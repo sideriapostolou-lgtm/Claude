@@ -10,7 +10,7 @@
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",
-    "db:seed": "tsx src/db/seed.ts"
+    "db:seed": "tsx src/db/seed-cli.ts"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.4",

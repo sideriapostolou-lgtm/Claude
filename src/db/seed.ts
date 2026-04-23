@@ -1,7 +1,6 @@
-// Idempotent seed script. Run via `pnpm db:seed` after the first migration.
-// Re-running is safe — every insert is guarded by an existence check.
+// Idempotent seed. Safe to re-run: every insert is guarded by an existence check.
+// Callable as a CLI (`pnpm db:seed`) or imported from /api/admin/init.
 
-import "dotenv/config";
 import { db, schema } from "./index";
 import { eq } from "drizzle-orm";
 import {
@@ -21,8 +20,8 @@ import {
   panelSku,
 } from "./bom";
 
-async function main() {
-  console.log("Seeding Omega Inventory…");
+export async function runSeed(log: (msg: string) => void = console.log) {
+  log("Seeding Omega Inventory…");
 
   // 1. Plant
   let [plant] = await db
@@ -31,9 +30,9 @@ async function main() {
     .where(eq(schema.plants.code, PLANT.code));
   if (!plant) {
     [plant] = await db.insert(schema.plants).values(PLANT).returning();
-    console.log(`  plant: inserted ${plant.code}`);
+    log(`  plant: inserted ${plant.code}`);
   } else {
-    console.log(`  plant: ${plant.code} already present`);
+    log(`  plant: ${plant.code} already present`);
   }
 
   // 2. Users
@@ -49,7 +48,7 @@ async function main() {
         role: u.role,
         receiveAlerts: true,
       });
-      console.log(`  user: inserted ${u.email} (${u.role})`);
+      log(`  user: inserted ${u.email} (${u.role})`);
     }
   }
 
@@ -67,7 +66,7 @@ async function main() {
         reorderPoint: rm.reorderPoint ?? null,
         buyAmerica: rm.buyAmerica ?? false,
       });
-      console.log(`  raw_material: inserted ${rm.name}`);
+      log(`  raw_material: inserted ${rm.name}`);
     }
   }
 
@@ -79,7 +78,7 @@ async function main() {
   for (const [name, qty] of Object.entries(RAW_MATERIAL_ON_HAND)) {
     const rm = rawByName.get(name);
     if (!rm) {
-      console.warn(`    skipping stock for unknown material: ${name}`);
+      log(`    skipping stock for unknown material: ${name}`);
       continue;
     }
     const [existing] = await db
@@ -147,7 +146,7 @@ async function main() {
         for (const line of lines) {
           const rm = rawByName.get(line.material);
           if (!rm) {
-            console.warn(`    BOM: missing material ${line.material} for ${sku}`);
+            log(`    BOM: missing material ${line.material} for ${sku}`);
             continue;
           }
           const [existing] = await db
@@ -187,12 +186,5 @@ async function main() {
     }
   }
 
-  console.log("Seed complete.");
+  log("Seed complete.");
 }
-
-main()
-  .then(() => process.exit(0))
-  .catch((err) => {
-    console.error(err);
-    process.exit(1);
-  });

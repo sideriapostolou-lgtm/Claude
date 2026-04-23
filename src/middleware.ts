@@ -16,6 +16,7 @@ export async function middleware(req: NextRequest) {
     pathname.startsWith("/_next") ||
     pathname.startsWith("/api/cron") ||
     pathname.startsWith("/api/auth") ||
+    pathname.startsWith("/api/admin/init") ||
     pathname === "/favicon.ico" ||
     PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(p + "/"))
   ) {
