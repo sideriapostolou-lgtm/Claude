@@ -1,0 +1,49 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 210 40% 98%;
+    --foreground: 218 50% 14%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 218 50% 14%;
+
+    --primary: 218 55% 26%; /* Omega navy #1F3864 */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 217 55% 52%; /* Omega blue #4472C4 */
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 215 25% 94%;
+    --muted-foreground: 217 15% 42%;
+
+    --accent: 215 30% 92%;
+    --accent-foreground: 218 50% 14%;
+
+    --destructive: 0 100% 38%;  /* Omega red #C00000 */
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 215 20% 86%;
+    --input: 215 20% 86%;
+    --ring: 218 55% 26%;
+
+    --radius: 0.5rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html {
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    @apply bg-background text-foreground font-sans;
+  }
+  table {
+    @apply text-sm;
+  }
+}
