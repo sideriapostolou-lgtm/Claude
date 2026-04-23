@@ -4,4 +4,4 @@ import * as schema from "./schema";
 
 export const db = drizzle(sql, { schema });
 export type DB = typeof db;
-export * as schema from "./schema";
+export { schema };
