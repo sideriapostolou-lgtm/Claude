@@ -1,0 +1,487 @@
+<title>Prop Engine — Say your bet</title>
+<style>
+:root {
+  --board: #F3EFE4; --board-2: #EAE5D6; --ink: #17211B; --ink-dim: #5C6A61;
+  --line: #D6D0BE; --odds: #0B7A4A; --amber: #A66F14; --amber-bg: #F3E3C2;
+  --hot: #B0421F; --slip: #FFFFFF; --slip-edge: #17211B; --chip: #ECE7D8;
+  --focus: #0B7A4A; --win: #0B7A4A; --winbg: #DCEEE2; --loss: #A94A2A; --lossbg: #F4E3DB;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --board: #0E1B15; --board-2: #12241C; --ink: #EDEAE0; --ink-dim: #8FA096;
+    --line: #24382E; --odds: #2FB673; --amber: #D9A441; --amber-bg: #2A2415;
+    --hot: #E06A45; --slip: #13251D; --slip-edge: #2FB673; --chip: #16291F;
+    --focus: #2FB673; --win: #2FB673; --winbg: #14301F; --loss: #E06A45; --lossbg: #2E1B12;
+  }
+}
+:root[data-theme="dark"] {
+  --board: #0E1B15; --board-2: #12241C; --ink: #EDEAE0; --ink-dim: #8FA096;
+  --line: #24382E; --odds: #2FB673; --amber: #D9A441; --amber-bg: #2A2415;
+  --hot: #E06A45; --slip: #13251D; --slip-edge: #2FB673; --chip: #16291F;
+  --focus: #2FB673; --win: #2FB673; --winbg: #14301F; --loss: #E06A45; --lossbg: #2E1B12;
+}
+:root[data-theme="light"] {
+  --board: #F3EFE4; --board-2: #EAE5D6; --ink: #17211B; --ink-dim: #5C6A61;
+  --line: #D6D0BE; --odds: #0B7A4A; --amber: #A66F14; --amber-bg: #F3E3C2;
+  --hot: #B0421F; --slip: #FFFFFF; --slip-edge: #17211B; --chip: #ECE7D8;
+  --focus: #0B7A4A; --win: #0B7A4A; --winbg: #DCEEE2; --loss: #A94A2A; --lossbg: #F4E3DB;
+}
+* { box-sizing: border-box; margin: 0; }
+body { background: var(--board); color: var(--ink);
+  font-family: -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased; }
+.mono { font-family: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+        font-variant-numeric: tabular-nums; }
+main { max-width: 620px; margin: 0 auto; padding: 28px 16px 90px; }
+.eyebrow { font-size: 11px; letter-spacing: .18em; text-transform: uppercase;
+           color: var(--ink-dim); }
+h1 { font-size: clamp(34px, 9vw, 46px); font-weight: 800; letter-spacing: -0.03em;
+     line-height: 1.02; margin: 6px 0 8px; text-wrap: balance; }
+h1 .odds-word { color: var(--odds); }
+.sub { color: var(--ink-dim); font-size: 15px; line-height: 1.5; max-width: 46ch; }
+.saybar { display: flex; gap: 8px; margin-top: 22px; }
+.saybar input { flex: 1; min-width: 0; font: inherit; font-size: 17px; padding: 15px 16px;
+  border: 1.5px solid var(--line); border-radius: 12px; background: var(--slip); color: var(--ink); }
+.saybar input:focus { outline: 2px solid var(--focus); outline-offset: 1px; border-color: transparent; }
+.saybar button { font: inherit; font-weight: 700; font-size: 15px; padding: 0 18px;
+  border-radius: 12px; border: 1.5px solid var(--ink); cursor: pointer;
+  background: var(--ink); color: var(--board); }
+.saybar button:focus-visible, .try button:focus-visible, .chipbtn:focus-visible
+  { outline: 2px solid var(--focus); outline-offset: 2px; }
+.saybar .mic { background: var(--slip); color: var(--ink); border-color: var(--line);
+               font-size: 19px; padding: 0 14px; }
+.saybar .mic.live { background: var(--hot); border-color: var(--hot); color: #fff; }
+.try { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 12px; }
+.try button { font: inherit; font-size: 13px; padding: 7px 12px; border-radius: 999px;
+  border: 1px solid var(--line); background: var(--chip); color: var(--ink); cursor: pointer; }
+#stage { margin-top: 22px; }
+.slip { background: var(--slip); border: 1.5px solid var(--slip-edge); border-radius: 4px;
+  padding: 20px 18px 16px; position: relative; box-shadow: 0 10px 24px rgba(0,0,0,.14);
+  animation: slam .3s cubic-bezier(.2,1.5,.4,1); }
+@keyframes slam { from { opacity: 0; transform: scale(.95) translateY(6px); } }
+@media (prefers-reduced-motion: reduce) { .slip { animation: none; } .parse { transition: none; } }
+.slip::before { content: ""; position: absolute; left: 0; right: 0; top: -1.5px; height: 7px;
+  background: radial-gradient(circle at 7px 0, var(--board) 0 4px, transparent 4.5px) repeat-x;
+  background-size: 14px 7px; }
+.slip .market { font-size: 18px; font-weight: 800; letter-spacing: -0.01em; }
+.slip .gm { color: var(--ink-dim); font-size: 13px; margin-top: 3px; }
+.slip .bigodds { font-size: 52px; font-weight: 700; color: var(--odds); margin-top: 10px;
+                 line-height: 1; letter-spacing: -0.02em; }
+.slip .fairline { color: var(--ink-dim); font-size: 13px; margin-top: 6px; }
+.slip .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.slip .tag { font-size: 11.5px; padding: 4px 10px; border-radius: 999px;
+             border: 1px solid var(--line); color: var(--ink-dim); }
+.slip .tag.amber { background: var(--amber-bg); color: var(--amber); border-color: transparent;
+                   font-weight: 700; }
+.slip .evidence { margin-top: 12px; padding: 10px 12px; background: var(--board-2);
+                  border-radius: 8px; font-size: 12.5px; color: var(--ink-dim); line-height: 1.55; }
+.slip .place { margin-top: 14px; width: 100%; font: inherit; font-size: 16px; font-weight: 700;
+               padding: 13px; border-radius: 10px; border: none; cursor: pointer;
+               background: var(--odds); color: #fff; }
+.slip .fine { text-align: center; font-size: 10.5px; letter-spacing: .12em;
+              text-transform: uppercase; color: var(--ink-dim); margin-top: 8px; }
+.slip .barcode { margin-top: 12px; height: 26px; opacity: .5;
+  background: repeating-linear-gradient(90deg, var(--ink) 0 2px, transparent 2px 5px,
+    var(--ink) 5px 6px, transparent 6px 11px, var(--ink) 11px 14px, transparent 14px 17px); }
+.parse { background: #0C1712; color: #9FE8C3; border-radius: 10px; padding: 13px 14px;
+  font-size: 12px; line-height: 1.5; white-space: pre-wrap; overflow-x: auto;
+  margin-bottom: 12px; opacity: 0; transform: translateY(5px); transition: all .4s ease;
+  border: 1px solid #1E3A2C; }
+:root[data-theme="light"] .parse { background: #10251B; }
+.parse.show { opacity: 1; transform: none; }
+.reject { background: var(--amber-bg); border: 1px solid var(--amber); border-radius: 10px;
+          padding: 14px 16px; color: var(--amber); font-size: 14.5px; line-height: 1.5; }
+.reject b { display: block; margin-bottom: 3px; }
+.clar { display: flex; flex-direction: column; gap: 8px; }
+.clar .chipbtn { text-align: left; font: inherit; font-size: 15px; padding: 13px 15px;
+  border-radius: 10px; border: 1px solid var(--line); background: var(--slip);
+  color: var(--ink); cursor: pointer; }
+h2 { font-size: 21px; font-weight: 800; letter-spacing: -0.01em; margin: 44px 0 4px; }
+.boardsub { color: var(--ink-dim); font-size: 13px; margin-bottom: 14px; }
+.gamecard { background: var(--board-2); border: 1px solid var(--line); border-radius: 12px;
+            padding: 13px 14px; margin-bottom: 10px; }
+.gamecard .gm { font-size: 14px; font-weight: 700; }
+.gamecard .venue { color: var(--ink-dim); font-size: 11.5px; margin-top: 1px; }
+.oddsrow { display: grid; grid-template-columns: repeat(9, 1fr); gap: 4px; margin-top: 10px; }
+.oddsrow button, .oddsrow .cell {
+  border: 1px solid var(--line); border-radius: 7px; background: var(--slip);
+  color: var(--ink); padding: 6px 1px 5px; cursor: pointer; font-size: 10px; line-height: 1.25;
+  display: flex; flex-direction: column; align-items: center; gap: 1px; }
+.oddsrow button .o { color: var(--odds); font-weight: 700; font-size: 11.5px; }
+.oddsrow button .i, .oddsrow .cell .i { color: var(--ink-dim); }
+.oddsrow .cell { cursor: default; }
+.oddsrow .cell.hit { background: var(--winbg); border-color: var(--win); }
+.oddsrow .cell.hit .o { color: var(--win); font-weight: 800; font-size: 11.5px; }
+.oddsrow .cell.miss .o { color: var(--ink-dim); font-size: 11.5px; }
+.pnlcard { background: var(--slip); border: 1.5px solid var(--slip-edge); border-radius: 10px;
+  padding: 14px 16px; margin-bottom: 12px; display: flex; gap: 18px; flex-wrap: wrap; }
+.pnlcard .stat .k { font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--ink-dim); }
+.pnlcard .stat .v { font-size: 22px; font-weight: 800; margin-top: 2px; }
+.pnlcard .stat .v.pos { color: var(--win); }
+.pnlcard .stat .v.neg { color: var(--loss); }
+footer { margin-top: 40px; color: var(--ink-dim); font-size: 12px; line-height: 1.6; }
+.stamp { display: inline-block; margin-top: 10px; font-size: 10.5px; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--ink-dim); border: 1px solid var(--line);
+  border-radius: 999px; padding: 3px 10px; }
+</style>
+
+<main>
+  <p class="eyebrow">Prop Engine · live slate <span id="slatedate"></span></p>
+  <h1>Say your bet.<br><span class="odds-word">Get a price.</span></h1>
+  <p class="sub">Any prop, parsed into a structured spec and priced by a model fit on
+    227,335 plate appearances and 21,153 shots. Refreshed automatically from the real
+    slate — and yesterday's board is settled from official play-by-play below.</p>
+  <span class="stamp mono" id="stamp"></span>
+
+  <div class="saybar">
+    <input id="utt" placeholder="third inning home run…" enterkeyhint="go"
+           autocapitalize="off" autocomplete="off">
+    <button class="mic" id="mic" aria-label="speak your bet">🎙</button>
+    <button id="go">Price it</button>
+  </div>
+  <div class="try" id="try"></div>
+
+  <div id="stage" aria-live="polite"></div>
+
+  <div id="yesterday"></div>
+
+  <h2>Tonight's board</h2>
+  <p class="boardsub" id="boardsub">Every game × every inning × home run, either team — tap any price.</p>
+  <div id="board"></div>
+
+  <footer>
+    Fair probabilities from the Prop Engine model (Poisson HR intensity, empirical inning
+    shape, park + pitcher blending, walk-forward recalibration). Vig is tiered by model
+    uncertainty: A 9% · B 13.5% · C 21%. Backtest: 7,983 markets, Brier 0.17294, 5.3% hold.
+    Demo only — no real money.
+  </footer>
+</main>
+
+<script id="pe-data" type="application/json">__DATA__</script>
+<script>
+const DATA = JSON.parse(document.getElementById('pe-data').textContent);
+const stage = document.getElementById('stage');
+const $utt = document.getElementById('utt');
+document.getElementById('slatedate').textContent = DATA.date;
+document.getElementById('stamp').textContent = 'updated ' + DATA.builtAt;
+
+const ORD = {first:1,'1st':1,second:2,'2nd':2,third:3,'3rd':3,fourth:4,'4th':4,
+  fifth:5,'5th':5,sixth:6,'6th':6,seventh:7,'7th':7,eighth:8,'8th':8,ninth:9,'9th':9,
+  tenth:10,'10th':10,eleventh:11,'11th':11,twelfth:12,'12th':12};
+const TEAMS = {yankees:'New York Yankees',astros:'Houston Astros',dodgers:'Los Angeles Dodgers',
+  nationals:'Washington Nationals','red sox':'Boston Red Sox',mets:'New York Mets',
+  braves:'Atlanta Braves',cubs:'Chicago Cubs',phillies:'Philadelphia Phillies',
+  padres:'San Diego Padres',mariners:'Seattle Mariners',orioles:'Baltimore Orioles',
+  rangers:'Texas Rangers',twins:'Minnesota Twins',guardians:'Cleveland Guardians',
+  brewers:'Milwaukee Brewers',royals:'Kansas City Royals',tigers:'Detroit Tigers',
+  giants:'San Francisco Giants',diamondbacks:'Arizona Diamondbacks',rays:'Tampa Bay Rays',
+  'blue jays':'Toronto Blue Jays',reds:'Cincinnati Reds',pirates:'Pittsburgh Pirates',
+  cardinals:'St. Louis Cardinals',rockies:'Colorado Rockies',marlins:'Miami Marlins',
+  angels:'Los Angeles Angels','white sox':'Chicago White Sox',athletics:'Athletics'};
+const HR = /(home\s*run|homer|hr\b|bomb|tater|dinger|jack\b|moonshot|goes\s+yard|go\s+yard|yard)/;
+const REJECTS = [
+  [/almost\s+scor/, "Can't verify 'almost scored' from event data — try 'Messi from exactly 29 yards'."],
+  [/break(s)?\s+(their|his|a)\s+bat/, "Official play-by-play doesn't record broken bats, so this can't be graded."],
+  [/crowd|boo(s|ing)?\b|cheer/, "Crowd reactions aren't in any official data feed, so this can't be graded."],
+  [/looks?\s+dominant|plays?\s+well|great\s+game/, "Subjective outcomes can't be graded — try a countable stat like '2+ hits'."],
+  [/commentator|announcer/, "What commentators say isn't in any official data feed."]];
+
+function keyify(dict){
+  const out = {};
+  for (const [name, ent] of Object.entries(dict)) {
+    out[name.toLowerCase()] = [name, ent];
+    const last = name.split(' ').slice(-1)[0].toLowerCase();
+    if (!out[last]) out[last] = [name, ent];
+    const parts = name.toLowerCase().split(' ');
+    if (parts.length > 2) { // "bobby witt jr." -> "witt"
+      const mid = parts[parts.length-2];
+      if (!out[mid]) out[mid] = [name, ent];
+    }
+  }
+  return out;
+}
+const PLAYERS = keyify(DATA.players);
+const PITCHERS = keyify(DATA.pitchers);
+
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function findInning(t){
+  let m = t.match(/\b(\d{1,2})(?:st|nd|rd|th)?\s+inning/); if (m) return +m[1];
+  m = t.match(/inning\s+(\d{1,2})\b/); if (m) return +m[1];
+  for (const [w,n] of Object.entries(ORD)) if (new RegExp('\\b'+w+'\\b').test(t)) return n;
+  return null;
+}
+function findTeam(t){ for (const [k,v] of Object.entries(TEAMS)) if (new RegExp('\\b'+k+'\\b').test(t)) return v; return null; }
+function findIn(dict, t){
+  const keys = Object.keys(dict).sort((a,b)=>b.length-a.length);
+  for (const k of keys) if (dict[k] && new RegExp('\\b'+k.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\b').test(t)) return dict[k];
+  return null;
+}
+function hottest(inn){
+  let best=null, bp=-1;
+  for (const g of DATA.board){ const q=g.innings[inn-1]; if(q.fair>bp){bp=q.fair;best=g;} }
+  return best;
+}
+function gameForTeam(team){ return DATA.board.find(g=>g.away===team||g.home===team) || null; }
+
+function parseUtterance(raw){
+  const t = raw.toLowerCase().trim();
+  for (const [re, reason] of REJECTS) if (re.test(t)) return {kind:'reject', reason};
+  if (!DATA.board.length && !/messi/.test(t) && !/yard/.test(t))
+    return {kind:'reject', reason:'No MLB games on today\'s slate — Messi props still price ("Messi from exactly 29 yards"), and the board returns with the next slate.'};
+
+  // Messi / soccer distance props
+  if (/messi/.test(t) || (/yard/.test(t) && /(goal|score)/.test(t))) {
+    const ex = t.match(/exactly\s+(\d+(?:\.\d+)?)\s*yard/);
+    const al = t.match(/(\d+)\s*\+\s*yard/) || (/outside|or\s+more|at\s+least/.test(t) ? t.match(/(\d+)(?:\.\d+)?\s*yard/) : null);
+    const anyd = t.match(/(\d+)(?:\.\d+)?\s*yard/);
+    const pick = (d, q, label, note) => ({kind:'quote', q, market:label,
+      game:'Lionel Messi — next 90 minutes',
+      spec:{sport:'soccer',market_family:'coordinate_event',event:'goal',scope:'player',
+            player:'Lionel Messi',constraints:{distance_yards:d}}, note});
+    if (ex && DATA.messiExact[Math.round(+ex[1])]) {
+      const d = Math.round(+ex[1]), q = DATA.messiExact[d];
+      const r = pick(d, q, `GOAL from exactly ${d} yds`,
+        `Career record in the ${d-0.5}–${d+0.5} yd band: ${q.shots} shots, ${q.goals} goals (43,590 min of StatsBomb data).`);
+      r.spec.constraints.tolerance = 0.5; r.spec.constraints.comparator = 'exactly';
+      return r;
+    }
+    if (al && DATA.messiAtLeast[Math.round(+al[1])]) {
+      const d = Math.round(+al[1]), q = DATA.messiAtLeast[d];
+      const r = pick(d, q, `GOAL from ${d}+ yds`,
+        `Career from ${d}+ yds: ${q.shots} shots, ${q.goals} goals.`);
+      r.spec.constraints.comparator = 'at_least';
+      return r;
+    }
+    if (anyd && DATA.messiExact[Math.round(+anyd[1])]) {
+      const d = Math.round(+anyd[1]), q = DATA.messiExact[d];
+      const r = pick(d, q, `GOAL from ${d} yds (±0.5)`,
+        `Career record in band: ${q.shots} shots, ${q.goals} goals.`);
+      r.spec.constraints.tolerance = 0.5; r.spec.constraints.comparator = 'exactly';
+      return r;
+    }
+    if (/messi/.test(t)) return {kind:'clarify', options:[
+      {label:'Messi from exactly 29 yards'},{label:'Messi from 25+ yards'},{label:'Messi from exactly 12 yards'}]};
+  }
+
+  // pitcher strikeout ladders
+  const pit = findIn(PITCHERS, t);
+  const kM = t.match(/(\d+)\s*\+?\s*(?:k's?|ks\b|strikeouts?)/);
+  if (pit && kM) {
+    const [name, ent] = pit; const k = +kM[1];
+    if (ent.ks[k]) return {kind:'quote', q:ent.ks[k], market:`${name.toUpperCase()} — ${k}+ STRIKEOUTS`,
+      game:ent.game, spec:{sport:'MLB',market_family:'count_event',event:'strikeout',
+      scope:'player',player:name,constraints:{count:k,comparator:'at_least'}},
+      note:'Regressed K/PA × expected batters faced, capped by the empirical starter-share curve.'};
+    return {kind:'reject', reason:`K ladders are pre-priced 4+ through 10+ — try "${name} 7+ Ks".`};
+  }
+
+  // hitter props
+  const pl = findIn(PLAYERS, t);
+  if (pl) {
+    const [name, ent] = pl;
+    const slotNote = ent.slotSource === 'lineup'
+      ? `Slot ${ent.slot} from tonight's posted lineup.`
+      : `Modal slot ${ent.slot ?? '—'} from the season corpus (lineup not posted yet).`;
+    const h3 = /(\b3\s*\+|\bthree\b).*(hit)/.test(t);
+    if (h3 && ent.hits3) return {kind:'quote', q:ent.hits3, market:`${name.toUpperCase()} — 3+ HITS`,
+      game:ent.game, spec:{sport:'MLB',market_family:'count_event',event:'hit',scope:'player',
+      player:name,constraints:{count:3,comparator:'at_least'}}, note:slotNote};
+    if (/hit/.test(t) && ent.hits2) return {kind:'quote', q:ent.hits2, market:`${name.toUpperCase()} — 2+ HITS`,
+      game:ent.game, spec:{sport:'MLB',market_family:'count_event',event:'hit',scope:'player',
+      player:name,constraints:{count:2,comparator:'at_least'}}, note:slotNote};
+    if (HR.test(t)) {
+      const inn = findInning(t);
+      if (inn && inn >= 1 && inn <= 9 && ent.hrInn)
+        return {kind:'quote', q:ent.hrInn[inn-1], market:`${name.toUpperCase()} — HR in inning ${inn}`,
+          game:ent.game, spec:{sport:'MLB',market_family:'inning_event',event:'home_run',
+          scope:'player',player:name,constraints:{inning:inn}},
+          note:`P(plate appearance in inning ${inn} | slot) × regressed HR/PA. ${slotNote}`};
+      if (inn) return {kind:'reject', reason:'Player props run innings 1–9; extras are team-level only.'};
+      return {kind:'quote', q:ent.hrAny, market:`${name.toUpperCase()} — HR anytime`,
+        game:ent.game, spec:{sport:'MLB',market_family:'player_event',event:'home_run',
+        scope:'player',player:name}, note:slotNote};
+    }
+    return {kind:'clarify', options:[{label:`${name} homers tonight`},{label:`${name} 2+ hits`},
+      {label:`${name} HR in the 4th inning`}]};
+  }
+
+  // HR props (team / either team)
+  if (HR.test(t)) {
+    const team = findTeam(t);
+    let inn = findInning(t);
+    const half = /\btop\s+of\b/.test(t) ? 'top' : (/\bbottom\s+of\b/.test(t) ? 'bottom' : null);
+    if (inn === null && /\bearly\b/.test(t))
+      return {kind:'clarify', options:[{label:'home run in the 1st inning'},
+        {label:'home run in the 3rd inning'},{label:'home run in the 9th inning'}]};
+    if (inn === null && team)
+      return {kind:'clarify', options:[{label:`${team} HR in the 1st inning`},
+        {label:`${team} HR in the 3rd inning`},{label:`${team} HR in the 9th inning`}]};
+    if (inn === null) inn = 3;
+    if (inn > 9) {
+      if (!DATA.extras.length) return {kind:'reject', reason:'No slate tonight to hang extras on.'};
+      const q = DATA.extras[Math.min(inn,12)-10];
+      const g = DATA.board[0];
+      return {kind:'quote', q, market:`HOME RUN — inning ${inn}`, game:g.matchup + ' (if played)',
+        spec:{sport:'MLB',market_family:'inning_event',event:'home_run',scope:'either_team',
+              constraints:{inning:inn},flags:['extra_innings']},
+        note:'Extra innings: priced on P(inning is played) × HR intensity — flagged tier C.'};
+    }
+    if (half) {
+      const g = team ? gameForTeam(team) : hottest(inn);
+      if (!g) return {kind:'reject', reason:`${team} isn't on tonight's slate.`};
+      const side = half === 'bottom' ? 'home' : 'away';
+      const nm = half === 'bottom' ? g.home : g.away;
+      return {kind:'quote', q:g.teamInnings[side][inn-1],
+        market:`HOME RUN — ${half} of inning ${inn}`, game:g.matchup,
+        spec:{sport:'MLB',market_family:'inning_event',event:'home_run',scope:'team',team:nm,
+              constraints:{inning:inn,half}},
+        note: half==='bottom' && inn===9 ? 'Bottom 9 averages just 2.28 PAs — the home team often never bats. Priced in.' : `${nm} bat the ${half} half.`};
+    }
+    if (team) {
+      const g = gameForTeam(team);
+      if (!g) return {kind:'reject', reason:`${team} isn't on tonight's slate — the schedule gate rejected it.`};
+      const side = g.away === team ? 'away' : 'home';
+      return {kind:'quote', q:g.teamInnings[side][inn-1],
+        market:`${team.toUpperCase()} — HR in inning ${inn}`, game:g.matchup,
+        spec:{sport:'MLB',market_family:'inning_event',event:'home_run',scope:'team',team,
+              constraints:{inning:inn}}};
+    }
+    const g = hottest(inn);
+    return {kind:'quote', q:g.innings[inn-1], market:`HOME RUN — inning ${inn}`,
+      game:`${g.matchup} · hottest of ${DATA.board.length} games`,
+      spec:{sport:'MLB',market_family:'inning_event',event:'home_run',scope:'either_team',
+            constraints:{inning:inn}}};
+  }
+
+  return {kind:'reject',
+    reason:"Couldn't map that to a gradeable market — try 'home run in the 3rd inning', 'Ohtani 2+ hits', or 'Messi from exactly 29 yards'."};
+}
+
+function renderQuote(r){
+  const q = r.q;
+  const win10 = q.book.startsWith('+') ? (10*parseInt(q.book.slice(1))/100).toFixed(2)
+                                       : (10*100/parseInt(q.book.slice(1))).toFixed(2);
+  stage.innerHTML = '';
+  const parseEl = document.createElement('div');
+  parseEl.className = 'parse mono';
+  parseEl.textContent = JSON.stringify(r.spec, null, 1);
+  stage.appendChild(parseEl);
+  requestAnimationFrame(()=>parseEl.classList.add('show'));
+  setTimeout(()=>{
+    const el = document.createElement('div');
+    el.className = 'slip';
+    el.innerHTML = `
+      <div class="market">${esc(r.market)}</div>
+      <div class="gm">${esc(r.game)}</div>
+      <div class="bigodds mono">${esc(q.book)}</div>
+      <div class="fairline mono">fair ${esc(q.fairOdds)} · P = ${(q.fair*100).toFixed(q.fair<0.02?2:1)}%</div>
+      <div class="chips">
+        <span class="tag amber">tier ${esc(q.tier)}</span>
+        <span class="tag">max stake $${q.stake}</span>
+        <span class="tag">quote live 90s</span>
+      </div>
+      ${r.note ? `<div class="evidence">${esc(r.note)}</div>` : ''}
+      <button class="place">Place $10 → win $${win10}</button>
+      <div class="fine">demo only · no real money</div>
+      <div class="barcode" aria-hidden="true"></div>`;
+    el.querySelector('.place').addEventListener('click', e=>{ e.target.textContent='✓ Demo bet placed'; });
+    stage.appendChild(el);
+  }, 550);
+}
+
+function go(text){
+  const utterance = (text || $utt.value).trim();
+  if (!utterance) return;
+  if (text) $utt.value = text;
+  const r = parseUtterance(utterance);
+  if (r.kind === 'reject') {
+    stage.innerHTML = `<div class="reject"><b>Can't offer that one.</b>${esc(r.reason)}</div>`;
+  } else if (r.kind === 'clarify') {
+    stage.innerHTML = '<div class="clar">' + r.options.map(o=>
+      `<button class="chipbtn" data-u="${esc(o.label)}">👉 ${esc(o.label)}</button>`).join('') + '</div>';
+    stage.querySelectorAll('.chipbtn').forEach(b=>b.addEventListener('click',()=>go(b.dataset.u)));
+  } else {
+    renderQuote(r);
+  }
+  stage.scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+document.getElementById('go').addEventListener('click', ()=>go());
+$utt.addEventListener('keydown', e=>{ if(e.key==='Enter') go(); });
+document.getElementById('mic').addEventListener('click', ()=>{
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const btn = document.getElementById('mic');
+  if (!SR) { alert('Speech input not supported in this browser — type instead.'); return; }
+  const rec = new SR(); rec.lang = 'en-US';
+  btn.classList.add('live');
+  rec.onresult = e => { btn.classList.remove('live'); go(e.results[0][0].transcript); };
+  rec.onerror = () => btn.classList.remove('live');
+  rec.onend = () => btn.classList.remove('live');
+  rec.start();
+});
+
+// sample chips: seeded from live data so they always resolve
+(function samples(){
+  const out = ['third inning home run', 'Messi from exactly 29 yards'];
+  const pNames = Object.keys(DATA.players);
+  if (pNames[0]) out.push(`${pNames[0]} 2+ hits`);
+  if (pNames[1]) out.push(`${pNames[1]} HR in the 4th`);
+  const kNames = Object.keys(DATA.pitchers);
+  if (kNames[0]) out.push(`${kNames[0].split(' ').slice(-1)[0]} 7+ Ks`);
+  if (DATA.board[0]) out.push('bottom of the 9th dinger');
+  out.push('HR in the 10th inning', 'the crowd boos in the 7th');
+  document.getElementById('try').innerHTML = out.map(s=>
+    `<button data-u="${esc(s)}">${esc(s)}</button>`).join('');
+  document.querySelectorAll('#try button').forEach(b=>b.addEventListener('click',()=>go(b.dataset.u)));
+})();
+
+// yesterday, graded
+(function yesterday(){
+  const y = DATA.yesterday;
+  if (!y || !y.games || !y.games.length) return;
+  const el = document.getElementById('yesterday');
+  let pnlHtml = '';
+  if (y.pnl) {
+    const pos = y.pnl.bookPnl >= 0;
+    pnlHtml = `<div class="pnlcard">
+      <div class="stat"><div class="k">book P&L ($10 flat)</div>
+        <div class="v mono ${pos?'pos':'neg'}">${pos?'+':''}$${y.pnl.bookPnl.toFixed(2)}</div></div>
+      <div class="stat"><div class="k">markets settled</div><div class="v mono">${y.pnl.settled}</div></div>
+      <div class="stat"><div class="k">hold</div><div class="v mono ${pos?'pos':'neg'}">${y.pnl.holdPct.toFixed(1)}%</div></div>
+    </div>`;
+  }
+  el.innerHTML = `<h2>Yesterday, graded</h2>
+    <p class="boardsub">${esc(y.date)} settled from official play-by-play — green = the inning hit.</p>
+    ${pnlHtml}` + y.games.map(g=>{
+      const cells = (g.markets || Array.from({length:9},(_,i)=>({inning:i+1,book:'',hit:g.hrInnings.includes(i+1)})))
+        .map(m=>`<div class="cell ${m.hit?'hit':'miss'}"><span class="i mono">${m.inning}</span>
+          <span class="o mono">${m.hit?'HR ✓':(m.book||'—')}</span></div>`).join('');
+      return `<div class="gamecard"><div class="gm">${esc(g.matchup)}</div>
+        <div class="oddsrow">${cells}</div></div>`;
+    }).join('');
+})();
+
+// tonight's board
+(function board(){
+  if (!DATA.board.length) {
+    document.getElementById('boardsub').textContent = 'No MLB games today — the board returns with the next slate. Messi props above still price.';
+    return;
+  }
+  document.getElementById('board').innerHTML = DATA.board.map((g,gi)=>`
+    <div class="gamecard">
+      <div class="gm">${esc(g.matchup)}</div>
+      <div class="venue">${esc(g.venue)}${g.lineupsPosted ? ' · lineups posted' : ''}</div>
+      <div class="oddsrow">${g.innings.map((q,i)=>
+        `<button data-g="${gi}" data-i="${i}" aria-label="HR in inning ${i+1}, ${esc(g.matchup)}, ${esc(q.book)}">
+          <span class="i mono">${i+1}</span><span class="o mono">${esc(q.book)}</span>
+        </button>`).join('')}</div>
+    </div>`).join('');
+  document.querySelectorAll('.oddsrow button').forEach(b=>b.addEventListener('click',()=>{
+    const g = DATA.board[+b.dataset.g], i = +b.dataset.i;
+    renderQuote({q: g.innings[i], market:`HOME RUN — inning ${i+1}`, game:g.matchup,
+      spec:{sport:'MLB',market_family:'inning_event',event:'home_run',scope:'either_team',
+            constraints:{inning:i+1}}});
+    window.scrollTo({top:0, behavior:'smooth'});
+  }));
+})();
+</script>
