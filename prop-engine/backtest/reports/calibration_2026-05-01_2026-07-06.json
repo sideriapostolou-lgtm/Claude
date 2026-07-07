@@ -1,0 +1,51 @@
+{
+ "window": "2026-05-01..2026-07-06",
+ "markets_priced": 7983,
+ "settled": 7983,
+ "voided": 0,
+ "base_rate": 0.2241,
+ "brier_score": 0.17313,
+ "brier_climatology": 0.17388,
+ "brier_skill_score": 0.0043,
+ "book_pnl_usd": 4515.29,
+ "handle_usd": 79830.0,
+ "hold_pct": 5.66,
+ "calibration": [
+  {
+   "bucket": "10-15%",
+   "n": 467,
+   "predicted": 0.1367,
+   "realized": 0.1606
+  },
+  {
+   "bucket": "15-20%",
+   "n": 2823,
+   "predicted": 0.1781,
+   "realized": 0.2051
+  },
+  {
+   "bucket": "20-25%",
+   "n": 3324,
+   "predicted": 0.2233,
+   "realized": 0.2289
+  },
+  {
+   "bucket": "25-30%",
+   "n": 1189,
+   "predicted": 0.2681,
+   "realized": 0.2641
+  },
+  {
+   "bucket": "30-35%",
+   "n": 174,
+   "predicted": 0.3179,
+   "realized": 0.3333
+  },
+  {
+   "bucket": "35-40%",
+   "n": 6,
+   "predicted": 0.3582,
+   "realized": 0.3333
+  }
+ ]
+}
