@@ -180,3 +180,73 @@ def test_american_round_trip():
 
 def test_american_never_exceeds_cap():
     assert american(0.999) == american(0.985)
+
+
+# ---- v1.1: drift, bullpen, slot priors --------------------------------------
+
+def test_hr_drift_scales_lambda():
+    class DriftRates(FakeRates):
+        hr_drift = 1.15
+    base = price_inning_hr(spec_inning(3), GAME, FakeRates())
+    drifted = price_inning_hr(spec_inning(3), GAME, DriftRates())
+    assert drifted.fair_prob > base.fair_prob
+    assert drifted.inputs_used["top"]["hr_drift"] == 1.15
+
+
+def test_bullpen_factor_used_in_late_innings():
+    class BullpenRates(FakeRates):
+        def team_bullpen_hr_factor(self, team_id):
+            return 1.5  # HR-prone bullpen
+    base = price_inning_hr(spec_inning(8), GAME, FakeRates())
+    juiced = price_inning_hr(spec_inning(8), GAME, BullpenRates())
+    # inning 8 is ~98% bullpen, so a 1.5x bullpen should move price a lot
+    assert juiced.fair_prob > 1.3 * base.fair_prob
+    # inning 1 is ~99.7% starter (openers exist): bullpen factor barely matters
+    b1 = price_inning_hr(spec_inning(1), GAME, FakeRates())
+    j1 = price_inning_hr(spec_inning(1), GAME, BullpenRates())
+    assert abs(j1.fair_prob - b1.fair_prob) / b1.fair_prob < 0.005
+
+
+def test_corpus_rates_bullpen_and_modal_slot():
+    from engine.rates import CorpusRates
+    cr = CorpusRates(as_of="2026-07-01")
+    # bullpen factors exist and are clamped sane
+    factors = [cr.team_bullpen_hr_factor(t) for t in list(cr._bullpen)[:5]]
+    assert factors and all(0.6 <= f <= 1.6 for f in factors)
+    # at least some regulars have a modal slot
+    slots = [cr.player_modal_slot(pid) for pid in list(cr._slots)[:50]]
+    assert any(s is not None and 1 <= s <= 9 for s in slots)
+
+
+def test_modal_slots_from_corpus_helper():
+    from engine.rates import modal_slots_from_corpus
+    slots = modal_slots_from_corpus("2026")
+    assert len(slots) > 100
+    assert all(1 <= s <= 9 for s in slots.values())
+
+
+def test_platt_scaler_identity_when_underpowered():
+    from engine.calibration import PlattScaler
+    s = PlattScaler().fit([(0.2, 0)] * 100)  # < MIN_SAMPLES
+    assert s.is_identity
+    assert s.apply(0.2) == pytest.approx(0.2, abs=1e-9)
+
+
+def test_platt_scaler_learns_slope():
+    from engine.calibration import PlattScaler
+    import random
+    rng = random.Random(7)
+    # truth: outcomes drawn from p_true = sigmoid(0.3 + 0.8*logit(p_raw))
+    from engine.calibration import _logit, _sigmoid
+    pairs = []
+    for _ in range(4000):
+        p_raw = rng.uniform(0.05, 0.4)
+        p_true = _sigmoid(0.3 + 0.8 * _logit(p_raw))
+        pairs.append((p_raw, 1 if rng.random() < p_true else 0))
+    s = PlattScaler().fit(pairs)
+    assert 0.15 < s.a < 0.45
+    assert 0.65 < s.b < 0.95
+    # calibrated prediction closer to truth than raw
+    p_raw = 0.10
+    p_true = _sigmoid(0.3 + 0.8 * _logit(p_raw))
+    assert abs(s.apply(p_raw) - p_true) < abs(p_raw - p_true)

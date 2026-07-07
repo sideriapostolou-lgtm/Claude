@@ -115,11 +115,26 @@ through D−1). Window 2026-05-01 → 2026-07-06, "HR in inning N" for all nine
 innings of every game:
 
 - **7,983 markets settled**, base rate 22.4%
-- **Brier 0.17313** vs climatology 0.17388 (skill +0.4% — inning-level HR
-  outcomes are mostly irreducible noise; calibration is the real test)
-- Calibration is tight in the 20–35% buckets (e.g. predicted 0.223 vs
-  realized 0.229 on n=3,324)
-- **Book P&L at $10 flat: +$4,515 on $79,830 handle = 5.66% hold**
+- **Brier 0.17294** vs climatology 0.17388 (v1 raw model: 0.17313; the v1.1
+  walk-forward Platt recalibration layer lifted the skill score from +0.43%
+  to +0.54% — inning-level HR outcomes are mostly irreducible noise, so
+  calibration is the real test)
+- Calibration is tight in the 20–35% buckets (e.g. predicted 0.225 vs
+  realized 0.238 on n=3,517)
+- **Book P&L at $10 flat: +$4,203 on $79,830 handle = 5.27% hold**
+
+v1.1 model additions, all exercised by the backtest:
+- **Platt recalibration** (`engine/calibration.py`): 2-parameter logistic
+  recalibration in log-odds, refit daily on a trailing 45-day window of
+  settled markets — the reliability curve had a slope problem a global
+  multiplier couldn't fix
+- **Real bullpen split**: reliever-only HR/BF per pitching team (pitcher ≠
+  half-inning starter) feeds the starter/bullpen blend instead of a
+  full-staff proxy
+- **League-drift hook** (`rates.hr_drift`) retained for live use
+- **Slot priors + game ranking** (API): players without a posted lineup get
+  their modal slot from the season corpus; unanchored utterances price every
+  slate game and quote the hottest one
 
 Full report: `backtest/reports/calibration_2026-05-01_2026-07-06.{json,md}`.
 
@@ -131,23 +146,24 @@ and store the exact plays as evidence. Soccer settlements check StatsBomb shot
 location + outcome against the distance band. Voids when the inning was never
 played or no feed exists.
 
-## Top 3 model weaknesses found (v2 fixes)
+## Model weaknesses: found in v1, addressed in v1.1, and what remains
 
-1. **Low-bucket underpricing.** In the backtest the 10–20% buckets realize
-   ~2.5pts above prediction (pred 0.178 → real 0.205). Likely causes: 2026
-   league HR environment running hotter than the 2024-25-fitted structural
-   factors, and no weather/temperature input (summer balls fly). Fix: refit
-   inning/park factors monthly and add a league-drift multiplier + game-time
-   temperature term.
-2. **Bullpen modelling is a proxy.** The "bullpen" factor uses full-staff
-   HR/BF (live) or 1.0 (backtest) rather than actual reliever-only rates and
-   likely relievers. Fix: split reliever pools from the corpus (pitcher ≠
-   game starter) and model per-team bullpen HR/9 with usage-weighted blending.
-3. **Game/lineup disambiguation.** A no-game utterance falls back to the
-   first slate game, and slot priors default to the middle order when lineups
-   haven't posted. Fix: rank candidate games by prop relevance, pull each
-   player's modal slot from their last 15 games in the corpus, and re-price on
-   lineup post (the hook exists — `hydrate=lineups` is already read).
+1. **Low-bucket underpricing** *(partially fixed)*. v1's 10–20% buckets
+   realized ~2.5pts above prediction. A global drift multiplier didn't help
+   (Brier 0.17311 — the overall level was already right; the reliability
+   curve had a slope < 1). The Platt layer fixed the shape where the data is
+   (Brier 0.17294, mid-buckets tight), but a residual remains at the low end:
+   the 2026 late-inning/bullpen HR environment runs hotter than the 2024-25
+   inning factors. Next: blend 2026 per-inning HR rates into the structural
+   factors walk-forward, and add a game-time temperature term.
+2. **Bullpen modelling** *(fixed in backtest + corpus rates)*. Reliever-only
+   HR/BF per team now feeds the blend. Live `LiveRates` still uses the
+   full-staff proxy (the Stats API has no cheap reliever split) — port the
+   corpus split to the live path next.
+3. **Game/lineup disambiguation** *(fixed)*. Unanchored utterances now price
+   every slate game and quote the hottest; players without posted lineups get
+   their modal slot from the season corpus. Remaining: re-price standing
+   quotes when lineups post (the `hydrate=lineups` refresh hook exists).
 
 ## Not in scope (v2+)
 

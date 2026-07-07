@@ -48,8 +48,10 @@ def _lambda_side(inning: int, half: str, bat_team: int, opp_sp: Optional[int],
     sp_factor, sp_n = rates.pitcher_hr_factor(opp_sp)
     bullpen = getattr(rates, "team_bullpen_hr_factor", lambda _tid: 1.0)(opp_team)
     blend = share * sp_factor + (1.0 - share) * bullpen
+    # league drift: trailing realized-vs-predicted recalibration (1.0 = no drift)
+    drift = getattr(rates, "hr_drift", 1.0)
 
-    lam = team_rate * exp_pa * inning_f * park * blend
+    lam = team_rate * exp_pa * inning_f * park * blend * drift
 
     hr_inning = fits["hr_by_inning"].get(f"top_{i}", 0) + fits["hr_by_inning"].get(f"bottom_{i}", 0)
     rel_var = (1.0 / max(team_hr, 4.0)
@@ -59,7 +61,7 @@ def _lambda_side(inning: int, half: str, bat_team: int, opp_sp: Optional[int],
     inputs = {"team_hr_pa": round(team_rate, 5), "exp_pa": round(exp_pa, 3),
               "inning_factor": round(inning_f, 3), "park_factor": round(park, 3),
               "starter_share": round(share, 3), "starter_factor": round(sp_factor, 3),
-              "bullpen_factor": round(bullpen, 3)}
+              "bullpen_factor": round(bullpen, 3), "hr_drift": round(drift, 3)}
     return lam, inputs, rel_var
 
 
@@ -126,8 +128,9 @@ def _price_player_inning_hr(spec, game: GameInfo, rates, fits: dict,
     sp_factor, sp_n = rates.pitcher_hr_factor(opp_sp)
     bullpen = getattr(rates, "team_bullpen_hr_factor", lambda _tid: 1.0)(opp_team)
     blend = share * sp_factor + (1.0 - share) * bullpen
+    drift = getattr(rates, "hr_drift", 1.0)
 
-    p = occ * hr_pa * inning_f * park * blend
+    p = occ * hr_pa * inning_f * park * blend * drift
     rel_var = (1.0 / max(n_eff * rates.league_hr_pa, 6.0)
                + 1.0 / 200.0                     # slot occupancy sample
                + (share ** 2) / max(sp_n * rates.league_hr_pa, 4.0)

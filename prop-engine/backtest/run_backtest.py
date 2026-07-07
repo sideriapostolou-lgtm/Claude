@@ -38,18 +38,29 @@ REPORTS_DIR = ROOT / "backtest" / "reports"
 
 
 class IncrementalRates:
-    """Day-by-day accumulating rates. Interface matches engine.rates.Rates."""
+    """Day-by-day accumulating rates. Interface matches engine.rates.Rates.
+
+    v1.1: splits bullpen (non-starter) HR rates per pitching team and carries
+    hr_drift, a trailing realized-vs-predicted recalibration multiplier set by
+    the runner (default 1.0).
+    """
 
     def __init__(self):
         self._team = defaultdict(lambda: [0, 0])
         self._pitcher = defaultdict(lambda: [0, 0])
+        self._bullpen = defaultdict(lambda: [0, 0])
         self._total = [0, 0]
         self.league_hr_pa = 0.030
+        self.hr_drift = 1.0
 
     def ingest_day(self, day: str):
         f = CORPUS_DIR / f"plays_{day}.csv"
         if not f.exists():
             return
+        gf = CORPUS_DIR / f"games_{day}.csv"
+        game_sides = {r["gamePk"]: (r["away_id"], r["home_id"])
+                      for r in csv.DictReader(open(gf))} if gf.exists() else {}
+        starter: dict[tuple, str] = {}
         for r in csv.DictReader(open(f)):
             is_hr = r["event_type"] == "home_run"
             self._team[r["bat_team_id"]][0] += is_hr
@@ -58,8 +69,23 @@ class IncrementalRates:
             self._pitcher[r["pitcher_id"]][1] += 1
             self._total[0] += is_hr
             self._total[1] += 1
+            sides = game_sides.get(r["gamePk"])
+            if sides:
+                pitch_team = sides[1] if r["half"] == "top" else sides[0]
+                half_key = (r["gamePk"], r["half"])
+                if half_key not in starter:
+                    starter[half_key] = r["pitcher_id"]
+                if r["pitcher_id"] != starter[half_key]:
+                    self._bullpen[pitch_team][0] += is_hr
+                    self._bullpen[pitch_team][1] += 1
         if self._total[1] > 5000:
             self.league_hr_pa = self._total[0] / self._total[1]
+
+    def team_bullpen_hr_factor(self, team_id) -> float:
+        hr, bf = self._bullpen.get(str(team_id), (0, 0))
+        rate, _ = _regress(hr, bf, self.league_hr_pa, PITCHER_PRIOR_PA)
+        lo, hi = PITCHER_FACTOR_CLAMP
+        return min(max(rate / self.league_hr_pa, lo), hi)
 
     def team_hr_pa(self, team_id) -> tuple[float, float]:
         hr, pa = self._team.get(str(team_id), (0, 0))
@@ -92,7 +118,13 @@ def run(start: str, end: str) -> dict:
 
     risk = RiskEngine(quote_log=REPORTS_DIR / "backtest_quotes.jsonl")
     records = []
+    # Platt recalibration fitted on trailing settled markets (walk-forward)
+    from engine.calibration import PlattScaler
+    CAL_WINDOW_DAYS = 45
+    daily_pairs: dict[str, list[tuple[float, int]]] = defaultdict(list)
     for day in window:
+        hist = sorted(d for d in daily_pairs if d < day)[-CAL_WINDOW_DAYS:]
+        scaler = PlattScaler().fit([pr for d in hist for pr in daily_pairs[d]])
         games = {int(r["gamePk"]): r
                  for r in csv.DictReader(open(CORPUS_DIR / f"games_{day}.csv"))}
         plays_by_game = defaultdict(list)
@@ -117,15 +149,21 @@ def run(start: str, end: str) -> dict:
                                 constraints=Constraints(inning=inning),
                                 grading_source="mlb_pbp")
                 pr = price_inning_hr(spec, gi, rates, fits)
+                raw_p = pr.fair_prob
+                cal_p = scaler.apply(raw_p)
                 if inning > max_inning:
                     outcome = None  # void — inning never played
                 else:
                     outcome = 1 if inning in hr_innings else 0
                 tier = risk.classify_tier(spec, pr)
-                book_prob = min(pr.fair_prob * TIERS[tier]["margin"], MAX_IMPLIED)
+                book_prob = min(cal_p * TIERS[tier]["margin"], MAX_IMPLIED)
                 records.append({"day": day, "gamePk": pk, "inning": inning,
-                                "fair_prob": pr.fair_prob, "book_prob": book_prob,
+                                "fair_prob": cal_p, "raw_prob": raw_p,
+                                "book_prob": book_prob,
                                 "tier": tier, "outcome": outcome})
+                if outcome is not None:
+                    # calibration always learns from RAW predictions
+                    daily_pairs[day].append((raw_p, outcome))
         rates.ingest_day(day)  # only after pricing: walk-forward
 
     return summarize(records, start, end)

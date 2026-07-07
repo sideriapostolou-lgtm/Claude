@@ -47,6 +47,37 @@ def _regress(successes: float, trials: float, league_rate: float, prior_pa: floa
     return rate, trials + prior_pa
 
 
+_MODAL_SLOTS: Optional[dict[int, int]] = None
+
+
+def modal_slots_from_corpus(season: Optional[str] = None) -> dict[int, int]:
+    """Each batter's most common lineup slot from the PBP corpus (>=20 PAs).
+
+    Used as the slot prior for player props before lineups post. Cached per
+    process; the corpus is committed so this works offline.
+    """
+    global _MODAL_SLOTS
+    if _MODAL_SLOTS is not None:
+        return _MODAL_SLOTS
+    counts: dict[str, dict[int, int]] = defaultdict(lambda: defaultdict(int))
+    pattern = f"plays_{season}-*.csv" if season else "plays_*.csv"
+    for f in sorted(CORPUS_DIR.glob(pattern)):
+        bat_seq: dict[tuple, int] = defaultdict(int)
+        for r in csv.DictReader(open(f)):
+            key = (r["gamePk"], r["bat_team_id"])
+            slot = bat_seq[key] % 9 + 1
+            bat_seq[key] += 1
+            counts[r["batter_id"]][slot] += 1
+    _MODAL_SLOTS = {}
+    for pid, slots in counts.items():
+        if sum(slots.values()) >= 20:
+            try:
+                _MODAL_SLOTS[int(pid)] = max(slots, key=slots.get)
+            except ValueError:
+                continue
+    return _MODAL_SLOTS
+
+
 class LiveRates:
     """Season-to-date rates from the MLB Stats API."""
 
@@ -169,14 +200,18 @@ class CorpusRates:
     """Rates from the PBP corpus using only games strictly before `as_of`.
 
     This is the walk-forward provider: identical interface, zero leakage.
+    Also splits bullpen (non-starter) HR rates per pitching team and tracks
+    each batter's modal lineup slot.
     """
 
     def __init__(self, as_of: str, season_start: Optional[str] = None):
         self.as_of = as_of
         self.season = as_of[:4]
         self._team = defaultdict(lambda: [0, 0])      # team -> [hr, pa]
-        self._batter = defaultdict(lambda: [0, 0, 0])  # batter -> [hr, hits(unknown->0), pa]
+        self._batter = defaultdict(lambda: [0, 0, 0])  # batter -> [hr, hits, pa]
         self._pitcher = defaultdict(lambda: [0, 0, 0])  # pitcher -> [hr, k, bf]
+        self._bullpen = defaultdict(lambda: [0, 0])    # pitch team -> [hr, bf] non-starters
+        self._slots = defaultdict(lambda: defaultdict(int))  # batter -> slot -> PAs
         self.league_hr_pa = 0.030
         self._load()
 
@@ -187,6 +222,11 @@ class CorpusRates:
             day = f.stem.replace("plays_", "")
             if not day.startswith(self.season) or day >= self.as_of:
                 continue
+            gf = CORPUS_DIR / f"games_{day}.csv"
+            game_sides = {r["gamePk"]: (r["away_id"], r["home_id"])
+                          for r in csv.DictReader(open(gf))} if gf.exists() else {}
+            starter: dict[tuple, str] = {}
+            bat_seq: dict[tuple, int] = defaultdict(int)
             for r in csv.DictReader(open(f)):
                 team = r["bat_team_id"]
                 ev = r["event_type"]
@@ -205,9 +245,36 @@ class CorpusRates:
                 p[2] += 1
                 total_hr += is_hr
                 total_pa += 1
+                # modal lineup slot
+                slot_key = (r["gamePk"], team)
+                slot = bat_seq[slot_key] % 9 + 1
+                bat_seq[slot_key] += 1
+                self._slots[r["batter_id"]][slot] += 1
+                # bullpen split: pitching team = the non-batting side
+                sides = game_sides.get(r["gamePk"])
+                if sides:
+                    pitch_team = sides[1] if r["half"] == "top" else sides[0]
+                    half_key = (r["gamePk"], r["half"])
+                    if half_key not in starter:
+                        starter[half_key] = r["pitcher_id"]
+                    if r["pitcher_id"] != starter[half_key]:
+                        self._bullpen[pitch_team][0] += is_hr
+                        self._bullpen[pitch_team][1] += 1
         if total_pa:
             self.league_hr_pa = total_hr / total_pa
         self.total_pa = total_pa
+
+    def team_bullpen_hr_factor(self, team_id) -> float:
+        hr, bf = self._bullpen.get(str(team_id), (0, 0))
+        rate, _ = _regress(hr, bf, self.league_hr_pa, PITCHER_PRIOR_PA)
+        lo, hi = PITCHER_FACTOR_CLAMP
+        return min(max(rate / self.league_hr_pa, lo), hi)
+
+    def player_modal_slot(self, player_id) -> Optional[int]:
+        slots = self._slots.get(str(player_id))
+        if not slots or sum(slots.values()) < 20:
+            return None
+        return max(slots, key=slots.get)
 
     def team_hr_pa(self, team_id: int) -> tuple[float, float]:
         hr, pa = self._team.get(str(team_id), (0, 0))

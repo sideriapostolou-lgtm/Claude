@@ -111,22 +111,40 @@ def _match_game(spec: PropSpec) -> Optional[GameInfo]:
                         spec.team = store.ctx.schedule_teams.get(team_id)
                     return gi
     if spec.sport == "MLB" and store.games:
-        return next(iter(store.games.values()))
+        return None  # unanchored: caller ranks all games and picks the best
     return None
+
+
+def _best_game(spec: PropSpec) -> Optional[GameInfo]:
+    """For unanchored props, price every slate game and take the hottest."""
+    best, best_p = None, -1.0
+    for gi in store.games.values():
+        try:
+            r = price_spec(spec, game=gi, rates=store.rates)
+        except Exception:
+            continue
+        if r.fair_prob > best_p:
+            best, best_p = gi, r.fair_prob
+    return best
 
 
 def _price_and_quote(spec: PropSpec, user_id: Optional[str] = None) -> dict:
     game = None
     player_id = None
+    player_slot = None
     if spec.sport == "MLB":
-        game = _match_game(spec)
+        game = _match_game(spec) or _best_game(spec)
         if game is None:
             raise HTTPException(422, "No MLB game on today's slate matches this prop.")
         if spec.player and store.ctx:
             player_id = store.ctx.rosters.get(spec.player.lower())
             if player_id is None:
                 raise HTTPException(422, f"{spec.player} not found on an active roster.")
-    result = price_spec(spec, game=game, rates=store.rates, player_id=player_id)
+            if player_id not in game.lineups:
+                from engine.rates import modal_slots_from_corpus
+                player_slot = modal_slots_from_corpus("2026").get(player_id)
+    result = price_spec(spec, game=game, rates=store.rates, player_id=player_id,
+                        player_slot=player_slot)
     quote = store.risk.quote(spec, result, user_id=user_id,
                              game_pk=game.gamePk if game else None)
     store.props[spec.prop_id] = {"spec": spec, "gamePk": game.gamePk if game else None,
