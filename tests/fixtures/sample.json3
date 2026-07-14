@@ -1,0 +1,10 @@
+{
+  "wireMagic": "pb3",
+  "events": [
+    {"tStartMs": 0, "dDurationMs": 4500, "segs": [{"utf8": "Welcome back to the channel, "}, {"utf8": "today we're covering something big."}]},
+    {"tStartMs": 4500, "dDurationMs": 4500, "segs": [{"utf8": "Most people get this completely wrong when they start out."}]},
+    {"tStartMs": 9000, "dDurationMs": 5200, "segs": [{"utf8": "\n"}]},
+    {"tStartMs": 9000, "dDurationMs": 5200, "segs": [{"utf8": "Here's why: nobody ever explains the fundamentals properly."}]},
+    {"tStartMs": 14200, "aAppend": 1}
+  ]
+}
