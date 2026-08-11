@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prop Engine — Say your bet</title>
+<style>
+  :root {
+    --ink: #16211c; --muted: #66756d; --paper: #f7f5ef; --card: #ffffff;
+    --accent: #0e7a4e; --accent-2: #c9542b; --line: #e4e0d4;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body { font-family: Georgia, 'Times New Roman', serif; background: var(--paper);
+         color: var(--ink); min-height: 100vh; }
+  main { max-width: 880px; margin: 0 auto; padding: 48px 20px 80px; }
+  h1 { font-size: 44px; letter-spacing: -0.5px; }
+  h1 em { color: var(--accent); font-style: italic; }
+  .sub { color: var(--muted); margin: 10px 0 36px; font-size: 17px; }
+  .say { display: flex; gap: 10px; }
+  .say input { flex: 1; font: inherit; font-size: 20px; padding: 18px 20px;
+    border: 2px solid var(--ink); border-radius: 14px; background: var(--card); }
+  .say button { font: inherit; font-size: 18px; padding: 0 24px; border-radius: 14px;
+    border: 2px solid var(--ink); cursor: pointer; background: var(--ink); color: #fff; }
+  .say button.mic { background: var(--card); color: var(--ink); font-size: 22px; }
+  .say button.mic.live { background: var(--accent-2); color: #fff; border-color: var(--accent-2); }
+  #stage { margin-top: 28px; }
+  .parsebox { background: #10251b; color: #b9f0d2; border-radius: 14px; padding: 18px 20px;
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 13px;
+    white-space: pre-wrap; opacity: 0; transform: translateY(8px);
+    transition: all .45s ease; max-height: 300px; overflow: auto; }
+  .parsebox.show { opacity: 1; transform: none; }
+  .oddscard { margin-top: 16px; background: var(--card); border: 2px solid var(--ink);
+    border-radius: 18px; padding: 26px 28px; box-shadow: 8px 8px 0 rgba(22,33,28,.12);
+    opacity: 0; transform: scale(.94); transition: all .35s cubic-bezier(.2,1.4,.4,1); }
+  .oddscard.show { opacity: 1; transform: none; }
+  .oddscard .title { font-size: 24px; font-weight: bold; }
+  .oddscard .game { color: var(--muted); margin-top: 4px; }
+  .oddsline { display: flex; align-items: baseline; gap: 18px; margin-top: 14px; }
+  .oddsline .big { font-size: 54px; font-weight: bold; color: var(--accent); }
+  .oddsline .fair { color: var(--muted); font-size: 15px; }
+  .meta { display: flex; gap: 18px; margin-top: 10px; color: var(--muted); font-size: 14px; }
+  .badge { border: 1px solid var(--line); border-radius: 999px; padding: 2px 12px; }
+  .placebtn { margin-top: 18px; width: 100%; font: inherit; font-size: 18px; padding: 14px;
+    border-radius: 12px; border: none; background: var(--accent); color: #fff; cursor: pointer; }
+  .placebtn:active { transform: translateY(1px); }
+  .note { color: var(--muted); font-size: 12px; text-align: center; margin-top: 8px; }
+  .reject { margin-top: 16px; background: #fdf1ec; border: 1px solid #eac9ba;
+    border-radius: 12px; padding: 16px 18px; color: #8a3b1c; }
+  .clar { margin-top: 16px; display: flex; flex-direction: column; gap: 8px; }
+  .clar button { text-align: left; font: inherit; padding: 12px 16px; border-radius: 10px;
+    border: 1px solid var(--line); background: var(--card); cursor: pointer; }
+  .clar button:hover { border-color: var(--accent); }
+  h2 { margin: 56px 0 6px; font-size: 26px; }
+  .boardsub { color: var(--muted); margin-bottom: 18px; }
+  .game-block { background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+    padding: 16px 18px; margin-bottom: 14px; }
+  .game-block .gm { font-weight: bold; margin-bottom: 10px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px;
+    font-size: 14px; background: var(--paper); cursor: default; }
+  .chip b { color: var(--accent); }
+  .chip small { color: var(--muted); }
+  .spin { display: inline-block; width: 16px; height: 16px; border: 2px solid var(--line);
+    border-top-color: var(--accent); border-radius: 50%; animation: r .7s linear infinite;
+    vertical-align: middle; }
+  @keyframes r { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Say your <em>bet.</em></h1>
+  <p class="sub">Any prop. Parsed by AI, priced by a real model, graded from official data.
+    Try: “third inning home run” · “Judge 2+ hits” · “Messi to score from exactly 29 yards”.</p>
+
+  <div class="say">
+    <input id="utt" placeholder="third inning home run…" autofocus
+           onkeydown="if(event.key==='Enter')go()">
+    <button class="mic" id="mic" onclick="mic()" title="speak">🎙</button>
+    <button onclick="go()">Price it</button>
+  </div>
+
+  <div id="stage"></div>
+
+  <h2>Tonight’s board</h2>
+  <p class="boardsub">Auto-generated: every game × every inning × home run — pre-priced.
+    <span id="boardstate"><span class="spin"></span></span></p>
+  <div id="board"></div>
+</main>
+
+<script>
+const stage = document.getElementById('stage');
+const $utt = document.getElementById('utt');
+
+function esc(s){ return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+async function go(text) {
+  const utterance = text || $utt.value.trim();
+  if (!utterance) return;
+  stage.innerHTML = '<p style="margin-top:24px"><span class="spin"></span> parsing &amp; pricing…</p>';
+  let res;
+  try {
+    const r = await fetch('/quote', {method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({utterance, user_id:'demo'})});
+    res = await r.json();
+  } catch (e) {
+    stage.innerHTML = '<div class="reject">API unreachable — is uvicorn running?</div>'; return;
+  }
+
+  if (res.status === 'rejected') {
+    stage.innerHTML = `<div class="reject"><b>Can’t offer that one.</b><br>${esc(res.reason)}</div>`;
+    return;
+  }
+  if (res.status === 'clarification_needed') {
+    stage.innerHTML = '<div class="clar">' + res.clarifications.map((c,i) =>
+      `<button onclick='go(${JSON.stringify(c.label)})'>👉 ${esc(c.label)}</button>`).join('') + '</div>';
+    return;
+  }
+  const leg = res.status === 'compound' ? res.legs[0] : res;
+
+  // 1) the wow moment: show the structured spec
+  const parseEl = document.createElement('div');
+  parseEl.className = 'parsebox';
+  parseEl.textContent = JSON.stringify(res.parsed || leg.spec, null, 1);
+  stage.innerHTML = '';
+  stage.appendChild(parseEl);
+  requestAnimationFrame(() => parseEl.classList.add('show'));
+
+  // 2) odds card slams in
+  const p = leg.book_prob, odds = leg.book_odds;
+  const win10 = odds.startsWith('+') ? (10 * parseInt(odds.slice(1)) / 100).toFixed(2)
+                                     : (10 * 100 / parseInt(odds.slice(1))).toFixed(2);
+  const title = (leg.spec.event || '').replace('_',' ').toUpperCase()
+      + (leg.spec.constraints && leg.spec.constraints.inning ? ` — inning ${leg.spec.constraints.inning}` : '')
+      + (leg.spec.constraints && leg.spec.constraints.distance_yards ? ` from ${leg.spec.constraints.distance_yards} yds` : '');
+  const card = document.createElement('div');
+  card.className = 'oddscard';
+  card.innerHTML = `
+    <div class="title">${esc(title)}</div>
+    <div class="game">${esc(leg.game || (leg.spec.player || ''))}</div>
+    <div class="oddsline"><span class="big">${esc(odds)}</span>
+      <span class="fair">fair ${esc(leg.fair_odds)} · P=${(leg.fair_prob*100).toFixed(1)}%</span></div>
+    <div class="meta">
+      <span class="badge">tier ${esc(leg.tier)}</span>
+      <span class="badge">max stake $${leg.max_stake}</span>
+      <span class="badge">quote live ${leg.quote_ttl_seconds}s</span>
+    </div>
+    <button class="placebtn" onclick="this.textContent='✓ Demo bet placed'">
+      Place $10 → win $${win10}</button>
+    <div class="note">demo only — no real money</div>`;
+  setTimeout(() => { stage.appendChild(card);
+    requestAnimationFrame(() => card.classList.add('show')); }, 650);
+}
+
+function mic() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const btn = document.getElementById('mic');
+  if (!SR) { alert('Speech recognition not supported in this browser'); return; }
+  const rec = new SR();
+  rec.lang = 'en-US';
+  btn.classList.add('live');
+  rec.onresult = e => { $utt.value = e.results[0][0].transcript; btn.classList.remove('live'); go(); };
+  rec.onerror = () => btn.classList.remove('live');
+  rec.onend = () => btn.classList.remove('live');
+  rec.start();
+}
+
+(async function board() {
+  try {
+    const r = await fetch('/markets/today');
+    const data = await r.json();
+    document.getElementById('boardstate').textContent = data.date;
+    document.getElementById('board').innerHTML = data.board.map(g => `
+      <div class="game-block">
+        <div class="gm">${esc(g.matchup)} <small style="color:var(--muted)">· ${esc(g.venue)}</small></div>
+        <div class="chips">${g.markets.map(m =>
+          `<span class="chip">inn ${m.label.replace('HR in inning ','')} <b>${esc(m.book_odds)}</b> <small>${(m.fair_prob*100).toFixed(0)}%</small></span>`).join('')}
+        </div>
+      </div>`).join('');
+  } catch (e) {
+    document.getElementById('boardstate').textContent = 'board unavailable (start the API)';
+  }
+})();
+</script>
+</body>
+</html>
