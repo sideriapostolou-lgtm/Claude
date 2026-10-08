@@ -7,11 +7,11 @@
 --     is_mayhem, quote_mint, token_program,
 --   * curve-life aggregates over the scanned part of the curve (exact when has_create = 1),
 --   * launch features over the first launch_s seconds after creation (creation slot = "bundle"),
---   * the canonical PumpSwap pool (CreatePool with base = mint, scanned over [s0, s1_pool]).
+--   * the canonical PumpSwap pool (first CreatePool with base = mint, scanned up to s1_pool).
 -- SOL amounts are user-side (fees included for buys, excluded for sells), in SOL; tokens are whole.
 -- Cost control: graduating mints are found first with a length-only prefilter, then only transactions that
--- touch those mints (solana.token_transfers) are decoded. Failed transactions are excluded for trades;
--- CreatePool events of failed transactions are harmless (same pool address, earliest slot kept).
+-- touch those mints (solana.token_transfers) are decoded, in ONE scan of both programs (curve events and the
+-- PumpSwap CreatePool of the migration). Failed transactions are excluded.
 WITH
 failed AS (
   SELECT signature FROM solana.transactions_non_voting
@@ -35,19 +35,22 @@ txs AS (
 raw AS (
   SELECT block_slot AS slot, toUInt32(block_timestamp) AS ts, tx_signature AS tx, base58Decode(data) AS r
   FROM solana.instructions
-  PREWHERE block_slot BETWEEN $s_lo AND $s1
-    AND program_id = '$CURVE' AND parent_index >= 0
-    AND length(data) BETWEEN $L_CURVE_COMPLETE_LO AND 900
+  PREWHERE block_slot BETWEEN $s_lo AND $s1_pool
+    AND parent_index >= 0
+    AND ((program_id = '$CURVE' AND length(data) BETWEEN $L_CURVE_COMPLETE_LO AND 900)
+      OR (program_id = '$AMM' AND length(data) BETWEEN $L_AMM_CREATE_POOL_LO AND $L_AMM_CREATE_POOL_HI))
   WHERE tx_signature IN (SELECT tx_signature FROM txs) AND tx_signature NOT IN failed
 ),
 ev AS (
   SELECT slot, ts,
     substring(r, 9, 8) AS d,
-    multiIf(d = unhex('$D_CURVE_TRADE'), 1, d = unhex('$D_CURVE_CREATE'), 2, d = unhex('$D_CURVE_COMPLETE'), 3, 0) AS k,
+    multiIf(d = unhex('$D_CURVE_TRADE'), 1, d = unhex('$D_CURVE_CREATE'), 2, d = unhex('$D_CURVE_COMPLETE'), 3,
+            d = unhex('$D_AMM_CREATE_POOL'), 4, 0) AS k,
     if(k = 2, 21 + reinterpretAsUInt32(substring(r, 17, 4)), 0) AS o2,
     if(k = 2, o2 + 4 + reinterpretAsUInt32(substring(r, o2, 4)), 0) AS o3,
     if(k = 2, o3 + 4 + reinterpretAsUInt32(substring(r, o3, 4)), 0) AS o4,
-    multiIf(k = 1, substring(r, 17, 32), k = 2, substring(r, o4, 32), k = 3, substring(r, 49, 32), '') AS mint_b,
+    multiIf(k = 1, substring(r, 17, 32), k = 2, substring(r, o4, 32), k = 3, substring(r, 49, 32),
+            k = 4, substring(r, 59, 32), '') AS mint_b,
     if(k = 1, substring(r, 66, 32), '') AS user_b,
     if(k = 1, reinterpretAsUInt8(substring(r, 65, 1)), 0) AS is_buy,
     if(k = 1, reinterpretAsUInt64(substring(r, 49, 8)), 0) AS sol,
@@ -64,7 +67,11 @@ ev AS (
     if(k = 2, substring(r, o4 + 201, 32), '') AS quote_b,
     if(k = 2, substring(r, o4 + 168, 32), '') AS tokprog_b,
     if(k = 2, reinterpretAsUInt64(substring(r, o4 + 144, 8)), 0) AS vsol0,
-    if(k = 3, substring(r, 17, 32), '') AS completer_b
+    if(k = 3, substring(r, 17, 32), '') AS completer_b,
+    -- CreatePool (k = 4): pool, quote mint, pool creator, initial reserves
+    if(k = 4, substring(r, 182, 32), '') AS p_pool_b, if(k = 4, substring(r, 91, 32), '') AS p_quote_b,
+    if(k = 4, substring(r, 27, 32), '') AS p_creator_b,
+    if(k = 4, reinterpretAsUInt64(substring(r, 141, 8)), 0) AS p_base0, if(k = 4, reinterpretAsUInt64(substring(r, 149, 8)), 0) AS p_quote0
   FROM raw
   WHERE substring(r, 1, 8) = unhex('$PREFIX') AND k > 0
 ),
@@ -87,6 +94,8 @@ mu AS (
     anyIf(cuser_b, k = 2) AS m_cuser_b, anyIf(is_mayhem, k = 2) AS m_is_mayhem, anyIf(quote_b, k = 2) AS m_quote_b,
     anyIf(tokprog_b, k = 2) AS m_tokprog_b, anyIf(vsol0, k = 2) AS m_vsol0,
     anyIf(completer_b, k = 3) AS m_completer_b,
+    minIf(slot, k = 4) AS m_pool_slot, argMinIf((p_pool_b, p_quote_b, p_creator_b, p_base0, p_quote0, ts), slot, k = 4) AS m_pool,
+    countIf(k = 4) AS m_n_pools,
     -- curve life (scanned part, up to completion)
     sumIf(usol, k = 1 AND is_buy = 1) AS m_b_usol, sumIf(usol, k = 1 AND is_buy = 0) AS m_s_usol,
     sumIf(tok, k = 1 AND is_buy = 1) AS m_b_tok, sumIf(tok, k = 1 AND is_buy = 0) AS m_s_tok,
@@ -119,6 +128,7 @@ coins AS (
     anyIf(m_cuser_b, user_b = '') AS cuser_b, anyIf(m_is_mayhem, user_b = '') AS is_mayhem,
     anyIf(m_quote_b, user_b = '') AS quote_b, anyIf(m_tokprog_b, user_b = '') AS tokprog_b,
     anyIf(m_vsol0, user_b = '') AS vsol0, anyIf(m_completer_b, user_b = '') AS completer_b,
+    anyIf(m_pool_slot, user_b = '') AS pool_slot, anyIf(m_pool, user_b = '') AS pool_t, anyIf(m_n_pools, user_b = '') AS n_pools,
     max(m_rsol_max) / 1e9 AS rsol_complete,
     sum(m_b_usol) / 1e9 AS curve_buy_sol, sum(m_s_usol) / 1e9 AS curve_sell_sol,
     sum(m_b_tok) / 1e6 AS curve_buy_tok, sum(m_s_tok) / 1e6 AS curve_sell_tok,
@@ -151,23 +161,6 @@ coins AS (
     arraySum(arrayMap(x -> x.2, first20)) / 1e9 AS first20_buy_sol
   FROM mu
   GROUP BY mint_b
-),
-pools AS (
-  SELECT mint_b, argMin(pool_b, slot) AS pool_b, min(slot) AS pool_slot, argMin(ts, slot) AS pool_ts,
-         argMin(quote_b, slot) AS pool_quote_b, argMin(pcreator_b, slot) AS pool_creator_b,
-         argMin(pbase, slot) AS pool_base0, argMin(pquote, slot) AS pool_quote0, count() AS n_pools
-  FROM (
-    SELECT block_slot AS slot, toUInt32(block_timestamp) AS ts, tx_signature AS tx, base58Decode(data) AS r,
-           substring(r, 59, 32) AS mint_b, substring(r, 182, 32) AS pool_b, substring(r, 91, 32) AS quote_b,
-           substring(r, 27, 32) AS pcreator_b,
-           reinterpretAsUInt64(substring(r, 141, 8)) AS pbase, reinterpretAsUInt64(substring(r, 149, 8)) AS pquote
-    FROM solana.instructions
-    PREWHERE block_slot BETWEEN $s0 AND $s1_pool
-      AND program_id = '$AMM' AND parent_index >= 0
-      AND length(data) BETWEEN $L_AMM_CREATE_POOL_LO AND $L_AMM_CREATE_POOL_HI
-  )
-  WHERE substring(r, 1, 16) = unhex('$PREFIX$D_AMM_CREATE_POOL')
-  GROUP BY mint_b
 )
 SELECT
   base58Encode(c.mint_b) AS mint, c.g_slot, c.g_ts, c.c_slot, c.c_ts, c.c_slot > 0 AS has_create,
@@ -183,9 +176,8 @@ SELECT
   c.z_n_buyers, c.z_n_buyers_noncreator, c.z_buy_sol, c.z_buy_tok, c.sn60_n_buyers, c.sn60_buy_sol,
   c.creator_buy_sol, c.creator_sell_sol, c.creator_buy_tok, c.creator_sell_tok,
   c.l_creator_buy_sol, c.l_creator_sell_sol, c.first20_buy_sol,
-  base58Encode(p.pool_b) AS pool, p.pool_slot, p.pool_ts, base58Encode(p.pool_quote_b) AS pool_quote_mint,
-  base58Encode(p.pool_creator_b) AS pool_creator, p.pool_base0 / 1e6 AS pool_base0, p.pool_quote0 / 1e9 AS pool_quote0,
-  p.n_pools
+  base58Encode(c.pool_t.1) AS pool, c.pool_slot AS pool_slot, c.pool_t.6 AS pool_ts, base58Encode(c.pool_t.2) AS pool_quote_mint,
+  base58Encode(c.pool_t.3) AS pool_creator, c.pool_t.4 / 1e6 AS pool_base0, c.pool_t.5 / 1e9 AS pool_quote0,
+  c.n_pools AS n_pools
 FROM coins c
-LEFT JOIN pools p ON p.mint_b = c.mint_b
 ORDER BY c.g_slot
