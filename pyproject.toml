@@ -14,12 +14,12 @@ dependencies = [
 
 [project.optional-dependencies]
 # Real-money execution (transaction signing). Paper mode does not need it.
-live = ["solders>=0.21"]
+live = ["solders>=0.29"]  # 0.29 adds MessageV1: Solana transaction v1, live since 2026-09-15
 # The "Jev" AI judge (Anthropic API).
 judge = ["anthropic>=1.0"]
 # Tests: anthropic and solders are needed so test_judge.py / test_broker_live.py
 # actually run instead of skipping.
-dev = ["pytest>=8", "anthropic>=1.0", "solders>=0.21"]
+dev = ["pytest>=8", "anthropic>=1.0", "solders>=0.29"]
 
 [project.scripts]
 nightcrawler = "nightcrawler.cli:main"

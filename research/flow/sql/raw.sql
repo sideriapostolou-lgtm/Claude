@@ -62,7 +62,8 @@ tr AS (
     if(e.amm, a_qamt, c_sol) AS qamt, if(e.amm, a_lp, 0) AS lp_fee,
     reinterpretAsUInt32(substring(e.r, 410, 4)) AS a_ixn_len,
     if(e.amm AND is_buy AND length(e.r) >= 454 + a_ixn_len AND a_ixn_len < 40,
-       reinterpretAsUInt64(substring(e.r, 446 + a_ixn_len, 8)), 0) AS virt,
+       reinterpretAsUInt64(substring(e.r, 446 + a_ixn_len, 8)), 0) AS virt_raw,
+    if(virt_raw < 100000000000, virt_raw, 0) AS virt,
     if(e.amm, if(is_buy AND a_ixn_len < 40, substring(e.r, 414, a_ixn_len), ''), substring(e.r, 271, reinterpretAsUInt32(substring(e.r, 267, 4)))) AS ix_name
   FROM ev AS e
   INNER JOIN wn AS w ON w.key_b = e.key_b AND w.venue = toUInt8(e.amm)

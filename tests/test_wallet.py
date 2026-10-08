@@ -13,11 +13,12 @@ import logging
 import pickle
 import sys
 import traceback
+from pathlib import Path
 
 import pytest
 from solders.hash import Hash
 from solders.keypair import Keypair
-from solders.message import MessageV0
+from solders.message import MessageV0, MessageV1
 from solders.pubkey import Pubkey
 from solders.signature import Signature
 from solders.system_program import TransferParams, transfer
@@ -180,3 +181,30 @@ def test_signing_refuses_garbage_and_foreign_transactions(secret58) -> None:
     foreign = base64.b64encode(bytes(VersionedTransaction.populate(message, [Signature.default()]))).decode()
     with pytest.raises(WalletError, match="does not require this wallet"):
         wallet.sign_transaction_b64(foreign)
+
+
+def _mainnet_v1_transaction() -> VersionedTransaction:
+    """A real PumpSwap transaction in the v1 format Solana activated on 2026-09-15 (SIMD-0385)."""
+    fixture = json.loads((Path(__file__).parent / "fixtures" / "solana_tx_v1_mainnet.json").read_text())
+    return VersionedTransaction.from_bytes(base64.b64decode(fixture["transaction_b64"]))
+
+
+def test_real_v1_transactions_parse_and_round_trip() -> None:
+    raw_tx = _mainnet_v1_transaction()
+    assert isinstance(raw_tx.message, MessageV1)
+    assert VersionedTransaction.from_bytes(bytes(raw_tx)) == raw_tx
+
+
+def test_sign_transaction_signs_v1_messages(keypair, secret58) -> None:
+    original = _mainnet_v1_transaction().message
+    account_keys = [keypair.pubkey(), *original.account_keys[1:]]  # make this wallet the fee payer
+    message = MessageV1(original.header, original.config, original.lifetime_specifier, account_keys,
+                        original.instructions)
+    unsigned = base64.b64encode(bytes(VersionedTransaction.populate(message, [Signature.default()]))).decode()
+
+    signed = VersionedTransaction.from_bytes(base64.b64decode(load_keypair(secret58).sign_transaction_b64(unsigned)))
+    assert isinstance(signed.message, MessageV1)
+    assert signed.verify_with_results() == [True]
+    assert bytes(signed) == bytes(VersionedTransaction(message, [keypair]))
+    with pytest.raises(WalletError, match="does not require this wallet"):
+        load_keypair(secret58).sign_transaction_b64(base64.b64encode(bytes(_mainnet_v1_transaction())).decode())
