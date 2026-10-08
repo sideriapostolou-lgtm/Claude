@@ -175,6 +175,9 @@ class Settings:
     reset_halt_token: str = _f("", "text", "Clears a drawdown halt once: set it to any NEW value (e.g. today's "
                                "date) and redeploy. Same as `nightcrawler reset-halt`, but works from the "
                                "Railway variables page on a phone")
+    keys_rotated_on: str = _f("", "text", "The date you replaced every key that was ever pasted into a chat "
+                              "(e.g. 2026-10-09). Only shown on the dashboard's 'ready for real money?' checklist; "
+                              "leave empty until the keys really are replaced")
 
     # ---- bankroll & risk ----------------------------------------------------
     paper_start_usd: float = _f(100.0, "usd", "Paper bankroll at first start (converted to SOL at the live price)",

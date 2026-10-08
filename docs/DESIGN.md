@@ -53,6 +53,10 @@ src/nightcrawler/
   ledger.py          Ledger (SQLite WAL) + receipts                                        O6
   audit.py           Auditor.reconcile(), trade P&L                                        O6
   dashboard.py       read-only phone dashboard (stdlib http.server)                        O6
+  page.py            the ONE page at "/" (static HTML/CSS/JS + CSP, text-only inserts)     O6
+  pagestate.py       /api/page: money, team, trades, learning card, checklist, usage       O6
+  readiness.py       "ready for real money?" six-step checklist (never optimistic)         O6
+  teamroom.py        /api/team: every bot member's status from real data (+ TeamRoom glue) O6
   engine.py          Engine.tick()/run_forever(), build_engine                             Integrator
   cli.py             `nightcrawler` console script                                         Integrator
 ```
@@ -322,7 +326,8 @@ added: `LOG_LEVEL`, `SIMULATE_BEFORE_SEND`, `QUOTE_MAX_AGE_S`,
 `WATCHLIST_TTL_H`, `COCOON_*` thresholds, `RADAR_*` thresholds,
 `JUDGE_MAX_DAILY_USD`, `DASHBOARD_HOST`, `EQUITY_INTERVAL_S`. The integrator
 added `RESET_HALT_TOKEN` (clear a drawdown halt from the Railway variables page).
-The safety review added `MAX_SLIPPAGE_PCT` (buys) and `PAPER_SLIPPAGE_BPS`.
+The safety review added `MAX_SLIPPAGE_PCT` (buys) and `PAPER_SLIPPAGE_BPS`. The one-page
+dashboard added `KEYS_ROTATED_ON` (step 4 of its "ready for real money?" checklist only).
 
 ## 11. Testing conventions
 

@@ -88,13 +88,22 @@ refreshes every 15 seconds and is read-only: nothing on it can trade.
 
 ## What you'll see
 
-- A big **PAPER** badge (a red **LIVE** one in live mode).
-- **Engine running · Xs ago:** the heartbeat. If it says "stopped", check the logs.
-- Equity, today's and all-time P&L, an equity chart, open positions and recent trades.
-- **Why coins were skipped:** counts of rug-filter rejections by rule (top-10 holders,
-  insiders, LP unlocked ...).
-- **Receipts:** the head hash, the receipt count and "verified". Tap "what is this?" for the
-  explanation.
+One page, top to bottom, in plain words:
+
+- A small **PAPER** tag (a red **LIVE** one in live mode) and "updated N s ago". A red banner
+  appears only for real trouble: kill switch on, buying halted, the bot silent for over 2 min.
+- **Money:** the value in dollars ("Paper money (pretend)" in paper mode), the result since start
+  and today (the bot's own trading, counted in SOL, shown at today's SOL price; the SOL price
+  effect is listed apart) and, after the first hour, a chart.
+- **The team:** one row per part of the bot (Crawler, Cocoon, Strategy, Radar, Jev, Broker, Risk,
+  Receipts, Coach) with Working / Waiting / Idle / Blocked, one sentence of what it is doing and
+  when it last acted. Tap a row for its last events (Cocoon: why coins were thrown out).
+- **Trades:** open positions, then the last 10 finished ones.
+- **Learning:** what the Coach (the self-learning system) knows so far.
+- **Ready for real money?** A six-step checklist; it says "Ready" only when all six are done.
+- **Receipts** ("chain verified") and **Services used** (free-plan budgets, amber at 80 %).
+
+The old `/team` link now opens this same page.
 
 Expect hours with no trades. The bot is strict on purpose: coins must be at least 1 hour old,
 pass the rug filter, and then show the dip-rebound setup.

@@ -1,12 +1,14 @@
 """Team room: a live, read-only view of every bot "team member" at work (owner: O6).
 
 Served by :class:`nightcrawler.dashboard.DashboardServer` behind the same ``DASHBOARD_TOKEN`` gate,
-security headers and secret scrubbing as ``/api/state``:
+security headers and secret scrubbing as ``/api/state`` (:class:`TeamRoom` is the glue):
 
-* ``/team`` -> :func:`render_team_html`: one self-contained, mobile-first page (inline CSS/JS, no external
-  assets, dark/light via ``prefers-color-scheme``, refreshes every :data:`REFRESH_S` seconds by fetching
-  ``/api/team``; every value is inserted with ``textContent``).
 * ``/api/team`` -> :func:`build_team_state` (JSON, schema below).
+* ``/api/page`` -> :func:`nightcrawler.pagestate.build_page_state`, the one page's data, which shows these
+  panels as its "team" rows. (``/team`` itself now redirects to that page, ``/``.)
+
+Texts are plain words for a non-developer: rule ids such as ``[top10]`` become labels (:func:`plain`), and
+every panel carries ``doing``, ONE short sentence of what the member is doing right now.
 
 REAL DATA ONLY. Every number and event comes from the ledger (candidates, safety, decisions, fills,
 positions, equity, receipts, kv) or from the engine's own status dict (kv ``engine.status``, rewritten
@@ -21,8 +23,9 @@ not started) -> ``idle``.
 
 Engine facts that live only in memory are read from kv when the engine persists them:
 ``engine.watchlist`` (watched coins with their last strategy reason) and ``crawler.nursery`` (too-young
-coins waiting) win when present; otherwise the same facts come from ``engine.status`` (``watching``,
-``crawler.nursery``); otherwise they are ``null``.
+coins waiting), saved by the engine as ``{saved_at, items}`` snapshots every few minutes, win unless
+``engine.status`` (``watching``, ``crawler.nursery``; rewritten every 15 s) is newer; without either they
+are ``null``.
 
 Deployed commit: only ``RAILWAY_GIT_COMMIT_SHA`` and ``RAILWAY_GIT_COMMIT_MESSAGE`` are read from the
 environment (:func:`deploy_info`), never anything else.
@@ -36,7 +39,7 @@ environment (:func:`deploy_info`), never anything else.
                  "started_at": float|null, "uptime_s": float|null},
       "bank": {"sol", "usd", "start_sol", "change_sol", "change_pct", "change_usd"},   # floats|null
       "team": {"working": int, "idle": int, "waiting": int, "blocked": int},
-      "panels": [{"id", "name", "role", "status", "why", "last_activity": float|null,
+      "panels": [{"id", "name", "role", "status", "why", "doing": str, "last_activity": float|null,
                   "headline": {"value", "unit", "label"},
                   "stats": [{"label", "value", "unit", "ts"?}],
                   "events": [{"ts": float, "text": str, "tone": "good"|"bad"|"neutral"}],   # newest first
@@ -49,14 +52,11 @@ Units: ``count``, ``sol``, ``usd``, ``pct`` (percent), ``ts`` (epoch s), ``dur``
 
 from __future__ import annotations
 
-import base64
-import hashlib
-import html
 import json
 import os
 import re
 import threading
-from collections.abc import Iterable, Mapping
+from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass
 from typing import Any
 
@@ -73,13 +73,13 @@ __all__ = [
     "EVENTS_MAX",
     "PANELS",
     "REFRESH_S",
-    "TEAM_CSP",
     "TeamRoom",
     "build_team_state",
     "deploy_info",
     "derive_status",
+    "json_body",
+    "plain",
     "proximity",
-    "render_team_html",
 ]
 
 log = get_logger(__name__)
@@ -92,7 +92,7 @@ BARS_MAX = 5
 TEXT_MAX = 160
 HOUR_S = 3600.0
 DAY_S = 86_400.0
-#: Kv keys another component may persist with in-memory engine facts (preferred when present).
+#: Kv keys the engine saves its in-memory facts to (used unless ``engine.status`` is newer).
 KV_WATCHLIST = "engine.watchlist"
 KV_NURSERY = ("crawler.nursery", "engine.nursery")
 
@@ -124,12 +124,39 @@ RULE_LABELS = {
     "shield": "Jupiter Shield warning", "lp_unlocked": "Liquidity not locked",
     "source_unavailable": "Could not verify (data source down)", "other": "Other",
 }
+#: Risk-manager refusal rule ids (``[rule]`` prefix) in plain words.
+RISK_LABELS = {
+    "kill": "Kill switch on", "halted": "Buying halted", "drawdown": "Fell too far from its high",
+    "daily_loss": "Today's loss limit reached", "max_positions": "Too many open trades",
+    "already_open": "Already holding this coin", "cooldown": "Sold this coin recently",
+    "wallet_cap": "Wallet holds more than the safety cap", "blocked": "New buys paused",
+    "size": "Not enough money for a trade",
+}
+_TAG = re.compile(r"\[([A-Za-z0-9_]+)\]\s*")
+_LABELS = {**RULE_LABELS, **RISK_LABELS}
+#: Why new buys are stopped (``_entry_blocks`` source), in plain words.
+_BLOCKED_WORDS = {"halt": "buying is halted after a big drop", "kill": "the kill switch is on",
+                  "daily_loss": "today's loss limit is reached"}
+#: Where a coin was found (candidate ``sources`` prefix -> provider).
+_FEEDS = (("jupiter", "Jupiter"), ("gt_", "GeckoTerminal"), ("dexscreener", "DexScreener"), ("pumpfun", "pump.fun"))
+#: Decision actions in plain words (receipt lines).
+_ACTION_WORDS = {
+    "reject_prefilter": "skipped", "reject_cocoon": "thrown out", "watch": "now watching",
+    "unwatch": "stopped watching", "no_signal": "no setup", "reject_radar": "radar said no",
+    "reject_judge": "judge said no", "reject_risk": "risk said no", "reject_quote": "bad price, no buy",
+    "enter": "bought", "exit": "sold", "exit_partial": "took profit", "hold": "holding", "kill": "kill switch",
+    "error": "error",
+}
 _SIGNAL_ACTIONS = ("enter", "reject_risk", "reject_radar", "reject_judge", "reject_quote")
 _RADAR_ACTIONS = ("enter", "reject_radar", "reject_judge", "reject_quote", "exit", "exit_partial")
 _STOPPED_BY = {"reject_risk": "risk", "reject_radar": "radar", "reject_judge": "the judge",
                "reject_quote": "the quote"}
 _DIP = re.compile(r"dip (\d+(?:\.\d+)?)% < required (\d+(?:\.\d+)?)%")
-_DIP_REACHED = ("chasing", "buyers not back", "buy/sell ratio", "setup, but", "dip-rebound")
+#: Strategy reasons that mean the dip is deep enough, with what is still missing in plain words.
+_DIP_REACHED = {"chasing": "dropped enough, but the price already bounced too far",
+                "buyers not back": "dropped enough; waiting for buyers to come back",
+                "buy/sell ratio": "dropped enough; more sellers than buyers right now",
+                "setup, but": "setup found, but another check said no", "dip-rebound": "setup found"}
 RECEIPTS_EXPLAINER = ("Every decision and fill is chained to the one before it by a SHA-256 fingerprint the "
                       "moment it happens, so no result can be edited with hindsight without breaking the chain.")
 
@@ -164,9 +191,10 @@ def proximity(last_signal: str | None) -> tuple[float | None, str]:
     match = _DIP.search(last_signal)
     if match:
         dip, required = float(match.group(1)), float(match.group(2))
-        return (min(1.0, dip / required) if required > 0 else None), f"dip {dip:g}% of {required:g}% needed"
-    if last_signal.startswith(_DIP_REACHED):
-        return 1.0, "dip reached · " + last_signal
+        return (min(1.0, dip / required) if required > 0 else None), f"dropped {dip:g}% of the {required:g}% needed"
+    reached = next((words for prefix, words in _DIP_REACHED.items() if last_signal.startswith(prefix)), None)
+    if reached is not None:
+        return 1.0, reached
     return None, last_signal
 
 
@@ -176,6 +204,30 @@ def deploy_info(environ: Mapping[str, str], secrets: Iterable[str] = ()) -> dict
     message = redact_text((environ.get("RAILWAY_GIT_COMMIT_MESSAGE") or "").strip(), tuple(secrets))
     first = message.splitlines()[0].strip() if message else ""
     return {"commit": sha[:12] or None, "message": _clip(first, 120) or None}
+
+
+def plain(reason: str) -> str:
+    """Rule ids in plain words: ``"[top10] top-10 own 45%"`` -> ``"Top 10 wallets hold too much: top-10 own 45%"``
+    (Cocoon and risk rules; an unknown ``[tag]`` is dropped)."""
+    return _TAG.sub(lambda m: f"{_LABELS[m.group(1)]}: " if m.group(1) in _LABELS else "", reason)
+
+
+def _n(count: int, word: str) -> str:
+    """``1 coin`` / ``3 coins`` (regular plurals only)."""
+    return f"{count:,} {word}{'' if count == 1 else 's'}"
+
+
+def _dur(seconds: float) -> str:
+    minutes = int(max(0.0, seconds) // 60)
+    if minutes < 60:
+        return f"{minutes} min"
+    if minutes < 24 * 60:
+        return f"{minutes // 60} h {minutes % 60:02d} min"
+    return f"{minutes // 1440} d {minutes % 1440 // 60} h"
+
+
+def _feed(source: str) -> str:
+    return next((name for prefix, name in _FEEDS if source.startswith(prefix)), source)
 
 
 def _clip(text: str, limit: int = TEXT_MAX) -> str:
@@ -295,7 +347,7 @@ class _Ctx:
         status, why = derive_status(self.now, last, _window(pid, self.settings),
                                     blocked=self.engine_block or blocked,
                                     waiting=self.engine_wait or waiting, idle=idle)
-        return status, self.text(why)
+        return status, self.text(plain(why))
 
     def decisions(self, actions: Iterable[str], limit: int = 50) -> list[Decision]:
         return self.ledger.decisions(limit=limit, actions=list(actions))
@@ -312,14 +364,15 @@ def _window(pid: str, settings: Settings) -> float:
     return base
 
 
-def _panel(pid: str, status_why: tuple[str, str], last: float | None, headline: dict[str, Any],
+def _panel(pid: str, status_why: tuple[str, str], last: float | None, doing: str, headline: dict[str, Any],
            stats: list[dict[str, Any]], events: list[dict[str, Any]], **extra: Any) -> dict[str, Any]:
+    """One panel; ``doing`` is already redacted and clipped (``_Ctx.text``)."""
     name, role = _ROLES[pid]
     status, why = status_why
     if extra.pop("sort", True):
         events = sorted(events, key=lambda e: e["ts"], reverse=True)
-    return {"id": pid, "name": name, "role": role, "status": status, "why": why, "last_activity": last,
-            "headline": headline, "stats": stats, "events": events[:EVENTS_MAX], **extra}
+    return {"id": pid, "name": name, "role": role, "status": status, "why": why, "doing": doing,
+            "last_activity": last, "headline": headline, "stats": stats, "events": events[:EVENTS_MAX], **extra}
 
 
 def _select(ledger: Any, sql: str, params: Iterable[Any] = ()) -> list[Any]:
@@ -342,15 +395,17 @@ def _engine_health(state: dict[str, Any], status: dict[str, Any], now: float) ->
 
 def build_team_state(ledger: Any, settings: Settings, now: float, engine_status: dict[str, Any] | None = None,
                      *, verify_cache: dict[str, Any] | None = None, memory: dict[str, Any] | None = None,
-                     deploy: dict[str, str | None] | None = None) -> dict[str, Any]:
+                     deploy: dict[str, str | None] | None = None, state: dict[str, Any] | None = None
+                     ) -> dict[str, Any]:
     """Assemble ``/api/team`` (schema in the module docstring) from the ledger ONLY (no network calls).
 
     ``engine_status`` overrides kv ``engine.status``; ``verify_cache`` throttles chain verification
     (see ``dashboard.build_state``); ``memory`` is a dict kept between calls so a since-boot counter that
-    moved counts as activity; ``deploy`` is :func:`deploy_info` (read once at startup by :class:`TeamRoom`).
+    moved counts as activity; ``deploy`` is :func:`deploy_info` (read once at startup by :class:`TeamRoom`);
+    ``state`` is ``dashboard.build_state`` for the same ``now`` when the caller already built it.
     """
     secrets = tuple(settings.secret_values())
-    state = build_state(ledger, settings, now, verify_cache)
+    state = state if state is not None else build_state(ledger, settings, now, verify_cache)
     status = engine_status if isinstance(engine_status, dict) else _dict(state["engine"]["status"])
     mode = "live" if settings.is_live else "paper"
     ctx = _Ctx(ledger=ledger, settings=settings, now=now, mode=mode, state=state, status=status, memory=memory,
@@ -395,10 +450,24 @@ def _bank(ctx: _Ctx) -> dict[str, float | None]:
 # =========================================================================== panels
 
 
+def _saved_wins(ctx: _Ctx, saved: Any, live: Any) -> bool:
+    """A kv value the engine saved wins over the live ``engine.status`` value unless the status is NEWER (the
+    engine saves ``{saved_at, items}`` snapshots every few minutes; it rewrites its status every 15 s)."""
+    if live is None:
+        return True
+    saved_at, status_at = _num(_dict(saved).get("saved_at")), ctx.status_ts
+    return saved_at is None or status_at is None or saved_at >= status_at
+
+
 def _nursery(ctx: _Ctx) -> int | None:
+    live = _int(_dict(ctx.status.get("crawler")).get("nursery"))
     for key in KV_NURSERY:
         value = ctx.ledger.get_kv(key)
+        if value is None or not _saved_wins(ctx, value, live):
+            continue
         if isinstance(value, dict):
+            if isinstance(value.get("items"), list):  # the engine's snapshot: {saved_at, items}
+                return len(value["items"])
             for name in ("count", "size", "total"):
                 if _num(value.get(name)) is not None:
                     return int(value[name])
@@ -407,7 +476,7 @@ def _nursery(ctx: _Ctx) -> int | None:
             return len(value)
         if _num(value) is not None:
             return int(value)
-    return _int(_dict(ctx.status.get("crawler")).get("nursery"))
+    return live
 
 
 def _crawler(ctx: _Ctx) -> dict[str, Any]:
@@ -423,19 +492,22 @@ def _crawler(ctx: _Ctx) -> dict[str, Any]:
         if age is not None:
             bits.append(f"{age:.0f} min old" if age < 120 else f"{age / 60:.1f} h old")
         if _num(c.get("mcap_usd")) is not None:
-            bits.append(f"mcap {_usd_compact(c['mcap_usd'])}")
-        sources = [str(s) for s in c.get("sources") or []][:2]
-        if sources:
-            bits.append("via " + ", ".join(sources))
+            bits.append(f"worth {_usd_compact(c['mcap_usd'])}")
+        feeds = list(dict.fromkeys(_feed(str(s)) for s in c.get("sources") or []))[:2]
+        if feeds:
+            bits.append("found on " + ", ".join(feeds))
         events.append(ctx.event(first_seen, " · ".join(bits)))
     errors = _dict(crawler.get("feed_errors"))
     last = _latest(_num(newest), ctx.counter("crawler.polls", crawler.get("polls")))
     status = ctx.derive("crawler", last, idle="no new coin passed the cheap prefilter recently")
-    return _panel("crawler", status, last,
-                  _headline(ctx.ledger.candidate_count(since=ctx.now - HOUR_S), "count",
-                            "new coins handed to the scam filter, last hour"),
+    found, nursery = ctx.ledger.candidate_count(since=ctx.now - HOUR_S), _nursery(ctx)
+    doing = (f"Found {_n(found, 'new coin')} in the last hour" if found
+             else "No new coin got past the first quick checks in the last hour")
+    doing += (f"; {nursery:,} too young to judge yet." if nursery else ".")
+    return _panel("crawler", status, last, ctx.text(doing),
+                  _headline(found, "count", "new coins handed to the scam filter, last hour"),
                   [_stat("Last 24 h", ctx.state["activity"]["candidates_24h"]),
-                   _stat("Too young, waiting", _nursery(ctx)),
+                   _stat("Too young, waiting", nursery),
                    _stat("Prefilter rejections since boot", _int(crawler.get("rejected"))),
                    _stat("Feed errors since boot", sum(int(v) for v in errors.values() if _num(v) is not None)
                          if crawler else None),
@@ -454,7 +526,7 @@ def _cocoon(ctx: _Ctx) -> dict[str, Any]:
         if d.action == "watch":
             events.append(ctx.event(d.ts, f"PASS {name} · {d.reason}", "good"))
         else:
-            events.append(ctx.event(d.ts, f"REJECT {name} · {d.reason}", "bad"))
+            events.append(ctx.event(d.ts, f"REJECT {name} · {plain(d.reason)}", "bad"))
     rules = list(ctx.state["cocoon_rules"].items())[:BARS_MAX]
     top = rules[0][1] if rules else 0
     bars = [{"label": RULE_LABELS.get(rule, rule), "value": n / top if top else None, "text": str(n), "note": None}
@@ -465,7 +537,13 @@ def _cocoon(ctx: _Ctx) -> dict[str, Any]:
     status = ctx.derive("cocoon", last, waiting="waiting for the crawler to hand over a coin" if not queue else None)
     passed, rejected = day.get("watch", 0), day.get("reject_cocoon", 0)
     pass_row = newest_pass[0] if newest_pass else None
-    return _panel("cocoon", status, last,
+    if passed or rejected:
+        doing = f"Last 24 h: threw out {_n(rejected, 'coin')}, let {passed:,} through."
+        if rules:
+            doing += f" Most common problem: {RULE_LABELS.get(rules[0][0], rules[0][0]).lower()}."
+    else:
+        doing = f"{_n(queue, 'coin')} waiting to be checked." if queue else "No coin to check in the last 24 h."
+    return _panel("cocoon", status, last, ctx.text(doing),
                   _headline(f"{passed} passed · {rejected} rejected", "text", "last 24 h"),
                   [_stat("Passed 1 h", hour.get("watch", 0)), _stat("Rejected 1 h", hour.get("reject_cocoon", 0)),
                    _stat("Passed 24 h", passed), _stat("Rejected 24 h", rejected),
@@ -504,7 +582,14 @@ def _radar(ctx: _Ctx) -> dict[str, Any]:
     status = ctx.derive("radar", last, waiting="waiting for a coin to reach a buy setup" if not held else None,
                         idle=(f"re-checks {held} open position(s) every {ctx.settings.radar_interval_s:g} s; "
                               "only recorded when it forces a sale") if held else None)
-    return _panel("radar", status, last,
+    if held:
+        doing = f"Watching {_n(held, 'open trade')} for danger: the creator or big holders selling."
+    elif day_scans:
+        stopped = sum(d.action == "reject_radar" for d in day_scans)
+        doing = f"Checked {_n(len(day_scans), 'coin')} right before buying in 24 h; stopped {stopped:,}."
+    else:
+        doing = "Nothing to check yet: it looks right before a buy."
+    return _panel("radar", status, last, ctx.text(doing),
                   _headline(len(flagged), "count", "big sells flagged, last 24 h"),
                   [_stat("Scans before a buy (24 h)", len(day_scans)), _stat("Last scan", last, "ts"),
                    _stat("Creator sold", reasons.count("creator sold")),
@@ -537,25 +622,40 @@ def _judge(ctx: _Ctx) -> dict[str, Any]:
     status = ctx.derive("judge", last, blocked=blocked,
                         waiting="waiting for a setup that passed risk and radar" if s.judge_mode != "off" else None,
                         idle="off: the rules decide alone" if s.judge_mode == "off" else None)
-    return _panel("judge", status, last,
+    yes = sum(v.get("decision") == "yes" for v in day)
+    if s.judge_mode == "off":
+        doing = "Switched off: the rules decide alone (no AI cost)."
+    elif blocked:
+        doing = "Spent today's budget: says no to everything until midnight UTC."
+    else:
+        doing = (f"Last 24 h: {yes} yes, {len(day) - yes} no. "
+                 f"Spent ${spent:.2f} of ${s.judge_max_daily_usd:.2f} today.")
+    return _panel("judge", status, last, ctx.text(doing),
                   _headline(spent, "usd", f"spent today (cap ${s.judge_max_daily_usd:.2f})"),
                   [_stat("Mode", s.judge_mode, "text"), _stat("Model", s.judge_model, "text"),
                    _stat("Calls since start", judge["calls"]),
                    _stat("Spent since start", judge["cost_usd_total"], "usd"),
-                   _stat("Verdicts 24 h", f"{sum(v.get('decision') == 'yes' for v in day)} yes · "
-                                          f"{sum(v.get('decision') != 'yes' for v in day)} no", "text")],
+                   _stat("Verdicts 24 h", f"{yes} yes · {len(day) - yes} no", "text")],
                   events)
 
 
 def _watchlist(ctx: _Ctx) -> tuple[int | None, list[dict[str, Any]]]:
-    """``(size, items)`` from kv ``engine.watchlist`` when persisted, else ``engine.status``; (None, [])."""
+    """``(size, items)`` from kv ``engine.watchlist`` when persisted (and not older than ``engine.status``),
+    else ``engine.status``; (None, []). Items: ``{mint, symbol, last_signal}`` (the engine saves its own
+    ``{candidate: {mint, symbol}, last_signal_reason}`` shape, read here too)."""
     stored = ctx.ledger.get_kv(KV_WATCHLIST)
+    watching = ctx.status.get("watching")
+    if stored is not None and not _saved_wins(ctx, stored, watching if isinstance(watching, list) else None):
+        stored = None
     if isinstance(stored, dict):
         stored = stored.get("items", [{"mint": k, **_dict(v)} for k, v in stored.items()])
     if isinstance(stored, list):
-        items = [_dict(i) for i in stored]
+        items = []
+        for raw in stored:
+            item, candidate = _dict(raw), _dict(_dict(raw).get("candidate"))
+            items.append({**item, "mint": item.get("mint") or candidate.get("mint"),
+                          "symbol": item.get("symbol") or candidate.get("symbol")})
         return len(items), items
-    watching = ctx.status.get("watching")
     size = _num(ctx.status.get("watchlist"))
     if not isinstance(watching, list) and size is None:
         return None, []
@@ -582,10 +682,10 @@ def _strategy(ctx: _Ctx) -> dict[str, Any]:
         if d.action == "unwatch":
             events.append(ctx.event(d.ts, f"DROP {name} · {d.reason}"))
         elif signal and d.action == "enter":
-            events.append(ctx.event(d.ts, f"SETUP {name} · {signal.get('reason', d.reason)} · bought", "good"))
+            events.append(ctx.event(d.ts, f"SETUP {name} · the drop and the bounce came · bought", "good"))
         elif signal:
             who = _STOPPED_BY.get(d.action, d.action)
-            why = re.sub(r"^(?:judge|radar):\s*", "", d.reason)
+            why = plain(re.sub(r"^(?:judge|radar):\s*", "", d.reason))
             events.append(ctx.event(d.ts, f"SETUP {name} · stopped by {who}: {why}", "bad"))
         if len(events) >= EVENTS_MAX:
             break
@@ -593,13 +693,25 @@ def _strategy(ctx: _Ctx) -> dict[str, Any]:
     last = _latest(events[0]["ts"] if events else None, ctx.counter("candle_fetches", counters.get("candle_fetches")))
     blocked = None
     if ctx.state["kill"] != "off":
-        blocked = f"kill switch {ctx.state['kill']}: no candles fetched, no new setups"
+        blocked = f"kill switch {ctx.state['kill']}: not looking for new setups"
     elif ctx.status.get("entries_blocked"):
         blocked = f"new entries blocked: {ctx.status['entries_blocked']}"
     status = ctx.derive("strategy", last, blocked=blocked,
                         waiting="waiting for the scam filter to pass a coin" if size == 0 else None,
                         idle=f"watching {size} coin(s); no setup yet" if size else "watchlist not available yet")
-    return _panel("strategy", status, last,
+    if size is None:
+        doing = "Watchlist not available yet."
+    elif size == 0:
+        doing = "Nothing to watch yet: waiting for a coin that passes the scam filter."
+    else:
+        closest = ranked[0][1]["label"] if ranked and ranked[0][1]["value"] is not None else None
+        doing = (f"Watching {_n(size, 'coin')} for a {s.dip_pct * 100:g}% drop and a bounce back"
+                 + (f"; closest: {closest}." if closest else "."))
+    if blocked is not None:
+        doing = ("Paused by the kill switch" if ctx.state["kill"] != "off"
+                 else f"Paused: new buys are blocked ({plain(str(ctx.status['entries_blocked']))})")
+        doing += f"; still watching {_n(size, 'coin')}." if size else "."
+    return _panel("strategy", status, last, ctx.text(doing),
                   _headline(f"{size} of {s.watchlist_max}" if size is not None else None, "text",
                             "coins on the watchlist"),
                   [_stat("Required dip", round(s.dip_pct * 100.0, 2), "pct"),
@@ -626,10 +738,10 @@ def _broker(ctx: _Ctx) -> dict[str, Any]:
     events = []
     for f in fills[:EVENTS_MAX]:
         cut = _haircut_pct(f)
-        events.append(ctx.event(f.ts, f"{f.side.upper()} {f.symbol or _short(f.mint)} "
-                                      f"{f.sol_lamports / LAMPORTS_PER_SOL:.4f} SOL @ {_price(f.price_usd)} · impact "
-                                      f"{f.price_impact_pct:.2f}% · fee {f.platform_fee_bps} bps + "
-                                      f"{f.fees_lamports / LAMPORTS_PER_SOL:.6f} SOL"
+        events.append(ctx.event(f.ts, f"{f.side.upper()} {f.symbol or _short(f.mint)} for "
+                                      f"{f.sol_lamports / LAMPORTS_PER_SOL:.4f} SOL at {_price(f.price_usd)} · "
+                                      f"price moved {f.price_impact_pct:.2f}% · fees {f.platform_fee_bps / 100:.2f}% "
+                                      f"+ {f.fees_lamports / LAMPORTS_PER_SOL:.6f} SOL network"
                                       + (f" · {cut:.2f}% below quote" if cut is not None else "")))
     cuts = [c for f in fills if (c := _haircut_pct(f)) is not None]
     haircut = (f"{s.paper_slippage_bps} bps (paper model)" if not s.is_live
@@ -642,7 +754,14 @@ def _broker(ctx: _Ctx) -> dict[str, Any]:
     status = ctx.derive("broker", last, blocked=blocked,
                         waiting="waiting for an approved setup" if not ctx.open_positions else None,
                         idle=f"holding {ctx.open_positions} position(s); sells when an exit rule fires")
-    return _panel("broker", status, last,
+    doing = (f"{_n(nb, 'buy')} and {_n(ns, 'sell')} in the last 24 h, with {'real' if s.is_live else 'pretend'} "
+             "money." if day else "No trades in the last 24 h: waiting for a setup that passed every check.")
+    if blocks:
+        source, why = blocks[0]
+        doing = ("No new buys right now: " + _BLOCKED_WORDS.get(source, plain(why)) + "; sells still run.")
+    if ctx.open_positions:
+        doing += f" Holding {_n(ctx.open_positions, 'trade')}."
+    return _panel("broker", status, last, ctx.text(doing),
                   _headline(len(day), "count", f"fills, last 24 h ({ctx.mode})"),
                   [_stat("Fills 24 h", f"{nb} buy{'s' * (nb != 1)} · {ns} sell{'s' * (ns != 1)}", "text"),
                    _stat("Last entry", ctx.text(f"{buys[0].symbol or _short(buys[0].mint)} @ "
@@ -695,7 +814,7 @@ def _risk(ctx: _Ctx) -> dict[str, Any]:
     s, eq = ctx.settings, ctx.state["equity"]
     latest = ctx.ledger.latest_equity()
     last = latest.ts if latest is not None and latest.mode == ctx.mode else None
-    events = [ctx.event(d.ts, f"REFUSED {d.symbol or _short(d.mint)} · {d.reason}", "bad")
+    events = [ctx.event(d.ts, f"REFUSED {d.symbol or _short(d.mint)} · {plain(d.reason)}", "bad")
               for d in ctx.decisions(("reject_risk",), limit=EVENTS_MAX)]
     for kind in ("halt", "kill", "reset"):
         receipt = ctx.ledger.last_receipt(kind)
@@ -704,10 +823,22 @@ def _risk(ctx: _Ctx) -> dict[str, Any]:
             detail = p.get("reason") or p.get("mode") or p.get("note") or ""
             events.append(ctx.event(receipt.ts, f"{kind.upper()} {detail}".strip(),
                                     "neutral" if kind == "reset" else "bad"))
-    blocks = [why for source, why in _entry_blocks(ctx) if source != "engine"]
-    status = ctx.derive("risk", last, blocked=blocks[0] if blocks else None, idle="no equity snapshot recently")
+    blocks = [(source, why) for source, why in _entry_blocks(ctx) if source != "engine"]
+    status = ctx.derive("risk", last, blocked=blocks[0][1] if blocks else None, idle="no equity snapshot recently")
     meter = _loss_meter(ctx)
-    return _panel("risk", status, last,
+    slots = f"{ctx.open_positions} of {s.max_open_positions} trade slots in use"
+    doing = {"halt": "Stopped new buys: the money fell too far from its high. It needs your reset.",
+             "kill": "Kill switch is on: no new buys.",
+             "daily_loss": "Today's loss limit is reached: no new buys until midnight UTC."}.get(
+        blocks[0][0] if blocks else "", "")
+    if not doing:
+        if meter["fraction"] is None:
+            doing = f"No money check yet today; {slots}."
+        elif (eq["pnl_today_sol"] or 0.0) >= 0:
+            doing = f"Up today; {slots}."
+        else:
+            doing = f"Used {meter['fraction'] * 100:.0f}% of today's loss allowance; {slots}."
+    return _panel("risk", status, last, ctx.text(doing),
                   _headline(eq["sol"], "sol", "equity (" + ("bot wallet" if s.is_live else "paper wallet") + ")"),
                   [_stat("Equity (USD)", eq["usd"], "usd"), _stat("Today", eq["pnl_today_sol"], "sol"),
                    _stat("Open positions", f"{ctx.open_positions} of {s.max_open_positions}", "text"),
@@ -719,15 +850,17 @@ def _risk(ctx: _Ctx) -> dict[str, Any]:
 
 def _receipt_line(r: Any) -> str:
     p = _dict(r.payload)
+    coin = p.get("symbol") or _short(str(p.get("mint", "")))
     if r.kind == "decision":
-        detail = f"{p.get('action')} {p.get('symbol') or _short(str(p.get('mint', '')))}"
+        line = f"decision: {_ACTION_WORDS.get(str(p.get('action')), p.get('action'))} {coin}"
     elif r.kind == "fill":
-        detail = f"{p.get('side')} {p.get('symbol') or _short(str(p.get('mint', '')))}"
+        line = f"trade: {p.get('side')} {coin}"
     elif r.kind == "boot":
-        detail = f"v{p.get('version')} {p.get('mode')}"
+        line = f"started v{p.get('version')} ({p.get('mode')})"
     else:
-        detail = str(p.get("event") or p.get("stage") or p.get("mode") or p.get("reason") or "")
-    return f"#{r.seq} {r.hash[:8]} · {r.kind} {detail}".strip()
+        detail = p.get("event") or p.get("stage") or p.get("mode") or p.get("reason") or p.get("note") or ""
+        line = f"{r.kind} {detail}".strip()
+    return f"#{r.seq} {line} · {r.hash[:8]}"
 
 
 def _receipts(ctx: _Ctx) -> dict[str, Any]:
@@ -739,7 +872,15 @@ def _receipts(ctx: _Ctx) -> dict[str, Any]:
     status = ctx.derive("receipts", last, blocked=blocked, idle="no new receipt recently")
     head = r["head_hash"]
     verified = {True: "yes", False: "NO"}.get(r["verified"])
-    return _panel("receipts", status, last, _headline(r["count"], "count", "receipts in the chain"),
+    count = r["count"]
+    if r["verified"] is False:
+        doing = f"Chain BROKEN at entry #{r['first_bad_seq']}: something was changed after the fact."
+    elif count:
+        doing = (f"{count:,} {'entry' if count == 1 else 'entries'} sealed; "
+                 + ("checked: nothing was edited." if r["verified"] else "not checked yet."))
+    else:
+        doing = "Nothing recorded yet."
+    return _panel("receipts", status, last, ctx.text(doing), _headline(count, "count", "receipts in the chain"),
                   [_stat("Head", r["seq"]), _stat("Verified", verified, "text", r["verified_at"]),
                    _stat("Last receipt", recent[0].kind if recent else None, "text",
                          recent[0].ts if recent else None)],
@@ -759,7 +900,9 @@ def _upgrades(ctx: _Ctx, deploy: dict[str, str | None], started_at: float | None
     running = ctx.engine_block is None and ctx.engine_wait is None
     uptime = ctx.now - started_at if started_at is not None and running else None
     status = ctx.derive("upgrades", started_at, idle=f"running v{__version__}")
-    return _panel("upgrades", status, started_at, _headline(f"v{__version__}", "text", "deployed version"),
+    doing = f"Running version {__version__}" + (f" for {_dur(uptime)}." if uptime is not None else ".")
+    return _panel("upgrades", status, started_at, ctx.text(doing),
+                  _headline(f"v{__version__}", "text", "deployed version"),
                   [_stat("Commit", deploy.get("commit"), "text"),
                    _stat("Commit message", ctx.text(deploy["message"], 120) if deploy.get("message") else None,
                          "text"),
@@ -767,343 +910,25 @@ def _upgrades(ctx: _Ctx, deploy: dict[str, str | None], started_at: float | None
                   events)
 
 
-# =========================================================================== page
-
-_STYLE = r"""
-:root{color-scheme:light;--page:#f9f9f7;--card:#fcfcfb;--ink:#0b0b0b;--ink2:#52514e;--muted:#898781;
---hair:#e1e0d9;--border:rgba(11,11,11,.10);--accent:#2a78d6;--accent-soft:#cde2fb;--up:#006300;--down:#c22f2f;
---good:#0ca30c;--warn:#fab219;--critical:#d03b3b;--idle:#898781;--paper:#256abf;--live:#d03b3b;
---new:rgba(42,120,214,.14)}
-@media (prefers-color-scheme:dark){:root{color-scheme:dark;--page:#0d0d0d;--card:#1a1a19;--ink:#fff;
---ink2:#c3c2b7;--hair:#2c2c2a;--border:rgba(255,255,255,.10);--accent:#3987e5;--accent-soft:#184f95;
---up:#0ca30c;--down:#e66767;--paper:#2a78d6;--new:rgba(57,135,229,.22)}}
-*{box-sizing:border-box}
-html{-webkit-text-size-adjust:100%}
-body{margin:0;background:var(--page);color:var(--ink);font:16px/1.45 system-ui,-apple-system,"Segoe UI",
-Roboto,sans-serif;font-variant-numeric:tabular-nums;padding:16px 16px calc(24px + env(safe-area-inset-bottom))}
-main{max-width:1080px;margin:0 auto}
-header{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:4px 12px;
-margin-bottom:12px}
-.brand{font-weight:700;font-size:18px}
-.brand small{font-weight:400;color:var(--ink2);font-size:13px;margin-left:6px}
-.updated{color:var(--ink2);font-size:13px}
-header a{color:var(--accent);font-size:14px;font-weight:600;text-decoration:none;white-space:nowrap}
-.strip{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;align-items:stretch}
-.badge{border-radius:14px;color:#fff;background:var(--paper);padding:10px 14px;display:flex;flex-direction:column;
-justify-content:center;text-align:center}
-.badge b{font-size:24px;letter-spacing:.12em;font-weight:800;line-height:1.1}
-.badge span{font-size:12px;opacity:.92}
-.badge.live{background:var(--live)}
-.bank{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:10px 14px;min-width:0}
-.bank .label{color:var(--ink2);font-size:13px}
-.bank .value{font-size:26px;font-weight:650;line-height:1.15}
-.bank .sub{color:var(--ink2);font-size:13px;overflow-wrap:anywhere}
-.up{color:var(--up)}.down{color:var(--down)}
-.team{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
-.status{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);border-radius:999px;
-padding:3px 10px;font-size:13px;font-weight:650;background:var(--card);white-space:nowrap}
-.status i{width:9px;height:9px;border-radius:50%;flex:none;background:var(--idle)}
-.status.working i{background:var(--good)}.status.waiting i{background:var(--warn)}
-.status.blocked i{background:var(--critical)}.status.blocked{border-color:var(--critical)}
-.banner{margin-top:10px;padding:10px 14px;border-radius:12px;background:var(--warn);color:#0b0b0b;font-weight:600;
-font-size:14px}
-.banner[hidden]{display:none}
-.grid{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;margin-top:12px}
-@media (min-width:760px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media (min-width:1080px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
-.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:14px 14px 12px;min-width:0}
-.card.blocked{border-color:var(--critical)}
-.head{display:flex;justify-content:space-between;align-items:center;gap:8px}
-h2{font-size:17px;font-weight:700;margin:0}
-.role{color:var(--ink2);font-size:13px;margin:2px 0 0}
-.why{color:var(--ink2);font-size:13px;margin:8px 0 0;overflow-wrap:anywhere}
-.headline{margin-top:10px;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
-.headline b{font-size:30px;font-weight:650;line-height:1.1;overflow-wrap:anywhere}
-.headline span{color:var(--ink2);font-size:13px}
-dl{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:3px 12px;margin:10px 0 0;font-size:14px}
-dt{color:var(--ink2)}dd{margin:0;text-align:right;overflow-wrap:anywhere}
-dd small{color:var(--ink2)}
-.na{color:var(--muted)}
-.bars{margin-top:10px}
-.bar{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:3px 10px;margin-top:8px;font-size:13px}
-.bar span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.bar small{grid-column:1/-1;color:var(--ink2);overflow-wrap:anywhere}
-.track{grid-column:1/-1;height:8px;border-radius:4px;background:var(--hair);overflow:hidden}
-.fill{height:100%;border-radius:4px;background:var(--accent)}
-.fill.warn{background:var(--warn)}.fill.critical{background:var(--critical)}
-.meter{margin-top:10px;font-size:13px;color:var(--ink2)}
-.meter .track{margin:4px 0}
-.hash{margin-top:10px;padding:8px 10px;border-radius:10px;background:var(--page);border:1px solid var(--border);
-font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:14px;overflow-wrap:anywhere}
-.explain{color:var(--ink2);font-size:13px;margin:6px 0 0}
-.empty{color:var(--ink2);font-size:13px;margin:8px 0 0}
-ol{list-style:none;margin:10px 0 0;padding:0;border-top:1px solid var(--hair)}
-li{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;padding:6px 0;border-bottom:1px solid var(--hair);
-font-size:13px;align-items:baseline}
-li time{color:var(--ink2);white-space:nowrap}
-li span{overflow-wrap:anywhere}
-li.good span::before,li.bad span::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;
-margin-right:6px;vertical-align:1px;background:var(--good)}
-li.bad span::before{background:var(--critical)}
-li.new{animation:flash 2.4s ease-out}
-@keyframes flash{from{background:var(--new)}to{background:transparent}}
-@media (prefers-reduced-motion:reduce){li.new{animation:none}}
-footer{color:var(--ink2);font-size:12px;text-align:center;margin-top:18px}
-main.stale .card,main.stale .bank{opacity:.6}
-"""
-
-_SCRIPT = r"""
-"use strict";
-(() => {
-  const REFRESH_MS = Number(document.body.dataset.refresh || 10) * 1000;
-  const MINUS = "−";
-  const $ = (id) => document.getElementById(id);
-  const seen = new Set();
-  let token = null, timer = null, first = true, last = null, lastOkAt = null, serverOffset = 0;
-
-  const params = new URLSearchParams(location.search);
-  if (params.has("token")) {
-    token = params.get("token");
-    params.delete("token");
-    const rest = params.toString();
-    history.replaceState(null, "", location.pathname + (rest ? "?" + rest : "") + location.hash);
-  }
-
-  // ------------------------------------------------------------ helpers (text only, never HTML)
-  function el(tag, cls, ...kids) {
-    const node = document.createElement(tag);
-    if (cls) node.className = cls;
-    for (const k of kids) if (k !== null && k !== undefined && k !== false) node.append(k);
-    return node;
-  }
-  const isNum = (v) => typeof v === "number" && isFinite(v);
-  const sign = (v, signed) => (v < 0 ? MINUS : signed && v > 0 ? "+" : "");
-  const tone = (v) => (isNum(v) && v > 0 ? "up" : isNum(v) && v < 0 ? "down" : "");
-  const nowS = () => Date.now() / 1000 + serverOffset;
-  function sol(v, signed) { return isNum(v) ? sign(v, signed) + Math.abs(v).toFixed(4) + " SOL" : null; }
-  function usd(v, signed) {
-    if (!isNum(v)) return null;
-    const a = Math.abs(v);
-    const text = a >= 1000 ? a.toLocaleString(undefined, {maximumFractionDigits: 0})
-      : a >= 1 || a === 0 ? a.toFixed(2) : a.toFixed(3);
-    return sign(v, signed) + "$" + text;
-  }
-  function dur(s) {
-    if (!isNum(s)) return null;
-    s = Math.max(0, s);
-    if (s < 60) return Math.round(s) + " s";
-    if (s < 3600) return Math.floor(s / 60) + " min";
-    if (s < 86400) return Math.floor(s / 3600) + " h " + String(Math.floor(s % 3600 / 60)).padStart(2, "0") + " min";
-    return Math.floor(s / 86400) + " d " + Math.floor(s % 86400 / 3600) + " h";
-  }
-  function ago(ts) { return isNum(ts) ? dur(nowS() - ts) + " ago" : null; }
-  function utc(ts) { return isNum(ts) ? new Date(ts * 1000).toISOString().slice(11, 19) : null; }
-  function fmt(value, unit) {
-    if (value === null || value === undefined || value === "") return null;
-    switch (unit) {
-      case "count": return isNum(value) ? value.toLocaleString() : String(value);
-      case "sol": return sol(value);
-      case "usd": return usd(value);
-      case "pct": return isNum(value) ? value.toFixed(1) + "%" : null;
-      case "ts": return isNum(value) ? utc(value) + " UTC · " + ago(value) : null;
-      case "dur": return dur(value);
-      default: return String(value);
-    }
-  }
-  const NA = () => el("span", "na", "not available yet");
-  const WORD = {working: "Working", idle: "Idle", waiting: "Waiting", blocked: "Blocked"};
-  function chip(status, text) { return el("span", "status " + status, el("i"), text || WORD[status] || status); }
-
-  // ------------------------------------------------------------ top strip
-  function renderStrip(s) {
-    const live = s.mode === "LIVE";
-    const badge = $("badge");
-    badge.className = "badge" + (live ? " live" : "");
-    badge.replaceChildren(el("b", null, s.mode), el("span", null, live ? "real money" : "simulated fills"));
-    const b = s.bank;
-    $("bank-label").textContent = live ? "Live wallet" : "Paper bank";
-    $("bank-value").textContent = sol(b.sol) || "—";
-    const parts = [];
-    if (isNum(b.usd)) parts.push(usd(b.usd));
-    if (isNum(b.change_sol)) {
-      parts.push(el("span", tone(b.change_sol), sol(b.change_sol, true)
-        + (isNum(b.change_pct) ? " (" + sign(b.change_pct, true) + Math.abs(b.change_pct).toFixed(1) + "%)" : "")
-        + " since start"));
-    }
-    const sub = $("bank-sub");
-    sub.replaceChildren();
-    parts.forEach((p, i) => { if (i) sub.append(" · "); sub.append(p); });
-    if (!parts.length) sub.textContent = "Waiting for the first equity snapshot.";
-    const order = ["working", "idle", "waiting", "blocked"];
-    $("team").replaceChildren(...order.map((k) => chip(k, s.team[k] + " " + k)));
-  }
-
-  // ------------------------------------------------------------ one member
-  function stats(rows) {
-    const dl = el("dl");
-    for (const r of rows) {
-      const text = fmt(r.value, r.unit);
-      const dd = el("dd", null, text === null ? NA() : text);
-      if (text !== null && isNum(r.ts) && r.unit !== "ts") dd.append(el("small", null, " · " + utc(r.ts)));
-      dl.append(el("dt", null, r.label), dd);
-    }
-    return dl;
-  }
-  function track(fraction, cls) {
-    const fill = el("div", "fill" + (cls ? " " + cls : ""));
-    fill.style.width = (isNum(fraction) ? Math.max(0, Math.min(1, fraction)) * 100 : 0).toFixed(1) + "%";
-    return el("div", "track", fill);
-  }
-  function bars(p) {
-    if (!p.bars.length) return el("p", "empty", p.bars_empty || "");
-    return el("div", "bars", ...p.bars.map((b) => el("div", "bar", el("span", null, b.label),
-      // no track when unknown: an empty soft track read as a FULL bar in dark mode
-      el("b", null, b.text || ""), isNum(b.value) ? track(b.value) : null,
-      b.note ? el("small", null, b.note) : null)));
-  }
-  function events(panel) {
-    if (!panel.events.length) return el("p", "empty", "No events recorded yet.");
-    const list = el("ol");
-    for (const e of panel.events) {
-      const key = panel.id + "|" + e.ts + "|" + e.text;
-      const item = el("li", e.tone, el("time", null, utc(e.ts)), el("span", null, e.text));
-      item.title = new Date(e.ts * 1000).toISOString().replace("T", " ").slice(0, 19) + " UTC";
-      if (!first && !seen.has(key)) item.classList.add("new");
-      seen.add(key);
-      list.append(item);
-    }
-    return list;
-  }
-  function renderPanel(p) {
-    const card = $("m-" + p.id);
-    if (!card) return;
-    card.className = "card " + p.status;
-    card.querySelector(".head").replaceChildren(el("h2", null, p.name), chip(p.status));
-    const why = p.status === "working"
-      ? "Last activity " + (ago(p.last_activity) || "just now")
-      : p.why + (isNum(p.last_activity) ? " · last activity " + ago(p.last_activity) : "");
-    const kids = [el("p", "why", why)];
-    const h = p.headline;
-    const value = fmt(h.value, h.unit);
-    kids.push(el("div", "headline", el("b", null, value === null ? "—" : value), el("span", null, h.label)));
-    if (p.meter) {
-      const m = p.meter, f = m.fraction;
-      const meter = track(f, isNum(f) && f >= 1 ? "critical" : isNum(f) && f >= 0.5 ? "warn" : "");
-      meter.setAttribute("role", "meter");
-      meter.setAttribute("aria-valuemin", "0");
-      meter.setAttribute("aria-valuemax", "100");
-      meter.setAttribute("aria-valuenow", isNum(f) ? String(Math.round(Math.min(1, f) * 100)) : "0");
-      meter.setAttribute("aria-label", "Share of today's loss limit used");
-      kids.push(el("div", "meter", el("div", null, "Daily loss limit used"), meter, el("div", null, m.text)));
-    }
-    if (p.hash) kids.push(el("div", "hash", p.hash.short), el("p", "explain", p.hash.explainer));
-    if (p.bars) kids.push(bars(p));
-    kids.push(stats(p.stats), events(p));
-    card.querySelector(".body").replaceChildren(...kids);
-  }
-
-  function render(s) {
-    last = s;
-    renderStrip(s);
-    s.panels.forEach(renderPanel);
-    if (seen.size > 3000) seen.clear();
-    first = false;
-    $("foot").textContent = "nightcrawler " + s.version + " · real data only · refreshes every "
-      + REFRESH_MS / 1000 + " s";
-    tick();
-  }
-
-  // ------------------------------------------------------------ polling
-  function banner(text) {
-    const b = $("banner");
-    b.hidden = !text;
-    b.textContent = text || "";
-    $("main").classList.toggle("stale", Boolean(text) && last !== null);
-  }
-  function tick() {
-    $("updated").textContent = lastOkAt ? "updated " + Math.round((Date.now() - lastOkAt) / 1000) + " s ago"
-      : "loading…";
-  }
-  async function refresh() {
-    clearTimeout(timer);
-    try {
-      const url = "api/team" + (token ? "?token=" + encodeURIComponent(token) : "");
-      const res = await fetch(url, {cache: "no-store", credentials: "same-origin"});
-      if (res.status === 401) {
-        banner("Locked: open the link that ends with ?token=…");
-      } else if (!res.ok) {
-        throw new Error("HTTP " + res.status);
-      } else {
-        const s = await res.json();
-        serverOffset = s.generated_at - Date.now() / 1000;
-        lastOkAt = Date.now();
-        render(s);
-        banner(null);
-      }
-    } catch (err) {
-      banner("Can't reach the bot right now" + (last ? " — showing data from " + ago(last.generated_at) : "")
-        + ". Retrying…");
-    } finally {
-      if (!document.hidden) timer = setTimeout(refresh, REFRESH_MS);
-    }
-  }
-  document.addEventListener("visibilitychange", () => { if (document.hidden) clearTimeout(timer); else refresh(); });
-  setInterval(tick, 5000);
-  refresh();
-})();
-"""
-
-
-def _sha256_source(text: str) -> str:
-    return "'sha256-" + base64.b64encode(hashlib.sha256(text.encode("utf-8")).digest()).decode("ascii") + "'"
-
-
-#: Sent with ``/team``: nothing loads from anywhere; only this exact inline script and style run.
-TEAM_CSP = (f"default-src 'none'; script-src {_sha256_source(_SCRIPT)}; style-src {_sha256_source(_STYLE)}; "
-            "connect-src 'self'; img-src data:; base-uri 'none'; form-action 'none'; frame-ancestors 'none'")
-
-
-def render_team_html() -> str:
-    """The complete ``/team`` page (static skeleton with every panel; the script fills in live data). Pure."""
-    cards = "".join(
-        f"<section class=\"card\" id=\"m-{pid}\" aria-label=\"{html.escape(name)}\">"
-        f"<div class=\"head\"><h2>{html.escape(name)}</h2><span class=\"status\"><i></i>…</span></div>"
-        f"<p class=\"role\">{html.escape(role, quote=False)}</p>"
-        "<div class=\"body\"><p class=\"empty\">Loading…</p></div></section>\n"
-        for pid, name, role in PANELS)
-    return (
-        "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n"
-        "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, viewport-fit=cover\">\n"
-        "<meta name=\"color-scheme\" content=\"light dark\">\n"
-        "<meta name=\"theme-color\" content=\"#f9f9f7\" media=\"(prefers-color-scheme: light)\">\n"
-        "<meta name=\"theme-color\" content=\"#0d0d0d\" media=\"(prefers-color-scheme: dark)\">\n"
-        "<meta name=\"robots\" content=\"noindex, nofollow\">\n<meta name=\"referrer\" content=\"no-referrer\">\n"
-        "<link rel=\"icon\" href=\"data:,\">\n<title>nightcrawler · team room</title>\n"
-        f"<style>{_STYLE}</style>\n</head>\n"
-        f"<body data-refresh=\"{REFRESH_S}\">\n<main id=\"main\">\n"
-        "<header><div class=\"brand\">nightcrawler<small>team room</small></div>"
-        "<div><span class=\"updated\" id=\"updated\">loading…</span> · <a href=\"./\">Dashboard</a></div></header>\n"
-        "<div class=\"strip\"><div class=\"badge\" id=\"badge\"><b>…</b><span>mode</span></div>"
-        "<div class=\"bank\"><div class=\"label\" id=\"bank-label\">Bank</div>"
-        "<div class=\"value\" id=\"bank-value\">—</div><div class=\"sub\" id=\"bank-sub\"></div></div></div>\n"
-        "<div class=\"team\" id=\"team\" aria-label=\"Team status\"></div>\n"
-        "<div class=\"banner\" id=\"banner\" role=\"status\" hidden></div>\n"
-        f"<div class=\"grid\">\n{cards}</div>\n"
-        "<footer id=\"foot\">read-only · real data only</footer>\n</main>\n"
-        f"<script>{_SCRIPT}</script>\n</body>\n</html>\n"
-    )
-
-
 # =========================================================================== server glue
 
 
+def json_body(state: dict[str, Any]) -> bytes:
+    """Strict JSON bytes with ``<`` escaped: ledger text such as a coin called ``<img ...>`` can never read
+    as a tag, even to a client that ignores the content type."""
+    text = json.dumps(state, allow_nan=False, separators=(",", ":"), default=str)
+    return text.replace("<", "\\u003c").encode("utf-8")
+
+
 class TeamRoom:
-    """The two team-room routes for :class:`~nightcrawler.dashboard.DashboardServer`.
+    """The live-data routes for :class:`~nightcrawler.dashboard.DashboardServer`: ``/api/team``
+    (:func:`build_team_state`) and ``/api/page`` (:func:`nightcrawler.pagestate.build_page_state`, the one
+    page's data). Both share one chain-verification cache and one counter memory.
 
     ``ledger`` is the engine's own ledger (``build_app`` and ``nightcrawler dashboard`` pass theirs). Only
-    when None (standalone use) is ``settings.db_path`` opened lazily on the first ``/api/team`` request,
-    READ-ONLY (never created or migrated), and closed by :meth:`close`. :meth:`close` and :meth:`open`
-    follow the server's ``stop()``/``start()``: a closed room answers 500 and never reopens a ledger.
+    when None (standalone use) is ``settings.db_path`` opened lazily on the first request, READ-ONLY (never
+    created or migrated), and closed by :meth:`close`. :meth:`close` and :meth:`open` follow the server's
+    ``stop()``/``start()``: a closed room answers 500 and never reopens a ledger.
     """
 
     def __init__(self, settings: Settings, ledger: Any = None, clock: Clock | None = None,
@@ -1114,7 +939,6 @@ class TeamRoom:
         self._owns_ledger = ledger is None
         self._secrets = tuple(settings.secret_values())
         self.deploy = deploy_info(os.environ if environ is None else environ, self._secrets)
-        self.page = render_team_html().encode("utf-8")
         self._verify_cache: dict[str, Any] = {}
         self._memory: dict[str, Any] = {}
         self._lock = threading.Lock()
@@ -1122,24 +946,34 @@ class TeamRoom:
 
     def state(self) -> dict[str, Any]:
         """``/api/team`` for now, scrubbed of secrets."""
+        return self._build(build_team_state)
+
+    def page_state(self) -> dict[str, Any]:
+        """``/api/page`` for now, scrubbed of secrets."""
+        from nightcrawler.pagestate import build_page_state  # late: pagestate builds on this module
+
+        return self._build(build_page_state)
+
+    def _build(self, builder: Callable[..., dict[str, Any]]) -> dict[str, Any]:
         with self._lock:
             if self._closed:
                 raise RuntimeError("team room is closed")
             if self._ledger is None:
                 self._ledger = Ledger(self.settings.db_path, clock=self.clock, read_only=True)
-            state = build_team_state(self._ledger, self.settings, self.clock.now(), verify_cache=self._verify_cache,
-                                     memory=self._memory, deploy=self.deploy)
-        return scrub(state, self._secrets)
+            state = builder(self._ledger, self.settings, self.clock.now(), verify_cache=self._verify_cache,
+                            memory=self._memory, deploy=self.deploy)
+        clean: dict[str, Any] = scrub(state, self._secrets)
+        return clean
 
     def response(self, path: str, headers: list[tuple[str, str]]) -> tuple[int, bytes, str, list[tuple[str, str]]]:
-        """``(status, body, content type, headers)`` for an AUTHORIZED request to ``/team`` or ``/api/team``."""
-        if path == "/team":
-            return 200, self.page, "text/html; charset=utf-8", [*headers, ("Content-Security-Policy", TEAM_CSP)]
+        """``(status, body, content type, headers)`` for an AUTHORIZED request to ``/api/team`` or ``/api/page``."""
+        page = path == "/api/page"
         try:
-            body = json.dumps(self.state(), allow_nan=False, separators=(",", ":"), default=str).encode("utf-8")
+            body = json_body(self.page_state() if page else self.state())
         except Exception:
-            log.exception("team_state_failed")
-            return 500, b'{"error":"team state unavailable"}', "application/json", headers
+            log.exception("page_state_failed" if page else "team_state_failed")
+            error = b'{"error":"page state unavailable"}' if page else b'{"error":"team state unavailable"}'
+            return 500, error, "application/json", headers
         return 200, body, "application/json", headers
 
     def open(self) -> None:

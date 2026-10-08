@@ -147,6 +147,7 @@ full list with explanations is in [.env.example](.env.example). The important on
 | `KILL_SWITCH` | `off` | `stop` = no new buys; `sell_all` = sell everything, then stop. `sell-all` works too; an unknown word means `stop`. |
 | `RESET_HALT_TOKEN` | (empty) | Change to any new value (e.g. today's date) to clear a drawdown halt once. |
 | `DASHBOARD_TOKEN` | (empty) | Password for the dashboard link. **Set a long random one** on Railway. |
+| `KEYS_ROTATED_ON` | (empty) | The date you replaced every key ever pasted into a chat. Only ticks step 4 of the dashboard's "Ready for real money?" checklist. |
 | `DATA_DIR` | `./data` | Where the ledger lives. On Railway: `/data` (a volume). |
 | `PAPER_START_USD` | `100` | Pretend bankroll at the first start. |
 | `POSITION_PCT` | `0.20` | Share of equity per position (a fraction: 0.20 = 20 %). |
@@ -165,7 +166,7 @@ full list with explanations is in [.env.example](.env.example). The important on
 | `JUDGE_MAX_DAILY_USD` | `1` | AI spending cap per day; past it, the judge says no. `0` blocks every judge call. |
 | `SOLANA_RPC_URL` | public RPC | A free [Helius](https://www.helius.dev/) key is recommended, especially for live mode. |
 | `JUPITER_API_KEY` | (empty) | Optional; higher Jupiter rate limits. |
-| `USAGE_HELIUS_MONTHLY_CREDITS` | `1000000` | The dashboard's "API usage" card counts calls per provider per day and month, and shows a warning chip at 80 % of a budget. This is the Helius free plan; `USAGE_JUPITER_MONTHLY_CALLS` and the other `USAGE_*` settings default to `0` (no budget). The judge's budget is `JUDGE_MAX_DAILY_USD`. |
+| `USAGE_HELIUS_MONTHLY_CREDITS` | `1000000` | The dashboard's "Services used" card counts calls per provider per day and month; a bar turns amber at 80 % of a budget and a used-up budget gets a banner. This is the Helius free plan; `USAGE_JUPITER_MONTHLY_CALLS` and the other `USAGE_*` settings default to `0` (no budget). The judge's budget is `JUDGE_MAX_DAILY_USD`. |
 
 "`_PCT`" knobs come in two kinds, and the bot checks you used the right one: the strategy and
 risk knobs listed above are **fractions** (0.20 = 20 %), while `MAX_PRICE_IMPACT_PCT` and the
@@ -196,8 +197,9 @@ Probably not, at least not reliably. It's a measuring instrument with a strategy
 Run paper mode for weeks and let the receipts tell you.
 
 **Why did it buy nothing all night?**
-That's normal. Most new coins fail the rug filter or never show the setup. The dashboard's
-"why coins were skipped" panel shows the reasons.
+That's normal. Most new coins fail the rug filter or never show the setup. On the dashboard,
+tap **Cocoon** (the rug filter) to see why coins were thrown out, and **Strategy** to see how
+close each watched coin is to the setup.
 
 **What are the receipts for?**
 They make the results provable. Anyone with the exported file can recompute the fingerprints

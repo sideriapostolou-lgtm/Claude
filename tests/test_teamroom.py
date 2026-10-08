@@ -3,11 +3,8 @@ dashboard token, the page itself, no secrets anywhere and a small JSON."""
 
 from __future__ import annotations
 
-import base64
-import hashlib
 import http.client
 import json
-import re
 import sqlite3
 from collections.abc import Callable, Iterator
 from pathlib import Path
@@ -18,7 +15,7 @@ from fakes import FakeClock
 
 from nightcrawler import __version__
 from nightcrawler.config import LIVE_CONFIRM_PHRASE, Settings
-from nightcrawler.dashboard import COOKIE_NAME, DashboardServer, build_state, render_html
+from nightcrawler.dashboard import COOKIE_NAME, DashboardServer, build_state
 from nightcrawler.ledger import Ledger, LedgerError
 from nightcrawler.models import (
     Decision,
@@ -34,20 +31,18 @@ from nightcrawler.teamroom import (
     EVENTS_MAX,
     PANELS,
     REFRESH_S,
-    TEAM_CSP,
     TeamRoom,
     build_team_state,
     deploy_info,
     derive_status,
     proximity,
-    render_team_html,
 )
 
 NOW = 1_791_475_200.0  # 2026-10-08T16:00:00Z (the fake clock's start)
 MIDNIGHT = NOW - NOW % 86_400
 HIGGS = "HiGGSmintAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
 PANEL_IDS = ["crawler", "cocoon", "radar", "judge", "strategy", "broker", "risk", "receipts", "upgrades"]
-PANEL_KEYS = {"id", "name", "role", "status", "why", "last_activity", "headline", "stats", "events"}
+PANEL_KEYS = {"id", "name", "role", "status", "why", "doing", "last_activity", "headline", "stats", "events"}
 STATUSES = {"working", "idle", "waiting", "blocked"}
 SECRETS = {
     "ANTHROPIC_API_KEY": "sk-ant-api03-TOPSECRETanthropicKEY0123456789",
@@ -231,6 +226,18 @@ def test_state_assembly_from_a_seeded_ledger(ledger: Ledger, make_settings: Call
         assert all(e["ts"] <= NOW and e["text"] for e in panel["events"])
     by = panels(state)
 
+    doing = {pid: by[pid]["doing"] for pid in PANEL_IDS}  # one plain sentence each
+    assert doing["crawler"] == "Found 3 new coins in the last hour; 2,100 too young to judge yet."
+    assert doing["cocoon"] == ("Last 24 h: threw out 2 coins, let 1 through. "
+                               "Most common problem: top 10 wallets hold too much.")
+    assert doing["radar"] == "Watching 1 open trade for danger: the creator or big holders selling."
+    assert doing["judge"] == "Last 24 h: 1 yes, 1 no. Spent $0.01 of $1.00 today."
+    assert doing["strategy"] == "Watching 4 coins for a 55% drop and a bounce back; closest: BBB."
+    assert doing["broker"] == "1 buy and 1 sell in the last 24 h, with pretend money. Holding 1 trade."
+    assert doing["risk"] == "Used 25% of today's loss allowance; 1 of 3 trade slots in use."
+    assert doing["receipts"] == f"{ledger.receipt_count()} entries sealed; checked: nothing was edited."
+    assert doing["upgrades"] == f"Running version {__version__} for 2 h 00 min."
+
     crawler = by["crawler"]
     assert crawler["headline"]["value"] == 3  # first seen within the hour
     assert stat(crawler, "Last 24 h") == 4 and stat(crawler, "Too young, waiting") == 2100
@@ -284,7 +291,7 @@ def test_state_assembly_from_a_seeded_ledger(ledger: Ledger, make_settings: Call
     assert risk["meter"]["fraction"] == pytest.approx(0.25)  # lost 0.05 of the 0.20 SOL allowed today
     assert risk["meter"]["used"] == pytest.approx(0.05) and risk["meter"]["limit"] == pytest.approx(0.2)
     assert risk["status"] == "working"  # the equity snapshot 30 s ago
-    assert any("[max_positions]" in e["text"] for e in risk["events"])
+    assert any("REFUSED RISKY · Too many open trades: 3 open" == e["text"] for e in risk["events"])
 
     receipts = by["receipts"]
     seq, head = ledger.head()
@@ -365,6 +372,12 @@ def test_blocks_come_from_real_state(ledger: Ledger, make_settings: Callable[...
     assert by["risk"]["status"] == "blocked" and "halted" in by["risk"]["why"]
     assert by["judge"]["status"] == "blocked" and "budget" in by["judge"]["why"]
     assert by["crawler"]["status"] == "working"  # discovery keeps running under a kill switch
+    # each blocked member's one sentence says why, in plain words
+    assert by["strategy"]["doing"] == "Paused by the kill switch; still watching 4 coins."
+    assert by["broker"]["doing"] == ("No new buys right now: buying is halted after a big drop; sells still run. "
+                                     "Holding 1 trade.")
+    assert by["risk"]["doing"] == "Stopped new buys: the money fell too far from its high. It needs your reset."
+    assert by["judge"]["doing"] == "Spent today's budget: says no to everything until midnight UTC."
 
 
 def test_daily_loss_limit_reached_blocks_risk(ledger: Ledger, settings: Settings) -> None:
@@ -448,6 +461,34 @@ def test_a_manual_risk_reset_says_why(ledger: Ledger, settings: Settings, fake_c
     assert any(e["text"] == "RESET manual reset via CLI" for e in risk["events"])
 
 
+def test_the_saved_nursery_counts_its_coins(ledger: Ledger, settings: Settings) -> None:
+    """The engine saves the nursery as ``{saved_at, items}`` every 10 min (redeploy-proof): that is 3 coins, not
+    2 keys, and the engine's status (rewritten every 15 s) wins when it is newer."""
+    ledger.set_kv("engine.heartbeat", NOW - 5)
+    ledger.set_kv("crawler.nursery", {"saved_at": NOW - 60, "items": [{"mint": f"N{i}"} for i in range(3)]})
+    no_count = status_kv(crawler={"polls": 100})
+    crawler = panels(build_team_state(ledger, settings, NOW, engine_status=no_count))["crawler"]
+    assert stat(crawler, "Too young, waiting") == 3 and "3 too young" in crawler["doing"]
+    newer = panels(build_team_state(ledger, settings, NOW, engine_status=status_kv(ts=NOW - 5)))["crawler"]
+    assert stat(newer, "Too young, waiting") == 2100
+    older = panels(build_team_state(ledger, settings, NOW, engine_status=status_kv(ts=NOW - 120)))["crawler"]
+    assert stat(older, "Too young, waiting") == 3
+
+
+def test_the_saved_watchlist_is_read_in_the_engine_format_and_never_beats_a_newer_status(
+        ledger: Ledger, settings: Settings) -> None:
+    ledger.set_kv("engine.heartbeat", NOW - 5)
+    saved = {"saved_at": NOW - 300, "items": [{"candidate": {"mint": "Z1mint", "symbol": "ZZZ"}, "added_at": NOW - 900,
+                                               "last_signal_reason": "dip 50.0% < required 55.0%"}]}
+    ledger.set_kv("engine.watchlist", saved)
+    stale = status_kv(ts=NOW - 400)  # older than the saved list: the saved list wins
+    strategy = panels(build_team_state(ledger, settings, NOW, engine_status=stale))["strategy"]
+    assert [(b["label"], b["value"]) for b in strategy["bars"]] == [("ZZZ", pytest.approx(50 / 55))]
+    assert strategy["headline"]["value"] == "1 of 15"
+    fresh = panels(build_team_state(ledger, settings, NOW, engine_status=status_kv(ts=NOW - 5)))["strategy"]
+    assert fresh["headline"]["value"] == "4 of 15" and [b["label"] for b in fresh["bars"]][0] == "BBB"
+
+
 def test_dedicated_kv_keys_win_over_the_status(ledger: Ledger, settings: Settings) -> None:
     ledger.set_kv("engine.heartbeat", NOW - 5)
     ledger.set_kv("engine.status", status_kv())
@@ -481,10 +522,9 @@ def test_setup_proximity_is_parsed_from_the_strategy_reason(signal: str | None, 
 def test_routes_without_a_token(serve: Callable[..., Client], ledger: Ledger, settings: Settings) -> None:
     seed(ledger)
     client = serve(settings, ledger)
-    status, headers, body = client.request("/team")
-    assert status == 200 and headers["Content-Type"] == "text/html; charset=utf-8"
-    assert headers["Content-Security-Policy"] == TEAM_CSP and headers["Cache-Control"] == "no-store"
-    assert headers["X-Frame-Options"] == "DENY" and b"Crawler" in body
+    status, headers, body = client.request("/team")  # the old team page is part of the one page now
+    assert (status, headers["Location"], body) == (302, "/", b"")
+    assert headers["Cache-Control"] == "no-store" and headers["X-Frame-Options"] == "DENY"
     status, headers, body = client.request("/api/team")
     assert status == 200 and headers["Content-Type"] == "application/json"
     assert [p["id"] for p in json.loads(body)["panels"]] == PANEL_IDS
@@ -501,11 +541,11 @@ def test_token_gate_on_both_routes(serve: Callable[..., Client], ledger: Ledger,
         status, headers, body = client.request(path)
         assert status == 401 and b"Locked" in body and "Set-Cookie" not in headers
     status, headers, _ = client.request("/team?token=" + TOKEN)
-    assert status == 200
+    assert status == 302 and headers["Location"] == "/"
     cookie = headers["Set-Cookie"].split(";", 1)[0]
     assert TOKEN not in cookie
     assert client.request("/api/team", headers={"Cookie": cookie})[0] == 200
-    assert client.request("/team", headers={"Cookie": cookie})[0] == 200
+    assert client.request("/team", headers={"Cookie": cookie})[0] == 302
     assert client.request("/api/team?token=" + TOKEN)[0] == 200
     assert client.request("/api/team", headers={"Cookie": f"{COOKIE_NAME}=forged"})[0] == 401
 
@@ -599,7 +639,6 @@ def test_a_closed_team_room_never_reopens_its_ledger(settings: Settings) -> None
     assert room.response("/api/team", [])[0] == 200 and room._ledger is not None
     room.close()
     assert room._ledger is None and room.response("/api/team", [])[0] == 500 and room._ledger is None
-    assert room.response("/team", [])[0] == 200  # the static page needs no ledger
     room.close()  # idempotent
 
 
@@ -613,51 +652,10 @@ def test_team_state_failure_is_a_500_without_details(serve: Callable[..., Client
     monkeypatch.setattr("nightcrawler.teamroom.build_team_state", broken)
     status, _, body = client.request("/api/team")
     assert status == 500 and json.loads(body) == {"error": "team state unavailable"}
-    assert client.request("/team")[0] == 200
-
-
-# --------------------------------------------------------------------------- page
-
-
-def test_page_contains_every_panel_and_is_built_for_phones() -> None:
-    html = render_team_html()
-    for pid, name, role in PANELS:
-        assert f'id="m-{pid}"' in html and f">{name}<" in html and role in html
-    assert 'name="viewport"' in html and "width=device-width" in html
-    assert "prefers-color-scheme:dark" in html and "body{margin:0;background:var(--page)" in html
-    assert f'data-refresh="{REFRESH_S}"' in html and REFRESH_S == 10
-    assert "tabular-nums" in html and 'fetch(url' in html and '"api/team"' in html
-    assert "innerHTML" not in html  # untrusted text goes in via textContent only
-    assert 'href="./"' in html  # back to the dashboard
-    assert not re.search(r"""(?:src|href)\s*=\s*["']?(?:https?:)?//""", html)
-    assert "@import" not in html and "url(" not in html and not re.search(r"https?://", html)
-
-
-def test_team_csp_hashes_match_the_inline_script_and_style() -> None:
-    html = render_team_html()
-    (script,) = re.findall(r"<script>(.*?)</script>", html, flags=re.DOTALL)
-    (style,) = re.findall(r"<style>(.*?)</style>", html, flags=re.DOTALL)
-
-    def source(text: str) -> str:
-        return "'sha256-" + base64.b64encode(hashlib.sha256(text.encode()).digest()).decode() + "'"
-
-    assert f"script-src {source(script)};" in TEAM_CSP and f"style-src {source(style)};" in TEAM_CSP
-    assert "default-src 'none'" in TEAM_CSP and "connect-src 'self'" in TEAM_CSP
-    assert "unsafe-inline" not in TEAM_CSP and "unsafe-eval" not in TEAM_CSP
-
-
-def test_an_unchecked_bar_draws_no_track() -> None:
-    """A bar whose value is null ("not checked yet") draws no track at all: a full-width soft track looked like
-    a FULL bar in dark mode. Tracks use the neutral hairline colour."""
-    from nightcrawler.teamroom import _SCRIPT, _STYLE
-
-    assert "isNum(b.value) ? track(b.value) : null" in _SCRIPT
-    rule = re.search(r"\.track\{[^}]*\}", _STYLE)
-    assert rule is not None and "var(--hair)" in rule.group(0) and "accent-soft" not in rule.group(0)
-
-
-def test_dashboard_links_to_the_team_room(settings: Settings) -> None:
-    assert 'href="team"' in render_html(settings)
+    monkeypatch.setattr("nightcrawler.pagestate.build_page_state", broken)
+    status, _, body = client.request("/api/page")
+    assert status == 500 and json.loads(body) == {"error": "page state unavailable"}
+    assert client.request("/team")[0] == 302 and client.request("/")[0] == 200
 
 
 # --------------------------------------------------------------------------- secrets & size
