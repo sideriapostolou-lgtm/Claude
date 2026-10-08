@@ -321,8 +321,9 @@ CURVE_LIFE_COLS = ("curve_buy_sol", "curve_sell_sol", "curve_buy_tok", "curve_se
 G_COLS = ("g_slot", "g_ts", "completer", "rsol_complete", "grad_delay_s", "grad_delay_lb_s", "mayhem",
           "has_create", "curve_partial", "created_exact", "created_ts")
 G_PREFIXES = ("creator_", "first20_")
-POOL_COLS = ("pool", "pool_slot", "pool_ts", "pool_quote_mint", "pool_creator", "pool_base0", "pool_quote0",
-             "sol_quoted")
+POOL_COLS = ("pool", "pool_slot", "pool_ts", "pool_creator")          # known once the pool exists (g + 0-6 s)
+# the migration's initial reserves and quote follow from the completed curve: known at g
+G_COLS = G_COLS + ("pool_base0", "pool_quote0", "pool_quote_mint", "sol_quoted")
 W120_COLS = ("w120_buy_sol", "w120_sell_sol", "w120_n_buyers", "w120_n_sellers", "w120_top10")
 W300_COLS = ("w300_buy_sol", "w300_sell_sol", "w300_n_buyers", "w300_n_sellers", "w300_top10")
 AGENT_ID_COLS = ("agent_present", "agent_wallet", "agent_known_at", "agent_first_offset_s")
@@ -637,7 +638,7 @@ class Dataset:
         want = set(FINAL_SPLITS) if split == "final" else {split}
         gs = g[g["split"].isin(want)].copy()
         b2c = b2_coins.drop(columns=[c for c in ("g_ts", "grad_delay_s", "sol_quoted", "mayhem") if c in b2_coins])
-        gs = gs.merge(b2c, on=["mint", "pool"], how="left", indicator="_b2")
+        gs = gs.merge(b2c, on=["mint", "pool"], how="left", indicator="b2_merge")
         have = _b2_hours(b2_bars)
         reasons = []
         for r in gs.itertuples(index=False):
@@ -645,7 +646,7 @@ class Dataset:
                 reasons.append("not_sol_quoted")
             elif r.mayhem:
                 reasons.append("mayhem")
-            elif r._b2 != "both":
+            elif r.b2_merge != "both":
                 reasons.append("no_b2_row")
             elif not _virt_known(r):
                 reasons.append("virt_unknown")
@@ -657,7 +658,7 @@ class Dataset:
                 reasons.append("")
         gs["exclude_reason"] = reasons
         gs["tradeable"] = ~gs["exclude_reason"].isin(["not_sol_quoted", "mayhem", "virt_unknown"])
-        usable = gs[gs["exclude_reason"] == ""].drop(columns=["_b2"]).sort_values(["created_for_split", "mint"])
+        usable = gs[gs["exclude_reason"] == ""].drop(columns=["b2_merge"]).sort_values(["created_for_split", "mint"])
         excluded = gs[gs["exclude_reason"] != ""][["mint", "g_ts", "created_for_split", "exclude_reason"]]
         bars = b2_bars[b2_bars["pool"].isin(set(usable["pool"]))]
         pooled = set(POOLED_ACCOUNTS) | set(extra_pooled) | _pooled_from_file()
@@ -1062,6 +1063,10 @@ class FillConfig:
     exit_fill: str = "worst"         # worst: min(open, low) | open (stops at the level)
     cost: CostModel = field(default_factory=CostModel)
     rent_usd: float = 0.0            # PLAN 3.3 stress: +$0.22 per coin until C1 confirms the account is closed
+    entry_bar_exits: bool = True     # check stop/trail against the ENTRY bar's low too (harness-compatible, harsh:
+                                     # with the entry at the high this assumes high-then-low inside one minute)
+    exit_delay_bars: int = 0         # 0: a stop/trail/TP triggered in bar j fills in bar j (harness);
+                                     # 1: fills at the adverse side of bar j + 1 (30 s polling + 30 s landing)
 
     def stressed(self, factor: float = 1.5, rent_usd: float | None = None) -> "FillConfig":
         """Every cost component x ``factor`` (pool fee, Ultra, slippage haircut, network, impact)."""
@@ -1108,13 +1113,18 @@ def _simulate_coin(cd: CoinData, sol: SolUsd, cfg: FillConfig, strategy_fn: Stra
             closed = None
             if pend_out is not None and pend_out[0] == j:
                 p = min(o[j], l[j]) if worst_out else o[j]
-                closed = (p, pend_out[1], pend_out[2] + cfg.latency_s)
+                closed = (p, pend_out[1], pend_out[2])
                 pend_out = None
-            else:
+            elif pend_out is None and (cfg.entry_bar_exits or j > pos["j_in"]):
                 closed = _mechanical(pos, j, cd, worst_out)
+                if closed is not None and cfg.exit_delay_bars > 0 and j + cfg.exit_delay_bars < N_BARS:
+                    jd = j + cfg.exit_delay_bars
+                    pend_out = (jd, closed[1], float(cd.bar_start(jd) + 30))
+                    closed = None
             if closed is None and j == N_BARS - 1:
                 closed = (min(o[j], l[j]) if worst_out else c[j], "horizon", float(cd.bar_start(j) + 59))
             if closed is not None:
+                closed = (closed[0], closed[1], max(closed[2], pos["t_in"]))
                 return _close(pos, closed, j, cd, cfg, is_placebo)
             pos["peak"] = max(pos["peak"], h[j]) if j > pos["j_in"] else pos["peak"]
         if done:
@@ -1147,7 +1157,7 @@ def _simulate_coin(cd: CoinData, sol: SolUsd, cfg: FillConfig, strategy_fn: Stra
             act = strategy_fn(AsOf(cd, t, sol), params, pv)
             if isinstance(act, Exit):
                 jf = cd.bar_of(t + cfg.latency_s)
-                pend_out = (min(jf, N_BARS - 1), "signal:" + act.reason, t)
+                pend_out = (min(jf, N_BARS - 1), "signal:" + act.reason, t + cfg.latency_s)
     return None
 
 
@@ -1229,14 +1239,16 @@ def run_trades(ds: Dataset, strategy_fn: StrategyFn, params: Mapping, cfg: FillC
 
 
 def run_placebo(ds: Dataset, strategy_fn: StrategyFn, params: Mapping, cfg: FillConfig, signals: pd.DataFrame,
-                exits: Sequence[ExitSpec], n_draws: int = 20, seed: int = 0,
-                eligible: Callable[[AsOf], bool] | None = None, max_tries: int = 200) -> pd.DataFrame:
+                n_draws: int = 20, seed: int = 0, eligible: Callable[[AsOf], bool] | None = None,
+                max_tries: int = 200) -> pd.DataFrame:
     """Matched-timing random entries (PLAN 3.4): for each signal, ``n_draws`` entries in random eligible coins of
-    the same split at a decision age within +-120 s of the signal's, with the same exits (mechanical + the
-    strategy's exit logic, called with ``pos.is_placebo = True`` and an empty state)."""
+    the same split at a decision age within +-120 s of the signal's, with the same exits (the signal's mechanical
+    ExitSpec + the strategy's exit logic, called with ``pos.is_placebo = True`` and an empty state).
+    ``eligible(snap)`` optionally restricts placebo entries (e.g. alive coins only)."""
     mints = ds.mints
     rows = []
-    for si, (sig, ex) in enumerate(zip(signals.itertuples(index=False), exits)):
+    for si, sig in enumerate(signals.itertuples(index=False)):
+        ex = _spec_of(sig)
         rng = np.random.default_rng([seed, si])
         a = float(sig.age_dec_s)
         got = tries = 0
@@ -1246,7 +1258,7 @@ def run_placebo(ds: Dataset, strategy_fn: StrategyFn, params: Mapping, cfg: Fill
             ks = np.arange(1, N_BARS)
             ages = cd.m0 + 60 * ks + GRID_OFFSET_S - cd.g
             ok = np.abs(ages - a) <= PLACEBO_AGE_TOL_S
-            ok &= ((cd.m0 + 60 * ks + GRID_OFFSET_S + cfg.latency_s - cd.m0) // 60) < N_BARS
+            ok &= ((60 * ks + GRID_OFFSET_S + cfg.latency_s) // 60) < N_BARS - 1
             cand = ks[ok]
             if not len(cand):
                 continue
@@ -1426,14 +1438,14 @@ def backtest(strategy_fn: StrategyFn, split: str, params: Mapping | None = None,
     trades = run_trades(ds, strategy_fn, params, cfg, mints)
     pl = _frame([], extra=("signal", "signal_mint"))
     if placebo and len(trades):
-        exits = [_exits_of(ds, strategy_fn, params, cfg, r) for r in trades.itertuples(index=False)]
-        pl = run_placebo(ds, strategy_fn, params, cfg, trades, exits, n_placebo, seed, placebo_eligible)
+        pl = run_placebo(ds, strategy_fn, params, cfg, trades, n_placebo, seed, placebo_eligible)
     if stress is None:
         stress = {"costs_x1.5": cfg.stressed(1.5)} if (split in ONE_RUN_SPLITS or split == "val") else {}
     st = {k: run_trades(ds, strategy_fn, params, c, mints) for k, c in stress.items()}
     meta = {"hypothesis": hypothesis, "params": params, "split": split, "debug_only": debug,
             "cfg": {"size_usd": cfg.size_usd, "latency_s": cfg.latency_s, "entry_fill": cfg.entry_fill,
-                    "exit_fill": cfg.exit_fill, "rent_usd": cfg.rent_usd, "cost": dataclasses.asdict(cfg.cost)},
+                    "exit_fill": cfg.exit_fill, "rent_usd": cfg.rent_usd, "entry_bar_exits": cfg.entry_bar_exits,
+                    "exit_delay_bars": cfg.exit_delay_bars, "cost": dataclasses.asdict(cfg.cost)},
             "n_coins": len(ds), "coverage_underpowered": ds.coverage.get("underpowered"),
             "declarations": dict(declarations or {}), "seed": seed, "utc": utc_str(time.time())}
     rets = trades["ret_net"].to_numpy(float)
@@ -1441,12 +1453,6 @@ def backtest(strategy_fn: StrategyFn, split: str, params: Mapping | None = None,
                       ledger_path, debug=debug)
     meta.update(info)
     return Result(trades=trades, placebo=pl, stress=st, meta=meta)
-
-
-def _exits_of(ds: Dataset, strategy_fn: StrategyFn, params: Mapping, cfg: FillConfig, row: Any) -> ExitSpec:
-    """Re-ask the strategy at the signal's decision time for its Enter (to copy the exit spec to placebos)."""
-    order = strategy_fn(AsOf(ds.coin(row.mint), row.t_dec, ds.sol), params, None)
-    return order.exits if isinstance(order, Enter) else ExitSpec()
 
 
 # =========================================================================== statistics
@@ -1547,26 +1553,26 @@ def placebo_compare(trades: pd.DataFrame, placebo: pd.DataFrame, B: int = 10_000
 def portfolio_sim(trades: pd.DataFrame, start_usd: float = 100.0, max_open: int = 5, size_usd: float = 20.0) -> dict:
     """PLAN 3.4: $100, at most 5 open positions, fixed $20 tickets, every skipped signal logged.
     Positions are carried at cost until they close (realized equity)."""
+    import heapq
+
     if not len(trades):
         return {"final_equity": start_usd, "max_dd_pct": 0.0, "taken": 0, "skipped": 0, "skipped_mints": []}
     t = trades.sort_values(["t_in", "mint"])
     cash, open_, eq, skipped = start_usd, [], [start_usd], []
     for r in t.itertuples(index=False):
-        open_.sort()
         while open_ and open_[0][0] <= r.t_in:
-            _, back = open_.pop(0)
+            _, _, back = heapq.heappop(open_)
             cash += back
-            eq.append(cash + 0)
-            eq[-1] = cash + sum(size_usd for _ in open_)
+            eq.append(cash + size_usd * len(open_))
         if len(open_) >= max_open or cash < size_usd:
             skipped.append(r.mint)
             continue
         cash -= size_usd
-        open_.append((r.t_out, size_usd * (1 + r.ret_net)))
-    for _, back in sorted(open_):
+        heapq.heappush(open_, (float(r.t_out), len(eq) + len(skipped) + len(open_), size_usd * (1 + float(r.ret_net))))
+    while open_:
+        _, _, back = heapq.heappop(open_)
         cash += back
-        eq.append(cash + sum(size_usd for _ in open_[: 0]))
-    eq.append(cash)
+        eq.append(cash + size_usd * len(open_))
     peak, dd = -math.inf, 0.0
     for v in eq:
         peak = max(peak, v)
