@@ -195,7 +195,7 @@ def fetch_raw_validation(out: Path, ch: CryptoHouse, sample: list[dict], max_hou
 
 def _fetch_raw_parts(ch: CryptoHouse, slots: SlotMap, cs: list[dict], max_trades: int = 300) -> list[dict]:
     """raw.sql for launch windows of coins created in one hour; halves the coin set on a 1 MB overflow."""
-    from cryptohouse import ResultTooLarge
+    from cryptohouse import QueryTimeout, ResultTooLarge
     t0 = floor_to(min(c["c0"] for c in cs) - 5, Q15)
     t1 = floor_to(max(c["c0"] for c in cs) + 125, Q15) + Q15
     slots.ensure(t0 - Q15, t1 + Q15)
@@ -204,7 +204,7 @@ def _fetch_raw_parts(ch: CryptoHouse, slots: SlotMap, cs: list[dict], max_trades
                   mints=sql_in([c["mint"] for c in cs]), min_usol=0, max_trades=max_trades)
     try:
         res = ch.query(render_sql("raw", **params), tag=f"validate:raw:{utc(t0)}:{len(cs)}")
-    except ResultTooLarge:
+    except (ResultTooLarge, QueryTimeout):
         if len(cs) == 1:
             return []
         h = len(cs) // 2
