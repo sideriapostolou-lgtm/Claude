@@ -9,6 +9,11 @@ tracebacks - is scrubbed of:
 * a JSON array of 64 small integers (solana-keygen secret format),
 * Anthropic-style keys (``sk-ant-...``).
 
+Streams: DEBUG/INFO go to **stdout** and WARNING+ to **stderr** (Railway, like
+most log collectors, labels every stderr line "error"). Both handlers share the
+one redaction filter. Pass ``stream=`` to send every level to a single stream
+instead (tests, and commands whose stdout carries data such as ``--json``).
+
 Module loggers: ``log = get_logger(__name__)`` -> ``nightcrawler.<module>``.
 Message style: ``"event key=value key=value"`` (one line; newlines are escaped).
 """
@@ -82,26 +87,51 @@ class OneLineFormatter(logging.Formatter):
         return text.replace("\r", "").replace("\n", " | ")
 
 
-def setup_logging(level: str = "INFO", secrets: Iterable[str] = (), stream: IO[str] | None = None) -> RedactionFilter:
-    """Configure the root logger with one redacting stream handler (idempotent).
+class _BelowLevel(logging.Filter):
+    """Passes only records below ``level`` (keeps WARNING+ off the stdout handler)."""
 
-    Returns the filter so callers can ``add_secret`` later (e.g. a freshly
+    def __init__(self, level: int) -> None:
+        super().__init__()
+        self.level = level
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        return record.levelno < self.level
+
+
+def setup_logging(level: str = "INFO", secrets: Iterable[str] = (), stream: IO[str] | None = None) -> RedactionFilter:
+    """Configure the root logger with redacting stream handlers (idempotent).
+
+    Without ``stream``: DEBUG/INFO -> ``sys.stdout``, WARNING+ -> ``sys.stderr``.
+    With ``stream``: every level -> that one stream.
+    Returns the (shared) filter so callers can ``add_secret`` later (e.g. a freshly
     generated wallet secret). Third-party chatty loggers are capped at WARNING.
     """
     root = logging.getLogger()
     for h in list(root.handlers):
         if getattr(h, "_nightcrawler", False):
             root.removeHandler(h)
-    handler = logging.StreamHandler(stream or sys.stderr)
-    handler._nightcrawler = True  # type: ignore[attr-defined]
     filt = RedactionFilter(secrets)
-    handler.addFilter(filt)
-    handler.setFormatter(OneLineFormatter())
-    root.addHandler(handler)
+    if stream is not None:
+        root.addHandler(_handler(stream, filt))
+    else:
+        root.addHandler(_handler(sys.stdout, filt, below=logging.WARNING))
+        root.addHandler(_handler(sys.stderr, filt, level=logging.WARNING))
     root.setLevel(getattr(logging, str(level).upper(), logging.INFO))
     for noisy in ("urllib3", "httpx", "httpcore", "anthropic"):
         logging.getLogger(noisy).setLevel(logging.WARNING)
     return filt
+
+
+def _handler(stream: IO[str], filt: RedactionFilter, *, level: int = logging.NOTSET,
+             below: int | None = None) -> logging.Handler:
+    handler = logging.StreamHandler(stream)
+    handler._nightcrawler = True  # type: ignore[attr-defined]
+    handler.setLevel(level)
+    if below is not None:
+        handler.addFilter(_BelowLevel(below))
+    handler.addFilter(filt)
+    handler.setFormatter(OneLineFormatter())
+    return handler
 
 
 def get_logger(name: str) -> logging.Logger:

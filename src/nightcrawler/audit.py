@@ -26,9 +26,15 @@ audit even though the chain itself still verifies.
 
 It also checks the books themselves: every fill must belong to a position
 (``Fill.position_id`` or the position's ``entry_fill_ids``/``exit_fill_ids``;
-an orphan fill means tokens nobody manages) and every open position's
-``token_amount`` must equal its fills' net tokens. Both flag ``ok=False``, as
-does a broken receipt chain.
+an orphan fill means tokens nobody manages), and every position - open AND
+closed, any mode - must equal the sums of its own fills (the ``Position``
+contract): ``token_amount`` = net tokens, ``initial_token_amount`` = tokens
+bought, ``cost_lamports`` = SOL of buys, ``proceeds_lamports`` = SOL of sells,
+``fees_lamports`` and ``rent_lamports`` = their sums (``position_drift``). Both
+flag ``ok=False``, as does a broken receipt chain. One exception: a closed paper
+position whose fills all precede the latest ``paper_reset`` and whose only drift
+is tokens left in its fills was abandoned by that reset (the virtual wallet was
+wiped); it is listed in ``position_drift`` and ``issues`` without failing.
 
 It also builds per-trade P&L (realized, fees, impact) and a daily summary.
 All amounts lamports unless named ``*_usd``; ``*_pct`` are percent.
@@ -37,7 +43,7 @@ All amounts lamports unless named ``*_usd``; ``*_pct`` are percent.
 from __future__ import annotations
 
 from collections import defaultdict
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -45,6 +51,7 @@ from nightcrawler.clock import RealClock, iso_utc, utc_day
 from nightcrawler.models import LAMPORTS_PER_SOL, Fill, Position
 
 __all__ = [
+    "POSITION_SUMS",
     "SOL_DRIFT_TOLERANCE_LAMPORTS",
     "AuditReport",
     "Auditor",
@@ -57,6 +64,15 @@ __all__ = [
 SOL_DRIFT_TOLERANCE_LAMPORTS = 100_000  # 0.0001 SOL
 #: Live token balances may differ from the books by rounding of at most this many base units.
 TOKEN_DRIFT_TOLERANCE = 1
+#: ``Position`` field -> its value recomputed from the position's own fills (the documented contract).
+POSITION_SUMS: dict[str, Callable[[list[Fill]], int]] = {
+    "token_amount": lambda fills: sum(f.token_delta() for f in fills),
+    "initial_token_amount": lambda fills: sum(f.token_amount for f in fills if f.side == "buy"),
+    "cost_lamports": lambda fills: sum(f.sol_lamports for f in fills if f.side == "buy"),
+    "proceeds_lamports": lambda fills: sum(f.sol_lamports for f in fills if f.side == "sell"),
+    "fees_lamports": lambda fills: sum(f.fees_lamports for f in fills),
+    "rent_lamports": lambda fills: sum(f.rent_lamports for f in fills),
+}
 
 
 @dataclass(slots=True)
@@ -118,6 +134,8 @@ class AuditReport:
     totals: dict[str, Any] = field(default_factory=dict)  # realized_lamports, fees_lamports, trades, win_rate_pct
     chain_ok: bool | None = None
     chain_first_bad_seq: int | None = None
+    #: ``{position_id: {field: {books, fills, drift}}}`` (drift = books - fills), see :data:`POSITION_SUMS`
+    position_drift: dict[str, dict[str, dict[str, int]]] = field(default_factory=dict)
 
 
 # --------------------------------------------------------------------------- pure P&L
@@ -341,13 +359,37 @@ class Auditor:
         if orphans:
             self._problem(report, f"{len(orphans)} fill(s) not linked to any position "
                                   f"(tokens nobody manages): {', '.join(orphans[:5])}")
+        abandoned = self._abandoned_by_reset(positions, grouped)
         for p in positions:
-            if not p.is_open:
+            drift: dict[str, dict[str, int]] = {}
+            for name, total in POSITION_SUMS.items():
+                books, from_fills = int(getattr(p, name)), total(grouped[p.id])
+                if books != from_fills:
+                    drift[name] = {"books": books, "fills": from_fills, "drift": books - from_fills}
+            if not drift:
                 continue
-            net = sum(f.token_delta() for f in grouped[p.id])
-            if net != p.token_amount:
-                self._problem(report, f"position {p.id} ({p.symbol or p.mint}) says {p.token_amount} tokens, "
-                                      f"its fills net {net}")
+            report.position_drift[p.id] = drift
+            label = f"position {p.id} ({p.symbol or p.mint})"
+            tokens = drift.get("token_amount")
+            if p.id in abandoned and set(drift) == {"token_amount"} and tokens["books"] == 0 < tokens["fills"]:
+                report.issues.append(f"{label} was closed by a paper reset with {tokens['fills']} tokens unsold "
+                                     "(the virtual wallet was wiped)")
+                continue
+            for name, d in drift.items():
+                if name == "token_amount":
+                    self._problem(report, f"{label} says {d['books']} tokens, its fills net {d['fills']}")
+                else:
+                    self._problem(report, f"{label} {name}: books {d['books']}, its fills {d['fills']} "
+                                          f"({d['drift']:+d})")
+
+    def _abandoned_by_reset(self, positions: list[Position], grouped: dict[str, list[Fill]]) -> set[str]:
+        """Ids of closed paper positions whose fills all precede the latest ``paper_reset``."""
+        reset = self.ledger.last_receipt("note", {"event": "paper_reset"})
+        if reset is None:
+            return set()
+        later = {f.id for f in self.ledger.fills_after_seq(reset.seq, mode="paper")}
+        return {p.id for p in positions if not p.is_open and grouped[p.id]
+                and all(f.mode == "paper" and f.id not in later for f in grouped[p.id])}
 
     # ------------------------------------------------------------------ text
     @staticmethod
@@ -364,6 +406,10 @@ class Auditor:
                       for mint, d in report.token_drift.items()]
         else:
             lines.append("Tokens: no drift" if report.broker_sol_lamports is not None else "Tokens: not compared")
+        if report.position_drift:
+            lines.append("Position drift (position row vs the sum of its fills):")
+            lines += [f"  {pid} {name}: books {d['books']}, fills {d['fills']}, drift {d['drift']:+d}"
+                      for pid, fields in report.position_drift.items() for name, d in fields.items()]
         if report.issues:
             lines.append("Issues:")
             lines += [f"  - {issue}" for issue in report.issues]

@@ -283,6 +283,20 @@ class Settings:
     dashboard_token: Secret | None = _f(None, "secret", "If set, the dashboard requires ?token= or cookie",
                                         secret=True)
 
+    # ---- provider usage budgets (observability team) -------------------------
+    # The dashboard's Usage panel shows calls per provider per UTC day and month against these
+    # free-tier budgets, with a warning chip at 80 %. 0 = no budget (the provider only rate-limits).
+    # The AI judge's budget is JUDGE_MAX_DAILY_USD (above).
+    usage_helius_monthly_credits: int = _f(1_000_000, "count", "Helius credits per UTC month (free plan: "
+                                           "1,000,000); nightcrawler counts 1 credit per RPC call. 0 = no budget",
+                                           lo=0)
+    usage_jupiter_monthly_calls: int = _f(0, "count", "Jupiter calls per UTC month (0 = no budget: the free API "
+                                          "is only rate-limited)", lo=0)
+    usage_geckoterminal_monthly_calls: int = _f(0, "count", "GeckoTerminal calls per UTC month (0 = no budget)",
+                                                lo=0)
+    usage_dexscreener_monthly_calls: int = _f(0, "count", "DexScreener calls per UTC month (0 = no budget)", lo=0)
+    usage_rugcheck_monthly_calls: int = _f(0, "count", "RugCheck calls per UTC month (0 = no budget)", lo=0)
+
     # ---- intervals ----------------------------------------------------------
     discovery_interval_s: float = _f(30.0, "seconds", "Crawler poll interval", lo=1)
     watch_interval_s: float = _f(60.0, "seconds", "Watchlist evaluation interval", lo=1)
