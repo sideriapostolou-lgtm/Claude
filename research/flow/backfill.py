@@ -50,7 +50,7 @@ Q15 = 900
 HORIZON_S = 180 * 60          # B2 window after graduation
 CURVE_LOOKBACK_S = 30 * 60    # scan this much before a curve chunk for creations of slow graduates
 LAUNCH_S = 120                # launch window after creation
-B2_MAX_POOLS = 150            # pools per B2 query (result-size guard)
+B2_MAX_POOLS = 260            # pools per B2 query (result-size guard; ~0.6 MB server-side at 250)
 UEXT_START = 1789516800       # 2026-09-16 00:00 UTC
 
 
