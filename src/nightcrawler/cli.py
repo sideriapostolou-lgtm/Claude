@@ -239,13 +239,24 @@ def _wallet_pubkey(settings: Settings, ledger: Any | None = None) -> str | None:
     return ledger.get_kv("wallet.pubkey") if ledger is not None else None
 
 
-def _sources(settings: Settings) -> Any:
+def _make_clock() -> Any:
+    """The wall clock (tests patch this)."""
     from nightcrawler.clock import RealClock
+
+    return RealClock()
+
+
+def _http(settings: Settings, clock: Any) -> Any:
+    """The shared rate-limited HTTP client (tests patch this to inject a fake transport)."""
     from nightcrawler.http import HttpClient
+
+    return HttpClient.from_settings(settings, clock=clock)
+
+
+def _sources(settings: Settings, clock: Any | None = None) -> Any:
     from nightcrawler.sources import build_sources
 
-    http = HttpClient.from_settings(settings, clock=RealClock())
-    return build_sources(settings, http)
+    return build_sources(settings, _http(settings, clock if clock is not None else _make_clock()))
 
 
 # ---------------------------------------------------------------------- handlers
@@ -283,13 +294,12 @@ def cmd_run(args: argparse.Namespace, settings: Settings) -> int:
 
 
 def cmd_scan(args: argparse.Namespace, settings: Settings) -> int:
-    from nightcrawler.clock import RealClock
     from nightcrawler.cocoon import Cocoon
     from nightcrawler.crawler import Crawler
 
     _setup_logging(args, settings, quiet=True)
-    clock = RealClock()
-    sources = _sources(settings)
+    clock = _make_clock()
+    sources = _sources(settings, clock)
     crawler = Crawler(sources, settings, clock)
     cocoon = Cocoon(sources, settings, clock)
     print("Crawling Jupiter, GeckoTerminal and DexScreener ...", file=sys.stderr)
@@ -416,14 +426,12 @@ def cmd_backtest(args: argparse.Namespace, settings: Settings) -> int:
 
 
 def cmd_collect(args: argparse.Namespace, settings: Settings) -> int:
-    from nightcrawler.clock import RealClock
     from nightcrawler.dataset import collect
-    from nightcrawler.http import HttpClient
     from nightcrawler.sources.geckoterminal import GeckoTerminalClient
 
     _setup_logging(args, settings)
-    clock = RealClock()
-    gecko = GeckoTerminalClient(HttpClient.from_settings(settings, clock=clock))
+    clock = _make_clock()
+    gecko = GeckoTerminalClient(_http(settings, clock))
     out = Path(args.out) if args.out else settings.dataset_dir
 
     def progress(done: int, total: int, pool: str) -> None:
@@ -568,13 +576,12 @@ def cmd_sell_all(args: argparse.Namespace, settings: Settings) -> int:
 
 
 def cmd_reset_halt(args: argparse.Namespace, settings: Settings) -> int:
-    from nightcrawler.clock import RealClock
     from nightcrawler.risk import RiskManager
 
     _setup_logging(args, settings, quiet=True)
     ledger = _open_ledger(settings)
     try:
-        risk = RiskManager(settings, ledger, RealClock())
+        risk = RiskManager(settings, ledger, _make_clock())
         halted, reason = risk.is_halted()
         if not halted:
             print("not halted; nothing to do")
@@ -592,13 +599,12 @@ def cmd_reset_halt(args: argparse.Namespace, settings: Settings) -> int:
 
 
 def cmd_dashboard(args: argparse.Namespace, settings: Settings) -> int:
-    from nightcrawler.clock import RealClock
     from nightcrawler.dashboard import DashboardServer, build_state
 
     _setup_logging(args, settings)
     settings.ensure_data_dir()
     ledger = _open_ledger(settings, must_exist=False)
-    clock = RealClock()
+    clock = _make_clock()
     cache: dict[str, Any] = {}
     server = DashboardServer(settings, lambda: build_state(ledger, settings, clock.now(), cache))
     try:

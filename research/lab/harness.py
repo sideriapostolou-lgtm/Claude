@@ -36,7 +36,7 @@ Allowed metadata (``view.meta``): mint, symbol, name, created_ts, supply, launch
 creation (quote mint, mayhem opt-in, socials present, description length, token program ...).
 NOT exposed: coverage/end of data, last trade time, census outcome fields, pool reserves, k.
 
-Default universe: SOL-paired coins whose bars are all 1-minute (983 of 1,070). Splits: see
+Default universe: SOL-paired, non-Mayhem coins whose bars are all 1-minute (see in_default_universe). Splits: see
 ``splits.json``; the TEST split is refused unless env ``LAB_ALLOW_TEST=1``.
 
 Minimal strategy (buy 2 minutes after graduation, 25 % stop, 50 % take-profit, 60 min max)::
@@ -190,12 +190,17 @@ def coin_paths(lab: Path | None = None) -> list[Path]:
 
 
 def in_default_universe(doc_or_coin: Any) -> bool:
-    """SOL-paired coins whose bars are all 1-minute (launch-time + data-quality filter)."""
+    """SOL-paired, non-Mayhem coins whose bars are all 1-minute (launch-time + data-quality filter).
+
+    Mayhem-mode coins (opt-in at launch) "complete" with ~0.1-10 SOL instead of 85 SOL; their
+    PumpSwap pools are 100-10,000x shallower and their USD prices sit at $1-$50 market caps, so
+    any $20 trade there is fiction. Non-SOL quotes need a second hop through an unknown pool."""
     if isinstance(doc_or_coin, Coin):
         launch, cov = doc_or_coin.launch, doc_or_coin.coverage
     else:
         launch, cov = doc_or_coin.get("launch") or {}, doc_or_coin.get("coverage") or {}
-    return bool(launch.get("quote_is_sol")) and cov.get("source", "1m") in ("1m", "gt1m+1m")
+    return (bool(launch.get("quote_is_sol")) and not launch.get("mayhem")
+            and cov.get("source", "1m") in ("1m", "gt1m+1m"))
 
 
 # --------------------------------------------------------------------------- splits

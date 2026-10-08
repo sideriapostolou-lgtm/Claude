@@ -216,14 +216,25 @@ class CoinCostContext:
 def context_for_coin(doc: dict, k_policy: str = "grad") -> CoinCostContext:
     """Cost context from a coin file. ``k_policy``:
 
-    * ``"grad"`` (default, leak-free): SOL-paired -> ``K_GRAD``; other quotes -> current k
-      (no launch constant known), shrunk by 2x as a conservative margin.
+    * ``"grad"`` (default, leak-free): SOL-paired -> ``K_GRAD`` (verified: live Jupiter quote
+      impact on dead and live graduates gives k = 1.02-1.06 x K_GRAD; GeckoTerminal's
+      reserve_in_usd is NOT reliable for dead pools - it implies ~0.22 x); other quotes -> current
+      k (no launch constant known), shrunk by 2x as a conservative margin; Mayhem-mode coins ->
+      min(current k, K_GRAD) because their pools are 100-10,000x shallower.
     * ``"min_now"``: min(K_GRAD, k measured from current reserves) - for calibration only.
     """
     cost = doc.get("cost") or {}
-    qm = cost.get("quote_mint") or (doc.get("launch") or {}).get("quote_mint")
+    launch = doc.get("launch") or {}
+    qm = cost.get("quote_mint") or launch.get("quote_mint")
     quote = "SOL" if qm == SOL_QUOTE else "USDC" if qm == USDC_MINT else "OTHER"
     k_now = cost.get("k_now_quote_token")
+    if launch.get("mayhem"):
+        # Mayhem-mode coins "complete" with ~0.1-10 SOL instead of 85 SOL: their pools are tiny.
+        # GeckoTerminal's reserve is the only (rough) estimate; never assume K_GRAD for them.
+        k = min(float(k_now), K_GRAD) if k_now else K_GRAD / 1e4
+        return CoinCostContext(k_sol=k, quote=quote if quote != "USDC" else "USDC",
+                               quote_usd=float(cost.get("quote_price_usd_now") or 1.0),
+                               graduated_ts=float(doc.get("graduated_ts") or 0))
     if quote == "SOL":
         k = K_GRAD if k_policy == "grad" or not k_now else min(K_GRAD, float(k_now))
         return CoinCostContext(k_sol=k, quote="SOL", graduated_ts=float(doc.get("graduated_ts") or 0))
