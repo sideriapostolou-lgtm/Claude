@@ -11,6 +11,7 @@ daemon thread. Routes (GET only; anything else -> 405; unknown path -> 404):
   dark/light via ``prefers-color-scheme``, big PAPER/LIVE badge, equity
   sparkline as inline SVG, positions & trades tables, receipt head hash with
   a "what is this?" explainer).
+* ``/team`` and ``/api/team`` -> the team room (:mod:`nightcrawler.teamroom`), same auth and scrubbing.
 
 Auth: if ``DASHBOARD_TOKEN`` is set, ``/`` and ``/api/state`` require
 ``?token=<value>`` or cookie ``nc_token=<value>`` (constant-time compare);
@@ -784,6 +785,7 @@ def render_html(settings: Settings) -> str:
         "<section class=\"card\" id=\"receipts\"></section>\n"
         "<section class=\"card\" id=\"decisions\"></section>\n"
         "<section class=\"card\" id=\"details\"></section>\n"
+        "<p class=\"sub\"><a href=\"team\">Team room: watch every bot member at work →</a></p>\n"
         "<footer id=\"foot\">read-only dashboard</footer>\n</main>\n"
         f"<script>{_SCRIPT}</script>\n</body>\n</html>\n"
     )
@@ -816,7 +818,7 @@ class _Handler(BaseHTTPRequestHandler):
         if parts.path == "/healthz":
             self._send(200, b"ok", "text/plain; charset=utf-8")
             return
-        if parts.path not in ("/", "/api/state"):
+        if parts.path not in ("/", "/api/state", "/team", "/api/team"):
             self._send(404, b"not found", "text/plain; charset=utf-8")
             return
         dashboard: DashboardServer = self.server.dashboard  # type: ignore[attr-defined]
@@ -826,6 +828,9 @@ class _Handler(BaseHTTPRequestHandler):
             self._send(401, _LOCKED_PAGE, "text/html; charset=utf-8")
             return
         headers = [("Set-Cookie", dashboard.cookie_header(self._is_https()))] if set_cookie else []
+        if parts.path in ("/team", "/api/team"):  # team room: nightcrawler.teamroom
+            self._send(*dashboard.team.response(parts.path, headers))
+            return
         if parts.path == "/":
             headers.append(("Content-Security-Policy", CONTENT_SECURITY_POLICY))
             self._send(200, dashboard.page, "text/html; charset=utf-8", headers)
@@ -896,7 +901,10 @@ class DashboardServer:
     """
 
     def __init__(self, settings: Settings, state_provider: Callable[[], dict[str, Any]],
-                 host: str | None = None, port: int | None = None) -> None:
+                 host: str | None = None, port: int | None = None, team: Any = None) -> None:
+        from nightcrawler.teamroom import TeamRoom  # late: teamroom builds on this module
+
+        self.team = team if team is not None else TeamRoom(settings)  # /team + /api/team
         self.settings = settings
         self.state_provider = state_provider
         self.host = host if host is not None else settings.dashboard_host
@@ -961,3 +969,4 @@ class DashboardServer:
             server.server_close()
         if thread is not None:
             thread.join(timeout=5)
+        self.team.close()
