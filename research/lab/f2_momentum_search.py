@@ -111,6 +111,32 @@ STAGE2_EXITS = [
     dict(stop_pct=None, trail_pct=None, max_hold_min=10),
     dict(stop_pct=None, trail_pct=None, max_hold_min=60),
 ]
+def stage3_grid() -> list[tuple[str, dict]]:
+    """Stability neighbourhood (TRAIN) around the best stage-2 'early' configuration: check time, hold,
+    stop. Purpose: see whether the result is a plateau or a spike - not to pick the peak."""
+    base = dict(entry="early", min_age_min=0, max_dd=0.25, min_vol_usd=5_000.0, vol_win=15, grad_kind="any",
+                trail_pct=None)
+    g = []
+    for cm, hold, stop in itertools.product((20, 25, 30, 40, 45), (5, 10, 20), (None, 0.2)):
+        g.append(("early", base | dict(check_min=cm, max_age_min=cm + 5, min_rel_grad=1.5, max_hold_min=hold,
+                                       stop_pct=stop)))
+    for cm, stop in itertools.product((20, 25, 30, 40, 45), (None, 0.2)):
+        g.append(("early", base | dict(check_min=cm, max_age_min=cm + 5, min_rel_grad=0.5, max_hold_min=10,
+                                       stop_pct=stop)))
+    return g
+
+
+def stage4_grid() -> list[tuple[str, dict]]:
+    """Long-horizon trend on established coins (declared before running; 2^5 = 32 configs)."""
+    g = []
+    exits = [dict(stop_pct=0.10, trail_pct=0.10, max_hold_min=120), dict(stop_pct=0.20, trail_pct=0.20, max_hold_min=360)]
+    for a0, mc, tr, hl, ex in itertools.product((120, 360), (1_000_000.0, 5_000_000.0), (0.02, 0.05), (False, True),
+                                                exits):
+        g.append(("trend", dict(entry="trend", min_age_min=a0, max_age_min=1440, mc_lo=mc, trend_bars=60, trend_ret=tr,
+                                higher_lows=hl, min_vol_usd=1_000.0, vol_win=60, max_entries=3, **ex)))
+    return g
+
+
 EXIT_KEYS = ("stop_pct", "trail_pct", "trail_atr_mult", "max_hold_min", "fail_bars", "fail_ret", "tp_pct",
              "tp_fraction", "trail_after_tp")
 
@@ -315,6 +341,33 @@ def robustness(params: dict, split: str = "validation") -> dict:
     return out
 
 
+class rug_aware_fills:
+    """Context manager (stress test, this process only): a stop/trail that wicks through fills at
+    min(harness fill, bar close). On a one-transaction rug the bar closes at the floor and no bot can
+    sell at the halfway price the default "half" rule assumes. Bars that recover keep the harness fill."""
+
+    def __enter__(self):
+        import harness as Hm
+        self.Hm = Hm
+        self.oi, self.od = Hm.CoinEngine._intrabar, Hm.CoinEngine._down_fill
+        oi, od = self.oi, self.od
+
+        def intrabar(eng, j):
+            eng._cur_close = float(eng.coin.c[j])
+            return oi(eng, j)
+
+        def down_fill(eng, level, o, low):
+            f = od(eng, level, o, low)
+            c = getattr(eng, "_cur_close", None)
+            return min(f, max(c, low)) if c is not None else f
+
+        Hm.CoinEngine._intrabar, Hm.CoinEngine._down_fill = intrabar, down_fill
+        return self
+
+    def __exit__(self, *a):
+        self.Hm.CoinEngine._intrabar, self.Hm.CoinEngine._down_fill = self.oi, self.od
+
+
 ZERO_COST = CostModel(ultra_bps=0, mev_bps=0, fee_mult=0, impact_mult=1e-9, priority_sol=0, base_fee_lamports=0)
 
 
@@ -357,6 +410,10 @@ if __name__ == "__main__":
         run_batch("stage1", stage1_grid(), "train")
     elif cmd == "stage2":
         run_batch("stage2", stage2_grid(), "train")
+    elif cmd == "stage3":
+        run_batch("stage3", stage3_grid(), "train")
+    elif cmd == "stage4":
+        run_batch("stage4", stage4_grid(), "train")
     elif cmd == "shortlist":
         shortlist()
     elif cmd == "validate":

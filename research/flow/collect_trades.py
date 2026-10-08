@@ -12,7 +12,7 @@ collector stays well below that and honours ``Retry-After``.
 
 Usage::
 
-    python research/flow/collect_trades.py CENSUS_JSON OUT_DIR [--rpm 12] [--max-coins N]
+    python research/flow/collect_trades.py CENSUS_JSON OUT_DIR [--rpm 12] [--windows 0-1,1-2] [--max-pages 10]
 """
 
 from __future__ import annotations
@@ -30,8 +30,10 @@ import requests
 TRADES_URL = "https://swap-api.pump.fun/v2/coins/{mint}/trades"
 PAGE_LIMIT = 100
 # (start, end) offsets from coin creation, in minutes, fetched in this order.
-WINDOWS_MIN = [(0, 10), (10, 30), (30, 60), (60, 180)]
-MAX_PAGES_PER_WINDOW = 25
+# Pages run newest-first, so a capped window loses its EARLIEST trades; keep
+# windows short enough that the page cap is rarely reached.
+DEFAULT_WINDOWS = "0-1,1-2"
+DEFAULT_MAX_PAGES = 10
 KEEP_FIELDS = (
     "slotIndexId", "tx", "timestamp", "userAddress", "type", "program",
     "priceUsd", "priceSol", "amountUsd", "amountSol", "baseAmount",
@@ -89,11 +91,11 @@ def fetch_page(session: requests.Session, throttle: Throttle, mint: str, cursor:
     raise RuntimeError(f"gave up on {mint} after repeated throttling")
 
 
-def fetch_window(session, throttle, mint: str, start_ms: int, end_ms: int) -> tuple[list[dict], bool]:
+def fetch_window(session, throttle, mint: str, start_ms: int, end_ms: int, max_pages: int) -> tuple[list[dict], bool]:
     """Fetch trades with start_ms <= ts < end_ms. Returns (trades, complete)."""
     cursor = f"0000000000000000000000-{end_ms}"
     trades: list[dict] = []
-    for _ in range(MAX_PAGES_PER_WINDOW):
+    for _ in range(max_pages):
         page = fetch_page(session, throttle, mint, cursor)
         batch = page.get("trades") or []
         for trade in batch:
@@ -109,19 +111,19 @@ def fetch_window(session, throttle, mint: str, start_ms: int, end_ms: int) -> tu
     return trades, False
 
 
-def collect_coin(session, throttle, coin: dict, out_dir: Path) -> dict:
+def collect_coin(session, throttle, coin: dict, out_dir: Path, windows_min: list[tuple[float, float]], max_pages: int) -> dict:
     mint = coin["mint"]
     created_ms = int(coin["created_timestamp"])
     windows = []
     all_trades: list[dict] = []
-    for start_min, end_min in WINDOWS_MIN:
-        start_ms = created_ms + start_min * 60_000
-        end_ms = created_ms + end_min * 60_000
+    for start_min, end_min in windows_min:
+        start_ms = created_ms + int(start_min * 60_000)
+        end_ms = created_ms + int(end_min * 60_000)
         if end_ms > time.time() * 1000:
             end_ms = int(time.time() * 1000)
         if end_ms <= start_ms:
             break
-        trades, complete = fetch_window(session, throttle, mint, start_ms, end_ms)
+        trades, complete = fetch_window(session, throttle, mint, start_ms, end_ms, max_pages)
         all_trades.extend(trades)
         windows.append({"start_min": start_min, "end_min": end_min, "trades": len(trades), "complete": complete})
     all_trades.sort(key=lambda t: (t["ts_ms"], t.get("slotIndexId") or ""))
@@ -148,6 +150,9 @@ def main() -> None:
     parser.add_argument("--rpm", type=float, default=12.0)
     parser.add_argument("--max-coins", type=int, default=0)
     parser.add_argument("--seed", type=int, default=7)
+    parser.add_argument("--windows", default=DEFAULT_WINDOWS,
+                        help="comma-separated start-end minute offsets from creation, e.g. 0-1,1-2")
+    parser.add_argument("--max-pages", type=int, default=DEFAULT_MAX_PAGES, help="page cap per window")
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -161,6 +166,7 @@ def main() -> None:
     session = requests.Session()
     session.headers["User-Agent"] = "nightcrawler-research/0.1"
     throttle = Throttle(args.rpm)
+    windows_min = [tuple(float(x) for x in w.split("-")) for w in args.windows.split(",")]
     done = 0
     for coin in order:
         if args.max_coins and done >= args.max_coins:
@@ -169,7 +175,7 @@ def main() -> None:
             done += 1
             continue
         try:
-            summary = collect_coin(session, throttle, coin, out_dir)
+            summary = collect_coin(session, throttle, coin, out_dir, windows_min, args.max_pages)
             done += 1
             log.info("[%d] %s %s trades=%d windows=%s", done, coin.get("symbol"), coin["mint"],
                      summary["trades"], [(w["end_min"], w["trades"], w["complete"]) for w in summary["windows"]])

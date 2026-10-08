@@ -17,6 +17,9 @@ Entry families (``F2Params.entry``):
 * ``"squeeze"``   - volatility contraction then expansion: the previous ``squeeze_win`` bars spanned
   a high/low range <= ``squeeze_range`` of their close while at least ``squeeze_active`` of them
   traded, then the current bar closes above that range with a ``vol_mult`` volume surge.
+* ``"trend"``     - long-horizon higher-highs on established coins: close >= (1 + ``trend_ret``) x the
+  close ``trend_bars`` bars ago, close above the previous 10 bars' highs, optional ``higher_lows``
+  over the ``trend_bars`` window, >= ``min_vol_usd`` over ``vol_win`` bars (meant for old, large coins).
 
 Common filters: minutes since graduation in [``min_age_min``, ``max_age_min``], market cap
 (close x supply) in [``mc_lo``, ``mc_hi``], graduation kind (``grad_kind``: "any" | "organic" |
@@ -81,6 +84,9 @@ class F2Params:
     squeeze_win: int = 20
     squeeze_range: float = 0.25
     squeeze_active: int = 10
+    # ---- trend (long-horizon higher-highs on established coins)
+    trend_bars: int = 60
+    trend_ret: float = 0.05
     # ---- exits
     stop_pct: float | None = 0.15
     trail_pct: float | None = 0.15
@@ -179,6 +185,8 @@ class F2Momentum(Strategy):
             sig = self._breakout(i, view, c)
         elif p.entry == "squeeze":
             sig = self._squeeze(i, view, c)
+        elif p.entry == "trend":
+            sig = self._trend(i, view, c)
         else:
             raise ValueError(p.entry)
         if not sig:
@@ -245,6 +253,23 @@ class F2Momentum(Strategy):
         base = float(v[-p.vol_base - 1:-1].mean())
         if vi < p.vol_mult * max(base, 1.0):
             return False
+        return self._recent_vol_ok(view)
+
+    def _trend(self, i, view, c) -> bool:
+        p = self.p
+        n = i + 1
+        tb = p.trend_bars
+        if n < tb + 1 or float(view.v[-1]) <= 0.0:
+            return False
+        if c < (1.0 + p.trend_ret) * float(view.c[-tb - 1]):
+            return False
+        if c <= float(view.h[-11:-1].max()):  # at a fresh 10-bar high
+            return False
+        if p.higher_lows:
+            lows = view.l[-tb - 1:-1]
+            half = len(lows) // 2
+            if float(lows[half:].min()) <= float(lows[:half].min()):
+                return False
         return self._recent_vol_ok(view)
 
     def _exits(self, view) -> Exits:
