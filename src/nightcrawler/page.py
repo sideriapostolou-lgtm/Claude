@@ -37,6 +37,7 @@ MEMBERS: tuple[tuple[str, str, str], ...] = (
     ("receipts", "Receipts", "tamper-proof log"),
     ("coach", "Coach", "the self-learning system"),
 )
+#: Shown only when the learning module says it really can (``can_stop_trading``), never as static text.
 LEARNING_RULE = "The Coach can turn real trading OFF on its own, never ON."
 
 _STYLE = r"""
@@ -133,6 +134,7 @@ ol.events li.bad span::before{background:var(--critical)}
 background:var(--chip);border:1px solid var(--border);vertical-align:1px}
 .lead{font-size:16px;font-weight:650;margin:10px 0 0;overflow-wrap:anywhere}
 .rule{margin:12px 0 0;padding:10px 12px;border-radius:10px;background:var(--chip);font-size:14px;font-weight:600}
+.rule[hidden]{display:none}
 .verdict{font-size:19px;font-weight:700;margin:8px 0 0}
 .verdict.ready{color:var(--up)}
 .warning{margin:8px 0 0;color:var(--critical);font-weight:600;font-size:14px}
@@ -163,6 +165,7 @@ _SCRIPT = r"""
   const REFRESH_MS = Number(document.body.dataset.refresh || 15) * 1000;
   const SVG = "http://www.w3.org/2000/svg";
   const MINUS = "−";
+  const MONEY_STALE_S = 300;  // the bot checks the money every minute; older than this is worth saying
   const $ = (id) => document.getElementById(id);
   let token = null, timer = null, last = null, lastOkAt = null, serverOffset = 0;
 
@@ -209,8 +212,9 @@ _SCRIPT = r"""
     s = Math.max(0, s);
     if (s < 60) return Math.round(s) + " s";
     if (s < 3600) return Math.floor(s / 60) + " min";
-    if (s < 86400) return Math.floor(s / 3600) + " h " + Math.floor(s % 3600 / 60) + " min";
-    return Math.floor(s / 86400) + " d " + Math.floor(s % 86400 / 3600) + " h";
+    const [big, unit, small, unit2] = s < 86400 ? [Math.floor(s / 3600), " h", Math.floor(s % 3600 / 60), " min"]
+      : [Math.floor(s / 86400), " d", Math.floor(s % 86400 / 3600), " h"];
+    return big + unit + (small ? " " + small + unit2 : "");
   }
   function ago(ts) { return isNum(ts) ? dur(nowS() - ts) + " ago" : ""; }
   function when(ts) {
@@ -220,7 +224,7 @@ _SCRIPT = r"""
     return today ? d.toLocaleTimeString([], {hour: "2-digit", minute: "2-digit"})
       : d.toLocaleString([], {month: "short", day: "numeric", hour: "2-digit", minute: "2-digit"});
   }
-  const WORD = {working: "Working", idle: "Idle", waiting: "Waiting", blocked: "Blocked"};
+  const WORD = {working: "Working", idle: "Idle", waiting: "Waiting", blocked: "Blocked", absent: "Not built yet"};
   function chip(status) { return el("span", "chip " + status, el("i"), WORD[status] || status); }
   function track(value, cls) {
     const fill = el("div", "fill" + (cls ? " " + cls : ""));
@@ -252,6 +256,9 @@ _SCRIPT = r"""
         + " on top: not the bot's doing.");
     }
     if (!isNum(m.usd)) help.push("No money check yet: the first one comes about a minute after the bot starts.");
+    else if (isNum(m.as_of) && nowS() - m.as_of > MONEY_STALE_S) {
+      help.unshift("Last money check: " + dur(nowS() - m.as_of) + " ago.");
+    }
     $("money-help").textContent = help.join(" ");
     put($("chart"), chart(m.curve || [], m.start_usd, m.chart_ready));
   }
@@ -327,8 +334,8 @@ _SCRIPT = r"""
       node.className = "member " + m.status;
       put(node.querySelector(".state"), chip(m.status));
       node.querySelector(".doing").textContent = m.doing || "";
-      node.querySelector(".when").textContent = isNum(m.last_activity) ? "last active " + ago(m.last_activity)
-        : "no activity recorded yet";
+      node.querySelector(".when").textContent = m.status === "absent" ? "not part of this version yet"
+        : isNum(m.last_activity) ? "last active " + ago(m.last_activity) : "no activity recorded yet";
       const bars = (m.bars || []).map((b) => bar(b.label, b.value, b.text, "", b.note));
       put(node.querySelector(".more"), bars.length ? el("p", "sub", BAR_TITLES[m.id] || "") : null, ...bars,
         el("p", "sub", "Last events"), events(m.events));
@@ -338,15 +345,21 @@ _SCRIPT = r"""
   // ---------------------------------------------------------------- C. trades
   function renderTrades(tr) {
     $("trades-count").textContent = tr.open.length + " of " + tr.max_open + " open";
+    // a line from its known parts only: right after a buy there is no price (and no result) yet
+    const parts = (...bits) => bits.filter(Boolean).join(" · ");
+    const known = (v) => isNum(v) && v > 0;
+    const result = (v) => (isNum(v) ? el("span", "big " + tone(v), usd(v, true)) : null);
     const open = tr.open.map((p) => el("div", null,
-      el("div", "line", el("span", "coin", p.coin), el("span", "big " + tone(p.pnl_usd), usd(p.pnl_usd, true))),
-      el("div", "meta", "Bought at " + price(p.entry_usd) + " · now " + price(p.now_usd) + " · "
-        + pct(p.pnl_pct) + " · held " + dur(nowS() - p.opened_at)
-        + (p.partial ? " · half already sold at a profit" : ""))));
+      el("div", "line", el("span", "coin", p.coin), isNum(p.pnl_usd) ? el("span", "big " + tone(p.pnl_usd),
+        usd(p.pnl_usd, true)) : null),
+      el("div", "meta", parts(known(p.entry_usd) ? "Bought at " + price(p.entry_usd) : null,
+        known(p.now_usd) ? "now " + price(p.now_usd) : "price not checked yet", pct(p.pnl_pct),
+        isNum(p.opened_at) ? "held " + dur(nowS() - p.opened_at) : null,
+        p.partial ? "half already sold at a profit" : null))));
     const closed = tr.closed.map((p) => el("div", null,
       el("div", "line", el("span", "coin", p.coin, el("span", "tag", p.result === "won" ? "Won" : p.result === "lost"
-        ? "Lost" : "Even")), el("span", "big " + tone(p.pnl_usd), usd(p.pnl_usd, true))),
-      el("div", "meta", p.why + " · " + pct(p.pnl_pct) + " · closed " + ago(p.closed_at))));
+        ? "Lost" : "Even")), result(p.pnl_usd)),
+      el("div", "meta", parts(p.why, pct(p.pnl_pct), isNum(p.closed_at) ? "closed " + ago(p.closed_at) : null))));
     if (!open.length && !closed.length) {
       put($("trades-body"), el("p", "empty", "No trades yet — on most days the bot buys nothing, that's on purpose."));
       return;
@@ -369,6 +382,9 @@ _SCRIPT = r"""
       variants.length ? el("p", "help", "Proof: how close a strategy is to beating trading costs on data it never saw.")
         : null, ...variants);
     $("learn-data").textContent = l.data || "";
+    const rule = $("learn-rule");  // a safety claim: only when the learning system says it really can
+    rule.hidden = !l.rule;
+    rule.textContent = l.rule || "";
   }
 
   // ---------------------------------------------------------------- E. ready for real money?
@@ -433,11 +449,19 @@ _SCRIPT = r"""
     if (!lastOkAt) return;
     $("updated").textContent = "updated " + dur((Date.now() - lastOkAt) / 1000) + " ago";
   }
+  // The link's ?token= already set the login cookie (an HMAC, never the token), so a refresh sends only that
+  // cookie: the raw token is not written into proxy logs every few seconds. It is sent again only if the
+  // cookie was refused (cookies blocked, or the cookie is from an older token).
+  async function load() {
+    const opts = {cache: "no-store", credentials: "same-origin"};
+    let res = await fetch("api/page", opts);
+    if (res.status === 401 && token) res = await fetch("api/page?token=" + encodeURIComponent(token), opts);
+    return res;
+  }
   async function refresh() {
     clearTimeout(timer);
     try {
-      const url = "api/page" + (token ? "?token=" + encodeURIComponent(token) : "");
-      const res = await fetch(url, {cache: "no-store", credentials: "same-origin"});
+      const res = await load();
       if (res.status === 401) {
         offline("Locked: open the link that ends with ?token=…");
       } else if (!res.ok) {
@@ -522,7 +546,7 @@ def render_page_html(settings: Settings) -> str:
         "<section class=\"card\" id=\"learning\"><h2>Learning <small>the Coach</small></h2>"
         "<p class=\"lead\" id=\"learn-headline\">Loading…</p><p class=\"help\" id=\"learn-state\"></p>"
         "<div id=\"learn-variants\"></div><p class=\"help\" id=\"learn-data\"></p>"
-        f"<p class=\"rule\">{html.escape(LEARNING_RULE)}</p></section>\n"
+        "<p class=\"rule\" id=\"learn-rule\" hidden></p></section>\n"
 
         "<section class=\"card\" id=\"ready\"><h2>Ready for real money?</h2>"
         "<p class=\"verdict\" id=\"ready-headline\">Checking…</p>"

@@ -55,7 +55,8 @@ src/nightcrawler/
   dashboard.py       read-only phone dashboard (stdlib http.server)                        O6
   page.py            the ONE page at "/" (static HTML/CSS/JS + CSP, text-only inserts)     O6
   pagestate.py       /api/page: money, team, trades, learning card, checklist, usage       O6
-  readiness.py       "ready for real money?" six-step checklist (never optimistic)         O6
+  readiness.py       "ready for real money?" checklist over steps 1-5 (never optimistic)   O6
+  botwallet.py       paper mode: the bot wallet's SOL for that checklist (kv, every 10 min) O6
   teamroom.py        /api/team: every bot member's status from real data (+ TeamRoom glue) O6
   engine.py          Engine.tick()/run_forever(), build_engine                             Integrator
   cli.py             `nightcrawler` console script                                         Integrator

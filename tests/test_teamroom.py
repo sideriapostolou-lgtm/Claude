@@ -389,6 +389,27 @@ def test_daily_loss_limit_reached_blocks_risk(ledger: Ledger, settings: Settings
     assert risk["status"] == "blocked" and "daily loss limit" in risk["why"]
 
 
+def test_risk_says_flat_on_a_day_without_gain_or_loss(ledger: Ledger, settings: Settings) -> None:
+    """Exactly zero today is not "up"; a gain is."""
+    for ts, lamports in ((MIDNIGHT + 60, 1_000_000_000), (NOW - 30, 1_000_000_000)):
+        ledger.record_equity(EquityPoint(ts=ts, equity_lamports=lamports, sol_usd=100.0,
+                                         equity_usd=lamports / 1e7, mode="paper"))
+    risk = panels(build_team_state(ledger, settings, NOW))["risk"]
+    assert risk["doing"] == "Flat today: no gain or loss yet; 0 of 3 trade slots in use."
+    assert not risk["meter"]["text"].startswith("Up")
+    ledger.record_equity(EquityPoint(ts=NOW - 10, equity_lamports=1_010_000_000, sol_usd=100.0, equity_usd=101.0,
+                                     mode="paper"))
+    risk = panels(build_team_state(ledger, settings, NOW))["risk"]
+    assert risk["doing"] == "Up today; 0 of 3 trade slots in use." and risk["meter"]["text"].startswith("Up 0.0100")
+
+
+def test_a_far_future_activity_stamp_is_not_activity() -> None:
+    """A millisecond epoch or a clock far ahead must not keep a member Working forever."""
+    assert derive_status(NOW, NOW * 1000, 300) == ("idle", "nothing recorded yet")
+    assert derive_status(NOW, NOW + 3600, 300, waiting="w") == ("waiting", "w")
+    assert derive_status(NOW, NOW + 30, 300) == ("working", "")
+
+
 def test_counter_changes_between_reads_count_as_activity(ledger: Ledger, settings: Settings) -> None:
     """With no candidate recorded, the crawler is 'working' only once its poll counter is seen moving."""
     ledger.set_kv("engine.heartbeat", NOW - 5)

@@ -14,17 +14,19 @@ Schema (lists capped: members 9, events <= 5, open trades <= 10, closed trades 1
       "money": {"label", "usd", "start_usd", "sol", "sol_usd",
                 "since_start": {"usd", "pct"}, "today": {"usd", "pct"},   # the bot's own result (in SOL,
                 "sol_price_effect_usd",                                   #  shown at today's SOL price)
-                "curve": [[ts, usd], ...], "chart_ready": bool},          # chart after one hour of data
+                "curve": [[ts, usd], ...], "chart_ready": bool,           # chart after one hour of data
+                "as_of": ts|null},                                        # the last money check
       "team": {"counts": {status: n}, "members": [{"id", "name", "role", "status", "why", "doing",
                                                     "last_activity", "events", "bars"?}]},
+                                                    # status "absent": the Coach is not built (not counted)
       "trades": {"open": [{"coin", "entry_usd", "now_usd", "pnl_usd", "pnl_pct", "opened_at", "partial"}],
                  "closed": [{"coin", "opened_at", "closed_at", "pnl_usd", "pnl_pct", "result", "why"}],
                  "max_open"},
-      "learning": {"source": "card"|"fallback", "state", "headline", "variants": [{"name", "n", "avg",
-                   "proof"}], "data", "rule"},
+      "learning": {"source": "card"|"missing"|"error", "state", "headline", "variants": [{"name", "n", "avg",
+                   "proof"}], "data", "rule": str|null},
       "ready": readiness.readiness(...),
       "receipts": {"count", "verified", "first_bad_seq", "head", "head_short"},
-      "usage": [{"label", "pct": float|null, "level": "ok"|"warn"|"over"|null, "text"}],
+      "usage": [{"label", "pct": float|null, "level": "ok"|"warn"|"over"|null, "text", "measured": bool}],
       "about": {"version", "uptime_s", "commit", "started_at"}
     }
 
@@ -38,10 +40,18 @@ that module exists (it is built on another branch) and keeps only these keys, ea
     headline: str, state: str, variants | top_variants: [{name | id, n | trades | n_trades,
     avg | average (PERCENT per trade), proof | proof_progress (0..1)}], data | data_line: str,
     champion: str | {"name": str}, champion_passed_locked_test: bool, paper_matches_backtest: bool,
-    paper_matches_backtest_reason | paper_reason: str, updated_at: epoch seconds
+    paper_matches_backtest_reason | paper_reason: str, updated_at: epoch seconds (not in the future),
+    can_stop_trading: bool (the module really can turn real trading off on its own)
 
-Anything missing, of the wrong type, a raising module or an absent one falls back to a "collecting" card.
-Only an explicit ``True`` ever counts towards the checklist.
+Three honest outcomes: ``source: "card"`` (a card with a headline or a state), ``"missing"`` (the module is
+not installed: the Coach shows "not built yet" and is left out of the team counts) and ``"error"`` (the
+module raised or returned something that is not a card: the Coach is Blocked and checklist steps 1-2 say
+unknown). Only an explicit ``True`` ever counts towards the checklist, and the "can turn real trading OFF"
+rule is shown only when the card says ``can_stop_trading: true``. Wrong-typed values are dropped.
+
+READY: the checklist (:mod:`nightcrawler.readiness`) never says Ready while any engine banner is up, and
+reads the bot wallet's SOL from the last live equity snapshot (live) or the engine's paper-mode reading
+(:mod:`nightcrawler.botwallet`), trusting a reading of the last :data:`WALLET_MAX_AGE_S` only.
 """
 
 from __future__ import annotations
@@ -51,20 +61,26 @@ from collections.abc import Mapping
 from typing import Any
 
 from nightcrawler import __version__
+from nightcrawler.botwallet import saved_balance
 from nightcrawler.config import Settings
 from nightcrawler.dashboard import build_state, scrub
 from nightcrawler.logging_setup import get_logger, redact_text
-from nightcrawler.models import LAMPORTS_PER_SOL
+from nightcrawler.models import LAMPORTS_PER_SOL, EquityPoint
 from nightcrawler.page import LEARNING_RULE, MEMBERS, REFRESH_S
 from nightcrawler.readiness import readiness
-from nightcrawler.teamroom import build_team_state, derive_status
+from nightcrawler.teamroom import ENGINE_STALE_S, FUTURE_SKEW_S, build_team_state, derive_status, duration_text
 
-__all__ = ["LEARNING_RULE", "MEMBERS", "STALE_BANNER_S", "build_page_state", "learning_card"]
+__all__ = ["LEARNING_RULE", "MEMBERS", "STALE_BANNER_S", "WALLET_MAX_AGE_S", "build_page_state", "learning_card"]
 
 log = get_logger(__name__)
 
-#: The header turns red when the engine's heartbeat is older than this (it beats every 15 s).
-STALE_BANNER_S = 120.0
+#: The header turns red when the engine's heartbeat is older than this (it beats every 15 s); the team
+#: room blocks every member from the same moment, so the banner and the chips always agree.
+STALE_BANNER_S = ENGINE_STALE_S
+#: The checklist trusts a bot wallet balance read this recently only (live: every minute; paper: 10 min).
+WALLET_MAX_AGE_S = 3600.0
+#: The learning module itself, as Python names it when it is absent.
+_LEARN_MODULES = ("nightcrawler.learn", "nightcrawler.learn.card")
 CHART_MIN_SPAN_S = 3600.0
 OPEN_MAX = 10
 CLOSED_MAX = 10
@@ -141,34 +157,50 @@ class _Text:
 
 def learning_card(settings: Settings, now: float, ledger: Any, memory: dict[str, Any] | None = None
                   ) -> dict[str, Any]:
-    """The Coach's learning card, sanitized (schema in the module docstring), or a "collecting" card.
-
-    Never raises. ``memory`` (kept between requests) caches the card for :data:`LEARNING_TTL_S`."""
+    """The Coach's learning card, sanitized (schema in the module docstring): a real card, a "not installed"
+    card or a "failed" card. Never raises. ``memory`` (kept between requests) caches it for
+    :data:`LEARNING_TTL_S`."""
     cached = memory.get("learning") if memory is not None else None
     if cached is not None and 0 <= now - cached[0] < LEARNING_TTL_S:
         return dict(cached[1])
-    card = _sanitize(_load_card(settings, now), _Text(settings)) or _collecting(now, ledger)
-    if card["headline"] is None:
-        card["headline"] = _collecting(now, ledger)["headline"]
+    outcome, raw = _load_card(settings, now)
+    sanitized = _sanitize(raw, _Text(settings), now) if outcome == "ok" else None
+    if outcome == "ok" and sanitized is None:
+        log.warning("learning_card_invalid type=%s", type(raw).__name__)
+    if outcome == "missing":
+        card = _missing(now, ledger)
+    else:
+        card = sanitized or _failed()
     if memory is not None:
         memory["learning"] = (now, card)
     return dict(card)
 
 
-def _load_card(settings: Settings, now: float) -> Any:
+def _load_card(settings: Settings, now: float) -> tuple[str, Any]:
+    """``("ok", raw card)``, ``("missing", None)`` when the module is not installed, or ``("error", None)``."""
     try:
         from nightcrawler.learn.card import learning_card_state  # built on another branch; may be absent
-    except ImportError:
-        return None
+    except ModuleNotFoundError as exc:
+        if exc.name in _LEARN_MODULES:
+            return "missing", None
+        log.warning("learning_card_failed error=%s", type(exc).__name__)  # installed, but its import broke
+        return "error", None
+    except ImportError as exc:
+        log.warning("learning_card_failed error=%s", type(exc).__name__)
+        return "error", None
     try:
-        return learning_card_state(settings, now)
+        return "ok", learning_card_state(settings, now)
     except Exception as exc:  # a broken learning module must never take the page down
         log.warning("learning_card_failed error=%s", type(exc).__name__)
-        return None
+        return "error", None
 
 
-def _sanitize(raw: Any, text: _Text) -> dict[str, Any] | None:
+def _sanitize(raw: Any, text: _Text, now: float) -> dict[str, Any] | None:
+    """The card's known keys, type-checked; None (a failure) unless it has a headline or a state."""
     if not isinstance(raw, Mapping):
+        return None
+    state, headline = text.opt(raw.get("state"), 60), text.opt(raw.get("headline"))
+    if headline is None and state is None:
         return None
     champion = raw.get("champion")
     if isinstance(champion, Mapping):
@@ -176,17 +208,20 @@ def _sanitize(raw: Any, text: _Text) -> dict[str, Any] | None:
     variants = _first(raw, "variants")
     items = variants if isinstance(variants, list) else []
     kept = [v for v in (_variant(item, text) for item in items) if v is not None]
+    updated_at = _num(raw.get("updated_at"))
     return {
         "source": "card",
-        "state": text.opt(raw.get("state"), 60),
-        "headline": text.opt(raw.get("headline")),
+        "state": state,
+        "headline": headline if headline is not None else f"Learning stage: {state}",
         "variants": kept[:VARIANTS_MAX],
         "data": text.opt(_first(raw, "data"), 200),
         "champion": text.opt(champion, 60),
         "champion_passed_locked_test": raw.get("champion_passed_locked_test") is True,
         "paper_matches_backtest": raw.get("paper_matches_backtest") is True,
         "paper_matches_backtest_reason": text.opt(_first(raw, "reason")),
-        "updated_at": _num(raw.get("updated_at")),
+        "can_stop_trading": raw.get("can_stop_trading") is True,
+        # a stamp from the future (a millisecond epoch, say) would keep the Coach "Working" forever
+        "updated_at": updated_at if updated_at is not None and updated_at <= now + FUTURE_SKEW_S else None,
     }
 
 
@@ -204,20 +239,36 @@ def _variant(item: Any, text: _Text) -> dict[str, Any] | None:
             "proof": min(1.0, max(0.0, proof)) if proof is not None else None}
 
 
-def _collecting(now: float, ledger: Any) -> dict[str, Any]:
-    """The fallback card: the Coach is still collecting data (day N since the first receipt)."""
+def _empty_card(source: str, headline: str, data: str | None) -> dict[str, Any]:
+    return {"source": source, "state": None, "headline": headline, "variants": [], "data": data, "champion": None,
+            "champion_passed_locked_test": False, "paper_matches_backtest": False,
+            "paper_matches_backtest_reason": None, "can_stop_trading": False, "updated_at": None}
+
+
+def _missing(now: float, ledger: Any) -> dict[str, Any]:
+    """The learning module is not installed: say so (day N since the first receipt)."""
     first = ledger.receipts(after_seq=0, limit=1)
     day = int(max(0.0, now - first[0].ts) // DAY_S) + 1 if first else 1
-    return {"source": "fallback", "state": "collecting", "headline": f"Collecting data, day {day}",
-            "variants": [], "data": "The Coach needs dozens of finished trades before it can judge any strategy.",
-            "champion": None, "champion_passed_locked_test": False, "paper_matches_backtest": False,
-            "paper_matches_backtest_reason": None, "updated_at": None}
+    return _empty_card("missing", "Not installed yet: nothing learns by itself in this version.",
+                       f"The bot keeps every record from day 1 (today is day {day}) for the Coach to learn from "
+                       "once it is added.")
+
+
+def _failed() -> dict[str, Any]:
+    """The learning module raised or returned something that is not a card (details in the logs)."""
+    return _empty_card("error", "The learning system failed: see the logs.", None)
 
 
 # =========================================================================== sections
 
 
-def _money(settings: Settings, eq: dict[str, Any]) -> dict[str, Any]:
+def _latest_point(ledger: Any, mode: str) -> EquityPoint | None:
+    """The newest equity snapshot when it belongs to ``mode`` (what ``build_state`` shows), else None."""
+    point = ledger.latest_equity()
+    return point if isinstance(point, EquityPoint) and point.mode == mode else None
+
+
+def _money(settings: Settings, eq: dict[str, Any], point: EquityPoint | None) -> dict[str, Any]:
     sol, sol_usd = eq["sol"], eq["sol_usd"]
     total, today = eq["pnl_total_sol"], eq["pnl_today_sol"]
     curve = eq["curve"]
@@ -231,7 +282,18 @@ def _money(settings: Settings, eq: dict[str, Any]) -> dict[str, Any]:
                   "pct": _pct(today, sol - today if sol is not None and today is not None else None)},
         "sol_price_effect_usd": eq["sol_price_effect_usd"],
         "curve": curve, "chart_ready": span >= CHART_MIN_SPAN_S,
+        "as_of": point.ts if point is not None else (curve[-1][0] if curve else None),
     }
+
+
+def _coach(card: dict[str, Any], now: float) -> tuple[str, str]:
+    if card["source"] == "missing":
+        return "absent", "not built yet"
+    if card["source"] == "error":
+        return "blocked", "the learning system failed: see the logs"
+    return derive_status(now, card["updated_at"], COACH_WINDOW_S,
+                         waiting="collecting data: nothing to learn from yet" if card["state"] == "collecting"
+                         else None, idle="no new lesson recently")
 
 
 def _members(team: dict[str, Any], card: dict[str, Any], now: float) -> list[dict[str, Any]]:
@@ -239,16 +301,15 @@ def _members(team: dict[str, Any], card: dict[str, Any], now: float) -> list[dic
     out = []
     for mid, name, role in MEMBERS:
         if mid == "coach":
-            status, why = derive_status(now, card["updated_at"], COACH_WINDOW_S,
-                                        waiting=("collecting data: nothing to learn from yet"
-                                                 if card["state"] == "collecting" else None),
-                                        idle="no new lesson recently")
+            status, why = _coach(card, now)
             out.append({"id": mid, "name": name, "role": role, "status": status, "why": why,
                         "doing": card["headline"], "last_activity": card["updated_at"], "events": []})
             continue
         p = panels[mid]
-        member = {"id": mid, "name": name, "role": role, "status": p["status"], "why": p["why"],
-                  "doing": p["doing"], "last_activity": p["last_activity"], "events": p["events"]}
+        last = p["last_activity"]  # never "last active 0 s ago" for a stamp from the future
+        member = {"id": mid, "name": name, "role": role, "status": p["status"], "why": p["why"], "doing": p["doing"],
+                  "last_activity": last if last is None or last <= now + FUTURE_SKEW_S else None,
+                  "events": p["events"]}
         if p.get("bars"):
             member["bars"] = p["bars"]
         out.append(member)
@@ -277,23 +338,30 @@ def _trades(ledger: Any, settings: Settings, state: dict[str, Any], text: _Text)
 
 
 def _usage(state: dict[str, Any]) -> tuple[list[dict[str, Any]], list[dict[str, str]]]:
-    """``(rows, alerts)``: one row per provider; a budget that is used up also goes to the header."""
+    """``(rows, alerts)``: one row per provider; a budget that is used up also goes to the header. Until the
+    call counters have saved anything (kv ``usage.providers``) a row says "not measured yet", never "0 calls"
+    (the AI judge measures its own spending, so its row always counts)."""
     rows, alerts = [], []
+    counted = state["usage"]["updated_at"] is not None
     for r in state["usage"]["providers"]:
         when = "today" if r["period"] == "day" else "this month"
-        if r["budget"]:
+        if not counted and r["id"] != "anthropic":
+            rows.append({"label": r["label"], "pct": None, "level": None, "text": "not measured yet",
+                         "measured": False})
+        elif r["budget"]:
             if r["unit"] == "usd":
                 used = f"${r['used']:.2f} of ${r['budget']:.2f} {when}"
             else:
                 used = f"{int(r['used']):,} of {int(r['budget']):,} {r['unit']} {when}"
-            rows.append({"label": r["label"], "pct": r["used_pct"], "level": r["level"], "text": used})
+            rows.append({"label": r["label"], "pct": r["used_pct"], "level": r["level"], "text": used,
+                         "measured": True})
             if r["level"] == "over":
                 alerts.append({"level": "warn", "text": f"{r['label']} is over its "
                                f"{'daily' if r['period'] == 'day' else 'monthly'} budget ({r['used_pct']:.0f}%)."})
         else:
             calls = int(r["calls_today"])
             rows.append({"label": r["label"], "pct": None, "level": None,
-                         "text": f"{calls:,} call{'' if calls == 1 else 's'} today"})
+                         "text": f"{calls:,} call{'' if calls == 1 else 's'} today", "measured": True})
     return rows, alerts
 
 
@@ -318,11 +386,29 @@ def _alerts(ledger: Any, state: dict[str, Any], now: float) -> list[dict[str, st
     elif status.get("state") == "stopped":
         out.append(("bad", "The bot is stopped."))
     elif now - heartbeat > STALE_BANNER_S:
-        out.append(("bad", f"The bot has not checked in for {round((now - heartbeat) / 60)} min: it may be down."))
+        out.append(("bad", f"The bot has not checked in for {duration_text(now - heartbeat)}: it may be down."))
     if status.get("unresolved_swaps"):
         out.append(("warn", "A trade's outcome is unknown: the bot is checking the wallet and pauses new buys."))
     out.sort(key=lambda a: a[0] != "bad")  # stable: worst first, otherwise in the order above
     return [{"level": level, "text": text} for level, text in out]
+
+
+def _wallet(ledger: Any, settings: Settings, state: dict[str, Any], point: EquityPoint | None, now: float
+            ) -> tuple[str | None, float | None]:
+    """``(address, SOL)`` of the bot wallet for checklist step 3; SOL is None unless read in the last
+    :data:`WALLET_MAX_AGE_S`. Live: the wallet's SOL in the last snapshot (not its total value, which counts
+    the coins it holds). Paper: the engine's own reading, only while BOT_WALLET_SECRET is set."""
+    if settings.is_live:
+        address = state["wallet"]["address"]
+        if point is None or now - point.ts > WALLET_MAX_AGE_S:
+            return address, None
+        return address, point.sol_lamports / LAMPORTS_PER_SOL
+    saved = saved_balance(ledger) if settings.bot_wallet_secret else None
+    if saved is None:
+        return None, None
+    if now - saved.checked_at > WALLET_MAX_AGE_S:
+        return saved.address, None
+    return saved.address, saved.sol_lamports / LAMPORTS_PER_SOL
 
 
 # =========================================================================== assembly
@@ -341,8 +427,12 @@ def build_page_state(ledger: Any, settings: Settings, now: float, engine_status:
     members = _members(team, card, now)
     counts = {"working": 0, "idle": 0, "waiting": 0, "blocked": 0}
     for m in members:
-        counts[m["status"]] += 1
+        if m["status"] in counts:  # a member that is not built yet is not part of the team's count
+            counts[m["status"]] += 1
     usage, usage_alerts = _usage(state)
+    alerts = _alerts(ledger, state, now)
+    point = _latest_point(ledger, "live" if settings.is_live else "paper")
+    address, wallet_sol = _wallet(ledger, settings, state, point, now)
     receipts = state["receipts"]
     head = receipts["head_hash"]
     out = {
@@ -350,14 +440,16 @@ def build_page_state(ledger: Any, settings: Settings, now: float, engine_status:
         "generated_at": now,
         "mode": state["mode"],
         "refresh_s": REFRESH_S,
-        "alerts": _alerts(ledger, state, now) + usage_alerts,
-        "money": _money(settings, state["equity"]),
+        "alerts": alerts + usage_alerts,
+        "money": _money(settings, state["equity"], point),
         "team": {"counts": counts, "members": members},
         "trades": _trades(ledger, settings, state, text),
         "learning": {"source": card["source"], "state": card["state"], "headline": card["headline"],
-                     "variants": card["variants"], "data": card["data"], "rule": LEARNING_RULE},
-        "ready": readiness(settings, card, wallet_address=state["wallet"]["address"],
-                           wallet_sol=state["equity"]["sol"] if settings.is_live else None),
+                     "variants": card["variants"], "data": card["data"],
+                     "rule": LEARNING_RULE if card["source"] == "card" and card["can_stop_trading"] else None},
+        # never "Ready" while a banner says the bot is stopped, silent or in trouble (budget banners aside)
+        "ready": readiness(settings, card, wallet_address=address, wallet_sol=wallet_sol, stopped=bool(alerts),
+                           now=now),
         "receipts": {"count": receipts["count"], "verified": receipts["verified"],
                      "first_bad_seq": receipts["first_bad_seq"], "head": head, "head_short": f"{head[:8]}…{head[-8:]}"},
         "usage": usage,

@@ -21,6 +21,7 @@ FRACTIONS (0.20 = 20 %); ``MAX_PRICE_IMPACT_PCT``, ``COCOON_*_PCT`` and
 from __future__ import annotations
 
 import dataclasses
+import datetime
 import logging
 import os
 import re
@@ -30,11 +31,14 @@ from typing import Any, Iterable, Mapping
 from urllib.parse import parse_qsl, urlsplit
 
 __all__ = [
+    "DASHBOARD_TOKEN_MIN_LEN",
     "LIVE_CONFIRM_PHRASE",
     "Secret",
     "ConfigError",
     "Settings",
+    "dashboard_token_problem",
     "load_settings",
+    "parse_rotation_date",
     "parse_dotenv",
     "redact_url",
     "redact_rpc_url",
@@ -49,6 +53,12 @@ _KEY_SHAPED = re.compile(r"^[A-Za-z0-9_-]{16,}$")
 _TRUE = {"1", "true", "yes", "on", "y"}
 _FALSE = {"0", "false", "no", "off", "n"}
 _SECRET_QUERY_HINTS = ("key", "token", "secret", "auth", "password")
+#: A live dashboard token must be at least this long (and not repetitive, and not the docs' example).
+DASHBOARD_TOKEN_MIN_LEN = 24
+_TOKEN_MIN_DISTINCT = 8
+#: docs/RAILWAY.md's example DASHBOARD_TOKEN starts with this: public, so never a real password.
+_TOKEN_EXAMPLE = "change-me"
+_ISO_DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
 
 class Secret:
@@ -133,6 +143,29 @@ def _url_secret_values(url: str) -> list[str]:
     return out
 
 
+def dashboard_token_problem(token: str) -> str | None:
+    """Why ``token`` is too weak to lock the dashboard, in plain words (``"too short"``, ``"too easy to guess"``,
+    ``"the example from the guide"``), or None when it is strong enough. Never includes the token."""
+    if len(token) < DASHBOARD_TOKEN_MIN_LEN:
+        return "too short"
+    if _TOKEN_EXAMPLE in token.lower():
+        return "the example from the guide"
+    if len(set(token)) < _TOKEN_MIN_DISTINCT:
+        return "too easy to guess"
+    return None
+
+
+def parse_rotation_date(value: str) -> datetime.date | None:
+    """``KEYS_ROTATED_ON`` as a date (exactly ``YYYY-MM-DD``), or None when it is anything else."""
+    text = value.strip()
+    if not _ISO_DATE.match(text):
+        return None
+    try:
+        return datetime.date.fromisoformat(text)
+    except ValueError:
+        return None
+
+
 def _normalize_kill_switch(value: Any) -> str:
     """``KILL_SWITCH`` read like the ``DATA_DIR/KILL`` file: case, ``-`` and spaces forgiven
     (``sell-all`` -> ``sell_all``). An unrecognized word means ``stop`` (fail SAFE: no new
@@ -175,9 +208,9 @@ class Settings:
     reset_halt_token: str = _f("", "text", "Clears a drawdown halt once: set it to any NEW value (e.g. today's "
                                "date) and redeploy. Same as `nightcrawler reset-halt`, but works from the "
                                "Railway variables page on a phone")
-    keys_rotated_on: str = _f("", "text", "The date you replaced every key that was ever pasted into a chat "
-                              "(e.g. 2026-10-09). Only shown on the dashboard's 'ready for real money?' checklist; "
-                              "leave empty until the keys really are replaced")
+    keys_rotated_on: str = _f("", "text", "The date (YYYY-MM-DD, e.g. 2026-10-09) you replaced every key that was "
+                              "ever pasted into a chat. Only shown on the dashboard's 'ready for real money?' "
+                              "checklist; leave empty until the keys really are replaced. Never put a key here")
 
     # ---- bankroll & risk ----------------------------------------------------
     paper_start_usd: float = _f(100.0, "usd", "Paper bankroll at first start (converted to SOL at the live price)",
@@ -286,8 +319,10 @@ class Settings:
     jupiter_base_url: str = _f("", "url", "Default: https://api.jup.ag with a key, else https://lite-api.jup.ag")
     solana_rpc_url: str = _f("https://api.mainnet-beta.solana.com", "url",
                              "Solana JSON-RPC endpoint (a free Helius key is recommended)")
-    bot_wallet_secret: Secret | None = _f(None, "secret", "Live only: base58 64-byte secret (Phantom export) or "
-                                          "JSON byte array (solana-keygen)", secret=True)
+    bot_wallet_secret: Secret | None = _f(None, "secret", "The bot wallet: base58 64-byte secret (Phantom export) "
+                                          "or JSON byte array (solana-keygen). Required for live; in paper mode "
+                                          "only its address is used (quotes and the dashboard's balance check)",
+                                          secret=True)
     x_bearer_token: Secret | None = _f(None, "secret", "Optional X/Twitter token (unused by default)", secret=True)
 
     # ---- data sources (runtime / data-source team) --------------------------
@@ -303,7 +338,8 @@ class Settings:
     # ---- dashboard ----------------------------------------------------------
     port: int = _f(8080, "port", "Dashboard port (Railway sets PORT)", lo=1, hi=65535)
     dashboard_host: str = _f("0.0.0.0", "text", "Dashboard bind address")
-    dashboard_token: Secret | None = _f(None, "secret", "If set, the dashboard requires ?token= or cookie",
+    dashboard_token: Secret | None = _f(None, "secret", "If set, the dashboard requires ?token= or cookie. Live "
+                                        "mode needs a strong one: a long random password of at least 24 characters",
                                         secret=True)
 
     # ---- provider usage budgets (observability team) -------------------------
@@ -341,6 +377,7 @@ class Settings:
         object.__setattr__(self, "kill_switch", _normalize_kill_switch(self.kill_switch))
         object.__setattr__(self, "judge_mode", str(self.judge_mode).lower())
         object.__setattr__(self, "log_level", str(self.log_level).upper())
+        object.__setattr__(self, "keys_rotated_on", str(self.keys_rotated_on).strip())
         problems = self._validate()
         if problems:
             raise ConfigError(problems)
@@ -371,6 +408,14 @@ class Settings:
             if not self.dashboard_token and self.dashboard_host not in _LOOPBACK_HOSTS:
                 problems.append("TRADING_MODE=live requires DASHBOARD_TOKEN (or DASHBOARD_HOST=127.0.0.1): "
                                 "an open dashboard shows the live wallet, its positions and their stops")
+            weak = dashboard_token_problem(self.dashboard_token.reveal()) if self.dashboard_token else None
+            if weak:  # never repeat the token: this message goes to the deploy logs
+                problems.append(f"TRADING_MODE=live requires a strong DASHBOARD_TOKEN: it is {weak}. Use a long "
+                                f"random password of at least {DASHBOARD_TOKEN_MIN_LEN} characters")
+        if self.keys_rotated_on and parse_rotation_date(self.keys_rotated_on) is None:
+            # never repeat the value: a key pasted into the wrong box would land in the deploy logs
+            problems.append("KEYS_ROTATED_ON must be a date like 2026-10-09: the day you replaced the keys "
+                            "(leave it empty until then)")
         if self.judge_mode in ("advisory", "required") and not self.anthropic_api_key:
             problems.append(f"JUDGE_MODE={self.judge_mode} requires ANTHROPIC_API_KEY (or set JUDGE_MODE=off)")
         if self.min_position_usd > self.max_position_usd:

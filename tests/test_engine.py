@@ -506,6 +506,51 @@ def test_build_app_live_mode_sets_the_wallet_pubkey(make_settings, http_client, 
         app.close()
 
 
+def test_paper_mode_reads_the_bot_wallet_balance_for_the_checklist(make_rig, fake_http: FakeHttp,
+                                                                   fake_clock: FakeClock) -> None:
+    """GOING_LIVE steps 1-3 (a funded bot wallet in BOT_WALLET_SECRET) happen in PAPER mode: the engine reads
+    that wallet's SOL every 10 minutes (one getBalance) so "ready for real money?" can tick step 3."""
+    from nightcrawler.botwallet import CHECK_EVERY_S, KV_BOT_WALLET
+
+    address = "BotWa11etPubkey1111111111111111111111111111"
+    balance = {"jsonrpc": "2.0", "id": 1, "result": {"context": {"slot": 1}, "value": 250_000_000}}
+    account = load_fixture("rpc_getAccountInfo_mint")
+    fake_http.register("api.mainnet-beta.solana.com",
+                       lambda req: balance if req.json.get("method") == "getBalance" else account, method="POST")
+
+    def balance_calls() -> list[Any]:
+        return [c for c in fake_http.calls if c.json and c.json.get("method") == "getBalance"]
+
+    rig = make_rig(broker_factory=lambda sources, ledger, settings: PaperBroker(
+        sources.jupiter, ledger, settings, fake_clock, taker=address))
+    results = rig.tick()
+    assert results["bot_wallet"] == "ok"
+    assert rig.ledger.get_kv(KV_BOT_WALLET) == {"address": address, "sol_lamports": 250_000_000,
+                                                "checked_at": rig.clock.now()}
+    (call,) = balance_calls()
+    assert call.json["params"][0] == address
+    rig.tick(advance=60)
+    assert len(balance_calls()) == 1  # not every tick
+    rig.tick(advance=CHECK_EVERY_S)
+    assert len(balance_calls()) == 2
+
+    # an RPC failure keeps the last reading (the checklist ages it out) and never becomes an engine error
+    fake_http.register("api.mainnet-beta.solana.com", RuntimeError("rpc down"), method="POST")
+    before = rig.ledger.get_kv(KV_BOT_WALLET)
+    receipts = len(rig.ledger.receipts())
+    rig.engine.check_bot_wallet(rig.clock.now() + 1)
+    assert rig.ledger.get_kv(KV_BOT_WALLET) == before and len(rig.ledger.receipts()) == receipts
+
+
+def test_without_a_bot_wallet_paper_mode_never_reads_a_balance(make_rig, fake_http: FakeHttp) -> None:
+    from nightcrawler.botwallet import KV_BOT_WALLET
+
+    rig = make_rig()
+    assert rig.tick()["bot_wallet"] == "ok"
+    assert rig.ledger.get_kv(KV_BOT_WALLET) is None
+    assert not [c for c in fake_http.calls if c.json and c.json.get("method") == "getBalance"]
+
+
 def test_build_app_refuses_a_bad_wallet_secret(make_settings, http_client, fake_clock) -> None:
     from nightcrawler.broker.wallet import WalletError
 

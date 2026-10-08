@@ -19,6 +19,7 @@ import pytest
 from fakes import FakeClock
 
 from nightcrawler import __version__
+from nightcrawler.botwallet import KV_BOT_WALLET
 from nightcrawler.config import LIVE_CONFIRM_PHRASE, Settings
 from nightcrawler.dashboard import CONTENT_SECURITY_POLICY, COOKIE_NAME, DashboardServer, build_state, render_html
 from nightcrawler.ledger import Ledger
@@ -26,7 +27,7 @@ from nightcrawler.models import Decision, EquityPoint, Fill, Position, SafetyRep
 from nightcrawler.page import PAGE_CSP, REFRESH_S, render_page_html
 from nightcrawler.pagestate import LEARNING_RULE, MEMBERS, STALE_BANNER_S, build_page_state, learning_card
 from nightcrawler.readiness import CHECK_IDS, readiness
-from nightcrawler.teamroom import TeamRoom
+from nightcrawler.teamroom import ENGINE_STALE_S, TeamRoom, derive_status
 
 NOW = 1_791_475_200.0  # 2026-10-08T16:00:00Z (the fake clock's start)
 MIDNIGHT = NOW - NOW % 86_400
@@ -45,6 +46,8 @@ RPC_KEY = "helius-rpc-key-0a1b2c3d4e5f"
 TOKEN = SECRETS["DASHBOARD_TOKEN"]
 WALLET = "BotWa11etPubkey1111111111111111111111111111"
 PROVEN = {"champion": "dip-rebound v2", "champion_passed_locked_test": True, "paper_matches_backtest": True}
+#: The example password in docs/RAILWAY.md: public, so it must never tick "dashboard locked".
+PLACEHOLDER_TOKEN = "change-me-to-a-long-random-password-1234567890"
 #: Words a non-developer should never have to decode on the page.
 JARGON = re.compile(r"\b(?:bps|lamports?|mint|slippage|mcap|prefilter|kv|ledger)\b", re.IGNORECASE)
 
@@ -191,11 +194,12 @@ def test_empty_ledger_gives_every_section_with_honest_empty_states(ledger: Ledge
     assert money["today"] == {"usd": None, "pct": None} and money["curve"] == [] and money["chart_ready"] is False
     assert [m["id"] for m in state["team"]["members"]] == MEMBER_IDS == [mid for mid, _, _ in MEMBERS]
     for m in state["team"]["members"]:
-        assert m["status"] == "waiting" and m["doing"] and m["last_activity"] is None and m["events"] == []
+        assert m["status"] == ("absent" if m["id"] == "coach" else "waiting"), m["id"]
+        assert m["doing"] and m["last_activity"] is None and m["events"] == []
     assert state["trades"]["open"] == [] and state["trades"]["closed"] == []
-    assert state["learning"]["state"] == "collecting" and state["learning"]["headline"] == "Collecting data, day 1"
-    assert state["learning"]["rule"] == LEARNING_RULE and state["learning"]["source"] == "fallback"
-    assert state["ready"]["ready"] is False and state["ready"]["headline"] == "Not ready yet — 0 of 6 done"
+    assert state["learning"]["source"] == "missing" and state["learning"]["headline"].startswith("Not installed yet")
+    assert state["learning"]["rule"] is None  # no "the Coach can turn trading off" claim without a Coach
+    assert state["ready"]["ready"] is False and state["ready"]["headline"] == "Not ready yet — 0 of 5 done"
     assert state["receipts"] == {"count": 0, "verified": True, "first_bad_seq": None, "head": "0" * 64,
                                  "head_short": "00000000…00000000"}
     assert [a["level"] for a in state["alerts"]] == ["warn"] and "not started" in state["alerts"][0]["text"]
@@ -246,8 +250,8 @@ def test_team_rows_reuse_the_team_room_rules_in_plain_words(ledger: Ledger, make
     assert by["broker"]["doing"] == "1 buy and 0 sells in the last 24 h, with pretend money. Holding 1 trade."
     assert by["risk"]["status"] == "working" and "1 of 3 trade slots" in by["risk"]["doing"]
     assert by["judge"]["doing"].startswith("Last 24 h: 0 yes, 1 no.")
-    assert by["coach"]["status"] == "waiting" and by["coach"]["doing"] == "Collecting data, day 3"
-    assert sum(state["team"]["counts"].values()) == len(MEMBER_IDS)
+    assert by["coach"]["status"] == "absent" and by["coach"]["doing"].startswith("Not installed yet")
+    assert sum(state["team"]["counts"].values()) == len(MEMBER_IDS) - 1  # a Coach that is not built is not counted
     for m in state["team"]["members"]:
         assert len(m["doing"]) <= 160 and not JARGON.search(m["doing"]), m
         assert len(m["events"]) <= 5 and all(not JARGON.search(e["text"]) for e in m["events"]), m["id"]
@@ -285,7 +289,7 @@ def test_alerts_come_from_real_trouble_only(ledger: Ledger, make_settings: Calla
     seed(ledger)
     assert build_page_state(ledger, settings, NOW)["alerts"] == []
     stale = build_page_state(ledger, settings, NOW - 5 + STALE_BANNER_S + 1)["alerts"]
-    assert [a["level"] for a in stale] == ["bad"] and "has not checked in for 2 min" in stale[0]["text"]
+    assert [a["level"] for a in stale] == ["bad"] and "has not checked in for 3 min" in stale[0]["text"]
     assert build_page_state(ledger, settings, NOW - 5 + STALE_BANNER_S)["alerts"] == []
     ledger.set_kv("engine.kill_mode", "sell_all")
     ledger.set_kv("risk.halted", {"halted": True, "reason": "[drawdown] -52%", "ts": NOW})
@@ -319,15 +323,91 @@ def test_receipts_usage_and_about(ledger: Ledger, make_settings: Callable[..., S
                               "started_at": NOW - 7200}
 
 
+def test_services_say_not_measured_instead_of_zero_calls(ledger: Ledger, settings: Settings) -> None:
+    """Before any call counter was saved the page cannot tell "0 calls" from "not counted": it says so."""
+    usage = {u["label"]: u for u in build_page_state(ledger, settings, NOW)["usage"]}
+    for label in ("Solana RPC", "Jupiter", "GeckoTerminal", "DexScreener", "RugCheck"):
+        assert usage[label] == {"label": label, "pct": None, "level": None, "text": "not measured yet",
+                                "measured": False}, label
+    assert usage["Anthropic"]["measured"] is True  # the judge measures its own spending (kv judge.cost_usd_day)
+    ledger.set_kv("usage.providers", {"jupiter": {"day": "2026-10-08", "day_counts": {"calls": 3}, "month": "2026-10",
+                                                  "month_counts": {"calls": 3}, "updated_at": NOW - 30}})
+    usage = {u["label"]: u for u in build_page_state(ledger, settings, NOW)["usage"]}
+    assert usage["Jupiter"]["text"] == "3 calls today" and usage["GeckoTerminal"]["text"] == "0 calls today"
+    assert all(u["measured"] for u in usage.values())
+
+
+def test_the_page_reads_the_bot_wallet_checked_in_paper_mode(ledger: Ledger, make_settings: Callable[..., Settings]
+                                                             ) -> None:
+    """GOING_LIVE steps 1-3 happen in paper mode: the engine reads the bot wallet's SOL (kv bot_wallet.balance)
+    and the checklist trusts a reading of the last hour only."""
+    settings = make_settings(BOT_WALLET_SECRET="x" * 88)
+    assert "has not read" in items(build_page_state(ledger, settings, NOW))["wallet"]["reason"]
+    ledger.set_kv(KV_BOT_WALLET, {"address": WALLET, "sol_lamports": 500_000_000, "checked_at": NOW - 600})
+    item = items(build_page_state(ledger, settings, NOW))["wallet"]
+    assert item["done"] and "holds 0.5 SOL" in item["reason"]
+    stale = items(build_page_state(ledger, settings, NOW + 3600))["wallet"]
+    assert not stale["done"] and "has not been read recently" in stale["reason"]
+    gone = items(build_page_state(ledger, make_settings(), NOW))["wallet"]  # the secret was removed again
+    assert not gone["done"] and gone["reason"].startswith("No bot wallet yet")
+    for junk in ("x", {"address": WALLET}, {"address": 5, "sol_lamports": 1, "checked_at": NOW},
+                 {"address": WALLET, "sol_lamports": "lots", "checked_at": NOW},
+                 {"address": WALLET, "sol_lamports": 1, "checked_at": None}):
+        ledger.set_kv(KV_BOT_WALLET, junk)
+        assert not items(build_page_state(ledger, settings, NOW))["wallet"]["done"], junk
+
+
+def test_live_wallet_balance_is_its_sol_not_its_total_value(ledger: Ledger, make_settings: Callable[..., Settings]
+                                                            ) -> None:
+    """Total value includes the coins held; "funded" means SOL in the wallet (EquityPoint.sol_lamports)."""
+    settings = live_settings(make_settings)
+    ledger.set_kv("wallet.pubkey", WALLET)
+    ledger.record_equity(EquityPoint(ts=NOW - 30, equity_lamports=925_000_000, sol_usd=100.0, equity_usd=92.5,
+                                     sol_lamports=300_000_000, positions_value_lamports=625_000_000, open_positions=1,
+                                     mode="live"))
+    item = items(build_page_state(ledger, settings, NOW))["wallet"]
+    assert item["done"] and "holds 0.3 SOL" in item["reason"] and "0.925" not in item["reason"]
+    ledger.record_equity(EquityPoint(ts=NOW - 20, equity_lamports=600_000_000, sol_usd=100.0, equity_usd=60.0,
+                                     sol_lamports=0, positions_value_lamports=600_000_000, open_positions=1,
+                                     mode="live"))
+    item = items(build_page_state(ledger, settings, NOW))["wallet"]
+    assert not item["done"] and "empty" in item["reason"]  # only coins, no SOL: not funded
+    assert not items(build_page_state(ledger, settings, NOW + 3600))["wallet"]["done"]  # an hour-old reading
+
+
+def test_a_long_silence_reads_in_days_and_the_money_says_how_old_it_is(ledger: Ledger, settings: Settings) -> None:
+    seed(ledger)  # heartbeat NOW - 5, last money check NOW - 30
+    state = build_page_state(ledger, settings, NOW - 5 + 3 * DAY)
+    (silent,) = [a for a in state["alerts"] if "checked in" in a["text"]]
+    assert silent["text"] == "The bot has not checked in for 3 d: it may be down."
+    assert state["money"]["as_of"] == NOW - 30
+    assert build_page_state(ledger, settings, NOW + 2 * 3600)["alerts"][0]["text"] == (
+        "The bot has not checked in for 2 h 00 min: it may be down.")
+    script = page_script(settings)
+    assert "Last money check: " in script and "m.as_of" in script
+
+
+def test_the_banner_and_the_team_agree_on_when_the_bot_is_silent(ledger: Ledger, settings: Settings) -> None:
+    assert STALE_BANNER_S == ENGINE_STALE_S
+    seed(ledger)
+    quiet = build_page_state(ledger, settings, NOW - 5 + 150)  # 2.5 min: neither a banner nor blocked members
+    assert quiet["alerts"] == [] and all(m["status"] != "blocked" for m in quiet["team"]["members"])
+    silent = build_page_state(ledger, settings, NOW - 5 + ENGINE_STALE_S + 1)
+    assert [a["level"] for a in silent["alerts"]] == ["bad"]
+    assert all(m["status"] == "blocked" for m in silent["team"]["members"] if m["id"] != "coach")
+
+
 # --------------------------------------------------------------------------- learning card
 
 
-def test_learning_falls_back_when_the_module_is_absent(ledger: Ledger, settings: Settings) -> None:
+def test_learning_says_not_installed_when_the_module_is_absent(ledger: Ledger, settings: Settings) -> None:
     seed(ledger)  # first receipt two days ago: day 3
     card = learning_card(settings, NOW, ledger)
-    assert card["source"] == "fallback" and card["state"] == "collecting"
-    assert card["headline"] == "Collecting data, day 3" and card["variants"] == []
+    assert card["source"] == "missing" and card["state"] is None and card["variants"] == []
+    assert card["headline"] == "Not installed yet: nothing learns by itself in this version."
+    assert "day 3" in card["data"]
     assert card["champion"] is None and card["champion_passed_locked_test"] is False
+    assert card["can_stop_trading"] is False
 
 
 @pytest.mark.parametrize("junk", [
@@ -341,6 +421,8 @@ def test_learning_card_junk_never_raises_and_never_counts(monkeypatch: pytest.Mo
                                                           settings: Settings, junk: Any) -> None:
     install_card(monkeypatch, lambda settings, now: junk)
     card = learning_card(settings, NOW, ledger)
+    usable = isinstance(junk, dict) and isinstance(junk.get("headline"), str)
+    assert card["source"] == ("card" if usable else "error"), junk  # junk is a failure, never "collecting"
     assert isinstance(card["headline"], str) and 0 < len(card["headline"]) <= 160
     assert card["state"] is None or (isinstance(card["state"], str) and len(card["state"]) <= 60)
     assert isinstance(card["variants"], list) and len(card["variants"]) <= 5
@@ -356,14 +438,49 @@ def test_learning_card_junk_never_raises_and_never_counts(monkeypatch: pytest.Mo
     assert not items(state)["edge"]["done"] and not items(state)["paper_match"]["done"]
 
 
-def test_a_failing_learning_module_falls_back(monkeypatch: pytest.MonkeyPatch, ledger: Ledger,
-                                              settings: Settings) -> None:
+def test_a_broken_learning_module_shows_as_a_failure_not_as_collecting(monkeypatch: pytest.MonkeyPatch,
+                                                                       ledger: Ledger, settings: Settings) -> None:
+    """A raising module or a non-card answer is a failure: the Coach is Blocked and steps 1-2 say unknown."""
     def broken(settings: Settings, now: float) -> dict[str, Any]:
         raise RuntimeError("boom")
 
-    install_card(monkeypatch, broken)
-    card = learning_card(settings, NOW, ledger)
-    assert card["source"] == "fallback" and card["headline"].startswith("Collecting data")
+    seed(ledger)
+    for module in (broken, lambda settings, now: ["not", "a", "card"]):
+        install_card(monkeypatch, module)
+        card = learning_card(settings, NOW, ledger)
+        assert card["source"] == "error" and card["headline"] == "The learning system failed: see the logs."
+        state = build_page_state(ledger, settings, NOW + 40 * DAY)
+        coach = members(state)["coach"]
+        assert coach["status"] == "blocked" and "learning system failed" in coach["why"]
+        assert "Collecting" not in coach["doing"] and state["learning"]["rule"] is None
+        for cid in ("edge", "paper_match"):
+            item = items(state)[cid]
+            assert not item["done"] and item["reason"] == "Unknown (learning system error): see the logs.", cid
+
+
+def test_a_learning_card_with_a_future_timestamp_is_not_activity(monkeypatch: pytest.MonkeyPatch, ledger: Ledger,
+                                                                  settings: Settings) -> None:
+    """A millisecond epoch (a common mistake) or any stamp from the future must not keep the Coach Working."""
+    for stamp, kept in ((NOW * 1000, False), (NOW + 3600, False), (NOW + 30, True), (NOW - 60, True)):
+        install_card(monkeypatch, lambda settings, now, stamp=stamp: {"headline": "learning", "updated_at": stamp})
+        card = learning_card(settings, NOW, ledger)
+        assert card["updated_at"] == (stamp if kept else None), stamp
+        coach = members(build_page_state(ledger, settings, NOW))["coach"]
+        assert coach["status"] == ("working" if kept else "idle") and coach["last_activity"] == card["updated_at"]
+    assert derive_status(NOW, NOW * 1000, 300)[0] != "working"  # the team room guards its own stamps too
+    assert derive_status(NOW, NOW + 2, 300) == ("working", "")  # a clock a little ahead still counts
+
+
+def test_the_off_switch_rule_shows_only_when_the_learning_module_says_it_has_one(
+        monkeypatch: pytest.MonkeyPatch, ledger: Ledger, settings: Settings) -> None:
+    """"The Coach can turn real trading OFF on its own" is a safety claim: never static text, only when the real
+    learning module reports exactly ``can_stop_trading: true``."""
+    html = render_page_html(settings)
+    assert LEARNING_RULE not in html and 'id="learn-rule"' in html
+    assert build_page_state(ledger, settings, NOW)["learning"]["rule"] is None  # module absent
+    for flag, rule in ((None, None), ("true", None), (1, None), (False, None), (True, LEARNING_RULE)):
+        install_card(monkeypatch, lambda settings, now, flag=flag: {"headline": "learning", "can_stop_trading": flag})
+        assert build_page_state(ledger, settings, NOW)["learning"]["rule"] == rule, flag
 
 
 def test_a_real_learning_card_is_shown_safely(monkeypatch: pytest.MonkeyPatch, ledger: Ledger,
@@ -382,7 +499,7 @@ def test_a_real_learning_card_is_shown_safely(monkeypatch: pytest.MonkeyPatch, l
     assert card["source"] == "card" and card["state"] == "testing" and card["data"] == "41 trades logged"
     assert card["variants"] == [{"name": "dip-55" + XSS, "n": 12, "avg": -0.8, "proof": 0.25},
                                 {"name": "dip-65", "n": 9, "avg": 0.4, "proof": 1.0}]
-    assert card["rule"] == "The Coach can turn real trading OFF on its own, never ON."
+    assert card["rule"] is None  # the card does not say it can turn trading off
 
 
 # --------------------------------------------------------------------------- ready for real money?
@@ -404,8 +521,8 @@ def test_checklist_items_on_a_fresh_paper_bot(settings: Settings) -> None:
         "locked": "Set DASHBOARD_TOKEN in Railway to a long random password.",
         "live": "Last step, only after 1–5.",
     }
-    assert ready["done"] == 0 and ready["ready"] is False and ready["headline"] == "Not ready yet — 0 of 6 done"
-    assert ready["warning"] is None
+    assert ready["done"] == 0 and ready["total"] == 5 and ready["ready"] is False
+    assert ready["headline"] == "Not ready yet — 0 of 5 done" and ready["warning"] is None
 
 
 @pytest.mark.parametrize(("card", "done"), [
@@ -442,22 +559,33 @@ def test_paper_match_item(settings: Settings, card: dict[str, Any], done: bool, 
         assert item["reason"] == reason
 
 
-def test_wallet_item_needs_live_config_an_address_and_a_known_positive_balance(
+def test_wallet_item_needs_a_configured_wallet_an_address_and_a_known_positive_balance(
         make_settings: Callable[..., Settings]) -> None:
-    paper = make_settings(BOT_WALLET_SECRET="x" * 88)
-    assert not readiness(paper, {}, wallet_address=WALLET, wallet_sol=1.0)["items"][2]["done"]
-    live = live_settings(make_settings)
-    for address, sol, expect in ((None, 1.0, "not known yet"), (WALLET, None, "not been read yet"),
-                                 (WALLET, 0.0, "empty")):
-        item = readiness(live, {}, wallet_address=address, wallet_sol=sol)["items"][2]
-        assert not item["done"] and expect in item["reason"], (address, sol)
-    item = readiness(live, {}, wallet_address=WALLET, wallet_sol=0.5)["items"][2]
-    assert item["done"] and "0.5" in item["reason"] and WALLET[:4] in item["reason"] and WALLET not in item["reason"]
+    """GOING_LIVE steps 1-3 (create, fund, add BOT_WALLET_SECRET) all happen in PAPER mode, so the wallet
+    step can be done before real money is switched on; without the secret it is never done."""
+    def wallet(settings: Settings, address: str | None, sol: float | None) -> dict[str, Any]:
+        item: dict[str, Any] = readiness(settings, {}, wallet_address=address, wallet_sol=sol)["items"][2]
+        assert item["id"] == "wallet"
+        return item
+
+    no_wallet = wallet(make_settings(), WALLET, 1.0)
+    assert not no_wallet["done"] and no_wallet["reason"].startswith("No bot wallet yet")
+    for settings in (make_settings(BOT_WALLET_SECRET="x" * 88), live_settings(make_settings)):
+        for address, sol, expect in ((None, 1.0, "not" if settings.is_live else "has not read"),
+                                     (WALLET, None, "has not been read recently"), (WALLET, 0.0, "empty"),
+                                     (WALLET, -1.0, "empty")):
+            item = wallet(settings, address, sol)
+            assert not item["done"] and expect in item["reason"], (settings.trading_mode, address, sol)
+            assert "No bot wallet yet" not in item["reason"]
+        item = wallet(settings, WALLET, 0.5)
+        assert item["done"] and "holds 0.5 SOL" in item["reason"], settings.trading_mode
+        assert WALLET[:4] in item["reason"] and WALLET not in item["reason"]
 
 
 def test_keys_lock_and_live_switch_items(make_settings: Callable[..., Settings]) -> None:
     def item(settings: Settings, cid: str) -> dict[str, Any]:
-        return {i["id"]: i for i in readiness(settings, {}, wallet_address=None, wallet_sol=None)["items"]}[cid]
+        return {i["id"]: i for i in readiness(settings, {}, wallet_address=None, wallet_sol=None,
+                                              now=NOW)["items"]}[cid]
 
     assert make_settings().keys_rotated_on == ""
     assert item(make_settings(KEYS_ROTATED_ON="2026-10-08"), "keys")["done"]
@@ -469,10 +597,19 @@ def test_keys_lock_and_live_switch_items(make_settings: Callable[..., Settings])
     assert item(live_settings(make_settings), "live")["done"]
 
 
-def test_all_six_done_is_the_only_ready(make_settings: Callable[..., Settings]) -> None:
+def test_steps_one_to_five_decide_and_the_switch_is_the_action(make_settings: Callable[..., Settings]) -> None:
+    """The verdict is over steps 1-5 (all doable in paper mode); step 6, the real-money switch, is what the
+    owner does once they are done, never a requirement for the "ready" answer."""
+    paper = make_settings(BOT_WALLET_SECRET="x" * 88, KEYS_ROTATED_ON="2026-10-08", DASHBOARD_TOKEN=TOKEN)
+    ready = readiness(paper, PROVEN, wallet_address=WALLET, wallet_sol=0.5, now=NOW)
+    assert (ready["done"], ready["total"], ready["ready"]) == (5, 5, True)
+    assert ready["headline"] == "Ready to switch on" and ready["warning"] is None
+    switch = {i["id"]: i for i in ready["items"]}["live"]
+    assert not switch["done"] and "GOING_LIVE" in switch["reason"] and "switch" in switch["reason"]
     live = live_settings(make_settings, KEYS_ROTATED_ON="2026-10-08")
-    ready = readiness(live, PROVEN, wallet_address=WALLET, wallet_sol=0.5)
-    assert ready["done"] == 6 and ready["ready"] is True and ready["headline"] == "Ready"
+    ready = readiness(live, PROVEN, wallet_address=WALLET, wallet_sol=0.5, now=NOW)
+    assert (ready["done"], ready["total"], ready["ready"]) == (5, 5, True)
+    assert ready["headline"] == "Ready — real money is on" and ready["items"][5]["done"]
     assert ready["warning"] is None
     # each condition missing on its own keeps the headline neutral and NOT ready
     variants = [
@@ -483,8 +620,81 @@ def test_all_six_done_is_the_only_ready(make_settings: Callable[..., Settings]) 
         readiness(make_settings(KEYS_ROTATED_ON="2026-10-08"), PROVEN, wallet_address=WALLET, wallet_sol=0.5),
     ]
     for r in variants:
-        assert r["ready"] is False and r["done"] < 6 and r["headline"].startswith("Not ready yet — ")
+        assert r["ready"] is False and r["done"] < 5 and r["headline"].startswith("Not ready yet — ")
+        assert r["headline"].endswith(" of 5 done")
     assert variants[0]["warning"] is not None  # real money is ON before every step is done
+
+
+def test_never_ready_while_the_bot_is_stopped(make_settings: Callable[..., Settings]) -> None:
+    live = live_settings(make_settings, KEYS_ROTATED_ON="2026-10-08")
+    ready = readiness(live, PROVEN, wallet_address=WALLET, wallet_sol=0.5, now=NOW, stopped=True)
+    assert ready["ready"] is False and ready["done"] == 5
+    assert ready["headline"] == "Set up, but stopped right now: see the banners at the top"
+    not_set_up = readiness(live, {}, wallet_address=WALLET, wallet_sol=0.5, now=NOW, stopped=True)
+    assert not_set_up["headline"] == "Not ready yet — 3 of 5 done"
+
+
+def test_the_page_is_never_ready_with_a_banner_up(monkeypatch: pytest.MonkeyPatch, ledger: Ledger,
+                                                  make_settings: Callable[..., Settings]) -> None:
+    """Kill switch, halt, silence, a wallet that doesn't match, safe mode, an unknown trade: each one keeps the
+    answer at "stopped right now", even with all five steps done."""
+    settings = live_settings(make_settings, KEYS_ROTATED_ON="2026-10-08")
+    install_card(monkeypatch, lambda settings, now: {"headline": "proven", **PROVEN})
+    seed(ledger, mode="live")
+    ledger.set_kv("wallet.pubkey", WALLET)
+    ledger.record_equity(EquityPoint(ts=NOW - 10, equity_lamports=950_000_000, sol_usd=110.0, equity_usd=104.5,
+                                     sol_lamports=600_000_000, positions_value_lamports=350_000_000, mode="live"))
+    assert build_page_state(ledger, settings, NOW)["ready"]["headline"] == "Ready — real money is on"
+    troubles: list[Callable[[], None]] = [
+        lambda: ledger.set_kv("engine.kill_mode", "stop"),
+        lambda: ledger.set_kv("risk.halted", {"halted": True, "reason": "[drawdown] -52%", "ts": NOW}),
+        lambda: ledger.set_kv("engine.heartbeat", NOW - ENGINE_STALE_S - 60),
+        lambda: ledger.set_kv("engine.status", status_kv(drift={"M": {"books": 1, "wallet": 0}})),
+        lambda: ledger.set_kv("engine.safe_mode", {"problems": ["x"], "defaults_used": []}),
+        lambda: ledger.set_kv("engine.status", status_kv(unresolved_swaps=["M"])),
+    ]
+    for trouble in troubles:
+        trouble()
+        state = build_page_state(ledger, settings, NOW)
+        assert state["alerts"] and state["ready"]["ready"] is False
+        assert state["ready"]["headline"] == "Set up, but stopped right now: see the banners at the top"
+        for key, value in (("engine.kill_mode", "off"), ("risk.halted", None), ("engine.heartbeat", NOW - 5),
+                           ("engine.status", status_kv()), ("engine.safe_mode", None)):
+            ledger.set_kv(key, value)
+        assert build_page_state(ledger, settings, NOW)["ready"]["ready"] is True
+
+
+@pytest.mark.parametrize(("token", "why"), [
+    ("4821", "too short"), ("x" * 40, "too easy to guess"), ("abcabcabcabcabcabcabcabcabc", "too easy to guess"),
+    (PLACEHOLDER_TOKEN, "the example from the guide"), ("a1B2c3D4e5F6g7H8i9J0k1", "too short"),
+])
+def test_a_weak_dashboard_token_does_not_count_as_locked(make_settings: Callable[..., Settings], token: str,
+                                                         why: str) -> None:
+    """Step 5 is ticked only for a password nobody can guess: 24+ characters, not repetitive, not the guide's
+    example. The reason never shows the token itself."""
+    item = {i["id"]: i for i in readiness(make_settings(DASHBOARD_TOKEN=token), {}, wallet_address=None,
+                                          wallet_sol=None, now=NOW)["items"]}["locked"]
+    assert not item["done"] and why in item["reason"] and token not in item["reason"]
+    strong = {i["id"]: i for i in readiness(make_settings(DASHBOARD_TOKEN=TOKEN), {}, wallet_address=None,
+                                            wallet_sol=None, now=NOW)["items"]}["locked"]
+    assert strong["done"]
+
+
+def test_keys_item_needs_a_real_date_that_is_not_in_the_future(make_settings: Callable[..., Settings]) -> None:
+    def keys(value: str) -> dict[str, Any]:
+        settings = make_settings()
+        object.__setattr__(settings, "keys_rotated_on", value)  # what Settings validation would refuse
+        return {i["id"]: i for i in readiness(settings, {}, wallet_address=None, wallet_sol=None,
+                                              now=NOW)["items"]}["keys"]
+
+    assert keys("2026-10-08") == {"id": "keys", "label": "Keys shared in chat replaced", "done": True,
+                                  "reason": "Done on 2026-10-08."}
+    assert keys("2026-10-09")["done"]  # "today" in a time zone ahead of UTC
+    future = keys("2026-10-12")
+    assert not future["done"] and "in the future" in future["reason"]
+    for junk in ("no", "false", "not yet", "TODO", "08/10/2026", "20261008", "sk-ant-api03-NEWKEY0123456789"):
+        item = keys(junk)
+        assert not item["done"] and item["reason"] == "KEYS_ROTATED_ON must be a date like 2026-10-09.", junk
 
 
 # --------------------------------------------------------------------------- routes
@@ -622,7 +832,7 @@ def test_page_has_every_section_in_order_and_is_built_for_phones(settings: Setti
     assert f'data-refresh="{REFRESH_S}"' in html and 10 <= REFRESH_S <= 15
     assert "visibilitychange" in html and "document.hidden" in html  # pauses while hidden, refreshes on return
     assert "Paper money (pretend)" in html and ">PAPER<" in html
-    assert LEARNING_RULE in html and "Ready for real money?" in html
+    assert 'id="learn-rule" hidden' in html and "Ready for real money?" in html  # the rule only from real data
     assert "min-height:44px" in html  # tap targets
     assert not re.search(r"""(?:src|href)\s*=\s*["']?(?:https?:)?//""", html)
     assert "@import" not in html and "url(" not in html
@@ -654,6 +864,26 @@ def test_page_csp_hashes_match_the_inline_script_and_style(settings: Settings) -
     assert f"script-src {source(script)};" in PAGE_CSP and f"style-src {source(style)};" in PAGE_CSP
     assert "default-src 'none'" in PAGE_CSP and "connect-src 'self'" in PAGE_CSP
     assert "unsafe-inline" not in PAGE_CSP and "unsafe-eval" not in PAGE_CSP
+
+
+def test_an_open_trade_without_a_price_yet_reads_cleanly(settings: Settings) -> None:
+    """Right after a buy, before the first price check: no "now —", no empty " ·  · " part, no bare dash."""
+    script = page_script(settings)
+    assert '"price not checked yet"' in script
+    assert '" · now " + price(' not in script and '" · " + pct(p.pnl_pct)' not in script
+    assert '.filter(Boolean).join(" · ")' in script
+    assert 'isNum(p.pnl_usd) ? el("span", "big "' in script  # no lone dash where the result would be
+
+
+def test_refreshes_rely_on_the_login_cookie_not_the_raw_token(settings: Settings) -> None:
+    """The link's ?token= sets the HMAC cookie on the first response; every refresh then sends only the cookie,
+    so the raw token is not written into proxy logs every 15 s. The token is retried only after a 401."""
+    script = page_script(settings)
+    assert '"api/page" + (token' not in script
+    assert 'fetch("api/page", opts)' in script
+    retry = re.search(r'if \(res\.status === 401 && token\) res = await fetch\("api/page\?token=" \+ '
+                      r'encodeURIComponent\(token\), opts\);', script)
+    assert retry is not None and script.count("api/page?token=") == 1
 
 
 def test_an_unknown_bar_draws_no_track_and_tracks_are_neutral(settings: Settings) -> None:

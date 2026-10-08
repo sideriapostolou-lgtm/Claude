@@ -71,12 +71,14 @@ from nightcrawler.models import LAMPORTS_PER_SOL, Decision, Fill
 __all__ = [
     "ENGINE_STALE_S",
     "EVENTS_MAX",
+    "FUTURE_SKEW_S",
     "PANELS",
     "REFRESH_S",
     "TeamRoom",
     "build_team_state",
     "deploy_info",
     "derive_status",
+    "duration_text",
     "json_body",
     "plain",
     "proximity",
@@ -85,8 +87,10 @@ __all__ = [
 log = get_logger(__name__)
 
 REFRESH_S = 10
-#: The engine rewrites its heartbeat every 15 s; older than this = silent (same as the dashboard chip).
+#: The engine rewrites its heartbeat every 15 s; older than this = silent (the page's banner uses it too).
 ENGINE_STALE_S = 180.0
+#: An activity stamp later than now + this is not trusted (a millisecond epoch, a clock far ahead).
+FUTURE_SKEW_S = 60.0
 EVENTS_MAX = 5
 BARS_MAX = 5
 TEXT_MAX = 160
@@ -168,8 +172,11 @@ def derive_status(now: float, last_activity: float | None, window_s: float, *, b
                   waiting: str | None = None, idle: str | None = None) -> tuple[str, str]:
     """``(status, why)``: ``blocked`` > ``working`` (activity within ``window_s``) > ``waiting`` > ``idle``.
 
-    A working member's ``why`` is empty: the page shows how long ago it acted from ``last_activity``.
+    A working member's ``why`` is empty: the page shows how long ago it acted from ``last_activity``. A stamp
+    more than :data:`FUTURE_SKEW_S` in the future counts as unknown, so it can never keep a member Working.
     """
+    if last_activity is not None and last_activity > now + FUTURE_SKEW_S:
+        last_activity = None
     if blocked:
         return "blocked", blocked
     if last_activity is not None and now - last_activity <= window_s:
@@ -217,13 +224,15 @@ def _n(count: int, word: str) -> str:
     return f"{count:,} {word}{'' if count == 1 else 's'}"
 
 
-def _dur(seconds: float) -> str:
+def duration_text(seconds: float) -> str:
+    """``"5 min"``, ``"2 h 05 min"``, ``"3 d 4 h"`` (``"3 d"`` on the hour)."""
     minutes = int(max(0.0, seconds) // 60)
     if minutes < 60:
         return f"{minutes} min"
     if minutes < 24 * 60:
         return f"{minutes // 60} h {minutes % 60:02d} min"
-    return f"{minutes // 1440} d {minutes % 1440 // 60} h"
+    hours = minutes % 1440 // 60
+    return f"{minutes // 1440} d" + (f" {hours} h" if hours else "")
 
 
 def _feed(source: str) -> str:
@@ -389,7 +398,7 @@ def _engine_health(state: dict[str, Any], status: dict[str, Any], now: float) ->
         return "stopped", "engine stopped"
     age = now - heartbeat
     if age > ENGINE_STALE_S:
-        return "stale", f"engine silent for {age / 60:.0f} min"
+        return "stale", f"engine silent for {duration_text(age)}"
     return "running", None
 
 
@@ -803,8 +812,10 @@ def _loss_meter(ctx: _Ctx) -> dict[str, Any]:
     limit = (sol - pnl) * pct
     used = max(0.0, -pnl)
     fraction = used / limit if limit > 0 else None
-    if pnl >= 0:
+    if pnl > 0:
         text = f"Up {pnl:.4f} SOL today; the bot may lose up to {limit:.4f} SOL ({pct * 100:g}%) before it stops."
+    elif pnl == 0:
+        text = f"No gain or loss today; the bot may lose up to {limit:.4f} SOL ({pct * 100:g}%) before it stops."
     else:
         text = f"Down {used:.4f} of {limit:.4f} SOL allowed today ({pct * 100:g}% of start-of-day equity)."
     return {"used": used, "limit": limit, "fraction": fraction, "text": text}
@@ -834,7 +845,9 @@ def _risk(ctx: _Ctx) -> dict[str, Any]:
     if not doing:
         if meter["fraction"] is None:
             doing = f"No money check yet today; {slots}."
-        elif (eq["pnl_today_sol"] or 0.0) >= 0:
+        elif eq["pnl_today_sol"] == 0:
+            doing = f"Flat today: no gain or loss yet; {slots}."
+        elif eq["pnl_today_sol"] > 0:
             doing = f"Up today; {slots}."
         else:
             doing = f"Used {meter['fraction'] * 100:.0f}% of today's loss allowance; {slots}."
@@ -900,7 +913,7 @@ def _upgrades(ctx: _Ctx, deploy: dict[str, str | None], started_at: float | None
     running = ctx.engine_block is None and ctx.engine_wait is None
     uptime = ctx.now - started_at if started_at is not None and running else None
     status = ctx.derive("upgrades", started_at, idle=f"running v{__version__}")
-    doing = f"Running version {__version__}" + (f" for {_dur(uptime)}." if uptime is not None else ".")
+    doing = f"Running version {__version__}" + (f" for {duration_text(uptime)}." if uptime is not None else ".")
     return _panel("upgrades", status, started_at, ctx.text(doing),
                   _headline(f"v{__version__}", "text", "deployed version"),
                   [_stat("Commit", deploy.get("commit"), "text"),

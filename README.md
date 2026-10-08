@@ -146,8 +146,8 @@ full list with explanations is in [.env.example](.env.example). The important on
 | `BOT_WALLET_SECRET` | (empty) | Live only: the private key of a **dedicated** bot wallet. Secret. |
 | `KILL_SWITCH` | `off` | `stop` = no new buys; `sell_all` = sell everything, then stop. `sell-all` works too; an unknown word means `stop`. |
 | `RESET_HALT_TOKEN` | (empty) | Change to any new value (e.g. today's date) to clear a drawdown halt once. |
-| `DASHBOARD_TOKEN` | (empty) | Password for the dashboard link. **Set a long random one** on Railway. |
-| `KEYS_ROTATED_ON` | (empty) | The date you replaced every key ever pasted into a chat. Only ticks step 4 of the dashboard's "Ready for real money?" checklist. |
+| `DASHBOARD_TOKEN` | (empty) | Password for the dashboard link. **Set a long random one** on Railway: live mode refuses one shorter than 24 characters, and the checklist only ticks a strong one. |
+| `KEYS_ROTATED_ON` | (empty) | The date (`YYYY-MM-DD`) you replaced every key ever pasted into a chat. Only ticks step 4 of the dashboard's "Ready for real money?" checklist; anything but a date is refused at start. |
 | `DATA_DIR` | `./data` | Where the ledger lives. On Railway: `/data` (a volume). |
 | `PAPER_START_USD` | `100` | Pretend bankroll at the first start. |
 | `POSITION_PCT` | `0.20` | Share of equity per position (a fraction: 0.20 = 20 %). |
