@@ -275,16 +275,24 @@ class Backfill:
         )
         bkey = hashlib.sha1(",".join(b[0] for b in batch).encode()).hexdigest()[:10]
         key = f"{t0}-{t1}-{bkey}"
+
+        def split(mid: int) -> bool:
+            ok = self._run_b2_part(hour, t0, mid, batch, st) and self._run_b2_part(hour, mid, t1, batch, st)
+            if ok and (t0, t1) == (hour, hour + HOUR):
+                self._mark_pools(st, batch)   # only the full hour marks pools done (nested splits resume)
+            return ok
+
+        if f"split:{key}" in st["parts"]:          # resumed after an earlier timeout: go straight to the halves
+            return split(int(st["parts"][f"split:{key}"]))
         try:
             res = self._query(render_sql("b2", **params), tag=f"b2:{utc(t0)}:{len(batch)}")
         except QueryTimeout:
             if t1 - t0 > Q15:
                 mid = t0 + floor_to((t1 - t0) // 2, Q15)
                 log.warning("b2 %s timed out with %d pools; splitting time at %s", utc(t0), len(batch), utc(mid))
-                ok = self._run_b2_part(hour, t0, mid, batch, st) and self._run_b2_part(hour, mid, t1, batch, st)
-                if ok and (t0, t1) == (hour, hour + HOUR):
-                    self._mark_pools(st, batch)   # only the full hour marks pools done (nested splits resume)
-                return ok
+                st["parts"][f"split:{key}"] = mid
+                self.store.save_state()
+                return split(mid)
             self._error("b2", key, "timeout at minimum chunk")
             return self._mark_pools(st, batch, error="timeout")
         except ResultTooLarge:

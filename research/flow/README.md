@@ -75,17 +75,27 @@ python -m pytest -q research/flow/tests
 
 ### Measured cost (pilot, 2026-10-08)
 
-Server timing **varies by 3-7x** for the same query. The service is shared, so expect occasional timeouts
-and the automatic splits that follow them.
+Server time for the **same** query varied 3-7x within an hour: the service is shared. Timeouts happen,
+and chunks are split automatically when they do.
 
-| Query | Covers | Typical execution |
-|---|---|---|
-| `curve.sql` | 1 chain hour, plus a 30-minute lookback | 12-40 s. Some 1-hour chunks time out and are split |
-| `b2.sql` | 1 chain hour, up to 150 active pools | 6-45 s |
-| `raw.sql` (validation) | ~8 coins × 2 minutes | ~8 s |
-| `slot_map.sql` | 18 days | ~1 s |
+| Query | Covers | Execution (median / p90) | Notes |
+|---|---|---|---|
+| `curve.sql` | 1 chain hour, plus a 30-minute lookback | ~20 s / ~55 s | ~190-300M rows read. About 1 in 7 hours timed out and was split |
+| `b2.sql` | 1 chain hour, ~180-260 active pools | ~17 s / ~56 s | One query per hour since the batch cap was raised to 260 (~0.6 MB of result) |
+| `b3.sql` (P3 test) | 6 busy coins, [created, g + 60 min] | 8.7 s | ~10k wallets ≥ 0.01 SOL; just under the 1 MB cap. P3 now keeps wallets ≥ 0.05 SOL |
+| `b1.sql` (P4 test) | 3 organic coins, [created, g + 120 min] | 22 s | 7,721 non-dust trades; just under the 1 MB cap, so ~3-4 coins per query |
+| `raw.sql` (validation) | ~8 coins × 2 minutes | 3-47 s | |
+| `slot_map.sql` | 18 days | ~1 s | |
 
-See `FLOW/manifest.json` (`queries.by_tag`) for the live numbers.
+**P1 throughput:**
+
+- About 2-4 queries per chain hour (curve + B2, including splits) and 1-2 minutes of wall time.
+- That is roughly **20-30 chain hours per wall hour**, which sits at the 90 queries/hour budget.
+- **Realistic ETAs:** P1 for 7 days ≈ 6-8 h; P2 to 21.8 days ≈ 18-24 h in total.
+- **P3** (60-minute horizon, ~12 coins/query): ~100 queries per chain day ≈ 24-26 h for 21.8 days.
+- **P4** (tradeable non-factory coins only, ~3.5 coins/query): ~100-150 queries per chain day ≈ 25-40 h
+  for 21.8 days.
+- `FLOW/pilot_report.json` and `manifest.json` have the measured numbers.
 
 ## Output tables (`FLOW/*.parquet`, built by `--consolidate`)
 

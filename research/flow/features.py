@@ -38,9 +38,9 @@ def merge_agent_candidates(chunks: Iterable[list]) -> dict[str, dict]:
             d["sol"].extend(sol)
             d["sells"] += int(sells or 0)
     for d in out.values():
-        order = sorted(range(len(d["ts"])), key=lambda i: d["ts"][i])
-        d["ts"] = [d["ts"][i] for i in order]
-        d["sol"] = [d["sol"][i] for i in order]
+        pairs = sorted(set(zip(d["ts"], d["sol"])))   # overlapping chunks (resumed splits) must not double count
+        d["ts"] = [p[0] for p in pairs]
+        d["sol"] = [p[1] for p in pairs]
     return out
 
 
