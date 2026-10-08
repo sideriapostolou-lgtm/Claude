@@ -255,6 +255,25 @@ class LearnStore:
     def days(self) -> list[str]:
         return [r[0] for r in self._rows("SELECT DISTINCT day FROM coins ORDER BY day")]
 
+    def newest_created(self, day: str) -> float | None:
+        """Creation time of the newest coin first seen on ``day`` (None for an empty day)."""
+        return self._rows("SELECT MAX(created_ts) FROM coins WHERE day = ?", (day,))[0][0]
+
+    def summary(self) -> dict[str, Any]:
+        """Counts for ``nightcrawler learn status``: coins per status, days, the fetch queue, variants,
+        evidence rows and the outbox."""
+        coins = {"open": 0, "closed": 0, "incomplete": 0}
+        coins.update(dict(self._rows("SELECT status, COUNT(*) FROM coins GROUP BY status")))
+        fetches = {"pending": 0, "done": 0, "failed": 0}
+        fetches.update(dict(self._rows(
+            "SELECT CASE WHEN done_ts IS NULL THEN 'pending' WHEN failed THEN 'failed' ELSE 'done' END, COUNT(*) "
+            "FROM fetch_queue GROUP BY 1")))
+        rows, receipted = self._rows("SELECT COUNT(*), COUNT(receipt_seq) FROM outbox")[0]
+        return {"coins": {"total": sum(coins.values()), **coins}, "days": self.days(), "fetches": fetches,
+                "variants": self._rows("SELECT COUNT(*) FROM variants")[0][0],
+                "evidence": self._rows("SELECT COUNT(*) FROM evidence")[0][0],
+                "outbox": {"rows": rows, "receipted": receipted, "pending": rows - receipted}}
+
     # ------------------------------------------------------------------ fetch queue
     def schedule(self, mint: str, kind: str, due_ts: float) -> None:
         self._write("INSERT OR IGNORE INTO fetch_queue(mint, kind, due_ts, next_try_ts) VALUES (?, ?, ?, ?)",

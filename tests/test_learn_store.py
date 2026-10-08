@@ -98,3 +98,38 @@ def test_a_read_only_store_never_creates_the_file(tmp_path) -> None:
         assert ro.get_meta("k") == 1
         with pytest.raises(sqlite3.OperationalError):
             ro.set_meta("k", 2)
+
+
+def test_summary_counts_coins_fetches_variants_evidence_and_the_outbox(store) -> None:
+    empty = store.summary()
+    assert empty["coins"] == {"total": 0, "open": 0, "closed": 0, "incomplete": 0} and empty["days"] == []
+    assert empty["fetches"] == {"pending": 0, "done": 0, "failed": 0} and empty["variants"] == 0
+    assert empty["outbox"] == {"rows": 0, "receipted": 0, "pending": 0} and empty["evidence"] == 0
+    for i, day in enumerate(("2026-10-08", "2026-10-08", "2026-10-09")):
+        store.add_coin(f"M{i}", created_ts=T + i, first_seen_ts=T + i, day=day)
+        store.schedule(f"M{i}", "candles", T + 3600)
+        store.schedule(f"M{i}", "snaps", T + 300)
+    store.finish_fetch("M0", "snaps", T + 300, T + 301)
+    store.fail_fetch("M1", "snaps", T + 300, T + 302)
+    store.set_coin_status("M0", "closed")
+    store.add_variant("h1", family="dip_rebound", params={}, source="seed", alpha=0.005, threshold=200.0,
+                      promotable=True, name="v1", now=T)
+    store.mark_outbox(store.next_outbox()["id"], 7, T + 1)
+    store.add_outbox("tape_root", {"root": "r"}, T + 2)
+    store.put_evidence({"variant_hash": "h1", "mint": "M0", "pricing": "replay", "entry_ts": T, "exit_ts": T + 60,
+                        "x": 0.1, "x_raw": 0.1, "x_stress": 0.05, "gross": 0.15, "cost": 0.05, "sim_hash": "s",
+                        "cost_scale_ver": 1})
+    found = store.summary()
+    assert found["coins"] == {"total": 3, "open": 2, "closed": 1, "incomplete": 0}
+    assert found["days"] == ["2026-10-08", "2026-10-09"]
+    assert found["fetches"] == {"pending": 4, "done": 1, "failed": 1}
+    assert found["variants"] == 1 and found["evidence"] == 1
+    assert found["outbox"] == {"rows": 2, "receipted": 1, "pending": 1}
+
+
+def test_newest_created_of_a_day(store) -> None:
+    assert store.newest_created("2026-10-08") is None
+    store.add_coin("M1", created_ts=T + 5, first_seen_ts=T + 9, day="2026-10-08")
+    store.add_coin("M2", created_ts=T + 2, first_seen_ts=T + 9, day="2026-10-08")
+    store.add_coin("M3", created_ts=T + 99, first_seen_ts=T + 99, day="2026-10-09")
+    assert store.newest_created("2026-10-08") == T + 5

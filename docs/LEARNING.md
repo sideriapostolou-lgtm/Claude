@@ -3,26 +3,40 @@
 Chief architect's synthesis, written 2026-10-08. Accepted: this file is `docs/LEARNING.md`, and `docs/DESIGN.md` §13
 "Learning" points to it.
 
-> **Implementation status (phase 1 core, 2026-10-08).**
+> **Implementation status (phase 1 built and wired, 2026-10-08).**
 >
-> - **Built and tested:** `src/nightcrawler/costs.py` (exact port of the lab model, `replay_model`, `cost_scale`,
+> - **Core:** `src/nightcrawler/costs.py` (exact port of the lab model, `replay_model`, `cost_scale`,
 >   `side_fill`; 50-case parity and the monotone-pessimism golden file), the optional `backtest.py` hooks
 >   (`cost_fn`, `decide_at`, `entry_delay_s`, plus `entry_fn` for families such as the placebo; all default
 >   `None` = unchanged results), `sources/pumpfun.py` `census_page(offset)` and `raw_candles(mint)`, and
 >   `learn/{store,tape,recorder,variants,replay,evidence,card,gate}.py`, `learn/families/{dip_rebound,placebo}.py`,
->   `learn/seeds.json`, `LEARN_ENABLED` and `LEARN_DISK_CAP_GB`. Tests: `test_costs_port`, `test_evidence`,
+>   `learn/seeds.json`. Tests: `test_costs_port`, `test_evidence`,
 >   `test_learn_{tape,store,outbox,recorder,visibility,replay,variants,card,boundary}`.
-> - **Still to wire (integrator):** `learn/job.py` (`learn run --incremental` in a subprocess: rlimits, nice,
->   lease, parent-death check), the engine's `learn` stage (`store.drain_outbox` into `learn` receipts,
->   spawn and reap the learner every 30 min, `recorder.start_recorder` / `RecorderThread.stop`, and the
->   non-blocking `Recorder.emit` of `evals` / `fills` / `lag`), `cli.py` `learn status` / `learn run`,
->   `models.ReceiptKind` gaining `"learn"`, the boot receipt's `code_hashes` / `sim_hash`, and the dashboard card
->   (`learn.card.learning_card_state(settings, now)`).
+> - **Integration:** `learn/job.py` (`nightcrawler learn run --incremental`: lease, seeds, judged days
+>   replayed once with per-coin commits, scoreboard; spawned by the bot with nice 19, `RLIMIT_AS` 1 GB,
+>   `RLIMIT_CPU`, a 600 s wall budget, no secrets, and an exit when its parent is gone), the engine's `learn`
+>   stage (`engine.LearnStage`: outbox -> `learn` receipts exactly once over a 50 ms-lock connection,
+>   learner spawned and reaped every `LEARN_INTERVAL_MIN`, recorder started after the boot receipt and
+>   stopped at shutdown, SIGTERM forwarded to the learner; non-blocking `evals` / `fills` / `lag` rows),
+>   `nightcrawler learn status [--json]` and `learn run`, `models.ReceiptKind` `"learn"`, the boot
+>   receipt's `code_hashes` and `sim_hash`, `LEARN_ENABLED` / `LEARN_DISK_CAP_GB` / `LEARN_INTERVAL_MIN`, and
+>   `learn.card.learning_card_state(settings, now)` filled from the scoreboard for the dashboard team's card
+>   (`state`, `headline`, `variants` = top 3 + placebo with n / avg % / proof, `data` line). Tests:
+>   `test_learn_job`, `test_engine` (learning on vs off trades identically; recorder, spawn, learner and
+>   learn.db failures never change a tick), `test_cli` (`learn`), `test_learn_card`.
+> - **Not in phase 1 (by plan):** the dashboard card itself (O6, built on `learning_card_state`), the janitor
+>   (`LEARN_DISK_CAP_GB` is shown, not enforced: phase 3), the cadence estimate (decisions stay on the
+>   180 s default), and everything of phases 2-4.
 > - **Phase-1 choices made while building:** a day is replayed only once every coin of it is closed or
 >   incomplete (so the 95 % completeness rule is known before any of its evidence exists); the replay prices a
 >   coin at the SOL/USD of the newest census row fetched at or before the coin's creation (leak-free); the
 >   recorder keeps the last 30 stored minutes per coin to detect revisions; a coin becomes `incomplete` only
->   when its last fetch is done, so its day is never sealed early.
+>   when its last fetch is done, so its day is never sealed early; day D is replayed with `L_obs` from the
+>   `lag` rows of the 7 days BEFORE D (all written before D began, so the replay stays a function of the
+>   tape), and a replayed day is marked finished for the variants frozen before its newest coin, so it is
+>   never read again until a new variant is frozen before its coins; the first learner run starts 60 s after
+>   boot so the seeds are registered early; the engine's rows go into the coin's partition (or the UTC day of
+>   the row for coins the recorder has not enrolled).
 
 **Inputs:**
 

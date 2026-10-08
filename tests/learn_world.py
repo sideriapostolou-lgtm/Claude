@@ -8,10 +8,13 @@ trades, newest ``limit`` of them, the newest possibly still open), chained throu
 from __future__ import annotations
 
 import random
+from pathlib import Path
 from typing import Any
 
 from nightcrawler.costs import SOL_QUOTE
-from nightcrawler.learn.tape import candle_fetch_row, candle_mark, universe_row
+from nightcrawler.learn.store import LearnStore
+from nightcrawler.learn.tape import TapeWriter, candle_fetch_row, candle_mark, tape_day, universe_row
+from nightcrawler.learn.variants import VariantSpec
 from nightcrawler.models import Candle
 
 #: Thursday 2026-10-08 00:00:00 UTC
@@ -91,3 +94,27 @@ def make_coins(n: int, seed: int, start: float, spacing_s: float = 1800.0, **kw:
         candles = dip_rebound_series(created, rng)
         coins[mint] = {"created_ts": created, "candles": candles, "rows": record_coin(mint, created, candles, **kw)}
     return coins
+
+
+def write_day(root: Path, store: LearnStore, coins: dict, *, incomplete: int = 0) -> str:
+    """Put ``coins`` (:func:`make_coins`) on the tape at ``root`` and in ``store``, every one finished:
+    the first ``incomplete`` as ``incomplete``, the rest ``closed``. Returns their first-seen day."""
+    day = tape_day(next(iter(coins.values()))["created_ts"] + 600)
+    with TapeWriter(root) as w:
+        for i, (mint, coin) in enumerate(coins.items()):
+            for stream, rows in coin["rows"].items():
+                for row in rows:
+                    w.append(stream, day, row)
+            store.add_coin(mint, created_ts=coin["created_ts"], first_seen_ts=coin["created_ts"] + 600, day=day)
+            store.set_coin_status(mint, "incomplete" if i < incomplete else "closed")
+    return day
+
+
+def freeze(store: LearnStore, spec: VariantSpec, t0: float) -> str:
+    """Register ``spec`` and mark its ``register`` row receipted at ``t0``, as the engine does."""
+    store.add_variant(spec.hash, family=spec.family, params=spec.params, source="seed", alpha=0.005,
+                      threshold=200.0, promotable=spec.promotable, name=spec.name, now=t0)
+    row = next(o for o in store.outbox(pending=True)
+               if o["event"] == "register" and o["payload"]["variant_hash"] == spec.hash)
+    store.mark_outbox(row["id"], 1, t0)
+    return spec.hash

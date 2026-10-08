@@ -276,3 +276,12 @@ def test_take_profit_written_as_percent_is_rejected_with_the_fraction_hint(make_
         make_settings(TAKE_PROFIT_PCT="40")
     assert make_settings(TAKE_PROFIT_PCT="0.4").take_profit_pct == 0.4
     assert make_settings(TAKE_PROFIT_PCT="2.0").take_profit_pct == 2.0
+
+
+def test_learning_settings(make_settings) -> None:
+    s = make_settings()
+    assert (s.learn_enabled, s.learn_disk_cap_gb, s.learn_interval_min) == (True, 3.0, 30.0)
+    assert make_settings(LEARN_INTERVAL_MIN="1").learn_interval_min == 1.0
+    for bad in ("0.5", "0", "-5"):
+        with pytest.raises(ConfigError, match="LEARN_INTERVAL_MIN"):
+            make_settings(LEARN_INTERVAL_MIN=bad)

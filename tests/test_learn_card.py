@@ -27,9 +27,17 @@ def _no_cache():
 def check_shape(state: dict) -> None:
     assert set(EMPTY_KEYS) <= set(state)
     json.dumps(state, allow_nan=False)  # JSON-native, no NaN
-    for key in ("data", "budget", "live", "paper_variant"):
+    for key in ("stats", "budget", "live", "paper_variant"):
         assert isinstance(state[key], dict)
     assert isinstance(state["top"], list) and isinstance(state["events"], list)
+    # what the one-page dashboard reads (pagestate.learning_card): plain strings and a variants list
+    assert isinstance(state["headline"], str) and state["headline"] and isinstance(state["state"], str)
+    assert isinstance(state["data"], str) and state["data_line"] == state["data"]
+    assert isinstance(state["variants"], list)
+    for v in state["variants"]:
+        assert isinstance(v["name"], str) and v["name"] and isinstance(v["n"], int) and v["n"] >= 0
+        assert v["avg"] is None or isinstance(v["avg"], float)
+        assert isinstance(v["proof"], float) and 0.0 <= v["proof"] <= 1.0
 
 
 def test_no_learn_db_yet_means_collecting_day_1(settings) -> None:
@@ -54,8 +62,9 @@ def test_collecting_counts_days_since_the_first_coin(settings) -> None:
     state = learning_card_state(settings, NOW)
     check_shape(state)
     assert state["headline"] == "Collecting data, day 3"
-    assert state["data"]["coins_yesterday"] == 1 and state["data"]["coins_total"] == 2
-    assert state["data"]["completeness_pct"] == 100.0
+    assert state["stats"]["coins_yesterday"] == 1 and state["stats"]["coins_total"] == 2
+    assert state["stats"]["completeness_pct"] == 100.0 and state["stats"]["days"] == 2
+    assert state["data"].startswith("Data: 2 coins taped · 2 days · ") and " GB of 3 GB" in state["data"]
 
 
 def test_practice_shows_the_top_three_by_proof_and_the_placebo(settings) -> None:
@@ -71,7 +80,8 @@ def test_practice_shows_the_top_three_by_proof_and_the_placebo(settings) -> None
                 "family": v["family"], "control": control}, NOW - 600)
     state = learning_card_state(settings, NOW)
     check_shape(state)
-    assert state["state"] == "practice" and "nothing has proven an edge" in state["headline"]
+    assert state["state"] == "practice" and state["headline"] == "Practice: promotions start in phase 2"
+    assert "No idea has proven an edge yet" in state["subline"]
     assert len(state["top"]) == 3 and [t["proof"] for t in state["top"]] == sorted(
         (t["proof"] for t in state["top"]), reverse=True)
     assert all(len(t["hash12"]) == 12 and t["name"] for t in state["top"])
@@ -112,3 +122,63 @@ def test_the_state_is_cached_for_60_seconds(settings) -> None:
         store.add_coin("M1", created_ts=NOW - 3 * DAY, first_seen_ts=NOW - 3 * DAY, day="2026-10-05")
     assert learning_card_state(settings, NOW + 59) == first
     assert learning_card_state(settings, NOW + 61)["headline"] == "Collecting data, day 4"
+
+
+def test_the_variants_line_up_the_top_three_then_the_placebo(settings) -> None:
+    anchor = StrategyParams()
+    with LearnStore(db_path(settings.data_dir)) as store:
+        register_seeds(store, anchor, NOW - 9 * DAY)
+        for i, v in enumerate(store.variants()):
+            control = v["family"] == "placebo"
+            store.put_scoreboard("2026-10-08", v["hash"], {
+                "n": 10 * (i + 1), "mean": -0.064 if control else 0.012 * i, "log_e": 0.1 * i,
+                "proof": 0.0 if control else 0.05 * i, "status": "testing", "name": v["name"],
+                "family": v["family"], "control": control}, NOW - 60)
+    state = learning_card_state(settings, NOW)
+    check_shape(state)
+    names = [v["name"] for v in state["variants"]]
+    assert len(names) == 4 and names[-1] == "random entry (control)" and state["variants"][-1]["control"]
+    assert names[:3] == [t["name"] for t in state["top"]]
+    first = state["variants"][0]
+    assert (first["n"], first["avg"], first["proof"]) == (state["top"][0]["n"], state["top"][0]["mean_pct"],
+                                                         state["top"][0]["proof"])
+    assert state["variants"][-1]["avg"] == pytest.approx(-6.4)  # percent per trade, like the page shows it
+
+
+def test_every_string_is_scrubbed_of_secrets_and_control_characters(make_settings) -> None:
+    token = "dash-token-very-secret-0123"
+    settings = make_settings(DASHBOARD_TOKEN=token)
+    spec = make_spec("dip_rebound", {"dip_pct": 0.6}, StrategyParams())
+    with LearnStore(db_path(settings.data_dir)) as store:
+        store.add_variant(spec.hash, family="dip_rebound", params=spec.params, source="seed", alpha=0.005,
+                          threshold=200.0, promotable=True, name=f"dip {token}\x1b[31m\n<b>x</b>" + "y" * 500,
+                          now=NOW - DAY)
+        store.put_scoreboard("2026-10-08", spec.hash, {"n": 12, "mean": 0.01, "log_e": 0.1, "proof": 0.02,
+                                                       "status": "testing", "name": f"dip {token}\x07",
+                                                       "family": "dip_rebound", "control": False}, NOW - 60)
+    state = learning_card_state(settings, NOW)
+    check_shape(state)
+    text = json.dumps(state)
+    assert token not in text and "[REDACTED]" in text
+    strings = []
+
+    def walk(value) -> None:
+        if isinstance(value, str):
+            strings.append(value)
+        elif isinstance(value, dict):
+            for v in value.values():
+                walk(v)
+        elif isinstance(value, list):
+            for v in value:
+                walk(v)
+
+    walk(state)
+    assert all(ch.isprintable() for text in strings for ch in text)
+    assert all(len(text) <= card.TEXT_MAX for text in strings)
+
+
+def test_the_empty_state_is_well_formed_for_the_page(settings) -> None:
+    state = learning_card_state(settings, NOW)
+    check_shape(state)
+    assert (state["state"], state["headline"], state["variants"]) == ("collecting", "Collecting data, day 1", [])
+    assert state["data"] == "Data: 0 coins taped · 0 days · 0.000 GB of 3 GB"

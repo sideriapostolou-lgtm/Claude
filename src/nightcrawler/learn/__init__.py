@@ -12,6 +12,8 @@ Phase 1 - forward logging, shadow book and scoreboard; trading behaviour is unch
 * :mod:`~nightcrawler.learn.variants`  ``VariantSpec``, hard bounds, Settings anchors, ``variant_hash``, seeds.
 * :mod:`~nightcrawler.learn.replay`    frozen variants replayed through ``backtest.Backtester`` on the tape.
 * :mod:`~nightcrawler.learn.evidence`  pure statistics: betting e-processes, LB, proof, ETA, CUSUM.
+* :mod:`~nightcrawler.learn.job`       the learner child (``nightcrawler learn run --incremental``): lease,
+  seeds, judged days replayed once with per-coin commits, the scoreboard; limits, no secrets.
 * :mod:`~nightcrawler.learn.card`      ``learning_card_state(settings, now)`` for the dashboard (never raises).
 * :mod:`~nightcrawler.learn.gate`      the statistical constants (docs/LEARNING.md §5.9).
 

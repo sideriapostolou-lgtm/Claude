@@ -9,8 +9,13 @@ books reconcile.
 
 from __future__ import annotations
 
+import json
 import math
+import random
+import subprocess
+import time
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, Callable
 
 import pytest
@@ -23,13 +28,23 @@ from nightcrawler.cocoon import Cocoon
 from nightcrawler.crawler import Crawler
 from nightcrawler.engine import (
     ERROR_RECEIPT_EVERY_S,
+    LEARN_DRAIN_PER_RUN,
+    LEARN_FIRST_RUN_S,
+    LEARNER_OVERRUN_S,
     RECONCILE_AFTER_S,
     App,
     Engine,
+    LearnStage,
     build_app,
 )
 from nightcrawler.http import HttpClient
 from nightcrawler.judge import Judge
+from nightcrawler.learn import job as learn_job
+from nightcrawler.learn import replay as learn_replay
+from nightcrawler.learn.recorder import Recorder, RecorderThread
+from nightcrawler.learn.store import LearnStore, db_path, learn_dir
+from nightcrawler.learn.tape import TapeReader, TapeWriter, tape_day
+from nightcrawler.learn.variants import make_spec
 from nightcrawler.ledger import Ledger
 from nightcrawler.models import (
     SOL_MINT,
@@ -1101,3 +1116,441 @@ def test_an_open_position_stays_watched_so_the_radar_liquidity_rule_keeps_workin
     rig.tick(200)  # past RADAR_INTERVAL_S since the position's first radar scan
     [closed] = rig.ledger.positions(status="closed")
     assert closed.exit_reason.startswith("radar: big sells")
+
+
+
+# =========================================================================== learning (docs/LEARNING.md)
+
+CENSUS = "frontend-api-v3.pump.fun/coins"
+CENSUS_ROWS = load_fixture("pumpfun_census_coins")
+START = 1_791_475_200.0
+
+
+class FakeLearner:
+    """A learner child: ``run`` (if given) already ran in-process; ``code`` is its exit status;
+    ``stubborn`` ignores SIGTERM until killed."""
+
+    def __init__(self, code: int | None = 0, run: Callable[[], Any] | None = None, stubborn: bool = False) -> None:
+        self.summary = run() if run is not None else None
+        self.code, self.stubborn = code, stubborn
+        self.pid = 4242
+        self.signals: list[str] = []
+
+    def poll(self) -> int | None:
+        return self.code
+
+    def terminate(self) -> None:
+        self.signals.append("TERM")
+        if not self.stubborn:
+            self.code = -15
+
+    def kill(self) -> None:
+        self.signals.append("KILL")
+        self.code = -9
+
+    def wait(self, timeout: float | None = None) -> int:
+        if self.code is None:
+            raise subprocess.TimeoutExpired("learner", timeout or 0)
+        return self.code
+
+
+class BoomRecorder:
+    """A recorder whose every step and every emit crashes."""
+
+    stats: dict[str, int] = {}
+
+    def step(self) -> None:
+        raise RuntimeError("recorder bug")
+
+    def emit(self, stream: str, row: dict) -> bool:
+        raise RuntimeError("emit bug")
+
+    def close(self) -> None:
+        pass
+
+
+def recorder_thread(settings: Any, fake: FakeHttp | None = None) -> RecorderThread:
+    """A real recorder for ``settings.data_dir`` over its own FakeHttp and clock (never the engine's)."""
+    if fake is None:
+        fake = FakeHttp()
+        fake.register(CENSUS, CENSUS_ROWS)
+        fake.register("api.dexscreener.com/tokens/v1/solana/", [])
+        fake.register("swap-api.pump.fun/v1/coins/", [])
+    clock = FakeClock(START)
+    http = HttpClient(session=fake, clock=clock, rate_limits={}, default_rate=None, max_retries=0)
+    root = learn_dir(settings.data_dir)
+    recorder = Recorder(LearnStore(root / "learn.db"), TapeWriter(root / "tape"), http, clock=clock)
+    return RecorderThread(recorder, interval_s=0.01, backoff_s=(0.01, 0.02))
+
+
+def started(thread: RecorderThread) -> RecorderThread:
+    thread.start()
+    return thread
+
+
+def learner_runs(settings: Any, clock: FakeClock) -> Callable[[], FakeLearner]:
+    """Spawn = the real learner job, run in-process at the engine's (fake) time."""
+    return lambda: FakeLearner(run=lambda: learn_job.run_job(learn_job.JobConfig.from_settings(settings),
+                                                             now=clock.now))
+
+
+def make_learning(**kw: Any) -> Callable[[Any, Any, FakeClock], LearnStage]:
+    """``kw``: ``recorder`` (settings -> thread, started by the stage) and ``spawn`` (settings, clock -> callable)."""
+    def build(settings: Any, ledger: Any, clock: FakeClock) -> LearnStage:
+        recorder = kw.get("recorder", recorder_thread)
+        spawn = kw.get("spawn", learner_runs)
+        return LearnStage(settings, ledger, start_recorder=lambda: started(recorder(settings)),
+                          spawn=spawn(settings, clock))
+    return build
+
+
+def fresh_rig(tmp_path: Path, make_settings: Callable[..., Any], name: str,
+              learning: Callable[[Any, Any, FakeClock], LearnStage] | None = None, **overrides: Any) -> Rig:
+    """A whole bot in its own world, clock and DATA_DIR (two of them can run side by side)."""
+    clock, fake = FakeClock(START), FakeHttp()
+    world = make_world(fake, clock)
+    http = HttpClient(session=fake, clock=clock, rate_limits={}, default_rate=None, rng=random.Random(0))
+    settings = make_settings(DATA_DIR=str(tmp_path / name), **overrides)
+    settings.ensure_data_dir()
+    sources = build_sources(settings, http)
+    ledger = Ledger(settings.db_path, clock=clock)
+    broker = PaperBroker(sources.jupiter, ledger, settings, clock)
+    engine = Engine(settings, clock=clock, ledger=ledger, crawler=Crawler(sources, settings, clock),
+                    cocoon=Cocoon(sources, settings, clock), radar=Radar(sources, settings, clock),
+                    judge=Judge(settings, clock=clock, ledger=ledger), risk=RiskManager(settings, ledger, clock),
+                    broker=broker, sources=sources,
+                    learning=learning(settings, ledger, clock) if learning is not None else None)
+    return Rig(engine, ledger, broker, clock, world, settings)
+
+
+def walk(rig: Rig) -> list[dict[str, Any]]:
+    """The full trade (entry, partial take-profit, new peak, trailing exit), then quiet ticks past the
+    learner's first run (LEARN_FIRST_RUN_S after the stage started)."""
+    if rig.engine.learning is not None:
+        rig.engine.learning.start(rig.clock.now())
+    results = [rig.tick()]
+    for price in (0.70e-3, 0.90e-3, 0.75e-3):
+        rig.world.price = price
+        results.append(rig.tick(10))
+    for _ in range(4):
+        results.append(rig.tick(30))
+    return results
+
+
+def _no_ids(value: Any) -> Any:
+    """Ids are random per run and receipt hashes depend on what else is on the chain: drop both."""
+    if isinstance(value, dict):
+        return {k: _no_ids(v) for k, v in value.items()
+                if k not in ("id", "receipt_hash") and not k.endswith(("_id", "_ids"))}
+    if isinstance(value, list):
+        return [_no_ids(v) for v in value]
+    return value
+
+
+def trading(rig: Rig, results: list[dict[str, Any]]) -> dict[str, Any]:
+    """Everything trading did: tick results (without the learn stage) and every non-learning receipt."""
+    return {"results": [{k: v for k, v in r.items() if k != "learn"} for r in results],
+            "receipts": [(r.kind, r.ts, _no_ids(r.payload)) for r in rig.ledger.receipts() if r.kind != "learn"],
+            "positions": [_no_ids(p.to_dict()) for p in rig.ledger.positions()],
+            "equity": [e.to_dict() for e in rig.ledger.equity_series()],
+            "last_error": rig.ledger.get_kv("engine.last_error")}
+
+
+def wait_for(predicate: Callable[[], Any], timeout: float = 5.0) -> bool:
+    end = time.monotonic() + timeout
+    while time.monotonic() < end:
+        if predicate():
+            return True
+        time.sleep(0.01)
+    return bool(predicate())
+
+
+def stop_learning(rig: Rig) -> None:
+    if rig.engine.learning is not None:
+        rig.engine.learning.stop()
+    rig.ledger.close()
+
+
+def test_learning_on_or_off_the_bot_trades_exactly_the_same(tmp_path, make_settings) -> None:
+    off = fresh_rig(tmp_path, make_settings, "off")
+    on = fresh_rig(tmp_path, make_settings, "on", learning=make_learning())
+    try:
+        baseline, learned = trading(off, walk(off)), trading(on, walk(on))
+        assert [k for k, _, _ in baseline["receipts"]].count("fill") == 3  # a whole trade happened
+        assert learned == baseline
+        # ... while learning did its job: seeds registered, scored and receipted exactly once each
+        stage = on.engine.learning
+        receipts = [r for r in on.ledger.receipts() if r.kind == "learn"]
+        with LearnStore(db_path(on.settings.data_dir)) as store:
+            outbox = store.outbox()
+        assert receipts and len({r.payload["outbox_id"] for r in receipts}) == len(receipts)
+        assert {r.payload["outbox_id"] for r in receipts} == {o["id"] for o in outbox if o["receipt_seq"]}
+        assert [r.payload["event"] for r in receipts].count("register") == 5
+        assert stage.status()["learner"]["last_exit"]["code"] == 0 and stage.counters["receipts"] == len(receipts)
+        assert on.ledger.verify_chain() == (True, None)
+        # ... and the engine's own rows reached the tape without blocking it
+        day = tape_day(START)
+        reader = TapeReader(learn_dir(on.settings.data_dir) / "tape")
+        decided = [d.action for d in reversed(on.ledger.decisions(limit=1000))
+                   if d.action == "enter" or d.action.startswith("reject_")]
+        assert decided[:2] == ["reject_cocoon", "enter"]
+        assert wait_for(lambda: len(reader.rows(day, "fills")) == 3 and reader.rows(day, "lag")
+                        and [r["decision"] for r in reader.rows(day, "evals") if "decision" in r] == decided)
+        benchmark = make_spec("dip_rebound", {}, on.settings.strategy_params()).hash
+        evals = reader.rows(day, "evals")
+        assert {r["variant_hash"] for r in evals} == {benchmark} and all(r["v"] == 1 for r in evals)
+        evaluation = next(r for r in evals if r.get("kind") == "enter")
+        assert evaluation["mint"] == GARY and evaluation["last_ts"] and evaluation["candle_source"] == "geckoterminal"
+        fills = reader.rows(day, "fills")
+        assert [f["side"] for f in fills] == ["buy", "sell", "sell"] and all(f["decision_ts"] for f in fills)
+        assert fills[0]["quote"]["expected_out_amount"] == fills[0]["fill"]["expected_out_amount"]
+        lags = reader.rows(day, "lag")
+        assert any(r.get("gt_lag_s") is not None and r["mint"] == GARY for r in lags)
+        assert any(r.get("kind") == "equity" and r["sol_usd"] == SOL_USD for r in lags)
+    finally:
+        stop_learning(off)
+        stop_learning(on)
+
+
+def _garbage_db(settings: Any) -> Any:
+    path = db_path(settings.data_dir)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(b"not a sqlite database " * 64)
+    return recorder_thread(settings)
+
+
+@pytest.mark.parametrize("failure", ["recorder", "spawn", "learner_exit", "learner_hangs", "learn_db"])
+def test_a_recorder_or_learner_crash_never_changes_a_tick(tmp_path, make_settings, failure) -> None:
+    def no_spawn(settings: Any, clock: FakeClock) -> Callable[[], Any]:
+        def spawn() -> Any:
+            raise OSError("cannot fork")
+        return spawn
+
+    kinds = {
+        "recorder": make_learning(recorder=lambda settings: RecorderThread(BoomRecorder(), interval_s=0.001,
+                                                                           backoff_s=(0.001, 0.002))),
+        "spawn": make_learning(spawn=no_spawn),
+        "learner_exit": make_learning(spawn=lambda settings, clock: lambda: FakeLearner(code=1)),
+        "learner_hangs": make_learning(spawn=lambda settings, clock: lambda: FakeLearner(code=None, stubborn=True)),
+        "learn_db": make_learning(recorder=_garbage_db),
+    }
+    off = fresh_rig(tmp_path, make_settings, "off")
+    on = fresh_rig(tmp_path, make_settings, "on", learning=kinds[failure])
+    try:
+        baseline, results = trading(off, walk(off)), walk(on)
+        assert trading(on, results) == baseline
+        assert all(r.get("learn", "ok") in ("ok", "skipped") for r in results)
+        assert "error" not in [r.kind for r in on.ledger.receipts()] and on.ledger.get_kv("engine.last_error") is None
+        status = on.engine.learning.status()
+        if failure == "recorder":
+            assert wait_for(lambda: on.engine.learning.recorder.crashes >= 2)
+            assert on.engine.learning.counters["emit_failed"] > 0
+        elif failure == "spawn":
+            assert status["counters"]["spawn_failed"] == 1 and status["last_error"] == "spawn: OSError"
+        elif failure == "learner_exit":
+            assert status["learner"]["last_exit"]["code"] == 1 and status["counters"]["runs_failed"] == 1
+        elif failure == "learner_hangs":
+            assert status["learner"]["running"] and status["counters"]["runs_started"] == 1  # never a second one
+        else:
+            assert status["last_error"].startswith("drain: ") and status["counters"]["drain_failed"] >= 1
+        json.dumps(on.engine.status(on.clock.now()), allow_nan=False)
+    finally:
+        stop_learning(off)
+        stop_learning(on)
+
+
+# --------------------------------------------------------------------------- the learn stage itself
+
+
+def outbox_rows(settings: Any, n: int, now: float) -> None:
+    with LearnStore(db_path(settings.data_dir)) as store:
+        for i in range(n):
+            store.add_outbox("tape_root", {"hour": f"h{i}", "root": f"r{i}"}, now)
+
+
+def bare_stage(settings: Any, ledger: Any, spawned: list[FakeLearner], **learner: Any) -> LearnStage:
+    def spawn() -> FakeLearner:
+        spawned.append(FakeLearner(**learner))
+        return spawned[-1]
+
+    return LearnStage(settings, ledger, start_recorder=lambda: None, spawn=spawn)
+
+
+def test_the_learn_stage_receipts_each_outbox_row_exactly_once(make_settings, tmp_path, fake_clock) -> None:
+    settings = make_settings(LEARN_INTERVAL_MIN=30)
+    with Ledger(tmp_path / "ledger.db", clock=fake_clock) as ledger:
+        stage = bare_stage(settings, ledger, [])
+        stage.run(START)  # not started yet: does nothing at all
+        assert not learn_dir(settings.data_dir).exists()
+        stage.start(START)
+        stage.run(START)  # no learn.db yet: the engine never creates it
+        assert not learn_dir(settings.data_dir).exists() and ledger.receipts() == []
+        outbox_rows(settings, LEARN_DRAIN_PER_RUN + 3, START)
+        stage.run(START + 5)
+        assert len(ledger.receipts()) == LEARN_DRAIN_PER_RUN  # a bounded amount of work per stage
+        stage.run(START + 10)
+        stage.run(START + 15)
+        receipts = ledger.receipts()
+        assert [r.kind for r in receipts] == ["learn"] * (LEARN_DRAIN_PER_RUN + 3)
+        assert [r.payload["outbox_id"] for r in receipts] == list(range(1, LEARN_DRAIN_PER_RUN + 4))
+        assert receipts[0].payload["event"] == "tape_root" and receipts[0].payload["store"]
+        stage.stop()
+
+
+def test_a_locked_learn_db_is_skipped_never_waited_for(make_settings, tmp_path, fake_clock) -> None:
+    settings = make_settings()
+    outbox_rows(settings, 2, START)
+    with Ledger(tmp_path / "ledger.db", clock=fake_clock) as ledger, LearnStore(db_path(settings.data_dir)) as holder:
+        stage = bare_stage(settings, ledger, [])
+        stage.start(START)
+        with holder.transaction():  # the learner is writing
+            began = time.monotonic()
+            stage.run(START)
+            assert time.monotonic() - began < 1.0 and ledger.receipts() == []
+        assert stage.counters["db_busy"] == 1 and stage.last_error is None
+        stage.run(START + 5)
+        assert len(ledger.receipts()) == 2
+        stage.stop()
+
+
+def test_with_nothing_to_receipt_the_engine_takes_no_learn_db_lock(make_settings, tmp_path, fake_clock) -> None:
+    settings = make_settings()
+    outbox_rows(settings, 1, START)
+    with Ledger(tmp_path / "ledger.db", clock=fake_clock) as ledger, LearnStore(db_path(settings.data_dir)) as holder:
+        stage = bare_stage(settings, ledger, [])
+        stage.start(START)
+        stage.run(START)
+        assert len(ledger.receipts()) == 1
+        with holder.transaction():  # the learner is writing, and nothing is pending
+            stage.run(START + 5)
+        assert stage.counters["db_busy"] == 0 and stage.last_error is None
+        stage.stop()
+
+
+def test_the_learner_is_started_every_interval_one_at_a_time(make_settings, tmp_path, fake_clock) -> None:
+    settings = make_settings(LEARN_INTERVAL_MIN=30)
+    spawned: list[FakeLearner] = []
+    with Ledger(tmp_path / "ledger.db", clock=fake_clock) as ledger:
+        stage = bare_stage(settings, ledger, spawned, code=None)
+        stage.start(START)
+        stage.run(START + LEARN_FIRST_RUN_S - 1)
+        assert spawned == []
+        stage.run(START + LEARN_FIRST_RUN_S)
+        assert len(spawned) == 1 and stage.status()["learner"] == {
+            "running": True, "pid": 4242, "started_at": START + LEARN_FIRST_RUN_S,
+            "next_run_at": START + LEARN_FIRST_RUN_S + 1800, "last_exit": None}
+        stage.run(START + LEARN_FIRST_RUN_S + 1800)  # due again, but the first one still runs
+        assert len(spawned) == 1
+        spawned[0].code = 0  # it finishes
+        stage.run(START + LEARN_FIRST_RUN_S + 1805)
+        assert len(spawned) == 2 and stage.last_exit == {"code": 0, "at": START + LEARN_FIRST_RUN_S + 1805,
+                                                          "seconds": 1805.0}
+        overrun = START + LEARN_FIRST_RUN_S + 1805 + learn_job.INCREMENTAL_MAX_S + LEARNER_OVERRUN_S + 1
+        stage.run(overrun)  # over its wall budget: SIGTERM
+        assert spawned[1].signals == ["TERM"]
+        stage.stop()
+
+
+def test_a_learner_that_ignores_sigterm_is_killed(make_settings, tmp_path, fake_clock) -> None:
+    settings = make_settings()
+    spawned: list[FakeLearner] = []
+    with Ledger(tmp_path / "ledger.db", clock=fake_clock) as ledger:
+        stage = bare_stage(settings, ledger, spawned, code=None, stubborn=True)
+        stage.start(START)
+        stage.run(START + LEARN_FIRST_RUN_S)
+        overrun = START + LEARN_FIRST_RUN_S + learn_job.INCREMENTAL_MAX_S + LEARNER_OVERRUN_S + 1
+        stage.run(overrun)
+        stage.run(overrun + 5)
+        assert spawned[0].signals == ["TERM", "KILL"]
+        stage.stop()
+
+
+def test_shutdown_forwards_sigterm_to_the_learner_and_stops_the_recorder(make_settings, tmp_path,
+                                                                        fake_clock) -> None:
+    settings = make_settings()
+    spawned: list[FakeLearner] = []
+    thread = recorder_thread(settings)
+    with Ledger(tmp_path / "ledger.db", clock=fake_clock) as ledger:
+        stage = LearnStage(settings, ledger, start_recorder=lambda: started(thread),
+                           spawn=lambda: spawned.append(FakeLearner(code=None)) or spawned[-1])
+        stage.start(START)
+        assert thread.is_alive()
+        stage.run(START + LEARN_FIRST_RUN_S)
+        stage.stop()
+        assert spawned[0].signals == ["TERM"] and not thread.is_alive()
+        stubborn = FakeLearner(code=None, stubborn=True)
+        stage = LearnStage(settings, ledger, start_recorder=lambda: None, spawn=lambda: stubborn)
+        stage.start(START)
+        stage.run(START + LEARN_FIRST_RUN_S)
+        stage.stop()
+        assert stubborn.signals == ["TERM", "KILL"]
+
+
+def test_engine_rows_never_block_a_full_queue_drops_them(make_settings, tmp_path, fake_clock) -> None:
+    settings = make_settings()
+    thread = recorder_thread(settings)
+    thread.recorder = Recorder(thread.recorder.store, thread.recorder.tape, thread.recorder.http,
+                               clock=thread.recorder.clock, emit_maxsize=1)
+    with Ledger(tmp_path / "ledger.db", clock=fake_clock) as ledger:
+        stage = LearnStage(settings, ledger, start_recorder=lambda: thread, spawn=lambda: None)
+        stage.start(START)  # (not running: nothing drains the queue)
+        stage.emit("lag", lambda: {"ts": START, "kind": "equity", "sol_usd": 100.0})
+        stage.emit("lag", lambda: {"ts": START, "kind": "equity", "sol_usd": 100.0})
+        stage.emit("lag", lambda: {"ts": START, "sol_usd": float("nan"), "x": 1 / 0})  # a bug in a row
+        assert stage.counters["emits"] == 1 and stage.counters["emits_dropped"] == 1
+        assert stage.counters["emit_failed"] == 1
+        thread.recorder.close()
+
+
+# --------------------------------------------------------------------------- wiring
+
+
+def test_build_app_wires_learning_without_starting_it(make_settings, http_client, fake_clock) -> None:
+    on = build_app(make_settings(), fake_clock, http=http_client)
+    try:
+        assert isinstance(on.engine.learning, LearnStage) and on.engine.learning.recorder is None
+        assert not learn_dir(on.settings.data_dir).exists()
+        on.engine.tick(fake_clock.now())
+        assert not learn_dir(on.settings.data_dir).exists()  # ticks alone never start learning
+    finally:
+        on.close()
+
+
+def test_learning_off_builds_no_learn_stage_and_touches_nothing(make_settings, http_client, fake_clock) -> None:
+    app = build_app(make_settings(LEARN_ENABLED=False), fake_clock, http=http_client)
+    try:
+        assert app.engine.learning is None
+        app.engine.stop()
+        app.engine.run_forever()
+        assert not learn_dir(app.settings.data_dir).exists()
+        assert "learn" not in [r.kind for r in app.ledger.receipts()]
+        assert app.ledger.get_kv("engine.status")["learning"] is None
+    finally:
+        app.close()
+
+
+def test_run_forever_starts_learning_after_the_boot_receipt_and_stops_it_at_shutdown(tmp_path, make_settings) -> None:
+    calls: list[str] = []
+
+    class Spy(LearnStage):
+        def start(self, now: float) -> None:
+            calls.append(f"start after {[r.kind for r in self.ledger.receipts()]}")
+            super().start(now)
+
+        def stop(self) -> None:
+            calls.append("stop")
+            super().stop()
+
+    rig = fresh_rig(tmp_path, make_settings, "spy",
+                    learning=lambda settings, ledger, clock: Spy(settings, ledger, start_recorder=lambda: None,
+                                                                 spawn=lambda: None))
+    try:
+        rig.engine.stop()
+        rig.engine.run_forever()
+        assert calls == ["start after ['boot']", "stop"]
+        boot = rig.ledger.receipts()[0]
+        assert set(boot.payload["code_hashes"]) == {"strategy", "backtest", "costs", "learn"}
+        assert boot.payload["sim_hash"] == learn_replay.sim_hash()
+        assert rig.ledger.get_kv("engine.status")["learning"]["learner"]["running"] is False
+    finally:
+        rig.ledger.close()

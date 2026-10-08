@@ -9,17 +9,15 @@ from pathlib import Path
 
 import pytest
 
-from learn_world import DAY0, api_rows, census_row, dip_rebound_series, make_coins, record_coin
+from learn_world import DAY0, api_rows, census_row, dip_rebound_series, freeze, make_coins, record_coin, write_day
 from nightcrawler.backtest import Backtester, CostModel, load_series
 from nightcrawler.learn import replay as rp
 from nightcrawler.learn.store import LearnStore
 from nightcrawler.learn.tape import (
     TapeReader,
     TapeView,
-    TapeWriter,
     candle_fetch_row,
     candle_mark,
-    tape_day,
     universe_row,
 )
 from nightcrawler.learn.variants import make_spec
@@ -145,23 +143,8 @@ def test_a_hole_after_the_entry_is_missing_data(traded, base) -> None:
 # --------------------------------------------------------------------------- the driver: days, determinism
 
 
-def write_day(root: Path, store: LearnStore, coins: dict, *, incomplete: int = 0) -> str:
-    day = tape_day(next(iter(coins.values()))["created_ts"] + 600)
-    with TapeWriter(root) as w:
-        for i, (mint, coin) in enumerate(coins.items()):
-            for stream, rows in coin["rows"].items():
-                for row in rows:
-                    w.append(stream, day, row)
-            store.add_coin(mint, created_ts=coin["created_ts"], first_seen_ts=coin["created_ts"] + 600, day=day)
-            store.set_coin_status(mint, "incomplete" if i < incomplete else "closed")
-    return day
-
-
 def registered(store: LearnStore, spec=SPEC, t0=T0) -> str:
-    store.add_variant(spec.hash, family=spec.family, params=spec.params, source="seed", alpha=0.005,
-                      threshold=200.0, promotable=spec.promotable, name=spec.name, now=t0)
-    store.mark_outbox(store.next_outbox()["id"], 1, t0)  # as the engine does once receipted
-    return spec.hash
+    return freeze(store, spec, t0)  # as the engine does once receipted
 
 
 def test_replay_is_deterministic_down_to_the_evidence_root(tmp_path, coins) -> None:

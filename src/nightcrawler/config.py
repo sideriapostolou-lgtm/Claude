@@ -303,6 +303,8 @@ class Settings:
                              "own small API budget; false = no learning calls at all")
     learn_disk_cap_gb: float = _f(3.0, "gb", "Disk cap for DATA_DIR/learn (oldest sealed days are deleted first; "
                                   "the ledger always has priority)", lo=0.1, lo_open=False)
+    learn_interval_min: float = _f(30.0, "minutes", "How often the bot starts the learner in the background "
+                                   "(replays finished days, scores every strategy version)", lo=1.0, lo_open=False)
 
     # ---- dashboard ----------------------------------------------------------
     port: int = _f(8080, "port", "Dashboard port (Railway sets PORT)", lo=1, hi=65535)
