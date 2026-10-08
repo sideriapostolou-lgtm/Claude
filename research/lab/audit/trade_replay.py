@@ -43,7 +43,7 @@ def _get(mint: str, cursor: str) -> dict:
         wait = _next[0] - time.monotonic()
         if wait > 0:
             time.sleep(wait)
-        _next[0] = time.monotonic() + 0.5  # <= 120 req/min
+        _next[0] = time.monotonic() + 0.3  # <= 200 req/min (limit 1000/min)
         r = requests.get(URL.format(mint=mint), params={"limit": 100, "cursor": cursor}, timeout=30)
         if r.status_code == 200:
             return r.json()
@@ -60,7 +60,7 @@ def _ts(iso: str) -> float:
     return datetime.fromisoformat(iso.replace("Z", "+00:00")).timestamp()
 
 
-def fetch_window(mint: str, start: float, end: float, max_pages: int = 60) -> tuple[list[dict], bool]:
+def fetch_window(mint: str, start: float, end: float, max_pages: int = 200) -> tuple[list[dict], bool]:
     cursor = f"0000000000000000000000-{int(end * 1000)}"
     out = []
     for _ in range(max_pages):
@@ -88,7 +88,7 @@ def fetch(paths: list[str]) -> None:
             f = DIR / f"{t['mint']}_{int(t['entry_ts'])}.json.gz"
             if f.exists():
                 continue
-            start, end = t["decision_ts"] - 120, t["entry_ts"] + 15 * 60 + 180
+            start, end = t["decision_ts"] - 60, t["exit_ts"] + 120  # candle exit bar + 1 min
             rows, complete = fetch_window(t["mint"], start, end)
             rows.sort(key=lambda r: r.get("slotIndexId") or "")
             with gzip.open(f, "wt") as fh:
