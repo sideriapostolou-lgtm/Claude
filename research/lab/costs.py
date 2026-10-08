@@ -25,7 +25,8 @@ Every side of a trade pays, in this order (all sources checked 2026-10-08):
 
 ``round_trip_cost_pct(usd_size, mcap_usd)`` reports the total for a buy followed by an immediate
 sell at an unchanged mid price. Calibration against live Jupiter Ultra quotes is in
-``calibrate()`` (``python research/lab/costs.py calibrate``) and DATASET.md.
+``calibrate()`` (``python research/lab/costs.py calibrate``), the k check in ``verify_k()``
+(``python research/lab/costs.py verify_k 6``); results in DATASET.md.
 """
 
 from __future__ import annotations
@@ -369,9 +370,40 @@ def calibrate(n: int = 5, usd: float = 20.0, out: Path | None = None) -> list[di
     return rows
 
 
+def verify_k(n: int = 4, seed: int = 3) -> list[dict]:
+    """Measure a pool's k from live Ultra quote impact: quote 0.01 SOL and 1 SOL buys; the ratio of
+    effective prices is (1 + a2/x)/(1 + a1/x) (fees cancel), giving the quote reserve x and
+    k = x^2 / p. Run on random SOL-paired, non-Mayhem census coins (dead ones included)."""
+    import random as _random
+    lab = _lab()
+    docs = [json.loads(p.read_text()) for p in sorted((lab / "coins").glob("*.json"))]
+    docs = [d for d in docs if (d.get("launch") or {}).get("quote_is_sol") and not d["launch"].get("mayhem")]
+    _random.Random(seed).shuffle(docs)
+    sol_mint = "So11111111111111111111111111111111111111112"
+    rows = []
+    for d in docs[:n]:
+        a1, a2 = 10_000_000, 1_000_000_000
+        o1 = int(_ultra_order(sol_mint, d["mint"], a1)["outAmount"])
+        o2 = int(_ultra_order(sol_mint, d["mint"], a2)["outAmount"])
+        p1, p2 = a1 / o1, a2 / o2
+        x = (a2 - a1) / (p2 / p1 - 1) / LAMPORTS_PER_SOL
+        p_sol = p1 / (1 + a1 / LAMPORTS_PER_SOL / x) * 10 ** int(d["launch"].get("base_decimals") or 6) / LAMPORTS_PER_SOL
+        k = x * x / p_sol
+        gt_k = (d.get("cost") or {}).get("k_now_quote_token")
+        row = {"symbol": d["coin"], "mint": d["mint"], "x_sol": round(x, 3), "mcap_sol": round(p_sol * 1e9, 1),
+               "k_over_k_grad": round(k / K_GRAD, 4), "geckoterminal_k_over_k_grad": round(gt_k / K_GRAD, 4)
+               if gt_k else None}
+        print(json.dumps(row))
+        rows.append(row)
+    (lab / "k_verification.json").write_text(json.dumps(rows, indent=1))
+    return rows
+
+
 if __name__ == "__main__":
     if len(sys.argv) > 1 and sys.argv[1] == "calibrate":
         calibrate(int(sys.argv[2]) if len(sys.argv) > 2 else 5)
+    elif len(sys.argv) > 1 and sys.argv[1] == "verify_k":
+        verify_k(int(sys.argv[2]) if len(sys.argv) > 2 else 4)
     else:
         m = CostModel()
         for mc in (30e3, 50e3, 100e3, 300e3, 1e6, 3e6, 10e6):

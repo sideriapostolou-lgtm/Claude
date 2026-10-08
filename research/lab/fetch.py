@@ -2,7 +2,7 @@
 
 Usage (resumable; every step skips work already on disk unless --force)::
 
-    python research/lab/fetch.py all          # census -> pools -> sol -> candles -> build
+    python research/lab/fetch.py all          # census -> pools -> sol -> candles -> gt1m -> build
     python research/lab/fetch.py census       # LAB/census.json  (every raw field + fetch time)
     python research/lab/fetch.py pools        # LAB/pools.json   (GeckoTerminal pool_created_at + reserves)
     python research/lab/fetch.py sol          # LAB/sol_usd.json (SOL/USD 1m, Orca SOL/USDC pool)
@@ -22,17 +22,23 @@ coins; market_cap / ath sorts are survivor-ranked; time filters are ignored).
 Candles: ``swap-api.pump.fun/v1/coins/{mint}/candles?interval=1m&limit=1000`` returns the
 LATEST <= 1000 minutes that had trades (bonding-curve AND PumpSwap trades, USD price per
 whole token, USD volume - verified against GeckoTerminal). If those 1000 minutes do not
-reach back to creation, the 5m response (which covers the whole life of any coin < 83 h old)
-supplies the earlier part at 5-minute resolution (``coverage.source = "5m+1m"``).
+reach back to creation (16 of 1,070 coins on 2026-10-08), the missing early part is fetched as
+TRUE 1m bars from GeckoTerminal - the bonding-curve "pool" (creation -> graduation) and the
+PumpSwap pool (graduation -> first swap-api bar) - rescaled to swap-api's USD basis
+(``coverage.source = "gt1m+1m"``). Only if that fails, the 5m response (covers any coin < 83 h
+old) fills it at 5-minute resolution (``"5m+1m"``) - harness.in_default_universe drops those,
+because bar size would reveal that the coin later traded a lot (future information).
 
 Coin file::
 
     {"coin": symbol, "name", "mint", "pool": pump_swap_pool, "supply": whole tokens,
-     "created_ts": s, "graduated_ts": s (pool creation), "graduated_src": "geckoterminal"|"candles"|"created",
+     "created_ts": s, "graduated_ts": s (pool creation),
+     "graduated_src": "geckoterminal" | "candles" (curve-completion price reached) | "created",
      "launch": {creation-time flags only}, "cost": {k estimate, ONLY for costs.py},
      "candles": [[ts, o, h, l, c, vol_usd], ...]   # ascending, gap-filled, flat to fetch time
      "coverage": {"first_ts", "last_trade_ts", "end_ts", "first_1m_ts", "bar_s_before_1m": 300,
-                  "complete_from_creation", "source", "n_candles", "n_synthetic", "fetched_ts"}}
+                  "complete_from_creation", "source", "n_candles", "n_synthetic", "fetched_ts",
+                  "gt_splice_scale", "census_finished_ts"}}
 
 Candles with ``ts < coverage.first_1m_ts`` are 5-minute bars; the rest are 1-minute bars.
 Missing bars inside the covered range (no trades) are flat zero-volume bars at the previous
@@ -41,8 +47,9 @@ does not move without trades). ``n_synthetic`` counts them.
 
 Outcome-only census fields (ath_*, last_trade_timestamp, market caps, reserves, complete,
 is_banned, reply_count, mayhem_state ...) stay in census.json and are NEVER copied into a coin
-file's ``launch``/``candles``. Current pool reserves are used only to sanity-check the
-constant-product k that costs.py uses (see costs.py).
+file's ``launch``/``candles``. ``cost.k_now_quote_token`` comes from GeckoTerminal's current
+reserves; it is used only for Mayhem / non-SOL coins (costs.py uses the leak-free migration
+constant K_GRAD for normal graduates - GeckoTerminal reserves are wrong for dead pools).
 """
 
 from __future__ import annotations
@@ -108,7 +115,7 @@ GECKO = Throttle(12)  # nominal ~30/min, 429s are frequent
 def get_json(url: str, params: dict | None, throttle: Throttle, tries: int = 8) -> Any:
     """GET with throttle + exponential backoff on 429/5xx/network errors (honours Retry-After)."""
     backoff = 5.0
-    for attempt in range(tries):
+    for _ in range(tries):
         throttle.wait()
         try:
             r = requests.get(url, params=params, headers=UA, timeout=40)
@@ -483,7 +490,8 @@ def build_coin(coin: dict, pool_info: dict | None, census_doc: dict, sol_usd: "S
                 r[5] > 0 for r in pre + main) else bars[0][0],
             "end_ts": bars[-1][0], "first_1m_ts": first_1m, "bar_s_before_1m": 300,
             "complete_from_creation": bool(complete), "source": source, "n_candles": len(bars),
-            "n_synthetic": synth, "fetched_ts": fetched, "gt_splice_scale": splice_scale, "census_finished_ts": census_doc["census_finished_ts"],
+            "n_synthetic": synth, "fetched_ts": fetched, "gt_splice_scale": splice_scale,
+            "census_finished_ts": census_doc["census_finished_ts"],
         },
         "candles": bars,
     }

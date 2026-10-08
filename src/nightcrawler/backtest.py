@@ -221,7 +221,7 @@ class Backtester:
         names = list(param_grid)
         rows = []
         for values in itertools.product(*(param_grid[name] for name in names)):
-            combo = dict(zip(names, values))
+            combo = dict(zip(names, values, strict=True))
             tester = self._with_params(dataclasses.replace(self.params, **combo))
             rows.append({**combo, "train": tester._aggregate(train), "test": tester._aggregate(test)})
         if not rows:
