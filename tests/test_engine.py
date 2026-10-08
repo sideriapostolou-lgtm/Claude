@@ -17,7 +17,7 @@ import pytest
 
 from fakes import FakeClock, FakeHttp, load_fixture
 from nightcrawler.audit import Auditor
-from nightcrawler.broker.base import SwapUnknown
+from nightcrawler.broker.base import QuoteRejected, SwapUnknown
 from nightcrawler.broker.paper import PaperBroker
 from nightcrawler.cocoon import Cocoon
 from nightcrawler.crawler import Crawler
@@ -31,11 +31,23 @@ from nightcrawler.engine import (
 from nightcrawler.http import HttpClient
 from nightcrawler.judge import Judge
 from nightcrawler.ledger import Ledger
-from nightcrawler.models import SOL_MINT, Balances, Quote, Verdict
+from nightcrawler.models import SOL_MINT, Balances, Fill, Quote, Verdict, effective_price_usd, new_id
 from nightcrawler.radar import Radar
 from nightcrawler.risk import RiskManager
 from nightcrawler.sources import build_sources
-from world import GARY, GARY_DEV, RISKY, SOL_USD, SWAP_COST, World, dip_rebound_candles, iso, make_world
+from world import (
+    DECIMALS,
+    GARY,
+    GARY_DEV,
+    RISKY,
+    SOL_USD,
+    SWAP_COST,
+    World,
+    dip_rebound_candles,
+    iso,
+    jupiter_token,
+    make_world,
+)
 
 @pytest.fixture
 def world(fake_http: FakeHttp, fake_clock: FakeClock) -> World:
@@ -556,3 +568,346 @@ def test_a_radar_error_on_an_open_position_is_not_an_exit(make_rig) -> None:
     rig.world.http.register("/trades", {"errors": "down"}, status=404)
     rig.tick(200)
     assert len(rig.ledger.open_positions()) == 1
+
+
+# =========================================================================== review fixes: live money safety
+
+
+class Killed(BaseException):
+    """Stands in for SIGKILL: not an Exception, so nothing in the engine can catch it."""
+
+
+def _die(_fill: Any) -> None:
+    raise Killed()
+
+
+def _timeout(_fill: Any) -> None:
+    raise SwapUnknown("Ultra execute outcome unknown (read timed out)")
+
+
+class FakeLiveBroker:
+    """A live-like broker over a fake ON-CHAIN wallet: Ultra-style quotes ("Insufficient funds" when the
+    wallet lacks the input) and swaps that LAND first and are then recorded the way LiveBroker records
+    them (``on_fill`` in the fill transaction; a failed write is an unknown outcome carrying the fill)."""
+
+    mode = "live"
+
+    def __init__(self, world: World, ledger: Ledger, clock: FakeClock, sol: int = 1_000_000_000,
+                 tokens: dict[str, int] | None = None) -> None:
+        self.world, self.ledger, self.clock = world, ledger, clock
+        self.sol = sol
+        self.tokens = dict(tokens or {})
+        self.after_land: Callable[[Any], None] | None = None  # runs after landing, before recording
+        self.refuse: Exception | None = None  # raised before anything is sent
+        self.quotes: list[Quote] = []
+        self.executed: list[str] = []
+        self.sol_price_error: Exception | None = None
+
+    def quote(self, side: str, mint: str, amount_in: int, decimals: int, **_: Any) -> Quote:
+        held = self.sol if side == "buy" else self.tokens.get(mint, 0)
+        if amount_in > held:
+            raise QuoteRejected("Ultra error: Insufficient funds")
+        if side == "buy":
+            usd = amount_in / 1e9 * SOL_USD
+            out = int(usd * (1 - SWAP_COST) / self.world.price * 10**DECIMALS)
+        else:
+            usd = amount_in / 10**DECIMALS * self.world.price
+            out = int(usd * (1 - SWAP_COST) / SOL_USD * 1e9)
+        q = Quote(side=side, input_mint=SOL_MINT if side == "buy" else mint,  # type: ignore[arg-type]
+                  output_mint=mint if side == "buy" else SOL_MINT, in_amount=amount_in, out_amount=out,
+                  price_impact_pct=0.2, fee_bps=10, route_labels=["x"], request_id=f"r{len(self.quotes)}",
+                  transaction_b64="AAAA", quoted_at=self.clock.now(), in_usd=usd, out_usd=usd * (1 - SWAP_COST))
+        self.quotes.append(q)
+        return q
+
+    def execute(self, quote: Quote, position: Any, *, symbol: str = "", on_fill: Any = None) -> Any:
+        if self.refuse is not None:
+            raise self.refuse
+        self.executed.append(quote.side)
+        mint, buy = quote.token_mint, quote.side == "buy"
+        if buy:  # the swap LANDS on chain
+            self.sol -= quote.in_amount
+            self.tokens[mint] = self.tokens.get(mint, 0) + quote.out_amount
+        else:
+            self.tokens[mint] = self.tokens.get(mint, 0) - quote.in_amount
+            self.sol += quote.out_amount
+        sol, tokens = (quote.in_amount, quote.out_amount) if buy else (quote.out_amount, quote.in_amount)
+        fill = Fill(id=new_id("fill"), mode="live", side=quote.side, mint=mint,  # type: ignore[arg-type]
+                    sol_lamports=sol, token_amount=tokens, token_decimals=DECIMALS,
+                    price_usd=effective_price_usd(sol, tokens, DECIMALS, SOL_USD), sol_usd=SOL_USD,
+                    fees_lamports=15_000, platform_fee_bps=10, price_impact_pct=0.2,
+                    signature=f"sig{len(self.executed)}", request_id=quote.request_id, ts=self.clock.now(),
+                    position_id=position.id if position is not None else None, symbol=symbol,
+                    expected_out_amount=quote.out_amount)
+        if self.after_land is not None:
+            hook, self.after_land = self.after_land, None
+            hook(fill)
+        try:
+            with self.ledger.transaction():
+                recorded = self.ledger.record_fill(fill)
+                if on_fill is not None:
+                    on_fill(recorded)
+        except Exception as exc:  # like LiveBroker: a landed swap that was not recorded is UNKNOWN
+            raise SwapUnknown(f"landed but not recorded ({exc})", fill) from exc
+        return recorded
+
+    def balances(self) -> Balances:
+        return Balances(sol_lamports=self.sol, tokens={m: a for m, a in self.tokens.items() if a})
+
+    def sol_price_usd(self) -> float:
+        if self.sol_price_error is not None:
+            raise self.sol_price_error
+        return SOL_USD
+
+    def wallet_value_usd(self) -> float:
+        return self.sol / 1e9 * SOL_USD + sum(a / 10**DECIMALS * self.world.price for a in self.tokens.values())
+
+
+def live_rig(make_rig: Callable[..., Rig], world: World, clock: FakeClock, *, path: Any = None,
+             sol: int = 1_000_000_000, tokens: dict[str, int] | None = None, **overrides: Any) -> Rig:
+    def factory(_sources: Any, ledger: Ledger, _settings: Any) -> FakeLiveBroker:
+        return FakeLiveBroker(world, ledger, clock, sol=sol, tokens=tokens)
+
+    return make_rig(broker_factory=factory, ledger_path=path, **{**LIVE, **overrides})
+
+
+def notes(rig: Rig, event: str) -> list[dict[str, Any]]:
+    return [r.payload for r in rig.ledger.receipts() if r.kind == "note" and r.payload.get("event") == event]
+
+
+def test_a_kill_between_a_landed_sell_and_its_record_is_reconciled_after_restart(make_rig, world, fake_clock,
+                                                                                 tmp_path) -> None:
+    path = tmp_path / "live.db"
+    rig = live_rig(make_rig, world, fake_clock, path=path)
+    rig.tick()
+    [position] = rig.ledger.open_positions()
+    world.price *= 0.5  # stop loss
+    rig.broker.after_land = _die
+    with pytest.raises(Killed):
+        rig.tick(10)
+    assert rig.broker.tokens[GARY] == 0  # the sell LANDED, then the process died
+    rig.ledger.close()
+
+    rig2 = live_rig(make_rig, world, fake_clock, path=path, sol=rig.broker.sol, tokens=rig.broker.tokens)
+    rig2.tick(1)
+    assert GARY in rig2.engine.unresolved and not rig2.engine.entries_allowed
+    assert rig2.broker.executed == []  # nothing re-sent, no hold loop on tokens the wallet no longer has
+    rig2.tick(RECONCILE_AFTER_S)
+    assert rig2.engine.unresolved == {} and rig2.ledger.open_positions() == []
+    closed = rig2.ledger.get_position(position.id)
+    assert closed.status == "closed" and closed.token_amount == 0
+    assert notes(rig2, "reconcile")[-1]["landed"] is True
+    assert rig2.ledger.verify_chain() == (True, None)
+
+
+def test_a_kill_between_a_landed_buy_and_its_record_never_buys_twice(make_rig, world, fake_clock,
+                                                                     tmp_path) -> None:
+    path = tmp_path / "live.db"
+    rig = live_rig(make_rig, world, fake_clock, path=path)
+    rig.broker.after_land = _die
+    with pytest.raises(Killed):
+        rig.tick()
+    landed = rig.broker.tokens[GARY]
+    assert landed > 0 and rig.ledger.fills() == [] and rig.ledger.open_positions() == []
+    rig.ledger.close()
+
+    rig2 = live_rig(make_rig, world, fake_clock, path=path, sol=rig.broker.sol, tokens=rig.broker.tokens)
+    rig2.tick(1)
+    assert GARY in rig2.engine.unresolved and rig2.broker.executed == []
+    world.candles = dip_rebound_candles(fake_clock.now() + RECONCILE_AFTER_S)
+    rig2.tick(RECONCILE_AFTER_S)
+    [position] = rig2.ledger.open_positions()
+    assert position.token_amount == landed == rig2.broker.tokens[GARY]  # books == wallet, stop-loss covers it
+    assert rig2.broker.executed == []  # the setup is still there, but the coin is already held
+
+
+def test_a_landed_swap_the_ledger_failed_to_record_blocks_entries_and_books_the_actual_fill(
+        make_rig, world, fake_clock, monkeypatch) -> None:
+    from nightcrawler.ledger import LedgerError
+
+    rig = live_rig(make_rig, world, fake_clock)
+    real = rig.ledger.record_fill
+    state = {"failed": False}
+
+    def locked_once(fill: Any) -> Any:
+        if not state["failed"]:
+            state["failed"] = True
+            raise LedgerError("sqlite error: database is locked")
+        return real(fill)
+
+    monkeypatch.setattr(rig.ledger, "record_fill", locked_once)
+    results = rig.tick()
+    assert not str(results["watch"]).startswith("error"), results
+    assert GARY in rig.engine.unresolved and not rig.engine.entries_allowed
+    assert rig.ledger.fills() == [] and rig.broker.tokens[GARY] > 0
+    world.candles = dip_rebound_candles(fake_clock.now() + 60)
+    rig.tick(60)
+    assert rig.broker.executed == ["buy"]  # no second buy while the first is unresolved
+    rig.tick(RECONCILE_AFTER_S)
+    [fill] = rig.ledger.fills()
+    assert fill.signature == "sig1" and fill.fees_lamports == 15_000  # the ACTUAL fill, not an estimate
+    [position] = rig.ledger.open_positions()
+    assert position.token_amount == rig.broker.tokens[GARY] and position.entry_fill_ids == [fill.id]
+
+
+def test_a_failed_position_write_rolls_back_the_paper_fill(make_rig, monkeypatch) -> None:
+    rig = make_rig()
+    real = rig.ledger.upsert_position
+    calls = {"n": 0}
+
+    def broken_once(position: Any) -> None:
+        calls["n"] += 1
+        if calls["n"] == 1:
+            raise RuntimeError("disk full")
+        real(position)
+
+    monkeypatch.setattr(rig.ledger, "upsert_position", broken_once)
+    start = rig.broker.balances()
+    rig.tick()
+    assert rig.ledger.fills() == [] and rig.ledger.open_positions() == []  # no orphan fill
+    assert rig.broker.balances() == start
+    assert Auditor(rig.ledger, rig.broker, rig.clock).reconcile().ok
+
+
+def test_paper_positions_are_invisible_to_a_live_engine_on_the_same_ledger(make_rig, world, fake_clock,
+                                                                           tmp_path) -> None:
+    path = tmp_path / "shared.db"
+    paper = make_rig(ledger_path=path)
+    paper.tick()
+    [pp] = paper.ledger.open_positions()
+    assert pp.mode == "paper"
+    paper.ledger.close()
+
+    live = live_rig(make_rig, world, fake_clock, path=path, KILL_SWITCH="stop")
+    live.engine._boot_checks(fake_clock.now())
+    [note] = notes(live, "other_mode_positions")
+    assert note["mode"] == "paper" and note["positions"] == [pp.id]
+    equity, _sol_usd, balances = live.engine._equity_now()
+    assert equity == balances.sol_lamports == 1_000_000_000  # no phantom paper value in live equity
+    assert live.engine.sell_all("kill_switch") == []
+    world.price *= 0.5
+    live.tick(10)
+    assert [d for d in live.ledger.decisions(limit=100) if d.action in ("hold", "exit")] == []
+    assert live.broker.quotes == []  # never asked to sell tokens the live wallet never had
+    assert live.ledger.get_position(pp.id).is_open  # left alone for a paper engine to manage
+
+
+def test_sell_all_from_another_process_is_not_undone_by_the_engine(make_rig) -> None:
+    rig = make_rig()
+    rig.tick()
+    [position] = rig.ledger.open_positions()
+    cli = make_rig(ledger_path=rig.ledger.path)  # `nightcrawler sell-all` beside the running bot
+    original = rig.engine._prices
+
+    def prices_then_cli_sells(mints: list[str]) -> dict[str, float]:
+        out = original(mints)  # the network call window
+        cli.engine.sell_all("manual")
+        return out
+
+    rig.engine._prices = prices_then_cli_sells  # type: ignore[method-assign]
+    rig.tick(10)
+    after = rig.ledger.get_position(position.id)
+    assert after.status == "closed" and after.token_amount == 0 and after.exit_reason == "manual"
+    assert Auditor(rig.ledger, rig.broker, rig.clock).reconcile().ok
+
+
+def test_a_sell_that_definitely_failed_is_on_the_record_as_a_hold(make_rig, world, fake_clock) -> None:
+    from nightcrawler.broker.base import SwapFailed
+
+    rig = live_rig(make_rig, world, fake_clock)
+    rig.tick()
+    rig.broker.refuse = SwapFailed("simulation failed: {'InstructionError': [2, {'Custom': 6001}]}")
+    world.price *= 0.5
+    rig.tick(10)
+    [hold] = rig.ledger.decisions(actions=["hold"])
+    assert hold.reason.startswith("stop_loss: swap failed") and "simulation failed" in hold.reason
+
+
+def test_live_wallet_drift_blocks_entries_and_is_shown(make_rig, world, fake_clock) -> None:
+    from nightcrawler.dashboard import build_state
+    from nightcrawler.engine import DRIFT_CHECK_S
+
+    rig = live_rig(make_rig, world, fake_clock)
+    rig.tick()
+    [position] = rig.ledger.open_positions()
+    assert rig.engine.drift == {}
+    rig.broker.tokens[GARY] = 0  # sold by hand in Phantom (or a lost record): the books still say held
+    rig.tick(DRIFT_CHECK_S)
+    assert set(rig.engine.drift) == {GARY} and not rig.engine.entries_allowed
+    assert rig.ledger.get_kv("engine.drift")[GARY] == {"books": position.token_amount, "wallet": 0}
+    assert notes(rig, "drift")[-1]["mints"] == [GARY]
+    state = build_state(rig.ledger, rig.settings, fake_clock.now())
+    assert GARY in state["engine"]["status"]["drift"]
+
+
+def test_a_fresh_live_ledger_refuses_entries_while_the_wallet_holds_untracked_tokens(make_rig, world,
+                                                                                     fake_clock) -> None:
+    rig = live_rig(make_rig, world, fake_clock, tokens={GARY: 50_000_000_000})  # ~$23 the books never saw
+    rig.tick()
+    assert GARY in rig.engine.drift and rig.broker.executed == []
+    assert rig.ledger.fills() == []
+
+
+def test_live_start_balance_is_recorded_before_the_first_trade(make_rig, world, fake_clock) -> None:
+    rig = live_rig(make_rig, world, fake_clock)
+    rig.tick()
+    assert rig.broker.executed == ["buy"]  # the first tick traded ...
+    assert rig.ledger.get_kv("live.start_lamports") == 1_000_000_000  # ... from a recorded starting balance
+    assert rig.ledger.get_kv("live.start_sol_usd") == SOL_USD
+    assert notes(rig, "live_start")[0]["start_lamports"] == 1_000_000_000
+
+
+def test_reconcile_without_a_sol_price_uses_the_quote_or_waits(make_rig, world, fake_clock) -> None:
+    from nightcrawler.sources.jupiter import JupiterError
+
+    rig = live_rig(make_rig, world, fake_clock)
+    rig.broker.after_land = _timeout
+    rig.tick()
+    assert GARY in rig.engine.unresolved
+    rig.broker.sol_price_error = JupiterError("price v3 returned no SOL price")
+    saved = rig.engine.unresolved[GARY]["quote"]
+    rig.engine.unresolved[GARY]["quote"] = {**saved, "in_usd": None}  # no price anywhere: wait, never book 0
+    rig.tick(RECONCILE_AFTER_S)
+    assert GARY in rig.engine.unresolved and rig.ledger.fills() == []
+    rig.engine.unresolved[GARY]["quote"] = saved  # the quote's own USD valuation is enough
+    rig.tick(10)
+    [fill] = rig.ledger.fills()
+    [position] = rig.ledger.open_positions()
+    assert fill.sol_usd == pytest.approx(SOL_USD) and position.entry_price_usd > 0
+
+
+@pytest.mark.parametrize("move,reason", [(1.0, "time_stop"), (0.5, "stop_loss")])
+def test_a_position_without_an_entry_price_still_exits(make_rig, move, reason) -> None:
+    rig = make_rig()
+    rig.tick()
+    [position] = rig.ledger.open_positions()
+    position.entry_price_usd = 0.0
+    rig.ledger.upsert_position(position)
+    rig.world.price *= move
+    rig.tick(10 if move < 1 else rig.settings.max_hold_min * 60 + 10)
+    [closed] = rig.ledger.positions(status="closed")
+    assert closed.exit_reason == reason
+
+
+def test_a_reconciled_partial_take_profit_counts_as_taken(make_rig, world, fake_clock) -> None:
+    rig = live_rig(make_rig, world, fake_clock)
+    rig.tick()
+    [position] = rig.ledger.open_positions()
+    bought = position.token_amount
+    world.price = 0.70e-3  # +52 %: partial take-profit
+    rig.broker.after_land = _timeout
+    rig.tick(10)
+    assert rig.engine.unresolved[GARY]["reason"] == "take_profit_partial"
+    rig.tick(RECONCILE_AFTER_S)  # reconcile, then the positions stage of the same tick
+    [position] = rig.ledger.open_positions()
+    assert position.partial_taken and position.token_amount == bought - bought // 2
+    assert rig.broker.executed == ["buy", "sell"] and rig.broker.tokens[GARY] == position.token_amount
+
+
+def test_a_new_position_is_marked_at_the_market_price_not_its_cost(make_rig) -> None:
+    rig = make_rig()
+    rig.tick()
+    [position] = rig.ledger.open_positions()
+    point = rig.ledger.latest_equity()
+    market = position.value_lamports(rig.world.price, SOL_USD)
+    assert point.positions_value_lamports == market < position.cost_lamports
