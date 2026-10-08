@@ -54,7 +54,7 @@ TOKEN = SECRETS["DASHBOARD_TOKEN"]
 STATE_KEYS = {"version", "generated_at", "mode", "kill", "halted", "engine", "equity", "positions", "fills",
               "decisions", "rejections", "receipts", "judge", "wallet", "cocoon_rules", "activity", "limits"}
 EQUITY_KEYS = {"sol", "usd", "sol_usd", "start_usd", "pnl_today_usd", "pnl_today_sol", "pnl_total_usd",
-               "pnl_total_sol", "curve"}
+               "pnl_total_sol", "pnl_total_trading_usd", "sol_price_effect_usd", "curve"}
 POSITION_KEYS = {"id", "mint", "symbol", "opened_at", "entry_price_usd", "last_price_usd", "value_sol",
                  "unrealized_pnl_sol", "unrealized_pnl_pct", "partial_taken", "cost_sol"}
 RECEIPT_KEYS = {"head_hash", "seq", "count", "verified", "first_bad_seq", "verified_at"}
@@ -81,21 +81,22 @@ def secret_values() -> list[str]:
     return [*SECRETS.values(), RPC_KEY]
 
 
-def populate(ledger: Ledger, leak: str = "") -> None:
+def populate(ledger: Ledger, leak: str = "", mode: str = "paper") -> None:
     """A realistic day: equity snapshots, one closed and one open trade, decisions, safety rejections.
 
-    ``leak`` is appended to free-text fields to prove secrets get scrubbed from responses.
+    ``leak`` is appended to free-text fields to prove secrets get scrubbed from responses. ``mode``
+    is the wallet the open position is in (a dashboard lists only its own mode's positions).
     """
     ledger.set_kv("paper.start_lamports", 500_000_000)
     ledger.set_kv("paper.start_sol_usd", 200.0)
     ledger.set_kv("live.start_lamports", 500_000_000)
     ledger.set_kv("live.start_sol_usd", 200.0)
-    for mode in ("paper", "live"):
+    for curve_mode in ("paper", "live"):
         for ts, lamports, sol_usd in ((MIDNIGHT - 600, 490_000_000, 200.0), (MIDNIGHT + 60, 495_000_000, 200.0),
                                       (NOW - 60, 520_000_000, 210.0)):
             ledger.record_equity(EquityPoint(ts=ts, equity_lamports=lamports, sol_usd=sol_usd,
-                                             equity_usd=lamports / 1e9 * sol_usd, mode=mode))
-    ledger.record_fill(Fill(id="f1", mode="paper", side="buy", mint=HIGGS, sol_lamports=100_000_000,
+                                             equity_usd=lamports / 1e9 * sol_usd, mode=curve_mode))
+    ledger.record_fill(Fill(id="f1", mode=mode, side="buy", mint=HIGGS, sol_lamports=100_000_000,
                             token_amount=5_000_000_000, token_decimals=6, price_usd=0.004, sol_usd=200.0,
                             fees_lamports=300_000, platform_fee_bps=10, price_impact_pct=1.5, signature=None,
                             request_id="r1", ts=NOW - 3000, symbol="HIGGS" + leak))
@@ -243,7 +244,7 @@ def test_token_gate(serve: Callable[..., Client], ledger: Ledger, make_settings:
 def test_no_secret_ever_appears_in_any_response(serve: Callable[..., Client], ledger: Ledger,
                                                 secret_settings: Settings, caplog: pytest.LogCaptureFixture) -> None:
     leak = " " + " ".join(secret_values())  # the engine accidentally stored secrets in free text
-    populate(ledger, leak=leak)
+    populate(ledger, leak=leak, mode="live")
     client = serve(secret_settings, provider_for(ledger, secret_settings))
     caplog.set_level(logging.DEBUG, logger="nightcrawler")
     responses = [client.request(path, method=method, headers=headers) for path, method, headers in [
@@ -408,3 +409,38 @@ def test_server_lifecycle(settings: Settings) -> None:
     server.stop()
     server.stop()  # idempotent
     assert not thread.is_alive()
+
+
+# --------------------------------------------------------------------------- review fixes
+
+
+def test_since_start_is_measured_in_sol_not_moved_by_the_sol_price(ledger: Ledger, settings: Settings) -> None:
+    """A bot that LOST 3 % in SOL while SOL/USD rose 12 % must not show a green "since start"."""
+    from nightcrawler.dashboard import _SCRIPT
+
+    start = 923_190_546  # $100 at $108.32/SOL
+    ledger.set_kv("paper.start_lamports", start)
+    ledger.set_kv("paper.start_sol_usd", 108.32)
+    now_lamports = int(start * 0.97)
+    ledger.record_equity(EquityPoint(ts=NOW - 60, equity_lamports=now_lamports, sol_usd=121.32,
+                                     equity_usd=now_lamports / 1e9 * 121.32, mode="paper"))
+    eq = build_state(ledger, settings, NOW)["equity"]
+    assert eq["pnl_total_usd"] > 0 > eq["pnl_total_sol"]  # the USD figure is mostly the SOL price
+    assert eq["pnl_total_trading_usd"] == pytest.approx(eq["pnl_total_sol"] * 121.32)
+    assert eq["pnl_total_trading_usd"] < 0 < eq["sol_price_effect_usd"]
+    assert eq["pnl_total_trading_usd"] + eq["sol_price_effect_usd"] == pytest.approx(eq["pnl_total_usd"])
+    # the tiles' headline value and colour come from the SOL figures (the unit the risk limits use)
+    assert 'tile("Since start", sol(e.pnl_total_sol, true)' in _SCRIPT and "tone(e.pnl_total_sol)" in _SCRIPT
+    assert 'tile("Today", sol(e.pnl_today_sol, true)' in _SCRIPT and "tone(e.pnl_today_sol)" in _SCRIPT
+
+
+def test_live_dashboard_lists_only_live_positions_and_shows_drift(ledger: Ledger,
+                                                                  make_settings: Callable[..., Settings]) -> None:
+    from nightcrawler.dashboard import _SCRIPT
+
+    populate(ledger)  # p1 is a PAPER position
+    live = make_settings(TRADING_MODE="live", LIVE_CONFIRM=LIVE_CONFIRM_PHRASE, BOT_WALLET_SECRET="x" * 88,
+                         DASHBOARD_HOST="127.0.0.1")
+    assert build_state(ledger, live, NOW)["positions"] == []
+    assert [p["id"] for p in build_state(ledger, make_settings(), NOW)["positions"]] == ["p1"]
+    assert "status.drift" in _SCRIPT  # a non-empty drift turns into a red chip

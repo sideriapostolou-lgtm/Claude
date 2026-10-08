@@ -61,6 +61,8 @@ EXIT_NOT_IMPLEMENTED = 5
 
 #: ``scan --include-young`` only checks nursery tokens at least this old (RugCheck needs a few minutes).
 YOUNG_MIN_AGE_S = 600.0
+#: ``sell-all`` treats the bot as running when its heartbeat is younger than this (seconds).
+BOT_ALIVE_S = 60.0
 #: ``backtest --sweep`` grid when ``--grid`` is not given.
 DEFAULT_SWEEP_GRID: dict[str, list[float]] = {"dip_pct": [0.45, 0.55, 0.65], "take_profit_pct": [0.3, 0.4, 0.6]}
 
@@ -555,14 +557,25 @@ def cmd_sell_all(args: argparse.Namespace, settings: Settings) -> int:
     filt = _setup_logging(args, settings)
     app = build_app(settings, redaction_filter=filt)
     try:
-        before = app.ledger.open_positions()
+        heartbeat = app.ledger.get_kv("engine.heartbeat")
+        status = app.ledger.get_kv("engine.status")
+        age = app.clock.now() - heartbeat if isinstance(heartbeat, (int, float)) else None
+        if age is not None and age < BOT_ALIVE_S and isinstance(status, dict) and status.get("state") == "running":
+            # Two processes trading one ledger race each other; let the ONE running bot sell.
+            settings.kill_file.write_text("sell_all\n", encoding="utf-8")
+            print(f"The bot is running (heartbeat {age:.0f}s ago): wrote 'sell_all' to {settings.kill_file}. It "
+                  "sells every open position within seconds and then buys nothing more. Watch the dashboard; "
+                  "to resume trading later, write 'off' into that file or delete it.")
+            return EXIT_OK
+        app.engine._restore_state()  # unresolved / in-flight live swaps of a stopped bot are respected
+        before = app.engine._open_positions()
         if not before:
             print("no open positions")
             return EXIT_OK
         fills = app.engine.sell_all("manual")
         for f in fills:
             print(f"sold {f.symbol or f.mint}: {f.token_amount} base units for {f.sol_lamports / 1e9:.6f} SOL")
-        left = app.ledger.open_positions()
+        left = app.engine._open_positions()
     finally:
         app.close()
     if settings.kill_switch == "off":

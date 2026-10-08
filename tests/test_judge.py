@@ -12,6 +12,7 @@ from typing import Any
 import pytest
 
 from nightcrawler.judge import (
+    JUDGE_ERROR_CACHE_S,
     FALLBACK_BETA,
     PRICE_TABLE,
     STATIC_SYSTEM_PROMPT,
@@ -207,7 +208,8 @@ def test_lazy_client_construction_uses_settings(judge_settings, fake_clock, monk
     judge = Judge(judge_settings(JUDGE_TIMEOUT_S="12"), clock=fake_clock)
     judge.decide(features())
     judge.decide(features(OTHER_MINT))
-    assert created == [{"api_key": API_KEY, "timeout": 12.0, "max_retries": 2}]
+    # no SDK retries: every judge second blocks the engine's single thread (stop-losses wait)
+    assert created == [{"api_key": API_KEY, "timeout": 12.0, "max_retries": 0}]
     assert len(fake.calls) == 2
 
 
@@ -289,13 +291,13 @@ def test_malformed_output_fails_closed(make_judge, response: Any, error: str) ->
 
 @pytest.mark.parametrize("exc, name, request_id, log_hint", [
     (_status_error(anthropic.RateLimitError, 429), "RateLimitError", "req_err_429", "rate limited"),
-    (anthropic.APITimeoutError(request=_request()), "APITimeoutError", None, "timed out after 20s"),
+    (anthropic.APITimeoutError(request=_request()), "APITimeoutError", None, "timed out after 10s"),
     (anthropic.APIConnectionError(request=_request()), "APIConnectionError", None, "connection error"),
     (_status_error(anthropic.APIStatusError, 529), "APIStatusError", "req_err_529", "http status 529"),
     (_status_error(anthropic.InternalServerError, 500), "InternalServerError", "req_err_500", "http status 500"),
     (_status_error(anthropic.AuthenticationError, 401), "AuthenticationError", "req_err_401", "http status 401"),
 ])
-def test_api_errors_fail_closed(make_judge, caplog, exc: Exception, name: str, request_id: str | None,
+def test_api_errors_fail_closed(make_judge, caplog, fake_clock, exc: Exception, name: str, request_id: str | None,
                                 log_hint: str) -> None:
     judge, client = make_judge(exc, make_response())
     with caplog.at_level(logging.INFO, logger="nightcrawler.judge"):
@@ -306,7 +308,11 @@ def test_api_errors_fail_closed(make_judge, caplog, exc: Exception, name: str, r
     if request_id:
         assert request_id in caplog.text
     assert API_KEY not in caplog.text
-    assert judge.decide(features()).source == "claude"  # error not cached
+    # an API failure is remembered briefly: the same mint does not cost another slow call every tick
+    again = judge.decide(features())
+    assert (again.decision, again.source, again.error) == ("no", "error", name) and len(client.calls) == 1
+    fake_clock.advance(JUDGE_ERROR_CACHE_S)
+    assert judge.decide(features()).source == "claude"  # then asked again
     assert len(client.calls) == 2
 
 

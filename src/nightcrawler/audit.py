@@ -13,8 +13,16 @@ fills and compares it with what the broker says it holds:
 
 Only fills of the broker's mode count, and in paper mode only fills recorded
 after the latest ``paper_reset`` note receipt (a reset starts a new virtual
-wallet; chain order, not wall-clock time, decides). Live tokens the bot never
-traded (airdrops, spam) are listed in ``issues`` but do not fail the audit.
+wallet; chain order, not wall-clock time, decides) - for the balances AND for
+the trades, daily summary and totals (a live report never shows paper P&L, and
+``TradePnL.mode`` says which wallet a trade was in). Live tokens the bot never
+traded (airdrops, spam) are listed in ``issues`` but do not fail the audit. A
+live wallet with fills but no recorded starting balance fails it (SOL could
+leak unnoticed).
+
+Fill ROWS (what the P&L is computed from) are compared with the payload of their
+hash-chained ``fill`` receipt; a row edited behind the chain's back fails the
+audit even though the chain itself still verifies.
 
 It also checks the books themselves: every fill must belong to a position
 (``Fill.position_id`` or the position's ``entry_fill_ids``/``exit_fill_ids``;
@@ -79,6 +87,7 @@ class TradePnL:
     exit_reason: str | None
     fills: int
     fill_ids: list[str] = field(default_factory=list)
+    mode: str = ""  # paper | live: the wallet this trade was in
 
 
 @dataclass(slots=True)
@@ -139,7 +148,8 @@ def trade_pnl(position: Position, fills: list[Fill]) -> TradePnL:
         fees_lamports=fees, rent_lamports=rent, realized_lamports=realized,
         realized_pct=realized / basis * 100.0 if basis else None,
         avg_price_impact_pct=sum(f.price_impact_pct for f in own) / len(own) if own else None,
-        exit_reason=position.exit_reason, fills=len(own), fill_ids=[f.id for f in own])
+        exit_reason=position.exit_reason, fills=len(own), fill_ids=[f.id for f in own],
+        mode=position.mode or next((f.mode for f in own), ""))
 
 
 def _fills_by_position(positions: list[Position], fills: list[Fill]) -> dict[str, list[Fill]]:
@@ -230,9 +240,17 @@ class Auditor:
         positions = self.ledger.positions(limit=None)
         grouped = _fills_by_position(positions, all_fills)
         self._check_books(report, positions, all_fills, grouped)
-        report.trades = sorted((trade_pnl(p, grouped[p.id]) for p in positions),
+        self._check_fill_receipts(report)
+        # P&L of THIS wallet only: fills of this mode (paper: since the last reset) and their positions
+        _, after_seq = self._epoch()
+        epoch = self.ledger.fills_after_seq(after_seq, mode=self.mode)
+        epoch_ids = {f.id for f in epoch}
+        mine = [p for p in positions
+                if (p.mode or next((f.mode for f in grouped[p.id]), None)) == self.mode
+                and (p.is_open or any(f.id in epoch_ids for f in grouped[p.id]))]
+        report.trades = sorted((trade_pnl(p, [f for f in grouped[p.id] if f.id in epoch_ids]) for p in mine),
                                key=lambda t: (t.opened_at, t.position_id))
-        report.daily = daily_summaries(report.trades, all_fills)
+        report.daily = daily_summaries(report.trades, epoch)
         report.totals = _totals(report.trades, report.daily)
         if verify_chain:
             report.chain_ok, report.chain_first_bad_seq = self.ledger.verify_chain()
@@ -259,7 +277,11 @@ class Auditor:
         for f in fills:
             expected_tokens[f.mint] += f.token_delta()
         if start is None:
-            report.issues.append(f"start balance unknown (kv {self.mode}.start_lamports missing): SOL not compared")
+            issue = f"start balance unknown (kv {self.mode}.start_lamports missing): SOL not compared"
+            if self.mode == "live" and fills:
+                self._problem(report, issue)  # live SOL could leak from the wallet unnoticed
+            else:
+                report.issues.append(issue)
         else:
             report.expected_sol_lamports = start + sum(f.sol_delta_lamports() for f in fills)
         if self.broker is None:
@@ -298,6 +320,18 @@ class Auditor:
                 report.issues.append(f"untracked token {mint} in the wallet ({act} base units; airdrop?)")
             elif self.mode == "paper" or abs(drift) > TOKEN_DRIFT_TOLERANCE:
                 self._problem(report, f"token drift {mint}: books {exp}, wallet {act} ({drift:+d} base units)")
+
+    def _check_fill_receipts(self, report: AuditReport) -> None:
+        """Every fill row must equal its hash-chained receipt (the report's numbers come from rows)."""
+        pairs = getattr(self.ledger, "fill_receipts", None)
+        if pairs is None:  # a duck-typed ledger without receipts per fill
+            return
+        for fill_id, row, payload, digest in pairs():
+            if payload is None:
+                self._problem(report, f"fill {fill_id} has no fill receipt")
+            elif ({k: v for k, v in row.items() if k != "receipt_hash"}
+                  != {k: v for k, v in payload.items() if k != "receipt_hash"} or row.get("receipt_hash") != digest):
+                self._problem(report, f"fill {fill_id} differs from its receipt (edited after it was recorded)")
 
     # ------------------------------------------------------------------ books
     def _check_books(self, report: AuditReport, positions: list[Position], fills: list[Fill],

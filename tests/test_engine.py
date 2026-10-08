@@ -456,6 +456,7 @@ def test_unknown_live_outcome_blocks_entries_then_reconciles(make_rig, fake_cloc
         assert position.entry_fill_ids == [fill.id] and position.entry_price_usd > 0
     else:
         assert rig.ledger.fills() == [] and rig.ledger.open_positions() == []
+        rig.world.candles = dip_rebound_candles(rig.clock.now() + 600)
         rig.tick(600)  # the setup is still there: a FRESH quote is fetched, the old one is never re-sent
         assert [q.request_id for q in broker.quotes] == ["r0", "r1"]
     assert rig.ledger.verify_chain() == (True, None)
@@ -515,7 +516,8 @@ def test_engine_http_client_fails_fast_on_geckoterminal(make_settings, fake_cloc
     settings = make_settings()
     app = build_app(settings, fake_clock, session=FakeHttp())
     try:
-        assert app.http.host_max_retries == {"api.geckoterminal.com": 1}
+        assert app.http.host_max_retries == {"api.geckoterminal.com": 1, "api.rugcheck.xyz": 1,
+                                             "api.mainnet-beta.solana.com": 1}
         assert app.http.max_retries == 4
     finally:
         app.close()
@@ -911,3 +913,154 @@ def test_a_new_position_is_marked_at_the_market_price_not_its_cost(make_rig) -> 
     point = rig.ledger.latest_equity()
     market = position.value_lamports(rig.world.price, SOL_USD)
     assert point.positions_value_lamports == market < position.cost_lamports
+
+
+# =========================================================================== review fixes: runtime and strategy integrity
+
+
+def test_slow_safety_checks_never_starve_open_positions(make_rig) -> None:
+    from nightcrawler.models import SafetyReport, TokenCandidate
+
+    rig = make_rig()
+    rig.tick()  # GARY bought
+    stamps: list[float] = []
+    manage = rig.engine.manage_positions
+
+    def counting(now: float) -> None:
+        stamps.append(rig.clock.now())
+        manage(now)
+
+    def slow_check(c: TokenCandidate, *, force: bool = False) -> SafetyReport:
+        rig.clock.advance(30)  # RugCheck 429 with Retry-After, or hanging into timeouts
+        return SafetyReport(mint=c.mint, passed=False, hard_fail_reasons=["[top10] 90%"], checked_at=rig.clock.now())
+
+    rig.engine.manage_positions = counting  # type: ignore[method-assign]
+    rig.engine.cocoon.check = slow_check  # type: ignore[method-assign]
+    rig.engine.queue.extend(TokenCandidate(mint=f"Mint{i}" + "1" * 39, symbol=f"M{i}") for i in range(5))
+    start = rig.clock.now() + 30
+    rig.tick(30)
+    assert rig.clock.now() - start <= 30 + rig.settings.position_interval_s  # discover stopped after its budget
+    assert len(rig.engine.queue) >= 3  # the rest waits for the next tick
+    assert len(stamps) >= 2 and stamps[-1] > start  # positions ran again after the slow check
+
+
+def test_the_engine_http_client_fails_fast_on_rugcheck_rpc_and_long_retry_afters(make_settings, fake_clock) -> None:
+    settings = make_settings(SOLANA_RPC_URL="https://mainnet.helius-rpc.com/?api-key=abc")
+    app = build_app(settings, fake_clock, session=FakeHttp())
+    try:
+        assert app.http.host_max_retries == {"api.geckoterminal.com": 1, "api.rugcheck.xyz": 1,
+                                             "mainnet.helius-rpc.com": 1}
+        assert app.http.retry_after_max_s <= 10
+    finally:
+        app.close()
+
+
+def test_candles_cover_the_whole_dip_lookback(make_rig) -> None:
+    rig = make_rig(CANDLE_WINDOW_MIN=180, DIP_LOOKBACK_H=6)
+    rig.tick()
+    [call, *_] = rig.world.http.calls_to("/ohlcv/minute")
+    assert int(call.params["limit"]) >= 6 * 60 + 1  # the live rolling high sees what the backtest sees
+
+
+def test_a_rugcheck_not_ready_answer_is_retried_not_final(make_rig) -> None:
+    rig = make_rig(KILL_SWITCH="stop")
+    rig.world.http.register(f"/tokens/{GARY}/report", {"error": "not found"}, status=400, times=1)
+    rig.tick()
+    assert GARY not in rig.engine.watchlist
+    assert [d for d in rig.ledger.decisions(actions=["reject_cocoon"]) if d.mint == GARY] == []
+    rig.tick(150)
+    assert GARY in rig.engine.watchlist
+    assert len(rig.world.http.calls_to(f"/tokens/{GARY}/report")) == 2
+
+
+def test_a_stale_market_snapshot_is_never_used_for_an_entry_and_expires(make_rig, tmp_data_dir) -> None:
+    from nightcrawler.engine import SNAPSHOT_MISSING_UNWATCH_S
+
+    (tmp_data_dir / "KILL").write_text("stop")
+    rig = make_rig()
+    rig.tick()
+    assert GARY in rig.engine.watchlist
+    rig.world.http.register("/tokens/v1/solana/", [])  # DexScreener stops returning the coin
+    rig.world.buys_m5, rig.world.sells_m5 = 2, 80
+    rig.tick(180)
+    (tmp_data_dir / "KILL").unlink()
+    rig.world.candles = dip_rebound_candles(rig.clock.now() + 60)
+    rig.tick(60)
+    assert rig.ledger.fills() == []
+    assert "no fresh market snapshot" in (rig.engine.watchlist[GARY].last_signal_reason or "")
+    rig.tick(SNAPSHOT_MISSING_UNWATCH_S)
+    assert GARY not in rig.engine.watchlist
+    assert rig.ledger.decisions(actions=["unwatch"])[0].reason.startswith("no market data for")
+
+
+def test_candle_fetches_rotate_through_every_dipping_token(make_rig) -> None:
+    from nightcrawler.engine import WatchItem
+    from nightcrawler.models import Candle, MarketSnapshot, SafetyReport, TokenCandidate
+
+    rig = make_rig()
+    now = rig.clock.now()
+    drawdowns = [0.95, 0.90, 0.85, 0.60, 0.50, 0.40]
+    for i, dd in enumerate(drawdowns):
+        mint = f"Mint{i}" + "1" * 39
+        item = WatchItem(candidate=TokenCandidate(mint=mint, pool=f"pool{i}"), safety=SafetyReport(mint, True),
+                         added_at=now - 3600, candles=[Candle(int(now) - 600, 1.0, 1.0, 1.0, 1.0)],
+                         candles_at=now - 120, snapshot_at=now,
+                         snapshot=MarketSnapshot(mint=mint, ts=now, price_usd=1.0 - dd, mcap_usd=None,
+                                                 liquidity_usd=None))
+        rig.engine.watchlist[mint] = item
+    picks = {i: 0 for i in range(len(drawdowns))}
+    for _ in range(10):
+        for item in rig.engine._pick_for_candles(now, set()):
+            picks[int(item.mint[4])] += 1
+            item.candles_at = now
+        now += 60
+    assert min(picks.values()) >= 4, picks  # the -60 % token (a live setup) is not starved by dead coins
+
+
+def test_stale_candles_never_trigger_an_entry(make_rig) -> None:
+    rig = make_rig()
+    rig.world.candles = dip_rebound_candles(rig.clock.now() - 11 * 60)  # GeckoTerminal 11 minutes behind
+    rig.world.price = 0.85e-3  # ... while the coin already ran up
+    rig.tick()
+    assert rig.ledger.fills() == []
+    assert "stale" in (rig.engine.watchlist[GARY].last_signal_reason or "")
+
+
+def test_a_quote_far_above_the_chase_ceiling_is_rejected(make_rig) -> None:
+    rig = make_rig()
+    rig.world.price = 0.85e-3  # candles say "dip-rebound at 0.46e-3"; the live price is 85 % higher
+    rig.tick()
+    assert rig.ledger.fills() == []
+    [rejected] = rig.ledger.decisions(actions=["reject_quote"])
+    assert "chasing" in rejected.reason
+
+
+def test_the_safety_report_is_checked_again_before_buying(make_rig, tmp_data_dir) -> None:
+    (tmp_data_dir / "KILL").write_text("stop")
+    rig = make_rig()
+    rig.tick()
+    assert GARY in rig.engine.watchlist
+    rigged = load_fixture("rugcheck_report") | {"rugged": True}
+    rig.world.http.register(f"/tokens/{GARY}/report", rigged)
+    (tmp_data_dir / "KILL").unlink()
+    rig.clock.advance(4 * 3600)
+    rig.world.candles = dip_rebound_candles(rig.clock.now())
+    rig.tick()
+    assert rig.ledger.fills() == []
+    [rejected] = [d for d in rig.ledger.decisions(actions=["reject_cocoon"]) if d.mint == GARY]
+    assert "[rugged]" in rejected.reason and GARY not in rig.engine.watchlist
+
+
+def test_an_open_position_stays_watched_so_the_radar_liquidity_rule_keeps_working(make_rig) -> None:
+    rig = make_rig()
+    rig.tick()
+    rig.world.liquidity = 10_000.0  # below MIN_LIQUIDITY/2: a watched-only token would be dropped
+    rig.tick(60)
+    assert GARY in rig.engine.watchlist
+    now = rig.clock.now()
+    rig.world.trades = [{"type": "trade", "attributes": {
+        "block_timestamp": iso(now - 30), "tx_hash": "big", "tx_from_address": "Anon11111111111111111111111111111",
+        "kind": "sell", "volume_in_usd": "3000", "price_from_in_usd": "0.00046", "from_token_amount": "6500000"}}]
+    rig.tick(200)  # past RADAR_INTERVAL_S since the position's first radar scan
+    [closed] = rig.ledger.positions(status="closed")
+    assert closed.exit_reason.startswith("radar: big sells")

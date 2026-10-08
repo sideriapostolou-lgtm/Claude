@@ -232,11 +232,15 @@ def test_live_token_rules(live_book: Ledger) -> None:
     assert airdrop.ok and any("untracked token SpamMint111" in i for i in airdrop.issues)
 
 
-def test_live_without_a_recorded_start_skips_sol(ledger: Ledger) -> None:
+def test_live_without_a_recorded_start_skips_sol_and_fails(ledger: Ledger) -> None:
+    """Live fills without a recorded starting balance: SOL leaking from the real wallet would go
+    unnoticed, so the audit must not say OK (the engine now records the start before any trade)."""
     book(ledger, winner_fills("live"), [winner_position()], start=None, mode="live")
     report = Auditor(ledger, FakeBroker("live", 123)).reconcile()
-    assert report.ok and report.expected_sol_lamports is None and report.sol_drift_lamports is None
+    assert not report.ok and report.expected_sol_lamports is None and report.sol_drift_lamports is None
     assert any("start balance unknown" in i for i in report.issues)
+    fresh = Auditor(Ledger(":memory:"), FakeBroker("live", 123), mode="live").reconcile()
+    assert fresh.ok and any("start balance unknown" in i for i in fresh.issues)  # nothing traded yet
 
 
 # --------------------------------------------------------------------------- books + chain + offline
@@ -285,3 +289,29 @@ def test_format_text_is_a_readable_summary(paper_book: Ledger, fake_clock: FakeC
     assert "2026-10-08" in text and "1 won / 0 lost" in text
     offline = Auditor.format_text(Auditor(paper_book, None).reconcile(verify_chain=False))
     assert "Receipt chain: not checked" in offline and "wallet n/a" in offline and "Tokens: not compared" in offline
+
+
+# --------------------------------------------------------------------------- review fixes
+
+
+def test_a_live_report_never_counts_paper_trades(paper_book: Ledger) -> None:
+    paper_book.set_kv("live.start_lamports", 1_000_000_000)
+    live = Auditor(paper_book, FakeBroker("live", 1_000_000_000)).reconcile()
+    assert live.ok, live.issues
+    assert live.trades == [] and live.daily == [] and live.totals["trades"] == 0
+    assert live.totals["realized_lamports"] == 0 and live.totals["fees_lamports"] == 0
+    paper = Auditor(paper_book, FakeBroker("paper", EXPECTED_SOL, {HOOKI: 600_000})).reconcile()
+    assert paper.totals["trades"] == 1 and {t.mode for t in paper.trades} == {"paper"}
+
+
+def test_a_fill_row_edited_behind_the_chain_fails_the_audit(paper_book: Ledger, tmp_path: Path) -> None:
+    """The P&L comes from fill rows; a row that no longer matches its hash-chained receipt is tampering."""
+    conn = sqlite3.connect(tmp_path / "nc.db")
+    with conn:
+        conn.execute("UPDATE fills SET data = replace(data, '\"sol_lamports\":70000000', "
+                     "'\"sol_lamports\":370000000') WHERE id = 'f2'")
+    conn.close()
+    assert paper_book.verify_chain() == (True, None)  # the chain itself is intact
+    report = Auditor(paper_book, None).reconcile()
+    assert not report.ok and report.chain_ok is True
+    assert any("fill f2" in i and "differs from its receipt" in i for i in report.issues)

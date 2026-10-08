@@ -41,7 +41,7 @@ def test_defaults_match_spec(settings: Settings) -> None:
     assert (s.take_profit_pct, s.partial_tp_fraction, s.trail_pct, s.stop_loss_pct) == (0.40, 0.5, 0.15, 0.18)
     assert (s.max_hold_min, s.cooldown_min) == (120.0, 30.0)
     assert s.judge_model == "claude-opus-5-5" and s.judge_effort == "low"
-    assert s.judge_timeout_s == 20.0 and s.judge_cache_min == 20.0
+    assert s.judge_timeout_s == 10.0 and s.judge_cache_min == 20.0
     assert s.port == 8080
     assert (s.discovery_interval_s, s.watch_interval_s, s.position_interval_s) == (30.0, 60.0, 10.0)
     assert s.solana_rpc_url == "https://api.mainnet-beta.solana.com"

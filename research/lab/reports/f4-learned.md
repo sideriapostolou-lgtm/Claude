@@ -10,8 +10,8 @@ for TEST, and nothing here should trade real money.**
 
   The model is a farm detector. It is not a market-wide edge.
 - **Remove the farm and nothing is left.** Models trained and traded on non-farm coins only lose money
-  on every short-horizon setting. Their 15-minute configurations have means of -5.7% to -20% per trade,
-  with CIs below zero.
+  on every short-horizon setting. All 60 of their 15-minute configurations average -5.0% to -19.8% per trade,
+  and 54 of them have a CI entirely below zero.
 - **The farm finalist does not prove itself on VALIDATION.** It stays positive on average: +9.2% per trade and
   +46% on the $100 portfolio over 24 trades. But its 95% CI is [-4.8%, +19.7%], so the gain is not significant.
 - **Realistic stop fills erase it.** Every losing trade is a one-bar rug to the floor. Fill those stops
@@ -23,7 +23,7 @@ Every number below comes from backtests on recorded data. Nothing here waits for
 ## What was built
 
 **Code.** The strategy is `strategies/f4-learned.py`, class `F4Learned`. The search driver is `f4_learned_search.py`.
-The tests are `tests/test_f4_learned.py`: 16 tests, all passing. Data, models and run logs are in `LAB/f4/`
+The tests are `tests/test_f4_learned.py`: 14 tests, all passing (127 across the lab). Data, models and run logs are in `LAB/f4/`
 and are not committed.
 
 **Features.** There are 39 strictly causal features at each bar close (`FEATURES`, `feature_matrix`):
@@ -137,7 +137,8 @@ bar loses about 4% to costs, so it counts as a loss. Ranking well does not make 
   - 1 mixes the two: 19 ticker-clone trades and 6 farm trades.
 - **Stage B:** 1 of 120 has a CI above 0 (ticker clones, 16 trades). Its neighbouring thresholds lose
   money, so it fails the stability rule.
-- **Without the farm, the 15-minute models have nothing.** Even the top 0.5% of no-farm scores loses 6-20% per trade.
+- **Without the farm, the 15-minute models have nothing.** All 60 no-farm 15-minute configurations lose money,
+  even at the top 0.5% of scores.
 - **The threshold behaves like a cliff, not a slope.** At the 90-95% quantiles every 15-minute configuration loses
   about 75% of the $100 portfolio. Only the top 2% turns positive, because that is exactly where the farm's
   staircase pattern lives.
@@ -160,7 +161,10 @@ Per trade at $20. "Port" is the $100 portfolio return and "DD" its maximum drawd
   it loses money.
 - **Selection.** The two finalists are the plateau centre (q 0.98) and its neighbour (q 0.99) of the same model,
   `tp30_sl15_h15` GBT. Both are positive on VALIDATION. They are kept for the record.
-- **Both fail the lab's bar.** Their VALIDATION CIs cross 0, and they fail the realistic-fill stress below.
+- **Both fail the lab's bar.** Their VALIDATION CIs cross 0. The gates in `finalists/f4-learned.json` record
+  the rest:
+  - q 0.98 also loses money on the $100 portfolio with worst-case wick fills;
+  - q 0.99 has only 14 VALIDATION trades, below the 15 the shortlist rule required on TRAIN.
 
 ## Finalist robustness (VALIDATION, 150 coins; per-trade mean %, $100 portfolio)
 
@@ -173,7 +177,7 @@ Per trade at $20. "Port" is the $100 portfolio return and "DD" its maximum drawd
 | $10 positions | +9.0, port +22% | +14.1, port +20% |
 | $40 positions | +9.2, port +100%, DD 19% | +14.2, port +80%, DD 30% |
 | `wick_fill="worst"` | **+1.2 [-19.5, +16.8], port -7%, DD 36%** | +8.5 [-18.2, +26.3], port +20%, DD 33% |
-| rug-aware fills (stop capped at the bar close) | **+1.3, port -7%, DD 36%** | +8.6, port +20%, DD 33% |
+| rug-aware fills (stop capped at the bar close) | **+1.3, port -6.5%, DD 36%** | +8.6, port +20%, DD 33% |
 | `wick_fill="touch"` (optimistic) | +17.1, port +98% | +20.0, port +66% |
 | without the best coin | +8.4 (FOMO removed) | +13.3 (Anthropic removed) |
 | first half / second half of VALIDATION | +8.6 (14 trades) / +9.9 (10 trades) | +7.6 (9) / +26.3 (5) |
@@ -305,6 +309,16 @@ a bet on a single anonymous launch farm's rug timing:
 
 Do not spend the TEST split on it unless the judge explicitly wants to measure the farm hypothesis. If it is
 ever tested, use `wick_fill="worst"` or rug-aware fills as the primary metric.
+
+## Notes for the judge
+
+- **One process slip.** While I was checking the coin-file format, `glob(...)[0]` happened to open a TEST-split
+  coin file. I printed its launch flags and first 3 candles. Nothing from it was used, and no run has
+  touched TEST: the harness guard was never bypassed.
+- **Use realistic fills for farm coins.** For any farm-coin candidate from any family, report `wick_fill="worst"`
+  or rug-aware fills as the primary result. The farm's losses are one-bar rugs to the floor.
+- **Ticker clones are untested.** The ticker-clone cluster (>$5M, slow drift) appears in F2, F3 and F4 on TRAIN.
+  It produces too few VALIDATION trades (4 here) to be tested on this dataset.
 
 ## Reproduce
 

@@ -39,6 +39,8 @@ page inserts every value with ``textContent``, never as HTML.
       "equity": {"sol": float|null, "usd": float|null, "sol_usd": float|null,
                  "start_usd": float|null, "pnl_today_usd": float|null, "pnl_today_sol": float|null,
                  "pnl_total_usd": float|null, "pnl_total_sol": float|null,
+                 "pnl_total_trading_usd": float|null,   # pnl_total_sol at today's SOL price
+                 "sol_price_effect_usd": float|null,    # pnl_total_usd - pnl_total_trading_usd
                  "curve": [[ts, equity_usd], ...]   # <= 300 points, downsampled},
       "positions": [{"id", "mint", "symbol", "opened_at", "entry_price_usd", "last_price_usd",
                      "value_sol", "unrealized_pnl_sol", "unrealized_pnl_pct", "partial_taken"}],
@@ -51,6 +53,11 @@ page inserts every value with ``textContent``, never as HTML.
                 "cost_usd_today": float},
       "wallet": {"address": str|null}                      # live only, else null
     }
+
+The "Today" and "Since start" tiles show the SOL result (the unit risk limits use)
+as their headline and colour; USD only as a sub-line, split into the trading result
+at today's SOL price and the SOL price effect - over a paper run, SOL/USD moves
+dwarf the bot's own P&L. Positions are those of the current TRADING_MODE only.
 
 Additional keys (also always present): ``receipts.seq`` (head seq),
 ``positions[].cost_sol``, ``cocoon_rules`` ``{rule_id: mints}`` (rug-filter
@@ -131,7 +138,7 @@ def build_state(ledger: Any, settings: Settings, now: float,
         "halted": _halted(ledger),
         "engine": _engine(ledger),
         "equity": equity,
-        "positions": [_position(p, equity["sol_usd"]) for p in ledger.open_positions()],
+        "positions": [_position(p, equity["sol_usd"]) for p in ledger.open_positions(mode=mode)],
         "fills": [{**f.to_dict(), "sol": f.sol_lamports / LAMPORTS_PER_SOL} for f in ledger.fills(limit=RECENT_LIMIT)],
         "decisions": [d.to_dict() for d in ledger.decisions(limit=RECENT_LIMIT)],
         "rejections": ledger.decision_counts(since=now - DAY_S),
@@ -203,6 +210,7 @@ def _equity(ledger: Any, mode: str, now: float) -> dict[str, Any]:
     start_usd = start_lamports / LAMPORTS_PER_SOL * start_sol_usd if start_lamports and start_sol_usd else None
     out: dict[str, Any] = {"sol": None, "usd": None, "sol_usd": None, "start_usd": start_usd,
                            "pnl_today_usd": None, "pnl_today_sol": None, "pnl_total_usd": None, "pnl_total_sol": None,
+                           "pnl_total_trading_usd": None, "sol_price_effect_usd": None,
                            "curve": [[ts, usd] for ts, usd in ledger.equity_curve(
                                since=now - CURVE_DAYS * DAY_S, max_points=CURVE_MAX_POINTS, mode=mode)]}
     if latest is None:
@@ -213,8 +221,12 @@ def _equity(ledger: Any, mode: str, now: float) -> dict[str, Any]:
         out["pnl_today_sol"] = (latest.equity_lamports - today[0].equity_lamports) / LAMPORTS_PER_SOL
     if start_lamports is not None:
         out["pnl_total_sol"] = (latest.equity_lamports - start_lamports) / LAMPORTS_PER_SOL
+    if start_lamports is not None:
+        out["pnl_total_trading_usd"] = out["pnl_total_sol"] * latest.sol_usd
     if start_usd is not None:
         out["pnl_total_usd"] = latest.equity_usd - start_usd
+        if out["pnl_total_trading_usd"] is not None:
+            out["sol_price_effect_usd"] = out["pnl_total_usd"] - out["pnl_total_trading_usd"]
     return out
 
 
@@ -469,18 +481,29 @@ _SCRIPT = r"""
     if (s.kill === "stop") chips.push(["warn", "Kill switch: STOP (no new buys)"]);
     if (s.kill === "sell_all") chips.push(["critical", "Kill switch: SELL ALL"]);
     if (s.halted.halted) chips.push(["serious", "Halted: " + (s.halted.reason || "drawdown limit")]);
+    const status = s.engine.status || {};
+    if (status.drift && Object.keys(status.drift).length) {
+      chips.push(["critical", "Wallet differs from the books (" + Object.keys(status.drift).length
+        + " coin) · new buys blocked"]);
+    }
+    if (status.unresolved_swaps && status.unresolved_swaps.length) {
+      chips.push(["serious", "Unresolved swap: checking the wallet · new buys blocked"]);
+    }
     $("chips").replaceChildren(...chips.map(([cls, text]) => el("span", "chip " + cls, el("i"), text)));
   }
 
   function renderEquity(e, s) {
     const card = $("equity");
     const hasUsd = isNum(e.usd);
+    // Headline + colour in SOL (what the bot controls); USD only as context, with the SOL price effect apart.
     const tiles = el("div", "tiles",
-      tile("Today", usd(e.pnl_today_usd, true), sol(e.pnl_today_sol, true), tone(e.pnl_today_usd)),
-      tile("Since start", usd(e.pnl_total_usd, true),
-        isNum(e.pnl_total_usd) && isNum(e.start_usd) && e.start_usd > 0
-          ? pct(e.pnl_total_usd / e.start_usd * 100) + " of " + usd(e.start_usd) : sol(e.pnl_total_sol, true),
-        tone(isNum(e.pnl_total_usd) ? e.pnl_total_usd : e.pnl_total_sol)));
+      tile("Today", sol(e.pnl_today_sol, true), usd(e.pnl_today_usd, true) + " in USD", tone(e.pnl_today_sol)),
+      tile("Since start", sol(e.pnl_total_sol, true),
+        isNum(e.pnl_total_trading_usd)
+          ? usd(e.pnl_total_trading_usd, true) + " at today's SOL price"
+            + (isNum(e.sol_price_effect_usd) ? " · SOL price " + usd(e.sol_price_effect_usd, true) : "")
+          : usd(e.pnl_total_usd, true),
+        tone(e.pnl_total_sol)));
     card.replaceChildren(
       el("h2", null, "Equity", el("small", null, s.mode === "LIVE" ? "bot wallet" : "virtual wallet")),
       el("div", "hero", hasUsd ? usd(e.usd) : "—"),

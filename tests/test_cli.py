@@ -265,6 +265,7 @@ def test_sell_all_needs_confirmation(env, capsys) -> None:
 
 def test_sell_all_exits_every_position(env, world, fake_clock, capsys) -> None:
     trade_once(env, fake_clock)
+    fake_clock.advance(120)  # the bot is not running any more (stale heartbeat)
     assert nc("sell-all", "--yes") == EXIT_OK
     out = capsys.readouterr().out
     assert "sold Gary" in out and "KILL_SWITCH=stop" in out
@@ -273,6 +274,18 @@ def test_sell_all_exits_every_position(env, world, fake_clock, capsys) -> None:
         assert ledger.positions(status="closed")[0].exit_reason == "manual"
     assert nc("sell-all", "--yes") == EXIT_OK
     assert "no open positions" in capsys.readouterr().out
+
+
+def test_sell_all_beside_a_running_bot_hands_the_job_to_the_bot(env, world, fake_clock, capsys) -> None:
+    """Two processes trading one ledger race (a stale position copy can be written back), so with a
+    fresh heartbeat the CLI only asks the running bot to sell, through the KILL file."""
+    trade_once(env, fake_clock)  # the bot's heartbeat is fresh
+    assert nc("sell-all", "--yes") == EXIT_OK
+    out = capsys.readouterr().out
+    assert "running" in out and "KILL" in out
+    assert (env / "KILL").read_text().strip() == "sell_all"
+    with Ledger(env / "nightcrawler.db") as ledger:
+        assert len(ledger.open_positions()) == 1  # the CLI itself sold nothing
 
 
 def test_reset_halt(env, capsys) -> None:

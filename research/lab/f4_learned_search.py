@@ -655,6 +655,7 @@ def finalize(train_ids: list[str], names: list[str]) -> list[dict]:
             "train_avg_positive": pos(tr), "train_ci_above_0": tr["per_coin"]["exp_ci95_pct"][0] > 0,
             "train_portfolio_positive": pos(tr, "portfolio", "total_return_pct"),
             "validation_avg_positive": pos(va), "validation_ci_above_0": (va["per_coin"]["exp_ci95_pct"] or [-1])[0] > 0,
+            "validation_at_least_15_trades": va["per_coin"]["trades"] >= MIN_TRADES,
             "validation_portfolio_positive": pos(va, "portfolio", "total_return_pct"),
             "validation_without_best_coin_positive": pos(va, "per_coin", "avg_ret_pct_wo_best"),
             "validation_without_top3_positive": pos(va, "per_coin", "avg_ret_pct_wo_top3"),

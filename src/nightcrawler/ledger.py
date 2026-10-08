@@ -514,6 +514,14 @@ class Ledger:
                           [*params, *extra])
         return [Fill.from_dict(json.loads(r[0])) for r in rows]
 
+    def fill_receipts(self) -> list[tuple[str, dict[str, Any], dict[str, Any] | None, str | None]]:
+        """``[(fill_id, row data, its 'fill' receipt payload or None, that receipt's hash)]`` in chain
+        order, so an auditor can prove each (editable) fill row still says what was hash-chained."""
+        rows = self._rows("SELECT f.id, f.data, r.payload, r.hash FROM fills f LEFT JOIN receipts r "
+                          "ON r.seq = f.receipt_seq AND r.kind = 'fill' ORDER BY f.receipt_seq")
+        return [(fid, json.loads(data), json.loads(payload) if payload is not None else None, digest)
+                for fid, data, payload, digest in rows]
+
     def fills_after_seq(self, after_seq: int, mode: str | None = None) -> list[Fill]:
         """Fills whose receipt ``seq > after_seq`` in chain order (optionally one mode only)."""
         where, params = ("", []) if mode is None else (" AND mode = ?", [mode])
