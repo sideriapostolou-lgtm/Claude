@@ -16,8 +16,9 @@ Tables (columns are a suggestion; the public methods are the contract):
 * ``decisions(id INTEGER PK, ts, mint, action, reason, data JSON, receipt_seq)``
 * ``fills(id TEXT PK, ts, mode, side, mint, position_id, data JSON, receipt_seq)``
 * ``positions(id TEXT PK, mint, status, opened_at, closed_at, data JSON, wallet TEXT)`` -
-  ``wallet``: pubkey of the wallet holding a LIVE position's tokens (NULL for paper; schema
-  v2 - a v1 ledger's live rows default to kv ``wallet.pubkey``, the last live boot's wallet).
+  ``wallet``: pubkey of the wallet holding a LIVE position's tokens (NULL for paper; a nullable
+  column added to older ledgers on open - their live rows default to kv ``wallet.pubkey``, the last
+  live boot's wallet - without a schema version bump, so older builds still open the ledger).
   Written with :meth:`Ledger.set_position_wallet`, read with :meth:`Ledger.position_wallets`.
 * ``equity(ts REAL, equity_lamports INT, sol_usd REAL, equity_usd REAL, mode, data JSON)``
 * ``receipts(seq INTEGER PK, ts REAL, kind TEXT, payload TEXT canonical JSON,
@@ -81,9 +82,14 @@ from nightcrawler.models import (
 
 __all__ = ["BUSY_TIMEOUT_S", "SCHEMA_VERSION", "Ledger", "LedgerError"]
 
-#: ``PRAGMA user_version`` of the layout below; bump with a migration when it changes.
-#: v2: ``positions.wallet`` - the wallet (pubkey) a LIVE position's tokens are in (NULL for paper).
-SCHEMA_VERSION = 2
+#: ``PRAGMA user_version`` of the layout below; bump it (with a migration) only for a change OLDER builds
+#: cannot read - every build refuses a newer version, so a bump breaks a rollback to an earlier image.
+#: A backward-compatible addition keeps it and is detected instead: ``positions.wallet`` (the wallet a
+#: LIVE position's tokens are in, NULL for paper) is a nullable column v1 builds read and write unharmed.
+SCHEMA_VERSION = 1
+#: Written by the builds that briefly bumped the version for ``positions.wallet``: v1 plus that column.
+#: Opened as v1 and marked v1 again, so earlier images open the ledger too.
+_V1_WITH_WALLET = 2
 #: How long a write waits for another process holding the write lock.
 BUSY_TIMEOUT_S = 10.0
 
@@ -181,20 +187,21 @@ class Ledger:
     def _migrate(self) -> None:
         with self.transaction(), self._locked() as conn:
             version = conn.execute("PRAGMA user_version").fetchone()[0]
-            if version > SCHEMA_VERSION:
+            if version > SCHEMA_VERSION and version != _V1_WITH_WALLET:
                 raise LedgerError(f"ledger schema v{version} is newer than this nightcrawler (v{SCHEMA_VERSION})")
             for statement in _SCHEMA:
                 conn.execute(statement)
-            if version < 2:
-                self._migrate_position_wallets(conn)
+            self._migrate_position_wallets(conn)
             conn.execute(f"PRAGMA user_version={SCHEMA_VERSION}")
 
     def _migrate_position_wallets(self, conn: sqlite3.Connection) -> None:
-        """v1 -> v2: add ``positions.wallet``; existing LIVE rows default to kv ``wallet.pubkey`` (the
-        wallet of the last live boot, which opened them), else stay NULL (unknown)."""
+        """A ledger without ``positions.wallet`` (written before it existed) gets the column; its LIVE
+        rows default to kv ``wallet.pubkey`` (the wallet of the last live boot, which opened them), else
+        stay NULL (unknown). Nothing to do when the column exists."""
         columns = {row[1] for row in conn.execute("PRAGMA table_info(positions)")}
-        if "wallet" not in columns:
-            conn.execute("ALTER TABLE positions ADD COLUMN wallet TEXT")
+        if "wallet" in columns:
+            return
+        conn.execute("ALTER TABLE positions ADD COLUMN wallet TEXT")
         row = conn.execute("SELECT value FROM kv WHERE key = 'wallet.pubkey'").fetchone()
         pubkey = json.loads(row[0]) if row is not None else None
         if not isinstance(pubkey, str) or not pubkey:

@@ -484,25 +484,71 @@ def test_a_live_shortfall_is_confirmed_on_chain_before_anything_is_written_off(m
     assert notes(rig, "exit_shortfall") == [] and not rig.ledger.get_position(position.id).is_open
 
 
-@pytest.mark.parametrize("chain", ["agrees", "unreadable"])
-def test_a_live_shortfall_the_chain_confirms_or_cannot_check_is_written_off(make_rig, world, fake_clock,
-                                                                            chain: str) -> None:
+def test_a_live_shortfall_the_chain_confirms_is_written_off(make_rig, world, fake_clock) -> None:
     rig = live_rig(make_rig, world, fake_clock)
     rig.tick()
     [position] = rig.ledger.open_positions()
     held = position.token_amount // 2
     rig.broker.tokens[GARY] = held  # half sold by hand: index and chain agree
-
-    def unreadable(mint: str) -> int:
-        raise RpcError(-32005, "node is behind", "getTokenAccountsByOwner")
-
-    rig.broker.chain_token_balance = ((lambda mint: rig.broker.tokens.get(mint, 0)) if chain == "agrees"
-                                      else unreadable)
+    rig.broker.chain_token_balance = lambda mint: rig.broker.tokens.get(mint, 0)
     world.price *= 0.5
     rig.tick(HOLDINGS_SETTLE_S)
     sale, write_off = sells(rig)
     assert (sale.token_amount, write_off.token_amount) == (held, position.token_amount - held)
     assert not rig.ledger.get_position(position.id).is_open
+
+
+def _chain_unreadable(mint: str) -> int:
+    raise RpcError(429, "Too many requests", "getTokenAccountsByOwner")
+
+
+@pytest.mark.parametrize("chain", ["unreadable", "no_reader"])
+def test_a_live_shortfall_the_chain_cannot_confirm_is_held_never_written_off(make_rig, world, fake_clock,
+                                                                             monkeypatch, chain: str) -> None:
+    """Index and wallet show half of the books, but the chain cannot be asked (public RPC 429s, or a
+    broker without a chain reader): nothing is written off on the index alone. The sell of the books
+    is tried and held; once the chain answers, the shortfall it confirms is written off."""
+    rig = live_rig(make_rig, world, fake_clock)
+    rig.tick()
+    [position] = rig.ledger.open_positions()
+    held = position.token_amount // 2
+    rig.broker.tokens[GARY] = held  # half sold by hand
+    monkeypatch.setattr(rig.broker, "chain_token_balance", _chain_unreadable if chain == "unreadable" else None)
+    world.price *= 0.5
+    rig.tick(HOLDINGS_SETTLE_S)
+    assert rig.ledger.get_position(position.id).is_open and notes(rig, "exit_shortfall") == []
+    assert sells(rig) == [] and rig.ledger.decisions(actions=["hold"])  # retried next interval
+    monkeypatch.setattr(rig.broker, "chain_token_balance", lambda mint: rig.broker.tokens.get(mint, 0))
+    rig.tick(rig.settings.position_interval_s)
+    sale, write_off = sells(rig)
+    assert (sale.token_amount, write_off.token_amount) == (held, position.token_amount - held)
+    assert not rig.ledger.get_position(position.id).is_open
+
+
+def test_an_index_gap_and_a_failed_chain_read_never_write_off_tokens_the_wallet_holds(make_rig, world, fake_clock,
+                                                                                    monkeypatch) -> None:
+    """Ultra holdings misses the coin (shows 0) and the one on-chain re-read fails: the position must
+    NOT be closed with a 0-SOL write-off while every token is still in the wallet - the books are
+    trusted for this attempt, so the stop-loss sells them."""
+    from nightcrawler.models import Balances
+
+    rig = live_rig(make_rig, world, fake_clock)
+    rig.tick()
+    [position] = rig.ledger.open_positions()
+    real_balances = rig.broker.balances
+
+    def index_missing_the_coin() -> Balances:
+        held = real_balances()
+        return Balances(sol_lamports=held.sol_lamports, tokens={m: a for m, a in held.tokens.items() if m != GARY})
+
+    monkeypatch.setattr(rig.broker, "balances", index_missing_the_coin)
+    monkeypatch.setattr(rig.broker, "chain_token_balance", _chain_unreadable)
+    world.price *= 0.5
+    rig.tick(HOLDINGS_SETTLE_S)
+    assert notes(rig, "exit_shortfall") == []
+    [sale] = sells(rig)
+    assert sale.token_amount == position.token_amount and sale.sol_lamports > 0
+    assert rig.broker.tokens.get(GARY, 0) == 0 and not rig.ledger.get_position(position.id).is_open
 
 
 def test_an_unreadable_wallet_never_writes_anything_off(make_rig, world, fake_clock, monkeypatch) -> None:
@@ -567,6 +613,78 @@ def test_positions_of_another_wallet_are_never_managed_and_are_surfaced(make_rig
     assert status["foreign_positions"][0]["wallet"] == OLD_WALLET
     equity, _sol_usd, balances = rig.engine._equity_now()
     assert equity == balances.sol_lamports  # no phantom value from the other wallet
+
+
+def test_an_unknown_swap_records_the_wallet_that_sent_it(make_rig, world, fake_clock) -> None:
+    rig = live_rig(make_rig, world, fake_clock)
+    rig.broker.pubkey = OLD_WALLET
+    rig.broker.refuse = SwapUnknown("Ultra execute outcome unknown (read timed out)")
+    rig.tick()
+    assert rig.engine.unresolved[GARY]["wallet"] == OLD_WALLET
+
+
+def test_an_unknown_sell_of_another_wallet_is_never_settled_against_this_one(make_rig, world, fake_clock,
+                                                                           tmp_path) -> None:
+    """A sell of the OLD wallet had an unknown outcome, then BOT_WALLET_SECRET changed: the new wallet holds
+    none of those tokens, which must not read as "the sell landed" - the old wallet's position stays open
+    (foreign, never touched), the swap stays unresolved (entries blocked) and that is said loudly once."""
+    path = tmp_path / "live.db"
+    old = live_rig(make_rig, world, fake_clock, path=path)
+    old.broker.pubkey = OLD_WALLET
+    old.tick()
+    [position] = old.ledger.open_positions()
+    old.broker.refuse = SwapUnknown("Ultra execute outcome unknown (read timed out)")  # nothing sent
+    world.price *= 0.5
+    old.tick(10)
+    assert GARY in old.engine.unresolved
+    old.ledger.close()
+
+    rig = live_rig(make_rig, world, fake_clock, path=path)  # a new, empty wallet
+    rig.broker.pubkey = NEW_WALLET
+    for _ in range(3):
+        rig.tick(RECONCILE_AFTER_S)
+    assert rig.ledger.get_position(position.id).is_open
+    assert sells(rig) == []  # nothing booked as sold
+    assert notes(rig, "reconcile") == [] and GARY in rig.engine.unresolved and not rig.engine.entries_allowed
+    [note] = notes(rig, "reconcile_foreign")
+    assert note["mint"] == GARY and note["wallet"] == OLD_WALLET and note["this_wallet"] == NEW_WALLET
+    assert OLD_WALLET in rig.engine.status(fake_clock.now())["entries_blocked"]
+
+
+def test_a_buy_in_flight_for_another_wallet_is_never_called_not_landed(make_rig, world, fake_clock,
+                                                                      tmp_path) -> None:
+    from test_engine import Killed
+
+    path = tmp_path / "live.db"
+    old = live_rig(make_rig, world, fake_clock, path=path)
+    old.broker.pubkey = OLD_WALLET
+    old.broker.refuse = Killed()  # SIGKILL mid-buy: the old wallet may hold the tokens now
+    with pytest.raises(Killed):
+        old.tick()
+    old.ledger.close()
+
+    rig = live_rig(make_rig, world, fake_clock, path=path)
+    rig.broker.pubkey = NEW_WALLET
+    rig.tick(1)
+    rig.tick(RECONCILE_AFTER_S)
+    assert GARY in rig.engine.unresolved and notes(rig, "reconcile") == []
+    assert notes(rig, "reconcile_foreign")[0]["wallet"] == OLD_WALLET
+
+
+def test_an_unknown_swap_of_another_wallet_that_failed_on_chain_is_still_settled(make_rig, world, fake_clock,
+                                                                               tmp_path) -> None:
+    path = tmp_path / "live.db"
+    old = chain_rig(make_rig, world, fake_clock, ledger_path=path)
+    old.broker.pubkey = OLD_WALLET
+    old.broker.refuse = unknown("sigF")
+    old.tick()
+    old.ledger.close()
+
+    rig = chain_rig(make_rig, world, fake_clock, ledger_path=path)
+    rig.broker.pubkey = NEW_WALLET
+    rig.broker.chain["sigF"] = "failed"  # final and failed: nothing moved in ANY wallet
+    rig.tick(1)
+    assert rig.engine.unresolved == {} and "failed on chain" in notes(rig, "reconcile")[0]["result"]
 
 
 # =========================================================================== F5: settle unknown swaps from the chain
@@ -710,6 +828,91 @@ def test_signature_checks_are_rate_limited(make_rig, world, fake_clock) -> None:
     for _ in range(20):
         rig.tick(1)
     assert 1 <= len(rig.broker.status_calls) <= 20 // SIGNATURE_CHECK_S + 1
+
+
+def index_misses(rig: Rig, monkeypatch: pytest.MonkeyPatch, mint: str = GARY) -> None:
+    """Ultra holdings (``balances``) leaves ``mint`` out; the chain (``chain_token_balance``) still has it."""
+    from nightcrawler.models import Balances
+
+    real_balances = rig.broker.balances
+
+    def index_missing_the_coin() -> Balances:
+        held = real_balances()
+        return Balances(sol_lamports=held.sol_lamports, tokens={m: a for m, a in held.tokens.items() if m != mint})
+
+    monkeypatch.setattr(rig.broker, "balances", index_missing_the_coin)
+
+
+def test_a_buy_confirmed_on_chain_is_booked_from_the_chain_when_the_index_misses_it(make_rig, world, fake_clock,
+                                                                                   monkeypatch) -> None:
+    rig = chain_rig(make_rig, world, fake_clock, WATCH_INTERVAL_S=600)
+    index_misses(rig, monkeypatch)
+    rig.broker.after_land = landed_then_unknown("sigA")
+    rig.tick()
+    rig.broker.chain["sigA"] = "landed"
+    rig.tick(SIGNATURE_CHECK_S)
+    assert rig.engine.unresolved == {} and rig.engine.entries_allowed
+    [position] = rig.ledger.open_positions()  # the bought tokens have a position (and a stop-loss)
+    assert position.token_amount == rig.broker.tokens[GARY] > 0
+    [note] = notes(rig, "reconcile")
+    assert note["landed"] is True and note["wallet"] == rig.broker.tokens[GARY]
+
+
+def test_a_partial_sell_confirmed_on_chain_books_only_what_was_sold_when_the_index_misses_the_coin(
+        make_rig, world, fake_clock, monkeypatch) -> None:
+    rig = chain_rig(make_rig, world, fake_clock, WATCH_INTERVAL_S=600)
+    rig.tick()
+    [position] = rig.ledger.open_positions()
+    rig.broker.after_land = landed_then_unknown("sigP")
+    world.price *= 1.6  # partial take-profit
+    rig.tick(10)
+    assert rig.engine.unresolved[GARY]["reason"] == "take_profit_partial"
+    index_misses(rig, monkeypatch)
+    rig.broker.chain["sigP"] = "landed"
+    rig.tick(SIGNATURE_CHECK_S)
+    assert rig.engine.unresolved == {}
+    after = rig.ledger.get_position(position.id)
+    assert after.is_open and after.partial_taken and after.token_amount == rig.broker.tokens[GARY] > 0
+    assert notes(rig, "exit_shortfall") == []
+
+
+def test_an_unknown_sell_that_never_landed_is_not_booked_from_an_index_that_misses_the_coin(
+        make_rig, world, fake_clock, monkeypatch) -> None:
+    rig = live_rig(make_rig, world, fake_clock)
+    rig.tick()
+    [position] = rig.ledger.open_positions()
+    index_misses(rig, monkeypatch)
+    rig.broker.refuse = SwapUnknown("Ultra execute outcome unknown (read timed out)")  # gasless: no signature
+    world.price *= 0.5
+    rig.tick(HOLDINGS_SETTLE_S)
+    assert GARY in rig.engine.unresolved and rig.broker.executed == ["buy"]
+    rig.broker.refuse = None
+    rig.tick(RECONCILE_AFTER_S + 1)  # reconciled from the chain: did not land; the stop-loss sells again
+    [note] = notes(rig, "reconcile")
+    assert note["landed"] is False and note["wallet"] == position.token_amount
+    [sale] = sells(rig)
+    assert sale.token_amount == position.token_amount and sale.sol_lamports > 0  # a REAL sale, not a guess
+    assert rig.broker.tokens.get(GARY, 0) == 0 and notes(rig, "exit_shortfall") == []
+
+
+def test_an_unknown_swap_is_not_settled_while_the_chain_balance_cannot_be_read(make_rig, world, fake_clock,
+                                                                             monkeypatch) -> None:
+    rig = live_rig(make_rig, world, fake_clock)
+    rig.tick()
+    [position] = rig.ledger.open_positions()
+    index_misses(rig, monkeypatch)
+    monkeypatch.setattr(rig.broker, "chain_token_balance", _chain_unreadable)
+    rig.broker.refuse = SwapUnknown("Ultra execute outcome unknown (read timed out)")
+    world.price *= 0.5
+    rig.tick(HOLDINGS_SETTLE_S)
+    rig.broker.refuse = None
+    for _ in range(3):
+        rig.tick(RECONCILE_AFTER_S)
+    assert GARY in rig.engine.unresolved and notes(rig, "reconcile") == []  # never settled from the index
+    assert rig.ledger.get_position(position.id).is_open and not rig.engine.entries_allowed
+    monkeypatch.setattr(rig.broker, "chain_token_balance", lambda mint: rig.broker.tokens.get(mint, 0))
+    rig.tick(SIGNATURE_CHECK_S)
+    assert rig.engine.unresolved == {} and notes(rig, "reconcile")[0]["landed"] is False
 
 
 # =========================================================================== RT-9: exits-only safe mode

@@ -35,7 +35,7 @@ from typing import Any, Sequence, cast
 from nightcrawler.clock import Clock
 from nightcrawler.config import Settings
 from nightcrawler.logging_setup import get_logger
-from nightcrawler.models import LAMPORTS_PER_SOL, TOKEN_ACCOUNT_RENT_LAMPORTS, KillMode, Position, lamports_to_sol
+from nightcrawler.models import LAMPORTS_PER_SOL, OPENING_RENT_RESERVE_LAMPORTS, KillMode, Position, lamports_to_sol
 
 __all__ = ["RiskManager", "size_position_usd", "KILL_WORDS"]
 
@@ -86,11 +86,12 @@ class RiskManager:
 
         ``size_position_usd(equity_usd, POSITION_PCT, MIN_POSITION_USD,
         MAX_POSITION_USD)`` converted to lamports, then capped so that
-        ``available_lamports - SOL_RESERVE - NETWORK_FEE - TOKEN_ACCOUNT_RENT``
+        ``available_lamports - SOL_RESERVE - NETWORK_FEE - OPENING_RENT_RESERVE``
         stays >= 0; if the cap pushes it below ``MIN_POSITION_USD`` -> 0.
         ``available_lamports`` defaults to ``equity_lamports``. ``sol_usd <= 0`` -> 0.
         NETWORK_FEE is ``network_fee_lamports`` (what the broker charges now, e.g. paper's
-        Helius estimate) when given, never below ``NETWORK_FEE_SOL``.
+        Helius estimate) when given, never below ``NETWORK_FEE_SOL``. OPENING_RENT_RESERVE is the most
+        the brokers book as rent for a new token account (Ultra's Token-2022 figure).
         """
         if sol_usd <= 0:
             return 0
@@ -100,7 +101,7 @@ class RiskManager:
         target = int(target_usd / sol_usd * LAMPORTS_PER_SOL)
         available = equity_lamports if available_lamports is None else available_lamports
         fee = max(s.network_fee_lamports, network_fee_lamports or 0)
-        spendable = available - s.sol_reserve_lamports - fee - TOKEN_ACCOUNT_RENT_LAMPORTS
+        spendable = available - s.sol_reserve_lamports - fee - OPENING_RENT_RESERVE_LAMPORTS
         if spendable >= target:
             return target
         capped = max(spendable, 0)

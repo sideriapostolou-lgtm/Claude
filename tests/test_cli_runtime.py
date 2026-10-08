@@ -117,6 +117,30 @@ def test_safe_mode_locks_the_dashboard_when_its_token_is_missing(tmp_data_dir, l
     assert boot_once["safe_mode"]["defaults_used"] == ["DASHBOARD_TOKEN (random: dashboard locked)"]
 
 
+def test_safe_mode_never_writes_a_mis_pasted_secret_into_receipts_kv_or_the_dashboard(tmp_data_dir, live_wallet,
+                                                                                         monkeypatch, boot_once,
+                                                                                         capsys) -> None:
+    """ConfigError problems quote the raw value. A key pasted into the wrong variable (the Helius API key into
+    USAGE_HELIUS_MONTHLY_CREDITS) must never reach the hash-chained receipts (exported, cannot be edited),
+    the ledger kv or the dashboard: only the variable name and a masked value are kept."""
+    from nightcrawler.dashboard import build_state
+
+    key = "3f2b9c1e-7d4a-4e8b-9a6f-0c5d2e1b8a47"  # shaped like a Helius API key
+    monkeypatch.setenv("USAGE_HELIUS_MONTHLY_CREDITS", key)
+    open_live_position(tmp_data_dir, live_wallet)
+    assert nc("run", "--no-dashboard") == EXIT_OK
+    capsys.readouterr()
+    assert boot_once["safe_mode"]["defaults_used"] == ["USAGE_HELIUS_MONTHLY_CREDITS"]
+    assert any("USAGE_HELIUS_MONTHLY_CREDITS" in p for p in boot_once["safe_mode"]["problems"])
+    assert key not in json.dumps(boot_once["safe_mode"]) and key not in boot_once["blocked"]
+    with Ledger(tmp_data_dir / "nightcrawler.db") as ledger:
+        assert all(key not in json.dumps(r.payload) for r in ledger.receipts())
+        for name in ("engine.safe_mode", "engine.status"):
+            assert key not in json.dumps(ledger.get_kv(name))
+        state = build_state(ledger, boot_once["settings"], 2e9, {})
+        assert state["safe_mode"]["problems"] and key not in json.dumps(state, default=str)
+
+
 # =========================================================================== F3: another wallet's positions
 
 

@@ -38,6 +38,7 @@ __all__ = [
     "parse_dotenv",
     "redact_url",
     "redact_rpc_url",
+    "mask_problem",
 ]
 
 LIVE_CONFIRM_PHRASE = "I_ACCEPT_REAL_MONEY_RISK"
@@ -49,6 +50,8 @@ _KEY_SHAPED = re.compile(r"^[A-Za-z0-9_-]{16,}$")
 _TRUE = {"1", "true", "yes", "on", "y"}
 _FALSE = {"0", "false", "no", "off", "n"}
 _SECRET_QUERY_HINTS = ("key", "token", "secret", "auth", "password")
+#: A raw value quoted in a ConfigError problem (``got '...'``, ``JUDGE_MODE='...'``): a str ``repr``.
+_QUOTED_VALUE = re.compile(r"'(?:[^'\\]|\\.)*'" r'|"(?:[^"\\]|\\.)*"')
 
 
 class Secret:
@@ -93,6 +96,13 @@ class ConfigError(ValueError):
     def __init__(self, problems: Iterable[str]) -> None:
         self.problems = list(problems)
         super().__init__("Invalid configuration:\n  - " + "\n  - ".join(self.problems))
+
+
+def mask_problem(problem: str) -> str:
+    """A :class:`ConfigError` problem with every quoted raw value replaced by ``'***'``: a value pasted
+    into the wrong variable may be a secret (an API key in a number variable), and safe mode keeps the
+    problems (receipts, kv, dashboard). The variable names stay, so the fix is still obvious."""
+    return _QUOTED_VALUE.sub("'***'", problem)
 
 
 def redact_url(url: str) -> str:

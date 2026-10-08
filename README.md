@@ -184,9 +184,11 @@ with a hint.
 - **Never double-buys.** A swap is never re-sent. If a live swap's outcome is unknown, the bot
   stops all new buys, asks the blockchain about the transaction (or, when it cannot, waits 90 s),
   reads the wallet and records what really happened.
-- **A broken setting never strands real money.** With open live positions, an invalid setting
+- **Most broken settings don't strand real money.** With open live positions, an invalid setting
   starts an exits-only safe mode (stop-losses keep working, no new buys, a red dashboard chip)
-  instead of refusing to start.
+  instead of refusing to start - as long as a valid live setup remains. A broken `TRADING_MODE`,
+  `LIVE_CONFIRM`, `BOT_WALLET_SECRET` or `DATA_DIR` still refuses to start, and the open positions
+  have NO stop-loss until you fix it.
 - **Forced exits still work in thin pools:** stop-loss, trailing, time, radar and kill exits
   accept up to 25 % price impact rather than staying trapped.
 - **Secrets never appear** in logs, receipts or the dashboard. The dashboard is read-only and

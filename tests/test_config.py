@@ -15,6 +15,7 @@ from nightcrawler.config import (
     Secret,
     Settings,
     load_settings,
+    mask_problem,
     parse_dotenv,
     redact_url,
 )
@@ -276,3 +277,20 @@ def test_take_profit_written_as_percent_is_rejected_with_the_fraction_hint(make_
         make_settings(TAKE_PROFIT_PCT="40")
     assert make_settings(TAKE_PROFIT_PCT="0.4").take_profit_pct == 0.4
     assert make_settings(TAKE_PROFIT_PCT="2.0").take_profit_pct == 2.0
+
+
+@pytest.mark.parametrize("raw", ["3f2b9c1e-7d4a-4e8b-9a6f-0c5d2e1b8a47", "it's", 'a\'b"c\\d', "sk-ant-api03-xyz"])
+@pytest.mark.parametrize("variable", ["USAGE_HELIUS_MONTHLY_CREDITS", "STOP_LOSS_PCT", "SIMULATE_BEFORE_SEND",
+                                      "JUDGE_MODE"])
+def test_mask_problem_hides_every_quoted_raw_value_but_keeps_the_variable(variable: str, raw: str) -> None:
+    with pytest.raises(ConfigError) as caught:
+        Settings.from_env({variable: raw})
+    [problem] = caught.value.problems
+    masked = mask_problem(problem)
+    assert raw not in masked and repr(raw) not in masked and variable in masked and "'***'" in masked
+
+
+def test_mask_problem_keeps_problems_without_a_quoted_value() -> None:
+    for problem in ("STOP_LOSS_PCT=18.0 must be <= 1 (a FRACTION: 0.20 means 20%)",
+                    f"TRADING_MODE=live requires LIVE_CONFIRM={LIVE_CONFIRM_PHRASE} (exact)"):
+        assert mask_problem(problem) == problem

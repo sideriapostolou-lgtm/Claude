@@ -94,12 +94,14 @@ BOT_WALLET_SECRET changed) is never valued, sold or counted - it is noted at boo
     never trap a position. Live, a lower wallet balance is trusted only
     :data:`HOLDINGS_SETTLE_S` after the position's last fill, and never when unreadable;
     it is then re-read ON CHAIN (``broker.chain_token_balance``: Ultra holdings is an index
-    that can miss a token) and the chain's answer wins (Ultra's only when the RPC fails).
+    that can miss a token) and the chain's answer wins. Nothing is written off on the index
+    alone: when the chain cannot be read the books are trusted for that attempt (sell or hold).
 
 ``reconcile`` (every tick, live only in practice)
     A live swap whose outcome is unknown (``SwapUnknown``) blocks ALL new
     entries and further trading of that mint. After
-    :data:`RECONCILE_AFTER_S` the wallet's token balance (Ultra holdings) is
+    :data:`RECONCILE_AFTER_S` the wallet's ON-CHAIN token balance (``broker.chain_token_balance``;
+    never the Ultra holdings index, which can miss a coin - an RPC failure waits and retries) is
     compared with the books: unchanged -> the swap did not land (cleared,
     ``note`` receipt); changed -> a reconciliation Fill is recorded from the
     balance change (the actual fill when the broker confirmed the swap but the
@@ -111,7 +113,11 @@ BOT_WALLET_SECRET changed) is never valued, sold or counted - it is noted at boo
     F5: when the swap's signature is known (``SwapUnknown.signature``), its status is
     asked every :data:`SIGNATURE_CHECK_S` (``broker.swap_status``) BEFORE the fixed wait:
     final and failed -> settled at once ("did not land"); final and landed -> booked from
-    the wallet at once, and never called "did not land" while the wallet index lags.
+    the wallet at once, and never called "did not land" while the wallet lags.
+    F3: each unknown swap records the wallet that sent it; one of ANOTHER wallet (the
+    BOT_WALLET_SECRET changed) is never settled against this wallet's balance - it stays
+    unresolved (entries blocked, ``note`` ``reconcile_foreign`` once) unless its signature is
+    final and failed.
 
     IN-FLIGHT MARKER (live): kv ``engine.inflight[mint]`` is written in the same
     transaction as the ``enter``/``exit`` decision receipt, BEFORE the swap is
@@ -170,7 +176,7 @@ from typing import Any, Callable
 
 from nightcrawler import __version__
 from nightcrawler.clock import Clock, RealClock, iso_utc
-from nightcrawler.config import Settings
+from nightcrawler.config import Settings, mask_problem
 from nightcrawler.http import HttpError
 from nightcrawler.logging_setup import get_logger
 from nightcrawler.models import (
@@ -543,9 +549,10 @@ class Engine:
         """EXITS-ONLY safe mode (RT-9): the configuration was invalid but the ledger holds open live
         positions, so the bot runs anyway - no discovery and no entries; stop-losses, the kill switch
         and reconciliation keep working. ``defaults_used``: the variables that fell back to defaults.
-        Shown on the dashboard via kv ``engine.safe_mode`` and ``engine.status["safe_mode"]``."""
-        self.safe_mode = {"problems": [str(p)[:300] for p in problems], "defaults_used": list(defaults_used),
-                          "since": self.clock.now()}
+        Shown on the dashboard via kv ``engine.safe_mode`` and ``engine.status["safe_mode"]``, and receipted:
+        quoted raw values are masked first (``config.mask_problem``: a mis-pasted value may be a secret)."""
+        self.safe_mode = {"problems": [mask_problem(str(p))[:300] for p in problems],
+                          "defaults_used": list(defaults_used), "since": self.clock.now()}
         log.critical("SAFE_MODE invalid configuration with open live positions: exits only, no entries. "
                      "Fix: %s", " | ".join(self.safe_mode["problems"]))
 
@@ -774,6 +781,10 @@ class Engine:
         if self._kill_mode not in (None, "off"):
             return f"kill switch {self._kill_mode}"
         if self.unresolved:
+            foreign = sorted({w for u in self.unresolved.values() if (w := self._swap_wallet_if_foreign(u))})
+            if foreign:
+                return (f"unresolved live swap of another wallet ({', '.join(foreign)}): run the bot with that "
+                        "wallet to settle it")[:300]
             return "unresolved live swap: reconciling first"
         if self.drift:
             return "wallet differs from the books: " + ", ".join(sorted(self.drift))[:200]
@@ -1387,8 +1398,9 @@ class Engine:
         open positions of the mint hold on the books. None (= trust the books) when the balance cannot
         be read, or - live - while a fresh swap may not be in Ultra holdings yet (:data:`HOLDINGS_SETTLE_S`).
         Live, a holding below the books is re-read ON CHAIN before anything is written off: Ultra
-        holdings is an index that can miss a token, the chain is the truth (the index's answer stands
-        only when the RPC cannot answer)."""
+        holdings is an index that can miss a token, the chain is the truth. When the chain cannot answer
+        the books are trusted too (the sell is tried, or held and retried) - a write-off needs the
+        chain's own word."""
         if self.settings.is_live:
             recent = self.ledger.fills(limit=1, position_id=position.id)
             last_fill = max([position.opened_at, *(f.ts for f in recent)])
@@ -1401,20 +1413,26 @@ class Engine:
             return None
         others = sum(p.token_amount for p in self._open_positions() if p.mint == position.mint and p.id != position.id)
         if self.settings.is_live and held - others < position.token_amount:
-            held = self._chain_holding(position.mint, held)
+            onchain = self._chain_holding(position.mint, held)
+            if onchain is None:  # never write off on the index alone
+                return None
+            held = onchain
         return max(0, held - others)
 
-    def _chain_holding(self, mint: str, indexed: int) -> int:
-        """Live: the wallet's ON-CHAIN holding of ``mint`` (``broker.chain_token_balance``), else
-        ``indexed`` (Ultra holdings) when the broker cannot tell or the RPC fails."""
+    def _chain_holding(self, mint: str, indexed: int) -> int | None:
+        """Live: the wallet's ON-CHAIN holding of ``mint`` (``broker.chain_token_balance``); None when the
+        broker cannot tell or the RPC fails (``indexed``, Ultra holdings, is only logged against it)."""
         read = getattr(self.broker, "chain_token_balance", None)
         if read is None:
-            return indexed
+            log.warning("exit_chain_balance_unavailable mint=%s ultra=%d: no chain reader, trusting the books",
+                        mint, indexed)
+            return None
         try:
             onchain = int(read(mint))
         except Exception as exc:
-            log.warning("exit_chain_balance_unavailable mint=%s error=%s: using Ultra holdings", mint, _err(exc))
-            return indexed
+            log.warning("exit_chain_balance_unavailable mint=%s ultra=%d error=%s: trusting the books this attempt",
+                        mint, indexed, _err(exc))
+            return None
         if onchain != indexed:
             log.warning("exit_holdings_index_differs mint=%s ultra=%d chain=%d: using the chain", mint, indexed,
                         onchain)
@@ -1521,7 +1539,7 @@ class Engine:
                     pool: str | None, reason: str | None, extra: dict[str, Any] | None = None) -> dict[str, Any]:
         return {"side": side, "quote": _quote_summary(quote), "decimals": decimals, "position_id": position_id,
                 "symbol": symbol, "pool": pool, "at": self.clock.now(), "reason": reason,
-                "mode": self.settings.trading_mode, **(extra or {})}
+                "mode": self.settings.trading_mode, "wallet": self._own_wallet(), **(extra or {})}
 
     def _set_inflight(self, mint: str, side: str, quote: Any, decimals: int | None, position_id: str | None,
                       symbol: str, pool: str | None, reason: str | None, extra: dict[str, Any] | None = None) -> None:
@@ -1585,8 +1603,10 @@ class Engine:
 
     def reconcile_unresolved(self, now: float) -> None:
         """Settle unknown live swaps: as soon as their signature status is final (F5), else after
-        :data:`RECONCILE_AFTER_S` from the wallet. A settle attempt that has to wait (no SOL price, or a
-        confirmed swap the wallet does not show yet) is retried every :data:`SIGNATURE_CHECK_S`."""
+        :data:`RECONCILE_AFTER_S` from the wallet's ON-CHAIN balance (Ultra holdings only for a broker
+        without a chain reader). A settle attempt that has to wait (no SOL price, the balance cannot be
+        read, or a confirmed swap the wallet does not show yet) is retried every :data:`SIGNATURE_CHECK_S`.
+        A swap of another wallet is never settled against this one (F3)."""
         if not self.unresolved:
             return
         learned = self._check_signatures(now)
@@ -1597,21 +1617,64 @@ class Engine:
             if learned:
                 self.ledger.set_kv("engine.unresolved", _clean(self.unresolved))
             return
-        balances = (self.broker.balances() if any(self.unresolved[m].get("chain") != "failed" for m in due)
-                    else None)
+        index: dict[str, int] | None = None  # Ultra holdings, only for a broker without a chain reader
         for mint in due:
             u = self.unresolved[mint]
             if u.get("chain") == "failed":
                 settled = self._settle_failed_on_chain(mint, u, now)
+            elif (other := self._swap_wallet_if_foreign(u)) is not None:  # never settled against THIS wallet (F3)
+                settled = self._hold_foreign_swap(mint, u, other, now)
             else:
-                if balances is None:  # fetched above whenever a due entry is not "failed"
-                    raise AttributeError("wallet balances were not fetched")
-                settled = self._reconcile_one(mint, u, balances.tokens.get(mint, 0), now)
+                read = getattr(self.broker, "chain_token_balance", None)
+                if read is None and index is None:
+                    index = dict(self.broker.balances().tokens)
+                actual = self._chain_balance(read, mint) if read is not None else int((index or {}).get(mint, 0))
+                settled = actual is not None and self._reconcile_one(mint, u, actual, now)
             if settled:
                 del self.unresolved[mint]
             else:
                 u["tried_at"] = now
         self.ledger.set_kv("engine.unresolved", _clean(self.unresolved))
+
+    def _swap_wallet_if_foreign(self, u: dict[str, Any]) -> str | None:
+        """The wallet an unresolved swap was sent from when it is ANOTHER one than this bot's (F3: the
+        BOT_WALLET_SECRET changed meanwhile), else None. Entries written before swaps recorded their
+        wallet fall back to their position's recorded wallet; unknown counts as this wallet's."""
+        own = self._own_wallet()
+        if own is None:
+            return None
+        wallet = u.get("wallet")
+        position_id = u.get("position_id")
+        lookup = getattr(self.ledger, "position_wallets", None)
+        if not wallet and position_id and lookup is not None:
+            wallet = lookup([position_id]).get(position_id)
+        return wallet if isinstance(wallet, str) and wallet and wallet != own else None
+
+    def _hold_foreign_swap(self, mint: str, u: dict[str, Any], wallet: str, now: float) -> bool:
+        """An unresolved swap of another ``wallet`` stays unresolved (entries blocked): this wallet's balance
+        says nothing about it. Noted once per wallet that finds it (``note`` ``reconcile_foreign``); always
+        False (not settled)."""
+        if u.get("foreign_noted_by") != self._own_wallet():
+            u["foreign_noted_by"] = self._own_wallet()
+            self.ledger.append_receipt("note", {"event": "reconcile_foreign", "mint": mint, "side": u.get("side"),
+                                                "position_id": u.get("position_id"), "wallet": wallet,
+                                                "this_wallet": self._own_wallet(), "signature": u.get("signature"),
+                                                "result": "unknown swap of another wallet: left unresolved, entries "
+                                                          "blocked; run the bot with that wallet to settle it"}, ts=now)
+            log.error("reconcile_foreign mint=%s side=%s wallet=%s: an unknown swap of ANOTHER wallet cannot be "
+                      "settled by this one; entries stay blocked until the bot runs with that wallet", mint,
+                      u.get("side"), wallet)
+        return False
+
+    @staticmethod
+    def _chain_balance(read: Callable[[str], int], mint: str) -> int | None:
+        """The wallet's ON-CHAIN holding of ``mint`` to settle an unknown swap with (Ultra holdings is an
+        index that can miss a coin: it never books or clears a swap); None when the RPC fails (retried)."""
+        try:
+            return int(read(mint))
+        except Exception as exc:
+            log.warning("reconcile_chain_balance_unavailable mint=%s error=%s: retrying", mint, _err(exc))
+            return None
 
     def _check_signatures(self, now: float) -> bool:
         """Ask the chain (``broker.swap_status``) about unresolved swaps with a known signature, at most
@@ -1667,7 +1730,7 @@ class Engine:
         note = {"event": "reconcile", "mint": mint, "side": side, "books": books, "wallet": actual,
                 "landed": landed, "request_id": q.get("request_id"), "chain": u.get("chain"),
                 "signature": u.get("signature")}
-        if not landed and u.get("chain") == "landed":  # confirmed on chain: the wallet index is behind
+        if not landed and u.get("chain") == "landed":  # confirmed on chain: the balance read is behind
             log.warning("reconcile_waiting mint=%s side=%s: confirmed on chain, the wallet does not show it yet",
                         mint, side)
             return False

@@ -10,6 +10,7 @@ Both brokers must put the same ``rent_lamports`` on the same fills.
 
 from __future__ import annotations
 
+import dataclasses
 from typing import Any
 
 import pytest
@@ -164,3 +165,26 @@ def _quote(side: str, rent: int) -> Quote:
 ])
 def test_the_shared_rent_rule(side: str, rent: int, account_open: bool, expected: int) -> None:
     assert token_rent_lamports(_quote(side, rent), account_open=account_open) == expected
+
+
+@pytest.mark.parametrize("rent", [OPENING_RENT, 0])
+def test_a_buy_sized_to_all_the_spendable_sol_still_fits_the_rent_the_broker_books(make_settings, fake_clock,
+                                                                                 rent: int) -> None:
+    """Sizing must leave room for the rent the brokers really book: Ultra's ``rentFeeLamports`` for a new
+    Token-2022 (pump.fun) account is above the 165-byte model. A buy capped by the available SOL still
+    fits in the paper wallet (else InsufficientBalance) - and live, it never eats into SOL_RESERVE."""
+    from nightcrawler.broker.paper import _PaperWallet
+    from nightcrawler.models import LAMPORTS_PER_SOL
+    from nightcrawler.risk import RiskManager
+
+    settings = make_settings()
+    available = (settings.sol_reserve_lamports + settings.network_fee_lamports + TOKEN_ACCOUNT_RENT_LAMPORTS
+                 + 50_000_000)  # the SOL left caps the size
+    size = RiskManager(settings, None, fake_clock).size_position(10 * LAMPORTS_PER_SOL, 150.0,
+                                                                 available_lamports=available)
+    assert size > 0
+    wallet = _PaperWallet(sol_lamports=available, tokens={}, rent={})
+    quote = dataclasses.replace(_quote("buy", rent), in_amount=size, out_amount=10**9)
+    booked = wallet.buy(quote, 10**9, settings.network_fee_lamports, settings.sol_reserve_lamports)
+    assert booked == token_rent_lamports(quote, account_open=False)
+    assert wallet.sol_lamports >= settings.sol_reserve_lamports

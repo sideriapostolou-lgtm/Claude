@@ -336,13 +336,41 @@ def test_memory_database_and_closed_ledger(fake_clock: FakeClock) -> None:
         led.head()
 
 
-def test_refuses_a_database_from_a_newer_version(db_path: Path) -> None:
+@pytest.mark.parametrize("version", [3, 7])
+def test_refuses_a_database_from_a_newer_version(db_path: Path, version: int) -> None:
     db_path.parent.mkdir(parents=True)
     conn = sqlite3.connect(db_path)
-    conn.execute(f"PRAGMA user_version={SCHEMA_VERSION + 1}")
+    conn.execute(f"PRAGMA user_version={version}")  # 2 is v1 + positions.wallet (see the v2 test below)
     conn.close()
     with pytest.raises(LedgerError, match="newer"):
         Ledger(db_path)
+
+
+def test_the_ledger_stays_readable_by_older_builds(db_path: Path, fake_clock: FakeClock) -> None:
+    """positions.wallet is a nullable column older builds read and write without trouble: the version
+    stays 1, so a rollback to an earlier image still opens the ledger (and manages live positions)."""
+    with Ledger(db_path, clock=fake_clock) as led:
+        led.upsert_position(_pos("p_live", "live"))
+        led.set_position_wallet("p_live", WALLET_A)
+    conn = sqlite3.connect(db_path)
+    assert conn.execute("PRAGMA user_version").fetchone()[0] == SCHEMA_VERSION == 1
+    conn.close()
+
+
+def test_a_ledger_marked_v2_by_an_earlier_build_opens_and_is_marked_v1_again(db_path: Path,
+                                                                             fake_clock: FakeClock) -> None:
+    with Ledger(db_path, clock=fake_clock) as led:
+        led.upsert_position(_pos("p_live", "live"))
+        led.set_position_wallet("p_live", WALLET_A)
+        fill_chain(led, 2)
+    conn = sqlite3.connect(db_path)
+    conn.execute("PRAGMA user_version=2")  # what the builds that bumped the version wrote
+    conn.close()
+    with Ledger(db_path, clock=fake_clock) as led:
+        assert led.position_wallets() == {"p_live": WALLET_A} and led.verify_chain() == (True, None)
+    conn = sqlite3.connect(db_path)
+    assert conn.execute("PRAGMA user_version").fetchone()[0] == 1
+    conn.close()
 
 
 def test_unwritable_data_dir_explains_the_railway_fix(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -511,7 +539,7 @@ def test_a_schema_v1_ledger_gets_the_wallet_column_and_a_default_for_live_rows(d
         assert migrated.position_wallets() == {"p_live": WALLET_A, "p_paper": None, "p_old": WALLET_A}
         assert migrated.verify_chain() == (True, None)
     conn = sqlite3.connect(db_path)
-    assert conn.execute("PRAGMA user_version").fetchone()[0] == SCHEMA_VERSION == 2
+    assert conn.execute("PRAGMA user_version").fetchone()[0] == SCHEMA_VERSION == 1  # older builds still open it
     conn.close()
     with Ledger(db_path, clock=fake_clock) as again:  # idempotent
         assert again.position_wallets()["p_live"] == WALLET_A

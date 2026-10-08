@@ -6,7 +6,7 @@ from typing import Any
 
 import pytest
 
-from nightcrawler.models import LAMPORTS_PER_SOL, TOKEN_ACCOUNT_RENT_LAMPORTS, EquityPoint, Position
+from nightcrawler.models import LAMPORTS_PER_SOL, OPENING_RENT_RESERVE_LAMPORTS, EquityPoint, Position
 from nightcrawler.risk import KILL_WORDS, RiskManager, size_position_usd
 from test_broker_paper import FakeLedger
 
@@ -66,7 +66,7 @@ def test_size_position_converts_usd_target_to_lamports(risk) -> None:
 
 
 def test_size_position_keeps_reserve_fee_and_rent(risk) -> None:
-    overhead = 20_000_000 + 300_000 + TOKEN_ACCOUNT_RENT_LAMPORTS
+    overhead = 20_000_000 + 300_000 + OPENING_RENT_RESERVE_LAMPORTS  # Ultra's Token-2022 rent, not the 165-byte model
     assert risk.size_position(1 * SOL, 100.0, available_lamports=100_000_000) == 100_000_000 - overhead
     assert risk.size_position(1 * SOL, 100.0, available_lamports=70_000_000) == 0  # $4.77 left < $5
     assert risk.size_position(1 * SOL, 100.0, available_lamports=10_000_000) == 0  # below the reserve
@@ -76,10 +76,10 @@ def test_size_position_keeps_the_brokers_actual_network_fee(risk) -> None:
     """Paper's fee can be above the NETWORK_FEE_SOL floor (Helius priority fees): a max-size buy
     must still leave room for it, or the broker refuses the buy as InsufficientBalance."""
     fee = 2_000_000
-    overhead = 20_000_000 + fee + TOKEN_ACCOUNT_RENT_LAMPORTS
+    overhead = 20_000_000 + fee + OPENING_RENT_RESERVE_LAMPORTS
     assert risk.size_position(1 * SOL, 100.0, available_lamports=100_000_000,
                               network_fee_lamports=fee) == 100_000_000 - overhead
-    floor = 20_000_000 + 300_000 + TOKEN_ACCOUNT_RENT_LAMPORTS  # never below NETWORK_FEE_SOL
+    floor = 20_000_000 + 300_000 + OPENING_RENT_RESERVE_LAMPORTS  # never below NETWORK_FEE_SOL
     assert risk.size_position(1 * SOL, 100.0, available_lamports=100_000_000,
                               network_fee_lamports=1) == 100_000_000 - floor
 

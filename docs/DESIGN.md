@@ -180,11 +180,15 @@ Integration details (see `engine.py` docstring for the full contract):
 * Positions carry `mode` (paper|live, from the opening fill). The engine, risk,
   dashboard and audit only see positions of the current TRADING_MODE; open
   positions of the other mode are noted at boot and left alone. Live positions
-  also record their wallet (ledger `positions.wallet`, schema v2); one of ANOTHER
+  also record their wallet (ledger `positions.wallet`, a nullable column added without a
+  schema version bump, so a rollback to an earlier image still opens the ledger); one of ANOTHER
   wallet (BOT_WALLET_SECRET changed) is never valued, sold or counted - noted at
   boot (`note` `foreign_positions`), listed by `report`/`sell-all` and marked on the
   dashboard. (The audit's live balance check still counts their fills: after a
-  wallet change `report` shows the difference as drift.)
+  wallet change `report` shows the difference as drift.) An unknown swap records its
+  wallet too: one of another wallet is never settled against this one's balance - it
+  stays unresolved (entries blocked; `note` `reconcile_foreign`, once) until the bot
+  runs with that wallet (a swap whose signature is final+failed still settles).
 * Entry gate order (cheap first, so no GT/LLM budget is spent on a blocked
   entry): fresh candles -> strict universe check (age/mcap/liquidity, snapshot
   no older than 2 x WATCH_INTERVAL_S) -> `risk.can_open` + `size_position` ->
@@ -206,20 +210,24 @@ Integration details (see `engine.py` docstring for the full contract):
   none). Live trusts a lower balance only 60 s after the position's last fill, and
   never an unreadable one; a holding below the books is re-read ON CHAIN
   (`getTokenAccountsByOwner`; Ultra holdings is only an index) and the chain's answer
-  is used - Ultra's only when the RPC fails. An unknown short exit is reconciled
-  against the balance held BEFORE the swap (`wallet_before`).
+  is used. Nothing is written off on the index alone: when the RPC fails the books are
+  trusted for that attempt (the sell is tried, or held and retried). An unknown short exit
+  is reconciled against the balance held BEFORE the swap (`wallet_before`).
 * Safe mode (RT-9): `run` with an INVALID configuration and open LIVE positions
   starts exits-only (no discovery, no entries; stop-losses, kill switch and
   reconciliation run) with defaults for the broken variables (never TRADING_MODE,
   LIVE_CONFIRM, BOT_WALLET_SECRET, DATA_DIR; a missing live DASHBOARD_TOKEN becomes a
   random one, i.e. locked). kv `engine.safe_mode` drives the dashboard's red chip.
+  Its problems are kept with every quoted raw value masked (`config.mask_problem`: a value
+  pasted into the wrong variable may be a key); only the startup stderr shows them in full.
 * `SwapUnknown` (live): the mint goes into kv `engine.unresolved`; ALL new
   entries are blocked; when the swap's signature is known (`SwapUnknown.signature`,
   also stored in the in-flight marker right before sending) its status is asked
   every 5 s - final+failed settles it at once, final+landed is booked as soon as the
-  wallet shows it (never "did not land" while the wallet index lags); otherwise
-  (a gasless swap: Ultra signs first) after 90 s the wallet (Ultra holdings) is compared with
-  the books: unchanged -> `note` "did not land"; changed -> a reconciliation
+  wallet shows it (never "did not land" while the wallet lags); otherwise
+  (a gasless swap: Ultra signs first) after 90 s the wallet's ON-CHAIN balance
+  (`getTokenAccountsByOwner`, never the Ultra holdings index; an RPC failure waits and
+  retries) is compared with the books: unchanged -> `note` "did not land"; changed -> a reconciliation
   Fill (the broker's actual fill when the swap landed but its ledger write
   failed, else SOL estimated pro rata from the quote; flagged in a `note`). No
   SOL/USD price at all -> the item waits (never a zero-price fill). The exit
@@ -350,7 +358,9 @@ the ONE rule both brokers share (`broker.base.token_rent_lamports`): Ultra's
 `rentFeeLamports` (else 2,039,280 lamports) on the buy that opens the account,
 NEVER refunded by a sell - Ultra's full-balance sell leaves the emptied account
 open (verified 2026-10-08), so the deposit stays locked and a later buy of the
-same mint pays none (`tests/test_broker_parity.py`). Live signs
+same mint pays none (`tests/test_broker_parity.py`). Sizing leaves room for the largest
+such rent (`OPENING_RENT_RESERVE_LAMPORTS`: Ultra's 2,976,880 for a new Token-2022 account), so
+a buy capped by the SOL left still fits it. Live signs
 the returned transaction, optionally simulates it, sends it via Ultra
 `/execute`, and records the ACTUAL in/out amounts (with the quote's
 `out_amount` kept as `expected_out_amount` to measure slippage).
@@ -370,7 +380,9 @@ the returned transaction, optionally simulates it, sends it via Ultra
 redeploy), `engine.safe_mode` {problems, defaults_used, since} | null,
 `engine.foreign_positions` [{id, mint, symbol, wallet, token_amount, opened_at}],
 `usage.providers` {provider: {day, day_counts, month, month_counts, updated_at}}
-(provider names only, never a URL or key). Ledger schema v2 adds `positions.wallet`.
+(provider names only, never a URL or key). The ledger stays at schema (`user_version`) 1:
+`positions.wallet` is detected, not versioned (a ledger marked 2 by an earlier build is read
+and marked 1 again), so older builds keep opening it.
 The dashboard reads ONLY the ledger (no network calls).
 
 ## 10. Settings

@@ -740,6 +740,10 @@ class FakeLiveBroker:
     def balances(self) -> Balances:
         return Balances(sol_lamports=self.sol, tokens={m: a for m, a in self.tokens.items() if a})
 
+    def chain_token_balance(self, mint: str) -> int:
+        """Like LiveBroker: the wallet's ON-CHAIN holding (here the same fake wallet as ``balances``)."""
+        return self.tokens.get(mint, 0)
+
     def sol_price_usd(self) -> float:
         if self.sol_price_error is not None:
             raise self.sol_price_error

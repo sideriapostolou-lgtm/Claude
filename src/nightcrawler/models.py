@@ -60,6 +60,7 @@ __all__ = [
     "LAMPORTS_PER_SOL",
     "SOL_DECIMALS",
     "TOKEN_ACCOUNT_RENT_LAMPORTS",
+    "OPENING_RENT_RESERVE_LAMPORTS",
     "TOKEN_PROGRAM_ID",
     "TOKEN_2022_PROGRAM_ID",
     "Mode",
@@ -102,6 +103,10 @@ SOL_DECIMALS = 9
 #: Rent-exempt deposit for a 165-byte SPL token account. Token-2022 accounts
 #: with extensions can be slightly larger; this is the paper-mode model value.
 TOKEN_ACCOUNT_RENT_LAMPORTS = 2_039_280
+#: What sizing reserves for a buy that opens a token account: the most the brokers book as its rent
+#: (``broker.base.token_rent_lamports``) - Ultra's ``rentFeeLamports`` for a new Token-2022 account of a
+#: pump.fun coin (2,976,880 lamports on 2026-10-08), above the 165-byte model.
+OPENING_RENT_RESERVE_LAMPORTS = max(TOKEN_ACCOUNT_RENT_LAMPORTS, 2_976_880)
 TOKEN_PROGRAM_ID = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
 TOKEN_2022_PROGRAM_ID = "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
 
