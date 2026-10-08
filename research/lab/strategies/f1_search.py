@@ -395,7 +395,7 @@ def robustness(params: dict, split: str = "validation", audit: bool = True) -> d
     out["zero_costs"] = evaluate(params, split, SimConfig(cost=CostModel(
         ultra_bps=0, mev_bps=0, fee_mult=0, impact_mult=1e-9, priority_sol=0, base_fee_lamports=0)))
     for f in (1.5, 2.0):
-        out[f"costs_x{f}"] = evaluate(params, split, SimConfig(cost=CostModel().stressed(f)))
+        out[f"costs_x{f:g}"] = evaluate(params, split, SimConfig(cost=CostModel().stressed(f)))
     out["latency_plus1_bar"] = evaluate(params, split, SimConfig(entry_delay_bars=2))
     out["size_10usd"] = evaluate(params, split, SimConfig(fixed_usd=10.0, position_pct=0.10, max_usd=10.0))
     out["size_40usd"] = evaluate(params, split, SimConfig(fixed_usd=40.0, position_pct=0.40, max_usd=40.0))
@@ -426,7 +426,35 @@ def _row(label: str, r: dict) -> str:
             f"dd={f(pf.get('max_drawdown_pct'))} tr={pf.get('trades')}")
 
 
-FINALISTS: list[str] = []  # filled in after looking at validate() output (see report)
+def _pos(r: dict | None, mode: str = "per_coin", key: str = "avg_ret_pct") -> bool:
+    v = ((r or {}).get(mode) or {}).get(key)
+    return v is not None and v > 0
+
+
+def _ci_pos(r: dict | None) -> bool:
+    ci = ((r or {}).get("per_coin") or {}).get("exp_ci95_pct")
+    return bool(ci) and ci[0] > 0
+
+
+def check_gates(tr: dict, va: dict, rob: dict, rob_tr: dict) -> dict[str, bool]:
+    """The lab's candidate bar (DATASET.md section 7), evaluated mechanically."""
+    return {
+        "train_avg_positive": _pos(tr), "train_ci_above_0": _ci_pos(tr),
+        "train_portfolio_positive": _pos(tr, "portfolio", "total_return_pct"),
+        "validation_avg_positive": _pos(va), "validation_ci_above_0": _ci_pos(va),
+        "validation_portfolio_positive": _pos(va, "portfolio", "total_return_pct"),
+        "train_without_best_coin_positive": (rob_tr["without_best_coin"]["avg_ret_pct"] or -1) > 0,
+        "train_without_top3_positive": (rob_tr["without_top3_coins"]["avg_ret_pct"] or -1) > 0,
+        "validation_without_best_coin_positive": (rob["without_best_coin"]["avg_ret_pct"] or -1) > 0,
+        "validation_without_top3_positive": (rob["without_top3_coins"]["avg_ret_pct"] or -1) > 0,
+        "train_costs_x2_positive": _pos(rob_tr["costs_x2"]), "validation_costs_x2_positive": _pos(rob["costs_x2"]),
+        "train_wick_worst_positive": _pos(rob_tr["wick_worst"]),
+        "validation_wick_worst_positive": _pos(rob["wick_worst"]),
+        "audit_lookahead_clean": not rob["audit_lookahead"] and not rob_tr["audit_lookahead"],
+    }
+
+
+FINALISTS: list[str] = ["S4_vol_dip_wideband_10k", "S1_vol_dip_fixed"]  # filled in after looking at validate() output (see report)
 
 
 def finalize(names: list[str]):
@@ -447,8 +475,14 @@ def finalize(names: list[str]):
         rob_tr = robustness(params, "train", audit=True)
         print("  TRAIN gates:", _row("costs_x2", rob_tr["costs_x2"]), _row("wick_worst", rob_tr["wick_worst"]),
               rob_tr["without_best_coin"], rob_tr["without_top3_coins"], "audit:", rob_tr["audit_lookahead"][:3])
+        gates = check_gates(tr, val[name], rob, rob_tr)
+        failed = [k for k, ok in gates.items() if not ok]
+        print("  gates failed:", failed)
         rows.append({
             "name": name, "strategy_class": "DipReboundPlus",
+            "verdict": "PASS" if not failed else "REJECTED - fails: " + ", ".join(failed),
+            "recommend_test": not failed,
+            "gates": gates,
             "module": "research/lab/strategies/f1-dip-rebound-plus.py",
             "params": params,
             "configs_tried": {"train": n_train, "validation_shortlist": n_val,
