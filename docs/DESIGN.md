@@ -42,7 +42,9 @@ src/nightcrawler/
   cocoon.py          Cocoon.check() -> SafetyReport (FAIL CLOSED)                          O2
   radar.py           Radar.scan() -> RadarSignal                                           O2
   strategy.py        PURE entry_signal / exit_signal / exit_levels                         O3
-  backtest.py        Backtester (no lookahead), CostModel, sweep                           O3
+  backtest.py        Backtester (no lookahead), CostModel, sweep (+ learning replay hooks) O3
+  costs.py           per-trade cost model shared with the lab (port of research/lab)       O3
+  learn/             self-learning loop: tape, recorder, variants, replay, evidence, card  O7 (docs/LEARNING.md)
   dataset.py         collect() unbiased multi-coin candles                                 O3
   judge.py           Judge.decide() via Anthropic API, build_features                      O4
   broker/base.py     Broker protocol + execution errors                                    O5
@@ -366,3 +368,13 @@ The safety review added `MAX_SLIPPAGE_PCT` (buys) and `PAPER_SLIPPAGE_BPS`.
 * **O6**: chain append/verify/tamper detection/export; thread-safety under
   concurrent readers; audit drift detection; dashboard routes, auth, schema,
   no secrets in HTML/JSON.
+
+## 13. Learning
+
+The self-learning loop (recorder, forward tape, shadow replay of frozen strategy variants,
+e-process scoreboard, receipts through an outbox) is specified in
+[docs/LEARNING.md](LEARNING.md), which also tracks what is built and what is still to wire.
+Its rules, in one line each: learning never trades and never writes Settings; trading never
+waits for it (own HTTP client, non-blocking emits); only the engine writes receipts; the
+learner (`nightcrawler.learn`, except the recorder) imports none of `broker`, `wallet`,
+`risk`, `judge`, `http` or `sources`; `LEARN_ENABLED=false` makes no learning call at all.

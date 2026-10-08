@@ -27,6 +27,10 @@ nightcrawler = "nightcrawler.cli:main"
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.package-data]
+# The learning loop's first-boot variants (docs/LEARNING.md §11).
+"nightcrawler.learn" = ["seeds.json"]
+
 [tool.setuptools.dynamic]
 version = { attr = "nightcrawler.__version__" }
 
