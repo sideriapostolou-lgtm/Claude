@@ -273,7 +273,8 @@ QUEUE_RESTORE_MAX_AGE_S = 3600.0
 _FINAL_CHAIN = ("landed", "failed")
 
 _SAFETY_METRIC_KEYS = ("top10_pct", "max_holder_pct", "creator_pct", "insider_pct", "graph_insiders",
-                       "dev_mints", "lp_locked_pct", "holder_count", "rugcheck_score_normalised")
+                       "dev_mints", "lp_locked_pct", "holder_count", "rugcheck_score_normalised", "copycat_count",
+                       "impersonates")
 _NOT_FORCED = frozenset({"take_profit_partial"})
 
 
@@ -792,6 +793,18 @@ class Engine:
         wallet = getattr(self.broker, "pubkey", None)
         return wallet if isinstance(wallet, str) and wallet else None
 
+    def _network_fee(self) -> int | None:
+        """The broker's current network fee per swap (paper: NETWORK_FEE_SOL raised to the Helius
+        estimate), so sizing leaves room for it; None (= NETWORK_FEE_SOL) when it does not say."""
+        fee_of = getattr(self.broker, "network_fee_lamports", None)
+        if fee_of is None:
+            return None
+        try:
+            return int(fee_of())
+        except Exception as exc:  # sizing falls back to the NETWORK_FEE_SOL floor
+            log.warning("network_fee_unavailable error=%s", _err(exc))
+            return None
+
     def _foreign_wallets(self, positions: list[Position]) -> dict[str, str]:
         """``{position_id: wallet}`` of ``positions`` recorded for ANOTHER wallet than this one.
         A position without a recorded wallet (unknown, pre-v2 ledger without kv ``wallet.pubkey``)
@@ -810,6 +823,10 @@ class Engine:
     # ------------------------------------------------------------------ discovery
     def discover(self, now: float) -> None:
         new = self.crawler.poll()
+        observe = getattr(self.cocoon, "observe", None)
+        if observe is not None:  # the copycat check sees every crawled coin, not only the ones it checks
+            for c in getattr(self.crawler, "last_fetched", None) or []:
+                observe(c)
         for _candidate, reason in getattr(self.crawler, "last_rejected", []) or []:
             self.prefilter_reasons[str(reason).split(":", 1)[0]] += 1
         queued = {c.mint for c in self.queue}
@@ -1065,7 +1082,8 @@ class Engine:
         if not ok:
             self._decide(self.clock.now(), mint, "reject_risk", reason, {**base, "sizing": sizing}, symbol=symbol)
             return None
-        size = self.risk.size_position(equity_lamports, sol_usd, available_lamports=balances.sol_lamports)
+        size = self.risk.size_position(equity_lamports, sol_usd, available_lamports=balances.sol_lamports,
+                                       network_fee_lamports=self._network_fee())
         size_usd = lamports_to_sol(size) * sol_usd
         sizing.update(size_lamports=size, size_usd=size_usd)
         if size <= 0:
@@ -1384,25 +1402,32 @@ class Engine:
         """Close ``position`` whose tokens are NOT in the wallet (none to sell): ``exit`` decision, a 0-SOL
         write-off fill and an ``exit_shortfall`` note, in one transaction (F10)."""
         books = position.token_amount
+        sol_usd = self._write_off_sol_usd()  # may ask Jupiter: never inside the ledger transaction
         with self.ledger.transaction():
             self._decide(self.clock.now(), position.mint, "exit",
                          f"{reason}: written off - the wallet holds none of the {books} tokens on the books", inputs,
                          symbol=position.symbol)
-            fill = self.ledger.record_fill(self._write_off_fill(position, missing, self.clock.now()))
+            fill = self.ledger.record_fill(self._write_off_fill(position, missing, self.clock.now(), sol_usd))
             self._apply_sell(position, fill, reason)
             self._note_shortfall(position, books, books - missing, missing, fill.ts)
         log.error("exit_written_off position=%s mint=%s tokens=%d: not in the wallet", position.id, position.mint,
                   missing)
         return fill
 
-    def _write_off_fill(self, position: Position, tokens: int, ts: float, sol_usd: float | None = None) -> Fill:
+    def _write_off_sol_usd(self) -> float:
+        """SOL/USD for a write-off fill: the broker's price, else the last equity snapshot's (0 when none).
+        Call it OUTSIDE a ledger transaction (it may ask Jupiter)."""
+        try:
+            return float(self.broker.sol_price_usd())
+        except Exception:
+            return self._last_sol_usd()
+
+    def _last_sol_usd(self) -> float:
+        latest = self.ledger.latest_equity()
+        return float(latest.sol_usd) if latest is not None else 0.0
+
+    def _write_off_fill(self, position: Position, tokens: int, ts: float, sol_usd: float) -> Fill:
         """A sell of ``tokens`` for 0 SOL: tokens on the books that the wallet does not hold."""
-        if sol_usd is None:
-            try:
-                sol_usd = float(self.broker.sol_price_usd())
-            except Exception:
-                latest = self.ledger.latest_equity()
-                sol_usd = float(latest.sol_usd) if latest is not None else 0.0
         return Fill(id=new_id("fill"), mode=self.settings.trading_mode,  # type: ignore[arg-type]
                     side="sell", mint=position.mint, sol_lamports=0, token_amount=tokens,
                     token_decimals=position.token_decimals, price_usd=0.0, sol_usd=sol_usd, fees_lamports=0,
@@ -1426,7 +1451,8 @@ class Engine:
         position.exit_fill_ids.append(fill.id)
         if write_off > 0 and position.token_amount > 0:
             gone = min(write_off, position.token_amount)
-            off = self.ledger.record_fill(self._write_off_fill(position, gone, fill.ts, fill.sol_usd or None))
+            off = self.ledger.record_fill(self._write_off_fill(position, gone, fill.ts,
+                                                               fill.sol_usd or self._last_sol_usd()))
             position.token_amount -= off.token_amount
             position.exit_fill_ids.append(off.id)
             self._note_shortfall(position, before, fill.token_amount, gone, fill.ts)
@@ -1798,11 +1824,16 @@ class Engine:
             "safe_mode": self.safe_mode,
             "foreign_positions": self.foreign_positions(),
             "entries_blocked": self._entries_blocked_why(),
-            "counters": dict(self.counters),
+            "counters": {**self.counters, **self._cocoon_counters()},
             "prefilter_rejections": dict(self.prefilter_reasons.most_common(12)),
             "crawler": crawler_stats,
             "stages": self.last_results,
         })
+
+    def _cocoon_counters(self) -> dict[str, int]:
+        """The cocoon's name-check warnings (``cocoon.copycat``, ``cocoon.impersonation``)."""
+        counters = getattr(self.cocoon, "counters", None)
+        return {f"cocoon.{k}": v for k, v in counters.items()} if isinstance(counters, dict) else {}
 
     def _set_status(self, now: float, state: str) -> None:
         self.ledger.set_kv("engine.heartbeat", now)
@@ -1842,12 +1873,18 @@ class App:
     wallet: Any = None
 
     def close(self) -> None:
-        """Stop the dashboard (if running) and close the ledger."""
+        """Stop the dashboard (if running), write the last provider-usage counts and close the ledger."""
+        from nightcrawler.http import attach_usage_store, flush_usage
+
         try:
             if self.dashboard is not None:
                 self.dashboard.stop()
         finally:
-            self.ledger.close()
+            try:
+                flush_usage(self.http)  # never raises; the last minute of counts is not lost
+                attach_usage_store(self.http, None)  # a reused client never writes into the closed ledger
+            finally:
+                self.ledger.close()
 
 
 def build_app(settings: Settings, clock: Clock | None = None, *, session: Any = None,
@@ -1864,7 +1901,7 @@ def build_app(settings: Settings, clock: Clock | None = None, *, session: Any = 
     from nightcrawler.cocoon import Cocoon
     from nightcrawler.crawler import Crawler
     from nightcrawler.dashboard import DashboardServer, build_state
-    from nightcrawler.http import HttpClient, host_of
+    from nightcrawler.http import HttpClient, attach_usage_store, host_of
     from nightcrawler.judge import Judge
     from nightcrawler.ledger import Ledger
     from nightcrawler.radar import Radar
@@ -1886,6 +1923,7 @@ def build_app(settings: Settings, clock: Clock | None = None, *, session: Any = 
     sources = build_sources(settings, http)
     pumpfun = pumpfun_mod.PumpFunClient(http) if settings.pumpfun_candles else None
     ledger = Ledger(settings.db_path, clock=clock)
+    attach_usage_store(http, ledger)  # provider calls per day/month -> kv usage.providers (API usage card)
     try:
         wallet = None
         if settings.bot_wallet_secret:
@@ -1899,7 +1937,7 @@ def build_app(settings: Settings, clock: Clock | None = None, *, session: Any = 
             ledger.set_kv("wallet.pubkey", wallet.pubkey() if wallet is not None else None)
         else:
             broker = PaperBroker(sources.jupiter, ledger, settings, clock,
-                                 taker=wallet.pubkey() if wallet is not None else None)
+                                 taker=wallet.pubkey() if wallet is not None else None, rpc=sources.rpc)
         crawler = Crawler(sources, settings, clock)
         cocoon = Cocoon(sources, settings, clock)
         radar = Radar(sources, settings, clock)

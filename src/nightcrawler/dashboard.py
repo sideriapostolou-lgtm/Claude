@@ -43,7 +43,8 @@ page inserts every value with ``textContent``, never as HTML.
                  "sol_price_effect_usd": float|null,    # pnl_total_usd - pnl_total_trading_usd
                  "curve": [[ts, equity_usd], ...]   # <= 300 points, downsampled},
       "positions": [{"id", "mint", "symbol", "opened_at", "entry_price_usd", "last_price_usd",
-                     "value_sol", "unrealized_pnl_sol", "unrealized_pnl_pct", "partial_taken"}],
+                     "value_sol", "unrealized_pnl_sol", "unrealized_pnl_pct", "partial_taken",
+                     "foreign_wallet": str|null}],   # live: set when the position is another wallet's
       "fills": [Fill.to_dict() + {"sol": float}],          # last 50, newest first
       "decisions": [Decision.to_dict()],                   # last 50, newest first
       "rejections": {action: count},                       # last 24 h, from decision_counts
@@ -51,8 +52,14 @@ page inserts every value with ``textContent``, never as HTML.
                    "first_bad_seq": int|null, "verified_at": float|null},
       "judge": {"mode": str, "model": str, "calls": int, "cost_usd_total": float,
                 "cost_usd_today": float},
-      "wallet": {"address": str|null}                      # live only, else null
+      "wallet": {"address": str|null},                     # live only, else null
+      "safe_mode": {"problems": [str], "defaults_used": [str], "since": float|null}|null
     }
+
+``safe_mode`` (kv ``engine.safe_mode``, RT-9) is set while the bot runs EXITS-ONLY on an
+invalid configuration (red chip, problems under Details). ``foreign_wallet`` (F3): a live
+position recorded for another wallet than kv ``wallet.pubkey`` - the engine never sells or
+counts it, so it is marked apart and left out of "N of max".
 
 The "Today" and "Since start" tiles show the SOL result (the unit risk limits use)
 as their headline and colour; USD only as a sub-line, split into the trading result
@@ -168,7 +175,7 @@ def build_state(ledger: Any, settings: Settings, now: float,
         "halted": _halted(ledger),
         "engine": _engine(ledger),
         "equity": equity,
-        "positions": [_position(p, equity["sol_usd"]) for p in ledger.open_positions(mode=mode)],
+        "positions": _positions(ledger, settings, mode, equity["sol_usd"]),
         "fills": [{**f.to_dict(), "sol": f.sol_lamports / LAMPORTS_PER_SOL} for f in ledger.fills(limit=RECENT_LIMIT)],
         "decisions": [d.to_dict() for d in ledger.decisions(limit=RECENT_LIMIT)],
         "rejections": ledger.decision_counts(since=now - DAY_S),
@@ -179,6 +186,7 @@ def build_state(ledger: Any, settings: Settings, now: float,
         "wallet": {"address": _str_or_none(ledger.get_kv("wallet.pubkey")) if settings.is_live else None},
         "limits": {"max_open_positions": settings.max_open_positions},
         "usage": _usage(ledger, settings, now),
+        "safe_mode": _safe_mode(ledger),
     }
     return scrub(state, settings.secret_values())
 
@@ -261,7 +269,29 @@ def _equity(ledger: Any, mode: str, now: float) -> dict[str, Any]:
     return out
 
 
-def _position(p: Position, sol_usd: float | None) -> dict[str, Any]:
+def _safe_mode(ledger: Any) -> dict[str, Any] | None:
+    """kv ``engine.safe_mode``: the exits-only banner of a bot running on an invalid configuration (RT-9)."""
+    banner = ledger.get_kv("engine.safe_mode")
+    if not isinstance(banner, dict):
+        return None
+    return {"problems": [str(x) for x in banner.get("problems") or []],
+            "defaults_used": [str(x) for x in banner.get("defaults_used") or []],
+            "since": _num_or_none(banner.get("since"))}
+
+
+def _positions(ledger: Any, settings: Settings, mode: str, sol_usd: float | None) -> list[dict[str, Any]]:
+    """Open positions of ``mode``; live ones recorded for ANOTHER wallet than kv ``wallet.pubkey`` (F3:
+    the engine never sells or counts them) carry that wallet in ``foreign_wallet``."""
+    positions = ledger.open_positions(mode=mode)
+    own = ledger.get_kv("wallet.pubkey") if settings.is_live else None
+    lookup = getattr(ledger, "position_wallets", None)
+    foreign: dict[str, Any] = {}
+    if isinstance(own, str) and own and lookup is not None and positions:
+        foreign = {pid: w for pid, w in lookup([p.id for p in positions]).items() if w and w != own}
+    return [_position(p, sol_usd, foreign.get(p.id)) for p in positions]
+
+
+def _position(p: Position, sol_usd: float | None, foreign_wallet: str | None = None) -> dict[str, Any]:
     """Marked with the engine's last price and the latest equity SOL price (None when unknown)."""
     value = pnl = None
     if p.last_price_usd is not None and sol_usd:
@@ -273,7 +303,7 @@ def _position(p: Position, sol_usd: float | None) -> dict[str, Any]:
             "cost_sol": p.cost_lamports / LAMPORTS_PER_SOL,
             "unrealized_pnl_sol": None if pnl is None else pnl / LAMPORTS_PER_SOL,
             "unrealized_pnl_pct": pnl / p.cost_lamports * 100.0 if pnl is not None and p.cost_lamports else None,
-            "partial_taken": p.partial_taken}
+            "partial_taken": p.partial_taken, "foreign_wallet": _str_or_none(foreign_wallet)}
 
 
 def rule_id(reason: str) -> str:
@@ -573,6 +603,12 @@ _SCRIPT = r"""
     if (status.unresolved_swaps && status.unresolved_swaps.length) {
       chips.push(["serious", "Unresolved swap: checking the wallet · new buys blocked"]);
     }
+    if (s.safe_mode) chips.push(["critical", "SAFE MODE: invalid configuration · exits only, no new buys"]);
+    const foreign = s.positions.filter((p) => p.foreign_wallet).length;
+    if (foreign) {
+      chips.push(["serious", foreign + " live position" + (foreign > 1 ? "s" : "") + " in another wallet · "
+        + "not sold by this bot"]);
+    }
     chips.push(...usageChips(s.usage));
     put($("chips"), ...chips.map(([cls, text]) => el("span", "chip " + cls, el("i"), text)));
   }
@@ -715,8 +751,11 @@ _SCRIPT = r"""
         el("span", null, "Value " + sol(p.value_sol) + " · cost " + sol(p.cost_sol)),
         el("span", "num " + tone(p.unrealized_pnl_sol), sol(p.unrealized_pnl_sol, true))),
       el("div", "meta", "Entry " + price(p.entry_price_usd) + " → now " + price(p.last_price_usd)
-        + " · held " + held(p.opened_at), p.partial_taken ? el("span", null, " · profit partly taken") : null)));
-    put(card, el("h2", null, "Open positions", el("small", null, list.length + " of " + max)),
+        + " · held " + held(p.opened_at), p.partial_taken ? el("span", null, " · profit partly taken") : null),
+      p.foreign_wallet ? el("div", "meta", "In another wallet (" + short(p.foreign_wallet) + "): no stop-loss "
+        + "from this bot · run it with that wallet to close") : null));
+    const own = list.filter((p) => !p.foreign_wallet).length;
+    put(card, el("h2", null, "Open positions", el("small", null, own + " of " + max)),
       rows.length ? el("div", "list", ...rows)
         : el("p", "empty", "No open positions. The bot is watching for a setup."));
   }
@@ -804,6 +843,7 @@ _SCRIPT = r"""
       ["Judge cost", usd(j.cost_usd_today) + " today · " + usd(j.cost_usd_total) + " total"]];
     if (s.wallet.address) rows.push(["Bot wallet", s.wallet.address]);
     if (isNum(s.engine.started_at)) rows.push(["Engine started", when(s.engine.started_at)]);
+    if (s.safe_mode) rows.push(["Safe mode (fix)", s.safe_mode.problems.join(" · ") || "invalid configuration"]);
     const dl = el("dl");
     for (const [k, v] of rows) dl.append(el("dt", null, k), el("dd", k === "Bot wallet" ? "mono" : null, v));
     const err = s.engine.last_error

@@ -37,7 +37,7 @@ from typing import Any
 import requests
 
 from nightcrawler.clock import Clock
-from nightcrawler.http import HttpClient, HttpError, host_of
+from nightcrawler.http import HttpClient, HttpError, host_of, provider_of
 from nightcrawler.logging_setup import get_logger
 from nightcrawler.models import Candle, fill_gaps
 from nightcrawler.sources._parse import to_float, to_int
@@ -144,7 +144,8 @@ class PumpFunClient:
 
     # ------------------------------------------------------------------ transport
     def _get(self, path: str, params: dict[str, Any]) -> Any:
-        """One GET through the shared session and rate bucket; ``retry`` never (see module docstring)."""
+        """One GET through the shared session and rate bucket; ``retry`` never (see module docstring).
+        Every request sent is counted on the provider usage panel (``http.usage``), failed ones too."""
         now = self.clock.now()
         if now < self.cooldown_until:
             raise PumpFunCoolingDown(self.cooldown_until - now)
@@ -153,6 +154,16 @@ class PumpFunClient:
         stats = self.http.stats[host]
         stats["rate_wait_s"] += self.http.limiter.acquire(host)
         stats["requests"] += 1
+        usage = getattr(self.http, "usage", None)
+        if usage is not None:
+            usage.record(provider_of(host))
+        try:
+            return self._send(url, params, now, stats)
+        finally:  # like HttpClient.request_json: persisted after the call, at most once a minute
+            if usage is not None:
+                usage.maybe_flush()
+
+    def _send(self, url: str, params: dict[str, Any], now: float, stats: dict[str, float]) -> Any:
         try:
             resp = self.http.session.request("GET", url, params=params, json=None,
                                              headers=dict(self.http.default_headers), timeout=self.http.timeout_s)

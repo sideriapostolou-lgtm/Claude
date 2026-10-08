@@ -561,8 +561,10 @@ class Fill(_Model):
       :func:`effective_price_usd` (pool + platform fees included, network fees
       excluded).
     * ``fees_lamports``: network fees only (signature + priority), lamports.
-    * ``rent_lamports``: token-account rent change: ``+2_039_280`` when the
-      buy created the account, negative when a full exit refunded it, else 0.
+    * ``rent_lamports``: token-account rent: ``+2_039_280`` (or Ultra's
+      ``rentFeeLamports``) when the buy created the account, else 0. No sell refunds
+      it (:func:`nightcrawler.broker.base.token_rent_lamports`); only paper fills of
+      older ledgers carry a negative refund.
     * ``expected_out_amount``: the quote's ``out_amount`` (live: compare with
       the actual result to measure slippage).
     * ``receipt_hash``: hash of the 'fill' receipt (set by the ledger).

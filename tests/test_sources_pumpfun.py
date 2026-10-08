@@ -172,6 +172,27 @@ def test_requests_go_through_the_shared_rate_bucket(fake_http, clock) -> None:
     assert http.stats[HOST]["requests"] == 6
 
 
+def test_every_request_counts_on_the_usage_panel(client, http, fake_http, clock, tmp_path) -> None:
+    """pump.fun bypasses ``request_json`` (no inline retries), so it counts its own calls - failed
+    ones too - in the shared tracker that the dashboard's API usage card reads."""
+    from nightcrawler.http import KV_USAGE, attach_usage_store
+    from nightcrawler.ledger import Ledger
+
+    fake_http.register_fixture(CANDLES, "pumpfun_candles_1m")
+    fake_http.register(CANDLES, {"error": "rate limited"}, status=429, times=1)
+    with Ledger(tmp_path / "usage.db", clock=clock) as ledger:
+        attach_usage_store(http, ledger)
+        with pytest.raises(HttpError):
+            client.candles(INU, minutes=30)
+        with pytest.raises(PumpFunCoolingDown):  # nothing sent while cooling down: nothing counted
+            client.candles(INU, minutes=30)
+        clock.advance(DEFAULT_COOLDOWN_S)
+        assert client.candles(INU, minutes=30)
+        assert http.usage.flush()
+        assert ledger.get_kv(KV_USAGE)["pumpfun"]["day_counts"] == {"calls": 2}
+        assert len(fake_http.calls) == 2
+
+
 # --------------------------------------------------------------------------- which coins
 
 

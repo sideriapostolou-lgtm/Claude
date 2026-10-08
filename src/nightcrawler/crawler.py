@@ -149,6 +149,8 @@ class Crawler:
         self.seen: dict[str, float] = {}
         self.nursery: dict[str, TokenCandidate] = {}
         self.last_rejected: list[tuple[TokenCandidate, str]] = []
+        #: every candidate the last poll fetched (merged, before the prefilter; seen ones too)
+        self.last_fetched: list[TokenCandidate] = []
         self._promoted: dict[str, dict[str, float]] = {}  # mint -> {source label: last seen ts}
         self._polls = 0
         self._emitted = 0
@@ -165,7 +167,9 @@ class Crawler:
           marked seen - EXCEPT "too young" ones, which go to the nursery and
           are re-checked when they mature (see module docstring).
         * ``last_rejected`` holds this poll's NEW rejections only (each mint
-          once until it leaves ``seen``), so logs are not spammed.
+          once until it leaves ``seen``), so logs are not spammed;
+          ``last_fetched`` every merged candidate the feeds returned (the
+          engine shows them all to the cocoon's copycat check).
         * SOL / USDC / USDT mints and invalid addresses are dropped silently.
         * Output order: by ``created_at`` descending (newest first), None last.
         * Never raises on a source failure (logs a warning per failed feed).
@@ -178,6 +182,7 @@ class Crawler:
 
         emitted: list[TokenCandidate] = []
         fresh = self.merge(self._fetch_candidates(now))
+        self.last_fetched = list(fresh)
         for candidate in fresh:
             if candidate.mint in self.seen:
                 continue

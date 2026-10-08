@@ -117,6 +117,15 @@ def test_scan_json_and_limit(env, world, capsys) -> None:
     assert data["checked"][0]["safety"]["mint"] in {GARY, data["checked"][0]["candidate"]["mint"]}
 
 
+def test_json_output_stays_parseable_with_info_logs(env, world, capsys) -> None:
+    """INFO logs go to stdout by default (Railway labels stderr "error"); a ``--json`` command's
+    stdout carries data, so its logs - every level - go to stderr instead."""
+    assert nc("--log-level", "INFO", "scan", "--json", "--limit", "1") == EXIT_OK
+    captured = capsys.readouterr()
+    assert len(json.loads(captured.out)["checked"]) == 1
+    assert "crawler_poll" in captured.err  # the INFO lines were written, just not into the JSON
+
+
 def test_scan_include_young_checks_nursery_tokens(env, world, fake_clock, capsys) -> None:
     world.trending[0]["firstPool"]["createdAt"] = cli_iso(fake_clock.now() - 30 * 60)  # GARY is 30 min old
     assert nc("scan") == EXIT_OK

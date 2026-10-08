@@ -72,6 +72,18 @@ def test_size_position_keeps_reserve_fee_and_rent(risk) -> None:
     assert risk.size_position(1 * SOL, 100.0, available_lamports=10_000_000) == 0  # below the reserve
 
 
+def test_size_position_keeps_the_brokers_actual_network_fee(risk) -> None:
+    """Paper's fee can be above the NETWORK_FEE_SOL floor (Helius priority fees): a max-size buy
+    must still leave room for it, or the broker refuses the buy as InsufficientBalance."""
+    fee = 2_000_000
+    overhead = 20_000_000 + fee + TOKEN_ACCOUNT_RENT_LAMPORTS
+    assert risk.size_position(1 * SOL, 100.0, available_lamports=100_000_000,
+                              network_fee_lamports=fee) == 100_000_000 - overhead
+    floor = 20_000_000 + 300_000 + TOKEN_ACCOUNT_RENT_LAMPORTS  # never below NETWORK_FEE_SOL
+    assert risk.size_position(1 * SOL, 100.0, available_lamports=100_000_000,
+                              network_fee_lamports=1) == 100_000_000 - floor
+
+
 def test_size_position_without_a_sol_price_is_zero(risk) -> None:
     assert risk.size_position(1 * SOL, 0.0) == 0
     assert risk.size_position(1 * SOL, -1.0) == 0

@@ -161,11 +161,13 @@ class UserError(Exception):
 
 
 def _setup_logging(args: argparse.Namespace, settings: Settings, quiet: bool = False) -> Any:
-    """Redacting one-line logs. ``quiet`` commands log WARNING+ unless ``--log-level`` was given."""
+    """Redacting one-line logs. ``quiet`` commands log WARNING+ unless ``--log-level`` was given.
+    A ``--json`` command's stdout carries data, so all its logs go to stderr."""
     from nightcrawler.logging_setup import setup_logging
 
     level = settings.log_level if (args.log_level or not quiet) else "WARNING"
-    return setup_logging(level, settings.secret_values())
+    stream = sys.stderr if getattr(args, "json", False) is True else None
+    return setup_logging(level, settings.secret_values(), stream=stream)
 
 
 def _open_ledger(settings: Settings, must_exist: bool = True) -> Any:

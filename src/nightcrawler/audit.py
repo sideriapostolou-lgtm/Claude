@@ -80,8 +80,8 @@ class TradePnL:
     """Realized result of one position (open positions: realized part only).
 
     ``realized_lamports`` = proceeds - cost basis of the tokens sold - ALL
-    network fees paid so far - rent still locked (closed positions only; for an
-    open position the rent is a refundable deposit). The cost basis is the full
+    network fees paid so far - rent still locked (closed positions only: the sell
+    leaves the emptied token account open, so the deposit is not refunded). The cost basis is the full
     cost once closed, else ``cost * sold / bought``. ``realized_pct`` is percent
     of that cost basis (None while nothing was sold). ``fill_ids`` lists the
     fills used, in time order.

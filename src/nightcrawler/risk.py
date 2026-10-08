@@ -80,7 +80,8 @@ class RiskManager:
         self._peak_scanned_ts: float | None = None
 
     # ------------------------------------------------------------------ sizing
-    def size_position(self, equity_lamports: int, sol_usd: float, available_lamports: int | None = None) -> int:
+    def size_position(self, equity_lamports: int, sol_usd: float, available_lamports: int | None = None, *,
+                      network_fee_lamports: int | None = None) -> int:
         """Lamports to spend on a new position (0 = skip).
 
         ``size_position_usd(equity_usd, POSITION_PCT, MIN_POSITION_USD,
@@ -88,6 +89,8 @@ class RiskManager:
         ``available_lamports - SOL_RESERVE - NETWORK_FEE - TOKEN_ACCOUNT_RENT``
         stays >= 0; if the cap pushes it below ``MIN_POSITION_USD`` -> 0.
         ``available_lamports`` defaults to ``equity_lamports``. ``sol_usd <= 0`` -> 0.
+        NETWORK_FEE is ``network_fee_lamports`` (what the broker charges now, e.g. paper's
+        Helius estimate) when given, never below ``NETWORK_FEE_SOL``.
         """
         if sol_usd <= 0:
             return 0
@@ -96,7 +99,8 @@ class RiskManager:
         target_usd = size_position_usd(equity_usd, s.position_pct, s.min_position_usd, s.max_position_usd)
         target = int(target_usd / sol_usd * LAMPORTS_PER_SOL)
         available = equity_lamports if available_lamports is None else available_lamports
-        spendable = available - s.sol_reserve_lamports - s.network_fee_lamports - TOKEN_ACCOUNT_RENT_LAMPORTS
+        fee = max(s.network_fee_lamports, network_fee_lamports or 0)
+        spendable = available - s.sol_reserve_lamports - fee - TOKEN_ACCOUNT_RENT_LAMPORTS
         if spendable >= target:
             return target
         capped = max(spendable, 0)

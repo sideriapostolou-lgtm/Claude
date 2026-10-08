@@ -76,6 +76,7 @@ from typing import Any, Mapping, Sequence
 
 from nightcrawler.clock import Clock, RealClock, utc_day
 from nightcrawler.config import Settings
+from nightcrawler.http import anthropic_usage_counts, record_usage
 from nightcrawler.logging_setup import get_logger
 from nightcrawler.models import (
     Candle,
@@ -574,6 +575,7 @@ class Judge:
         except ImportError:
             log.error("judge sdk_missing hint=pip_install_nightcrawler[judge]")
             return self._error_verdict("anthropic not installed")
+        usage = None
         try:
             client = self._get_client(anthropic)
             response = client.beta.messages.create(
@@ -590,8 +592,11 @@ class Judge:
             log.exception("judge unexpected_error error=%s", type(exc).__name__)
             verdict = self._error_verdict(type(exc).__name__, started)
         else:
+            usage = _field(response, "usage")
             verdict = self._verdict_from_response(response, started)
         self._account(verdict.cost_usd)
+        # the SDK bypasses HttpClient: count this call (failed ones too) on the provider usage panel
+        record_usage(self.ledger, "anthropic", self.clock.now(), **anthropic_usage_counts(usage, verdict.cost_usd))
         return verdict
 
     def _get_client(self, anthropic: Any) -> Any:

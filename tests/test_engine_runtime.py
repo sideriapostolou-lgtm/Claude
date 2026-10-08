@@ -363,6 +363,42 @@ def test_a_full_exit_of_tokens_the_paper_wallet_no_longer_has_closes_the_books(m
     assert Auditor(rig.ledger, rig.broker, rig.clock).reconcile().ok
 
 
+def test_a_write_off_asks_for_its_sol_price_outside_the_ledger_transaction(make_rig, world, monkeypatch) -> None:
+    """A price fetch is network I/O: inside a ledger transaction it would hold the SQLite write lock (and
+    the dashboard's reads) for as long as Jupiter takes to answer, retries included."""
+    import contextlib
+
+    rig = make_rig()
+    rig.tick()
+    tokens = rig.ledger.get_kv("paper.tokens")
+    tokens.pop(GARY)
+    rig.ledger.set_kv("paper.tokens", tokens)
+    depth: list[int] = []
+    real_transaction, real_price = rig.ledger.transaction, rig.broker.sol_price_usd
+
+    @contextlib.contextmanager
+    def transaction() -> Any:
+        depth.append(1)
+        try:
+            with real_transaction():
+                yield rig.ledger
+        finally:
+            depth.pop()
+
+    asked_inside: list[bool] = []
+
+    def sol_price_usd() -> float:
+        asked_inside.append(bool(depth))
+        return real_price()
+
+    monkeypatch.setattr(rig.ledger, "transaction", transaction)
+    monkeypatch.setattr(rig.broker, "sol_price_usd", sol_price_usd)
+    world.price *= 0.5
+    rig.tick(10)
+    assert [f.sol_lamports for f in sells(rig)] == [0]  # written off
+    assert asked_inside and not any(asked_inside)
+
+
 def test_a_live_exit_after_a_manual_sale_sells_the_rest_and_clears_the_drift(make_rig, world, fake_clock) -> None:
     rig = live_rig(make_rig, world, fake_clock)
     rig.tick()

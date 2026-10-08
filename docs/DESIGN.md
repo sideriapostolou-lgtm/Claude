@@ -37,7 +37,8 @@ src/nightcrawler/
     geckoterminal.py GeckoTerminalClient (pools, trades, ohlcv), normalize_pool            O1
     rugcheck.py      RugCheckClient, RugReport, parse_report (AMM exclusion)               O1
     jupiter.py       JupiterClient (Ultra order/execute/holdings/shield, tokens, prices)   O1
-    solana_rpc.py    SolanaRpc (mint_info, balance, simulate, signature_status)            O1
+    solana_rpc.py    SolanaRpc (mint_info, balance, simulate, signature_status, priority_fee_levels) O1
+    pumpfun.py       PumpFunClient: FALLBACK 1m candles for pump.fun coins (own bucket)    runtime
   crawler.py         Crawler.poll()/refresh()/prefilter()                                  O2
   cocoon.py          Cocoon.check() -> SafetyReport (FAIL CLOSED)                          O2
   radar.py           Radar.scan() -> RadarSignal                                           O2
@@ -55,13 +56,19 @@ src/nightcrawler/
   dashboard.py       read-only phone dashboard (stdlib http.server)                        O6
   engine.py          Engine.tick()/run_forever(), build_engine                             Integrator
   cli.py             `nightcrawler` console script                                         Integrator
+scripts/
+  verify_receipts.py standalone receipts verifier (Python stdlib only, never imports nightcrawler)
 ```
 
 Dependency direction (no cycles): `config, models, clock` <- `http, hashing,
 logging_setup` <- `sources` <- `crawler, cocoon, radar` ; `strategy` depends
 only on `models` ; `judge` on `models, config` ; `broker, risk` on `sources,
 ledger(duck-typed), models` ; `engine` on everything ; `cli` on `engine` and the
-tools. Modules receive collaborators through constructors (dependency
+tools. Later additions: `judge` also imports `http` (it reports its Anthropic calls with
+`http.record_usage`); `cocoon` imports `judge.fold_lookalikes` (one look-alike folding
+for the judge's sanitizer and the cocoon's name checks; `judge` never imports `cocoon`);
+`dashboard` imports `http`'s provider table (constants only, still no network calls).
+Modules receive collaborators through constructors (dependency
 injection); nothing creates its own `HttpClient` or reads `os.environ`
 except `config.load_settings` and `engine.build_engine`.
 
@@ -118,9 +125,11 @@ impact as a NEGATIVE fraction string (`priceImpactPct: "-0.0219"` when
 ```
             every DISCOVERY_INTERVAL_S (30 s)
  Jupiter recent+trending ─┐
- GT new_pools p1-2 ───────┼─> Crawler.poll ──(prefilter)──> new TokenCandidates
- DexScreener boosts ──────┘   (paid_promo flag only)              │  <= 5 per tick
+ DexScreener boosts ──────┼─> Crawler.poll ──(prefilter)──> new TokenCandidates
+ (GT new_pools p1-2) ─────┘   (paid_promo flag only)              │  <= 5 per tick
+   GT new_pools only with DISCOVER_GT_NEW_POOLS (off by default; lowest priority, 5 min pause after a 429)
    too young (< MIN_AGE_MIN)? -> nursery; re-checked with a DexScreener batch once mature
+   every crawled coin -> Cocoon.observe (copycat-ticker memory, before the prefilter)
                                                                    v
                                      Cocoon.check (RugCheck report, RPC mint, Jupiter Shield)
                                          │ fail -> Decision reject_cocoon ──> receipt
@@ -130,10 +139,13 @@ impact as a NEGATIVE fraction string (`priceImpactPct: "-0.0219"` when
             every WATCH_INTERVAL_S (60 s)
  DexScreener /tokens/v1 batch ──> MarketSnapshot per watched mint (expire out-of-window ones)
  GT ohlcv 1m (>= DIP_LOOKBACK_H + 4 min, <= 3 tokens/tick, newest closed candle <= 2 min old)
+     pump.fun coins (main market pumpfun/pumpswap): pump.fun candles when GT fails, 429s (GT candles
+     pause 60 s), returns nothing or lags - ONE source per series (`candle_source` in the decision)
      ──> strategy.entry_signal (closed candles only)
      enter? ──> Cocoon.check again (cached 30 min)    hard fail -> reject_cocoon + unwatch
             ──> Radar.scan (GT trades >= $300)        flagged/error -> reject_radar
             ──> Judge.decide(build_features)          required & "no" -> reject_judge
+                (creator text - name, symbol - only inside `untrusted_text`, sanitized)
             ──> RiskManager.can_open + size_position  -> reject_risk
             ──> broker.quote("buy")                   -> reject_quote (impact/error/slippage/chasing)
             ──> Decision enter ──> RECEIPT (+ live in-flight marker, same transaction)
@@ -148,6 +160,8 @@ impact as a NEGATIVE fraction string (`priceImpactPct: "-0.0219"` when
             every tick: kill switch (env KILL_SWITCH or DATA_DIR/KILL): stop | sell_all
             live, every 5 min: wallet (Ultra holdings) vs books -> drift blocks entries
             every EQUITY_INTERVAL_S: EquityPoint -> ledger (risk limits + dashboard curve)
+            every 10 min, on every watch/unwatch and at shutdown: watchlist, cocoon queue and
+            nursery -> kv (restored at boot, bounded and age-expired)
 ```
 
 Rules: each stage is wrapped in try/except (log + `error` receipt + kv
@@ -157,14 +171,19 @@ blindly: failed or unknown outcomes are reconciled and re-quoted.
 Integration details (see `engine.py` docstring for the full contract):
 
 * Tick order: `kill` -> `reconcile` -> `live_start` (live, until recorded) ->
-  `drift` -> `positions` -> `discover` -> `watch` -> `equity` -> `heartbeat`
+  `drift` -> `positions` -> `discover` -> `watch` -> `equity` -> `persist` -> `heartbeat`
   (exits before entries). `discover` and `watch` stop after a budget of
   POSITION_INTERVAL_S and run the kill check and `positions` (when due) between
   candidates, so a slow upstream never starves a stop-loss. An `error` receipt
   is written at most once per 5 min for the same stage+error (log every time).
 * Positions carry `mode` (paper|live, from the opening fill). The engine, risk,
   dashboard and audit only see positions of the current TRADING_MODE; open
-  positions of the other mode are noted at boot and left alone.
+  positions of the other mode are noted at boot and left alone. Live positions
+  also record their wallet (ledger `positions.wallet`, schema v2); one of ANOTHER
+  wallet (BOT_WALLET_SECRET changed) is never valued, sold or counted - noted at
+  boot (`note` `foreign_positions`), listed by `report`/`sell-all` and marked on the
+  dashboard. (The audit's live balance check still counts their fills: after a
+  wallet change `report` shows the difference as drift.)
 * Entry gate order (cheap first, so no GT/LLM budget is spent on a blocked
   entry): fresh candles -> strict universe check (age/mcap/liquidity, snapshot
   no older than 2 x WATCH_INTERVAL_S) -> `risk.can_open` + `size_position` ->
@@ -181,8 +200,22 @@ Integration details (see `engine.py` docstring for the full contract):
 * Forced exits (stop, trailing, time, radar, kill) quote with
   `max_impact_pct = max(MAX_PRICE_IMPACT_PCT, 25)`; the partial take-profit
   uses the normal cap. A blocked sell writes a `hold` decision (<= 1 per 5 min).
+* A FULL exit sells `min(books, wallet holding)` and writes the rest off with a
+  0-SOL fill and a `note` `exit_shortfall` (no sale at all when the wallet holds
+  none). Live trusts a lower balance only 60 s after the position's last fill, and
+  never an unreadable one; an unknown short exit is reconciled against the balance
+  held BEFORE the swap (`wallet_before`).
+* Safe mode (RT-9): `run` with an INVALID configuration and open LIVE positions
+  starts exits-only (no discovery, no entries; stop-losses, kill switch and
+  reconciliation run) with defaults for the broken variables (never TRADING_MODE,
+  LIVE_CONFIRM, BOT_WALLET_SECRET, DATA_DIR; a missing live DASHBOARD_TOKEN becomes a
+  random one, i.e. locked). kv `engine.safe_mode` drives the dashboard's red chip.
 * `SwapUnknown` (live): the mint goes into kv `engine.unresolved`; ALL new
-  entries are blocked; after 90 s the wallet (Ultra holdings) is compared with
+  entries are blocked; when the swap's signature is known (`SwapUnknown.signature`,
+  also stored in the in-flight marker right before sending) its status is asked
+  every 5 s - final+failed settles it at once, final+landed is booked as soon as the
+  wallet shows it (never "did not land" while the wallet index lags); otherwise
+  (a gasless swap: Ultra signs first) after 90 s the wallet (Ultra holdings) is compared with
   the books: unchanged -> `note` "did not land"; changed -> a reconciliation
   Fill (the broker's actual fill when the swap landed but its ledger write
   failed, else SOL estimated pro rata from the quote; flagged in a `note`). No
@@ -213,9 +246,11 @@ Integration details (see `engine.py` docstring for the full contract):
   `DATA_DIR/KILL`.
 * Risk equity (peak, start of day) counts only snapshots of the CURRENT
   `TRADING_MODE`, so a paper history never halts a fresh live wallet.
-* `build_app(settings)` wires everything (http, clock, sources, crawler,
-  cocoon, radar, judge, ledger, risk, paper/live broker, auditor, dashboard,
-  engine); `build_engine` returns its engine.
+* `build_app(settings)` wires everything (http, clock, sources, pump.fun candles,
+  crawler, cocoon, radar, judge, ledger, risk, paper/live broker, auditor, dashboard,
+  engine); `build_engine` returns its engine. It binds the HTTP client's provider
+  usage counters to the ledger (kv `usage.providers`, flushed at most once a minute
+  and by `App.close()`) and gives the paper broker the RPC client (Helius fees).
 
 ## 5. Receipts (hindsight-proof hash chain)
 
@@ -245,17 +280,22 @@ canonical_json(x) = json.dumps(x, sort_keys=True, separators=(",", ":"), default
 * `nightcrawler report` compares every fill ROW with the payload of its `fill`
   receipt, so an edit behind the chain's back fails the audit.
 * Publishing the head hash (e.g. posting it somewhere public) commits to the
-  entire history up to that point.
+  entire history up to that point. `scripts/verify_receipts.py EXPORT [--head HASH]`
+  checks an export with the Python standard library only (and that a published head
+  hash is still in the chain).
+* `report` also checks every position (open and closed) against the sums of its own
+  fills (`AuditReport.position_drift`; ACC-9).
 
 ## 6. Rate budgets (shared `HttpClient`, one token bucket per host)
 
 | Host | Bucket (rate, burst) | Planned use per minute |
 |------|----------------------|------------------------|
-| `api.geckoterminal.com` | 20/min, burst 2 (free tier ~30/min, shared IP 429s) | crawler 4 (new_pools p1-2 x2), candles <= 3, radar <= 2-4, dataset collector when run alone |
+| `api.geckoterminal.com` | 20/min, burst 2 (free tier ~30/min, shared IP 429s) | crawler 0 by default (4 with `DISCOVER_GT_NEW_POOLS`), candles <= 3 (paused 60 s after a 429), radar <= 2-4, dataset collector when run alone |
+| `swap-api.pump.fun` | 12/min, burst 3 (Cloudflare) | fallback candles for pump.fun coins only; never retried inline; a 429/403/503 starts a cool-down of `Retry-After` (60 s default, <= 15 min) |
 | `api.rugcheck.xyz` | 1/s, burst 1 | cocoon <= 10 (5 per discovery tick) |
 | `lite-api.jup.ag` / `api.jup.ag` | 1/s, burst 1 | crawler 4, price v3 6, shield <= 10, quotes on demand |
 | `api.dexscreener.com` | 60/min, burst 3 | crawler 4, refresh 1 (30 mints per call) |
-| Solana RPC (`SOLANA_RPC_URL` host) | 5/s, burst 5 | cocoon mint_info, live simulate/status |
+| Solana RPC (`SOLANA_RPC_URL` host) | 5/s, burst 5 | cocoon mint_info, live simulate/status, paper Helius `getPriorityFeeEstimate` <= 1 per 5 min |
 | anything else | 5/s, burst 5 | - |
 
 Retries: 429/5xx/connection errors, max 4, exponential backoff with jitter,
@@ -264,6 +304,10 @@ Retries: 429/5xx/connection errors, max 4, exponential backoff with jitter,
 re-posted (at most twice, within ~2 min of the quote) to learn a final status - Ultra documents this as safe.
 The ENGINE's client retries GeckoTerminal, RugCheck and the Solana RPC host once only and caps `Retry-After`
 at 10 s (one thread runs every stage). All sleeps go through the injected `Clock`.
+Every attempt is counted per provider per UTC day/month (`HttpClient.usage`; pump.fun and the
+judge's Anthropic SDK calls report theirs too) for the dashboard's API usage card, with budgets
+from the `USAGE_*` settings and `JUDGE_MAX_DAILY_USD`. Logs: DEBUG/INFO to stdout, WARNING+ to
+stderr (a `--json` command logs everything to stderr).
 
 ## 7. Failure policy (fail closed)
 
@@ -284,17 +328,26 @@ at 10 s (one thread runs every stage). All sleeps go through the injected `Clock
   Ultra "Failed" with a code that does not prove the swap cannot land -> unknown, reconcile before acting.
 * Kill switch (env or file) garbled -> `stop` (never a startup refusal: that would leave positions unmanaged).
 * Judge API failure (rate limit, timeout, connection, status) -> `no`, remembered per mint for 2 min.
-* Config invalid -> process refuses to start (exit code 3). Live without `DASHBOARD_TOKEN` (unless the
-  dashboard binds 127.0.0.1) is invalid.
+* Config invalid -> process refuses to start (exit code 3) - except `run` with open LIVE positions, which
+  starts the exits-only safe mode (section 4) when a valid live configuration remains. Live without
+  `DASHBOARD_TOKEN` (unless the dashboard binds 127.0.0.1) is invalid.
+* Judge prompt injection (SI-10): creator text reaches the model only inside `untrusted_text`,
+  cleaned and cut to 40 characters; instruction-like text becomes `[removed: instruction-like text]`.
 
 ## 8. Paper == live (only sign + send differ)
 
 Both brokers quote with Jupiter Ultra `/order` at the exact size; paper fills
 at `quote.out_amount` (already net of pool fees and the 0.1 % Ultra fee) minus
 `PAPER_SLIPPAGE_BPS` (default 100 bps: live swaps land below the quote; the gap
-is visible as `expected_out_amount` vs the filled amount), deducts
-`NETWORK_FEE_SOL` per swap, reserves token-account rent
-(2,039,280 lamports) on a first buy and refunds it on a full exit. Live signs
+is visible as `expected_out_amount` vs the filled amount), deducts a network fee
+per swap (`NETWORK_FEE_SOL` as the floor; with a Helius `SOLANA_RPC_URL` the
+`high` priority-fee estimate x 300k CU + 5,000 lamports, asked <= 1 per 5 min,
+capped at 0.01 SOL; sizing leaves room for it), and books token-account rent by
+the ONE rule both brokers share (`broker.base.token_rent_lamports`): Ultra's
+`rentFeeLamports` (else 2,039,280 lamports) on the buy that opens the account,
+NEVER refunded by a sell - Ultra's full-balance sell leaves the emptied account
+open (verified 2026-10-08), so the deposit stays locked and a later buy of the
+same mint pays none (`tests/test_broker_parity.py`). Live signs
 the returned transaction, optionally simulates it, sends it via Ultra
 `/execute`, and records the ACTUAL in/out amounts (with the quote's
 `out_amount` kept as `expected_out_amount` to measure slippage).
@@ -309,7 +362,12 @@ the returned transaction, optionally simulates it, sends it via Ultra
 `wallet.pubkey`, `live.start_sol_usd`, `engine.mode`, `engine.unresolved`
 {mint: {side, quote, decimals, position_id, at, reason, mode, fill?, ...}},
 `engine.inflight` {mint: same shape, written before a live swap is sent},
-`engine.drift` {mint: {books, wallet}}, `risk.reset_token`.
+`engine.drift` {mint: {books, wallet}}, `risk.reset_token`, `engine.watchlist` /
+`engine.cocoon_queue` / `crawler.nursery` {saved_at, items} (resumed after a
+redeploy), `engine.safe_mode` {problems, defaults_used, since} | null,
+`engine.foreign_positions` [{id, mint, symbol, wallet, token_amount, opened_at}],
+`usage.providers` {provider: {day, day_counts, month, month_counts, updated_at}}
+(provider names only, never a URL or key). Ledger schema v2 adds `positions.wallet`.
 The dashboard reads ONLY the ledger (no network calls).
 
 ## 10. Settings
@@ -322,7 +380,10 @@ added: `LOG_LEVEL`, `SIMULATE_BEFORE_SEND`, `QUOTE_MAX_AGE_S`,
 `WATCHLIST_TTL_H`, `COCOON_*` thresholds, `RADAR_*` thresholds,
 `JUDGE_MAX_DAILY_USD`, `DASHBOARD_HOST`, `EQUITY_INTERVAL_S`. The integrator
 added `RESET_HALT_TOKEN` (clear a drawdown halt from the Railway variables page).
-The safety review added `MAX_SLIPPAGE_PCT` (buys) and `PAPER_SLIPPAGE_BPS`.
+The safety review added `MAX_SLIPPAGE_PCT` (buys) and `PAPER_SLIPPAGE_BPS`. Later:
+`DISCOVER_GT_NEW_POOLS`, `PUMPFUN_CANDLES` (data sources), `USAGE_HELIUS_MONTHLY_CREDITS` and
+`USAGE_{JUPITER,GECKOTERMINAL,DEXSCREENER,RUGCHECK}_MONTHLY_CALLS` (usage budgets),
+`COCOON_COPYCAT_WINDOW_H` and `COCOON_IMPERSONATION_NAMES` (name warnings, never a hard fail).
 
 ## 11. Testing conventions
 

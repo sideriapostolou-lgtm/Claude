@@ -48,14 +48,18 @@ from world import (
     DECIMALS,
     GARY,
     GARY_DEV,
+    GARY_POOL,
     RISKY,
     SOL_USD,
     SWAP_COST,
     World,
     dip_rebound_candles,
     iso,
+    jupiter_token,
     make_world,
 )
+
+COPYCAT = "US517G5965aydkZ46HS38QLi7UQiSojurfbQfKCELFr"  # another coin with GARY's ticker
 
 @pytest.fixture
 def world(fake_http: FakeHttp, fake_clock: FakeClock) -> World:
@@ -520,6 +524,75 @@ def test_fixture_sanity() -> None:
     report = load_fixture("rugcheck_report")
     assert report["mint"] == GARY and report["creator"] == GARY_DEV
     assert math.isclose(dip_rebound_candles(0.0)[-1].c, 0.46e-3)
+
+
+def test_build_app_counts_provider_usage_into_the_ledger(make_settings, fake_clock) -> None:
+    """The dashboard's API usage card reads kv ``usage.providers``: build_app binds the engine's
+    HTTP client to the ledger, and App.close() writes the last (not yet flushed) counts."""
+    from nightcrawler.http import KV_USAGE
+
+    session = FakeHttp()
+    session.register("/tokens/v2/recent", [])
+    app = build_app(make_settings(), fake_clock, session=session)
+    try:
+        app.sources.jupiter.tokens_recent()
+        assert app.ledger.get_kv(KV_USAGE)["jupiter"]["day_counts"] == {"calls": 1}
+        app.sources.jupiter.tokens_recent()  # within the minute: still pending in memory
+        assert app.ledger.get_kv(KV_USAGE)["jupiter"]["day_counts"] == {"calls": 1}
+        path = app.ledger.path
+    finally:
+        app.close()
+    with Ledger(path) as ledger:
+        assert ledger.get_kv(KV_USAGE)["jupiter"]["day_counts"] == {"calls": 2}
+
+
+def test_build_app_prices_paper_fees_from_helius(make_settings, fake_clock) -> None:
+    from nightcrawler.broker.paper import network_fee_from_priority
+
+    session = FakeHttp()
+    session.register("helius-rpc.com", {"jsonrpc": "2.0", "id": 1,
+                                        "result": {"priorityFeeLevels": {"high": 2_000_000.0}}}, method="POST")
+    settings = make_settings(SOLANA_RPC_URL="https://mainnet.helius-rpc.com/?api-key=0123456789abcdef0123")
+    app = build_app(settings, fake_clock, session=session)
+    try:
+        fee = network_fee_from_priority(2_000_000.0)
+        assert fee > settings.network_fee_lamports
+        assert app.broker.network_fee_lamports() == fee
+        assert len(session.calls_to("helius-rpc.com")) == 1
+    finally:
+        app.close()
+
+
+def test_entry_size_leaves_room_for_the_brokers_network_fee(make_rig) -> None:
+    rig = make_rig()
+    rig.broker.network_fee_lamports = lambda: 5_000_000  # e.g. a Helius priority-fee spike
+    sizes: list[dict[str, Any]] = []
+    real = rig.engine.risk.size_position
+
+    def spy(*args: Any, **kwargs: Any) -> int:
+        sizes.append(kwargs)
+        return real(*args, **kwargs)
+
+    rig.engine.risk.size_position = spy
+    rig.tick()
+    assert sizes and sizes[0]["network_fee_lamports"] == 5_000_000
+
+
+def test_discovery_shows_every_crawled_coin_to_the_copycat_check(make_rig, world) -> None:
+    """A coin the cheap prefilter rejects is never rug-checked, but its ticker still counts: the
+    engine shows every crawled coin to ``Cocoon.observe``, so GARY's report warns about the copy."""
+    copy = jupiter_token(COPYCAT, "GARY", GARY_POOL, world.clock.now() - 4 * 3600, world.price, GARY_DEV)
+    copy["audit"]["freezeAuthorityDisabled"] = False  # prefilter: "freeze authority set"
+    world.trending.append(copy)
+    rig = make_rig(KILL_SWITCH="stop")
+    rig.tick()
+    [watch] = rig.ledger.decisions(actions=["watch"])
+    assert watch.mint == GARY
+    safety = watch.inputs["safety"]
+    assert any(w.startswith("[copycat]") for w in safety["warnings"])
+    assert safety["metrics"]["copycat_count"] == 1 and safety["metrics"]["impersonates"] is None
+    counters = rig.engine.status(rig.clock.now())["counters"]
+    assert counters["cocoon.copycat"] == 1
 
 
 def test_engine_http_client_fails_fast_on_geckoterminal(make_settings, fake_clock) -> None:

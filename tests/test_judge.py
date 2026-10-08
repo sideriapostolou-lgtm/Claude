@@ -448,6 +448,26 @@ def test_spend_persisted_in_ledger_and_resumed(make_judge, judge_settings, fake_
     assert restarted.spent_today_usd() == pytest.approx(one)
 
 
+def test_every_model_call_is_counted_on_the_usage_panel(make_judge, fake_clock) -> None:
+    """The SDK does not go through HttpClient, so the judge reports its own Anthropic calls, tokens
+    and cost into kv ``usage.providers`` (the dashboard's API usage card); failed calls count too."""
+    from nightcrawler.http import KV_USAGE
+
+    ledger = FakeLedger()
+    judge, client = make_judge(make_response(), anthropic.APIConnectionError(request=_request()), ledger=ledger)
+    judge.decide(features())
+    judge.decide(features(OTHER_MINT))
+    judge.decide(features())  # cached: no call, nothing counted
+    assert len(client.calls) == 2
+    entry = ledger.kv[KV_USAGE]["anthropic"]
+    one = estimate_cost_usd("claude-opus-5-5", USAGE)
+    tokens_in = USAGE["input_tokens"] + USAGE["cache_read_input_tokens"] + USAGE["cache_creation_input_tokens"]
+    assert (entry["day"], entry["month"]) == ("2026-10-08", "2026-10")
+    assert entry["day_counts"] == {"calls": 2, "input_tokens": tokens_in, "output_tokens": USAGE["output_tokens"],
+                                   "cost_usd": pytest.approx(one)}
+    assert entry["month_counts"] == entry["day_counts"]
+
+
 def test_previous_day_ledger_spend_is_ignored(judge_settings, fake_clock) -> None:
     ledger = FakeLedger({"judge.cost_usd_day": {"day": "2026-10-07", "usd": 5.0}, "judge.cost_usd_total": 9.5})
     judge = Judge(judge_settings(), client=FakeClient(), clock=fake_clock, ledger=ledger)

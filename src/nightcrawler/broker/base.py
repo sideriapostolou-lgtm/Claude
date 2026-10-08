@@ -146,7 +146,7 @@ class Broker(Protocol):
         re-raises; live (the swap already landed) raises ``SwapUnknown`` carrying the fill.
 
         ``position``: None for an opening buy; the open position for adds and
-        sells (needed for rent refund on a full exit and ``Fill.position_id``).
+        sells (needed for ``Fill.position_id``).
         Must NOT re-quote silently: paper fills at ``quote.out_amount``; live
         sends ``quote.transaction_b64``. Raises ``QuoteRejected`` (stale),
         ``InsufficientBalance``, ``SwapFailed`` or ``SwapUnknown``. The caller

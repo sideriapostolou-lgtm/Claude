@@ -29,11 +29,11 @@ Think of a night shift with six workers:
 
 | Step | Worker | What it does |
 |------|--------|--------------|
-| 1 | **Crawler** | Every 30 s it reads the newest and trending Solana coins from Jupiter, GeckoTerminal and DexScreener. Coins younger than 1 hour wait in a "nursery" until they are old enough. Cheap checks drop coins that are too old, too small, too illiquid or made by serial launchers. |
-| 2 | **Cocoon** (rug filter) | Checks each survivor with RugCheck, the Solana blockchain itself and Jupiter Shield. It **fails a coin** if: someone can still mint or freeze tokens; it has dangerous token features (transfer tax, hooks, permanent delegate); a few wallets own too much; the creator still holds a lot; an insider network holds a lot; the creator is a serial launcher; the pool's liquidity isn't locked. If any check *can't be done* (a service is down), the coin fails too. |
-| 3 | **Watchlist + strategy** | Up to 15 coins that passed are watched for up to 6 hours. The bot looks for one setup only, the "dip-rebound": the price fell at least 55 % from its recent high, then two closed green 1-minute candles show buyers coming back, and recent buys outnumber sells. |
+| 1 | **Crawler** | Every 30 s it reads the newest and trending Solana coins from Jupiter and DexScreener (GeckoTerminal's new-pools feed is optional, `DISCOVER_GT_NEW_POOLS`, so its small free budget is kept for price candles). Coins younger than 1 hour wait in a "nursery" until they are old enough. Cheap checks drop coins that are too old, too small, too illiquid or made by serial launchers. |
+| 2 | **Cocoon** (rug filter) | Checks each survivor with RugCheck, the Solana blockchain itself and Jupiter Shield. It **fails a coin** if: someone can still mint or freeze tokens; it has dangerous token features (transfer tax, hooks, permanent delegate); a few wallets own too much; the creator still holds a lot; an insider network holds a lot; the creator is a serial launcher; the pool's liquidity isn't locked. If any check *can't be done* (a service is down), the coin fails too. It also *warns* (never fails) about copycat tickers and names that imitate a brand or celebrity. |
+| 3 | **Watchlist + strategy** | Up to 15 coins that passed are watched for up to 6 hours. The bot looks for one setup only, the "dip-rebound": the price fell at least 55 % from its recent high, then two closed green 1-minute candles show buyers coming back, and recent buys outnumber sells. Price candles come from GeckoTerminal; for pump.fun coins, from pump.fun itself when GeckoTerminal is rate-limited or behind (never a mix of both). |
 | 4 | **Radar** | Right before buying, checks the last 15 minutes of big trades: if the creator, an insider or a top holder is dumping, or big sells are draining the pool, **no buy**. It keeps watching open positions too. |
-| 5 | **Judge** ("Jev") | Optional. An AI (Claude, through your Anthropic API key) sees the facts and must answer yes/no **with reasons**. It only runs after every hard rule passed, can only say no to a trade (never force one), and errors count as "no". Off by default (no key needed). |
+| 5 | **Judge** ("Jev") | Optional. An AI (Claude, through your Anthropic API key) sees the facts and must answer yes/no **with reasons**. It only runs after every hard rule passed, can only say no to a trade (never force one), and errors count as "no". A coin's name and ticker are written by anonymous creators, so the judge only sees them cleaned, cut short and marked as untrusted. Off by default (no key needed). |
 | 6 | **Broker** | Asks Jupiter for a real quote at the exact size. In **paper mode** the fill is that quote's exact amount minus the real fees: it is the same quote live mode would sign. In **live mode** it signs the transaction with the bot wallet and sends it. |
 
 Then: **exits.** Sell half at +40 %. After that, sell the rest if the price drops 15 % from
@@ -69,7 +69,7 @@ Each position is 20 % of the bankroll, capped at $25, so about **$20**.
 | Pool fee: PumpSwap 0.3-1.25 % per side; pump.fun bonding curve 1.25 % per side | 0.6-2.5 % | $0.12-$0.50 |
 | Price impact (small for $20 in a $30K+ pool, big in thin pools) | 0.1-2 % | $0.02-$0.40 |
 | Network fees (~0.0003 SOL per swap) | ~0.3 % | ~$0.06 |
-| Token-account deposit (~0.002 SOL, refunded when the position is fully sold) | 0 % | $0.20 locked |
+| Token-account deposit (~0.002 SOL per coin; Jupiter's sell leaves the emptied account open, so it is **not** refunded) | ~1 % | ~$0.20 |
 
 **Measured live on 2026-10-08:** buying 0.1-0.2 SOL of a liquid memecoin (HIGGS) and selling
 it immediately lost **0.9-2.2 %** of the position before network fees, about **1.2-1.5 %**
@@ -182,7 +182,11 @@ with a hint.
   drawdown halt measured in SOL, so a SOL price move alone can't trip them.
 - **Kill switch** from the Railway variables page: `stop` or `sell_all`.
 - **Never double-buys.** A swap is never re-sent. If a live swap's outcome is unknown, the bot
-  stops all new buys, waits 90 s, reads the wallet and records what really happened.
+  stops all new buys, asks the blockchain about the transaction (or, when it cannot, waits 90 s),
+  reads the wallet and records what really happened.
+- **A broken setting never strands real money.** With open live positions, an invalid setting
+  starts an exits-only safe mode (stop-losses keep working, no new buys, a red dashboard chip)
+  instead of refusing to start.
 - **Forced exits still work in thin pools:** stop-loss, trailing, time, radar and kill exits
   accept up to 25 % price impact rather than staying trapped.
 - **Secrets never appear** in logs, receipts or the dashboard. The dashboard is read-only and

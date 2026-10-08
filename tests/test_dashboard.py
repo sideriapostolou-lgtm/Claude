@@ -52,14 +52,15 @@ RPC_KEY = "helius-rpc-key-0a1b2c3d4e5f"
 TOKEN = SECRETS["DASHBOARD_TOKEN"]
 
 STATE_KEYS = {"version", "generated_at", "mode", "kill", "halted", "engine", "equity", "positions", "fills",
-              "decisions", "rejections", "receipts", "judge", "wallet", "cocoon_rules", "activity", "limits", "usage"}
+              "decisions", "rejections", "receipts", "judge", "wallet", "cocoon_rules", "activity", "limits", "usage",
+              "safe_mode"}
 USAGE_KEYS = {"day", "month", "warn_pct", "updated_at", "providers"}
 USAGE_ROW_KEYS = {"id", "label", "unit", "period", "calls_today", "calls_month", "used", "budget", "used_pct", "level",
                   "tokens_today", "tokens_month", "cost_usd_today", "cost_usd_month"}
 EQUITY_KEYS = {"sol", "usd", "sol_usd", "start_usd", "pnl_today_usd", "pnl_today_sol", "pnl_total_usd",
                "pnl_total_sol", "pnl_total_trading_usd", "sol_price_effect_usd", "curve"}
 POSITION_KEYS = {"id", "mint", "symbol", "opened_at", "entry_price_usd", "last_price_usd", "value_sol",
-                 "unrealized_pnl_sol", "unrealized_pnl_pct", "partial_taken", "cost_sol"}
+                 "unrealized_pnl_sol", "unrealized_pnl_pct", "partial_taken", "cost_sol", "foreign_wallet"}
 RECEIPT_KEYS = {"head_hash", "seq", "count", "verified", "first_bad_seq", "verified_at"}
 JUDGE_KEYS = {"mode", "model", "calls", "cost_usd_total", "cost_usd_today"}
 
@@ -534,3 +535,37 @@ def test_live_dashboard_lists_only_live_positions_and_shows_drift(ledger: Ledger
     assert build_state(ledger, live, NOW)["positions"] == []
     assert [p["id"] for p in build_state(ledger, make_settings(), NOW)["positions"]] == ["p1"]
     assert "status.drift" in _SCRIPT  # a non-empty drift turns into a red chip
+
+
+def test_safe_mode_banner_and_foreign_wallet_positions(ledger: Ledger,
+                                                       make_settings: Callable[..., Settings]) -> None:
+    """RT-9 / F3: the exits-only safe mode and live positions of ANOTHER wallet (never sold or counted
+    by this bot) are shown from the ledger alone: a red chip, and foreign positions marked apart."""
+    from nightcrawler.dashboard import _SCRIPT
+
+    populate(ledger, mode="live")  # p1: a live position of the current wallet
+    other = "OtherWa11et111111111111111111111111111111111"
+    ledger.record_fill(Fill(id="f9", mode="live", side="buy", mint=HIGGS, sol_lamports=50_000_000,
+                            token_amount=1_000_000, token_decimals=6, price_usd=0.004, sol_usd=200.0, fees_lamports=0,
+                            platform_fee_bps=10, price_impact_pct=0.5, signature=None, request_id="r9",
+                            ts=NOW - 9000, symbol="OLD"))
+    ledger.upsert_position(Position(id="p9", mint=HIGGS, symbol="OLD", pool="pool", opened_at=NOW - 9000,
+                                    token_decimals=6, entry_fill_ids=["f9"], token_amount=1_000_000,
+                                    initial_token_amount=1_000_000, cost_lamports=50_000_000, mode="live"))
+    ledger.set_kv("wallet.pubkey", WALLET)
+    ledger.set_position_wallet("p1", WALLET)
+    ledger.set_position_wallet("p9", other)
+    live = make_settings(TRADING_MODE="live", LIVE_CONFIRM=LIVE_CONFIRM_PHRASE, BOT_WALLET_SECRET="x" * 88,
+                         DASHBOARD_HOST="127.0.0.1")
+    state = build_state(ledger, live, NOW)
+    assert state["safe_mode"] is None
+    assert {p["id"]: p["foreign_wallet"] for p in state["positions"]} == {"p1": None, "p9": other}
+
+    ledger.set_kv("engine.safe_mode", {"problems": ["STOP_LOSS_PCT: must be a FRACTION"],
+                                       "defaults_used": ["STOP_LOSS_PCT"], "since": NOW - 60})
+    state = build_state(ledger, live, NOW)
+    assert state["safe_mode"] == {"problems": ["STOP_LOSS_PCT: must be a FRACTION"],
+                                  "defaults_used": ["STOP_LOSS_PCT"], "since": NOW - 60}
+    assert all(p["foreign_wallet"] is None for p in build_state(ledger, make_settings(), NOW)["positions"])
+    assert "SAFE MODE" in _SCRIPT and "s.safe_mode" in _SCRIPT
+    assert "p.foreign_wallet" in _SCRIPT and "another wallet" in _SCRIPT
