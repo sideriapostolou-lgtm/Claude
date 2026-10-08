@@ -277,6 +277,16 @@ class Settings:
                                           "JSON byte array (solana-keygen)", secret=True)
     x_bearer_token: Secret | None = _f(None, "secret", "Optional X/Twitter token (unused by default)", secret=True)
 
+    # ---- data sources (runtime / data-source team) --------------------------
+    # GeckoTerminal's free tier (~30/min, 429s on shared IPs such as Railway's) is the scarcest
+    # budget: by default it serves only candles and the radar; pump.fun backs up its candles.
+    discover_gt_new_pools: bool = _f(False, "bool", "Also discover tokens from GeckoTerminal new_pools (lowest "
+                                     "priority feed, paused for 5 min after a 429). Off by default: Jupiter "
+                                     "recent/trending plus DexScreener cover discovery and GeckoTerminal's small "
+                                     "free budget is kept for candles and the radar")
+    pumpfun_candles: bool = _f(True, "bool", "pump.fun coins: take 1m candles from pump.fun's swap API when "
+                               "GeckoTerminal fails, rate-limits or lags (one source per series, never mixed)")
+
     # ---- dashboard ----------------------------------------------------------
     port: int = _f(8080, "port", "Dashboard port (Railway sets PORT)", lo=1, hi=65535)
     dashboard_host: str = _f("0.0.0.0", "text", "Dashboard bind address")

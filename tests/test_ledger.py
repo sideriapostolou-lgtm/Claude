@@ -463,3 +463,64 @@ def test_update_open_position_refuses_a_stale_copy(ledger: Ledger) -> None:
     fresh.token_amount -= 1_000_000
     ledger.update_open_position(fresh, expected_token_amount=5_000_000)
     assert ledger.get_position("p2").token_amount == 4_000_000
+
+
+# --------------------------------------------------------------------------- wallet of live positions (F3)
+
+WALLET_A = "WaLLetAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+WALLET_B = "WaLLetBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
+
+
+def test_a_position_records_the_wallet_it_lives_in(ledger: Ledger) -> None:
+    ledger.upsert_position(_pos("p_live", "live"))
+    ledger.set_position_wallet("p_live", WALLET_A)
+    ledger.upsert_position(_pos("p_paper", "paper", mint=MINT_B))
+    assert ledger.position_wallets() == {"p_live": WALLET_A, "p_paper": None}
+    moved = ledger.get_position("p_live")
+    moved.token_amount -= 1
+    ledger.update_open_position(moved, expected_token_amount=5_000_000)  # later writes keep the wallet
+    ledger.upsert_position(dataclasses.replace(moved, status="closed", closed_at=NOW + 1))
+    assert ledger.position_wallets(["p_live"]) == {"p_live": WALLET_A}
+    assert ledger.position_wallets() == {"p_paper": None}  # default: open positions only
+    ledger.set_position_wallet("p_paper", WALLET_B)
+    assert ledger.position_wallets() == {"p_paper": WALLET_B}
+
+
+def _as_schema_v1(db_path: Path, wallet_kv: str | None) -> None:
+    """Turn a fresh ledger file into what nightcrawler <= schema v1 wrote (no ``wallet`` column)."""
+    conn = sqlite3.connect(db_path)
+    with conn:
+        conn.execute("ALTER TABLE positions DROP COLUMN wallet")
+        if wallet_kv is not None:
+            conn.execute("INSERT INTO kv(key, value, updated_at) VALUES ('wallet.pubkey', ?, 0)",
+                         (json.dumps(wallet_kv),))
+        conn.execute("PRAGMA user_version=1")
+    conn.close()
+
+
+def test_a_schema_v1_ledger_gets_the_wallet_column_and_a_default_for_live_rows(db_path: Path,
+                                                                              fake_clock: FakeClock) -> None:
+    with Ledger(db_path, clock=fake_clock) as old:
+        old.upsert_position(_pos("p_live", "live"))
+        old.upsert_position(_pos("p_paper", "paper", mint=MINT_B))
+        old.record_fill(dataclasses.replace(make_fill("fill_live", position_id="p_old"), mode="live"))
+        old.upsert_position(_pos("p_old", None, fill_ids=["fill_live"]))  # mode inferred from its fill
+    _as_schema_v1(db_path, wallet_kv=WALLET_A)  # the wallet the last live boot used
+
+    with Ledger(db_path, clock=fake_clock) as migrated:
+        assert migrated.position_wallets() == {"p_live": WALLET_A, "p_paper": None, "p_old": WALLET_A}
+        assert migrated.verify_chain() == (True, None)
+    conn = sqlite3.connect(db_path)
+    assert conn.execute("PRAGMA user_version").fetchone()[0] == SCHEMA_VERSION == 2
+    conn.close()
+    with Ledger(db_path, clock=fake_clock) as again:  # idempotent
+        assert again.position_wallets()["p_live"] == WALLET_A
+
+
+def test_a_schema_v1_ledger_without_a_known_wallet_leaves_live_rows_unknown(db_path: Path,
+                                                                           fake_clock: FakeClock) -> None:
+    with Ledger(db_path, clock=fake_clock) as old:
+        old.upsert_position(_pos("p_live", "live"))
+    _as_schema_v1(db_path, wallet_kv=None)
+    with Ledger(db_path, clock=fake_clock) as migrated:
+        assert migrated.position_wallets() == {"p_live": None}

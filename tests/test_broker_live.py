@@ -531,3 +531,84 @@ def test_quote_age_is_checked_again_right_before_sending(broker, venue, fake_clo
     with pytest.raises(QuoteRejected, match="stale"):
         broker.execute(broker.quote("buy", HIGGS, BUY_IN, 6), None)
     assert venue.executed == []
+
+
+# --------------------------------------------------------------------------- the signature of an unknown swap (F5)
+
+
+def test_an_unknown_outcome_carries_the_signature_of_the_signed_transaction(broker, venue, ledger) -> None:
+    """The fee payer's signature IS the transaction id: the engine can ask the chain for the status of
+    exactly this transaction instead of waiting blind."""
+    venue.execute_with(requests.ConnectionError("connection reset"))
+    with pytest.raises(SwapUnknown) as ei:
+        broker.execute(broker.quote("buy", HIGGS, BUY_IN, 6), None)
+    expected = str(decode(venue.executed[0]["signedTransaction"]).signatures[0])
+    assert ei.value.signature == expected
+    assert receipts_of(ledger, "swap_failed")[-1].payload["signature"] == expected
+
+
+def test_an_unknown_outcome_prefers_the_signature_ultra_reported(broker, venue) -> None:
+    execute_sequence(venue, {"status": "Failed", "signature": "5igSIG", "code": -1000, "error": "timed out"})
+    with pytest.raises(SwapUnknown) as ei:
+        broker.execute(broker.quote("buy", HIGGS, BUY_IN, 6), None)
+    assert ei.value.signature == "5igSIG"
+
+
+def test_a_gasless_unknown_outcome_has_no_signature_of_ours_to_check(broker, venue, keypair) -> None:
+    venue.transaction = unsigned_tx_b64(Keypair().pubkey(), keypair.pubkey())  # Ultra pays and signs first
+    venue.execute_with(requests.ConnectionError("connection reset"))
+    with pytest.raises(SwapUnknown) as ei:
+        broker.execute(broker.quote("buy", HIGGS, BUY_IN, 6), None)
+    assert ei.value.signature is None
+
+
+def test_a_landed_but_unrecorded_swap_carries_its_signature(broker, venue, ledger) -> None:
+    from nightcrawler.ledger import LedgerError
+
+    ledger.fail_next["record_fill"] = LedgerError("sqlite error: database is locked")
+    with pytest.raises(SwapUnknown) as ei:
+        broker.execute(broker.quote("buy", HIGGS, BUY_IN, 6), None)
+    assert ei.value.signature == ei.value.fill.signature == load_fixture("jup_ultra_execute_success_synthetic")[
+        "signature"]
+
+
+def test_on_signed_reports_the_signature_before_anything_is_sent(broker, venue) -> None:
+    """The engine stores it in its in-flight marker, so even a process killed mid-swap can ask the chain."""
+    seen: list[tuple[Any, int]] = []
+    broker.execute(broker.quote("buy", HIGGS, BUY_IN, 6), None,
+                   on_signed=lambda signature: seen.append((signature, len(venue.executed))))
+    assert seen == [(str(decode(venue.executed[0]["signedTransaction"]).signatures[0]), 0)]
+    assert broker.reports_signature is True
+
+
+def test_a_failing_on_signed_callback_never_blocks_the_swap(broker, venue) -> None:
+    def broken(_signature: Any) -> None:
+        raise RuntimeError("ledger busy")
+
+    fill = broker.execute(broker.quote("buy", HIGGS, BUY_IN, 6), None, on_signed=broken)
+    assert fill.token_amount == ACTUAL_OUT and len(venue.executed) == 1
+
+
+@pytest.mark.parametrize("value,expected", [
+    (None, None),  # the cluster does not know the signature (yet, or any more)
+    ({"slot": 1, "confirmations": 0, "err": None, "confirmationStatus": "processed"}, None),  # not final
+    ({"slot": 1, "confirmations": 3, "err": None, "confirmationStatus": "confirmed"}, "landed"),
+    ({"slot": 1, "confirmations": None, "err": None, "confirmationStatus": "finalized"}, "landed"),
+    ({"slot": 1, "confirmations": None, "err": {"InstructionError": [2, {"Custom": 6001}]},
+      "confirmationStatus": "finalized"}, "failed"),
+    ({"slot": 1, "confirmations": 5, "err": {"InstructionError": [2, {"Custom": 6001}]},
+      "confirmationStatus": "confirmed"}, "failed"),
+])
+def test_swap_status_reads_get_signature_statuses(broker, venue, value, expected) -> None:
+    asked: list[Any] = []
+
+    def rpc(request):
+        body = request.json
+        if body["method"] != "getSignatureStatuses":
+            return venue._rpc(request)
+        asked.append(body["params"])
+        return {"jsonrpc": "2.0", "id": body["id"], "result": {"context": {"slot": 9}, "value": [value]}}
+
+    venue.http.register(venue.rpc_url, rpc, method="POST")
+    assert broker.swap_status("5igSIG") == expected
+    assert asked == [[["5igSIG"], {"searchTransactionHistory": True}]]
