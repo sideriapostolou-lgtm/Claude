@@ -31,7 +31,16 @@ from nightcrawler.engine import (
 from nightcrawler.http import HttpClient
 from nightcrawler.judge import Judge
 from nightcrawler.ledger import Ledger
-from nightcrawler.models import SOL_MINT, Balances, Fill, Quote, Verdict, effective_price_usd, new_id
+from nightcrawler.models import (
+    SOL_MINT,
+    TOKEN_ACCOUNT_RENT_LAMPORTS,
+    Balances,
+    Fill,
+    Quote,
+    Verdict,
+    effective_price_usd,
+    new_id,
+)
 from nightcrawler.radar import Radar
 from nightcrawler.risk import RiskManager
 from nightcrawler.sources import build_sources
@@ -151,7 +160,9 @@ def test_full_trade_from_discovery_to_trailing_exit(make_rig) -> None:
     assert rig.decisions()[-1] == "exit"
     assert rig.ledger.open_positions() == []
     [closed] = rig.ledger.positions(status="closed")
-    assert closed.exit_reason == "trailing_stop" and closed.token_amount == 0 and closed.rent_lamports == 0
+    # ACC-8: like live (Ultra's sell leaves the emptied token account open), the rent stays locked
+    assert closed.exit_reason == "trailing_stop" and closed.token_amount == 0
+    assert closed.rent_lamports == TOKEN_ACCOUNT_RENT_LAMPORTS
     assert closed.pnl_lamports() > 0
 
     assert rig.ledger.verify_chain() == (True, None)
@@ -232,7 +243,7 @@ def test_judge_no_blocks_entry_in_required_mode(make_rig) -> None:
     [rejected] = rig.ledger.decisions(actions=["reject_judge"])
     assert rejected.verdict is not None and rejected.verdict.reasons == ["insider wallets dominate"]
     assert rejected.inputs["features"]["mint"] == GARY
-    assert judge.calls and judge.calls[0]["symbol"] == "Gary"
+    assert judge.calls and judge.calls[0]["untrusted_text"]["symbol"] == "Gary"  # SI-10: creator text only there
 
 
 def test_judge_no_is_only_logged_in_advisory_mode(make_rig) -> None:

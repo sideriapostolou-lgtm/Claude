@@ -12,21 +12,40 @@ Notes:
 * ``getTokenLargestAccounts`` is DISABLED (429) on the public RPC - do not use.
 * JSON-RPC errors come back as HTTP 200 with ``{"error": {code, message}}``
   -> raise :class:`RpcError`. HTTP 429/5xx are retried by ``HttpClient``.
+* ``getPriorityFeeEstimate`` is a Helius extension (:func:`is_helius_url`):
+  ``[{"accountKeys": [...], "options": {"includeAllPriorityFeeLevels": true}}]`` ->
+  ``result.priorityFeeLevels = {min, low, medium, high, veryHigh, unsafeMax}`` in
+  MICRO-lamports per compute unit.
 """
 
 from __future__ import annotations
 
 import itertools
+from collections.abc import Sequence
 from typing import Any
 
-from nightcrawler.http import HttpClient
+from nightcrawler.http import HttpClient, host_of
 from nightcrawler.models import TOKEN_2022_PROGRAM_ID, TOKEN_PROGRAM_ID
-from nightcrawler.sources._parse import get_path, to_int
+from nightcrawler.sources._parse import get_path, to_float, to_int
 
-__all__ = ["DEFAULT_RPC_URL", "RpcError", "SolanaRpc"]
+__all__ = ["DEFAULT_RPC_URL", "JUPITER_PROGRAM_ID", "PUMPSWAP_PROGRAM_ID", "SWAP_FEE_ACCOUNT_KEYS", "RpcError",
+           "SolanaRpc", "is_helius_url"]
 
 DEFAULT_RPC_URL = "https://api.mainnet-beta.solana.com"
 _PROGRAM_NAMES = {TOKEN_PROGRAM_ID: "spl-token", TOKEN_2022_PROGRAM_ID: "spl-token-2022"}
+#: PumpSwap AMM program (where graduated pump.fun coins trade).
+PUMPSWAP_PROGRAM_ID = "pAMMBay6oceH9fJKBRHGP5D4bD4sWpmSwMn52FMfXEA"
+#: Jupiter aggregator v6 program (Ultra's metis routes).
+JUPITER_PROGRAM_ID = "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4"
+#: Accounts whose recent priority fees price a bot swap.
+SWAP_FEE_ACCOUNT_KEYS = (PUMPSWAP_PROGRAM_ID, JUPITER_PROGRAM_ID)
+_HELIUS_HOST_SUFFIXES = ("helius-rpc.com", "helius.xyz")
+
+
+def is_helius_url(url: str) -> bool:
+    """True when ``url``'s HOST is a Helius RPC host (which serves ``getPriorityFeeEstimate``)."""
+    host = host_of(url) if url else ""
+    return any(host == suffix or host.endswith("." + suffix) for suffix in _HELIUS_HOST_SUFFIXES)
 
 
 class RpcError(Exception):
@@ -144,6 +163,26 @@ class SolanaRpc:
             "err": status.get("err"),
             "confirmation_status": status.get("confirmationStatus") or None,
         }
+
+    def priority_fee_levels(self, account_keys: Sequence[str] = SWAP_FEE_ACCOUNT_KEYS) -> dict[str, float]:
+        """Helius ``getPriorityFeeEstimate`` for ``account_keys`` with every level included.
+
+        Returns ``{level: micro-lamports per compute unit}`` (``min, low, medium, high,
+        veryHigh, unsafeMax``); levels that are not finite non-negative numbers are left out.
+        Raises :class:`RpcError` when the answer has no ``priorityFeeLevels`` object (or the
+        node does not know the method - only Helius serves it).
+        """
+        method = "getPriorityFeeEstimate"
+        params = [{"accountKeys": list(account_keys), "options": {"includeAllPriorityFeeLevels": True}}]
+        levels = get_path(self.call(method, params), "priorityFeeLevels")
+        if not isinstance(levels, dict):
+            raise RpcError(None, "getPriorityFeeEstimate returned no priorityFeeLevels", method)
+        out: dict[str, float] = {}
+        for name, value in levels.items():
+            number = to_float(value)  # None for bools, NaN, inf and junk
+            if number is not None and number >= 0:
+                out[str(name)] = number
+        return out
 
 
 def _lower(value: Any) -> str | None:

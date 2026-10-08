@@ -41,7 +41,22 @@ dashboard can group them - start each with the rule id shown in brackets):
 WARNINGS (not fatal; each starts with a bracketed id too): mutable metadata,
 no socials, paid promotion (DexScreener boost/profile), holder count <
 ``COCOON_MIN_HOLDERS``, holder stats unavailable (fresh token), RugCheck
-``warn``-level risks, unknown creator holding or insider share.
+``warn``-level risks, unknown creator holding or insider share, and two name
+checks (no HTTP; warning texts never quote the creator's own text, which the
+judge must not see outside its untrusted field):
+
+* ``[copycat]`` the normalized ticker (case, ``$``, punctuation, full-width and
+  Cyrillic/Greek look-alike letters folded) was seen on ANOTHER mint within
+  ``COCOON_COPYCAT_WINDOW_H`` (6 h; 0 disables). "Seen" = passed to
+  :meth:`Cocoon.check` or :meth:`Cocoon.observe` (the engine may observe every
+  crawled coin). Metric ``copycat_count``; memory bounded by
+  :data:`COPYCAT_MAX_TRACKED` mints.
+* ``[impersonation]`` the name or ticker imitates an entry of
+  ``COCOON_IMPERSONATION_NAMES`` (a whole-word phrase, or for entries of 5+
+  letters anywhere, e.g. ``ElonMuskDoge``, ``TRUMPCOIN``; look-alike letters,
+  leetspeak and zero-width characters folded). Metric ``impersonates``.
+
+``Cocoon.counters`` counts each name warning (``copycat``, ``impersonation``).
 
 ORDER (rate budgets are tight): Jupiter audit (no HTTP) -> RugCheck report ->
 RPC mint account -> Jupiter Shield. Checking stops at the first stage that
@@ -63,15 +78,19 @@ unavailable source (or an unexpected error) are cached for at most 2 minutes.
 ``metrics`` keys written: ``top10_pct, max_holder_pct, creator_pct,
 insider_pct, graph_insiders, dev_mints, lp_locked_pct, holder_count,
 rugcheck_score_normalised, mint_authority, freeze_authority, extensions,
-shield_warnings, program, decimals`` (only for the stages that ran).
+shield_warnings, program, decimals`` (only for the stages that ran), plus
+``copycat_count`` (when the copycat check is on) and ``impersonates``.
 """
 
 from __future__ import annotations
 
+import re
+from collections import Counter
 from typing import Any
 
 from nightcrawler.clock import Clock
 from nightcrawler.config import Settings
+from nightcrawler.judge import fold_lookalikes
 from nightcrawler.logging_setup import get_logger
 from nightcrawler.models import SafetyReport, TokenCandidate
 from nightcrawler.sources import Sources
@@ -84,6 +103,8 @@ __all__ = [
     "UNAVAILABLE_CACHE_S",
     "SHIELD_FAIL_SEVERITIES",
     "MAX_TOP_HOLDERS",
+    "COPYCAT_MAX_TRACKED",
+    "normalize_ticker",
 ]
 
 log = get_logger(__name__)
@@ -102,6 +123,12 @@ UNAVAILABLE_CACHE_S = 120
 SHIELD_FAIL_SEVERITIES = frozenset({"warning", "critical"})
 #: Max holder wallets handed to the radar.
 MAX_TOP_HOLDERS = 20
+#: Max mints remembered for the copycat-ticker check (oldest forgotten first).
+COPYCAT_MAX_TRACKED = 20_000
+#: Impersonation entries this long (letters/digits) also match inside words (ElonMuskDoge); shorter ones
+#: only as whole words, so "Meta" does not flag "Metaverse".
+_IMPERSONATION_INFIX_MIN = 5
+_WORD = re.compile(r"[a-z0-9]+")
 
 #: defaultAccountState values that are safe; anything else (frozen, unknown, unreadable) fails.
 _SAFE_ACCOUNT_STATES = frozenset({"initialized", "uninitialized", "0", "1"})
@@ -117,6 +144,11 @@ class Cocoon:
         self.settings = settings
         self.clock = clock
         self._cache: dict[str, tuple[float, SafetyReport]] = {}  # mint -> (expires_at, report)
+        self._tickers: dict[str, dict[str, float]] = {}  # normalized ticker -> {mint: last seen}
+        self._tracked = 0  # sightings in _tickers
+        self._impersonation = _impersonation_terms(settings.cocoon_impersonation_names)
+        #: Name-check warnings issued so far (``copycat``, ``impersonation``), for status/metrics.
+        self.counters: Counter[str] = Counter()
 
     # ------------------------------------------------------------------ public
     def check(self, candidate: TokenCandidate, *, force: bool = False) -> SafetyReport:
@@ -127,7 +159,9 @@ class Cocoon:
         ``top_holders`` (non-excluded owner wallets, largest first, max 20) and
         ``insiders`` for the radar. Any unexpected exception becomes a
         fail-closed report with reason ``"error: <ExceptionType>"``.
+        Every call (cached or not) also records the candidate's ticker (:meth:`observe`).
         """
+        self.observe(candidate)
         if not force:
             hit = self.cached(candidate.mint)
             if hit is not None:
@@ -143,6 +177,23 @@ class Cocoon:
         log.info("cocoon_check mint=%s passed=%s fails=%d unverified=%s", report.mint, report.passed,
                  len(report.hard_fail_reasons), ",".join(report.unverified) or "-")
         return report
+
+    def observe(self, candidate: TokenCandidate) -> None:
+        """Remember that ``candidate``'s ticker was seen now (copycat check; free, never raises)."""
+        ticker = normalize_ticker(candidate.symbol)
+        if not ticker or self._copycat_window_s <= 0:
+            return
+        now = self.clock.now()
+        mints = self._tickers.setdefault(ticker, {})
+        if candidate.mint not in mints:
+            self._tracked += 1
+        mints[candidate.mint] = now
+        if self._tracked > COPYCAT_MAX_TRACKED:
+            self._forget_tickers(now)
+
+    def tracked_tickers(self) -> int:
+        """How many (ticker, mint) sightings the copycat check currently remembers."""
+        return self._tracked
 
     def invalidate(self, mint: str) -> None:
         """Drop the cached report for ``mint`` (no-op if absent)."""
@@ -176,6 +227,29 @@ class Cocoon:
         degraded = report.unverified or any(r.startswith(_ERROR_PREFIX) for r in report.hard_fail_reasons)
         return min(full, UNAVAILABLE_CACHE_S) if degraded else full
 
+    # ------------------------------------------------------------------ copycat memory
+    @property
+    def _copycat_window_s(self) -> float:
+        return self.settings.cocoon_copycat_window_h * 3600.0
+
+    def _forget_tickers(self, now: float) -> None:
+        """Drop sightings older than the window, then the oldest ones, down to 90 % of
+        :data:`COPYCAT_MAX_TRACKED` (so the sort is not repeated on every new sighting)."""
+        horizon = now - self._copycat_window_s
+        keep = max(1, COPYCAT_MAX_TRACKED * 9 // 10)
+        seen = sorted(((at, ticker, mint) for ticker, mints in self._tickers.items() for mint, at in mints.items()
+                       if at >= horizon), reverse=True)[:keep]
+        self._tickers = {}
+        for at, ticker, mint in seen:
+            self._tickers.setdefault(ticker, {})[mint] = at
+        self._tracked = len(seen)
+
+    def _copycats(self, c: TokenCandidate, now: float) -> int:
+        """Other mints whose ticker equals ``c``'s (normalized) and were seen within the window."""
+        horizon = now - self._copycat_window_s
+        mints = self._tickers.get(normalize_ticker(c.symbol), {})
+        return sum(1 for mint, at in mints.items() if mint != c.mint and at >= horizon)
+
     # ------------------------------------------------------------------ evaluation
     def _evaluate(self, c: TokenCandidate, now: float) -> SafetyReport:
         report = SafetyReport(mint=c.mint, passed=False, checked_at=now, creator=c.dev)
@@ -185,6 +259,7 @@ class Cocoon:
                 break
             stage(c, report)
         self._add_candidate_warnings(c, report)
+        self._add_name_warnings(c, report, now)
         report.passed = not report.hard_fail_reasons and not report.unverified
         return report
 
@@ -347,8 +422,60 @@ class Cocoon:
         elif holders < self.settings.cocoon_min_holders:
             _warn(report, "low_holders", f"{holders} holders (< {self.settings.cocoon_min_holders})")
 
+    def _add_name_warnings(self, c: TokenCandidate, report: SafetyReport, now: float) -> None:
+        """Copycat ticker and brand/celebrity impersonation (warnings; texts never quote the creator)."""
+        if self._copycat_window_s > 0:
+            others = self._copycats(c, now)
+            report.metrics["copycat_count"] = others
+            if others:
+                plural = "coin" if others == 1 else "coins"
+                _warn(report, "copycat", f"ticker shared with {others} other {plural} seen in the last "
+                      f"{self.settings.cocoon_copycat_window_h:g}h")
+                self.counters["copycat"] += 1
+        brand = _impersonated(c, self._impersonation)
+        report.metrics["impersonates"] = brand
+        if brand:
+            _warn(report, "impersonation", f"name or ticker imitates {brand!r}")
+            self.counters["impersonation"] += 1
+        if report.metrics.get("copycat_count") or brand:
+            log.info("cocoon_name_warning mint=%s copycat_count=%s impersonates=%s", c.mint,
+                     report.metrics.get("copycat_count"), brand)
+
 
 # ---------------------------------------------------------------------- helpers
+
+
+def normalize_ticker(symbol: str | None) -> str:
+    """A ticker as the copycat check compares it: case, ``$``, punctuation, spacing, full-width and
+    look-alike letters folded; only ``a-z0-9`` kept (``""`` when nothing is left)."""
+    return "".join(_WORD.findall(fold_lookalikes(symbol))) if symbol else ""
+
+
+#: (label as configured, its folded words, those words joined)
+_Term = tuple[str, tuple[str, ...], str]
+
+
+def _impersonation_terms(raw: str) -> tuple[_Term, ...]:
+    """Parse ``COCOON_IMPERSONATION_NAMES`` (comma-separated; ``none`` disables)."""
+    terms = []
+    for label in (part.strip() for part in str(raw or "").split(",")):
+        words = tuple(_WORD.findall(fold_lookalikes(label, leet=True)))
+        if words and label.lower() != "none":
+            terms.append((label, words, "".join(words)))
+    return tuple(terms)
+
+
+def _impersonated(c: TokenCandidate, terms: tuple[_Term, ...]) -> str | None:
+    """The first configured brand/celebrity that ``c``'s name or ticker imitates, or None."""
+    texts = [_WORD.findall(fold_lookalikes(t.replace("$", " "), leet=True)) for t in (c.name, c.symbol) if t]
+    for label, words, compact in terms:
+        n = len(words)
+        for text_words in texts:
+            if any(tuple(text_words[i:i + n]) == words for i in range(len(text_words) - n + 1)):
+                return label
+            if len(compact) >= _IMPERSONATION_INFIX_MIN and compact in "".join(text_words):
+                return label
+    return None
 
 
 def _fail(report: SafetyReport, rule: str, detail: str) -> None:

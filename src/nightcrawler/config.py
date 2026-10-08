@@ -247,6 +247,16 @@ class Settings:
     cocoon_min_holders: int = _f(100, "count", "Warn (not fail) below this holder count", lo=0)
     cocoon_cache_min: float = _f(30.0, "minutes", "Reuse a SafetyReport for this long", lo=0)
 
+    # ---- cocoon name checks (decisions/fills team): warnings only, never a hard fail ------
+    cocoon_copycat_window_h: float = _f(6.0, "hours", "Warn (not fail) when another coin with the same normalized "
+                                        "ticker was seen within this many hours (0 disables)", lo=0, hi=168)
+    cocoon_impersonation_names: str = _f(
+        "Elon Musk, Elon, Tesla, SpaceX, Trump, Melania, Barron, Kanye, Taylor Swift, MrBeast, Vitalik, Saylor, "
+        "BlackRock, Coinbase, Binance, OpenAI, ChatGPT, Nvidia, Apple, Google, Amazon, Microsoft, Meta, Disney, "
+        "Nike, Solana, Jupiter, Phantom, Pump.fun, Raydium", "text",
+        "Comma-separated brands/celebrities: warn (not fail) when a coin's name or ticker imitates one "
+        "(look-alike letters and spacing tricks included). 'none' disables")
+
     # ---- radar --------------------------------------------------------------
     radar_min_trade_usd: float = _f(300.0, "usd", "Only trades at least this big are scanned", lo=0)
     radar_window_min: float = _f(15.0, "minutes", "Look-back window for big sells", lo=1, hi=1440)

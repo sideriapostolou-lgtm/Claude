@@ -575,3 +575,113 @@ def test_a_malformed_shield_answer_fails_closed_through_the_real_client(fake_htt
     report = Cocoon(build_sources(settings, http_client), settings, fake_clock).check(clean_candidate())
     assert report.passed is False and "jupiter_shield" in report.unverified
     assert any(r.startswith("source unavailable: jupiter_shield") for r in report.hard_fail_reasons)
+
+
+# --------------------------------------------------------------------------- copycat tickers / impersonation (warnings)
+
+COPY_MINT = "CoPYcAt1111111111111111111111111111111pump"
+COPY_MINT_2 = "CoPYcAt2222222222222222222222222222222pump"
+
+
+def test_a_ticker_seen_on_another_coin_within_the_window_is_a_copycat_warning(world: World) -> None:
+    first = world.cocoon.check(clean_candidate())  # "Gary"
+    assert "copycat" not in warning_ids(first) and first.metrics["copycat_count"] == 0
+    world.clock.advance(5 * 3600)
+    copy = world.cocoon.check(clean_candidate(mint=COPY_MINT, symbol=" $gary "))
+    assert copy.passed is True  # a warning, never a hard fail
+    assert warning_ids(copy) == {"copycat"}
+    assert copy.warnings == ["[copycat] ticker shared with 1 other coin seen in the last 6h"]
+    assert copy.metrics["copycat_count"] == 1
+    assert world.cocoon.counters["copycat"] == 1
+
+
+@pytest.mark.parametrize("symbol", ["GARY", "gary", "$Gary", "G.A.R.Y", "ＧＡＲＹ",
+                                    "GΑRY", "Gаry"])  # full-width; Greek Alpha; Cyrillic a
+def test_copycat_tickers_are_normalized(world: World, symbol: str) -> None:
+    world.cocoon.check(clean_candidate())
+    assert "copycat" in warning_ids(world.cocoon.check(clean_candidate(mint=COPY_MINT, symbol=symbol)))
+
+
+@pytest.mark.parametrize("symbol", ["GARY2", "GARRY", "GAR", "", "$"])
+def test_other_tickers_are_not_copycats(world: World, symbol: str) -> None:
+    world.cocoon.check(clean_candidate())
+    report = world.cocoon.check(clean_candidate(mint=COPY_MINT, symbol=symbol))
+    assert "copycat" not in warning_ids(report) and report.metrics["copycat_count"] == 0
+
+
+def test_copycat_window_expires_and_the_same_mint_is_not_its_own_copycat(world: World) -> None:
+    world.cocoon.check(clean_candidate())
+    world.cocoon.check(clean_candidate(), force=True)
+    assert world.cocoon.check(clean_candidate(), force=True).metrics["copycat_count"] == 0
+    world.clock.advance(6 * 3600 + 1)
+    assert world.cocoon.check(clean_candidate(mint=COPY_MINT)).metrics["copycat_count"] == 0
+    world.clock.advance(60)
+    report = world.cocoon.check(clean_candidate(mint=COPY_MINT_2))
+    assert report.metrics["copycat_count"] == 1
+    assert report.warnings == ["[copycat] ticker shared with 1 other coin seen in the last 6h"]
+
+
+def test_observed_coins_count_as_seen_even_without_a_check(world: World) -> None:
+    world.cocoon.observe(TokenCandidate(mint=COPY_MINT, symbol="GARY"))
+    world.cocoon.observe(TokenCandidate(mint=COPY_MINT_2, symbol="gary"))
+    report = world.cocoon.check(clean_candidate())
+    assert report.metrics["copycat_count"] == 2
+    assert "[copycat] ticker shared with 2 other coins seen in the last 6h" in report.warnings
+    assert world.calls() == (1, 1, 1)  # observing is free
+
+
+def test_copycat_check_can_be_disabled(make_settings, fake_clock) -> None:
+    w = build_world(make_settings(COCOON_COPYCAT_WINDOW_H=0), fake_clock)
+    w.cocoon.check(clean_candidate())
+    report = w.cocoon.check(clean_candidate(mint=COPY_MINT))
+    assert "copycat" not in warning_ids(report) and "copycat_count" not in report.metrics
+    assert w.cocoon.tracked_tickers() == 0
+
+
+def test_copycat_memory_is_bounded(world: World, monkeypatch) -> None:
+    import nightcrawler.cocoon as cocoon_module
+
+    monkeypatch.setattr(cocoon_module, "COPYCAT_MAX_TRACKED", 5)
+    for i in range(50):
+        world.cocoon.observe(TokenCandidate(mint=f"M{i:03d}" + "1" * 39, symbol=f"T{i}"))
+        world.clock.advance(1)
+    assert world.cocoon.tracked_tickers() <= 5
+    world.cocoon.observe(TokenCandidate(mint=COPY_MINT, symbol="T49"))  # the newest are kept
+    assert world.cocoon.check(clean_candidate(mint=COPY_MINT_2, symbol="T49")).metrics["copycat_count"] == 2
+
+
+@pytest.mark.parametrize("name, symbol, brand", [
+    ("Elon Musk Inu", "EMI", "Elon Musk"),
+    ("ElonMuskDoge", "EMD", "Elon Musk"),
+    ("Baby Elon", "BELON", "Elon"),
+    ("Official TRUMP", "OT", "Trump"),
+    ("whatever", "TRUMPCOIN", "Trump"),
+    ("Ｔｅｓｌａ Cat", "TC", "Tesla"),  # full-width letters
+    ("Tеsla Moon", "TM", "Tesla"),  # Cyrillic e
+    ("M​rBeast Coin", "MBC", "MrBeast"),  # zero-width space
+    ("Meta Cat", "MC", "Meta"),
+])
+def test_impersonating_names_are_a_warning(world: World, name: str, symbol: str, brand: str) -> None:
+    report = world.cocoon.check(clean_candidate(name=name, symbol=symbol))
+    assert report.passed is True
+    assert warning_ids(report) == {"impersonation"}
+    assert report.warnings == [f"[impersonation] name or ticker imitates {brand!r}"]
+    assert report.metrics["impersonates"] == brand
+    assert world.cocoon.counters["impersonation"] == 1
+
+
+@pytest.mark.parametrize("name, symbol", [("Gary the Cat", "Gary"), ("Metaverse Frog", "MVF"),
+                                          ("Elongated Dog", "ELD"), ("", "")])
+def test_ordinary_names_are_not_impersonation(world: World, name: str, symbol: str) -> None:
+    report = world.cocoon.check(clean_candidate(name=name, symbol=symbol))
+    assert "impersonation" not in warning_ids(report) and report.metrics["impersonates"] is None
+
+
+def test_the_impersonation_list_is_configurable(make_settings, fake_clock) -> None:
+    w = build_world(make_settings(COCOON_IMPERSONATION_NAMES="Gary, Acme Corp"), fake_clock)
+    assert w.cocoon.check(clean_candidate()).metrics["impersonates"] == "Gary"
+    trump = clean_candidate(mint=COPY_MINT, name="Trump", symbol="TRUMP")
+    assert w.cocoon.check(trump).metrics["impersonates"] is None
+    off = build_world(make_settings(COCOON_IMPERSONATION_NAMES="none"), fake_clock)
+    report = off.cocoon.check(clean_candidate(name="Elon Musk", symbol="ELON"))
+    assert "impersonation" not in warning_ids(report) and report.metrics["impersonates"] is None

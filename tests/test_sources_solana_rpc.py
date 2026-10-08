@@ -9,7 +9,15 @@ import pytest
 from fakes import FakeRequest
 from nightcrawler.http import HttpClient, HttpError
 from nightcrawler.models import SOL_MINT, TOKEN_2022_PROGRAM_ID, TOKEN_PROGRAM_ID
-from nightcrawler.sources.solana_rpc import DEFAULT_RPC_URL, RpcError, SolanaRpc
+from nightcrawler.sources.solana_rpc import (
+    DEFAULT_RPC_URL,
+    JUPITER_PROGRAM_ID,
+    PUMPSWAP_PROGRAM_ID,
+    SWAP_FEE_ACCOUNT_KEYS,
+    RpcError,
+    SolanaRpc,
+    is_helius_url,
+)
 
 GARY = "8ZCmwpW3MtC5UpNcZf7U4HMvRNTo71syU11BDiAFpump"
 USDC = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
@@ -200,6 +208,62 @@ def test_signature_status_unknown_is_none(rpc, fake_http, value):
     fake_http.register(RPC_URL, _result(value))
 
     assert rpc.signature_status("SIG") is None
+
+
+# --------------------------------------------------------------------------- Helius priority fees
+
+HELIUS_LEVELS = {"min": 0.0, "low": 2.0, "medium": 10082.0, "high": 100000.0, "veryHigh": 1000000.0,
+                 "unsafeMax": 50000000.0}
+
+
+def test_priority_fee_levels_request_and_parse(rpc, fake_http):
+    fake_http.register(RPC_URL, {"jsonrpc": "2.0", "id": "1", "result": {"priorityFeeLevels": HELIUS_LEVELS}},
+                       method="POST")
+
+    assert rpc.priority_fee_levels() == HELIUS_LEVELS
+    (call,) = fake_http.calls
+    assert call.json["method"] == "getPriorityFeeEstimate"
+    assert call.json["params"] == [{"accountKeys": [PUMPSWAP_PROGRAM_ID, JUPITER_PROGRAM_ID],
+                                    "options": {"includeAllPriorityFeeLevels": True}}]
+    assert SWAP_FEE_ACCOUNT_KEYS == ("pAMMBay6oceH9fJKBRHGP5D4bD4sWpmSwMn52FMfXEA",
+                                     "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4")
+
+
+def test_priority_fee_levels_drop_unusable_values(rpc, fake_http):
+    levels = {"low": "12.5", "medium": None, "high": -1, "veryHigh": "nan", "unsafeMax": True, "x": "abc"}
+    fake_http.register(RPC_URL, {"jsonrpc": "2.0", "id": 1, "result": {"priorityFeeLevels": levels}})
+
+    assert rpc.priority_fee_levels() == {"low": 12.5}
+
+
+@pytest.mark.parametrize("result", [None, {}, {"priorityFeeEstimate": 5.0}, {"priorityFeeLevels": [1, 2]}])
+def test_priority_fee_levels_missing_raise_rpc_error(rpc, fake_http, result):
+    fake_http.register(RPC_URL, {"jsonrpc": "2.0", "id": 1, "result": result})
+
+    with pytest.raises(RpcError, match="priorityFeeLevels"):
+        rpc.priority_fee_levels()
+
+
+def test_priority_fee_levels_method_not_found_raises_rpc_error(rpc, fake_http):
+    fake_http.register(RPC_URL, {"jsonrpc": "2.0", "id": 1, "error": {"code": -32601, "message": "Method not found"}})
+
+    with pytest.raises(RpcError) as info:
+        rpc.priority_fee_levels()
+    assert info.value.code == -32601 and info.value.method == "getPriorityFeeEstimate"
+
+
+@pytest.mark.parametrize("url, helius", [
+    ("https://mainnet.helius-rpc.com/?api-key=abc", True),
+    ("https://MAINNET.HELIUS-RPC.COM", True),
+    ("https://staked.helius-rpc.com?api-key=abc", True),
+    ("https://rpc.helius.xyz/?api-key=abc", True),
+    ("https://api.mainnet-beta.solana.com", False),
+    ("https://example.com/?u=helius-rpc.com", False),  # only the host counts
+    ("https://helius-rpc.com.evil.example", False),
+    ("", False),
+])
+def test_is_helius_url(url, helius):
+    assert is_helius_url(url) is helius
 
 
 # --------------------------------------------------------------------------- live

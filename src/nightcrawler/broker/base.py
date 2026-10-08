@@ -20,6 +20,14 @@ Optional extras beyond the contract (all keyword-only, safe to ignore):
 quote (e.g. a looser cap so a stop-loss can still exit a thinning pool),
 ``execute(..., symbol="")`` labels the fill and ``execute(..., on_fill=None)``
 runs the caller's bookkeeping in the same ledger transaction as the fill.
+
+Token-account rent (ACC-8): both brokers book ``Fill.rent_lamports`` by ONE rule,
+:func:`token_rent_lamports`: the rent goes on the buy that opens the token account
+and is never refunded by a sell. Ultra's full-balance sell does not close the
+input token account (verified 2026-10-08 on a live ``/order``: the transaction
+closes only its temporary wSOL account), so the deposit stays locked in the empty
+account and a later buy of the same mint pays none. Only a separate CloseAccount
+transaction (not sent by this bot) would return it.
 """
 
 from __future__ import annotations
@@ -35,6 +43,7 @@ from nightcrawler.logging_setup import get_logger
 from nightcrawler.models import (
     LAMPORTS_PER_SOL,
     SOL_MINT,
+    TOKEN_ACCOUNT_RENT_LAMPORTS,
     Balances,
     Fill,
     Mode,
@@ -60,6 +69,7 @@ __all__ = [
     "swap_mints",
     "implied_sol_usd",
     "quote_summary",
+    "token_rent_lamports",
     "SolPriceCache",
     "UltraBrokerBase",
 ]
@@ -193,6 +203,20 @@ def implied_sol_usd(quote: Quote) -> float | None:
     if not usd or usd <= 0 or lamports <= 0:
         return None
     return usd / (lamports / LAMPORTS_PER_SOL)
+
+
+def token_rent_lamports(quote: Quote, *, account_open: bool) -> int:
+    """``Fill.rent_lamports`` for a swap of ``quote`` - the ONE rent rule of paper and live (ACC-8).
+
+    A buy into a token account that does not exist yet (``account_open`` False) pays what
+    Ultra reports the taker pays (``rentFeeLamports``; Token-2022 accounts cost more than
+    the 165-byte model), or :data:`~nightcrawler.models.TOKEN_ACCOUNT_RENT_LAMPORTS` when
+    Ultra could not tell (no taker). Anything else books 0 - in particular a sell, even of
+    everything: Ultra leaves the emptied account open, so nothing is refunded.
+    """
+    if quote.side != "buy" or account_open:
+        return 0
+    return quote.rent_fee_lamports if quote.rent_fee_lamports > 0 else TOKEN_ACCOUNT_RENT_LAMPORTS
 
 
 def quote_summary(quote: Quote) -> dict[str, Any]:

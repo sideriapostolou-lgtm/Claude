@@ -16,16 +16,27 @@ Rules (the contract):
 * Execute (no re-quote): reject if ``now - quote.quoted_at >
   QUOTE_MAX_AGE_S`` (``QuoteRejected("stale quote")``), or if the quote was
   not issued by this broker or was already executed (see ``broker.base``).
-  - BUY: require ``sol_lamports - SOL_RESERVE - NETWORK_FEE - rent(if new) >=
-    in_amount`` else ``InsufficientBalance``. Debit ``in_amount +
-    network_fee_lamports + rent`` where rent = ``TOKEN_ACCOUNT_RENT_LAMPORTS``
-    on the FIRST buy of a mint we do not currently hold (else 0). Credit
-    exactly ``quote.out_amount`` tokens.
-  - SELL: require token balance >= ``in_amount``. Debit tokens, credit
-    ``quote.out_amount`` lamports minus ``network_fee_lamports``; if the token
-    balance becomes 0, refund the locked rent (``Fill.rent_lamports`` negative).
-  - ``Fill``: ``mode="paper"``, ``signature=None``, ``fees_lamports =
-    NETWORK_FEE_SOL`` in lamports, ``platform_fee_bps = quote.fee_bps``,
+  - BUY: require ``sol_lamports - SOL_RESERVE - network fee - rent(if new) >=
+    in_amount`` else ``InsufficientBalance``. Debit ``in_amount + network fee +
+    rent`` where rent = :func:`~nightcrawler.broker.base.token_rent_lamports`
+    (the rule live books too): Ultra's ``rentFeeLamports`` or
+    ``TOKEN_ACCOUNT_RENT_LAMPORTS`` when the virtual wallet has no account for
+    the mint yet (no tokens and no rent locked), else 0. Credit the quote's
+    ``out_amount`` minus ``PAPER_SLIPPAGE_BPS``.
+  - SELL: require token balance >= ``in_amount``. Debit tokens, credit the
+    quote's ``out_amount`` (minus ``PAPER_SLIPPAGE_BPS``) minus the network fee.
+    NO rent refund, also on a full exit (``Fill.rent_lamports`` 0): like live,
+    where Ultra's sell leaves the emptied token account open, the deposit stays
+    locked in ``paper.rent`` and a later buy of that mint pays no new rent.
+  - Network fee: ``NETWORK_FEE_SOL`` is the FLOOR. When ``SOLANA_RPC_URL`` is a
+    Helius host and an ``rpc`` is given, Helius ``getPriorityFeeEstimate``
+    (PumpSwap + Jupiter program accounts, every level) is asked at most once per
+    :data:`PRIORITY_FEE_REFRESH_S`; the fee is its ``high`` level x
+    :data:`SWAP_COMPUTE_UNITS` + :data:`BASE_FEE_LAMPORTS`, never below the floor,
+    capped at :data:`MAX_PAPER_NETWORK_FEE_LAMPORTS`. Any error -> the floor
+    (until the next refresh).
+  - ``Fill``: ``mode="paper"``, ``signature=None``, ``fees_lamports`` = that
+    network fee, ``platform_fee_bps = quote.fee_bps``,
     ``price_impact_pct = quote.price_impact_pct``, ``sol_usd`` from
     :meth:`sol_price_usd` (falling back to the quote's own SOL valuation if
     the price feed is down), ``price_usd = effective_price_usd(...)``,
@@ -39,6 +50,7 @@ Rules (the contract):
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass, field
 from typing import Any, Callable
 
@@ -46,13 +58,13 @@ from nightcrawler.broker.base import (
     SOL_PRICE_TTL_S,
     InsufficientBalance,
     UltraBrokerBase,
+    token_rent_lamports,
 )
 from nightcrawler.clock import Clock
 from nightcrawler.config import Settings
 from nightcrawler.logging_setup import get_logger
 from nightcrawler.models import (
     LAMPORTS_PER_SOL,
-    TOKEN_ACCOUNT_RENT_LAMPORTS,
     Balances,
     Fill,
     Mode,
@@ -61,8 +73,10 @@ from nightcrawler.models import (
     Side,
     lamports_to_sol,
 )
+from nightcrawler.sources.solana_rpc import SWAP_FEE_ACCOUNT_KEYS, is_helius_url
 
-__all__ = ["PaperBroker", "SOL_PRICE_TTL_S", "paper_out_amount"]
+__all__ = ["PaperBroker", "SOL_PRICE_TTL_S", "paper_out_amount", "network_fee_from_priority",
+           "PRIORITY_FEE_REFRESH_S", "SWAP_COMPUTE_UNITS", "BASE_FEE_LAMPORTS", "MAX_PAPER_NETWORK_FEE_LAMPORTS"]
 
 log = get_logger(__name__)
 
@@ -72,9 +86,61 @@ KV_RENT = "paper.rent"
 KV_START_LAMPORTS = "paper.start_lamports"
 KV_START_SOL_USD = "paper.start_sol_usd"
 
+#: Helius priority fees are asked at most this often (seconds), also after an error.
+PRIORITY_FEE_REFRESH_S = 300.0
+#: The priority-fee level a paper swap pays (conservative: live lands most swaps for less).
+PRIORITY_FEE_LEVEL = "high"
+#: Compute units assumed per swap (Ultra/Jupiter swaps use roughly 150k-400k).
+SWAP_COMPUTE_UNITS = 300_000
+#: Solana base fee for the one signature of a swap.
+BASE_FEE_LAMPORTS = 5_000
+#: Sanity cap on an estimated paper fee (0.01 SOL, NETWORK_FEE_SOL's own upper bound).
+MAX_PAPER_NETWORK_FEE_LAMPORTS = 10_000_000
+
 
 def _sol(lamports: int) -> str:
     return f"{lamports_to_sol(lamports):.6f} SOL"
+
+
+def network_fee_from_priority(micro_lamports_per_cu: float) -> int:
+    """Network fee of one swap paying ``micro_lamports_per_cu`` for :data:`SWAP_COMPUTE_UNITS`
+    plus the base fee, rounded up, capped at :data:`MAX_PAPER_NETWORK_FEE_LAMPORTS`."""
+    fee = BASE_FEE_LAMPORTS + math.ceil(micro_lamports_per_cu * SWAP_COMPUTE_UNITS / 1_000_000)
+    return min(fee, MAX_PAPER_NETWORK_FEE_LAMPORTS)
+
+
+class _PaperNetworkFee:
+    """``NETWORK_FEE_SOL`` as a floor, raised to the Helius ``high`` priority-fee estimate (see module doc)."""
+
+    def __init__(self, settings: Settings, clock: Clock, rpc: Any | None) -> None:
+        self.settings = settings
+        self.clock = clock
+        self.rpc = rpc if rpc is not None and is_helius_url(settings.solana_rpc_url) else None
+        self._estimate: int | None = None
+        self._asked_at: float | None = None
+
+    def lamports(self) -> int:
+        floor = self.settings.network_fee_lamports
+        if self.rpc is None:
+            return floor
+        now = self.clock.now()
+        if self._asked_at is None or now - self._asked_at >= PRIORITY_FEE_REFRESH_S:
+            self._asked_at = now
+            self._estimate = self._ask()
+        return floor if self._estimate is None else max(floor, self._estimate)
+
+    def _ask(self) -> int | None:
+        try:
+            level = float(self.rpc.priority_fee_levels(SWAP_FEE_ACCOUNT_KEYS)[PRIORITY_FEE_LEVEL])
+            if not math.isfinite(level) or level < 0:
+                raise ValueError(f"unusable {PRIORITY_FEE_LEVEL} level {level!r}")
+        except Exception as exc:  # any failure: the NETWORK_FEE_SOL floor until the next refresh
+            log.warning("paper_priority_fee_unavailable error=%s: %s using=network_fee_sol", type(exc).__name__, exc)
+            return None
+        fee = network_fee_from_priority(level)
+        log.info("paper_priority_fee level=%s micro_lamports_per_cu=%.1f fee_lamports=%d floor_lamports=%d",
+                 PRIORITY_FEE_LEVEL, level, fee, self.settings.network_fee_lamports)
+        return fee
 
 
 def paper_out_amount(out_amount: int, slippage_bps: int) -> int:
@@ -108,10 +174,14 @@ class _PaperWallet:
     def as_balances(self) -> Balances:
         return Balances(sol_lamports=self.sol_lamports, tokens=dict(self.tokens))
 
-    def buy(self, mint: str, cost: int, received: int, fee: int, reserve: int) -> int:
-        """Spend ``cost`` + ``fee`` (+ rent for a new token account); return the rent charged."""
-        opens_account = self.tokens.get(mint, 0) == 0 and self.rent.get(mint, 0) == 0
-        rent = TOKEN_ACCOUNT_RENT_LAMPORTS if opens_account else 0
+    def has_account(self, mint: str) -> bool:
+        """True when the virtual wallet holds a token account for ``mint`` (tokens or locked rent)."""
+        return self.tokens.get(mint, 0) > 0 or self.rent.get(mint, 0) > 0
+
+    def buy(self, quote: Quote, received: int, fee: int, reserve: int) -> int:
+        """Spend ``in_amount`` + ``fee`` (+ rent when the buy opens the account); return the rent charged."""
+        mint, cost = quote.token_mint, quote.in_amount
+        rent = token_rent_lamports(quote, account_open=self.has_account(mint))
         needed = cost + fee + rent + reserve
         if self.sol_lamports < needed:
             raise InsufficientBalance(
@@ -120,26 +190,25 @@ class _PaperWallet:
         self.sol_lamports -= cost + fee + rent
         self.tokens[mint] = self.tokens.get(mint, 0) + received
         if rent:
-            self.rent[mint] = rent
+            self.rent[mint] = self.rent.get(mint, 0) + rent
         return rent
 
-    def sell(self, mint: str, amount: int, proceeds: int, fee: int) -> int:
-        """Sell ``amount`` tokens for ``proceeds`` minus ``fee``; return the rent refunded (full exit)."""
+    def sell(self, quote: Quote, proceeds: int, fee: int) -> int:
+        """Sell ``in_amount`` tokens for ``proceeds`` minus ``fee``; return the rent change (always 0:
+        like Ultra, a sell never closes the token account, so its rent stays locked in ``rent``)."""
+        mint, amount = quote.token_mint, quote.in_amount
         held = self.tokens.get(mint, 0)
         if held < amount:
             raise InsufficientBalance(f"need {amount} base units of {mint}, have {held}")
-        remaining = held - amount
-        refund = self.rent.get(mint, 0) if remaining == 0 else 0
-        new_sol = self.sol_lamports + proceeds - fee + refund
+        new_sol = self.sol_lamports + proceeds - fee
         if new_sol < 0:
             raise InsufficientBalance(f"not enough SOL for the network fee ({_sol(fee)})")
         self.sol_lamports = new_sol
-        if remaining:
-            self.tokens[mint] = remaining
+        if held - amount:
+            self.tokens[mint] = held - amount
         else:
             self.tokens.pop(mint, None)
-            self.rent.pop(mint, None)
-        return refund
+        return token_rent_lamports(quote, account_open=self.has_account(mint))
 
 
 class PaperBroker(UltraBrokerBase):
@@ -149,12 +218,19 @@ class PaperBroker(UltraBrokerBase):
     allow_insufficient_funds = True
 
     def __init__(self, jupiter: Any, ledger: Any, settings: Settings, clock: Clock,
-                 taker: str | None = None) -> None:
+                 taker: str | None = None, rpc: Any | None = None) -> None:
         """``jupiter``: :class:`~nightcrawler.sources.jupiter.JupiterClient`;
         ``ledger``: :class:`~nightcrawler.ledger.Ledger`; ``taker``: optional
-        bot wallet pubkey to quote with (more realistic routing)."""
+        bot wallet pubkey to quote with (more realistic routing); ``rpc``: optional
+        :class:`~nightcrawler.sources.solana_rpc.SolanaRpc` for live priority fees
+        (used only when ``SOLANA_RPC_URL`` is a Helius host)."""
         super().__init__(jupiter, ledger, settings, clock)
         self.taker = taker
+        self._network_fee = _PaperNetworkFee(settings, clock, rpc)
+
+    def network_fee_lamports(self) -> int:
+        """Network fee a paper swap pays now (``NETWORK_FEE_SOL`` floor, see the module rules)."""
+        return self._network_fee.lamports()
 
     def quote(self, side: Side, mint: str, amount_in: int, decimals: int, *,
               max_impact_pct: float | None = None) -> Quote:
@@ -169,16 +245,15 @@ class PaperBroker(UltraBrokerBase):
         swap (balances, fill, receipt) is rolled back and the error propagates."""
         ticket, sol_usd = self._prepare_execution(quote, position)
         self._ensure_wallet()
-        fee = self.settings.network_fee_lamports
+        fee = self.network_fee_lamports()
         received = paper_out_amount(quote.out_amount, self.settings.paper_slippage_bps)
         with self.ledger.transaction():
             wallet = _PaperWallet.load(self.ledger)
             if quote.side == "buy":
-                rent = wallet.buy(quote.token_mint, quote.in_amount, received, fee,
-                                  self.settings.sol_reserve_lamports)
+                rent = wallet.buy(quote, received, fee, self.settings.sol_reserve_lamports)
                 sol_lamports, token_amount = quote.in_amount, received
             else:
-                rent = -wallet.sell(quote.token_mint, quote.in_amount, received, fee)
+                rent = wallet.sell(quote, received, fee)
                 sol_lamports, token_amount = received, quote.in_amount
             fill = self._new_fill(quote, sol_lamports=sol_lamports, token_amount=token_amount,
                                   decimals=ticket.decimals, sol_usd=sol_usd, fees_lamports=fee,
