@@ -67,3 +67,24 @@ def test_chain_check_detects_phantom():
     t2 = dict(base, slot=3, x0=110, y0=910, x1=105, y1=950, is_buy=0)
     c = V.chain_check([t1, phantom, t2])
     assert c["pairs"] == 2 and c["chain_ok"] == 1
+
+
+def test_swapapi_amount_convention_per_trade(launch_fixture, launch_amm_fixture):
+    """net_swap_sol reproduces swap-api amountSol to the lamport on every tx-matched trade."""
+    n = 0
+    for fx in (launch_fixture, launch_amm_fixture):
+        idx = {}
+        for x in fx["swapapi"]["trades"]:
+            idx.setdefault((x["tx"], x["userAddress"], x["type"] == "buy"), []).append(x)
+        for t in _trades(fx):
+            xs = idx.get((t["tx"], t["user"], bool(t["is_buy"])))
+            if not xs:
+                continue
+            n += 1
+            a = float(xs[0]["amountSol"])
+            if t["venue"] == 1 and t["is_buy"] and not t["ix_name"]:
+                # fixture captured before raw.sql extracted ix_name for PumpSwap buys: either convention
+                assert min(abs(t["usol"] / 1e9 - a), abs(V.net_swap_sol(t) - a)) <= 2e-9
+            else:
+                assert abs(V.net_swap_sol(t) - a) <= 2e-9
+    assert n >= 240

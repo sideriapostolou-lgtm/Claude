@@ -281,8 +281,10 @@ class Backfill:
             if t1 - t0 > Q15:
                 mid = t0 + floor_to((t1 - t0) // 2, Q15)
                 log.warning("b2 %s timed out with %d pools; splitting time at %s", utc(t0), len(batch), utc(mid))
-                return (self._run_b2_part(hour, t0, mid, batch, st) and self._run_b2_part(hour, mid, t1, batch, st)
-                        and self._mark_pools(st, batch))
+                ok = self._run_b2_part(hour, t0, mid, batch, st) and self._run_b2_part(hour, mid, t1, batch, st)
+                if ok and (t0, t1) == (hour, hour + HOUR):
+                    self._mark_pools(st, batch)   # only the full hour marks pools done (nested splits resume)
+                return ok
             self._error("b2", key, "timeout at minimum chunk")
             return self._mark_pools(st, batch, error="timeout")
         except ResultTooLarge:
@@ -600,7 +602,12 @@ def main(argv=None) -> int:
                            {"min_wallet_usol": 50_000_000})
         elif args.phase == "P4":
             def non_factory(g):
-                return not (g.get("has_create") and (g["g_ts"] - g["c_ts"]) <= 5 and g.get("z_n_buyers", 0) <= 3)
+                # instant graduates (bought out within 5 s of creation, alone or as a bundle) are the factory class
+                if g.get("is_mayhem") or (g.get("rsol_complete") or 0) < 80:
+                    return False            # Mayhem: not tradeable
+                if g.get("pool_quote_mint") != "So11111111111111111111111111111111111111112":
+                    return False            # non-SOL quote: not tradeable
+                return not (g.get("has_create") and (g["g_ts"] - g["c_ts"]) <= 5)
             bf.run_windows("raw", "b1", bf.coin_windows(120 * 60, non_factory), args.raw_batch,
                            {"min_usol": 10_000_000, "max_trades": 20000})
     except CHError as e:

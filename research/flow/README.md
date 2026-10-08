@@ -38,7 +38,8 @@ python research/flow/backfill.py --phase P2 --days 21 --out $FLOW
 # P3: B3 wallet summaries for every graduate found by P1/P2.
 python research/flow/backfill.py --phase P3 --out $FLOW [--b3-batch 12]
 
-# P4: B1 raw non-dust trades (>= 0.01 SOL), [created, g + 120 min], for non-factory coins.
+# P4: B1 raw non-dust trades (>= 0.01 SOL), [created, g + 120 min], for tradeable non-factory coins
+#     (SOL-quoted, not Mayhem, graduated more than 5 s after creation).
 python research/flow/backfill.py --phase P4 --out $FLOW [--raw-batch 6]
 
 # Rebuild the Parquet tables from the raw chunks. Offline; no queries.
@@ -152,9 +153,19 @@ removed).
 | `agent_known_at` | The AGENT's 4th buy. **Do not use the AGENT role before this time.** |
 | `grad_delay_s` | As in `graduates.parquet`. |
 
-**AGENT rule (PLAN §3.2).** A pool wallet with ≥ 4 buys in [g, g + 330 s), no sells, a median gap of
-11-13 s and a gap coefficient of variation < 0.15. `b2.sql` only pre-filters candidates (≥ 2 buys, no
-sells, median gap 9-15 s); `features.detect_agent` applies the rule after merging the chunks.
+**AGENT rule.** A pool wallet with ≥ 4 buys in [g, g + 330 s), no sells, a median gap of 11-13 s, and
+**≥ 60% of gaps within 10-14 s**.
+
+- **Why not the PLAN's rule.** PLAN §3.2 asks for a gap coefficient of variation < 0.15. On real data one
+  skipped 12 s slice creates a 24 s gap and pushes the CV to 0.2-0.4, so the PLAN's rule missed 26% of BOOST
+  agents on the census night. `b2_coins.agent_plan_rule` records whether the PLAN's rule also matched.
+- **Server and offline split.** `b2.sql` only pre-filters candidates (≥ 2 buys, no sells, median gap
+  9-15 s). `features.detect_agent` applies the rule after merging the chunks.
+- **Observed on 2026-10-07/08 census coins** (SOL-quoted, not Mayhem, `boost_mode = COMPLETED`): present on
+  100%; **28 slices** (p10-p90 25-28, not 25); **16.2 SOL** (p10-p90 15.2-16.7); first buy ~2 s after g;
+  gap 12.0 s.
+- **Expect revision.** The candidate window stops at g + 330 s. If later data shows more than 28 slices,
+  widen `g_ts + 330` in `b2.sql` (BOOST may run past 330 s).
 
 ### `b3_positions.parquet`: one row per (wallet, coin) with ≥ 0.05 SOL of volume (`sql/b3.sql`)
 
@@ -297,7 +308,16 @@ These tables are storage, not features.
 
 ### 9. Conventions
 
-- `usol` is user-side SOL. swap-api's `amountSol` excludes fees on buys, about 1.0-1.25% less.
+- `usol` is user-side SOL. swap-api's `amountSol` mixes conventions by instruction. We measured this on
+  24k trades matched by transaction:
+
+  | swap-api trade | `amountSol` equals |
+  |---|---|
+  | PumpSwap sells and `buy` instructions | User-side SOL (our `usol`) |
+  | PumpSwap `buy_exact_quote_in` (and `_v2`) | Net of all fees (`usol − pfee − cfee − lp_fee`) |
+  | Curve buys and sells | The curve's `sol_amount`: fees excluded on buys, included on sells |
+
+  `validate.net_swap_sol` converts trade by trade. Mixing conventions shifts SOL totals by ~1.1-1.25%.
 - Prices are in SOL. Join minute SOL/USD (`LAB/sol_usd.json`, or Coinbase/Binance klines) for USD.
 - **Non-SOL-quoted coins:** check `pool_quote_mint`. Their prices are in quote units; exclude them, as
   the lab does.

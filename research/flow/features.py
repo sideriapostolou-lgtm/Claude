@@ -167,3 +167,36 @@ def top_share(top: list | None, total: float | None, k: int = 5, exclude: str | 
     vals = [t[1] for t in top if t[0] != exclude]
     tot = total - sum(t[1] for t in top if t[0] == exclude)
     return sum(sorted(vals, reverse=True)[:k]) / tot if tot > 0 else None
+
+
+def b2_minute_arrays(bars: list[dict], g_ts: int, n_minutes: int = 181) -> dict[str, list]:
+    """Dense per-minute arrays for one coin (PLAN 6.1 B2 shape): index i = clock minute floor(g/60)*60 + 60*i.
+
+    Index 0 is the (partial) graduation minute. Flow fields are 0 for minutes without trades; ``close``,
+    ``x_close`` and ``y_close`` are carried forward (an AMM price does not move without trades) and are None
+    before the first trade. Only minutes that ENDED before a decision time may be used for it.
+    """
+    m0 = (int(g_ts) // 60) * 60
+    flow = ("n_buys", "n_sells", "n_dust", "buy_sol", "sell_sol", "buy_tok", "sell_tok", "n_buyers", "n_sellers",
+            "top5_buy_sol", "agent_buy_sol")
+    out: dict[str, list] = {k: [0] * n_minutes for k in flow}
+    for k in ("open", "high", "low", "close", "x_close", "y_close"):
+        out[k] = [None] * n_minutes
+    out["minute_ts"] = [m0 + 60 * i for i in range(n_minutes)]
+    for b in bars:
+        i = (int(b["minute_ts"]) - m0) // 60
+        if 0 <= i < n_minutes:
+            for k in flow:
+                out[k][i] = b.get(k, 0) or 0
+            for k in ("open", "high", "low", "close", "x_close", "y_close"):
+                out[k][i] = b.get(k)
+    last = {k: None for k in ("close", "x_close", "y_close")}
+    for i in range(n_minutes):
+        for k in last:
+            if out[k][i] is None:
+                out[k][i] = last[k]
+            else:
+                last[k] = out[k][i]
+        if out["open"][i] is None and last["close"] is not None:
+            out["open"][i] = out["high"][i] = out["low"][i] = out["close"][i]
+    return out

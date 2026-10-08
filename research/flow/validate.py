@@ -116,10 +116,16 @@ def ordering_check(ours: list[dict], theirs: list[dict]) -> dict:
 
 
 def net_swap_sol(t: dict) -> float:
-    """SOL in swap-api's convention: buys net of all fees, sells as received by the user."""
-    if t["is_buy"]:
+    """SOL in swap-api's ``amountSol`` convention, measured on 24k tx-matched trades (2026-10-08).
+
+    PumpSwap: sells and 'buy' instructions = user-side SOL; other buys (buy_exact_quote_in, ...) = net of
+    all fees. Curve: buys and sells = the curve's sol_amount (fees excluded on buys, included on sells).
+    """
+    if t["venue"] == 1:
+        if not t["is_buy"] or t.get("ix_name") == "buy":
+            return t["usol"] / 1e9
         return (t["usol"] - t["pfee"] - t["cfee"] - t["lp_fee"]) / 1e9
-    return t["usol"] / 1e9
+    return t["qamt"] / 1e9
 
 
 def cross_source_minutes(minutes: list, sw: dict, c0: int) -> list[dict]:
@@ -137,6 +143,11 @@ def cross_source_minutes(minutes: list, sw: dict, c0: int) -> list[dict]:
 
 
 # ----------------------------------------------------------------------------------------------
+
+
+def _q(xs: list[float]) -> list[float] | None:
+    xs = sorted(xs)
+    return [xs[len(xs) // 2], xs[min(len(xs) - 1, int(len(xs) * 0.99))]] if xs else None
 
 
 def load_launch_sample() -> list[dict]:
@@ -260,35 +271,42 @@ def run(out: Path, max_hours: int, ch: CryptoHouse | None) -> dict:
         # raw.sql minutes are relative to ts_lo = c0; the per-minute totals are never truncated but are
         # user-side SOL. Convert buys to the net-of-fee convention with the per-trade sample when complete.
         full = not r["truncated"]
-        for mi, venue, n, nb, bs, ss in r["minutes"]:
+        for m7 in r["minutes"]:
+            mi, venue, n, nb, bs, ss = m7[:6]
             mins[mi]["n"] += n
             mins[mi]["sell"] += ss / 1e9
             mins[mi]["buy_user"] = mins[mi].get("buy_user", 0.0) + bs / 1e9
+            if len(m7) > 6:   # server-side swap-api convention total (buys + sells), exact for every coin
+                mins[mi]["sw_total"] = mins[mi].get("sw_total", 0.0) + m7[6] / 1e9
         if full:
             for k in mins:
-                mins[k]["buy"] = 0.0
+                mins[k]["sw_total_trades"] = 0.0
             for t in r["trades"]:
                 mi = (t["ts"] - c0) // 60
-                if t["is_buy"]:
-                    mins[mi]["buy"] += net_swap_sol(t)
+                mins[mi]["sw_total_trades"] = mins[mi].get("sw_total_trades", 0.0) + net_swap_sol(t)
         for w in cross_source_minutes(r["minutes"], s["sw"], c0):
             mi = int(w["window"])
-            ours = mins.get(mi, {"n": 0, "buy": 0.0, "sell": 0.0, "buy_user": 0.0})
-            buy_ours = ours["buy"] if full else ours.get("buy_user", 0.0) / 1.0125
+            ours = mins.get(mi, {"n": 0, "sell": 0.0, "buy_user": 0.0})
+            if "sw_total" in ours:
+                total, exact = ours["sw_total"], True
+            elif full:
+                total, exact = ours.get("sw_total_trades", 0.0), True
+            else:   # old cache without the server-side total: approximate
+                total, exact = ours.get("buy_user", 0.0) / 1.0125 + ours["sell"], False
             rows3.append({"mint": m, "minute": mi, "ch_n": ours["n"], "sw_n": w["sw_n"],
-                          "ch_buy": buy_ours, "sw_buy": w["sw_buy"], "ch_sell": ours["sell"], "sw_sell": w["sw_sell"],
-                          "buy_exact": full})
+                          "ch_sol": total, "sw_sol": w["sw_buy"] + w["sw_sell"], "sol_exact": exact})
     def within(a, b, tol):
         return abs(a - b) <= tol * max(abs(b), 1e-9) or abs(a - b) < 1e-6
     ok_n = sum(1 for x in rows3 if within(x["ch_n"], x["sw_n"], 0.02))
-    ok_sol = sum(1 for x in rows3 if within(x["ch_buy"] + x["ch_sell"], x["sw_buy"] + x["sw_sell"], 0.01))
-    ok_both = sum(1 for x in rows3 if within(x["ch_n"], x["sw_n"], 0.02)
-                  and within(x["ch_buy"] + x["ch_sell"], x["sw_buy"] + x["sw_sell"], 0.01))
+    ok_sol = sum(1 for x in rows3 if within(x["ch_sol"], x["sw_sol"], 0.01))
+    ok_both = sum(1 for x in rows3 if within(x["ch_n"], x["sw_n"], 0.02) and within(x["ch_sol"], x["sw_sol"], 0.01))
     res["V3"] = {"coins": len(raw), "coin_windows": len(rows3), "count_within_2pct": ok_n, "sol_within_1pct": ok_sol,
                  "both": ok_both, "exact_count_match": sum(1 for x in rows3 if x["ch_n"] == x["sw_n"]),
                  "share_both": ok_both / len(rows3) if rows3 else None,
+                 "sol_exact_rows": sum(1 for x in rows3 if x["sol_exact"]),
+                 "sol_rel_err_p50_p99": _q([abs(x["ch_sol"] - x["sw_sol"]) / max(x["sw_sol"], 1e-9) for x in rows3]),
                  "pass": bool(rows3) and ok_both / len(rows3) >= 0.95,
-                 "worst": sorted(rows3, key=lambda x: -abs(x["ch_n"] - x["sw_n"]))[:5]}
+                 "worst": sorted(rows3, key=lambda x: -abs(x["ch_sol"] - x["sw_sol"]) / max(x["sw_sol"], 1e-9))[:5]}
 
     # ---- V4 ordering ------------------------------------------------------------------------------------
     o_same = o_agree = o_matched = 0
@@ -412,7 +430,8 @@ def write_report(out: Path, res: dict) -> None:
     if v:
         L.append(f"| V3 cross-source vs swap-api launch sample | {pf(v['pass'])} | {v['coins']} coins, {v['coin_windows']} coin-minutes: "
                  f"count within 2% on {v['count_within_2pct']}, SOL within 1% on {v['sol_within_1pct']}, both on {v['both']} "
-                 f"({(v['share_both'] or 0):.1%}); exact count match {v['exact_count_match']} |")
+                 f"({(v['share_both'] or 0):.1%}); exact count match {v['exact_count_match']}; SOL relative error p50/p99 "
+                 f"{v['sol_rel_err_p50_p99']}; exact SOL convention on {v['sol_exact_rows']} rows |")
     v = res.get("V4", {})
     if v:
         L.append(f"| V4 intra-slot order vs slotIndexId | {pf(v['pass'])} | {v['agree']}/{v['same_slot_pairs']} same-slot pairs agree "
@@ -444,16 +463,29 @@ def write_report(out: Path, res: dict) -> None:
               f"- CryptoHouse graduates created inside the census window: {v['cryptohouse_graduates_created_in_census_window']}."]
     v = res.get("V3", {})
     if v and v.get("worst"):
-        L += ["", "Worst V3 coin-minutes (count gap):", ""]
+        L += ["", "Worst V3 coin-minutes (SOL gap):", ""]
         for w in v["worst"]:
-            L.append(f"- `{w['mint'][:10]}` minute {w['minute']}: n {w['ch_n']} vs {w['sw_n']}, SOL {w['ch_buy'] + w['ch_sell']:.3f} vs "
-                     f"{w['sw_buy'] + w['sw_sell']:.3f}")
+            L.append(f"- `{w['mint'][:10]}` minute {w['minute']}: n {w['ch_n']} vs {w['sw_n']}, SOL {w['ch_sol']:.3f} vs "
+                     f"{w['sw_sol']:.3f}")
+    lc = out / "layout_check_sep16.json"
+    if lc.exists():
+        j = json.loads(lc.read_text())
+        L += ["", "## Layout check at the start of U_ext (2026-09-16)", "",
+              f"Window {j['window']}. Same offsets decode correctly:",
+              f"- PumpSwap Buy: {j['amm_buy']['n']} events, base58 length {j['amm_buy']['len_chars']}; virtual quote reserve "
+              f"present (median {j['amm_buy']['virt_median_lamports'] / 1e9:.4f} SOL).",
+              f"- PumpSwap Sell: {j['amm_sell']['n']} events, length {j['amm_sell']['len_chars']} ({j['amm_sell']['note']}).",
+              f"- Curve TradeEvent: {j['curve_trade']['n']} events, length {j['curve_trade']['len_chars']}; virtual - real SOL = 30 SOL on "
+              f"{j['curve_trade']['vsol_minus_rsol_eq_30SOL']} (the rest are Mayhem / non-standard curves).",
+              f"- CreateEvent: {j['curve_create']['vsol0_30SOL_and_native_quote']}/{j['curve_create']['n']} with 30 SOL virtual and native-SOL quote; "
+              f"CreatePool with WSOL {j['create_pool']['wsol_side']}/{j['create_pool']['n']}; CompleteEvent length {j['complete']['len_chars']}."]
     L += ["", "## Notes", "",
           "- Failed transactions: `solana.instructions` keeps inner instructions (and so events) of failed transactions. "
           "All templates keep only `transactions_non_voting.err = ''`; without that filter 2.6-4.4 % of PumpSwap events and "
           "~0.7 % of curve trades on 2026-10-08 would be phantom trades.",
           "- SOL convention: our `usol` is what the user paid (buys, fees included) or received (sells). swap-api's `amountSol` "
-          "is net of fees on buys; V3 converts ours to that convention before comparing.",
+          "mixes conventions by instruction (PumpSwap sells and `buy` = user-side; `buy_exact_quote_in` = net of fees; curve = "
+          "curve amount, fees excluded on buys and included on sells); V3 converts ours to that convention trade by trade.",
           "- PumpSwap price: the AMM prices with `x + virt` where `virt` is a virtual quote reserve (~17.58 SOL on 2026-10 migration "
           "pools) carried only by Buy events (u64 at byte 446 + len(ix_name)). Price = (x + virt) / y. Ignoring it under-prices "
           "fresh pools by ~7 %. It also explains the lab's 17.6 SOL 'floor' market cap.",

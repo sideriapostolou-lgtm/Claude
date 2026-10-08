@@ -76,14 +76,20 @@ tr AS (
 ),
 packed AS (
   SELECT mint, count() AS n_trades, n_trades > $max_trades AS truncated,
-    -- per-minute totals over ALL trades (never truncated): (minute since ts_lo, venue, n, n_buys, buy_usol, sell_usol)
-    groupArray((toUInt32(intDiv(ts - ts_lo, 60)), venue, toUInt8(is_buy), usol)) AS mv,
+    -- per-minute totals over ALL trades (never truncated):
+    -- (minute since ts_lo, venue, n, n_buys, buy_usol, sell_usol, swapapi_convention_sol)
+    -- swap-api's amountSol convention (measured on 24k tx-matched trades, 2026-10-08): PumpSwap sells and
+    -- 'buy' instructions = user-side SOL; other PumpSwap buys = net of fees; curve buys and sells = curve amount
+    groupArray((toUInt32(intDiv(ts - ts_lo, 60)), venue, toUInt8(is_buy), usol,
+                multiIf(venue = 1 AND NOT is_buy, usol, venue = 1 AND ix_name = 'buy', usol,
+                        venue = 1, toUInt64(usol - least(usol, pfee + cfee + lp_fee)), qamt))) AS mv,
     arrayDistinct(arrayMap(x -> (x.1, x.2), mv)) AS mk,
     arraySort(arrayMap(k -> (k.1, k.2,
         length(arrayFilter(x -> x.1 = k.1 AND x.2 = k.2, mv)),
         length(arrayFilter(x -> x.1 = k.1 AND x.2 = k.2 AND x.3 = 1, mv)),
         arraySum(arrayMap(x -> if(x.1 = k.1 AND x.2 = k.2 AND x.3 = 1, x.4, 0), mv)),
-        arraySum(arrayMap(x -> if(x.1 = k.1 AND x.2 = k.2 AND x.3 = 0, x.4, 0), mv))), mk)) AS minutes,
+        arraySum(arrayMap(x -> if(x.1 = k.1 AND x.2 = k.2 AND x.3 = 0, x.4, 0), mv)),
+        arraySum(arrayMap(x -> if(x.1 = k.1 AND x.2 = k.2, x.5, 0), mv))), mk)) AS minutes,
     arraySlice(arraySort(x -> (x.1, x.2, x.3, x.4), groupArray((slot, tx_idx, pix, ix, ts, tx, venue, toUInt8(is_buy),
         base58Encode(user_b), usol, tok, x0, y0, x1, y1, qamt, lp_fee, pfee, cfee, ix_name, virt))), 1, $max_trades) AS trades
   FROM tr

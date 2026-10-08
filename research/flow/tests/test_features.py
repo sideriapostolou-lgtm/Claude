@@ -71,3 +71,17 @@ def test_top_share_excludes_agent():
     top = [["a", 50.0, 0], ["agent", 10.0, 0], ["b", 20.0, 0]]
     assert F.top_share(top, 100.0, k=5) == pytest.approx(0.8)
     assert F.top_share(top, 100.0, k=5, exclude="agent") == pytest.approx(70 / 90)
+
+
+def test_b2_minute_arrays_dense_and_carried(ch_events):
+    row = ch_events["b2_rows"][0]
+    bars = F.bars_to_dicts(row["bars"])
+    arr = F.b2_minute_arrays(bars, row["g_ts"], n_minutes=181)
+    assert len(arr["close"]) == 181 and arr["minute_ts"][0] == (row["g_ts"] // 60) * 60
+    first = (bars[0]["minute_ts"] - arr["minute_ts"][0]) // 60
+    assert arr["close"][first] == bars[0]["close"]
+    # after the last bar the price is carried forward and flows are zero
+    last = (bars[-1]["minute_ts"] - arr["minute_ts"][0]) // 60
+    if last + 1 < 181:
+        assert arr["close"][last + 1] == bars[-1]["close"] and arr["n_buys"][last + 1] == 0
+    assert sum(arr["n_buys"]) == sum(b["n_buys"] for b in bars if 0 <= (b["minute_ts"] - arr["minute_ts"][0]) // 60 < 181)
