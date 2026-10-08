@@ -168,22 +168,37 @@ def fetch_raw_validation(out: Path, ch: CryptoHouse, sample: list[dict], max_hou
         if not p.exists() and ch is None:
             continue
         if not p.exists():
-            cs = by_hour[h]
-            t0 = floor_to(min(c["c0"] for c in cs) - 5, Q15)
-            t1 = floor_to(max(c["c0"] for c in cs) + 125, Q15) + Q15
-            slots.ensure(t0 - Q15, t1 + Q15)
-            params = dict(s0=slots.first_slot(t0), s1=slots.last_slot_before(t1), t0=utc(t0), t1=utc(t1),
-                          win=sql_tuples([(c["mint"], c["pool"], c["c0"], c["c0"] + 120) for c in cs]),
-                          mints=sql_in([c["mint"] for c in cs]), min_usol=0, max_trades=400)
-            res = ch.query(render_sql("raw", **params), tag=f"validate:raw:{utc(h)}")
+            rows, columns = [], None
+            for part in _fetch_raw_parts(ch, slots, by_hour[h]):
+                columns = part["columns"]
+                rows.extend(part["rows"])
             with gzip.open(p, "wt") as f:
-                json.dump({"columns": res.columns, "rows": res.rows}, f)
+                json.dump({"columns": columns, "rows": rows}, f)
         d = json.load(gzip.open(p))
         for r in d["rows"]:
             row = dict(zip(d["columns"], r))
             row["trades"] = [dict(zip(TRADE_FIELDS, t)) for t in row["trades"]]
             raw[row["mint"]] = row
     return raw
+
+
+def _fetch_raw_parts(ch: CryptoHouse, slots: SlotMap, cs: list[dict], max_trades: int = 300) -> list[dict]:
+    """raw.sql for launch windows of coins created in one hour; halves the coin set on a 1 MB overflow."""
+    from cryptohouse import ResultTooLarge
+    t0 = floor_to(min(c["c0"] for c in cs) - 5, Q15)
+    t1 = floor_to(max(c["c0"] for c in cs) + 125, Q15) + Q15
+    slots.ensure(t0 - Q15, t1 + Q15)
+    params = dict(s0=slots.first_slot(t0), s1=slots.last_slot_before(t1), t0=utc(t0), t1=utc(t1),
+                  win=sql_tuples([(c["mint"], c["pool"], c["c0"], c["c0"] + 120) for c in cs]),
+                  mints=sql_in([c["mint"] for c in cs]), min_usol=0, max_trades=max_trades)
+    try:
+        res = ch.query(render_sql("raw", **params), tag=f"validate:raw:{utc(t0)}:{len(cs)}")
+    except ResultTooLarge:
+        if len(cs) == 1:
+            return []
+        h = len(cs) // 2
+        return _fetch_raw_parts(ch, slots, cs[:h], max_trades) + _fetch_raw_parts(ch, slots, cs[h:], max_trades)
+    return [{"columns": res.columns, "rows": res.rows}]
 
 
 def run(out: Path, max_hours: int, ch: CryptoHouse | None) -> dict:

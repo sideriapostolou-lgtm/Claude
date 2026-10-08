@@ -4,8 +4,9 @@
 --         mints (token_transfers prefilter), min_wallet_usol (lamports; wallets whose buy + sell volume is
 --         below it are dropped but counted in n_dust_wallets).
 -- Successful transactions only, curve and PumpSwap combined, ordered by (slot, tx_idx, parent_index, index).
--- Each wallet tuple:
---   (wallet, n_buys, n_sells, buy_sol, sell_sol, buy_tok, sell_tok, curve_buy_sol, curve_sell_sol,
+-- Each wallet tuple (wallet_h = cityHash64 of the raw 32-byte key, stable across queries; the base58 address
+-- is included only for wallets that bought >= 0.5 SOL, to keep results under the 1 MB cap):
+--   (wallet_h, wallet, n_buys, n_sells, buy_sol, sell_sol, buy_tok, sell_tok, curve_buy_sol, curve_sell_sol,
 --    first_ts, last_ts, first_buy_ts, last_sell_ts, peak_tok, end_tok, orphan_tok, n_sell_before_buy)
 -- SOL user-side (fees in for buys, out for sells); tokens whole; peak/end position from the ordered
 -- running sum of signed tokens; orphan_tok = tokens sold beyond the wallet's holding at that moment
@@ -74,7 +75,8 @@ wc AS (
 SELECT mint,
   count() AS n_wallets,
   countIf(bs + ss < $min_wallet_usol) AS n_dust_wallets,
-  arrayMap(x -> (base58Encode(x.1), x.2, x.3, toFloat32(x.4 / 1e9), toFloat32(x.5 / 1e9), toFloat32(x.6 / 1e6), toFloat32(x.7 / 1e6),
+  arrayMap(x -> (cityHash64(x.1), if(x.4 >= 500000000, base58Encode(x.1), ''), x.2, x.3,
+                 toFloat32(x.4 / 1e9), toFloat32(x.5 / 1e9), toFloat32(x.6 / 1e6), toFloat32(x.7 / 1e6),
                  toFloat32(x.8 / 1e9), toFloat32(x.9 / 1e9), x.10, x.11, x.12, x.13,
                  toFloat32(x.14 / 1e6), toFloat32(x.15 / 1e6), toFloat32(x.16 / 1e6), x.17),
     groupArrayIf((user_b, toUInt32(nb), toUInt32(ns), bs, ss, bt, st, cbs, css, t_first, t_last, t_fbuy, t_lsell, peak, endp, orphan, toUInt32(n_sell_wo_hold)),

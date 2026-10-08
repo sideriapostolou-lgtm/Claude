@@ -524,7 +524,7 @@ def consolidate(out: Path) -> dict:
         pq.write_table(pa.Table.from_pylist(coin_rows), out / "b2_coins.parquet", compression="zstd")
     # B3 wallets (long format)
     wrows = []
-    wf = ("wallet", "n_buys", "n_sells", "buy_sol", "sell_sol", "buy_tok", "sell_tok", "curve_buy_sol",
+    wf = ("wallet_h", "wallet", "n_buys", "n_sells", "buy_sol", "sell_sol", "buy_tok", "sell_tok", "curve_buy_sol",
           "curve_sell_sol", "first_ts", "last_ts", "first_buy_ts", "last_sell_ts", "peak_tok", "end_tok",
           "orphan_tok", "n_sell_without_holding")
     for ch in store.load_chunks("b3"):
@@ -570,6 +570,7 @@ def main(argv=None) -> int:
     ap.add_argument("--no-census-first", action="store_true")
     ap.add_argument("--consolidate", action="store_true", help="build Parquet tables from raw chunks (offline)")
     ap.add_argument("--b3-batch", type=int, default=12)
+    ap.add_argument("--b3-horizon-min", type=int, default=60, help="B3 window = [created, g + this]")
     ap.add_argument("--raw-batch", type=int, default=6)
     args = ap.parse_args(argv)
 
@@ -590,7 +591,8 @@ def main(argv=None) -> int:
             days = args.days if args.phase == "P1" else max(args.days, 21)
             bf.p1(days, now_limit, census_first=not args.no_census_first)
         elif args.phase == "P3":
-            bf.run_windows("b3", "b3", bf.coin_windows(HORIZON_S), args.b3_batch, {"min_wallet_usol": 10_000_000})
+            bf.run_windows("b3", "b3", bf.coin_windows(args.b3_horizon_min * 60), args.b3_batch,
+                           {"min_wallet_usol": 10_000_000})
         elif args.phase == "P4":
             def non_factory(g):
                 return not (g.get("has_create") and (g["g_ts"] - g["c_ts"]) <= 5 and g.get("z_n_buyers", 0) <= 3)
