@@ -363,3 +363,244 @@ above 0.
   - `test_results.json`, with every TEST trade, variant and gate
   - `test_run.log`
   - `TEST_PASS_STARTED`
+
+---
+
+## Audit - independent re-check of the "no winner" verdict
+
+Audited 2026-10-08, 20:40-21:50 UTC, after the judge's TEST pass. The auditor changed nothing the judge froze,
+re-tuned or re-selected nothing on TEST, and did not touch `src/` or `tests/`. New code is in
+`research/lab/audit/`; new data is in `LAB/audit/`. The auditor committed nothing. An automatic "wip: research
+progress snapshot" job on this branch commits `research/` from time to time and has picked up the audit code.
+
+**Audit verdict: CONFIRMED.** The "no winner" verdict stands, and no harness bug hides an edge. The only
+material bias I found runs the other way: the backtest's default stop fill makes rug losses look about half as
+bad as they really are. Replayed swap by swap, the closest finalist (F4-#1) lost about **17-18% per trade on
+TEST, not 5%**, and would have taken the $100 to about **$61, not $85**.
+
+### Plain-English summary
+
+- **The backtest engine does what it says.** I rewrote F4-#1 from scratch without the lab's engine, feature
+  code or cost code. It produced exactly the judge's trades: 12 of 12 on TEST, 24 of 24 on VALIDATION, and
+  3 of 3 for F4-#2, with returns equal to within 0.0005 percentage points. On all 10,693 scored VALIDATION
+  rows, its model scores equal the lab's saved scores exactly (maximum difference 0.0).
+- **Real trade-by-trade prices make it worse, not better.** I downloaded all 274,857 swaps around the 36
+  F4-#1 trades on VALIDATION and TEST and replayed the strategy on them.
+  - **The wins are real.** Every take-profit filled at +26% on the real swaps too, and buying 1-5 seconds after
+    the signal cost only about 0.2% extra (at most 0.9%).
+  - **The losses are much bigger than the backtest books.** Every rug (4 on TEST, 5 on VALIDATION) was **one
+    single sell transaction** of $21k-$30k that dropped the price 86-93% in one swap. No stop-loss can sell in
+    between, because no price in between ever existed. The backtest booked these at -51% to -59%; the real
+    outcome is -84% to -97%.
+  - None of the 9 rug sells came from the coin's creator wallet, so a "watch the creator" alarm would not have
+    caught them.
+- **Costs are not what kills it.** Live Jupiter Ultra quotes on 7 coins trading at the strategy's market cap
+  ($350k-$770k) gave a $20 round trip of 0.4-2.5% (median 2.2%). The cost model says 2.3-2.5%, so it is accurate
+  to slightly cautious. With the measured costs TEST is still -4.6% per trade with the backtest's fills; with
+  **zero** costs it is -2.6%.
+- **Nothing else rescues it.** Entering 1-2 minutes later, missing 30% of entries, removing the top 5 coins and
+  splitting by hour or market cap all leave TEST negative. The only variant that turns TEST positive assumes you
+  can sell a rug at your stop price, and the swap data shows you cannot.
+- **For your $100:** with realistic fills, this "best" strategy lost about 39% of the account in the 4.5-hour
+  test window. Across VALIDATION and TEST together (36 trades) it averages about -1.5% per trade, which is
+  no edge. Do not trade it.
+
+### A1. Code audit (`harness.py`, `costs.py`, `strategies/f4-learned.py`, `f4_learned_search.py`, `fetch.py`)
+
+The lab's own 50 harness and cost tests pass.
+
+| Check | Result |
+|---|---|
+| Strategy sees only bars 0..i | Clean. `View` slices every array to i. The auditor's features, built row by row from `bars[:i+1]` only, reproduce every decision. The judge's `audit_lookahead` on TEST is clean. |
+| Outcome-only fields as inputs | None in the F4 path or the harness. `coverage.source` is used only for the universe filter (it drops the one 5-minute-bar coin). `cost.k_now` is used only for Mayhem / non-SOL coins, which are excluded. |
+| Feature normalisation | No lookahead. The GBT needs no scaling; the logistic model's scaler is fit inside each TRAIN fold. The thresholds are TRAIN out-of-fold quantiles, frozen as numbers. |
+| Split leakage | None into TEST. One flattering detail for TRAIN only: the out-of-fold TRAIN scores come from fold models that were also trained on *later* TRAIN blocks. This inflates the +14% TRAIN number, not VALIDATION or TEST. |
+| SOL/USD lookup | Small lookahead: `SolUsd.at(t)` returns the close of the SOL minute that *starts* at t, up to 60 s in the future. It feeds the market-cap-in-SOL feature, the gate and the fee tier. Using only closed SOL minutes gives the same F4-#1 signals on TEST (12 of 12) and VALIDATION (24 of 24), with returns within 0.001 pp (`audit/sol_lag.py`). Harmless here, but it should be fixed. |
+| "Next open" fills | Correct as coded. However, swap-api's bar open equals the previous close on 99.99% of real bars (28,179 of 28,181 checked), so the "next open" fill is the price at the decision moment. Real swaps 2 s later were on average 0.2% higher (range -0.15% to +0.87%, 35 trades). This is a small optimism. |
+| Synthetic candles | No effect. All 36 F4-#1 entry and exit bars on VALIDATION and TEST were real trading minutes (at least $787 of volume). Flat filler bars cannot trigger a stop or a take-profit. |
+| Fills at prices that never traded | **Yes, on rug stops, in the strategy's favour.** In all 4 TEST rug exits, not one swap printed between the stop level and the post-rug price. The "half" fill ($232k-$290k market cap) never existed. On NVIDIA's ordinary stop, 4 swaps did trade in that range. Take-profit fills at the level are confirmed by swaps; the "half" take-profit rule never bound on a TEST trade. |
+| Costs | The fee tiers match the saved pump.fun fee page, re-typed independently. All 70 live Ultra quotes reported `feeBps` 10. The impact model (k = 84.99 SOL x 206.9M tokens) is slightly cautious. See A4. |
+| Survivorship | Small. On-chain graduations from CryptoHouse (`research/flow`, Oct 7 19:37-22:58 UTC) show 218 of 220 graduates in the census. About 1% of graduates may be hidden coins, so the real world is slightly worse than the data. The TEST window is not yet covered by on-chain data. Coins created in the TEST window that graduated after the 18:09 census are also missing, but those are slow graduates, not the farm coins F4 trades. |
+
+### A2. Independent re-implementation (`audit/indep_f4.py`)
+
+It imports nothing from the lab. It reads the coin JSON and SOL prices directly and recomputes the 39
+features row by row from `bars[:i+1]`. It re-implements the gate, the entry rule and the exits, and rebuilds the
+costs from the fee page, the Ultra fee, the MEV buffer, x*y=k impact and the network fee. The only shared
+artefact is the frozen model pickle, checked by SHA-256 and loaded through a stub class, so `f4-learned.py` is
+never executed.
+
+| Run | Coins in universe | Rows scored | Judge trades | Independent trades | Identical (entry, exit, reason) | Max return difference |
+|---|---:|---:|---:|---:|---:|---:|
+| F4-#1 TEST | 172 | 5,063 | 12 | 12 | 12 | 0.0005 pp |
+| F4-#1 VALIDATION | 150 | 9,971 | 24 | 24 | 24 | 0.0005 pp |
+| F4-#2 TEST | 172 | 5,305 | 3 | 3 | 3 | 0.0002 pp |
+
+There were no extra or missing trades on any of the 322 coins. The task asked for at least 10 TEST coins; all 172
+were run. Row by row (`audit/rowcheck.py`), all 10,693 gated VALIDATION rows pass the independent gate and score
+exactly like the lab's saved table: maximum difference 0.0, and 352 rows above the threshold in both.
+
+### A3. Swap-by-swap replay (`audit/trade_replay.py`)
+
+**Method.**
+
+- **Data:** the swaps around each trade, from `swap-api.pump.fun/v2/coins/{mint}/trades`. Each swap's
+  `priceUsd` is the pool price after that swap.
+- **Entry:** the buy lands L seconds after the signal and fills at the pool price at that moment.
+- **Exits:** a stop or take-profit triggers on the first swap that crosses the level. The sell lands L seconds
+  later at the pool price then.
+- **Costs:** the auditor's cost model.
+
+**TEST, F4-#1.** Returns are shown at 1 s / 2 s / 5 s latency.
+
+| Coin | Backtest (candles) | Real swaps 1 s / 2 s / 5 s | What happened |
+|---|---|---|---|
+| MrBeast | stop -58.7% | -93.2% / -94.4% / -96.6% | one sell of $26.3k (132.5M tokens): $700k to $58k market cap in one swap |
+| OpenAI | take-profit +26.3% | +26.3% / +26.3% / +26.4% | |
+| ChatGPT | take-profit +26.3% | +26.1% / +26.4% / +26.3% | |
+| NVIDIA | stop -23.3% | -24.7% / -29.2% / -29.1% | ordinary sell-off (22 small sells in the trigger second) |
+| LEGO | take-profit +26.3% | +26.3% / +26.4% / +26.1% | |
+| FOMO | stop -54.5% | -91.4% / -91.4% / -91.4% | one sell of $27.0k (134.7M tokens): $739k to $56k |
+| NASA | take-profit +26.3% | +26.2% / +26.4% / +26.7% | |
+| FOMO | take-profit +26.3% | +26.4% / +26.5% / +26.5% | |
+| Apple | stop -51.0% | -84.3% / -84.1% / -84.1% | one sell of $22.9k (94.6M tokens): $678k to $88k |
+| Meta | time stop +23.4% | +23.7% / +23.4% / +23.3% | |
+| SpaceXSI | take-profit +26.2% | +26.4% / +26.6% / +26.5% | |
+| FOMO | stop -58.6% | -93.9% / -95.1% / -97.0% | one sell of $23.3k (128.7M tokens): $607k to $55k |
+| **Mean** | **-5.4%** | **-17.2% / -17.7% / -18.0%** | |
+
+**All splits.** Default (half) fills vs real swaps at 2 s latency:
+
+| Split | Trades | Backtest per trade | Swaps per trade [95% CI] | $100 portfolio, swaps |
+|---|---:|---:|---|---:|
+| VALIDATION | 24 | +9.2% | +6.6% [-13.2, +21.7] (see note) | +26% |
+| TEST | 12 | -5.4% | **-17.7% [-48.8, +11.7]** | **-39%** |
+| Both | 36 | +4.3% | **-1.5% [-18.1, +13.4]** | -24% |
+
+**Note on VALIDATION (Haaland).** The rug came 1 second after the signal. In the replay the buy lands after
+the rug, at $93k, and a dead-cat bounce then hits the take-profit (+27%). The backtest instead bought before the
+rug and lost. Counting that trade as the rug loss it would be from a faster bot (about -95%) brings VALIDATION
+to about +1.5% per trade. That matches the judge's rug-aware stress (+1.3%).
+
+**The rug signature.** All 9 rug exits share it:
+
+- one sell of $21k-$30k (92.7M-134.7M tokens, about 9-13% of supply, with the same sizes repeating);
+- a drop of 86-93% in a single swap;
+- never from the creator wallet.
+
+**The farm signature.** Before entry, the farm coins traded 440-740 swaps a minute. The median buy was
+$0.02-0.08, from 99-261 distinct wallets a minute. The smooth "staircase" climb the model learned is painted by
+dust-sized bot swaps.
+
+**Break-even.** With wins at +26% and losses at their real size (TEST average -79%), F4-#1 needs about a 75%
+win rate. It got 58% on TEST.
+
+### A4. Live cost check (`audit/live_costs.py`, LAB/audit/live_costs.json)
+
+**Method.**
+
+- Jupiter Ultra `/order` quotes, with nothing signed, at 20:44 UTC, SOL = $109.6.
+- Each coin got $20 SOL-to-token-to-SOL round trips, twice forward and twice reverse. A price drift between two
+  quotes moves the forward and the reverse trips in opposite directions, so the average cancels it.
+- The model is shown without the MEV buffer and network fee, because quotes include neither. The coins are
+  graduates that were trading at the time, at or near the F4 entry range ($517k-$720k).
+
+| Coin | Market cap | Routes seen | Measured round trip | Model | Difference |
+|---|---:|---|---:|---:|---:|
+| Pack | $553k | Meteora DLMM, OKX router, Pump.fun AMM | 0.40% | 2.31% | -1.91 pp |
+| puter | $596k | OKX router, Pump.fun AMM | 1.85% | 2.30% | -0.45 pp |
+| ChatGPT | $558k | Pump.fun AMM | 2.21% | 2.31% | -0.09 pp |
+| Joker | $765k | Pump.fun AMM | 2.28% | 2.29% | -0.01 pp |
+| OWLNIGHT | $654k | Pump.fun AMM | 1.95% | 2.30% | -0.35 pp |
+| SpaceX | $455k | Pump.fun AMM | 2.26% | 2.42% | -0.16 pp |
+| FOMO | $354k | Pump.fun AMM | 2.52% | 2.53% | -0.01 pp |
+| **Mean / median** | | | **1.92% / 2.21%** | **2.35% / 2.31%** | **-0.43 / -0.10 pp** |
+
+- **Model vs measured.** When Jupiter routes only through the pump.fun pool, the model is right to within
+  0.0-0.35 pp. When it finds a second venue, the trip is cheaper. Pack's 0.40% is partly a deeper second pool
+  (Meteora DLMM) and partly noise, because its price moved fast between quotes.
+- **The model's full cost** (with the 20 bps MEV buffer and the network fee) is 2.9-3.2% per round trip.
+- **TEST re-run with measured costs** (F4-#1, backtest fills):
+
+  | Costs | Per trade |
+  |---|---:|
+  | Model | -5.4% |
+  | Mean measured cost, no MEV buffer | -4.6% |
+  | Cheapest measured cost (0.40%) applied to every trade | -3.1% |
+  | Zero | -2.6% |
+
+  With realistic swap fills and measured costs, TEST stays around -17% per trade.
+
+### A5. Fragility (`audit/fragility.py`, LAB/audit/fragility.json)
+
+Per-trade mean at $20, with backtest (half) fills unless noted. The portfolio is the auditor's simple $100
+simulation, which matches the harness to within 0.6 points: TEST -14.9% vs -15.0%, VALIDATION +45.9% vs +46.4%.
+
+| Variant | TEST (12) | VALIDATION (24) | Both (36) |
+|---|---|---|---|
+| Base | -5.4% | +9.2% | +4.3% |
+| Entry 1 min later | -5.6% | +11.1% | +5.5% |
+| Entry 2 min later | -3.3% | +11.0% | +6.3% |
+| 30% of entries missed (10,000 draws): mean [5th, 95th percentile], share of draws > 0 | -5.5% [-16.6, +7.9], 21% | +9.2% [+2.1, +16.8], 98% | +4.2% [-2.2, +10.9], 86% |
+| Same, $100 portfolio median [5th, 95th percentile] | -11% [-27, +10] | +30% [+2, +65] | +17% [-17, +61] |
+| Without the top 5 coins | -28.1% (7 trades) | +4.7% (19) | +0.8% (31) |
+| Rug-aware fills (judge's stress) | -18.3% | +1.3% | -5.2% |
+| **Real swaps, 2 s latency** | **-17.7%** | **+6.6% (about +1.5% without Haaland's luck)** | **-1.5%** |
+| Touch stop fills (sell rugs at the stop; impossible per A3) | +7.8% | +17.1% | +14.0% |
+| Zero costs | -2.6% | +12.5% | +7.5% |
+
+- **By entry hour (UTC):** each hour has 1-6 trades. Means swing from -59% to +26% with no pattern that holds
+  across splits.
+- **By entry market cap:** $650-750k entries lost on both splits (-14% VALIDATION, -7% TEST). $550-650k entries
+  won on both (+13%, +6%). This is descriptive only. Choosing a band from it now would be fitting to TEST.
+- **Latency is not the weak point.** The farm's climb is smooth, so 1-2 minutes of delay barely matters.
+- **What it hinges on.** Whether the operator rugs during the 15-minute hold, and how much of the position
+  survives a rug. The swaps answer the second question: almost none of it.
+
+### A6. Verdict with numbers
+
+**CONFIRMED: no winner.** The harness has no bug that hides an edge. The independent re-implementation matches
+the judge's TEST trades exactly: 12 of 12 for F4-#1 and 3 of 3 for F4-#2.
+
+- **Fill realism.** The harness's one material bias, the "half" fill on rug stops, flatters the strategy.
+  Correcting it with real swaps moves F4-#1 on TEST from -5.4% to -17.7% per trade and from -15% to -39% on the
+  $100.
+- **Costs.** Measured live costs are 0.1-0.4 pp *lower* than the model. That moves TEST from -5.4% to only about
+  -4.6%. Even zero costs leave -2.6%.
+- **Fragility.** No fragility variant turns TEST positive except "touch" stop fills, which the swap data shows
+  are impossible on these rugs.
+- **Recommendation.**
+  - Keep `winner.json` unwritten. Paper-trade only.
+  - The farm coins are not an opportunity. The same operator paints the climb with dust trades and ends it with
+    one sell of about 10% of supply.
+  - If anything, the evidence argues for **skipping** brand-ticker farm coins (instant graduation, graduation
+    close $250k-$500k) entirely. That is a filter to test on coins launched after Oct 8 18:09 UTC, not a
+    strategy.
+
+**Small fixes worth making** (none changes a result here):
+
+1. Make `SolUsd.at` return only closed SOL minutes.
+2. Make the default stop fill rug-aware, for example no better than the bar close, or the post-swap price when
+   swaps are available.
+3. Add the 0.2% entry drift seen in the swaps, or use `entry_delay_bars=2` as the default.
+4. Label TRAIN out-of-fold numbers as "includes models trained on later blocks".
+
+**Audit files.**
+
+- Code (`research/lab/audit/`):
+  - `indep_f4.py`
+  - `rowcheck.py`
+  - `sol_lag.py`
+  - `trade_replay.py`
+  - `summarize.py`
+  - `live_costs.py`
+  - `fragility.py`
+- Data (`LAB/audit/`):
+  - `indep_*.json`
+  - `trades/*.json.gz`: 36 swap windows, 274,857 swaps
+  - `replay_*_lat{1,2,5}.json`
+  - `replay_summary.json`
+  - `live_costs.json`
+  - `fragility.json`
+  - `sol_lag_check.json`
+  - `rowcheck_validation.json`
