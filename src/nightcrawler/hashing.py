@@ -55,16 +55,27 @@ def _check_finite(obj: Any) -> None:
             _check_finite(v)
 
 
+def _str_keys(obj: Any) -> Any:
+    """Copy with every dict key turned into ``str`` (JSON does that anyway, but ``sort_keys``
+    cannot compare a mix of int and str keys)."""
+    if isinstance(obj, dict):
+        return {str(k): _str_keys(v) for k, v in obj.items()}
+    if isinstance(obj, (list, tuple)):
+        return [_str_keys(v) for v in obj]
+    return obj
+
+
 def normalize_payload(payload: Any) -> Any:
     """Round-trip ``payload`` through canonical JSON.
 
     Returns the JSON-native structure that will be hashed and stored.
     Raises ``ValueError`` on NaN/inf floats (they are not portable JSON).
+    Dict keys become strings first (so a mix of int and str keys is fine).
     Dataclasses should be converted first with ``models.to_jsonable``;
     otherwise ``default=str`` turns them into their ``repr`` string.
     """
     _check_finite(payload)
-    return json.loads(canonical_json(payload))
+    return json.loads(canonical_json(_str_keys(payload)))
 
 
 def receipt_hash(prev_hash: str, seq: int, ts: float, kind: str, payload: Any) -> str:
@@ -85,7 +96,7 @@ def verify_receipts(receipts: Iterable[Mapping[str, Any]] | Iterable[Any]) -> tu
     expected_prev = GENESIS_HASH
     expected_seq = 1
     for r in receipts:
-        get = r.get if isinstance(r, Mapping) else (lambda k, _r=r: getattr(_r, k))
+        get: Any = r.get if isinstance(r, Mapping) else (lambda k, _r=r: getattr(_r, k))
         seq = get("seq")
         if seq != expected_seq:  # gap, duplicate or reordering: the chain breaks here
             return False, expected_seq

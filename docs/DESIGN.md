@@ -188,13 +188,17 @@ canonical_json(x) = json.dumps(x, sort_keys=True, separators=(",", ":"), default
 | anything else | 5/s, burst 5 | - |
 
 Retries: 429/5xx/connection errors, max 4, exponential backoff with jitter,
-`Retry-After` honoured (capped 60 s). Ultra `/execute` is sent with
+`Retry-After` honoured as a floor (capped 60 s; `Retry-After: 0` still backs off). Ultra `/execute` is sent with
 `retry=False`. All sleeps go through the injected `Clock`.
 
 ## 7. Failure policy (fail closed)
 
 * Cocoon: a required source down -> `passed=False`, reason
-  `source unavailable: X`.
+  `source unavailable: X`. RugCheck `/report` answers HTTP 400
+  `{"error": "not found"}` (and `/report/summary` 400 `"unable to generate
+  report"`) for mints it has not indexed yet: both raise `ReportUnavailable`
+  -> `source unavailable: rugcheck (not ready)`, never cached, so the next
+  check retries.
 * Radar error at entry -> reject; radar error on an open position -> ignored.
 * Judge error/refusal/timeout/budget -> Verdict `no` (`source="error"`).
 * Quote with impact > `MAX_PRICE_IMPACT_PCT` or an unexpected Ultra error -> no trade.

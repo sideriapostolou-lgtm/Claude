@@ -6,6 +6,8 @@ against SOL, and SOL/USD moves are not its decisions. The dashboard shows both.
 Equity (lamports) = free SOL + open positions marked at mid price (see
 ``models.EquityPoint``). The engine writes an equity snapshot every
 ``EQUITY_INTERVAL_S`` via ``ledger.record_equity``; RiskManager reads them.
+Only snapshots of the CURRENT ``TRADING_MODE`` count (a paper history on the
+same ledger never sets the peak or the day start of a live wallet).
 
 ``can_open`` checks, in this order (first failure is the returned reason;
 reason strings start with the rule id in brackets):
@@ -221,11 +223,14 @@ class RiskManager:
         """Start-of-UTC-day equity in lamports (see rule 4), or None without snapshots."""
         now = self.clock.now() if now is None else now
         midnight = now - now % _SECONDS_PER_DAY
-        today = [p for p in self.ledger.equity_series(since=midnight) if p.ts <= now]
+        mode = self.settings.trading_mode
+        today = [p for p in self.ledger.equity_series(since=midnight) if p.ts <= now and p.mode == mode]
         if today:
             return today[0].equity_lamports
         latest = self.ledger.latest_equity()
-        return latest.equity_lamports if latest is not None and latest.ts < midnight else None
+        if latest is None or latest.mode != mode:
+            return None
+        return latest.equity_lamports if latest.ts < midnight else None
 
     def peak_equity(self) -> int | None:
         """Max equity (lamports) since ``risk.peak_reset_ts`` (or ever), or None.
@@ -236,8 +241,9 @@ class RiskManager:
         reset_ts = self.ledger.get_kv(KV_PEAK_RESET_TS)
         if reset_ts != self._peak_reset_ts:
             self._peak, self._peak_reset_ts, self._peak_scanned_ts = None, reset_ts, reset_ts
+        mode = self.settings.trading_mode
         for point in self.ledger.equity_series(since=self._peak_scanned_ts):
-            if reset_ts is not None and point.ts < reset_ts:
+            if (reset_ts is not None and point.ts < reset_ts) or point.mode != mode:
                 continue
             self._peak = point.equity_lamports if self._peak is None else max(self._peak, point.equity_lamports)
             self._peak_scanned_ts = point.ts if self._peak_scanned_ts is None else max(self._peak_scanned_ts,

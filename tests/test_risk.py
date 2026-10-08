@@ -34,8 +34,9 @@ def risk(make_risk) -> RiskManager:
     return make_risk()
 
 
-def equity(ledger: FakeLedger, ts: float, lamports: int) -> None:
-    ledger.record_equity(EquityPoint(ts=ts, equity_lamports=lamports, sol_usd=100.0, equity_usd=lamports / SOL * 100))
+def equity(ledger: FakeLedger, ts: float, lamports: int, mode: str = "paper") -> None:
+    ledger.record_equity(EquityPoint(ts=ts, equity_lamports=lamports, sol_usd=100.0, equity_usd=lamports / SOL * 100,
+                                     mode=mode))
 
 
 def position(mint: str = MINT, status: str = "open", closed_at: float | None = None, pid: str = "p") -> Position:
@@ -248,7 +249,7 @@ def test_wallet_cap_applies_only_in_live_mode(make_risk) -> None:
 
 def test_rules_are_checked_in_the_documented_order(make_risk, ledger, tmp_data_dir, fake_clock) -> None:
     live = {"TRADING_MODE": "live", "LIVE_CONFIRM": "I_ACCEPT_REAL_MONEY_RISK", "BOT_WALLET_SECRET": "x" * 88}
-    equity(ledger, MIDNIGHT + 60, 1 * SOL)
+    equity(ledger, MIDNIGHT + 60, 1 * SOL, mode="live")
     ledger.upsert_position(position(status="closed", closed_at=NOW - 60, pid="old"))
     opened = [position(pid="a"), position("m2", pid="b"), position("m3", pid="c")]
     (tmp_data_dir / "KILL").write_text("stop")
@@ -271,3 +272,14 @@ def test_rules_are_checked_in_the_documented_order(make_risk, ledger, tmp_data_d
     assert reason(MAX_DRAWDOWN_HALT_PCT=0.9, DAILY_LOSS_LIMIT_PCT=0.9).startswith("[cooldown]")
     fake_clock.advance(31 * 60)
     assert reason(MAX_DRAWDOWN_HALT_PCT=0.9, DAILY_LOSS_LIMIT_PCT=0.9).startswith("[wallet_cap]")
+
+
+def test_only_equity_of_the_current_mode_counts(make_risk, ledger) -> None:
+    """A paper history on the same ledger must not set the live peak or day start."""
+    equity(ledger, MIDNIGHT + 60, 10 * SOL, mode="paper")
+    equity(ledger, NOW - 60, 1 * SOL, mode="live")
+    live = make_risk(TRADING_MODE="live", LIVE_CONFIRM="I_ACCEPT_REAL_MONEY_RISK", BOT_WALLET_SECRET="x" * 88)
+    assert live.peak_equity() == 1 * SOL
+    assert live.day_start_equity() == 1 * SOL
+    assert live.can_open(MINT, [], 1 * SOL, wallet_usd=50.0) == (True, "ok")
+    assert make_risk().peak_equity() == 10 * SOL

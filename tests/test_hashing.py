@@ -61,3 +61,9 @@ def test_verify_detects_tampering(mutate, bad) -> None:
     chain = build_chain(5)
     mutate(chain)
     assert verify_receipts(chain) == (False, bad)
+
+
+def test_normalize_payload_accepts_mixed_int_and_str_keys() -> None:
+    from nightcrawler.hashing import normalize_payload
+
+    assert normalize_payload({1: "a", "b": {2: [3]}}) == {"1": "a", "b": {"2": [3]}}

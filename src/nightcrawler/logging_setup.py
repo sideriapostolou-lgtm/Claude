@@ -72,7 +72,7 @@ class RedactionFilter(logging.Filter):
 class OneLineFormatter(logging.Formatter):
     """``2026-10-08T16:00:00Z INFO nightcrawler.engine: message`` - newlines escaped."""
 
-    converter = time.gmtime
+    converter = time.gmtime  # type: ignore[assignment]
 
     def __init__(self) -> None:
         super().__init__("%(asctime)s %(levelname)s %(name)s: %(message)s", datefmt="%Y-%m-%dT%H:%M:%SZ")

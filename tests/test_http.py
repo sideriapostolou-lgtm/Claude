@@ -174,3 +174,14 @@ def test_unlimited_when_no_default_rate(fake_clock: FakeClock) -> None:
 def test_fake_response_passthrough(fake_http: FakeHttp, http_client: HttpClient) -> None:
     fake_http.register("custom", lambda req: FakeResponse(200, {"echo": req.params}))
     assert http_client.get_json("https://api.example.com/custom", params={"q": "z"}) == {"echo": {"q": "z"}}
+
+
+def test_retry_after_zero_still_backs_off(fake_http: FakeHttp, fake_clock: FakeClock) -> None:
+    """GeckoTerminal answers 429 with ``Retry-After: 0``; that must not cause back-to-back retries."""
+    client = make_client(fake_http, fake_clock)
+    fake_http.register("thing", {"ok": 1})
+    fake_http.register("thing", {}, status=429, headers={"Retry-After": "0"}, times=2)
+    assert client.get_json(URL) == {"ok": 1}
+    assert len(fake_clock.sleeps) == 2
+    assert 0.5 <= fake_clock.sleeps[0] <= 1.0  # exponential backoff, not 0
+    assert 1.0 <= fake_clock.sleeps[1] <= 2.0

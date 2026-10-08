@@ -39,6 +39,7 @@ unless marked **synthetic**. Use them through `fakes.load_fixture(name)` and
 | `rugcheck_report_risky.json` | same, risky token | danger risks, curve pool holds 50 %, creator history |
 | `rugcheck_summary.json`, `rugcheck_summary_risky.json` | `/report/summary` | `lpLockedPct` unreliable |
 | `rugcheck_report_unavailable_400.json` | **synthetic** body of HTTP 400 for very new mints | `{"error": "unable to generate report"}` |
+| `rugcheck_report_not_found_400.json` | body of HTTP 400 from `/tokens/{mint}/report` for a mint RugCheck has not indexed yet (seen live 2026-10-08 on 6 s - 3 min old mints) | `{"error": "not found"}` -> `ReportUnavailable` (retry later) |
 | `rugcheck_stats_*.json`, `rugcheck_rugs_ticker.json` | misc RugCheck stats | not used yet |
 | `rpc_getAccountInfo_mint.json` | Solana RPC `getAccountInfo` jsonParsed (Token-2022 mint) | authorities null |
 | `rpc_getTokenSupply.json` | `getTokenSupply` | |

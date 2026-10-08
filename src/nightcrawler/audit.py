@@ -29,14 +29,22 @@ All amounts lamports unless named ``*_usd``; ``*_pct`` are percent.
 from __future__ import annotations
 
 from collections import defaultdict
+from collections.abc import Iterable
 from dataclasses import dataclass, field
-from typing import Any, Iterable
+from typing import Any
 
 from nightcrawler.clock import RealClock, iso_utc, utc_day
 from nightcrawler.models import LAMPORTS_PER_SOL, Fill, Position
 
-__all__ = ["SOL_DRIFT_TOLERANCE_LAMPORTS", "TradePnL", "DailySummary", "AuditReport", "Auditor",
-           "trade_pnl", "daily_summaries"]
+__all__ = [
+    "SOL_DRIFT_TOLERANCE_LAMPORTS",
+    "AuditReport",
+    "Auditor",
+    "DailySummary",
+    "TradePnL",
+    "daily_summaries",
+    "trade_pnl",
+]
 
 SOL_DRIFT_TOLERANCE_LAMPORTS = 100_000  # 0.0001 SOL
 #: Live token balances may differ from the books by rounding of at most this many base units.
@@ -314,8 +322,8 @@ class Auditor:
         lines = [f"nightcrawler audit - {report.mode.upper()} - {iso_utc(report.checked_at)}",
                  f"Result: {'OK' if report.ok else 'PROBLEMS FOUND'}",
                  f"Receipt chain: {_chain_text(report)}",
-                 f"SOL: books {_sol(report.expected_sol_lamports)}, wallet {_sol(report.broker_sol_lamports)}, "
-                 f"drift {_sol(report.sol_drift_lamports, signed=True)}"]
+                 (f"SOL: books {_sol(report.expected_sol_lamports)}, wallet {_sol(report.broker_sol_lamports)}, "
+                  f"drift {_sol(report.sol_drift_lamports, signed=True)}")]
         if report.token_drift:
             lines.append("Token drift (base units):")
             lines += [f"  {mint}: books {d['expected']}, wallet {d['actual']}, drift {d['drift']:+d}"
@@ -366,12 +374,13 @@ def _totals_text(totals: dict[str, Any]) -> list[str]:
     if not totals:
         return []
     win_rate = totals.get("win_rate_pct")
-    return [f"Trades: {totals['trades']} closed ({totals['wins']} won / {totals['losses']} lost, win rate "
-            f"{'n/a' if win_rate is None else f'{win_rate:.0f}%'}), {totals['open_trades']} open",
-            f"Closed trades: {_sol(totals['realized_lamports'], signed=True)} SOL "
-            f"({_usd(totals['realized_usd'])} USD at fill-time SOL prices)",
-            f"Open trades, realized so far: {_sol(totals['open_realized_lamports'], signed=True)} SOL; "
-            f"network fees paid: {_sol(totals['fees_lamports'])} SOL"]
+    rate = "n/a" if win_rate is None else f"{win_rate:.0f}%"
+    return [(f"Trades: {totals['trades']} closed ({totals['wins']} won / {totals['losses']} lost, "
+             f"win rate {rate}), {totals['open_trades']} open"),
+            (f"Closed trades: {_sol(totals['realized_lamports'], signed=True)} SOL "
+             f"({_usd(totals['realized_usd'])} USD at fill-time SOL prices)"),
+            (f"Open trades, realized so far: {_sol(totals['open_realized_lamports'], signed=True)} SOL; "
+             f"network fees paid: {_sol(totals['fees_lamports'])} SOL")]
 
 
 def _trade_row(t: TradePnL) -> str:

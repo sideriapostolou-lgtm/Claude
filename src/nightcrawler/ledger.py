@@ -39,7 +39,7 @@ Well-known kv keys (JSON values): ``paper.sol_lamports``, ``paper.tokens``,
 Helpers beyond the core contract (used by the auditor and the dashboard):
 :meth:`Ledger.last_receipt`, :meth:`Ledger.fills_after_seq`,
 :meth:`Ledger.equity_curve`, :meth:`Ledger.safety_failures`,
-:meth:`Ledger.candidate_count`.
+:meth:`Ledger.candidate_count`, :meth:`Ledger.latest_safety` (engine).
 """
 
 from __future__ import annotations
@@ -50,11 +50,18 @@ import json
 import os
 import sqlite3
 import threading
+from collections.abc import Iterator, Mapping, Sequence
 from pathlib import Path
-from typing import Any, Iterator, Mapping, Sequence
+from typing import Any
 
 from nightcrawler.clock import RealClock
-from nightcrawler.hashing import GENESIS_HASH, canonical_json, normalize_payload, receipt_hash, verify_receipts
+from nightcrawler.hashing import (
+    GENESIS_HASH,
+    canonical_json,
+    normalize_payload,
+    receipt_hash,
+    verify_receipts,
+)
 from nightcrawler.models import (
     Decision,
     EquityPoint,
@@ -66,7 +73,7 @@ from nightcrawler.models import (
     to_jsonable,
 )
 
-__all__ = ["Ledger", "LedgerError", "SCHEMA_VERSION", "BUSY_TIMEOUT_S"]
+__all__ = ["BUSY_TIMEOUT_S", "SCHEMA_VERSION", "Ledger", "LedgerError"]
 
 #: ``PRAGMA user_version`` of the layout below; bump with a migration when it changes.
 SCHEMA_VERSION = 1
@@ -82,6 +89,7 @@ _SCHEMA = (
         id INTEGER PRIMARY KEY, mint TEXT NOT NULL, checked_at REAL NOT NULL, passed INTEGER NOT NULL,
         reasons TEXT NOT NULL, data TEXT NOT NULL)""",
     "CREATE INDEX IF NOT EXISTS safety_checked_at ON safety(checked_at)",
+    "CREATE INDEX IF NOT EXISTS safety_mint ON safety(mint, checked_at)",
     """CREATE TABLE IF NOT EXISTS decisions (
         id INTEGER PRIMARY KEY, ts REAL NOT NULL, mint TEXT NOT NULL, action TEXT NOT NULL,
         reason TEXT NOT NULL, data TEXT NOT NULL, receipt_seq INTEGER NOT NULL)""",
@@ -153,7 +161,15 @@ class Ledger:
             self._migrate()
         except (sqlite3.Error, LedgerError) as exc:
             self.close()
-            raise LedgerError(f"cannot open ledger {self.path}: {exc}") from exc
+            raise LedgerError(f"cannot open ledger {self.path}: {exc}{self._permission_hint()}") from exc
+
+    def _permission_hint(self) -> str:
+        """Explain the usual cause on Railway: a root-owned volume and a non-root process."""
+        folder = Path(self.path).parent
+        if self.path == ":memory:" or os.access(folder, os.W_OK):
+            return ""
+        return (f" (this user cannot write to {folder}; on Railway set the service variable "
+                "RAILWAY_RUN_UID=0, locally fix the folder's owner)")
 
     def _migrate(self) -> None:
         with self.transaction(), self._locked() as conn:
@@ -367,6 +383,11 @@ class Ledger:
         latest = {mint: (passed, reasons) for mint, passed, reasons in rows}
         return {mint: json.loads(reasons) for mint, (passed, reasons) in latest.items() if not passed}
 
+    def latest_safety(self, mint: str) -> SafetyReport | None:
+        """The newest stored :class:`SafetyReport` for ``mint`` (engine restarts reuse its wallets)."""
+        rows = self._rows("SELECT data FROM safety WHERE mint = ? ORDER BY checked_at DESC, id DESC LIMIT 1", (mint,))
+        return SafetyReport.from_dict(json.loads(rows[0][0])) if rows else None
+
     def record_decision(self, decision: Decision) -> Decision:
         """Insert + ``decision`` receipt atomically; returns a copy with ``receipt_hash`` set."""
         payload = {**decision.to_dict(), "receipt_hash": None}
@@ -469,7 +490,12 @@ class Ledger:
                     (point.ts, point.equity_lamports, point.sol_usd, point.equity_usd, point.mode, _dumps(point)))
 
     def equity_series(self, since: float | None = None, limit: int | None = None) -> list[EquityPoint]:
-        """Equity points ascending by ts (``since`` inclusive; downsampling is the caller's job)."""
+        """Equity points ascending by ts (``since`` inclusive; downsampling is the caller's job).
+
+        ``limit`` keeps the FIRST ``limit`` points of that ascending series (the
+        oldest ones at/after ``since``), not the latest; use :meth:`latest_equity`
+        or :meth:`equity_curve` for recent history.
+        """
         clause, extra = _limit_clause(limit)
         rows = self._rows(f"SELECT data FROM equity WHERE ts >= ? ORDER BY ts, id{clause}",
                           [float("-inf") if since is None else since, *extra])

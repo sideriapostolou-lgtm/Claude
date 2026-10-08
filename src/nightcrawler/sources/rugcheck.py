@@ -45,7 +45,8 @@ __all__ = ["BASE_URL", "CURVE_MARKET_TYPES", "ReportUnavailable", "RugReport", "
 BASE_URL = "https://api.rugcheck.xyz/v1"
 #: RugCheck ``marketType`` values of bonding curves (not AMM pools; no LP to lock).
 #: ``pump_fun_amm`` is the graduated PumpSwap pool and is NOT a curve.
-CURVE_MARKET_TYPES = frozenset({"pump_fun", "meteora_dbc"})
+#: ``raydium_launchlab`` (Raydium LaunchLab bonding curve) seen in live reports 2026-10-08.
+CURVE_MARKET_TYPES = frozenset({"pump_fun", "meteora_dbc", "raydium_launchlab"})
 #: Lower-case HTTP 400 error texts that mean "not indexed yet, retry later".
 _NOT_READY_HINTS = ("unable to generate report", "not found")
 _RUG_HISTORY_RISK = "creator history of rugged tokens"

@@ -55,7 +55,7 @@ def test_report_too_new_raises_report_unavailable_without_retry(client, fake_htt
 
 @pytest.mark.parametrize("status", [400, 404])  # live 2026-10-08: /report on a 6 s old mint -> 400 "not found"
 def test_report_not_indexed_yet_raises_report_unavailable(client, fake_http, status):
-    fake_http.register("/report", {"error": "not found"}, status=status)
+    fake_http.register_fixture("/report", "rugcheck_report_not_found_400", status=status)
 
     with pytest.raises(ReportUnavailable, match="not found") as info:
         client.report("FRESH")
@@ -253,10 +253,11 @@ def test_parse_report_lp_lock_uses_largest_non_curve_market():
         {"pubkey": "BIG", "marketType": "meteora_damm_v2", "lp": {"lpLockedPct": "95.5", "lpLockedUSD": "5000"}},
         {"pubkey": "UNKNOWN", "marketType": "orca", "lp": {"lpLockedUSD": 1e8}},
         {"pubkey": "DBC", "marketType": "meteora_dbc", "lp": {"lpLockedPct": 100, "lpLockedUSD": 1e9}},
+        {"pubkey": "LL", "marketType": "raydium_launchlab", "lp": {"lpLockedPct": 100, "lpLockedUSD": 1e9}},
     ]})
 
     assert rep.lp_locked_pct == 95.5
-    assert [m["pubkey"] for m in rep.markets] == ["CURVE", "SMALL", "BIG", "UNKNOWN", "DBC"]
+    assert [m["pubkey"] for m in rep.markets] == ["CURVE", "SMALL", "BIG", "UNKNOWN", "DBC", "LL"]
 
 
 def test_parse_report_authorities_fall_back_to_token_section():

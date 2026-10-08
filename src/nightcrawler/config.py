@@ -135,6 +135,9 @@ class Settings:
                           choices=("off", "stop", "sell_all"))
     simulate_before_send: bool = _f(True, "bool", "Live: simulate the signed transaction via RPC before sending")
     quote_max_age_s: float = _f(15.0, "seconds", "Reject executing a quote older than this", lo=1, hi=120)
+    reset_halt_token: str = _f("", "text", "Clears a drawdown halt once: set it to any NEW value (e.g. today's "
+                               "date) and redeploy. Same as `nightcrawler reset-halt`, but works from the "
+                               "Railway variables page on a phone")
 
     # ---- bankroll & risk ----------------------------------------------------
     paper_start_usd: float = _f(100.0, "usd", "Paper bankroll at first start (converted to SOL at the live price)",
@@ -217,7 +220,8 @@ class Settings:
     judge_timeout_s: float = _f(20.0, "seconds", "Per-request timeout", lo=1, hi=600)
     judge_cache_min: float = _f(20.0, "minutes", "Reuse a verdict per mint for this long", lo=0)
     judge_max_daily_usd: float = _f(1.0, "usd", "Judge spend cap per UTC day; beyond it verdicts are 'no' "
-                                    "(source=error)", lo=0)
+                                    "(source=error). 0 blocks every judge call (and so every entry when "
+                                    "JUDGE_MODE=required)", lo=0)
 
     # ---- endpoints & keys ---------------------------------------------------
     jupiter_api_key: Secret | None = _f(None, "secret", "Optional Jupiter key (header x-api-key)", secret=True)

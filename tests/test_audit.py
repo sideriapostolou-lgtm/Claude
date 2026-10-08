@@ -6,8 +6,8 @@ import sqlite3
 from pathlib import Path
 
 import pytest
-
 from fakes import FakeClock
+
 from nightcrawler.audit import (
     SOL_DRIFT_TOLERANCE_LAMPORTS,
     Auditor,

@@ -9,8 +9,8 @@ import threading
 from pathlib import Path
 
 import pytest
-
 from fakes import FakeClock
+
 from nightcrawler.hashing import GENESIS_HASH, receipt_hash, verify_receipts
 from nightcrawler.ledger import SCHEMA_VERSION, Ledger, LedgerError
 from nightcrawler.models import (
@@ -342,6 +342,14 @@ def test_refuses_a_database_from_a_newer_version(db_path: Path) -> None:
     conn.close()
     with pytest.raises(LedgerError, match="newer"):
         Ledger(db_path)
+
+
+def test_unwritable_data_dir_explains_the_railway_fix(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    folder = tmp_path / "volume"
+    (folder / "nightcrawler.db").mkdir(parents=True)  # a directory where the file should be: sqlite cannot open it
+    monkeypatch.setattr("nightcrawler.ledger.os.access", lambda *_: False)
+    with pytest.raises(LedgerError, match="RAILWAY_RUN_UID=0"):
+        Ledger(folder / "nightcrawler.db")
 
 
 def test_concurrent_writers_and_readers_never_fork_the_chain(db_path: Path) -> None:

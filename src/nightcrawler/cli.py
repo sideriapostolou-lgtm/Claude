@@ -3,10 +3,11 @@
 Subcommands (all accept ``--env-file`` and ``--log-level`` before the subcommand):
 
 * ``run [--no-dashboard]`` - engine + dashboard (Railway start command).
-* ``scan [--limit N] [--json]`` - one-shot crawl -> cocoon; prints candidates
-  with pass/fail reasons. Never trades.
-* ``backtest PATH [--sweep] [--grid JSON] [--json OUT]`` - PATH is a file or a
-  directory of backtest JSON files.
+* ``scan [--limit N] [--json] [--include-young]`` - one-shot crawl -> cocoon;
+  prints candidates with pass/fail reasons. Never trades, writes nothing.
+* ``backtest PATH [--sweep] [--grid JSON] [--json OUT] [--from T] [--until T]`` -
+  PATH is a file or a directory of backtest JSON files; ``--from/--until``
+  (ISO UTC like ``2026-10-04T22:00`` or epoch seconds) limit ENTRIES to a window.
 * ``collect [--pools N] [--hours H] [--min-age-h H] [--out DIR]`` - dataset collector.
 * ``report [--json]`` - P&L + audit reconcile + chain verification.
 * ``receipts head|verify|export PATH`` - hash-chain tools.
@@ -19,18 +20,23 @@ Subcommands (all accept ``--env-file`` and ``--log-level`` before the subcommand
 * ``dashboard`` - serve the dashboard only (reads the ledger).
 
 Exit codes: :data:`EXIT_OK` 0, :data:`EXIT_ERROR` 1 (runtime failure),
-:data:`EXIT_USAGE` 2 (argparse), :data:`EXIT_CONFIG` 3 (invalid settings),
-:data:`EXIT_VERIFY_FAILED` 4 (receipt chain broken / audit drift),
-:data:`EXIT_NOT_IMPLEMENTED` 5. Errors print one friendly line to stderr
-(no tracebacks unless ``--log-level DEBUG``).
+:data:`EXIT_USAGE` 2 (argparse), :data:`EXIT_CONFIG` 3 (invalid settings, live
+mode refused, bad wallet secret), :data:`EXIT_VERIFY_FAILED` 4 (receipt chain
+broken / audit drift), :data:`EXIT_NOT_IMPLEMENTED` 5. Errors print one
+friendly line to stderr (no tracebacks unless ``--log-level DEBUG``).
 """
 
 from __future__ import annotations
 
 import argparse
+import dataclasses
 import json
+import signal
 import sys
-from typing import Callable, Sequence
+import threading
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any, Callable, Sequence
 
 from nightcrawler import __version__
 from nightcrawler.config import ConfigError, Settings, load_settings
@@ -53,6 +59,11 @@ EXIT_CONFIG = 3
 EXIT_VERIFY_FAILED = 4
 EXIT_NOT_IMPLEMENTED = 5
 
+#: ``scan --include-young`` only checks nursery tokens at least this old (RugCheck needs a few minutes).
+YOUNG_MIN_AGE_S = 600.0
+#: ``backtest --sweep`` grid when ``--grid`` is not given.
+DEFAULT_SWEEP_GRID: dict[str, list[float]] = {"dip_pct": [0.45, 0.55, 0.65], "take_profit_pct": [0.3, 0.4, 0.6]}
+
 
 def build_parser() -> argparse.ArgumentParser:
     """The full argument grammar (stable contract for docs and tests)."""
@@ -70,12 +81,18 @@ def build_parser() -> argparse.ArgumentParser:
     s = sub.add_parser("scan", help="one-shot crawl + rug filter, no trading")
     s.add_argument("--limit", type=int, default=30, help="max candidates to check (default 30)")
     s.add_argument("--json", action="store_true", help="print JSON instead of a table")
+    s.add_argument("--include-young", action="store_true",
+                   help="also rug-check tokens still too young to trade (>= 10 min old), marked YOUNG")
 
     s = sub.add_parser("backtest", help="replay 1m candles through the strategy")
     s.add_argument("path", help="backtest JSON file or a directory of them")
     s.add_argument("--sweep", action="store_true", help="grid search with a train/test split")
     s.add_argument("--grid", default=None, help='JSON param grid for --sweep, e.g. \'{"dip_pct":[0.5,0.6]}\'')
     s.add_argument("--json", dest="json_out", default=None, metavar="OUT", help="also write results JSON here")
+    s.add_argument("--from", dest="trade_from", default=None, metavar="TIME",
+                   help="only enter at/after this time (ISO UTC, e.g. 2026-10-04T22:00, or epoch seconds)")
+    s.add_argument("--until", dest="trade_until", default=None, metavar="TIME",
+                   help="only enter before this time (ISO UTC or epoch seconds)")
 
     s = sub.add_parser("collect", help="download an unbiased multi-coin dataset")
     s.add_argument("--pools", type=int, default=100, help="number of pools (default 100)")
@@ -113,6 +130,124 @@ def build_parser() -> argparse.ArgumentParser:
     return p
 
 
+# ---------------------------------------------------------------------- helpers
+class UserError(Exception):
+    """A problem the user can fix; printed as one line with ``exit_code``."""
+
+    def __init__(self, message: str, exit_code: int = EXIT_ERROR) -> None:
+        super().__init__(message)
+        self.exit_code = exit_code
+
+
+def _setup_logging(args: argparse.Namespace, settings: Settings, quiet: bool = False) -> Any:
+    """Redacting one-line logs. ``quiet`` commands log WARNING+ unless ``--log-level`` was given."""
+    from nightcrawler.logging_setup import setup_logging
+
+    level = settings.log_level if (args.log_level or not quiet) else "WARNING"
+    return setup_logging(level, settings.secret_values())
+
+
+def _open_ledger(settings: Settings, must_exist: bool = True) -> Any:
+    from nightcrawler.ledger import Ledger
+
+    if must_exist and not settings.db_path.is_file():
+        raise UserError(f"no ledger yet at {settings.db_path} (run the bot first, or check DATA_DIR)")
+    return Ledger(settings.db_path)
+
+
+def _confirm(args: argparse.Namespace, question: str, word: str) -> bool:
+    if getattr(args, "yes", False):
+        return True
+    if not sys.stdin.isatty():
+        raise UserError(f"refusing without confirmation; re-run with --yes ({question})", EXIT_USAGE)
+    answer = input(f"{question} Type {word} to continue: ").strip()
+    return answer == word
+
+
+def _fmt_usd(value: float | None) -> str:
+    if value is None:
+        return "-"
+    for unit, size in (("B", 1e9), ("M", 1e6), ("K", 1e3)):
+        if abs(value) >= size:
+            return f"${value / size:.1f}{unit}"
+    return f"${value:,.0f}"
+
+
+def _short(mint: str) -> str:
+    return f"{mint[:4]}..{mint[-4:]}" if len(mint) > 10 else mint
+
+
+def _parse_time(text: str | None) -> float | None:
+    if text is None:
+        return None
+    try:
+        return float(text)
+    except ValueError:
+        pass
+    try:
+        dt = datetime.fromisoformat(text.replace("Z", "+00:00"))
+    except ValueError:
+        raise UserError(f"cannot read time {text!r}; use ISO UTC like 2026-10-04T22:00 or epoch seconds",
+                        EXIT_USAGE) from None
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt.timestamp()
+
+
+def _wait_for_signal(stop: threading.Event) -> None:
+    """Block until SIGTERM/SIGINT (main thread) or ``stop`` is set."""
+    if threading.current_thread() is threading.main_thread():
+        for sig in (signal.SIGTERM, signal.SIGINT):
+            signal.signal(sig, lambda *_: stop.set())
+    while not stop.wait(1.0):
+        pass
+
+
+class _PaperBalances:
+    """Read-only paper balances straight from the ledger kv (never initializes a wallet)."""
+
+    mode = "paper"
+
+    def __init__(self, ledger: Any) -> None:
+        self.ledger = ledger
+
+    def balances(self) -> Any:
+        from nightcrawler.models import Balances
+
+        tokens = {m: int(a) for m, a in (self.ledger.get_kv("paper.tokens") or {}).items()}
+        return Balances(sol_lamports=int(self.ledger.get_kv("paper.sol_lamports") or 0), tokens=tokens)
+
+
+class _LiveBalances:
+    """Live wallet balances from Ultra holdings (read-only)."""
+
+    mode = "live"
+
+    def __init__(self, jupiter: Any, pubkey: str) -> None:
+        self.jupiter = jupiter
+        self.pubkey = pubkey
+
+    def balances(self) -> Any:
+        return self.jupiter.holdings(self.pubkey)
+
+
+def _wallet_pubkey(settings: Settings, ledger: Any | None = None) -> str | None:
+    if settings.bot_wallet_secret:
+        from nightcrawler.broker.wallet import load_keypair
+
+        return load_keypair(settings.bot_wallet_secret).pubkey()
+    return ledger.get_kv("wallet.pubkey") if ledger is not None else None
+
+
+def _sources(settings: Settings) -> Any:
+    from nightcrawler.clock import RealClock
+    from nightcrawler.http import HttpClient
+    from nightcrawler.sources import build_sources
+
+    http = HttpClient.from_settings(settings, clock=RealClock())
+    return build_sources(settings, http)
+
+
 # ---------------------------------------------------------------------- handlers
 def cmd_config(args: argparse.Namespace, settings: Settings) -> int:
     data = settings.public_dict()
@@ -126,44 +261,354 @@ def cmd_config(args: argparse.Namespace, settings: Settings) -> int:
 
 
 def cmd_run(args: argparse.Namespace, settings: Settings) -> int:
-    """setup_logging -> build_engine -> DashboardServer (unless --no-dashboard) -> run_forever."""
-    raise NotImplementedError
+    """setup_logging -> build_app -> DashboardServer (unless --no-dashboard) -> run_forever."""
+    from nightcrawler.engine import build_app
+    from nightcrawler.logging_setup import get_logger
+
+    filt = _setup_logging(args, settings)
+    log = get_logger("nightcrawler.cli")
+    app = build_app(settings, redaction_filter=filt)
+    try:
+        if not args.no_dashboard:
+            try:
+                app.dashboard.start()
+            except OSError as exc:
+                raise UserError(f"dashboard cannot listen on {settings.dashboard_host}:{settings.port}: {exc}") from exc
+            log.info("dashboard_url http://%s:%d/ (token %s)", settings.dashboard_host, app.dashboard.bound_port,
+                     "required" if settings.dashboard_token else "not set")
+        app.engine.run_forever()
+    finally:
+        app.close()
+    return EXIT_OK
 
 
 def cmd_scan(args: argparse.Namespace, settings: Settings) -> int:
-    raise NotImplementedError
+    from nightcrawler.clock import RealClock
+    from nightcrawler.cocoon import Cocoon
+    from nightcrawler.crawler import Crawler
+
+    _setup_logging(args, settings, quiet=True)
+    clock = RealClock()
+    sources = _sources(settings)
+    crawler = Crawler(sources, settings, clock)
+    cocoon = Cocoon(sources, settings, clock)
+    print("Crawling Jupiter, GeckoTerminal and DexScreener ...", file=sys.stderr)
+    candidates = crawler.poll()
+    rejected = crawler.last_rejected
+    limit = max(0, args.limit)
+    if candidates:
+        print(f"Checking {min(limit, len(candidates))} of {len(candidates)} candidates with the rug filter "
+              "(RugCheck allows ~1 call/s) ...", file=sys.stderr)
+    young: list[Any] = []
+    if getattr(args, "include_young", False):
+        now = clock.now()
+        aged = [c for c in crawler.nursery.values()
+                if c.created_at is not None and now - c.created_at >= YOUNG_MIN_AGE_S]
+        young = sorted(aged, key=lambda c: c.created_at)[:max(0, limit - len(candidates))]
+        for c in young:
+            c.age_min = (now - c.created_at) / 60
+    rows = [(c, cocoon.check(c)) for c in [*candidates[:limit], *young]]
+    young_mints = {c.mint for c in young}
+    reasons: dict[str, int] = {}
+    for _c, reason in rejected:
+        key = reason.split(":", 1)[0]
+        reasons[key] = reasons.get(key, 0) + 1
+    stats = crawler.stats()
+    if args.json:
+        print(json.dumps({
+            "checked": [{"candidate": c.to_dict(), "safety": r.to_dict(), "young": c.mint in young_mints}
+                        for c, r in rows],
+            "not_checked": len(candidates) - len(rows),
+            "prefilter_rejections": reasons,
+            "nursery": stats["nursery"],
+            "feed_errors": stats["feed_errors"],
+        }, indent=2, sort_keys=True, default=str))
+        return EXIT_OK
+    passed = sum(1 for _c, r in rows if r.passed)
+    print(f"\n{len(rows)} checked: {passed} PASS, {len(rows) - passed} FAIL"
+          f" | prefilter rejected {len(rejected)} | {stats['nursery']} too young (waiting in the nursery)")
+    if reasons:
+        print("prefilter: " + ", ".join(f"{n} {k}" for k, n in sorted(reasons.items(), key=lambda kv: -kv[1])))
+    if stats["feed_errors"]:
+        print("feed errors: " + ", ".join(f"{k} x{n}" for k, n in stats["feed_errors"].items()))
+    if rows:
+        print(f"\n{'RESULT':<6} {'SYMBOL':<12} {'AGE':>6} {'MCAP':>8} {'LIQ':>8}  {'MINT':<10}  WHY")
+    for c, r in rows:
+        age = f"{c.age_min / 60:.1f}h" if c.age_min is not None else "-"
+        why = "; ".join(r.hard_fail_reasons[:2]) if not r.passed else (
+            f"{len(r.warnings)} warning(s): " + "; ".join(r.warnings[:2]) if r.warnings else "clean")
+        result = ("PASS" if r.passed else "FAIL") + ("*" if c.mint in young_mints else "")
+        print(f"{result:<6} {c.symbol[:12]:<12} {age:>6} {_fmt_usd(c.mcap_usd):>8} "
+              f"{_fmt_usd(c.liquidity_usd):>8}  {_short(c.mint):<10}  {why}")
+    if young:
+        print(f"\n* = YOUNG: younger than MIN_AGE_MIN ({settings.min_age_min:g} min), checked for information "
+              "only; the bot would not trade it yet (and market-cap/liquidity filters were not applied).")
+    if not rows:
+        print("\nNo candidate passed the cheap prefilter right now. Brand-new tokens must be at least "
+              f"{settings.min_age_min:g} min old; the running bot re-checks them when they mature "
+              "(try --include-young to rug-check the young ones anyway).")
+    return EXIT_OK
 
 
 def cmd_backtest(args: argparse.Namespace, settings: Settings) -> int:
-    raise NotImplementedError
+    from nightcrawler.backtest import Backtester, aggregate_metrics, format_table, load_series
+
+    _setup_logging(args, settings, quiet=True)
+    path = Path(args.path)
+    if path.is_dir():
+        files = sorted(p for p in path.glob("*.json") if p.is_file())
+    elif path.is_file():
+        files = [path]
+    else:
+        raise UserError(f"no such file or folder: {path}")
+    if not files:
+        raise UserError(f"no backtest *.json files in {path}")
+    bt = Backtester.from_settings(settings)
+    out: dict[str, Any]
+    if args.sweep:
+        try:
+            grid = json.loads(args.grid) if args.grid else DEFAULT_SWEEP_GRID
+        except json.JSONDecodeError as exc:
+            raise UserError(f"--grid is not valid JSON: {exc}", EXIT_USAGE) from None
+        try:
+            result = bt.sweep(grid, files)
+        except ValueError as exc:
+            raise UserError(f"sweep: {exc}", EXIT_USAGE) from None
+        names = list(grid)
+        print(f"train: {', '.join(result.train_coins)} | test (out-of-sample): {', '.join(result.test_coins)}")
+        header = (" ".join(f"{n:>16}" for n in names)
+                  + f" {'train ret%':>11} {'train n':>8} {'TEST ret%':>10} {'test n':>7}")
+        print(header + "\n" + "-" * len(header))
+        for row in result.rows:
+            cells = " ".join(f"{row[n]!s:>16}" for n in names)
+            print(f"{cells} {row['train']['total_return_pct']:>11.2f} {row['train']['trades']:>8} "
+                  f"{row['test']['total_return_pct']:>10.2f} {row['test']['trades']:>7}")
+        print(f"best on TRAIN: {result.best_params} (judge it by its TEST column, not its train column)")
+        out = dataclasses.asdict(result)
+    else:
+        start, until = _parse_time(args.trade_from), _parse_time(args.trade_until)
+        if start is None and until is None:
+            results, agg = bt.run_many(files)
+        else:
+            series, skipped = [], 0
+            for f in files:
+                try:
+                    series.append(load_series(f))
+                except ValueError:
+                    skipped += 1
+            results = [bt.run(c, m, trade_from=start, trade_until=until) for c, m in series]
+            agg = aggregate_metrics(results, bt.start_usd, skipped)
+        print(format_table(results, agg))
+        cm = bt.cost_model
+        print(f"\nstart ${bt.start_usd:,.0f} per series | costs per side: {cm.fee_bps_per_side:g} bps fee + "
+              f"{cm.impact_bps_per_1k_usd:g} bps impact per $1K + ${cm.network_fee_usd_per_side:g} network")
+        print("Not modelled (each makes this look BETTER than live): rug filter, radar, judge, liquidity floor, "
+              "5m buy/sell ratio.")
+        out = {"results": [r.to_dict() for r in results], "aggregate": agg,
+               "cost_model": dataclasses.asdict(cm), "start_usd": bt.start_usd,
+               "window": {"from": start, "until": until}}
+    if args.json_out:
+        target = Path(args.json_out)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(json.dumps(out, indent=2, sort_keys=True, default=str) + "\n", encoding="utf-8")
+        print(f"wrote {target}")
+    return EXIT_OK
 
 
 def cmd_collect(args: argparse.Namespace, settings: Settings) -> int:
-    raise NotImplementedError
+    from nightcrawler.clock import RealClock
+    from nightcrawler.dataset import collect
+    from nightcrawler.http import HttpClient
+    from nightcrawler.sources.geckoterminal import GeckoTerminalClient
+
+    _setup_logging(args, settings)
+    clock = RealClock()
+    gecko = GeckoTerminalClient(HttpClient.from_settings(settings, clock=clock))
+    out = Path(args.out) if args.out else settings.dataset_dir
+
+    def progress(done: int, total: int, pool: str) -> None:
+        print(f"[{done}/{total}] {pool}", file=sys.stderr)
+
+    try:
+        summary = collect(gecko, out, n_pools=args.pools, min_age_h=args.min_age_h, hours=args.hours, clock=clock,
+                          progress=progress)
+    except RuntimeError as exc:
+        raise UserError(str(exc)) from exc
+    print(f"census: {summary.considered} pools ({summary.census_added} new) in {summary.out_dir}")
+    print(f"downloaded {len(summary.written)} ({summary.empty} never traded), already had "
+          f"{summary.skipped_existing}, too young {summary.skipped_young}, failed {len(summary.failed)}")
+    if not summary.written and summary.skipped_young:
+        print(f"Nothing is {args.min_age_h:g} h old yet: the first runs only build the census. "
+              "Run `nightcrawler collect` again later (e.g. hourly); pools are downloaded once old enough.")
+    return EXIT_OK
 
 
 def cmd_report(args: argparse.Namespace, settings: Settings) -> int:
-    raise NotImplementedError
+    from nightcrawler.audit import Auditor
+
+    _setup_logging(args, settings, quiet=True)
+    ledger = _open_ledger(settings)
+    try:
+        balances: Any = None
+        if settings.is_live:
+            pubkey = _wallet_pubkey(settings, ledger)
+            if pubkey:
+                balances = _LiveBalances(_sources(settings).jupiter, pubkey)
+        elif ledger.get_kv("paper.sol_lamports") is not None:
+            balances = _PaperBalances(ledger)
+        report = Auditor(ledger, balances, mode=settings.trading_mode).reconcile()
+        if args.json:
+            print(json.dumps(dataclasses.asdict(report), indent=2, sort_keys=True, default=str))
+        else:
+            print(Auditor.format_text(report))
+    finally:
+        ledger.close()
+    return EXIT_OK if report.ok else EXIT_VERIFY_FAILED
 
 
 def cmd_receipts(args: argparse.Namespace, settings: Settings) -> int:
-    raise NotImplementedError
+    _setup_logging(args, settings, quiet=True)
+    ledger = _open_ledger(settings)
+    try:
+        if args.receipts_cmd == "head":
+            seq, head = ledger.head()
+            print(f"seq  {seq}\nhash {head}")
+            return EXIT_OK
+        if args.receipts_cmd == "verify":
+            ok, bad = ledger.verify_chain()
+            seq, head = ledger.head()
+            if ok:
+                print(f"OK: all {seq} receipts verify; head {head}")
+                return EXIT_OK
+            print(f"BROKEN: the receipt chain fails at seq {bad} (of {seq}). Someone or something edited the "
+                  "ledger; do not trust results after that point.")
+            return EXIT_VERIFY_FAILED
+        count = ledger.export_receipts(args.path)
+        seq, head = ledger.head()
+        print(f"wrote {count} receipts to {args.path} (head seq {seq} {head})")
+        return EXIT_OK
+    finally:
+        ledger.close()
+
+
+_WALLET_WARNING = """
+##########################################################################
+#  NEW BOT WALLET - THE SECRET BELOW IS SHOWN ONCE AND NEVER AGAIN         #
+#  Anyone who sees it can take every coin in this wallet.                 #
+#  * Copy it into a password manager or straight into the Railway        #
+#    variable BOT_WALLET_SECRET. Do not screenshot it, do not chat it.    #
+#  * Use this wallet ONLY for the bot. Never your main wallet.            #
+#  * Fund it with no more than you can afford to lose (about $100).       #
+##########################################################################
+"""
 
 
 def cmd_wallet(args: argparse.Namespace, settings: Settings) -> int:
-    raise NotImplementedError
+    from nightcrawler.broker.wallet import PHANTOM_IMPORT_HELP, generate_new
+    from nightcrawler.models import SOL_MINT, lamports_to_sol
+
+    _setup_logging(args, settings, quiet=True)
+    if args.wallet_cmd == "new":
+        wallet, secret = generate_new()
+        print(_WALLET_WARNING)
+        print(f"address (public, safe to share): {wallet.pubkey()}")
+        print(f"secret  (PRIVATE, shown once):   {secret}")
+        print(f"\n{PHANTOM_IMPORT_HELP}")
+        return EXIT_OK
+    pubkey = _wallet_pubkey(settings)
+    if not pubkey:
+        raise UserError("BOT_WALLET_SECRET is not set (paper mode needs no wallet; see docs/GOING_LIVE.md)")
+    print(f"address: {pubkey}")
+    jupiter = _sources(settings).jupiter
+    try:
+        holdings = jupiter.holdings(pubkey)
+        sol_usd = jupiter.sol_price_usd()
+    except Exception as exc:
+        raise UserError(f"balances unavailable right now ({type(exc).__name__}: {exc})") from exc
+    sol = lamports_to_sol(holdings.sol_lamports)
+    print(f"SOL:     {sol:.6f} (~${sol * sol_usd:,.2f} at ${sol_usd:,.2f}/SOL)")
+    tokens = {m: a for m, a in holdings.tokens.items() if a > 0 and m != SOL_MINT}
+    if tokens:
+        prices = jupiter.prices(list(tokens))
+        print(f"tokens:  {len(tokens)}")
+        for mint, amount in sorted(tokens.items()):
+            price = prices.get(mint)
+            print(f"  {mint}  {amount} base units" + (f"  (price ${price:.10g})" if price else ""))
+    return EXIT_OK
 
 
 def cmd_sell_all(args: argparse.Namespace, settings: Settings) -> int:
-    raise NotImplementedError
+    from nightcrawler.engine import build_app
+
+    mode = "REAL MONEY (live)" if settings.is_live else "paper"
+    if not _confirm(args, f"Sell every open {mode} position now?", "SELL"):
+        print("cancelled")
+        return EXIT_ERROR
+    filt = _setup_logging(args, settings)
+    app = build_app(settings, redaction_filter=filt)
+    try:
+        before = app.ledger.open_positions()
+        if not before:
+            print("no open positions")
+            return EXIT_OK
+        fills = app.engine.sell_all("manual")
+        for f in fills:
+            print(f"sold {f.symbol or f.mint}: {f.token_amount} base units for {f.sol_lamports / 1e9:.6f} SOL")
+        left = app.ledger.open_positions()
+    finally:
+        app.close()
+    if settings.kill_switch == "off":
+        print("Note: a running bot may buy again. To stop new buys set KILL_SWITCH=stop (Railway variable) "
+              f"or write 'stop' into {settings.kill_file}.")
+    if left:
+        print(f"{len(left)} position(s) could NOT be sold now (see the log); try again in a minute.",
+              file=sys.stderr)
+        return EXIT_ERROR
+    return EXIT_OK
 
 
 def cmd_reset_halt(args: argparse.Namespace, settings: Settings) -> int:
-    raise NotImplementedError
+    from nightcrawler.clock import RealClock
+    from nightcrawler.risk import RiskManager
+
+    _setup_logging(args, settings, quiet=True)
+    ledger = _open_ledger(settings)
+    try:
+        risk = RiskManager(settings, ledger, RealClock())
+        halted, reason = risk.is_halted()
+        if not halted:
+            print("not halted; nothing to do")
+            return EXIT_OK
+        print(f"halted: {reason}")
+        if not _confirm(args, "Clear the halt and restart the equity peak from now?", "RESET"):
+            print("cancelled")
+            return EXIT_ERROR
+        risk.reset_halt("manual reset via CLI")
+        seq, head = ledger.head()
+        print(f"halt cleared (reset receipt seq {seq}, head {head})")
+        return EXIT_OK
+    finally:
+        ledger.close()
 
 
 def cmd_dashboard(args: argparse.Namespace, settings: Settings) -> int:
-    raise NotImplementedError
+    from nightcrawler.clock import RealClock
+    from nightcrawler.dashboard import DashboardServer, build_state
+
+    _setup_logging(args, settings)
+    settings.ensure_data_dir()
+    ledger = _open_ledger(settings, must_exist=False)
+    clock = RealClock()
+    cache: dict[str, Any] = {}
+    server = DashboardServer(settings, lambda: build_state(ledger, settings, clock.now(), cache))
+    try:
+        server.start()
+        print(f"dashboard on http://{settings.dashboard_host}:{server.bound_port}/ (Ctrl+C to stop)", file=sys.stderr)
+        _wait_for_signal(threading.Event())
+    finally:
+        server.stop()
+        ledger.close()
+    return EXIT_OK
 
 
 HANDLERS: dict[str, Callable[[argparse.Namespace, Settings], int]] = {
@@ -184,6 +629,10 @@ HANDLERS: dict[str, Callable[[argparse.Namespace, Settings], int]] = {
 def main(argv: Sequence[str] | None = None) -> int:
     """Parse ``argv``, load settings, dispatch. Returns an exit code (never raises SystemExit
     except from argparse's own ``--help``/usage errors)."""
+    from nightcrawler.broker.base import LiveNotAllowed
+    from nightcrawler.broker.wallet import WalletError
+    from nightcrawler.ledger import LedgerError
+
     parser = build_parser()
     args = parser.parse_args(argv)
     try:
@@ -199,6 +648,15 @@ def main(argv: Sequence[str] | None = None) -> int:
     except NotImplementedError:
         print(f"nightcrawler: '{args.command}' is not implemented yet", file=sys.stderr)
         return EXIT_NOT_IMPLEMENTED
+    except UserError as exc:
+        print(f"nightcrawler: {exc}", file=sys.stderr)
+        return exc.exit_code
+    except (LiveNotAllowed, WalletError) as exc:
+        print(f"nightcrawler: {exc}", file=sys.stderr)
+        return EXIT_CONFIG
+    except LedgerError as exc:
+        print(f"nightcrawler: ledger problem: {exc}", file=sys.stderr)
+        return EXIT_ERROR
     except KeyboardInterrupt:
         print("nightcrawler: interrupted", file=sys.stderr)
         return EXIT_ERROR
@@ -211,3 +669,4 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 if __name__ == "__main__":  # pragma: no cover
     sys.exit(main())
+

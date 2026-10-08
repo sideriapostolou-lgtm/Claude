@@ -63,7 +63,7 @@ unavailable source (or an unexpected error) are cached for at most 2 minutes.
 ``metrics`` keys written: ``top10_pct, max_holder_pct, creator_pct,
 insider_pct, graph_insiders, dev_mints, lp_locked_pct, holder_count,
 rugcheck_score_normalised, mint_authority, freeze_authority, extensions,
-shield_warnings, program`` (only for the stages that ran).
+shield_warnings, program, decimals`` (only for the stages that ran).
 """
 
 from __future__ import annotations
@@ -309,6 +309,7 @@ class Cocoon:
             "freeze_authority": info.get("freeze_authority"),
             "program": info.get("program"),
             "extensions": extensions,
+            "decimals": info.get("decimals"),
         })
         if info.get("mint_authority"):
             _fail(report, "mint_authority", "mint authority not renounced (on-chain)")

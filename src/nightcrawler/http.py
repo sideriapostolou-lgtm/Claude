@@ -13,9 +13,11 @@ Behaviour (the contract):
   host missing from ``rate_limits`` means unlimited.
 * **Retries** (``retry=True``, the default): on HTTP 429 and 5xx, and on
   connection errors / timeouts, up to ``max_retries`` (4) extra attempts.
-  Delay = ``Retry-After`` header when present (seconds or HTTP date, capped
-  at ``retry_after_max_s``), else exponential backoff
-  ``min(backoff_max_s, backoff_base_s * 2**attempt) * U(0.5, 1.0)``.
+  Delay = exponential backoff
+  ``min(backoff_max_s, backoff_base_s * 2**attempt) * U(0.5, 1.0)``, raised
+  to the ``Retry-After`` header when that is longer (seconds or HTTP date,
+  capped at ``retry_after_max_s``). ``Retry-After: 0`` (GeckoTerminal sends
+  it with 429s) therefore never causes an immediate retry storm.
   Use ``retry=False`` for non-idempotent calls (Ultra ``/execute``).
 * **Errors**: anything that does not end in a 2xx JSON response raises
   :class:`HttpError` with ``status`` (None for network errors), ``url``
@@ -280,9 +282,12 @@ class HttpClient:
         return max(0.0, min(seconds, self.retry_after_max_s))
 
     def _sleep_retry(self, host: str, attempt: int, resp: Any, why: str) -> None:
-        delay = self._retry_after(resp)
-        if delay is None:
-            delay = self.backoff_delay(attempt)
+        # Retry-After is a FLOOR, never a shortcut: GeckoTerminal answers 429 with
+        # ``Retry-After: 0``, and honouring that literally produced back-to-back
+        # retries (a 429 storm) that burned the scarcest rate budget.
+        backoff = self.backoff_delay(attempt)
+        retry_after = self._retry_after(resp)
+        delay = backoff if retry_after is None else max(retry_after, backoff)
         self.stats[host]["retries"] += 1
         log.warning("http_retry host=%s why=%s attempt=%d delay_s=%.2f", host, why, attempt + 1, delay)
         self.clock.sleep(delay)
