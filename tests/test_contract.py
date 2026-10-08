@@ -116,3 +116,13 @@ def test_repo_files_exist() -> None:
     for rel in ["pyproject.toml", "Dockerfile", ".dockerignore", "railway.json", ".env.example", ".gitignore",
                 "docs/DESIGN.md", "tests/fixtures/README.md"]:
         assert (ROOT / rel).is_file(), rel
+
+
+def test_railway_gives_a_stopping_bot_time_to_finish_a_swap() -> None:
+    """Railway's default draining time is 0 s: SIGKILL follows SIGTERM at once, which can cut a live
+    swap between Ultra /execute and its ledger record. The engine stops after the current stage."""
+    import json
+
+    deploy = json.loads((ROOT / "railway.json").read_text(encoding="utf-8"))["deploy"]
+    assert deploy["drainingSeconds"] >= 30
+    assert "RAILWAY_DEPLOYMENT_DRAINING_SECONDS" in (ROOT / "docs" / "RAILWAY.md").read_text(encoding="utf-8")

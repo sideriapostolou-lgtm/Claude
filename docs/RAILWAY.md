@@ -39,6 +39,7 @@ this, replacing the token with your own long random string:
 ```
 DATA_DIR=/data
 RAILWAY_RUN_UID=0
+RAILWAY_DEPLOYMENT_DRAINING_SECONDS=30
 DASHBOARD_TOKEN=change-me-to-a-long-random-password-1234567890
 TRADING_MODE=paper
 ```
@@ -46,6 +47,11 @@ TRADING_MODE=paper
 - `RAILWAY_RUN_UID=0` is required. Railway mounts volumes as root, and the image runs as a
   non-root user, so without this the bot can't write to `/data`. The error message says so
   if you forget.
+- `RAILWAY_DEPLOYMENT_DRAINING_SECONDS=30` gives the old container 30 seconds between "please
+  stop" (SIGTERM) and the hard kill. Railway's default is **0 seconds**, and every variable change
+  is a redeploy: without it, a deploy can kill the bot in the middle of a swap. The bot finishes
+  the step it is on and stops cleanly. (It also writes a marker before every live swap, so even a
+  hard kill is reconciled against the wallet on the next start, but a clean stop is better.)
 - `DASHBOARD_TOKEN` protects the dashboard. Use 30+ random characters; a password manager
   can generate one.
 - Don't set `PORT`: Railway sets it, and the dashboard and health check use it.
@@ -57,6 +63,7 @@ TRADING_MODE=paper
 - **Restart Policy:** On Failure
 - **Replicas:** 1. Never more than one: two bots on one ledger would fight. Railway doesn't
   allow replicas with a volume anyway.
+- **Draining time:** 30 seconds (the same as `RAILWAY_DEPLOYMENT_DRAINING_SECONDS` above).
 
 Why by hand: the repo has a `railway.json` with these values, but Railway has deprecated
 config-as-code files. New services may ignore it, and existing ones stop reading it on
@@ -114,14 +121,16 @@ can ask. The bot slows down and carries on. Secrets never appear in the logs.
 | You want to... | Set |
 |---|---|
 | Stop new buys, keep managing open positions | `KILL_SWITCH=stop` |
-| Sell everything now, then stop | `KILL_SWITCH=sell_all` |
+| Sell everything now, then stop | `KILL_SWITCH=sell_all` (`sell-all` and `sell all` work too; any word the bot does not know means `stop`, never "refuse to start") |
 | Resume normal trading | `KILL_SWITCH=off` |
 | Clear a drawdown halt (after thinking it over) | `RESET_HALT_TOKEN=<any new value, e.g. 2026-10-20>` |
 | Try different settings | edit the variable, e.g. `MAX_OPEN_POSITIONS=2` |
 
 Every variable change needs a **Deploy**, which restarts the bot. Open positions, balances
 and receipts survive restarts because they're on the volume. The watchlist is rebuilt within
-minutes.
+minutes. If you run `nightcrawler sell-all` in a shell while the bot is running, it does not
+trade itself: it writes `sell_all` into `/data/KILL` and the running bot sells (two processes
+trading one ledger would race). Write `off` into that file, or delete it, to resume.
 
 ## Updating to a newer version
 
