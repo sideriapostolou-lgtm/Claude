@@ -45,6 +45,12 @@ Swap flow (``execute``):
      so the engine blocks entries and reconciles from the wallet.
 7. Never retry a swap blindly (could double-buy). Re-quote instead.
 
+Every ``SwapUnknown`` carries ``.signature``: the one Ultra reported, else the signed
+transaction's first signature (the fee payer's = the transaction id; ``None`` for a gasless
+transaction, whose first slot is Ultra's). :meth:`LiveBroker.swap_status` reads it with
+``getSignatureStatuses``, so the engine can settle an unknown swap as soon as the chain has a
+final answer instead of waiting a fixed time.
+
 Wallet-cap guard: ``quote('buy', ...)`` raises ``QuoteRejected`` when the
 wallet's USD value (SOL + tokens at Jupiter prices) exceeds ``MAX_WALLET_USD``,
 or when that value cannot be determined (fail closed).
@@ -86,8 +92,8 @@ from nightcrawler.models import (
 from nightcrawler.sources.jupiter import JupiterError
 from nightcrawler.sources.solana_rpc import RpcError
 
-__all__ = ["LiveBroker", "require_solders", "missing_signatures", "definitely_failed", "EXECUTE_REPOLLS",
-           "EXECUTE_REPOLL_WINDOW_S"]
+__all__ = ["LiveBroker", "require_solders", "missing_signatures", "definitely_failed", "transaction_signature",
+           "final_swap_status", "EXECUTE_REPOLLS", "EXECUTE_REPOLL_WINDOW_S", "FINAL_COMMITMENTS"]
 
 log = get_logger(__name__)
 
@@ -113,12 +119,45 @@ def definitely_failed(result: dict[str, Any]) -> bool:
     return isinstance(code, int) and code > 0 and bool(result.get("signature"))
 
 
+#: Commitment levels at which a transaction's outcome is final for our purposes ("confirmed" is what
+#: Ultra itself reports as Success; a supermajority-confirmed block has never been rolled back).
+FINAL_COMMITMENTS = frozenset({"confirmed", "finalized"})
+
+
 def missing_signatures(tx_b64: str) -> int:
     """Number of still-empty signature slots in a base64 ``VersionedTransaction``."""
     solders = require_solders()
     tx = solders.transaction.VersionedTransaction.from_bytes(base64.b64decode(tx_b64))
     empty = solders.signature.Signature.default()
     return sum(1 for sig in tx.signatures if sig == empty)
+
+
+def transaction_signature(tx_b64: str) -> str | None:
+    """The transaction id (first signature, base58) of a signed base64 transaction, or None when
+    that slot is still empty (a gasless transaction awaiting Ultra's fee-payer signature)."""
+    solders = require_solders()
+    try:
+        tx = solders.transaction.VersionedTransaction.from_bytes(base64.b64decode(tx_b64))
+    except (ValueError, TypeError):
+        return None
+    if not tx.signatures or tx.signatures[0] == solders.signature.Signature.default():
+        return None
+    return str(tx.signatures[0])
+
+
+def final_swap_status(status: dict[str, Any] | None) -> str | None:
+    """``"landed"`` / ``"failed"`` when a ``SolanaRpc.signature_status`` answer is final (confirmed
+    or finalized, without / with an error), else None (unknown signature, or only processed)."""
+    if not isinstance(status, dict) or status.get("confirmation_status") not in FINAL_COMMITMENTS:
+        return None
+    return "failed" if status.get("err") is not None else "landed"
+
+
+def _unknown(message: str, signature: str | None, fill: Fill | None = None) -> SwapUnknown:
+    """A :class:`SwapUnknown` carrying the transaction ``signature`` (None when not known)."""
+    exc = SwapUnknown(message, fill)
+    exc.signature = signature  # type: ignore[attr-defined]
+    return exc
 
 
 def _live_refusal(settings: Settings, wallet: Any) -> str | None:
@@ -137,6 +176,8 @@ class LiveBroker(UltraBrokerBase):
 
     mode: Mode = "live"
     allow_insufficient_funds = False
+    #: ``execute`` accepts ``on_signed`` and ``SwapUnknown`` carries ``.signature``; ``swap_status`` exists.
+    reports_signature = True
 
     def __init__(self, jupiter: Any, rpc: Any, wallet: Any, ledger: Any, settings: Settings,
                  clock: Clock) -> None:
@@ -167,8 +208,13 @@ class LiveBroker(UltraBrokerBase):
         return quote
 
     def execute(self, quote: Quote, position: Position | None, *, symbol: str = "",
-                on_fill: Callable[[Fill], Any] | None = None) -> Fill:
-        """Sign, (simulate), send via Ultra execute; see module docstring."""
+                on_fill: Callable[[Fill], Any] | None = None,
+                on_signed: Callable[[str | None], Any] | None = None) -> Fill:
+        """Sign, (simulate), send via Ultra execute; see module docstring.
+
+        ``on_signed(signature)`` runs right BEFORE the transaction is first posted (signature None for
+        a gasless one): the engine stores it in its in-flight marker, so even a process killed while
+        the swap is in flight can ask the chain about it. Its failure is logged, never fatal."""
         ticket, sol_usd = self._prepare_execution(quote, position)
         signed_b64 = self._sign(quote)
         self._simulate(quote, signed_b64, position)
@@ -176,8 +222,14 @@ class LiveBroker(UltraBrokerBase):
         if age > self.settings.quote_max_age_s:  # signing/simulation/price fetch took long: never send it
             raise QuoteRejected(f"stale quote before sending: {age:.1f}s old > QUOTE_MAX_AGE_S "
                                 f"{self.settings.quote_max_age_s:g}s")
+        signature = transaction_signature(signed_b64)
+        if on_signed is not None:
+            try:
+                on_signed(signature)
+            except Exception as exc:  # bookkeeping only: the swap itself is still safe to send
+                log.warning("on_signed_failed signature=%s error=%s: %s", signature, type(exc).__name__, exc)
         ticket.spent = True
-        result = self._send(quote, signed_b64, position)
+        result = self._send(quote, signed_b64, position, signature)
         fill = self._fill_from_result(quote, result, ticket.decimals, sol_usd, position, symbol)
         try:
             with self.ledger.transaction():
@@ -188,8 +240,9 @@ class LiveBroker(UltraBrokerBase):
             log.critical("live_fill_not_recorded signature=%s side=%s mint=%s sol_lamports=%d token_amount=%d "
                          "error=%s: %s", fill.signature, fill.side, fill.mint, fill.sol_lamports, fill.token_amount,
                          type(exc).__name__, exc)
-            raise SwapUnknown(f"swap landed (signature {fill.signature}) but was not recorded "
-                              f"({type(exc).__name__}: {exc}); reconcile holdings, then re-quote", fill) from exc
+            raise _unknown(f"swap landed (signature {fill.signature}) but was not recorded "
+                           f"({type(exc).__name__}: {exc}); reconcile holdings, then re-quote", fill.signature,
+                           fill) from exc
         log.info("live_fill side=%s mint=%s sol=%.6f tokens=%d expected_out=%d signature=%s",
                  recorded.side, recorded.mint, lamports_to_sol(recorded.sol_lamports), recorded.token_amount,
                  quote.out_amount, recorded.signature)
@@ -198,6 +251,11 @@ class LiveBroker(UltraBrokerBase):
     def balances(self) -> Balances:
         """Ultra holdings of the wallet."""
         return self.jupiter.holdings(self.pubkey)
+
+    def swap_status(self, signature: str) -> str | None:
+        """Final on-chain outcome of a sent swap: ``"landed"``, ``"failed"`` or None (not known or not
+        final yet) - see :func:`final_swap_status`. Raises ``RpcError``/``HttpError`` when the RPC fails."""
+        return final_swap_status(self.rpc.signature_status(signature))
 
     def wallet_value_usd(self) -> float:
         """SOL + token holdings valued at Jupiter prices (unknown prices count 0).
@@ -268,9 +326,11 @@ class LiveBroker(UltraBrokerBase):
         self._swap_failed(quote, position, outcome="failed", stage="simulate", error=error)
         raise SwapFailed(error)
 
-    def _send(self, quote: Quote, signed_b64: str, position: Position | None) -> dict[str, Any]:
+    def _send(self, quote: Quote, signed_b64: str, position: Position | None,
+              signature: str | None = None) -> dict[str, Any]:
         """Post the signed transaction; re-post the IDENTICAL one (never a new swap) to learn a
-        final status after a transport error or a non-final answer (see module docstring)."""
+        final status after a transport error or a non-final answer (see module docstring).
+        ``signature``: the transaction id when known before sending (carried by ``SwapUnknown``)."""
         repolls = 0
         while True:
             try:
@@ -294,15 +354,17 @@ class LiveBroker(UltraBrokerBase):
                             f"status {(result or {}).get('status')!r}")
                 continue
             if problem is not None:
-                self._swap_failed(quote, position, outcome="unknown", stage="execute", error=str(problem))
-                raise SwapUnknown(f"Ultra execute outcome unknown ({problem}); reconcile holdings, then re-quote") \
-                    from problem
+                self._swap_failed(quote, position, outcome="unknown", stage="execute", error=str(problem),
+                                  signature=signature)
+                raise _unknown(f"Ultra execute outcome unknown ({problem}); reconcile holdings, then re-quote",
+                               signature) from problem
             assert result is not None
             error = result.get("error") or f"status {result.get('status')!r}"
+            reported = result.get("signature") or signature
             self._swap_failed(quote, position, outcome="unknown", stage="execute", error=error,
-                              signature=result.get("signature"), code=result.get("code"))
-            raise SwapUnknown(f"Ultra execute returned {error} (code {result.get('code')}): not final; "
-                              "reconcile holdings, then re-quote")
+                              signature=reported, code=result.get("code"))
+            raise _unknown(f"Ultra execute returned {error} (code {result.get('code')}): not final; "
+                           "reconcile holdings, then re-quote", reported)
 
     def _fill_from_result(self, quote: Quote, result: dict[str, Any], decimals: int, sol_usd: float,
                           position: Position | None, symbol: str) -> Fill:

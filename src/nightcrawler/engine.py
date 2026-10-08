@@ -8,7 +8,7 @@ same stage at most once per :data:`ERROR_RECEIPT_EVERY_S`) - the loop never dies
 
 Stage order inside one tick: ``kill`` -> ``reconcile`` -> ``live_start`` (live, until
 recorded) -> ``drift`` -> ``positions`` -> ``discover`` -> ``watch`` -> ``equity`` ->
-``heartbeat`` (exits before entries). ``discover`` and ``watch`` stop after a wall-clock
+``persist`` -> ``heartbeat`` (exits before entries). ``discover`` and ``watch`` stop after a wall-clock
 budget of POSITION_INTERVAL_S and run the kill check and (when due) ``positions``
 between candidates, so a slow upstream (RugCheck 429s, an LLM timeout) never delays a
 stop-loss by more than one slow call.
@@ -16,7 +16,10 @@ stop-loss by more than one slow call.
 POSITIONS BELONG TO A MODE: ``Position.mode`` (paper|live) comes from the opening fill
 and the engine only sees, values and trades positions of the current TRADING_MODE. At
 boot, open positions of the other mode are noted (``note`` ``other_mode_positions``)
-and left alone.
+and left alone. LIVE POSITIONS ALSO BELONG TO A WALLET (F3): a live position records the
+bot wallet's pubkey (ledger ``positions.wallet``); one recorded for ANOTHER wallet (the
+BOT_WALLET_SECRET changed) is never valued, sold or counted - it is noted at boot (``note``
+``foreign_positions``, kv ``engine.foreign_positions``) and listed in ``engine.status``.
 
 ``kill`` (every tick)
     ``risk.kill_mode()``: ``stop`` -> no new entries (the watch stage stops
@@ -46,8 +49,11 @@ and left alone.
     older snapshot exists (``Decision("unwatch")``). A mint with an OPEN
     position is never unwatched (its snapshot feeds the radar's liquidity rule).
     ``crawler.refresh`` (DexScreener batch) for all items; then fetch 1m candles
-    (GeckoTerminal ``ohlcv``) covering at least DIP_LOOKBACK_H (and
-    CANDLE_WINDOW_MIN) for at most :data:`MAX_CANDLE_FETCH_PER_TICK` items,
+    (GeckoTerminal ``ohlcv`` first; for a coin whose main market is a pump.fun venue,
+    pump.fun's candle API when GT fails, rate-limits - a 429 pauses GT candle calls for
+    :data:`GT_CANDLE_PAUSE_S` - returns nothing or lags; ONE source per series, recorded
+    as ``WatchItem.candle_source`` and in every entry decision) covering at least
+    DIP_LOOKBACK_H (and CANDLE_WINDOW_MIN) for at most :data:`MAX_CANDLE_FETCH_PER_TICK` items,
     chosen in this priority: never fetched yet; then items whose snapshot price
     is >= DIP_PCT/2 below the rolling high of their last candles (least recently
     fetched first, so every dipping token gets its turn); then least recently
@@ -82,6 +88,11 @@ and left alone.
     another process changed the row), so a stale copy never reopens a position
     that ``nightcrawler sell-all`` closed meanwhile. A position without a usable
     entry price still exits: time stop, or a stop measured on value vs cost.
+    A FULL exit sells ``min(books, what the wallet holds)`` (F10): the tokens the wallet
+    does not hold are written off with a 0-SOL fill and a ``note`` ``exit_shortfall`` (all
+    of them, with an ``exit`` decision, when it holds none), so a books/wallet mismatch can
+    never trap a position. Live, a lower wallet balance is trusted only
+    :data:`HOLDINGS_SETTLE_S` after the position's last fill, and never when unreadable.
 
 ``reconcile`` (every tick, live only in practice)
     A live swap whose outcome is unknown (``SwapUnknown``) blocks ALL new
@@ -95,6 +106,10 @@ and left alone.
     take-profit counts as taken). Without any SOL/USD price (Jupiter down and
     no USD value on the quote) the item waits instead of booking a zero price.
     Pending items persist in kv ``engine.unresolved`` across restarts.
+    F5: when the swap's signature is known (``SwapUnknown.signature``), its status is
+    asked every :data:`SIGNATURE_CHECK_S` (``broker.swap_status``) BEFORE the fixed wait:
+    final and failed -> settled at once ("did not land"); final and landed -> booked from
+    the wallet at once, and never called "did not land" while the wallet index lags.
 
     IN-FLIGHT MARKER (live): kv ``engine.inflight[mint]`` is written in the same
     transaction as the ``enter``/``exit`` decision receipt, BEFORE the swap is
@@ -121,8 +136,19 @@ and left alone.
     their last price (a new position starts at the market price, not its
     fill price) -> ``ledger.record_equity`` (risk limits + dashboard curve).
 
+``persist`` (:data:`STATE_SAVE_S`, also at shutdown; RT-14)
+    kv ``engine.watchlist`` (also on every add/remove), ``engine.cocoon_queue`` and
+    ``crawler.nursery``, so a redeploy resumes them: restored at boot, the watchlist bounded by
+    WATCHLIST_MAX with items past WATCHLIST_TTL_H unwatched at once, the cocoon queue only when
+    saved within :data:`QUEUE_RESTORE_MAX_AGE_S`, the nursery bounded and age-expired by the crawler.
+
 ``heartbeat`` (:data:`HEARTBEAT_S`)
     kv ``engine.heartbeat`` = now and ``engine.status`` (counters for the dashboard/API).
+
+SAFE MODE (RT-9, :meth:`Engine.enter_safe_mode`, set by ``nightcrawler run`` when the
+configuration is invalid but open live positions exist): no discovery and no entries;
+positions, the kill switch and reconciliation run as usual. kv ``engine.safe_mode`` (and
+``engine.status["safe_mode"]``) carries the banner; a normal boot clears it.
 
 ORDERING GUARANTEE: a Decision/Fill receipt is appended before the engine
 fetches any newer price, so recorded intent can never be edited with hindsight.
@@ -143,6 +169,7 @@ from typing import Any, Callable
 from nightcrawler import __version__
 from nightcrawler.clock import Clock, RealClock, iso_utc
 from nightcrawler.config import Settings
+from nightcrawler.http import HttpError
 from nightcrawler.logging_setup import get_logger
 from nightcrawler.models import (
     SOL_MINT,
@@ -161,6 +188,7 @@ from nightcrawler.models import (
     lamports_to_sol,
     new_id,
 )
+from nightcrawler.sources.pumpfun import is_pumpfun_coin
 from nightcrawler.strategy import entry_signal, exit_signal, rolling_high
 
 __all__ = [
@@ -169,6 +197,7 @@ __all__ = [
     "App",
     "build_app",
     "build_engine",
+    "foreign_positions_of",
     "MAX_COCOON_PER_TICK",
     "MAX_CANDLE_FETCH_PER_TICK",
     "COCOON_QUEUE_MAX",
@@ -177,6 +206,11 @@ __all__ = [
     "DRIFT_CHECK_S",
     "RECONCILE_AFTER_S",
     "SNAPSHOT_MISSING_UNWATCH_S",
+    "GT_CANDLE_PAUSE_S",
+    "HOLDINGS_SETTLE_S",
+    "SIGNATURE_CHECK_S",
+    "STATE_SAVE_S",
+    "QUEUE_RESTORE_MAX_AGE_S",
 ]
 
 log = get_logger(__name__)
@@ -225,6 +259,18 @@ SNAPSHOT_MAX_AGE_INTERVALS = 2.0
 COCOON_RETRY_S = 120.0
 #: ... and becomes a final ``reject_cocoon`` on this attempt.
 COCOON_ATTEMPTS = 3
+#: After a GeckoTerminal 429 no GT candles are fetched for this long (pump.fun coins use pump.fun).
+GT_CANDLE_PAUSE_S = 60.0
+#: Live: a wallet balance BELOW the books is trusted for an exit's write-off only this long after the
+#: position's last fill (Ultra holdings may not show a fresh swap yet).
+HOLDINGS_SETTLE_S = 60.0
+#: Live: the signature status of an unknown swap (and a wallet re-read for it) is asked at most this often.
+SIGNATURE_CHECK_S = 5.0
+#: The watchlist and the crawler nursery are saved to the ledger kv this often (and at shutdown).
+STATE_SAVE_S = 600.0
+#: Candidates saved waiting for the cocoon are re-queued at boot only when saved at most this long ago.
+QUEUE_RESTORE_MAX_AGE_S = 3600.0
+_FINAL_CHAIN = ("landed", "failed")
 
 _SAFETY_METRIC_KEYS = ("top10_pct", "max_holder_pct", "creator_pct", "insider_pct", "graph_insiders",
                        "dev_mints", "lp_locked_pct", "holder_count", "rugcheck_score_normalised")
@@ -286,6 +332,36 @@ def _only_unavailable(report: SafetyReport) -> bool:
                                            for r in report.hard_fail_reasons)
 
 
+def foreign_positions_of(ledger: Any, wallet: str) -> list[dict[str, Any]]:
+    """Open LIVE positions recorded for another wallet than ``wallet`` (F3), as small dicts
+    ``{id, mint, symbol, wallet, token_amount, opened_at}`` for the dashboard and the report."""
+    lookup = getattr(ledger, "position_wallets", None)
+    positions = ledger.open_positions(mode="live")
+    if lookup is None or not positions:
+        return []
+    wallets = lookup([p.id for p in positions])
+    return [{"id": p.id, "mint": p.mint, "symbol": p.symbol, "wallet": wallets[p.id], "token_amount": p.token_amount,
+             "opened_at": p.opened_at} for p in positions if wallets.get(p.id) and wallets[p.id] != wallet]
+
+
+def _watch_item_from(row: Any) -> WatchItem | None:
+    """A saved watchlist row (``Engine._save_watchlist``) back as a WatchItem; None for anything
+    unusable (garbage, a missing or non-passing safety report, a report of another mint)."""
+    try:
+        candidate = TokenCandidate.from_dict(row["candidate"])
+        safety = SafetyReport.from_dict(row["safety"])
+        added_at = float(row["added_at"])
+        snapshot = MarketSnapshot.from_dict(row["snapshot"]) if isinstance(row.get("snapshot"), dict) else None
+        snapshot_at = float(row["snapshot_at"]) if row.get("snapshot_at") is not None else None
+    except (KeyError, TypeError, ValueError, AttributeError):
+        return None
+    if not candidate.mint or safety.mint != candidate.mint or safety.passed is not True or not math.isfinite(added_at):
+        return None
+    reason = row.get("last_signal_reason")
+    return WatchItem(candidate=candidate, safety=safety, added_at=added_at, snapshot=snapshot, snapshot_at=snapshot_at,
+                     last_signal_reason=str(reason) if reason is not None else None)
+
+
 def _candles_stale(candles: list[Candle], now: float) -> str | None:
     """Why ``candles`` are too old to decide on (GeckoTerminal indexing lag), or None.
 
@@ -316,6 +392,7 @@ class WatchItem:
     candles_at: float | None = None
     last_signal_reason: str | None = None
     snapshot_at: float | None = None
+    candle_source: str | None = None  # "geckoterminal" | "pumpfun": the ONE source of ``candles``
 
     @property
     def mint(self) -> str:
@@ -348,7 +425,7 @@ class Engine:
 
     def __init__(self, settings: Settings, *, clock: Clock, ledger: Any, crawler: Any, cocoon: Any,
                  radar: Any, judge: Any, risk: Any, broker: Any, sources: Any = None,
-                 stop_event: threading.Event | None = None) -> None:
+                 stop_event: threading.Event | None = None, pumpfun: Any = None) -> None:
         self.settings = settings
         self.clock = clock
         self.ledger = ledger
@@ -380,6 +457,11 @@ class Engine:
         self.prefilter_reasons: Counter[str] = Counter()
         self.last_results: dict[str, str] = {}
         self._booted = False
+        #: pump.fun candle client (fallback candle source for pump.fun coins); None = GT only
+        self.pumpfun = pumpfun if settings.pumpfun_candles else None
+        self._gt_paused_until = 0.0
+        #: set by :meth:`enter_safe_mode` (invalid configuration with open live positions)
+        self.safe_mode: dict[str, Any] | None = None
 
     # ------------------------------------------------------------------ loop
     def tick(self, now: float) -> dict[str, Any]:
@@ -398,8 +480,9 @@ class Engine:
                                    ("discover", s.discovery_interval_s, self.discover),
                                    ("watch", s.watch_interval_s, self.watch),
                                    ("equity", s.equity_interval_s, self.snapshot_equity),
+                                   ("persist", STATE_SAVE_S, self.save_state),
                                    ("heartbeat", HEARTBEAT_S, self._heartbeat)):
-            if self.stop_event.is_set():
+            if self.stop_event.is_set() or (name == "discover" and self.safe_mode is not None):
                 results[name] = "skipped"
             elif self._due(name, interval, now):
                 self._run(name, fn, now, results)
@@ -441,6 +524,7 @@ class Engine:
                 self.clock.sleep(max(0.0, TICK_S - (self.clock.now() - started)))
         finally:
             now = self.clock.now()
+            self.save_state(now)  # a redeploy resumes the watchlist and the nursery (RT-14)
             try:
                 self._set_status(now, "stopped")
                 self.ledger.append_receipt("note", {"event": "shutdown", "version": __version__}, ts=now)
@@ -452,9 +536,20 @@ class Engine:
         """Request a graceful stop (finishes the current stage)."""
         self.stop_event.set()
 
+    def enter_safe_mode(self, problems: list[str], defaults_used: list[str] | tuple[str, ...] = ()) -> None:
+        """EXITS-ONLY safe mode (RT-9): the configuration was invalid but the ledger holds open live
+        positions, so the bot runs anyway - no discovery and no entries; stop-losses, the kill switch
+        and reconciliation keep working. ``defaults_used``: the variables that fell back to defaults.
+        Shown on the dashboard via kv ``engine.safe_mode`` and ``engine.status["safe_mode"]``."""
+        self.safe_mode = {"problems": [str(p)[:300] for p in problems], "defaults_used": list(defaults_used),
+                          "since": self.clock.now()}
+        log.critical("SAFE_MODE invalid configuration with open live positions: exits only, no entries. "
+                     "Fix: %s", " | ".join(self.safe_mode["problems"]))
+
     def _boot_checks(self, now: float) -> None:
-        """Mode switch note, open positions of the OTHER mode (left alone, noted) and the
-        phone-friendly halt reset (``RESET_HALT_TOKEN``)."""
+        """Mode switch note, open positions of the OTHER mode (left alone, noted), live positions of
+        ANOTHER wallet (never managed, noted), the safe-mode banner and the phone-friendly halt
+        reset (``RESET_HALT_TOKEN``)."""
         previous = self.ledger.get_kv("engine.mode")
         mode = self.settings.trading_mode
         if previous is not None and previous != mode:
@@ -470,6 +565,18 @@ class Engine:
                                        ts=now)
             log.warning("other_mode_positions mode=%s count=%d: a %s engine never trades or counts them; close "
                         "them in %s mode (KILL_SWITCH=sell_all) before switching", other, len(ids), mode, other)
+        foreign = self.foreign_positions()
+        self.ledger.set_kv("engine.foreign_positions", foreign)
+        if foreign:
+            self.ledger.append_receipt("note", {"event": "foreign_positions", "wallet": self._own_wallet(),
+                                                "positions": foreign}, ts=now)
+            log.error("foreign_positions count=%d wallet=%s: these live positions belong to another wallet and are "
+                      "NOT managed (no stop-loss) by this one; run the bot with that wallet to close them",
+                      len(foreign), self._own_wallet())
+        self.ledger.set_kv("engine.safe_mode", self.safe_mode)  # None clears the banner of a fixed config
+        if self.safe_mode is not None:
+            self.ledger.append_receipt("note", {"event": "safe_mode", "problems": self.safe_mode["problems"],
+                                                "defaults_used": self.safe_mode["defaults_used"]}, ts=now)
         token = self.settings.reset_halt_token
         if token and token != self.ledger.get_kv("risk.reset_token"):
             self.risk.reset_halt(f"reset via RESET_HALT_TOKEN={token}")
@@ -533,6 +640,11 @@ class Engine:
                 self._adopt_inflight({str(k): dict(v) for k, v in inflight.items() if isinstance(v, dict)})
         except Exception as exc:
             log.warning("engine_restore_failed error=%s", _err(exc))
+        for restore in (self._restore_watchlist, self._restore_queue, self._restore_nursery):  # best effort
+            try:
+                restore(self.clock.now())
+            except Exception as exc:
+                log.warning("engine_restore_failed part=%s error=%s", restore.__name__, _err(exc))
 
     def _adopt_inflight(self, inflight: dict[str, dict[str, Any]]) -> None:
         now = self.clock.now()
@@ -547,6 +659,89 @@ class Engine:
                                                 "reconciling": sorted(adopted)}, ts=now)
         log.error("inflight_at_restart mints=%s: the process stopped mid-swap; reconciling with the wallet before "
                   "any new entry", ",".join(sorted(inflight)))
+
+    # ------------------------------------------------------------------ persistence across redeploys (RT-14)
+    def save_state(self, now: float) -> None:
+        """Save the watchlist (kv ``engine.watchlist``), the candidates waiting for the cocoon (kv
+        ``engine.cocoon_queue``) and the crawler nursery (kv ``crawler.nursery``). Best effort: a
+        failure is logged, never raised (trading must not depend on it)."""
+        self._save_watchlist(now)
+        waiting = [c.to_dict() for c in [*self.queue, *(c for _, c in self._cocoon_retry)][:COCOON_QUEUE_MAX]]
+        try:
+            self.ledger.set_kv("engine.cocoon_queue", _clean({"saved_at": now, "items": waiting}))
+        except Exception as exc:
+            log.warning("state_save_failed part=cocoon_queue error=%s", _err(exc))
+        export = getattr(self.crawler, "export_nursery", None)
+        if export is None:
+            return
+        try:
+            self.ledger.set_kv("crawler.nursery", {"saved_at": now, "items": _clean(export())})
+        except Exception as exc:
+            log.warning("state_save_failed part=nursery error=%s", _err(exc))
+
+    def _save_watchlist(self, now: float) -> None:
+        items = [{"candidate": item.candidate.to_dict(), "safety": item.safety.to_dict(), "added_at": item.added_at,
+                  "snapshot": item.snapshot.to_dict() if item.snapshot is not None else None,
+                  "snapshot_at": item.snapshot_at, "last_signal_reason": item.last_signal_reason}
+                 for item in sorted(self.watchlist.values(), key=lambda i: i.added_at)]
+        try:
+            self.ledger.set_kv("engine.watchlist", _clean({"saved_at": now, "items": items}))
+        except Exception as exc:
+            log.warning("state_save_failed part=watchlist error=%s", _err(exc))
+
+    def _restore_watchlist(self, now: float) -> None:
+        """Resume the watchlist saved before a restart: at most WATCHLIST_MAX (newest first); items
+        older than WATCHLIST_TTL_H are unwatched at once (an open position's mint stays watched), so
+        discovery can look at them afresh."""
+        saved = self.ledger.get_kv("engine.watchlist")
+        rows = saved.get("items") if isinstance(saved, dict) else None
+        if not isinstance(rows, list) or not rows:
+            return
+        found: list[WatchItem] = []
+        for row in rows:
+            item = _watch_item_from(row)
+            if item is not None and item.mint not in self.watchlist and item.mint not in {i.mint for i in found}:
+                found.append(item)
+        found.sort(key=lambda i: i.added_at, reverse=True)
+        keep = sorted(found[:max(0, self.settings.watchlist_max - len(self.watchlist))], key=lambda i: i.added_at)
+        for item in keep:
+            self.watchlist[item.mint] = item
+            self._safety.setdefault(item.mint, item.safety)
+        open_mints = {p.mint for p in self._open_positions()}
+        ttl_h = self.settings.watchlist_ttl_h
+        expired = [i.mint for i in keep if i.mint not in open_mints and now - i.added_at > ttl_h * 3600]
+        for mint in expired:
+            self._unwatch(mint, f"expired after {ttl_h:g} h (while the bot was stopped)", now)
+        log.info("watchlist_restored items=%d expired=%d", len(keep), len(expired))
+
+    def _restore_nursery(self, now: float) -> None:
+        saved = self.ledger.get_kv("crawler.nursery")
+        rows = saved.get("items") if isinstance(saved, dict) else None
+        restore = getattr(self.crawler, "restore_nursery", None)
+        if restore is not None and isinstance(rows, list) and rows:
+            restore(rows, now)
+
+    def _restore_queue(self, now: float) -> None:
+        """Re-queue candidates that were waiting for the cocoon when the bot stopped (saved at most
+        :data:`QUEUE_RESTORE_MAX_AGE_S` ago; coins past MAX_AGE_H are dropped)."""
+        saved = self.ledger.get_kv("engine.cocoon_queue")
+        if not isinstance(saved, dict) or now - float(saved.get("saved_at") or 0) > QUEUE_RESTORE_MAX_AGE_S:
+            return
+        known = {c.mint for c in self.queue} | set(self.watchlist)
+        max_age_s = self.settings.max_age_h * 3600
+        for row in saved.get("items") or []:
+            try:
+                candidate = TokenCandidate.from_dict(row)
+            except (TypeError, ValueError, KeyError, AttributeError):
+                continue
+            created = candidate.created_at
+            if not candidate.mint or candidate.mint in known or (
+                    isinstance(created, (int, float)) and now - created > max_age_s):
+                continue
+            self.queue.append(candidate)
+            known.add(candidate.mint)
+            if len(self.queue) >= COCOON_QUEUE_MAX:
+                break
 
     # ------------------------------------------------------------------ kill switch
     def handle_kill(self, now: float) -> str:
@@ -571,6 +766,8 @@ class Engine:
         return self._entries_blocked_why() is None
 
     def _entries_blocked_why(self) -> str | None:
+        if self.safe_mode is not None:
+            return ("SAFE MODE (invalid configuration, exits only): " + "; ".join(self.safe_mode["problems"]))[:300]
         if self._kill_mode not in (None, "off"):
             return f"kill switch {self._kill_mode}"
         if self.unresolved:
@@ -582,8 +779,33 @@ class Engine:
         return None
 
     def _open_positions(self) -> list[Position]:
-        """Open positions of THIS trading mode (a paper position is never a live one)."""
-        return self.ledger.open_positions(mode=self.settings.trading_mode)
+        """Open positions of THIS trading mode (a paper position is never a live one) and, live, of
+        THIS wallet: positions recorded for another wallet are never valued, sold or counted (F3)."""
+        positions = self.ledger.open_positions(mode=self.settings.trading_mode)
+        foreign = self._foreign_wallets(positions)
+        return [p for p in positions if p.id not in foreign] if foreign else positions
+
+    def _own_wallet(self) -> str | None:
+        """Live: the bot wallet's pubkey (None when the broker does not say)."""
+        if not self.settings.is_live:
+            return None
+        wallet = getattr(self.broker, "pubkey", None)
+        return wallet if isinstance(wallet, str) and wallet else None
+
+    def _foreign_wallets(self, positions: list[Position]) -> dict[str, str]:
+        """``{position_id: wallet}`` of ``positions`` recorded for ANOTHER wallet than this one.
+        A position without a recorded wallet (unknown, pre-v2 ledger without kv ``wallet.pubkey``)
+        counts as this wallet's."""
+        own = self._own_wallet()
+        lookup = getattr(self.ledger, "position_wallets", None)
+        if own is None or lookup is None or not positions:
+            return {}
+        return {pid: w for pid, w in lookup([p.id for p in positions]).items() if w and w != own}
+
+    def foreign_positions(self) -> list[dict[str, Any]]:
+        """Open live positions of another wallet (dashboard/report: shown, never managed)."""
+        own = self._own_wallet()
+        return foreign_positions_of(self.ledger, own) if own is not None else []
 
     # ------------------------------------------------------------------ discovery
     def discover(self, now: float) -> None:
@@ -645,6 +867,7 @@ class Engine:
         self._decide(ts, c.mint, "watch", "passed cocoon" + (f" ({len(report.warnings)} warnings)"
                                                               if report.warnings else ""),
                      {"safety": _safety_summary(report), "candidate": _candidate_summary(c)}, symbol=c.symbol)
+        self._save_watchlist(ts)
         log.info("watch_add mint=%s symbol=%s warnings=%d", c.mint, c.symbol, len(report.warnings))
 
     def _unwatch(self, mint: str, reason: str, ts: float) -> None:
@@ -654,6 +877,7 @@ class Engine:
         self._decide(ts, mint, "unwatch", reason, {"last_signal": item.last_signal_reason,
                                                    "snapshot": item.snapshot.to_dict() if item.snapshot else None},
                      symbol=item.candidate.symbol)
+        self._save_watchlist(ts)
         log.info("watch_remove mint=%s symbol=%s reason=%s", mint, item.candidate.symbol, reason)
 
     # ------------------------------------------------------------------ watchlist
@@ -730,14 +954,16 @@ class Engine:
         return max(int(self.settings.candle_window_min), math.ceil(p.dip_lookback_h * 60) + p.confirm_green + 2)
 
     def _evaluate(self, item: WatchItem, now: float) -> None:
-        try:
-            candles = self.sources.gecko.ohlcv(item.pool, self._candle_minutes())
-        except Exception as exc:  # one token's candles must not stop the others
+        fetched = self._fetch_candles(item, now)
+        if isinstance(fetched, str):  # one token's candles must not stop the others
             item.candles_at = now
-            log.warning("candles_failed mint=%s pool=%s error=%s", item.mint, item.pool, _err(exc))
+            item.last_signal_reason = f"candles unavailable: {fetched}"[:300]
+            log.warning("candles_failed mint=%s pool=%s error=%s", item.mint, item.pool, fetched)
             return
-        item.candles, item.candles_at = list(candles), now
+        candles, source = fetched
+        item.candles, item.candles_at, item.candle_source = list(candles), now, source
         self.counters["candle_fetches"] += 1
+        self.counters[f"candles.{source}"] += 1
         stale = _candles_stale(item.candles, now)
         if stale:  # GeckoTerminal lags: deciding on an old close could buy far above it
             item.last_signal_reason = stale
@@ -754,6 +980,48 @@ class Engine:
             return
         self.counters["entry_signals"] += 1
         self._try_enter(item, signal_, now)
+
+    def _fetch_candles(self, item: WatchItem, now: float) -> tuple[list[Candle], str] | str:
+        """``(candles, source)`` from ONE source, or why there are none.
+
+        GeckoTerminal first (a 429 pauses GT candle calls for :data:`GT_CANDLE_PAUSE_S`); for a coin
+        whose main market is a pump.fun venue (:func:`~nightcrawler.sources.pumpfun.is_pumpfun_coin`)
+        pump.fun's candles replace GT's when GT fails, is paused, returns nothing or lags
+        (:data:`CANDLE_MAX_LAG_S`). A series is never assembled from both sources; a lagging GT
+        series is kept (and skipped as stale) when pump.fun has nothing fresher.
+        """
+        minutes = self._candle_minutes()
+        snap_dex = item.snapshot.dex if item.snapshot is not None else None
+        pump = self.pumpfun is not None and is_pumpfun_coin(launchpad=item.candidate.launchpad,
+                                                            dex=snap_dex or item.candidate.dex)
+        problems: list[str] = []
+        gt: list[Candle] | None = None
+        if now < self._gt_paused_until:
+            problems.append("geckoterminal paused after a rate limit")
+        else:
+            try:
+                gt = list(self.sources.gecko.ohlcv(item.pool, minutes))
+            except Exception as exc:
+                if isinstance(exc, HttpError) and exc.status == 429:
+                    self._gt_paused_until = now + GT_CANDLE_PAUSE_S
+                    log.warning("gt_candles_paused seconds=%.0f: GeckoTerminal rate limit", GT_CANDLE_PAUSE_S)
+                problems.append(f"geckoterminal {_err(exc)}")
+            else:
+                if gt and (not pump or not _candles_stale(gt, now)):
+                    return gt, "geckoterminal"
+                problems.append("geckoterminal " + (_candles_stale(gt, now) or "returned no candles"))
+        if pump:
+            try:
+                pf = list(self.pumpfun.candles(item.mint, minutes))
+            except Exception as exc:
+                problems.append(f"pump.fun {_err(exc)}")
+            else:
+                if pf and (not gt or not _candles_stale(pf, now)):
+                    return pf, "pumpfun"
+                problems.append("pump.fun " + (_candles_stale(pf, now) or "returned no candles"))
+        if gt is not None:
+            return gt, "geckoterminal"
+        return "; ".join(problems) or "no candle source"
 
     def _universe_problem(self, item: WatchItem, now: float) -> str | None:
         """Strict entry-time window (mirrors the crawler prefilter and the backtester)."""
@@ -780,7 +1048,8 @@ class Engine:
 
         c = item.candidate
         mint, symbol = c.mint, c.symbol
-        base = {"signal": _signal_summary(signal_), "snapshot": item.snapshot.to_dict() if item.snapshot else None}
+        base = {"signal": _signal_summary(signal_), "snapshot": item.snapshot.to_dict() if item.snapshot else None,
+                "candle_source": item.candle_source}
 
         blocked = self._entries_blocked_why()
         if blocked:
@@ -856,7 +1125,7 @@ class Engine:
             self._clear_inflight(mint)
 
         try:
-            fill = self.broker.execute(quote, None, symbol=symbol, on_fill=on_fill)
+            fill = self.broker.execute(quote, None, symbol=symbol, on_fill=on_fill, **self._signed_hook(mint))
         except SwapUnknown as exc:
             self._mark_unresolved(mint, "buy", quote, decimals, None, symbol, item.pool, exc, reason="entry")
             return None
@@ -925,6 +1194,9 @@ class Engine:
                             peak_price_usd=fill.price_usd, last_price_usd=mark, last_marked_at=fill.ts,
                             mode=fill.mode)
         self.ledger.upsert_position(position)
+        wallet = self._own_wallet()
+        if wallet is not None and fill.mode == "live":  # F3: whose tokens these are (same transaction)
+            self.ledger.set_position_wallet(position.id, wallet)
         return position
 
     def _decimals(self, item: WatchItem) -> int:
@@ -1034,35 +1306,47 @@ class Engine:
               inputs: dict[str, Any] | None = None) -> Fill | None:
         from nightcrawler.broker.base import BrokerError, QuoteRejected, SwapFailed, SwapUnknown
 
-        amount = position.token_amount if fraction >= 1.0 else int(math.floor(position.token_amount * fraction))
+        full = fraction >= 1.0
+        amount = position.token_amount if full else int(math.floor(position.token_amount * fraction))
         if amount <= 0:
             return None
+        # F10: a full exit sells what the wallet REALLY holds; the rest of the books is written off,
+        # so a books/wallet mismatch can never trap a position in an endless "insufficient funds" hold.
+        held = self._sellable(position, now) if full else None
+        shortfall = max(0, amount - held) if held is not None else 0
+        amount -= shortfall
         forced = reason not in _NOT_FORCED
         max_impact = max(self.settings.max_price_impact_pct, EXIT_MAX_IMPACT_PCT) if forced else None
         base = {**(inputs or {}), "position_id": position.id, "fraction": fraction, "amount": amount,
                 "forced": forced}
+        if held is not None:
+            base.update(wallet_holds=held, shortfall=shortfall)
+        if amount <= 0:
+            return self._write_off(position, reason, shortfall, base, now)
+        extra = {"wallet_before": held, "write_off": shortfall} if shortfall else None
         try:
             quote = self.broker.quote("sell", position.mint, amount, position.token_decimals,
                                       max_impact_pct=max_impact)
         except Exception as exc:  # QuoteRejected, HttpError, JupiterError ...
             self._hold(position, f"{reason}: sell quote failed: {_err(exc)}", base, now)
             return None
-        action = "exit" if amount >= position.token_amount else "exit_partial"
+        action = "exit" if full or amount >= position.token_amount else "exit_partial"
         with self.ledger.transaction():
             self._decide(self.clock.now(), position.mint, action, reason, {**base, "quote": _quote_summary(quote)},
                          symbol=position.symbol)
             self._set_inflight(position.mint, "sell", quote, position.token_decimals, position.id, position.symbol,
-                               position.pool, reason)
+                               position.pool, reason, extra=extra)
 
         def on_fill(fill: Fill) -> None:  # runs inside the fill's ledger transaction
-            self._apply_sell(position, fill, reason)
+            self._apply_sell(position, fill, reason, write_off=shortfall)
             self._clear_inflight(position.mint)
 
         try:
-            fill = self.broker.execute(quote, position, symbol=position.symbol, on_fill=on_fill)
+            fill = self.broker.execute(quote, position, symbol=position.symbol, on_fill=on_fill,
+                                       **self._signed_hook(position.mint))
         except SwapUnknown as exc:
             self._mark_unresolved(position.mint, "sell", quote, position.token_decimals, position.id,
-                                  position.symbol, position.pool, exc, reason=reason)
+                                  position.symbol, position.pool, exc, reason=reason, extra=extra)
             return None
         except SwapFailed as exc:
             self._clear_inflight(position.mint)
@@ -1074,18 +1358,80 @@ class Engine:
             return None
         except Exception as exc:
             self._swap_crashed(position.mint, "sell", quote, position.token_decimals, position.id, position.symbol,
-                               position.pool, reason, exc)
+                               position.pool, reason, exc, extra=extra)
             raise
         return fill
 
-    def _apply_sell(self, position: Position, fill: Fill, reason: str) -> None:
-        """Book a sell fill on ``position``; refused (LedgerError) if the stored row changed meanwhile."""
+    def _sellable(self, position: Position, now: float) -> int | None:
+        """Tokens of ``position`` the wallet can actually sell: its holding of the mint minus what other
+        open positions of the mint hold on the books. None (= trust the books) when the balance cannot
+        be read, or - live - while a fresh swap may not be in Ultra holdings yet (:data:`HOLDINGS_SETTLE_S`)."""
+        if self.settings.is_live:
+            recent = self.ledger.fills(limit=1, position_id=position.id)
+            last_fill = max([position.opened_at, *(f.ts for f in recent)])
+            if now - last_fill < HOLDINGS_SETTLE_S:
+                return None
+        try:
+            held = int(self.broker.balances().tokens.get(position.mint, 0))
+        except Exception as exc:  # unknown balance: never write anything off on it
+            log.warning("exit_balance_unavailable mint=%s error=%s", position.mint, _err(exc))
+            return None
+        others = sum(p.token_amount for p in self._open_positions() if p.mint == position.mint and p.id != position.id)
+        return max(0, held - others)
+
+    def _write_off(self, position: Position, reason: str, missing: int, inputs: dict[str, Any],
+                   now: float) -> Fill:
+        """Close ``position`` whose tokens are NOT in the wallet (none to sell): ``exit`` decision, a 0-SOL
+        write-off fill and an ``exit_shortfall`` note, in one transaction (F10)."""
+        books = position.token_amount
+        with self.ledger.transaction():
+            self._decide(self.clock.now(), position.mint, "exit",
+                         f"{reason}: written off - the wallet holds none of the {books} tokens on the books", inputs,
+                         symbol=position.symbol)
+            fill = self.ledger.record_fill(self._write_off_fill(position, missing, self.clock.now()))
+            self._apply_sell(position, fill, reason)
+            self._note_shortfall(position, books, books - missing, missing, fill.ts)
+        log.error("exit_written_off position=%s mint=%s tokens=%d: not in the wallet", position.id, position.mint,
+                  missing)
+        return fill
+
+    def _write_off_fill(self, position: Position, tokens: int, ts: float, sol_usd: float | None = None) -> Fill:
+        """A sell of ``tokens`` for 0 SOL: tokens on the books that the wallet does not hold."""
+        if sol_usd is None:
+            try:
+                sol_usd = float(self.broker.sol_price_usd())
+            except Exception:
+                latest = self.ledger.latest_equity()
+                sol_usd = float(latest.sol_usd) if latest is not None else 0.0
+        return Fill(id=new_id("fill"), mode=self.settings.trading_mode,  # type: ignore[arg-type]
+                    side="sell", mint=position.mint, sol_lamports=0, token_amount=tokens,
+                    token_decimals=position.token_decimals, price_usd=0.0, sol_usd=sol_usd, fees_lamports=0,
+                    platform_fee_bps=0, price_impact_pct=0.0, signature=None, request_id=None, ts=ts,
+                    position_id=position.id, symbol=position.symbol)
+
+    def _note_shortfall(self, position: Position, books: int, wallet: int, written_off: int, ts: float) -> None:
+        self.ledger.append_receipt("note", {"event": "exit_shortfall", "position_id": position.id,
+                                            "mint": position.mint, "books": books, "wallet": wallet,
+                                            "written_off": written_off}, ts=ts)
+
+    def _apply_sell(self, position: Position, fill: Fill, reason: str, write_off: int = 0) -> None:
+        """Book a sell fill on ``position``; refused (LedgerError) if the stored row changed meanwhile.
+        ``write_off``: tokens on the books the wallet did not hold (a full exit, F10) - booked right
+        after the sale as a 0-SOL fill, so the position closes and the books match the wallet."""
         before = position.token_amount
         position.token_amount -= fill.token_amount
         position.proceeds_lamports += fill.sol_lamports
         position.fees_lamports += fill.fees_lamports
         position.rent_lamports += fill.rent_lamports
         position.exit_fill_ids.append(fill.id)
+        if write_off > 0 and position.token_amount > 0:
+            gone = min(write_off, position.token_amount)
+            off = self.ledger.record_fill(self._write_off_fill(position, gone, fill.ts, fill.sol_usd or None))
+            position.token_amount -= off.token_amount
+            position.exit_fill_ids.append(off.id)
+            self._note_shortfall(position, before, fill.token_amount, gone, fill.ts)
+            log.error("exit_shortfall position=%s mint=%s sold=%d written_off=%d: the wallet held less than the "
+                      "books", position.id, position.mint, fill.token_amount, gone)
         if reason == "take_profit_partial":
             position.partial_taken = True
         if position.token_amount <= 0:
@@ -1123,36 +1469,59 @@ class Engine:
 
     # ------------------------------------------------------------------ in-flight and unknown live outcomes
     def _swap_entry(self, side: str, quote: Any, decimals: int | None, position_id: str | None, symbol: str,
-                    pool: str | None, reason: str | None) -> dict[str, Any]:
+                    pool: str | None, reason: str | None, extra: dict[str, Any] | None = None) -> dict[str, Any]:
         return {"side": side, "quote": _quote_summary(quote), "decimals": decimals, "position_id": position_id,
                 "symbol": symbol, "pool": pool, "at": self.clock.now(), "reason": reason,
-                "mode": self.settings.trading_mode}
+                "mode": self.settings.trading_mode, **(extra or {})}
 
     def _set_inflight(self, mint: str, side: str, quote: Any, decimals: int | None, position_id: str | None,
-                      symbol: str, pool: str | None, reason: str | None) -> None:
+                      symbol: str, pool: str | None, reason: str | None, extra: dict[str, Any] | None = None) -> None:
         """Live: persist that a swap of ``mint`` is about to be SENT (see the module docstring)."""
         if not self.settings.is_live:
             return  # a paper swap is one local transaction: nothing can be half done
-        self.inflight[mint] = self._swap_entry(side, quote, decimals, position_id, symbol, pool, reason)
+        self.inflight[mint] = self._swap_entry(side, quote, decimals, position_id, symbol, pool, reason, extra)
         self.ledger.set_kv("engine.inflight", _clean(self.inflight))
 
     def _clear_inflight(self, mint: str) -> None:
         if self.inflight.pop(mint, None) is not None:
             self.ledger.set_kv("engine.inflight", _clean(self.inflight))
 
+    def _signed_hook(self, mint: str) -> dict[str, Any]:
+        """``execute`` kwargs for a broker that reports the signature right before sending (live):
+        it is added to the in-flight marker, so an unknown outcome - even after a crash - can be
+        settled from the chain (F5)."""
+        if not getattr(self.broker, "reports_signature", False):
+            return {}
+
+        def on_signed(signature: str | None) -> None:
+            entry = self.inflight.get(mint)
+            if entry is not None and signature:
+                entry["signature"] = signature
+                self.ledger.set_kv("engine.inflight", _clean(self.inflight))
+
+        return {"on_signed": on_signed}
+
     def _swap_crashed(self, mint: str, side: str, quote: Any, decimals: int | None, position_id: str | None,
-                      symbol: str, pool: str | None, reason: str, exc: BaseException) -> None:
+                      symbol: str, pool: str | None, reason: str, exc: BaseException,
+                      extra: dict[str, Any] | None = None) -> None:
         """An unexpected error escaped ``execute``: live cannot know whether the swap was sent, so it
         is treated as unknown; paper rolled the whole swap back, so nothing happened."""
         if self.settings.is_live:
-            self._mark_unresolved(mint, side, quote, decimals, position_id, symbol, pool, exc, reason=reason)
+            self._mark_unresolved(mint, side, quote, decimals, position_id, symbol, pool, exc, reason=reason,
+                                  extra=extra)
         else:
             self._clear_inflight(mint)
 
     def _mark_unresolved(self, mint: str, side: str, quote: Any, decimals: int | None, position_id: str | None,
-                         symbol: str, pool: str | None, exc: BaseException, reason: str | None = None) -> None:
-        entry = {**self._swap_entry(side, quote, decimals, position_id, symbol, pool, reason), "error": _err(exc)}
+                         symbol: str, pool: str | None, exc: BaseException, reason: str | None = None,
+                         extra: dict[str, Any] | None = None) -> None:
+        entry = {**self._swap_entry(side, quote, decimals, position_id, symbol, pool, reason, extra),
+                 "error": _err(exc)}
         fill = getattr(exc, "fill", None)
+        signature = (getattr(exc, "signature", None) or (fill.signature if isinstance(fill, Fill) else None)
+                     or (self.inflight.get(mint) or {}).get("signature"))
+        if isinstance(signature, str) and signature:  # F5: lets the chain settle it before the fixed wait
+            entry["signature"] = signature
         if isinstance(fill, Fill):  # the broker confirmed the swap but could not record it: keep the real amounts
             entry["fill"] = fill.to_dict()
         self.unresolved[mint] = entry  # in memory FIRST: entries stay blocked even if the ledger is failing
@@ -1166,33 +1535,96 @@ class Engine:
         log.error("swap_unknown mint=%s side=%s: entries blocked until reconciled (%s)", mint, side, _err(exc))
 
     def reconcile_unresolved(self, now: float) -> None:
+        """Settle unknown live swaps: as soon as their signature status is final (F5), else after
+        :data:`RECONCILE_AFTER_S` from the wallet. A settle attempt that has to wait (no SOL price, or a
+        confirmed swap the wallet does not show yet) is retried every :data:`SIGNATURE_CHECK_S`."""
         if not self.unresolved:
             return
-        due = [m for m, u in self.unresolved.items() if now - float(u.get("at", 0)) >= RECONCILE_AFTER_S]
+        learned = self._check_signatures(now)
+        due = [m for m, u in self.unresolved.items()
+               if (u.get("chain") in _FINAL_CHAIN or now - float(u.get("at", 0)) >= RECONCILE_AFTER_S)
+               and now - float(u.get("tried_at") or 0) >= SIGNATURE_CHECK_S]
         if not due:
+            if learned:
+                self.ledger.set_kv("engine.unresolved", _clean(self.unresolved))
             return
-        balances = self.broker.balances()
+        balances = (self.broker.balances() if any(self.unresolved[m].get("chain") != "failed" for m in due)
+                    else None)
         for mint in due:
-            if self._reconcile_one(mint, self.unresolved[mint], balances.tokens.get(mint, 0), now):
+            u = self.unresolved[mint]
+            if u.get("chain") == "failed":
+                settled = self._settle_failed_on_chain(mint, u, now)
+            else:
+                settled = self._reconcile_one(mint, u, balances.tokens.get(mint, 0), now)
+            if settled:
                 del self.unresolved[mint]
+            else:
+                u["tried_at"] = now
         self.ledger.set_kv("engine.unresolved", _clean(self.unresolved))
 
+    def _check_signatures(self, now: float) -> bool:
+        """Ask the chain (``broker.swap_status``) about unresolved swaps with a known signature, at most
+        every :data:`SIGNATURE_CHECK_S` each. Stores a final ``chain`` status; True when one was learned."""
+        status_of = getattr(self.broker, "swap_status", None)
+        if status_of is None:
+            return False
+        learned = False
+        for mint, u in self.unresolved.items():
+            signature = u.get("signature")
+            if not signature or u.get("chain") in _FINAL_CHAIN:
+                continue
+            if now - float(u.get("chain_checked_at") or 0) < SIGNATURE_CHECK_S:
+                continue
+            u["chain_checked_at"] = now
+            try:
+                status = status_of(signature)
+            except Exception as exc:  # RPC trouble: the time-based wallet check still settles it
+                log.warning("swap_status_unavailable mint=%s error=%s", mint, _err(exc))
+                continue
+            if status in _FINAL_CHAIN:
+                u["chain"] = status
+                learned = True
+                log.warning("swap_status mint=%s signature=%s status=%s", mint, signature, status)
+        return learned
+
+    def _settle_failed_on_chain(self, mint: str, u: dict[str, Any], now: float) -> bool:
+        """The swap's transaction is final WITH an error: nothing moved (an on-chain failure changes no
+        token balance), so the item is settled at once and entries unblock."""
+        q = u.get("quote") or {}
+        self.ledger.append_receipt("note", {"event": "reconcile", "mint": mint, "side": u.get("side"),
+                                            "landed": False, "chain": "failed", "signature": u.get("signature"),
+                                            "request_id": q.get("request_id"),
+                                            "result": "swap failed on chain (final signature status); nothing "
+                                                      "changed"}, ts=now)
+        log.warning("reconcile mint=%s side=%s result=failed_on_chain", mint, u.get("side"))
+        return True
+
     def _reconcile_one(self, mint: str, u: dict[str, Any], actual: int, now: float) -> bool:
-        """Settle one unknown swap from the wallet; False = not settled yet (retried next tick)."""
+        """Settle one unknown swap from the wallet; False = not settled yet (retried next tick).
+
+        The wallet is compared with what it held BEFORE the swap: ``wallet_before`` (recorded by a full
+        exit that knew the books and the wallet differed), else the books."""
         position = self.ledger.get_position(u["position_id"]) if u.get("position_id") else None
         if position is None:
             position = next((p for p in self._open_positions() if p.mint == mint), None)
         books = position.token_amount if position is not None else 0
+        held_before = u.get("wallet_before")
+        baseline = held_before if isinstance(held_before, int) and not isinstance(held_before, bool) else books
         q = u.get("quote") or {}
         side = u.get("side")
-        landed = actual > books if side == "buy" else actual < books
+        landed = actual > baseline if side == "buy" else actual < baseline
         note = {"event": "reconcile", "mint": mint, "side": side, "books": books, "wallet": actual,
-                "landed": landed, "request_id": q.get("request_id")}
+                "landed": landed, "request_id": q.get("request_id"), "chain": u.get("chain"),
+                "signature": u.get("signature")}
+        if not landed and u.get("chain") == "landed":  # confirmed on chain: the wallet index is behind
+            log.warning("reconcile_waiting mint=%s side=%s: confirmed on chain, the wallet does not show it yet",
+                        mint, side)
+            return False
         if not landed:
             self.ledger.append_receipt("note", {**note, "result": "swap did not land; nothing changed"}, ts=now)
             log.warning("reconcile mint=%s side=%s result=not_landed", mint, side)
             return True
-        delta = actual - books if side == "buy" else books - actual
+        delta = actual - baseline if side == "buy" else baseline - actual
         stashed = Fill.from_dict(u["fill"]) if isinstance(u.get("fill"), dict) else None
         if stashed is not None and (stashed.side != side or stashed.token_amount != delta):
             stashed = None  # the wallet moved by something else too: fall back to the estimate
@@ -1217,7 +1649,8 @@ class Engine:
                 position.entry_fill_ids.append(recorded.id)
                 self.ledger.update_open_position(position, before)
             elif position is not None:
-                self._apply_sell(position, recorded, str(u.get("reason") or "reconciled_sell"))
+                self._apply_sell(position, recorded, str(u.get("reason") or "reconciled_sell"),
+                                 write_off=int(u.get("write_off") or 0))
         log.warning("reconcile mint=%s side=%s result=landed tokens=%d sol=%d actual_fill=%s", mint, side, delta,
                     recorded.sol_lamports, stashed is not None)
         return True
@@ -1362,6 +1795,8 @@ class Engine:
             "unresolved_swaps": sorted(self.unresolved),
             "inflight_swaps": sorted(self.inflight),
             "drift": self.drift,
+            "safe_mode": self.safe_mode,
+            "foreign_positions": self.foreign_positions(),
             "entries_blocked": self._entries_blocked_why(),
             "counters": dict(self.counters),
             "prefilter_rejections": dict(self.prefilter_reasons.most_common(12)),
@@ -1435,6 +1870,7 @@ def build_app(settings: Settings, clock: Clock | None = None, *, session: Any = 
     from nightcrawler.radar import Radar
     from nightcrawler.risk import RiskManager
     from nightcrawler.sources import build_sources
+    from nightcrawler.sources import pumpfun as pumpfun_mod
 
     stop_event = threading.Event()
     clock = clock if clock is not None else RealClock(stop_event)
@@ -1446,7 +1882,9 @@ def build_app(settings: Settings, clock: Clock | None = None, *, session: Any = 
             retries[rpc_host] = 1
         http = HttpClient.from_settings(settings, session=session, clock=clock, host_max_retries=retries,
                                         retry_after_max_s=ENGINE_RETRY_AFTER_MAX_S)
+        http.limiter.set_limit(pumpfun_mod.HOST, *pumpfun_mod.RATE_LIMIT)  # Cloudflare: its own small bucket
     sources = build_sources(settings, http)
+    pumpfun = pumpfun_mod.PumpFunClient(http) if settings.pumpfun_candles else None
     ledger = Ledger(settings.db_path, clock=clock)
     try:
         wallet = None
@@ -1469,7 +1907,8 @@ def build_app(settings: Settings, clock: Clock | None = None, *, session: Any = 
         risk = RiskManager(settings, ledger, clock)
         auditor = Auditor(ledger, broker, clock)
         engine = Engine(settings, clock=clock, ledger=ledger, crawler=crawler, cocoon=cocoon, radar=radar,
-                        judge=judge, risk=risk, broker=broker, sources=sources, stop_event=stop_event)
+                        judge=judge, risk=risk, broker=broker, sources=sources, stop_event=stop_event,
+                        pumpfun=pumpfun)
         verify_cache: dict[str, Any] = {}
         dashboard = DashboardServer(settings, lambda: build_state(ledger, settings, clock.now(), verify_cache))
     except BaseException:

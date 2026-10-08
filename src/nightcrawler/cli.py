@@ -24,6 +24,15 @@ Exit codes: :data:`EXIT_OK` 0, :data:`EXIT_ERROR` 1 (runtime failure),
 mode refused, bad wallet secret), :data:`EXIT_VERIFY_FAILED` 4 (receipt chain
 broken / audit drift), :data:`EXIT_NOT_IMPLEMENTED` 5. Errors print one
 friendly line to stderr (no tracebacks unless ``--log-level DEBUG``).
+
+SAFE MODE (RT-9): ``run`` with an INVALID configuration still refuses to start -
+unless the ledger holds open LIVE positions, which would then sit without a
+stop-loss. In that case every variable a problem names falls back to its default
+(never TRADING_MODE, LIVE_CONFIRM, BOT_WALLET_SECRET or DATA_DIR; a live dashboard
+without DASHBOARD_TOKEN gets a random token, i.e. it is locked) and, when that is a
+valid live configuration, the bot runs EXITS-ONLY (``Engine.enter_safe_mode``: no
+discovery, no entries; stop-losses, the kill switch and reconciliation work) with
+a loud log line, a ``note`` receipt and kv ``engine.safe_mode`` for the dashboard.
 """
 
 from __future__ import annotations
@@ -31,15 +40,18 @@ from __future__ import annotations
 import argparse
 import dataclasses
 import json
+import os
+import re
+import secrets
 import signal
 import sys
 import threading
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Callable, Sequence
+from typing import Any, Callable, Mapping, Sequence
 
 from nightcrawler import __version__
-from nightcrawler.config import ConfigError, Settings, load_settings
+from nightcrawler.config import ConfigError, Settings, load_settings, parse_dotenv
 
 __all__ = [
     "EXIT_OK",
@@ -65,6 +77,10 @@ YOUNG_MIN_AGE_S = 600.0
 BOT_ALIVE_S = 60.0
 #: ``backtest --sweep`` grid when ``--grid`` is not given.
 DEFAULT_SWEEP_GRID: dict[str, list[float]] = {"dip_pct": [0.45, 0.55, 0.65], "take_profit_pct": [0.3, 0.4, 0.6]}
+#: Settings the safe mode never replaces with a default: who trades, with which wallet, on which ledger.
+SAFE_MODE_KEEP = frozenset({"TRADING_MODE", "LIVE_CONFIRM", "BOT_WALLET_SECRET", "DATA_DIR"})
+SAFE_MODE_TOKEN = "DASHBOARD_TOKEN (random: dashboard locked)"
+_ENV_NAME = re.compile(r"\b[A-Z][A-Z0-9_]{2,}\b")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -264,6 +280,96 @@ def _sources(settings: Settings, clock: Any | None = None) -> Any:
     return build_sources(settings, _http(settings, clock if clock is not None else _make_clock()))
 
 
+def _foreign_positions(ledger: Any, settings: Settings) -> list[dict[str, Any]]:
+    """Live: open positions recorded for another wallet than the configured one (F3)."""
+    from nightcrawler.engine import foreign_positions_of
+
+    wallet = _wallet_pubkey(settings, ledger) if settings.is_live else None
+    return foreign_positions_of(ledger, wallet) if wallet else []
+
+
+# ---------------------------------------------------------------------- safe mode (RT-9)
+def _merged_env(env_file: str | None) -> dict[str, str]:
+    """What :func:`load_settings` reads: the ``.env`` file overlaid by the real environment."""
+    merged: dict[str, str] = dict(parse_dotenv(env_file)) if env_file is not None else {}
+    merged.update(os.environ)
+    return merged
+
+
+def _open_live_positions(env: Mapping[str, str]) -> tuple[int, Path]:
+    """``(count, ledger path)`` of open LIVE positions in DATA_DIR's ledger (0 when there is none)."""
+    from nightcrawler.ledger import Ledger
+
+    data_dir = str(env.get("DATA_DIR") or "").strip() or str(Settings.__dataclass_fields__["data_dir"].default)
+    path = Path(data_dir) / "nightcrawler.db"
+    if not path.is_file():
+        return 0, path
+    with Ledger(path) as ledger:
+        return len(ledger.open_positions(mode="live")), path
+
+
+def safe_mode_settings(env: Mapping[str, str], error: ConfigError) -> tuple[Settings, list[str]] | None:
+    """Settings for the exits-only safe mode, or None when they are not a valid LIVE configuration.
+
+    Every variable a problem names falls back to its default, except :data:`SAFE_MODE_KEEP`; a live
+    dashboard without ``DASHBOARD_TOKEN`` gets a random one (locked, but ``/healthz`` still answers).
+    Returns ``(settings, variables that fell back)``.
+    """
+    fields = {row["env"] for row in Settings.describe()}
+    env = dict(env)
+    used: list[str] = []
+    problems = list(error.problems)
+    for _ in range(len(fields) + 1):
+        changed = False
+        for problem in problems:
+            if "DASHBOARD_TOKEN" in problem and not str(env.get("DASHBOARD_TOKEN") or "").strip():
+                env["DASHBOARD_TOKEN"] = secrets.token_urlsafe(32)
+                used.append(SAFE_MODE_TOKEN)
+                changed = True
+                continue
+            for name in _ENV_NAME.findall(problem):
+                if name in fields and name not in SAFE_MODE_KEEP and str(env.get(name) or "").strip():
+                    env.pop(name)
+                    used.append(name)
+                    changed = True
+        if not changed:
+            return None
+        try:
+            settings = Settings.from_env(env)
+        except ConfigError as exc:
+            problems = list(exc.problems)
+            continue
+        return (settings, list(dict.fromkeys(used))) if settings.is_live else None
+    return None
+
+
+def _safe_mode_fallback(args: argparse.Namespace, error: ConfigError) -> tuple[Settings, dict[str, Any]] | None:
+    """``run`` with an invalid configuration: the exits-only safe mode when the ledger holds open LIVE
+    positions and a valid live configuration remains (see module docstring), else None (refuse)."""
+    env = _merged_env(args.env_file)
+    try:
+        count, path = _open_live_positions(env)
+    except Exception as exc:  # an unreadable ledger: cannot tell, so refuse as before
+        print(f"nightcrawler: cannot read the ledger to look for open live positions ({type(exc).__name__}: "
+              f"{exc})", file=sys.stderr)
+        return None
+    if not count:
+        return None
+    found = safe_mode_settings(env, error)
+    if found is None:
+        print(f"nightcrawler: {count} open LIVE position(s) in {path} are NOT managed (no stop-loss) until the "
+              "configuration below is fixed: it concerns the live setup itself, so not even an exits-only safe "
+              "mode can run", file=sys.stderr)
+        return None
+    settings, used = found
+    if args.log_level:
+        settings = settings.replace(log_level=args.log_level.upper())
+    print(f"nightcrawler: SAFE MODE - invalid configuration, but {count} open LIVE position(s) need their "
+          f"stop-losses: running EXITS ONLY (no new buys) with defaults for {', '.join(used)}. Fix:\n  - "
+          + "\n  - ".join(error.problems), file=sys.stderr)
+    return settings, {"problems": list(error.problems), "defaults_used": used}
+
+
 # ---------------------------------------------------------------------- handlers
 def cmd_config(args: argparse.Namespace, settings: Settings) -> int:
     data = settings.public_dict()
@@ -276,14 +382,17 @@ def cmd_config(args: argparse.Namespace, settings: Settings) -> int:
     return EXIT_OK
 
 
-def cmd_run(args: argparse.Namespace, settings: Settings) -> int:
-    """setup_logging -> build_app -> DashboardServer (unless --no-dashboard) -> run_forever."""
+def cmd_run(args: argparse.Namespace, settings: Settings, safe_mode: dict[str, Any] | None = None) -> int:
+    """setup_logging -> build_app -> DashboardServer (unless --no-dashboard) -> run_forever.
+    ``safe_mode``: ``{"problems", "defaults_used"}`` -> exits-only (see module docstring)."""
     from nightcrawler.engine import build_app
     from nightcrawler.logging_setup import get_logger
 
     filt = _setup_logging(args, settings)
     log = get_logger("nightcrawler.cli")
     app = build_app(settings, redaction_filter=filt)
+    if safe_mode is not None:
+        app.engine.enter_safe_mode(safe_mode["problems"], safe_mode["defaults_used"])
     try:
         if not args.no_dashboard:
             try:
@@ -307,7 +416,8 @@ def cmd_scan(args: argparse.Namespace, settings: Settings) -> int:
     sources = _sources(settings, clock)
     crawler = Crawler(sources, settings, clock)
     cocoon = Cocoon(sources, settings, clock)
-    print("Crawling Jupiter, GeckoTerminal and DexScreener ...", file=sys.stderr)
+    feeds = "Jupiter, GeckoTerminal and DexScreener" if settings.discover_gt_new_pools else "Jupiter and DexScreener"
+    print(f"Crawling {feeds} ...", file=sys.stderr)
     candidates = crawler.poll()
     rejected = crawler.last_rejected
     limit = max(0, args.limit)
@@ -470,10 +580,18 @@ def cmd_report(args: argparse.Namespace, settings: Settings) -> int:
         elif ledger.get_kv("paper.sol_lamports") is not None:
             balances = _PaperBalances(ledger)
         report = Auditor(ledger, balances, mode=settings.trading_mode).reconcile()
+        foreign = _foreign_positions(ledger, settings)
         if args.json:
-            print(json.dumps(dataclasses.asdict(report), indent=2, sort_keys=True, default=str))
+            print(json.dumps({**dataclasses.asdict(report), "foreign_positions": foreign}, indent=2, sort_keys=True,
+                             default=str))
         else:
             print(Auditor.format_text(report))
+            if foreign:
+                print(f"\nFOREIGN live positions ({len(foreign)}): recorded for another wallet, so THIS bot never "
+                      "sells or counts them - run it with that wallet to close them:")
+                for p in foreign:
+                    print(f"  {p['id']}  {p['symbol'] or _short(p['mint'])}  {p['token_amount']} base units  "
+                          f"wallet {p['wallet']}")
     finally:
         ledger.close()
     return EXIT_OK if report.ok else EXIT_VERIFY_FAILED
@@ -571,13 +689,20 @@ def cmd_sell_all(args: argparse.Namespace, settings: Settings) -> int:
                   "to resume trading later, write 'off' into that file or delete it.")
             return EXIT_OK
         app.engine._restore_state()  # unresolved / in-flight live swaps of a stopped bot are respected
+        foreign = app.engine.foreign_positions()
+        if foreign:
+            print(f"{len(foreign)} live position(s) belong to another wallet ("
+                  + ", ".join(sorted({p['wallet'] for p in foreign})) + "): not sold by this wallet")
         before = app.engine._open_positions()
         if not before:
             print("no open positions")
             return EXIT_OK
         fills = app.engine.sell_all("manual")
         for f in fills:
-            print(f"sold {f.symbol or f.mint}: {f.token_amount} base units for {f.sol_lamports / 1e9:.6f} SOL")
+            if f.sol_lamports == 0 and f.request_id is None and f.signature is None:  # F10 write-off
+                print(f"wrote off {f.symbol or f.mint}: {f.token_amount} base units the wallet did not hold")
+            else:
+                print(f"sold {f.symbol or f.mint}: {f.token_amount} base units for {f.sol_lamports / 1e9:.6f} SOL")
         left = app.engine._open_positions()
     finally:
         app.close()
@@ -657,15 +782,21 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     parser = build_parser()
     args = parser.parse_args(argv)
+    safe_mode: dict[str, Any] | None = None
     try:
         settings = load_settings(dotenv_path=args.env_file)
         if args.log_level:
             settings = settings.replace(log_level=args.log_level.upper())
     except ConfigError as exc:
-        print(f"nightcrawler: {exc}", file=sys.stderr)
-        return EXIT_CONFIG
+        fallback = _safe_mode_fallback(args, exc) if args.command == "run" else None
+        if fallback is None:
+            print(f"nightcrawler: {exc}", file=sys.stderr)
+            return EXIT_CONFIG
+        settings, safe_mode = fallback
     handler = HANDLERS[args.command]
     try:
+        if safe_mode is not None:
+            return cmd_run(args, settings, safe_mode=safe_mode)
         return handler(args, settings)
     except NotImplementedError:
         print(f"nightcrawler: '{args.command}' is not implemented yet", file=sys.stderr)

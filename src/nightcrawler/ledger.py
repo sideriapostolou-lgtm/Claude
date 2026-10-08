@@ -15,7 +15,10 @@ Tables (columns are a suggestion; the public methods are the contract):
 * ``safety(mint, checked_at, passed INT, reasons JSON, data JSON)``
 * ``decisions(id INTEGER PK, ts, mint, action, reason, data JSON, receipt_seq)``
 * ``fills(id TEXT PK, ts, mode, side, mint, position_id, data JSON, receipt_seq)``
-* ``positions(id TEXT PK, mint, status, opened_at, closed_at, data JSON)``
+* ``positions(id TEXT PK, mint, status, opened_at, closed_at, data JSON, wallet TEXT)`` -
+  ``wallet``: pubkey of the wallet holding a LIVE position's tokens (NULL for paper; schema
+  v2 - a v1 ledger's live rows default to kv ``wallet.pubkey``, the last live boot's wallet).
+  Written with :meth:`Ledger.set_position_wallet`, read with :meth:`Ledger.position_wallets`.
 * ``equity(ts REAL, equity_lamports INT, sol_usd REAL, equity_usd REAL, mode, data JSON)``
 * ``receipts(seq INTEGER PK, ts REAL, kind TEXT, payload TEXT canonical JSON,
   prev_hash TEXT, hash TEXT UNIQUE)``
@@ -34,7 +37,10 @@ Well-known kv keys (JSON values): ``paper.sol_lamports``, ``paper.tokens``,
 ``live.start_lamports``, ``risk.halted``, ``risk.peak_reset_ts``,
 ``engine.heartbeat``, ``engine.started_at``, ``engine.status`` (dict),
 ``engine.kill_mode``, ``engine.last_error``, ``judge.cost_usd_total``,
-``judge.cost_usd_day``, ``judge.calls``, ``wallet.pubkey``.
+``judge.cost_usd_day``, ``judge.calls``, ``wallet.pubkey``, ``engine.watchlist``,
+``engine.cocoon_queue`` and ``crawler.nursery`` (``{saved_at, items}``, resumed after a
+redeploy), ``engine.safe_mode``
+(banner, None outside safe mode), ``engine.foreign_positions`` (live positions of another wallet).
 
 Helpers beyond the core contract (used by the auditor and the dashboard):
 :meth:`Ledger.last_receipt`, :meth:`Ledger.fills_after_seq`,
@@ -76,7 +82,8 @@ from nightcrawler.models import (
 __all__ = ["BUSY_TIMEOUT_S", "SCHEMA_VERSION", "Ledger", "LedgerError"]
 
 #: ``PRAGMA user_version`` of the layout below; bump with a migration when it changes.
-SCHEMA_VERSION = 1
+#: v2: ``positions.wallet`` - the wallet (pubkey) a LIVE position's tokens are in (NULL for paper).
+SCHEMA_VERSION = 2
 #: How long a write waits for another process holding the write lock.
 BUSY_TIMEOUT_S = 10.0
 
@@ -103,7 +110,7 @@ _SCHEMA = (
     "CREATE INDEX IF NOT EXISTS fills_receipt_seq ON fills(receipt_seq)",
     """CREATE TABLE IF NOT EXISTS positions (
         id TEXT PRIMARY KEY, mint TEXT NOT NULL, status TEXT NOT NULL, opened_at REAL NOT NULL,
-        closed_at REAL, data TEXT NOT NULL)""",
+        closed_at REAL, data TEXT NOT NULL, wallet TEXT)""",
     "CREATE INDEX IF NOT EXISTS positions_status ON positions(status, opened_at)",
     "CREATE INDEX IF NOT EXISTS positions_mint ON positions(mint, closed_at)",
     """CREATE TABLE IF NOT EXISTS equity (
@@ -178,7 +185,23 @@ class Ledger:
                 raise LedgerError(f"ledger schema v{version} is newer than this nightcrawler (v{SCHEMA_VERSION})")
             for statement in _SCHEMA:
                 conn.execute(statement)
+            if version < 2:
+                self._migrate_position_wallets(conn)
             conn.execute(f"PRAGMA user_version={SCHEMA_VERSION}")
+
+    def _migrate_position_wallets(self, conn: sqlite3.Connection) -> None:
+        """v1 -> v2: add ``positions.wallet``; existing LIVE rows default to kv ``wallet.pubkey`` (the
+        wallet of the last live boot, which opened them), else stay NULL (unknown)."""
+        columns = {row[1] for row in conn.execute("PRAGMA table_info(positions)")}
+        if "wallet" not in columns:
+            conn.execute("ALTER TABLE positions ADD COLUMN wallet TEXT")
+        row = conn.execute("SELECT value FROM kv WHERE key = 'wallet.pubkey'").fetchone()
+        pubkey = json.loads(row[0]) if row is not None else None
+        if not isinstance(pubkey, str) or not pubkey:
+            return
+        rows = conn.execute("SELECT data FROM positions WHERE wallet IS NULL").fetchall()
+        live = [p.id for p in self._load_positions(rows) if p.mode == "live"]
+        conn.executemany("UPDATE positions SET wallet = ? WHERE id = ?", [(pubkey, pid) for pid in live])
 
     def close(self) -> None:
         """Close the connection (idempotent). Later calls raise :class:`LedgerError`."""
@@ -464,6 +487,20 @@ class Ledger:
                 raise LedgerError(f"position {position.id} changed concurrently (stored "
                                   f"{row[0] if row else 'missing'}/{stored}, expected open/{expected_token_amount})")
             self.upsert_position(position)
+
+    def set_position_wallet(self, position_id: str, wallet: str | None) -> None:
+        """Record the wallet (pubkey) that holds a LIVE position's tokens; kept by later writes."""
+        self._write("UPDATE positions SET wallet = ? WHERE id = ?", (wallet, position_id))
+
+    def position_wallets(self, position_ids: Sequence[str] | None = None) -> dict[str, str | None]:
+        """``{position_id: wallet or None}`` for ``position_ids`` (default: every OPEN position)."""
+        if position_ids is None:
+            return dict(self._rows("SELECT id, wallet FROM positions WHERE status = 'open' ORDER BY opened_at, rowid"))
+        ids = list(dict.fromkeys(position_ids))
+        if not ids:
+            return {}
+        marks = ",".join("?" for _ in ids)
+        return dict(self._rows(f"SELECT id, wallet FROM positions WHERE id IN ({marks})", ids))
 
     def get_position(self, position_id: str) -> Position | None:
         rows = self._rows("SELECT data FROM positions WHERE id = ?", (position_id,))

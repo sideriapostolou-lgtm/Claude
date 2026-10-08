@@ -189,11 +189,22 @@ class World:
     crawler: Crawler
 
 
-@pytest.fixture
-def world(settings, fake_clock: FakeClock) -> World:
+def make_world(settings: Any, fake_clock: FakeClock) -> World:
     jupiter, gecko, dex = FakeJupiter(), FakeGecko(), FakeDexScreener()
     sources = Sources(dexscreener=dex, gecko=gecko, rugcheck=None, jupiter=jupiter, rpc=None)  # type: ignore[arg-type]
     return World(jupiter, gecko, dex, fake_clock, Crawler(sources, settings, fake_clock))
+
+
+@pytest.fixture
+def world(make_settings, fake_clock: FakeClock) -> World:
+    """Every feed on, GeckoTerminal new_pools included (off by default; see the GT tests below)."""
+    return make_world(make_settings(DISCOVER_GT_NEW_POOLS=True), fake_clock)
+
+
+@pytest.fixture
+def default_world(settings, fake_clock: FakeClock) -> World:
+    """Default settings: discovery without GeckoTerminal."""
+    return make_world(settings, fake_clock)
 
 
 def mints_of(candidates: list[TokenCandidate]) -> list[str]:
@@ -535,13 +546,132 @@ def test_stats_counts_polls_emissions_and_rejections(world: World) -> None:
                                      "feed_errors": {}}
 
 
+# --------------------------------------------------------------------------- GeckoTerminal is optional (RT-13)
+
+
+def test_geckoterminal_new_pools_are_off_by_default(default_world: World) -> None:
+    a, d = mint(1), mint(4)
+    default_world.jupiter.recent = [jup_token(a)]
+    default_world.gecko.pages = {1: [gt_pool(d, age_min=70)]}
+    assert mints_of(default_world.crawler.poll()) == [a]
+    assert default_world.gecko.pages_requested == []  # GT budget kept for candles and the radar
+
+
+def test_a_geckoterminal_429_pauses_the_optional_feed(world: World) -> None:
+    a, d = mint(1), mint(4)
+    world.jupiter.recent = [jup_token(a)]
+    world.gecko.pages = {1: HttpError("HTTP 429", url="https://api.geckoterminal.com/x", status=429,
+                                      retryable=True), 2: [gt_pool(d)]}
+    assert mints_of(world.crawler.poll()) == [a]
+    assert world.gecko.pages_requested == [1]  # page 2 is not even tried after a rate limit
+    world.gecko.pages = {1: [gt_pool(d)]}
+    world.clock.advance(crawler_mod.GT_FEED_PAUSE_S - 1)
+    world.crawler.poll()
+    assert world.gecko.pages_requested == [1]  # still paused
+    world.clock.advance(1)
+    assert mints_of(world.crawler.poll()) == [d]
+    assert world.gecko.pages_requested == [1, 1, 2]
+
+
+# --------------------------------------------------------------------------- launchpad deployers (RT-11)
+
+BAGS_DEPLOYER = "BAGSB9TpGrZxQbEsrEznv5jXXdwyP6AXerN8aVRiAmcv"
+LAUNCH_SERVICE = "bwamJzztZsepfkteWRChggmXuiiCQvpLqPietdNfSXa"
+PERSON = mint(77)
+
+DEPLOYER_CASES = [
+    # (id, dev, launchpad, devMints, expected prefilter reason)
+    ("person_serial_on_pumpfun", PERSON, "pump.fun", 21, "serial launcher: dev minted 21 tokens"),
+    ("person_bot_on_pumpfun", PERSON, "pump.fun", 7_306, "serial launcher: dev minted 7306 tokens"),
+    ("person_at_the_limit", PERSON, "pump.fun", 20, "ok"),
+    ("person_without_launchpad", PERSON, None, 21, "serial launcher: dev minted 21 tokens"),
+    ("known_bags_deployer", BAGS_DEPLOYER, "bags.fun", 190_960, "ok"),
+    ("known_launch_service_on_pumpfun", LAUNCH_SERVICE, "pump.fun", 169_827, "ok"),
+    ("known_deployer_without_launchpad_field", LAUNCH_SERVICE, None, 169_827, "ok"),
+    ("platform_scale_deployer_with_launchpad", PERSON, "stonkfun", crawler_mod.FACTORY_DEV_MINTS_MIN, "ok"),
+    ("just_below_platform_scale", PERSON, "stonkfun", crawler_mod.FACTORY_DEV_MINTS_MIN - 1,
+     f"serial launcher: dev minted {crawler_mod.FACTORY_DEV_MINTS_MIN - 1} tokens"),
+    ("platform_scale_without_launchpad", PERSON, None, crawler_mod.FACTORY_DEV_MINTS_MIN,
+     f"serial launcher: dev minted {crawler_mod.FACTORY_DEV_MINTS_MIN} tokens"),
+]
+
+
+@pytest.mark.parametrize("dev,launchpad,dev_mints,expected", [c[1:] for c in DEPLOYER_CASES],
+                         ids=[c[0] for c in DEPLOYER_CASES])
+def test_launchpad_deployers_are_not_serial_launchers(make_settings, fake_clock, dev, launchpad, dev_mints,
+                                                      expected) -> None:
+    crawler = Crawler(Sources(None, None, None, None, None), make_settings(), fake_clock)  # type: ignore[arg-type]
+    c = base_candidate(dev=dev, launchpad=launchpad,
+                       audit={"mintAuthorityDisabled": True, "freezeAuthorityDisabled": True, "devMints": dev_mints})
+    assert crawler.prefilter(c, NOW) == (expected == "ok", expected)
+    assert (crawler_mod.launchpad_deployer(c) is not None) is (expected == "ok" and dev_mints > 20)
+
+
+def test_a_launchpad_deployed_candidate_reaches_the_cocoon_without_the_platform_mint_count(world: World) -> None:
+    """The cocoon's serial-launcher rule reads ``audit.devMints``: for a shared deployer that number
+    counts the whole platform, so the crawler files it under ``deployerMints`` instead."""
+    a, b = mint(1), mint(2)
+    world.jupiter.trending = [jup_token(a, dev=BAGS_DEPLOYER, launchpad="bags.fun", audit={"devMints": 190_960}),
+                              jup_token(b, dev=PERSON, audit={"devMints": 7})]
+    out = {c.mint: c for c in world.crawler.poll()}
+    assert set(out) == {a, b}
+    assert "devMints" not in out[a].audit and out[a].audit["deployerMints"] == 190_960
+    assert out[a].raw["deployer"] == {"address": BAGS_DEPLOYER, "label": "bags.fun"}
+    assert out[a].dev == BAGS_DEPLOYER  # what Jupiter reported stays visible
+    assert out[b].audit["devMints"] == 7 and "deployer" not in out[b].raw  # a person's history still counts
+
+
+# --------------------------------------------------------------------------- nursery persistence (RT-14)
+
+
+def test_nursery_export_and_restore_resume_the_young_candidates(world: World, make_settings) -> None:
+    a, b = mint(1), mint(2)
+    world.jupiter.recent = [jup_token(a, age_min=5), jup_token(b, age_min=30)]
+    world.dex.boosts = [{"mint": a}]
+    world.crawler.poll()
+    saved = world.crawler.export_nursery()
+    assert {item["mint"] for item in saved} == {a, b}
+    assert all("stats" not in item for item in saved)
+
+    restarted = make_world(make_settings(DISCOVER_GT_NEW_POOLS=True), world.clock)  # a redeploy
+    assert restarted.crawler.restore_nursery(saved, world.clock.now()) == 2
+    assert set(restarted.crawler.nursery) == {a, b}
+    assert restarted.crawler.nursery[a].paid_promo and restarted.crawler.nursery[a].created_at == NOW - 5 * MIN
+
+    restarted.dex.known = {a: snapshot(a), b: snapshot(b)}
+    world.clock.advance(55 * MIN)  # both mature now: emitted from the restored nursery
+    assert mints_of(restarted.crawler.poll()) == [a, b]
+
+
+def test_nursery_restore_expires_old_entries_and_skips_garbage(world: World) -> None:
+    a, b = mint(1), mint(2)
+    saved = [{"mint": a, "created_at": NOW - 5 * MIN},
+             {"mint": b, "created_at": NOW - (60 + crawler_mod.NURSERY_GRACE_MIN - 1) * MIN},
+             {"mint": "not-a-mint", "created_at": NOW}, {"symbol": "no mint"}, "junk",
+             {"mint": mint(3)},  # no creation time: it could never mature
+             {"mint": mint(4), "created_at": "yesterday"}]
+    world.clock.advance(2 * MIN)  # the bot was down for 2 min: b is past MIN_AGE + GRACE now
+    assert world.crawler.restore_nursery(saved, world.clock.now()) == 1
+    assert set(world.crawler.nursery) == {a}
+
+
+def test_nursery_restore_is_bounded(world: World, make_settings, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(crawler_mod, "NURSERY_MAX", 2)
+    saved = [{"mint": mint(i), "created_at": NOW - (10 + i) * MIN} for i in range(1, 6)]
+    assert world.crawler.restore_nursery(saved, NOW) == 2
+    assert set(world.crawler.nursery) == {mint(1), mint(2)}  # the newest, like the in-memory overflow rule
+
+
 # --------------------------------------------------------------------------- with O1's real clients
 
 
-def test_poll_with_real_o1_clients(monkeypatch, fake_http, http_client, settings, fake_clock, load_fixture) -> None:
+def test_poll_with_real_o1_clients(monkeypatch, fake_http, http_client, make_settings, fake_clock,
+                                  load_fixture) -> None:
     """End-to-end over FakeHttp fixtures with O1's real clients/converters (skipped until O1 lands)."""
     from nightcrawler.sources.geckoterminal import pool_to_candidate
     from nightcrawler.sources.jupiter import token_to_candidate
+
+    settings = make_settings(DISCOVER_GT_NEW_POOLS=True)
 
     monkeypatch.setattr(crawler_mod, "token_to_candidate", token_to_candidate)
     monkeypatch.setattr(crawler_mod, "pool_to_candidate", pool_to_candidate)

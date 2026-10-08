@@ -5,17 +5,35 @@
 prefilters (no extra HTTP calls per token). Expensive safety checks happen
 later in :mod:`nightcrawler.cocoon`.
 
-Per poll (HTTP budget ~5 calls; the engine polls every DISCOVERY_INTERVAL_S):
+Per poll (HTTP budget ~4 calls; the engine polls every DISCOVERY_INTERVAL_S):
 
 1. Jupiter ``tokens/v2/recent`` -> ``source="jupiter_recent"``
 2. Jupiter ``tokens/v2/toptrending/1h`` -> ``source="jupiter_trending_1h"``
-3. GeckoTerminal ``new_pools`` pages 1-2 -> ``source="gt_new_pools"``
+3. OPTIONAL (``DISCOVER_GT_NEW_POOLS``, off by default): GeckoTerminal
+   ``new_pools`` pages 1-2 -> ``source="gt_new_pools"``, the lowest-priority
+   feed. GeckoTerminal's free budget is the scarcest one (429s on shared IPs
+   such as Railway's), so by default it is reserved for candles and the radar.
+   A 429 skips the remaining pages and pauses the feed for :data:`GT_FEED_PAUSE_S`.
 4. DexScreener ``token-boosts/latest`` + ``token-profiles/latest`` (Solana only)
    -> only used to set ``paid_promo=True`` (and add ``"dexscreener_boost"`` /
    ``"dexscreener_profile"`` to ``sources``) on candidates found by 1-3; they
    never create candidates on their own. Promoted mints are remembered for
    :data:`SEEN_TTL_S`, so a nursery candidate that was boosted while it
    matured is still flagged when it is finally emitted.
+
+LAUNCHPAD DEPLOYERS (RT-11): some launchpads and launch services deploy every
+coin from ONE shared address, so Jupiter's ``dev`` is the platform and
+``audit.devMints`` counts the whole platform (100k+ coins), not one person's
+history. :func:`launchpad_deployer` recognises them (:data:`KNOWN_LAUNCHPAD_DEPLOYERS`,
+or a coin WITH a launchpad whose deployer minted at least
+:data:`FACTORY_DEV_MINTS_MIN` tokens); the serial-launcher prefilter applies only to
+individual creators, and such a candidate's platform count is filed under
+``audit["deployerMints"]`` (``raw["deployer"]`` names the platform) so the
+cocoon's ``devMints`` rule does not misfire on it either.
+
+PERSISTENCE (RT-14): :meth:`Crawler.export_nursery` / :meth:`Crawler.restore_nursery`
+let the engine keep the nursery in the ledger kv across redeploys (bounded by
+:data:`NURSERY_MAX`; entries too old to mature are dropped on restore).
 
 Merging: same mint from several feeds -> one candidate; ``sources`` is the
 union (stable order); for each field prefer the first non-None value in the
@@ -53,10 +71,11 @@ from typing import Any, Callable, Final, Iterable, Sequence, TypeGuard
 from nightcrawler.base58 import is_pubkey
 from nightcrawler.clock import Clock
 from nightcrawler.config import Settings
+from nightcrawler.http import HttpError
 from nightcrawler.logging_setup import get_logger
 from nightcrawler.models import SOL_MINT, MarketSnapshot, TokenCandidate
 from nightcrawler.sources import Sources
-from nightcrawler.sources._parse import to_float
+from nightcrawler.sources._parse import parse_ts, to_float
 from nightcrawler.sources.geckoterminal import pool_to_candidate
 from nightcrawler.sources.jupiter import token_to_candidate
 
@@ -68,6 +87,10 @@ __all__ = [
     "NURSERY_REFRESH_PER_POLL",
     "IGNORED_MINTS",
     "CURVE_DEXES",
+    "GT_FEED_PAUSE_S",
+    "KNOWN_LAUNCHPAD_DEPLOYERS",
+    "FACTORY_DEV_MINTS_MIN",
+    "launchpad_deployer",
 ]
 
 log = get_logger(__name__)
@@ -89,6 +112,19 @@ IGNORED_MINTS = frozenset({SOL_MINT, USDC_MINT, USDT_MINT})
 CURVE_DEXES = frozenset({"pumpfun", "meteoradbc"})
 
 GT_NEW_POOL_PAGES = (1, 2)
+#: After a GeckoTerminal 429 the optional new_pools feed is skipped for this long (seconds).
+GT_FEED_PAUSE_S = 300.0
+
+#: Shared deployer addresses of launchpads / launch services (Jupiter tokens/v2 ``dev``), seen live
+#: 2026-10-08 as the ``dev`` of many unrelated trending coins, with 170k-191k ``devMints`` each.
+KNOWN_LAUNCHPAD_DEPLOYERS: Final[dict[str, str]] = {
+    "BAGSB9TpGrZxQbEsrEznv5jXXdwyP6AXerN8aVRiAmcv": "bags.fun",  # 190,960 coins
+    "bwamJzztZsepfkteWRChggmXuiiCQvpLqPietdNfSXa": "launch service (pump.fun, stonkfun)",  # 169,827 coins
+}
+#: A coin WITH a launchpad whose deployer minted at least this many tokens came from a platform
+#: (factory) deployer, not a person: individual creators measured live 2026-10-08 topped out near
+#: 22k (bots included), shared deployers started above 150k.
+FACTORY_DEV_MINTS_MIN = 100_000
 TRENDING_WINDOW: Final = "1h"
 TOO_YOUNG = "too young"
 NO_MARKET_DATA = "no market data"
@@ -118,6 +154,7 @@ class Crawler:
         self._emitted = 0
         self._rejected = 0
         self._feed_errors: Counter[str] = Counter()
+        self._gt_paused_until = 0.0
 
     # ------------------------------------------------------------------ poll
     def poll(self) -> list[TokenCandidate]:
@@ -163,6 +200,7 @@ class Crawler:
     def _decide(self, candidate: TokenCandidate, now: float, emitted: list[TokenCandidate]) -> None:
         """Prefilter one candidate: emit it, park it in the nursery, or reject it."""
         self._apply_promotion(candidate)
+        _file_platform_mints(candidate)
         ok, reason = self.prefilter(candidate, now)
         if ok:
             self.seen[candidate.mint] = now
@@ -179,26 +217,42 @@ class Crawler:
 
     # ------------------------------------------------------------------ feeds
     def _fetch_candidates(self, now: float) -> list[TokenCandidate]:
-        """All feed items as candidates, in merge-precedence order (Jupiter recent, trending, GT)."""
+        """All feed items as candidates, in merge-precedence order (Jupiter recent, trending, GT last)."""
         jupiter = self.sources.jupiter
-        gecko = self.sources.gecko
         out: list[TokenCandidate] = []
         out += self._convert(self._fetch("jupiter_recent", jupiter.tokens_recent),
                              lambda t: token_to_candidate(t, now, "jupiter_recent"))
         out += self._convert(self._fetch("jupiter_trending_1h", lambda: jupiter.top_trending(TRENDING_WINDOW)),
                              lambda t: token_to_candidate(t, now, "jupiter_trending_1h"))
-        for page in GT_NEW_POOL_PAGES:
-            out += self._convert(self._fetch(f"gt_new_pools_p{page}", partial(gecko.new_pools, page)),
-                                 lambda pool: pool_to_candidate(pool, now, "gt_new_pools"))
+        if self.settings.discover_gt_new_pools and now >= self._gt_paused_until:
+            out += self._fetch_gt_new_pools(now)
         return [c for c in out if _is_tradable_mint(c.mint)]
 
-    def _fetch(self, feed: str, call: Callable[[], Iterable[Any] | None]) -> list[Any]:
-        """Run one feed call; on any failure log it, count it and return ``[]``."""
+    def _fetch_gt_new_pools(self, now: float) -> list[TokenCandidate]:
+        """The optional, lowest-priority GeckoTerminal feed; a 429 pauses it (see module docstring)."""
+        out: list[TokenCandidate] = []
+        for page in GT_NEW_POOL_PAGES:
+            limited: list[bool] = []
+            items = self._fetch(f"gt_new_pools_p{page}", partial(self.sources.gecko.new_pools, page), limited)
+            out += self._convert(items, lambda pool: pool_to_candidate(pool, now, "gt_new_pools"))
+            if limited:
+                self._gt_paused_until = now + GT_FEED_PAUSE_S
+                log.warning("crawler_gt_feed_paused seconds=%.0f: GeckoTerminal rate limit; its budget is kept "
+                            "for candles and the radar", GT_FEED_PAUSE_S)
+                break
+        return out
+
+    def _fetch(self, feed: str, call: Callable[[], Iterable[Any] | None],
+               rate_limited: list[bool] | None = None) -> list[Any]:
+        """Run one feed call; on any failure log it, count it and return ``[]`` (an HTTP 429 is
+        also flagged in ``rate_limited`` when given)."""
         try:
             return list(call() or [])
         except Exception as exc:  # one broken feed must never stop discovery
             self._feed_errors[feed] += 1
             log.warning("crawler_feed_failed feed=%s error=%s: %s", feed, type(exc).__name__, exc)
+            if rate_limited is not None and isinstance(exc, HttpError) and exc.status == 429:
+                rate_limited.append(True)
             return []
 
     @staticmethod
@@ -283,6 +337,43 @@ class Crawler:
         if stale or overflow > 0:
             log.info("crawler_nursery_pruned stale=%d overflow=%d", len(stale), max(overflow, 0))
 
+    def export_nursery(self) -> list[dict[str, Any]]:
+        """The nursery as compact JSON-native dicts (unset fields omitted), newest first, at most
+        :data:`NURSERY_MAX` - what the engine stores in the ledger kv across redeploys."""
+        ordered = sorted(self.nursery.values(), key=_newest_first_key)[:NURSERY_MAX]
+        return [{k: v for k, v in c.to_dict().items() if v not in (None, "", [], {}) and k != "stats"}
+                for c in ordered]
+
+    def restore_nursery(self, items: Any, now: float) -> int:
+        """Load :meth:`export_nursery` output saved before a restart; returns how many were restored.
+
+        Garbage, invalid or ignored mints, entries without a creation time (they could never
+        mature), mints already known (nursery or seen) and entries older than
+        ``MIN_AGE_MIN + NURSERY_GRACE_MIN`` are skipped; the result is bounded like the live
+        nursery (:data:`NURSERY_MAX`, oldest dropped).
+        """
+        max_age_s = (self.settings.min_age_min + NURSERY_GRACE_MIN) * 60
+        added: list[str] = []
+        for item in items if isinstance(items, (list, tuple)) else []:
+            if not isinstance(item, dict):
+                continue
+            try:
+                candidate = TokenCandidate.from_dict(item)
+            except (TypeError, ValueError, KeyError, AttributeError):
+                continue
+            created = parse_ts(candidate.created_at)
+            if (created is None or not _is_tradable_mint(candidate.mint) or now - created > max_age_s
+                    or candidate.mint in self.nursery or candidate.mint in self.seen):
+                continue
+            candidate.created_at, candidate.stats = created, {}
+            self.nursery[candidate.mint] = candidate
+            added.append(candidate.mint)
+        self._prune_nursery(now)
+        restored = sum(1 for m in added if m in self.nursery)
+        log.info("crawler_nursery_restored entries=%d offered=%d", restored,
+                 len(items) if isinstance(items, (list, tuple)) else 0)
+        return restored
+
     # ------------------------------------------------------------------ prefilter
     def prefilter(self, c: TokenCandidate, now: float) -> tuple[bool, str]:
         """Cheap checks on data already in the candidate. Returns ``(ok, reason)``.
@@ -292,7 +383,9 @@ class Crawler:
         * Jupiter ``audit.mintAuthorityDisabled is False`` or
           ``audit.freezeAuthorityDisabled is False`` (explicitly not renounced);
         * Jupiter ``audit.devMints > COCOON_DEV_MINTS_MAX`` (serial launcher; the
-          cocoon would hard-fail it anyway, so it is rejected for free here);
+          cocoon would hard-fail it anyway, so it is rejected for free here) -
+          individual creators only: a launchpad's shared deployer
+          (:func:`launchpad_deployer`) says nothing about the coin's creator;
         * age known and ``age_min < MIN_AGE_MIN`` or ``age_min > MAX_AGE_H*60``
           (age is measured at ``now`` from ``created_at`` when known);
         * mcap known and outside ``[MIN_MCAP_USD, MAX_MCAP_USD]``;
@@ -312,7 +405,7 @@ class Crawler:
         if audit.get("freezeAuthorityDisabled") is False:
             return False, "freeze authority set"
         dev_mints = to_float(audit.get("devMints"))
-        if dev_mints is not None and dev_mints > s.cocoon_dev_mints_max:
+        if dev_mints is not None and dev_mints > s.cocoon_dev_mints_max and launchpad_deployer(c) is None:
             return False, f"serial launcher: dev minted {dev_mints:.0f} tokens"
         age_min = _age_min(c, now)
         if age_min is not None:
@@ -407,6 +500,39 @@ class Crawler:
 
 def _is_tradable_mint(mint: Any) -> TypeGuard[str]:
     return isinstance(mint, str) and mint not in IGNORED_MINTS and is_pubkey(mint)
+
+
+def launchpad_deployer(c: TokenCandidate) -> str | None:
+    """Label of the launchpad / launch service whose SHARED deployer launched ``c``, or None when
+    ``c.dev`` is (as far as we can tell) an individual creator.
+
+    Platform deployers: an address in :data:`KNOWN_LAUNCHPAD_DEPLOYERS`, or - for a coin whose
+    ``launchpad`` field is set - a deployer that minted at least :data:`FACTORY_DEV_MINTS_MIN`
+    tokens. A candidate already classified (``raw["deployer"]``) keeps its label.
+    """
+    known = c.raw.get("deployer") if isinstance(c.raw, dict) else None
+    if isinstance(known, dict) and known.get("label"):
+        return str(known["label"])
+    if c.dev and c.dev in KNOWN_LAUNCHPAD_DEPLOYERS:
+        return KNOWN_LAUNCHPAD_DEPLOYERS[c.dev]
+    mints = to_float((c.audit or {}).get("devMints"))
+    if c.launchpad and mints is not None and mints >= FACTORY_DEV_MINTS_MIN:
+        return f"{c.launchpad} platform deployer"
+    return None
+
+
+def _file_platform_mints(c: TokenCandidate) -> None:
+    """For a launchpad-deployed candidate, move the PLATFORM's mint count out of ``audit.devMints``
+    (into ``audit.deployerMints``) and name the platform in ``raw["deployer"]`` - so no serial
+    launcher rule (prefilter or cocoon) reads a platform's history as the creator's."""
+    label = launchpad_deployer(c)
+    if label is None:
+        return
+    audit = dict(c.audit or {})
+    if "devMints" in audit:
+        audit["deployerMints"] = audit.pop("devMints")
+    c.audit = audit
+    c.raw = {**c.raw, "deployer": {"address": c.dev, "label": label}}
 
 
 def _created_at(c: TokenCandidate) -> float | None:
