@@ -17,8 +17,9 @@ A stale, foreign or already-used quote raises ``QuoteRejected`` - re-quote.
 
 Optional extras beyond the contract (all keyword-only, safe to ignore):
 ``quote(..., max_impact_pct=None)`` overrides ``MAX_PRICE_IMPACT_PCT`` for one
-quote (e.g. a looser cap so a stop-loss can still exit a thinning pool) and
-``execute(..., symbol="")`` labels the fill.
+quote (e.g. a looser cap so a stop-loss can still exit a thinning pool),
+``execute(..., symbol="")`` labels the fill and ``execute(..., on_fill=None)``
+runs the caller's bookkeeping in the same ledger transaction as the fill.
 """
 
 from __future__ import annotations
@@ -92,8 +93,17 @@ class SwapFailed(BrokerError):
 
 
 class SwapUnknown(BrokerError):
-    """Live swap outcome unknown (transport error during /execute). DO NOT retry the
-    same swap - reconcile balances (Ultra holdings) first, then re-quote."""
+    """Live swap outcome unknown (transport error during /execute, an ambiguous Ultra
+    "Failed", or a swap that LANDED but could not be recorded). DO NOT retry the same swap -
+    reconcile balances (Ultra holdings) first, then re-quote.
+
+    ``fill``: the actual (unrecorded) Fill when Ultra confirmed the swap but the ledger write
+    failed, so reconciliation can book the real amounts instead of an estimate; else None.
+    """
+
+    def __init__(self, message: str, fill: Fill | None = None) -> None:
+        super().__init__(message)
+        self.fill = fill
 
 
 class LiveNotAllowed(BrokerError):
@@ -120,6 +130,11 @@ class Broker(Protocol):
         """Execute ``quote`` and return the recorded :class:`Fill` (already in the ledger,
         with ``receipt_hash`` set).
 
+        Optional keyword ``on_fill(recorded_fill)``: called INSIDE the ledger transaction that
+        records the fill, so the caller's position update commits (or rolls back) together
+        with it. If it raises, nothing is recorded: paper rolls the whole swap back and
+        re-raises; live (the swap already landed) raises ``SwapUnknown`` carrying the fill.
+
         ``position``: None for an opening buy; the open position for adds and
         sells (needed for rent refund on a full exit and ``Fill.position_id``).
         Must NOT re-quote silently: paper fills at ``quote.out_amount``; live
@@ -139,6 +154,14 @@ class Broker(Protocol):
 
 
 # --------------------------------------------------------------------------- helpers
+
+
+def _request_mismatch(quote: Quote, input_mint: str, output_mint: str, amount_in: int) -> str | None:
+    """Why Ultra's answer is not a quote for what was asked (other mints or another input amount)."""
+    if (quote.input_mint, quote.output_mint, quote.in_amount) != (input_mint, output_mint, amount_in):
+        return (f"Ultra quote does not match the request: {quote.input_mint}->{quote.output_mint} for "
+                f"{quote.in_amount}, asked {input_mint}->{output_mint} for {amount_in}")
+    return None
 
 
 def require_solders() -> Any:
@@ -251,7 +274,7 @@ class UltraBrokerBase:
         self._before_quote(side)
         quote = self.jupiter.ultra_order(input_mint, output_mint, amount_in, taker=taker)
         limit = self.settings.max_price_impact_pct if max_impact_pct is None else max_impact_pct
-        problem = self._quote_problem(quote, limit)
+        problem = _request_mismatch(quote, input_mint, output_mint, amount_in) or self._quote_problem(quote, limit)
         if problem:
             log.info("quote_rejected mode=%s side=%s mint=%s reason=%s", self.mode, side, mint, problem)
             raise QuoteRejected(problem)
@@ -263,13 +286,38 @@ class UltraBrokerBase:
         """Hook run after argument validation, before the Ultra request (live: wallet cap)."""
 
     def _quote_problem(self, quote: Quote, max_impact_pct: float) -> str | None:
-        """Why ``quote`` must not be traded, or None when it is acceptable."""
+        """Why ``quote`` must not be traded, or None when it is acceptable.
+
+        Every quote: a requestId, positive amounts, no disqualifying Ultra error, impact within
+        ``max_impact_pct``. BUYS also fail closed on what a sell must never be trapped by: an
+        unknown impact, an all-in USD value loss above the cap (+ the platform fee), and a signed
+        minimum output more than ``MAX_SLIPPAGE_PCT`` below the quote.
+        """
         if not quote.request_id:
             return "Ultra returned no requestId"
+        if quote.in_amount <= 0 or quote.out_amount <= 0:
+            return f"Ultra quoted a non-positive amount (in {quote.in_amount}, out {quote.out_amount})"
         if quote.error and not (self.allow_insufficient_funds and quote.is_insufficient_funds):
             return f"Ultra error: {quote.error}"
         if quote.price_impact_pct > max_impact_pct:
             return f"price impact {quote.price_impact_pct:.2f}% > max {max_impact_pct:.2f}%"
+        if quote.side == "buy":
+            return self._buy_problem(quote, max_impact_pct)
+        return None
+
+    def _buy_problem(self, quote: Quote, max_impact_pct: float) -> str | None:
+        if not quote.price_impact_known:
+            return "price impact unknown (Ultra sent no priceImpactPct/priceImpact)"
+        loss = quote.usd_value_loss_pct
+        loss_cap = max_impact_pct + quote.fee_bps / 100.0
+        if loss is not None and loss > loss_cap:
+            return f"USD value lost {loss:.2f}% > max {loss_cap:.2f}% (impact cap + platform fee)"
+        slip_cap = self.settings.max_slippage_pct
+        slippage = quote.slippage_bps / 100.0
+        if quote.other_amount_threshold is not None:
+            slippage = max(slippage, (quote.out_amount - quote.other_amount_threshold) / quote.out_amount * 100.0)
+        if slippage > slip_cap:
+            return f"slippage {slippage:.2f}% > MAX_SLIPPAGE_PCT {slip_cap:.2f}% (Ultra's signed minimum output)"
         return None
 
     def _forget_old_tickets(self) -> None:

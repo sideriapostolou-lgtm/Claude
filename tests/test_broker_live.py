@@ -85,6 +85,7 @@ def wallet(keypair: Keypair) -> Wallet:
 @pytest.fixture
 def live_settings(make_settings, wallet):
     def _make(**overrides: Any):
+        overrides.setdefault("DASHBOARD_HOST", "127.0.0.1")  # live needs a token unless bound to loopback
         return make_settings(TRADING_MODE="live", LIVE_CONFIRM=LIVE_CONFIRM_PHRASE,
                              BOT_WALLET_SECRET=wallet.secret_base58(), **overrides)
 
@@ -341,16 +342,21 @@ def test_failed_status_records_a_failure_and_changes_nothing(broker, venue, ledg
     ({"status": "Pending", "signature": "sig"}, 200),
 ])
 def test_unknown_outcome_is_never_retried(broker, venue, ledger, response, status) -> None:
+    """No NEW swap is ever sent for an unknown outcome. Only the identical signed transaction (same
+    signature and requestId) may be re-posted to learn its status, which Ultra documents as safe."""
+    from nightcrawler.broker.live import EXECUTE_REPOLLS
+
     venue.execute_with(response, status=status)
     quote = broker.quote("buy", HIGGS, BUY_IN, 6)
     with pytest.raises(SwapUnknown, match="reconcile"):
         broker.execute(quote, None)
-    assert len(venue.executed) == 1
+    posts = list(venue.executed)
+    assert 1 <= len(posts) <= 1 + EXECUTE_REPOLLS and all(p == posts[0] for p in posts)
     (failure,) = receipts_of(ledger, "swap_failed")
     assert failure.payload["outcome"] == "unknown"
     with pytest.raises(QuoteRejected):
         broker.execute(quote, None)
-    assert len(venue.executed) == 1
+    assert venue.executed == posts
 
 
 def test_stale_quote_is_never_signed_or_sent(broker, venue, fake_clock) -> None:
@@ -405,7 +411,7 @@ def test_live_smoke_unfunded_wallet_quotes_but_never_trades(make_settings) -> No
     """
     wallet = load_keypair(b58encode(bytes(Keypair())))
     settings = make_settings(TRADING_MODE="live", LIVE_CONFIRM=LIVE_CONFIRM_PHRASE,
-                             BOT_WALLET_SECRET=wallet.secret_base58())
+                             BOT_WALLET_SECRET=wallet.secret_base58(), DASHBOARD_HOST="127.0.0.1")
     clock = RealClock()
     http = HttpClient.from_settings(settings, clock=clock)
     jupiter = JupiterClient(http, base_url=settings.jupiter_base_url, api_key=settings.jupiter_api_key)
@@ -414,3 +420,114 @@ def test_live_smoke_unfunded_wallet_quotes_but_never_trades(make_settings) -> No
     assert broker.wallet_value_usd() == 0.0
     with pytest.raises(QuoteRejected, match="(?i)insufficient funds|no transaction"):
         broker.quote("buy", USDC, 10_000_000, 6)
+
+
+# --------------------------------------------------------------------------- review fixes
+
+
+def execute_sequence(venue: Venue, *responses: Any) -> None:
+    """/execute answers ``responses`` in order (an exception instance is raised), the last one forever."""
+    queue = list(responses)
+
+    def respond(request):
+        venue.executed.append(request.json)
+        body = queue.pop(0) if len(queue) > 1 else queue[0]
+        if isinstance(body, BaseException):
+            raise body
+        return load_fixture(body) if isinstance(body, str) else body
+
+    venue.http.register("/ultra/v1/execute", respond, method="POST")
+
+
+def test_a_ledger_failure_after_a_landed_swap_is_an_unknown_outcome(broker, venue, ledger) -> None:
+    from nightcrawler.ledger import LedgerError
+
+    ledger.fail_next["record_fill"] = LedgerError("sqlite error: database is locked")
+    with pytest.raises(SwapUnknown, match="not recorded") as ei:
+        broker.execute(broker.quote("buy", HIGGS, BUY_IN, 6), None)
+    assert len(venue.executed) == 1  # the swap WAS sent and landed
+    assert ei.value.fill is not None and ei.value.fill.token_amount == ACTUAL_OUT  # actual amounts kept
+    assert ledger.fills() == []
+
+
+def test_on_fill_runs_in_the_fill_transaction_and_its_failure_rolls_both_back(broker, venue, ledger) -> None:
+    seen: list[Any] = []
+
+    def apply(fill):
+        seen.append(fill)
+        ledger.set_kv("applied", fill.id)
+
+    fill = broker.execute(broker.quote("buy", HIGGS, BUY_IN, 6), None, on_fill=apply)
+    assert seen == [fill] and ledger.get_kv("applied") == fill.id and ledger.fills() == [fill]
+
+    def boom(_fill):
+        ledger.set_kv("half", True)
+        raise RuntimeError("position write failed")
+
+    with pytest.raises(SwapUnknown) as ei:
+        broker.execute(broker.quote("buy", HIGGS, BUY_IN, 6), None, on_fill=boom)
+    assert ledger.get_kv("half") is None and len(ledger.fills()) == 1  # rolled back together
+    assert ei.value.fill is not None
+
+
+@pytest.mark.parametrize("code", [-1000, -1001, -1006, -2000, -2001, -2005, None])
+def test_an_ambiguous_ultra_failure_is_unknown_not_failed(broker, venue, ledger, code) -> None:
+    execute_sequence(venue, {"status": "Failed", "signature": "5igSIG", "code": code, "error": "Transaction timed out"})
+    quote = broker.quote("buy", HIGGS, BUY_IN, 6)
+    with pytest.raises(SwapUnknown):
+        broker.execute(quote, None)
+    # only the IDENTICAL signed transaction is ever re-posted (Ultra: safe, same signature)
+    assert 1 <= len(venue.executed) <= 3 and all(e == venue.executed[0] for e in venue.executed)
+    assert receipts_of(ledger, "swap_failed")[-1].payload["outcome"] == "unknown"
+
+
+@pytest.mark.parametrize("code,signature", [(-2, None), (-1005, None), (-1003, None), (-2003, None),
+                                            (6001, "5igSIG")])
+def test_a_definite_ultra_failure_stays_failed(broker, venue, code, signature) -> None:
+    execute_sequence(venue, {"status": "Failed", "signature": signature, "code": code, "error": "nope"})
+    with pytest.raises(SwapFailed):
+        broker.execute(broker.quote("buy", HIGGS, BUY_IN, 6), None)
+    assert len(venue.executed) == 1
+
+
+def test_a_transport_error_re_polls_the_same_transaction_and_books_the_real_fill(broker, venue, ledger) -> None:
+    execute_sequence(venue, requests.Timeout("read timed out"), "jup_ultra_execute_success_synthetic")
+    fill = broker.execute(broker.quote("buy", HIGGS, BUY_IN, 6), None)
+    assert len(venue.executed) == 2 and venue.executed[0] == venue.executed[1]
+    assert fill.token_amount == ACTUAL_OUT and fill.signature
+    assert receipts_of(ledger, "swap_failed") == []
+
+
+def test_a_sell_is_sent_unsimulated_when_the_rpc_is_down_but_a_buy_is_not(broker, venue) -> None:
+    venue.simulation = {"error": {"code": -32005, "message": "node is behind"}}
+    venue.execute_with({"status": "Success", "signature": "sig", "inputAmountResult": "16239400281",
+                        "outputAmountResult": "98000000"})
+    position = Position(id="pos_1", mint=HIGGS, symbol="HIGGS", pool=None, opened_at=0.0, token_decimals=6,
+                        token_amount=QUOTED_OUT)
+    fill = broker.execute(broker.quote("sell", HIGGS, QUOTED_OUT, 6, max_impact_pct=25.0), position)
+    assert fill.side == "sell" and len(venue.executed) == 1
+    with pytest.raises(SwapFailed, match="simulation unavailable"):
+        broker.execute(broker.quote("buy", HIGGS, BUY_IN, 6), None)
+    assert len(venue.executed) == 1
+
+
+def test_a_sell_with_a_definite_simulation_error_is_still_not_sent(broker, venue) -> None:
+    venue.simulation = simulation_result({"InstructionError": [2, {"Custom": 6001}]})
+    position = Position(id="pos_1", mint=HIGGS, symbol="HIGGS", pool=None, opened_at=0.0, token_decimals=6,
+                        token_amount=QUOTED_OUT)
+    with pytest.raises(SwapFailed, match="simulation failed"):
+        broker.execute(broker.quote("sell", HIGGS, QUOTED_OUT, 6), position)
+    assert venue.executed == []
+
+
+def test_quote_age_is_checked_again_right_before_sending(broker, venue, fake_clock) -> None:
+    original = venue._rpc
+
+    def slow_rpc(request):
+        fake_clock.advance(60)  # rate-limited RPC retries/backoff during the simulation
+        return original(request)
+
+    venue.http.register(venue.rpc_url, slow_rpc, method="POST")
+    with pytest.raises(QuoteRejected, match="stale"):
+        broker.execute(broker.quote("buy", HIGGS, BUY_IN, 6), None)
+    assert venue.executed == []

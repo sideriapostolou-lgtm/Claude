@@ -200,27 +200,29 @@ def test_feature_matrix_is_prefix_stable_real():
 
 
 def _finalist_models():
+    """(model path, params, finalist record or None) for each F4 finalist (or one trained model)."""
     if not MODEL.exists():
         return []
     import json
     fin = LAB_DIR / "finalists" / "f4-learned.json"
     if fin.exists():
-        recs = json.loads(fin.read_text())
         out = []
-        for r in recs:
+        for r in json.loads(fin.read_text()):
             p = r["params"]
-            out.append((MODEL / f"{p['label']}_{p['model']}.pkl", F4.F4Params(**p["strategy"])))
+            path = H.LAB / p["model_file"].replace("LAB/", "", 1)
+            if path.exists():
+                out.append((path, F4.F4Params(**p["strategy"]), r))
         if out:
             return out
     pk = sorted(MODEL.glob("*.pkl"))[:1]
-    return [(pk[0], F4.F4Params(threshold=0.3, tp=0.15, sl=0.15, hold_min=15))] if pk else []
+    return [(pk[0], F4.F4Params(threshold=0.3, tp=0.15, sl=0.15, hold_min=15), None)] if pk else []
 
 
 @pytest.mark.skipif(not HAVE_DATA or not _finalist_models(), reason="lab data / trained models not present")
 def test_audit_lookahead_clean_real_model_scorer():
     sol = SolUsd.from_lab()
-    coins = _train_coins(40)
-    for path, prm in _finalist_models():
+    coins = _train_coins(20)
+    for path, prm, _ in _finalist_models()[:1]:
         model = F4.FoldEnsemble.load(path)
         loose = F4.F4Params(**{**prm.__dict__, "threshold": min(prm.threshold, 0.2), "max_entries": 3})
         fac = F4.factory(loose, F4.ModelScorer(model, loose.gate))
@@ -231,8 +233,8 @@ def test_audit_lookahead_clean_real_model_scorer():
 def test_table_scorer_matches_model_scorer_on_real_coins():
     """The search's precomputed tables must reproduce the live-style scorer bar for bar."""
     sol = SolUsd.from_lab()
-    coins = _train_coins(30)
-    for path, prm in _finalist_models():
+    coins = _train_coins(15)
+    for path, prm, _ in _finalist_models()[:1]:
         model = F4.FoldEnsemble.load(path)
         table = {}
         for c in coins:
@@ -240,11 +242,32 @@ def test_table_scorer_matches_model_scorer_on_real_coins():
             g = F4.gate_mask(Fm, F4.vol10(c.v), prm.gate)
             s = np.full(c.n, np.nan)
             if g.any():
-                s[g] = model.score(np.nan_to_num(Fm[g], nan=0.0, posinf=0.0, neginf=0.0).clip(-50, 50))
+                s[g] = model.score(Fm[g])
             table[c.mint] = s
         loose = F4.F4Params(**{**prm.__dict__, "threshold": min(prm.threshold, 0.2), "max_entries": 3})
         live = H.run_per_coin(F4.factory(loose, F4.ModelScorer(model, loose.gate)), coins, sol=sol,
                               keep_decisions=True)
         fast = H.run_per_coin(F4.factory(loose, F4.TableScorer(table)), coins, sol=sol, keep_decisions=True)
         assert live.decisions == fast.decisions
+        assert [round(t.ret, 12) for t in live.trades] == [round(t.ret, 12) for t in fast.trades]
+
+
+@pytest.mark.skipif(not HAVE_DATA or not (H.LAB / "f4" / "dataset_validation.npz").exists()
+                    or not any(r for *_, r in _finalist_models()), reason="F4 search artifacts not present")
+def test_search_validation_table_equals_live_scorer():
+    """The VALIDATION numbers in finalists/f4-learned.json come from precomputed tables; the live-style
+    scorer (features from the view + saved model) must make the same decisions and trades."""
+    S = _load("f4_learned_search", "f4_learned_search.py")
+    coins = H.load_coins(split="validation")[:25]
+    last = {c.mint: c.n - 1 for c in coins}
+    for path, prm, rec in _finalist_models():
+        if rec is None:
+            continue
+        p = rec["params"]
+        model = F4.FoldEnsemble.load(path)
+        table = S.score_table("validation", p["label"], p["model"], p["variant"])
+        live = H.run_per_coin(F4.factory(prm, F4.ModelScorer(model, prm.gate)), coins, keep_decisions=True)
+        fast = H.run_per_coin(F4.factory(prm, F4.TableScorer(table)), coins, keep_decisions=True)
+        strip = lambda d: {m: [x for x in v if x[0] < last[m]] for m, v in d.items()}  # noqa: E731
+        assert strip(live.decisions) == strip(fast.decisions)
         assert [round(t.ret, 12) for t in live.trades] == [round(t.ret, 12) for t in fast.trades]

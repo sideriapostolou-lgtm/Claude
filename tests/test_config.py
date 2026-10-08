@@ -76,12 +76,14 @@ def test_parsing_types_and_blank_values(make_settings) -> None:
 
 def test_validation_collects_all_problems(make_settings) -> None:
     with pytest.raises(ConfigError) as ei:
-        make_settings(POSITION_PCT="20", MAX_PRICE_IMPACT_PCT="0", KILL_SWITCH="maybe", PORT="0")
+        make_settings(POSITION_PCT="20", MAX_PRICE_IMPACT_PCT="0", JUDGE_EFFORT="maybe", PORT="0")
     text = str(ei.value)
     assert len(ei.value.problems) == 4
     assert "POSITION_PCT=20.0 must be <= 1 (a FRACTION: 0.20 means 20%)" in text
     assert "MAX_PRICE_IMPACT_PCT" in text and "PERCENT" in text
-    assert "KILL_SWITCH='maybe' must be one of off, stop, sell_all" in text
+    assert "JUDGE_EFFORT='maybe' must be one of low, medium, high, xhigh, max" in text
+    # KILL_SWITCH never refuses to boot: a garbled value fails SAFE to "stop" (see the review-fix tests)
+    assert make_settings(KILL_SWITCH="maybe").kill_switch == "stop"
 
 
 @pytest.mark.parametrize("env,needle", [
@@ -114,7 +116,8 @@ def test_live_requires_confirmation_and_wallet(make_settings) -> None:
     assert any("BOT_WALLET_SECRET" in p for p in ei.value.problems)
     with pytest.raises(ConfigError):
         make_settings(TRADING_MODE="live", LIVE_CONFIRM="yes please", BOT_WALLET_SECRET=WALLET)
-    s = make_settings(TRADING_MODE="live", LIVE_CONFIRM=LIVE_CONFIRM_PHRASE, BOT_WALLET_SECRET=WALLET)
+    s = make_settings(TRADING_MODE="live", LIVE_CONFIRM=LIVE_CONFIRM_PHRASE, BOT_WALLET_SECRET=WALLET,
+                      DASHBOARD_TOKEN="a-long-random-dashboard-password")
     assert s.is_live and s.bot_wallet_secret.reveal() == WALLET
 
 
@@ -210,3 +213,66 @@ def test_redact_url() -> None:
     assert redact_url("https://x.io/?api-key=abc&cluster=main") == "https://x.io/?api-key=***&cluster=main"
     assert redact_url("https://api.mainnet-beta.solana.com") == "https://api.mainnet-beta.solana.com"
     assert redact_url("https://x.io/rpc?token=t1") == "https://x.io/rpc?token=***"
+
+
+# --------------------------------------------------------------------------- review fixes
+
+
+@pytest.mark.parametrize("raw,expected", [
+    ("sell-all", "sell_all"), ("sell all", "sell_all"), ("Sell All", "sell_all"), (" SELL_ALL ", "sell_all"),
+    ("STOP", "stop"), ("off", "off"),
+    ("sel_all", "stop"), ("maybe", "stop"),  # garbled: fail SAFE (no new entries), never refuse to boot
+])
+def test_kill_switch_is_normalized_and_never_blocks_startup(raw, expected, tmp_path) -> None:
+    from nightcrawler.risk import RiskManager
+
+    s = Settings.from_env({"KILL_SWITCH": raw, "DATA_DIR": str(tmp_path)})
+    assert s.kill_switch == expected
+    assert RiskManager(s, None, None).kill_mode() == expected  # type: ignore[arg-type]
+
+
+QUICKNODE = "https://x.solana-mainnet.quiknode.pro/abcdef0123456789SECRETKEY/"
+ALCHEMY = "https://solana-mainnet.g.alchemy.com/v2/AlchemyKey0123456789abcdef"
+
+
+@pytest.mark.parametrize("url,key", [(QUICKNODE, "abcdef0123456789SECRETKEY"),
+                                     (ALCHEMY, "AlchemyKey0123456789abcdef")])
+def test_rpc_keys_in_the_url_path_are_secret(make_settings, url, key) -> None:
+    from nightcrawler.http import HttpError
+
+    s = make_settings(SOLANA_RPC_URL=url)
+    assert key not in json.dumps(s.public_dict(), default=str) and key not in repr(s)
+    assert key in s.secret_values()
+    assert s.public_dict()["solana_rpc_url"].startswith("https://") and "***" in s.public_dict()["solana_rpc_url"]
+    err = HttpError("HTTP 429", url=url, status=429, secret_paths=True)
+    assert key not in str(err) and key not in err.url
+
+
+def test_http_errors_from_a_path_key_rpc_never_show_the_key(make_settings) -> None:
+    from fakes import FakeClock, FakeHttp
+    from nightcrawler.http import HttpClient, HttpError
+
+    s = make_settings(SOLANA_RPC_URL=QUICKNODE)
+    fake = FakeHttp()
+    fake.register("quiknode.pro", {"error": "slow down"}, status=429, method="POST")
+    client = HttpClient.from_settings(s, session=fake, clock=FakeClock(0.0), max_retries=0)
+    with pytest.raises(HttpError) as ei:
+        client.post_json(s.solana_rpc_url, json={"method": "getHealth"})
+    assert "SECRETKEY" not in str(ei.value) and "SECRETKEY" not in ei.value.url
+    assert "x.solana-mainnet.quiknode.pro" in str(ei.value)
+
+
+def test_live_mode_requires_a_dashboard_token_unless_bound_to_loopback(make_settings) -> None:
+    live = {"TRADING_MODE": "live", "LIVE_CONFIRM": LIVE_CONFIRM_PHRASE, "BOT_WALLET_SECRET": WALLET}
+    with pytest.raises(ConfigError, match="DASHBOARD_TOKEN"):
+        make_settings(**live)
+    assert make_settings(**live, DASHBOARD_TOKEN="a-long-random-dashboard-password").is_live
+    assert make_settings(**live, DASHBOARD_HOST="127.0.0.1").is_live
+    assert make_settings(DASHBOARD_HOST="0.0.0.0").trading_mode == "paper"  # paper needs no token
+
+
+def test_take_profit_written_as_percent_is_rejected_with_the_fraction_hint(make_settings) -> None:
+    with pytest.raises(ConfigError, match="TAKE_PROFIT_PCT=40.0 must be <= 10.*FRACTION"):
+        make_settings(TAKE_PROFIT_PCT="40")
+    assert make_settings(TAKE_PROFIT_PCT="0.4").take_profit_pct == 0.4
+    assert make_settings(TAKE_PROFIT_PCT="2.0").take_profit_pct == 2.0

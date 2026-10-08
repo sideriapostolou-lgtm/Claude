@@ -49,7 +49,7 @@ import requests
 
 from nightcrawler import __version__
 from nightcrawler.clock import Clock, RealClock
-from nightcrawler.config import redact_url
+from nightcrawler.config import redact_rpc_url, redact_url
 from nightcrawler.logging_setup import get_logger
 
 __all__ = [
@@ -84,22 +84,27 @@ def host_of(url: str) -> str:
     return (urlsplit(url).hostname or "").lower()
 
 
-def _short(url: str) -> str:
+def _short(url: str, secret_path: bool = False) -> str:
     parts = urlsplit(url)
-    return f"{parts.hostname}{parts.path}"
+    path = "/***" if secret_path and parts.path not in ("", "/") else parts.path
+    return f"{parts.hostname}{path}"
 
 
 class HttpError(Exception):
-    """A request that did not produce a usable 2xx JSON response."""
+    """A request that did not produce a usable 2xx JSON response.
+
+    ``secret_paths=True`` (hosts such as a QuickNode/Alchemy RPC whose API key is part of
+    the PATH) keeps only scheme and host in ``url`` and the message.
+    """
 
     def __init__(self, message: str, *, url: str, status: int | None = None, body: str | None = None,
-                 payload: Any = None, retryable: bool = False) -> None:
-        self.url = redact_url(url)
+                 payload: Any = None, retryable: bool = False, secret_paths: bool = False) -> None:
+        self.url = redact_rpc_url(url) if secret_paths else redact_url(url)
         self.status = status
         self.body = body[:500] if body else body
         self.payload = payload
         self.retryable = retryable
-        where = _short(url)
+        where = _short(url, secret_paths)
         super().__init__(f"{message} [{status if status is not None else 'no response'}] {where}")
 
 
@@ -178,6 +183,8 @@ class HttpClient:
         #: Per-host override of ``max_retries`` (e.g. fail fast on a rate-limited host whose
         #: callers retry on their own schedule anyway).
         self.host_max_retries = {h.lower(): int(n) for h, n in (host_max_retries or {}).items()}
+        #: Hosts whose URL PATH holds an API key (QuickNode/Alchemy-style RPC URLs): errors show host only.
+        self.secret_path_hosts: set[str] = set()
         self.clock = clock or RealClock()
         self.limiter = RateLimiter(self.clock, rate_limits, default_rate)
         self.timeout_s = timeout_s
@@ -197,9 +204,12 @@ class HttpClient:
                       **kwargs: Any) -> "HttpClient":
         """Default client; the host of ``settings.solana_rpc_url`` gets 5 req/s unless listed."""
         client = cls(session=session, clock=clock, **kwargs)
-        rpc_host = host_of(getattr(settings, "solana_rpc_url", "") or "")
+        rpc_url = getattr(settings, "solana_rpc_url", "") or ""
+        rpc_host = host_of(rpc_url)
         if rpc_host and rpc_host not in client.limiter.limits:
             client.limiter.set_limit(rpc_host, 5.0, 5)
+        if rpc_host and urlsplit(rpc_url).path not in ("", "/"):
+            client.secret_path_hosts.add(rpc_host)
         return client
 
     # ------------------------------------------------------------------ public
@@ -222,6 +232,7 @@ class HttpClient:
         timeout = self.timeout_s if timeout_s is None else timeout_s
         stats = self.stats[host]
         max_retries = self.host_max_retries.get(host, self.max_retries)
+        secret_paths = host in self.secret_path_hosts
         attempt = 0
         while True:
             stats["rate_wait_s"] += self.limiter.acquire(host)
@@ -230,7 +241,8 @@ class HttpClient:
                 resp = self.session.request(method, url, params=params, json=json_body, headers=hdrs,
                                             timeout=timeout)
             except (requests.ConnectionError, requests.Timeout) as exc:
-                err = HttpError(f"{type(exc).__name__}", url=url, status=None, retryable=True)
+                err = HttpError(f"{type(exc).__name__}", url=url, status=None, retryable=True,
+                                secret_paths=secret_paths)
                 if retry and attempt < max_retries:
                     self._sleep_retry(host, attempt, None, f"{type(exc).__name__}")
                     attempt += 1
@@ -239,7 +251,8 @@ class HttpClient:
                 raise err from exc
             except requests.RequestException as exc:
                 stats["errors"] += 1
-                raise HttpError(f"{type(exc).__name__}", url=url, status=None, retryable=False) from exc
+                raise HttpError(f"{type(exc).__name__}", url=url, status=None, retryable=False,
+                                secret_paths=secret_paths) from exc
 
             status = int(resp.status_code)
             if status in RETRY_STATUSES or 500 <= status < 600:
@@ -248,10 +261,10 @@ class HttpClient:
                     attempt += 1
                     continue
                 stats["errors"] += 1
-                raise self._error(f"HTTP {status}", url, resp, retryable=True)
+                raise self._error(f"HTTP {status}", url, resp, retryable=True, secret_paths=secret_paths)
             if status >= 400:
                 stats["errors"] += 1
-                raise self._error(f"HTTP {status}", url, resp, retryable=False)
+                raise self._error(f"HTTP {status}", url, resp, retryable=False, secret_paths=secret_paths)
             content = getattr(resp, "content", b"")
             if not content or not content.strip():
                 return None
@@ -259,7 +272,7 @@ class HttpClient:
                 return resp.json()
             except ValueError:
                 stats["errors"] += 1
-                raise self._error("invalid JSON", url, resp, retryable=False) from None
+                raise self._error("invalid JSON", url, resp, retryable=False, secret_paths=secret_paths) from None
 
     # ------------------------------------------------------------------ internals
     def backoff_delay(self, attempt: int) -> float:
@@ -300,7 +313,7 @@ class HttpClient:
         self.clock.sleep(delay)
 
     @staticmethod
-    def _error(message: str, url: str, resp: Any, *, retryable: bool) -> HttpError:
+    def _error(message: str, url: str, resp: Any, *, retryable: bool, secret_paths: bool = False) -> HttpError:
         text = None
         try:
             text = resp.text
@@ -312,4 +325,4 @@ class HttpClient:
         except Exception:
             payload = None
         return HttpError(message, url=url, status=int(resp.status_code), body=text, payload=payload,
-                         retryable=retryable)
+                         retryable=retryable, secret_paths=secret_paths)

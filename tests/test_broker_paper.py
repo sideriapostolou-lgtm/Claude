@@ -208,6 +208,8 @@ def order_route(fixture: str, **overrides: Any):
         body = {**base, **overrides}
         body["inAmount"] = str(amount)
         body["outAmount"] = str(int(base["outAmount"]) * amount // int(base["inAmount"]))
+        if "otherAmountThreshold" not in overrides:  # keep Ultra's min-out consistent with the scaled amount
+            body["otherAmountThreshold"] = str(int(base["otherAmountThreshold"]) * amount // int(base["inAmount"]))
         return body
 
     return respond
@@ -519,3 +521,75 @@ def test_live_smoke_paper_round_trip_on_real_ultra_quotes(make_settings) -> None
     round_trip = (buy.sol_lamports - sell.sol_lamports) / buy.sol_lamports
     assert 0 <= round_trip < 0.02  # ~0.2 % Ultra fees on a deep pool, before network fees
     assert broker.balances().tokens == {}
+
+
+# --------------------------------------------------------------------------- review fixes: quote sanity
+
+
+def test_quote_for_another_mint_or_amount_than_requested_is_rejected(broker, jupiter_http) -> None:
+    other = "So1anaOtherMint1111111111111111111111111111"
+    jupiter_http.register(f"inputMint={SOL_MINT}", order_route("jup_ultra_order_buy", outputMint=other))
+    with pytest.raises(QuoteRejected, match="does not match the request"):
+        broker.quote("buy", HIGGS, BUY_IN, 6)
+    bigger = load_fixture("jup_ultra_order_buy") | {"inAmount": str(BUY_IN * 5)}
+    jupiter_http.register(f"inputMint={SOL_MINT}", bigger)
+    with pytest.raises(QuoteRejected, match="does not match the request"):
+        broker.quote("buy", HIGGS, BUY_IN, 6)
+
+
+@pytest.mark.parametrize("field", ["outAmount", "inAmount"])
+def test_quote_with_a_zero_amount_is_rejected(broker, jupiter_http, field) -> None:
+    body = load_fixture("jup_ultra_order_buy") | {field: "0"}
+    jupiter_http.register(f"inputMint={SOL_MINT}", body)
+    with pytest.raises(QuoteRejected):
+        broker.quote("buy", HIGGS, BUY_IN if field == "outAmount" else BUY_IN, 6)
+
+
+def test_buy_quote_without_any_price_impact_field_fails_closed(broker, jupiter_http) -> None:
+    body = {k: v for k, v in load_fixture("jup_ultra_order_buy").items() if k not in ("priceImpactPct", "priceImpact")}
+    jupiter_http.register(f"inputMint={SOL_MINT}", body)
+    with pytest.raises(QuoteRejected, match="price impact unknown"):
+        broker.quote("buy", HIGGS, BUY_IN, 6)
+    jupiter_http.register(f"inputMint={SOL_MINT}", body | {"priceImpactPct": "NaN"})
+    with pytest.raises(QuoteRejected, match="price impact unknown"):
+        broker.quote("buy", HIGGS, BUY_IN, 6)
+
+
+def test_buy_quote_losing_more_usd_value_than_the_cap_is_rejected(broker, jupiter_http) -> None:
+    body = load_fixture("jup_ultra_order_buy")
+    lossy = body | {"priceImpactPct": "-0.00001", "priceImpact": -0.001, "outUsdValue": body["inUsdValue"] * 0.8}
+    jupiter_http.register(f"inputMint={SOL_MINT}", lossy)
+    with pytest.raises(QuoteRejected, match=r"USD value lost 20\.00%"):
+        broker.quote("buy", HIGGS, BUY_IN, 6)
+
+
+def test_buy_with_a_wide_ultra_min_out_is_rejected_but_a_forced_sell_is_not(make_broker, jupiter_http) -> None:
+    broker = make_broker(MAX_SLIPPAGE_PCT=3.0)
+    base = load_fixture("jup_ultra_order_buy")
+    wide = base | {"slippageBps": 500, "otherAmountThreshold": str(int(int(base["outAmount"]) * 0.95))}
+    jupiter_http.register(f"inputMint={SOL_MINT}", wide)
+    with pytest.raises(QuoteRejected, match=r"slippage 5\.00% > MAX_SLIPPAGE_PCT 3\.00%"):
+        broker.quote("buy", HIGGS, BUY_IN, 6)
+    sell = load_fixture("jup_ultra_order_sell")
+    jupiter_http.register(f"outputMint={SOL_MINT}",
+                          sell | {"slippageBps": 500, "otherAmountThreshold": str(int(int(sell["outAmount"]) * 0.95))})
+    assert broker.quote("sell", HIGGS, BUY_OUT, 6, max_impact_pct=25.0).side == "sell"
+    # Ultra's usual taker slippage (1.28 % in the captured fixture) passes the default cap
+    assert make_broker().settings.max_slippage_pct == 3.0
+
+
+def test_on_fill_failure_rolls_back_the_whole_paper_swap(broker, ledger) -> None:
+    """The engine's position write runs inside the fill transaction: if it fails, no orphan fill
+    and no balance change remain (the next tick simply sees nothing happened)."""
+    before = broker.balances()
+    quote = broker.quote("buy", HIGGS, BUY_IN, 6)
+
+    def boom(_fill: Fill) -> None:
+        raise RuntimeError("position write failed")
+
+    with pytest.raises(RuntimeError, match="position write failed"):
+        broker.execute(quote, None, on_fill=boom)
+    assert broker.balances() == before and ledger.fills() == [] and fill_receipts(ledger) == []
+    applied: list[Fill] = []
+    fill = broker.execute(broker.quote("buy", HIGGS, BUY_IN, 6), None, on_fill=applied.append)
+    assert applied == [fill] and ledger.fills() == [fill]

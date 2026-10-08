@@ -225,6 +225,17 @@ class Gate:
     max_age_min: float = 360.0  # minutes since graduation
     min_vol10_usd: float = 1_000.0  # USD volume over the last 10 closed bars
     min_mcap_sol: float = 30.0  # above the ~17.6 SOL dumped floor
+    exclude_farm: bool = False  # skip the brand-ticker launch farm (see farm_flag)
+
+
+def farm_flag(F: np.ndarray) -> np.ndarray:
+    """The launch-farm signature F2 found on TRAIN: graduated within 10 s of creation (creator bought
+    out the curve) and a graduation-bar close of $250k-$500k. Both are public from the close of the
+    graduation bar on, so the flag is causal."""
+    with np.errstate(invalid="ignore", over="ignore"):
+        delay = np.expm1(F[:, FIDX["grad_delay_log"]])
+        grad_mc = 10 ** F[:, FIDX["mcap_log10"]] / np.exp(F[:, FIDX["rel_grad_close"]])
+        return (delay < 10) & (grad_mc >= 250e3) & (grad_mc <= 500e3)
 
 
 def gate_mask(F: np.ndarray, v10: np.ndarray, gate: Gate) -> np.ndarray:
@@ -233,8 +244,11 @@ def gate_mask(F: np.ndarray, v10: np.ndarray, gate: Gate) -> np.ndarray:
     with np.errstate(invalid="ignore"):
         since_min = np.expm1(sg)
         mcap_sol = np.exp(F[:, FIDX["dist_grad_level"]]) * GRAD_LEVEL_SOL
-        return (~np.isnan(sg)) & (since_min <= gate.max_age_min) & (v10 >= gate.min_vol10_usd) \
+        ok = (~np.isnan(sg)) & (since_min <= gate.max_age_min) & (v10 >= gate.min_vol10_usd) \
             & (mcap_sol >= gate.min_mcap_sol)
+    if gate.exclude_farm:
+        ok &= ~farm_flag(F)
+    return ok
 
 
 def vol10(v: np.ndarray) -> np.ndarray:
@@ -242,6 +256,11 @@ def vol10(v: np.ndarray) -> np.ndarray:
 
 
 # =========================================================================== scorers
+
+
+def clean_X(X: np.ndarray) -> np.ndarray:
+    """Model input: NaN/inf -> 0, clipped to [-50, 50] (identical in training and live scoring)."""
+    return np.clip(np.nan_to_num(np.asarray(X, dtype=float), nan=0.0, posinf=0.0, neginf=0.0), -50, 50)
 
 
 class FoldEnsemble:
@@ -254,7 +273,7 @@ class FoldEnsemble:
         self.meta = dict(meta or {})
 
     def score(self, X: np.ndarray) -> np.ndarray:
-        X = np.atleast_2d(X)[:, self.cols]
+        X = clean_X(np.atleast_2d(X))[:, self.cols]
         if self.kind == "gbt_reg":
             return np.mean([m.predict(X) for m in self.models], axis=0)
         return np.mean([m.predict_proba(X)[:, 1] for m in self.models], axis=0)
@@ -310,10 +329,11 @@ class F4Params:
     max_age_min: float = 360.0  # gate (also used as horizon)
     min_vol10_usd: float = 1_000.0
     min_mcap_sol: float = 30.0
+    exclude_farm: bool = False
 
     @property
     def gate(self) -> Gate:
-        return Gate(self.max_age_min, self.min_vol10_usd, self.min_mcap_sol)
+        return Gate(self.max_age_min, self.min_vol10_usd, self.min_mcap_sol, self.exclude_farm)
 
 
 class F4Learned(Strategy):

@@ -15,23 +15,35 @@ Swap flow (``execute``):
 3. Sign: ``tx = VersionedTransaction.from_bytes(base64.b64decode(quote.transaction_b64))``,
    this wallet's signature slot filled (``Wallet.sign_transaction_b64``; identical to
    ``VersionedTransaction(tx.message, [keypair])`` for single-signer transactions).
-4. If ``SIMULATE_BEFORE_SEND``: ``rpc.simulate(b64(bytes(signed)))``; ``err`` or an
-   unreachable RPC -> write ``swap_failed`` receipt, raise ``SwapFailed`` (nothing
-   sent). A gasless transaction still awaiting Ultra's co-signature cannot pass
-   ``sigVerify`` and is sent unsimulated (logged).
-5. ``jupiter.ultra_execute(signed_b64, quote.request_id)`` (never retried; the
-   quote is marked spent BEFORE sending).
-   * Transport error or a status other than Success/Failed -> ``swap_failed``
-     receipt with ``outcome="unknown"``, raise ``SwapUnknown`` (engine must
-     reconcile before acting on this mint).
-   * ``status == "Failed"`` -> ``swap_failed`` receipt, raise ``SwapFailed``.
+4. If ``SIMULATE_BEFORE_SEND``: ``rpc.simulate(b64(bytes(signed)))``; ``err`` ->
+   write ``swap_failed`` receipt, raise ``SwapFailed`` (nothing sent). An
+   unreachable RPC does the same for BUYS (fail closed); a SELL is then sent
+   unsimulated (logged) - Ultra lands it without our RPC, and a stop-loss must
+   not be trapped by an RPC outage. A gasless transaction still awaiting Ultra's
+   co-signature cannot pass ``sigVerify`` and is sent unsimulated (logged).
+5. The quote's age is checked AGAIN (price fetch, signing and simulation take
+   time): older than ``QUOTE_MAX_AGE_S`` -> ``QuoteRejected``, nothing sent.
+6. ``jupiter.ultra_execute(signed_b64, quote.request_id)`` (the quote is marked
+   spent BEFORE sending). Only the IDENTICAL signed transaction is ever re-posted
+   (Ultra documents this as safe for ~2 minutes: same signature, it cannot execute
+   twice, and the answer reports its status): at most :data:`EXECUTE_REPOLLS` more
+   times within :data:`EXECUTE_REPOLL_WINDOW_S` of the quote, after a transport
+   error or a non-final answer.
+   * Still a transport error, a status other than Success/Failed, or a "Failed"
+     whose code does not prove the swap cannot land (:func:`definitely_failed`)
+     -> ``swap_failed`` receipt with ``outcome="unknown"``, raise ``SwapUnknown``
+     (engine must reconcile before acting on this mint).
+   * A definite ``"Failed"`` -> ``swap_failed`` receipt, raise ``SwapFailed``.
    * ``status == "Success"`` -> ``Fill`` from ``input_amount`` /
      ``output_amount`` (actual results, NOT the quote; quote amounts only if
      Ultra omitted them), ``signature``, ``fees_lamports`` =
      ``quote.signature_fee_lamports + quote.prioritization_fee_lamports``,
      ``rent_lamports`` = ``quote.rent_fee_lamports`` for buys (0 for sells),
-     ``expected_out_amount = quote.out_amount``; record via ``ledger.record_fill``.
-6. Never retry a swap blindly (could double-buy). Re-quote instead.
+     ``expected_out_amount = quote.out_amount``; record via ``ledger.record_fill``
+     (plus the caller's ``on_fill`` in the same transaction). If that write fails
+     the swap HAS landed: log CRITICAL and raise ``SwapUnknown`` carrying the fill,
+     so the engine blocks entries and reconciles from the wallet.
+7. Never retry a swap blindly (could double-buy). Re-quote instead.
 
 Wallet-cap guard: ``quote('buy', ...)`` raises ``QuoteRejected`` when the
 wallet's USD value (SOL + tokens at Jupiter prices) exceeds ``MAX_WALLET_USD``,
@@ -43,7 +55,7 @@ or when that value cannot be determined (fail closed).
 from __future__ import annotations
 
 import base64
-from typing import Any
+from typing import Any, Callable
 
 from nightcrawler.broker.base import (
     BrokerError,
@@ -74,9 +86,31 @@ from nightcrawler.models import (
 from nightcrawler.sources.jupiter import JupiterError
 from nightcrawler.sources.solana_rpc import RpcError
 
-__all__ = ["LiveBroker", "require_solders", "missing_signatures"]
+__all__ = ["LiveBroker", "require_solders", "missing_signatures", "definitely_failed", "EXECUTE_REPOLLS",
+           "EXECUTE_REPOLL_WINDOW_S"]
 
 log = get_logger(__name__)
+
+#: How many more times the IDENTICAL signed transaction may be posted to learn its status.
+EXECUTE_REPOLLS = 2
+#: ... but only this long after the quote (Ultra keeps a requestId for ~2 minutes).
+EXECUTE_REPOLL_WINDOW_S = 110.0
+#: Ultra /execute "Failed" codes that prove the transaction was rejected before broadcast or
+#: has expired (it can never land): bad request / unsigned / unknown order (-1..-5), invalid
+#: transaction (-1002), not fully signed (-1003), invalid block height (-1004), expired
+#: (-1005), gasless unsupported (-1007), RFQ invalid payload / quote expired / rejected
+#: (-2002..-2004). Others ("failed to land", "unknown error", "timed out" ...) are NOT final.
+DEFINITE_FAILURE_CODES = frozenset({-1, -2, -3, -4, -5, -1002, -1003, -1004, -1005, -1007, -2002, -2003, -2004})
+
+
+def definitely_failed(result: dict[str, Any]) -> bool:
+    """True when an Ultra ``status == "Failed"`` answer proves the swap did not and cannot happen:
+    a code from :data:`DEFINITE_FAILURE_CODES`, or a positive program error code with a signature
+    (the transaction landed and failed on chain)."""
+    code = result.get("code")
+    if code in DEFINITE_FAILURE_CODES:
+        return True
+    return isinstance(code, int) and code > 0 and bool(result.get("signature"))
 
 
 def missing_signatures(tx_b64: str) -> int:
@@ -132,20 +166,30 @@ class LiveBroker(UltraBrokerBase):
         self._decimals[mint] = decimals
         return quote
 
-    def execute(self, quote: Quote, position: Position | None, *, symbol: str = "") -> Fill:
+    def execute(self, quote: Quote, position: Position | None, *, symbol: str = "",
+                on_fill: Callable[[Fill], Any] | None = None) -> Fill:
         """Sign, (simulate), send via Ultra execute; see module docstring."""
         ticket, sol_usd = self._prepare_execution(quote, position)
         signed_b64 = self._sign(quote)
         self._simulate(quote, signed_b64, position)
+        age = self.clock.now() - quote.quoted_at
+        if age > self.settings.quote_max_age_s:  # signing/simulation/price fetch took long: never send it
+            raise QuoteRejected(f"stale quote before sending: {age:.1f}s old > QUOTE_MAX_AGE_S "
+                                f"{self.settings.quote_max_age_s:g}s")
         ticket.spent = True
         result = self._send(quote, signed_b64, position)
         fill = self._fill_from_result(quote, result, ticket.decimals, sol_usd, position, symbol)
         try:
-            recorded = self.ledger.record_fill(fill)
-        except Exception:
-            log.critical("live_fill_not_recorded signature=%s side=%s mint=%s sol_lamports=%d token_amount=%d",
-                         fill.signature, fill.side, fill.mint, fill.sol_lamports, fill.token_amount)
-            raise
+            with self.ledger.transaction():
+                recorded = self.ledger.record_fill(fill)
+                if on_fill is not None:
+                    on_fill(recorded)
+        except Exception as exc:  # the swap LANDED: never let the engine forget it
+            log.critical("live_fill_not_recorded signature=%s side=%s mint=%s sol_lamports=%d token_amount=%d "
+                         "error=%s: %s", fill.signature, fill.side, fill.mint, fill.sol_lamports, fill.token_amount,
+                         type(exc).__name__, exc)
+            raise SwapUnknown(f"swap landed (signature {fill.signature}) but was not recorded "
+                              f"({type(exc).__name__}: {exc}); reconcile holdings, then re-quote", fill) from exc
         log.info("live_fill side=%s mint=%s sol=%.6f tokens=%d expected_out=%d signature=%s",
                  recorded.side, recorded.mint, lamports_to_sol(recorded.sol_lamports), recorded.token_amount,
                  quote.out_amount, recorded.signature)
@@ -212,6 +256,10 @@ class LiveBroker(UltraBrokerBase):
         try:
             err = self.rpc.simulate(signed_b64).get("err")
         except (HttpError, RpcError) as exc:
+            if position is not None:  # a sell: an RPC outage must not trap a stop-loss
+                log.warning("simulate_unavailable_sending_exit_unsimulated request_id=%s error=%s",
+                            quote.request_id, exc)
+                return
             error = f"simulation unavailable: {exc}"
         else:
             if err is None:
@@ -221,21 +269,40 @@ class LiveBroker(UltraBrokerBase):
         raise SwapFailed(error)
 
     def _send(self, quote: Quote, signed_b64: str, position: Position | None) -> dict[str, Any]:
-        try:
-            result = self.jupiter.ultra_execute(signed_b64, quote.request_id)
-        except Exception as exc:  # the request may have left the machine: outcome UNKNOWN
-            self._swap_failed(quote, position, outcome="unknown", stage="execute", error=str(exc))
-            raise SwapUnknown(f"Ultra execute outcome unknown ({exc}); reconcile holdings, then re-quote") from exc
-        status = result.get("status")
-        if status == "Success":
-            return result
-        outcome = "failed" if status == "Failed" else "unknown"
-        error = result.get("error") or f"status {status!r}"
-        self._swap_failed(quote, position, outcome=outcome, stage="execute", error=error,
-                          signature=result.get("signature"), code=result.get("code"))
-        if outcome == "failed":
-            raise SwapFailed(f"Ultra execute failed: {error}")
-        raise SwapUnknown(f"Ultra execute returned {error}; reconcile holdings, then re-quote")
+        """Post the signed transaction; re-post the IDENTICAL one (never a new swap) to learn a
+        final status after a transport error or a non-final answer (see module docstring)."""
+        repolls = 0
+        while True:
+            try:
+                result: dict[str, Any] | None = self.jupiter.ultra_execute(signed_b64, quote.request_id)
+                problem: BaseException | None = None
+            except Exception as exc:  # the request may have left the machine: outcome UNKNOWN
+                result, problem = None, exc
+            if result is not None:
+                status = result.get("status")
+                if status == "Success":
+                    return result
+                if status == "Failed" and definitely_failed(result):
+                    error = result.get("error") or "status 'Failed'"
+                    self._swap_failed(quote, position, outcome="failed", stage="execute", error=error,
+                                      signature=result.get("signature"), code=result.get("code"))
+                    raise SwapFailed(f"Ultra execute failed: {error} (code {result.get('code')})")
+            if repolls < EXECUTE_REPOLLS and self.clock.now() - quote.quoted_at < EXECUTE_REPOLL_WINDOW_S:
+                repolls += 1
+                log.warning("execute_status_repoll request_id=%s attempt=%d reason=%s", quote.request_id, repolls,
+                            problem if problem is not None else (result or {}).get("error") or
+                            f"status {(result or {}).get('status')!r}")
+                continue
+            if problem is not None:
+                self._swap_failed(quote, position, outcome="unknown", stage="execute", error=str(problem))
+                raise SwapUnknown(f"Ultra execute outcome unknown ({problem}); reconcile holdings, then re-quote") \
+                    from problem
+            assert result is not None
+            error = result.get("error") or f"status {result.get('status')!r}"
+            self._swap_failed(quote, position, outcome="unknown", stage="execute", error=error,
+                              signature=result.get("signature"), code=result.get("code"))
+            raise SwapUnknown(f"Ultra execute returned {error} (code {result.get('code')}): not final; "
+                              "reconcile holdings, then re-quote")
 
     def _fill_from_result(self, quote: Quote, result: dict[str, Any], decimals: int, sol_usd: float,
                           position: Position | None, symbol: str) -> Fill:

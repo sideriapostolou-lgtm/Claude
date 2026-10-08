@@ -170,7 +170,7 @@ def stage2_grid() -> list[tuple[str, dict]]:
                                   mc_lo=mc_lo, stop_pct=0.10, max_hold_min=120)))
     # dying-volume exit on the best non-drifter TRAIN configs
     rows = [r for r in load_runs("train") if r["family"] in ("runner", "gated_dip")
-            and (r["per_coin"].get("trades") or 0) >= 15]
+            and r["stage"] in ("smoke", "stage1") and (r["per_coin"].get("trades") or 0) >= 15]
     rows.sort(key=lambda r: -r["per_coin"]["avg_ret_pct"])
     for r in rows[:4]:
         for dn, dv in ((10, 500.0), (30, 2000.0)):

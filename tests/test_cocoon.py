@@ -564,3 +564,14 @@ def test_live_check_smoke(settings) -> None:
     assert report.passed == (not report.hard_fail_reasons and not report.unverified)
     if "rugcheck" not in report.unverified:
         assert report.metrics["top10_pct"] is not None and report.creator
+
+
+def test_a_malformed_shield_answer_fails_closed_through_the_real_client(fake_http, http_client, settings,
+                                                                        fake_clock) -> None:
+    """A 200 Shield body without ``warnings`` must not read as "no warnings" (required source)."""
+    fake_http.register_fixture(f"/tokens/{CLEAN_MINT}/report", "rugcheck_report")
+    fake_http.register_fixture("api.mainnet-beta.solana.com", "rpc_getAccountInfo_mint", method="POST")
+    fake_http.register("/ultra/v1/shield", {"error": "internal: shield temporarily unavailable"})
+    report = Cocoon(build_sources(settings, http_client), settings, fake_clock).check(clean_candidate())
+    assert report.passed is False and "jupiter_shield" in report.unverified
+    assert any(r.startswith("source unavailable: jupiter_shield") for r in report.hard_fail_reasons)

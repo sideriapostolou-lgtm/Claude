@@ -412,7 +412,8 @@ class UnknownOutcomeBroker:
         return 50.0
 
 
-LIVE = {"TRADING_MODE": "live", "LIVE_CONFIRM": "I_ACCEPT_REAL_MONEY_RISK", "BOT_WALLET_SECRET": "x" * 88}
+LIVE = {"TRADING_MODE": "live", "LIVE_CONFIRM": "I_ACCEPT_REAL_MONEY_RISK", "BOT_WALLET_SECRET": "x" * 88,
+        "DASHBOARD_HOST": "127.0.0.1"}
 
 
 @pytest.mark.parametrize("lands", [True, False])
@@ -467,7 +468,7 @@ def test_build_app_live_mode_sets_the_wallet_pubkey(make_settings, http_client, 
 
     kp = keypair_mod.Keypair()
     settings = make_settings(TRADING_MODE="live", LIVE_CONFIRM="I_ACCEPT_REAL_MONEY_RISK",
-                             BOT_WALLET_SECRET=b58encode(bytes(kp)))
+                             BOT_WALLET_SECRET=b58encode(bytes(kp)), DASHBOARD_TOKEN="test-dashboard-token-0123")
     app = build_app(settings, fake_clock, http=http_client)
     try:
         assert isinstance(app.broker, LiveBroker)
@@ -481,7 +482,7 @@ def test_build_app_refuses_a_bad_wallet_secret(make_settings, http_client, fake_
     from nightcrawler.broker.wallet import WalletError
 
     settings = make_settings(TRADING_MODE="live", LIVE_CONFIRM="I_ACCEPT_REAL_MONEY_RISK",
-                             BOT_WALLET_SECRET="not-a-real-secret")
+                             BOT_WALLET_SECRET="not-a-real-secret", DASHBOARD_HOST="127.0.0.1")
     with pytest.raises(WalletError):
         build_app(settings, fake_clock, http=http_client)
 

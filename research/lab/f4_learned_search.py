@@ -6,7 +6,9 @@ Subcommands (run from anywhere; data goes to LAB/f4/, nothing under src/ or test
   python research/lab/f4_learned_search.py train      # fold models on TRAIN, OOF scores, val scores
   python research/lab/f4_learned_search.py sweep      # harness runs on TRAIN (OOF scores) for every config
   python research/lab/f4_learned_search.py shortlist  # pre-registered TRAIN rule -> VALIDATION runs
-  python research/lab/f4_learned_search.py robust     # robustness of the finalists on VALIDATION
+  python research/lab/f4_learned_search.py robust     # robustness of the finalists (VALIDATION and TRAIN)
+  python research/lab/f4_learned_search.py audit      # live scorer == search tables; audit_lookahead
+  python research/lab/f4_learned_search.py finalize   # finalists/f4-learned.json (after robust + audit)
   python research/lab/f4_learned_search.py count      # configurations evaluated so far
 
 Protocol (fixed before any VALIDATION run):
@@ -197,25 +199,40 @@ def make_model(kind: str, seed: int = 0):
     raise ValueError(kind)
 
 
-def clean_X(X: np.ndarray) -> np.ndarray:
-    X = np.nan_to_num(X, nan=0.0, posinf=0.0, neginf=0.0)
-    return np.clip(X, -50, 50)
+clean_X = F4.clean_X
+
+# model variants: "all" = every gated row; "nofarm" = rows of non-farm coins only (F4.farm_flag), and the
+# strategy then skips farm coins too (Gate.exclude_farm)
+VARIANTS = ("all", "nofarm")
 
 
-def train_all() -> dict:
+def tag(key: str, kind: str, variant: str = "all") -> str:
+    return f"{key}_{kind}" if variant == "all" else f"{key}_{kind}_{variant}"
+
+
+def row_mask(ds: dict, variant: str) -> np.ndarray:
+    if variant == "all":
+        return np.ones(len(ds["X"]), dtype=bool)
+    if variant == "nofarm":
+        return ~F4.farm_flag(ds["X"])
+    raise ValueError(variant)
+
+
+def train_all(variant: str = "all", kinds: tuple[str, ...] = MODELS) -> dict:
     """Fit fold models for every label x model; save OOF TRAIN scores and VALIDATION scores."""
     from sklearn.metrics import roc_auc_score
     tr, va = load_ds("train"), load_ds("validation")
     folds = time_folds(tr["coin"], tr["created"])
     Xtr, Xva = clean_X(tr["X"]), clean_X(va["X"])
+    rm_tr, rm_va = row_mask(tr, variant), row_mask(va, variant)
     cols = list(range(Xtr.shape[1]))
     summary = {}
     for d in LABELS:
         key = lab_key(*d)
         ytr_raw = tr[f"y_{key}"]
-        ok = ~np.isnan(ytr_raw)
+        ok = ~np.isnan(ytr_raw) & rm_tr
         ytr = (ytr_raw > 0).astype(int)
-        for kind in MODELS:
+        for kind in kinds:
             oof = np.full(len(Xtr), np.nan)
             models = []
             for f in range(N_FOLDS):
@@ -223,27 +240,31 @@ def train_all() -> dict:
                 m = make_model(kind)
                 m.fit(Xtr[fit][:, cols], ytr[fit])
                 models.append(m)
-                oof[folds == f] = m.predict_proba(Xtr[folds == f][:, cols])[:, 1]
-            ens = F4.FoldEnsemble(models, cols, kind, {"label": key, "features": list(F4.FEATURES)})
-            ens.save(OUT / "models" / f"{key}_{kind}.pkl")
-            sva = ens.score(Xva)
+                sel = (folds == f) & rm_tr
+                oof[sel] = m.predict_proba(Xtr[sel][:, cols])[:, 1]
+            ens = F4.FoldEnsemble(models, cols, kind, {"label": key, "variant": variant,
+                                                       "features": list(F4.FEATURES)})
+            t = tag(key, kind, variant)
+            ens.save(OUT / "models" / f"{t}.pkl")
+            sva = np.full(len(Xva), np.nan)
+            sva[rm_va] = ens.score(Xva[rm_va])
             (OUT / "scores").mkdir(parents=True, exist_ok=True)
-            np.save(OUT / "scores" / f"oof_{key}_{kind}.npy", oof)
-            np.save(OUT / "scores" / f"val_{key}_{kind}.npy", sva)
+            np.save(OUT / "scores" / f"oof_{t}.npy", oof)
+            np.save(OUT / "scores" / f"val_{t}.npy", sva)
             auc = roc_auc_score(ytr[ok], oof[ok]) if ytr[ok].min() != ytr[ok].max() else None
-            summary[f"{key}_{kind}"] = {"base_rate": float(ytr[ok].mean()), "rows": int(ok.sum()),
-                                        "oof_auc": auc,
-                                        "oof_mean_ret_top": {str(q): float(np.nanmean(ytr_raw[ok & (oof >= np.quantile(oof[ok], q))]))
-                                                             for q in QUANTILES}}
-            print(key, kind, json.dumps(summary[f"{key}_{kind}"]))
-    (OUT / "train_summary.json").write_text(json.dumps(summary, indent=1))
+            summary[t] = {"base_rate": float(ytr[ok].mean()), "rows": int(ok.sum()), "oof_auc": auc,
+                          "oof_mean_ret_top": {str(q): float(np.nanmean(ytr_raw[ok & (oof >= np.quantile(oof[ok], q))]))
+                                               for q in QUANTILES}}
+            print(t, json.dumps(summary[t]), flush=True)
+    path = OUT / ("train_summary.json" if variant == "all" else f"train_summary_{variant}.json")
+    path.write_text(json.dumps(summary, indent=1))
     return summary
 
 
-def score_table(split: str, key: str, kind: str) -> dict[str, np.ndarray]:
+def score_table(split: str, key: str, kind: str, variant: str = "all") -> dict[str, np.ndarray]:
     """Per-coin score arrays (NaN where the gate is closed) for TableScorer."""
     ds = load_ds(split)
-    s = np.load(OUT / "scores" / f"{'oof' if split == 'train' else 'val'}_{key}_{kind}.npy")
+    s = np.load(OUT / "scores" / f"{'oof' if split == 'train' else 'val'}_{tag(key, kind, variant)}.npy")
     lens = {c.mint: c.n for c in _coins(split)}
     table = {m: np.full(lens[m], np.nan) for m in lens}
     mints = ds["mints"]
@@ -262,8 +283,8 @@ def _coins(split: str) -> list:
     return _COINS[split]
 
 
-def thresholds_for(key: str, kind: str) -> dict[float, float]:
-    oof = np.load(OUT / "scores" / f"oof_{key}_{kind}.npy")
+def thresholds_for(key: str, kind: str, variant: str = "all") -> dict[float, float]:
+    oof = np.load(OUT / "scores" / f"oof_{tag(key, kind, variant)}.npy")
     oof = oof[~np.isnan(oof)]
     return {q: float(np.quantile(oof, q)) for q in QUANTILES}
 
@@ -313,23 +334,30 @@ def log_run(rec: dict) -> None:
         fh.write(json.dumps(rec) + "\n")
 
 
-def sweep() -> None:
-    """Stage A: every label x model x threshold quantile on TRAIN (out-of-fold scores)."""
+def make_params(d: tuple[float, float, float], thr: float, variant: str = "all", max_entries: int = 1) -> Any:
+    return F4.F4Params(threshold=thr, tp=d[0], sl=d[1], hold_min=d[2], max_entries=max_entries,
+                       max_age_min=GATE.max_age_min, min_vol10_usd=GATE.min_vol10_usd,
+                       min_mcap_sol=GATE.min_mcap_sol, exclude_farm=(variant == "nofarm"))
+
+
+def sweep(stage: str = "A", variant: str = "all", kinds: tuple[str, ...] = MODELS) -> None:
+    """Every label x model x threshold quantile on TRAIN (out-of-fold scores).
+    Stage A = all rows; stage B = the "nofarm" variant."""
     coins = _coins("train")
     done = {json.loads(x)["id"] for x in RUNS.read_text().splitlines()} if RUNS.exists() else set()
     for d in LABELS:
         key = lab_key(*d)
-        for kind in MODELS:
-            table = score_table("train", key, kind)
+        for kind in kinds:
+            table = score_table("train", key, kind, variant)
             scorer = F4.TableScorer(table)
-            for q, thr in thresholds_for(key, kind).items():
-                cfg = {"stage": "A", "label": key, "model": kind, "q": q, "max_entries": 1}
+            for q, thr in thresholds_for(key, kind, variant).items():
+                cfg = {"stage": stage, "label": key, "model": kind, "q": q, "max_entries": 1}
+                if variant != "all":
+                    cfg["variant"] = variant
                 cid = config_id(cfg)
                 if cid in done:
                     continue
-                p = F4.F4Params(threshold=thr, tp=d[0], sl=d[1], hold_min=d[2], max_entries=1,
-                                max_age_min=GATE.max_age_min, min_vol10_usd=GATE.min_vol10_usd,
-                                min_mcap_sol=GATE.min_mcap_sol)
+                p = make_params(d, thr, variant)
                 t = time.time()
                 res = evaluate(p, scorer, coins)
                 rec = {"id": cid, "split": "train", **cfg, "params": asdict(p), **res, "secs": round(time.time() - t, 1)}
@@ -337,6 +365,332 @@ def sweep() -> None:
                 pc, pf = res["per_coin"], res["portfolio"]
                 print(f"{cid} {key:16s} {kind:5s} q={q:<5} n={pc['trades']:4d} avg={pc['avg_ret_pct']} "
                       f"ci={pc['exp_ci95_pct']} port={pf['total_return_pct']} dd={pf['max_drawdown_pct']}", flush=True)
+
+
+# =========================================================================== diagnostics
+
+
+def cluster_of(coin: H.Coin, entry_mid: float) -> str:
+    """Descriptive tag (analysis only): the brand-ticker launch farm F2 found (instant graduation,
+    graduation-bar close $250-500k), the >$5M ticker-clone cluster, or other."""
+    gi = F4.graduation_index(coin.ts.astype(float), coin.dur.astype(float), coin.graduated_ts)
+    grad_mc = float(coin.c[min(gi, coin.n - 1)]) * 1e9
+    if coin.graduated_ts - coin.created_ts < 10 and 250e3 <= grad_mc <= 500e3:
+        return "farm"
+    if entry_mid * 1e9 >= 5e6:
+        return "big"
+    return "other"
+
+
+def breakdown(res: H.Result, coins: list) -> dict:
+    by_mint = {c.mint: c for c in coins}
+    out: dict[str, dict] = {}
+    for t in res.trades:
+        k = cluster_of(by_mint[t.mint], t.entry_mid)
+        d = out.setdefault(k, {"trades": 0, "pnl_usd": 0.0, "rets": []})
+        d["trades"] += 1
+        d["pnl_usd"] += t.pnl_usd
+        d["rets"].append(t.ret)
+    for d in out.values():
+        d["avg_ret_pct"] = round(100 * float(np.mean(d.pop("rets"))), 3)
+        d["pnl_usd"] = round(d["pnl_usd"], 3)
+    return out
+
+
+def trade_rows(res: H.Result, coins: list) -> list[dict]:
+    by_mint = {c.mint: c for c in coins}
+    rows = []
+    for t in res.trades:
+        c = by_mint[t.mint]
+        rows.append({"symbol": t.symbol, "entry_min_after_grad": round((t.entry_ts - c.graduated_ts) / 60, 1),
+                     "grad_delay_s": round(c.graduated_ts - c.created_ts, 1), "entry_mcap": round(t.entry_mid * 1e9),
+                     "ret_pct": round(100 * t.ret, 2), "exit": t.exit_reason, "tag": t.tag,
+                     "cluster": cluster_of(c, t.entry_mid)})
+    return rows
+
+
+def importance(key: str, kind: str, repeats: int = 3) -> dict[str, float]:
+    """Mean drop in held-out AUC when one feature is permuted (fold models on their own held-out
+    TRAIN fold; coin-grouped folds). For logit also the mean standardized coefficient."""
+    from sklearn.inspection import permutation_importance
+    tr = load_ds("train")
+    folds = time_folds(tr["coin"], tr["created"])
+    X = clean_X(tr["X"])
+    y_raw = tr[f"y_{key}"]
+    ens = F4.FoldEnsemble.load(OUT / "models" / f"{key}_{kind}.pkl")
+    acc = np.zeros(X.shape[1])
+    for f, m in enumerate(ens.models):
+        sel = (folds == f) & ~np.isnan(y_raw)
+        r = permutation_importance(m, X[sel], (y_raw[sel] > 0).astype(int), scoring="roc_auc",
+                                   n_repeats=repeats, random_state=0)
+        acc += r.importances_mean
+    out = {f: round(float(v / len(ens.models)), 5) for f, v in zip(F4.FEATURES, acc)}
+    out = dict(sorted(out.items(), key=lambda kv: -kv[1]))
+    if kind == "logit":
+        coefs = np.mean([m[-1].coef_[0] for m in ens.models], axis=0)
+        out = {"perm_auc_drop": out,
+               "std_coef": dict(sorted(((f, round(float(c), 4)) for f, c in zip(F4.FEATURES, coefs)),
+                                       key=lambda kv: -abs(kv[1])))}
+    else:
+        out = {"perm_auc_drop": out}
+    return out
+
+
+# =========================================================================== shortlist / validation
+
+MIN_TRADES, MIN_COINS, MAX_SHORTLIST, MAX_PER_LABEL = 15, 10, 6, 2
+
+
+def _ok(pc: dict) -> bool:
+    ci = pc.get("exp_ci95_pct")
+    return (pc["trades"] or 0) > 0 and pc["avg_ret_pct"] is not None and pc["avg_ret_pct"] > 0 \
+        and ci is not None and ci[0] > 0
+
+
+def shortlist_rule(recs: list[dict]) -> list[dict]:
+    """PRE-REGISTERED (written before any VALIDATION run). Eligible TRAIN configs:
+    >= 15 trades on >= 10 coins (per-coin run); per-trade mean > 0 with coin-bootstrap CI low > 0;
+    $100 portfolio return > 0; mean still > 0 without the top-3 coins; and at least one adjacent
+    threshold quantile of the same label/model/variant also has mean > 0 and CI low > 0 (plateau,
+    not a spike). Rank by CI low; keep at most 2 per (variant, label) and 6 overall."""
+    train = [r for r in recs if r["split"] == "train" and r.get("stage") in ("A", "B")]
+    groups: dict[tuple, dict[float, dict]] = {}
+    for r in train:
+        groups.setdefault((r.get("variant", "all"), r["label"], r["model"]), {})[r["q"]] = r
+    elig = []
+    for g, byq in groups.items():
+        qs = sorted(byq)
+        for k, q in enumerate(qs):
+            r = byq[q]
+            pc, pf = r["per_coin"], r["portfolio"]
+            if pc["trades"] < MIN_TRADES or pc["coins_traded"] < MIN_COINS or not _ok(pc):
+                continue
+            if (pf.get("total_return_pct") or 0) <= 0 or (pc.get("avg_ret_pct_wo_top3") or -1) <= 0:
+                continue
+            nb = [byq[qs[j]] for j in (k - 1, k + 1) if 0 <= j < len(qs)]
+            if not any(_ok(x["per_coin"]) for x in nb):
+                continue
+            elig.append(r)
+    elig.sort(key=lambda r: -r["per_coin"]["exp_ci95_pct"][0])
+    out, per = [], {}
+    for r in elig:
+        g = (r.get("variant", "all"), r["label"])
+        if per.get(g, 0) >= MAX_PER_LABEL:
+            continue
+        per[g] = per.get(g, 0) + 1
+        out.append(r)
+        if len(out) >= MAX_SHORTLIST:
+            break
+    return out
+
+
+def label_tuple(key: str) -> tuple[float, float, float]:
+    for d in LABELS:
+        if lab_key(*d) == key:
+            return d
+    raise KeyError(key)
+
+
+def scorer_for(split: str, rec: dict) -> Any:
+    return F4.TableScorer(score_table(split, rec["label"], rec["model"], rec.get("variant", "all")))
+
+
+def validate_shortlist() -> list[dict]:
+    recs = [json.loads(x) for x in RUNS.read_text().splitlines()]
+    sl = shortlist_rule(recs)
+    (OUT / "shortlist.json").write_text(json.dumps([r["id"] for r in sl], indent=1))
+    coins = _coins("validation")
+    done = {r["id"] for r in recs}
+    out = []
+    for r in sl:
+        p = F4.F4Params(**r["params"])
+        cfg = {"stage": "V", "train_id": r["id"]}
+        cid = config_id(cfg)
+        if cid in done:
+            out.append(next(x for x in recs if x["id"] == cid))
+            continue
+        res = evaluate(p, scorer_for("validation", r), coins)
+        rec = {"id": cid, "split": "validation", **cfg, "label": r["label"], "model": r["model"], "q": r["q"],
+               "variant": r.get("variant", "all"), "params": r["params"], **res}
+        res_pc = H.run_per_coin(F4.factory(p, scorer_for("validation", r)), coins)
+        rec["clusters"] = breakdown(res_pc, coins)
+        log_run(rec)
+        out.append(rec)
+        pc, pf = res["per_coin"], res["portfolio"]
+        print(f"VAL {r['id']} {r['label']} {r['model']} {r.get('variant', 'all')} q={r['q']}: n={pc['trades']} "
+              f"avg={pc['avg_ret_pct']} ci={pc['exp_ci95_pct']} port={pf['total_return_pct']} "
+              f"dd={pf['max_drawdown_pct']} clusters={rec['clusters']}", flush=True)
+    return out
+
+
+class rug_aware_fills:
+    """Stress (this process only, same as F2's): a stop that wicks through fills at no better than the
+    bar close - on a one-transaction rug nobody sells at the halfway price "half" assumes."""
+
+    def __enter__(self):
+        self.oi, self.od = H.CoinEngine._intrabar, H.CoinEngine._down_fill
+        oi, od = self.oi, self.od
+
+        def intrabar(eng, j):
+            eng._cur_close = float(eng.coin.c[j])
+            return oi(eng, j)
+
+        def down_fill(eng, level, o, low):
+            f = od(eng, level, o, low)
+            c = getattr(eng, "_cur_close", None)
+            return min(f, max(c, low)) if c is not None else f
+
+        H.CoinEngine._intrabar, H.CoinEngine._down_fill = intrabar, down_fill
+        return self
+
+    def __exit__(self, *a):
+        H.CoinEngine._intrabar, H.CoinEngine._down_fill = self.oi, self.od
+
+
+def robustness(rec: dict, split: str = "validation") -> dict:
+    """Costs x1.5 / x2, +1 bar latency, $10 / $40 positions, wick worst / touch, rug-aware fills,
+    without the best coin, first vs second half of the split (by creation time)."""
+    coins = _coins(split)
+    p = F4.F4Params(**rec["params"])
+    sc = scorer_for(split, rec)
+    base = H.SimConfig()
+    out: dict[str, Any] = {"base": evaluate(p, sc, coins)}
+    out["costs_x1.5"] = evaluate(p, sc, coins, H.SimConfig(cost=CostModel().stressed(1.5)))
+    out["costs_x2"] = evaluate(p, sc, coins, H.SimConfig(cost=CostModel().stressed(2.0)))
+    out["latency_+1bar"] = evaluate(p, sc, coins, H.SimConfig(entry_delay_bars=2))
+    out["size_$10"] = evaluate(p, sc, coins, H.SimConfig(fixed_usd=10, position_pct=1.0, min_usd=10, max_usd=10))
+    out["size_$40"] = evaluate(p, sc, coins, H.SimConfig(fixed_usd=40, position_pct=1.0, min_usd=40, max_usd=40))
+    out["wick_worst"] = evaluate(p, sc, coins, H.SimConfig(wick_fill="worst"))
+    out["wick_touch"] = evaluate(p, sc, coins, H.SimConfig(wick_fill="touch"))
+    with rug_aware_fills():
+        out["rug_aware_fills"] = evaluate(p, sc, coins)
+    pc = H.run_per_coin(F4.factory(p, sc), coins, base)
+    by: dict[str, float] = {}
+    for t in pc.trades:
+        by[t.mint] = by.get(t.mint, 0.0) + t.pnl_usd
+    if by:
+        best = max(by, key=by.get)
+        out["without_best_coin"] = evaluate(p, sc, [c for c in coins if c.mint != best])
+        out["without_best_coin"]["removed"] = next(c.symbol for c in coins if c.mint == best)
+    half = len(coins) // 2
+    out["first_half"] = evaluate(p, sc, coins[:half])
+    out["second_half"] = evaluate(p, sc, coins[half:])
+    out["clusters"] = breakdown(pc, coins)
+    out["trades"] = trade_rows(pc, coins)
+    return out
+
+
+FINALIST_IDS = ["8e870ebcf0", "314fea3f67"]  # chosen on VALIDATION from the pre-registered shortlist
+FINALIST_NAMES = ["F4_farm_climb_gbt_tp30_sl15_h15_q98", "F4_farm_climb_gbt_tp30_sl15_h15_q99"]
+
+
+def run_robust(ids: list[str] = FINALIST_IDS) -> dict:
+    by_id = {json.loads(x)["id"]: json.loads(x) for x in RUNS.read_text().splitlines()}
+    out = {tid: {"validation": robustness(by_id[tid], "validation"), "train": robustness(by_id[tid], "train")}
+           for tid in ids}
+    (OUT / "robustness.json").write_text(json.dumps(out, indent=1, default=str))
+    return out
+
+
+def run_audit(ids: list[str] = FINALIST_IDS) -> dict:
+    """Live-style ModelScorer (features from the view, fold-ensemble model): (1) its decisions and trades
+    on every VALIDATION coin equal the search's table run; (2) audit_lookahead is clean on every
+    VALIDATION coin (2 cuts) and every TRAIN coin (1 cut)."""
+    by_id = {json.loads(x)["id"]: json.loads(x) for x in RUNS.read_text().splitlines()}
+    coins = _coins("validation")
+    last = {c.mint: c.n - 1 for c in coins}
+    out = {}
+    for tid in ids:
+        r = by_id[tid]
+        p = F4.F4Params(**r["params"])
+        model = F4.FoldEnsemble.load(OUT / "models" / f"{tag(r['label'], r['model'], r.get('variant', 'all'))}.pkl")
+        live_fac = F4.factory(p, F4.ModelScorer(model, p.gate))
+        live = H.run_per_coin(live_fac, coins, keep_decisions=True)
+        fast = H.run_per_coin(F4.factory(p, scorer_for("validation", r)), coins, keep_decisions=True)
+        # a Buy decided on a coin's very last bar can never fill; the table has no row there
+        dl = {m: [d for d in v if d[0] < last[m]] for m, v in live.decisions.items()}
+        df = {m: [d for d in v if d[0] < last[m]] for m, v in fast.decisions.items()}
+        out[tid] = {
+            "live_equals_table_decisions": dl == df,
+            "live_equals_table_trades": [round(t.ret, 12) for t in live.trades] == [round(t.ret, 12) for t in fast.trades],
+            "audit_validation_problems": H.audit_lookahead(live_fac, coins, cuts_per_coin=2),
+            "audit_train_problems": H.audit_lookahead(live_fac, _coins("train"), cuts_per_coin=1),
+            "audit_coins": {"validation": len(coins), "train": len(_coins("train"))},
+        }
+        print(tid, json.dumps(out[tid]), flush=True)
+    (OUT / "audit.json").write_text(json.dumps(out, indent=1))
+    return out
+
+
+# =========================================================================== finalists file
+
+KEYS = ("trades", "coins_traded", "win_rate_pct", "avg_ret_pct", "median_ret_pct", "exp_ci95_pct",
+        "expectancy_usd", "profit_factor", "total_return_pct", "max_drawdown_pct", "best_coin_share_pct",
+        "top3_share_pct", "pnl_without_best_coin_usd", "pnl_without_top3_usd", "avg_ret_pct_wo_best",
+        "avg_ret_pct_wo_top3", "exit_reasons", "rejected")
+
+
+def _trim(ev: dict) -> dict:
+    return {mode: {k: ev[mode].get(k) for k in KEYS if k in ev[mode]} for mode in ("per_coin", "portfolio") if mode in ev}
+
+
+def finalize(train_ids: list[str], names: list[str]) -> list[dict]:
+    recs = [json.loads(x) for x in RUNS.read_text().splitlines()]
+    by_id = {r["id"]: r for r in recs}
+    rob = json.loads((OUT / "robustness.json").read_text())
+    audit = json.loads((OUT / "audit.json").read_text()) if (OUT / "audit.json").exists() else {}
+    cnt = count()
+    out = []
+    for tid, name in zip(train_ids, names):
+        tr = by_id[tid]
+        va = next(r for r in recs if r.get("stage") == "V" and r.get("train_id") == tid)
+        rv, rt = rob[tid]["validation"], rob[tid]["train"]
+        au = audit.get(tid, {})
+
+        def pos(ev, mode="per_coin", key="avg_ret_pct"):
+            v = ev[mode].get(key)
+            return v is not None and v > 0
+
+        gates = {
+            "train_avg_positive": pos(tr), "train_ci_above_0": tr["per_coin"]["exp_ci95_pct"][0] > 0,
+            "train_portfolio_positive": pos(tr, "portfolio", "total_return_pct"),
+            "validation_avg_positive": pos(va), "validation_ci_above_0": (va["per_coin"]["exp_ci95_pct"] or [-1])[0] > 0,
+            "validation_portfolio_positive": pos(va, "portfolio", "total_return_pct"),
+            "validation_without_best_coin_positive": pos(va, "per_coin", "avg_ret_pct_wo_best"),
+            "validation_without_top3_positive": pos(va, "per_coin", "avg_ret_pct_wo_top3"),
+            "validation_costs_x2_positive": pos(rv["costs_x2"]),
+            "validation_wick_worst_positive": pos(rv["wick_worst"]),
+            "validation_wick_worst_portfolio_positive": pos(rv["wick_worst"], "portfolio", "total_return_pct"),
+            "validation_rug_aware_fills_positive": pos(rv["rug_aware_fills"]),
+            "audit_lookahead_clean": bool(au) and not au.get("audit_validation_problems") and not au.get("audit_train_problems"),
+            "live_scorer_equals_search_table": bool(au.get("live_equals_table_decisions")) and bool(au.get("live_equals_table_trades")),
+        }
+        fails = [k for k, v in gates.items() if not v]
+        verdict = "REJECTED - fails: " + ", ".join(fails) if fails else "PASSES lab gates"
+        out.append({
+            "name": name, "strategy_class": "F4Learned", "module": "research/lab/strategies/f4-learned.py",
+            "verdict": verdict, "recommend_test": not fails,
+            "params": {"label": tr["label"], "model": tr["model"], "variant": tr.get("variant", "all"), "q": tr["q"],
+                       "model_file": f"LAB/f4/models/{tag(tr['label'], tr['model'], tr.get('variant', 'all'))}.pkl",
+                       "scorer": "ModelScorer(FoldEnsemble.load(model_file), F4Params.gate)",
+                       "strategy": tr["params"]},
+            "configs_tried": {"train": cnt.get("train_total"), "train_stage_A_all_rows": cnt.get("train:A"),
+                              "train_stage_B_nofarm": cnt.get("train:B"), "validation": cnt.get("validation:V"),
+                              "note": "every config is in LAB/f4/runs.jsonl; robustness variants are not selection tries"},
+            "gates": gates,
+            "train_metrics": {**_trim(tr), "note": "out-of-fold scores (5 time-blocked, coin-grouped folds)"},
+            "validation_metrics": {**_trim(va), "clusters": va.get("clusters")},
+            "robustness": {"validation": {k: (_trim(v) | ({"removed": v["removed"]} if "removed" in v else {}))
+                                          for k, v in rv.items() if k not in ("clusters", "trades")},
+                           "validation_trades": rv.get("trades"),
+                           "train": {k: (_trim(v) | ({"removed": v["removed"]} if "removed" in v else {}))
+                                     for k, v in rt.items() if k not in ("clusters", "trades")}},
+            "audit": au,
+        })
+    path = HERE / "finalists" / "f4-learned.json"
+    path.write_text(json.dumps(out, indent=1))
+    print(f"wrote {path}")
+    return out
 
 
 def count() -> dict:
@@ -357,9 +711,18 @@ if __name__ == "__main__":
         for s in (sys.argv[2:] or ["train", "validation"]):
             build(s)
     elif cmd == "train":
-        train_all()
+        train_all(sys.argv[2] if len(sys.argv) > 2 else "all")
     elif cmd == "sweep":
-        sweep()
+        v = sys.argv[2] if len(sys.argv) > 2 else "all"
+        sweep("A" if v == "all" else "B", v)
+    elif cmd == "shortlist":
+        validate_shortlist()
+    elif cmd == "robust":
+        run_robust()
+    elif cmd == "audit":
+        run_audit()
+    elif cmd == "finalize":
+        finalize(FINALIST_IDS, FINALIST_NAMES)
     elif cmd == "count":
         print(json.dumps(count(), indent=1))
     else:

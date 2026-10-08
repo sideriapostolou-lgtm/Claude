@@ -40,7 +40,7 @@ Rules (the contract):
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Callable
 
 from nightcrawler.broker.base import (
     SOL_PRICE_TTL_S,
@@ -155,8 +155,12 @@ class PaperBroker(UltraBrokerBase):
         """See :meth:`nightcrawler.broker.base.Broker.quote` and the module rules."""
         return self._issue_quote(side, mint, amount_in, decimals, taker=self.taker, max_impact_pct=max_impact_pct)
 
-    def execute(self, quote: Quote, position: Position | None, *, symbol: str = "") -> Fill:
-        """See :meth:`nightcrawler.broker.base.Broker.execute` and the module rules."""
+    def execute(self, quote: Quote, position: Position | None, *, symbol: str = "",
+                on_fill: Callable[[Fill], Any] | None = None) -> Fill:
+        """See :meth:`nightcrawler.broker.base.Broker.execute` and the module rules.
+
+        ``on_fill`` runs inside the same ledger transaction; if it raises, the whole simulated
+        swap (balances, fill, receipt) is rolled back and the error propagates."""
         ticket, sol_usd = self._prepare_execution(quote, position)
         self._ensure_wallet()
         fee = self.settings.network_fee_lamports
@@ -174,6 +178,8 @@ class PaperBroker(UltraBrokerBase):
                                   rent_lamports=rent, signature=None, position=position, symbol=symbol)
             recorded = self.ledger.record_fill(fill)
             wallet.save(self.ledger)
+            if on_fill is not None:
+                on_fill(recorded)
         ticket.spent = True
         log.info("paper_fill side=%s mint=%s sol=%s tokens=%d impact=%.2f%% fee_bps=%d rent=%d sol_left=%s",
                  recorded.side, recorded.mint, _sol(recorded.sol_lamports), recorded.token_amount,

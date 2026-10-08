@@ -476,7 +476,8 @@ class Quote(_Model):
       negative fraction (verified 2026-10-08: buying HIGGS for 0.1 SOL gave
       ``priceImpactPct="-0.0219"`` with ``outUsdValue`` 2.2 % below
       ``inUsdValue``); older endpoints used positive numbers. Taking the
-      magnitude is conservative.
+      magnitude is conservative. When Ultra sends no usable impact it is 0.0
+      with ``price_impact_known=False`` (fail closed: never read as "no impact").
     * ``in_usd`` / ``out_usd``: Ultra ``inUsdValue`` / ``outUsdValue``.
     * ``transaction_b64``: base64 unsigned transaction, ``None`` when Ultra
       returned null/"" (no taker, or taker lacks funds).
@@ -508,6 +509,9 @@ class Quote(_Model):
     error: str | None = None
     error_code: int | None = None
     raw: dict[str, Any] = field(default_factory=dict)
+    #: False when Ultra reported no usable impact (both fields missing or non-finite);
+    #: ``price_impact_pct`` is then 0.0 and MUST NOT be trusted (brokers refuse such buys).
+    price_impact_known: bool = True
 
     @property
     def token_mint(self) -> str:

@@ -6,7 +6,8 @@
   ``X_BEARER_TOKEN``, ``DASHBOARD_TOKEN``) are wrapped in :class:`Secret`, whose
   ``repr``/``str`` is ``***``; call ``.reveal()`` only at the point of use.
   :meth:`Settings.public_dict` never contains secret values (only ``*_set``
-  booleans) and redacts API keys embedded in ``SOLANA_RPC_URL``.
+  booleans) and shows only the scheme and host of ``SOLANA_RPC_URL`` (providers
+  put API keys in its query OR its path).
 * Construction validates everything (``__post_init__``) and raises
   :class:`ConfigError` listing every problem at once.
 
@@ -20,7 +21,9 @@ FRACTIONS (0.20 = 20 %); ``MAX_PRICE_IMPACT_PCT``, ``COCOON_*_PCT`` and
 from __future__ import annotations
 
 import dataclasses
+import logging
 import os
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Iterable, Mapping
@@ -34,9 +37,15 @@ __all__ = [
     "load_settings",
     "parse_dotenv",
     "redact_url",
+    "redact_rpc_url",
 ]
 
 LIVE_CONFIRM_PHRASE = "I_ACCEPT_REAL_MONEY_RISK"
+_KILL_WORDS = ("off", "stop", "sell_all")
+#: Bind addresses that only this machine can reach (no DASHBOARD_TOKEN needed in live mode).
+_LOOPBACK_HOSTS = frozenset({"127.0.0.1", "localhost", "::1"})
+#: A path segment or query value this long (letters, digits, ``-``/``_``) is treated as an API key.
+_KEY_SHAPED = re.compile(r"^[A-Za-z0-9_-]{16,}$")
 _TRUE = {"1", "true", "yes", "on", "y"}
 _FALSE = {"0", "false", "no", "off", "n"}
 _SECRET_QUERY_HINTS = ("key", "token", "secret", "auth", "password")
@@ -99,14 +108,41 @@ def redact_url(url: str) -> str:
     return parts._replace(query="&".join(pairs)).geturl()
 
 
+def redact_rpc_url(url: str) -> str:
+    """An RPC URL with everything but scheme and host hidden: providers such as QuickNode
+    (``https://x.quiknode.pro/<KEY>/``) and Alchemy (``/v2/<KEY>``) put the API key in the PATH."""
+    if not url:
+        return url
+    parts = urlsplit(url)
+    path = "/***" if parts.path not in ("", "/") else parts.path
+    query = "&".join(f"{k}=***" for k, _ in parse_qsl(parts.query, keep_blank_values=True))
+    return parts._replace(path=path, query=query, fragment="").geturl()
+
+
 def _url_secret_values(url: str) -> list[str]:
-    if not url or "?" not in url:
+    """Key-like values in ``url``: key-named query values, plus any key-shaped path segment or
+    query value (16+ letters/digits), so the log filter and the dashboard scrub catch path keys."""
+    if not url:
         return []
+    parts = urlsplit(url)
     out = []
-    for k, v in parse_qsl(urlsplit(url).query, keep_blank_values=True):
-        if v and any(h in k.lower() for h in _SECRET_QUERY_HINTS):
+    for k, v in parse_qsl(parts.query, keep_blank_values=True):
+        if v and (any(h in k.lower() for h in _SECRET_QUERY_HINTS) or _KEY_SHAPED.match(v)):
             out.append(v)
+    out.extend(seg for seg in parts.path.split("/") if _KEY_SHAPED.match(seg))
     return out
+
+
+def _normalize_kill_switch(value: Any) -> str:
+    """``KILL_SWITCH`` read like the ``DATA_DIR/KILL`` file: case, ``-`` and spaces forgiven
+    (``sell-all`` -> ``sell_all``). An unrecognized word means ``stop`` (fail SAFE: no new
+    entries, exits keep running) - never a startup refusal, which would leave open positions
+    with no stop-loss at the very moment the owner reached for the emergency switch."""
+    word = "_".join(str(value).strip().lower().replace("-", " ").split())
+    if word in _KILL_WORDS:
+        return word
+    logging.getLogger(__name__).warning("config_kill_switch_unrecognized value=%r using=stop", str(value)[:40])
+    return "stop"
 
 
 def _f(default: Any, unit: str, help: str, *, lo: float | None = None, hi: float | None = None,
@@ -131,6 +167,7 @@ class Settings:
     data_dir: Path = _f(Path("./data"), "path", "Where the SQLite ledger, KILL file and datasets live (Railway: /data)")
     log_level: str = _f("INFO", "text", "Logging level", choices=("DEBUG", "INFO", "WARNING", "ERROR"))
     kill_switch: str = _f("off", "text", "off | stop (no new entries) | sell_all (exit everything, then stop). "
+                          "Case, '-' and spaces are forgiven (sell-all); any other word means stop. "
                           "A DATA_DIR/KILL file containing the same words also works.",
                           choices=("off", "stop", "sell_all"))
     simulate_before_send: bool = _f(True, "bool", "Live: simulate the signed transaction via RPC before sending")
@@ -156,6 +193,9 @@ class Settings:
     sol_reserve: float = _f(0.02, "sol", "SOL never spent (fees, rent)", lo=0, hi=10)
     max_price_impact_pct: float = _f(3.0, "percent", "Reject quotes with more PERCENT price impact (3.0 = 3%)",
                                      lo=0, hi=100, lo_open=True)
+    max_slippage_pct: float = _f(3.0, "percent", "Buys: reject quotes whose signed minimum output (Ultra's slippage "
+                                 "tolerance) is more than this PERCENT below the quoted output. Forced exits are "
+                                 "never blocked by it", lo=0, hi=100, lo_open=True)
     network_fee_sol: float = _f(0.0003, "sol", "Paper model of network fee per swap (base + priority)", lo=0, hi=0.01)
 
     # ---- strategy -----------------------------------------------------------
@@ -171,7 +211,7 @@ class Settings:
     confirm_green: int = _f(2, "count", "Consecutive closed green 1m candles to confirm buyers returned", lo=1, hi=30)
     min_buy_sell_ratio: float = _f(1.2, "ratio", "Min 5m buys/sells when a snapshot is available", lo=0)
     take_profit_pct: float = _f(0.40, "fraction", "Partial take-profit trigger above entry (0.40 = +40%)",
-                                lo=0, hi=100, lo_open=True)
+                                lo=0, hi=10, lo_open=True)
     partial_tp_fraction: float = _f(0.5, "fraction", "Share of the position sold at the take-profit",
                                     lo=0, hi=1, lo_open=True)
     trail_pct: float = _f(0.15, "fraction", "Trailing stop from peak after the partial (0.15 = 15%)",
@@ -256,7 +296,7 @@ class Settings:
         if not isinstance(self.data_dir, Path):
             object.__setattr__(self, "data_dir", Path(self.data_dir))
         object.__setattr__(self, "trading_mode", str(self.trading_mode).lower())
-        object.__setattr__(self, "kill_switch", str(self.kill_switch).lower())
+        object.__setattr__(self, "kill_switch", _normalize_kill_switch(self.kill_switch))
         object.__setattr__(self, "judge_mode", str(self.judge_mode).lower())
         object.__setattr__(self, "log_level", str(self.log_level).upper())
         problems = self._validate()
@@ -286,6 +326,9 @@ class Settings:
                 problems.append(f"TRADING_MODE=live requires LIVE_CONFIRM={LIVE_CONFIRM_PHRASE} (exact)")
             if not self.bot_wallet_secret:
                 problems.append("TRADING_MODE=live requires BOT_WALLET_SECRET (a dedicated bot wallet)")
+            if not self.dashboard_token and self.dashboard_host not in _LOOPBACK_HOSTS:
+                problems.append("TRADING_MODE=live requires DASHBOARD_TOKEN (or DASHBOARD_HOST=127.0.0.1): "
+                                "an open dashboard shows the live wallet, its positions and their stops")
         if self.judge_mode in ("advisory", "required") and not self.anthropic_api_key:
             problems.append(f"JUDGE_MODE={self.judge_mode} requires ANTHROPIC_API_KEY (or set JUDGE_MODE=off)")
         if self.min_position_usd > self.max_position_usd:
@@ -395,7 +438,7 @@ class Settings:
             elif f.name == "live_confirm":
                 out["live_confirmed"] = v == LIVE_CONFIRM_PHRASE
             elif f.name == "solana_rpc_url":
-                out[f.name] = redact_url(v)
+                out[f.name] = redact_rpc_url(v)
             elif isinstance(v, Path):
                 out[f.name] = str(v)
             else:

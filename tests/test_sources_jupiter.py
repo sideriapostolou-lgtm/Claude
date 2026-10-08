@@ -408,3 +408,34 @@ def test_live_jupiter_smoke():
     recent = tokens_to_candidates(jup.tokens_recent(), 0.0, "jupiter_recent")
     assert recent and all(c.mint for c in recent)
     assert isinstance(jup.shield([HIGGS])[HIGGS], list)
+
+
+# --------------------------------------------------------------------------- review fixes
+
+
+@pytest.mark.parametrize("fields", [{}, {"priceImpactPct": "NaN"}, {"priceImpactPct": None, "priceImpact": "inf"}])
+def test_missing_or_non_finite_impact_is_marked_unknown(fields):
+    quote = quote_from_order(_order(**fields), "buy", quoted_at=1.0)
+    assert quote.price_impact_pct == 0.0 and quote.price_impact_known is False
+    assert quote_from_order(_order(priceImpactPct="-0.01"), "buy", quoted_at=1.0).price_impact_known is True
+
+
+def test_ultra_execute_waits_long_enough_for_ultra_to_confirm(client, fake_http):
+    """Ultra /execute polls for confirmation itself; a 10 s client timeout turned slow-but-landed swaps
+    into 'unknown' outcomes with estimated fills."""
+    fake_http.register_fixture("/ultra/v1/execute", "jup_ultra_execute_success_synthetic", method="POST")
+    client.ultra_execute("SIGNED_B64", "req-1")
+    assert fake_http.calls[0].timeout >= 30
+
+
+@pytest.mark.parametrize("body", [{"error": "internal: shield temporarily unavailable"}, {"warnings": None},
+                                  {"warnings": []}, []])
+def test_shield_without_a_warnings_object_fails_closed(client, fake_http, body):
+    fake_http.register("/ultra/v1/shield", body)
+    with pytest.raises(JupiterError, match="warnings"):
+        client.shield([HIGGS])
+
+
+def test_shield_with_an_empty_warnings_object_is_a_clean_answer(client, fake_http):
+    fake_http.register("/ultra/v1/shield", {"warnings": {}})
+    assert client.shield([HIGGS]) == {HIGGS: []}

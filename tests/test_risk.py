@@ -235,7 +235,8 @@ def test_cooldown_after_closing_a_mint(risk, ledger) -> None:
 
 
 def test_wallet_cap_applies_only_in_live_mode(make_risk) -> None:
-    live = make_risk(TRADING_MODE="live", LIVE_CONFIRM="I_ACCEPT_REAL_MONEY_RISK", BOT_WALLET_SECRET="x" * 88)
+    live = make_risk(TRADING_MODE="live", LIVE_CONFIRM="I_ACCEPT_REAL_MONEY_RISK", BOT_WALLET_SECRET="x" * 88,
+                     DASHBOARD_HOST="127.0.0.1")
     assert live.can_open(MINT, [], SOL, wallet_usd=149.0) == (True, "ok")
     ok, reason = live.can_open(MINT, [], SOL, wallet_usd=151.0)
     assert not ok and reason.startswith("[wallet_cap] wallet worth $151.00")
@@ -248,7 +249,8 @@ def test_wallet_cap_applies_only_in_live_mode(make_risk) -> None:
 
 
 def test_rules_are_checked_in_the_documented_order(make_risk, ledger, tmp_data_dir, fake_clock) -> None:
-    live = {"TRADING_MODE": "live", "LIVE_CONFIRM": "I_ACCEPT_REAL_MONEY_RISK", "BOT_WALLET_SECRET": "x" * 88}
+    live = {"TRADING_MODE": "live", "LIVE_CONFIRM": "I_ACCEPT_REAL_MONEY_RISK", "BOT_WALLET_SECRET": "x" * 88,
+            "DASHBOARD_HOST": "127.0.0.1"}
     equity(ledger, MIDNIGHT + 60, 1 * SOL, mode="live")
     ledger.upsert_position(position(status="closed", closed_at=NOW - 60, pid="old"))
     opened = [position(pid="a"), position("m2", pid="b"), position("m3", pid="c")]
@@ -278,7 +280,8 @@ def test_only_equity_of_the_current_mode_counts(make_risk, ledger) -> None:
     """A paper history on the same ledger must not set the live peak or day start."""
     equity(ledger, MIDNIGHT + 60, 10 * SOL, mode="paper")
     equity(ledger, NOW - 60, 1 * SOL, mode="live")
-    live = make_risk(TRADING_MODE="live", LIVE_CONFIRM="I_ACCEPT_REAL_MONEY_RISK", BOT_WALLET_SECRET="x" * 88)
+    live = make_risk(TRADING_MODE="live", LIVE_CONFIRM="I_ACCEPT_REAL_MONEY_RISK", BOT_WALLET_SECRET="x" * 88,
+                     DASHBOARD_HOST="127.0.0.1")
     assert live.peak_equity() == 1 * SOL
     assert live.day_start_equity() == 1 * SOL
     assert live.can_open(MINT, [], 1 * SOL, wallet_usd=50.0) == (True, "ok")

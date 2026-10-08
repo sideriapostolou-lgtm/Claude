@@ -318,6 +318,7 @@ def test_run_refuses_a_bad_live_wallet(env, monkeypatch, capsys) -> None:
     monkeypatch.setenv("TRADING_MODE", "live")
     monkeypatch.setenv("LIVE_CONFIRM", "I_ACCEPT_REAL_MONEY_RISK")
     monkeypatch.setenv("BOT_WALLET_SECRET", "definitely-not-a-key")
+    monkeypatch.setenv("DASHBOARD_TOKEN", "a-long-random-dashboard-password")
     assert nc("run", "--no-dashboard") == EXIT_CONFIG
     err = capsys.readouterr().err
     assert "definitely-not-a-key" not in err and "secret" in err.lower()

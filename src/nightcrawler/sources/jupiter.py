@@ -46,6 +46,7 @@ mints are omitted.
 
 from __future__ import annotations
 
+import math
 from typing import Any, Literal, Sequence
 
 from nightcrawler.clock import Clock
@@ -70,6 +71,9 @@ LITE_BASE_URL = "https://lite-api.jup.ag"
 KEYED_BASE_URL = "https://api.jup.ag"
 PRICE_BATCH = 50
 SHIELD_BATCH = 50
+#: Ultra /execute polls for the transaction's confirmation before answering, so it can take
+#: well over the default 10 s; timing out early turns a landed swap into an "unknown" outcome.
+EXECUTE_TIMEOUT_S = 60.0
 TRENDING_WINDOWS = ("5m", "1h", "6h", "24h")
 _SOCIAL_KEYS = ("twitter", "website", "telegram")
 
@@ -132,7 +136,7 @@ class JupiterClient:
         """
         resp = self.http.post_json(f"{self.base_url}/ultra/v1/execute",
                                    json={"signedTransaction": signed_tx_b64, "requestId": request_id},
-                                   headers=self._headers(), retry=False)
+                                   headers=self._headers(), retry=False, timeout_s=EXECUTE_TIMEOUT_S)
         resp = resp if isinstance(resp, dict) else {}
         return {
             "status": resp.get("status"),
@@ -162,10 +166,17 @@ class JupiterClient:
         """``{mint: [{"type", "message", "severity"}]}`` for every requested mint (``[]`` if none).
 
         ``severity`` is lower-cased. Batched by :data:`SHIELD_BATCH`; empty input -> ``{}`` without a call.
+        A 200 body without a ``warnings`` OBJECT (an error body, a renamed key) raises
+        :class:`JupiterError`: Shield is a required cocoon source and must fail closed, never
+        read as "no warnings".
         """
         out: dict[str, list[dict[str, Any]]] = {}
         for batch in chunks(list(dict.fromkeys(mints)), SHIELD_BATCH):
-            warnings = get_path(self._get("/ultra/v1/shield", {"mints": ",".join(batch)}), "warnings", {})
+            resp = self._get("/ultra/v1/shield", {"mints": ",".join(batch)})
+            warnings = resp.get("warnings") if isinstance(resp, dict) else None
+            if not isinstance(warnings, dict):
+                detail = resp.get("error") if isinstance(resp, dict) else None
+                raise JupiterError(f"Shield answered without a warnings object ({detail or type(resp).__name__})")
             for mint in batch:
                 out[mint] = [_shield_warning(w) for w in _dicts(get_path(warnings, (mint,)))]
         return out
@@ -215,7 +226,8 @@ def quote_from_order(resp: dict[str, Any], side: Literal["buy", "sell"], quoted_
 
     * ``in_amount`` / ``out_amount`` / ``other_amount_threshold``: ints from strings.
     * ``price_impact_pct`` = ``abs(float(priceImpactPct)) * 100``; fall back to
-      ``abs(priceImpact)`` (already percent); 0.0 if both missing.
+      ``abs(priceImpact)`` (already percent); 0.0 if both are missing or
+      non-finite, with ``price_impact_known=False`` so callers fail closed.
     * ``fee_bps`` = ``feeBps`` (or ``platformFee.feeBps``), default 0.
     * ``route_labels`` = ``[step.swapInfo.label for step in routePlan]``.
     * ``transaction_b64`` = ``transaction`` or None when null/"".
@@ -242,13 +254,14 @@ def quote_from_order(resp: dict[str, Any], side: Literal["buy", "sell"], quoted_
     if error is None and error_code:
         error = f"Ultra errorCode {error_code}"
     transaction = resp.get("transaction")
+    impact = _impact_pct(resp)
     return Quote(
         side=side,
         input_mint=in_mint,
         output_mint=out_mint,
         in_amount=in_amount,
         out_amount=out_amount,
-        price_impact_pct=_impact_pct(resp),
+        price_impact_pct=0.0 if impact is None else impact,
         fee_bps=to_int(first_not_none(resp.get("feeBps"), get_path(resp, "platformFee.feeBps")), 0),
         route_labels=[label for step in _dicts(resp.get("routePlan"))
                       if (label := get_path(step, "swapInfo.label"))],
@@ -266,6 +279,7 @@ def quote_from_order(resp: dict[str, Any], side: Literal["buy", "sell"], quoted_
         error=str(error) if error is not None else None,
         error_code=error_code,
         raw=resp,
+        price_impact_known=impact is not None,
     )
 
 
@@ -339,13 +353,14 @@ def _side(input_mint: str, output_mint: str, error: type[Exception] = ValueError
     raise error(f"exactly one side of the swap must be SOL ({SOL_MINT}): {input_mint} -> {output_mint}")
 
 
-def _impact_pct(resp: dict[str, Any]) -> float:
-    """Adverse price impact magnitude in PERCENT (see :class:`~nightcrawler.models.Quote`)."""
+def _impact_pct(resp: dict[str, Any]) -> float | None:
+    """Adverse price impact magnitude in PERCENT (see :class:`~nightcrawler.models.Quote`), or
+    None when Ultra sent neither field as a finite number (unknown - never "zero impact")."""
     fraction = to_float(resp.get("priceImpactPct"))
-    if fraction is not None:
+    if fraction is not None and math.isfinite(fraction):
         return abs(fraction) * 100.0
     percent = to_float(resp.get("priceImpact"))
-    return abs(percent) if percent is not None else 0.0
+    return abs(percent) if percent is not None and math.isfinite(percent) else None
 
 
 def _shield_warning(raw: dict[str, Any]) -> dict[str, Any]:
