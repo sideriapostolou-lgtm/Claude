@@ -536,10 +536,9 @@ def consolidate(out: Path) -> dict:
                 wrows.append(row)
     if wrows:
         pq.write_table(pa.Table.from_pylist(wrows), out / "b3_positions.parquet", compression="zstd")
-    # B1 raw trades
-    tf = ("slot", "tx_idx", "pix", "ix", "ts", "tx", "venue", "is_buy", "user", "usol", "tok", "x0", "y0",
-          "x1", "y1", "qamt", "lp_fee", "pfee", "cfee", "ix_name", "virt")
-    trows = []
+    # B1 raw trades (P4, slim tuples from sql/b1.sql)
+    tf = ("slot", "tx_idx", "pix", "ix", "ts", "venue", "is_buy", "wallet_h", "usol", "tok", "x0", "y0", "fees", "virt_ksol")
+    trows, wdict = [], {}
     for ch in store.load_chunks("raw"):
         for r in ch["rows"]:
             d = dict(zip(ch["columns"], r))
@@ -548,8 +547,13 @@ def consolidate(out: Path) -> dict:
                 row["mint"] = d["mint"]
                 row["src"] = 0
                 trows.append(row)
+            for h, a in d.get("wallet_dict") or []:
+                wdict[h] = a
     if trows:
         pq.write_table(pa.Table.from_pylist(trows), out / "b1_trades.parquet", compression="zstd")
+    if wdict:
+        pq.write_table(pa.Table.from_pylist([{"wallet_h": h, "wallet": a} for h, a in wdict.items()]),
+                       out / "wallet_dict.parquet", compression="zstd")
     summary = {"graduates": len(grads), "b2_coins": len(coin_rows), "b2_bars": len(bars_rows),
                "b3_positions": len(wrows), "b1_trades": len(trows)}
     log.info("consolidated: %s", summary)
@@ -571,7 +575,7 @@ def main(argv=None) -> int:
     ap.add_argument("--consolidate", action="store_true", help="build Parquet tables from raw chunks (offline)")
     ap.add_argument("--b3-batch", type=int, default=12)
     ap.add_argument("--b3-horizon-min", type=int, default=60, help="B3 window = [created, g + this]")
-    ap.add_argument("--raw-batch", type=int, default=6)
+    ap.add_argument("--raw-batch", type=int, default=4)
     args = ap.parse_args(argv)
 
     out = Path(args.out)
@@ -592,12 +596,12 @@ def main(argv=None) -> int:
             bf.p1(days, now_limit, census_first=not args.no_census_first)
         elif args.phase == "P3":
             bf.run_windows("b3", "b3", bf.coin_windows(args.b3_horizon_min * 60), args.b3_batch,
-                           {"min_wallet_usol": 10_000_000})
+                           {"min_wallet_usol": 50_000_000})
         elif args.phase == "P4":
             def non_factory(g):
                 return not (g.get("has_create") and (g["g_ts"] - g["c_ts"]) <= 5 and g.get("z_n_buyers", 0) <= 3)
-            bf.run_windows("raw", "raw", bf.coin_windows(120 * 60, non_factory), args.raw_batch,
-                           {"min_usol": 10_000_000, "max_trades": 6000})
+            bf.run_windows("raw", "b1", bf.coin_windows(120 * 60, non_factory), args.raw_batch,
+                           {"min_usol": 10_000_000, "max_trades": 20000})
     except CHError as e:
         log.error("stopped on server error: %s", e)
     finally:

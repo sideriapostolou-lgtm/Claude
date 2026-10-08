@@ -99,7 +99,7 @@ def test_virtual_quote_reserve_on_buy_events(ch_events):
             assert (ev.pool_quote_before + virt) / 1e9 == pytest.approx(coin["pool_quote0"], abs=1e-6)
 
 
-@pytest.mark.parametrize("name", ["curve", "b2", "raw", "b3", "slot_map"])
+@pytest.mark.parametrize("name", ["curve", "b2", "raw", "b1", "b3", "slot_map"])
 def test_templates_render_without_leftover_placeholders(name):
     params = dict(s_lo=1, s0=2, s1=3, s1_pool=4, t_lo="2026-10-08 00:00:00", t_hi="2026-10-08 01:00:00",
                   t0="2026-10-08 00:00:00", t1="2026-10-08 01:00:00", launch_s=120, horizon_s=10800,

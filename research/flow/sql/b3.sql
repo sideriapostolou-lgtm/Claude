@@ -75,6 +75,10 @@ wc AS (
 SELECT mint,
   count() AS n_wallets,
   countIf(bs + ss < $min_wallet_usol) AS n_dust_wallets,
+  -- coin-level aggregates over ALL wallets (including those below min_wallet_usol)
+  countIf(nb > 0) AS n_buyers_all, countIf(ns > 0) AS n_sellers_all,
+  countIf(orphan > 0) AS n_orphan_sellers, sumIf(ss, orphan > 0) / 1e9 AS orphan_seller_sell_sol,
+  sum(orphan) / 1e6 AS orphan_tok, countIf(nb = 0 AND ns > 0) AS n_sell_only_wallets,
   arrayMap(x -> (cityHash64(x.1), if(x.4 >= 500000000, base58Encode(x.1), ''), x.2, x.3,
                  toFloat32(x.4 / 1e9), toFloat32(x.5 / 1e9), toFloat32(x.6 / 1e6), toFloat32(x.7 / 1e6),
                  toFloat32(x.8 / 1e9), toFloat32(x.9 / 1e9), x.10, x.11, x.12, x.13,
