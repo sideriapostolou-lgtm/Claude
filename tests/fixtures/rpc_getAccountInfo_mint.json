@@ -1,0 +1,51 @@
+{
+ "jsonrpc": "2.0",
+ "result": {
+  "context": {
+   "apiVersion": "4.3.0",
+   "slot": 454587281
+  },
+  "value": {
+   "data": {
+    "parsed": {
+     "info": {
+      "decimals": 6,
+      "extensions": [
+       {
+        "extension": "metadataPointer",
+        "state": {
+         "authority": null,
+         "metadataAddress": "8ZCmwpW3MtC5UpNcZf7U4HMvRNTo71syU11BDiAFpump"
+        }
+       },
+       {
+        "extension": "tokenMetadata",
+        "state": {
+         "additionalMetadata": [],
+         "mint": "8ZCmwpW3MtC5UpNcZf7U4HMvRNTo71syU11BDiAFpump",
+         "name": "Gary the Cat",
+         "symbol": "Gary",
+         "updateAuthority": null,
+         "uri": "https://ipfs.io/ipfs/bafkreigjcoj5qmin7omjc3yzb6mgh54d7krcienw7gtxafubumv4apwxva"
+        }
+       }
+      ],
+      "freezeAuthority": null,
+      "isInitialized": true,
+      "mintAuthority": null,
+      "supply": "994092192206734"
+     },
+     "type": "mint"
+    },
+    "program": "spl-token-2022",
+    "space": 414
+   },
+   "executable": false,
+   "lamports": 2753360,
+   "owner": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+   "rentEpoch": 18446744073709551615,
+   "space": 414
+  }
+ },
+ "id": 1
+}

@@ -1,0 +1,20 @@
+{
+ "_synthetic": "Shape per Jupiter Ultra /holdings docs; values invented for tests.",
+ "amount": "250000000",
+ "uiAmount": 0.25,
+ "uiAmountString": "0.25",
+ "tokens": {
+  "DoVAVzViX8Bjy3r15nwikSaSbzE6dV4ovd28aWpJpump": [
+   {
+    "account": "SyntheticTokenAccount1111111111111111111111",
+    "amount": "16200000000",
+    "uiAmount": 16200.0,
+    "uiAmountString": "16200",
+    "isFrozen": false,
+    "isAssociatedTokenAccount": true,
+    "decimals": 6,
+    "programId": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
+   }
+  ]
+ }
+}

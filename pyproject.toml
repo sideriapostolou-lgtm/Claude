@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nightcrawler"
+dynamic = ["version"]
+description = "Honest, provable Solana memecoin paper/live trading bot: multi-source crawler, rug filter, sell radar, AI judge, hash-chained receipts."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "requests>=2.31",
+]
+
+[project.optional-dependencies]
+# Real-money execution (transaction signing). Paper mode does not need it.
+live = ["solders>=0.21"]
+# The "Jev" AI judge (Anthropic API).
+judge = ["anthropic>=1.0"]
+dev = ["pytest>=8"]
+
+[project.scripts]
+nightcrawler = "nightcrawler.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.dynamic]
+version = { attr = "nightcrawler.__version__" }
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src", "tests"]
+addopts = "-ra"
+markers = [
+    "live: opt-in network smoke tests; skipped unless NIGHTCRAWLER_LIVE_TESTS=1",
+]

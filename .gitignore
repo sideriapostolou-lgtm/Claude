@@ -1,0 +1,23 @@
+# secrets
+.env
+.env.*
+!.env.example
+
+# runtime data (keep the backtest samples tracked)
+data/*.db
+data/*.db-wal
+data/*.db-shm
+data/dataset/
+data/KILL
+data/*.jsonl
+!data/samples/
+
+# python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.egg-info/
+dist/
+build/
+.venv/
+venv/

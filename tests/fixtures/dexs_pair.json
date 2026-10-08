@@ -1,0 +1,147 @@
+{
+ "schemaVersion": "1.0.0",
+ "pairs": [
+  {
+   "chainId": "solana",
+   "dexId": "pumpswap",
+   "url": "https://dexscreener.com/solana/bfrszakeqnzvtm3efhroo4erhagmmwn8brntiqkfh6ru",
+   "pairAddress": "BFrSZakeqNzVtM3EFhroo4eRhagmmWN8BRntiQKFH6Ru",
+   "baseToken": {
+    "address": "DoVAVzViX8Bjy3r15nwikSaSbzE6dV4ovd28aWpJpump",
+    "name": "Higgspad",
+    "symbol": "HIGGS"
+   },
+   "quoteToken": {
+    "address": "So11111111111111111111111111111111111111112",
+    "name": "Wrapped SOL",
+    "symbol": "SOL"
+   },
+   "priceNative": "0.000008058",
+   "priceUsd": "0.0008832",
+   "txns": {
+    "m5": {
+     "buys": 0,
+     "sells": 0
+    },
+    "h1": {
+     "buys": 75,
+     "sells": 57
+    },
+    "h6": {
+     "buys": 521,
+     "sells": 387
+    },
+    "h24": {
+     "buys": 2577,
+     "sells": 2031
+    }
+   },
+   "volume": {
+    "h24": 414235.4,
+    "h6": 72134.24,
+    "h1": 11146.5,
+    "m5": 0
+   },
+   "priceChange": {
+    "h1": -2.14,
+    "h6": -15.81,
+    "h24": -47.21
+   },
+   "liquidity": {
+    "usd": 119336.33,
+    "base": 68302069,
+    "quote": 538.3472
+   },
+   "fdv": 855167,
+   "marketCap": 855186,
+   "pairCreatedAt": 1791117376000,
+   "info": {
+    "imageUrl": "https://cdn.dexscreener.com/cms/images/oqd8EuXuIb-sWnPu?width=800&height=800&quality=95&format=auto",
+    "openGraph": "https://cdn.dexscreener.com/token-images/og/solana/DoVAVzViX8Bjy3r15nwikSaSbzE6dV4ovd28aWpJpump?timestamp=1791473400000",
+    "websites": [
+     {
+      "url": "https://higgspad.com/",
+      "label": "Website"
+     }
+    ],
+    "socials": [
+     {
+      "url": "https://x.com/higgspad",
+      "type": "twitter"
+     }
+    ]
+   }
+  }
+ ],
+ "pair": {
+  "chainId": "solana",
+  "dexId": "pumpswap",
+  "url": "https://dexscreener.com/solana/bfrszakeqnzvtm3efhroo4erhagmmwn8brntiqkfh6ru",
+  "pairAddress": "BFrSZakeqNzVtM3EFhroo4eRhagmmWN8BRntiQKFH6Ru",
+  "baseToken": {
+   "address": "DoVAVzViX8Bjy3r15nwikSaSbzE6dV4ovd28aWpJpump",
+   "name": "Higgspad",
+   "symbol": "HIGGS"
+  },
+  "quoteToken": {
+   "address": "So11111111111111111111111111111111111111112",
+   "name": "Wrapped SOL",
+   "symbol": "SOL"
+  },
+  "priceNative": "0.000008058",
+  "priceUsd": "0.0008832",
+  "txns": {
+   "m5": {
+    "buys": 0,
+    "sells": 0
+   },
+   "h1": {
+    "buys": 75,
+    "sells": 57
+   },
+   "h6": {
+    "buys": 521,
+    "sells": 387
+   },
+   "h24": {
+    "buys": 2577,
+    "sells": 2031
+   }
+  },
+  "volume": {
+   "h24": 414235.4,
+   "h6": 72134.24,
+   "h1": 11146.5,
+   "m5": 0
+  },
+  "priceChange": {
+   "h1": -2.14,
+   "h6": -15.81,
+   "h24": -47.21
+  },
+  "liquidity": {
+   "usd": 119336.33,
+   "base": 68302069,
+   "quote": 538.3472
+  },
+  "fdv": 855167,
+  "marketCap": 855186,
+  "pairCreatedAt": 1791117376000,
+  "info": {
+   "imageUrl": "https://cdn.dexscreener.com/cms/images/oqd8EuXuIb-sWnPu?width=800&height=800&quality=95&format=auto",
+   "openGraph": "https://cdn.dexscreener.com/token-images/og/solana/DoVAVzViX8Bjy3r15nwikSaSbzE6dV4ovd28aWpJpump?timestamp=1791473400000",
+   "websites": [
+    {
+     "url": "https://higgspad.com/",
+     "label": "Website"
+    }
+   ],
+   "socials": [
+    {
+     "url": "https://x.com/higgspad",
+     "type": "twitter"
+    }
+   ]
+  }
+ }
+}
