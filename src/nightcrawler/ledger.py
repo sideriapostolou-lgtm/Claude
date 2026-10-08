@@ -339,6 +339,11 @@ class Ledger:
     def export_receipts(self, path: str | os.PathLike[str]) -> int:
         """Write all receipts as JSONL (one ``Receipt.to_dict()`` per line, ascending); return count.
 
+        Each line also carries ``body``: the EXACT text that was hashed
+        (``canonical_json({seq, ts, kind, payload})``), so a verifier in any language checks
+        ``sha256(prev_hash + body) == hash`` without re-encoding JSON (other encoders write
+        ``100.0`` as ``100``, ``1e-05`` as ``0.00001``, escape unicode differently and lose
+        integers above 2**53). Parse ``body`` only to display it.
         Written to a temporary file first and renamed, so a reader never sees half a file.
         """
         target = Path(path)
@@ -348,7 +353,9 @@ class Ledger:
         try:
             with tmp.open("w", encoding="utf-8", newline="\n") as fh:
                 for receipt in self.iter_receipts():
-                    fh.write(canonical_json(receipt.to_dict()) + "\n")
+                    body = canonical_json({"seq": receipt.seq, "ts": receipt.ts, "kind": receipt.kind,
+                                           "payload": receipt.payload})
+                    fh.write(canonical_json({**receipt.to_dict(), "body": body}) + "\n")
                     count += 1
             os.replace(tmp, target)
         except BaseException:
@@ -427,22 +434,67 @@ class Ledger:
                     (position.id, position.mint, position.status, position.opened_at, position.closed_at,
                      _dumps(position)))
 
+    def mark_position(self, position_id: str, *, peak_price_usd: float, last_price_usd: float,
+                      last_marked_at: float) -> bool:
+        """Store a new mark (peak/last price) on an OPEN position, touching nothing else.
+
+        Read-modify-write inside one transaction, so a stale in-memory copy can never write
+        back an old ``status``/``token_amount`` (e.g. after ``nightcrawler sell-all`` closed it
+        from another process). Returns False when the position is no longer open.
+        """
+        with self.transaction(), self._locked() as conn:
+            row = conn.execute("SELECT data FROM positions WHERE id = ? AND status = 'open'",
+                               (position_id,)).fetchone()
+            if row is None:
+                return False
+            data = json.loads(row[0])
+            data.update(peak_price_usd=float(peak_price_usd), last_price_usd=float(last_price_usd),
+                        last_marked_at=float(last_marked_at))
+            conn.execute("UPDATE positions SET data = ? WHERE id = ?", (_dumps(data), position_id))
+        return True
+
+    def update_open_position(self, position: Position, expected_token_amount: int) -> None:
+        """Write ``position`` only if the stored row is still OPEN with ``expected_token_amount``
+        tokens (what the caller read before its sell); else raise :class:`LedgerError` and change
+        nothing - another process sold or closed it meanwhile."""
+        with self.transaction(), self._locked() as conn:
+            row = conn.execute("SELECT status, data FROM positions WHERE id = ?", (position.id,)).fetchone()
+            stored = json.loads(row[1]).get("token_amount") if row is not None else None
+            if row is None or row[0] != "open" or stored != expected_token_amount:
+                raise LedgerError(f"position {position.id} changed concurrently (stored "
+                                  f"{row[0] if row else 'missing'}/{stored}, expected open/{expected_token_amount})")
+            self.upsert_position(position)
+
     def get_position(self, position_id: str) -> Position | None:
         rows = self._rows("SELECT data FROM positions WHERE id = ?", (position_id,))
-        return Position.from_dict(json.loads(rows[0][0])) if rows else None
+        return self._load_positions(rows)[0] if rows else None
 
-    def open_positions(self) -> list[Position]:
-        """Open positions ordered by ``opened_at``."""
+    def open_positions(self, mode: str | None = None) -> list[Position]:
+        """Open positions ordered by ``opened_at`` (only those of ``mode`` when given)."""
         rows = self._rows("SELECT data FROM positions WHERE status = 'open' ORDER BY opened_at, rowid")
-        return [Position.from_dict(json.loads(r[0])) for r in rows]
+        return [p for p in self._load_positions(rows) if mode is None or p.mode == mode]
 
-    def positions(self, status: str | None = None, limit: int | None = None) -> list[Position]:
-        """Positions newest first, optionally filtered by status."""
+    def positions(self, status: str | None = None, limit: int | None = None,
+                  mode: str | None = None) -> list[Position]:
+        """Positions newest first, optionally filtered by status and trading mode."""
         where, params = ("", []) if status is None else (" WHERE status = ?", [status])
-        clause, extra = _limit_clause(limit)
+        clause, extra = _limit_clause(limit if mode is None else None)
         rows = self._rows(f"SELECT data FROM positions{where} ORDER BY opened_at DESC, rowid DESC{clause}",
                           [*params, *extra])
-        return [Position.from_dict(json.loads(r[0])) for r in rows]
+        out = [p for p in self._load_positions(rows) if mode is None or p.mode == mode]
+        return out if limit is None else out[:limit]
+
+    def _load_positions(self, rows: Sequence[Any]) -> list[Position]:
+        """Rows -> Positions; ``mode`` of rows written before it existed comes from the entry fill."""
+        positions = [Position.from_dict(json.loads(r[0])) for r in rows]
+        unknown = {p.entry_fill_ids[0] for p in positions if p.mode is None and p.entry_fill_ids}
+        if unknown:
+            marks = ",".join("?" for _ in unknown)
+            modes = dict(self._rows(f"SELECT id, mode FROM fills WHERE id IN ({marks})", sorted(unknown)))
+            for p in positions:
+                if p.mode is None and p.entry_fill_ids:
+                    p.mode = modes.get(p.entry_fill_ids[0])  # type: ignore[assignment]
+        return positions
 
     def last_closed_at(self, mint: str) -> float | None:
         """Most recent ``closed_at`` of a position in ``mint`` (cooldown)."""

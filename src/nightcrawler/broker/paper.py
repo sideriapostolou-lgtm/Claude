@@ -62,7 +62,7 @@ from nightcrawler.models import (
     lamports_to_sol,
 )
 
-__all__ = ["PaperBroker", "SOL_PRICE_TTL_S"]
+__all__ = ["PaperBroker", "SOL_PRICE_TTL_S", "paper_out_amount"]
 
 log = get_logger(__name__)
 
@@ -75,6 +75,12 @@ KV_START_SOL_USD = "paper.start_sol_usd"
 
 def _sol(lamports: int) -> str:
     return f"{lamports_to_sol(lamports):.6f} SOL"
+
+
+def paper_out_amount(out_amount: int, slippage_bps: int) -> int:
+    """What a paper fill receives for a quote promising ``out_amount``: ``PAPER_SLIPPAGE_BPS``
+    less (rounded down), modelling the gap between a quote and a landed live swap."""
+    return out_amount * (10_000 - slippage_bps) // 10_000
 
 
 @dataclass(slots=True)
@@ -164,15 +170,16 @@ class PaperBroker(UltraBrokerBase):
         ticket, sol_usd = self._prepare_execution(quote, position)
         self._ensure_wallet()
         fee = self.settings.network_fee_lamports
+        received = paper_out_amount(quote.out_amount, self.settings.paper_slippage_bps)
         with self.ledger.transaction():
             wallet = _PaperWallet.load(self.ledger)
             if quote.side == "buy":
-                rent = wallet.buy(quote.token_mint, quote.in_amount, quote.out_amount, fee,
+                rent = wallet.buy(quote.token_mint, quote.in_amount, received, fee,
                                   self.settings.sol_reserve_lamports)
-                sol_lamports, token_amount = quote.in_amount, quote.out_amount
+                sol_lamports, token_amount = quote.in_amount, received
             else:
-                rent = -wallet.sell(quote.token_mint, quote.in_amount, quote.out_amount, fee)
-                sol_lamports, token_amount = quote.out_amount, quote.in_amount
+                rent = -wallet.sell(quote.token_mint, quote.in_amount, received, fee)
+                sol_lamports, token_amount = received, quote.in_amount
             fill = self._new_fill(quote, sol_lamports=sol_lamports, token_amount=token_amount,
                                   decimals=ticket.decimals, sol_usd=sol_usd, fees_lamports=fee,
                                   rent_lamports=rent, signature=None, position=position, symbol=symbol)

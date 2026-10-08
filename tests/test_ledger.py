@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import dataclasses
 import hashlib
 import json
 import sqlite3
@@ -144,7 +145,7 @@ def test_export_jsonl_is_verifiable_without_nightcrawler(ledger: Ledger, tmp_pat
     lines = out.read_text(encoding="utf-8").splitlines()
     rows = [json.loads(line) for line in lines]
     assert [r["seq"] for r in rows] == [1, 2, 3, 4]
-    assert set(rows[0]) == {"seq", "ts", "kind", "payload", "prev_hash", "hash"}
+    assert set(rows[0]) == {"seq", "ts", "kind", "payload", "prev_hash", "hash", "body"}
     assert verify_receipts(rows) == (True, None)
     # the "~10 lines in any language" claim, done with hashlib + json only
     prev = "0" * 64
@@ -392,3 +393,73 @@ def test_concurrent_writers_and_readers_never_fork_the_chain(db_path: Path) -> N
     assert secondary.get_kv("a.i") == 39 and primary.get_kv("c.i") == 39
     primary.close()
     secondary.close()
+
+
+# --------------------------------------------------------------------------- review fixes
+
+
+def test_export_carries_the_exact_hashed_body_for_verifiers_in_any_language(ledger: Ledger, tmp_path: Path) -> None:
+    """JS/Go re-serialize floats and unicode differently (100.0 -> 100, 1e-05, \\uXXXX, big ints):
+    the exported ``body`` is the exact hashed text, so ``sha256(prev + body)`` needs no JSON re-encoding."""
+    ledger.append_receipt("note", {"start_usd": 100.0, "x": 0.00001, "symbol": "\u732b\U0001f680",
+                                   "amount": 12345678901234567890}, ts=NOW)
+    ledger.append_receipt("note", {"i": 2}, ts=1_791_475_200.0)
+    out = tmp_path / "r.jsonl"
+    ledger.export_receipts(out)
+    prev = "0" * 64
+    for line in out.read_text(encoding="utf-8").splitlines():
+        row = json.loads(line)
+        assert row["prev_hash"] == prev
+        prev = hashlib.sha256((prev + row["body"]).encode()).hexdigest()
+        assert row["hash"] == prev
+        assert json.loads(row["body"]) == {k: row[k] for k in ("seq", "ts", "kind", "payload")}
+
+
+def _pos(pid: str, mode: str | None, *, mint: str = MINT_A, fill_ids: list[str] | None = None,
+         tokens: int = 5_000_000) -> Position:
+    return Position(id=pid, mint=mint, symbol="HIGGS", pool=None, opened_at=NOW, token_decimals=6,
+                    entry_fill_ids=fill_ids or [], token_amount=tokens, initial_token_amount=tokens, mode=mode)
+
+
+def test_open_positions_can_be_filtered_by_trading_mode(ledger: Ledger) -> None:
+    ledger.upsert_position(_pos("p_paper", "paper"))
+    ledger.upsert_position(_pos("p_live", "live", mint=MINT_B))
+    live_fill = dataclasses.replace(make_fill("fill_live", position_id="p_old"), mode="live")
+    ledger.record_fill(live_fill)
+    ledger.upsert_position(_pos("p_old", None, fill_ids=["fill_live"]))  # a row written before Position.mode
+    assert [p.id for p in ledger.open_positions()] == ["p_paper", "p_live", "p_old"]
+    assert [p.id for p in ledger.open_positions(mode="paper")] == ["p_paper"]
+    assert [p.id for p in ledger.open_positions(mode="live")] == ["p_live", "p_old"]
+    assert ledger.get_position("p_old").mode == "live"  # inferred from its entry fill
+    assert {p.id for p in ledger.positions(mode="live")} == {"p_live", "p_old"}
+
+
+def test_mark_position_never_resurrects_or_resizes_a_position(ledger: Ledger) -> None:
+    ledger.upsert_position(_pos("p1", "paper"))
+    stale = ledger.get_position("p1")
+    closed = dataclasses.replace(stale, status="closed", token_amount=0, closed_at=NOW + 5, exit_fill_ids=["f9"])
+    ledger.upsert_position(closed)  # another process sold it meanwhile
+    assert ledger.mark_position("p1", peak_price_usd=2.0, last_price_usd=1.5, last_marked_at=NOW + 10) is False
+    after = ledger.get_position("p1")
+    assert after.status == "closed" and after.token_amount == 0 and after.last_price_usd is None
+    ledger.upsert_position(_pos("p2", "paper"))
+    assert ledger.mark_position("p2", peak_price_usd=2.0, last_price_usd=1.5, last_marked_at=NOW + 10) is True
+    p2 = ledger.get_position("p2")
+    assert (p2.peak_price_usd, p2.last_price_usd, p2.last_marked_at, p2.token_amount) == (2.0, 1.5, NOW + 10,
+                                                                                        5_000_000)
+
+
+def test_update_open_position_refuses_a_stale_copy(ledger: Ledger) -> None:
+    ledger.upsert_position(_pos("p1", "paper"))
+    mine = ledger.get_position("p1")
+    other = dataclasses.replace(mine, token_amount=0, status="closed", closed_at=NOW + 1)
+    ledger.upsert_position(other)
+    mine.token_amount -= 1_000_000
+    with pytest.raises(LedgerError, match="changed"):
+        ledger.update_open_position(mine, expected_token_amount=5_000_000)
+    assert ledger.get_position("p1").status == "closed"
+    ledger.upsert_position(_pos("p2", "paper"))
+    fresh = ledger.get_position("p2")
+    fresh.token_amount -= 1_000_000
+    ledger.update_open_position(fresh, expected_token_amount=5_000_000)
+    assert ledger.get_position("p2").token_amount == 4_000_000

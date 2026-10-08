@@ -197,6 +197,9 @@ class Settings:
                                  "tolerance) is more than this PERCENT below the quoted output. Forced exits are "
                                  "never blocked by it", lo=0, hi=100, lo_open=True)
     network_fee_sol: float = _f(0.0003, "sol", "Paper model of network fee per swap (base + priority)", lo=0, hi=0.01)
+    paper_slippage_bps: int = _f(100, "bps", "Paper model of execution slippage: every paper fill receives this many "
+                                 "basis points LESS than the quote's out_amount (live fills land below the quote "
+                                 "by Ultra's slippage, latency and MEV; 0 = fill exactly at the quote)", lo=0, hi=1000)
 
     # ---- strategy -----------------------------------------------------------
     min_age_min: float = _f(60.0, "minutes", "Ignore tokens younger than this", lo=0)

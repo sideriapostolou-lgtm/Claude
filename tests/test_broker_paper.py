@@ -152,8 +152,9 @@ class FakeLedger:
     def upsert_position(self, position: Position) -> None:
         self._positions[position.id] = copy.deepcopy(position)
 
-    def open_positions(self) -> list[Position]:
-        return sorted((p for p in self._positions.values() if p.is_open), key=lambda p: p.opened_at)
+    def open_positions(self, mode: str | None = None) -> list[Position]:
+        return sorted((p for p in self._positions.values() if p.is_open and (mode is None or p.mode == mode)),
+                      key=lambda p: p.opened_at)
 
     def last_closed_at(self, mint: str) -> float | None:
         closed = [p.closed_at for p in self._positions.values() if p.mint == mint and p.closed_at is not None]
@@ -231,6 +232,7 @@ def jupiter_http(fake_http):
 @pytest.fixture
 def make_broker(jupiter_http, http_client, ledger, fake_clock, make_settings):
     def _make(taker: str | None = None, **settings: Any) -> PaperBroker:
+        settings.setdefault("PAPER_SLIPPAGE_BPS", 0)  # these tests pin the exact fee/rent model
         s = make_settings(**settings)
         jupiter = JupiterClient(http_client, base_url=s.jupiter_base_url)
         return PaperBroker(jupiter, ledger, s, fake_clock, taker=taker)
@@ -593,3 +595,16 @@ def test_on_fill_failure_rolls_back_the_whole_paper_swap(broker, ledger) -> None
     applied: list[Fill] = []
     fill = broker.execute(broker.quote("buy", HIGGS, BUY_IN, 6), None, on_fill=applied.append)
     assert applied == [fill] and ledger.fills() == [fill]
+
+
+def test_paper_fills_receive_the_configured_slippage_below_the_quote(make_broker, ledger) -> None:
+    """Paper must not be the best case: live swaps land below the quote (Ultra slippage, latency,
+    MEV). The haircut is visible on the books as ``expected_out_amount`` vs the filled amount."""
+    assert make_broker(PAPER_SLIPPAGE_BPS=None).settings.paper_slippage_bps == 100  # the default
+    broker = make_broker(PAPER_SLIPPAGE_BPS=100)
+    buy = broker.execute(broker.quote("buy", HIGGS, BUY_IN, 6), None)
+    assert buy.token_amount == BUY_OUT * 9_900 // 10_000 and buy.expected_out_amount == BUY_OUT
+    assert broker.balances().tokens[HIGGS] == buy.token_amount
+    sold = broker.execute(broker.quote("sell", HIGGS, buy.token_amount, 6), open_position(buy))
+    quoted = SELL_OUT * buy.token_amount // BUY_OUT
+    assert sold.expected_out_amount == quoted and sold.sol_lamports == quoted * 9_900 // 10_000

@@ -105,14 +105,16 @@ def test_full_trade_from_discovery_to_trailing_exit(make_rig) -> None:
     [buy] = rig.ledger.fills()
     assert position.mint == GARY and position.entry_fill_ids == [buy.id] and position.token_amount == buy.token_amount
     assert buy.side == "buy" and buy.sol_lamports == 200_000_000  # 20 % of $100 at $100/SOL
-    assert position.entry_price_usd == pytest.approx(w.price / (1 - SWAP_COST), rel=1e-4)
+    haircut = 1 - rig.settings.paper_slippage_bps / 1e4  # paper fills land PAPER_SLIPPAGE_BPS below the quote
+    assert position.entry_price_usd == pytest.approx(w.price / (1 - SWAP_COST) / haircut, rel=1e-4)
     # the decision receipt came BEFORE the fill receipt
     receipts = rig.ledger.receipts()
     enter_seq = next(r.seq for r in receipts if r.kind == "decision" and r.payload["action"] == "enter")
     fill_seq = next(r.seq for r in receipts if r.kind == "fill")
     assert enter_seq < fill_seq
     enter = rig.ledger.decisions(actions=["enter"])[0]
-    assert enter.inputs["quote"]["expected_out_amount"] == buy.token_amount
+    assert enter.inputs["quote"]["expected_out_amount"] == buy.expected_out_amount
+    assert buy.token_amount == buy.expected_out_amount * (10_000 - rig.settings.paper_slippage_bps) // 10_000
     assert enter.verdict is not None and enter.verdict.source == "rules"  # judge off without an API key
     assert rig.ledger.latest_equity() is not None
 

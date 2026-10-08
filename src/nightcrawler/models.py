@@ -599,6 +599,10 @@ class Position(_Model):
     * ``status``: ``open`` | ``closed``; ``exit_reason`` e.g. ``stop_loss``,
       ``take_profit_partial``, ``trailing_stop``, ``time_stop``, ``radar``,
       ``kill_switch``, ``manual``.
+    * ``mode``: ``paper`` | ``live`` - the wallet the tokens are in (from the
+      opening fill). A paper position is never traded or counted by a live engine
+      and vice versa. ``None`` only on rows written before this field existed;
+      the ledger infers it from the entry fill when loading.
     """
 
     id: str
@@ -623,6 +627,7 @@ class Position(_Model):
     status: Literal["open", "closed"] = "open"
     exit_reason: str | None = None
     closed_at: float | None = None
+    mode: Mode | None = None
 
     @property
     def is_open(self) -> bool:
