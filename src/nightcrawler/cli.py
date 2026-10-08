@@ -95,6 +95,9 @@ def build_parser() -> argparse.ArgumentParser:
                    help="only enter at/after this time (ISO UTC, e.g. 2026-10-04T22:00, or epoch seconds)")
     s.add_argument("--until", dest="trade_until", default=None, metavar="TIME",
                    help="only enter before this time (ISO UTC or epoch seconds)")
+    s.add_argument("--any-age", action="store_true",
+                   help="allow entries at any token age up to MAX_AGE_H (a coin that keeps trending); by default "
+                        "a coin is traded only within WATCHLIST_TTL_H of maturity, like the live bot")
 
     s = sub.add_parser("collect", help="download an unbiased multi-coin dataset")
     s.add_argument("--pools", type=int, default=100, help="number of pools (default 100)")
@@ -375,7 +378,7 @@ def cmd_backtest(args: argparse.Namespace, settings: Settings) -> int:
         raise UserError(f"no such file or folder: {path}")
     if not files:
         raise UserError(f"no backtest *.json files in {path}")
-    bt = Backtester.from_settings(settings)
+    bt = Backtester.from_settings(settings, any_age=bool(getattr(args, "any_age", False)))
     out: dict[str, Any]
     if args.sweep:
         try:

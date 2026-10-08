@@ -10,9 +10,9 @@ The candles come from GeckoTerminal and live in `data/samples/`. Every trade is 
 
 | Coin | Night (UTC) | Trades | Wins | Net P&L | Return | Max drawdown | Paid in costs |
 |------|-------------|-------:|-----:|--------:|-------:|-------------:|--------------:|
-| HIGGS | Oct 4 22:00 to Oct 5 06:00 | 5 | 2 | **-$1.42** | -1.4 % | 12.7 % | $2.49 |
-| HOOKI | Oct 5 22:00 to Oct 6 07:00 | 10 | 1 | **-$23.66** | -23.7 % | 24.7 % | $4.43 |
-| Both | | 15 | 3 | **-$25.08** | -12.5 % | | $6.92 |
+| HIGGS | Oct 4 22:00 to Oct 5 06:00 | 5 | 2 | **-$2.08** | -2.1 % | 12.9 % | $2.48 |
+| HOOKI | Oct 5 22:00 to Oct 6 07:00 | 10 | 1 | **-$25.79** | -25.8 % | 26.8 % | $4.36 |
+| Both | | 15 | 3 | **-$27.87** | -13.9 % | | $6.84 |
 
 How the trades closed:
 - HIGGS: 2 stop losses, 2 time stops (one of them a winner) and 1 take-profit followed by a trailing stop.
@@ -22,8 +22,8 @@ How the trades closed:
 
 | Coin | Start | Claimed | Backtest, with costs | Backtest, zero costs (impossible best case) |
 |------|------:|--------:|---------------------:|--------------------------------------------:|
-| HIGGS | $12,161 | +$5,479 | **-$1,467.63** (6 trades) | +$156.43 (5 trades) |
-| HOOKI | $17,608 | +$6,271 | **-$4,188.19** (10 trades) | -$1,683.10 (10 trades) |
+| HIGGS | $12,161 | +$5,479 | **-$1,529.45** (6 trades) | -$99.03 (5 trades) |
+| HOOKI | $17,608 | +$6,271 | **-$4,686.68** (10 trades) | -$3,169.02 (9 trades) |
 
 For these runs, positions were set with `POSITION_PCT 0.25` and capped at `MAX_POSITION_USD $2,700`.
 At $2.7K per trade, the linear impact model charges about 4 % per side, so costs alone take
@@ -44,11 +44,22 @@ most of whatever edge such a strategy has.
   both cases, no earlier decision changes.
 - Entries fill at the **next** candle's open, plus fee (100 bps), linear impact (150 bps per
   $1K) and $0.05 network fee per side. You never get the close you decided on.
-- Exits are checked inside each candle in **pessimistic** order:
+- Exits are checked inside each candle in **pessimistic** order, filled the way a bot that
+  polls the price every 10 seconds could fill them:
   - A gap through a stop fills at the open.
+  - A stop inside a candle fills at the stop level, or at the close when the candle closed
+    below it (a poller never gets the exact level of a candle that kept falling).
+  - The take-profit fills only when the candle **closes** at or above it; a one-minute wick
+    through it is not a fill.
   - If the stop and the take-profit are both inside one candle, the stop wins.
-  - The trailing stop uses only the peaks of earlier candles.
+  - The trailing stop follows the **closes** of earlier candles, not their wicks.
   - The candle a position was filled in can already stop it out.
+- Missing minutes are filled with flat, zero-volume candles, exactly like the live candle
+  client does, so a gap breaks a run of green candles in both.
+- This fill model is part of `CostModel` (`stop_fill`, `tp_needs_close`, `peak_from`) and is
+  recorded with every result. The optimistic model the first published runs used is
+  `CostModel(stop_fill="level", tp_needs_close=False, peak_from="high")`; it gave HIGGS -$1.42
+  and HOOKI -$23.66 on these nights.
 - Position size uses the same `risk.size_position_usd` math as the live bot, and starting
   equity is $100. There is one position at a time and a 30-minute cooldown after each exit.
 - Entries are allowed only inside the night window. A position still open when the window ends
@@ -61,8 +72,12 @@ most of whatever edge such a strategy has.
   those checks would have seen at the time.
 - Pool liquidity isn't known, so the $30K liquidity floor isn't checked. The age window and the
   market-cap window (`supply x close`) are checked.
-- The watchlist's 6-hour time-to-live is ignored. On the night in question, the live bot might
-  not even have been watching HIGGS any more.
+- These runs allow any token age up to 48 h. Both coins were viral and trending, and the live
+  crawler re-discovers a trending coin every 6 hours, so that is the closer model for them. For
+  ordinary fresh launches the live bot watches a coin only from its first hour for
+  `WATCHLIST_TTL_H` (6 h). `nightcrawler backtest` mirrors that by default (the coin must pass
+  the market-cap window at maturity, and entries stop 7 h after launch); add `--any-age` to lift
+  it. With that window, HIGGS (launched at 12:26 UTC) could not be traded at all on its night.
 - Only 1-minute data is used. Within a candle, the order of the high and the low is unknown, and
   the pessimistic ordering covers that.
 

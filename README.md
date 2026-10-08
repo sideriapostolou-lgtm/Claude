@@ -10,7 +10,7 @@ It was built to test the viral "crawler + Jev judge + Grok bots" posts honestly.
 > **Read this first.** This is not a money machine.
 >
 > - **No profit is promised.** On the two nights the viral posts showed off, this bot's
->   default strategy **lost money** (HIGGS -$1.42, HOOKI -$23.66 on a $100 start). The posts'
+>   default strategy **lost money** (HIGGS -$2.08, HOOKI -$25.79 on a $100 start). The posts'
 >   own numbers did not hold up when checked against real price data. See
 >   [docs/FACTCHECK.md](docs/FACTCHECK.md) and [docs/backtests/README.md](docs/backtests/README.md).
 > - About 98 % of pump.fun coins end up as pump-and-dumps. AI "judges" have shown no proven

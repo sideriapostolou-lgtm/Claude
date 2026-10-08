@@ -341,8 +341,8 @@ replayed them on the same minutes, and charged costs.
 | The same rule, 9 setting variations | +$262 to +$1,658 (median about $943) | -$2,158 to +$734 (median -$811; 2 of 9 positive) |
 | A wider search (315 variations), before price impact | -$632 to +$3,916 (median $1,084). None reach $5,479. | (not run) |
 | Buy at 22:00 and hold | -25% to -42%, depending on when you sell | -$1,023 on $2,500 |
-| nightcrawler backtester, post's bankroll, fees + impact | **-$1,467.63** | **-$4,188.19** |
-| nightcrawler backtester, zero costs (an impossible best case) | +$156.43 | -$1,683.10 |
+| nightcrawler backtester, post's bankroll, fees + impact | **-$1,529.45** | **-$4,686.68** |
+| nightcrawler backtester, zero costs (an impossible best case) | -$99.03 | -$3,169.02 |
 
 A few notes on these runs:
 
@@ -350,10 +350,12 @@ A few notes on these runs:
   says it bought.
 - On the same night, the same rule with price impact lost $2,726. On 5-minute candles it
   lost $149.
-- Our own backtester's runs, including the default $100 runs (HIGGS -$1.42, HOOKI -$23.66),
+- Our own backtester's runs, including the default $100 runs (HIGGS -$2.08, HOOKI -$25.79),
   are in [backtests/README.md](backtests/README.md), with every trade in
   [backtests/samples.json](backtests/samples.json). It never looks ahead, fills at the next
-  candle's open, and charges 1% fees plus price impact per side.
+  candle's open, charges 1% fees plus price impact per side, and fills exits the way a bot
+  polling every 10 seconds could (no stop at the exact level of a candle that closed below
+  it, no take-profit on a one-minute wick).
 
 **What this proves and doesn't.** A simple rule can't show that some other strategy, or an
 AI judge, never made these trades. It shows what bots without hindsight typically get on these

@@ -130,6 +130,7 @@ Example: `feat: add user authentication module`
 |------|---------|
 | `.gitignore` | Git ignore patterns |
 | `CLAUDE.md` | AI assistant guidelines |
+| `docs/ACCOUNTS.md` | The owner's external service accounts (Helius, Dune, ...), what each is for, and the usage budgets to track. Check and update it whenever a provider, plan or key variable changes. Never store keys there. |
 
 ## Useful Commands
 

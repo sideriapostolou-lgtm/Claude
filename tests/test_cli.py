@@ -151,6 +151,15 @@ def test_backtest_folder_with_a_trading_window(env, capsys) -> None:
     assert out.count("\n") >= 4 and "TOTAL" in out
 
 
+def test_backtest_mirrors_the_live_watch_window_unless_any_age(env, tmp_path, capsys) -> None:
+    window = ("--from", "2026-10-04T22:00", "--until", "2026-10-05T06:00")
+    out_file = tmp_path / "bt.json"
+    assert nc("backtest", str(SAMPLES / "higgs_1m.json"), *window, "--json", str(out_file)) == EXIT_OK
+    assert json.loads(out_file.read_text())["aggregate"]["trades"] == 0  # HIGGS was 9.5 h old that night
+    assert nc("backtest", str(SAMPLES / "higgs_1m.json"), *window, "--any-age", "--json", str(out_file)) == EXIT_OK
+    assert json.loads(out_file.read_text())["aggregate"]["trades"] > 0
+
+
 def test_backtest_sweep_reports_out_of_sample(env, capsys) -> None:
     assert nc("backtest", str(SAMPLES), "--sweep", "--grid", '{"dip_pct": [0.5, 0.6]}') == EXIT_OK
     out = capsys.readouterr().out

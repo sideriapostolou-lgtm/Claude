@@ -131,7 +131,8 @@ def test_partial_take_profit_then_trailing_stop() -> None:
     after = [(0.33, 0.34, 0.33, 0.34),  # peak 0.34
              (0.34, 0.50, 0.34, 0.48),  # TP 0.462 hit: sell half; trail (prev peak 0.34) = 0.289 not hit
              (0.48, 0.48, 0.40, 0.41)]  # peak now 0.50 -> trail 0.425 hit
-    t = only_trade(Backtester(P, FREE).run(series(after), META))
+    # the optimistic legacy fill model (peak from wicks); the default model: see the review-fix tests
+    t = only_trade(Backtester(P, CostModel(0.0, 0.0, 0.0, **LEGACY_FILLS)).run(series(after), META))
     assert t.partial_taken and t.exit_reason == "trailing_stop"
     assert t.exit_price == pytest.approx((0.33 * 1.4 + 0.50 * 0.85) / 2)
     assert t.pnl_usd == pytest.approx(20 / 0.33 * ((0.462 + 0.425) / 2 - 0.33))
