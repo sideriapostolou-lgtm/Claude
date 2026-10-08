@@ -45,7 +45,6 @@ from world import (
     World,
     dip_rebound_candles,
     iso,
-    jupiter_token,
     make_world,
 )
 
@@ -723,6 +722,33 @@ def test_a_kill_between_a_landed_buy_and_its_record_never_buys_twice(make_rig, w
     assert rig2.broker.executed == []  # the setup is still there, but the coin is already held
 
 
+def test_a_kill_between_the_fill_record_and_the_position_write_leaves_no_half_state(make_rig, world, fake_clock,
+                                                                                   tmp_path, monkeypatch) -> None:
+    """Fill and position are ONE transaction: dying in between commits neither, so the restart
+    reconciles once from the wallet (no orphan fill, no duplicate fill)."""
+    path = tmp_path / "live.db"
+    rig = live_rig(make_rig, world, fake_clock, path=path)
+    real = rig.engine._open_position
+
+    def die_after_the_fill(*args: Any, **kwargs: Any) -> Any:
+        real(*args, **kwargs)
+        raise Killed()
+
+    monkeypatch.setattr(rig.engine, "_open_position", die_after_the_fill)
+    with pytest.raises(Killed):
+        rig.tick()
+    assert rig.ledger.fills() == [] and rig.ledger.open_positions() == []  # rolled back together
+    rig.ledger.close()
+
+    rig2 = live_rig(make_rig, world, fake_clock, path=path, sol=rig.broker.sol, tokens=rig.broker.tokens)
+    rig2.tick(1)
+    rig2.tick(RECONCILE_AFTER_S)
+    [fill] = rig2.ledger.fills()
+    [position] = rig2.ledger.open_positions()
+    assert position.token_amount == fill.token_amount == rig2.broker.tokens[GARY]
+    assert Auditor(rig2.ledger, rig2.broker, rig2.clock).reconcile().token_drift == {}
+
+
 def test_a_landed_swap_the_ledger_failed_to_record_blocks_entries_and_books_the_actual_fill(
         make_rig, world, fake_clock, monkeypatch) -> None:
     from nightcrawler.ledger import LedgerError
@@ -915,7 +941,7 @@ def test_a_new_position_is_marked_at_the_market_price_not_its_cost(make_rig) -> 
     assert point.positions_value_lamports == market < position.cost_lamports
 
 
-# =========================================================================== review fixes: runtime and strategy integrity
+# =========================================================================== review fixes: runtime and strategy
 
 
 def test_slow_safety_checks_never_starve_open_positions(make_rig) -> None:

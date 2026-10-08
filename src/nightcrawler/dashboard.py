@@ -497,7 +497,8 @@ _SCRIPT = r"""
     const hasUsd = isNum(e.usd);
     // Headline + colour in SOL (what the bot controls); USD only as context, with the SOL price effect apart.
     const tiles = el("div", "tiles",
-      tile("Today", sol(e.pnl_today_sol, true), usd(e.pnl_today_usd, true) + " in USD", tone(e.pnl_today_sol)),
+      tile("Today", sol(e.pnl_today_sol, true), isNum(e.pnl_today_usd) ? usd(e.pnl_today_usd, true) + " in USD" : "—",
+        tone(e.pnl_today_sol)),
       tile("Since start", sol(e.pnl_total_sol, true),
         isNum(e.pnl_total_trading_usd)
           ? usd(e.pnl_total_trading_usd, true) + " at today's SOL price"

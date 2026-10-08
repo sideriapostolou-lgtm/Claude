@@ -521,7 +521,9 @@ def test_live_smoke_paper_round_trip_on_real_ultra_quotes(make_settings) -> None
     buy = broker.execute(broker.quote("buy", USDC, 10_000_000, 6), None)  # 0.01 SOL -> USDC
     sell = broker.execute(broker.quote("sell", USDC, buy.token_amount, 6), None)
     round_trip = (buy.sol_lamports - sell.sol_lamports) / buy.sol_lamports
-    assert 0 <= round_trip < 0.02  # ~0.2 % Ultra fees on a deep pool, before network fees
+    paper_haircut = 2 * settings.paper_slippage_bps / 10_000  # PAPER_SLIPPAGE_BPS on each side
+    # ~0.2 % Ultra fees on a deep pool plus the deliberate paper haircut, before network fees
+    assert paper_haircut <= round_trip < paper_haircut + 0.01
     assert broker.balances().tokens == {}
 
 

@@ -424,9 +424,9 @@ class Engine:
         :attr:`stop_event` is set. Installs SIGTERM/SIGINT handlers when on the main thread."""
         self._install_signal_handlers()
         now = self.clock.now()
-        self._restore_state()
         self.ledger.append_receipt("boot", {"version": __version__, "mode": self.settings.trading_mode,
                                             "settings": self.settings.public_dict(), "pid": os.getpid()}, ts=now)
+        self._restore_state()  # after the boot receipt: an adopted in-flight swap is noted under this boot
         self.ledger.set_kv("engine.started_at", now)
         self._boot_checks(now)
         self._set_status(now, "running")

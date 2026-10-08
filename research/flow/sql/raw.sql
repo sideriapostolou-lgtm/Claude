@@ -4,7 +4,8 @@
 --         (pool may be '1' for "no pool"), mints = the mints (token_transfers prefilter),
 --         min_usol (lamports; trades below it are dropped, 0 keeps dust), max_trades (per coin).
 -- Successful transactions only. Each trade is a tuple
---   (slot, tx_idx, pix, ix, ts, tx, venue, is_buy, user, usol, tok, x0, y0, x1, y1, qamt, lp_fee, pfee, cfee, ix_name)
+--   (slot, tx_idx, pix, ix, ts, tx, venue, is_buy, user, usol, tok, x0, y0, x1, y1, qamt, lp_fee, pfee, cfee, ix_name, virt)
+-- virt = PumpSwap virtual quote reserve from Buy events (0 on sells and curve trades); AMM price = (x + virt) / y.
 -- venue 0 = curve (x/y = virtual SOL/token reserves; x0/y0 derived from the post-trade values),
 -- venue 1 = PumpSwap (x/y = pool quote/base reserves; x0/y0 as emitted, x1/y1 derived),
 -- amounts in raw units (lamports, token base units with 6 decimals), sorted by (slot, tx_idx, pix, ix).
@@ -59,7 +60,10 @@ tr AS (
     if(e.amm, if(is_buy, a_x0 + a_qd, toUInt64(a_x0 - least(a_x0, a_qd))), c_vx) AS x1,
     if(e.amm, if(is_buy, toUInt64(a_y0 - least(a_y0, a_base)), a_y0 + a_base), c_vy) AS y1,
     if(e.amm, a_qamt, c_sol) AS qamt, if(e.amm, a_lp, 0) AS lp_fee,
-    if(e.amm, '', substring(e.r, 271, reinterpretAsUInt32(substring(e.r, 267, 4)))) AS ix_name
+    reinterpretAsUInt32(substring(e.r, 410, 4)) AS a_ixn_len,
+    if(e.amm AND is_buy AND length(e.r) >= 454 + a_ixn_len AND a_ixn_len < 40,
+       reinterpretAsUInt64(substring(e.r, 446 + a_ixn_len, 8)), 0) AS virt,
+    if(e.amm, if(is_buy AND a_ixn_len < 40, substring(e.r, 414, a_ixn_len), ''), substring(e.r, 271, reinterpretAsUInt32(substring(e.r, 267, 4)))) AS ix_name
   FROM ev AS e
   INNER JOIN wn AS w ON w.key_b = e.key_b AND w.venue = toUInt8(e.amm)
   INNER JOIN okt AS o ON o.signature = e.tx
@@ -80,7 +84,7 @@ packed AS (
         arraySum(arrayMap(x -> if(x.1 = k.1 AND x.2 = k.2 AND x.3 = 1, x.4, 0), mv)),
         arraySum(arrayMap(x -> if(x.1 = k.1 AND x.2 = k.2 AND x.3 = 0, x.4, 0), mv))), mk)) AS minutes,
     arraySlice(arraySort(x -> (x.1, x.2, x.3, x.4), groupArray((slot, tx_idx, pix, ix, ts, tx, venue, toUInt8(is_buy),
-        base58Encode(user_b), usol, tok, x0, y0, x1, y1, qamt, lp_fee, pfee, cfee, ix_name))), 1, $max_trades) AS trades
+        base58Encode(user_b), usol, tok, x0, y0, x1, y1, qamt, lp_fee, pfee, cfee, ix_name, virt))), 1, $max_trades) AS trades
   FROM tr
   GROUP BY mint
 )
