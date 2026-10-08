@@ -40,7 +40,7 @@ python research/flow/backfill.py --phase P3 --out $FLOW [--b3-batch 12]
 
 # P4: B1 raw non-dust trades (>= 0.01 SOL), [created, g + 120 min], for tradeable non-factory coins
 #     (SOL-quoted, not Mayhem, graduated more than 5 s after creation).
-python research/flow/backfill.py --phase P4 --out $FLOW [--raw-batch 6]
+python research/flow/backfill.py --phase P4 --out $FLOW [--raw-batch 4]
 
 # Rebuild the Parquet tables from the raw chunks. Offline; no queries.
 python research/flow/backfill.py --consolidate --out $FLOW
@@ -80,21 +80,27 @@ and chunks are split automatically when they do.
 
 | Query | Covers | Execution (median / p90) | Notes |
 |---|---|---|---|
-| `curve.sql` | 1 chain hour, plus a 30-minute lookback | ~20 s / ~55 s | ~190-300M rows read. About 1 in 7 hours timed out and was split |
-| `b2.sql` | 1 chain hour, ~180-260 active pools | ~17 s / ~56 s | One query per hour since the batch cap was raised to 260 (~0.6 MB of result) |
+| `curve.sql` | 1 chain hour, plus a 30-minute lookback | 33 s / 60 s | ~150-300M rows read; 7 of 46 timed out and were split |
+| `b2.sql` | 1 chain hour, ~160-260 active pools | 23 s / 60 s | One query per hour since the batch cap was raised to 260; 5 of 41 timed out and were split |
 | `b3.sql` (P3 test) | 6 busy coins, [created, g + 60 min] | 8.7 s | ~10k wallets ≥ 0.01 SOL; just under the 1 MB cap. P3 now keeps wallets ≥ 0.05 SOL |
 | `b1.sql` (P4 test) | 3 organic coins, [created, g + 120 min] | 22 s | 7,721 non-dust trades; just under the 1 MB cap, so ~3-4 coins per query |
 | `raw.sql` (validation) | ~8 coins × 2 minutes | 3-47 s | |
 | `slot_map.sql` | 18 days | ~1 s | |
 
-**P1 throughput:**
+**Pilot (2026-10-08 20:26-21:46 UTC):**
 
-- About 2-4 queries per chain hour (curve + B2, including splits) and 1-2 minutes of wall time.
-- That is roughly **20-30 chain hours per wall hour**, which sits at the 90 queries/hour budget.
-- **Realistic ETAs:** P1 for 7 days ≈ 6-8 h; P2 to 21.8 days ≈ 18-24 h in total.
-- **P3** (60-minute horizon, ~12 coins/query): ~100 queries per chain day ≈ 24-26 h for 21.8 days.
-- **P4** (tradeable non-factory coins only, ~3.5 coins/query): ~100-150 queries per chain day ≈ 25-40 h
-  for 21.8 days.
+- 89 backfill queries covered the census day: curve 10-07 16:00 → 10-08 20:00, B2 10-07 19:00 → 10-08 20:00.
+- That is **3.1 queries and ~100 s of wall time per chain hour**, i.e. ~29 chain hours per wall hour. At
+  that pace the 90 queries/hour budget is what limits throughput.
+- **Realistic ETAs at 90 queries/hour:**
+
+  | Phase | Queries | Hours |
+  |---|---:|---:|
+  | P1, 7 days | ~520 | ~5.7 (~4.6 still to go) |
+  | P2, 21.8 days in total | ~1,600 | ~18 |
+  | P3, 21.8 days (60-minute horizon, ~12 coins/query) | ~2,400 | ~28 |
+  | P4, 21.8 days (~28% of graduates are tradeable non-factory, ~3.5 coins/query) | ~2,300 | ~27 |
+
 - `FLOW/pilot_report.json` and `manifest.json` have the measured numbers.
 
 ## Output tables (`FLOW/*.parquet`, built by `--consolidate`)
@@ -163,19 +169,18 @@ removed).
 | `agent_known_at` | The AGENT's 4th buy. **Do not use the AGENT role before this time.** |
 | `grad_delay_s` | As in `graduates.parquet`. |
 
-**AGENT rule.** A pool wallet with ≥ 4 buys in [g, g + 330 s), no sells, a median gap of 11-13 s, and
-**≥ 60% of gaps within 10-14 s**.
+**AGENT rule.** A pool wallet with ≥ 4 buys in [g, g + 420 s), no sells, a median gap of 11-13 s, and
+**≥ 60% of gaps within 10-14 s**. For a decision at t, call `features.detect_agent(..., as_of=t - 20)`; the
+stored `agent_*` columns use the whole window and are not causal.
 
 - **Why not the PLAN's rule.** PLAN §3.2 asks for a gap coefficient of variation < 0.15. On real data one
   skipped 12 s slice creates a 24 s gap and pushes the CV to 0.2-0.4, so the PLAN's rule missed 26% of BOOST
   agents on the census night. `b2_coins.agent_plan_rule` records whether the PLAN's rule also matched.
 - **Server and offline split.** `b2.sql` only pre-filters candidates (≥ 2 buys, no sells, median gap
   9-15 s). `features.detect_agent` applies the rule after merging the chunks.
-- **Observed on 2026-10-07/08 census coins** (SOL-quoted, not Mayhem, `boost_mode = COMPLETED`): present on
-  100%; **28 slices** (p10-p90 25-28, not 25); **16.2 SOL** (p10-p90 15.2-16.7); first buy ~2 s after g;
-  gap 12.0 s.
-- **Expect revision.** The candidate window stops at g + 330 s. If later data shows more than 28 slices,
-  widen `g_ts + 330` in `b2.sql` (BOOST may run past 330 s).
+- **Observed on 2026-10-08 (audit, raw events of 5 graduates):** BOOST makes **29-30 fee-free slices** and
+  spends **exactly 17.5845 SOL**; first buy 1-4 s after g, gap 12 s, last slice at g + 341-353 s. The pilot's
+  "28 slices / 16.2 SOL" came from the old 330 s window, which cut off the last 1-3 slices.
 
 ### `b3_positions.parquet`: one row per (wallet, coin) with ≥ 0.05 SOL of volume (`sql/b3.sql`)
 
@@ -203,7 +208,13 @@ more often. Columns:
 
 **Using it for reputation (PLAN §6.6).** A row summarises the whole window, so a decision at t may use it
 only if the coin's window ended before t − 20 s. Never use rows of the coin being traded. Treat a position
-as closed when `end_tok` ≤ 1% of `peak_tok` or the window ended.
+as closed only when `end_tok` ≤ 1% of `peak_tok`. A position still open when the window ended is censored:
+it contributes nothing (PLAN §6.6 rule 2), and must never be scored as realized at the window end.
+
+**Wallet identity.** `user` in curve and PumpSwap events is the token-account authority, not the transaction
+signer. Some are pooled program accounts: `ARu4n5mF…` signs with a different user on every trade and sits in the
+first-5-minute top-10 buyers of 227 of 1,444 pools. Exclude such accounts from registries, repeat-buyer counts
+and orphan/TRANSFEREE logic, or attribute trades to the fee payer.
 
 ### `b1_trades.parquet` (P4) and `wallet_dict.parquet`
 
@@ -222,7 +233,8 @@ non-factory coins. One row per trade:
 | `virt_ksol` | PumpSwap virtual quote reserve / 1000 lamports, on buys only. |
 | `src` | 0 = CryptoHouse. |
 
-**Price before the trade:** (x0 + virt) / y0, with virt = the pool's `virt_sol` from `b2_coins`.
+**Price before the trade:** (x0 + virt_ksol × 1000) / y0 (lamports). `virt_ksol` is the virtual reserve in force
+before each PumpSwap trade, buys and sells (patched b1.sql). Fills (PLAN §3.3) use X = x + v, not x.
 
 `wallet_dict.parquet` maps `wallet_h` → base58 for every wallet that moved ≥ 1 SOL in a coin.
 
@@ -254,8 +266,11 @@ PumpSwap events, ~0.7% of curve trades and ~4% of `CreateEvent`s.
 
 The pool prices with **x + virt**, not with the emitted quote reserve x.
 
-- **Where it is.** `virt` is a u64 that only Buy events carry, at byte `446 + len(ix_name)`. It was
-  ~17.58 SOL, nearly constant, on 2026-10 migration pools.
+- **Where it is.** `virt` is a u64 that only Buy events carry, at byte `446 + len(ix_name)`. It starts at
+  17.584505289 SOL on 2026-10 migration pools and is **not constant**: between trades x and v move by opposite
+  amounts (X = x + v is conserved, verified exactly on 3,981 transitions). Price and fills must use the v in force
+  at that trade (carried through sells along the chain), never a per-pool constant. A constant v mis-priced
+  closes by up to 0.42 % within 45 minutes.
 - **What goes wrong without it.** Ignoring it under-prices fresh pools by ~7%, and by more as the pool
   drains. It is also why dumped graduates "floor" at ~17.6 SOL market cap.
 - **Pools with no buy in a chain hour.** Their bars come back with virt = 0. `--consolidate` repairs the
@@ -298,8 +313,9 @@ The pool prices with **x + virt**, not with the emitted quote reserve x.
 ### 7. Coverage limits of P1
 
 - **Launch and curve-life features are exact only when `has_create = 1`.** That requires creation within
-  30 minutes before the graduation hour. Slower graduates (~3-5%) have partial curve stats and no launch
-  window.
+  30 minutes before the graduation hour. On the pilot 88 of 1,233 tradeable graduates (7 %; 17 % of the
+  non-instant ones that G1/S1 care about) have `has_create = 0`: launch, bundle, sniper and creator columns are
+  NULL (patched consolidate) and curve-life totals are partial (`curve_partial = 1`).
 - **The B2 windows** (`w120`, `w300`) are exact only when [g, g + 330 s) lies inside one chain hour
   (`w_exact`). Otherwise their sums are exact and their counts are approximate.
 - **The last 3 hours before a run** have incomplete [g, g + 180 min) windows. A later run that extends the
@@ -309,7 +325,11 @@ The pool prices with **x + virt**, not with the emitted quote reserve x.
 
 These tables are storage, not features.
 
-- **Bars.** Per-minute bars are complete only for minutes that ended before the decision.
+- **Bars.** Per-minute bars are complete only for minutes that ended before the decision: use
+  `features.bars_asof(bars, tau)`.
+- **Early windows.** `w120_*` is usable only from t = g + 140 s and `w300_*` from g + 320 s (τ = t − 20 s).
+- **Not features.** `n_chunks`, `n_pools`, `b2_coins.virt_sol` and repaired prices are built from data after g
+  (survival, later pools, later chunks).
 - **Graduation-time features.** `graduates.parquet` columns about the curve are known at `g_ts`. The
   completion-time ones (`completer*`, `rsol_complete`) are known only at `g_ts`, never before.
 - **Reputation.** Use only coins whose window **ended** before the decision.
@@ -329,8 +349,12 @@ These tables are storage, not features.
 
   `validate.net_swap_sol` converts trade by trade. Mixing conventions shifts SOL totals by ~1.1-1.25%.
 - Prices are in SOL. Join minute SOL/USD (`LAB/sol_usd.json`, or Coinbase/Binance klines) for USD.
-- **Non-SOL-quoted coins:** check `pool_quote_mint`. Their prices are in quote units; exclude them, as
-  the lab does.
+- **Non-SOL-quoted coins** (USDC, WLD, `pumpCm…` and others; ~8% of graduates): identify them by
+  `pool_quote_mint`, which comes from CreatePool and is reliable.
+  - Their curve events use another tail layout. `rsol_complete` reads 0, `curve_quote_mint` is garbage,
+    and curve SOL features are in quote units or invalid.
+  - Their PumpSwap prices are in quote units.
+  - Exclude them, as the lab does (`sol_quoted = False`).
 
 ### 10. Transaction version 1
 

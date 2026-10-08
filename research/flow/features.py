@@ -18,7 +18,7 @@ BAR_FIELDS = (
     "n_buyers", "n_sellers", "top5_buy_sol", "open", "high", "low", "close", "x_close", "y_close",
 )
 
-AGENT_WINDOW_S = 330
+AGENT_WINDOW_S = 420           # BOOST runs 29-30 slices x 12 s, last slice ~g+341-353 s (audit 2026-10-08)
 AGENT_MIN_BUYS = 4
 AGENT_GAP_RANGE = (11.0, 13.0)
 AGENT_MAX_CV = 0.15            # PLAN 3.2 rule ("plan")
@@ -57,7 +57,7 @@ def agent_stats(ts: list[int], sol: list[float]) -> dict | None:
             "gap_band_share": float(band)}
 
 
-def detect_agent(cands: dict[str, dict], g_ts: int, rule: str = "robust") -> dict | None:
+def detect_agent(cands: dict[str, dict], g_ts: int, rule: str = "robust", as_of: int | None = None) -> dict | None:
     """AGENT (BOOST): >= 4 buys in [g, g+330 s], 0 sells, median gap in [11, 13] s, and a regular cadence.
 
     ``rule="plan"`` uses PLAN 3.2's gap CV < 0.15. On real 2026-10 data that misses ~26 % of BOOST agents,
@@ -69,7 +69,8 @@ def detect_agent(cands: dict[str, dict], g_ts: int, rule: str = "robust") -> dic
     for w, d in cands.items():
         if d["sells"]:
             continue
-        idx = [i for i, t in enumerate(d["ts"]) if g_ts <= t < g_ts + AGENT_WINDOW_S]
+        hi = g_ts + AGENT_WINDOW_S if as_of is None else min(g_ts + AGENT_WINDOW_S, as_of + 1)
+        idx = [i for i, t in enumerate(d["ts"]) if g_ts <= t < hi]   # as_of: causal view (buys <= as_of only)
         ts = [d["ts"][i] for i in idx]
         sol = [d["sol"][i] for i in idx]
         if len(ts) < AGENT_MIN_BUYS:
@@ -86,6 +87,11 @@ def detect_agent(cands: dict[str, dict], g_ts: int, rule: str = "robust") -> dic
         if best is None or st["sol"] > best["sol"]:
             best = st
     return best
+
+
+def bars_asof(bars: list[dict], tau: int) -> list[dict]:
+    """Only bars whose clock minute ENDED at or before the feature cutoff tau (= t - 20 s). Use this, never raw bars."""
+    return [b for b in bars if int(b["minute_ts"]) + 60 <= tau]
 
 
 def bars_to_dicts(bars: list[list]) -> list[dict]:

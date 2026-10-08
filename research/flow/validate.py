@@ -56,10 +56,17 @@ def chain_check(trades: list[dict]) -> dict:
     by_venue = defaultdict(list)
     for t in trades:
         by_venue[t["venue"]].append(t)
-    for _, ts in by_venue.items():
+    for venue, ts in by_venue.items():
         for a, b in zip(ts, ts[1:]):
             n_pairs += 1
-            if a["x1"] == b["x0"] and a["y1"] == b["y0"]:
+            # PumpSwap: x (real quote) jumps between trades while the virtual reserve v moves the other way
+            # (X = x + v is conserved; audit 2026-10-08). Completeness is judged on the token side; a quote-side
+            # jump counts as explained when both events carry v and x + v chains.
+            quote_ok = a["x1"] == b["x0"] or (venue == 1 and a.get("virt") and b.get("virt")
+                                              and a["x1"] + a["virt"] == b["x0"] + b["virt"])
+            if venue == 1 and a["y1"] == b["y0"] and not quote_ok and not (a.get("virt") and b.get("virt")):
+                quote_ok = True   # v unknown on a sell: token side chains, quote jump assumed to be a v shift
+            if quote_ok and a["y1"] == b["y0"]:
                 n_ok += 1
                 # V1 on a verified transition: does the observed reserve move match the label?
                 n_label += 1
@@ -339,10 +346,16 @@ def run(out: Path, max_hours: int, ch: CryptoHouse | None) -> dict:
         may_c = [m for m in found if cen[m].get("mayhem_state") is not None]
         may_agree = sum(1 for m in found if bool(grads[m]["is_mayhem"]) == (cen[m].get("mayhem_state") is not None))
         pool_match = sum(1 for m in found if grads[m].get("pool") == cen[m].get("pump_swap_pool"))
+        may_derived = sum(1 for m in found if bool(grads[m].get("mayhem")) == (cen[m].get("mayhem_state") is not None))
+        solq = sum(1 for m in found if bool(grads[m].get("sol_quoted")) == (cen[m].get("quote_mint") == SOL_NATIVE))
+        missing = [g for g in grads.values() if g.get("has_create") and census["created_min_ts"] <= g["c_ts"] <= census["created_max_ts"]
+                   and g["g_ts"] <= census["census_started_ts"] and g["mint"] not in cen]
         ch_in_census_window = [g for g in grads.values() if census["created_min_ts"] <= (g["c_ts"] or 0) <= census["created_max_ts"]]
         res["V0"] = {"census_coins": len(cen), "found_in_cryptohouse": len(found),
                      "creation_ts_exact": ts_match, "pool_match": pool_match,
                      "mayhem_flag_agree": may_agree, "census_mayhem_state_set": len(may_c),
+                     "mayhem_derived_agree": may_derived, "sol_quoted_agree": solq,
+                     "graduates_missing_from_census": [g["mint"] for g in missing],
                      "cryptohouse_graduates_created_in_census_window": len(ch_in_census_window),
                      "graduates_span": [utc(g_lo), utc(g_hi)]}
     if bars:
@@ -459,7 +472,11 @@ def write_report(out: Path, res: dict) -> None:
               f"- {v['found_in_cryptohouse']} of {v['census_coins']} census coins found as CryptoHouse graduates "
               f"(graduates span {v['graduates_span'][0]} to {v['graduates_span'][1]}).",
               f"- Creation timestamp identical to the census for {v['creation_ts_exact']}; canonical pool identical for {v['pool_match']}.",
-              f"- Mayhem flag (CreateEvent `is_mayhem_mode`) agrees with census `mayhem_state` presence on {v['mayhem_flag_agree']}.",
+              f"- Mayhem flag (CreateEvent `is_mayhem_mode`) agrees with census `mayhem_state` presence on {v['mayhem_flag_agree']}; "
+              f"the derived `mayhem` column (flag, or real SOL < 80 at completion on SOL curves) agrees on {v['mayhem_derived_agree']}.",
+              f"- SOL-quoted classification agrees with the census quote mint on {v['sol_quoted_agree']}.",
+              f"- CryptoHouse graduates created in the census window and graduated before the census ran but absent from it: "
+              f"{len(v['graduates_missing_from_census'])} {v['graduates_missing_from_census']}.",
               f"- CryptoHouse graduates created inside the census window: {v['cryptohouse_graduates_created_in_census_window']}."]
     v = res.get("V3", {})
     if v and v.get("worst"):

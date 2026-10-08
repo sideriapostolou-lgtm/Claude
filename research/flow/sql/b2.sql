@@ -13,7 +13,7 @@
 --          pool's virtual quote reserve read from Buy events (~17.58 SOL on 2026-10 migration pools; sells do
 --          not carry it, so a pool with no buy in the chunk gets virt = 0 and its prices must be redone
 --          offline from x_close/y_close); buyers/sellers/top5 count wallets with >= 0.01 SOL in the minute.
---   agent candidates: wallets with >= 2 buys, 0 sells in [g, g+330 s) inside this chunk: (user, [ts], [sol]).
+--   agent candidates: wallets with >= 2 buys, 0 sells in [g, g+420 s) inside this chunk: (user, [ts], [sol]).
 --   early windows (exact only if [g, g + 300) lies inside the chunk; flag w_complete):
 --          totals over 120 s and 300 s after g, plus the top 10 buyers of each window.
 WITH
@@ -64,11 +64,24 @@ tr AS (
     AND substring(e.r, 9, 8) IN (unhex('$D_AMM_BUY'), unhex('$D_AMM_SELL'))
     AND e.ts >= a.g_ts AND e.ts < a.g_ts + $horizon_s
 ),
+-- The pool prices with X = x + v. v (virtual quote reserve) is emitted on Buy events only and is NOT constant:
+-- between trades x and v move by opposite amounts (X is conserved). Carry v through sells along the chain:
+-- v_k = (v + C)_last_buy - C_k, C = cumulative quote-side jumps x0_k - x1_(k-1) where the token side chains.
+trj AS (
+  SELECT *, if(toInt64(y0) = lagInFrame(toInt64(y1), 1, toInt64(y0)) OVER wj,
+               toInt64(x0) - lagInFrame(toInt64(x1), 1, toInt64(x0)) OVER wj, 0) AS brk
+  FROM tr WINDOW wj AS (PARTITION BY pool_b ORDER BY okey ROWS BETWEEN 1 PRECEDING AND CURRENT ROW)
+),
+trc AS (
+  SELECT *, sum(brk) OVER (PARTITION BY pool_b ORDER BY okey ROWS UNBOUNDED PRECEDING) AS cbrk FROM trj
+),
 trp AS (
   SELECT *, max(virt) OVER (PARTITION BY pool_b) AS pv,
-    ((x1 + pv) / 1e9) / greatest(y1 / 1e6, 1e-9) AS p1,
-    ((x0 + pv) / 1e9) / greatest(y0 / 1e6, 1e-9) AS p0
-  FROM tr
+    last_value(if(virt > 0, toInt64(virt) + cbrk, NULL)) OVER (PARTITION BY pool_b ORDER BY okey ROWS UNBOUNDED PRECEDING) AS vc,
+    toUInt64(greatest(ifNull(vc - cbrk, toInt64(pv)), 0)) AS pv_t,
+    ((x1 + pv_t) / 1e9) / greatest(y1 / 1e6, 1e-9) AS p1,
+    ((x0 + pv_t) / 1e9) / greatest(y0 / 1e6, 1e-9) AS p0
+  FROM trc
 ),
 -- per (pool, clock minute, wallet); everything downstream is a single linear pipeline (CTEs referenced
 -- more than once are re-executed by ClickHouse, which would repeat the whole scan).
@@ -84,8 +97,8 @@ pmu AS (
     max(p1) AS u_hi, min(p1) AS u_lo,
     sumIf(usol, is_buy AND ts < g_ts + 120) AS u_w2b, sumIf(usol, NOT is_buy AND ts < g_ts + 120) AS u_w2s,
     sumIf(usol, is_buy AND ts < g_ts + 300) AS u_w5b, sumIf(usol, NOT is_buy AND ts < g_ts + 300) AS u_w5s,
-    arraySort(x -> x.1, groupArrayIf((ts, toFloat32(usol / 1e9)), is_buy AND ts < g_ts + 330)) AS u_agb,
-    countIf(NOT is_buy AND ts < g_ts + 330) AS u_ags
+    arraySort(x -> x.1, groupArrayIf((ts, toFloat32(usol / 1e9)), is_buy AND ts < g_ts + 420)) AS u_agb,
+    countIf(NOT is_buy AND ts < g_ts + 420) AS u_ags
   FROM trp GROUP BY pool_b, m, user_b
 ),
 pm AS (
@@ -112,7 +125,7 @@ pp AS (
   FROM pm GROUP BY pool_b
 )
 SELECT base58Encode(pool_b) AS pool, mint, g AS g_ts,
-  (g >= toUInt32(toDateTime('$t0')) AND g + 330 <= toUInt32(toDateTime('$t1'))) AS w_complete,
+  (g >= toUInt32(toDateTime('$t0')) AND g + 420 <= toUInt32(toDateTime('$t1'))) AS w_complete,
   n_trades, first_m, last_m, pool_pv / 1e9 AS virt_sol, virt_max / 1e9 AS virt_max_sol, bars,
   -- early windows after g (sums over wallets; buyers/sellers count wallets with >= 0.01 SOL)
   arraySum(wm.2) / 1e9 AS w120_buy_sol, arraySum(wm.3) / 1e9 AS w120_sell_sol,

@@ -454,7 +454,7 @@ class Backfill:
             "graduates": n,
             "graduates_with_create": sum(1 for g in grads.values() if g.get("has_create")),
             "graduates_with_pool": sum(1 for g in grads.values() if g.get("pool")),
-            "graduates_mayhem": sum(1 for g in grads.values() if g.get("is_mayhem")),
+            "graduates_mayhem_flag": sum(1 for g in grads.values() if g.get("is_mayhem")),   # CreateEvent flag only
             "curve_hours_done": len(curve_hours),
             "curve_span": [utc(curve_hours[0]), utc(curve_hours[-1] + HOUR)] if curve_hours else None,
             "b2_hours_done": len(b2_hours),
@@ -490,8 +490,20 @@ def consolidate(out: Path) -> dict:
                 grads[d["mint"]] = d
     for d in grads.values():
         d["grad_delay_s"] = (d["g_ts"] - d["c_ts"]) if d.get("has_create") else None
-        d["mayhem"] = bool(d.get("is_mayhem")) or (d.get("rsol_complete") or 0) < 80
         d["sol_quoted"] = d.get("pool_quote_mint") == "So11111111111111111111111111111111111111112"
+        # non-SOL-quoted curves use another TradeEvent/CreateEvent tail: their rsol and curve_quote_mint are not
+        # valid, so the "real SOL < 80 at completion" rule applies to SOL-quoted coins only
+        d["mayhem"] = bool(d.get("is_mayhem")) or (d["sol_quoted"] and (d.get("rsol_complete") or 0) < 80)
+        if not d.get("has_create"):
+            # creation outside the scan: launch / bundle / sniper / creator features were never observed. They read 0
+            # in the raw rows; make them NULL so they cannot be mistaken for real zeros (audit: 7 % of tradeable,
+            # 17 % of non-instant tradeable graduates on the pilot). Curve-life totals are partial: flag them.
+            for k in list(d):
+                if k.startswith(("l_", "z_", "sn60_", "creator_", "first20_")):
+                    d[k] = None
+            d["curve_partial"] = True
+        else:
+            d["curve_partial"] = False
     if grads:
         pq.write_table(pa.Table.from_pylist(sorted(grads.values(), key=lambda d: d["g_ts"])),
                        out / "graduates.parquet", compression="zstd")
@@ -507,7 +519,9 @@ def consolidate(out: Path) -> dict:
         agent = m.pop("agent")
         a_by_min = features.agent_sol_by_minute(agent)
         for b in m.pop("bars"):
+            gq = grads.get(m["mint"], {})
             b.update({"mint": m["mint"], "pool": pool, "g_ts": m["g_ts"],
+                      "sol_quoted": gq.get("sol_quoted"), "mayhem": gq.get("mayhem"),   # non-SOL pools: prices/flows in quote units
                       "minute_idx": (b["minute_ts"] - (m["g_ts"] // 60) * 60) // 60,
                       "agent_buy_sol": a_by_min.get(b["minute_ts"], 0.0)})
             b.setdefault("price_repaired", 0)
@@ -527,6 +541,8 @@ def consolidate(out: Path) -> dict:
             "w120_top5_share_ex_agent": features.top_share(m.get("w120_top10"), m.get("w120_buy_sol"), 5, excl),
             "w120_top10": json.dumps(m.get("w120_top10")), "w300_top10": json.dumps(m.get("w300_top10")),
             "grad_delay_s": g.get("grad_delay_s"),
+            "sol_quoted": g.get("sol_quoted"), "mayhem": g.get("mayhem"),
+            "virt_known": bool(m.get("virt_sol")),   # False: prices are x / y without the virtual reserve (~17 % low)
         })
         coin_rows.append(m)
     if bars_rows:

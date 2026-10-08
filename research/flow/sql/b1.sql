@@ -8,7 +8,8 @@
 --         min_usol (lamports; trades below it are dropped, 0 keeps dust), max_trades (per coin).
 -- Successful transactions only. Each trade is a tuple
 --   (slot, tx_idx, pix, ix, ts, tx, venue, is_buy, user, usol, tok, x0, y0, x1, y1, qamt, lp_fee, pfee, cfee, ix_name, virt)
--- virt = PumpSwap virtual quote reserve from Buy events (0 on sells and curve trades); AMM price = (x + virt) / y.
+-- virt = PumpSwap virtual quote reserve BEFORE each trade (carried through sells along the chain; 0 on curve trades);
+-- AMM price before the trade = (x0 + virt) / y0.
 -- venue 0 = curve (x/y = virtual SOL/token reserves; x0/y0 derived from the post-trade values),
 -- venue 1 = PumpSwap (x/y = pool quote/base reserves; x0/y0 as emitted, x1/y1 derived),
 -- amounts in raw units (lamports, token base units with 6 decimals), sorted by (slot, tx_idx, pix, ix).
@@ -75,8 +76,24 @@ tr AS (
     AND substring(e.r, 9, 8) IN (unhex('$D_CURVE_TRADE'), unhex('$D_AMM_BUY'), unhex('$D_AMM_SELL'))
     AND (e.amm OR substring(e.r, 9, 8) = unhex('$D_CURVE_TRADE'))
     AND e.ts >= w.ts_lo AND e.ts < w.ts_hi
-    AND usol >= $min_usol
 ),
+-- PumpSwap pricing reserve X = x + v; v is emitted on Buy events only and moves opposite to x between trades.
+-- Carry it along the per-pool chain BEFORE dropping dust (see b2.sql): v_k = (v + C)_last_buy - C_k.
+trj AS (
+  SELECT *, if(venue = 1 AND toInt64(y0) = lagInFrame(toInt64(y1), 1, toInt64(y0)) OVER wj,
+               toInt64(x0) - lagInFrame(toInt64(x1), 1, toInt64(x0)) OVER wj, 0) AS brk
+  FROM tr WINDOW wj AS (PARTITION BY mint, venue ORDER BY slot, tx_idx, pix, ix ROWS BETWEEN 1 PRECEDING AND CURRENT ROW)
+),
+trc AS (
+  SELECT *, sum(brk) OVER (PARTITION BY mint, venue ORDER BY slot, tx_idx, pix, ix ROWS UNBOUNDED PRECEDING) AS cbrk FROM trj
+),
+trv AS (
+  SELECT *,
+    last_value(if(virt > 0, toInt64(virt) + cbrk, NULL)) OVER (PARTITION BY mint, venue ORDER BY slot, tx_idx, pix, ix ROWS UNBOUNDED PRECEDING) AS vc,
+    if(venue = 1, toUInt64(greatest(ifNull(vc - cbrk, 0), 0)), 0) AS virt_t
+  FROM trc
+),
+trf AS (SELECT * FROM trv WHERE usol >= $min_usol),
 packed AS (
   SELECT mint, count() AS n_trades, n_trades > $max_trades AS truncated,
     -- per-minute totals over ALL trades (never truncated): (minute since ts_lo, venue, n, n_buys, buy_usol, sell_usol)
@@ -87,12 +104,12 @@ packed AS (
         length(arrayFilter(x -> x.1 = k.1 AND x.2 = k.2 AND x.3 = 1, mv)),
         arraySum(arrayMap(x -> if(x.1 = k.1 AND x.2 = k.2 AND x.3 = 1, x.4, 0), mv)),
         arraySum(arrayMap(x -> if(x.1 = k.1 AND x.2 = k.2 AND x.3 = 0, x.4, 0), mv))), mk)) AS minutes,
-    arraySlice(arraySort(x -> (x.1, x.2, x.3, x.4), groupArray((toUInt32(slot), toUInt16(tx_idx), toUInt8(pix), toUInt8(ix), ts,
-        venue, toUInt8(is_buy), cityHash64(user_b), usol, tok, x0, y0, toUInt32(pfee + cfee + lp_fee), toUInt32(virt / 1000)))),
+    arraySlice(arraySort(x -> (x.1, x.2, x.3, x.4), groupArray((toUInt32(slot), toUInt16(tx_idx), toUInt16(pix), toUInt16(ix), ts,
+        venue, toUInt8(is_buy), cityHash64(user_b), usol, tok, x0, y0, toUInt64(pfee + cfee + lp_fee), toUInt32(virt_t / 1000)))),
         1, $max_trades) AS trades,
     sumMap([user_b], [usol]) AS wsum,
     arrayMap(x -> (cityHash64(x.1), base58Encode(x.1)), arrayFilter(x -> x.2 >= 1000000000, arrayZip(wsum.1, wsum.2))) AS wallet_dict
-  FROM tr
+  FROM trf
   GROUP BY mint
 )
 SELECT mint, n_trades, truncated, minutes, trades, wallet_dict FROM packed
