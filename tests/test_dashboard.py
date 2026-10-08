@@ -455,18 +455,27 @@ def test_usage_budget_of_the_judge_is_what_the_judge_enforces(ledger: Ledger,
     assert (anthropic["used"], anthropic["level"]) == (0.0, "ok")
 
 
-def test_usage_card_and_budget_chips_are_on_the_page(settings: Settings) -> None:
-    from nightcrawler.dashboard import _SCRIPT
+def test_usage_card_and_budget_chips_are_on_the_page(ledger: Ledger, make_settings: Callable[..., Settings]) -> None:
+    from nightcrawler.page import _SCRIPT
+    from nightcrawler.pagestate import build_page_state
 
+    settings = make_settings(USAGE_JUPITER_MONTHLY_CALLS=100, USAGE_DEXSCREENER_MONTHLY_CALLS=100)
     assert '<section class="card" id="usage">' in render_html(settings)
-    assert "renderUsage(s.usage)" in _SCRIPT
-    assert "of its " in _SCRIPT and "over its " in _SCRIPT  # chips: "<provider> at 85% of its monthly budget"
+    assert "renderUsage(s.usage, s.about)" in _SCRIPT
+    assert 'row.level === "warn"' in _SCRIPT and 'row.level === "over"' in _SCRIPT  # amber at 80 %, red over
+    ledger.set_kv("usage.providers", {
+        "jupiter": _counts("2026-10-08", {"calls": 1}, "2026-10", {"calls": 120}),
+        "dexscreener": _counts("2026-10-08", {"calls": 1}, "2026-10", {"calls": 85})})
+    page = build_page_state(ledger, settings, NOW)
+    levels = {row["label"]: row["level"] for row in page["usage"]}
+    assert levels["Jupiter"] == "over" and levels["DexScreener"] == "warn"
+    assert "Jupiter is over its monthly budget (120%)." in [a["text"] for a in page["alerts"]]
 
 
 def test_missing_optional_parts_never_render_as_the_word_null() -> None:
     """``node.replaceChildren(null)`` inserts the TEXT "null" (it showed under Details whenever there was
     no engine error, and under the skip reasons): every card is filled through one helper that drops them."""
-    from nightcrawler.dashboard import _SCRIPT
+    from nightcrawler.page import _SCRIPT
 
     assert _SCRIPT.count(".replaceChildren(") == 1 and "function put(node, ...kids)" in _SCRIPT
 
@@ -507,7 +516,8 @@ def test_server_lifecycle(settings: Settings) -> None:
 
 def test_since_start_is_measured_in_sol_not_moved_by_the_sol_price(ledger: Ledger, settings: Settings) -> None:
     """A bot that LOST 3 % in SOL while SOL/USD rose 12 % must not show a green "since start"."""
-    from nightcrawler.dashboard import _SCRIPT
+    from nightcrawler.page import _SCRIPT
+    from nightcrawler.pagestate import build_page_state
 
     start = 923_190_546  # $100 at $108.32/SOL
     ledger.set_kv("paper.start_lamports", start)
@@ -520,28 +530,37 @@ def test_since_start_is_measured_in_sol_not_moved_by_the_sol_price(ledger: Ledge
     assert eq["pnl_total_trading_usd"] == pytest.approx(eq["pnl_total_sol"] * 121.32)
     assert eq["pnl_total_trading_usd"] < 0 < eq["sol_price_effect_usd"]
     assert eq["pnl_total_trading_usd"] + eq["sol_price_effect_usd"] == pytest.approx(eq["pnl_total_usd"])
-    # the tiles' headline value and colour come from the SOL figures (the unit the risk limits use)
-    assert 'tile("Since start", sol(e.pnl_total_sol, true)' in _SCRIPT and "tone(e.pnl_total_sol)" in _SCRIPT
-    assert 'tile("Today", sol(e.pnl_today_sol, true)' in _SCRIPT and "tone(e.pnl_today_sol)" in _SCRIPT
+    # the page's "since start" and "today" come from the SOL figures (the unit the risk limits use), shown in
+    # dollars at today's SOL price and coloured by their own sign; the SOL price effect is reported apart
+    money = build_page_state(ledger, settings, NOW)["money"]
+    assert money["since_start"]["usd"] == pytest.approx(eq["pnl_total_trading_usd"]) and money["since_start"]["usd"] < 0
+    assert money["since_start"]["pct"] == pytest.approx(-3.0, abs=1e-5)
+    assert money["sol_price_effect_usd"] == pytest.approx(eq["sol_price_effect_usd"])
+    assert eq["sol_price_effect_usd"] > 0
+    assert 'value.className = "num " + tone(part.usd)' in _SCRIPT and "share.className = tone(part.pct)" in _SCRIPT
 
 
 def test_live_dashboard_lists_only_live_positions_and_shows_drift(ledger: Ledger,
                                                                   make_settings: Callable[..., Settings]) -> None:
-    from nightcrawler.dashboard import _SCRIPT
+    from nightcrawler.pagestate import build_page_state
 
     populate(ledger)  # p1 is a PAPER position
     live = make_settings(TRADING_MODE="live", LIVE_CONFIRM=LIVE_CONFIRM_PHRASE, BOT_WALLET_SECRET="x" * 88,
                          DASHBOARD_HOST="127.0.0.1")
     assert build_state(ledger, live, NOW)["positions"] == []
     assert [p["id"] for p in build_state(ledger, make_settings(), NOW)["positions"]] == ["p1"]
-    assert "status.drift" in _SCRIPT  # a non-empty drift turns into a red chip
+    ledger.set_kv("engine.status", {"drift": {HIGGS: {"books": 5, "wallet": 0}}})  # a red banner at the top
+    alerts = build_page_state(ledger, live, NOW)["alerts"]
+    assert any(a["level"] == "bad" and "wallet doesn't match" in a["text"] for a in alerts)
+
+
 
 
 def test_safe_mode_banner_and_foreign_wallet_positions(ledger: Ledger,
                                                        make_settings: Callable[..., Settings]) -> None:
     """RT-9 / F3: the exits-only safe mode and live positions of ANOTHER wallet (never sold or counted
     by this bot) are shown from the ledger alone: a red chip, and foreign positions marked apart."""
-    from nightcrawler.dashboard import _SCRIPT
+    from nightcrawler.pagestate import build_page_state
 
     populate(ledger, mode="live")  # p1: a live position of the current wallet
     other = "OtherWa11et111111111111111111111111111111111"
@@ -567,5 +586,6 @@ def test_safe_mode_banner_and_foreign_wallet_positions(ledger: Ledger,
     assert state["safe_mode"] == {"problems": ["STOP_LOSS_PCT: must be a FRACTION"],
                                   "defaults_used": ["STOP_LOSS_PCT"], "since": NOW - 60}
     assert all(p["foreign_wallet"] is None for p in build_state(ledger, make_settings(), NOW)["positions"])
-    assert "SAFE MODE" in _SCRIPT and "s.safe_mode" in _SCRIPT
-    assert "p.foreign_wallet" in _SCRIPT and "another wallet" in _SCRIPT
+    page = build_page_state(ledger, live, NOW)
+    assert any(a["level"] == "bad" and a["text"].startswith("Safe mode") for a in page["alerts"])
+    assert {t["foreign"] for t in page["trades"]["open"]} == {False, True}

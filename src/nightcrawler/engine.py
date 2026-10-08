@@ -175,6 +175,7 @@ from dataclasses import dataclass, field
 from typing import Any, Callable
 
 from nightcrawler import __version__
+from nightcrawler.botwallet import CHECK_EVERY_S as BOT_WALLET_CHECK_S, record_balance
 from nightcrawler.clock import Clock, RealClock, iso_utc
 from nightcrawler.config import Settings, mask_problem
 from nightcrawler.http import HttpError
@@ -489,6 +490,7 @@ class Engine:
                                    ("discover", s.discovery_interval_s, self.discover),
                                    ("watch", s.watch_interval_s, self.watch),
                                    ("equity", s.equity_interval_s, self.snapshot_equity),
+                                   ("bot_wallet", BOT_WALLET_CHECK_S, self.check_bot_wallet),
                                    ("persist", STATE_SAVE_S, self.save_state),
                                    ("heartbeat", HEARTBEAT_S, self._heartbeat)):
             if self.stop_event.is_set() or (name == "discover" and self.safe_mode is not None):
@@ -1881,6 +1883,13 @@ class Engine:
         value = sum(p.value_lamports(p.last_price_usd, sol_usd) for p in positions if p.last_price_usd)
         return int(balances.sol_lamports) + int(value), sol_usd, balances
 
+    def check_bot_wallet(self, now: float) -> None:
+        """Paper mode with BOT_WALLET_SECRET set (the paper broker quotes as that wallet): read its SOL for
+        the page's "ready for real money?" checklist (:mod:`nightcrawler.botwallet`). Never raises."""
+        address = getattr(self.broker, "taker", None)
+        if not self.settings.is_live and address:
+            record_balance(self.ledger, self.sources.rpc, address, now)
+
     def snapshot_equity(self, now: float) -> None:
         positions = self._open_positions()
         equity, sol_usd, balances = self._equity_now(positions)
@@ -1996,6 +2005,7 @@ def build_app(settings: Settings, clock: Clock | None = None, *, session: Any = 
     from nightcrawler.risk import RiskManager
     from nightcrawler.sources import build_sources
     from nightcrawler.sources import pumpfun as pumpfun_mod
+    from nightcrawler.teamroom import TeamRoom
 
     stop_event = threading.Event()
     clock = clock if clock is not None else RealClock(stop_event)
@@ -2036,7 +2046,8 @@ def build_app(settings: Settings, clock: Clock | None = None, *, session: Any = 
                         judge=judge, risk=risk, broker=broker, sources=sources, stop_event=stop_event,
                         pumpfun=pumpfun)
         verify_cache: dict[str, Any] = {}
-        dashboard = DashboardServer(settings, lambda: build_state(ledger, settings, clock.now(), verify_cache))
+        dashboard = DashboardServer(settings, lambda: build_state(ledger, settings, clock.now(), verify_cache),
+                                    team=TeamRoom(settings, ledger, clock))
     except BaseException:
         attach_usage_store(http, None)  # an injected client must not keep writing into a closed ledger
         ledger.close()

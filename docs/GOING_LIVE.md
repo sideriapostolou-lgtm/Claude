@@ -17,18 +17,19 @@ the Phantom app, the Coinbase app, and the Railway website.
 - [ ] **Paper mode ran on Railway for at least 1-2 weeks,** with the dashboard's heartbeat
       green most of the time.
 - [ ] **Paper results beat costs over many trades.** Run `nightcrawler report` ("Closed
-      trades: ... SOL"), or read the dashboard's "Since start" figure **in SOL** (the big
-      number). Do not judge by dollars: over a week or two, SOL's own price moves far more
-      than the bot's results, and the USD line under the tile shows that "SOL price" effect
-      separately. The SOL result should be positive *after* fees, over at least 20-30 closed
+      trades: ... SOL"), or read the dashboard's "Since start" tile: it is the bot's own result,
+      counted **in SOL** and shown at today's SOL price. Do not judge by the big dollar number:
+      over a week or two, SOL's own price moves far more than the bot's results, and the page
+      lists that "price of SOL" effect separately. The SOL result should be positive *after* fees, over at least 20-30 closed
       trades, and not just thanks to one lucky trade. If it isn't, stop here. A losing paper
       bot will be a losing live bot. (Paper fills already assume 1 % worse than the quote,
       `PAPER_SLIPPAGE_BPS=100`, because real swaps land below the quote.)
 - [ ] **Receipts verify.** The dashboard shows "verified", or `nightcrawler receipts verify`
       says OK.
 - [ ] **The audit is clean.** `nightcrawler report` says `Result: OK` (exit code 0).
-- [ ] **`DASHBOARD_TOKEN` is set** to a long random password, so strangers can't look at your bot.
-      Live mode refuses to start without it (unless the dashboard only listens on `127.0.0.1`).
+- [ ] **`DASHBOARD_TOKEN` is set** to a long random password (at least 24 characters, not the
+      example from RAILWAY.md), so strangers can't look at your bot. Live mode refuses to start
+      without one, or with a short or guessable one (unless the dashboard only listens on `127.0.0.1`).
 - [ ] **The volume is attached** at `/data`, with `DATA_DIR=/data` and `RAILWAY_RUN_UID=0`
       (see [RAILWAY.md](RAILWAY.md)). Without it, the bot forgets its positions on every redeploy.
 - [ ] **`RAILWAY_DEPLOYMENT_DRAINING_SECONDS=30` is set** (see [RAILWAY.md](RAILWAY.md)). Railway's
@@ -85,9 +86,18 @@ so roughly $98 is tradable.
 The bot never prints, logs or displays this key, and it never sends it anywhere. Jupiter
 gets only signed transactions, never the key itself.
 
+Deploy (still in paper mode). Within about 10 minutes the dashboard's "Ready for real money?"
+card shows step 3 ticked, with the start of the wallet's address and its SOL: the bot reads that
+balance every 10 minutes, so you can check the address matches the one in Phantom.
+
 ## 4. Switch to live mode
 
-**First, close the paper positions.** Set `KILL_SWITCH=sell_all` (still in paper mode), deploy,
+**First, check the dashboard.** Its "Ready for real money?" card should say **"Ready to switch
+on"**: steps 1-5 ticked, all of them doable in paper mode (sections 1-3 above are its step 3,
+and `KEYS_ROTATED_ON`, a date like `2026-10-09`, is its step 4). If it doesn't, the unticked step
+says what is missing. It never says Ready while a banner is up (kill switch, halt, a silent bot).
+
+**Then, close the paper positions.** Set `KILL_SWITCH=sell_all` (still in paper mode), deploy,
 and wait until the dashboard shows no open positions. A live bot never sells, counts or values
 paper positions (they are not in your wallet); it notes them in the receipts and leaves them
 alone, so they would just sit there.
@@ -121,9 +131,10 @@ can compare every later balance with the books.
 
 ## 5. Watch it: the dashboard and Phantom
 
-- **The dashboard** (your Railway link with `?token=...`) now shows a red **LIVE** badge and
-  the bot wallet's address. Check the engine heartbeat, open positions, recent trades and
-  "why coins were skipped".
+- **The dashboard** (your Railway link with `?token=...`) now shows a red **LIVE** tag and
+  "Real money". Check that no red banner shows, the team rows, open positions and recent trades.
+  Before you switched (step 4), its "Ready for real money?" card should have said "Ready to
+  switch on" (steps 1-5 ticked); now it says "Ready — real money is on".
 - **Phantom** (the nightcrawler bot account) shows the same swaps as the dashboard. Every
   swap shows up in Phantom's activity tab.
 - `nightcrawler report` (if you can run commands) compares the books with the real wallet
@@ -132,7 +143,7 @@ can compare every later balance with the books.
 Expect long stretches with **no trades**. The filters are strict on purpose.
 
 **If something looks off,** for example a swap in Phantom that's not on the dashboard, a red
-error, an "Unresolved swap" or a "Wallet differs from the books" chip: set `KILL_SWITCH=stop`
+error, an "outcome is unknown" or a "wallet doesn't match" banner: set `KILL_SWITCH=stop`
 first and investigate after. When a live swap's outcome is unknown (say the network dropped
 mid-send, or the bot was restarted in the middle of one), the bot stops all new buys by itself,
 waits 90 seconds, reads the wallet, and records what actually happened in the receipts. It

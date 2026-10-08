@@ -125,10 +125,10 @@ def test_live_requires_confirmation_and_wallet(make_settings) -> None:
 def test_secrets_never_leak(make_settings) -> None:
     s = make_settings(TRADING_MODE="live", LIVE_CONFIRM=LIVE_CONFIRM_PHRASE, BOT_WALLET_SECRET=WALLET,
                       ANTHROPIC_API_KEY="sk-ant-api03-SECRETSECRET", JUPITER_API_KEY="jup-SECRET-KEY",
-                      DASHBOARD_TOKEN="dash-SECRET", X_BEARER_TOKEN="xbearer-SECRET",
+                      DASHBOARD_TOKEN="dash-SECRET-long-random-password", X_BEARER_TOKEN="xbearer-SECRET",
                       SOLANA_RPC_URL="https://mainnet.helius-rpc.com/?api-key=HELIUSSECRET")
-    secrets = [WALLET, "sk-ant-api03-SECRETSECRET", "jup-SECRET-KEY", "dash-SECRET", "xbearer-SECRET",
-               "HELIUSSECRET"]
+    secrets = [WALLET, "sk-ant-api03-SECRETSECRET", "jup-SECRET-KEY", "dash-SECRET-long-random-password",
+               "xbearer-SECRET", "HELIUSSECRET"]
     for text in (repr(s), str(s), json.dumps(s.public_dict(), default=str)):
         for secret in secrets:
             assert secret not in text
@@ -270,6 +270,32 @@ def test_live_mode_requires_a_dashboard_token_unless_bound_to_loopback(make_sett
     assert make_settings(**live, DASHBOARD_TOKEN="a-long-random-dashboard-password").is_live
     assert make_settings(**live, DASHBOARD_HOST="127.0.0.1").is_live
     assert make_settings(DASHBOARD_HOST="0.0.0.0").trading_mode == "paper"  # paper needs no token
+
+
+@pytest.mark.parametrize("token", ["4821", "short-password-123", "x" * 40, "abcabcabcabcabcabcabcabcabc",
+                                   "change-me-to-a-long-random-password-1234567890"])
+def test_live_mode_refuses_a_weak_dashboard_token(make_settings, token: str) -> None:
+    """A guessable token on a public live dashboard is as good as none: it shows the wallet, its positions and
+    their stops. The error never repeats the token (it is printed to the deploy logs)."""
+    live = {"TRADING_MODE": "live", "LIVE_CONFIRM": LIVE_CONFIRM_PHRASE, "BOT_WALLET_SECRET": WALLET}
+    with pytest.raises(ConfigError) as ei:
+        make_settings(**live, DASHBOARD_TOKEN=token)
+    text = "\n".join(ei.value.problems)
+    assert "DASHBOARD_TOKEN" in text and "24 characters" in text and token not in text
+    assert make_settings(DASHBOARD_TOKEN=token).dashboard_token  # paper mode: allowed (the checklist says it's weak)
+
+
+@pytest.mark.parametrize("value", ["no", "false", "not yet", "TODO", "2026-13-01", "08/10/2026", "20261008",
+                                   "2026-10-08T10:00", "sk-ant-api03-NEWKEYshouldnotbehere0123"])
+def test_keys_rotated_on_must_be_a_date(make_settings, value: str) -> None:
+    """Only a date ticks "keys replaced"; anything else (or a key pasted into the wrong box) is refused at start
+    with a message that never repeats the value."""
+    with pytest.raises(ConfigError) as ei:
+        make_settings(KEYS_ROTATED_ON=value)
+    (problem,) = ei.value.problems
+    assert problem.startswith("KEYS_ROTATED_ON must be a date like 2026-10-09") and repr(value) not in problem
+    assert value not in problem.replace("KEYS_ROTATED_ON", "")
+    assert make_settings(KEYS_ROTATED_ON=" 2026-10-08 ").keys_rotated_on.strip() == "2026-10-08"
 
 
 def test_take_profit_written_as_percent_is_rejected_with_the_fraction_hint(make_settings) -> None:
