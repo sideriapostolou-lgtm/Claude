@@ -68,11 +68,14 @@ def make_rig(world: World, http_client: HttpClient, fake_clock: FakeClock, make_
              tmp_path) -> Callable[..., Rig]:
     ledgers: list[Ledger] = []
 
-    def _make(*, judge: Any = None, broker: Any = None, crawler: Any = None, **overrides: Any) -> Rig:
+    def _make(*, judge: Any = None, broker: Any = None, crawler: Any = None, broker_factory: Any = None,
+              ledger_path: Any = None, **overrides: Any) -> Rig:
         settings = make_settings(**overrides)
         sources = build_sources(settings, http_client)
-        ledger = Ledger(tmp_path / f"ledger{len(ledgers)}.db", clock=fake_clock)
+        ledger = Ledger(ledger_path or tmp_path / f"ledger{len(ledgers)}.db", clock=fake_clock)
         ledgers.append(ledger)
+        if broker is None and broker_factory is not None:
+            broker = broker_factory(sources, ledger, settings)
         broker = broker if broker is not None else PaperBroker(sources.jupiter, ledger, settings, fake_clock)
         engine = Engine(settings, clock=fake_clock, ledger=ledger,
                         crawler=crawler or Crawler(sources, settings, fake_clock),
@@ -398,7 +401,7 @@ class UnknownOutcomeBroker:
         self.quotes.append(q)
         return q
 
-    def execute(self, quote: Quote, position: Any, *, symbol: str = "") -> Any:
+    def execute(self, quote: Quote, position: Any, *, symbol: str = "", on_fill: Any = None) -> Any:
         if self.lands:
             self.tokens[quote.output_mint] = quote.out_amount
             self.sol -= quote.in_amount
