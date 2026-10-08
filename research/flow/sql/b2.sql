@@ -28,18 +28,16 @@ okt AS (
         AND mint IN $mints)
 ),
 ev AS (
-  SELECT i.slot AS slot, i.ts AS ts, o.tx_idx AS tx_idx, i.pix AS pix, i.ix AS ix, base58Decode(i.data) AS r
-  FROM (
-    SELECT block_slot AS slot, toUInt32(block_timestamp) AS ts, tx_signature AS tx, parent_index AS pix, index AS ix, data
-    FROM solana.instructions
-    PREWHERE block_slot BETWEEN $s0 AND $s1 AND program_id = '$AMM' AND parent_index >= 0
-      AND length(data) BETWEEN $L_AMM_TRADE_LO AND $L_AMM_TRADE_HI
-    WHERE block_timestamp >= toDateTime64('$t0', 6) AND block_timestamp < toDateTime64('$t1', 6)
-  ) AS i
-  INNER JOIN okt AS o ON o.signature = i.tx
+  SELECT block_slot AS slot, toUInt32(block_timestamp) AS ts, tx_signature AS tx, parent_index AS pix, index AS ix,
+         base58Decode(data) AS r, substring(r, 129, 32) AS ev_pool_b
+  FROM solana.instructions
+  PREWHERE block_slot BETWEEN $s0 AND $s1 AND program_id = '$AMM' AND parent_index >= 0
+    AND length(data) BETWEEN $L_AMM_TRADE_LO AND $L_AMM_TRADE_HI
+  WHERE block_timestamp >= toDateTime64('$t0', 6) AND block_timestamp < toDateTime64('$t1', 6)
+    AND tx_signature IN (SELECT signature FROM okt)
 ),
 tr AS (
-  SELECT e.slot AS slot, e.ts AS ts, (e.slot, e.tx_idx, e.pix, e.ix) AS okey,
+  SELECT e.slot AS slot, e.ts AS ts, (e.slot, o.tx_idx, e.pix, e.ix) AS okey,
     substring(e.r, 9, 8) = unhex('$D_AMM_BUY') AS is_buy,
     a.pool_b AS pool_b, a.mint AS mint, a.g_ts AS g_ts,
     substring(e.r, 161, 32) AS user_b,
@@ -54,7 +52,8 @@ tr AS (
     (x1 / 1e9) / greatest(y1 / 1e6, 1e-9) AS p1,
     (x0 / 1e9) / greatest(y0 / 1e6, 1e-9) AS p0
   FROM ev AS e
-  INNER JOIN act AS a ON a.pool_b = substring(e.r, 129, 32)
+  INNER JOIN act AS a ON a.pool_b = e.ev_pool_b
+  INNER JOIN okt AS o ON o.signature = e.tx
   WHERE substring(e.r, 1, 8) = unhex('$PREFIX')
     AND substring(e.r, 9, 8) IN (unhex('$D_AMM_BUY'), unhex('$D_AMM_SELL'))
     AND e.ts >= a.g_ts AND e.ts < a.g_ts + $horizon_s

@@ -222,8 +222,9 @@ class Settings:
     stop_loss_pct: float = _f(0.18, "fraction", "Stop loss below entry (0.18 = -18%)", lo=0, hi=1, lo_open=True)
     max_hold_min: float = _f(120.0, "minutes", "Time stop", lo=0, lo_open=True)
     cooldown_min: float = _f(30.0, "minutes", "No re-entry into the same mint for this long after an exit", lo=0)
-    candle_window_min: int = _f(180, "minutes", "How many 1m candles the engine fetches per watch evaluation",
-                                lo=10, hi=1000)
+    candle_window_min: int = _f(180, "minutes", "Minimum 1m candles the engine fetches per watch evaluation (it "
+                                "always fetches at least DIP_LOOKBACK_H, the window the strategy and the "
+                                "backtester use)", lo=10, hi=1000)
 
     # ---- watchlist ----------------------------------------------------------
     watchlist_max: int = _f(15, "count", "Max tokens watched at once", lo=1, hi=100)

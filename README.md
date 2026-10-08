@@ -109,7 +109,7 @@ nightcrawler run                  # paper trading + dashboard on http://localhos
 | `nightcrawler receipts head` / `verify` / `export FILE` | Show the head hash, re-check the whole chain, or export it as a file anyone can verify. |
 | `nightcrawler wallet new` | Make a fresh bot wallet and show its secret **once** (Phantom's own "create account" works just as well). |
 | `nightcrawler wallet show` | The bot wallet's address and balances (never the secret). |
-| `nightcrawler sell-all [--yes]` | Sell every open position now. |
+| `nightcrawler sell-all [--yes]` | Sell every open position now (beside a running bot it writes `sell_all` into `DATA_DIR/KILL` and lets the bot sell). |
 | `nightcrawler reset-halt [--yes]` | Clear a drawdown halt (also possible from Railway with `RESET_HALT_TOKEN`). |
 | `nightcrawler config [--json]` | Show the settings in use (secrets are never shown). |
 | `nightcrawler dashboard` | Serve only the dashboard, without trading. |
@@ -126,7 +126,7 @@ full list with explanations is in [.env.example](.env.example). The important on
 | `TRADING_MODE` | `paper` | `paper` or `live` (real money). |
 | `LIVE_CONFIRM` | (empty) | Must be exactly `I_ACCEPT_REAL_MONEY_RISK` for live mode. |
 | `BOT_WALLET_SECRET` | (empty) | Live only: the private key of a **dedicated** bot wallet. Secret. |
-| `KILL_SWITCH` | `off` | `stop` = no new buys; `sell_all` = sell everything, then stop. |
+| `KILL_SWITCH` | `off` | `stop` = no new buys; `sell_all` = sell everything, then stop. `sell-all` works too; an unknown word means `stop`. |
 | `RESET_HALT_TOKEN` | (empty) | Change to any new value (e.g. today's date) to clear a drawdown halt once. |
 | `DASHBOARD_TOKEN` | (empty) | Password for the dashboard link. **Set a long random one** on Railway. |
 | `DATA_DIR` | `./data` | Where the ledger lives. On Railway: `/data` (a volume). |

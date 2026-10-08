@@ -16,16 +16,23 @@ the Phantom app, the Coinbase app, and the Railway website.
 
 - [ ] **Paper mode ran on Railway for at least 1-2 weeks,** with the dashboard's heartbeat
       green most of the time.
-- [ ] **Paper results beat costs over many trades.** Run `nightcrawler report`, or read the
-      dashboard's "since start" P&L. It should be positive *after* fees, over at least
-      20-30 closed trades, and not just thanks to one lucky trade. If it isn't, stop here.
-      A losing paper bot will be a losing live bot.
+- [ ] **Paper results beat costs over many trades.** Run `nightcrawler report` ("Closed
+      trades: ... SOL"), or read the dashboard's "Since start" figure **in SOL** (the big
+      number). Do not judge by dollars: over a week or two, SOL's own price moves far more
+      than the bot's results, and the USD line under the tile shows that "SOL price" effect
+      separately. The SOL result should be positive *after* fees, over at least 20-30 closed
+      trades, and not just thanks to one lucky trade. If it isn't, stop here. A losing paper
+      bot will be a losing live bot. (Paper fills already assume 1 % worse than the quote,
+      `PAPER_SLIPPAGE_BPS=100`, because real swaps land below the quote.)
 - [ ] **Receipts verify.** The dashboard shows "verified", or `nightcrawler receipts verify`
       says OK.
 - [ ] **The audit is clean.** `nightcrawler report` says `Result: OK` (exit code 0).
 - [ ] **`DASHBOARD_TOKEN` is set** to a long random password, so strangers can't look at your bot.
+      Live mode refuses to start without it (unless the dashboard only listens on `127.0.0.1`).
 - [ ] **The volume is attached** at `/data`, with `DATA_DIR=/data` and `RAILWAY_RUN_UID=0`
       (see [RAILWAY.md](RAILWAY.md)). Without it, the bot forgets its positions on every redeploy.
+- [ ] **`RAILWAY_DEPLOYMENT_DRAINING_SECONDS=30` is set** (see [RAILWAY.md](RAILWAY.md)). Railway's
+      default gives a stopping bot 0 seconds, so a redeploy could cut a swap in half.
 - [ ] **You know how to stop it** (section 6) and have tried `KILL_SWITCH=stop` once in paper mode.
 - [ ] **You accept** that edges on memecoins, if any, fade within weeks, and that the bot can
       lose everything you deposit.
@@ -80,12 +87,18 @@ gets only signed transactions, never the key itself.
 
 ## 4. Switch to live mode
 
-In the same **Variables** tab, set:
+**First, close the paper positions.** Set `KILL_SWITCH=sell_all` (still in paper mode), deploy,
+and wait until the dashboard shows no open positions. A live bot never sells, counts or values
+paper positions (they are not in your wallet); it notes them in the receipts and leaves them
+alone, so they would just sit there.
+
+Then, in the same **Variables** tab, set:
 
 | Variable | Value |
 |---|---|
 | `TRADING_MODE` | `live` |
 | `LIVE_CONFIRM` | `I_ACCEPT_REAL_MONEY_RISK` (exactly, capital letters) |
+| `KILL_SWITCH` | `off` (it was `sell_all` for the paper close-out) |
 | `MAX_WALLET_USD` | `150` (leave the default unless you know why) |
 | `SOLANA_RPC_URL` | your Helius URL (optional, recommended) |
 
@@ -101,8 +114,10 @@ the returned transaction, checks it by simulating it on Solana, then sends it th
 Everything else, including the filters, the strategy, the limits and the receipts, is
 identical to paper mode.
 
-Your paper history stays in the same ledger. Risk limits only count live equity from now on,
-and the switch is noted in the receipts.
+Your paper history stays in the same ledger. Risk limits, the dashboard and `nightcrawler report`
+only count live equity, positions and trades from now on, and the switch is noted in the
+receipts. Before its first live trade the bot records the wallet's starting SOL, so the audit
+can compare every later balance with the books.
 
 ## 5. Watch it: the dashboard and Phantom
 
@@ -117,10 +132,13 @@ and the switch is noted in the receipts.
 Expect long stretches with **no trades**. The filters are strict on purpose.
 
 **If something looks off,** for example a swap in Phantom that's not on the dashboard, a red
-error, or an "unresolved swap": set `KILL_SWITCH=stop` first and investigate after. When a
-live swap's outcome is unknown (say the network dropped mid-send), the bot stops all new buys
-by itself, waits 90 seconds, reads the wallet, and records what actually happened in the
-receipts. It never re-sends a swap.
+error, an "Unresolved swap" or a "Wallet differs from the books" chip: set `KILL_SWITCH=stop`
+first and investigate after. When a live swap's outcome is unknown (say the network dropped
+mid-send, or the bot was restarted in the middle of one), the bot stops all new buys by itself,
+waits 90 seconds, reads the wallet, and records what actually happened in the receipts. It
+never sends a new swap for it. Every 5 minutes it also compares the wallet's coins with its
+books; if they differ (a coin sold by hand in Phantom, say), it stops buying until they match
+again.
 
 **If it says "Halted":** equity fell 50 % from its peak. Take that seriously before
 resuming. To resume anyway, set `RESET_HALT_TOKEN` to a new value (for example today's date)

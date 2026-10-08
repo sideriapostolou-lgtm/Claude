@@ -8,7 +8,7 @@ Railway variables when deployed) under the variable names below.
 |---|---|---|---|---|---|
 | Helius (helius.dev) | Yes (created 2026-10-08, kept for possible future subscriptions) | Free | Bot's Solana RPC on Railway (`SOLANA_RPC_URL`), research spot checks, priority-fee estimates, `getTransactionsForAddress` (works on free, oldest-first) | `HELIUS_API_KEY` | 1M credits per month |
 | Dune (dune.com) | Yes | Free, API is paid-only (account showed 0 included credits on 2026-10-08) | Not used | — | — |
-| Jupiter (portal.jup.ag) | Not yet | Free key | Bot swaps and quotes once `lite-api.jup.ag` is retired | `JUPITER_API_KEY` | 1 request/s |
+| Jupiter (portal.jup.ag) | Yes (key verified 2026-10-08 on `api.jup.ag`: Ultra order + Price v3 OK) | Free key | Bot swaps and quotes; with a key the bot uses `https://api.jup.ag` instead of the retiring `lite-api.jup.ag` | `JUPITER_API_KEY` | Response headers showed 100 requests per rate window |
 | Alchemy (alchemy.com) | Not yet | Free | Optional research backup for full transaction history | `ALCHEMY_API_KEY` | 30M compute units per month |
 | Anthropic (console.anthropic.com) | Not yet | Pay per use | Optional AI judge ("Jev") | `ANTHROPIC_API_KEY` | Capped by `JUDGE_MAX_DAILY_USD` |
 | CryptoHouse (crypto.clickhouse.com) | No account needed | Free, public | Main research source for historical pump.fun trades | — | ~90 queries/hour per IP (shared through the proxy) |

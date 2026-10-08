@@ -391,7 +391,7 @@ class Engine:
         self._results = results
         self._run("kill", self.handle_kill, now, results)
         self._run("reconcile", self.reconcile_unresolved, now, results)
-        if not self._live_start_ok:
+        if not self._live_start_ok and self._due("live_start", s.position_interval_s, now):
             self._run("live_start", self._ensure_live_start, now, results)
         for name, interval, fn in (("drift", DRIFT_CHECK_S, self.check_drift),
                                    ("positions", s.position_interval_s, self.manage_positions),

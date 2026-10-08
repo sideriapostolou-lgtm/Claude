@@ -485,7 +485,8 @@ class Ledger:
         return out if limit is None else out[:limit]
 
     def _load_positions(self, rows: Sequence[Any]) -> list[Position]:
-        """Rows -> Positions; ``mode`` of rows written before it existed comes from the entry fill."""
+        """Rows -> Positions; ``mode`` of rows written before it existed comes from their fills
+        (the first entry fill, else any fill linked by ``position_id``)."""
         positions = [Position.from_dict(json.loads(r[0])) for r in rows]
         unknown = {p.entry_fill_ids[0] for p in positions if p.mode is None and p.entry_fill_ids}
         if unknown:
@@ -494,6 +495,14 @@ class Ledger:
             for p in positions:
                 if p.mode is None and p.entry_fill_ids:
                     p.mode = modes.get(p.entry_fill_ids[0])  # type: ignore[assignment]
+        orphans = {p.id for p in positions if p.mode is None}
+        if orphans:
+            marks = ",".join("?" for _ in orphans)
+            linked = dict(self._rows(f"SELECT position_id, MIN(mode) FROM fills WHERE position_id IN ({marks}) "
+                                     "GROUP BY position_id", sorted(orphans)))
+            for p in positions:
+                if p.mode is None:
+                    p.mode = linked.get(p.id)  # type: ignore[assignment]
         return positions
 
     def last_closed_at(self, mint: str) -> float | None:
