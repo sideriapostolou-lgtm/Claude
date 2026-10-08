@@ -1,0 +1,462 @@
+{
+ "stage": "debug",
+ "split": "final_train",
+ "utc": "2026-10-08 23:36:52",
+ "runtime_s": 3.6,
+ "provisional": false,
+ "debug_only": true,
+ "prereg_sha256": "08d68682eb9013626fc950aca3ef1712f618d1757438b88f4aa158a7a77ec88b",
+ "g1_py_sha256": "7a17be237edbd2c8007a711bd4010c1c237aa0fa32f27344b9f8a815b09a5499",
+ "data_files": {
+  "graduates.parquet": "2026-10-08 21:54:48",
+  "b2_coins.parquet": "2026-10-08 21:54:49",
+  "b2_bars.parquet": "2026-10-08 21:54:49"
+ },
+ "coverage": {
+  "bounds_utc": [
+   "2026-10-07 19:37:30",
+   "2026-10-08 08:06:47"
+  ],
+  "graduates_in_split": 644,
+  "tradeable": 450,
+  "usable": 450,
+  "excluded": {
+   "mayhem": 129,
+   "not_sol_quoted": 65
+  },
+  "created_inexact": 0,
+  "has_create0": 44,
+  "chain_hours_scanned_frac": 1.0,
+  "days_full": 2,
+  "days_expected": 0.52,
+  "notes": [
+   "SOL/USD series covers 449/450 coins; others use the nearest edge price (affects only $->SOL sizing and the alive filter's USD volume)"
+  ]
+ },
+ "coverage_ok": true,
+ "coverage_notes": [],
+ "variants": [
+  "G-time",
+  "G-chain",
+  "G-chain+"
+ ],
+ "hosts_params": {
+  "dip": {
+   "host": "nightcrawler_dip_rebound_default",
+   "dip_pct": 0.55,
+   "confirm_green": 2,
+   "dip_lookback_h": 6.0,
+   "min_age_min": 60.0,
+   "max_age_h": 48.0,
+   "min_mcap_usd": 100000.0,
+   "max_mcap_usd": 5000000.0,
+   "stop_pct": 0.18,
+   "take_profit_pct": 0.4,
+   "max_hold_min": 120.0
+  },
+  "R0": {
+   "host": "R0_random_alive",
+   "seed": 0,
+   "age_lo_min": 30.0,
+   "age_hi_min": 115.0,
+   "alive_vol_usd_15m": 1500.0,
+   "alive_mcap_usd": 6000.0,
+   "stop_pct": 0.5,
+   "max_hold_s": 3600.0
+  }
+ },
+ "trials": {
+  "n_trials_total": 2575,
+  "gate_runs": {
+   "G-time": {
+    "config": "G1|1e4842f81140",
+    "new_trial": false,
+    "n_trials_total": 2575,
+    "hypothesis_configs": 0,
+    "over_variant_limit": false
+   },
+   "G-chain": {
+    "config": "G1|79941ea68199",
+    "new_trial": false,
+    "n_trials_total": 2575,
+    "hypothesis_configs": 0,
+    "over_variant_limit": false
+   },
+   "G-chain+": {
+    "config": "G1|b843b614c9a2",
+    "new_trial": false,
+    "n_trials_total": 2575,
+    "hypothesis_configs": 0,
+    "over_variant_limit": false
+   }
+  },
+  "host_runs": {
+   "dip": {
+    "config": "G1.dip|e6b014d6ddb8",
+    "new_trial": false,
+    "hypothesis_configs": 0,
+    "over_variant_limit": false
+   },
+   "R0": {
+    "config": "G1.R0|27a79bc60126",
+    "new_trial": false,
+    "hypothesis_configs": 0,
+    "over_variant_limit": false
+   }
+  }
+ },
+ "counts": {
+  "usable_coins": 450,
+  "split_days": 0.5203240740740741,
+  "classes_at_g140": {
+   "ORGANIC": 193,
+   "FACTORY": 183,
+   "OPERATOR": 34,
+   "UNRESOLVED": 21,
+   "COMPLETED": 19
+  },
+  "flags_at_g140": {
+   "G-time": 327,
+   "G-chain": 236,
+   "G-chain+": 236
+  },
+  "unresolved_inputs": {
+   "creator_unknown": 21,
+   "grad_delay_null": 0
+  },
+  "serial_at_g140": 1,
+  "airdrop_by_window_end": 190,
+  "registry": {
+   "coins": 1100,
+   "creators": 848,
+   "wallets": 1624,
+   "warm_share_at_g140": 0.0
+  },
+  "host_trades": {
+   "dip": 13,
+   "R0": 94
+  },
+  "host_trades_per_day": {
+   "dip": 24.984429219681466,
+   "R0": 180.65664205000445
+  },
+  "host_trades_per_100_coins": {
+   "dip": 2.888888888888889,
+   "R0": 20.88888888888889
+  },
+  "host_trades_by_class": {
+   "dip": {
+    "ORGANIC": 6,
+    "COMPLETED": 3,
+    "FACTORY": 2,
+    "UNRESOLVED": 2
+   },
+   "R0": {
+    "ORGANIC": 29,
+    "OPERATOR": 29,
+    "FACTORY": 19,
+    "UNRESOLVED": 10,
+    "COMPLETED": 7
+   }
+  },
+  "host_trades_flagged": {
+   "dip": {
+    "G-time": 5,
+    "G-chain": 5,
+    "G-chain+": 5
+   },
+   "R0": {
+    "G-time": 61,
+    "G-chain": 55,
+    "G-chain+": 55
+   }
+  }
+ },
+ "hosts": {
+  "dip": {
+   "hypothesis": "G1.dip",
+   "params": {
+    "host": "nightcrawler_dip_rebound_default",
+    "dip_pct": 0.55,
+    "confirm_green": 2,
+    "dip_lookback_h": 6.0,
+    "min_age_min": 60.0,
+    "max_age_h": 48.0,
+    "min_mcap_usd": 100000.0,
+    "max_mcap_usd": 5000000.0,
+    "stop_pct": 0.18,
+    "take_profit_pct": 0.4,
+    "max_hold_min": 120.0
+   },
+   "config": "G1.dip|e6b014d6ddb8",
+   "n": 13,
+   "n_coins": 13,
+   "n_placebo": 125,
+   "reasons": {
+    "stop": 11,
+    "take_profit": 2
+   },
+   "auto_rejections_3_6": [],
+   "returns": "hidden (debug split: never choose parameters on FINAL data)"
+  },
+  "R0": {
+   "hypothesis": "G1.R0",
+   "params": {
+    "host": "R0_random_alive",
+    "seed": 0,
+    "age_lo_min": 30.0,
+    "age_hi_min": 115.0,
+    "alive_vol_usd_15m": 1500.0,
+    "alive_mcap_usd": 6000.0,
+    "stop_pct": 0.5,
+    "max_hold_s": 3600.0
+   },
+   "config": "G1.R0|27a79bc60126",
+   "n": 94,
+   "n_coins": 94,
+   "n_placebo": 0,
+   "reasons": {
+    "time": 60,
+    "stop": 34
+   },
+   "auto_rejections_3_6": [],
+   "returns": "hidden (debug split: never choose parameters on FINAL data)"
+  }
+ },
+ "classes": {
+  "coins": {
+   "OPERATOR": {
+    "n_coins": 34,
+    "n_airdrop_by_end": 6
+   },
+   "FACTORY": {
+    "n_coins": 183,
+    "n_airdrop_by_end": 174
+   },
+   "COMPLETED": {
+    "n_coins": 19,
+    "n_airdrop_by_end": 0
+   },
+   "UNRESOLVED": {
+    "n_coins": 21,
+    "n_airdrop_by_end": 0
+   },
+   "ORGANIC": {
+    "n_coins": 193,
+    "n_airdrop_by_end": 10
+   },
+   "flag:SERIAL": {
+    "n_coins": 1
+   },
+   "flag:INSTANT": {
+    "n_coins": 277
+   },
+   "flag:FAST120": {
+    "n_coins": 327
+   }
+  },
+  "hosts": {
+   "dip": {
+    "OPERATOR": {
+     "n": 0,
+     "n_coins": 0
+    },
+    "FACTORY": {
+     "n": 2,
+     "n_coins": 2
+    },
+    "COMPLETED": {
+     "n": 3,
+     "n_coins": 3
+    },
+    "UNRESOLVED": {
+     "n": 2,
+     "n_coins": 2
+    },
+    "ORGANIC": {
+     "n": 6,
+     "n_coins": 6
+    },
+    "flag:AIRDROP": {
+     "n": 0,
+     "n_coins": 0
+    },
+    "noflag:AIRDROP": {
+     "n": 13,
+     "n_coins": 13
+    },
+    "flag:SERIAL": {
+     "n": 0,
+     "n_coins": 0
+    },
+    "noflag:SERIAL": {
+     "n": 13,
+     "n_coins": 13
+    },
+    "flag:INSTANT": {
+     "n": 2,
+     "n_coins": 2
+    },
+    "noflag:INSTANT": {
+     "n": 11,
+     "n_coins": 11
+    },
+    "flag:FAST120": {
+     "n": 5,
+     "n_coins": 5
+    },
+    "noflag:FAST120": {
+     "n": 8,
+     "n_coins": 8
+    }
+   },
+   "R0": {
+    "OPERATOR": {
+     "n": 29,
+     "n_coins": 29
+    },
+    "FACTORY": {
+     "n": 19,
+     "n_coins": 19
+    },
+    "COMPLETED": {
+     "n": 7,
+     "n_coins": 7
+    },
+    "UNRESOLVED": {
+     "n": 10,
+     "n_coins": 10
+    },
+    "ORGANIC": {
+     "n": 29,
+     "n_coins": 29
+    },
+    "flag:AIRDROP": {
+     "n": 1,
+     "n_coins": 1
+    },
+    "noflag:AIRDROP": {
+     "n": 93,
+     "n_coins": 93
+    },
+    "flag:SERIAL": {
+     "n": 0,
+     "n_coins": 0
+    },
+    "noflag:SERIAL": {
+     "n": 94,
+     "n_coins": 94
+    },
+    "flag:INSTANT": {
+     "n": 54,
+     "n_coins": 54
+    },
+    "noflag:INSTANT": {
+     "n": 40,
+     "n_coins": 40
+    },
+    "flag:FAST120": {
+     "n": 61,
+     "n_coins": 61
+    },
+    "noflag:FAST120": {
+     "n": 33,
+     "n_coins": 33
+    }
+   }
+  }
+ },
+ "variants_eval": {
+  "G-time": {
+   "labels": {
+    "n_coins": 450,
+    "n_flag_gate": 327,
+    "n_flag_dead": 327
+   },
+   "hosts": {
+    "dip": {
+     "flagged": {
+      "n": 5,
+      "n_coins": 5
+     },
+     "unflagged": {
+      "n": 8,
+      "n_coins": 8
+     }
+    },
+    "R0": {
+     "flagged": {
+      "n": 61,
+      "n_coins": 61
+     },
+     "unflagged": {
+      "n": 33,
+      "n_coins": 33
+     }
+    }
+   }
+  },
+  "G-chain": {
+   "labels": {
+    "n_coins": 450,
+    "n_flag_gate": 236,
+    "n_flag_dead": 202
+   },
+   "hosts": {
+    "dip": {
+     "flagged": {
+      "n": 5,
+      "n_coins": 5
+     },
+     "unflagged": {
+      "n": 8,
+      "n_coins": 8
+     }
+    },
+    "R0": {
+     "flagged": {
+      "n": 55,
+      "n_coins": 55
+     },
+     "unflagged": {
+      "n": 39,
+      "n_coins": 39
+     }
+    }
+   }
+  },
+  "G-chain+": {
+   "labels": {
+    "n_coins": 450,
+    "n_flag_gate": 236,
+    "n_flag_dead": 202
+   },
+   "hosts": {
+    "dip": {
+     "flagged": {
+      "n": 5,
+      "n_coins": 5
+     },
+     "unflagged": {
+      "n": 8,
+      "n_coins": 8
+     }
+    },
+    "R0": {
+     "flagged": {
+      "n": 55,
+      "n_coins": 55
+     },
+     "unflagged": {
+      "n": 39,
+      "n_coins": 39
+     }
+    }
+   }
+  },
+  "_chain_vs_time_R0": {}
+ },
+ "decision": {
+  "debug": "counts only; returns, dead60 / winner rates and decisions are hidden"
+ }
+}

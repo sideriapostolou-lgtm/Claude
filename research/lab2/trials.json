@@ -35,6 +35,123 @@
    "n": 272,
    "mean": -0.3977744751966777,
    "over_variant_limit": false
+  },
+  {
+   "utc": "2026-10-08 23:37:04",
+   "hypothesis": "S1-gate",
+   "config": "S1-gate|a568b22fb899",
+   "split": "final_train",
+   "debug": true,
+   "n": 85,
+   "mean": null,
+   "over_variant_limit": false,
+   "note": "mean scrubbed: debug split (census TRAIN third), returns must stay hidden"
+  },
+  {
+   "utc": "2026-10-08 23:37:05",
+   "hypothesis": "S1-gate",
+   "config": "S1-gate|4e41f3833ab4",
+   "split": "final_train",
+   "debug": true,
+   "n": 47,
+   "mean": null,
+   "over_variant_limit": false,
+   "note": "mean scrubbed: debug split (census TRAIN third), returns must stay hidden"
+  },
+  {
+   "utc": "2026-10-08 23:37:08",
+   "hypothesis": "S1",
+   "config": "S1|e2c9dd075adb",
+   "split": "final_train",
+   "debug": true,
+   "n": 0,
+   "mean": null,
+   "over_variant_limit": false
+  },
+  {
+   "utc": "2026-10-08 23:37:08",
+   "hypothesis": "S1",
+   "config": "S1|1f41ec5f4eb9",
+   "split": "final_train",
+   "debug": true,
+   "n": 0,
+   "mean": null,
+   "over_variant_limit": false
+  },
+  {
+   "utc": "2026-10-08 23:37:09",
+   "hypothesis": "S1",
+   "config": "S1|53e23e22a395",
+   "split": "final_train",
+   "debug": true,
+   "n": 0,
+   "mean": null,
+   "over_variant_limit": false
+  },
+  {
+   "utc": "2026-10-08 23:37:09",
+   "hypothesis": "S1",
+   "config": "S1|9302a18b2afe",
+   "split": "final_train",
+   "debug": true,
+   "n": 0,
+   "mean": null,
+   "over_variant_limit": false
+  },
+  {
+   "utc": "2026-10-08 23:37:12",
+   "hypothesis": "S1",
+   "config": "S1|64d0ce046ca3",
+   "split": "final_train",
+   "debug": true,
+   "n": 18,
+   "mean": null,
+   "over_variant_limit": false,
+   "note": "mean scrubbed: debug split (census TRAIN third), returns must stay hidden"
+  },
+  {
+   "utc": "2026-10-08 23:37:13",
+   "hypothesis": "S1",
+   "config": "S1|5e3f64acd840",
+   "split": "final_train",
+   "debug": true,
+   "n": 18,
+   "mean": null,
+   "over_variant_limit": false,
+   "note": "mean scrubbed: debug split (census TRAIN third), returns must stay hidden"
+  },
+  {
+   "utc": "2026-10-08 23:37:15",
+   "hypothesis": "S1",
+   "config": "S1|9ac09dd674ba",
+   "split": "final_train",
+   "debug": true,
+   "n": 18,
+   "mean": null,
+   "over_variant_limit": false,
+   "note": "mean scrubbed: debug split (census TRAIN third), returns must stay hidden"
+  },
+  {
+   "utc": "2026-10-08 23:37:16",
+   "hypothesis": "S1",
+   "config": "S1|bf1f60c31b15",
+   "split": "final_train",
+   "debug": true,
+   "n": 18,
+   "mean": null,
+   "over_variant_limit": false,
+   "note": "mean scrubbed: debug split (census TRAIN third), returns must stay hidden"
+  },
+  {
+   "utc": "2026-10-08 23:37:16",
+   "hypothesis": "S1-control1",
+   "config": "S1-control1|271e2abf5ef4",
+   "split": "final_train",
+   "debug": true,
+   "n": 143,
+   "mean": null,
+   "over_variant_limit": false,
+   "note": "mean scrubbed: debug split (census TRAIN third), returns must stay hidden"
   }
  ],
  "val_shortlists": {},

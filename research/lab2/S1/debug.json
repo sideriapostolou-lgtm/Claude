@@ -1,0 +1,296 @@
+{
+ "stage": "debug",
+ "split": "final_train",
+ "version": "s1-v1",
+ "utc": "2026-10-08 23:47:27",
+ "b1_source": "SYNTHETIC (made-up wallets; flow-condition counts are meaningless)",
+ "n_usable_coins": 450,
+ "s1_universe": 152,
+ "coins_with_b1_rows": 152,
+ "b1_rows": 226107,
+ "days": 0.5203240740740741,
+ "gate": {
+  "10": {
+   "n": 85,
+   "quintiles": [
+    {
+     "q": 1,
+     "n": 17,
+     "rem_min": 0.101807147,
+     "rem_max": 0.230119856,
+     "mean": "hidden",
+     "median": "hidden"
+    },
+    {
+     "q": 2,
+     "n": 17,
+     "rem_min": 0.232984027,
+     "rem_max": 0.277157784,
+     "mean": "hidden",
+     "median": "hidden"
+    },
+    {
+     "q": 3,
+     "n": 17,
+     "rem_min": 0.280185207,
+     "rem_max": 0.363087493,
+     "mean": "hidden",
+     "median": "hidden"
+    },
+    {
+     "q": 4,
+     "n": 17,
+     "rem_min": 0.38852413,
+     "rem_max": 0.551622077,
+     "mean": "hidden",
+     "median": "hidden"
+    },
+    {
+     "q": 5,
+     "n": 17,
+     "rem_min": 0.553560512,
+     "rem_max": 0.929104866,
+     "mean": "hidden",
+     "median": "hidden"
+    }
+   ],
+   "inversions": "hidden",
+   "q1_minus_q5": "hidden",
+   "q1_minus_q5_ci95": "hidden",
+   "n_ties_at_mode": 1,
+   "n_distinct_rem": 85,
+   "wall_s": 0.58
+  },
+  "30": {
+   "n": 47,
+   "quintiles": [
+    {
+     "q": 1,
+     "n": 10,
+     "rem_min": 0.144152173,
+     "rem_max": 0.230106471,
+     "mean": "hidden",
+     "median": "hidden"
+    },
+    {
+     "q": 2,
+     "n": 9,
+     "rem_min": 0.252071582,
+     "rem_max": 0.277157783,
+     "mean": "hidden",
+     "median": "hidden"
+    },
+    {
+     "q": 3,
+     "n": 10,
+     "rem_min": 0.280182182,
+     "rem_max": 0.42133281,
+     "mean": "hidden",
+     "median": "hidden"
+    },
+    {
+     "q": 4,
+     "n": 9,
+     "rem_min": 0.434373737,
+     "rem_max": 0.545210693,
+     "mean": "hidden",
+     "median": "hidden"
+    },
+    {
+     "q": 5,
+     "n": 9,
+     "rem_min": 0.57372796,
+     "rem_max": 0.921546847,
+     "mean": "hidden",
+     "median": "hidden"
+    }
+   ],
+   "inversions": "hidden",
+   "q1_minus_q5": "hidden",
+   "q1_minus_q5_ci95": "hidden",
+   "n_ties_at_mode": 1,
+   "n_distinct_rem": 47,
+   "wall_s": 0.62
+  }
+ },
+ "grid": [
+  {
+   "label": "rem0.10_buy10_absY",
+   "n": 0,
+   "n_coins": 0,
+   "checkpoints": {},
+   "new_trial": false,
+   "wall_s": 3.34,
+   "reasons": {},
+   "n_placebo": 0
+  },
+  {
+   "label": "rem0.10_buy10_absN",
+   "n": 0,
+   "n_coins": 0,
+   "checkpoints": {},
+   "new_trial": false,
+   "wall_s": 0.55,
+   "reasons": {},
+   "n_placebo": 0
+  },
+  {
+   "label": "rem0.10_buy20_absY",
+   "n": 0,
+   "n_coins": 0,
+   "checkpoints": {},
+   "new_trial": false,
+   "wall_s": 0.58,
+   "reasons": {},
+   "n_placebo": 0
+  },
+  {
+   "label": "rem0.10_buy20_absN",
+   "n": 0,
+   "n_coins": 0,
+   "checkpoints": {},
+   "new_trial": false,
+   "wall_s": 0.49,
+   "reasons": {},
+   "n_placebo": 0
+  },
+  {
+   "label": "rem0.25_buy10_absY",
+   "n": 18,
+   "n_coins": 18,
+   "checkpoints": {
+    "cp10": 2,
+    "cp15": 8,
+    "cp20": 1,
+    "cp30": 1,
+    "cp6": 4,
+    "cp8": 2
+   },
+   "new_trial": false,
+   "wall_s": 3.15,
+   "reasons": {
+    "trail": 11,
+    "signal:org_net5": 7
+   },
+   "n_placebo": 356
+  },
+  {
+   "label": "rem0.25_buy10_absN",
+   "n": 18,
+   "n_coins": 18,
+   "checkpoints": {
+    "cp10": 2,
+    "cp15": 8,
+    "cp20": 1,
+    "cp30": 1,
+    "cp6": 5,
+    "cp8": 1
+   },
+   "new_trial": false,
+   "wall_s": 1.47,
+   "reasons": {
+    "trail": 11,
+    "signal:org_net5": 7
+   },
+   "n_placebo": 356
+  },
+  {
+   "label": "rem0.25_buy20_absY",
+   "n": 18,
+   "n_coins": 18,
+   "checkpoints": {
+    "cp10": 2,
+    "cp15": 8,
+    "cp20": 1,
+    "cp30": 1,
+    "cp6": 4,
+    "cp8": 2
+   },
+   "new_trial": false,
+   "wall_s": 1.41,
+   "reasons": {
+    "trail": 11,
+    "signal:org_net5": 7
+   },
+   "n_placebo": 356
+  },
+  {
+   "label": "rem0.25_buy20_absN",
+   "n": 18,
+   "n_coins": 18,
+   "checkpoints": {
+    "cp10": 2,
+    "cp15": 8,
+    "cp20": 1,
+    "cp30": 1,
+    "cp6": 5,
+    "cp8": 1
+   },
+   "new_trial": false,
+   "wall_s": 1.31,
+   "reasons": {
+    "trail": 11,
+    "signal:org_net5": 7
+   },
+   "n_placebo": 356
+  }
+ ],
+ "control1": {
+  "n": 143,
+  "checkpoints": {
+   "cp20": 1,
+   "cp6": 142
+  }
+ },
+ "nonflow_counts_real": {
+  "days": 0.5203240740740741,
+  "coins": 152,
+  "alive_at_checkpoint": {
+   "6": 142,
+   "8": 103,
+   "10": 85,
+   "15": 66,
+   "20": 59,
+   "30": 47,
+   "45": 40,
+   "60": 32,
+   "90": 29,
+   "120": 25
+  },
+  "per_day_alive_at_checkpoint": {
+   "6": 272.90684224575136,
+   "8": 197.95355458670699,
+   "10": 163.3597295133019,
+   "15": 126.84402526915206,
+   "20": 113.39087107393895,
+   "30": 90.32832102500223,
+   "45": 76.87516682978912,
+   "60": 61.5001334638313,
+   "90": 55.73449595159711,
+   "120": 48.0469792686182
+  },
+  "ceiling_entries_theta_buy": {
+   "10": 141,
+   "20": 141
+  },
+  "ceiling_entries_per_day": {
+   "10": 270.98496307500665,
+   "20": 270.98496307500665
+  }
+ },
+ "feature_census": {
+  "why_at_g+10": {
+   "ok": 152
+  },
+  "g1_class_at_g+10": {
+   "ORGANIC": 144,
+   "COMPLETED": 8
+  }
+ },
+ "timing_s": {
+  "synth_or_load": 7.5,
+  "gate": 1.2,
+  "grid_plus_control": 12.7
+ },
+ "returns": "hidden (debug split: never choose parameters on FINAL data)"
+}
