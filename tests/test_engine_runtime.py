@@ -460,6 +460,51 @@ def test_a_live_balance_that_may_still_be_indexing_is_not_written_off(make_rig, 
     assert sale.token_amount == position.token_amount and not rig.ledger.get_position(position.id).is_open
 
 
+def test_a_live_shortfall_is_confirmed_on_chain_before_anything_is_written_off(make_rig, world, fake_clock,
+                                                                              monkeypatch) -> None:
+    """Ultra holdings is an INDEX: when it shows fewer tokens than the books, the chain is asked before a
+    write-off - tokens the chain still holds are sold, never written off and left without a stop-loss."""
+    from nightcrawler.models import Balances
+
+    rig = live_rig(make_rig, world, fake_clock)
+    rig.tick()
+    [position] = rig.ledger.open_positions()
+    real_balances = rig.broker.balances
+
+    def index_missing_the_coin() -> Balances:
+        held = real_balances()
+        return Balances(sol_lamports=held.sol_lamports, tokens={m: a for m, a in held.tokens.items() if m != GARY})
+
+    monkeypatch.setattr(rig.broker, "balances", index_missing_the_coin)
+    rig.broker.chain_token_balance = lambda mint: rig.broker.tokens.get(mint, 0)  # the on-chain truth
+    world.price *= 0.5
+    rig.tick(HOLDINGS_SETTLE_S)
+    [sale] = sells(rig)
+    assert sale.token_amount == position.token_amount and sale.sol_lamports > 0
+    assert notes(rig, "exit_shortfall") == [] and not rig.ledger.get_position(position.id).is_open
+
+
+@pytest.mark.parametrize("chain", ["agrees", "unreadable"])
+def test_a_live_shortfall_the_chain_confirms_or_cannot_check_is_written_off(make_rig, world, fake_clock,
+                                                                            chain: str) -> None:
+    rig = live_rig(make_rig, world, fake_clock)
+    rig.tick()
+    [position] = rig.ledger.open_positions()
+    held = position.token_amount // 2
+    rig.broker.tokens[GARY] = held  # half sold by hand: index and chain agree
+
+    def unreadable(mint: str) -> int:
+        raise RpcError(-32005, "node is behind", "getTokenAccountsByOwner")
+
+    rig.broker.chain_token_balance = ((lambda mint: rig.broker.tokens.get(mint, 0)) if chain == "agrees"
+                                      else unreadable)
+    world.price *= 0.5
+    rig.tick(HOLDINGS_SETTLE_S)
+    sale, write_off = sells(rig)
+    assert (sale.token_amount, write_off.token_amount) == (held, position.token_amount - held)
+    assert not rig.ledger.get_position(position.id).is_open
+
+
 def test_an_unreadable_wallet_never_writes_anything_off(make_rig, world, fake_clock, monkeypatch) -> None:
     rig = live_rig(make_rig, world, fake_clock)
     rig.tick()

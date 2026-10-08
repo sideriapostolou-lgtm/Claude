@@ -31,6 +31,7 @@ from nightcrawler.broker.paper import (
     PRIORITY_FEE_REFRESH_S,
     SWAP_COMPUTE_UNITS,
     PaperBroker,
+    paper_out_amount,
 )
 from nightcrawler.clock import RealClock
 from nightcrawler.hashing import GENESIS_HASH, normalize_payload, receipt_hash, verify_receipts
@@ -555,12 +556,19 @@ def test_live_smoke_paper_round_trip_on_real_ultra_quotes(make_settings) -> None
     jupiter = JupiterClient(http, base_url=settings.jupiter_base_url, api_key=settings.jupiter_api_key)
     broker = PaperBroker(jupiter, FakeLedger(clock=clock), settings, clock)
 
-    buy = broker.execute(broker.quote("buy", USDC, 10_000_000, 6), None)  # 0.01 SOL -> USDC
-    sell = broker.execute(broker.quote("sell", USDC, buy.token_amount, 6), None)
+    buy_quote = broker.quote("buy", USDC, 10_000_000, 6)  # 0.01 SOL -> USDC
+    buy = broker.execute(buy_quote, None)
+    sell_quote = broker.quote("sell", USDC, buy.token_amount, 6)
+    sell = broker.execute(sell_quote, None)
+    bps = settings.paper_slippage_bps
+    # every fill lands exactly PAPER_SLIPPAGE_BPS below its live quote ...
+    assert buy.token_amount == paper_out_amount(buy_quote.out_amount, bps)
+    assert sell.sol_lamports == paper_out_amount(sell_quote.out_amount, bps)
     round_trip = (buy.sol_lamports - sell.sol_lamports) / buy.sol_lamports
-    paper_haircut = 2 * settings.paper_slippage_bps / 10_000  # PAPER_SLIPPAGE_BPS on each side
-    # ~0.2 % Ultra fees on a deep pool plus the deliberate paper haircut, before network fees
-    assert paper_haircut <= round_trip < paper_haircut + 0.01
+    paper_haircut = 1 - (1 - bps / 10_000) ** 2  # ... on each side: it compounds (1.99 % for 100 bps)
+    # plus ~0-0.2 % Ultra fees on a deep pool, before network fees. The two quotes are ~1 s apart, so
+    # SOL/USDC may move a little in our favour (seen live: +0.06 %); 0.25 % of slack covers that.
+    assert paper_haircut - 0.0025 <= round_trip < paper_haircut + 0.01
     assert broker.balances().tokens == {}
 
 

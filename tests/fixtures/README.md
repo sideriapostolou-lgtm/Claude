@@ -43,6 +43,7 @@ unless marked **synthetic**. Use them through `fakes.load_fixture(name)` and
 | `rugcheck_stats_*.json`, `rugcheck_rugs_ticker.json` | misc RugCheck stats | not used yet |
 | `rpc_getAccountInfo_mint.json` | Solana RPC `getAccountInfo` jsonParsed (Token-2022 mint) | authorities null |
 | `rpc_getTokenSupply.json` | `getTokenSupply` | |
+| `rpc_getTokenAccountsByOwner.json` | `getTokenAccountsByOwner(owner, {mint}, jsonParsed)` (GARY's PumpSwap pool vault, captured 21:55 UTC) | one Token-2022 account; `tokenAmount.amount` is a base-unit string |
 | `rpc_getTokenLargestAccounts_429.json` | `getTokenLargestAccounts` on public RPC | DISABLED - do not depend on it |
 | `pumpfun_candles_1m.json` | pump.fun `swap-api.pump.fun/v1/coins/{mint}/candles?interval=1m&limit=40` (INU `AACtro...pump`, captured 2026-10-08 20:58:38Z) | ASCENDING, `timestamp` in ms, USD decimal strings; only minutes WITH trades (12 no-trade minutes missing); the newest candle was still open. Used by `sources/pumpfun.py` (candle fallback) |
 | `pumpfun_coins_v2.json`, `pumpfun_swap_*.json` | other pump.fun frontend APIs | reference only (not used: unofficial) |

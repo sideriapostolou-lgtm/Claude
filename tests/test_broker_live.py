@@ -612,3 +612,20 @@ def test_swap_status_reads_get_signature_statuses(broker, venue, value, expected
     venue.http.register(venue.rpc_url, rpc, method="POST")
     assert broker.swap_status("5igSIG") == expected
     assert asked == [[["5igSIG"], {"searchTransactionHistory": True}]]
+
+
+def test_chain_token_balance_reads_the_bot_wallet_on_chain(broker, venue, wallet) -> None:
+    """The ON-CHAIN holding (not Ultra's holdings index) the engine checks before writing anything off."""
+    asked: list[Any] = []
+
+    def rpc(request):
+        body = request.json
+        if body["method"] != "getTokenAccountsByOwner":
+            return venue._rpc(request)
+        asked.append(body["params"])
+        return {**load_fixture("rpc_getTokenAccountsByOwner"), "id": body["id"]}
+
+    venue.http.register(venue.rpc_url, rpc, method="POST")
+    gary = "8ZCmwpW3MtC5UpNcZf7U4HMvRNTo71syU11BDiAFpump"  # the fixture's account
+    assert broker.chain_token_balance(gary) == 28_124_227_731_397
+    assert asked == [[wallet.pubkey(), {"mint": gary}, {"encoding": "jsonParsed", "commitment": "confirmed"}]]

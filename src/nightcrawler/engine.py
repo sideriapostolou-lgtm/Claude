@@ -92,7 +92,9 @@ BOT_WALLET_SECRET changed) is never valued, sold or counted - it is noted at boo
     does not hold are written off with a 0-SOL fill and a ``note`` ``exit_shortfall`` (all
     of them, with an ``exit`` decision, when it holds none), so a books/wallet mismatch can
     never trap a position. Live, a lower wallet balance is trusted only
-    :data:`HOLDINGS_SETTLE_S` after the position's last fill, and never when unreadable.
+    :data:`HOLDINGS_SETTLE_S` after the position's last fill, and never when unreadable;
+    it is then re-read ON CHAIN (``broker.chain_token_balance``: Ultra holdings is an index
+    that can miss a token) and the chain's answer wins (Ultra's only when the RPC fails).
 
 ``reconcile`` (every tick, live only in practice)
     A live swap whose outcome is unknown (``SwapUnknown``) blocks ALL new
@@ -1383,7 +1385,10 @@ class Engine:
     def _sellable(self, position: Position, now: float) -> int | None:
         """Tokens of ``position`` the wallet can actually sell: its holding of the mint minus what other
         open positions of the mint hold on the books. None (= trust the books) when the balance cannot
-        be read, or - live - while a fresh swap may not be in Ultra holdings yet (:data:`HOLDINGS_SETTLE_S`)."""
+        be read, or - live - while a fresh swap may not be in Ultra holdings yet (:data:`HOLDINGS_SETTLE_S`).
+        Live, a holding below the books is re-read ON CHAIN before anything is written off: Ultra
+        holdings is an index that can miss a token, the chain is the truth (the index's answer stands
+        only when the RPC cannot answer)."""
         if self.settings.is_live:
             recent = self.ledger.fills(limit=1, position_id=position.id)
             last_fill = max([position.opened_at, *(f.ts for f in recent)])
@@ -1395,7 +1400,25 @@ class Engine:
             log.warning("exit_balance_unavailable mint=%s error=%s", position.mint, _err(exc))
             return None
         others = sum(p.token_amount for p in self._open_positions() if p.mint == position.mint and p.id != position.id)
+        if self.settings.is_live and held - others < position.token_amount:
+            held = self._chain_holding(position.mint, held)
         return max(0, held - others)
+
+    def _chain_holding(self, mint: str, indexed: int) -> int:
+        """Live: the wallet's ON-CHAIN holding of ``mint`` (``broker.chain_token_balance``), else
+        ``indexed`` (Ultra holdings) when the broker cannot tell or the RPC fails."""
+        read = getattr(self.broker, "chain_token_balance", None)
+        if read is None:
+            return indexed
+        try:
+            onchain = int(read(mint))
+        except Exception as exc:
+            log.warning("exit_chain_balance_unavailable mint=%s error=%s: using Ultra holdings", mint, _err(exc))
+            return indexed
+        if onchain != indexed:
+            log.warning("exit_holdings_index_differs mint=%s ultra=%d chain=%d: using the chain", mint, indexed,
+                        onchain)
+        return onchain
 
     def _write_off(self, position: Position, reason: str, missing: int, inputs: dict[str, Any],
                    now: float) -> Fill:

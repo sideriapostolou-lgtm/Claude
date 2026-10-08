@@ -252,6 +252,11 @@ class LiveBroker(UltraBrokerBase):
         """Ultra holdings of the wallet."""
         return self.jupiter.holdings(self.pubkey)
 
+    def chain_token_balance(self, mint: str) -> int:
+        """Base units of ``mint`` the wallet holds ON CHAIN (Solana RPC), as opposed to Ultra's holdings
+        index (:meth:`balances`): the engine asks it before writing tokens off. Raises on RPC trouble."""
+        return self.rpc.token_balance(self.pubkey, mint)
+
     def swap_status(self, signature: str) -> str | None:
         """Final on-chain outcome of a sent swap: ``"landed"``, ``"failed"`` or None (not known or not
         final yet) - see :func:`final_swap_status`. Raises ``RpcError``/``HttpError`` when the RPC fails."""

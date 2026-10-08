@@ -125,6 +125,28 @@ class SolanaRpc:
             raise RpcError(None, "getBalance returned no value", method)
         return lamports
 
+    def token_balance(self, owner: str, mint: str) -> int:
+        """Base units of ``mint`` held ON CHAIN by ``owner``: ``getTokenAccountsByOwner(owner, {mint},
+        jsonParsed, confirmed)`` summed over its accounts (Token and Token-2022; 0 without one).
+
+        Raises :class:`RpcError` for anything unreadable (no ``value`` list, an account without a
+        base-unit ``tokenAmount.amount``, an account of another mint): a balance decides whether
+        tokens are written off, so it never guesses.
+        """
+        method = "getTokenAccountsByOwner"
+        params = [owner, {"mint": mint}, {"encoding": "jsonParsed", "commitment": "confirmed"}]
+        accounts = get_path(self.call(method, params), "value")
+        if not isinstance(accounts, list):
+            raise RpcError(None, "getTokenAccountsByOwner returned no account list", method)
+        total = 0
+        for account in accounts:
+            info = get_path(account, "account.data.parsed.info")
+            amount = to_int(get_path(info, "tokenAmount.amount")) if isinstance(info, dict) else None
+            if amount is None or amount < 0 or info.get("mint") != mint:
+                raise RpcError(None, "unreadable token account in getTokenAccountsByOwner", method)
+            total += amount
+        return total
+
     def simulate(self, tx_b64: str) -> dict[str, Any]:
         """``simulateTransaction`` with ``{"encoding": "base64", "sigVerify": true,
         "replaceRecentBlockhash": false, "commitment": "processed"}``.

@@ -165,6 +165,40 @@ def test_get_balance_without_value_raises(rpc, fake_http):
         rpc.get_balance("W")
 
 
+GARY_POOL = "2uZuTQEjcXcR1ESwMdGTpqEwM5PCekEwrSNVRPc1EhS1"  # owner in rpc_getTokenAccountsByOwner.json
+
+
+def test_token_balance_reads_the_owners_accounts_of_the_mint_on_chain(rpc, fake_http):
+    fake_http.register_fixture(RPC_URL, "rpc_getTokenAccountsByOwner", method="POST")
+
+    assert rpc.token_balance(GARY_POOL, GARY) == 28_124_227_731_397  # a Token-2022 account
+    assert fake_http.calls[0].json["method"] == "getTokenAccountsByOwner"
+    assert fake_http.calls[0].json["params"] == [GARY_POOL, {"mint": GARY},
+                                                 {"encoding": "jsonParsed", "commitment": "confirmed"}]
+
+
+def test_token_balance_sums_several_accounts_and_is_zero_without_one(rpc, fake_http):
+    def account(amount):
+        return {"pubkey": "A", "account": {"data": {"parsed": {"info": {"mint": GARY, "tokenAmount": {
+            "amount": amount, "decimals": 6}}, "type": "account"}}}}
+
+    fake_http.register(RPC_URL, _result([account("5"), account("7")]), method="POST")
+    assert rpc.token_balance("W", GARY) == 12
+    fake_http.register(RPC_URL, _result([]), method="POST")
+    assert rpc.token_balance("W", GARY) == 0
+
+
+@pytest.mark.parametrize("value", [None, "junk", [{"account": {"data": {"parsed": {"info": {"tokenAmount": {}}}}}}],
+                                   [{"account": {"data": {"parsed": {"info": {"mint": USDC, "tokenAmount": {
+                                       "amount": "9"}}}}}}]])
+def test_token_balance_never_guesses(rpc, fake_http, value):
+    """A balance decides whether tokens are written off: anything unreadable (or another mint's
+    account) raises instead of counting as 0."""
+    fake_http.register(RPC_URL, _result(value), method="POST")
+    with pytest.raises(RpcError):
+        rpc.token_balance("W", GARY)
+
+
 def test_simulate_success_and_request_config(rpc, fake_http):
     fake_http.register(RPC_URL, _result({"err": None, "logs": ["Program log: ok"], "unitsConsumed": 4242}))
 
@@ -281,3 +315,4 @@ def test_live_solana_rpc_smoke():
     assert usdc["program"] == "spl-token" and usdc["extensions"] == []
     assert usdc["mint_authority"] and usdc["freeze_authority"]  # centrally issued: authorities kept
     assert rpc.get_balance(SOL_MINT) > 0
+    assert rpc.token_balance("2uZuTQEjcXcR1ESwMdGTpqEwM5PCekEwrSNVRPc1EhS1", GARY) > 0  # GARY's PumpSwap vault

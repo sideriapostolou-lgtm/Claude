@@ -37,7 +37,8 @@ src/nightcrawler/
     geckoterminal.py GeckoTerminalClient (pools, trades, ohlcv), normalize_pool            O1
     rugcheck.py      RugCheckClient, RugReport, parse_report (AMM exclusion)               O1
     jupiter.py       JupiterClient (Ultra order/execute/holdings/shield, tokens, prices)   O1
-    solana_rpc.py    SolanaRpc (mint_info, balance, simulate, signature_status, priority_fee_levels) O1
+    solana_rpc.py    SolanaRpc (mint_info, balance, token_balance, simulate, signature_status,
+                     priority_fee_levels)                                                  O1
     pumpfun.py       PumpFunClient: FALLBACK 1m candles for pump.fun coins (own bucket)    runtime
   crawler.py         Crawler.poll()/refresh()/prefilter()                                  O2
   cocoon.py          Cocoon.check() -> SafetyReport (FAIL CLOSED)                          O2
@@ -203,8 +204,10 @@ Integration details (see `engine.py` docstring for the full contract):
 * A FULL exit sells `min(books, wallet holding)` and writes the rest off with a
   0-SOL fill and a `note` `exit_shortfall` (no sale at all when the wallet holds
   none). Live trusts a lower balance only 60 s after the position's last fill, and
-  never an unreadable one; an unknown short exit is reconciled against the balance
-  held BEFORE the swap (`wallet_before`).
+  never an unreadable one; a holding below the books is re-read ON CHAIN
+  (`getTokenAccountsByOwner`; Ultra holdings is only an index) and the chain's answer
+  is used - Ultra's only when the RPC fails. An unknown short exit is reconciled
+  against the balance held BEFORE the swap (`wallet_before`).
 * Safe mode (RT-9): `run` with an INVALID configuration and open LIVE positions
   starts exits-only (no discovery, no entries; stop-losses, kill switch and
   reconciliation run) with defaults for the broken variables (never TRADING_MODE,
@@ -295,7 +298,7 @@ canonical_json(x) = json.dumps(x, sort_keys=True, separators=(",", ":"), default
 | `api.rugcheck.xyz` | 1/s, burst 1 | cocoon <= 10 (5 per discovery tick) |
 | `lite-api.jup.ag` / `api.jup.ag` | 1/s, burst 1 | crawler 4, price v3 6, shield <= 10, quotes on demand |
 | `api.dexscreener.com` | 60/min, burst 3 | crawler 4, refresh 1 (30 mints per call) |
-| Solana RPC (`SOLANA_RPC_URL` host) | 5/s, burst 5 | cocoon mint_info, live simulate/status, paper Helius `getPriorityFeeEstimate` <= 1 per 5 min |
+| Solana RPC (`SOLANA_RPC_URL` host) | 5/s, burst 5 | cocoon mint_info, live simulate/status, live exit shortfall check (`getTokenAccountsByOwner`), paper Helius `getPriorityFeeEstimate` <= 1 per 5 min |
 | anything else | 5/s, burst 5 | - |
 
 Retries: 429/5xx/connection errors, max 4, exponential backoff with jitter,
