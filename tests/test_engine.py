@@ -487,7 +487,8 @@ def test_run_forever_writes_boot_and_shutdown_receipts(make_rig) -> None:
     kinds = rig.receipt_kinds()
     assert kinds[0] == "boot" and kinds[-1] == "note"
     boot = rig.ledger.receipts()[0]
-    assert boot.payload["mode"] == "paper" and "anthropic_api_key" not in str(boot.payload)
+    assert boot.payload["mode"] == "paper" and "anthropic_api_key" not in boot.payload["settings"]
+    assert boot.payload["settings"]["anthropic_api_key_set"] is False
     assert rig.ledger.get_kv("engine.status")["state"] == "stopped"
     assert len(ticks) == 3 and ticks[1] - ticks[0] == pytest.approx(1.0, abs=0.01)
 
@@ -549,7 +550,7 @@ LIVE = {"TRADING_MODE": "live", "LIVE_CONFIRM": "I_ACCEPT_REAL_MONEY_RISK", "BOT
 @pytest.mark.parametrize("lands", [True, False])
 def test_unknown_live_outcome_blocks_entries_then_reconciles(make_rig, fake_clock, lands: bool) -> None:
     broker = UnknownOutcomeBroker(fake_clock, lands)
-    rig = make_rig(broker=broker, **LIVE)
+    rig = make_rig(broker=broker, WATCH_INTERVAL_S=600, **LIVE)
     rig.tick()
     assert rig.decisions()[-1] == "enter" and rig.ledger.fills() == []
     assert set(rig.engine.unresolved) == {GARY}
@@ -569,6 +570,8 @@ def test_unknown_live_outcome_blocks_entries_then_reconciles(make_rig, fake_cloc
         assert position.entry_fill_ids == [fill.id] and position.entry_price_usd > 0
     else:
         assert rig.ledger.fills() == [] and rig.ledger.open_positions() == []
+        rig.tick(600)  # the setup is still there: a FRESH quote is fetched, the old one is never re-sent
+        assert [q.request_id for q in broker.quotes] == ["r0", "r1"]
     assert rig.ledger.verify_chain() == (True, None)
 
 

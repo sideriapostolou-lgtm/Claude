@@ -85,6 +85,7 @@ fetches any newer price, so recorded intent can never be edited with hindsight.
 from __future__ import annotations
 
 import dataclasses
+import logging
 import math
 import os
 import signal
@@ -413,7 +414,8 @@ class Engine:
             if not (previous is None and mode == "off"):
                 self.ledger.append_receipt("kill", {"mode": mode, "previous": previous}, ts=now)
             self.ledger.set_kv("engine.kill_mode", mode)
-            log.warning("kill_switch mode=%s previous=%s", mode, previous)
+            log.log(logging.INFO if mode == "off" else logging.WARNING, "kill_switch mode=%s previous=%s", mode,
+                    previous)
             self._kill_mode = mode
             self._last_run.pop("sell_all", None)
         if mode == "sell_all" and self._due("sell_all", self.settings.position_interval_s, now):
