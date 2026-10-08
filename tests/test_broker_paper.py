@@ -25,10 +25,16 @@ from nightcrawler.broker.base import (
     implied_sol_usd,
     swap_mints,
 )
-from nightcrawler.broker.paper import PaperBroker
+from nightcrawler.broker.paper import (
+    BASE_FEE_LAMPORTS,
+    MAX_PAPER_NETWORK_FEE_LAMPORTS,
+    PRIORITY_FEE_REFRESH_S,
+    SWAP_COMPUTE_UNITS,
+    PaperBroker,
+)
 from nightcrawler.clock import RealClock
 from nightcrawler.hashing import GENESIS_HASH, normalize_payload, receipt_hash, verify_receipts
-from nightcrawler.http import HttpClient
+from nightcrawler.http import HttpClient, HttpError
 from nightcrawler.ledger import Ledger, LedgerError
 from nightcrawler.models import (
     LAMPORTS_PER_SOL,
@@ -41,6 +47,13 @@ from nightcrawler.models import (
     effective_price_usd,
 )
 from nightcrawler.sources.jupiter import JupiterClient, quote_from_order
+from nightcrawler.sources.solana_rpc import (
+    JUPITER_PROGRAM_ID,
+    PUMPSWAP_PROGRAM_ID,
+    SWAP_FEE_ACCOUNT_KEYS,
+    RpcError,
+    SolanaRpc,
+)
 
 HIGGS = "DoVAVzViX8Bjy3r15nwikSaSbzE6dV4ovd28aWpJpump"
 USDC = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
@@ -231,11 +244,11 @@ def jupiter_http(fake_http):
 
 @pytest.fixture
 def make_broker(jupiter_http, http_client, ledger, fake_clock, make_settings):
-    def _make(taker: str | None = None, **settings: Any) -> PaperBroker:
+    def _make(taker: str | None = None, rpc: Any = None, **settings: Any) -> PaperBroker:
         settings.setdefault("PAPER_SLIPPAGE_BPS", 0)  # these tests pin the exact fee/rent model
         s = make_settings(**settings)
         jupiter = JupiterClient(http_client, base_url=s.jupiter_base_url)
-        return PaperBroker(jupiter, ledger, s, fake_clock, taker=taker)
+        return PaperBroker(jupiter, ledger, s, fake_clock, taker=taker, rpc=rpc)
 
     return _make
 
@@ -304,21 +317,24 @@ def test_buy_fills_exactly_at_the_quote_with_network_fee_and_rent(broker, ledger
     assert ledger.verify_chain() == (True, None)
 
 
-def test_round_trip_refunds_rent_and_costs_exactly_fees_plus_spread(broker, ledger) -> None:
+def test_round_trip_keeps_the_rent_locked_like_live_and_costs_fees_spread_and_rent(broker, ledger) -> None:
+    """ACC-8: Ultra's full-balance sell does NOT close the token account (verified 2026-10-08: its
+    transaction closes only the temporary wSOL account), so live never gets the rent back on an exit.
+    Paper books exactly what live books: rent on the opening buy, nothing back on the sell."""
     buy = broker.execute(broker.quote("buy", HIGGS, BUY_IN, 6), None)
     sell = broker.execute(broker.quote("sell", HIGGS, BUY_OUT, 6), open_position(buy))
 
     assert (sell.sol_lamports, sell.token_amount) == (SELL_OUT, BUY_OUT)
-    assert sell.rent_lamports == -TOKEN_ACCOUNT_RENT_LAMPORTS
+    assert sell.rent_lamports == 0
     assert sell.position_id == "pos_1" and sell.symbol == "HIGGS"
     final = broker.balances()
     assert final.tokens == {}
-    assert final.sol_lamports == start_lamports() - BUY_IN - 2 * FEE + SELL_OUT
+    assert final.sol_lamports == start_lamports() - BUY_IN - 2 * FEE - TOKEN_ACCOUNT_RENT_LAMPORTS + SELL_OUT
     assert final.sol_lamports - start_lamports() == buy.sol_delta_lamports() + sell.sol_delta_lamports()
-    assert ledger.get_kv("paper.rent") == {}
+    assert ledger.get_kv("paper.rent") == {HIGGS: TOKEN_ACCOUNT_RENT_LAMPORTS}  # the empty account holds it
 
 
-def test_partial_sell_keeps_rent_locked_until_the_full_exit(broker) -> None:
+def test_partial_and_full_sells_book_no_rent(broker) -> None:
     buy = broker.execute(broker.quote("buy", HIGGS, BUY_IN, 6), None)
     half = BUY_OUT // 2
     first = broker.execute(broker.quote("sell", HIGGS, half, 6), open_position(buy))
@@ -326,8 +342,29 @@ def test_partial_sell_keeps_rent_locked_until_the_full_exit(broker) -> None:
     assert broker.balances().tokens == {HIGGS: BUY_OUT - half}
 
     rest = broker.execute(broker.quote("sell", HIGGS, BUY_OUT - half, 6), None)
-    assert rest.rent_lamports == -TOKEN_ACCOUNT_RENT_LAMPORTS
+    assert rest.rent_lamports == 0
     assert broker.balances().tokens == {}
+
+
+def test_rebuying_a_mint_whose_account_is_still_open_pays_no_new_rent(broker, ledger) -> None:
+    buy = broker.execute(broker.quote("buy", HIGGS, BUY_IN, 6), None)
+    broker.execute(broker.quote("sell", HIGGS, BUY_OUT, 6), open_position(buy))
+    again = broker.execute(broker.quote("buy", HIGGS, BUY_IN, 6), None)
+    assert again.rent_lamports == 0  # live: the account still exists, Ultra reports no rent
+    assert ledger.get_kv("paper.rent") == {HIGGS: TOKEN_ACCOUNT_RENT_LAMPORTS}
+    assert broker.balances().tokens == {HIGGS: BUY_OUT}
+
+
+def test_opening_buy_books_the_rent_ultra_reports(broker, jupiter_http, ledger) -> None:
+    """With a taker, Ultra reports what opening the account really costs (Token-2022 accounts are bigger
+    than the 165-byte model); paper books that, like live. Without it, the model value."""
+    jupiter_http.register(f"inputMint={SOL_MINT}", order_route("jup_ultra_order_buy", rentFeeLamports=2_976_880))
+    buy = broker.execute(broker.quote("buy", HIGGS, BUY_IN, 6), None)
+    assert buy.rent_lamports == 2_976_880
+    assert ledger.get_kv("paper.rent") == {HIGGS: 2_976_880}
+    assert broker.balances().sol_lamports == start_lamports() - BUY_IN - FEE - 2_976_880
+    add = broker.execute(broker.quote("buy", HIGGS, BUY_IN, 6), None)
+    assert add.rent_lamports == 0  # the account exists in the virtual wallet: nothing to open
 
 
 def test_adding_to_a_held_mint_pays_no_second_rent(broker) -> None:
@@ -610,3 +647,96 @@ def test_paper_fills_receive_the_configured_slippage_below_the_quote(make_broker
     sold = broker.execute(broker.quote("sell", HIGGS, buy.token_amount, 6), open_position(buy))
     quoted = SELL_OUT * buy.token_amount // BUY_OUT
     assert sold.expected_out_amount == quoted and sold.sol_lamports == quoted * 9_900 // 10_000
+
+
+# --------------------------------------------------------------------------- network fee from live priority fees
+
+HELIUS_URL = "https://mainnet.helius-rpc.com/?api-key=0123456789abcdef0123"
+
+
+class FakeFeeRpc:
+    """``SolanaRpc.priority_fee_levels`` stand-in: scripted levels (micro-lamports per CU) or an exception."""
+
+    def __init__(self, high: Any = 2_000_000.0) -> None:
+        self.answer: Any = {"low": 10.0, "medium": 1_000.0, "high": high, "veryHigh": 9e9}
+        self.calls: list[tuple[str, ...]] = []
+
+    def priority_fee_levels(self, account_keys: Any = SWAP_FEE_ACCOUNT_KEYS) -> dict[str, float]:
+        self.calls.append(tuple(account_keys))
+        if isinstance(self.answer, BaseException):
+            raise self.answer
+        return dict(self.answer)
+
+
+def test_paper_network_fee_is_the_floor_without_a_helius_rpc(make_broker) -> None:
+    rpc = FakeFeeRpc()
+    broker = make_broker(rpc=rpc)  # public mainnet RPC: no getPriorityFeeEstimate there
+    buy = broker.execute(broker.quote("buy", HIGGS, BUY_IN, 6), None)
+    assert buy.fees_lamports == FEE and rpc.calls == []
+    assert make_broker(SOLANA_RPC_URL=HELIUS_URL).network_fee_lamports() == FEE  # Helius but no rpc wired
+
+
+def test_helius_high_priority_fee_sets_the_paper_network_fee(make_broker) -> None:
+    rpc = FakeFeeRpc(high=2_000_000.0)  # micro-lamports per CU
+    broker = make_broker(rpc=rpc, SOLANA_RPC_URL=HELIUS_URL)
+    expected = BASE_FEE_LAMPORTS + 2_000_000 * SWAP_COMPUTE_UNITS // 1_000_000  # 5_000 + 600_000
+    assert expected == 605_000 > FEE
+    buy = broker.execute(broker.quote("buy", HIGGS, BUY_IN, 6), None)
+    assert buy.fees_lamports == expected
+    assert broker.balances().sol_lamports == start_lamports() - BUY_IN - expected - TOKEN_ACCOUNT_RENT_LAMPORTS
+    assert rpc.calls == [(PUMPSWAP_PROGRAM_ID, JUPITER_PROGRAM_ID)]
+    sell = broker.execute(broker.quote("sell", HIGGS, BUY_OUT, 6), open_position(buy))
+    assert sell.fees_lamports == expected and len(rpc.calls) == 1
+
+
+def test_network_fee_floor_keeps_paper_conservative(make_broker) -> None:
+    rpc = FakeFeeRpc(high=100.0)  # 5_000 + 30 lamports: far below NETWORK_FEE_SOL
+    broker = make_broker(rpc=rpc, SOLANA_RPC_URL=HELIUS_URL)
+    assert broker.execute(broker.quote("buy", HIGGS, BUY_IN, 6), None).fees_lamports == FEE
+    assert make_broker(rpc=FakeFeeRpc(high=100.0), SOLANA_RPC_URL=HELIUS_URL,
+                       NETWORK_FEE_SOL=0.000001).network_fee_lamports() == 5_030
+
+
+def test_priority_fee_is_fetched_at_most_once_per_five_minutes(make_broker, fake_clock) -> None:
+    rpc = FakeFeeRpc(high=2_000_000.0)
+    broker = make_broker(rpc=rpc, SOLANA_RPC_URL=HELIUS_URL)
+    assert broker.network_fee_lamports() == 605_000
+    rpc.answer = {"high": 4_000_000.0}
+    fake_clock.advance(PRIORITY_FEE_REFRESH_S - 1)
+    assert broker.network_fee_lamports() == 605_000 and len(rpc.calls) == 1
+    fake_clock.advance(1)
+    assert broker.network_fee_lamports() == 1_205_000 and len(rpc.calls) == 2
+
+
+@pytest.mark.parametrize("answer", [
+    RpcError(-32601, "Method not found", "getPriorityFeeEstimate"),
+    HttpError("HTTP 503", url=HELIUS_URL, status=503, retryable=True),
+    RuntimeError("anything else"),
+    {"low": 1.0, "medium": 2.0},  # no "high" level
+    {"high": "garbage"},
+    {"high": float("inf")},
+    {"high": -5.0},
+])
+def test_priority_fee_errors_fall_back_to_the_floor_and_wait(make_broker, fake_clock, answer: Any) -> None:
+    rpc = FakeFeeRpc()
+    rpc.answer = answer
+    broker = make_broker(rpc=rpc, SOLANA_RPC_URL=HELIUS_URL)
+    assert broker.execute(broker.quote("buy", HIGGS, BUY_IN, 6), None).fees_lamports == FEE
+    assert broker.network_fee_lamports() == FEE and len(rpc.calls) == 1  # an outage costs one call per 5 min
+    rpc.answer = {"high": 2_000_000.0}
+    fake_clock.advance(PRIORITY_FEE_REFRESH_S)
+    assert broker.network_fee_lamports() == 605_000  # recovers on the next refresh
+
+
+def test_an_absurd_priority_fee_is_capped(make_broker) -> None:
+    broker = make_broker(rpc=FakeFeeRpc(high=1e12), SOLANA_RPC_URL=HELIUS_URL)
+    assert broker.network_fee_lamports() == MAX_PAPER_NETWORK_FEE_LAMPORTS == 10_000_000  # 0.01 SOL
+
+
+def test_paper_fee_through_the_real_rpc_client(make_broker, fake_http, http_client) -> None:
+    fake_http.register("helius-rpc.com", {"jsonrpc": "2.0", "id": 1,
+                                          "result": {"priorityFeeLevels": {"high": 1_500_000.0}}}, method="POST")
+    broker = make_broker(rpc=SolanaRpc(http_client, url=HELIUS_URL), SOLANA_RPC_URL=HELIUS_URL)
+    assert broker.execute(broker.quote("buy", HIGGS, BUY_IN, 6), None).fees_lamports == 5_000 + 450_000
+    (call,) = fake_http.calls_to("helius-rpc.com")
+    assert call.json["method"] == "getPriorityFeeEstimate"
