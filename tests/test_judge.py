@@ -12,8 +12,8 @@ from typing import Any
 import pytest
 
 from nightcrawler.judge import (
-    JUDGE_ERROR_CACHE_S,
     FALLBACK_BETA,
+    JUDGE_ERROR_CACHE_S,
     PRICE_TABLE,
     STATIC_SYSTEM_PROMPT,
     VERDICT_SCHEMA,

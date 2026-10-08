@@ -16,12 +16,11 @@ failed AS (
     AND block_slot BETWEEN $s_lo AND $s1_pool AND err != ''
 ),
 raw AS (
-  SELECT block_slot AS slot, toUInt32(block_timestamp) AS ts, base58Decode(data) AS r
+  SELECT block_slot AS slot, toUInt32(block_timestamp) AS ts, tx_signature AS tx, base58Decode(data) AS r
   FROM solana.instructions
-  WHERE block_slot BETWEEN $s_lo AND $s1
+  PREWHERE block_slot BETWEEN $s_lo AND $s1
     AND program_id = '$CURVE' AND parent_index >= 0
     AND length(data) BETWEEN $L_CURVE_COMPLETE_LO AND 900
-    AND tx_signature NOT IN failed
 ),
 ev AS (
   SELECT slot, ts,
@@ -49,7 +48,7 @@ ev AS (
     if(k = 2, reinterpretAsUInt64(substring(r, o4 + 144, 8)), 0) AS vsol0,
     if(k = 3, substring(r, 17, 32), '') AS completer_b
   FROM raw
-  WHERE substring(r, 1, 8) = unhex('$PREFIX') AND k > 0
+  WHERE substring(r, 1, 8) = unhex('$PREFIX') AND k > 0 AND tx NOT IN failed
 ),
 ev2 AS (
   SELECT *,
@@ -139,17 +138,16 @@ pools AS (
          argMin(quote_b, slot) AS pool_quote_b, argMin(pcreator_b, slot) AS pool_creator_b,
          argMin(pbase, slot) AS pool_base0, argMin(pquote, slot) AS pool_quote0, count() AS n_pools
   FROM (
-    SELECT block_slot AS slot, toUInt32(block_timestamp) AS ts, base58Decode(data) AS r,
+    SELECT block_slot AS slot, toUInt32(block_timestamp) AS ts, tx_signature AS tx, base58Decode(data) AS r,
            substring(r, 59, 32) AS mint_b, substring(r, 182, 32) AS pool_b, substring(r, 91, 32) AS quote_b,
            substring(r, 27, 32) AS pcreator_b,
            reinterpretAsUInt64(substring(r, 141, 8)) AS pbase, reinterpretAsUInt64(substring(r, 149, 8)) AS pquote
     FROM solana.instructions
-    WHERE block_slot BETWEEN $s0 AND $s1_pool
+    PREWHERE block_slot BETWEEN $s0 AND $s1_pool
       AND program_id = '$AMM' AND parent_index >= 0
       AND length(data) BETWEEN $L_AMM_CREATE_POOL_LO AND $L_AMM_CREATE_POOL_HI
-      AND tx_signature NOT IN failed
   )
-  WHERE substring(r, 1, 16) = unhex('$PREFIX$D_AMM_CREATE_POOL')
+  WHERE substring(r, 1, 16) = unhex('$PREFIX$D_AMM_CREATE_POOL') AND tx NOT IN failed
   GROUP BY mint_b
 )
 SELECT

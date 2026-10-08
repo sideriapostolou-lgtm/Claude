@@ -260,7 +260,8 @@ class Settings:
                          "else off)", choices=("off", "advisory", "required"))
     judge_model: str = _f("claude-opus-5-5", "text", "Anthropic model id for the judge")
     judge_effort: str = _f("low", "text", "output_config.effort", choices=("low", "medium", "high", "xhigh", "max"))
-    judge_timeout_s: float = _f(20.0, "seconds", "Per-request timeout", lo=1, hi=600)
+    judge_timeout_s: float = _f(10.0, "seconds", "Per-request timeout (no retries: the engine re-asks next tick)",
+                                lo=1, hi=600)
     judge_cache_min: float = _f(20.0, "minutes", "Reuse a verdict per mint for this long", lo=0)
     judge_max_daily_usd: float = _f(1.0, "usd", "Judge spend cap per UTC day; beyond it verdicts are 'no' "
                                     "(source=error). 0 blocks every judge call (and so every entry when "

@@ -5,7 +5,9 @@ container has 1.12.1; import ``anthropic`` lazily so the package works without
 the ``judge`` extra):
 
 * ``client = anthropic.Anthropic(api_key=<settings.anthropic_api_key.reveal()>,
-  timeout=JUDGE_TIMEOUT_S, max_retries=2)`` (tests inject ``client``).
+  timeout=JUDGE_TIMEOUT_S, max_retries=0)`` (tests inject ``client``). No SDK
+  retries: the engine runs every stage in one thread, so each judge second delays
+  stop-losses; the engine re-evaluates a setup on its next tick anyway.
 * Request (:func:`build_request`)::
 
       client.beta.messages.create(
@@ -40,7 +42,10 @@ the ``judge`` extra):
   served model.
 * Cache verdicts per mint (``features["mint"]``) for ``JUDGE_CACHE_MIN``;
   a cached verdict is returned as a copy with ``cached=True`` and
-  ``cost_usd=0.0``. Error verdicts are NOT cached.
+  ``cost_usd=0.0``. Refusals and bad output are NOT cached. API failures
+  (rate limit, timeout, connection, HTTP status) are remembered per mint for
+  :data:`JUDGE_ERROR_CACHE_S` (still ``no``, fail closed), so an outage costs one
+  slow call per mint, not one per watch tick.
 * Budget: if today's (UTC) judge spend >= ``JUDGE_MAX_DAILY_USD`` return
   ``Verdict("no", source="error", error="daily budget exceeded")`` without
   calling the API. Spend is accumulated in memory and, when a ledger is
@@ -384,6 +389,10 @@ def _safe_float(value: Any) -> float:
     return number if math.isfinite(number) else 0.0
 
 
+#: An API failure verdict (rate limit, timeout, connection, HTTP status) is reused for this mint
+#: for this long (seconds): the engine's loop must not pay a timeout per tick during an outage.
+JUDGE_ERROR_CACHE_S = 120.0
+
 # --------------------------------------------------------------------------- the judge
 
 
@@ -397,6 +406,8 @@ class Judge:
         self.clock = clock if clock is not None else RealClock()
         self.ledger = ledger
         self._cache: dict[str, tuple[float, Verdict]] = {}
+        self._failures: dict[str, tuple[float, Verdict]] = {}  # mint -> (at, API failure verdict)
+        self._api_failed = False
         self.calls = int(_safe_float(self._kv_get(KV_CALLS, 0)))
         self.cost_usd_total = _safe_float(self._kv_get(KV_COST_TOTAL, 0.0))
         self._spend_day: str | None = None
@@ -415,6 +426,9 @@ class Judge:
         cached = self._cached(mint)
         if cached is not None:
             return cached
+        failed = self._recent_failure(mint)
+        if failed is not None:
+            return failed
         if self.spent_today_usd() >= self.settings.judge_max_daily_usd:
             log.warning("judge budget_exceeded mint=%s spent_usd=%.4f cap_usd=%.4f",
                         mint, self._spend_today, self.settings.judge_max_daily_usd)
@@ -426,6 +440,8 @@ class Judge:
                  verdict.error)
         if verdict.source == "claude":
             self._store(mint, verdict)
+        elif self._api_failed:
+            self._failures[mint] = (self.clock.now(), verdict)
         return verdict
 
     def spent_today_usd(self) -> float:
@@ -441,6 +457,7 @@ class Judge:
     # ------------------------------------------------------------------ model call
     def _ask_model(self, features: dict[str, Any]) -> Verdict:
         started = self.clock.now()
+        self._api_failed = False
         try:
             import anthropic
         except ImportError:
@@ -470,10 +487,11 @@ class Judge:
         if self.client is None:
             key = self.settings.anthropic_api_key
             self.client = anthropic.Anthropic(api_key=key.reveal() if key else None,
-                                              timeout=self.settings.judge_timeout_s, max_retries=2)
+                                              timeout=self.settings.judge_timeout_s, max_retries=0)
         return self.client
 
     def _api_failure(self, exc: Exception, started: float, detail: str) -> Verdict:
+        self._api_failed = True
         request_id = getattr(exc, "request_id", None)
         log.warning("judge api_error error=%s detail=%s request_id=%s", type(exc).__name__, detail, request_id)
         return self._error_verdict(type(exc).__name__, started, request_id=request_id)
@@ -523,6 +541,16 @@ class Judge:
             del self._cache[mint]
             return None
         return dataclasses.replace(verdict, reasons=list(verdict.reasons), cached=True, cost_usd=0.0)
+
+    def _recent_failure(self, mint: str) -> Verdict | None:
+        entry = self._failures.get(mint)
+        if entry is None:
+            return None
+        failed_at, verdict = entry
+        if self.clock.now() - failed_at >= JUDGE_ERROR_CACHE_S:
+            del self._failures[mint]
+            return None
+        return dataclasses.replace(verdict, reasons=list(verdict.reasons), cached=True, cost_usd=0.0, latency_ms=0)
 
     def _store(self, mint: str, verdict: Verdict) -> None:
         if self._cache_ttl_s <= 0:
