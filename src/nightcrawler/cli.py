@@ -741,13 +741,15 @@ def cmd_reset_halt(args: argparse.Namespace, settings: Settings) -> int:
 
 def cmd_dashboard(args: argparse.Namespace, settings: Settings) -> int:
     from nightcrawler.dashboard import DashboardServer, build_state
+    from nightcrawler.teamroom import TeamRoom
 
     _setup_logging(args, settings)
     settings.ensure_data_dir()
     ledger = _open_ledger(settings, must_exist=False)
     clock = _make_clock()
     cache: dict[str, Any] = {}
-    server = DashboardServer(settings, lambda: build_state(ledger, settings, clock.now(), cache))
+    server = DashboardServer(settings, lambda: build_state(ledger, settings, clock.now(), cache),
+                             team=TeamRoom(settings, ledger, clock))
     try:
         server.start()
         print(f"dashboard on http://{settings.dashboard_host}:{server.bound_port}/ (Ctrl+C to stop)", file=sys.stderr)

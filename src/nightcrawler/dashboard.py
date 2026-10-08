@@ -1072,6 +1072,7 @@ class DashboardServer:
         (read the bound port from :attr:`bound_port`)."""
         if self._thread is not None:
             return self._thread
+        self.team.open()  # stop() closed it
         self._server = _Server((self.host, self.port), self)
         self._thread = threading.Thread(target=self._server.serve_forever, kwargs={"poll_interval": 0.5},
                                         name="nightcrawler-dashboard", daemon=True)

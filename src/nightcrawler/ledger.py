@@ -147,25 +147,37 @@ def _limit_clause(limit: int | None) -> tuple[str, list[Any]]:
 class Ledger:
     """Thread-safe SQLite ledger. Use as a context manager or call :meth:`close`."""
 
-    def __init__(self, path: str | os.PathLike[str], clock: Any | None = None) -> None:
+    def __init__(self, path: str | os.PathLike[str], clock: Any | None = None, *, read_only: bool = False) -> None:
         """Open/create the database at ``path`` (parent dirs created), enable WAL, create tables.
 
         ``path=":memory:"`` is allowed (tests). ``clock`` (default RealClock)
         supplies receipt/kv timestamps when none is passed explicitly.
+
+        ``read_only=True`` opens an EXISTING ledger for reading only (SQLite ``mode=ro``): no file or
+        folder is created, nothing is migrated, and every write raises :class:`LedgerError`. For a
+        process that only displays the ledger another process writes.
         """
         self.clock = clock if clock is not None else RealClock()
         self.path = str(path)
+        self.read_only = read_only
         self._lock = threading.RLock()
         self._depth = 0
         self._conn: sqlite3.Connection | None = None
-        if self.path != ":memory:":
+        if read_only and self.path == ":memory:":
+            raise LedgerError("an in-memory ledger cannot be opened read-only")
+        if self.path != ":memory:" and not read_only:
             Path(self.path).parent.mkdir(parents=True, exist_ok=True)
         try:
-            self._conn = sqlite3.connect(self.path, timeout=BUSY_TIMEOUT_S, check_same_thread=False,
-                                         isolation_level=None)
-            self._conn.execute("PRAGMA journal_mode=WAL")
-            self._conn.execute("PRAGMA synchronous=FULL")
-            self._migrate()
+            if read_only:
+                self._conn = sqlite3.connect(Path(self.path).absolute().as_uri() + "?mode=ro", uri=True,
+                                             timeout=BUSY_TIMEOUT_S, check_same_thread=False, isolation_level=None)
+                self._check_schema()
+            else:
+                self._conn = sqlite3.connect(self.path, timeout=BUSY_TIMEOUT_S, check_same_thread=False,
+                                             isolation_level=None)
+                self._conn.execute("PRAGMA journal_mode=WAL")
+                self._conn.execute("PRAGMA synchronous=FULL")
+                self._migrate()
         except (sqlite3.Error, LedgerError) as exc:
             self.close()
             raise LedgerError(f"cannot open ledger {self.path}: {exc}{self._permission_hint()}") from exc
@@ -188,6 +200,15 @@ class Ledger:
             if version < 2:
                 self._migrate_position_wallets(conn)
             conn.execute(f"PRAGMA user_version={SCHEMA_VERSION}")
+
+    def _check_schema(self) -> None:
+        """Read-only open: the file must already hold a ledger this nightcrawler can read (never migrated)."""
+        with self._locked() as conn:
+            version = conn.execute("PRAGMA user_version").fetchone()[0]
+        if version == 0:
+            raise LedgerError("not a nightcrawler ledger yet (no schema)")
+        if version > SCHEMA_VERSION:
+            raise LedgerError(f"ledger schema v{version} is newer than this nightcrawler (v{SCHEMA_VERSION})")
 
     def _migrate_position_wallets(self, conn: sqlite3.Connection) -> None:
         """v1 -> v2: add ``positions.wallet``; existing LIVE rows default to kv ``wallet.pubkey`` (the

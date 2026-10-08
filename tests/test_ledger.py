@@ -345,6 +345,36 @@ def test_refuses_a_database_from_a_newer_version(db_path: Path) -> None:
         Ledger(db_path)
 
 
+def test_read_only_ledger_reads_but_never_creates_migrates_or_writes(db_path: Path, fake_clock: FakeClock) -> None:
+    with pytest.raises(LedgerError):
+        Ledger(db_path, read_only=True)
+    assert not db_path.parent.exists()  # neither the folder nor the file was created
+    with pytest.raises(LedgerError):
+        Ledger(":memory:", read_only=True)
+    with Ledger(db_path, clock=fake_clock) as writer:
+        fill_chain(writer, 3)
+        conn = sqlite3.connect(db_path)
+        conn.execute("PRAGMA user_version=1")  # an older schema: a reader must not migrate it
+        conn.close()
+        with Ledger(db_path, clock=fake_clock, read_only=True) as reader:
+            assert reader.read_only and reader.head() == writer.head()
+            assert reader.verify_chain() == (True, None)
+            writer.append_receipt("note", {"later": True})
+            assert reader.head() == writer.head()  # sees the writer's new rows
+            for write in (lambda: reader.append_receipt("note", {}), lambda: reader.set_kv("k", 1)):
+                with pytest.raises(LedgerError, match="readonly"):
+                    write()
+        conn = sqlite3.connect(db_path)
+        assert conn.execute("PRAGMA user_version").fetchone()[0] == 1
+        conn.execute(f"PRAGMA user_version={SCHEMA_VERSION + 1}")
+        conn.close()
+    with pytest.raises(LedgerError, match="newer"):
+        Ledger(db_path, read_only=True)
+    sqlite3.connect(db_path.parent / "empty.db").close()
+    with pytest.raises(LedgerError, match="no schema"):
+        Ledger(db_path.parent / "empty.db", read_only=True)
+
+
 def test_unwritable_data_dir_explains_the_railway_fix(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     folder = tmp_path / "volume"
     (folder / "nightcrawler.db").mkdir(parents=True)  # a directory where the file should be: sqlite cannot open it

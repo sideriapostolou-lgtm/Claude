@@ -19,7 +19,7 @@ from fakes import FakeClock
 from nightcrawler import __version__
 from nightcrawler.config import LIVE_CONFIRM_PHRASE, Settings
 from nightcrawler.dashboard import COOKIE_NAME, DashboardServer, build_state, render_html
-from nightcrawler.ledger import Ledger
+from nightcrawler.ledger import Ledger, LedgerError
 from nightcrawler.models import (
     Decision,
     EquityPoint,
@@ -387,9 +387,65 @@ def test_counter_changes_between_reads_count_as_activity(ledger: Ledger, setting
     moved = status_kv(ts=NOW + 15, crawler={**status_kv()["crawler"], "polls": 101},
                       counters={**status_kv()["counters"], "candle_fetches": 13})
     later = panels(build_team_state(ledger, settings, NOW + 20, engine_status=moved, memory=memory))
-    assert later["crawler"]["status"] == "working" and later["crawler"]["last_activity"] == NOW + 15
-    assert later["strategy"]["last_activity"] == NOW + 15
+    # it moved after the previous read (status stamp NOW - 5): dated there, never later than proven
+    assert later["crawler"]["status"] == "working" and later["crawler"]["last_activity"] == NOW - 5
+    assert later["strategy"]["last_activity"] == NOW - 5
     assert later["cocoon"]["last_activity"] is None  # its counter did not move
+
+
+def test_a_counter_that_moved_during_a_long_gap_is_dated_to_the_previous_read(ledger: Ledger,
+                                                                              settings: Settings) -> None:
+    """The phone screen was off for an hour: a counter that moved since the last read moved somewhere in that
+    hour, so it proves activity only since the PREVIOUS read, never "Working · 5 s ago"."""
+    memory: dict[str, Any] = {}
+    ledger.set_kv("engine.heartbeat", NOW - 5)
+    build_team_state(ledger, settings, NOW, engine_status=status_kv(), memory=memory)
+    hour = 3600.0
+    ledger.set_kv("engine.heartbeat", NOW + hour - 5)
+    moved = status_kv(ts=NOW + hour - 5, crawler={**status_kv()["crawler"], "polls": 220},
+                      counters={**status_kv()["counters"], "candle_fetches": 70})
+    after_gap = panels(build_team_state(ledger, settings, NOW + hour, engine_status=moved, memory=memory))
+    for pid in ("crawler", "strategy"):
+        assert after_gap[pid]["last_activity"] == NOW - 5, pid
+        assert after_gap[pid]["status"] != "working", pid
+    ledger.set_kv("engine.heartbeat", NOW + hour + 10)
+    again = status_kv(ts=NOW + hour + 10, crawler={**status_kv()["crawler"], "polls": 221},
+                      counters={**status_kv()["counters"], "candle_fetches": 71})
+    steady = panels(build_team_state(ledger, settings, NOW + hour + 12, engine_status=again, memory=memory))
+    assert steady["crawler"]["last_activity"] == NOW + hour - 5 and steady["crawler"]["status"] == "working"
+
+
+def test_rules_only_verdicts_are_not_judge_activity(ledger: Ledger, settings: Settings) -> None:
+    """JUDGE_MODE=off: the judge returns a ``source="rules"`` yes that the engine attaches to every entry. That
+    is not Jev at work: no activity, no 'Working' chip, no verdict counted as an AI yes."""
+    assert settings.judge_mode == "off"
+    ledger.set_kv("engine.heartbeat", NOW - 5)
+    rules = Verdict(decision="yes", confidence=1.0, reasons=["judge off: rules only"], model="rules",
+                    latency_ms=0, cost_usd=0.0, source="rules")
+    ledger.record_decision(Decision(ts=NOW - 60, mint=HIGGS, action="enter", reason="dip-rebound", symbol="HIGGS",
+                                    verdict=rules))
+    judge = panels(build_team_state(ledger, settings, NOW, engine_status=status_kv()))["judge"]
+    assert judge["last_activity"] is None and judge["status"] == "idle"
+    assert judge["why"] == "off: the rules decide alone"
+    assert stat(judge, "Verdicts 24 h") == "0 yes · 0 no" and judge["events"] == []
+
+
+def test_a_sell_forced_by_the_radar_is_radar_activity(ledger: Ledger, settings: Settings) -> None:
+    ledger.set_kv("engine.heartbeat", NOW - 5)
+    ledger.record_decision(Decision(ts=NOW - 60, mint=HIGGS, action="exit", symbol="HIGGS",
+                                    reason="radar: insiders sold $900"))
+    radar = panels(build_team_state(ledger, settings, NOW, engine_status=status_kv()))["radar"]
+    assert radar["last_activity"] == NOW - 60 and radar["status"] == "working"
+    assert radar["events"][0]["text"].startswith("SOLD HIGGS")
+
+
+def test_a_manual_risk_reset_says_why(ledger: Ledger, settings: Settings, fake_clock: FakeClock) -> None:
+    from nightcrawler.risk import RiskManager
+
+    seed(ledger)
+    RiskManager(settings, ledger, fake_clock).reset_halt("manual reset via CLI")
+    risk = panels(build_team_state(ledger, settings, NOW))["risk"]
+    assert any(e["text"] == "RESET manual reset via CLI" for e in risk["events"])
 
 
 def test_dedicated_kv_keys_win_over_the_status(ledger: Ledger, settings: Settings) -> None:
@@ -484,6 +540,58 @@ def test_without_a_wired_ledger_the_team_room_reads_the_db_file(serve: Callable[
     assert status == 200 and panels(state)["crawler"]["events"][0]["text"].startswith("NEWEST")
 
 
+def test_build_app_hands_the_engine_ledger_to_the_team_room(make_settings: Callable[..., Settings],
+                                                           http_client: Any, fake_clock: FakeClock) -> None:
+    from nightcrawler.engine import build_app
+
+    app = build_app(make_settings(), fake_clock, http=http_client)
+    try:
+        assert app.dashboard.team._ledger is app.ledger  # one connection, not a second one to the same file
+        app.ledger.set_kv("engine.heartbeat", NOW - 5)
+        assert app.dashboard.team.response("/api/team", [])[0] == 200
+    finally:
+        app.close()
+
+
+def test_the_standalone_fallback_opens_the_ledger_read_only(settings: Settings) -> None:
+    """Without a wired ledger the team room reads DATA_DIR/nightcrawler.db through a READ-ONLY connection:
+    it never creates the file, never migrates it and cannot write to it."""
+    room = TeamRoom(settings, clock=FakeClock(NOW), environ={})
+    assert room.response("/api/team", [])[0] == 500  # no ledger yet: nothing to show, nothing created
+    assert not settings.db_path.exists()
+    with Ledger(settings.db_path, clock=FakeClock(NOW)) as led:
+        seed(led)
+        conn = sqlite3.connect(settings.db_path)
+        conn.execute("PRAGMA user_version=1")  # an older schema the fallback must NOT migrate
+        conn.close()
+        assert room.response("/api/team", [])[0] == 200
+        with pytest.raises(LedgerError):
+            room._ledger.set_kv("engine.heartbeat", 1.0)
+        conn = sqlite3.connect(settings.db_path)
+        assert conn.execute("PRAGMA user_version").fetchone()[0] == 1
+        conn.close()
+    room.close()
+
+
+@pytest.mark.parametrize("wired", [True, False])
+def test_dashboard_restart_keeps_the_team_room_answering(ledger: Ledger, settings: Settings, wired: bool) -> None:
+    """``stop()`` then ``start()`` (e.g. a restarted server) must not leave /api/team answering 500."""
+    seed(ledger)
+    team = TeamRoom(settings, ledger=ledger, clock=FakeClock(NOW), environ={}) if wired else None
+    if not wired:
+        with Ledger(settings.db_path, clock=FakeClock(NOW)) as led:
+            seed(led)
+    server = DashboardServer(settings, dict, host="127.0.0.1", port=0, team=team)
+    try:
+        server.start()
+        assert Client(server).request("/api/team")[0] == 200
+        server.stop()
+        server.start()
+        assert Client(server).request("/api/team")[0] == 200
+    finally:
+        server.stop()
+
+
 def test_a_closed_team_room_never_reopens_its_ledger(settings: Settings) -> None:
     with Ledger(settings.db_path, clock=FakeClock(NOW)) as led:
         seed(led)
@@ -536,6 +644,16 @@ def test_team_csp_hashes_match_the_inline_script_and_style() -> None:
     assert f"script-src {source(script)};" in TEAM_CSP and f"style-src {source(style)};" in TEAM_CSP
     assert "default-src 'none'" in TEAM_CSP and "connect-src 'self'" in TEAM_CSP
     assert "unsafe-inline" not in TEAM_CSP and "unsafe-eval" not in TEAM_CSP
+
+
+def test_an_unchecked_bar_draws_no_track() -> None:
+    """A bar whose value is null ("not checked yet") draws no track at all: a full-width soft track looked like
+    a FULL bar in dark mode. Tracks use the neutral hairline colour."""
+    from nightcrawler.teamroom import _SCRIPT, _STYLE
+
+    assert "isNum(b.value) ? track(b.value) : null" in _SCRIPT
+    rule = re.search(r"\.track\{[^}]*\}", _STYLE)
+    assert rule is not None and "var(--hair)" in rule.group(0) and "accent-soft" not in rule.group(0)
 
 
 def test_dashboard_links_to_the_team_room(settings: Settings) -> None:

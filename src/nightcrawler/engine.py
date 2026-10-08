@@ -1871,6 +1871,7 @@ def build_app(settings: Settings, clock: Clock | None = None, *, session: Any = 
     from nightcrawler.risk import RiskManager
     from nightcrawler.sources import build_sources
     from nightcrawler.sources import pumpfun as pumpfun_mod
+    from nightcrawler.teamroom import TeamRoom
 
     stop_event = threading.Event()
     clock = clock if clock is not None else RealClock(stop_event)
@@ -1910,7 +1911,8 @@ def build_app(settings: Settings, clock: Clock | None = None, *, session: Any = 
                         judge=judge, risk=risk, broker=broker, sources=sources, stop_event=stop_event,
                         pumpfun=pumpfun)
         verify_cache: dict[str, Any] = {}
-        dashboard = DashboardServer(settings, lambda: build_state(ledger, settings, clock.now(), verify_cache))
+        dashboard = DashboardServer(settings, lambda: build_state(ledger, settings, clock.now(), verify_cache),
+                                    team=TeamRoom(settings, ledger, clock))
     except BaseException:
         ledger.close()
         raise

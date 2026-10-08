@@ -241,15 +241,19 @@ def _verdict(d: Decision) -> dict[str, Any] | None:
 
 
 def _counter_activity(memory: dict[str, Any] | None, key: str, value: Any, stamp: float | None) -> float | None:
-    """When a since-boot counter in ``engine.status`` CHANGED between two reads, the member acted in
-    between: remember the status stamp of the read that saw it move. An unchanged counter proves nothing."""
+    """When a since-boot counter in ``engine.status`` CHANGED between two reads, the member acted somewhere
+    between them: the activity is dated to the PREVIOUS read's status stamp, so a member never looks more
+    recent than proven (after an hour with the phone screen off that is an hour ago, not "5 s ago"). An
+    unchanged counter proves nothing. ``memory[key]`` = ``[value, activity stamp | None, last read's stamp]``."""
     if memory is None or _num(value) is None or stamp is None:
         return None
     seen = memory.get(key)
     if seen is None:
-        memory[key] = [value, None]
+        memory[key] = [value, None, stamp]
     elif seen[0] != value:
-        memory[key] = [value, stamp]
+        memory[key] = [value, seen[2], stamp]
+    else:
+        seen[2] = stamp
     return memory[key][1]
 
 
@@ -495,7 +499,7 @@ def _radar(ctx: _Ctx) -> dict[str, Any]:
     flagged = [d for d in day_scans if d.action == "reject_radar"] + [d for d in exits if d.ts >= ctx.now - DAY_S]
     reasons = " ".join(" ".join(str(r) for r in _dict(d.inputs.get("radar")).get("reasons") or []) or d.reason
                        for d in flagged).lower()
-    last = scans[0].ts if scans else None
+    last = _latest(scans[0].ts if scans else None, exits[0].ts if exits else None)
     held = ctx.open_positions
     status = ctx.derive("radar", last, waiting="waiting for a coin to reach a buy setup" if not held else None,
                         idle=(f"re-checks {held} open position(s) every {ctx.settings.radar_interval_s:g} s; "
@@ -511,15 +515,15 @@ def _radar(ctx: _Ctx) -> dict[str, Any]:
 
 def _judge(ctx: _Ctx) -> dict[str, Any]:
     s, judge = ctx.settings, ctx.state["judge"]
-    verdicts = [(d, v) for d in ctx.decisions(("reject_judge", "enter", "reject_quote")) if (v := _verdict(d))]
+    # A ``source="rules"`` verdict is the judge being OFF (a rules-only yes on every entry): not Jev's work.
+    verdicts = [(d, v) for d in ctx.decisions(("reject_judge", "enter", "reject_quote"))
+                if (v := _verdict(d)) and v.get("source") != "rules"]
     events = []
     for d, v in verdicts:
         name = d.symbol or _short(d.mint)
         word = str(v.get("decision", "?")).upper()
         if v.get("source") == "error":
             events.append(ctx.event(d.ts, f"{word} (error) · {name} · {v.get('error') or 'no answer'}", "bad"))
-        elif v.get("source") == "rules":
-            events.append(ctx.event(d.ts, f"{word} (rules only) · {name}", "neutral"))
         else:
             conf = round((_num(v.get("confidence")) or 0.0) * 100)
             why = "; ".join(str(r) for r in v.get("reasons") or [])
@@ -696,7 +700,8 @@ def _risk(ctx: _Ctx) -> dict[str, Any]:
     for kind in ("halt", "kill", "reset"):
         receipt = ctx.ledger.last_receipt(kind)
         if receipt is not None:
-            detail = receipt.payload.get("reason") or receipt.payload.get("mode") or ""
+            p = receipt.payload
+            detail = p.get("reason") or p.get("mode") or p.get("note") or ""
             events.append(ctx.event(receipt.ts, f"{kind.upper()} {detail}".strip(),
                                     "neutral" if kind == "reset" else "bad"))
     blocks = [why for source, why in _entry_blocks(ctx) if source != "engine"]
@@ -823,7 +828,7 @@ dd small{color:var(--ink2)}
 .bar{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:3px 10px;margin-top:8px;font-size:13px}
 .bar span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .bar small{grid-column:1/-1;color:var(--ink2);overflow-wrap:anywhere}
-.track{grid-column:1/-1;height:8px;border-radius:4px;background:var(--accent-soft);overflow:hidden}
+.track{grid-column:1/-1;height:8px;border-radius:4px;background:var(--hair);overflow:hidden}
 .fill{height:100%;border-radius:4px;background:var(--accent)}
 .fill.warn{background:var(--warn)}.fill.critical{background:var(--critical)}
 .meter{margin-top:10px;font-size:13px;color:var(--ink2)}
@@ -952,7 +957,9 @@ _SCRIPT = r"""
   function bars(p) {
     if (!p.bars.length) return el("p", "empty", p.bars_empty || "");
     return el("div", "bars", ...p.bars.map((b) => el("div", "bar", el("span", null, b.label),
-      el("b", null, b.text || ""), track(b.value), b.note ? el("small", null, b.note) : null)));
+      // no track when unknown: an empty soft track read as a FULL bar in dark mode
+      el("b", null, b.text || ""), isNum(b.value) ? track(b.value) : null,
+      b.note ? el("small", null, b.note) : null)));
   }
   function events(panel) {
     if (!panel.events.length) return el("p", "empty", "No events recorded yet.");
@@ -1093,9 +1100,10 @@ def render_team_html() -> str:
 class TeamRoom:
     """The two team-room routes for :class:`~nightcrawler.dashboard.DashboardServer`.
 
-    ``ledger`` is the engine's ledger when wired by the caller; when None (``build_app`` does not pass
-    one), the ledger file ``settings.db_path`` is opened lazily on the first ``/api/team`` request as a
-    second WAL connection (reads never block the engine) and closed by :meth:`close`.
+    ``ledger`` is the engine's own ledger (``build_app`` and ``nightcrawler dashboard`` pass theirs). Only
+    when None (standalone use) is ``settings.db_path`` opened lazily on the first ``/api/team`` request,
+    READ-ONLY (never created or migrated), and closed by :meth:`close`. :meth:`close` and :meth:`open`
+    follow the server's ``stop()``/``start()``: a closed room answers 500 and never reopens a ledger.
     """
 
     def __init__(self, settings: Settings, ledger: Any = None, clock: Clock | None = None,
@@ -1118,7 +1126,7 @@ class TeamRoom:
             if self._closed:
                 raise RuntimeError("team room is closed")
             if self._ledger is None:
-                self._ledger = Ledger(self.settings.db_path, clock=self.clock)
+                self._ledger = Ledger(self.settings.db_path, clock=self.clock, read_only=True)
             state = build_team_state(self._ledger, self.settings, self.clock.now(), verify_cache=self._verify_cache,
                                      memory=self._memory, deploy=self.deploy)
         return scrub(state, self._secrets)
@@ -1134,8 +1142,13 @@ class TeamRoom:
             return 500, b'{"error":"team state unavailable"}', "application/json", headers
         return 200, body, "application/json", headers
 
+    def open(self) -> None:
+        """Serve again after :meth:`close` (the dashboard server calls this from ``start()``)."""
+        with self._lock:
+            self._closed = False
+
     def close(self) -> None:
-        """Close the ledger this object opened itself (idempotent); later requests answer 500."""
+        """Close the ledger this object opened itself (idempotent); requests answer 500 until :meth:`open`."""
         with self._lock:
             self._closed = True
             if self._owns_ledger and self._ledger is not None:
