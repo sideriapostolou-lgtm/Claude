@@ -98,17 +98,31 @@ def run_all() -> dict:
         "live_measured_costs_mean": dict(costs=None, rt=rt_mean),
         "live_measured_costs_cheapest": dict(costs=None, rt=rt_min),
     }
+    sp = I.frozen_params(0.98)["params"]["strategy"]
+    sol = I.Sol()
     for split in ("validation", "test"):
+        # signals do not depend on the execution variant: take them from the independent run's output
+        sig = json.loads((I.OUT / f"indep_{split}_q98.json").read_text())["trades"]
+        coins = {t["mint"]: I.load_coin(t["mint"]) for t in sig}
         res = {}
         for name, kw in variants.items():
             kw = dict(kw)
+            delay = kw.pop("delay", 1)
             if "rt" in kw:
                 rt = kw.pop("rt")
                 # impact part of the round trip at this size/mcap is ~ model_rt - 2*(1.00+0.10)
                 impact_rt = max(model_rt - 2 * (1.00 + I.ULTRA_PCT), 0.0)
                 kw["costs"] = I.Costs(side_pct_override=max((rt - impact_rt) / 2, 0.0))
-            r = I.run(split, 0.98, **kw)
-            res[name] = [t for t in r["trades"] if "ret_pct" in t]
+            costs = kw.pop("costs", None) or I.Costs()
+            tr = []
+            for t in sig:
+                cn = coins[t["mint"]]
+                j0 = t["decision_bar"] + delay
+                if j0 >= len(cn["ts"]):
+                    continue
+                tr.append({"mint": t["mint"], "symbol": t["symbol"],
+                           **I.execute(cn, j0, sp, costs, sol, kw.get("wick", "half"), kw.get("rug_aware", False))})
+            res[name] = tr
         out[split] = res
     report: dict = {"live_rt_mean_pct": round(rt_mean, 3), "live_rt_min_pct": round(rt_min, 3),
                     "model_rt_pct_same_coins": round(model_rt, 3)}

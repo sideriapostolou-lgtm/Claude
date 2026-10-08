@@ -11,7 +11,8 @@ F4 trade and replays the same rules on the real trade sequence with a reaction l
   and fills at the pool price after the last swap at or before t* + L;
 * time stop: the pool price at entry + 15 min + L.
 
-Prices are swap-api's per-swap ``priceUsd`` (checked against ``fillPriceUsd``); costs are the auditor's
+Prices are swap-api's per-swap ``priceUsd`` = the pool price AFTER that swap (checked: on the MrBeast
+rug the 132.5M-token sell has fillPriceUsd x1e9 = $198k and priceUsd x1e9 = $57.7k, the next swaps start there); costs are the auditor's
 cost model (indep_f4.Costs). Network etiquette: <= 120 requests/min (limit 1000/min), backoff on 429.
 
     python research/lab/audit/trade_replay.py fetch LAB/audit/indep_test_q98.json [more.json ...]
@@ -142,7 +143,11 @@ def replay(path: str, lat: float = 2.0, tp: float = 0.30, sl: float = 0.15, hold
                 why, t_x = "take_profit", ts
                 break
         if why is None:
-            why, t_x = "time_stop", T + lat + hold_s - lat
+            if doc["end"] < T + lat + hold_s:
+                # the fetched window ends before the time stop and no level was crossed inside it
+                why, t_x = "undetermined_window", doc["end"] - lat
+            else:
+                why, t_x = "time_stop", T + lat + hold_s - lat
         px = price_at(s, t_x + lat)
         s0, s1 = sol.at(T), sol.at(t_x)
         tok = cost.buy(20.0, entry, s0)
@@ -157,7 +162,8 @@ def replay(path: str, lat: float = 2.0, tp: float = 0.30, sl: float = 0.15, hold
                 crash = {"largest_sell_usd": round(float(big["amountUsd"]), 0), "wallet": big["userAddress"],
                          "sells_in_that_second": len(sec),
                          "price_before": price_at(s, t_x - 1), "price_after_second": price_at(s, t_x + 1)}
-        rows.append({"symbol": t["symbol"], "mint": t["mint"], "candle_entry": t["entry_mid"],
+        rows.append({"symbol": t["symbol"], "mint": t["mint"], "entry_ts": T + lat, "exit_ts": t_x + lat,
+                     "ret_pct": ret, "pnl_usd": ret / 100 * 20, "candle_entry": t["entry_mid"],
                      "trade_entry": entry, "last_swap_before_decision": last_before,
                      "entry_slip_pct": round(100 * (entry / t["entry_mid"] - 1), 3),
                      "candle_exit": t["exit_reason"], "candle_ret_pct": round(t["ret_pct"], 2),

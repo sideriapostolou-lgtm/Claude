@@ -80,6 +80,8 @@ class Costs:
         return self.mult * (pool_fee_pct(price_usd * 1e9 / sol) + ULTRA_PCT + MEV_PCT)
 
     def quote_reserve_usd(self, price_usd: float, sol: float) -> float:
+        if self.mult <= 0:
+            return math.inf  # zero-cost bound: no impact either
         p_sol = price_usd / sol
         return math.sqrt(self.k * p_sol) * sol / self.mult
 
@@ -89,18 +91,19 @@ class Costs:
     def buy(self, usd: float, price: float, sol: float) -> float:
         net = usd * (1 - self.side_pct(price, sol) / 100)
         x = self.quote_reserve_usd(price, sol)
-        return net / price * x / (x + net)  # tokens out of x*y=k
+        return net / price if math.isinf(x) else net / price * x / (x + net)  # tokens out of x*y=k
 
     def sell(self, tokens: float, price: float, sol: float) -> float:
         val = tokens * price
         x = self.quote_reserve_usd(price, sol)
-        gross = val * x / (x + val)
+        gross = val if math.isinf(x) else val * x / (x + val)
         return gross * (1 - self.side_pct(price, sol) / 100)
 
 
 # ----------------------------------------------------------------------------- data
 class Sol:
-    def __init__(self) -> None:
+    def __init__(self, shift_s: float = 0.0) -> None:
+        self.shift = shift_s  # 60 = use only SOL minutes that have CLOSED by ts (audit of the 1-min SOL lookahead)
         rows = json.loads((LAB / "sol_usd.json").read_text())["candles"]
         rows.sort(key=lambda r: r[0])
         self.t = [int(r[0]) for r in rows]
@@ -108,7 +111,7 @@ class Sol:
 
     def at(self, ts: float) -> float:
         """Close of the last SOL minute whose START is <= ts (same convention as the lab, see audit notes)."""
-        k = bisect.bisect_right(self.t, ts) - 1
+        k = bisect.bisect_right(self.t, ts - self.shift) - 1
         return self.c[max(k, 0)]
 
 
@@ -283,13 +286,37 @@ def simulate_exit(cn: dict, j0: int, tp: float, sl: float, hold_s: float, wick: 
     return len(ts) - 1, c[-1], "end_of_data"
 
 
+def execute(cn: dict, j0: int, sp: dict, costs: Costs, sol: Sol, wick: str = "half", rug_aware: bool = False,
+            usd: float = 20.0) -> dict:
+    """Buy ``usd`` at the open of bar j0, exit by the frozen rules, net of costs."""
+    mid = cn["o"][j0]
+    s0 = sol.at(cn["ts"][j0])
+    tokens = costs.buy(usd, mid, s0)
+    jx, px, why = simulate_exit(cn, j0, sp["tp"], sp["sl"], sp["hold_min"] * 60, wick, rug_aware)
+    s1 = sol.at(cn["ts"][jx])
+    back = costs.sell(tokens, px, s1)
+    pnl = back - costs.network_usd(s1) - usd - costs.network_usd(s0)
+    return {"entry_bar": j0, "entry_ts": float(cn["ts"][j0]), "entry_mid": float(mid),
+            "entry_mcap_usd": float(mid * 1e9), "exit_bar": jx, "exit_ts": float(cn["ts"][jx]),
+            "exit_mid": float(px), "exit_reason": why, "ret_pct": 100 * pnl / usd, "pnl_usd": pnl,
+            "min_after_grad": (cn["ts"][j0] - cn["grad"]) / 60,
+            "entry_bar_volume": float(cn["v"][j0]), "exit_bar_volume": float(cn["v"][jx]),
+            "exit_bar_close": float(cn["c"][jx]), "exit_bar_low": float(cn["l"][jx])}
+
+
+def frozen_params(q: float) -> dict:
+    frozen = json.loads(FROZEN.read_text())
+    return next(x for x in frozen["finalists"] if x["strategy_class"] == "F4Learned" and x["params"]["q"] == q)
+
+
 def run(split: str, q: float, mints: list[str] | None = None, delay: int = 1, costs: Costs | None = None,
-        wick: str = "half", rug_aware: bool = False, usd: float = 20.0, signals_only: bool = False) -> dict:
+        wick: str = "half", rug_aware: bool = False, usd: float = 20.0, signals_only: bool = False,
+        sol_shift_s: float = 0.0) -> dict:
     frozen = json.loads(FROZEN.read_text())
     fin = next(x for x in frozen["finalists"] if x["strategy_class"] == "F4Learned" and x["params"]["q"] == q)
     sp = fin["params"]["strategy"]
     ens = load_model(LAB / fin["params"]["model_file"][4:], fin["model_sha256"])
-    sol = Sol()
+    sol = Sol(sol_shift_s)
     costs = costs or Costs()
     mints = mints or split_mints(split)
     trades, scored, n_univ = [], 0, 0
@@ -323,19 +350,7 @@ def run(split: str, q: float, mints: list[str] | None = None, delay: int = 1, co
             rec = {"mint": mint, "symbol": cn["symbol"], "decision_bar": i, "decision_ts": now, "score": score,
                    "features": {k: f[k] for k in NAMES}}
             if j0 < n and not signals_only:
-                mid = cn["o"][j0]
-                s0 = sol.at(cn["ts"][j0])
-                tokens = costs.buy(usd, mid, s0)
-                jx, px, why = simulate_exit(cn, j0, sp["tp"], sp["sl"], sp["hold_min"] * 60, wick, rug_aware)
-                s1 = sol.at(cn["ts"][jx])
-                back = costs.sell(tokens, px, s1)
-                pnl = back - costs.network_usd(s1) - usd - costs.network_usd(s0)
-                rec.update({"entry_bar": j0, "entry_ts": float(cn["ts"][j0]), "entry_mid": float(mid),
-                            "entry_mcap_usd": float(mid * 1e9), "exit_bar": jx, "exit_ts": float(cn["ts"][jx]),
-                            "exit_mid": float(px), "exit_reason": why, "ret_pct": 100 * pnl / usd, "pnl_usd": pnl,
-                            "min_after_grad": (cn["ts"][j0] - cn["grad"]) / 60,
-                            "entry_bar_volume": float(cn["v"][j0]), "exit_bar_volume": float(cn["v"][jx]),
-                            "exit_bar_close": float(cn["c"][jx]), "exit_bar_low": float(cn["l"][jx])})
+                rec.update(execute(cn, j0, sp, costs, sol, wick, rug_aware, usd))
             trades.append(rec)
             break
     return {"split": split, "q": q, "threshold": sp["threshold"], "coins_in_universe": n_univ,
