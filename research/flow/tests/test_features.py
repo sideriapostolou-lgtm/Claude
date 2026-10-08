@@ -12,7 +12,7 @@ def test_agent_detected_on_real_pool(ch_events):
     row = ch_events["b2_rows"][0]
     a = F.detect_agent(_cands(row), row["g_ts"])
     assert a is not None
-    assert 11 <= a["median_gap"] <= 13 and a["gap_cv"] < 0.15
+    assert 11 <= a["median_gap"] <= 13 and a["gap_band_share"] >= 0.6
     assert a["n_slices"] >= 10
     assert 0.3 < a["sol"] / a["n_slices"] < 1.0       # ~0.5-0.7 SOL slices
     # knowable only from its 4th buy (PLAN 3.2 role timing)
@@ -37,6 +37,17 @@ def test_agent_rules_synthetic():
     assert F.detect_agent(late, g) is None
     # 3 buys are not enough
     assert F.detect_agent({"A": {"ts": ts[:3], "sol": [1] * 3, "sells": 0}}, g) is None
+
+
+def test_robust_rule_tolerates_a_skipped_slice():
+    g = 0
+    ts = [2 + 12 * i for i in range(27)]
+    del ts[5]                      # one missed slice -> a 24 s gap
+    del ts[15]
+    cands = {"A": {"ts": ts, "sol": [0.65] * len(ts), "sells": 0}}
+    assert F.detect_agent(cands, g, rule="plan") is None     # CV ~0.24 fails PLAN's 0.15
+    a = F.detect_agent(cands, g)
+    assert a and a["n_slices"] == 25 and a["gap_band_share"] > 0.9
 
 
 def test_merge_agent_candidates_across_chunks():

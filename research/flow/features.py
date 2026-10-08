@@ -21,7 +21,9 @@ BAR_FIELDS = (
 AGENT_WINDOW_S = 330
 AGENT_MIN_BUYS = 4
 AGENT_GAP_RANGE = (11.0, 13.0)
-AGENT_MAX_CV = 0.15
+AGENT_MAX_CV = 0.15            # PLAN 3.2 rule ("plan")
+AGENT_BAND = (10.0, 14.0)      # robust rule: share of gaps inside this band ...
+AGENT_MIN_BAND_SHARE = 0.6     # ... must be >= this (one skipped 12 s slice makes a 24 s gap and CV ~0.25)
 
 
 def merge_agent_candidates(chunks: Iterable[list]) -> dict[str, dict]:
@@ -50,14 +52,18 @@ def agent_stats(ts: list[int], sol: list[float]) -> dict | None:
     mean = sum(gaps) / len(gaps)
     sd = math.sqrt(sum((g - mean) ** 2 for g in gaps) / len(gaps)) if len(gaps) > 1 else 0.0
     cv = sd / mean if mean > 0 else float("inf")
-    return {"n_slices": len(ts), "sol": float(sum(sol)), "median_gap": float(mg), "gap_cv": float(cv)}
+    band = sum(1 for g in gaps if AGENT_BAND[0] <= g <= AGENT_BAND[1]) / len(gaps)
+    return {"n_slices": len(ts), "sol": float(sum(sol)), "median_gap": float(mg), "gap_cv": float(cv),
+            "gap_band_share": float(band)}
 
 
-def detect_agent(cands: dict[str, dict], g_ts: int) -> dict | None:
-    """PLAN 3.2 AGENT (BOOST): >= 4 buys in [g, g+330 s], 0 sells, median gap in [11, 13] s, gap CV < 0.15.
+def detect_agent(cands: dict[str, dict], g_ts: int, rule: str = "robust") -> dict | None:
+    """AGENT (BOOST): >= 4 buys in [g, g+330 s], 0 sells, median gap in [11, 13] s, and a regular cadence.
 
-    Returns the best-matching wallet with ``known_at`` = time of its 4th buy (first moment the role is
-    knowable), or None.
+    ``rule="plan"`` uses PLAN 3.2's gap CV < 0.15. On real 2026-10 data that misses ~26 % of BOOST agents,
+    because a single skipped 12 s slice (a 24 s gap) lifts the CV to 0.2-0.4. ``rule="robust"`` (default)
+    instead requires >= 60 % of gaps inside [10, 14] s. Returns the best-matching wallet with
+    ``known_at`` = time of its 4th buy (first moment the role is knowable), or None.
     """
     best = None
     for w, d in cands.items():
@@ -69,7 +75,11 @@ def detect_agent(cands: dict[str, dict], g_ts: int) -> dict | None:
         if len(ts) < AGENT_MIN_BUYS:
             continue
         st = agent_stats(ts, sol)
-        if not st or not (AGENT_GAP_RANGE[0] <= st["median_gap"] <= AGENT_GAP_RANGE[1]) or st["gap_cv"] >= AGENT_MAX_CV:
+        if not st or not (AGENT_GAP_RANGE[0] <= st["median_gap"] <= AGENT_GAP_RANGE[1]):
+            continue
+        if rule == "plan" and st["gap_cv"] >= AGENT_MAX_CV:
+            continue
+        if rule == "robust" and st["gap_band_share"] < AGENT_MIN_BAND_SHARE:
             continue
         st.update({"wallet": w, "first_offset_s": ts[0] - g_ts, "last_offset_s": ts[-1] - g_ts,
                    "known_at": ts[AGENT_MIN_BUYS - 1], "buy_ts": ts, "buy_sol": sol})
@@ -131,11 +141,13 @@ def merge_b2(rows: list[dict]) -> dict:
         for k in ("w120_n_buyers", "w120_n_sellers", "w300_n_buyers", "w300_n_sellers"):
             win[k] = max(int(r.get(k) or 0) for r in rows)
     first = rows[0] if rows else {}
-    agent = detect_agent(merge_agent_candidates(r.get("agent_cands") for r in rows), int(first.get("g_ts") or 0))
+    cands = merge_agent_candidates(r.get("agent_cands") for r in rows)
+    agent = detect_agent(cands, int(first.get("g_ts") or 0))
+    agent_plan = detect_agent(cands, int(first.get("g_ts") or 0), rule="plan")
     return {
         "pool": first.get("pool"), "mint": first.get("mint"), "g_ts": first.get("g_ts"),
         "virt_sol": virt, "n_chunks": len(rows), "w_exact": bool(complete), **win,
-        "bars": [bars[k] for k in sorted(bars)], "agent": agent,
+        "bars": [bars[k] for k in sorted(bars)], "agent": agent, "agent_plan_rule": agent_plan is not None,
     }
 
 

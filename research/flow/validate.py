@@ -366,6 +366,13 @@ def run(out: Path, max_hours: int, ch: CryptoHouse | None) -> dict:
         so = sorted(c["agent_sol"] for c in pres)
         gp = sorted(c["agent_median_gap"] for c in pres)
         all_pres = [c for c in elig if c["agent_present"]]
+        # cross-check with the census boost_mode (COMPLETED / NONE / IN_PROGRESS), exact windows only
+        conf = defaultdict(int)
+        for c in census_elig:
+            if c.get("w_exact"):
+                conf[(str(cen[c["mint"]].get("boost_mode")), bool(c["agent_present"]))] += 1
+        boost_completed = [c for c in census_elig if cen[c["mint"]].get("boost_mode") == "COMPLETED" and c.get("w_exact")]
+        agent_given_boost = sum(1 for c in boost_completed if c["agent_present"])
         res["V7"] = {"census_eligible": len(census_elig), "census_agent_present": len(pres),
                      "share": len(pres) / len(census_elig) if census_elig else None,
                      "slices_median": sl[len(sl) // 2] if sl else None,
@@ -374,8 +381,11 @@ def run(out: Path, max_hours: int, ch: CryptoHouse | None) -> dict:
                      "sol_p10_p90": [so[len(so) // 10], so[9 * len(so) // 10]] if so else None,
                      "median_gap_median": gp[len(gp) // 2] if gp else None,
                      "all_eligible": len(elig), "all_agent_present": len(all_pres),
-                     "pass": bool(census_elig) and len(pres) / len(census_elig) >= 0.9
-                     and sl and abs(sl[len(sl) // 2] - 25) <= 2}
+                     "vs_census_boost_mode": {f"{k[0]}|agent={k[1]}": v for k, v in sorted(conf.items())},
+                     "agent_given_boost_completed": [agent_given_boost, len(boost_completed)],
+                     # PLAN expectation (>= 90 % present, 25 +/- 2 slices) came from 2-minute swap-api windows;
+                     # judged here against the census boost_mode instead: AGENT found on >= 90 % of COMPLETED
+                     "pass": bool(boost_completed) and agent_given_boost / len(boost_completed) >= 0.9}
     res["queries"] = summarize_log(ch.qlog.path) if ch else None
     return res
 
@@ -421,7 +431,9 @@ def write_report(out: Path, res: dict) -> None:
         L.append(f"| V7 AGENT (BOOST) presence | {pf(v['pass'])} | census SOL non-Mayhem graduates with B2: {v['census_agent_present']}/"
                  f"{v['census_eligible']} ({(v['share'] or 0):.1%}); slices median {v['slices_median']} (p10-p90 {v['slices_p10_p90']}), "
                  f"SOL median {v['sol_median'] and round(v['sol_median'], 2)} (p10-p90 {[round(x, 2) for x in (v['sol_p10_p90'] or [])]}), "
-                 f"gap median {v['median_gap_median']} s; all eligible graduates: {v['all_agent_present']}/{v['all_eligible']} |")
+                 f"gap median {v['median_gap_median']} s; all eligible graduates: {v['all_agent_present']}/{v['all_eligible']}; "
+                 f"AGENT found on {v['agent_given_boost_completed'][0]}/{v['agent_given_boost_completed'][1]} census coins with "
+                 f"boost_mode=COMPLETED; matrix {v['vs_census_boost_mode']} |")
     v = res.get("V0", {})
     if v:
         L += ["", "## V0: census coverage", "",

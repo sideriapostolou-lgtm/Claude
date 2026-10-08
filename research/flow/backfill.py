@@ -511,6 +511,7 @@ def consolidate(out: Path) -> dict:
             "agent_sol": agent["sol"] if agent else 0.0,
             "agent_median_gap": agent["median_gap"] if agent else None,
             "agent_gap_cv": agent["gap_cv"] if agent else None,
+            "agent_gap_band_share": agent["gap_band_share"] if agent else None,
             "agent_first_offset_s": agent["first_offset_s"] if agent else None,
             "agent_known_at": agent["known_at"] if agent else None,
             "w120_top5_share_ex_agent": features.top_share(m.get("w120_top10"), m.get("w120_buy_sol"), 5, excl),

@@ -41,12 +41,24 @@ def main(mints: list[str], usd: float = 20.0) -> list[dict]:
     model = I.Costs()
     rows = []
     for mint in mints:
-        buy = get(ULTRA, {"inputMint": SOL_MINT, "outputMint": mint, "amount": lamports})
-        tok = int(buy["outAmount"])
-        sell = get(ULTRA, {"inputMint": mint, "outputMint": SOL_MINT, "amount": tok})
-        back = int(sell["outAmount"])
-        measured = (1 - back / lamports) * 100
-        # mid from the two quotes (geometric mean of the buy and sell effective prices), 6 decimals
+        # forward (buy then sell) and reverse (sell then buy) round trips, twice: a price drift between
+        # the two quotes biases the forward and reverse legs in opposite directions, the mean cancels it.
+        fw, rv, routes, fees = [], [], set(), set()
+        for _ in range(2):
+            buy = get(ULTRA, {"inputMint": SOL_MINT, "outputMint": mint, "amount": lamports})
+            tok = int(buy["outAmount"])
+            sell = get(ULTRA, {"inputMint": mint, "outputMint": SOL_MINT, "amount": tok})
+            back = int(sell["outAmount"])
+            fw.append(1 - back / lamports)
+            sell2 = get(ULTRA, {"inputMint": mint, "outputMint": SOL_MINT, "amount": tok})
+            lam2 = int(sell2["outAmount"])
+            buy2 = get(ULTRA, {"inputMint": SOL_MINT, "outputMint": mint, "amount": lam2})
+            rv.append(1 - int(buy2["outAmount"]) / tok)
+            for q in (buy, sell, sell2, buy2):
+                routes.add(" > ".join(h["swapInfo"]["label"] for h in q.get("routePlan", [])))
+                fees.add(q.get("feeBps"))
+        measured = 100 * (sum(fw) + sum(rv)) / (len(fw) + len(rv))
+        # mid from the last buy/sell pair (geometric mean of the effective prices), 6 decimals
         p_sol = math.sqrt((lamports / tok) * (back / tok)) * 1e6 / 1e9
         price_usd = p_sol * sol_px
         mcap = price_usd * 1e9
@@ -61,12 +73,8 @@ def main(mints: list[str], usd: float = 20.0) -> list[dict]:
         t2 = full.buy(usd, price_usd, sol_px)
         full_rt = (usd - full.sell(t2, price_usd, sol_px) + 2 * full.network_usd(sol_px)) / usd * 100
         row = {"mint": mint, "mcap_usd": round(mcap), "mcap_sol": round(mcap / sol_px), "sol_usd": sol_px,
-               "buy_route": [h["swapInfo"]["label"] for h in buy.get("routePlan", [])],
-               "sell_route": [h["swapInfo"]["label"] for h in sell.get("routePlan", [])],
-               "fee_bps": [buy.get("feeBps"), sell.get("feeBps")],
-               "router": [buy.get("router"), sell.get("router")],
-               "price_impact_pct": [buy.get("priceImpactPct"), sell.get("priceImpactPct")],
-               "slippage_bps": [buy.get("slippageBps"), sell.get("slippageBps")],
+               "routes": sorted(routes), "ultra_fee_bps": sorted(fees, key=str),
+               "forward_rt_pct": [round(100 * x, 3) for x in fw], "reverse_rt_pct": [round(100 * x, 3) for x in rv],
                "measured_rt_pct": round(measured, 3), "model_rt_pct_no_mev_no_network": round(model_rt, 3),
                "model_rt_pct_full": round(full_rt, 3), "diff_pp": round(measured - model_rt, 3),
                "ts": time.time()}

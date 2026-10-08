@@ -16,7 +16,8 @@ belongs to another collector.
 | `sql/curve.sql` | Graduates: completion, creation, curve-life and launch features, and the canonical pool. One row per graduate. |
 | `sql/b2.sql` | B2 server-side PumpSwap aggregates: clock-minute bars, AGENT candidates and the first 120/300 s after graduation. One row per pool per chain hour. |
 | `sql/b3.sql` | B3 per-(wallet, coin) position summaries, packed one row per coin. |
-| `sql/raw.sql` | B1 raw trades from the curve and PumpSwap, packed per coin. Also used for validation. |
+| `sql/raw.sql` | Raw trades from the curve and PumpSwap with tx signatures and full fields, packed per coin. Used by validation. |
+| `sql/b1.sql` | B1 raw trades for P4 in slim tuples: no tx signature, wallets as `cityHash64` plus a per-coin dictionary. |
 | `sql/slot_map.sql` | Slot ↔ time anchors from `solana.blocks`, at 15-minute granularity. |
 | `backfill.py` | Resumable phases P1-P4. It checkpoints after every query and consolidates the results to Parquet. |
 | `features.py` | Offline helpers: AGENT detection, B2 merging across chunks, and price repair. |
@@ -155,11 +156,14 @@ removed).
 11-13 s and a gap coefficient of variation < 0.15. `b2.sql` only pre-filters candidates (≥ 2 buys, no
 sells, median gap 9-15 s); `features.detect_agent` applies the rule after merging the chunks.
 
-### `b3_positions.parquet`: one row per (wallet, coin) with ≥ 0.01 SOL of volume (`sql/b3.sql`)
+### `b3_positions.parquet`: one row per (wallet, coin) with ≥ 0.05 SOL of volume (`sql/b3.sql`)
 
-The window is [created, g + 180 min]. Columns:
+The window is [created, g + 60 min]. Change it with `--b3-horizon-min`; 180 doubles the cost and times out
+more often. Columns:
 
-- `wallet`, `mint`;
+- `wallet_h` = `cityHash64` of the raw 32-byte key. It is stable across queries and the registry key.
+- `wallet` = the base58 address, only for wallets that bought ≥ 0.5 SOL. Otherwise `''`, to stay under the
+  1 MB cap.
 - `n_buys`, `n_sells`, `buy_sol`, `sell_sol`, `buy_tok`, `sell_tok`, `curve_buy_sol`, `curve_sell_sol`;
 - `first_ts`, `last_ts`, `first_buy_ts`, `last_sell_ts`;
 - `peak_tok` and `end_tok`, from the running position in chain order;
@@ -167,27 +171,42 @@ The window is [created, g + 180 min]. Columns:
   signal);
 - `n_sell_without_holding`.
 
-The per-coin `n_dust_wallets` count stays in the raw chunk.
+**Per-coin aggregates over all wallets, dust included.** Each raw chunk row also has `n_buyers_all`,
+`n_sellers_all`, `n_orphan_sellers`, `orphan_seller_sell_sol`, `orphan_tok` and `n_sell_only_wallets`.
 
-**Using it for reputation (PLAN §6.6).** Only use a position after its coin's data window has ended. A
-row is a summary over the whole window, so a decision at t may use it only if `last_ts` < t − 20 s **and**
-the position is closed: `end_tok` ≤ 1% of `peak_tok`, or the window ended before t. Never use rows of the
-coin being traded.
+> **Finding from the P3 test (6 census coins, first hour).** Factory coins (self-graduated in the creation
+> slot: FOMO, Open AI, Mr Beast, Coinbase) had **1,545-2,149 wallets that sold tokens they never bought**.
+> Most sold ~360k-465k tokens each, and only 38-392 wallets bought. The two organic coins had 20-25 such
+> wallets. The creator side spreads supply across thousands of wallets that dump into the pool. That is
+> the insider-distribution and TRANSFEREE signal of V1/S1, and it is visible within minutes.
 
-### `b1_trades.parquet`: one row per trade (`sql/raw.sql`, P4: ≥ 0.01 SOL, [created, g + 120 min])
+**Using it for reputation (PLAN §6.6).** A row summarises the whole window, so a decision at t may use it
+only if the coin's window ended before t − 20 s. Never use rows of the coin being traded. Treat a position
+as closed when `end_tok` ≤ 1% of `peak_tok` or the window ended.
+
+### `b1_trades.parquet` (P4) and `wallet_dict.parquet`
+
+`b1_trades.parquet` comes from `sql/b1.sql`: non-dust trades (≥ 0.01 SOL) over [created, g + 120 min] for
+non-factory coins. One row per trade:
 
 | Columns | Meaning |
 |---|---|
-| `slot`, `tx_idx`, `pix`, `ix` | Total order. |
-| `ts`, `tx`, `mint` | |
+| `slot`, `tx_idx`, `pix`, `ix` | Total chain order and unique key. |
+| `ts`, `mint` | |
 | `venue` | 0 = curve, 1 = PumpSwap. |
-| `is_buy`, `user`, `usol` | `usol` is in lamports, user-side. |
+| `is_buy`, `wallet_h`, `usol` | `usol` is in lamports, user-side. |
 | `tok` | Raw units, 6 decimals. |
-| `x0`, `y0`, `x1`, `y1` | Reserves before and after the trade. On the curve these are the virtual reserves; on PumpSwap, the real pool reserves. |
-| `qamt`, `lp_fee`, `pfee`, `cfee` | Lamports. |
-| `ix_name` | |
-| `virt` | PumpSwap virtual quote reserve, on buys only. |
+| `x0`, `y0` | Reserves **before** the trade. Curve: virtual SOL/token. PumpSwap: real quote/base. |
+| `fees` | Lamports: protocol + creator + LP. |
+| `virt_ksol` | PumpSwap virtual quote reserve / 1000 lamports, on buys only. |
 | `src` | 0 = CryptoHouse. |
+
+**Price before the trade:** (x0 + virt) / y0, with virt = the pool's `virt_sol` from `b2_coins`.
+
+`wallet_dict.parquet` maps `wallet_h` → base58 for every wallet that moved ≥ 1 SOL in a coin.
+
+`sql/raw.sql` has the same selection, with tx signatures, base58 wallets and full fee fields. It is used by
+`validate.py` and by ad-hoc pulls.
 
 ### Other files in `FLOW`
 
