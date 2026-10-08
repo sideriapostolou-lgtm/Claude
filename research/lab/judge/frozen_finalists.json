@@ -1,5 +1,5 @@
 {
- "frozen_utc": "2026-10-08 20:02:44",
+ "frozen_utc": "2026-10-08 20:14:59",
  "finalists": [
   {
    "name": "S4_vol_dip_wideband_10k",
@@ -138,7 +138,9 @@
   "costs.py": "699fd1876da47e594e36391e5dd0c8e154cf781e20637e210e91217bbef62aed",
   "strategies/f1-dip-rebound-plus.py": "179dc8c9ed0cc7ee4e520ee8783232b5b3d5e3b8c11d22b7bcc670b0e8d76a3a",
   "strategies/f4-learned.py": "8ad117b6ced1d5a9e44af12c161a58a7f34057b4b1f57a5fb1c7d1d89ffd249f",
-  "judge/judge.py": "b67aee8eed88a71cfc0aa590f4eb0630f143d6dd0dcdb85f50966592605c3d96"
+  "f4_learned_search.py": "90dc5973f25831e12180f2d52a10a89c4d85b3d60b953c09bbab72b2bc7519f0",
+  "baseline.py": "402285ba3cb6e08dad791fa40df8d1bdb9c69b18b715f60ae56cb6b14e006399",
+  "judge/judge.py": "97cdb08c7ac4d21623c5c3c8fd658698007ea19471e1067d613525aa76766146"
  },
  "splits_sha256": "d5b273950de03880419800b707c406a31f87a6f0827b392bb7252ef13d8e9818",
  "decision_rule": {

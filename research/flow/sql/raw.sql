@@ -37,7 +37,7 @@ ev AS (
     AND tx_signature IN (SELECT signature FROM okt)
 ),
 tr AS (
-  SELECT w.mint AS mint, e.slot AS slot, o.tx_idx AS tx_idx, e.pix AS pix, e.ix AS ix, e.ts AS ts, e.tx AS tx,
+  SELECT w.mint AS mint, w.ts_lo AS ts_lo, e.slot AS slot, o.tx_idx AS tx_idx, e.pix AS pix, e.ix AS ix, e.ts AS ts, e.tx AS tx,
     toUInt8(e.amm) AS venue,
     if(e.amm, substring(e.r, 9, 8) = unhex('$D_AMM_BUY'), reinterpretAsUInt8(substring(e.r, 65, 1)) = 1) AS is_buy,
     if(e.amm, substring(e.r, 161, 32), substring(e.r, 66, 32)) AS user_b,
@@ -68,9 +68,20 @@ tr AS (
     AND (e.amm OR substring(e.r, 9, 8) = unhex('$D_CURVE_TRADE'))
     AND e.ts >= w.ts_lo AND e.ts < w.ts_hi
     AND usol >= $min_usol
+),
+packed AS (
+  SELECT mint, count() AS n_trades, n_trades > $max_trades AS truncated,
+    -- per-minute totals over ALL trades (never truncated): (minute since ts_lo, venue, n, n_buys, buy_usol, sell_usol)
+    groupArray((toUInt32(intDiv(ts - ts_lo, 60)), venue, toUInt8(is_buy), usol)) AS mv,
+    arrayDistinct(arrayMap(x -> (x.1, x.2), mv)) AS mk,
+    arraySort(arrayMap(k -> (k.1, k.2,
+        length(arrayFilter(x -> x.1 = k.1 AND x.2 = k.2, mv)),
+        length(arrayFilter(x -> x.1 = k.1 AND x.2 = k.2 AND x.3 = 1, mv)),
+        arraySum(arrayMap(x -> if(x.1 = k.1 AND x.2 = k.2 AND x.3 = 1, x.4, 0), mv)),
+        arraySum(arrayMap(x -> if(x.1 = k.1 AND x.2 = k.2 AND x.3 = 0, x.4, 0), mv))), mk)) AS minutes,
+    arraySlice(arraySort(x -> (x.1, x.2, x.3, x.4), groupArray((slot, tx_idx, pix, ix, ts, tx, venue, toUInt8(is_buy),
+        base58Encode(user_b), usol, tok, x0, y0, x1, y1, qamt, lp_fee, pfee, cfee, ix_name))), 1, $max_trades) AS trades
+  FROM tr
+  GROUP BY mint
 )
-SELECT mint, count() AS n_trades, n_trades > $max_trades AS truncated,
-  arraySlice(arraySort(x -> (x.1, x.2, x.3, x.4), groupArray((slot, tx_idx, pix, ix, ts, tx, venue, toUInt8(is_buy),
-      base58Encode(user_b), usol, tok, x0, y0, x1, y1, qamt, lp_fee, pfee, cfee, ix_name))), 1, $max_trades) AS trades
-FROM tr
-GROUP BY mint
+SELECT mint, n_trades, truncated, minutes, trades FROM packed
