@@ -517,6 +517,7 @@ def test_build_app_refuses_a_bad_wallet_secret(make_settings, http_client, fake_
                              BOT_WALLET_SECRET="not-a-real-secret", DASHBOARD_HOST="127.0.0.1")
     with pytest.raises(WalletError):
         build_app(settings, fake_clock, http=http_client)
+    assert http_client.usage.store is None  # never left bound to the ledger build_app closed
 
 
 def test_fixture_sanity() -> None:

@@ -1973,6 +1973,7 @@ def build_app(settings: Settings, clock: Clock | None = None, *, session: Any = 
         verify_cache: dict[str, Any] = {}
         dashboard = DashboardServer(settings, lambda: build_state(ledger, settings, clock.now(), verify_cache))
     except BaseException:
+        attach_usage_store(http, None)  # an injected client must not keep writing into a closed ledger
         ledger.close()
         raise
     return App(settings=settings, clock=clock, stop_event=stop_event, http=http, sources=sources, ledger=ledger,
