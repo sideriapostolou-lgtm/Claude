@@ -874,3 +874,35 @@ def test_real_census_train_loads_with_coverage():
     firsts = [ds.coin(m) for m in ds.mints[:100]]
     ok = [abs(c.arr["o"][0] / (c.init_X / c.init_y) - 1) < 1e-3 for c in firsts if c.arr["traded"][0]]
     assert np.mean(ok) > 0.95
+
+
+# =========================================================================== helpers added for the hypothesis builders
+
+
+def test_top_share_excludes_pooled_and_agent(ds_train):
+    m = [m for m in ds_train.mints if ds_train.coin(m).row["agent_present"]][0]
+    s = ds_train.asof(m, ds_train.coin(m).g + 500)
+    # stored top list: pooled 9, Wa 5, AGENT 4, Wc 1; w120_buy_sol = 30
+    assert s.top_share("w120", 5) == pytest.approx((5 + 1) / (30 - 4))
+    assert s.top_share("w120", 1, exclude_agent=False) == pytest.approx(5 / 30)
+
+
+def test_b1_trades_asof_and_garbage(frames):
+    g, c, b = frames
+    m, gts = g.loc[0, "mint"], int(g.loc[0, "g_ts"])
+    n = 300
+    tr = pd.DataFrame({"slot": np.arange(n), "tx_idx": 0, "pix": 0, "ix": 0, "ts": gts + np.arange(n) * 7,
+                       "mint": m, "venue": 1, "is_buy": True, "wallet_h": np.arange(n), "usol": 10**8, "tok": 10**9,
+                       "x0": 85 * 10**9, "y0": 2 * 10**14, "fees": 10**6, "virt_ksol": 17584505, "src": 0})
+    ds = C.Dataset.from_frames("train", g, c, b, census=C.Census.empty(), sol=SOL, trades=tr)
+    t = gts + 500.0
+    s = ds.asof(m, t)
+    assert len(s.trades) and (s.trades["ts"] <= t - 20).all() and s.trades["ts"].max() > t - 30
+    tr2 = tr.copy()
+    late = tr2["ts"] > t - 20
+    tr2.loc[late, "usol"] = 777
+    tr2 = pd.concat([tr2, tr2[late].assign(slot=tr2["slot"][late] + 0.5)], ignore_index=True)
+    ds2 = C.Dataset.from_frames("train", g, c, b, census=C.Census.empty(), sol=SOL, trades=tr2)
+    pd.testing.assert_frame_equal(s.trades.reset_index(drop=True), ds2.asof(m, t).trades.reset_index(drop=True),
+                                  check_dtype=False)
+    assert ds.asof(g.loc[1, "mint"], t).trades is None or len(ds.asof(g.loc[1, "mint"], t).trades) == 0

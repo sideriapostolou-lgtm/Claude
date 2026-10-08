@@ -1,0 +1,42 @@
+{
+ "version": 1,
+ "note": "every distinct (hypothesis, params) is one trial for the deflated Sharpe ratio",
+ "baseline": {
+  "lab_wave1_logged_configs": 2575
+ },
+ "configs": {},
+ "runs": [
+  {
+   "utc": "2026-10-08 23:08:55",
+   "hypothesis": "DEBUG_COMMON",
+   "config": "DEBUG_COMMON|7798bbfedc1b",
+   "split": "final_train",
+   "debug": true,
+   "n": 272,
+   "mean": -0.38468219691710126,
+   "over_variant_limit": false
+  },
+  {
+   "utc": "2026-10-08 23:08:56",
+   "hypothesis": "DEBUG_COMMON",
+   "config": "DEBUG_COMMON|b24031c7a388",
+   "split": "final_train",
+   "debug": true,
+   "n": 272,
+   "mean": -0.38114374111924826,
+   "over_variant_limit": false
+  },
+  {
+   "utc": "2026-10-08 23:08:56",
+   "hypothesis": "DEBUG_COMMON",
+   "config": "DEBUG_COMMON|ddd5903fd8dd",
+   "split": "final_train",
+   "debug": true,
+   "n": 272,
+   "mean": -0.3977744751966777,
+   "over_variant_limit": false
+  }
+ ],
+ "val_shortlists": {},
+ "n_trials_total": 2575
+}

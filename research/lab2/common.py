@@ -743,13 +743,30 @@ def load(split: str, *, flow: Path | None = None, census: Census | None = None, 
         c = _read_parquet(f / "b2_coins.parquet")
         b = _read_parquet(f / "b2_bars.parquet")
         tr = _read_parquet(f / "b1_trades.parquet") if (f / "b1_trades.parquet").exists() else None
-        if stamp == [(f / n).stat().st_mtime_ns for n in ("graduates.parquet", "b2_coins.parquet", "b2_bars.parquet")]:
+        if tr is not None and (f / "wallet_dict.parquet").exists():
+            wd = _read_parquet(f / "wallet_dict.parquet")
+            pooled = set(POOLED_ACCOUNTS) | _pooled_from_file()
+            ph = set(wd.loc[wd.iloc[:, 1].isin(pooled), wd.columns[0]])
+            tr = tr.assign(pooled=tr["wallet_h"].isin(ph))     # exclude from wallet features (audit 3.6)
+        if stamp ==[(f / n).stat().st_mtime_ns for n in ("graduates.parquet", "b2_coins.parquet", "b2_bars.parquet")]:
             break
         warnings.warn("FLOW tables changed while loading (re-consolidation?): reloading")
     ds = Dataset.from_frames(split, g, c, b, census=census, sol=sol, trades=tr, guard=False)
     ds.coverage["data_files"] = {n: utc_str((f / n).stat().st_mtime) for n in
                                  ("graduates.parquet", "b2_coins.parquet", "b2_bars.parquet")}
     return ds
+
+
+def coverage_summary(flow: Path | None = None, census: Census | None = None) -> dict[str, dict]:
+    """Coverage reports (counts only: no prices, no returns) for every split, guarded ones included."""
+    f = flow or flow_dir()
+    g, c, b = (_read_parquet(f / n) for n in ("graduates.parquet", "b2_coins.parquet", "b2_bars.parquet"))
+    census = census if census is not None else Census.load()
+    out = {}
+    for s in ALL_SPLITS:
+        cov = Dataset.from_frames(s, g, c, b, census=census, guard=False).coverage
+        out[s] = {k: v for k, v in cov.items()}
+    return out
 
 
 def coverage_report(split: str, g_all: pd.DataFrame, g_split: pd.DataFrame, usable: pd.DataFrame,
@@ -814,7 +831,8 @@ def coverage_report(split: str, g_all: pd.DataFrame, g_split: pd.DataFrame, usab
         "days_expected": round((hi - lo) / 86400, 2), "days_full": sum(1 for d in days if not d["partial"]),
         "curve_span_utc": [utc_str(min(curve_hours)), utc_str(max(curve_hours) + 3600)] if curve_hours else None,
         "b2_span_utc": [utc_str(min(b2h)), utc_str(max(b2h) + 3600)] if b2h else None,
-        "power": power, "underpowered": n_use < PLAN_MIN["entry_test_coins"], "notes": notes,
+        "power": power, "underpowered": n_use < PLAN_MIN["entry_test_coins"],
+        "complete": bool(days) and not any(d["partial"] for d in days) and hours_frac >= 0.999, "notes": notes,
     }
 
 
@@ -994,6 +1012,23 @@ class AsOf:
             aw = self._cd.row.get("agent_wallet") if self.agent_detected else None
             lst = tuple(w for w in lst if w[0] != aw)
         return lst
+
+    def top_share(self, window: str = "w120", k: int = 5, exclude_agent: bool = True) -> float | None:
+        """Top-k buyers' share of the window's buy SOL (G1 ``amm_top5_share_2m``), pooled accounts never counted
+        as one buyer (their SOL stays in the denominator: it is real flow by many users), the AGENT removed from
+        both sides when ``exclude_agent`` (only possible when it is in the stored top-10 list, as in
+        research/flow/features.top_share). None when the window total is unknown or zero."""
+        lst = self.top_buyers(window, exclude_agent=exclude_agent)
+        total = self[f"{window}_buy_sol"]
+        if lst is None or total is None:
+            return None
+        if exclude_agent and self.agent_detected:
+            aw = self._cd.row.get("agent_wallet")
+            raw = self[f"{window}_top10"] or ()
+            total = total - sum(w[1] for w in raw if w[0] == aw)
+        if total <= 0:
+            return None
+        return float(sum(sorted((w[1] for w in lst), reverse=True)[:k]) / total)
 
     # ------------------------------------------------------------------ B1 trades (when b1_trades.parquet exists)
     @property
