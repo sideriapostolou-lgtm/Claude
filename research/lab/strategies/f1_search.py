@@ -7,7 +7,8 @@ split) so the number of tries is auditable for multiple-testing correction.
     python research/lab/strategies/f1_search.py stageB      # exit grid on the most stable entries
     python research/lab/strategies/f1_search.py stageC      # local refinement around the best
     python research/lab/strategies/f1_search.py summary     # print the train leaderboard
-    python research/lab/strategies/f1_search.py validate    # finalists on VALIDATION + robustness
+    python research/lab/strategies/f1_search.py validate    # the train shortlist on VALIDATION (logged)
+    python research/lab/strategies/f1_search.py finalize S1 S2   # robustness + finalists JSON
 
 The TEST split is never touched (the harness refuses it anyway).
 """
@@ -282,22 +283,6 @@ def stage_b(n_entries: int = 6):
     print(f"stage B: {len(recs)} configs")
 
 
-def best_b(n: int = 3) -> list[dict]:
-    recs = [r for r in load_trials() if r["stage"] in ("A", "B") and r["split"] == "train"]
-    valid = [(score(r), r) for r in recs if score(r) is not None]
-    valid.sort(key=lambda t: t[0], reverse=True)
-    out, seen = [], set()
-    for s, r in valid:
-        k = json.dumps(r["params"], sort_keys=True)
-        if k in seen:
-            continue
-        seen.add(k)
-        out.append(r)
-        if len(out) >= n:
-            break
-    return out
-
-
 STAGE_C_BASES = (658, 638, 223)  # chosen after stage B: best per-coin mean with >= 25 trades and a positive
 #                                   portfolio, preferring the entry that is near the top for many exits
 STAGE_C_VARIATIONS = [dict(min_mcap=40_000.0), dict(max_mcap=1_000_000.0), dict(min_since_high=15),
@@ -343,6 +328,148 @@ def summary(top: int = 25):
               + " ".join(f"{k}={r['params'].get(k)}" for k in r["params"]))
 
 
+# ------------------------------------------------------------------ validation (shortlist -> finalists)
+
+# Shortlist picked from TRAIN only (before any validation run): the entry that stayed near the top
+# for many exits (dd 60-80 %, rebound <= 2x the low, volume >= 2x its 30-bar mean) with its three
+# best-behaved exits, the best wider-band variant, and two stage-C one-at-a-time "peaks" kept as a
+# deliberate overfitting control (if peaks beat their stable parents on validation, fine; if not,
+# that is evidence the train differences were noise).
+SHORTLIST = {
+    "S1_vol_dip_fixed": (628, {}),
+    "S2_vol_dip_lowstop": (658, {}),
+    "S3_vol_dip_partial_trail": (638, {}),
+    "S4_vol_dip_wideband_10k": (223, {}),
+    "S5_lowstop_lookback120": (658, {"lookback_min": 120}),
+    "S6_lowstop_minreb115": (658, {"min_reb": 1.15}),
+}
+
+
+def shortlist_params() -> dict[str, dict]:
+    by_id = {r["id"]: r for r in load_trials()}
+    return {name: dict(by_id[tid]["params"], **over) for name, (tid, over) in SHORTLIST.items()}
+
+
+def train_record(params: dict) -> dict | None:
+    for r in load_trials():
+        if r["split"] == "train" and r["params"] == params:
+            return r
+    return None
+
+
+def validate():
+    """Evaluate every shortlisted config on VALIDATION (each run is logged as a try)."""
+    OUT.mkdir(parents=True, exist_ok=True)
+    done = load_trials()
+    nid = max([t["id"] for t in done], default=-1) + 1
+    out = {}
+    with TRIALS.open("a") as fh:
+        for name, params in shortlist_params().items():
+            t0 = time.time()
+            res = evaluate(params, "validation")
+            rec = {"id": nid, "stage": "V", "split": "validation", "name": name, "params": params, **res,
+                   "error": None, "secs": round(time.time() - t0, 2)}
+            nid += 1
+            fh.write(json.dumps(rec, default=str) + "\n")
+            out[name] = rec
+            tr = train_record(params)
+            for split, r in (("train", tr), ("valid", rec)):
+                pc, pf = r["per_coin"], r["portfolio"]
+                print(f"{name:26s} {split}: pc tr={pc['trades']:3d} coins={pc['coins_traded']:3d} "
+                      f"win={pc['win_rate_pct']} avg={pc['avg_ret_pct']} ci={pc['exp_ci95_pct']} "
+                      f"wobest={pc['avg_ret_pct_wo_best']} | pf ret={pf.get('total_return_pct')} "
+                      f"dd={pf.get('max_drawdown_pct')} tr={pf['trades']}")
+    (OUT / "validation_shortlist.json").write_text(json.dumps(out, indent=1, default=str))
+
+
+def _halves(coins):
+    coins = sorted(coins, key=lambda c: (c.created_ts, c.mint))
+    k = len(coins) // 2
+    return coins[:k], coins[k:]
+
+
+def robustness(params: dict, split: str = "validation", audit: bool = True) -> dict:
+    coins = coins_for(split)
+    out: dict[str, Any] = {}
+    out["base"] = evaluate(params, split)
+    out["zero_costs"] = evaluate(params, split, SimConfig(cost=CostModel(
+        ultra_bps=0, mev_bps=0, fee_mult=0, impact_mult=1e-9, priority_sol=0, base_fee_lamports=0)))
+    for f in (1.5, 2.0):
+        out[f"costs_x{f}"] = evaluate(params, split, SimConfig(cost=CostModel().stressed(f)))
+    out["latency_plus1_bar"] = evaluate(params, split, SimConfig(entry_delay_bars=2))
+    out["size_10usd"] = evaluate(params, split, SimConfig(fixed_usd=10.0, position_pct=0.10, max_usd=10.0))
+    out["size_40usd"] = evaluate(params, split, SimConfig(fixed_usd=40.0, position_pct=0.40, max_usd=40.0))
+    out["wick_worst"] = evaluate(params, split, SimConfig(wick_fill="worst"))
+    out["wick_touch"] = evaluate(params, split, SimConfig(wick_fill="touch"))
+    a, b = _halves(coins)
+    out["first_half"] = evaluate(params, split, coins=a)
+    out["second_half"] = evaluate(params, split, coins=b)
+    out["first_half"]["coins"] = [len(a), a[0].created_ts, a[-1].created_ts]
+    out["second_half"]["coins"] = [len(b), b[0].created_ts, b[-1].created_ts]
+    pc = out["base"]["per_coin"]
+    out["without_best_coin"] = {"avg_ret_pct": pc.get("avg_ret_pct_wo_best"),
+                                "pnl_usd": pc.get("pnl_without_best_coin_usd"),
+                                "portfolio_pnl_usd": out["base"]["portfolio"].get("pnl_without_best_coin_usd")}
+    out["without_top3_coins"] = {"avg_ret_pct": pc.get("avg_ret_pct_wo_top3"),
+                                 "pnl_usd": pc.get("pnl_without_top3_usd")}
+    if audit:
+        from harness import audit_lookahead
+        out["audit_lookahead"] = audit_lookahead(S.make(**params), coins, cuts_per_coin=3, seed=11)
+    return out
+
+
+def _row(label: str, r: dict) -> str:
+    pc, pf = r.get("per_coin") or {}, r.get("portfolio") or {}
+    f = lambda v: None if v is None else round(v, 2)  # noqa: E731
+    return (f"  {label:18s} pc: tr={pc.get('trades')} win={f(pc.get('win_rate_pct'))} avg={f(pc.get('avg_ret_pct'))} "
+            f"ci={pc.get('exp_ci95_pct')} | pf: ret={f(pf.get('total_return_pct'))} "
+            f"dd={f(pf.get('max_drawdown_pct'))} tr={pf.get('trades')}")
+
+
+FINALISTS: list[str] = []  # filled in after looking at validate() output (see report)
+
+
+def finalize(names: list[str]):
+    sl = shortlist_params()
+    n_train = sum(1 for r in load_trials() if r["split"] == "train")
+    n_val = sum(1 for r in load_trials() if r["split"] == "validation")
+    val = json.loads((OUT / "validation_shortlist.json").read_text())
+    rows = []
+    for name in names:
+        params = sl[name]
+        tr = train_record(params)
+        print(f"== {name}")
+        rob = robustness(params, "validation")
+        for k, v in rob.items():
+            if isinstance(v, dict) and ("per_coin" in v or "portfolio" in v):
+                print(_row(k, v))
+        print("  without best coin:", rob["without_best_coin"], " audit:", rob["audit_lookahead"][:3])
+        rob_tr = robustness(params, "train", audit=True)
+        print("  TRAIN gates:", _row("costs_x2", rob_tr["costs_x2"]), _row("wick_worst", rob_tr["wick_worst"]),
+              rob_tr["without_best_coin"], rob_tr["without_top3_coins"], "audit:", rob_tr["audit_lookahead"][:3])
+        rows.append({
+            "name": name, "strategy_class": "DipReboundPlus",
+            "module": "research/lab/strategies/f1-dip-rebound-plus.py",
+            "params": params,
+            "configs_tried": {"train": n_train, "validation_shortlist": n_val,
+                              "note": "every train config is in LAB/f1/trials.jsonl; validation runs only "
+                                      "for the shortlist; robustness variants are not selection tries"},
+            "train_metrics": {"portfolio": tr["portfolio"], "per_coin": tr["per_coin"]},
+            "validation_metrics": {"portfolio": val[name]["portfolio"], "per_coin": val[name]["per_coin"]},
+            "robustness": {"validation": rob, "train": {k: rob_tr[k] for k in (
+                "costs_x2", "wick_worst", "zero_costs", "without_best_coin", "without_top3_coins",
+                "audit_lookahead", "first_half", "second_half")}},
+        })
+    dst = LABDIR / "finalists" / "f1-dip-rebound-plus.json"
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    dst.write_text(json.dumps(rows, indent=1, default=str))
+    print("wrote", dst)
+
+
 if __name__ == "__main__":
     cmd = sys.argv[1] if len(sys.argv) > 1 else "summary"
-    {"stageA": stage_a, "stageB": stage_b, "stageC": stage_c, "summary": summary}[cmd]()
+    if cmd == "finalize":
+        finalize(sys.argv[2:] or FINALISTS)
+    else:
+        {"stageA": stage_a, "stageB": stage_b, "stageC": stage_c, "summary": summary,
+         "validate": validate}[cmd]()

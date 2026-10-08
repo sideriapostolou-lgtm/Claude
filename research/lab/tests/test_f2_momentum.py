@@ -49,6 +49,9 @@ FAMILIES = {
     "squeeze": F2.F2Params(entry="squeeze", squeeze_win=10, squeeze_range=0.6, squeeze_active=5, vol_mult=1.2,
                            vol_base=10, min_vol_usd=1000, max_age_min=600, mc_lo=1_000, max_entries=20,
                            stop_pct=0.1, trail_pct=0.1, max_hold_min=20),
+    "trend": F2.F2Params(entry="trend", trend_bars=30, trend_ret=0.0, higher_lows=True, min_vol_usd=1000,
+                         vol_win=30, min_age_min=40, max_age_min=600, mc_lo=1_000, max_entries=20, stop_pct=0.1,
+                         trail_pct=0.1, max_hold_min=30),
 }
 
 
