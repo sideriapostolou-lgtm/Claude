@@ -158,7 +158,8 @@ def test_paper_books_that_match_are_ok(paper_book: Ledger, fake_clock: FakeClock
     assert (report.chain_ok, report.chain_first_bad_seq) == (True, None)
     assert [t.position_id for t in report.trades] == ["p1", "p2"]
     assert report.totals == {"trades": 1, "open_trades": 1, "wins": 1, "losses": 0, "win_rate_pct": 100.0,
-                             "realized_lamports": 9_100_000, "realized_usd": pytest.approx(report.daily[0].realized_usd),
+                             "realized_lamports": 9_100_000,
+                             "realized_usd": pytest.approx(report.daily[0].realized_usd),
                              "open_realized_lamports": 9_400_000, "fees_lamports": 5 * FEE}
 
 

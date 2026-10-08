@@ -19,6 +19,8 @@ Behaviour (the contract):
   capped at ``retry_after_max_s``). ``Retry-After: 0`` (GeckoTerminal sends
   it with 429s) therefore never causes an immediate retry storm.
   Use ``retry=False`` for non-idempotent calls (Ultra ``/execute``).
+  ``host_max_retries={"api.geckoterminal.com": 1}`` lowers the retry count
+  for one host (the engine does this so a GT 429 storm cannot stall its loop).
 * **Errors**: anything that does not end in a 2xx JSON response raises
   :class:`HttpError` with ``status`` (None for network errors), ``url``
   (secrets redacted), ``body`` (first 500 chars), ``payload`` (parsed JSON
@@ -170,8 +172,12 @@ class HttpClient:
                  default_rate: tuple[float, float] | None = DEFAULT_RATE,
                  timeout_s: float = 10.0, max_retries: int = 4, backoff_base_s: float = 1.0,
                  backoff_max_s: float = 30.0, retry_after_max_s: float = 60.0,
-                 rng: random.Random | None = None, user_agent: str | None = None) -> None:
+                 rng: random.Random | None = None, user_agent: str | None = None,
+                 host_max_retries: Mapping[str, int] | None = None) -> None:
         self.session = session if session is not None else requests.Session()
+        #: Per-host override of ``max_retries`` (e.g. fail fast on a rate-limited host whose
+        #: callers retry on their own schedule anyway).
+        self.host_max_retries = {h.lower(): int(n) for h, n in (host_max_retries or {}).items()}
         self.clock = clock or RealClock()
         self.limiter = RateLimiter(self.clock, rate_limits, default_rate)
         self.timeout_s = timeout_s
@@ -215,6 +221,7 @@ class HttpClient:
         hdrs = {**self.default_headers, **(headers or {})}
         timeout = self.timeout_s if timeout_s is None else timeout_s
         stats = self.stats[host]
+        max_retries = self.host_max_retries.get(host, self.max_retries)
         attempt = 0
         while True:
             stats["rate_wait_s"] += self.limiter.acquire(host)
@@ -224,7 +231,7 @@ class HttpClient:
                                             timeout=timeout)
             except (requests.ConnectionError, requests.Timeout) as exc:
                 err = HttpError(f"{type(exc).__name__}", url=url, status=None, retryable=True)
-                if retry and attempt < self.max_retries:
+                if retry and attempt < max_retries:
                     self._sleep_retry(host, attempt, None, f"{type(exc).__name__}")
                     attempt += 1
                     continue
@@ -236,7 +243,7 @@ class HttpClient:
 
             status = int(resp.status_code)
             if status in RETRY_STATUSES or 500 <= status < 600:
-                if retry and attempt < self.max_retries:
+                if retry and attempt < max_retries:
                     self._sleep_retry(host, attempt, resp, f"status={status}")
                     attempt += 1
                     continue

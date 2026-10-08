@@ -185,3 +185,15 @@ def test_retry_after_zero_still_backs_off(fake_http: FakeHttp, fake_clock: FakeC
     assert len(fake_clock.sleeps) == 2
     assert 0.5 <= fake_clock.sleeps[0] <= 1.0  # exponential backoff, not 0
     assert 1.0 <= fake_clock.sleeps[1] <= 2.0
+
+
+def test_host_max_retries_overrides_the_default_per_host(fake_http: FakeHttp, fake_clock: FakeClock) -> None:
+    client = make_client(fake_http, fake_clock, host_max_retries={"api.example.com": 1})
+    fake_http.register("thing", {"error": "slow down"}, status=429)
+    with pytest.raises(HttpError):
+        client.get_json(URL)
+    assert len(fake_http.calls) == 2  # 1 attempt + 1 retry, not 1 + 4
+    fake_http.register("other.example.org", {"error": "down"}, status=503)
+    with pytest.raises(HttpError):
+        client.get_json("https://other.example.org/x")
+    assert len(fake_http.calls) == 2 + 5  # other hosts keep max_retries=4

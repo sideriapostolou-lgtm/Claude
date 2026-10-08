@@ -153,6 +153,10 @@ SNAPSHOT_MISSING_UNWATCH_S = 1800.0
 MIN_CANDLE_REFETCH_S = 55.0
 #: Watchlist hysteresis: unwatch only when mcap/liquidity is this far outside the window.
 WINDOW_SLACK = 2.0
+#: The engine runs every stage in ONE thread, so a long retry chain on a rate-limited host
+#: delays exits. GeckoTerminal answers 429 often on shared IPs; its callers (crawler, candle
+#: fetch, radar) all retry on their own schedule, so the engine's client fails fast there.
+ENGINE_HOST_MAX_RETRIES = {"api.geckoterminal.com": 1}
 
 _SAFETY_METRIC_KEYS = ("top10_pct", "max_holder_pct", "creator_pct", "insider_pct", "graph_insiders",
                        "dev_mints", "lp_locked_pct", "holder_count", "rugcheck_score_normalised")
@@ -726,16 +730,17 @@ class Engine:
                 log.warning("position_unpriced id=%s mint=%s", position.id, position.mint)
             return
         radar = None
+        item = self.watchlist.get(position.mint)
         last = self._radar_at.get(position.id)
         if position.pool and (last is None or now - last >= s.radar_interval_s):
             self._radar_at[position.id] = now
             safety = self._safety.get(position.mint) or self.ledger.latest_safety(position.mint)
             if safety is not None:
                 self._safety[position.mint] = safety
-            radar = self.radar.scan(position.mint, position.pool, safety)
+            liquidity = item.snapshot.liquidity_usd if item is not None and item.snapshot is not None else None
+            radar = self.radar.scan(position.mint, position.pool, safety, liquidity_usd=liquidity)
             if radar.error:
                 log.info("radar_error_ignored position=%s error=%s", position.id, radar.error)
-        item = self.watchlist.get(position.mint)
         candles = item.candles if item is not None else []
         sig = exit_signal(position, candles, price, self.params, now, radar)
         position.peak_price_usd = float(sig.metrics.get("peak_price_usd") or position.peak_price_usd)
@@ -1011,7 +1016,8 @@ def build_app(settings: Settings, clock: Clock | None = None, *, session: Any = 
     stop_event = threading.Event()
     clock = clock if clock is not None else RealClock(stop_event)
     settings.ensure_data_dir()
-    http = http if http is not None else HttpClient.from_settings(settings, session=session, clock=clock)
+    http = http if http is not None else HttpClient.from_settings(settings, session=session, clock=clock,
+                                                                  host_max_retries=ENGINE_HOST_MAX_RETRIES)
     sources = build_sources(settings, http)
     ledger = Ledger(settings.db_path, clock=clock)
     try:

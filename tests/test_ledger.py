@@ -377,7 +377,8 @@ def test_concurrent_writers_and_readers_never_fork_the_chain(db_path: Path) -> N
         except BaseException as exc:  # pragma: no cover - surfaced below
             errors.append(exc)
 
-    threads = [threading.Thread(target=writer, args=(primary, "a")), threading.Thread(target=writer, args=(primary, "b")),
+    threads = [threading.Thread(target=writer, args=(primary, "a")),
+               threading.Thread(target=writer, args=(primary, "b")),
                threading.Thread(target=writer, args=(secondary, "c")), threading.Thread(target=reader),
                threading.Thread(target=reader)]
     for t in threads:

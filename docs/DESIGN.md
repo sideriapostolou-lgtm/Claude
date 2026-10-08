@@ -151,6 +151,33 @@ Rules: each stage is wrapped in try/except (log + `error` receipt + kv
 `engine.last_error`), so the loop never dies. A swap is never retried
 blindly: failed or unknown outcomes are reconciled and re-quoted.
 
+Integration details (see `engine.py` docstring for the full contract):
+
+* Tick order: `kill` -> `reconcile` -> `positions` -> `discover` -> `watch`
+  -> `equity` -> `heartbeat` (exits before entries). An `error` receipt is
+  written at most once per 5 min for the same stage+error (log every time).
+* Entry gate order (cheap first, so no GT/LLM budget is spent on a blocked
+  entry): strict universe check (age/mcap/liquidity, snapshot required) ->
+  `risk.can_open` + `size_position` -> radar -> judge -> quote.
+* Watchlist expiry uses hysteresis (mcap < MIN/2, > MAX*2, liquidity < MIN/2,
+  or no DexScreener data for 30 min) so a token is not dropped during the very
+  dip the strategy waits for; the entry itself re-checks the strict window.
+* Forced exits (stop, trailing, time, radar, kill) quote with
+  `max_impact_pct = max(MAX_PRICE_IMPACT_PCT, 25)`; the partial take-profit
+  uses the normal cap. A blocked sell writes a `hold` decision (<= 1 per 5 min).
+* `SwapUnknown` (live): the mint goes into kv `engine.unresolved`; ALL new
+  entries are blocked; after 90 s the wallet (Ultra holdings) is compared with
+  the books: unchanged -> `note` "did not land"; changed -> a reconciliation
+  Fill (SOL estimated pro rata from the quote, flagged in a `note`).
+* Boot: `boot` receipt; mode switch (kv `engine.mode`) -> `note`;
+  `RESET_HALT_TOKEN` changed (kv `risk.reset_token`) -> `risk.reset_halt`.
+  Shutdown writes a `note` {"event": "shutdown"}.
+* Risk equity (peak, start of day) counts only snapshots of the CURRENT
+  `TRADING_MODE`, so a paper history never halts a fresh live wallet.
+* `build_app(settings)` wires everything (http, clock, sources, crawler,
+  cocoon, radar, judge, ledger, risk, paper/live broker, auditor, dashboard,
+  engine); `build_engine` returns its engine.
+
 ## 5. Receipts (hindsight-proof hash chain)
 
 ```
@@ -223,7 +250,9 @@ the returned transaction, optionally simulates it, sends it via Ultra
 `risk.halted` {halted, reason, ts}, `risk.peak_reset_ts`, `engine.heartbeat`,
 `engine.started_at`, `engine.status`, `engine.kill_mode`, `engine.last_error`,
 `judge.cost_usd_total`, `judge.cost_usd_day` {day, usd}, `judge.calls`,
-`wallet.pubkey`. The dashboard reads ONLY the ledger (no network calls).
+`wallet.pubkey`, `live.start_sol_usd`, `engine.mode`, `engine.unresolved`
+{mint: {side, quote, decimals, position_id, at, ...}}, `risk.reset_token`.
+The dashboard reads ONLY the ledger (no network calls).
 
 ## 10. Settings
 
@@ -233,7 +262,8 @@ test checks it lists every setting. Beyond the owner's list the architect
 added: `LOG_LEVEL`, `SIMULATE_BEFORE_SEND`, `QUOTE_MAX_AGE_S`,
 `MIN_ORGANIC_SCORE`, `DIP_LOOKBACK_H`, `CANDLE_WINDOW_MIN`, `WATCHLIST_MAX`,
 `WATCHLIST_TTL_H`, `COCOON_*` thresholds, `RADAR_*` thresholds,
-`JUDGE_MAX_DAILY_USD`, `DASHBOARD_HOST`, `EQUITY_INTERVAL_S`.
+`JUDGE_MAX_DAILY_USD`, `DASHBOARD_HOST`, `EQUITY_INTERVAL_S`. The integrator
+added `RESET_HALT_TOKEN` (clear a drawdown halt from the Railway variables page).
 
 ## 11. Testing conventions
 

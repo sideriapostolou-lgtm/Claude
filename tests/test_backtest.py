@@ -192,7 +192,7 @@ def test_cooldown_between_trades() -> None:
     candles, meta = load_series(SAMPLES / "higgs_1m.json")
     trades = Backtester(P).run(candles, meta).trades
     assert len(trades) >= 2
-    for prev, nxt in zip(trades, trades[1:]):
+    for prev, nxt in zip(trades, trades[1:], strict=False):
         assert nxt.entry_ts >= prev.exit_ts + P.cooldown_min * 60
 
 

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import dataclasses
 import json
 
 import pytest
@@ -162,7 +163,7 @@ def test_snapshot_ratio() -> None:
 def test_strategy_params_from_settings(settings) -> None:
     sp = StrategyParams.from_settings(settings)
     assert sp.stop_loss_pct == 0.18 and sp.confirm_green == 2
-    with pytest.raises(Exception):
+    with pytest.raises(dataclasses.FrozenInstanceError):
         sp.dip_pct = 0.1  # type: ignore[misc]  # frozen
 
 

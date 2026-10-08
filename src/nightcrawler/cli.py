@@ -314,7 +314,7 @@ def cmd_scan(args: argparse.Namespace, settings: Settings) -> int:
         now = clock.now()
         aged = [c for c in crawler.nursery.values()
                 if c.created_at is not None and now - c.created_at >= YOUNG_MIN_AGE_S]
-        young = sorted(aged, key=lambda c: c.created_at)[:max(0, limit - len(candidates))]
+        young = sorted(aged, key=lambda c: c.created_at or 0.0)[:max(0, limit - len(candidates))]
         for c in young:
             c.age_min = (now - c.created_at) / 60
     rows = [(c, cocoon.check(c)) for c in [*candidates[:limit], *young]]

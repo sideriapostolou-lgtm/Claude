@@ -491,3 +491,62 @@ def test_fixture_sanity() -> None:
     report = load_fixture("rugcheck_report")
     assert report["mint"] == GARY and report["creator"] == GARY_DEV
     assert math.isclose(dip_rebound_candles(0.0)[-1].c, 0.46e-3)
+
+
+def test_engine_http_client_fails_fast_on_geckoterminal(make_settings, fake_clock) -> None:
+    settings = make_settings()
+    app = build_app(settings, fake_clock, session=FakeHttp())
+    try:
+        assert app.http.host_max_retries == {"api.geckoterminal.com": 1}
+        assert app.http.max_retries == 4
+    finally:
+        app.close()
+
+
+def test_watchlist_hysteresis_ttl_and_missing_data(make_rig) -> None:
+    rig = make_rig(KILL_SWITCH="stop")  # watch only, no entries
+    rig.tick()
+    assert set(rig.engine.watchlist) == {GARY}
+    rig.world.price = 0.09e-3  # mcap $90K: below the $100K floor but inside the 2x slack -> still watched
+    rig.tick(60)
+    assert GARY in rig.engine.watchlist
+    rig.world.price = 0.04e-3  # mcap $40K: collapsed -> unwatched
+    rig.tick(60)
+    assert GARY not in rig.engine.watchlist
+    assert rig.ledger.decisions(actions=["unwatch"])[0].reason == "mcap fell to $40,000"
+
+
+def test_watchlist_expires_after_ttl(make_rig) -> None:
+    rig = make_rig(KILL_SWITCH="stop", WATCHLIST_TTL_H=1)
+    rig.tick()
+    rig.tick(3601)
+    assert rig.ledger.decisions(actions=["unwatch"])[0].reason == "expired after 1 h"
+
+
+def test_entry_needs_mcap_inside_the_strict_window(make_rig) -> None:
+    rig = make_rig()
+    rig.world.price = 0.09e-3  # setup candles unchanged, but mcap $90K < MIN_MCAP_USD at decision time
+    rig.tick()
+    assert rig.ledger.fills() == []
+    assert "outside the window" in (rig.engine.watchlist[GARY].last_signal_reason or "")
+
+
+def test_radar_flag_on_an_open_position_exits_everything(make_rig) -> None:
+    rig = make_rig()
+    rig.tick()
+    assert len(rig.ledger.open_positions()) == 1
+    now = rig.clock.now()
+    rig.world.trades = [{"type": "trade", "attributes": {
+        "block_timestamp": iso(now), "tx_hash": "dump", "tx_from_address": GARY_DEV, "kind": "sell",
+        "volume_in_usd": "9000", "price_from_in_usd": "0.0005", "from_token_amount": "18000000"}}]
+    rig.tick(200)  # past RADAR_INTERVAL_S (180 s) and the radar's 60 s trade cache
+    [closed] = rig.ledger.positions(status="closed")
+    assert closed.exit_reason.startswith("radar: creator sold")
+
+
+def test_a_radar_error_on_an_open_position_is_not_an_exit(make_rig) -> None:
+    rig = make_rig()
+    rig.tick()
+    rig.world.http.register("/trades", {"errors": "down"}, status=404)
+    rig.tick(200)
+    assert len(rig.ledger.open_positions()) == 1

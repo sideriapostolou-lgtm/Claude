@@ -5,7 +5,16 @@ from __future__ import annotations
 import pytest
 
 from fakes import load_fixture
-from nightcrawler.sources._parse import chunks, first_not_none, get_path, parse_ts, strip_gt_id, to_bool, to_float, to_int
+from nightcrawler.sources._parse import (
+    chunks,
+    first_not_none,
+    get_path,
+    parse_ts,
+    strip_gt_id,
+    to_bool,
+    to_float,
+    to_int,
+)
 
 
 @pytest.mark.parametrize("value,expected", [
