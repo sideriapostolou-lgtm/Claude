@@ -298,16 +298,24 @@ def best_b(n: int = 3) -> list[dict]:
     return out
 
 
-def stage_c(n: int = 3):
-    bases = best_b(n)
+STAGE_C_BASES = (658, 638, 223)  # chosen after stage B: best per-coin mean with >= 25 trades and a positive
+#                                   portfolio, preferring the entry that is near the top for many exits
+STAGE_C_VARIATIONS = [dict(min_mcap=40_000.0), dict(max_mcap=1_000_000.0), dict(min_since_high=15),
+                      dict(min_since_high=30), dict(min_reb=1.15), dict(vol_mult=1.5), dict(vol_mult=3.0),
+                      dict(vol_base=10), dict(lookback_min=120), dict(max_age_min=240.0),
+                      dict(max_age_min=1440.0), dict(min_vol_usd=5000.0)]
+
+
+def stage_c():
+    """One-at-a-time sensitivity around the stage-C bases (also a stability check)."""
+    by_id = {r["id"]: r for r in load_trials()}
     grid = []
-    for r in bases:
-        p = r["params"]
-        for min_mcap, msh, mreb in itertools.product((15_000.0, 40_000.0), (5, 15, 30), (1.05, 1.15)):
-            q = dict(p, min_mcap=min_mcap, min_since_high=msh, min_reb=mreb)
-            if q == {**p} or (min_mcap == 15_000.0 and msh == 5 and mreb == 1.05):
-                continue
-            grid.append(q)
+    for tid in STAGE_C_BASES:
+        p = by_id[tid]["params"]
+        for var in STAGE_C_VARIATIONS:
+            q = dict(p, **var)
+            if q != p:
+                grid.append(q)
     recs = run_grid("C", grid)
     print(f"stage C: {len(recs)} configs")
 

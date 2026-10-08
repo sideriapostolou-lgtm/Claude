@@ -325,6 +325,8 @@ def robustness(params: dict, split: str = "validation") -> dict:
     }
     for k, cfg in variants.items():
         out[k] = evaluate(params, split, cfg, coins)
+    with rug_aware_fills():
+        out["rug_aware_fills"] = evaluate(params, split, None, coins)
     # without the single best coin (per-coin P&L) / first vs second half of the split (by creation time)
     base_pc = run_per_coin(F2.factory(P(**params)), coins)
     by = {}
