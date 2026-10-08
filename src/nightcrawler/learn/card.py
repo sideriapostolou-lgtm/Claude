@@ -1,7 +1,10 @@
 """The learning card's data (docs/LEARNING.md §9): :func:`learning_card_state` for the dashboard.
 
 A pure READ of ``DATA_DIR/learn/learn.db`` (opened read-only; a missing file is never created), cached
-for 60 s, with no network calls. It NEVER raises: any problem gives a well-formed state.
+for 60 s, with no network calls. It NEVER raises: any problem gives a well-formed state. It runs in the
+engine process (dashboard threads), so its cost never grows with the tape: aggregates and the latest
+scoreboard only, never a coin, outbox or evidence row in bulk; one build at a time (concurrent requests
+at expiry wait for it and read the cache).
 
 States (phase 1): ``off`` (LEARN_ENABLED=false), ``collecting`` (no evidence yet: "Collecting data,
 day N"), ``practice`` (variants are being scored - "Practice: promotions start in phase 2"; nothing can
@@ -15,6 +18,8 @@ What the one-page dashboard reads (``pagestate.learning_card``):
   percent per trade, None before any trade) ``, "proof"`` (0..1, ``log E / log threshold``) ``,
   "status", "control"}``;
 * ``data`` (= ``data_line``) - one line: coins taped, days of data, disk used of the cap;
+* ``warnings`` - plain lines about what keeps learning from working fully: a seed the Settings put
+  outside a hard range (it is not tested), a data host that keeps refusing the recorder;
 * ``updated_at`` - when the scoreboard was written.
 
 The structured numbers stay in ``stats`` (coins yesterday/total, completeness, days, disk, cap),
@@ -49,13 +54,16 @@ CACHE_S = 60.0
 TEXT_MAX = 200
 NAME_MAX = 60
 EMPTY_KEYS = ("state", "headline", "subline", "frozen", "updated_at", "paper_variant", "champion", "top", "placebo",
-              "variants", "data", "data_line", "stats", "events", "budget", "live")
+              "variants", "data", "data_line", "stats", "events", "budget", "live", "warnings")
+#: A host refusing the recorder for this long is reported on the card (a short 429 pause is not).
+BLOCKED_WARN_S = 1800.0
 PRACTICE_HEADLINE = "Practice: promotions start in phase 2"
 _SUBLINE = "No idea has proven an edge yet. Paper practises with the default strategy (unproven)."
 _EVENT_TEXT = {"register": "started testing {name}", "tape_seal": "sealed the {day} data ({completeness}% complete)",
                "scoreboard": "scored every idea for {day}"}
 _cache: dict[str, tuple[float, dict[str, Any]]] = {}
 _lock = threading.Lock()
+_build_lock = threading.Lock()  # single flight: one build at a time
 
 
 def clear_cache() -> None:
@@ -72,6 +80,7 @@ def _empty(state: str, headline: str, cap_gb: float | None) -> dict[str, Any]:
                   "fidelity_pct": None, "disk_gb": 0.0, "cap_gb": cap_gb, "day": 1, "days": 0},
         "events": [], "budget": {"registrations_this_week": 0, "live_attempts": 0, "trials_total": None},
         "live": {"ready": False, "armed": False, "why": "real money needs proof on real quotes and your OK (phase 2)"},
+        "warnings": [],
     }
 
 
@@ -84,17 +93,26 @@ def learning_card_state(settings: Any, now: float) -> dict[str, Any]:
             return _finish(_empty("off", "Learning is off (LEARN_ENABLED=false)", cap), secrets)
         path = db_path(settings.data_dir)
         key = str(path)
-        with _lock:
-            hit = _cache.get(key)
-            if hit is not None and 0 <= now - hit[0] < CACHE_S:
-                return copy.deepcopy(hit[1])
-        state = _finish(_build(path, settings, now, cap), secrets)
-        with _lock:
-            _cache[key] = (now, state)
+        hit = _cached(key, now)
+        if hit is not None:
+            return hit
+        with _build_lock:
+            hit = _cached(key, now)  # built while this request waited
+            if hit is not None:
+                return hit
+            state = _finish(_build(path, settings, now, cap), secrets)
+            with _lock:
+                _cache[key] = (now, state)
         return copy.deepcopy(state)
     except Exception as exc:  # the dashboard must always render
         log.warning("learning_card_failed error=%s", type(exc).__name__)
         return _finish(_empty("unavailable", "Learning data unavailable right now", None), ())
+
+
+def _cached(key: str, now: float) -> dict[str, Any] | None:
+    with _lock:
+        hit = _cache.get(key)
+        return copy.deepcopy(hit[1]) if hit is not None and 0 <= now - hit[0] < CACHE_S else None
 
 
 def _secrets(settings: Any) -> tuple[str, ...]:
@@ -126,31 +144,31 @@ def _build(path: Path, settings: Any, now: float, cap: float) -> dict[str, Any]:
 
 
 def _from_store(store: LearnStore, settings: Any, now: float, cap: float) -> dict[str, Any]:
-    coins = store.coins()
-    first_seen = min((c["first_seen_ts"] for c in coins), default=None)
+    coins = store.coin_overview()
+    first_seen = coins["first_seen_ts"]
     day_n = 1 if first_seen is None else (_utc_day(now) - _utc_day(first_seen)).days + 1
     state = _empty("collecting", f"Collecting data, day {day_n}", cap)
     yesterday = (_utc_day(now).timestamp() - 86400.0)
     y_label = datetime.fromtimestamp(yesterday, tz=timezone.utc).strftime("%Y-%m-%d")
     counts = store.day_counts(y_label)
     state["stats"].update({
-        "coins_yesterday": counts["coins"], "coins_total": len(coins), "day": day_n, "days": len(store.days()),
+        "coins_yesterday": counts["coins"], "coins_total": coins["count"], "day": day_n, "days": len(store.days()),
         "completeness_pct": round(100.0 * counts["closed"] / counts["coins"], 1)
         if counts["coins"] and not counts["open"] else None,
         "disk_gb": round(_disk_bytes(learn_dir(settings.data_dir)) / 1e9, 3)})
     state["budget"].update({"registrations_this_week": registrations_this_week(store, now),
                             "trials_total": store.trials_total()})
     state["events"] = _events(store)
+    state["warnings"] = _warnings(store, now)
     board_day = store.latest_scoreboard_day()
     rows = store.scoreboard(board_day) if board_day else []
     if not rows or not any(r.get("n") for r in rows):
         return state
     state.update({"state": "practice", "headline": PRACTICE_HEADLINE,
                   "updated_at": max(r["updated_ts"] for r in rows)})
-    rate = _trades_per_day(store, rows, now)
     ideas = sorted((r for r in rows if not r.get("control")),
                    key=lambda r: (-(r.get("proof") or 0.0), r["variant_hash"]))
-    state["top"] = [_row(r, rate.get(r["variant_hash"])) for r in ideas[:3]]
+    state["top"] = [_row(r, r.get("trades_per_day_7d")) for r in ideas[:3]]
     placebo = next((r for r in rows if r.get("control")), None)
     if placebo is not None:
         mean = placebo.get("mean")
@@ -212,29 +230,30 @@ def _row(r: dict[str, Any], per_day: float | None) -> dict[str, Any]:
             "eta": eta, "status": r.get("status") or ""}
 
 
-def _trades_per_day(store: LearnStore, rows: list[dict[str, Any]], now: float) -> dict[str, float]:
-    """Evidence per day over the last 7 days, per variant (for the ETA)."""
-    out = {}
-    for r in rows:
-        recent = [e for e in store.evidence(r["variant_hash"]) if e["exit_ts"] >= now - 7 * 86400]
-        out[r["variant_hash"]] = len(recent) / 7.0
-    return out
-
-
 def _events(store: LearnStore) -> list[dict[str, Any]]:
     events = []
-    for row in reversed(store.outbox()):
-        template = _EVENT_TEXT.get(row["event"])
-        if template is None:
-            continue
+    for row in store.recent_outbox(tuple(_EVENT_TEXT), 10):
         p = row["payload"]
         share = p.get("completeness")
-        text = template.format(name=p.get("name") or "an idea", day=p.get("day") or "?",
-                               completeness=round(100 * share) if isinstance(share, (int, float)) else "?")
+        text = _EVENT_TEXT[row["event"]].format(name=p.get("name") or "an idea", day=p.get("day") or "?",
+                                                completeness=round(100 * share) if isinstance(share, (int, float))
+                                                else "?")
         events.append({"ts": row["created_ts"], "text": text, "seq": row["receipt_seq"]})
-        if len(events) == 10:
-            break
     return events
+
+
+def _warnings(store: LearnStore, now: float) -> list[str]:
+    out = []
+    last_run = store.get_meta("learner.last_run") or {}
+    for reason in last_run.get("seeds_rejected") or ():
+        out.append(f"Not tested (outside the learner's limits): {reason}")
+    for host, info in sorted((store.get_meta("recorder.blocked") or {}).items()):
+        since = info.get("since") if isinstance(info, dict) else None
+        if isinstance(since, (int, float)) and now - since >= BLOCKED_WARN_S:
+            at = datetime.fromtimestamp(since, tz=timezone.utc).strftime("%b %d %H:%M UTC")
+            out.append(f"{info.get('name') or host} has refused the recorder since {at} (HTTP {info.get('status')}): "
+                       "no new data from it")
+    return out
 
 
 def _disk_bytes(root: Path) -> int:

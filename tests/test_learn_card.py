@@ -8,7 +8,7 @@ import json
 import pytest
 
 from nightcrawler.learn import card
-from nightcrawler.learn.card import EMPTY_KEYS, learning_card_state
+from nightcrawler.learn.card import EMPTY_KEYS, PRACTICE_HEADLINE, learning_card_state
 from nightcrawler.learn.store import LearnStore, db_path, learn_dir
 from nightcrawler.learn.variants import make_spec, register_seeds
 from nightcrawler.models import StrategyParams
@@ -182,3 +182,65 @@ def test_the_empty_state_is_well_formed_for_the_page(settings) -> None:
     check_shape(state)
     assert (state["state"], state["headline"], state["variants"]) == ("collecting", "Collecting data, day 1", [])
     assert state["data"] == "Data: 0 coins taped · 0 days · 0.000 GB of 3 GB"
+
+
+def test_building_the_card_never_loads_the_coin_outbox_or_evidence_rows(settings) -> None:
+    """The card runs inside the engine process (dashboard threads): its cost must not grow with the tape.
+    Thousands of coins (each with a recorder candle mark), outbox rows and evidence rows stay in SQLite."""
+    import tracemalloc
+
+    mark = json.dumps({"cover": [None, 1], "rows": [[i, "0.0001", "0.0002", "0.00005", "0.00015", "123.4"]
+                                                    for i in range(30)] * 4, "tail_from": 0, "fetches": 1})
+    launch = json.dumps({"name": "n" * 40, "creator": "c" * 44, "pump_swap_pool": "p" * 44})
+    with LearnStore(db_path(settings.data_dir)) as store:
+        register_seeds(store, StrategyParams(), NOW - 9 * DAY)
+        variant = store.variants()[0]["hash"]
+        with store.transaction():
+            store.conn.executemany(
+                "INSERT INTO coins(mint, created_ts, first_seen_ts, day, launch) VALUES (?, ?, ?, ?, ?)",
+                [(f"M{i:06d}", NOW - 2 * DAY + i, NOW - 2 * DAY + i, "2026-10-06", launch) for i in range(3000)])
+            store.conn.executemany("INSERT INTO coin_marks(mint, mark) VALUES (?, ?)",
+                                   [(f"M{i:06d}", mark) for i in range(3000)])
+            store.conn.executemany(
+                "INSERT INTO outbox(event, payload, created_ts) VALUES ('tape_root', ?, ?)",
+                [(json.dumps({"segments": [{"file": "x" * 40, "sha256": "f" * 64}] * 20}), NOW - i)
+                 for i in range(1500)])
+            store.conn.executemany(
+                "INSERT INTO evidence VALUES (?, ?, 'replay', ?, ?, 0.1, 0.1, 0.05, 0.12, 0.02, ?, 1)",
+                [(variant, f"M{i:06d}", NOW - DAY, NOW - DAY + 60, "s" * 64) for i in range(3000)])
+            store.put_scoreboard("2026-10-08", variant, {"n": 3000, "mean": 0.1, "proof": 0.2, "status": "testing",
+                                                         "name": "v", "family": "dip_rebound", "control": False,
+                                                         "eta_trades": 50.0}, NOW - 60)
+    tracemalloc.start()
+    try:
+        state = learning_card_state(settings, NOW)
+        peak = tracemalloc.get_traced_memory()[1]
+    finally:
+        tracemalloc.stop()
+    check_shape(state)
+    assert state["headline"] == PRACTICE_HEADLINE and state["stats"]["coins_total"] == 3000
+    assert state["stats"]["day"] == 3 and [e["text"][:16] for e in state["events"]] == ["started testing "] * 5
+    assert peak < 2_000_000, f"the card allocated {peak / 1e6:.1f} MB"
+
+
+def test_concurrent_requests_at_expiry_build_the_card_once(settings, monkeypatch) -> None:
+    import threading
+    import time
+
+    builds = []
+    real = card._build
+
+    def slow_build(*args, **kwargs):
+        builds.append(1)
+        time.sleep(0.2)
+        return real(*args, **kwargs)
+
+    monkeypatch.setattr(card, "_build", slow_build)
+    results: list[dict] = []
+    threads = [threading.Thread(target=lambda: results.append(learning_card_state(settings, NOW))) for _ in range(6)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join(10)
+    assert len(results) == 6 and all(r == results[0] for r in results)
+    assert len(builds) == 1  # single flight: the others wait for it and read the cache

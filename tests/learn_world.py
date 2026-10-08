@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Any
 
 from nightcrawler.costs import SOL_QUOTE
+from nightcrawler.learn.recorder import CANDLE_FETCH_H
 from nightcrawler.learn.store import LearnStore
 from nightcrawler.learn.tape import TapeWriter, candle_fetch_row, candle_mark, tape_day, universe_row
 from nightcrawler.learn.variants import VariantSpec
@@ -41,7 +42,7 @@ def api_rows(candles: list[Candle]) -> list[dict[str, Any]]:
 
 
 def record_coin(mint: str, created_ts: float, candles: list[Candle], *, first_seen_ts: float | None = None,
-                fetch_after_h: tuple[float, ...] = (3, 12, 50), limit: int = 1000,
+                fetch_after_h: tuple[float, ...] = CANDLE_FETCH_H, limit: int = 1000,
                 **census: Any) -> dict[str, list[dict[str, Any]]]:
     """The tape rows the recorder would write for this coin."""
     seen = created_ts + 600 if first_seen_ts is None else first_seen_ts

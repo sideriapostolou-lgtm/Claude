@@ -73,6 +73,26 @@ def test_a_first_run_registers_the_seeds_scores_and_queues_receipts(tmp_path) ->
     assert again["status"] == "ok" and again["registered"] == []  # nothing registered twice
 
 
+def test_an_out_of_bounds_settings_anchor_never_stops_learning(tmp_path, coins) -> None:
+    """A valid Settings value outside a hard range (MAX_HOLD_MIN=480) only skips the seeds that inherit it:
+    every run still registers the others, replays and scores, and says what it skipped."""
+    import dataclasses
+
+    from nightcrawler.learn.card import clear_cache, learning_card_state
+
+    day = a_judged_day(tmp_path, coins)
+    anchor = dataclasses.replace(ANCHOR, max_hold_min=480.0)
+    summary = run_job(JobConfig(data_dir=tmp_path, anchor=anchor), now=at(LATER))
+    assert summary["status"] == "ok" and len(summary["registered"]) == 3 and sum(summary["days"][day].values())
+    assert len(summary["seeds_rejected"]) == 2 and "max_hold_min=480.0" in summary["seeds_rejected"][0]
+    with LearnStore(db_path(tmp_path)) as store:
+        assert store.get_meta("learner.last_run")["seeds_rejected"] == summary["seeds_rejected"]
+        assert store.get_meta("learner.last_ok") == LATER and store.scoreboard(tape_day(LATER))
+    clear_cache()
+    state = learning_card_state(Settings.from_env({"DATA_DIR": str(tmp_path)}), LATER)
+    assert any("max_hold_min=480.0" in w for w in state["warnings"])
+
+
 def test_a_judged_day_is_replayed_once_and_then_skipped(tmp_path, coins) -> None:
     day = a_judged_day(tmp_path, coins)
     first = run_job(config(tmp_path), now=at(LATER))
@@ -86,6 +106,17 @@ def test_a_judged_day_is_replayed_once_and_then_skipped(tmp_path, coins) -> None
         assert store.evidence(BENCHMARK.hash) == evidence
         board = {r["variant_hash"]: r for r in store.scoreboard(tape_day(LATER))}
         assert board[BENCHMARK.hash]["n"] == len(evidence)
+
+
+def test_a_finished_day_leaves_one_marker_per_strategy_version_not_a_row_per_coin(tmp_path, coins) -> None:
+    """learn.db must not grow by a row per (version, coin) for ever: once a version is finished with a day,
+    a single marker replaces its per-coin bookkeeping (only trades keep an evidence row)."""
+    day = a_judged_day(tmp_path, coins)
+    run_job(config(tmp_path), now=at(LATER))
+    with LearnStore(db_path(tmp_path)) as store:
+        assert store.conn.execute("SELECT COUNT(*) FROM replayed").fetchone()[0] == 0
+        assert store.day_replayed(BENCHMARK.hash, day, rp.sim_hash())
+        assert not store.day_replayed(BENCHMARK.hash, day, "0" * 64)  # a new simulator replays it again
 
 
 def test_a_day_is_replayed_again_for_a_variant_frozen_before_its_coins(tmp_path, coins) -> None:

@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 import ast
+import os
 from pathlib import Path
 
 import pytest
@@ -72,3 +73,32 @@ def test_the_checker_sees_every_import_style(tmp_path) -> None:
         assert any(_under(name, FORBIDDEN) for name in imports(probe)), line
     probe.write_text("from nightcrawler import strategy, hashing\nimport math\n", encoding="utf-8")
     assert not any(_under(name, FORBIDDEN) for name in imports(probe))
+
+
+#: What the learner PROCESS may never load, directly or through another module (S4): no way to trade, sign,
+#: write the ledger or call out. ``nightcrawler.sources`` itself is allowed for its pure ``_parse`` helpers
+#: (the backtester parses timestamps with them), never a client. ``nightcrawler.risk`` comes in only through
+#: the backtester's PURE sizing function, shared with live trading on purpose (``test_backtest.py`` pins it);
+#: the risk STATE lives in the ledger, which the process never loads.
+PROCESS_FORBIDDEN = ("nightcrawler.broker", "nightcrawler.wallet", "nightcrawler.judge", "nightcrawler.http",
+                     "nightcrawler.ledger", "nightcrawler.engine", "nightcrawler.dashboard", "nightcrawler.crawler",
+                     "nightcrawler.cocoon", "nightcrawler.radar", "requests", "urllib3", "solders", "anthropic")
+PROCESS_SOURCES_ALLOWED = ("nightcrawler.sources", "nightcrawler.sources._parse")
+
+
+def test_the_learner_process_never_loads_a_trading_or_network_module(make_settings) -> None:
+    """The child the engine starts, run for real: ``-X importtime`` lists every module it imported."""
+    import subprocess
+
+    from nightcrawler.learn.job import learner_command, learner_env
+
+    cmd = learner_command(os.getpid(), 60.0)
+    cmd[1:1] = ["-X", "importtime"]
+    done = subprocess.run(cmd, env=learner_env(make_settings()), timeout=120, stdin=subprocess.DEVNULL,
+                          capture_output=True, text=True)
+    assert done.returncode == 0 and "learner ok" in done.stdout, done.stderr[-2000:]
+    loaded = {line.rsplit("|", 1)[-1].strip() for line in done.stderr.splitlines() if line.startswith("import time:")}
+    assert "nightcrawler.learn.job" in loaded and "nightcrawler.backtest" in loaded
+    bad = sorted(m for m in loaded if _under(m, PROCESS_FORBIDDEN)
+                 or (_under(m, ("nightcrawler.sources",)) and m not in PROCESS_SOURCES_ALLOWED))
+    assert not bad, f"the learner process loads {bad}"

@@ -6,7 +6,8 @@ so it never runs inside the engine. One run (:func:`run_job`):
 
 1. takes the ``learner`` LEASE in learn.db (one learner at a time, S6; a lease older than
    :data:`LEASE_STALE_S` is taken over) and renews it every :data:`LEASE_RENEW_S`;
-2. registers the seeds not registered yet (``seeds.json``, within the weekly allowance);
+2. registers the seeds not registered yet (``seeds.json``, within the weekly allowance); a seed the
+   Settings put outside a hard range is skipped and listed in ``seeds_rejected`` (the card shows it);
 3. replays every JUDGED day (no open coin) that is not finished yet, oldest first, one transaction
    per (variant, coin) (:func:`~nightcrawler.learn.replay.replay_day`). A day is finished for the
    variants frozen before its newest coin under the current ``sim_hash`` (meta ``learner.days``), so
@@ -57,7 +58,7 @@ from nightcrawler.hashing import canonical_json
 from nightcrawler.learn import replay
 from nightcrawler.learn.store import LearnStore, db_path, learn_dir
 from nightcrawler.learn.tape import DEFAULT_L_OBS_S, TapeReader, tape_day
-from nightcrawler.learn.variants import register_seeds
+from nightcrawler.learn.variants import register_seeds, rejected_seeds
 from nightcrawler.models import StrategyParams
 
 __all__ = [
@@ -262,7 +263,8 @@ def run_job(cfg: JobConfig, *, now: Callable[[], float] = time.time, stop_event:
     t_start = monotonic()
     started = now()
     summary: dict[str, Any] = {"status": "ok", "reason": None, "pid": os.getpid(), "started": started,
-                               "finished": None, "registered": [], "days": {}, "l_obs_s": {}, "scored": 0,
+                               "finished": None, "registered": [], "seeds_rejected": [], "days": {}, "l_obs_s": {},
+                               "scored": 0,
                                "limits": dict(limits) if limits is not None else None}
     with LearnStore(db_path(cfg.data_dir)) as store:
         if not store.acquire_lease(LEASE_NAME, os.getpid(), started, LEASE_STALE_S):
@@ -272,6 +274,7 @@ def run_job(cfg: JobConfig, *, now: Callable[[], float] = time.time, stop_event:
         try:
             if stop.hard() is None:
                 summary["registered"] = register_seeds(store, cfg.anchor, now())
+                summary["seeds_rejected"] = rejected_seeds(cfg.anchor)
                 _replay_days(store, cfg, summary, stop, now)
             if stop.hard() is None:
                 summary["scored"] = len(replay.update_scoreboard(store, now(), cfg.sim))
@@ -297,9 +300,11 @@ def describe_run(summary: Mapping[str, Any]) -> str:
         return "learner busy: another learner holds the lease, nothing done"
     coins = sum(sum(c.values()) for c in (summary.get("days") or {}).values())
     why = f" ({summary['reason']})" if summary.get("reason") else ""
+    skipped = len(summary.get("seeds_rejected") or [])
     return (f"learner {summary.get('status')}{why} in {summary.get('seconds', 0.0):.1f} s: replayed {coins:,} "
             f"coins on {len(summary.get('days') or {})} day(s), scored {summary.get('scored', 0)} strategy "
-            f"versions, registered {len(summary.get('registered') or [])}")
+            f"versions, registered {len(summary.get('registered') or [])}"
+            + (f", skipped {skipped} seeds outside the learner's limits" if skipped else ""))
 
 
 # --------------------------------------------------------------------------- the child process

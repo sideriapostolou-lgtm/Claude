@@ -378,7 +378,9 @@ e-process scoreboard, receipts through an outbox) is specified in
 Its rules, in one line each: learning never trades and never writes Settings; trading never
 waits for it (own HTTP client, non-blocking emits); only the engine writes receipts; the
 learner (`nightcrawler.learn`, except the recorder) imports none of `broker`, `wallet`,
-`risk`, `judge`, `http` or `sources`; `LEARN_ENABLED=false` makes no learning call at all.
+`risk`, `judge`, `http` or `sources`, and the learner process loads no broker, wallet, ledger,
+HTTP or source-client module at all (`sources/__init__` and `cli.main` import those lazily);
+`LEARN_ENABLED=false` makes no learning call at all.
 
 Wiring (phase 1): `build_app` gives the engine a `LearnStage` (LEARN_ENABLED). `run_forever` starts
 the recorder thread after the `boot` receipt (which carries `code_hashes` and `sim_hash`) and stops it

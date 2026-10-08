@@ -135,3 +135,31 @@ def test_a_tape_truncated_at_t_gives_identical_decisions_up_to_t(coins) -> None:
         else:
             assert out.kind in ("pending", "excluded")
     assert finals >= 5 and compared >= 20
+
+
+def test_no_entry_before_the_coin_is_known_to_have_graduated() -> None:
+    """The universe is "coins that graduated". The census shows a coin only once it has, so before the
+    recorder first saw it, buying it on the bonding curve would use the future fact that it graduates
+    (research/lab: no entries before graduation). Here 30 coins dip and rebound on the curve for 8 h and
+    graduate afterwards; the Settings floors are low enough (valid MIN_MCAP_USD / MIN_LIQUIDITY_USD) to
+    let the strategy trade them."""
+    from learn_world import dip_rebound_series, record_coin
+    from nightcrawler.models import Candle
+
+    spec = make_spec("dip_rebound", {}, StrategyParams(min_mcap_usd=10_000.0, min_liquidity_usd=5_000.0))
+    entries = 0
+    for seed in range(30):
+        created = T0 + 60
+        base = dip_rebound_series(created, random.Random(seed))
+        scale = 40_000.0 / 1e9 / max(c.h for c in base)  # below the curve's completion (~$43k at SOL $106)
+        candles = [Candle(c.ts, c.o * scale, c.h * scale, c.l * scale, c.c * scale, c.v) for c in base]
+        graduated = candles[-1].ts + 60
+        mint = f"Curve{seed:03d}" + "c" * 36
+        rows = record_coin(mint, created, candles, first_seen_ts=graduated + 120, fetch_after_h=(3, 12, 50))
+        out = replay(spec, mint, rows, rows["universe"])
+        for d in out.decisions:
+            assert d["t_dec"] >= rows["universe"][0]["first_seen_ts"], (seed, d)
+        if out.evidence is not None:
+            entries += 1
+            assert out.evidence["entry_ts"] >= rows["universe"][0]["first_seen_ts"]
+    assert entries == 0  # the coins never trade again after graduating: nothing left to buy

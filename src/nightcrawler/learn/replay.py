@@ -15,7 +15,11 @@ live. Rules (§4.2), applied through the backtester's optional hooks:
   MEV buffer, all x ``cost_scale[tier]`` (>= 1); no entry when the modelled impact exceeds
   ``MAX_PRICE_IMPACT_PCT`` or the pool (both sides) is below the variant's ``min_liquidity_usd``;
 * universe: SOL-quoted, not Mayhem (launch fields), then the variant's own age and market-cap
-  filters and its signal (the backtester's universe check).
+  filters and its signal (the backtester's universe check);
+* graduation: no decision before the coin's ``first_seen_ts``, when the recorder first saw it in the
+  GRADUATED census (it graduated at or before then). The universe is "coins that graduated", so
+  buying earlier - on the bonding curve - would use the future fact that it graduates
+  (research/lab: no entries before graduation).
 
 EVIDENCE (§4.3): one observation per (variant, coin) - the net return of the FIRST $20 trade,
 ``x_raw = proceeds / stake - 1``, tested as ``x = clip(x_raw, -1, 1)``; ``x_stress`` charges the
@@ -26,7 +30,9 @@ time stop. A day is replayed only once every coin of it is closed or incomplete,
 than 95 % of the coins completed every fetch is excluded for every variant.
 
 ``sim_hash`` = sha256 of the bytes of ``replay.py``, ``costs.py`` and ``backtest.py``: evidence carries
-it, and a change means every result is recomputed.
+it, and a change means every result is recomputed: a coin replayed again keeps only the new
+simulator's outcome (no evidence row when it no longer trades), and the scoreboard scores only the
+evidence of the current ``sim_hash``.
 """
 
 from __future__ import annotations
@@ -241,7 +247,7 @@ def replay_coin(spec: VariantSpec, view: TapeView, *, t0: float | None, closed: 
                         entry_fn=logged_entry)
     else:
         bt = Backtester(params, CostModel(), **sizing, entry_fn=logged_entry)
-    trades = bt.run(candles, meta).trades
+    trades = bt.run(candles, meta, trade_from=view.first_seen_ts).trades
     filled = {id(t.signal_metrics): t.entry_ts for t in trades}
     # every ENTER signal, filled or refused at the fill (impact, liquidity): what the variant decided, when
     decisions = [{"t_dec": now, "last_ts": s.metrics.get("last_ts"), "entry_ts": filled.get(id(s.metrics)),
@@ -291,7 +297,8 @@ def _spec(row: Mapping[str, Any]) -> VariantSpec:
 def replay_day(store: Any, reader: TapeReader, day: str, now: float, cfg: SimConfig | None = None,
                should_stop: Callable[[], bool] = lambda: False) -> dict[str, int]:
     """Replay every receipted variant on every coin of a judged ``day``; one transaction per
-    (variant, coin), so a killed learner resumes where it stopped. Returns counts per outcome."""
+    (variant, coin), so a killed learner resumes where it stopped. A variant finished with the day under
+    this ``sim_hash`` keeps one ``replayed_days`` marker instead of a row per coin. Returns counts per outcome."""
     cfg = cfg or SimConfig()
     counts: dict[str, int] = {}
     judged, complete, _ = day_ready(store, day)
@@ -309,7 +316,10 @@ def replay_day(store: Any, reader: TapeReader, day: str, now: float, cfg: SimCon
         if spec.hash != variant["hash"]:  # strategy.py or the family file changed: no longer this variant
             counts["stale_code"] = counts.get("stale_code", 0) + 1
             continue
+        if store.day_replayed(variant["hash"], day, sim):
+            continue
         done = store.replayed(variant["hash"], sim)
+        finished = True
         for coin in store.coins(day=day):
             mint = coin["mint"]
             if mint in done:
@@ -325,12 +335,17 @@ def replay_day(store: Any, reader: TapeReader, day: str, now: float, cfg: SimCon
                 outcome = replay_coin(spec, view, t0=variant["t0"], closed=True, cfg=cfg,
                                       sol_usd=sol_at_creation[mint])
             if outcome.kind == "pending":  # cannot happen on a judged day; never counted early
+                finished = False
                 continue
             with store.transaction():
                 if outcome.evidence is not None:
                     store.put_evidence(outcome.evidence)
+                else:  # e.g. replayed again under a new simulator: an older outcome must not linger
+                    store.delete_evidence(variant["hash"], mint)
                 store.mark_replayed(variant["hash"], mint, outcome.kind, sim, now)
             counts[outcome.kind] = counts.get(outcome.kind, 0) + 1
+        if finished:
+            store.finish_replayed_day(variant["hash"], day, sim, now)
     return counts
 
 
@@ -351,21 +366,23 @@ _EVIDENCE_KEYS = ("variant_hash", "mint", "pricing", "entry_ts", "exit_ts", "x",
 
 
 def update_scoreboard(store: Any, now: float, cfg: SimConfig | None = None) -> dict[str, dict[str, Any]]:
-    """Score every variant's replay evidence (pure :func:`evidence.score`), store today's scoreboard and,
-    once per UTC day, queue the ``scoreboard`` outbox row (evidence roots, sim_hash, cost_scale)."""
+    """Score every variant's replay evidence under the current ``sim_hash`` (pure :func:`evidence.score`),
+    store today's scoreboard (with the trades per day of the last 7 days, for the card's ETA) and, once per
+    UTC day, queue the ``scoreboard`` outbox row (evidence roots, sim_hash, cost_scale)."""
     cfg = cfg or SimConfig()
     day = tape_day(now)
     rows: dict[str, dict[str, Any]] = {}
     prev_day = store.latest_scoreboard_day()
     prev = {r["variant_hash"]: r for r in store.scoreboard(prev_day)} if prev_day else {}
     for variant in store.variants():
-        evidence = [{k: e[k] for k in _EVIDENCE_KEYS} for e in store.evidence(variant["hash"])]
+        evidence = [{k: e[k] for k in _EVIDENCE_KEYS} for e in store.evidence(variant["hash"], sim_hash=sim_hash())]
         stats = ev.score([e["x"] for e in evidence], threshold=variant["threshold"],
                          alpha=variant["alpha"] or PAPER_ALPHA,  # controls spend none; LB shown at the paper level
                          prev_lb=(prev.get(variant["hash"]) or {}).get("lb"))
         stats.update({"status": variant["status"], "name": variant["name"], "family": variant["family"],
                       "control": bool(FAMILIES[variant["family"]].CONTROL), "evidence_root": evidence_root(evidence),
-                      "last_exit_ts": evidence[-1]["exit_ts"] if evidence else None})
+                      "last_exit_ts": evidence[-1]["exit_ts"] if evidence else None,
+                      "trades_per_day_7d": sum(e["exit_ts"] >= now - 7 * 86400 for e in evidence) / 7.0})
         store.put_scoreboard(day, variant["hash"], stats, now)
         rows[variant["hash"]] = stats
     if store.get_meta("scoreboard.receipted_day") != day:

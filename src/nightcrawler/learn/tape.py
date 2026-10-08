@@ -397,6 +397,11 @@ class TapeWriter:
         self._step("manifest_written")
         return manifest
 
+    def raw_left(self, day: str) -> bool:
+        """True when a SEALED day still has a ``.jsonl`` next to its ``.gz`` (:meth:`finish_seal` did not run)."""
+        folder = self.root / day
+        return self.sealed(day) and any(p.with_name(p.name + ".gz").exists() for p in folder.glob("*.jsonl"))
+
     def finish_seal(self, day: str) -> None:
         """Last sealing step: delete the ``.jsonl`` (and stray ``.tmp``) files once their ``.gz`` and the
         manifest exist. Safe to repeat."""
@@ -484,6 +489,13 @@ class TapeView:
         self._values = self._determine(rows.get("candles", ()))
 
     # ---------------------------------------------------------------- launch / state
+    @property
+    def first_seen_ts(self) -> float | None:
+        """When the recorder first saw the coin in the GRADUATED census: from then on it is known to have
+        graduated (it graduated at or before this time)."""
+        u = self._universe
+        return float(u.get("first_seen_ts", u["ts"])) if u else None
+
     @property
     def created_ts(self) -> float | None:
         u = self._universe

@@ -5,6 +5,7 @@ zero learning calls with LEARN_ENABLED=false."""
 
 from __future__ import annotations
 
+import itertools
 import threading
 import time
 
@@ -22,7 +23,7 @@ from nightcrawler.learn.recorder import (
     start_recorder,
 )
 from nightcrawler.learn.store import LearnStore, learn_dir
-from nightcrawler.learn.tape import MANIFEST, TapeReader, TapeWriter, verify_segments
+from nightcrawler.learn.tape import MANIFEST, TapeReader, TapeWriter, tape_day, verify_segments
 from nightcrawler.sources.pumpfun import CENSUS_HOST, HOST as SWAP_HOST
 
 CENSUS_AT = 1_791_482_981.0  # 2026-10-08T18:09:41Z, when the lab captured the census fixture
@@ -104,9 +105,43 @@ def test_the_fetch_schedule_is_a_function_of_first_seen_only(world, clock, candl
         assert coin["fetches_done"] == len(CANDLE_FETCH_H) + len(SNAP_AGES_MIN)
 
 
+def test_the_candle_schedule_cannot_leave_a_hole_however_busy_the_coin_is() -> None:
+    """pump.fun serves the newest 1000 TRADED minutes. If two fetches are more than ~1000 minutes apart, a
+    coin that trades every minute gets a hole - only the busiest coins would lose their late candles, an
+    outcome-dependent universe. Every gap of the fixed schedule is shorter than the page."""
+    from nightcrawler.learn.tape import CANDLE_LIMIT
+
+    gaps = [b - a for a, b in itertools.pairwise(CANDLE_FETCH_H)]
+    assert all(gap * 60 + 1 < CANDLE_LIMIT for gap in gaps), gaps
+    assert CANDLE_FETCH_H[0] == 3 and CANDLE_FETCH_H[-1] == 50
+
+
+def test_a_coin_that_keeps_trading_is_covered_as_long_as_a_quiet_one() -> None:
+    from learn_world import DAY0, record_coin
+    from nightcrawler.learn.tape import TapeView
+    from nightcrawler.models import Candle
+
+    created = DAY0 + 3600
+
+    def series(active_late: bool) -> list[Candle]:
+        out = []
+        for i in range(52 * 60):
+            traded = i < 12 * 60 + 10 or active_late or i % 7 == 0
+            out.append(Candle(int(created) + 60 * i, 3e-4, 3.003e-4, 2.997e-4, 3e-4, 100.0 if traded else 0.0))
+        return out
+
+    ends = []
+    for active in (False, True):
+        mint = ("HoleA" if active else "HoleQ") + "h" * 39
+        rows = record_coin(mint, created, series(active), fetch_after_h=CANDLE_FETCH_H)
+        view = TapeView(mint, DAY0 + 30 * 86400, rows)
+        ends.append((view.covered_until, view.candles()[-1].ts))
+    assert ends[0] == ends[1] and (ends[0][1] - created) / 3600 > 50
+
+
 def test_candle_and_snapshot_rows_reach_the_tape(world, clock) -> None:
     recorder, http, store = world
-    run_for(recorder, clock, 13)
+    run_for(recorder, clock, CANDLE_FETCH_H[1] + 1)
     recorder.tape.flush()
     reader = TapeReader(recorder.tape.root)
     candles = reader.rows("2026-10-08", "candles")
@@ -119,6 +154,37 @@ def test_candle_and_snapshot_rows_reach_the_tape(world, clock) -> None:
     assert sorted(s["age_min"] for s in snaps if s["mint"] == MINTS[0]) == sorted(SNAP_AGES_MIN)
     assert all(s["pair"]["baseToken"]["address"] == s["mint"] for s in snaps)
     assert len(http.calls_to(DEXS)) < len(snaps)  # batched: up to 30 mints per call
+
+
+def live_bytes(store: LearnStore) -> int:
+    store.conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+    pages = store.conn.execute("PRAGMA page_count").fetchone()[0] - store.conn.execute(
+        "PRAGMA freelist_count").fetchone()[0]
+    return pages * store.conn.execute("PRAGMA page_size").fetchone()[0]
+
+
+def test_a_closed_coin_keeps_only_a_small_row_in_learn_db(world, clock) -> None:
+    """learn.db must not grow with what the recorder needed BETWEEN fetches: once a coin closes its candle
+    mark (the last 30 raw minutes) and its finished fetch rows are gone; the counts stay."""
+    recorder, http, store = world
+    empty = live_bytes(store)
+    many = []
+    for i in range(120):
+        row = dict(ROWS[i % len(ROWS)])
+        row["mint"] = f"Many{i:04d}" + ROWS[i % len(ROWS)]["mint"][8:]
+        row["created_timestamp"] = ROWS[i % len(ROWS)]["created_timestamp"] - 1000 * i
+        many.append(row)
+    http.register(CENSUS, [])
+    http.register(CENSUS, many, times=1)
+    run_for(recorder, clock, CANDLE_FETCH_H[-1] + 8, step_s=300)  # 2 candle fetches a step: ~5 h per wave
+    coins = store.coins()
+    assert len(coins) == 120 and {c["status"] for c in coins} == {"closed"}
+    assert all(c["mark"] is None and store.fetches(c["mint"]) == [] for c in coins)
+    assert all(c["fetches_done"] == len(CANDLE_FETCH_H) + len(SNAP_AGES_MIN) for c in coins)
+    assert store.summary()["fetches"] == {"pending": 0, "failed": 0,
+                                          "done": 120 * (len(CANDLE_FETCH_H) + len(SNAP_AGES_MIN))}
+    per_coin = (live_bytes(store) - empty) / 120
+    assert per_coin < 1500, f"{per_coin:.0f} bytes of learn.db per closed coin"
 
 
 # --------------------------------------------------------------------------- failures
@@ -170,13 +236,43 @@ def test_five_failures_make_a_coin_incomplete(world, clock) -> None:
     recorder.step()
     http.register(CANDLES, {"statusCode": 404}, status=404)
     run_for(recorder, clock, 4, step_s=300)
-    assert all(c["status"] == "open" for c in store.coins())  # given up on +3 h, still waiting for +12 h
+    assert all(c["status"] == "open" for c in store.coins())  # given up on +3 h, still waiting for +18 h
     assert not (recorder.tape.root / "2026-10-08" / MANIFEST).exists()
     run_for(recorder, clock, 50, step_s=300)  # past +50 h and its five tries
     for coin in store.coins():
         assert coin["status"] == "incomplete"
-        assert [f["failed"] for f in store.fetches(coin["mint"]) if f["kind"] == "candles"] == [1, 1, 1]
+        assert [f["failed"] for f in store.fetches(coin["mint"]) if f["kind"] == "candles"] == [1] * len(CANDLE_FETCH_H)
         assert all(f["attempts"] == rec_mod.MAX_ATTEMPTS for f in store.fetches(coin["mint"]) if f["kind"] == "candles")
+
+
+def test_a_host_that_refuses_for_good_ends_its_coins_incomplete_so_the_day_still_closes(world, clock,
+                                                                                         make_settings) -> None:
+    """A permanent 403 (e.g. Cloudflare blocking the server) never counts an attempt, so without a deadline
+    the coins would stay open forever: no day judged or sealed. A fetch still not done GIVE_UP_AFTER_S after
+    it was due is given up; the blocked host is recorded for the card."""
+    from nightcrawler.learn.card import clear_cache, learning_card_state
+
+    recorder, http, store = world
+    http.register(CENSUS, [])
+    http.register(CENSUS, ROWS, times=1)
+    http.register(CANDLES, "<html>Attention Required! | Cloudflare</html>", status=403)
+    run_for(recorder, clock, 10)
+    blocked = store.get_meta("recorder.blocked")
+    assert list(blocked) == [SWAP_HOST] and blocked[SWAP_HOST]["status"] == 403
+    clear_cache()
+    settings = make_settings(DATA_DIR=str(recorder.tape.root.parent.parent))
+    warnings = learning_card_state(settings, clock.now())["warnings"]
+    assert any("pump.fun candles" in w and "403" in w for w in warnings), warnings
+    run_for(recorder, clock, CANDLE_FETCH_H[-1] + rec_mod.GIVE_UP_AFTER_S / 3600)
+    assert {c["status"] for c in store.coins()} == {"incomplete"}
+    assert (recorder.tape.root / "2026-10-08" / MANIFEST).exists()  # judged and sealed, files closed
+    assert not [p for p in recorder.tape._files if p.parent.name == "2026-10-08"]
+    http.register(CANDLES, [])  # the host answers again: no longer reported as blocked
+    store.add_coin("Fresh" + MINTS[0][5:], created_ts=clock.now() - 600, first_seen_ts=clock.now(),
+                   day=tape_day(clock.now()))
+    store.schedule("Fresh" + MINTS[0][5:], "candles", clock.now())
+    recorder.step()
+    assert store.get_meta("recorder.blocked") == {}
 
 
 # --------------------------------------------------------------------------- roots, seal
@@ -213,6 +309,34 @@ def test_a_finished_day_is_sealed_and_receipted_once(world, clock) -> None:
     recorder.step()
     assert len([o for o in store.outbox() if o["event"] == "tape_seal"]) == 1
     assert len(TapeReader(recorder.tape.root).rows(day, "universe")) == len(ROWS)
+
+
+def test_a_crash_after_the_seal_is_committed_still_deletes_the_raw_files(world, clock, monkeypatch) -> None:
+    """The seal is committed (outbox row, sealed_days) before the raw .jsonl files are deleted; a crash in
+    between must not leave them for ever: the next pass (or the next process) finishes the seal."""
+    recorder, http, store = world
+    http.register(CENSUS, [])
+    http.register(CENSUS, ROWS, times=1)
+    real = recorder.tape.finish_seal
+
+    def crash(day: str) -> None:
+        raise OSError("killed before the raw files were deleted")
+
+    monkeypatch.setattr(recorder.tape, "finish_seal", crash)
+    with pytest.raises(OSError):
+        run_for(recorder, clock, CANDLE_FETCH_H[-1] + 2)
+    day = "2026-10-08"
+    assert day in store.get_meta("tape.sealed_days") and list((recorder.tape.root / day).glob("*.jsonl"))
+    monkeypatch.setattr(recorder.tape, "finish_seal", real)
+    recorder.step()  # the same process, next pass
+    assert not list((recorder.tape.root / day).glob("*.jsonl"))
+    assert len([o for o in store.outbox() if o["event"] == "tape_seal"]) == 1
+
+    for path in (recorder.tape.root / day).glob("*.jsonl.gz"):  # the same crash, then a new process
+        (recorder.tape.root / day / path.name[:-3]).write_bytes(b"{}\n")
+    fresh = Recorder(store, TapeWriter(recorder.tape.root), recorder.http, clock=clock)
+    fresh.step()
+    assert not list((recorder.tape.root / day).glob("*.jsonl"))
 
 
 # --------------------------------------------------------------------------- engine emits, disk

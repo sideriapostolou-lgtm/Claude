@@ -12,14 +12,20 @@ their own :class:`LearnStore`; the dashboard opens it ``readonly=True`` (it neve
 Tables (``PRAGMA user_version`` = :data:`SCHEMA_VERSION`):
 
 * ``coins(mint PK, created_ts, first_seen_ts, day, pool, quote_mint, mayhem, late, launch JSON,
-  status open|closed|incomplete, fetches_done, mark JSON)`` - ``mark``: the recorder's candle state per coin.
+  status open|closed|incomplete, fetches_done)`` - one small row per coin, written once (it never grows).
+* ``coin_marks(mint PK, mark JSON)`` - the recorder's candle state of an OPEN coin (the last raw minutes,
+  ~5 KB), needed only between fetches: :meth:`LearnStore.close_coin` deletes it, so this table holds the
+  open coins only and reuses its own pages.
 * ``fetch_queue((mint, kind, due_ts) PK, attempts, next_try_ts, done_ts, failed)`` - resumes exactly
-  after a restart.
+  after a restart. Once a coin closes only its GIVEN-UP rows stay (what failed, for diagnosis); the
+  successful ones are counted in ``coins.fetches_done``.
 * ``variants(hash PK, name, family, params JSON, procedure JSON, source, register_seq, t0, alpha,
   threshold, promotable, status, created_ts)`` - a cache of ``register`` receipts; ``t0`` stays NULL
   until the engine has receipted the registration (the forward-only rule needs it).
 * ``evidence((variant_hash, mint, pricing) PK, entry_ts, exit_ts, x, x_raw, x_stress, gross, cost,
-  sim_hash, cost_scale_ver)`` and ``replayed((variant_hash, mint) PK, outcome, sim_hash, ts)``.
+  sim_hash, cost_scale_ver)``, ``replayed((variant_hash, mint) PK, outcome, sim_hash, ts)`` (the coins of
+  a day a variant is still being replayed on) and ``replayed_days((variant_hash, day) PK, sim_hash, ts)``
+  (a day it is finished with: one row instead of one per coin).
 * ``scoreboard((day, variant_hash) PK, data JSON, updated_ts)``.
 * ``outbox(id PK, event, payload JSON, created_ts, receipt_seq, receipt_ts)``.
 * ``trials(day, family, n)`` (starts at the lab's 2,800), ``lease(name PK, pid, ts)``, ``meta(key PK, value)``.
@@ -38,7 +44,7 @@ import json
 import secrets
 import sqlite3
 import threading
-from collections.abc import Iterator, Mapping
+from collections.abc import Iterator, Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
@@ -57,8 +63,8 @@ _SCHEMA = (
     """CREATE TABLE IF NOT EXISTS coins (
         mint TEXT PRIMARY KEY, created_ts REAL NOT NULL, first_seen_ts REAL NOT NULL, day TEXT NOT NULL,
         pool TEXT, quote_mint TEXT, mayhem INTEGER NOT NULL DEFAULT 0, late INTEGER NOT NULL DEFAULT 0,
-        launch TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'open', fetches_done INTEGER NOT NULL DEFAULT 0,
-        mark TEXT)""",
+        launch TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'open', fetches_done INTEGER NOT NULL DEFAULT 0)""",
+    """CREATE TABLE IF NOT EXISTS coin_marks (mint TEXT PRIMARY KEY, mark TEXT NOT NULL)""",
     "CREATE INDEX IF NOT EXISTS coins_day ON coins(day, status)",
     """CREATE TABLE IF NOT EXISTS fetch_queue (
         mint TEXT NOT NULL, kind TEXT NOT NULL, due_ts REAL NOT NULL, attempts INTEGER NOT NULL DEFAULT 0,
@@ -78,6 +84,9 @@ _SCHEMA = (
     """CREATE TABLE IF NOT EXISTS replayed (
         variant_hash TEXT NOT NULL, mint TEXT NOT NULL, outcome TEXT NOT NULL, sim_hash TEXT NOT NULL,
         ts REAL NOT NULL, PRIMARY KEY (variant_hash, mint))""",
+    """CREATE TABLE IF NOT EXISTS replayed_days (
+        variant_hash TEXT NOT NULL, day TEXT NOT NULL, sim_hash TEXT NOT NULL, ts REAL NOT NULL,
+        PRIMARY KEY (variant_hash, day))""",
     """CREATE TABLE IF NOT EXISTS scoreboard (
         day TEXT NOT NULL, variant_hash TEXT NOT NULL, data TEXT NOT NULL, updated_ts REAL NOT NULL,
         PRIMARY KEY (day, variant_hash))""",
@@ -222,8 +231,10 @@ class LearnStore:
         out["mayhem"], out["late"] = bool(out["mayhem"]), bool(out["late"])
         return out
 
+    _COIN = "SELECT coins.*, coin_marks.mark FROM coins LEFT JOIN coin_marks USING (mint)"
+
     def coin(self, mint: str) -> dict[str, Any] | None:
-        rows = self._rows("SELECT * FROM coins WHERE mint = ?", (mint,))
+        rows = self._rows(f"{self._COIN} WHERE mint = ?", (mint,))
         return self._coin(rows[0]) if rows else None
 
     def coins(self, day: str | None = None, status: str | None = None) -> list[dict[str, Any]]:
@@ -235,14 +246,28 @@ class LearnStore:
             where.append("status = ?")
             params.append(status)
         clause = f" WHERE {' AND '.join(where)}" if where else ""
-        return [self._coin(r) for r in self._rows(f"SELECT * FROM coins{clause} ORDER BY created_ts, mint", params)]
+        return [self._coin(r) for r in self._rows(f"{self._COIN}{clause} ORDER BY created_ts, mint", params)]
 
     def set_coin_status(self, mint: str, status: str) -> None:
         self._write("UPDATE coins SET status = ? WHERE mint = ?", (status, mint))
 
+    def close_coin(self, mint: str, status: str) -> None:
+        """Nothing is left to fetch: set the final ``status`` and drop what only mattered between fetches
+        (the candle mark and the finished fetch rows; given-up rows stay). One transaction."""
+        with self.transaction():
+            self.conn.execute("UPDATE coins SET status = ? WHERE mint = ?", (status, mint))
+            self.conn.execute("DELETE FROM coin_marks WHERE mint = ?", (mint,))
+            self.conn.execute("DELETE FROM fetch_queue WHERE mint = ? AND done_ts IS NOT NULL AND failed = 0",
+                              (mint,))
+
+    def coin_overview(self) -> dict[str, Any]:
+        """``{"count": coins, "first_seen_ts": earliest first sighting or None}`` without reading a coin row."""
+        count, first = self._rows("SELECT COUNT(*), MIN(first_seen_ts) FROM coins")[0]
+        return {"count": int(count), "first_seen_ts": first}
+
     def set_coin_mark(self, mint: str, mark: Mapping[str, Any]) -> None:
         """The recorder's per-coin candle state between fetches (``tape.candle_mark``)."""
-        self._write("UPDATE coins SET mark = ? WHERE mint = ?", (_dumps(dict(mark)), mint))
+        self._write("INSERT OR REPLACE INTO coin_marks(mint, mark) VALUES (?, ?)", (mint, _dumps(dict(mark))))
 
     def day_counts(self, day: str) -> dict[str, int]:
         """``{"coins": n, "open": .., "closed": .., "incomplete": ..}`` for a first-seen day."""
@@ -264,10 +289,9 @@ class LearnStore:
         evidence rows and the outbox."""
         coins = {"open": 0, "closed": 0, "incomplete": 0}
         coins.update(dict(self._rows("SELECT status, COUNT(*) FROM coins GROUP BY status")))
-        fetches = {"pending": 0, "done": 0, "failed": 0}
-        fetches.update(dict(self._rows(
-            "SELECT CASE WHEN done_ts IS NULL THEN 'pending' WHEN failed THEN 'failed' ELSE 'done' END, COUNT(*) "
-            "FROM fetch_queue GROUP BY 1")))
+        pending, failed = self._rows("SELECT COUNT(*) - COUNT(done_ts), TOTAL(failed) FROM fetch_queue")[0]
+        done = self._rows("SELECT COALESCE(SUM(fetches_done), 0) FROM coins")[0][0]
+        fetches = {"pending": int(pending), "done": int(done), "failed": int(failed)}
         rows, receipted = self._rows("SELECT COUNT(*), COUNT(receipt_seq) FROM outbox")[0]
         return {"coins": {"total": sum(coins.values()), **coins}, "days": self.days(), "fetches": fetches,
                 "variants": self._rows("SELECT COUNT(*) FROM variants")[0][0],
@@ -305,6 +329,11 @@ class LearnStore:
         """Try again later WITHOUT counting an attempt (the host, not the coin, was unavailable)."""
         self._write("UPDATE fetch_queue SET next_try_ts = ? WHERE mint = ? AND kind = ? AND due_ts = ?",
                     (float(next_try_ts), mint, kind, due_ts))
+
+    def overdue(self, before: float, limit: int) -> list[dict[str, Any]]:
+        """Open fetches that were due before ``before`` (oldest first), whatever their retry time."""
+        return [dict(r) for r in self._rows("SELECT * FROM fetch_queue WHERE done_ts IS NULL AND due_ts < ? "
+                                            "ORDER BY due_ts, mint, kind LIMIT ?", (float(before), int(limit)))]
 
     def finish_fetch(self, mint: str, kind: str, due_ts: float, now: float) -> None:
         with self.transaction():
@@ -381,10 +410,17 @@ class LearnStore:
         self._write(f"INSERT OR REPLACE INTO evidence({cols}) VALUES ({', '.join('?' * len(self._EVIDENCE))})",
                     [row[k] for k in self._EVIDENCE])
 
-    def evidence(self, variant_hash: str, pricing: str = "replay") -> list[dict[str, Any]]:
-        """A variant's observations in evidence ORDER: ``(exit_ts, mint)``."""
-        return [dict(r) for r in self._rows("SELECT * FROM evidence WHERE variant_hash = ? AND pricing = ? "
-                                            "ORDER BY exit_ts, mint", (variant_hash, pricing))]
+    def delete_evidence(self, variant_hash: str, mint: str, pricing: str = "replay") -> None:
+        self._write("DELETE FROM evidence WHERE variant_hash = ? AND mint = ? AND pricing = ?",
+                    (variant_hash, mint, pricing))
+
+    def evidence(self, variant_hash: str, pricing: str = "replay", sim_hash: str | None = None) -> list[dict[str, Any]]:
+        """A variant's observations in evidence ORDER: ``(exit_ts, mint)`` (priced by ``sim_hash`` when given)."""
+        sql, params = "SELECT * FROM evidence WHERE variant_hash = ? AND pricing = ?", [variant_hash, pricing]
+        if sim_hash is not None:
+            sql += " AND sim_hash = ?"
+            params.append(sim_hash)
+        return [dict(r) for r in self._rows(sql + " ORDER BY exit_ts, mint", params)]
 
     def evidence_mints(self, variant_hash: str, pricing: str = "replay") -> set[str]:
         return {r[0] for r in self._rows("SELECT mint FROM evidence WHERE variant_hash = ? AND pricing = ?",
@@ -401,6 +437,19 @@ class LearnStore:
             sql += " AND sim_hash = ?"
             params.append(sim_hash)
         return {r[0]: r[1] for r in self._rows(sql, params)}
+
+    def day_replayed(self, variant_hash: str, day: str, sim_hash: str) -> bool:
+        return bool(self._rows("SELECT 1 FROM replayed_days WHERE variant_hash = ? AND day = ? AND sim_hash = ?",
+                               (variant_hash, day, sim_hash)))
+
+    def finish_replayed_day(self, variant_hash: str, day: str, sim_hash: str, now: float) -> None:
+        """Every coin of ``day`` is replayed for the variant under ``sim_hash``: one marker replaces the
+        per-coin rows (learn.db would otherwise grow by a row per variant and coin, forever)."""
+        with self.transaction():
+            self.conn.execute("INSERT OR REPLACE INTO replayed_days(variant_hash, day, sim_hash, ts) "
+                              "VALUES (?, ?, ?, ?)", (variant_hash, day, sim_hash, float(now)))
+            self.conn.execute("DELETE FROM replayed WHERE variant_hash = ? AND mint IN "
+                              "(SELECT mint FROM coins WHERE day = ?)", (variant_hash, day))
 
     # ------------------------------------------------------------------ scoreboard
     def put_scoreboard(self, day: str, variant_hash: str, data: Mapping[str, Any], now: float) -> None:
@@ -428,6 +477,12 @@ class LearnStore:
         out = dict(row)
         out["payload"] = json.loads(out["payload"])
         return out
+
+    def recent_outbox(self, events: Sequence[str], limit: int) -> list[dict[str, Any]]:
+        """The newest ``limit`` outbox rows of the given ``events``, newest first."""
+        marks = ", ".join("?" * len(events))
+        return [self._outbox(r) for r in self._rows(f"SELECT * FROM outbox WHERE event IN ({marks}) "
+                                                    "ORDER BY id DESC LIMIT ?", [*events, int(limit)])]
 
     def next_outbox(self) -> dict[str, Any] | None:
         rows = self._rows("SELECT * FROM outbox WHERE receipt_seq IS NULL ORDER BY id LIMIT 1")

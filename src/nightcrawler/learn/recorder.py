@@ -7,22 +7,31 @@ A daemon :class:`RecorderThread` runs :meth:`Recorder.step` every :data:`STEP_EV
 2. **census** - every 5 min the top pages (offsets 0/70/140) of pump.fun's graduated-coin census,
    every 6 h a full sweep (offsets 0-980) for late graduates. A coin seen for the first time is
    enrolled: its census row goes to the ``universe`` stream and its fetches are scheduled at FIXED
-   ages since first seen - candles at +3 h, +12 h and +50 h, DexScreener snapshots at
-   +5/15/30/60/120/240/360 min. No fetch ever depends on how a coin is doing.
+   ages since first seen - candles at +3 h, +18 h, +34 h and +50 h, DexScreener snapshots at
+   +5/15/30/60/120/240/360 min. No fetch ever depends on how a coin is doing. pump.fun serves the
+   newest 1000 TRADED minutes, so the candle fetches are less than 1000 minutes apart: however busy a
+   coin is, consecutive fetches overlap and its coverage has no hole (a hole would cut the late candles
+   of exactly the coins that kept trading - an outcome-dependent universe).
 3. **candles** - due candle fetches (swap API, up to 1000 traded minutes) -> ``candles`` rows
    (new closed minutes only, revisions counted; :func:`~nightcrawler.learn.tape.candle_fetch_row`).
 4. **snaps** - due snapshots, batched 30 mints per DexScreener call -> raw pairs in ``snaps``.
 5. **roots** - every hour the bytes appended since the last root are hashed and queued as a
    ``tape_root`` outbox row (the engine receipts it).
-6. **seal** - a finished day whose coins are all closed is sealed (``tape_seal`` outbox row).
+6. **seal** - a finished day whose coins are all closed is sealed (``tape_seal`` outbox row). The seal
+   is committed before the raw ``.jsonl`` files are deleted; raw files a crash left next to a sealed
+   day's ``.gz`` are deleted by the next pass (the first pass of a process checks every sealed day).
 
 A fetch that fails is retried with backoff; after :data:`MAX_ATTEMPTS` it is given up and the coin
 becomes ``incomplete``. A 429 or 403 pauses that HOST for :data:`BREAKER_S` (the fetch is postponed,
-no attempt counted). The recorder has its OWN :class:`~nightcrawler.http.HttpClient`
-(:func:`build_http`: buckets below every host's spare capacity, no inline retries), so it can never
-take a token from trading. Free space below :data:`LOW_DISK_BYTES` pauses every learning write.
-A crash inside a step is caught by the thread and the step is retried with exponential backoff;
-every step is idempotent (the queue and the marks live in learn.db).
+no attempt counted) and the host is listed in meta ``recorder.blocked`` until it answers again (the
+card shows it). A fetch still not done :data:`GIVE_UP_AFTER_S` after it was due - a host that refuses
+for good - is given up too, so every coin closes and every day is judged and sealed. A closed coin
+keeps no candle mark and no finished fetch row (:meth:`~nightcrawler.learn.store.LearnStore.close_coin`).
+The recorder has its OWN :class:`~nightcrawler.http.HttpClient` (:func:`build_http`: buckets below
+every host's spare capacity, no inline retries), so it can never take a token from trading. Free
+space below :data:`LOW_DISK_BYTES` pauses every learning write. A crash inside a step is caught by the
+thread and the step is retried with exponential backoff; every step is idempotent (the queue and the
+marks live in learn.db).
 
 Imports only ``http``, ``sources`` and ``learn.{tape,store}`` (``tests/test_learn_boundary.py``).
 """
@@ -64,6 +73,7 @@ __all__ = [
     "MAX_ATTEMPTS",
     "RETRY_BACKOFF_S",
     "BREAKER_S",
+    "GIVE_UP_AFTER_S",
     "ROOT_EVERY_S",
     "LOW_DISK_BYTES",
     "RATE_LIMITS",
@@ -82,24 +92,30 @@ TOP_OFFSETS = (0, 70, 140)
 SWEEP_OFFSETS = tuple(range(0, 981, CENSUS_PAGE))
 #: Coins first found beyond the top pages graduated long after creation: flagged ``late``.
 LATE_OFFSET = TOP_OFFSETS[-1] + CENSUS_PAGE
-CANDLE_FETCH_H = (3, 12, 50)
+CANDLE_FETCH_H = (3, 18, 34, 50)
 SNAP_AGES_MIN = (5, 15, 30, 60, 120, 240, 360)
 CANDLES_PER_STEP = 2
 MAX_ATTEMPTS = 5
 RETRY_BACKOFF_S = (60.0, 300.0, 900.0, 1800.0, 3600.0)
 BREAKER_S = 600.0
 BREAKER_STATUSES = frozenset({403, 429})
+#: A fetch still not done this long after it was due is given up (the coin ends ``incomplete``).
+GIVE_UP_AFTER_S = 48 * 3600.0
+GIVE_UPS_PER_STEP = 500
+
 ROOT_EVERY_S = 3600.0
 LOW_DISK_BYTES = 1 << 30
 EMITS_PER_STEP = 5000
 DEXSCREENER_HOST = host_of(DEXSCREENER_URL)
 #: The recorder's own buckets (requests per second, burst): census ~0.7/min used of 12/min, candles
-#: ~2.5/min of 6/min, snapshots <= 1.5/min of 4/min (DexScreener allows 60/min; trading uses ~5).
+#: ~3.3/min of 6/min, snapshots <= 1.5/min of 4/min (DexScreener allows 60/min; trading uses ~5).
 RATE_LIMITS: dict[str, tuple[float, float]] = {
     CENSUS_HOST: (12 / 60, 3),
     SWAP_HOST: (6 / 60, 2),
     DEXSCREENER_HOST: (4 / 60, 2),
 }
+#: Plain names of the recorder's hosts (``recorder.blocked`` -> the card).
+HOST_NAMES = {CENSUS_HOST: "pump.fun census", SWAP_HOST: "pump.fun candles", DEXSCREENER_HOST: "DexScreener"}
 
 
 def build_http(session: Any = None, clock: Any = None) -> HttpClient:
@@ -135,7 +151,9 @@ class Recorder:
         self.paused_until: dict[str, float] = {}
         self.stats: dict[str, int] = {"census_calls": 0, "candle_calls": 0, "snap_calls": 0, "enrolled": 0,
                                       "revisions": 0, "errors": 0, "breaker_trips": 0, "emits_dropped": 0,
-                                      "low_disk_skips": 0}
+                                      "low_disk_skips": 0, "given_up": 0}
+        self._blocked: dict[str, dict[str, Any]] | None = None  # meta ``recorder.blocked``, loaded on first use
+        self._seals_finished = False  # True once no sealed day has raw files left (checked per process)
         self._emits: queue.Queue[tuple[str, Mapping[str, Any]]] = queue.Queue(maxsize=emit_maxsize)
 
     def close(self) -> None:
@@ -162,7 +180,8 @@ class Recorder:
                 log.warning("learn_paused reason=low_disk free_mb=%d", free // (1 << 20))
             return {"skipped": "low disk"}
         return {"emits": self._drain_emits(now), "census": self._census(now), "candles": self._candles(now),
-                "snaps": self._snaps(now), "roots": self._roots(now), "sealed": self._seal(now)}
+                "snaps": self._snaps(now), "given_up": self._give_up(now), "roots": self._roots(now),
+                "sealed": self._seal(now)}
 
     def paused(self, host: str, now: float | None = None) -> bool:
         return (self.clock.now() if now is None else now) < self.paused_until.get(host, 0.0)
@@ -173,8 +192,24 @@ class Recorder:
             self.paused_until[host] = now + BREAKER_S
             self.stats["breaker_trips"] += 1
             log.warning("learn_breaker_open host=%s pause_s=%.0f", host, BREAKER_S)
+            status = exc.status if isinstance(exc, HttpError) else 429
+            blocked = self._blocked_hosts()
+            if host not in blocked:
+                blocked[host] = {"since": now, "status": status, "name": HOST_NAMES.get(host, host)}
+                self.store.set_meta("recorder.blocked", blocked)
             return True
         return False
+
+    def _blocked_hosts(self) -> dict[str, dict[str, Any]]:
+        if self._blocked is None:
+            self._blocked = dict(self.store.get_meta("recorder.blocked", {}))
+        return self._blocked
+
+    def _answered(self, host: str) -> None:
+        """A call to ``host`` succeeded: it no longer refuses the recorder."""
+        blocked = self._blocked_hosts()
+        if blocked.pop(host, None) is not None:
+            self.store.set_meta("recorder.blocked", blocked)
 
     def _drain_emits(self, now: float) -> int:
         n = 0
@@ -209,6 +244,7 @@ class Recorder:
                 self.stats["errors"] += 1
                 log.warning("learn_census_failed offset=%d error=%s", offset, type(exc).__name__)
                 break  # any other failure: the next pass is the regular one, never a retry storm
+            self._answered(CENSUS_HOST)
             self.stats["census_calls"] += 1
             fetched = self.clock.now()
             enrolled += sum(self._enroll(row, fetched, offset) for row in rows if isinstance(row, Mapping))
@@ -252,6 +288,7 @@ class Recorder:
                     break
                 self._failed(item, now, exc)
                 continue
+            self._answered(SWAP_HOST)
             self.stats["candle_calls"] += 1
             fetched = self.clock.now()
             coin = self.store.coin(item["mint"])
@@ -285,6 +322,7 @@ class Recorder:
                 for item in due:
                     self._failed(item, now, exc)
             return 0
+        self._answered(DEXSCREENER_HOST)
         self.stats["snap_calls"] += 1
         fetched = self.clock.now()
         for item in due:
@@ -310,11 +348,24 @@ class Recorder:
                 self.store.fail_fetch(item["mint"], item["kind"], item["due_ts"], now)
                 self._maybe_close(item["mint"])
 
+    def _give_up(self, now: float) -> int:
+        """Give up the fetches still not done :data:`GIVE_UP_AFTER_S` after they were due (whatever the host
+        says), so a coin never stays open forever."""
+        items = self.store.overdue(now - GIVE_UP_AFTER_S, GIVE_UPS_PER_STEP)
+        for item in items:
+            with self.store.transaction():
+                self.store.fail_fetch(item["mint"], item["kind"], item["due_ts"], now)
+                self._maybe_close(item["mint"])
+        if items:
+            self.stats["given_up"] += len(items)
+            log.warning("learn_fetches_given_up n=%d after_h=%.0f", len(items), GIVE_UP_AFTER_S / 3600)
+        return len(items)
+
     def _maybe_close(self, mint: str) -> None:
         """Once nothing is left to fetch: ``closed``, or ``incomplete`` if any fetch was given up."""
         if self.store.open_fetches(mint) == 0:
             failed = any(f["failed"] for f in self.store.fetches(mint))
-            self.store.set_coin_status(mint, "incomplete" if failed else "closed")
+            self.store.close_coin(mint, "incomplete" if failed else "closed")
 
     # ---------------------------------------------------------------- roots and seals
     def _roots(self, now: float, force: bool = False) -> int:
@@ -333,6 +384,11 @@ class Recorder:
 
     def _seal(self, now: float) -> int:
         sealed_days = list(self.store.get_meta("tape.sealed_days", []))
+        if not self._seals_finished:  # a crash after a seal's commit left its raw files: delete them now
+            for day in sealed_days:
+                if self.tape.raw_left(day):
+                    self.tape.finish_seal(day)
+            self._seals_finished = True
         today = tape_day(now)
         sealed = 0
         for day in self.store.days():
@@ -351,7 +407,9 @@ class Recorder:
                 self.store.set_meta("tape.sealed_days", sealed_days)
                 offsets = self.store.get_meta("tape.offsets", {})
                 self.store.set_meta("tape.offsets", {f: e for f, e in offsets.items() if not f.startswith(day + "/")})
+            self._seals_finished = False
             self.tape.finish_seal(day)
+            self._seals_finished = True
             sealed += 1
         return sealed
 

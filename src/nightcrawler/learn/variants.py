@@ -12,9 +12,12 @@
   where ``family_code_sha256`` hashes the bytes of ``strategy.py`` plus the family file
   (``procedure`` is None in v1).
 * Registration (:func:`register`) caches the variant in learn.db and queues its ``register``
-  receipt; ``t0`` is the receipt's time. At most :data:`~nightcrawler.learn.gate.REG_PER_ISO_WEEK`
-  non-control registrations per ISO week (seeds, search and proposals combined; unused allowance
-  does not roll over); controls (the placebo) are exempt and spend no alpha.
+  receipt; ``t0`` is the receipt's time. A seed is checked on its own: one the Settings anchor puts
+  outside a hard range (a valid MAX_HOLD_MIN=480, say) is skipped with its reason
+  (:func:`rejected_seeds`) and the others still register - it never stops the learner. At most
+  :data:`~nightcrawler.learn.gate.REG_PER_ISO_WEEK` non-control registrations per ISO week (seeds,
+  search and proposals combined; unused allowance does not roll over); controls (the placebo) are
+  exempt and spend no alpha.
 """
 
 from __future__ import annotations
@@ -50,6 +53,7 @@ __all__ = [
     "describe",
     "load_seeds",
     "seed_specs",
+    "rejected_seeds",
     "iso_week",
     "registrations_this_week",
     "register",
@@ -169,8 +173,26 @@ def load_seeds(path: str | Path = SEEDS_PATH) -> list[dict[str, Any]]:
     return list(json.loads(Path(path).read_text(encoding="utf-8"))["seeds"])
 
 
+def _checked_seeds(anchor: StrategyParams, path: str | Path) -> list[tuple[dict[str, Any], VariantSpec | str]]:
+    """Each seed with its spec, or with why it is refused under this anchor."""
+    out: list[tuple[dict[str, Any], VariantSpec | str]] = []
+    for seed in load_seeds(path):
+        try:
+            out.append((seed, make_spec(seed["family"], seed.get("params") or {}, anchor)))
+        except SpecRejected as exc:
+            out.append((seed, str(exc)))
+    return out
+
+
 def seed_specs(anchor: StrategyParams, path: str | Path = SEEDS_PATH) -> list[VariantSpec]:
-    return [make_spec(s["family"], s.get("params") or {}, anchor) for s in load_seeds(path)]
+    """The seeds this anchor allows (a seed it puts out of bounds is left out: :func:`rejected_seeds`)."""
+    return [spec for _, spec in _checked_seeds(anchor, path) if isinstance(spec, VariantSpec)]
+
+
+def rejected_seeds(anchor: StrategyParams, path: str | Path = SEEDS_PATH) -> list[str]:
+    """``"<seed note>: <reason>"`` for every seed this anchor puts outside a hard range."""
+    return [f"{seed.get('note') or seed['family']}: {why}" for seed, why in _checked_seeds(anchor, path)
+            if isinstance(why, str)]
 
 
 def iso_week(ts: float) -> tuple[int, int]:
@@ -198,5 +220,6 @@ def register(store: Any, spec: VariantSpec, *, source: str, now: float) -> bool:
 
 
 def register_seeds(store: Any, anchor: StrategyParams, now: float) -> list[str]:
-    """Register the seeds not registered yet (first boot: 4 within the week-1 allowance + the placebo)."""
+    """Register the seeds not registered yet (first boot: 4 within the week-1 allowance + the placebo); a seed
+    the anchor puts out of bounds is skipped (:func:`rejected_seeds`)."""
     return [spec.hash for spec in seed_specs(anchor) if register(store, spec, source="seed", now=now)]

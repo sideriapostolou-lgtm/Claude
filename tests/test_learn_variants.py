@@ -121,6 +121,19 @@ def test_seed_registration_spends_the_week_one_allowance(store) -> None:
     assert v.registrations_this_week(store, T) == REG_PER_ISO_WEEK
 
 
+def test_a_seed_the_settings_put_out_of_bounds_is_skipped_and_the_others_register(store) -> None:
+    """MAX_HOLD_MIN=480 is a valid setting but outside the learner's hard range [5, 360]: the seeds that
+    inherit it (the benchmark, the placebo) are skipped with a reason; the lab points set their own."""
+    anchor = dataclasses.replace(ANCHOR, max_hold_min=480.0)
+    seeds = v.seed_specs(anchor)
+    assert [s.params["max_hold_min"] for s in seeds] == [60.0, 60.0, 60.0]
+    rejected = v.rejected_seeds(anchor)
+    assert len(rejected) == 2 and all("max_hold_min=480.0 outside its hard range [5, 360]" in r for r in rejected)
+    assert rejected[0].startswith("the Settings benchmark")
+    assert v.register_seeds(store, anchor, T) == [s.hash for s in seeds]
+    assert v.rejected_seeds(ANCHOR) == []
+
+
 def test_the_weekly_allowance_queues_a_fifth_registration(store) -> None:
     v.register_seeds(store, ANCHOR, T)
     extra = v.make_spec("dip_rebound", {"dip_pct": 0.7}, ANCHOR)

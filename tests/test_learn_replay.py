@@ -129,7 +129,8 @@ def test_a_first_trade_open_where_the_tape_ends_is_pending_then_minus_50pct(trad
 def test_a_hole_after_the_entry_is_missing_data(traded, base) -> None:
     mint, coin = next(iter(traded.items()))
     entry = base[mint].evidence["entry_ts"]
-    first = record_coin(mint, coin["created_ts"], coin["candles"], first_seen_ts=entry + 120, fetch_after_h=(0,))
+    seen = coin["created_ts"] + 600
+    first = record_coin(mint, coin["created_ts"], coin["candles"], fetch_after_h=((entry + 120 - seen) / 3600,))
     later = [c for c in coin["candles"] if c.ts <= entry + 6 * 3600]
     served = api_rows(later)[-60:]  # the API's row cap was hit: the minutes between the fetches are unknown
     second = candle_fetch_row(mint, served, fetched_ts=entry + 6 * 3600,
@@ -198,6 +199,26 @@ def test_the_scoreboard_scores_evidence_and_is_receipted_once_a_day(tmp_path, co
         events = [o for o in store.outbox() if o["event"] == "scoreboard"]
         assert len(events) == 1 and events[0]["payload"]["variants"][h]["n"] == len(xs)
         assert events[0]["payload"]["sim_hash"] == rp.sim_hash()
+
+
+def test_a_simulator_change_leaves_no_evidence_of_the_old_simulator(tmp_path, coins, monkeypatch) -> None:
+    """After a sim_hash change every coin is replayed again; a coin that no longer trades must not keep the
+    old simulator's row, and the scoreboard only ever scores the current simulator's evidence."""
+    with LearnStore(tmp_path / "learn.db") as store:
+        day = write_day(tmp_path / "tape", store, coins)
+        h = registered(store)
+        reader = TapeReader(tmp_path / "tape")
+        assert rp.replay_day(store, reader, day, now=DAY0 + 5 * 86400).get("trade")
+        old = rp.sim_hash()
+        monkeypatch.setattr(rp, "sim_hash", lambda: "f" * 64)  # replay.py, costs.py or backtest.py changed
+        counts = rp.replay_day(store, reader, day, now=DAY0 + 6 * 86400, cfg=rp.SimConfig(max_price_impact_pct=0.0))
+        assert counts == {"none": len(coins)}  # no entry is possible under the new simulator
+        assert store.evidence(h) == []
+        store.put_evidence({"variant_hash": h, "mint": "LeftOver", "pricing": "replay", "entry_ts": DAY0,
+                            "exit_ts": DAY0 + 60, "x": 0.5, "x_raw": 0.5, "x_stress": 0.4, "gross": 0.6,
+                            "cost": 0.1, "sim_hash": old, "cost_scale_ver": 1})
+        rows = rp.update_scoreboard(store, now=DAY0 + 6 * 86400)
+        assert rows[h]["n"] == 0 and rows[h]["evidence_root"] == rp.evidence_root([])
 
 
 def test_evidence_root_is_a_merkle_root() -> None:

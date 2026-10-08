@@ -37,6 +37,18 @@ Chief architect's synthesis, written 2026-10-08. Accepted: this file is `docs/LE
 >   never read again until a new variant is frozen before its coins; the first learner run starts 60 s after
 >   boot so the seeds are registered early; the engine's rows go into the coin's partition (or the UTC day of
 >   the row for coins the recorder has not enrolled).
+> - **Review fixes (phase 1):** the card reads aggregates only (never the coin, outbox or evidence rows) and
+>   builds once per expiry; a seed the Settings put outside a hard range is skipped with its reason
+>   (`learner.last_run.seeds_rejected`, the card's `warnings`, `learn status`) instead of failing every run;
+>   a coin replayed under a new `sim_hash` keeps only the new outcome and the scoreboard scores only the
+>   current simulator's evidence; a closed coin keeps one small row in learn.db (its candle mark lives in
+>   `coin_marks` until it closes, its finished fetch rows are dropped, a finished day keeps one
+>   `replayed_days` marker per version instead of a row per coin): about 1 KB per coin; no decision before a
+>   coin's `first_seen_ts` (graduation, §4.2); candle fetches at +3/18/34/50 h so no hole can depend on how
+>   busy a coin is (§3.1); a fetch still not done 48 h after it was due is given up (a host that refuses for
+>   good no longer keeps days open) and a refusing host is shown on the card; raw files a crash left next to
+>   a sealed day are deleted on the next pass; the learner PROCESS loads no broker, wallet, ledger, http,
+>   requests or source client (checked by running it, `test_learn_boundary`).
 
 **Inputs:**
 
@@ -191,7 +203,7 @@ stateDiagram-v2
 | S1 | **Trading never waits for learning.** Engine emits use `queue.put_nowait`; a full queue drops the item and counts it. In phase 1 the recorder uses its **own** `HttpClient`, built in `build_app`, with caps below every host's spare capacity. From phase 2, calls on hosts shared with trading go through `try_acquire(host, keep=1)` and are skipped when no spare token is left |
 | S2 | **Only the engine writes receipts.** Learner results go to the `outbox` table. The engine's `learn` stage appends each row as a `learn` receipt with `outbox_id` in the payload. It checks `ledger.last_receipt("learn", where={"outbox_id": id})` first, so each row is receipted exactly once across crashes |
 | S3 | **The champion is a pure fold over `learn` receipts.** Editing `learn.db`, kv or files cannot change what the engine trades. Before receipting a `promote` or `live_ready` event, the engine re-checks it with the pure `champion.check_event` (thresholds equal code constants, log E ≥ log threshold, registration precedes evidence, no freeze, cool-down respected). A failure is receipted as `event_rejected`, raises an alarm and has no effect |
-| S4 | **The learner is a pure function of (tape bytes, code, constants).** It never imports `broker`, `wallet`, `risk`, `judge`, `http` or `sources` (AST test). It runs with a scrubbed environment and no secrets |
+| S4 | **The learner is a pure function of (tape bytes, code, constants).** It never imports `broker`, `wallet`, `risk`, `judge`, `http` or `sources` (AST test). It runs with a scrubbed environment and no secrets. The learner process, run for real, loads no `broker`, `wallet`, `judge`, `ledger`, `http`, `requests` or source client; it loads `risk` only for the backtester's pure sizing function (shared with live trading on purpose) and `sources._parse` (pure parsing helpers) |
 | S5 | **Every crash is local.** A dead recorder is restarted with backoff. A dead learner leaves per-coin commits and resumes. On low disk, learning writes pause first. Trading never stops because of learning |
 | S6 | **One learner at a time.** A lease row in `learn.db` holds pid and timestamp, and a stale lease is taken over. The service runs one replica (`railway.json`) |
 | S7 | **Learning reads Settings and never writes them.** A spec has no risk fields. The live gate can only *block* entries. Exits and `sell_all` are never blocked |
@@ -222,7 +234,7 @@ The tape is append-only JSONL, partitioned by the UTC day a coin was **first see
 | Stream | Writer | When | Contents | Calls | Phase |
 |---|---|---|---|---|---|
 | `universe` | recorder | Census `frontend-api-v3.pump.fun/coins` (graduated, newest by creation) at offsets 0/70/140 every 5 min, plus a full sweep (offsets 0-980) every 6 h for late graduates | The census row as seen: immutable launch fields, and state fields stamped with `fetched_ts`. `first_seen_ts`, `late` flag | ~0.7/min, own bucket | 1 |
-| `candles` | recorder | Fetch queue: each coin at `first_seen + 3 h, 12 h, 50 h`; the last fetch closes the coin | `swap-api.pump.fun/v1/coins/{mint}/candles?interval=1m&limit=1000`, keeping only minutes not stored before. A **changed** closed minute is stored as a revision and counted. The **first** value is the one used | ~2.5/min average, own bucket capped at 6/min | 1 |
+| `candles` | recorder | Fetch queue: each coin at `first_seen + 3 h, 18 h, 34 h, 50 h`; the last fetch closes the coin. The API serves the newest 1,000 **traded** minutes, so fetches are less than 1,000 minutes apart: a coin that keeps trading is covered as long as a quiet one (a hole would cut exactly the busiest coins' late candles) | `swap-api.pump.fun/v1/coins/{mint}/candles?interval=1m&limit=1000`, keeping only minutes not stored before. A **changed** closed minute is stored as a revision and counted. The **first** value is the one used | ~3.3/min average, own bucket capped at 6/min | 1 |
 | `snaps` | recorder | Each coin at fixed ages since `first_seen`: {5, 15, 30, 60, 120, 240, 360} min. Coins due within the same 60 s are batched, 30 mints per call | Raw DexScreener pair: price, mcap, liquidity, txns and volume m5/h1, priceChange, boosts and orders | ≤ 1.5/min, own cap 4/min | 1 |
 | `evals` | engine `_evaluate` | Every candle evaluation (≤ 3/min) and every `reject_*` / `enter` decision | ts, mint, `variant_hash`, newest closed candle ts, signal kind, reason, metrics, the snapshot used, cocoon pass and rule ids (already in `ledger.safety`), judge verdict | 0 | 1 |
 | `fills` | engine `on_fill` | Every paper or live fill | Fill mirror, plus `variant_hash`, decision ts, quote out vs filled, impact | 0 | 1 |
@@ -248,8 +260,10 @@ The learner reads the tape only through `TapeView(mint, as_of=t)`, which applies
 
 | Table | Key columns |
 |---|---|
-| `coins` | mint PK, created_ts, first_seen_ts, day, pool, quote_mint, mayhem, launch JSON, status (`open` / `closed` / `incomplete`), fetches_done |
-| `fetch_queue` | (mint, kind, due_ts) PK, attempts, done_ts. Resumes exactly after a restart; 5 retries with backoff, then `incomplete` |
+| `coins` | mint PK, created_ts, first_seen_ts, day, pool, quote_mint, mayhem, launch JSON, status (`open` / `closed` / `incomplete`), fetches_done. Written once; it never grows |
+| `coin_marks` | mint PK, mark JSON: the recorder's candle state (last 30 raw minutes) of an **open** coin; deleted when it closes |
+| `fetch_queue` | (mint, kind, due_ts) PK, attempts, done_ts. Resumes exactly after a restart; 5 retries with backoff, then `incomplete`; a fetch not done 48 h after it was due is given up. When the coin closes its finished rows are dropped (given-up rows stay) |
+| `replayed`, `replayed_days` | (variant_hash, mint) while a version is still being replayed on a day; then one (variant_hash, day, sim_hash) marker |
 | `variants` | hash PK, family, params JSON, procedure JSON NULL, source (`seed` / `search` / `proposal`), register_seq, t0, alpha, threshold, promotable, status. A cache of `register` receipts |
 | `evidence` | (variant_hash, mint, pricing) PK. Fields: entry_ts, exit_ts, `x` (net return, clipped to [−1, 1]), `x_raw`, `x_stress` (costs × 1.5), gross, cost, `sim_hash`, `cost_scale_ver`. `pricing` is `replay` or `paper` |
 | `scoreboard` | (day, variant_hash) PK. Fields: n, Σx, Σx², log_e, log_e_fut, log_e_drift, lb, cusum, status, proof, eta_days |
@@ -268,12 +282,13 @@ The learner reads the tape only through `TapeView(mint, as_of=t)`, which applies
 | universe | ~0.4 MB |
 | evals + fills + lag | ~0.9 MB |
 | safety + quotes (phase 2) | ~0.9 MB |
-| learn.db growth | ~0.3 MB |
-| **Total** | **~10-11 MB/day ≈ 0.3 GB/month** |
+| learn.db growth (measured: ~1 KB per closed coin) | ~1.2 MB |
+| **Total** | **~11-12 MB/day ≈ 0.35 GB/month** |
 
 - **Cap.** `LEARN_DISK_CAP_GB = 3.0` (about 9-10 months of data).
 - **Janitor.** It deletes the oldest **sealed** partitions above the cap, by age only, and never touches an open
-  partition. Each deletion is receipted (`janitor_delete`, with the partition root). The hashes stay in the chain, so
+  partition. The cap counts learn.db too, and the janitor deletes the learn.db rows (coins, given-up fetches,
+  `replayed_days`) of the partitions it deletes. Each deletion is receipted (`janitor_delete`, with the partition root). The hashes stay in the chain, so
   an exported copy remains verifiable.
 - **Low disk.** If free space on `/data` falls below 1 GB, every learning write pauses. The ledger always has
   priority.
@@ -325,6 +340,7 @@ All three default to `None`, so existing behaviour and tests are unchanged.
 | Missing data after entry | If the tape is incomplete after an entry, the trade exits at **entry × 0.5** at its time stop | Statistician P10 |
 | Pending | A trade whose exit is beyond fetch coverage stays **pending**. It is never dropped and never counted early | — |
 | Universe | Launch-time filter (SOL-quoted, not Mayhem), the variant's own age, mcap and liquidity filters, then the variant's signal. The cocoon applies "as of" its time only once phase-2 `safety` rows exist; until then its absence is measured by the twin gap | — |
+| Graduation | No decision before the coin's `first_seen_ts`, when the recorder first saw it in the **graduated** census (it graduated at or before then). Buying earlier, on the bonding curve, would use the future fact that it graduates | `research/lab`: no entries before graduation |
 
 ### 4.3 The evidence unit and the forward-only rule
 
@@ -347,7 +363,7 @@ All three default to `None`, so existing behaviour and tests are unchanged.
 | **Quote calibration** | Random `quotes` probes: quoted round-trip loss ÷ model loss, per mcap tier, over 7 days with ≥ 200 samples | `cost_scale[tier] = max(current, UCB95 of the ratio)`. It only rises automatically. A rise is receipted (`calibration`) and all affected evidence is recomputed from the tape. Lowering it needs a PR | 2 |
 | **Twin fill gap** | For each paper fill: the paper net return minus the replay net return for the same variant, coin and decision minute | Feeds the ratchet. Champion median over its last 20 twins < −2.0 pp → **demote** (a realism failure) | 2 |
 | **Decision fidelity** | Each live `evals` row replayed with `entry_signal` on `TapeView(as_of=ts)`; agreement of the signal kinds | < 95% over 24 h (with ≥ 50 evals) → **freeze promotions**. This catches GT vs swap-api differences, data revisions and lag errors | 2 |
-| **Simulator change** | `sim_hash` = sha256 of the bytes of `replay.py`, `costs.py` and `backtest.py` | A change is receipted, all evidence is recomputed, and promotions **freeze for 7 days**. A golden test refuses any cost change that lowers modelled costs (monotone pessimism) | 1 |
+| **Simulator change** | `sim_hash` = sha256 of the bytes of `replay.py`, `costs.py` and `backtest.py` | A change is receipted, all evidence is recomputed (a coin that no longer trades loses its old row; the scoreboard scores only evidence of the current `sim_hash`), and promotions **freeze for 7 days**. A golden test refuses any cost change that lowers modelled costs (monotone pessimism) | 1 |
 
 ---
 
@@ -752,7 +768,7 @@ Real money: OFF · needs proof on real quotes + your OK
 | Host | Trading today | Learning | How |
 |---|---|---|---|
 | `frontend-api-v3.pump.fun` | 0 | census ~0.7/min | own bucket 12/min (P1) |
-| `swap-api.pump.fun` | 0 | candles ~2.5/min, cap 6/min | own bucket (P1) |
+| `swap-api.pump.fun` | 0 | candles ~3.3/min, cap 6/min | own bucket (P1) |
 | `api.dexscreener.com` (limit 60/min) | ~5/min | snaps ≤ 1.5/min, cap 4/min | own capped bucket (P1); `try_acquire` from P2 |
 | `api.rugcheck.xyz` (1/s) | ≤ 10/min | ~1.7/min | `try_acquire(keep=1)` (P2) |
 | Jupiter (1/s) | ~20-25/min | probes ≤ 4/min, tokens ~0.3/min | `try_acquire(keep=1)` (P2) |

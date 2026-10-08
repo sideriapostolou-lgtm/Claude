@@ -413,6 +413,18 @@ def test_learn_run_then_status(env, monkeypatch, capsys) -> None:
     assert data["enabled"] is True and data["recorder"] is None  # no bot has run here
 
 
+def test_learn_says_which_seed_the_settings_put_out_of_bounds(env, monkeypatch, capsys) -> None:
+    monkeypatch.setattr(learn_job, "apply_limits", lambda seconds: {})
+    monkeypatch.setenv("MAX_HOLD_MIN", "480")  # a valid setting, beyond the learner's hard range [5, 360]
+    assert nc("learn", "run") == EXIT_OK
+    out = capsys.readouterr().out
+    assert "learner ok" in out and "registered 3" in out and "skipped 2 seeds" in out
+    assert nc("learn", "status") == EXIT_OK
+    out = capsys.readouterr().out
+    assert "Warning: Not tested (outside the learner's limits): the Settings benchmark" in out
+    assert "max_hold_min=480.0 outside its hard range [5, 360]" in out
+
+
 def test_learn_with_learning_off_does_nothing(env, monkeypatch, capsys) -> None:
     monkeypatch.setenv("LEARN_ENABLED", "false")
     assert nc("learn", "run") == EXIT_OK

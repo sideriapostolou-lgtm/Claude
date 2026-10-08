@@ -815,6 +815,8 @@ def _print_learn_report(report: dict[str, Any]) -> None:
     state = f"on, the learner runs every {report['interval_min']:g} min" if report["enabled"] else "off"
     print(f"Learning: {state} · disk {stats.get('disk_gb', 0.0):.3f} GB of {report['cap_gb']:g} GB")
     print(f"Card: {card['headline']}")
+    for warning in card.get("warnings") or ():
+        print(f"Warning: {warning}")
     store = report["store"]
     if store is None:
         print(f"no learning data yet at {report['path']} (the bot's recorder creates it)")
@@ -842,7 +844,7 @@ def _print_learn_report(report: dict[str, Any]) -> None:
         print(f"Recorder (in the bot): {alive}, {r.get('census_calls', 0)} census calls, "
               f"{r.get('enrolled', 0)} coins enrolled, {r.get('candle_calls', 0)} candle and "
               f"{r.get('snap_calls', 0)} snapshot calls, {r.get('errors', 0)} errors, {r.get('breaker_trips', 0)} "
-              f"rate-limit pauses, {r.get('emits_dropped', 0)} rows dropped")
+              f"rate-limit pauses, {r.get('given_up', 0)} fetches given up, {r.get('emits_dropped', 0)} rows dropped")
 
 
 def cmd_learn(args: argparse.Namespace, settings: Settings) -> int:
@@ -893,13 +895,24 @@ HANDLERS: dict[str, Callable[[argparse.Namespace, Settings], int]] = {
 }
 
 
+def _config_errors() -> tuple[type[Exception], ...]:
+    """Errors that mean "fix the configuration". Imported only when an error is being matched: a command
+    that never touches the broker or the ledger - the learner child above all - never loads them."""
+    from nightcrawler.broker.base import LiveNotAllowed
+    from nightcrawler.broker.wallet import WalletError
+
+    return LiveNotAllowed, WalletError
+
+
+def _ledger_error() -> type[Exception]:
+    from nightcrawler.ledger import LedgerError
+
+    return LedgerError
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     """Parse ``argv``, load settings, dispatch. Returns an exit code (never raises SystemExit
     except from argparse's own ``--help``/usage errors)."""
-    from nightcrawler.broker.base import LiveNotAllowed
-    from nightcrawler.broker.wallet import WalletError
-    from nightcrawler.ledger import LedgerError
-
     parser = build_parser()
     args = parser.parse_args(argv)
     safe_mode: dict[str, Any] | None = None
@@ -924,10 +937,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     except UserError as exc:
         print(f"nightcrawler: {exc}", file=sys.stderr)
         return exc.exit_code
-    except (LiveNotAllowed, WalletError) as exc:
+    except _config_errors() as exc:  # an except clause is evaluated only when an error reaches it
         print(f"nightcrawler: {exc}", file=sys.stderr)
         return EXIT_CONFIG
-    except LedgerError as exc:
+    except _ledger_error() as exc:
         print(f"nightcrawler: ledger problem: {exc}", file=sys.stderr)
         return EXIT_ERROR
     except KeyboardInterrupt:
