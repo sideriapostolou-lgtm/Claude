@@ -36,7 +36,7 @@ from typing import Any, Literal
 
 from nightcrawler.clock import Clock
 from nightcrawler.http import HttpClient, HttpError
-from nightcrawler.models import SOL_MINT, Candle, TokenCandidate
+from nightcrawler.models import SOL_MINT, Candle, TokenCandidate, fill_gaps
 from nightcrawler.sources._parse import (
     first_not_none,
     get_path,

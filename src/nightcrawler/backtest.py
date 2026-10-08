@@ -15,14 +15,21 @@ Simulation rules (the contract):
   ``fill = open * (1 + (fee_bps_per_side + impact_bps) / 1e4)`` where
   ``impact_bps = impact_bps_per_1k_usd * size_usd / 1000``; plus
   ``network_fee_usd_per_side`` deducted from cash. No fill if there is no next candle.
+* Missing minutes between candles are filled with flat zero-volume candles
+  (:func:`nightcrawler.models.fill_gaps`), exactly like the live GeckoTerminal
+  client does, so a gap breaks a green run in both.
 * Exits are evaluated intrabar on each later candle with ``strategy.exit_levels``
   in PESSIMISTIC order: (1) gap: if open <= stop -> exit at open; (2) stop if
-  ``low <= stop``; (3) take-profit if ``high >= tp`` (partial, once); (4) trailing
-  stop if ``low <= peak*(1-trail)`` (peak updated with highs of PREVIOUS candles
-  only, then this candle's high after the checks); (5) time stop at the candle
-  where ``ts >= opened_at + max_hold``. If stop and TP are both inside one
-  candle -> STOP first. Sells fill at the level (or open on a gap) times
-  ``(1 - (fee_bps + impact_bps)/1e4)``.
+  ``low <= stop``; (3) take-profit if ``high >= tp`` AND the candle closes at or
+  above it (partial, once); (4) trailing stop if ``low <= peak*(1-trail)`` (peak
+  updated with the CLOSES of previous candles only, then this candle's close
+  after the checks); (5) time stop at the candle where ``ts >= opened_at +
+  max_hold``. If stop and TP are both inside one candle -> STOP first. Stops fill
+  at ``min(level, close)`` (a 10 s poller never gets the exact level of a candle
+  that closed below it; open on a gap); sells are then charged
+  ``(1 - (fee_bps + impact_bps)/1e4)``. This FILL MODEL is part of
+  :class:`CostModel` (``stop_fill``, ``tp_needs_close``, ``peak_from``; the legacy
+  optimistic model is ``"level", False, "high"``) and reported in every result.
 * Sizing: ``risk.size_position_usd(equity_usd, POSITION_PCT, MIN, MAX)`` with
   equity starting at ``start_usd`` (default 100); one position at a time per
   series; COOLDOWN_MIN after an exit.
@@ -44,7 +51,14 @@ Clarifications of the rules above (all deterministic, all documented in results)
 * Universe filter (mirrors the crawler prefilter): no entry unless the token
   age (from meta ``created_utc``, else the first candle) is within
   ``[MIN_AGE_MIN, MAX_AGE_H]`` and, when ``supply`` is known, ``close * supply``
-  is within ``[MIN_MCAP_USD, MAX_MCAP_USD]``. Liquidity is unknown here and
+  is within ``[MIN_MCAP_USD, MAX_MCAP_USD]``. With ``watch_ttl_h`` set
+  (:meth:`Backtester.from_settings` uses WATCHLIST_TTL_H) the backtest mirrors
+  how the live bot meets a FRESH launch: it is prefiltered once at maturity
+  (``MIN_AGE_MIN``; mcap outside the window then -> the series is never traded)
+  and watched for ``watch_ttl_h`` hours, so entries stop at age ``MIN_AGE_MIN +
+  watch_ttl_h``. ``watch_ttl_h=None`` (the constructor default, CLI
+  ``--any-age``) allows any age up to MAX_AGE_H - right for coins that keep
+  trending (the live crawler re-discovers them every 6 h) and for research. Liquidity is unknown here and
   NOT checked (documented optimism, like the skipped buy/sell ratio, radar,
   judge and cocoon - the backtest only measures the price setup).
 * Optional trading window (``run(..., trade_from=, trade_until=)``): entries
@@ -80,7 +94,7 @@ from typing import Any, Iterable, Mapping, Sequence
 
 from nightcrawler import risk
 from nightcrawler.logging_setup import get_logger
-from nightcrawler.models import Candle, Position, StrategyParams
+from nightcrawler.models import Candle, Position, StrategyParams, fill_gaps
 from nightcrawler.sources._parse import parse_ts, to_float
 from nightcrawler.strategy import CANDLE_INTERVAL_S, entry_signal, exit_levels
 
@@ -100,11 +114,15 @@ log = get_logger(__name__)
 
 @dataclass(frozen=True, slots=True)
 class CostModel:
-    """Per-side trading costs. Defaults are deliberately pessimistic for a $100 bankroll."""
+    """Per-side trading costs and the intrabar fill model. Defaults are deliberately pessimistic
+    for a $100 bankroll and a live bot that polls prices every ~10 s (see the module docstring)."""
 
     fee_bps_per_side: float = 100.0  # pool + platform fees (pump AMMs 0.3-1.25 %, Ultra 0.1 %)
     impact_bps_per_1k_usd: float = 150.0  # linear price-impact model
     network_fee_usd_per_side: float = 0.05  # base + priority fee (+ rent amortized)
+    stop_fill: str = "close"  # "close": min(stop level, candle close); "level": exactly the stop level
+    tp_needs_close: bool = True  # the take-profit fills only when the candle CLOSES at/above it (no wick fills)
+    peak_from: str = "close"  # trailing-stop peak from candle "close"s or (optimistic) "high"s
 
     def cost_bps(self, size_usd: float) -> float:
         """Fee + linear impact (bps) for one side of ``size_usd``."""
@@ -170,19 +188,25 @@ class Backtester:
     """Replays candles through ``strategy`` with the cost model (see module docstring)."""
 
     def __init__(self, params: StrategyParams, cost_model: CostModel | None = None, start_usd: float = 100.0,
-                 position_pct: float = 0.20, min_position_usd: float = 5.0, max_position_usd: float = 25.0) -> None:
+                 position_pct: float = 0.20, min_position_usd: float = 5.0, max_position_usd: float = 25.0,
+                 watch_ttl_h: float | None = None) -> None:
         self.params = params
         self.cost_model = cost_model or CostModel()
         self.start_usd = start_usd
         self.position_pct = position_pct
         self.min_position_usd = min_position_usd
         self.max_position_usd = max_position_usd
+        #: None = any age; else entries only within ``watch_ttl_h`` of maturity (see module docstring).
+        self.watch_ttl_h = watch_ttl_h
 
     @classmethod
-    def from_settings(cls, settings: Any, cost_model: CostModel | None = None) -> "Backtester":
-        """Backtester mirroring the live bot: strategy params, PAPER_START_USD and position sizing from Settings."""
+    def from_settings(cls, settings: Any, cost_model: CostModel | None = None, *,
+                      any_age: bool = False) -> "Backtester":
+        """Backtester mirroring the live bot: strategy params, PAPER_START_USD, position sizing and the
+        watch window (WATCHLIST_TTL_H) from Settings; ``any_age=True`` lifts the watch window."""
         return cls(settings.strategy_params(), cost_model, settings.paper_start_usd, settings.position_pct,
-                   settings.min_position_usd, settings.max_position_usd)
+                   settings.min_position_usd, settings.max_position_usd,
+                   None if any_age else settings.watchlist_ttl_h)
 
     def run(self, candles: Sequence[Candle], meta: Mapping[str, Any], *, trade_from: float | None = None,
             trade_until: float | None = None) -> BacktestResult:
@@ -233,7 +257,7 @@ class Backtester:
 
     def _with_params(self, params: StrategyParams) -> "Backtester":
         return Backtester(params, self.cost_model, self.start_usd, self.position_pct, self.min_position_usd,
-                          self.max_position_usd)
+                          self.max_position_usd, self.watch_ttl_h)
 
     def _aggregate(self, series: Sequence[tuple[list[Candle], dict[str, Any]]]) -> dict[str, float]:
         return aggregate_metrics([self.run(c, m) for c, m in series], self.start_usd)
@@ -269,7 +293,7 @@ class _SeriesRun:
         self.bt = bt
         self.p = bt.params
         self.costs = bt.cost_model
-        self.candles = list(candles)
+        self.candles = fill_gaps(list(candles), CANDLE_INTERVAL_S)  # what the live candle client returns
         self.ts = [c.ts for c in self.candles]
         self.meta = meta
         self.coin = str(meta.get("coin") or meta.get("mint") or "?")
@@ -277,6 +301,9 @@ class _SeriesRun:
         self.trade_until = math.inf if trade_until is None else trade_until
         self.created_ts = parse_ts(meta.get("created_utc")) or (self.ts[0] if self.ts else 0)
         self.supply = to_float(meta.get("supply"))
+        self.watch_until = (math.inf if bt.watch_ttl_h is None
+                            else self.created_ts + self.p.min_age_min * 60 + bt.watch_ttl_h * 3600)
+        self.ever_watched = bt.watch_ttl_h is None or self._passes_maturity_prefilter()
         self.cash = bt.start_usd
         self.trades: list[BacktestTrade] = []
         self.curve: list[tuple[int, float]] = []
@@ -320,7 +347,20 @@ class _SeriesRun:
         if size > 0:
             self.pending = (signal.metrics, size)
 
+    def _passes_maturity_prefilter(self) -> bool:
+        """The crawler's mcap window at maturity (``MIN_AGE_MIN``), on the last candle at/before it.
+        Unknown supply or no candle that early -> not checked (documented optimism)."""
+        if not self.supply:
+            return True
+        maturity = self.created_ts + self.p.min_age_min * 60
+        i = bisect.bisect_right(self.ts, maturity) - 1
+        if i < 0:
+            return True
+        return self.p.min_mcap_usd <= self.candles[i].c * self.supply <= self.p.max_mcap_usd
+
     def _in_universe(self, c: Candle, now: float) -> bool:
+        if not self.ever_watched or now > self.watch_until:
+            return False
         age_min = (now - self.created_ts) / 60
         if not self.p.min_age_min <= age_min <= self.p.max_age_h * 60:
             return False
@@ -344,7 +384,8 @@ class _SeriesRun:
         if not self._exit_at_open(trade, c):
             self._exit_intrabar(trade, c)
         if self.open is trade:
-            trade.position.peak_price_usd = max(trade.position.peak_price_usd, c.h)
+            seen = c.h if self.costs.peak_from == "high" else c.c
+            trade.position.peak_price_usd = max(trade.position.peak_price_usd, seen)
 
     def _exit_at_open(self, trade: _OpenTrade, c: Candle) -> bool:
         """Gap / time checks at the open (exit_signal order). True if the position was closed."""
@@ -364,9 +405,10 @@ class _SeriesRun:
         pos = trade.position
         lv = exit_levels(pos, self.p)
         if c.l <= lv.stop:  # pessimistic: the stop beats a take-profit in the same candle
-            self._close(trade, c.ts, lv.stop, "stop_loss")
+            self._close(trade, c.ts, self._stop_price(lv.stop, c), "stop_loss")
             return
-        if lv.take_profit is not None and c.h >= lv.take_profit:
+        if (lv.take_profit is not None and c.h >= lv.take_profit
+                and (not self.costs.tp_needs_close or c.c >= lv.take_profit)):
             price = max(c.o, lv.take_profit)
             if self.p.partial_tp_fraction >= 1.0:
                 self._close(trade, c.ts, price, "take_profit_partial")
@@ -375,7 +417,11 @@ class _SeriesRun:
             pos.partial_taken = True
             lv = exit_levels(pos, self.p)
         if lv.trail is not None and c.l <= lv.trail:
-            self._close(trade, c.ts, min(c.o, lv.trail), "trailing_stop")
+            self._close(trade, c.ts, min(c.o, self._stop_price(lv.trail, c)), "trailing_stop")
+
+    def _stop_price(self, level: float, c: Candle) -> float:
+        """Where a stop inside candle ``c`` fills: the level, or (default) the close when it closed below."""
+        return level if self.costs.stop_fill == "level" else min(level, c.c)
 
     def _sell(self, trade: _OpenTrade, tokens: float, price: float) -> None:
         gross = tokens * price
