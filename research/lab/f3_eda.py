@@ -106,6 +106,123 @@ def count() -> None:
     print({"eda_cuts": n_cuts, "eda_groups_looked_at": n_groups})
 
 
+
+
+# --------------------------------------------------------------------------- event scans (TRAIN)
+
+def scan(cs, cond, horizons=(15, 30, 60, 120), spacing=30, first_only=False, max_age=None, min_age=20):
+    """Events where cond(c, g, i) is True (decided at bar i close). Returns {H: [ret]}, {H: [minlow]}, events."""
+    out = {h: [] for h in horizons}
+    lows = {h: [] for h in horizons}
+    ev = []
+    for c in cs:
+        g = grad_index(c)
+        last = -10**9
+        hi = c.n - 1 if max_age is None else min(c.n - 1, g + max_age)
+        for i in range(g + min_age, hi):
+            if i - last < spacing:
+                continue
+            if cond(c, g, i):
+                last = i
+                ev.append((c.symbol, i - g, c.c[i] * c.supply, (c.graduated_ts - c.created_ts) < 5))
+                for h in horizons:
+                    r = fwd(c, i, h)
+                    if r is not None:
+                        out[h].append(r[0])
+                        lows[h].append(r[1])
+                if first_only:
+                    break
+    return out, lows, ev
+
+
+def second_leg_cond(D=0.6, W=30, R=1.6, k=2.0, vmin=3000, mc_lo=8000, inst=None):
+    def cond(c, g, i):
+        if inst is not None and ((c.graduated_ts - c.created_ts) < 5) != inst:
+            return False
+        if c.c[i] * c.supply < mc_lo:
+            return False
+        w0 = i - W
+        if w0 <= g:
+            return False
+        pk_idx = g + int(np.argmax(c.h[g:w0 + 1]))
+        peak = c.h[pk_idx]
+        if c.l[pk_idx:i + 1].min() > peak * (1 - D):
+            return False
+        hh, ll = c.h[w0:i].max(), c.l[w0:i].min()
+        if hh / max(ll, 1e-18) > R:
+            return False
+        vw = c.v[w0:i]
+        if vw.sum() < vmin:
+            return False
+        return c.c[i] > hh and c.v[i] >= k * max(vw.mean(), 1e-9)
+    return cond
+
+
+def revival_cond(dorm=60, dorm_v=500, spike_v=3000, up=0.1, mc_lo=3000):
+    def cond(c, g, i):
+        if i - dorm <= g or c.c[i] * c.supply < mc_lo:
+            return False
+        if c.v[i - dorm:i].sum() > dorm_v:
+            return False
+        return c.v[i] >= spike_v and c.c[i] >= c.o[i] * (1 + up)
+    return cond
+
+
+def events() -> None:
+    cs = load_coins(split="train")
+    cuts = {
+        "second_leg D0.6 W30 R1.6 k2 all": second_leg_cond(),
+        "second_leg D0.6 W30 R1.6 k2 org": second_leg_cond(inst=False),
+        "second_leg D0.6 W30 R1.6 k2 inst": second_leg_cond(inst=True),
+        "second_leg D0.5 W60 R2.0 k2 all": second_leg_cond(D=0.5, W=60, R=2.0),
+        "second_leg D0.7 W60 R2.0 k3 all": second_leg_cond(D=0.7, W=60, R=2.0, k=3.0),
+        "revival dorm60 v500 spike3000 up10": revival_cond(),
+        "revival dorm120 v300 spike2000 up5": revival_cond(dorm=120, dorm_v=300, spike_v=2000, up=0.05),
+    }
+    for name, cond in cuts.items():
+        out, lows, ev = scan(cs, cond)
+        rows = {f"H{h}": summarize(v) for h, v in out.items()}
+        rows.update({f"minlow_H{h}": summarize(v) for h, v in lows.items() if h == 60})
+        n_coins = len({e[0] for e in ev})
+        log(f"event {name} split=train", {"groups": rows, "coins": n_coins})
+        print(f"--- {name}: {len(ev)} events on {n_coins} coins; inst share "
+              f"{np.mean([e[3] for e in ev]) if ev else 0:.2f}; med age {np.median([e[1] for e in ev]) if ev else 0}")
+        for k_, v in rows.items():
+            print(f"   {k_:12s} {v}")
+
+def coin_class(c, g) -> str:
+    inst = (c.graduated_ts - c.created_ts) < 5
+    gm = c.c[g] * c.supply
+    b = "lt100k" if gm < 1e5 else "lt1M" if gm < 1e6 else "ge1M"
+    return ("inst_" if inst else "org_") + b
+
+
+def drift_map(split: str = "train", step: int = 15, H: int = 30) -> None:
+    cs = load_coins(split=split)
+    ages = [(0, 10), (10, 30), (30, 60), (60, 120), (120, 240), (240, 480), (480, 2000)]
+    groups: dict[str, list[float]] = {}
+    coins_in: dict[str, set] = {}
+    for c in cs:
+        g = grad_index(c)
+        cl = coin_class(c, g)
+        for i in range(g + 1, c.n - 1, step):
+            a = i - g
+            f = features(c, g, i)
+            if not (f["v15"] >= 1500 and f["mcap"] >= 6000):
+                continue
+            r = fwd(c, i, H)
+            if r is None:
+                continue
+            ab = next(f"{lo}-{hi}" for lo, hi in ages if lo <= a < hi) if a < 2000 else "2000+"
+            for key in (f"{cl}|{ab}", f"ALL|{ab}", f"{cl}|ALL"):
+                groups.setdefault(key, []).append(r[0])
+                coins_in.setdefault(key, set()).add(c.mint)
+    rows = {k: {**summarize(v), "coins": len(coins_in[k])} for k, v in sorted(groups.items())}
+    log(f"drift_map step={step} H={H} split={split}", {"groups": rows})
+    for k, v in rows.items():
+        print(f"   {k:24s} {v}")
+
+
 if __name__ == "__main__":
     cmd = sys.argv[1] if len(sys.argv) > 1 else "checkpoints"
-    {"checkpoints": checkpoints, "count": count}[cmd]()
+    {"checkpoints": checkpoints, "count": count, "events": events, "drift": drift_map}[cmd]()
