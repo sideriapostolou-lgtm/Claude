@@ -9,11 +9,28 @@
 --   * launch features over the first launch_s seconds after creation (creation slot = "bundle"),
 --   * the canonical PumpSwap pool (CreatePool with base = mint, scanned over [s0, s1_pool]).
 -- SOL amounts are user-side (fees included for buys, excluded for sells), in SOL; tokens are whole.
+-- Cost control: graduating mints are found first with a length-only prefilter, then only transactions that
+-- touch those mints (solana.token_transfers) are decoded. Failed transactions are excluded for trades;
+-- CreatePool events of failed transactions are harmless (same pool address, earliest slot kept).
 WITH
 failed AS (
   SELECT signature FROM solana.transactions_non_voting
   WHERE block_timestamp BETWEEN toDateTime64('$t_lo', 6) AND toDateTime64('$t_hi', 6)
     AND block_slot BETWEEN $s_lo AND $s1_pool AND err != ''
+),
+comp AS (
+  -- cheap pre-pass: CompleteEvents are short (length prefilter reads only the size subcolumn)
+  SELECT base58Encode(substring(r, 49, 32)) AS mint
+  FROM (SELECT base58Decode(data) AS r FROM solana.instructions
+        PREWHERE block_slot BETWEEN $s0 AND $s1 AND program_id = '$CURVE' AND parent_index >= 0
+          AND length(data) BETWEEN $L_CURVE_COMPLETE_LO AND $L_CURVE_COMPLETE_HI)
+  WHERE substring(r, 1, 16) = unhex('$PREFIX$D_CURVE_COMPLETE')
+),
+txs AS (
+  -- transactions touching the graduating mints (trades, create, complete); token_transfers is cheap to scan
+  SELECT tx_signature FROM solana.token_transfers
+  WHERE block_timestamp BETWEEN toDateTime64('$t_lo', 6) AND toDateTime64('$t_hi', 6)
+    AND mint IN (SELECT mint FROM comp)
 ),
 raw AS (
   SELECT block_slot AS slot, toUInt32(block_timestamp) AS ts, tx_signature AS tx, base58Decode(data) AS r
@@ -21,6 +38,7 @@ raw AS (
   PREWHERE block_slot BETWEEN $s_lo AND $s1
     AND program_id = '$CURVE' AND parent_index >= 0
     AND length(data) BETWEEN $L_CURVE_COMPLETE_LO AND 900
+  WHERE tx_signature IN (SELECT tx_signature FROM txs) AND tx_signature NOT IN failed
 ),
 ev AS (
   SELECT slot, ts,
@@ -48,7 +66,7 @@ ev AS (
     if(k = 2, reinterpretAsUInt64(substring(r, o4 + 144, 8)), 0) AS vsol0,
     if(k = 3, substring(r, 17, 32), '') AS completer_b
   FROM raw
-  WHERE substring(r, 1, 8) = unhex('$PREFIX') AND k > 0 AND tx NOT IN failed
+  WHERE substring(r, 1, 8) = unhex('$PREFIX') AND k > 0
 ),
 ev2 AS (
   SELECT *,
@@ -108,7 +126,7 @@ coins AS (
     countIf(m_b_usol >= 10000000) AS curve_n_buyers, countIf(m_s_usol >= 10000000) AS curve_n_sellers,
     arraySlice(arrayReverseSort(groupArrayIf(m_b_usol, user_b != '')), 1, 3) AS top3_b,
     arraySum(top3_b) / 1e9 AS curve_top3_buy_sol, if(length(top3_b) > 0, top3_b[1], 0) / 1e9 AS curve_top1_buy_sol,
-    max(m_l30_b_usol) / 1e9 AS completer_sol, argMax(user_b, m_l30_b_usol) AS completer30_b,
+    max(m_l30_b_usol) / 1e9 AS completer_sol, if(completer_sol > 0, argMax(user_b, (m_l30_b_usol, user_b)), '') AS completer30_b,
     sum(m_l_b_usol) / 1e9 AS l_buy_sol, sum(m_l_s_usol) / 1e9 AS l_sell_sol,
     sum(m_l_b_tok) / 1e6 AS l_buy_tok, sum(m_l_s_tok) / 1e6 AS l_sell_tok,
     sum(m_l_nb) AS l_n_buys, sum(m_l_ns) AS l_n_sells,
@@ -128,7 +146,8 @@ coins AS (
     sumIf(m_b_usol, user_b = m_creator_b) / 1e9 AS creator_buy_sol, sumIf(m_s_usol, user_b = m_creator_b) / 1e9 AS creator_sell_sol,
     sumIf(m_b_tok, user_b = m_creator_b) / 1e6 AS creator_buy_tok, sumIf(m_s_tok, user_b = m_creator_b) / 1e6 AS creator_sell_tok,
     sumIf(m_l_b_usol, user_b = m_creator_b) / 1e9 AS l_creator_buy_sol, sumIf(m_l_s_usol, user_b = m_creator_b) / 1e9 AS l_creator_sell_sol,
-    arraySlice(arraySort(x -> x.1, groupArrayIf((m_fb_slot, m_b_usol), m_nb > 0)), 1, 20) AS first20,
+    -- first 20 distinct curve buyers by first-buy slot (ties inside a slot broken by wallet bytes: no tx order here)
+    arraySlice(arraySort(x -> (x.1, x.3), groupArrayIf((m_fb_slot, m_b_usol, user_b), m_nb > 0)), 1, 20) AS first20,
     arraySum(arrayMap(x -> x.2, first20)) / 1e9 AS first20_buy_sol
   FROM mu
   GROUP BY mint_b
@@ -147,7 +166,7 @@ pools AS (
       AND program_id = '$AMM' AND parent_index >= 0
       AND length(data) BETWEEN $L_AMM_CREATE_POOL_LO AND $L_AMM_CREATE_POOL_HI
   )
-  WHERE substring(r, 1, 16) = unhex('$PREFIX$D_AMM_CREATE_POOL') AND tx NOT IN failed
+  WHERE substring(r, 1, 16) = unhex('$PREFIX$D_AMM_CREATE_POOL')
   GROUP BY mint_b
 )
 SELECT
