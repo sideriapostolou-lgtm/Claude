@@ -221,10 +221,7 @@ class Ledger:
         if it propagates, everything up to the outermost block).
         """
         with self._lock:
-            depth = self._depth
-            begin, commit, rollback = (
-                ("BEGIN IMMEDIATE", "COMMIT", ("ROLLBACK",)) if depth == 0
-                else (f"SAVEPOINT nc_{depth}", f"RELEASE nc_{depth}", (f"ROLLBACK TO nc_{depth}", f"RELEASE nc_{depth}")))
+            begin, commit, rollback = self._tx_statements(self._depth)
             with self._locked() as conn:
                 conn.execute(begin)
             self._depth += 1
@@ -241,6 +238,14 @@ class Ledger:
             except LedgerError:
                 self._run_quietly(rollback)
                 raise
+
+    @staticmethod
+    def _tx_statements(depth: int) -> tuple[str, str, tuple[str, ...]]:
+        """``(begin, commit, rollback)`` SQL: a real transaction at depth 0, else a savepoint."""
+        if depth == 0:
+            return "BEGIN IMMEDIATE", "COMMIT", ("ROLLBACK",)
+        name = f"nc_{depth}"
+        return f"SAVEPOINT {name}", f"RELEASE {name}", (f"ROLLBACK TO {name}", f"RELEASE {name}")
 
     def _run_quietly(self, statements: Sequence[str]) -> None:
         """Best-effort rollback: the original error matters more than a failed cleanup."""

@@ -11,26 +11,49 @@ fills and compares it with what the broker says it holds:
   (deposits/withdrawals and unmodelled fees cause it) but only flags when
   negative beyond ``SOL_DRIFT_TOLERANCE_LAMPORTS``.
 
+Only fills of the broker's mode count, and in paper mode only fills recorded
+after the latest ``paper_reset`` note receipt (a reset starts a new virtual
+wallet; chain order, not wall-clock time, decides). Live tokens the bot never
+traded (airdrops, spam) are listed in ``issues`` but do not fail the audit.
+
+It also checks the books themselves: every fill must belong to a position
+(``Fill.position_id`` or the position's ``entry_fill_ids``/``exit_fill_ids``;
+an orphan fill means tokens nobody manages) and every open position's
+``token_amount`` must equal its fills' net tokens. Both flag ``ok=False``, as
+does a broken receipt chain.
+
 It also builds per-trade P&L (realized, fees, impact) and a daily summary.
 All amounts lamports unless named ``*_usd``; ``*_pct`` are percent.
 """
 
 from __future__ import annotations
 
+from collections import defaultdict
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Iterable
 
-from nightcrawler.models import Fill, Position
+from nightcrawler.clock import RealClock, iso_utc, utc_day
+from nightcrawler.models import LAMPORTS_PER_SOL, Fill, Position
 
 __all__ = ["SOL_DRIFT_TOLERANCE_LAMPORTS", "TradePnL", "DailySummary", "AuditReport", "Auditor",
            "trade_pnl", "daily_summaries"]
 
 SOL_DRIFT_TOLERANCE_LAMPORTS = 100_000  # 0.0001 SOL
+#: Live token balances may differ from the books by rounding of at most this many base units.
+TOKEN_DRIFT_TOLERANCE = 1
 
 
 @dataclass(slots=True)
 class TradePnL:
-    """Realized result of one position (open positions: realized part only)."""
+    """Realized result of one position (open positions: realized part only).
+
+    ``realized_lamports`` = proceeds - cost basis of the tokens sold - ALL
+    network fees paid so far - rent still locked (closed positions only; for an
+    open position the rent is a refundable deposit). The cost basis is the full
+    cost once closed, else ``cost * sold / bought``. ``realized_pct`` is percent
+    of that cost basis (None while nothing was sold). ``fill_ids`` lists the
+    fills used, in time order.
+    """
 
     position_id: str
     mint: str
@@ -47,6 +70,7 @@ class TradePnL:
     avg_price_impact_pct: float | None  # mean over the position's fills
     exit_reason: str | None
     fills: int
+    fill_ids: list[str] = field(default_factory=list)
 
 
 @dataclass(slots=True)
@@ -79,23 +103,111 @@ class AuditReport:
     chain_first_bad_seq: int | None = None
 
 
+# --------------------------------------------------------------------------- pure P&L
+
+
+def _belongs_to(position: Position, fill: Fill) -> bool:
+    return fill.position_id == position.id or fill.id in position.entry_fill_ids or fill.id in position.exit_fill_ids
+
+
 def trade_pnl(position: Position, fills: list[Fill]) -> TradePnL:
     """PURE: P&L of one position from its fills (fills not belonging to it are ignored)."""
-    raise NotImplementedError
+    own = sorted((f for f in fills if _belongs_to(position, f)), key=lambda f: f.ts)
+    buys = [f for f in own if f.side == "buy"]
+    sells = [f for f in own if f.side == "sell"]
+    cost = sum(f.sol_lamports for f in buys)
+    proceeds = sum(f.sol_lamports for f in sells)
+    fees = sum(f.fees_lamports for f in own)
+    rent = sum(f.rent_lamports for f in own)
+    bought = sum(f.token_amount for f in buys)
+    sold = sum(f.token_amount for f in sells)
+    closed = position.status == "closed"
+    basis = cost if closed else (cost * min(sold, bought) // bought if bought else 0)
+    realized = proceeds - basis - fees - (rent if closed else 0)
+    symbol = position.symbol or next((f.symbol for f in own if f.symbol), "")
+    return TradePnL(
+        position_id=position.id, mint=position.mint, symbol=symbol, opened_at=position.opened_at,
+        closed_at=position.closed_at, status=position.status, cost_lamports=cost, proceeds_lamports=proceeds,
+        fees_lamports=fees, rent_lamports=rent, realized_lamports=realized,
+        realized_pct=realized / basis * 100.0 if basis else None,
+        avg_price_impact_pct=sum(f.price_impact_pct for f in own) / len(own) if own else None,
+        exit_reason=position.exit_reason, fills=len(own), fill_ids=[f.id for f in own])
+
+
+def _fills_by_position(positions: list[Position], fills: list[Fill]) -> dict[str, list[Fill]]:
+    """``{position_id: fills}`` linked by ``Fill.position_id`` or the position's fill id lists."""
+    by_id = {f.id: f for f in fills}
+    grouped: dict[str, dict[str, Fill]] = defaultdict(dict)
+    for f in fills:
+        if f.position_id is not None:
+            grouped[f.position_id][f.id] = f
+    for p in positions:
+        for fill_id in (*p.entry_fill_ids, *p.exit_fill_ids):
+            if fill_id in by_id:
+                grouped[p.id][fill_id] = by_id[fill_id]
+    return {p.id: list(grouped[p.id].values()) for p in positions}
+
+
+def _fills_usd(fills: Iterable[Fill]) -> float | None:
+    """Net USD flow of ``fills`` valued at each fill's own SOL price (None if one is unknown)."""
+    total = 0.0
+    for f in fills:
+        if not f.sol_usd or f.sol_usd <= 0:
+            return None
+        total += f.sol_delta_lamports() / LAMPORTS_PER_SOL * f.sol_usd
+    return total
 
 
 def daily_summaries(trades: list[TradePnL], fills: list[Fill]) -> list[DailySummary]:
     """PURE: group closed trades by UTC day of ``closed_at`` (ascending days)."""
-    raise NotImplementedError
+    by_id = {f.id: f for f in fills}
+    days: dict[str, DailySummary] = {}
+    for t in trades:
+        if t.status != "closed" or t.closed_at is None:
+            continue
+        day = utc_day(t.closed_at)
+        s = days.setdefault(day, DailySummary(day=day, trades_closed=0, wins=0, losses=0, realized_lamports=0,
+                                              fees_lamports=0, realized_usd=0.0))
+        s.trades_closed += 1
+        s.wins += t.realized_lamports > 0
+        s.losses += t.realized_lamports < 0
+        s.realized_lamports += t.realized_lamports
+        s.fees_lamports += t.fees_lamports
+        usd = _fills_usd(by_id[i] for i in t.fill_ids if i in by_id)
+        s.realized_usd = None if s.realized_usd is None or usd is None else s.realized_usd + usd
+    return [days[d] for d in sorted(days)]
+
+
+def _totals(trades: list[TradePnL], daily: list[DailySummary]) -> dict[str, Any]:
+    """Closed-trade results (``realized_*``), partial profits of open trades kept apart, all fees."""
+    closed = [t for t in trades if t.status == "closed"]
+    wins = sum(t.realized_lamports > 0 for t in closed)
+    usd = [d.realized_usd for d in daily]
+    return {
+        "trades": len(closed),
+        "open_trades": len(trades) - len(closed),
+        "wins": wins,
+        "losses": sum(t.realized_lamports < 0 for t in closed),
+        "win_rate_pct": wins / len(closed) * 100.0 if closed else None,
+        "realized_lamports": sum(t.realized_lamports for t in closed),
+        "realized_usd": None if None in usd else sum((u for u in usd if u is not None), 0.0),
+        "open_realized_lamports": sum(t.realized_lamports for t in trades if t.status != "closed"),
+        "fees_lamports": sum(t.fees_lamports for t in trades),
+    }
+
+
+# --------------------------------------------------------------------------- auditor
 
 
 class Auditor:
     """Reconciles ledger vs broker; also verifies the receipt chain."""
 
-    def __init__(self, ledger: Any, broker: Any, clock: Any | None = None) -> None:
+    def __init__(self, ledger: Any, broker: Any, clock: Any | None = None, *, mode: str | None = None) -> None:
+        """``mode`` is only used without a broker (offline report); default ``paper``."""
         self.ledger = ledger
         self.broker = broker
-        self.clock = clock
+        self.clock = clock if clock is not None else RealClock()
+        self.mode = getattr(broker, "mode", None) or mode or "paper"
 
     def reconcile(self, verify_chain: bool = True) -> AuditReport:
         """Build an :class:`AuditReport` (never raises on drift; raises only on storage errors).
@@ -103,9 +215,173 @@ class Auditor:
         ``broker`` may be None (offline report): balance comparison is skipped
         and noted in ``issues``.
         """
-        raise NotImplementedError
+        report = AuditReport(ok=True, mode=self.mode, checked_at=float(self.clock.now()),
+                             expected_sol_lamports=None, broker_sol_lamports=None, sol_drift_lamports=None)
+        self._check_balances(report)
+        all_fills = self.ledger.fills(limit=None)
+        positions = self.ledger.positions(limit=None)
+        grouped = _fills_by_position(positions, all_fills)
+        self._check_books(report, positions, all_fills, grouped)
+        report.trades = sorted((trade_pnl(p, grouped[p.id]) for p in positions),
+                               key=lambda t: (t.opened_at, t.position_id))
+        report.daily = daily_summaries(report.trades, all_fills)
+        report.totals = _totals(report.trades, report.daily)
+        if verify_chain:
+            report.chain_ok, report.chain_first_bad_seq = self.ledger.verify_chain()
+            if not report.chain_ok:
+                self._problem(report, f"receipt chain broken at seq {report.chain_first_bad_seq}")
+        return report
 
+    # ------------------------------------------------------------------ balances
+    @staticmethod
+    def _problem(report: AuditReport, issue: str) -> None:
+        report.ok = False
+        report.issues.append(issue)
+
+    def _epoch(self) -> tuple[int | None, int]:
+        """``(start_lamports, after_seq)``: the wallet's starting SOL and the receipt seq it starts after."""
+        start = self.ledger.get_kv(f"{self.mode}.start_lamports")
+        reset = self.ledger.last_receipt("note", {"event": "paper_reset"}) if self.mode == "paper" else None
+        return (None if start is None else int(start)), (reset.seq if reset is not None else 0)
+
+    def _check_balances(self, report: AuditReport) -> None:
+        start, after_seq = self._epoch()
+        fills = self.ledger.fills_after_seq(after_seq, mode=self.mode)
+        expected_tokens: dict[str, int] = defaultdict(int)
+        for f in fills:
+            expected_tokens[f.mint] += f.token_delta()
+        if start is None:
+            report.issues.append(f"start balance unknown (kv {self.mode}.start_lamports missing): SOL not compared")
+        else:
+            report.expected_sol_lamports = start + sum(f.sol_delta_lamports() for f in fills)
+        if self.broker is None:
+            report.issues.append("no broker: balance comparison skipped")
+            return
+        try:
+            balances = self.broker.balances()
+        except Exception as exc:  # network trouble must not hide the rest of the report
+            report.issues.append(f"broker balances unavailable ({type(exc).__name__}): comparison skipped")
+            return
+        report.broker_sol_lamports = int(balances.sol_lamports)
+        self._compare_sol(report)
+        self._compare_tokens(report, dict(expected_tokens), {m: int(a) for m, a in balances.tokens.items()})
+
+    def _compare_sol(self, report: AuditReport) -> None:
+        if report.expected_sol_lamports is None or report.broker_sol_lamports is None:
+            return
+        drift = report.broker_sol_lamports - report.expected_sol_lamports
+        report.sol_drift_lamports = drift
+        text = f"SOL drift {drift / LAMPORTS_PER_SOL:+.9f} SOL ({drift:+d} lamports)"
+        if self.mode == "paper" and drift:
+            self._problem(report, f"{text}: paper balances must match the fills exactly")
+        elif drift < -SOL_DRIFT_TOLERANCE_LAMPORTS:
+            self._problem(report, f"{text}: the wallet holds LESS SOL than the books say")
+        elif abs(drift) > SOL_DRIFT_TOLERANCE_LAMPORTS:
+            report.issues.append(f"{text}: more than the books say (deposit or unmodelled refund?)")
+
+    def _compare_tokens(self, report: AuditReport, expected: dict[str, int], actual: dict[str, int]) -> None:
+        for mint in sorted(set(expected) | set(actual)):
+            exp, act = expected.get(mint, 0), actual.get(mint, 0)
+            drift = act - exp
+            if drift == 0:
+                continue
+            report.token_drift[mint] = {"expected": exp, "actual": act, "drift": drift}
+            if self.mode == "live" and mint not in expected:
+                report.issues.append(f"untracked token {mint} in the wallet ({act} base units; airdrop?)")
+            elif self.mode == "paper" or abs(drift) > TOKEN_DRIFT_TOLERANCE:
+                self._problem(report, f"token drift {mint}: books {exp}, wallet {act} ({drift:+d} base units)")
+
+    # ------------------------------------------------------------------ books
+    def _check_books(self, report: AuditReport, positions: list[Position], fills: list[Fill],
+                     grouped: dict[str, list[Fill]]) -> None:
+        linked = {f.id for own in grouped.values() for f in own}
+        orphans = sorted(f.id for f in fills if f.id not in linked)
+        if orphans:
+            self._problem(report, f"{len(orphans)} fill(s) not linked to any position "
+                                  f"(tokens nobody manages): {', '.join(orphans[:5])}")
+        for p in positions:
+            if not p.is_open:
+                continue
+            net = sum(f.token_delta() for f in grouped[p.id])
+            if net != p.token_amount:
+                self._problem(report, f"position {p.id} ({p.symbol or p.mint}) says {p.token_amount} tokens, "
+                                      f"its fills net {net}")
+
+    # ------------------------------------------------------------------ text
     @staticmethod
     def format_text(report: AuditReport) -> str:
         """Human-readable multi-line summary for ``nightcrawler report`` (SOL with 4 decimals)."""
-        raise NotImplementedError
+        lines = [f"nightcrawler audit - {report.mode.upper()} - {iso_utc(report.checked_at)}",
+                 f"Result: {'OK' if report.ok else 'PROBLEMS FOUND'}",
+                 f"Receipt chain: {_chain_text(report)}",
+                 f"SOL: books {_sol(report.expected_sol_lamports)}, wallet {_sol(report.broker_sol_lamports)}, "
+                 f"drift {_sol(report.sol_drift_lamports, signed=True)}"]
+        if report.token_drift:
+            lines.append("Token drift (base units):")
+            lines += [f"  {mint}: books {d['expected']}, wallet {d['actual']}, drift {d['drift']:+d}"
+                      for mint, d in report.token_drift.items()]
+        else:
+            lines.append("Tokens: no drift" if report.broker_sol_lamports is not None else "Tokens: not compared")
+        if report.issues:
+            lines.append("Issues:")
+            lines += [f"  - {issue}" for issue in report.issues]
+        lines += _totals_text(report.totals)
+        if report.trades:
+            lines += ["", "Trades (oldest first):", _TRADE_HEADER]
+            lines += [_trade_row(t) for t in report.trades]
+        if report.daily:
+            lines += ["", "Daily (UTC, by close time):", _DAY_HEADER]
+            lines += [_day_row(d) for d in report.daily]
+        return "\n".join(lines)
+
+
+# --------------------------------------------------------------------------- text helpers
+
+_TRADE_HEADER = (f"  {'symbol':<10} {'opened (UTC)':<20} {'status':<6} {'cost SOL':>9} {'proceeds':>9} "
+                 f"{'fees':>7} {'realized':>9} {'pct':>7} {'impact':>6}  exit")
+_DAY_HEADER = f"  {'day':<10} {'closed':>6} {'W/L':>5} {'realized SOL':>13} {'realized $':>10} {'fees SOL':>9}"
+
+
+def _sol(lamports: int | None, signed: bool = False) -> str:
+    if lamports is None:
+        return "n/a"
+    return f"{lamports / LAMPORTS_PER_SOL:{'+' if signed else ''}.4f}"
+
+
+def _pct(value: float | None) -> str:
+    return "n/a" if value is None else f"{value:+.1f}%"
+
+
+def _usd(value: float | None) -> str:
+    return "n/a" if value is None else f"{value:+.2f}"
+
+
+def _chain_text(report: AuditReport) -> str:
+    if report.chain_ok is None:
+        return "not checked"
+    return "verified OK" if report.chain_ok else f"BROKEN at seq {report.chain_first_bad_seq}"
+
+
+def _totals_text(totals: dict[str, Any]) -> list[str]:
+    if not totals:
+        return []
+    win_rate = totals.get("win_rate_pct")
+    return [f"Trades: {totals['trades']} closed ({totals['wins']} won / {totals['losses']} lost, win rate "
+            f"{'n/a' if win_rate is None else f'{win_rate:.0f}%'}), {totals['open_trades']} open",
+            f"Closed trades: {_sol(totals['realized_lamports'], signed=True)} SOL "
+            f"({_usd(totals['realized_usd'])} USD at fill-time SOL prices)",
+            f"Open trades, realized so far: {_sol(totals['open_realized_lamports'], signed=True)} SOL; "
+            f"network fees paid: {_sol(totals['fees_lamports'])} SOL"]
+
+
+def _trade_row(t: TradePnL) -> str:
+    impact = "n/a" if t.avg_price_impact_pct is None else f"{t.avg_price_impact_pct:.2f}%"
+    return (f"  {(t.symbol or t.mint[:8])[:10]:<10} {iso_utc(t.opened_at) or '':<20} {t.status:<6} "
+            f"{_sol(t.cost_lamports):>9} {_sol(t.proceeds_lamports):>9} {_sol(t.fees_lamports):>7} "
+            f"{_sol(t.realized_lamports, signed=True):>9} {_pct(t.realized_pct):>7} {impact:>6}  "
+            f"{t.exit_reason or '-'}")
+
+
+def _day_row(d: DailySummary) -> str:
+    return (f"  {d.day:<10} {d.trades_closed:>6} {f'{d.wins}/{d.losses}':>5} "
+            f"{_sol(d.realized_lamports, signed=True):>13} {_usd(d.realized_usd):>10} {_sol(d.fees_lamports):>9}")
