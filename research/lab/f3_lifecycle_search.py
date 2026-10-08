@@ -134,6 +134,49 @@ SMOKE = [
 ]
 
 
+
+def stage2_grid() -> list[tuple[str, dict]]:
+    """Declared after stage 1 (TRAIN only): one-parameter neighbourhoods around the two drifter centres,
+    a falsification test of the 'calm late base' on ORGANIC coins, and a dying-volume exit on the best
+    non-drifter configs."""
+    g: list[tuple[str, dict]] = []
+    centres = [
+        dict(entry="drifter", cls="inst", gm_lo=5e6, t_lo=240, W=60, rng=1.03, vmin=2000.0, mc_lo=1e5,
+             stop_pct=0.10, max_hold_min=120),  # 6f57468754
+        dict(entry="drifter", cls="inst", gm_lo=5e6, t_lo=120, W=60, rng=1.08, vmin=2000.0, mc_lo=1e5,
+             stop_pct=0.10, max_hold_min=360),  # d51828bc55
+    ]
+    axes = {
+        "gm_lo": (1e6, 2e6, 3e6, 5e6, 1e7),
+        "t_lo": (120, 180, 240, 300, 360, 480),
+        "rng": (1.02, 1.03, 1.05, 1.08),
+        "W": (30, 60, 120),
+        "vmin": (1000.0, 2000.0, 5000.0),
+        "max_hold_min": (60, 120, 180, 240, 360),
+        "stop_pct": (0.05, 0.10, 0.20, None),
+        "max_entries": (1, 2, 4),
+    }
+    for c in centres:
+        g.append(("drifter", dict(c)))
+        for k, vals in axes.items():
+            for v in vals:
+                if c.get(k, getattr(P(), k)) == v:
+                    continue
+                g.append(("drifter", {**c, k: v}))
+        g.append(("drifter", {**c, "dead_n": 30, "dead_v": 1000.0}))
+    # falsification: the same calm late base on organic graduates (no clone cluster)
+    for mc_lo, t_lo, rng in itertools.product((2e4, 1e5), (120, 240), (1.1, 1.2)):
+        g.append(("drifter", dict(entry="drifter", cls="org", gm_lo=0.0, t_lo=t_lo, W=60, rng=rng, vmin=2000.0,
+                                  mc_lo=mc_lo, stop_pct=0.10, max_hold_min=120)))
+    # dying-volume exit on the best non-drifter TRAIN configs
+    rows = [r for r in load_runs("train") if r["family"] in ("runner", "gated_dip")
+            and (r["per_coin"].get("trades") or 0) >= 15]
+    rows.sort(key=lambda r: -r["per_coin"]["avg_ret_pct"])
+    for r in rows[:4]:
+        for dn, dv in ((10, 500.0), (30, 2000.0)):
+            g.append((r["family"], {**r["params"], "dead_n": dn, "dead_v": dv}))
+    return g
+
 # --------------------------------------------------------------------------- running
 
 _COINS: dict[str, list] = {}
@@ -401,6 +444,8 @@ if __name__ == "__main__":
         run_batch("smoke", SMOKE)
     elif cmd == "stage1":
         run_batch("stage1", stage1_grid())
+    elif cmd == "stage2":
+        run_batch("stage2", stage2_grid())
     elif cmd == "shortlist":
         shortlist()
     elif cmd == "validate":
