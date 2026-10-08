@@ -333,6 +333,17 @@ def sql_list(values: Iterable[str]) -> str:
     return "[" + ",".join(f"'{v}'" for v in vals) + "]"
 
 
+def sql_in(values: Iterable[str]) -> str:
+    """A tuple literal ('a','b',...) of base58 keys for ``x IN (...)``; rejects non-base58."""
+    vals = list(values)
+    for v in vals:
+        if not is_base58(v):
+            raise ValueError(f"not a base58 key: {v!r}")
+    if not vals:
+        return "('')"
+    return "(" + ",".join(f"'{v}'" for v in vals) + ")"
+
+
 def sql_tuples(rows: Iterable[tuple]) -> str:
     """Array literal of tuples of base58 strings and integers, e.g. [('pool',123),...]."""
     parts = []

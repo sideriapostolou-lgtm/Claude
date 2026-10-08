@@ -335,3 +335,69 @@ def test_published_sample_results_reproduce() -> None:
         result = Backtester(P).run(candles, meta, trade_from=entry["trade_from"], trade_until=entry["trade_until"])
         assert result.metrics["trades"] == entry["metrics"]["trades"]
         assert result.metrics["net_pnl_usd"] == pytest.approx(entry["metrics"]["net_pnl_usd"], abs=0.05)
+
+
+# --------------------------------------------------------------------------- review fixes
+
+
+LEGACY_FILLS = {"stop_fill": "level", "tp_needs_close": False, "peak_from": "high"}
+
+
+def test_a_stop_candle_closing_far_below_the_stop_fills_at_the_close() -> None:
+    """A poller sees the price every few seconds, not the exact stop level: when the candle CLOSES
+    below the stop, booking the stop level is optimistic."""
+    after = [(0.33, 0.335, 0.20, 0.21)]  # stop 0.2706; low 0.20; close 0.21
+    t = only_trade(Backtester(P, FREE).run(series(after + flat(0.21, 3)), META))
+    assert t.exit_reason == "stop_loss" and t.exit_price == pytest.approx(0.21)
+    legacy = only_trade(Backtester(P, CostModel(0.0, 0.0, 0.0, **LEGACY_FILLS)).run(
+        series(after + flat(0.21, 3)), META))
+    assert legacy.exit_price == pytest.approx(0.33 * 0.82)
+    above = only_trade(Backtester(P, FREE).run(series([(0.33, 0.335, 0.25, 0.30)] + flat(0.30, 3)), META))
+    assert above.exit_price == pytest.approx(0.33 * 0.82)  # closed back above the stop: the stop level
+
+
+def test_a_one_minute_wick_through_the_take_profit_is_not_a_fill() -> None:
+    wick = [(0.33, 0.47, 0.33, 0.34)] + flat(0.34, 3)  # TP 0.462 touched only by the wick
+    t = only_trade(Backtester(P, FREE).run(series(wick), META))
+    assert not t.partial_taken
+    held = [(0.33, 0.47, 0.33, 0.465)] + flat(0.465, 3)  # closed above the TP: it held
+    assert only_trade(Backtester(P, FREE).run(series(held), META)).partial_taken
+    assert only_trade(Backtester(P, CostModel(0.0, 0.0, 0.0, **LEGACY_FILLS)).run(series(wick), META)).partial_taken
+
+
+def test_the_trailing_peak_follows_closes_not_wicks() -> None:
+    after = [(0.33, 0.34, 0.33, 0.34),
+             (0.34, 0.50, 0.34, 0.48),  # partial at 0.462 (closed above); peak 0.48 (close), not the 0.50 wick
+             (0.48, 0.48, 0.40, 0.41)]  # trail 0.408 hit
+    t = only_trade(Backtester(P, FREE).run(series(after), META))
+    assert t.partial_taken and t.exit_reason == "trailing_stop"
+    assert t.exit_price == pytest.approx((0.462 + 0.48 * 0.85) / 2)
+    assert Backtester(P, FREE).run(series(after), META).cost_model["peak_from"] == "close"
+
+
+def test_missing_minutes_are_filled_like_the_live_candle_client() -> None:
+    """GeckoTerminal's client inserts flat zero-volume candles for missing minutes, which breaks a
+    green run; the backtester must see the same series."""
+    candles = series(flat(0.33, 3))
+    gapped = candles[:SIGNAL_INDEX] + [Candle(c.ts + 60, c.o, c.h, c.l, c.c, c.v) for c in candles[SIGNAL_INDEX:]]
+    assert len(Backtester(P, FREE).run(candles, META).trades) == 1
+    assert Backtester(P, FREE).run(gapped, META).trades == []  # the flat filler candle is not green
+
+
+def test_the_backtest_universe_can_mirror_the_live_watch_window() -> None:
+    """Live watches a fresh launch from maturity (MIN_AGE_MIN) for WATCHLIST_TTL_H only."""
+    candles = series(flat(0.33, 5))
+    old = {**META, "created_utc": iso_utc(T0 - 10 * 3600)}  # 10 h old at the setup
+    assert len(Backtester(P, FREE).run(candles, old).trades) == 1  # default: any age (a coin that keeps trending)
+    assert Backtester(P, FREE, watch_ttl_h=6.0).run(candles, old).trades == []
+    assert len(Backtester(P, FREE, watch_ttl_h=6.0).run(candles, META).trades) == 1  # 2 h old: watched
+    # the prefilter's mcap window is applied once at maturity: a token too small then was never watched
+    tiny_then = {**META, "created_utc": iso_utc(T0 - 61 * 60), "supply": 1e6}
+    rows = [Candle(T0 - 60, 0.01, 0.01, 0.01, 0.01, 1.0)] + candles  # $10K mcap at maturity (T0 - 60)
+    assert len(Backtester(P, FREE).run(rows, tiny_then).trades) == 1  # $330K at the setup: inside the window
+    assert Backtester(P, FREE, watch_ttl_h=6.0).run(rows, tiny_then).trades == []
+
+
+def test_from_settings_mirrors_the_live_watch_window(make_settings) -> None:
+    assert Backtester.from_settings(make_settings(WATCHLIST_TTL_H=4)).watch_ttl_h == 4.0
+    assert Backtester.from_settings(make_settings(), any_age=True).watch_ttl_h is None

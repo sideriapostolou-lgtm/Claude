@@ -76,6 +76,7 @@ __all__ = [
     "base_to_ui",
     "ui_to_base",
     "effective_price_usd",
+    "fill_gaps",
     "Candle",
     "TokenCandidate",
     "MarketSnapshot",
@@ -250,6 +251,20 @@ class _Model:
                 kwargs[f.name] = _convert(hints.get(f.name), data[f.name])
         return cls(**kwargs)
 
+
+
+def fill_gaps(candles: list["Candle"], interval_s: int) -> list["Candle"]:
+    """Insert flat zero-volume candles (o=h=l=c=previous close) for intervals missing BETWEEN
+    candles (ascending input). Nothing is invented after the last candle. Shared by the live
+    GeckoTerminal client and the backtester, so both see the same series."""
+    filled: list[Candle] = []
+    for candle in candles:
+        if filled:
+            prev = filled[-1]
+            filled.extend(Candle(ts, prev.c, prev.c, prev.c, prev.c, 0.0)
+                          for ts in range(prev.ts + interval_s, candle.ts, interval_s))
+        filled.append(candle)
+    return filled
 
 # --------------------------------------------------------------------------- market data
 

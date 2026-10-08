@@ -408,14 +408,7 @@ def _plain_number(value: float) -> str:
 
 def _fill_gaps(candles: list[Candle], interval_s: int) -> list[Candle]:
     """Insert flat zero-volume candles (o=h=l=c=previous close) for intervals missing between candles."""
-    filled: list[Candle] = []
-    for candle in candles:
-        if filled:
-            prev = filled[-1]
-            filled.extend(Candle(ts, prev.c, prev.c, prev.c, prev.c, 0.0)
-                          for ts in range(prev.ts + interval_s, candle.ts, interval_s))
-        filled.append(candle)
-    return filled
+    return fill_gaps(candles, interval_s)
 
 
 def _launchpad(details: Any) -> dict[str, Any] | None:
