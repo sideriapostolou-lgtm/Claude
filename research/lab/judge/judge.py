@@ -140,21 +140,31 @@ def boot_means(sums: np.ndarray, lens: np.ndarray, b: int, seed: int) -> np.ndar
 
 
 def boot_test(trades, b: int = B_P, seed: int = 20261008, m: int = 1) -> dict:
-    """One-sided H0: mean per-trade return <= 0. Null-shifted coin bootstrap: subtract the observed
-    mean from every trade, resample coins, p = P(mean* >= observed). Also percentile CIs: 95 % and
-    the Bonferroni level 1 - 0.05/m (two-sided)."""
+    """One-sided H0: mean per-trade return <= 0, coin-level bootstrap (resample coins, pool their trades).
+
+    Primary p-value = CI inversion: p = (1 + #{bootstrap mean <= 0}) / (B + 1), i.e. the smallest one-sided
+    level at which the percentile CI excludes 0. (A null-SHIFTED bootstrap was tried in the VALIDATION dry run
+    and rejected: with returns capped by the take-profit, the shifted resamples can never reach the observed
+    mean, giving p ~ 1e-6 for a strategy whose 95 % CI includes 0.)
+    Cross-check: cluster-robust t statistic (coins as clusters), Student t with n_coins - 1 df.
+    CIs: 95 % and the Bonferroni level 1 - 0.05/m (two-sided)."""
+    from scipy import stats as st
     sums, lens = coin_sums(trades)
-    if len(sums) < 2:
-        return {"p_one_sided": None, "n_coins": int(len(sums))}
+    n = len(sums)
+    if n < 2:
+        return {"p_one_sided": None, "n_coins": int(n)}
     mu = sums.sum() / lens.sum()
-    null = boot_means(sums - mu * lens, lens, b, seed)
-    p = (1 + int((null >= mu).sum())) / (b + 1)
-    bs = boot_means(sums, lens, b, seed + 1)
+    bs = boot_means(sums, lens, b, seed)
+    p = (1 + int((bs <= 0).sum())) / (b + 1)
+    resid = sums - mu * lens
+    se = math.sqrt(n / (n - 1) * float((resid ** 2).sum())) / lens.sum()
+    t = mu / se if se > 0 else math.inf
+    p_t = float(st.t.sf(t, n - 1)) if math.isfinite(t) else 0.0
     q = lambda a: round(100 * float(np.quantile(bs, a)), 3)  # noqa: E731
     a = ALPHA / (2 * m)
-    return {"mean_pct": round(100 * mu, 3), "p_one_sided": p, "n_coins": int(len(sums)),
-            "ci95_pct": [q(0.025), q(0.975)], "ci_bonf_pct": [q(a), q(1 - a)], "ci_bonf_level": 1 - 2 * a,
-            "share_boot_le_0": float((bs <= 0).mean())}
+    return {"mean_pct": round(100 * mu, 3), "p_one_sided": p, "p_cluster_t": p_t, "t_stat": round(t, 3),
+            "n_coins": int(n), "ci95_pct": [q(0.025), q(0.975)], "ci_bonf_pct": [q(a), q(1 - a)],
+            "ci_bonf_level": 1 - 2 * a}
 
 
 KEEP = ["coins", "trades", "coins_traded", "win_rate_pct", "avg_ret_pct", "median_ret_pct", "profit_factor",
@@ -297,7 +307,8 @@ def freeze(validation_report: dict | None = None) -> dict:
     fins = load_finalists()
     rep = validation_report or json.loads((OUT / "validation_reproduction.json").read_text())
     code = {p: sha256(LABDIR / p) for p in ("harness.py", "costs.py", "strategies/f1-dip-rebound-plus.py",
-                                            "strategies/f4-learned.py", "judge/judge.py")}
+                                            "strategies/f4-learned.py", "f4_learned_search.py", "baseline.py",
+                                            "judge/judge.py")}
     frozen = []
     for fin in fins:
         entry = {"name": fin["name"], "family_file": fin["family_file"], "strategy_class": fin["strategy_class"],
