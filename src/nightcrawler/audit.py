@@ -371,7 +371,8 @@ class Auditor:
             report.position_drift[p.id] = drift
             label = f"position {p.id} ({p.symbol or p.mint})"
             tokens = drift.get("token_amount")
-            if p.id in abandoned and set(drift) == {"token_amount"} and tokens["books"] == 0 < tokens["fills"]:
+            if (p.id in abandoned and set(drift) == {"token_amount"} and tokens is not None
+                    and tokens["books"] == 0 < tokens["fills"]):
                 report.issues.append(f"{label} was closed by a paper reset with {tokens['fills']} tokens unsold "
                                      "(the virtual wallet was wiped)")
                 continue

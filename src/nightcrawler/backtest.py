@@ -604,7 +604,7 @@ def format_table(results: Sequence[BacktestResult], aggregate: Mapping[str, floa
     name_w = max([len("series"), len("TOTAL"), *(len(r.coin) for r in results)])
     header = "series".ljust(name_w) + "".join(f" {h:>{w}}" for h, _, w, _ in _TABLE_COLUMNS)
     lines = [header, "-" * len(header)]
-    rows = [(r.coin, r.metrics) for r in results]
+    rows: list[tuple[str, Mapping[str, float]]] = [(r.coin, r.metrics) for r in results]
     if aggregate is not None:
         rows.append(("TOTAL", aggregate))
     for name, metrics in rows:

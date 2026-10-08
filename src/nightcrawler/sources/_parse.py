@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import math
 from datetime import datetime, timezone
-from typing import Any, Iterable, Iterator, Sequence, TypeVar
+from typing import Any, Iterable, Iterator, Sequence, TypeVar, overload
 
 __all__ = [
     "to_float",
@@ -25,6 +25,10 @@ T = TypeVar("T")
 _MISSING_STRINGS = {"", "null", "none", "nan", "n/a", "-"}
 
 
+@overload
+def to_float(value: Any, default: float) -> float: ...
+@overload
+def to_float(value: Any, default: None = None) -> float | None: ...
 def to_float(value: Any, default: float | None = None) -> float | None:
     """``"0.0123"`` / ``12`` / ``1.5`` -> float; None, "", "null", NaN, inf, bools -> ``default``."""
     if value is None or isinstance(value, bool):
@@ -44,6 +48,10 @@ def to_float(value: Any, default: float | None = None) -> float | None:
     return out if math.isfinite(out) else default
 
 
+@overload
+def to_int(value: Any, default: int) -> int: ...
+@overload
+def to_int(value: Any, default: None = None) -> int | None: ...
 def to_int(value: Any, default: int | None = None) -> int | None:
     """Integer from int / integral float / numeric string (big ints exact); else ``default``.
 

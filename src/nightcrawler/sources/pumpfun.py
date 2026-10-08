@@ -110,11 +110,11 @@ def parse_candles(rows: Any) -> list[Candle]:
         if not isinstance(row, dict):
             continue
         ms = to_int(row.get("timestamp"))
-        ohlc = [to_float(row.get(k)) for k in ("open", "high", "low", "close")]
-        if ms is None or any(x is None for x in ohlc):
+        o, h, low, c = (to_float(row.get(k)) for k in ("open", "high", "low", "close"))
+        if ms is None or o is None or h is None or low is None or c is None:
             continue
         ts = ms // 1000
-        by_ts[ts] = Candle(ts, *ohlc, to_float(row.get("volume"), 0.0))  # type: ignore[arg-type]
+        by_ts[ts] = Candle(ts, o, h, low, c, to_float(row.get("volume"), 0.0))
     return [by_ts[ts] for ts in sorted(by_ts)]
 
 

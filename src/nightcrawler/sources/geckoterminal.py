@@ -394,11 +394,11 @@ def _candle(row: Any) -> Candle | None:
     if not isinstance(row, (list, tuple)) or len(row) < 5:
         return None
     ts = to_int(row[0])
-    ohlc = [to_float(x) for x in row[1:5]]
-    if ts is None or any(x is None for x in ohlc):
+    o, h, low, c = (to_float(x) for x in row[1:5])
+    if ts is None or o is None or h is None or low is None or c is None:
         return None
     volume = to_float(row[5], 0.0) if len(row) > 5 else 0.0
-    return Candle(ts, *ohlc, volume)
+    return Candle(ts, o, h, low, c, volume)
 
 
 def _plain_number(value: float) -> str:

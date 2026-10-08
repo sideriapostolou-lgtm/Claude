@@ -30,7 +30,7 @@ Returns ``(True, "ok")`` when all pass.
 
 from __future__ import annotations
 
-from typing import Any, Sequence
+from typing import Any, Sequence, cast
 
 from nightcrawler.clock import Clock
 from nightcrawler.config import Settings
@@ -185,7 +185,7 @@ class RiskManager:
         Missing file = off.
         """
         modes = (self.settings.kill_switch, self._kill_file_mode())
-        return max(modes, key=KILL_WORDS.index)  # type: ignore[return-value]
+        return cast(KillMode, max(modes, key=KILL_WORDS.index))  # .index rejects any other word
 
     def _kill_file_mode(self) -> str:
         try:

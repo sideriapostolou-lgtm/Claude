@@ -100,7 +100,7 @@ class SolanaRpc:
         if get_path(value, "data.parsed.type") != "mint":
             raise RpcError(None, f"account {mint} is not a parsed token mint", method)
         info = get_path(value, "data.parsed.info", {})
-        states = {
+        states: dict[str, Any] = {
             ext["extension"]: ext.get("state") if isinstance(ext.get("state"), dict) else {}
             for ext in get_path(info, "extensions", [])
             if isinstance(ext, dict) and ext.get("extension")

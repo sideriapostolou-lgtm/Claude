@@ -1029,7 +1029,7 @@ class Engine:
                 if gt and (not pump or not _candles_stale(gt, now)):
                     return gt, "geckoterminal"
                 problems.append("geckoterminal " + (_candles_stale(gt, now) or "returned no candles"))
-        if pump:
+        if pump and self.pumpfun is not None:  # pump already implies a pump.fun client
             try:
                 pf = list(self.pumpfun.candles(item.mint, minutes))
             except Exception as exc:
@@ -1604,6 +1604,8 @@ class Engine:
             if u.get("chain") == "failed":
                 settled = self._settle_failed_on_chain(mint, u, now)
             else:
+                if balances is None:  # fetched above whenever a due entry is not "failed"
+                    raise AttributeError("wallet balances were not fetched")
                 settled = self._reconcile_one(mint, u, balances.tokens.get(mint, 0), now)
             if settled:
                 del self.unresolved[mint]

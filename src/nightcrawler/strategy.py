@@ -61,7 +61,7 @@ from __future__ import annotations
 
 import dataclasses
 from dataclasses import dataclass
-from typing import Sequence
+from typing import Any, Sequence
 
 from nightcrawler.models import Candle, MarketSnapshot, Position, RadarSignal, Signal, StrategyParams
 
@@ -131,7 +131,7 @@ def entry_signal(candles: Sequence[Candle], snapshot: MarketSnapshot | None, par
     low_candle = min(after_high, key=lambda c: c.l) if after_high else window[i_high]
     last, prev = window[-1], window[-2]
     ratio = snapshot.buy_sell_ratio_m5 if snapshot is not None else None
-    metrics = {
+    metrics: dict[str, Any] = {
         "high": high,
         "high_ts": window[i_high].ts,
         "low": low_candle.l,

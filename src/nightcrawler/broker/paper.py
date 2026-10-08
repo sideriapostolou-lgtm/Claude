@@ -126,12 +126,12 @@ class _PaperNetworkFee:
         now = self.clock.now()
         if self._asked_at is None or now - self._asked_at >= PRIORITY_FEE_REFRESH_S:
             self._asked_at = now
-            self._estimate = self._ask()
+            self._estimate = self._ask(self.rpc)
         return floor if self._estimate is None else max(floor, self._estimate)
 
-    def _ask(self) -> int | None:
+    def _ask(self, rpc: Any) -> int | None:
         try:
-            level = float(self.rpc.priority_fee_levels(SWAP_FEE_ACCOUNT_KEYS)[PRIORITY_FEE_LEVEL])
+            level = float(rpc.priority_fee_levels(SWAP_FEE_ACCOUNT_KEYS)[PRIORITY_FEE_LEVEL])
             if not math.isfinite(level) or level < 0:
                 raise ValueError(f"unusable {PRIORITY_FEE_LEVEL} level {level!r}")
         except Exception as exc:  # any failure: the NETWORK_FEE_SOL floor until the next refresh
@@ -249,6 +249,8 @@ class PaperBroker(UltraBrokerBase):
         received = paper_out_amount(quote.out_amount, self.settings.paper_slippage_bps)
         with self.ledger.transaction():
             wallet = _PaperWallet.load(self.ledger)
+            if wallet is None:  # _ensure_wallet() stored it above; never fill without one
+                raise AttributeError("paper wallet missing from the ledger")
             if quote.side == "buy":
                 rent = wallet.buy(quote, received, fee, self.settings.sol_reserve_lamports)
                 sol_lamports, token_amount = quote.in_amount, received

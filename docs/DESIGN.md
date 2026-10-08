@@ -405,6 +405,9 @@ The safety review added `MAX_SLIPPAGE_PCT` (buys) and `PAPER_SLIPPAGE_BPS`. Late
   labelled). Backtest samples: `data/samples/higgs_1m.json`,
   `data/samples/hooki_1m.json` (the HOOKI 2026-10-06 00:31 UTC partial candle
   was re-fetched and patched; see its `patches` key).
+* Types: `mypy` (settings in pyproject `[tool.mypy]`) stays clean on `src/`;
+  `tests/test_typecheck.py` runs it when mypy (dev extra) is installed. Narrow an
+  Optional with an explicit check rather than a `# type: ignore`.
 
 ## 12. Per-owner acceptance checklist
 

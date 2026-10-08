@@ -72,7 +72,7 @@ import json
 import math
 import re
 import unicodedata
-from typing import Any, Mapping, Sequence
+from typing import Any, Literal, Mapping, Sequence
 
 from nightcrawler.clock import Clock, RealClock, utc_day
 from nightcrawler.config import Settings
@@ -472,7 +472,7 @@ def _first_text(response: Any) -> Any:
     raise ValueError("response has no text block")
 
 
-def _parse_verdict(text: Any) -> tuple[str, float, list[str]]:
+def _parse_verdict(text: Any) -> tuple[Literal["yes", "no"], float, list[str]]:
     """``(decision, confidence clamped to [0, 1], <= 3 reasons of <= 200 chars)``.
 
     Raises ``json.JSONDecodeError``/``ValueError``/``KeyError``/``TypeError`` on bad output.

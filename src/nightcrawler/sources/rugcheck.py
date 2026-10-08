@@ -177,7 +177,8 @@ def parse_report(report: dict[str, Any], *, mint: str = "") -> RugReport:
 
     ``mint`` is used only when the report itself has no ``mint`` field.
     """
-    token = report.get("token") if isinstance(report.get("token"), dict) else {}
+    raw_token = report.get("token")
+    token: dict[str, Any] = raw_token if isinstance(raw_token, dict) else {}
     supply = to_int(token.get("supply"))
     risks = [_risk(r) for r in _dicts(report.get("risks"))]
     holders = _holders(report)
@@ -281,9 +282,10 @@ def _known_accounts(raw: Any) -> dict[str, dict[str, Any]]:
 def _holders(report: dict[str, Any]) -> list[dict[str, Any]]:
     """``topHolders`` normalized with exclusion flags, largest first."""
     excluded = _excluded_accounts(report)
-    holders = []
+    holders: list[dict[str, Any]] = []
     for raw in _dicts(report.get("topHolders")):
-        address, owner = raw.get("address"), raw.get("owner")
+        address: Any = raw.get("address")  # raw JSON values, looked up as they are
+        owner: Any = raw.get("owner")
         reason = excluded.get(owner) or excluded.get(address)
         holders.append({
             "address": address,
