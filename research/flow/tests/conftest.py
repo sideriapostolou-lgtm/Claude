@@ -17,3 +17,8 @@ def ch_events():
 @pytest.fixture(scope="session")
 def launch_fixture():
     return json.loads((FIX / "launch_JBfdBN1q.json").read_text())
+
+
+@pytest.fixture(scope="session")
+def launch_amm_fixture():
+    return json.loads((FIX / "launch_HqJ4C36p.json").read_text())

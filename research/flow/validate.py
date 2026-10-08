@@ -194,9 +194,20 @@ def run(out: Path, max_hours: int, ch: CryptoHouse | None) -> dict:
 
     # ---- V1, V2, V5 on raw launch windows -------------------------------------------------------
     tot = defaultdict(int)
+    cen_all = {c["mint"]: c for c in json.loads((LAB / "census.json").read_text())["coins"]}
     for m, r in raw.items():
         c = chain_check(r["trades"])
         s5 = semantics_check(r["trades"])
+        if cen_all.get(m, {}).get("mayhem_state") is not None:
+            # Mayhem curves change their SOL reserve outside TradeEvents; report them apart (not tradeable)
+            for k in ("pairs", "chain_ok"):
+                tot["mayhem_" + k] += c[k]
+            tot["mayhem_coins"] += 1
+            tot["v5_pairs"] += s5["pairs"]
+            tot["v5_pre"] += s5["pre_fit"]
+            tot["v5_post"] += s5["post_fit"]
+            continue
+        tot["coins"] += 1
         for k in ("pairs", "chain_ok", "label_checked", "label_ok"):
             tot[k] += c[k]
         tot["v5_pairs"] += s5["pairs"]
@@ -216,7 +227,9 @@ def run(out: Path, max_hours: int, ch: CryptoHouse | None) -> dict:
                  "swapapi_label_agree": lab_match, "swapapi_label_checked": lab_n,
                  "pass": tot["label_checked"] > 0 and tot["label_ok"] / tot["label_checked"] >= 0.999
                  and lab_n > 0 and lab_match / lab_n >= 0.999}
-    res["V2"] = {"transitions": tot["pairs"], "chain_ok": tot["chain_ok"],
+    res["V2"] = {"coins": tot["coins"], "transitions": tot["pairs"], "chain_ok": tot["chain_ok"],
+                 "mayhem_coins": tot["mayhem_coins"], "mayhem_transitions": tot["mayhem_pairs"],
+                 "mayhem_chain_ok": tot["mayhem_chain_ok"],
                  "share": tot["chain_ok"] / tot["pairs"] if tot["pairs"] else None,
                  "pass": tot["pairs"] > 0 and tot["chain_ok"] / tot["pairs"] >= 0.99}
     res["V5"] = {"amm_pairs": tot["v5_pairs"], "pre_fit": tot["v5_pre"], "post_fit": tot["v5_post"],
@@ -367,8 +380,9 @@ def write_report(out: Path, res: dict) -> None:
                  f"{v['swapapi_label_agree']}/{v['swapapi_label_checked']} tx-matched trades |")
     v = res.get("V2", {})
     if v:
-        L.append(f"| V2 reserve-chain completeness | {pf(v['pass'])} | {v['chain_ok']}/{v['transitions']} transitions chain "
-                 f"exactly ({(v['share'] or 0):.4%}) |")
+        L.append(f"| V2 reserve-chain completeness | {pf(v['pass'])} | non-Mayhem coins ({v['coins']}): {v['chain_ok']}/{v['transitions']} "
+                 f"transitions chain exactly ({(v['share'] or 0):.4%}); Mayhem curves ({v['mayhem_coins']}, not tradeable): "
+                 f"{v['mayhem_chain_ok']}/{v['mayhem_transitions']} (their SOL reserve moves outside TradeEvents) |")
     v = res.get("V3", {})
     if v:
         L.append(f"| V3 cross-source vs swap-api launch sample | {pf(v['pass'])} | {v['coins']} coins, {v['coin_windows']} coin-minutes: "

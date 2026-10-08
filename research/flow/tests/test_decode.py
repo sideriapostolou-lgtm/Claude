@@ -31,33 +31,36 @@ def test_fixture_has_every_event_kind(ch_events):
 
 def test_trade_decoders_match_server_side_sql(ch_events):
     """Every SQL-decoded trade (raw.sql) is reproduced byte-exactly by the Python decoders."""
-    exp = {(t["tx"], t["user"], bool(t["is_buy"])): t for t in ch_events["expected_trades"]}
+    exp = {}
+    uniq = {(t["slot"], t["tx_idx"], t["pix"], t["ix"]): t for t in ch_events["expected_trades"]}
+    for t in uniq.values():
+        exp.setdefault((t["tx"], t["user"], bool(t["is_buy"]), t["tok"]), []).append(t)
     matched = 0
     for e in ch_events["events"]:
         kind, ev = D.decode_event(e["data"])
         if kind == "curve_trade":
-            t = exp.get((e["tx_signature"], ev.user, ev.is_buy))
-            if not t:
+            ts = exp.get((e["tx_signature"], ev.user, ev.is_buy, ev.tok))
+            if not ts:
                 continue
+            t = ts.pop()
             matched += 1
             assert t["venue"] == 0
             assert ev.user_sol == t["usol"]
-            assert ev.tok == t["tok"]
             assert ev.vsol == t["x1"] and ev.vtok == t["y1"]
             assert ev.fee == t["pfee"] and ev.creator_fee == t["cfee"]
             assert ev.ix_name == t["ix_name"]
         elif kind in ("amm_buy", "amm_sell"):
-            t = exp.get((e["tx_signature"], ev.user, ev.is_buy))
-            if not t:
+            ts = exp.get((e["tx_signature"], ev.user, ev.is_buy, ev.base_amount))
+            if not ts:
                 continue
+            t = ts.pop()
             matched += 1
             assert t["venue"] == 1
             assert ev.user_sol == t["usol"]
-            assert ev.base_amount == t["tok"]
             assert ev.pool_quote_before == t["x0"] and ev.pool_base_before == t["y0"]
             assert ev.pool_quote_after == t["x1"] and ev.pool_base_after == t["y1"]
             assert ev.lp_fee == t["lp_fee"] and ev.protocol_fee == t["pfee"] and ev.coin_creator_fee == t["cfee"]
-    assert matched == len(ch_events["expected_trades"])
+    assert matched == len(uniq) == 20
 
 
 def test_create_complete_pool_match_curve_sql(ch_events):
@@ -78,18 +81,6 @@ def test_create_complete_pool_match_curve_sql(ch_events):
     assert pool.pool == coin["pool"] and pool.quote_mint == D.WSOL
     assert pool.pool_quote / 1e9 == pytest.approx(coin["pool_quote0"])
     assert pool.pool_base == 206_900_000_000_000   # migration pools hold 206.9M tokens
-
-
-def test_reserve_chain_pre_trade_semantics(ch_events):
-    """V5 as a unit test: event reserves are pre-trade; derived post-state equals the next event's pre-state."""
-    kinds = _events_by_kind(ch_events)
-    coin = ch_events["expected_coin"]
-    amm = [(e, ev) for k in ("amm_buy", "amm_sell") for e, ev in kinds.get(k, []) if ev.pool == coin["pool"]]
-    amm.sort(key=lambda p: (p[0]["block_slot"], p[0]["index"]))
-    pairs = [(a, b) for (_, a), (_, b) in zip(amm, amm[1:])]
-    assert pairs
-    ok = sum(1 for a, b in pairs if a.pool_quote_after == b.pool_quote_before and a.pool_base_after == b.pool_base_before)
-    assert ok >= len(pairs) - 1
 
 
 def test_virtual_quote_reserve_on_buy_events(ch_events):

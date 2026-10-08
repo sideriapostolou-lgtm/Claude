@@ -19,11 +19,33 @@ def test_counts_and_sol_match_swapapi(launch_fixture):
     assert abs(buys_ch - buys_sw) / buys_sw < 0.001
 
 
-def test_chain_and_labels(launch_fixture):
-    c = V.chain_check(_trades(launch_fixture))
-    assert c["pairs"] > 100
-    assert c["chain_ok"] / c["pairs"] >= 0.99
-    assert c["label_ok"] == c["label_checked"] > 0
+def test_mayhem_curve_reserves_move_outside_trade_events(launch_fixture):
+    """Mayhem curves: the token side chains exactly, the SOL side does not (reserves change without TradeEvents)."""
+    assert launch_fixture["mayhem"]
+    tr = [t for t in _trades(launch_fixture) if t["venue"] == 0]
+    y_ok = sum(1 for a, b in zip(tr, tr[1:]) if a["y1"] == b["y0"])
+    x_ok = sum(1 for a, b in zip(tr, tr[1:]) if a["x1"] == b["x0"])
+    assert y_ok == len(tr) - 1
+    assert x_ok < 0.5 * (len(tr) - 1)
+
+
+def test_chain_labels_and_pre_trade_semantics(launch_amm_fixture):
+    """V1/V2/V5 on a normal graduate: curve + PumpSwap chains close exactly; reserves are pre-trade."""
+    tr = _trades(launch_amm_fixture)
+    assert {t["venue"] for t in tr} == {0, 1}
+    c = V.chain_check(tr)
+    assert c["pairs"] == len(tr) - 2 and c["chain_ok"] == c["pairs"]
+    assert c["label_ok"] == c["label_checked"] == c["pairs"]
+    s = V.semantics_check(tr)
+    assert s["pairs"] > 50 and s["pre_fit"] == s["pairs"] and s["post_fit"] == 0
+
+
+def test_amm_counts_match_swapapi(launch_amm_fixture):
+    tr = _trades(launch_amm_fixture)
+    sw = launch_amm_fixture["swapapi"]["trades"]
+    assert len(tr) == len(sw) == launch_amm_fixture["cryptohouse"]["n_trades"]
+    o = V.ordering_check(tr, sw)
+    assert o["matched"] == len(tr) and o["agree"] == o["same_slot_pairs"] > 0
 
 
 def test_ordering_matches_slot_index(launch_fixture):
