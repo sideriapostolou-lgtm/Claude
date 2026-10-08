@@ -52,7 +52,10 @@ RPC_KEY = "helius-rpc-key-0a1b2c3d4e5f"
 TOKEN = SECRETS["DASHBOARD_TOKEN"]
 
 STATE_KEYS = {"version", "generated_at", "mode", "kill", "halted", "engine", "equity", "positions", "fills",
-              "decisions", "rejections", "receipts", "judge", "wallet", "cocoon_rules", "activity", "limits"}
+              "decisions", "rejections", "receipts", "judge", "wallet", "cocoon_rules", "activity", "limits", "usage"}
+USAGE_KEYS = {"day", "month", "warn_pct", "updated_at", "providers"}
+USAGE_ROW_KEYS = {"id", "label", "unit", "period", "calls_today", "calls_month", "used", "budget", "used_pct", "level",
+                  "tokens_today", "tokens_month", "cost_usd_today", "cost_usd_month"}
 EQUITY_KEYS = {"sol", "usd", "sol_usd", "start_usd", "pnl_today_usd", "pnl_today_sol", "pnl_total_usd",
                "pnl_total_sol", "pnl_total_trading_usd", "sol_price_effect_usd", "curve"}
 POSITION_KEYS = {"id", "mint", "symbol", "opened_at", "entry_price_usd", "last_price_usd", "value_sol",
@@ -378,6 +381,93 @@ def test_chain_verification_is_throttled_and_catches_tampering(ledger: Ledger, s
     assert cached["verified"] is True and cached["verified_at"] == NOW
     fresh = build_state(ledger, settings, NOW + VERIFY_EVERY_S, cache)["receipts"]
     assert (fresh["verified"], fresh["first_bad_seq"]) == (False, 2)
+
+
+def _counts(day: str, day_counts: dict[str, Any], month: str, month_counts: dict[str, Any]) -> dict[str, Any]:
+    return {"day": day, "day_counts": day_counts, "month": month, "month_counts": month_counts,
+            "updated_at": NOW - 30}
+
+
+def test_usage_panel_on_an_empty_ledger(ledger: Ledger, make_settings: Callable[..., Settings]) -> None:
+    usage = build_state(ledger, make_settings(), NOW)["usage"]
+    assert set(usage) == USAGE_KEYS and (usage["day"], usage["month"]) == ("2026-10-08", "2026-10")
+    assert usage["warn_pct"] == 80.0 and usage["updated_at"] is None
+    rows = usage["providers"]
+    assert [r["id"] for r in rows] == ["solana_rpc", "jupiter", "geckoterminal", "dexscreener", "rugcheck", "anthropic"]
+    assert all(set(r) == USAGE_ROW_KEYS and r["calls_today"] == r["calls_month"] == 0 for r in rows)
+    rpc, anthropic = rows[0], rows[-1]
+    assert (rpc["label"], rpc["unit"], rpc["budget"], rpc["used_pct"], rpc["level"]) == (
+        "Solana RPC", "calls", None, None, None)  # the public RPC has no monthly budget
+    assert (anthropic["unit"], anthropic["period"], anthropic["budget"], anthropic["used"]) == ("usd", "day", 1.0, 0.0)
+    assert (anthropic["used_pct"], anthropic["level"]) == (0.0, "ok")
+    blocked = build_state(ledger, make_settings(JUDGE_MAX_DAILY_USD=0), NOW)["usage"]["providers"][-1]
+    assert (blocked["budget"], blocked["used_pct"], blocked["level"]) == (0.0, None, None)  # cap 0 = judge blocked
+
+
+def test_usage_panel_shows_each_provider_against_its_budget(ledger: Ledger,
+                                                            make_settings: Callable[..., Settings]) -> None:
+    settings = make_settings(SOLANA_RPC_URL=f"https://mainnet.helius-rpc.com/?api-key={RPC_KEY}",
+                             USAGE_HELIUS_MONTHLY_CREDITS=1000, USAGE_JUPITER_MONTHLY_CALLS=100,
+                             JUDGE_MAX_DAILY_USD=0.5)
+    assert make_settings().usage_helius_monthly_credits == 1_000_000  # the Helius free plan
+    ledger.set_kv("usage.providers", {
+        "helius": _counts("2026-10-08", {"calls": 40, "credits": 40}, "2026-10", {"calls": 850, "credits": 850}),
+        "jupiter": _counts("2026-10-07", {"calls": 70}, "2026-10", {"calls": 120}),  # nothing yet today
+        "geckoterminal": _counts("2026-09-30", {"calls": 9}, "2026-09", {"calls": 9000}),  # last month's
+        "anthropic": _counts("2026-10-08", {"calls": 3, "input_tokens": 6000, "output_tokens": 300, "cost_usd": 0.45},
+                             "2026-10", {"calls": 30, "input_tokens": 60000, "output_tokens": 3000, "cost_usd": 0.6}),
+        "pumpfun": _counts("2026-10-08", {"calls": 2}, "2026-10", {"calls": 2}),
+        f"leak {RPC_KEY}": _counts("2026-10-08", {"calls": 1}, "2026-10", {"calls": 1}),  # unknown ids: ignored
+    })
+    ledger.set_kv("judge.cost_usd_day", {"day": "2026-10-08", "usd": 0.45})
+    state = build_state(ledger, settings, NOW)
+    usage = state["usage"]
+    assert usage["updated_at"] == NOW - 30
+    rows = {r["id"]: r for r in usage["providers"]}
+    assert list(rows) == ["helius", "jupiter", "geckoterminal", "dexscreener", "rugcheck", "anthropic", "pumpfun"]
+    none = dict.fromkeys(("tokens_today", "tokens_month", "cost_usd_today", "cost_usd_month"))
+    assert rows["helius"] == {"id": "helius", "label": "Helius", "unit": "credits", "period": "month",
+                              "calls_today": 40, "calls_month": 850, "used": 850, "budget": 1000,
+                              "used_pct": 85.0, "level": "warn", **none}
+    assert rows["jupiter"] == {"id": "jupiter", "label": "Jupiter", "unit": "calls", "period": "month",
+                               "calls_today": 0, "calls_month": 120, "used": 120, "budget": 100,
+                               "used_pct": 120.0, "level": "over", **none}
+    assert (rows["geckoterminal"]["calls_today"], rows["geckoterminal"]["calls_month"]) == (0, 0)
+    assert rows["geckoterminal"]["budget"] is None and rows["geckoterminal"]["level"] is None
+    assert rows["anthropic"] == {"id": "anthropic", "label": "Anthropic", "unit": "usd", "period": "day",
+                                 "calls_today": 3, "calls_month": 30, "used": 0.45, "budget": 0.5,
+                                 "used_pct": pytest.approx(90.0), "level": "warn", "tokens_today": 6300,
+                                 "tokens_month": 63000, "cost_usd_today": 0.45, "cost_usd_month": 0.6}
+    assert rows["pumpfun"]["calls_today"] == 2 and rows["pumpfun"]["budget"] is None
+    blob = json.dumps(state)
+    assert RPC_KEY not in blob and "helius-rpc.com" not in blob  # provider names, never URLs
+
+
+def test_usage_budget_of_the_judge_is_what_the_judge_enforces(ledger: Ledger,
+                                                              make_settings: Callable[..., Settings]) -> None:
+    """Without per-call usage (judge hook not wired yet) the daily spend still comes from the judge's kv."""
+    ledger.set_kv("judge.cost_usd_day", {"day": "2026-10-08", "usd": 0.85})
+    anthropic = build_state(ledger, make_settings(), NOW)["usage"]["providers"][-1]
+    assert (anthropic["used"], anthropic["used_pct"], anthropic["level"]) == (0.85, pytest.approx(85.0), "warn")
+    ledger.set_kv("judge.cost_usd_day", {"day": "2026-10-07", "usd": 5.0})  # yesterday's spend is over
+    anthropic = build_state(ledger, make_settings(), NOW)["usage"]["providers"][-1]
+    assert (anthropic["used"], anthropic["level"]) == (0.0, "ok")
+
+
+def test_usage_card_and_budget_chips_are_on_the_page(settings: Settings) -> None:
+    from nightcrawler.dashboard import _SCRIPT
+
+    assert '<section class="card" id="usage">' in render_html(settings)
+    assert "renderUsage(s.usage)" in _SCRIPT
+    assert "of its " in _SCRIPT and "over its " in _SCRIPT  # chips: "<provider> at 85% of its monthly budget"
+
+
+def test_missing_optional_parts_never_render_as_the_word_null() -> None:
+    """``node.replaceChildren(null)`` inserts the TEXT "null" (it showed under Details whenever there was
+    no engine error, and under the skip reasons): every card is filled through one helper that drops them."""
+    from nightcrawler.dashboard import _SCRIPT
+
+    assert _SCRIPT.count(".replaceChildren(") == 1 and "function put(node, ...kids)" in _SCRIPT
 
 
 def test_rule_ids() -> None:

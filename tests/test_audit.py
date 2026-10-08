@@ -43,9 +43,11 @@ def winner_fills(mode: str = "paper") -> list[Fill]:
 
 
 def winner_position() -> Position:
+    """The row the engine writes for :func:`winner_fills` (every amount = the sum of its fills)."""
     return Position(id="p1", mint=HIGGS, symbol="HIGGS", pool="pool1", opened_at=NOW, token_decimals=6,
                     entry_fill_ids=["f1"], exit_fill_ids=["f2", "f3"], token_amount=0,
-                    initial_token_amount=5_000_000, status="closed", exit_reason="trailing_stop",
+                    initial_token_amount=5_000_000, cost_lamports=100_000_000, proceeds_lamports=110_000_000,
+                    fees_lamports=3 * FEE, rent_lamports=0, status="closed", exit_reason="trailing_stop",
                     closed_at=NOW + 3600)
 
 
@@ -56,8 +58,11 @@ def open_fills() -> list[Fill]:
 
 
 def open_position(token_amount: int = 600_000) -> Position:
+    """The row the engine writes for :func:`open_fills` (``token_amount`` overridable to fake drift)."""
     return Position(id="p2", mint=HOOKI, symbol="HOOKI", pool="pool2", opened_at=NOW + 100, token_decimals=6,
-                    entry_fill_ids=["g1"], exit_fill_ids=["g2"], token_amount=token_amount, partial_taken=True)
+                    entry_fill_ids=["g1"], exit_fill_ids=["g2"], token_amount=token_amount,
+                    initial_token_amount=1_000_000, cost_lamports=50_000_000, proceeds_lamports=30_000_000,
+                    fees_lamports=2 * FEE, rent_lamports=RENT, partial_taken=True)
 
 
 EXPECTED_SOL = START + 9_100_000 - 50_000_000 - FEE - RENT + 30_000_000 - FEE
@@ -154,7 +159,7 @@ def test_paper_books_that_match_are_ok(paper_book: Ledger, fake_clock: FakeClock
     assert report.issues == []
     assert (report.mode, report.checked_at) == ("paper", NOW)
     assert report.expected_sol_lamports == report.broker_sol_lamports == EXPECTED_SOL
-    assert report.sol_drift_lamports == 0 and report.token_drift == {}
+    assert report.sol_drift_lamports == 0 and report.token_drift == {} and report.position_drift == {}
     assert (report.chain_ok, report.chain_first_bad_seq) == (True, None)
     assert [t.position_id for t in report.trades] == ["p1", "p2"]
     assert report.totals == {"trades": 1, "open_trades": 1, "wins": 1, "losses": 0, "win_rate_pct": 100.0,
@@ -183,11 +188,15 @@ def test_paper_reset_starts_a_new_accounting_epoch(paper_book: Ledger) -> None:
     paper_book.set_kv("paper.start_lamports", 400_000_000)
     paper_book.record_fill(fill("k1", "buy", HIGGS, 10_000_000, 1_000, ts=NOW + 900, rent=RENT, position_id="p9"))
     paper_book.upsert_position(Position(id="p9", mint=HIGGS, symbol="HIGGS", pool=None, opened_at=NOW + 900,
-                                        token_decimals=6, token_amount=1_000))
+                                        token_decimals=6, token_amount=1_000, initial_token_amount=1_000,
+                                        cost_lamports=10_000_000, fees_lamports=FEE, rent_lamports=RENT))
     expected = 400_000_000 - 10_000_000 - FEE - RENT
     report = Auditor(paper_book, FakeBroker("paper", expected, {HIGGS: 1_000})).reconcile()
     assert report.ok, report.issues
     assert report.expected_sol_lamports == expected
+    # the reset wiped p2's virtual tokens: reported, but not a failure (they never existed for real)
+    assert report.position_drift == {"p2": {"token_amount": {"books": 0, "fills": 600_000, "drift": -600_000}}}
+    assert any("position p2" in i and "paper reset" in i for i in report.issues)
 
 
 def test_fills_of_the_other_mode_are_ignored(paper_book: Ledger) -> None:
@@ -266,6 +275,45 @@ def test_orphan_fill_and_position_mismatch_are_problems(paper_book: Ledger) -> N
     assert not report.ok
     assert any("not linked to any position" in i and "orphan" in i for i in report.issues)
     assert any("position p2" in i and "net 600000" in i for i in report.issues)
+
+
+def test_every_position_is_cross_checked_against_the_sum_of_its_fills(paper_book: Ledger) -> None:
+    """ACC-9: token amounts and SOL figures of open AND closed positions must equal their fills' sums."""
+    closed = winner_position()
+    closed.cost_lamports, closed.proceeds_lamports = 90_000_000, 111_000_000
+    paper_book.upsert_position(closed)
+    still_open = open_position()
+    still_open.fees_lamports, still_open.initial_token_amount, still_open.rent_lamports = FEE, 2_000_000, 0
+    paper_book.upsert_position(still_open)
+    report = Auditor(paper_book, FakeBroker("paper", EXPECTED_SOL, {HOOKI: 600_000})).reconcile()
+    assert not report.ok and report.token_drift == {}  # the wallet matches; the position rows do not
+    assert report.position_drift == {
+        "p1": {"cost_lamports": {"books": 90_000_000, "fills": 100_000_000, "drift": -10_000_000},
+               "proceeds_lamports": {"books": 111_000_000, "fills": 110_000_000, "drift": 1_000_000}},
+        "p2": {"initial_token_amount": {"books": 2_000_000, "fills": 1_000_000, "drift": 1_000_000},
+               "fees_lamports": {"books": FEE, "fills": 2 * FEE, "drift": -FEE},
+               "rent_lamports": {"books": 0, "fills": RENT, "drift": -RENT}}}
+    assert any("position p1 (HIGGS) cost_lamports: books 90000000, its fills 100000000" in i for i in report.issues)
+    assert any("position p2 (HOOKI) fees_lamports: books 300000, its fills 600000" in i for i in report.issues)
+    text = Auditor.format_text(report)
+    assert "Position drift (position row vs the sum of its fills):" in text
+    assert "  p1 cost_lamports: books 90000000, fills 100000000, drift -10000000" in text
+
+
+@pytest.mark.parametrize("mode", ["paper", "live"], ids=["paper-wallet", "live-wallet"])  # id "live" = skipped
+def test_a_closed_position_whose_fills_still_hold_tokens_is_drift(ledger: Ledger, mode: str) -> None:
+    """Closed in the books, but its sells add up to less than its buys: tokens nobody manages."""
+    fills = [fill("k1", "buy", HIGGS, 10_000_000, 1_000, ts=NOW, rent=RENT, position_id="p5", mode=mode),
+             fill("k2", "sell", HIGGS, 4_000_000, 400, ts=NOW + 60, position_id="p5", mode=mode)]
+    closed = Position(id="p5", mint=HIGGS, symbol="HIGGS", pool=None, opened_at=NOW, token_decimals=6,
+                      entry_fill_ids=["k1"], exit_fill_ids=["k2"], token_amount=0, initial_token_amount=1_000,
+                      cost_lamports=10_000_000, proceeds_lamports=4_000_000, fees_lamports=2 * FEE,
+                      rent_lamports=RENT, status="closed", closed_at=NOW + 60, exit_reason="stop_loss", mode=mode)
+    book(ledger, fills, [closed], mode=mode)
+    report = Auditor(ledger, None, mode=mode).reconcile()
+    assert not report.ok
+    assert report.position_drift == {"p5": {"token_amount": {"books": 0, "fills": 600, "drift": -600}}}
+    assert any("position p5 (HIGGS) says 0 tokens, its fills net 600" in i for i in report.issues)
 
 
 def test_broken_chain_fails_the_audit(paper_book: Ledger, tmp_path: Path) -> None:

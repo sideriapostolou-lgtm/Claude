@@ -67,6 +67,23 @@ per mint), ``activity`` ``{"candidates_24h": int}`` and ``limits``
 whole marked-to-market result (partial-sale proceeds + marked value - cost -
 fees - locked rent, :meth:`Position.pnl_lamports`), percent of its cost.
 
+``usage`` (the "API usage" card) - provider calls per UTC day and month from kv
+``usage.providers`` (written by ``http.UsageTracker``; provider names only, never
+a URL or key) against each free-tier budget::
+
+    {"day": "YYYY-MM-DD", "month": "YYYY-MM", "warn_pct": 80.0, "updated_at": float|null,
+     "providers": [{"id", "label", "unit": "calls"|"credits"|"usd", "period": "month"|"day",
+                    "calls_today", "calls_month", "used", "budget": number|null,
+                    "used_pct": float|null, "level": "ok"|"warn"|"over"|null,
+                    "tokens_today", "tokens_month", "cost_usd_today", "cost_usd_month"}]}
+
+The RPC row (Helius or Solana RPC, by ``SOLANA_RPC_URL``), Jupiter, GeckoTerminal,
+DexScreener, RugCheck and Anthropic are always listed; other providers once used.
+Budgets: ``USAGE_*_MONTHLY_*`` settings (Helius: credits, 1 per RPC call); Anthropic:
+``JUDGE_MAX_DAILY_USD`` per day, measured by the judge's own kv ``judge.cost_usd_day``.
+``tokens_*``/``cost_usd_*`` are set for Anthropic only. ``level`` ``warn`` (>= 80 %)
+and ``over`` (>= 100 %) also add a chip to the status row.
+
 Chain verification is expensive on long chains: ``build_state`` re-verifies
 at most every 5 minutes (cached in the server instance).
 """
@@ -89,6 +106,7 @@ from urllib.parse import parse_qs, urlsplit
 from nightcrawler import __version__
 from nightcrawler.clock import utc_day
 from nightcrawler.config import Settings
+from nightcrawler.http import KV_USAGE, PROVIDERS, host_of, provider_of
 from nightcrawler.logging_setup import get_logger, redact_text
 from nightcrawler.models import LAMPORTS_PER_SOL, Position
 
@@ -115,6 +133,18 @@ RECENT_LIMIT = 50
 KILL_MODES = ("off", "stop", "sell_all")
 _RULE_PREFIX = re.compile(r"^\[([A-Za-z0-9_]+)\]")
 _COOKIE_CONTEXT = b"nightcrawler-dashboard-cookie-v1"
+#: A provider at or above this PERCENT of its budget gets a warning chip (100 % and more: red).
+USAGE_WARN_PCT = 80.0
+#: Always on the Usage panel after the RPC row (Helius or Solana RPC, by SOLANA_RPC_URL); others once used.
+_USAGE_CORE = ("jupiter", "geckoterminal", "dexscreener", "rugcheck", "anthropic")
+#: provider -> (Settings field holding its monthly budget, the unit counted against it)
+_MONTHLY_BUDGETS = {
+    "helius": ("usage_helius_monthly_credits", "credits"),
+    "jupiter": ("usage_jupiter_monthly_calls", "calls"),
+    "geckoterminal": ("usage_geckoterminal_monthly_calls", "calls"),
+    "dexscreener": ("usage_dexscreener_monthly_calls", "calls"),
+    "rugcheck": ("usage_rugcheck_monthly_calls", "calls"),
+}
 
 
 # =========================================================================== state
@@ -148,6 +178,7 @@ def build_state(ledger: Any, settings: Settings, now: float,
         "judge": _judge(ledger, settings, now),
         "wallet": {"address": _str_or_none(ledger.get_kv("wallet.pubkey")) if settings.is_live else None},
         "limits": {"max_open_positions": settings.max_open_positions},
+        "usage": _usage(ledger, settings, now),
     }
     return scrub(state, settings.secret_values())
 
@@ -280,6 +311,53 @@ def _judge(ledger: Any, settings: Settings, now: float) -> dict[str, Any]:
             "cost_usd_today": today or 0.0}
 
 
+def _usage(ledger: Any, settings: Settings, now: float) -> dict[str, Any]:
+    """Provider calls this UTC day/month (kv ``usage.providers``, written by ``http.UsageTracker``)
+    against each free-tier budget. Only provider names are shown - never a URL, host or key."""
+    stored = ledger.get_kv(KV_USAGE)
+    stored = {k: v for k, v in stored.items() if isinstance(v, dict)} if isinstance(stored, dict) else {}
+    day = utc_day(now)
+    rpc_host = host_of(settings.solana_rpc_url)
+    ids = [provider_of(rpc_host, rpc_host), *_USAGE_CORE]
+    ids += [p for p in PROVIDERS if p in stored and p not in ids]
+    stamps = [v["updated_at"] for v in stored.values() if _num_or_none(v.get("updated_at")) is not None]
+    return {"day": day, "month": day[:7], "warn_pct": USAGE_WARN_PCT, "updated_at": max(stamps, default=None),
+            "providers": [_usage_row(p, stored.get(p, {}), day, ledger, settings) for p in ids]}
+
+
+def _period_counts(entry: dict[str, Any], period: str, key: str) -> dict[str, float]:
+    """``entry``'s day/month counters when they belong to ``key`` (today / this month), else ``{}``."""
+    counts = entry.get(f"{period}_counts")
+    if entry.get(period) != key or not isinstance(counts, dict):
+        return {}
+    return {name: value for name, value in counts.items() if _num_or_none(value) is not None}
+
+
+def _usage_row(provider: str, entry: dict[str, Any], day: str, ledger: Any, settings: Settings) -> dict[str, Any]:
+    today, month = _period_counts(entry, "day", day), _period_counts(entry, "month", day[:7])
+    row: dict[str, Any] = {"id": provider, "label": PROVIDERS[provider], "unit": "calls", "period": "month",
+                           "calls_today": today.get("calls", 0), "calls_month": month.get("calls", 0),
+                           "used": month.get("calls", 0), "budget": None, "used_pct": None, "level": None,
+                           "tokens_today": None, "tokens_month": None, "cost_usd_today": None, "cost_usd_month": None}
+    if provider == "anthropic":  # budget: JUDGE_MAX_DAILY_USD, measured like the judge enforces it
+        judged = ledger.get_kv("judge.cost_usd_day")
+        spent = _num_or_none(judged.get("usd")) if isinstance(judged, dict) and judged.get("day") == day else None
+        spent = spent if spent is not None else today.get("cost_usd", 0.0)
+        row.update(unit="usd", period="day", used=spent, budget=float(settings.judge_max_daily_usd),
+                   tokens_today=today.get("input_tokens", 0) + today.get("output_tokens", 0),
+                   tokens_month=month.get("input_tokens", 0) + month.get("output_tokens", 0),
+                   cost_usd_today=spent, cost_usd_month=month.get("cost_usd", 0.0))
+    elif provider in _MONTHLY_BUDGETS:
+        field_name, unit = _MONTHLY_BUDGETS[provider]
+        budget = getattr(settings, field_name)
+        row.update(unit=unit, used=month.get(unit, 0), budget=budget if budget > 0 else None)
+    if row["budget"]:
+        row["used_pct"] = row["used"] / row["budget"] * 100.0
+        row["level"] = ("over" if row["used_pct"] >= 100.0 else
+                        "warn" if row["used_pct"] >= USAGE_WARN_PCT else "ok")
+    return row
+
+
 # =========================================================================== page
 
 _STYLE = r"""
@@ -363,6 +441,8 @@ background:var(--accent-soft);vertical-align:1px;white-space:nowrap}
 .bar{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;margin-top:10px;font-size:14px}
 .bar .track{grid-column:1/-1;height:8px;border-radius:4px;background:var(--hair);overflow:hidden}
 .bar .fill{height:100%;border-radius:4px;background:var(--accent);min-width:4px}
+.bar .fill.warn{background:var(--warn)}.bar .fill.over{background:var(--critical)}
+.bar .meta{grid-column:1/-1;margin-top:0}
 .sublabel{color:var(--ink2);font-size:13px;margin:14px 0 0}
 .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px;word-break:break-all}
 .hash{margin-top:8px;padding:10px 12px;border-radius:10px;background:var(--page);border:1px solid var(--border)}
@@ -401,6 +481,10 @@ _SCRIPT = r"""
     if (cls) node.className = cls;
     for (const k of kids) if (k !== null && k !== undefined && k !== false) node.append(k);
     return node;
+  }
+  // Fill a card. Missing parts are dropped: replaceChildren(null) would show the word "null".
+  function put(node, ...kids) {
+    node.replaceChildren(...kids.filter((k) => k !== null && k !== undefined && k !== false));
   }
   function svg(tag, attrs) {
     const node = document.createElementNS(SVG, tag);
@@ -469,7 +553,7 @@ _SCRIPT = r"""
     const live = s.mode === "LIVE";
     const badge = $("badge");
     badge.className = "badge" + (live ? " live" : "");
-    badge.replaceChildren(el("b", null, live ? "LIVE" : "PAPER"), el("span", null,
+    put(badge, el("b", null, live ? "LIVE" : "PAPER"), el("span", null,
       live ? "Real money · signed swaps through Jupiter" : "Simulated fills from live Jupiter quotes"));
     const chips = [];
     const hb = s.engine.heartbeat;
@@ -489,7 +573,47 @@ _SCRIPT = r"""
     if (status.unresolved_swaps && status.unresolved_swaps.length) {
       chips.push(["serious", "Unresolved swap: checking the wallet · new buys blocked"]);
     }
-    $("chips").replaceChildren(...chips.map(([cls, text]) => el("span", "chip " + cls, el("i"), text)));
+    chips.push(...usageChips(s.usage));
+    put($("chips"), ...chips.map(([cls, text]) => el("span", "chip " + cls, el("i"), text)));
+  }
+
+  // ---------------------------------------------------------------- provider usage (free-tier budgets)
+  const PERIOD = {day: "daily", month: "monthly"};
+  function usageChips(u) {
+    return ((u && u.providers) || []).filter((r) => r.level === "warn" || r.level === "over").map((r) =>
+      r.level === "over"
+        ? ["critical", r.label + " over its " + PERIOD[r.period] + " budget (" + Math.round(r.used_pct) + "%)"]
+        : ["warn", r.label + " at " + Math.round(r.used_pct) + "% of its " + PERIOD[r.period] + " budget"]);
+  }
+  function compact(n) {
+    if (!isNum(n)) return "—";
+    if (Math.abs(n) >= 1e6) return (n / 1e6).toFixed(1) + "M";
+    if (Math.abs(n) >= 1e4) return (n / 1e3).toFixed(1) + "k";
+    return Math.round(n).toLocaleString();
+  }
+  function amount(v, unit) { return unit === "usd" ? usd(v) : compact(v) + " " + unit; }
+
+  function renderUsage(u) {
+    const rows = u.providers.map((r) => {
+      const budget = isNum(r.budget) && r.budget > 0;
+      const right = budget ? Math.round(r.used_pct) + "%" : r.unit === "usd" ? "judge blocked (cap $0)" : "no budget";
+      const when = r.period === "day" ? " today" : " this month";
+      const used = amount(r.used, r.unit) + (budget ? " of " + amount(r.budget, r.unit) : "") + when;
+      const meta = r.unit === "usd"
+        ? used + " · " + compact(r.calls_today) + " calls, " + compact(r.tokens_today) + " tokens today · "
+          + usd(r.cost_usd_month) + " this month"
+        : budget ? used + " · " + compact(r.calls_today) + " calls today"
+          : compact(r.calls_today) + " calls today · " + compact(r.calls_month) + " this month";
+      const fill = budget ? el("div", "fill " + (r.level === "ok" ? "" : r.level)) : null;
+      if (fill) fill.style.width = Math.min(100, r.used_pct).toFixed(1) + "%";
+      return el("div", "bar", el("span", null, r.label), el("b", "num " + (r.level === "over" ? "down" : ""), right),
+        fill ? el("div", "track", fill) : null, el("div", "meta", meta));
+    });
+    const counted = isNum(u.updated_at) ? "UTC day & month · counted " + ago(u.updated_at) : "nothing counted yet";
+    put($("usage"), el("h2", null, "API usage", el("small", null, counted)),
+      el("div", "bars", ...rows),
+      el("p", "sublabel", "Free-tier budgets come from the USAGE_* settings and JUDGE_MAX_DAILY_USD; a chip warns at "
+        + u.warn_pct + "%."));
   }
 
   function renderEquity(e, s) {
@@ -505,7 +629,7 @@ _SCRIPT = r"""
             + (isNum(e.sol_price_effect_usd) ? " · SOL price " + usd(e.sol_price_effect_usd, true) : "")
           : usd(e.pnl_total_usd, true),
         tone(e.pnl_total_sol)));
-    card.replaceChildren(
+    put(card,
       el("h2", null, "Equity", el("small", null, s.mode === "LIVE" ? "bot wallet" : "virtual wallet")),
       el("div", "hero", hasUsd ? usd(e.usd) : "—"),
       el("div", "sub", hasUsd ? sol(e.sol) + " · SOL " + usd(e.sol_usd)
@@ -592,7 +716,7 @@ _SCRIPT = r"""
         el("span", "num " + tone(p.unrealized_pnl_sol), sol(p.unrealized_pnl_sol, true))),
       el("div", "meta", "Entry " + price(p.entry_price_usd) + " → now " + price(p.last_price_usd)
         + " · held " + held(p.opened_at), p.partial_taken ? el("span", null, " · profit partly taken") : null)));
-    card.replaceChildren(el("h2", null, "Open positions", el("small", null, list.length + " of " + max)),
+    put(card, el("h2", null, "Open positions", el("small", null, list.length + " of " + max)),
       rows.length ? el("div", "list", ...rows)
         : el("p", "empty", "No open positions. The bot is watching for a setup."));
   }
@@ -604,7 +728,7 @@ _SCRIPT = r"""
         el("div", "num", sol(f.sol))),
       el("div", "meta", when(f.ts) + " · " + price(f.price_usd) + " · impact " + plainPct(f.price_impact_pct)
         + " · fee " + f.platform_fee_bps + " bps" + (f.signature ? " · tx " + short(f.signature) : ""))));
-    $("fills").replaceChildren(el("h2", null, "Recent trades", el("small", null, fills.length ? "newest first" : "")),
+    put($("fills"), el("h2", null, "Recent trades", el("small", null, fills.length ? "newest first" : "")),
       rows.length ? el("div", "list", ...rows)
         : el("p", "empty", "No trades yet. Every paper fill is priced from a live Jupiter quote at the exact size."));
   }
@@ -624,7 +748,7 @@ _SCRIPT = r"""
     });
     const others = OTHER_REJECTIONS.filter(([key]) => counts[key]).map(([key, label]) =>
       el("div", "line", el("span", null, label), el("b", "num", String(counts[key]))));
-    $("filter").replaceChildren(el("h2", null, "Why coins were skipped", el("small", null, "last 24 h")), funnel,
+    put($("filter"), el("h2", null, "Why coins were skipped", el("small", null, "last 24 h")), funnel,
       bars.length ? el("div", "bars", el("p", "sublabel", "Rug filter failures (coins)"), ...bars)
         : el("p", "sublabel", "No rug-filter failures in the last 24 h."),
       others.length ? el("div", "bars", el("p", "sublabel", "Later checks that said no"), ...others) : null);
@@ -641,7 +765,7 @@ _SCRIPT = r"""
           d.symbol || short(d.mint)), el("div", "meta", when(d.ts))),
         el("div", "reason", d.reason || ""), verdict ? el("div", "reason", verdict) : null);
     });
-    $("decisions").replaceChildren(el("h2", null, "Decisions", el("small", null, "newest first")),
+    put($("decisions"), el("h2", null, "Decisions", el("small", null, "newest first")),
       rows.length ? el("div", "list", ...rows) : el("p", "empty", "No decisions recorded yet."));
   }
 
@@ -669,7 +793,7 @@ _SCRIPT = r"""
         + "exported file) proves that history was never rewritten. It proves honesty, not profit."));
     const head = r.seq > 0 ? [el("div", "hash mono", r.head_hash), copy]
       : [el("p", "empty", "No receipts yet: the chain starts when the engine boots.")];
-    $("receipts").replaceChildren(el("h2", null, "Receipts", el("small", null, r.count.toLocaleString() + " recorded")),
+    put($("receipts"), el("h2", null, "Receipts", el("small", null, r.count.toLocaleString() + " recorded")),
       el("div", "chips", el("span", "chip " + chip[0], el("i"), chip[1])), ...head, explain);
   }
 
@@ -684,7 +808,7 @@ _SCRIPT = r"""
     for (const [k, v] of rows) dl.append(el("dt", null, k), el("dd", k === "Bot wallet" ? "mono" : null, v));
     const err = s.engine.last_error
       ? el("details", null, el("summary", null, "Last engine error"), el("p", "mono", s.engine.last_error)) : null;
-    $("details").replaceChildren(el("h2", null, "Details"), dl, err);
+    put($("details"), el("h2", null, "Details"), dl, err);
   }
 
   function render(s) {
@@ -696,6 +820,7 @@ _SCRIPT = r"""
     renderFilter(s);
     renderDecisions(s.decisions);
     renderReceipts(s.receipts);
+    renderUsage(s.usage);
     renderDetails(s);
     $("foot").textContent = "nightcrawler " + s.version + " · read-only · refreshes every " + REFRESH_MS / 1000 + " s";
     tick();
@@ -783,6 +908,7 @@ def render_html(settings: Settings) -> str:
         "<section class=\"card\" id=\"filter\"></section>\n"
         "<section class=\"card\" id=\"receipts\"></section>\n"
         "<section class=\"card\" id=\"decisions\"></section>\n"
+        "<section class=\"card\" id=\"usage\"></section>\n"
         "<section class=\"card\" id=\"details\"></section>\n"
         "<footer id=\"foot\">read-only dashboard</footer>\n</main>\n"
         f"<script>{_SCRIPT}</script>\n</body>\n</html>\n"

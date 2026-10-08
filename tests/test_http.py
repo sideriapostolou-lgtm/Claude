@@ -2,13 +2,33 @@
 
 from __future__ import annotations
 
+import json
 import random
+from datetime import datetime, timezone
+from pathlib import Path
 
 import pytest
 import requests
 
 from fakes import FakeClock, FakeHttp, FakeResponse
-from nightcrawler.http import DEFAULT_RATE_LIMITS, HttpClient, HttpError, RateLimiter, TokenBucket, host_of
+from nightcrawler.http import (
+    DEFAULT_RATE_LIMITS,
+    KV_USAGE,
+    PROVIDERS,
+    USAGE_FLUSH_EVERY_S,
+    HttpClient,
+    HttpError,
+    RateLimiter,
+    TokenBucket,
+    UsageTracker,
+    anthropic_usage_counts,
+    attach_usage_store,
+    flush_usage,
+    host_of,
+    provider_of,
+    record_usage,
+)
+from nightcrawler.ledger import Ledger
 
 URL = "https://api.example.com/v1/thing"
 
@@ -197,3 +217,165 @@ def test_host_max_retries_overrides_the_default_per_host(fake_http: FakeHttp, fa
     with pytest.raises(HttpError):
         client.get_json("https://other.example.org/x")
     assert len(fake_http.calls) == 2 + 5  # other hosts keep max_retries=4
+
+
+# --------------------------------------------------------------------------- provider usage
+
+KEY = "helius-secret-key-0123456789abcdef"
+
+
+@pytest.fixture
+def usage_ledger(tmp_path: Path, fake_clock: FakeClock) -> Ledger:
+    with Ledger(tmp_path / "nc.db", clock=fake_clock) as led:
+        yield led
+
+
+def test_provider_of_maps_hosts_to_the_providers_on_the_usage_panel() -> None:
+    cases = {"mainnet.helius-rpc.com": "helius", "api.helius.xyz": "helius", "lite-api.jup.ag": "jupiter",
+             "api.jup.ag": "jupiter", "api.geckoterminal.com": "geckoterminal", "api.dexscreener.com": "dexscreener",
+             "api.rugcheck.xyz": "rugcheck", "frontend-api-v3.pump.fun": "pumpfun", "api.anthropic.com": "anthropic",
+             "api.mainnet-beta.solana.com": "solana_rpc", "example.com": "other", "notjup.ag": "other",
+             "evil-helius-rpc.com": "other"}
+    for host, provider in cases.items():
+        assert provider_of(host) == provider, host
+    assert provider_of("my-node.quiknode.pro", rpc_host="my-node.quiknode.pro") == "solana_rpc"
+    assert provider_of("mainnet.helius-rpc.com", rpc_host="mainnet.helius-rpc.com") == "helius"
+    assert set(cases.values()) <= set(PROVIDERS)
+
+
+def test_every_attempt_is_counted_per_provider_utc_day_and_month(settings, fake_http: FakeHttp,
+                                                                 fake_clock: FakeClock, usage_ledger: Ledger) -> None:
+    s = settings.replace(solana_rpc_url=f"https://mainnet.helius-rpc.com/?api-key={KEY}")
+    client = HttpClient.from_settings(s, session=fake_http, clock=fake_clock, rate_limits={}, default_rate=None,
+                                      rng=random.Random(0))
+    fake_http.register("helius-rpc.com", {"jsonrpc": "2.0", "result": 1})
+    fake_http.register("lite-api.jup.ag", {"ok": 1})
+    fake_http.register("geckoterminal", {"ok": 1})
+    fake_http.register("geckoterminal", {}, status=429, times=1)
+    client.post_json(s.solana_rpc_url, {"method": "getSlot"})
+    client.post_json(s.solana_rpc_url, {"method": "getSlot"})
+    client.get_json("https://lite-api.jup.ag/tokens/v2/recent")
+    client.get_json("https://api.geckoterminal.com/api/v2/x")  # a 429 and its retry: two calls on the quota
+    attach_usage_store(client, usage_ledger)  # counted before the ledger existed: nothing is lost
+    assert client.usage.flush()
+    stored = usage_ledger.get_kv(KV_USAGE)
+    helius = stored["helius"]
+    assert (helius["day"], helius["month"]) == ("2026-10-08", "2026-10")
+    assert helius["day_counts"] == helius["month_counts"] == {"calls": 2, "credits": 2}  # 1 credit per RPC call
+    assert stored["jupiter"]["day_counts"] == {"calls": 1}
+    assert stored["geckoterminal"]["month_counts"] == {"calls": 2}
+    text = json.dumps(stored)
+    assert KEY not in text and "http" not in text and "helius-rpc.com" not in text  # provider names only
+
+
+def test_usage_is_written_at_most_once_a_minute(fake_http: FakeHttp, fake_clock: FakeClock,
+                                                 usage_ledger: Ledger) -> None:
+    client = make_client(fake_http, fake_clock)
+    attach_usage_store(client, usage_ledger)
+    fake_http.register("dexscreener", {"ok": 1})
+    client.get_json("https://api.dexscreener.com/latest/dex/tokens/x")  # first call after binding: written
+    assert usage_ledger.get_kv(KV_USAGE)["dexscreener"]["day_counts"] == {"calls": 1}
+    fake_clock.advance(30)
+    client.get_json("https://api.dexscreener.com/latest/dex/tokens/x")
+    assert usage_ledger.get_kv(KV_USAGE)["dexscreener"]["day_counts"] == {"calls": 1}  # pending in memory
+    fake_clock.advance(USAGE_FLUSH_EVERY_S)
+    client.get_json("https://api.dexscreener.com/latest/dex/tokens/x")
+    assert usage_ledger.get_kv(KV_USAGE)["dexscreener"]["day_counts"] == {"calls": 3}
+
+
+def test_flush_usage_writes_the_last_counts_at_shutdown(fake_http: FakeHttp, fake_clock: FakeClock,
+                                                        usage_ledger: Ledger) -> None:
+    client = make_client(fake_http, fake_clock)
+    attach_usage_store(client, usage_ledger)
+    fake_http.register("rugcheck", {"ok": 1})
+    client.get_json("https://api.rugcheck.xyz/v1/tokens/x/report")
+    fake_clock.advance(10)
+    client.get_json("https://api.rugcheck.xyz/v1/tokens/x/report")  # pending: the minute is not over
+    assert usage_ledger.get_kv(KV_USAGE)["rugcheck"]["day_counts"] == {"calls": 1}
+    assert flush_usage(client) is True
+    assert usage_ledger.get_kv(KV_USAGE)["rugcheck"]["day_counts"] == {"calls": 2}
+    assert flush_usage(object()) is False  # a test double without usage tracking
+
+
+def test_usage_rolls_over_at_utc_midnight_and_at_the_month_end(fake_clock: FakeClock, usage_ledger: Ledger) -> None:
+    fake_clock.set(datetime(2026, 10, 31, 23, 59, tzinfo=timezone.utc).timestamp())
+    tracker = UsageTracker(fake_clock, usage_ledger)
+    tracker.record("jupiter")
+    tracker.record("jupiter")
+    assert tracker.flush()
+    fake_clock.advance(120)  # 2026-11-01 00:01 UTC
+    tracker.record("jupiter")
+    assert tracker.flush()
+    j = usage_ledger.get_kv(KV_USAGE)["jupiter"]
+    assert (j["day"], j["day_counts"], j["month"], j["month_counts"]) == (
+        "2026-11-01", {"calls": 1}, "2026-11", {"calls": 1})
+    fake_clock.advance(86_400)  # next day, same month: the day starts over, the month keeps counting
+    tracker.record("jupiter")
+    assert tracker.flush()
+    j = usage_ledger.get_kv(KV_USAGE)["jupiter"]
+    assert (j["day"], j["day_counts"], j["month_counts"]) == ("2026-11-02", {"calls": 1}, {"calls": 2})
+
+
+def test_counts_of_several_processes_add_up_instead_of_overwriting(fake_clock: FakeClock,
+                                                                   usage_ledger: Ledger) -> None:
+    bot, cli = UsageTracker(fake_clock, usage_ledger), UsageTracker(fake_clock, usage_ledger)
+    for _ in range(3):
+        bot.record("rugcheck")
+    cli.record("rugcheck")
+    cli.record("geckoterminal")
+    late = UsageTracker(fake_clock, usage_ledger)
+    late.record("rugcheck")  # recorded on 2026-10-08, flushed after midnight
+    assert bot.flush() and cli.flush()
+    stored = usage_ledger.get_kv(KV_USAGE)
+    assert stored["rugcheck"]["day_counts"] == {"calls": 4} and stored["geckoterminal"]["day_counts"] == {"calls": 1}
+    fake_clock.advance(86_400)
+    bot.record("rugcheck")
+    assert bot.flush() and late.flush()
+    rugcheck = usage_ledger.get_kv(KV_USAGE)["rugcheck"]
+    assert (rugcheck["day"], rugcheck["day_counts"]) == ("2026-10-09", {"calls": 1})  # yesterday's late count
+    assert rugcheck["month_counts"] == {"calls": 6}  # ... still belongs to the month
+
+
+def test_a_failing_store_never_breaks_a_request_and_loses_no_counts(fake_http: FakeHttp, fake_clock: FakeClock,
+                                                                    usage_ledger: Ledger) -> None:
+    class BrokenStore:
+        def get_kv(self, key: str, default: object = None) -> object:
+            raise RuntimeError("disk full")
+
+        def set_kv(self, key: str, value: object) -> None:
+            raise RuntimeError("disk full")
+
+    client = make_client(fake_http, fake_clock)
+    attach_usage_store(client, BrokenStore())
+    fake_http.register("rugcheck", {"ok": 1})
+    assert client.get_json("https://api.rugcheck.xyz/v1/tokens/x/report") == {"ok": 1}
+    assert client.usage.flush() is False
+    client.usage.bind(usage_ledger)
+    assert client.usage.flush()
+    assert usage_ledger.get_kv(KV_USAGE)["rugcheck"]["day_counts"] == {"calls": 1}
+    attach_usage_store(object(), usage_ledger)  # a client without usage tracking: nothing to do
+
+
+def test_judge_hook_counts_anthropic_calls_tokens_and_cost(fake_clock: FakeClock, usage_ledger: Ledger) -> None:
+    usage = {"input_tokens": 1200, "cache_read_input_tokens": 800, "cache_creation_input_tokens": 0,
+             "output_tokens": 90}
+    counts = anthropic_usage_counts(usage, 0.0123)
+    assert counts == {"calls": 1, "input_tokens": 2000, "output_tokens": 90, "cost_usd": 0.0123}
+    record_usage(usage_ledger, "anthropic", fake_clock.now(), **counts)
+    record_usage(usage_ledger, "anthropic", fake_clock.now(), **anthropic_usage_counts(None, 0.0))  # API error
+    anthropic = usage_ledger.get_kv(KV_USAGE)["anthropic"]
+    assert anthropic["day_counts"] == anthropic["month_counts"] == {
+        "calls": 2, "input_tokens": 2000, "output_tokens": 90, "cost_usd": 0.0123}
+
+    class SdkUsage:  # the SDK's usage object: attributes, some None
+        input_tokens, output_tokens, cache_read_input_tokens, cache_creation_input_tokens = 5, 7, None, 3
+
+    assert anthropic_usage_counts(SdkUsage(), 0.5) == {"calls": 1, "input_tokens": 8, "output_tokens": 7,
+                                                       "cost_usd": 0.5}
+    record_usage(None, "anthropic", fake_clock.now(), calls=1)  # no ledger: nothing to do, never raises
+
+    class BrokenStore:
+        def get_kv(self, key: str, default: object = None) -> object:
+            raise RuntimeError("locked")
+
+    record_usage(BrokenStore(), "anthropic", fake_clock.now(), calls=1)  # logged, never raised

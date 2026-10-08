@@ -116,6 +116,24 @@ nightcrawler run                  # paper trading + dashboard on http://localhos
 
 Exit codes: 0 ok, 1 error, 2 usage, 3 bad settings / live mode refused, 4 receipts broken or audit drift.
 
+## Check the receipts without nightcrawler
+
+[`scripts/verify_receipts.py`](scripts/verify_receipts.py) re-checks an export using only
+Python 3's standard library. It never imports nightcrawler, so a skeptic can read the whole
+file before trusting it:
+
+```bash
+nightcrawler receipts export receipts.jsonl
+python3 scripts/verify_receipts.py receipts.jsonl --head <a head hash you posted earlier>
+```
+
+It applies the chain rule from [docs/DESIGN.md](docs/DESIGN.md) (section 5) to every line:
+`hash = sha256(prev_hash + body)`, seq 1, 2, 3 ... starting from 64 zeros. It also checks
+that the readable fields say exactly what the hashed `body` says. It prints `OK` (exit code 0)
+or `BROKEN at seq N` with the reason (exit code 1). `--head` checks that a hash you published
+earlier is still in the chain: someone who rewrote the history could re-link every later
+receipt, but they could not reproduce a head hash that is already public.
+
 ## Settings
 
 Every setting is an environment variable (on Railway: the service's **Variables** tab). The
@@ -147,6 +165,7 @@ full list with explanations is in [.env.example](.env.example). The important on
 | `JUDGE_MAX_DAILY_USD` | `1` | AI spending cap per day; past it, the judge says no. `0` blocks every judge call. |
 | `SOLANA_RPC_URL` | public RPC | A free [Helius](https://www.helius.dev/) key is recommended, especially for live mode. |
 | `JUPITER_API_KEY` | (empty) | Optional; higher Jupiter rate limits. |
+| `USAGE_HELIUS_MONTHLY_CREDITS` | `1000000` | The dashboard's "API usage" card counts calls per provider per day and month, and shows a warning chip at 80 % of a budget. This is the Helius free plan; `USAGE_JUPITER_MONTHLY_CALLS` and the other `USAGE_*` settings default to `0` (no budget). The judge's budget is `JUDGE_MAX_DAILY_USD`. |
 
 "`_PCT`" knobs come in two kinds, and the bot checks you used the right one: the strategy and
 risk knobs listed above are **fractions** (0.20 = 20 %), while `MAX_PRICE_IMPACT_PCT` and the

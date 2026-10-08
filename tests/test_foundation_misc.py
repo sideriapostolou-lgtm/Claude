@@ -6,6 +6,7 @@ import io
 import json
 import logging
 import os
+import sys
 import threading
 
 import pytest
@@ -91,6 +92,65 @@ def test_setup_logging_one_line_and_redacted() -> None:
     # idempotent: a second setup replaces our handler instead of duplicating it
     setup_logging("INFO", stream=stream)
     assert sum(getattr(h, "_nightcrawler", False) for h in logging.getLogger().handlers) == 1
+
+
+def test_setup_logging_sends_info_to_stdout_and_warnings_to_stderr(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Railway labels every stderr line "error": DEBUG/INFO go to stdout, WARNING+ to stderr, both redacted."""
+    out, err = io.StringIO(), io.StringIO()
+    monkeypatch.setattr(sys, "stdout", out)
+    monkeypatch.setattr(sys, "stderr", err)
+    root = logging.getLogger()
+    root_level = root.level
+    try:
+        filt = setup_logging("DEBUG", secrets=["TOPSECRET-123"])
+        log = get_logger("test_streams")
+        log.debug("dbg TOPSECRET-123")
+        log.info("info %s", "TOPSECRET-123")
+        filt.add_secret("LATER-SECRET")  # one filter object guards both streams
+        log.warning("warn LATER-SECRET")
+        log.error("err TOPSECRET-123")
+        try:
+            raise ValueError("boom LATER-SECRET")
+        except ValueError:
+            log.exception("failed")
+        log.critical("crit\nsecond line")
+        ours = [h for h in root.handlers if getattr(h, "_nightcrawler", False)]
+        assert len(ours) == 2
+        setup_logging("INFO")  # idempotent: replaces both handlers instead of adding two more
+        assert sum(getattr(h, "_nightcrawler", False) for h in root.handlers) == 2
+        log.debug("hidden at INFO")
+        log.info("after reset")
+    finally:
+        root.handlers = [h for h in root.handlers if not getattr(h, "_nightcrawler", False)]
+        root.setLevel(root_level)
+    out_lines, err_lines = out.getvalue().splitlines(), err.getvalue().splitlines()
+    assert [line.split(" ", 2)[1] for line in out_lines] == ["DEBUG", "INFO", "INFO"], out_lines
+    assert [line.split(" ", 2)[1] for line in err_lines] == ["WARNING", "ERROR", "ERROR", "CRITICAL"], err_lines
+    assert out_lines[0].endswith("DEBUG nightcrawler.test_streams: dbg [REDACTED]")
+    assert out_lines[1].endswith("INFO nightcrawler.test_streams: info [REDACTED]")
+    assert out_lines[2].endswith("after reset") and "hidden" not in out.getvalue()
+    assert err_lines[0].endswith("warn [REDACTED]") and "ValueError: boom [REDACTED]" in err_lines[2]
+    assert err_lines[3].endswith("crit | second line")
+    for text in (out.getvalue(), err.getvalue()):
+        assert "TOPSECRET-123" not in text and "LATER-SECRET" not in text
+
+
+def test_setup_logging_with_one_stream_keeps_every_level_on_it(monkeypatch: pytest.MonkeyPatch) -> None:
+    """An explicit ``stream`` gets everything (tests; commands whose stdout carries data such as --json)."""
+    out, err, only = io.StringIO(), io.StringIO(), io.StringIO()
+    monkeypatch.setattr(sys, "stdout", out)
+    monkeypatch.setattr(sys, "stderr", err)
+    root = logging.getLogger()
+    root_level = root.level
+    try:
+        setup_logging("INFO", stream=only)
+        get_logger("test_streams").info("to the one stream")
+        get_logger("test_streams").warning("also there")
+    finally:
+        root.handlers = [h for h in root.handlers if not getattr(h, "_nightcrawler", False)]
+        root.setLevel(root_level)
+    assert out.getvalue() == err.getvalue() == ""
+    assert len(only.getvalue().splitlines()) == 2
 
 
 # ----------------------------------------------------------------------------- FakeHttp
