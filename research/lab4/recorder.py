@@ -3,8 +3,9 @@
 Why: the owner's venue is Polymarket US (gateway.polymarket.us, public market data, no key). Its stored price
 history is coarse for anything older than a day, so a paper desk that must fill at THAT venue's printed prices
 needs its own tape. This recorder polls, once a minute, the best bid / offer of every open non-sports market whose
-``endDate`` is within :data:`HORIZON_H` hours, and records each market's settlement price once it closes.
-Research only; nothing here trades.
+``endDate`` is within :data:`HORIZON_H` hours, and records each market's settlement price once it closes. Sports
+(the owner can trade them): the moneyline markets of games in progress (events with a live period), capped at
+:data:`SPORTS_CAP`. Research only; nothing here trades.
 
 Layout (``$SCRATCH/lab4/us`` by default)::
 
@@ -58,7 +59,10 @@ CATEGORIES = (
     "mentions",
     "tech",
 )
-HORIZON_H = 48.0  # record markets ending within two days
+HORIZON_H = 48.0  # record non-sports markets ending within two days
+SPORTS_CAP = 150  # live games: their moneyline markets only, at most this many at a time (rate limit)
+SPORTS_LOOKBACK_H = 12.0  # a game that started this long ago is treated as over
+NOT_LIVE_PERIODS = {"NS", "", "CAN", "SUS", "PST", "FT", "AOT", "FINAL", "ENDED"}
 POLL_S = 60.0
 REQ_SLEEP_S = 0.08  # the gateway's public limit is 20 req/s per IP; we stay far below
 PAGE = 100
@@ -166,6 +170,62 @@ def open_markets(
     return out
 
 
+def live_sports_markets(now: float, cap: int = SPORTS_CAP) -> list[dict[str, Any]]:
+    """The moneyline markets of sports games in progress: events that started within SPORTS_LOOKBACK_H and
+    report a live period (not scheduled, cancelled, suspended or finished), newest start first, capped."""
+    start_min = datetime.fromtimestamp(now - SPORTS_LOOKBACK_H * 3600, UTC).strftime(
+        "%Y-%m-%dT%H:%M:%SZ"
+    )
+    start_max = datetime.fromtimestamp(now + 300, UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+    out: list[dict[str, Any]] = []
+    for page in range(5):
+        reply = _get(
+            "/events",
+            {
+                "limit": PAGE,
+                "offset": page * PAGE,
+                "closed": "false",
+                "categories": "sports",
+                "startDateMin": start_min,
+                "startDateMax": start_max,
+            },
+        )
+        evs = reply.get("events") if isinstance(reply, dict) else None
+        if not evs:
+            break
+        for ev in evs:
+            started = parse_iso(ev.get("startTime") or ev.get("startDate"))
+            period = str(ev.get("period") or "").upper()
+            if started is None or started > now or period in NOT_LIVE_PERIODS:
+                continue
+            for m in ev.get("markets") or []:
+                kind = str(
+                    m.get("sportsMarketTypeV2") or m.get("marketType") or ""
+                ).upper()
+                if kind != "MONEYLINE" or m.get("closed"):
+                    continue
+                out.append(
+                    {
+                        "slug": m["slug"],
+                        "question": m.get("question"),
+                        "category": "sports",
+                        "end_ts": parse_iso(m.get("endDate")) or started + 6 * 3600,
+                        "fee_coef": _num(m.get("feeCoefficient")),
+                        "tick": _num(m.get("orderPriceMinTickSize")),
+                        "min_qty": _num(m.get("minimumTradeQty")),
+                        "status": m.get("status"),
+                        "game_start": started,
+                        "period": period,
+                        "event": ev.get("slug"),
+                    }
+                )
+        if len(evs) < PAGE:
+            break
+        time.sleep(REQ_SLEEP_S)
+    out.sort(key=lambda m: -m["game_start"])
+    return out[:cap]
+
+
 def bbo(slug: str) -> dict[str, float | None]:
     reply = _get(f"/markets/{slug}/bbo")
     md = reply.get("marketData", reply) if isinstance(reply, dict) else {}
@@ -198,6 +258,10 @@ def poll(out: Path = OUT, now: float | None = None) -> dict[str, int]:
     markets = _load(out / "markets.json")
     settled = _load(out / "settlements.json")
     fresh = open_markets(now)
+    try:
+        fresh += live_sports_markets(now)
+    except RuntimeError:
+        pass  # a sports listing hiccup must not stop the non-sports poll
     for m in fresh:
         rec = markets.setdefault(m["slug"], {**m, "first_seen": now})
         rec.update(
@@ -214,6 +278,9 @@ def poll(out: Path = OUT, now: float | None = None) -> dict[str, int]:
                 )
             }
         )
+        for k in ("period", "game_start", "event"):
+            if k in m:
+                rec[k] = m[k]
     day = datetime.fromtimestamp(now, UTC).strftime("%Y-%m-%d")
     path = out / "bbo" / f"{day}.csv"
     new_file = not path.exists()
@@ -245,8 +312,10 @@ def poll(out: Path = OUT, now: float | None = None) -> dict[str, int]:
     fresh_slugs = {m["slug"] for m in fresh}
     n_settled = 0
     for slug, rec in markets.items():
-        if slug in fresh_slugs or slug in settled or rec["end_ts"] > now:
+        if slug in fresh_slugs or slug in settled:
             continue
+        if rec["end_ts"] > now and rec.get("category") != "sports":
+            continue  # non-sports settle after their end; a game leaves the live list first
         try:
             s = settlement(slug)
         except RuntimeError:

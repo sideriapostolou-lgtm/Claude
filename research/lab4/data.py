@@ -197,38 +197,43 @@ def _list_window(
 
 
 def _list_future_enddates(
-    since: datetime, until: datetime, min_volume: float, max_pages: int = 400
+    since: datetime, until: datetime, min_volume: float
 ) -> list[dict[str, Any]]:
     """Closed markets whose endDate is AFTER ``until`` (resolved early, e.g. "by Dec 31" questions decided in
-    July): the keyset listing ordered by closedTime, newest first, stopping once closedTime < ``since``."""
+    July): the plain listing ordered by closedTime, newest first, through the allowed offsets, stopping once
+    closedTime < ``since``. A server error here is logged and yields [] so the day listing still stands."""
     rows: list[dict[str, Any]] = []
-    cursor: str | None = None
-    for _ in range(max_pages):
-        params: dict[str, Any] = {
-            "limit": PAGE,
-            "closed": "true",
-            "order": "closedTime",
-            "ascending": "false",
-            "volume_num_min": min_volume,
-            "end_date_min": until.strftime("%Y-%m-%dT%H:%M:%SZ"),
-        }
-        if cursor:
-            params["after_cursor"] = cursor
-        reply = _get(f"{API_GAMMA}/markets/keyset", params)
-        page = reply.get("markets") if isinstance(reply, dict) else None
-        if not page:
-            break
-        stop = False
-        for m in page:
-            ct = parse_time(m.get("closedTime"))
-            if ct is not None and ct < since.timestamp():
-                stop = True
+    try:
+        for offset in range(0, OFFSET_CAP + 1, PAGE):
+            page = _gamma_page(
+                {
+                    "limit": PAGE,
+                    "offset": offset,
+                    "closed": "true",
+                    "order": "closedTime",
+                    "ascending": "false",
+                    "volume_num_min": min_volume,
+                    "end_date_min": until.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                }
+            )
+            if not page:
                 break
-            rows.append(m)
-        cursor = reply.get("next_cursor") or None
-        if stop or cursor is None:
-            break
-        time.sleep(SLEEP_S)
+            stop = False
+            for m in page:
+                ct = parse_time(m.get("closedTime"))
+                if ct is not None and ct < since.timestamp():
+                    stop = True
+                    break
+                rows.append(m)
+            if stop or len(page) < PAGE:
+                break
+            time.sleep(SLEEP_S)
+    except RuntimeError as e:
+        print(
+            f"  listing early-resolved markets failed ({e}); continuing without them",
+            flush=True,
+        )
+        return []
     return rows
 
 

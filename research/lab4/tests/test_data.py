@@ -81,17 +81,15 @@ def _gamma_fake(allm, calls):
     def fake_get(url, params, tries=6):
         calls.append(dict(params))
         lo = D.parse_time(params["end_date_min"])
-        if url.endswith("/markets/keyset"):
+        if (
+            params.get("order") == "closedTime"
+        ):  # the early-resolution pass: future endDates, newest closed first
             rows = sorted(
                 (m for m in allm if D.parse_time(m["endDate"]) >= lo),
                 key=lambda m: -D.parse_time(m["closedTime"]),
             )
-            off = int(params.get("after_cursor") or 0)
-            page = rows[off : off + params["limit"]]
-            return {
-                "markets": page,
-                "next_cursor": str(off + 100) if off + 100 < len(rows) else None,
-            }
+            off = params["offset"]
+            return rows[off : off + params["limit"]]
         hi = D.parse_time(params["end_date_max"])
         rows = [
             m
@@ -191,8 +189,8 @@ def test_run_is_resumable_and_writes_manifest(monkeypatch, tmp_path):
 
     def fake_get(url, params, tries=6):
         if "gamma" in url:
-            if url.endswith("/keyset"):
-                return {"markets": [], "next_cursor": None}
+            if params.get("order") == "closedTime":
+                return []
             lo, hi = (
                 D.parse_time(params["end_date_min"]),
                 D.parse_time(params["end_date_max"]),

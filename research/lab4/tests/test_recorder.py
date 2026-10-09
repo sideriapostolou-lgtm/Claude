@@ -27,12 +27,18 @@ def _market(slug, cat, end_offset_s, closed=False):
     }
 
 
-def _fake_gateway(markets, bbos, settlements):
+def _fake_gateway(markets, bbos, settlements, events=()):
+    events = list(events)
+
     def fake_get(path, params=None, tries=4):
         if path == "/markets":
             off = params["offset"]
             ms = [m for m in markets if m["category"] == params["categories"]]
             return {"markets": ms[off : off + params["limit"]]}
+        if path == "/events":
+            return {
+                "events": events[params["offset"] : params["offset"] + params["limit"]]
+            }
         if path.endswith("/bbo"):
             slug = path.split("/")[2]
             return {
@@ -110,4 +116,88 @@ def test_parse_helpers():
         and R._num("") is None
         and R._num(None) is None
         and R._num("abc") is None
+    )
+
+
+def _event(slug, start_offset_s, period, n_markets=2, closed=False):
+    from datetime import UTC, datetime
+
+    start = datetime.fromtimestamp(NOW + start_offset_s, UTC).strftime(
+        "%Y-%m-%dT%H:%M:%SZ"
+    )
+    markets = [
+        {
+            "slug": f"{slug}-ml",
+            "question": slug,
+            "sportsMarketTypeV2": "MONEYLINE",
+            "closed": closed,
+            "endDate": start,
+            "feeCoefficient": "0.0695",
+            "orderPriceMinTickSize": "0.001",
+            "minimumTradeQty": "1",
+            "status": "MARKET_STATUS_OPEN",
+        },
+        {
+            "slug": f"{slug}-spread",
+            "question": slug,
+            "sportsMarketTypeV2": "SPREAD",
+            "closed": False,
+            "endDate": start,
+        },
+    ][:n_markets]
+    return {
+        "slug": slug,
+        "startTime": start,
+        "period": period,
+        "closed": closed,
+        "markets": markets,
+    }
+
+
+def test_live_sports_markets_keeps_moneylines_of_games_in_progress(monkeypatch):
+    evs = [
+        _event("live1", -3600, "2H"),
+        _event("live2", -600, "LIVE"),
+        _event("notstarted", 1800, "NS"),
+        _event("scheduled", -300, ""),
+        _event("done", -4 * 3600, "FT"),
+        _event("live3", -7200, "4Q"),
+    ]
+    monkeypatch.setattr(R, "_get", _fake_gateway([], {}, {}, events=evs))
+    monkeypatch.setattr(R.time, "sleep", lambda s: None)
+    got = R.live_sports_markets(NOW)
+    assert [m["slug"] for m in got] == [
+        "live2-ml",
+        "live1-ml",
+        "live3-ml",
+    ]  # newest start first, moneylines only
+    assert (
+        got[0]["category"] == "sports"
+        and got[0]["period"] == "LIVE"
+        and got[0]["fee_coef"] == 0.0695
+    )
+    assert len(R.live_sports_markets(NOW, cap=2)) == 2
+
+
+def test_poll_includes_live_sports_and_settles_them_when_they_leave_the_list(
+    monkeypatch, tmp_path
+):
+    bbos = {"g1-ml": (0.96, 0.97, 0.965)}
+    monkeypatch.setattr(
+        R, "_get", _fake_gateway([], bbos, {}, events=[_event("g1", -3600, "2H")])
+    )
+    monkeypatch.setattr(R.time, "sleep", lambda s: None)
+    r1 = R.poll(tmp_path, now=NOW)
+    assert r1["watched"] == 1 and r1["rows"] == 1
+    rec = json.loads((tmp_path / "markets.json").read_text())["g1-ml"]
+    assert (
+        rec["category"] == "sports" and rec["period"] == "2H" and rec["event"] == "g1"
+    )
+    # the game ends: it leaves the live list (its endDate may still be in the future) and settles at 1
+    monkeypatch.setattr(R, "_get", _fake_gateway([], bbos, {"g1-ml": 1}, events=[]))
+    r2 = R.poll(tmp_path, now=NOW + 1800)
+    assert r2["watched"] == 0 and r2["settled_now"] == 1
+    assert (
+        json.loads((tmp_path / "settlements.json").read_text())["g1-ml"]["settlement"]
+        == 1.0
     )
