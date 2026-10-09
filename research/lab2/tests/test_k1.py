@@ -159,7 +159,8 @@ def _dataset(split="final_train"):
     g, c, b = make_frames()
     cen = C.Census.empty()
     if split == "final_train":
-        cts = {str(m): float(t) for m, t in zip(g["mint"], (g["c_ts"] if "c_ts" in g else g["g_ts"] - 600.0), strict=True)}
+        created = g["c_ts"] if "c_ts" in g else g["g_ts"] - 600.0
+        cts = {str(m): float(t) for m, t in zip(g["mint"], created, strict=True)}
         cts = {m: (t if t == t else float(g.loc[g["mint"] == m, "g_ts"].iloc[0]) - 600.0) for m, t in cts.items()}
         cen = C.Census(MappingProxyType({m: "final_train" for m in cts}), MappingProxyType(cts), math.inf, math.inf,
                        float(C.FINAL_LO), float(C.FINAL_LO))
