@@ -20,7 +20,9 @@ Schema (lists capped: members 9, events <= 5, open trades <= 10, closed trades 1
                                "paper": {"label": "Paper money (pretend)", "open", "today_usd", "since_start_usd",
                                          "settled_today", "won_today", "settled_total", "won_total"},
                                "real": {"label": "Real money", (the same keys), "at_risk_usd", "contracts",
-                                        "cost_usd", "value_usd", "venue_at", "cash_usd", "cash_at"}|null}|null},
+                                        "cost_usd", "value_usd", "venue_at", "cash_usd", "cash_at"}|null,
+                               "guard": {"verdict", "reason", "paused", "line", "on", "candidate",   # risk manager
+                                         "real": {"verdict", "reason", "paused", "line"}|null}|null}|null},
       "town": {"label", "cost_per_day_usd", "cost_today_usd", "cost_since_start_usd": float|null,  # see TOWN
                "income_today_usd": float|null, "income_since_start_usd": float|null,
                "covered_today": bool|null, "covered_since_start": bool|null, "line",
@@ -72,7 +74,10 @@ holds (``live``), the desk's real settlements, the venue's contract count, cost 
 cash (``balance``). ``real`` is null unless the desk has a real book (an open real position, a real settlement or
 a contract at the venue) or the venue's cash was read; ``money.polymarket`` is null when the desk is off
 (``POLYDESK_ENABLED``) or its state cannot be read: nothing is shown rather than a made-up zero. A paper tally of
-zero before the desk's first round is marked ``as_of: null`` ("no round finished yet").
+zero before the desk's first round is marked ``as_of: null`` ("no round finished yet"). ``guard`` is the desk's
+risk manager (:mod:`nightcrawler.deskguard` on the current rule's own record): the verdict (learning, losing,
+winning, unclear), its reason with the numbers, whether new buys are paused, and the page's ``line``; while it is
+paused the town's paper line and its sentence say "paused by the risk manager".
 
 LEARNING: :func:`learning_card` calls ``nightcrawler.learn.card.learning_card_state(settings, now)`` when
 that module exists (it is built on another branch) and keeps only these keys, each type-checked::
@@ -148,6 +153,7 @@ from nightcrawler.botwallet import saved_balance, wallet_configured
 from nightcrawler.broker.keystore import KV_GENERATED, unused_wallet
 from nightcrawler.config import Settings
 from nightcrawler.dashboard import build_state, scrub
+from nightcrawler.deskguard import VERDICTS as GUARD_VERDICTS
 from nightcrawler.logging_setup import get_logger, redact_text
 from nightcrawler.models import LAMPORTS_PER_SOL, EquityPoint
 from nightcrawler.page import LEARNING_RULE, MEMBERS, REFRESH_S
@@ -776,7 +782,28 @@ def polymarket_desk(settings: Settings, now: float) -> dict[str, Any] | None:
         "paper": _book(_xp_map(desk.get("paper")), PAPER_LABEL),
         # the venue's cash alone (a key, no contracts) is real money to show, but not a real book for the town
         "real": real if _real_book(real) or real["cash_usd"] is not None else None,
+        "guard": _desk_guard(desk.get("guard")),
     }
+
+
+def _desk_guard(raw: Any) -> dict[str, Any] | None:
+    """``money.polymarket.guard``: the risk manager's verdict on the desk's current rule (``polydesk.guard_view``),
+    type-checked: ``{verdict, reason, paused, line, on, candidate, real: {verdict, reason, paused, line}|null}``;
+    None without a paper verdict (an older state, a junk one)."""
+    g = _xp_map(raw)
+
+    def book(v: Mapping[str, Any]) -> dict[str, Any] | None:
+        verdict = v.get("verdict")
+        if verdict not in GUARD_VERDICTS:
+            return None
+        return {"verdict": verdict, "reason": _clip(str(v.get("reason") or ""), TEXT_MAX),
+                "paused": v.get("paused") is True, "line": _clip(str(v.get("line") or ""), 2 * TEXT_MAX)}
+
+    paper = book(_xp_map(g.get("paper")))
+    if paper is None:
+        return None
+    return {**paper, "on": g.get("on") is not False, "candidate": isinstance(g.get("candidate"), Mapping),
+            "real": book(_xp_map(g.get("real")))}
 
 
 def _book(raw: Mapping[str, Any], label: str) -> dict[str, Any]:
@@ -804,14 +831,20 @@ def _desk_lines(desk: Mapping[str, Any] | None) -> dict[str, Any] | None:
             f"{_signed(paper['since_start_usd'])}, {paper['open']} open")
     if desk.get("as_of") is None:
         line += "; no round finished yet"
+    guard = _xp_map(desk.get("guard"))
+    if guard.get("paused"):
+        line += "; paused by the risk manager"
     out: dict[str, Any] = {"paper": {"label": PAPER_LABEL, "open": paper["open"], "today_usd": paper["today_usd"],
                                      "since_start_usd": paper["since_start_usd"], "line": line}, "real": None}
     if real is not None and _real_book(real):
+        real_line = _real_line(real)
+        if _xp_map(guard.get("real")).get("paused"):
+            real_line += "; real buys paused by the risk manager"
         out["real"] = {"label": REAL_LABEL, "open": real["open"], "contracts": real["contracts"],
                        "cost_usd": real["cost_usd"], "value_usd": real["value_usd"], "today_usd": real["today_usd"],
                        "settled_today": real["settled_today"], "won_today": real["won_today"],
                        "since_start_usd": real["since_start_usd"], "cash_usd": real["cash_usd"],
-                       "line": _real_line(real)}
+                       "line": real_line}
     return out
 
 
@@ -890,6 +923,8 @@ def town_ledger(settings: Settings, money: Mapping[str, Any], judge: Mapping[str
     if desk is not None:
         made = _with_desk(made, income_today, desk, live=settings.is_live)
     line = f"The town costs {_dollars(cost_per_day)} a day to run; {made}."
+    if desk is not None and _xp_map(desk.get("guard")).get("paused"):
+        line += " The Polymarket desk is paused by the risk manager: its rule's record loses money."
     real = desk.get("real") if desk is not None else None
     if real is not None and _real_book(real):
         line += _real_sentence(real)

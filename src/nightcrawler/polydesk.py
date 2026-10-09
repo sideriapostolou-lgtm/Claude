@@ -47,6 +47,23 @@ TRAIN / VAL / TEST, and the page says "paper" or "real" everywhere this desk's n
   ``Lesson: ...`` event, so the office can say it; the sentences it last derived are kept in ``last_lessons``.
 * The paper book is capped at :data:`PAPER_MAX_OPEN` open paper positions at once, so it can never balloon past
   what the owner can read; a market skipped for the cap is not marked tried and may be bought once a slot frees.
+
+**The risk manager** (:mod:`nightcrawler.deskguard`, 2026-10-09, after the paper desk lost about $1,388 of pretend
+money in a day and kept buying). Every settlement's P&L is kept per rule version and book (``by_rule[rule][book]
+["pnls"]``, the newest :data:`GUARD_KEEP`). Every round, before buying and again after settling, the desk judges
+the CURRENT :data:`RULE_VERSION`'s own record, paper and real apart (:meth:`PolyDesk._guard`):
+
+* ``losing`` (95 % sure the rule loses money per settlement) PAUSES new buys: ``state["paused"] = {at, reason,
+  rule}`` for the paper record (it stops paper buys and real ones: real money never follows a rule its own paper
+  record shows losing), ``state["paused_real"]`` for the real record (it stops real buys). One event says it
+  ("Risk manager paused the desk: <reason>"). Open positions still settle normally. A pause sticks for its rule;
+  a new RULE_VERSION (a changed rule) starts a fresh record and lifts it; ``POLYDESK_GUARD=off`` is the owner's
+  switch (no pause at all).
+* ``winning`` (99 % sure, enough settlements and losses, the loss stress test) only records one event and the flag
+  ``state["candidate"]``: a candidate for real money, the owner decides. The guard NEVER changes ``mode``, the
+  live client, ``live_halted``, ``live_status`` or any setting: it can only ever stop buying.
+* ``learning`` / ``unclear`` change nothing. The panel (:func:`panel_state`) carries ``guard``: each book's
+  verdict, reason and pause, and a plain line for the page.
 """
 
 from __future__ import annotations
@@ -64,6 +81,7 @@ from typing import Any
 
 import requests
 
+from nightcrawler import deskguard
 from nightcrawler.config import LIVE_CONFIRM_PHRASE, Settings
 from nightcrawler.polymarket_us import PolymarketUSClient, PolymarketUSError
 
@@ -108,6 +126,8 @@ BEFORE_FIX = "before the fix"  # rows with no rule stamp (bought before RULE_VER
 PAPER_MAX_OPEN = 60  # open paper positions at once: the paper book stays readable
 LESSONS_MIN_ROWS = 10  # settled rows before the desk states a lesson
 LESSONS_MAX = 5
+GUARD_KEEP = 5000  # per-settlement P&Ls kept per rule and book for the risk manager (the newest)
+GUARD_BOOKS = (("paused", "paper", "the desk"), ("paused_real", "real", "real buys"))  # (state key, book, name)
 _DIGITS = re.compile(r"\d[\d,.]*")
 _CUTS = ("spread", "category", "price", "time", "tight")
 _CATEGORY_WORDS = {"sports": "sports", "crypto": "crypto"}
@@ -306,6 +326,11 @@ def empty_state() -> dict[str, Any]:
         "by_rule": {},
         "last_lessons": [],
         "paper_full": False,
+        "guard": None,  # the risk manager's last verdicts (PolyDesk._guard)
+        "paused": None,  # {at, reason, rule}: new buys stopped by the risk manager (the paper record is losing)
+        "paused_real": None,  # {at, reason, rule}: new real buys stopped (the real record is losing)
+        "candidate": None,  # {at, reason, rule}: the paper record is winning: a candidate for real money (owner decides)
+        "candidate_said": None,  # the rule version whose candidacy was announced (said once per rule)
     }
 
 
@@ -317,6 +342,8 @@ def load_state(path: Path) -> dict[str, Any]:
             base.update(doc)
             if not base["by_rule"]:  # a file from before the per-rule record: rebuilt from the rows it kept
                 base["by_rule"] = _by_rule_from_rows(base["closed"])
+            else:
+                _backfill_pnls(base["by_rule"], base["closed"])
             return base
     except (OSError, ValueError):
         pass
@@ -333,20 +360,56 @@ def _book_of(row: dict[str, Any]) -> str:
 
 
 def _tally(by_rule: dict[str, Any], row: dict[str, Any], pnl: float, won: bool) -> None:
-    """One settlement into the per-rule record: ``by_rule[rule][paper|real] = {settled, won, pnl_usd}``."""
+    """One settlement into the per-rule record: ``by_rule[rule][paper|real] = {settled, won, pnl_usd, pnls}``
+    (``pnls``: each settlement's P&L, oldest first, the newest :data:`GUARD_KEEP`: the risk manager's input)."""
     rec = by_rule.setdefault(_rule_of(row), {}).setdefault(_book_of(row), {"settled": 0, "won": 0, "pnl_usd": 0.0})
     rec["settled"] += 1
     rec["won"] += int(won)
     rec["pnl_usd"] += pnl
+    pnls = rec.setdefault("pnls", [])
+    pnls.append(pnl)
+    del pnls[:-GUARD_KEEP]
+
+
+def _settled_rows(closed: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """The closed rows that are settlements (an unresolved or replaced row has no P&L), oldest first."""
+    return [r for r in reversed(closed) if r.get("won") is not None and _num(r.get("pnl_usd")) is not None]
 
 
 def _by_rule_from_rows(closed: list[dict[str, Any]]) -> dict[str, Any]:
     out: dict[str, Any] = {}
-    for row in closed:
-        if row.get("won") is None or _num(row.get("pnl_usd")) is None:
-            continue
+    for row in _settled_rows(closed):
         _tally(out, row, float(row["pnl_usd"]), bool(row["won"]))
     return out
+
+
+def _backfill_pnls(by_rule: dict[str, Any], closed: list[dict[str, Any]]) -> None:
+    """A per-rule record from before the per-settlement list gets its P&Ls from the closed rows the file kept (the
+    newest :data:`CLOSED_KEEP`): the risk manager then judges those settlements, never made-up ones."""
+    missing = {(rule, book) for rule, books in by_rule.items() if isinstance(books, dict)
+               for book, rec in books.items() if isinstance(rec, dict) and not isinstance(rec.get("pnls"), list)}
+    if not missing:
+        return
+    for rule, book in missing:
+        by_rule[rule][book]["pnls"] = []
+    for row in _settled_rows(closed):
+        if (_rule_of(row), _book_of(row)) in missing:
+            by_rule[_rule_of(row)][_book_of(row)]["pnls"].append(float(row["pnl_usd"]))
+
+
+def judge_book(settings: Settings, by_rule: Any, book: str) -> deskguard.Verdict:
+    """The risk manager's verdict on one book (``paper`` / ``real``) of the CURRENT rule version's own record."""
+    rec = by_rule.get(RULE_VERSION) if isinstance(by_rule, dict) else None
+    rec = rec.get(book) if isinstance(rec, dict) else None
+    pnls = rec.get("pnls") if isinstance(rec, dict) else None
+    return deskguard.judge(pnls if isinstance(pnls, list) else [], min_n=int(settings.polydesk_guard_min_n),
+                           win_n=int(settings.polydesk_guard_win_n))
+
+
+def _current(record: Any) -> dict[str, Any] | None:
+    """A pause (or candidacy) record that belongs to the current rule version, else None (an older rule's is
+    stale: a changed rule starts a fresh record)."""
+    return record if isinstance(record, dict) and record.get("rule") == RULE_VERSION else None
 
 
 def _money(value: float) -> str:
@@ -627,8 +690,11 @@ class PolyDesk:
         quotes = self._quotes(watch)
         st["counters"]["quotes"] += len(quotes)
         adopted = self._reconcile(now, watch) if self.reader is not None else 0
+        self._guard(now)  # the record so far decides whether this round may buy
         bought = self._apply_rule(now, watch, quotes)
         settled = self._settle(now, {m["slug"] for m in watch})
+        if settled:
+            self._guard(now)  # this round's settlements count at once (the panel, the next round)
         if bought and st["mode"] == "live" and self.reader is not None:
             adopted += self._reconcile(now, watch)  # the venue summary after this round's real buys
         self._learn(now)
@@ -767,6 +833,11 @@ class PolyDesk:
         tried: set[str] = set(st.setdefault("tried", []))
         paper_open = sum(1 for p in st["positions"].values() if not p.get("live"))
         st["paper_full"] = bool(st.get("paper_full")) and paper_open >= PAPER_MAX_OPEN
+        # The risk manager's pauses (self._guard): a losing paper record stops paper AND real buys (real money never
+        # follows a rule its own paper record shows losing); a losing real record stops real buys. Paused markets
+        # are not marked tried: they may be bought once the pause lifts (a changed rule, the owner's switch).
+        paper_paused = self._paused("paused")
+        real_paused = paper_paused or self._paused("paused_real")
         for m in watch:
             slug = m["slug"]
             if slug in st["positions"] or slug in tried:
@@ -796,6 +867,8 @@ class PolyDesk:
             if st["mode"] == "live" and self.client is not None:
                 if side != "long":
                     continue  # live: the YES side only (the venue prices every order on YES); shorts stay paper-only
+                if real_paused:
+                    continue  # the risk manager stopped real buys (never starts any)
                 if not self._live_allows(now, price):
                     continue
                 tried.add(slug)
@@ -844,6 +917,8 @@ class PolyDesk:
                     {"slug": slug, "order_id": fill.get("id"), "contracts": shares, "price": p_fill, "cost_usd": cost},
                 )
                 continue
+            if paper_paused:
+                continue  # the risk manager paused paper buys; open positions still settle
             if paper_open >= PAPER_MAX_OPEN:  # not marked tried: the market may be bought once a slot frees
                 if not st["paper_full"]:
                     st["paper_full"] = True
@@ -983,15 +1058,95 @@ class PolyDesk:
         if new != old:
             st["last_lessons"] = new
 
+    # ------------------------------------------------------------------ the risk manager
+    def _paused(self, key: str) -> bool:
+        """``state[key]`` (``paused`` / ``paused_real``) stops buying now: the guard is on and the pause is the
+        current rule's."""
+        return bool(self.settings.polydesk_guard) and _current(self.state.get(key)) is not None
+
+    def _guard(self, now: float) -> None:
+        """The risk manager (module docstring, :mod:`nightcrawler.deskguard`) on the current rule's own record, paper
+        and real apart. It writes only ``guard``, ``paused``, ``paused_real``, ``candidate`` and ``candidate_said``,
+        events and receipts: never ``mode``, the client, ``live_halted``, ``live_status`` or a setting. A pause only
+        ever stops buying; a winning record is a flag for the owner."""
+        st = self.state
+        on = bool(self.settings.polydesk_guard)
+        by_rule = st.get("by_rule") or {}
+        verdicts = {book: judge_book(self.settings, by_rule, book) for _, book, _ in GUARD_BOOKS}
+        st["guard"] = {"on": on, "rule": RULE_VERSION, "at": now,
+                       **{book: v.to_dict() for book, v in verdicts.items()}}
+        for key, book, what in GUARD_BOOKS:
+            st[key], text = deskguard.pause_step(st.get(key), verdicts[book], rule=RULE_VERSION, now=now, on=on,
+                                                 what=what)
+            if text:
+                paused = st[key] is not None
+                self._event(now, text, "bad" if paused else "neutral")
+                self._receipt("polydesk_guard", {"book": book, "paused": paused, "rule": RULE_VERSION,
+                                                 "verdict": verdicts[book].verdict, "n": verdicts[book].n,
+                                                 "total_usd": verdicts[book].total})
+                log.warning("polydesk_guard book=%s paused=%s n=%d verdict=%s", book, paused, verdicts[book].n,
+                            verdicts[book].verdict)
+        paper = verdicts["paper"]
+        if not on or paper.verdict != deskguard.WINNING:
+            st["candidate"] = None
+            return
+        cand = _current(st.get("candidate"))
+        st["candidate"] = {"at": cand["at"] if cand else now, "reason": paper.reason, "rule": RULE_VERSION}
+        if st.get("candidate_said") != RULE_VERSION:  # said once per rule: a record near the bar may come and go
+            st["candidate_said"] = RULE_VERSION
+            self._event(now, f"Candidate for real money (owner decides): {paper.reason}", "good")
+            self._receipt("polydesk_candidate", {"rule": RULE_VERSION, "n": paper.n, "total_usd": paper.total})
+            log.info("polydesk_candidate rule=%s n=%d", RULE_VERSION, paper.n)
+
 
 # ---------------------------------------------------------------------- the panel's view
+def _guard_line(book: str, v: deskguard.Verdict, pause: dict[str, Any] | None, on: bool, candidate: bool) -> str:
+    """The risk manager's verdict on one book in one plain sentence (the page's line)."""
+    if not on:
+        return f"Risk manager off (the owner's switch); the {book} record is {v.phrase}: {v.reason}."
+    if pause is not None:
+        return f"Paused by the risk manager ({book} buys stopped): {pause.get('reason') or v.reason}."
+    if candidate:
+        return f"Risk manager ({book}, winning): a candidate for real money, the owner decides. {v.reason}."
+    return f"Risk manager ({book}, {v.phrase}): {v.reason}."
+
+
+def guard_view(settings: Settings, st: dict[str, Any]) -> dict[str, Any]:
+    """The risk manager's view for the panel and the page: each book's verdict on the current rule's own record
+    (:func:`judge_book`, recomputed from the file), whether its buys are paused (a pause of an older rule, or any
+    pause with the guard off, does not count), and a plain ``line``. ``real`` is None until the current rule has a
+    real settlement, a real pause, or the desk is live."""
+    on = bool(settings.polydesk_guard)
+    by_rule = st.get("by_rule") or {}
+    paused = _current(st.get("paused")) if on else None
+    paused_real = _current(st.get("paused_real")) if on else None
+    candidate = _current(st.get("candidate")) if on else None
+    paper = judge_book(settings, by_rule, "paper")
+    real = judge_book(settings, by_rule, "real")
+    real_pause = paused_real or (  # a losing paper record stops real buys too, and the real line says why
+        {**paused, "reason": f"the paper record is losing, {paused.get('reason')}"} if paused is not None else None)
+    show_real = real.n > 0 or paused_real is not None or st.get("mode") == "live"
+    return {
+        "on": on,
+        "rule": RULE_VERSION,
+        "paper": {**paper.to_dict(), "phrase": paper.phrase, "paused": paused is not None,
+                  "line": _guard_line("paper", paper, paused, on, candidate is not None)},
+        "real": ({**real.to_dict(), "phrase": real.phrase, "paused": real_pause is not None,
+                  "line": _guard_line("real", real, real_pause, on, False)} if show_real else None),
+        "paused": paused,
+        "paused_real": paused_real,
+        "candidate": candidate,
+    }
+
+
 def panel_state(settings: Settings, now: float) -> dict[str, Any]:
     """What the team room shows for this desk (reads the state file only). Paper and real money are
     tallied apart (``paper`` / ``real``: open positions, money at risk, today's and all-time results), so
     paper positions left over from before a switch to live are never shown as real ones. The top-level
     ``open``/``today``/``*_total`` keys are the combined book. ``since_fix`` is the current rule version's own
     record and ``before_fix`` everything else (older rows, venue adoptions), each with paper and real apart;
-    ``lessons`` and ``worst`` are derived from the closed rows (module docstring)."""
+    ``lessons`` and ``worst`` are derived from the closed rows (module docstring); ``guard`` is the risk
+    manager's view (:func:`guard_view`)."""
     st = load_state(state_path(settings))
     enabled = bool(settings.polydesk_enabled)
     today = datetime.fromtimestamp(now, UTC).strftime("%Y-%m-%d")
@@ -1093,4 +1248,5 @@ def panel_state(settings: Settings, now: float) -> dict[str, Any]:
         "lessons": lessons(st["closed"]),
         "worst": worst_row(st["closed"]),
         "paper_max_open": PAPER_MAX_OPEN,
+        "guard": guard_view(settings, st),
     }

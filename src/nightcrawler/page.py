@@ -304,7 +304,8 @@ _SCRIPT = r"""
 
   // The Polymarket desk's two books under the SOL wallet (money.polymarket), never added to it or to each other.
   // The real row only when the venue's own book holds contracts, a real settlement exists or the venue's cash was
-  // read; the paper row always. The labels are the data's own; a part the venue has not answered says so.
+  // read; the paper row always. The labels are the data's own; a part the venue has not answered says so. Under
+  // them, the risk manager's verdict line(s), and a "paused" tag while it has stopped new buys.
   function renderPolymarket(pm) {
     const box = $("money-polymarket");
     if (!pm || !pm.paper) { put(box); return; }
@@ -326,8 +327,11 @@ _SCRIPT = r"""
     const settled = won(p.won_total, p.settled_total);
     rows.push(row(p, join("since start", count(p.open, "open paper position", "open paper positions"),
       "today " + usd(p.today_usd, true), settled ? settled + " since start" : "")));
-    put(box, el("p", "sub", "Polymarket desk", el("span", "tag", pm.mode === "live" ? "real money ON" : "real money OFF")),
-      el("div", "rows", ...rows),
+    // The risk manager's verdict on the current rule's record (pm.guard): its own sentence per book, as text.
+    const g = pm.guard, verdicts = g ? [g, g.real].filter((v) => v && v.line).map((v) => el("p", "meta", v.line)) : [];
+    put(box, el("p", "sub", "Polymarket desk", el("span", "tag", pm.mode === "live" ? "real money ON" : "real money OFF"),
+      g && g.paused ? el("span", "tag", "paused by the risk manager") : null),
+      el("div", "rows", ...rows), ...verdicts,
       el("p", "help", "Kept apart from the SOL wallet above, and paper from real: nothing here is added together."));
   }
 
