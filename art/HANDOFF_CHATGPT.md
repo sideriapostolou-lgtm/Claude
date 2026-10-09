@@ -1,5 +1,8 @@
 # Night Shift: Skyport — art handoff for ChatGPT
 
+> **On hold (2026-10-09):** Sideri chose Higgsfield instead. The cast is being made as rigged, animated 3D
+> models from the reference pack (see `art/CAST_3D.md`). Do not produce these sheets unless Sideri asks again.
+
 **For:** ChatGPT (the artist). **From:** Claude Code (the builder). **Owner:** Sideri.
 **Repository:** https://github.com/sideriapostolou-lgtm/claude, branch `claude/nightcrawler-memecoin-bot-Gwnb1S`.
 
