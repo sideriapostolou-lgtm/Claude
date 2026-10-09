@@ -21,16 +21,19 @@ Response cache: ``research/lab6/data/cache/`` (``$LAB6_CACHE``; gitignored, rebu
 (sport, requested time) holding the response body only. A cached request is never sent again.
 
 Layout of the committed, derived files (``research/lab6/data/``): ``gamma_meta.parquet`` (start times),
-``plan.parquet`` (the snapshot schedule), ``pinnacle.parquet`` (one row per event per snapshot), ``manifest.json``.
+``pregame.parquet`` (print counts per game), ``plan_close.parquet`` / ``plan_full.parquet`` (the two snapshot
+schedules), ``pinnacle.parquet`` (one row per event per pre-game snapshot), ``matches.parquet`` /
+``match_failures.parquet`` and ``inventory.json``.
 
 Rebuild (the key stays in the environment, never on a command line or in a file in the repo)::
 
     export ODDS_API_KEY=$(cat <path to the key file>)
-    python research/lab6/data.py --gamma           # start times for the candidate markets (keyless)
-    python research/lab6/data.py --plan            # the snapshot schedule and its credit cost
-    python research/lab6/data.py --fetch           # fetch the schedule (cache-first, ledger-capped)
-    python research/lab6/data.py --build           # pinnacle.parquet from the cache
-    python research/lab6/data.py --status
+    python research/lab6/data.py --gamma --pregame --plan-close   # keyless: start times, print counts, schedule 1
+    python research/lab6/data.py --fetch close                    # closing snapshots (cache-first, ledger-capped)
+    python research/lab6/data.py --build --match --plan-full      # Pinnacle table, matching, schedule 2
+    python research/lab6/data.py --fetch full                     # the other offsets for matched games
+    python research/lab6/data.py --build --match                  # final tables
+    python research/lab6/data.py --status                         # the credit ledger
 """
 
 from __future__ import annotations
