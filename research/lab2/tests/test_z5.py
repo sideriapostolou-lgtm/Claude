@@ -617,13 +617,50 @@ def test_m1_blocker_host_first_rule(tmp_path):
     assert Z.m1_blocker("final", led, m1o) is None
 
 
+def _g1_look(led, split):
+    """G1's own look at ``split`` as the trials ledger records it (a G1.R0 run inside G1's stage)."""
+    with C._ledger(led) as L:
+        L["runs"].append({"utc": "x", "hypothesis": "G1.R0", "config": "G1.R0|x", "split": split, "debug": False})
+
+
+def test_g1_blocker_host_first_rule_for_the_r0_host(tmp_path):
+    """review Z5-1: G1 judges VAL / TEST / CONFIRM / FINAL on G1.R0's trades, which ARE Z5's R0 baseline (the twin)."""
+    import g1
+    assert Z.G1_SHIP_VERDICTS == g1.SHIP_VERDICTS and Z.G1_OUT_DIR == g1.OUT_DIR
+    g1o, led = tmp_path / "G1", tmp_path / "trials.json"
+    for st in ("val", "test", "confirm", "final"):
+        assert "not finished TRAIN" in Z.g1_blocker(st, led, g1o)
+    _write(g1o, "train.json", {"provisional": True, "decision": {"shortlist_written": False}})
+    assert "not finished TRAIN" in Z.g1_blocker("val", led, g1o)
+    _write(g1o, "train.json", {"decision": {"shortlist_written": True}})   # G1's TRAIN always shortlists
+    assert "VAL" in Z.g1_blocker("val", led, g1o) and "VAL" in Z.g1_blocker("test", led, g1o)
+    _g1_look(led, "val")
+    assert Z.g1_blocker("val", led, g1o) is None                  # G1 had its VAL look: Z5 may follow
+    _write(g1o, "val.json", {"decision": {"verdict": "KILL"}})
+    for st in ("test", "confirm", "final"):
+        assert Z.g1_blocker(st, led, g1o) is None                 # G1 stopped at VAL: it never opens TEST
+    _write(g1o, "val.json", {"decision": {"verdict": "UNDERPOWERED"}})
+    assert Z.g1_blocker("test", led, g1o) is None
+    for ship in g1.SHIP_VERDICTS:
+        _write(g1o, "val.json", {"decision": {"verdict": ship}})
+        for st in ("test", "confirm", "final"):
+            assert st.upper() in Z.g1_blocker(st, led, g1o)
+    _g1_look(led, "test")
+    assert Z.g1_blocker("test", led, g1o) is None
+    assert "CONFIRM" in Z.g1_blocker("confirm", led, g1o)         # G1 runs CONFIRM after any TEST
+    with C._ledger(led) as L:                                     # G1 had its FINAL look (one-shot session)
+        L.setdefault("one_shot_sessions", []).append({"family": "G1", "split_group": "final", "split": "final",
+                                                      "session": "s", "opened_utc": "x"})
+    assert Z.g1_blocker("final", led, g1o) is None
+
+
 # =========================================================================== stages: end to end and refusals
 
 
 @pytest.fixture
 def st(tmp_path, monkeypatch):
     d = SimpleNamespace(out=tmp_path / "Z5", flow=tmp_path / "flow", ledger=tmp_path / "trials.json",
-                        sl=tmp_path / "shortlists", m1=tmp_path / "M1")
+                        sl=tmp_path / "shortlists", m1=tmp_path / "M1", g1=tmp_path / "G1")
     monkeypatch.setenv("LAB2_TRIALS", str(d.ledger))     # one-shot looks go to the canonical ledger only
     d.out.mkdir()
     d.flow.mkdir()
@@ -634,12 +671,13 @@ def st(tmp_path, monkeypatch):
 
 def _run(stage, d, ds, env=None, **kw):
     return Z.run_stage(stage, out_dir=d.out, ds=ds, flow=d.flow, ledger_path=d.ledger, shortlist_path=d.sl, B=200,
-                       n_placebo=2, env=env or {}, m1_out=d.m1, _skip_coverage=kw.pop("_skip_coverage", True), **kw)
+                       n_placebo=2, env=env or {}, m1_out=d.m1, g1_out=d.g1,
+                       _skip_coverage=kw.pop("_skip_coverage", True), **kw)
 
 
 def _check(stage, d, env=None, **kw):
     return Z.check_prereqs(stage, d.out, flow=d.flow, ledger_path=d.ledger, shortlist_path=d.sl, env=env or {},
-                           m1_out=d.m1, **kw)
+                           m1_out=d.m1, g1_out=d.g1, **kw)
 
 
 def test_train_no_config_when_the_cheap_coins_fall(st):
@@ -721,6 +759,13 @@ def test_full_pipeline_and_every_refusal(st, monkeypatch):
     for stage in ("test", "confirm", "final"):
         with pytest.raises(Z.Z5Refused, match="no VAL result"):
             _check(stage, st, env=ENV_ALL)
+    # ---- host-first rule for R0 (review Z5-1): the twin IS G1.R0 on VAL, so G1 looks first
+    with pytest.raises(Z.Z5Refused, match="host-first.*G1"):
+        _check("val", st)
+    _write(st.g1, "train.json", {"decision": {"shortlist_written": True}})
+    with pytest.raises(Z.Z5Refused, match="host-first.*G1"):
+        _check("val", st)
+    _g1_look(st.ledger, "val")
     # ---- VAL: the pair once
     va = _run("val", st, market("val", C.utc_ts("2026-10-05 02:00"), 20, 8, 2, 2))
     assert set(va["configs"]) == {"candidate", "twin"}
@@ -730,6 +775,10 @@ def test_full_pipeline_and_every_refusal(st, monkeypatch):
         _check("val", st)
     with pytest.raises(Z.Z5Refused, match="before TEST"):
         _check("confirm", st, env=ENV_ALL)
+    _write(st.g1, "val.json", {"decision": {"verdict": "SHIP_G_TIME"}})
+    with pytest.raises(Z.Z5Refused, match="host-first.*G1 has not had its own TEST look"):
+        _check("test", st, env=ENV_ALL)
+    _write(st.g1, "val.json", {"decision": {"verdict": "KILL"}})        # G1 stopped at VAL: TEST onwards is Z5's
     # ---- TEST: locked without the judge's flag, then once
     ds_test = market("test", C.utc_ts("2026-10-06 13:00"), 30, 8, 2, 3)
     with pytest.raises(Z.Z5Refused, match="LAB2_ALLOW_TEST"):

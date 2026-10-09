@@ -25,8 +25,8 @@ CLI::
 
 Each stage writes ``Z5/<stage>.json`` and ``Z5/<stage>.md`` and REFUSES to run when its prerequisites are missing (no
 VAL without the written shortlist, TEST / CONFIRM / FINAL once each, never CONFIRM or FINAL before TEST, PLAN 8 data
-gates V1-V4, PREREG frozen after the first official TRAIN run, the M1 host pinned, and the host-first rule: no look at
-M1's entries on a split before M1's own look there).
+gates V1-V4, PREREG frozen after the first TRAIN run (provisional included), the M1 host pinned, and the host-first
+rule: no look at M1's or R0's entries on a split before the host's owner (M1, or G1 for R0) had its own look there).
 """
 
 from __future__ import annotations
@@ -84,6 +84,10 @@ R0_PARAMS = {"host": "R0_random_alive", "seed": 0, "age_lo_min": 30.0, "age_hi_m
              "alive_vol_usd_15m": 1500.0, "alive_mcap_usd": 6000.0, "stop_pct": 0.50, "max_hold_s": 3600.0}
 R0_PIN = "27a79bc60126"          # == C.params_hash(g1.R0_PARAMS) when this file was written
 M1_VERSION_PIN, M1_PIN = "m1-v1", "9c0a14afb895"
+# G1 judges its gate on G1.R0's trades (= Z5's R0 baseline): the host-first rule protects that look too. Constants of
+# g1.py, mirrored here so Z5 never imports G1's module (test_z5 pins them to g1.SHIP_VERDICTS / g1.OUT_DIR).
+G1_OUT_DIR = HERE / "G1"
+G1_SHIP_VERDICTS = ("PASS_CHAIN", "SHIP_G_TIME")    # the only G1 VAL verdicts that open G1's TEST
 M1_M, M1_EXIT = 1.0, "rhythm+prec"
 M1_PARAMS = M1.make_params(M1_M, M1_EXIT)
 
@@ -741,9 +745,37 @@ def m1_blocker(stage: str, ledger_path: Path | None = None, m1_out: Path | None 
     return f"M1 has not had its own {stage.upper()} look yet"
 
 
+def g1_blocker(stage: str, ledger_path: Path | None = None, g1_out: Path | None = None) -> str | None:
+    """Host-first rule for the R0 host (PREREG 9): None when Z5 may look at R0's entries on ``stage``'s split, else the
+    reason. Z5's R0 is G1.R0 decision for decision, and G1 judges VAL (c3: R0's unflagged trades) and TEST / CONFIRM /
+    FINAL (R0 flagged minus unflagged) on those trades, so Z5's twin on a split IS G1's evidence there.
+
+    Allowed once family G1 had its own look at that split group (trials ledger), or when G1 can no longer reach it:
+    its VAL verdict did not open TEST (only PASS_CHAIN / SHIP_G_TIME do). A complete G1 TRAIN always writes a
+    shortlist (g1.shortlist_rule), and G1 runs CONFIRM and FINAL after any TEST, so neither stops it earlier."""
+    split = STAGE_SPLIT[stage]
+    grp = C.split_group(split)
+    with C._ledger(ledger_path, write=False) as led:
+        if C._family_looks(led, "G1", grp):
+            return None
+    d = Path(g1_out or G1_OUT_DIR)
+    train = _read_json(d / "train.json")
+    if not train or train.get("provisional"):
+        return f"G1 has not finished TRAIN ({d}/train.json): G1 may still look at {split}"
+    if stage == "val":
+        return "G1 has not had its own VAL look yet"
+    val = _read_json(d / "val.json")
+    if not val:
+        return f"G1 has not had its own VAL look yet, so it may still look at {split}"
+    if (val.get("decision") or {}).get("verdict") not in G1_SHIP_VERDICTS:
+        return None                                       # G1 stopped at VAL: it never opens TEST
+    return f"G1 has not had its own {stage.upper()} look yet"
+
+
 def check_prereqs(stage: str, out_dir: Path = OUT_DIR, *, flow: Path | None = None, ledger_path: Path | None = None,
                   shortlist_path: Path | None = None, env: Mapping[str, str] | None = None,
-                  rerun_reason: str | None = None, m1_out: Path | None = None) -> dict:
+                  rerun_reason: str | None = None, m1_out: Path | None = None,
+                  g1_out: Path | None = None) -> dict:
     """Raise :class:`Z5Refused` when ``stage`` may not run. Read-only."""
     env = os.environ if env is None else env
     out_dir = Path(out_dir)
@@ -753,16 +785,19 @@ def check_prereqs(stage: str, out_dir: Path = OUT_DIR, *, flow: Path | None = No
     if not prereg.exists():
         raise Z5Refused(f"{prereg} missing: pre-register before any run")
     lock = _read_json(out_dir / "prereg.lock")
-    if lock and lock.get("sha256") != _sha(prereg):
-        raise Z5Refused("PREREG.md changed after the first official TRAIN run; record changes in Z5/AMENDMENTS.md "
-                        "as a new version instead")
+    # The first TRAIN run of ANY kind freezes PREREG.md: a provisional run shows TRAIN returns too. A train_prelim.json
+    # without a lock (written before that rule) pins the sha it recorded.
+    frozen = (lock or {}).get("sha256") or (_read_json(out_dir / "train_prelim.json") or {}).get("prereg_sha256")
+    if frozen and frozen != _sha(prereg):
+        raise Z5Refused("PREREG.md changed after the first TRAIN run (provisional runs included); record changes in "
+                        "Z5/AMENDMENTS.md as a new version instead")
     pins = host_pin_problems()
     if pins:
         raise Z5Refused("the registered hosts changed (a new Z5 version is needed): " + "; ".join(pins))
     ok, bad = C.validation_gates(STAGE_SPLIT[stage], flow)
     if not ok and stage != "debug":         # debug checks mechanics only; every real stage needs stop rule 1
         raise Z5Refused("PLAN 8 rule 1 (data first): " + "; ".join(bad))
-    info = {"stage": stage, "prereg_sha256": _sha(prereg), "prereg_locked": bool(lock),
+    info = {"stage": stage, "prereg_sha256": _sha(prereg), "prereg_locked": bool(frozen),
             "data_gates": {"ok": ok, "problems": bad}}
     if stage == "debug":
         return info
@@ -784,7 +819,7 @@ def check_prereqs(stage: str, out_dir: Path = OUT_DIR, *, flow: Path | None = No
         raise Z5Refused("no VAL shortlist for Z5 (written by a complete --stage train)")
     if list(sl.get("hashes", [])) != list(train["decision"].get("shortlist_hashes", [])):
         raise Z5Refused("the Z5 shortlist on disk differs from the one TRAIN wrote")
-    cand, _twin = _pair(sl)
+    cand, twin = _pair(sl)
     split = STAGE_SPLIT[stage]
     if stage == "val":
         if (out_dir / "val.json").exists():
@@ -811,10 +846,13 @@ def check_prereqs(stage: str, out_dir: Path = OUT_DIR, *, flow: Path | None = No
             raise Z5Refused(f"{HYP} already had its one {split} run (trials ledger)")
         if env.get(STAGE_ENV[stage]) != "1":
             raise Z5Refused(f"{stage.upper()} is locked: set {STAGE_ENV[stage]}=1 (the judge's flag)")
-    if cand is not None and cand.get("host") == "M1":
-        why = m1_blocker(stage, ledger_path, m1_out)
-        if why:
-            raise Z5Refused(f"host-first rule: {why}")
+    hosts = {c.get("host") for c in (cand, twin) if c is not None}     # the twin is a look at its host too
+    for host, why in (("M1", lambda: m1_blocker(stage, ledger_path, m1_out)),
+                      ("R0", lambda: g1_blocker(stage, ledger_path, g1_out))):
+        if host in hosts:
+            reason = why()
+            if reason:
+                raise Z5Refused(f"host-first rule ({host} host): {reason}")
     return info
 
 
@@ -897,14 +935,14 @@ def run_stage(stage: str, *, out_dir: Path = OUT_DIR, allow_partial: bool = Fals
               ds: C.Dataset | None = None, census: C.Census | None = None, flow: Path | None = None,
               ledger_path: Path | None = None, shortlist_path: Path | None = None, B: int = 10_000,
               n_placebo: int = 20, env: Mapping[str, str] | None = None, m1_out: Path | None = None,
-              _skip_coverage: bool = False) -> dict:
+              g1_out: Path | None = None, _skip_coverage: bool = False) -> dict:
     """Run one stage end to end and write Z5/<stage>.json + .md (``ds`` injection is for tests)."""
     t0 = time.time()
     out_dir = Path(out_dir)
     debug = stage == "debug"
     split = STAGE_SPLIT[stage]
     info = check_prereqs(stage, out_dir, flow=flow, ledger_path=ledger_path, shortlist_path=shortlist_path, env=env,
-                         rerun_reason=rerun_reason, m1_out=m1_out)
+                         rerun_reason=rerun_reason, m1_out=m1_out, g1_out=g1_out)
     if debug and ledger_path is None:
         ledger_path = C._SCRATCH / "lab2_debug" / "z5_debug_trials.json"   # debug never reaches the real ledger
     cov = ds.coverage if ds is not None else _coverage_counts(split, flow, census)
@@ -932,12 +970,15 @@ def run_stage(stage: str, *, out_dir: Path = OUT_DIR, allow_partial: bool = Fals
                     C._check_run_allowed(HYP, p, split, ledger_path, shortlist_path)
             except C.SplitLocked as e:
                 raise Z5Refused(str(e)) from e
-        if stage == "train" and not provisional:
+        if stage == "train":
             out_dir.mkdir(parents=True, exist_ok=True)
-            if not (out_dir / "prereg.lock").exists():
+            if not (out_dir / "prereg.lock").exists():      # the first TRAIN run, provisional or not, locks PREREG
                 (out_dir / "prereg.lock").write_text(json.dumps({"sha256": info["prereg_sha256"],
-                                                                 "locked_utc": C.utc_str(time.time())}, indent=1))
-            if rerun_reason and (out_dir / "train.json").exists():      # archive, never overwrite, an official run
+                                                                 "locked_utc": C.utc_str(time.time()),
+                                                                 "locked_by": "provisional TRAIN" if provisional
+                                                                 else "TRAIN"}, indent=1))
+            # archive, never overwrite, an official run
+            if not provisional and rerun_reason and (out_dir / "train.json").exists():
                 stamp = time.strftime("%Y%m%dT%H%M%S", time.gmtime())
                 for ext in ("json", "md"):
                     p = out_dir / f"train.{ext}"

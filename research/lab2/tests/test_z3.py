@@ -28,9 +28,11 @@ def mint(i: int, seed: int = 1) -> str:
     return f"MINT{i:03d}{seed}pump"
 
 
-def coin_bars(g: int, mint_: str, pool: str, buy, sell, n_sellers=None, n_buyers=None) -> pd.DataFrame:
+def coin_bars(g: int, mint_: str, pool: str, buy, sell, n_sellers=None, n_buyers=None, n_sells=None,
+              n_dust=None) -> pd.DataFrame:
     """Hand-built minute bars: every SOL goes into the pricing reserve (X += buy - sell), y = k / X, so the close is
-    X^2 / k and a minute's drop is 1 - (X_after / X_before)^2. A minute with no buy and no sell has no row (as in B2)."""
+    X^2 / k and a minute's drop is 1 - (X_after / X_before)^2. A minute with no buy and no sell has no row (as in B2).
+    Sell TRADES default to one per selling wallet (at least one when SOL was sold); ``n_sells`` / ``n_dust`` override."""
     m0 = int(g) // 60 * 60
     X, y = X0, Y0
     k = X * y
@@ -44,10 +46,13 @@ def coin_bars(g: int, mint_: str, pool: str, buy, sell, n_sellers=None, n_buyers
         y1 = k / X1
         bt, st = (y - y1, 0.0) if y1 < y else (0.0, y1 - y)
         p0, p1 = X / y, X1 / y1
-        rows.append({"minute_ts": m0 + 60 * j, "n_buys": 4 if b > 0 else 0, "n_sells": 3 if s > 0 else 0, "n_dust": 0,
+        nsl = int(n_sellers[j]) if n_sellers is not None else int(s > 0) * 2
+        nst = int(n_sells[j]) if n_sells is not None else (max(nsl, 1) if s > 0 else 0)
+        rows.append({"minute_ts": m0 + 60 * j, "n_buys": 4 if b > 0 else 0, "n_sells": nst,
+                     "n_dust": int(n_dust[j]) if n_dust is not None else 0,
                      "buy_sol": b, "sell_sol": s, "buy_tok": bt, "sell_tok": st,
                      "n_buyers": int(n_buyers[j]) if n_buyers is not None else int(b > 0) * 2,
-                     "n_sellers": int(n_sellers[j]) if n_sellers is not None else int(s > 0) * 2,
+                     "n_sellers": nsl,
                      "top5_buy_sol": b, "open": p0, "high": max(p0, p1), "low": min(p0, p1), "close": p1,
                      "x_close": X1 - V0, "y_close": y1, "mint": mint_, "pool": pool, "g_ts": g, "minute_idx": j,
                      "agent_buy_sol": 0.0, "price_repaired": 0})
@@ -154,6 +159,31 @@ def test_single_seller_pigeonhole_bound():
     assert two["big_sol"] == pytest.approx(21.25) and two["single"] and two["fires"]
     dust = Z.crash_at(snap_k(ds, mint(3), 31).bars, 30)                   # n_sellers 0 counts as 1 (never divides by 0)
     assert dust["big_sol"] == pytest.approx(42.5) and dust["fires"]
+
+
+def test_single_seller_bound_is_trade_level_and_pooled_proof():
+    """review Z3-1 (z3-v2): B2's n_sellers counts the event user, and a pooled program account (ARu4n5mF..., audit 3.6)
+    is ONE event user for many signers. 4 sell trades of 10.6 SOL under one pooled 'seller' are a stampede, not a
+    rug: the bound is per TRADE (z2.sell_lb_at's pigeonhole), so it can miss a split rug, never invent one."""
+    import z2
+    assert Z.VERSION == "z3-v2" and "trade" in Z.FIXED["big_seller_bound"]
+    four_trades = path(30, crash_sell=42.5, crash_sellers=1)
+    four_trades["n_sells"] = np.where(np.arange(N_MIN) == 30, 4, (four_trades["sell"] > 0).astype(int))
+    dusty = path(30, crash_sell=42.5 + 0.004, crash_sellers=1)            # the rug + 2 dust sells (no buys)
+    dusty["n_sells"] = np.where(np.arange(N_MIN) == 30, 3, (dusty["sell"] > 0).astype(int))
+    dusty["n_dust"] = np.where(np.arange(N_MIN) == 30, 2, 0)
+    ds = ds_of(frames_with({1: four_trades, 2: dusty}))
+    pooled = Z.crash_at(snap_k(ds, mint(1), 31).bars, 30)
+    assert pooled["crash"] and pooled["n_sellers"] == 1
+    assert pooled["big_sol"] == pytest.approx(42.5 / 4) and not pooled["single"] and not pooled["fires"]
+    rug = Z.crash_at(snap_k(ds, mint(2), 31).bars, 30)                     # dust removed: the rug's swap is found
+    assert rug["big_sol"] == pytest.approx(42.5 + 0.004 - 0.02) and rug["single"] and rug["fires"]
+    rng = np.random.default_rng(0)                                         # the same bound as z2's, vectorised
+    a = rng.integers(0, 6, (4, 500)).astype(float)
+    sol = np.where(rng.random(500) < 0.2, rng.uniform(0, 0.05, 500), rng.lognormal(0, 1.5, 500))
+    got = Z.sell_trade_lb(sol, a[0], a[1], a[2])
+    want = [z2.trade_lb(v, n, d, o) for v, n, d, o in zip(sol, a[0], a[1], a[2])]
+    np.testing.assert_allclose(got, want, rtol=1e-12, atol=0)
 
 
 def test_crash_is_on_the_close_not_the_low():

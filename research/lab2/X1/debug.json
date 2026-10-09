@@ -3,10 +3,10 @@
  "version": "x1-v1",
  "stage": "debug",
  "split": "final_train",
- "utc": "2026-10-09 02:41:27",
+ "utc": "2026-10-09 04:25:05",
  "provisional": false,
  "debug_only": true,
- "prereg_sha256": "71a5f755ce3bfa6f1519a5a822183d75e903d7420a3d6de15d7fdd7d3697bfa7",
+ "prereg_sha256": "e86be45299958f53f0fd160fd6a0e0327d64c8f11d0407a071f0823c3d32234d",
  "rerun_reason": null,
  "coverage": {
   "split": "final_train",
@@ -54,15 +54,15 @@
   "days_expected": 0.52,
   "days_full": 2,
   "curve_span_utc": [
-   "2026-10-04 18:00:00",
-   "2026-10-08 21:00:00"
+   "2026-09-30 17:00:00",
+   "2026-10-09 02:00:00"
   ],
   "b2_span_utc": [
    "2026-10-07 19:00:00",
    "2026-10-08 19:00:00"
   ],
   "completeness_source": "raw_chunks",
-  "parquet_snapshot_utc": "2026-10-09 00:30:55",
+  "parquet_snapshot_utc": "2026-10-09 03:57:17",
   "b2_hours_needed": 24,
   "b2_hours_done": 24,
   "b2_hours_midrun": [],
@@ -119,11 +119,10 @@
  "gate": {
   "n_eligible": 145,
   "n_obs": 5,
-  "groups": {
-   "unknown": 140,
-   "known_not_reputable": 5
+  "holder_split": {
+   "known": 5,
+   "unknown": 140
   },
-  "n_score_wallets": 3,
   "n_warmup_obs": 5,
   "need": {
    "obs": 200,
@@ -173,7 +172,17 @@
     "new_trial": false,
     "n_trials_total": 2575
    },
-   "returns": "hidden on the debug split (never choose parameters on FINAL data)"
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)",
+   "label_dependent_counts": [
+    "n",
+    "n_coins",
+    "n_leads",
+    "n_placebo",
+    "n_control",
+    "n_warmup",
+    "horizon_exits",
+    "entries_per_day"
+   ]
   },
   "th0|n6": {
    "config": "th0|n6",
@@ -191,7 +200,17 @@
     "new_trial": false,
     "n_trials_total": 2575
    },
-   "returns": "hidden on the debug split (never choose parameters on FINAL data)"
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)",
+   "label_dependent_counts": [
+    "n",
+    "n_coins",
+    "n_leads",
+    "n_placebo",
+    "n_control",
+    "n_warmup",
+    "horizon_exits",
+    "entries_per_day"
+   ]
   },
   "th0.1|n3": {
    "config": "th0.1|n3",
@@ -209,7 +228,17 @@
     "new_trial": false,
     "n_trials_total": 2575
    },
-   "returns": "hidden on the debug split (never choose parameters on FINAL data)"
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)",
+   "label_dependent_counts": [
+    "n",
+    "n_coins",
+    "n_leads",
+    "n_placebo",
+    "n_control",
+    "n_warmup",
+    "horizon_exits",
+    "entries_per_day"
+   ]
   },
   "th0.1|n6": {
    "config": "th0.1|n6",
@@ -227,7 +256,17 @@
     "new_trial": false,
     "n_trials_total": 2575
    },
-   "returns": "hidden on the debug split (never choose parameters on FINAL data)"
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)",
+   "label_dependent_counts": [
+    "n",
+    "n_coins",
+    "n_leads",
+    "n_placebo",
+    "n_control",
+    "n_warmup",
+    "horizon_exits",
+    "entries_per_day"
+   ]
   }
  },
  "entries_per_day": {
@@ -240,7 +279,7 @@
   "verdict": "DEBUG",
   "note": "mechanics only; returns hidden"
  },
- "runtime_s": 3.2,
+ "runtime_s": 4.5,
  "n_trials_total": 2575,
  "overall": "PENDING (no official TRAIN run)"
 }

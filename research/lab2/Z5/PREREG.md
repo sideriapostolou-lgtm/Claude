@@ -6,7 +6,8 @@
   fixed in this file **before** the debug run on the census TRAIN third (§13). That run reports counts and
   decision-time costs only: returns, exit reasons, fill prices and placebo outcomes hidden, and no parameter chosen
   there. Two robustness additions came **after** it, from counts only, and are listed in §13: the concentration check
-  (§9, Z5.4) and the class-matched diagnostic control (§8). Neither touches the grid.
+  (§9, Z5.4) and the class-matched diagnostic control (§8). Neither touches the grid. They are recorded as amendment
+  A1 in `Z5/AMENDMENTS.md` (review finding Z5-2), with what they rest on and the lead's sign-off.
 - **Code:** `research/lab2/z5.py`, on the shared foundation `research/lab2/common.py` (every feature through
   `common.AsOf`). Tests: `research/lab2/tests/test_z5.py`.
 - **Data:** `graduates`, `b2_coins`, `b2_bars` only (B2 minute bars to g + 180 min). No B1, no B3, no CryptoHouse
@@ -16,8 +17,9 @@
   shortlists and one-shot sessions. Stage gating and CLI follow `m1.py`.
 - **Splits:** common.py's (TRAIN 10-01 → 10-05, VAL → 10-06 12:00, TEST → 10-07 19:37:30, CONFIRM 09-16 → 10-01,
   FINAL = census day; the census TRAIN third is debug only).
-- **Freeze.** The first official TRAIN run hashes this file into `Z5/prereg.lock`. After that, `z5.py` refuses every
-  stage if this file changed. A change is a new version (`z5-v2`) in `Z5/AMENDMENTS.md`, and its configs are new
+- **Freeze.** The first TRAIN run of any kind, a provisional `--allow-partial` run included (it shows TRAIN returns),
+  hashes this file into `Z5/prereg.lock`. After that, `z5.py` refuses every stage if this file changed (a
+  `train_prelim.json` without a lock pins the sha it recorded). A change is a new version (`z5-v2`) in `Z5/AMENDMENTS.md`, and its configs are new
   trials.
 
 ## 1. Question and mechanism
@@ -210,10 +212,21 @@ PLAN §8 rule 1 holds (`common.validation_gates` for the split; the debug stage 
 is complete (FINAL exempt), with no B2 hour mid-run and no SOL/USD lookahead; the guarded splits have their flags
 (`LAB2_ALLOW_TEST`, `LAB2_ALLOW_CONFIRM`, `LAB2_ALLOW_FINAL`), which `z5.py` never sets.
 
-**Host-first rule.** Running M1's entries on VAL, TEST, CONFIRM or FINAL would show M1's result there before M1's own
-look. So a stage whose shortlist holds the M1 host refuses until M1 has had its own look at that split group (trials
-ledger), or M1 can no longer reach it (its TRAIN decision was not SHORTLISTED; its VAL decision did not proceed; for
-CONFIRM, M1's `confirm_allowed` is false). R0 is a parameter-free null host with no look to protect.
+**Host-first rule.** Running a host's entries on VAL, TEST, CONFIRM or FINAL would show the host owner's result there
+before the owner's own look. Both hosts have an owner, and the rule covers the candidate and the twin (the twin is the
+host baseline itself):
+
+- **M1 host.** A stage whose shortlist holds the M1 host refuses until M1 has had its own look at that split group
+  (trials ledger), or M1 can no longer reach it (its TRAIN decision was not SHORTLISTED; its VAL decision did not
+  proceed; for CONFIRM, M1's `confirm_allowed` is false). `z5.m1_blocker`.
+- **R0 host (review fix Z5-1).** R0 has no parameters, but it is G1.R0 decision for decision (§3), and G1 judges its
+  gate on G1.R0's trades: VAL criterion c3 on the unflagged R0 trades, TEST / CONFIRM / FINAL on R0 flagged minus
+  unflagged. An R0 pair's twin on a split is exactly G1.R0's trades there, and the by-class means approximate G1's
+  gate split. So a stage whose shortlist holds the R0 host refuses until family G1 has had its own look at that split
+  group (trials ledger), or G1 can no longer reach it: G1's VAL verdict did not open TEST (only `PASS_CHAIN` /
+  `SHIP_G_TIME` do). A complete G1 TRAIN always writes its shortlist and G1 runs CONFIRM and FINAL after any TEST, so
+  nothing else stops G1 earlier. `z5.g1_blocker`. (The first version of this file called R0 "a null host with no look
+  to protect"; that was wrong.)
 
 ### TRAIN (all searching)
 
@@ -235,7 +248,8 @@ CONFIRM, M1's `confirm_allowed` is false). R0 is a parameter-free null host with
    then the higher mean, then grid order. Written with `common.write_shortlist`, frozen at the first VAL run.
 5. Nothing qualifies: **NO_CONFIG** if any filtered config met the sample bar, else **UNDERPOWERED_TRAIN**. Z5 stops.
 6. A decision on complete TRAIN is final (a re-run needs `--rerun-reason` naming a data correction; the old result is
-   archived). `--allow-partial` writes a PROVISIONAL `train_prelim.*` that never writes a shortlist or a lock.
+   archived). `--allow-partial` writes a PROVISIONAL `train_prelim.*` that never writes a shortlist. It does write
+   `prereg.lock` when none exists: the first TRAIN run of any kind freezes this file (review fix Z-ALL-1).
 
 ### VAL (the pair, once)
 
@@ -350,7 +364,7 @@ were fixed before it and did not change.
    are 1,000 SOL apart (a 25-60 % stop).
 
 **Definition changes made while debugging** (from structure and counts, never from outcomes; before any TRAIN data,
-no `prereg.lock` existed):
+no `prereg.lock` existed). Items 1 and 2 are amendment A1 in `Z5/AMENDMENTS.md`:
 
 1. **The concentration check** (§9, Z5.4). Item 1 means a cheap-tier R0 result could rest on one operator: all 29
    OPERATOR entries are one operator cluster (as M1 PREREG §13 found). M1's cluster linking cannot be used for R0: its

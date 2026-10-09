@@ -1,6 +1,7 @@
 # Z2 pre-registration: follow a single large buy after BOOST, or learn that whales are exit liquidity
 
-- **Version:** `z2-v1`.
+- **Version:** `z2-v2`: `z2-v1` plus amendment A1 (`Z2/AMENDMENTS.md`), a definition fix made before any TRAIN run
+  after review finding Z2-1: a whale bar must also lift the pricing reserve net of the minute's sells (§3).
 - **Written:** 2026-10-09, before any run on TRAIN, VAL, TEST, CONFIRM or FINAL data. TRAIN is still being
   backfilled. The only run so far is the debug run on the census TRAIN third (§13): counts only, returns hidden, no
   parameter chosen there.
@@ -10,9 +11,10 @@
   no CryptoHouse queries.
 - **Splits:** common.py's (TRAIN 10-01 → 10-05, VAL 10-05 → 10-06 12:00, TEST 10-06 12:00 → 10-07 19:37:30,
   CONFIRM 09-16 → 10-01, FINAL = census day; the census TRAIN third is debug only).
-- **Freeze.** The first official TRAIN run hashes this file into `Z2/prereg.lock`. After that `z2.py` refuses every
-  stage if this file changed. A change is a new version (`z2-v2`) in `Z2/AMENDMENTS.md`, and its configs are new
-  trials.
+- **Freeze.** The first TRAIN run of any kind, a provisional `--allow-partial` run included (it shows TRAIN returns),
+  hashes this file into `Z2/prereg.lock` (review fix Z-ALL-1; a `train_prelim.json` without a lock pins the sha it
+  recorded). After that `z2.py` refuses every stage if this file changed. A later change is a new version (`z2-v3`) in
+  `Z2/AMENDMENTS.md`, and its configs are new trials.
 
 ## 1. Hypothesis and mechanism
 
@@ -73,7 +75,8 @@ user-side SOL (pool fee included), so the whale's real ΔX is up to 1.25 % small
 | `whale_lb_j` | §2, on the last completed bar j = k − 1 (bars complete only when `minute_ts + 60 ≤ τ`) |
 | `X_before_j` | pricing reserve X = x + v after bar j − 1 (`bars.X[j − 1]`), i.e. the depth the whale hit |
 | `size_ratio_j` | `whale_lb_j / X_before_j` |
-| **whale bar** | bar j starts ≥ g + 420 s, traded, and `size_ratio_j ≥ q` (q from the grid). q = 0.03 → the single trade lifted the price by ≥ 6.1 %; q = 0.06 → ≥ 12.4 % |
+| `dX_j` | net change of the pricing reserve over bar j: `bars.X[j] − X_before_j` (every buy and sell of the minute) |
+| **whale bar** | bar j starts ≥ g + 420 s, traded, `size_ratio_j ≥ q` (q from the grid) **and** `dX_j ≥ 0.5 · q · X_before_j` (z2-v2). The single trade alone would lift the price by ≥ 6.1 % (q = 0.03) or ≥ 12.4 % (q = 0.06); the net lift guarantees that the minute as a whole still raised the price by ≥ 3.0 % or ≥ 6.1 %, so the whale was not netted out by the same minute's sellers |
 | `X_dec` | pricing reserve after the last completed bar at the decision |
 | `depth` | bucket of `X_dec`: `X<50` (drained: < 59 % of the ≈ 85 SOL migration reserve), `50-100` (near migration), `X>=100` (grown) |
 | `speed` | `instant` if `grad_delay_s` ≤ 5 s (factory / operator style launch), else `slow`. NULL `grad_delay_s` (creation not scanned) uses `grad_delay_lb_s` = 1,800 s → `slow`. Known at g |
@@ -193,8 +196,8 @@ A stage refuses to run unless:
    **UNDERPOWERED_TRAIN**.
 4. A decision on complete TRAIN is final. A re-run needs `--rerun-reason` naming a data correction; the previous
    result is archived as `train_prev_<ts>.*`.
-5. `--allow-partial` runs a **PROVISIONAL** TRAIN on partial data: it writes `train_prelim.*`, never a shortlist or a
-   lock, and never unlocks VAL.
+5. `--allow-partial` runs a **PROVISIONAL** TRAIN on partial data: it writes `train_prelim.*` and, when none exists,
+   `prereg.lock` (the first TRAIN run of any kind freezes this file), never a shortlist, and never unlocks VAL.
 
 ### VAL (the ≤ 2 shortlisted configs, once)
 
@@ -266,6 +269,11 @@ Declarations passed to `common.auto_rejections`: `uses_organic_flow = False`, `u
 | SOL/USD | Non-debug stages refuse while the series starts after a split's coins (a later price would be lookahead) |
 
 ## 13. Debug findings and expected sample (census TRAIN third, counts only)
+
+**Version note.** The counts below are `z2-v1`'s (whale bar = size test only). Amendment A1 (`z2-v2`, §3) removes the
+whale bars whose minute did not lift the reserve by ≥ 0.5 · q · X_before: by the review's probe of the same bars
+(bar flows only, no returns), between 5 and 18 of the 77 q = 0.03 whale bars, so the expected samples shrink by up to
+a quarter. Nothing else in §13 changes.
 
 **The run.** `python research/lab2/z2.py --debug` writes `Z2/debug.md` and `Z2/debug.json`.
 

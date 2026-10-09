@@ -86,9 +86,9 @@ VAL. Its trials still count (the configs are the same as the full run's, so a la
 - **Entries need all of:**
   - age at the minute close τ − g ≥ 10 min;
   - t − g ≤ 120 min (B1 ends at g + 120 min);
-  - a B1 prefix shorter than 20,000 trades. P4 keeps only the first 20,000 trades per coin, so a prefix of that
-    length may be truncated. From then on the coin takes no new entry and the flow exits are off; this is known at
-    τ with no lookahead.
+  - a complete B1 window for the coin. P4b (research/flow/b1c.py) has no per-coin trade cap
+    (`B1_MAX_TRADES = None`), so no prefix is truncated; coins without a complete B1 window are not scored.
+    (Amended 2026-10-09 before any TRAIN run: the earlier text described P4's 20,000-trade cap.)
 - **Exits** may run to the end of the 180-minute B2 window. A position still open there closes at the horizon.
 
 ## 3. Event E1: the candle dip (PLAN §4.4, unchanged)
@@ -328,7 +328,7 @@ one-run rule on TEST, CONFIRM and FINAL.
   - it disappears without the top 2 trades;
   - it scores a wallet with its trades in the traded coin (D1 uses no reputation);
   - it counts AGENT, BOT, WASH, DUST or MECH as organic (declared and excluded);
-  - it uses truncated windows (the 20,000-trade cap is handled by §2.3);
+  - it uses truncated windows (P4b has no trade cap; coins without a complete B1 window are not scored);
   - it uses current-state fields (none are used);
   - it uses more variants than the PLAN limit (D1 uses 3 of 6).
 - **An honest result.** "Underpowered" and "no edge" are valid outcomes, and will be reported as such.

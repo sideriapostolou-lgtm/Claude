@@ -1,6 +1,7 @@
 # Z3 pre-registration: buy the dead-cat bounce after a single-seller crash (expected: no edge)
 
-- **Version:** `z3-v1`.
+- **Version:** `z3-v2`: `z3-v1` plus amendment A1 (`Z3/AMENDMENTS.md`), a definition fix made before any TRAIN run
+  after review finding Z3-1: the single-seller bound is per sell **trade**, not per wallet (§3).
 - **Written:** 2026-10-09, before any run on TRAIN, VAL, TEST, CONFIRM or FINAL data. TRAIN is still being
   backfilled. Every constant and the whole grid (§6), the controls (§10) and the predictions (§7) were fixed in this
   file **before** the debug run on the census TRAIN third (§14), which reports counts only: returns hidden, no
@@ -11,9 +12,10 @@
   queries.
 - **Splits:** common.py's (TRAIN 10-01 → 10-05, VAL 10-05 → 10-06 12:00, TEST 10-06 12:00 → 10-07 19:37:30,
   CONFIRM 09-16 → 10-01, FINAL = census day; the census TRAIN third is debug only).
-- **Freeze.** The first official TRAIN run hashes this file into `Z3/prereg.lock`. After that `z3.py` refuses every
-  stage if this file changed. A change is a new version (`z3-v2`) in `Z3/AMENDMENTS.md`, and its configs are new
-  trials.
+- **Freeze.** The first TRAIN run of any kind, a provisional `--allow-partial` run included (it shows TRAIN returns),
+  hashes this file into `Z3/prereg.lock` (review fix Z-ALL-1; a `train_prelim.json` without a lock pins the sha it
+  recorded). After that `z3.py` refuses every stage if this file changed. A later change is a new version (`z3-v3`) in
+  `Z3/AMENDMENTS.md`, and its configs are new trials.
 
 ## 1. Hypothesis and mechanism
 
@@ -79,7 +81,7 @@ For a completed bar j (index from the graduation minute; dense bars, untraded mi
 | ref_j | max(open_j, close_{j−1}): the price where the minute started |
 | drop_j | 1 − close_j / ref_j |
 | X_{j−1} | pricing reserve x + v after bar j − 1 (just before the crash minute) |
-| big_j | sell_sol_j / max(n_sellers_j, 1): by pigeonhole, at least one wallet (≥ 0.01 SOL) sold this much SOL in minute j |
+| big_j | (sell_sol_j − 0.01 · d) / (n_sells_j − d), d = max(0, n_dust_j − n_buys_j) (never below sell_sol_j / n_sells_j; 0 without sells): by pigeonhole, at least one sell **trade** (one signer's swap) sold this much SOL in minute j. z3-v2: `z3-v1` divided by the wallet count `n_sellers_j`, which counts a pooled program account's many signers as one seller (audit §3.6); the trade bound is the one Z2 §2 uses |
 
 **CRASH(j)**: j ≥ 2, bar j traded, and drop_j ≥ **0.70**. The drop is measured on the **close**, so a crash that
 already bounced back inside its own minute is not an event (that bounce was never ours to trade).
@@ -181,7 +183,8 @@ A config **qualifies** on TRAIN when all hold:
   **UNDERPOWERED_TRAIN**. Both stop Z3.
 - A decision on complete TRAIN is final. A re-run needs `--rerun-reason` naming a data correction; the previous
   result is archived as `train_prev_<ts>.*`. `--allow-partial` runs a **PROVISIONAL** TRAIN on partial data that
-  writes `train_prelim.*`, never a shortlist or a lock, and never unlocks VAL.
+  writes `train_prelim.*` and, when none exists, `prereg.lock` (the first TRAIN run of any kind freezes this
+  file), never a shortlist, and never unlocks VAL.
 
 ## 9. Later stages (`python research/lab2/z3.py --stage …`)
 
@@ -269,7 +272,7 @@ Declarations passed to `common.auto_rejections`: `uses_organic_flow = False`, `u
 
 | Area | Limit |
 |---|---|
-| "Single seller" | a pigeonhole bound from per-minute totals (B2 has no wallet ids): it proves one wallet sold ≥ big_j, never who. A rug followed in the same minute by many panic sellers can fail the bound (missed event, never a false one) |
+| "Single seller" | a pigeonhole bound from per-minute totals (B2 has no wallet ids): it proves one sell trade (one swap by one signer) sold ≥ big_j, never who. A rug followed in the same minute by many panic sellers, or split into several swaps, can fail the bound (missed event, never a false one; with the trade-level bound of z3-v2 this holds for pooled program accounts too) |
 | Crash timing | minute resolution: a crash in the last second of a minute and one in the first second look alike; our decision comes 20-80 s after the swap |
 | Fills | minute bars, worst side, next-bar exits; no sub-minute replay (X1). A real bot with websocket latency (5 s) could act earlier; this test does not cover it |
 | Hold | B2 ends at g + 180 min; holds are capped at g + 178 min |
@@ -283,7 +286,9 @@ outcomes are hidden; its trials go to a scratch ledger, never to `trials.json`. 
 run; **no constant above may change because of them.**
 
 **Run 2026-10-09 02:58 UTC, 52 s** (`Z3/debug.md`). 450 usable coins created over 0.52 days; 50,864 decision minutes
-at ages 7-120 min. **No constant above was changed after it ran, and no definition needed a fix.**
+at ages 7-120 min. **No constant above was changed after it ran.** One definition was fixed afterwards on review
+(amendment A1, `z3-v2`: the trade-level bound of §3, so pooled program accounts cannot pass as one seller); the counts
+below are `z3-v1`'s. Rugs are one swap (wave-1 RESULTS A3), so the trade bound keeps genuine rugs.
 
 | Count (no outcomes) | Census TRAIN third |
 |---|---:|

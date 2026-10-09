@@ -6,8 +6,9 @@ Every FEATURE is read through :class:`common.AsOf` (cutoff tau = t - 20 s; compl
 None). Outcomes (trade returns, later prices) are never features.
 
 Mechanism (PREREG 1): a completed minute bar whose CLOSE is >= 70 % below where the minute started (max(open, previous
-close)), with a pigeonhole proof that one wallet sold >= 25 % of the pricing reserve X = x + v in that minute (more
-than half of the 0.452 X outflow a 70 % drop needs), leaves a thin pool in which a few SOL of dip buying make a large
+close)), with a pigeonhole proof that one sell TRADE (one signer's swap) sold >= 25 % of the pricing reserve X = x + v
+in that minute (more than half of the 0.452 X outflow a 70 % drop needs; z3-v2: trade-level, so pooled program accounts
+cannot pass as one seller), leaves a thin pool in which a few SOL of dip buying make a large
 bounce. Z3 buys right after the crash (``now``) or after the first green minute (``confirm``) and holds 5, 15 or 60 min,
 with a 50 % catastrophe stop; time and stop exits fill on the NEXT bar at its low; deadline g + 178 min.
 
@@ -26,7 +27,7 @@ CLI::
 
 Each stage writes ``Z3/<stage>.json`` and ``Z3/<stage>.md`` and REFUSES to run when its prerequisites are missing (no
 VAL without the written shortlist, TEST / CONFIRM / FINAL once each, never CONFIRM or FINAL before TEST, PLAN 8 data
-gates V1-V4, PREREG frozen after the first official TRAIN run).
+gates V1-V4, PREREG frozen after the first TRAIN run, provisional included).
 """
 
 from __future__ import annotations
@@ -51,7 +52,7 @@ if str(HERE) not in sys.path:
     sys.path.insert(0, str(HERE))
 import common as C  # noqa: E402
 
-VERSION = "z3-v1"
+VERSION = "z3-v2"
 OUT_DIR = HERE / "Z3"
 HYP = "Z3"
 STAGES = ("train", "val", "test", "confirm", "final")
@@ -61,7 +62,8 @@ STAGE_ENV = {"test": "LAB2_ALLOW_TEST", "confirm": "LAB2_ALLOW_CONFIRM", "final"
 
 # =========================================================================== pre-registered constants (PREREG 3-6)
 CRASH_DROP = 0.70                    # close_j <= 0.30 x max(open_j, close_{j-1})
-BIG_SELLER_FRAC_X = 0.25             # sell_sol / max(n_sellers, 1) >= 0.25 x X_{j-1}: one wallet supplied > half of
+DUST_SOL = 0.01                      # B2 dust: a trade under 0.01 SOL
+BIG_SELLER_FRAC_X = 0.25             # largest sell TRADE (pigeonhole) >= 0.25 x X_{j-1}: one swap supplied > half of
                                      # the 1 - sqrt(0.30) = 0.452 X outflow a 70 % drop needs
 MIN_CRASH_BAR = 2                    # bar 0 is the partial graduation minute; ref needs a full previous bar
 STATE_DD = 0.70                      # post-crash state (control): last close <= 0.30 x highest open / close so far
@@ -90,7 +92,9 @@ G35_MARGIN = -0.10
 
 FIXED = {
     "version": VERSION, "crash_drop": CRASH_DROP, "crash_on": "close vs max(open, previous close)",
-    "big_seller_frac_x": BIG_SELLER_FRAC_X, "min_crash_bar": MIN_CRASH_BAR, "state_dd": STATE_DD,
+    "big_seller_frac_x": BIG_SELLER_FRAC_X,
+    "big_seller_bound": "largest single sell trade >= (sell_sol - 0.01 d) / (n_sells - d), d = max(0, n_dust - n_buys)",
+    "min_crash_bar": MIN_CRASH_BAR, "state_dd": STATE_DD,
     "state_quiet_bars": STATE_QUIET_BARS, "age_min_s": AGE_MIN_S, "age_max_s": AGE_MAX_S, "stop_pct": STOP_PCT,
     "exit_by_age_s": EXIT_BY_AGE_S, "size_usd": SIZE_USD,
     "placebo": "drawdown-matched (post-crash state, no crash in 15 bars); unmatched control",
@@ -124,6 +128,22 @@ def config_key(p: Mapping[str, Any]) -> str:
 # =========================================================================== features (AsOf only)
 
 
+def sell_trade_lb(sell_sol: Any, n_sells: Any, n_dust: Any, n_buys: Any) -> np.ndarray:
+    """Lower bound on the largest single sell TRADE of each bar (z2.trade_lb, vectorised; review Z3-1).
+
+    ``n_sells`` trades hold ``sell_sol`` SOL; at least d = max(0, n_dust - n_buys) of them are dust (< 0.01 SOL, n_dust
+    counts both sides), so the others hold > sell_sol - 0.01 d in n_sells - d trades and the largest is at least their
+    mean (never less than the plain mean). One trade is one signer's swap, so a pooled program account (one B2 event
+    user for many signers, audit 3.6) cannot pass as one seller, as it can through the wallet-level n_sellers."""
+    ss, n, nd, nb = (np.asarray(v, float) for v in (sell_sol, n_sells, n_dust, n_buys))
+    mean_all = ss / np.maximum(n, 1.0)
+    d = np.maximum(0.0, nd - nb)
+    n_eff = n - d
+    lb = np.where(n_eff >= 1, (ss - DUST_SOL * d) / np.maximum(n_eff, 1.0), mean_all)
+    out = np.where(ss <= DUST_SOL * n, mean_all, np.maximum(mean_all, lb))
+    return np.where((n >= 1) & (ss > 0), out, 0.0)
+
+
 def crash_arrays(bars: C.Bars, lo: int, hi: int) -> dict | None:
     """PREREG 3 for completed bars j in [lo, hi) of ``bars`` (a :class:`common.Bars` = completed bars at tau).
 
@@ -139,7 +159,8 @@ def crash_arrays(bars: C.Bars, lo: int, hi: int) -> dict | None:
     ref = np.maximum(o[j], c[j - 1])
     with np.errstate(divide="ignore", invalid="ignore"):
         drop = np.where(np.isfinite(ref) & (ref > 0), 1.0 - c[j] / ref, np.nan)
-    big = ss[j] / np.maximum(ns[j], 1.0)
+    big = sell_trade_lb(ss[j], np.asarray(bars.n_sells, float)[j], np.asarray(bars.n_dust, float)[j],
+                        np.asarray(bars.n_buys, float)[j])
     xb = X[j - 1]
     crash = tr[j] & np.isfinite(drop) & (drop >= CRASH_DROP)
     single = np.isfinite(xb) & (xb > 0) & (big >= BIG_SELLER_FRAC_X * xb)
@@ -490,13 +511,16 @@ def check_prereqs(stage: str, out_dir: Path = OUT_DIR, *, flow: Path | None = No
     if not prereg.exists():
         raise Z3Refused(f"{prereg} missing: pre-register before any run")
     lock = _read_json(out_dir / "prereg.lock")
-    if lock and lock.get("sha256") != _sha(prereg):
-        raise Z3Refused("PREREG.md changed after the first official TRAIN run; record changes in Z3/AMENDMENTS.md "
-                        "as a new version instead")
+    # The first TRAIN run of ANY kind freezes PREREG.md: a provisional run shows TRAIN returns too. A train_prelim.json
+    # without a lock (written before that rule) pins the sha it recorded.
+    frozen = (lock or {}).get("sha256") or (_read_json(out_dir / "train_prelim.json") or {}).get("prereg_sha256")
+    if frozen and frozen != _sha(prereg):
+        raise Z3Refused("PREREG.md changed after the first TRAIN run (provisional runs included); record changes in "
+                        "Z3/AMENDMENTS.md as a new version instead")
     ok, bad = C.validation_gates(STAGE_SPLIT[stage], flow)
     if not ok and stage != "debug":         # debug checks mechanics only; every real stage needs stop rule 1
         raise Z3Refused("PLAN 8 rule 1 (data first): " + "; ".join(bad))
-    info = {"stage": stage, "prereg_sha256": _sha(prereg), "prereg_locked": bool(lock),
+    info = {"stage": stage, "prereg_sha256": _sha(prereg), "prereg_locked": bool(frozen),
             "data_gates": {"ok": ok, "problems": bad}}
     if stage == "debug":
         return info
@@ -702,12 +726,15 @@ def run_stage(stage: str, *, out_dir: Path = OUT_DIR, allow_partial: bool = Fals
                     C._check_run_allowed(HYP, p, split, ledger_path, shortlist_path)
             except C.SplitLocked as e:
                 raise Z3Refused(str(e)) from e
-        if stage == "train" and not provisional:
+        if stage == "train":
             out_dir.mkdir(parents=True, exist_ok=True)
-            if not (out_dir / "prereg.lock").exists():
+            if not (out_dir / "prereg.lock").exists():      # the first TRAIN run, provisional or not, locks PREREG
                 (out_dir / "prereg.lock").write_text(json.dumps({"sha256": info["prereg_sha256"],
-                                                                 "locked_utc": C.utc_str(time.time())}, indent=1))
-            if rerun_reason and (out_dir / "train.json").exists():      # archive, never overwrite, an official run
+                                                                 "locked_utc": C.utc_str(time.time()),
+                                                                 "locked_by": "provisional TRAIN" if provisional
+                                                                 else "TRAIN"}, indent=1))
+            # archive, never overwrite, an official run
+            if not provisional and rerun_reason and (out_dir / "train.json").exists():
                 stamp = time.strftime("%Y%m%dT%H%M%S", time.gmtime())
                 for ext in ("json", "md"):
                     p = out_dir / f"train.{ext}"

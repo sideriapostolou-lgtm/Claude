@@ -4,7 +4,8 @@
 - **Written:** 2026-10-09, before any Z4 run on TRAIN, VAL, TEST, CONFIRM or FINAL data. TRAIN was still being
   backfilled. Every constant, the tokenizer and stop-word list (§2.3), the grid (§7), the controls (§10) and the
   decision rules (§9) were fixed in this file **before** the debug run on the census TRAIN third (§14). That run
-  reports counts only: returns hidden, no parameter chosen there.
+  reports counts only: returns hidden, no parameter chosen there. One diagnostic control was added afterwards on
+  review (finding Z4-1, before any TRAIN run): the market-heat control of §10, never judged; X5 was added to §1.1.
 - **Code:** `research/lab2/z4.py`, on the shared foundation `research/lab2/common.py` (every feature through
   `common.AsOf`). Tests: `research/lab2/tests/test_z4.py`.
 - **Data:** `graduates`, `b2_coins`, `b2_bars` only (B2 minute bars to g + 180 min). No B1, no B3, no CryptoHouse
@@ -15,9 +16,10 @@
   `m1.py`; the cross-coin registry follows `y1.py`'s causal pattern.
 - **Splits:** common.py's (TRAIN 10-01 → 10-05, VAL → 10-06 12:00, TEST → 10-07 19:37:30, CONFIRM 09-16 → 10-01,
   FINAL = census day; the census TRAIN third is debug only).
-- **Freeze.** The first official TRAIN run hashes this file into `Z4/prereg.lock`. After that `z4.py` refuses every
-  stage if this file changed. A change is a new version (`z4-v2`) in `Z4/AMENDMENTS.md`, and its configs are new
-  trials.
+- **Freeze.** The first TRAIN run of any kind, a provisional `--allow-partial` run included (it shows TRAIN returns),
+  hashes this file into `Z4/prereg.lock` (review fix Z-ALL-1; a `train_prelim.json` without a lock pins the sha it
+  recorded). After that `z4.py` refuses every stage if this file changed. A change is a new version (`z4-v2`) in
+  `Z4/AMENDMENTS.md`, and its configs are new trials.
 
 ## 1. Hypothesis and mechanism
 
@@ -67,6 +69,7 @@ momentum claim, with the opposite sign. Both cannot pass.
 | PLAN N1 (H3) | buys the theme **leader** when a copy graduates | Z4 buys the **new member**, conditioned on the theme's resolved outcomes; N1's "buy the copy" sanity check is Z4's exhaustion mirror |
 | G1 / craft G04 (RA-03 ticker reuse) | counts of ticker reuse as a FACTORY flag | Z4 conditions on the **outcomes** of theme members; counts are a diagnostic only |
 | X1 (smart money), X2 (breadth rank), Y2 (organic curve), Z1-Z3, M1, S1, D1 | wallets, flow, bars of the coin itself | Z4's only signal is other coins' names and outcomes |
+| X5 (market regime gate) | **market-wide** state of the recent fresh graduates (graduation rate, post-graduation volume `AV`, survival share `SV` over the last 2 h) | Z4's heat is a **theme-filtered** sample of the same recent-graduate outcomes. A MOM result could be X5's hot market seen through a theme, so §10 adds a market-heat control (review Z4-1) |
 
 ## 2. Data and the registry
 
@@ -244,8 +247,8 @@ ties → N = 3 h.
 
 **TRAIN decision:** SHORTLISTED (branches listed) if either branch qualifies; otherwise NO_CONFIG if some MOM config
 or veto met its sample bar, else UNDERPOWERED_TRAIN. A complete TRAIN's decision is final (a re-run needs
-`--rerun-reason` naming a data correction). `--allow-partial` runs a PROVISIONAL TRAIN that never writes a lock or a
-shortlist.
+`--rerun-reason` naming a data correction). `--allow-partial` runs a PROVISIONAL TRAIN that never writes a
+shortlist; it does write `prereg.lock` when none exists (the first TRAIN run of any kind freezes this file).
 
 ### VAL (shortlisted configs only, once)
 
@@ -293,6 +296,13 @@ per branch.
   N. This isolates **heat** from "being a theme member". With a thin stratum, fewer than 20 draws may succeed in 200
   tries; the draws per signal are reported.
 - **Unmatched control (reported):** any alive coin at the same age.
+- **Market-heat control (MOM only, reported, never judged; review Z4-1).** The judged control matches decision age
+  only, not calendar time, so a theme-heat result could be market-wide heat (X5's mechanism). **Market heat** at t is
+  heat's construction without the theme link: the mean record of the 3 most recent resolved (t_end ≤ t) graduates
+  with g_p in [t − N, g), a known creator ≠ the coin's own, never the coin and never one of its theme members
+  (`Registry.market_state`). The control draws alive eligible members (as the judged control) whose market heat at
+  their own time is ≥ θ. MOM minus it is what the theme adds over a hot market; it is reported next to the judged
+  control (`placebo_market_heat`, with its draw count). At θ = 1.0 the draws may be few or none.
 - **HOST** is the cleanest comparison for MOM (same coins, same time, H < θ removed) and is always reported next to it.
 
 ## 11. Metric, statistics, theme-key clusters

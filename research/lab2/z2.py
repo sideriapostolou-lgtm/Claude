@@ -15,8 +15,9 @@ TRADE is at least
 
 (a pigeonhole bound: at least d_min of the buys are dust, < 0.01 SOL each). One trade is one signer's order, so the
 bound is pooled-account-proof without wallet ids. Bar j is a WHALE bar for size q when whale_lb >= q * X(before j),
-X = pricing reserve x + v. Entry: the first decision whose last completed bar is a whale bar, at decision age <= 120
-min; the order lands in the next bar (worst fill). Exits: time H, a registered deadline g + 178 min, a -35 % stop
+X = pricing reserve x + v, AND the bar raised X by at least 0.5 * q * X(before j) net of its sells (z2-v2, review
+Z2-1: a whale netted out by the same minute's sellers paid no impact). Entry: the first decision whose last completed
+bar is a whale bar, at decision age <= 120 min; the order lands in the next bar (worst fill). Exits: time H, a registered deadline g + 178 min, a -35 % stop
 (next-bar fills, ``FillConfig(exit_delay_bars=1)``), and for exit set ``seller`` a single sell trade (same bound) of
 at least 0.5 * q * X at the decision.
 
@@ -55,7 +56,7 @@ if str(HERE) not in sys.path:
     sys.path.insert(0, str(HERE))
 import common as C  # noqa: E402
 
-VERSION = "z2-v1"
+VERSION = "z2-v2"
 OUT_DIR = HERE / "Z2"
 HYP = "Z2"
 STAGES = ("train", "val", "test", "confirm", "final")
@@ -70,6 +71,7 @@ AGE_MAX_S = 7200.0                      # last entry decision at g + 120 min (>=
 STOP_PCT = 0.35                         # catastrophe stop (craft rule G24 band), not gridded
 EXIT_BY_AGE_S = 178 * 60.0              # registered deadline: sell by g + 178 min (fills inside the B2 window)
 SELLER_FRAC = 0.5                       # big seller: a single sell >= 0.5 x q x X at the decision
+MIN_NET_LIFT_Q = 0.5                    # z2-v2: the whale bar's net dX = X_j - X_(j-1) >= 0.5 x q x X_(j-1)
 DEPTH_EDGES = (50.0, 100.0)             # X buckets (SOL): drained < 50 <= near migration (~85) < 100 <= grown
 INSTANT_MAX_DELAY_S = 5.0               # instant (factory / operator style) graduate: grad_delay_s <= 5 s
 SIZE_USD = 20.0
@@ -96,7 +98,7 @@ DECL = {"uses_organic_flow": False, "uses_wallet_reputation": False, "uses_trunc
 FIXED = {
     "version": VERSION, "detector": "single-trade pigeonhole bound on B2 bars", "boost_end_s": BOOST_END_S,
     "dust_sol": DUST_SOL, "age_max_s": AGE_MAX_S, "stop_pct": STOP_PCT, "exit_by_age_s": EXIT_BY_AGE_S,
-    "seller_frac": SELLER_FRAC, "depth_edges": list(DEPTH_EDGES), "instant_max_delay_s": INSTANT_MAX_DELAY_S,
+    "seller_frac": SELLER_FRAC, "min_net_lift_q": MIN_NET_LIFT_Q, "depth_edges": list(DEPTH_EDGES), "instant_max_delay_s": INSTANT_MAX_DELAY_S,
     "size_usd": SIZE_USD, "placebo": "matched on (speed, depth)",
     "fill": "common.FillConfig(exit_delay_bars=1): worst, latency 30 s, entry-bar exits, next-bar exits",
 }
@@ -157,22 +159,33 @@ def sell_lb_at(bars: C.Bars, j: int) -> float:
     return trade_lb(bars.sell_sol[j], bars.n_sells[j], bars.n_dust[j], bars.n_buys[j])
 
 
+def whale_at(bars: C.Bars, j: int, q: float) -> dict:
+    """PREREG 3 on completed bar j (j >= 1, traded): the single-trade size test ``whale_lb / X_before >= q`` and the
+    net lift ``X_j - X_before >= 0.5 q X_before`` (z2-v2). -> {is_whale, lb, x_before, ratio, dx, lifts}."""
+    out = {"is_whale": False, "lb": None, "x_before": None, "ratio": None, "dx": None, "lifts": None}
+    xb = float(bars.X[j - 1])
+    if not xb > 0:
+        return out
+    lb = whale_lb_at(bars, j)
+    r = lb / xb
+    dx = float(bars.X[j]) - xb
+    lifts = bool(dx >= MIN_NET_LIFT_Q * float(q) * xb)
+    out.update(lb=lb, x_before=xb, ratio=r, dx=dx, lifts=lifts, is_whale=bool(r >= float(q) and lifts))
+    return out
+
+
 def whale_bar(snap: C.AsOf, q: float) -> dict:
-    """Is the LAST completed bar (j = k - 1) a whale bar for size ``q``? -> {is_whale, j, lb, x_before, ratio}."""
+    """Is the LAST completed bar (j = k - 1) a whale bar for size ``q``?
+    -> {is_whale, j, lb, x_before, ratio, dx, lifts}."""
     k = snap.k
-    out = {"is_whale": False, "j": k - 1, "lb": None, "x_before": None, "ratio": None}
+    out = {"is_whale": False, "j": k - 1, "lb": None, "x_before": None, "ratio": None, "dx": None, "lifts": None}
     if k < 2 or not _bar_start_ok(snap, k - 1):
         return out
     bars = snap.bars
     j = k - 1
     if not bars.traded[j]:
         return out
-    lb = whale_lb_at(bars, j)
-    xb = float(bars.X[j - 1])
-    if not xb > 0:
-        return out
-    r = lb / xb
-    out.update(lb=lb, x_before=xb, ratio=r, is_whale=bool(r >= float(q)))
+    out.update(whale_at(bars, j, q))
     return out
 
 
@@ -473,13 +486,16 @@ def check_prereqs(stage: str, out_dir: Path = OUT_DIR, *, flow: Path | None = No
     if not prereg.exists():
         raise Z2Refused(f"{prereg} missing: pre-register before any run")
     lock = _read_json(out_dir / "prereg.lock")
-    if lock and lock.get("sha256") != _sha(prereg):
-        raise Z2Refused("PREREG.md changed after the first official TRAIN run; record changes in Z2/AMENDMENTS.md "
-                        "as a new version instead")
+    # The first TRAIN run of ANY kind freezes PREREG.md: a provisional run shows TRAIN returns too. A train_prelim.json
+    # without a lock (written before that rule) pins the sha it recorded.
+    frozen = (lock or {}).get("sha256") or (_read_json(out_dir / "train_prelim.json") or {}).get("prereg_sha256")
+    if frozen and frozen != _sha(prereg):
+        raise Z2Refused("PREREG.md changed after the first TRAIN run (provisional runs included); record changes in "
+                        "Z2/AMENDMENTS.md as a new version instead")
     ok, bad = C.validation_gates(STAGE_SPLIT[stage], flow)
     if not ok and stage != "debug":
         raise Z2Refused("PLAN 8 rule 1 (data first): " + "; ".join(bad))
-    info = {"stage": stage, "prereg_sha256": _sha(prereg), "prereg_locked": bool(lock),
+    info = {"stage": stage, "prereg_sha256": _sha(prereg), "prereg_locked": bool(frozen),
             "data_gates": {"ok": ok, "problems": bad}}
     if stage == "debug":
         return info
@@ -587,10 +603,8 @@ def event_counts(ds: C.Dataset) -> dict:
             if not bars.traded[j]:
                 continue
             eligible_bars += 1
-            xb = float(bars.X[j - 1])
-            r = whale_lb_at(bars, j) / xb if xb > 0 else 0.0
             for q in Q_GRID:
-                if r >= q:
+                if whale_at(bars, j, q)["is_whale"]:
                     bars_per_q[q] += 1
                     coins_per_q[q].add(m)
                     if q not in seen:
@@ -642,12 +656,14 @@ def run_stage(stage: str, *, out_dir: Path = OUT_DIR, allow_partial: bool = Fals
                     C._check_run_allowed(HYP, p, split, ledger_path, shortlist_path)
             except C.SplitLocked as e:
                 raise Z2Refused(str(e)) from e
-        if stage == "train" and not provisional:
+        if stage == "train":
             out_dir.mkdir(parents=True, exist_ok=True)
-            if not (out_dir / "prereg.lock").exists():
+            if not (out_dir / "prereg.lock").exists():      # the first TRAIN run, provisional or not, locks PREREG
                 (out_dir / "prereg.lock").write_text(json.dumps({"sha256": info["prereg_sha256"],
-                                                                 "locked_utc": C.utc_str(time.time())}, indent=1))
-            if rerun_reason and (out_dir / "train.json").exists():
+                                                                 "locked_utc": C.utc_str(time.time()),
+                                                                 "locked_by": "provisional TRAIN" if provisional
+                                                                 else "TRAIN"}, indent=1))
+            if not provisional and rerun_reason and (out_dir / "train.json").exists():
                 stamp = time.strftime("%Y%m%dT%H%M%S", time.gmtime())
                 for ext in ("json", "md"):
                     p = out_dir / f"train.{ext}"

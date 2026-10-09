@@ -1,7 +1,7 @@
 # X2 debug
 
 - **Split:** `final_train`; usable coins: 450; span: 0.52 days; reference sizes (alive coins at their checkpoint): {'breadth@30': 137, 'breadth@60': 102, 'pressure@30': 137, 'pressure@60': 102}.
-- **Written:** 2026-10-09 02:42:57 UTC; runtime 7.5 s; PREREG sha256 `05c364e47993`; trials in the ledger: 2575.
+- **Written:** 2026-10-09 04:25:09 UTC; runtime 7.5 s; PREREG sha256 `d05337e31cec`; trials in the ledger: 2575.
 - **Overall X2 status:** PENDING (no official TRAIN run).
 
 **Debug run on the census TRAIN third: mechanics and counts only. Returns, exit reasons and bin means are hidden, and no parameter was chosen here.**
@@ -30,10 +30,10 @@
 | c30|h30|time+fade | 8 | 8 | {'OTHER': 7, 'FACTORY': 1} | 160 | 0 | 15.4 |
 | c30|h60|time | 8 | 8 | {'OTHER': 7, 'FACTORY': 1} | 160 | 0 | 15.4 |
 | c30|h60|time+fade | 8 | 8 | {'OTHER': 7, 'FACTORY': 1} | 160 | 0 | 15.4 |
-| c60|h30|time | 2 | 2 | {'FACTORY': 1, 'OTHER': 1} | 40 | 0 | 3.8 |
-| c60|h30|time+fade | 2 | 2 | {'FACTORY': 1, 'OTHER': 1} | 40 | 0 | 3.8 |
-| c60|h60|time | 2 | 2 | {'FACTORY': 1, 'OTHER': 1} | 40 | 0 | 3.8 |
-| c60|h60|time+fade | 2 | 2 | {'FACTORY': 1, 'OTHER': 1} | 40 | 0 | 3.8 |
+| c60|h30|time | 2 | 2 | {'FACTORY': 1, 'OTHER': 1} | 28 | 0 | 3.8 |
+| c60|h30|time+fade | 2 | 2 | {'FACTORY': 1, 'OTHER': 1} | 28 | 0 | 3.8 |
+| c60|h60|time | 2 | 2 | {'FACTORY': 1, 'OTHER': 1} | 28 | 0 | 3.8 |
+| c60|h60|time+fade | 2 | 2 | {'FACTORY': 1, 'OTHER': 1} | 28 | 0 | 3.8 |
 
 ## Decision
 

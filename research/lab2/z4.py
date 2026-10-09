@@ -19,6 +19,8 @@ Every FEATURE is read through :class:`common.AsOf` (cutoff tau = t - 20 s). The 
 Entry (PREREG 4): one decision at the first grid time >= g + 30 min. MOM(N, theta) enters an alive eligible member
 with heat >= theta; HOST(N) enters every alive eligible member. EXH (PREREG 6): on HOST trades, flag = heat >= 0.25;
 PLAN 3.5 veto bar via ``common.verdict_veto``. Exits: 60-minute time exit, -50 % stop, worst fills, next-bar exits.
+Diagnostic for MOM (review Z4-1, never judged): a market-heat control whose draws are eligible members with
+``market heat`` >= theta, the same construction as heat from the 3 most recent resolved NON-member graduates.
 
 CLI::
 
@@ -32,7 +34,7 @@ CLI::
 
 Each stage writes ``Z4/<stage>.json`` and ``Z4/<stage>.md`` and REFUSES to run when its prerequisites are missing
 (no VAL without the written shortlists, TEST / CONFIRM / FINAL once each and only for live branches, never CONFIRM or
-FINAL before TEST, PLAN 8 data gates V1-V4, PREREG frozen after the first official TRAIN run).
+FINAL before TEST, PLAN 8 data gates V1-V4, PREREG frozen after the first TRAIN run, provisional included).
 """
 
 from __future__ import annotations
@@ -127,7 +129,8 @@ FIXED = {
     "stopwords_sha1": STOP_SHA1, "hot_theta": HOT_THETA, "crowd_k": CROWD_K,
     "history_splits": {k: list(v) for k, v in HISTORY_SPLITS.items()}, "stop_pct": STOP_PCT, "hold_s": HOLD_S,
     "exit_by_age_s": EXIT_BY_AGE_S, "size_usd": SIZE_USD, "alive": "AsOf.alive() defaults",
-    "placebo": "eligible-member stratum at the draw's time, alive; unmatched control reported",
+    "placebo": "eligible-member stratum at the draw's time, alive; unmatched control reported; MOM: market-heat "
+               "control (eligible members whose market heat >= theta at their own time), reported",
     "fill": "common.FillConfig(exit_delay_bars=1): worst, latency 30 s, entry-bar stops, exits in the next bar",
 }
 
@@ -281,6 +284,7 @@ class Themes:
     """Structure only: token -> structural graduates carrying it, sorted by g. A query sees g < g_i (< tau) only."""
 
     by_token: dict[str, tuple[np.ndarray, list[Member]]] = field(default_factory=dict)
+    creator_of: dict[str, str] = field(default_factory=dict)    # every structural graduate with a known creator
     n_coins: int = 0
     n_named: int = 0
     first_g: float | None = None
@@ -288,6 +292,7 @@ class Themes:
     @classmethod
     def from_rows(cls, rows: Iterable[Mapping[str, Any]]) -> "Themes":
         by: dict[str, list[Member]] = defaultdict(list)
+        creators: dict[str, str] = {}
         seen: set[str] = set()
         first, named = None, 0
         for r in rows:
@@ -297,6 +302,8 @@ class Themes:
             g = float(r["g"])
             first = g if first is None else min(first, g)
             cr = _nz(r.get("creator"))
+            if cr is not None:
+                creators[str(r["mint"])] = str(cr)
             toks = theme_tokens(r.get("name"), r.get("symbol"))
             if cr is None or not toks:
                 continue
@@ -308,7 +315,7 @@ class Themes:
         for tok, lst in by.items():
             lst.sort(key=lambda m: (m.g, m.mint))
             packed[tok] = (np.array([m.g for m in lst], float), lst)
-        return cls(by_token=packed, n_coins=len(seen), n_named=named, first_g=first)
+        return cls(by_token=packed, creator_of=creators, n_coins=len(seen), n_named=named, first_g=first)
 
     def members(self, tokens: Iterable[str], lo: float, hi: float, mint: str, creator: str) -> dict[str, list[Member]]:
         """token -> members with g in [lo, hi), another (known) creator, never ``mint``."""
@@ -418,6 +425,47 @@ class Registry:
         self._cache[ck] = out
         return out
 
+    def _records_by_g(self) -> tuple[np.ndarray, list[Prior]]:
+        hit = self._cache.get("_records_by_g")
+        if hit is None:
+            lst = sorted(self.records.by_mint.values(), key=lambda p: (p.g, p.mint))
+            hit = (np.array([p.g for p in lst], float), lst)
+            self._cache["_records_by_g"] = hit
+        return hit
+
+    def market_state(self, snap: C.AsOf, lookback_s: float) -> dict:
+        """Market heat (review Z4-1; the MOM diagnostic control): heat's construction WITHOUT the theme link -- the
+        mean record of the 3 most recent resolved (t_end <= t) graduates with g_p in [t - N, g), a known creator !=
+        the coin's own, never the coin itself and never one of its theme members. -> {market_heat, n}; heat None
+        when the coin's creator is unknown or no such graduate resolved."""
+        ck = ("market", snap.mint, float(snap.t), float(lookback_s))
+        hit = self._cache.get(ck)
+        if hit is not None:
+            return hit
+        cr = _nz(snap.get("creator"))
+        out: dict[str, Any] = {"market_heat": None, "n": 0}
+        if cr is not None:
+            lo = snap.t - float(lookback_s)
+            toks = theme_tokens(snap.get("name"), snap.get("symbol"))
+            members = {m.mint for lst in self.themes.members(toks, lo, snap.g, snap.mint, str(cr)).values()
+                       for m in lst}
+            gs, pri = self._records_by_g()
+            a, b = int(np.searchsorted(gs, lo, side="left")), int(np.searchsorted(gs, snap.g, side="left"))
+            picked = []
+            for p in reversed(pri[a:b]):
+                if p.t_end > snap.t or p.mint == snap.mint or p.mint in members:
+                    continue
+                c = self.themes.creator_of.get(p.mint)
+                if c is None or c == str(cr):
+                    continue
+                picked.append(p.ret)
+                if len(picked) == REC_K:
+                    break
+            if picked:
+                out = {"market_heat": float(np.mean(picked)), "n": len(picked)}
+        self._cache[ck] = out
+        return out
+
 
 def _structure_of(cd: C.CoinData, sol: C.SolUsd | None = None) -> dict:
     """(name, symbol, creator) read through AsOf at g + 20 s (all legal from creation or g)."""
@@ -490,6 +538,26 @@ def make_stratum(reg: Registry, lookback_s: float):
 
 
 PLACEBO_CONTROLS = {"unmatched": {"eligible": placebo_eligible, "strata": None}}
+
+
+def market_heat_ok(reg: Registry, lookback_s: float, theta: float):
+    """Market-heat control universe (review Z4-1, diagnostic): alive, an eligible theme member at the draw's own time
+    (as the judged control), and market heat >= theta there. MOM minus it = what the THEME adds over a hot market."""
+    def ok(snap: C.AsOf) -> bool:
+        if not snap.alive() or reg.state(snap, lookback_s)["status"] != "eligible":
+            return False
+        mh = reg.market_state(snap, lookback_s)["market_heat"]
+        return mh is not None and mh >= float(theta)
+    ok.__name__ = f"market_heat_ge_{theta:g}"
+    return ok
+
+
+def placebo_controls(reg: Registry, p: Mapping[str, Any]) -> dict:
+    """Diagnostic controls of a config (never judged): unmatched for every config; MOM also the market-heat one."""
+    out = dict(PLACEBO_CONTROLS)
+    if p["rule"] == "mom":
+        out["market_heat"] = {"eligible": market_heat_ok(reg, p["lookback_s"], p["theta"]), "strata": None}
+    return out
 
 
 # =========================================================================== scans (counts only), trade info
@@ -609,6 +677,10 @@ def evaluate(res: C.Result, info: pd.DataFrame, *, B: int, hide: bool, n_trials_
     base["placebo"] = C.placebo_compare(t, res.placebo, B=B) if len(res.placebo) and len(t) else None
     pu = res.controls.get("unmatched") if res.controls else None
     base["placebo_unmatched"] = C.placebo_compare(t, pu, B=B) if pu is not None and len(pu) and len(t) else None
+    if p["rule"] == "mom":       # review Z4-1: theme heat beyond a hot market (diagnostic, never judged)
+        pm = (res.controls or {}).get("market_heat")
+        base["placebo_market_heat"] = C.placebo_compare(t, pm, B=B) if pm is not None and len(pm) and len(t) else None
+        base["n_market_heat_draws"] = int(len(pm)) if pm is not None else 0
     base["stress"] = {k: C.describe(v, B=200).get("mean") for k, v in res.stress.items()}
     base["portfolio"] = {k: v for k, v in C.portfolio_sim(t).items() if k != "skipped_mints"}
     base["keys"] = _key_stats(t, info["key"], B)
@@ -945,13 +1017,16 @@ def check_prereqs(stage: str, out_dir: Path = OUT_DIR, *, flow: Path | None = No
     if not prereg.exists():
         raise Z4Refused(f"{prereg} missing: pre-register before any run")
     lock = _read_json(out_dir / "prereg.lock")
-    if lock and lock.get("sha256") != _sha(prereg):
-        raise Z4Refused("PREREG.md changed after the first official TRAIN run; record changes in Z4/AMENDMENTS.md "
-                        "as a new version instead")
+    # The first TRAIN run of ANY kind freezes PREREG.md: a provisional run shows TRAIN returns too. A train_prelim.json
+    # without a lock (written before that rule) pins the sha it recorded.
+    frozen = (lock or {}).get("sha256") or (_read_json(out_dir / "train_prelim.json") or {}).get("prereg_sha256")
+    if frozen and frozen != _sha(prereg):
+        raise Z4Refused("PREREG.md changed after the first TRAIN run (provisional runs included); record changes in "
+                        "Z4/AMENDMENTS.md as a new version instead")
     ok, bad = C.validation_gates(STAGE_SPLIT[stage], flow)
     if not ok and stage != "debug":
         raise Z4Refused("PLAN 8 rule 1 (data first): " + "; ".join(bad))
-    info = {"stage": stage, "prereg_sha256": _sha(prereg), "prereg_locked": bool(lock),
+    info = {"stage": stage, "prereg_sha256": _sha(prereg), "prereg_locked": bool(frozen),
             "data_gates": {"ok": ok, "problems": bad}}
     if stage == "debug":
         return info
@@ -1106,12 +1181,14 @@ def run_stage(stage: str, *, out_dir: Path = OUT_DIR, allow_partial: bool = Fals
                     C._check_run_allowed(h, p, split, ledger_path, shortlist_path)
             except C.SplitLocked as e:
                 raise Z4Refused(str(e)) from e
-        if stage == "train" and not provisional:
+        if stage == "train":
             out_dir.mkdir(parents=True, exist_ok=True)
-            if not (out_dir / "prereg.lock").exists():
+            if not (out_dir / "prereg.lock").exists():      # the first TRAIN run, provisional or not, locks PREREG
                 (out_dir / "prereg.lock").write_text(json.dumps({"sha256": info["prereg_sha256"],
-                                                                 "locked_utc": C.utc_str(time.time())}, indent=1))
-            if rerun_reason and (out_dir / "train.json").exists():
+                                                                 "locked_utc": C.utc_str(time.time()),
+                                                                 "locked_by": "provisional TRAIN" if provisional
+                                                                 else "TRAIN"}, indent=1))
+            if not provisional and rerun_reason and (out_dir / "train.json").exists():
                 stamp = time.strftime("%Y%m%dT%H%M%S", time.gmtime())
                 for ext in ("json", "md"):
                     p = out_dir / f"train.{ext}"
@@ -1151,7 +1228,7 @@ def run_stage(stage: str, *, out_dir: Path = OUT_DIR, allow_partial: bool = Fals
             results[role] = C.backtest(strategy, split, p, hypothesis=h, ds=ds, cfg=FILL, placebo=True,
                                        n_placebo=n_placebo, placebo_eligible=placebo_eligible,
                                        placebo_strata=make_stratum(reg, p["lookback_s"]),
-                                       placebo_controls=PLACEBO_CONTROLS, stress=STRESS, declarations=DECL,
+                                       placebo_controls=placebo_controls(reg, p), stress=STRESS, declarations=DECL,
                                        ledger_path=ledger_path, shortlist_path=shortlist_path)
             infos[role] = trade_info(results[role].trades, ds, reg, p["lookback_s"])
         n_tr = C.n_trials(ledger_path)
@@ -1392,17 +1469,20 @@ def render_md(doc: Mapping[str, Any]) -> str:
                          f"{e['horizon_exits']} | {_num(epd)} |")
         else:
             L += ["| role | config | n | keys | mean | 90% CI coin | 90% CI 6-h block | 90% CI key | w/o top 2 | "
-                  "w/o best key | placebo diff (members) | placebo diff (unmatched) | costs ×1.5 | ρ(heat, ret) |",
-                  "|---|---|---:|---:|---:|---|---|---|---:|---:|---:|---:|---:|---:|"]
+                  "w/o best key | placebo diff (members) | placebo diff (unmatched) | diff vs market heat | "
+                  "costs ×1.5 | ρ(heat, ret) |",
+                  "|---|---|---:|---:|---:|---|---|---|---:|---:|---:|---:|---:|---:|---:|"]
             for k, e in cf.items():
                 ks = e.get("keys") or {}
                 pc = (e.get("placebo") or {}).get("mean_diff")
                 pu = (e.get("placebo_unmatched") or {}).get("mean_diff")
+                pmh = (e.get("placebo_market_heat") or {}).get("mean_diff")
                 rho = (e.get("diagnostics") or {}).get("dose_spearman_heat_ret")
                 L.append(f"| {k} | {e['config']} | {e['n']} | {e['n_keys']} | {_pct(e.get('mean'))} | "
                          f"{_ci(e.get('ci90'))} | {_ci(e.get('ci90_block'))} | {_ci(ks.get('ci90_key'))} | "
                          f"{_pct(e.get('mean_without_top2'))} | {_pct(ks.get('mean_without_best_key'))} | {_pct(pc)} | "
-                         f"{_pct(pu)} | {_pct((e.get('stress') or {}).get('costs_x1.5'))} | {_num(rho, 3)} |")
+                         f"{_pct(pu)} | {_pct(pmh)} | {_pct((e.get('stress') or {}).get('costs_x1.5'))} | "
+                         f"{_num(rho, 3)} |")
             L.append("")
             for k, e in cf.items():
                 dg = e.get("diagnostics") or {}

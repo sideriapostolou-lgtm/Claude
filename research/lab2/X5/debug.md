@@ -1,7 +1,7 @@
 # X5 debug
 
 - **Split:** `final_train`; usable coins: 450; span: 0.52 days.
-- **Written:** 2026-10-09 03:50:03 UTC; runtime 51.0 s; PREREG sha256 `1ad9c315d5cc`; trials in the ledger: 2575.
+- **Written:** 2026-10-09 04:25:18 UTC; runtime 6.6 s; PREREG sha256 `8b8bce32d761`; trials in the ledger: 2575.
 - **Overall X5 status:** PENDING (no official TRAIN run).
 
 **Debug run on the census TRAIN third: mechanics and counts only. Returns, alive rates, signal values and every outcome statistic are hidden; no parameter was chosen here.**
@@ -24,7 +24,6 @@
 ## Hosts (ungated)
 
 - R0: 94 trades from 94 coins; by tag {'R0': 94}; per day 180.65664205000445.
-- M1: 24 trades from 24 coins; by tag {'OPERATOR': 24}; per day 46.12510009787347.
 
 ## Gated configs
 
@@ -36,9 +35,6 @@
 | R0|AV|q0.8 | 0 | 0 | 0/0/94 | 0.0 | 0 | 0 | 0.0 | True |
 | R0|SV|q0.5 | 0 | 0 | 0/0/94 | 0.0 | 0 | 0 | 0.0 | True |
 | R0|SV|q0.8 | 0 | 0 | 0/0/94 | 0.0 | 0 | 0 | 0.0 | True |
-| M1|GR|q0.5 | 12 | 12 | 12/11/1 | 0.958 | 2 | 145 | 23.1 | True |
-| M1|AV|q0.5 | 0 | 0 | 0/0/24 | 0.0 | 0 | 0 | 0.0 | True |
-| M1|SV|q0.5 | 0 | 0 | 0/0/24 | 0.0 | 0 | 0 | 0.0 | True |
 
 ## Decision
 

@@ -3,10 +3,10 @@
  "version": "x5-v1",
  "stage": "debug",
  "split": "final_train",
- "utc": "2026-10-09 03:50:03",
+ "utc": "2026-10-09 04:25:18",
  "provisional": false,
  "debug_only": true,
- "prereg_sha256": "1ad9c315d5ccafee4889f1e33dc9fc3149caa5d9ca85a12ed165771279505445",
+ "prereg_sha256": "8b8bce32d7610c43a51132396cc250c284ac9ecad67cf6ff7b2cd42a396ed8ef",
  "rerun_reason": null,
  "coverage": {
   "split": "final_train",
@@ -54,15 +54,15 @@
   "days_expected": 0.52,
   "days_full": 2,
   "curve_span_utc": [
-   "2026-10-01 21:00:00",
-   "2026-10-09 00:00:00"
+   "2026-09-30 17:00:00",
+   "2026-10-09 02:00:00"
   ],
   "b2_span_utc": [
    "2026-10-07 19:00:00",
    "2026-10-08 19:00:00"
   ],
   "completeness_source": "raw_chunks",
-  "parquet_snapshot_utc": "2026-10-09 02:53:25",
+  "parquet_snapshot_utc": "2026-10-09 03:57:17",
   "b2_hours_needed": 24,
   "b2_hours_done": 24,
   "b2_hours_midrun": [],
@@ -173,7 +173,7 @@
    "SV"
   ],
   "trial": {
-   "config": "X5-modelcheck|972e2837db8d",
+   "config": "X5-modelcheck|b37bf2e6c363",
    "new_trial": false,
    "n_trials_total": 2575,
    "hypothesis_configs": 0,
@@ -198,29 +198,12 @@
     "n_trials_total": 2575
    },
    "returns": "hidden on the debug split (never choose parameters on FINAL data)"
-  },
-  "M1": {
-   "hypothesis": "X5.host-M1",
-   "host": "M1",
-   "params_hash": "4096697e9ed9",
-   "n": 24,
-   "n_coins": 24,
-   "by_tag_n": {
-    "OPERATOR": 24
-   },
-   "horizon_exits": 0,
-   "trial": {
-    "config": "X5.host-M1|4096697e9ed9|cfg:a06543feac6c",
-    "new_trial": false,
-    "n_trials_total": 2575
-   },
-   "returns": "hidden on the debug split (never choose parameters on FINAL data)"
   }
  },
  "configs": {
   "R0|GR|q0.5": {
    "config": "R0|GR|q0.5",
-   "params_hash": "581ed5d2ae2f",
+   "params_hash": "2f4d80b8964e",
    "hypothesis": "X5",
    "host": "R0",
    "signal": "GR",
@@ -239,7 +222,7 @@
    "gate_consistent": true,
    "horizon_exits": 0,
    "trial": {
-    "config": "X5|581ed5d2ae2f|cfg:a06543feac6c",
+    "config": "X5|2f4d80b8964e|cfg:a06543feac6c",
     "new_trial": false,
     "n_trials_total": 2575
    },
@@ -247,7 +230,7 @@
   },
   "R0|GR|q0.8": {
    "config": "R0|GR|q0.8",
-   "params_hash": "3a2967d5c957",
+   "params_hash": "ccd0202251aa",
    "hypothesis": "X5",
    "host": "R0",
    "signal": "GR",
@@ -266,7 +249,7 @@
    "gate_consistent": true,
    "horizon_exits": 0,
    "trial": {
-    "config": "X5|3a2967d5c957|cfg:a06543feac6c",
+    "config": "X5|ccd0202251aa|cfg:a06543feac6c",
     "new_trial": false,
     "n_trials_total": 2575
    },
@@ -274,7 +257,7 @@
   },
   "R0|AV|q0.5": {
    "config": "R0|AV|q0.5",
-   "params_hash": "5c81cbfca535",
+   "params_hash": "711c268a884e",
    "hypothesis": "X5",
    "host": "R0",
    "signal": "AV",
@@ -291,7 +274,7 @@
    "gate_consistent": true,
    "horizon_exits": 0,
    "trial": {
-    "config": "X5|5c81cbfca535|cfg:a06543feac6c",
+    "config": "X5|711c268a884e|cfg:a06543feac6c",
     "new_trial": false,
     "n_trials_total": 2575
    },
@@ -299,7 +282,7 @@
   },
   "R0|AV|q0.8": {
    "config": "R0|AV|q0.8",
-   "params_hash": "0314099b8810",
+   "params_hash": "bf77e9ad2be3",
    "hypothesis": "X5",
    "host": "R0",
    "signal": "AV",
@@ -316,7 +299,7 @@
    "gate_consistent": true,
    "horizon_exits": 0,
    "trial": {
-    "config": "X5|0314099b8810|cfg:a06543feac6c",
+    "config": "X5|bf77e9ad2be3|cfg:a06543feac6c",
     "new_trial": false,
     "n_trials_total": 2575
    },
@@ -324,7 +307,7 @@
   },
   "R0|SV|q0.5": {
    "config": "R0|SV|q0.5",
-   "params_hash": "abd880d254a9",
+   "params_hash": "637bda54a198",
    "hypothesis": "X5",
    "host": "R0",
    "signal": "SV",
@@ -341,7 +324,7 @@
    "gate_consistent": true,
    "horizon_exits": 0,
    "trial": {
-    "config": "X5|abd880d254a9|cfg:a06543feac6c",
+    "config": "X5|637bda54a198|cfg:a06543feac6c",
     "new_trial": false,
     "n_trials_total": 2575
    },
@@ -349,7 +332,7 @@
   },
   "R0|SV|q0.8": {
    "config": "R0|SV|q0.8",
-   "params_hash": "91ba186818a4",
+   "params_hash": "52f6809bf641",
    "hypothesis": "X5",
    "host": "R0",
    "signal": "SV",
@@ -366,84 +349,7 @@
    "gate_consistent": true,
    "horizon_exits": 0,
    "trial": {
-    "config": "X5|91ba186818a4|cfg:a06543feac6c",
-    "new_trial": false,
-    "n_trials_total": 2575
-   },
-   "returns": "hidden on the debug split (never choose parameters on FINAL data)"
-  },
-  "M1|GR|q0.5": {
-   "config": "M1|GR|q0.5",
-   "params_hash": "ff5f0033db06",
-   "hypothesis": "X5",
-   "host": "M1",
-   "signal": "GR",
-   "q": 0.5,
-   "n": 12,
-   "n_coins": 12,
-   "n_placebo": 145,
-   "host_n": 24,
-   "host_states": {
-    "ON": 12,
-    "OFF": 11,
-    "UNKNOWN": 1
-   },
-   "known_share": 0.9583333333333334,
-   "on_blocks": 2,
-   "gate_consistent": true,
-   "horizon_exits": 0,
-   "trial": {
-    "config": "X5|ff5f0033db06|cfg:a06543feac6c",
-    "new_trial": false,
-    "n_trials_total": 2575
-   },
-   "returns": "hidden on the debug split (never choose parameters on FINAL data)"
-  },
-  "M1|AV|q0.5": {
-   "config": "M1|AV|q0.5",
-   "params_hash": "c9bfb608bcaa",
-   "hypothesis": "X5",
-   "host": "M1",
-   "signal": "AV",
-   "q": 0.5,
-   "n": 0,
-   "n_coins": 0,
-   "n_placebo": 0,
-   "host_n": 24,
-   "host_states": {
-    "UNKNOWN": 24
-   },
-   "known_share": 0.0,
-   "on_blocks": 0,
-   "gate_consistent": true,
-   "horizon_exits": 0,
-   "trial": {
-    "config": "X5|c9bfb608bcaa|cfg:a06543feac6c",
-    "new_trial": false,
-    "n_trials_total": 2575
-   },
-   "returns": "hidden on the debug split (never choose parameters on FINAL data)"
-  },
-  "M1|SV|q0.5": {
-   "config": "M1|SV|q0.5",
-   "params_hash": "77d014ecec34",
-   "hypothesis": "X5",
-   "host": "M1",
-   "signal": "SV",
-   "q": 0.5,
-   "n": 0,
-   "n_coins": 0,
-   "n_placebo": 0,
-   "host_n": 24,
-   "host_states": {
-    "UNKNOWN": 24
-   },
-   "known_share": 0.0,
-   "on_blocks": 0,
-   "gate_consistent": true,
-   "horizon_exits": 0,
-   "trial": {
-    "config": "X5|77d014ecec34|cfg:a06543feac6c",
+    "config": "X5|52f6809bf641|cfg:a06543feac6c",
     "new_trial": false,
     "n_trials_total": 2575
    },
@@ -457,19 +363,15 @@
   "R0|AV|q0.5": 0.0,
   "R0|AV|q0.8": 0.0,
   "R0|SV|q0.5": 0.0,
-  "R0|SV|q0.8": 0.0,
-  "M1|GR|q0.5": 23.062550048936735,
-  "M1|AV|q0.5": 0.0,
-  "M1|SV|q0.5": 0.0
+  "R0|SV|q0.8": 0.0
  },
  "host_trades_per_day": {
-  "R0": 180.65664205000445,
-  "M1": 46.12510009787347
+  "R0": 180.65664205000445
  },
  "decision": {
   "verdict": "DEBUG",
   "note": "mechanics and counts only; returns hidden"
  },
- "runtime_s": 51.0,
+ "runtime_s": 6.6,
  "overall": "PENDING (no official TRAIN run)"
 }

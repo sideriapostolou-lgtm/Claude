@@ -159,6 +159,28 @@ def test_whale_bar_sizes_against_depth():
     assert not Z.whale_bar(ds.asof(cd.mint, grid_t(cd, 20) - 1.0), 0.03)["is_whale"]  # bar 20 not complete yet
 
 
+def test_whale_bar_must_lift_the_reserve_net_of_the_minutes_sells():
+    """review Z2-1 (z2-v2): the whale's bar must raise the pricing reserve by >= 0.5 q X_before NET of the same
+    minute's sells. A whale netted out by sellers did not pay the impact it signals (PREREG 3)."""
+    assert Z.VERSION == "z2-v2" and Z.FIXED["min_net_lift_q"] == Z.MIN_NET_LIFT_Q == 0.5
+    ds, cd = _one(background({20: {"buys": [0.045 * X0]},
+                              30: {"buys": [0.045 * X0], "sells": [0.04 * X0]},    # netted out: dX = 0.005 X0
+                              40: {"buys": [0.045 * X0], "sells": [0.01 * X0]}}))  # dX = 0.035 X0
+    X = cd.arr["X"]
+    alone = Z.whale_bar(ds.asof(cd.mint, grid_t(cd, 20)), 0.03)
+    assert alone["is_whale"] and alone["lifts"] and alone["dx"] == pytest.approx(float(X[20] - X[19]))
+    netted = Z.whale_bar(ds.asof(cd.mint, grid_t(cd, 30)), 0.03)
+    assert netted["ratio"] >= 0.03                              # the single trade is a whale ...
+    assert netted["dx"] == pytest.approx(0.005 * X0) and not netted["lifts"] and not netted["is_whale"]   # ... not
+    partly = Z.whale_bar(ds.asof(cd.mint, grid_t(cd, 40)), 0.03)
+    assert partly["dx"] >= 0.5 * 0.03 * partly["x_before"] and partly["lifts"] and partly["is_whale"]
+    # the threshold scales with q: at q = 0.06 the size test is the binding one here
+    assert not Z.whale_bar(ds.asof(cd.mint, grid_t(cd, 40)), 0.06)["is_whale"]
+    # the debug counts use the same rule: bars 20 and 40 at q = 0.03, none at q = 0.06
+    ec = Z.event_counts(ds)
+    assert ec["per_q"]["q0.03"]["whale_bars"] == 2 and ec["per_q"]["q0.06"]["whale_bars"] == 0
+
+
 def test_whale_bar_ignores_the_boost_window_and_agent_buys():
     """Coin 3 has a detected AGENT in make_frames (known at g + 40 s), so its agent_buy_sol column is visible."""
     cd0 = ds_of(frames_with({})).coin(mint(3))

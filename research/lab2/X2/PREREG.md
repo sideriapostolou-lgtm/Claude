@@ -12,6 +12,13 @@
 - **Freeze.** The first official TRAIN run hashes this file into `X2/prereg.lock`. After that, `x2.py` refuses every
   stage if this file changed. A change is a new version (`x2-v2`) in `X2/AMENDMENTS.md`, and its configs are new
   trials.
+- **Review amendment X2-PLACEBO-NREF (2026-10-09, before the lock and before any TRAIN, VAL, TEST, CONFIRM or FINAL
+  run).** The matched control (§10) now also requires entry condition 3, **n_ref ≥ 30 at the draw's own decision
+  time** (the drawn coin excluded from its reference), as §10 always said it should ("exactly what the rank adds
+  over the entry gate"). The first code checked only conditions 1-2; on the census TRAIN third 39 % (c = 30) and
+  57 % (c = 60) of control draws then came from quiet-market moments in which X2 can never trade, which mixed the
+  breadth rank with a market-activity filter. The control's description is part of every config's params, so the
+  trial identities changed; nothing had run on a non-debug split. The debug run (§15) was repeated.
 
 ## 1. Hypothesis and mechanism
 
@@ -226,9 +233,12 @@ PASS; FINAL mean > 0. Otherwise KILLED, UNDERPOWERED (TRAIN, VAL or CONFIRM) or 
 ## 10. Controls
 
 - **Matched random control** (`common.backtest` placebo; the task's "same checkpoint random pick"): 20 draws per
-  signal from random coins of the same split that are `alive` with `netflow` > 0 at a decision age within ±120 s of
-  the signal's, same exits. It measures exactly what the rank adds over the entry gate. It feeds PLAN §3.5 item 5
-  and the shortlist / VAL `mean_diff`.
+  signal from random coins of the same split that meet **entry conditions 1-3 without the rank** at a decision age
+  within ±120 s of the signal's: `alive`, `netflow` > 0, and ≥ 30 reference coins in the config's checkpoint
+  reference at the draw's own decision time, the drawn coin excluded (review X2-PLACEBO-NREF). Same exits. It
+  measures exactly what the rank adds over the entry gate, in the same market-activity conditions. It feeds PLAN
+  §3.5 item 5 and the shortlist / VAL `mean_diff`. Where the gate is rare (c = 60) a signal can get fewer than 20
+  draws (common's 200 tries per signal); the draw count is reported.
 - **Class-matched control** (diagnostic, never judged): the same, drawn only from coins of the signal's class, to
   show how much of any gap is class composition (organic vs factory coins), which a G1 gate could deliver alone.
 
@@ -278,7 +288,8 @@ Declarations to `auto_rejections`: `uses_organic_flow = False`, `uses_wallet_rep
 
 From `python research/lab2/x2.py --debug` (writes `X2/debug.md`, `X2/debug.json`; trials go to a scratch ledger,
 never to `trials.json`). 450 usable coins created over 12.5 h (0.52 days). No returns, exit reasons or bin means are
-shown, and **no parameter above was chosen or changed after the run.**
+shown, and **no parameter above was chosen or changed after the run.** The control's amendment (review
+X2-PLACEBO-NREF) came from a code review, not from these counts; the run was repeated after it.
 
 | Count (features only) | c = 30 min | c = 60 min |
 |---|---:|---:|
@@ -288,6 +299,7 @@ shown, and **no parameter above was chosen or changed after the run.**
 | n_ref p10 / p50 / p90 | 17.5 / 32 / 43.5 | 16 / 25 / 36 |
 | breadth of alive coins p10 / p50 / p90 / max (buyers per minute) | 2.2 / 16 / 62 / 228 | 2.0 / 7.7 / 33.5 / 133 |
 | top-decile entries (every config at that checkpoint) | 8 (7 OTHER, 1 FACTORY) | 2 (1 OTHER, 1 FACTORY) |
+| matched-control draws per config (≤ 20 per entry), conditions 1-3 (review X2-PLACEBO-NREF; conditions 1-2 gave 160 / 40) | 160 of 160 | 28 of 40 |
 | dose-gate observations per bin [0-.5, .5-.8, .8-.9, .9-1] | 25 / 18 / 9 / 8 | 15 / 9 / 4 / 2 |
 | Spearman(`pressure`, 10-min return) over alive coins | **0.961** | **0.980** |
 

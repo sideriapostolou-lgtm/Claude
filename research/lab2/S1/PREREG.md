@@ -57,9 +57,10 @@ A coin is in the S1-universe if it meets all of these:
 
 **Truncation.**
 
-- A coin whose B1 prefix at τ already holds 20,000 trades (P4's `max_trades`) may be missing trades.
-- Its features are NULL from that point on.
-- This test is causal: it uses only the prefix length at τ.
+- B1 is fetched by P4b (time slabs, research/flow/b1c.py), which has no per-coin trade cap
+  (`B1_MAX_TRADES = None`), so no coin's features are nulled for truncation.
+- A coin without a complete B1 window is not scored (coverage gate, B1_MIN_COVERAGE).
+- (Amended 2026-10-09 before any TRAIN run: the earlier text described P4's 20,000-trade cap.)
 
 **Horizon.**
 

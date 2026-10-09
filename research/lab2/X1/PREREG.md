@@ -14,6 +14,13 @@
 - **Freeze.** The first official TRAIN run hashes this file into `X1/prereg.lock`. After that, `x1.py` refuses every
   stage if this file has changed. Any change is a new version (`x1-v2`) in `X1/AMENDMENTS.md`, and its configs are new
   trials.
+- **Review amendment X1-DEBUG-LABELS (2026-10-09, before the lock and before any TRAIN, VAL, TEST, CONFIRM or FINAL
+  run).** Debug output only; no definition, parameter or decision rule changed. On the debug split the persistence
+  gate now reports only the outcome-free split of eligible coins (an early holder known at n ≥ 3 vs none), not the
+  reputable / known-not-reputable groups or the number of scoring wallets, which are signs of earlier coins' labels.
+  The per-config debug counts (trades, coins, lead wallets, warm-up, placebo and control draws, entries a day) stay,
+  for mechanics, but are flagged as **label-dependent** in `debug.json` (`label_dependent_counts`) and `debug.md`.
+  The debug run was repeated (§14).
 
 ## 1. Hypothesis and mechanism
 
@@ -156,7 +163,10 @@ This is PLAN W1 stage 1's question ("does wallet skill persist?") asked at the c
 
 **Reported, never decisive:** label means by tercile of rep; coins with ≥ 1 reputable holder (θ = 0, N = 3) vs coins
 with only non-reputable known holders vs coins with no known holder; ρ without warm-up decisions; how many distinct
-wallets carry the scores.
+wallets carry the scores. **None of these on the debug split** (review X1-DEBUG-LABELS): there the gate reports only
+eligible coins with a holder known at n ≥ 3 vs none, and warm-up observations. Being "known" depends on how many of a
+wallet's earlier picks had resolved by τ, a timing fact (a stopped base trade resolves earlier), not on the sign or
+size of any label.
 
 ## 9. Procedure by stage (`python research/lab2/x1.py --stage …`)
 
@@ -288,9 +298,16 @@ uses_current_state_fields = False
 
 **The run.** `python research/lab2/x1.py --debug` writes `X1/debug.md` and `X1/debug.json` (runtime ~3 s). Returns,
 labels, skills and the gate statistic are hidden; its trials go to a scratch ledger, never to `trials.json`. **No
-definition or parameter was changed after it.** By construction the signal and gate-group counts depend on labels
-(reputation is built from outcomes), so they say a little about `final_train` outcomes; that third is never judged
-(§9 FINAL).
+definition or parameter was changed after it.** By construction the per-config signal counts depend on labels
+(reputation is built from outcomes), so they say a little about `final_train` outcomes; they are flagged
+label-dependent, and that third is never judged (§9 FINAL).
+
+**Disclosure (review X1-DEBUG-LABELS).** The first debug output (02:41 UTC) also reported the gate's groups,
+{unknown: 140, known_not_reputable: 5}, and 3 scoring wallets. With "signals = 0 at θ = 0, N = 3" this showed that
+the 3 wallets known on the census TRAIN third had a shrunk skill ≤ 0 there, i.e. the sign of their realized follow
+trades on `final_train`. Since the review the debug output reports only the outcome-free split (known 5 / unknown
+140); the run was repeated. `final_train` is never judged (§9 FINAL uses the census VAL and TEST thirds), and nothing
+in this file was chosen from those counts.
 
 | Count (450 usable coins created over 0.52 days) | Value |
 |---|---:|
@@ -301,7 +318,7 @@ definition or parameter was changed after it.** By construction the signal and g
 | Wallets with ≥ 2 / ≥ 3 / ≥ 6 entries | 45 / 10 / 1 (the most for one wallet: 6) |
 | Eligible coins with a holder known at the decision (n ≥ 3 / n ≥ 6) | 5 / 0 |
 | Persistence-gate observations | 5 (need 200) |
-| Signals, every config | 0 |
+| Signals, every config (label-dependent) | 0 |
 
 **What these counts imply, before any TRAIN data:**
 

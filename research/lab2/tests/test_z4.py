@@ -255,6 +255,38 @@ def test_crowding_and_exact_clone():
     assert st["k"] == 4 and st["exact_clone"] is True and Z.tag_of(st).endswith("crowd")
 
 
+def test_market_heat_is_the_same_construction_without_the_theme_link():
+    """review Z4-1: heat is a theme-filtered sample of recent graduates' outcomes, so MOM is also compared with the
+    3 most recent resolved NON-member graduates (g_p in [t - N, g), known creator != own, t_end <= t) at the same t."""
+    coins = [{"g": T0, "creator": "P", "name": "Claude One", "drift": 0.01},          # 0 member
+             {"g": T0 + 3300, "creator": "Q", "name": "Claude Two", "drift": -0.01},  # 1 member, most recent resolved
+             {"g": T0 + 7200, "creator": "R", "name": "Claude Three", "drift": 0.0},  # 2 the coin decided
+             {"g": T0 + 1200, "creator": "U", "name": "Banana", "drift": 0.02},       # 3 non-member
+             {"g": T0 + 1800, "creator": "V", "name": "Mango", "drift": 0.0},         # 4 non-member
+             {"g": T0 + 2400, "creator": "W", "name": "Kiwi", "drift": 0.01},         # 5 non-member
+             {"g": T0 + 3000, "creator": "R", "name": "Apple", "drift": 0.03},        # 6 own creator: out
+             {"g": T0 + 3600, "creator": None, "drift": 0.03},                        # 7 creator unknown: out
+             {"g": T0 + 6900, "creator": "X", "name": "Pear", "drift": 0.03},         # 8 unresolved at t: out
+             {"g": T0 + 300, "creator": "Y", "name": "Grape", "drift": 0.03},         # 9 older than the 3 kept
+             {"g": T0 + 7300, "creator": "Z", "name": "Lime", "drift": 0.03}]         # 10 graduated after g: out
+    fr = market_frames(coins)
+    ds = ds_of(fr)
+    reg = registry(ds, fr)
+    snap = ds.asof(mint_of(2), dec_t(ds, mint_of(2)))
+    assert reg.state(snap, H3)["status"] == "eligible"
+    ms = reg.market_state(snap, H3)
+    r = {i: Z.prior_of(ds, mint_of(i)).ret for i in (3, 4, 5)}
+    assert ms["n"] == 3 and ms["market_heat"] == pytest.approx(np.mean(list(r.values())))      # ~ +39 %
+    assert reg.market_state(ds.asof(mint_of(7), dec_t(ds, mint_of(7))), H3)["market_heat"] is None   # own creator NULL
+    ok25 = Z.market_heat_ok(reg, H3, 0.25)
+    assert ok25(snap) and not Z.market_heat_ok(reg, H3, 1.0)(snap)
+    assert not ok25(ds.asof(mint_of(4), dec_t(ds, mint_of(4))))                 # not an eligible theme member
+    ctl = Z.placebo_controls(reg, Z.make_params("mom", 3, 0.25))
+    assert set(ctl) == {"unmatched", "market_heat"} and ctl["market_heat"]["strata"] is None
+    assert set(Z.placebo_controls(reg, Z.make_params("host", 3))) == {"unmatched"}
+    assert "market-heat" in Z.FIXED["placebo"]
+
+
 # =========================================================================== strategy
 
 
@@ -317,8 +349,10 @@ def _decision_states(ds, reg, T):
             continue
         for n in (H3, H12):
             st = reg.state(ds.asof(m, t), n)
+            mk_ = reg.market_state(ds.asof(m, t), n)
             out[(m, n)] = (st["status"], st.get("k"), st.get("key"), st.get("n_resolved"),
-                           None if st.get("heat") is None else round(st["heat"], 12))
+                           None if st.get("heat") is None else round(st["heat"], 12),
+                           mk_["n"], None if mk_["market_heat"] is None else round(mk_["market_heat"], 12))
     return out
 
 
@@ -589,6 +623,8 @@ def test_momentum_pipeline_and_every_refusal(st, monkeypatch):
     assert dec["shortlist_written"] and set(tr["veto"]) == {"host|N3h", "host|N12h"}
     assert tr["veto"]["host|N3h"]["verdict"]["verdict"] == "FAIL"
     assert tr["configs"]["mom|N3h|th0.25"]["placebo"]["mean_diff"] > 0.06
+    assert "placebo_market_heat" in tr["configs"]["mom|N3h|th0.25"]
+    assert "placebo_market_heat" not in tr["configs"]["host|N3h"]
     led = json.loads(st.ledger.read_text())
     hyps = [v["hypothesis"] for v in led["configs"].values()]
     assert sorted(hyps) == sorted(["Z4"] * 4 + ["Z4-host"] * 2 + ["Z4-exh"] * 2)

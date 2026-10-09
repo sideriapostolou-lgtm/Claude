@@ -28,7 +28,7 @@ CLI::
 
 Each stage writes ``Z1/<stage>.json`` and ``Z1/<stage>.md`` and REFUSES to run when its prerequisites are missing (no
 VAL without the written shortlist, TEST / CONFIRM / FINAL once each, never CONFIRM or FINAL before TEST, PLAN 8 data
-gates V1-V4, PREREG frozen after the first official TRAIN run).
+gates V1-V4, PREREG frozen after the first TRAIN run, provisional included).
 """
 
 from __future__ import annotations
@@ -473,13 +473,16 @@ def check_prereqs(stage: str, out_dir: Path = OUT_DIR, *, flow: Path | None = No
     if not prereg.exists():
         raise Z1Refused(f"{prereg} missing: pre-register before any run")
     lock = _read_json(out_dir / "prereg.lock")
-    if lock and lock.get("sha256") != _sha(prereg):
-        raise Z1Refused("PREREG.md changed after the first official TRAIN run; record changes in Z1/AMENDMENTS.md "
-                        "as a new version instead")
+    # The first TRAIN run of ANY kind freezes PREREG.md: a provisional run shows TRAIN returns too. A train_prelim.json
+    # without a lock (written before that rule) pins the sha it recorded.
+    frozen = (lock or {}).get("sha256") or (_read_json(out_dir / "train_prelim.json") or {}).get("prereg_sha256")
+    if frozen and frozen != _sha(prereg):
+        raise Z1Refused("PREREG.md changed after the first TRAIN run (provisional runs included); record changes in "
+                        "Z1/AMENDMENTS.md as a new version instead")
     ok, bad = C.validation_gates(STAGE_SPLIT[stage], flow)
     if not ok and stage != "debug":         # debug checks mechanics only; every real stage needs stop rule 1
         raise Z1Refused("PLAN 8 rule 1 (data first): " + "; ".join(bad))
-    info = {"stage": stage, "prereg_sha256": _sha(prereg), "prereg_locked": bool(lock),
+    info = {"stage": stage, "prereg_sha256": _sha(prereg), "prereg_locked": bool(frozen),
             "data_gates": {"ok": ok, "problems": bad}}
     if stage == "debug":
         return info
@@ -639,12 +642,15 @@ def run_stage(stage: str, *, out_dir: Path = OUT_DIR, allow_partial: bool = Fals
                     C._check_run_allowed(HYP, p, split, ledger_path, shortlist_path)
             except C.SplitLocked as e:
                 raise Z1Refused(str(e)) from e
-        if stage == "train" and not provisional:
+        if stage == "train":
             out_dir.mkdir(parents=True, exist_ok=True)
-            if not (out_dir / "prereg.lock").exists():
+            if not (out_dir / "prereg.lock").exists():      # the first TRAIN run, provisional or not, locks PREREG
                 (out_dir / "prereg.lock").write_text(json.dumps({"sha256": info["prereg_sha256"],
-                                                                 "locked_utc": C.utc_str(time.time())}, indent=1))
-            if rerun_reason and (out_dir / "train.json").exists():      # archive, never overwrite, an official run
+                                                                 "locked_utc": C.utc_str(time.time()),
+                                                                 "locked_by": "provisional TRAIN" if provisional
+                                                                 else "TRAIN"}, indent=1))
+            # archive, never overwrite, an official run
+            if not provisional and rerun_reason and (out_dir / "train.json").exists():
                 stamp = time.strftime("%Y%m%dT%H%M%S", time.gmtime())
                 for ext in ("json", "md"):
                     p = out_dir / f"train.{ext}"

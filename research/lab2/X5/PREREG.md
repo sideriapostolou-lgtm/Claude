@@ -20,6 +20,20 @@
 - **Freeze.** The first official TRAIN run hashes this file into `X5/prereg.lock`. After that `x5.py` refuses every
   stage if this file changed. A change is a new version (`x5-v2`) in `X5/AMENDMENTS.md`, and its configs are new
   trials.
+- **Review amendments (2026-10-09, before the lock and before any TRAIN, VAL, TEST, CONFIRM or FINAL run).** Two
+  review findings changed this file and `x5.py`. Nothing had run on a non-debug split and no X5 return had been seen;
+  the only run was the counts-only debug run (§14), which was repeated after the change.
+  - **X5-M1HOST** (§4, §6, §8, §13, §14): **the M1 host and its three gated configs are dropped.** The M1 host was
+    `m1.strategy` at m = 1 with `rhythm+prec`, which *is* M1's own TEST candidate whenever M1's TRAIN picks m = 1.
+    common.py counts one-shot looks per hypothesis family, and `X5.host-M1` belongs to the X5 family. An X5 run on
+    VAL, TEST, CONFIRM or FINAL would therefore have published M1's candidate on that split (mean and CI, next-bar
+    fills instead of M1's) outside M1's one look and outside M1's VAL shortlist. The arm was also, by §13's own
+    account, confounded with one operator's schedule and expected to be underpowered. X5 now has one host (R0) and
+    **8 trials** (§6). A shortlist naming an M1-hosted config or the M1 host is refused at every stage after TRAIN.
+  - **X5-PLACEBO-UNKNOWN** (§4, §9): the matched control now draws only at decisions whose regime state is **known**
+    (ON or OFF, the drawn coin's own records removed). The gated rule never trades in an UNKNOWN regime, so a control
+    drawn from the warm-up (about a third of TRAIN for AV and SV) compared the gate with entries the rule could never
+    make.
 
 ## 1. Hypothesis, mechanism, and an honest prior
 
@@ -57,7 +71,8 @@ sooner than the distribution finishes.
 
 **What X5 does not duplicate.** G1 sorts coins by their own launch class, S1/D1 by wallet roles in the coin, M1 by
 the coin's own mechanical bid. X5 uses no fact about the traded coin except its host's entry decision; every
-regime input is an aggregate over the market, with the traded coin itself removed (§2.4).
+regime input is an aggregate over the market, with the traded coin itself removed (§2.4). Its only host is PLAN 4.1's
+random entry R0; the first draft also gated M1's own rule, which duplicated M1 and was dropped (review X5-M1HOST, §4).
 
 ## 2. The three regime signals (all causal, trailing windows only)
 
@@ -141,13 +156,19 @@ coin itself is hot".)
 | Host | Ledger name | Rule |
 |---|---|---|
 | **R0**, random entry | `X5.host-R0` | `g1.host_r0` with `g1.R0_PARAMS` verbatim (PLAN 4.1 R0): at a seeded random age in [30, 115] min, enter if the coin is `alive`, else never; −50 % catastrophe stop, 60 min time exit |
-| **M1**, mechanical bids | `X5.host-M1` | `m1.strategy` with `m1.make_params(1.0, "rhythm+prec")` verbatim: PLAN 4.5's fixed candidate exit set at the looser m. It does not wait for M1's own TRAIN choice of m |
+| ~~M1~~, mechanical bids | — | **Dropped (review X5-M1HOST).** `m1.strategy` at m = 1 with `rhythm+prec` is M1's own candidate rule whenever M1's TRAIN picks m = 1, so every X5 look at VAL / TEST / CONFIRM / FINAL would have been a second look at M1 outside M1's one-look rule and its VAL shortlist. M1's code never runs under X5 (`x5.py` imports `m1` only for its Spearman helper) |
 | D1 | — | **Not available.** D1 needs B1 raw trades (`d1.py` refuses without them). Adding D1 as a host is a new version (`x5-v2`) with new trials |
 
-- **Placebo** (PLAN §3.4, common's matched-timing control, 20 draws per signal, decision age ± 120 s): R0-hosted
-  configs draw random **alive** coins of the same split; M1-hosted configs use M1's own placebo (allowed class and
-  alive, matched on the M1 class). Placebo entries ignore the regime, so the control is a **random-regime entry at
-  the same age**: `placebo diff` measures exactly what the gate adds.
+- **Placebo** (PLAN §3.4, common's matched-timing control, 20 draws per signal, decision age ± 120 s): random
+  **alive** coins of the same split whose regime state for the config's signal is **known** at the draw (ON or OFF,
+  computed at the draw's own cutoff with the drawn coin's records removed, exactly as for a trade; review
+  X5-PLACEBO-UNKNOWN). Placebo entries ignore whether that state is ON or OFF, so the control is a **random-state
+  entry among the regimes the gated rule can see, at the same age**: `placebo diff` measures exactly what the gate
+  adds. (The gated rule never enters in an UNKNOWN regime, so an UNKNOWN draw is an entry the rule could never make.)
+- **The R0 host is shared with G1** (`G1.R0` runs the same `g1.host_r0` with G1's same-bar fills). R0 is PLAN 4.1's
+  random-entry baseline, no family's candidate and without a parameter to select, so X5 keeps it. G1's veto subset of
+  R0 could in principle be recomputed from X5's R0 host trades on a sealed split before G1's own look there; to avoid
+  even that, G1's TEST / CONFIRM / FINAL should be run before X5's (an ordering note for the lead; not enforced).
 
 ## 5. Fills, exits and costs (all runs, hosts included)
 
@@ -155,18 +176,19 @@ coin itself is hot".)
   checked on the entry bar, **every stop and time exit fills on the NEXT bar at min(open, low)**; costs from
   `costs.py` by date and market cap, + Ultra 10 bps, + 20 bps buffer, network fees, impact at the pool's own k.
 - **Stress** (same call, never used to select): costs × 1.5; rent $0.22; same-bar exits (`exit_delay_bars=0`).
-- No trade can be censored by the data horizon: R0 enters by g + 116 min and exits within 60 min (+ 1 bar);
-  M1's registered deadline is g + 178 min. A verdict with > 10 % `horizon` exits is INCOMPLETE (common).
+- No trade can be censored by the data horizon: R0 enters by g + 116 min and exits within 60 min (+ 1 bar). A verdict
+  with > 10 % `horizon` exits is INCOMPLETE (common).
 
-## 6. The grid: 12 trials in all, every one logged
+## 6. The grid: 8 trials in all, every one logged
 
 | # | Hypothesis | Config |
 |---:|---|---|
 | 1 | `X5-modelcheck` | the stop rule of §7 (one trial, before any P&L) |
 | 2 | `X5.host-R0` | R0, ungated (the host baseline and the OFF arm) |
-| 3 | `X5.host-M1` | M1 host, ungated |
-| 4-9 | `X5` | R0 gated by signal ∈ {GR, AV, SV} × q ∈ {0.5, 0.8} |
-| 10-12 | `X5` | M1 gated by signal ∈ {GR, AV, SV} at q = 0.5 (M1 makes ~46 entries a day: q = 0.8 cannot be powered) |
+| 3-8 | `X5` | R0 gated by signal ∈ {GR, AV, SV} × q ∈ {0.5, 0.8} |
+
+- The first draft had 12: the M1 host and M1 gated by {GR, AV, SV} at q = 0.5 (trials 3 and 10-12) were dropped in
+  review X5-M1HOST (§4) before any non-debug run, so they were never trials.
 
 - Each params dict carries every constant of §2-§5, the host's own params, the fill model and the version.
 - **Fixed, not searched:** N = 2 h, the 15-minute grid, the 24-hour baseline, SLACK, the 10-minute AV age floor,
@@ -211,14 +233,15 @@ FINAL reports end-of-data coins instead); TEST / CONFIRM / FINAL have the judge'
    6-h block-bootstrap 90 % CI, and the known share.
 4. **EDGE qualification** (all must hold): ≥ 60 trades from ≥ 40 coins; mean > 0; mean without the top 2 > 0;
    placebo diff > 0; contrast > 0; censored share ≤ 10 %. Rank qualifiers by the 6-h block-bootstrap 90 % CI lower
-   bound of the mean (the regime is time-clustered), then the mean, then q = 0.5 before 0.8, R0 before M1, and
+   bound of the mean (the regime is time-clustered), then the mean, then q = 0.5 before 0.8, and
    GR, AV, SV in that order. **Shortlist = the top 2** → `SHORTLISTED_EDGE`.
 5. **Else VETO qualification:** ≥ 60 ON and ≥ 60 OFF host trades, and contrast ≥ +5 points. Rank by the contrast's
    block CI lower bound, then the contrast. **Shortlist = the top 1** → `SHORTLISTED_VETO` (a loss-reducer track:
    it can never become an edge).
 6. Else **NO_CONFIG** if some config was powered (≥ 60 trades from ≥ 40 coins), **UNDERPOWERED_TRAIN** otherwise.
 7. The shortlist is written with `common.write_shortlist("X5", …)` together with the fixed host shortlist(s)
-   (`X5.host-R0` / `X5.host-M1`) of the shortlisted configs' hosts, and frozen at the first VAL run.
+   (`X5.host-R0`) of the shortlisted configs' host, and frozen at the first VAL run. Every later stage refuses a
+   shortlist whose configs are not in §6's grid (e.g. an M1-hosted config of the dropped arm).
 8. A decision on complete TRAIN is final; a re-run needs `--rerun-reason` naming a data correction and archives the
    previous result. `--allow-partial` writes a PROVISIONAL `train_prelim.*` that never writes a shortlist or a lock
    and never unlocks VAL.
@@ -270,8 +293,8 @@ Run the candidate and its host baseline inside one `X5` session.
 
 ## 9. Controls
 
-- **Matched random control** (§4): random-regime entries at the same age; PLAN §3.5 item 5 (≥ +6 points) and the
-  TRAIN bar (> 0).
+- **Matched random control** (§4): random-state entries at the same age, drawn only where the regime is known (ON or
+  OFF); PLAN §3.5 item 5 (≥ +6 points) and the TRAIN bar (> 0).
 - **The OFF arm** (the host's own known-regime OFF trades): the contrast, the veto bar, X5.1.
 - **The ungated host** itself is reported next to every gated config (same coins, same exits).
 
@@ -306,7 +329,7 @@ history splits only.
 |---|---|
 | R1 inputs | PLAN §6.5's `regime_30m` lists factory/operator shares, organic net SOL, a migration-bot P&L index and the SOL return. X5 uses the three signals the lead specified (graduation rate, aggregate post-graduation volume, survival at g + 30) from B2 alone. Organic flow and bot P&L need B1/B3 (not available); SOL/USD does not cover TRAIN-CONFIRM |
 | Thresholds | relative to the signal's own trailing 24 hours (self-normalizing), not absolute: an absolute threshold fitted on TRAIN would mis-gate CONFIRM if activity drifted over three weeks |
-| Hosts | R0 and M1; D1 needs B1 (§4) |
+| Hosts | R0 only: M1 was dropped (review X5-M1HOST, §4); D1 needs B1 (§4) |
 | Fills | minute-bar worst fills with next-bar exits, not replayed fills |
 | Warm-up | AV and SV are UNKNOWN for the first ≈ 35 h of TRAIN and of CONFIRM (pool start + SLACK 6 h + B2 window + N + 24 h baseline) and for the whole census TRAIN third (§14); GR has no warm-up (structure from earlier splits) |
 
@@ -317,32 +340,30 @@ history splits only.
 | R0 host trades | 94 | ≈ 181 | ≈ 450 | ≈ 270 | ≈ 215 | ≈ 2,400 |
 | R0 ON trades, q = 0.5 | 43 (GR) | ≈ 83 | ≈ 205 | ≈ 125 | ≈ 100 | ≈ 1,100 |
 | R0 ON trades, q = 0.8 | 12 (GR) | ≈ 23 | ≈ 58 | ≈ 35 | ≈ 28 | ≈ 310 |
-| M1 host trades | 24 | ≈ 46 | ≈ 115 | ≈ 69 | ≈ 55 | ≈ 620 |
-| M1 ON trades, q = 0.5 | 12 (GR) | ≈ 23 | ≈ 58 | ≈ 35 | ≈ 28 | ≈ 310 |
 
 - GR has no warm-up on TRAIN (≈ 3.9 known days, so about 1.5× the AV/SV figures above).
-- q = 0.8 and every M1-hosted config sit at or below TRAIN's 60-trade bar for AV and SV and are expected to be
-  UNDERPOWERED on TEST (< 60 trades); X5.2 (≥ 6 blocks) is borderline on TEST. CONFIRM is the powered test.
-- M1's entries come from one operator cluster on the census day, so an M1-hosted regime effect would be confounded
-  with that operator's schedule; the M1-hosted configs are included because the lead asked for it, not because
-  they are expected to be informative.
+- q = 0.8 sits at or below TRAIN's 60-trade bar for AV and SV and is expected to be UNDERPOWERED on TEST (< 60
+  trades); X5.2 (≥ 6 blocks) is borderline on TEST. CONFIRM is the powered test.
+- The dropped M1 arm (review X5-M1HOST) would have had ≈ 46 host and ≈ 23 ON trades a day, from one operator
+  cluster on the census day: under the 60-trade bar on TEST, and confounded with that operator's schedule.
 
 ## 14. Debug run (census TRAIN third, counts only)
 
-`python research/lab2/x5.py --debug` (2026-10-09 03:47 UTC, 52 s) wrote `X5/debug.md` and `X5/debug.json`: 450
-usable coins created over 0.52 days. Returns, alive rates, signal values, the model check's statistics and exit
-reasons are hidden; the runs went to a scratch ledger, never to `trials.json`. **No definition, constant or grid
-point was changed after it.**
+`python research/lab2/x5.py --debug` (first run 2026-10-09 03:47 UTC, 52 s; repeated after the review amendments, about
+10 s without the M1 host) wrote `X5/debug.md` and `X5/debug.json`: 450 usable coins created over 0.52
+days. Returns, alive rates, signal values, the model check's statistics and exit reasons are hidden; the runs went to
+a scratch ledger, never to `trials.json`. **No definition, constant or grid point was chosen from it**; the review
+amendments came from a code review, not from these counts.
 
 | Count | Value |
 |---|---|
 | R0 host trades | 94 from 94 coins (180.7 a day): the same 94 as G1's `G1.R0` debug run, so the host is verbatim |
-| M1 host trades | 24 from 24 coins, all OPERATOR (46.1 a day): the same 24 entries as M1's own debug run at m = 1 |
 | R0 decisions with a known GR state | 88 of 94 (the other 6 fall after the third's creation end, 08:06:47, where the GR pool stops) |
 | R0 ON trades by GR, q = 0.5 / 0.8 | 43 (82.6 a day) / 12 (23.1 a day); OFF 45 / 76 |
-| M1 ON trades by GR, q = 0.5 | 12 of 23 known (23.1 a day) |
-| R0 / M1 decisions with a known AV or SV state | 0: the debug pool is the census TRAIN third alone, and the AV / SV warm-up (SLACK 6 h + N 2 h + 30 min or 3 h + the 24-h baseline) is longer than the third's 12.5 h. By construction, not a bug |
-| Gated trades equal to the host's ON trades | 9 of 9 configs (the gate is an exact filter) |
+| R0 decisions with a known AV or SV state | 0: the debug pool is the census TRAIN third alone, and the AV / SV warm-up (SLACK 6 h + N 2 h + 30 min or 3 h + the 24-h baseline) is longer than the third's 12.5 h. By construction, not a bug |
+| Gated trades equal to the host's ON trades | 6 of 6 configs (the gate is an exact filter) |
+| Placebo draws (known regime only) | 860 / 240 for the 43 / 12 GR trades: the full 20 per trade, so the known-regime condition does not starve the control where the regime is known |
+| First run only (dropped arm) | M1 host 24 trades from 24 OPERATOR coins, the same 24 entries as M1's own debug run at m = 1 (which is what made the arm a second look at M1); 12 of 23 known GR decisions ON |
 | Model-check observations (alive at the R0 decision, known state) | GR 88, AV 0, SV 0 |
 | SLACK check: graduation delay | 2 of 450 graduates (0.4 %) took > 6 h from creation, 20 (4.4 %) > 1 h, none unscanned: a 6-hour SLACK leaves ≈ 0.4 % of a window's graduates outside the pool at the warm-up edge |
 

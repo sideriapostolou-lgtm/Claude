@@ -11,9 +11,10 @@
   one-shot sessions. Stage gating and CLI follow `m1.py`.
 - **Splits:** common.py's (TRAIN 10-01 → 10-05, VAL → 10-06 12:00, TEST → 10-07 19:37:30, CONFIRM 09-16 → 10-01,
   FINAL = census day).
-- **Freeze.** The first official TRAIN run hashes this file into `Z1/prereg.lock`. After that, `z1.py` refuses every
-  stage if this file has changed. A change is a new version (`z1-v2`) recorded in `Z1/AMENDMENTS.md`, and every
-  config it adds is a new trial.
+- **Freeze.** The first TRAIN run of any kind, a provisional `--allow-partial` run included (it shows TRAIN returns),
+  hashes this file into `Z1/prereg.lock` (review fix Z-ALL-1; a `train_prelim.json` without a lock pins the sha it
+  recorded). After that, `z1.py` refuses every stage if this file has changed. A change is a new version (`z1-v2`)
+  recorded in `Z1/AMENDMENTS.md`, and every config it adds is a new trial.
 
 ## 1. Hypothesis and mechanism
 
@@ -180,7 +181,8 @@ A config **qualifies** on TRAIN when all hold:
   **UNDERPOWERED_TRAIN**.
 - A decision on complete TRAIN is final. A re-run needs `--rerun-reason` naming a data correction; the previous
   result is archived as `train_prev_<ts>.*`. `--allow-partial` runs a **PROVISIONAL** TRAIN on partial data that
-  writes `train_prelim.*`, never a shortlist or a lock, and never unlocks VAL.
+  writes `train_prelim.*` and, when none exists, `prereg.lock` (the first TRAIN run of any kind freezes this
+  file), never a shortlist, and never unlocks VAL.
 
 ## 8. Later stages (`python research/lab2/z1.py --stage …`)
 
