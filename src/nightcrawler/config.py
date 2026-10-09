@@ -399,6 +399,11 @@ class Settings:
                                    secret=True)
     polymarket_us_secret_key: str = _f("", "text", "Polymarket US API secret key (a Railway variable; the live desk "
                                        "only; never in a file or the repo)", secret=True)
+    trenddesk_enabled: bool = _f(True, "bool", "The trend desk: a PAPER forward test of lab 3's 50-day trend rule on "
+                                 "BTC, ETH and SOL, from Coinbase's public daily candles once a day (never real money, "
+                                 "never a key)")
+    trenddesk_sleeve_usd: float = _f(100.0, "usd", "Trend desk: the paper sleeve, split equally across BTC, ETH and "
+                                     "SOL (fixed when its record starts)", lo=10, hi=1_000_000)
     learn_enabled: bool = _f(True, "bool", "Self-learning loop: record every pump.fun graduate and test strategy "
                              "versions in the shadow. It never trades, never changes risk settings and uses its "
                              "own small API budget; false = no learning calls at all")

@@ -20,13 +20,19 @@ Schema (lists capped: members 9, events <= 5, open trades <= 10, closed trades 1
                                "paper": {"label": "Paper money (pretend)", "open", "today_usd", "since_start_usd",
                                          "settled_today", "won_today", "settled_total", "won_total"},
                                "real": {"label": "Real money", (the same keys), "at_risk_usd", "contracts",
-                                        "cost_usd", "value_usd", "venue_at", "cash_usd", "cash_at"}|null}|null},
+                                        "cost_usd", "value_usd", "venue_at", "cash_usd", "cash_at"}|null}|null,
+                "trend": {"mode": "paper", "label": "Paper money (pretend)", "as_of": ts|null,   # see TREND; null: off
+                          "sleeve_usd", "equity_usd", "today_usd", "since_start_usd", "hold_since_start_usd",
+                          "in_market": {"BTC": bool, "ETH": bool, "SOL": bool}, "started": "YYYY-MM-DD"|null,
+                          "problem": str|null, "lab": {"since_start_usd", "hold_since_start_usd"}|null,
+                          "reset_from": str|null}|null},
       "town": {"label", "cost_per_day_usd", "cost_today_usd", "cost_since_start_usd": float|null,  # see TOWN
                "income_today_usd": float|null, "income_since_start_usd": float|null,
                "covered_today": bool|null, "covered_since_start": bool|null, "line",
                "polymarket": {"paper": {"label", "open", "today_usd", "since_start_usd", "line"},  # the desk in words
                               "real": {"label", "open", "contracts", "cost_usd", "value_usd", "today_usd",
-                                       "settled_today", "won_today", "since_start_usd", "cash_usd", "line"}|null}|null},
+                                       "settled_today", "won_today", "since_start_usd", "cash_usd", "line"}|null}|null,
+               "trend": {"line"}|null},                                   # the trend desk in words (TREND)
       "team": {"counts": {status: n}, "members": [{"id", "name", "role", "status", "why", "doing",
                                                     "last_activity", "events", "bars"?}]},
                                                     # status "absent": the Coach is not built (not counted)
@@ -73,6 +79,21 @@ cash (``balance``). ``real`` is null unless the desk has a real book (an open re
 a contract at the venue) or the venue's cash was read; ``money.polymarket`` is null when the desk is off
 (``POLYDESK_ENABLED``) or its state cannot be read: nothing is shown rather than a made-up zero. A paper tally of
 zero before the desk's first round is marked ``as_of: null`` ("no round finished yet").
+
+TREND (:func:`trend_desk`): the trend desk's paper book (:func:`nightcrawler.trenddesk.panel_state`, its state file
+only), a forward test of lab 3's 50-day trend rule on BTC, ETH and SOL with a pretend sleeve. PAPER ONLY: the desk
+has no real-money path at all. ``as_of`` is the last daily close it booked (null before the first one: the figures
+are then the untouched sleeve). ``equity_usd``, ``today_usd`` (the last day's change) and ``since_start_usd`` are the
+rule's book kept as a real account would keep it: three separate thirds, one per coin, never re-balanced.
+``hold_since_start_usd`` is the benchmark the rule has to beat: holding the three, bought on day one and never
+touched (the desk's ``bh`` book, same costs). ``lab`` is lab 3's own reckoning of both (the book put back to thirds
+every day for free), for comparison with the lab only, never the result. ``problem`` says in plain words when the
+book is behind (Coinbase not read, a candle late); ``reset_from`` names the earlier record this one replaced because
+it could not be read (null otherwise). ``town.trend.line`` says the same in one sentence ("Trend desk (paper,
+pretend): in BTC and SOL, out of ETH; since start +$1.20 vs holding the three (bought on day one, never touched)
++$0.40"; "record restarted <day>" after the label while ``reset_from`` is set). Its figures are never added to the
+SOL wallet's, the Polymarket desk's or the town's income: the town's own line and bars are untouched. Null when the
+desk is off (``TRENDDESK_ENABLED``) or its state cannot be read.
 
 LEARNING: :func:`learning_card` calls ``nightcrawler.learn.card.learning_card_state(settings, now)`` when
 that module exists (it is built on another branch) and keeps only these keys, each type-checked::
@@ -143,7 +164,7 @@ from collections.abc import Callable, Mapping
 from pathlib import Path
 from typing import Any
 
-from nightcrawler import __version__
+from nightcrawler import __version__, trenddesk
 from nightcrawler.botwallet import saved_balance, wallet_configured
 from nightcrawler.broker.keystore import KV_GENERATED, unused_wallet
 from nightcrawler.config import Settings
@@ -158,7 +179,8 @@ from nightcrawler.withdraw import fresh_balance, last_withdrawal, live_hold, pag
 
 __all__ = ["EXPERIENCE_CAVEAT", "EXPERIENCE_CHIPS", "EXPERIENCE_KINDS", "EXPERIENCE_MONEY_LINE", "LEARNING_RULE",
            "MEMBERS", "PAPER_LABEL", "PLAYBOOK_PATH", "REAL_LABEL", "STALE_BANNER_S", "TOWN_MONTH_DAYS",
-           "WALLET_MAX_AGE_S", "build_page_state", "experience_card", "learning_card", "polymarket_desk", "town_ledger"]
+           "WALLET_MAX_AGE_S", "build_page_state", "experience_card", "learning_card", "polymarket_desk", "town_ledger",
+           "trend_desk"]
 
 log = get_logger(__name__)
 
@@ -679,10 +701,11 @@ def _latest_point(ledger: Any, mode: str) -> EquityPoint | None:
 
 
 def _money(settings: Settings, eq: dict[str, Any], point: EquityPoint | None,
-           withdrawn: tuple[int, int] = (0, 0), desk: dict[str, Any] | None = None) -> dict[str, Any]:
+           withdrawn: tuple[int, int] = (0, 0), desk: dict[str, Any] | None = None,
+           trend: dict[str, Any] | None = None) -> dict[str, Any]:
     """``withdrawn``: live SOL (all time, today) sent back to the owner with WITHDRAW_TO - added back to the
     results, so taking money out never reads as a trading loss. ``desk``: :func:`polymarket_desk`, carried under
-    ``polymarket`` apart from every SOL figure (never added to them)."""
+    ``polymarket`` apart from every SOL figure (never added to them); ``trend``: :func:`trend_desk`, likewise."""
     sol, sol_usd = eq["sol"], eq["sol_usd"]
     total, today = eq["pnl_total_sol"], eq["pnl_today_sol"]
     since_usd = eq["pnl_total_trading_usd"]
@@ -706,6 +729,7 @@ def _money(settings: Settings, eq: dict[str, Any], point: EquityPoint | None,
         "curve": curve, "chart_ready": span >= CHART_MIN_SPAN_S,
         "as_of": point.ts if point is not None else (curve[-1][0] if curve else None),
         "polymarket": desk,
+        "trend": trend,
     }
 
 
@@ -854,6 +878,58 @@ def _real_sentence(real: Mapping[str, Any]) -> str:
             f"({real['won_today']}/{real['settled_today']} won); {since}")
 
 
+# =========================================================================== the trend desk
+
+
+def trend_desk(settings: Settings, now: float) -> dict[str, Any] | None:
+    """The trend desk's paper book for the money card (TREND in the module docstring), type-checked: its own figures,
+    never added to anything else. None when the desk is off (``TRENDDESK_ENABLED``) or its state cannot be read or
+    holds junk: nothing is shown rather than a made-up number. Never raises."""
+    if not settings.trenddesk_enabled:
+        return None
+    try:
+        raw = trenddesk.panel_state(settings, now)
+    except (KeyError, TypeError, ValueError, AttributeError) as exc:  # a malformed state file: never take the page down
+        log.warning("trenddesk_panel_failed error=%s", type(exc).__name__)
+        return None
+    figures = {key: _num(raw.get(key)) for key in ("sleeve_usd", "equity_usd", "today_usd", "since_start_usd")}
+    figures["hold_since_start_usd"] = _num(raw.get("bh_since_start_usd"))  # holding the three, bought on day one
+    if any(value is None for value in figures.values()):
+        return None
+    lab = {"since_start_usd": _num(raw.get("lab_since_start_usd")),
+           "hold_since_start_usd": _num(raw.get("lab_hold_since_start_usd"))}
+    in_market = _xp_map(raw.get("in_market"))
+    started, problem, reset = raw.get("started"), raw.get("problem"), raw.get("reset_from")
+    return {"mode": "paper", "label": PAPER_LABEL, "as_of": _num(raw.get("as_of")), **figures,
+            "in_market": {coin: in_market.get(coin) is True for coin in trenddesk.COINS},
+            "started": started if isinstance(started, str) else None,
+            "problem": _clip(problem, TEXT_MAX) if isinstance(problem, str) and problem else None,
+            "lab": lab if all(value is not None for value in lab.values()) else None,
+            "reset_from": _clip(reset, 80) if isinstance(reset, str) and reset else None}
+
+
+def _trend_line(trend: Mapping[str, Any] | None) -> dict[str, Any] | None:
+    """``town.trend``: the trend desk in one sentence, paper and pretend, its own figures only (never summed),
+    against holding the three bought on day one and never touched; a record that replaced an unreadable one says
+    so."""
+    if trend is None:
+        return None
+    who = "Trend desk (paper, pretend)"
+    if trend.get("reset_from"):
+        who = f"Trend desk (paper, pretend; record restarted {trend.get('started') or 'today'})"
+    if trend["as_of"] is None:
+        first = (f"first booking at the close of {trend['started']} (UTC midnight)" if trend.get("started")
+                 else "not started")
+        line = f"{who}: {first}; nothing booked yet"
+    else:
+        line = (f"{who}: {trenddesk.in_out_text(trend['in_market'])}; since start "
+                f"{_signed(trend['since_start_usd'])} vs holding the three (bought on day one, never touched) "
+                f"{_signed(trend['hold_since_start_usd'])}")
+    if trend.get("problem"):
+        line += "; behind: the newest daily close is not booked yet"
+    return {"line": line}
+
+
 # =========================================================================== the town
 
 
@@ -880,6 +956,9 @@ def town_ledger(settings: Settings, money: Mapping[str, Any], judge: Mapping[str
     income_today = _num(_xp_map(money.get("today")).get("usd"))
     income_since = _num(_xp_map(money.get("since_start")).get("usd"))
     desk = money.get("polymarket")  # the Polymarket desk's books, or nothing: the desk is off
+    trend = money.get("trend")  # the trend desk's paper book, or nothing
+    if not (isinstance(trend, Mapping) and "as_of" in trend and isinstance(trend.get("in_market"), Mapping)):
+        trend = None
     desk = desk if isinstance(desk, Mapping) and isinstance(desk.get("paper"), Mapping) else None
     kind = "real money" if settings.is_live else "paper money"
     who = "Solana desk" if desk is not None else "desks"
@@ -907,6 +986,7 @@ def town_ledger(settings: Settings, money: Mapping[str, Any], judge: Mapping[str
                                 else None),
         "line": line,
         "polymarket": _desk_lines(desk),
+        "trend": _trend_line(trend),  # its own line: never in the income figures or the line above
     }
 
 
@@ -1103,7 +1183,8 @@ def build_page_state(ledger: Any, settings: Settings, now: float, engine_status:
     point = _latest_point(ledger, "live" if settings.is_live else "paper")
     address, wallet_sol, wallet_read_at = _wallet(ledger, settings, state, point, now)
     desk = polymarket_desk(settings, now)  # the Polymarket desk's books, apart from the SOL wallet (never summed)
-    money = _money(settings, state["equity"], point, _withdrawn(ledger, settings, point, now), desk)
+    trend = trend_desk(settings, now)  # the trend desk's paper book, apart from everything else (never summed)
+    money = _money(settings, state["equity"], point, _withdrawn(ledger, settings, point, now), desk, trend)
     receipts = state["receipts"]
     head = receipts["head_hash"]
     out = {

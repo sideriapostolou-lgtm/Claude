@@ -1,8 +1,9 @@
 """The ONE dashboard page at ``/`` (owner: O6): built for an owner who checks the bot from a phone.
 
 Top to bottom, in plain words: money (a big dollar number and a chart; under it the Polymarket desk's two books,
-paper and real, never added to the SOL wallet or to each other), the town (what running the bot costs against what
-each desk made), the bot wallet (its public address with
+paper and real, never added to the SOL wallet or to each other, and the trend desk's paper book, a forward test of
+lab 3's 50-day trend rule on BTC, ETH and SOL, never added to anything either), the town (what running the bot costs
+against what each desk made, with the trend desk's own line under the bars), the bot wallet (its public address with
 a copy button, its SOL and how to fund it from Phantom), the team (one row per bot member, tap for its report
 card and last events; the team's practice record on top and the playbook's counts below, docs/EXPERIENCE.md
 §9), trades, learning (the Coach), "ready for real money?" (a six-step checklist)
@@ -300,6 +301,7 @@ _SCRIPT = r"""
     $("money-help").textContent = help.join(" ");
     put($("chart"), chart(m.curve || [], m.start_usd, m.chart_ready));
     renderPolymarket(m.polymarket);
+    renderTrend(m.trend);
   }
 
   // The Polymarket desk's two books under the SOL wallet (money.polymarket), never added to it or to each other.
@@ -329,6 +331,40 @@ _SCRIPT = r"""
     put(box, el("p", "sub", "Polymarket desk", el("span", "tag", pm.mode === "live" ? "real money ON" : "real money OFF")),
       el("div", "rows", ...rows),
       el("p", "help", "Kept apart from the SOL wallet above, and paper from real: nothing here is added together."));
+  }
+
+  // The trend desk's paper book (money.trend) under the Polymarket desk: its own figures, never added to anything.
+  // Text only; before its first daily close it says so instead of showing a result.
+  function renderTrend(tr) {
+    const box = $("money-trend");
+    if (!tr || !tr.in_market) { put(box); return; }
+    const coins = Object.keys(tr.in_market);
+    const ins = coins.filter((c) => tr.in_market[c] === true), outs = coins.filter((c) => tr.in_market[c] !== true);
+    const meta = isNum(tr.as_of)
+      ? ["since start", "holding the three instead (bought on day one, never touched) "
+        + usd(tr.hold_since_start_usd, true), "last day " + usd(tr.today_usd, true),
+        ins.length ? "in " + ins.join(", ") : "all cash", ins.length && outs.length ? "out " + outs.join(", ") : "",
+        "book " + usd(tr.equity_usd) + " of " + usd(tr.sleeve_usd)]
+      : ["no daily close booked yet" + (tr.started ? ": the first is the close of " + tr.started + " (UTC midnight)"
+        : "")];
+    // lab 3's own figures put the book back to thirds every day for free: shown for comparison, never as the result
+    const lab = isNum(tr.as_of) && tr.lab && isNum(tr.lab.since_start_usd) && isNum(tr.lab.hold_since_start_usd)
+      ? "lab 3's way (back to thirds every day, for free): rule " + usd(tr.lab.since_start_usd, true) + ", holding "
+        + usd(tr.lab.hold_since_start_usd, true) : null;
+    put(box, el("p", "sub", "Trend desk", el("span", "tag", "paper only")),
+      el("div", "rows", el("div", null,
+        el("div", "line", el("span", "coin", tr.label), el("span", "big " + tone(tr.since_start_usd),
+          usd(tr.since_start_usd, true))),
+        el("div", "meta", meta.filter(Boolean).join(" · ")),
+        lab ? el("div", "meta", lab) : null,
+        tr.reset_from ? el("div", "meta", "(record restarted " + (tr.started || "today") + ": the earlier record "
+          + "could not be read and is kept aside)") : null,
+        tr.problem ? el("div", "meta", tr.problem) : null)),
+      el("p", "help", "Lab 3's 50-day trend rule on BTC, ETH and SOL, checked once a day after the daily close "
+        + "(UTC midnight). Each coin has its own third of the book, as a real account would hold it: a sell puts that "
+        + "coin's money in its own cash and a buy spends only that cash; nothing is moved between the thirds. It has "
+        + "to beat holding the three, bought on day one and never touched. Kept apart from everything above: nothing "
+        + "here is added together."));
   }
 
   function chart(curve, startUsd, ready) {
@@ -401,7 +437,8 @@ _SCRIPT = r"""
         el("b", "num " + tone(made), usd(made, true)),
         isNum(made) ? track(Math.abs(made) / scale, made < 0 ? "down" : "up") : null,
         el("small", null, since(t.income_since_start_usd, true, t.covered_since_start))));
-    put($("town-desks"), ...(desks ? [desks.paper, desks.real] : []).filter((d) => d && d.line)
+    // the trend desk's own line (town.trend) comes last: words only, never part of the bars above
+    put($("town-desks"), ...[...(desks ? [desks.paper, desks.real] : []), t.trend].filter((d) => d && d.line)
       .map((d) => el("p", "meta", d.line)));
   }
 
@@ -847,7 +884,8 @@ def render_page_html(settings: Settings) -> str:
         "<div class=\"tile\"><div class=\"label\">Today</div><b id=\"today-usd\">—</b><span id=\"today-pct\"></span>"
         "</div></div>"
         "<p class=\"help\">Since start and today count only the bot's own trading, at today's price of SOL.</p>"
-        "<p class=\"help\" id=\"money-help\"></p><div id=\"chart\"></div><div id=\"money-polymarket\"></div></section>\n"
+        "<p class=\"help\" id=\"money-help\"></p><div id=\"chart\"></div><div id=\"money-polymarket\"></div>"
+        "<div id=\"money-trend\"></div></section>\n"
 
         "<section class=\"card\" id=\"town\">"
         f"<h2>The town <small id=\"town-label\">{label}</small></h2>"

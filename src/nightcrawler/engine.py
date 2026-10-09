@@ -2534,6 +2534,7 @@ class App:
     dashboard: Any
     wallet: Any = None
     polydesk: Any = None
+    trenddesk: Any = None
 
     def close(self) -> None:
         """Stop the dashboard (if running), write the last provider-usage counts and close the ledger."""
@@ -2542,6 +2543,8 @@ class App:
         try:
             if self.polydesk is not None:
                 self.polydesk.stop()
+            if self.trenddesk is not None:
+                self.trenddesk.stop()
             if self.dashboard is not None:
                 self.dashboard.stop()
         finally:
@@ -2638,9 +2641,20 @@ def build_app(settings: Settings, clock: Clock | None = None, *, session: Any = 
 
         polydesk = PolyDesk(settings, ledger=ledger)  # live orders and settlements are receipted in the chain
         polydesk.start()
+    trenddesk = None
+    if settings.trenddesk_enabled:  # PAPER only: lab 3's 50-day trend rule on BTC, ETH and SOL, once a day
+        try:
+            from nightcrawler.trenddesk import TrendDesk
+
+            trenddesk = TrendDesk(settings, ledger=ledger)  # its own thread; each booked day is receipted
+            trenddesk.start()
+        except Exception as exc:  # noqa: BLE001 (an optional paper desk never stops the bot)
+            log.warning("trenddesk_not_started error=%s", type(exc).__name__)
+            trenddesk = None
     return App(settings=settings, clock=clock, stop_event=stop_event, http=http, sources=sources, ledger=ledger,
                crawler=crawler, cocoon=cocoon, radar=radar, judge=judge, risk=risk, broker=broker,
-               auditor=auditor, engine=engine, dashboard=dashboard, wallet=wallet, polydesk=polydesk)
+               auditor=auditor, engine=engine, dashboard=dashboard, wallet=wallet, polydesk=polydesk,
+               trenddesk=trenddesk)
 
 
 def build_engine(settings: Settings, clock: Clock | None = None) -> Engine:

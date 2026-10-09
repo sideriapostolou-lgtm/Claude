@@ -38,6 +38,7 @@ unless marked **synthetic**. Use them through `fakes.load_fixture(name)` and
 | `rugcheck_report.json` | RugCheck `/tokens/{mint}/report` | clean graduated token; pool account in topHolders (exclude it!) |
 | `rugcheck_report_risky.json` | same, risky token | danger risks, curve pool holds 50 %, creator history |
 | `rugcheck_summary.json`, `rugcheck_summary_risky.json` | `/report/summary` | `lpLockedPct` unreliable |
+| `trenddesk/candles_1d.csv` | Coinbase Exchange `/products/{coin}-USD/candles?granularity=86400` (lab 3's cache) | BTC, ETH, SOL daily close and volume, 400 real days; see `trenddesk/README.md` |
 | `rugcheck_report_unavailable_400.json` | **synthetic** body of HTTP 400 for very new mints | `{"error": "unable to generate report"}` |
 | `rugcheck_report_not_found_400.json` | body of HTTP 400 from `/tokens/{mint}/report` for a mint RugCheck has not indexed yet (seen live 2026-10-08 on 6 s - 3 min old mints) | `{"error": "not found"}` -> `ReportUnavailable` (retry later) |
 | `rugcheck_stats_*.json`, `rugcheck_rugs_ticker.json` | misc RugCheck stats | not used yet |
