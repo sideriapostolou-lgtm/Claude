@@ -281,3 +281,44 @@ Declarations passed to `common.auto_rejections`: `uses_organic_flow = False`, `u
 `python research/lab2/z3.py --debug` writes `Z3/debug.md` and `Z3/debug.json`. Returns, exit reasons and placebo
 outcomes are hidden; its trials go to a scratch ledger, never to `trials.json`. Results are appended below after the
 run; **no constant above may change because of them.**
+
+**Run 2026-10-09 02:58 UTC, 52 s** (`Z3/debug.md`). 450 usable coins created over 0.52 days; 50,864 decision minutes
+at ages 7-120 min. **No constant above was changed after it ran, and no definition needed a fix.**
+
+| Count (no outcomes) | Census TRAIN third |
+|---|---:|
+| CRASH bars (≥ 70 % close drop in one minute) at ages 7-120 min | 363 bars on 252 coins |
+| ... of which SINGLE-SELLER (the Z3 event) | **3 bars on 3 coins** |
+| ... of which a stampede (fails the 0.25 X bound) | 360 |
+| CRASH bars before g + 7 min (excluded by the BOOST rule) | 128 bars on 106 coins |
+| `confirm` condition met | 1 |
+| coin-minutes in the POST-CRASH STATE (control pool) | 35,261 of 50,864 (403 coins) |
+| entries `now` / `confirm` (each hold) | 3 / 1 |
+| placebo draws (drawdown-matched), `now` / `confirm` | 57 of 60 / 15 of 20 |
+| exits at the data horizon | 0 |
+
+**Structure of the crash minutes** (decision-time features only): 307 of the 363 crash bars are on **instant
+graduates**; median age 12.8 min; median depth 95 %; median **669 sellers and 1,052 sell trades in the crash
+minute**; the pigeonhole bound on the largest seller is median 0.001 X (90th percentile 0.056 X). These are the
+factory airdrop dumps (craft rule G14: thousands of wallets each holding ~0.04 % of supply), not single-wallet rugs.
+Only 4 crash bars had ≤ 3 sellers, 22 had ≤ 10.
+
+**The 3 single-seller crashes** (1-2 sellers, 73-96 % drop, one wallet ≥ 0.40 X) left the pool at the supply floor:
+X after the crash 17.8-20.6 SOL (≈ the virtual reserve: almost no real SOL left), market cap ≈ $2.1-2.7k, pool fee
+125 bps (the floor-level top tier), $20 round trip **5.0-5.1 %** (7.4-7.6 % at costs × 1.5): the hurdle any bounce
+must clear before the worst-fill haircut.
+
+**Expected samples**, if other days look like the census day (≈ 5.8 `now` signals a day, ≈ 1.9 `confirm`): TRAIN
+(4 d) ≈ 23 `now` / ≈ 8 `confirm` trades per config, VAL ≈ 9 / 3, TEST ≈ 8 / 3, CONFIRM (15 d) ≈ 87 / 29.
+
+**What the counts imply, before any TRAIN data:**
+
+- **Z3 as registered is expected to be UNDERPOWERED_TRAIN** (≈ 23 trades against the 60-trade / 40-coin bar), which
+  stops it before VAL (§8). That is the pre-registered answer, not a code failure: single-wallet ≥ 70 % crashes are
+  rare in the 7-120 min window. Running TRAIN still spends 6 trials.
+- **The common ≥ 70 % one-minute crash is a many-wallet stampede on instant graduates**, which the single-seller
+  bound excludes by design. A "stampede-crash bounce" is a different mechanism (a coordinated distribution through
+  many wallets, not one price-insensitive seller). It would need its own pre-registration and its own trials; it is
+  **not** an amendment of Z3, because it would be chosen from these counts.
+- The drawdown-matched control is plentiful (69 % of coin-minutes are ≥ 70 % under their high), so the placebo is not
+  the binding constraint.

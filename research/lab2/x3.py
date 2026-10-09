@@ -85,7 +85,8 @@ FACTORY_MIN_TOP5 = 0.85
 ALLOWED_CLASSES = ("OTHER",)
 # reversion gate (PREREG 8)
 GATE_M, GATE_TIMING = 2.0, "now"
-GATE_DRAWS, GATE_MAX_TRIES = 20, 200
+GATE_DRAWS, GATE_MAX_TRIES = 20, 2000   # rejection sampling: deep coins are rare (PREREG 14, debug fix 1)
+PLACEBO_MAX_TRIES = 2000     # the strategy's matched placebo too (common's default 200 gave 3 of 20 draws; fix 2)
 GATE_SKIP_S = 1800.0         # after an event, the coin's next 30 min are skipped (labels never overlap)
 GATE_MIN_EVENTS, GATE_MIN_COINS = 50, 30
 # selection and verdict bars
@@ -107,7 +108,7 @@ FIXED = {
     "deep_mcap_sol": DEEP_MCAP_SOL, "w_base": W_BASE, "vol_floor_sol": VOL_FLOOR_SOL, "vol_mult": VOL_MULT,
     "max_drop": MAX_DROP, "lp_frac_y": LP_FRAC_Y, "rho": RHO, "exhaust_sell_frac": EXHAUST_SELL_FRAC,
     "stop_pct": STOP_PCT, "size_usd": SIZE_USD, "classes": list(ALLOWED_CLASSES), "alive": "AsOf.alive()",
-    "placebo": "age window & OTHER & alive & deep, +-120 s",
+    "placebo": "age window & OTHER & alive & deep, +-120 s", "placebo_max_tries": PLACEBO_MAX_TRIES,
     "fill": "common.FillConfig(exit_delay_bars=1): worst, latency 30 s, entry-bar exits, next-bar exits",
 }
 
@@ -120,7 +121,8 @@ def make_params(m: float, timing: str, hold_min: int) -> dict:
 
 GRID = [make_params(m, tm, h) for m in M_GRID for tm in TIMINGS for h in HOLDS_MIN]
 GATE_PARAMS = {"version": VERSION, "test": "reversion_gate", "m": GATE_M, "timing": GATE_TIMING,
-               "holds_min": list(HOLDS_MIN), "draws": GATE_DRAWS, "skip_s": GATE_SKIP_S,
+               "holds_min": list(HOLDS_MIN), "draws": GATE_DRAWS, "max_tries": GATE_MAX_TRIES,
+               "skip_s": GATE_SKIP_S,
                "min_events": GATE_MIN_EVENTS, "min_coins": GATE_MIN_COINS, "fixed": FIXED}
 
 
@@ -302,6 +304,23 @@ def placebo_any_depth(snap: C.AsOf) -> bool:
 PLACEBO_CONTROLS = {"any_depth": {"eligible": placebo_any_depth, "strata": None}}
 
 
+def run_config(ds: C.Dataset, split: str, p: Mapping[str, Any], hypothesis: str, *, n_placebo: int = 20,
+               ledger_path: Path | None = None, shortlist_path: Path | None = None, seed: int = 0) -> C.Result:
+    """One logged ``common.backtest`` look (guards, stress runs, ledger), then common's matched placebo and the
+    any-depth control with ``max_tries`` = 2,000 (backtest's own call stops at 200 tries per signal, too few when deep
+    coins are rare). Same function, eligibility, seeds and exits as backtest's internal placebo."""
+    res = C.backtest(strategy, split, p, hypothesis=hypothesis, ds=ds, cfg=MAIN_CFG, placebo=False, stress=STRESS,
+                     declarations=DECL, ledger_path=ledger_path, shortlist_path=shortlist_path, seed=seed)
+    if len(res.trades):
+        res.placebo = C.run_placebo(ds, strategy, p, MAIN_CFG, res.trades, n_placebo, seed, placebo_ok,
+                                    max_tries=PLACEBO_MAX_TRIES, _internal=True)
+        res.controls = {name: C.run_placebo(ds, strategy, p, MAIN_CFG, res.trades, n_placebo, seed, spec["eligible"],
+                                            max_tries=PLACEBO_MAX_TRIES, strata=spec["strata"], _internal=True)
+                        for name, spec in PLACEBO_CONTROLS.items()}
+    res.meta["placebo_max_tries"] = PLACEBO_MAX_TRIES
+    return res
+
+
 # =========================================================================== reversion gate (PREREG 8)
 
 
@@ -364,9 +383,10 @@ def gate_events(ds: C.Dataset, band: str = "deep", timing: str = GATE_TIMING, wi
 
 
 def gate_draws(ds: C.Dataset, events: pd.DataFrame, band: str = "deep", seed: int = 0,
-               n_draws: int = GATE_DRAWS, max_tries: int = GATE_MAX_TRIES) -> pd.DataFrame:
+               n_draws: int = GATE_DRAWS, max_tries: int = GATE_MAX_TRIES, with_labels: bool = True) -> pd.DataFrame:
     """Matched random decisions for each event: random coins of the split, decision age within +-120 s, eligible as
-    the placebo in ``band``; OUTCOME labels over the same horizons. One row per event: n_draws and mean labels."""
+    the placebo in ``band``; OUTCOME labels over the same horizons. One row per event: n_draws and mean labels.
+    Without labels (debug) only the draws are counted: a draw needs its horizons inside the data, never its price."""
     mints = ds.mints
     rows = []
     band_id = {"deep": 0, "shallow": 1}[band]
@@ -388,6 +408,10 @@ def gate_draws(ds: C.Dataset, events: pd.DataFrame, band: str = "deep", seed: in
             snap = ds.asof(m, float(cd.bar_start(k) + C.GRID_OFFSET_S))
             if not _eligible(snap, band):
                 continue
+            if not with_labels:
+                if snap.k + max(HOLDS_MIN) <= C.N_BARS:
+                    got += 1
+                continue
             lab = _labels(ds, m, snap)
             if any(v is None for v in lab.values()):
                 continue
@@ -406,10 +430,10 @@ def gate_obs(ds: C.Dataset, with_labels: bool = True, seed: int = 0) -> dict[str
     for name, band, timing in (("deep", "deep", "now"), ("deep_confirm", "deep", "confirm"),
                                ("shallow", "shallow", "now")):
         ev = gate_events(ds, band, timing, with_labels=with_labels)
-        if with_labels:
-            dr = gate_draws(ds, ev, band, seed=seed)
-            ev = pd.concat([ev.reset_index(drop=True), dr.drop(columns=["event"])], axis=1)
-        out[name] = ev
+        dr = gate_draws(ds, ev, band, seed=seed, with_labels=with_labels)
+        if not with_labels:
+            dr = dr[["event", "n_draws"]]
+        out[name] = pd.concat([ev.reset_index(drop=True), dr.drop(columns=["event"])], axis=1)
     return out
 
 
@@ -432,6 +456,7 @@ def gate_check(obs: Mapping[str, pd.DataFrame], B: int = 2000, hide: bool = Fals
     out: dict[str, Any] = {
         "n_events": int(len(deep)), "n_coins": int(deep["mint"].nunique()) if len(deep) else 0,
         "n_events_with_draws": int(len(usable)) if "n_draws" in deep else None,
+        "mean_draws_per_event": float(deep["n_draws"].mean()) if "n_draws" in deep and len(deep) else None,
         "by_bucket": deep["bucket"].value_counts().to_dict() if len(deep) else {},
         "n_events_deep_confirm": int(len(obs.get("deep_confirm", pd.DataFrame()))),
         "n_events_shallow": int(len(obs.get("shallow", pd.DataFrame()))),
@@ -476,7 +501,8 @@ def evaluate(res: C.Result, ds: C.Dataset, *, B: int, hide: bool, n_trials_total
     t = res.trades
     cens = (t["reason"] == "horizon").to_numpy(bool) if len(t) else np.zeros(0, bool)
     base = {"config": config_key(res.meta["params"]), "params_hash": C.params_hash(res.meta["params"]),
-            "hypothesis": res.meta["hypothesis"], "n": int(len(t)), "n_coins": int(t["mint"].nunique()) if len(t) else 0,
+            "hypothesis": res.meta["hypothesis"], "n": int(len(t)),
+            "n_coins": int(t["mint"].nunique()) if len(t) else 0,
             "by_bucket_n": t["tag"].value_counts().to_dict() if len(t) else {}, "n_placebo": int(len(res.placebo)),
             "n_placebo_any_depth": int(len((res.controls or {}).get("any_depth", ()))),
             "horizon_exits": int(cens.sum()),
@@ -894,10 +920,8 @@ def run_stage(stage: str, *, out_dir: Path = OUT_DIR, allow_partial: bool = Fals
         # ---- the configs
         results: dict[str, C.Result] = {}
         for role, h, p in run_cfgs:
-            results[role] = C.backtest(strategy, split, p, hypothesis=h, ds=ds, cfg=MAIN_CFG, placebo=True,
-                                       n_placebo=n_placebo, placebo_eligible=placebo_ok,
-                                       placebo_controls=PLACEBO_CONTROLS, stress=STRESS, declarations=DECL,
-                                       ledger_path=ledger_path, shortlist_path=shortlist_path)
+            results[role] = run_config(ds, split, p, h, n_placebo=n_placebo, ledger_path=ledger_path,
+                                       shortlist_path=shortlist_path)
         n_tr = C.n_trials(ledger_path)
         evals = {role: evaluate(r, ds, B=B, hide=debug, n_trials_total=n_tr) for role, r in results.items()}
         doc["configs"] = evals
@@ -905,7 +929,8 @@ def run_stage(stage: str, *, out_dir: Path = OUT_DIR, allow_partial: bool = Fals
             _write_trades(out_dir, stage, provisional, results)
         if debug:
             days = doc["span_days"]
-            doc["entries_per_day"] = {k: (e["n"] / days if days == days and days > 0 else None) for k, e in evals.items()}
+            doc["entries_per_day"] = {k: (e["n"] / days if days == days and days > 0 else None)
+                                      for k, e in evals.items()}
             doc["decision"] = {"verdict": "DEBUG", "note": "mechanics only; returns hidden"}
         elif stage == "train":
             dec = decide_train(evals, doc["gate"]["passing_horizons"])
@@ -1047,8 +1072,8 @@ def render_md(doc: Mapping[str, Any]) -> str:
     if g:
         L += ["## Reversion gate (PREREG 8)", "",
               f"- Deep `now` events (m = 2): {g['n_events']} from {g['n_coins']} coins (with matched draws: "
-              f"{g.get('n_events_with_draws', 'n/a')}); need ≥ {GATE_MIN_EVENTS} and ≥ {GATE_MIN_COINS} coins; by depth "
-              f"bucket {g.get('by_bucket')}.",
+              f"{g.get('n_events_with_draws', 'n/a')}, mean draws per event {g.get('mean_draws_per_event')}); need "
+              f"≥ {GATE_MIN_EVENTS} and ≥ {GATE_MIN_COINS} coins; by depth bucket {g.get('by_bucket')}.",
               f"- Diagnostics: deep `confirm` events {g.get('n_events_deep_confirm')}, shallow (100-1,470 SOL) events "
               f"{g.get('n_events_shallow')}.",
               f"- Decision: **{g['decision']}**; passing horizons: {g.get('passing_horizons')}."]
@@ -1085,8 +1110,8 @@ def render_md(doc: Mapping[str, Any]) -> str:
     if cf:
         L += ["## Configs", ""]
         if doc.get("debug_only"):
-            L += ["| config | trades | coins | depth buckets | mean rt | mean tp | placebo trades (matched / any depth) | "
-                  "horizon exits | entries/day |",
+            L += ["| config | trades | coins | depth buckets | mean rt | mean tp | "
+                  "placebo trades (matched / any depth) | horizon exits | entries/day |",
                   "|---|---:|---:|---|---:|---:|---|---:|---:|"]
             for k, e in cf.items():
                 epd = (doc.get("entries_per_day") or {}).get(k)
@@ -1096,8 +1121,8 @@ def render_md(doc: Mapping[str, Any]) -> str:
                          f"{e['n_placebo']} / {e['n_placebo_any_depth']} | {e['horizon_exits']} | "
                          f"{'n/a' if epd is None else f'{epd:.1f}'} |")
         else:
-            L += ["| role | config | n | coins | mean | 90% CI coin | 90% CI 6-h block | w/o top 2 | placebo diff (deep) | "
-                  "placebo diff (any depth) | costs ×1.5 | same-bar exits | mean rt | reasons |",
+            L += ["| role | config | n | coins | mean | 90% CI coin | 90% CI 6-h block | w/o top 2 | "
+                  "placebo diff (deep) | placebo diff (any depth) | costs ×1.5 | same-bar exits | mean rt | reasons |",
                   "|---|---|---:|---:|---:|---|---|---:|---:|---:|---:|---:|---:|---|"]
             for k, e in cf.items():
                 st_ = e.get("stress") or {}

@@ -99,9 +99,9 @@ climax. **The edge has to come from the size of the rebound, not from the cost s
 - **Reserves.** `bars.X` is the pricing reserve x + v after each completed minute (exactly close × y_close in B2) and
   `bars.y` the token reserve. On a constant-product pool price = X / y = X² / k, so the climax outflow and the rebound
   target are exact functions of X.
-- **Liquidity events.** A bar where tokens leave or enter the pool outside trades (|y − (y_prev − buy_tok + sell_tok)|
-  > 0.5 % of y_prev, M1's token-conservation test) changes k; its "outflow" is not a sell climax, so no climax is read
-  there.
+- **Liquidity events.** A bar where tokens leave or enter the pool outside trades (y differs from
+  y_prev − buy_tok + sell_tok by more than 0.5 % of y_prev, M1's token-conservation test) changes k; its "outflow" is
+  not a sell climax, so no climax is read there.
 
 ## 3. Universe and class
 
@@ -202,8 +202,9 @@ after an event, the coin's next 30 minutes are skipped so labels never overlap.
 **Label** (an outcome, never a feature): the mid-price change close(t + H) / close(t) − 1 for H ∈ {10, 30} min, read
 through AsOf H minutes later.
 
-**Matched random control.** For each event, up to 20 random decisions (seeded) in TRAIN coins of the same split with
-decision age within ± 120 s, eligible as the placebo (§10: age window, class OTHER, alive, deep), with the same label.
+**Matched random control.** For each event, up to 20 random decisions (seeded rejection sampling, at most 2,000 tries
+per event) in TRAIN coins of the same split with decision age within ± 120 s, eligible as the placebo (§10: age window,
+class OTHER, alive, deep), with the same label.
 
 **Statistic.** excess_H = mean over events of (label − mean label of its matched draws).
 
@@ -283,14 +284,15 @@ VAL or CONFIRM) or **NO EDGE**.
 
 ## 10. Controls
 
-- **Matched random control** (PLAN §3.4, judged): `common.backtest`'s placebo, 20 draws per signal, random coins of the
-  same split at a decision age within ± 120 s, **eligible = age window, class OTHER, alive and deep (≥ 1,470 SOL)** at
+- **Matched random control** (PLAN §3.4, judged): common.py's matched-timing placebo (`run_placebo`, the function
+  `backtest` uses), 20 draws per signal, random coins of the same split at a decision age within ± 120 s, **eligible = age window, class OTHER, alive and deep (≥ 1,470 SOL)** at
   the draw's own decision, the signal's own exits (target %, stop, H). It isolates the climax timing from the
   "deep survivors" effect. Feeds §3.5 item 5 (≥ +6 points), the TRAIN shortlist and VAL.
 - **`any_depth` control** (reported, never judged): the same without the depth condition. Signal − `any_depth` minus
   signal − matched shows how much of the result is just "deep coins".
-- common.run_placebo stops after 200 tries per signal; when deep coins are rare a signal may get fewer than 20 draws.
-  The count is reported.
+- Both are `common.run_placebo` (same eligibility, seeds and exits as `backtest`'s internal call), run right after the
+  logged `backtest` look with `max_tries` = 2,000 per signal instead of backtest's 200: deep coins are rare, and at 200
+  tries the one debug signal got 3 of 20 matched draws (§14, fix 2). The draw count is reported.
 
 ## 11. Metric and statistics
 
@@ -325,5 +327,54 @@ Declarations passed to `auto_rejections`: `uses_organic_flow = False`, `uses_wal
 
 ## 14. Debug findings and expected sample (census TRAIN third, counts only)
 
-To be filled from `python research/lab2/x3.py --debug` (writes `X3/debug.md`, `X3/debug.json`; trials to a scratch
-ledger, never `trials.json`). Returns, exit reasons and gate labels are hidden. No parameter is chosen there.
+**The run.** `python research/lab2/x3.py --debug` writes `X3/debug.md` and `X3/debug.json` (trials go to a scratch
+ledger, never `trials.json`). 450 usable coins created over 12.5 h (0.52 days). Returns, exit reasons, fill prices and
+gate labels are hidden. The grid and every threshold above were fixed before this run; nothing was changed after it
+except the two sampling fixes below.
+
+**Fixes made while debugging** (mechanics only, from counts, before any TRAIN data; no trading rule changed):
+
+1. The gate's matched draws use up to 2,000 tries per event (was 200): with 13 deep coins among 450, 200 tries gave
+   too few eligible draws. Now 16 of 20 per event.
+2. The strategy's matched placebo and the `any_depth` control call `common.run_placebo` with `max_tries` = 2,000
+   after the logged `backtest` look (§10). The one debug signal got 3 of 20 matched draws at 200 tries, 16-17 now.
+
+**Counts** (features only):
+
+| Measure | Census TRAIN third (0.52 d) |
+|---|---:|
+| Classes at g + 60 min | FACTORY 183, OPERATOR 34, OTHER 233 |
+| OTHER coins ever deep (≥ 1,470 SOL) at a decision in g + 60 → 145 min | **13** (all alive) |
+| Deep coin-decisions (OTHER, in the window) | 451 |
+| Deep `now` climax events (m = 2), i.e. gate events | **1** (1 coin; 1,844 SOL; rt 3.29 %; tp 11.7 %; climax drop 19.5 %; age 100 min) |
+| Deep `confirm` events (m = 2) | 1 (the same climax) |
+| m = 4 entries | 0 |
+| Shallow (100-1,470 SOL) climax events (diagnostic) | 16 from 15 coins (median 250 SOL, rt 3.8 %) |
+| Entries per config | m = 2: 1 each (≈ 1.9 a day); m = 4: 0 |
+
+**Why so few** (a feature-only check of the detector, `scratchpad/x3/debug_detector.py`): at the 451 deep
+decisions every last bar traded and no bar had a liquidity event, so the detector reads the data as intended. Deep
+coins are busy: their median minute volume is 58 SOL (p10 2.6, p90 204). One-minute drops of ≥ 12 % happened at 27 of
+the 451 deep decisions, but only 8 decisions had a selling minute ≥ 3 × the median volume, and only 1 of the large
+drops was a volume climax. **In deep pools, large one-minute drops mostly come without a volume spike.** The
+pre-registered trigger is a volume climax, so it is rare there by construction.
+
+**Expected sample if the census rate holds** (≈ 1.9 deep climax events a day):
+
+| Split | Days | Gate events / m = 2 entries | m = 4 entries |
+|---|---:|---:|---:|
+| TRAIN | 4 | ≈ 8 | ≈ 0 |
+| VAL | 1.5 | ≈ 3 | ≈ 0 |
+| TEST | 1.32 | ≈ 2.5 | ≈ 0 |
+| CONFIRM | 15 | ≈ 29 | ≈ 0 |
+
+**What this implies, stated before any TRAIN data:**
+
+- The gate needs ≥ 50 events from ≥ 30 coins. TRAIN is expected to give about 8, so **the expected outcome is
+  UNDERPOWERED_GATE: X3 halts on TRAIN without a P&L.** Even CONFIRM-sized data (≈ 29) would not reach the bar.
+- That is the pre-registered answer, not a code failure. I do **not** relax the trigger: doing so after these counts
+  would be choosing a parameter on FINAL data.
+- If the lead wants the deep-pool question answered anyway, the candidate is a **new** hypothesis (`x3-v2`, new
+  trials): a net-outflow drop in a deep pool **without** the volume-spike condition (≈ 27 large drops per 451 deep
+  decisions here, before the cost condition). It overlaps D1's candle dip E1 (minus D1's wallet classes and organic
+  universe), which is why it is not added to this grid.

@@ -286,5 +286,47 @@ Declarations passed to `common.auto_rejections`: `uses_organic_flow = False`, `u
 
 ## 13. Debug run (census TRAIN third, counts only)
 
-To be filled in after `python research/lab2/y3.py --debug` (counts only: returns, exit reasons and placebo outcomes
-hidden; trials go to a scratch ledger, never to `trials.json`). No constant above may change after it.
+`python research/lab2/y3.py --debug` writes `Y3/debug.md` and `Y3/debug.json`. Returns, exit reasons and placebo
+outcomes are hidden; its trials go to a scratch ledger, never to `trials.json`. **No constant above was changed after
+it ran, and no definition needed a fix** (run 2026-10-09 03:03 UTC, 70 s). A mechanics cross-check recomputed the one
+real `broad` signal's box high / low, traded share, breakout-bar buyers, top-5 share and net flow from the raw
+`b2_bars` rows: all equal to `y3.setup` (feature values only, no outcome).
+
+**Counts** (450 usable coins created over 0.52 days: 277 instant, 173 slow; 27,014 decision minutes at ages
+70-130 min; 102 coins ELIGIBLE at some such decision):
+
+| box | coins COMPRESSED (coin-min) | coins BREAKOUT | coins BROAD | chart setups: coins (coin-min) | broad setups: coins | eligible broad |
+|---|---:|---:|---:|---:|---:|---:|
+| N10, θ 0.06 | 76 (2,298) | 58 | 32 | 11 (13) | 0 | 0 |
+| N10, θ 0.12 | 87 (2,615) | 58 | 32 | 17 (24) | 1 | 1 |
+| N20, θ 0.06 | 46 (1,645) | 39 | 24 | 1 (1) | 0 | 0 |
+| N20, θ 0.12 | 60 (1,771) | 39 | 24 | 7 (8) | 1 | 1 |
+
+| config | entries (0.52 d) | per day | TRAIN (4 d) | VAL (1.5 d) | TEST (1.32 d) | CONFIRM (15 d) |
+|---|---:|---:|---:|---:|---:|---:|
+| N10 θ0.06 broad / chart | 0 / 8 | 0 / 15 | 0 / 62 | 0 / 23 | 0 / 20 | 0 / 230 |
+| N10 θ0.12 broad / chart | 1 / 14 | 1.9 / 27 | ≈ 8 / 108 | ≈ 3 / 40 | ≈ 2.5 / 36 | ≈ 29 / 400 |
+| N20 θ0.06 broad / chart | 0 / 1 | 0 / 1.9 | 0 / 8 | | | |
+| N20 θ0.12 broad / chart | 1 / 6 | 1.9 / 11.5 | ≈ 8 / 46 | ≈ 3 / 17 | ≈ 2.5 / 15 | ≈ 29 / 170 |
+
+No exit at the data horizon in any config. Placebo draws (of 20 per signal): primary 92-100 %; compression-matched
+13-20 % for N = 10 and 0-2 % for N = 20 (`common.run_placebo` stops after 200 random tries, and a compressed coin of
+the same stratum at the same age is rare). For N = 20 the compression-matched TRAIN qualifier would rest on almost no
+draws, so a missing `mean_diff` there fails the qualifier (§7: it must be > 0), as registered.
+
+**What the counts imply, before any TRAIN data:**
+
+- **Y3 as registered is almost certainly UNDERPOWERED.** If other days look like the census day, the best `broad`
+  configs make about 2 entries a day: ≈ 8 on TRAIN against the 60-trade shortlist bar, and ≈ 29 on the 15-day CONFIRM
+  split, still below PLAN §3.5's 60. The pre-registered TRAIN answer is then **UNDERPOWERED_TRAIN**, and Y3 stops
+  there. That is a property of the mechanism on this universe, not a code failure.
+- **The binding constraint is the conjunction.** Quiet boxes (60-87 coins) and broad breakout minutes (24-32 coins)
+  are both common; they rarely happen at the same minute (0-1 coin). Broad minutes come from active coins, quiet
+  boxes from quiet ones. The ≥ 6-buyer requirement implied by the top-5 rule (§12) is the strictest part.
+- **The chart twins are powered** (≈ 8-108 TRAIN entries), so even an UNDERPOWERED Y3 leaves the TRAIN report with a
+  measurement of F2's chart squeeze under next-bar worst fills at g + 70-130 min. They are never selectable (§6).
+- **Signals sit on slow graduates** (`chart`: 26 of 29 entries across the four configs; both `broad` entries slow),
+  which are 38 % of coins. The stratum-matched placebo keeps the control on the same kind of coin.
+- **No constant may be loosened to buy power.** A looser flow rule (e.g. no top-5 test, or breadth ≥ 3 buyers) would
+  be a new version (`y3-v2`), its thresholds would have been informed by these census-third counts, and it would
+  carry new trials; it is not part of this registration.

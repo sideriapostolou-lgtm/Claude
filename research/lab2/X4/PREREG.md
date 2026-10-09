@@ -254,4 +254,51 @@ never calls anything organic), `uses_wallet_reputation = False`, `uses_truncated
 
 ## 15. Debug findings and expected sample (census TRAIN third, counts only)
 
-Filled in after the debug run below; nothing above this section was changed after it.
+Filled in after the debug run; **nothing above this section was changed after it.**
+
+**The run.** `python research/lab2/x4.py --debug` writes `X4/debug.md` and `X4/debug.json` (runtime ~2 min). Returns,
+the gate's revival labels, fill prices and floor bounds are hidden. Its trials go to a scratch ledger
+(`scratchpad/lab2_debug/x4_debug_trials.json`), never to `trials.json`.
+
+| Count (450 usable coins created over 0.52 days: 277 instant, 173 slow) | Value |
+|---|---:|
+| Coins `at_floor` at some decision at ages 30-150 min | 262 (58 %) |
+| Coins `at_floor` at age 30 / 60 / 90 / 120 min | 64 / 218 / 241 / 254 |
+| `at_floor` coin-minutes (of 54,014 decision minutes) | 28,293 |
+| `fm` at `at_floor` minutes, p10 / p50 / p90 | 1.027 / 1.042 / 1.179 |
+| v at age 60 min, p1 / p50 / p99 (definition check) | 17.483 / 17.5845 / 17.5846 SOL |
+| `at_floor` minutes that are `dispersed` / have `BM` ≥ 12 / have `NI` ≥ 1 SOL | 19 (1 coin) / 0 / 5 (2 coins) |
+| Signal minutes: BREADTH / FLOW / BOTH | 0 / 0 / 0 |
+| Separation-gate observations: `at_floor` / with a signal | 3,955 from 258 coins / 0 |
+| Entries, every config | 0 (0 a day) |
+
+At age 30 the count is low by definition: the pre-window then still holds the minutes before the dump. (The lead's
+brief puts 147 of these 450 coins at the floor 10 minutes after graduation.)
+
+**Mechanics check** (a one-off script on the 5-minute grid, counts only, no price after any decision): of 5,668
+`at_floor` decisions, **97.5 % have zero buyer-minutes** in their 10-bar window. The most any window holds is 4
+buyer-minutes (peak 4 in one minute), and only 193 of the 56,680 window-minutes carry any buy SOL at all. The largest
+window buy (4.95 SOL) sits in one minute: a single print, Z2's territory. The code is not missing revivals; there is
+no buying at the floor to find.
+
+**What these counts imply, before any TRAIN data:**
+
+- **The floor is real and reached fast.** 254 of 450 coins (56 %) sit at `fm` ≤ 1.25 two hours after graduation,
+  most at `fm` ≈ 1.03-1.04 (x_real ≈ 0.25-0.35 SOL: the supply that never returns sets the floor slightly above
+  `fm` = 1). v is the documented 17.58 SOL, so `fm` measures what §1 says it measures.
+- **Within B2's horizon a coin at the floor is not dormant with occasional revivals: it is silent.** Over 28k
+  `at_floor` coin-minutes no 10-minute window had more than 4 buyer-minutes, and none had 1 SOL of net inflow spread
+  over more than one minute.
+- **Expected outcome: UNDERPOWERED_SEP on TRAIN, and X4 halts before any P&L.** With 0 signals in 0.52 days, the
+  95 % upper bound on the signal rate is about 6 a day (Poisson 3 / 0.52), at most ~23 over the 4 TRAIN days. The
+  gate needs ≥ 30 signal observations from ≥ 15 coins. That is the pre-registered answer to "is there a revival to
+  buy at the floor within 3 hours of graduation?": no, or too rare to measure.
+- **What this does not test.** Community takeovers usually come hours to days later. Wave 1's H12 looked 12 h
+  ahead (0.4 % reached 3×). Testing revivals there needs B2 bars beyond g + 180 min for floor coins: a new version
+  (`x4-v2`) on a new data build, not a parameter change here. Lowering the thresholds now would be choosing
+  parameters on the census third; it is not done.
+
+| Expected at the census-day rate | TRAIN (4 d) | VAL (1.5 d) | TEST (1.32 d) | CONFIRM (15 d) |
+|---|---:|---:|---:|---:|
+| Coins `at_floor` at 30-150 min | ≈ 2,000 | ≈ 760 | ≈ 670 | ≈ 7,600 |
+| Signal coins (= entries per config) | ≈ 0 (95 % bound ≈ 23) | ≈ 0 | ≈ 0 | never spent if TRAIN halts |

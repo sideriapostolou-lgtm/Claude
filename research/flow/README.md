@@ -115,9 +115,13 @@ and chunks are split automatically when they do.
   | P1, 7 days | ~520 | ~5.7 (~4.6 still to go) |
   | P2, 21.8 days in total | ~1,600 | ~18 |
   | P3, 21.8 days (60-minute horizon, ~12 coins/query) | ~2,400 | ~28 |
-  | P4b (B1), TRAIN 10-01 → 10-05 (S1 universe, compact tuple, ~2.8 queries per hour of coin creation) | ~311 (230-360) | ~3.5 |
-  | P4b (B1), VAL 10-05 → 10-06 12:00 | ~86 | ~1 |
+  | P4b (B1), TRAIN 10-01 → 10-05 (S1 universe; `--dry-run` 03:00: 250 units for the 830 coins discovered so far, 10-01 23:44 → 10-05) | ~335-365 | ~3.9 |
+  | P4b (B1), VAL 10-05 → 10-06 12:00 (458 coins, 2.59 M trades; `--dry-run`: 130 units) | ~137 | ~1.5 |
   | P4b (B1), TEST 10-06 12:00 → 10-07 19:37 (418 coins, 2.31 M trades; `--dry-run`: 117 units) | ~123 | ~1.4 |
+
+  P4b queries include ~5 % for splits after ResultTooLarge / QueryTimeout. Smoke test (2026-10-09 03:04, 3 TRAIN
+  units): 6.3-10.7 s exec, 29-48 M rows read, 513-871 kB native (estimates 4-5 % high), 0 overflow, and B1 pool
+  trades = B2 non-dust on all 326 pool-minutes checked (34,700 trades).
 
   The old P4 (coin batches of 4) needed ~7.5 queries per chain hour, ~1,290 for TRAIN-TEST, and timed out on every
   query at 3-4 M rows/s. It is disabled (`--phase P4` exits with code 2).

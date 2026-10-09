@@ -661,7 +661,7 @@ def event_counts(ds: C.Dataset) -> dict:
                 "round_trip": _quantiles(first_sig["round_trip"]),
                 "round_trip_costs_x1.5": _quantiles(first_sig["round_trip_x1.5"]),
                 "fee_bps_tier": first_sig["fee_bps"]},
-            "signal_coins_per_day": (len(coins["single"]) / days) if days == days and days > 0 else None}
+            "signal_coins_per_day": (len(coins["single"]) / days) if math.isfinite(days) and days > 0 else None}
 
 
 def run_stage(stage: str, *, out_dir: Path = OUT_DIR, allow_partial: bool = False, rerun_reason: str | None = None,
@@ -737,7 +737,8 @@ def run_stage(stage: str, *, out_dir: Path = OUT_DIR, allow_partial: bool = Fals
             _write_trades(out_dir, stage, provisional, results)
         if debug:
             days = doc["span_days"]
-            doc["entries_per_day"] = {k: (e["n"] / days if days == days and days > 0 else None) for k, e in evals.items()}
+            doc["entries_per_day"] = {k: (e["n"] / days if math.isfinite(days) and days > 0 else None)
+                                     for k, e in evals.items()}
             doc["decision"] = {"verdict": "DEBUG", "note": "mechanics and counts only; returns hidden"}
         elif stage == "train":
             dec = decide_train(evals)
