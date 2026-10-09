@@ -4868,6 +4868,270 @@
     "entry_bar_exits": true,
     "exit_delay_bars": 1
    }
+  },
+  "Q10|8280b9fc12e4|cfg:a06543feac6c": {
+   "hypothesis": "Q10",
+   "params": {
+    "version": "q10-v1",
+    "kind": "lp",
+    "entry_min_age_s": 600.0,
+    "alive_vol_usd_15m": 1500.0,
+    "alive_mcap_usd": 6000.0,
+    "min_mcap_sol": 420.0,
+    "max_abs_r15": 0.2,
+    "quiet_mult": 1.0,
+    "quiet_window_bars": 30,
+    "exit_by_age_s": 10680.0,
+    "size_usd": 20.0,
+    "n_tx": 4,
+    "value": "s * (q + X), q = x_real - max(0, v_ref - v); LP fees accrue, protocol/creator fees do not",
+    "placebo": "matched-timing LP deposit in a random alive coin with mcap >= 420 SOL (20 draws per signal)",
+    "fill": "common.FillConfig(exit_delay_bars=1): worst, latency 30 s, entry-bar exits, next-bar exits",
+    "M": 6,
+    "D": 0.7
+   },
+   "first_seen_utc": "2026-10-09 11:04:00",
+   "splits": {
+    "train": 1
+   },
+   "cfg": {
+    "size_usd": 20.0,
+    "latency_s": 30.0,
+    "entry_fill": "worst",
+    "exit_fill": "worst",
+    "cost": {
+     "ultra_bps": 10.0,
+     "mev_bps": 20.0,
+     "priority_sol": 0.0002,
+     "base_fee_lamports": 5000,
+     "fee_mult": 1.0,
+     "impact_mult": 1.0,
+     "extra_hop_bps": 100.0
+    },
+    "rent_usd": 0.0,
+    "entry_bar_exits": true,
+    "exit_delay_bars": 1
+   }
+  },
+  "Q10|11c27f090609|cfg:a06543feac6c": {
+   "hypothesis": "Q10",
+   "params": {
+    "version": "q10-v1",
+    "kind": "lp",
+    "entry_min_age_s": 600.0,
+    "alive_vol_usd_15m": 1500.0,
+    "alive_mcap_usd": 6000.0,
+    "min_mcap_sol": 420.0,
+    "max_abs_r15": 0.2,
+    "quiet_mult": 1.0,
+    "quiet_window_bars": 30,
+    "exit_by_age_s": 10680.0,
+    "size_usd": 20.0,
+    "n_tx": 4,
+    "value": "s * (q + X), q = x_real - max(0, v_ref - v); LP fees accrue, protocol/creator fees do not",
+    "placebo": "matched-timing LP deposit in a random alive coin with mcap >= 420 SOL (20 draws per signal)",
+    "fill": "common.FillConfig(exit_delay_bars=1): worst, latency 30 s, entry-bar exits, next-bar exits",
+    "M": 6,
+    "D": 0.5
+   },
+   "first_seen_utc": "2026-10-09 11:04:27",
+   "splits": {
+    "train": 1
+   },
+   "cfg": {
+    "size_usd": 20.0,
+    "latency_s": 30.0,
+    "entry_fill": "worst",
+    "exit_fill": "worst",
+    "cost": {
+     "ultra_bps": 10.0,
+     "mev_bps": 20.0,
+     "priority_sol": 0.0002,
+     "base_fee_lamports": 5000,
+     "fee_mult": 1.0,
+     "impact_mult": 1.0,
+     "extra_hop_bps": 100.0
+    },
+    "rent_usd": 0.0,
+    "entry_bar_exits": true,
+    "exit_delay_bars": 1
+   }
+  },
+  "Q10|77a1c0942fb4|cfg:a06543feac6c": {
+   "hypothesis": "Q10",
+   "params": {
+    "version": "q10-v1",
+    "kind": "lp",
+    "entry_min_age_s": 600.0,
+    "alive_vol_usd_15m": 1500.0,
+    "alive_mcap_usd": 6000.0,
+    "min_mcap_sol": 420.0,
+    "max_abs_r15": 0.2,
+    "quiet_mult": 1.0,
+    "quiet_window_bars": 30,
+    "exit_by_age_s": 10680.0,
+    "size_usd": 20.0,
+    "n_tx": 4,
+    "value": "s * (q + X), q = x_real - max(0, v_ref - v); LP fees accrue, protocol/creator fees do not",
+    "placebo": "matched-timing LP deposit in a random alive coin with mcap >= 420 SOL (20 draws per signal)",
+    "fill": "common.FillConfig(exit_delay_bars=1): worst, latency 30 s, entry-bar exits, next-bar exits",
+    "M": 6,
+    "D": null
+   },
+   "first_seen_utc": "2026-10-09 11:05:07",
+   "splits": {
+    "train": 1
+   },
+   "cfg": {
+    "size_usd": 20.0,
+    "latency_s": 30.0,
+    "entry_fill": "worst",
+    "exit_fill": "worst",
+    "cost": {
+     "ultra_bps": 10.0,
+     "mev_bps": 20.0,
+     "priority_sol": 0.0002,
+     "base_fee_lamports": 5000,
+     "fee_mult": 1.0,
+     "impact_mult": 1.0,
+     "extra_hop_bps": 100.0
+    },
+    "rent_usd": 0.0,
+    "entry_bar_exits": true,
+    "exit_delay_bars": 1
+   }
+  },
+  "Q10|72a3fd0264a6|cfg:a06543feac6c": {
+   "hypothesis": "Q10",
+   "params": {
+    "version": "q10-v1",
+    "kind": "lp",
+    "entry_min_age_s": 600.0,
+    "alive_vol_usd_15m": 1500.0,
+    "alive_mcap_usd": 6000.0,
+    "min_mcap_sol": 420.0,
+    "max_abs_r15": 0.2,
+    "quiet_mult": 1.0,
+    "quiet_window_bars": 30,
+    "exit_by_age_s": 10680.0,
+    "size_usd": 20.0,
+    "n_tx": 4,
+    "value": "s * (q + X), q = x_real - max(0, v_ref - v); LP fees accrue, protocol/creator fees do not",
+    "placebo": "matched-timing LP deposit in a random alive coin with mcap >= 420 SOL (20 draws per signal)",
+    "fill": "common.FillConfig(exit_delay_bars=1): worst, latency 30 s, entry-bar exits, next-bar exits",
+    "M": 3,
+    "D": 0.7
+   },
+   "first_seen_utc": "2026-10-09 11:05:31",
+   "splits": {
+    "train": 1
+   },
+   "cfg": {
+    "size_usd": 20.0,
+    "latency_s": 30.0,
+    "entry_fill": "worst",
+    "exit_fill": "worst",
+    "cost": {
+     "ultra_bps": 10.0,
+     "mev_bps": 20.0,
+     "priority_sol": 0.0002,
+     "base_fee_lamports": 5000,
+     "fee_mult": 1.0,
+     "impact_mult": 1.0,
+     "extra_hop_bps": 100.0
+    },
+    "rent_usd": 0.0,
+    "entry_bar_exits": true,
+    "exit_delay_bars": 1
+   }
+  },
+  "Q10|5b0dac929855|cfg:a06543feac6c": {
+   "hypothesis": "Q10",
+   "params": {
+    "version": "q10-v1",
+    "kind": "lp",
+    "entry_min_age_s": 600.0,
+    "alive_vol_usd_15m": 1500.0,
+    "alive_mcap_usd": 6000.0,
+    "min_mcap_sol": 420.0,
+    "max_abs_r15": 0.2,
+    "quiet_mult": 1.0,
+    "quiet_window_bars": 30,
+    "exit_by_age_s": 10680.0,
+    "size_usd": 20.0,
+    "n_tx": 4,
+    "value": "s * (q + X), q = x_real - max(0, v_ref - v); LP fees accrue, protocol/creator fees do not",
+    "placebo": "matched-timing LP deposit in a random alive coin with mcap >= 420 SOL (20 draws per signal)",
+    "fill": "common.FillConfig(exit_delay_bars=1): worst, latency 30 s, entry-bar exits, next-bar exits",
+    "M": 3,
+    "D": 0.5
+   },
+   "first_seen_utc": "2026-10-09 11:05:59",
+   "splits": {
+    "train": 1
+   },
+   "cfg": {
+    "size_usd": 20.0,
+    "latency_s": 30.0,
+    "entry_fill": "worst",
+    "exit_fill": "worst",
+    "cost": {
+     "ultra_bps": 10.0,
+     "mev_bps": 20.0,
+     "priority_sol": 0.0002,
+     "base_fee_lamports": 5000,
+     "fee_mult": 1.0,
+     "impact_mult": 1.0,
+     "extra_hop_bps": 100.0
+    },
+    "rent_usd": 0.0,
+    "entry_bar_exits": true,
+    "exit_delay_bars": 1
+   }
+  },
+  "Q10|ba1e46ea869e|cfg:a06543feac6c": {
+   "hypothesis": "Q10",
+   "params": {
+    "version": "q10-v1",
+    "kind": "lp",
+    "entry_min_age_s": 600.0,
+    "alive_vol_usd_15m": 1500.0,
+    "alive_mcap_usd": 6000.0,
+    "min_mcap_sol": 420.0,
+    "max_abs_r15": 0.2,
+    "quiet_mult": 1.0,
+    "quiet_window_bars": 30,
+    "exit_by_age_s": 10680.0,
+    "size_usd": 20.0,
+    "n_tx": 4,
+    "value": "s * (q + X), q = x_real - max(0, v_ref - v); LP fees accrue, protocol/creator fees do not",
+    "placebo": "matched-timing LP deposit in a random alive coin with mcap >= 420 SOL (20 draws per signal)",
+    "fill": "common.FillConfig(exit_delay_bars=1): worst, latency 30 s, entry-bar exits, next-bar exits",
+    "M": 3,
+    "D": null
+   },
+   "first_seen_utc": "2026-10-09 11:06:40",
+   "splits": {
+    "train": 1
+   },
+   "cfg": {
+    "size_usd": 20.0,
+    "latency_s": 30.0,
+    "entry_fill": "worst",
+    "exit_fill": "worst",
+    "cost": {
+     "ultra_bps": 10.0,
+     "mev_bps": 20.0,
+     "priority_sol": 0.0002,
+     "base_fee_lamports": 5000,
+     "fee_mult": 1.0,
+     "impact_mult": 1.0,
+     "extra_hop_bps": 100.0
+    },
+    "rent_usd": 0.0,
+    "entry_bar_exits": true,
+    "exit_delay_bars": 1
+   }
   }
  },
  "runs": [
@@ -6362,6 +6626,78 @@
    "over_variant_limit": false,
    "kind": "backtest",
    "session": null
+  },
+  {
+   "utc": "2026-10-09 11:04:00",
+   "hypothesis": "Q10",
+   "config": "Q10|8280b9fc12e4|cfg:a06543feac6c",
+   "split": "train",
+   "debug": false,
+   "n": 540,
+   "mean": -0.2784148832391078,
+   "over_variant_limit": false,
+   "kind": "lp",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 11:04:27",
+   "hypothesis": "Q10",
+   "config": "Q10|11c27f090609|cfg:a06543feac6c",
+   "split": "train",
+   "debug": false,
+   "n": 540,
+   "mean": -0.3600864670666098,
+   "over_variant_limit": false,
+   "kind": "lp",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 11:05:07",
+   "hypothesis": "Q10",
+   "config": "Q10|77a1c0942fb4|cfg:a06543feac6c",
+   "split": "train",
+   "debug": false,
+   "n": 540,
+   "mean": -0.48191303730053126,
+   "over_variant_limit": false,
+   "kind": "lp",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 11:05:31",
+   "hypothesis": "Q10",
+   "config": "Q10|72a3fd0264a6|cfg:a06543feac6c",
+   "split": "train",
+   "debug": false,
+   "n": 599,
+   "mean": -0.2816959114023889,
+   "over_variant_limit": false,
+   "kind": "lp",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 11:05:59",
+   "hypothesis": "Q10",
+   "config": "Q10|5b0dac929855|cfg:a06543feac6c",
+   "split": "train",
+   "debug": false,
+   "n": 599,
+   "mean": -0.3639247482228191,
+   "over_variant_limit": false,
+   "kind": "lp",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 11:06:40",
+   "hypothesis": "Q10",
+   "config": "Q10|ba1e46ea869e|cfg:a06543feac6c",
+   "split": "train",
+   "debug": false,
+   "n": 599,
+   "mean": -0.4801053851577182,
+   "over_variant_limit": false,
+   "kind": "lp",
+   "session": null
   }
  ],
  "val_shortlists": {
@@ -6390,7 +6726,7 @@
    "first_val_run_utc": "2026-10-09 09:41:27"
   }
  },
- "n_trials_total": 2678,
+ "n_trials_total": 2684,
  "val_looks": {
   "G1": 4,
   "O1": 1,
