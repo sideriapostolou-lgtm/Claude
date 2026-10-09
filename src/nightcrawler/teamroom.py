@@ -917,26 +917,48 @@ def _predict(ctx: _Ctx) -> dict[str, Any]:
         status = ctx.derive("predict", last, blocked=blocked, idle="no round finished recently")
     t = d["today"]
     live = d.get("mode") == "live"
-    word = "real" if live else "paper"
-    money = "real money" if live else "paper money, pretend"
+    real, paper = d.get("real") or {}, d.get("paper") or {}
     bal = d.get("balance")
     account = (f" Polymarket account: ${float(bal['cash']):.2f} cash."
                if isinstance(bal, dict) and bal.get("cash") is not None else "")
     if last is None:
         doing = ("Starting up: first look at the venue's markets." if d["enabled"] else "Switched off.") + account
+    elif live:
+        rt = real["today"]
+        doing = (f"Watching {d['watched']:,} markets; {real['open']} real positions open "
+                 f"(${real['at_risk_usd']:.2f} at risk); real money today {rt['won']}/{rt['settled']} settled won, "
+                 f"{rt['pnl_usd']:+.2f} $; all time {real['won_total']}/{real['settled_total']} won, "
+                 f"{real['pnl_total_usd']:+.2f} $." + account)
+        if paper["open"] or paper["settled_total"]:
+            doing += (f" Paper (pretend, from before the switch): {paper['open']} still running off; "
+                      f"{paper['won_total']}/{paper['settled_total']} won, {paper['pnl_total_usd']:+.2f} $.")
     else:
-        doing = (f"Watching {d['watched']:,} markets; {d['open']} {word} positions open; today {t['won']}/{t['settled']} "
+        doing = (f"Watching {d['watched']:,} markets; {d['open']} paper positions open; today {t['won']}/{t['settled']} "
                  f"settled won, {t['pnl_usd']:+.2f} $; all time {d['won_total']}/{d['settled_total']} won, "
-                 f"{d['pnl_total_usd']:+.2f} $ ({money})." + account)
+                 f"{d['pnl_total_usd']:+.2f} $ (paper money, pretend)." + account)
     if d.get("live_status"):
         doing += f" {d['live_status']}"
-    stats = [_stat("Watching", d["watched"], "count"), _stat(f"Open ({word})", d["open"], "count"),
-             _stat(f"Today $ ({word})", round(t["pnl_usd"], 2), "usd"),
-             _stat(f"All time $ ({word})", round(d["pnl_total_usd"], 2), "usd")]
-    if isinstance(bal, dict) and bal.get("cash") is not None:
-        stats.append(_stat("Polymarket cash", round(float(bal["cash"]), 2), "usd"))
-    return _panel("predict", status, last, ctx.text(doing), _headline(d["open"], "count", f"{word} positions open"),
-                  stats, events, rule=d["rule"], positions=d["positions"], label=d["label"], mode=d.get("mode"))
+    if live:
+        stats = [_stat("Watching", d["watched"], "count"), _stat("Open (real)", real["open"], "count"),
+                 _stat("At risk (real)", round(real["at_risk_usd"], 2), "usd"),
+                 _stat("Today $ (real)", round(real["today"]["pnl_usd"], 2), "usd"),
+                 _stat("All time $ (real)", round(real["pnl_total_usd"], 2), "usd")]
+        if isinstance(bal, dict) and bal.get("cash") is not None:
+            stats.append(_stat("Polymarket cash", round(float(bal["cash"]), 2), "usd"))
+        if paper["open"] or paper["settled_total"]:
+            stats += [_stat("Open (paper, running off)", paper["open"], "count"),
+                      _stat("All time $ (paper)", round(paper["pnl_total_usd"], 2), "usd")]
+        headline = _headline(real["open"], "count", "real positions open")
+    else:
+        stats = [_stat("Watching", d["watched"], "count"), _stat("Open (paper)", d["open"], "count"),
+                 _stat("Today $ (paper)", round(t["pnl_usd"], 2), "usd"),
+                 _stat("All time $ (paper)", round(d["pnl_total_usd"], 2), "usd")]
+        if isinstance(bal, dict) and bal.get("cash") is not None:
+            stats.append(_stat("Polymarket cash", round(float(bal["cash"]), 2), "usd"))
+        headline = _headline(d["open"], "count", "paper positions open")
+    return _panel("predict", status, last, ctx.text(doing), headline, stats, events, rule=d["rule"],
+                  positions=d["positions"], label=d["label"], mode=d.get("mode"),
+                  open_real=int(real.get("open") or 0), open_paper=int(paper.get("open") or 0))
 
 
 def _upgrades(ctx: _Ctx, deploy: dict[str, str | None], started_at: float | None) -> dict[str, Any]:

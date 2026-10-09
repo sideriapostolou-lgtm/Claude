@@ -781,10 +781,12 @@ def _members(team: dict[str, Any], card: dict[str, Any], now: float) -> list[dic
         if isinstance(p.get("positions"), list):  # the Polymarket desk's open positions (paper or real), capped
             member["positions"] = [
                 {"question": str(x.get("question") or "")[:80], "side": str(x.get("side") or ""),
-                 "p_in": x.get("p_in"), "category": str(x.get("category") or "")}
+                 "p_in": x.get("p_in"), "category": str(x.get("category") or ""), "live": bool(x.get("live"))}
                 for x in p["positions"][:10] if isinstance(x, dict)
             ]
             member["label"] = str(p.get("label") or "")
+            member["open_real"] = int(p.get("open_real") or 0)  # real-money positions open (whole book)
+            member["open_paper"] = int(p.get("open_paper") or 0)  # paper ones, e.g. running off after a switch
         out.append(member)
     return out
 

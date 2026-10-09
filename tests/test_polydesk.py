@@ -279,5 +279,7 @@ def test_page_members_carry_the_desks_positions() -> None:
                               "label": "Paper money (pretend)"})
     card = {"source": "missing", "headline": "", "updated_at": None, "state": "collecting"}
     members = {m["id"]: m for m in _members({"panels": list(panels.values())}, card, NOW)}
-    assert members["predict"]["positions"] == [{"question": "Q?", "side": "long", "p_in": 0.97, "category": "sports"}]
+    assert members["predict"]["positions"] == [{"question": "Q?", "side": "long", "p_in": 0.97, "category": "sports",
+                                                "live": False}]
     assert members["predict"]["label"] == "Paper money (pretend)" and "positions" not in members["crawler"]
+    assert (members["predict"]["open_real"], members["predict"]["open_paper"]) == (0, 0)  # counts come from the panel

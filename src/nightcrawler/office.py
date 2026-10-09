@@ -413,11 +413,12 @@ _SCRIPT = r"""
       const desk = members["predict"];
       if (desk && Array.isArray(desk.positions)) {
         const head = document.createElement("div"); const hs = document.createElement("span");
-        hs.textContent = "Polymarket desk (" + (desk.label || "paper") + "): " + desk.positions.length + " open on the table";
+        const nReal = Number(desk.open_real || 0), nPaper = Number(desk.open_paper || 0);
+        hs.textContent = "Polymarket desk (" + (desk.label || "paper") + "): " + nReal + " real money, " + nPaper + " paper (pretend) on the table";
         head.appendChild(hs); rows.appendChild(head);
         desk.positions.slice(0, 5).forEach(function (q) {
           const div = document.createElement("div"); const a = document.createElement("span"); const b = document.createElement("span");
-          a.textContent = q.question; b.textContent = q.side + " " + (q.p_in != null ? Number(q.p_in).toFixed(3) : "");
+          a.textContent = q.question; b.textContent = q.side + " " + (q.p_in != null ? Number(q.p_in).toFixed(3) : "") + (q.live ? " · REAL" : " · paper");
           div.appendChild(a); div.appendChild(b); rows.appendChild(div);
         });
       }

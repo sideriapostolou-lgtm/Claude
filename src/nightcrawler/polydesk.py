@@ -666,8 +666,10 @@ class PolyDesk:
                 "good" if won else "bad",
             )
             if pos.get("live"):
-                d_live = st.setdefault("live_days", {}).setdefault(day, {"pnl_usd": 0.0})
+                d_live = st.setdefault("live_days", {}).setdefault(day, {"pnl_usd": 0.0, "settled": 0, "won": 0})
                 d_live["pnl_usd"] += pnl
+                d_live["settled"] = int(d_live.get("settled") or 0) + 1
+                d_live["won"] = int(d_live.get("won") or 0) + int(won)
                 st["live_pnl_total_usd"] = float(st.get("live_pnl_total_usd") or 0.0) + pnl
                 self._receipt(
                     "polydesk_settled",
@@ -680,7 +682,10 @@ class PolyDesk:
 
 # ---------------------------------------------------------------------- the panel's view
 def panel_state(settings: Settings, now: float) -> dict[str, Any]:
-    """What the team room shows for this desk (reads the state file only)."""
+    """What the team room shows for this desk (reads the state file only). Paper and real money are
+    tallied apart (``paper`` / ``real``: open positions, money at risk, today's and all-time results), so
+    paper positions left over from before a switch to live are never shown as real ones. The top-level
+    ``open``/``today``/``*_total`` keys are the combined book."""
     st = load_state(state_path(settings))
     enabled = bool(settings.polydesk_enabled)
     today = datetime.fromtimestamp(now, UTC).strftime("%Y-%m-%d")
@@ -689,13 +694,45 @@ def panel_state(settings: Settings, now: float) -> dict[str, Any]:
     c = st["counters"]
     open_n = len(st["positions"])
     live = st.get("mode") == "live"
+    live_days = st.get("live_days") or {}
+    live_day = live_days.get(today) or {}
+    real_open = [p for p in st["positions"].values() if p.get("live")]
+    real_settled = sum(int(d.get("settled") or 0) for d in live_days.values())
+    real_won = sum(int(d.get("won") or 0) for d in live_days.values())
+    real_total = float(st.get("live_pnl_total_usd") or 0.0)
+    real_today = {
+        "pnl_usd": float(live_day.get("pnl_usd") or 0.0),
+        "settled": int(live_day.get("settled") or 0),
+        "won": int(live_day.get("won") or 0),
+    }
+    real: dict[str, Any] = {
+        "open": len(real_open),
+        "at_risk_usd": sum(float(p.get("cost_usd") or 0.0) for p in real_open),
+        "settled_total": real_settled,
+        "won_total": real_won,
+        "pnl_total_usd": real_total,
+        "today": real_today,
+    }
+    paper: dict[str, Any] = {
+        "open": open_n - len(real_open),
+        "settled_total": int(c.get("settled") or 0) - real_settled,
+        "won_total": int(c.get("won") or 0) - real_won,
+        "pnl_total_usd": total - real_total,
+        "today": {
+            "pnl_usd": float(day["pnl_usd"]) - real_today["pnl_usd"],
+            "settled": int(day["settled"]) - real_today["settled"],
+            "won": int(day["won"]) - real_today["won"],
+        },
+    }
     return {
         "enabled": enabled,
         "mode": "live" if live else "paper",
         "label": "Real money" if live else "Paper money (pretend)",
         "balance": st.get("balance"),
         "live_status": st.get("live_status"),
-        "live_pnl_total_usd": float(st.get("live_pnl_total_usd") or 0.0),
+        "live_pnl_total_usd": real_total,
+        "real": real,
+        "paper": paper,
         "rule": st.get("rule"),
         "last_poll": st.get("last_poll"),
         "last_ok": st.get("last_ok"),
@@ -717,6 +754,8 @@ def panel_state(settings: Settings, now: float) -> dict[str, Any]:
                 "p_in": p["p_in"],
                 "category": p["category"],
                 "t_in": p["t_in"],
+                "live": bool(p.get("live")),
+                "cost_usd": float(p.get("cost_usd") or 0.0),
             }
             for p in sorted(st["positions"].values(), key=lambda p: -p["t_in"])[:10]
         ],

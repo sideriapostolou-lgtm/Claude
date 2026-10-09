@@ -167,3 +167,33 @@ def test_daily_and_total_loss_stops(gw: Gateway, tmp_path) -> None:
     assert again.state["mode"] == "paper" and "stays on paper" in again.state["live_status"]
     d = P.panel_state(again.settings, NOW + 2300)
     assert d["label"] == "Paper money (pretend)" and d["live_pnl_total_usd"] < -3
+
+
+def test_panel_tells_leftover_paper_positions_from_real_ones(gw: Gateway, tmp_path) -> None:
+    gw.markets = [_market("p1", "crypto", 1800), _market("p2", "crypto", 1800)]
+    gw.quotes = {"p1": (0.97, 0.98), "p2": (0.97, 0.98)}
+    paper = P.PolyDesk(Settings.from_env({"DATA_DIR": str(tmp_path)}))
+    paper.poll(NOW)
+    assert len(paper.state["positions"]) == 2 and not any(p.get("live") for p in paper.state["positions"].values())
+    # the owner switches the same desk (same state file) to live: the paper positions run off, new buys are real
+    gw.markets = [_market("p1", "crypto", 1800), _market("p2", "crypto", 1800), _market("r1", "crypto", 1800)]
+    gw.quotes["r1"] = (0.96, 0.97)
+    live = P.PolyDesk(_live_settings(tmp_path), ledger=FakeLedger(), client_factory=FakeExchange())
+    live.poll(NOW + 10)
+    d = P.panel_state(live.settings, NOW + 10)
+    assert d["mode"] == "live" and d["open"] == 3
+    assert d["real"] == {"open": 1, "at_risk_usd": pytest.approx(0.97), "settled_total": 0, "won_total": 0,
+                         "pnl_total_usd": 0.0, "today": {"pnl_usd": 0.0, "settled": 0, "won": 0}}
+    assert d["paper"]["open"] == 2 and d["paper"]["settled_total"] == 0
+    assert {(x["question"], x["live"]) for x in d["positions"]} == {
+        ("Will p1 happen?", False), ("Will p2 happen?", False), ("Will r1 happen?", True)}
+    # settlements book paper and real apart
+    gw.markets = []
+    gw.settlements = {"p1": 1.0, "p2": 0.0, "r1": 1.0}
+    live.poll(NOW + 2000)
+    d = P.panel_state(live.settings, NOW + 2000)
+    assert d["real"]["settled_total"] == 1 and d["real"]["won_total"] == 1 and d["real"]["open"] == 0
+    assert d["real"]["pnl_total_usd"] == pytest.approx(d["live_pnl_total_usd"]) and d["real"]["pnl_total_usd"] > 0
+    assert d["paper"]["settled_total"] == 2 and d["paper"]["won_total"] == 1 and d["paper"]["open"] == 0
+    assert d["paper"]["pnl_total_usd"] == pytest.approx(d["pnl_total_usd"] - d["real"]["pnl_total_usd"])
+    assert d["paper"]["pnl_total_usd"] < 0  # one $20 paper loss outweighs one paper win
