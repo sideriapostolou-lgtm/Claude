@@ -21,5 +21,7 @@ Rules that the code enforces (see `PREREG.md`):
 - `--fake-client` is for `--debug` and tests only; its decisions go to `K1/decisions_fake/` (ignored by git).
 - Commit `K1/decisions/` with the stage results: the exam record is what makes the result reproducible.
 
-Costs (fake-desk estimate from the debug third, 137 alive coins): about $0.0013 per decision, so TRAIN (~1,200
-alive coins x 3 configs) is roughly $5-15 of the $40 cap; the panel config is ~90 % of it.
+Costs. Counted on the real data (no returns looked at): TRAIN has 3,863 coins of which **1,408 are alive at the
+desk's decision time** (36 %); VAL 1,278 / **488** (38 %). With real brief sizes (~900 input tokens, cached system
+prompt, ~300-token memos) the panel costs about $0.008 per decision, solo Sonnet ~$0.003, solo Haiku ~$0.0003, so
+TRAIN is roughly **$10-20** of its $40 cap and VAL **$4-7** of $15. A stage stops at its cap and resumes from the cache.
