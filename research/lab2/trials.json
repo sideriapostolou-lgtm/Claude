@@ -5132,6 +5132,1126 @@
     "entry_bar_exits": true,
     "exit_delay_bars": 1
    }
+  },
+  "Q11|7c4d3f5fb89f": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 1,
+    "H": 5,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|2dbe9140fa44": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 1,
+    "H": 15,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|c8062dac0ebd": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 1,
+    "H": 30,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|a388ee3497e1": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 1,
+    "H": 60,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|92f901d8db49": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 1,
+    "H": 120,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|826b7e645c9f": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 1,
+    "H": 300,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|8c954d2c39f8": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 1,
+    "H": 900,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|c0fbdc9694a2": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 1,
+    "H": 1800,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|f0f9cb04b8e0": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 2,
+    "H": 5,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|238e4095da4d": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 2,
+    "H": 15,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|cd67a70c3795": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 2,
+    "H": 30,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|bbbcf03961c1": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 2,
+    "H": 60,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|98a2043ea5ae": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 2,
+    "H": 120,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|73d4f1dc2b61": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 2,
+    "H": 300,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|64d9dd52cceb": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 2,
+    "H": 900,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|cac64dba9b52": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 2,
+    "H": 1800,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|91ad0bc2c8e9": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 5,
+    "H": 5,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|ea8f2e9b9324": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 5,
+    "H": 15,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|36a450a92223": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 5,
+    "H": 30,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|34b42cbebccc": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 5,
+    "H": 60,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|ca26bdecde7b": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 5,
+    "H": 120,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|fae8c073966c": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 5,
+    "H": 300,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|8ac5bdbdd677": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 5,
+    "H": 900,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|eb38c80934ac": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 5,
+    "H": 1800,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|1a9cb26584d8": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 10,
+    "H": 5,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|8a5d9aa9f5ea": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 10,
+    "H": 15,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|3f0861fd0e32": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 10,
+    "H": 30,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|06d633e4157b": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 10,
+    "H": 60,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|279169cf9621": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 10,
+    "H": 120,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|162ba545d4a8": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 10,
+    "H": 300,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|24ce3724db9f": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 10,
+    "H": 900,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|6dd06b991d56": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 10,
+    "H": 1800,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|66ce074a204b": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 20,
+    "H": 5,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|9f65cbd34600": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 20,
+    "H": 15,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|3bef3d5ece6d": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 20,
+    "H": 30,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|2262e29dd554": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 20,
+    "H": 60,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|b7aaa18a8ab9": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 20,
+    "H": 120,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|1c6ab7026965": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 20,
+    "H": 300,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|623815c65910": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 20,
+    "H": 900,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|574cf9ee62fa": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 20,
+    "H": 1800,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|f950409cb79d": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 30,
+    "H": 5,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|f63c8376f505": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 30,
+    "H": 15,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|5713d5ecb428": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 30,
+    "H": 30,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|de644b87b6fb": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 30,
+    "H": 60,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|ad0815b6f4bc": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 30,
+    "H": 120,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|0af8aa671aa3": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 30,
+    "H": 300,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|790cb24baab5": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 30,
+    "H": 900,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|d4cea94b2667": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 30,
+    "H": 1800,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|036c8a09c2a8": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 60,
+    "H": 5,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|4f54ad3426e3": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 60,
+    "H": 15,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|e0e0dd43b94b": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 60,
+    "H": 30,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|0a83600e6191": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 60,
+    "H": 60,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|76c80d440f81": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 60,
+    "H": 120,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|25d6c2029e6e": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 60,
+    "H": 300,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|f5adc35fe8d4": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 60,
+    "H": 900,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|afb56c89564a": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 60,
+    "H": 1800,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|d4cfe43d5943": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 120,
+    "H": 5,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|13db7f0c8375": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 120,
+    "H": 15,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|14824b27dc84": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 120,
+    "H": 30,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|ec10046f3eb6": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 120,
+    "H": 60,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|367eab5d344f": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 120,
+    "H": 120,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|b7d99ed82824": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 120,
+    "H": 300,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|230872c648ee": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 120,
+    "H": 900,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|23574c383954": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 120,
+    "H": 1800,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|9c482c45d461": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 300,
+    "H": 5,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|cf7229e5a927": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 300,
+    "H": 15,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|c487bbb781b0": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 300,
+    "H": 30,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|dfdc689d5ade": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 300,
+    "H": 60,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|f1a587bd019c": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 300,
+    "H": 120,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|c298039de888": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 300,
+    "H": 300,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|8d402a8acf76": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 300,
+    "H": 900,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|4c9b019b7dce": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 300,
+    "H": 1800,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|46ba873f437b": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 900,
+    "H": 5,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|3724c912a4e6": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 900,
+    "H": 15,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|b4981c19d42d": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 900,
+    "H": 30,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|1b3f3193108c": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 900,
+    "H": 60,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|29f404b6e32a": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 900,
+    "H": 120,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|a20a3e5ca019": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 900,
+    "H": 300,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|c5f882f61a73": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 900,
+    "H": 900,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Q11|d1a2c50a54d0": {
+   "hypothesis": "Q11",
+   "params": {
+    "version": "q11-v1",
+    "L": 900,
+    "H": 1800,
+    "tip": 0.001,
+    "kind": "measurement"
+   },
+   "first_seen_utc": "2026-10-09 13:24:38",
+   "splits": {
+    "train": 1
+   }
   }
  },
  "runs": [
@@ -6698,6 +7818,966 @@
    "over_variant_limit": false,
    "kind": "lp",
    "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|7c4d3f5fb89f",
+   "split": "train",
+   "debug": false,
+   "n": 1420,
+   "mean": -0.023099964145316204,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|2dbe9140fa44",
+   "split": "train",
+   "debug": false,
+   "n": 1420,
+   "mean": -0.00932847006652721,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|c8062dac0ebd",
+   "split": "train",
+   "debug": false,
+   "n": 1420,
+   "mean": -0.02123072177131236,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|a388ee3497e1",
+   "split": "train",
+   "debug": false,
+   "n": 1420,
+   "mean": -0.028883659684912345,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|92f901d8db49",
+   "split": "train",
+   "debug": false,
+   "n": 1420,
+   "mean": -0.02532731780335513,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|826b7e645c9f",
+   "split": "train",
+   "debug": false,
+   "n": 1420,
+   "mean": -0.003106188153972369,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|8c954d2c39f8",
+   "split": "train",
+   "debug": false,
+   "n": 1316,
+   "mean": -0.2815053887668549,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|c0fbdc9694a2",
+   "split": "train",
+   "debug": false,
+   "n": 1218,
+   "mean": -0.29505965239482973,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|f0f9cb04b8e0",
+   "split": "train",
+   "debug": false,
+   "n": 1420,
+   "mean": -0.03045366711840326,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|238e4095da4d",
+   "split": "train",
+   "debug": false,
+   "n": 1420,
+   "mean": -0.02250190677732618,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|cd67a70c3795",
+   "split": "train",
+   "debug": false,
+   "n": 1420,
+   "mean": -0.03745759414965168,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|bbbcf03961c1",
+   "split": "train",
+   "debug": false,
+   "n": 1420,
+   "mean": -0.0395848686806448,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|98a2043ea5ae",
+   "split": "train",
+   "debug": false,
+   "n": 1420,
+   "mean": -0.03694379573029393,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|73d4f1dc2b61",
+   "split": "train",
+   "debug": false,
+   "n": 1420,
+   "mean": -0.01190993954972012,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|64d9dd52cceb",
+   "split": "train",
+   "debug": false,
+   "n": 1316,
+   "mean": -0.2926449816878716,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|cac64dba9b52",
+   "split": "train",
+   "debug": false,
+   "n": 1218,
+   "mean": -0.309459368403536,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|91ad0bc2c8e9",
+   "split": "train",
+   "debug": false,
+   "n": 1420,
+   "mean": -0.03514883829314497,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|ea8f2e9b9324",
+   "split": "train",
+   "debug": false,
+   "n": 1420,
+   "mean": -0.03344126045755592,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|36a450a92223",
+   "split": "train",
+   "debug": false,
+   "n": 1420,
+   "mean": -0.04291190413455182,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|34b42cbebccc",
+   "split": "train",
+   "debug": false,
+   "n": 1420,
+   "mean": -0.04746810174884924,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|ca26bdecde7b",
+   "split": "train",
+   "debug": false,
+   "n": 1420,
+   "mean": -0.04320069626042001,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|fae8c073966c",
+   "split": "train",
+   "debug": false,
+   "n": 1420,
+   "mean": -0.026339074084758,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|8ac5bdbdd677",
+   "split": "train",
+   "debug": false,
+   "n": 1315,
+   "mean": -0.3066834547009121,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|eb38c80934ac",
+   "split": "train",
+   "debug": false,
+   "n": 1217,
+   "mean": -0.32724605261162604,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|1a9cb26584d8",
+   "split": "train",
+   "debug": false,
+   "n": 1420,
+   "mean": -0.032208356639541406,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|8a5d9aa9f5ea",
+   "split": "train",
+   "debug": false,
+   "n": 1420,
+   "mean": -0.041577888820924634,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|3f0861fd0e32",
+   "split": "train",
+   "debug": false,
+   "n": 1420,
+   "mean": -0.04318496537608353,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|06d633e4157b",
+   "split": "train",
+   "debug": false,
+   "n": 1420,
+   "mean": -0.05745389704897988,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|279169cf9621",
+   "split": "train",
+   "debug": false,
+   "n": 1420,
+   "mean": -0.04973384302501121,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|162ba545d4a8",
+   "split": "train",
+   "debug": false,
+   "n": 1420,
+   "mean": -0.03214055138390411,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|24ce3724db9f",
+   "split": "train",
+   "debug": false,
+   "n": 1315,
+   "mean": -0.32173872260460545,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|6dd06b991d56",
+   "split": "train",
+   "debug": false,
+   "n": 1217,
+   "mean": -0.346326932597433,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|66ce074a204b",
+   "split": "train",
+   "debug": false,
+   "n": 1420,
+   "mean": -0.043625823745827894,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|9f65cbd34600",
+   "split": "train",
+   "debug": false,
+   "n": 1420,
+   "mean": -0.05001175829571206,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|3bef3d5ece6d",
+   "split": "train",
+   "debug": false,
+   "n": 1420,
+   "mean": -0.04659662558203695,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|2262e29dd554",
+   "split": "train",
+   "debug": false,
+   "n": 1420,
+   "mean": -0.054275331248672384,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|b7aaa18a8ab9",
+   "split": "train",
+   "debug": false,
+   "n": 1420,
+   "mean": -0.05322500646427193,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|1c6ab7026965",
+   "split": "train",
+   "debug": false,
+   "n": 1420,
+   "mean": -0.03269619748055983,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|623815c65910",
+   "split": "train",
+   "debug": false,
+   "n": 1313,
+   "mean": -0.32095476568504194,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|574cf9ee62fa",
+   "split": "train",
+   "debug": false,
+   "n": 1215,
+   "mean": -0.3473899172482558,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|f950409cb79d",
+   "split": "train",
+   "debug": false,
+   "n": 1420,
+   "mean": -0.0491809133999146,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|f63c8376f505",
+   "split": "train",
+   "debug": false,
+   "n": 1420,
+   "mean": -0.03975062656358451,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|5713d5ecb428",
+   "split": "train",
+   "debug": false,
+   "n": 1420,
+   "mean": -0.05484660387477216,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|de644b87b6fb",
+   "split": "train",
+   "debug": false,
+   "n": 1420,
+   "mean": -0.05483206851230414,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|ad0815b6f4bc",
+   "split": "train",
+   "debug": false,
+   "n": 1420,
+   "mean": -0.04932914435378754,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|0af8aa671aa3",
+   "split": "train",
+   "debug": false,
+   "n": 1420,
+   "mean": -0.04009198939659254,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|790cb24baab5",
+   "split": "train",
+   "debug": false,
+   "n": 1312,
+   "mean": -0.3334877188411819,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|d4cea94b2667",
+   "split": "train",
+   "debug": false,
+   "n": 1214,
+   "mean": -0.34632770341925395,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|036c8a09c2a8",
+   "split": "train",
+   "debug": false,
+   "n": 1420,
+   "mean": -0.041329973339395254,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|4f54ad3426e3",
+   "split": "train",
+   "debug": false,
+   "n": 1420,
+   "mean": -0.03591021503822515,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|e0e0dd43b94b",
+   "split": "train",
+   "debug": false,
+   "n": 1420,
+   "mean": -0.03987473701216402,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|0a83600e6191",
+   "split": "train",
+   "debug": false,
+   "n": 1420,
+   "mean": -0.04301982575479856,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|76c80d440f81",
+   "split": "train",
+   "debug": false,
+   "n": 1420,
+   "mean": -0.02057048319689365,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|25d6c2029e6e",
+   "split": "train",
+   "debug": false,
+   "n": 1416,
+   "mean": -0.12743810252133062,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|f5adc35fe8d4",
+   "split": "train",
+   "debug": false,
+   "n": 1310,
+   "mean": -0.3363560817538359,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|afb56c89564a",
+   "split": "train",
+   "debug": false,
+   "n": 1213,
+   "mean": -0.3367460468489089,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|d4cfe43d5943",
+   "split": "train",
+   "debug": false,
+   "n": 1420,
+   "mean": -0.04158253560009123,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|13db7f0c8375",
+   "split": "train",
+   "debug": false,
+   "n": 1420,
+   "mean": -0.036645538775848835,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|14824b27dc84",
+   "split": "train",
+   "debug": false,
+   "n": 1420,
+   "mean": -0.037788611361874676,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|ec10046f3eb6",
+   "split": "train",
+   "debug": false,
+   "n": 1420,
+   "mean": -0.020617250013464896,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|367eab5d344f",
+   "split": "train",
+   "debug": false,
+   "n": 1420,
+   "mean": -0.010729475261066782,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|b7d99ed82824",
+   "split": "train",
+   "debug": false,
+   "n": 1407,
+   "mean": -0.21023307569829194,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|230872c648ee",
+   "split": "train",
+   "debug": false,
+   "n": 1302,
+   "mean": -0.336793953711152,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|23574c383954",
+   "split": "train",
+   "debug": false,
+   "n": 1210,
+   "mean": -0.330303036331196,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|9c482c45d461",
+   "split": "train",
+   "debug": false,
+   "n": 1420,
+   "mean": -0.055504621669020406,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|cf7229e5a927",
+   "split": "train",
+   "debug": false,
+   "n": 1420,
+   "mean": -0.05287018527768518,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|c487bbb781b0",
+   "split": "train",
+   "debug": false,
+   "n": 1420,
+   "mean": -0.05956430213101395,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|dfdc689d5ade",
+   "split": "train",
+   "debug": false,
+   "n": 1416,
+   "mean": -0.16329516074812142,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|f1a587bd019c",
+   "split": "train",
+   "debug": false,
+   "n": 1407,
+   "mean": -0.2485312891855135,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|c298039de888",
+   "split": "train",
+   "debug": false,
+   "n": 1368,
+   "mean": -0.3245858570744295,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|8d402a8acf76",
+   "split": "train",
+   "debug": false,
+   "n": 1284,
+   "mean": -0.3878652204379886,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|4c9b019b7dce",
+   "split": "train",
+   "debug": false,
+   "n": 1189,
+   "mean": -0.39857291725250216,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|46ba873f437b",
+   "split": "train",
+   "debug": false,
+   "n": 1315,
+   "mean": -0.051218953709622726,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|3724c912a4e6",
+   "split": "train",
+   "debug": false,
+   "n": 1314,
+   "mean": -0.05247390992855782,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|b4981c19d42d",
+   "split": "train",
+   "debug": false,
+   "n": 1312,
+   "mean": -0.05638860157645048,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|1b3f3193108c",
+   "split": "train",
+   "debug": false,
+   "n": 1310,
+   "mean": -0.057548481502834016,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|29f404b6e32a",
+   "split": "train",
+   "debug": false,
+   "n": 1302,
+   "mean": -0.0650794666443946,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|a20a3e5ca019",
+   "split": "train",
+   "debug": false,
+   "n": 1284,
+   "mean": -0.09542411301543569,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|c5f882f61a73",
+   "split": "train",
+   "debug": false,
+   "n": 1219,
+   "mean": -0.1344473434342659,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 13:24:38",
+   "hypothesis": "Q11",
+   "config": "Q11|d1a2c50a54d0",
+   "split": "train",
+   "debug": false,
+   "n": 1130,
+   "mean": -0.20361227287337336,
+   "over_variant_limit": false,
+   "kind": "measurement",
+   "session": null
   }
  ],
  "val_shortlists": {
@@ -6726,7 +8806,7 @@
    "first_val_run_utc": "2026-10-09 09:41:27"
   }
  },
- "n_trials_total": 2684,
+ "n_trials_total": 2764,
  "val_looks": {
   "G1": 4,
   "O1": 1,
