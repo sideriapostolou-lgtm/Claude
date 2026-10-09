@@ -249,8 +249,8 @@ CONFIRM), with the stage named.
   trades; top-coin share; halves; the $100 / 5-slot portfolio; costs × 1.5; the deflated Sharpe ratio counting every
   trial in the ledger; per crash-depth tag; exit reasons (non-debug splits only).
 - **Cost decomposition** (non-debug only): the mean gross move between the worst-fill prices (`ret_mid`), the mean
-  cost (`ret_mid − ret_net`), and the entry fee tiers paid (`fee_bps_in`), so a "bounce exists but costs eat it"
-  result is visible as such.
+  cost (`ret_mid − ret_net`), and the side bps paid at entry (`fee_bps_in` = pool tier + Ultra + buffer; 155 at the
+  floor-level tier), so a "bounce exists but costs eat it" result is visible as such.
 
 ## 12. Kill criteria and declarations
 

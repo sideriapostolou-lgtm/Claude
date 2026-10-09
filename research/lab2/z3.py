@@ -261,7 +261,7 @@ def _age_bins(t: pd.DataFrame) -> dict:
 
 def evaluate(res: C.Result, *, B: int, hide: bool, n_trials_total: int | None) -> dict:
     """Per-config report. On the debug split: counts only (n, coins, depth tags, ages, placebo / control counts) --
-    never returns, exit reasons, fill prices, fee tiers paid or placebo outcomes."""
+    never returns, exit reasons, fill prices, the side bps paid at the fills or placebo outcomes."""
     t = res.trades
     base = {"config": config_key(res.meta["params"]), "params_hash": C.params_hash(res.meta["params"]),
             "hypothesis": res.meta["hypothesis"], "n": int(len(t)), "n_coins": int(t["mint"].nunique()) if len(t) else 0,
@@ -281,7 +281,7 @@ def evaluate(res: C.Result, *, B: int, hide: bool, n_trials_total: int | None) -
         mid, net = t["ret_mid"].to_numpy(float), t["ret_net"].to_numpy(float)
         base["cost_decomposition"] = {"mean_gross_move_worst_fills": float(mid.mean()),
                                       "mean_cost": float((mid - net).mean()),
-                                      "fee_bps_in": {str(k): int(v) for k, v in t["fee_bps_in"].value_counts().items()}}
+                                      "side_bps_in": {str(k): int(v) for k, v in t["fee_bps_in"].value_counts().items()}}
     base["placebo"] = C.placebo_compare(t, res.placebo, B=B) if len(res.placebo) and len(t) else None
     base["controls"] = {k: C.placebo_compare(t, v, B=B) for k, v in res.controls.items() if len(v) and len(t)}
     base["stress"] = {k: C.describe(v, B=200).get("mean") for k, v in res.stress.items()}
