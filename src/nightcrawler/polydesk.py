@@ -78,6 +78,7 @@ REQ_SLEEP_S = 0.05
 MAX_PRICE = 0.999
 US_TAKER = 0.0695
 CLOSED_KEEP = 200
+ADOPTED_END_GUESS_S = 3 * 3600.0  # a venue position on a market the watch list no longer carries: check settlement after this
 EVENTS_KEEP = 40
 STATE_VERSION = 1
 FIRST_POLL_DELAY_S = 20.0
@@ -322,7 +323,9 @@ class PolyDesk:
         self.ticket = float(settings.polydesk_ticket_usd)
         self.poll_s = float(settings.polydesk_poll_s)
         self.contracts = float(settings.polydesk_live_contracts)
-        self.client: PolymarketUSClient | None = None
+        self.client: PolymarketUSClient | None = None  # places orders: live mode only
+        self.reader: PolymarketUSClient | None = None  # reads balances and positions whenever the key is set
+        self._key_status: str | None = None
         self._client_factory = client_factory or PolymarketUSClient
         self.live_requested = (
             settings.polydesk_mode == "live"
@@ -341,6 +344,8 @@ class PolyDesk:
         self._stop = threading.Event()
         self._thread: threading.Thread | None = None
         self.state["mode"] = "paper"
+        if bool(settings.polymarket_us_key_id) and bool(settings.polymarket_us_secret_key):
+            self.reader = self._open_reader()
         if self.live_requested and self.state.get("live_halted"):
             self.state["live_status"] = (
                 "Live was switched off by the total-loss cap; the desk stays on paper until the owner resets it."
@@ -355,26 +360,35 @@ class PolyDesk:
             self.state["live_status"] = None
         self._save()
 
-    def _connect(self) -> None:
-        """Live only after the venue accepts the key (a balance read); otherwise paper, with the reason."""
+    def _open_reader(self) -> PolymarketUSClient | None:
+        """A read link to the venue (balances, positions) once the key is accepted, in paper mode too: the
+        venue's book is the truth about real money. A rejected key leaves the reason for the panel."""
         try:
             client = self._client_factory(
                 _reveal(self.settings.polymarket_us_key_id), _reveal(self.settings.polymarket_us_secret_key)
             )
             bal = client.balances()
         except (PolymarketUSError, ValueError) as exc:
-            self.client = None
-            self.state["mode"] = "paper"
             status = exc.status if isinstance(exc, PolymarketUSError) else "bad key format"
-            self.state["live_status"] = (
+            self._key_status = (
                 f"Polymarket rejected the API key ({status}): make a new key in the app and put it in "
                 "Railway; staying on paper."
             )
-            log.warning("polydesk_live_rejected status=%s", status)
-            return
-        self.client = client
-        self.state["mode"] = "live"
+            log.warning("polydesk_key_rejected status=%s", status)
+            return None
         self.state["balance"] = {**bal, "at": time.time()}
+        return client
+
+    def _connect(self) -> None:
+        """Live only after the venue accepts the key (a balance read); otherwise paper, with the reason."""
+        if self.reader is None:
+            self.client = None
+            self.state["mode"] = "paper"
+            self.state["live_status"] = self._key_status
+            return
+        bal = self.state["balance"]
+        self.client = self.reader
+        self.state["mode"] = "live"
         self.state["live_status"] = None
         log.info(
             "polydesk_live_connected cash=%.2f buying_power=%.2f",
@@ -446,14 +460,17 @@ class PolyDesk:
             st["counters"]["errors"] += 1
         quotes = self._quotes(watch)
         st["counters"]["quotes"] += len(quotes)
+        adopted = self._reconcile(now, watch) if self.reader is not None else 0
         bought = self._apply_rule(now, watch, quotes)
         settled = self._settle(now, {m["slug"] for m in watch})
+        if bought and st["mode"] == "live" and self.reader is not None:
+            adopted += self._reconcile(now, watch)  # the venue summary after this round's real buys
         st["watched"] = len(watch)
         st["last_ok"] = now
         st["last_error"] = None
-        if self.client is not None and st["mode"] == "live":
+        if self.reader is not None:
             try:
-                st["balance"] = {**self.client.balances(), "at": now}
+                st["balance"] = {**self.reader.balances(), "at": now}
             except PolymarketUSError as exc:
                 st["counters"]["errors"] += 1
                 log.warning("polydesk_balance_failed status=%s", exc.status)
@@ -463,7 +480,94 @@ class PolyDesk:
             "quotes": len(quotes),
             "bought": bought,
             "settled": settled,
+            "adopted": adopted,
         }
+
+    def _reconcile(self, now: float, watch: list[dict[str, Any]]) -> int:
+        """The venue's book is the truth for real money. Every contract it holds that this desk never recorded
+        (an order reply that showed no fill, a buy from another place) is adopted as a live position, so it is
+        counted against the caps, settled and shown. The venue summary is kept for the panel."""
+        assert self.reader is not None
+        st = self.state
+        try:
+            rows = self.reader.positions()
+        except PolymarketUSError as exc:
+            st["counters"]["errors"] += 1
+            log.warning("polydesk_positions_failed status=%s", exc.status)
+            return 0
+        held = [r for r in rows if r["qty"] > 0 and not r["expired"] and r["slug"]]
+        st["exchange"] = {
+            "positions": len(held),
+            "contracts": sum(r["qty"] for r in held),
+            "cost_usd": sum(r["cost"] if r["cost"] > 0 else r["qty"] * r["avg_price"] for r in held),
+            "value_usd": sum(r["value"] for r in held),
+            "at": now,
+        }
+        by_slug = {m["slug"]: m for m in watch}
+        adopted = 0
+        for r in held:
+            slug = r["slug"]
+            pos = st["positions"].get(slug)
+            if pos is not None and pos.get("live"):
+                continue
+            if pos is not None:  # a paper position on the same market: the real one takes the slot, no paper P&L
+                st["closed"].insert(0, {**pos, "settled_at": now, "won": None, "unresolved": True, "replaced_by_real": True})
+                del st["closed"][CLOSED_KEEP:]
+            m = by_slug.get(slug)
+            price = r["avg_price"] if r["avg_price"] > 0 else (r["cost"] / r["qty"] if r["cost"] > 0 else 0.0)
+            cost = r["cost"] if r["cost"] > 0 else price * r["qty"]
+            coef = m["fee_coef"] if m is not None and m.get("fee_coef") is not None else US_TAKER
+            label = f"{r['title']} · {r['outcome']}" if r["outcome"] else r["title"]
+            question = m["question"] if m is not None else (label or slug)
+            st["positions"][slug] = {
+                "slug": slug,
+                "question": question,
+                "category": m["category"] if m is not None else ("sports" if r["event_slug"] else "other"),
+                "side": "long",
+                "p_in": price,
+                "shares": r["qty"],
+                "fee_usd": r["qty"] * coef * price * (1.0 - price),
+                "cost_usd": cost,
+                "t_in": now,
+                "end_ts": m["end_ts"] if m is not None else now + ADOPTED_END_GUESS_S,
+                "event": m.get("event") if m is not None else None,
+                "live": True,
+                "adopted": True,
+                "end_known": m is not None,
+            }
+            st["counters"]["bought"] += 1
+            adopted += 1
+            self._event(
+                now,
+                f"REAL position found at the venue: {question[:60]} · {r['qty']:g} contract at {price:.3f} "
+                f"(${cost:.2f})",
+                "good",
+            )
+            self._receipt(
+                "polydesk_position_adopted",
+                {"slug": slug, "contracts": r["qty"], "price": price, "cost_usd": cost},
+            )
+        if adopted:
+            log.info("polydesk_adopted n=%d venue_contracts=%g", adopted, st["exchange"]["contracts"])
+        return adopted
+
+    def _fill_from_positions(self, slug: str, fill: dict[str, Any]) -> dict[str, Any]:
+        """An order reply without executions is not the last word: the venue's book decides whether it filled."""
+        assert self.client is not None
+        try:
+            rows = self.client.positions()
+        except PolymarketUSError as exc:
+            self.state["counters"]["errors"] += 1
+            log.warning("polydesk_positions_failed status=%s", exc.status)
+            return fill
+        for r in rows:
+            if r["slug"] == slug and r["qty"] > 0:
+                price = r["avg_price"] if r["avg_price"] > 0 else (r["cost"] / r["qty"] if r["cost"] > 0 else 0.0)
+                if price <= 0:
+                    return fill
+                return {**fill, "filled": r["qty"], "avg_price": price,
+                        "cost": r["cost"] if r["cost"] > 0 else price * r["qty"], "via": "positions"}
+        return fill
 
     def _quotes(
         self, watch: list[dict[str, Any]]
@@ -526,6 +630,8 @@ class PolyDesk:
                     self._event(now, f"Order rejected by the venue ({exc.status}): {m['question'][:50]}", "bad")
                     self._receipt("polydesk_order_rejected", {"slug": slug, "status": exc.status})
                     continue
+                if fill["filled"] <= 0:
+                    fill = self._fill_from_positions(slug, fill)
                 if fill["filled"] <= 0:
                     self._event(now, f"No fill at {price:.3f}: {m['question'][:50]} (order cancelled)")
                     continue
@@ -733,6 +839,7 @@ def panel_state(settings: Settings, now: float) -> dict[str, Any]:
         "live_pnl_total_usd": real_total,
         "real": real,
         "paper": paper,
+        "exchange": st.get("exchange"),
         "rule": st.get("rule"),
         "last_poll": st.get("last_poll"),
         "last_ok": st.get("last_ok"),

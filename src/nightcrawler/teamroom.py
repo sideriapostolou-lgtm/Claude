@@ -936,6 +936,10 @@ def _predict(ctx: _Ctx) -> dict[str, Any]:
         doing = (f"Watching {d['watched']:,} markets; {d['open']} paper positions open; today {t['won']}/{t['settled']} "
                  f"settled won, {t['pnl_usd']:+.2f} $; all time {d['won_total']}/{d['settled_total']} won, "
                  f"{d['pnl_total_usd']:+.2f} $ (paper money, pretend)." + account)
+    venue = d.get("exchange") if isinstance(d.get("exchange"), dict) else None
+    if venue and float(venue.get("contracts") or 0) > 0:
+        doing += (f" Venue holds {float(venue['contracts']):g} real contract(s): cost ${float(venue['cost_usd']):.2f}, "
+                  f"worth ${float(venue['value_usd']):.2f} now.")
     if d.get("live_status"):
         doing += f" {d['live_status']}"
     if live:
@@ -955,6 +959,9 @@ def _predict(ctx: _Ctx) -> dict[str, Any]:
                  _stat("All time $ (paper)", round(d["pnl_total_usd"], 2), "usd")]
         if isinstance(bal, dict) and bal.get("cash") is not None:
             stats.append(_stat("Polymarket cash", round(float(bal["cash"]), 2), "usd"))
+        if venue and float(venue.get("contracts") or 0) > 0:
+            stats += [_stat("Venue contracts (real)", float(venue["contracts"]), "count"),
+                      _stat("Venue value (real)", round(float(venue["value_usd"]), 2), "usd")]
         headline = _headline(d["open"], "count", "paper positions open")
     return _panel("predict", status, last, ctx.text(doing), headline, stats, events, rule=d["rule"],
                   positions=d["positions"], label=d["label"], mode=d.get("mode"),

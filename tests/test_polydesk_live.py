@@ -26,6 +26,8 @@ class FakeExchange:
         self.orders: list[dict[str, Any]] = []
         self.fill_price: float | None = None  # None = fill at the limit price; 0 = no fill
         self.reject_orders = False
+        self.silent_fills = False  # the real venue: the order reply shows no execution, the book shows the fill
+        self.book: dict[str, dict[str, Any]] = {}  # slug -> position row as positions() returns it
 
     def __call__(self, key_id: str, secret_key: str) -> FakeExchange:
         self.key_id, self.secret = key_id, secret_key
@@ -36,6 +38,14 @@ class FakeExchange:
             raise PolymarketUSError("GET /v1/account/balances: HTTP 401", status=401)
         return {"cash": self.cash, "buying_power": self.cash, "asset_notional": 0.0, "open_orders": 0.0, "currency": "USD"}
 
+    def positions(self) -> list[dict[str, Any]]:
+        return [dict(r) for r in self.book.values()]
+
+    def hold(self, slug: str, qty: float, price: float, title: str = "", outcome: str = "", event_slug: str = "") -> None:
+        self.book[slug] = {"slug": slug, "qty": qty, "avg_price": price, "cost": qty * price, "value": qty * price,
+                           "realized": 0.0, "expired": False, "title": title, "outcome": outcome,
+                           "event_slug": event_slug, "updated": "t"}
+
     def buy_long_ioc(self, slug: str, price: float, quantity: float, max_block_s: int = 5) -> dict[str, Any]:
         self.orders.append({"slug": slug, "price": price, "quantity": quantity})
         if self.reject_orders:
@@ -43,6 +53,11 @@ class FakeExchange:
         if self.fill_price == 0:
             return {"id": "o", "filled": 0.0, "avg_price": None, "cost": 0.0, "raw_executions": 0}
         p = self.fill_price if self.fill_price is not None else price
+        if self.silent_fills:
+            self.hold(slug, quantity, p)
+            self.cash -= p * quantity
+            return {"id": f"o{len(self.orders)}", "filled": 0.0, "avg_price": None, "cost": 0.0, "raw_executions": 0}
+        self.hold(slug, quantity, p)
         return {"id": f"o{len(self.orders)}", "filled": quantity, "avg_price": p, "cost": p * quantity, "raw_executions": 1}
 
 
@@ -197,3 +212,61 @@ def test_panel_tells_leftover_paper_positions_from_real_ones(gw: Gateway, tmp_pa
     assert d["paper"]["settled_total"] == 2 and d["paper"]["won_total"] == 1 and d["paper"]["open"] == 0
     assert d["paper"]["pnl_total_usd"] == pytest.approx(d["pnl_total_usd"] - d["real"]["pnl_total_usd"])
     assert d["paper"]["pnl_total_usd"] < 0  # one $20 paper loss outweighs one paper win
+
+
+def test_silent_fills_are_found_in_the_venues_book(gw: Gateway, tmp_path) -> None:
+    """2026-10-09: six real buys filled while every order reply showed no execution. The venue's book decides."""
+    gw.markets = [_market("w1", "crypto", 1800), _market("w2", "crypto", 1800)]
+    gw.quotes = {"w1": (0.96, 0.97), "w2": (0.97, 0.98)}
+    ex = FakeExchange(cash=25.0)
+    ex.silent_fills = True
+    ledger = FakeLedger()
+    desk = P.PolyDesk(_live_settings(tmp_path), ledger=ledger, client_factory=ex)
+    r = desk.poll(NOW)
+    assert r["bought"] == 2 and len(ex.orders) == 2
+    pos = desk.state["positions"]
+    assert pos["w1"]["live"] and pos["w1"]["cost_usd"] == pytest.approx(0.97) and pos["w2"]["cost_usd"] == pytest.approx(0.98)
+    assert not any(e["text"].startswith("No fill") for e in desk.state["events"])
+    assert [k for k, _ in ledger.receipts].count("polydesk_order_filled") == 2
+    d = P.panel_state(desk.settings, NOW)
+    assert d["real"]["open"] == 2 and d["real"]["at_risk_usd"] == pytest.approx(1.95)
+    assert d["exchange"]["contracts"] == 2 and d["exchange"]["cost_usd"] == pytest.approx(1.95)
+
+
+def test_venue_positions_the_desk_never_recorded_are_adopted_and_capped(gw: Gateway, tmp_path) -> None:
+    gw.markets = [_market("k1", "crypto", 1800)]
+    gw.quotes = {"k1": (0.96, 0.97)}
+    ex = FakeExchange(cash=16.27)
+    # real contracts bought under an earlier build: one on a watched market, one on a market the list no longer carries
+    ex.hold("k1", 1.0, 0.97)
+    ex.hold("aec-del-kec-sww", 1.0, 0.97, title="Koelner Haie vs. Schwenninger Wild Wings", outcome="Koelner Haie",
+            event_slug="del-kec-sww")
+    ex.book["aec-del-kec-sww"]["value"] = 0.68
+    ledger = FakeLedger()
+    desk = P.PolyDesk(_live_settings(tmp_path, POLYDESK_LIVE_MAX_OPEN_USD="2.5"), ledger=ledger, client_factory=ex)
+    r = desk.poll(NOW)
+    assert r["adopted"] == 2 and not ex.orders  # k1 is held already, so it is not bought again
+    pos = desk.state["positions"]
+    assert pos["k1"]["live"] and pos["k1"]["adopted"] and pos["k1"]["question"] == "Will k1 happen?" and pos["k1"]["end_known"]
+    hockey = pos["aec-del-kec-sww"]
+    assert hockey["question"] == "Koelner Haie vs. Schwenninger Wild Wings · Koelner Haie" and hockey["category"] == "sports"
+    assert hockey["cost_usd"] == pytest.approx(0.97) and not hockey["end_known"] and hockey["end_ts"] == NOW + P.ADOPTED_END_GUESS_S
+    assert [k for k, _ in ledger.receipts].count("polydesk_position_adopted") == 2
+    d = P.panel_state(desk.settings, NOW)
+    assert d["real"] == {"open": 2, "at_risk_usd": pytest.approx(1.94), "settled_total": 0, "won_total": 0,
+                         "pnl_total_usd": 0.0, "today": {"pnl_usd": 0.0, "settled": 0, "won": 0}}
+    assert d["exchange"] == {"positions": 2, "contracts": 2.0, "cost_usd": pytest.approx(1.94), "value_usd": pytest.approx(1.65),
+                             "at": NOW}
+    # the adopted money counts against the open cap: $1.94 held + $0.98 > $2.50
+    gw.markets.append(_market("n1", "crypto", 1800))
+    gw.quotes["n1"] = (0.97, 0.98)
+    desk.poll(NOW + 100)
+    assert not ex.orders and "n1" not in desk.state["positions"]
+    # the venue's book is shown in paper mode too (the key is set, no orders are placed)
+    paper = P.PolyDesk(Settings.from_env({"DATA_DIR": str(tmp_path / "p"), **KEY}), client_factory=ex)
+    assert paper.state["mode"] == "paper" and paper.client is None and paper.reader is ex
+    gw.markets = [_market("n1", "crypto", 1800)]
+    r = paper.poll(NOW)
+    assert r["adopted"] == 2 and not ex.orders and paper.state["positions"]["n1"]["live"] is False  # paper buy, real adoptions
+    dd = P.panel_state(paper.settings, NOW)
+    assert dd["mode"] == "paper" and dd["real"]["open"] == 2 and dd["paper"]["open"] == 1 and dd["balance"]["cash"] == 16.27

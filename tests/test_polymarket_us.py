@@ -71,4 +71,42 @@ def test_errors_carry_the_status() -> None:
         c.balances()
     assert e.value.status == 401 and "HTTP 401" in str(e.value)
     c3 = PolymarketUSClient("key-id", SECRET_64, transport=lambda m, u, **kw: Resp(200, {"positions": [{"marketSlug": "m"}]}))
-    assert c3.positions() == [{"marketSlug": "m"}]
+    assert [r["slug"] for r in c3.positions()] == ["m"]
+
+
+def test_positions_are_keyed_by_slug_and_the_signature_skips_the_query() -> None:
+    """The venue answers ``{"positions": {slug: {...}}}`` (seen 2026-10-09) and signs paths without ``?query``."""
+    calls: list[dict[str, Any]] = []
+    venue = {"positions": {"aec-del-kec-sww-2026-10-09": {
+        "netPosition": "1", "netPositionDecimal": "1.0000", "qtyBought": "1", "qtySold": "0", "expired": False,
+        "cost": {"value": "0.9700", "currency": "USD"}, "avgPx": {"value": "0.9700", "currency": "USD"},
+        "cashValue": {"value": "0.6800", "currency": "USD"}, "realized": {"value": "0.0000", "currency": "USD"},
+        "updateTime": "2026-10-09T17:32:20Z",
+        "marketMetadata": {"slug": "aec-del-kec-sww-2026-10-09", "title": "Koelner Haie vs. Schwenninger Wild Wings",
+                           "outcome": "Koelner Haie", "eventSlug": "del-kec-sww-2026-10-09"}}},
+        "nextCursor": "", "eof": True}
+
+    def transport(method: str, url: str, **kw: Any) -> Resp:
+        calls.append({"method": method, "url": url, **kw})
+        return Resp(200, venue)
+
+    c = PolymarketUSClient("key-id", SECRET_64, transport=transport, clock=lambda: 1_791_560_000.0)
+    rows = c.positions()
+    assert rows == [{"slug": "aec-del-kec-sww-2026-10-09", "qty": 1.0, "avg_price": 0.97, "cost": 0.97, "value": 0.68,
+                     "realized": 0.0, "expired": False, "title": "Koelner Haie vs. Schwenninger Wild Wings",
+                     "outcome": "Koelner Haie", "event_slug": "del-kec-sww-2026-10-09", "updated": "2026-10-09T17:32:20Z"}]
+    c._call("GET", "/v1/portfolio/positions?includeClosed=true")
+    h = calls[1]["headers"]
+    message = (h["X-PM-Timestamp"] + "GET" + "/v1/portfolio/positions").encode()  # no query in the signed text
+    SigningKey(SEED).verify_key.verify(message, base64.b64decode(h["X-PM-Signature"]))
+    assert calls[1]["url"].endswith("/v1/portfolio/positions?includeClosed=true")
+
+
+def test_order_reply_with_the_fill_on_the_order_object() -> None:
+    reply = {"order": {"id": "o-9", "status": "ORDER_STATUS_FILLED", "filledQuantity": "1", "avgPrice": {"value": "0.980"}}}
+    c = PolymarketUSClient("key-id", SECRET_64, transport=lambda m, u, **kw: Resp(200, reply))
+    r = c.buy_long_ioc("m", 0.98, 1)
+    assert r["id"] == "o-9" and r["filled"] == 1.0 and r["avg_price"] == pytest.approx(0.98) and r["cost"] == pytest.approx(0.98)
+    # a reply that only says "accepted" reads as no fill here: the desk then asks the venue's book
+    c2 = PolymarketUSClient("key-id", SECRET_64, transport=lambda m, u, **kw: Resp(200, {"id": "o-10", "status": "ORDER_STATUS_PENDING"}))
+    assert c2.buy_long_ioc("m", 0.98, 1) == {"id": "o-10", "filled": 0.0, "avg_price": None, "cost": 0.0, "raw_executions": 0}

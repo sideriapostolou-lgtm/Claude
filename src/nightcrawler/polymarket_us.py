@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import base64
 import json
+import logging
 import time
 from typing import Any
 
@@ -20,6 +21,7 @@ import requests
 
 API = "https://api.polymarket.us"
 TIMEOUT_S = 15.0
+log = logging.getLogger("nightcrawler.polymarket_us")
 
 
 class PolymarketUSError(RuntimeError):
@@ -60,7 +62,8 @@ class PolymarketUSClient:
 
     def _call(self, method: str, path: str, body: dict[str, Any] | None = None) -> Any:
         try:
-            r = self._transport(method.upper(), f"{self.base_url}{path}", headers=self.headers(method, path),
+            # the signature covers the path without its query string (the venue rejects it otherwise)
+            r = self._transport(method.upper(), f"{self.base_url}{path}", headers=self.headers(method, path.split("?", 1)[0]),
                                 data=json.dumps(body) if body is not None else None, timeout=TIMEOUT_S)
         except requests.RequestException as e:
             raise PolymarketUSError(f"{method} {path}: {type(e).__name__}") from e
@@ -92,9 +95,35 @@ class PolymarketUSClient:
         }
 
     def positions(self) -> list[dict[str, Any]]:
+        """The venue's positions, one row per market: ``{"slug", "qty", "avg_price", "cost", "value", "realized",
+        "expired", "title", "outcome", "event_slug", "updated"}``. The venue keys them by market slug (a dict);
+        a list is accepted too."""
         doc = self._call("GET", "/v1/portfolio/positions")
-        rows = doc.get("positions") if isinstance(doc, dict) else doc
-        return rows if isinstance(rows, list) else []
+        raw = doc.get("positions") if isinstance(doc, dict) else doc
+        items: list[tuple[str, dict[str, Any]]] = []
+        if isinstance(raw, dict):
+            items = [(str(k), v) for k, v in raw.items() if isinstance(v, dict)]
+        elif isinstance(raw, list):
+            items = [("", v) for v in raw if isinstance(v, dict)]
+        out: list[dict[str, Any]] = []
+        for key, row in items:
+            md: dict[str, Any] = row["marketMetadata"] if isinstance(row.get("marketMetadata"), dict) else {}
+            slug = key or str(row.get("marketSlug") or md.get("slug") or row.get("slug") or "")
+            qty = row.get("netPositionDecimal") if row.get("netPositionDecimal") is not None else row.get("netPosition")
+            out.append({
+                "slug": slug,
+                "qty": _f(qty),
+                "avg_price": _f(row.get("avgPx")),
+                "cost": _f(row.get("cost")),
+                "value": _f(row.get("cashValue")),
+                "realized": _f(row.get("realized")),
+                "expired": bool(row.get("expired")),
+                "title": str(md.get("title") or ""),
+                "outcome": str(md.get("outcome") or ""),
+                "event_slug": str(md.get("eventSlug") or ""),
+                "updated": str(row.get("updateTime") or ""),
+            })
+        return out
 
     def buy_long_ioc(self, market_slug: str, price: float, quantity: float, max_block_s: int = 5) -> dict[str, Any]:
         """A limit BUY of the YES side (``ORDER_INTENT_BUY_LONG``), immediate-or-cancel, executed synchronously.
@@ -111,17 +140,31 @@ class PolymarketUSClient:
             "manualOrderIndicator": "MANUAL_ORDER_INDICATOR_AUTOMATIC",
         }
         doc = self._call("POST", "/v1/orders", body)
-        execs = doc.get("executions") if isinstance(doc, dict) else None
+        top: dict[str, Any] = doc if isinstance(doc, dict) else {}
+        order: dict[str, Any] = top["order"] if isinstance(top.get("order"), dict) else top
+        execs = top.get("executions") if isinstance(top.get("executions"), list) else order.get("executions")
         filled = 0.0
         cost = 0.0
-        for e in execs or []:
+        for e in execs if isinstance(execs, list) else []:
+            if not isinstance(e, dict):
+                continue
             q = _f(e.get("quantity") or e.get("lastQuantity") or e.get("cumQuantity"))
             p = _f(e.get("price") or e.get("lastPrice"))
             if q > 0 and p > 0:
                 filled += q
                 cost += q * p
-        return {"id": str(doc.get("id")) if isinstance(doc, dict) else None, "filled": filled,
-                "avg_price": (cost / filled) if filled > 0 else None, "cost": cost, "raw_executions": len(execs or [])}
+        if filled <= 0:  # some replies carry the fill on the order itself rather than as executions
+            q = _f(order.get("filledQuantity") or order.get("cumQuantity") or order.get("executedQuantity"))
+            p = _f(order.get("avgPrice") or order.get("averagePrice") or order.get("avgPx"))
+            if q > 0 and p > 0:
+                filled, cost = q, q * p
+        # the reply's shape, so a fill the desk only finds later in the venue's book can be traced (no secrets here)
+        log.info("polymarket_us_order_reply keys=%s status=%s executions=%d filled=%g",
+                 ",".join(sorted(top.keys())), order.get("status"), len(execs) if isinstance(execs, list) else -1, filled)
+        oid = order.get("id") if order.get("id") is not None else top.get("id")
+        return {"id": str(oid) if oid is not None else None, "filled": filled,
+                "avg_price": (cost / filled) if filled > 0 else None, "cost": cost,
+                "raw_executions": len(execs) if isinstance(execs, list) else 0}
 
 
 def _f(v: Any) -> float:
