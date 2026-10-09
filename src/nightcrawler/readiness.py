@@ -12,8 +12,9 @@ computed over steps 1-5; step 6, the real-money switch, is the action the owner 
    net result above 0, docs/LEARNING.md §5.4 and docs/GOING_LIVE.md §0; "positive over 20-30 trades" is not
    proof - a strategy with no edge passes it about half the time) AND the card reports
    ``paper_matches_backtest: true``.
-3. ``wallet`` - a bot wallet is configured (``BOT_WALLET_SECRET``, required in live mode) with a known
-   address and a recently read SOL balance above 0 (its SOL, not the value of the coins it holds).
+3. ``wallet`` - a bot wallet is set up (``BOT_WALLET_MODE=generated``, the bot's own, or ``BOT_WALLET_SECRET``;
+   one is required in live mode) with a known address and a recently read SOL balance above 0 (its SOL, not
+   the value of the coins it holds).
 4. ``keys`` - ``KEYS_ROTATED_ON`` is a real date (``YYYY-MM-DD``), not in the future.
 5. ``locked`` - ``DASHBOARD_TOKEN`` is a strong password (:func:`nightcrawler.config.dashboard_token_problem`).
 6. ``live`` - ``TRADING_MODE=live`` with the exact ``LIVE_CONFIRM`` phrase.
@@ -33,6 +34,7 @@ import time
 from collections.abc import Mapping
 from typing import Any
 
+from nightcrawler.botwallet import wallet_configured
 from nightcrawler.config import (
     DASHBOARD_TOKEN_MIN_LEN,
     LIVE_CONFIRM_PHRASE,
@@ -118,8 +120,8 @@ def _learning(card: Mapping[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]:
 
 
 def _wallet(settings: Settings, address: str | None, sol: float | None) -> dict[str, Any]:
-    """Step 3: live, or paper with BOT_WALLET_SECRET set (GOING_LIVE steps 1-3 happen in paper mode)."""
-    if not settings.is_live and not settings.bot_wallet_secret:
+    """Step 3: live, or paper with a bot wallet set up (GOING_LIVE steps 1-3 happen in paper mode)."""
+    if not settings.is_live and not wallet_configured(settings):
         return _item("wallet", False, "No bot wallet yet — you create it when you're ready (docs/GOING_LIVE.md).")
     if not address:
         if settings.is_live:

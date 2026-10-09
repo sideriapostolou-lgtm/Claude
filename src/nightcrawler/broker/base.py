@@ -27,7 +27,8 @@ and is never refunded by a sell. Ultra's full-balance sell does not close the
 input token account (verified 2026-10-08 on a live ``/order``: the transaction
 closes only its temporary wSOL account), so the deposit stays locked in the empty
 account and a later buy of the same mint pays none. Only a separate CloseAccount
-transaction (not sent by this bot) would return it.
+transaction returns it: the bot sends one only while withdrawing everything
+(``WITHDRAW_TO``, :mod:`nightcrawler.withdraw`), for its token accounts holding 0 coins.
 """
 
 from __future__ import annotations

@@ -23,3 +23,5 @@ venv
 **/*.db-shm
 **/*.jsonl
 **/KILL
+**/bot-keypair.json
+**/.bot-keypair.json.*.tmp

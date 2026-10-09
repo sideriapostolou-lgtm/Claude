@@ -21,3 +21,7 @@ Railway variables when deployed) under the variable names below.
   credits stay available for the live bot.
 - If the owner ever buys a subscription, update the plan and budget columns here.
 - Keys that were pasted into a chat should be replaced with fresh ones before the bot trades real money.
+- Bot wallet: with `BOT_WALLET_MODE=generated` the bot makes its own wallet and its key exists ONLY on the
+  Railway volume (`/data/wallet/bot-keypair.json`); no variable, chat or file in this repo holds it. The owner
+  funds it from Phantom (Send, SOL, the address on the dashboard) and takes it back with `WITHDRAW_TO`. Never
+  delete the `nightcrawler-data` volume or the service while SOL is in that wallet: withdraw first.

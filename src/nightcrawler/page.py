@@ -1,8 +1,9 @@
 """The ONE dashboard page at ``/`` (owner: O6): built for an owner who checks the bot from a phone.
 
-Top to bottom, in plain words: money (a big dollar number and a chart), the team (one row per bot member,
-tap for its report card and last events; the team's practice record on top and the playbook's counts below,
-docs/EXPERIENCE.md §9), trades, learning (the Coach), "ready for real money?" (a six-step checklist)
+Top to bottom, in plain words: money (a big dollar number and a chart), the bot wallet (its public address with
+a copy button, its SOL and how to fund it from Phantom), the team (one row per bot member, tap for its report
+card and last events; the team's practice record on top and the playbook's counts below, docs/EXPERIENCE.md
+§9), trades, learning (the Coach), "ready for real money?" (a six-step checklist)
 and, small at the bottom, receipts and service usage. Data: ``/api/page``
 (:func:`nightcrawler.pagestate.build_page_state`), fetched every :data:`REFRESH_S` seconds while the tab is
 visible and at once when it comes back.
@@ -181,6 +182,10 @@ details.about summary{padding:10px 0 0;color:var(--accent);font-weight:600;font-
 details.about p{color:var(--ink2);font-size:13px;margin:6px 0 0}
 .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;word-break:break-all}
 #about{margin-top:12px}
+.addr{display:block;margin-top:4px;font-size:14px;-webkit-user-select:all;user-select:all}
+button.copy{margin-top:10px;min-height:44px;padding:8px 16px;border-radius:10px;border:1px solid var(--border);
+background:var(--accent);color:#fff;font:inherit;font-size:15px;font-weight:650;cursor:pointer}
+button.copy:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
 footer{color:var(--ink2);font-size:12px;text-align:center;margin-top:18px}
 """
 
@@ -280,6 +285,9 @@ _SCRIPT = r"""
       help.push("The price of SOL itself moved the value " + usd(m.sol_price_effect_usd, true)
         + " on top: not the bot's doing.");
     }
+    if (isNum(m.withdrawn_sol) && m.withdrawn_sol > 0) {
+      help.push("Sent back to you so far: " + m.withdrawn_sol.toFixed(4) + " SOL (not counted as a loss).");
+    }
     if (!isNum(m.usd)) help.push("No money check yet: the first one comes about a minute after the bot starts.");
     else if (isNum(m.as_of) && nowS() - m.as_of > MONEY_STALE_S) {
       help.unshift("Last money check: " + dur(nowS() - m.as_of) + " ago.");
@@ -336,6 +344,59 @@ _SCRIPT = r"""
     plot.addEventListener("pointerleave", () => show(vs.length - 1, false));
     show(vs.length - 1, false);
     return box;
+  }
+
+  // ---------------------------------------------------------------- A2. the bot wallet: where to send SOL
+  // Text only. The copy button writes the address (plain text) to the clipboard; without clipboard access it
+  // selects the address so a long-press copies it.
+  let walletShown = null, walletSol = null, walletLast = null;
+  function copyButton(address, node) {
+    const button = el("button", "copy", "Copy address");
+    button.type = "button";
+    button.addEventListener("click", async () => {
+      let copied = false;
+      try {
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(address);
+          copied = true;
+        }
+      } catch (err) {
+        copied = false;
+      }
+      if (!copied) {
+        const range = document.createRange();
+        range.selectNodeContents(node);
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+      }
+      button.textContent = copied ? "Copied ✓" : "Selected: press and hold it to copy";
+      setTimeout(() => { button.textContent = "Copy address"; }, 3000);
+    });
+    return button;
+  }
+  function renderWallet(w) {
+    $("wallet-kind").textContent = w.address && w.own ? "made by the bot, its key never leaves it" : "";
+    if (!w.address) {
+      walletShown = null;
+      put($("wallet-body"), el("p", "empty", w.note || "No bot wallet yet."));
+      return;
+    }
+    if (walletShown !== w.address) {  // rebuilt only when the address changes: a selection survives refreshes
+      walletShown = w.address;
+      const addr = el("span", "mono addr", w.address);
+      walletSol = el("p", "meta");
+      walletLast = el("p", "help");
+      put($("wallet-body"), el("p", "lead", "Bot wallet:", addr), copyButton(w.address, addr), walletSol,
+        el("p", "help", w.help), w.paper_note ? el("p", "help", w.paper_note) : null,
+        w.keep_note ? el("p", "help", w.keep_note) : null, walletLast);
+    }
+    walletSol.textContent = isNum(w.sol) ? "In it now: " + w.sol.toFixed(4) + " SOL"
+      + (isNum(w.checked_at) ? " (checked " + ago(w.checked_at) + ")" : "")
+      : "Its SOL has not been checked in the last hour.";
+    const last = w.last_withdrawal;
+    walletLast.textContent = last && isNum(last.sol) ? "Last sent back: " + last.sol.toFixed(4) + " SOL to "
+      + last.to + (isNum(last.at) ? ", " + ago(last.at) : "") + "." : "";  // in full: look-alikes share the ends
   }
 
   // ---------------------------------------------------------------- B. the team
@@ -619,6 +680,7 @@ _SCRIPT = r"""
     mode.className = "mode" + (s.mode === "LIVE" ? " live" : "");
     put($("alerts"), ...s.alerts.map((a) => el("div", "alert " + a.level, a.text)));
     renderMoney(s.money);
+    if (s.wallet) renderWallet(s.wallet);
     renderTeam(s.team, s.experience);
     renderTrades(s.trades);
     renderLearning(s.learning);
@@ -724,6 +786,9 @@ def render_page_html(settings: Settings) -> str:
         "</div></div>"
         "<p class=\"help\">Since start and today count only the bot's own trading, at today's price of SOL.</p>"
         "<p class=\"help\" id=\"money-help\"></p><div id=\"chart\"></div></section>\n"
+
+        "<section class=\"card\" id=\"wallet\"><h2>Bot wallet <small id=\"wallet-kind\"></small></h2>"
+        "<div id=\"wallet-body\"><p class=\"empty\">Loading…</p></div></section>\n"
 
         "<section class=\"card\" id=\"team\"><h2>The team <small id=\"team-counts\"></small></h2>"
         "<p class=\"help\">Each one is a part of the bot. Tap a name to see what it did last.</p>"

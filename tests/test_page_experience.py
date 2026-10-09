@@ -473,7 +473,8 @@ def test_the_report_cards_live_inside_the_team_card(settings: Settings) -> None:
     assert team.index('id="xp-head"') < team.index('class="members"') < team.index('id="xp-playbook"')
     assert html.count('class="graded"') == len(MEMBERS)  # "Graded on 4,212 coins · 14 days" under each row
     ids = re.findall(r'<section class="card" id="([a-z]+)"', html)
-    assert ids == ["money", "team", "trades", "learning", "ready", "receipts", "usage"]  # no new card
+    # the experience adds no card of its own (the wallet card is the bot wallet's deposit card)
+    assert ids == ["money", "wallet", "team", "trades", "learning", "ready", "receipts", "usage"]
 
 
 def test_the_page_draws_range_bars_and_chips_as_text_only(settings: Settings) -> None:

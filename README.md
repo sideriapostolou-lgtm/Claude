@@ -145,7 +145,9 @@ full list with explanations is in [.env.example](.env.example). The important on
 |---|---|---|
 | `TRADING_MODE` | `paper` | `paper` or `live` (real money). |
 | `LIVE_CONFIRM` | (empty) | Must be exactly `I_ACCEPT_REAL_MONEY_RISK` for live mode. |
-| `BOT_WALLET_SECRET` | (empty) | Live only: the private key of a **dedicated** bot wallet. Secret. |
+| `BOT_WALLET_MODE` | `env` | `generated` = the bot makes and keeps its **own** wallet (nobody ever sees the key); fund it from Phantom with Send. See [docs/GOING_LIVE.md](docs/GOING_LIVE.md). |
+| `BOT_WALLET_SECRET` | (empty) | With `BOT_WALLET_MODE=env`: the private key of a **dedicated** bot wallet. Secret. |
+| `WITHDRAW_TO` | (empty) | Your Phantom address (the one that funded the bot): the bot buys nothing, sells everything, closes its empty coin accounts and, after a 10-minute cancel window, sends ALL its SOL there (paper mode only shows what it would send). |
 | `KILL_SWITCH` | `off` | `stop` = no new buys; `sell_all` = sell everything, then stop. `sell-all` works too; an unknown word means `stop`. |
 | `RESET_HALT_TOKEN` | (empty) | Change to any new value (e.g. today's date) to clear a drawdown halt once. |
 | `DASHBOARD_TOKEN` | (empty) | Password for the dashboard link. **Set a long random one** on Railway: live mode refuses one shorter than 24 characters, and the checklist only ticks a strong one. |
@@ -182,6 +184,9 @@ with a hint.
 
 - **Paper by default.** Live mode needs `TRADING_MODE=live`, the exact confirmation phrase and
   a wallet. Without all three it refuses to start.
+- **No keys to handle** with `BOT_WALLET_MODE=generated`: the bot's own key stays in
+  `DATA_DIR/wallet/` (never shown, logged or sent; never replaced). You fund it with Phantom's
+  Send and take it back with `WITHDRAW_TO`.
 - **Dedicated wallet only,** with `MAX_WALLET_USD` as a tripwire if you load the wrong one.
 - **Fail closed.** If a safety source, the radar, the judge or a quote fails, the bot doesn't buy.
 - **Limits:** 20 % per position (max $25), at most 3 open positions, a daily loss stop and a

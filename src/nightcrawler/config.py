@@ -352,6 +352,15 @@ class Settings:
                                           "only its address is used (quotes and the dashboard's balance check)",
                                           secret=True)
     x_bearer_token: Secret | None = _f(None, "secret", "Optional X/Twitter token (unused by default)", secret=True)
+    # ---- the bot's own wallet and taking the money back (broker/keystore.py, withdraw.py) ----
+    bot_wallet_mode: str = _f("env", "text", "env = the wallet in BOT_WALLET_SECRET; generated = the bot makes its own "
+                              "wallet on the first start (paper mode) and keeps the key in DATA_DIR/wallet/ where "
+                              "nobody ever sees it: fund it from Phantom with Send, take it back with WITHDRAW_TO")
+    withdraw_to: str = _f("", "text", "Your own Solana address (Phantom: Receive, Solana, copy): the wallet that sent "
+                          "the bot its SOL. While set the bot buys nothing, sells everything, closes its empty coin "
+                          "accounts, then (live, after 10 minutes in which deleting it cancels) sends ALL its SOL "
+                          "there minus the network fee; paper mode only shows what it would send. Afterwards set "
+                          "TRADING_MODE=paper: after a live withdrawal the bot buys nothing until it ran in paper")
 
     # ---- data sources (runtime / data-source team) --------------------------
     # GeckoTerminal's free tier (~30/min, 429s on shared IPs such as Railway's) is the scarcest
@@ -415,6 +424,8 @@ class Settings:
         object.__setattr__(self, "judge_mode", str(self.judge_mode).lower())
         object.__setattr__(self, "log_level", str(self.log_level).upper())
         object.__setattr__(self, "keys_rotated_on", str(self.keys_rotated_on).strip())
+        object.__setattr__(self, "bot_wallet_mode", str(self.bot_wallet_mode).strip().lower())
+        object.__setattr__(self, "withdraw_to", str(self.withdraw_to).strip())
         problems = self._validate()
         if problems:
             raise ConfigError(problems)
@@ -440,8 +451,9 @@ class Settings:
         if self.trading_mode == "live":
             if self.live_confirm != LIVE_CONFIRM_PHRASE:
                 problems.append(f"TRADING_MODE=live requires LIVE_CONFIRM={LIVE_CONFIRM_PHRASE} (exact)")
-            if not self.bot_wallet_secret:
-                problems.append("TRADING_MODE=live requires BOT_WALLET_SECRET (a dedicated bot wallet)")
+            if not self.bot_wallet_secret and self.bot_wallet_mode != "generated":
+                problems.append("TRADING_MODE=live requires a bot wallet: BOT_WALLET_MODE=generated (the bot's own "
+                                "wallet) or BOT_WALLET_SECRET (a dedicated bot wallet)")
             if not self.dashboard_token and self.dashboard_host not in _LOOPBACK_HOSTS:
                 problems.append("TRADING_MODE=live requires DASHBOARD_TOKEN (or DASHBOARD_HOST=127.0.0.1): "
                                 "an open dashboard shows the live wallet, its positions and their stops")
@@ -453,6 +465,7 @@ class Settings:
             # never repeat the value: a key pasted into the wrong box would land in the deploy logs
             problems.append("KEYS_ROTATED_ON must be a date like 2026-10-09: the day you replaced the keys "
                             "(leave it empty until then)")
+        problems.extend(_wallet_problems(self))
         if self.judge_mode in ("advisory", "required") and not self.anthropic_api_key:
             problems.append(f"JUDGE_MODE={self.judge_mode} requires ANTHROPIC_API_KEY (or set JUDGE_MODE=off)")
         if self.min_position_usd > self.max_position_usd:
@@ -552,7 +565,21 @@ class Settings:
                 if v:
                     out.append(v.reveal())
         out.extend(_url_secret_values(self.solana_rpc_url))
+        held = _RUNTIME_SECRETS.get(id(self))
+        if held is not None and held[0] is self:
+            out.extend(s.reveal() for s in held[1])
         return out
+
+    def add_runtime_secret(self, value: str) -> None:
+        """A secret this process made or loaded at run time (the bot's own wallet key, broker/keystore.py):
+        from now on :meth:`secret_values` returns it too, so every scrubber treats it like BOT_WALLET_SECRET.
+        Kept for THIS Settings object only (never in the environment, never pickled: :class:`Secret`)."""
+        if not value:
+            return
+        held = _RUNTIME_SECRETS.get(id(self))
+        known = held[1] if held is not None and held[0] is self else ()
+        if all(s.reveal() != value for s in known):
+            _RUNTIME_SECRETS[id(self)] = (self, (*known, Secret(value)))
 
     def public_dict(self) -> dict[str, Any]:
         """JSON-safe settings with NO secret values: secrets become ``<name>_set: bool``."""
@@ -592,6 +619,25 @@ class Settings:
 
 
 _FIELDS = {f.name: f for f in dataclasses.fields(Settings)}
+#: :meth:`Settings.add_runtime_secret`: ``id(settings) -> (settings, secrets)`` (the object is kept, so its id
+#: is never reused by another Settings; a frozen slots dataclass cannot hold the list itself).
+_RUNTIME_SECRETS: dict[int, tuple[Settings, tuple[Secret, ...]]] = {}
+
+
+def _wallet_problems(s: Settings) -> list[str]:
+    """BOT_WALLET_MODE and WITHDRAW_TO. A value is never repeated: a key pasted into the wrong box would land in
+    the deploy logs (the WITHDRAW_TO checks that need the chain or the wallet are in ``nightcrawler.withdraw``)."""
+    from nightcrawler.base58 import is_pubkey
+
+    problems = []
+    if s.bot_wallet_mode not in ("env", "generated"):
+        problems.append("BOT_WALLET_MODE must be env or generated")
+    elif s.bot_wallet_mode == "generated" and s.bot_wallet_secret:
+        problems.append("BOT_WALLET_MODE=generated and BOT_WALLET_SECRET are both set: use one wallet only (delete "
+                        "BOT_WALLET_SECRET to use the wallet the bot made itself, or set BOT_WALLET_MODE=env)")
+    if s.withdraw_to and not is_pubkey(s.withdraw_to):
+        problems.append("WITHDRAW_TO must be a Solana address (in Phantom: Receive, choose Solana, copy)")
+    return problems
 
 
 def _coerce(f: dataclasses.Field, raw: str) -> Any:

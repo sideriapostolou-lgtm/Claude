@@ -32,6 +32,9 @@ Without it, every redeploy wipes the bot's memory.
   palette), then **Volume**, and connect it to the nightcrawler service.
 - Set the **mount path** to `/data`.
 - One volume per service. The Hobby plan allows up to 5 GB, and the bot uses a few MB a day.
+- **Turn on the volume's backups** (open the volume, **Backups**, choose a daily schedule, if your
+  plan offers it). With `BOT_WALLET_MODE=generated` the volume is the wallet: the bot's key exists
+  only there, so a lost or deleted volume with no backup loses the SOL in it for good.
 
 **4. Set the variables.** Open the service, go to **Variables**, then **Raw Editor**, and paste
 this, replacing the token with your own long random string:
@@ -164,4 +167,5 @@ To roll back, go to **Deployments**, open an older deployment, and choose **Rede
 | Logs: `Invalid configuration: ...` and the bot exits | A variable has a wrong value. The message names it and gives a hint (e.g. `POSITION_PCT` is a fraction: 0.20, not 20). |
 | Dashboard shows "401" / a locked page | Open it once with `?token=<DASHBOARD_TOKEN>`. |
 | P&L and positions reset after a deploy | The volume is missing or not mounted at `/data`, or `DATA_DIR` isn't `/data`. |
-| Live mode refuses to start | Expected unless `TRADING_MODE=live`, `LIVE_CONFIRM=I_ACCEPT_REAL_MONEY_RISK` and a valid `BOT_WALLET_SECRET` are all set. See [GOING_LIVE.md](GOING_LIVE.md). |
+| Live mode refuses to start | Expected unless `TRADING_MODE=live`, `LIVE_CONFIRM=I_ACCEPT_REAL_MONEY_RISK` and a wallet (`BOT_WALLET_MODE=generated`, made earlier in paper mode, or a valid `BOT_WALLET_SECRET`) are all set. See [GOING_LIVE.md](GOING_LIVE.md). |
+| Logs: `... wallet/bot-keypair.json ...` and the bot exits | The bot's own wallet file is missing or damaged, or no volume is attached. It never makes a second wallet over one it had: attach the volume at `/data` again (the money is in the wallet on it). |
