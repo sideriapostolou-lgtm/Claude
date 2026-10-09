@@ -203,6 +203,10 @@ def _ci(r: np.ndarray, coins: np.ndarray, B: int) -> tuple[float, float] | None:
 
 
 def summarize(rows: pd.DataFrame, B: int = 2000, hide: bool = False) -> dict[str, Any]:
+    if not len(rows):
+        rows = pd.DataFrame(
+            columns=["mint", "cls", "censored", "L", "H", "tip", "slip_s", "ret_net", "ret_mid", "mcap_in_sol"]
+        )
     out: dict[str, Any] = {
         "n_coins": int(rows["mint"].nunique()),
         "cells": {},
