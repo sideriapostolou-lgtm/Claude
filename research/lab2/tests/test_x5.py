@@ -141,21 +141,19 @@ def manual_regime(S: np.ndarray, known: np.ndarray | None = None, sig: str = "GR
 # =========================================================================== grid and constants
 
 
-def test_grid_is_twelve_trials_and_registered():
-    assert len(X.GRID) == 9
+def test_grid_is_eight_trials_and_registered():
+    assert len(X.GRID) == 6
     keys = [X.config_key(p) for p in X.GRID]
-    assert len(set(keys)) == 9 and len({C.params_hash(p) for p in X.GRID}) == 9
-    assert {k for k in keys if k.startswith("R0")} == {f"R0|{s}|q{q:g}" for s in X.SIGNALS for q in (0.5, 0.8)}
-    assert {k for k in keys if k.startswith("M1")} == {f"M1|{s}|q0.5" for s in X.SIGNALS}
-    assert len(X.GRID) + len(X.HOST_ORDER) + 1 == 12          # + 2 host baselines + the model check
-    with pytest.raises(ValueError):
-        X.make_params("M1", "GR", 0.8)
-    with pytest.raises(ValueError):
-        X.make_params("R0", "XX", 0.5)
+    assert len(set(keys)) == 6 and len({C.params_hash(p) for p in X.GRID}) == 6
+    assert set(keys) == {f"R0|{s}|q{q:g}" for s in X.SIGNALS for q in (0.5, 0.8)}
+    assert len(X.GRID) + len(X.HOST_ORDER) + 1 == 8            # + the R0 host baseline + the model check
+    for bad in (("M1", "GR", 0.5), ("M1", "GR", 0.8), ("R0", "XX", 0.5)):
+        with pytest.raises(ValueError):
+            X.make_params(*bad)
     for p in X.GRID:                        # the host's own params travel verbatim inside every config
         assert p["host_params"] == X.HOST_PARAMS[p["x5_host"]]
         assert p["window_s"] == 7200.0 and p["baseline_n"] == 96 and p["step_s"] == 900
-    assert X.R0_HOST == X.g1.R0_PARAMS and X.M1_HOST == X.m1.make_params(1.0, "rhythm+prec")
+    assert X.R0_HOST == X.g1.R0_PARAMS
     assert X.FILL.exit_delay_bars == 1 and X.FILL.entry_fill == "worst" and X.FILL.exit_fill == "worst"
 
 
@@ -352,25 +350,64 @@ def test_gated_r0_equals_host_trades_in_on_regime(small, tmp_ledger):
         assert (lab[X.state_col(sig, 0.5)] != "UNKNOWN").sum() > 30
 
 
-def test_gated_m1_host_filters_m1_entries(small, tmp_ledger):
-    """M1 fires on pure-bot coins (non-instant, so class OTHER); the gate keeps exactly the ON ones."""
+def test_placebo_draws_only_where_the_regime_is_known(small, tmp_ledger):
+    """Review X5-PLACEBO-UNKNOWN: the gated rule never trades in an UNKNOWN regime, so its matched control is a
+    random-state entry among the regimes the rule can see (the drawn coin's own records removed, as for a trade)."""
     t0 = C.utc_ts("2026-10-01 00:00")
-    g, c, b = regime_market(t0, t0 + 20 * 3600, 10)
-    bots = g["mint"].iloc[240:292:2].tolist()          # graduated in the hot 12-15 h and the cold 15-18 h
-    for m in bots:
-        r = g[g["mint"] == m].iloc[0]
-        g.loc[g["mint"] == m, "c_ts"] = int(r["g_ts"]) - 600
-        c.loc[c["mint"] == m, "w120_top10"] = json.dumps([[f"W{j}{m}", 2.0, 0.0] for j in range(10)])
-        b = pd.concat([b[b["mint"] != m], coin_bars(int(r["g_ts"]), m, r["pool"], buy=full(0.3))], ignore_index=True)
-    ds = ds_of((g, c, b), "train")
-    reg = X.build_regime("train", ds, [ds], g, C.Census.empty())
-    host = X._host_run("M1", "train", ds, ledger_path=tmp_ledger, shortlist_path=None)
-    assert len(host.trades) >= 10 and set(host.trades["mint"]) <= set(bots)
-    lab = X.label_states(reg, host.trades)
-    p = X.make_params("M1", "GR", 0.5)
-    res = X._gated_run(p, "train", ds, reg, ledger_path=tmp_ledger, shortlist_path=None, n_placebo=2)
-    ev = X.evaluate(res, lab, B=200, hide=False, n_trials_total=None)
-    assert ev["gate_consistent"] and 0 < ev["n"] < len(host.trades)
+    fr = regime_market(t0, t0 + 24 * 3600, 9)
+    ds = ds_of(fr, "train")
+    reg = X.build_regime("train", ds, [ds], fr[0], C.Census.empty())
+    n_draws = 0
+    for p in [q for q in X.GRID if q["q"] == 0.5]:
+        res = X._gated_run(p, "train", ds, reg, ledger_path=tmp_ledger, shortlist_path=None, n_placebo=6)
+        assert len(res.trades) > 0
+        for d in res.placebo.itertuples(index=False):
+            n_draws += 1
+            st_ = reg.state(p["signal"], p["q"], float(d.t_dec) - C.DECISION_LAG_S, d.mint)["state"]
+            assert st_ in ("ON", "OFF"), (p["signal"], d.mint, d.t_dec)
+            assert X.r0_eligible(ds.asof(d.mint, float(d.t_dec)))             # still R0's alive universe
+    assert n_draws > 100
+    # the same draws without the known-regime condition do land in the warm-up (the check above is not vacuous)
+    host = X._host_run("R0", "train", ds, ledger_path=tmp_ledger, shortlist_path=None)
+    raw = C.run_placebo(ds, X.make_strategy(reg), X.make_params("R0", "AV", 0.5), X.FILL, host.trades, 3,
+                        eligible=X.r0_eligible, _internal=True)
+    unknown = [reg.state("AV", 0.5, float(d.t_dec) - C.DECISION_LAG_S, d.mint)["state"] == "UNKNOWN"
+               for d in raw.itertuples(index=False)]
+    assert sum(unknown) > 20
+
+
+def test_m1_arm_is_dropped_and_m1_never_runs_under_x5(st, small, monkeypatch):
+    """Review X5-M1HOST: X5's M1 host was M1's own candidate rule (m = 1, rhythm+prec), so an X5 look at VAL / TEST /
+    CONFIRM / FINAL was a second, unguarded look at M1. The arm is dropped: M1's code never runs under X5, and a
+    shortlist that names an M1-hosted config (or the M1 host) is refused."""
+    assert X.HOST_ORDER == ("R0",) and set(X.HOST_HYP) == {"R0"} and set(X.Q_BY_HOST) == {"R0"}
+    assert all(p["x5_host"] == "R0" for p in X.GRID)
+
+    def boom(*a, **k):
+        raise AssertionError("M1 code ran under X5")
+    for name in ("strategy", "placebo_ok", "placebo_stratum", "make_params"):
+        monkeypatch.setattr(X.m1, name, boom)
+    t0 = C.utc_ts("2026-10-01 00:00")
+    fr = regime_market(t0, t0 + 20 * 3600, 13)
+    ds = ds_of(fr, "train")
+    ds.split = "final_train"
+    ds.debug_only = True
+    doc = X.run_stage("debug", out_dir=st.out, ds=ds, history=[ds], graduates=fr[0], flow=st.flow,
+                      ledger_path=st.ledger, B=200, n_placebo=2, env={})
+    assert set(doc["hosts"]) == {"R0"} and all(e["host"] == "R0" for e in doc["configs"].values())
+    assert not {r["hypothesis"] for r in json.loads(st.ledger.read_text())["runs"]} & {"X5.host-M1"}
+    # a stale shortlist from the old grid (an M1-hosted config + the M1 host) never reaches VAL or a sealed split
+    old = {**X.FIXED, "x5_host": "M1", "signal": "GR", "q": 0.5, "host_params": {"m": 1.0, "exit_set": "rhythm+prec"}}
+    old_host = {"m": 1.0, "exit_set": "rhythm+prec", "x5_version": X.VERSION, "x5_role": "host", "x5_host": "M1"}
+    C.write_shortlist("X5", [old], path=st.sl, ledger_path=st.ledger)
+    C.write_shortlist("X5.host-M1", [old_host], path=st.sl, ledger_path=st.ledger)
+    (st.out / "train.json").write_text(json.dumps({"provisional": False, "decision": {
+        "verdict": "SHORTLISTED_EDGE", "track": "EDGE", "shortlist_hashes": [C.params_hash(old)], "hosts": ["M1"]}}))
+    env_all = {"LAB2_ALLOW_TEST": "1", "LAB2_ALLOW_CONFIRM": "1", "LAB2_ALLOW_FINAL": "1"}
+    for stage in ("val", "test", "confirm", "final"):
+        with pytest.raises(X.X5Refused, match="registered grid"):
+            _check(stage, st, env=env_all)
+    assert X.stage_configs("val", st.out, st.sl) == [] and X.stage_configs("test", st.out, st.sl) == []
 
 
 # =========================================================================== model check and decision rules
@@ -418,7 +455,7 @@ def test_decide_train_edge_ranking_and_veto_fallback():
     ev["R0|GR|q0.5"] = _ev(P["R0|GR|q0.5"], 120, 100, 0.04, 0.03, 0.05, 0.10, ci_lo=0.005)
     ev["R0|SV|q0.8"] = _ev(P["R0|SV|q0.8"], 70, 60, 0.06, 0.05, 0.08, 0.15, ci_lo=0.02)
     ev["R0|AV|q0.5"] = _ev(P["R0|AV|q0.5"], 120, 100, 0.05, -0.01, 0.05, 0.10, ci_lo=0.03)   # top-2 dependent
-    ev["M1|GR|q0.5"] = _ev(P["M1|GR|q0.5"], 61, 40, 0.09, 0.08, 0.1, 0.0, ci_lo=0.05)          # contrast 0
+    ev["R0|GR|q0.8"] = _ev(P["R0|GR|q0.8"], 61, 40, 0.09, 0.08, 0.1, 0.0, ci_lo=0.05)          # contrast 0
     d = X.decide_train(ev, X.GRID)
     assert d["verdict"] == "SHORTLISTED_EDGE" and d["track"] == "EDGE"
     assert d["ranked"] == ["R0|SV|q0.8", "R0|GR|q0.5"] and d["hosts"] == ["R0"]
@@ -576,13 +613,13 @@ def test_full_pipeline_and_every_refusal(st, small, monkeypatch):
     G = pd.concat([f[0] for f in (F_tr, F_va, F_te, F_co, F_fi)], ignore_index=True)
     with pytest.raises(X.X5Refused, match="no TRAIN result"):
         _check("val", st)
-    # ---- TRAIN: model check PASS, 2 hosts + 9 gated configs, the EDGE shortlist (top 2) and the host shortlist
+    # ---- TRAIN: model check PASS, the R0 host + 6 gated configs, the EDGE shortlist (top 2) and the host shortlist
     ds_tr = ds_of(F_tr, "train")
     tr = _run("train", st, ds_tr, [ds_tr], G)
     ps = tr["model_check"]["pass_signals"]
     assert tr["model_check"]["decision"] == "PASS" and "GR" in ps
     assert set(tr["configs"]) == {X.config_key(p) for p in X.GRID if p["signal"] in ps}   # failed signals never run
-    assert set(tr["grid_run"]) == set(tr["configs"]) and set(tr["hosts"]) == {"R0", "M1"}
+    assert set(tr["grid_run"]) == set(tr["configs"]) and set(tr["hosts"]) == {"R0"}
     assert all(e["gate_consistent"] for e in tr["configs"].values())
     assert tr["decision"]["verdict"] == "SHORTLISTED_EDGE" and tr["decision"]["shortlist_written"]
     assert len(tr["decision"]["ranked"]) == 2 and tr["decision"]["hosts"] == ["R0"]
@@ -590,7 +627,9 @@ def test_full_pipeline_and_every_refusal(st, small, monkeypatch):
     assert (st.sl / "X5.json").exists() and (st.sl / "X5.host-R0.json").exists()
     led = json.loads(st.ledger.read_text())
     assert sum(1 for v in led["configs"].values() if C.hypothesis_family(v["hypothesis"]) == "X5") == \
-        3 + 3 * len(ps)                                     # model check + 2 hosts + 3 gated per passing signal
+        2 + 2 * len(ps)                                     # model check + the R0 host + 2 gated per passing signal
+    assert not any(C.hypothesis_family(r["hypothesis"]) == "M1" or r["hypothesis"] == "X5.host-M1"
+                   for r in led["runs"])
     # PREREG frozen
     (st.out / "PREREG.md").write_text("# edited\n")
     with pytest.raises(X.X5Refused, match="changed"):

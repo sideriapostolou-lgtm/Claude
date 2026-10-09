@@ -582,16 +582,21 @@ def test_primary_fill_is_next_bar_exits(st):
 def test_underpowered_train_takes_the_fixed_path(st):
     """Review Y1-2: persistence PASS but no GOOD config powered -> GOOD(0) / T30 + HOST(T30), fixed a priori. VAL and
     TEST are run once each and reported only; CONFIRM is the judged look (only a structural REJECTED stops it)."""
-    tr = _run("train", st, mk("train", T0, 5, 25, 4, "F", 6))           # 90 observations; GOOD(0): 15 trades
+    ds_tr = mk("train", T0, 5, 25, 4, "F", 6)
+    tr = _run("train", st, ds_tr)                                         # 90 observations; GOOD(0): 15 trades
     assert tr["persistence"]["decision"] == "PASS"
     dec = tr["decision"]
     assert dec["verdict"] == "SHORTLISTED_FIXED" and dec["chosen"] == "good|th0|T30" and dec["shortlist_written"]
     assert json.loads((st.sl / "Y1.json").read_text())["hashes"] == [C.params_hash(Y.make_params("good", "T30", 0.0))]
     assert tr["overall"] == "PENDING VAL"
-    _check("val", st)
+    assert _check("val", st)["path"] == "fixed"
     with pytest.raises(Y.Y1Refused, match="no VAL result"):
         _check("test", st, env=ENV_ALL)
-    (st.out / "val.json").write_text(json.dumps({"stage": "val", "decision": {"verdict": "FAIL_VAL"}}))
+    # VAL: the good deployers' coins now FALL -> the candidate fails VAL, which the fixed path only reports
+    va = _run("val", st, mk("val", C.utc_ts("2026-10-05 02:00"), 5, 25, 2, "F", 7, drift=-0.01), history=[ds_tr])
+    assert set(va["configs"]) == {"candidate", "host"} and va["configs"]["candidate"]["n"] >= 5
+    assert va["decision"]["verdict"] == "FAIL_VAL" and "reported only" in va["decision"]["note"]
+    assert va["overall"] == "PENDING TEST"
     _check("test", st, env=ENV_ALL)                                       # a failed VAL does not stop the fixed path
     assert Y.overall_verdict(st.out) == "PENDING TEST"
     with pytest.raises(Y.Y1Refused, match="before TEST"):

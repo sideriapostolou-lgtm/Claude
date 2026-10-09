@@ -547,6 +547,33 @@ def test_data_gates_and_missing_prereg_refuse(st):
         _check("train", st)
 
 
+def test_matched_controls_draw_only_where_x2_could_trade(st, monkeypatch):
+    """Review X2-PLACEBO-NREF: the matched control is entry conditions 1-3 without the rank (PREREG 5, 10), so every
+    placebo and class-matched draw has >= REF_MIN reference coins at its OWN decision time, the drawn coin excluded."""
+    ds = market("train", T0, 300)
+    ds.split = "final_train"
+    ds.debug_only = True
+    seen: list[C.Result] = []
+    real = C.backtest
+
+    def spy(*a, **k):
+        r = real(*a, **k)
+        seen.append(r)
+        return r
+    monkeypatch.setattr(C, "backtest", spy)
+    X.run_stage("debug", out_dir=st.out, ds=ds, flow=st.flow, ledger_path=st.ledger, B=200, n_placebo=6, env={})
+    refs = X.references(ds)
+    n_draws = 0
+    for r in seen:
+        ref = refs[("breadth", float(r.meta["params"]["checkpoint_min"]))]
+        for draws in [r.placebo, *r.controls.values()]:
+            for d in draws.itertuples(index=False):
+                n_draws += 1
+                assert len(ref.pool(float(d.t_dec), d.mint)) >= X.REF_MIN, (d.mint, d.t_dec)
+                assert X.placebo_ok(ds.asof(d.mint, float(d.t_dec)))           # conditions 1-2 still hold
+    assert n_draws > 100
+
+
 def test_debug_stage_hides_returns(st):
     ds = market("train", T0, 300)
     ds.split = "final_train"

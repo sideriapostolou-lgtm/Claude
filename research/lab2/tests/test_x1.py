@@ -283,6 +283,22 @@ def test_gate_hidden_on_debug():
     assert g["decision"].startswith("HIDDEN") and "rho" not in g and "diagnostics" not in g
 
 
+def test_gate_hidden_reports_only_the_outcome_free_holder_split():
+    """Review X1-DEBUG-LABELS: on the debug split the gate reports holders known at n >= N_GATE vs unknown only. The
+    reputable / known-not-reputable split (and which wallet scores) is the sign of earlier coins' labels."""
+    o = _gate_obs(600, 0.5)
+    o.loc[o.index[:100], ["rep", "best_wallet"]] = None
+    o.loc[o.index[:100], ["group", "n_known"]] = ["unknown", 0]
+    g = X.gate_decision(o, hide=True)
+    assert "groups" not in g and "n_score_wallets" not in g and "reputable" not in json.dumps(g)
+    assert g["holder_split"] == {"known": 500, "unknown": 100} and g["n_obs"] == 500
+    flipped = o.assign(label=-o["label"], rep=-o["rep"],
+                       group=np.where(o["rep"].isna(), "unknown",
+                                      np.where(-o["rep"] > 0, "reputable", "known_not_reputable")),
+                       best_wallet=o["best_wallet"].where(o["best_wallet"].isna(), "W0"))
+    assert X.gate_decision(flipped, hide=True) == g                 # every label and skill flipped: same report
+
+
 def test_gate_obs_on_market(train_ds, train_reg):
     obs = X.gate_obs(train_ds, train_reg)
     assert len(obs) == int(train_reg.coins["label"].notna().sum())
@@ -504,6 +520,11 @@ def test_debug_stage_hides_returns(st, train_ds):
             assert k not in e
         assert e["returns"].startswith("hidden")
     assert doc["event_counts"]["eligible"] == 120
+    # review X1-DEBUG-LABELS: no reputable split; the per-config signal counts are flagged as label-dependent
+    assert "groups" not in doc["gate"] and set(doc["gate"]["holder_split"]) == {"known", "unknown"}
+    assert all(e.get("label_dependent_counts") for e in doc["configs"].values())
     md = (st.out / "debug.md").read_text()
     assert "Spearman" not in md and "mean" not in md.lower()
+    assert "reputable" not in md.split("## Persistence gate")[1].split("\n## ")[0]
+    assert "label-dependent" in md.split("## Configs")[1]
     assert all(r["debug"] for r in json.loads(st.ledger.read_text())["runs"])

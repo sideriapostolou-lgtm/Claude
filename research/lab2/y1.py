@@ -842,6 +842,7 @@ def check_prereqs(stage: str, out_dir: Path = OUT_DIR, *, flow: Path | None = No
     if tv not in SHORTLISTED:
         raise Y1Refused(f"TRAIN decision {tv}: Y1 stopped before VAL")
     fixed = tv == "SHORTLISTED_FIXED"
+    info["path"] = "fixed" if fixed else "selected"
     want = train["decision"].get("shortlist_hashes") or {}
     for h in (HYP, HYP_HOST):
         sl = _shortlist(h, shortlist_path)
@@ -1097,12 +1098,16 @@ def run_stage(stage: str, *, out_dir: Path = OUT_DIR, allow_partial: bool = Fals
             doc["decision"] = dec
         elif stage == "val":
             doc["decision"] = decide_val(evals["candidate"])
+            if info.get("path") == "fixed":
+                doc["decision"]["note"] = "fixed path (PREREG 9): VAL is reported only and never stops Y1"
         elif stage in ("test", "confirm"):
             val_t = _read_trades(out_dir, "val", "candidate")
             val_res = C.Result(trades=val_t, placebo=C._frame([]), stress={}, meta={}) if val_t is not None else None
             base = C.verdict_entry(results["candidate"], val=val_res, min_mean=PASS_MIN_MEAN, B=B)
             extras = y1_extras(evals["candidate"])
             doc["verdict"] = {"verdict": combine_verdict(base, extras), "base": base, "y1_extras": extras}
+            if stage == "test" and info.get("path") == "fixed":
+                doc["verdict"]["note"] = "fixed path (PREREG 9): TEST is reported only; CONFIRM is the judged look"
             doc["decision"] = doc["verdict"]
         elif stage == "final":
             doc["decision"] = final_decision(results["candidate"].trades)

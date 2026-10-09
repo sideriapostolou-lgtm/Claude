@@ -441,14 +441,15 @@ def gate_decision(obs: pd.DataFrame, B: int = GATE_BLOCK_B, hide: bool = False) 
     o = obs[obs["rep"].notna()] if len(obs) else obs
     n = int(len(o))
     out: dict[str, Any] = {"n_eligible": int(len(obs)), "n_obs": n,
-                           "groups": obs["group"].value_counts().to_dict() if len(obs) else {},
-                           "n_score_wallets": int(o["best_wallet"].nunique()) if n else 0,
+                           "holder_split": {"known": n, "unknown": int(len(obs)) - n},
                            "n_warmup_obs": int(o["warmup"].sum()) if n else 0,
                            "need": {"obs": GATE_MIN_OBS, "rho": GATE_MIN_RHO, "p_one_sided": GATE_MAX_P,
                                     "block_ci90_low": "> 0"}}
-    if hide:
+    if hide:    # review X1-DEBUG-LABELS: reputable vs not, and which wallet scores, are signs of earlier labels
         out["decision"] = "HIDDEN (debug split: no outcome statistics)"
         return out
+    out["groups"] = obs["group"].value_counts().to_dict() if len(obs) else {}
+    out["n_score_wallets"] = int(o["best_wallet"].nunique()) if n else 0
     x, y = o["rep"].to_numpy(float), o["label"].to_numpy(float)
     rho = spearman(x, y) if n else None
     p = None if rho is None else float(1.0 - NormalDist().cdf(rho * math.sqrt(max(n - 1, 1))))
@@ -489,6 +490,13 @@ def _lead_stats(t: pd.DataFrame, B: int) -> dict:
             "mean_without_top_lead": float(rest.mean()) if len(rest) else None}
 
 
+# On the debug split these per-config counts are still LABEL-DEPENDENT: a coin is a signal (or a control draw) only when
+# an earlier coin's resolved label made one of its holders reputable (or not), so they carry the sign of earlier
+# outcomes. They are reported for mechanics only and flagged as such (review X1-DEBUG-LABELS).
+LABEL_DEPENDENT_COUNTS = ("n", "n_coins", "n_leads", "n_placebo", "n_control", "n_warmup", "horizon_exits",
+                          "entries_per_day")
+
+
 def evaluate(res: C.Result, reg: Registry, *, B: int, hide: bool, n_trials_total: int | None) -> dict:
     """Per-config report. On the debug split: counts only (never returns, exit reasons or stress)."""
     t = res.trades
@@ -502,6 +510,7 @@ def evaluate(res: C.Result, reg: Registry, *, B: int, hide: bool, n_trials_total
             "trial": {k: res.meta.get(k) for k in ("config", "new_trial", "n_trials_total")}}
     if hide:
         base["returns"] = "hidden on the debug split (never choose parameters on FINAL data)"
+        base["label_dependent_counts"] = list(LABEL_DEPENDENT_COUNTS)    # review X1-DEBUG-LABELS
         return base
     base["reasons"] = t["reason"].value_counts().to_dict() if len(t) else {}
     d = C.describe(t, B=B, n_trials_total=n_trials_total)
@@ -1057,10 +1066,13 @@ def render_md(doc: Mapping[str, Any]) -> str:
               "statistic are hidden and no parameter was chosen here.**", ""]
     g = doc.get("gate")
     if g:
+        hsplit = g.get("holder_split") or {}
+        detail = (f"groups {g.get('groups')}; distinct scoring wallets {g.get('n_score_wallets')}; " if "groups" in g
+                  else f"holder known at n ≥ {N_GATE} / unknown: {hsplit.get('known')} / {hsplit.get('unknown')} "
+                       f"(outcome-free split only); ")
         L += ["## Persistence gate (PREREG 8)", "",
               f"- Eligible coins: {g['n_eligible']}; observations (≥ 1 early holder known at n ≥ {N_GATE}): {g['n_obs']} "
-              f"(need ≥ {GATE_MIN_OBS}); groups {g.get('groups')}; distinct scoring wallets {g.get('n_score_wallets')}; "
-              f"warm-up observations {g.get('n_warmup_obs')}.",
+              f"(need ≥ {GATE_MIN_OBS}); {detail}warm-up observations {g.get('n_warmup_obs')}.",
               f"- Decision: **{g['decision']}**."]
         if g.get("rho") is not None:
             L.append(f"- Spearman ρ = {g['rho']:+.4f}, one-sided p = {g['p_one_sided']:.4g}, 6-h block 90% CI "
@@ -1078,7 +1090,11 @@ def render_md(doc: Mapping[str, Any]) -> str:
     if cf:
         L += ["## Configs", ""]
         if doc.get("debug_only"):
-            L += ["| config | trades | coins | lead wallets | warm-up trades | placebo trades | control trades | "
+            L += ["**Every count in this table is label-dependent** (review X1-DEBUG-LABELS): a coin is a signal, or a "
+                  "control draw, only when earlier coins' resolved labels made one of its holders reputable (or not), "
+                  "so these counts carry the sign of earlier outcomes. Mechanics only; no parameter is chosen from "
+                  "them.", "",
+                  "| config | trades | coins | lead wallets | warm-up trades | placebo trades | control trades | "
                   "horizon exits | entries/day |", "|---|---:|---:|---:|---:|---:|---:|---:|---:|"]
             for k, e in cf.items():
                 epd = (doc.get("entries_per_day") or {}).get(k)

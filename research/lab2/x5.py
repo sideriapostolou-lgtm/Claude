@@ -14,7 +14,9 @@ own trailing 24 hours, and lets the host's FIRST entry signal through only in an
 * ``SV`` survival share: share of the graduates whose g + 30 min fell in the last 2 h that were ``alive`` then.
 
 ON iff S(s) >= the q-quantile of S at the 96 previous 15-minute points; OFF / UNKNOWN -> the coin is skipped.
-Hosts: ``R0`` (g1.host_r0, PLAN 4.1 random entry into alive coins) and ``M1`` (m1.strategy at m = 1, rhythm+prec).
+Host: ``R0`` (g1.host_r0, PLAN 4.1 random entry into alive coins). The M1 host (m1.strategy at m = 1, rhythm+prec) was
+dropped in review X5-M1HOST: it was M1's own candidate rule, so an X5 look at a sealed split was a second, unguarded look
+at M1 (PREREG 4). M1's code never runs under X5; ``m1`` is imported for its Spearman helper only.
 Prior (PREREG 1): weak. Wave 1 found the hourly ICC of returns ~0; the likely outcome is NO EDGE, at best a veto.
 
 No lookahead
@@ -66,12 +68,12 @@ if str(HERE) not in sys.path:
     sys.path.insert(0, str(HERE))
 import common as C  # noqa: E402
 import g1  # noqa: E402  (the R0 host, verbatim)
-import m1  # noqa: E402  (the M1 host, verbatim)
+import m1  # noqa: E402  (m1.spearman only: M1's strategy never runs under X5, review X5-M1HOST)
 
 VERSION = "x5-v1"
 OUT_DIR = HERE / "X5"
 HYP, HYP_MC = "X5", "X5-modelcheck"
-HOST_HYP = {"R0": "X5.host-R0", "M1": "X5.host-M1"}
+HOST_HYP = {"R0": "X5.host-R0"}             # the M1 arm was dropped (review X5-M1HOST, PREREG 4)
 STAGES = ("train", "val", "test", "confirm", "final")
 STAGE_SPLIT = {"debug": "final_train", "train": "train", "val": "val", "test": "test", "confirm": "confirm",
                "final": "final"}
@@ -90,8 +92,8 @@ SLACK_S = 6 * 3600.0         # a coin created before the pool start can graduate
 AV_MIN_AGE_S = 600.0         # AV counts bars starting at age >= 10 min (BOOST and the first-minute pumps excluded)
 SV_AGE_S = 1800.0            # SV: alive at age 30 min
 SV_MIN_RECORDS = 10          # SV is UNKNOWN with fewer records in the window
-Q_BY_HOST = {"R0": (0.5, 0.8), "M1": (0.5,)}
-HOST_ORDER = ("R0", "M1")
+Q_BY_HOST = {"R0": (0.5, 0.8)}
+HOST_ORDER = ("R0",)
 LABEL_QS = (0.5, 0.8)        # every host trade is labelled at both cuts
 FILL = C.FillConfig(exit_delay_bars=1)   # worst fills; stops / time exits fill on the NEXT bar at min(open, low)
 STRESS = {"costs_x1.5": FILL.stressed(1.5), "rent_0.22": dataclasses.replace(FILL, rent_usd=0.22),
@@ -114,8 +116,7 @@ CONTRAST_B = 2000
 PROCEED_VAL = ("SELECTED", "SELECTED_UNDERPOWERED", "VETO_SELECTED")
 
 R0_HOST = dict(g1.R0_PARAMS)
-M1_HOST = m1.make_params(1.0, "rhythm+prec")
-HOST_PARAMS = {"R0": R0_HOST, "M1": M1_HOST}
+HOST_PARAMS = {"R0": R0_HOST}
 FILL_DESC = "common.FillConfig(exit_delay_bars=1): worst, latency 30 s, entry-bar stop checks, next-bar exits"
 
 FIXED = {
@@ -124,6 +125,7 @@ FIXED = {
     "gate": "ON iff S(s) >= q-quantile of the 96 previous points; filter on the host's first entry; OFF/UNKNOWN skip",
     "own_coin": "excluded from every window", "history_splits": {k: list(v) for k, v in HISTORY_SPLITS.items()},
     "gr_pool": "tradeable graduates created before the split's end (structure)", "fill": FILL_DESC,
+    "placebo": "random alive coins at +-120 s whose regime state is known (ON or OFF, own coin removed) at the draw",
 }
 
 
@@ -139,7 +141,8 @@ def host_config(host: str) -> dict:
 
 
 GRID = [make_params(h, s, q) for h in HOST_ORDER for s in SIGNALS for q in Q_BY_HOST[h]]
-assert len(GRID) == 9 and len(GRID) + len(HOST_ORDER) + 1 <= 12      # PREREG 6: 12 trials in all
+GRID_HASHES = frozenset(C.params_hash(p) for p in GRID)
+assert len(GRID) == 6 and len(GRID) + len(HOST_ORDER) + 1 == 8       # PREREG 6: 8 trials in all
 MC_PARAMS = {"version": VERSION, "test": "model_check", "label": "realized 60-min mid change at the R0 decision",
              "statistic": "Spearman(pct, label)", "rule": "PASS iff rho > 0 with >= 200 observations",
              "min_obs": MC_MIN_OBS, "signals": list(SIGNALS), "fixed": FIXED, "r0": R0_HOST}
@@ -163,8 +166,10 @@ def state_col(signal: str, q: float) -> str:
 
 
 def host_fn(host: str) -> Callable:
-    """The host strategy (looked up at call time, so the hosts are always g1's / m1's current code)."""
-    return g1.host_r0 if host == "R0" else m1.strategy
+    """The host strategy (looked up at call time, so the host is always g1's current code)."""
+    if host != "R0":
+        raise ValueError(f"{host!r} is not an X5 host (PREREG 4; the M1 arm was dropped in review X5-M1HOST)")
+    return g1.host_r0
 
 
 def r0_eligible(snap: C.AsOf) -> bool:
@@ -173,10 +178,23 @@ def r0_eligible(snap: C.AsOf) -> bool:
 
 
 def placebo_spec(host: str) -> dict:
-    """PREREG 4: R0 draws random alive coins; M1 uses M1's own control (allowed class, alive, class-matched)."""
-    if host == "R0":
-        return {"eligible": r0_eligible, "strata": None}
-    return {"eligible": m1.placebo_ok, "strata": m1.placebo_stratum}
+    """PREREG 4: the host's placebo universe (R0: random alive coins)."""
+    if host != "R0":
+        raise ValueError(f"{host!r} is not an X5 host (PREREG 4)")
+    return {"eligible": r0_eligible, "strata": None}
+
+
+def placebo_eligible(regime: "Regime", p: Mapping[str, Any]) -> Callable[[C.AsOf], bool]:
+    """PREREG 4: the host's placebo universe AND a known regime state at the draw's own cutoff (the drawn coin's records
+    removed, exactly as for a trade). The gated rule never enters in an UNKNOWN regime, so the control is a random-STATE
+    entry among the regimes the rule can see (review X5-PLACEBO-UNKNOWN), not a draw from the warm-up."""
+    base, sig = placebo_spec(p["x5_host"])["eligible"], p["signal"]
+
+    def ok(snap: C.AsOf) -> bool:
+        return regime.values(sig, int(math.floor(float(snap.tau) / STEP_S)), snap.mint) is not None and base(snap)
+
+    ok.__name__ = f"x5_placebo_known_{sig}"
+    return ok
 
 
 def make_strategy(regime: "Regime") -> Callable:
@@ -837,6 +855,14 @@ def _shortlist(h: str, shortlist_path: Path | None) -> dict | None:
     return _read_json(Path(shortlist_path or C.shortlist_dir()) / f"{h}.json")
 
 
+def _on_grid(sl: Mapping[str, Any]) -> bool:
+    """Every shortlisted config is a config of the registered grid (a stale shortlist, e.g. an M1-hosted config of the
+    dropped arm, never reaches VAL or a sealed split)."""
+    cfgs = list(sl.get("configs") or [])
+    return bool(cfgs) and all(isinstance(c, Mapping) and c.get("x5_host") in HOST_ORDER and C.params_hash(c) in
+                              GRID_HASHES for c in cfgs) and set(sl.get("hashes") or []) <= GRID_HASHES
+
+
 def stage_configs(stage: str, out_dir: Path, shortlist_path: Path | None = None) -> list[tuple[str, str, dict]]:
     """[(role, hypothesis, params)]: hosts + the grid (debug / train; TRAIN drops model-check failures later), the
     shortlist in rank order + its hosts (val), the VAL candidate + its host (test / confirm / final)."""
@@ -844,7 +870,7 @@ def stage_configs(stage: str, out_dir: Path, shortlist_path: Path | None = None)
         return [(f"host-{h}", HOST_HYP[h], host_config(h)) for h in HOST_ORDER] + \
                [(config_key(p), HYP, p) for p in GRID]
     sl = _shortlist(HYP, shortlist_path)
-    if not sl:
+    if not sl or not _on_grid(sl):
         return []
     if stage == "val":
         cfgs = list(sl["configs"])
@@ -902,6 +928,10 @@ def check_prereqs(stage: str, out_dir: Path = OUT_DIR, *, flow: Path | None = No
         raise X5Refused("no VAL shortlist for X5 (written by a complete --stage train)")
     if list(sl.get("hashes", [])) != list(train["decision"].get("shortlist_hashes", [])):
         raise X5Refused("the X5 shortlist on disk differs from the one TRAIN wrote")
+    off = [h for h in train["decision"].get("hosts", []) if h not in HOST_ORDER]
+    if not _on_grid(sl) or off:
+        raise X5Refused(f"the X5 shortlist is not in the registered grid (hosts {off or 'ok'}; PREREG 6: R0 only, the "
+                        "M1 arm was dropped in review X5-M1HOST): re-run --stage train")
     for h in train["decision"].get("hosts", []):
         hs = _shortlist(HOST_HYP[h], shortlist_path)
         if not hs or hs.get("hashes") != [C.params_hash(host_config(h))]:
@@ -992,7 +1022,7 @@ def _gated_run(p: Mapping[str, Any], split: str, ds: C.Dataset, regime: Regime, 
                n_placebo: int) -> C.Result:
     ps = placebo_spec(p["x5_host"])
     return C.backtest(make_strategy(regime), split, p, hypothesis=HYP, ds=ds, cfg=FILL, placebo=True,
-                      n_placebo=n_placebo, placebo_eligible=ps["eligible"], placebo_strata=ps["strata"],
+                      n_placebo=n_placebo, placebo_eligible=placebo_eligible(regime, p), placebo_strata=ps["strata"],
                       stress=STRESS, declarations=DECL, ledger_path=ledger_path, shortlist_path=shortlist_path)
 
 

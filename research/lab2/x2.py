@@ -102,7 +102,8 @@ FIXED = {
     "version": VERSION, "score": "breadth", "win_bars": WIN_BARS, "agent_min_sol": AGENT_MIN_SOL,
     "ref_window_s": REF_WINDOW_S, "ref_min": REF_MIN, "top_pct": TOP_PCT, "gate": "alive & netflow > 0",
     "stop_pct": STOP_PCT, "exit_by_age_s": EXIT_BY_AGE_S, "fade_bars": FADE_BARS,
-    "fade_breadth_frac": FADE_BREADTH_FRAC, "size_usd": SIZE_USD, "placebo": "random alive & netflow > 0, +-120 s",
+    "fade_breadth_frac": FADE_BREADTH_FRAC, "size_usd": SIZE_USD,
+    "placebo": "random alive & netflow > 0 & n_ref >= ref_min at the draw (entry conditions 1-3), +-120 s",
     "fill": "common.FillConfig(exit_delay_bars=1): worst, latency 30 s, entry-bar exits, next-bar exits",
 }
 
@@ -328,16 +329,33 @@ def strategy_for(ds: C.Dataset, refs: Mapping[tuple[str, float], Reference] | No
 
 
 def placebo_ok(snap: C.AsOf) -> bool:
-    """Matched random control universe: the entry gate without the rank (alive and net flow > 0)."""
+    """Entry conditions 1-2 (alive and net flow > 0). The matched control adds condition 3: :func:`placebo_eligible`."""
     f = features(snap)
     return bool(f["ok"] and f["alive"] and f["netflow"] is not None and f["netflow"] > 0)
+
+
+def placebo_eligible(ref: Reference):
+    """Matched random control universe (PREREG 10): entry conditions 1-3 without the rank -- alive, net flow > 0 and
+    >= REF_MIN reference coins at the draw's OWN decision time, the drawn coin excluded (review X2-PLACEBO-NREF: n_ref
+    is a market-activity condition, so a control drawn from quiet hours X2 can never trade would mix the rank with
+    the regime)."""
+
+    def ok(snap: C.AsOf) -> bool:
+        return len(ref.pool(snap.t, snap.mint)) >= REF_MIN and placebo_ok(snap)
+
+    ok.__name__ = f"placebo_ok_nref_c{ref.c_min:g}"
+    return ok
 
 
 def placebo_stratum(snap: C.AsOf) -> str | None:
     return x2_class(snap)
 
 
-PLACEBO_CONTROLS = {"class_matched": {"eligible": placebo_ok, "strata": placebo_stratum}}
+def placebo_spec(strat: "X2Strategy", p: Mapping[str, Any]) -> tuple[Any, dict]:
+    """(eligible, placebo_controls) for ``common.backtest`` on config ``p``: the matched control and the class-matched
+    diagnostic control, both on entry conditions 1-3 at the config's checkpoint reference."""
+    ok = placebo_eligible(strat.refs[float(p["checkpoint_min"])])
+    return ok, {"class_matched": {"eligible": ok, "strata": placebo_stratum}}
 
 
 # =========================================================================== dose-response gate (PREREG 8)
@@ -883,9 +901,10 @@ def run_stage(stage: str, *, out_dir: Path = OUT_DIR, allow_partial: bool = Fals
         # ---- the configs
         results: dict[str, C.Result] = {}
         for role, h, p in run_cfgs:
+            pl_ok, pl_controls = placebo_spec(strat, p)
             results[role] = C.backtest(strat, split, p, hypothesis=h, ds=ds, cfg=MAIN_CFG, placebo=True,
-                                       n_placebo=n_placebo, placebo_eligible=placebo_ok,
-                                       placebo_controls=PLACEBO_CONTROLS, stress=STRESS, declarations=DECL,
+                                       n_placebo=n_placebo, placebo_eligible=pl_ok,
+                                       placebo_controls=pl_controls, stress=STRESS, declarations=DECL,
                                        ledger_path=ledger_path, shortlist_path=shortlist_path)
         n_tr = C.n_trials(ledger_path)
         evals = {role: evaluate(r, B=B, hide=debug, n_trials_total=n_tr) for role, r in results.items()}

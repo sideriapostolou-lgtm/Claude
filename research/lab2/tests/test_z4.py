@@ -552,9 +552,26 @@ def test_provisional_train_never_unlocks_val(st):
         _run("train", st, ds, _skip_coverage=False)
     doc = _run("train", st, ds, _skip_coverage=False, allow_partial=True)
     assert doc["provisional"] and (st.out / "train_prelim.json").exists() and not (st.out / "train.json").exists()
-    assert not (st.out / "prereg.lock").exists() and not (st.sl / "Z4.json").exists()
+    assert (st.out / "prereg.lock").exists() and not (st.sl / "Z4.json").exists()   # any TRAIN run locks
     with pytest.raises(Z.Z4Refused, match="no TRAIN result"):
         _check("val", st)
+    # review Z-ALL-1: the provisional run showed TRAIN returns, so PREREG.md is frozen from it on
+    (st.out / "PREREG.md").write_text("# edited after the provisional run\n")
+    with pytest.raises(Z.Z4Refused, match="changed"):
+        _check("train", st)
+    with pytest.raises(Z.Z4Refused, match="changed"):
+        _run("train", st, ds, _skip_coverage=False, allow_partial=True)
+
+
+def test_prelim_without_lock_still_freezes_prereg(st):
+    """review Z-ALL-1: a train_prelim.json with no prereg.lock (written before the lock rule) pins its PREREG sha."""
+    (st.out / "train_prelim.json").write_text(json.dumps({"stage": "train", "provisional": True,
+                                                           "prereg_sha256": "0" * 64}))
+    with pytest.raises(Z.Z4Refused, match="changed"):
+        _check("train", st)
+    (st.out / "train_prelim.json").write_text(json.dumps({"stage": "train", "provisional": True,
+                                                           "prereg_sha256": Z._sha(st.out / "PREREG.md")}))
+    assert _check("train", st)["prereg_locked"] is True
 
 
 def test_momentum_pipeline_and_every_refusal(st, monkeypatch):

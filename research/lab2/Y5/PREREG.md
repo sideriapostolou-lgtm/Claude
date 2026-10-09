@@ -96,7 +96,10 @@ in the ASIA block.
   (a non-debug M1 run on it, or an M1 one-shot session), or when **M1's own written decisions forbid M1 that stage**
   (an official M1 TRAIN decision other than SHORTLISTED; an M1 VAL decision that stops M1 before TEST; an M1 TEST that
   closes M1's CONFIRM). Otherwise the stage refuses and Y5 waits for M1. TRAIN is shared search data and is not
-  gated. R30 pairs are never gated.
+  gated. R30 pairs are never gated. Each stage document records which of the two conditions let the pair run
+  (`m1_host_gate`), so that a later M1 TRAIN re-run after a data correction (the one way M1 can reopen a stage) is
+  visible against it. `x5.py` runs the same host under its own family (`X5.host-M1`) and is not covered by this
+  rule; that is X5's to fix.
 - M1's entries mostly come from one operator cluster (M1 PREREG §13). A calendar gate on M1 therefore largely measures
   one operator's daily schedule. Y5 keeps M1's cluster checks for M1-host candidates (§9, Y5.3).
 
