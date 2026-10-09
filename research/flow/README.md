@@ -17,9 +17,12 @@ belongs to another collector.
 | `sql/b2.sql` | B2 server-side PumpSwap aggregates: clock-minute bars, AGENT candidates and the first 120/300 s after graduation. One row per pool per chain hour. |
 | `sql/b3.sql` | B3 per-(wallet, coin) position summaries, packed one row per coin. |
 | `sql/raw.sql` | Raw trades from the curve and PumpSwap with tx signatures and full fields, packed per coin. Used by validation. |
-| `sql/b1.sql` | B1 raw trades for P4 in slim tuples: no tx signature, wallets as `cityHash64` plus a per-coin dictionary. |
+| `sql/b1c.sql` | B1 raw trades for P4b: one row per **piece** (a coin's window cut to a ≤ 30-minute slab), compact 43-byte tuples, no wallet dictionary, no trade cap, an overflow guard. |
+| `b1c.py` | P4b: per-minute trade estimator, sweep packer, unit runner (split on error, resume from the residual), decoder and B1 consolidation. |
+| `run_b1.sh` | One command: waits for the running P1, finishes discovery down to TRAIN, then B1 TRAIN → VAL → TEST. |
+| `sql/b1.sql` | Old P4 coin-batch template (slim tuples + wallet dictionary). Not run: P4 cannot reach the 95 % coverage gate. |
 | `sql/slot_map.sql` | Slot ↔ time anchors from `solana.blocks`, at 15-minute granularity. |
-| `backfill.py` | Resumable phases P1-P4. It checkpoints after every query and consolidates the results to Parquet. |
+| `backfill.py` | Resumable phases P1-P3 and P4b. It checkpoints after every query and consolidates the results to Parquet. |
 | `features.py` | Offline helpers: AGENT detection, B2 merging across chunks, and price repair. |
 | `validate.py` | Gates V0-V7. It writes `FLOW/VALIDATION.md` and `FLOW/validation.json`. |
 | `tests/` | Offline pytest. The fixtures are real CryptoHouse rows from 2026-10-08, plus the matching swap-api launch trades. |
@@ -38,9 +41,16 @@ python research/flow/backfill.py --phase P2 --days 21 --out $FLOW
 # P3: B3 wallet summaries for every graduate found by P1/P2.
 python research/flow/backfill.py --phase P3 --out $FLOW [--b3-batch 12]
 
-# P4: B1 raw non-dust trades (>= 0.01 SOL), [created, g + 120 min], for tradeable non-factory coins
-#     (SOL-quoted, not Mayhem, graduated more than 5 s after creation).
-python research/flow/backfill.py --phase P4 --out $FLOW [--raw-batch 4]
+# P1 down to an absolute start (hour-aligned), never past --until (hours outside every split are skipped)
+python research/flow/backfill.py --phase P1 --since 2026-10-01 --until 2026-10-09 --out $FLOW
+python research/flow/backfill.py --check-discovery --since 2026-10-01 --until 2026-10-09 --out $FLOW  # exit 0 = done
+
+# P4b: B1 raw non-dust trades (>= 0.01 SOL) over [c_ts, g + 120 min) for the lab2 S1 universe, TRAIN first.
+python research/lab2/b1_select.py                      # FLOW/b1_select.json (re-run after every consolidation)
+python research/flow/backfill.py --phase P4b --splits train,val,test --out $FLOW [--dry-run] [--retry-errors]
+
+# Everything above in one command (waits for a running P1/P2/P3; see "B1 (P4b)" below)
+bash research/flow/run_b1.sh
 
 # Rebuild the Parquet tables from the raw chunks. Offline; no queries.
 python research/flow/backfill.py --consolidate --out $FLOW
@@ -53,8 +63,12 @@ python -m pytest -q research/flow/tests
 ```
 
 - **Stopping and resuming.** Every phase can be stopped at any time with Ctrl-C, `--max-minutes` or
-  `--max-queries`. A rerun continues from `FLOW/state.json`. Each query result is written to
-  `FLOW/raw/<kind>/*.json.gz` before the next query is sent.
+  `--max-queries`. A rerun continues from `FLOW/state.json` (P1-P3) or `FLOW/state_b1.json` (P4b). Each query
+  result is written to `FLOW/raw/<kind>/*.json.gz` before the state is updated and before the next query is sent.
+- **One process per state file.** P1-P3 hold `FLOW/state.lock` and P4b holds `FLOW/state_b1.lock`; a second process
+  on the same state file waits (each one rewrites its state file whole). P1 and P4b may run together.
+- **Consolidation is atomic.** Every Parquet table is written to a temporary file and moved into place
+  (`os.replace`) under an exclusive `flock` on `FLOW/consolidate.lock`, so readers never see half a table.
 - **The query log is the budget.** `FLOW/ch_query_log.jsonl` holds one line per request, whether it
   succeeded or failed, with its timing, rows read and error code. Restarts and parallel processes (the
   backfill, `validate.py`, the CLI) read this log, so they respect the same rolling-hour budget. Set
@@ -83,7 +97,9 @@ and chunks are split automatically when they do.
 | `curve.sql` | 1 chain hour, plus a 30-minute lookback | 33 s / 60 s | ~150-300M rows read; 7 of 46 timed out and were split |
 | `b2.sql` | 1 chain hour, ~160-260 active pools | 23 s / 60 s | One query per hour since the batch cap was raised to 260; 5 of 41 timed out and were split |
 | `b3.sql` (P3 test) | 6 busy coins, [created, g + 60 min] | 8.7 s | ~10k wallets ≥ 0.01 SOL; just under the 1 MB cap. P3 now keeps wallets ≥ 0.05 SOL |
-| `b1.sql` (P4 test) | 3 organic coins, [created, g + 120 min] | 22 s | 7,721 non-dust trades; just under the 1 MB cap, so ~3-4 coins per query |
+| `b1.sql` (P4 test) | 3 organic coins, [created, g + 120 min] | 22 s | 7,721 non-dust trades: 1.07 MB of **JSON**, ~0.58 MB native. The 1 MB cap counts native (in-memory) bytes, not JSON |
+| `b1.sql` (P4 sizing, 2026-10-09) | 13 coins, 2.75 h of chain time | 60.4 s **timeout** | 243 M rows read; P4 cannot work at 3-4 M rows/s |
+| `b1c.sql` tail (M2 / M4, 2026-10-09) | one 30-minute slab, 12 / 23 pieces | 15.0 s / 4.9 s | 52-53 M rows read; 17,969 / 19,937 trades = 867 / 994 kB native (passed) |
 | `raw.sql` (validation) | ~8 coins × 2 minutes | 3-47 s | |
 | `slot_map.sql` | 18 days | ~1 s | |
 
@@ -99,7 +115,12 @@ and chunks are split automatically when they do.
   | P1, 7 days | ~520 | ~5.7 (~4.6 still to go) |
   | P2, 21.8 days in total | ~1,600 | ~18 |
   | P3, 21.8 days (60-minute horizon, ~12 coins/query) | ~2,400 | ~28 |
-  | P4, 21.8 days (~28% of graduates are tradeable non-factory, ~3.5 coins/query) | ~2,300 | ~27 |
+  | P4b (B1), TRAIN 10-01 → 10-05 (S1 universe, compact tuple, ~2.8 queries per hour of coin creation) | ~311 (230-360) | ~3.5 |
+  | P4b (B1), VAL 10-05 → 10-06 12:00 | ~86 | ~1 |
+  | P4b (B1), TEST 10-06 12:00 → 10-07 19:37 (418 coins, 2.31 M trades; `--dry-run`: 117 units) | ~123 | ~1.4 |
+
+  The old P4 (coin batches of 4) needed ~7.5 queries per chain hour, ~1,290 for TRAIN-TEST, and timed out on every
+  query at 3-4 M rows/s. It is disabled (`--phase P4` exits with code 2).
 
 - `FLOW/pilot_report.json` and `manifest.json` have the measured numbers.
 
@@ -216,27 +237,72 @@ signer. Some are pooled program accounts: `ARu4n5mF…` signs with a different u
 first-5-minute top-10 buyers of 227 of 1,444 pools. Exclude such accounts from registries, repeat-buyer counts
 and orphan/TRANSFEREE logic, or attribute trades to the fee payer.
 
-### `b1_trades.parquet` (P4) and `wallet_dict.parquet`
+### B1 (P4b): `b1_trades.parquet`, `b1_coins.parquet`, `b1_manifest.json`
 
-`b1_trades.parquet` comes from `sql/b1.sql`: non-dust trades (≥ 0.01 SOL) over [created, g + 120 min] for
-non-factory coins. One row per trade:
+**Who reads B1.** lab2 S1 (checkpoints g + 6 … g + 120 min) and D1 (decisions at tau in [g + 600, g + 7180], flow
+exits up to g + 7200). Both refuse tau ≥ g + 7200 and need every trade from creation (curve roles, insider ledgers,
+orphan sells).
+
+**Selection** (`research/lab2/b1_select.py` → `FLOW/b1_select.json`): the S1 universe of each split = lab2 usable
+(SOL-quoted, not Mayhem, virtual reserve known, B2 window complete under `completeness_from_flow`) ∧ creation
+scanned ∧ `created_exact` ∧ `grad_delay_s` > 5. It is exactly the denominator of `s1.coverage_counts` and of
+`d1.b1_coverage` (D1's ORGANIC universe lies inside it). Window [c_ts, g_ts + 7200). Every filter is a
+graduation-time fact. Counts and windows only; re-run it after every consolidation.
+
+**How P4b fetches** (`b1c.py`, `sql/b1c.sql`):
+
+- **Estimate** trades per (coin, clock minute) offline: pool = B2 `n_buys + n_sells − n_dust` (exact on the pilot);
+  curve = 0.95 × (`l_n_buys + l_n_sells`) over [c, c + 120 s) and the rest of 0.95 × (`curve_n_buys +
+  curve_n_sells`) spread over [c + 120, g). Slab totals were within 1-2.5 % of the truth.
+- **Pack**: sweep the minutes in time order, every active coin in mint order, 43 B per estimated trade + 60 B per
+  piece with trades; close the unit before it would pass 920 kB or when its span reaches 30 min. Each coin's window
+  becomes consecutive pieces with no gap and no overlap. Units run split by split in the order given (TRAIN first).
+- **Packing is on the residual** (window minus pieces already fetched, from `state_b1.json`), so a restart, a
+  `--retry-errors` or a newly selected coin only fetches what is missing.
+- **Errors**: `ResultTooLarge` splits the unit at its time midpoint (inside one minute: by coin halves).
+  `QueryTimeout` splits at the 15-minute anchor nearest the middle; a unit inside one anchor is retried later (3
+  times per coin, then the coin is an error: splitting cannot reduce the rows read). `n_overflow > 0` marks the coin.
+- **Cost**: a 30-minute slab reads ~53 M rows (5-18 s measured, ≤ 38 s at 2.9 M rows/s); ~2.8 queries per hour of
+  coin creation. `--dry-run` prints the plan (units, estimated MB and trades per split) without a query.
+
+**Compact tuple** (43 B; the old one was 68 B): `slot` UInt32, `tx_idx` UInt16, `pix` UInt8, `ix` UInt8,
+`ts − lo` UInt16, `venue + 2·is_buy` UInt8, `wallet_h` UInt64, `usol` µSOL UInt32, `tok` whole tokens UInt32,
+`x0` Float32, `y0` whole tokens UInt32, `fees` µSOL UInt32, `virt` k-lamports UInt32. Checked against the
+old-format pilot rows of the same trades: keys, ts, venue, side and wallet identical; usol and fees ≤ 1e-6 SOL,
+tok and y0 ≤ 0.5 token, x0 relative ≤ 1e-7 (`tests/test_b1c.py`).
+
+**`b1_trades.parquet`**: same schema as before, one row per non-dust trade (≥ 0.01 SOL), **complete coins only**
+(fetched pieces cover [c_ts, g_ts + 7200)), sorted by mint then (slot, tx_idx, pix, ix), duplicate keys dropped:
 
 | Columns | Meaning |
 |---|---|
 | `slot`, `tx_idx`, `pix`, `ix` | Total chain order and unique key. |
 | `ts`, `mint` | |
 | `venue` | 0 = curve, 1 = PumpSwap. |
-| `is_buy`, `wallet_h`, `usol` | `usol` is in lamports, user-side. |
-| `tok` | Raw units, 6 decimals. |
+| `is_buy`, `wallet_h`, `usol` | `wallet_h` = `cityHash64` of the raw 32-byte user key (uint64). `usol` in lamports, user-side (µSOL precision). |
+| `tok` | Raw units, 6 decimals (whole-token precision). |
 | `x0`, `y0` | Reserves **before** the trade. Curve: virtual SOL/token. PumpSwap: real quote/base. |
-| `fees` | Lamports: protocol + creator + LP. |
-| `virt_ksol` | PumpSwap virtual quote reserve / 1000 lamports, on buys only. |
+| `fees` | Lamports: protocol + creator + LP (µSOL precision). |
+| `virt_ksol` | PumpSwap virtual quote reserve / 1000 lamports in force before each pool trade, buys and sells. |
 | `src` | 0 = CryptoHouse. |
 
-**Price before the trade:** (x0 + virt_ksol × 1000) / y0 (lamports). `virt_ksol` is the virtual reserve in force
-before each PumpSwap trade, buys and sells (patched b1.sql). Fills (PLAN §3.3) use X = x + v, not x.
+- **Price before the trade:** (x0 + virt_ksol × 1000) / y0 (lamports per raw token). Fills use X = x + v.
+- **Virtual reserve at piece starts.** The SQL carries `virt` along each piece's pool chain, so pool sells before a
+  piece's first buy come back 0; consolidation forward-fills them from the coin's previous value (19 of 16,327
+  pool trades in M2; the error is far below 0.1 % of price). Rows before the coin's first non-zero value stay 0.
+- **No `wallet_dict.parquet`.** S1 and D1 hash pooled accounts locally (`s1.pooled_hashes`), so they never needed it.
+- **No trade cap.** `s1.B1_MAX_TRADES` / `d1.B1_MAX_TRADES` are `None` (the old 20,000 cap skipped the late
+  checkpoints of the 3.4 % busiest coins, a non-random subset).
 
-`wallet_dict.parquet` maps `wallet_h` → base58 for every wallet that moved ≥ 1 SOL in a coin.
+**`b1_coins.parquet`**: one row per fetched or selected coin: `split`, `selected`, `lo`/`hi` (the window),
+`complete`, `missing_s`, `pieces` (JSON list of the fetched [lo, hi) intervals), `n_pieces`, `n_chunks`,
+`overflow_pieces`, `n_trades`, `n_pool_trades`, `n_dup_dropped`, `n_virt_ffilled`, and the **B1 = B2 gate**:
+B1 pool trades per clock minute vs B2's non-dust count over the minutes fully inside [g, g + 7200)
+(`gate_b1_pool`, `gate_b2_pool`, `gate_abs_diff`, `gate_ok` = difference ≤ 0.5 %; expected exact).
+
+**`b1_manifest.json`** (written at every consolidation): per split, selected / complete coins and the fraction
+(S1 and D1 need ≥ 95 %), incomplete coins, coins with overflow, gate flags, trades. **`b1_progress.json`** (written
+by each P4b run): fetched / errors / units left per split before and after the run, and the run's query counts.
 
 `sql/raw.sql` has the same selection, with tx signatures, base58 wallets and full fee fields. It is used by
 `validate.py` and by ad-hoc pulls.
@@ -246,7 +312,11 @@ before each PumpSwap trade, buys and sells (patched b1.sql). Fills (PLAN §3.3) 
 | File | Contents |
 |---|---|
 | `manifest.json` | Coverage: graduates, with creation, with pool, Mayhem, curve and B2 hours done and their spans, B3/B1 coins, errors, and query stats by tag. |
-| `state.json` | Resumable state: done hours and parts, pools done per B2 hour, and errors. |
+| `state.json` | Resumable state of P1-P3: done hours and parts, pools done per B2 hour, and errors. |
+| `state_b1.json` | Resumable state of P4b: fetched intervals per coin (`b1c.cov`), coin errors (`b1c.err`), timeout counts, and one record per unit (estimated vs actual bytes, exec time). |
+| `b1_select.json` | The P4b selection (lab2 S1 universe per split, windows, counts). |
+| `b1_manifest.json`, `b1_progress.json`, `run_b1.log` | B1 coverage per split, P4b run progress, the `run_b1.sh` log. |
+| `consolidate.lock`, `state.lock`, `state_b1.lock`, `run_b1.lock` | `flock` files (see "Running"). |
 | `slotmap.json` | Slot anchors per 15 minutes. |
 | `raw/<kind>/*.json.gz` | The verbatim query results with their parameters. They are append-only, and the source of truth for `--consolidate`. |
 | `ch_query_log.jsonl` | The query log. |
