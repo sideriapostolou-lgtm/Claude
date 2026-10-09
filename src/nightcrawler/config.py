@@ -395,6 +395,18 @@ class Settings:
     polydesk_live_total_loss_usd: float = _f(10.0, "usd", "Polymarket desk live: after losing this much in total the "
                                              "desk switches itself back to paper for good (only the owner can "
                                              "switch it live again)", lo=1, hi=100_000)
+    polydesk_guard: bool = _f(True, "bool", "Polymarket desk's risk manager (nightcrawler.deskguard): pauses new buys "
+                              "(paper, and real in live mode) while the current rule's own record is losing, 95 % "
+                              "sure (99 % sure from 10 events); open positions still settle; keeps the paper book at "
+                              "10 open until the record is winning. It never switches real money on. off = the "
+                              "owner's switch to let the desk keep buying")
+    polydesk_guard_min_n: int = _f(30, "count", "Polymarket desk's risk manager: events (a game's markets, or a "
+                                   "ladder's markets ending together, count as one) of the current rule before it "
+                                   "judges (fewer: still learning, unless a clear loser is stopped early from 10)",
+                                   lo=10, hi=100_000)
+    polydesk_guard_win_n: int = _f(100, "count", "Polymarket desk's risk manager: events before a record can count as "
+                                   "winning (a flag for the owner, never real money by itself; below "
+                                   "POLYDESK_GUARD_MIN_N it is raised to it)", lo=30, hi=1_000_000)
     polymarket_us_key_id: str = _f("", "text", "Polymarket US API key id (a Railway variable; the live desk only)",
                                    secret=True)
     polymarket_us_secret_key: str = _f("", "text", "Polymarket US API secret key (a Railway variable; the live desk "

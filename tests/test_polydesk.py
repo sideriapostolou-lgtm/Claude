@@ -12,6 +12,9 @@ import pytest
 from nightcrawler import polydesk as P
 from nightcrawler.config import Settings
 
+#: The default settings' rule (polydesk.rule_id): the version plus theta, hours and the max spread.
+RULE = "2026-10-09b|t0.970|h1|s0.03"
+
 NOW = 1_791_560_000.0
 
 
@@ -321,18 +324,19 @@ def test_new_positions_carry_the_rule_version_and_the_book_at_entry(gw: Gateway,
     desk = _desk(tmp_path)
     desk.poll(NOW)
     pos = desk.state["positions"]
-    assert pos["w1"]["rule"] == P.RULE_VERSION == "2026-10-09b" == desk.state["rule"]["version"]
+    assert pos["w1"]["rule"] == P.rule_id(desk.settings) == RULE == desk.state["rule"]["id"]
+    assert desk.state["rule"]["version"] == P.RULE_VERSION == "2026-10-09b" and RULE.startswith(P.RULE_VERSION)
     assert (pos["w1"]["bid_in"], pos["w1"]["ask_in"]) == (0.96, 0.975) and pos["w1"]["spread_in"] == pytest.approx(0.015)
     assert pos["c1"]["side"] == "short" and (pos["c1"]["bid_in"], pos["c1"]["ask_in"]) == (0.02, 0.04)  # the book as quoted
     gw.markets = []
     gw.settlements = {"w1": 1.0, "c1": 0.0}
     desk.poll(NOW + 1900)
     closed = {c["slug"]: c for c in desk.state["closed"]}
-    assert closed["w1"]["rule"] == P.RULE_VERSION and closed["w1"]["spread_in"] == pytest.approx(0.015)  # inherited
+    assert closed["w1"]["rule"] == RULE and closed["w1"]["spread_in"] == pytest.approx(0.015)  # inherited
     rec = desk.state["by_rule"]
-    assert set(rec) == {P.RULE_VERSION} and set(rec[P.RULE_VERSION]) == {"paper"}  # kept as it settles, per rule and book
-    assert rec[P.RULE_VERSION]["paper"]["settled"] == 2 and rec[P.RULE_VERSION]["paper"]["won"] == 2
-    assert rec[P.RULE_VERSION]["paper"]["pnl_usd"] == pytest.approx(closed["w1"]["pnl_usd"] + closed["c1"]["pnl_usd"])
+    assert set(rec) == {RULE} and set(rec[RULE]) == {"paper"}  # kept as it settles, per rule and book
+    assert rec[RULE]["paper"]["settled"] == 2 and rec[RULE]["paper"]["won"] == 2
+    assert rec[RULE]["paper"]["pnl_usd"] == pytest.approx(closed["w1"]["pnl_usd"] + closed["c1"]["pnl_usd"])
     d = P.panel_state(desk.settings, NOW + 1900)
     assert d["since_fix"]["paper"]["settled_total"] == 2 and d["since_fix"]["paper"]["won_total"] == 2
     assert d["before_fix"]["paper"] == {"open": 0, "settled_total": 0, "won_total": 0, "pnl_total_usd": 0.0}
@@ -344,22 +348,22 @@ def test_since_fix_and_before_fix_split_a_mixed_state_file(tmp_path) -> None:
     settings = Settings.from_env({"DATA_DIR": str(tmp_path)})
     st = P.empty_state()
     before = [_row(f"old{i}", "sports", 0.98, i < 4, 0.4 if i < 4 else -20.0) for i in range(10)]  # 4 won: -118.40
-    since = [_row(f"new{i}", "crypto", 0.98, i < 7, 0.3 if i < 7 else -20.0, spread=0.01, rule=P.RULE_VERSION)
+    since = [_row(f"new{i}", "crypto", 0.98, i < 7, 0.3 if i < 7 else -20.0, spread=0.01, rule=RULE)
              for i in range(8)]  # 7 won: -17.90
     real_before = [_row("venue1", "sports", 0.97, False, -0.99, live=True, rule=P.RULE_VENUE)]
-    real_since = [_row("live1", "crypto", 0.97, True, 0.02, spread=0.01, live=True, rule=P.RULE_VERSION)]
+    real_since = [_row("live1", "crypto", 0.97, True, 0.02, spread=0.01, live=True, rule=RULE)]
     st["closed"] = before + since + real_before + real_since
     st["positions"] = {"p_old": _open("p_old", "politics", 0.98),
-                       "p_new": _open("p_new", "crypto", 0.98, spread=0.01, rule=P.RULE_VERSION),
+                       "p_new": _open("p_new", "crypto", 0.98, spread=0.01, rule=RULE),
                        "v_open": _open("v_open", "sports", 0.97, live=True, rule=P.RULE_VENUE),
-                       "r_new": _open("r_new", "crypto", 0.97, live=True, spread=0.01, rule=P.RULE_VERSION)}
+                       "r_new": _open("r_new", "crypto", 0.97, live=True, spread=0.01, rule=RULE)}
     st["counters"].update({"settled": 20, "won": 12})
     st["days"] = {"2026-10-09": {"pnl_usd": -118.4 - 17.9 - 0.99 + 0.02, "settled": 20, "won": 12}}
     st["live_days"] = {"2026-10-09": {"pnl_usd": -0.97, "settled": 2, "won": 1}}
     st["live_pnl_total_usd"] = -0.97
     P.save_state(P.state_path(settings), st)
     d = P.panel_state(settings, NOW)
-    assert d["since_fix"] == {"rule": "2026-10-09b",
+    assert d["since_fix"] == {"rule": RULE,
                               "paper": {"open": 1, "settled_total": 8, "won_total": 7, "pnl_total_usd": pytest.approx(-17.9)},
                               "real": {"open": 1, "settled_total": 1, "won_total": 1, "pnl_total_usd": pytest.approx(0.02)}}
     assert d["before_fix"] == {"rule": "before the fix",
@@ -370,7 +374,7 @@ def test_since_fix_and_before_fix_split_a_mixed_state_file(tmp_path) -> None:
     assert d["paper"]["settled_total"] == 18 and d["real"]["settled_total"] == 2 and d["real"]["open"] == 2
     assert d["lessons"] and d["worst"]["book"] == "paper" and d["worst"]["pnl_usd"] == -20.0 and d["paper_max_open"] == 60
     # the record is kept as it settles: a file that carries it is not re-read from its (capped) closed list
-    st["by_rule"] = {P.RULE_VERSION: {"paper": {"settled": 230, "won": 200, "pnl_usd": 12.5}}}
+    st["by_rule"] = {RULE: {"paper": {"settled": 230, "won": 200, "pnl_usd": 12.5}}}
     P.save_state(P.state_path(settings), st)
     d2 = P.panel_state(settings, NOW)
     assert d2["since_fix"]["paper"] == {"open": 1, "settled_total": 230, "won_total": 200, "pnl_total_usd": 12.5}
@@ -384,7 +388,7 @@ def test_since_fix_and_before_fix_split_a_mixed_state_file(tmp_path) -> None:
 
 def test_lessons_are_computed_from_the_closed_rows_paper_and_real_apart() -> None:
     closed = [_row(f"wide{i}", "sports", 0.98, False, -20.0, spread=0.6) for i in range(6)]
-    closed += [_row(f"tight{i}", "crypto", 0.98, True, 0.3, spread=0.01, rule=P.RULE_VERSION) for i in range(5)]
+    closed += [_row(f"tight{i}", "crypto", 0.98, True, 0.3, spread=0.01, rule=RULE) for i in range(5)]
     closed += [_row(f"old{i}", "politics", 0.99, True, 0.1) for i in range(2)]  # no quote saved at entry
     closed += [_row("venue1", "sports", 0.97, False, -0.99, live=True, rule=P.RULE_VENUE)]
     got = P.lessons(closed)
@@ -419,7 +423,7 @@ def test_a_new_lesson_is_said_once(gw: Gateway, tmp_path) -> None:
     """The desk says a lesson when it is new (a group, a sign, a book); a changed count is the same lesson."""
     settings = Settings.from_env({"DATA_DIR": str(tmp_path)})
     st = P.empty_state()
-    st["closed"] = [_row(f"t{i}", "crypto", 0.98, True, 0.3, spread=0.01, rule=P.RULE_VERSION) for i in range(10)]
+    st["closed"] = [_row(f"t{i}", "crypto", 0.98, True, 0.3, spread=0.01, rule=RULE) for i in range(10)]
     P.save_state(P.state_path(settings), st)
     desk = P.PolyDesk(settings)
     desk.poll(NOW)

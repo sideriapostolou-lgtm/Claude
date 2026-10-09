@@ -747,7 +747,7 @@ def test_the_polymarket_panel_shows_the_rule_record_since_the_fix_and_its_lesson
 
     st = P.empty_state()
     st["closed"] = ([_row(f"old{i}", "sports", 0.98, False, -20.0) for i in range(6)]
-                    + [_row(f"new{i}", "crypto", 0.98, True, 0.3, spread=0.01, rule=P.RULE_VERSION) for i in range(5)]
+                    + [_row(f"new{i}", "crypto", 0.98, True, 0.3, spread=0.01, rule=P.rule_id(settings)) for i in range(5)]
                     + [_row("venue1", "sports", 0.97, False, -0.99, live=True, rule=P.RULE_VENUE)])
     st["counters"].update({"settled": 12, "won": 5})
     st["days"] = {"2026-10-08": {"pnl_usd": -120.0 + 1.5 - 0.99, "settled": 12, "won": 5}}
@@ -762,7 +762,7 @@ def test_the_polymarket_panel_shows_the_rule_record_since_the_fix_and_its_lesson
     assert stat(predict, "Since fix (real) won/settled") == "0/0" and stat(predict, "Since fix $ (real)") == 0.0
     assert stat(predict, "All time $ (paper)") == pytest.approx(-118.5)  # paper only: the real loss is not in it
     assert stat(predict, "All time $ (real)") == pytest.approx(-0.99) and stat(predict, "Open (paper)") == 0
-    assert predict["since_fix"] == {"rule": "2026-10-09b",
+    assert predict["since_fix"] == {"rule": "2026-10-09b|t0.970|h1|s0.03",
                                     "paper": {"open": 0, "settled_total": 5, "won_total": 5, "pnl_total_usd": pytest.approx(1.5)},
                                     "real": {"open": 0, "settled_total": 0, "won_total": 0, "pnl_total_usd": 0.0}}
     assert predict["before_fix"]["paper"]["settled_total"] == 6 and predict["before_fix"]["real"]["settled_total"] == 1
