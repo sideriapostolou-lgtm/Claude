@@ -16,6 +16,9 @@ Schema (lists capped: members 9, events <= 5, open trades <= 10, closed trades 1
                 "sol_price_effect_usd",                                   #  shown at today's SOL price)
                 "curve": [[ts, usd], ...], "chart_ready": bool,           # chart after one hour of data
                 "as_of": ts|null},                                        # the last money check
+      "town": {"label", "cost_per_day_usd", "cost_today_usd", "cost_since_start_usd": float|null,  # see TOWN
+               "income_today_usd": float|null, "income_since_start_usd": float|null,
+               "covered_today": bool|null, "covered_since_start": bool|null, "line"},
       "team": {"counts": {status: n}, "members": [{"id", "name", "role", "status", "why", "doing",
                                                     "last_activity", "events", "bars"?}]},
                                                     # status "absent": the Coach is not built (not counted)
@@ -37,6 +40,19 @@ Schema (lists capped: members 9, events <= 5, open trades <= 10, closed trades 1
 MONEY honesty (same rule as the old dashboard tiles): "since start" and "today" are the bot's result
 measured in SOL - the unit the risk limits use - and shown in dollars at today's SOL price, so a SOL price
 rise can never paint a losing bot green. The SOL price effect is reported apart.
+
+TOWN ("keep the town alive", :func:`town_ledger`): the desks must earn more than the town costs to run. Costs:
+Railway's price per month (``TOWN_RAILWAY_USD_MONTH``; a day is 1/30 of it) plus the AI judge's spending
+(``judge.cost_usd_today`` and ``judge.cost_usd_total`` of ``/api/state``; a missing figure counts as nothing
+recorded, and without a figure for today the total is spread over the days run so far). ``cost_per_day_usd``: the
+day rate, Railway's day plus the judge's spend today. ``cost_today_usd``: the cost so far today, Railway's day
+prorated over the part of the UTC day that has passed (since the start, when the run began today) plus the
+judge's spend today. ``cost_since_start_usd``: Railway's price over the run so far plus the judge's total. The run
+starts at the ledger's first record (the first boot on this volume) or at ``engine.started_at``, whichever is
+earlier: a redeploy restarts the engine, not the bill, the judge's total or the money since start. Income is the
+money card's own result (``money.today.usd``, ``money.since_start.usd``). Whatever is not known is null (income
+before the first money check; the since-start cost before the first record) and the line says so; ``covered_*``
+is null while either side is unknown.
 
 LEARNING: :func:`learning_card` calls ``nightcrawler.learn.card.learning_card_state(settings, now)`` when
 that module exists (it is built on another branch) and keeps only these keys, each type-checked::
@@ -120,8 +136,8 @@ from nightcrawler.teamroom import ENGINE_STALE_S, FUTURE_SKEW_S, build_team_stat
 from nightcrawler.withdraw import fresh_balance, last_withdrawal, live_hold, page_view, saved_state, withdrawn_lamports
 
 __all__ = ["EXPERIENCE_CAVEAT", "EXPERIENCE_CHIPS", "EXPERIENCE_KINDS", "EXPERIENCE_MONEY_LINE", "LEARNING_RULE",
-           "MEMBERS", "PLAYBOOK_PATH", "STALE_BANNER_S", "WALLET_MAX_AGE_S", "build_page_state", "experience_card",
-           "learning_card"]
+           "MEMBERS", "PLAYBOOK_PATH", "STALE_BANNER_S", "TOWN_MONTH_DAYS", "WALLET_MAX_AGE_S", "build_page_state",
+           "experience_card", "learning_card", "town_ledger"]
 
 log = get_logger(__name__)
 
@@ -149,6 +165,8 @@ LEARNING_TTL_S = 60.0
 #: The Coach counts as working when its card was updated this recently (it learns nightly).
 COACH_WINDOW_S = 26 * 3600.0
 DAY_S = 86_400.0
+#: The town's hosting bill is a monthly price: a day of it is 1/30.
+TOWN_MONTH_DAYS = 30.0
 
 #: The experience state (the report cards) is re-read at most this often.
 EXPERIENCE_TTL_S = 60.0
@@ -652,7 +670,7 @@ def _money(settings: Settings, eq: dict[str, Any], point: EquityPoint | None,
     curve = eq["curve"]
     span = curve[-1][0] - curve[0][0] if len(curve) >= 2 else 0.0
     return {
-        "label": "Real money" if settings.is_live else "Paper money (pretend)",
+        "label": _money_label(settings),
         "usd": eq["usd"], "start_usd": eq["start_usd"], "sol": sol, "sol_usd": sol_usd,
         "withdrawn_sol": out_total or None,
         "since_start": {"usd": since_usd, "pct": _pct(total, base_total)},
@@ -670,6 +688,68 @@ def _withdrawn(ledger: Any, settings: Settings, point: EquityPoint | None, now: 
         return 0, 0
     first = next((p for p in ledger.equity_series(since=now - now % 86_400) if p.mode == point.mode), None)
     return withdrawn_lamports(ledger, point.ts, first.ts if first is not None else None)
+
+
+def _money_label(settings: Settings) -> str:
+    """The money card's label: the page must always make clear when the money is pretend."""
+    return "Real money" if settings.is_live else "Paper money (pretend)"
+
+
+def _dollars(value: float) -> str:
+    return f"${abs(value):,.2f}"
+
+
+def _run_started(ledger: Any, state: Mapping[str, Any]) -> float | None:
+    """When the bot first ran on this volume: the ledger's first record (the first boot's receipt) or the engine's
+    start (kv ``engine.started_at``: the current process only), whichever is earlier; None until either exists."""
+    first = ledger.receipts(after_seq=0, limit=1)
+    stamps = [_num(first[0].ts)] if first else []
+    stamps.append(_num(_xp_map(state.get("engine")).get("started_at")))
+    known = [ts for ts in stamps if ts is not None]
+    return min(known) if known else None
+
+
+def town_ledger(settings: Settings, money: Mapping[str, Any], judge: Mapping[str, Any] | None, now: float,
+                started_at: float | None) -> dict[str, Any]:
+    """The town's books (TOWN in the module docstring): what running the bot costs against what the desks made,
+    today and since the start. ``money`` is the page's money card, ``judge`` the ``judge`` block of ``/api/state``
+    (None, or missing or junk figures, count as nothing recorded), ``started_at`` when the run began (None: not
+    known). Never a made-up number: an unknown side is null and the line says so."""
+    spend = _xp_map(judge)
+    fixed_day = settings.town_railway_usd_month / TOWN_MONTH_DAYS
+    uptime_s = max(0.0, now - started_at) if started_at is not None else None
+    judge_total = max(0.0, _num(spend.get("cost_usd_total")) or 0.0)
+    judge_today = _num(spend.get("cost_usd_today"))
+    if judge_today is None:  # no figure for today: the total spread over the days run so far (at least one)
+        judge_today = judge_total / max(1.0, (uptime_s or 0.0) / DAY_S)
+    judge_today = max(0.0, judge_today)
+    day_start = now - now % DAY_S
+    since = max(day_start, started_at) if started_at is not None else day_start
+    cost_per_day = fixed_day + judge_today
+    cost_today = fixed_day * min(1.0, max(0.0, now - since) / DAY_S) + judge_today
+    cost_since = fixed_day * uptime_s / DAY_S + judge_total if uptime_s is not None else None
+    income_today = _num(_xp_map(money.get("today")).get("usd"))
+    income_since = _num(_xp_map(money.get("since_start")).get("usd"))
+    kind = "real money" if settings.is_live else "paper money"
+    if income_today is None:
+        made = f"what the desks made today ({kind}) is not known yet: no money check so far"
+    else:
+        made = f"the desks {'lost' if income_today < 0 else 'made'} {_dollars(income_today)} today ({kind})"
+    line = f"The town costs {_dollars(cost_per_day)} a day to run; {made}."
+    if cost_since is None:
+        line += " How long the town has been running is not known yet."
+    return {
+        "label": _money_label(settings),
+        "cost_per_day_usd": cost_per_day,
+        "cost_today_usd": cost_today,
+        "cost_since_start_usd": cost_since,
+        "income_today_usd": income_today,
+        "income_since_start_usd": income_since,
+        "covered_today": income_today >= cost_today if income_today is not None else None,
+        "covered_since_start": (income_since >= cost_since if income_since is not None and cost_since is not None
+                                else None),
+        "line": line,
+    }
 
 
 def _coach(card: dict[str, Any], now: float) -> tuple[str, str]:
@@ -855,6 +935,7 @@ def build_page_state(ledger: Any, settings: Settings, now: float, engine_status:
     alerts = _alerts(ledger, state, now, withdrawal, settings)
     point = _latest_point(ledger, "live" if settings.is_live else "paper")
     address, wallet_sol, wallet_read_at = _wallet(ledger, settings, state, point, now)
+    money = _money(settings, state["equity"], point, _withdrawn(ledger, settings, point, now))
     receipts = state["receipts"]
     head = receipts["head_hash"]
     out = {
@@ -863,7 +944,9 @@ def build_page_state(ledger: Any, settings: Settings, now: float, engine_status:
         "mode": state["mode"],
         "refresh_s": REFRESH_S,
         "alerts": alerts + usage_alerts,
-        "money": _money(settings, state["equity"], point, _withdrawn(ledger, settings, point, now)),
+        "money": money,
+        # the town: what running the bot costs against what the desks made (same clock as the judge's total)
+        "town": town_ledger(settings, money, state.get("judge"), now, _run_started(ledger, state)),
         "team": {"counts": counts, "members": members},
         "trades": _trades(ledger, settings, state, text),
         "learning": {"source": card["source"], "state": card["state"], "headline": card["headline"],

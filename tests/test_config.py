@@ -342,3 +342,15 @@ def test_the_graduation_window_is_its_own_setting(make_settings) -> None:
         make_settings(MIN_AGE_SINCE_GRAD_MIN=-1)
     with pytest.raises(ConfigError, match="MIN_AGE_SINCE_GRAD_MIN must be shorter than MAX_AGE_H"):
         make_settings(MIN_AGE_SINCE_GRAD_MIN=3000, MAX_AGE_H=48)
+
+
+def test_the_towns_railway_price_is_dollars_per_month_at_least_zero(make_settings) -> None:
+    """TOWN_RAILWAY_USD_MONTH: what hosting costs, for the page's town card (default: Railway's $5 Hobby plan)."""
+    assert make_settings().town_railway_usd_month == 5.0
+    assert make_settings(TOWN_RAILWAY_USD_MONTH="0").town_railway_usd_month == 0.0
+    assert make_settings(TOWN_RAILWAY_USD_MONTH="20").town_railway_usd_month == 20.0
+    with pytest.raises(ConfigError, match="TOWN_RAILWAY_USD_MONTH=-1.0 must be >= 0"):
+        make_settings(TOWN_RAILWAY_USD_MONTH="-1")
+    with pytest.raises(ConfigError, match="TOWN_RAILWAY_USD_MONTH: expected a number"):
+        make_settings(TOWN_RAILWAY_USD_MONTH="five")
+    assert {r["env"]: r["unit"] for r in Settings.describe()}["TOWN_RAILWAY_USD_MONTH"] == "usd"

@@ -150,6 +150,7 @@ ol.events li.bad span::before{background:var(--critical)}
 .track{grid-column:1/-1;height:8px;border-radius:4px;background:var(--hair);overflow:hidden}
 .fill{height:100%;border-radius:4px;background:var(--accent)}
 .fill.warn{background:var(--warn)}.fill.over{background:var(--critical)}
+.fill.cost{background:var(--muted)}.fill.up{background:var(--up)}.fill.down{background:var(--down)}
 .rows>div{border-top:1px solid var(--hair);padding:10px 0}
 .rows>div:first-child{border-top:0}
 .line{display:flex;justify-content:space-between;align-items:baseline;gap:10px;min-width:0}
@@ -345,6 +346,26 @@ _SCRIPT = r"""
     plot.addEventListener("pointerleave", () => show(vs.length - 1, false));
     show(vs.length - 1, false);
     return box;
+  }
+
+  // ---------------------------------------------------------------- A1. the town: what it costs vs what the desks made
+  // Two bars on one scale: what running the bot cost so far today (grey) and what the desks made today (green;
+  // red for a loss). An income that is not known yet draws no bar at all; every word is fixed text or the data's.
+  function renderTown(t) {
+    $("town-label").textContent = t.label;
+    $("town-line").textContent = t.line;
+    const cost = t.cost_today_usd, made = t.income_today_usd;
+    const scale = Math.max(isNum(cost) ? cost : 0, isNum(made) ? Math.abs(made) : 0, 0.01);
+    const since = (v, signed, covered) => "since start: " + (isNum(v) ? usd(v, signed) : "not known yet")
+      + (covered === true ? " · covered" : covered === false ? " · not covered" : "");
+    const verdict = t.covered_today === true ? el("span", "tag", "covered")
+      : t.covered_today === false ? el("span", "tag", "not covered") : null;
+    put($("town-bars"),
+      el("div", "bar", el("span", null, "Costs today"), el("b", "num", usd(cost)),
+        isNum(cost) ? track(cost / scale, "cost") : null, el("small", null, since(t.cost_since_start_usd, false, null))),
+      el("div", "bar", el("span", null, "Made today", verdict), el("b", "num " + tone(made), usd(made, true)),
+        isNum(made) ? track(Math.abs(made) / scale, made < 0 ? "down" : "up") : null,
+        el("small", null, since(t.income_since_start_usd, true, t.covered_since_start))));
   }
 
   // ---------------------------------------------------------------- A2. the bot wallet: where to send SOL
@@ -681,6 +702,7 @@ _SCRIPT = r"""
     mode.className = "mode" + (s.mode === "LIVE" ? " live" : "");
     put($("alerts"), ...s.alerts.map((a) => el("div", "alert " + a.level, a.text)));
     renderMoney(s.money);
+    if (s.town) renderTown(s.town);
     if (s.wallet) renderWallet(s.wallet);
     renderTeam(s.team, s.experience);
     renderTrades(s.trades);
@@ -788,6 +810,12 @@ def render_page_html(settings: Settings) -> str:
         "</div></div>"
         "<p class=\"help\">Since start and today count only the bot's own trading, at today's price of SOL.</p>"
         "<p class=\"help\" id=\"money-help\"></p><div id=\"chart\"></div></section>\n"
+
+        "<section class=\"card\" id=\"town\">"
+        f"<h2>The town <small id=\"town-label\">{label}</small></h2>"
+        "<p class=\"lead\" id=\"town-line\">Loading…</p><div id=\"town-bars\"></div>"
+        "<p class=\"help\">To keep the town alive, the desks must earn more than it costs to run: the hosting plan "
+        "plus the AI judge's spending.</p></section>\n"
 
         "<section class=\"card\" id=\"wallet\"><h2>Bot wallet <small id=\"wallet-kind\"></small></h2>"
         "<div id=\"wallet-body\"><p class=\"empty\">Loading…</p></div></section>\n"
