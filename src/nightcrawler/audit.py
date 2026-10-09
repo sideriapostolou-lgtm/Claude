@@ -4,7 +4,8 @@
 fills and compares it with what the broker says it holds:
 
 * expected SOL = start lamports (kv ``paper.start_lamports`` /
-  ``live.start_lamports``) + sum(``fill.sol_delta_lamports()``);
+  ``live.start_lamports``) + sum(``fill.sol_delta_lamports()``) - live SOL sent
+  to the owner by ``WITHDRAW_TO`` (``withdraw`` receipts: amount + fee);
 * expected tokens[mint] = sum(``fill.token_delta()``) per mint;
 * drift = broker - expected. Paper: any drift is a bug (``ok=False``).
   Live: token drift beyond 1 base unit -> ``ok=False``; SOL drift is reported
@@ -288,6 +289,21 @@ class Auditor:
         reset = self.ledger.last_receipt("note", {"event": "paper_reset"}) if self.mode == "paper" else None
         return (None if start is None else int(start)), (reset.seq if reset is not None else 0)
 
+    def _withdrawn(self) -> int:
+        """Live: lamports that left this wallet in confirmed ``WITHDRAW_TO`` transfers (``withdraw`` receipts,
+        amount + network fee; :mod:`nightcrawler.withdraw`), so a withdrawal is not reported as missing SOL."""
+        if self.mode != "live":
+            return 0
+        wallet = getattr(self.broker, "pubkey", None)
+        total = 0
+        for r in self.ledger.iter_receipts():
+            p = r.payload
+            if r.kind != "withdraw" or p.get("mode") != "live" or (wallet and p.get("from") != wallet):
+                continue
+            total += sum(v for v in (p.get("lamports"), p.get("fee_lamports"))
+                         if isinstance(v, int) and not isinstance(v, bool))
+        return total
+
     def _check_balances(self, report: AuditReport) -> None:
         start, after_seq = self._epoch()
         fills = self.ledger.fills_after_seq(after_seq, mode=self.mode)
@@ -301,7 +317,7 @@ class Auditor:
             else:
                 report.issues.append(issue)
         else:
-            report.expected_sol_lamports = start + sum(f.sol_delta_lamports() for f in fills)
+            report.expected_sol_lamports = start + sum(f.sol_delta_lamports() for f in fills) - self._withdrawn()
         if self.broker is None:
             report.issues.append("no broker: balance comparison skipped")
             return

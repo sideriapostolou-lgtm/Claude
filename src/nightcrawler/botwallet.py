@@ -1,10 +1,11 @@
 """The bot wallet's SOL balance in PAPER mode, for the "ready for real money?" checklist (owner: O6).
 
-docs/GOING_LIVE.md creates, funds and adds the bot wallet (``BOT_WALLET_SECRET``) while the bot is still in
-paper mode. Paper mode only uses that wallet's address (to quote with), so nothing else ever reads its
-balance: the engine calls :func:`record_balance` every :data:`CHECK_EVERY_S` (one ``getBalance`` RPC call)
-and the page reads the result with :func:`saved_balance`. Live mode does not need this: every equity
-snapshot records the wallet's SOL (``EquityPoint.sol_lamports``).
+docs/GOING_LIVE.md creates and funds the bot wallet (``BOT_WALLET_MODE=generated``: the bot's own, see
+:mod:`nightcrawler.broker.keystore`; or ``BOT_WALLET_SECRET``) while the bot is still in paper mode. Paper
+mode only uses that wallet's address (to quote with), so nothing else ever reads its balance: the engine
+calls :func:`record_balance` every :data:`CHECK_EVERY_S` (one ``getBalance`` RPC call) and the page reads
+the result with :func:`saved_balance`. Live mode does not need this: every equity snapshot records the
+wallet's SOL (``EquityPoint.sol_lamports``).
 
 kv :data:`KV_BOT_WALLET` = ``{"address": str, "sol_lamports": int, "checked_at": epoch seconds}`` (the
 address is public; the secret never leaves :mod:`nightcrawler.broker.wallet`).
@@ -16,13 +17,18 @@ from typing import Any, NamedTuple
 
 from nightcrawler.logging_setup import get_logger
 
-__all__ = ["CHECK_EVERY_S", "KV_BOT_WALLET", "SavedBalance", "record_balance", "saved_balance"]
+__all__ = ["CHECK_EVERY_S", "KV_BOT_WALLET", "SavedBalance", "record_balance", "saved_balance", "wallet_configured"]
 
 log = get_logger(__name__)
 
 KV_BOT_WALLET = "bot_wallet.balance"
-#: How often the engine reads the balance (about 144 RPC calls a day, only with BOT_WALLET_SECRET set).
+#: How often the engine reads the balance (about 144 RPC calls a day, only with a bot wallet set up).
 CHECK_EVERY_S = 600.0
+
+
+def wallet_configured(settings: Any) -> bool:
+    """A bot wallet is set up: ``BOT_WALLET_SECRET``, or ``BOT_WALLET_MODE=generated`` (the bot's own wallet)."""
+    return bool(settings.bot_wallet_secret) or getattr(settings, "bot_wallet_mode", "env") == "generated"
 
 
 class SavedBalance(NamedTuple):

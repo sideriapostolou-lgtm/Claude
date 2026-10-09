@@ -11,6 +11,9 @@ data/dataset/
 data/KILL
 data/*.jsonl
 data/*.tmp
+# the bot's own wallet key (BOT_WALLET_MODE=generated): never in version control
+data/wallet/
+**/bot-keypair.json
 
 # python
 __pycache__/

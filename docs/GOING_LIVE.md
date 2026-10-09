@@ -12,6 +12,59 @@ the Phantom app, the Coinbase app, and the Railway website.
 
 ---
 
+## Fund the bot from Phantom (no keys needed)
+
+The easy way, and the safer one: the bot makes **its own wallet** and keeps the key to itself.
+Nobody ever sees, copies or pastes a private key: not you, not an AI assistant, not a chat.
+You only ever copy a public address, which is safe to share.
+
+**Set it up once (Railway, in paper mode):**
+
+1. Railway, your nightcrawler service, **Variables**, **New Variable**: name `BOT_WALLET_MODE`,
+   value `generated`. If a `BOT_WALLET_SECRET` variable exists, delete it (the bot refuses to
+   start with both). The volume must be attached at `/data` with `DATA_DIR=/data`
+   ([RAILWAY.md](RAILWAY.md), step 3): the bot refuses to make a wallet anywhere a redeploy
+   would wipe it. Press **Deploy**.
+2. Open your dashboard link. The **Bot wallet** card shows the bot's address and a
+   **Copy address** button.
+
+**Put money in (Phantom only):**
+
+3. Tap **Copy address** on the dashboard.
+4. In **Phantom**, tap **Send**, choose **SOL**, paste the address, type the amount and send.
+   Send a small test first (say $5) and wait until the card shows it ("In it now: ... SOL",
+   checked about every 10 minutes), then send the rest. Keep it under `MAX_WALLET_USD` ($150).
+
+That is step 3 of the dashboard's "Ready for real money?" checklist. Skip sections 1-3 below.
+
+**Take everything back:**
+
+5. In Phantom, tap **Receive**, choose **Solana** and copy **your** address.
+6. Railway **Variables**: `WITHDRAW_TO` = paste it. While it is set the bot buys nothing, sells
+   every coin it holds, then sends **all** its SOL to that address minus the network fee
+   (0.000005 SOL), waits until the network confirms it and records it in the receipts.
+   - In **paper** mode it only shows what it *would* send (a yellow "Practice mode" banner).
+     To really send it, also set `TRADING_MODE=live` and
+     `LIVE_CONFIRM=I_ACCEPT_REAL_MONEY_RISK`; with `WITHDRAW_TO` set it still buys nothing.
+   - Press **Deploy**. A red banner says what it is doing; then "Withdrawal done: ... SOL went
+     to ...". Check Phantom.
+7. Delete `WITHDRAW_TO` (and set `TRADING_MODE=paper` again if you like), then **Deploy**.
+
+Good to know:
+
+- **Never delete the Railway volume or the service while SOL is in the bot wallet**: the key
+  lives only on that volume. Withdraw first. The bot refuses to start rather than replace or
+  re-make a wallet it already had.
+- A coin nobody will buy cannot hold your SOL back: after 30 minutes the SOL is sent anyway
+  and the banner says which coins stayed. Each coin the bot ever bought also keeps a ~0.002
+  SOL deposit in a token account that this version does not close.
+- Less than about 0.0009 SOL cannot be sent (a Solana rule); the banner then says "Nothing to
+  withdraw".
+- `WITHDRAW_TO` must be a plain wallet address. The bot refuses its own address, token
+  accounts and program addresses, and says so on the page.
+
+---
+
 ## 0. The checklist: all of these must be true first
 
 - [ ] **Paper mode ran on Railway for at least 1-2 weeks,** with the dashboard's heartbeat
@@ -43,6 +96,9 @@ the Phantom app, the Coinbase app, and the Railway website.
 ---
 
 ## 1. Create a NEW account in Phantom, just for the bot
+
+*Sections 1-3 are the older way, with a private key you paste yourself (`BOT_WALLET_SECRET`).
+With `BOT_WALLET_MODE=generated` ([above](#fund-the-bot-from-phantom-no-keys-needed)) skip them.*
 
 Never use your main wallet. The bot needs the private key, and a key that sits in a server
 setting is only as safe as that server. A separate account means the worst case is losing the
@@ -156,6 +212,10 @@ resuming. To resume anyway, set `RESET_HALT_TOKEN` to a new value (for example t
 and deploy.
 
 ## 6. How to stop and take your money back
+
+With the bot's own wallet (`BOT_WALLET_MODE=generated`) there is no key to take to Phantom: set
+`WITHDRAW_TO` to your Phantom address instead ([above](#fund-the-bot-from-phantom-no-keys-needed)).
+It sells everything and sends all the SOL back by itself. The steps below are for `BOT_WALLET_SECRET`.
 
 1. In Railway **Variables**, set `KILL_SWITCH` = `sell_all` and **Deploy**. The bot sells
    every open position (accepting more slippage than usual, so it can't get stuck in a thin

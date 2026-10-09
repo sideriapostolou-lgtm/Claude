@@ -149,6 +149,8 @@ ReceiptKind = Literal[
     "reset",  # manual halt reset
     "note",  # free-form operator note
     "learn",  # learning loop event from the learn.db outbox (docs/LEARNING.md §8); payload has event + outbox_id
+    "wallet_created",  # the bot made its own wallet (BOT_WALLET_MODE=generated); payload = its PUBLIC address only
+    "withdraw",  # WITHDRAW_TO: a confirmed SOL transfer to the owner; payload has from, to, lamports, signature, fee
 ]
 
 # --------------------------------------------------------------------------- helpers

@@ -334,6 +334,13 @@ class Settings:
                                           "only its address is used (quotes and the dashboard's balance check)",
                                           secret=True)
     x_bearer_token: Secret | None = _f(None, "secret", "Optional X/Twitter token (unused by default)", secret=True)
+    # ---- the bot's own wallet and taking the money back (broker/keystore.py, withdraw.py) ----
+    bot_wallet_mode: str = _f("env", "text", "env = the wallet in BOT_WALLET_SECRET; generated = the bot makes its own "
+                              "wallet on the first start (paper mode) and keeps the key in DATA_DIR/wallet/ where "
+                              "nobody ever sees it: fund it from Phantom with Send, take it back with WITHDRAW_TO")
+    withdraw_to: str = _f("", "text", "Your own Solana address (Phantom: Receive, Solana, copy). While set the bot "
+                          "buys nothing, sells everything, then sends ALL its SOL there minus the network fee (paper "
+                          "mode only shows what it would send). Delete it to trade again")
 
     # ---- data sources (runtime / data-source team) --------------------------
     # GeckoTerminal's free tier (~30/min, 429s on shared IPs such as Railway's) is the scarcest
@@ -397,6 +404,8 @@ class Settings:
         object.__setattr__(self, "judge_mode", str(self.judge_mode).lower())
         object.__setattr__(self, "log_level", str(self.log_level).upper())
         object.__setattr__(self, "keys_rotated_on", str(self.keys_rotated_on).strip())
+        object.__setattr__(self, "bot_wallet_mode", str(self.bot_wallet_mode).strip().lower())
+        object.__setattr__(self, "withdraw_to", str(self.withdraw_to).strip())
         problems = self._validate()
         if problems:
             raise ConfigError(problems)
@@ -422,8 +431,9 @@ class Settings:
         if self.trading_mode == "live":
             if self.live_confirm != LIVE_CONFIRM_PHRASE:
                 problems.append(f"TRADING_MODE=live requires LIVE_CONFIRM={LIVE_CONFIRM_PHRASE} (exact)")
-            if not self.bot_wallet_secret:
-                problems.append("TRADING_MODE=live requires BOT_WALLET_SECRET (a dedicated bot wallet)")
+            if not self.bot_wallet_secret and self.bot_wallet_mode != "generated":
+                problems.append("TRADING_MODE=live requires a bot wallet: BOT_WALLET_MODE=generated (the bot's own "
+                                "wallet) or BOT_WALLET_SECRET (a dedicated bot wallet)")
             if not self.dashboard_token and self.dashboard_host not in _LOOPBACK_HOSTS:
                 problems.append("TRADING_MODE=live requires DASHBOARD_TOKEN (or DASHBOARD_HOST=127.0.0.1): "
                                 "an open dashboard shows the live wallet, its positions and their stops")
@@ -435,6 +445,7 @@ class Settings:
             # never repeat the value: a key pasted into the wrong box would land in the deploy logs
             problems.append("KEYS_ROTATED_ON must be a date like 2026-10-09: the day you replaced the keys "
                             "(leave it empty until then)")
+        problems.extend(_wallet_problems(self))
         if self.judge_mode in ("advisory", "required") and not self.anthropic_api_key:
             problems.append(f"JUDGE_MODE={self.judge_mode} requires ANTHROPIC_API_KEY (or set JUDGE_MODE=off)")
         if self.min_position_usd > self.max_position_usd:
@@ -572,6 +583,22 @@ class Settings:
 
 
 _FIELDS = {f.name: f for f in dataclasses.fields(Settings)}
+
+
+def _wallet_problems(s: Settings) -> list[str]:
+    """BOT_WALLET_MODE and WITHDRAW_TO. A value is never repeated: a key pasted into the wrong box would land in
+    the deploy logs (the WITHDRAW_TO checks that need the chain or the wallet are in ``nightcrawler.withdraw``)."""
+    from nightcrawler.base58 import is_pubkey
+
+    problems = []
+    if s.bot_wallet_mode not in ("env", "generated"):
+        problems.append("BOT_WALLET_MODE must be env or generated")
+    elif s.bot_wallet_mode == "generated" and s.bot_wallet_secret:
+        problems.append("BOT_WALLET_MODE=generated and BOT_WALLET_SECRET are both set: use one wallet only (delete "
+                        "BOT_WALLET_SECRET to use the wallet the bot made itself, or set BOT_WALLET_MODE=env)")
+    if s.withdraw_to and not is_pubkey(s.withdraw_to):
+        problems.append("WITHDRAW_TO must be a Solana address (in Phantom: Receive, choose Solana, copy)")
+    return problems
 
 
 def _coerce(f: dataclasses.Field, raw: str) -> Any:

@@ -33,7 +33,7 @@ friendly line to stderr (no tracebacks unless ``--log-level DEBUG``).
 SAFE MODE (RT-9): ``run`` with an INVALID configuration still refuses to start -
 unless the ledger holds open LIVE positions, which would then sit without a
 stop-loss. In that case every variable a problem names falls back to its default
-(never TRADING_MODE, LIVE_CONFIRM, BOT_WALLET_SECRET or DATA_DIR; a live dashboard
+(never TRADING_MODE, LIVE_CONFIRM, BOT_WALLET_SECRET, BOT_WALLET_MODE or DATA_DIR; a live dashboard
 without DASHBOARD_TOKEN gets a random token, i.e. it is locked) and, when that is a
 valid live configuration, the bot runs EXITS-ONLY (``Engine.enter_safe_mode``: no
 discovery, no entries; stop-losses, the kill switch and reconciliation work) with
@@ -83,7 +83,7 @@ BOT_ALIVE_S = 60.0
 #: ``backtest --sweep`` grid when ``--grid`` is not given.
 DEFAULT_SWEEP_GRID: dict[str, list[float]] = {"dip_pct": [0.45, 0.55, 0.65], "take_profit_pct": [0.3, 0.4, 0.6]}
 #: Settings the safe mode never replaces with a default: who trades, with which wallet, on which ledger.
-SAFE_MODE_KEEP = frozenset({"TRADING_MODE", "LIVE_CONFIRM", "BOT_WALLET_SECRET", "DATA_DIR"})
+SAFE_MODE_KEEP = frozenset({"TRADING_MODE", "LIVE_CONFIRM", "BOT_WALLET_SECRET", "BOT_WALLET_MODE", "DATA_DIR"})
 SAFE_MODE_TOKEN = "DASHBOARD_TOKEN (random: dashboard locked)"
 _ENV_NAME = re.compile(r"\b[A-Z][A-Z0-9_]{2,}\b")
 
@@ -270,6 +270,11 @@ class _LiveBalances:
 
 
 def _wallet_pubkey(settings: Settings, ledger: Any | None = None) -> str | None:
+    if settings.bot_wallet_mode == "generated":  # the bot's own key file (read, never made, never shown)
+        from nightcrawler.broker.keystore import resolve_wallet
+
+        own = resolve_wallet(settings, create=False)
+        return own.pubkey() if own is not None else None
     if settings.bot_wallet_secret:
         from nightcrawler.broker.wallet import load_keypair
 
@@ -657,6 +662,9 @@ def cmd_wallet(args: argparse.Namespace, settings: Settings) -> int:
 
     _setup_logging(args, settings, quiet=True)
     if args.wallet_cmd == "new":
+        if settings.bot_wallet_mode == "generated":
+            raise UserError("BOT_WALLET_MODE=generated: the bot makes and keeps its own wallet (nobody sees its key); "
+                            "`nightcrawler wallet show` prints its address", EXIT_USAGE)
         wallet, secret = generate_new()
         print(_WALLET_WARNING)
         print(f"address (public, safe to share): {wallet.pubkey()}")
@@ -664,6 +672,8 @@ def cmd_wallet(args: argparse.Namespace, settings: Settings) -> int:
         print(f"\n{PHANTOM_IMPORT_HELP}")
         return EXIT_OK
     pubkey = _wallet_pubkey(settings)
+    if not pubkey and settings.bot_wallet_mode == "generated":
+        raise UserError("the bot has not made its wallet yet: it does on its first start (nightcrawler run)")
     if not pubkey:
         raise UserError("BOT_WALLET_SECRET is not set (paper mode needs no wallet; see docs/GOING_LIVE.md)")
     print(f"address: {pubkey}")

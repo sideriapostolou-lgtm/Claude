@@ -7,7 +7,8 @@ stop event). EVERY stage is wrapped: an exception is logged, stored in kv
 same stage at most once per :data:`ERROR_RECEIPT_EVERY_S`) - the loop never dies.
 
 Stage order inside one tick: ``kill`` -> ``reconcile`` -> ``live_start`` (live, until
-recorded) -> ``drift`` -> ``positions`` -> ``discover`` -> ``watch`` -> ``equity`` ->
+recorded) -> ``drift`` -> ``positions`` -> ``withdraw`` (WITHDRAW_TO, :mod:`nightcrawler.withdraw`) ->
+``discover`` -> ``watch`` -> ``equity`` ->
 ``learn`` (LEARN_ENABLED) -> ``persist`` -> ``heartbeat`` (exits before entries). ``discover``
 and ``watch`` stop after a wall-clock budget of POSITION_INTERVAL_S and run the kill check and (when due) ``positions``
 between candidates, so a slow upstream (RugCheck 429s, an LLM timeout) never delays a
@@ -27,6 +28,8 @@ BOT_WALLET_SECRET changed) is never valued, sold or counted - it is noted at boo
     ``kill_switch``, retried every POSITION_INTERVAL_S until flat) and behave
     like ``stop``. Mode changes are receipted (kind ``kill``) and stored in kv
     ``engine.kill_mode`` (so a restart does not receipt the same mode again).
+    ``WITHDRAW_TO`` set = ``sell_all`` whatever the switch says (then the ``withdraw``
+    stage sends all the SOL to that address once nothing is left to sell).
 
 ``discover`` (DISCOVERY_INTERVAL_S)
     ``crawler.poll()`` -> new candidates go into a FIFO queue (max
@@ -730,7 +733,8 @@ class Engine:
 
     def __init__(self, settings: Settings, *, clock: Clock, ledger: Any, crawler: Any, cocoon: Any,
                  radar: Any, judge: Any, risk: Any, broker: Any, sources: Any = None,
-                 stop_event: threading.Event | None = None, pumpfun: Any = None, learning: Any = None) -> None:
+                 stop_event: threading.Event | None = None, pumpfun: Any = None, learning: Any = None,
+                 withdraw: Any = None) -> None:
         self.settings = settings
         self.clock = clock
         self.ledger = ledger
@@ -769,6 +773,8 @@ class Engine:
         self.safe_mode: dict[str, Any] | None = None
         #: :class:`LearnStage` (LEARN_ENABLED) or None
         self.learning = learning
+        #: :class:`nightcrawler.withdraw.Withdrawer` (WITHDRAW_TO set, or a transfer still in flight) or None
+        self.withdraw = withdraw
 
     # ------------------------------------------------------------------ loop
     def tick(self, now: float) -> dict[str, Any]:
@@ -783,8 +789,10 @@ class Engine:
         if not self._live_start_ok and self._due("live_start", s.position_interval_s, now):
             self._run("live_start", self._ensure_live_start, now, results)
         learn = (("learn", LEARN_STAGE_S, self.run_learning),) if self.learning is not None else ()
+        withdraw = (("withdraw", self.withdraw.stage_s, self.run_withdraw),) if self.withdraw is not None else ()
         for name, interval, fn in (("drift", DRIFT_CHECK_S, self.check_drift),
                                    ("positions", s.position_interval_s, self.manage_positions),
+                                   *withdraw,
                                    ("discover", s.discovery_interval_s, self.discover),
                                    ("watch", s.watch_interval_s, self.watch),
                                    ("equity", s.equity_interval_s, self.snapshot_equity),
@@ -811,6 +819,11 @@ class Engine:
     def run_learning(self, now: float) -> None:
         """The ``learn`` stage (:class:`LearnStage`; never raises)."""
         self.learning.run(now)
+
+    def run_withdraw(self, now: float) -> None:
+        """The ``withdraw`` stage (WITHDRAW_TO, :mod:`nightcrawler.withdraw`): all SOL to the owner once sold."""
+        self.withdraw.run(now, open_positions=len(self._open_positions()),
+                          pending_swaps=len(self.unresolved) + len(self.inflight))
 
     def _emit(self, stream: str, build: Callable[[], dict[str, Any]]) -> None:
         """Hand a row to the learning tape (never blocks, never raises; nothing without learning)."""
@@ -1073,6 +1086,8 @@ class Engine:
     def handle_kill(self, now: float) -> str:
         """Apply the kill switch; returns the active mode."""
         mode = self.risk.kill_mode()
+        if self.settings.withdraw_to:  # WITHDRAW_TO: buy nothing, sell everything (nightcrawler.withdraw)
+            mode = "sell_all"
         if mode != self._kill_mode:
             previous = self._kill_mode
             if not (previous is None and mode == "off"):
@@ -2351,11 +2366,10 @@ def build_app(settings: Settings, clock: Clock | None = None, *, session: Any = 
     ledger = Ledger(settings.db_path, clock=clock)
     attach_usage_store(http, ledger)  # provider calls per day/month -> kv usage.providers (API usage card)
     try:
-        wallet = None
-        if settings.bot_wallet_secret:
-            from nightcrawler.broker.wallet import load_keypair
+        from nightcrawler.broker.keystore import resolve_wallet
 
-            wallet = load_keypair(settings.bot_wallet_secret, redaction_filter)
+        # BOT_WALLET_SECRET, or BOT_WALLET_MODE=generated: the bot's own key file (made on the first paper start)
+        wallet = resolve_wallet(settings, ledger, redaction_filter)
         if settings.is_live:
             from nightcrawler.broker.live import LiveBroker
 
@@ -2377,9 +2391,13 @@ def build_app(settings: Settings, clock: Clock | None = None, *, session: Any = 
             learning = LearnStage(settings, ledger,
                                   start_recorder=lambda: start_recorder(settings, session=session, clock=learn_clock),
                                   spawn=lambda: learn_job.spawn_learner(settings))
+        from nightcrawler.withdraw import Withdrawer, has_pending
+
+        withdraw = (Withdrawer(settings, ledger, sources.rpc, wallet, clock)
+                    if settings.withdraw_to or has_pending(ledger) else None)
         engine = Engine(settings, clock=clock, ledger=ledger, crawler=crawler, cocoon=cocoon, radar=radar,
                         judge=judge, risk=risk, broker=broker, sources=sources, stop_event=stop_event,
-                        pumpfun=pumpfun, learning=learning)
+                        pumpfun=pumpfun, learning=learning, withdraw=withdraw)
         verify_cache: dict[str, Any] = {}
         dashboard = DashboardServer(settings, lambda: build_state(ledger, settings, clock.now(), verify_cache),
                                     team=TeamRoom(settings, ledger, clock))
