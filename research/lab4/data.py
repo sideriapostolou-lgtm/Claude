@@ -60,7 +60,7 @@ OFFSET_CAP = 2000  # the plain /markets endpoint rejects offsets above this
 TRADES_LIMIT = 10_000  # Data API's cap per request
 TRADES_MAX_OFFSET = 10_000
 MIN_WINDOW_S = 60  # never split a trade window below one minute (a minute with > 20k fills is kept truncated)
-SLEEP_S = 0.35  # ~3 requests / s, well under both APIs' public limits
+SLEEP_S = float(os.environ.get("LAB4_SLEEP_S", "0.35"))  # per request; the Data API allows ~20 req/s per IP
 TRADE_COLUMNS = ["ts", "price", "size", "side", "outcome_index", "asset", "tx"]
 UA = {
     "User-Agent": "nightcrawler-research/lab4 (+https://github.com/sideriapostolou-lgtm/Claude)"
