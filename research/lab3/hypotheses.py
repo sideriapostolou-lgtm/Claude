@@ -184,4 +184,34 @@ R1 = {
     "signal": r1_signal,
 }
 
-REGISTRY = {h["HYP"]: h for h in (T1, T2, V1, X1, R1)}
+
+# --------------------------------------------------------------------------- T3 majors-only trend
+# (pre-registered 2026-10-09 12:40 UTC, after T1-V1's VAL was read and before any T3 return was computed)
+
+MAJORS = ["BTC", "ETH", "SOL"]
+
+
+def t3_signal(P: C.Panel, p: Mapping[str, Any]) -> pd.DataFrame:
+    """T1 / T2 rules restricted to the three majors (the universe override does the restriction; the rule is the
+    same code path)."""
+    if p["rule"] == "tsmom":
+        return t1_signal(P, {"L": p["N"]})
+    return t2_signal(P, {"kind": p["rule"], "N": p["N"]})
+
+
+T3 = {
+    "HYP": "T3",
+    "name": "trend following on the majors only (BTC, ETH, SOL)",
+    "universe": MAJORS,
+    "GRID": [
+        {"rule": "tsmom", "N": 30},
+        {"rule": "tsmom", "N": 90},
+        {"rule": "sma", "N": 50},
+        {"rule": "sma", "N": 200},
+        {"rule": "donchian", "N": 55},
+    ],
+    "config_key": lambda p: f"{p['rule']}{p['N']}",
+    "signal": t3_signal,
+}
+
+REGISTRY = {h["HYP"]: h for h in (T1, T2, V1, X1, R1, T3)}

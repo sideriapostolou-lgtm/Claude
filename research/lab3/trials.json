@@ -113,6 +113,51 @@
     "kind": "donchian"
    }
   },
+  "T3|44e368dc2dc06242": {
+   "first_utc": "2026-10-09 12:35:45",
+   "hypothesis": "T3",
+   "params": {
+    "N": 90,
+    "hyp": "T3",
+    "rule": "tsmom"
+   }
+  },
+  "T3|b78ad515e03b96f1": {
+   "first_utc": "2026-10-09 12:36:05",
+   "hypothesis": "T3",
+   "params": {
+    "N": 200,
+    "hyp": "T3",
+    "rule": "sma"
+   }
+  },
+  "T3|d1d4c16fea4342ac": {
+   "first_utc": "2026-10-09 12:36:16",
+   "hypothesis": "T3",
+   "params": {
+    "N": 55,
+    "hyp": "T3",
+    "rule": "donchian"
+   }
+  },
+  "T3|d54b52eed5d46cf1": {
+   "first_utc": "2026-10-09 12:35:35",
+   "hypothesis": "T3",
+   "params": {
+    "N": 30,
+    "hyp": "T3",
+    "rule": "tsmom"
+   }
+  },
+  "T3|d779cb3bc8d2f680": {
+   "first_utc": "2026-10-09 12:35:55",
+   "hypothesis": "T3",
+   "params": {
+    "N": 50,
+    "hyp": "T3",
+    "rule": "sma"
+   }
+  },
   "V1|1cc1885ae73ac50a": {
    "first_utc": "2026-10-09 12:30:39",
    "hypothesis": "V1",
@@ -652,6 +697,150 @@
    "sharpe": -0.993737701285341,
    "split": "val",
    "utc": "2026-10-09 12:33:53"
+  },
+  {
+   "cagr": null,
+   "config": "T3|d54b52eed5d46cf1",
+   "max_drawdown": null,
+   "n_days": null,
+   "sharpe": null,
+   "split": "train",
+   "utc": "2026-10-09 12:35:35"
+  },
+  {
+   "cagr": 1.0634332780744087,
+   "config": "T3|d54b52eed5d46cf1",
+   "max_drawdown": -0.7036827361717078,
+   "n_days": 3453,
+   "sharpe": 1.3732277583103156,
+   "split": "train",
+   "utc": "2026-10-09 12:35:45"
+  },
+  {
+   "cagr": null,
+   "config": "T3|44e368dc2dc06242",
+   "max_drawdown": null,
+   "n_days": null,
+   "sharpe": null,
+   "split": "train",
+   "utc": "2026-10-09 12:35:45"
+  },
+  {
+   "cagr": 0.9304915177860029,
+   "config": "T3|44e368dc2dc06242",
+   "max_drawdown": -0.7067767876653426,
+   "n_days": 3453,
+   "sharpe": 1.1137048841546755,
+   "split": "train",
+   "utc": "2026-10-09 12:35:55"
+  },
+  {
+   "cagr": null,
+   "config": "T3|d779cb3bc8d2f680",
+   "max_drawdown": null,
+   "n_days": null,
+   "sharpe": null,
+   "split": "train",
+   "utc": "2026-10-09 12:35:55"
+  },
+  {
+   "cagr": 1.0874446300053031,
+   "config": "T3|d779cb3bc8d2f680",
+   "max_drawdown": -0.5496241936935262,
+   "n_days": 3453,
+   "sharpe": 1.4207833886092995,
+   "split": "train",
+   "utc": "2026-10-09 12:36:05"
+  },
+  {
+   "cagr": null,
+   "config": "T3|b78ad515e03b96f1",
+   "max_drawdown": null,
+   "n_days": null,
+   "sharpe": null,
+   "split": "train",
+   "utc": "2026-10-09 12:36:05"
+  },
+  {
+   "cagr": 1.0217179358490664,
+   "config": "T3|b78ad515e03b96f1",
+   "max_drawdown": -0.6680995666072108,
+   "n_days": 3453,
+   "sharpe": 1.2142436643175654,
+   "split": "train",
+   "utc": "2026-10-09 12:36:16"
+  },
+  {
+   "cagr": null,
+   "config": "T3|d1d4c16fea4342ac",
+   "max_drawdown": null,
+   "n_days": null,
+   "sharpe": null,
+   "split": "train",
+   "utc": "2026-10-09 12:36:16"
+  },
+  {
+   "cagr": 0.9456916183510939,
+   "config": "T3|d1d4c16fea4342ac",
+   "max_drawdown": -0.5646646203924034,
+   "n_days": 3453,
+   "sharpe": 1.3632173280435642,
+   "split": "train",
+   "utc": "2026-10-09 12:36:26"
+  },
+  {
+   "cagr": null,
+   "config": "T3|d779cb3bc8d2f680",
+   "max_drawdown": null,
+   "n_days": null,
+   "sharpe": null,
+   "split": "val",
+   "utc": "2026-10-09 12:36:27"
+  },
+  {
+   "cagr": 0.2588683564423462,
+   "config": "T3|d779cb3bc8d2f680",
+   "max_drawdown": -0.19289919178719994,
+   "n_days": 365,
+   "sharpe": 0.6714329217502699,
+   "split": "val",
+   "utc": "2026-10-09 12:36:35"
+  },
+  {
+   "cagr": null,
+   "config": "T3|d54b52eed5d46cf1",
+   "max_drawdown": null,
+   "n_days": null,
+   "sharpe": null,
+   "split": "val",
+   "utc": "2026-10-09 12:36:35"
+  },
+  {
+   "cagr": 0.16178843818242372,
+   "config": "T3|d54b52eed5d46cf1",
+   "max_drawdown": -0.2021370651955675,
+   "n_days": 365,
+   "sharpe": 0.4389584872535169,
+   "split": "val",
+   "utc": "2026-10-09 12:36:44"
+  },
+  {
+   "cagr": null,
+   "config": "T3|d779cb3bc8d2f680",
+   "max_drawdown": null,
+   "n_days": null,
+   "sharpe": null,
+   "split": "test",
+   "utc": "2026-10-09 12:37:13"
+  },
+  {
+   "cagr": 0.07455681511836176,
+   "config": "T3|d779cb3bc8d2f680",
+   "max_drawdown": -0.2765732102059062,
+   "n_days": 282,
+   "sharpe": 0.21594690246085907,
+   "split": "test",
+   "utc": "2026-10-09 12:37:22"
   }
  ]
 }

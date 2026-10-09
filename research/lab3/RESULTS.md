@@ -37,3 +37,31 @@ No TEST look was spent (nothing was SELECTED on VAL).
   conservative for the strategies, not for the absolute numbers).
 - The universe is memecoin-heavy because it had to be Solana-tradable; a majors-only universe (BTC, ETH, SOL) is a
   different, pre-registered hypothesis (T3), see below.
+
+## 2026-10-09 12:35-12:37 UTC: T3 trend following on the majors only (BTC, ETH, SOL)
+
+Pre-registered after the VAL results above were read (PLAN 4, dated); 5 new counted trials. Universe, benchmarks
+and placebo restricted to the three majors.
+
+| stage | result |
+|---|---|
+| TRAIN 2015-2024 | all 5 configs qualify: sma50 Sharpe 1.42, CAGR +109 %, DD -55 %; tsmom30 1.37 / +106 % / -70 %; donchian55 1.36 / +95 % / -57 %; buy-and-hold 0.89 / +98 % / -88 %; excess vs exposure-matched placebo +33..+42 % a year, CI95 > 0, DSR 0.78-0.96. Shortlist: sma50, tsmom30 |
+| VAL 2025 | **SELECTED**: sma50 Sharpe 0.67, **+25.9 %**, DD -19 %, exposure 0.43 while the majors' buy-and-hold was -14 % (SOL -34 %, BTC -6 %); vs placebo +33.5 % a year, p = 0.03, but CI95 [-0.017 %, +0.224 %]/day spans 0. tsmom30 0.44 / +16 % |
+| TEST 2026 YTD (one look, 282 days) | **FAIL on the pre-registered bar**: sma50 Sharpe 0.22, **+7.5 % annualised (+5.7 % YTD)**, DD -28 % vs buy-and-hold -12 % / DD -50 %; vs placebo +21.9 % a year, p = 0.17, CI95 [-0.096 %, +0.249 %]/day spans 0; stress x2 costs Sharpe 0.01. Criteria: Sharpe > 0 yes; drawdown better than buy-and-hold yes; placebo-excess CI lower bound > 0 **no** |
+
+### Reading
+
+- Direction is consistent across all three periods: trend following on the majors beat holding them in TRAIN, in
+  the 2025 bear (+26 % vs -14 %) and in 2026 so far (+7.5 % vs -12 %), with roughly half the drawdown. That is
+  exactly what the literature predicts and the only consistently positive out-of-sample result this program has
+  produced.
+- It does NOT meet the pre-registered evidence bar: over 9-12 months the gap to random timing with the same
+  exposure is not statistically separable from luck (the CI spans zero in both VAL and TEST), and the deflated
+  Sharpe after ~120 program trials is ~0. One more year of data would roughly double the power. The verdict stands
+  as FAIL; the finding is recorded as "promising, under-powered", not as an edge.
+- Economics at the owner's size: +5.7 % YTD on $100 is $5.70, and the fixed network fees already cost this rule
+  ~3 % a year on a $100 sleeve. The rule makes sense as a way to HOLD crypto majors with smaller drawdowns, sized
+  in hundreds or thousands of dollars, judged over years. It is not a way to turn $100 into anything.
+- What would be legitimate next steps (new pre-registrations, counted): a forward paper run of sma50 on the
+  majors inside the bot (free, builds live evidence daily); re-judging after 2026 closes; a hourly-bar variant
+  only if the daily one keeps its direction.

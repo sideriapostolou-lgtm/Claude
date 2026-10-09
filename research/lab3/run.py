@@ -221,6 +221,9 @@ def run_stage(
         P, U = _load()
     else:
         U = C.universe_mask(P)
+    if hyp.get("universe"):  # a hypothesis-specific universe (PLAN 4 T3): benchmarks and placebo use the same one
+        U = U.copy()
+        U.loc[:, [c for c in U.columns if c not in hyp["universe"]]] = False
     costs = C.Costs()
     bench = benchmarks(P, U, stage, costs)
     grid_all = {hyp["config_key"](p): p for p in hyp["GRID"]}

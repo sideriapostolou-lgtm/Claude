@@ -60,6 +60,11 @@ Signals may use any data BEFORE the decision bar (warm-up reaches back into the 
   (k in {3, 5}) only where the asset's own 90-day return > 0; else cash. 2 configs.
 - **R1 short-term mean reversion**: buy an asset after it closes below its 5-day low while above its 200-day SMA;
   exit at the first close above the 5-day SMA or after 5 days. 1 config (and its "no trend filter" twin). 2 configs.
+- **T3 majors-only trend** (added 2026-10-09 12:40 UTC, AFTER the VAL results of T1-V1 were read, BEFORE any T3
+  return was computed; counted as 5 new trials): the T1 / T2 rules on a universe of BTC, ETH and SOL only, with the
+  benchmarks and the placebo on that same universe. Grid: tsmom30, tsmom90, sma50, sma200, donchian55. Same splits
+  and bars; the 2025 VAL look is its first out-of-sample test. Motivation (stated honestly): the wave-3 universe is
+  memecoin-heavy because it had to be Solana-tradable; the owner's direction was "crypto majors".
 - **Benchmarks** (not trials): buy-and-hold equal weight; SOL only; BTC only; cash.
 - **Placebo** (PLAN 3.4 analogue): for each config, 200 random position series with the SAME per-asset exposure and
   the same average holding length (block-shuffled positions), costs applied: the strategy must beat its own
