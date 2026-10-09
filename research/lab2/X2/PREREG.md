@@ -158,7 +158,7 @@ TEST, CONFIRM and FINAL run the single candidate inside the family's one `common
 
   | Result | Condition |
   |---|---|
-  | UNDERPOWERED | fewer than 30 coins in the top bin |
+  | UNDERPOWERED | fewer than 30 coins in the top bin, or an empty bin |
   | PASS | mean(top bin) > mean(all observations) **and** the four bin means rise with at most one adjacent inversion |
   | FAIL | otherwise |
 
