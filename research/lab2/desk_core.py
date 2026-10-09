@@ -243,12 +243,20 @@ class FakeDeskClient:
         return type("R", (), {"content": [block], "usage": usage, "model": request["model"], "id": "fake"})()
 
 
+# Per-model "answer without thinking first": Haiku 5.5 names it "between_tools", the others "disabled" (live API
+# errors of 2026-10-09 said so in both directions).
+THINKING_OFF = {"claude-haiku-5-5": {"type": "between_tools"}}
+
+
+def thinking_off(model: str) -> dict[str, str]:
+    return dict(THINKING_OFF.get(model, {"type": "disabled"}))
+
+
 def _request(model: str, system: str, user: str, max_tokens: int, schema: dict | None) -> dict[str, Any]:
     req: dict[str, Any] = {
         "model": model,
         "max_tokens": max_tokens,  # no sampling parameters: the Claude 5 API has none (PREREG amendment 1)
-        # amendment 2: hidden reasoning ate the memo budget; "between_tools" is this API's "no thinking before answering"
-        "thinking": {"type": "between_tools"},
+        "thinking": thinking_off(model),  # amendment 2: hidden reasoning ate the memo budget
         "system": [{"type": "text", "text": system, "cache_control": {"type": "ephemeral"}}],
         "messages": [{"role": "user", "content": user}],
     }
