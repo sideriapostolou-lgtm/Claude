@@ -245,6 +245,12 @@ def settlement(slug: str) -> float | None:
     return _num(reply.get("settlement")) if isinstance(reply, dict) else None
 
 
+def _write_atomic(path: Path, text: str) -> None:
+    tmp = path.with_suffix(".tmp")
+    tmp.write_text(text)
+    os.replace(tmp, path)
+
+
 def _load(path: Path) -> dict[str, Any]:
     if path.exists():
         try:
@@ -338,8 +344,10 @@ def poll(out: Path = OUT, now: float | None = None) -> dict[str, int]:
             }
             n_settled += 1
         time.sleep(REQ_SLEEP_S)
-    (out / "markets.json").write_text(json.dumps(markets, indent=0, sort_keys=True))
-    (out / "settlements.json").write_text(json.dumps(settled, indent=0, sort_keys=True))
+    _write_atomic(out / "markets.json", json.dumps(markets, indent=0, sort_keys=True))
+    _write_atomic(
+        out / "settlements.json", json.dumps(settled, indent=0, sort_keys=True)
+    )
     return {
         "watched": len(fresh),
         "rows": n_rows,

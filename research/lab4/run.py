@@ -13,6 +13,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import sys
 from datetime import UTC, datetime
 from pathlib import Path
@@ -25,12 +26,13 @@ import data as D
 HERE = Path(__file__).resolve().parent
 PLAN = HERE / "PLAN.md"
 
+INF = C.INF
 HYPOTHESES: dict[str, dict[str, Any]] = {
     "P1": {
         "title": "near-certain, all markets",
         "families": "all",
         "thetas": [0.95, 0.97, 0.99],
-        "hours": [1.0, 6.0, 24.0, 168.0],
+        "hours": [1.0, 6.0, 24.0, 168.0, INF],
         "control": False,
         "selectable": True,
     },
@@ -38,10 +40,11 @@ HYPOTHESES: dict[str, dict[str, Any]] = {
         "title": "late-game sports",
         "families": "sports",
         "thetas": [0.95, 0.97, 0.99],
-        "hours": [0.25, 0.5, 1.0, 2.0],
+        "hours": [0.25, 0.5, 1.0, 2.0, INF],
         "control": False,
         "selectable": True,
-    },
+        "selectable_hours": [INF],
+    },  # Amendment 3: windowed sports cells are oracle-timed, reported only
     "P3": {
         "title": "crypto up/down, last minutes",
         "families": "crypto",
@@ -54,7 +57,7 @@ HYPOTHESES: dict[str, dict[str, Any]] = {
         "title": "non-sports grind (the owner's venue)",
         "families": "nonsports",
         "thetas": [0.95, 0.97, 0.99],
-        "hours": [1.0, 6.0, 24.0, 168.0],
+        "hours": [1.0, 6.0, 24.0, 168.0, INF],
         "control": False,
         "selectable": True,
     },
@@ -62,7 +65,7 @@ HYPOTHESES: dict[str, dict[str, Any]] = {
         "title": "control: longshots (the other side)",
         "families": "all",
         "thetas": [0.95, 0.97, 0.99],
-        "hours": [1.0, 6.0, 24.0, 168.0],
+        "hours": [1.0, 6.0, 24.0, 168.0, INF],
         "control": True,
         "selectable": False,
     },
@@ -76,7 +79,13 @@ def prereg_sha256() -> str:
 
 
 def cell_key(theta: float, hours: float) -> str:
-    return f"theta{theta:g}|H{hours:g}"
+    return f"theta{theta:g}|H{'inf' if hours == INF else f'{hours:g}'}"
+
+
+def oracle_timed(hyp: str, hours: float) -> bool:
+    """A windowed sports cell is anchored on an endDate that is a deadline, not the final whistle (Amendment 3)."""
+    sel = HYPOTHESES[hyp].get("selectable_hours")
+    return sel is not None and hours not in sel
 
 
 def evaluate(
@@ -111,7 +120,11 @@ def evaluate(
 def decide_train(cells: list[dict[str, Any]], hyp: str) -> dict[str, Any] | None:
     if not HYPOTHESES[hyp]["selectable"]:
         return None
-    ok = [c for c in cells if C.qualifies(c["summary"], MIN_N)]
+    ok = [
+        c
+        for c in cells
+        if C.qualifies(c["summary"], MIN_N) and not oracle_timed(hyp, c["hours"])
+    ]
     if not ok:
         return None
     best = max(ok, key=lambda c: c["summary"]["mean_net"])
@@ -137,31 +150,44 @@ def _fmt(v: Any, nd: int = 3) -> str:
 def _md(hyp: str, stage: str, doc: dict[str, Any]) -> str:
     h = HYPOTHESES[hyp]
     lines = [
-        f"# {hyp} {h['title']}: {stage.upper()} ({doc['split']}, lab4-v1)",
+        f"# {hyp} {h['title']}: {stage.upper()} ({doc['split']}, lab4-v1 + Amendments 1-3)",
         "",
         f"Run {doc['utc']}; PLAN.md sha256 {doc['prereg_sha256'][:12]}; markets in split {doc['n_markets']} "
         f"(families: {doc['families']}); trials so far across labs 2-4: {doc['n_trials_total']}.",
         "",
     ]
+    cov = doc.get("coverage") or {}
+    if cov:
+        lines += [
+            f"Tape coverage: {cov.get('with_tape')} of {cov.get('eligible')} eligible markets "
+            f"({100 * float(cov.get('share') or 0):.1f} %).",
+            "",
+        ]
     lines.append(
-        "| cell | n | missed | /day | win rate | mean p | gap | mean net | CI95 | $/trade | worst $ | streak | lock h | daily Sharpe | DD $ |"
+        "| cell | n | events | missed | /day | win rate | losses | mean p | gap | mean net | CI95 (events) | "
+        "worst case (rule of 3) | bid-side share (old rule) | $/trade | worst $ | streak | lock h | "
+        "daily Sharpe | DD $ |"
     )
-    lines.append("|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|")
+    lines.append(
+        "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"
+    )
     for c in doc["cells"]:
         s = c["summary"]
         ci = s["ci95"]
+        tag = " (oracle-timed, not selectable)" if oracle_timed(hyp, c["hours"]) else ""
         lines.append(
-            f"| {c['key']} | {s['n']} | {s['missed']} | {_fmt(s['trades_per_day'], 2)} | {_fmt(s['win_rate'])} | "
-            f"{_fmt(s['mean_p_exec'])} | {_fmt(s['calibration_gap'])} | {_fmt(s['mean_net'], 4)} | "
-            f"[{_fmt(ci[0], 4)}, {_fmt(ci[1], 4)}] | {_fmt(s['mean_pnl_usd'], 2)} | {_fmt(s['worst_pnl_usd'], 2)} | "
+            f"| {c['key']}{tag} | {s['n']} | {s.get('n_events', '-')} | {s['missed']} | {_fmt(s['trades_per_day'], 2)} | "
+            f"{_fmt(s['win_rate'])} | {s.get('losses', '-')} | {_fmt(s['mean_p_exec'])} | {_fmt(s['calibration_gap'])} | "
+            f"{_fmt(s['mean_net'], 4)} | [{_fmt(ci[0], 4)}, {_fmt(ci[1], 4)}] | {_fmt(s.get('worst_case_net'), 4)} | "
+            f"{_fmt(s.get('bid_side_share'))} | {_fmt(s['mean_pnl_usd'], 2)} | {_fmt(s['worst_pnl_usd'], 2)} | "
             f"{s['longest_losing_streak']} | {_fmt(s['lock_h_median'], 2)} | {_fmt(s['daily']['sharpe'], 2)} | "
             f"{_fmt(s['daily']['max_drawdown_usd'], 2)} |"
         )
         if c.get("placebo"):
             p = c["placebo"]
             lines.append(
-                f"|  placebo (calibrated) | | | | | | | mean {_fmt(p['mean'], 4)}, p95 {_fmt(p['p95'], 4)}; "
-                f"real at percentile {_fmt(p['real_percentile'], 1)} | | | | | | | |"
+                f"|  placebo (calibrated) | | | | | | | | | mean {_fmt(p['mean'], 4)}, p95 {_fmt(p['p95'], 4)}; "
+                f"real at percentile {_fmt(p['real_percentile'], 1)} | | | | | | | | | |"
             )
     lines.append("")
     lines.append(f"**Decision:** {doc['decision']}")
@@ -169,9 +195,11 @@ def _md(hyp: str, stage: str, doc: dict[str, Any]) -> str:
         lines.append(f"Selected cell: `{doc['selected']['key']}`.")
     lines.append("")
     lines.append(
-        "Readings per PLAN §4. 'gap' = win rate minus mean execution price (the gross edge before fees); "
-        "'net' = profit per $1 at risk after the venue's taker fee; one trade per market per cell, $20 "
-        "tickets, 10 s latency. Nothing here is a live trade."
+        "Readings per PLAN §4 and Amendment 3. 'gap' = win rate minus mean execution price (the gross edge "
+        "before fees); 'net' = profit per $1 at risk after the venue's taker fee; one trade per market per "
+        "cell, $20 tickets, 10 s latency, buyable prints only; CI by event bootstrap; 'worst case' = "
+        "(1 - 3/n) x mean win - 3/n; 'bid-side share' = how often the old side-blind rule would have filled "
+        "at a price no buyer could get. Nothing here is a live trade."
     )
     return "\n".join(lines) + "\n"
 
@@ -186,6 +214,12 @@ def run_stage(
     split = stage
     C.check_split_allowed(split)
     ds = C.Dataset.load(split, out_dir)
+    cov = ds.coverage
+    if cov.get("share", 1.0) < 1.0 and os.environ.get("LAB4_ALLOW_PARTIAL") != "1":
+        raise RuntimeError(
+            f"{split.upper()} tapes incomplete: {cov['with_tape']} of {cov['eligible']} eligible markets have a tape "
+            "(Amendment 3 refuses a partial run; set LAB4_ALLOW_PARTIAL=1 for a labelled dry run)"
+        )
     results: dict[str, Any] = {}
     for hyp in hyps or list(HYPOTHESES):
         hdir = here / hyp
@@ -225,6 +259,7 @@ def run_stage(
                     "prereg_sha256": prereg_sha256(),
                     "n_markets": len(ds.markets),
                     "families": ds.markets["family"].value_counts().to_dict(),
+                    "coverage": ds.coverage,
                     "n_trials_total": C.trials_count(),
                 }
                 (hdir / f"{stage}.json").write_text(
@@ -277,6 +312,7 @@ def run_stage(
             "prereg_sha256": prereg_sha256(),
             "n_markets": len(ds.markets),
             "families": ds.markets["family"].value_counts().to_dict(),
+            "coverage": ds.coverage,
             "n_trials_total": n_total,
         }
         (hdir / f"{stage}.json").write_text(

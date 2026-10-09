@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import os
 import sys
 from datetime import UTC, datetime
@@ -116,15 +117,21 @@ def shadow_trades(
         s_rec = settlements.get(slug)
         if (
             cat == "sports"
-        ):  # a game's endDate is a deadline weeks out: its end is the settlement, else the last quote
-            end_ts = (
+        ):  # a game's endDate is a deadline weeks out: its end is when it left the live list
+            last_quote = float(g["ts"].iloc[-1])
+            closed_at = (
                 float(s_rec["closed_at"])
                 if s_rec and s_rec.get("closed_at")
-                else float(g["ts"].iloc[-1])
+                else math.inf
             )
+            end_ts = min(
+                last_quote + 1.0, closed_at
+            )  # the last quote itself is still eligible
         else:
             end_ts = float(g["end_ts"].iloc[-1])
-        window = g[g["ts"] >= end_ts - hours * 3600.0]
+        window = g[
+            (g["ts"] >= end_ts - hours * 3600.0) & (g["ts"] < end_ts)
+        ]  # never after the end (Amendment 3)
         if window.empty:
             continue
         long_ok = window["best_ask"] >= theta

@@ -144,3 +144,23 @@ def test_empty_recorder_dir(tmp_path):
     assert books.empty
     md, doc = P.report(tmp_path, cells=[(0.97, 1.0, "all")])
     assert doc["quotes"] == 0 and "| all | 0.97 | 1 | 0 | 0 | 0 |" in md
+
+
+def test_no_entry_after_a_market_has_ended(tmp_path):
+    end = T0 + 3600
+    rows = [
+        _q(T0 + 100, "a1", "crypto", 0.50, 0.52, end),
+        _q(end + 120, "a1", "crypto", 0.98, 0.99, end),  # after the end
+        _q(T0 + 100, "g1", "sports", 0.50, 0.52, end + 30 * 86400),
+        _q(T0 + 1000, "g1", "sports", 0.97, 0.98, end + 30 * 86400),
+    ]
+    _write(
+        tmp_path,
+        rows,
+        {"a1": {"settlement": 1}, "g1": {"settlement": 1, "closed_at": T0 + 5000}},
+    )
+    books = P.load_books(tmp_path)
+    tr = P.shadow_trades(books, P.load_settlements(tmp_path), 0.95, 1.0, "all")
+    assert set(tr["slug"]) == {
+        "g1"
+    }  # a1's 0.99 ask printed after its end is not an entry; g1's last live quote is

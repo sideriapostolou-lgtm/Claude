@@ -206,3 +206,10 @@ def test_poll_includes_live_sports_and_settles_them_when_they_leave_the_list(
         json.loads((tmp_path / "settlements.json").read_text())["g1-ml"]["settlement"]
         == 1.0
     )
+
+
+def test_state_files_are_written_atomically(tmp_path):
+    R._write_atomic(tmp_path / "x.json", "{}")
+    assert (tmp_path / "x.json").read_text() == "{}" and not (
+        tmp_path / "x.tmp"
+    ).exists()
