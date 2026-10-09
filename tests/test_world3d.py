@@ -13,7 +13,7 @@ import re
 import struct
 import tomllib
 from collections.abc import Callable, Iterator
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any
 
 import pytest
@@ -29,7 +29,10 @@ from nightcrawler.page import MEMBERS
 from nightcrawler.teamroom import TeamRoom
 from nightcrawler.world3d import (
     ADDON_FILES,
+    CART_MODEL,
     CAST_MODELS,
+    MOTION_FILES,
+    PROP_MODELS,
     WORLD_ASSETS,
     WORLD_CAST,
     WORLD_CSP,
@@ -47,6 +50,7 @@ ADDON = "/office/assets/addons/postprocessing/UnrealBloomPass.js"
 #: (identical on unpkg.com).
 ADDON_SHA256 = {
     "addons/loaders/GLTFLoader.js": "d073b438e6a07e1359741dd5d6c76c953420cc0d4fd84eb1bdde94315540e6a3",
+    "addons/libs/meshopt_decoder.module.js": "01f48524f4bac6141eaba07e94cc36e7ee56f311796fa6117c159842941b0468",
     "addons/utils/BufferGeometryUtils.js": "9be041e96308775d00e2695cc607645b9a9b64fd7c0e759dd8f7c00a8d92becb",
     "addons/postprocessing/EffectComposer.js": "d234e578618fa816955ebdc059c049c577e203e650e33cf22bde3f232c29e669",
     "addons/postprocessing/RenderPass.js": "1c90c085312871c4bcdccfcf519499c6276dd503363fcf7cb7f703add45cf4a2",
@@ -214,7 +218,7 @@ def test_world_live_mode_is_marked(make_settings: Callable[..., Settings]) -> No
 
 def test_world_data_blocks_are_json_that_cannot_break_out(settings: Settings) -> None:
     page = render_world_html(settings)
-    for block_id, expected in (("cast", WORLD_CAST), ("rooms", WORLD_ROOMS), ("models", {})):
+    for block_id, expected in (("cast", WORLD_CAST), ("rooms", WORLD_ROOMS), ("models", models_on_disk())):
         raw = _block(page, rf'<script id="{block_id}" type="application/json">(.*?)</script>')
         assert "<" not in raw and ">" not in raw and "&" not in raw
         assert json.loads(raw) == expected
@@ -227,13 +231,77 @@ def test_world_csp_hashes_the_inline_module_import_map_and_style(settings: Setti
     assert _hash(style) in WORLD_CSP and _hash(_module(page)) in WORLD_CSP and _hash(importmap) in WORLD_CSP
     assert json.loads(importmap) == {"imports": {"three": "./office/assets/three.module.min.js",
                                                  "three/addons/": "./office/assets/addons/"}}
-    assert WORLD_CSP.startswith("default-src 'none'; script-src 'self' 'sha256-")
+    assert WORLD_CSP.startswith("default-src 'none'; script-src 'self' 'wasm-unsafe-eval' 'sha256-")
     assert "; style-src 'sha256-" in WORLD_CSP and WORLD_CSP.endswith(
         "; connect-src 'self' blob:; img-src 'self' data: blob:; base-uri 'none'; form-action 'none'; "
         "frame-ancestors 'none'")
     assert "'unsafe-inline'" not in WORLD_CSP and "'unsafe-eval'" not in WORLD_CSP
     assert page.count("<script") == 5  # the import map, three JSON data blocks and the one module: nothing else runs
     assert page.index('type="importmap"') < page.index('type="module"')  # the map must come before the module
+
+
+def test_world_csp_adds_only_webassembly_for_the_decoder(settings: Settings) -> None:
+    """The meshopt decoder instantiates its bundled WebAssembly: ``'wasm-unsafe-eval'`` is the one addition, and
+    nothing else is looser than before (no eval, no inline script or style, no other origin, no workers)."""
+    directives = dict(d.strip().split(" ", 1) for d in WORLD_CSP.split(";"))
+    page = render_world_html(settings)
+    module, importmap = _module(page), _block(page, r'<script type="importmap">(.*?)</script>')
+    assert directives["script-src"].split() == ["'self'", "'wasm-unsafe-eval'", _hash(module), _hash(importmap)]
+    assert directives["style-src"] == _hash(_block(page, r"<style>(.*?)</style>"))
+    assert directives == {"default-src": "'none'", "script-src": directives["script-src"],
+                          "style-src": directives["style-src"], "connect-src": "'self' blob:",
+                          "img-src": "'self' data: blob:", "base-uri": "'none'", "form-action": "'none'",
+                          "frame-ancestors": "'none'"}
+    for loose in ("'unsafe-inline'", "'unsafe-eval'", "'unsafe-hashes'", "'strict-dynamic'", "*", "http", "data:",
+                  "blob:"):
+        assert loose not in directives["script-src"], loose
+
+
+def test_the_module_loads_the_real_cast_with_the_meshopt_decoder(settings: Settings) -> None:
+    module = _module(render_world_html(settings))
+    # three's GLTFLoader with the meshopt decoder (the cast's files are meshopt-compressed), both from this server
+    assert 'import("three/addons/loaders/GLTFLoader.js")' in module
+    assert 'import("three/addons/libs/meshopt_decoder.module.js")' in module
+    assert "await decoder.ready;" in module and "gltfLoader.setMeshoptDecoder(decoder);" in module
+    # the bodies in motion: cast_motion.js (same origin), its move library and actors
+    assert 'import("./office/assets/cast_motion.js")' in module and "m.loadLibrary(gltfLoader, ASSET)" in module
+    assert "new motionMod.Actor(got[0].scene, s, lib)" in module
+    # progressive: never before the first frame; the crew first, then the set nearest the camera; a counter line
+    assert "if (!started) { started = true; setTimeout(function () { loadModels()" in module
+    assert '"loading the crew " + loading.crew + "/" + loading.crewN' in module
+    assert "propIds.sort(function (x, y) { return PLACE[x][0].at.distanceTo(camera.position)" in module
+    # every procedural stand-in stays until its model is ready, then fades out; a failure keeps the drawing
+    assert "keeping the drawing" in module and "back to the drawing" in module
+    assert "(STANDIN[id] || []).forEach(function (s) { s.visible = false; })" in module
+    assert "a.body.visible = false" in module and "a.body.visible = true" in module
+    # Mote rides a glass bell drawn in code on its cart, Rook's amber eyes are drawn on his Head bone
+    assert "new THREE.LatheGeometry(prof.map(function (q) { return new THREE.Vector2(q[0] * radius, q[1] * height); }), 48)" \
+        in module and "clearcoat: 1" in module
+    assert "rookEyes(A)" in module and "A.bones.Head" in module
+    layout = module[module.index("const PLACE = {"):module.index("const placed = {};")]
+    for prop in PROP_MODELS:
+        assert f"\n    {prop}: " in layout, prop  # every hero prop has a place in the layout
+
+
+def test_the_acting_follows_the_ledger(settings: Settings) -> None:
+    """Moves are acting triggered by real events and statuses; nothing invents a result."""
+    module = _module(render_world_html(settings))
+    # Jet carries a real closed trade's cube (the carry walk), cheers only for a win and shrugs only at a loss
+    assert 'carry: won ? "gold" : "red"' in module and 'return a.carrying ? "carry"' in module
+    assert 'if (pnl > 0) oneShot(a, "cheer"); else if (pnl < 0) oneShot(a, "shrug");' in module
+    assert module.count('"cheer"') == 1 and module.count('"shrug"') == 1
+    # worried only on a bad-tone event; Rook nods only on a good-tone one
+    assert 'if (ev.tone === "bad") oneShot(actor, "worried");' in module and module.count('"worried"') == 1
+    assert 'ev.tone === "good" && actor.key === "rook") oneShot(actor, "nod"' in module and module.count('"nod"') == 1
+    # the Polymarket desk's lessons: Voss thinks, then says the desk's own words
+    assert 'memberId === "predict" && /^Lesson:/.test(' in module and 'oneShot(actor, "think", 3.4)' in module
+    assert "speak(a, memberId, ev.text, ev.tone, 10)" in module
+    # talk while the member's own words are up; the crew within ~6 m turn and listen
+    assert 'else if (a.speaking) loop = "talk";' in module and 'else if (a.listening) loop = "listen";' in module
+    assert "let best = 6.0;" in module
+    # blocked or waiting: think; ambient life only while every member an actor plays is idle (no words)
+    assert 'if (status === "blocked" || status === "waiting")' in module
+    assert 'worstStatus(a.members) === "idle"' in module
 
 
 def test_the_honest_words_come_from_the_data(settings: Settings) -> None:
@@ -286,6 +354,31 @@ def test_the_model_manifest_names_one_whitelisted_glb_per_actor() -> None:
         assert spec["asset"] == f"cast_{key}.glb" and WORLD_ASSETS[f"cast_{key}.glb"] == "model/gltf-binary"
         assert isinstance(spec["height"], float) and 0.5 < spec["height"] < 3.0
     assert CAST_MODELS["rook"]["height"] > 1.8 * CAST_MODELS["pip"]["height"]  # Rook is twice the others
+    others = [float(str(s["height"])) for k, s in CAST_MODELS.items() if k != "rook"]
+    assert float(str(CAST_MODELS["rook"]["height"])) > 1.6 * max(others)  # clearly the biggest of the lineup
+    assert WORLD_ASSETS[CART_MODEL] == "model/gltf-binary"
+    for key, spec in PROP_MODELS.items():
+        assert spec["asset"] == f"prop_{key}.glb" and WORLD_ASSETS[f"prop_{key}.glb"] == "model/gltf-binary"
+
+
+def test_the_model_tables_agree_with_the_cast_manifest() -> None:
+    """The page's heights, facings, kinds and walks are the build's (cast_manifest.json), so nothing floats, sinks
+    or faces backwards; the cast's heights are the world's own lineup (the manifest's are the rigs')."""
+    manifest = json.loads((world3d.ASSET_DIR / "cast_manifest.json").read_text(encoding="utf-8"))
+    for key, spec in CAST_MODELS.items():
+        built = manifest["characters"][key]
+        assert (spec["asset"], spec["kind"], spec["walk"]) == (built["file"], built["kind"], built["walk"]), key
+        assert spec["yaw"] == pytest.approx(built["yaw"]), key
+        if built["walk"]:
+            assert built["walk"] in manifest["clips"] and manifest["clips"][built["walk"]]["walk"], key
+    assert manifest["characters"]["motecart"]["file"] == CART_MODEL
+    assert set(PROP_MODELS) == set(manifest["props"])
+    for key, spec in PROP_MODELS.items():
+        built = manifest["props"][key]
+        assert spec["asset"] == built["file"] and spec["height"] == built["height_m"], key
+        assert spec["yaw"] == pytest.approx(built["yaw"]), key
+    assert set(MOTION_FILES) == {"clips.glb", "cast_manifest.json", "cast_rig.js", "cast_motion.js"}
+    assert manifest["library"]["file"] == "clips.glb"
 
 
 def test_the_tiny_glb_is_a_valid_binary_gltf() -> None:
@@ -299,18 +392,48 @@ def test_the_tiny_glb_is_a_valid_binary_gltf() -> None:
     assert gltf["animations"][0]["name"] == "Idle" and gltf["accessors"][0]["max"][1] == 4.0
 
 
+def test_models_on_disk_reports_the_real_files() -> None:
+    on = models_on_disk()
+    assert on["motion"] is True  # the move library, its manifest and both modules ship
+    assert set(on["cast"]) == set(CAST_MODELS) and set(on["props"]) == set(PROP_MODELS)  # type: ignore[arg-type]
+    assert on["cast"]["mote"] == dict(CAST_MODELS["mote"], cart=CART_MODEL)  # type: ignore[index]
+    assert on["cast"]["jet"] == CAST_MODELS["jet"] and on["props"]["arch"] == PROP_MODELS["arch"]  # type: ignore[index]
+    for name in list(MOTION_FILES) + [CART_MODEL] + [str(s["asset"]) for s in [*CAST_MODELS.values(), *PROP_MODELS.values()]]:
+        assert (world3d.ASSET_DIR / name).is_file(), name
+
+
 def test_models_on_disk_lists_only_whitelisted_files_that_exist(asset_dir: Path, settings: Settings) -> None:
-    assert models_on_disk() == {}
+    assert models_on_disk() == {"motion": False, "cast": {}, "props": {}}  # the fixture took every model away
     (asset_dir / "cast_pip.glb").write_bytes(tiny_glb())
     (asset_dir / "cast_bob.glb").write_bytes(tiny_glb())  # not a cast member: ignored
     (asset_dir / "cast_nyx.glb").mkdir()  # not a file: ignored
-    assert models_on_disk() == {"pip": CAST_MODELS["pip"]}
+    (asset_dir / "cast_mote.glb").write_bytes(tiny_glb())  # Mote without its cart: keeps the drawing
+    (asset_dir / "prop_lantern.glb").write_bytes(tiny_glb())
+    (asset_dir / "prop_bob.glb").write_bytes(tiny_glb())  # not a hero prop: ignored
+    expected = {"motion": False, "cast": {"pip": CAST_MODELS["pip"]}, "props": {"lantern": PROP_MODELS["lantern"]}}
+    assert models_on_disk() == expected
     page = render_world_html(settings)
     raw = _block(page, r'<script id="models" type="application/json">(.*?)</script>')
-    assert json.loads(raw) == {"pip": CAST_MODELS["pip"]}
+    assert json.loads(raw) == expected
+    (asset_dir / CART_MODEL).write_bytes(tiny_glb())
+    (asset_dir / "clips.glb").write_bytes(tiny_glb())
+    on = models_on_disk()
+    assert on["motion"] is True and on["cast"]["mote"] == dict(CAST_MODELS["mote"], cart=CART_MODEL)  # type: ignore[index]
+    (asset_dir / "cast_motion.js").unlink()  # one motion file missing: the bipeds keep their drawings
+    assert models_on_disk()["motion"] is False
+
+
+def test_without_models_the_world_still_draws_everyone(asset_dir: Path, settings: Settings) -> None:
+    """The fallback path: no model on disk (or any that fails) leaves the procedural cast and set in place."""
+    page = render_world_html(settings)
+    raw = _block(page, r'<script id="models" type="application/json">(.*?)</script>')
+    assert json.loads(raw) == {"motion": False, "cast": {}, "props": {}}
     module = _module(page)
-    assert 'import("three/addons/loaders/GLTFLoader.js")' in module  # loaded only when a model exists
-    assert "keeping the drawing" in module  # any load error falls back to the procedural character
+    assert "const BUILD = { voss: makeVoss, pip: makePip, nyx: makeNyx, rook: makeRook, mote: makeMote, jet: makeJet };" in module
+    assert "if (!castIds.length && !propIds.length) return;" in module  # nothing to fetch: no loader at all
+    assert "a.anim(simT + a.phase, st, dt);" in module  # each drawing animates itself until a model replaces it
+    assert "console.warn(\"world: model for \" + id + \" could not load, keeping the drawing\", e)" in module
+    assert "console.warn(\"world: prop \" + id + \" could not load, keeping the drawing\", e)" in module
 
 
 # --------------------------------------------------------------------------- the vendored addons
@@ -351,7 +474,12 @@ def test_the_world_whitelist_never_reaches_outside(asset_dir: Path) -> None:
 
 def test_package_data_ships_the_addons_and_models() -> None:
     declared = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["tool"]["setuptools"]["package-data"]
-    assert "office_assets/addons/**/*.js" in declared["nightcrawler"] and "office_assets/*.glb" in declared["nightcrawler"]
+    globs = declared["nightcrawler"]
+    for glob in ("office_assets/addons/**/*.js", "office_assets/*.glb", "office_assets/*.json", "office_assets/*.js"):
+        assert glob in globs, glob
+    # every file the world serves is matched by one of the globs (so a wheel or the Docker image carries it)
+    for name in WORLD_ASSETS:
+        assert any(PurePosixPath("office_assets/" + name).match(g) for g in globs), name
 
 
 # --------------------------------------------------------------------------- the routes
@@ -390,10 +518,37 @@ def test_the_addons_are_served_behind_the_token_from_the_whitelist(
     assert status == 200 and hashlib.sha256(body).hexdigest() == THREE_SHA256  # the town's file still served
     for bad in ("/office/assets/addons/", "/office/assets/addons/loaders/", "/office/assets/addons/../../world3d.py",
                 "/office/assets/addons/%2e%2e/%2e%2e/world3d.py", "/office/assets/addons/loaders/GLTFLoader.js/",
-                "/office/assets/addons//loaders/GLTFLoader.js", "/office/assets/cast_pip.glb", "/office/assets/cast_bob.glb"):
+                "/office/assets/addons//loaders/GLTFLoader.js", "/office/assets/cast_bob.glb", "/office/assets/prop_bob.glb",
+                "/office/assets/cast_manifest.json/", "/office/assets/../cast_manifest.json", "/office/assets/CLIPS.glb",
+                "/office/assets/addons/libs/", "/office/assets/addons/libs/meshopt_decoder.js"):
         assert client.request(bad, headers={"Cookie": cookie})[0] == 404, bad
     status, headers, _ = client.request(ADDON, method="POST", headers={"Cookie": cookie})
     assert status == 405 and headers["Allow"] == "GET"
+
+
+def test_the_cast_props_library_and_decoder_are_whitelisted_and_served_behind_the_token(
+        serve: Callable[..., Client], ledger: Ledger, make_settings: Callable[..., Settings]) -> None:
+    expected = {
+        "addons/libs/meshopt_decoder.module.js": "application/javascript; charset=utf-8",
+        "clips.glb": "model/gltf-binary", "cast_manifest.json": "application/json",
+        "cast_rig.js": "text/javascript; charset=utf-8", "cast_motion.js": "text/javascript; charset=utf-8",
+        CART_MODEL: "model/gltf-binary",
+        **{str(s["asset"]): "model/gltf-binary" for s in CAST_MODELS.values()},
+        **{str(s["asset"]): "model/gltf-binary" for s in PROP_MODELS.values()},
+    }
+    for name, media in expected.items():
+        assert WORLD_ASSETS[name] == media, name
+    shipped = {p.name for p in world3d.ASSET_DIR.glob("*") if p.suffix in (".glb", ".json") or p.name.startswith("cast_")}
+    assert shipped <= set(WORLD_ASSETS)  # every model, the manifest and the cast modules on disk are servable
+    client = serve(make_settings(DASHBOARD_TOKEN=TOKEN), ledger)
+    _, headers, _ = client.request(f"/world?token={TOKEN}")
+    cookie = headers["Set-Cookie"].split(";")[0]
+    for name, media in expected.items():
+        assert client.request("/office/assets/" + name)[0] == 401, name  # private like everything else
+        status, headers, body = client.request("/office/assets/" + name, headers={"Cookie": cookie})
+        assert status == 200 and headers["Content-Type"] == media, name
+        assert body == (world3d.ASSET_DIR / name).read_bytes(), name
+        assert headers["Cache-Control"] == "private, max-age=86400" and headers["X-Content-Type-Options"] == "nosniff"
 
 
 def test_a_dropped_in_model_is_served_and_announced(serve: Callable[..., Client], ledger: Ledger,
@@ -405,5 +560,5 @@ def test_a_dropped_in_model_is_served_and_announced(serve: Callable[..., Client]
     assert status == 200 and headers["Content-Type"] == "model/gltf-binary" and body == glb
     status, _, page = client.request("/world")
     raw = _block(page.decode("utf-8"), r'<script id="models" type="application/json">(.*?)</script>')
-    assert status == 200 and json.loads(raw) == {"jet": CAST_MODELS["jet"]}
+    assert status == 200 and json.loads(raw) == {"motion": False, "cast": {"jet": CAST_MODELS["jet"]}, "props": {}}
     assert client.request("/office/assets/cast_rook.glb")[0] == 404  # whitelisted, but not dropped in

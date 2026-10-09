@@ -14,6 +14,10 @@ import { BIPED_BONES, retarget } from "./cast_rig.js";
 const FPS = 30;
 const _v1 = new THREE.Vector3(), _v2 = new THREE.Vector3(), _v3 = new THREE.Vector3(), _q1 = new THREE.Quaternion(),
   _q2 = new THREE.Quaternion(), _q3 = new THREE.Quaternion(), _qa = new THREE.Quaternion(), _qb = new THREE.Quaternion();
+// scratch for the per-frame layers (look, reach): nothing is allocated while the page runs
+const _UP = new THREE.Vector3(0, 1, 0), _s = new THREE.Vector3(), _to = new THREE.Vector3(), _local = new THREE.Vector3(),
+  _side = new THREE.Vector3(), _pole = new THREE.Vector3(), _axis = new THREE.Vector3(), _elbow = new THREE.Vector3(),
+  _hand = new THREE.Vector3(), _tp = new THREE.Vector3(), _rq = new THREE.Quaternion();
 
 // ---------------------------------------------------------------- reading rigs and moves
 function boneMap(root) {
@@ -185,11 +189,20 @@ export class Actor {
     return this.spec.kind === "biped" && k > 0 ? k * this.hipsHeight * this.root.scale.x : (this.spec.speed || 0.9);
   }
 
-  lookAt(worldPos, weight = 1) { this.look = worldPos ? worldPos.clone() : null; this.lookTargetW = worldPos ? weight : 0; }
-  // Hands to world points (null: let go). typing=true taps the fingers.
+  // Turn the head toward a world point (null: look ahead again). Copies the point (no allocation after the first).
+  lookAt(worldPos, weight = 1) {
+    if (worldPos) { this.look = (this.look || new THREE.Vector3()).copy(worldPos); this.lookTargetW = weight; }
+    else this.lookTargetW = 0;
+  }
+  // Hands to world points (null: let go). typing=true taps the fingers. The hands keep their last points while
+  // they let go, so the arms ease back instead of snapping.
   reachTo(left, right, typing = false) {
-    this.reach.left = left ? left.clone() : null; this.reach.right = right ? right.clone() : null;
-    this.reach.typing = typing; this.reach.target = left || right ? 1 : 0;
+    const r = this.reach;
+    if (left) r.left = (r.left || new THREE.Vector3()).copy(left);
+    if (right) r.right = (r.right || new THREE.Vector3()).copy(right);
+    if (left && !right) r.right = null;
+    if (right && !left) r.left = null;
+    r.typing = typing; r.target = left || right ? 1 : 0;
   }
 
   update(dt) {
@@ -247,22 +260,21 @@ export class Actor {
     this._rotateWorld(bone, _q1);
   }
   _ik(side, target, w) {  // two-bone IK: upper arm and forearm reach a world point, elbow bent outward and down
-    const arm = this.bones[side + "Arm"], fore = this.bones[side + "ForeArm"], hand = this.bones[side + "Hand"];
+    const arm = this.bones[side + "Arm"], fore = this.bones[side + "ForeArm"];
     arm.updateMatrixWorld(true);
-    const s = arm.getWorldPosition(new THREE.Vector3());
+    const s = arm.getWorldPosition(_s);
     const scale = arm.getWorldScale(_v1).x;
     const a = this.armLen[side][0] * scale, b = this.armLen[side][1] * scale;
-    const to = target.clone().sub(s); let d = to.length();
-    d = Math.min(d, (a + b) * 0.999); to.setLength(d);
+    const to = _to.copy(target).sub(s); let d = to.length();
+    d = Math.max(1e-4, Math.min(d, (a + b) * 0.999)); to.setLength(d);
     const cosA = THREE.MathUtils.clamp((a * a + d * d - b * b) / (2 * a * d), -1, 1), ang = Math.acos(cosA);
-    const right = new THREE.Vector3(1, 0, 0).applyQuaternion(this.root.quaternion).multiplyScalar(side === "Left" ? 1 : -1);
-    const pole = right.add(new THREE.Vector3(0, -1, 0)).normalize();
-    const axis = new THREE.Vector3().crossVectors(to, pole).normalize();
-    const elbowDir = to.clone().normalize().applyAxisAngle(axis, ang);  // turned toward the pole
-    const elbow = s.clone().add(elbowDir.multiplyScalar(a));
+    // the actor's own right (its world turn: the root may sit under a parent that walks and turns it)
+    const right = _side.set(side === "Left" ? 1 : -1, 0, 0).applyQuaternion(this.root.getWorldQuaternion(_rq));
+    const pole = _pole.copy(right).sub(_UP).normalize();
+    const axis = _axis.crossVectors(to, pole).normalize();
+    const elbow = _elbow.copy(to).normalize().applyAxisAngle(axis, ang).multiplyScalar(a).add(s);  // turned toward the pole
     this._aim(arm, elbow, w);
-    this._aim(fore, s.clone().add(to), w);
-    void hand;
+    this._aim(fore, _hand.copy(s).add(to), w);
   }
   _layers(dt) {
     // head turn toward the look target (neck 35 %, head 65 %), limited to what a neck can do
@@ -271,13 +283,15 @@ export class Actor {
       const head = this.bones.Head;
       head.updateMatrixWorld(true);
       const hp = head.getWorldPosition(_v1), to = _v2.copy(this.look).sub(hp);
-      const local = to.clone().applyQuaternion(this.root.getWorldQuaternion(_q1).invert());
+      const rootQ = this.root.getWorldQuaternion(_rq);
+      const local = _local.copy(to).applyQuaternion(_q1.copy(rootQ).invert());
       const yaw = THREE.MathUtils.clamp(Math.atan2(local.x, local.z), -1.0, 1.0);
       const pitch = THREE.MathUtils.clamp(Math.atan2(local.y, Math.hypot(local.x, local.z)), -0.45, 0.35);
-      const up = new THREE.Vector3(0, 1, 0), side = new THREE.Vector3(1, 0, 0).applyQuaternion(this.root.quaternion);
-      for (const [b, k] of [["neck", 0.35], ["Head", 0.65]]) {
-        _q1.setFromAxisAngle(up, yaw * k * this.lookW); _q2.setFromAxisAngle(side, -pitch * k * this.lookW);
-        this._rotateWorld(this.bones[b], _q3.copy(_q1).multiply(_q2));
+      const side = _side.set(1, 0, 0).applyQuaternion(rootQ);
+      for (let i = 0; i < 2; i++) {
+        const k = i ? 0.65 : 0.35;
+        _q1.setFromAxisAngle(_UP, yaw * k * this.lookW); _q2.setFromAxisAngle(side, -pitch * k * this.lookW);
+        this._rotateWorld(this.bones[i ? "Head" : "neck"], _q3.copy(_q1).multiply(_q2));
       }
     }
     // hands reach (typing taps the fingers)
@@ -285,11 +299,12 @@ export class Actor {
     r.w = (r.w || 0) + ((r.target || 0) - (r.w || 0)) * Math.min(1, dt * 4);
     if (r.w > 0.01) {
       const t = this.time;
-      for (const [side, p, ph] of [["Left", r.left, 0], ["Right", r.right, 1.7]]) {
+      for (let i = 0; i < 2; i++) {
+        const p = i ? r.right : r.left, ph = i ? 1.7 : 0;
         if (!p) continue;
-        const tp = p.clone();
+        const tp = _tp.copy(p);
         if (r.typing) tp.y += Math.max(0, Math.sin(t * 11 + ph) * Math.sin(t * 3.1 + ph)) * 0.025 * this.root.scale.y;
-        this._ik(side, tp, r.w);
+        this._ik(i ? "Right" : "Left", tp, r.w);
       }
     }
   }
@@ -330,7 +345,8 @@ export class Actor {
 
   _blink() {  // eyes that glow (Jet's visor) blink now and then
     if (this.time < this.blinkAt) return;
-    const glow = this.materials.filter((m) => m.emissiveMap || (m.emissive && m.emissive.getHex()));
+    if (!this.glow) this.glow = this.materials.filter((m) => m.emissiveMap || (m.emissive && m.emissive.getHex()));
+    const glow = this.glow;
     if (!glow.length) { this.blinkAt = Infinity; return; }
     const phase = this.time - this.blinkAt;
     const k = phase < 0.07 ? 1 - phase / 0.07 : phase < 0.16 ? (phase - 0.07) / 0.09 : 1;

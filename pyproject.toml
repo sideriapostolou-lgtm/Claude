@@ -33,9 +33,12 @@ where = ["src"]
 # The playbook registry, generated from docs/EXPERIENCE_GROUNDED.md (docs/EXPERIENCE.md §7.1).
 "nightcrawler.experience" = ["playbook.json"]
 # The office's concept-art sets (nightcrawler.office; served at /office/art/<name>.jpg), the 3D town's
-# bundled three.js (nightcrawler.office3d; served at /office/assets/<name>.js), the 3D world's three.js addons and
-# the optional real cast models (nightcrawler.world3d; served at /office/assets/addons/... and cast_<id>.glb).
-"nightcrawler" = ["office_art/*.jpg", "office_assets/*.js", "office_assets/addons/**/*.js", "office_assets/*.glb"]
+# bundled three.js (nightcrawler.office3d; served at /office/assets/<name>.js), the 3D world's three.js addons
+# (with the meshopt decoder), the real cast and hero props, the move library, its manifest and the modules that
+# play it (nightcrawler.world3d; served at /office/assets/addons/..., cast_*.glb, prop_*.glb, clips.glb,
+# cast_manifest.json, cast_rig.js and cast_motion.js).
+"nightcrawler" = ["office_art/*.jpg", "office_assets/*.js", "office_assets/*.json", "office_assets/addons/**/*.js",
+                  "office_assets/*.glb"]
 
 [tool.setuptools.dynamic]
 version = { attr = "nightcrawler.__version__" }

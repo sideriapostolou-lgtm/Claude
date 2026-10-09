@@ -12,14 +12,24 @@ horizontal, close behind the crew; never a top-down tycoon view.
   kiosk. Bridges, steps and open arches connect everything; a glass parcel tube runs along the rails.
 * The cast (:data:`WORLD_CAST`) plays the same bot members as the 3D town (:data:`nightcrawler.office3d.CAST3D`):
   Voss the cobalt owl, Pip the orange fox, Nyx the lavender octopus, Rook the slate golem (twice the others' size),
-  Mote in a glass bell on a brass cart and Jet the yellow capsule courier. Until real models exist each one is
-  drawn procedurally (rounded, big animated-film eyes that blink, the lineup's costumes and colours) and moves its
-  own way (owl small steps and glides, fox springy walk, octopus tentacle crawl, golem heavy steps, the bell rolls,
-  Jet quick steps).
-* Real models drop in: :data:`CAST_MODELS` names one optional file per cast member (``cast_<id>.glb``). Copy a GLB
-  into ``office_assets/`` and redeploy: the page is told which of the whitelisted files exist, loads them with
-  three.js's GLTFLoader, scales each to its character's height, stands it on the floor, faces it forward and plays
-  clips named like ``idle``/``walk``; a missing or broken file keeps the drawing.
+  Mote in a glass bell on a brass cart and Jet the yellow capsule courier. The first frame draws each one
+  procedurally (rounded, big animated-film eyes that blink, the lineup's costumes and colours), so the world is
+  never empty while the real cast downloads.
+* The real cast (``art/CAST_3D.md``): :data:`CAST_MODELS` names each member's rigged model, :data:`MOTION_FILES`
+  the shared move library (``clips.glb`` and ``cast_manifest.json``) and the two modules that play it
+  (``cast_rig.js``, ``cast_motion.js``). The page loads them progressively after the first frame (three.js's
+  GLTFLoader with the meshopt decoder: the files are meshopt-compressed), the library and the six characters
+  first, and swaps each drawing for its model with a quick fade; a missing or broken file keeps the drawing. Each
+  biped walks with its own measured walk (Voss's penguin steps and glides, Pip's skip, Rook's heavy steps, Jet's
+  quick walk), Nyx's tentacles ripple and Mote rides a clear glass bell (drawn in code) on its brass cart.
+* Twelve hero props (:data:`PROP_MODELS`: the mission table, the telescope, the vault door, the workbench, Nyx's
+  desk, the archive shelves, the airship, the kiosk, lanterns, flowered arches, Rook's desk, floating islands) take
+  the place of the procedural pieces they supersede the same way, nearest the camera first.
+* The acting comes from the ledger: whoever speaks a real event talks while the crew nearby turn and listen, a
+  hand-off walks to the next department, Jet carries a closed trade's cube to the vault and cheers only for a win
+  (a shrug for a loss), Rook nods at good news and worries at bad, a blocked or waiting member thinks, the
+  Polymarket desk's lessons make Voss think, then talk. Idle members get ambient life (coffee, looking around,
+  chatting with a neighbour) that shows no words and no numbers.
 
 Honesty rules (the same as the office's and the town's, non-negotiable):
 
@@ -36,9 +46,12 @@ No external network: three.js and the addons it needs (:data:`ADDON_FILES`, thre
 :data:`~nightcrawler.office3d.THREE_VERSION`, unmodified) are bundled in ``office_assets/`` and served at
 ``/office/assets/<name>`` from the :data:`WORLD_ASSETS` whitelist behind the dashboard token; an inline import map
 resolves their bare ``three`` imports. The CSP allows scripts from this origin plus the inline module and import
-map by their hashes only. Built for phones: static geometry merged per material, instancing for plants, railings and
-lanterns, the device pixel ratio capped at 1.75, one shadow-casting light (large screens only), bloom skipped on
-small or slow screens, the loop paused while the tab is hidden and a plain fallback line without WebGL.
+map by their hashes only, and ``'wasm-unsafe-eval'`` for the meshopt decoder's bundled WebAssembly (nothing looser:
+no ``eval``, no inline scripts). Built for phones: static geometry merged per material, instancing for plants,
+railings and lanterns, the device pixel ratio capped at 1.75, one shadow-casting light (large screens only), soft
+contact shadows under every character, bloom skipped on small or slow screens, smaller prop textures on small
+screens, the ~20 MB of models never blocking the first frame, the loop paused while the tab is hidden and a plain
+fallback line without WebGL.
 
 Pure and static like :mod:`nightcrawler.office3d`: :func:`render_world_html` never puts ledger data into the HTML
 (the only thing it reads from disk is which whitelisted model files exist).
@@ -60,7 +73,10 @@ from nightcrawler.page import MEMBERS, REFRESH_S
 __all__ = [
     "ADDON_FILES",
     "ASSET_DIR",
+    "CART_MODEL",
     "CAST_MODELS",
+    "MOTION_FILES",
+    "PROP_MODELS",
     "WORLD_ASSETS",
     "WORLD_CAST",
     "WORLD_CSP",
@@ -74,11 +90,15 @@ __all__ = [
 ASSET_DIR = Path(__file__).resolve().parent / "office_assets"
 
 _JS = "application/javascript; charset=utf-8"
+_GLB = "model/gltf-binary"
 #: The three.js 0.160.1 addons the world imports, copied unmodified from
 #: ``https://cdn.jsdelivr.net/npm/three@0.160.1/examples/jsm/<name>`` (identical on unpkg); tests pin each SHA-256.
 #: Every relative import inside them is in this list, and their bare ``three`` imports go through the import map.
+#: The meshopt decoder unpacks the cast's compressed models (it instantiates its bundled WebAssembly, hence the
+#: CSP's ``'wasm-unsafe-eval'``).
 ADDON_FILES: tuple[str, ...] = (
     "addons/loaders/GLTFLoader.js",
+    "addons/libs/meshopt_decoder.module.js",
     "addons/utils/BufferGeometryUtils.js",
     "addons/postprocessing/EffectComposer.js",
     "addons/postprocessing/RenderPass.js",
@@ -92,23 +112,60 @@ ADDON_FILES: tuple[str, ...] = (
     "addons/shaders/OutputShader.js",
 )
 
-#: One optional real model per cast member: drop ``office_assets/cast_<id>.glb`` in and it replaces the drawing.
-#: ``height`` is the character's standing height in metres (the model is scaled to it), ``yaw`` turns a model that
-#: does not face +Z (glTF's forward) the right way round.
+#: The real cast (``art/CAST_3D.md``), one rigged or sculpted model per member. ``height`` is the character's
+#: standing height in metres on the set (the model is scaled to it; the crew lineup's proportions, Rook towering),
+#: ``yaw`` turns the model to face +Z, ``kind`` and ``walk`` say how it moves (the same as ``cast_manifest.json``,
+#: which a test keeps in step). Mote's ``height`` is the whole travel bell on its cart; the creature inside is
+#: ``body_height`` tall and the cart (:data:`CART_MODEL`) ``cart_height``.
 CAST_MODELS: dict[str, dict[str, object]] = {
-    "voss": {"asset": "cast_voss.glb", "height": 1.18, "yaw": 0.0},
-    "pip": {"asset": "cast_pip.glb", "height": 1.3, "yaw": 0.0},
-    "nyx": {"asset": "cast_nyx.glb", "height": 1.05, "yaw": 0.0},
-    "rook": {"asset": "cast_rook.glb", "height": 2.35, "yaw": 0.0},
-    "mote": {"asset": "cast_mote.glb", "height": 1.2, "yaw": 0.0},
-    "jet": {"asset": "cast_jet.glb", "height": 1.0, "yaw": 0.0},
+    "voss": {"asset": "cast_voss.glb", "height": 1.18, "yaw": 0.0, "kind": "biped", "walk": "walk_penguin"},
+    "pip": {"asset": "cast_pip.glb", "height": 1.3, "yaw": 0.0, "kind": "biped", "walk": "walk_skip"},
+    "nyx": {"asset": "cast_nyx.glb", "height": 0.95, "yaw": -1.5708, "kind": "octopus", "walk": None},
+    "rook": {"asset": "cast_rook.glb", "height": 2.35, "yaw": 0.0, "kind": "biped", "walk": "walk_heavy"},
+    "mote": {"asset": "cast_mote.glb", "height": 1.05, "yaw": -1.5708, "kind": "blob", "walk": None,
+             "body_height": 0.4, "cart_height": 0.46},
+    "jet": {"asset": "cast_jet.glb", "height": 0.92, "yaw": 0.0, "kind": "biped", "walk": "walk_quick"},
+}
+#: Mote's brass wheeled cart (the glass bell over it is drawn in code).
+CART_MODEL = "cast_motecart.glb"
+
+#: The twelve hero props (Tripo, 40k triangles, webp textures), each scaled to ``height`` metres and turned by
+#: ``yaw`` to face +Z (the same as ``cast_manifest.json``'s props, which a test keeps in step); the page places
+#: them in the canonical layout and removes the procedural pieces they supersede once they are in.
+PROP_MODELS: dict[str, dict[str, object]] = {
+    "missiontable": {"asset": "prop_missiontable.glb", "height": 1.0, "yaw": 0.0},
+    "telescope": {"asset": "prop_telescope.glb", "height": 2.4, "yaw": 0.0},
+    "vaultdoor": {"asset": "prop_vaultdoor.glb", "height": 2.6, "yaw": -1.5708},
+    "workbench": {"asset": "prop_workbench.glb", "height": 1.05, "yaw": -1.5708},
+    "nyxdesk": {"asset": "prop_nyxdesk.glb", "height": 1.5, "yaw": -1.5708},
+    "archive": {"asset": "prop_archive.glb", "height": 2.8, "yaw": -1.5708},
+    "airship": {"asset": "prop_airship.glb", "height": 3.2, "yaw": 0.0},
+    "kiosk": {"asset": "prop_kiosk.glb", "height": 2.8, "yaw": -1.5708},
+    "lantern": {"asset": "prop_lantern.glb", "height": 2.6, "yaw": 0.0},
+    "arch": {"asset": "prop_arch.glb", "height": 3.4, "yaw": -1.5708},
+    "rookdesk": {"asset": "prop_rookdesk.glb", "height": 1.3, "yaw": -1.5708},
+    "island": {"asset": "prop_island.glb", "height": 6.0, "yaw": 0.0},
+}
+
+#: The move library and the modules that play it (art/CAST_3D.md): 21 moves on one reference skeleton, the
+#: manifest (per move: loops or not, length, ground speed; per character: kind, size, facing), the retarget math and
+#: the bodies in motion. The page imports ``cast_motion.js`` from this server; it imports ``cast_rig.js`` and
+#: ``three`` (the import map).
+MOTION_FILES: dict[str, str] = {
+    "clips.glb": _GLB,
+    "cast_manifest.json": "application/json",
+    "cast_rig.js": "text/javascript; charset=utf-8",
+    "cast_motion.js": "text/javascript; charset=utf-8",
 }
 
 #: The only files ``/office/assets/<name>`` serves for this page (exact names, no listing, no traversal), with
 #: their media types. The three.js module itself is :data:`nightcrawler.office3d.ASSET_FILES`.
 WORLD_ASSETS: dict[str, str] = {
     **{name: _JS for name in ADDON_FILES},
-    **{str(spec["asset"]): "model/gltf-binary" for spec in CAST_MODELS.values()},
+    **MOTION_FILES,
+    **{str(spec["asset"]): _GLB for spec in CAST_MODELS.values()},
+    CART_MODEL: _GLB,
+    **{str(spec["asset"]): _GLB for spec in PROP_MODELS.values()},
 }
 
 #: The six actors: the bot members they play come from the 3D town's cast (one mapping for both pages), the rest
@@ -175,13 +232,20 @@ def world_asset_bytes(name: str) -> bytes | None:
         return None
 
 
-def models_on_disk() -> dict[str, dict[str, object]]:
-    """The cast members whose whitelisted model file exists, with their manifest entry."""
-    out: dict[str, dict[str, object]] = {}
+def models_on_disk() -> dict[str, object]:
+    """What the page may load, from the whitelisted files that exist: ``motion`` (the move library, its manifest and
+    both modules are all there: the bipeds can move), ``cast`` (members whose model exists, with their entry; Mote
+    only with its cart), ``props`` (hero props whose model exists, with their entry)."""
+
+    def there(name: str) -> bool:
+        return (ASSET_DIR / name).is_file()
+
+    cast: dict[str, dict[str, object]] = {}
     for key, spec in CAST_MODELS.items():
-        if (ASSET_DIR / str(spec["asset"])).is_file():
-            out[key] = dict(spec)
-    return out
+        if there(str(spec["asset"])) and (key != "mote" or there(CART_MODEL)):
+            cast[key] = dict(spec, cart=CART_MODEL) if key == "mote" else dict(spec)
+    props = {key: dict(spec) for key, spec in PROP_MODELS.items() if there(str(spec["asset"]))}
+    return {"motion": all(there(name) for name in MOTION_FILES), "cast": cast, "props": props}
 
 
 _STYLE = r"""
@@ -212,6 +276,7 @@ header .money #clock { font-size: 10px; color: var(--dim); display: block; }
         color: var(--dim); text-shadow: 0 1px 2px #000, 0 0 6px rgba(0,0,0,.6); pointer-events: none; display: flex; }
 #status { flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 #status.bad { color: var(--bad); }
+#loading { flex: 0 0 auto; margin-left: 8px; color: var(--brass); font-variant-numeric: tabular-nums; }
 #town { position: fixed; left: 14px; right: 14px; top: calc(68px + env(safe-area-inset-top)); font-size: 11px;
         line-height: 1.3; color: var(--dim); text-shadow: 0 1px 2px #000, 0 0 6px rgba(0,0,0,.6); pointer-events: none;
         max-height: 2.7em; overflow: hidden; }
@@ -283,11 +348,13 @@ const PIPELINE = (body.dataset.pipeline || "").split(",").filter(Boolean);
 const CAST = JSON.parse(document.getElementById("cast").textContent);
 const ROOMS = JSON.parse(document.getElementById("rooms").textContent);
 const MODELS = JSON.parse(document.getElementById("models").textContent);
+const MODEL_CAST = MODELS.cast || {}, MODEL_PROPS = MODELS.props || {};
+const HAS = function (id) { return !!MODEL_PROPS[id]; };  // a hero prop will replace its procedural stand-in
 const MEMBERS = Array.from(document.querySelectorAll("#members span")).map(function (s) {
   return { id: s.dataset.id, name: s.dataset.name, role: s.dataset.role };
 });
 const el = function (id) { return document.getElementById(id); };
-const boot = el("boot"), statusEl = el("status"), clockEl = el("clock"), townEl = el("town");
+const boot = el("boot"), statusEl = el("status"), clockEl = el("clock"), townEl = el("town"), loadingEl = el("loading");
 const moneyEl = el("money"), sinceEl = el("since"), modeEl = el("mode");
 const bubblesEl = el("bubbles"), dropEl = el("drop"), card = el("card"), chips = el("chips"), labelsEl = el("labels");
 const canvas = el("view");
@@ -322,7 +389,9 @@ function main() {
   const W0 = window.innerWidth, H0 = window.innerHeight;
   const tiny = Math.min(W0, H0) < 340, slow = (navigator.hardwareConcurrency || 8) <= 2 || (navigator.deviceMemory || 8) <= 2;
   const Q = { dpr: LITE ? 1 : Math.min(1.75, window.devicePixelRatio || 1), bloom: !LITE && !tiny && !slow,
-              shadows: !LITE && !slow && Math.min(W0, H0) >= 600, msaa: LITE ? 0 : 4 };
+              shadows: !LITE && !slow && Math.min(W0, H0) >= 600, msaa: LITE ? 0 : 4,
+              // phones: half-size prop textures (GPU memory) and fewer decorative copies (lanterns, islands)
+              small: LITE || slow || Math.min(W0, H0) < 600 || (navigator.deviceMemory || 8) <= 4 };
   renderer.setPixelRatio(Q.dpr);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -552,6 +621,25 @@ function main() {
     list.forEach(function (it, i) { im.setMatrixAt(i, mat4(it.p, it.r, it.s)); if (it.c != null) im.setColorAt(i, it.c.isColor ? it.c : col(it.c)); });
     im.instanceMatrix.needsUpdate = true; if (im.instanceColor) im.instanceColor.needsUpdate = true;
     im.castShadow = !!cast && Q.shadows; im.receiveShadow = true; im.computeBoundingSphere(); scene.add(im); return im;
+  }
+  // a procedural stand-in for a hero prop: what fn() builds is merged into its own group (not the shared static
+  // meshes), so it can fade away when the prop's model is in place (and stays if the model never arrives)
+  const STANDIN = {};
+  let standinBooks = null;
+  function standin(key, fn) {
+    const saved = new Map(buckets); buckets.clear(); standinBooks = [];
+    try { fn(); } finally {
+      const g = new THREE.Group(); g.name = "standin:" + key;
+      buckets.forEach(function (list, k) {
+        const geo = mergeGeometries(list.map(prep), false); if (!geo) return;
+        if (UVSCALE[k]) worldUV(geo, UVSCALE[k]); geo.computeBoundingSphere();
+        const m = new THREE.Mesh(geo, MAT[k]); m.receiveShadow = k !== "glow" && k !== "glass";
+        m.castShadow = Q.shadows && k !== "glow" && k !== "glass" && k !== "leaf"; if (k === "glass") m.renderOrder = 2; g.add(m);
+      });
+      if (standinBooks.length) g.add(instanced(paint(G.box(1, 1, 1), 0xffffff), MAT.plain, standinBooks, false));
+      buckets.clear(); saved.forEach(function (v, k) { buckets.set(k, v); }); standinBooks = null;
+      scene.add(g); (STANDIN[key] = STANDIN[key] || []).push(g);
+    }
   }
 
   // ------------------------------------------------------------- sky, sun, clouds (blue hour; the viewer's clock tints it)
@@ -866,23 +954,28 @@ _M_WORLD = r"""
     F.add("brass", G.sph(0.07 * s, 14, 10), [x, y + 1.38 * s, z], null, null, BRASS);
   }
   armillary(WF, -2.65, 0, 7.05, 0.8); armillary(WF, 2.65, 0, 7.05, 0.8);
-  // the table: a stone drum, brass bands, a walnut rim and dark glass under the hologram
-  WF.add("stone", G.cyl(1.58, 1.72, 0.66, 56), [0, 0.33, 0], null, null, CREAM2);
-  WF.add("stone", G.rbox(3.7, 0.12, 3.7, 0.2, 40), [0, 0.06, 0], null, null, STONE_DARK);
-  [0.16, 0.52].forEach(function (y) { WF.add("brass", G.tor(1.66, 0.035, 8, 80), [0, y, 0], [Math.PI / 2, 0, 0], null, BRASS); });
-  WF.add("wood", G.tor(1.6, 0.13, 14, 96), [0, 0.74, 0], [Math.PI / 2, 0, 0], [1, 1, 0.72], WALNUT);
-  WF.add("brass", G.tor(1.46, 0.03, 8, 80), [0, 0.8, 0], [Math.PI / 2, 0, 0], null, BRASS);
-  WF.add("iron", G.cyl(1.47, 1.47, 0.08, 64), [0, 0.74, 0], null, null, 0x10272a);
-  for (let i = 0; i < 18; i++) {
-    const a = i / 18 * TAU + 0.1; if (i % 6 === 0) continue;
-    const x = Math.cos(a) * 1.62, z = Math.sin(a) * 1.62;
-    if (i % 3 === 1) { WF.add("brass", G.cyl(0.045, 0.055, 0.06, 12), [x, 0.86, z], null, null, BRASS); WF.add("brass", G.sph(0.03, 10, 8), [x, 0.91, z], null, null, COPPER); }
-    else { WF.add("brass", G.cyl(0.075, 0.075, 0.03, 18), [x, 0.85, z], null, null, BRASS_DARK); WF.add("glow", G.cyl(0.058, 0.058, 0.032, 18), [x, 0.852, z], null, null, hdr(0x6dffd2, 1.8)); }
-  }
-  [[0.7, 1.45], [2.3, 1.5], [3.9, 1.46], [5.5, 1.5]].forEach(function (q) {
-    const x = Math.cos(q[0]) * q[1], z = Math.sin(q[0]) * q[1];
-    WF.add("brass", G.cyl(0.05, 0.07, 0.05, 12), [x, 0.85, z], null, null, BRASS);
-    WF.add("glass", G.cyl(0.055, 0.055, 0.14, 12), [x, 0.95, z]); WF.add("glow", G.sph(0.03, 8, 6), [x, 0.95, z], null, null, hdr(0xffc27a, 6));
+  // the table: a stone drum, brass bands, a walnut rim and dark glass under the hologram (until the hero prop, a
+  // round brass holo table, stands on a smaller dais in its place)
+  const DAIS_Y = HAS("missiontable") ? 0.12 : 0;
+  WF.add("stone", HAS("missiontable") ? G.cyl(1.2, 1.3, 0.12, 56) : G.rbox(3.7, 0.12, 3.7, 0.2, 40), [0, 0.06, 0], null, null, STONE_DARK);
+  if (HAS("missiontable")) WF.add("brass", G.tor(1.21, 0.025, 6, 64), [0, 0.12, 0], [Math.PI / 2, 0, 0], null, BRASS);
+  standin("missiontable", function () {
+    WF.add("stone", G.cyl(1.58, 1.72, 0.66, 56), [0, 0.33, 0], null, null, CREAM2);
+    [0.16, 0.52].forEach(function (y) { WF.add("brass", G.tor(1.66, 0.035, 8, 80), [0, y, 0], [Math.PI / 2, 0, 0], null, BRASS); });
+    WF.add("wood", G.tor(1.6, 0.13, 14, 96), [0, 0.74, 0], [Math.PI / 2, 0, 0], [1, 1, 0.72], WALNUT);
+    WF.add("brass", G.tor(1.46, 0.03, 8, 80), [0, 0.8, 0], [Math.PI / 2, 0, 0], null, BRASS);
+    WF.add("iron", G.cyl(1.47, 1.47, 0.08, 64), [0, 0.74, 0], null, null, 0x10272a);
+    for (let i = 0; i < 18; i++) {
+      const a = i / 18 * TAU + 0.1; if (i % 6 === 0) continue;
+      const x = Math.cos(a) * 1.62, z = Math.sin(a) * 1.62;
+      if (i % 3 === 1) { WF.add("brass", G.cyl(0.045, 0.055, 0.06, 12), [x, 0.86, z], null, null, BRASS); WF.add("brass", G.sph(0.03, 10, 8), [x, 0.91, z], null, null, COPPER); }
+      else { WF.add("brass", G.cyl(0.075, 0.075, 0.03, 18), [x, 0.85, z], null, null, BRASS_DARK); WF.add("glow", G.cyl(0.058, 0.058, 0.032, 18), [x, 0.852, z], null, null, hdr(0x6dffd2, 1.8)); }
+    }
+    [[0.7, 1.45], [2.3, 1.5], [3.9, 1.46], [5.5, 1.5]].forEach(function (q) {
+      const x = Math.cos(q[0]) * q[1], z = Math.sin(q[0]) * q[1];
+      WF.add("brass", G.cyl(0.05, 0.07, 0.05, 12), [x, 0.85, z], null, null, BRASS);
+      WF.add("glass", G.cyl(0.055, 0.055, 0.14, 12), [x, 0.95, z]); WF.add("glow", G.sph(0.03, 8, 6), [x, 0.95, z], null, null, hdr(0xffc27a, 6));
+    });
   });
   // chairs suited to the visitors' shapes (a stool, a low perch)
   [[-2.3, -0.95], [2.3, -0.95]].forEach(function (c, i) {
@@ -956,34 +1049,36 @@ _M_WORLD = r"""
   // the espresso kiosk on its terrace
   WF.add("wood", G.box(3.6, 0.08, 5.8), [22.6, -0.04, 5.5], null, null, WALNUT);
   railing([V3(20.8, 0, 8.45), V3(24.45, 0, 8.45), V3(24.45, 0, 2.55), V3(20.8, 0, 2.55)]);
-  WF.add("wood", G.rbox(0.8, 0.98, 2.7, 0.18, 18), [23.25, 0.49, 5.5], null, null, WALNUT_DARK);
-  WF.add("stone", G.rbox(0.92, 0.07, 2.84, 0.25, 18), [23.22, 1.0, 5.5], null, null, PAPER);
-  WF.add("brass", G.box(0.03, 0.05, 2.7), [22.84, 0.88, 5.5], null, null, BRASS);
-  WF.add("wood", G.box(0.12, 2.2, 3.0), [24.25, 1.1, 5.5], null, null, WALNUT_DARK);
-  [1.5, 2.0].forEach(function (y) { WF.add("wood", G.box(0.32, 0.04, 2.6), [24.08, y, 5.5], null, null, WALNUT);
-    for (let k = 0; k < 7; k++) { WF.add("plain", G.cyl(0.04, 0.032, 0.08, 10), [24.05, y + 0.06, 4.45 + k * 0.33], null, null, 0xfaf4ea);
-      if (k % 3 === 1) WF.add("glass", G.cyl(0.06, 0.06, 0.18, 10), [24.08, y + 0.11, 4.6 + k * 0.33]); } });
-  // the espresso machine
-  WF.add("brass", G.rbox(0.42, 0.42, 0.62, 0.3, 18), [23.3, 1.25, 5.1], null, null, BRASS);
-  WF.add("brass", G.sph(0.2, 20, 12, 0, TAU, 0, Math.PI / 2), [23.3, 1.46, 5.1], null, null, COPPER);
-  WF.add("brass", G.sph(0.06, 10, 8), [23.3, 1.69, 5.1], null, null, BRASS);
-  [-0.15, 0.15].forEach(function (o) { WF.add("iron", G.cyl(0.05, 0.05, 0.09, 12), [23.12, 1.07, 5.1 + o], null, null, IRON);
-    WF.add("wood", G.cyl(0.018, 0.018, 0.2, 6), [23.0, 1.04, 5.1 + o], [0, 0, Math.PI / 2], null, WALNUT_DARK);
-    WF.add("glow", G.cyl(0.045, 0.045, 0.01, 14), [23.09, 1.33, 5.1 + o], [0, 0, Math.PI / 2], null, hdr(0xfff1d0, 1.6)); });
-  [4.55, 5.75, 6.3].forEach(function (z, i) { WF.add("plain", G.cyl(0.04, 0.03, 0.06, 10), [22.95, 1.07, z], null, null, 0xfbf6ee);
-    WF.add("plain", G.cyl(0.07, 0.07, 0.01, 12), [22.95, 1.04, z], null, null, 0xfbf6ee); if (i === 2) WF.add("glass", G.sph(0.17, 16, 10, 0, TAU, 0, Math.PI / 2), [23.25, 1.04, 6.4]); });
-  [0, 1, 2, 3].forEach(function (k) { WF.add("plain", G.sph(0.045, 8, 6), [23.2 + (k % 2) * 0.07, 1.07, 6.35 + (k > 1 ? 0.07 : -0.05)], null, [1, 0.6, 1], 0xd9a066); });
-  // the awning, striped, on brass poles
-  for (let k = 0; k < 14; k++) WF.add("cloth", G.box(2.5, 0.025, 0.24), [23.15, 2.55, 3.93 + k * 0.24], [0, 0, 0.26], null, k % 2 ? 0xf3e7d0 : 0xd8795a);
-  for (let k = 0; k < 14; k++) WF.add("cloth", G.cyl(0.12, 0.12, 0.024, 12, false), [21.98, 2.22, 3.93 + k * 0.24], [0, 0, 0.26], [1, 1, 1], k % 2 ? 0xf3e7d0 : 0xd8795a);
-  [[22.0, 3.85], [22.0, 7.15]].forEach(function (q) { WF.add("brass", G.cyl(0.035, 0.035, 2.25, 10), [q[0], 1.12, q[1]], null, null, BRASS); });
-  hangingLamp(WF, 22.4, 2.4, 4.6, 0.35); hangingLamp(WF, 22.4, 2.4, 6.4, 0.35);
-  vinesAlong(WF, 22.0, 24.2, 2.62, 3.85, 0.35, 0.9, 77); vinesAlong(WF, 22.0, 24.2, 2.62, 7.15, 0.35, 0.9, 78);
-  // stools at the counter and a cafe table
-  [4.7, 5.5, 6.3].forEach(function (z) {
-    WF.add("brass", G.cyl(0.03, 0.06, 0.66, 10), [22.45, 0.33, z], null, null, BRASS);
-    WF.add("cloth", G.rbox(0.36, 0.09, 0.36, 0.3, 14), [22.45, 0.7, z], null, null, LEATHER);
-    WF.add("brass", G.tor(0.15, 0.014, 6, 16), [22.45, 0.25, z], [Math.PI / 2, 0, 0], null, BRASS_DARK); });
+  standin("kiosk", function () {  // the counter, the espresso machine, the awning and stools (the hero kiosk replaces them)
+    WF.add("wood", G.rbox(0.8, 0.98, 2.7, 0.18, 18), [23.25, 0.49, 5.5], null, null, WALNUT_DARK);
+    WF.add("stone", G.rbox(0.92, 0.07, 2.84, 0.25, 18), [23.22, 1.0, 5.5], null, null, PAPER);
+    WF.add("brass", G.box(0.03, 0.05, 2.7), [22.84, 0.88, 5.5], null, null, BRASS);
+    WF.add("wood", G.box(0.12, 2.2, 3.0), [24.25, 1.1, 5.5], null, null, WALNUT_DARK);
+    [1.5, 2.0].forEach(function (y) { WF.add("wood", G.box(0.32, 0.04, 2.6), [24.08, y, 5.5], null, null, WALNUT);
+      for (let k = 0; k < 7; k++) { WF.add("plain", G.cyl(0.04, 0.032, 0.08, 10), [24.05, y + 0.06, 4.45 + k * 0.33], null, null, 0xfaf4ea);
+        if (k % 3 === 1) WF.add("glass", G.cyl(0.06, 0.06, 0.18, 10), [24.08, y + 0.11, 4.6 + k * 0.33]); } });
+    // the espresso machine
+    WF.add("brass", G.rbox(0.42, 0.42, 0.62, 0.3, 18), [23.3, 1.25, 5.1], null, null, BRASS);
+    WF.add("brass", G.sph(0.2, 20, 12, 0, TAU, 0, Math.PI / 2), [23.3, 1.46, 5.1], null, null, COPPER);
+    WF.add("brass", G.sph(0.06, 10, 8), [23.3, 1.69, 5.1], null, null, BRASS);
+    [-0.15, 0.15].forEach(function (o) { WF.add("iron", G.cyl(0.05, 0.05, 0.09, 12), [23.12, 1.07, 5.1 + o], null, null, IRON);
+      WF.add("wood", G.cyl(0.018, 0.018, 0.2, 6), [23.0, 1.04, 5.1 + o], [0, 0, Math.PI / 2], null, WALNUT_DARK);
+      WF.add("glow", G.cyl(0.045, 0.045, 0.01, 14), [23.09, 1.33, 5.1 + o], [0, 0, Math.PI / 2], null, hdr(0xfff1d0, 1.6)); });
+    [4.55, 5.75, 6.3].forEach(function (z, i) { WF.add("plain", G.cyl(0.04, 0.03, 0.06, 10), [22.95, 1.07, z], null, null, 0xfbf6ee);
+      WF.add("plain", G.cyl(0.07, 0.07, 0.01, 12), [22.95, 1.04, z], null, null, 0xfbf6ee); if (i === 2) WF.add("glass", G.sph(0.17, 16, 10, 0, TAU, 0, Math.PI / 2), [23.25, 1.04, 6.4]); });
+    [0, 1, 2, 3].forEach(function (k) { WF.add("plain", G.sph(0.045, 8, 6), [23.2 + (k % 2) * 0.07, 1.07, 6.35 + (k > 1 ? 0.07 : -0.05)], null, [1, 0.6, 1], 0xd9a066); });
+    // the awning, striped, on brass poles
+    for (let k = 0; k < 14; k++) WF.add("cloth", G.box(2.5, 0.025, 0.24), [23.15, 2.55, 3.93 + k * 0.24], [0, 0, 0.26], null, k % 2 ? 0xf3e7d0 : 0xd8795a);
+    for (let k = 0; k < 14; k++) WF.add("cloth", G.cyl(0.12, 0.12, 0.024, 12, false), [21.98, 2.22, 3.93 + k * 0.24], [0, 0, 0.26], [1, 1, 1], k % 2 ? 0xf3e7d0 : 0xd8795a);
+    [[22.0, 3.85], [22.0, 7.15]].forEach(function (q) { WF.add("brass", G.cyl(0.035, 0.035, 2.25, 10), [q[0], 1.12, q[1]], null, null, BRASS); });
+    hangingLamp(WF, 22.4, 2.4, 4.6, 0.35); hangingLamp(WF, 22.4, 2.4, 6.4, 0.35);
+    // stools at the counter and a cafe table
+    [4.7, 5.5, 6.3].forEach(function (z) {
+      WF.add("brass", G.cyl(0.03, 0.06, 0.66, 10), [22.45, 0.33, z], null, null, BRASS);
+      WF.add("cloth", G.rbox(0.36, 0.09, 0.36, 0.3, 14), [22.45, 0.7, z], null, null, LEATHER);
+      WF.add("brass", G.tor(0.15, 0.014, 6, 16), [22.45, 0.25, z], [Math.PI / 2, 0, 0], null, BRASS_DARK); });
+  });
+  if (!HAS("kiosk")) { vinesAlong(WF, 22.0, 24.2, 2.62, 3.85, 0.35, 0.9, 77); vinesAlong(WF, 22.0, 24.2, 2.62, 7.15, 0.35, 0.9, 78); }
   WF.add("brass", G.cyl(0.04, 0.2, 0.72, 12), [21.6, 0.36, 3.35], null, null, BRASS);
   WF.add("stone", G.cyl(0.38, 0.38, 0.05, 24), [21.6, 0.74, 3.35], null, null, PAPER);
   WF.add("plain", G.cyl(0.045, 0.035, 0.07, 10), [21.5, 0.8, 3.3], null, null, 0xfbf6ee);
@@ -1023,7 +1118,7 @@ _M_WORLD = r"""
       let u = -w / 2 + 0.08;
       while (u < w / 2 - 0.12) { const bw = 0.04 + r() * 0.05, bh = 0.18 + r() * 0.12, q = V3(u + bw / 2, 0, 0.06).applyAxisAngle(V3(0, 1, 0), ry);
         const p = F.at(x + q.x, y + 0.02 + bh / 2, z + q.z);
-        books.push({ p: [p.x, p.y, p.z], r: [0, F.yaw + ry + (r() < 0.1 ? 0.25 : 0), 0], s: [bw, bh, 0.24], c: [0x7b2f2a, 0x2f4d6e, 0x3f5e3a, 0x7a5a2c, 0x5a2f5e, 0x8c6b3e, 0x2e3a4f][Math.floor(r() * 7)] });
+        (standinBooks || books).push({ p: [p.x, p.y, p.z], r: [0, F.yaw + ry + (r() < 0.1 ? 0.25 : 0), 0], s: [bw, bh, 0.24], c: [0x7b2f2a, 0x2f4d6e, 0x3f5e3a, 0x7a5a2c, 0x5a2f5e, 0x8c6b3e, 0x2e3a4f][Math.floor(r() * 7)] });
         u += bw + 0.005; if (r() < 0.06) u += 0.12; }
     }
   };
@@ -1063,7 +1158,9 @@ _M_WORLD = r"""
   const screens = [];
   function screen(F, x, y, z, ry, w, h, kind, hue, tilt, k) {
     const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: screenTex(kind, hue), color: hdr(0xffffff, k || 1.5), toneMapped: true }));
-    F.place(m, x, y, z, ry); m.rotation.x = tilt || 0; m.rotation.order = "YXZ";
+    // the glass sits just proud of its brass frame (inside the frame it would be hidden)
+    const front = V3(0, 0, 0.024).applyAxisAngle(V3(1, 0, 0), tilt || 0).applyAxisAngle(V3(0, 1, 0), ry);
+    F.place(m, x + front.x, y + front.y, z + front.z, ry); m.rotation.x = tilt || 0; m.rotation.order = "YXZ";
     F.add("brass", G.rbox(w + 0.07, h + 0.07, 0.035, 0.2, 14), [x, y, z], [tilt || 0, ry, 0], null, BRASS_DARK);
     const back = V3(0, 0, -0.03).applyAxisAngle(V3(1, 0, 0), tilt || 0).applyAxisAngle(V3(0, 1, 0), ry);
     F.add("iron", G.box(w + 0.02, h + 0.02, 0.02), [x + back.x, y + back.y, z + back.z], [tilt || 0, ry, 0], null, IRON);
@@ -1076,31 +1173,33 @@ _M_WORLD = r"""
     back: [{ x: 0, w: 2.4, y0: 1.0, sp: 2.6 }], left: [{ x: 0.6, w: 1.3, y0: 1.1, sp: 2.5 }], right: [],
     front: [{ x: 0, w: 3.0, sp: 2.45 }] });
   WS.add("cloth", G.rbox(3.6, 0.02, 2.4, 0.2, 16), [0, 0.012, -0.6], null, null, 0x7a3428);
-  WS.add("wood", G.rbox(2.7, 0.1, 0.95, 0.2, 18), [0, 0.68, -0.7], null, null, WALNUT);
-  WS.add("cloth", G.box(2.0, 0.012, 0.7), [0, 0.735, -0.7], null, null, 0x3f2a1e);
-  WS.add("brass", G.box(2.72, 0.035, 0.03), [0, 0.68, -0.22], null, null, BRASS);
-  [-1.2, 1.2].forEach(function (x) { WS.add("wood", G.box(0.1, 0.64, 0.82), [x, 0.32, -0.7], null, null, WALNUT_DARK); });
-  WS.add("wood", G.box(2.3, 0.05, 0.7), [0, 0.16, -0.7], null, null, WALNUT_DARK);
-  // the sensor drone being assembled, parts, tools, the blueprint roll
-  WS.add("plain", G.sph(0.13, 24, 16), [0.05, 0.86, -0.55], null, null, 0xf4efe6);
-  WS.add("brass", G.tor(0.135, 0.02, 8, 28), [0.05, 0.86, -0.55], [0, 0.3, 0], null, BRASS);
-  WS.add("brass", G.tor(0.135, 0.014, 8, 28), [0.05, 0.86, -0.55], [Math.PI / 2, 0, 0], null, BRASS);
-  WS.add("glow", G.cyl(0.055, 0.055, 0.02, 18), [0.05, 0.86, -0.42], [Math.PI / 2, 0, 0], null, hdr(0x5fffd4, 3));
-  WS.add("plain", G.sph(0.11, 20, 14), [0.95, 0.84, -0.62], null, null, 0xf4efe6);
-  WS.add("glow", G.cyl(0.045, 0.045, 0.02, 16), [0.95, 0.84, -0.51], [Math.PI / 2, 0, 0], null, hdr(0x5fffd4, 2.4));
-  WS.add("brass", G.tor(0.115, 0.018, 8, 24), [0.95, 0.84, -0.62], [0, -0.4, 0], null, BRASS);
-  [[-0.45, -0.45, 0.06], [-0.3, -0.8, 0.05], [0.5, -0.4, 0.04], [0.6, -0.9, 0.07]].forEach(function (q) {
-    WS.add("brass", G.cyl(q[2], q[2], 0.03, 16), [q[0], 0.76, q[1]], null, null, BRASS); WS.add("brass", G.tor(q[2], 0.012, 6, 16), [q[0], 0.78, q[1]], [Math.PI / 2, 0, 0], null, COPPER); });
-  WS.add("wood", G.cyl(0.018, 0.018, 0.14, 8), [0.35, 0.76, -0.35], [0, 0, Math.PI / 2], null, WALNUT_DARK);
-  WS.add("brass", G.cyl(0.006, 0.006, 0.12, 6), [0.48, 0.76, -0.35], [0, 0, Math.PI / 2], null, 0xd8d8d8);
-  WS.add("plain", G.cyl(0.07, 0.07, 0.9, 16), [-0.85, 0.8, -0.35], [0, 0.2, Math.PI / 2], null, PAPER);
-  WS.add("plain", G.box(0.6, 0.006, 0.42), [-0.6, 0.746, -0.85], [0, 0.15, 0], null, 0xe8eef4);
-  // the desk lamp
-  WS.add("brass", G.cyl(0.09, 0.11, 0.04, 16), [-1.05, 0.76, -0.95], null, null, BRASS);
-  WS.add("brass", G.cyl(0.012, 0.012, 0.5, 6), [-1.05, 1.0, -0.95], [0.3, 0, 0], null, BRASS);
-  WS.add("brass", G.cyl(0.012, 0.012, 0.42, 6), [-1.05, 1.32, -0.82], [-0.9, 0, 0], null, BRASS);
-  WS.add("brass", G.cone(0.13, 0.16, 18, true), [-1.05, 1.4, -0.62], [Math.PI + 0.5, 0, 0], null, BRASS);
-  WS.add("glow", G.sph(0.05, 12, 8), [-1.05, 1.37, -0.6], null, null, hdr(0xffd08a, 7));
+  standin("workbench", function () {  // Pip's bench and what is on it (the hero workbench replaces them)
+    WS.add("wood", G.rbox(2.7, 0.1, 0.95, 0.2, 18), [0, 0.68, -0.7], null, null, WALNUT);
+    WS.add("cloth", G.box(2.0, 0.012, 0.7), [0, 0.735, -0.7], null, null, 0x3f2a1e);
+    WS.add("brass", G.box(2.72, 0.035, 0.03), [0, 0.68, -0.22], null, null, BRASS);
+    [-1.2, 1.2].forEach(function (x) { WS.add("wood", G.box(0.1, 0.64, 0.82), [x, 0.32, -0.7], null, null, WALNUT_DARK); });
+    WS.add("wood", G.box(2.3, 0.05, 0.7), [0, 0.16, -0.7], null, null, WALNUT_DARK);
+    // the sensor drone being assembled, parts, tools, the blueprint roll
+    WS.add("plain", G.sph(0.13, 24, 16), [0.05, 0.86, -0.55], null, null, 0xf4efe6);
+    WS.add("brass", G.tor(0.135, 0.02, 8, 28), [0.05, 0.86, -0.55], [0, 0.3, 0], null, BRASS);
+    WS.add("brass", G.tor(0.135, 0.014, 8, 28), [0.05, 0.86, -0.55], [Math.PI / 2, 0, 0], null, BRASS);
+    WS.add("glow", G.cyl(0.055, 0.055, 0.02, 18), [0.05, 0.86, -0.42], [Math.PI / 2, 0, 0], null, hdr(0x5fffd4, 3));
+    WS.add("plain", G.sph(0.11, 20, 14), [0.95, 0.84, -0.62], null, null, 0xf4efe6);
+    WS.add("glow", G.cyl(0.045, 0.045, 0.02, 16), [0.95, 0.84, -0.51], [Math.PI / 2, 0, 0], null, hdr(0x5fffd4, 2.4));
+    WS.add("brass", G.tor(0.115, 0.018, 8, 24), [0.95, 0.84, -0.62], [0, -0.4, 0], null, BRASS);
+    [[-0.45, -0.45, 0.06], [-0.3, -0.8, 0.05], [0.5, -0.4, 0.04], [0.6, -0.9, 0.07]].forEach(function (q) {
+      WS.add("brass", G.cyl(q[2], q[2], 0.03, 16), [q[0], 0.76, q[1]], null, null, BRASS); WS.add("brass", G.tor(q[2], 0.012, 6, 16), [q[0], 0.78, q[1]], [Math.PI / 2, 0, 0], null, COPPER); });
+    WS.add("wood", G.cyl(0.018, 0.018, 0.14, 8), [0.35, 0.76, -0.35], [0, 0, Math.PI / 2], null, WALNUT_DARK);
+    WS.add("brass", G.cyl(0.006, 0.006, 0.12, 6), [0.48, 0.76, -0.35], [0, 0, Math.PI / 2], null, 0xd8d8d8);
+    WS.add("plain", G.cyl(0.07, 0.07, 0.9, 16), [-0.85, 0.8, -0.35], [0, 0.2, Math.PI / 2], null, PAPER);
+    WS.add("plain", G.box(0.6, 0.006, 0.42), [-0.6, 0.746, -0.85], [0, 0.15, 0], null, 0xe8eef4);
+    // the desk lamp
+    WS.add("brass", G.cyl(0.09, 0.11, 0.04, 16), [-1.05, 0.76, -0.95], null, null, BRASS);
+    WS.add("brass", G.cyl(0.012, 0.012, 0.5, 6), [-1.05, 1.0, -0.95], [0.3, 0, 0], null, BRASS);
+    WS.add("brass", G.cyl(0.012, 0.012, 0.42, 6), [-1.05, 1.32, -0.82], [-0.9, 0, 0], null, BRASS);
+    WS.add("brass", G.cone(0.13, 0.16, 18, true), [-1.05, 1.4, -0.62], [Math.PI + 0.5, 0, 0], null, BRASS);
+    WS.add("glow", G.sph(0.05, 12, 8), [-1.05, 1.37, -0.6], null, null, hdr(0xffd08a, 7));
+  });
   // the pegboard of hung tools, the shelves, the boiler, crates, a stool
   WS.add("wood", G.box(0.06, 1.5, 2.4), [3.48, 1.8, -1.0], null, null, WALNUT);
   for (let i = 0; i < 14; i++) { const zz = -2.0 + (i % 7) * 0.33, yy = 1.35 + Math.floor(i / 7) * 0.62;
@@ -1131,26 +1230,32 @@ _M_WORLD = r"""
   DN.add("brass", new THREE.RingGeometry(1.86, 1.93, 64).rotateX(-Math.PI / 2), [0, 0.014, -1.2], null, null, BRASS);
   DN.add("brass", G.tor(1.12, 0.05, 8, 48), [0, 3.0, -3.27], null, null, BRASS);
   for (let k = 0; k < 4; k++) DN.add("brass", G.box(0.04, 2.2, 0.06), [0, 3.0, -3.3], [0, 0, k * Math.PI / 4], null, BRASS_DARK);
-  (function () {
+  // Nyx's curved desk, its keyboard, mug and chair (the hero desk replaces them); the four glass screens stay, over
+  // the procedural desk or, once the hero desk (its own violet monitors) is coming, a tier higher on brass rods
+  standin("nyxdesk", function () {
     const s = new THREE.Shape(); s.absarc(0, 0, 1.42, Math.PI * 0.2, Math.PI * 0.8, false); s.absarc(0, 0, 0.62, Math.PI * 0.8, Math.PI * 0.2, true);
     const top = new THREE.ExtrudeGeometry(s, { depth: 0.07, bevelEnabled: false, curveSegments: 40 }).rotateX(-Math.PI / 2);
     DN.add("wood", top, [0, 0.72, -0.95], null, null, WALNUT);
     const front = new THREE.CylinderGeometry(1.36, 1.36, 0.66, 40, 1, true, Math.PI * 0.7, Math.PI * 0.6);
     DN.add("wood", front, [0, 0.36, -0.95], [0, Math.PI, 0], null, WALNUT_DARK);
     DN.add("brass", G.tor(1.42, 0.02, 6, 40, Math.PI * 0.6), [0, 0.795, -0.95], [-Math.PI / 2, 0, Math.PI * 0.2], null, BRASS);
-    [[-62, "nodes", "#9d7bff"], [-22, "wave", "#7fb2ff"], [22, "rings", "#b78cff"], [62, "gem", "#79e9ff"]].forEach(function (q) {
-      const a = (90 + q[0]) * Math.PI / 180, x = Math.cos(a) * 1.33, z = -0.95 - Math.sin(a) * 1.33;
-      screen(DN, x, 1.25, z, Math.atan2(-Math.cos(a), Math.sin(a)), 0.86, 0.56, q[1], q[2], -0.08, 1.7);
-      DN.add("brass", G.cyl(0.02, 0.02, 0.38, 8), [x, 0.93, z], null, null, BRASS);
-    });
-  })();
-  DN.add("iron", G.rbox(0.56, 0.04, 0.2, 0.3, 14), [0, 0.81, -1.72], null, null, IRON);
-  DN.add("brass", G.cyl(0.08, 0.09, 0.05, 18), [0.55, 0.8, -1.65], null, null, BRASS); DN.add("glow", G.cyl(0.05, 0.05, 0.052, 16), [0.55, 0.8, -1.65], null, null, hdr(0xb47bff, 2));
-  DN.add("plain", G.box(0.32, 0.03, 0.24), [-0.6, 0.78, -1.65], [0, 0.4, 0], null, PAPER);
-  DN.add("brass", G.cyl(0.008, 0.008, 0.2, 6), [-0.55, 0.8, -1.62], [0, 0.4, Math.PI / 2], null, BRASS);
-  DN.add("plain", G.cyl(0.05, 0.045, 0.1, 14), [-0.75, 0.84, -1.6], null, null, 0xfbf6ee);
-  DN.add("plain", G.tor(0.03, 0.01, 6, 10), [-0.7, 0.84, -1.6], null, null, 0xfbf6ee);
-  chair(DN, 0, -0.95, Math.PI, 1.0, 0x5e2f6e, 0.55);
+    if (!HAS("nyxdesk")) [-62, -22, 22, 62].forEach(function (deg) { const a = (90 + deg) * Math.PI / 180;
+      DN.add("brass", G.cyl(0.02, 0.02, 0.38, 8), [Math.cos(a) * 1.33, 0.93, -0.95 - Math.sin(a) * 1.33], null, null, BRASS); });
+    DN.add("iron", G.rbox(0.56, 0.04, 0.2, 0.3, 14), [0, 0.81, -1.72], null, null, IRON);
+    DN.add("brass", G.cyl(0.08, 0.09, 0.05, 18), [0.55, 0.8, -1.65], null, null, BRASS); DN.add("glow", G.cyl(0.05, 0.05, 0.052, 16), [0.55, 0.8, -1.65], null, null, hdr(0xb47bff, 2));
+    DN.add("plain", G.box(0.32, 0.03, 0.24), [-0.6, 0.78, -1.65], [0, 0.4, 0], null, PAPER);
+    DN.add("brass", G.cyl(0.008, 0.008, 0.2, 6), [-0.55, 0.8, -1.62], [0, 0.4, Math.PI / 2], null, BRASS);
+    DN.add("plain", G.cyl(0.05, 0.045, 0.1, 14), [-0.75, 0.84, -1.6], null, null, 0xfbf6ee);
+    DN.add("plain", G.tor(0.03, 0.01, 6, 10), [-0.7, 0.84, -1.6], null, null, 0xfbf6ee);
+    chair(DN, 0, -0.95, Math.PI, 1.0, 0x5e2f6e, 0.55);
+  });
+  [[-62, "nodes", "#9d7bff"], [-22, "wave", "#7fb2ff"], [22, "rings", "#b78cff"], [62, "gem", "#79e9ff"]].forEach(function (q) {
+    const a = (90 + q[0]) * Math.PI / 180, ry = Math.atan2(-Math.cos(a), Math.sin(a));
+    if (!HAS("nyxdesk")) { screen(DN, Math.cos(a) * 1.33, 1.25, -0.95 - Math.sin(a) * 1.33, ry, 0.86, 0.56, q[1], q[2], -0.08, 1.7); return; }
+    const x = Math.cos(a) * 1.5, z = -1.15 - Math.sin(a) * 1.5;
+    screen(DN, x, 2.08, z, ry, 0.78, 0.5, q[1], q[2], -0.1, 1.7);
+    [-0.3, 0.3].forEach(function (o) { DN.add("brass", G.cyl(0.01, 0.01, 2.08, 6), [x + Math.sin(a) * o, 3.37, z + Math.cos(a) * o], null, null, BRASS_DARK); });
+  });
   shelf(DN, -1.6, -3.2, 0, 1.1, 2.3, 4, 8); shelf(DN, 1.6, -3.2, 0, 1.1, 2.3, 4, 9);
   DN.add("glow", G.ico(0.09, 0), [-1.6, 2.05, -3.1], null, [1, 1.6, 1], hdr(0xc08bff, 3));
   hangingLamp(DN, 0.9, 4.4, 0.4, 1.3); hangingLamp(DN, -1.2, 4.4, 1.3, 1.0);
@@ -1163,7 +1268,7 @@ _M_WORLD = r"""
     back: [{ x: 0, w: 1.6, y0: 1.2, sp: 3.0 }], left: [], right: [{ x: 0.3, w: 2.0, sp: 2.4 }],
     front: [{ x: 0, w: 2.6, sp: 2.4 }] });
   AR.add("cloth", G.rbox(3.4, 0.02, 2.6, 0.2, 16), [-0.2, 0.012, -0.3], null, null, 0x6d2a34);
-  shelf(AR, -2.4, -2.95, 0, 1.6, 3.6, 6, 13); shelf(AR, 2.4, -2.95, 0, 1.6, 3.6, 6, 14);
+  standin("archive", function () { shelf(AR, -2.4, -2.95, 0, 1.6, 3.6, 6, 13); shelf(AR, 2.4, -2.95, 0, 1.6, 3.6, 6, 14); });
   shelf(AR, -3.25, -1.2, Math.PI / 2, 1.6, 3.6, 6, 15); shelf(AR, -3.25, 0.7, Math.PI / 2, 1.6, 3.6, 6, 16);
   AR.add("brass", G.cyl(0.02, 0.02, 3.6, 8), [-3.0, 1.8, -1.8], [0.2, 0, 0], null, BRASS);
   AR.add("brass", G.cyl(0.02, 0.02, 3.6, 8), [-3.0, 1.8, -1.3], [0.2, 0, 0], null, BRASS);
@@ -1189,8 +1294,8 @@ _M_WORLD = r"""
     back: [], left: [{ x: 0.2, w: 0.8, y0: 0.6, sp: 1.15 }], right: [{ x: -0.6, w: 1.3, y0: 1.1, sp: 2.4 }],
     front: [{ x: 0, w: 2.8, sp: 2.4 }] });
   VT.add("brass", new THREE.RingGeometry(1.2, 1.28, 64).rotateX(-Math.PI / 2), [0.9, 0.012, -2.0], null, null, BRASS);
-  // the vault door: frame, door, rings, the wheel, bolts
-  (function () {
+  // the vault door: frame, door, rings, the wheel, bolts (the hero vault door replaces them)
+  standin("vaultdoor", function () {
     const x = 0.9, y = 1.55, z = -2.98;
     VT.add("stone", G.tor(1.3, 0.2, 10, 48), [x, y, z], null, [1, 1, 0.6], CREAM2);
     VT.add("brass", G.tor(1.22, 0.1, 12, 56), [x, y, z + 0.05], null, null, BRASS_DARK);
@@ -1201,21 +1306,23 @@ _M_WORLD = r"""
     VT.add("brass", G.cyl(0.1, 0.1, 0.25, 18), [x, y, z + 0.22], [Math.PI / 2, 0, 0], null, COPPER);
     for (let k = 0; k < 10; k++) { const a = k / 10 * TAU; VT.add("brass", G.cyl(0.05, 0.05, 0.1, 10), [x + Math.cos(a) * 1.02, y + Math.sin(a) * 1.02, z + 0.16], [Math.PI / 2, 0, 0], null, BRASS_DARK); }
     VT.add("brass", G.box(0.18, 0.5, 0.18), [x + 1.2, y + 0.4, z + 0.12], null, null, BRASS_DARK); VT.add("brass", G.box(0.18, 0.5, 0.18), [x + 1.2, y - 0.4, z + 0.12], null, null, BRASS_DARK);
-  })();
+  });
   // cubbies, no money on show
   for (let i = 0; i < 4; i++) for (let j = 0; j < 3; j++) { VT.add("wood", G.box(0.42, 0.36, 0.1), [-2.6 + i * 0.46, 1.3 + j * 0.42, -3.0], null, null, WALNUT_DARK);
     VT.add("plain", G.box(0.36, 0.3, 0.02), [-2.6 + i * 0.46, 1.3 + j * 0.42, -2.94], null, null, 0x2a2228); if ((i + j) % 3 === 0) VT.add("plain", G.box(0.25, 0.2, 0.05), [-2.6 + i * 0.46, 1.25 + j * 0.42, -2.92], null, null, PAPER); }
-  // the desk, the oversized chair, the ledger, the stamp pad
-  VT.add("wood", G.rbox(2.8, 0.1, 1.1, 0.18, 18), [0.2, 0.84, -0.7], null, null, WALNUT);
-  VT.add("brass", G.box(2.82, 0.04, 0.03), [0.2, 0.84, -0.14], null, null, BRASS);
-  [-0.9, 1.3].forEach(function (x) { VT.add("wood", G.rbox(0.8, 0.8, 0.95, 0.15, 14), [x, 0.4, -0.72], null, null, WALNUT_DARK);
-    [0.25, 0.55].forEach(function (y) { VT.add("brass", G.box(0.18, 0.03, 0.03), [x, y, -0.23], null, null, BRASS); }); });
-  VT.add("plain", G.box(0.5, 0.025, 0.36), [-0.35, 0.9, -0.55], [0, 0.1, 0], null, PAPER); VT.add("plain", G.box(0.5, 0.025, 0.36), [0.15, 0.9, -0.55], [0, -0.1, 0], null, PAPER);
-  VT.add("wood", G.box(1.02, 0.02, 0.38), [-0.1, 0.885, -0.55], null, null, 0x6a2a20);
-  VT.add("iron", G.rbox(0.2, 0.04, 0.14, 0.3, 10), [0.75, 0.9, -0.5], null, null, IRON);
-  VT.add("plain", G.cyl(0.06, 0.05, 0.12, 14), [1.35, 0.95, -0.45], null, null, 0xfbf6ee);
-  [[-0.95, -0.6], [-0.75, -0.95]].forEach(function (q) { VT.add("plain", G.box(0.3, 0.12, 0.4), [q[0], 0.95, q[1]], [0, q[0], 0], null, 0x5a3a2a); });
-  chair(VT, 0.2, -1.55, 0, 1.55, 0x6e2a22, 0.75);
+  // the desk, the oversized chair, the ledger, the stamp pad (the hero risk desk with its scales replaces them)
+  standin("rookdesk", function () {
+    VT.add("wood", G.rbox(2.8, 0.1, 1.1, 0.18, 18), [0.2, 0.84, -0.7], null, null, WALNUT);
+    VT.add("brass", G.box(2.82, 0.04, 0.03), [0.2, 0.84, -0.14], null, null, BRASS);
+    [-0.9, 1.3].forEach(function (x) { VT.add("wood", G.rbox(0.8, 0.8, 0.95, 0.15, 14), [x, 0.4, -0.72], null, null, WALNUT_DARK);
+      [0.25, 0.55].forEach(function (y) { VT.add("brass", G.box(0.18, 0.03, 0.03), [x, y, -0.23], null, null, BRASS); }); });
+    VT.add("plain", G.box(0.5, 0.025, 0.36), [-0.35, 0.9, -0.55], [0, 0.1, 0], null, PAPER); VT.add("plain", G.box(0.5, 0.025, 0.36), [0.15, 0.9, -0.55], [0, -0.1, 0], null, PAPER);
+    VT.add("wood", G.box(1.02, 0.02, 0.38), [-0.1, 0.885, -0.55], null, null, 0x6a2a20);
+    VT.add("iron", G.rbox(0.2, 0.04, 0.14, 0.3, 10), [0.75, 0.9, -0.5], null, null, IRON);
+    VT.add("plain", G.cyl(0.06, 0.05, 0.12, 14), [1.35, 0.95, -0.45], null, null, 0xfbf6ee);
+    [[-0.95, -0.6], [-0.75, -0.95]].forEach(function (q) { VT.add("plain", G.box(0.3, 0.12, 0.4), [q[0], 0.95, q[1]], [0, q[0], 0], null, 0x5a3a2a); });
+    chair(VT, 0.2, -1.55, 0, 1.55, 0x6e2a22, 0.75);
+  });
   VT.add("brass", G.box(0.6, 0.05, 0.2), [-3.35, 0.58, 0.2 * -1], [0, Math.PI / 2, 0], null, BRASS);
   shelf(VT, 3.2, -1.0, -Math.PI / 2, 1.4, 2.2, 3, 20);
   armillary(VT, 2.6, 0, 2.4, 0.7);
@@ -1372,10 +1479,17 @@ _M_WORLD = r"""
       const m = new THREE.Mesh(new THREE.PlaneGeometry(0.26, 0.26), new THREE.MeshBasicMaterial({ map: t, color: hdr(0xffffff, 1.6), transparent: true, depthWrite: false, side: THREE.DoubleSide }));
       const a = i / 4 * TAU + 0.4; m.position.set(Math.cos(a) * 1.05, (i % 2) * 0.12, Math.sin(a) * 1.05); m.userData.a = a; cards.add(m);
     });
+    // fit the whole hologram to a table top of radius r at height y (the procedural table, then the hero prop)
+    props.holoFit = function (r, y) {
+      const k = r / 1.44; props.holoK = k; props.holoY = y;
+      disc.scale.setScalar(k); disc.position.y = y; mini.scale.setScalar(k); dome.scale.set(k, 0.55 * k, k); dome.position.y = y + 0.008 * k;
+      cards.scale.setScalar(k); cards.position.y = y + 0.63 * k;
+    };
+    props.holoFit(1.44, 0.792);
   })();
   // the telescope: turns slowly on its mount
   (function () {
-    const g = new THREE.Group(); OB.place(g, 0.6, 0, -1.2, 0); props.telescope = g;
+    const g = new THREE.Group(); OB.place(g, 0.6, 0, -1.2, 0); props.telescope = g; STANDIN.telescope = [g];
     const parts = new THREE.Group(); g.add(parts);
     const pm = function (geo, c, p, r) { const m = new THREE.Mesh(paint(geo, c), MAT.brass); if (p) m.position.set(p[0], p[1], p[2]); if (r) m.rotation.set(r[0], r[1], r[2]); m.castShadow = Q.shadows; return m; };
     for (let k = 0; k < 3; k++) { const leg = pm(G.cyl(0.05, 0.07, 1.4, 10), BRASS_DARK, [Math.cos(k * TAU / 3) * 0.45, 0.62, Math.sin(k * TAU / 3) * 0.45]); leg.rotation.set(Math.sin(k * TAU / 3) * 0.35, 0, -Math.cos(k * TAU / 3) * 0.35); parts.add(leg); }
@@ -1394,7 +1508,7 @@ _M_WORLD = r"""
   })();
   // the airship moored at the dock: bobs, its propellers turn
   (function () {
-    const g = new THREE.Group(); g.position.set(29.6, 2.35, -1.6); scene.add(g); props.airship = g;
+    const g = new THREE.Group(); g.position.set(29.6, 2.35, -1.6); scene.add(g); props.airship = g; STANDIN.airship = [g];
     const add = function (geo, key, c, p, r, s) { const m = new THREE.Mesh(paint(geo, c), MAT[key]); if (p) m.position.set(p[0], p[1], p[2]); if (r) m.rotation.set(r[0], r[1], r[2]); if (s) m.scale.set(s[0], s[1], s[2]); m.castShadow = Q.shadows; g.add(m); return m; };
     add(G.sph(1, 40, 24), "cloth", 0xf1e5cb, [0, 0.6, 0], null, [4.0, 1.5, 1.5]);
     [-2.6, -1.2, 0.2, 1.6, 2.9].forEach(function (x) { const k = Math.sqrt(Math.max(0.05, 1 - (x / 4) * (x / 4))); add(G.tor(1.5 * k + 0.01, 0.035, 6, 40), "brass", BRASS, [x, 0.6, 0], [0, Math.PI / 2, 0], [1, 1, 1]); });
@@ -1409,7 +1523,7 @@ _M_WORLD = r"""
       const hm = new THREE.Mesh(paint(G.cyl(0.08, 0.08, 0.25, 12), BRASS), MAT.brass); hm.rotation.z = Math.PI / 2; hub.add(hm);
       for (let k = 0; k < 3; k++) { const b = new THREE.Mesh(paint(G.rbox(0.04, 0.55, 0.12, 0.3, 10), WALNUT), MAT.wood); b.position.y = 0; b.rotation.x = k * TAU / 3; b.geometry.translate(0, 0.28, 0); hub.add(b); }
       props.propellers.push(hub); });
-    WF.add("brass", G.box(2.9, 0.05, 0.7), [26.95, 0.27, -1.5], [0, 0, 0.19], null, BRASS_DARK);
+    standin("airship", function () { WF.add("brass", G.box(2.9, 0.05, 0.7), [26.95, 0.27, -1.5], [0, 0, 0.19], null, BRASS_DARK); });
   })();
   // two small delivery drones looping round the island (decorative)
   props.drones = [0, 1].map(function (i) {
@@ -1436,15 +1550,16 @@ _M_WORLD = r"""
     add(G.cone(0.13, 0.16, 8), BRASS, 0, 2.14, 0); add(G.cyl(0.1, 0.1, 0.03, 8), BRASS, 0, 1.71, 0); add(G.sph(0.03, 8, 6), BRASS, 0, 2.24, 0);
     for (let k = 0; k < 4; k++) add(G.box(0.014, 0.32, 0.014), BRASS, Math.cos(k * Math.PI / 2 + 0.78) * 0.085, 1.88, Math.sin(k * Math.PI / 2 + 0.78) * 0.085);
     const lgeo = mergeGeometries(lg, false);
-    instanced(lgeo, MAT.brass, lanterns.map(function (q) { return { p: q.p, s: [1, q.h, 1] }; }));
-    instanced(paint(G.sph(0.06, 10, 8), 0xffffff), new THREE.MeshBasicMaterial({ vertexColors: true, color: hdr(0xffc47e, 6) }), lanterns.map(function (q) { return { p: [q.p[0], q.p[1] + 1.88 * q.h, q.p[2]], s: [1, 1.5, 1] }; }));
+    props.lanternPosts = instanced(lgeo, MAT.brass, lanterns.map(function (q) { return { p: q.p, s: [1, q.h, 1] }; }));
+    props.lanternBulbs = instanced(paint(G.sph(0.06, 10, 8), 0xffffff), new THREE.MeshBasicMaterial({ vertexColors: true, color: hdr(0xffc47e, 6) }), lanterns.map(function (q) { return { p: [q.p[0], q.p[1] + 1.88 * q.h, q.p[2]], s: [1, 1.5, 1] }; }));
     // soft halos round the lanterns: one additive billboard draw
     const haloMat = new THREE.ShaderMaterial({ transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, uniforms: { uMap: { value: glowTex } },
-      vertexShader: "varying vec2 vUv; void main() { vUv = uv; vec4 c = modelViewMatrix * instanceMatrix * vec4(0.0, 0.0, 0.0, 1.0); c.xy += position.xy * length(instanceMatrix[0].xyz); gl_Position = projectionMatrix * c; }",
-      fragmentShader: "uniform sampler2D uMap; varying vec2 vUv; void main() { float a = texture2D(uMap, vUv).r; gl_FragColor = vec4(vec3(1.0, 0.62, 0.3) * a * 0.55, 1.0); }" });
+      // (a halo fades out as the drone comes close, so a lamp passing the lens never blooms over the shot)
+      vertexShader: "varying vec2 vUv; varying float vFade; void main() { vUv = uv; vec4 c = modelViewMatrix * instanceMatrix * vec4(0.0, 0.0, 0.0, 1.0); vFade = smoothstep(1.4, 3.6, -c.z); c.xy += position.xy * length(instanceMatrix[0].xyz); gl_Position = projectionMatrix * c; }",
+      fragmentShader: "uniform sampler2D uMap; varying vec2 vUv; varying float vFade; void main() { float a = texture2D(uMap, vUv).r; gl_FragColor = vec4(vec3(1.0, 0.62, 0.3) * a * 0.55 * vFade, 1.0); }" });
     const halos = new THREE.InstancedMesh(new THREE.PlaneGeometry(1, 1), haloMat, lanterns.length);
     lanterns.forEach(function (q, i) { halos.setMatrixAt(i, mat4([q.p[0], q.p[1] + 1.88 * q.h, q.p[2]], null, 0.9)); });
-    halos.frustumCulled = false; halos.renderOrder = 4; scene.add(halos);
+    halos.frustumCulled = false; halos.renderOrder = 4; scene.add(halos); props.lanternHalos = halos;
     // plants
     instanced(crag(0.5, 1, 3, 1), MAT.leaf, bushes, false);
     const bloomGeo = (function () { const parts = [], r = rng(5); for (let i = 0; i < 9; i++) { const g = G.sph(0.3, 6, 5); g.translate((r() - 0.5) * 0.6, (r() - 0.5) * 0.4, (r() - 0.5) * 0.6); parts.push(prep(g)); } return mergeGeometries(parts, false); })();
@@ -1983,6 +2098,30 @@ _M_CAST = r"""
     A.blink = function (v) { eyes.forEach(function (e) { e.scale.y = Math.max(0.08, 1 - v); }); };
     return A;
   }
+
+  // -- Mote's clear glass travel bell (for the real model on its brass cart): a lathe bell of clear glass with a
+  //    clearcoat and a faint mint rim (a fresnel glow, no transmission pass), a brass base ring, a knob and a loop
+  const bellMat = new THREE.MeshPhysicalMaterial({ color: 0xf4fffb, roughness: 0.03, metalness: 0, transparent: true, opacity: 0.1,
+    clearcoat: 1, clearcoatRoughness: 0.02, envMapIntensity: 2.4, depthWrite: false, side: THREE.DoubleSide, specularIntensity: 1 });
+  bellMat.onBeforeCompile = function (sh) {
+    sh.fragmentShader = sh.fragmentShader.replace("#include <emissivemap_fragment>", [
+      "#include <emissivemap_fragment>",
+      "float rimF = pow(1.0 - abs(dot(normal, normalize(vViewPosition))), 2.6);",
+      "totalEmissiveRadiance += vec3(0.32, 0.95, 0.72) * rimF * 0.55;",
+      "diffuseColor.a = clamp(diffuseColor.a + rimF * 0.42, 0.0, 1.0);"].join("\n"));
+  };
+  function makeBell(radius, height) {
+    const g = new THREE.Group(); g.name = "bell";
+    const prof = [[1.0, 0], [1.02, 0.04], [1.0, 0.55], [0.95, 0.68], [0.85, 0.8], [0.68, 0.9], [0.46, 0.965], [0.22, 0.995], [0.001, 1.0]];
+    const glass = new THREE.Mesh(new THREE.LatheGeometry(prof.map(function (q) { return new THREE.Vector2(q[0] * radius, q[1] * height); }), 48), bellMat);
+    glass.renderOrder = 6; g.add(glass);
+    const brass = function (geo, p, r) { const m = new THREE.Mesh(paint(geo, BRASS), MAT.brass); m.position.set(p[0], p[1], p[2]); if (r) m.rotation.set(r[0], r[1], r[2]); m.castShadow = Q.shadows; g.add(m); return m; };
+    brass(G.tor(radius * 1.02, radius * 0.075, 10, 48), [0, radius * 0.06, 0], [Math.PI / 2, 0, 0]);
+    brass(G.tor(radius * 1.0, radius * 0.03, 6, 48), [0, height * 0.55, 0], [Math.PI / 2, 0, 0]).material = MAT.brass;
+    brass(G.sph(radius * 0.13, 14, 10), [0, height + radius * 0.08, 0]);
+    brass(G.tor(radius * 0.12, radius * 0.035, 8, 20), [0, height + radius * 0.27, 0]);
+    return g;
+  }
 """
 
 _M_LIFE = r"""
@@ -1995,37 +2134,50 @@ _M_LIFE = r"""
   for (let k = 0; k < 8; k++) link("r" + k, "r" + ((k + 1) % 8));
   [[200, ["r4", "r5"]], [340, ["r7", "r0"]], [135, ["r3"]], [45, ["r1"]], [90, ["r2"]], [270, ["r6"]]].forEach(function (q) {
     const a = q[0] * Math.PI / 180; node("e" + q[0], V3(Math.cos(a) * 5.6, 0, Math.sin(a) * 5.6)); q[1].forEach(function (r) { link("e" + q[0], r); }); });
-  node("tbH", V3(-1.55, 0, 1.95)); link("tbH", "r2"); link("tbH", "r3"); link("tbH", "r4");
-  node("tbW", V3(-1.95, 0, -1.65)); link("tbW", "r4"); link("tbW", "r5");
-  node("tbN", V3(0.35, 0, -2.55)); link("tbN", "r6"); link("tbN", "r5"); link("tbN", "r7");
+  // round the mission table: Voss's place on its left (seen from the bridge) and two places for visitors, kept just
+  // clear of whichever table stands there (the procedural one, then the hero prop): see tableSpots()
+  node("tbH", V3(0, 0, 0)); link("tbH", "r2"); link("tbH", "r3"); link("tbH", "r4");
+  node("tbW", V3(0, 0, 0)); link("tbW", "r0"); link("tbW", "r1"); link("tbW", "r7");
+  node("tbN", V3(0, 0, 0)); link("tbN", "r6"); link("tbN", "r7"); link("tbN", "r5");
   node("wsD", WS2.at(0, 0, 4.1)); node("wsI", WS2.at(0, 0, 2.2)); node("wsS", WS2.at(1.8, 0, 0.25)); node("wsB", WS2.at(1.65, 0, -1.45));
-  node("wsH", WS2.at(0, 0, -1.45)); node("wsV", WS2.at(1.45, 0, 0.95));
+  node("wsH", WS2.at(0, 0, -1.3)); node("wsV", WS2.at(1.45, 0, 0.95));
   link("e200", "wsD"); link("wsD", "wsI"); link("wsI", "wsS"); link("wsS", "wsB"); link("wsB", "wsH"); link("wsI", "wsV"); link("wsV", "wsS");
-  node("dnD", DN2.at(0, 0, 4.1)); node("dnI", DN2.at(0, 0, 2.0)); node("dnH", DN2.at(0, 0, -0.95)); node("dnV", DN2.at(-1.6, 0, -1.0));
+  node("dnD", DN2.at(0, 0, 4.1)); node("dnI", DN2.at(0, 0, 2.0)); node("dnH", DN2.at(0, 0, -1.15)); node("dnV", DN2.at(-1.6, 0, -1.0));
   node("dnSi", DN2.at(2.6, 0, 0.5)); node("dnSo", DN2.at(4.6, 0, 0.5));
   link("e340", "dnD"); link("dnD", "dnI"); link("dnI", "dnH"); link("dnI", "dnV"); link("dnI", "dnSi"); link("dnSi", "dnSo");
-  node("arD", AR2.at(0, 0, 3.75)); node("arI", AR2.at(0, 0, 1.6)); node("arH", AR2.at(-0.75, 0, -0.55)); node("arV", AR2.at(0.95, 0, 0.55));
+  node("arD", AR2.at(0, 0, 3.75)); node("arI", AR2.at(0, 0, 1.6)); node("arH", AR2.at(-1.4, 0, -1.55)); node("arV", AR2.at(0.95, 0, 0.55));
   link("e135", "arD"); link("arD", "arI"); link("arI", "arH"); link("arI", "arV");
   node("vtD", VT2.at(0, 0, 3.75)); node("vtI", VT2.at(0, 0, 1.75)); node("vtS", VT2.at(-1.95, 0, 0.6)); node("vtB", VT2.at(-1.95, 0, -1.8)); node("vtH", VT2.at(0.2, 0, -1.55));
   node("vtX", VT2.at(-4.35, 0, -0.2));
   link("e45", "vtD"); link("vtD", "vtI"); link("vtI", "vtS"); link("vtS", "vtB"); link("vtB", "vtH");
   node("wk6", V3(19.5, 0, 6.3)); node("wkN", V3(19.5, 0, -1.5)); node("wkS", V3(19.5, 0, 16.2));
-  node("kiV", V3(22.05, 0, 5.5)); node("dkV", V3(21.6, 0, -1.1)); node("dkH", V3(23.05, 0, -1.45));
+  node("kiV", V3(22.0, 0, 5.1)); node("dkV", V3(21.6, 0, -1.1)); node("dkH", V3(23.05, 0, -1.45));
   link("dnSo", "vtX"); link("vtX", "wk6"); link("wk6", "wkN"); link("wk6", "wkS"); link("wk6", "kiV"); link("wkN", "dkV"); link("dkV", "dkH");
   node("br", V3(0, 0, 11)); node("pr0", V3(0, 0, 16.2)); link("e90", "br"); link("br", "pr0"); link("pr0", "wkS");
   node("stB", V3(0, 0, -6.0)); node("stT", V3(0, 1.8, -8.95)); node("obC", OB2.at(0, 0, 2.6)); node("obH", OB2.at(-1.0, 0, -1.9)); node("obV", OB2.at(-1.75, 0, 0.7));
   link("e270", "stB"); link("stB", "stT"); link("stT", "obC"); link("obC", "obH"); link("obC", "obV");
   // room -> where its resident works (home) and where a visitor stands
   const SPOTS = {
-    table: { home: "tbH", homeYaw: 0.42, visit: ["tbW", "tbN"], visitYaw: [2.2, Math.PI + 0.1] },
+    table: { home: "tbH", homeYaw: 0, visit: ["tbW", "tbN"], visitYaw: [0, 0] },
     workshop: { home: "wsH", homeYaw: WS2.yaw, visit: ["wsV"], visitYaw: [WS2.yaw + Math.PI + 0.5] },
     den: { home: "dnH", homeYaw: DN2.yaw + Math.PI, visit: ["dnV"], visitYaw: [DN2.yaw + Math.PI / 2] },
-    archive: { home: "arH", homeYaw: AR2.yaw + 0.45, visit: ["arV"], visitYaw: [AR2.yaw - 2.0] },
+    archive: { home: "arH", homeYaw: AR2.yaw + 0.3, visit: ["arV"], visitYaw: [AR2.yaw - 2.0] },
     vault: { home: "vtH", homeYaw: VT2.yaw, visit: ["vtX"], visitYaw: [VT2.yaw + Math.PI / 2] },
     dock: { home: "dkH", homeYaw: -0.95, visit: ["dkV"], visitYaw: [Math.PI / 2] },
     observatory: { home: "obH", homeYaw: OB2.yaw + Math.PI + 0.6, visit: ["obV"], visitYaw: [OB2.yaw + Math.PI - 0.3] },
     kiosk: { home: "kiV", homeYaw: Math.PI / 2, visit: ["kiV"], visitYaw: [Math.PI / 2] },
   };
+  // the table's places for a table of radius R with its top at y (the procedural one, then the hero prop): Voss on
+  // the left turned three-quarters to the bridge, the visitors facing the middle; TABLE_PT is the rim he reaches for
+  const TABLE_PT = V3(0, 0.8, 0);
+  function tableSpots(R, top) {
+    const at = function (deg, d, out) { const a = deg * Math.PI / 180; return out.set(Math.cos(a) * d, 0, Math.sin(a) * d); };
+    at(170, R + 0.45, NAV.tbH.p); at(18, R + 0.52, NAV.tbW.p); at(-62, R + 0.52, NAV.tbN.p);
+    const face = function (p) { return Math.atan2(-p.x, -p.z); };
+    SPOTS.table.homeYaw = 0.8; SPOTS.table.visitYaw[0] = face(NAV.tbW.p); SPOTS.table.visitYaw[1] = face(NAV.tbN.p);
+    at(170, R * 0.82, TABLE_PT).setY(top);
+  }
+  tableSpots(1.72, 0.8);
   function route(from, to) {
     const dist = {}, prev = {}, todo = new Set(Object.keys(NAV));
     Object.keys(NAV).forEach(function (k) { dist[k] = Infinity; }); dist[from] = 0;
@@ -2042,14 +2194,19 @@ _M_LIFE = r"""
   const BUILD = { voss: makeVoss, pip: makePip, nyx: makeNyx, rook: makeRook, mote: makeMote, jet: makeJet };
   const SPEED = { voss: 1.0, pip: 1.45, nyx: 1.05, rook: 0.95, mote: 1.15, jet: 1.8 };
   const HEIGHT = { voss: 1.22, pip: 1.34, nyx: 1.08, rook: 2.37, mote: 1.1, jet: 0.96 };
-  const actors = {};
+  const actors = {}, ACTOR_KEYS = [];
   Object.keys(CAST).forEach(function (k) {
     if (!BUILD[k] || !SPOTS[CAST[k].room]) return;
     const a = BUILD[k](), sp = SPOTS[CAST[k].room];
     a.name = CAST[k].name; a.members = CAST[k].members; a.homeRoom = CAST[k].room; a.room = a.homeRoom;
     a.homeNode = sp.home; a.node = sp.home; a.pos = NAV[sp.home].p.clone(); a.yaw = sp.homeYaw; a.yawGoal = a.yaw; a.yawS = a.yaw;
     a.state = "home"; a.queue = []; a.speed = SPEED[k]; a.height = HEIGHT[k]; a.glide = 0; a.homeSince = 0;
-    a.group.position.copy(a.pos); a.group.rotation.y = a.yaw; actors[k] = a;
+    // the acting state (reused every frame: nothing is allocated in the loop)
+    a.st = { walking: false, speed: a.speed, working: false, seated: false, carrying: false, glide: 0 };
+    a.headAt = V3(0, 0, 0); a.beats = []; a.nextThink = 0; a.nextReach = 6 + Math.random() * 8; a.reachUntil = 0;
+    a.speaking = false; a.listening = false; a.listenTo = null; a.station = "idle"; a.ambient = false;
+    a.reachL = null; a.reachR = null; a.typing = false; a.lookTarget = null; a.shadowR = a.shadow.geometry.parameters.radius;
+    a.group.position.copy(a.pos); a.group.rotation.y = a.yaw; actors[k] = a; ACTOR_KEYS.push(k);
   });
   function pathLength(a) { let L = 0; if (!a.path) return 0; L += a.pos.distanceTo(a.path[Math.min(a.seg + 1, a.path.length - 1)]);
     for (let i = a.seg + 1; i < a.path.length - 1; i++) L += a.path[i].distanceTo(a.path[i + 1]); return L; }
@@ -2059,26 +2216,47 @@ _M_LIFE = r"""
     for (let i = 0; i < sp.visit.length; i++) if (busy.indexOf(sp.visit[i]) < 0) return { id: sp.visit[i], yaw: sp.visitYaw[i] };
     return { id: sp.visit[0], yaw: sp.visitYaw[0] };
   }
+  // ground speed: the drawing's own pace; a real biped walks at its own walk's measured speed (the feet do not
+  // slide). Jet hurries with a closed trade's cube (the carry move, quicker); Voss takes quick penguin steps and
+  // glides when the way is long (wings spread).
+  const WALK_RATE = { carry: 3.2, walk_penguin: 2.4 };
+  function walkClip(a) { return a.carrying ? "carry" : (a.actor && a.actor.spec.walk) || "walk_casual"; }
+  function walkSpeedOf(a) {
+    const A = a.actor;
+    if (!A || A.spec.kind !== "biped") return a.speed * (a.key === "voss" ? lerp(1, 2.3, a.glide) : 1);
+    const name = walkClip(a), feet = (A.library.info(name).speed_hips_per_s || 0) * A.hipsHeight * (WALK_RATE[name] || 1);
+    return a.key === "voss" ? lerp(Math.max(0.15, feet), 1.5, a.glide) : Math.max(0.15, feet);
+  }
+  function travelSpeed(a) { return a.key === "voss" ? (a.actor ? 1.35 : 1.8) : walkSpeedOf(a); }
   function startWalk(a, action) {
     const v = visitNodeFor(action.dest, a); if (!v) return;
     const ids = route(a.node, v.id); if (!ids) return;
     a.path = ids.map(function (id) { return NAV[id].p.clone(); }); a.path[0] = a.pos.clone(); a.seg = 0;
-    a.state = "out"; a.action = action; a.destNode = v.id; a.destYaw = v.yaw; a.destRoom = action.dest;
+    a.state = "out"; a.action = action; a.destNode = v.id; a.destYaw = v.yaw; a.destRoom = action.dest; a.ambient = !!action.ambient;
     a.carrying = action.carry || null; if (a.carrying) showCube(a.carrying);
-    if (focus && focus.actor === a) focus.until = Math.max(focus.until, simT + 2 + pathLength(a) / (a.key === "voss" ? 1.8 : a.speed));
+    if (focus && focus.actor === a) focus.until = Math.max(focus.until, simT + 2 + pathLength(a) / travelSpeed(a));
   }
   function walkBack(a) {
     const ids = route(a.node, a.homeNode); if (!ids) { a.state = "home"; return; }
-    a.path = ids.map(function (id) { return NAV[id].p.clone(); }); a.path[0] = a.pos.clone(); a.seg = 0; a.state = "back"; a.room = a.homeRoom;
+    a.path = ids.map(function (id) { return NAV[id].p.clone(); }); a.path[0] = a.pos.clone(); a.seg = 0; a.state = "back"; a.room = a.homeRoom; a.ambient = false;
   }
+  // a home place moved (the table changed): whoever stands there steps to the new place
+  function resettle(nodeId) {
+    ACTOR_KEYS.forEach(function (k) { const a = actors[k];
+      if (a.node !== nodeId || (a.state !== "home" && a.state !== "visit")) return;
+      a.path = [a.pos.clone(), NAV[nodeId].p.clone()]; a.seg = 0;
+      if (a.state === "home") a.state = "back"; else { a.state = "out"; a.action = { dest: a.destRoom, hold: Math.max(1, a.visitUntil - simT) }; }
+    });
+  }
+  const _wdir = new THREE.Vector3();
   function stepWalk(a, dt) {
     const remaining = pathLength(a);
-    if (a.key === "voss") a.glide += ((remaining > 4.5 && a.state !== "home" ? 1 : 0) - a.glide) * Math.min(1, dt * 1.6);
-    let left = a.speed * (a.key === "voss" ? lerp(1, 2.3, a.glide) : 1) * dt;
+    if (a.key === "voss") a.glide += ((remaining > (a.actor ? 3.0 : 4.5) && a.state !== "home" ? 1 : 0) - a.glide) * Math.min(1, dt * 1.6);
+    let left = walkSpeedOf(a) * dt;
     while (left > 0 && a.seg < a.path.length - 1) {
       const to = a.path[a.seg + 1], d = to.distanceTo(a.pos);
       if (d <= left) { a.pos.copy(to); a.seg += 1; left -= d; }
-      else { const dir = to.clone().sub(a.pos).normalize(); a.pos.addScaledVector(dir, left); left = 0; if (Math.abs(dir.x) + Math.abs(dir.z) > 0.01) a.yawGoal = Math.atan2(dir.x, dir.z); }
+      else { _wdir.copy(to).sub(a.pos).normalize(); a.pos.addScaledVector(_wdir, left); left = 0; if (Math.abs(_wdir.x) + Math.abs(_wdir.z) > 0.01) a.yawGoal = Math.atan2(_wdir.x, _wdir.z); }
     }
     if (a.seg >= a.path.length - 1) {
       a.path = null;
@@ -2087,82 +2265,408 @@ _M_LIFE = r"""
       else { a.state = "home"; a.node = a.homeNode; a.room = a.homeRoom; a.yawGoal = SPOTS[a.homeRoom].homeYaw; a.homeSince = simT; }
     }
   }
-  const _hp = new THREE.Vector3(), _cp = new THREE.Vector3();
+  const _cp = new THREE.Vector3(), _w1 = new THREE.Vector3(), _w2 = new THREE.Vector3();
   function updateActors(dt) {
-    Object.keys(actors).forEach(function (k) {
-      const a = actors[k];
-      if (a.state === "home" && a.queue.length) startWalk(a, a.queue.shift());
+    // who is speaking (a bubble with the member's own words is up) and who stands near enough to listen
+    for (let i = 0; i < ACTOR_KEYS.length; i++) { const a = actors[ACTOR_KEYS[i]]; a.head.getWorldPosition(a.headAt); a.speaking = false; a.listenTo = null; }
+    for (let i = 0; i < bubbles.length; i++) if (simT < bubbles[i].until) bubbles[i].actor.speaking = true;
+    for (let i = 0; i < ACTOR_KEYS.length; i++) {
+      const a = actors[ACTOR_KEYS[i]]; if (a.speaking || a.walking) continue;
+      let best = 6.0;
+      for (let j = 0; j < ACTOR_KEYS.length; j++) { const s = actors[ACTOR_KEYS[j]]; if (s === a || !s.speaking) continue;
+        const d = a.group.position.distanceTo(s.group.position); if (d < best) { best = d; a.listenTo = s; } }
+    }
+    for (let i = 0; i < ACTOR_KEYS.length; i++) {
+      const k = ACTOR_KEYS[i], a = actors[k];
+      a.listening = !!a.listenTo;
+      while (a.beats.length && simT >= a.beats[0].at) a.beats.shift().fn(a);
+      const busy = !!(a.actor && a.actor.oneShot);  // a one-shot move (a nod, a cheer) finishes before a walk starts
+      if (a.state === "home" && a.queue.length && !busy) startWalk(a, a.queue.shift());
       if (a.state === "out" || a.state === "back") stepWalk(a, dt);
-      else if (a.state === "visit" && simT >= a.visitUntil) walkBack(a);
+      else if (a.state === "visit" && simT >= a.visitUntil && !busy) walkBack(a);
       else if (a.key === "voss") a.glide += (0 - a.glide) * Math.min(1, dt * 2);
       a.walking = a.state === "out" || a.state === "back";
       a.yaw += angleDiff(a.yawGoal, a.yaw) * (1 - Math.exp(-dt * (a.walking ? 7 : 3)));
       a.yawS += angleDiff(a.yaw, a.yawS) * (1 - Math.exp(-dt * 1.4));
       const working = a.members.some(function (id) { return (members[id] || {}).status === "working"; });
-      const st = { walking: a.walking, speed: a.speed, working: working && a.state === "home", seated: a.state === "home" && (k === "nyx" || k === "rook"),
-                   carrying: !!a.carrying, glide: a.glide };
-      // turn the head towards the drone when it is close and in front
-      a.head.getWorldPosition(_hp); _cp.copy(camera.position).sub(_hp);
-      const rel = angleDiff(Math.atan2(_cp.x, _cp.z), a.yaw), near = _cp.length() < 7.5 && Math.abs(rel) < 1.9;
-      const wantY = near ? clamp(rel, -0.75, 0.75) : 0, wantP = near ? clamp(-Math.atan2(_cp.y, Math.hypot(_cp.x, _cp.z)) * 0.6, -0.35, 0.3) : 0;
-      a.lookYaw += (wantY - a.lookYaw) * (1 - Math.exp(-dt * 2.5)); a.lookPitch += (wantP - a.lookPitch) * (1 - Math.exp(-dt * 2.5));
-      // blink every few seconds
-      a.blinkAt -= dt; if (a.blinkAt <= 0 && a.blinkT < 0) { a.blinkT = 0; a.blinkAt = 2.2 + Math.random() * 4.5; }
-      let bv = 0; if (a.blinkT >= 0) { a.blinkT += dt; const u = a.blinkT / 0.17; bv = u >= 1 ? 0 : Math.sin(u * Math.PI); if (u >= 1) a.blinkT = -1; }
-      a.eyes.forEach(function (e) { if (e.lid) e.lid.rotation.x = e.lid.userData.open + (1.5 - e.lid.userData.open) * bv; });
-      if (a.blink) a.blink(bv);
-      if (a.model) animateModel(a, st, dt); else a.anim(simT + a.phase, st, dt);
+      const st = a.st;
+      st.walking = a.walking; st.speed = a.speed; st.working = working && a.state === "home"; st.seated = a.state === "home" && (k === "nyx" || k === "rook");
+      st.carrying = !!a.carrying; st.glide = a.glide;
       a.group.position.set(a.pos.x, a.pos.y + a.glide * 0.38, a.pos.z); a.group.rotation.y = a.yaw;
+      if (a.actor) {
+        try { act(a, st); driveActor(a, st, dt); } catch (e) { dropModel(a, e); }
+      } else {
+        // the drawing: turn the head towards the drone when it is close and in front, blink every few seconds
+        _cp.copy(camera.position).sub(a.headAt);
+        const rel = angleDiff(Math.atan2(_cp.x, _cp.z), a.yaw), near = _cp.length() < 7.5 && Math.abs(rel) < 1.9;
+        const wantY = near ? clamp(rel, -0.75, 0.75) : 0, wantP = near ? clamp(-Math.atan2(_cp.y, Math.hypot(_cp.x, _cp.z)) * 0.6, -0.35, 0.3) : 0;
+        a.lookYaw += (wantY - a.lookYaw) * (1 - Math.exp(-dt * 2.5)); a.lookPitch += (wantP - a.lookPitch) * (1 - Math.exp(-dt * 2.5));
+        a.blinkAt -= dt; if (a.blinkAt <= 0 && a.blinkT < 0) { a.blinkT = 0; a.blinkAt = 2.2 + Math.random() * 4.5; }
+        let bv = 0; if (a.blinkT >= 0) { a.blinkT += dt; const u = a.blinkT / 0.17; bv = u >= 1 ? 0 : Math.sin(u * Math.PI); if (u >= 1) a.blinkT = -1; }
+        for (let j = 0; j < a.eyes.length; j++) { const e = a.eyes[j]; if (e.lid) e.lid.rotation.x = e.lid.userData.open + (1.5 - e.lid.userData.open) * bv; }
+        if (a.blink) a.blink(bv);
+        a.anim(simT + a.phase, st, dt);
+      }
       a.shadow.position.y = 0.012 - a.glide * 0.38; a.shadow.material.opacity = 0.6;
-      if (a.carrying && cube.mesh.visible && !cube.flight) { a.carry.getWorldPosition(cube.mesh.position); cube.mesh.position.y += Math.sin(simT * 4) * 0.02; }
-    });
+      if (a.carrying && cube.mesh.visible && !cube.flight) {
+        if (a.actor && a.actor.bones) cubeBetweenHands(a);
+        else { a.carry.getWorldPosition(cube.mesh.position); cube.mesh.position.y += Math.sin(simT * 4) * 0.02; }
+      }
+    }
   }
 
-  // ============================================================= REAL MODELS: office_assets/cast_<id>.glb replaces the drawing
-  function animateModel(a, st, dt) {
-    if (a.mixer) {
-      const want = st.walking && a.clips.walk ? a.clips.walk : a.clips.idle;
-      if (want && want !== a.clipNow) { if (a.clipNow) a.clipNow.fadeOut(0.3); want.reset().fadeIn(0.3).play(); a.clipNow = want; }
-      a.mixer.update(dt);
-    }
-    if (!a.clips || !a.clips.walk) { a.step += dt * (st.walking ? 9 : 0); a.model.position.y = st.walking ? Math.abs(Math.sin(a.step)) * 0.04 : 0;
-      a.model.rotation.z = st.walking ? Math.sin(a.step) * 0.05 : 0; }
-    a.model.scale.y = a.modelScale * (1 + Math.sin(simT * 2 + a.phase) * 0.008);
+  // ============================================================= ACTING FROM THE LEDGER (the real cast)
+  // Moves are acting, triggered only by real events and statuses: talk while the member's own words are up, listen
+  // (and turn) when someone nearby talks, think while blocked or waiting, Rook nods at good news and worries at bad,
+  // a bad-tone event worries its speaker, Jet cheers only for a closed winning trade and shrugs at a loss, Voss
+  // thinks over the Polymarket desk's lessons before saying them. Ambient life (coffee, looking around, chatting with
+  // a neighbour) only while every member an actor plays is idle, and it never shows words or numbers.
+  const BENCH = { l: V3(0, 0, 0), r: V3(0, 0, 0), c: V3(0, 0, 0) };  // where Pip's hands tinker (set with the bench)
+  function benchAt(top, zBack) { BENCH.l.copy(WS2.at(0.17, top, zBack)); BENCH.r.copy(WS2.at(-0.17, top, zBack)); BENCH.c.copy(WS2.at(0, top - 0.05, zBack + 0.12)); }
+  benchAt(0.76, -0.95);
+  function oneShot(a, name, maxSeconds) {
+    const A = a.actor; if (!A || A.spec.kind !== "biped" || a.state === "out" || a.state === "back") return false;
+    if (!A.play(name, 0.3)) return false;
+    if (maxSeconds) { const shot = A.oneShot; a.beats.push({ at: simT + maxSeconds, fn: function (b) { if (b.actor && b.actor.oneShot === shot) endOneShot(b.actor); } });
+      a.beats.sort(function (x, y) { return x.at - y.at; }); }
+    return true;
   }
-  function adopt(a, gltf, spec) {
-    const root = gltf.scene || (gltf.scenes && gltf.scenes[0]); if (!root) throw new Error("no scene");
-    const holder = new THREE.Group(), inner = new THREE.Group(); holder.add(inner); inner.add(root);
-    root.rotation.y = Number(spec.yaw) || 0; root.updateMatrixWorld(true);
-    const box = new THREE.Box3().setFromObject(root), size = box.getSize(new THREE.Vector3());
-    if (!(size.y > 1e-6) || !isFinite(size.y)) throw new Error("empty model");
-    const k = (Number(spec.height) || a.height) / size.y; inner.scale.setScalar(k); inner.updateMatrixWorld(true);
-    box.setFromObject(inner); const c = box.getCenter(new THREE.Vector3());
-    inner.position.set(-c.x, -box.min.y, -c.z);
-    root.traverse(function (o) { if (o.isMesh) { o.castShadow = Q.shadows; o.receiveShadow = true;
-      (Array.isArray(o.material) ? o.material : [o.material]).forEach(function (m) { if (m && "envMapIntensity" in m) m.envMapIntensity = 0.9; }); } });
-    a.body.visible = false; a.group.add(holder); a.model = holder; a.modelScale = 1; a.height = Number(spec.height) || a.height;
-    a.head.position.set(0, a.height + 0.12, 0); a.carry.position.set(0, a.height * 0.45, 0.32);
-    a.clips = {};
-    if (gltf.animations && gltf.animations.length) {
-      a.mixer = new THREE.AnimationMixer(root);
-      gltf.animations.forEach(function (clip) { const n = (clip.name || "").toLowerCase();
-        if (!a.clips.idle && /idle|stand|breath|rest/.test(n)) a.clips.idle = a.mixer.clipAction(clip);
-        else if (!a.clips.walk && /walk|run|move|roll|crawl/.test(n)) a.clips.walk = a.mixer.clipAction(clip); });
-      if (!a.clips.idle) a.clips.idle = a.mixer.clipAction(gltf.animations[0]);
+  function endOneShot(A) {
+    if (!A.oneShot) return;
+    A.oneShot.fadeOut(0.35); A.oneShot = null;
+    if (A.current) A.current.reset().fadeIn(0.35).play();
+  }
+  function visitorOf(a) {
+    for (let i = 0; i < ACTOR_KEYS.length; i++) { const v = actors[ACTOR_KEYS[i]]; if (v !== a && v.state === "visit" && v.ambient && v.room === a.homeRoom) return v; }
+    return null;
+  }
+  function handToward(a, p) {  // the hand on the side of the point reaches for it
+    const left = (p.x - a.pos.x) * Math.cos(a.yaw) - (p.z - a.pos.z) * Math.sin(a.yaw) > 0;
+    a.reachL = left ? p : null; a.reachR = left ? null : p;
+  }
+  const STATION = {  // at their station while one of their members works
+    pip: function (a) { a.reachL = BENCH.l; a.reachR = BENCH.r; a.typing = true; a.lookTarget = BENCH.c; },
+    voss: function (a) {
+      a.station = Math.floor((simT + 3) / 12) % 2 ? "look" : "idle";
+      if (simT >= a.nextReach) { a.reachUntil = simT + 2.8; a.nextReach = simT + 13 + Math.random() * 9; }
+      if (simT < a.reachUntil) { handToward(a, TABLE_PT); a.lookTarget = TABLE_PT; a.station = "idle"; }
+    },
+    rook: function (a) { a.station = "idle"; },
+    jet: function (a) { a.station = "look"; },
+  };
+  function act(a, st) {
+    a.station = "idle"; a.reachL = null; a.reachR = null; a.typing = false; a.lookTarget = null;
+    if (st.walking) return;
+    if (a.state === "visit") {
+      a.station = a.room === "kiosk" && a.key === "jet" ? "drink" : a.ambient ? "chat" : "idle";
+      if (a.ambient && a.room === "table" && actors.voss && actors.voss.state === "home") a.lookTarget = actors.voss.headAt;
+      return;
     }
+    if (a.state !== "home") return;
+    const status = worstStatus(a.members);
+    if (status === "blocked" || status === "waiting") {
+      if (simT >= a.nextThink && !a.speaking) { a.nextThink = simT + 17 + Math.random() * 8; oneShot(a, "think", 6); }
+      return;
+    }
+    const visitor = visitorOf(a);  // a neighbour dropped by: chat (no words)
+    if (visitor) { a.station = "chat"; a.lookTarget = visitor.headAt; return; }
+    if (status === "working") { if (STATION[a.key]) STATION[a.key](a); }
+    else if (simT - a.homeSince > 20) a.station = Math.floor((simT + a.phase * 10) / 14) % 2 ? "look" : "idle";
+  }
+  function facingCamera(a) { _cp.copy(camera.position).sub(a.headAt); return _cp.length() < 6.5 && Math.abs(angleDiff(Math.atan2(_cp.x, _cp.z), a.yaw)) < 1.4; }
+  function driveActor(a, st, dt) {
+    const A = a.actor, biped = A.spec.kind === "biped";
+    if (biped) {
+      let loop = a.station, rate = 1;
+      if (st.walking) { loop = walkClip(a); rate = WALK_RATE[loop] || 1; if (a.key === "voss" && a.glide > 0.35) { loop = "idle"; rate = 1; } }
+      else if (a.speaking) loop = "talk";
+      else if (a.listening) loop = "listen";
+      if (st.walking && A.oneShot) endOneShot(A);
+      if (!A.oneShot) A.play(loop, 0.4);
+      if (A.current) A.current.setEffectiveTimeScale(st.walking ? rate : 1);
+    }
+    // the head: whoever talks nearby, the work in hand, or a glance at the drone when it comes close
+    if (a.listenTo) A.lookAt(a.listenTo.headAt, 0.9);
+    else if (a.lookTarget) A.lookAt(a.lookTarget, 0.75);
+    else if (!st.walking && facingCamera(a)) A.lookAt(camera.position, 0.45);
+    else A.lookAt(null);
+    if (biped) {
+      if (st.walking && a.key === "voss" && a.glide > 0.35) {  // gliding: the wings spread
+        const h = a.height, lx = Math.cos(a.yaw), lz = -Math.sin(a.yaw), fx = Math.sin(a.yaw) * 0.12, fz = Math.cos(a.yaw) * 0.12;
+        _w1.set(a.group.position.x + lx * h * 0.75 + fx, a.group.position.y + h * 0.72, a.group.position.z + lz * h * 0.75 + fz);
+        _w2.set(a.group.position.x - lx * h * 0.75 + fx, a.group.position.y + h * 0.72, a.group.position.z - lz * h * 0.75 + fz);
+        A.reachTo(_w1, _w2, false);
+      } else if (!st.walking && (a.reachL || a.reachR)) A.reachTo(a.reachL, a.reachR, a.typing);
+      else A.reachTo(null, null);
+      A.root.rotation.x = a.key === "voss" ? a.glide * 0.22 : 0;
+    } else {
+      // Nyx and Mote have no neck: the whole body turns a little toward whoever talks
+      const want = a.listenTo ? clamp(angleDiff(Math.atan2(a.listenTo.headAt.x - a.headAt.x, a.listenTo.headAt.z - a.headAt.z), a.yaw), -0.7, 0.7) : 0;
+      A.root.rotation.y += (want - A.root.rotation.y) * Math.min(1, dt * 2.5);
+    }
+    if (a.rig) a.rig(dt, st);
+    A.update(dt);
+  }
+  function cubeBetweenHands(a) {  // Jet holds the closed trade's cube between his hands
+    const B = a.actor.bones;
+    B.LeftHand.getWorldPosition(_w1); B.RightHand.getWorldPosition(_w2);
+    const gap = _w1.distanceTo(_w2);
+    cube.mesh.position.addVectors(_w1, _w2).multiplyScalar(0.5);
+    cube.mesh.position.x += Math.sin(a.yaw) * 0.05; cube.mesh.position.z += Math.cos(a.yaw) * 0.05;
+    cube.mesh.scale.setScalar(clamp(gap / 0.3, 0.75, 1.4));
+  }
+  // ambient life: now and then one idle member strolls (coffee at the kiosk, a word with Voss at the table); no
+  // words, no numbers, and never while there is real work in the queue or the camera is on a real moment
+  const STROLL = { jet: "kiosk", pip: "table", nyx: "table", mote: "table" };
+  let nextStroll = 40;
+  function ambientLife() {
+    if (simT < nextStroll) return;
+    nextStroll = simT + 45 + Math.random() * 40;
+    if (focus && simT < focus.until) return;
+    const idle = ACTOR_KEYS.map(function (k) { return actors[k]; }).filter(function (a) {
+      return STROLL[a.key] && a.state === "home" && !a.queue.length && !a.carrying && worstStatus(a.members) === "idle" && simT - a.homeSince > 30
+        && !(a.actor && a.actor.oneShot) && (STROLL[a.key] !== "table" || (actors.voss && actors.voss.state === "home" && !visitorOf(actors.voss)));
+    });
+    if (!idle.length) return;
+    const a = idle[Math.floor(Math.random() * idle.length)];
+    a.queue.push({ dest: STROLL[a.key], hold: STROLL[a.key] === "kiosk" ? 12 : 11, ambient: true });
+  }
+
+  // ============================================================= REAL MODELS: the cast and the hero props, progressively
+  // Nothing here blocks the first frame: the drawings are up first, then the move library and the six characters
+  // download together (each swaps in with a quick fade as soon as it is ready), then the props, nearest the camera
+  // first. A missing or broken file keeps its drawing; a fixed-text line in the footer counts the crew and the set.
+  const ASSET = "office/assets/";
+  let gltfLoader = null, motionMod = null;
+  const loading = { crew: 0, crewN: 0, set: 0, setN: 0 };
+  function showLoading() {
+    const text = loading.crew < loading.crewN ? "loading the crew " + loading.crew + "/" + loading.crewN
+      : loading.set < loading.setN ? "loading the set " + loading.set + "/" + loading.setN : "";
+    loadingEl.textContent = text; loadingEl.hidden = !text;
+  }
+  // a quick fade-in (the model over its drawing), then the drawing goes
+  const fades = [];
+  function fadeIn(root, seconds, done) {
+    const keep = [];
+    root.traverse(function (o) { if (!o.isMesh) return; [].concat(o.material).forEach(function (m) {
+      if (keep.some(function (k) { return k.m === m; })) return;
+      keep.push({ m: m, t: m.transparent, o: m.opacity }); m.transparent = true; m.opacity = 0; m.needsUpdate = true; }); });
+    fades.push({ keep: keep, t: 0, dur: seconds, done: done });
+  }
+  function updateFades(dt) {
+    for (let i = fades.length - 1; i >= 0; i--) {
+      const f = fades[i]; f.t += dt; const u = Math.min(1, f.t / f.dur), e = u * u * (3 - 2 * u);
+      for (let j = 0; j < f.keep.length; j++) f.keep[j].m.opacity = f.keep[j].o * e;
+      if (u >= 1) {
+        for (let j = 0; j < f.keep.length; j++) { const k = f.keep[j]; k.m.transparent = k.t; k.m.opacity = k.o; k.m.needsUpdate = true; }
+        fades.splice(i, 1); if (f.done) f.done();
+      }
+    }
+  }
+  // the models' own PBR textures under this sky: the environment map, shadows, and on phones half-size prop textures
+  function dress(root, envK) {
+    root.traverse(function (o) {
+      if (!o.isMesh) return;
+      o.castShadow = Q.shadows; o.receiveShadow = true;
+      [].concat(o.material).forEach(function (m) { if (m && "envMapIntensity" in m) m.envMapIntensity = envK; });
+    });
+  }
+  function shrinkTextures(root, size) {
+    const seen = [];
+    root.traverse(function (o) { if (!o.isMesh) return; [].concat(o.material).forEach(function (m) {
+      ["map", "normalMap", "roughnessMap", "metalnessMap", "emissiveMap", "aoMap"].forEach(function (key) {
+        const t = m[key]; if (!t || seen.indexOf(t) >= 0 || !t.image || !(t.image.width > size)) return; seen.push(t);
+        const c = document.createElement("canvas"); c.width = c.height = size; const ctx = c.getContext("2d"); if (!ctx) return;
+        ctx.drawImage(t.image, 0, 0, size, size); if (t.image.close) t.image.close(); t.image = c; t.needsUpdate = true;
+      }); }); });
+  }
+  // scale to height, turn to face +Z, stand on the floor, centred (the same fit as cast_motion.js's actors)
+  function fitModel(scene3, height, yaw) {
+    const inner = new THREE.Group(); inner.add(scene3); scene3.rotation.y = yaw || 0; inner.updateMatrixWorld(true);
+    const box = new THREE.Box3().setFromObject(inner), size = box.getSize(new THREE.Vector3());
+    if (!(size.y > 1e-6) || !isFinite(size.y)) throw new Error("empty model");
+    inner.scale.setScalar(height / size.y); inner.updateMatrixWorld(true);
+    box.setFromObject(inner); const c = box.getCenter(new THREE.Vector3());
+    inner.position.set(-c.x, -box.min.y, -c.z); inner.updateMatrixWorld(true);
+    inner.userData.size = box.getSize(new THREE.Vector3());
+    return inner;
+  }
+  function dropModel(a, e) {  // a model that misbehaves goes; the drawing comes back
+    console.warn("world: model for " + a.key + " failed, back to the drawing", e);
+    if (a.model) a.group.remove(a.model); a.model = null; a.actor = null; a.rig = null; a.body.visible = true; a.body.scale.setScalar(1);
+    a.shadow.scale.setScalar(1); a.head.position.y = a.height0 || a.head.position.y;
+  }
+
+  // Rook's model lost its amber eyes: two small glowing spheres on his Head bone, facing forward, gently pulsing
+  const rookEyeMat = new THREE.MeshBasicMaterial({ color: hdr(0xffa22e, 3.2) });
+  const rookEyeHalo = new THREE.SpriteMaterial({ map: glowTex, color: 0xff9a2a, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.8 });
+  function rookEyes(A) {
+    const head = A.bones && A.bones.Head; let mesh = null;
+    A.model.traverse(function (o) { if (o.isSkinnedMesh && !mesh) mesh = o; });
+    if (!head || !mesh) return;
+    const bi = mesh.skeleton.bones.indexOf(head); if (bi < 0) return;
+    A.root.updateMatrixWorld(true); mesh.skeleton.update();
+    const toRoot = new THREE.Matrix4().copy(A.root.matrixWorld).invert().multiply(mesh.matrixWorld);
+    const pos = mesh.geometry.attributes.position, si = mesh.geometry.attributes.skinIndex, sw = mesh.geometry.attributes.skinWeight;
+    const v = new THREE.Vector3(), pts = [], box = new THREE.Box3();
+    for (let i = 0; i < pos.count; i++) {
+      let w = 0; for (let c = 0; c < 4; c++) if (si.getComponent(i, c) === bi) w += sw.getComponent(i, c);
+      if (w < 0.6) continue;
+      mesh.getVertexPosition(i, v); v.applyMatrix4(toRoot); pts.push(v.clone()); box.expandByPoint(v);
+    }
+    if (pts.length < 20) return;
+    const size = box.getSize(new THREE.Vector3()), r = Math.max(0.018, size.x * 0.075), headS = head.getWorldScale(new THREE.Vector3()).x / A.root.getWorldScale(v).x;
+    [-1, 1].forEach(function (s) {
+      const ex = (box.min.x + box.max.x) / 2 + s * size.x * 0.2, ey = box.min.y + size.y * 0.56;
+      let front = box.min.z;  // the face's surface in front of this eye
+      for (let i = 0; i < pts.length; i++) { const p = pts[i]; if (Math.abs(p.x - ex) < size.x * 0.1 && Math.abs(p.y - ey) < size.y * 0.1 && p.z > front) front = p.z; }
+      const eye = new THREE.Mesh(new THREE.SphereGeometry(r, 16, 10), rookEyeMat);
+      const at = head.worldToLocal(A.root.localToWorld(new THREE.Vector3(ex, ey, front - r * 0.25)));
+      eye.position.copy(at); eye.scale.set(1.25 / headS, 0.8 / headS, 0.6 / headS);  // an amber slit, facing forward
+      eye.quaternion.copy(head.getWorldQuaternion(new THREE.Quaternion()).invert().multiply(A.root.getWorldQuaternion(new THREE.Quaternion())));
+      const halo = new THREE.Sprite(rookEyeHalo); halo.position.copy(at); halo.scale.setScalar(r * 6 / headS);
+      head.add(eye, halo);
+    });
+    A.eyes = true;
+  }
+  // Mote: a soft translucent mint glow over its own texture
+  function moteGlow(A) {
+    A.model.traverse(function (o) { if (!o.isMesh) return; o.renderOrder = 5; [].concat(o.material).forEach(function (m) {
+      m.transparent = true; m.opacity = 0.9; if (m.emissive) { m.emissive.set(0x5ff2bd); m.emissiveIntensity = 0.42; if (!m.emissiveMap && m.map) m.emissiveMap = m.map; }
+      m.roughness = Math.min(m.roughness, 0.55); m.needsUpdate = true; }); });
+  }
+  function adoptActor(a, A, cartScene, spec) {
+    const holder = new THREE.Group(); holder.name = "model:" + a.key;
+    let top = A.size.y;
+    if (cartScene) {  // Mote rides inside a clear glass bell on its brass cart; the three move together
+      const ch = Number(spec.cart_height) || 0.46, cart = fitModel(cartScene, ch, 0), deck = ch * 0.74;
+      const cs = cart.userData.size, br = Math.min(cs.x, cs.z) * 0.36, bh = Math.max(A.size.y * 1.45, Number(spec.height) - deck);
+      const bell = makeBell(br, bh); bell.position.y = deck;
+      A.root.position.y = deck + 0.015;
+      holder.add(cart, bell, A.root); top = deck + bh;
+      a.rig = function (dt, st) {  // the cart rocks a little as it rolls
+        cart.rotation.z = st.walking ? Math.sin(simT * 9) * 0.012 : 0; bell.rotation.z = cart.rotation.z;
+        holder.position.y = st.walking ? Math.abs(Math.sin(simT * 9)) * 0.008 : 0;
+      };
+    } else holder.add(A.root);
+    dress(holder, a.key === "mote" ? 1.1 : 0.95);
+    holder.traverse(function (o) {  // skinned bounds once, padded for the moves (no per-frame recompute)
+      if (o.isSkinnedMesh) { o.computeBoundingSphere(); o.boundingSphere.radius *= 1.6; }
+    });
+    if (a.key === "rook") rookEyes(A);
+    if (a.key === "mote") moteGlow(A);
+    if (A.spec.kind === "biped") { A.play("idle", 0); A.update(0.016); }  // never a T-pose, not even for a frame
+    a.height0 = a.head.position.y;
+    a.group.add(holder); a.actor = A; a.model = holder; a.height = top; a.head.position.set(0, top + 0.12, 0);
+    const foot = Math.max(A.size.x, A.size.z, cartScene ? 0.8 : 0) * 0.55;
+    a.shadow.scale.setScalar(clamp(foot / a.shadowR, 0.6, 3.2));
+    fadeIn(holder, 0.45, function () { a.body.visible = false; });
     console.info("world: real model for " + a.key + " in place");
   }
-  function loadModels() {
-    const ids = Object.keys(MODELS).filter(function (id) { return actors[id] && MODELS[id] && /^cast_[a-z]+\.glb$/.test(String(MODELS[id].asset)); });
-    if (!ids.length) return;
-    import("three/addons/loaders/GLTFLoader.js").then(function (mod) {
-      const loader = new mod.GLTFLoader();
-      ids.forEach(function (id) {
-        loader.load("office/assets/" + MODELS[id].asset, function (gltf) {
-          try { adopt(actors[id], gltf, MODELS[id]); } catch (e) { console.warn("world: model for " + id + " unusable, keeping the drawing", e); }
-        }, undefined, function () { console.warn("world: model for " + id + " could not load, keeping the drawing"); });
+  async function loadMember(id, libReady) {
+    const a = actors[id], spec = MODEL_CAST[id];
+    try {
+      const lib = await libReady, kind = String(spec.kind || "prop");
+      if (!motionMod) throw new Error("no motion module");
+      if (kind === "biped" && !lib) throw new Error("no move library");
+      const files = [gltfLoader.loadAsync(ASSET + spec.asset)];
+      if (spec.cart) files.push(gltfLoader.loadAsync(ASSET + spec.cart));
+      const got = await Promise.all(files);
+      const s = { id: id, file: spec.asset, kind: kind, walk: spec.walk || "walk_casual", yaw: Number(spec.yaw) || 0,
+                  height: spec.cart ? Number(spec.body_height) || 0.4 : Number(spec.height) || a.height };
+      const A = new motionMod.Actor(got[0].scene, s, lib);
+      if (kind === "biped" && A.spec.kind !== "biped") throw new Error("the rig is missing bones");
+      adoptActor(a, A, got[1] ? got[1].scene : null, spec);
+    } catch (e) { console.warn("world: model for " + id + " could not load, keeping the drawing", e); }
+    loading.crew += 1; showLoading();
+  }
+
+  // where each hero prop stands (a room's own coordinates: across, up, toward its door; ry turns it from facing the
+  // door), and what happens once it is in
+  function propSpot(F, x, y, z, ry) { return { at: F.at(x, y, z), yaw: F.yaw + (ry || 0) }; }
+  // lanterns: flanking the paths to the workshop and the den (in the arrival shot), down the bridge and (large
+  // screens) along the promenade; the bridge and promenade ones take the place of procedural railing lamps
+  const LANTERN_SPOTS = [WS2.at(-1.6, 0, 5.35), WS2.at(1.6, 0, 5.35), DN2.at(-1.6, 0, 5.35), DN2.at(1.6, 0, 5.35),
+    V3(-1.62, 0, 10.68), V3(1.62, 0, 10.68)].concat(Q.small ? [] : [V3(-1.62, 0, 14.03), V3(1.62, 0, 14.03),
+    V3(-6.65, 0, 17.15), V3(4.3, 0, 17.15), V3(8.68, 0, 17.15)]);
+  const ISLAND_SPOTS = [[-36, -5, -20, 0.4, 1.0], [41, 1, -27, 2.1, 1.25], [-27, 4, 31, 4.0, 0.85], [33, -9, 25, 5.2, 1.1]].slice(0, Q.small ? 2 : 4);
+  const PLACE = {
+    missiontable: [propSpot(WF, 0, DAIS_Y, 0)],
+    telescope: [propSpot(OB2, 0.6, 0, -1.2, 0.35)],
+    vaultdoor: [propSpot(VT2, 0.9, 0, -2.63)],
+    workbench: [propSpot(WS2, 0, 0, -0.62)],
+    nyxdesk: [propSpot(DN2, 0, 0, -1.9)],
+    archive: [propSpot(AR2, -2.4, 0, -2.69), propSpot(AR2, 2.4, 0, -2.69)],
+    airship: [propSpot(WF, 27.3, -0.3, -1.5, Math.PI / 2)],
+    kiosk: [propSpot(WF, 23.55, 0, 5.5, -Math.PI / 2)],
+    rookdesk: [propSpot(VT2, 0.2, 0, -0.62)],
+    arch: [propSpot(WS2, 0, 0, 4.55), propSpot(DN2, 0, 0, 4.55)],
+    lantern: LANTERN_SPOTS.map(function (q) { return { at: q, yaw: 0 }; }),
+    island: ISLAND_SPOTS.map(function (q) { return { at: V3(q[0], q[1], q[2]), yaw: q[3], bob: q[4] }; }),
+  };
+  const placed = {};  // prop id -> the placed holders
+  const PLACED = {
+    missiontable: function (h) {  // the hologram over the prop's own top; Voss and the visitors step up to it
+      const s = h.children[0].userData.size, r = Math.max(s.x, s.z) / 2, top = DAIS_Y + s.y * 0.86;
+      props.holoFit(Math.max(0.95, r * 1.6), top + 0.03); props.holoDisc.material.color.multiplyScalar(0.7); tableSpots(r, top); ["tbH", "tbW", "tbN"].forEach(resettle);
+      board.position.y = 2.05;
+    },
+    workbench: function (h) { const s = h.children[0].userData.size; benchAt(s.y * 0.63, -0.62 - s.z / 2 + 0.1); },
+    telescope: function (h) { props.telescopeModel = h; h.userData.yaw = h.rotation.y; },
+    airship: function (h) { props.airshipModel = h; h.userData.y = h.position.y; },
+    island: function (h, i) { (props.islands = props.islands || []).push({ h: h, y: h.position.y, k: PLACE.island[i].bob, ph: i * 1.7 }); },
+    lantern: function (h) {  // a warm bulb and a soft halo in the lantern's head; the procedural lamps it replaces make way
+      const bulb = new THREE.Mesh(G.sph(0.06, 12, 8), props.lanternBulbs.material); bulb.position.y = 2.27; bulb.scale.set(1, 1.4, 1); h.add(bulb);
+      const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: 0xffa04d, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.5 }));
+      halo.position.y = 2.27; halo.scale.setScalar(1.1); h.add(halo); (props.lanternGlow = props.lanternGlow || []).push(halo);
+      if (props.lanternGlow.length < PLACE.lantern.length) return;  // the rest once, after the last copy is placed
+      const zero = new THREE.Matrix4().makeScale(0, 0, 0);
+      lanterns.forEach(function (q, i) {
+        if (!LANTERN_SPOTS.some(function (s) { return Math.hypot(s.x - q.p[0], s.z - q.p[2]) < 0.4 && q.p[1] === 0; })) return;
+        props.lanternPosts.setMatrixAt(i, zero); props.lanternBulbs.setMatrixAt(i, zero); props.lanternHalos.setMatrixAt(i, zero);
       });
-    }).catch(function () { console.warn("world: no model loader, keeping the drawings"); });
+      props.lanternPosts.instanceMatrix.needsUpdate = true; props.lanternBulbs.instanceMatrix.needsUpdate = true; props.lanternHalos.instanceMatrix.needsUpdate = true;
+    },
+  };
+  async function loadProp(id) {
+    const spec = MODEL_PROPS[id];
+    try {
+      const gltf = await gltfLoader.loadAsync(ASSET + spec.asset);
+      if (Q.small) shrinkTextures(gltf.scene, 512);
+      const holders = PLACE[id].map(function (spot, i) {
+        const h = new THREE.Group(); h.name = "prop:" + id;
+        h.add(fitModel(i ? gltf.scene.clone() : gltf.scene, Number(spec.height) || 1, Number(spec.yaw) || 0));
+        h.position.copy(spot.at); h.rotation.y = spot.yaw; dress(h, 1.0);
+        h.traverse(function (o) { if (o.isMesh) o.castShadow = Q.shadows && id !== "island"; });
+        scene.add(h); if (PLACED[id]) PLACED[id](h, i); return h;
+      });
+      placed[id] = holders;
+      // the copies share their materials: one fade brings them all in, then the procedural stand-ins go
+      fadeIn(holders[0], 0.6, function () { (STANDIN[id] || []).forEach(function (s) { s.visible = false; }); });
+    } catch (e) { console.warn("world: prop " + id + " could not load, keeping the drawing", e); }
+    loading.set += 1; showLoading();
+  }
+  async function loadModels() {
+    const castIds = MODELS.motion ? Object.keys(MODEL_CAST).filter(function (id) { return actors[id]; }) : [];
+    const propIds = Object.keys(MODEL_PROPS).filter(function (id) { return PLACE[id] && PLACE[id].length; });
+    if (!castIds.length && !propIds.length) return;
+    loading.crewN = castIds.length; loading.setN = propIds.length; showLoading();
+    try {
+      const mods = await Promise.all([import("three/addons/loaders/GLTFLoader.js"), import("three/addons/libs/meshopt_decoder.module.js")]);
+      const decoder = mods[1].MeshoptDecoder; await decoder.ready;
+      gltfLoader = new mods[0].GLTFLoader(); gltfLoader.setMeshoptDecoder(decoder);
+    } catch (e) { console.warn("world: no model loader, keeping the drawings", e); loading.crewN = loading.setN = 0; showLoading(); return; }
+    if (castIds.length) {
+      // the move library and the six characters together; a biped swaps in once the library is also ready
+      const libReady = import("./office/assets/cast_motion.js").then(function (m) { motionMod = m; return m.loadLibrary(gltfLoader, ASSET); })
+        .then(function (lib) { return lib && lib.rest && lib.manifest && lib.manifest.clips && Object.keys(lib.manifest.clips).length ? lib : null; })
+        .catch(function (e) { console.warn("world: no move library, the bipeds keep their drawings", e); return null; });
+      await Promise.all(castIds.map(function (id) { return loadMember(id, libReady); }));
+    }
+    // then the set, nearest the camera first, two at a time
+    propIds.sort(function (x, y) { return PLACE[x][0].at.distanceTo(camera.position) - PLACE[y][0].at.distanceTo(camera.position); });
+    const next = async function () { while (propIds.length) await loadProp(propIds.shift()); };
+    await Promise.all([next(), next()]);
   }
 
   // ============================================================= SIGNS, LAMPS, THE TICKET BOARD, THE TRADE CUBE
@@ -2211,8 +2715,16 @@ _M_LIFE = r"""
   }
   // the red REAL lamp at the table: lit only while the desk holds real-money positions
   const realBulbMat = new THREE.MeshStandardMaterial({ color: 0x5a1010, emissive: 0xff2a1a, emissiveIntensity: 0, roughness: 0.2 });
-  const realBulb = new THREE.Mesh(G.sph(0.065, 16, 12), realBulbMat); realBulb.position.set(-1.2, 0.98, 1.08); scene.add(realBulb);
-  WF.add("brass", G.cyl(0.05, 0.07, 0.12, 14), [-1.2, 0.86, 1.08], null, null, BRASS); WF.add("brass", G.tor(0.07, 0.012, 6, 18), [-1.2, 0.98, 1.08], [Math.PI / 2, 0, 0], null, BRASS);
+  const realBulb = new THREE.Mesh(G.sph(0.065, 16, 12), realBulbMat); scene.add(realBulb);
+  if (HAS("missiontable")) {  // on its own brass post at the hero table's front right
+    realBulb.position.set(0.66, 1.18, 1.02);
+    WF.add("brass", G.cyl(0.028, 0.05, 1.06, 12), [0.66, DAIS_Y + 0.53, 1.02], null, null, BRASS_DARK);
+    WF.add("brass", G.cyl(0.08, 0.1, 0.05, 14), [0.66, DAIS_Y + 0.025, 1.02], null, null, BRASS);
+    WF.add("brass", G.tor(0.07, 0.012, 6, 18), [0.66, 1.18, 1.02], [Math.PI / 2, 0, 0], null, BRASS);
+  } else {  // on the procedural table's rim
+    realBulb.position.set(-1.2, 0.98, 1.08);
+    WF.add("brass", G.cyl(0.05, 0.07, 0.12, 14), [-1.2, 0.86, 1.08], null, null, BRASS); WF.add("brass", G.tor(0.07, 0.012, 6, 18), [-1.2, 0.98, 1.08], [Math.PI / 2, 0, 0], null, BRASS);
+  }
   const realHalo = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: 0xff3a2a, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0 }));
   realHalo.scale.set(0.6, 0.6, 1); realHalo.position.copy(realBulb.position); scene.add(realHalo);
   // a status lamp at every department's door (the worst status of its members)
@@ -2247,14 +2759,16 @@ _M_LIFE = r"""
   const cubeCore = new THREE.Mesh(G.rbox(0.12, 0.12, 0.12, 0.4, 10), new THREE.MeshBasicMaterial({ color: hdr(0xffd36a, 5) }));
   cube.mesh.add(cubeOuter, cubeCore); cube.mesh.visible = false; scene.add(cube.mesh);
   const vaultFlash = new THREE.Mesh(G.tor(1.05, 0.06, 10, 64), new THREE.MeshBasicMaterial({ color: hdr(0xffd36a, 4), transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false }));
-  VT2.place(vaultFlash, 0.9, 1.55, -2.62, 0); let flashUntil = 0;
+  // the vault door's face: the procedural door's, or the hero door's (it stands proud of the wall)
+  const DOOR = HAS("vaultdoor") ? { y: 1.32, z: -2.24, r: 0.95 } : { y: 1.55, z: -2.62, r: 1.0 };
+  VT2.place(vaultFlash, 0.9, DOOR.y, DOOR.z, 0); vaultFlash.scale.setScalar(DOOR.r); let flashUntil = 0;
   function showCube(kind) {
     const won = kind === "gold", c = won ? 0xffd36a : 0xff5a4a;
     cubeOuter.material.color.setHex(c); cubeOuter.material.emissive.setHex(won ? 0xffb02a : 0xff2a1a); cubeCore.material.color.copy(hdr(c, 5));
     vaultFlash.material.color.copy(hdr(c, 4)); cube.mesh.visible = true; cube.flight = null;
   }
   function deliverCube(a, pnl) {
-    const from = cube.mesh.position.clone(), to = VT2.at(0.9, 1.55, -2.5), mid = VT2.at(-3.5, 1.0, -0.2);
+    const from = cube.mesh.position.clone(), to = VT2.at(0.9, DOOR.y, DOOR.z + 0.12), mid = VT2.at(-3.5, 1.0, -0.2);
     cube.flight = { t: 0, from: from, mid: mid, to: to, pnl: pnl }; a.carrying = null;
   }
   function updateCube(dt) {
@@ -2270,37 +2784,50 @@ _M_LIFE = r"""
   // ============================================================= THE DRONE: shots, glides between rooms, touch
   function rig(F, p, l) { return { pos: F.at(p[0], p[1], p[2]), look: F.at(l[0], l[1], l[2]) }; }
   const SHOTS = {
-    table: { pos: V3(2.75, 1.74, 1.55), look: V3(-0.75, 0.92, 0.05) },
-    workshop: rig(WS2, [1.6, 1.85, 2.05], [-0.15, 0.95, -1.35]),
+    table: { pos: V3(-1.3, 1.7, 3.05), look: V3(-0.45, 0.98, -0.1) },
+    workshop: rig(WS2, [0.95, 1.55, 1.15], [-0.05, 0.92, -1.3]),
     den: rig(DN2, [0.95, 2.05, 0.8], [-0.2, 1.1, -2.2]),
-    archive: rig(AR2, [1.65, 1.55, 2.05], [-0.6, 0.72, -0.5]),
-    vault: rig(VT2, [2.0, 2.1, 1.8], [-0.7, 1.2, -1.3]),
-    dock: { pos: V3(19.9, 1.85, 1.9), look: V3(23.3, 0.85, -1.6) },
+    archive: rig(AR2, [0.35, 1.35, 0.55], [-1.3, 0.72, -1.5]),
+    vault: rig(VT2, [1.5, 1.85, 1.9], [0.0, 1.55, -1.45]),
+    dock: { pos: V3(20.9, 1.65, 0.75), look: V3(23.4, 0.8, -1.7) },
     kiosk: { pos: V3(19.4, 1.8, 3.0), look: V3(22.6, 0.95, 5.6) },
     observatory: rig(OB2, [-2.9, 2.1, 3.3], [0.6, 1.5, -1.5]),
   };
+  // the arrival (the pack's primary shot): the drone floats just above the bridge walkway at the courtyard's edge,
+  // close behind the railings, the mission table and Voss ahead, the observatory and its telescope behind; on a
+  // portrait phone it comes closer so faces stay readable. Each shot fills one reused object (no allocation).
+  const _arr = { pos: V3(0, 0, 0), look: V3(0, 0, 0) }, _map = { pos: V3(0, 0, 0), look: V3(1, 0, 1) }, _fol = { pos: V3(0, 0, 0), look: V3(0, 0, 0) };
   function arrivalShot(t) {
-    const z = 8.0 + Math.sin(t * 0.055) * 1.1, x = -0.45 + Math.sin(t * 0.041) * 0.45;
-    return { pos: V3(x, 2.15 + Math.sin(t * 0.09) * 0.08, z), look: V3(Math.sin(t * 0.032) * 2.4, 0.95, -0.6) };
+    const tall = camera.aspect < 0.85, z = (tall ? 5.0 : 7.4) + Math.sin(t * 0.055) * (tall ? 0.45 : 0.9), x = 0.1 + Math.sin(t * 0.041) * 0.35;
+    _arr.pos.set(x, 2.05 + Math.sin(t * 0.09) * 0.07, z);
+    _arr.look.set(-0.45 + Math.sin(t * 0.032) * (tall ? 0.8 : 2.0), 0.95, -0.9);
+    return _arr;
   }
-  function mapShot(t) { const a = 0.35 + t * 0.025; return { pos: V3(Math.sin(a) * 34, 25, Math.cos(a) * 34 + 2), look: V3(1, 0, 1) }; }
-  const _o = new THREE.Vector3(), _d = new THREE.Vector3(), _r = new THREE.Ray(), _m = new THREE.Matrix4(), _b = new THREE.Box3(), _hit = new THREE.Vector3();
+  function mapShot(t) { const a = 0.35 + t * 0.025; _map.pos.set(Math.sin(a) * 34, 25, Math.cos(a) * 34 + 2); return _map; }
+  const _o = new THREE.Vector3(), _d = new THREE.Vector3(), _r = new THREE.Ray(), _b = new THREE.Box3(), _hit = new THREE.Vector3();
   function blocked(from, to) {
     // the nearest solid wall between the subject and the drone (oriented boxes), as a fraction of the way
     let best = 1; const len = from.distanceTo(to); if (len < 1e-3) return 1;
-    blockers.forEach(function (b) {
+    for (let i = 0; i < blockers.length; i++) {
+      const b = blockers[i];
       _o.copy(from).applyMatrix4(b.inv); _d.copy(to).applyMatrix4(b.inv).sub(_o).normalize(); _r.set(_o, _d);
       _b.min.copy(b.half).negate(); _b.max.copy(b.half);
       if (_r.intersectBox(_b, _hit)) { const f = _hit.distanceTo(_o) / len; if (f < best) best = f; }
-    });
+    }
     return best;
   }
+  const _fwd = new THREE.Vector3(), _side = new THREE.Vector3(), _fh = new THREE.Vector3();
+  // follow a walker from close behind; a courier with a closed trade's cube is led instead (the drone flies ahead,
+  // facing him, so the cube in his hands and his visor read)
   function followShot(a) {
-    const fwd = V3(Math.sin(a.yawS), 0, Math.cos(a.yawS)), side = V3(fwd.z, 0, -fwd.x), base = a.group.position, h = a.height;
-    const head = base.clone(); head.y += h * 0.85;
-    const want = base.clone().addScaledVector(fwd, -(2.4 + h * 0.8)).addScaledVector(side, 0.75); want.y += h + 0.8;
-    const f = blocked(head, want); if (f < 1) want.lerpVectors(head, want, Math.max(0.25, f - 0.08));
-    return { pos: want, look: base.clone().addScaledVector(fwd, 2.0).setY(base.y + h * 0.55) };
+    const base = a.group.position, h = a.height, lead = !!a.carrying;
+    _fwd.set(Math.sin(a.yawS), 0, Math.cos(a.yawS)); _side.set(_fwd.z, 0, -_fwd.x);
+    _fh.copy(base); _fh.y += h * 0.85;
+    const want = _fol.pos.copy(base).addScaledVector(_fwd, lead ? 1.7 + h * 0.6 : -(2.2 + h * 0.75)).addScaledVector(_side, lead ? 0.5 : 0.75);
+    want.y += lead ? Math.max(1.35, h + 0.5) : Math.max(1.6, h + 0.75);
+    const f = blocked(_fh, want); if (f < 1) want.lerpVectors(_fh, want, Math.max(0.25, f - 0.08));
+    _fol.look.copy(base).addScaledVector(_fwd, lead ? 0.1 : 2.0).setY(base.y + h * (lead ? 0.5 : 0.55));
+    return _fol;
   }
   function roomShot(room) { return SHOTS[room] || SHOTS.table; }
   const cam = { pos: V3(0, 0, 0), look: V3(0, 0, 0) };
@@ -2313,7 +2840,7 @@ _M_LIFE = r"""
     renderCard();
   }
   const user = { yaw: 0, pitch: 0, zoom: 1 }; let lastInputAt = -1e9, shake = 0;
-  const _dir = new THREE.Vector3(), _right = new THREE.Vector3(), _look = new THREE.Vector3(), UP = V3(0, 1, 0);
+  const _camP = new THREE.Vector3(), _dir = new THREE.Vector3(), _right = new THREE.Vector3(), _look = new THREE.Vector3(), UP = V3(0, 1, 0);
   function updateCamera(dt, t) {
     const s = shotFn(t);
     if (tween) {
@@ -2326,7 +2853,7 @@ _M_LIFE = r"""
     }
     if (performance.now() - lastInputAt > 9000) { const k = 1 - Math.exp(-dt * 0.8); user.yaw -= user.yaw * k; user.pitch -= user.pitch * k; user.zoom += (1 - user.zoom) * k * 0.6; }
     _dir.copy(cam.look).sub(cam.pos); const dist = _dir.length(); _dir.normalize();
-    const p = cam.look.clone().addScaledVector(_dir, -dist * user.zoom);
+    const p = _camP.copy(cam.look).addScaledVector(_dir, -dist * user.zoom);
     // the drone floats: a slow bob and drift
     p.x += Math.sin(t * 0.53) * 0.05; p.y += Math.sin(t * 0.71) * 0.045 + Math.sin(t * 1.9) * 0.008; p.z += Math.cos(t * 0.43) * 0.05;
     if (p.y < 0.9 && shotKey !== "map") p.y = 0.9;
@@ -2394,7 +2921,7 @@ _M_LIFE = r"""
     for (let i = bubbles.length - 1; i >= 0; i--) {
       const b = bubbles[i];
       if (simT >= b.until) { b.el.remove(); bubbles.splice(i, 1); continue; }
-      const s = toScreen(b.actor.head.getWorldPosition(new THREE.Vector3()));
+      const s = toScreen(b.actor.headAt);
       const visible = s.ok && s.x > -30 && s.x < Wd + 30 && s.y > 30 && s.y < bottom + 60;
       b.el.style.opacity = visible ? "1" : "0";
       if (visible) { const bw = b.el.offsetWidth, bh = b.el.offsetHeight, left = clamp(s.x - 30, 8, Wd - bw - 8);
@@ -2481,7 +3008,16 @@ _M_LIFE = r"""
     const here = roomOf[memberId] || actor.homeRoom, i = PIPELINE.indexOf(memberId);
     let dest = i >= 0 && i + 1 < PIPELINE.length ? roomOf[PIPELINE[i + 1]] : null;
     if (!dest && here !== actor.homeRoom) dest = here;
-    speak(actor, memberId, ev.text, ev.tone, 9);
+    const lesson = memberId === "predict" && /^Lesson:/.test(String(ev.text || ""));
+    if (lesson && actor.actor) {  // the Polymarket desk's lesson: Voss thinks it over, then says it
+      oneShot(actor, "think", 3.4);
+      actor.beats.push({ at: simT + 3.2, fn: function (a) { speak(a, memberId, ev.text, ev.tone, 10); } });
+      actor.beats.sort(function (x, y) { return x.at - y.at; });
+    } else {
+      speak(actor, memberId, ev.text, ev.tone, 9);
+      if (ev.tone === "bad") oneShot(actor, "worried");  // a bad-tone event worries its speaker (Rook too)
+      else if (ev.tone === "good" && actor.key === "rook") oneShot(actor, "nod", 4.5);  // Rook nods at good news
+    }
     const walks = dest && dest !== actor.homeRoom && actor.queue.length < 3;
     if (walks) actor.queue.push({ dest: dest, hold: 3.5 });
     focusOn(actor, 3.5, walks ? 8 : 10);
@@ -2490,11 +3026,15 @@ _M_LIFE = r"""
     const jet = actors.jet; if (!jet) return;
     const pnl = t.pnl_usd, won = (pnl || 0) >= 0;
     speak(jet, "broker", (t.coin || "a trade") + ": " + (t.result ? t.result + " " : "") + fmtSigned(pnl), won ? "good" : "bad", 12);
-    jet.queue.unshift({ dest: "vault", hold: 4.5, carry: won ? "gold" : "red", onArrive: function (a) { deliverCube(a, pnl); } });
+    // Jet carries the cube to the vault; there he cheers only for a winning trade and shrugs at a losing one
+    jet.queue.unshift({ dest: "vault", hold: 4.5, carry: won ? "gold" : "red", onArrive: function (a) {
+      deliverCube(a, pnl);
+      if (pnl > 0) oneShot(a, "cheer"); else if (pnl < 0) oneShot(a, "shrug");
+    } });
     focusOn(jet, 2.0, 8);
   }
   function chatter() {
-    const ids = Object.keys(members).filter(function (id) { const a = actors[actorOf[id]]; if (!a) return false; const s = toScreen(a.head.getWorldPosition(new THREE.Vector3()));
+    const ids = Object.keys(members).filter(function (id) { const a = actors[actorOf[id]]; if (!a) return false; const s = toScreen(a.headAt);
       return s.ok && s.x > 0 && s.x < window.innerWidth && s.y > 60 && s.y < window.innerHeight - 140; });
     const working = ids.filter(function (id) { return members[id].status === "working"; });
     const pool = (working.length ? working : ids).filter(function (id) { const m = members[id]; return m.doing || (m.events && m.events.length) || m.why; });
@@ -2580,50 +3120,67 @@ _M_LIFE = r"""
   }
   window.addEventListener("resize", resize);
   let fpsN = 0, fpsT = 0, governed = FULLQ || LITE;
+  function trimDecor() {  // the last step down: the distant islands and the extra lantern copies go (the crew stays)
+    let n = 0;
+    (props.islands || []).forEach(function (q) { if (q.h.visible) { q.h.visible = false; n++; } });
+    (placed.lantern || []).forEach(function (h, i) { if (i >= 4 && h.visible) { h.visible = false; n++; } });
+    (placed.arch || []).forEach(function (h) { if (h.visible) { h.visible = false; n++; } });
+    return n;
+  }
   function govern(dt) {
     if (governed) return; fpsN += 1; fpsT += dt; if (fpsT < 5) return;
     const fps = fpsN / fpsT; fpsN = 0; fpsT = 0;
-    if (fps >= 28) { governed = true; return; }
+    if (fps >= 28) { if (loading.set >= loading.setN && loading.crew >= loading.crewN) governed = true; return; }
     if (bloom && bloom.enabled) { bloom.enabled = false; console.info("world: bloom off (" + fps.toFixed(0) + " fps)"); return; }
     if (Q.dpr > 1) { Q.dpr = 1; resize(); console.info("world: pixel ratio 1"); return; }
     if (Q.shadows) { Q.shadows = false; renderer.shadowMap.enabled = false; sun.castShadow = false; console.info("world: shadows off"); return; }
-    governed = true;
+    if (trimDecor()) { console.info("world: fewer decorations"); return; }
+    if (loading.set >= loading.setN && loading.crew >= loading.crewN) governed = true;
   }
 
   // ============================================================= AMBIENT LIFE (decorative: no words, no numbers)
-  const tubeLen = props.parcels.len, _pm = new THREE.Matrix4();
+  const tubeLen = props.parcels.len, _pm = new THREE.Matrix4(), _pp = new THREE.Vector3();
   function updateProps(dt) {
-    props.holoDisc.rotation.y += dt * 0.08; props.holoMini.rotation.y -= dt * 0.05; props.holoMini.position.y = 1.05 + Math.sin(simT * 0.9) * 0.025;
+    props.holoDisc.rotation.y += dt * 0.08; props.holoMini.rotation.y -= dt * 0.05; props.holoMini.position.y = props.holoY + (0.258 + Math.sin(simT * 0.9) * 0.025) * props.holoK;
     props.holoDome.rotation.y += dt * 0.03; props.holoCards.rotation.y += dt * 0.12;
-    props.holoCards.children.forEach(function (c, i) { c.position.y = (i % 2) * 0.12 + Math.sin(simT * 1.3 + i) * 0.03; c.rotation.y = -props.holoCards.rotation.y + Math.atan2(camera.position.x, camera.position.z); });
-    props.telescope.rotation.y = OB2.yaw + Math.sin(simT * 0.04) * 0.7; props.telescopeTube.rotation.x = -0.75 + Math.sin(simT * 0.07) * 0.12;
-    props.airship.position.y = 2.35 + Math.sin(simT * 0.6) * 0.08; props.airship.rotation.z = Math.sin(simT * 0.5) * 0.015; props.airship.rotation.y = Math.sin(simT * 0.2) * 0.03;
-    props.propellers.forEach(function (h) { h.rotation.x += dt * 4; });
-    props.drones.forEach(function (d) { const a = simT * d.speed + d.phase; d.g.position.set(Math.cos(a) * d.r, d.y + Math.sin(simT * 0.9 + d.phase) * 0.3, Math.sin(a) * d.r * 0.8 + 1);
-      d.g.rotation.y = -a; d.g.rotation.z = Math.sin(simT * 2 + d.phase) * 0.05; });
-    for (let i = 0; i < props.parcels.n; i++) { const u = ((simT * 2.2 + i * tubeLen / props.parcels.n) % tubeLen) / tubeLen, p = tubeCurve.getPointAt(u);
-      _pm.makeRotationY(simT * 2 + i); _pm.setPosition(p); props.parcels.im.setMatrixAt(i, _pm); }
+    const cards = props.holoCards.children, face = Math.atan2(camera.position.x, camera.position.z);
+    for (let i = 0; i < cards.length; i++) { cards[i].position.y = (i % 2) * 0.12 + Math.sin(simT * 1.3 + i) * 0.03; cards[i].rotation.y = -props.holoCards.rotation.y + face; }
+    if (props.telescope.visible) { props.telescope.rotation.y = OB2.yaw + Math.sin(simT * 0.04) * 0.7; props.telescopeTube.rotation.x = -0.75 + Math.sin(simT * 0.07) * 0.12; }
+    if (props.telescopeModel) props.telescopeModel.rotation.y = props.telescopeModel.userData.yaw + Math.sin(simT * 0.04) * 0.45;
+    if (props.airship.visible) {
+      props.airship.position.y = 2.35 + Math.sin(simT * 0.6) * 0.08; props.airship.rotation.z = Math.sin(simT * 0.5) * 0.015; props.airship.rotation.y = Math.sin(simT * 0.2) * 0.03;
+      for (let i = 0; i < props.propellers.length; i++) props.propellers[i].rotation.x += dt * 4;
+    }
+    if (props.airshipModel) { const m = props.airshipModel; m.position.y = m.userData.y + Math.sin(simT * 0.6) * 0.07; m.rotation.z = Math.sin(simT * 0.5) * 0.012; }
+    if (props.islands) for (let i = 0; i < props.islands.length; i++) { const q = props.islands[i]; q.h.position.y = q.y + Math.sin(simT * 0.21 + q.ph) * 0.35; q.h.rotation.y += dt * 0.004; }
+    if (props.lanternGlow) for (let i = 0; i < props.lanternGlow.length; i++) {  // the prop lanterns' halos fade near the lens too
+      const s = props.lanternGlow[i]; s.getWorldPosition(_pp); s.material.opacity = 0.5 * smoothstep(_pp.distanceTo(camera.position), 1.6, 4.0); }
+    rookEyeMat.color.setRGB(1, 0.635, 0.18).multiplyScalar(2.6 + Math.sin(simT * 1.7) * 0.9); rookEyeHalo.opacity = 0.62 + Math.sin(simT * 1.7) * 0.2;
+    for (let i = 0; i < props.drones.length; i++) { const d = props.drones[i], a = simT * d.speed + d.phase;
+      d.g.position.set(Math.cos(a) * d.r, d.y + Math.sin(simT * 0.9 + d.phase) * 0.3, Math.sin(a) * d.r * 0.8 + 1); d.g.rotation.y = -a; d.g.rotation.z = Math.sin(simT * 2 + d.phase) * 0.05; }
+    for (let i = 0; i < props.parcels.n; i++) { const u = ((simT * 2.2 + i * tubeLen / props.parcels.n) % tubeLen) / tubeLen;
+      tubeCurve.getPointAt(u, _pp); _pm.makeRotationY(simT * 2 + i); _pm.setPosition(_pp); props.parcels.im.setMatrixAt(i, _pm); }
     props.parcels.im.instanceMatrix.needsUpdate = true;
-    screens.forEach(function (s) { s.mesh.material.color.copy(hdr(0xffffff, s.base * (0.92 + Math.sin(simT * 1.7 + s.phase) * 0.08))); });
+    for (let i = 0; i < screens.length; i++) { const s = screens[i]; s.mesh.material.color.setScalar(s.base * (0.92 + Math.sin(simT * 1.7 + s.phase) * 0.08)); }
     board.lookAt(camera.position.x, board.position.y, camera.position.z);
-    const r = actors.rook; if (r && r.impact > 0.5) { const d = r.group.position.distanceTo(camera.position); if (d < 9) shake = Math.max(shake, (1 - d / 9) * r.impact); }
-    // Jet's coffee: a decorative stroll to the kiosk now and then, never while there is work in the queue
-    const jet = actors.jet;
-    if (jet && jet.state === "home" && !jet.queue.length && !jet.carrying && simT - jet.homeSince > 75 && (!focus || focus.actor !== jet)) jet.queue.push({ dest: "kiosk", hold: 9 });
+    const r = actors.rook; if (r && !r.actor && r.impact > 0.5) { const d = r.group.position.distanceTo(camera.position); if (d < 9) shake = Math.max(shake, (1 - d / 9) * r.impact); }
+    ambientLife();
   }
 
   // ============================================================= THE LOOP (paused while the tab is hidden)
-  let simT = 0, last = performance.now(), raf = 0;
+  let simT = 0, last = performance.now(), raf = 0, started = false;
   function frame(now) {
     raf = 0;
     const dtRaw = Math.min(0.1, Math.max(0, (now - last) / 1000)); last = now;
     const dt = offline ? 0 : dtRaw;
     simT += dt; uTime.value = simT;
     if (data && !offline && simT >= chatterAt) { chatter(); chatterAt = simT + 12; }
-    updateActors(dt); updateCube(dt); updateProps(dt); director(); updateCamera(dtRaw, simT);
+    updateActors(dt); updateCube(dt); updateProps(dt); updateFades(dtRaw); director(); updateCamera(dtRaw, simT);
     updateBubbles(); updateLabels(); updateDrop();
     if (composer) composer.render(dtRaw); else renderer.render(scene, camera);
     govern(dtRaw);
+    // the ~20 MB of models start downloading only once the drawn world is on screen
+    if (!started) { started = true; setTimeout(function () { loadModels().catch(function (e) { console.warn("world: models stopped loading", e); }); }, 50); }
     if (document.visibilityState === "visible") raf = requestAnimationFrame(frame);
   }
   document.addEventListener("visibilitychange", function () { if (document.visibilityState === "visible" && !raf) { last = performance.now(); raf = requestAnimationFrame(frame); } });
@@ -2632,7 +3189,6 @@ _M_LIFE = r"""
   cut("arrival", arrivalShot);
   renderChips(); renderCard();
   boot.hidden = true;
-  loadModels();
   tick(); setInterval(function () { if (document.visibilityState === "visible") tick(); }, REFRESH_MS);
   raf = requestAnimationFrame(frame);
 }
@@ -2645,11 +3201,13 @@ def _sha256_source(text: str) -> str:
     return "'sha256-" + base64.b64encode(hashlib.sha256(text.encode("utf-8")).digest()).decode("ascii") + "'"
 
 
-#: Sent with ``/world``: scripts from this server (three.js and its addons), this exact inline module and import
-#: map; this exact inline style; data and models only from this server (``blob:``: the textures GLTFLoader unpacks
-#: from a model file in memory).
+#: Sent with ``/world``: scripts from this server (three.js, its addons and the cast's modules), this exact inline
+#: module and import map, and WebAssembly compilation for the meshopt decoder (``'wasm-unsafe-eval'`` allows
+#: compiling WebAssembly only; JavaScript ``eval`` stays forbidden); this exact inline style; data and models only
+#: from this server (``blob:``: the textures GLTFLoader unpacks from a model file in memory).
 WORLD_CSP = (
-    f"default-src 'none'; script-src 'self' {_sha256_source(_MODULE)} {_sha256_source(_IMPORTMAP)}; "
+    f"default-src 'none'; script-src 'self' 'wasm-unsafe-eval' {_sha256_source(_MODULE)} "
+    f"{_sha256_source(_IMPORTMAP)}; "
     f"style-src {_sha256_source(_STYLE)}; connect-src 'self' blob:; img-src 'self' data: blob:; "
     "base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
 )
@@ -2682,7 +3240,7 @@ def render_world_html(settings: Settings) -> str:
         f'<header><b class="mode{" live" if live else ""}" id="mode">{mode}</b><a href="./">← the page</a>'
         '<a href="office">office</a>'
         '<span class="money"><b id="money">—</b><small id="since"></small><span id="clock"></span></span></header>\n'
-        '<div id="foot"><span id="status">Loading the world…</span></div>\n'
+        '<div id="foot"><span id="status">Loading the world…</span><span id="loading" hidden></span></div>\n'
         '<div id="town"></div>\n'
         f'<div id="members" hidden>{members}</div>\n'
         f'<script id="cast" type="application/json">{_json_block(WORLD_CAST)}</script>\n'
