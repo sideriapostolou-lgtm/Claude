@@ -138,7 +138,7 @@ function skinnedBounds(nodes) {
   return { min, max };
 }
 
-async function buildCharacter(id, spec, manifest) {
+async function buildCharacter(id, spec, manifest, prefix = 'cast', bucket = 'characters') {
   const doc = await io.read(raw(spec.raw));
   const root = doc.getRoot();
   let rest = null;
@@ -157,16 +157,16 @@ async function buildCharacter(id, spec, manifest) {
     textureCompress({ encoder: sharp, targetFormat: 'webp', resize: [spec.tex || TEX, spec.tex || TEX], quality: 82 }),
     meshopt({ encoder: MeshoptEncoder, level: 'medium' }),
   );
-  const out = join(OUT, `cast_${id}.glb`);
+  const out = join(OUT, `${prefix}_${id}.glb`);
   await io.write(out, doc);
   const tris = countTris(root);
-  manifest.characters[id] = {
-    file: `cast_${id}.glb`, kind: spec.kind, role: spec.role || null, bytes: statSync(out).size, tris: Math.round(tris),
+  manifest[bucket][id] = {
+    file: `${prefix}_${id}.glb`, kind: spec.kind, role: spec.role || null, height_m: spec.height_m || null, bytes: statSync(out).size, tris: Math.round(tris),
     size_m: box.max.map((v, i) => +(v - box.min[i]).toFixed(3)), min_m: box.min.map((v) => +v.toFixed(3)),
     yaw: spec.yaw || 0, walk: spec.walk || null,
     hips_height: rest ? rest.bones.Hips.t[1] : null, armature: rest ? rest.armature : null,
   };
-  console.log(`cast_${id}.glb: ${spec.kind}, ${Math.round(tris)} tris, ${(statSync(out).size / 1024).toFixed(0)} KB`);
+  console.log(`${prefix}_${id}.glb: ${spec.kind}, ${Math.round(tris)} tris, ${(statSync(out).size / 1024).toFixed(0)} KB`);
 }
 
 const manifestPath = join(OUT, 'cast_manifest.json');
@@ -178,8 +178,12 @@ try {
   if (!ONLY || ONLY === 'clips') await buildClips(manifest);
   for (const [id, spec] of Object.entries(cfg.characters)) {
     if (ONLY && ONLY !== id && ONLY !== 'cast') continue;
-    if (ONLY === 'clips') continue;
     await buildCharacter(id, spec, manifest);
+  }
+  manifest.props = manifest.props || {};
+  for (const [id, spec] of Object.entries(cfg.props || {})) {
+    if (ONLY && ONLY !== id && ONLY !== 'props') continue;
+    await buildCharacter(id, { kind: 'prop', ...spec }, manifest, 'prop', 'props');
   }
 } catch (e) {
   console.error(`build failed: ${e.message}`); process.exit(1);

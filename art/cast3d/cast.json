@@ -238,5 +238,127 @@
    "mesh_url": "https://d8j0ntlcm91z4.cloudfront.net/user_37raYK73mveR4zPEdz9xgOVsef4/hf_20261009_191440_77a22e57-0eba-4130-8046-31d3bb8dace8.glb",
    "rig_job": "4af1790c-e785-482e-89d5-b7c996221a30"
   }
+ },
+ "props": {
+  "missiontable": {
+   "raw": "prop_missiontable.glb",
+   "role": "the round holo table in the mission courtyard (Voss)",
+   "height_m": 1.0,
+   "tris": 40000,
+   "tex": 1024,
+   "job": "f074d1a6-ba56-4ad7-a01b-84d5d1da50fe",
+   "url": "https://d8j0ntlcm91z4.cloudfront.net/user_37raYK73mveR4zPEdz9xgOVsef4/hf_20261009_193659_f074d1a6-ba56-4ad7-a01b-84d5d1da50fe.glb",
+   "yaw": 0
+  },
+  "telescope": {
+   "raw": "prop_telescope.glb",
+   "role": "the observatory telescope",
+   "height_m": 2.4,
+   "tris": 40000,
+   "tex": 1024,
+   "job": "d0c25333-256a-47ea-923d-b0fdf0171f7d",
+   "url": "https://d8j0ntlcm91z4.cloudfront.net/user_37raYK73mveR4zPEdz9xgOVsef4/hf_20261009_193702_d0c25333-256a-47ea-923d-b0fdf0171f7d.glb",
+   "yaw": 0
+  },
+  "vaultdoor": {
+   "raw": "prop_vaultdoor.glb",
+   "role": "the vault's round door (Rook)",
+   "height_m": 2.6,
+   "tris": 40000,
+   "tex": 1024,
+   "job": "628775c9-c461-459a-b919-97c705c4ca8c",
+   "url": "https://d8j0ntlcm91z4.cloudfront.net/user_37raYK73mveR4zPEdz9xgOVsef4/hf_20261009_193704_628775c9-c461-459a-b919-97c705c4ca8c.glb",
+   "yaw": -1.5708
+  },
+  "workbench": {
+   "raw": "prop_workbench.glb",
+   "role": "Pip's workbench",
+   "height_m": 1.05,
+   "tris": 40000,
+   "tex": 1024,
+   "job": "2171c981-65df-482c-af5c-bd40a7fa83f8",
+   "url": "https://d8j0ntlcm91z4.cloudfront.net/user_37raYK73mveR4zPEdz9xgOVsef4/hf_20261009_193707_2171c981-65df-482c-af5c-bd40a7fa83f8.glb",
+   "yaw": -1.5708
+  },
+  "nyxdesk": {
+   "raw": "prop_nyxdesk.glb",
+   "role": "Nyx's curved analysis desk",
+   "height_m": 1.5,
+   "tris": 40000,
+   "tex": 1024,
+   "job": "a7636cf7-0dac-4076-b923-288801f396c4",
+   "url": "https://d8j0ntlcm91z4.cloudfront.net/user_37raYK73mveR4zPEdz9xgOVsef4/hf_20261009_193710_a7636cf7-0dac-4076-b923-288801f396c4.glb",
+   "yaw": -1.5708
+  },
+  "archive": {
+   "raw": "prop_archive.glb",
+   "role": "Mote's crystal archive shelf",
+   "height_m": 2.8,
+   "tris": 40000,
+   "tex": 1024,
+   "job": "088717d8-d5ff-45e1-b093-dd2187b636ba",
+   "url": "https://d8j0ntlcm91z4.cloudfront.net/user_37raYK73mveR4zPEdz9xgOVsef4/hf_20261009_193712_088717d8-d5ff-45e1-b093-dd2187b636ba.glb",
+   "yaw": -1.5708
+  },
+  "airship": {
+   "raw": "prop_airship.glb",
+   "role": "Jet's courier airship at the dock",
+   "height_m": 3.2,
+   "tris": 40000,
+   "tex": 1024,
+   "job": "5c6fc036-2615-4579-ba1b-7a1a0974c63e",
+   "url": "https://d8j0ntlcm91z4.cloudfront.net/user_37raYK73mveR4zPEdz9xgOVsef4/hf_20261009_193714_5c6fc036-2615-4579-ba1b-7a1a0974c63e.glb",
+   "yaw": 0
+  },
+  "kiosk": {
+   "raw": "prop_kiosk.glb",
+   "role": "the rooftop espresso kiosk",
+   "height_m": 2.8,
+   "tris": 40000,
+   "tex": 1024,
+   "job": "8222e38d-d2d3-4ebb-8997-29a9547e2b40",
+   "url": "https://d8j0ntlcm91z4.cloudfront.net/user_37raYK73mveR4zPEdz9xgOVsef4/hf_20261009_193716_8222e38d-d2d3-4ebb-8997-29a9547e2b40.glb",
+   "yaw": -1.5708
+  },
+  "lantern": {
+   "raw": "prop_lantern.glb",
+   "role": "walkway lanterns",
+   "height_m": 2.6,
+   "tris": 20000,
+   "tex": 512,
+   "job": "bbd42c0d-ef71-416a-8c8a-771903b1a6da",
+   "url": "https://d8j0ntlcm91z4.cloudfront.net/user_37raYK73mveR4zPEdz9xgOVsef4/hf_20261009_193718_bbd42c0d-ef71-416a-8c8a-771903b1a6da.glb",
+   "yaw": 0
+  },
+  "arch": {
+   "raw": "prop_arch.glb",
+   "role": "the flowered stone arches",
+   "height_m": 3.4,
+   "tris": 40000,
+   "tex": 1024,
+   "job": "d8df6eac-929d-4fde-96c3-386d7574d95a",
+   "url": "https://d8j0ntlcm91z4.cloudfront.net/user_37raYK73mveR4zPEdz9xgOVsef4/hf_20261009_193722_d8df6eac-929d-4fde-96c3-386d7574d95a.glb",
+   "yaw": -1.5708
+  },
+  "rookdesk": {
+   "raw": "prop_rookdesk.glb",
+   "role": "Rook's risk desk with the scales",
+   "height_m": 1.3,
+   "tris": 40000,
+   "tex": 1024,
+   "job": "db8d0ffa-757e-4d77-b9cc-5927532b8f10",
+   "url": "https://d8j0ntlcm91z4.cloudfront.net/user_37raYK73mveR4zPEdz9xgOVsef4/hf_20261009_193724_db8d0ffa-757e-4d77-b9cc-5927532b8f10.glb",
+   "yaw": -1.5708
+  },
+  "island": {
+   "raw": "prop_island.glb",
+   "role": "small floating islands around the headquarters",
+   "height_m": 6.0,
+   "tris": 40000,
+   "tex": 1024,
+   "job": "ad015cb6-a2b3-444c-83b0-ddf7967c4f68",
+   "url": "https://d8j0ntlcm91z4.cloudfront.net/user_37raYK73mveR4zPEdz9xgOVsef4/hf_20261009_193727_ad015cb6-a2b3-444c-83b0-ddf7967c4f68.glb",
+   "yaw": 0
+  }
  }
 }

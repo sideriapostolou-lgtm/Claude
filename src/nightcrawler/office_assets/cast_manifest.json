@@ -323,5 +323,271 @@
   "bytes": 981152,
   "hips_height": 38.810187578201294,
   "armature": 0.01
+ },
+ "props": {
+  "missiontable": {
+   "file": "prop_missiontable.glb",
+   "kind": "prop",
+   "role": "the round holo table in the mission courtyard (Voss)",
+   "height_m": 1,
+   "bytes": 706128,
+   "tris": 40000,
+   "size_m": [
+    0.922,
+    0.825,
+    0.978
+   ],
+   "min_m": [
+    -0.462,
+    -0.412,
+    -0.49
+   ],
+   "yaw": 0,
+   "walk": null,
+   "hips_height": null,
+   "armature": null
+  },
+  "telescope": {
+   "file": "prop_telescope.glb",
+   "kind": "prop",
+   "role": "the observatory telescope",
+   "height_m": 2.4,
+   "bytes": 813084,
+   "tris": 39996,
+   "size_m": [
+    0.676,
+    0.98,
+    0.426
+   ],
+   "min_m": [
+    -0.338,
+    -0.49,
+    -0.213
+   ],
+   "yaw": 0,
+   "walk": null,
+   "hips_height": null,
+   "armature": null
+  },
+  "vaultdoor": {
+   "file": "prop_vaultdoor.glb",
+   "kind": "prop",
+   "role": "the vault's round door (Rook)",
+   "height_m": 2.6,
+   "bytes": 781784,
+   "tris": 39990,
+   "size_m": [
+    0.272,
+    0.98,
+    0.934
+   ],
+   "min_m": [
+    -0.135,
+    -0.489,
+    -0.467
+   ],
+   "yaw": -1.5708,
+   "walk": null,
+   "hips_height": null,
+   "armature": null
+  },
+  "workbench": {
+   "file": "prop_workbench.glb",
+   "kind": "prop",
+   "role": "Pip's workbench",
+   "height_m": 1.05,
+   "bytes": 722232,
+   "tris": 40000,
+   "size_m": [
+    0.524,
+    0.978,
+    0.884
+   ],
+   "min_m": [
+    -0.262,
+    -0.489,
+    -0.442
+   ],
+   "yaw": -1.5708,
+   "walk": null,
+   "hips_height": null,
+   "armature": null
+  },
+  "nyxdesk": {
+   "file": "prop_nyxdesk.glb",
+   "kind": "prop",
+   "role": "Nyx's curved analysis desk",
+   "height_m": 1.5,
+   "bytes": 776352,
+   "tris": 39999,
+   "size_m": [
+    0.491,
+    0.752,
+    0.98
+   ],
+   "min_m": [
+    -0.246,
+    -0.376,
+    -0.491
+   ],
+   "yaw": -1.5708,
+   "walk": null,
+   "hips_height": null,
+   "armature": null
+  },
+  "archive": {
+   "file": "prop_archive.glb",
+   "kind": "prop",
+   "role": "Mote's crystal archive shelf",
+   "height_m": 2.8,
+   "bytes": 918560,
+   "tris": 40000,
+   "size_m": [
+    0.204,
+    0.98,
+    0.455
+   ],
+   "min_m": [
+    -0.103,
+    -0.489,
+    -0.228
+   ],
+   "yaw": -1.5708,
+   "walk": null,
+   "hips_height": null,
+   "armature": null
+  },
+  "airship": {
+   "file": "prop_airship.glb",
+   "kind": "prop",
+   "role": "Jet's courier airship at the dock",
+   "height_m": 3.2,
+   "bytes": 831024,
+   "tris": 39983,
+   "size_m": [
+    0.886,
+    0.984,
+    0.559
+   ],
+   "min_m": [
+    -0.443,
+    -0.493,
+    -0.277
+   ],
+   "yaw": 0,
+   "walk": null,
+   "hips_height": null,
+   "armature": null
+  },
+  "kiosk": {
+   "file": "prop_kiosk.glb",
+   "kind": "prop",
+   "role": "the rooftop espresso kiosk",
+   "height_m": 2.8,
+   "bytes": 916544,
+   "tris": 39999,
+   "size_m": [
+    0.453,
+    0.979,
+    0.666
+   ],
+   "min_m": [
+    -0.227,
+    -0.489,
+    -0.332
+   ],
+   "yaw": -1.5708,
+   "walk": null,
+   "hips_height": null,
+   "armature": null
+  },
+  "lantern": {
+   "file": "prop_lantern.glb",
+   "kind": "prop",
+   "role": "walkway lanterns",
+   "height_m": 2.6,
+   "bytes": 354076,
+   "tris": 18486,
+   "size_m": [
+    0.275,
+    0.979,
+    0.274
+   ],
+   "min_m": [
+    -0.137,
+    -0.489,
+    -0.137
+   ],
+   "yaw": 0,
+   "walk": null,
+   "hips_height": null,
+   "armature": null
+  },
+  "arch": {
+   "file": "prop_arch.glb",
+   "kind": "prop",
+   "role": "the flowered stone arches",
+   "height_m": 3.4,
+   "bytes": 1069212,
+   "tris": 39997,
+   "size_m": [
+    0.203,
+    0.978,
+    0.73
+   ],
+   "min_m": [
+    -0.102,
+    -0.489,
+    -0.364
+   ],
+   "yaw": -1.5708,
+   "walk": null,
+   "hips_height": null,
+   "armature": null
+  },
+  "rookdesk": {
+   "file": "prop_rookdesk.glb",
+   "kind": "prop",
+   "role": "Rook's risk desk with the scales",
+   "height_m": 1.3,
+   "bytes": 867676,
+   "tris": 39989,
+   "size_m": [
+    0.499,
+    0.973,
+    0.981
+   ],
+   "min_m": [
+    -0.249,
+    -0.486,
+    -0.49
+   ],
+   "yaw": -1.5708,
+   "walk": null,
+   "hips_height": null,
+   "armature": null
+  },
+  "island": {
+   "file": "prop_island.glb",
+   "kind": "prop",
+   "role": "small floating islands around the headquarters",
+   "height_m": 6,
+   "bytes": 850608,
+   "tris": 39997,
+   "size_m": [
+    0.586,
+    0.981,
+    0.844
+   ],
+   "min_m": [
+    -0.293,
+    -0.491,
+    -0.421
+   ],
+   "yaw": 0,
+   "walk": null,
+   "hips_height": null,
+   "armature": null
+  }
  }
 }
