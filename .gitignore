@@ -35,3 +35,4 @@ venv/
 
 # Claude Code workflow worktrees (temporary isolated checkouts)
 .claude/worktrees/
+art/cast3d/node_modules
