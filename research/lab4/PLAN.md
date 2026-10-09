@@ -174,3 +174,74 @@ window has an upper bound (no entry after a market's end; a game's end is its la
 recorder writes its files atomically. Fee rates stay the family table of Amendment 1 (verified against Gamma's
 per-market `feeSchedule.rate` on the listed markets; the 22 `general_fees` markets are charged the most
 expensive rate).
+
+## Amendment 4 (2026-10-09 ~18:45 UTC, before any P5 return was read): P5 "patient bid", rest a bid instead of lifting the ask
+
+Why: P1-P4 found no edge taking the ask on near-certain outcomes (TRAIN read 18:00-18:05 UTC; RESULTS.md,
+READING.md). Those rules paid the spread and the taker fee on every trade: they bought at the ask. P5 asks whether
+the same markets and the same signals are worth having when we wait on the bid side and let a seller come to us,
+paying no spread and, per the venue's own schedule, no fee. The known danger is adverse selection: a seller only
+reaches our bid when the price falls, which is exactly when a "near-certain" outcome is less certain than it
+looked. This amendment is written after the P1-P4 TRAIN returns were read (they are its motive) and before any P5
+number was computed; P5 is a new rule, not a re-selection among P1-P4 cells, and it is run on TRAIN only.
+
+**Hypothesis P5 (patient bid, all markets, selectable).** Same universe, splits, $20 ticket, 10 s latency and
+signal as P1: the first buyable print for outcome `o` at or above `theta` inside `[endDate - H, endDate)`
+(`H = inf`: anywhere before resolution). Instead of lifting the next ask we post a bid for `o` at
+`tp = t_signal + 10 s` at price `b` and leave it resting until it fills or the window ends (`end_bound` =
+min(`endDate`, `closedTime`) for windowed cells, `closedTime` for `H = inf`), when it is cancelled unfilled.
+
+**Resting price.** The tape has no book, so the best bid is inferred from the prints a buyer could NOT get (the
+bid-side prints of Amendment 3: a SELL on `o`'s token, or a BUY on the other token at `1 - p`; each one is a level
+a seller actually hit). `b_ref` = the price of the most recent bid-side print for `o` in the 600 s before
+`t_signal` (the same 600 s as §2's execution window), else `p_signal - tick` (the top of a one-tick-wide book);
+in every case `b_ref = min(b_ref, p_signal - tick)`, a bid never sits at or above the ask we saw. Cells: offset
+`k` in {0, 1} ticks, `b = b_ref - k x tick`, rounded to the tick grid. **Tick = 0.001**: polymarket.com's tick
+above 0.96, and Polymarket US's tick everywhere. (Structural check, no return computed: in a 400-market TRAIN
+sample, 399 markets show sub-cent prints at >= 0.95, about half of all such prints.)
+
+**Fill model (conservative; the tape is taker-side prints with price, size and side, and NO depth).** The bid at
+`b` is filled only by a bid-side print for `o` at a price STRICTLY below `b`, strictly after `tp` and before
+`end_bound`: a taker sold through our level, so by price priority every share resting at `b`, ours included, was
+taken whatever our place in the queue. A print at exactly `b` never fills us: our queue position is unknown, and
+the book-aware rule ("filled at `b` once the cumulative sell size at `b` since `tp` exceeds the displayed bid depth
+at `tp`") cannot be applied because the data carries no depth; strictly-below only, stated here. Size: the fill
+is complete only once the cumulative size of bid-side prints for `o` at or below `b` since `tp`, through the
+filling print, is at least our order `shares = 20 / b`; the first strictly-below print at which that holds is the
+fill, at its time `t_fill`, at price `b` (a resting order fills at its own limit, never better). Otherwise the
+trade is "missed" (posted, never filled) and counted, so every cell reports its fill rate. Settlement as P1:
+`shares x 1` if `o` wins, else 0; lock time from `t_fill` to `closedTime`; no sale before resolution.
+
+**Fees (two stated assumptions, both run).** polymarket.com's published schedule (Amendment 1) charges takers
+only: a resting order pays nothing. Polymarket US charges takers `0.0695 x shares x p x (1 - p)` and pays makers a
+rebate, which is not modelled (a rebate is never counted as income here). Every P5 cell is therefore run twice:
+**fee0** (maker pays 0, the documented case) and **feeT** (maker pays the full taker fee of the market's family,
+Amendment 1 table: the stress case). Only the **feeT** cells are selectable; the fee0 cells are reported as the
+fee-free upper bound and tagged not selectable, like P2's oracle-timed cells. A cell that qualifies under feeT
+qualifies under fee0 as well (the fee only lowers `net`), so "qualifies under both" and "qualifies under feeT" are
+the same bar.
+
+**Cells.** `theta` in {0.95, 0.97, 0.99} x `H` in {1, 6, 24, 168, inf} hours x `k` in {0, 1} x fee in
+{fee0, feeT}: 60 cells, 30 selectable. Cell key `theta<t>|H<h>|b-<k>|<fee>`. Families: all, as P1; the
+per-family breakdown is reported as everywhere (the owner's non-sports mix is read from it).
+
+**Qualification bar (unchanged: PLAN §3 + Amendment 3, `core.qualifies`).** `n >= 100` fills, mean net per $ at
+risk > 0, event-bootstrap CI95 lower bound > 0, at least one observed loss, and with fewer than five losses the
+rule-of-three worst case `(1 - 3/n) x mean win - 3/n` must be positive. TRAIN selects the selectable cell with the
+highest mean net among those that qualify; none = NO EDGE for P5. **Placebo:** §4's calibration placebo,
+unchanged, at VAL: outcomes redrawn as Bernoulli(`b`), the fill price, 2000 draws; the real mean must sit above
+the 95th percentile. VAL and TEST are separate decisions and are NOT run under this amendment; if P5 qualifies on
+TRAIN the stage stops there and says so.
+
+**Readings added for P5:** signals (bids posted), fill rate (fills / signals), mean signal ask against mean fill
+price (the price improvement patience bought), median wait from posting to fill, and how many bids saw a
+strictly-below print but never enough size (lost to the size condition). The "bid-side share (old rule)" column
+does not apply (every P5 fill is a maker fill) and prints n/a.
+
+**Power.** The conservative fill model may leave a cell with a handful of fills; such a cell is underpowered and
+cannot qualify (`n >= 100`), which is the intended behaviour, not a finding of no edge, and the reading must say
+so with the fill counts.
+
+**Trial ledger.** Each of the 60 cells evaluated on TRAIN is one trial in `research/lab4/trials.json`, written by
+`run.py` as everywhere (upsert on hypothesis, cell, split and stage); the cross-lab count is reported in
+`P5/train.md`. `RESULTS.md` is regenerated by `run.py`, never by hand.

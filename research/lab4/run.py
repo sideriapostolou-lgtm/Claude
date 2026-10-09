@@ -61,6 +61,18 @@ HYPOTHESES: dict[str, dict[str, Any]] = {
         "control": False,
         "selectable": True,
     },
+    "P5": {
+        "title": "patient bid: rest at the bid, fill only when a seller sweeps through",
+        "families": "all",
+        "thetas": [0.95, 0.97, 0.99],
+        "hours": [1.0, 6.0, 24.0, 168.0, INF],
+        "control": False,
+        "selectable": True,
+        "maker": True,
+        "offsets": [0, 1],
+        "fees": {"fee0": 0.0, "feeT": 1.0},
+        "selectable_fees": ["feeT"],
+    },  # Amendment 4: fee0 (maker pays nothing) is the fee-free upper bound, reported only; feeT selects
     "C1": {
         "title": "control: longshots (the other side)",
         "families": "all",
@@ -72,14 +84,22 @@ HYPOTHESES: dict[str, dict[str, Any]] = {
 }
 MIN_N = 100
 PLACEBO_PCT = 95.0
+PLAN_VERSION = "lab4-v1 + Amendments 1-4"
 
 
 def prereg_sha256() -> str:
     return hashlib.sha256(PLAN.read_bytes()).hexdigest()
 
 
-def cell_key(theta: float, hours: float) -> str:
-    return f"theta{theta:g}|H{'inf' if hours == INF else f'{hours:g}'}"
+def cell_key(
+    theta: float, hours: float, offset: int | None = None, fee: str | None = None
+) -> str:
+    key = f"theta{theta:g}|H{'inf' if hours == INF else f'{hours:g}'}"
+    if offset is not None:
+        key += f"|b-{offset}"
+    if fee is not None:
+        key += f"|{fee}"
+    return key
 
 
 def oracle_timed(hyp: str, hours: float) -> bool:
@@ -88,29 +108,72 @@ def oracle_timed(hyp: str, hours: float) -> bool:
     return sel is not None and hours not in sel
 
 
+def reported_only(hyp: str, cell: dict[str, Any]) -> str | None:
+    """Why a cell is reported but never selected: a windowed sports cell is oracle-timed (Amendment 3); a P5 cell
+    at the documented zero maker fee is the fee-free upper bound (Amendment 4). None = selectable."""
+    if oracle_timed(hyp, cell["hours"]):
+        return "oracle-timed, not selectable"
+    sel = HYPOTHESES[hyp].get("selectable_fees")
+    if sel is not None and cell.get("fee") not in sel:
+        return "fee-free upper bound, not selectable"
+    return None
+
+
+def _spec(sel: dict[str, Any]) -> tuple[Any, ...]:
+    """A selected cell as the grid tuple evaluate() takes: (theta, hours) or, for a maker cell, + (offset, fee)."""
+    if "fee" in sel:
+        return (sel["theta"], sel["hours"], sel["offset"], sel["fee"])
+    return (sel["theta"], sel["hours"])
+
+
 def evaluate(
     ds: C.Dataset,
     hyp: str,
-    cells: list[tuple[float, float]] | None = None,
+    cells: list[tuple[Any, ...]] | None = None,
     B: int = C.BOOTSTRAP_B,
     placebo: bool = False,
 ) -> list[dict[str, Any]]:
     h = HYPOTHESES[hyp]
-    grid = (
-        cells
-        if cells is not None
-        else [(t, H) for t in h["thetas"] for H in h["hours"]]
-    )
+    maker = bool(h.get("maker"))
+    if cells is not None:
+        grid = cells
+    elif maker:
+        grid = [
+            (t, H, k, fee)
+            for t in h["thetas"]
+            for H in h["hours"]
+            for k in h["offsets"]
+            for fee in h["fees"]
+        ]
+    else:
+        grid = [(t, H) for t in h["thetas"] for H in h["hours"]]
     out = []
-    for theta, hours in grid:
-        trades = C.cell_trades(ds, theta, hours, h["families"], control=h["control"])
-        s = C.summarize(trades, ds.split, B=B)
-        cell = {
-            "key": cell_key(theta, hours),
-            "theta": theta,
-            "hours": hours,
-            "summary": s,
-        }
+    for spec in grid:
+        theta, hours = float(spec[0]), float(spec[1])
+        if maker:
+            offset, fee = int(spec[2]), str(spec[3])
+            trades = C.bid_trades(
+                ds, theta, hours, offset, h["fees"][fee], h["families"]
+            )
+            cell = {
+                "key": cell_key(theta, hours, offset, fee),
+                "theta": theta,
+                "hours": hours,
+                "offset": offset,
+                "fee": fee,
+                "summary": C.summarize(trades, ds.split, B=B),
+                "maker": C.maker_extra(trades),
+            }
+        else:
+            trades = C.cell_trades(
+                ds, theta, hours, h["families"], control=h["control"]
+            )
+            cell = {
+                "key": cell_key(theta, hours),
+                "theta": theta,
+                "hours": hours,
+                "summary": C.summarize(trades, ds.split, B=B),
+            }
         if placebo:
             cell["placebo"] = C.calibration_placebo(trades, draws=B)
         out.append(cell)
@@ -123,12 +186,15 @@ def decide_train(cells: list[dict[str, Any]], hyp: str) -> dict[str, Any] | None
     ok = [
         c
         for c in cells
-        if C.qualifies(c["summary"], MIN_N) and not oracle_timed(hyp, c["hours"])
+        if C.qualifies(c["summary"], MIN_N) and reported_only(hyp, c) is None
     ]
     if not ok:
         return None
     best = max(ok, key=lambda c: c["summary"]["mean_net"])
-    return {"key": best["key"], "theta": best["theta"], "hours": best["hours"]}
+    sel = {"key": best["key"], "theta": best["theta"], "hours": best["hours"]}
+    if "fee" in best:
+        sel.update({"offset": best["offset"], "fee": best["fee"]})
+    return sel
 
 
 def decide_holdout(cell: dict[str, Any]) -> str:
@@ -150,7 +216,7 @@ def _fmt(v: Any, nd: int = 3) -> str:
 def _md(hyp: str, stage: str, doc: dict[str, Any]) -> str:
     h = HYPOTHESES[hyp]
     lines = [
-        f"# {hyp} {h['title']}: {stage.upper()} ({doc['split']}, lab4-v1 + Amendments 1-3)",
+        f"# {hyp} {h['title']}: {stage.upper()} ({doc['split']}, {PLAN_VERSION})",
         "",
         f"Run {doc['utc']}; PLAN.md sha256 {doc['prereg_sha256'][:12]}; markets in split {doc['n_markets']} "
         f"(families: {doc['families']}); trials so far across labs 2-4: {doc['n_trials_total']}.",
@@ -163,31 +229,46 @@ def _md(hyp: str, stage: str, doc: dict[str, Any]) -> str:
             f"({100 * float(cov.get('share') or 0):.1f} %).",
             "",
         ]
-    lines.append(
+    maker = bool(h.get("maker"))
+    head = (
         "| cell | n | events | missed | /day | win rate | losses | mean p | gap | mean net | CI95 (events) | "
         "worst case (rule of 3) | bid-side share (old rule) | $/trade | worst $ | streak | lock h | "
         "daily Sharpe | DD $ |"
     )
-    lines.append(
-        "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"
+    extra_cols = (
+        " bids posted | fill rate | mean ask seen | wait s (median) | size-blocked |"
+        if maker
+        else ""
     )
+    lines.append(head + extra_cols)
+    lines.append("|" + "---|" * (19 + (5 if maker else 0)))
     for c in doc["cells"]:
         s = c["summary"]
         ci = s["ci95"]
-        tag = " (oracle-timed, not selectable)" if oracle_timed(hyp, c["hours"]) else ""
+        why = reported_only(hyp, c)
+        tag = f" ({why})" if why else ""
+        mk = c.get("maker") or {}
+        extra = (
+            f" {mk.get('signals', '-')} | {_fmt(mk.get('fill_rate'))} | {_fmt(mk.get('mean_p_signal'))} | "
+            f"{_fmt(mk.get('wait_s_median'), 0)} | {mk.get('size_blocked', '-')} |"
+            if maker
+            else ""
+        )
         lines.append(
             f"| {c['key']}{tag} | {s['n']} | {s.get('n_events', '-')} | {s['missed']} | {_fmt(s['trades_per_day'], 2)} | "
             f"{_fmt(s['win_rate'])} | {s.get('losses', '-')} | {_fmt(s['mean_p_exec'])} | {_fmt(s['calibration_gap'])} | "
             f"{_fmt(s['mean_net'], 4)} | [{_fmt(ci[0], 4)}, {_fmt(ci[1], 4)}] | {_fmt(s.get('worst_case_net'), 4)} | "
-            f"{_fmt(s.get('bid_side_share'))} | {_fmt(s['mean_pnl_usd'], 2)} | {_fmt(s['worst_pnl_usd'], 2)} | "
+            f"{'n/a' if maker else _fmt(s.get('bid_side_share'))} | {_fmt(s['mean_pnl_usd'], 2)} | "
+            f"{_fmt(s['worst_pnl_usd'], 2)} | "
             f"{s['longest_losing_streak']} | {_fmt(s['lock_h_median'], 2)} | {_fmt(s['daily']['sharpe'], 2)} | "
-            f"{_fmt(s['daily']['max_drawdown_usd'], 2)} |"
+            f"{_fmt(s['daily']['max_drawdown_usd'], 2)} |" + extra
         )
         if c.get("placebo"):
             p = c["placebo"]
             lines.append(
                 f"|  placebo (calibrated) | | | | | | | | | mean {_fmt(p['mean'], 4)}, p95 {_fmt(p['p95'], 4)}; "
                 f"real at percentile {_fmt(p['real_percentile'], 1)} | | | | | | | | | |"
+                + (" | | | | |" if maker else "")
             )
     lines.append("")
     lines.append(f"**Decision:** {doc['decision']}")
@@ -201,6 +282,17 @@ def _md(hyp: str, stage: str, doc: dict[str, Any]) -> str:
         "(1 - 3/n) x mean win - 3/n; 'bid-side share' = how often the old side-blind rule would have filled "
         "at a price no buyer could get. Nothing here is a live trade."
     )
+    if maker:
+        lines.append("")
+        lines.append(
+            "P5 (Amendment 4): the bid rests from 10 s after the signal until the window ends; 'missed' = posted and "
+            "never filled (fill rate = n / bids posted); a fill needs a later bid-side print STRICTLY below the "
+            "resting price (the tape has no depth, so a print at exactly the bid never fills us) with enough "
+            "bid-side size at or below it to cover the order ('size-blocked' = bids that saw such a print but never "
+            "enough size); 'mean p' is the price paid at the bid, 'mean ask seen' the ask P1 would have lifted; "
+            "fee0 = maker pays nothing (the venue's schedule, reported as the upper bound), feeT = maker pays the "
+            "taker fee (the stress case; the only selectable cells); the bid-side-share column does not apply."
+        )
     return "\n".join(lines) + "\n"
 
 
@@ -269,9 +361,7 @@ def run_stage(
                 results[hyp] = doc
                 continue
             sel = prev["selected"]
-            cells = evaluate(
-                ds, hyp, cells=[(sel["theta"], sel["hours"])], B=B, placebo=True
-            )
+            cells = evaluate(ds, hyp, cells=[_spec(sel)], B=B, placebo=True)
             verdict = decide_holdout(cells[0])
             selected = sel if verdict == "SELECTED" else None
             decision = (
