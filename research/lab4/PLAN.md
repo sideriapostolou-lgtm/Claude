@@ -133,3 +133,9 @@ Correction to the counts above (2026-10-09 15:12 UTC, still before any TRAIN ret
 poll of the US gateway found **537** non-sports markets ending within 48 hours: 477 crypto (hourly and weekly
 "BTC above / below a strike" markets) and 60 climate (daily city high-temperature brackets). The "~5 crypto per
 day" settlement count above undercounts the hourly crypto series; the recorder measures the real supply.
+
+Correction (2026-10-09 15:40 UTC, still before any TRAIN return): the owner confirms that Polymarket US does
+offer sports contracts where they are, so P2 (late-game sports) is a live candidate for their desk as well, not
+only for the record; the published evidence still predicts no favourite edge in sports, and the lab decides. The
+US recorder is extended to sports markets in progress (from game start until settlement), capped to stay under the
+gateway's public rate limit.
