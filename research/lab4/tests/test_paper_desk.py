@@ -125,10 +125,18 @@ def test_shadow_trades_and_summary(tmp_path):
         and "| all | 0.95 | 1 | 4 | 1 | 3 |" in md
         and len(doc["cells"]) == 2
     )
-    empty = P.summarize(P.shadow_trades(books, {}, 0.999, 1.0, "all"))
+    none = P.summarize(P.shadow_trades(books, {}, 0.999, 1.0, "all"))
     assert (
-        empty["n"] == 1 and empty["settled"] == 0 and empty["win_rate"] is None
-    )  # w1 at 0.99 is the only hit, open
+        none["n"] == 0 and none["settled"] == 0 and none["win_rate"] is None
+    )  # nothing prints at 0.999
+    unsettled = P.summarize(
+        P.shadow_trades(books, {}, 0.95, 1.0, "all")
+    )  # no settlements known: all open
+    assert (
+        unsettled["n"] >= 3
+        and unsettled["settled"] == 0
+        and unsettled["total_usd"] == 0.0
+    )
 
 
 def test_empty_recorder_dir(tmp_path):
