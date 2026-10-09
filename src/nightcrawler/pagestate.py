@@ -26,8 +26,8 @@ Schema (lists capped: members 9, events <= 5, open trades <= 10, closed trades 1
                    "proof"}], "data", "rule": str|null},
       "ready": readiness.readiness(...),
       "wallet": {"address", "sol", "checked_at", "own", "help", "paper_note", "note",   # the deposit address
-                 "last_withdrawal": {"sol", "to", "at", "signature"}|null},
-      "withdraw": {"status", "to", "level", "text"}|null,                           # WITHDRAW_TO (also a banner)
+                 "keep_note", "last_withdrawal": {"sol", "to", "at", "signature"}|null},
+      "withdraw": {"status", "to", "level", "text"}|null,     # WITHDRAW_TO, or the hold after it (also a banner)
       "receipts": {"count", "verified", "first_bad_seq", "head", "head_short"},
       "usage": [{"label", "pct": float|null, "level": "ok"|"warn"|"over"|null, "text", "measured": bool}],
       "about": {"version", "uptime_s", "commit", "started_at"}
@@ -58,9 +58,12 @@ reads the bot wallet's SOL from the last live equity snapshot (live) or the engi
 
 WALLET: the bot wallet's PUBLIC address (live: kv ``wallet.pubkey``; paper: the bot's own wallet, kv
 ``keystore.pubkey``, or the address the engine read) with the same SOL reading, and how to fund it from
-Phantom. WITHDRAW: :func:`nightcrawler.withdraw.page_view` of kv ``withdraw.state`` while WITHDRAW_TO is set,
-also the first banner (red while it is under way; it replaces the kill-switch banner the engine's forced
-sell-off would show).
+Phantom (live: right after a withdrawal landed, the balance the withdrawal read, until an equity snapshot is
+newer). WITHDRAW: :func:`nightcrawler.withdraw.page_view` of kv ``withdraw.state`` while WITHDRAW_TO is set (or
+of the hold after a live withdrawal), also the first banner (red while it is under way; it replaces the
+kill-switch banner the engine's forced sell-off or hold would show). The money card adds back only SOL sent
+back that the latest equity point already reflects. A wallet the bot made itself but does not use
+(``BOT_WALLET_MODE=env``) is a banner too.
 """
 
 from __future__ import annotations
@@ -71,7 +74,7 @@ from typing import Any
 
 from nightcrawler import __version__
 from nightcrawler.botwallet import saved_balance, wallet_configured
-from nightcrawler.broker.keystore import KV_GENERATED
+from nightcrawler.broker.keystore import KV_GENERATED, unused_wallet
 from nightcrawler.config import Settings
 from nightcrawler.dashboard import build_state, scrub
 from nightcrawler.logging_setup import get_logger, redact_text
@@ -79,7 +82,7 @@ from nightcrawler.models import LAMPORTS_PER_SOL, EquityPoint
 from nightcrawler.page import LEARNING_RULE, MEMBERS, REFRESH_S
 from nightcrawler.readiness import readiness
 from nightcrawler.teamroom import ENGINE_STALE_S, FUTURE_SKEW_S, build_team_state, derive_status, duration_text
-from nightcrawler.withdraw import last_withdrawal, page_view, saved_state, withdrawn_lamports
+from nightcrawler.withdraw import fresh_balance, last_withdrawal, live_hold, page_view, saved_state, withdrawn_lamports
 
 __all__ = ["LEARNING_RULE", "MEMBERS", "STALE_BANNER_S", "WALLET_MAX_AGE_S", "build_page_state", "learning_card"]
 
@@ -101,6 +104,9 @@ TEXT_MAX = 160
 VARIANTS_MAX = 5
 #: How to fund the bot wallet, for an owner with only the Phantom app.
 FUND_HELP = "To fund: in Phantom tap Send, choose SOL, paste this address."
+#: The bot's own wallet: its key exists only on the volume (broker/keystore.py).
+KEEP_NOTE = ("Its key exists only on the Railway volume: keep the volume's backups on, and never delete the volume "
+             "or the service while it holds SOL (withdraw first).")
 #: The learning card is recomputed at most this often (the page refreshes every few seconds).
 LEARNING_TTL_S = 60.0
 #: The Coach counts as working when its card was updated this recently (it learns nightly).
@@ -310,6 +316,15 @@ def _money(settings: Settings, eq: dict[str, Any], point: EquityPoint | None,
     }
 
 
+def _withdrawn(ledger: Any, settings: Settings, point: EquityPoint | None, now: float) -> tuple[int, int]:
+    """Live SOL sent back to the owner that the latest equity point ``point`` already reflects ``(since the
+    start, since today's first point)`` - a later withdrawal is not in that point yet (it would count twice)."""
+    if not settings.is_live or point is None or not ledger.get_kv("withdraw.totals"):
+        return 0, 0
+    first = next((p for p in ledger.equity_series(since=now - now % 86_400) if p.mode == point.mode), None)
+    return withdrawn_lamports(ledger, point.ts, first.ts if first is not None else None)
+
+
 def _coach(card: dict[str, Any], now: float) -> tuple[str, str]:
     if card["source"] == "missing":
         return "absent", "not built yet"
@@ -390,17 +405,23 @@ def _usage(state: dict[str, Any]) -> tuple[list[dict[str, Any]], list[dict[str, 
     return rows, alerts
 
 
-def _alerts(ledger: Any, state: dict[str, Any], now: float, withdrawal: dict[str, Any] | None = None
-            ) -> list[dict[str, str]]:
+def _alerts(ledger: Any, state: dict[str, Any], now: float, withdrawal: dict[str, Any] | None = None,
+            settings: Settings | None = None) -> list[dict[str, str]]:
     """Header banners from real trouble only, worst first. ``withdrawal``: :func:`nightcrawler.withdraw.page_view`
-    (WITHDRAW_TO set): its banner comes first and replaces the "selling everything" kill-switch banner."""
+    (WITHDRAW_TO set, or the hold after a live withdrawal): its banner comes first and replaces the kill-switch
+    banner the engine's forced sell-off (or hold) would show."""
     out = []
     if withdrawal is not None:
         out.append((withdrawal["level"], withdrawal["text"]))
-    if state["kill"] == "sell_all" and withdrawal is None:
+    elif state["kill"] == "sell_all":
         out.append(("bad", "Kill switch is ON: the bot is selling everything and buying nothing."))
     elif state["kill"] == "stop":
         out.append(("bad", "Kill switch is ON: the bot buys nothing new (open trades are still looked after)."))
+    unused = unused_wallet(settings, ledger) if settings is not None else None
+    if unused is not None:
+        out.append(("bad", f"The bot's own wallet {unused or '(address unknown)'} is not in use: BOT_WALLET_MODE is "
+                           "not 'generated'. If it holds SOL, only the bot can move it: set BOT_WALLET_MODE=generated "
+                           "(delete BOT_WALLET_SECRET), then take it back with WITHDRAW_TO."))
     if state["halted"]["halted"]:
         out.append(("bad", "Stopped buying: the money fell too far from its high. It stays stopped until you "
                            "reset it (RESET_HALT_TOKEN in Railway)."))
@@ -430,6 +451,9 @@ def _wallet(ledger: Any, settings: Settings, state: dict[str, Any], point: Equit
     the bot's own wallet its address is known from the start, and a reading of another wallet does not count."""
     if settings.is_live:
         address = state["wallet"]["address"]
+        after = fresh_balance(saved_state(ledger), point.ts if point is not None else None)
+        if after is not None and now - after[1] <= WALLET_MAX_AGE_S:  # read right after a withdrawal landed
+            return address, after[0], after[1]
         if point is None or now - point.ts > WALLET_MAX_AGE_S:
             return address, None, None
         return address, point.sol_lamports / LAMPORTS_PER_SOL, point.ts
@@ -454,7 +478,7 @@ def _wallet_card(settings: Settings, address: str | None, sol: float | None, rea
                 "its address here." if not (settings.is_live or wallet_configured(settings))
                 else "The address shows here once the bot has started.")
     return {"address": address, "sol": sol, "checked_at": read_at, "own": own,
-            "help": FUND_HELP if address else None,
+            "help": FUND_HELP if address else None, "keep_note": KEEP_NOTE if address and own else None,
             "paper_note": ("This is real SOL, even in paper mode: paper trades never spend it."
                            if address and not settings.is_live else None),
             "note": note, "last_withdrawal": last_withdrawal(withdraw_state)}
@@ -480,8 +504,8 @@ def build_page_state(ledger: Any, settings: Settings, now: float, engine_status:
             counts[m["status"]] += 1
     usage, usage_alerts = _usage(state)
     withdraw_state = saved_state(ledger)
-    withdrawal = page_view(settings, withdraw_state, now)
-    alerts = _alerts(ledger, state, now, withdrawal)
+    withdrawal = page_view(settings, withdraw_state, now, live_hold(ledger))
+    alerts = _alerts(ledger, state, now, withdrawal, settings)
     point = _latest_point(ledger, "live" if settings.is_live else "paper")
     address, wallet_sol, wallet_read_at = _wallet(ledger, settings, state, point, now)
     receipts = state["receipts"]
@@ -492,7 +516,7 @@ def build_page_state(ledger: Any, settings: Settings, now: float, engine_status:
         "mode": state["mode"],
         "refresh_s": REFRESH_S,
         "alerts": alerts + usage_alerts,
-        "money": _money(settings, state["equity"], point, withdrawn_lamports(ledger, now)),
+        "money": _money(settings, state["equity"], point, _withdrawn(ledger, settings, point, now)),
         "team": {"counts": counts, "members": members},
         "trades": _trades(ledger, settings, state, text),
         "learning": {"source": card["source"], "state": card["state"], "headline": card["headline"],

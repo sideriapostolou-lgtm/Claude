@@ -338,9 +338,11 @@ class Settings:
     bot_wallet_mode: str = _f("env", "text", "env = the wallet in BOT_WALLET_SECRET; generated = the bot makes its own "
                               "wallet on the first start (paper mode) and keeps the key in DATA_DIR/wallet/ where "
                               "nobody ever sees it: fund it from Phantom with Send, take it back with WITHDRAW_TO")
-    withdraw_to: str = _f("", "text", "Your own Solana address (Phantom: Receive, Solana, copy). While set the bot "
-                          "buys nothing, sells everything, then sends ALL its SOL there minus the network fee (paper "
-                          "mode only shows what it would send). Delete it to trade again")
+    withdraw_to: str = _f("", "text", "Your own Solana address (Phantom: Receive, Solana, copy): the wallet that sent "
+                          "the bot its SOL. While set the bot buys nothing, sells everything, closes its empty coin "
+                          "accounts, then (live, after 10 minutes in which deleting it cancels) sends ALL its SOL "
+                          "there minus the network fee; paper mode only shows what it would send. Afterwards set "
+                          "TRADING_MODE=paper: after a live withdrawal the bot buys nothing until it ran in paper")
 
     # ---- data sources (runtime / data-source team) --------------------------
     # GeckoTerminal's free tier (~30/min, 429s on shared IPs such as Railway's) is the scarcest
@@ -543,7 +545,21 @@ class Settings:
                 if v:
                     out.append(v.reveal())
         out.extend(_url_secret_values(self.solana_rpc_url))
+        held = _RUNTIME_SECRETS.get(id(self))
+        if held is not None and held[0] is self:
+            out.extend(s.reveal() for s in held[1])
         return out
+
+    def add_runtime_secret(self, value: str) -> None:
+        """A secret this process made or loaded at run time (the bot's own wallet key, broker/keystore.py):
+        from now on :meth:`secret_values` returns it too, so every scrubber treats it like BOT_WALLET_SECRET.
+        Kept for THIS Settings object only (never in the environment, never pickled: :class:`Secret`)."""
+        if not value:
+            return
+        held = _RUNTIME_SECRETS.get(id(self))
+        known = held[1] if held is not None and held[0] is self else ()
+        if all(s.reveal() != value for s in known):
+            _RUNTIME_SECRETS[id(self)] = (self, (*known, Secret(value)))
 
     def public_dict(self) -> dict[str, Any]:
         """JSON-safe settings with NO secret values: secrets become ``<name>_set: bool``."""
@@ -583,6 +599,9 @@ class Settings:
 
 
 _FIELDS = {f.name: f for f in dataclasses.fields(Settings)}
+#: :meth:`Settings.add_runtime_secret`: ``id(settings) -> (settings, secrets)`` (the object is kept, so its id
+#: is never reused by another Settings; a frozen slots dataclass cannot hold the list itself).
+_RUNTIME_SECRETS: dict[int, tuple[Settings, tuple[Secret, ...]]] = {}
 
 
 def _wallet_problems(s: Settings) -> list[str]:

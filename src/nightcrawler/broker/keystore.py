@@ -18,20 +18,40 @@ Created once (:func:`create`), on the first start in PAPER mode
     the final name - a link fails when the name exists, so an existing key is never overwritten, not even by a
     second process racing this one - and the folder is fsynced. The file is read back before it is used.
 
+    A ``.creating`` marker in the folder is written before and removed after, and a start killed in the middle
+    leaves only ``.bot-keypair.json.*.tmp`` copies that the next start removes (:func:`load`): one that is a
+    second link to the key, or one older than :data:`TEMP_STALE_S` (its address was never shown).
+
 Never replaced
     An existing key file that is not a regular file, cannot be read or does not hold a valid keypair stops the
-    bot (:class:`KeystoreError`) instead of being replaced: money may sit in that wallet.
+    bot (:class:`KeystoreError`) instead of being replaced: money may sit in that wallet. The one exception is
+    a file :func:`create` was still writing when the process died (the ``.creating`` marker is there) and that
+    this ledger never recorded: its address was never shown, so nothing can have been sent to it.
 
 Never created where it could be lost (:func:`resolve_wallet`)
     * not in live mode (a live bot never starts on a brand-new empty wallet: the volume may be missing);
     * not when the ledger already recorded a generated wallet (kv ``keystore.pubkey``) whose file is gone;
     * not on Railway unless ``DATA_DIR`` is on the attached volume (``RAILWAY_VOLUME_MOUNT_PATH``): a container's
-      own disk is wiped on every deploy, and the money with the key.
+      own disk is wiped on every deploy, and the money with the key;
+    * not on a Railway volume that already holds another bot wallet: a key file anywhere in the top
+      :data:`SCAN_DEPTH` folders of the volume, or one listed in the volume's own ``.nightcrawler-wallets.json``
+      (every wallet made on it, by address and folder; public data only). A changed ``DATA_DIR`` would
+      otherwise hide a funded wallet behind a new empty one.
+
+With ``BOT_WALLET_MODE=env`` a wallet the bot made itself is never used, so :func:`unused_wallet` names it: the
+start logs an error and the page shows a banner (its SOL can only be taken back in generated mode).
+
+The key in memory: every encoding is registered with the log redaction filter AND with the settings
+(:meth:`~nightcrawler.config.Settings.add_runtime_secret`), so the page, ``/api/*`` and team-room scrubbers
+(``settings.secret_values()``) redact it exactly like ``BOT_WALLET_SECRET``; and :func:`harden_process` turns
+off core dumps and (Linux) marks the process non-dumpable, so no core file and no same-user ``ptrace`` or
+``/proc/<pid>/mem`` read can carry it out.
 
 Ambiguity is refused by the settings: ``BOT_WALLET_MODE=generated`` together with ``BOT_WALLET_SECRET``.
 
-Signing (:func:`sign_transfer`) builds the one transaction this module signs itself: a SystemProgram transfer
-of SOL from the bot wallet, for :mod:`nightcrawler.withdraw`. Swaps are signed by
+Signing: the two transactions this module signs itself, both for :mod:`nightcrawler.withdraw` -
+:func:`sign_transfer` (a SystemProgram transfer of SOL from the bot wallet) and :func:`sign_close_accounts`
+(CloseAccount of the bot's own EMPTY token accounts, their deposits returned to the bot wallet). Swaps are signed by
 :meth:`~nightcrawler.broker.wallet.Wallet.sign_transaction_b64` as before.
 """
 
@@ -43,34 +63,48 @@ import json
 import os
 import secrets as _random
 import stat
+import sys
+import time
 from collections.abc import Mapping
 from pathlib import Path
 from typing import Any, NamedTuple
 
 from nightcrawler.base58 import b58encode, is_pubkey
 from nightcrawler.broker.base import require_solders
-from nightcrawler.broker.wallet import Wallet, WalletError, load_keypair
-from nightcrawler.config import Secret, Settings
+from nightcrawler.broker.wallet import (
+    Wallet,
+    WalletError,
+    _parse_base58_secret,
+    _parse_json_secret,
+    load_keypair,
+)
+from nightcrawler.config import Settings
 from nightcrawler.logging_setup import get_logger
 
 __all__ = [
+    "CREATING_MARKER",
     "KEY_FILE",
     "KV_GENERATED",
     "KV_PUBKEY",
     "RECEIPT_KIND",
+    "VOLUME_MARKER",
     "WALLET_DIR",
     "KeystoreError",
     "KeystoreExists",
+    "KeystoreHalfMade",
     "SignedTransfer",
     "create",
+    "harden_process",
     "key_path",
     "load",
     "load_or_create",
     "record",
     "resolve_wallet",
+    "sign_close_accounts",
     "sign_transfer",
     "storage_problem",
     "transfer_message_b64",
+    "unused_wallet",
 ]
 
 log = get_logger(__name__)
@@ -89,6 +123,19 @@ _RAILWAY_MARKERS = ("RAILWAY_PROJECT_ID", "RAILWAY_SERVICE_ID", "RAILWAY_ENVIRON
 _FILE_NAME_FOR_HUMANS = f"DATA_DIR/{WALLET_DIR}/{KEY_FILE}"
 _NOFOLLOW = getattr(os, "O_NOFOLLOW", 0)
 _MAX_FILE_BYTES = 4096
+#: Written in the wallet folder before a key is made and removed once it reads back (see :func:`create`).
+CREATING_MARKER = ".creating"
+#: At the Railway volume's root: every wallet made on this volume ``{"wallets": [{"pubkey", "key_file"}]}``.
+VOLUME_MARKER = ".nightcrawler-wallets.json"
+#: How many folder levels below the volume root are searched for another bot wallet before a new one is made.
+SCAN_DEPTH = 3
+#: A leftover ``.bot-keypair.json.*.tmp`` older than this is from a start that died (a racing one is younger).
+TEMP_STALE_S = 60.0
+_TEMP_GLOB = f".{KEY_FILE}.*.tmp"
+_PR_SET_DUMPABLE = 4
+#: Said wherever the key file is damaged or gone: the volume is the only copy (docs/GOING_LIVE.md, backups).
+_RESTORE_HINT = ("If you turned on Railway's volume backups, restore the latest one (Railway: the volume, "
+                 "Backups); if you have none, the bot cannot recover this wallet")
 
 
 class KeystoreError(WalletError):
@@ -97,6 +144,11 @@ class KeystoreError(WalletError):
 
 class KeystoreExists(KeystoreError):
     """:func:`create` found a key file already there (it is never replaced)."""
+
+
+class KeystoreHalfMade(KeystoreError):
+    """The key file is damaged AND :func:`create` was still writing it when the process stopped (its
+    ``.creating`` marker is there): unless a ledger recorded that wallet, its address was never shown."""
 
 
 class SignedTransfer(NamedTuple):
@@ -162,14 +214,107 @@ def _write_all(fd: int, data: bytes) -> None:
         view = view[os.write(fd, view):]
 
 
-def _register(redaction_filter: Any | None, secret: bytes) -> None:
-    """Every encoding of the key (and of its seed half) is redacted from the logs."""
+def _encodings(secret: bytes) -> list[str]:
+    """Every text encoding of the key and of its seed half someone could print by mistake."""
+    out = []
+    for part in (secret, secret[:32]):
+        out += [b58encode(part), part.hex(), part.hex().upper(), base64.b64encode(part).decode("ascii"),
+                base64.urlsafe_b64encode(part).decode("ascii"), json.dumps(list(part)),
+                json.dumps(list(part), separators=(",", ":"))]
+    return out
+
+
+def _register(redaction_filter: Any | None, secret: bytes, raw: str = "") -> None:
+    """Every encoding of the key (and of its seed half) - and the file's own text - is redacted. ``redaction_filter``
+    is anything with ``add_secret`` (the log filter, or :class:`_Sinks`)."""
     if redaction_filter is None:
         return
-    for part in (secret, secret[:32]):
-        for text in (b58encode(part), part.hex(), base64.b64encode(part).decode("ascii"),
-                     json.dumps(list(part)), json.dumps(list(part), separators=(",", ":"))):
-            redaction_filter.add_secret(text)
+    for text in dict.fromkeys([*([raw] if raw else []), *_encodings(secret)]):
+        redaction_filter.add_secret(text)
+
+
+class _Sinks:
+    """Hands every encoding to the log filter AND to the settings' scrub list (``secret_values()``)."""
+
+    def __init__(self, redaction_filter: Any | None, settings: Settings | None) -> None:
+        self.redaction_filter, self.settings = redaction_filter, settings
+
+    def add_secret(self, value: str) -> None:
+        if self.redaction_filter is not None:
+            self.redaction_filter.add_secret(value)
+        add = getattr(self.settings, "add_runtime_secret", None)
+        if add is not None:
+            add(value)
+
+
+def harden_process() -> None:
+    """While the key is in memory: no core dump (RLIMIT_CORE 0) and, on Linux, not dumpable (no same-user
+    ``ptrace`` or ``/proc/<pid>/mem`` read). Best effort: a platform without either keeps working."""
+    try:
+        import resource
+
+        resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
+    except (ImportError, ValueError, OSError) as exc:  # pragma: no cover - platforms without rlimits
+        log.info("keystore_core_dumps_unchanged error=%s", type(exc).__name__)
+    if not sys.platform.startswith("linux"):
+        return
+    try:
+        import ctypes
+
+        if ctypes.CDLL(None, use_errno=True).prctl(_PR_SET_DUMPABLE, 0, 0, 0, 0) != 0:  # pragma: no cover
+            log.info("keystore_dumpable_unchanged errno=%d", ctypes.get_errno())
+    except (OSError, AttributeError) as exc:  # pragma: no cover - no libc prctl
+        log.info("keystore_dumpable_unchanged error=%s", type(exc).__name__)
+
+
+def _write_marker(folder: Path) -> None:
+    fd = os.open(folder / CREATING_MARKER, os.O_WRONLY | os.O_CREAT | os.O_TRUNC | _NOFOLLOW, FILE_MODE)
+    try:
+        _write_all(fd, b"a bot wallet is being made here\n")
+        os.fsync(fd)
+    finally:
+        os.close(fd)
+    _fsync_dir(folder)
+
+
+def _clear_marker(folder: Path) -> None:
+    try:
+        (folder / CREATING_MARKER).unlink()
+    except FileNotFoundError:
+        return
+    except OSError as exc:  # pragma: no cover - a read-only folder: harmless, it is only a marker
+        log.warning("keystore_marker_not_removed error=%s", type(exc).__name__)
+        return
+    _fsync_dir(folder)
+
+
+def _sweep_temps(folder: Path, final: Path) -> None:
+    """Remove ``.bot-keypair.json.*.tmp`` left by a start that died inside :func:`create`: a second link to the
+    key file (always), or a copy of a key that was never used, older than :data:`TEMP_STALE_S` (a younger one
+    may belong to a start racing this one). Never raises."""
+    try:
+        temps = sorted(folder.glob(_TEMP_GLOB))
+    except OSError:  # pragma: no cover - an unreadable folder: load() reports it
+        return
+    if not temps:
+        return
+    try:
+        final_info: os.stat_result | None = os.lstat(final)
+    except OSError:
+        final_info = None
+    now = time.time()
+    for tmp in temps:
+        try:
+            info = os.lstat(tmp)
+            if not stat.S_ISREG(info.st_mode):
+                continue
+            linked = final_info is not None and (info.st_dev, info.st_ino) == (final_info.st_dev, final_info.st_ino)
+            if linked or now - info.st_mtime >= TEMP_STALE_S:
+                os.unlink(tmp)
+                log.warning("keystore_temp_removed file=%s reason=%s", tmp.name,
+                            "second_link_to_the_key" if linked else "key_never_used")
+        except OSError:  # pragma: no cover - gone already, or not ours to remove
+            continue
 
 
 # --------------------------------------------------------------------------- load / create
@@ -177,8 +322,11 @@ def _register(redaction_filter: Any | None, secret: bytes) -> None:
 
 def load(data_dir: str | os.PathLike[str], redaction_filter: Any | None = None) -> Wallet | None:
     """The bot's own wallet from its key file, or None when there is no file. Raises :class:`KeystoreError`
-    (never replacing the file) when it is not a regular file, unreadable or not a valid keypair."""
+    (never replacing the file) when it is not a regular file, unreadable or not a valid keypair -
+    :class:`KeystoreHalfMade` when :func:`create` was still writing it. Leftover temporary copies are removed
+    first. The file may hold the key as a JSON byte array (``solana-keygen``) or in base58 (Phantom)."""
     path = key_path(data_dir)
+    _sweep_temps(path.parent, path)
     try:
         info = os.lstat(path)
     except FileNotFoundError:
@@ -198,14 +346,19 @@ def load(data_dir: str | os.PathLike[str], redaction_filter: Any | None = None) 
     try:
         if len(raw) > _MAX_FILE_BYTES:
             raise WalletError("too large")
-        text = raw.decode("ascii")
-        wallet = load_keypair(Secret(text), redaction_filter)  # validates the format and the key halves
-        if redaction_filter is not None:
-            _register(redaction_filter, bytes(json.loads(text)))
-    except (UnicodeDecodeError, WalletError):
-        raise KeystoreError(f"{_FILE_NAME_FOR_HUMANS} is damaged (not a valid keypair): refusing to start. The bot "
-                            "never replaces its wallet, because money may be in it: restore the file from a backup "
-                            "of the volume") from None
+        text = raw.decode("ascii").strip()
+        # the bytes are parsed ONCE, here (JSON array or base58), and registered from these bytes
+        secret = _parse_json_secret(text) if text.startswith("[") else _parse_base58_secret(text)
+        wallet = Wallet(secret)  # validates the key halves
+    except (UnicodeDecodeError, WalletError, ValueError):
+        if os.path.lexists(path.parent / CREATING_MARKER):
+            raise KeystoreHalfMade(f"{_FILE_NAME_FOR_HUMANS} is damaged: the bot was still writing it when it "
+                                   "stopped") from None
+        raise KeystoreError(f"{_FILE_NAME_FOR_HUMANS} is damaged (not a valid keypair): refusing to start, because "
+                            "money may be in that wallet and the bot never replaces it. " + _RESTORE_HINT) from None
+    _register(redaction_filter, secret, text)
+    _clear_marker(path.parent)  # a finished key: a marker left by a start that died after linking it is stale
+    harden_process()
     return wallet
 
 
@@ -217,11 +370,15 @@ def create(data_dir: str | os.PathLike[str], redaction_filter: Any | None = None
     folder = wallet_dir(data_dir)
     folder.mkdir(mode=DIR_MODE, parents=True, exist_ok=True)
     _tighten(folder, DIR_MODE)
+    final = folder / KEY_FILE
+    if os.path.lexists(final):
+        raise KeystoreExists(f"{_FILE_NAME_FOR_HUMANS} already exists; it is never replaced")
+    harden_process()
     secret = bytes(solders.keypair.Keypair())  # the operating system's CSPRNG
     wallet = Wallet(secret)
     _register(redaction_filter, secret)
+    _write_marker(folder)  # until the key reads back: a file damaged mid-write is known to be half made
     body = (json.dumps(list(secret)) + "\n").encode("ascii")
-    final = folder / KEY_FILE
     tmp = folder / f".{KEY_FILE}.{_random.token_hex(8)}.tmp"
     try:
         fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_EXCL | _NOFOLLOW, FILE_MODE)
@@ -240,7 +397,7 @@ def create(data_dir: str | os.PathLike[str], redaction_filter: Any | None = None
     finally:
         tmp.unlink(missing_ok=True)
     _fsync_dir(folder)
-    check = load(data_dir, redaction_filter)
+    check = load(data_dir, redaction_filter)  # also removes the marker
     if check is None or check.pubkey() != wallet.pubkey():
         raise KeystoreError(f"{_FILE_NAME_FOR_HUMANS} did not read back as the wallet just made: refusing to use it")
     log.info("wallet_created address=%s file=%s (the key never leaves this file)", wallet.pubkey(),
@@ -285,10 +442,94 @@ def _creation_problem(settings: Settings, ledger: Any | None, env: Mapping[str, 
     known = ledger.get_kv(KV_GENERATED) if ledger is not None else None
     if isinstance(known, str) and known:
         return (f"the bot made wallet {known} before (this ledger recorded it), but {_FILE_NAME_FOR_HUMANS} is gone. "
-                "Refusing to make another one: money may be in that wallet. Restore the file (the volume), or "
-                "start over with a new DATA_DIR on purpose")
+                f"Refusing to make another one: money may be in that wallet. {_RESTORE_HINT}")
     problem = storage_problem(settings.data_dir, env)
-    return f"not making a bot wallet: {problem}" if problem else None
+    if problem:
+        return f"not making a bot wallet: {problem}"
+    root = _volume_root(settings.data_dir, env)
+    return _other_wallet_problem(root, key_path(settings.data_dir)) if root is not None else None
+
+
+def _volume_root(data_dir: str | os.PathLike[str], env: Mapping[str, str] | None) -> Path | None:
+    """The Railway volume ``data_dir`` is on (resolved), or None (not on Railway, or not on its volume)."""
+    env = os.environ if env is None else env
+    if not any(env.get(name) for name in _RAILWAY_MARKERS):
+        return None
+    mount = str(env.get("RAILWAY_VOLUME_MOUNT_PATH") or "").strip()
+    if not mount:
+        return None
+    data, volume = Path(data_dir).resolve(), Path(mount).resolve()
+    return volume if data == volume or volume in data.parents else None
+
+
+def _relative(root: Path, path: Path) -> str:
+    try:
+        return path.resolve().relative_to(root).as_posix()
+    except ValueError:  # pragma: no cover - outside the volume
+        return str(path)
+
+
+def _volume_wallets(root: Path) -> list[dict[str, str]]:
+    """The wallets the volume marker lists (public addresses and key-file paths). Unreadable = none."""
+    try:
+        data = json.loads((root / VOLUME_MARKER).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return []
+    wallets = data.get("wallets") if isinstance(data, dict) else None
+    return [w for w in wallets if isinstance(w, dict) and isinstance(w.get("pubkey"), str)
+            and isinstance(w.get("key_file"), str)] if isinstance(wallets, list) else []
+
+
+def _other_wallet_problem(root: Path, own: Path) -> str | None:
+    """Another bot wallet on this volume (listed in its marker, or a key file in its top folders), or None."""
+    mine = _relative(root, own)
+    for entry in _volume_wallets(root):
+        if entry["key_file"] != mine:
+            return _other_wallet_text(entry["key_file"], entry["pubkey"])
+    for depth in range(SCAN_DEPTH + 1):
+        pattern = "/".join(["*"] * depth + [WALLET_DIR, KEY_FILE])
+        for found in sorted(root.glob(pattern)):
+            if _relative(root, found) != mine:
+                return _other_wallet_text(_relative(root, found), None)
+    return None
+
+
+def _other_wallet_text(key_file: str, pubkey: str | None) -> str:
+    folder = key_file.rsplit(f"/{WALLET_DIR}/", 1)[0] if f"/{WALLET_DIR}/" in key_file else ""
+    where = f"the volume's folder {folder}" if folder else "the top of the volume"
+    return (f"another bot wallet{f' ({pubkey})' if pubkey else ''} already exists on this volume, in {where} "
+            f"({key_file}). Refusing to make a second one: money may be in it, and a new wallet would hide it. Set "
+            "DATA_DIR back to the folder that holds that wallet (the folder above its 'wallet' folder), then take "
+            "the money back with WITHDRAW_TO before changing anything")
+
+
+def _remember_on_volume(root: Path, wallet: Wallet, path: Path) -> None:
+    """Add the wallet just made to the volume marker (public address and key-file path; atomic replace)."""
+    entry = {"pubkey": wallet.pubkey(), "key_file": _relative(root, path)}
+    wallets = [w for w in _volume_wallets(root) if w != entry] + [entry]
+    tmp = root / f"{VOLUME_MARKER}.{_random.token_hex(4)}.tmp"
+    try:
+        tmp.write_text(json.dumps({"wallets": wallets}, indent=1) + "\n", encoding="utf-8")
+        os.replace(tmp, root / VOLUME_MARKER)
+        _fsync_dir(root)
+    except OSError as exc:  # the key file itself is safe; the scan still finds it
+        tmp.unlink(missing_ok=True)
+        log.warning("keystore_volume_marker_not_written error=%s", type(exc).__name__)
+
+
+def unused_wallet(settings: Settings, ledger: Any | None) -> str | None:
+    """``BOT_WALLET_MODE=env`` while a wallet the bot made itself exists: its address (this ledger recorded it),
+    ``""`` when only its key file is there, else None. Nobody else can move SOL out of it, so the start logs
+    an error and the page says so."""
+    if settings.bot_wallet_mode == "generated":
+        return None
+    known = ledger.get_kv(KV_GENERATED) if ledger is not None else None
+    if isinstance(known, str) and known:
+        return known
+    try:
+        return "" if os.path.lexists(key_path(settings.data_dir)) else None
+    except OSError:  # pragma: no cover
+        return None
 
 
 def record(ledger: Any, wallet: Wallet, created: bool = False) -> None:
@@ -320,8 +561,26 @@ def resolve_wallet(settings: Settings, ledger: Any | None = None, redaction_filt
     ``env`` (default ``os.environ``) is only read to tell whether ``DATA_DIR`` is on a Railway volume.
     """
     if settings.bot_wallet_mode != "generated":
+        unused = unused_wallet(settings, ledger)
+        if unused is not None:
+            log.error("unused_bot_wallet address=%s: the bot made its own wallet earlier, but BOT_WALLET_MODE=%s does "
+                      "not use it. If it holds SOL, set BOT_WALLET_MODE=generated (and delete BOT_WALLET_SECRET), "
+                      "then take it back with WITHDRAW_TO", unused or "unknown", settings.bot_wallet_mode)
         return load_keypair(settings.bot_wallet_secret, redaction_filter) if settings.bot_wallet_secret else None
-    wallet = load(settings.data_dir, redaction_filter)
+    sinks = _Sinks(redaction_filter, settings)
+    try:
+        wallet = load(settings.data_dir, sinks)
+    except KeystoreHalfMade:
+        known = ledger.get_kv(KV_GENERATED) if ledger is not None else None
+        if not create or (isinstance(known, str) and known):
+            raise KeystoreError(f"{_FILE_NAME_FOR_HUMANS} is damaged (not a valid keypair): refusing to start, "
+                                "because money may be in that wallet and the bot never replaces it. "
+                                + _RESTORE_HINT) from None
+        # its address was never shown (create() logs it only after the read-back, then removes the marker)
+        key_path(settings.data_dir).unlink()
+        log.warning("keystore_half_made_removed file=%s: the bot stopped while writing a new key; its address was "
+                    "never shown, so nothing was ever sent to it. Making the wallet again", _FILE_NAME_FOR_HUMANS)
+        wallet = None
     created = False
     if wallet is None:
         if not create:
@@ -329,13 +588,21 @@ def resolve_wallet(settings: Settings, ledger: Any | None = None, redaction_filt
         problem = _creation_problem(settings, ledger, env)
         if problem:
             raise KeystoreError(problem)
-        wallet, created = load_or_create(settings.data_dir, redaction_filter)
+        wallet, created = load_or_create(settings.data_dir, sinks)
+        root = _volume_root(settings.data_dir, env)
+        if created and root is not None:
+            _remember_on_volume(root, wallet, key_path(settings.data_dir))
     if ledger is not None:
         record(ledger, wallet, created)
     return wallet
 
 
 # --------------------------------------------------------------------------- the transfer it signs
+
+
+#: The only programs whose accounts :func:`sign_close_accounts` closes: SPL Token and Token-2022.
+TOKEN_PROGRAMS = ("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA", "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb")
+_CLOSE_ACCOUNT = bytes([9])  # TokenInstruction::CloseAccount (the same in both programs)
 
 
 def _solders_parts() -> tuple[Any, Any, Any, Any, Any]:
@@ -378,3 +645,29 @@ def sign_transfer(wallet: Wallet, to: str, lamports: int, blockhash: str) -> Sig
         del keypair
     return SignedTransfer(tx_b64=base64.b64encode(bytes(tx)).decode("ascii"), signature=str(tx.signatures[0]),
                           message_b64=base64.b64encode(bytes(message)).decode("ascii"))
+
+
+def sign_close_accounts(wallet: Wallet, accounts: list[tuple[str, str]], blockhash: str) -> SignedTransfer:
+    """A legacy transaction, paid and signed by ``wallet``, with one CloseAccount per ``(token account, token
+    program)``: each (empty) account's lamports go back to ``wallet`` itself, never anywhere else. Only the SPL
+    Token and Token-2022 programs are accepted."""
+    if not accounts:
+        raise ValueError("nothing to close")
+    message, transaction, _sp, pubkey, hash_ = _solders_parts()
+    instruction = importlib.import_module("solders.instruction")
+    owner = pubkey.Pubkey.from_string(wallet.pubkey())
+    ixs = []
+    for account, program in accounts:
+        if program not in TOKEN_PROGRAMS or not is_pubkey(account) or account == wallet.pubkey():
+            raise ValueError("only the bot's own token accounts are closed")
+        metas = [instruction.AccountMeta(pubkey.Pubkey.from_string(account), False, True),
+                 instruction.AccountMeta(owner, False, True), instruction.AccountMeta(owner, True, False)]
+        ixs.append(instruction.Instruction(pubkey.Pubkey.from_string(program), _CLOSE_ACCOUNT, metas))
+    msg = message.Message.new_with_blockhash(ixs, owner, hash_.Hash.from_string(blockhash))
+    keypair = wallet.keypair()
+    try:
+        tx = transaction.Transaction([keypair], msg, hash_.Hash.from_string(blockhash))
+    finally:
+        del keypair
+    return SignedTransfer(tx_b64=base64.b64encode(bytes(tx)).decode("ascii"), signature=str(tx.signatures[0]),
+                          message_b64=base64.b64encode(bytes(msg)).decode("ascii"))

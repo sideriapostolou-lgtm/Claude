@@ -14,6 +14,7 @@ data/*.tmp
 # the bot's own wallet key (BOT_WALLET_MODE=generated): never in version control
 data/wallet/
 **/bot-keypair.json
+**/.bot-keypair.json.*.tmp
 
 # python
 __pycache__/

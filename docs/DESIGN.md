@@ -289,7 +289,8 @@ canonical_json(x) = json.dumps(x, sort_keys=True, separators=(",", ":"), default
   wallet, `BOT_WALLET_MODE=generated`: its PUBLIC address only) and `withdraw` (a
   confirmed `WITHDRAW_TO` transfer: from, to, lamports, signature, fee; the
   `note`s `withdraw_sending` / `withdraw_failed` / `withdraw_expired` /
-  `withdraw_simulated` around it). See `broker/keystore.py` and `withdraw.py`.
+  `withdraw_simulated` / `accounts_closed` / `withdraw_hold_cleared` around it). See
+  `broker/keystore.py` and `withdraw.py`.
 * Ordering guarantee: the engine appends the `decision` receipt before
   executing, and the `fill` receipt immediately after, before fetching any
   newer price.
@@ -394,7 +395,9 @@ redeploy), `engine.safe_mode` {problems, defaults_used, since} | null,
 `usage.providers` {provider: {day, day_counts, month, month_counts, updated_at}}
 (provider names only, never a URL or key), `bot_wallet.balance` {address, sol_lamports,
 checked_at}, `keystore.pubkey` (the generated wallet this ledger receipted), `withdraw.state`
-(`WITHDRAW_TO`: status, pending transfer, last confirmed one; schema in `withdraw.py`). The
+(`WITHDRAW_TO`: status, pending transfer, last confirmed one; schema in `withdraw.py`),
+`withdraw.totals` {lamports, events [[ts, lamports]]}, `withdraw.live_hold` {since, to} (no live
+buys after a live withdrawal until a paper run). The
 bot's own key is NEVER in the ledger: it lives only in `DATA_DIR/wallet/bot-keypair.json`. The ledger stays at schema (`user_version`) 1:
 `positions.wallet` is detected, not versioned (a ledger marked 2 by an earlier build is read
 and marked 1 again), so older builds keep opening it.

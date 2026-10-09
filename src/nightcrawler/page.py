@@ -363,14 +363,15 @@ _SCRIPT = r"""
       walletSol = el("p", "meta");
       walletLast = el("p", "help");
       put($("wallet-body"), el("p", "lead", "Bot wallet:", addr), copyButton(w.address, addr), walletSol,
-        el("p", "help", w.help), w.paper_note ? el("p", "help", w.paper_note) : null, walletLast);
+        el("p", "help", w.help), w.paper_note ? el("p", "help", w.paper_note) : null,
+        w.keep_note ? el("p", "help", w.keep_note) : null, walletLast);
     }
     walletSol.textContent = isNum(w.sol) ? "In it now: " + w.sol.toFixed(4) + " SOL"
       + (isNum(w.checked_at) ? " (checked " + ago(w.checked_at) + ")" : "")
       : "Its SOL has not been checked in the last hour.";
     const last = w.last_withdrawal;
     walletLast.textContent = last && isNum(last.sol) ? "Last sent back: " + last.sol.toFixed(4) + " SOL to "
-      + last.to.slice(0, 4) + "…" + last.to.slice(-4) + (isNum(last.at) ? ", " + ago(last.at) : "") + "." : "";
+      + last.to + (isNum(last.at) ? ", " + ago(last.at) : "") + "." : "";  // in full: look-alikes share the ends
   }
 
   // ---------------------------------------------------------------- B. the team

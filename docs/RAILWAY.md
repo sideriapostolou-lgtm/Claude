@@ -32,6 +32,9 @@ Without it, every redeploy wipes the bot's memory.
   palette), then **Volume**, and connect it to the nightcrawler service.
 - Set the **mount path** to `/data`.
 - One volume per service. The Hobby plan allows up to 5 GB, and the bot uses a few MB a day.
+- **Turn on the volume's backups** (open the volume, **Backups**, choose a daily schedule, if your
+  plan offers it). With `BOT_WALLET_MODE=generated` the volume is the wallet: the bot's key exists
+  only there, so a lost or deleted volume with no backup loses the SOL in it for good.
 
 **4. Set the variables.** Open the service, go to **Variables**, then **Raw Editor**, and paste
 this, replacing the token with your own long random string:

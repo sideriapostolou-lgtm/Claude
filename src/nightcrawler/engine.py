@@ -29,7 +29,9 @@ BOT_WALLET_SECRET changed) is never valued, sold or counted - it is noted at boo
     like ``stop``. Mode changes are receipted (kind ``kill``) and stored in kv
     ``engine.kill_mode`` (so a restart does not receipt the same mode again).
     ``WITHDRAW_TO`` set = ``sell_all`` whatever the switch says (then the ``withdraw``
-    stage sends all the SOL to that address once nothing is left to sell).
+    stage sends all the SOL to that address once nothing is left to sell); live, also
+    ``sell_all`` while a transfer is still pending, and ``stop`` instead of ``off`` after a
+    live withdrawal until the bot ran in paper mode (``Withdrawer.kill_mode``).
 
 ``discover`` (DISCOVERY_INTERVAL_S)
     ``crawler.poll()`` -> new candidates go into a FIFO queue (max
@@ -823,7 +825,7 @@ class Engine:
     def run_withdraw(self, now: float) -> None:
         """The ``withdraw`` stage (WITHDRAW_TO, :mod:`nightcrawler.withdraw`): all SOL to the owner once sold."""
         self.withdraw.run(now, open_positions=len(self._open_positions()),
-                          pending_swaps=len(self.unresolved) + len(self.inflight))
+                          pending_swaps=len(self.unresolved) + len(self.inflight), drift=len(self.drift))
 
     def _emit(self, stream: str, build: Callable[[], dict[str, Any]]) -> None:
         """Hand a row to the learning tape (never blocks, never raises; nothing without learning)."""
@@ -1088,6 +1090,8 @@ class Engine:
         mode = self.risk.kill_mode()
         if self.settings.withdraw_to:  # WITHDRAW_TO: buy nothing, sell everything (nightcrawler.withdraw)
             mode = "sell_all"
+        elif self.withdraw is not None:  # a pending transfer, or the hold after a live withdrawal
+            mode = self.withdraw.kill_mode(mode)
         if mode != self._kill_mode:
             previous = self._kill_mode
             if not (previous is None and mode == "off"):
@@ -2391,10 +2395,10 @@ def build_app(settings: Settings, clock: Clock | None = None, *, session: Any = 
             learning = LearnStage(settings, ledger,
                                   start_recorder=lambda: start_recorder(settings, session=session, clock=learn_clock),
                                   spawn=lambda: learn_job.spawn_learner(settings))
-        from nightcrawler.withdraw import Withdrawer, has_pending
+        from nightcrawler.withdraw import Withdrawer, has_pending, live_hold
 
         withdraw = (Withdrawer(settings, ledger, sources.rpc, wallet, clock)
-                    if settings.withdraw_to or has_pending(ledger) else None)
+                    if settings.withdraw_to or has_pending(ledger) or live_hold(ledger) else None)
         engine = Engine(settings, clock=clock, ledger=ledger, crawler=crawler, cocoon=cocoon, radar=radar,
                         judge=judge, risk=risk, broker=broker, sources=sources, stop_event=stop_event,
                         pumpfun=pumpfun, learning=learning, withdraw=withdraw)

@@ -5,7 +5,8 @@ fills and compares it with what the broker says it holds:
 
 * expected SOL = start lamports (kv ``paper.start_lamports`` /
   ``live.start_lamports``) + sum(``fill.sol_delta_lamports()``) - live SOL sent
-  to the owner by ``WITHDRAW_TO`` (``withdraw`` receipts: amount + fee);
+  to the owner by ``WITHDRAW_TO`` (``withdraw`` receipts: amount + fee) + token-account
+  deposits the withdrawal got back (``note`` ``accounts_closed``: reclaimed - fee);
 * expected tokens[mint] = sum(``fill.token_delta()``) per mint;
 * drift = broker - expected. Paper: any drift is a bug (``ok=False``).
   Live: token drift beyond 1 base unit -> ``ok=False``; SOL drift is reported
@@ -290,18 +291,26 @@ class Auditor:
         return (None if start is None else int(start)), (reset.seq if reset is not None else 0)
 
     def _withdrawn(self) -> int:
-        """Live: lamports that left this wallet in confirmed ``WITHDRAW_TO`` transfers (``withdraw`` receipts,
-        amount + network fee; :mod:`nightcrawler.withdraw`), so a withdrawal is not reported as missing SOL."""
+        """Live: net lamports that left this wallet through ``WITHDRAW_TO`` (:mod:`nightcrawler.withdraw`):
+        confirmed transfers (``withdraw`` receipts, amount + network fee) minus the token-account deposits it
+        closed back into the wallet (``note`` ``accounts_closed``, reclaimed - fee), so neither is reported as
+        missing (or extra) SOL."""
         if self.mode != "live":
             return 0
         wallet = getattr(self.broker, "pubkey", None)
+
+        def whole(*values: Any) -> list[int]:
+            return [v for v in values if isinstance(v, int) and not isinstance(v, bool)]
+
         total = 0
         for r in self.ledger.iter_receipts():
             p = r.payload
-            if r.kind != "withdraw" or p.get("mode") != "live" or (wallet and p.get("from") != wallet):
+            if p.get("mode") != "live" or (wallet and p.get("from") != wallet):
                 continue
-            total += sum(v for v in (p.get("lamports"), p.get("fee_lamports"))
-                         if isinstance(v, int) and not isinstance(v, bool))
+            if r.kind == "withdraw":
+                total += sum(whole(p.get("lamports"), p.get("fee_lamports")))
+            elif r.kind == "note" and p.get("event") == "accounts_closed":
+                total -= sum(whole(p.get("reclaimed_lamports"))) - sum(whole(p.get("fee_lamports")))
         return total
 
     def _check_balances(self, report: AuditReport) -> None:

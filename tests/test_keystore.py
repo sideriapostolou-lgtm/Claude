@@ -294,6 +294,8 @@ def test_settings_refuse_an_ambiguous_wallet_and_never_echo_values(make_settings
 def _rpc_handler(fixture: Any) -> Callable[[Any], Any]:
     """Solana JSON-RPC for the world plus what the bot wallet and the paper withdrawal read."""
     blockhash = b58encode(bytes(range(1, 33)))
+    funding = b58encode(bytes(range(64)))
+    seen: dict[str, str] = {}
 
     def handle(req: Any) -> Any:
         method, params = req.json.get("method"), req.json.get("params") or []
@@ -307,8 +309,22 @@ def _rpc_handler(fixture: Any) -> Callable[[Any], Any]:
             return {**envelope, "result": {"context": {"slot": 1}, "value": 5000}}
         if method == "getMinimumBalanceForRentExemption":
             return {**envelope, "result": 890_880}
-        if method == "getAccountInfo" and params and params[0] == OWNER:
-            return {**envelope, "result": {"context": {"slot": 1}, "value": None}}
+        if method == "getAccountInfo" and params and params[0] == OWNER:  # the owner's Phantom wallet exists
+            return {**envelope, "result": {"context": {"slot": 1}, "value": {
+                "owner": "11111111111111111111111111111111", "executable": False, "data": ["", "base64"],
+                "lamports": 5_000_000_000}}}
+        if method == "getSignaturesForAddress":  # ... and funded the bot wallet once
+            if params and params[0] != OWNER:
+                seen["bot"] = params[0]
+            return {**envelope, "result": [{"signature": funding, "err": None, "slot": 7}]}
+        if method == "getTransaction":
+            return {**envelope, "result": {"slot": 7, "meta": {"err": None, "innerInstructions": []},
+                                           "transaction": {"message": {"instructions": [{
+                                               "program": "system", "parsed": {"type": "transfer", "info": {
+                                                   "source": OWNER, "destination": seen.get("bot"),
+                                                   "lamports": 300_000_000}}}]}}}}
+        if method == "getTokenAccountsByOwner":
+            return {**envelope, "result": {"context": {"slot": 1}, "value": []}}
         return fixture
 
     return handle
@@ -492,3 +508,212 @@ def test_logged_records_cannot_carry_the_key_even_from_tracebacks(generated: Set
         drop_nightcrawler_log_handlers()
     assert not leaks(logs.getvalue(), secret) and "[REDACTED]" in logs.getvalue()
     assert sys.modules["nightcrawler.broker.keystore"] is keystore
+
+
+# --------------------------------------------------------------------------- review round 2 (KS-1 .. KS-9)
+
+
+def _railway(volume: Path) -> dict[str, str]:
+    return {"RAILWAY_PROJECT_ID": "p", "RAILWAY_SERVICE_ID": "s", "RAILWAY_VOLUME_MOUNT_PATH": str(volume)}
+
+
+def test_a_second_wallet_is_never_made_while_another_one_sits_on_the_volume(make_settings: Callable[..., Settings],
+                                                                             tmp_path: Path,
+                                                                             fake_clock: FakeClock) -> None:
+    """KS-1: DATA_DIR moved to another folder of the SAME volume must not silently make a second wallet."""
+    volume = tmp_path / "vol"
+    volume.mkdir()
+    env = _railway(volume)
+    first = resolve_wallet(make_settings(BOT_WALLET_MODE="generated", DATA_DIR=str(volume)), env=env)
+    assert first is not None
+    moved = make_settings(BOT_WALLET_MODE="generated", DATA_DIR=str(volume / "nightcrawler"))
+    with Ledger(volume / "nightcrawler" / "nc.db", clock=fake_clock) as fresh:  # a new ledger: it knows nothing
+        with pytest.raises(KeystoreError, match="another bot wallet") as caught:
+            resolve_wallet(moved, fresh, env=env)
+        assert first.pubkey() in str(caught.value) and "DATA_DIR" in str(caught.value)
+        assert fresh.receipts() == []
+    assert not key_path(volume / "nightcrawler").exists()
+    # the volume remembers every wallet it ever held, even when its key file is buried deeper than any scan
+    buried = volume / "a" / "b" / "c" / "d"
+    buried.mkdir(parents=True)
+    key_path(volume).rename(buried / KEY_FILE)
+    with pytest.raises(KeystoreError, match=first.pubkey()):
+        resolve_wallet(moved, env=env)
+    # the folder that holds it still starts normally
+    (volume / "wallet").mkdir(exist_ok=True)
+    (buried / KEY_FILE).rename(key_path(volume))
+    again = resolve_wallet(make_settings(BOT_WALLET_MODE="generated", DATA_DIR=str(volume)), env=env)
+    assert again is not None and again.pubkey() == first.pubkey()
+
+
+def test_a_wallet_left_behind_by_env_mode_is_named_in_the_logs_and_on_the_page(
+        make_settings: Callable[..., Settings], ledger: Ledger) -> None:
+    """KS-1: switching back to BOT_WALLET_MODE=env hides a funded generated wallet: say so, loudly."""
+    from nightcrawler.pagestate import build_page_state
+
+    generated = make_settings(BOT_WALLET_MODE="generated")
+    own = resolve_wallet(generated, ledger, env={})
+    assert own is not None
+    from solders.keypair import Keypair
+
+    env_mode = make_settings(BOT_WALLET_SECRET=b58encode(bytes(Keypair())))  # a throwaway pasted key
+    records: list[logging.LogRecord] = []
+    handler = logging.Handler()
+    handler.emit = records.append  # type: ignore[method-assign]
+    logging.getLogger("nightcrawler").addHandler(handler)
+    try:
+        assert resolve_wallet(env_mode, ledger, env={}) is not None
+    finally:
+        logging.getLogger("nightcrawler").removeHandler(handler)
+    assert any(r.levelno >= logging.ERROR and own.pubkey() in r.getMessage() for r in records)
+    assert keystore.unused_wallet(env_mode, ledger) == own.pubkey()
+    assert keystore.unused_wallet(generated, ledger) is None
+    alerts = build_page_state(ledger, env_mode, 1_791_475_200.0)["alerts"]
+    assert any(own.pubkey() in a["text"] and "WITHDRAW_TO" in a["text"] for a in alerts), alerts
+
+
+def test_the_damaged_file_message_does_not_assume_a_backup_and_the_docs_ask_for_one(generated: Settings) -> None:
+    """KS-2: the volume is the only copy of the key: the docs ask for volume backups; errors never assume one."""
+    keystore.create(generated.data_dir)
+    key_path(generated.data_dir).write_text("not a key\n")
+    with pytest.raises(KeystoreError) as caught:
+        resolve_wallet(generated, env={})
+    text = str(caught.value)
+    assert "restore the file from a backup of the volume" not in text
+    assert "if you have one" in text.lower() or "if you turned" in text.lower()
+    root = Path(__file__).resolve().parents[1]
+    going_live = (root / "docs" / "GOING_LIVE.md").read_text(encoding="utf-8")
+    fund = going_live.split("## Fund the bot from Phantom", 1)[1].split("\n## ", 1)[0].replace("**", "")
+    fund = " ".join(fund.split())  # one line: the doc wraps at 95 columns
+    assert "Backups" in fund and "the volume is the wallet" in fund.lower()
+    assert "Backups" in (root / "docs" / "RAILWAY.md").read_text(encoding="utf-8")
+
+
+def test_the_wallet_card_says_the_volume_holds_the_only_copy_of_the_key(generated: Settings, ledger: Ledger) -> None:
+    from nightcrawler.pagestate import build_page_state
+
+    resolve_wallet(generated, ledger, env={})
+    card = build_page_state(ledger, generated, 1_791_475_200.0)["wallet"]
+    assert card["keep_note"] and "backup" in card["keep_note"].lower() and "volume" in card["keep_note"].lower()
+
+
+def test_leftover_temporary_copies_of_a_key_are_removed(generated: Settings) -> None:
+    """KS-5: a start killed inside create() leaves .tmp copies of a key; the next start removes them."""
+    wallet = resolve_wallet(generated, env={})
+    assert wallet is not None
+    folder = key_path(generated.data_dir).parent
+    linked = folder / f".{KEY_FILE}.0123456789abcdef.tmp"
+    os.link(key_path(generated.data_dir), linked)  # killed right after the hard link
+    orphan = folder / f".{KEY_FILE}.fedcba9876543210.tmp"
+    keystore.create(generated.data_dir.parent / "elsewhere")
+    orphan.write_bytes(key_path(generated.data_dir.parent / "elsewhere").read_bytes())  # killed before the link
+    old = orphan.stat().st_mtime - 3600
+    os.utime(orphan, (old, old))
+    again = resolve_wallet(generated, env={})
+    assert again is not None and again.pubkey() == wallet.pubkey()
+    assert sorted(p.name for p in folder.iterdir()) == [KEY_FILE]
+    root = Path(__file__).resolve().parents[1]
+    for ignore in (".gitignore", ".dockerignore"):
+        assert "**/.bot-keypair.json.*.tmp" in (root / ignore).read_text(encoding="utf-8"), ignore
+
+
+def test_a_fresh_temporary_file_of_a_racing_start_is_left_alone(generated: Settings) -> None:
+    folder = key_path(generated.data_dir).parent
+    folder.mkdir(parents=True)
+    racing = folder / f".{KEY_FILE}.00000000000000aa.tmp"
+    racing.write_text("[]")  # another start is writing its key right now
+    keystore.load(generated.data_dir)
+    assert racing.exists()
+
+
+def test_a_half_written_key_that_was_never_shown_does_not_block_the_bot_forever(
+        generated: Settings, ledger: Ledger, monkeypatch: pytest.MonkeyPatch) -> None:
+    """KS-6: without hard links the key is written in place; a kill mid-write must not brick the bot."""
+    def no_links(*_a: Any, **_k: Any) -> None:
+        raise PermissionError(1, "Operation not permitted")
+
+    real_write = keystore._write_all
+    writes: list[int] = []
+
+    def killed_mid_write(fd: int, data: bytes) -> None:
+        if len(data) > 200:  # the key itself (not the small marker)
+            writes.append(len(data))
+            if len(writes) == 2:  # the temporary copy first, then straight into the final name
+                real_write(fd, data[:100])
+                raise KeyboardInterrupt("killed")
+        real_write(fd, data)
+
+    monkeypatch.setattr(keystore.os, "link", no_links)
+    monkeypatch.setattr(keystore, "_write_all", killed_mid_write)
+    with pytest.raises(KeyboardInterrupt):
+        resolve_wallet(generated, ledger, env={})
+    assert key_path(generated.data_dir).stat().st_size == 100
+    monkeypatch.setattr(keystore, "_write_all", real_write)
+    wallet = resolve_wallet(generated, ledger, env={})  # its address was never shown: nothing can be in it
+    assert wallet is not None and len(read_key(generated.data_dir)) == 64
+    assert [r.payload["pubkey"] for r in ledger.receipts() if r.kind == "wallet_created"] == [wallet.pubkey()]
+    assert sorted(p.name for p in key_path(generated.data_dir).parent.iterdir()) == [KEY_FILE]
+
+
+def test_a_damaged_key_of_a_recorded_wallet_still_stops_the_bot(generated: Settings, ledger: Ledger) -> None:
+    wallet = resolve_wallet(generated, ledger, env={})
+    assert wallet is not None
+    folder = key_path(generated.data_dir).parent
+    (folder / keystore.CREATING_MARKER).write_text("creating\n")  # even with a marker: it was shown
+    key_path(generated.data_dir).write_text("[1, 2")
+    with pytest.raises(KeystoreError, match="damaged"):
+        resolve_wallet(generated, ledger, env={})
+    assert key_path(generated.data_dir).read_text() == "[1, 2"
+
+
+def test_the_page_api_and_team_scrubbers_also_know_the_generated_key(make_settings: Callable[..., Settings],
+                                                                     ledger: Ledger, fake_clock: FakeClock) -> None:
+    """KS-7: settings.secret_values() feeds every scrubber; with the bot's own wallet it must hold the key too."""
+    from nightcrawler.pagestate import build_page_state
+
+    settings = make_settings(BOT_WALLET_MODE="generated")
+    resolve_wallet(settings, ledger, env={})
+    secret = read_key(settings.data_dir)
+    assert not [name for name, form in secret_forms(secret).items()
+                if form not in settings.secret_values() and name in ("key.base58", "seed.base58", "key.json")]
+    ledger.set_kv("engine.last_error", f"2026-10-09 positions: boom {b58encode(secret)} {secret.hex()}")
+    ledger.append_receipt("error", {"stage": "positions", "error": f"boom {b58encode(secret)}"})
+    blobs = {"state": json.dumps(build_state(ledger, settings, fake_clock.now())),
+             "page": json.dumps(build_page_state(ledger, settings, fake_clock.now())),
+             "team": json.dumps(TeamRoom(settings, ledger=ledger, clock=fake_clock, environ={}).state())}
+    assert not {name: found for name, blob in blobs.items() if (found := leaks(blob, secret))}
+    assert make_settings(BOT_WALLET_MODE="generated").secret_values() == []  # another Settings: not affected
+
+
+def test_a_key_file_in_phantom_format_loads_the_same_with_or_without_the_log_filter(generated: Settings) -> None:
+    """KS-8: load() accepts base58 (Phantom) key files; registering them with the filter must not crash."""
+    from nightcrawler.logging_setup import RedactionFilter
+
+    wallet = keystore.create(generated.data_dir)
+    secret = read_key(generated.data_dir)
+    key_path(generated.data_dir).write_text(b58encode(secret) + "\n")
+    filt = RedactionFilter()
+    loaded = keystore.load(generated.data_dir, filt)
+    assert loaded is not None and loaded.pubkey() == wallet.pubkey()
+    assert b58encode(secret) in filt.secrets and json.dumps(list(secret)) in filt.secrets
+    assert keystore.load(generated.data_dir) is not None
+
+
+def test_no_core_dump_or_same_user_memory_read_while_the_key_is_loaded(generated: Settings,
+                                                                       monkeypatch: pytest.MonkeyPatch) -> None:
+    """KS-9: the process holding the key makes no core dump and (Linux) is not dumpable/ptrace-able."""
+    import subprocess
+
+    calls: list[int] = []
+    monkeypatch.setattr(keystore, "harden_process", lambda: calls.append(1))
+    resolve_wallet(generated, env={})
+    resolve_wallet(generated, env={})
+    assert len(calls) >= 2  # made, then loaded: hardened each time the key is in memory
+    code = ("import ctypes, resource, sys; from nightcrawler.broker import keystore; keystore.harden_process(); "
+            "core = resource.getrlimit(resource.RLIMIT_CORE); "
+            "dump = ctypes.CDLL(None).prctl(3, 0, 0, 0, 0) if sys.platform.startswith('linux') else 0; "
+            "print(core[0], core[1], dump)")
+    out = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, timeout=60,
+                         env={**os.environ, "PYTHONPATH": str(Path(keystore.__file__).resolve().parents[2])})
+    assert out.returncode == 0, out.stderr
+    assert out.stdout.split() == ["0", "0", "0"]
