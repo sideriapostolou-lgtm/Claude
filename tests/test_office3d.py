@@ -1,6 +1,7 @@
 """The 3D town (/office3d, nightcrawler.office3d): static render and purity, the CSP hashes of the inline module and
 style, the cast and the pavilions covering every member, the route (auth, headers, methods), the bundled three.js
-asset route (whitelist, auth, no traversal, integrity) and the one page's link to it."""
+asset route (whitelist, auth, no traversal, integrity), the one page's link to it, and the mission table's ticket
+board, REAL lamp and held bubbles reading the Polymarket desk from members.predict."""
 
 from __future__ import annotations
 
@@ -132,6 +133,30 @@ def test_office3d_csp_hashes_match_the_inline_module_and_style(settings: Setting
         "; connect-src 'self'; img-src 'self' data:; base-uri 'none'; form-action 'none'; frame-ancestors 'none'")
     assert "'unsafe-inline'" not in OFFICE3D_CSP and "'unsafe-eval'" not in OFFICE3D_CSP
     assert page.count("<script") == 3  # the two JSON data blocks and the one module: nothing else runs
+
+
+def test_the_mission_table_reads_the_polymarket_desk(settings: Settings) -> None:
+    """The ticket board, the REAL lamp, Voss's held bubbles, the HUD row and the chip dot all come from
+    members.predict (label, open_real, open_paper, positions[].live) and go on screen as text only."""
+    page = render_office3d_html(settings)
+    module, style = _module(page), re.search(r"<style>(.*?)</style>", page, re.DOTALL).group(1)
+    assert "members.predict" in module
+    for field in ("open_real", "open_paper", "positions", "label"):
+        assert f"m.{field}" in module, field  # read from the desk's member, never from another figure
+    assert "o.board = makeSign(" in module and "t.board.userData.draw(lines" in module  # a canvas-text sprite like the safe sign
+    assert '"Polymarket desk"' in module and '" REAL · "' in module and '" paper"' in module
+    assert '(q.live ? "REAL " : "paper ")' in module and "q.live ? BRASS : DIM" in module  # REAL only from the venue's own book
+    assert 'BRASS = "#d8a953", DIM = "#c9bda6"' in module  # brass for real, dim for paper; red stays for losses
+    assert "s.length > 28 ? s.slice(0, 27)" in module and "pos.slice(0, 3)" in module  # 28-char questions, three lines
+    assert 'if (!pos.length) lines.push({ text: "no open positions"' in module  # an empty book is said, not invented
+    assert "if (key === deskKey) return" in module  # redrawn only when the desk's data changes
+    assert "o.realLamp" in module and "o.realHalo" in module and "realOn ? 0xff4d4d : 0x6c717c" in module  # red lit, grey off
+    assert "/^(Lesson:|REAL\\b)/" in module and "big ? 14 : 9, big ? 8 : 0" in module  # the desk's lessons stay up 8 s
+    assert "simT < bubbles[i].holdUntil && !hold" in module  # a held bubble is not talked over
+    assert 'c.members.indexOf("predict") >= 0' in module and 'r.className = "real"' in module  # the red dot on Voss's chip
+    assert '"Polymarket desk · " + (m.label || "")' in module and 'if (id === "predict") a.className = "wrap"' in module
+    assert "#chips button i.real" in style and "#card .rows span.real" in style and "#card .rows div span.wrap" in style
+    assert "innerHTML" not in module and page.count("<script") == 3  # still text only, still nothing else runs
 
 
 # --------------------------------------------------------------------------- the cast and the world

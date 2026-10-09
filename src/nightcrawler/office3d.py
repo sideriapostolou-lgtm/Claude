@@ -16,6 +16,10 @@ Honesty rules (the same as the office's, non-negotiable):
 * Every WORD on screen comes from ``/api/page`` (names, roles, status words, event text, money, the town line) or
   from the fixed cast descriptions in :data:`CAST3D` and :data:`OFFICES3D`, and is inserted as text only (never as
   markup). The sign on the safe says exactly ``money.label`` (e.g. "Paper money (pretend)") under ``money.usd``.
+  The ticket board at the mission table lists the Polymarket desk exactly as ``members.predict`` reports it (its
+  label, ``open_real`` REAL and ``open_paper`` paper positions, the first three positions); a position is written
+  REAL (brass) only when the venue's own book says ``live``, paper ones are dim; the REAL lamp on the pavilion is
+  lit only while ``open_real > 0``.
 * Nothing is invented: no trade, profit or activity appears that the ledger did not report. Hand-off walks and the
   coin drop are triggered only by a new member event or a newly closed trade in the data.
 * When the API cannot be reached, the page says so in plain words and the town freezes.
@@ -264,6 +268,9 @@ header .money #clock { font-size: 10px; color: var(--dim); display: block; }
 #chips button i { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 6px; background: #6c717c; }
 #chips button i.working { background: var(--good); } #chips button i.blocked { background: var(--bad); }
 #chips button i.waiting { background: #f5b133; }
+#chips button i.real { background: #ff4d4d; margin: 0 0 0 6px; box-shadow: 0 0 6px #ff4d4d; }
+#card .rows span.real { color: var(--brass); font-weight: 700; }
+#card .rows div span.wrap { white-space: normal; }
 #honest { position: fixed; left: 12px; right: 12px; bottom: calc(14px + env(safe-area-inset-bottom)); font-size: 10.5px;
           color: var(--dim); text-align: center; text-shadow: 0 1px 2px #000; pointer-events: none;
           white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -348,7 +355,8 @@ function main() {
     ctx.lineTo(x + w, y + h - r); ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h); ctx.lineTo(x + r, y + h);
     ctx.quadraticCurveTo(x, y + h, x, y + h - r); ctx.lineTo(x, y + r); ctx.quadraticCurveTo(x, y, x + r, y); ctx.closePath();
   }
-  // A sign: a canvas texture on a sprite. draw(lines, accent) writes the lines as TEXT (fillText) only.
+  // A sign: a canvas texture on a sprite. draw(lines, accent) writes the lines as TEXT (fillText) only, centred or
+  // (align: "left") from the left edge, each with its own size and colour.
   function makeSign(w, h, sw, sh) {
     const c = document.createElement("canvas"); c.width = w; c.height = h;
     const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
@@ -365,8 +373,8 @@ function main() {
       let y = h / 2 - total / 2;
       used.forEach(function (ln) {
         ctx.font = (ln.bold ? "bold " : "") + ln.size + "px ui-sans-serif, system-ui, sans-serif";
-        ctx.fillStyle = ln.color || "#f3ecdf";
-        ctx.fillText(ln.text, w / 2, y + ln.size * 0.62, w - 40);
+        ctx.fillStyle = ln.color || "#f3ecdf"; ctx.textAlign = ln.align === "left" ? "left" : "center";
+        ctx.fillText(ln.text, ln.align === "left" ? 36 : w / 2, y + ln.size * 0.62, ln.align === "left" ? w - 72 : w - 40);
         y += ln.size * 1.18;
       });
       tex.needsUpdate = true;
@@ -447,6 +455,20 @@ function main() {
       [[0.4, 0.3], [-0.6, -0.4], [0.2, -0.7]].forEach(function (p) { g.add(cone(0.08, 0.26, 0xd8a953, p[0], 1.2, -0.2 + p[1], 8)); });
       [-1.9, 1.9].forEach(function (x) { g.add(cone(0.16, 0.26, 0xd8a953, x, 2.2, -D / 2 + 0.25, 8)); const lm = sph(0.14, 0xffd27a, x, 2.42, -D / 2 + 0.25, glow(0xffd27a, 0.9)); g.add(lm); lampMats.push(lm.material); });
       g.add(box(2.4, 1.3, 0.06, 0x241a38, 0, 2.05, -D / 2 + 0.18)); g.add(box(2.5, 0.06, 0.08, 0xd8a953, 0, 2.72, -D / 2 + 0.19)); g.add(box(2.5, 0.06, 0.08, 0xd8a953, 0, 1.38, -D / 2 + 0.19));
+      // the ticket board: a canvas-text sprite on the tower's front face, the band a 390 px phone shows between the HUD
+      // and Voss's head whether the table is pinned or the camera follows him (and the face the orbiting camera sees);
+      // the Polymarket desk's label, REAL/paper counts and positions (updateDesk). A little left of centre: the pinned
+      // camera looks from a three-quarter angle.
+      o.board = makeSign(1024, 301, 3.4, 1.0); o.board.position.set(-0.3, 4.4, -0.4 + D * 0.3 + 0.05); g.add(o.board);
+      o.board.userData.draw([{ text: "Polymarket desk", size: 44, bold: true }, { text: "—", size: 48, color: "#c9bda6" }], "rgba(216,169,83,0.55)");
+      // the REAL lamp on a bracket beside the board: red only while the desk holds real-money positions
+      // (members.predict.open_real > 0), grey otherwise; a small plaque under it says what it is
+      const br = cyl(0.03, 0.03, 0.45, 0x3a3a44, -2.1, 4.62, 1.1); br.rotation.z = Math.PI / 2; g.add(br);
+      o.realLamp = new THREE.MeshLambertMaterial({ color: 0x6c717c, emissive: 0x6c717c, emissiveIntensity: 0.25 });
+      const lamp = new THREE.Mesh(new THREE.SphereGeometry(0.2, 12, 9), o.realLamp); lamp.position.set(-2.3, 4.62, 1.2); g.add(lamp);
+      const rh = halo(0xff4d4d, 1.6); rh.position.copy(lamp.position); rh.material.opacity = 0; g.add(rh); o.realHalo = rh.material;
+      o.realTag = makeSign(192, 80, 0.72, 0.3); o.realTag.position.set(-2.3, 4.2, 1.2); g.add(o.realTag);
+      o.realTag.userData.draw([{ text: "REAL", size: 48, bold: true, color: "#ff8a80" }], "#ff4d4d"); o.realTag.material.opacity = 0.35;
     },
     vault: function (g, o) {
       [1.2, 2.45].forEach(function (y) { g.add(box(W, 0.18, 0.08, 0x2c2f36, 0, y, -D / 2 + 0.17)); });
@@ -751,6 +773,7 @@ function main() {
       coinMesh.position.copy(p); coinMesh.rotation.y += dt * 8; coinMesh.rotation.x += dt * 5; if (u >= 1) { coin = null; coinMesh.visible = false; } }
     if (safeFlashUntil && simT > safeFlashUntil) { offices.vault.safeDoor.emissiveIntensity = 0; safeFlashUntil = 0; }
     offices.den.screens.concat(offices.table.screens).forEach(function (m, i) { m.emissiveIntensity = 0.55 + Math.sin(simT * (3 + i) + i) * 0.12; });
+    if (realOn && offices.table.realLamp) offices.table.realLamp.emissiveIntensity = 1.0 + Math.sin(simT * 3) * 0.35;
     water.rotation.z += dt * 0.15;
   }
   const _v = new THREE.Vector3(), _w = new THREE.Vector3();
@@ -773,6 +796,28 @@ function main() {
       offices[k].light.color.setHex(c); offices[k].light.emissive.setHex(c); offices[k].light.emissiveIntensity = st === "idle" ? 0.25 : 0.9;
       offices[k].halo.color.setHex(c); offices[k].halo.opacity = st === "idle" ? 0 : 0.9;
     });
+  }
+  // the ticket board and the REAL lamp at the mission table: the Polymarket desk exactly as members.predict reports it
+  const BRASS = "#d8a953", DIM = "#c9bda6";
+  let deskKey = null, realOn = false;
+  function clip28(s) { s = String(s || ""); return s.length > 28 ? s.slice(0, 27) + "…" : s; }
+  function updateDesk() {
+    const t = offices.table, m = members.predict || null; if (!t || !t.board || !m) return;
+    const nReal = Number(m.open_real || 0), nPaper = Number(m.open_paper || 0), pos = Array.isArray(m.positions) ? m.positions : [];
+    const key = JSON.stringify([m.label, nReal, nPaper, pos.slice(0, 3)]);
+    if (key === deskKey) return; deskKey = key;
+    const lines = [{ text: "Polymarket desk" + (m.label ? " · " + m.label : ""), size: 44, bold: true },  // the desk's own label, as is
+                   { text: nReal + " REAL · " + nPaper + " paper", size: 48, color: nReal > 0 ? BRASS : DIM }];
+    pos.slice(0, 3).forEach(function (q) {  // REAL only when the venue's own book says so (live), else paper
+      lines.push({ text: (q.live ? "REAL " : "paper ") + (q.side || "") + " " + (q.p_in != null ? Number(q.p_in).toFixed(3) : "—") + " " + clip28(q.question),
+                   size: 42, align: "left", color: q.live ? BRASS : DIM });
+    });
+    if (!pos.length) lines.push({ text: "no open positions", size: 42, color: DIM });
+    t.board.userData.draw(lines, nReal > 0 ? BRASS : "rgba(216,169,83,0.55)");
+    realOn = nReal > 0;
+    const c = realOn ? 0xff4d4d : 0x6c717c;
+    t.realLamp.color.setHex(c); t.realLamp.emissive.setHex(c); t.realLamp.emissiveIntensity = realOn ? 1.2 : 0.25;
+    t.realHalo.opacity = realOn ? 0.95 : 0; t.realTag.material.opacity = realOn ? 1 : 0.35;
   }
   const SKY_D = new THREE.Color(0x9ec9ef), SKY_N = new THREE.Color(0x0a0f24), SKY_G = new THREE.Color(0xf2a35c), HEMI_D = new THREE.Color(0xcfe3ff), HEMI_N = new THREE.Color(0x3b4a7a);
   function daylight() { const d = new Date(), h = d.getHours() + d.getMinutes() / 60; return THREE.MathUtils.smoothstep(Math.cos((h - 13) / 12 * Math.PI), -0.3, 0.35); }
@@ -848,15 +893,16 @@ function main() {
 
   // ------------------------------------------------------------- bubbles and the HUD
   const bubbles = [];
-  function speak(actor, memberId, text, tone, seconds) {
+  function speak(actor, memberId, text, tone, seconds, hold) {
     if (!actor || !text) return;
-    const i = bubbles.findIndex(function (b) { return b.actor === actor; }); if (i >= 0) { bubbles[i].el.remove(); bubbles.splice(i, 1); }
-    while (bubbles.length >= 2) bubbles.shift().el.remove();
+    const i = bubbles.findIndex(function (b) { return b.actor === actor; });
+    if (i >= 0) { if (simT < bubbles[i].holdUntil && !hold) return; bubbles[i].el.remove(); bubbles.splice(i, 1); }  // a held bubble is not talked over
+    while (bubbles.length >= 2) { const j = bubbles.findIndex(function (b) { return simT >= b.holdUntil; }); if (j < 0) break; bubbles[j].el.remove(); bubbles.splice(j, 1); }
     const d = document.createElement("div"); d.className = "bubble" + (tone === "good" ? " good" : tone === "bad" ? " bad" : "");
     const s = document.createElement("small"); s.textContent = actor.name.toUpperCase() + " · " + nameOf(memberId);
     const p = document.createElement("span"); p.textContent = text;
     d.appendChild(s); d.appendChild(p); d.style.opacity = "0"; bubblesEl.appendChild(d);
-    bubbles.push({ el: d, actor: actor, until: simT + (seconds || 8) });
+    bubbles.push({ el: d, actor: actor, until: simT + (seconds || 8), holdUntil: simT + (hold || 0) });
   }
   function updateBubbles() {
     const Wd = window.innerWidth, Hg = window.innerHeight;
@@ -885,6 +931,7 @@ function main() {
     Object.keys(CAST).forEach(function (k) {
       const c = CAST[k], b = document.createElement("button");
       b.appendChild(statusDot(c.members)); b.appendChild(document.createTextNode(c.name)); b.className = pinned === c.office ? "on" : "";
+      if (c.members.indexOf("predict") >= 0 && Number((members.predict || {}).open_real || 0) > 0) { const r = document.createElement("i"); r.className = "real"; b.appendChild(r); }
       b.onclick = function () { pin(c.office); }; chips.appendChild(b);
     });
     Object.keys(OFFICES).forEach(function (k) {
@@ -908,8 +955,15 @@ function main() {
         const m = members[id]; if (!m) return;
         const div = document.createElement("div"), a = document.createElement("span"), st = document.createElement("span");
         a.textContent = nameOf(id) + ": " + (m.doing || m.why || ""); st.className = "status " + m.status; st.textContent = m.status;
+        if (id === "predict") a.className = "wrap";  // the desk's doing text in full: it says what is paper and what is real
         div.appendChild(a); div.appendChild(st); rows.appendChild(div);
       });
+      if (key === "table" && members.predict) {  // the Polymarket desk: its label and what is real on the table
+        const m = members.predict, nReal = Number(m.open_real || 0), nPaper = Number(m.open_paper || 0);
+        const div = document.createElement("div"), a = document.createElement("span"), n = document.createElement("span");
+        a.textContent = "Polymarket desk · " + (m.label || ""); n.textContent = nReal + " REAL · " + nPaper + " paper"; n.className = nReal > 0 ? "real" : "";
+        div.appendChild(a); div.appendChild(n); rows.appendChild(div);
+      }
     } else {
       room.textContent = "THE CAMPUS"; who.appendChild(document.createTextNode("The team"));
       const counts = (data && data.team && data.team.counts) || {};
@@ -936,9 +990,10 @@ function main() {
     const here = officeOf[memberId], i = PIPELINE.indexOf(memberId);
     let dest = i >= 0 && i + 1 < PIPELINE.length ? officeOf[PIPELINE[i + 1]] : null;
     if (!dest && here !== actor.homeOffice) dest = here;
-    speak(actor, memberId, ev.text, ev.tone, 9);
+    const text = String(ev.text || ""), big = /^(Lesson:|REAL\b)/.test(text);  // the desk's lessons and real-money events stay up
+    speak(actor, memberId, text, ev.tone, big ? 14 : 9, big ? 8 : 0);
     if (dest && dest !== actor.homeOffice && actor.queue.length < 3) actor.queue.push({ dest: dest, hold: 3 });
-    focusOn(here, actor, 10);
+    focusOn(here, actor, big ? 12 : 10);
   }
   function onClosed(t) {
     const jet = actors.jet; if (!jet) return;
@@ -982,7 +1037,7 @@ function main() {
     statusEl.className = alerts.length && alerts[0].level === "bad" ? "bad" : "";
     townEl.textContent = (d.town && d.town.line) || "";
     data = d;
-    updateLights(); renderChips(); renderCard();
+    updateLights(); updateDesk(); renderChips(); renderCard();
     if (first) { chatterAt = simT + 0.5; }
   }
   async function tick() {
