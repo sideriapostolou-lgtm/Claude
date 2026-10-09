@@ -466,7 +466,7 @@ _SCRIPT = r"""
   // ------------------------------------------------------------- loop
   async function tick() {
     try { const d = await fetchPage(); if (d) apply(d); } catch (e) { setOffline("Cannot reach the bot right now"); }
-    clockEl.textContent = lastOkAt ? "updated " + new Date(lastOkAt).toLocaleTimeString() : "";
+    clockEl.textContent = lastOkAt ? "· updated " + new Date(lastOkAt).toLocaleTimeString() : "";
   }
   window.addEventListener("resize", function () { positionBubble(); positionSafe(); });
   setInterval(function () { if (document.visibilityState === "visible") director(false); }, 1000);
