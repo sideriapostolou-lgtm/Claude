@@ -15,6 +15,7 @@ Two detectors
   - ``floor``: the 3rd-lowest per-minute non-AGENT buy SOL (a price-ignoring buyer present in >= 28 of 30 minutes
     puts a floor under every minute's buying; organic flow only adds to it);
   - single actor: in the 6 quietest minutes the median number of buyers (>= 0.01 SOL) is <= 2;
+  - steady: the CV of the 30 minute sums is < 0.5 (PLAN's buy-size regularity);
   - price-insensitive: |Spearman(minute buy SOL, previous minute's return)| < 0.3 (PLAN's threshold);
   - fires when floor >= 0.01 SOL/min and both tests pass. ``mech_bid_h`` = 60 x floor (SOL per hour).
 
@@ -77,6 +78,7 @@ FLOOR_RANK = 3              # floor = 3rd-lowest minute -> the bid is present in
 FLOOR_MIN_SOL = 0.01        # SOL per minute: at least one non-dust buy's worth
 QUIET_N = 6                 # the quietest minutes examined by the single-actor test
 QUIET_MAX_BUYERS = 2        # median buyers (>= 0.01 SOL) in those minutes
+STEADY_MAX_CV = 0.5         # PLAN 4.5 size regularity (CV of buy sizes < 0.5) applied to the window's minute sums
 SPEARMAN_MAX = 0.3          # PLAN 4.5: |Spearman(size, return before)| < 0.3
 CARRY_FRAC = 0.5            # a minute "carries the bid" when its non-AGENT buy SOL >= 0.5 x floor
 ALIVE_BARS = 2              # bid_alive: one of the last 2 completed minutes carries the bid (PLAN: within 120 s)
@@ -106,6 +108,8 @@ MC_AGES_MIN = tuple(range(30, 111, 10))
 MC_HORIZON_S = 3600.0
 MC_MIN_SLOPE, MC_MIN_R2 = 0.5, 0.05
 MC_MIN_COINS, MC_MIN_OBS = 30, 100
+# operator clusters (a bootstrap grouping, never a feature): shared creator / symbol / top-5 early pool buyer
+CLUSTER_TOP_K = 5
 # rug label: a one-minute drop of more than 50 % (PLAN: one-trade drop > 50 %; minute bars bound it from above)
 RUG_DROP = 0.5
 # selection and verdict bars
@@ -119,8 +123,8 @@ PROCEED_VAL = ("SELECTED", "SELECTED_UNDERPOWERED")
 FIXED = {
     "version": VERSION, "detector": "MECH-bar", "w_bars": W_BARS, "floor_rank": FLOOR_RANK,
     "floor_min_sol": FLOOR_MIN_SOL, "quiet_n": QUIET_N, "quiet_max_buyers": QUIET_MAX_BUYERS,
-    "spearman_max": SPEARMAN_MAX, "carry_frac": CARRY_FRAC, "alive_bars": ALIVE_BARS, "rhythm_bars": RHYTHM_BARS,
-    "mech_age_min": MECH_AGE_MIN, "dump_frac_x": DUMP_FRAC_X, "lp_frac_y": LP_FRAC_Y,
+    "steady_max_cv": STEADY_MAX_CV, "spearman_max": SPEARMAN_MAX, "carry_frac": CARRY_FRAC,
+    "alive_bars": ALIVE_BARS, "rhythm_bars": RHYTHM_BARS, "mech_age_min": MECH_AGE_MIN, "dump_frac_x": DUMP_FRAC_X, "lp_frac_y": LP_FRAC_Y,
     "classes": list(ALLOWED_CLASSES), "age_min_s": AGE_MIN_S, "age_max_s": AGE_MAX_S, "stop_pct": STOP_PCT,
     "max_hold_s": MAX_HOLD_S, "size_usd": SIZE_USD,
     "fill": "common.FillConfig() default: worst, latency 30 s, entry-bar exits",
@@ -216,10 +220,10 @@ def _run_minutes(carry: np.ndarray, k: int) -> int:
 def mech_bar(snap: C.AsOf, k_end: int | None = None) -> dict:
     """MECH-bar detector at ``snap`` (or as of an earlier cutoff: the first ``k_end`` completed bars).
 
-    -> {ok, fires, k, floor, quiet_buyers, spearman, bid_alive, mech_age_min, mech_bid_h, X, drift_pred60}."""
+    -> {ok, fires, k, floor, quiet_buyers, cv, spearman, bid_alive, mech_age_min, mech_bid_h, X, drift_pred60}."""
     bars = snap.bars
     k = len(bars) if k_end is None else max(0, min(int(k_end), len(bars)))
-    out = {"ok": False, "fires": False, "k": k, "floor": None, "quiet_buyers": None, "spearman": None,
+    out = {"ok": False, "fires": False, "k": k, "floor": None, "quiet_buyers": None, "cv": None, "spearman": None,
            "bid_alive": False, "mech_age_min": 0, "mech_bid_h": None, "X": None, "drift_pred60": None}
     if k < W_BARS + 2:
         return out
@@ -232,14 +236,16 @@ def mech_bar(snap: C.AsOf, k_end: int | None = None) -> dict:
     floor = float(bw[order[FLOOR_RANK - 1]])
     quiet = float(np.median(nb[order[:QUIET_N]]))
     rho = spearman(bw, r_prev)
+    cv = _cv(bw)
     X = float(bars.X[k - 1])
     carry = b >= CARRY_FRAC * floor if floor > 0 else np.zeros(k, bool)
     mech_h = 60.0 * floor
-    out.update(ok=True, floor=floor, quiet_buyers=quiet, spearman=rho, X=X, mech_bid_h=mech_h,
+    out.update(ok=True, floor=floor, quiet_buyers=quiet, cv=cv, spearman=rho, X=X, mech_bid_h=mech_h,
                bid_alive=bool(floor > 0 and carry[k - ALIVE_BARS:k].any()),
                mech_age_min=_run_minutes(carry, k),
                drift_pred60=((X + mech_h) / X) ** 2 - 1.0 if X > 0 else None,
-               fires=bool(floor >= FLOOR_MIN_SOL and quiet <= QUIET_MAX_BUYERS and abs(rho) < SPEARMAN_MAX))
+               fires=bool(floor >= FLOOR_MIN_SOL and quiet <= QUIET_MAX_BUYERS and cv < STEADY_MAX_CV
+                          and abs(rho) < SPEARMAN_MAX))
     return out
 
 
@@ -589,8 +595,10 @@ def model_check(obs: pd.DataFrame, B: int = 2000, hide: bool = False) -> dict:
 
 def clusters_for(ds: C.Dataset) -> dict[str, str]:
     """Operator-cluster proxy for the bootstrap / concentration checks (a grouping, never a feature): connected
-    components of coins sharing a creator or an upper-cased symbol. Fields read through AsOf at the end of each
-    coin's window. Coins with neither are their own cluster."""
+    components of allowed-class coins that share a creator, an upper-cased symbol, or ANY of their top-5 early
+    (w120) pool buyers (AGENT and pooled accounts excluded) -- the PLAN links operators by co-appearing wallets.
+    Fields are read through AsOf at the end of each coin's window. Other coins are their own cluster. Over-merging
+    only widens the cluster CIs (conservative); under-merging would narrow them."""
     parent: dict[str, str] = {}
 
     def find(a: str) -> str:
@@ -609,11 +617,16 @@ def clusters_for(ds: C.Dataset) -> dict[str, str]:
         snap = ds.asof(m, cd.g + 60 * C.N_BARS + C.DECISION_LAG_S)
         node = "m:" + m
         find(node)
+        if m1_class(snap) not in ALLOWED_CLASSES:
+            continue
         cr, sy = snap.get("creator"), snap.get("symbol")
         if cr:
             union(node, "c:" + str(cr))
         if sy and str(sy).strip():
             union(node, "s:" + str(sy).strip().upper())
+        top = snap.top_buyers("w120", exclude_agent=True) or ()
+        for w in sorted(top, key=lambda w: (-float(w[1]), str(w[0])))[:CLUSTER_TOP_K]:
+            union(node, "w:" + str(w[0]))
     return {m: find("m:" + m) for m in ds.mints}
 
 

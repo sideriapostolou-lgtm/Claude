@@ -375,8 +375,9 @@ def _checksums(tr: pd.DataFrame) -> np.ndarray:
          + np.mod((tr["wallet_h"].to_numpy(np.uint64) % np.uint64(1_000_037)).astype(np.float64), p) * 11.0
          + np.mod(tr["ts"].to_numpy(np.float64), p) * 13.0
          + tr["is_buy"].to_numpy().astype(np.float64) * 17.0)
-    if "tx_idx" in tr:
-        v = v + np.mod(tr["tx_idx"].to_numpy(np.float64), p) * 19.0
+    for k, col in enumerate(("tx_idx", "venue", "x0", "y0", "virt_ksol")):
+        if col in tr:
+            v = v + np.mod(tr[col].to_numpy(np.float64), p) * float(19 + 4 * k)
     return np.cumsum(v + 1.0)
 
 
@@ -1346,7 +1347,7 @@ def synth_b1(ds: C.Dataset, mints: Iterable[str], seed: int = 0) -> pd.DataFrame
     v0 = 17.584505289
     for m in mints:
         cd_snap = ds.asof(m, ds.coin(m).g + 60 * C.N_BARS + 60)
-        rng = np.random.default_rng([seed, abs(hash(m)) % (2 ** 32)])
+        rng = np.random.default_rng([seed, int(hashlib.sha1(m.encode()).hexdigest()[:8], 16)])
         g = cd_snap.g
         created = cd_snap.get("created_ts")
         c_slot = cd_snap.get("c_slot")
@@ -1365,7 +1366,7 @@ def synth_b1(ds: C.Dataset, mints: Iterable[str], seed: int = 0) -> pd.DataFrame
         def add(t, venue, buy, w, sol, tok, x0, y0, virt=0.0):
             if sol < 0.01:
                 return
-            rows.append({"slot": slot_of(t), "tx_idx": len(rows) % 400, "pix": 0, "ix": 0, "ts": int(t), "mint": m,
+            rows.append({"slot": slot_of(t), "t_float": float(t), "pix": 0, "ix": 0, "ts": int(t), "mint": m,
                          "venue": venue, "is_buy": bool(buy), "wallet_h": np.uint64(w), "usol": int(sol * LAMPORTS),
                          "tok": int(tok * TOK), "x0": int(x0 * LAMPORTS), "y0": int(y0 * TOK), "fees": 0,
                          "virt_ksol": int(virt * 1e6), "src": 9})
@@ -1423,7 +1424,10 @@ def synth_b1(ds: C.Dataset, mints: Iterable[str], seed: int = 0) -> pd.DataFrame
     df = pd.DataFrame(rows)
     if len(df):
         df["wallet_h"] = df["wallet_h"].astype(np.uint64)
-        df = df.sort_values(["mint", "slot", "tx_idx"], kind="stable").reset_index(drop=True)
+        df = df.sort_values(["mint", "t_float"], kind="stable").reset_index(drop=True)
+        df["slot"] = df.groupby("mint")["slot"].cummax()            # slots monotonic in time within a coin
+        df["tx_idx"] = df.groupby("mint").cumcount()
+        df = df.drop(columns=["t_float"])
     return df
 
 
