@@ -16,6 +16,7 @@ documented exception: ``POSITION_PCT, DAILY_LOSS_LIMIT_PCT,
 MAX_DRAWDOWN_HALT_PCT, DIP_PCT, TAKE_PROFIT_PCT, TRAIL_PCT, STOP_LOSS_PCT`` are
 FRACTIONS (0.20 = 20 %); ``MAX_PRICE_IMPACT_PCT``, ``COCOON_*_PCT`` and
 ``RADAR_*_PCT`` are PERCENT (3.0 = 3 %).
+The gap-risk budgets ``DAILY_RISK_BUDGET_PCT`` and ``MAX_AT_RISK_PCT`` are FRACTIONS too.
 """
 
 from __future__ import annotations
@@ -246,6 +247,16 @@ class Settings:
     paper_slippage_bps: int = _f(100, "bps", "Paper model of execution slippage: every paper fill receives this many "
                                  "basis points LESS than the quote's out_amount (live fills land below the quote "
                                  "by Ultra's slippage, latency and MEV; 0 = fill exactly at the quote)", lo=0, hi=1000)
+
+    # ---- gap-risk budgets (risk.py: every open ticket counts 0.95 of itself, a rug's real loss) ----------
+    daily_risk_budget_pct: float = _f(0.15, "fraction", "Worst-case daily budget as a FRACTION of start-of-day "
+                                      "equity: today's loss plus 0.95 of every open ticket plus 0.95 of the new "
+                                      "one must stay within it, or the new ticket is made smaller (below "
+                                      "MIN_POSITION_USD: no buy). A stop-loss does not bound a rug", lo=0, hi=1,
+                                      lo_open=True)
+    max_at_risk_pct: float = _f(0.25, "fraction", "Most of the equity (a FRACTION) that may be at rug risk in all "
+                                "open positions together, 0.95 of each ticket, the new one included (alongside "
+                                "MAX_OPEN_POSITIONS)", lo=0, hi=1, lo_open=True)
 
     # ---- strategy -----------------------------------------------------------
     min_age_min: float = _f(60.0, "minutes", "Ignore tokens younger than this", lo=0)

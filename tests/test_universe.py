@@ -57,7 +57,9 @@ class Bot:
         change(self.world)
         client = HttpClient(session=self.http, clock=self.clock, rate_limits={}, default_rate=None,
                             rng=random.Random(0))
-        settings = make_settings(DATA_DIR=str(tmp_path / "bot"))
+        # The gap-risk budgets (G23/G38) size the ticket below the 20 % HEAD_TRACE was captured with; they are
+        # pinned in test_engine_exits/test_risk, so they are opened here and the trace stays the 510f347 one.
+        settings = make_settings(DATA_DIR=str(tmp_path / "bot"), DAILY_RISK_BUDGET_PCT=1, MAX_AT_RISK_PCT=1)
         settings.ensure_data_dir()
         sources = build_sources(settings, client)
         self.ledger = Ledger(settings.db_path, clock=self.clock)

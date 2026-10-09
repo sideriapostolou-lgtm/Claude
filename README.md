@@ -156,6 +156,8 @@ full list with explanations is in [.env.example](.env.example). The important on
 | `MAX_POSITION_USD` / `MIN_POSITION_USD` | `25` / `5` | Position size limits in dollars. |
 | `MAX_OPEN_POSITIONS` | `3` | Most positions at once. |
 | `DAILY_LOSS_LIMIT_PCT` | `0.20` | After losing 20 % in a UTC day, no new buys until tomorrow. |
+| `DAILY_RISK_BUDGET_PCT` | `0.15` | Today's loss plus 95 % of every open ticket and of the new one (a rug's real loss) must fit in 15 % of the day's start, or the ticket shrinks (no buy below $5). At $100 the first ticket is $15.79. |
+| `MAX_AT_RISK_PCT` | `0.25` | All open tickets together may risk at most 25 % of the money in rugs (95 % of each). |
 | `MAX_DRAWDOWN_HALT_PCT` | `0.50` | After falling 50 % from the peak, no new buys until you reset. |
 | `MAX_WALLET_USD` | `150` | Live: refuses new buys while the wallet holds more than this, in case you funded the wrong wallet. |
 | `SOL_RESERVE` | `0.02` | SOL that is never spent (fees, deposits). |
@@ -183,7 +185,11 @@ with a hint.
 - **Dedicated wallet only,** with `MAX_WALLET_USD` as a tripwire if you load the wrong one.
 - **Fail closed.** If a safety source, the radar, the judge or a quote fails, the bot doesn't buy.
 - **Limits:** 20 % per position (max $25), at most 3 open positions, a daily loss stop and a
-  drawdown halt measured in SOL, so a SOL price move alone can't trip them.
+  drawdown halt measured in SOL, so a SOL price move alone can't trip them. Every limit counts 95 %
+  of each ticket as at risk (a rug, not the stop), so a ticket shrinks until even all-rug days
+  stay within 15 % and above the halt line.
+- **Blind means out:** a position with no price for 30 s is priced by a Jupiter sell quote; two
+  failed quotes in a row and it is sold.
 - **Kill switch** from the Railway variables page: `stop` or `sell_all`.
 - **Never double-buys.** A swap is never re-sent. If a live swap's outcome is unknown, the bot
   stops all new buys, asks the blockchain about the transaction (or, when it cannot, waits 90 s),

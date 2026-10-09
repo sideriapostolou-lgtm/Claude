@@ -45,7 +45,8 @@ SECRETS = {
 RPC_KEY = "helius-rpc-key-0a1b2c3d4e5f"
 TOKEN = SECRETS["DASHBOARD_TOKEN"]
 WALLET = "BotWa11etPubkey1111111111111111111111111111"
-PROVEN = {"champion": "dip-rebound v2", "champion_passed_locked_test": True, "paper_matches_backtest": True}
+PROVEN = {"champion": "dip-rebound v2", "champion_passed_locked_test": True, "paper_matches_backtest": True,
+          "state": "live_ready"}  # the Coach's stage 2 passed (G39: no real money before it)
 #: The example password in docs/RAILWAY.md: public, so it must never tick "dashboard locked".
 PLACEHOLDER_TOKEN = "change-me-to-a-long-random-password-1234567890"
 #: Words a non-developer should never have to decode on the page.
@@ -509,7 +510,7 @@ def test_checklist_items_on_a_fresh_paper_bot(settings: Settings) -> None:
     ready = readiness(settings, {}, wallet_address=None, wallet_sol=None)
     assert [i["id"] for i in ready["items"]] == list(CHECK_IDS)
     assert [i["label"] for i in ready["items"]] == [
-        "A strategy proved an edge on unseen data", "Paper results match the test results",
+        "A strategy proved an edge on unseen data", "Paper trades proved it (150+ trades, 14+ days)",
         "Bot wallet set up and funded", "Keys shared in chat replaced", "Dashboard locked with a password link",
         "Real-money switch"]
     reasons = {i["id"]: i["reason"] for i in ready["items"]}

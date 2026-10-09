@@ -61,8 +61,10 @@ BOT_WALLET_SECRET changed) is never valued, sold or counted - it is noted at boo
     closed candle is older than :data:`CANDLE_MAX_LAG_S` are skipped (GT lag) ->
     ``strategy.entry_signal`` -> strict universe check (age, mcap and liquidity
     windows, a snapshot no older than 2 x WATCH_INTERVAL_S) -> ``risk.can_open``
-    + ``risk.size_position`` (cheap, so the GT/LLM budget is not spent on a
-    blocked entry) -> ``cocoon.check`` again (cached COCOON_CACHE_MIN; a hard
+    + ``risk.size_position`` with the open positions (cheap, so the GT/LLM budget is not spent on a
+    blocked entry; the ticket is capped so that its rug, 0.95 of it, fits the daily risk budget, the
+    drawdown cushion and the total-at-risk cap - G23/G38, see :mod:`nightcrawler.risk`; the decision's
+    ``sizing`` records the cap and the budget that set it) -> ``cocoon.check`` again (cached COCOON_CACHE_MIN; a hard
     fail rejects and unwatches) -> ``radar.scan`` (reject on flag OR error) ->
     ``judge.decide(build_features(...))`` (required mode: "no" rejects;
     advisory: logged only) -> ``broker.quote("buy")`` (rejected when its price
@@ -88,6 +90,12 @@ BOT_WALLET_SECRET changed) is never valued, sold or counted - it is noted at boo
     another process changed the row), so a stale copy never reopens a position
     that ``nightcrawler sell-all`` closed meanwhile. A position without a usable
     entry price still exits: time stop, or a stop measured on value vs cost.
+    BLIND MEANS OUT (G33): a position the feeds have not priced for more than
+    :data:`BLIND_PRICE_MAX_AGE_S` is priced by an Ultra SELL quote for the whole position (never executed;
+    any impact accepted, ``price_source: ultra_quote`` on its exit), every interval while it stays blind;
+    :data:`BLIND_QUOTE_FAILURES` failed quotes in a row force a full exit (``blind_exit``), retried every
+    interval through the same full-exit rules (live: chain truth before any write-off). A price from the
+    feeds resets it; a due time stop goes first, as before.
     A FULL exit sells ``min(books, what the wallet holds)`` (F10): the tokens the wallet
     does not hold are written off with a 0-SOL fill and a ``note`` ``exit_shortfall`` (all
     of them, with an ``exit`` decision, when it holds none), so a books/wallet mismatch can
@@ -155,8 +163,11 @@ BOT_WALLET_SECRET changed) is never valued, sold or counted - it is noted at boo
     the learner child (``nightcrawler learn run --incremental``) every LEARN_INTERVAL_MIN and reaps it.
     The recorder thread is started after the boot receipt and stopped at shutdown (the learner gets
     SIGTERM). The engine's own observations go to the tape without ever waiting: ``evals`` (every
-    candle evaluation and every ``enter``/``reject_*`` decision, after its receipt), ``fills`` (every
-    entry and exit fill) and ``lag`` (every candle fetch, every equity point). Nothing learning does
+    candle evaluation and every ``enter``/``reject_*``/``watch``/``unwatch``/``exit``/``exit_partial``
+    decision, after its receipt, with ``sizing {equity_usd, free_sol, size_usd}``), ``fills`` (every
+    entry and exit fill) and ``lag`` (every candle fetch; every equity point with ``equity_usd``; at boot
+    one ``kind="versions"`` row with the 7 member hashes, :func:`member_hashes`; per crawler poll compact
+    ``kind="seen"`` rows ``{source, mints}`` of the coins the tape had not seen). Nothing learning does
     can change a tick: its failures are counted in ``engine.status["learning"]``, never receipted as
     errors, and trading reads nothing from it.
 
@@ -175,6 +186,7 @@ fetches any newer price, so recorded intent can never be edited with hindsight.
 from __future__ import annotations
 
 import dataclasses
+import hashlib
 import logging
 import math
 import os
@@ -184,17 +196,20 @@ import threading
 import time
 from collections import Counter, deque
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any, Callable
 
 from nightcrawler import __version__
 from nightcrawler.botwallet import CHECK_EVERY_S as BOT_WALLET_CHECK_S, record_balance
 from nightcrawler.clock import Clock, RealClock, iso_utc
 from nightcrawler.config import Settings, mask_problem
+from nightcrawler.hashing import canonical_json
 from nightcrawler.http import HttpError
 from nightcrawler.learn import job as learn_job
 from nightcrawler.learn.store import LearnStore, db_path, drain_outbox
 from nightcrawler.logging_setup import get_logger
 from nightcrawler.models import (
+    LAMPORTS_PER_SOL,
     SOL_MINT,
     Candle,
     Decision,
@@ -205,6 +220,7 @@ from nightcrawler.models import (
     RadarSignal,
     SafetyReport,
     Signal,
+    StrategyParams,
     TokenCandidate,
     Verdict,
     effective_price_usd,
@@ -241,6 +257,13 @@ __all__ = [
     "LEARN_DB_TIMEOUT_S",
     "LEARNER_OVERRUN_S",
     "LEARNER_TERM_GRACE_S",
+    "BLIND_PRICE_MAX_AGE_S",
+    "BLIND_QUOTE_FAILURES",
+    "BLIND_PROBE_MAX_IMPACT_PCT",
+    "SEEN_TAPE_TTL_S",
+    "MEMBERS",
+    "member_hashes",
+    "team_hash",
 ]
 
 log = get_logger(__name__)
@@ -314,7 +337,43 @@ LEARNER_OVERRUN_S = 60.0
 LEARNER_TERM_GRACE_S = 2.0
 #: The same learning failure is logged at most this often (seconds).
 LEARN_LOG_EVERY_S = 600.0
+#: G33 "blind means out": an open position whose last price from the feeds (Jupiter price v3, DexScreener) is
+#: older than this is priced by an Ultra sell quote for the whole position, every POSITION_INTERVAL_S ...
+BLIND_PRICE_MAX_AGE_S = 30.0
+#: ... and this many failed quotes in a row force an exit (``blind_exit``), retried every POSITION_INTERVAL_S.
+BLIND_QUOTE_FAILURES = 2
+#: The blind quote is a price, not a trade: any price impact is accepted for it (the exit keeps its own cap).
+BLIND_PROBE_MAX_IMPACT_PCT = 100.0
+#: A coin taped in a ``seen`` row is taped again only after this long (the crawler's own memory, seconds) ...
+SEEN_TAPE_TTL_S = 6 * 3600.0
+#: ... and at most this many are remembered (oldest forgotten first).
+SEEN_TAPE_MAX = 20_000
 _FINAL_CHAIN = ("landed", "failed")
+#: Decisions taped to ``evals`` besides every ``reject_*`` (PR-E; ``hold`` stays off the tape).
+_TAPED_ACTIONS = frozenset({"enter", "watch", "unwatch", "exit", "exit_partial"})
+
+#: The team members whose versions the ``versions`` tape row carries (EXPERIENCE.md §4.1).
+MEMBERS = ("crawler", "cocoon", "radar", "strategy", "judge", "risk", "broker")
+#: Source files of each member (relative to the package).
+_MEMBER_SOURCES: dict[str, tuple[str, ...]] = {
+    "crawler": ("crawler.py",), "cocoon": ("cocoon.py",), "radar": ("radar.py",), "strategy": ("strategy.py",),
+    "judge": ("judge.py",), "risk": ("risk.py",), "broker": ("broker/base.py", "broker/paper.py", "broker/live.py"),
+}
+#: Public settings each member reads, besides the ``cocoon_*`` / ``radar_*`` families (controls such as the
+#: kill switch are not versions).
+_MEMBER_SETTINGS: dict[str, tuple[str, ...]] = {
+    "crawler": ("min_age_min", "min_age_since_grad_min", "max_age_h", "min_mcap_usd", "max_mcap_usd",
+                "min_liquidity_usd", "min_organic_score", "discover_gt_new_pools", "discovery_interval_s",
+                "watchlist_max", "watchlist_ttl_h"),
+    # the graduation window (G12) is an age anchor of the entry check, like MIN_AGE_MIN
+    "strategy": (*StrategyParams.FIELDS_FROM_SETTINGS, "min_age_since_grad_min"),
+    "judge": ("judge_mode", "judge_model", "judge_effort"),
+    "risk": ("position_pct", "max_position_usd", "min_position_usd", "max_open_positions", "daily_loss_limit_pct",
+             "max_drawdown_halt_pct", "max_wallet_usd", "sol_reserve", "cooldown_min", "daily_risk_budget_pct",
+             "max_at_risk_pct"),
+    "broker": ("trading_mode", "paper_slippage_bps", "network_fee_sol", "max_price_impact_pct", "max_slippage_pct",
+               "quote_max_age_s", "simulate_before_send"),
+}
 
 _SAFETY_METRIC_KEYS = ("top10_pct", "max_holder_pct", "creator_pct", "insider_pct", "graph_insiders",
                        "dev_mints", "lp_locked_pct", "holder_count", "rugcheck_score_normalised", "copycat_count",
@@ -408,15 +467,67 @@ def _eval_row(item: WatchItem, now: float, signal_: Signal | None, reason: str) 
             "snapshot_at": item.snapshot_at, "candle_source": item.candle_source}
 
 
+def _finite(value: Any) -> float | None:
+    """``value`` as a finite float, else None (a bool is not a number here)."""
+    if isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value):
+        return float(value)
+    return None
+
+
+def _tape_sizing(sizing: Any) -> dict[str, Any] | None:
+    """``sizing`` of a decision row: ``{equity_usd, free_sol, size_usd}`` (None where the decision had none)."""
+    if not isinstance(sizing, dict):
+        return None
+    equity, sol_usd, free = (_finite(sizing.get(k)) for k in ("equity_lamports", "sol_usd", "free_lamports"))
+    return {"equity_usd": equity / LAMPORTS_PER_SOL * sol_usd if equity is not None and sol_usd is not None else None,
+            "free_sol": free / LAMPORTS_PER_SOL if free is not None else None,
+            "size_usd": _finite(sizing.get("size_usd"))}
+
+
 def _decision_row(d: Decision) -> dict[str, Any]:
-    """``evals`` tape row of an ``enter`` / ``reject_*`` decision (written after its receipt)."""
+    """``evals`` tape row of an ``enter`` / ``reject_*`` / ``watch`` / ``unwatch`` / ``exit`` / ``exit_partial``
+    decision (written after its receipt)."""
     inputs, v = d.inputs or {}, d.verdict
     safety = inputs.get("safety")
     return {"ts": d.ts, "mint": d.mint, "decision": d.action, "reason": d.reason, "signal": inputs.get("signal"),
             "snapshot": inputs.get("snapshot"), "candle_source": inputs.get("candle_source"),
             "safety": {k: safety.get(k) for k in ("passed", "hard_fail_reasons", "warnings", "unverified")}
             if isinstance(safety, dict) else None,
-            "verdict": {"decision": v.decision, "confidence": v.confidence, "source": v.source} if v else None}
+            "verdict": {"decision": v.decision, "confidence": v.confidence, "source": v.source} if v else None,
+            "sizing": _tape_sizing(inputs.get("sizing"))}
+
+
+def member_hashes(settings: Settings) -> dict[str, str]:
+    """``{member: sha256}`` for :data:`MEMBERS`: the member's source bytes plus the public Settings it reads
+    (the judge also its prompt's sha256). A new hash is a new version of that member (EXPERIENCE.md §4.1)."""
+    from nightcrawler.judge import STATIC_SYSTEM_PROMPT
+
+    public = settings.public_dict()
+    root = Path(__file__).resolve().parent
+    out: dict[str, str] = {}
+    for member in MEMBERS:
+        digest = hashlib.sha256()
+        for rel in _MEMBER_SOURCES[member]:
+            digest.update(rel.encode("utf-8") + b"\0" + (root / rel).read_bytes() + b"\0")
+        names = [*_MEMBER_SETTINGS.get(member, ()),
+                 *(n for n in public if member in ("cocoon", "radar") and n.startswith(f"{member}_"))]
+        used: dict[str, Any] = {name: public[name] for name in names}
+        if member == "judge":
+            used["prompt_sha256"] = hashlib.sha256(STATIC_SYSTEM_PROMPT.encode("utf-8")).hexdigest()
+        digest.update(canonical_json(used).encode("utf-8"))
+        out[member] = digest.hexdigest()
+    return out
+
+
+def team_hash(members: dict[str, str]) -> str:
+    """sha256 of the canonical JSON of every member hash."""
+    return hashlib.sha256(canonical_json(members).encode("utf-8")).hexdigest()
+
+
+def _versions_row(settings: Settings, now: float) -> dict[str, Any]:
+    """The boot ``lag`` row ``kind="versions"``: the 7 member hashes and the team hash."""
+    members = member_hashes(settings)
+    return {"ts": now, "kind": "versions", "members": members, "team_hash": team_hash(members)}
 
 
 def _fill_row(fill: Fill, quote: Any, decision: Decision | None) -> dict[str, Any]:
@@ -536,7 +647,8 @@ class LearnStage:
       LEARN_INTERVAL_MIN, one at a time. One still running :data:`LEARNER_OVERRUN_S` past its wall budget
       gets SIGTERM, then SIGKILL.
     * :meth:`emit`: an ``evals`` / ``fills`` / ``lag`` row into the recorder's queue with ``put_nowait`` (a
-      full queue drops it, counted). The row is BUILT inside, so a bug in it costs only that row.
+      full queue drops it, counted). The row is BUILT inside, so a bug in it costs only that row;
+      :meth:`emit_many` does the same for a list of rows.
     * :meth:`stop` (shutdown): SIGTERM to the learner (SIGKILL after :data:`LEARNER_TERM_GRACE_S`), stop the
       recorder.
 
@@ -664,19 +776,31 @@ class LearnStage:
         log.info("learner_started pid=%s", getattr(process, "pid", None))
 
     def emit(self, stream: str, build: Callable[[], dict[str, Any]]) -> None:
+        self.emit_many(stream, lambda: [build()])
+
+    def emit_many(self, stream: str, build: Callable[[], list[dict[str, Any]]]) -> None:
+        """Like :meth:`emit` for the rows ``build()`` returns (built inside, only while a recorder runs)."""
         recorder = getattr(self.recorder, "recorder", None)
         if recorder is None:
             return
         try:
-            extra = {"variant_hash": self.variant_hash} if stream in ("evals", "fills") else {}
-            row = _clean({"v": 1, **build(), **extra})
-            if recorder.emit(stream, row):
-                self.counters["emits"] += 1
-            else:
-                self.counters["emits_dropped"] += 1
+            rows = build()
         except Exception as exc:
-            self.counters["emit_failed"] += 1
-            self._failed("emit", exc)
+            self._emit_failed(exc)
+            return
+        extra = {"variant_hash": self.variant_hash} if stream in ("evals", "fills") else {}
+        for row in rows:
+            try:
+                if recorder.emit(stream, _clean({"v": 1, **row, **extra})):
+                    self.counters["emits"] += 1
+                else:
+                    self.counters["emits_dropped"] += 1
+            except Exception as exc:
+                self._emit_failed(exc)
+
+    def _emit_failed(self, exc: Exception) -> None:
+        self.counters["emit_failed"] += 1
+        self._failed("emit", exc)
 
     def stop(self) -> None:
         p, self.process = self.process, None
@@ -769,6 +893,11 @@ class Engine:
         self.safe_mode: dict[str, Any] | None = None
         #: :class:`LearnStage` (LEARN_ENABLED) or None
         self.learning = learning
+        #: G33: position id -> when the feeds last priced it; failed blind quotes in a row
+        self._priced_at: dict[str, float] = {}
+        self._blind_failures: dict[str, int] = {}
+        #: mint -> when it was taped in a ``seen`` row (learning only)
+        self._taped_seen: dict[str, float] = {}
 
     # ------------------------------------------------------------------ loop
     def tick(self, now: float) -> dict[str, Any]:
@@ -835,6 +964,7 @@ class Engine:
         self._boot_checks(now)
         if self.learning is not None:
             self.learning.start(now)
+            self._emit("lag", lambda: _versions_row(self.settings, now))
         self._set_status(now, "running")
         log.info("engine_start version=%s mode=%s judge=%s data_dir=%s", __version__, self.settings.trading_mode,
                  self.settings.judge_mode, self.settings.data_dir)
@@ -1152,6 +1282,7 @@ class Engine:
     # ------------------------------------------------------------------ discovery
     def discover(self, now: float) -> None:
         new = self.crawler.poll()
+        self._tape_seen(now)
         observe = getattr(self.cocoon, "observe", None)
         if observe is not None:  # the copycat check sees every crawled coin, not only the ones it checks
             for c in getattr(self.crawler, "last_fetched", None) or []:
@@ -1180,6 +1311,34 @@ class Engine:
             checked += 1
             self._check_candidate(candidate, now)
             self._between_steps()
+
+    def _tape_seen(self, now: float) -> None:
+        """Compact ``lag`` rows ``kind="seen"`` ``{source, mints}``: the coins this poll fetched (before the
+        prefilter) that the tape has not seen within :data:`SEEN_TAPE_TTL_S`, one row per feed (the Crawler's
+        coverage, EXPERIENCE.md §5.2). Learning only; never changes discovery."""
+        if self.learning is None:
+            return
+
+        def build() -> list[dict[str, Any]]:
+            fetched = list(getattr(self.crawler, "last_fetched", None) or [])
+            taped = self._taped_seen
+            for mint in [m for m, ts in taped.items() if now - ts >= SEEN_TAPE_TTL_S]:
+                del taped[mint]
+            groups: dict[str, set[str]] = {}
+            for c in fetched:
+                if not c.mint or c.mint in taped:
+                    continue
+                taped[c.mint] = now
+                for source in c.sources or ["unknown"]:
+                    groups.setdefault(str(source), set()).add(c.mint)
+            for mint in list(taped)[:max(0, len(taped) - SEEN_TAPE_MAX)]:  # oldest first
+                del taped[mint]
+            return [{"ts": now, "kind": "seen", "source": source, "mints": sorted(mints)}
+                    for source, mints in sorted(groups.items())]
+
+        emit_many = getattr(self.learning, "emit_many", None)
+        if emit_many is not None:
+            emit_many("lag", build)
 
     def _check_candidate(self, c: TokenCandidate, now: float) -> None:
         self.ledger.record_candidate(c)
@@ -1421,16 +1580,19 @@ class Engine:
         open_positions = self._open_positions()
         equity_lamports, sol_usd, balances = self._equity_now(open_positions)
         wallet_usd = self._wallet_usd() if self.settings.is_live else None
-        ok, reason = self.risk.can_open(mint, open_positions, equity_lamports, wallet_usd)
+        ok, reason = self.risk.can_open(mint, open_positions, equity_lamports, wallet_usd, sol_usd=sol_usd)
         sizing = {"equity_lamports": equity_lamports, "sol_usd": sol_usd, "free_lamports": balances.sol_lamports,
                   "wallet_usd": wallet_usd}
         if not ok:
             self._decide(self.clock.now(), mint, "reject_risk", reason, {**base, "sizing": sizing}, symbol=symbol)
             return None
+        # every ticket is sized so that its rug (L_MAX) fits the daily budget, the cushion and the at-risk cap
+        room = self.risk.risk_room(open_positions, equity_lamports, sol_usd)
         size = self.risk.size_position(equity_lamports, sol_usd, available_lamports=balances.sol_lamports,
-                                       network_fee_lamports=self._network_fee())
+                                       network_fee_lamports=self._network_fee(), open_positions=open_positions)
         size_usd = lamports_to_sol(size) * sol_usd
-        sizing.update(size_lamports=size, size_usd=size_usd)
+        sizing.update(size_lamports=size, size_usd=size_usd, at_risk_lamports=room.at_risk,
+                      risk_cap_lamports=room.max_ticket(), risk_cap_by=room.binding)
         if size <= 0:
             self._decide(self.clock.now(), mint, "reject_risk", "[size] position size is 0 (too little free SOL)",
                          {**base, "sizing": sizing}, symbol=symbol)
@@ -1613,12 +1775,24 @@ class Engine:
 
     def _manage_one(self, position: Position, price: float | None, now: float) -> None:
         s = self.settings
-        if price is None or price <= 0:
+        source = None
+        if price is not None and price > 0:
+            self._priced_at[position.id] = now
+            self._blind_failures.pop(position.id, None)
+        else:
             if now - position.opened_at >= s.max_hold_min * 60:
                 self._exit(position, "time_stop", 1.0, now, {"note": "no price available"})
-            else:
-                log.warning("position_unpriced id=%s mint=%s", position.id, position.mint)
-            return
+                return
+            price = self._blind_price(position, now)
+            if price is None:
+                failures = self._blind_failures.get(position.id, 0)
+                if failures >= BLIND_QUOTE_FAILURES:  # blind means out (G33)
+                    self._exit(position, "blind_exit", 1.0, now,
+                               {"note": "no price, and Ultra could not quote the position", "failed_quotes": failures})
+                else:
+                    log.warning("position_unpriced id=%s mint=%s", position.id, position.mint)
+                return
+            source = "ultra_quote"
         radar = None
         item = self.watchlist.get(position.mint)
         last = self._radar_at.get(position.id)
@@ -1643,7 +1817,39 @@ class Engine:
             log.info("position_changed_elsewhere id=%s mint=%s: no longer open", position.id, position.mint)
             return
         if sig.kind == "exit":
-            self._exit(position, sig.reason, sig.fraction, now, _signal_summary(sig) | {"price_now": price})
+            seen = {"price_now": price} if source is None else {"price_now": price, "price_source": source}
+            self._exit(position, sig.reason, sig.fraction, now, _signal_summary(sig) | seen)
+
+    def _blind_price(self, position: Position, now: float) -> float | None:
+        """G33 "blind means out": the price of a position the feeds have not priced for more than
+        :data:`BLIND_PRICE_MAX_AGE_S` (Jupiter price v3 drops a coin it flags right after a rug) is the
+        executable one, an Ultra SELL quote for the whole position (never executed). None while the last feed
+        price is recent, once :data:`BLIND_QUOTE_FAILURES` quotes in a row failed (the caller exits), or when
+        this quote fails (counted)."""
+        from nightcrawler.broker.base import implied_sol_usd
+
+        since = self._priced_at.setdefault(position.id, position.last_marked_at or position.opened_at)
+        if now - since <= BLIND_PRICE_MAX_AGE_S or self._blind_failures.get(position.id, 0) >= BLIND_QUOTE_FAILURES:
+            return None
+        try:
+            quote = self.broker.quote("sell", position.mint, position.token_amount, position.token_decimals,
+                                      max_impact_pct=BLIND_PROBE_MAX_IMPACT_PCT)
+            try:
+                sol_usd = float(self.broker.sol_price_usd())
+            except Exception:  # the quote values its own SOL leg
+                sol_usd = implied_sol_usd(quote) or 0.0
+            price = effective_price_usd(quote.out_amount, quote.in_amount, position.token_decimals, sol_usd)
+            if not (math.isfinite(price) and price > 0):
+                raise ValueError(f"the quote implies no price ({quote.out_amount} lamports, SOL ${sol_usd})")
+        except Exception as exc:
+            failures = self._blind_failures[position.id] = self._blind_failures.get(position.id, 0) + 1
+            log.warning("position_blind_quote_failed id=%s mint=%s failures=%d error=%s", position.id, position.mint,
+                        failures, _err(exc))
+            return None
+        self._blind_failures.pop(position.id, None)
+        log.warning("position_blind id=%s mint=%s unpriced_s=%.0f price=%.10g source=ultra_quote", position.id,
+                    position.mint, now - since, price)
+        return price
 
     def _fallback_exit(self, position: Position, price: float, now: float, exc: Exception) -> Signal:
         """Exit rules for a position whose entry price is unknown (``exit_signal`` refuses it):
@@ -1842,6 +2048,8 @@ class Engine:
             position.closed_at = fill.ts
             position.exit_reason = reason
             self._radar_at.pop(position.id, None)
+            self._priced_at.pop(position.id, None)
+            self._blind_failures.pop(position.id, None)
             self.counters["exits"] += 1
         self.ledger.update_open_position(position, before)
         log.info("position_%s id=%s mint=%s reason=%s sol=%.4f tokens=%d pnl_sol=%.4f",
@@ -2232,7 +2440,7 @@ class Engine:
                             positions_value_lamports=value, open_positions=len(positions),
                             mode=self.settings.trading_mode)  # type: ignore[arg-type]
         self.ledger.record_equity(point)
-        self._emit("lag", lambda: {"ts": now, "kind": "equity", "sol_usd": sol_usd})
+        self._emit("lag", lambda: {"ts": now, "kind": "equity", "sol_usd": sol_usd, "equity_usd": point.equity_usd})
 
     # ------------------------------------------------------------------ status
     def _heartbeat(self, now: float) -> None:
@@ -2278,7 +2486,7 @@ class Engine:
                             inputs=_clean(inputs), verdict=verdict, symbol=symbol)
         self.counters[f"decision.{action}"] += 1
         recorded = self.ledger.record_decision(decision)
-        if action == "enter" or action.startswith("reject_"):
+        if action in _TAPED_ACTIONS or action.startswith("reject_"):
             self._emit("evals", lambda: _decision_row(recorded))
         return recorded
 
