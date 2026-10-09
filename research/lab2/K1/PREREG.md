@@ -73,3 +73,12 @@ K1 dies at TRAIN NO_CONFIG, VAL FAIL_VAL, TEST FAIL/REJECTED, CONFIRM not PASS, 
 not fund real money: the Coach's stage-2 forward proof applies (>= 150 paper trades over >= 14 days with an
 anytime-valid lower bound above 0), and the live desk would run under Jev's existing fail-closed, budget-capped
 path. Real money can be switched OFF by learning, never ON.
+
+
+## Amendment 1 (2026-10-09 12:55 UTC, before any real decision was scored)
+
+The API for the Claude 5 models (SDK 1.12) has no `temperature` parameter; the request no longer sends one. The
+registered reproducibility guarantee therefore rests on the decision cache (every decision is stored once per
+prompt version, config and brief hash and never re-asked), not on deterministic sampling. Prompt version unchanged
+(`desk-v1`). Budget caps unchanged. The owner funded $25 of credits on 2026-10-09 and chose to supply the key in the
+chat; TRAIN runs with `--budget-usd 14`, VAL and TEST with `--budget-usd 5.5` so the whole exam fits the credit.

@@ -119,7 +119,7 @@ def test_deliberate_panel_runs_three_memos_then_the_decider():
     assert len(cl.calls) == len(roles) + 1 and d.buy and d.config == "panel" and d.brief_hash == D.brief_hash(BRIEF)
     assert tuple(d.memos) == roles and d.models == (D.ROLE_MODEL,) * len(roles) + (D.DECIDER_MODEL_PANEL,)
     for r in cl.calls:
-        assert r["temperature"] == D.TEMPERATURE == 0.0
+        assert "temperature" not in r  # the Claude 5 API has no sampling parameters (PREREG amendment 1)
         assert r["system"][0]["cache_control"] == {"type": "ephemeral"}
         assert json.loads(r["messages"][0]["content"])["brief"] == BRIEF
     for r in cl.calls[:-1]:                                           # memos are free text
