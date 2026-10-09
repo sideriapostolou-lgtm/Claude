@@ -120,11 +120,11 @@ ADDON_FILES: tuple[str, ...] = (
 CAST_MODELS: dict[str, dict[str, object]] = {
     "voss": {"asset": "cast_voss.glb", "height": 1.18, "yaw": 0.0, "kind": "biped", "walk": "walk_penguin"},
     "pip": {"asset": "cast_pip.glb", "height": 1.3, "yaw": 0.0, "kind": "biped", "walk": "walk_skip"},
-    "nyx": {"asset": "cast_nyx.glb", "height": 0.95, "yaw": -1.5708, "kind": "octopus", "walk": None},
+    "nyx": {"asset": "cast_nyx.glb", "height": 0.9, "yaw": -1.5708, "kind": "octopus", "walk": None},
     "rook": {"asset": "cast_rook.glb", "height": 2.35, "yaw": 0.0, "kind": "biped", "walk": "walk_heavy"},
     "mote": {"asset": "cast_mote.glb", "height": 1.05, "yaw": -1.5708, "kind": "blob", "walk": None,
              "body_height": 0.4, "cart_height": 0.46},
-    "jet": {"asset": "cast_jet.glb", "height": 0.92, "yaw": 0.0, "kind": "biped", "walk": "walk_quick"},
+    "jet": {"asset": "cast_jet.glb", "height": 0.85, "yaw": 0.0, "kind": "biped", "walk": "walk_quick"},
 }
 #: Mote's brass wheeled cart (the glass bell over it is drawn in code).
 CART_MODEL = "cast_motecart.glb"
@@ -276,7 +276,9 @@ header .money #clock { font-size: 10px; color: var(--dim); display: block; }
         color: var(--dim); text-shadow: 0 1px 2px #000, 0 0 6px rgba(0,0,0,.6); pointer-events: none; display: flex; }
 #status { flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 #status.bad { color: var(--bad); }
-#loading { flex: 0 0 auto; margin-left: 8px; color: var(--brass); font-variant-numeric: tabular-nums; }
+#loading { position: absolute; right: 11px; top: 7px; font-size: 10.5px; letter-spacing: .06em; color: var(--brass);
+            font-variant-numeric: tabular-nums; white-space: nowrap; }
+#loading[hidden] { display: none; }
 #town { position: fixed; left: 14px; right: 14px; top: calc(68px + env(safe-area-inset-top)); font-size: 11px;
         line-height: 1.3; color: var(--dim); text-shadow: 0 1px 2px #000, 0 0 6px rgba(0,0,0,.6); pointer-events: none;
         max-height: 2.7em; overflow: hidden; }
@@ -1556,7 +1558,7 @@ _M_WORLD = r"""
     const haloMat = new THREE.ShaderMaterial({ transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, uniforms: { uMap: { value: glowTex } },
       // (a halo fades out as the drone comes close, so a lamp passing the lens never blooms over the shot)
       vertexShader: "varying vec2 vUv; varying float vFade; void main() { vUv = uv; vec4 c = modelViewMatrix * instanceMatrix * vec4(0.0, 0.0, 0.0, 1.0); vFade = smoothstep(1.4, 3.6, -c.z); c.xy += position.xy * length(instanceMatrix[0].xyz); gl_Position = projectionMatrix * c; }",
-      fragmentShader: "uniform sampler2D uMap; varying vec2 vUv; varying float vFade; void main() { float a = texture2D(uMap, vUv).r; gl_FragColor = vec4(vec3(1.0, 0.62, 0.3) * a * 0.55 * vFade, 1.0); }" });
+      fragmentShader: "uniform sampler2D uMap; varying vec2 vUv; varying float vFade; void main() { float a = texture2D(uMap, vUv).r; gl_FragColor = vec4(vec3(1.0, 0.62, 0.3) * a * 0.4 * vFade, 1.0); }" });
     const halos = new THREE.InstancedMesh(new THREE.PlaneGeometry(1, 1), haloMat, lanterns.length);
     lanterns.forEach(function (q, i) { halos.setMatrixAt(i, mat4([q.p[0], q.p[1] + 1.88 * q.h, q.p[2]], null, 0.72)); });
     halos.frustumCulled = false; halos.renderOrder = 4; scene.add(halos); props.lanternHalos = halos;
@@ -2471,10 +2473,10 @@ _M_LIFE = r"""
       [].concat(o.material).forEach(function (m) { if (m && "envMapIntensity" in m) m.envMapIntensity = envK; });
     });
   }
-  function shrinkTextures(root, size) {
+  function shrinkTextures(root, size, keys) {
     const seen = [];
     root.traverse(function (o) { if (!o.isMesh) return; [].concat(o.material).forEach(function (m) {
-      ["map", "normalMap", "roughnessMap", "metalnessMap", "emissiveMap", "aoMap"].forEach(function (key) {
+      (keys || ["map", "normalMap", "roughnessMap", "metalnessMap", "emissiveMap", "aoMap"]).forEach(function (key) {
         const t = m[key]; if (!t || seen.indexOf(t) >= 0 || !t.image || !(t.image.width > size)) return; seen.push(t);
         const c = document.createElement("canvas"); c.width = c.height = size; const ctx = c.getContext("2d"); if (!ctx) return;
         ctx.drawImage(t.image, 0, 0, size, size); if (t.image.close) t.image.close(); t.image = c; t.needsUpdate = true;
@@ -2573,6 +2575,8 @@ _M_LIFE = r"""
       if (!motionMod) throw new Error("no motion module");
       if (kind === "biped" && !lib) throw new Error("no move library");
       const got = await files;
+      // phones: the colour maps stay sharp (faces read close up); the normal, roughness and glow maps go to half size
+      if (Q.small) got.forEach(function (g, i) { shrinkTextures(g.scene, 512, i ? null : ["normalMap", "roughnessMap", "metalnessMap", "emissiveMap"]); });
       const s = { id: id, file: spec.asset, kind: kind, walk: spec.walk || "walk_casual", yaw: Number(spec.yaw) || 0,
                   height: spec.cart ? Number(spec.body_height) || 0.4 : Number(spec.height) || a.height };
       const A = new motionMod.Actor(got[0].scene, s, lib);
@@ -2609,7 +2613,7 @@ _M_LIFE = r"""
   const PLACED = {
     missiontable: function (h) {  // the hologram over the prop's own top; Voss and the visitors step up to it
       const s = h.children[0].userData.size, r = Math.max(s.x, s.z) / 2, top = DAIS_Y + s.y * 0.86;
-      props.holoFit(Math.max(0.95, r * 1.6), top + 0.03); props.holoDisc.material.color.multiplyScalar(0.7); tableSpots(r, top); ["tbH", "tbW", "tbN"].forEach(resettle);
+      props.holoFit(Math.max(0.95, r * 1.6), top + 0.03); props.holoDisc.material.color.multiplyScalar(0.55); props.holoMini.children[0].material.opacity = 0.3; tableSpots(r, top); ["tbH", "tbW", "tbN"].forEach(resettle);
       board.position.y = 2.05;
     },
     workbench: function (h) { const s = h.children[0].userData.size; benchAt(s.y * 0.63, -0.62 - s.z / 2 + 0.1); },
@@ -2802,9 +2806,9 @@ _M_LIFE = r"""
   // portrait phone it comes closer so faces stay readable. Each shot fills one reused object (no allocation).
   const _arr = { pos: V3(0, 0, 0), look: V3(0, 0, 0) }, _map = { pos: V3(0, 0, 0), look: V3(1, 0, 1) }, _fol = { pos: V3(0, 0, 0), look: V3(0, 0, 0) };
   function arrivalShot(t) {
-    const tall = camera.aspect < 0.85, z = (tall ? 5.0 : 6.55) + Math.sin(t * 0.055) * (tall ? 0.45 : 0.4), x = 0.1 + Math.sin(t * 0.041) * 0.35;
+    const tall = camera.aspect < 0.85, z = (tall ? 5.0 : 6.55) + Math.sin(t * 0.055) * (tall ? 0.45 : 0.4), x = (tall ? -0.35 : 0.1) + Math.sin(t * 0.041) * (tall ? 0.25 : 0.35);
     _arr.pos.set(x, 2.05 + Math.sin(t * 0.09) * 0.07, z);
-    _arr.look.set(-0.45 + Math.sin(t * 0.032) * (tall ? 0.8 : 2.0), 0.95, -0.9);
+    _arr.look.set((tall ? -0.8 : -0.45) + Math.sin(t * 0.032) * (tall ? 0.5 : 2.0), 0.95, -0.9);
     return _arr;
   }
   function mapShot(t) { const a = 0.35 + t * 0.025; _map.pos.set(Math.sin(a) * 34, 25, Math.cos(a) * 34 + 2); return _map; }
@@ -2834,13 +2838,19 @@ _M_LIFE = r"""
     return _fol;
   }
   // a close shot of someone where they stopped (a hand-off, a delivery): in front of them, a little to the side
-  const _face = { pos: V3(0, 0, 0), look: V3(0, 0, 0) };
+  // (if a wall is in the way, the drone swings round the subject to the clearest side rather than closing in)
+  const _face = { pos: V3(0, 0, 0), look: V3(0, 0, 0) }, _try = new THREE.Vector3(), SWING = [0.35, -0.35, 1.0, -1.0, 1.7, -1.7, 2.6, -2.6];
   function faceShot(a) {
-    const base = a.group.position, h = a.height;
-    _fwd.set(Math.sin(a.yawS), 0, Math.cos(a.yawS)); _side.set(_fwd.z, 0, -_fwd.x);
+    const base = a.group.position, h = a.height, d = 1.9 + h * 0.55, up = Math.max(1.4, h * 0.85 + 0.5);
     _fh.copy(base); _fh.y += h * 0.7;
-    const want = _face.pos.copy(base).addScaledVector(_fwd, 1.9 + h * 0.55).addScaledVector(_side, 0.7); want.y += Math.max(1.4, h * 0.85 + 0.5);
-    const f = blocked(_fh, want); if (f < 1) want.lerpVectors(_fh, want, Math.max(0.3, f - 0.08));
+    let best = -1, bestA = SWING[0];
+    for (let i = 0; i < SWING.length && best < 0.98; i++) {
+      const ang = a.yawS + SWING[i];
+      _try.set(base.x + Math.sin(ang) * d, base.y + up, base.z + Math.cos(ang) * d);
+      const f = blocked(_fh, _try); if (f > best) { best = f; bestA = ang; }
+    }
+    const want = _face.pos.set(base.x + Math.sin(bestA) * d, base.y + up, base.z + Math.cos(bestA) * d);
+    if (best < 1) want.lerpVectors(_fh, want, Math.max(0.55, best - 0.08));
     _face.look.copy(base).setY(base.y + h * 0.6);
     return _face;
   }
@@ -3158,7 +3168,7 @@ _M_LIFE = r"""
     const fps = fpsN / fpsT; fpsN = 0; fpsT = 0;
     if (fps >= 28) { if (loading.set >= loading.setN && loading.crew >= loading.crewN) governed = true; return; }
     if (bloom && bloom.enabled) { bloom.enabled = false; console.info("world: bloom off (" + fps.toFixed(0) + " fps)"); return; }
-    if (Q.dpr > 1) { Q.dpr = 1; resize(); console.info("world: pixel ratio 1"); return; }
+    if (Q.dpr > 1) { Q.dpr = 1; resizeNext = true; console.info("world: pixel ratio 1"); return; }  // (resized just before the next draw: no blank frame)
     if (Q.shadows) { Q.shadows = false; renderer.shadowMap.enabled = false; sun.castShadow = false; console.info("world: shadows off"); return; }
     if (trimDecor()) { console.info("world: fewer decorations"); return; }
     if (loading.set >= loading.setN && loading.crew >= loading.crewN) governed = true;
@@ -3195,13 +3205,14 @@ _M_LIFE = r"""
   }
 
   // ============================================================= THE LOOP (paused while the tab is hidden)
-  let simT = 0, last = performance.now(), raf = 0, started = false;
+  let simT = 0, last = performance.now(), raf = 0, started = false, resizeNext = false;
   function frame(now) {
     raf = 0;
     const dtRaw = Math.min(0.1, Math.max(0, (now - last) / 1000)); last = now;
     const dt = offline ? 0 : dtRaw;
     simT += dt; uTime.value = simT;
     if (data && !offline && simT >= chatterAt) { chatter(); chatterAt = simT + 12; }
+    if (resizeNext) { resizeNext = false; resize(); }
     updateActors(dt); updateCube(dt); updateProps(dt); updateFades(dtRaw); director(); updateCamera(dtRaw, simT);
     updateBubbles(); updateLabels(); updateDrop();
     if (composer) composer.render(dtRaw); else renderer.render(scene, camera);
@@ -3267,7 +3278,7 @@ def render_world_html(settings: Settings) -> str:
         f'<header><b class="mode{" live" if live else ""}" id="mode">{mode}</b><a href="./">← the page</a>'
         '<a href="office">office</a>'
         '<span class="money"><b id="money">—</b><small id="since"></small><span id="clock"></span></span></header>\n'
-        '<div id="foot"><span id="status">Loading the world…</span><span id="loading" hidden></span></div>\n'
+        '<div id="foot"><span id="status">Loading the world…</span></div>\n'
         '<div id="town"></div>\n'
         f'<div id="members" hidden>{members}</div>\n'
         f'<script id="cast" type="application/json">{_json_block(WORLD_CAST)}</script>\n'
@@ -3275,7 +3286,7 @@ def render_world_html(settings: Settings) -> str:
         f'<script id="models" type="application/json">{_json_block(models_on_disk())}</script>\n'
         '<div id="labels"></div>\n<div id="bubbles"></div>\n<div id="drop"></div>\n'
         '<div id="card"><div class="room">NIGHT SHIFT: SKYPORT</div><div class="who">Loading…</div>'
-        '<div class="rows"></div></div>\n'
+        '<div class="rows"></div><span id="loading" hidden></span></div>\n'
         '<div id="chips"></div>\n'
         '<p id="boot">Loading the 3D world… It needs a browser with JavaScript modules and WebGL; '
         'the <a href="office">Office</a> page shows the same team as pictures.</p>\n'
