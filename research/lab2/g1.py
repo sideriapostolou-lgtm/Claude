@@ -38,6 +38,7 @@ gates V1-V4).
 from __future__ import annotations
 
 import argparse
+import contextlib
 import hashlib
 import json
 import math
@@ -694,11 +695,11 @@ def host_report(res: C.Result, B: int, hide: bool, n_trials_total: int | None) -
                            "config": res.meta.get("config"), "n": int(len(t)),
                            "n_coins": int(t["mint"].nunique()) if len(t) else 0,
                            "n_placebo": int(len(res.placebo)),
-                           "reasons": t["reason"].value_counts().to_dict() if len(t) else {},
                            "auto_rejections_3_6": C.auto_rejections(res)}
-    if hide:
+    if hide:     # exit reasons (stop vs take-profit) reveal the outcome direction: hidden like returns
         out["returns"] = "hidden (debug split: never choose parameters on FINAL data)"
         return out
+    out["reasons"] = t["reason"].value_counts().to_dict() if len(t) else {}
     out["summary"] = C.describe(t, B=B, n_trials_total=n_trials_total)
     out["placebo"] = C.placebo_compare(t, res.placebo, B=B) if len(res.placebo) and len(t) else None
     out["stress"] = {k: {kk: vv for kk, vv in C.describe(v, B=min(B, 2000)).items()
@@ -942,119 +943,134 @@ def run_stage(stage: str, *, out_dir: Path = OUT_DIR, allow_partial: bool = Fals
         else:
             raise G1Refused(f"{split} data incomplete: " + "; ".join(cov_notes[:6])
                             + (" (TRAIN only: --allow-partial for a provisional run)" if stage == "train" else ""))
-    # commit to the run: ledger guards for every (hypothesis, config) BEFORE any data is read
+    hard = [] if debug else C.coverage_problems(cov, provisional=True)
+    if hard:                                    # never allowed, not even provisionally (a future SOL price)
+        raise G1Refused(f"{split} data not usable: " + "; ".join(hard))
     gate_cfgs = [{"gate": v} for v in variants]
-    if not debug:
-        try:
-            for h, _fn, p in HOSTS.values():
-                C._check_run_allowed(h, p, split, ledger_path, shortlist_path)
-            for g in gate_cfgs:
-                C._check_run_allowed(HYP, g, split, ledger_path, shortlist_path)
-        except C.SplitLocked as e:
-            raise G1Refused(str(e)) from e
-    if stage == "train" and not (out_dir / "prereg.lock").exists():
-        out_dir.mkdir(parents=True, exist_ok=True)
-        (out_dir / "prereg.lock").write_text(json.dumps({"sha256": info["prereg_sha256"],
-                                                         "locked_utc": C.utc_str(time.time())}, indent=1))
-    if ds is None:
-        ds = C.load(split, flow=flow, census=census, _internal=(split == "val"))
-    reg = registry_for(ds, frames=frames, census=census, flow=flow)
-    coins_df = coin_table(ds, reg, labels=True)
-    hide = debug
-    res = {}
-    for key, (h, fn, p) in HOSTS.items():
-        res[key] = C.backtest(fn, split, p, hypothesis=h, ds=ds, placebo=(key == "dip"), n_placebo=n_placebo,
-                              placebo_eligible=dip_universe_ok if key == "dip" else None, stress=STRESS,
-                              declarations=DECL_HOST, ledger_path=ledger_path, shortlist_path=shortlist_path)
-    trades = {k: annotate(r.trades, ds, reg) for k, r in res.items()}
-    n_tr = C.n_trials(ledger_path)
-    ev = eval_variants(variants, coins_df, trades, B=B, hide=hide, n_trials_total=n_tr)
-    # one ledger trial per gate config (the gated R0 is its summary); debug runs never count
-    gate_runs = {}
-    for g in gate_cfgs:
-        u = ev[g["gate"]]["hosts"].get("R0", {}).get("unflagged", {})
-        gate_runs[g["gate"]] = C.record_run(HYP, g, split, {"n": u.get("n"), "mean": u.get("mean")},
-                                            ledger_path, debug=debug)
-    n_tr = C.n_trials(ledger_path)
-    doc: dict[str, Any] = {
-        "stage": stage, "split": split, "utc": C.utc_str(time.time()), "runtime_s": None, "provisional": provisional,
-        "debug_only": debug, "prereg_sha256": info["prereg_sha256"], "g1_py_sha256": _sha(Path(__file__)),
-        "data_files": ds.coverage.get("data_files"),
-        "coverage": {k: ds.coverage.get(k) for k in ("bounds_utc", "graduates_in_split", "tradeable", "usable",
-                                                      "excluded", "created_inexact", "has_create0",
-                                                      "chain_hours_scanned_frac", "days_full", "days_expected",
-                                                      "notes")},
-        "coverage_ok": cov_ok, "coverage_notes": cov_notes,
-        "variants": variants, "hosts_params": {k: v[2] for k, v in HOSTS.items()},
-        "trials": {"n_trials_total": n_tr, "gate_runs": gate_runs,
-                   "host_runs": {k: {kk: r.meta.get(kk) for kk in ("config", "new_trial", "hypothesis_configs",
-                                                                     "over_variant_limit")}
-                                 for k, r in res.items()}},
-    }
-    days = _days(ds, cov_ok)
-    doc["counts"] = {
-        "usable_coins": int(len(ds)), "split_days": days,
-        "classes_at_g140": coins_df["g1_class"].value_counts().to_dict() if len(coins_df) else {},
-        "flags_at_g140": {v: int(coins_df[f"flag_{v}"].sum()) for v in VARIANTS} if len(coins_df) else {},
-        "unresolved_inputs": {"creator_unknown": int((~coins_df["creator_known"].astype(bool)).sum()),
-                              "grad_delay_null": int(coins_df["grad_delay_s"].isna().sum())} if len(coins_df) else {},
-        "serial_at_g140": int(coins_df["serial_flag"].sum()) if len(coins_df) else 0,
-        "airdrop_by_window_end": int(coins_df["airdrop_by_end"].sum()) if len(coins_df) else 0,
-        "registry": {"coins": reg.n_coins, "creators": len(reg.creator_ev), "wallets": len(reg.wallet_ev),
-                     "warm_share_at_g140": float((coins_df["registry_cov"] >= REGISTRY_WARM_MIN).mean())
-                     if len(coins_df) else None},
-        "host_trades": {k: int(len(t)) for k, t in trades.items()},
-        "host_trades_per_day": {k: (len(t) / days if days and days == days else None) for k, t in trades.items()},
-        "host_trades_per_100_coins": {k: (100.0 * len(t) / len(ds) if len(ds) else None) for k, t in trades.items()},
-        "host_trades_by_class": {k: (t["g1_class"].value_counts().to_dict() if len(t) else {}) for k, t in trades.items()},
-        "host_trades_flagged": {k: {v: int(t[f"flag_{v}"].sum()) if len(t) else 0 for v in VARIANTS}
-                                for k, t in trades.items()},
-    }
-    doc["hosts"] = {k: host_report(r, B, hide, n_tr) for k, r in res.items()}
-    doc["classes"] = class_tables(coins_df, trades, B=min(B, 2000), hide=hide)
-    doc["variants_eval"] = ev
-    if stage == "train":
-        sl = shortlist_rule(ev)
-        doc["decision"] = {"shortlist": sl, "rule": "G-time + the chain variant whose kept R0 trades have the "
-                           "higher mean (tie -> G-chain)"}
-        if not provisional:
+
+    def _execute(ds: C.Dataset | None) -> dict:
+        # commit to the run: ledger guards for every (hypothesis, config) BEFORE any data is read
+        if not debug:
             try:
-                C.write_shortlist(HYP, sl, path=shortlist_path, ledger_path=ledger_path, note="G1 PREREG rule")
-                C.write_shortlist(HYP_DIP, [DIP_PARAMS], path=shortlist_path, ledger_path=ledger_path,
-                                  note="fixed host")
-                C.write_shortlist(HYP_R0, [R0_PARAMS], path=shortlist_path, ledger_path=ledger_path, note="fixed host")
-                doc["decision"]["shortlist_written"] = True
+                for h, _fn, p in HOSTS.values():
+                    C._check_run_allowed(h, p, split, ledger_path, shortlist_path)
+                for g in gate_cfgs:
+                    C._check_run_allowed(HYP, g, split, ledger_path, shortlist_path)
             except C.SplitLocked as e:
+                raise G1Refused(str(e)) from e
+        if stage == "train" and not (out_dir / "prereg.lock").exists():
+            out_dir.mkdir(parents=True, exist_ok=True)
+            (out_dir / "prereg.lock").write_text(json.dumps({"sha256": info["prereg_sha256"],
+                                                             "locked_utc": C.utc_str(time.time())}, indent=1))
+        if ds is None:
+            ds = C.load(split, flow=flow, census=census, _internal=(split == "val"))
+        if not debug:
+            C.check_sol_coverage(ds)        # a future SOL price: refuse before anything is logged
+        reg = registry_for(ds, frames=frames, census=census, flow=flow)
+        coins_df = coin_table(ds, reg, labels=True)
+        hide = debug
+        res = {}
+        for key, (h, fn, p) in HOSTS.items():
+            res[key] = C.backtest(fn, split, p, hypothesis=h, ds=ds, placebo=(key == "dip"), n_placebo=n_placebo,
+                                  placebo_eligible=dip_universe_ok if key == "dip" else None, stress=STRESS,
+                                  declarations=DECL_HOST, ledger_path=ledger_path, shortlist_path=shortlist_path)
+        trades = {k: annotate(r.trades, ds, reg) for k, r in res.items()}
+        n_tr = C.n_trials(ledger_path)
+        ev = eval_variants(variants, coins_df, trades, B=B, hide=hide, n_trials_total=n_tr)
+        # one ledger trial per gate config (the gated R0 is its summary); debug runs never count
+        gate_runs = {}
+        for g in gate_cfgs:
+            u = ev[g["gate"]]["hosts"].get("R0", {}).get("unflagged", {})
+            gate_runs[g["gate"]] = C.record_run(HYP, g, split, {"n": u.get("n"), "mean": u.get("mean")},
+                                                ledger_path, debug=debug)
+        n_tr = C.n_trials(ledger_path)
+        doc: dict[str, Any] = {
+            "stage": stage, "split": split, "utc": C.utc_str(time.time()), "runtime_s": None, "provisional": provisional,
+            "debug_only": debug, "prereg_sha256": info["prereg_sha256"], "g1_py_sha256": _sha(Path(__file__)),
+            "data_files": ds.coverage.get("data_files"),
+            "coverage": {k: ds.coverage.get(k) for k in ("bounds_utc", "graduates_in_split", "tradeable", "usable",
+                                                          "excluded", "created_inexact", "has_create0",
+                                                          "chain_hours_scanned_frac", "days_full", "days_expected",
+                                                          "notes")},
+            "coverage_ok": cov_ok, "coverage_notes": cov_notes,
+            "variants": variants, "hosts_params": {k: v[2] for k, v in HOSTS.items()},
+            "trials": {"n_trials_total": n_tr, "gate_runs": gate_runs,
+                       "host_runs": {k: {kk: r.meta.get(kk) for kk in ("config", "new_trial", "hypothesis_configs",
+                                                                         "over_variant_limit")}
+                                     for k, r in res.items()}},
+        }
+        days = _days(ds, cov_ok)
+        doc["counts"] = {
+            "usable_coins": int(len(ds)), "split_days": days,
+            "classes_at_g140": coins_df["g1_class"].value_counts().to_dict() if len(coins_df) else {},
+            "flags_at_g140": {v: int(coins_df[f"flag_{v}"].sum()) for v in VARIANTS} if len(coins_df) else {},
+            "unresolved_inputs": {"creator_unknown": int((~coins_df["creator_known"].astype(bool)).sum()),
+                                  "grad_delay_null": int(coins_df["grad_delay_s"].isna().sum())} if len(coins_df) else {},
+            "serial_at_g140": int(coins_df["serial_flag"].sum()) if len(coins_df) else 0,
+            "airdrop_by_window_end": int(coins_df["airdrop_by_end"].sum()) if len(coins_df) else 0,
+            "registry": {"coins": reg.n_coins, "creators": len(reg.creator_ev), "wallets": len(reg.wallet_ev),
+                         "warm_share_at_g140": float((coins_df["registry_cov"] >= REGISTRY_WARM_MIN).mean())
+                         if len(coins_df) else None},
+            "host_trades": {k: int(len(t)) for k, t in trades.items()},
+            "host_trades_per_day": {k: (len(t) / days if days and days == days else None) for k, t in trades.items()},
+            "host_trades_per_100_coins": {k: (100.0 * len(t) / len(ds) if len(ds) else None) for k, t in trades.items()},
+            "host_trades_by_class": {k: (t["g1_class"].value_counts().to_dict() if len(t) else {}) for k, t in trades.items()},
+            "host_trades_flagged": {k: {v: int(t[f"flag_{v}"].sum()) if len(t) else 0 for v in VARIANTS}
+                                    for k, t in trades.items()},
+        }
+        doc["hosts"] = {k: host_report(r, B, hide, n_tr) for k, r in res.items()}
+        doc["classes"] = class_tables(coins_df, trades, B=min(B, 2000), hide=hide)
+        doc["variants_eval"] = ev
+        if stage == "train":
+            sl = shortlist_rule(ev)
+            doc["decision"] = {"shortlist": sl, "rule": "G-time + the chain variant whose kept R0 trades have the "
+                               "higher mean (tie -> G-chain)"}
+            if not provisional:
+                try:
+                    C.write_shortlist(HYP, sl, path=shortlist_path, ledger_path=ledger_path, note="G1 PREREG rule")
+                    C.write_shortlist(HYP_DIP, [DIP_PARAMS], path=shortlist_path, ledger_path=ledger_path,
+                                      note="fixed host")
+                    C.write_shortlist(HYP_R0, [R0_PARAMS], path=shortlist_path, ledger_path=ledger_path, note="fixed host")
+                    doc["decision"]["shortlist_written"] = True
+                except C.SplitLocked as e:
+                    doc["decision"]["shortlist_written"] = False
+                    doc["decision"]["shortlist_note"] = str(e)
+            else:
                 doc["decision"]["shortlist_written"] = False
-                doc["decision"]["shortlist_note"] = str(e)
+                doc["decision"]["shortlist_note"] = "provisional (partial TRAIN data): no shortlist"
+        elif stage == "val":
+            sl = _shortlist(HYP, shortlist_path)
+            doc["decision"] = decide_val(ev, sl["configs"])
+        elif stage in ("test", "confirm", "final"):
+            doc["decision"] = decide_confirm(ev, variants[0])
+            if stage == "final" and len(trades["R0"]):
+                thirds = {}
+                for third in C.FINAL_SPLITS:
+                    sub = trades["R0"][trades["R0"]["split"] == third]
+                    fl = sub[f"flag_{variants[0]}"].to_numpy(bool) if len(sub) else np.zeros(0, bool)
+                    thirds[third] = {"flagged": _cell(sub[fl], 2000, False), "unflagged": _cell(sub[~fl], 2000, False)}
+                doc["decision"]["by_third_R0"] = thirds
         else:
-            doc["decision"]["shortlist_written"] = False
-            doc["decision"]["shortlist_note"] = "provisional (partial TRAIN data): no shortlist"
-    elif stage == "val":
-        sl = _shortlist(HYP, shortlist_path)
-        doc["decision"] = decide_val(ev, sl["configs"])
-    elif stage in ("test", "confirm", "final"):
-        doc["decision"] = decide_confirm(ev, variants[0])
-        if stage == "final" and len(trades["R0"]):
-            thirds = {}
-            for third in C.FINAL_SPLITS:
-                sub = trades["R0"][trades["R0"]["split"] == third]
-                fl = sub[f"flag_{variants[0]}"].to_numpy(bool) if len(sub) else np.zeros(0, bool)
-                thirds[third] = {"flagged": _cell(sub[fl], 2000, False), "unflagged": _cell(sub[~fl], 2000, False)}
-            doc["decision"]["by_third_R0"] = thirds
-    else:
-        doc["decision"] = {"debug": "counts only; returns, dead60 / winner rates and decisions are hidden"}
-    doc["runtime_s"] = round(time.time() - t0, 1)
-    doc = _jsonable(doc)
-    out_dir.mkdir(parents=True, exist_ok=True)
-    (out_dir / f"{stage}.json").write_text(json.dumps(doc, indent=1, sort_keys=False))
-    (out_dir / f"{stage}.md").write_text(render_md(doc))
-    if not debug:
-        keep = [c for c in next(iter(trades.values())).columns
-                if not any(c in (f"flag_{v}", f"dead_{v}") for v in VARIANTS if v not in variants)]
-        allt = pd.concat([t.assign(host=k) for k, t in trades.items()], ignore_index=True)
-        allt[[c for c in keep if c in allt] + ["host"]].to_csv(out_dir / f"{stage}_trades.csv.gz", index=False)
-    return doc
+            doc["decision"] = {"debug": "counts only; returns, dead60 / winner rates and decisions are hidden"}
+        doc["runtime_s"] = round(time.time() - t0, 1)
+        doc = _jsonable(doc)
+        out_dir.mkdir(parents=True, exist_ok=True)
+        (out_dir / f"{stage}.json").write_text(json.dumps(doc, indent=1, sort_keys=False))
+        (out_dir / f"{stage}.md").write_text(render_md(doc))
+        if not debug:
+            keep = [c for c in next(iter(trades.values())).columns
+                    if not any(c in (f"flag_{v}", f"dead_{v}") for v in VARIANTS if v not in variants)]
+            allt = pd.concat([t.assign(host=k) for k, t in trades.items()], ignore_index=True)
+            allt[[c for c in keep if c in allt] + ["host"]].to_csv(out_dir / f"{stage}_trades.csv.gz", index=False)
+        return doc
+
+    session = (C.one_shot_session(HYP, split, ledger_path, note=f"g1 --stage {stage}")
+               if split in C.ONE_RUN_SPLITS else contextlib.nullcontext())
+    try:
+        with session:           # TEST / CONFIRM / FINAL: G1's ONE look (both hosts and the gate inside it)
+            return _execute(ds)
+    except C.SplitLocked as e:
+        raise G1Refused(str(e)) from e
 
 
 # =========================================================================== report

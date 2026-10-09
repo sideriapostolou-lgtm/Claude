@@ -2,47 +2,67 @@
  "version": "d1-v1",
  "prereg_sha256": "ca7be6e7986d9cf3ae0ec5832c1d78a19b3532610c3013a71b85b7c156196798",
  "prereg_locked": false,
- "n_trials_total": 2575,
+ "n_trials_total": 2576,
  "train_grid": 18,
  "splits": {
   "train": {
    "split": "train",
    "b1_file": false,
-   "usable": 0,
-   "b1_eligible": 0,
+   "usable": 144,
+   "b1_eligible": 67,
    "with_b1": 0,
    "frac": 0.0,
    "coverage_complete": false,
-   "coverage_usable": 0,
+   "coverage_usable": 144,
    "days_full": 0,
    "days_expected": 4.0,
-   "chain_hours_scanned_frac": 0.0
+   "chain_hours_scanned_frac": 0.0625,
+   "contract_problems": [
+    "138/282 tradeable coins lack a complete B2 window (incl. 0 pools the backfill gave up on: the most active coins, not a random loss)",
+    "SOL/USD series starts 2026-10-07 08:57:00: 144 coins would use a later SOL price (lookahead); extend the series (LAB2_SOL_USD) first"
+   ],
+   "contract_problems_hard": [
+    "SOL/USD series starts 2026-10-07 08:57:00: 144 coins would use a later SOL price (lookahead); extend the series (LAB2_SOL_USD) first"
+   ]
   },
   "val": {
    "split": "val",
    "b1_file": false,
-   "usable": 0,
-   "b1_eligible": 0,
+   "usable": 651,
+   "b1_eligible": 189,
    "with_b1": 0,
    "frac": 0.0,
    "coverage_complete": false,
-   "coverage_usable": 0,
-   "days_full": 0,
+   "coverage_usable": 651,
+   "days_full": 1,
    "days_expected": 1.5,
-   "chain_hours_scanned_frac": 0.0
+   "chain_hours_scanned_frac": 0.6667,
+   "contract_problems": [
+    "224/875 tradeable coins lack a complete B2 window (incl. 0 pools the backfill gave up on: the most active coins, not a random loss)",
+    "SOL/USD series starts 2026-10-07 08:57:00: 651 coins would use a later SOL price (lookahead); extend the series (LAB2_SOL_USD) first"
+   ],
+   "contract_problems_hard": [
+    "SOL/USD series starts 2026-10-07 08:57:00: 651 coins would use a later SOL price (lookahead); extend the series (LAB2_SOL_USD) first"
+   ]
   },
   "test": {
    "split": "test",
    "b1_file": false,
-   "usable": 44,
-   "b1_eligible": 10,
+   "usable": 1264,
+   "b1_eligible": 418,
    "with_b1": 0,
    "frac": 0.0,
-   "coverage_complete": false,
-   "coverage_usable": 44,
-   "days_full": 0,
+   "coverage_complete": true,
+   "coverage_usable": 1264,
+   "days_full": 2,
    "days_expected": 1.32,
-   "chain_hours_scanned_frac": 0.25
+   "chain_hours_scanned_frac": 1.0,
+   "contract_problems": [
+    "SOL/USD series starts 2026-10-07 08:57:00: 806 coins would use a later SOL price (lookahead); extend the series (LAB2_SOL_USD) first"
+   ],
+   "contract_problems_hard": [
+    "SOL/USD series starts 2026-10-07 08:57:00: 806 coins would use a later SOL price (lookahead); extend the series (LAB2_SOL_USD) first"
+   ]
   },
   "confirm": {
    "split": "confirm",
@@ -55,7 +75,9 @@
    "coverage_usable": 0,
    "days_full": 0,
    "days_expected": 15.0,
-   "chain_hours_scanned_frac": 0.0
+   "chain_hours_scanned_frac": 0.0,
+   "contract_problems": [],
+   "contract_problems_hard": []
   },
   "final_train": {
    "split": "final_train",
@@ -68,7 +90,9 @@
    "coverage_usable": 450,
    "days_full": 2,
    "days_expected": 0.52,
-   "chain_hours_scanned_frac": 1.0
+   "chain_hours_scanned_frac": 1.0,
+   "contract_problems": [],
+   "contract_problems_hard": []
   },
   "final_val": {
    "split": "final_val",
@@ -81,20 +105,26 @@
    "coverage_usable": 150,
    "days_full": 1,
    "days_expected": 0.23,
-   "chain_hours_scanned_frac": 1.0
+   "chain_hours_scanned_frac": 1.0,
+   "contract_problems": [],
+   "contract_problems_hard": []
   },
   "final_test": {
    "split": "final_test",
    "b1_file": false,
-   "usable": 126,
-   "b1_eligible": 35,
+   "usable": 163,
+   "b1_eligible": 43,
    "with_b1": 0,
    "frac": 0.0,
    "coverage_complete": false,
-   "coverage_usable": 126,
+   "coverage_usable": 163,
    "days_full": 0,
-   "days_expected": 0.26,
-   "chain_hours_scanned_frac": 1.0
+   "days_expected": 0.31,
+   "chain_hours_scanned_frac": 1.0,
+   "contract_problems": [
+    "145/308 tradeable coins lack a complete B2 window (incl. 0 pools the backfill gave up on: the most active coins, not a random loss)"
+   ],
+   "contract_problems_hard": []
   }
  },
  "stages": {
@@ -104,6 +134,29 @@
   "confirm": "refused: no TRAIN run yet (D1/prereg_lock.json missing): run --stage train first",
   "final": "refused: no TRAIN run yet (D1/prereg_lock.json missing): run --stage train first"
  },
- "validation_gates_ok": true,
- "validation_problems": []
+ "validation_gates_ok": {
+  "train": false,
+  "val": false,
+  "test": false,
+  "confirm": false,
+  "final_test": false
+ },
+ "validation_problems": {
+  "train": [
+   "validation does not cover 96 chain hour(s) of split 'train' (first 2026-10-01 00:00:00): run V1/V2/V4 on raw trades from those dates"
+  ],
+  "val": [
+   "validation does not cover 36 chain hour(s) of split 'val' (first 2026-10-05 00:00:00): run V1/V2/V4 on raw trades from those dates"
+  ],
+  "test": [
+   "validation does not cover 31 chain hour(s) of split 'test' (first 2026-10-06 12:00:00): run V1/V2/V4 on raw trades from those dates",
+   "validation of 1 hour(s) of split 'test' predates their data (first 2026-10-07 19:00:00: validated 2026-10-08 21:55:06, B2 fetched 2026-10-08 22:36:09): re-run it on the current data"
+  ],
+  "confirm": [
+   "validation does not cover 360 chain hour(s) of split 'confirm' (first 2026-09-16 00:00:00): run V1/V2/V4 on raw trades from those dates"
+  ],
+  "final_test": [
+   "validation of 24 hour(s) of split 'final_test' predates their data (first 2026-10-07 19:00:00: validated 2026-10-08 21:55:06, B2 fetched 2026-10-08 22:36:09): re-run it on the current data"
+  ]
+ }
 }

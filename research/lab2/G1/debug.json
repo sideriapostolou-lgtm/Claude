@@ -1,16 +1,16 @@
 {
  "stage": "debug",
  "split": "final_train",
- "utc": "2026-10-08 23:36:52",
- "runtime_s": 3.6,
+ "utc": "2026-10-09 01:40:09",
+ "runtime_s": 4.3,
  "provisional": false,
  "debug_only": true,
  "prereg_sha256": "08d68682eb9013626fc950aca3ef1712f618d1757438b88f4aa158a7a77ec88b",
- "g1_py_sha256": "7a17be237edbd2c8007a711bd4010c1c237aa0fa32f27344b9f8a815b09a5499",
+ "g1_py_sha256": "a72527dff7688e165d0a24e484bee0fd60473ef203a2fada316135fdc06ea315",
  "data_files": {
-  "graduates.parquet": "2026-10-08 21:54:48",
-  "b2_coins.parquet": "2026-10-08 21:54:49",
-  "b2_bars.parquet": "2026-10-08 21:54:49"
+  "graduates.parquet": "2026-10-09 00:30:51",
+  "b2_coins.parquet": "2026-10-09 00:30:55",
+  "b2_bars.parquet": "2026-10-09 00:30:55"
  },
  "coverage": {
   "bounds_utc": [
@@ -30,7 +30,7 @@
   "days_full": 2,
   "days_expected": 0.52,
   "notes": [
-   "SOL/USD series covers 449/450 coins; others use the nearest edge price (affects only $->SOL sizing and the alive filter's USD volume)"
+   "SOL/USD series covers 449/450 coins; 1 use its last (stale) price after it ends (affects only $->SOL sizing and the alive filter's USD volume)"
   ]
  },
  "coverage_ok": true,
@@ -73,21 +73,24 @@
     "new_trial": false,
     "n_trials_total": 2575,
     "hypothesis_configs": 0,
-    "over_variant_limit": false
+    "over_variant_limit": false,
+    "family_val_looks": 0
    },
    "G-chain": {
     "config": "G1|79941ea68199",
     "new_trial": false,
     "n_trials_total": 2575,
     "hypothesis_configs": 0,
-    "over_variant_limit": false
+    "over_variant_limit": false,
+    "family_val_looks": 0
    },
    "G-chain+": {
     "config": "G1|b843b614c9a2",
     "new_trial": false,
     "n_trials_total": 2575,
     "hypothesis_configs": 0,
-    "over_variant_limit": false
+    "over_variant_limit": false,
+    "family_val_looks": 0
    }
   },
   "host_runs": {
@@ -118,19 +121,19 @@
   "flags_at_g140": {
    "G-time": 327,
    "G-chain": 236,
-   "G-chain+": 236
+   "G-chain+": 238
   },
   "unresolved_inputs": {
    "creator_unknown": 21,
    "grad_delay_null": 0
   },
-  "serial_at_g140": 1,
+  "serial_at_g140": 4,
   "airdrop_by_window_end": 190,
   "registry": {
-   "coins": 1100,
-   "creators": 848,
-   "wallets": 1624,
-   "warm_share_at_g140": 0.0
+   "coins": 2089,
+   "creators": 1597,
+   "wallets": 3948,
+   "warm_share_at_g140": 1.0
   },
   "host_trades": {
    "dip": 13,
@@ -192,10 +195,6 @@
    "n": 13,
    "n_coins": 13,
    "n_placebo": 125,
-   "reasons": {
-    "stop": 11,
-    "take_profit": 2
-   },
    "auto_rejections_3_6": [],
    "returns": "hidden (debug split: never choose parameters on FINAL data)"
   },
@@ -215,10 +214,6 @@
    "n": 94,
    "n_coins": 94,
    "n_placebo": 0,
-   "reasons": {
-    "time": 60,
-    "stop": 34
-   },
    "auto_rejections_3_6": [],
    "returns": "hidden (debug split: never choose parameters on FINAL data)"
   }
@@ -246,7 +241,7 @@
     "n_airdrop_by_end": 10
    },
    "flag:SERIAL": {
-    "n_coins": 1
+    "n_coins": 4
    },
    "flag:INSTANT": {
     "n_coins": 277
@@ -340,12 +335,12 @@
      "n_coins": 93
     },
     "flag:SERIAL": {
-     "n": 0,
-     "n_coins": 0
+     "n": 1,
+     "n_coins": 1
     },
     "noflag:SERIAL": {
-     "n": 94,
-     "n_coins": 94
+     "n": 93,
+     "n_coins": 93
     },
     "flag:INSTANT": {
      "n": 54,
@@ -428,8 +423,8 @@
   "G-chain+": {
    "labels": {
     "n_coins": 450,
-    "n_flag_gate": 236,
-    "n_flag_dead": 202
+    "n_flag_gate": 238,
+    "n_flag_dead": 205
    },
    "hosts": {
     "dip": {

@@ -771,26 +771,6 @@ def control1_strategy(snap: C.AsOf, p: Mapping, pos: C.PositionView | None):
     return C.Enter(exits=_exit_spec(p), tag=f"cp{cp}")
 
 
-def checkpoint_time(cd: C.CoinData, cp: int) -> float:
-    """The decision-grid time t (minute boundary + 20 s) with t <= g + cp min < t + 60 (see :func:`checkpoint_at`)."""
-    return float(cd.m0 + C.GRID_OFFSET_S + 60 * math.floor((cd.g + 60.0 * cp - cd.m0 - C.GRID_OFFSET_S) / 60.0))
-
-
-def control1_entries(ds: C.Dataset, p: Mapping) -> list[tuple[str, float, C.Enter]]:
-    """Control 1 (PLAN 4.3: "the same coins at the same t without the flow conditions"): EVERY coin that is
-    non-flow eligible (features computable, class allowed, alive) at checkpoint cp is entered at cp, for every cp.
-    S1 trades at cp are then compared with control trades at the same cp (:func:`matched_control_diff`), so the
-    entry age (g + 6 min sits right after the BOOST cliff) cannot drive the difference."""
-    out = []
-    for m in ds.mints:
-        cd = ds.coin(m)
-        for cp in p["checkpoints_min"]:
-            t = checkpoint_time(cd, int(cp))
-            if nonflow_ok(ds.asof(m, t)):
-                out.append((m, t, C.Enter(exits=_exit_spec(p), tag=f"cp{int(cp)}")))
-    return out
-
-
 def gate_strategy(snap: C.AsOf, p: Mapping, pos: C.PositionView | None):
     """Dose-response gate (PREREG §7): enter every eligible coin at the checkpoint, hold 30 min, tag insider_rem."""
     if pos is not None:
@@ -835,6 +815,30 @@ def control_params() -> dict:
 
 def config_label(p: Mapping) -> str:
     return f"rem{p['theta_rem']:.2f}_buy{p['theta_buy']}_abs{'Y' if p['absorb_req'] else 'N'}"
+
+
+# =========================================================================== control 1 (orchestration: not feature code)
+
+
+def checkpoint_time(cd: C.CoinData, cp: int) -> float:
+    """The decision-grid time t (minute boundary + 20 s) with t <= g + cp min < t + 60 (see :func:`checkpoint_at`)."""
+    return float(cd.m0 + C.GRID_OFFSET_S + 60 * math.floor((cd.g + 60.0 * cp - cd.m0 - C.GRID_OFFSET_S) / 60.0))
+
+
+def control1_entries(ds: C.Dataset, p: Mapping) -> list[tuple[str, float, C.Enter]]:
+    """Control 1 (PLAN 4.3: "the same coins at the same t without the flow conditions"): EVERY coin that is
+    non-flow eligible (features computable, class allowed, alive) at checkpoint cp is entered at cp, for every cp.
+    S1 trades at cp are then compared with control trades at the same cp (:func:`matched_control_diff`), so the
+    entry age (g + 6 min sits right after the BOOST cliff) cannot drive the difference."""
+    out = []
+    for m in ds.mints:
+        cd = ds.coin(m)
+        for cp in p["checkpoints_min"]:
+            t = checkpoint_time(cd, int(cp))
+            if nonflow_ok(ds.asof(m, t)):
+                out.append((m, t, C.Enter(exits=_exit_spec(p), tag=f"cp{int(cp)}")))
+    return out
+
 
 
 # =========================================================================== statistics helpers
@@ -1052,7 +1056,8 @@ def coverage_counts(split: str) -> dict:
             "b1_frac": (n_b1 / n_uni) if n_uni else 0.0, "split_complete": complete,
             "chain_hours_scanned_frac": cov.get("chain_hours_scanned_frac"),
             "days_full": cov.get("days_full"), "days_expected": cov.get("days_expected"),
-            "b1_file": (C.flow_dir() / "b1_trades.parquet").exists(), "problems": C.coverage_problems(cov)}
+            "b1_file": (C.flow_dir() / "b1_trades.parquet").exists(), "problems": C.coverage_problems(cov),
+            "problems_provisional": C.coverage_problems(cov, provisional=True)}
 
 
 def check_data(split: str, allow_partial: bool = False) -> dict:
@@ -1068,7 +1073,8 @@ def check_data(split: str, allow_partial: bool = False) -> dict:
     if not cc["split_complete"] and not allow_partial:
         problems.append(f"split {split!r} coverage incomplete (hours scanned {cc['chain_hours_scanned_frac']}, "
                         f"full days {cc['days_full']}/{cc['days_expected']})")
-    problems += cc.get("problems") or []          # common.coverage_problems (mid-run hours, SOL/USD lookahead)
+    # common.coverage_problems: mid-run hours and missing B2 (waived for a provisional TRAIN), SOL/USD lookahead (never)
+    problems += cc.get("problems_provisional" if allow_partial else "problems") or []
     gok, gbad = C.validation_gates(split)
     if not gok:
         problems.append("PLAN 8 stop rule 1 (data first): " + "; ".join(gbad))
@@ -1609,7 +1615,8 @@ def stage_debug(synthetic: bool | None = None, max_coins: int | None = None, see
         "n_usable_coins": len(ds), "s1_universe": int(len(uni)), "coins_with_b1_rows": int(trades["mint"].nunique()),
         "b1_rows": int(len(trades)), "days": days,
         "gate": gate, "grid": [{k: r[k] for k in ("label", "n", "n_coins", "checkpoints", "new_trial", "wall_s")}
-                               | {"reasons": r["summary"].get("reasons"), "n_placebo": r["summary"].get("n_placebo")}
+                               | {"horizon_exits": r["summary"].get("horizon_exits"),
+                                  "n_placebo": r["summary"].get("n_placebo")}
                                for r in rows],
         "control1": {"n": int(len(ctrl.trades)), "checkpoints": _cp_counts(ctrl.trades)},
         "nonflow_counts_real": nonflow, "feature_census": feats,

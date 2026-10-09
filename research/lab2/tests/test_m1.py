@@ -20,8 +20,7 @@ SOL = C.SolUsd(fallback=100.0)
 T0 = C.utc_ts("2026-10-02 00:00")
 X0, Y0 = 84.990359, 206.9e6
 N_MIN = 186
-VALID = {"V1": {"pass": True}, "V2": {"chain_ok": 100, "transitions": 100}, "V3": {"both": 10, "coin_windows": 10},
-         "V4": {"pass": True}}
+from conftest import VALID_ALL as VALID   # noqa: E402  (stop rule 1 is per split: V1/V2/V4 ranges over every split)
 
 
 # =========================================================================== fixtures
@@ -300,7 +299,8 @@ def test_precursor_exit_only_in_the_rhythm_prec_set():
     b = C.run_trades(ds, M.strategy, M.make_params(1, "rhythm"), C.FillConfig(), mints=[mint(2)]).iloc[0]
     cd = ds.coin(mint(2))
     assert a["reason"] == "signal:precursor_dump" and a["t_out"] == cd.bar_start(71) + C.GRID_OFFSET_S + 30
-    assert b["reason"] == "horizon" and a["t_dec"] == b["t_dec"]
+    # the twin rides the bid to the REGISTERED deadline (g + 178 min, PREREG amendment 1), never to the data horizon
+    assert b["reason"] == "time" and a["t_dec"] == b["t_dec"] and b["t_out"] <= cd.g + C.N_BARS * 60
 
 
 def test_grid_is_the_plan_grid():
@@ -570,9 +570,10 @@ def test_combine_verdict_ignores_missing_final_but_not_failures():
 
 
 @pytest.fixture
-def st(tmp_path):
+def st(tmp_path, monkeypatch):
     d = SimpleNamespace(out=tmp_path / "M1", flow=tmp_path / "flow", ledger=tmp_path / "trials.json",
                         sl=tmp_path / "shortlists")
+    monkeypatch.setenv("LAB2_TRIALS", str(d.ledger))     # one-shot looks go to the canonical ledger only
     d.out.mkdir()
     d.flow.mkdir()
     (d.out / "PREREG.md").write_text("# M1 test prereg\n")
@@ -637,8 +638,10 @@ def test_provisional_train_never_unlocks_val(st):
         _check("val", st)
 
 
-def test_full_pipeline_and_every_refusal(st):
+def test_full_pipeline_and_every_refusal(st, monkeypatch):
     env_all = {"LAB2_ALLOW_TEST": "1", "LAB2_ALLOW_CONFIRM": "1", "LAB2_ALLOW_FINAL": "1"}
+    for k in env_all:            # common enforces the real env flags; m1's ``env=`` drives m1's own checks
+        monkeypatch.setenv(k, "1")
     with pytest.raises(M.M1Refused, match="no TRAIN result"):
         _check("val", st)
     # ---- TRAIN: model check PASS (pure bots: realized == predicted), grid, shortlist of the pair

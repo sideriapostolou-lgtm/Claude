@@ -870,10 +870,14 @@ def test_real_census_train_loads_with_coverage():
                                     "truncated"}
     cd = ds.coin(ds.mints[0])
     assert cd.arr["X"][0] > 0 and np.all(np.isfinite(cd.arr["c"]))
-    # initial pool price equals the first bar's open (X0 = pool_quote0, y0 = pool_base0)
+    # the initial PRICING reserve includes the virtual reserve: X0 = pool_quote0 + v (B2's bar-0 open omits v, so
+    # the first traded bar's open is rebuilt from it and its low cut to the body)
     firsts = [ds.coin(m) for m in ds.mints[:100]]
-    ok = [abs(c.arr["o"][0] / (c.init_X / c.init_y) - 1) < 1e-3 for c in firsts if c.arr["traded"][0]]
-    assert np.mean(ok) > 0.95
+    assert all(c.init_X == pytest.approx(c.row["pool_quote0"] + c.row["virt_sol"]) for c in firsts)
+    assert np.median([c.row["virt_sol"] for c in firsts]) == pytest.approx(17.584505289, rel=1e-6)
+    ok = [abs(c.arr["o"][0] / (c.init_X / c.init_y) - 1) < 1e-12 and c.arr["l"][0] <= min(c.arr["o"][0], c.arr["c"][0])
+          for c in firsts if c.arr["traded"][0]]
+    assert all(ok)
 
 
 # =========================================================================== helpers added for the hypothesis builders

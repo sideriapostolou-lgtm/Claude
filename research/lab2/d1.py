@@ -979,7 +979,8 @@ def b1_coverage(split: str) -> dict[str, Any]:
             "coverage_complete": bool(ds.coverage.get("complete")), "coverage_usable": ds.coverage.get("usable"),
             "days_full": ds.coverage.get("days_full"), "days_expected": ds.coverage.get("days_expected"),
             "chain_hours_scanned_frac": ds.coverage.get("chain_hours_scanned_frac"),
-            "contract_problems": C.coverage_problems(ds.coverage)}
+            "contract_problems": C.coverage_problems(ds.coverage),
+            "contract_problems_hard": C.coverage_problems(ds.coverage, provisional=True)}
 
 
 def validation_gates(split: str = "train") -> tuple[bool, list[str]]:
@@ -1004,8 +1005,9 @@ def check_data(split: str, allow_partial: bool = False) -> dict[str, Any]:
     if not gates_ok:
         problems.append(f"validation gates not all PASS (stop rule 1): {bad}")
     cov["problems"] = problems
-    if problems and not allow_partial:
-        raise StageRefused("data not ready: " + "; ".join(problems))
+    hard = cov.get("contract_problems_hard") or []      # a future SOL price is never allowed, partial data or not
+    if (problems and not allow_partial) or hard:
+        raise StageRefused("data not ready: " + "; ".join(problems if not allow_partial else hard))
     return cov
 
 
@@ -1150,14 +1152,16 @@ def _frames_of(results: Mapping[str, C.Result]) -> dict[str, pd.DataFrame]:
 
 
 def fill_sensitivity(ds: C.Dataset, params: dict, reveal: bool = True) -> dict[str, Any]:
-    """The same config under the alternative minute-bar fill assumptions (no ledger entry: not a new trial)."""
+    """The same config under the alternative minute-bar fill assumptions. On TRAIN no ledger entry; on a guarded
+    split every variant is a LOGGED look (its own trial: the ledger identity includes the fills)."""
     out = {}
+    hyp = HYP if ds.split in C.GUARD_ENV else None
     for name, cfg in (("worst_default", C.FillConfig()),
                       ("no_entry_bar_exits", C.FillConfig(entry_bar_exits=False)),
                       ("exit_delay_1_bar", C.FillConfig(exit_delay_bars=1)),
                       ("open_fills", C.FillConfig(entry_fill="open", exit_fill="open")),
                       ("rent_0.22", C.FillConfig(rent_usd=0.22))):
-        t = C.run_trades(ds, d1_strategy, params, cfg)
+        t = C.run_trades(ds, d1_strategy, params, cfg, hypothesis=hyp)
         d = C.describe(t, B=1000)
         out[name] = d if reveal else {"n": d["n"], "n_coins": d["n_coins"]}
     return out
@@ -1282,9 +1286,14 @@ def _oos(stage: str) -> tuple[dict[str, Any], C.Result]:
     sel = val["selection"]["selected"]
     params = variant_params(sel)
     ds = load_split(split)
-    res = _run(d1_strategy, split, HYP, params, ds)       # stress costs x1.5 is the default on one-run splits
+    try:
+        with C.one_shot_session(HYP, split, note=f"d1 --stage {stage}"):    # the run + its fill variants: ONE look
+            res = _run(d1_strategy, split, HYP, params, ds)   # stress costs x1.5 is the default on one-run splits
+            sens = fill_sensitivity(ds, params)
+    except C.SplitLocked as e:
+        raise StageRefused(str(e)) from e
     out = {"stage": stage, "version": VERSION, "split": split, "coverage": cov, "selected": sel, "params": params,
-           "summary": summarize(res), "fill_sensitivity": fill_sensitivity(ds, params),
+           "summary": summarize(res), "fill_sensitivity": sens,
            "rejections": C.auto_rejections(res), "n_trials_total": C.n_trials(), "gate": val["gate"]}
     return out, res
 
@@ -1504,7 +1513,7 @@ def stage_debug() -> dict[str, Any]:
             label = p.get("variant") or f"{p['event_class']}@{p['hold_min']}"
             runs[label] = {"n": s["n"], "n_coins": s["n_coins"], "n_placebo": s["n_placebo"],
                            "placebo_per_signal": round(s["n_placebo"] / s["n"], 1) if s["n"] else None,
-                           "reasons": s["reasons"],
+                           "horizon_exits": s.get("horizon_exits"),   # exit reasons hidden (outcome labels)
                            "tags": r.trades["tag"].value_counts().to_dict() if len(r.trades) else {},
                            "wall_s": round(time.time() - t1, 2)}
     payload = {"stage": "debug", "split": "final_train", "version": VERSION,
@@ -1584,8 +1593,9 @@ def _md_debug(p: Mapping[str, Any]) -> str:
           f"{s['coins_cap_feasible_ub_loose']} coins",
           f"- Real B1 coins in this split: {p['real_b1_coins_in_split']}",
           "", "## Pipeline on SYNTHETIC B1 (mechanics only)", "",
-          "| run | trades | coins | placebo | tags | exit reasons | wall s |", "|---|---:|---:|---:|---|---|---:|"]
-    md += [f"| {k} | {v['n']} | {v['n_coins']} | {v['n_placebo']} | {v['tags']} | {v['reasons']} | {v['wall_s']} |"
+          "| run | trades | coins | placebo | tags | horizon exits | wall s |", "|---|---:|---:|---:|---|---:|---:|"]
+    md += [f"| {k} | {v['n']} | {v['n_coins']} | {v['n_placebo']} | {v['tags']} | {v.get('horizon_exits')} | "
+           f"{v['wall_s']} |"
            for k, v in p["runs_on_synthetic_b1"].items()]
     return "\n".join(md) + "\n"
 

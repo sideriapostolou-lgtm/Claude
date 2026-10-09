@@ -1,16 +1,16 @@
 # D1 status
 
-- version `d1-v1`, PREREG locked: False, trials so far: 2575
+- version `d1-v1`, PREREG locked: False, trials so far: 2576
 
 | split | usable | B1-eligible | with B1 | B2 complete |
 |---|---:|---:|---:|---|
-| train | 0 | 0 | 0 | False |
-| val | 0 | 0 | 0 | False |
-| test | 44 | 10 | 0 | False |
+| train | 144 | 67 | 0 | False |
+| val | 651 | 189 | 0 | False |
+| test | 1264 | 418 | 0 | True |
 | confirm | 0 | 0 | 0 | False |
 | final_train | 450 | 152 | 0 | True |
 | final_val | 150 | 37 | 0 | True |
-| final_test | 126 | 35 | 0 | False |
+| final_test | 163 | 43 | 0 | False |
 
 | stage | state |
 |---|---|

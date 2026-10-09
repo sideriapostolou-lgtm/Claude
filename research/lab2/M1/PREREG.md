@@ -108,7 +108,7 @@ Sell at the first of:
 | Rhythm break | the last 2 completed minutes after the entry decision both have `b` < 0.5 × the entry `floor` |
 | Precursor | **exit set `rhythm+prec` only**: a `dump` or `lp` flag in any minute completed after the entry decision |
 | Stop | −10% from the entry fill (mechanical) |
-| Time | 6 h. The data horizon g + 179 min truncates it; such exits are labelled `horizon` and reported |
+| Time | **No later than g + 178 min** (`EXIT_BY_AGE_S`, amendment 1; fills by g + 179 min, inside the data). The PLAN's 6 h cap stays as `max_hold_s` but never binds. This is the rule M1 tests and would deploy |
 
 **Placebo positions** carry no state. Their floor is recomputed from the bars completed at their own decision time,
 so they run the same rule. A placebo coin with no floor (< 0.01 SOL/min) cannot have a rhythm break.
@@ -260,9 +260,9 @@ VAL trades:
 ### FINAL (the census day)
 
 - It runs only after TEST.
-- Run the candidate and the twin once on all of FINAL.
-- Report the sign and n overall and per census third. The TRAIN third was used for debugging only, with returns
-  hidden.
+- Run the candidate and the twin once on all of FINAL (one `common.one_shot_session`: FINAL consumes its thirds).
+- **Criterion 9 (FINAL mean > 0) is judged on the census VAL and TEST thirds only** (amendment 1). The detector was
+  redesigned on the census TRAIN third (§13), so its trades are reported apart as "used for detector design".
 
 ### Overall M1 verdict
 
@@ -285,8 +285,9 @@ Otherwise the verdict is one of:
 **Matched random control** (PLAN §3.4): `common.backtest`'s placebo.
 
 - 20 draws per signal.
-- Random coins of the same split that are in an allowed class and `alive` (≥ $1.5k of volume in 15 min, market
-  cap ≥ $6k).
+- Random coins of the same split that are `alive` (≥ $1.5k of volume in 15 min, market cap ≥ $6k) and **in the
+  signal's own M1 class** (amendment 1: an OPERATOR signal draws OPERATOR coins). The unmatched control (any
+  allowed class) is reported next to it as `placebo_unmatched`, never judged.
 - The decision age is within ±120 s of the signal's.
 - The exits are the same (§5).
 - It feeds PLAN §3.5 item 5 (≥ +6 points) and the TRAIN shortlist (`mean_diff` > 0).
@@ -352,11 +353,11 @@ M1 counts no flow as organic. Its drift uses only the mechanical floor, with AGE
 | `org_net_h` | Not identifiable on bars. `drift_pred60` uses the mechanical floor alone |
 | Precursors | Bar proxies: the `dump` pigeonhole bound and the `lp` token-conservation break. `orphan_share10` and creator-linked transfers are not available |
 | Operator clusters | Shared creator, symbol or top-5 early pool buyer (B2's w120 list), not co-appearance of MECH or creation-slot wallets |
-| Hold | 6 h is truncated at g + 179 min by B2. Entries stop at g + 120 min |
+| Hold | The 6 h hold cannot be simulated (B2 ends at g + 180 min). M1 registers and tests "sell no later than g + 178 min" instead (amendment 1). Entries stop at g + 120 min |
 | Fills | Minute-bar "worst" fills, not replayed fills. No 2-second exit variant (X1) |
 | Rugs | "One-trade drop > 50%" is measured as a one-minute drop > 50% (an upper bound on one-trade drops) |
 | Fees | The pool fee inside user-side buy SOL (≤ 1.25%) is not removed from `mech_bid_h` (overstates the drift by ≤ 2.5% of itself) |
-| SOL/USD | Covers 10-07 09:00 → 10-08 18:15 only. Earlier dates use the edge price. This affects the $20 → SOL sizing (impact) and the placebo's `alive` filter, not M1's entry conditions |
+| SOL/USD | Covers 10-07 09:00 → 10-08 18:15 only. A price before the series start would be a LATER price (lookahead), so every non-debug stage refuses until the series covers the split (`common.coverage_problems`, extension file `LAB2_SOL_USD`) |
 
 ## 13. Debug findings and expected sample (census TRAIN third, counts only)
 
@@ -409,3 +410,26 @@ operator can change its schedule at any time.
   185 coins and 1,000 observations, all from OPERATOR coins.
 - **TEST will be underpowered on the cluster count** (M1.1). Its expected trade count (≈ 51-61) sits at the 60-trade
   bar.
+
+## Amendment 1 (2026-10-09, review findings; before any official TRAIN run, no `prereg.lock` existed)
+
+All changes come from a code review, not from any outcome. M_GRID, the exit sets, the detector and the bars are
+unchanged; the four TRAIN configs get new parameter hashes (the registered deadline is part of `FIXED`).
+
+1. **The registered time exit is g + 178 min.** On the census TRAIN third 20 of 24 M1 holds ended on the data
+   horizon (median hold 145 min against the PLAN's 6 h), and the verdict treated those cut-offs as real exits.
+   Wave 1 (F3) found the operator rugs roughly cancel the drift, so cutting hours 3-6 removes the loss tail of a 6 h
+   rule. M1 therefore registers the rule it can simulate and would deploy: sell no later than g + 178 min. No
+   trade exits on the horizon any more; the rug criterion M1.4 is measured on whole (uncensored) holds; and
+   `common.verdict_entry` / `combine_verdict` return INCOMPLETE (never PASS) when > 10% of trades are censored.
+   The PLAN's 6 h variant stays untested until B2 is backfilled to g + 6 h for detector-firing coins.
+2. **The matched random control is matched on the M1 class** (§9). All 24 debug signals were OPERATOR coins while
+   the placebo drew 334 OTHER vs 146 OPERATOR coins, so criterion 5 and the TRAIN shortlist's `placebo_diff > 0`
+   measured "operator coins vs decaying organic coins", not the detector's timing.
+3. **FINAL criterion 9 uses the census VAL and TEST thirds only** (§8 FINAL): the TRAIN third shaped the detector
+   (§13).
+4. **Shared protocol fixes** (`common.py`): criterion 3 needs the 90% CI lower bound > 0 under both the coin and a
+   6-hour block bootstrap; stop rule 1 is checked per split (V1/V2/V4 on the split's dates, validated after the data
+   was fetched; the debug stage only reports it); stages refuse while a B2 hour is mid-run or the SOL/USD series
+   starts after the split's coins; TEST / CONFIRM / FINAL are one `common.one_shot_session` per family (M1 and
+   M1-twin inside it); debug reports carry no exit reasons.

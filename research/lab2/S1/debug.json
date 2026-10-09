@@ -2,12 +2,12 @@
  "stage": "debug",
  "split": "final_train",
  "version": "s1-v1",
- "utc": "2026-10-08 23:47:27",
+ "utc": "2026-10-09 01:40:34",
  "b1_source": "SYNTHETIC (made-up wallets; flow-condition counts are meaningless)",
  "n_usable_coins": 450,
  "s1_universe": 152,
  "coins_with_b1_rows": 152,
- "b1_rows": 226107,
+ "b1_rows": 226105,
  "days": 0.5203240740740741,
  "gate": {
   "10": {
@@ -110,7 +110,7 @@
    "q1_minus_q5_ci95": "hidden",
    "n_ties_at_mode": 1,
    "n_distinct_rem": 47,
-   "wall_s": 0.62
+   "wall_s": 0.58
   }
  },
  "grid": [
@@ -120,8 +120,8 @@
    "n_coins": 0,
    "checkpoints": {},
    "new_trial": false,
-   "wall_s": 3.34,
-   "reasons": {},
+   "wall_s": 2.98,
+   "horizon_exits": 0,
    "n_placebo": 0
   },
   {
@@ -130,8 +130,8 @@
    "n_coins": 0,
    "checkpoints": {},
    "new_trial": false,
-   "wall_s": 0.55,
-   "reasons": {},
+   "wall_s": 0.49,
+   "horizon_exits": 0,
    "n_placebo": 0
   },
   {
@@ -140,8 +140,8 @@
    "n_coins": 0,
    "checkpoints": {},
    "new_trial": false,
-   "wall_s": 0.58,
-   "reasons": {},
+   "wall_s": 0.5,
+   "horizon_exits": 0,
    "n_placebo": 0
   },
   {
@@ -150,8 +150,8 @@
    "n_coins": 0,
    "checkpoints": {},
    "new_trial": false,
-   "wall_s": 0.49,
-   "reasons": {},
+   "wall_s": 0.53,
+   "horizon_exits": 0,
    "n_placebo": 0
   },
   {
@@ -167,11 +167,8 @@
     "cp8": 2
    },
    "new_trial": false,
-   "wall_s": 3.15,
-   "reasons": {
-    "trail": 11,
-    "signal:org_net5": 7
-   },
+   "wall_s": 3.11,
+   "horizon_exits": 0,
    "n_placebo": 356
   },
   {
@@ -187,11 +184,8 @@
     "cp8": 1
    },
    "new_trial": false,
-   "wall_s": 1.47,
-   "reasons": {
-    "trail": 11,
-    "signal:org_net5": 7
-   },
+   "wall_s": 1.22,
+   "horizon_exits": 0,
    "n_placebo": 356
   },
   {
@@ -207,11 +201,8 @@
     "cp8": 2
    },
    "new_trial": false,
-   "wall_s": 1.41,
-   "reasons": {
-    "trail": 11,
-    "signal:org_net5": 7
-   },
+   "wall_s": 1.38,
+   "horizon_exits": 0,
    "n_placebo": 356
   },
   {
@@ -227,19 +218,24 @@
     "cp8": 1
    },
    "new_trial": false,
-   "wall_s": 1.31,
-   "reasons": {
-    "trail": 11,
-    "signal:org_net5": 7
-   },
+   "wall_s": 1.32,
+   "horizon_exits": 0,
    "n_placebo": 356
   }
  ],
  "control1": {
-  "n": 143,
+  "n": 628,
   "checkpoints": {
-   "cp20": 1,
-   "cp6": 142
+   "cp10": 85,
+   "cp120": 25,
+   "cp15": 66,
+   "cp20": 59,
+   "cp30": 47,
+   "cp45": 40,
+   "cp6": 142,
+   "cp60": 32,
+   "cp8": 103,
+   "cp90": 29
   }
  },
  "nonflow_counts_real": {
@@ -288,9 +284,9 @@
   }
  },
  "timing_s": {
-  "synth_or_load": 7.5,
+  "synth_or_load": 7.3,
   "gate": 1.2,
-  "grid_plus_control": 12.7
+  "grid_plus_control": 14.6
  },
  "returns": "hidden (debug split: never choose parameters on FINAL data)"
 }

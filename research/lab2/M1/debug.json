@@ -3,10 +3,10 @@
  "version": "m1-v1",
  "stage": "debug",
  "split": "final_train",
- "utc": "2026-10-09 00:28:06",
+ "utc": "2026-10-09 01:38:30",
  "provisional": false,
  "debug_only": true,
- "prereg_sha256": "4ed7d99edcf19b3126522cdd8768f0303796143910471c498597f879590deb08",
+ "prereg_sha256": "82f2166071669e8228283f3ac5d26fb699278e63e293bfd5c102df548da874df",
  "rerun_reason": null,
  "coverage": {
   "split": "final_train",
@@ -31,6 +31,7 @@
     "hours_in_split": 5,
     "curve_hours": 5,
     "b2_hours": 5,
+    "b2_hours_midrun": 0,
     "coins_created": 294,
     "tradeable": 196,
     "usable": 196,
@@ -42,6 +43,7 @@
     "hours_in_split": 9,
     "curve_hours": 9,
     "b2_hours": 9,
+    "b2_hours_midrun": 0,
     "coins_created": 350,
     "tradeable": 254,
     "usable": 254,
@@ -52,13 +54,27 @@
   "days_expected": 0.52,
   "days_full": 2,
   "curve_span_utc": [
-   "2026-10-06 17:00:00",
-   "2026-10-08 20:00:00"
+   "2026-10-04 18:00:00",
+   "2026-10-08 21:00:00"
   ],
   "b2_span_utc": [
    "2026-10-07 19:00:00",
-   "2026-10-08 20:00:00"
+   "2026-10-08 19:00:00"
   ],
+  "completeness_source": "raw_chunks",
+  "parquet_snapshot_utc": "2026-10-09 00:30:55",
+  "b2_hours_needed": 24,
+  "b2_hours_done": 24,
+  "b2_hours_midrun": [],
+  "sol_usd": {
+   "series_utc": [
+    "2026-10-07 08:57:00",
+    "2026-10-08 18:15:00"
+   ],
+   "constant_fallback": false,
+   "lookahead_coins": 0,
+   "stale_coins": 1
+  },
   "power": {
    "entry_bar_coins": {
     "need": 40,
@@ -79,8 +95,9 @@
   "underpowered": false,
   "complete": true,
   "notes": [
-   "SOL/USD series covers 449/450 coins; others use the nearest edge price (affects only $->SOL sizing and the alive filter's USD volume)"
-  ]
+   "SOL/USD series covers 449/450 coins; 1 use its last (stale) price after it ends (affects only $->SOL sizing and the alive filter's USD volume)"
+  ],
+  "from_flow": true
  },
  "n_coins": 450,
  "span_days": 0.5203240740740741,
@@ -91,10 +108,10 @@
  "clusters_allowed": 32,
  "clusters_operator": 1,
  "model_check": {
-  "n_obs": 131,
+  "n_obs": 130,
   "n_coins": 24,
   "by_class": {
-   "OPERATOR": 131
+   "OPERATOR": 130
   },
   "n_clusters": 1,
   "need": {
@@ -105,11 +122,12 @@
   },
   "decision": "HIDDEN (debug split: no outcome statistics)",
   "trial": {
-   "config": "M1-modelcheck|2c46ee343654",
+   "config": "M1-modelcheck|869e50779074",
    "new_trial": false,
    "n_trials_total": 2575,
    "hypothesis_configs": 0,
-   "over_variant_limit": false
+   "over_variant_limit": false,
+   "family_val_looks": 0
   }
  },
  "event_counts": {
@@ -129,22 +147,19 @@
  "configs": {
   "m1|rhythm": {
    "config": "m1|rhythm",
-   "params_hash": "cdad46afafa9",
+   "params_hash": "8e6ebd969f57",
    "hypothesis": "M1",
    "n": 24,
    "n_coins": 24,
    "by_class_n": {
     "OPERATOR": 24
    },
-   "reasons": {
-    "horizon": 20,
-    "stop": 4
-   },
-   "n_placebo": 480,
+   "n_placebo": 300,
    "n_clusters": 1,
-   "horizon_exits": 20,
+   "horizon_exits": 0,
+   "censored": 0,
    "trial": {
-    "config": "M1|cdad46afafa9",
+    "config": "M1|8e6ebd969f57",
     "new_trial": false,
     "n_trials_total": 2575
    },
@@ -152,22 +167,19 @@
   },
   "m1|rhythm+prec": {
    "config": "m1|rhythm+prec",
-   "params_hash": "83775bb1bd75",
+   "params_hash": "9c0a14afb895",
    "hypothesis": "M1",
    "n": 24,
    "n_coins": 24,
    "by_class_n": {
     "OPERATOR": 24
    },
-   "reasons": {
-    "horizon": 20,
-    "stop": 4
-   },
-   "n_placebo": 480,
+   "n_placebo": 300,
    "n_clusters": 1,
-   "horizon_exits": 20,
+   "horizon_exits": 0,
+   "censored": 0,
    "trial": {
-    "config": "M1|83775bb1bd75",
+    "config": "M1|9c0a14afb895",
     "new_trial": false,
     "n_trials_total": 2575
    },
@@ -175,22 +187,19 @@
   },
   "m2|rhythm": {
    "config": "m2|rhythm",
-   "params_hash": "47fc2a94c189",
+   "params_hash": "95aced347723",
    "hypothesis": "M1",
    "n": 20,
    "n_coins": 20,
    "by_class_n": {
     "OPERATOR": 20
    },
-   "reasons": {
-    "horizon": 16,
-    "stop": 4
-   },
-   "n_placebo": 400,
+   "n_placebo": 241,
    "n_clusters": 1,
-   "horizon_exits": 16,
+   "horizon_exits": 0,
+   "censored": 0,
    "trial": {
-    "config": "M1|47fc2a94c189",
+    "config": "M1|95aced347723",
     "new_trial": false,
     "n_trials_total": 2575
    },
@@ -198,22 +207,19 @@
   },
   "m2|rhythm+prec": {
    "config": "m2|rhythm+prec",
-   "params_hash": "32527f3ef55e",
+   "params_hash": "70887e738650",
    "hypothesis": "M1",
    "n": 20,
    "n_coins": 20,
    "by_class_n": {
     "OPERATOR": 20
    },
-   "reasons": {
-    "horizon": 16,
-    "stop": 4
-   },
-   "n_placebo": 400,
+   "n_placebo": 241,
    "n_clusters": 1,
-   "horizon_exits": 16,
+   "horizon_exits": 0,
+   "censored": 0,
    "trial": {
-    "config": "M1|32527f3ef55e",
+    "config": "M1|70887e738650",
     "new_trial": false,
     "n_trials_total": 2575
    },
@@ -231,6 +237,6 @@
   "verdict": "DEBUG",
   "note": "mechanics only; returns hidden"
  },
- "runtime_s": 72.7,
+ "runtime_s": 96.2,
  "overall": "PENDING (no official TRAIN run)"
 }

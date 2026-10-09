@@ -693,7 +693,8 @@ def _cluster_stats(t: pd.DataFrame, clusters: Mapping[str, str], B: int) -> dict
 
 def evaluate(res: C.Result, ds: C.Dataset, clusters: Mapping[str, str], *, B: int, hide: bool,
              n_trials_total: int | None) -> dict:
-    """Per-config report. On the debug split: counts only (n, coins, classes, exit reasons) -- never returns."""
+    """Per-config report. On the debug split: counts only (n, coins, classes, horizon exits) -- never returns or
+    exit reasons."""
     t = res.trades
     rugs = rug_hits(ds, t) if (len(t) and not hide) else np.zeros(0, bool)
     cens = (t["reason"] == "horizon").to_numpy(bool) if len(t) else np.zeros(0, bool)
@@ -709,9 +710,9 @@ def evaluate(res: C.Result, ds: C.Dataset, clusters: Mapping[str, str], *, B: in
     base["reasons"] = t["reason"].value_counts().to_dict() if len(t) else {}
     base["rug_hits"] = int(rugs.sum())
     d = C.describe(t, B=B, n_trials_total=n_trials_total)
-    base.update({k: d.get(k) for k in ("mean", "median", "win_rate", "sd", "ci90", "ci95", "top_coin_share",
-                                        "top3_coin_share", "mean_without_top2", "halves", "mean_hold_min",
-                                        "deflated_sharpe")})
+    base.update({k: d.get(k) for k in ("mean", "median", "win_rate", "sd", "ci90", "ci95", "ci90_block", "ci95_block",
+                                        "n_blocks", "censored_share", "top_coin_share", "top3_coin_share",
+                                        "mean_without_top2", "halves", "mean_hold_min", "deflated_sharpe")})
     base["rug_rate"] = float(rugs.mean()) if len(t) else None
     base["rug_rate_uncensored"] = float(rugs[~cens].mean()) if (~cens).any() else None   # whole holds only
     base["placebo"] = C.placebo_compare(t, res.placebo, B=B) if len(res.placebo) and len(t) else None
@@ -1042,6 +1043,10 @@ def run_stage(stage: str, *, out_dir: Path = OUT_DIR, allow_partial: bool = Fals
             else:
                 raise M1Refused(f"{split} data incomplete: " + "; ".join(notes[:6])
                                 + (" (TRAIN only: --allow-partial for a provisional run)" if stage == "train" else ""))
+    covs = list(cov.values()) if (split == "final" and "split" not in cov) else [cov]     # FINAL: one per third
+    hard = [] if debug else [x for cv in covs for x in C.coverage_problems(cv, provisional=True)]
+    if hard:                                    # never allowed, not even provisionally (a future SOL price)
+        raise M1Refused(f"{split} data not usable: " + "; ".join(hard))
     configs = stage_configs(stage, out_dir, shortlist_path)
     if not configs or any(p is None for _, _, p in configs):
         raise M1Refused("no configs to run (shortlist missing or malformed)")
@@ -1066,6 +1071,8 @@ def run_stage(stage: str, *, out_dir: Path = OUT_DIR, allow_partial: bool = Fals
                         p.rename(out_dir / f"train_prev_{stamp}.{ext}")
         if ds is None:
             ds = C.load(split, flow=flow, census=census, _internal=(split == "val"))
+        if not debug:
+            C.check_sol_coverage(ds)        # a future SOL price: refuse before anything is logged
         ctab = cluster_table(ds)
         clusters = dict(zip(ctab["mint"], ctab["cluster"]))
         allowed = ctab[ctab["cls"].isin(ALLOWED_CLASSES)]
@@ -1282,22 +1289,25 @@ def render_md(doc: Mapping[str, Any]) -> str:
     if cf:
         L += ["## Configs", ""]
         if doc.get("debug_only"):
-            L += ["| config | trades | coins | classes | exit reasons | placebo trades | horizon exits | entries/day |",
-                  "|---|---:|---:|---|---|---:|---:|---:|"]
+            L += ["| config | trades | coins | classes | placebo trades | horizon exits | entries/day |",
+                  "|---|---:|---:|---|---:|---:|---:|"]
             for k, e in cf.items():
                 epd = (doc.get("entries_per_day") or {}).get(k)
-                L.append(f"| {e['config']} | {e['n']} | {e['n_coins']} | {e['by_class_n']} | {e['reasons']} | "
+                L.append(f"| {e['config']} | {e['n']} | {e['n_coins']} | {e['by_class_n']} | "
                          f"{e['n_placebo']} | {e['horizon_exits']} | {'n/a' if epd is None else f'{epd:.1f}'} |")
         else:
-            L += ["| role | config | n | coins | clusters | mean | 90% CI coin | 90% CI cluster | w/o top 2 | "
-                  "placebo diff | costs ×1.5 | rug rate |", "|---|---|---:|---:|---:|---:|---|---|---:|---:|---:|---:|"]
+            L += ["| role | config | n | coins | clusters | mean | 90% CI coin | 90% CI 6-h block | 90% CI cluster | "
+                  "w/o top 2 | placebo diff (class-matched) | placebo diff (unmatched) | costs ×1.5 | rug rate |",
+                  "|---|---|---:|---:|---:|---:|---|---|---|---:|---:|---:|---:|---:|"]
             for k, e in cf.items():
                 cl = e.get("clusters") or {}
                 pc = (e.get("placebo") or {}).get("mean_diff")
                 rug = "n/a" if e.get("rug_rate") is None else f"{100 * e['rug_rate']:.1f}%"
+                pu = (e.get("placebo_unmatched") or {}).get("mean_diff")
                 L.append(f"| {k} | {e['config']} | {e['n']} | {e['n_coins']} | {e['n_clusters']} | {_pct(e.get('mean'))} | "
-                         f"{_ci(e.get('ci90'))} | {_ci(cl.get('ci90_cluster'))} | {_pct(e.get('mean_without_top2'))} | "
-                         f"{_pct(pc)} | {_pct((e.get('stress') or {}).get('costs_x1.5'))} | {rug} |")
+                         f"{_ci(e.get('ci90'))} | {_ci(e.get('ci90_block'))} | {_ci(cl.get('ci90_cluster'))} | "
+                         f"{_pct(e.get('mean_without_top2'))} | {_pct(pc)} | {_pct(pu)} | "
+                         f"{_pct((e.get('stress') or {}).get('costs_x1.5'))} | {rug} |")
         L.append("")
     dec = doc.get("decision") or {}
     L += ["## Decision", "", f"- **{dec.get('verdict')}**."]

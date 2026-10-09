@@ -488,6 +488,10 @@ def test_boot_subset_diff():
 
 VALID_OK = {"V1": {"pass": True}, "V2": {"chain_ok": 995, "transitions": 1000}, "V3": {"both": 99, "coin_windows": 100},
             "V4": {"pass": True}}
+# stop rule 1 is checked per split: a passing V1/V2/V4 record over every split's dates (common.validation_gates)
+VALID_OK = {**VALID_OK, "ranges": [{"lo_utc": "2026-09-01 00:00:00", "hi_utc": "2026-10-10 00:00:00",
+                                    "validated_utc": "2030-01-01 00:00:00", "V1": {"pass": True},
+                                    "V2": {"chain_ok": 995, "transitions": 1000}, "V4": {"pass": True}}]}
 
 
 @pytest.fixture

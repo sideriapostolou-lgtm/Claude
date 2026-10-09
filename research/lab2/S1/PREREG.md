@@ -230,11 +230,15 @@ search, before any promotion.
 
 ## 9. Controls
 
-- **Control 1, the population control** (hypothesis key `S1-control1`, one config).
-  - Same checkpoints, universe, class filter and exits.
-  - It enters at the first checkpoint where the coin is `ok`, in an allowed class and `alive`. **No flow
-    conditions.**
-  - It is compared as mean(S1) − mean(control 1), with a CI from independent coin bootstraps.
+- **Control 1, the population control** (hypothesis key `S1-control1`, one config), **time-matched** (amendment 1).
+  - PLAN §4.3: "the same coins at the same t without the flow conditions". At EVERY checkpoint cp, every coin that is
+    `ok`, in an allowed class and `alive` at cp is entered at cp (`s1.control1_entries`, run through
+    `common.run_entries`: several entries per coin, one per checkpoint). Same universe, class filter and exits.
+    **No flow conditions.**
+  - It is compared at the same ages: mean(S1) − Σ_cp w_cp · mean(control 1 at cp), with w_cp = S1's share of trades
+    at checkpoint cp (`s1.matched_control_diff`). The 95% / 90% CIs come from a JOINT coin bootstrap (a coin in
+    both sets carries its trades in both). A checkpoint where S1 traded but control 1 has no trade leaves the
+    difference undefined (`None`).
 - **Control 2, the matched random control** (PLAN §3.4).
   - `common.backtest` placebo: 20 draws per signal; random S1-eligible coins (`ok`, allowed class, `alive`); a
     decision age within ±120 s; the same exits.
@@ -341,8 +345,12 @@ Otherwise the verdict is one of:
 
 **Kill criteria:**
 
-- **Stop rule 1 (data first).** Gates V1-V7 passed (`FLOW/VALIDATION.md`). Stages refuse to run when B1 coverage is
-  under 95% or the split is incomplete.
+- **Stop rule 1 (data first).** `s1.check_data` calls `common.validation_gates(split)`: V1, V2 (≥ 99%) and V4 must
+  pass on raw trades FROM THE SPLIT'S OWN DATES, validated after that data was fetched, plus V3 (census sample).
+  The census-day run of 2026-10-08 21:55 covers no EXT split and predates the post-audit re-fetch, so every
+  non-debug stage refuses until the split's dates are validated. Stages also refuse when B1 coverage is under 95%,
+  the split is incomplete, a B2 hour is mid-run, or the SOL/USD series starts after the split's coins
+  (`common.coverage_problems`).
 - **Stop rule 2.** The fill-model caveat in §8.
 - **Stop rule 3.** GATE_FAIL on TRAIN kills S1 before VAL. GATE_VAL_FAIL kills it before the entry rule's VAL run.
 - **Stop rule 7.** FAIL_VAL is reported to the lead. If S1, D1 and M1 all fail VAL, entries on fresh graduates
@@ -404,3 +412,20 @@ looked at.
 
 - With these numbers TEST is expected to be **UNDERPOWERED** against the 60-trade bar. CONFIRM is the powered
   out-of-sample test.
+
+## Amendment 1 (2026-10-09, review findings; before any official TRAIN run, no `prereg.lock` existed)
+
+All changes come from a code review of `common.py` / `s1.py`, not from any outcome. No parameter changed.
+
+1. **Control 1 is time-matched (§9).** Before, control 1 entered at the FIRST eligible checkpoint, which is almost
+   always g + 6 min (debug run: 142 of 143 control trades at cp6), while S1 signals spread over cp6-cp30, so the
+   "≥ 6 points better than control 1" bar compared different entry ages (g + 6 sits right after the BOOST cliff,
+   PLAN §6.7). Control 1 now enters every eligible coin at every checkpoint and is compared at S1's checkpoint mix,
+   with a joint coin bootstrap. The bar (≥ +0.06 on VAL and TEST; the TRAIN shortlist rule) is unchanged.
+2. **Shared protocol fixes that apply to S1** (`common.py`): criterion 3 needs the 90% CI lower bound > 0 under both
+   the coin bootstrap and a 6-hour block bootstrap (PLAN §3.4 "also resample by day blocks"); a verdict with more
+   than 10% of trades closed by the data horizon (g + 179 min: S1 entries after g + 89 min with a 90-min hold) is
+   INCOMPLETE, never PASS; TEST / CONFIRM / FINAL are ONE look per hypothesis family (S1, S1-gate, S1-control1
+   and the fill-sensitivity runs share one `common.one_shot_session`), every VAL / TEST look is logged (the
+   sensitivity runs are now trials: the ledger identity includes the fill config), and FINAL consumes the
+   census thirds.

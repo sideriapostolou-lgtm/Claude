@@ -20,8 +20,15 @@ THE CONTRACT (read this before writing a hypothesis)
   it is a census coin, otherwise its latest possible creation time ``g_ts - 1800`` (the curve scan looks back
   30 min before its chunk). That can only move a coin into a LATER split, never an earlier one.
 * **Universe** (:func:`load`): tradeable = SOL-quoted, not Mayhem (derived: CreateEvent flag OR real SOL at
-  completion < 80), virtual reserve known; plus data quality: a B2 row for the canonical pool and every chain
-  hour of [g, g + 180 min) present in ``b2_bars``. Every exclusion is counted in ``Dataset.coverage``.
+  completion < 80), virtual reserve known; plus data quality: a B2 row for the canonical pool and every
+  (pool, chain hour) of [g, g + 180 min) COMPLETELY consolidated (:class:`Completeness`, from the backfill's raw
+  chunks: a time-split hour with one half in the Parquet does not count; a pool the backfill gave up on is
+  ``b2_pool_error``). Every exclusion is counted in ``Dataset.coverage``.
+* **Data contract for every non-debug stage** (:func:`validation_gates`, :func:`coverage_problems`): stop rule 1
+  per split (V1/V2/V4 on the split's own dates, validated after that data was fetched; V3 on the census sample),
+  no B2 hour mid-run, <= 5 % of tradeable coins missing B2, and a SOL/USD series that starts before the split's
+  coins (a lookup before the series returns its first, i.e. a LATER, price). :func:`backtest` refuses SOL lookahead
+  itself (:class:`DataNotReady`).
 * **No lookahead** (:class:`AsOf`): a decision at time ``t`` sees events with time <= ``tau = t - 20 s`` only.
 
   - a minute bar is visible only once its minute ended (``minute_ts + 60 <= tau``);
@@ -49,11 +56,21 @@ THE CONTRACT (read this before writing a hypothesis)
   entry bar too (high first, then low). ``"open"`` mode is the optimistic reference. X1 will replace this.
 * **Backtest** (:func:`backtest`): at most ONE entry per coin per rule; per-trade records
   (mint, t_in, t_out, ret_net, reason ...); a matched-timing random-entry PLACEBO (20 draws per signal, a random
-  eligible coin of the same split, decision age within +-120 s, same exit rule); a costs x1.5 stress run on
-  every guarded split; every non-debug run is logged in ``research/lab2/trials.json`` and every distinct
-  (hypothesis, params) is a TRIAL for the deflated Sharpe ratio (baseline: the lab's 2,575 logged configs).
-* **Stats and verdicts**: :func:`describe` (mean, median, win rate, coin-bootstrap CIs, top-coin share,
-  mean without the top 2 trades, halves), :func:`deflated_sharpe`, :func:`portfolio_sim` ($100, 5 slots),
+  eligible coin of the same split, decision age within +-120 s, same exit rule, optionally the signal's own
+  class via ``placebo_strata``); a costs x1.5 stress run on every guarded split; every non-debug run is logged in
+  ``research/lab2/trials.json`` and every distinct (hypothesis, params, fills, coin subset) is a TRIAL for the
+  deflated Sharpe ratio (baseline: the lab's 2,575 logged configs). Debug runs log no mean.
+* **Gating**: the env guards are enforced inside :func:`backtest` / :func:`run_trades` / :func:`run_entries`
+  whatever Dataset is passed; a low-level run on a guarded split needs ``hypothesis=`` and is logged. TEST /
+  CONFIRM / FINAL allow ONE look per hypothesis FAMILY (``M1-twin`` and ``G1.dip`` are M1 and G1): several configs
+  only inside one :func:`one_shot_session`; ``final`` consumes ``final_val`` / ``final_test``; one-shot and VAL
+  looks go to the canonical ledger only (env LAB2_TRIALS). Every VAL look is counted per family.
+* **Horizon**: B2 ends at g + 180 min; a position still open there closes as ``horizon`` (censored). Use
+  ``ExitSpec.exit_by_age_s`` to register a deadline inside the data; a verdict with > 10 % censored trades is
+  INCOMPLETE, never PASS.
+* **Stats and verdicts**: :func:`describe` (mean, median, win rate, coin-bootstrap CIs, 6-hour block-bootstrap CIs
+  (PLAN 3.4 day blocks), top-coin share, mean without the top 2 trades, halves, censored share),
+  :func:`deflated_sharpe`, :func:`portfolio_sim` ($100, 5 slots),
   :func:`verdict_entry` (PLAN 3.5: PASS / FAIL / UNDERPOWERED / INCOMPLETE) and :func:`auto_rejections`
   (PLAN 3.6), :func:`verdict_veto`.
 
@@ -906,7 +923,8 @@ def _check_split_env(split: str) -> None:
         raise SplitLocked(f"split {split!r} is locked: needs env {env}=1 (only the judge sets it)")
 
 
-def _check_sol_coverage(ds: "Dataset") -> None:
+def check_sol_coverage(ds: "Dataset") -> None:
+    """Raise :class:`DataNotReady` when coins of ``ds`` would read a SOL/USD price from before the series."""
     sol = ds.coverage.get("sol_usd") or {}
     if sol.get("lookahead_coins"):
         raise DataNotReady(f"SOL/USD series starts {(sol.get('series_utc') or ['?'])[0]}: {sol['lookahead_coins']} "
@@ -1081,21 +1099,24 @@ def coverage_report(split: str, g_all: pd.DataFrame, g_split: pd.DataFrame, usab
     }
 
 
-def coverage_problems(cov: Mapping[str, Any], max_missing_frac: float = 0.05) -> list[str]:
+def coverage_problems(cov: Mapping[str, Any], max_missing_frac: float = 0.05, provisional: bool = False) -> list[str]:
     """Data-contract problems that make every non-debug stage refuse (shared by G1 / S1 / D1 / M1):
 
     * B2 hours mid-run (a time-split hour with one half consolidated, pools still to come);
     * coins missing B2 (no row, incomplete window, or a pool the backfill gave up on) > 5 % of tradeable;
     * SOL/USD: coins that would read a price from before the series starts (= a later price), or no series at all
-      on real data (a constant)."""
+      on real data (a constant).
+
+    ``provisional=True`` (a provisional TRAIN run on partial data) keeps only the SOL/USD problems: partial data is
+    allowed there, a future SOL price never is."""
     out = []
-    mr = cov.get("b2_hours_midrun") or []
+    mr = [] if provisional else (cov.get("b2_hours_midrun") or [])
     if mr:
         out.append(f"{len(mr)} B2 hour(s) mid-run (first {mr[0]}): wait for the backfill to finish them")
     ex = cov.get("excluded") or {}
     miss = sum(int(ex.get(k, 0)) for k in ("b2_window_incomplete", "no_b2_row", "b2_pool_error"))
     trad = int(cov.get("tradeable") or 0)
-    if trad and miss / trad > max_missing_frac:
+    if trad and miss / trad > max_missing_frac and not provisional:
         out.append(f"{miss}/{trad} tradeable coins lack a complete B2 window (incl. {int(ex.get('b2_pool_error', 0))} "
                    "pools the backfill gave up on: the most active coins, not a random loss)")
     sol = cov.get("sol_usd") or {}
@@ -1640,7 +1661,7 @@ def _guarded_look(ds: Dataset, hypothesis: str | None, params: Mapping, ledger_p
         raise SplitLocked(f"{what} on guarded split {ds.split!r} needs hypothesis= (every look there is logged)")
     _check_split_env(ds.split)
     _check_run_allowed(hypothesis, params, ds.split, ledger_path, shortlist_path)
-    _check_sol_coverage(ds)
+    check_sol_coverage(ds)
     return True
 
 
@@ -1688,12 +1709,16 @@ def run_entries(ds: Dataset, strategy_fn: StrategyFn, params: Mapping, cfg: Fill
 
 def run_placebo(ds: Dataset, strategy_fn: StrategyFn, params: Mapping, cfg: FillConfig, signals: pd.DataFrame,
                 n_draws: int = 20, seed: int = 0, eligible: Callable[[AsOf], bool] | None = None,
-                max_tries: int = 200, strata: Callable[[AsOf], Any] | None = None) -> pd.DataFrame:
+                max_tries: int = 200, strata: Callable[[AsOf], Any] | None = None, *,
+                hypothesis: str | None = None, ledger_path: Path | None = None,
+                shortlist_path: Path | None = None, _internal: bool = False) -> pd.DataFrame:
     """Matched-timing random entries (PLAN 3.4): for each signal, ``n_draws`` entries in random eligible coins of
     the same split at a decision age within +-120 s of the signal's, with the same exits (the signal's mechanical
     ExitSpec + the strategy's exit logic, called with ``pos.is_placebo = True`` and an empty state).
     ``eligible(snap)`` optionally restricts placebo entries (e.g. alive coins only); ``strata(snap)`` matches them
-    on a class: a draw counts only when its stratum equals the signal's (evaluated at the signal's decision)."""
+    on a class: a draw counts only when its stratum equals the signal's (evaluated at the signal's decision).
+    Outside :func:`backtest` it is a logged look on guarded splits (``hypothesis=`` required), like run_trades."""
+    log = False if _internal else _guarded_look(ds, hypothesis, params, ledger_path, shortlist_path, "run_placebo")
     mints = ds.mints
     rows = []
     for si, sig in enumerate(signals.itertuples(index=False)):
@@ -1726,7 +1751,11 @@ def run_placebo(ds: Dataset, strategy_fn: StrategyFn, params: Mapping, cfg: Fill
             r["signal_mint"] = sig.mint
             rows.append(r)
             got += 1
-    return _frame(rows, extra=("signal", "signal_mint"))
+    out = _frame(rows, extra=("signal", "signal_mint"))
+    if log:
+        record_run(hypothesis, params, ds.split, {"n": int(len(out)), "mean": None}, ledger_path, cfg=cfg,
+                   kind="run_placebo")
+    return out
 
 
 # =========================================================================== trials ledger, shortlists, guards
@@ -1997,16 +2026,16 @@ def backtest(strategy_fn: StrategyFn, split: str, params: Mapping | None = None,
     elif ds.split != split:
         raise ValueError(f"dataset is {ds.split!r}, backtest asked for {split!r}")
     if not debug:
-        _check_sol_coverage(ds)
+        check_sol_coverage(ds)
     trades = _engine_trades(ds, strategy_fn, params, cfg, mints)
     pl = _frame([], extra=("signal", "signal_mint"))
     controls: dict[str, pd.DataFrame] = {}
     if placebo and len(trades):
         pl = run_placebo(ds, strategy_fn, params, cfg, trades, n_placebo, seed, placebo_eligible,
-                         strata=placebo_strata)
+                         strata=placebo_strata, _internal=True)
         for name, spec in (placebo_controls or {}).items():
             controls[name] = run_placebo(ds, strategy_fn, params, cfg, trades, n_placebo, seed,
-                                         spec.get("eligible"), strata=spec.get("strata"))
+                                         spec.get("eligible"), strata=spec.get("strata"), _internal=True)
     if stress is None:
         stress = {"costs_x1.5": cfg.stressed(1.5)} if (split in ONE_RUN_SPLITS or split == "val") else {}
     st = {k: _engine_trades(ds, strategy_fn, params, c, mints) for k, c in stress.items()}
@@ -2234,7 +2263,9 @@ def auto_rejections(res: Result) -> list[str]:
 def verdict_entry(test: Result, *, val: Result | None = None, final: Result | None = None, min_mean: float = 0.03,
                   control_margin: float = 0.06, B: int = 10_000) -> dict:
     """PLAN 3.5 entry-rule bar on a TEST result. UNDERPOWERED when < 60 trades or < 40 coins (never PASS/FAIL);
-    INCOMPLETE when an input is missing (VAL sign, placebo, stress); REJECTED on any 3.6 auto-rejection."""
+    INCOMPLETE when an input is missing (VAL sign, placebo, stress, FINAL) or when more than 10 % of the trades were
+    closed by the data horizon (criterion 10: the simulated rule is not the registered one); REJECTED on any 3.6
+    auto-rejection. Criterion 3 needs the 90 % CI lower bound > 0 under the coin AND the 6-h block bootstrap."""
     t = test.trades
     s = describe(t, B=B)
     crit = []

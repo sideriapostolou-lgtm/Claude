@@ -560,3 +560,32 @@ def test_m1_final_criterion_excludes_the_design_third():
     assert d["mean_positive"] is False and d["n"] == 4
     assert d["design_third"]["n"] == 5 and "detector design" in d["design_third"]["note"]
     assert M.final_decision(t.iloc[:5])["mean_positive"] is None
+
+
+def test_run_placebo_on_a_guarded_split_is_a_logged_look(tmp_ledger, monkeypatch):
+    monkeypatch.setenv("LAB2_ALLOW_TEST", "1")
+    ds = _test_ds()
+    sig = C._engine_trades(ds, _enter_at(10), {}, C.FillConfig())
+    with pytest.raises(C.SplitLocked, match="hypothesis"):
+        C.run_placebo(ds, _enter_at(10), {}, C.FillConfig(), sig, n_draws=2)
+    C.run_placebo(ds, _enter_at(10), {}, C.FillConfig(), sig, n_draws=2, hypothesis="HP")
+    assert [r["kind"] for r in json.loads(tmp_ledger.read_text())["runs"]] == ["run_placebo"]
+
+
+def test_m1_provisional_train_refuses_sol_lookahead_before_logging(tmp_path, monkeypatch, tmp_ledger):
+    import m1 as M
+    from conftest import VALID_ALL
+    from test_m1 import frames_with, full
+    late = C.SolUsd([[T0 + 100 * H, 1, 1, 1, 150.0, 1], [T0 + 200 * H, 1, 1, 1, 140.0, 1]])
+    ds = C.Dataset.from_frames("train", *frames_with({i: {"buy": full(0.3)} for i in range(4)}, n=6),
+                               census=C.Census.empty(), sol=late, guard=False)
+    out, flow = tmp_path / "M1", tmp_path / "flow"
+    out.mkdir()
+    flow.mkdir()
+    (out / "PREREG.md").write_text("# p\n")
+    (flow / "validation.json").write_text(json.dumps(VALID_ALL))
+    with pytest.raises(M.M1Refused, match="SOL/USD"):
+        M.run_stage("train", out_dir=out, ds=ds, flow=flow, ledger_path=tmp_ledger, shortlist_path=tmp_path / "sl",
+                    B=100, n_placebo=1, env={}, allow_partial=True)
+    assert not tmp_ledger.exists() or not json.loads(tmp_ledger.read_text())["runs"]
+    assert not (out / "prereg.lock").exists()

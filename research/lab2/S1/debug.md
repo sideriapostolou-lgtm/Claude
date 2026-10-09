@@ -1,8 +1,8 @@
 # S1 debug run on the census TRAIN third (counts only; returns hidden)
 
 - B1 source: **SYNTHETIC (made-up wallets; flow-condition counts are meaningless)**.
-- 450 usable coins; S1-universe 152; 0.52 days; 226107 B1 rows.
-- Timing (s): {'synth_or_load': 7.5, 'gate': 1.2, 'grid_plus_control': 12.7}.
+- 450 usable coins; S1-universe 152; 0.52 days; 226105 B1 rows.
+- Timing (s): {'synth_or_load': 7.3, 'gate': 1.2, 'grid_plus_control': 14.6}.
 
 ## Gate populations
 
@@ -22,7 +22,7 @@
 | rem0.25_buy20_absY | 18 | 18 | {'cp10': 2, 'cp15': 8, 'cp20': 1, 'cp30': 1, 'cp6': 4, 'cp8': 2} |
 | rem0.25_buy20_absN | 18 | 18 | {'cp10': 2, 'cp15': 8, 'cp20': 1, 'cp30': 1, 'cp6': 5, 'cp8': 1} |
 
-Control 1: {'n': 143, 'checkpoints': {'cp20': 1, 'cp6': 142}}.
+Control 1: {'n': 628, 'checkpoints': {'cp10': 85, 'cp120': 25, 'cp15': 66, 'cp20': 59, 'cp30': 47, 'cp45': 40, 'cp6': 142, 'cp60': 32, 'cp8': 103, 'cp90': 29}}.
 
 ## Real non-flow counts (bars + graduation columns)
 
