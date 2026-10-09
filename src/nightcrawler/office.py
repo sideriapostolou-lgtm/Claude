@@ -86,7 +86,7 @@ CAST: dict[str, dict[str, object]] = {
     "voss": {
         "name": "Voss",
         "kind": "owl director",
-        "members": ["judge"],
+        "members": ["judge", "predict"],
         "shot": "02_mission_table.jpg",
         "room": "The mission table",
         "job": "reviews and challenges every setup: the AI judge",

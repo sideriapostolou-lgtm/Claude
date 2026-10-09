@@ -34,7 +34,7 @@ MIDNIGHT = NOW - NOW % 86_400
 DAY = 86_400.0
 XSS = "<img src=x onerror=alert(1)>"
 HIGGS = "HiGGSmintAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
-MEMBER_IDS = ["crawler", "cocoon", "strategy", "radar", "judge", "broker", "risk", "receipts", "coach"]
+MEMBER_IDS = ["crawler", "cocoon", "strategy", "radar", "judge", "broker", "risk", "receipts", "coach", "predict"]
 SECRETS = {
     "ANTHROPIC_API_KEY": "sk-ant-api03-TOPSECRETanthropicKEY0123456789",
     "JUPITER_API_KEY": "jup-secret-key-5f4dcc3b5aa765d61d8327deb882cf99",
@@ -246,7 +246,7 @@ def test_team_rows_reuse_the_team_room_rules_in_plain_words(ledger: Ledger, make
     state = build_page_state(ledger, settings, NOW)
     by = members(state)
     assert [m["name"] for m in state["team"]["members"]] == [
-        "Crawler", "Cocoon", "Strategy", "Radar", "Jev", "Broker", "Risk", "Receipts", "Coach"]
+        "Crawler", "Cocoon", "Strategy", "Radar", "Jev", "Broker", "Risk", "Receipts", "Coach", "Polymarket desk"]
     assert by["crawler"]["status"] == "working" and by["crawler"]["last_activity"] == NOW  # coin last seen now
     assert by["crawler"]["doing"] == "Found 1 new coin in the last hour; 120 too young to judge yet."
     assert by["cocoon"]["doing"].startswith("Last 24 h: threw out 1 coin, let 1 through.")

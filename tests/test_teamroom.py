@@ -41,7 +41,7 @@ from nightcrawler.teamroom import (
 NOW = 1_791_475_200.0  # 2026-10-08T16:00:00Z (the fake clock's start)
 MIDNIGHT = NOW - NOW % 86_400
 HIGGS = "HiGGSmintAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
-PANEL_IDS = ["crawler", "cocoon", "radar", "judge", "strategy", "broker", "risk", "receipts", "upgrades"]
+PANEL_IDS = ["crawler", "cocoon", "radar", "judge", "strategy", "broker", "risk", "receipts", "upgrades", "predict"]
 PANEL_KEYS = {"id", "name", "role", "status", "why", "doing", "last_activity", "headline", "stats", "events"}
 STATUSES = {"working", "idle", "waiting", "blocked"}
 SECRETS = {
@@ -327,7 +327,7 @@ def test_empty_ledger_says_not_available_instead_of_inventing(ledger: Ledger, se
     assert by["risk"]["meter"]["fraction"] is None
     assert state["bank"] == {"sol": None, "usd": None, "start_sol": None, "change_sol": None, "change_pct": None,
                              "change_usd": None}
-    assert state["team"] == {"working": 0, "idle": 0, "waiting": 9, "blocked": 0}
+    assert state["team"] == {"working": 0, "idle": 0, "waiting": 10, "blocked": 0}
 
 
 # --------------------------------------------------------------------------- status chips

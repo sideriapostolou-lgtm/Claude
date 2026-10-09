@@ -2533,12 +2533,15 @@ class App:
     engine: Engine
     dashboard: Any
     wallet: Any = None
+    polydesk: Any = None
 
     def close(self) -> None:
         """Stop the dashboard (if running), write the last provider-usage counts and close the ledger."""
         from nightcrawler.http import attach_usage_store, flush_usage
 
         try:
+            if self.polydesk is not None:
+                self.polydesk.stop()
             if self.dashboard is not None:
                 self.dashboard.stop()
         finally:
@@ -2629,9 +2632,15 @@ def build_app(settings: Settings, clock: Clock | None = None, *, session: Any = 
         attach_usage_store(http, None)  # an injected client must not keep writing into a closed ledger
         ledger.close()
         raise
+    polydesk = None
+    if settings.polydesk_enabled:
+        from nightcrawler.polydesk import PolyDesk
+
+        polydesk = PolyDesk(settings)
+        polydesk.start()
     return App(settings=settings, clock=clock, stop_event=stop_event, http=http, sources=sources, ledger=ledger,
                crawler=crawler, cocoon=cocoon, radar=radar, judge=judge, risk=risk, broker=broker,
-               auditor=auditor, engine=engine, dashboard=dashboard, wallet=wallet)
+               auditor=auditor, engine=engine, dashboard=dashboard, wallet=wallet, polydesk=polydesk)
 
 
 def build_engine(settings: Settings, clock: Clock | None = None) -> Engine:

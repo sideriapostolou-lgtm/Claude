@@ -467,6 +467,8 @@ def _xp_state(raw: Any, text: _Text, now: float, *, live: bool, coach_state: Any
         raise _Refused("members")
     members = {}
     for mid, _, _ in MEMBERS:
+        if mid not in EXPERIENCE_KINDS:
+            continue  # a desk the report cards do not grade (yet), e.g. the Polymarket paper desk
         key = "jev" if mid == "judge" and mid not in members_raw and "jev" in members_raw else mid
         if key in members_raw:
             members[mid] = _xp_member(mid, members_raw[key], text, live=live)

@@ -38,6 +38,7 @@ MEMBERS: tuple[tuple[str, str, str], ...] = (
     ("risk", "Risk", "protects the money"),
     ("receipts", "Receipts", "tamper-proof log"),
     ("coach", "Coach", "the self-learning system"),
+    ("predict", "Polymarket desk", "paper desk on prediction markets"),
 )
 #: Shown only when the learning module says it really can (``can_stop_trading``), never as static text.
 LEARNING_RULE = "The Coach can turn real trading OFF on its own, never ON."

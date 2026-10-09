@@ -373,6 +373,15 @@ class Settings:
                                "GeckoTerminal fails, rate-limits or lags (one source per series, never mixed)")
 
     # ---- learning (docs/LEARNING.md) ------------------------------------------
+    polydesk_enabled: bool = _f(True, "bool", "The Polymarket desk: a PAPER desk that watches Polymarket US's public "
+                                "market data all day and keeps a paper book under one candidate rule (never real "
+                                "money, never a key)")
+    polydesk_theta: float = _f(0.97, "fraction", "Polymarket desk: buy a side on paper once it can be bought at or "
+                                 "above this price", lo=0.5, hi=0.999)
+    polydesk_hours: float = _f(1.0, "hours", "Polymarket desk: only within this many hours before a market's end",
+                                 lo=0.05, hi=168)
+    polydesk_ticket_usd: float = _f(20.0, "usd", "Polymarket desk: paper ticket per market", lo=1, hi=1000)
+    polydesk_poll_s: float = _f(90.0, "seconds", "Polymarket desk: seconds between rounds", lo=30, hi=900)
     learn_enabled: bool = _f(True, "bool", "Self-learning loop: record every pump.fun graduate and test strategy "
                              "versions in the shadow. It never trades, never changes risk settings and uses its "
                              "own small API budget; false = no learning calls at all")

@@ -111,12 +111,13 @@ PANELS: tuple[tuple[str, str, str], ...] = (
     ("risk", "Risk", "Sizes trades and enforces the daily loss, drawdown and position limits"),
     ("receipts", "Receipts", "Writes every decision and fill into a tamper-evident hash chain"),
     ("upgrades", "Upgrades", "What is deployed right now and how long it has been running"),
+    ("predict", "Polymarket desk", "PAPER desk on Polymarket US: buys outcomes that are almost decided, all day"),
 )
 _ROLES = {pid: (name, role) for pid, name, role in PANELS}
 
 #: How recent an activity must be for a member to count as working (seconds); see ``_window``.
 WORKING_WINDOW_S = {"crawler": 300.0, "cocoon": 600.0, "radar": 1800.0, "judge": 1800.0, "strategy": 300.0,
-                    "broker": 1800.0, "risk": 300.0, "receipts": 600.0, "upgrades": 600.0}
+                    "broker": 1800.0, "risk": 300.0, "receipts": 600.0, "upgrades": 600.0, "predict": 600.0}
 
 #: Cocoon rule ids (``[rule]`` prefix of a hard-fail reason) in plain words.
 RULE_LABELS = {
@@ -426,7 +427,8 @@ def build_team_state(ledger: Any, settings: Settings, now: float, engine_status:
         ctx.engine_wait = problem
     started_at = _num(state["engine"]["started_at"])
     panels = [_crawler(ctx), _cocoon(ctx), _radar(ctx), _judge(ctx), _strategy(ctx), _broker(ctx), _risk(ctx),
-              _receipts(ctx), _upgrades(ctx, deploy or {"commit": None, "message": None}, started_at)]
+              _receipts(ctx), _upgrades(ctx, deploy or {"commit": None, "message": None}, started_at),
+              _predict(ctx)]
     team = {"working": 0, "idle": 0, "waiting": 0, "blocked": 0}
     for panel in panels:
         team[panel["status"]] += 1
@@ -899,6 +901,32 @@ def _receipts(ctx: _Ctx) -> dict[str, Any]:
                          recent[0].ts if recent else None)],
                   events, sort=False,
                   hash={"head": head, "short": f"{head[:8]}…{head[-8:]}", "explainer": RECEIPTS_EXPLAINER})
+
+
+def _predict(ctx: _Ctx) -> dict[str, Any]:
+    """The Polymarket desk (nightcrawler.polydesk): paper positions and settlements from its state file."""
+    from nightcrawler.polydesk import panel_state
+
+    d = panel_state(ctx.settings, ctx.now)
+    events = [ctx.event(float(e["ts"]), str(e["text"]), str(e.get("tone") or "neutral")) for e in d["events"]]
+    last = d["last_ok"]
+    if not d["enabled"]:
+        status: tuple[str, str] = ("idle", "switched off (POLYDESK_ENABLED)")
+    else:
+        blocked = f"last round failed ({d['last_error']})" if d["last_error"] and not last else None
+        status = ctx.derive("predict", last, blocked=blocked, idle="no round finished recently")
+    t = d["today"]
+    if last is None:
+        doing = "Starting up: first look at the venue's markets." if d["enabled"] else "Switched off."
+    else:
+        doing = (f"Watching {d['watched']:,} markets; {d['open']} paper positions open; today {t['won']}/{t['settled']} "
+                 f"settled won, {t['pnl_usd']:+.2f} $; all time {d['won_total']}/{d['settled_total']} won, "
+                 f"{d['pnl_total_usd']:+.2f} $ (paper money, pretend).")
+    stats = [_stat("Watching", d["watched"], "count"), _stat("Open (paper)", d["open"], "count"),
+             _stat("Today $ (paper)", round(t["pnl_usd"], 2), "usd"),
+             _stat("All time $ (paper)", round(d["pnl_total_usd"], 2), "usd")]
+    return _panel("predict", status, last, ctx.text(doing), _headline(d["open"], "count", "paper positions open"),
+                  stats, events, rule=d["rule"], positions=d["positions"], label=d["label"])
 
 
 def _upgrades(ctx: _Ctx, deploy: dict[str, str | None], started_at: float | None) -> dict[str, Any]:

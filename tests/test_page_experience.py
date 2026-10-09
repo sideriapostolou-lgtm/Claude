@@ -26,13 +26,13 @@ from nightcrawler.config import LIVE_CONFIRM_PHRASE, Settings
 from nightcrawler.dashboard import DashboardServer, build_state
 from nightcrawler.ledger import Ledger
 from nightcrawler.page import MEMBERS, render_page_html
-from nightcrawler.pagestate import EXPERIENCE_CAVEAT, EXPERIENCE_MONEY_LINE, build_page_state, experience_card
+from nightcrawler.pagestate import EXPERIENCE_KINDS, EXPERIENCE_CAVEAT, EXPERIENCE_MONEY_LINE, build_page_state, experience_card
 from nightcrawler.teamroom import TeamRoom
 
 NOW = 1_791_475_200.0  # 2026-10-08T16:00:00Z
 XSS = "<img src=x onerror=alert(1)>"
 SECRET = "sk-ant-api03-TOPSECRETanthropicKEY0123456789"
-MEMBER_IDS = [mid for mid, _, _ in MEMBERS]
+MEMBER_IDS = [mid for mid, _, _ in MEMBERS if mid in EXPERIENCE_KINDS]  # the graded members
 EXPERIENCE_KEYS = {"source", "headline", "bars_line", "money_line", "caveat", "team", "members", "loss_types_week",
                    "lessons", "playbook"}
 TEAM_KEYS = {"graded", "days", "practised", "practised_window", "skills_shown", "skills_measurable", "collecting",
