@@ -12,6 +12,10 @@ Pure functions over the parquet files written by :mod:`data`. Nothing here talks
 * :func:`cell_trades`: one trade per market for a cell (theta, H, families, control): the first buyable print at or
   above theta for an outcome inside the window ``[endDate - H, endDate)`` (``H = inf``: anywhere before resolution),
   executed at the first buyable print for the same outcome LATENCY_S later, held to resolution.
+* :func:`bid_trades` (P5, Amendment 4): the same signal, but a bid rests at the inferred best bid (the last
+  bid-side print in the 600 s before the signal, never above the signal ask minus one tick, less 0 or 1 tick) and
+  fills only at a later bid-side print STRICTLY below it once the bid-side size at or below it covers the order;
+  the tape has no depth, so a print at exactly the bid never fills. :func:`maker_extra` adds its readings.
 * :func:`summarize`: the pre-registered readings with an event bootstrap, the rule-of-three worst case and the
   share of trades the old (side-blind) rule would have filled at a bid-side print; :func:`calibration_placebo`.
 * :func:`record_run`: the trial ledger (one entry per hypothesis, cell, split and stage), shared in count with
@@ -52,6 +56,8 @@ EXEC_WINDOW_S = 600
 MAX_PRICE = 0.999  # a fill at 1.0 cannot be bought
 BOOTSTRAP_B = 2000
 INF = math.inf
+TICK = 0.001  # Amendment 4: polymarket.com's tick above 0.96, Polymarket US's tick everywhere
+BID_REF_LOOKBACK_S = EXEC_WINDOW_S  # Amendment 4: a bid-side print this recent sets the resting price
 
 # PLAN Amendment 1: taker rate by Gamma feeType family.
 FEE_RATES: dict[str, float] = {
@@ -216,6 +222,65 @@ class Dataset:
         )
 
 
+@dataclass
+class _Signal:
+    """One market's tape seen from the signalled outcome: ``buyable`` / ``price_o`` are per print, ``i`` is the
+    signal print, ``end_bound`` the last instant an order may still execute."""
+
+    ts: np.ndarray
+    buyable: np.ndarray
+    price_o: np.ndarray
+    closed: float
+    end_date: float
+    end_bound: float
+    i: int
+    outcome: int
+
+
+def _signal(
+    m: Any, tape: pd.DataFrame, theta: float, hours: float, control: bool
+) -> _Signal | None:
+    """The window ``[endDate - hours, endDate)`` (``hours = inf``: before resolution) and the first buyable print at
+    or above ``theta`` inside it (control: the longshot at or below ``1 - theta``); None when either is empty."""
+    ts = tape["ts"].to_numpy()
+    p0 = tape["p0"].to_numpy()
+    buy0 = tape["buy0"].to_numpy()
+    closed = float(m.closed_time)
+    end_date = (
+        float(m.end_date)
+        if m.end_date is not None and not pd.isna(m.end_date)
+        else closed
+    )
+    if math.isfinite(hours):
+        end_bound = min(end_date, closed)
+        window = (ts >= end_date - hours * 3600.0) & (ts < end_bound)
+    else:
+        end_bound = closed
+        window = ts < closed
+    if not window.any():
+        return None
+    p1 = 1.0 - p0
+    if control:
+        hit0, hit1 = buy0 & (p0 <= 1.0 - theta), (~buy0) & (p1 <= 1.0 - theta)
+    else:
+        hit0, hit1 = buy0 & (p0 >= theta), (~buy0) & (p1 >= theta)
+    cand = window & (hit0 | hit1)
+    if not cand.any():
+        return None
+    i = int(np.argmax(cand))
+    outcome = 0 if hit0[i] else 1
+    return _Signal(
+        ts=ts,
+        buyable=buy0 if outcome == 0 else ~buy0,
+        price_o=p0 if outcome == 0 else p1,
+        closed=closed,
+        end_date=end_date,
+        end_bound=end_bound,
+        i=i,
+        outcome=outcome,
+    )
+
+
 def cell_trades(
     ds: Dataset,
     theta: float,
@@ -229,38 +294,12 @@ def cell_trades(
     at or below ``1 - theta``, the longshot) inside ``[endDate - hours, endDate)`` (``hours = inf``: any print
     before resolution), executed at the first buyable print for the same outcome ``latency_s`` later."""
     rows: list[dict[str, Any]] = []
-    windowed = math.isfinite(hours)
     for m in ds.families(families).itertuples(index=False):
-        tape = ds.tapes[m.id]
-        ts = tape["ts"].to_numpy()
-        p0 = tape["p0"].to_numpy()
-        buy0 = tape["buy0"].to_numpy()
-        closed = float(m.closed_time)
-        end_date = (
-            float(m.end_date)
-            if m.end_date is not None and not pd.isna(m.end_date)
-            else closed
-        )
-        if windowed:
-            end_bound = min(end_date, closed)
-            window = (ts >= end_date - hours * 3600.0) & (ts < end_bound)
-        else:
-            end_bound = closed
-            window = ts < closed
-        if not window.any():
+        sig = _signal(m, ds.tapes[m.id], theta, hours, control)
+        if sig is None:
             continue
-        p1 = 1.0 - p0
-        if control:
-            hit0, hit1 = buy0 & (p0 <= 1.0 - theta), (~buy0) & (p1 <= 1.0 - theta)
-        else:
-            hit0, hit1 = buy0 & (p0 >= theta), (~buy0) & (p1 >= theta)
-        cand = window & (hit0 | hit1)
-        if not cand.any():
-            continue
-        i = int(np.argmax(cand))
-        outcome = 0 if hit0[i] else 1
-        buyable = buy0 if outcome == 0 else ~buy0
-        price_o = p0 if outcome == 0 else p1
+        ts, buyable, price_o = sig.ts, sig.buyable, sig.price_o
+        closed, end_bound, i, outcome = sig.closed, sig.end_bound, sig.i, sig.outcome
         t_signal = float(ts[i])
         row = {
             "id": m.id,
@@ -268,7 +307,7 @@ def cell_trades(
             "family": m.family,
             "question": m.question,
             "closed_time": closed,
-            "end_date": end_date,
+            "end_date": sig.end_date,
             "outcome": outcome,
             "t_signal": t_signal,
             "p_signal": float(price_o[i]),
@@ -349,6 +388,158 @@ def cell_trades(
         "old_rule_bid_side",
     ]
     return pd.DataFrame(rows, columns=cols)
+
+
+BID_COLUMNS = [
+    "id",
+    "event",
+    "family",
+    "question",
+    "closed_time",
+    "end_date",
+    "outcome",
+    "t_signal",
+    "p_signal",
+    "p_bid",
+    "day",
+    "missed",
+    "t_exec",
+    "p_exec",
+    "won",
+    "net",
+    "fee_usd",
+    "pnl_usd",
+    "lock_h",
+    "wait_s",
+    "size_blocked",
+    "old_rule_bid_side",
+]
+
+
+def bid_trades(
+    ds: Dataset,
+    theta: float,
+    hours: float,
+    offset_ticks: int = 0,
+    fee_mult: float = 1.0,
+    families: str = "all",
+    ticket: float = TICKET_USD,
+    latency_s: int = LATENCY_S,
+    tick: float = TICK,
+) -> pd.DataFrame:
+    """P5 (Amendment 4): the signal of :func:`cell_trades`, but instead of lifting the next ask a bid is posted at
+    ``t_signal + latency_s`` at ``b`` = the most recent bid-side print for the outcome in the BID_REF_LOOKBACK_S
+    before the signal (else one tick under the signal ask), never above the signal ask minus one tick, less
+    ``offset_ticks`` ticks. It fills only at a later bid-side print STRICTLY below ``b`` before the window ends,
+    once the bid-side size at or below ``b`` since posting covers the order (the tape has no depth, so a print at
+    exactly ``b`` never fills us); the fill is at ``b`` and pays ``fee_mult`` x the family's taker fee (0: the
+    documented maker fee; 1: the stress case). An unfilled bid is "missed"; ``size_blocked`` marks the ones that
+    saw a strictly-below print but never enough size."""
+    rows: list[dict[str, Any]] = []
+    for m in ds.families(families).itertuples(index=False):
+        tape = ds.tapes[m.id]
+        sig = _signal(m, tape, theta, hours, False)
+        if sig is None:
+            continue
+        ts, price_o = sig.ts, sig.price_o
+        bid_side = ~sig.buyable
+        size = tape["size"].to_numpy(dtype=float)
+        t_signal = float(ts[sig.i])
+        p_signal = float(price_o[sig.i])
+        cap = p_signal - tick
+        ref = bid_side & (ts >= t_signal - BID_REF_LOOKBACK_S) & (ts <= t_signal)
+        b_ref = cap
+        if ref.any():
+            j_ref = len(ref) - 1 - int(np.argmax(ref[::-1]))
+            b_ref = min(float(price_o[j_ref]), cap)
+        b = round(round((b_ref - offset_ticks * tick) / tick) * tick, 6)
+        if b <= 0.0:
+            continue
+        shares = ticket / b
+        tp = t_signal + latency_s
+        live = bid_side & (ts > tp) & (ts < sig.end_bound)
+        at_or_below = live & (price_o <= b + 1e-9)
+        below = live & (price_o < b - 1e-9)
+        cum = np.cumsum(np.where(at_or_below, size, 0.0))
+        fill = below & (cum >= shares - 1e-9)
+        row = {
+            "id": m.id,
+            "event": m.event_slug,
+            "family": m.family,
+            "question": m.question,
+            "closed_time": sig.closed,
+            "end_date": sig.end_date,
+            "outcome": sig.outcome,
+            "t_signal": t_signal,
+            "p_signal": p_signal,
+            "p_bid": b,
+            "day": datetime.fromtimestamp(sig.closed, UTC).strftime("%Y-%m-%d"),
+            "old_rule_bid_side": False,
+        }
+        if not fill.any():
+            rows.append(
+                {
+                    **row,
+                    "missed": True,
+                    "t_exec": None,
+                    "p_exec": None,
+                    "won": None,
+                    "net": None,
+                    "fee_usd": None,
+                    "pnl_usd": None,
+                    "lock_h": None,
+                    "wait_s": None,
+                    "size_blocked": bool(below.any()),
+                }
+            )
+            continue
+        j = int(np.argmax(fill))
+        fee = fee_mult * taker_fee(shares, b, m.rate)
+        won = int(m.winner_index) == sig.outcome
+        pnl = (shares if won else 0.0) - fee - ticket
+        rows.append(
+            {
+                **row,
+                "missed": False,
+                "t_exec": float(ts[j]),
+                "p_exec": b,
+                "won": bool(won),
+                "net": pnl / ticket,
+                "fee_usd": fee,
+                "pnl_usd": pnl,
+                "lock_h": (sig.closed - float(ts[j])) / 3600.0,
+                "wait_s": float(ts[j]) - tp,
+                "size_blocked": False,
+            }
+        )
+    return pd.DataFrame(rows, columns=BID_COLUMNS)
+
+
+def maker_extra(trades: pd.DataFrame) -> dict[str, Any]:
+    """Amendment 4's added readings for a resting-bid cell: bids posted, fill rate, the ask seen against the price
+    paid, the median wait from posting to fill, and the bids that saw a strictly-below print but never enough size."""
+    n_sig = len(trades)
+    filled = trades[~trades["missed"].astype(bool)] if n_sig else trades
+    out: dict[str, Any] = {
+        "signals": n_sig,
+        "fill_rate": (len(filled) / n_sig) if n_sig else None,
+        "size_blocked": int(trades["size_blocked"].astype(bool).sum()) if n_sig else 0,
+    }
+    if len(filled) == 0:
+        return {
+            **out,
+            "mean_p_signal": None,
+            "mean_p_bid": None,
+            "improvement": None,
+            "wait_s_median": None,
+        }
+    return {
+        **out,
+        "mean_p_signal": float(filled["p_signal"].mean()),
+        "mean_p_bid": float(filled["p_exec"].mean()),
+        "improvement": float((filled["p_signal"] - filled["p_exec"]).mean()),
+        "wait_s_median": float(filled["wait_s"].median()),
+    }
 
 
 def event_bootstrap_ci(
