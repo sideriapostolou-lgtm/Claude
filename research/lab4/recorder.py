@@ -42,6 +42,22 @@ SCRATCH = Path(
 )
 OUT = Path(os.environ.get("LAB4_US_DATA", str(SCRATCH / "lab4" / "us")))
 EXCLUDE_CATEGORIES = {"sports"}
+#: The gateway lists thousands of open sports markets first, so the watch list is built per non-sports category.
+CATEGORIES = (
+    "climate",
+    "weather",
+    "crypto",
+    "politics",
+    "culture",
+    "finance",
+    "technology",
+    "macro",
+    "geopolitics",
+    "science",
+    "economics",
+    "mentions",
+    "tech",
+)
 HORIZON_H = 48.0  # record markets ending within two days
 POLL_S = 60.0
 REQ_SLEEP_S = 0.08  # the gateway's public limit is 20 req/s per IP; we stay far below
@@ -97,39 +113,56 @@ def _num(v: Any) -> float | None:
 
 
 def open_markets(
-    now: float, horizon_h: float = HORIZON_H, max_pages: int = 60
+    now: float, horizon_h: float = HORIZON_H, max_pages: int = 20
 ) -> list[dict[str, Any]]:
-    """Open, non-sports markets ending within ``horizon_h`` hours (the gateway has no category exclusion, so
-    every open market is paged and filtered here)."""
+    """Open, non-sports markets ending within ``horizon_h`` hours, paged per category (the default listing is
+    thousands of sports markets deep before anything else appears)."""
     out: list[dict[str, Any]] = []
-    for page in range(max_pages):
-        reply = _get(
-            "/markets", {"limit": PAGE, "offset": page * PAGE, "closed": "false"}
-        )
-        ms = reply.get("markets") if isinstance(reply, dict) else None
-        if not ms:
-            break
-        for m in ms:
-            if (m.get("category") or "").lower() in EXCLUDE_CATEGORIES:
-                continue
-            end_ts = parse_iso(m.get("endDate"))
-            if end_ts is None or end_ts < now - 3600 or end_ts > now + horizon_h * 3600:
-                continue
-            out.append(
+    seen: set[str] = set()
+    for cat in CATEGORIES:
+        for page in range(max_pages):
+            reply = _get(
+                "/markets",
                 {
-                    "slug": m["slug"],
-                    "question": m.get("question"),
-                    "category": (m.get("category") or "").lower(),
-                    "end_ts": end_ts,
-                    "fee_coef": _num(m.get("feeCoefficient")),
-                    "tick": _num(m.get("orderPriceMinTickSize")),
-                    "min_qty": _num(m.get("minimumTradeQty")),
-                    "status": m.get("status"),
-                }
+                    "limit": PAGE,
+                    "offset": page * PAGE,
+                    "closed": "false",
+                    "categories": cat,
+                },
             )
-        if len(ms) < PAGE:
-            break
+            ms = reply.get("markets") if isinstance(reply, dict) else None
+            if not ms:
+                break
+            for m in ms:
+                if (m.get("category") or "").lower() in EXCLUDE_CATEGORIES or m[
+                    "slug"
+                ] in seen:
+                    continue
+                end_ts = parse_iso(m.get("endDate"))
+                if (
+                    end_ts is None
+                    or end_ts < now - 3600
+                    or end_ts > now + horizon_h * 3600
+                ):
+                    continue
+                seen.add(m["slug"])
+                out.append(
+                    {
+                        "slug": m["slug"],
+                        "question": m.get("question"),
+                        "category": (m.get("category") or "").lower(),
+                        "end_ts": end_ts,
+                        "fee_coef": _num(m.get("feeCoefficient")),
+                        "tick": _num(m.get("orderPriceMinTickSize")),
+                        "min_qty": _num(m.get("minimumTradeQty")),
+                        "status": m.get("status"),
+                    }
+                )
+            if len(ms) < PAGE:
+                break
+            time.sleep(REQ_SLEEP_S)
         time.sleep(REQ_SLEEP_S)
+    out.sort(key=lambda m: m["end_ts"])
     return out
 
 
