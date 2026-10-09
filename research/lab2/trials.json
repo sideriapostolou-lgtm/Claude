@@ -470,6 +470,403 @@
     "entry_bar_exits": true,
     "exit_delay_bars": 1
    }
+  },
+  "Y3|551962bfcb9d|cfg:a06543feac6c": {
+   "hypothesis": "Y3",
+   "params": {
+    "version": "y3-v1",
+    "box_min_age_s": 3600.0,
+    "traded_min": 0.5,
+    "ret_bo_min": 0.03,
+    "buyers_min": 5,
+    "buyers_mult": 2.0,
+    "top5_max": 0.85,
+    "net_buy": "> 0",
+    "mcap_usd_min": 6000.0,
+    "age_max_s": 7800.0,
+    "box_stop": "close below box_lo -> sell, next-bar fill",
+    "stop_pct": 0.25,
+    "max_hold_s": 1800.0,
+    "exit_by_age_s": 10680.0,
+    "size_usd": 20.0,
+    "placebo": "eligible (mcap >= $6k), stratum-matched (instant / slow)",
+    "fill": "common.FillConfig(exit_delay_bars=1): worst, latency 30 s, entry-bar stop checks, next-bar exits",
+    "N": 10,
+    "theta": 0.12,
+    "flow": "broad"
+   },
+   "first_seen_utc": "2026-10-09 04:48:47",
+   "splits": {
+    "train": 1
+   },
+   "cfg": {
+    "size_usd": 20.0,
+    "latency_s": 30.0,
+    "entry_fill": "worst",
+    "exit_fill": "worst",
+    "cost": {
+     "ultra_bps": 10.0,
+     "mev_bps": 20.0,
+     "priority_sol": 0.0002,
+     "base_fee_lamports": 5000,
+     "fee_mult": 1.0,
+     "impact_mult": 1.0,
+     "extra_hop_bps": 100.0
+    },
+    "rent_usd": 0.0,
+    "entry_bar_exits": true,
+    "exit_delay_bars": 1
+   }
+  },
+  "Y3|4c3f5caf9e5f|cfg:a06543feac6c": {
+   "hypothesis": "Y3",
+   "params": {
+    "version": "y3-v1",
+    "box_min_age_s": 3600.0,
+    "traded_min": 0.5,
+    "ret_bo_min": 0.03,
+    "buyers_min": 5,
+    "buyers_mult": 2.0,
+    "top5_max": 0.85,
+    "net_buy": "> 0",
+    "mcap_usd_min": 6000.0,
+    "age_max_s": 7800.0,
+    "box_stop": "close below box_lo -> sell, next-bar fill",
+    "stop_pct": 0.25,
+    "max_hold_s": 1800.0,
+    "exit_by_age_s": 10680.0,
+    "size_usd": 20.0,
+    "placebo": "eligible (mcap >= $6k), stratum-matched (instant / slow)",
+    "fill": "common.FillConfig(exit_delay_bars=1): worst, latency 30 s, entry-bar stop checks, next-bar exits",
+    "N": 10,
+    "theta": 0.12,
+    "flow": "chart"
+   },
+   "first_seen_utc": "2026-10-09 04:50:03",
+   "splits": {
+    "train": 1
+   },
+   "cfg": {
+    "size_usd": 20.0,
+    "latency_s": 30.0,
+    "entry_fill": "worst",
+    "exit_fill": "worst",
+    "cost": {
+     "ultra_bps": 10.0,
+     "mev_bps": 20.0,
+     "priority_sol": 0.0002,
+     "base_fee_lamports": 5000,
+     "fee_mult": 1.0,
+     "impact_mult": 1.0,
+     "extra_hop_bps": 100.0
+    },
+    "rent_usd": 0.0,
+    "entry_bar_exits": true,
+    "exit_delay_bars": 1
+   }
+  },
+  "Y3|b9c13f588c4e|cfg:a06543feac6c": {
+   "hypothesis": "Y3",
+   "params": {
+    "version": "y3-v1",
+    "box_min_age_s": 3600.0,
+    "traded_min": 0.5,
+    "ret_bo_min": 0.03,
+    "buyers_min": 5,
+    "buyers_mult": 2.0,
+    "top5_max": 0.85,
+    "net_buy": "> 0",
+    "mcap_usd_min": 6000.0,
+    "age_max_s": 7800.0,
+    "box_stop": "close below box_lo -> sell, next-bar fill",
+    "stop_pct": 0.25,
+    "max_hold_s": 1800.0,
+    "exit_by_age_s": 10680.0,
+    "size_usd": 20.0,
+    "placebo": "eligible (mcap >= $6k), stratum-matched (instant / slow)",
+    "fill": "common.FillConfig(exit_delay_bars=1): worst, latency 30 s, entry-bar stop checks, next-bar exits",
+    "N": 20,
+    "theta": 0.06,
+    "flow": "broad"
+   },
+   "first_seen_utc": "2026-10-09 04:50:53",
+   "splits": {
+    "train": 1
+   },
+   "cfg": {
+    "size_usd": 20.0,
+    "latency_s": 30.0,
+    "entry_fill": "worst",
+    "exit_fill": "worst",
+    "cost": {
+     "ultra_bps": 10.0,
+     "mev_bps": 20.0,
+     "priority_sol": 0.0002,
+     "base_fee_lamports": 5000,
+     "fee_mult": 1.0,
+     "impact_mult": 1.0,
+     "extra_hop_bps": 100.0
+    },
+    "rent_usd": 0.0,
+    "entry_bar_exits": true,
+    "exit_delay_bars": 1
+   }
+  },
+  "Y3|a7f88272084d|cfg:a06543feac6c": {
+   "hypothesis": "Y3",
+   "params": {
+    "version": "y3-v1",
+    "box_min_age_s": 3600.0,
+    "traded_min": 0.5,
+    "ret_bo_min": 0.03,
+    "buyers_min": 5,
+    "buyers_mult": 2.0,
+    "top5_max": 0.85,
+    "net_buy": "> 0",
+    "mcap_usd_min": 6000.0,
+    "age_max_s": 7800.0,
+    "box_stop": "close below box_lo -> sell, next-bar fill",
+    "stop_pct": 0.25,
+    "max_hold_s": 1800.0,
+    "exit_by_age_s": 10680.0,
+    "size_usd": 20.0,
+    "placebo": "eligible (mcap >= $6k), stratum-matched (instant / slow)",
+    "fill": "common.FillConfig(exit_delay_bars=1): worst, latency 30 s, entry-bar stop checks, next-bar exits",
+    "N": 20,
+    "theta": 0.06,
+    "flow": "chart"
+   },
+   "first_seen_utc": "2026-10-09 04:51:44",
+   "splits": {
+    "train": 1
+   },
+   "cfg": {
+    "size_usd": 20.0,
+    "latency_s": 30.0,
+    "entry_fill": "worst",
+    "exit_fill": "worst",
+    "cost": {
+     "ultra_bps": 10.0,
+     "mev_bps": 20.0,
+     "priority_sol": 0.0002,
+     "base_fee_lamports": 5000,
+     "fee_mult": 1.0,
+     "impact_mult": 1.0,
+     "extra_hop_bps": 100.0
+    },
+    "rent_usd": 0.0,
+    "entry_bar_exits": true,
+    "exit_delay_bars": 1
+   }
+  },
+  "Y3|ef91fda69516|cfg:a06543feac6c": {
+   "hypothesis": "Y3",
+   "params": {
+    "version": "y3-v1",
+    "box_min_age_s": 3600.0,
+    "traded_min": 0.5,
+    "ret_bo_min": 0.03,
+    "buyers_min": 5,
+    "buyers_mult": 2.0,
+    "top5_max": 0.85,
+    "net_buy": "> 0",
+    "mcap_usd_min": 6000.0,
+    "age_max_s": 7800.0,
+    "box_stop": "close below box_lo -> sell, next-bar fill",
+    "stop_pct": 0.25,
+    "max_hold_s": 1800.0,
+    "exit_by_age_s": 10680.0,
+    "size_usd": 20.0,
+    "placebo": "eligible (mcap >= $6k), stratum-matched (instant / slow)",
+    "fill": "common.FillConfig(exit_delay_bars=1): worst, latency 30 s, entry-bar stop checks, next-bar exits",
+    "N": 20,
+    "theta": 0.12,
+    "flow": "broad"
+   },
+   "first_seen_utc": "2026-10-09 04:52:36",
+   "splits": {
+    "train": 1
+   },
+   "cfg": {
+    "size_usd": 20.0,
+    "latency_s": 30.0,
+    "entry_fill": "worst",
+    "exit_fill": "worst",
+    "cost": {
+     "ultra_bps": 10.0,
+     "mev_bps": 20.0,
+     "priority_sol": 0.0002,
+     "base_fee_lamports": 5000,
+     "fee_mult": 1.0,
+     "impact_mult": 1.0,
+     "extra_hop_bps": 100.0
+    },
+    "rent_usd": 0.0,
+    "entry_bar_exits": true,
+    "exit_delay_bars": 1
+   }
+  },
+  "Y3|1689a8ebd001|cfg:a06543feac6c": {
+   "hypothesis": "Y3",
+   "params": {
+    "version": "y3-v1",
+    "box_min_age_s": 3600.0,
+    "traded_min": 0.5,
+    "ret_bo_min": 0.03,
+    "buyers_min": 5,
+    "buyers_mult": 2.0,
+    "top5_max": 0.85,
+    "net_buy": "> 0",
+    "mcap_usd_min": 6000.0,
+    "age_max_s": 7800.0,
+    "box_stop": "close below box_lo -> sell, next-bar fill",
+    "stop_pct": 0.25,
+    "max_hold_s": 1800.0,
+    "exit_by_age_s": 10680.0,
+    "size_usd": 20.0,
+    "placebo": "eligible (mcap >= $6k), stratum-matched (instant / slow)",
+    "fill": "common.FillConfig(exit_delay_bars=1): worst, latency 30 s, entry-bar stop checks, next-bar exits",
+    "N": 20,
+    "theta": 0.12,
+    "flow": "chart"
+   },
+   "first_seen_utc": "2026-10-09 04:53:30",
+   "splits": {
+    "train": 1
+   },
+   "cfg": {
+    "size_usd": 20.0,
+    "latency_s": 30.0,
+    "entry_fill": "worst",
+    "exit_fill": "worst",
+    "cost": {
+     "ultra_bps": 10.0,
+     "mev_bps": 20.0,
+     "priority_sol": 0.0002,
+     "base_fee_lamports": 5000,
+     "fee_mult": 1.0,
+     "impact_mult": 1.0,
+     "extra_hop_bps": 100.0
+    },
+    "rent_usd": 0.0,
+    "entry_bar_exits": true,
+    "exit_delay_bars": 1
+   }
+  },
+  "Y4-eventstudy|ac6d17e42f30": {
+   "hypothesis": "Y4-eventstudy",
+   "params": {
+    "version": "y4-v1",
+    "test": "event_study",
+    "levels_round_usd": [
+     10000.0,
+     25000.0,
+     50000.0,
+     100000.0,
+     250000.0,
+     500000.0,
+     1000000.0,
+     2500000.0,
+     5000000.0,
+     10000000.0
+    ],
+    "levels_shifted_usd": [
+     12800.0,
+     32000.0,
+     64000.0,
+     128000.0,
+     320000.0,
+     640000.0,
+     1280000.0,
+     3200000.0,
+     6400000.0,
+     12800000.0
+    ],
+    "n_below": 10,
+    "margin": 0.03,
+    "horizons": [
+     15,
+     60
+    ],
+    "age_min_s": 600.0,
+    "age_max_s": 6900.0,
+    "touch": "first contact from below (prior N highs < L)"
+   },
+   "first_seen_utc": "2026-10-09 04:54:12",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Y4|0c33d571d122|cfg:a06543feac6c": {
+   "hypothesis": "Y4",
+   "params": {
+    "version": "y4-v1",
+    "levels_round_usd": [
+     10000.0,
+     25000.0,
+     50000.0,
+     100000.0,
+     250000.0,
+     500000.0,
+     1000000.0,
+     2500000.0,
+     5000000.0,
+     10000000.0
+    ],
+    "levels_shifted_usd": [
+     12800.0,
+     32000.0,
+     64000.0,
+     128000.0,
+     320000.0,
+     640000.0,
+     1280000.0,
+     3200000.0,
+     6400000.0,
+     12800000.0
+    ],
+    "shift": 1.28,
+    "n_below": 10,
+    "margin": 0.03,
+    "retest_w": 15,
+    "retest_band": 0.03,
+    "min_bar": 1,
+    "age_min_s": 600.0,
+    "age_max_s": 6900.0,
+    "stop_pct": 0.25,
+    "exit_by_age_s": 10680.0,
+    "size_usd": 20.0,
+    "usd": "levels / AsOf.sol_usd at the decision",
+    "thesis_exit": "AsOf.mcap_usd < level (bar completed after the decision), next-bar worst fill",
+    "placebo": "mcap-band matched (round bands), mcap_usd >= $10k; unmatched control",
+    "fill": "common.FillConfig(exit_delay_bars=1): worst, latency 30 s, entry-bar stop checks, next-bar exits",
+    "entry": "break",
+    "hold_min": 15,
+    "max_hold_s": 900.0,
+    "levels": "round"
+   },
+   "first_seen_utc": "2026-10-09 04:54:39",
+   "splits": {
+    "train": 1
+   },
+   "cfg": {
+    "size_usd": 20.0,
+    "latency_s": 30.0,
+    "entry_fill": "worst",
+    "exit_fill": "worst",
+    "cost": {
+     "ultra_bps": 10.0,
+     "mev_bps": 20.0,
+     "priority_sol": 0.0002,
+     "base_fee_lamports": 5000,
+     "fee_mult": 1.0,
+     "impact_mult": 1.0,
+     "extra_hop_bps": 100.0
+    },
+    "rent_usd": 0.0,
+    "entry_bar_exits": true,
+    "exit_delay_bars": 1
+   }
   }
  },
  "runs": [
@@ -776,8 +1173,104 @@
    "over_variant_limit": false,
    "kind": "backtest",
    "session": null
+  },
+  {
+   "utc": "2026-10-09 04:48:47",
+   "hypothesis": "Y3",
+   "config": "Y3|551962bfcb9d|cfg:a06543feac6c",
+   "split": "train",
+   "debug": false,
+   "n": 26,
+   "mean": -0.17719280169642562,
+   "over_variant_limit": false,
+   "kind": "backtest",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 04:50:03",
+   "hypothesis": "Y3",
+   "config": "Y3|4c3f5caf9e5f|cfg:a06543feac6c",
+   "split": "train",
+   "debug": false,
+   "n": 183,
+   "mean": -0.09142495978659639,
+   "over_variant_limit": false,
+   "kind": "backtest",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 04:50:53",
+   "hypothesis": "Y3",
+   "config": "Y3|b9c13f588c4e|cfg:a06543feac6c",
+   "split": "train",
+   "debug": false,
+   "n": 1,
+   "mean": -0.0419953730049412,
+   "over_variant_limit": false,
+   "kind": "backtest",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 04:51:44",
+   "hypothesis": "Y3",
+   "config": "Y3|a7f88272084d|cfg:a06543feac6c",
+   "split": "train",
+   "debug": false,
+   "n": 15,
+   "mean": -0.08294477374545914,
+   "over_variant_limit": false,
+   "kind": "backtest",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 04:52:36",
+   "hypothesis": "Y3",
+   "config": "Y3|ef91fda69516|cfg:a06543feac6c",
+   "split": "train",
+   "debug": false,
+   "n": 3,
+   "mean": -0.26998799221704856,
+   "over_variant_limit": false,
+   "kind": "backtest",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 04:53:30",
+   "hypothesis": "Y3",
+   "config": "Y3|1689a8ebd001|cfg:a06543feac6c",
+   "split": "train",
+   "debug": false,
+   "n": 37,
+   "mean": -0.0539996076322523,
+   "over_variant_limit": false,
+   "kind": "backtest",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 04:54:12",
+   "hypothesis": "Y4-eventstudy",
+   "config": "Y4-eventstudy|ac6d17e42f30",
+   "split": "train",
+   "debug": false,
+   "n": 3277,
+   "mean": null,
+   "over_variant_limit": false,
+   "kind": "backtest",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 04:54:39",
+   "hypothesis": "Y4",
+   "config": "Y4|0c33d571d122|cfg:a06543feac6c",
+   "split": "train",
+   "debug": false,
+   "n": 601,
+   "mean": -0.2940584881384349,
+   "over_variant_limit": false,
+   "kind": "backtest",
+   "session": null
   }
  ],
  "val_shortlists": {},
- "n_trials_total": 2588
+ "n_trials_total": 2596
 }
