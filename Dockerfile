@@ -8,7 +8,9 @@
 # in DATA_DIR=/data, which must be a persistent volume.
 # Railway mounts volumes as root, so on Railway set the service variable
 # RAILWAY_RUN_UID=0 (Railway's documented fix for non-root images with a volume).
-FROM python:3.12-slim
+# Docker Hub rate-limits Railway's shared builders (429 on 2026-10-09); AWS's public mirror of the same official image
+# (public.ecr.aws/docker/library) serves it without a pull limit.
+FROM public.ecr.aws/docker/library/python:3.12-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
