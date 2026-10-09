@@ -25,3 +25,12 @@ Costs. Counted on the real data (no returns looked at): TRAIN has 3,863 coins of
 desk's decision time** (36 %); VAL 1,278 / **488** (38 %). With real brief sizes (~900 input tokens, cached system
 prompt, ~300-token memos) the panel costs about $0.008 per decision, solo Sonnet ~$0.003, solo Haiku ~$0.0003, so
 TRAIN is roughly **$10-20** of its $40 cap and VAL **$4-7** of $15. A stage stops at its cap and resumes from the cache.
+
+If a stage refuses with a data-validation message (the CONFIRM-split backfill that started 2026-10-09 ~10:45 UTC
+re-consolidates the Parquet tables when it finishes, which can mark TRAIN/VAL/TEST validation stale), refresh it first:
+
+```bash
+python research/flow/validate.py --ranges train val test --refresh --max-per-hour 110
+```
+
+Then re-run the stage. Cached decisions survive this (the brief hash depends on the bars, which do not change).
