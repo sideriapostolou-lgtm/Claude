@@ -340,7 +340,8 @@ class PolyDesk:
             "hours": self.hours,
             "ticket_usd": self.ticket,
             "label": f"candidate rule: buy at >= {self.theta:.2f} within the last {self.hours:g} h when bid and ask "
-            f"are within {MAX_SPREAD:.2f}, ${self.ticket:.0f} paper tickets (not yet passed the lab)",
+            f"are within {MAX_SPREAD:.2f}, ${self.ticket:.0f} paper tickets. Lab 4 TRAIN (2026-10-09): NO EDGE in any "
+            "cell after fees, so this rule never gets real money",
         }
         self._stop = threading.Event()
         self._thread: threading.Thread | None = None
