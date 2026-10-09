@@ -139,3 +139,38 @@ offer sports contracts where they are, so P2 (late-game sports) is a live candid
 only for the record; the published evidence still predicts no favourite edge in sports, and the lab decides. The
 US recorder is extended to sports markets in progress (from game start until settlement), capped to stay under the
 gateway's public rate limit.
+
+## Amendment 3 (2026-10-09 ~16:45 UTC, before any TRAIN return was read): execution, windows, power
+
+From an adversarial code review of the engine against the real tapes (structure only; no return was computed).
+Three things were wrong in version lab4-v1 as written, and they are fixed before the first TRAIN read:
+
+1. **Buyable prints only.** The Data API tape is taker-side: a SELL print on outcome o's token at price p means
+   someone HIT THE BID at p; a buyer could not have paid p. A print is *buyable for outcome o* only if it is a BUY
+   on o's token or a SELL on the other token at 1 - p. Under lab4-v1 most "fills" at 0.97-0.999 were bid-side
+   prints, which would have inflated every cell. Rule now: the signal is the first buyable print for o at or
+   above theta; execution is the first buyable print for the SAME outcome at or after t + 10 s (within 600 s, and
+   before the end). Each cell reports the share of its trades whose old-rule execution print was bid-side, so the
+   size of the correction is visible.
+2. **Windows a live trader can know.** The `closedTime` (UMA resolution) is not known in advance, and for short
+   windows it sat entirely after the outcome was decided (crypto: median 54 s after `endDate`; sports: about 2 h
+   after the game). Windowed cells are now anchored on **`endDate`** (published when the market opens):
+   signal and execution must lie in `[endDate - H, endDate)`. For sports, `endDate` is often a deadline rather
+   than the final whistle, so P2's windowed cells are labelled **oracle-timed** and are NOT selectable; P2's
+   selectable cell is **H = infinity**: the first buyable print at or above theta anywhere in the 14-day tape
+   before resolution, held to resolution (the honest "buy the near-certain side whenever it appears"). P1 and P4
+   also gain an H = infinity cell. Lock time is still measured to `closedTime`.
+3. **Power and degenerate cells.** A cell with zero observed losses cannot qualify, whatever its CI: with n
+   wins and no loss the 95 % upper bound on the loss rate is 3 / n (rule of three), and at a 0.1 % gain per win
+   that is a losing rule. Each cell reports that worst case (`worst_case_net = (1 - 3/n) x mean win - 3/n`)
+   and `qualifies` additionally requires at least one observed loss and `worst_case_net > 0` when losses are
+   fewer than 5. The bootstrap resamples **events** (`event_slug`), not markets: 44 % of markets sit in
+   multi-market events whose outcomes are one draw (weather brackets, winner fields).
+
+Also fixed: TRAIN refuses to run until every eligible market of the split has a tape (coverage is written into
+the result); the trial ledger keeps one entry per (hypothesis, cell, split, stage), so a re-run does not inflate
+the count; the cross-lab count reads lab 2's and lab 3's ledgers in their own formats; the shadow paper desk's
+window has an upper bound (no entry after a market's end; a game's end is its last live quote) and the
+recorder writes its files atomically. Fee rates stay the family table of Amendment 1 (verified against Gamma's
+per-market `feeSchedule.rate` on the listed markets; the 22 `general_fees` markets are charged the most
+expensive rate).
