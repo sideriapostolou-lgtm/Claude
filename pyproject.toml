@@ -30,6 +30,8 @@ where = ["src"]
 [tool.setuptools.package-data]
 # The learning loop's first-boot variants (docs/LEARNING.md §11).
 "nightcrawler.learn" = ["seeds.json"]
+# The playbook registry, generated from docs/EXPERIENCE_GROUNDED.md (docs/EXPERIENCE.md §7.1).
+"nightcrawler.experience" = ["playbook.json"]
 
 [tool.setuptools.dynamic]
 version = { attr = "nightcrawler.__version__" }

@@ -24,6 +24,7 @@ Schema (lists capped: members 9, events <= 5, open trades <= 10, closed trades 1
                  "max_open"},
       "learning": {"source": "card"|"missing"|"error", "state", "headline", "variants": [{"name", "n", "avg",
                    "proof"}], "data", "rule": str|null},
+      "experience": {...},                                            # the report cards: see EXPERIENCE below
       "ready": readiness.readiness(...),
       "receipts": {"count", "verified", "first_bad_seq", "head", "head_short"},
       "usage": [{"label", "pct": float|null, "level": "ok"|"warn"|"over"|null, "text", "measured": bool}],
@@ -49,6 +50,34 @@ module raised or returned something that is not a card: the Coach is Blocked and
 unknown). Only an explicit ``True`` ever counts towards the checklist, and the "can turn real trading OFF"
 rule is shown only when the card says ``can_stop_trading: true``. Wrong-typed values are dropped.
 
+EXPERIENCE (docs/EXPERIENCE.md §9): :func:`experience_card` calls
+``nightcrawler.experience.state.experience_state(settings, now)`` when that module exists (another team builds
+it) and keeps exactly the keys of the §9 schema, each type-checked; every key is always present and unknown
+values are null::
+
+    {"source": "state"|"missing"|"error", "headline": [str, str], "bars_line", "money_line", "caveat",
+     "team": {"graded", "days", "practised", "practised_window", "skills_shown", "skills_measurable": 4,
+              "collecting", "not_measured": [str], "updated_at"},
+     "members": {member id: {"kind", "label", "chip", "line", "graded", "days", "practised",
+                             "metrics": [{"name", "value", "lo", "hi", "baseline", "unit", "text"}] (<= 3),
+                             "exam": {"split", "version12", "date", "result", "current"}|null,
+                             "trend": [[week_start, value, lo, hi]] (<= 8), "version_line", "independent",
+                             "lessons": {"open", "testing", "adopted", "rejected"}, "coverage", "budget_left"}},
+     "loss_types_week": [{"type", "n", "expected", "text"}] (<= 3), "lessons": [{"id", "status", "text"}] (<= 3),
+     "playbook": {"validated", "rejected", "in_bot_contradicted", "in_bot_unsupported", "testing",
+                  "false_keep_bound"}}
+
+The honesty rules of §5.1 and §8.4 are checked HERE too, at the page's boundary, and a state that breaks one is
+shown as ``source: "error"`` (nothing of it is shown): each member has the card kind of :data:`EXPERIENCE_KINDS`
+and a label of that kind; "Skill shown" and "Worse than chance" need a primary band entirely on one side of the
+chance baseline; "Meets the bar" needs a band on the good side of the bar; the Broker is never graded on paper;
+the skill count equals the members labelled skilled. The chip WORD always comes from the label
+(:data:`EXPERIENCE_CHIPS`), never from the state's own text. The money line says
+:data:`EXPERIENCE_MONEY_LINE` unless the Coach's own card is ``paper_champion``, ``live_ready`` or ``live``, and
+the caveat is fixed. Report cards never feed the checklist or the banners: they cannot turn trading on. The
+playbook counts fall back to the static ``experience/playbook.json`` (generated from GROUNDED) when the state
+has none; an unreadable file gives null counts, never zeros.
+
 READY: the checklist (:mod:`nightcrawler.readiness`) never says Ready while any engine banner is up, and
 reads the bot wallet's SOL from the last live equity snapshot (live) or the engine's paper-mode reading
 (:mod:`nightcrawler.botwallet`), trusting a reading of the last :data:`WALLET_MAX_AGE_S` only.
@@ -56,8 +85,14 @@ reads the bot wallet's SOL from the last live equity snapshot (live) or the engi
 
 from __future__ import annotations
 
+import functools
+import itertools
+import json
 import math
-from collections.abc import Mapping
+import re
+from collections import Counter
+from collections.abc import Callable, Mapping
+from pathlib import Path
 from typing import Any
 
 from nightcrawler import __version__
@@ -70,7 +105,9 @@ from nightcrawler.page import LEARNING_RULE, MEMBERS, REFRESH_S
 from nightcrawler.readiness import readiness
 from nightcrawler.teamroom import ENGINE_STALE_S, FUTURE_SKEW_S, build_team_state, derive_status, duration_text
 
-__all__ = ["LEARNING_RULE", "MEMBERS", "STALE_BANNER_S", "WALLET_MAX_AGE_S", "build_page_state", "learning_card"]
+__all__ = ["EXPERIENCE_CAVEAT", "EXPERIENCE_CHIPS", "EXPERIENCE_KINDS", "EXPERIENCE_MONEY_LINE", "LEARNING_RULE",
+           "MEMBERS", "PLAYBOOK_PATH", "STALE_BANNER_S", "WALLET_MAX_AGE_S", "build_page_state", "experience_card",
+           "learning_card"]
 
 log = get_logger(__name__)
 
@@ -93,6 +130,49 @@ LEARNING_TTL_S = 60.0
 #: The Coach counts as working when its card was updated this recently (it learns nightly).
 COACH_WINDOW_S = 26 * 3600.0
 DAY_S = 86_400.0
+
+#: The experience state (the report cards) is re-read at most this often.
+EXPERIENCE_TTL_S = 60.0
+#: The experience module itself, as Python names it when it is absent.
+_EXPERIENCE_MODULES = ("nightcrawler.experience", "nightcrawler.experience.state")
+#: The static playbook (generated from docs/EXPERIENCE_GROUNDED.md by scripts/gen_playbook.py).
+PLAYBOOK_PATH = Path(__file__).resolve().parent / "experience" / "playbook.json"
+#: docs/EXPERIENCE.md §8.2: the last line of the team's headline, always.
+EXPERIENCE_CAVEAT = "Avoiding losses is not the same as making money."
+#: The money line until the Coach itself has shown a strategy that makes money on coins it never saw.
+EXPERIENCE_MONEY_LINE = "Making money: not shown yet — holding cash."
+#: Coach card states that let the experience state word the money line itself (LEARNING §9).
+_MONEY_STATES = ("paper_champion", "live_ready", "live")
+#: The card kind of each member (docs/EXPERIENCE.md §5.1): only "chance" cards can show skill.
+EXPERIENCE_KINDS = {"crawler": "bar", "cocoon": "chance", "strategy": "chance", "radar": "chance", "judge": "chance",
+                    "broker": "bar", "risk": "bar", "receipts": "self_check", "coach": "self_check"}
+#: The chip word of each label, per card kind (§5.1). A self-check is never green.
+EXPERIENCE_CHIPS = {
+    "chance": {"not_measured": "Not measured", "not_enough": "Collecting", "no_skill_yet": "No skill yet",
+               "skilled": "Skill shown", "worse": "Worse than chance"},
+    "bar": {"not_measured": "Not measured", "not_enough": "Collecting", "meets_bar": "Meets the bar",
+            "below_bar": "Below the bar"},
+    "self_check": {"not_built": "Not built yet", "checks_pass": "Checks pass", "check_failed": "Check failed"},
+}
+#: Risk's bar is a tolerance (§5.1).
+_RISK_CHIPS = {"meets_bar": "Within tolerance", "below_bar": "Over tolerance"}
+#: The good side of each bar (§5.2): coverage must reach its bar; shortfall and ruin must stay under theirs.
+_BAR_GOOD_ABOVE = {"crawler": True, "broker": False, "risk": False}
+#: Cocoon, Strategy, Radar and Jev: the cards that can show skill.
+SKILL_MEMBERS = sum(kind == "chance" for kind in EXPERIENCE_KINDS.values())
+_XP_UNITS = ("pp", "share", "ratio", "count", "s")
+_XP_LESSON_KEYS = ("open", "testing", "adopted", "rejected")
+_XP_PLAYBOOK_KEYS = ("validated", "rejected", "in_bot_contradicted", "in_bot_unsupported", "testing")
+_XP_FALSE_KEEP = "1 in 10"
+_XP_WORD = re.compile(r"[a-z][a-z0-9_]{0,29}")
+_XP_HEX = re.compile(r"[0-9a-f]{1,12}")
+XP_METRICS_MAX = 3
+XP_LIST_MAX = 3  # loss types this week and lessons on the page
+XP_TREND_MAX = 8  # weeks
+XP_NAMES_MAX = 9
+XP_LINE_MAX = 320  # a card's plain-words sentence
+XP_COUNT_MAX = 10**9
+XP_NUM_MAX = 1e9
 
 #: Why a position was closed (``Position.exit_reason``), in plain words.
 EXIT_WORDS = {
@@ -257,6 +337,271 @@ def _missing(now: float, ledger: Any) -> dict[str, Any]:
 def _failed() -> dict[str, Any]:
     """The learning module raised or returned something that is not a card (details in the logs)."""
     return _empty_card("error", "The learning system failed: see the logs.", None)
+
+
+# =========================================================================== experience (report cards)
+
+
+class _Refused(ValueError):
+    """The experience state breaks a rule of the §9 schema or an honesty rule of §5.1: shown as an error."""
+
+
+def experience_card(settings: Settings, now: float, card: Mapping[str, Any], memory: dict[str, Any] | None = None
+                    ) -> dict[str, Any]:
+    """The team's report cards for ``/api/page.experience`` (schema and rules in the module docstring): a sanitized
+    state, a "not installed" one or a "failed" one. ``card`` is the sanitized learning card (the money line follows
+    the Coach). Never raises. ``memory`` (kept between requests) caches what was read for
+    :data:`EXPERIENCE_TTL_S`."""
+    cached = memory.get("experience") if memory is not None else None
+    if cached is not None and 0 <= now - cached[0] < EXPERIENCE_TTL_S:
+        outcome, raw = cached[1]
+    else:
+        outcome, raw = _load_experience(settings, now)
+        if memory is not None:
+            memory["experience"] = (now, (outcome, raw))
+    static = _static_playbook(str(PLAYBOOK_PATH))
+    if outcome != "ok":
+        return _xp_empty(outcome, static)
+    coach = card.get("state") if card.get("source") == "card" else None
+    try:
+        return _xp_state(raw, _Text(settings), now, live=settings.is_live, coach_state=coach, static=static)
+    except _Refused as exc:
+        log.warning("experience_state_refused reason=%s", exc)
+    except Exception as exc:  # a strange object from another team's module must never take the page down
+        log.warning("experience_state_failed error=%s", type(exc).__name__)
+    return _xp_empty("error", static)
+
+
+def _load_experience(settings: Settings, now: float) -> tuple[str, Any]:
+    """``("ok", raw state)``, ``("missing", None)`` when the module is not installed, or ``("error", None)``."""
+    try:
+        from nightcrawler.experience.state import experience_state  # built by another team; may be absent
+    except ModuleNotFoundError as exc:
+        if exc.name in _EXPERIENCE_MODULES:
+            return "missing", None
+        log.warning("experience_state_failed error=%s", type(exc).__name__)  # installed, but its import broke
+        return "error", None
+    except ImportError as exc:
+        log.warning("experience_state_failed error=%s", type(exc).__name__)
+        return "error", None
+    try:
+        return "ok", experience_state(settings, now)
+    except Exception as exc:  # a broken experience module must never take the page down
+        log.warning("experience_state_failed error=%s", type(exc).__name__)
+        return "error", None
+
+
+@functools.lru_cache(maxsize=4)
+def _static_playbook(path: str) -> dict[str, Any]:
+    """The playbook counts by initial status, from the static file (read once per process); null when unreadable:
+    "0 rules contradicted" would be a false claim."""
+    try:
+        rules = json.loads(Path(path).read_text(encoding="utf-8"))["rules"]
+        statuses = Counter(rule["status"] for rule in rules)
+    except (OSError, ValueError, KeyError, TypeError) as exc:
+        log.warning("playbook_unreadable error=%s", type(exc).__name__)
+        return {**dict.fromkeys(_XP_PLAYBOOK_KEYS), "false_keep_bound": _XP_FALSE_KEEP}
+    return {**{key: statuses.get(key, 0) for key in _XP_PLAYBOOK_KEYS}, "false_keep_bound": _XP_FALSE_KEEP}
+
+
+def _xp_empty(source: str, playbook: Mapping[str, Any]) -> dict[str, Any]:
+    return {"source": source, "headline": ["", ""], "bars_line": "", "money_line": "", "caveat": EXPERIENCE_CAVEAT,
+            "team": {"graded": None, "days": None, "practised": None, "practised_window": "", "skills_shown": None,
+                     "skills_measurable": SKILL_MEMBERS, "collecting": None, "not_measured": [], "updated_at": None},
+            "members": {}, "loss_types_week": [], "lessons": [], "playbook": dict(playbook)}
+
+
+def _count(value: Any) -> int | None:
+    """A whole number in [0, 10**9] (bool is not a number), else None."""
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, float) and math.isfinite(value) and value.is_integer():
+        value = int(value)
+    return value if isinstance(value, int) and 0 <= value <= XP_COUNT_MAX else None
+
+
+def _xp_num(value: Any) -> float | None:
+    number = _num(value)
+    return number if number is not None and abs(number) < XP_NUM_MAX else None
+
+
+def _xp_str(text: _Text, value: Any, limit: int = TEXT_MAX) -> str:
+    return text.opt(value, limit) or ""
+
+
+def _xp_list(value: Any) -> list[Any]:
+    return value if isinstance(value, list) else []
+
+
+def _xp_map(value: Any) -> Mapping[str, Any]:
+    return value if isinstance(value, Mapping) else {}
+
+
+def _xp_state(raw: Any, text: _Text, now: float, *, live: bool, coach_state: Any,
+              static: Mapping[str, Any]) -> dict[str, Any]:
+    if not isinstance(raw, Mapping):
+        raise _Refused("not a mapping")
+    if raw.get("source") in ("missing", "error"):  # the module itself says it has nothing (yet)
+        return _xp_empty(raw["source"], static)
+    members_raw = raw.get("members")
+    if not isinstance(members_raw, Mapping):
+        raise _Refused("members")
+    members = {}
+    for mid, _, _ in MEMBERS:
+        key = "jev" if mid == "judge" and mid not in members_raw and "jev" in members_raw else mid
+        if key in members_raw:
+            members[mid] = _xp_member(mid, members_raw[key], text, live=live)
+    headline = raw.get("headline")
+    lines = [_xp_str(text, line) for line in headline[:2]] if isinstance(headline, list) else []
+    lines += [""] * (2 - len(lines))
+    if not members and not any(lines):
+        raise _Refused("empty")
+    team = _xp_team(raw.get("team"), members, text, now)
+    money = _xp_str(text, raw.get("money_line")) if coach_state in _MONEY_STATES else ""
+    return {
+        "source": "state", "headline": lines, "bars_line": _xp_str(text, raw.get("bars_line")),
+        "money_line": money or EXPERIENCE_MONEY_LINE, "caveat": EXPERIENCE_CAVEAT, "team": team, "members": members,
+        "loss_types_week": _xp_items(raw.get("loss_types_week"), _xp_loss, text),
+        "lessons": _xp_items(raw.get("lessons"), _xp_lesson, text),
+        "playbook": _xp_playbook(raw.get("playbook"), static, text),
+    }
+
+
+def _xp_member(mid: str, raw: Any, text: _Text, *, live: bool) -> dict[str, Any]:
+    kind = EXPERIENCE_KINDS[mid]
+    if not isinstance(raw, Mapping):
+        raise _Refused(f"member={mid}")
+    label = raw.get("label")
+    if raw.get("kind") != kind or not isinstance(label, str) or label not in EXPERIENCE_CHIPS[kind]:
+        raise _Refused(f"kind_or_label member={mid}")
+    items = _xp_list(raw.get("metrics"))
+    _xp_check_claim(mid, kind, label, _xp_metric(items[0], text) if items else None, live=live)
+    metrics = [m for m in (_xp_metric(item, text) for item in items[:XP_METRICS_MAX]) if m is not None]
+    lessons = _xp_map(raw.get("lessons"))
+    budget = _xp_num(raw.get("budget_left"))
+    chip = _RISK_CHIPS[label] if mid == "risk" and label in _RISK_CHIPS else EXPERIENCE_CHIPS[kind][label]
+    return {
+        "kind": kind, "label": label, "chip": chip,
+        "line": _xp_str(text, raw.get("line"), XP_LINE_MAX), "graded": _count(raw.get("graded")),
+        "days": _count(raw.get("days")), "practised": _count(raw.get("practised")), "metrics": metrics,
+        "exam": _xp_exam(raw.get("exam"), text), "trend": _xp_trend(raw.get("trend")),
+        "version_line": _xp_str(text, raw.get("version_line")), "independent": _xp_str(text, raw.get("independent")),
+        "lessons": {key: _count(lessons.get(key)) or 0 for key in _XP_LESSON_KEYS},
+        "coverage": _xp_str(text, raw.get("coverage")),
+        "budget_left": budget if budget is not None and 0.0 <= budget <= 1.0 else None,
+    }
+
+
+def _xp_check_claim(mid: str, kind: str, label: str, primary: dict[str, Any] | None, *, live: bool) -> None:
+    """Green and "worse" claims need the primary band on one side of the baseline or bar (§5.1); on paper the
+    Broker is never graded (§5.2: the paper fill and the cost model share the same haircut by construction)."""
+    if mid == "broker" and not live and label != "not_measured":
+        raise _Refused("broker_graded_on_paper")
+    if label not in ("skilled", "worse", "meets_bar"):
+        return
+    lo, hi, base = (primary or {}).get("lo"), (primary or {}).get("hi"), (primary or {}).get("baseline")
+    if lo is None or hi is None or base is None:
+        raise _Refused(f"claim_without_band member={mid}")
+    if label == "skilled":
+        backed = lo > base
+    elif label == "worse":
+        backed = hi < base
+    else:
+        backed = lo >= base if _BAR_GOOD_ABOVE[mid] else hi <= base
+    if not backed:
+        raise _Refused(f"claim_not_backed member={mid}")
+
+
+def _xp_metric(raw: Any, text: _Text) -> dict[str, Any] | None:
+    if not isinstance(raw, Mapping) or raw.get("unit") not in _XP_UNITS:
+        return None
+    name = text.opt(raw.get("name"), 60)
+    if name is None:
+        return None
+    lo, hi = _xp_num(raw.get("lo")), _xp_num(raw.get("hi"))
+    if lo is None or hi is None or lo > hi:  # half a band, or an upside-down one, is no band
+        lo = hi = None
+    return {"name": name, "value": _xp_num(raw.get("value")), "lo": lo, "hi": hi,
+            "baseline": _xp_num(raw.get("baseline")), "unit": raw["unit"], "text": _xp_str(text, raw.get("text"))}
+
+
+def _xp_exam(raw: Any, text: _Text) -> dict[str, Any] | None:
+    if not isinstance(raw, Mapping):
+        return None
+    result = text.opt(raw.get("result"), 30)
+    if result is None:
+        return None
+    version = raw.get("version12")
+    return {"split": _xp_str(text, raw.get("split"), 20),
+            "version12": version if isinstance(version, str) and _XP_HEX.fullmatch(version) else "",
+            "date": _xp_str(text, raw.get("date"), 20), "result": result, "current": raw.get("current") is True}
+
+
+def _xp_trend(raw: Any) -> list[list[float | None]]:
+    """Weekly ``[week_start, value, lo, hi]`` of the primary metric, the last :data:`XP_TREND_MAX` weeks."""
+    weeks = []
+    for item in _xp_list(raw):
+        if not isinstance(item, list) or len(item) != 4:
+            continue
+        start, value = _num(item[0]), _xp_num(item[1])  # a week's start is an epoch, not a metric value
+        if start is None or value is None:
+            continue
+        lo, hi = _xp_num(item[2]), _xp_num(item[3])
+        weeks.append([start, value, *((lo, hi) if lo is not None and hi is not None and lo <= hi else (None, None))])
+    return weeks[-XP_TREND_MAX:]
+
+
+def _xp_team(raw: Any, members: Mapping[str, Mapping[str, Any]], text: _Text, now: float) -> dict[str, Any]:
+    team = _xp_map(raw)
+    claimed = _count(team.get("skills_shown"))
+    graded = [m for m in members.values() if m["kind"] == "chance"]
+    shown = sum(m["label"] == "skilled" for m in graded) if graded else claimed
+    if claimed is not None and claimed != shown:  # the headline's count would disagree with the chips
+        raise _Refused("skills_shown")
+    names = _xp_list(team.get("not_measured"))
+    updated = _num(team.get("updated_at"))
+    return {
+        "graded": _count(team.get("graded")), "days": _count(team.get("days")),
+        "practised": _count(team.get("practised")),
+        "practised_window": _xp_str(text, team.get("practised_window"), 60), "skills_shown": shown,
+        "skills_measurable": SKILL_MEMBERS, "collecting": _count(team.get("collecting")),
+        "not_measured": [n for n in (text.opt(name, 40) for name in names[:XP_NAMES_MAX]) if n is not None],
+        "updated_at": updated if updated is not None and updated <= now + FUTURE_SKEW_S else None,
+    }
+
+
+def _xp_items(raw: Any, keep: Callable[[Any, _Text], dict[str, Any] | None], text: _Text) -> list[dict[str, Any]]:
+    """The first :data:`XP_LIST_MAX` well-formed items of a list (the rest is never even looked at)."""
+    kept = (item for item in (keep(x, text) for x in _xp_list(raw)) if item is not None)
+    return list(itertools.islice(kept, XP_LIST_MAX))
+
+
+def _xp_loss(raw: Any, text: _Text) -> dict[str, Any] | None:
+    if not isinstance(raw, Mapping) or not isinstance(raw.get("type"), str) or not _XP_WORD.fullmatch(raw["type"]):
+        return None
+    n, expected = _count(raw.get("n")), _xp_num(raw.get("expected"))
+    if n is None:
+        return None
+    return {"type": raw["type"], "n": n, "expected": expected if expected is not None and expected >= 0 else None,
+            "text": _xp_str(text, raw.get("text"))}
+
+
+def _xp_lesson(raw: Any, text: _Text) -> dict[str, Any] | None:
+    if not isinstance(raw, Mapping):
+        return None
+    status, words = raw.get("status"), _xp_str(text, raw.get("text"))
+    lesson_id = _xp_str(text, raw.get("id"), 40)
+    if not isinstance(status, str) or not _XP_WORD.fullmatch(status) or not (words or lesson_id):
+        return None
+    return {"id": lesson_id, "status": status, "text": words}
+
+
+def _xp_playbook(raw: Any, static: Mapping[str, Any], text: _Text) -> dict[str, Any]:
+    book = _xp_map(raw)
+    counts = {key: _count(book.get(key)) for key in _XP_PLAYBOOK_KEYS}
+    if all(v is None for v in counts.values()):
+        return dict(static)
+    return {**counts, "false_keep_bound": _xp_str(text, book.get("false_keep_bound"), 20) or _XP_FALSE_KEEP}
 
 
 # =========================================================================== sections
@@ -448,6 +793,8 @@ def build_page_state(ledger: Any, settings: Settings, now: float, engine_status:
         "learning": {"source": card["source"], "state": card["state"], "headline": card["headline"],
                      "variants": card["variants"], "data": card["data"],
                      "rule": LEARNING_RULE if card["source"] == "card" and card["can_stop_trading"] else None},
+        # read-only: the report cards never feed the checklist below or the banners
+        "experience": experience_card(settings, now, card, memory),
         # never "Ready" while a banner says the bot is stopped, silent or in trouble (budget banners aside)
         "ready": readiness(settings, card, wallet_address=address, wallet_sol=wallet_sol, stopped=bool(alerts),
                            now=now),

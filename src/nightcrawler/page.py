@@ -1,7 +1,8 @@
 """The ONE dashboard page at ``/`` (owner: O6): built for an owner who checks the bot from a phone.
 
 Top to bottom, in plain words: money (a big dollar number and a chart), the team (one row per bot member,
-tap for its last events), trades, learning (the Coach), "ready for real money?" (a six-step checklist)
+tap for its report card and last events; the team's practice record on top and the playbook's counts below,
+docs/EXPERIENCE.md §9), trades, learning (the Coach), "ready for real money?" (a six-step checklist)
 and, small at the bottom, receipts and service usage. Data: ``/api/page``
 (:func:`nightcrawler.pagestate.build_page_state`), fetched every :data:`REFRESH_S` seconds while the tab is
 visible and at once when it comes back.
@@ -107,6 +108,30 @@ padding:2px 10px;font-size:13px;font-weight:650;background:var(--chip);white-spa
 .chip i{width:8px;height:8px;border-radius:50%;background:var(--muted);flex:none}
 .chip.working i{background:var(--good)}.chip.waiting i{background:var(--warn)}
 .chip.blocked{border-color:var(--critical)}.chip.blocked i{background:var(--critical)}
+.state{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:4px;max-width:170px}
+@media (min-width:480px){.state{max-width:none}}
+.skill-chip.good{color:var(--up);border-color:var(--good)}
+.skill-chip.bad{color:var(--down);border-color:var(--critical)}
+.row .graded{grid-column:1/-1;color:var(--ink2);font-size:13px;overflow-wrap:anywhere;min-width:0}
+.row .graded:empty{display:none}
+.metric{margin-top:10px;font-size:13px}
+.metric .line{flex-wrap:wrap;gap:0 10px}
+.metric .line b{font-size:13px;margin-left:auto}
+.metric small{display:block;color:var(--ink2);overflow-wrap:anywhere}
+.rbar{position:relative;height:14px;margin:6px 6px 2px}
+.rbar div{position:absolute}
+.rbar .rt{left:0;right:0;top:6px;height:2px;background:var(--hair)}
+.rbar .rb{top:2px;height:10px;min-width:3px;border-radius:5px;background:var(--area);border:1px solid var(--accent)}
+.rbar .rk{top:0;width:2px;height:14px;margin-left:-1px;background:var(--ink2)}
+.rbar .rd{top:2px;width:10px;height:10px;margin-left:-5px;border-radius:50%;background:var(--ink);
+border:2px solid var(--card)}
+.meta.old{opacity:.6}
+.line>.tag{flex:none;margin-left:0}
+.spark{margin-top:4px}
+.spark svg{display:block;width:100%;height:44px}
+.spark .band{fill:var(--area);stroke:none}
+.spark .ln{fill:none;stroke:var(--accent);stroke-width:2;stroke-linejoin:round}
+.spark .base{stroke:var(--muted);stroke-width:1;stroke-dasharray:3 3}
 .more{padding:0 0 12px}
 .sub{color:var(--ink2);font-size:13px;font-weight:600;margin:10px 0 0}
 ol.events{list-style:none;margin:6px 0 0;padding:0}
@@ -324,22 +349,186 @@ _SCRIPT = r"""
   }
   const BAR_TITLES = {strategy: "How close each watched coin is to the setup",
     cocoon: "Why coins were thrown out, last 24 h"};
-  function renderTeam(t) {
+  function renderTeam(t, x) {
     const c = t.counts;
     $("team-counts").textContent = ["working", "waiting", "idle", "blocked"].filter((k) => c[k])
       .map((k) => c[k] + " " + k).join(" · ");
+    const graded = x && x.source === "state";
     for (const m of t.members) {
       const node = $("m-" + m.id);
       if (!node) continue;
+      const card = graded ? x.members[m.id] || null : null;
       node.className = "member " + m.status;
-      put(node.querySelector(".state"), chip(m.status));
+      put(node.querySelector(".state"), chip(m.status), card ? skillChip(card) : null);
       node.querySelector(".doing").textContent = m.doing || "";
+      node.querySelector(".graded").textContent = card ? gradedLine(m.id, card) : "";
       node.querySelector(".when").textContent = m.status === "absent" ? "not part of this version yet"
         : isNum(m.last_activity) ? "last active " + ago(m.last_activity) : "no activity recorded yet";
       const bars = (m.bars || []).map((b) => bar(b.label, b.value, b.text, "", b.note));
       put(node.querySelector(".more"), bars.length ? el("p", "sub", BAR_TITLES[m.id] || "") : null, ...bars,
+        ...(card ? reportCard(m.id, card, x) : []), ...(graded && m.id === "coach" ? coachBlock(x) : []),
         el("p", "sub", "Last events"), events(m.events));
     }
+    renderExperience(x);
+  }
+
+  // ---------------------------------------------------------------- B2. report cards (docs/EXPERIENCE.md §9)
+  // Green only for a band that clears chance or the bar, red for the bad side, grey otherwise (never amber:
+  // "Collecting" and "No skill yet" are the expected states). The chip word always shows, so colour is never the
+  // only signal, and every word of a card comes from the data: the page itself never claims a skill.
+  const GOOD_LABELS = ["skilled", "meets_bar"];
+  const BAD_LABELS = ["worse", "below_bar", "check_failed"];
+  const GRADED_UNIT = {strategy: "trades", radar: "trades", risk: "trades", broker: "trades"};
+  const BASE_WORDS = {chance: "a random stand-in would give ", bar: "the bar is ", self_check: "the target is "};
+  const LESSON_WORDS = {open: "open", testing: "being tested", adopted: "kept", rejected: "dropped"};
+  const LOSS_WORDS = {pipeline_fault: "A bug in the bot (fixed at once)", rug_missed: "Rug missed",
+    regime: "Bad market hour", oversize: "Trade too big for the money", late_entry: "Late entry",
+    bad_entry: "Bad entry", early_exit: "Sold too early", late_exit: "Sold too late",
+    cost_eaten: "Costs ate the gain", missed_winner: "Missed a winner", variance: "No type: ordinary swings"};
+  const UNITS = {
+    pp: (v) => sign(v, true) + Math.abs(v).toFixed(1) + " pts",
+    share: (v) => (Math.abs(v) < 0.1 ? (v * 100).toFixed(1) : String(Math.round(v * 100))) + "%",
+    ratio: (v) => v.toFixed(1) + "×",
+    count: (v) => Math.round(v).toLocaleString(),
+    s: (v) => v.toFixed(1) + " s",
+  };
+  const words = (key) => String(key).replace(/_/g, " ");
+  function fmt(v, unit) { return isNum(v) ? (UNITS[unit] || String)(v) : "—"; }
+  // A band's ends without the unit word the value beside them already carries: "−0.4 pts [−1.2, +0.5]".
+  function fmtEnd(v, unit) { return unit === "pp" && isNum(v) ? sign(v, true) + Math.abs(v).toFixed(1) : fmt(v, unit); }
+
+  function skillChip(card) {
+    const tone = GOOD_LABELS.includes(card.label) ? " good" : BAD_LABELS.includes(card.label) ? " bad" : "";
+    return el("span", "chip skill-chip" + tone, card.chip);
+  }
+  function gradedLine(id, card) {
+    if (!isNum(card.graded)) return "";
+    const days = isNum(card.days) ? " · " + card.days + (card.days === 1 ? " day" : " days") : "";
+    return "Graded on " + card.graded.toLocaleString() + " " + (GRADED_UNIT[id] || "coins") + days;
+  }
+  // A track, the shaded band [lo, hi], a dot at the value and a tick at the baseline or the bar. No band, no bar.
+  function rangeBar(m, kind) {
+    if (!isNum(m.lo) || !isNum(m.hi)) return null;
+    const known = [m.lo, m.hi, m.value, m.baseline].filter(isNum);
+    let lo = Math.min(...known), hi = Math.max(...known);
+    const pad = (hi - lo) * 0.12 || Math.max(Math.abs(hi), 1) * 0.12;
+    lo -= pad;
+    hi += pad;
+    const at = (v) => ((v - lo) / (hi - lo) * 100).toFixed(2) + "%";
+    const band = el("div", "rb");
+    band.style.left = at(m.lo);
+    band.style.width = ((m.hi - m.lo) / (hi - lo) * 100).toFixed(2) + "%";
+    const parts = [el("div", "rt"), band];
+    if (isNum(m.baseline)) {
+      const tick = el("div", "rk");
+      tick.style.left = at(m.baseline);
+      parts.push(tick);
+    }
+    if (isNum(m.value)) {
+      const dot = el("div", "rd");
+      dot.style.left = at(m.value);
+      parts.push(dot);
+    }
+    const box = el("div", "rbar", ...parts);
+    box.setAttribute("role", "img");
+    box.setAttribute("aria-label", (m.name + ": " + fmt(m.value, m.unit) + ", likely between " + fmt(m.lo, m.unit)
+      + " and " + fmt(m.hi, m.unit) + (isNum(m.baseline) ? "; " + (BASE_WORDS[kind] || "the baseline is ")
+      + fmt(m.baseline, m.unit) : "")).replace(/ pts\b/g, " points"));
+    return box;
+  }
+  function metricRow(m, kind) {
+    const band = isNum(m.lo) && isNum(m.hi) ? " [" + fmtEnd(m.lo, m.unit) + ", " + fmtEnd(m.hi, m.unit) + "]" : "";
+    return el("div", "metric", el("div", "line", el("span", null, m.name), el("b", "num", fmt(m.value, m.unit) + band)),
+      rangeBar(m, kind), m.text ? el("small", null, m.text) : null);
+  }
+  // The primary metric week by week, from 3 weeks on. No trend words: the picture is the data.
+  function sparkline(trend, primary) {
+    if (trend.length < 3) return null;
+    const W = 300, H = 44, pad = 3;
+    const base = primary && isNum(primary.baseline) ? primary.baseline : null;
+    const vals = trend.flatMap((w) => w.slice(1)).filter(isNum).concat(base === null ? [] : [base]);
+    let lo = Math.min(...vals), hi = Math.max(...vals);
+    if (hi - lo < 1e-9) { hi += 1; lo -= 1; }
+    const x = (i) => (i / (trend.length - 1) * W).toFixed(1);
+    const y = (v) => (pad + (1 - (v - lo) / (hi - lo)) * (H - 2 * pad)).toFixed(1);
+    const plot = svg("svg", {viewBox: "0 0 " + W + " " + H, preserveAspectRatio: "none", "aria-hidden": "true"});
+    if (trend.every((w) => isNum(w[2]) && isNum(w[3]))) {
+      const top = trend.map((w, i) => x(i) + "," + y(w[3]));
+      const bottom = trend.map((w, i) => x(i) + "," + y(w[2])).reverse();
+      plot.append(svg("path", {d: "M" + top.concat(bottom).join("L") + "Z", class: "band"}));
+    }
+    if (base !== null) {
+      plot.append(svg("line", {x1: 0, x2: W, y1: y(base), y2: y(base), class: "base",
+        "vector-effect": "non-scaling-stroke"}));
+    }
+    plot.append(svg("polyline", {points: trend.map((w, i) => x(i) + "," + y(w[1])).join(" "), class: "ln",
+      "vector-effect": "non-scaling-stroke"}));
+    return el("div", "spark", el("p", "sub", "Week by week, the last " + trend.length + " weeks"), plot);
+  }
+  function reportCard(id, card, x) {
+    const span = x.team.practised_window ? " (" + x.team.practised_window + ")" : "";
+    const record = [gradedLine(id, card), isNum(card.practised)
+      ? "practised on " + card.practised.toLocaleString() + " past coins" + span : ""].filter(Boolean);
+    const exam = card.exam;
+    const lessons = ["open", "testing", "adopted", "rejected"].filter((k) => k === "open" || card.lessons[k])
+      .map((k) => card.lessons[k] + " " + LESSON_WORDS[k]).join(" · ");
+    return [el("p", "sub", "Report card"), card.line ? el("p", "help", card.line) : null,
+      record.length ? el("p", "meta", record.join(" · ")) : null,
+      ...card.metrics.map((m) => metricRow(m, card.kind)),
+      exam ? el("p", "meta" + (exam.current ? "" : " old"), "Past-data check" + (exam.date ? ", " + exam.date : "")
+        + (exam.version12 ? ", version " + exam.version12 : "") + ": " + exam.result
+        + (exam.current ? "" : " (an earlier version)")) : null,
+      sparkline(card.trend, card.metrics[0]),
+      card.version_line ? el("p", "meta", card.version_line) : null,
+      card.independent ? el("p", "meta", card.independent) : null,
+      card.coverage ? el("p", "meta", card.coverage) : null,
+      card.kind === "self_check" ? null : el("p", "meta", "Lessons: " + lessons),
+      isNum(card.budget_left) ? el("p", "meta", "False-alarm budget left: " + (card.budget_left * 100).toFixed(2)
+        + "%") : null];
+  }
+  // The Coach's row: this week's loss types next to what luck alone gives, then the lessons (ideas to test).
+  function coachBlock(x) {
+    const losses = x.loss_types_week.map((t) => el("div", null,
+      el("div", "line", el("span", null, LOSS_WORDS[t.type] || words(t.type)), el("b", "num", String(t.n))),
+      el("div", "meta", isNum(t.expected) ? "random entries in the same situations: " + t.expected.toFixed(1)
+        + " expected" : "no luck-only count for this type"),
+      t.text ? el("div", "meta", t.text) : null));
+    const lessons = x.lessons.map((l) => el("div", null, el("div", "line", el("span", null, l.text || l.id),
+      el("span", "tag", LESSON_WORDS[l.status] || words(l.status)))));
+    return [el("p", "sub", "Loss types this week"),
+      losses.length ? el("div", "rows", ...losses) : el("p", "empty", "No graded losses this week."),
+      el("p", "help", "Each type sits next to what luck alone gives; one loss on its own changes nothing."),
+      el("p", "sub", "Lessons"),
+      lessons.length ? el("div", "rows", ...lessons)
+        : el("p", "empty", "None yet: a lesson needs the same kind of loss on many different coins."),
+      el("p", "help", "A lesson is an idea to test, never a change to the bot by itself.")];
+  }
+  // The team's headline under the Team card's first line, and the playbook under the members.
+  function renderExperience(x) {
+    if (!x) {
+      put($("xp-head"));
+      put($("xp-playbook"));
+      return;
+    }
+    if (x.source === "state") {
+      put($("xp-head"), ...x.headline.filter(Boolean).map((h) => el("p", "lead", h)),
+        x.bars_line ? el("p", "help", x.bars_line) : null, el("p", "help", x.money_line), el("p", "help", x.caveat));
+    } else {
+      put($("xp-head"), el("p", "help", x.source === "missing"
+        ? "Report cards: not built yet. Each member will be graded against a random stand-in or a fixed bar."
+        : "Report cards: could not be read right now (see the logs)."));
+    }
+    const p = x.playbook;
+    if (!isNum(p.in_bot_contradicted)) {
+      put($("xp-playbook"));
+      return;
+    }
+    const n = (v) => (isNum(v) ? String(v) : "?");
+    put($("xp-playbook"), el("p", "sub", "Playbook: every craft rule is a test"),
+      el("p", "help", "In the bot, contradicted by our data: " + n(p.in_bot_contradicted) + " · in the bot, untested: "
+        + n(p.in_bot_unsupported) + " · being tested: " + n(p.testing) + "."),
+      el("p", "help", "Tested and kept: " + n(p.validated) + " (at most " + p.false_keep_bound
+        + " expected to be a false keep) · tested and dropped: " + n(p.rejected) + "."));
   }
 
   // ---------------------------------------------------------------- C. trades
@@ -430,7 +619,7 @@ _SCRIPT = r"""
     mode.className = "mode" + (s.mode === "LIVE" ? " live" : "");
     put($("alerts"), ...s.alerts.map((a) => el("div", "alert " + a.level, a.text)));
     renderMoney(s.money);
-    renderTeam(s.team);
+    renderTeam(s.team, s.experience);
     renderTrades(s.trades);
     renderLearning(s.learning);
     renderReady(s.ready);
@@ -500,7 +689,7 @@ PAGE_CSP = (f"default-src 'none'; script-src {_sha256_source(_SCRIPT)}; style-sr
 def _member(mid: str, name: str, role: str) -> str:
     return (f'<details class="member" id="m-{mid}"><summary><span class="row">'
             f'<span class="who"><b>{html.escape(name)}</b><small>{html.escape(role)}</small></span>'
-            '<span class="state"></span><span class="doing">Loading…</span>'
+            '<span class="state"></span><span class="doing">Loading…</span><span class="graded"></span>'
             '<span class="when"></span></span></summary><div class="more"></div></details>\n')
 
 
@@ -538,7 +727,8 @@ def render_page_html(settings: Settings) -> str:
 
         "<section class=\"card\" id=\"team\"><h2>The team <small id=\"team-counts\"></small></h2>"
         "<p class=\"help\">Each one is a part of the bot. Tap a name to see what it did last.</p>"
-        f"<div class=\"members\">\n{members}</div></section>\n"
+        "<div id=\"xp-head\"></div>"
+        f"<div class=\"members\">\n{members}</div><div id=\"xp-playbook\"></div></section>\n"
 
         "<section class=\"card\" id=\"trades\"><h2>Trades <small id=\"trades-count\"></small></h2>"
         "<div id=\"trades-body\"><p class=\"empty\">Loading…</p></div>"

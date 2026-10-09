@@ -1,10 +1,11 @@
 """The playbook: every rule is a tested hypothesis (docs/EXPERIENCE.md §7.1, §7.2). Pure, read-only.
 
 The static registry ``experience/playbook.json`` is GENERATED from the grounded rules (G01-G62) by
-``scripts/gen_playbook.py`` (T7): one entry per row with at least ``id`` and its initial ``status``. Status changes
-live outside ``src/`` edits - forward tests arrive as receipted ``filter_register`` / ``filter_verdict`` outbox rows
-(first row per ``filter_id``) - so a status change never forces a redeploy. Nothing here can change trading: a
-``validated`` rule enters the bot only through a human-reviewed PR (§7.5), and the counts are display only.
+``scripts/gen_playbook.py`` (T7): one ``rules`` entry per row with at least ``id`` and its initial ``status``.
+Status changes live outside ``src/`` edits - forward tests arrive as receipted ``filter_register`` /
+``filter_verdict`` outbox rows (first row per ``filter_id``) - so a status change never forces a redeploy. Nothing
+here can change trading: a ``validated`` rule enters the bot only through a human-reviewed PR (§7.5), and the counts
+are display only.
 
 * :func:`load_entries` - the registry (``[]`` when the file is missing or unreadable; never raises).
 * :func:`fold_statuses` - entry statuses with the receipted forward-test events applied in receipt order.
@@ -37,15 +38,16 @@ _VERDICTS = {"kept": "validated", "dropped": "rejected"}
 
 
 def load_entries(path: Path = PLAYBOOK_PATH) -> list[dict[str, Any]]:
-    """The registry's entries (``{"entries": [...]}`` or a bare list); an entry needs a string ``id``, and an unknown
-    status reads as ``candidate`` (untested). Missing or broken file: ``[]``."""
+    """The registry's entries (``{"rules": [...]}`` as ``scripts/gen_playbook.py`` writes it, ``{"entries": [...]}``
+    or a bare list); an entry needs a string ``id``, and an unknown status reads as ``candidate`` (untested). Missing
+    or broken file: ``[]``."""
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, ValueError) as exc:
         if path.exists():
             log.warning("playbook_unreadable error=%s", type(exc).__name__)
         return []
-    items = data.get("entries") if isinstance(data, Mapping) else data
+    items = data.get("rules", data.get("entries")) if isinstance(data, Mapping) else data
     out = []
     for item in items if isinstance(items, list) else []:
         if isinstance(item, Mapping) and isinstance(item.get("id"), str) and item["id"]:

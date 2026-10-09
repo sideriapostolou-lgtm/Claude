@@ -118,6 +118,21 @@ def test_repo_files_exist() -> None:
         assert (ROOT / rel).is_file(), rel
 
 
+def test_every_data_file_in_the_package_ships_in_the_image() -> None:
+    """The Docker image runs ``pip install .`` (not editable): a data file the code reads ships only when
+    pyproject.toml lists it as package data (e.g. the learner's seeds, the playbook registry)."""
+    import tomllib
+
+    declared = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["tool"]["setuptools"][
+        "package-data"]
+    package_root = ROOT / "src"
+    for path in sorted((package_root / "nightcrawler").rglob("*")):
+        if not path.is_file() or path.suffix in (".py", ".pyc") or "__pycache__" in path.parts:
+            continue
+        package = ".".join(path.parent.relative_to(package_root).parts)
+        assert path.name in declared.get(package, []), f"{package}: {path.name} is not package data"
+
+
 def test_railway_gives_a_stopping_bot_time_to_finish_a_swap() -> None:
     """Railway's default draining time is 0 s: SIGKILL follows SIGTERM at once, which can cut a live
     swap between Ultra /execute and its ledger record. The engine stops after the current stage."""
