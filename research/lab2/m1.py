@@ -16,8 +16,9 @@ Two detectors
     puts a floor under every minute's buying; organic flow only adds to it);
   - single actor: in the 6 quietest minutes the median number of buyers (>= 0.01 SOL) is <= 2;
   - steady: the CV of the 30 minute sums is < 0.5 (PLAN's buy-size regularity);
-  - price-insensitive: |Spearman(minute buy SOL, previous minute's return)| < 0.3 (PLAN's threshold);
-  - fires when floor >= 0.01 SOL/min and both tests pass. ``mech_bid_h`` = 60 x floor (SOL per hour).
+  - price-insensitive: |Spearman(minute buy SOL, previous minute's return)| < 0.3 (PLAN's threshold), over the
+    minutes that carry the bid (the PLAN computes it over the MECH wallet's own buys);
+  - fires when floor >= 0.01 SOL/min and the three tests pass. ``mech_bid_h`` = 60 x floor (SOL per hour).
 
 * **MECH-wallet** (PLAN 4.5 verbatim, on B1 trades through ``snap.trades``): >= 6 buys, sells <= 10 % of buys in SOL,
   CV of buy gaps < 0.25, CV of buy sizes < 0.5, |Spearman(size, 1-minute return before the buy)| < 0.3, not AGENT,
@@ -25,8 +26,8 @@ Two detectors
   not a strategy variant, so M1 stays at the PLAN 3.4 limit of 4 variants.
 
 Model check (stop rule 5, before any P&L): on TRAIN, OLS of the realized 60-minute mid-price change on
-``drift_pred60 = ((X + mech_bid_h) / X)^2 - 1`` (X = pricing reserve x + v) over detector-firing decisions on a
-10-minute grid; KILL when slope < 0.5 or R^2 < 0.05.
+``drift_pred60 = ((X + mech_bid_h) / X)^2 - 1`` (X = pricing reserve x + v) over detector-firing decisions at ages
+35, 45, ..., 115 min; KILL when slope < 0.5 or R^2 < 0.05.
 
 CLI::
 
@@ -104,7 +105,7 @@ M_GRID = (1.0, 2.0)
 EXIT_GRID = ("rhythm", "rhythm+prec")
 CANDIDATE_EXIT, TWIN_EXIT = "rhythm+prec", "rhythm"
 # model check (stop rule 5)
-MC_AGES_MIN = tuple(range(30, 111, 10))
+MC_AGES_MIN = tuple(range(35, 116, 10))   # the detector needs 32 completed bars; label ends <= g + 176 min
 MC_HORIZON_S = 3600.0
 MC_MIN_SLOPE, MC_MIN_R2 = 0.5, 0.05
 MC_MIN_COINS, MC_MIN_OBS = 30, 100
@@ -235,7 +236,10 @@ def mech_bar(snap: C.AsOf, k_end: int | None = None) -> dict:
     order = np.argsort(bw, kind="stable")
     floor = float(bw[order[FLOOR_RANK - 1]])
     quiet = float(np.median(nb[order[:QUIET_N]]))
-    rho = spearman(bw, r_prev)
+    # PLAN: Spearman over the MECH wallet's buys only -> over the window minutes that carry the bid. Minutes the
+    # bid skipped would otherwise couple b_i to r_{i-1} through the bid's own impact (a spurious "reaction").
+    on = bw >= CARRY_FRAC * floor
+    rho = spearman(bw[on], r_prev[on])
     cv = _cv(bw)
     X = float(bars.X[k - 1])
     carry = b >= CARRY_FRAC * floor if floor > 0 else np.zeros(k, bool)
@@ -490,7 +494,7 @@ def _rug_in(bars: C.Bars, j0: int, j1: int) -> bool:
 
 
 def model_check_obs(ds: C.Dataset, mints: Iterable[str] | None = None, with_wallet: bool = True) -> pd.DataFrame:
-    """Detector-firing decisions on the 10-minute grid (ages 30..110 min) with their LABEL, the realized 60-minute
+    """Detector-firing decisions on the 10-minute grid (ages 35..115 min) with their LABEL, the realized 60-minute
     mid-price change (read through AsOf 60 min later). Allowed classes only."""
     rows = []
     for m in (mints if mints is not None else ds.mints):
@@ -556,12 +560,14 @@ def _boot_slope(obs: pd.DataFrame, B: int, seed: int = 0) -> tuple[float, float]
     return float(np.quantile(out, 0.025)), float(np.quantile(out, 0.975))
 
 
-def model_check(obs: pd.DataFrame, B: int = 2000, hide: bool = False) -> dict:
+def model_check(obs: pd.DataFrame, B: int = 2000, hide: bool = False,
+                clusters: Mapping[str, str] | None = None) -> dict:
     """Stop rule 5. PASS / KILL / UNDERPOWERED (fewer than 30 coins or 100 observations). Diagnostics never decide.
     ``hide`` (debug split) returns counts only."""
     n_obs, n_coins = int(len(obs)), int(obs["mint"].nunique()) if len(obs) else 0
     out: dict[str, Any] = {"n_obs": n_obs, "n_coins": n_coins,
                            "by_class": obs["class"].value_counts().to_dict() if n_obs else {},
+                           "n_clusters": int(obs["mint"].map(clusters).nunique()) if (n_obs and clusters) else None,
                            "need": {"coins": MC_MIN_COINS, "obs": MC_MIN_OBS, "slope": MC_MIN_SLOPE, "r2": MC_MIN_R2}}
     if "wallet_mech" in obs and obs["wallet_mech"].notna().any():
         wm = obs["wallet_mech"].dropna().astype(bool)
@@ -593,13 +599,14 @@ def model_check(obs: pd.DataFrame, B: int = 2000, hide: bool = False) -> dict:
     return out
 
 
-def clusters_for(ds: C.Dataset) -> dict[str, str]:
+def cluster_table(ds: C.Dataset) -> pd.DataFrame:
     """Operator-cluster proxy for the bootstrap / concentration checks (a grouping, never a feature): connected
     components of allowed-class coins that share a creator, an upper-cased symbol, or ANY of their top-5 early
     (w120) pool buyers (AGENT and pooled accounts excluded) -- the PLAN links operators by co-appearing wallets.
     Fields are read through AsOf at the end of each coin's window. Other coins are their own cluster. Over-merging
     only widens the cluster CIs (conservative); under-merging would narrow them."""
     parent: dict[str, str] = {}
+    cls_of: dict[str, str | None] = {}
 
     def find(a: str) -> str:
         while parent.setdefault(a, a) != a:
@@ -617,7 +624,8 @@ def clusters_for(ds: C.Dataset) -> dict[str, str]:
         snap = ds.asof(m, cd.g + 60 * C.N_BARS + C.DECISION_LAG_S)
         node = "m:" + m
         find(node)
-        if m1_class(snap) not in ALLOWED_CLASSES:
+        cls_of[m] = m1_class(snap)
+        if cls_of[m] not in ALLOWED_CLASSES:
             continue
         cr, sy = snap.get("creator"), snap.get("symbol")
         if cr:
@@ -627,7 +635,14 @@ def clusters_for(ds: C.Dataset) -> dict[str, str]:
         top = snap.top_buyers("w120", exclude_agent=True) or ()
         for w in sorted(top, key=lambda w: (-float(w[1]), str(w[0])))[:CLUSTER_TOP_K]:
             union(node, "w:" + str(w[0]))
-    return {m: find("m:" + m) for m in ds.mints}
+    return pd.DataFrame({"mint": ds.mints, "cls": [cls_of[m] for m in ds.mints],
+                         "cluster": [find("m:" + m) for m in ds.mints]}, columns=["mint", "cls", "cluster"])
+
+
+def clusters_for(ds: C.Dataset) -> dict[str, str]:
+    """mint -> operator-cluster id (see :func:`cluster_table`)."""
+    t = cluster_table(ds)
+    return dict(zip(t["mint"], t["cluster"]))
 
 
 def rug_hits(ds: C.Dataset, trades: pd.DataFrame) -> np.ndarray:
@@ -666,18 +681,18 @@ def evaluate(res: C.Result, ds: C.Dataset, clusters: Mapping[str, str], *, B: in
              n_trials_total: int | None) -> dict:
     """Per-config report. On the debug split: counts only (n, coins, classes, exit reasons) -- never returns."""
     t = res.trades
-    rugs = rug_hits(ds, t) if len(t) else np.zeros(0, bool)
+    rugs = rug_hits(ds, t) if (len(t) and not hide) else np.zeros(0, bool)
     base = {"config": config_key(res.meta["params"]), "params_hash": C.params_hash(res.meta["params"]),
             "hypothesis": res.meta["hypothesis"], "n": int(len(t)), "n_coins": int(t["mint"].nunique()) if len(t) else 0,
             "by_class_n": t["tag"].value_counts().to_dict() if len(t) else {},
             "reasons": t["reason"].value_counts().to_dict() if len(t) else {}, "n_placebo": int(len(res.placebo)),
             "n_clusters": int(pd.Series(t["mint"].map(clusters)).nunique()) if len(t) else 0,
             "horizon_exits": int((t["reason"] == "horizon").sum()) if len(t) else 0,
-            "rug_hits": int(rugs.sum()), "trial": {k: res.meta.get(k) for k in ("config", "new_trial",
-                                                                                "n_trials_total")}}
-    if hide:
+            "trial": {k: res.meta.get(k) for k in ("config", "new_trial", "n_trials_total")}}
+    if hide:     # rug hits are an outcome label: hidden like returns
         base["returns"] = "hidden on the debug split (never choose parameters on FINAL data)"
         return base
+    base["rug_hits"] = int(rugs.sum())
     d = C.describe(t, B=B, n_trials_total=n_trials_total)
     base.update({k: d.get(k) for k in ("mean", "median", "win_rate", "sd", "ci90", "ci95", "top_coin_share",
                                         "top3_coin_share", "mean_without_top2", "halves", "mean_hold_min",
@@ -718,14 +733,18 @@ def m1_extras(ev_cand: Mapping[str, Any], ev_twin: Mapping[str, Any] | None) -> 
 
 
 def combine_verdict(base: Mapping[str, Any], extras: list[dict]) -> str:
-    v = base["verdict"]
-    if v == "REJECTED":
+    """PLAN 3.5 items 1-8 (from common.verdict_entry) + the M1 extras. Item 9 (FINAL mean > 0) is judged in the
+    overall verdict once FINAL ran, so a missing FINAL never makes TEST / CONFIRM 'INCOMPLETE'."""
+    if base.get("auto_rejections"):
         return "REJECTED"
-    if v == "UNDERPOWERED" or extras[0]["pass"] is False:
+    crit = {c["id"]: c["pass"] for c in base["criteria"] if c["id"] != 9}
+    if not crit.get(1) or extras[0]["pass"] is False:
         return "UNDERPOWERED"
-    if v == "FAIL" or any(e["pass"] is False for e in extras[1:]):
+    rest = [v for k, v in crit.items() if k != 1]
+    if any(v is False for v in rest) or any(e["pass"] is False for e in extras[1:]):
         return "FAIL"
-    if v == "INCOMPLETE" or any(e["pass"] is None and e.get("blocking_when_none", True) for e in extras[1:]):
+    if any(v is None for v in rest) or any(e["pass"] is None and e.get("blocking_when_none", True)
+                                           for e in extras[1:]):
         return "INCOMPLETE"
     return "PASS"
 
@@ -753,8 +772,13 @@ def decide_train(evals: Mapping[str, Mapping[str, Any]]) -> dict:
         sl = [make_params(best["m"], TWIN_EXIT), make_params(best["m"], CANDIDATE_EXIT)]
         return {"verdict": "SHORTLISTED", "m_star": best["m"], "rows": rows, "shortlist": sl,
                 "shortlist_hashes": [C.params_hash(p) for p in sl]}
-    v = "NO_CONFIG" if any(r["powered"] for r in rows) else "UNDERPOWERED_TRAIN"
-    return {"verdict": v, "rows": rows, "shortlist": [], "shortlist_hashes": []}
+    if any(r["powered"] for r in rows):
+        v, why = "NO_CONFIG", "a powered candidate failed the mean / top-2 / matched-control bars"
+    else:
+        v = "UNDERPOWERED_TRAIN"
+        why = (f"no candidate reached >= {TRAIN_MIN_TRADES} trades from >= {TRAIN_MIN_CLUSTERS} operator clusters "
+               f"(best: {max(r['n'] for r in rows)} trades, {max(r['clusters'] for r in rows)} clusters)")
+    return {"verdict": v, "reason": why, "rows": rows, "shortlist": [], "shortlist_hashes": []}
 
 
 def decide_val(ev_cand: Mapping[str, Any]) -> dict:
@@ -1039,16 +1063,20 @@ def run_stage(stage: str, *, out_dir: Path = OUT_DIR, allow_partial: bool = Fals
                     p.rename(out_dir / f"train_prev_{stamp}.{ext}")
     if ds is None:
         ds = C.load(split, flow=flow, census=census, _internal=(split == "val"))
-    clusters = clusters_for(ds)
+    ctab = cluster_table(ds)
+    clusters = dict(zip(ctab["mint"], ctab["cluster"]))
+    allowed = ctab[ctab["cls"].isin(ALLOWED_CLASSES)]
     doc: dict[str, Any] = {"hypothesis": HYP, "version": VERSION, "stage": stage, "split": split,
                            "utc": C.utc_str(time.time()), "provisional": provisional, "debug_only": debug,
                            "prereg_sha256": info["prereg_sha256"], "rerun_reason": rerun_reason,
                            "coverage": cov, "n_coins": len(ds), "span_days": _span_days(ds),
-                           "n_clusters_in_split": len(set(clusters.values()))}
+                           "allowed_coins": {str(k): int(v) for k, v in allowed["cls"].value_counts().items()},
+                           "clusters_allowed": int(allowed["cluster"].nunique()),
+                           "clusters_operator": int(allowed.loc[allowed["cls"] == "OPERATOR", "cluster"].nunique())}
     # ---- model check (TRAIN: before any P&L; debug: counts only)
     if stage in ("train", "debug"):
         obs = model_check_obs(ds)
-        mc = model_check(obs, B=min(B, 2000), hide=debug)
+        mc = model_check(obs, B=min(B, 2000), hide=debug, clusters=clusters)
         doc["model_check"] = mc
         mc_run = C.record_run(HYP_MC, MC_PARAMS, split, {"n": mc["n_obs"], "mean": None}, ledger_path, debug=debug)
         doc["model_check"]["trial"] = mc_run
@@ -1193,7 +1221,8 @@ def render_md(doc: Mapping[str, Any]) -> str:
     st = doc["stage"]
     L = [f"# M1 {st}{' (PROVISIONAL: partial data)' if doc.get('provisional') else ''}", "",
          f"- **Split:** `{doc['split']}`; usable coins: {doc['n_coins']}; span: {doc.get('span_days') or 0:.2f} days; "
-         f"operator clusters (proxy): {doc.get('n_clusters_in_split')}.",
+         f"allowed-class coins {doc.get('allowed_coins')} in {doc.get('clusters_allowed')} operator clusters "
+         f"(OPERATOR coins: {doc.get('clusters_operator')} clusters).",
          f"- **Written:** {doc['utc']} UTC; runtime {doc.get('runtime_s')} s; PREREG sha256 "
          f"`{(doc.get('prereg_sha256') or '')[:12]}`; trials in the ledger: {doc.get('n_trials_total')}.",
          f"- **Overall M1 status:** {doc.get('overall')}.", ""]
@@ -1203,8 +1232,8 @@ def render_md(doc: Mapping[str, Any]) -> str:
     mc = doc.get("model_check")
     if mc:
         L += ["## Model check (PLAN 8 stop rule 5)", "",
-              f"- Observations: {mc['n_obs']} from {mc['n_coins']} coins (need ≥ {MC_MIN_OBS} and ≥ {MC_MIN_COINS}); "
-              f"by class: {mc.get('by_class')}.",
+              f"- Observations: {mc['n_obs']} from {mc['n_coins']} coins in {mc.get('n_clusters')} operator clusters "
+              f"(need ≥ {MC_MIN_OBS} and ≥ {MC_MIN_COINS} coins); by class: {mc.get('by_class')}.",
               f"- Decision: **{mc['decision']}**."]
         if mc.get("fit"):
             f = mc["fit"]
@@ -1259,6 +1288,10 @@ def render_md(doc: Mapping[str, Any]) -> str:
             L.append(f"- {c['id']} {c['name']}: {c['pass']} (value {c['value']}).")
         if dec["base"].get("auto_rejections"):
             L.append(f"- Auto-rejections: {dec['base']['auto_rejections']}.")
+    if dec.get("base"):
+        L.append("- PLAN 3.5 #9 (FINAL mean > 0) is judged in the overall verdict after the FINAL stage.")
+    if dec.get("reason"):
+        L.append(f"- Reason: {dec['reason']}.")
     if dec.get("note"):
         L.append(f"- {dec['note']}")
     if dec.get("per_third"):

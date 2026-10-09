@@ -1,0 +1,288 @@
+{
+ "stage": "debug",
+ "split": "final_train",
+ "version": "d1-v1",
+ "created_span_days": 0.52,
+ "usable_coins": 450,
+ "e1_scan_real_bars": {
+  "universe": {
+   "instant": 277,
+   "eligible": 133,
+   "g1_completed": 19,
+   "no_creation_data": 21
+  },
+  "eligible_coins": 133,
+  "e1_events": 1957,
+  "coins_with_e1": 64,
+  "e1_events_cap_feasible_ub_strict": 1754,
+  "e1_events_cap_feasible_ub_loose": 1787,
+  "coins_cap_feasible_ub_strict": 62,
+  "coins_cap_feasible_ub_loose": 63,
+  "first_e1_age_min_quartiles": [
+   10.2,
+   10.6,
+   10.9
+  ]
+ },
+ "per_day_real_bars": {
+  "eligible_coins": 255.6,
+  "e1_events": 3761.1,
+  "coins_with_e1": 123.0,
+  "coins_cap_feasible_ub_strict": 119.2,
+  "coins_cap_feasible_ub_loose": 121.1
+ },
+ "real_b1_coins_in_split": 0,
+ "synthetic_b1": {
+  "coins": 133,
+  "trades": 153310,
+  "note": "SYNTHETIC tapes: class counts and trades are pipeline checks, not estimates"
+ },
+ "runs_on_synthetic_b1": {
+  "V1": {
+   "n": 26,
+   "n_coins": 26,
+   "n_placebo": 449,
+   "placebo_per_signal": 17.3,
+   "reasons": {
+    "stop": 25,
+    "take_profit": 1
+   },
+   "tags": {
+    "CAP": 26
+   },
+   "wall_s": 5.27
+  },
+  "V2": {
+   "n": 27,
+   "n_coins": 27,
+   "n_placebo": 483,
+   "placebo_per_signal": 17.9,
+   "reasons": {
+    "stop": 27
+   },
+   "tags": {
+    "CAP": 27
+   },
+   "wall_s": 3.34
+  },
+  "V3": {
+   "n": 26,
+   "n_coins": 26,
+   "n_placebo": 449,
+   "placebo_per_signal": 17.3,
+   "reasons": {
+    "trail": 23,
+    "signal:org_net5": 3
+   },
+   "tags": {
+    "CAP": 26
+   },
+   "wall_s": 6.31
+  },
+  "CAP@15": {
+   "n": 26,
+   "n_coins": 26,
+   "n_placebo": 449,
+   "placebo_per_signal": 17.3,
+   "reasons": {
+    "time": 26
+   },
+   "tags": {
+    "CAP": 26
+   },
+   "wall_s": 3.71
+  },
+  "CAP@30": {
+   "n": 26,
+   "n_coins": 26,
+   "n_placebo": 449,
+   "placebo_per_signal": 17.3,
+   "reasons": {
+    "time": 26
+   },
+   "tags": {
+    "CAP": 26
+   },
+   "wall_s": 3.58
+  },
+  "CAP@60": {
+   "n": 26,
+   "n_coins": 26,
+   "n_placebo": 449,
+   "placebo_per_signal": 17.3,
+   "reasons": {
+    "time": 26
+   },
+   "tags": {
+    "CAP": 26
+   },
+   "wall_s": 3.67
+  },
+  "CAP_LOOSE@15": {
+   "n": 27,
+   "n_coins": 27,
+   "n_placebo": 483,
+   "placebo_per_signal": 17.9,
+   "reasons": {
+    "time": 27
+   },
+   "tags": {
+    "CAP": 27
+   },
+   "wall_s": 3.29
+  },
+  "CAP_LOOSE@30": {
+   "n": 27,
+   "n_coins": 27,
+   "n_placebo": 483,
+   "placebo_per_signal": 17.9,
+   "reasons": {
+    "time": 27
+   },
+   "tags": {
+    "CAP": 27
+   },
+   "wall_s": 3.49
+  },
+  "CAP_LOOSE@60": {
+   "n": 27,
+   "n_coins": 27,
+   "n_placebo": 483,
+   "placebo_per_signal": 17.9,
+   "reasons": {
+    "time": 27
+   },
+   "tags": {
+    "CAP": 27
+   },
+   "wall_s": 3.89
+  },
+  "DIST@15": {
+   "n": 12,
+   "n_coins": 12,
+   "n_placebo": 174,
+   "placebo_per_signal": 14.5,
+   "reasons": {
+    "time": 12
+   },
+   "tags": {
+    "DIST": 12
+   },
+   "wall_s": 5.7
+  },
+  "DIST@30": {
+   "n": 12,
+   "n_coins": 12,
+   "n_placebo": 174,
+   "placebo_per_signal": 14.5,
+   "reasons": {
+    "time": 12
+   },
+   "tags": {
+    "DIST": 12
+   },
+   "wall_s": 4.4
+  },
+  "DIST@60": {
+   "n": 12,
+   "n_coins": 12,
+   "n_placebo": 174,
+   "placebo_per_signal": 14.5,
+   "reasons": {
+    "time": 12
+   },
+   "tags": {
+    "DIST": 12
+   },
+   "wall_s": 4.5
+  },
+  "MIXED@15": {
+   "n": 63,
+   "n_coins": 63,
+   "n_placebo": 1053,
+   "placebo_per_signal": 16.7,
+   "reasons": {
+    "time": 63
+   },
+   "tags": {
+    "MIXED": 63
+   },
+   "wall_s": 2.5
+  },
+  "MIXED@30": {
+   "n": 63,
+   "n_coins": 63,
+   "n_placebo": 1053,
+   "placebo_per_signal": 16.7,
+   "reasons": {
+    "time": 63
+   },
+   "tags": {
+    "MIXED": 63
+   },
+   "wall_s": 2.44
+  },
+  "MIXED@60": {
+   "n": 63,
+   "n_coins": 63,
+   "n_placebo": 1053,
+   "placebo_per_signal": 16.7,
+   "reasons": {
+    "time": 63
+   },
+   "tags": {
+    "MIXED": 63
+   },
+   "wall_s": 2.51
+  },
+  "ALL@15": {
+   "n": 64,
+   "n_coins": 64,
+   "n_placebo": 1060,
+   "placebo_per_signal": 16.6,
+   "reasons": {
+    "time": 64
+   },
+   "tags": {
+    "MIXED": 61,
+    "DIST": 2,
+    "CAP": 1
+   },
+   "wall_s": 2.33
+  },
+  "ALL@30": {
+   "n": 64,
+   "n_coins": 64,
+   "n_placebo": 1060,
+   "placebo_per_signal": 16.6,
+   "reasons": {
+    "time": 64
+   },
+   "tags": {
+    "MIXED": 61,
+    "DIST": 2,
+    "CAP": 1
+   },
+   "wall_s": 2.52
+  },
+  "ALL@60": {
+   "n": 64,
+   "n_coins": 64,
+   "n_placebo": 1060,
+   "placebo_per_signal": 16.6,
+   "reasons": {
+    "time": 64
+   },
+   "tags": {
+    "MIXED": 61,
+    "DIST": 2,
+    "CAP": 1
+   },
+   "wall_s": 2.48
+  }
+ },
+ "wall_s": {
+  "e1_scan": 1.4,
+  "total": 72.4
+ }
+}

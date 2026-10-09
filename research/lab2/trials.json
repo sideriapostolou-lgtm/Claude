@@ -4,7 +4,60 @@
  "baseline": {
   "lab_wave1_logged_configs": 2575
  },
- "configs": {},
+ "configs": {
+  "M1-modelcheck|2c46ee343654": {
+   "hypothesis": "M1-modelcheck",
+   "params": {
+    "version": "m1-v1",
+    "test": "model_check",
+    "ages_min": [
+     35,
+     45,
+     55,
+     65,
+     75,
+     85,
+     95,
+     105,
+     115
+    ],
+    "horizon_s": 3600.0,
+    "min_slope": 0.5,
+    "min_r2": 0.05,
+    "detector": {
+     "version": "m1-v1",
+     "detector": "MECH-bar",
+     "w_bars": 30,
+     "floor_rank": 3,
+     "floor_min_sol": 0.01,
+     "quiet_n": 6,
+     "quiet_max_buyers": 2,
+     "steady_max_cv": 0.5,
+     "spearman_max": 0.3,
+     "carry_frac": 0.5,
+     "alive_bars": 2,
+     "rhythm_bars": 2,
+     "mech_age_min": 10,
+     "dump_frac_x": 0.04,
+     "lp_frac_y": 0.005,
+     "classes": [
+      "OPERATOR",
+      "OTHER"
+     ],
+     "age_min_s": 1800.0,
+     "age_max_s": 7200.0,
+     "stop_pct": 0.1,
+     "max_hold_s": 21600.0,
+     "size_usd": 20.0,
+     "fill": "common.FillConfig() default: worst, latency 30 s, entry-bar exits"
+    }
+   },
+   "first_seen_utc": "2026-10-09 00:31:01",
+   "splits": {
+    "train": 1
+   }
+  }
+ },
  "runs": [
   {
    "utc": "2026-10-08 23:08:55",
@@ -152,8 +205,18 @@
    "mean": null,
    "over_variant_limit": false,
    "note": "mean scrubbed: debug split (census TRAIN third), returns must stay hidden"
+  },
+  {
+   "utc": "2026-10-09 00:31:01",
+   "hypothesis": "M1-modelcheck",
+   "config": "M1-modelcheck|2c46ee343654",
+   "split": "train",
+   "debug": false,
+   "n": 18,
+   "mean": null,
+   "over_variant_limit": false
   }
  ],
  "val_shortlists": {},
- "n_trials_total": 2575
+ "n_trials_total": 2576
 }

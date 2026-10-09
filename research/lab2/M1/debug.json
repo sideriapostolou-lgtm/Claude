@@ -1,0 +1,236 @@
+{
+ "hypothesis": "M1",
+ "version": "m1-v1",
+ "stage": "debug",
+ "split": "final_train",
+ "utc": "2026-10-09 00:28:06",
+ "provisional": false,
+ "debug_only": true,
+ "prereg_sha256": "4ed7d99edcf19b3126522cdd8768f0303796143910471c498597f879590deb08",
+ "rerun_reason": null,
+ "coverage": {
+  "split": "final_train",
+  "bounds_utc": [
+   "2026-10-07 19:37:30",
+   "2026-10-08 08:06:47"
+  ],
+  "debug_only": true,
+  "graduates_in_split": 644,
+  "tradeable": 450,
+  "usable": 450,
+  "excluded": {
+   "mayhem": 129,
+   "not_sol_quoted": 65
+  },
+  "created_inexact": 0,
+  "has_create0": 44,
+  "chain_hours_scanned_frac": 1.0,
+  "days": [
+   {
+    "day": "2026-10-07",
+    "hours_in_split": 5,
+    "curve_hours": 5,
+    "b2_hours": 5,
+    "coins_created": 294,
+    "tradeable": 196,
+    "usable": 196,
+    "usable_frac": 1.0,
+    "partial": false
+   },
+   {
+    "day": "2026-10-08",
+    "hours_in_split": 9,
+    "curve_hours": 9,
+    "b2_hours": 9,
+    "coins_created": 350,
+    "tradeable": 254,
+    "usable": 254,
+    "usable_frac": 1.0,
+    "partial": false
+   }
+  ],
+  "days_expected": 0.52,
+  "days_full": 2,
+  "curve_span_utc": [
+   "2026-10-06 17:00:00",
+   "2026-10-08 20:00:00"
+  ],
+  "b2_span_utc": [
+   "2026-10-07 19:00:00",
+   "2026-10-08 20:00:00"
+  ],
+  "power": {
+   "entry_bar_coins": {
+    "need": 40,
+    "have_usable_coins": 450,
+    "ok": true
+   },
+   "x1_r0_trades_5_seeds": {
+    "need": 200,
+    "max_possible": 2250,
+    "ok": true
+   },
+   "g1_flagged_coins_val": {
+    "need": 200,
+    "max_possible": 450,
+    "ok": true
+   }
+  },
+  "underpowered": false,
+  "complete": true,
+  "notes": [
+   "SOL/USD series covers 449/450 coins; others use the nearest edge price (affects only $->SOL sizing and the alive filter's USD volume)"
+  ]
+ },
+ "n_coins": 450,
+ "span_days": 0.5203240740740741,
+ "allowed_coins": {
+  "OTHER": 233,
+  "OPERATOR": 34
+ },
+ "clusters_allowed": 32,
+ "clusters_operator": 1,
+ "model_check": {
+  "n_obs": 131,
+  "n_coins": 24,
+  "by_class": {
+   "OPERATOR": 131
+  },
+  "n_clusters": 1,
+  "need": {
+   "coins": 30,
+   "obs": 100,
+   "slope": 0.5,
+   "r2": 0.05
+  },
+  "decision": "HIDDEN (debug split: no outcome statistics)",
+  "trial": {
+   "config": "M1-modelcheck|2c46ee343654",
+   "new_trial": false,
+   "n_trials_total": 2575,
+   "hypothesis_configs": 0,
+   "over_variant_limit": false
+  }
+ },
+ "event_counts": {
+  "coins": 450,
+  "class_counts": {
+   "FACTORY": 183,
+   "OTHER": 233,
+   "OPERATOR": 34
+  },
+  "coins_detector_fires": 26,
+  "coins_bid_alive_age10": 25,
+  "coins_entry_condition": {
+   "m1": 24,
+   "m2": 20
+  }
+ },
+ "configs": {
+  "m1|rhythm": {
+   "config": "m1|rhythm",
+   "params_hash": "cdad46afafa9",
+   "hypothesis": "M1",
+   "n": 24,
+   "n_coins": 24,
+   "by_class_n": {
+    "OPERATOR": 24
+   },
+   "reasons": {
+    "horizon": 20,
+    "stop": 4
+   },
+   "n_placebo": 480,
+   "n_clusters": 1,
+   "horizon_exits": 20,
+   "trial": {
+    "config": "M1|cdad46afafa9",
+    "new_trial": false,
+    "n_trials_total": 2575
+   },
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)"
+  },
+  "m1|rhythm+prec": {
+   "config": "m1|rhythm+prec",
+   "params_hash": "83775bb1bd75",
+   "hypothesis": "M1",
+   "n": 24,
+   "n_coins": 24,
+   "by_class_n": {
+    "OPERATOR": 24
+   },
+   "reasons": {
+    "horizon": 20,
+    "stop": 4
+   },
+   "n_placebo": 480,
+   "n_clusters": 1,
+   "horizon_exits": 20,
+   "trial": {
+    "config": "M1|83775bb1bd75",
+    "new_trial": false,
+    "n_trials_total": 2575
+   },
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)"
+  },
+  "m2|rhythm": {
+   "config": "m2|rhythm",
+   "params_hash": "47fc2a94c189",
+   "hypothesis": "M1",
+   "n": 20,
+   "n_coins": 20,
+   "by_class_n": {
+    "OPERATOR": 20
+   },
+   "reasons": {
+    "horizon": 16,
+    "stop": 4
+   },
+   "n_placebo": 400,
+   "n_clusters": 1,
+   "horizon_exits": 16,
+   "trial": {
+    "config": "M1|47fc2a94c189",
+    "new_trial": false,
+    "n_trials_total": 2575
+   },
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)"
+  },
+  "m2|rhythm+prec": {
+   "config": "m2|rhythm+prec",
+   "params_hash": "32527f3ef55e",
+   "hypothesis": "M1",
+   "n": 20,
+   "n_coins": 20,
+   "by_class_n": {
+    "OPERATOR": 20
+   },
+   "reasons": {
+    "horizon": 16,
+    "stop": 4
+   },
+   "n_placebo": 400,
+   "n_clusters": 1,
+   "horizon_exits": 16,
+   "trial": {
+    "config": "M1|32527f3ef55e",
+    "new_trial": false,
+    "n_trials_total": 2575
+   },
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)"
+  }
+ },
+ "n_trials_total": 2575,
+ "entries_per_day": {
+  "m1|rhythm": 46.12510009787347,
+  "m1|rhythm+prec": 46.12510009787347,
+  "m2|rhythm": 38.43758341489456,
+  "m2|rhythm+prec": 38.43758341489456
+ },
+ "decision": {
+  "verdict": "DEBUG",
+  "note": "mechanics only; returns hidden"
+ },
+ "runtime_s": 72.7,
+ "overall": "PENDING (no official TRAIN run)"
+}

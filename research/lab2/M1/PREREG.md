@@ -57,8 +57,9 @@ So the pre-registered instrument is **MECH-bar** (§3), a minute-bar mapping of 
 |---|---|---|
 | `floor` | 3rd-lowest `b_i` in the window. A price-ignoring buyer present in ≥ 28 of 30 minutes puts a floor under every minute; organic flow only adds to it | MECH buys ≥ 6 in 30 min, regular gaps |
 | `quiet_buyers` | median `n_i` over the 6 minutes with the lowest `b_i` | one wallet (MECH is a single wallet) |
-| `spearman` | Spearman(`b_i`, `r_{i−1}`) over the window; 0 when undefined (constant series) | \|Spearman(size, 1-min return before)\| < 0.3 |
-| **MECH-bar fires** | `floor` ≥ 0.01 SOL/min **and** `quiet_buyers` ≤ 2 **and** \|`spearman`\| < 0.3 | MECH wallet exists |
+| `cv` | coefficient of variation of the 30 `b_i` | CV of buy sizes < 0.5 (and regular gaps) |
+| `spearman` | Spearman(`b_i`, `r_{i−1}`) over the window minutes that carry the bid (`b_i` ≥ 0.5 × `floor`); 0 when undefined (constant series) | \|Spearman(size, 1-min return before)\| < 0.3, over the MECH wallet's buys |
+| **MECH-bar fires** | `floor` ≥ 0.01 SOL/min **and** `quiet_buyers` ≤ 2 **and** `cv` < 0.5 **and** \|`spearman`\| < 0.3 | MECH wallet exists |
 | `mech_bid_h` | 60 × `floor` (SOL per hour) | 2 × Σ MECH buy SOL over 30 min |
 | `drift_pred60` | ((X + `mech_bid_h`) / X)² − 1, where X = pricing reserve x + v after the last completed bar | ((x + `mech_bid_h` + `org_net_h`) / x)² − 1 |
 | `bid_alive` | one of the last 2 completed minutes has `b` ≥ 0.5 × `floor` | last MECH buy within max(3 × gap, 120 s) |
@@ -145,7 +146,8 @@ of 4.
 **Observations:**
 
 - Allowed-class TRAIN coins.
-- Decision times: the last grid time ≤ g + a min, for a ∈ {30, 40, …, 110}.
+- Decision times: the last grid time ≤ g + a min, for a ∈ {35, 45, …, 115}. The detector needs 32 completed
+  bars, so it cannot fire before about g + 33 min, and the 60-minute label must end inside the g + 179 min window.
 - Kept where MECH-bar fires, `bid_alive` holds and `mech_age` ≥ 10 min.
 
 **Label:** the realized 60-minute mid-price change, close(τ + 60 min) / close(τ) − 1. It is read through AsOf
@@ -229,7 +231,8 @@ VAL trades:
 
 - Run the candidate once as `M1` and the twin once as `M1-twin`, each with the matched control and the stress runs.
 - **Verdict** = `common.verdict_entry(test, val=VAL candidate, min_mean=0.02)`. That is PLAN §3.5 items 1-8 with
-  M1's +2% mean bar, plus the §3.6 auto-rejections.
+  M1's +2% mean bar, plus the §3.6 auto-rejections. Item 9 (FINAL mean > 0) is judged in the overall verdict once
+  FINAL has run, so a missing FINAL never makes TEST or CONFIRM "incomplete".
 - **Plus PLAN §4.5's extras:**
 
   | ID | Criterion |
@@ -305,12 +308,17 @@ Otherwise the verdict is one of:
   - `horizon` exits;
   - the rug-hit rate (a > 50% one-minute drop during the hold).
 
-**Operator clusters** are a proxy, because the PLAN's linking needs wallets.
+**Operator clusters** follow the PLAN's idea of linking operators by co-appearing wallets, using what B2 has.
 
-- They are the connected components of coins that share a creator or an upper-cased symbol (ticker clones are
-  relaunched under the same symbol).
-- The fields are read through AsOf at the end of each coin's window.
+- They are the connected components of allowed-class coins that share any of:
+  - a creator;
+  - an upper-cased symbol (ticker clones are relaunched under the same symbol);
+  - a wallet among their top-5 early (w120) pool buyers, with AGENT and pooled accounts excluded.
+- The fields are read through AsOf at the end of each coin's window. Other coins are their own cluster.
 - Clusters are a grouping for the bootstrap and the concentration checks, never a feature.
+- **Over-merging only widens the cluster CIs, which is conservative. Under-merging would narrow them.** The
+  creator/symbol links alone gave 17-18 "clusters" for 20-24 debug entries. One wallet is a top-5 early buyer on 26
+  of the 34 OPERATOR coins of the census TRAIN third, so the wallet link is needed (§13).
 
 ## 11. Kill criteria (PLAN §8) and declarations
 
@@ -340,16 +348,64 @@ M1 counts no flow as organic. Its drift uses only the mechanical floor, with AGE
 | Area | Deviation |
 |---|---|
 | Splits | The lead's revised ones: TRAIN 4 days, VAL 1.5, TEST 1.3, CONFIRM 15. The shortlist sample bar is 30 trades, not 60. PLAN §4.5's "≥ 60 trades from ≥ 3 clusters" is checked on TEST and CONFIRM (M1.1) |
-| Detector | MECH-bar instead of wallet MECH (§2). Bots slower than one buy per minute, and price-ignoring bids hidden under heavy organic flow, are invisible to it. CREATOR exclusion is impossible on bars; AGENT is excluded |
+| Detector | MECH-bar instead of wallet MECH (§2). Bots slower than one buy per minute, and price-ignoring bids hidden under heavy organic flow, are invisible to it. CREATOR exclusion is impossible on bars; AGENT is excluded. The PLAN's two regularity tests (gap CV < 0.25, size CV < 0.5) become one: the CV of the minute sums < 0.5 |
 | `org_net_h` | Not identifiable on bars. `drift_pred60` uses the mechanical floor alone |
 | Precursors | Bar proxies: the `dump` pigeonhole bound and the `lp` token-conservation break. `orphan_share10` and creator-linked transfers are not available |
-| Operator clusters | A creator / symbol proxy, not co-appearance of MECH or creation-slot wallets |
+| Operator clusters | Shared creator, symbol or top-5 early pool buyer (B2's w120 list), not co-appearance of MECH or creation-slot wallets |
 | Hold | 6 h is truncated at g + 179 min by B2. Entries stop at g + 120 min |
 | Fills | Minute-bar "worst" fills, not replayed fills. No 2-second exit variant (X1) |
 | Rugs | "One-trade drop > 50%" is measured as a one-minute drop > 50% (an upper bound on one-trade drops) |
 | Fees | The pool fee inside user-side buy SOL (≤ 1.25%) is not removed from `mech_bid_h` (overstates the drift by ≤ 2.5% of itself) |
 | SOL/USD | Covers 10-07 09:00 → 10-08 18:15 only. Earlier dates use the edge price. This affects the $20 → SOL sizing (impact) and the placebo's `alive` filter, not M1's entry conditions |
 
-## 13. Expected sample (from the debug run on the census TRAIN third, counts only)
+## 13. Debug findings and expected sample (census TRAIN third, counts only)
 
-To be filled from `M1/debug.md` before any TRAIN run.
+**The run.** `python research/lab2/m1.py --debug` writes `M1/debug.md` and `M1/debug.json`.
+
+- 450 usable coins, created over 12.5 h (0.52 days).
+- Returns, rug hits and model-check fits are hidden.
+- No parameter was chosen on these coins.
+- Its trials go to a scratch ledger, never to `trials.json`.
+
+**Definition corrections made while debugging.** All four came from structure or unit tests, never from outcomes,
+and all were made before any TRAIN data existed:
+
+1. **The steadiness test (`cv` < 0.5) was added.**
+   - Without it, MECH-bar fired on decaying organic coins. Their quietest minutes have 1-2 buyers, while their
+     normal minutes have 15-80.
+   - With it, MECH-bar fires on OPERATOR coins only: about 60 buys a minute from 2-4 wallets, at a stable
+     0.8-1.4 SOL a minute. That is the steady operator bid behind F3's "drifters".
+   - The threshold is the PLAN's size-CV threshold, 0.5, not a tuned one.
+2. **Spearman is computed over the minutes that carry the bid.** A unit test showed that a steady synthetic bot
+   which skips two minutes gets Spearman 0.43 from its own price impact.
+3. **Clusters also link coins through shared top-5 early pool buyers** (§10).
+4. **The model-check grid starts at 35 min**, because the detector needs 32 completed bars.
+
+**Counts, and extrapolations that assume the operator's activity on other days resembles the census day.** The
+operator can change its schedule at any time.
+
+| Measure | Census TRAIN third (0.52 d) | Per day | TRAIN (4 d) | VAL (1.5 d) | TEST (1.32 d) | CONFIRM (15 d) |
+|---|---:|---:|---:|---:|---:|---:|
+| Allowed-class coins | 267 (34 OPERATOR, 233 OTHER) | ≈ 513 | ≈ 2,050 | ≈ 770 | ≈ 675 | ≈ 7,700 |
+| Coins where MECH-bar fires (ages 30-120 min) | 26 (all OPERATOR) | ≈ 50 | ≈ 200 | ≈ 75 | ≈ 66 | ≈ 750 |
+| Model-check observations | 131, from 24 coins | ≈ 250, from ≈ 46 coins | ≈ 1,000, from ≈ 185 coins | | | |
+| Entries, m = 1 | 24 | ≈ 46 | ≈ 185 | ≈ 69 | ≈ 61 | ≈ 690 |
+| Entries, m = 2 | 20 | ≈ 38 | ≈ 155 | ≈ 58 | ≈ 51 | ≈ 575 |
+| Operator clusters among the entries | **1** | | | | | |
+
+**What these counts imply, before any TRAIN data:**
+
+- **Concentration is the binding constraint, not the trade count.**
+  - Every debug entry and model-check observation belongs to **one operator cluster**. One wallet is a top-5 early
+    buyer on 26 of the 34 OPERATOR coins.
+  - If TRAIN looks like the census day, the shortlist rule (≥ 3 clusters) returns **UNDERPOWERED_TRAIN**, and M1
+    stops before VAL. That is the pre-registered answer to "is this one operator's schedule?", not a code failure.
+- **Holds mostly end at the data horizon.**
+  - 20 of 24 debug holds (m = 1) end at g + 179 min. The bid does not break inside the B2 window.
+  - So the P&L largely measures "ride to g + 179 min". The rhythm and precursor exits rarely fire.
+  - No precursor fired on the census third, so each twin pair had identical trades there. Expect M1.4 (rug rate) to
+    be vacuous unless precursors fire on TRAIN, VAL or TEST.
+- **The model check is powered.** It needs 30 coins and 100 observations, and TRAIN is expected to give about
+  185 coins and 1,000 observations, all from OPERATOR coins.
+- **TEST will be underpowered on the cluster count** (M1.1). Its expected trade count (≈ 51-61) sits at the 60-trade
+  bar.

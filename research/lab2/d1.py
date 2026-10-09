@@ -1,7 +1,7 @@
 """D1 (PLAN §4.4): buy dips caused by capitulation, not by insiders distributing.
 
 Research only (wave-2 lab); nothing here is wired into the bot. Pre-registration: ``research/lab2/D1/PREREG.md``
-(frozen at the first TRAIN run by ``D1/prereg.lock``).
+(frozen at the first TRAIN run by ``D1/prereg_lock.json``).
 
 Mechanism. Two kinds of dip look identical on candles. In a DISTRIBUTION dip, insiders who hold inventory bought
 10x below the price keep selling, and the dip continues. In a CAPITULATION dip, many late organic holders sell at a
@@ -355,8 +355,8 @@ class _LRU(OrderedDict):
             self.popitem(last=False)
 
 
-_LEDGERS = _LRU(32)
-_FEATS = _LRU(300_000)
+_LEDGERS = _LRU(16)          # backtests walk one coin at a time: a few ledgers suffice
+_FEATS = _LRU(50_000)        # (mint, prefix, tau, statics, tau_entry) -> features; bounded memory (~100 MB)
 
 
 def clear_cache() -> None:
@@ -1041,11 +1041,11 @@ def _ledger_runs(hyp: str, split: str) -> int:
 
 def _require_frozen() -> None:
     sha = _prereg_sha()
-    lk = d1_dir() / "prereg.lock"
+    lk = d1_dir() / "prereg_lock.json"
     if sha is None:
         raise StageRefused("D1/PREREG.md is missing")
     if not lk.exists():
-        raise StageRefused("no TRAIN run yet (D1/prereg.lock missing): run --stage train first")
+        raise StageRefused("no TRAIN run yet (D1/prereg_lock.json missing): run --stage train first")
     if json.loads(lk.read_text())["sha256"] != sha:
         raise StageRefused("D1/PREREG.md changed after the first TRAIN run: that is a new version (new VERSION, "
                            "new trials), not an edit")
@@ -1066,7 +1066,7 @@ def prerequisites(stage: str) -> None:
             raise StageRefused("write D1/PREREG.md before any TRAIN run")
         if _read("val.json") is not None or _ledger_runs(HYP, "val") or _ledger_runs(HYP_EVENT, "val"):
             raise StageRefused("D1 already ran on VAL: TRAIN is closed (a new TRAIN run could change the shortlist)")
-        lk = d1_dir() / "prereg.lock"
+        lk = d1_dir() / "prereg_lock.json"
         if lk.exists() and json.loads(lk.read_text())["sha256"] != sha:
             raise StageRefused("D1/PREREG.md changed after the first TRAIN run: that is a new version")
         return
@@ -1116,7 +1116,7 @@ def load_split(split: str) -> C.Dataset:
 
 
 def _lock_prereg() -> None:
-    lk = d1_dir() / "prereg.lock"
+    lk = d1_dir() / "prereg_lock.json"
     if not lk.exists():
         lk.write_text(json.dumps({"sha256": _prereg_sha(), "version": VERSION, "locked_utc": C.utc_str(time.time())},
                                  indent=1))
@@ -1178,7 +1178,7 @@ def _days(ds: C.Dataset) -> float:
 
 
 def stage_status() -> dict[str, Any]:
-    out: dict[str, Any] = {"version": VERSION, "prereg_sha256": _prereg_sha(), "prereg_locked": (d1_dir() / "prereg.lock").exists(),
+    out: dict[str, Any] = {"version": VERSION, "prereg_sha256": _prereg_sha(), "prereg_locked": (d1_dir() / "prereg_lock.json").exists(),
                            "n_trials_total": C.n_trials(), "train_grid": len(train_grid()), "splits": {}, "stages": {}}
     for s in ("train", "val", "test", "confirm", "final_train", "final_val", "final_test"):
         try:
@@ -1319,7 +1319,7 @@ def stage_final() -> dict[str, Any]:
     out, res = _oos("final")
     test = _read("test.json")
     tres_p = d1_dir() / "test_trades.parquet"
-    t = pd.read_parquet(tres_p).drop(columns=["run"])
+    t = pd.read_parquet(tres_p).drop(columns=["run"]) if tres_p.exists() else C._frame([])   # TEST had 0 trades
     pl = d1_dir() / "test_placebo.parquet"
     st = d1_dir() / "test_stress.parquet"
     tres = C.Result(trades=t, placebo=pd.read_parquet(pl).drop(columns=["run"]) if pl.exists() else t.iloc[0:0],
@@ -1488,7 +1488,7 @@ def stage_debug() -> dict[str, Any]:
     ds = C.load("final_train")
     days_created = (ds.coins["created_for_split"].max() - ds.coins["created_for_split"].min()) / 86400.0
     scan = e1_scan(ds, require_b1=False)
-    per_day = {k: round(scan[k] / days_created, 1) for k in ("eligible_coins", "e1_events", "coins_with_e1",
+    per_day = {k: round(float(scan[k]) / float(days_created), 1) for k in ("eligible_coins", "e1_events", "coins_with_e1",
                                                               "coins_cap_feasible_ub_strict",
                                                               "coins_cap_feasible_ub_loose")}
     t_scan = time.time() - t0
@@ -1506,11 +1506,13 @@ def stage_debug() -> dict[str, Any]:
             r = _run(d1_strategy, "final_train", hyp, p, dsx, ledger_path=led)
             s = r.summary()                  # debug split: counts only (returns hidden by common)
             label = p.get("variant") or f"{p['event_class']}@{p['hold_min']}"
-            runs[label] = {"n": s["n"], "n_coins": s["n_coins"], "n_placebo": s["n_placebo"], "reasons": s["reasons"],
+            runs[label] = {"n": s["n"], "n_coins": s["n_coins"], "n_placebo": s["n_placebo"],
+                           "placebo_per_signal": round(s["n_placebo"] / s["n"], 1) if s["n"] else None,
+                           "reasons": s["reasons"],
                            "tags": r.trades["tag"].value_counts().to_dict() if len(r.trades) else {},
                            "wall_s": round(time.time() - t1, 2)}
     payload = {"stage": "debug", "split": "final_train", "version": VERSION,
-               "created_span_days": round(days_created, 3), "usable_coins": len(ds), "e1_scan_real_bars": scan,
+               "created_span_days": round(float(days_created), 3), "usable_coins": len(ds), "e1_scan_real_bars": scan,
                "per_day_real_bars": per_day, "real_b1_coins_in_split": real_b1_here,
                "synthetic_b1": {"coins": len(elig), "trades": int(len(tr)),
                                 "note": "SYNTHETIC tapes: class counts and trades are pipeline checks, not estimates"},

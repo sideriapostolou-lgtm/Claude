@@ -1,0 +1,109 @@
+{
+ "version": "d1-v1",
+ "prereg_sha256": "ca7be6e7986d9cf3ae0ec5832c1d78a19b3532610c3013a71b85b7c156196798",
+ "prereg_locked": false,
+ "n_trials_total": 2575,
+ "train_grid": 18,
+ "splits": {
+  "train": {
+   "split": "train",
+   "b1_file": false,
+   "usable": 0,
+   "b1_eligible": 0,
+   "with_b1": 0,
+   "frac": 0.0,
+   "coverage_complete": false,
+   "coverage_usable": 0,
+   "days_full": 0,
+   "days_expected": 4.0,
+   "chain_hours_scanned_frac": 0.0
+  },
+  "val": {
+   "split": "val",
+   "b1_file": false,
+   "usable": 0,
+   "b1_eligible": 0,
+   "with_b1": 0,
+   "frac": 0.0,
+   "coverage_complete": false,
+   "coverage_usable": 0,
+   "days_full": 0,
+   "days_expected": 1.5,
+   "chain_hours_scanned_frac": 0.0
+  },
+  "test": {
+   "split": "test",
+   "b1_file": false,
+   "usable": 44,
+   "b1_eligible": 10,
+   "with_b1": 0,
+   "frac": 0.0,
+   "coverage_complete": false,
+   "coverage_usable": 44,
+   "days_full": 0,
+   "days_expected": 1.32,
+   "chain_hours_scanned_frac": 0.25
+  },
+  "confirm": {
+   "split": "confirm",
+   "b1_file": false,
+   "usable": 0,
+   "b1_eligible": 0,
+   "with_b1": 0,
+   "frac": 0.0,
+   "coverage_complete": false,
+   "coverage_usable": 0,
+   "days_full": 0,
+   "days_expected": 15.0,
+   "chain_hours_scanned_frac": 0.0
+  },
+  "final_train": {
+   "split": "final_train",
+   "b1_file": false,
+   "usable": 450,
+   "b1_eligible": 152,
+   "with_b1": 0,
+   "frac": 0.0,
+   "coverage_complete": true,
+   "coverage_usable": 450,
+   "days_full": 2,
+   "days_expected": 0.52,
+   "chain_hours_scanned_frac": 1.0
+  },
+  "final_val": {
+   "split": "final_val",
+   "b1_file": false,
+   "usable": 150,
+   "b1_eligible": 37,
+   "with_b1": 0,
+   "frac": 0.0,
+   "coverage_complete": true,
+   "coverage_usable": 150,
+   "days_full": 1,
+   "days_expected": 0.23,
+   "chain_hours_scanned_frac": 1.0
+  },
+  "final_test": {
+   "split": "final_test",
+   "b1_file": false,
+   "usable": 126,
+   "b1_eligible": 35,
+   "with_b1": 0,
+   "frac": 0.0,
+   "coverage_complete": false,
+   "coverage_usable": 126,
+   "days_full": 0,
+   "days_expected": 0.26,
+   "chain_hours_scanned_frac": 1.0
+  }
+ },
+ "stages": {
+  "train": "prerequisites met (data checked at run time)",
+  "val": "refused: no TRAIN run yet (D1/prereg_lock.json missing): run --stage train first",
+  "test": "refused: no TRAIN run yet (D1/prereg_lock.json missing): run --stage train first",
+  "confirm": "refused: no TRAIN run yet (D1/prereg_lock.json missing): run --stage train first",
+  "final": "refused: no TRAIN run yet (D1/prereg_lock.json missing): run --stage train first"
+ },
+ "validation_gates_ok": true,
+ "validation_problems": []
+}

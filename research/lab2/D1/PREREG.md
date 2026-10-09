@@ -5,7 +5,7 @@ backfill was still adding days), and no B1 trade table existed for any split. Th
 TRAIN third (`final_train`), and only to debug code and count events. No return was looked at, by parameter or
 otherwise.
 
-This file is frozen at the first TRAIN run: `d1.py` writes `D1/prereg.lock` (SHA-256 of this file) and every
+This file is frozen at the first TRAIN run: `d1.py` writes `D1/prereg_lock.json` (SHA-256 of this file) and every
 later stage refuses to run if this file changed. Changing anything below is a **new version** (new `VERSION`
 string, new trials counted, a new lock), never an edit.
 
@@ -349,6 +349,16 @@ one-run rule on TEST, CONFIRM and FINAL.
    $20 → SOL sizing and the $1,500 volume filter. This is recorded in every coverage block.
 8. **Instant graduates are excluded** because P4 has no B1 for them. D1 is about slower, non-factory graduates
    only.
+9. **"Worst" fills against a −15 % stop.** On the debug split (synthetic B1 entries, counts only, no returns
+   looked at), 19 of the 26 V1 trades were stopped out **on their entry bar**. "Worst" mode buys at the minute's high and checks the
+   stop against the same minute's low, so the bracket mostly measures intra-minute ranges.
+   - With `entry_bar_exits=False`, none of the 26 is stopped on its entry bar.
+   - Every variant's fill-sensitivity table is reported.
+   - The verdict uses only the default "worst" fills, as pre-registered.
+   - X1's replayed fills supersede these results (stop rule 2).
+10. **Placebo draws can fall short of 20 per signal.** `common.run_placebo` tries at most 200 random (coin, time)
+    draws per signal. D1's universe is narrow (about 30 % of usable coins), so some signals get fewer than 20; the
+    debug run averaged about 17. `n_placebo` is reported.
 
 ## 13. Expected sample (debug counts only, census TRAIN third)
 

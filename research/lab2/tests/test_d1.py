@@ -434,11 +434,12 @@ def random_tape(rng, mint, G, Cr, n_min=130, rate=5.0, insiders_exit=False, loss
             held = [w for w, q in pos.items() if q > 0.05 and not (insiders_exit and w in insiders)]
             r = rng.random()
             if r < 0.45 or not held:
-                w = int(rng.choice(held)) if held and rng.random() < 0.3 else int(2000 + rng.integers(0, 400))
+                w = held[int(rng.integers(len(held)))] if held and rng.random() < 0.3 else int(2000 + rng.integers(0, 400))
                 sol = float(rng.uniform(0.05, 2))
                 buy(ts, w, sol, sol / float(rng.uniform(0.3, 0.5)))
             elif r < 0.95:
-                sell(ts, int(rng.choice(held)), float(rng.uniform(0.3, 1.0)), loss_bias * float(rng.uniform(0.6, 1.4)))
+                sell(ts, held[int(rng.integers(len(held)))], float(rng.uniform(0.3, 1.0)),
+                     loss_bias * float(rng.uniform(0.6, 1.4)))
             else:
                 t.add(ts, int(5000 + rng.integers(0, 1000)), False, 0.3, 2.0)    # orphan
             if rng.random() < 0.02:
@@ -667,7 +668,7 @@ def test_stages_end_to_end_on_synthetic_data(lab, monkeypatch):
     monkeypatch.setattr(d1, "fill_sensitivity", lambda ds, p, reveal=True: {})
     tr = d1.stage_train()
     assert tr["status"] in ("SHORTLISTED", "SHORTLISTED_UNDERPOWERED")
-    assert (lab / "train.json").exists() and (lab / "train.md").exists() and (lab / "prereg.lock").exists()
+    assert (lab / "train.json").exists() and (lab / "train.md").exists() and (lab / "prereg_lock.json").exists()
     assert len(tr["events"]) == 15 and set(tr["variants"]) == set(d1.VARIANTS)
     assert tr["events"]["CAP@30"]["n"] > 0 and tr["events"]["DIST@30"]["n"] > 0   # both classes occur
     assert tr["variants"]["V2"]["n"] >= tr["variants"]["V1"]["n"] > 0             # loose CAP fires at least as often
@@ -682,6 +683,7 @@ def test_stages_end_to_end_on_synthetic_data(lab, monkeypatch):
         d1.stage_train()
     with pytest.raises(d1.StageRefused):
         d1.stage_val()
+    assert v["status"] == "SELECTED"          # deterministic synthetic data: the TEST / FINAL path must run
     if v["status"] == "SELECTED":
         monkeypatch.setenv("LAB2_ALLOW_TEST", "1")
         out = d1.stage_test()
@@ -689,3 +691,12 @@ def test_stages_end_to_end_on_synthetic_data(lab, monkeypatch):
         assert (lab / "test.json").exists() and (lab / "test_trades.parquet").exists() or out["summary"]["n"] == 0
         with pytest.raises(d1.StageRefused, match="one TEST run"):
             d1.stage_test()
+        splits["final"] = random_frames(24, n=6, t0=C.FINAL_LO + 3600, **kw)     # census-day coins
+        with pytest.raises(d1.StageRefused, match="LAB2_ALLOW_FINAL"):
+            d1.stage_final()
+        monkeypatch.setenv("LAB2_ALLOW_FINAL", "1")
+        fin = d1.stage_final()
+        assert fin["d1_verdict"]["verdict"] in ("PASS", "FAIL", "UNDERPOWERED", "INCOMPLETE", "REJECTED", "KILLED")
+        assert any(c["id"] == 9 for c in fin["entry_verdict_with_final"]["criteria"])
+        with pytest.raises(d1.StageRefused, match="one FINAL run"):
+            d1.stage_final()
