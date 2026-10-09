@@ -44,7 +44,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--config", choices=tuple(D.CONFIGS), required=True)
     ap.add_argument("--budget-usd", type=float, required=True)
     ap.add_argument("--status", action="store_true", help="count cached vs needed decisions and exit (no API)")
-    ap.add_argument("--shard", default=None, help="i/n: only coins with index %% n == i (parallel workers share the cache)")
+    ap.add_argument("--shard", default=None,
+                    help="i/n: only coins with index %% n == i (parallel workers share the cache)")
     a = ap.parse_args(argv)
     if a.split == "test" and os.environ.get("LAB2_ALLOW_TEST") != "1":
         print("REFUSED: TEST deliberation needs LAB2_ALLOW_TEST=1 (the judge must have read VAL)", file=sys.stderr)
