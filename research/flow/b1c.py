@@ -459,8 +459,8 @@ def consolidate_b1(out: Path, grads: Mapping[str, Mapping[str, Any]], pool_nd: M
                "n_chunks": len(chunks_of.get(mint, ())), "overflow_pieces": overflow.get(mint, 0),
                "pieces": json.dumps(iv), "n_trades": 0, "n_pool_trades": 0, "n_dup_dropped": 0, "n_virt_ffilled": 0,
                "gate_b1_pool": None, "gate_b2_pool": None, "gate_abs_diff": None, "gate_ok": None}
+        ps = parts.pop(mint, None) or []          # free the decoded pieces as we go (TRAIN-TEST ~9 M trades)
         if complete:
-            ps = parts.get(mint) or []
             cols = {k: np.concatenate([p[k] for p in ps]) for k in TRADE_COLUMNS} if ps else decode_trades(0, [])
             win = (cols["ts"] >= lo) & (cols["ts"] < hi)
             if not win.all():

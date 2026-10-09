@@ -174,3 +174,17 @@ def test_merge_ranges_replaces_same_split_only():
     new = [{"split": "train", "lo_utc": "1", "hi_utc": "2", "v": 1}, {"split": "x", "lo_utc": "5", "hi_utc": "6"}]
     got = V.merge_ranges(old, new)
     assert [r.get("split") for r in got] == ["val", "train", "x"] and got[1]["v"] == 1
+
+
+def test_label_pairs_same_wallet_buy_and_sell_in_one_tx():
+    """Seen on 2026-10-01: a wallet's dust buy + sell in one tx. A (tx, wallet) dict compares the buy with the sell."""
+    ours = [{"tx": "T", "user": "W", "slot": 5, "tx_idx": 9, "pix": 7, "ix": 5, "is_buy": 0},
+            {"tx": "T", "user": "W", "slot": 5, "tx_idx": 9, "pix": 4, "ix": 5, "is_buy": 1},
+            {"tx": "U", "user": "X", "slot": 6, "tx_idx": 1, "pix": 2, "ix": 3, "is_buy": 1}]
+    theirs = [{"tx": "T", "userAddress": "W", "slotIndexId": "0000000000050000090001", "type": "sell"},
+              {"tx": "T", "userAddress": "W", "slotIndexId": "0000000000050000090000", "type": "buy"}]
+    pairs = V.label_pairs(ours, theirs)
+    assert len(pairs) == 2 and all((x["type"] == "buy") == bool(t["is_buy"]) for t, x in pairs)
+    rows = [{"mint": "M", "truncated": 0, "trades": [dict(t, venue=1, x0=1, y0=1, x1=1, y1=1, virt=0) for t in ours]}]
+    st = V.block_stats(rows, {"M": theirs})
+    assert (st["sw_label_n"], st["sw_label_ok"], st["sw_multi_trade_tx_wallets"]) == (2, 2, 1)

@@ -63,7 +63,7 @@ def s1_dir() -> Path:
 CHECKPOINTS_MIN = (6, 8, 10, 15, 20, 30, 45, 60, 90, 120)
 GATE_CHECKPOINTS_MIN = (10, 30)
 GATE_HOLD_S = 1800
-B1_HORIZON_S = 7200            # P4 window = [created, g + 120 min)
+B1_HORIZON_S = 7200            # B1 (P4b) window = [created, g + 120 min)
 B1_MAX_TRADES: int | None = None   # P4b (backfill) never truncates; None skips the check (P4 cut at 20,000)
 SUPPLY = 1e9                   # whole tokens
 TOK = 1e6                      # raw token units per whole token
@@ -1064,7 +1064,7 @@ def check_data(split: str, allow_partial: bool = False) -> dict:
     cc = coverage_counts(split)
     problems = []
     if not cc["b1_file"]:
-        problems.append("b1_trades.parquet does not exist (backfill phase P4 has not run)")
+        problems.append("b1_trades.parquet does not exist (backfill phase P4b has not run: research/flow/run_b1.sh)")
     if cc["s1_universe"] == 0:
         problems.append(f"no S1-universe coins in split {split!r} yet")
     elif cc["b1_frac"] < B1_MIN_COVERAGE:

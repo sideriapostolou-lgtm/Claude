@@ -967,7 +967,7 @@ def b1_mints() -> set[str] | None:
 
 
 def b1_coverage(split: str) -> dict[str, Any]:
-    """Counts only (no prices): usable coins of ``split`` that P4 should have collected (creation scanned, graduated
+    """Counts only (no prices): usable coins of ``split`` that P4b collects (creation scanned, graduated
     > 5 s after creation), and how many have B1 rows."""
     ds = C.coverage_dataset(split)
     co = ds.coins
@@ -996,7 +996,7 @@ def check_data(split: str, allow_partial: bool = False) -> dict[str, Any]:
         problems.append(f"{split} B2 coverage incomplete ({cov['days_full']}/{cov['days_expected']} full days, "
                         f"{cov['chain_hours_scanned_frac']} of chain hours scanned)")
     if not cov["b1_file"]:
-        problems.append("no b1_trades.parquet (backfill phase P4 has not run)")
+        problems.append("no b1_trades.parquet (backfill phase P4b has not run: research/flow/run_b1.sh)")
     elif cov["frac"] < B1_MIN_COVERAGE:
         problems.append(f"B1 covers {cov['with_b1']}/{cov['b1_eligible']} eligible {split} coins "
                         f"(< {B1_MIN_COVERAGE:.0%})")

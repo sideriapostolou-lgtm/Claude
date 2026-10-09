@@ -25,7 +25,7 @@ import random
 import statistics as stats
 import sys
 import time
-from collections import defaultdict
+from collections import Counter, defaultdict
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -479,6 +479,23 @@ def range_candidates(grads: dict[str, dict], lo: int, hi: int, hour: int,
     return sorted(out, key=lambda d: d["mint"])
 
 
+def label_pairs(ours: list[dict], theirs: list[dict]) -> list[tuple[dict, dict]]:
+    """(CryptoHouse trade, swap-api trade) pairs by tx + wallet, never by the label under test. A wallet with several
+    trades in one tx (e.g. a dust buy + sell) pairs them in each source's own order (chain order vs slotIndexId);
+    a plain (tx, wallet) dict would compare the buy with the sell."""
+    g = defaultdict(list)
+    for x in sorted(theirs, key=lambda x: x["slotIndexId"]):
+        g[(x["tx"], x["userAddress"])].append(x)
+    used: dict = defaultdict(int)
+    out = []
+    for t in sorted(ours, key=lambda t: (t["slot"], t["tx_idx"], t["pix"], t["ix"])):
+        k = (t["tx"], t["user"])
+        if used[k] < len(g.get(k, ())):
+            out.append((t, g[k][used[k]]))
+            used[k] += 1
+    return out
+
+
 def block_stats(rows: list[dict], sw: dict[str, list[dict]]) -> dict:
     """V1 / V2 / V4 counts over one sampled hour. ``rows``: raw.sql rows (trades decoded); ``sw``: mint -> swap-api
     trades of the same coin over the same span (only trades present in both sources count for V1-labels / V4)."""
@@ -493,12 +510,10 @@ def block_stats(rows: list[dict], sw: dict[str, list[dict]]) -> dict:
         s["trades"] += len(r["trades"])
         s["truncated"] += bool(r.get("truncated"))
         st = sw.get(r["mint"]) or []
-        idx = {(x["tx"], x["userAddress"]): x for x in st}
-        for t in r["trades"]:
-            x = idx.get((t["tx"], t["user"]))
-            if x:
-                s["sw_label_n"] += 1
-                s["sw_label_ok"] += (x["type"] == "buy") == bool(t["is_buy"])
+        for t, x in label_pairs(r["trades"], st):
+            s["sw_label_n"] += 1
+            s["sw_label_ok"] += (x["type"] == "buy") == bool(t["is_buy"])
+        s["sw_multi_trade_tx_wallets"] += sum(1 for v in Counter((x["tx"], x["userAddress"]) for x in st).values() if v > 1)
         o = ordering_check(r["trades"], st)
         s["o_matched"] += o["matched"]
         s["o_same"] += o["same_slot_pairs"]
@@ -514,7 +529,8 @@ def range_record(name: str, lo: str, hi: str, blocks: list[dict], validated_utc:
             if isinstance(v, int):
                 t[k] += v
     v1 = {"reserve_label_agree": t["label_ok"], "reserve_label_checked": t["label_checked"],
-          "swapapi_label_agree": t["sw_label_ok"], "swapapi_label_checked": t["sw_label_n"]}
+          "swapapi_label_agree": t["sw_label_ok"], "swapapi_label_checked": t["sw_label_n"],
+          "swapapi_multi_trade_tx_wallets": t["sw_multi_trade_tx_wallets"]}
     v1["pass"] = (t["label_checked"] > 0 and t["label_ok"] / t["label_checked"] >= 0.999
                   and t["sw_label_n"] > 0 and t["sw_label_ok"] / t["sw_label_n"] >= 0.999)
     v2 = {"coins": t["coins"], "transitions": t["pairs"], "chain_ok": t["chain_ok"],
@@ -672,8 +688,10 @@ def run_ranges(out: Path, ch: CryptoHouse | None, names: list[str], coins_per_ho
                 cols, rows, scanned_to = _fetch_block(ch, slots, sample, max_trades)
                 with gzip.open(p, "wt") as f:
                     json.dump({"hour": hour, "sample": sample, "scanned_to": scanned_to, "columns": cols,
-                               "rows": rows, "fetched_ts": time.time()}, f)
+                               "rows": rows, "fetched_ts": time.time(), "candidates": len(cands),
+                               "candidates_partial": partial}, f)
             d = json.load(gzip.open(p))
+            cands_n, partial = d.get("candidates", len(cands)), d.get("candidates_partial", partial)
             rows = []
             for r in d["rows"]:
                 row = dict(zip(d["columns"], r))
@@ -694,7 +712,7 @@ def run_ranges(out: Path, ch: CryptoHouse | None, names: list[str], coins_per_ho
             st = block_stats(rows, {m: v["trades"] for m, v in sw.items()})
             st["sw_n"] = sum(len(v["trades"]) for m, v in sw.items() if m in win)
             st["sw_incomplete"] = sum(1 for m, v in sw.items() if m in win and not v["complete"])
-            blocks.append({"hour_utc": utc(hour), "candidates": len(cands), "candidates_partial": partial,
+            blocks.append({"hour_utc": utc(hour), "candidates": cands_n, "candidates_partial": partial,
                            "sampled": len(d["sample"]), "scanned_to_utc": utc(d["scanned_to"]),
                            "ch_fetched_utc": utc(d["fetched_ts"]), "stats": st})
         if blocks:
