@@ -3043,6 +3043,170 @@
     "entry_bar_exits": true,
     "exit_delay_bars": 1
    }
+  },
+  "X5|637bda54a198|cfg:a06543feac6c": {
+   "hypothesis": "X5",
+   "params": {
+    "version": "x5-v1",
+    "window_s": 7200.0,
+    "step_s": 900,
+    "baseline_n": 96,
+    "slack_s": 21600.0,
+    "av_min_age_s": 600.0,
+    "sv_age_s": 1800.0,
+    "sv_min_records": 10,
+    "direction": "hot = high",
+    "gate": "ON iff S(s) >= q-quantile of the 96 previous points; filter on the host's first entry; OFF/UNKNOWN skip",
+    "own_coin": "excluded from every window",
+    "history_splits": {
+     "debug": [
+      "final_train"
+     ],
+     "train": [
+      "train"
+     ],
+     "val": [
+      "train",
+      "val"
+     ],
+     "test": [
+      "train",
+      "val",
+      "test"
+     ],
+     "confirm": [
+      "confirm"
+     ],
+     "final": [
+      "train",
+      "val",
+      "test",
+      "final_train",
+      "final_val",
+      "final_test"
+     ]
+    },
+    "gr_pool": "tradeable graduates created before the split's end (structure)",
+    "fill": "common.FillConfig(exit_delay_bars=1): worst, latency 30 s, entry-bar stop checks, next-bar exits",
+    "placebo": "random alive coins at +-120 s whose regime state is known (ON or OFF, own coin removed) at the draw",
+    "x5_host": "R0",
+    "signal": "SV",
+    "q": 0.5,
+    "host_params": {
+     "host": "R0_random_alive",
+     "seed": 0,
+     "age_lo_min": 30.0,
+     "age_hi_min": 115.0,
+     "alive_vol_usd_15m": 1500.0,
+     "alive_mcap_usd": 6000.0,
+     "stop_pct": 0.5,
+     "max_hold_s": 3600.0
+    }
+   },
+   "first_seen_utc": "2026-10-09 05:18:33",
+   "splits": {
+    "train": 1
+   },
+   "cfg": {
+    "size_usd": 20.0,
+    "latency_s": 30.0,
+    "entry_fill": "worst",
+    "exit_fill": "worst",
+    "cost": {
+     "ultra_bps": 10.0,
+     "mev_bps": 20.0,
+     "priority_sol": 0.0002,
+     "base_fee_lamports": 5000,
+     "fee_mult": 1.0,
+     "impact_mult": 1.0,
+     "extra_hop_bps": 100.0
+    },
+    "rent_usd": 0.0,
+    "entry_bar_exits": true,
+    "exit_delay_bars": 1
+   }
+  },
+  "X5|52f6809bf641|cfg:a06543feac6c": {
+   "hypothesis": "X5",
+   "params": {
+    "version": "x5-v1",
+    "window_s": 7200.0,
+    "step_s": 900,
+    "baseline_n": 96,
+    "slack_s": 21600.0,
+    "av_min_age_s": 600.0,
+    "sv_age_s": 1800.0,
+    "sv_min_records": 10,
+    "direction": "hot = high",
+    "gate": "ON iff S(s) >= q-quantile of the 96 previous points; filter on the host's first entry; OFF/UNKNOWN skip",
+    "own_coin": "excluded from every window",
+    "history_splits": {
+     "debug": [
+      "final_train"
+     ],
+     "train": [
+      "train"
+     ],
+     "val": [
+      "train",
+      "val"
+     ],
+     "test": [
+      "train",
+      "val",
+      "test"
+     ],
+     "confirm": [
+      "confirm"
+     ],
+     "final": [
+      "train",
+      "val",
+      "test",
+      "final_train",
+      "final_val",
+      "final_test"
+     ]
+    },
+    "gr_pool": "tradeable graduates created before the split's end (structure)",
+    "fill": "common.FillConfig(exit_delay_bars=1): worst, latency 30 s, entry-bar stop checks, next-bar exits",
+    "placebo": "random alive coins at +-120 s whose regime state is known (ON or OFF, own coin removed) at the draw",
+    "x5_host": "R0",
+    "signal": "SV",
+    "q": 0.8,
+    "host_params": {
+     "host": "R0_random_alive",
+     "seed": 0,
+     "age_lo_min": 30.0,
+     "age_hi_min": 115.0,
+     "alive_vol_usd_15m": 1500.0,
+     "alive_mcap_usd": 6000.0,
+     "stop_pct": 0.5,
+     "max_hold_s": 3600.0
+    }
+   },
+   "first_seen_utc": "2026-10-09 05:18:37",
+   "splits": {
+    "train": 1
+   },
+   "cfg": {
+    "size_usd": 20.0,
+    "latency_s": 30.0,
+    "entry_fill": "worst",
+    "exit_fill": "worst",
+    "cost": {
+     "ultra_bps": 10.0,
+     "mev_bps": 20.0,
+     "priority_sol": 0.0002,
+     "base_fee_lamports": 5000,
+     "fee_mult": 1.0,
+     "impact_mult": 1.0,
+     "extra_hop_bps": 100.0
+    },
+    "rent_usd": 0.0,
+    "entry_bar_exits": true,
+    "exit_delay_bars": 1
+   }
   }
  },
  "runs": [
@@ -3949,6 +4113,30 @@
    "over_variant_limit": false,
    "kind": "backtest",
    "session": null
+  },
+  {
+   "utc": "2026-10-09 05:18:33",
+   "hypothesis": "X5",
+   "config": "X5|637bda54a198|cfg:a06543feac6c",
+   "split": "train",
+   "debug": false,
+   "n": 248,
+   "mean": -0.21361023908761487,
+   "over_variant_limit": false,
+   "kind": "backtest",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 05:18:37",
+   "hypothesis": "X5",
+   "config": "X5|52f6809bf641|cfg:a06543feac6c",
+   "split": "train",
+   "debug": false,
+   "n": 97,
+   "mean": -0.24742922170209064,
+   "over_variant_limit": false,
+   "kind": "backtest",
+   "session": null
   }
  ],
  "val_shortlists": {
@@ -3965,7 +4153,7 @@
    "first_val_run_utc": "2026-10-09 05:17:33"
   }
  },
- "n_trials_total": 2634,
+ "n_trials_total": 2636,
  "val_looks": {
   "G1": 4
  }
