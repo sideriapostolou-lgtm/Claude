@@ -67,6 +67,9 @@ MAX_EXEC = 0.99
 STALENESS_S = 30 * 60  # PLAN: a snapshot is usable for 30 minutes after its timestamp
 CLOSE_MAX_AGE_S = 30 * 60  # the closing line must be a snapshot within 30 min of the start
 MATCH_TOL_S = 3 * 3600  # Pinnacle commence_time vs Polymarket gameStartTime
+# Combat sports: Polymarket's gameStartTime is the card's start, Pinnacle's commence the fight's own estimate.
+COMBAT = ("ufc", "zuffa", "boxing")
+COMBAT_WINDOW_S = (-3600.0, 9 * 3600.0)
 WINDOWS_H = (24.0, 6.0, 1.0)
 MARGINS = (0.01, 0.02, 0.03, 0.05)
 METHODS = ("mult", "power")
@@ -397,44 +400,64 @@ def split_of(closed_time: float) -> str | None:
 FILLER = {
     "fc", "cf", "sc", "ac", "afc", "cd", "ca", "club", "de", "del", "la", "el", "the", "sk", "fk", "if", "ik",
     "bk", "rcd", "ssc", "as", "us", "sv", "vfb", "vfl", "tsg", "fsv", "sd", "ud", "cs", "ec", "cr", "se", "ss",
-    "calcio", "futbol", "football", "clube", "saudi", "1", "e", "y", "and", "of", "hd", "ii",
+    "calcio", "futbol", "football", "fotball", "clube", "saudi", "1", "e", "y", "and", "of", "hd", "ii", "bc",
+    "basketball", "kk",
 }
+# Names the two sources spell differently, keyed on the normalized name without filler words.
 ALIASES: dict[str, str] = {
     "bayern munchen": "bayern munich",
-    "fc bayern munchen": "bayern munich",
     "internazionale milano": "inter milan",
-    "fc internazionale milano": "inter milan",
-    "athletic club": "athletic bilbao",
-    "sport lisboa e benfica": "benfica",
-    "paris saint germain fc": "paris saint germain",
-    "wolverhampton wanderers fc": "wolverhampton wanderers",
-    "brighton hove albion fc": "brighton and hove albion",
-    "tottenham hotspur fc": "tottenham hotspur",
-    "ca mineiro": "atletico mineiro",
-    "club atletico de madrid": "atletico madrid",
-    "rc celta de vigo": "celta vigo",
-    "deportivo alaves": "alaves",
-    "real betis balompie": "real betis",
-    "ulsan hd fc": "ulsan hyundai",
-    "manchester united fc": "manchester united",
-    "manchester city fc": "manchester city",
-    "newcastle united fc": "newcastle united",
-    "west ham united fc": "west ham united",
-    "utah": "utah mammoth",
-    "athletics": "athletics",
+    "sport lisboa benfica": "benfica",
+    "mineiro": "atletico mineiro",
+    "atletico madrid": "atletico madrid",
+    "celta vigo": "celta vigo",
+    "ulsan": "ulsan hyundai",
+    "united states": "usa",
+    "olympique lyonnais": "lyon",
+    "olympique marseille": "marseille",
+    "heart midlothian": "hearts",
+    "hamarkameratene": "hamkam",
+    "vaasan palloseura": "vps vaasa",
+    "turun palloseura": "tps turku",
+    "kuopion palloseura": "kups kuopio",
+    "seinajoen jk": "sjk seinajoki",
+    "shanghai haigang": "shanghai sipg",
+    "wuhan san zhen": "wuhan three towns",
+    "shenzhen xinpengcheng": "shenzhen peng city",
+    "qingdao xihaian": "qingdao west coast",
+    "beijing guoan": "beijing",
+    "gimcheon sangmu": "sangju sangmu",
+    "nautico capibaribe": "nautico pe",
+    "operario ferroviario": "operario pr",
+    "red bull bragantino": "bragantino sp",
+    "kobenhavn": "copenhagen",
+    "warwickshire": "birmingham bears",
+    "stade brestois 29": "brest",
+    "stade rennais 1901": "rennes",
+    "czechia": "czech republic",
+    "ol lyonnes": "lyon",
+    "southern miss": "southern mississippi",
+    "miami fl": "miami hurricanes",
+    "louisiana monroe": "ul monroe",
+    "hawai i": "hawaii",
+    "unlv runnin": "unlv",
 }
+_LETTERS = str.maketrans({"ł": "l", "Ł": "L", "ø": "o", "Ø": "O", "æ": "ae", "Æ": "AE", "œ": "oe", "đ": "d",
+                          "Đ": "D", "ı": "i", "ß": "ss", "þ": "th", "ð": "d"})
 
 
 def _ascii(text: str) -> str:
-    norm = unicodedata.normalize("NFKD", str(text))
+    norm = unicodedata.normalize("NFKD", str(text).translate(_LETTERS))
     return "".join(c for c in norm if not unicodedata.combining(c))
 
 
 def normalize(name: str) -> str:
-    s = _ascii(name).lower().replace("&", " and ").replace("ø", "o").replace("ß", "ss")
+    """Lower-case ASCII words, '&' as 'and', then the alias table (looked up without filler words)."""
+    s = _ascii(name).lower().replace("&", " and ")
     s = re.sub(r"[^a-z0-9 ]+", " ", s)
     s = re.sub(r"\s+", " ", s).strip()
-    return ALIASES.get(s, s)
+    core = " ".join(w for w in s.split() if w not in FILLER)
+    return ALIASES.get(core, ALIASES.get(s, s))
 
 
 def tokens(name: str) -> set[str]:
@@ -452,7 +475,9 @@ def name_sim(a: str, b: str) -> float:
     inter = len(ta & tb)
     cont = inter / min(len(ta), len(tb))
     seq = SequenceMatcher(None, " ".join(sorted(ta)), " ".join(sorted(tb))).ratio()
-    return max(cont, seq)
+    # spacing variants of one name ("Seokhyeon Ko" / "Seok Hyun Ko"): the letters in order, spaces dropped
+    joined = SequenceMatcher(None, normalize(a).replace(" ", ""), normalize(b).replace(" ", "")).ratio()
+    return max(cont, seq, joined if joined >= 0.85 else 0.0)
 
 
 MIN_SIM = 0.6
@@ -485,7 +510,9 @@ def match_games(
             continue
         ev = pd.concat(cands, ignore_index=True)
         if not math.isnan(g.game_start):
-            near = ev[(ev["commence"] - g.game_start).abs() <= tol_s]
+            lo_s, hi_s = COMBAT_WINDOW_S if g.league in COMBAT else (-tol_s, tol_s)
+            dt = ev["commence"] - g.game_start
+            near = ev[(dt >= lo_s) & (dt <= hi_s)]
         else:
             day = _slug_date(g.game_id)
             near = (
@@ -645,7 +672,8 @@ def snapshot_index(
 
 
 def closing_index(snap_ts: np.ndarray, commence: float, max_age_s: float = CLOSE_MAX_AGE_S) -> int:
-    """The closing line: the last snapshot strictly before ``commence`` and no older than ``max_age_s``; -1 if none."""
+    """The closing line: the last snapshot strictly before ``commence`` (callers pass the entry cutoff, the earlier
+    of Pinnacle's commence and Polymarket's gameStartTime) and no older than ``max_age_s``; -1 if none."""
     j = int(np.searchsorted(snap_ts, commence, side="left")) - 1
     if j < 0 or commence - snap_ts[j] > max_age_s:
         return -1
@@ -731,7 +759,7 @@ def side_candidates(
     fee_ps = side.rate * p_exec * (1.0 - p_exec)
     shares = ticket / np.maximum(p_exec, 1e-9)
     ok = (p_exec <= MAX_EXEC) & np.isfinite(fair) & (bp["size"].to_numpy() >= shares)
-    ci = closing_index(line.snap_ts, commence)
+    ci = closing_index(line.snap_ts, cutoff)
     close_fair = float(fair_all[ci]) if ci >= 0 else float("nan")
     out = pd.DataFrame(
         {
@@ -957,10 +985,10 @@ def clv_baseline(
         line = u.lines.get(str(g.event_id))
         if line is None:
             continue
-        ci = closing_index(line.snap_ts, float(g.commence))
+        cutoff = min(float(g.commence), float(g.game_start)) if not math.isnan(g.game_start) else float(g.commence)
+        ci = closing_index(line.snap_ts, cutoff)
         if ci < 0:
             continue
-        cutoff = min(float(g.commence), float(g.game_start)) if not math.isnan(g.game_start) else float(g.commence)
         for s in sides_by_game.get(g.game_id, pd.DataFrame()).itertuples(index=False):
             tape = u.tapes.get(str(s.market_id))
             if tape is None or tape.empty:

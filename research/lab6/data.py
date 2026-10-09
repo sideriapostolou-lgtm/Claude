@@ -47,10 +47,9 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+import core as C
 import pandas as pd
 import requests
-
-import core as C
 
 API_ODDS = "https://api.the-odds-api.com/v4"
 API_GAMMA = "https://gamma-api.polymarket.com"
@@ -71,13 +70,16 @@ COST = {"odds": 10, "sports": 0}
 GRID_S = 300  # historical snapshots are 5 minutes apart
 UA = {"User-Agent": "nightcrawler-research/lab6"}
 
-# PLAN §2: snapshot offsets before each scheduled start (minutes). A request for offset o may sit anywhere in
+# PLAN §1: snapshot offsets before each game's start (minutes). A request for offset o may sit anywhere in
 # [start - o - before, start - o + after] (minutes) so games of one sport share snapshots; the closing request
-# (o = 1) sits in the last five minutes before the start, every other one inside its entry window.
-OFFSETS_MIN: tuple[int, ...] = (1440, 360, 180, 60, 30, 10, 1)
+# (o = 1) sits in the last five minutes before the start, every other one inside its entry window. Closing
+# snapshots are fetched for every active game (anchored on Polymarket's gameStartTime); the other offsets only for
+# matched games, anchored on the entry cutoff min(gameStartTime, Pinnacle commence).
+OFFSETS_MIN: tuple[int, ...] = (1440, 720, 360, 180, 120, 60, 40, 20, 10, 1)
 CLOSE_OFFSETS: tuple[int, ...] = (1,)
 WINDOW_MIN: dict[int, tuple[int, int]] = {
-    1440: (0, 180), 360: (0, 90), 180: (0, 45), 60: (0, 15), 30: (0, 10), 10: (0, 5), 1: (4, 0),
+    1440: (0, 180), 720: (0, 120), 360: (0, 60), 180: (0, 30), 120: (0, 20), 60: (0, 10), 40: (0, 10),
+    20: (0, 5), 10: (0, 5), 1: (4, 0),
 }
 
 
@@ -353,7 +355,7 @@ def pregame_prints(games: pd.DataFrame, sides: pd.DataFrame, window_s: float = 8
             if t is None:
                 continue
             tapes += 1
-            if s == s:
+            if not pd.isna(s):
                 n += int(((t["ts"] >= s - window_s) & (t["ts"] < s)).sum())
         rows[str(gid)] = {"game_id": gid, "tapes": tapes, "markets": len(g), "prints_24h": n}
     return pd.DataFrame(list(rows.values()))
@@ -582,8 +584,9 @@ def main(argv: list[str] | None = None) -> int:
         games, _ = candidate_games()
         act = active_games(games, pd.read_parquet(DATA / "pregame.parquet"))
         matched = pd.read_parquet(DATA / "matches.parquet")
-        sub = act.merge(matched[["game_id", "sport_key"]], on="game_id")
+        sub = act.merge(matched[["game_id", "sport_key", "commence"]], on="game_id")
         sub["sport_keys"] = [json.dumps([k]) for k in sub["sport_key"]]
+        sub["game_start"] = sub[["game_start", "commence"]].min(axis=1)  # anchor on the entry cutoff
         plan = plan_snapshots(sub, tuple(o for o in OFFSETS_MIN if o not in CLOSE_OFFSETS))
         plan.to_parquet(DATA / "plan_full.parquet", index=False)
         _print_plan("plan_full", plan)
