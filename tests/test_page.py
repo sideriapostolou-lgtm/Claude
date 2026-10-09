@@ -63,8 +63,10 @@ def ledger(tmp_path: Path, fake_clock: FakeClock) -> Iterator[Ledger]:
 
 @pytest.fixture(autouse=True)
 def no_learning_module(monkeypatch: pytest.MonkeyPatch) -> None:
-    """The learning card module is built on another branch: by default it is ABSENT in these tests."""
+    """The learning card and the report cards are built by other teams: by default both are ABSENT in these
+    tests (tests/test_page_experience.py covers the report cards)."""
     monkeypatch.setitem(sys.modules, "nightcrawler.learn.card", None)
+    monkeypatch.setitem(sys.modules, "nightcrawler.experience.state", None)
 
 
 def install_card(monkeypatch: pytest.MonkeyPatch, func: Callable[..., Any]) -> None:
@@ -199,6 +201,7 @@ def test_empty_ledger_gives_every_section_with_honest_empty_states(ledger: Ledge
     assert state["trades"]["open"] == [] and state["trades"]["closed"] == []
     assert state["learning"]["source"] == "missing" and state["learning"]["headline"].startswith("Not installed yet")
     assert state["learning"]["rule"] is None  # no "the Coach can turn trading off" claim without a Coach
+    assert state["experience"]["source"] == "missing" and state["experience"]["members"] == {}  # no report cards
     assert state["ready"]["ready"] is False and state["ready"]["headline"] == "Not ready yet — 0 of 5 done"
     assert state["receipts"] == {"count": 0, "verified": True, "first_bad_seq": None, "head": "0" * 64,
                                  "head_short": "00000000…00000000"}
