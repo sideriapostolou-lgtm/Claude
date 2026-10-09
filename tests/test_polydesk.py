@@ -268,3 +268,16 @@ def test_state_file_is_atomic_and_versioned(tmp_path) -> None:
     assert (
         P.load_state(path)["watched"] == 0
     )  # an unknown version is ignored, never half-read
+
+
+def test_page_members_carry_the_desks_positions() -> None:
+    from nightcrawler.pagestate import _members
+
+    panels = {mid: {"id": mid, "status": "idle", "why": "", "doing": "", "last_activity": None, "events": []}
+              for mid, _, _ in __import__("nightcrawler.page", fromlist=["MEMBERS"]).MEMBERS}
+    panels["predict"].update({"positions": [{"question": "Q?", "side": "long", "p_in": 0.97, "category": "sports", "t_in": 1}],
+                              "label": "Paper money (pretend)"})
+    card = {"source": "missing", "headline": "", "updated_at": None, "state": "collecting"}
+    members = {m["id"]: m for m in _members({"panels": list(panels.values())}, card, NOW)}
+    assert members["predict"]["positions"] == [{"question": "Q?", "side": "long", "p_in": 0.97, "category": "sports"}]
+    assert members["predict"]["label"] == "Paper money (pretend)" and "positions" not in members["crawler"]

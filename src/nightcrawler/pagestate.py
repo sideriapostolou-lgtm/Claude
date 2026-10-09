@@ -778,6 +778,13 @@ def _members(team: dict[str, Any], card: dict[str, Any], now: float) -> list[dic
                   "events": p["events"]}
         if p.get("bars"):
             member["bars"] = p["bars"]
+        if isinstance(p.get("positions"), list):  # the Polymarket desk's open positions (paper or real), capped
+            member["positions"] = [
+                {"question": str(x.get("question") or "")[:80], "side": str(x.get("side") or ""),
+                 "p_in": x.get("p_in"), "category": str(x.get("category") or "")}
+                for x in p["positions"][:10] if isinstance(x, dict)
+            ]
+            member["label"] = str(p.get("label") or "")
         out.append(member)
     return out
 

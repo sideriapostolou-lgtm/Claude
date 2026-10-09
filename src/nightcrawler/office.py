@@ -410,6 +410,17 @@ _SCRIPT = r"""
       const open = ((data.trades || {}).open || []).slice(0, 4);
       open.forEach(function (t) { const div = document.createElement("div"); const a = document.createElement("span"); a.textContent = "open: " + (t.coin || "?"); const b = document.createElement("span"); b.textContent = fmtUsd(t.pnl_usd) + " " + fmtPct(t.pnl_pct); b.style.color = (t.pnl_usd || 0) >= 0 ? "var(--good)" : "var(--bad)"; div.appendChild(a); div.appendChild(b); rows.appendChild(div); });
       if (!open.length) { const div = document.createElement("div"); div.textContent = "No open trades on the table."; rows.appendChild(div); }
+      const desk = members["predict"];
+      if (desk && Array.isArray(desk.positions)) {
+        const head = document.createElement("div"); const hs = document.createElement("span");
+        hs.textContent = "Polymarket desk (" + (desk.label || "paper") + "): " + desk.positions.length + " open on the table";
+        head.appendChild(hs); rows.appendChild(head);
+        desk.positions.slice(0, 5).forEach(function (q) {
+          const div = document.createElement("div"); const a = document.createElement("span"); const b = document.createElement("span");
+          a.textContent = q.question; b.textContent = q.side + " " + (q.p_in != null ? Number(q.p_in).toFixed(3) : "");
+          div.appendChild(a); div.appendChild(b); rows.appendChild(div);
+        });
+      }
     }
     if (current.shot === "09_observatory.jpg" && data && data.learning) {
       const L = data.learning; const div = document.createElement("div"); div.textContent = "Coach: " + (L.headline || L.state || "collecting data"); rows.appendChild(div);
