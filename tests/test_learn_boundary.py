@@ -3,20 +3,26 @@
 * learner modules (everything in ``nightcrawler/learn`` except the recorder) import none of
   ``broker``, ``wallet``, ``risk``, ``judge``, ``http`` or ``sources`` (nor ``requests``): the learner is
   a pure function of the tape bytes, the code and the constants, and can neither trade nor call out;
-* the recorder imports, from nightcrawler, only ``http``, ``sources`` and ``learn.{tape,store}``.
+* the recorder imports, from nightcrawler, only ``http``, ``sources`` and ``learn.{tape,store}``;
+* experience modules (``nightcrawler/experience``, docs/EXPERIENCE.md X2) import none of those either, nor
+  ``ledger``, ``engine``, ``crawler``, ``cocoon``, ``radar`` or ``dashboard``: experience grades members from the
+  verdicts the engine tapes and can never trade; learn never imports experience.
 """
 
 from __future__ import annotations
 
 import ast
 import os
+import sys
 from pathlib import Path
 
 import pytest
 
+import nightcrawler.experience
 import nightcrawler.learn
 
 LEARN = Path(nightcrawler.learn.__file__).parent
+EXPERIENCE = Path(nightcrawler.experience.__file__).parent
 FORBIDDEN = ("nightcrawler.broker", "nightcrawler.wallet", "nightcrawler.risk", "nightcrawler.judge",
              "nightcrawler.http", "nightcrawler.sources", "requests")
 RECORDER_ALLOWED = ("nightcrawler.http", "nightcrawler.sources", "nightcrawler.learn.tape", "nightcrawler.learn.store")
@@ -102,3 +108,56 @@ def test_the_learner_process_never_loads_a_trading_or_network_module(make_settin
     bad = sorted(m for m in loaded if _under(m, PROCESS_FORBIDDEN)
                  or (_under(m, ("nightcrawler.sources",)) and m not in PROCESS_SOURCES_ALLOWED))
     assert not bad, f"the learner process loads {bad}"
+
+
+# --------------------------------------------------------------------------- experience (docs/EXPERIENCE.md X2)
+
+EXPERIENCE_FORBIDDEN = (*FORBIDDEN, "nightcrawler.ledger", "nightcrawler.engine", "nightcrawler.crawler",
+                        "nightcrawler.cocoon", "nightcrawler.radar", "nightcrawler.dashboard")
+EXPERIENCE_FILES = sorted(EXPERIENCE.rglob("*.py"))
+
+
+def test_the_experience_package_has_the_phase_1_core() -> None:
+    names = {p.relative_to(EXPERIENCE).as_posix() for p in EXPERIENCE_FILES}
+    assert {"__init__.py", "constants.py", "texts.py", "stats.py", "attribution.py", "losses.py", "features.py",
+            "cards.py", "playbook.py"} <= names
+    assert (LEARN / "labels.py").exists()
+
+
+@pytest.mark.parametrize("path", EXPERIENCE_FILES, ids=lambda p: p.relative_to(EXPERIENCE).as_posix())
+def test_experience_modules_cannot_trade_or_call_out(path: Path) -> None:
+    bad = sorted(name for name in imports(path) if _under(name, EXPERIENCE_FORBIDDEN))
+    assert not bad, f"{path.name} imports {bad}"
+
+
+@pytest.mark.parametrize("path", sorted(LEARN.rglob("*.py")), ids=lambda p: p.relative_to(LEARN).as_posix())
+def test_learn_never_imports_experience(path: Path) -> None:
+    bad = sorted(name for name in imports(path) if _under(name, ("nightcrawler.experience",)))
+    assert not bad, f"{path.name} imports {bad}"
+
+
+def test_the_checker_sees_experience_specific_imports(tmp_path) -> None:
+    probe = tmp_path / "probe.py"
+    for line in ("from nightcrawler import cocoon", "import nightcrawler.engine", "from nightcrawler.ledger import X",
+                 "from nightcrawler.radar import Radar", "from nightcrawler import dashboard, crawler"):
+        probe.write_text(line + "\n", encoding="utf-8")
+        assert any(_under(name, EXPERIENCE_FORBIDDEN) for name in imports(probe)), line
+    probe.write_text("from nightcrawler.learn import labels, evidence\nfrom nightcrawler import models\n",
+                     encoding="utf-8")
+    assert not any(_under(name, EXPERIENCE_FORBIDDEN) for name in imports(probe))
+
+
+def test_importing_experience_loads_no_trading_or_network_module() -> None:
+    """The modules really loaded (``-X importtime``) when every experience module is imported."""
+    import subprocess
+
+    modules = ", ".join(f"nightcrawler.experience.{p.stem}" for p in EXPERIENCE_FILES if p.stem != "__init__")
+    src = str(EXPERIENCE.parents[1])
+    env = {**os.environ, "PYTHONPATH": os.pathsep.join(filter(None, (src, os.environ.get("PYTHONPATH"))))}
+    done = subprocess.run([sys.executable, "-X", "importtime", "-c", f"import {modules}"], env=env, timeout=120,
+                          stdin=subprocess.DEVNULL, capture_output=True, text=True)
+    assert done.returncode == 0, done.stderr[-2000:]
+    loaded = {line.rsplit("|", 1)[-1].strip() for line in done.stderr.splitlines() if line.startswith("import time:")}
+    assert "nightcrawler.experience.cards" in loaded and "nightcrawler.learn.labels" in loaded
+    bad = sorted(m for m in loaded if _under(m, (*PROCESS_FORBIDDEN, *EXPERIENCE_FORBIDDEN)))
+    assert not bad, f"importing experience loads {bad}"
