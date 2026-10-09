@@ -382,6 +382,23 @@ class Settings:
                                  lo=0.05, hi=168)
     polydesk_ticket_usd: float = _f(20.0, "usd", "Polymarket desk: paper ticket per market", lo=1, hi=1000)
     polydesk_poll_s: float = _f(90.0, "seconds", "Polymarket desk: seconds between rounds", lo=30, hi=900)
+    polydesk_mode: str = _f("paper", "text", "Polymarket desk: paper (default) or live (REAL MONEY on Polymarket US "
+                            "through the account's API key; needs POLYDESK_LIVE_CONFIRM and both key variables)",
+                            choices=("paper", "live"))
+    polydesk_live_confirm: str = _f("", "text", f"Must equal {LIVE_CONFIRM_PHRASE} for POLYDESK_MODE=live")
+    polydesk_live_contracts: float = _f(1.0, "count", "Polymarket desk live: contracts per market (1 = about a dollar "
+                                        "at 97c; the venue's minimum on most markets)", lo=0.01, hi=100)
+    polydesk_live_max_open_usd: float = _f(10.0, "usd", "Polymarket desk live: most money in open positions at once",
+                                           lo=1, hi=10_000)
+    polydesk_live_daily_loss_usd: float = _f(3.0, "usd", "Polymarket desk live: no more real buys for the UTC day "
+                                             "after losing this much", lo=0.5, hi=10_000)
+    polydesk_live_total_loss_usd: float = _f(10.0, "usd", "Polymarket desk live: after losing this much in total the "
+                                             "desk switches itself back to paper for good (only the owner can "
+                                             "switch it live again)", lo=1, hi=100_000)
+    polymarket_us_key_id: str = _f("", "text", "Polymarket US API key id (a Railway variable; the live desk only)",
+                                   secret=True)
+    polymarket_us_secret_key: str = _f("", "text", "Polymarket US API secret key (a Railway variable; the live desk "
+                                       "only; never in a file or the repo)", secret=True)
     learn_enabled: bool = _f(True, "bool", "Self-learning loop: record every pump.fun graduate and test strategy "
                              "versions in the shadow. It never trades, never changes risk settings and uses its "
                              "own small API budget; false = no learning calls at all")
@@ -462,6 +479,11 @@ class Settings:
                     problems.append(f"{env}={value} must be {op} {lo}{hint}")
                 if hi is not None and value > hi:
                     problems.append(f"{env}={value} must be <= {hi}{hint}")
+        if self.polydesk_mode == "live":
+            if self.polydesk_live_confirm != LIVE_CONFIRM_PHRASE:
+                problems.append(f"POLYDESK_MODE=live requires POLYDESK_LIVE_CONFIRM={LIVE_CONFIRM_PHRASE} (exact)")
+            if not self.polymarket_us_key_id or not self.polymarket_us_secret_key:
+                problems.append("POLYDESK_MODE=live requires POLYMARKET_US_KEY_ID and POLYMARKET_US_SECRET_KEY")
         if self.trading_mode == "live":
             if self.live_confirm != LIVE_CONFIRM_PHRASE:
                 problems.append(f"TRADING_MODE=live requires LIVE_CONFIRM={LIVE_CONFIRM_PHRASE} (exact)")

@@ -180,7 +180,8 @@ def test_describe_covers_every_field() -> None:
     assert {"TRADING_MODE", "BOT_WALLET_SECRET", "POSITION_PCT", "PORT", "JUDGE_MODEL"} <= envs
     assert all(r["help"] and r["unit"] for r in rows)
     assert {r["env"] for r in rows if r["secret"]} == {
-        "ANTHROPIC_API_KEY", "JUPITER_API_KEY", "BOT_WALLET_SECRET", "X_BEARER_TOKEN", "DASHBOARD_TOKEN"}
+        "ANTHROPIC_API_KEY", "JUPITER_API_KEY", "BOT_WALLET_SECRET", "X_BEARER_TOKEN", "DASHBOARD_TOKEN",
+        "POLYMARKET_US_KEY_ID", "POLYMARKET_US_SECRET_KEY"}
 
 
 def test_env_example_lists_every_setting() -> None:

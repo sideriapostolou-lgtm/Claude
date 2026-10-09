@@ -15,10 +15,20 @@ What it does, every ``polydesk_poll_s`` seconds, in its own thread (the trading 
 4. Settlement: a position whose market left the watch list (or ended) is settled at the venue's settlement price;
    the paper P&L is booked and the day's total updated.
 
+**Live mode** (``POLYDESK_MODE=live`` + ``POLYDESK_LIVE_CONFIRM`` + the account's key in Railway variables, the
+owner's explicit switch): the same rule, but a real limit order on Polymarket US for ``polydesk_live_contracts``
+contracts of the YES side (long only: the venue prices every order on the YES side, so shorts stay paper-only),
+immediate-or-cancel at the printed ask, through :mod:`nightcrawler.polymarket_us`. Caps, checked before every
+order: money in open positions <= ``polydesk_live_max_open_usd``; the UTC day's realised loss <=
+``polydesk_live_daily_loss_usd`` (then no more buys today); total realised loss <=
+``polydesk_live_total_loss_usd`` (then the desk switches itself back to paper for good and says so; only the owner
+can switch it live again). Live starts only after a successful balance read; a rejected key leaves the desk on
+paper with the reason on the page. Every live order and settlement is receipted in the ledger's hash chain.
+
 State lives in ``DATA_DIR/polydesk/state.json`` (atomic rewrite): open positions, the last closed positions,
-daily P&L, counters, the last poll. The team-room panel (:func:`panel_state`) reads that file; nothing here
-touches the ledger, the wallet, a key or an order. The rule is a CANDIDATE: it earns a real seat only by passing
-lab 4's TRAIN / VAL / TEST, and the page says "paper" everywhere this desk's numbers appear.
+daily P&L, counters, the last poll, the live status and the last balance. The team-room panel
+(:func:`panel_state`) reads that file. The rule is a CANDIDATE: it earns a real seat only by passing lab 4's
+TRAIN / VAL / TEST, and the page says "paper" or "real" everywhere this desk's numbers appear.
 """
 
 from __future__ import annotations
@@ -35,7 +45,8 @@ from typing import Any
 
 import requests
 
-from nightcrawler.config import Settings
+from nightcrawler.config import LIVE_CONFIRM_PHRASE, Settings
+from nightcrawler.polymarket_us import PolymarketUSClient, PolymarketUSError
 
 log = logging.getLogger("nightcrawler.polydesk")
 
@@ -104,7 +115,7 @@ def parse_iso(value: Any) -> float | None:
     if not value or not isinstance(value, str):
         return None
     try:
-        return datetime.fromisoformat(value.replace("Z", "+00:00")).timestamp()
+        return datetime.fromisoformat(value).timestamp()  # Python 3.11+ accepts the trailing Z
     except ValueError:
         return None
 
@@ -256,6 +267,12 @@ def empty_state() -> dict[str, Any]:
         "watched": 0,
         "last_error": None,
         "rule": None,
+        "mode": "paper",
+        "live_status": None,
+        "live_halted": False,
+        "balance": None,
+        "live_days": {},
+        "live_pnl_total_usd": 0.0,
     }
 
 
@@ -282,16 +299,37 @@ def state_path(settings: Settings) -> Path:
     return Path(settings.data_dir) / "polydesk" / "state.json"
 
 
+def _reveal(value: Any) -> str:
+    """A secret setting's text (``Secret.reveal()``), or the plain string; never logged."""
+    return str(value.reveal()) if hasattr(value, "reveal") else str(value or "")
+
+
 class PolyDesk:
     """The paper desk's runtime (one daemon thread). ``poll(now)`` is also callable directly (tests)."""
 
-    def __init__(self, settings: Settings, path: Path | None = None) -> None:
+    def __init__(
+        self,
+        settings: Settings,
+        path: Path | None = None,
+        ledger: Any = None,
+        client_factory: Any = None,
+    ) -> None:
         self.settings = settings
+        self.ledger = ledger
         self.path = path or state_path(settings)
         self.theta = float(settings.polydesk_theta)
         self.hours = float(settings.polydesk_hours)
         self.ticket = float(settings.polydesk_ticket_usd)
         self.poll_s = float(settings.polydesk_poll_s)
+        self.contracts = float(settings.polydesk_live_contracts)
+        self.client: PolymarketUSClient | None = None
+        self._client_factory = client_factory or PolymarketUSClient
+        self.live_requested = (
+            settings.polydesk_mode == "live"
+            and settings.polydesk_live_confirm == LIVE_CONFIRM_PHRASE
+            and bool(settings.polymarket_us_key_id)
+            and bool(settings.polymarket_us_secret_key)
+        )
         self.state = load_state(self.path)
         self.state["rule"] = {
             "theta": self.theta,
@@ -302,6 +340,59 @@ class PolyDesk:
         }
         self._stop = threading.Event()
         self._thread: threading.Thread | None = None
+        self.state["mode"] = "paper"
+        if self.live_requested and self.state.get("live_halted"):
+            self.state["live_status"] = (
+                "Live was switched off by the total-loss cap; the desk stays on paper until the owner resets it."
+            )
+        elif self.live_requested:
+            self._connect()
+        elif settings.polydesk_mode == "live":
+            self.state["live_status"] = (
+                "Live requested but the confirm phrase or the key is missing: staying on paper."
+            )
+        else:
+            self.state["live_status"] = None
+        self._save()
+
+    def _connect(self) -> None:
+        """Live only after the venue accepts the key (a balance read); otherwise paper, with the reason."""
+        try:
+            client = self._client_factory(
+                _reveal(self.settings.polymarket_us_key_id), _reveal(self.settings.polymarket_us_secret_key)
+            )
+            bal = client.balances()
+        except (PolymarketUSError, ValueError) as exc:
+            self.client = None
+            self.state["mode"] = "paper"
+            status = exc.status if isinstance(exc, PolymarketUSError) else "bad key format"
+            self.state["live_status"] = (
+                f"Polymarket rejected the API key ({status}): make a new key in the app and put it in "
+                "Railway; staying on paper."
+            )
+            log.warning("polydesk_live_rejected status=%s", status)
+            return
+        self.client = client
+        self.state["mode"] = "live"
+        self.state["balance"] = {**bal, "at": time.time()}
+        self.state["live_status"] = None
+        log.info(
+            "polydesk_live_connected cash=%.2f buying_power=%.2f",
+            bal["cash"],
+            bal["buying_power"],
+        )
+        self._receipt(
+            "polydesk_live_connected",
+            {"cash": bal["cash"], "buying_power": bal["buying_power"]},
+        )
+
+    def _receipt(self, kind: str, payload: dict[str, Any]) -> None:
+        if self.ledger is None:
+            return
+        try:
+            self.ledger.append_receipt(kind, payload)
+        except Exception as exc:  # noqa: BLE001 (a receipt failure must not stop the desk)
+            log.warning("polydesk_receipt_failed kind=%s error=%s", kind, type(exc).__name__)
 
     # ------------------------------------------------------------------ lifecycle
     def start(self) -> None:
@@ -359,6 +450,12 @@ class PolyDesk:
         st["watched"] = len(watch)
         st["last_ok"] = now
         st["last_error"] = None
+        if self.client is not None and st["mode"] == "live":
+            try:
+                st["balance"] = {**self.client.balances(), "at": now}
+            except PolymarketUSError as exc:
+                st["counters"]["errors"] += 1
+                log.warning("polydesk_balance_failed status=%s", exc.status)
         self._save()
         return {
             "watched": len(watch),
@@ -415,6 +512,54 @@ class PolyDesk:
                 continue
             price = min(price, MAX_PRICE)
             coef = m["fee_coef"] if m.get("fee_coef") is not None else US_TAKER
+            if st["mode"] == "live" and self.client is not None:
+                if side != "long":
+                    continue  # live: the YES side only (the venue prices every order on YES); shorts stay paper-only
+                if not self._live_allows(now, price):
+                    continue
+                tried.add(slug)
+                try:
+                    fill = self.client.buy_long_ioc(slug, price, self.contracts)
+                except PolymarketUSError as exc:
+                    st["counters"]["errors"] += 1
+                    self._event(now, f"Order rejected by the venue ({exc.status}): {m['question'][:50]}", "bad")
+                    self._receipt("polydesk_order_rejected", {"slug": slug, "status": exc.status})
+                    continue
+                if fill["filled"] <= 0:
+                    self._event(now, f"No fill at {price:.3f}: {m['question'][:50]} (order cancelled)")
+                    continue
+                shares = float(fill["filled"])
+                p_fill = float(fill["avg_price"])
+                cost = float(fill["cost"])
+                fee = shares * coef * p_fill * (1.0 - p_fill)
+                st["positions"][slug] = {
+                    "slug": slug,
+                    "question": m["question"],
+                    "category": m["category"],
+                    "side": "long",
+                    "p_in": p_fill,
+                    "shares": shares,
+                    "fee_usd": fee,
+                    "cost_usd": cost,
+                    "t_in": now,
+                    "end_ts": m["end_ts"],
+                    "event": m.get("event"),
+                    "live": True,
+                    "order_id": fill.get("id"),
+                }
+                st["counters"]["bought"] += 1
+                bought += 1
+                self._event(
+                    now,
+                    f"REAL buy: {m['question'][:60]} · {shares:g} contract at {p_fill:.3f} (${cost:.2f}, "
+                    f"{m['category']})",
+                    "good",
+                )
+                self._receipt(
+                    "polydesk_order_filled",
+                    {"slug": slug, "order_id": fill.get("id"), "contracts": shares, "price": p_fill, "cost_usd": cost},
+                )
+                continue
             shares = self.ticket / price
             fee = shares * coef * price * (1.0 - price)
             st["positions"][slug] = {
@@ -425,9 +570,11 @@ class PolyDesk:
                 "p_in": price,
                 "shares": shares,
                 "fee_usd": fee,
+                "cost_usd": self.ticket,
                 "t_in": now,
                 "end_ts": m["end_ts"],
                 "event": m.get("event"),
+                "live": False,
             }
             tried.add(slug)
             st["counters"]["bought"] += 1
@@ -439,6 +586,38 @@ class PolyDesk:
             )
         st["tried"] = sorted(tried)[-5000:]
         return bought
+
+    # ------------------------------------------------------------------ live caps
+    def _live_allows(self, now: float, price: float) -> bool:
+        st = self.state
+        s = self.settings
+        open_usd = sum(float(p.get("cost_usd") or 0.0) for p in st["positions"].values() if p.get("live"))
+        if open_usd + price * self.contracts > float(s.polydesk_live_max_open_usd):
+            return False
+        day = datetime.fromtimestamp(now, UTC).strftime("%Y-%m-%d")
+        day_pnl = float((st.get("live_days") or {}).get(day, {}).get("pnl_usd") or 0.0)
+        if day_pnl <= -float(s.polydesk_live_daily_loss_usd):
+            note = "Daily loss cap reached: no more real buys today."
+            if st.get("live_status") != note:
+                st["live_status"] = note
+                self._event(now, note, "bad")
+            return False
+        return True
+
+    def _check_total_loss(self, now: float) -> None:
+        st = self.state
+        total = float(st.get("live_pnl_total_usd") or 0.0)
+        if total <= -float(self.settings.polydesk_live_total_loss_usd) and st["mode"] == "live":
+            st["mode"] = "paper"
+            st["live_halted"] = True
+            st["live_status"] = (
+                f"Total loss cap reached ({total:+.2f} $): the desk switched itself back to paper for good; "
+                "only the owner can switch it live again."
+            )
+            self.client = None
+            self._event(now, "Total loss cap reached: real trading stopped, back to paper.", "bad")
+            self._receipt("polydesk_live_halted", {"live_pnl_total_usd": total})
+            log.warning("polydesk_live_halted total=%.2f", total)
 
     def _settle(self, now: float, watched: set[str]) -> int:
         st = self.state
@@ -463,7 +642,7 @@ class PolyDesk:
                     del st["positions"][slug]
                 continue
             payout = pos["shares"] * (value if pos["side"] == "long" else 1.0 - value)
-            pnl = payout - pos["fee_usd"] - self.ticket
+            pnl = payout - pos["fee_usd"] - float(pos.get("cost_usd", self.ticket))
             won = pnl > 0
             day = datetime.fromtimestamp(now, UTC).strftime("%Y-%m-%d")
             d = st["days"].setdefault(day, {"pnl_usd": 0.0, "settled": 0, "won": 0})
@@ -479,11 +658,21 @@ class PolyDesk:
             st["counters"]["settled"] += 1
             st["counters"]["won"] += int(won)
             settled += 1
+            word = "real" if pos.get("live") else "paper"
             self._event(
                 now,
-                f"Settled: {pos['question'][:60]} · {'won' if won else 'lost'} {pnl:+.2f} $ (paper)",
+                f"Settled: {pos['question'][:60]} · {'won' if won else 'lost'} {pnl:+.2f} $ ({word})",
                 "good" if won else "bad",
             )
+            if pos.get("live"):
+                d_live = st.setdefault("live_days", {}).setdefault(day, {"pnl_usd": 0.0})
+                d_live["pnl_usd"] += pnl
+                st["live_pnl_total_usd"] = float(st.get("live_pnl_total_usd") or 0.0) + pnl
+                self._receipt(
+                    "polydesk_settled",
+                    {"slug": slug, "value": value, "pnl_usd": pnl, "contracts": pos["shares"]},
+                )
+                self._check_total_loss(now)
             time.sleep(REQ_SLEEP_S)
         return settled
 
@@ -498,9 +687,14 @@ def panel_state(settings: Settings, now: float) -> dict[str, Any]:
     total = sum(float(d.get("pnl_usd") or 0.0) for d in st["days"].values())
     c = st["counters"]
     open_n = len(st["positions"])
+    live = st.get("mode") == "live"
     return {
         "enabled": enabled,
-        "label": "Paper money (pretend)",
+        "mode": "live" if live else "paper",
+        "label": "Real money" if live else "Paper money (pretend)",
+        "balance": st.get("balance"),
+        "live_status": st.get("live_status"),
+        "live_pnl_total_usd": float(st.get("live_pnl_total_usd") or 0.0),
         "rule": st.get("rule"),
         "last_poll": st.get("last_poll"),
         "last_ok": st.get("last_ok"),

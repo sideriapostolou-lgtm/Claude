@@ -916,17 +916,27 @@ def _predict(ctx: _Ctx) -> dict[str, Any]:
         blocked = f"last round failed ({d['last_error']})" if d["last_error"] and not last else None
         status = ctx.derive("predict", last, blocked=blocked, idle="no round finished recently")
     t = d["today"]
+    live = d.get("mode") == "live"
+    word = "real" if live else "paper"
+    money = "real money" if live else "paper money, pretend"
+    bal = d.get("balance")
+    account = (f" Polymarket account: ${float(bal['cash']):.2f} cash."
+               if isinstance(bal, dict) and bal.get("cash") is not None else "")
     if last is None:
-        doing = "Starting up: first look at the venue's markets." if d["enabled"] else "Switched off."
+        doing = ("Starting up: first look at the venue's markets." if d["enabled"] else "Switched off.") + account
     else:
-        doing = (f"Watching {d['watched']:,} markets; {d['open']} paper positions open; today {t['won']}/{t['settled']} "
+        doing = (f"Watching {d['watched']:,} markets; {d['open']} {word} positions open; today {t['won']}/{t['settled']} "
                  f"settled won, {t['pnl_usd']:+.2f} $; all time {d['won_total']}/{d['settled_total']} won, "
-                 f"{d['pnl_total_usd']:+.2f} $ (paper money, pretend).")
-    stats = [_stat("Watching", d["watched"], "count"), _stat("Open (paper)", d["open"], "count"),
-             _stat("Today $ (paper)", round(t["pnl_usd"], 2), "usd"),
-             _stat("All time $ (paper)", round(d["pnl_total_usd"], 2), "usd")]
-    return _panel("predict", status, last, ctx.text(doing), _headline(d["open"], "count", "paper positions open"),
-                  stats, events, rule=d["rule"], positions=d["positions"], label=d["label"])
+                 f"{d['pnl_total_usd']:+.2f} $ ({money})." + account)
+    if d.get("live_status"):
+        doing += f" {d['live_status']}"
+    stats = [_stat("Watching", d["watched"], "count"), _stat(f"Open ({word})", d["open"], "count"),
+             _stat(f"Today $ ({word})", round(t["pnl_usd"], 2), "usd"),
+             _stat(f"All time $ ({word})", round(d["pnl_total_usd"], 2), "usd")]
+    if isinstance(bal, dict) and bal.get("cash") is not None:
+        stats.append(_stat("Polymarket cash", round(float(bal["cash"]), 2), "usd"))
+    return _panel("predict", status, last, ctx.text(doing), _headline(d["open"], "count", f"{word} positions open"),
+                  stats, events, rule=d["rule"], positions=d["positions"], label=d["label"], mode=d.get("mode"))
 
 
 def _upgrades(ctx: _Ctx, deploy: dict[str, str | None], started_at: float | None) -> dict[str, Any]:

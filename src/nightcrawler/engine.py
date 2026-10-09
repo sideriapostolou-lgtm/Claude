@@ -2636,7 +2636,7 @@ def build_app(settings: Settings, clock: Clock | None = None, *, session: Any = 
     if settings.polydesk_enabled:
         from nightcrawler.polydesk import PolyDesk
 
-        polydesk = PolyDesk(settings)
+        polydesk = PolyDesk(settings, ledger=ledger)  # live orders and settlements are receipted in the chain
         polydesk.start()
     return App(settings=settings, clock=clock, stop_event=stop_event, http=http, sources=sources, ledger=ledger,
                crawler=crawler, cocoon=cocoon, radar=radar, judge=judge, risk=risk, broker=broker,
