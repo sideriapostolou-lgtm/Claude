@@ -21,6 +21,7 @@ from nightcrawler import engine as engine_mod
 from nightcrawler.cli import EXIT_CONFIG, EXIT_ERROR, EXIT_OK, EXIT_USAGE, EXIT_VERIFY_FAILED, main
 from nightcrawler.config import load_settings
 from nightcrawler.learn import job as learn_job
+from nightcrawler.learn.variants import load_seeds
 from nightcrawler.ledger import Ledger
 from world import GARY, World, make_world
 
@@ -409,15 +410,16 @@ def test_learn_run_then_status(env, monkeypatch, capsys) -> None:
     assert nc("learn", "run") == EXIT_OK
     assert signal.getsignal(signal.SIGTERM) == term  # its stop handlers are removed again
     out = capsys.readouterr().out
-    assert "learner ok" in out and "registered 5" in out
+    seeds = len(load_seeds())  # the benchmark, 3 lab points and two placebo controls
+    assert "learner ok" in out and f"registered {seeds}" in out
     assert applied == []  # a person's run is theirs to limit; only the bot's own child limits itself
     assert nc("learn", "status") == EXIT_OK
     out = capsys.readouterr().out
-    assert "Strategy versions (5)" in out and "random entry (control)" in out
-    assert "waiting for the bot to receipt them: 6" in out and "last run" in out.lower()
+    assert f"Strategy versions ({seeds})" in out and "random entry (control)" in out
+    assert f"waiting for the bot to receipt them: {seeds + 1}" in out and "last run" in out.lower()
     assert nc("learn", "status", "--json") == EXIT_OK
     data = json.loads(capsys.readouterr().out)
-    assert data["store"]["variants"] == 5 and data["store"]["outbox"]["pending"] == 6
+    assert data["store"]["variants"] == seeds and data["store"]["outbox"]["pending"] == seeds + 1
     assert data["card"]["state"] == "collecting" and data["last_run"]["status"] == "ok"
     assert data["enabled"] is True and data["recorder"] is None  # no bot has run here
 
@@ -427,7 +429,7 @@ def test_learn_says_which_seed_the_settings_put_out_of_bounds(env, monkeypatch, 
     monkeypatch.setenv("MAX_HOLD_MIN", "480")  # a valid setting, beyond the learner's hard range [5, 360]
     assert nc("learn", "run") == EXIT_OK
     out = capsys.readouterr().out
-    assert "learner ok" in out and "registered 3" in out and "skipped 2 seeds" in out
+    assert "learner ok" in out and "registered 3" in out and "skipped 3 seeds" in out  # incl. both placebos
     assert nc("learn", "status") == EXIT_OK
     out = capsys.readouterr().out
     assert "Warning: Not tested (outside the learner's limits): the Settings benchmark" in out

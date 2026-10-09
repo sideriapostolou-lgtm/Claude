@@ -81,6 +81,14 @@ def test_scoreboard_rows_by_day(store) -> None:
                                                "status": "testing", "updated_ts": T + 86400}]
 
 
+def test_a_wide_universe_row_is_listed_after_the_others(store) -> None:
+    """The dashboard shows the first control: the bot-universe placebo, never the research-only W host."""
+    for h, wide in (("a-wide", True), ("b", False), ("c", False)):
+        store.put_scoreboard("2026-10-08", h, {"n": 1, "control": True, "wide": wide}, T)
+    store.put_scoreboard("2026-10-08", "0-old", {"n": 1}, T)  # a row written before the flag existed
+    assert [r["variant_hash"] for r in store.scoreboard("2026-10-08")] == ["0-old", "b", "c", "a-wide"]
+
+
 def test_meta_round_trips_json(store) -> None:
     assert store.get_meta("tape.offsets", {}) == {}
     store.set_meta("tape.offsets", {"2026-10-08/candles.jsonl": 120})
@@ -125,6 +133,45 @@ def test_summary_counts_coins_fetches_variants_evidence_and_the_outbox(store) ->
     assert found["fetches"] == {"pending": 4, "done": 1, "failed": 1}
     assert found["variants"] == 1 and found["evidence"] == 1
     assert found["outbox"] == {"rows": 2, "receipted": 1, "pending": 1}
+
+
+EXT = {"variant_hash": "v1", "mint": "M1", "t_dec": T + 120.0, "t_in": T + 180.0, "t_out": T + 900.0,
+       "exit_reason": "stop_loss", "partials": [{"ts": 1_791_475_500, "price": 0.462, "fraction": 0.5}],
+       "decisions": [{"t_dec": T + 120.0, "last_ts": 1_791_475_260, "entry_ts": T + 180.0, "metrics": {"dip": 0.6}},
+                     {"t_dec": T + 2000.0, "last_ts": 1_791_477_140, "entry_ts": None, "metrics": {}}],
+       "sim_hash": "s1"}
+
+
+def test_trades_ext_keeps_the_first_trades_exit_partials_and_every_enter_signal(store) -> None:
+    """PR-S side table (docs/EXPERIENCE §4.2): one row per (variant, coin) next to its evidence."""
+    store.put_trade_ext(EXT)
+    assert store.trade_ext("v1", "M1") == EXT
+    refused = {**EXT, "mint": "M2", "t_dec": None, "t_in": None, "t_out": None, "exit_reason": None, "partials": [],
+               "decisions": [{"t_dec": T, "last_ts": 1, "entry_ts": None, "metrics": {}}]}  # refused at the fill
+    store.put_trade_ext(refused)
+    store.put_trade_ext({**EXT, "exit_reason": "time_stop", "sim_hash": "s2"})  # replayed again: replaced
+    assert store.trade_ext("v1", "M1")["exit_reason"] == "time_stop"
+    assert [r["mint"] for r in store.trades_ext("v1")] == ["M1", "M2"]
+    assert [r["mint"] for r in store.trades_ext("v1", sim_hash="s2")] == ["M1"]
+    assert store.trades_ext("v2") == [] and store.trade_ext("v1", "nope") is None
+    store.delete_trade_ext("v1", "M2")
+    assert [r["mint"] for r in store.trades_ext("v1")] == ["M1"]
+
+
+def test_an_older_learn_db_gains_trades_ext_and_stays_readable_by_older_builds(tmp_path) -> None:
+    """An added table older builds ignore: the version stays 1, so a rollback still opens learn.db."""
+    path = tmp_path / "learn" / "learn.db"
+    with LearnStore(path) as st:
+        st.add_coin("M1", created_ts=T, first_seen_ts=T, day="2026-10-08")
+    conn = sqlite3.connect(path)
+    conn.execute("DROP TABLE trades_ext")  # what a learn.db written before PR-S looks like
+    conn.close()
+    with LearnStore(path) as st:
+        assert st.coin("M1") is not None
+        st.put_trade_ext(EXT)
+        assert st.trade_ext("v1", "M1") == EXT
+    assert SCHEMA_VERSION == 1
+    assert sqlite3.connect(path).execute("PRAGMA user_version").fetchone()[0] == 1
 
 
 def test_newest_created_of_a_day(store) -> None:

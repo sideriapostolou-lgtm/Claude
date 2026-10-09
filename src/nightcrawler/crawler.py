@@ -31,6 +31,22 @@ individual creators, and such a candidate's platform count is filed under
 ``audit["deployerMints"]`` (``raw["deployer"]`` names the platform) so the
 cocoon's ``devMints`` rule does not misfire on it either.
 
+TESTED UNIVERSE (G01 + N3): every result we have (lab census, CryptoHouse, lab2, the Coach replay)
+covers pump.fun graduates quoted in SOL that are not Mayhem coins, so the bot trades only those:
+:func:`universe_problem` refuses another launchpad (bags.fun, launch services ...), a coin without one
+and a known non-SOL launch quote; the cocoon refuses Mayhem coins (their on-chain supply is 2e9).
+These are permanent, so they run right after the audit checks.
+
+AGE FROM GRADUATION (G12): ``MIN_AGE_MIN`` counts from creation, so a slow graduate created long ago
+could be bought the minute it graduated (inside the BOOST bid and the lab's 30-min ban). Now a coin also
+needs ``MIN_AGE_SINCE_GRAD_MIN`` since its graduation (:func:`graduated_at`: Jupiter ``graduatedAt``; for
+a graduate Jupiter reported without one, ONE GeckoTerminal token lookup, ``launchpad.completed_at``, at most
+:data:`GRADUATION_LOOKUPS_PER_POLL` per poll and once per :data:`GRADUATION_RETRY_S` per mint). A coin too
+young since graduation, still on its bonding curve, or whose graduation time is not known yet WAITS in the
+nursery (never traded blind, never marked seen); its maturity is its ELIGIBLE time, the later of creation
++ ``MIN_AGE_MIN`` and graduation + ``MIN_AGE_SINCE_GRAD_MIN``. The engine's entry check and the Coach replay
+apply the same window (``engine._universe_problem``, ``learn/replay.py``).
+
 PERSISTENCE (RT-14): :meth:`Crawler.export_nursery` / :meth:`Crawler.restore_nursery`
 let the engine keep the nursery in the ledger kv across redeploys (bounded by
 :data:`NURSERY_MAX`; entries too old to mature are dropped on restore).
@@ -41,16 +57,16 @@ order Jupiter search/recent > Jupiter trending > GeckoTerminal.
 
 NURSERY (why): the "recent"/"new_pools" feeds only cover the last few
 minutes, but entries need ``age >= MIN_AGE_MIN`` (60 min). Too-young
-candidates therefore go into :attr:`Crawler.nursery` instead of being
+candidates (and the other waits above) therefore go into :attr:`Crawler.nursery` instead of being
 forgotten (their Jupiter ``stats`` are dropped there: they would be an hour
 stale by the time the token matures). On every poll, nursery entries that
-have matured (``now - created_at >= MIN_AGE_MIN*60``) are refreshed with ONE
+have matured (their eligible time has come) are refreshed with ONE
 DexScreener batch (<= 60 mints per poll = 2 calls), their
 mcap/liquidity/price/pool updated from the snapshot, and prefiltered again:
 pass -> emitted; fail (or DexScreener does not know the mint: ``"no market
 data"``) -> dropped and marked seen. If the refresh call itself fails the
-entries stay for the next poll. Entries still in the nursery once older than
-``MIN_AGE_MIN + NURSERY_GRACE_MIN`` or beyond :data:`NURSERY_MAX` (oldest
+entries stay for the next poll. Entries still in the nursery once
+``NURSERY_GRACE_MIN`` past their eligible time or beyond :data:`NURSERY_MAX` (oldest
 first) are dropped (not marked seen).
 
 Live measurement (2026-10-08): Jupiter ``recent`` lists ~70-80 new tokens per
@@ -71,12 +87,13 @@ from typing import Any, Callable, Final, Iterable, Sequence, TypeGuard
 from nightcrawler.base58 import is_pubkey
 from nightcrawler.clock import Clock
 from nightcrawler.config import Settings
+from nightcrawler.costs import SOL_QUOTE
 from nightcrawler.http import HttpError
 from nightcrawler.logging_setup import get_logger
 from nightcrawler.models import SOL_MINT, MarketSnapshot, TokenCandidate
 from nightcrawler.sources import Sources
 from nightcrawler.sources._parse import parse_ts, to_float
-from nightcrawler.sources.geckoterminal import pool_to_candidate
+from nightcrawler.sources.geckoterminal import graduation_time, pool_to_candidate
 from nightcrawler.sources.jupiter import token_to_candidate
 
 __all__ = [
@@ -90,7 +107,15 @@ __all__ = [
     "GT_FEED_PAUSE_S",
     "KNOWN_LAUNCHPAD_DEPLOYERS",
     "FACTORY_DEV_MINTS_MIN",
+    "TESTED_LAUNCHPADS",
+    "SOL_QUOTE_MINTS",
+    "GRADUATION_LOOKUPS_PER_POLL",
+    "GRADUATION_RETRY_S",
+    "NOT_GRADUATED",
+    "GRADUATION_UNKNOWN",
     "launchpad_deployer",
+    "universe_problem",
+    "graduated_at",
 ]
 
 log = get_logger(__name__)
@@ -125,8 +150,20 @@ KNOWN_LAUNCHPAD_DEPLOYERS: Final[dict[str, str]] = {
 #: (factory) deployer, not a person: individual creators measured live 2026-10-08 topped out near
 #: 22k (bots included), shared deployers started above 150k.
 FACTORY_DEV_MINTS_MIN = 100_000
+#: The only launchpad whose graduates any test covered (G01, N3; lower case, as Jupiter's ``launchpad``).
+TESTED_LAUNCHPADS: Final = frozenset({"pump.fun"})
+#: Launch quotes that are SOL: wrapped SOL (pool quote) and the pump.fun census's native-SOL marker.
+SOL_QUOTE_MINTS: Final = frozenset({SOL_MINT, SOL_QUOTE})
+#: GeckoTerminal token lookups per poll for a graduation time Jupiter did not send (GT is the scarcest budget).
+GRADUATION_LOOKUPS_PER_POLL = 2
+#: A mint GeckoTerminal could not date is asked again at most this often (seconds; < GT_FEED_PAUSE_S).
+GRADUATION_RETRY_S = 120.0
 TRENDING_WINDOW: Final = "1h"
 TOO_YOUNG = "too young"
+NOT_GRADUATED = "not graduated yet"
+GRADUATION_UNKNOWN = "graduation time unknown"
+#: Prefilter reasons that mean "not yet": the candidate waits in the nursery instead of being rejected.
+_WAITS = (TOO_YOUNG, NOT_GRADUATED, GRADUATION_UNKNOWN)
 NO_MARKET_DATA = "no market data"
 
 
@@ -157,6 +194,8 @@ class Crawler:
         self._rejected = 0
         self._feed_errors: Counter[str] = Counter()
         self._gt_paused_until = 0.0
+        self._graduation_tried: dict[str, float] = {}  # mint -> last GeckoTerminal graduation lookup
+        self._graduation_lookups_left = 0
 
     # ------------------------------------------------------------------ poll
     def poll(self) -> list[TokenCandidate]:
@@ -177,6 +216,7 @@ class Crawler:
         now = self.clock.now()
         self._polls += 1
         self.last_rejected = []
+        self._graduation_lookups_left = GRADUATION_LOOKUPS_PER_POLL
         self.expire_seen(now)
         self._remember_promotions(now)
 
@@ -203,18 +243,47 @@ class Crawler:
         return emitted
 
     def _decide(self, candidate: TokenCandidate, now: float, emitted: list[TokenCandidate]) -> None:
-        """Prefilter one candidate: emit it, park it in the nursery, or reject it."""
+        """Prefilter one candidate: emit it, park it in the nursery (a wait, :data:`_WAITS`), or reject it.
+        A graduate without a graduation time gets one GeckoTerminal lookup first (bounded, see the docstring)."""
         self._apply_promotion(candidate)
         _file_platform_mints(candidate)
         ok, reason = self.prefilter(candidate, now)
+        if reason == GRADUATION_UNKNOWN and self._lookup_graduation(candidate, now):
+            ok, reason = self.prefilter(candidate, now)
         if ok:
             self.seen[candidate.mint] = now
             emitted.append(candidate)
-        elif reason.startswith(TOO_YOUNG):
+        elif reason.startswith(_WAITS):
             candidate.stats = {}
             self.nursery[candidate.mint] = candidate
         else:
             self._reject(candidate, reason, now)
+
+    def _lookup_graduation(self, c: TokenCandidate, now: float) -> bool:
+        """G12 fallback: GeckoTerminal's ``launchpad.completed_at`` for a graduate Jupiter sent no ``graduatedAt``
+        for. True when ``c`` now carries a graduation time. Bounded per poll and per mint, paused with the rest of
+        the crawler's GeckoTerminal calls after a 429, skipped when the source has no ``token`` lookup."""
+        lookup = getattr(self.sources.gecko, "token", None)
+        last = self._graduation_tried.get(c.mint)
+        if (lookup is None or self._graduation_lookups_left <= 0 or now < self._gt_paused_until
+                or (last is not None and now - last < GRADUATION_RETRY_S)):
+            return False
+        self._graduation_lookups_left -= 1
+        self._graduation_tried[c.mint] = now
+        limited: list[bool] = []
+        found = self._fetch("gt_graduation", lambda: [lookup(c.mint)], limited)
+        if limited:
+            self._gt_paused_until = now + GT_FEED_PAUSE_S
+            log.warning("crawler_gt_paused seconds=%.0f: GeckoTerminal rate limit on a graduation lookup",
+                        GT_FEED_PAUSE_S)
+        when = graduation_time(found[0]) if found else None
+        if when is None:
+            log.info("crawler_graduation_unknown mint=%s: waiting (never traded blind)", c.mint)
+            return False
+        c.raw = {**c.raw, "graduated_at": when, "graduated_at_source": "geckoterminal"}
+        c.graduated = True
+        self._graduation_tried.pop(c.mint, None)
+        return True
 
     def _reject(self, candidate: TokenCandidate, reason: str, now: float) -> None:
         self.seen[candidate.mint] = now
@@ -316,22 +385,34 @@ class Crawler:
             _apply_snapshot(candidate, snapshot, now)
             self._decide(candidate, now, emitted)
 
+    def _eligible_at(self, c: TokenCandidate) -> float | None:
+        """When ``c`` may first be traded: creation + ``MIN_AGE_MIN``, or graduation + ``MIN_AGE_SINCE_GRAD_MIN``
+        when that is later (G12). None without a creation time (such an entry never matures)."""
+        created = _created_at(c)
+        if created is None:
+            return None
+        eligible = created + self.settings.min_age_min * 60
+        graduated = graduated_at(c)
+        if graduated is not None:
+            eligible = max(eligible, graduated + self.settings.min_age_since_grad_min * 60)
+        return eligible
+
     def _matured(self, now: float, skip: set[str]) -> list[TokenCandidate]:
-        """Nursery entries at least ``MIN_AGE_MIN`` old, oldest first, at most :data:`NURSERY_REFRESH_PER_POLL`."""
-        min_age_s = self.settings.min_age_min * 60
+        """Nursery entries whose eligible time has come, the longest waiting first, at most
+        :data:`NURSERY_REFRESH_PER_POLL`."""
         ready: list[tuple[float, TokenCandidate]] = []
         for mint, candidate in self.nursery.items():
-            created = _created_at(candidate)
-            if mint not in skip and created is not None and now - created >= min_age_s:
-                ready.append((created, candidate))
+            eligible = self._eligible_at(candidate)
+            if mint not in skip and eligible is not None and now >= eligible:
+                ready.append((eligible, candidate))
         ready.sort(key=lambda pair: pair[0])
         return [candidate for _, candidate in ready[:NURSERY_REFRESH_PER_POLL]]
 
     def _prune_nursery(self, now: float) -> None:
-        """Drop entries past ``MIN_AGE_MIN + NURSERY_GRACE_MIN``, then the oldest beyond :data:`NURSERY_MAX`."""
-        max_age_s = (self.settings.min_age_min + NURSERY_GRACE_MIN) * 60
+        """Drop entries ``NURSERY_GRACE_MIN`` past their eligible time, then the oldest beyond :data:`NURSERY_MAX`."""
+        grace_s = NURSERY_GRACE_MIN * 60
         stale = [m for m, c in self.nursery.items()
-                 if (created := _created_at(c)) is not None and now - created > max_age_s]
+                 if (eligible := self._eligible_at(c)) is not None and now - eligible > grace_s]
         for mint in stale:
             del self.nursery[mint]
         overflow = len(self.nursery) - NURSERY_MAX
@@ -353,11 +434,11 @@ class Crawler:
         """Load :meth:`export_nursery` output saved before a restart; returns how many were restored.
 
         Garbage, invalid or ignored mints, entries without a creation time (they could never
-        mature), mints already known (nursery or seen) and entries older than
-        ``MIN_AGE_MIN + NURSERY_GRACE_MIN`` are skipped; the result is bounded like the live
+        mature), mints already known (nursery or seen) and entries more than ``NURSERY_GRACE_MIN``
+        past their eligible time are skipped; the result is bounded like the live
         nursery (:data:`NURSERY_MAX`, oldest dropped).
         """
-        max_age_s = (self.settings.min_age_min + NURSERY_GRACE_MIN) * 60
+        grace_s = NURSERY_GRACE_MIN * 60
         added: list[str] = []
         for item in items if isinstance(items, (list, tuple)) else []:
             if not isinstance(item, dict):
@@ -367,10 +448,13 @@ class Crawler:
             except (TypeError, ValueError, KeyError, AttributeError):
                 continue
             created = parse_ts(candidate.created_at)
-            if (created is None or not _is_tradable_mint(candidate.mint) or now - created > max_age_s
-                    or candidate.mint in self.nursery or candidate.mint in self.seen):
+            if created is None or not _is_tradable_mint(candidate.mint):
                 continue
             candidate.created_at, candidate.stats = created, {}
+            eligible = self._eligible_at(candidate)
+            if (eligible is None or now - eligible > grace_s
+                    or candidate.mint in self.nursery or candidate.mint in self.seen):
+                continue
             self.nursery[candidate.mint] = candidate
             added.append(candidate.mint)
         self._prune_nursery(now)
@@ -391,15 +475,22 @@ class Crawler:
           cocoon would hard-fail it anyway, so it is rejected for free here) -
           individual creators only: a launchpad's shared deployer
           (:func:`launchpad_deployer`) says nothing about the coin's creator;
+        * outside the tested universe (:func:`universe_problem`, G01): another launchpad, none, or a
+          known non-SOL launch quote;
         * age known and ``age_min < MIN_AGE_MIN`` or ``age_min > MAX_AGE_H*60``
           (age is measured at ``now`` from ``created_at`` when known);
+        * graduation time known (:func:`graduated_at`) and less than ``MIN_AGE_SINCE_GRAD_MIN`` ago
+          (``"too young: 12.0 min since graduation"``, G12);
         * mcap known and outside ``[MIN_MCAP_USD, MAX_MCAP_USD]``;
         * liquidity known and ``< MIN_LIQUIDITY_USD`` (unknown liquidity, e.g.
           bonding curve, passes here - Cocoon/Quote impact decide later);
-        * ``organic_score`` known and ``< MIN_ORGANIC_SCORE`` (when that setting > 0).
-        Unknown values never reject. ``reason`` is ``"ok"`` when passing.
-        The permanent checks (audit) run before the age check, so a
-        "too young" verdict means the token is worth re-checking later.
+        * ``organic_score`` known and ``< MIN_ORGANIC_SCORE`` (when that setting > 0);
+        * graduation time unknown: :data:`NOT_GRADUATED` while the coin is still on its bonding curve
+          (``graduated is False``), else :data:`GRADUATION_UNKNOWN` (the caller may ask GeckoTerminal).
+        Unknown MARKET values never reject; an unknown universe never passes (fail closed). ``reason`` is
+        ``"ok"`` when passing. The permanent checks (audit, universe) run before the age checks, so a
+        "too young" verdict means the token is worth re-checking later; "too young", :data:`NOT_GRADUATED` and
+        :data:`GRADUATION_UNKNOWN` are waits (:meth:`poll` keeps such candidates in the nursery).
         """
         s = self.settings
         audit = c.audit or {}
@@ -412,12 +503,18 @@ class Crawler:
         dev_mints = to_float(audit.get("devMints"))
         if dev_mints is not None and dev_mints > s.cocoon_dev_mints_max and launchpad_deployer(c) is None:
             return False, f"serial launcher: dev minted {dev_mints:.0f} tokens"
+        outside = universe_problem(c)
+        if outside is not None:
+            return False, outside
         age_min = _age_min(c, now)
         if age_min is not None:
             if age_min < s.min_age_min:
                 return False, f"{TOO_YOUNG}: {age_min:.1f} min"
             if age_min > s.max_age_h * 60:
                 return False, f"too old: {age_min / 60:.1f} h"
+        graduated = graduated_at(c)
+        if graduated is not None and (now - graduated) / 60 < s.min_age_since_grad_min:
+            return False, f"{TOO_YOUNG}: {(now - graduated) / 60:.1f} min since graduation"
         if c.mcap_usd is not None:
             if c.mcap_usd < s.min_mcap_usd:
                 return False, f"mcap too low: ${c.mcap_usd:,.0f}"
@@ -427,6 +524,9 @@ class Crawler:
             return False, f"liquidity too low: ${c.liquidity_usd:,.0f}"
         if s.min_organic_score > 0 and c.organic_score is not None and c.organic_score < s.min_organic_score:
             return False, f"organic score too low: {c.organic_score:.1f}"
+        if graduated is None:
+            return False, (f"{NOT_GRADUATED}: still on the bonding curve" if c.graduated is False
+                           else GRADUATION_UNKNOWN)
         return True, "ok"
 
     # ------------------------------------------------------------------ snapshots
@@ -460,6 +560,7 @@ class Crawler:
         expired = [m for m, ts in self.seen.items() if ts < cutoff]
         for mint in expired:
             del self.seen[mint]
+        self._graduation_tried = {m: ts for m, ts in self._graduation_tried.items() if now - ts < GRADUATION_RETRY_S}
         for mint in list(self._promoted):
             labels = {k: ts for k, ts in self._promoted[mint].items() if ts >= cutoff}
             if labels:
@@ -524,6 +625,34 @@ def launchpad_deployer(c: TokenCandidate) -> str | None:
     if c.launchpad and mints is not None and mints >= FACTORY_DEV_MINTS_MIN:
         return f"{c.launchpad} platform deployer"
     return None
+
+
+def universe_problem(c: TokenCandidate) -> str | None:
+    """Why ``c`` is outside the universe every test covered (G01 + N3), or None.
+
+    The universe is pump.fun graduates quoted in SOL, not Mayhem: another launchpad (``"untested launchpad:
+    bags.fun"``) or none at all (``"not a pump.fun launch: ..."``: Jupiter names no launchpad, or only a
+    GeckoTerminal pool reported the coin) is outside it, and so is a known non-SOL launch quote
+    (``raw["quote_mint"]``, stated by a pump.fun curve pool). Mayhem coins are refused by the cocoon, which
+    reads the mint's on-chain supply. The engine runs the same check before every entry.
+    """
+    raw = c.raw if isinstance(c.raw, dict) else {}
+    quote = raw.get("quote_mint")
+    if quote and quote not in SOL_QUOTE_MINTS:
+        return f"not SOL-quoted: quote mint {str(quote)[:44]}"
+    launchpad = str(c.launchpad or "").strip()
+    if not launchpad:
+        return "not a pump.fun launch: no launchpad reported"
+    if launchpad.lower() not in TESTED_LAUNCHPADS:
+        return f"untested launchpad: {launchpad[:40]}"
+    return None
+
+
+def graduated_at(c: TokenCandidate) -> float | None:
+    """When ``c`` left its bonding curve (epoch s): ``raw["graduated_at"]``, from Jupiter's ``graduatedAt`` or the
+    GeckoTerminal fallback (``raw["graduated_at_source"] == "geckoterminal"``); None when unknown (G12)."""
+    raw = c.raw if isinstance(c.raw, dict) else {}
+    return parse_ts(raw.get("graduated_at"))
 
 
 def _file_platform_mints(c: TokenCandidate) -> None:

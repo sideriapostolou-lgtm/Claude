@@ -10,20 +10,25 @@ The candles come from GeckoTerminal and live in `data/samples/`. Every trade is 
 
 | Coin | Night (UTC) | Trades | Wins | Net P&L | Return | Max drawdown | Paid in costs |
 |------|-------------|-------:|-----:|--------:|-------:|-------------:|--------------:|
-| HIGGS | Oct 4 22:00 to Oct 5 06:00 | 5 | 2 | **-$2.08** | -2.1 % | 12.9 % | $2.48 |
-| HOOKI | Oct 5 22:00 to Oct 6 07:00 | 10 | 1 | **-$25.79** | -25.8 % | 26.8 % | $4.36 |
-| Both | | 15 | 3 | **-$27.87** | -13.9 % | | $6.84 |
+| HIGGS | Oct 4 22:00 to Oct 5 06:00 | 5 | 2 | **-$8.32** | -8.3 % | 17.0 % | $2.37 |
+| HOOKI | Oct 5 22:00 to Oct 6 07:00 | 9 | 1 | **-$26.10** | -26.1 % | 27.1 % | $3.89 |
+| Both | | 14 | 3 | **-$34.42** | -17.2 % | | $6.26 |
 
 How the trades closed:
 - HIGGS: 2 stop losses, 2 time stops (one of them a winner) and 1 take-profit followed by a trailing stop.
-- HOOKI: 9 stop losses and 1 take-profit followed by a trailing stop.
+- HOOKI: 8 stop losses and 1 take-profit followed by a trailing stop.
+
+These numbers fill every stop where its market sell really lands (G22, 2026-10-09). With the
+earlier fill model (a stop at `min(level, close)` of the minute that triggered it) the same
+nights gave HIGGS -$2.08 and HOOKI -$25.79: that model was optimistic, because a falling coin
+keeps falling while the sell is on its way.
 
 ## Compared with the post's claims (its bankroll, ~$2.7K positions)
 
 | Coin | Start | Claimed | Backtest, with costs | Backtest, zero costs (impossible best case) |
 |------|------:|--------:|---------------------:|--------------------------------------------:|
-| HIGGS | $12,161 | +$5,479 | **-$1,529.45** (6 trades) | -$99.03 (5 trades) |
-| HOOKI | $17,608 | +$6,271 | **-$4,686.68** (10 trades) | -$3,169.02 (9 trades) |
+| HIGGS | $12,161 | +$5,479 | **-$2,311.15** (6 trades) | -$800.44 (5 trades) |
+| HOOKI | $17,608 | +$6,271 | **-$4,604.05** (9 trades) | -$2,367.53 (8 trades) |
 
 For these runs, positions were set with `POSITION_PCT 0.25` and capped at `MAX_POSITION_USD $2,700`.
 At $2.7K per trade, the linear impact model charges about 4 % per side, so costs alone take
@@ -46,9 +51,12 @@ most of whatever edge such a strategy has.
   $1K) and $0.05 network fee per side. You never get the close you decided on.
 - Exits are checked inside each candle in **pessimistic** order, filled the way a bot that
   polls the price every 10 seconds could fill them:
-  - A gap through a stop fills at the open.
-  - A stop inside a candle fills at the stop level, or at the close when the candle closed
-    below it (a poller never gets the exact level of a candle that kept falling).
+  - A stop, a trailing stop or a time exit is a market sell. It fills at the lowest price
+    (`min(open, low)`) of the minute it lands in: the next minute when the stop was crossed
+    inside a minute, the same minute when the price gapped through the stop at its open (or the
+    time ran out). It never fills better than the stop level, or the close of a minute that
+    closed below it. So a gap fills below the stop, and a rug is booked where the sell really
+    filled, not at the stop.
   - The take-profit fills only when the candle **closes** at or above it; a one-minute wick
     through it is not a fill.
   - If the stop and the take-profit are both inside one candle, the stop wins.
@@ -57,7 +65,8 @@ most of whatever edge such a strategy has.
 - Missing minutes are filled with flat, zero-volume candles, exactly like the live candle
   client does, so a gap breaks a run of green candles in both.
 - This fill model is part of `CostModel` (`stop_fill`, `tp_needs_close`, `peak_from`) and is
-  recorded with every result. The optimistic model the first published runs used is
+  recorded with every result. `CostModel(stop_fill="close")` is the model used until
+  2026-10-09 (HIGGS -$2.08, HOOKI -$25.79). The optimistic model the first published runs used is
   `CostModel(stop_fill="level", tp_needs_close=False, peak_from="high")`; it gave HIGGS -$1.42
   and HOOKI -$23.66 on these nights.
 - Position size uses the same `risk.size_position_usd` math as the live bot, and starting

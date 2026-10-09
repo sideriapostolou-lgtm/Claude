@@ -43,6 +43,10 @@ def iso(ts: float) -> str:
 def jup_token_to_candidate(token: dict[str, Any], now: float, source: str) -> TokenCandidate:
     """Double of ``sources.jupiter.token_to_candidate`` written from its docstring."""
     created = parse_ts(get_path(token, "firstPool.createdAt")) or parse_ts(token.get("createdAt"))
+    graduated_at = parse_ts(token.get("graduatedAt"))
+    raw: dict[str, Any] = {"jupiter_id": token["id"]}
+    if graduated_at is not None:
+        raw["graduated_at"] = graduated_at
     return TokenCandidate(
         mint=token["id"],
         symbol=token.get("symbol") or "",
@@ -58,12 +62,13 @@ def jup_token_to_candidate(token: dict[str, Any], now: float, source: str) -> To
         holder_count=to_int(token.get("holderCount")),
         dev=token.get("dev"),
         launchpad=token.get("launchpad"),
-        graduated=True if token.get("graduatedPool") else (False if token.get("launchpad") else None),
+        graduated=True if token.get("graduatedPool") or graduated_at is not None else (
+            False if token.get("launchpad") else None),
         organic_score=to_float(token.get("organicScore")),
         audit=dict(token.get("audit") or {}),
         stats={w: token[f"stats{w}"] for w in ("5m", "1h", "6h", "24h") if token.get(f"stats{w}")},
         socials={k: token[k] for k in ("twitter", "website", "telegram") if token.get(k)},
-        raw={"jupiter_id": token["id"]},
+        raw=raw,
         discovered_at=now,
     )
 
@@ -76,12 +81,14 @@ def gt_pool_to_candidate(pool: dict[str, Any], now: float, source: str = "gt_new
     created = pool.get("created_at")
     gt_dex = pool.get("dex") or ""
     dex = {"pump-fun": "pumpfun", "meteora-dbc": "meteoradbc"}.get(gt_dex, gt_dex.replace("-", ""))
+    curve = gt_dex == "pump-fun"
+    raw = {"gt_pool": pool["pool"], **({"quote_mint": pool["quote_mint"]} if curve and pool.get("quote_mint") else {})}
     return TokenCandidate(
         mint=base, symbol=pool.get("base_symbol") or "", pool=pool["pool"], dex=dex or None, sources=[source],
         created_at=created, age_min=(now - created) / 60 if created else None,
         mcap_usd=pool.get("mcap_usd") or pool.get("fdv_usd"), liquidity_usd=pool.get("reserve_usd"),
         price_usd=pool.get("price_usd"), graduated=False if dex in ("pumpfun", "meteoradbc") else None,
-        raw={"gt_pool": pool["pool"]}, discovered_at=now,
+        launchpad="pump.fun" if curve else None, raw=raw, discovered_at=now,
     )
 
 
@@ -95,7 +102,12 @@ def contract_converters(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def jup_token(m: str, *, age_min: float = 90.0, now: float = NOW, mcap: float | None = 500_000.0,
-              liquidity: float | None = 60_000.0, audit: dict[str, Any] | None = None, **extra: Any) -> dict[str, Any]:
+              liquidity: float | None = 60_000.0, audit: dict[str, Any] | None = None,
+              graduated_min: float | None = None, **extra: Any) -> dict[str, Any]:
+    """A pump.fun coin as Jupiter reports it. It graduated ``graduated_min`` minutes before ``now`` (default:
+    at creation, an instant graduate: ``graduatedPool`` + ``graduatedAt``); ``graduated_min=-1`` = still on
+    the curve (no graduation fields)."""
+    graduated_min = age_min if graduated_min is None else graduated_min
     token = {
         "id": m, "symbol": "TKN", "name": "Token",
         "firstPool": {"id": f"pool-{m[:6]}", "createdAt": iso(now - age_min * MIN)},
@@ -103,6 +115,8 @@ def jup_token(m: str, *, age_min: float = 90.0, now: float = NOW, mcap: float | 
         "audit": {"mintAuthorityDisabled": True, "freezeAuthorityDisabled": True, "devMints": 1, **(audit or {})},
         "twitter": "https://x.com/tkn", "stats1h": {"numBuys": 120, "numSells": 80},
     }
+    if graduated_min >= 0:
+        token.update(graduatedPool=f"pool-{m[:6]}", graduatedAt=iso(now - graduated_min * MIN))
     token.update(extra)
     return token
 
@@ -146,6 +160,9 @@ class FakeGecko:
     def __init__(self) -> None:
         self.pages: dict[int, list[dict[str, Any]] | Exception] = {}
         self.pages_requested: list[int] = []
+        #: ``token(mint)`` answers: a launchpad ``completed_at`` (epoch s), None (404) or an exception
+        self.completed: dict[str, float | None | Exception] = {}
+        self.token_calls: list[str] = []
 
     def new_pools(self, page: int = 1) -> list[dict[str, Any]]:
         self.pages_requested.append(page)
@@ -153,6 +170,17 @@ class FakeGecko:
         if isinstance(result, Exception):
             raise result
         return list(result)
+
+    def token(self, mint: str) -> dict[str, Any] | None:
+        """``GeckoTerminalClient.token`` as documented: ``launchpad.completed_at`` is the graduation time."""
+        self.token_calls.append(mint)
+        answer = self.completed.get(mint)
+        if isinstance(answer, Exception):
+            raise answer
+        if answer is None:
+            return None
+        return {"mint": mint, "launchpad": {"graduation_percentage": 100.0, "completed": True,
+                                            "completed_at": answer, "migrated_pool": None}}
 
 
 class FakeDexScreener:
@@ -215,10 +243,15 @@ def mints_of(candidates: list[TokenCandidate]) -> list[str]:
 
 
 def base_candidate(**changes: Any) -> TokenCandidate:
+    """A pump.fun graduate inside every window: created and graduated 90 min ago."""
     c = TokenCandidate(mint=mint(1), created_at=NOW - 90 * MIN, age_min=90.0, mcap_usd=500_000.0,
-                       liquidity_usd=60_000.0, organic_score=40.0, discovered_at=NOW,
+                       liquidity_usd=60_000.0, organic_score=40.0, discovered_at=NOW, launchpad="pump.fun",
+                       graduated=True, raw={"graduated_at": NOW - 90 * MIN},
                        audit={"mintAuthorityDisabled": True, "freezeAuthorityDisabled": True, "devMints": 1})
     return dataclasses.replace(c, **changes)
+
+
+USDC = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
 
 
 PREFILTER_CASES = [
@@ -247,6 +280,36 @@ PREFILTER_CASES = [
     ("permanent_checks_before_age", dict(audit={"isSus": True}, created_at=NOW - 5 * MIN), {},
      "suspicious: Jupiter audit.isSus"),
     ("age_before_market_checks", dict(created_at=NOW - 5 * MIN, mcap_usd=1_000.0), {}, "too young: 5.0 min"),
+    # G01 + N3: only the universe every test covered - pump.fun launches, SOL-quoted (Mayhem: the cocoon)
+    ("no_launchpad", dict(launchpad=None), {}, "not a pump.fun launch: no launchpad reported"),
+    ("untested_launchpad", dict(launchpad="bags.fun"), {}, "untested launchpad: bags.fun"),
+    ("launchpad_name_case", dict(launchpad="Pump.Fun"), {}, "ok"),
+    ("not_sol_quoted", dict(raw={"graduated_at": NOW - 90 * MIN, "quote_mint": USDC}), {},
+     f"not SOL-quoted: quote mint {USDC}"),
+    ("wrapped_sol_quote", dict(raw={"graduated_at": NOW - 90 * MIN, "quote_mint": SOL_MINT}), {}, "ok"),
+    ("native_sol_quote", dict(raw={"graduated_at": NOW - 90 * MIN, "quote_mint": "1" * 32}), {}, "ok"),
+    ("audit_before_universe", dict(audit={"isSus": True}, launchpad="bags.fun"), {},
+     "suspicious: Jupiter audit.isSus"),
+    ("universe_is_permanent_so_before_age", dict(launchpad="bags.fun", created_at=NOW - 5 * MIN), {},
+     "untested launchpad: bags.fun"),
+    # G12: age since GRADUATION as well as since creation
+    ("graduated_too_recently", dict(raw={"graduated_at": NOW - 29 * MIN}), {}, "too young: 29.0 min since graduation"),
+    ("graduated_exactly_the_window", dict(raw={"graduated_at": NOW - 30 * MIN}), {}, "ok"),
+    ("slow_graduate_old_since_creation", dict(created_at=NOW - 5 * HOUR, raw={"graduated_at": NOW - 10 * MIN}), {},
+     "too young: 10.0 min since graduation"),
+    ("graduation_window_setting", dict(raw={"graduated_at": NOW - 29 * MIN}), {"MIN_AGE_SINCE_GRAD_MIN": 20}, "ok"),
+    ("graduation_window_off", dict(raw={"graduated_at": NOW}), {"MIN_AGE_SINCE_GRAD_MIN": 0}, "ok"),
+    ("creation_age_still_counts", dict(created_at=NOW - 59 * MIN, raw={"graduated_at": NOW - 59 * MIN}), {},
+     "too young: 59.0 min"),
+    ("graduation_age_before_market_checks", dict(raw={"graduated_at": NOW - 10 * MIN}, mcap_usd=1_000.0), {},
+     "too young: 10.0 min since graduation"),
+    ("graduation_time_as_iso_text", dict(raw={"graduated_at": iso(NOW - 29 * MIN)}), {},
+     "too young: 29.0 min since graduation"),
+    ("still_on_the_curve", dict(graduated=False, raw={}), {}, "not graduated yet: still on the bonding curve"),
+    ("graduation_time_unknown", dict(raw={}), {}, "graduation time unknown"),
+    ("graduation_unknown_and_not_known_graduated", dict(graduated=None, raw={}), {}, "graduation time unknown"),
+    ("market_checks_before_the_graduation_wait", dict(graduated=False, raw={}, mcap_usd=1_000.0), {},
+     "mcap too low: $1,000"),
 ]
 
 
@@ -300,15 +363,18 @@ def test_poll_merges_feeds_and_emits_newest_first(world: World) -> None:
 
     out = world.crawler.poll()
 
-    assert mints_of(out) == [d, a, b, c]
+    assert mints_of(out) == [a, b, c]
     by_mint = {x.mint: x for x in out}
     assert by_mint[b].sources == ["jupiter_recent", "jupiter_trending_1h"]
     assert by_mint[b].mcap_usd == 300_000  # Jupiter recent wins over trending
     assert by_mint[a].sources == ["jupiter_recent", "gt_new_pools"]
     assert by_mint[a].pool == f"pool-{a[:6]}"  # Jupiter wins over GeckoTerminal
-    assert by_mint[d].dex == "pumpswap" and by_mint[d].sources == ["gt_new_pools"]
+    # G01: a PumpSwap pool alone proves no pump.fun launch (anyone can open one): outside the tested universe
+    [(rejected, why)] = world.crawler.last_rejected
+    assert rejected.mint == d and why == "not a pump.fun launch: no launchpad reported"
+    assert rejected.dex == "pumpswap" and rejected.sources == ["gt_new_pools"]
     assert world.gecko.pages_requested == [1, 2] and world.jupiter.trending_windows == ["1h"]
-    assert set(world.crawler.seen) == {a, b, c, d} and world.crawler.last_rejected == []
+    assert set(world.crawler.seen) == {a, b, c, d}
 
 
 def test_poll_dedupes_with_seen_ttl(world: World) -> None:
@@ -507,6 +573,130 @@ def test_promotion_seen_while_in_the_nursery_is_kept(world: World) -> None:
     assert c.paid_promo and "dexscreener_boost" in c.sources
 
 
+# --------------------------------------------------------------------------- age from GRADUATION (G12)
+
+
+def test_a_slow_graduate_waits_for_the_graduation_window_not_the_creation_one(world: World) -> None:
+    """A coin created 5 h ago that graduated 10 min ago used to pass the age check at once (inside the BOOST
+    bid and the lab's 30-min ban): it now waits in the nursery until 30 min after graduation, past the
+    creation-based grace period, and is emitted from there on fresh market data."""
+    a = mint(1)
+    world.jupiter.trending = [jup_token(a, age_min=300, graduated_min=10)]
+    assert world.crawler.poll() == [] and world.crawler.last_rejected == []
+    assert a in world.crawler.nursery and a not in world.crawler.seen
+    world.jupiter.trending = []
+    world.dex.known[a] = snapshot(a)
+    world.clock.advance(19 * MIN)  # 29 min after graduation: not yet, and no refresh is spent on it
+    assert world.crawler.poll() == [] and world.dex.snapshot_calls == [] and a in world.crawler.nursery
+    world.clock.advance(1 * MIN)
+    out = world.crawler.poll()
+    assert mints_of(out) == [a] and world.dex.snapshot_calls == [[a]]
+    assert out[0].raw["graduated_at"] == NOW - 10 * MIN and world.gecko.token_calls == []
+
+
+def test_a_graduation_wait_expires_after_the_grace_period_from_its_window(world: World) -> None:
+    a = mint(1)
+    world.jupiter.trending = [jup_token(a, age_min=300, graduated_min=10)]
+    world.crawler.poll()
+    world.jupiter.trending = []
+    world.dex.snapshot_error = boom("tokens")
+    world.clock.advance((20 + crawler_mod.NURSERY_GRACE_MIN) * MIN)  # exactly window + GRACE
+    world.crawler.poll()
+    assert a in world.crawler.nursery
+    world.clock.advance(1)
+    world.crawler.poll()
+    assert a not in world.crawler.nursery and a not in world.crawler.seen
+
+
+def test_a_coin_still_on_its_bonding_curve_waits_and_is_emitted_after_graduating(world: World) -> None:
+    """G01: graduates only. A curve coin waits (market checks first, so the dead majority is still refused);
+    once DexScreener shows its AMM pair, GeckoTerminal tells when it graduated and the window applies."""
+    a, dead = mint(1), mint(2)
+    world.jupiter.recent = [jup_token(a, age_min=70, graduated_min=-1),
+                            jup_token(dead, age_min=70, graduated_min=-1, mcap=4_000)]
+    assert world.crawler.poll() == []
+    assert [(c.mint, r) for c, r in world.crawler.last_rejected] == [(dead, "mcap too low: $4,000")]
+    assert a in world.crawler.nursery and world.gecko.token_calls == []  # Jupiter says: still on the curve
+    world.jupiter.recent = []
+    world.dex.known[a] = snapshot(a, dex="pumpswap")  # it graduated now
+    world.gecko.completed[a] = world.clock.now() + 30
+    world.clock.advance(30)
+    assert world.crawler.poll() == [] and world.gecko.token_calls == [a]
+    assert world.crawler.nursery[a].raw["graduated_at"] == NOW + 30
+    assert world.crawler.nursery[a].raw["graduated_at_source"] == "geckoterminal"
+    world.clock.advance(30 * MIN)
+    assert mints_of(world.crawler.poll()) == [a] and world.gecko.token_calls == [a]  # asked once
+
+
+def test_a_graduate_without_jupiter_graduated_at_asks_geckoterminal_once(world: World) -> None:
+    a = mint(1)
+    world.jupiter.trending = [jup_token(a, graduated_min=-1, graduatedPool=f"pool-{a[:6]}")]
+    world.gecko.completed[a] = NOW - 90 * MIN
+    out = world.crawler.poll()
+    assert mints_of(out) == [a] and world.gecko.token_calls == [a]
+    assert out[0].raw["graduated_at"] == NOW - 90 * MIN and out[0].raw["graduated_at_source"] == "geckoterminal"
+
+
+def test_graduation_lookups_are_bounded_retried_later_and_never_guessed(world: World, monkeypatch) -> None:
+    monkeypatch.setattr(crawler_mod, "GRADUATION_LOOKUPS_PER_POLL", 2)
+    a, b, c = mint(1), mint(2), mint(3)
+    world.jupiter.trending = [jup_token(m, graduated_min=-1, graduatedPool=f"pool-{m[:6]}") for m in (a, b, c)]
+    world.gecko.completed = {a: None, b: boom("gt")}  # GeckoTerminal does not know a; b fails
+    assert world.crawler.poll() == [] and world.crawler.last_rejected == []
+    assert len(world.gecko.token_calls) == 2  # the per-poll budget; GT is the scarcest one
+    assert set(world.crawler.nursery) == {a, b, c} and not world.crawler.seen  # waiting, never traded blind
+    world.jupiter.trending = []
+    world.dex.known = {m: snapshot(m) for m in (a, b, c)}
+    world.clock.advance(30)
+    world.crawler.poll()
+    assert sorted(world.gecko.token_calls) == sorted([a, b, c])  # c's turn; a and b wait for the retry time
+    world.gecko.completed = {m: NOW - 2 * HOUR for m in (a, b, c)}
+    world.clock.advance(crawler_mod.GRADUATION_RETRY_S)
+    first = mints_of(world.crawler.poll())
+    assert len(first) == 2 and len(world.gecko.token_calls) == 5  # still two lookups per poll
+    world.clock.advance(30)
+    assert set(first + mints_of(world.crawler.poll())) == {a, b, c} and len(world.gecko.token_calls) == 6
+
+
+def test_a_geckoterminal_429_on_a_graduation_lookup_pauses_every_crawler_gt_call(world: World) -> None:
+    a = mint(1)
+    world.jupiter.trending = [jup_token(a, graduated_min=-1, graduatedPool=f"pool-{a[:6]}")]
+    world.gecko.completed[a] = HttpError("HTTP 429", url="https://api.geckoterminal.com/x", status=429,
+                                         retryable=True)
+    world.crawler.poll()
+    assert world.gecko.token_calls == [a] and world.gecko.pages_requested == [1, 2]
+    assert crawler_mod.GRADUATION_RETRY_S < crawler_mod.GT_FEED_PAUSE_S
+    world.clock.advance(crawler_mod.GRADUATION_RETRY_S)  # the retry is due, the pause is not over
+    world.crawler.poll()
+    assert world.gecko.token_calls == [a] and world.gecko.pages_requested == [1, 2]  # paused: no GT call at all
+    world.gecko.completed[a] = NOW - 2 * HOUR
+    world.clock.advance(crawler_mod.GT_FEED_PAUSE_S - crawler_mod.GRADUATION_RETRY_S)
+    assert mints_of(world.crawler.poll()) == [a] and world.gecko.token_calls == [a, a]
+
+
+def test_without_a_graduation_source_the_coin_waits(make_settings, fake_clock) -> None:
+    """A duck-typed GeckoTerminal client without ``token`` (tests, a future source swap) is no reason to guess."""
+
+    class FeedOnlyGecko:
+        def new_pools(self, page: int = 1) -> list[dict[str, Any]]:
+            return []
+
+    jupiter = FakeJupiter()
+    sources = Sources(dexscreener=FakeDexScreener(), gecko=FeedOnlyGecko(), rugcheck=None,  # type: ignore[arg-type]
+                      jupiter=jupiter, rpc=None)  # type: ignore[arg-type]
+    crawler = Crawler(sources, make_settings(), fake_clock)
+    a = mint(1)
+    jupiter.trending = [jup_token(a, graduated_min=-1, graduatedPool=f"pool-{a[:6]}")]
+    assert crawler.poll() == [] and a in crawler.nursery and crawler.stats()["feed_errors"] == {}
+
+
+def test_the_nursery_restore_keeps_a_graduation_wait(world: World) -> None:
+    a = mint(1)
+    saved = [{"mint": a, "created_at": NOW - 5 * HOUR, "launchpad": "pump.fun", "graduated": True,
+              "raw": {"graduated_at": NOW - 10 * MIN}}]
+    assert world.crawler.restore_nursery(saved, NOW) == 1  # 5 h since creation, but its window is still ahead
+
+
 # --------------------------------------------------------------------------- refresh / memory / stats
 
 
@@ -569,7 +759,8 @@ def test_a_geckoterminal_429_pauses_the_optional_feed(world: World) -> None:
     world.crawler.poll()
     assert world.gecko.pages_requested == [1]  # still paused
     world.clock.advance(1)
-    assert mints_of(world.crawler.poll()) == [d]
+    world.crawler.poll()
+    assert d in mints_of(world.crawler.last_fetched)  # read again (a lone PumpSwap pool: outside the universe)
     assert world.gecko.pages_requested == [1, 1, 2]
 
 
@@ -579,46 +770,57 @@ BAGS_DEPLOYER = "BAGSB9TpGrZxQbEsrEznv5jXXdwyP6AXerN8aVRiAmcv"
 LAUNCH_SERVICE = "bwamJzztZsepfkteWRChggmXuiiCQvpLqPietdNfSXa"
 PERSON = mint(77)
 
+UNTESTED = "not a pump.fun launch: no launchpad reported"
 DEPLOYER_CASES = [
-    # (id, dev, launchpad, devMints, expected prefilter reason)
-    ("person_serial_on_pumpfun", PERSON, "pump.fun", 21, "serial launcher: dev minted 21 tokens"),
-    ("person_bot_on_pumpfun", PERSON, "pump.fun", 7_306, "serial launcher: dev minted 7306 tokens"),
-    ("person_at_the_limit", PERSON, "pump.fun", 20, "ok"),
-    ("person_without_launchpad", PERSON, None, 21, "serial launcher: dev minted 21 tokens"),
-    ("known_bags_deployer", BAGS_DEPLOYER, "bags.fun", 190_960, "ok"),
-    ("known_launch_service_on_pumpfun", LAUNCH_SERVICE, "pump.fun", 169_827, "ok"),
-    ("known_deployer_without_launchpad_field", LAUNCH_SERVICE, None, 169_827, "ok"),
-    ("platform_scale_deployer_with_launchpad", PERSON, "stonkfun", crawler_mod.FACTORY_DEV_MINTS_MIN, "ok"),
-    ("just_below_platform_scale", PERSON, "stonkfun", crawler_mod.FACTORY_DEV_MINTS_MIN - 1,
+    # (id, dev, launchpad, devMints, platform deployer?, expected prefilter reason). A platform's shared deployer is
+    # never a serial launcher; a coin from an untested launchpad is still refused (G01), for that reason only.
+    ("person_serial_on_pumpfun", PERSON, "pump.fun", 21, False, "serial launcher: dev minted 21 tokens"),
+    ("person_bot_on_pumpfun", PERSON, "pump.fun", 7_306, False, "serial launcher: dev minted 7306 tokens"),
+    ("person_at_the_limit", PERSON, "pump.fun", 20, False, "ok"),
+    ("person_without_launchpad", PERSON, None, 21, False, "serial launcher: dev minted 21 tokens"),
+    ("known_bags_deployer", BAGS_DEPLOYER, "bags.fun", 190_960, True, "untested launchpad: bags.fun"),
+    ("known_launch_service_on_pumpfun", LAUNCH_SERVICE, "pump.fun", 169_827, True, "ok"),
+    ("known_deployer_without_launchpad_field", LAUNCH_SERVICE, None, 169_827, True, UNTESTED),
+    ("platform_scale_deployer_with_launchpad", PERSON, "stonkfun", crawler_mod.FACTORY_DEV_MINTS_MIN, True,
+     "untested launchpad: stonkfun"),
+    ("platform_scale_deployer_on_pumpfun", PERSON, "pump.fun", crawler_mod.FACTORY_DEV_MINTS_MIN, True, "ok"),
+    ("just_below_platform_scale", PERSON, "stonkfun", crawler_mod.FACTORY_DEV_MINTS_MIN - 1, False,
      f"serial launcher: dev minted {crawler_mod.FACTORY_DEV_MINTS_MIN - 1} tokens"),
-    ("platform_scale_without_launchpad", PERSON, None, crawler_mod.FACTORY_DEV_MINTS_MIN,
+    ("platform_scale_without_launchpad", PERSON, None, crawler_mod.FACTORY_DEV_MINTS_MIN, False,
      f"serial launcher: dev minted {crawler_mod.FACTORY_DEV_MINTS_MIN} tokens"),
 ]
 
 
-@pytest.mark.parametrize("dev,launchpad,dev_mints,expected", [c[1:] for c in DEPLOYER_CASES],
+@pytest.mark.parametrize("dev,launchpad,dev_mints,platform,expected", [c[1:] for c in DEPLOYER_CASES],
                          ids=[c[0] for c in DEPLOYER_CASES])
 def test_launchpad_deployers_are_not_serial_launchers(make_settings, fake_clock, dev, launchpad, dev_mints,
-                                                      expected) -> None:
+                                                      platform, expected) -> None:
     crawler = Crawler(Sources(None, None, None, None, None), make_settings(), fake_clock)  # type: ignore[arg-type]
     c = base_candidate(dev=dev, launchpad=launchpad,
                        audit={"mintAuthorityDisabled": True, "freezeAuthorityDisabled": True, "devMints": dev_mints})
     assert crawler.prefilter(c, NOW) == (expected == "ok", expected)
-    assert (crawler_mod.launchpad_deployer(c) is not None) is (expected == "ok" and dev_mints > 20)
+    assert (crawler_mod.launchpad_deployer(c) is not None) is platform
+    if platform:
+        assert not expected.startswith("serial launcher")
 
 
 def test_a_launchpad_deployed_candidate_reaches_the_cocoon_without_the_platform_mint_count(world: World) -> None:
     """The cocoon's serial-launcher rule reads ``audit.devMints``: for a shared deployer that number
-    counts the whole platform, so the crawler files it under ``deployerMints`` instead."""
-    a, b = mint(1), mint(2)
-    world.jupiter.trending = [jup_token(a, dev=BAGS_DEPLOYER, launchpad="bags.fun", audit={"devMints": 190_960}),
-                              jup_token(b, dev=PERSON, audit={"devMints": 7})]
-    out = {c.mint: c for c in world.crawler.poll()}
+    counts the whole platform, so the crawler files it under ``deployerMints`` instead (an untested
+    launchpad's coin is refused, but for being outside the universe, never as a serial launcher)."""
+    a, b, c = mint(1), mint(2), mint(3)
+    world.jupiter.trending = [jup_token(a, dev=LAUNCH_SERVICE, audit={"devMints": 169_827}),
+                              jup_token(b, dev=PERSON, audit={"devMints": 7}),
+                              jup_token(c, dev=BAGS_DEPLOYER, launchpad="bags.fun", audit={"devMints": 190_960})]
+    out = {x.mint: x for x in world.crawler.poll()}
     assert set(out) == {a, b}
-    assert "devMints" not in out[a].audit and out[a].audit["deployerMints"] == 190_960
-    assert out[a].raw["deployer"] == {"address": BAGS_DEPLOYER, "label": "bags.fun"}
-    assert out[a].dev == BAGS_DEPLOYER  # what Jupiter reported stays visible
+    assert "devMints" not in out[a].audit and out[a].audit["deployerMints"] == 169_827
+    assert out[a].raw["deployer"] == {"address": LAUNCH_SERVICE, "label": "launch service (pump.fun, stonkfun)"}
+    assert out[a].dev == LAUNCH_SERVICE  # what Jupiter reported stays visible
     assert out[b].audit["devMints"] == 7 and "deployer" not in out[b].raw  # a person's history still counts
+    [(bags, why)] = world.crawler.last_rejected
+    assert bags.mint == c and why == "untested launchpad: bags.fun"
+    assert bags.audit["deployerMints"] == 190_960 and bags.raw["deployer"]["label"] == "bags.fun"
 
 
 # --------------------------------------------------------------------------- nursery persistence (RT-14)
@@ -699,16 +901,16 @@ def test_poll_with_real_o1_clients(monkeypatch, fake_http, http_client, make_set
     reasons = {c.mint: r for c, r in crawler.last_rejected}
     assert reasons["8RScxJmdMU58Kt1WiYM6jx7wvZXtXwfqY8ZZceAcCKJL"].startswith("suspicious")
     assert reasons["G5pUPqCZBzYVpSCwSE1b1JvhTjdGAMepJUhmDMpPn2ES"].startswith("serial launcher")
-    assert reasons["pumpCmXqMfrsAkQ5r49WcJnRayYRqmXz6ae8H7H9Dfn"].startswith("too old")
+    # G01: the PUMP token and the other trending coins are no pump.fun launches (Jupiter names no launchpad)
+    assert reasons["pumpCmXqMfrsAkQ5r49WcJnRayYRqmXz6ae8H7H9Dfn"] == "not a pump.fun launch: no launchpad reported"
     gt_bases = {"5wjVDmEnfayycCSihhx1hU2qG3mRSkSkxxqU5KRTMvdt", "E7VTCpUtES5uQX2FkWgLDn7TkqLutZeThFoxCYBHpqD4",
                 "EkKg6JJyjsoQhYDyt6DC5mUvgq3kpWZYkyTD2hRXpump"}
-    assert set(crawler.nursery) == gt_bases  # ~29 min old at 16:00Z
-
-    fake_clock.advance(61 * MIN)  # same feeds again: the GT pools are mature now, their fresh data decides
-    assert crawler.poll() == []
-    assert {m for m in gt_bases if reasons.get(m) is None} == gt_bases
-    assert {c.mint for c, r in crawler.last_rejected if r.startswith("mcap too low")} == gt_bases
+    # Meteora curve/DAMM pools: outside the tested universe at once, so they never take a nursery slot
+    assert {m for m in gt_bases if reasons[m] == "not a pump.fun launch: no launchpad reported"} == gt_bases
     assert not crawler.nursery
+
+    fake_clock.advance(61 * MIN)  # same feeds again: nothing is re-evaluated before the seen TTL
+    assert crawler.poll() == [] and crawler.last_rejected == [] and not crawler.nursery
 
 
 @pytest.mark.live

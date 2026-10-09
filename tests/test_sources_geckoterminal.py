@@ -14,6 +14,7 @@ from nightcrawler.sources.geckoterminal import (
     HEADERS,
     OHLCV_MAX_LIMIT,
     GeckoTerminalClient,
+    graduation_time,
     normalize_pool,
     pool_to_candidate,
 )
@@ -172,6 +173,32 @@ def test_pool_to_candidate_dex_ids(gt_dex, expected):
     assert cand.dex == expected and cand.sources == ["gt_trending"]
     assert cand.graduated is (False if gt_dex == "pump-fun" else None)
     assert cand.age_min is None and cand.symbol == ""
+    # G01: only pump.fun's own bonding curve proves the launchpad (anyone can open a PumpSwap pool)
+    assert cand.launchpad == ("pump.fun" if gt_dex == "pump-fun" else None)
+
+
+def test_a_pump_fun_curve_pool_states_the_coins_launch_quote():
+    """The curve's quote is the coin's launch quote (G01: SOL-quoted only); another pool's quote proves nothing."""
+    usdc = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+    curve = pool_to_candidate({"base_mint": "M", "quote_mint": usdc, "dex": "pump-fun", "pool": "P"}, now=0.0)
+    assert curve.raw == {"gt_pool": "P", "quote_mint": usdc}
+    amm = pool_to_candidate({"base_mint": "M", "quote_mint": usdc, "dex": "pumpswap", "pool": "P"}, now=0.0)
+    assert amm.raw == {"gt_pool": "P"}
+    unknown = pool_to_candidate({"base_mint": "M", "dex": "pump-fun", "pool": "P"}, now=0.0)
+    assert unknown.raw == {"gt_pool": "P"}
+
+
+def test_graduation_time_is_the_launchpads_completed_at(client, fake_http):
+    """G12 fallback: GeckoTerminal's ``launchpad_details.completed_at`` when the curve completed, else None."""
+    fake_http.register_fixture(f"/tokens/{GARY}", "gt_token")
+    assert graduation_time(client.token(GARY)) == parse_ts("2026-10-08T13:28:26Z")
+    curve = {"launchpad": {"graduation_percentage": -0.08, "completed": False, "completed_at": None}}
+    assert graduation_time(curve) is None
+    contradictory = {"launchpad": {"completed": False, "completed_at": 1_791_466_106.0}}
+    assert graduation_time(contradictory) is None  # never trust a time GeckoTerminal itself calls unfinished
+    assert graduation_time({"launchpad": {"completed": None, "completed_at": 1_791_466_106.0}}) == 1_791_466_106.0
+    for nothing in (None, {}, {"launchpad": None}, {"launchpad": "x"}, "garbage"):
+        assert graduation_time(nothing) is None
 
 
 @pytest.mark.parametrize("base", [None, "", SOL_MINT])

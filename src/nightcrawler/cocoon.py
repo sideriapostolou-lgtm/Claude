@@ -37,6 +37,12 @@ dashboard can group them - start each with the rule id shown in brackets):
   RugCheck's best non-curve market (``RugReport.lp_locked_pct``).
   Concentrated-liquidity pools (DLMM/CLMM) report 0 % - their liquidity can be
   withdrawn at any time, so they fail this rule by design.
+* ``[mayhem]`` the mint's on-chain supply (RPC, whole tokens) is above :data:`MAYHEM_SUPPLY_TOKENS`
+  (1e9): Mayhem mode mints a second billion for its AI agent, and no test ever covered a Mayhem coin
+  (G01: 410 of 1,783 graduates, 23 %). The test is one-sided: a burned Mayhem supply can look normal,
+  so passing proves nothing (pump.fun's ``mayhem_state`` is the other signal; the engine has no
+  per-coin pump.fun lookup, the Coach's census rows carry it). An unreadable supply fails closed
+  (``source unavailable: rpc (mint supply unreadable)``).
 
 WARNINGS (not fatal; each starts with a bracketed id too): mutable metadata,
 no socials, paid promotion (DexScreener boost/profile), holder count <
@@ -78,7 +84,7 @@ unavailable source (or an unexpected error) are cached for at most 2 minutes.
 ``metrics`` keys written: ``top10_pct, max_holder_pct, creator_pct,
 insider_pct, graph_insiders, dev_mints, lp_locked_pct, holder_count,
 rugcheck_score_normalised, mint_authority, freeze_authority, extensions,
-shield_warnings, program, decimals`` (only for the stages that ran), plus
+shield_warnings, program, decimals, supply`` (whole tokens; only for the stages that ran), plus
 ``copycat_count`` (when the copycat check is on) and ``impersonates``.
 """
 
@@ -100,6 +106,7 @@ from nightcrawler.sources.rugcheck import CURVE_MARKET_TYPES, ReportUnavailable,
 __all__ = [
     "Cocoon",
     "DANGEROUS_EXTENSIONS",
+    "MAYHEM_SUPPLY_TOKENS",
     "UNAVAILABLE_CACHE_S",
     "SHIELD_FAIL_SEVERITIES",
     "MAX_TOP_HOLDERS",
@@ -119,6 +126,8 @@ DANGEROUS_EXTENSIONS = frozenset({
     "defaultAccountState",  # only when the default state is "frozen"
 })
 UNAVAILABLE_CACHE_S = 120
+#: A pump.fun mint has 1e9 whole tokens (less after burns); more means Mayhem mode's extra billion (G01).
+MAYHEM_SUPPLY_TOKENS = 1_000_000_000
 #: Jupiter Shield severities that hard-fail (``info`` only informs).
 SHIELD_FAIL_SEVERITIES = frozenset({"warning", "critical"})
 #: Max holder wallets handed to the radar.
@@ -394,6 +403,19 @@ class Cocoon:
         dangerous = _dangerous_extensions(extensions, states.get("defaultAccountState"))
         if dangerous:
             _fail(report, "token2022_ext", "dangerous Token-2022 extensions: " + ", ".join(dangerous))
+        self._check_supply(info, report)
+
+    @staticmethod
+    def _check_supply(info: dict[str, Any], report: SafetyReport) -> None:
+        """G01: Mayhem mode (see the module docstring), from the supply the RPC stage already read."""
+        supply, decimals = to_int(info.get("supply")), to_int(info.get("decimals"))
+        if supply is None or decimals is None or supply < 0 or not 0 <= decimals <= 18:
+            _unavailable(report, "rpc", "mint supply unreadable")
+            return
+        report.metrics["supply"] = supply / 10**decimals
+        if supply > MAYHEM_SUPPLY_TOKENS * 10**decimals:
+            _fail(report, "mayhem", f"supply {supply // 10**decimals:,} tokens > {MAYHEM_SUPPLY_TOKENS:,}: "
+                                    "a Mayhem-mode coin, outside the universe the bot was tested on")
 
     def _check_shield(self, c: TokenCandidate, report: SafetyReport) -> None:
         try:

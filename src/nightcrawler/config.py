@@ -272,6 +272,13 @@ class Settings:
                                 "always fetches at least DIP_LOOKBACK_H, the window the strategy and the "
                                 "backtester use)", lo=10, hi=1000)
 
+    # ---- tested universe (G01, G12): trade only what every test covered -------
+    # pump.fun graduates quoted in SOL, not Mayhem (crawler + cocoon); age counts from GRADUATION too.
+    min_age_since_grad_min: float = _f(30.0, "minutes", "Only enter a coin this long after it GRADUATED from its "
+                                       "bonding curve (Jupiter graduatedAt, GeckoTerminal as fallback); MIN_AGE_MIN "
+                                       "still counts from creation. The lab saw the first 30 min after graduation "
+                                       "lose most (no entries there)", lo=0)
+
     # ---- watchlist ----------------------------------------------------------
     watchlist_max: int = _f(15, "count", "Max tokens watched at once", lo=1, hi=100)
     watchlist_ttl_h: float = _f(6.0, "hours", "Drop a watched token after this long", lo=0, lo_open=True)
@@ -443,6 +450,8 @@ class Settings:
             problems.append("MIN_MCAP_USD must be < MAX_MCAP_USD")
         if self.min_age_min >= self.max_age_h * 60:
             problems.append("MIN_AGE_MIN must be shorter than MAX_AGE_H")
+        if self.min_age_since_grad_min >= self.max_age_h * 60:
+            problems.append("MIN_AGE_SINCE_GRAD_MIN must be shorter than MAX_AGE_H")
         for name in ("jupiter_base_url", "solana_rpc_url"):
             url = getattr(self, name)
             if not url.startswith(("http://", "https://")):

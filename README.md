@@ -10,7 +10,7 @@ It was built to test the viral "crawler + Jev judge + Grok bots" posts honestly.
 > **Read this first.** This is not a money machine.
 >
 > - **No profit is promised.** On the two nights the viral posts showed off, this bot's
->   default strategy **lost money** (HIGGS -$2.08, HOOKI -$25.79 on a $100 start). The posts'
+>   default strategy **lost money** (HIGGS -$8.32, HOOKI -$26.10 on a $100 start). The posts'
 >   own numbers did not hold up when checked against real price data. See
 >   [docs/FACTCHECK.md](docs/FACTCHECK.md) and [docs/backtests/README.md](docs/backtests/README.md).
 > - About 98 % of pump.fun coins end up as pump-and-dumps. AI "judges" have shown no proven
@@ -29,8 +29,8 @@ Think of a night shift with six workers:
 
 | Step | Worker | What it does |
 |------|--------|--------------|
-| 1 | **Crawler** | Every 30 s it reads the newest and trending Solana coins from Jupiter and DexScreener (GeckoTerminal's new-pools feed is optional, `DISCOVER_GT_NEW_POOLS`, so its small free budget is kept for price candles). Coins younger than 1 hour wait in a "nursery" until they are old enough. Cheap checks drop coins that are too old, too small, too illiquid or made by serial launchers. |
-| 2 | **Cocoon** (rug filter) | Checks each survivor with RugCheck, the Solana blockchain itself and Jupiter Shield. It **fails a coin** if: someone can still mint or freeze tokens; it has dangerous token features (transfer tax, hooks, permanent delegate); a few wallets own too much; the creator still holds a lot; an insider network holds a lot; the creator is a serial launcher; the pool's liquidity isn't locked. If any check *can't be done* (a service is down), the coin fails too. It also *warns* (never fails) about copycat tickers and names that imitate a brand or celebrity. |
+| 1 | **Crawler** | Every 30 s it reads the newest and trending Solana coins from Jupiter and DexScreener (GeckoTerminal's new-pools feed is optional, `DISCOVER_GT_NEW_POOLS`, so its small free budget is kept for price candles). Coins younger than 1 hour, or that left their bonding curve less than 30 minutes ago, wait in a "nursery" until they are old enough. Cheap checks drop coins that are too old, too small, too illiquid or made by serial launchers, and every coin outside the universe the bot was tested on: only pump.fun graduates traded against SOL (no other launchpads). |
+| 2 | **Cocoon** (rug filter) | Checks each survivor with RugCheck, the Solana blockchain itself and Jupiter Shield. It **fails a coin** if: someone can still mint or freeze tokens; it has dangerous token features (transfer tax, hooks, permanent delegate); a few wallets own too much; the creator still holds a lot; an insider network holds a lot; the creator is a serial launcher; the pool's liquidity isn't locked; it is a "Mayhem mode" coin (2 billion tokens instead of 1, never tested). If any check *can't be done* (a service is down), the coin fails too. It also *warns* (never fails) about copycat tickers and names that imitate a brand or celebrity. |
 | 3 | **Watchlist + strategy** | Up to 15 coins that passed are watched for up to 6 hours. The bot looks for one setup only, the "dip-rebound": the price fell at least 55 % from its recent high, then two closed green 1-minute candles show buyers coming back, and recent buys outnumber sells. Price candles come from GeckoTerminal; for pump.fun coins, from pump.fun itself when GeckoTerminal is rate-limited or behind (never a mix of both). |
 | 4 | **Radar** | Right before buying, checks the last 15 minutes of big trades: if the creator, an insider or a top holder is dumping, or big sells are draining the pool, **no buy**. It keeps watching open positions too. |
 | 5 | **Judge** ("Jev") | Optional. An AI (Claude, through your Anthropic API key) sees the facts and must answer yes/no **with reasons**. It only runs after every hard rule passed, can only say no to a trade (never force one), and errors count as "no". A coin's name and ticker are written by anonymous creators, so the judge only sees them cleaned, cut short and marked as untrusted. Off by default (no key needed). |
@@ -161,6 +161,7 @@ full list with explanations is in [.env.example](.env.example). The important on
 | `SOL_RESERVE` | `0.02` | SOL that is never spent (fees, deposits). |
 | `MAX_PRICE_IMPACT_PCT` | `3.0` | Skip a buy whose quote moves the price more than 3 %. |
 | `MIN_AGE_MIN` / `MAX_AGE_H` | `60` / `48` | Only coins between 1 hour and 2 days old. |
+| `MIN_AGE_SINCE_GRAD_MIN` | `30` | ... and that left their bonding curve (graduated) at least 30 minutes ago: the lab saw the first half hour after graduation lose the most. |
 | `MIN_MCAP_USD` / `MAX_MCAP_USD` | `100000` / `5000000` | Market-cap window. |
 | `MIN_LIQUIDITY_USD` | `30000` | Pool liquidity floor (when known). |
 | `DIP_PCT`, `TAKE_PROFIT_PCT`, `TRAIL_PCT`, `STOP_LOSS_PCT` | `0.55`, `0.40`, `0.15`, `0.18` | Strategy (fractions). |

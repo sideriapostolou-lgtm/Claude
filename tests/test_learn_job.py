@@ -84,7 +84,7 @@ def test_an_out_of_bounds_settings_anchor_never_stops_learning(tmp_path, coins) 
     anchor = dataclasses.replace(ANCHOR, max_hold_min=480.0)
     summary = run_job(JobConfig(data_dir=tmp_path, anchor=anchor), now=at(LATER))
     assert summary["status"] == "ok" and len(summary["registered"]) == 3 and sum(summary["days"][day].values())
-    assert len(summary["seeds_rejected"]) == 2 and "max_hold_min=480.0" in summary["seeds_rejected"][0]
+    assert len(summary["seeds_rejected"]) == 3 and "max_hold_min=480.0" in summary["seeds_rejected"][0]
     with LearnStore(db_path(tmp_path)) as store:
         assert store.get_meta("learner.last_run")["seeds_rejected"] == summary["seeds_rejected"]
         assert store.get_meta("learner.last_ok") == LATER and store.scoreboard(tape_day(LATER))

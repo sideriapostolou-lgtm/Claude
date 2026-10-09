@@ -334,7 +334,8 @@ All three default to `None`, so existing behaviour and tests are unchanged.
 | Observation lag | A minute is visible at `m + 60 + L_obs` | `lag` stream (p75); default 60 s |
 | Evaluation cadence (hook `decide_at`) | Decisions only at `t0 + k·C + phase(mint)`, where `phase = int(sha256(mint)) mod C` | Median per-coin interval from the `lag` stream; default 180 s |
 | Entry fill (hook `entry_delay_s`) | `max(open of the candle containing t_dec + L_obs + L_land, close at decision)` | `L_land` = 5 s until live data exists |
-| Exit fill | `backtest.py`'s pessimistic intrabar order: stop before take-profit, stop at `min(level, close)`, gaps at the open | Unchanged |
+| Exit fill | `backtest.py`'s pessimistic intrabar order: stop before take-profit. Stops, trails and time exits are market orders (G22, since 2026-10-09): `min(open, low)` of the candle the sell lands in (the next one for an intrabar trigger), never above `min(level, close)`; the older `close` fill was optimistic | `SimConfig.stop_fill` |
+| Graduation window | No entry until `MIN_AGE_SINCE_GRAD_MIN` after graduation (G12); the census `first_seen_ts` stands in for `graduatedAt` until the tape stores it, so the twin's window opens at most one census poll later than live's | `SimConfig.min_age_since_grad_min` |
 | Costs (hook `cost_fn`) | `src/nightcrawler/costs.py`, a port of `research/lab/costs.py`: pump.fun fee tier at that mcap, constant-product impact from `K_GRAD`, Ultra 10 bps, network fee. The MEV buffer is replaced by `PAPER_SLIPPAGE_BPS` (100 bps) per side, mirroring the paper broker. Everything is multiplied by `cost_scale[tier]` (≥ 1.0, a ratchet; §4.4) | Lab model, calibrated to Ultra quotes within 0.07 pp |
 | Impact cap | No entry if the model impact exceeds `MAX_PRICE_IMPACT_PCT` | Settings |
 | Missing data after entry | If the tape is incomplete after an entry, the trade exits at **entry × 0.5** at its time stop | Statistician P10 |

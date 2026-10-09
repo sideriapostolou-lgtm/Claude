@@ -38,7 +38,7 @@ RISKY_WHALE = "BwWK17cbHxwWBKZkUYvzxLcNQ1YVyaFezduWbtm2de6s"
 RISKY_CREATOR = "7WKdcCiZ3yrutfGrShz35bmTc4Jk3sikaMzJLaxRpjkw"
 
 ALL_RULES = {"mint_authority", "freeze_authority", "token2022_ext", "rugged", "rugcheck_danger", "top10",
-             "single_holder", "creator_holding", "insiders", "serial_launcher", "shield", "lp_unlocked"}
+             "single_holder", "creator_holding", "insiders", "serial_launcher", "shield", "lp_unlocked", "mayhem"}
 
 
 def holder(owner: str, pct: float, *, excluded: str | None = None, insider: bool = False) -> dict[str, Any]:
@@ -300,6 +300,10 @@ HARD_FAIL_CASES = [
     ("lp_unlocked/amm_without_known_lock",
      lambda w, c: _cand(pool=None)(w, _rug(markets=[market(AMM_POOL, "raydium_cpmm", None, None)],
                                             lp_locked_pct=None)(w, c)), "lp_unlocked"),
+    # G01: Mayhem mode mints a second billion for its AI agent (on-chain supply 2e9); no test ever covered one
+    ("mayhem/two_billion", _rpc(supply=2_000_000_000 * 10**6), "mayhem"),
+    ("mayhem/one_base_unit_over", _rpc(supply=1_000_000_000 * 10**6 + 1), "mayhem"),
+    ("mayhem/other_decimals", _rpc(supply=2_000_000_000 * 10**9, decimals=9), "mayhem"),
 ]
 
 
@@ -336,6 +340,7 @@ PASS_CASES = [
     ("main_pool_locked_beats_unlocked_side_pool",
      _rug(markets=[market(DLMM_POOL, "meteoraDlmm", 0.0, 0.0), market(CLEAN_POOL, "pump_fun_amm", 100.0, 70_000.0)],
           lp_locked_pct=100.0)),
+    ("supply_exactly_one_billion", _rpc(supply=1_000_000_000 * 10**6)),  # a standard pump.fun mint, nothing burned
 ]
 
 
@@ -360,6 +365,20 @@ def test_short_circuit_after_the_free_jupiter_audit(world: World) -> None:
     report = world.cocoon.check(clean_candidate(audit={"devMints": 7306}))
     assert rule_ids(report) == {"serial_launcher"} and world.calls() == (0, 0, 0)
     assert report.creator == CLEAN_CREATOR  # from the candidate's dev field
+
+
+def test_a_mayhem_coin_is_refused_with_a_clear_reason_and_its_supply_is_kept(world: World) -> None:
+    """G01: the RPC stage already reads the mint's supply; more than 1e9 whole tokens is Mayhem mode (one-sided:
+    a burned Mayhem supply can look normal, so a pass proves nothing). Shield is not asked any more."""
+    clean = world.cocoon.check(clean_candidate())
+    assert clean.passed and clean.metrics["supply"] == pytest.approx(994_092_192.206734)
+    world.cocoon.invalidate(CLEAN_MINT)
+    world.rpc.info = clean_mint_info(supply=2_000_000_000 * 10**6)
+    report = world.cocoon.check(clean_candidate())
+    assert report.passed is False and report.unverified == []
+    assert report.hard_fail_reasons == ["[mayhem] supply 2,000,000,000 tokens > 1,000,000,000: a Mayhem-mode coin, "
+                                        "outside the universe the bot was tested on"]
+    assert report.metrics["supply"] == 2_000_000_000.0 and world.calls() == (2, 2, 1)
 
 
 def test_short_circuit_after_the_rpc(world: World) -> None:
@@ -420,6 +439,10 @@ DEGRADED_CASES = [
     ("rpc_http", lambda w: setattr(w.rpc, "error", http_error(429)), "source unavailable: rpc", "rpc", (1, 1, 0)),
     ("rpc_mint_missing", lambda w: setattr(w.rpc, "info", None), "source unavailable: rpc (mint account not found)",
      "rpc", (1, 1, 0)),
+    ("rpc_supply_unreadable", lambda w: setattr(w.rpc, "info", clean_mint_info(supply=None)),
+     "source unavailable: rpc (mint supply unreadable)", "rpc", (1, 1, 0)),
+    ("rpc_decimals_unreadable", lambda w: setattr(w.rpc, "info", clean_mint_info(decimals=None)),
+     "source unavailable: rpc (mint supply unreadable)", "rpc", (1, 1, 0)),
     ("shield_http", lambda w: setattr(w.jupiter, "error", http_error()), "source unavailable: jupiter_shield",
      "jupiter_shield", (1, 1, 1)),
 ]
