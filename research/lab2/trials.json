@@ -4406,6 +4406,468 @@
    "splits": {
     "train": 1
    }
+  },
+  "Y2|0e25686fa3ef|cfg:a06543feac6c": {
+   "hypothesis": "Y2",
+   "params": {
+    "version": "y2-v1",
+    "components": [
+     "breadth",
+     "top3_share",
+     "completer_share",
+     "bundle_share",
+     "sniper_share"
+    ],
+    "organic_high": [
+     true,
+     false,
+     false,
+     false,
+     false
+    ],
+    "instant_max_delay_s": 5.0,
+    "curve_supply_tok": 793100000.0,
+    "completer_window_sol": 30.0,
+    "ref_lookback_s": 86400.0,
+    "ref_min_coins": 50,
+    "ref_warm_min": 0.99,
+    "top_tercile": 0.6666666666666666,
+    "top_quintile": 0.8,
+    "pe11": {
+     "min_delay_s": 5.0,
+     "max_delay_s": 300.0,
+     "min_buyers": 15,
+     "max_top3": 0.6
+    },
+    "entry_age_s": 1800.0,
+    "alive": "AsOf.alive(): 15-min USD volume >= 1500 and mcap >= 6000 USD",
+    "stop_pct": 0.5,
+    "hold_x60_s": 3600.0,
+    "exit_by_age_s": 10680.0,
+    "size_usd": 20.0,
+    "fill": "common.FillConfig(exit_delay_bars=1): worst, latency 30 s, entry-bar stops, exits in the next bar",
+    "placebo": "eligible and alive, +-120 s, 20 draws",
+    "selector": "T3",
+    "exit": "X60"
+   },
+   "first_seen_utc": "2026-10-09 10:43:48",
+   "splits": {
+    "train": 1
+   },
+   "cfg": {
+    "size_usd": 20.0,
+    "latency_s": 30.0,
+    "entry_fill": "worst",
+    "exit_fill": "worst",
+    "cost": {
+     "ultra_bps": 10.0,
+     "mev_bps": 20.0,
+     "priority_sol": 0.0002,
+     "base_fee_lamports": 5000,
+     "fee_mult": 1.0,
+     "impact_mult": 1.0,
+     "extra_hop_bps": 100.0
+    },
+    "rent_usd": 0.0,
+    "entry_bar_exits": true,
+    "exit_delay_bars": 1
+   }
+  },
+  "Y2|7fbce04c537f|cfg:a06543feac6c": {
+   "hypothesis": "Y2",
+   "params": {
+    "version": "y2-v1",
+    "components": [
+     "breadth",
+     "top3_share",
+     "completer_share",
+     "bundle_share",
+     "sniper_share"
+    ],
+    "organic_high": [
+     true,
+     false,
+     false,
+     false,
+     false
+    ],
+    "instant_max_delay_s": 5.0,
+    "curve_supply_tok": 793100000.0,
+    "completer_window_sol": 30.0,
+    "ref_lookback_s": 86400.0,
+    "ref_min_coins": 50,
+    "ref_warm_min": 0.99,
+    "top_tercile": 0.6666666666666666,
+    "top_quintile": 0.8,
+    "pe11": {
+     "min_delay_s": 5.0,
+     "max_delay_s": 300.0,
+     "min_buyers": 15,
+     "max_top3": 0.6
+    },
+    "entry_age_s": 1800.0,
+    "alive": "AsOf.alive(): 15-min USD volume >= 1500 and mcap >= 6000 USD",
+    "stop_pct": 0.5,
+    "hold_x60_s": 3600.0,
+    "exit_by_age_s": 10680.0,
+    "size_usd": 20.0,
+    "fill": "common.FillConfig(exit_delay_bars=1): worst, latency 30 s, entry-bar stops, exits in the next bar",
+    "placebo": "eligible and alive, +-120 s, 20 draws",
+    "selector": "T3",
+    "exit": "H178"
+   },
+   "first_seen_utc": "2026-10-09 10:43:52",
+   "splits": {
+    "train": 1
+   },
+   "cfg": {
+    "size_usd": 20.0,
+    "latency_s": 30.0,
+    "entry_fill": "worst",
+    "exit_fill": "worst",
+    "cost": {
+     "ultra_bps": 10.0,
+     "mev_bps": 20.0,
+     "priority_sol": 0.0002,
+     "base_fee_lamports": 5000,
+     "fee_mult": 1.0,
+     "impact_mult": 1.0,
+     "extra_hop_bps": 100.0
+    },
+    "rent_usd": 0.0,
+    "entry_bar_exits": true,
+    "exit_delay_bars": 1
+   }
+  },
+  "Y2|8a569c73cebb|cfg:a06543feac6c": {
+   "hypothesis": "Y2",
+   "params": {
+    "version": "y2-v1",
+    "components": [
+     "breadth",
+     "top3_share",
+     "completer_share",
+     "bundle_share",
+     "sniper_share"
+    ],
+    "organic_high": [
+     true,
+     false,
+     false,
+     false,
+     false
+    ],
+    "instant_max_delay_s": 5.0,
+    "curve_supply_tok": 793100000.0,
+    "completer_window_sol": 30.0,
+    "ref_lookback_s": 86400.0,
+    "ref_min_coins": 50,
+    "ref_warm_min": 0.99,
+    "top_tercile": 0.6666666666666666,
+    "top_quintile": 0.8,
+    "pe11": {
+     "min_delay_s": 5.0,
+     "max_delay_s": 300.0,
+     "min_buyers": 15,
+     "max_top3": 0.6
+    },
+    "entry_age_s": 1800.0,
+    "alive": "AsOf.alive(): 15-min USD volume >= 1500 and mcap >= 6000 USD",
+    "stop_pct": 0.5,
+    "hold_x60_s": 3600.0,
+    "exit_by_age_s": 10680.0,
+    "size_usd": 20.0,
+    "fill": "common.FillConfig(exit_delay_bars=1): worst, latency 30 s, entry-bar stops, exits in the next bar",
+    "placebo": "eligible and alive, +-120 s, 20 draws",
+    "selector": "T5",
+    "exit": "X60"
+   },
+   "first_seen_utc": "2026-10-09 10:43:54",
+   "splits": {
+    "train": 1
+   },
+   "cfg": {
+    "size_usd": 20.0,
+    "latency_s": 30.0,
+    "entry_fill": "worst",
+    "exit_fill": "worst",
+    "cost": {
+     "ultra_bps": 10.0,
+     "mev_bps": 20.0,
+     "priority_sol": 0.0002,
+     "base_fee_lamports": 5000,
+     "fee_mult": 1.0,
+     "impact_mult": 1.0,
+     "extra_hop_bps": 100.0
+    },
+    "rent_usd": 0.0,
+    "entry_bar_exits": true,
+    "exit_delay_bars": 1
+   }
+  },
+  "Y2|03ab70f478bb|cfg:a06543feac6c": {
+   "hypothesis": "Y2",
+   "params": {
+    "version": "y2-v1",
+    "components": [
+     "breadth",
+     "top3_share",
+     "completer_share",
+     "bundle_share",
+     "sniper_share"
+    ],
+    "organic_high": [
+     true,
+     false,
+     false,
+     false,
+     false
+    ],
+    "instant_max_delay_s": 5.0,
+    "curve_supply_tok": 793100000.0,
+    "completer_window_sol": 30.0,
+    "ref_lookback_s": 86400.0,
+    "ref_min_coins": 50,
+    "ref_warm_min": 0.99,
+    "top_tercile": 0.6666666666666666,
+    "top_quintile": 0.8,
+    "pe11": {
+     "min_delay_s": 5.0,
+     "max_delay_s": 300.0,
+     "min_buyers": 15,
+     "max_top3": 0.6
+    },
+    "entry_age_s": 1800.0,
+    "alive": "AsOf.alive(): 15-min USD volume >= 1500 and mcap >= 6000 USD",
+    "stop_pct": 0.5,
+    "hold_x60_s": 3600.0,
+    "exit_by_age_s": 10680.0,
+    "size_usd": 20.0,
+    "fill": "common.FillConfig(exit_delay_bars=1): worst, latency 30 s, entry-bar stops, exits in the next bar",
+    "placebo": "eligible and alive, +-120 s, 20 draws",
+    "selector": "T5",
+    "exit": "H178"
+   },
+   "first_seen_utc": "2026-10-09 10:43:56",
+   "splits": {
+    "train": 1
+   },
+   "cfg": {
+    "size_usd": 20.0,
+    "latency_s": 30.0,
+    "entry_fill": "worst",
+    "exit_fill": "worst",
+    "cost": {
+     "ultra_bps": 10.0,
+     "mev_bps": 20.0,
+     "priority_sol": 0.0002,
+     "base_fee_lamports": 5000,
+     "fee_mult": 1.0,
+     "impact_mult": 1.0,
+     "extra_hop_bps": 100.0
+    },
+    "rent_usd": 0.0,
+    "entry_bar_exits": true,
+    "exit_delay_bars": 1
+   }
+  },
+  "Y2|42ae6d4a712e|cfg:a06543feac6c": {
+   "hypothesis": "Y2",
+   "params": {
+    "version": "y2-v1",
+    "components": [
+     "breadth",
+     "top3_share",
+     "completer_share",
+     "bundle_share",
+     "sniper_share"
+    ],
+    "organic_high": [
+     true,
+     false,
+     false,
+     false,
+     false
+    ],
+    "instant_max_delay_s": 5.0,
+    "curve_supply_tok": 793100000.0,
+    "completer_window_sol": 30.0,
+    "ref_lookback_s": 86400.0,
+    "ref_min_coins": 50,
+    "ref_warm_min": 0.99,
+    "top_tercile": 0.6666666666666666,
+    "top_quintile": 0.8,
+    "pe11": {
+     "min_delay_s": 5.0,
+     "max_delay_s": 300.0,
+     "min_buyers": 15,
+     "max_top3": 0.6
+    },
+    "entry_age_s": 1800.0,
+    "alive": "AsOf.alive(): 15-min USD volume >= 1500 and mcap >= 6000 USD",
+    "stop_pct": 0.5,
+    "hold_x60_s": 3600.0,
+    "exit_by_age_s": 10680.0,
+    "size_usd": 20.0,
+    "fill": "common.FillConfig(exit_delay_bars=1): worst, latency 30 s, entry-bar stops, exits in the next bar",
+    "placebo": "eligible and alive, +-120 s, 20 draws",
+    "selector": "PE11",
+    "exit": "X60"
+   },
+   "first_seen_utc": "2026-10-09 10:43:58",
+   "splits": {
+    "train": 1
+   },
+   "cfg": {
+    "size_usd": 20.0,
+    "latency_s": 30.0,
+    "entry_fill": "worst",
+    "exit_fill": "worst",
+    "cost": {
+     "ultra_bps": 10.0,
+     "mev_bps": 20.0,
+     "priority_sol": 0.0002,
+     "base_fee_lamports": 5000,
+     "fee_mult": 1.0,
+     "impact_mult": 1.0,
+     "extra_hop_bps": 100.0
+    },
+    "rent_usd": 0.0,
+    "entry_bar_exits": true,
+    "exit_delay_bars": 1
+   }
+  },
+  "Y2|07df03cfeff0|cfg:a06543feac6c": {
+   "hypothesis": "Y2",
+   "params": {
+    "version": "y2-v1",
+    "components": [
+     "breadth",
+     "top3_share",
+     "completer_share",
+     "bundle_share",
+     "sniper_share"
+    ],
+    "organic_high": [
+     true,
+     false,
+     false,
+     false,
+     false
+    ],
+    "instant_max_delay_s": 5.0,
+    "curve_supply_tok": 793100000.0,
+    "completer_window_sol": 30.0,
+    "ref_lookback_s": 86400.0,
+    "ref_min_coins": 50,
+    "ref_warm_min": 0.99,
+    "top_tercile": 0.6666666666666666,
+    "top_quintile": 0.8,
+    "pe11": {
+     "min_delay_s": 5.0,
+     "max_delay_s": 300.0,
+     "min_buyers": 15,
+     "max_top3": 0.6
+    },
+    "entry_age_s": 1800.0,
+    "alive": "AsOf.alive(): 15-min USD volume >= 1500 and mcap >= 6000 USD",
+    "stop_pct": 0.5,
+    "hold_x60_s": 3600.0,
+    "exit_by_age_s": 10680.0,
+    "size_usd": 20.0,
+    "fill": "common.FillConfig(exit_delay_bars=1): worst, latency 30 s, entry-bar stops, exits in the next bar",
+    "placebo": "eligible and alive, +-120 s, 20 draws",
+    "selector": "PE11",
+    "exit": "H178"
+   },
+   "first_seen_utc": "2026-10-09 10:44:03",
+   "splits": {
+    "train": 1
+   },
+   "cfg": {
+    "size_usd": 20.0,
+    "latency_s": 30.0,
+    "entry_fill": "worst",
+    "exit_fill": "worst",
+    "cost": {
+     "ultra_bps": 10.0,
+     "mev_bps": 20.0,
+     "priority_sol": 0.0002,
+     "base_fee_lamports": 5000,
+     "fee_mult": 1.0,
+     "impact_mult": 1.0,
+     "extra_hop_bps": 100.0
+    },
+    "rent_usd": 0.0,
+    "entry_bar_exits": true,
+    "exit_delay_bars": 1
+   }
+  },
+  "Y2|82e00b03b5ec|cfg:a06543feac6c": {
+   "hypothesis": "Y2",
+   "params": {
+    "version": "y2-v1",
+    "components": [
+     "breadth",
+     "top3_share",
+     "completer_share",
+     "bundle_share",
+     "sniper_share"
+    ],
+    "organic_high": [
+     true,
+     false,
+     false,
+     false,
+     false
+    ],
+    "instant_max_delay_s": 5.0,
+    "curve_supply_tok": 793100000.0,
+    "completer_window_sol": 30.0,
+    "ref_lookback_s": 86400.0,
+    "ref_min_coins": 50,
+    "ref_warm_min": 0.99,
+    "top_tercile": 0.6666666666666666,
+    "top_quintile": 0.8,
+    "pe11": {
+     "min_delay_s": 5.0,
+     "max_delay_s": 300.0,
+     "min_buyers": 15,
+     "max_top3": 0.6
+    },
+    "entry_age_s": 1800.0,
+    "alive": "AsOf.alive(): 15-min USD volume >= 1500 and mcap >= 6000 USD",
+    "stop_pct": 0.5,
+    "hold_x60_s": 3600.0,
+    "exit_by_age_s": 10680.0,
+    "size_usd": 20.0,
+    "fill": "common.FillConfig(exit_delay_bars=1): worst, latency 30 s, entry-bar stops, exits in the next bar",
+    "placebo": "eligible and alive, +-120 s, 20 draws",
+    "selector": "ALL",
+    "exit": "H178"
+   },
+   "first_seen_utc": "2026-10-09 10:44:03",
+   "splits": {
+    "train": 1
+   },
+   "cfg": {
+    "size_usd": 20.0,
+    "latency_s": 30.0,
+    "entry_fill": "worst",
+    "exit_fill": "worst",
+    "cost": {
+     "ultra_bps": 10.0,
+     "mev_bps": 20.0,
+     "priority_sol": 0.0002,
+     "base_fee_lamports": 5000,
+     "fee_mult": 1.0,
+     "impact_mult": 1.0,
+     "extra_hop_bps": 100.0
+    },
+    "rent_usd": 0.0,
+    "entry_bar_exits": true,
+    "exit_delay_bars": 1
+   }
   }
  },
  "runs": [
@@ -5816,6 +6278,90 @@
    "over_variant_limit": false,
    "kind": "backtest",
    "session": null
+  },
+  {
+   "utc": "2026-10-09 10:43:48",
+   "hypothesis": "Y2",
+   "config": "Y2|0e25686fa3ef|cfg:a06543feac6c",
+   "split": "train",
+   "debug": false,
+   "n": 150,
+   "mean": -0.3959712553852258,
+   "over_variant_limit": false,
+   "kind": "backtest",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 10:43:52",
+   "hypothesis": "Y2",
+   "config": "Y2|7fbce04c537f|cfg:a06543feac6c",
+   "split": "train",
+   "debug": false,
+   "n": 150,
+   "mean": -0.40989996081986385,
+   "over_variant_limit": false,
+   "kind": "backtest",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 10:43:54",
+   "hypothesis": "Y2",
+   "config": "Y2|8a569c73cebb|cfg:a06543feac6c",
+   "split": "train",
+   "debug": false,
+   "n": 83,
+   "mean": -0.41350591113072555,
+   "over_variant_limit": false,
+   "kind": "backtest",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 10:43:56",
+   "hypothesis": "Y2",
+   "config": "Y2|03ab70f478bb|cfg:a06543feac6c",
+   "split": "train",
+   "debug": false,
+   "n": 83,
+   "mean": -0.35794461316497755,
+   "over_variant_limit": false,
+   "kind": "backtest",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 10:43:58",
+   "hypothesis": "Y2",
+   "config": "Y2|42ae6d4a712e|cfg:a06543feac6c",
+   "split": "train",
+   "debug": false,
+   "n": 169,
+   "mean": -0.2904755625648415,
+   "over_variant_limit": false,
+   "kind": "backtest",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 10:44:03",
+   "hypothesis": "Y2",
+   "config": "Y2|07df03cfeff0|cfg:a06543feac6c",
+   "split": "train",
+   "debug": false,
+   "n": 169,
+   "mean": -0.37974884109517615,
+   "over_variant_limit": false,
+   "kind": "backtest",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 10:44:03",
+   "hypothesis": "Y2",
+   "config": "Y2|82e00b03b5ec|cfg:a06543feac6c",
+   "split": "train",
+   "debug": false,
+   "n": 492,
+   "mean": -0.40375899876196214,
+   "over_variant_limit": false,
+   "kind": "backtest",
+   "session": null
   }
  ],
  "val_shortlists": {
@@ -5844,7 +6390,7 @@
    "first_val_run_utc": "2026-10-09 09:41:27"
   }
  },
- "n_trials_total": 2671,
+ "n_trials_total": 2678,
  "val_looks": {
   "G1": 4,
   "O1": 1,
