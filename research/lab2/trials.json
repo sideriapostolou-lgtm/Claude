@@ -867,6 +867,1194 @@
     "entry_bar_exits": true,
     "exit_delay_bars": 1
    }
+  },
+  "Y4|73e4f08e2125|cfg:a06543feac6c": {
+   "hypothesis": "Y4",
+   "params": {
+    "version": "y4-v1",
+    "levels_round_usd": [
+     10000.0,
+     25000.0,
+     50000.0,
+     100000.0,
+     250000.0,
+     500000.0,
+     1000000.0,
+     2500000.0,
+     5000000.0,
+     10000000.0
+    ],
+    "levels_shifted_usd": [
+     12800.0,
+     32000.0,
+     64000.0,
+     128000.0,
+     320000.0,
+     640000.0,
+     1280000.0,
+     3200000.0,
+     6400000.0,
+     12800000.0
+    ],
+    "shift": 1.28,
+    "n_below": 10,
+    "margin": 0.03,
+    "retest_w": 15,
+    "retest_band": 0.03,
+    "min_bar": 1,
+    "age_min_s": 600.0,
+    "age_max_s": 6900.0,
+    "stop_pct": 0.25,
+    "exit_by_age_s": 10680.0,
+    "size_usd": 20.0,
+    "usd": "levels / AsOf.sol_usd at the decision",
+    "thesis_exit": "AsOf.mcap_usd < level (bar completed after the decision), next-bar worst fill",
+    "placebo": "mcap-band matched (round bands), mcap_usd >= $10k; unmatched control",
+    "fill": "common.FillConfig(exit_delay_bars=1): worst, latency 30 s, entry-bar stop checks, next-bar exits",
+    "entry": "break",
+    "hold_min": 60,
+    "max_hold_s": 3600.0,
+    "levels": "round"
+   },
+   "first_seen_utc": "2026-10-09 04:55:10",
+   "splits": {
+    "train": 1
+   },
+   "cfg": {
+    "size_usd": 20.0,
+    "latency_s": 30.0,
+    "entry_fill": "worst",
+    "exit_fill": "worst",
+    "cost": {
+     "ultra_bps": 10.0,
+     "mev_bps": 20.0,
+     "priority_sol": 0.0002,
+     "base_fee_lamports": 5000,
+     "fee_mult": 1.0,
+     "impact_mult": 1.0,
+     "extra_hop_bps": 100.0
+    },
+    "rent_usd": 0.0,
+    "entry_bar_exits": true,
+    "exit_delay_bars": 1
+   }
+  },
+  "Y4|47cdc52b65e1|cfg:a06543feac6c": {
+   "hypothesis": "Y4",
+   "params": {
+    "version": "y4-v1",
+    "levels_round_usd": [
+     10000.0,
+     25000.0,
+     50000.0,
+     100000.0,
+     250000.0,
+     500000.0,
+     1000000.0,
+     2500000.0,
+     5000000.0,
+     10000000.0
+    ],
+    "levels_shifted_usd": [
+     12800.0,
+     32000.0,
+     64000.0,
+     128000.0,
+     320000.0,
+     640000.0,
+     1280000.0,
+     3200000.0,
+     6400000.0,
+     12800000.0
+    ],
+    "shift": 1.28,
+    "n_below": 10,
+    "margin": 0.03,
+    "retest_w": 15,
+    "retest_band": 0.03,
+    "min_bar": 1,
+    "age_min_s": 600.0,
+    "age_max_s": 6900.0,
+    "stop_pct": 0.25,
+    "exit_by_age_s": 10680.0,
+    "size_usd": 20.0,
+    "usd": "levels / AsOf.sol_usd at the decision",
+    "thesis_exit": "AsOf.mcap_usd < level (bar completed after the decision), next-bar worst fill",
+    "placebo": "mcap-band matched (round bands), mcap_usd >= $10k; unmatched control",
+    "fill": "common.FillConfig(exit_delay_bars=1): worst, latency 30 s, entry-bar stop checks, next-bar exits",
+    "entry": "retest",
+    "hold_min": 15,
+    "max_hold_s": 900.0,
+    "levels": "round"
+   },
+   "first_seen_utc": "2026-10-09 04:56:07",
+   "splits": {
+    "train": 1
+   },
+   "cfg": {
+    "size_usd": 20.0,
+    "latency_s": 30.0,
+    "entry_fill": "worst",
+    "exit_fill": "worst",
+    "cost": {
+     "ultra_bps": 10.0,
+     "mev_bps": 20.0,
+     "priority_sol": 0.0002,
+     "base_fee_lamports": 5000,
+     "fee_mult": 1.0,
+     "impact_mult": 1.0,
+     "extra_hop_bps": 100.0
+    },
+    "rent_usd": 0.0,
+    "entry_bar_exits": true,
+    "exit_delay_bars": 1
+   }
+  },
+  "Y4|9a1e9cb6fe09|cfg:a06543feac6c": {
+   "hypothesis": "Y4",
+   "params": {
+    "version": "y4-v1",
+    "levels_round_usd": [
+     10000.0,
+     25000.0,
+     50000.0,
+     100000.0,
+     250000.0,
+     500000.0,
+     1000000.0,
+     2500000.0,
+     5000000.0,
+     10000000.0
+    ],
+    "levels_shifted_usd": [
+     12800.0,
+     32000.0,
+     64000.0,
+     128000.0,
+     320000.0,
+     640000.0,
+     1280000.0,
+     3200000.0,
+     6400000.0,
+     12800000.0
+    ],
+    "shift": 1.28,
+    "n_below": 10,
+    "margin": 0.03,
+    "retest_w": 15,
+    "retest_band": 0.03,
+    "min_bar": 1,
+    "age_min_s": 600.0,
+    "age_max_s": 6900.0,
+    "stop_pct": 0.25,
+    "exit_by_age_s": 10680.0,
+    "size_usd": 20.0,
+    "usd": "levels / AsOf.sol_usd at the decision",
+    "thesis_exit": "AsOf.mcap_usd < level (bar completed after the decision), next-bar worst fill",
+    "placebo": "mcap-band matched (round bands), mcap_usd >= $10k; unmatched control",
+    "fill": "common.FillConfig(exit_delay_bars=1): worst, latency 30 s, entry-bar stop checks, next-bar exits",
+    "entry": "retest",
+    "hold_min": 60,
+    "max_hold_s": 3600.0,
+    "levels": "round"
+   },
+   "first_seen_utc": "2026-10-09 04:57:06",
+   "splits": {
+    "train": 1
+   },
+   "cfg": {
+    "size_usd": 20.0,
+    "latency_s": 30.0,
+    "entry_fill": "worst",
+    "exit_fill": "worst",
+    "cost": {
+     "ultra_bps": 10.0,
+     "mev_bps": 20.0,
+     "priority_sol": 0.0002,
+     "base_fee_lamports": 5000,
+     "fee_mult": 1.0,
+     "impact_mult": 1.0,
+     "extra_hop_bps": 100.0
+    },
+    "rent_usd": 0.0,
+    "entry_bar_exits": true,
+    "exit_delay_bars": 1
+   }
+  },
+  "Y4|273643080435|cfg:a06543feac6c": {
+   "hypothesis": "Y4",
+   "params": {
+    "version": "y4-v1",
+    "levels_round_usd": [
+     10000.0,
+     25000.0,
+     50000.0,
+     100000.0,
+     250000.0,
+     500000.0,
+     1000000.0,
+     2500000.0,
+     5000000.0,
+     10000000.0
+    ],
+    "levels_shifted_usd": [
+     12800.0,
+     32000.0,
+     64000.0,
+     128000.0,
+     320000.0,
+     640000.0,
+     1280000.0,
+     3200000.0,
+     6400000.0,
+     12800000.0
+    ],
+    "shift": 1.28,
+    "n_below": 10,
+    "margin": 0.03,
+    "retest_w": 15,
+    "retest_band": 0.03,
+    "min_bar": 1,
+    "age_min_s": 600.0,
+    "age_max_s": 6900.0,
+    "stop_pct": 0.25,
+    "exit_by_age_s": 10680.0,
+    "size_usd": 20.0,
+    "usd": "levels / AsOf.sol_usd at the decision",
+    "thesis_exit": "AsOf.mcap_usd < level (bar completed after the decision), next-bar worst fill",
+    "placebo": "mcap-band matched (round bands), mcap_usd >= $10k; unmatched control",
+    "fill": "common.FillConfig(exit_delay_bars=1): worst, latency 30 s, entry-bar stop checks, next-bar exits",
+    "entry": "break",
+    "hold_min": 15,
+    "max_hold_s": 900.0,
+    "levels": "shifted"
+   },
+   "first_seen_utc": "2026-10-09 04:57:33",
+   "splits": {
+    "train": 1
+   },
+   "cfg": {
+    "size_usd": 20.0,
+    "latency_s": 30.0,
+    "entry_fill": "worst",
+    "exit_fill": "worst",
+    "cost": {
+     "ultra_bps": 10.0,
+     "mev_bps": 20.0,
+     "priority_sol": 0.0002,
+     "base_fee_lamports": 5000,
+     "fee_mult": 1.0,
+     "impact_mult": 1.0,
+     "extra_hop_bps": 100.0
+    },
+    "rent_usd": 0.0,
+    "entry_bar_exits": true,
+    "exit_delay_bars": 1
+   }
+  },
+  "Y4|ed9fffe99c60|cfg:a06543feac6c": {
+   "hypothesis": "Y4",
+   "params": {
+    "version": "y4-v1",
+    "levels_round_usd": [
+     10000.0,
+     25000.0,
+     50000.0,
+     100000.0,
+     250000.0,
+     500000.0,
+     1000000.0,
+     2500000.0,
+     5000000.0,
+     10000000.0
+    ],
+    "levels_shifted_usd": [
+     12800.0,
+     32000.0,
+     64000.0,
+     128000.0,
+     320000.0,
+     640000.0,
+     1280000.0,
+     3200000.0,
+     6400000.0,
+     12800000.0
+    ],
+    "shift": 1.28,
+    "n_below": 10,
+    "margin": 0.03,
+    "retest_w": 15,
+    "retest_band": 0.03,
+    "min_bar": 1,
+    "age_min_s": 600.0,
+    "age_max_s": 6900.0,
+    "stop_pct": 0.25,
+    "exit_by_age_s": 10680.0,
+    "size_usd": 20.0,
+    "usd": "levels / AsOf.sol_usd at the decision",
+    "thesis_exit": "AsOf.mcap_usd < level (bar completed after the decision), next-bar worst fill",
+    "placebo": "mcap-band matched (round bands), mcap_usd >= $10k; unmatched control",
+    "fill": "common.FillConfig(exit_delay_bars=1): worst, latency 30 s, entry-bar stop checks, next-bar exits",
+    "entry": "break",
+    "hold_min": 60,
+    "max_hold_s": 3600.0,
+    "levels": "shifted"
+   },
+   "first_seen_utc": "2026-10-09 04:58:04",
+   "splits": {
+    "train": 1
+   },
+   "cfg": {
+    "size_usd": 20.0,
+    "latency_s": 30.0,
+    "entry_fill": "worst",
+    "exit_fill": "worst",
+    "cost": {
+     "ultra_bps": 10.0,
+     "mev_bps": 20.0,
+     "priority_sol": 0.0002,
+     "base_fee_lamports": 5000,
+     "fee_mult": 1.0,
+     "impact_mult": 1.0,
+     "extra_hop_bps": 100.0
+    },
+    "rent_usd": 0.0,
+    "entry_bar_exits": true,
+    "exit_delay_bars": 1
+   }
+  },
+  "Y4|2ce45ecbff4a|cfg:a06543feac6c": {
+   "hypothesis": "Y4",
+   "params": {
+    "version": "y4-v1",
+    "levels_round_usd": [
+     10000.0,
+     25000.0,
+     50000.0,
+     100000.0,
+     250000.0,
+     500000.0,
+     1000000.0,
+     2500000.0,
+     5000000.0,
+     10000000.0
+    ],
+    "levels_shifted_usd": [
+     12800.0,
+     32000.0,
+     64000.0,
+     128000.0,
+     320000.0,
+     640000.0,
+     1280000.0,
+     3200000.0,
+     6400000.0,
+     12800000.0
+    ],
+    "shift": 1.28,
+    "n_below": 10,
+    "margin": 0.03,
+    "retest_w": 15,
+    "retest_band": 0.03,
+    "min_bar": 1,
+    "age_min_s": 600.0,
+    "age_max_s": 6900.0,
+    "stop_pct": 0.25,
+    "exit_by_age_s": 10680.0,
+    "size_usd": 20.0,
+    "usd": "levels / AsOf.sol_usd at the decision",
+    "thesis_exit": "AsOf.mcap_usd < level (bar completed after the decision), next-bar worst fill",
+    "placebo": "mcap-band matched (round bands), mcap_usd >= $10k; unmatched control",
+    "fill": "common.FillConfig(exit_delay_bars=1): worst, latency 30 s, entry-bar stop checks, next-bar exits",
+    "entry": "retest",
+    "hold_min": 15,
+    "max_hold_s": 900.0,
+    "levels": "shifted"
+   },
+   "first_seen_utc": "2026-10-09 04:59:00",
+   "splits": {
+    "train": 1
+   },
+   "cfg": {
+    "size_usd": 20.0,
+    "latency_s": 30.0,
+    "entry_fill": "worst",
+    "exit_fill": "worst",
+    "cost": {
+     "ultra_bps": 10.0,
+     "mev_bps": 20.0,
+     "priority_sol": 0.0002,
+     "base_fee_lamports": 5000,
+     "fee_mult": 1.0,
+     "impact_mult": 1.0,
+     "extra_hop_bps": 100.0
+    },
+    "rent_usd": 0.0,
+    "entry_bar_exits": true,
+    "exit_delay_bars": 1
+   }
+  },
+  "Y4|c059fb3589bd|cfg:a06543feac6c": {
+   "hypothesis": "Y4",
+   "params": {
+    "version": "y4-v1",
+    "levels_round_usd": [
+     10000.0,
+     25000.0,
+     50000.0,
+     100000.0,
+     250000.0,
+     500000.0,
+     1000000.0,
+     2500000.0,
+     5000000.0,
+     10000000.0
+    ],
+    "levels_shifted_usd": [
+     12800.0,
+     32000.0,
+     64000.0,
+     128000.0,
+     320000.0,
+     640000.0,
+     1280000.0,
+     3200000.0,
+     6400000.0,
+     12800000.0
+    ],
+    "shift": 1.28,
+    "n_below": 10,
+    "margin": 0.03,
+    "retest_w": 15,
+    "retest_band": 0.03,
+    "min_bar": 1,
+    "age_min_s": 600.0,
+    "age_max_s": 6900.0,
+    "stop_pct": 0.25,
+    "exit_by_age_s": 10680.0,
+    "size_usd": 20.0,
+    "usd": "levels / AsOf.sol_usd at the decision",
+    "thesis_exit": "AsOf.mcap_usd < level (bar completed after the decision), next-bar worst fill",
+    "placebo": "mcap-band matched (round bands), mcap_usd >= $10k; unmatched control",
+    "fill": "common.FillConfig(exit_delay_bars=1): worst, latency 30 s, entry-bar stop checks, next-bar exits",
+    "entry": "retest",
+    "hold_min": 60,
+    "max_hold_s": 3600.0,
+    "levels": "shifted"
+   },
+   "first_seen_utc": "2026-10-09 04:59:58",
+   "splits": {
+    "train": 1
+   },
+   "cfg": {
+    "size_usd": 20.0,
+    "latency_s": 30.0,
+    "entry_fill": "worst",
+    "exit_fill": "worst",
+    "cost": {
+     "ultra_bps": 10.0,
+     "mev_bps": 20.0,
+     "priority_sol": 0.0002,
+     "base_fee_lamports": 5000,
+     "fee_mult": 1.0,
+     "impact_mult": 1.0,
+     "extra_hop_bps": 100.0
+    },
+    "rent_usd": 0.0,
+    "entry_bar_exits": true,
+    "exit_delay_bars": 1
+   }
+  },
+  "Z1|6652c49c45fc|cfg:a06543feac6c": {
+   "hypothesis": "Z1",
+   "params": {
+    "version": "z1-v1",
+    "decline_ratio": 0.5,
+    "min_early_sell_frac_x": 0.01,
+    "min_sellers_per_min": 1.0,
+    "price_hold_min_ret": 0.0,
+    "dip_window_bars": 15,
+    "dip_dd_max": 0.25,
+    "age_min_s": 1800.0,
+    "age_max_s": 7200.0,
+    "alive": "common.AsOf.alive() ($1.5k / 15 min, mcap $6k)",
+    "stop_pct": 0.25,
+    "exit_by_age_s": 10680.0,
+    "size_usd": 20.0,
+    "placebo": "alive, stratum-matched (instant / slow)",
+    "fill": "common.FillConfig(exit_delay_bars=1): worst, latency 30 s, entry-bar stop checks, next-bar exits",
+    "K": 10,
+    "exit": "t30",
+    "max_hold_s": 1800.0
+   },
+   "first_seen_utc": "2026-10-09 05:00:42",
+   "splits": {
+    "train": 1
+   },
+   "cfg": {
+    "size_usd": 20.0,
+    "latency_s": 30.0,
+    "entry_fill": "worst",
+    "exit_fill": "worst",
+    "cost": {
+     "ultra_bps": 10.0,
+     "mev_bps": 20.0,
+     "priority_sol": 0.0002,
+     "base_fee_lamports": 5000,
+     "fee_mult": 1.0,
+     "impact_mult": 1.0,
+     "extra_hop_bps": 100.0
+    },
+    "rent_usd": 0.0,
+    "entry_bar_exits": true,
+    "exit_delay_bars": 1
+   }
+  },
+  "Z1|6f692f1133e4|cfg:a06543feac6c": {
+   "hypothesis": "Z1",
+   "params": {
+    "version": "z1-v1",
+    "decline_ratio": 0.5,
+    "min_early_sell_frac_x": 0.01,
+    "min_sellers_per_min": 1.0,
+    "price_hold_min_ret": 0.0,
+    "dip_window_bars": 15,
+    "dip_dd_max": 0.25,
+    "age_min_s": 1800.0,
+    "age_max_s": 7200.0,
+    "alive": "common.AsOf.alive() ($1.5k / 15 min, mcap $6k)",
+    "stop_pct": 0.25,
+    "exit_by_age_s": 10680.0,
+    "size_usd": 20.0,
+    "placebo": "alive, stratum-matched (instant / slow)",
+    "fill": "common.FillConfig(exit_delay_bars=1): worst, latency 30 s, entry-bar stop checks, next-bar exits",
+    "K": 10,
+    "exit": "t60",
+    "max_hold_s": 3600.0
+   },
+   "first_seen_utc": "2026-10-09 05:01:06",
+   "splits": {
+    "train": 1
+   },
+   "cfg": {
+    "size_usd": 20.0,
+    "latency_s": 30.0,
+    "entry_fill": "worst",
+    "exit_fill": "worst",
+    "cost": {
+     "ultra_bps": 10.0,
+     "mev_bps": 20.0,
+     "priority_sol": 0.0002,
+     "base_fee_lamports": 5000,
+     "fee_mult": 1.0,
+     "impact_mult": 1.0,
+     "extra_hop_bps": 100.0
+    },
+    "rent_usd": 0.0,
+    "entry_bar_exits": true,
+    "exit_delay_bars": 1
+   }
+  },
+  "Z1|0bb3381fba02|cfg:a06543feac6c": {
+   "hypothesis": "Z1",
+   "params": {
+    "version": "z1-v1",
+    "decline_ratio": 0.5,
+    "min_early_sell_frac_x": 0.01,
+    "min_sellers_per_min": 1.0,
+    "price_hold_min_ret": 0.0,
+    "dip_window_bars": 15,
+    "dip_dd_max": 0.25,
+    "age_min_s": 1800.0,
+    "age_max_s": 7200.0,
+    "alive": "common.AsOf.alive() ($1.5k / 15 min, mcap $6k)",
+    "stop_pct": 0.25,
+    "exit_by_age_s": 10680.0,
+    "size_usd": 20.0,
+    "placebo": "alive, stratum-matched (instant / slow)",
+    "fill": "common.FillConfig(exit_delay_bars=1): worst, latency 30 s, entry-bar stop checks, next-bar exits",
+    "K": 10,
+    "exit": "sret60",
+    "max_hold_s": 3600.0
+   },
+   "first_seen_utc": "2026-10-09 05:01:45",
+   "splits": {
+    "train": 1
+   },
+   "cfg": {
+    "size_usd": 20.0,
+    "latency_s": 30.0,
+    "entry_fill": "worst",
+    "exit_fill": "worst",
+    "cost": {
+     "ultra_bps": 10.0,
+     "mev_bps": 20.0,
+     "priority_sol": 0.0002,
+     "base_fee_lamports": 5000,
+     "fee_mult": 1.0,
+     "impact_mult": 1.0,
+     "extra_hop_bps": 100.0
+    },
+    "rent_usd": 0.0,
+    "entry_bar_exits": true,
+    "exit_delay_bars": 1
+   }
+  },
+  "Z1|ab926555ca0a|cfg:a06543feac6c": {
+   "hypothesis": "Z1",
+   "params": {
+    "version": "z1-v1",
+    "decline_ratio": 0.5,
+    "min_early_sell_frac_x": 0.01,
+    "min_sellers_per_min": 1.0,
+    "price_hold_min_ret": 0.0,
+    "dip_window_bars": 15,
+    "dip_dd_max": 0.25,
+    "age_min_s": 1800.0,
+    "age_max_s": 7200.0,
+    "alive": "common.AsOf.alive() ($1.5k / 15 min, mcap $6k)",
+    "stop_pct": 0.25,
+    "exit_by_age_s": 10680.0,
+    "size_usd": 20.0,
+    "placebo": "alive, stratum-matched (instant / slow)",
+    "fill": "common.FillConfig(exit_delay_bars=1): worst, latency 30 s, entry-bar stop checks, next-bar exits",
+    "K": 20,
+    "exit": "t30",
+    "max_hold_s": 1800.0
+   },
+   "first_seen_utc": "2026-10-09 05:02:09",
+   "splits": {
+    "train": 1
+   },
+   "cfg": {
+    "size_usd": 20.0,
+    "latency_s": 30.0,
+    "entry_fill": "worst",
+    "exit_fill": "worst",
+    "cost": {
+     "ultra_bps": 10.0,
+     "mev_bps": 20.0,
+     "priority_sol": 0.0002,
+     "base_fee_lamports": 5000,
+     "fee_mult": 1.0,
+     "impact_mult": 1.0,
+     "extra_hop_bps": 100.0
+    },
+    "rent_usd": 0.0,
+    "entry_bar_exits": true,
+    "exit_delay_bars": 1
+   }
+  },
+  "Z1|8ff974516f5a|cfg:a06543feac6c": {
+   "hypothesis": "Z1",
+   "params": {
+    "version": "z1-v1",
+    "decline_ratio": 0.5,
+    "min_early_sell_frac_x": 0.01,
+    "min_sellers_per_min": 1.0,
+    "price_hold_min_ret": 0.0,
+    "dip_window_bars": 15,
+    "dip_dd_max": 0.25,
+    "age_min_s": 1800.0,
+    "age_max_s": 7200.0,
+    "alive": "common.AsOf.alive() ($1.5k / 15 min, mcap $6k)",
+    "stop_pct": 0.25,
+    "exit_by_age_s": 10680.0,
+    "size_usd": 20.0,
+    "placebo": "alive, stratum-matched (instant / slow)",
+    "fill": "common.FillConfig(exit_delay_bars=1): worst, latency 30 s, entry-bar stop checks, next-bar exits",
+    "K": 20,
+    "exit": "t60",
+    "max_hold_s": 3600.0
+   },
+   "first_seen_utc": "2026-10-09 05:02:33",
+   "splits": {
+    "train": 1
+   },
+   "cfg": {
+    "size_usd": 20.0,
+    "latency_s": 30.0,
+    "entry_fill": "worst",
+    "exit_fill": "worst",
+    "cost": {
+     "ultra_bps": 10.0,
+     "mev_bps": 20.0,
+     "priority_sol": 0.0002,
+     "base_fee_lamports": 5000,
+     "fee_mult": 1.0,
+     "impact_mult": 1.0,
+     "extra_hop_bps": 100.0
+    },
+    "rent_usd": 0.0,
+    "entry_bar_exits": true,
+    "exit_delay_bars": 1
+   }
+  },
+  "Z1|a451c8460075|cfg:a06543feac6c": {
+   "hypothesis": "Z1",
+   "params": {
+    "version": "z1-v1",
+    "decline_ratio": 0.5,
+    "min_early_sell_frac_x": 0.01,
+    "min_sellers_per_min": 1.0,
+    "price_hold_min_ret": 0.0,
+    "dip_window_bars": 15,
+    "dip_dd_max": 0.25,
+    "age_min_s": 1800.0,
+    "age_max_s": 7200.0,
+    "alive": "common.AsOf.alive() ($1.5k / 15 min, mcap $6k)",
+    "stop_pct": 0.25,
+    "exit_by_age_s": 10680.0,
+    "size_usd": 20.0,
+    "placebo": "alive, stratum-matched (instant / slow)",
+    "fill": "common.FillConfig(exit_delay_bars=1): worst, latency 30 s, entry-bar stop checks, next-bar exits",
+    "K": 20,
+    "exit": "sret60",
+    "max_hold_s": 3600.0
+   },
+   "first_seen_utc": "2026-10-09 05:03:14",
+   "splits": {
+    "train": 1
+   },
+   "cfg": {
+    "size_usd": 20.0,
+    "latency_s": 30.0,
+    "entry_fill": "worst",
+    "exit_fill": "worst",
+    "cost": {
+     "ultra_bps": 10.0,
+     "mev_bps": 20.0,
+     "priority_sol": 0.0002,
+     "base_fee_lamports": 5000,
+     "fee_mult": 1.0,
+     "impact_mult": 1.0,
+     "extra_hop_bps": 100.0
+    },
+    "rent_usd": 0.0,
+    "entry_bar_exits": true,
+    "exit_delay_bars": 1
+   }
+  },
+  "Z2|631c4608b1bd|cfg:a06543feac6c": {
+   "hypothesis": "Z2",
+   "params": {
+    "version": "z2-v2",
+    "detector": "single-trade pigeonhole bound on B2 bars",
+    "boost_end_s": 420.0,
+    "dust_sol": 0.01,
+    "age_max_s": 7200.0,
+    "stop_pct": 0.35,
+    "exit_by_age_s": 10680.0,
+    "seller_frac": 0.5,
+    "min_net_lift_q": 0.5,
+    "depth_edges": [
+     50.0,
+     100.0
+    ],
+    "instant_max_delay_s": 5.0,
+    "size_usd": 20.0,
+    "placebo": "matched on (speed, depth)",
+    "fill": "common.FillConfig(exit_delay_bars=1): worst, latency 30 s, entry-bar exits, next-bar exits",
+    "q": 0.03,
+    "hold_min": 15,
+    "exit": "time"
+   },
+   "first_seen_utc": "2026-10-09 05:03:52",
+   "splits": {
+    "train": 1
+   },
+   "cfg": {
+    "size_usd": 20.0,
+    "latency_s": 30.0,
+    "entry_fill": "worst",
+    "exit_fill": "worst",
+    "cost": {
+     "ultra_bps": 10.0,
+     "mev_bps": 20.0,
+     "priority_sol": 0.0002,
+     "base_fee_lamports": 5000,
+     "fee_mult": 1.0,
+     "impact_mult": 1.0,
+     "extra_hop_bps": 100.0
+    },
+    "rent_usd": 0.0,
+    "entry_bar_exits": true,
+    "exit_delay_bars": 1
+   }
+  },
+  "Z2|d873b1d2cf66|cfg:a06543feac6c": {
+   "hypothesis": "Z2",
+   "params": {
+    "version": "z2-v2",
+    "detector": "single-trade pigeonhole bound on B2 bars",
+    "boost_end_s": 420.0,
+    "dust_sol": 0.01,
+    "age_max_s": 7200.0,
+    "stop_pct": 0.35,
+    "exit_by_age_s": 10680.0,
+    "seller_frac": 0.5,
+    "min_net_lift_q": 0.5,
+    "depth_edges": [
+     50.0,
+     100.0
+    ],
+    "instant_max_delay_s": 5.0,
+    "size_usd": 20.0,
+    "placebo": "matched on (speed, depth)",
+    "fill": "common.FillConfig(exit_delay_bars=1): worst, latency 30 s, entry-bar exits, next-bar exits",
+    "q": 0.03,
+    "hold_min": 15,
+    "exit": "seller"
+   },
+   "first_seen_utc": "2026-10-09 05:04:12",
+   "splits": {
+    "train": 1
+   },
+   "cfg": {
+    "size_usd": 20.0,
+    "latency_s": 30.0,
+    "entry_fill": "worst",
+    "exit_fill": "worst",
+    "cost": {
+     "ultra_bps": 10.0,
+     "mev_bps": 20.0,
+     "priority_sol": 0.0002,
+     "base_fee_lamports": 5000,
+     "fee_mult": 1.0,
+     "impact_mult": 1.0,
+     "extra_hop_bps": 100.0
+    },
+    "rent_usd": 0.0,
+    "entry_bar_exits": true,
+    "exit_delay_bars": 1
+   }
+  },
+  "Z2|95fa20ca56e2|cfg:a06543feac6c": {
+   "hypothesis": "Z2",
+   "params": {
+    "version": "z2-v2",
+    "detector": "single-trade pigeonhole bound on B2 bars",
+    "boost_end_s": 420.0,
+    "dust_sol": 0.01,
+    "age_max_s": 7200.0,
+    "stop_pct": 0.35,
+    "exit_by_age_s": 10680.0,
+    "seller_frac": 0.5,
+    "min_net_lift_q": 0.5,
+    "depth_edges": [
+     50.0,
+     100.0
+    ],
+    "instant_max_delay_s": 5.0,
+    "size_usd": 20.0,
+    "placebo": "matched on (speed, depth)",
+    "fill": "common.FillConfig(exit_delay_bars=1): worst, latency 30 s, entry-bar exits, next-bar exits",
+    "q": 0.03,
+    "hold_min": 60,
+    "exit": "time"
+   },
+   "first_seen_utc": "2026-10-09 05:04:32",
+   "splits": {
+    "train": 1
+   },
+   "cfg": {
+    "size_usd": 20.0,
+    "latency_s": 30.0,
+    "entry_fill": "worst",
+    "exit_fill": "worst",
+    "cost": {
+     "ultra_bps": 10.0,
+     "mev_bps": 20.0,
+     "priority_sol": 0.0002,
+     "base_fee_lamports": 5000,
+     "fee_mult": 1.0,
+     "impact_mult": 1.0,
+     "extra_hop_bps": 100.0
+    },
+    "rent_usd": 0.0,
+    "entry_bar_exits": true,
+    "exit_delay_bars": 1
+   }
+  },
+  "Z2|714b46ec999a|cfg:a06543feac6c": {
+   "hypothesis": "Z2",
+   "params": {
+    "version": "z2-v2",
+    "detector": "single-trade pigeonhole bound on B2 bars",
+    "boost_end_s": 420.0,
+    "dust_sol": 0.01,
+    "age_max_s": 7200.0,
+    "stop_pct": 0.35,
+    "exit_by_age_s": 10680.0,
+    "seller_frac": 0.5,
+    "min_net_lift_q": 0.5,
+    "depth_edges": [
+     50.0,
+     100.0
+    ],
+    "instant_max_delay_s": 5.0,
+    "size_usd": 20.0,
+    "placebo": "matched on (speed, depth)",
+    "fill": "common.FillConfig(exit_delay_bars=1): worst, latency 30 s, entry-bar exits, next-bar exits",
+    "q": 0.03,
+    "hold_min": 60,
+    "exit": "seller"
+   },
+   "first_seen_utc": "2026-10-09 05:05:07",
+   "splits": {
+    "train": 1
+   },
+   "cfg": {
+    "size_usd": 20.0,
+    "latency_s": 30.0,
+    "entry_fill": "worst",
+    "exit_fill": "worst",
+    "cost": {
+     "ultra_bps": 10.0,
+     "mev_bps": 20.0,
+     "priority_sol": 0.0002,
+     "base_fee_lamports": 5000,
+     "fee_mult": 1.0,
+     "impact_mult": 1.0,
+     "extra_hop_bps": 100.0
+    },
+    "rent_usd": 0.0,
+    "entry_bar_exits": true,
+    "exit_delay_bars": 1
+   }
+  },
+  "Z2|0ff3e97ac88a|cfg:a06543feac6c": {
+   "hypothesis": "Z2",
+   "params": {
+    "version": "z2-v2",
+    "detector": "single-trade pigeonhole bound on B2 bars",
+    "boost_end_s": 420.0,
+    "dust_sol": 0.01,
+    "age_max_s": 7200.0,
+    "stop_pct": 0.35,
+    "exit_by_age_s": 10680.0,
+    "seller_frac": 0.5,
+    "min_net_lift_q": 0.5,
+    "depth_edges": [
+     50.0,
+     100.0
+    ],
+    "instant_max_delay_s": 5.0,
+    "size_usd": 20.0,
+    "placebo": "matched on (speed, depth)",
+    "fill": "common.FillConfig(exit_delay_bars=1): worst, latency 30 s, entry-bar exits, next-bar exits",
+    "q": 0.06,
+    "hold_min": 15,
+    "exit": "time"
+   },
+   "first_seen_utc": "2026-10-09 05:05:21",
+   "splits": {
+    "train": 1
+   },
+   "cfg": {
+    "size_usd": 20.0,
+    "latency_s": 30.0,
+    "entry_fill": "worst",
+    "exit_fill": "worst",
+    "cost": {
+     "ultra_bps": 10.0,
+     "mev_bps": 20.0,
+     "priority_sol": 0.0002,
+     "base_fee_lamports": 5000,
+     "fee_mult": 1.0,
+     "impact_mult": 1.0,
+     "extra_hop_bps": 100.0
+    },
+    "rent_usd": 0.0,
+    "entry_bar_exits": true,
+    "exit_delay_bars": 1
+   }
+  },
+  "Z2|cbc57763159f|cfg:a06543feac6c": {
+   "hypothesis": "Z2",
+   "params": {
+    "version": "z2-v2",
+    "detector": "single-trade pigeonhole bound on B2 bars",
+    "boost_end_s": 420.0,
+    "dust_sol": 0.01,
+    "age_max_s": 7200.0,
+    "stop_pct": 0.35,
+    "exit_by_age_s": 10680.0,
+    "seller_frac": 0.5,
+    "min_net_lift_q": 0.5,
+    "depth_edges": [
+     50.0,
+     100.0
+    ],
+    "instant_max_delay_s": 5.0,
+    "size_usd": 20.0,
+    "placebo": "matched on (speed, depth)",
+    "fill": "common.FillConfig(exit_delay_bars=1): worst, latency 30 s, entry-bar exits, next-bar exits",
+    "q": 0.06,
+    "hold_min": 15,
+    "exit": "seller"
+   },
+   "first_seen_utc": "2026-10-09 05:05:37",
+   "splits": {
+    "train": 1
+   },
+   "cfg": {
+    "size_usd": 20.0,
+    "latency_s": 30.0,
+    "entry_fill": "worst",
+    "exit_fill": "worst",
+    "cost": {
+     "ultra_bps": 10.0,
+     "mev_bps": 20.0,
+     "priority_sol": 0.0002,
+     "base_fee_lamports": 5000,
+     "fee_mult": 1.0,
+     "impact_mult": 1.0,
+     "extra_hop_bps": 100.0
+    },
+    "rent_usd": 0.0,
+    "entry_bar_exits": true,
+    "exit_delay_bars": 1
+   }
+  },
+  "Z2|f4d9a308e943|cfg:a06543feac6c": {
+   "hypothesis": "Z2",
+   "params": {
+    "version": "z2-v2",
+    "detector": "single-trade pigeonhole bound on B2 bars",
+    "boost_end_s": 420.0,
+    "dust_sol": 0.01,
+    "age_max_s": 7200.0,
+    "stop_pct": 0.35,
+    "exit_by_age_s": 10680.0,
+    "seller_frac": 0.5,
+    "min_net_lift_q": 0.5,
+    "depth_edges": [
+     50.0,
+     100.0
+    ],
+    "instant_max_delay_s": 5.0,
+    "size_usd": 20.0,
+    "placebo": "matched on (speed, depth)",
+    "fill": "common.FillConfig(exit_delay_bars=1): worst, latency 30 s, entry-bar exits, next-bar exits",
+    "q": 0.06,
+    "hold_min": 60,
+    "exit": "time"
+   },
+   "first_seen_utc": "2026-10-09 05:05:52",
+   "splits": {
+    "train": 1
+   },
+   "cfg": {
+    "size_usd": 20.0,
+    "latency_s": 30.0,
+    "entry_fill": "worst",
+    "exit_fill": "worst",
+    "cost": {
+     "ultra_bps": 10.0,
+     "mev_bps": 20.0,
+     "priority_sol": 0.0002,
+     "base_fee_lamports": 5000,
+     "fee_mult": 1.0,
+     "impact_mult": 1.0,
+     "extra_hop_bps": 100.0
+    },
+    "rent_usd": 0.0,
+    "entry_bar_exits": true,
+    "exit_delay_bars": 1
+   }
+  },
+  "Z2|e13d96ab0bd3|cfg:a06543feac6c": {
+   "hypothesis": "Z2",
+   "params": {
+    "version": "z2-v2",
+    "detector": "single-trade pigeonhole bound on B2 bars",
+    "boost_end_s": 420.0,
+    "dust_sol": 0.01,
+    "age_max_s": 7200.0,
+    "stop_pct": 0.35,
+    "exit_by_age_s": 10680.0,
+    "seller_frac": 0.5,
+    "min_net_lift_q": 0.5,
+    "depth_edges": [
+     50.0,
+     100.0
+    ],
+    "instant_max_delay_s": 5.0,
+    "size_usd": 20.0,
+    "placebo": "matched on (speed, depth)",
+    "fill": "common.FillConfig(exit_delay_bars=1): worst, latency 30 s, entry-bar exits, next-bar exits",
+    "q": 0.06,
+    "hold_min": 60,
+    "exit": "seller"
+   },
+   "first_seen_utc": "2026-10-09 05:06:13",
+   "splits": {
+    "train": 1
+   },
+   "cfg": {
+    "size_usd": 20.0,
+    "latency_s": 30.0,
+    "entry_fill": "worst",
+    "exit_fill": "worst",
+    "cost": {
+     "ultra_bps": 10.0,
+     "mev_bps": 20.0,
+     "priority_sol": 0.0002,
+     "base_fee_lamports": 5000,
+     "fee_mult": 1.0,
+     "impact_mult": 1.0,
+     "extra_hop_bps": 100.0
+    },
+    "rent_usd": 0.0,
+    "entry_bar_exits": true,
+    "exit_delay_bars": 1
+   }
+  },
+  "Z3|8ac96cacf0a1|cfg:a06543feac6c": {
+   "hypothesis": "Z3",
+   "params": {
+    "version": "z3-v2",
+    "crash_drop": 0.7,
+    "crash_on": "close vs max(open, previous close)",
+    "big_seller_frac_x": 0.25,
+    "big_seller_bound": "largest single sell trade >= (sell_sol - 0.01 d) / (n_sells - d), d = max(0, n_dust - n_buys)",
+    "min_crash_bar": 2,
+    "state_dd": 0.7,
+    "state_quiet_bars": 15,
+    "age_min_s": 420.0,
+    "age_max_s": 7200.0,
+    "stop_pct": 0.5,
+    "exit_by_age_s": 10680.0,
+    "size_usd": 20.0,
+    "placebo": "drawdown-matched (post-crash state, no crash in 15 bars); unmatched control",
+    "fill": "common.FillConfig(exit_delay_bars=1): worst, latency 30 s, entry-bar stop checks, next-bar exits",
+    "entry": "now",
+    "hold_min": 5,
+    "max_hold_s": 300.0
+   },
+   "first_seen_utc": "2026-10-09 05:08:12",
+   "splits": {
+    "train": 1
+   },
+   "cfg": {
+    "size_usd": 20.0,
+    "latency_s": 30.0,
+    "entry_fill": "worst",
+    "exit_fill": "worst",
+    "cost": {
+     "ultra_bps": 10.0,
+     "mev_bps": 20.0,
+     "priority_sol": 0.0002,
+     "base_fee_lamports": 5000,
+     "fee_mult": 1.0,
+     "impact_mult": 1.0,
+     "extra_hop_bps": 100.0
+    },
+    "rent_usd": 0.0,
+    "entry_bar_exits": true,
+    "exit_delay_bars": 1
+   }
   }
  },
  "runs": [
@@ -1269,8 +2457,272 @@
    "over_variant_limit": false,
    "kind": "backtest",
    "session": null
+  },
+  {
+   "utc": "2026-10-09 04:55:10",
+   "hypothesis": "Y4",
+   "config": "Y4|73e4f08e2125|cfg:a06543feac6c",
+   "split": "train",
+   "debug": false,
+   "n": 601,
+   "mean": -0.35533644948748083,
+   "over_variant_limit": false,
+   "kind": "backtest",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 04:56:07",
+   "hypothesis": "Y4",
+   "config": "Y4|47cdc52b65e1|cfg:a06543feac6c",
+   "split": "train",
+   "debug": false,
+   "n": 271,
+   "mean": -0.22888833267942124,
+   "over_variant_limit": false,
+   "kind": "backtest",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 04:57:06",
+   "hypothesis": "Y4",
+   "config": "Y4|9a1e9cb6fe09|cfg:a06543feac6c",
+   "split": "train",
+   "debug": false,
+   "n": 271,
+   "mean": -0.25592576043268317,
+   "over_variant_limit": false,
+   "kind": "backtest",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 04:57:33",
+   "hypothesis": "Y4",
+   "config": "Y4|273643080435|cfg:a06543feac6c",
+   "split": "train",
+   "debug": false,
+   "n": 617,
+   "mean": -0.32346376509846736,
+   "over_variant_limit": false,
+   "kind": "backtest",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 04:58:04",
+   "hypothesis": "Y4",
+   "config": "Y4|ed9fffe99c60|cfg:a06543feac6c",
+   "split": "train",
+   "debug": false,
+   "n": 617,
+   "mean": -0.4103115452071793,
+   "over_variant_limit": false,
+   "kind": "backtest",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 04:59:00",
+   "hypothesis": "Y4",
+   "config": "Y4|2ce45ecbff4a|cfg:a06543feac6c",
+   "split": "train",
+   "debug": false,
+   "n": 247,
+   "mean": -0.2597743924216214,
+   "over_variant_limit": false,
+   "kind": "backtest",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 04:59:58",
+   "hypothesis": "Y4",
+   "config": "Y4|c059fb3589bd|cfg:a06543feac6c",
+   "split": "train",
+   "debug": false,
+   "n": 247,
+   "mean": -0.24663775034583274,
+   "over_variant_limit": false,
+   "kind": "backtest",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 05:00:42",
+   "hypothesis": "Z1",
+   "config": "Z1|6652c49c45fc|cfg:a06543feac6c",
+   "split": "train",
+   "debug": false,
+   "n": 377,
+   "mean": -0.1724036386722085,
+   "over_variant_limit": false,
+   "kind": "backtest",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 05:01:06",
+   "hypothesis": "Z1",
+   "config": "Z1|6f692f1133e4|cfg:a06543feac6c",
+   "split": "train",
+   "debug": false,
+   "n": 377,
+   "mean": -0.1690376353489524,
+   "over_variant_limit": false,
+   "kind": "backtest",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 05:01:45",
+   "hypothesis": "Z1",
+   "config": "Z1|0bb3381fba02|cfg:a06543feac6c",
+   "split": "train",
+   "debug": false,
+   "n": 377,
+   "mean": -0.15850016974188402,
+   "over_variant_limit": false,
+   "kind": "backtest",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 05:02:09",
+   "hypothesis": "Z1",
+   "config": "Z1|ab926555ca0a|cfg:a06543feac6c",
+   "split": "train",
+   "debug": false,
+   "n": 360,
+   "mean": -0.16416021406283998,
+   "over_variant_limit": false,
+   "kind": "backtest",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 05:02:33",
+   "hypothesis": "Z1",
+   "config": "Z1|8ff974516f5a|cfg:a06543feac6c",
+   "split": "train",
+   "debug": false,
+   "n": 360,
+   "mean": -0.16464895998213258,
+   "over_variant_limit": false,
+   "kind": "backtest",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 05:03:14",
+   "hypothesis": "Z1",
+   "config": "Z1|a451c8460075|cfg:a06543feac6c",
+   "split": "train",
+   "debug": false,
+   "n": 360,
+   "mean": -0.20098760420896605,
+   "over_variant_limit": false,
+   "kind": "backtest",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 05:03:52",
+   "hypothesis": "Z2",
+   "config": "Z2|631c4608b1bd|cfg:a06543feac6c",
+   "split": "train",
+   "debug": false,
+   "n": 333,
+   "mean": -0.17280507375940993,
+   "over_variant_limit": false,
+   "kind": "backtest",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 05:04:12",
+   "hypothesis": "Z2",
+   "config": "Z2|d873b1d2cf66|cfg:a06543feac6c",
+   "split": "train",
+   "debug": false,
+   "n": 333,
+   "mean": -0.15476768229772572,
+   "over_variant_limit": false,
+   "kind": "backtest",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 05:04:32",
+   "hypothesis": "Z2",
+   "config": "Z2|95fa20ca56e2|cfg:a06543feac6c",
+   "split": "train",
+   "debug": false,
+   "n": 333,
+   "mean": -0.21391589899439722,
+   "over_variant_limit": false,
+   "kind": "backtest",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 05:05:07",
+   "hypothesis": "Z2",
+   "config": "Z2|714b46ec999a|cfg:a06543feac6c",
+   "split": "train",
+   "debug": false,
+   "n": 333,
+   "mean": -0.1619964518170926,
+   "over_variant_limit": false,
+   "kind": "backtest",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 05:05:21",
+   "hypothesis": "Z2",
+   "config": "Z2|0ff3e97ac88a|cfg:a06543feac6c",
+   "split": "train",
+   "debug": false,
+   "n": 63,
+   "mean": -0.1959167597261683,
+   "over_variant_limit": false,
+   "kind": "backtest",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 05:05:37",
+   "hypothesis": "Z2",
+   "config": "Z2|cbc57763159f|cfg:a06543feac6c",
+   "split": "train",
+   "debug": false,
+   "n": 63,
+   "mean": -0.22817978701048958,
+   "over_variant_limit": false,
+   "kind": "backtest",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 05:05:52",
+   "hypothesis": "Z2",
+   "config": "Z2|f4d9a308e943|cfg:a06543feac6c",
+   "split": "train",
+   "debug": false,
+   "n": 63,
+   "mean": -0.27808580045789705,
+   "over_variant_limit": false,
+   "kind": "backtest",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 05:06:13",
+   "hypothesis": "Z2",
+   "config": "Z2|e13d96ab0bd3|cfg:a06543feac6c",
+   "split": "train",
+   "debug": false,
+   "n": 63,
+   "mean": -0.265792091005587,
+   "over_variant_limit": false,
+   "kind": "backtest",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 05:08:12",
+   "hypothesis": "Z3",
+   "config": "Z3|8ac96cacf0a1|cfg:a06543feac6c",
+   "split": "train",
+   "debug": false,
+   "n": 51,
+   "mean": -0.052020629476424704,
+   "over_variant_limit": false,
+   "kind": "backtest",
+   "session": null
   }
  ],
  "val_shortlists": {},
- "n_trials_total": 2596
+ "n_trials_total": 2618
 }
