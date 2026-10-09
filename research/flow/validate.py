@@ -103,7 +103,9 @@ def slot_index_order(slot_index_id: str) -> tuple[int, int]:
 def ordering_check(ours: list[dict], theirs: list[dict]) -> dict:
     """V4: for same-slot pairs present in both sources, does (tx_idx, pix, ix) order match slotIndexId order?"""
     key = {}
-    for t in theirs:
+    # several trades under one key (same tx, wallet, side) pair in each source's own order, so take swap-api's in
+    # slotIndexId order whatever order the pages came in (they are newest-first)
+    for t in sorted(theirs, key=lambda t: t["slotIndexId"]):
         k = (t["tx"], t["userAddress"], t["type"] == "buy")
         key.setdefault(k, []).append(slot_index_order(t["slotIndexId"]))
     pos = []
@@ -641,6 +643,7 @@ def _fetch_block(ch: CryptoHouse, slots: SlotMap, coins: list[dict], max_trades:
 def _swapapi_window(sess, throttle, mint: str, start_ms: int, end_ms: int, max_pages: int = 8) -> dict:
     from collect_trades import fetch_window
     trades, complete = fetch_window(sess, throttle, mint, start_ms, end_ms, max_pages)
+    trades.sort(key=lambda t: (t["ts_ms"], t.get("slotIndexId") or ""))     # pages are newest-first
     return {"start_ms": start_ms, "end_ms": end_ms, "complete": complete, "trades": trades}
 
 

@@ -188,3 +188,17 @@ def test_label_pairs_same_wallet_buy_and_sell_in_one_tx():
     rows = [{"mint": "M", "truncated": 0, "trades": [dict(t, venue=1, x0=1, y0=1, x1=1, y1=1, virt=0) for t in ours]}]
     st = V.block_stats(rows, {"M": theirs})
     assert (st["sw_label_n"], st["sw_label_ok"], st["sw_multi_trade_tx_wallets"]) == (2, 2, 1)
+
+
+def test_ordering_check_ignores_swapapi_page_order(launch_amm_fixture):
+    """swap-api pages come newest-first; a wallet's two same-side trades in one tx must still pair in order."""
+    tr = _trades(launch_amm_fixture)
+    sw = launch_amm_fixture["swapapi"]["trades"]
+    assert V.ordering_check(tr, sw[::-1]) == V.ordering_check(tr, sw)
+    a = {"tx": "T", "user": "W", "is_buy": 1, "slot": 9, "tx_idx": 1, "pix": 2, "ix": 5}
+    b = dict(a, pix=4)
+    c = {"tx": "U", "user": "Z", "is_buy": 0, "slot": 9, "tx_idx": 3, "pix": 1, "ix": 5}
+    theirs = [{"tx": "T", "userAddress": "W", "type": "buy", "slotIndexId": f"{9:012d}{p:010d}"} for p in (10001, 10000)]
+    theirs.append({"tx": "U", "userAddress": "Z", "type": "sell", "slotIndexId": f"{9:012d}{30000:010d}"})
+    o = V.ordering_check([a, b, c], theirs)
+    assert o["matched"] == 3 and o["agree"] == o["same_slot_pairs"] == 3
