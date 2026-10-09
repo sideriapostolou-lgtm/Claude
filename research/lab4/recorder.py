@@ -62,6 +62,8 @@ CATEGORIES = (
 HORIZON_H = 48.0  # record non-sports markets ending within two days
 SPORTS_CAP = 150  # live games: their moneyline markets only, at most this many at a time (rate limit)
 SPORTS_LOOKBACK_H = 12.0  # a game that started this long ago is treated as over
+#: Match-winner markets (the venue's enums SPORTS_MARKET_TYPE_MONEYLINE, SPORTS_MARKET_TYPE_DRAWABLE_OUTCOME).
+WINNER_KINDS = ("MONEYLINE", "DRAWABLE_OUTCOME")
 NOT_LIVE_PERIODS = {"NS", "", "CAN", "SUS", "PST", "FT", "AOT", "FINAL", "ENDED"}
 POLL_S = 60.0
 REQ_SLEEP_S = 0.08  # the gateway's public limit is 20 req/s per IP; we stay far below
@@ -202,7 +204,7 @@ def live_sports_markets(now: float, cap: int = SPORTS_CAP) -> list[dict[str, Any
                 kind = str(
                     m.get("sportsMarketTypeV2") or m.get("marketType") or ""
                 ).upper()
-                if kind != "MONEYLINE" or m.get("closed"):
+                if not any(w in kind for w in WINNER_KINDS) or m.get("closed"):
                     continue
                 out.append(
                     {

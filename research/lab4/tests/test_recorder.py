@@ -129,7 +129,7 @@ def _event(slug, start_offset_s, period, n_markets=2, closed=False):
         {
             "slug": f"{slug}-ml",
             "question": slug,
-            "sportsMarketTypeV2": "MONEYLINE",
+            "sportsMarketTypeV2": "SPORTS_MARKET_TYPE_MONEYLINE",
             "closed": closed,
             "endDate": start,
             "feeCoefficient": "0.0695",
@@ -140,7 +140,7 @@ def _event(slug, start_offset_s, period, n_markets=2, closed=False):
         {
             "slug": f"{slug}-spread",
             "question": slug,
-            "sportsMarketTypeV2": "SPREAD",
+            "sportsMarketTypeV2": "SPORTS_MARKET_TYPE_SPREAD",
             "closed": False,
             "endDate": start,
         },
