@@ -3,12 +3,12 @@
 Research only. The live bot never reads this. Two public endpoints, both verified from this environment on
 2026-10-09:
 
-* Gamma ``GET https://gamma-api.polymarket.com/markets/keyset?closed=true&order=closedTime&ascending=false
-  &volume_num_min=V&limit=100&after_cursor=C`` lists closed markets newest-resolved first (``closedTime`` is
-  monotone across pages; the response is ``{"markets": [...], "next_cursor": "..."}``), with the final
-  ``outcomePrices`` (``["1","0"]`` style), the CLOB token ids, volume and the fee flags (``feesEnabled``,
-  ``takerBaseFee``, ``makerBaseFee``, ``feeType``). ``limit`` is capped at 100; the plain ``/markets`` endpoint
-  rejects ``offset`` > 2000, hence the keyset cursor.
+* Gamma ``GET https://gamma-api.polymarket.com/markets?closed=true&volume_num_min=V&end_date_min=D&end_date_max=D+1
+  &limit=100&offset=k`` lists the closed markets whose endDate falls on one day (offsets are capped at 2000, so
+  a day that fills them is split), with the final ``outcomePrices`` (``["1","0"]`` style), the CLOB token ids,
+  volume and the fee flags (``feesEnabled``, ``takerBaseFee``, ``makerBaseFee``, ``feeType``). Markets resolved
+  early (endDate after the window) come from ``/markets/keyset`` ordered by ``closedTime``. Each day is saved
+  under ``listing/`` so a long listing resumes after a restart; the universe is then filtered on ``closedTime``.
 * Data API ``GET https://data-api.polymarket.com/trades?market=<conditionId>&start=S&end=E&limit=10000&offset=K``
   returns the fills of a market newest first, ``limit`` up to 10,000 and ``offset`` at most 10,000; ``start`` /
   ``end`` are unix seconds. The CLOB's ``prices-history`` is EMPTY for resolved markets, so the tape is the only
@@ -20,6 +20,7 @@ Layout (``$SCRATCH/lab4`` by default; only a small manifest is mirrored to ``res
     markets.parquet          one row per resolved market (see :func:`market_row`)
     trades/<market id>.parquet   ts, price, size, side, outcome_index, asset, tx  (the last LOOKBACK days + 1 h)
     manifest.json            per market: rows, first / last trade, fetched_at; plus the run arguments
+    listing/YYYY-MM-DD.parquet   the raw listing of one endDate day (resumable); future_enddates.parquet
 
 CLI::
 
@@ -36,7 +37,7 @@ import json
 import os
 import sys
 import time
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -55,6 +56,7 @@ OUT = Path(os.environ.get("LAB4_DATA", str(SCRATCH / "lab4")))
 HERE = Path(__file__).resolve().parent
 
 PAGE = 100  # Gamma's cap
+OFFSET_CAP = 2000  # the plain /markets endpoint rejects offsets above this
 TRADES_LIMIT = 10_000  # Data API's cap per request
 TRADES_MAX_OFFSET = 10_000
 MIN_WINDOW_S = 60  # never split a trade window below one minute (a minute with > 20k fills is kept truncated)
@@ -65,17 +67,19 @@ UA = {
 }
 
 
-def _get(url: str, params: dict[str, Any], tries: int = 6) -> Any:
-    """GET JSON with backoff; a 429 waits longer. Raises after ``tries`` failures."""
-    last: Exception | None = None
+def _get(url: str, params: dict[str, Any], tries: int = 8) -> Any:
+    """GET JSON with backoff; a 429 waits long (the public APIs throttle long listings). Raises after ``tries``."""
+    last: str = "no response"
     for attempt in range(tries):
         try:
             r = requests.get(url, params=params, headers=UA, timeout=60)
             if r.status_code == 429:
-                time.sleep(5.0 * (attempt + 1))
+                last = "HTTP 429"
+                time.sleep(10.0 * (attempt + 1))
                 continue
             if r.status_code >= 500:
-                time.sleep(2.0 * (attempt + 1))
+                last = f"HTTP {r.status_code}"
+                time.sleep(3.0 * (attempt + 1))
                 continue
             r.raise_for_status()
             return r.json()
@@ -83,8 +87,8 @@ def _get(url: str, params: dict[str, Any], tries: int = 6) -> Any:
             requests.RequestException,
             ValueError,
         ) as e:  # transport / bad JSON: retry with backoff
-            last = e
-            time.sleep(1.5 * (attempt + 1))
+            last = repr(e)
+            time.sleep(2.0 * (attempt + 1))
     raise RuntimeError(f"GET {url} failed after {tries} tries: {last}")
 
 
@@ -159,53 +163,148 @@ def market_row(m: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def list_resolved(
-    since: datetime,
-    until: datetime,
-    min_volume: float = 0.0,
-    max_pages: int | None = None,
-) -> pd.DataFrame:
-    """Resolved markets with ``since <= closedTime <= until`` and volume >= ``min_volume``, newest first."""
-    since_ts, until_ts = since.timestamp(), until.timestamp()
+def _gamma_page(params: dict[str, Any]) -> list[dict[str, Any]]:
+    reply = _get(f"{API_GAMMA}/markets", params)
+    return reply if isinstance(reply, list) else []
+
+
+def _list_window(
+    end_min: datetime, end_max: datetime, min_volume: float
+) -> list[dict[str, Any]]:
+    """Closed markets whose endDate lies in [end_min, end_max), through offset pages (the plain endpoint allows
+    offsets up to 2000; a window that fills them is split in half)."""
+    base = {
+        "limit": PAGE,
+        "closed": "true",
+        "volume_num_min": min_volume,
+        "end_date_min": end_min.strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "end_date_max": end_max.strftime("%Y-%m-%dT%H:%M:%SZ"),
+    }
+    rows: list[dict[str, Any]] = []
+    for offset in range(0, OFFSET_CAP + 1, PAGE):
+        page = _gamma_page({**base, "offset": offset})
+        rows.extend(page)
+        if len(page) < PAGE:
+            return rows
+        time.sleep(SLEEP_S)
+    # the window filled every allowed page: split it
+    if (end_max - end_min).total_seconds() <= 3600:
+        return rows
+    mid = end_min + (end_max - end_min) / 2
+    return _list_window(end_min, mid, min_volume) + _list_window(
+        mid, end_max, min_volume
+    )
+
+
+def _list_future_enddates(
+    since: datetime, until: datetime, min_volume: float, max_pages: int = 400
+) -> list[dict[str, Any]]:
+    """Closed markets whose endDate is AFTER ``until`` (resolved early, e.g. "by Dec 31" questions decided in
+    July): the keyset listing ordered by closedTime, newest first, stopping once closedTime < ``since``."""
     rows: list[dict[str, Any]] = []
     cursor: str | None = None
-    pages, stop = 0, False
-    while not stop:
+    for _ in range(max_pages):
         params: dict[str, Any] = {
             "limit": PAGE,
             "closed": "true",
             "order": "closedTime",
             "ascending": "false",
             "volume_num_min": min_volume,
+            "end_date_min": until.strftime("%Y-%m-%dT%H:%M:%SZ"),
         }
         if cursor:
             params["after_cursor"] = cursor
         reply = _get(f"{API_GAMMA}/markets/keyset", params)
         page = reply.get("markets") if isinstance(reply, dict) else None
-        if not isinstance(page, list) or not page:
+        if not page:
             break
-        cursor = reply.get("next_cursor") or None
+        stop = False
         for m in page:
             ct = parse_time(m.get("closedTime"))
-            if ct is None:
-                continue
-            if ct > until_ts:
-                continue
-            if ct < since_ts:
+            if ct is not None and ct < since.timestamp():
                 stop = True
                 break
-            rows.append(market_row(m))
-        pages += 1
-        if cursor is None or (max_pages is not None and pages >= max_pages):
+            rows.append(m)
+        cursor = reply.get("next_cursor") or None
+        if stop or cursor is None:
             break
         time.sleep(SLEEP_S)
-    df = pd.DataFrame(rows, columns=list(market_row({}).keys()))
+    return rows
+
+
+def list_resolved(
+    since: datetime,
+    until: datetime,
+    min_volume: float = 0.0,
+    out: Path | None = None,
+    max_days: int | None = None,
+) -> pd.DataFrame:
+    """Resolved markets with ``since <= closedTime <= until`` and volume >= ``min_volume``, newest first.
+
+    Day by day on endDate from ``since`` to ``until`` + 1 day (each day saved under ``out/listing/`` so a
+    restart resumes), plus the early-resolved markets with endDates after ``until``."""
+    days: list[pd.DataFrame] = []
+    day = since.replace(hour=0, minute=0, second=0, microsecond=0)
+    last_day = until.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(
+        days=1
+    )
+    n_days = 0
+    while day <= last_day:
+        path = (
+            (out / "listing" / f"{day:%Y-%m-%d}.parquet") if out is not None else None
+        )
+        if path is not None and path.exists():
+            days.append(pd.read_parquet(path))
+        else:
+            rows = [
+                market_row(m)
+                for m in _list_window(day, day + timedelta(days=1), min_volume)
+            ]
+            df = pd.DataFrame(rows, columns=list(market_row({}).keys()))
+            if path is not None:
+                path.parent.mkdir(parents=True, exist_ok=True)
+                df.to_parquet(path, index=False)
+            days.append(df)
+            print(
+                f"  listing {day:%Y-%m-%d}: {len(df)} closed markets with that endDate",
+                flush=True,
+            )
+            time.sleep(SLEEP_S)
+        day += timedelta(days=1)
+        n_days += 1
+        if max_days is not None and n_days >= max_days:
+            break
+    tail_path = (
+        (out / "listing" / "future_enddates.parquet") if out is not None else None
+    )
+    if tail_path is not None and tail_path.exists():
+        days.append(pd.read_parquet(tail_path))
+    else:
+        rows = [
+            market_row(m) for m in _list_future_enddates(since, last_day, min_volume)
+        ]
+        df = pd.DataFrame(rows, columns=list(market_row({}).keys()))
+        if tail_path is not None:
+            tail_path.parent.mkdir(parents=True, exist_ok=True)
+            df.to_parquet(tail_path, index=False)
+        days.append(df)
+        print(
+            f"  listing early-resolved (endDate after {last_day:%Y-%m-%d}): {len(df)}",
+            flush=True,
+        )
+    df = (
+        pd.concat(days, ignore_index=True)
+        if days
+        else pd.DataFrame(columns=list(market_row({}).keys()))
+    )
     if df.empty:
         return df
     keep = (
         (df["resolution_status"] == "resolved")
         & (df["volume"] >= min_volume)
         & df["closed_time"].notna()
+        & (df["closed_time"] >= since.timestamp())
+        & (df["closed_time"] <= until.timestamp())
     )
     return (
         df[keep]
@@ -319,7 +418,9 @@ def run(
         )
         listed = markets[in_window]
     else:
-        listed = list_resolved(since, until, min_volume=min_volume, max_pages=max_pages)
+        listed = list_resolved(
+            since, until, min_volume=min_volume, out=out, max_days=max_pages
+        )
         markets = _merge_markets(out, listed)
     listed = listed.sort_values("closed_time", ascending=oldest_first)
     if list_only:

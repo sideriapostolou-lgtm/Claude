@@ -75,39 +75,57 @@ def test_market_row_flattens_and_finds_the_winner():
     assert D.market_row({})["id"] == "None" and D.market_row({})["closed_time"] is None
 
 
-def test_list_resolved_pages_newest_first_and_stops_at_since(monkeypatch):
-    # 250 closed markets, one per hour back from T0; the 5th is unresolved, the 6th tiny
-    allm = [_market(i, T0 - 3600 * i) for i in range(250)]
-    allm[5]["umaResolutionStatus"] = "proposed"
-    allm[6]["volumeNum"] = 10.0
-    calls = []
+def _gamma_fake(allm, calls):
+    """A Gamma that answers /markets by endDate window + offset and /markets/keyset by closedTime, newest first."""
 
     def fake_get(url, params, tries=6):
-        calls.append(params)
-        assert (
-            url.endswith("/markets/keyset")
-            and "offset" not in params
-            and params["volume_num_min"] == 1000
-        )
-        assert (
-            params["order"] == "closedTime"
-            and params["ascending"] == "false"
-            and params["limit"] == 100
-        )
-        off = int(params.get("after_cursor") or 0)
-        nxt = str(off + 100) if off + 100 < len(allm) else None
-        return {"markets": allm[off : off + 100], "next_cursor": nxt}
+        calls.append(dict(params))
+        lo = D.parse_time(params["end_date_min"])
+        if url.endswith("/markets/keyset"):
+            rows = sorted(
+                (m for m in allm if D.parse_time(m["endDate"]) >= lo),
+                key=lambda m: -D.parse_time(m["closedTime"]),
+            )
+            off = int(params.get("after_cursor") or 0)
+            page = rows[off : off + params["limit"]]
+            return {
+                "markets": page,
+                "next_cursor": str(off + 100) if off + 100 < len(rows) else None,
+            }
+        hi = D.parse_time(params["end_date_max"])
+        rows = [
+            m
+            for m in allm
+            if lo <= D.parse_time(m["endDate"]) < hi
+            and m["volumeNum"] >= params["volume_num_min"]
+        ]
+        off = params["offset"]
+        return {"markets": None} if False else rows[off : off + params["limit"]]
 
-    monkeypatch.setattr(D, "_get", fake_get)
+    return fake_get
+
+
+def test_list_resolved_by_enddate_days_plus_early_resolutions(monkeypatch, tmp_path):
+    # 250 closed markets, one per hour back from T0, endDate = closedTime; the 5th unresolved, the 6th tiny;
+    # two markets resolved early with endDates far in the future (one inside the window on closedTime, one older)
+    allm = [_market(i, T0 - 3600 * i) for i in range(250)]
+    for m in allm:
+        m["endDate"] = m["closedTime"].replace(" ", "T").replace("+00", "Z")
+    allm[5]["umaResolutionStatus"] = "proposed"
+    allm[6]["volumeNum"] = 10.0
+    early_in = _market(900, T0 - 3600 * 50)
+    early_in["endDate"] = "2027-01-01T00:00:00Z"
+    early_out = _market(901, T0 - 3600 * 300)
+    early_out["endDate"] = "2027-01-01T00:00:00Z"
+    allm += [early_in, early_out]
+    calls = []
+    monkeypatch.setattr(D, "_get", _gamma_fake(allm, calls))
     monkeypatch.setattr(D.time, "sleep", lambda s: None)
     since = datetime.fromtimestamp(T0 - 3600 * 120, UTC)
     until = datetime.fromtimestamp(T0 - 3600 * 2, UTC)
-    df = D.list_resolved(since, until, min_volume=1000)
-    assert (
-        len(calls) == 2
-    )  # stopped once a page crossed --since (market 121 is older than since)
-    assert df["closed_time"].is_monotonic_decreasing
+    df = D.list_resolved(since, until, min_volume=1000, out=tmp_path)
     ids = set(df["id"])
+    assert df["closed_time"].is_monotonic_decreasing
     assert (
         "0" not in ids
         and "1" not in ids
@@ -115,7 +133,19 @@ def test_list_resolved_pages_newest_first_and_stops_at_since(monkeypatch):
         and "120" in ids
         and "121" not in ids
     )
-    assert "5" not in ids and "6" not in ids and len(ids) == 119 - 2
+    assert "5" not in ids and "6" not in ids and "900" in ids and "901" not in ids
+    assert len(ids) == 119 - 2 + 1
+    assert any(
+        c.get("order") == "closedTime" for c in calls
+    )  # the early-resolution pass ran
+    assert (tmp_path / "listing" / "future_enddates.parquet").exists() and len(
+        list((tmp_path / "listing").glob("*.parquet"))
+    ) >= 6
+    n_calls = len(calls)
+    df2 = D.list_resolved(
+        since, until, min_volume=1000, out=tmp_path
+    )  # resumed from the saved days: no new calls
+    assert len(calls) == n_calls and set(df2["id"]) == ids
 
 
 def test_fetch_trades_splits_full_windows_and_dedupes(monkeypatch):
@@ -156,9 +186,18 @@ def test_run_is_resumable_and_writes_manifest(monkeypatch, tmp_path):
     ms = [_market(i, T0 - 86400 * i) for i in range(3)]
     fetched = []
 
+    for m in ms:
+        m["endDate"] = m["closedTime"].replace(" ", "T").replace("+00", "Z")
+
     def fake_get(url, params, tries=6):
         if "gamma" in url:
-            return {"markets": ms, "next_cursor": None}
+            if url.endswith("/keyset"):
+                return {"markets": [], "next_cursor": None}
+            lo, hi = (
+                D.parse_time(params["end_date_min"]),
+                D.parse_time(params["end_date_max"]),
+            )
+            return [m for m in ms if lo <= D.parse_time(m["endDate"]) < hi]
         fetched.append(params["market"])
         t = params["end"] - 7200
         return [
