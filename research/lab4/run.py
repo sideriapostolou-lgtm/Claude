@@ -50,6 +50,14 @@ HYPOTHESES: dict[str, dict[str, Any]] = {
         "control": False,
         "selectable": True,
     },
+    "P4": {
+        "title": "non-sports grind (the owner's venue)",
+        "families": "nonsports",
+        "thetas": [0.95, 0.97, 0.99],
+        "hours": [1.0, 6.0, 24.0, 168.0],
+        "control": False,
+        "selectable": True,
+    },
     "C1": {
         "title": "control: longshots (the other side)",
         "families": "all",

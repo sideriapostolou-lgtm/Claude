@@ -64,6 +64,19 @@ UNKNOWN_RATE = 0.07
 FAMILIES = {
     "sports": ("sports",),
     "crypto": ("crypto",),
+    "nonsports": (
+        "crypto",
+        "politics",
+        "culture",
+        "finance",
+        "economics",
+        "weather",
+        "mentions",
+        "tech",
+        "geopolitics",
+        "none",
+        "unknown",
+    ),
     "all": (),
 }
 

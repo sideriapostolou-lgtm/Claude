@@ -109,3 +109,22 @@ re-costed at 0.0695 before any paper desk is built, and the venue would be the o
 The trade tape used here (Data API `/trades`) is the fills of polymarket.com; the Data API v2 `/v2/prices-history`
 (1-minute buckets kept at least 7 days, 5-minute at least 60 days, 30-minute at least 90 days) is a documented
 alternative for coarser history and is not used in version lab4-v1.
+
+## Amendment 2 (2026-10-09 ~15:05 UTC, before any TRAIN return was read): the owner's venue and P4
+
+The owner is in Washington State and will trade, if anything passes, on **Polymarket US** (QCX LLC, the
+CFTC-regulated venue), where sports contracts are not offered to them. On 2026-10-09 the venue's public gateway
+(`gateway.polymarket.us`, no key) listed 5,000 open markets: sports 4,402, culture 227, politics 217, crypto 47,
+finance 46, technology 36, macro 12, geopolitics 7, science 6; of the ~3,000 markets settling per day, ~2,900 are
+sports, ~30 climate (daily weather), ~5 crypto, a handful of culture / politics / finance. Its taker fee is
+`0.0695 x shares x p x (1 - p)` (`feeCoefficient` on each market), tick 0.001, minimum 1 contract.
+
+Added hypothesis, same mechanics as P1: **P4 non-sports grind**, the markets the owner can actually trade:
+fee families `crypto`, `politics`, `culture`, `finance`, `economics`, `weather`, `mentions`, `tech` (everything
+but `sports`), theta in {0.95, 0.97, 0.99}, H in {1, 6, 24, 168} hours (12 cells, selectable). The published
+evidence (Cardozo and Rivero-Wildemauwe 2026) finds the favourite edge in crypto and politics and none in sports,
+so P4 is the hypothesis that matters for the owner's path; P2 (sports) stays as written for the record.
+
+Re-costing rule: a cell selected on polymarket.com data is re-evaluated with the US fee (0.0695) before any paper
+desk is built; the US venue's own books are then recorded live (a recorder on the public gateway) so the paper desk
+fills at that venue's printed prices, not at polymarket.com's.
