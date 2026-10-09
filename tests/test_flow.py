@@ -25,7 +25,7 @@ from nightcrawler.flow import (
     pumpswap_fee_components,
     wallet_h,
 )
-from test_flow_parity import COINS, INSTANT, SANE, tracker_for
+from test_flow_parity import COINS, INSTANT, MAYHEM, MINTS, SANE, tracker_for
 
 POOLED = next(iter(POOLED_ACCOUNTS))
 
@@ -308,3 +308,122 @@ def test_grid_time_matches_the_lab_decision_grid() -> None:
     for age in (0, 59, 60, 361, 7200):
         t = grid_time(g, age)
         assert t <= g + age < t + 60 and (t - m0 - 20) % 60 == 0
+
+
+# =========================================================================== review round 1
+
+
+def test_history_that_starts_after_graduation_reads_null_never_a_wrong_number() -> None:
+    """A coin watched from g + 60 s (late start, or re-watched after an overload): the early window, the AGENT and
+    the minutes before history_from are unknown, not zero flow at the fresh pool's price."""
+    coin = COINS["8Tj1fv3MBYj6fjhjRHr1ZWnxqvfbUCV8MwiYD1c1uMoC"]
+    g = coin["graduate"]["g_ts"]
+    full = tracker_for(coin, with_g=True)
+    late = FlowTracker(coin["mint"], created_ts=coin["created_ms"] // 1000, creator=coin["graduate"]["creator"],
+                       g_ts=g, history_from=g + 60)
+    late.ingest([t for t in full.trades if t.ts >= g + 60])
+    late.mark_complete(g + 121)                                     # the recorded window has no trade at c + 120
+    full.mark_complete(g + 121)
+    s, f = late.as_of(g + 140, sol_usd=200.0), full.as_of(g + 140, sol_usd=200.0)
+    assert s.complete and not s.pool_known and f["w120_buy_sol"] > 0
+    for name in ("w120_buy_sol", "w120_sell_sol", "w120_n_buyers", "w120_n_sellers", "w120_top10"):
+        assert s[name] is None
+    assert s.top_buyers("w120") is None and s.top_share("w120") is None
+    assert s.agent is None and not s.agent_detected and not s.agent_resolved and f.agent_detected
+    assert s.non_agent_buy_sol(120) is None
+    unknown = [i for i, m in enumerate(s.bars.minute_ts) if m < g + 60]
+    assert unknown and all(s.bars.known[i] == 0.0 for i in unknown)
+    for name in ("o", "h", "l", "c", "buy_sol", "sell_sol", "n_buys", "n_buyers", "traded"):
+        assert all(math.isnan(getattr(s.bars, name)[i]) for i in unknown), name
+    assert math.isnan(s.vol_sol(120)) and math.isnan(s.ret(120)) and math.isnan(s.max_high(120))
+    assert not s.alive()
+    # the same coin watched from graduation (M1 wiring) is fully known
+    m1 = FlowTracker(coin["mint"], g_ts=g, history_from=g)
+    m1.ingest([t for t in full.trades if t.ts >= g])
+    m1.mark_complete(g + 121)
+    a = m1.as_of(g + 140)
+    assert a.pool_known and a["w120_buy_sol"] == f["w120_buy_sol"]
+    assert canon(a.bars.as_dict()) == canon(f.bars.as_dict())
+
+
+def test_positions_are_kept_in_exact_integer_units() -> None:
+    c = 2_000_000_000
+    tr = FlowTracker("M", created_ts=c, history_from=c)
+    tr.ingest([_cv(c + 1, "A", True, 700_000, 11), _cv(c + 2, "A", True, 100_000, 12),
+               _cv(c + 3, "A", False, 800_000, 13)])          # 0.7 + 0.1 - 0.8 tokens: 1.1e-16 left in floats
+    s = tr.as_of(c + 100)
+    p = s.positions()["A"]
+    assert p.orphan_tok == 0 and p.pos_tok == 0 and p.n_sell_without_holding == 0
+    assert s.orphan_summary()["n_orphan_sellers"] == 0 and s.orphan_sellers() == {}
+
+
+@pytest.mark.parametrize("mint", MINTS)
+def test_orphan_summary_matches_an_integer_b3_ledger(mint: str) -> None:
+    coin = COINS[mint]
+    s = tracker_for(coin).as_of(coin["created_ms"] // 1000 + 140)
+    pos: dict[str, int] = {}
+    orphan: dict[str, int] = {}
+    wo_hold = 0
+    for r in s.rows:                                                # b3.sql over every trade, raw units
+        if r.pooled:
+            continue
+        w, q = r.trade.wallet, r.trade.tok_raw
+        before = pos.get(w, 0)
+        if r.trade.is_buy:
+            pos[w] = before + q
+        else:
+            orphan[w] = orphan.get(w, 0) + max(0, q - max(before, 0))
+            wo_hold += before <= 0
+            pos[w] = before - q
+    summ = s.orphan_summary()
+    assert summ["n_orphan_sellers"] == sum(1 for v in orphan.values() if v > 0)
+    assert summ["orphan_tok"] == sum(orphan.values()) / 1e6
+    assert sum(p.n_sell_without_holding for p in s.positions().values()) == wo_hold
+    assert {w: p.end_tok for w, p in s.positions().items()} == {w: v / 1e6 for w, v in pos.items()}
+
+
+@pytest.mark.parametrize("bad", [dict(amount_sol=1e300), dict(amount_sol=math.nan), dict(amount_sol=-1.0),
+                                 dict(price=1e300), dict(price=math.inf), dict(price=0.0), dict(tok_raw=-5),
+                                 dict(tok_raw=10**30), dict(venue=7)])
+def test_ingest_rejects_a_trade_that_cannot_be_derived(bad: dict[str, Any]) -> None:
+    coin = COINS[INSTANT[0]]
+    tr = tracker_for(coin)
+    c_ts = coin["created_ms"] // 1000
+    before = fingerprint(tr, c_ts + 140)
+    early = fingerprint(tr, c_ts + 50)
+    t0 = tr.trades[-1]
+    sid = f"{t0.slot + 1:012d}{0:010d}"
+    poison = FlowTrade(**{**{f: getattr(t0, f) for f in t0.__dataclass_fields__}, "slot": t0.slot + 1, "pos": 0,
+                          "sid": sid, **bad})
+    assert tr.ingest([poison]) == 0 and tr.rejected == 1
+    assert fingerprint(tr, c_ts + 140) == before and fingerprint(tr, c_ts + 50) == early
+    assert tr.chain_breaks == 0
+
+
+@pytest.mark.parametrize("mint", MINTS)
+def test_page_by_page_ingest_extends_the_chain_without_a_full_rederive(mint: str, monkeypatch) -> None:
+    coin = COINS[mint]
+    ref = tracker_for(coin)
+    ref_rows = ref.rows()
+    trades = list(ref.trades)
+    tr = FlowTracker(mint, created_ts=ref.meta.created_ts, creator=ref.meta.creator, history_from=ref.history_from)
+    full_derives = []
+    orig = FlowTracker._derive
+
+    def counting(self: FlowTracker, ts: list[FlowTrade], tau: float) -> Any:
+        full_derives.append(len(ts))
+        return orig(self, ts, tau)
+
+    monkeypatch.setattr(FlowTracker, "_derive", counting)
+    for i in range(0, len(trades), 7):
+        tr.ingest(trades[i:i + 7])
+        tr.rows()
+    assert len(full_derives) == 1                                      # the first page; then extended in place
+    assert tr.rows() == ref_rows and tr.chain_breaks == ref.chain_breaks
+    tr.ingest([trades[0]])                                             # a duplicate: nothing to do
+    assert len(full_derives) == 1
+    late = FlowTracker(mint, created_ts=ref.meta.created_ts, creator=ref.meta.creator, history_from=ref.history_from)
+    late.ingest(trades[len(trades) // 2:])
+    late.rows()
+    late.ingest(trades[:len(trades) // 2])                             # out of order: one full re-derive
+    assert late.rows() == ref_rows and (mint == MAYHEM or late.chain_breaks == 0)

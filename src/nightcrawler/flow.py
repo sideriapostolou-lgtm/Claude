@@ -18,10 +18,25 @@ THE CONTRACT
   ``snap.complete`` is False when trades up to tau may still be missing (``complete_through <= tau``): do not
   trade on such a snapshot. ``history_from`` is the time from which the tracker holds EVERY trade; curve-life,
   launch, wallet-position and reserve features need it to reach back to creation (curve) or graduation (pool),
-  otherwise they read ``None`` (the lab's NULL, never 0).
+  otherwise they read ``None`` (the lab's NULL, never 0). The same holds for everything that sums the pool from
+  graduation: ``w120_*`` / ``w300_*``, the AGENT (``agent`` None, ``agent_resolved`` False), and the minute bars
+  that began before ``history_from`` (``bars.known`` 0, every value NaN; so are ``vol_sol`` / ``ret`` /
+  ``max_high`` windows that reach them).
+* **Trade sanity.** :meth:`FlowTracker.ingest` refuses trades whose numbers cannot be real (non-finite, negative,
+  more tokens than a mint's supply, absurd SOL or price): ``tracker.rejected`` counts them.
 * **Wallet identity.** Pooled program accounts (:data:`POOLED_ACCOUNTS`) are kept in every SOL / token total and
   in the reserve chain (they are real trades) but never count as a wallet (top buyers, AGENT, positions,
   orphans), exactly like ``common.py`` / ``s1.py``. swap-api attributes most pooled trades to the real signer.
+* **Wallet ledgers are integers.** :meth:`FlowSnapshot.positions` is ``b3.sql`` (every trade, raw token units and
+  lamports); :meth:`FlowSnapshot.roles` / :meth:`FlowSnapshot.orphan_sellers` / :meth:`FlowSnapshot.inventory`
+  are ``s1._build_prefix`` (B1 rows of >= 0.01 SOL, the per-sell 2 % orphan rule, the S1 INSIDER union).
+
+KNOWN LAB DIVERGENCE (research/lab2/common.py, not fixed there): ``common._make_coin`` opens bar 0 at
+``(pool_quote0 + virt) / pool_base0``, but ``pool_quote0`` already includes the virtual reserve (CryptoHouse's first
+pool trade: x0 67.406 + v 17.585 = 84.990 SOL), so the lab's bar-0 open is ~20.7 % high and its bar-0 low is
+min(open, close). This tracker follows B2 (bar-0 open = 84.990 / 206.9M). Every later bar, window and AGENT field
+matches the lab; anything that reads bar 0's open / low / high, or ``ret`` / ``max_high`` windows reaching g (G1's
+dip signal, early D1 windows), is NOT parity-safe until the lab is corrected and re-run.
 * **Failed transactions** never reach the tracker: swap-api lists successful swaps only (its trades matched
   CryptoHouse's ``err = ''`` set 6,138/6,142, the 4 others being pooled-account attribution; AUDIT section 1).
   :func:`nightcrawler.sources.pumpfun_trades.parse_trade` also drops rows that carry an error flag.
@@ -68,6 +83,10 @@ __all__ = [
     "VENUE_CURVE",
     "VENUE_AMM",
     "AMM_BUY_FALLBACK",
+    "MAX_TOK_RAW",
+    "MAX_AMOUNT_SOL",
+    "MAX_PRICE_SOL",
+    "ORPHAN_TOL",
     "NotYetKnown",
     "ForbiddenFeature",
     "FlowTrade",
@@ -85,6 +104,7 @@ __all__ = [
     "wallet_h",
     "b58decode",
     "cityhash64",
+    "valid_trade",
 ]
 
 # --------------------------------------------------------------------------- constants (research/lab2/common.py)
@@ -104,6 +124,13 @@ TOP_K = 10                     # w120_top10 / w300_top10
 LAMPORTS = 1_000_000_000
 TOK_RAW = 1_000_000            # raw token units per whole token (6 decimals)
 _DUST_L = 10_000_000           # DUST_SOL in lamports (b2.sql / curve.sql compare integer lamports)
+#: sanity bounds of one trade (FlowTracker.ingest refuses the rest): more tokens than a mint's 1e9 supply (+10 %),
+#: ten million SOL, or a price of 1,000 SOL per token (a 1e12 SOL market cap) cannot be real
+MAX_TOK_RAW = 1_100_000_000 * 1_000_000
+MAX_AMOUNT_SOL = 1e7
+MAX_PRICE_SOL = 1e3
+ORPHAN_TOL = 0.02              # s1.py: a sell's orphan part counts only above 2 % of the sell
+CURVE_BAND = (55.0, 85.0)      # s1.py COMPLETER: real SOL band (the last 30 SOL)
 
 #: Pooled program accounts: the event ``user`` signs for many people (AUDIT 3.6). Never a wallet.
 POOLED_ACCOUNTS = frozenset({"ARu4n5mFdZogZAravu7CcizaojWnS6oqka37gdLT5SZn"})
@@ -185,6 +212,18 @@ class FlowTrade:
     @property
     def tok(self) -> float:
         return self.tok_raw / TOK_RAW
+
+
+def valid_trade(t: FlowTrade) -> bool:
+    """True when every number of ``t`` can be real (finite, in range): the chain derivation relies on it."""
+    try:
+        return (type(t.slot) is int and t.slot >= 0 and type(t.pos) is int and t.pos >= 0 and type(t.ts) is int
+                and isinstance(t.sid, str) and isinstance(t.wallet, str) and t.venue in (VENUE_CURVE, VENUE_AMM)
+                and type(t.tok_raw) is int
+                and 0 <= t.tok_raw <= MAX_TOK_RAW and math.isfinite(t.amount_sol)
+                and 0.0 <= t.amount_sol < MAX_AMOUNT_SOL and math.isfinite(t.price) and 0.0 < t.price < MAX_PRICE_SOL)
+    except (AttributeError, TypeError):
+        return False
 
 
 @dataclass(frozen=True, slots=True)
@@ -388,25 +427,62 @@ def _wallet_bytes(address: str) -> bytes:
 
 @dataclass
 class Position:
-    """One wallet's trades in a snapshot prefix (B3 columns): tokens are whole, SOL user-side."""
+    """One wallet's trades in a snapshot prefix (B3 columns), kept in exact integers like ``b3.sql``: lamports
+    (user-side SOL) and raw token units; the ``*_sol`` / ``*_tok`` properties convert on output."""
 
     n_buys: int = 0
     n_sells: int = 0
-    buy_sol: float = 0.0
-    sell_sol: float = 0.0
-    buy_tok: float = 0.0
-    sell_tok: float = 0.0
-    curve_buy_sol: float = 0.0
-    curve_sell_sol: float = 0.0
+    buy_lamports: int = 0
+    sell_lamports: int = 0
+    buy_raw: int = 0
+    sell_raw: int = 0
+    curve_buy_lamports: int = 0
+    curve_sell_lamports: int = 0
     first_ts: int | None = None
     last_ts: int | None = None
     first_buy_ts: int | None = None
     last_sell_ts: int | None = None
-    pos_tok: float = 0.0           # running position (end_tok)
-    peak_tok: float = 0.0
-    orphan_tok: float = 0.0        # tokens sold beyond the holding at that moment (TRANSFEREE signal)
+    pos_raw: int = 0               # running position (end_tok)
+    peak_raw: int = 0
+    orphan_raw: int = 0            # tokens sold beyond the holding at that moment (b3.sql orphan_tok)
     n_sell_without_holding: int = 0
     cost_sol: float = 0.0          # average-cost basis of the open position (S1 rule)
+
+    @property
+    def buy_sol(self) -> float:
+        return self.buy_lamports / LAMPORTS
+
+    @property
+    def sell_sol(self) -> float:
+        return self.sell_lamports / LAMPORTS
+
+    @property
+    def curve_buy_sol(self) -> float:
+        return self.curve_buy_lamports / LAMPORTS
+
+    @property
+    def curve_sell_sol(self) -> float:
+        return self.curve_sell_lamports / LAMPORTS
+
+    @property
+    def buy_tok(self) -> float:
+        return self.buy_raw / TOK_RAW
+
+    @property
+    def sell_tok(self) -> float:
+        return self.sell_raw / TOK_RAW
+
+    @property
+    def pos_tok(self) -> float:
+        return self.pos_raw / TOK_RAW
+
+    @property
+    def peak_tok(self) -> float:
+        return self.peak_raw / TOK_RAW
+
+    @property
+    def orphan_tok(self) -> float:
+        return self.orphan_raw / TOK_RAW
 
     @property
     def end_tok(self) -> float:
@@ -417,7 +493,7 @@ class Position:
 
 
 _BAR_FIELDS = ("o", "h", "l", "c", "X", "y", "x_real", "buy_sol", "sell_sol", "buy_tok", "sell_tok", "n_buys",
-               "n_sells", "n_dust", "n_buyers", "n_sellers", "top5_buy_sol", "agent_buy_sol", "traded")
+               "n_sells", "n_dust", "n_buyers", "n_sellers", "top5_buy_sol", "agent_buy_sol", "traded", "known")
 
 
 class FlowBars:
@@ -427,7 +503,10 @@ class FlowBars:
     zero flow; ``traded`` is 1.0 for minutes with >= 1 pool trade. ``X`` = pricing reserve x + v and ``y`` = pool
     tokens after the minute (None when the reserve chain is unknown). ``x_real`` is not observable from swap-api
     (None). ``agent_buy_sol`` is NaN before the AGENT is detected. B2 definitions: ``open`` = the price before the
-    minute's first trade, ``high`` / ``low`` / ``close`` after trades; buyers / sellers / top5 per wallet."""
+    minute's first trade, ``high`` / ``low`` / ``close`` after trades; buyers / sellers / top5 per wallet.
+    ``known`` is 0.0 for minutes the tracker does not fully hold (they began before ``history_from`` while the
+    pool's history from graduation is missing): every value of such a minute is NaN, and the first known minute
+    opens at NaN until a trade sets the price."""
 
     def __init__(self, minute_ts: list[int], cols: dict[str, list[Any]]) -> None:
         self.minute_ts = minute_ts
@@ -469,6 +548,97 @@ class _Meta:
     max_bars: int | None
 
 
+class _Chain:
+    """The reserve chain's running state, one trade at a time in chain order (the derivation of
+    :meth:`FlowTracker.rows`). Kept between ingests so an in-order page extends the rows instead of re-deriving
+    every held trade."""
+
+    def __init__(self, tracker: "FlowTracker") -> None:
+        m = tracker.meta
+        self.tracker, self.meta = tracker, m
+        curve_ok = tracker._curve_from_creation()
+        self.y_c: int | None = CURVE_VTOK0_RAW if curve_ok else None
+        self.x_c: float | None = m.vsol0 * LAMPORTS if curve_ok else None
+        # the pool's start is decided at the first pool trade, when g is known (FlowTracker.g_at)
+        self.amm_started = False
+        self.y_a: int | None = None
+        self.x_a: float | None = None
+        self.last_curve_ts: int | None = None
+        self.pc_rate = {20: _DEFAULT_PC_RATE, 2: _TIER2_PC_RATE}
+        self.breaks = 0
+        self.misses = 0
+
+    def step(self, t: FlowTrade) -> FlowRow:
+        m = self.meta
+        pooled = t.wallet in m.pooled
+        amount = int(round(t.amount_sol * LAMPORTS))
+        if t.venue == VENUE_CURVE:
+            self.last_curve_ts = t.ts
+            usol, fees = curve_user_sol(t.is_buy, t.amount_sol, t.wallet, m.fee_free)
+            kind = "curve_fee_free" if t.wallet in m.fee_free else "curve"
+            x0c, y0c, y1c, rs = self.x_c, self.y_c, None, None
+            if self.y_c is not None and self.x_c is not None:
+                y1c = self.y_c - t.tok_raw if t.is_buy else self.y_c + t.tok_raw
+                x1c = t.price * y1c * 1e3 if y1c > 0 else self.x_c
+                # the curve's sol_amount IS the virtual-SOL move: a gap means SOL left / entered outside trades
+                # (Mayhem curves do that by design) or a trade is missing; x is re-anchored on the price anyway
+                if abs(abs(x1c - self.x_c) - amount) > max(_CHAIN_TOL_LAMPORTS, amount * 1e-7):
+                    self.breaks += 1
+                rs = (x1c - CURVE_VSOL0_LAMPORTS) / LAMPORTS
+                self.y_c, self.x_c = y1c, x1c
+            return FlowRow(t, usol, t.wallet in m.fee_free, kind, fees, x0c, y0c, x0c, y1c, pooled, rs)
+        # ---- PumpSwap
+        if not self.amm_started:
+            self.amm_started = True
+            g = m.g_ts if m.g_ts is not None else (self.last_curve_ts if self.last_curve_ts is not None else t.ts)
+            if self.tracker._pool_from_start(float(g)):
+                self.y_a, self.x_a = int(round(m.pool_base0 * TOK_RAW)), m.pool_x0_sol * LAMPORTS
+        if not t.is_buy:
+            usol, kind, exact, fees = amount, "sell", True, 0
+        else:
+            usol, kind, exact, fees = int(round(amount * AMM_BUY_FALLBACK)), "fallback", False, 0
+        X0, y0 = self.x_a, self.y_a
+        y1: int | None = None
+        if self.y_a is not None and self.x_a is not None:
+            x_a, y_a = self.x_a, self.y_a
+            y1 = y_a - t.tok_raw if t.is_buy else y_a + t.tok_raw
+            X1 = t.price * y1 * 1e3 if y1 > 0 else x_a
+            q = X1 - x_a if t.is_buy else x_a - X1
+            tol = max(_CHAIN_TOL_LAMPORTS, amount * 1e-7)
+            if t.is_buy:
+                diff = amount - q
+                if q <= 0 or abs(diff) > 0.05 * q + tol:
+                    self.breaks += 1
+                elif abs(diff) <= tol:
+                    usol, kind, exact, fees = amount, "fee_free", True, 0
+                elif diff > 0:
+                    usol, kind, exact = amount, "buy", True
+                    fees = int(round(diff))
+                    if q >= _DUST_L:                 # small trades are dominated by per-fee rounding up
+                        tier = 2 if diff / q > 0.0118 else 20
+                        self.pc_rate[tier] = diff / q
+                else:
+                    # buy_exact_quote_in: the user typed usol; each fee is ceil(usol * bps / (1e4 + total)) at
+                    # the pool's market-cap tier BEFORE the trade and amountSol = usol - fees (verified to the
+                    # lamport on the launch sample). The LP fee q - amountSol confirms the tier group.
+                    lp = -diff
+                    bps = pumpswap_fee_components((x_a / LAMPORTS) / (y_a / TOK_RAW) * TOKEN_SUPPLY)
+                    if abs(lp / max(amount, 1) * 1e4 - bps[0]) < 1.0 or amount < 1_000_000:
+                        usol = _invert_exact_in(amount, bps)
+                    else:   # the fee schedule moved: exact LP fee + protocol/creator from the last `buy`
+                        self.misses += 1
+                        tier = 2 if lp / max(amount, 1) * 1e4 < 6 else 20
+                        usol = int(round(amount + lp + amount * self.pc_rate[tier]))
+                    fees, kind, exact = usol - amount, "exact_in", False
+            else:
+                if q + tol < amount:
+                    self.breaks += 1
+                fees = max(int(round(q - amount)), 0)
+            self.y_a, self.x_a = y1, X1
+        x0r = X0 - V_MIGRATION_SOL * LAMPORTS if X0 is not None else None
+        return FlowRow(t, usol, exact, kind, fees, x0r, y0, X0, y1, pooled)
+
+
 class FlowTracker:
     """One coin's trades in chain order (slot, position), deduplicated by slotIndexId.
 
@@ -495,8 +665,11 @@ class FlowTracker:
         self._keys: list[tuple[int, int, str]] = []
         self._sids: set[str] = set()
         self._rows: list[FlowRow] | None = None
+        self._chain: _Chain | None = None
         self._chain_breaks = 0
         self._fee_table_misses = 0
+        #: trades refused by :func:`valid_trade` (numbers that cannot be real)
+        self.rejected = 0
         self.version = 0
 
     # ------------------------------------------------------------------ ingest
@@ -507,26 +680,41 @@ class FlowTracker:
     def __len__(self) -> int:
         return len(self._trades)
 
+    def __contains__(self, sid: object) -> bool:
+        """True when the trade with this slotIndexId is held."""
+        return sid in self._sids
+
     @property
     def trades(self) -> tuple[FlowTrade, ...]:
         return tuple(self._trades)
 
     def ingest(self, trades: Iterable[FlowTrade]) -> int:
-        """Add trades (any order); duplicates (same slotIndexId) are ignored. Returns how many were new."""
-        added = 0
+        """Add trades (any order); duplicates (same slotIndexId) are ignored and trades that fail
+        :func:`valid_trade` are refused (``rejected``). Returns how many were new. Trades that all land after the
+        held ones (a feed page in chain order) extend the derived rows in place; anything else re-derives."""
+        added: list[FlowTrade] = []
+        tail = True
         for t in trades:
+            if not valid_trade(t):
+                self.rejected += 1
+                continue
             if t.sid in self._sids:
                 continue
             k = t.key
             i = bisect.bisect_right(self._keys, k)
+            tail = tail and i == len(self._keys)
             self._keys.insert(i, k)
             self._trades.insert(i, t)
             self._sids.add(t.sid)
-            added += 1
+            added.append(t)
         if added:
-            self._rows = None
+            if tail and self._rows is not None and self._chain is not None:
+                self._rows.extend(self._chain.step(t) for t in added)
+                self._chain_breaks, self._fee_table_misses = self._chain.breaks, self._chain.misses
+            else:
+                self._rows, self._chain = None, None
             self.version += 1
-        return added
+        return len(added)
 
     def mark_complete(self, through_ts: float) -> None:
         """Every trade with ``ts < through_ts`` is now held (monotone: an earlier time is ignored)."""
@@ -536,7 +724,16 @@ class FlowTracker:
 
     def set_history_from(self, ts: float) -> None:
         self.history_from = float(ts)
-        self._rows = None
+        self._rows, self._chain = None, None
+        self.version += 1
+
+    def reset_history(self, start_ts: float) -> None:
+        """Restart coverage at ``start_ts``: from now on every trade from ``start_ts`` is promised again, and none
+        is confirmed yet (``complete_through = start_ts``, NOT monotone). For a feed that re-syncs the coin from an
+        earlier (or later, non-contiguous) start; held trades stay (duplicates are ignored on re-ingest)."""
+        self.history_from = float(start_ts)
+        self.complete_through = float(start_ts)
+        self._rows, self._chain = None, None
         self.version += 1
 
     # ------------------------------------------------------------------ chain derivation
@@ -570,9 +767,11 @@ class FlowTracker:
         return self._chain_breaks
 
     def rows(self) -> list[FlowRow]:
-        """Every trade with its chain-derived columns, in chain order (cached until the next ingest)."""
+        """Every trade with its chain-derived columns, in chain order (extended by in-order ingests)."""
         if self._rows is None:
-            self._rows, self._chain_breaks, self._fee_table_misses = self._derive(self._trades, math.inf)
+            rows, chain = self._derive(self._trades, math.inf)
+            self._rows, self._chain = rows, chain
+            self._chain_breaks, self._fee_table_misses = chain.breaks, chain.misses
         return self._rows
 
     def rows_asof(self, tau: float) -> list[FlowRow]:
@@ -585,83 +784,11 @@ class FlowTracker:
             return rows[:n]
         return self._derive([t for t in self._trades if t.ts <= tau], tau)[0]
 
-    def _derive(self, trades: list[FlowTrade], tau: float) -> tuple[list[FlowRow], int, int]:
-        m = self.meta
-        curve_ok = self._curve_from_creation()
-        pool_ok = self._pool_from_start(self.g_at(tau))
-        y_c: int | None = CURVE_VTOK0_RAW if curve_ok else None
-        x_c: float | None = m.vsol0 * LAMPORTS if curve_ok else None
-        y_a: int | None = int(round(m.pool_base0 * TOK_RAW)) if pool_ok else None
-        x_a: float | None = m.pool_x0_sol * LAMPORTS if pool_ok else None
-        v_l = V_MIGRATION_SOL * LAMPORTS
-        pc_rate = {20: _DEFAULT_PC_RATE, 2: _TIER2_PC_RATE}
-        breaks = 0
-        misses = 0
-        out: list[FlowRow] = []
-        for t in trades:
-            pooled = t.wallet in m.pooled
-            amount = int(round(t.amount_sol * LAMPORTS))
-            if t.venue == VENUE_CURVE:
-                usol, fees = curve_user_sol(t.is_buy, t.amount_sol, t.wallet, m.fee_free)
-                kind = "curve_fee_free" if t.wallet in m.fee_free else "curve"
-                x0c, y0c, y1c, rs = x_c, y_c, None, None
-                if y_c is not None and x_c is not None:
-                    y1c = y_c - t.tok_raw if t.is_buy else y_c + t.tok_raw
-                    x1c = t.price * y1c * 1e3 if y1c > 0 else x_c
-                    # the curve's sol_amount IS the virtual-SOL move: a gap means SOL left / entered outside trades
-                    # (Mayhem curves do that by design) or a trade is missing; x is re-anchored on the price anyway
-                    if abs(abs(x1c - x_c) - amount) > max(_CHAIN_TOL_LAMPORTS, amount * 1e-7):
-                        breaks += 1
-                    rs = (x1c - CURVE_VSOL0_LAMPORTS) / LAMPORTS
-                    y_c, x_c = y1c, x1c
-                out.append(FlowRow(t, usol, t.wallet in m.fee_free, kind, fees, x0c, y0c, x0c, y1c, pooled, rs))
-                continue
-            # ---- PumpSwap
-            if not t.is_buy:
-                usol, kind, exact, fees = amount, "sell", True, 0
-            else:
-                usol, kind, exact, fees = int(round(amount * AMM_BUY_FALLBACK)), "fallback", False, 0
-            X0: float | None = x_a
-            y0: int | None = y_a
-            y1: int | None = None
-            if y_a is not None and x_a is not None:
-                y1 = y_a - t.tok_raw if t.is_buy else y_a + t.tok_raw
-                X1 = t.price * y1 * 1e3 if y1 > 0 else x_a
-                q = X1 - x_a if t.is_buy else x_a - X1
-                tol = max(_CHAIN_TOL_LAMPORTS, amount * 1e-7)
-                if t.is_buy:
-                    diff = amount - q
-                    if q <= 0 or abs(diff) > 0.05 * q + tol:
-                        breaks += 1
-                    elif abs(diff) <= tol:
-                        usol, kind, exact, fees = amount, "fee_free", True, 0
-                    elif diff > 0:
-                        usol, kind, exact = amount, "buy", True
-                        fees = int(round(diff))
-                        if q >= _DUST_L:                 # small trades are dominated by per-fee rounding up
-                            tier = 2 if diff / q > 0.0118 else 20
-                            pc_rate[tier] = diff / q
-                    else:
-                        # buy_exact_quote_in: the user typed usol; each fee is ceil(usol * bps / (1e4 + total)) at
-                        # the pool's market-cap tier BEFORE the trade and amountSol = usol - fees (verified to the
-                        # lamport on the launch sample). The LP fee q - amountSol confirms the tier group.
-                        lp = -diff
-                        bps = pumpswap_fee_components((x_a / LAMPORTS) / (y_a / TOK_RAW) * TOKEN_SUPPLY)
-                        if abs(lp / max(amount, 1) * 1e4 - bps[0]) < 1.0 or amount < 1_000_000:
-                            usol = _invert_exact_in(amount, bps)
-                        else:   # the fee schedule moved: exact LP fee + protocol/creator from the last `buy`
-                            misses += 1
-                            tier = 2 if lp / max(amount, 1) * 1e4 < 6 else 20
-                            usol = int(round(amount + lp + amount * pc_rate[tier]))
-                        fees, kind, exact = usol - amount, "exact_in", False
-                else:
-                    if q + tol < amount:
-                        breaks += 1
-                    fees = max(int(round(q - amount)), 0)
-                y_a, x_a = y1, X1
-            x0r = X0 - v_l if X0 is not None else None
-            out.append(FlowRow(t, usol, exact, kind, fees, x0r, y0, X0, y1, pooled))
-        return out, breaks, misses
+    def _derive(self, trades: list[FlowTrade], tau: float) -> tuple[list[FlowRow], _Chain]:
+        """Rows of ``trades`` (chain order) from the coverage start; ``tau`` only documents the cutoff (g is
+        decided at the first pool trade of ``trades``, exactly what :meth:`g_at` returns at that cutoff)."""
+        chain = _Chain(self)
+        return [chain.step(t) for t in trades], chain
 
     # ------------------------------------------------------------------ snapshots
     def as_of(self, t: float, *, lag_s: float = DECISION_LAG_S, sol_usd: float | None = None) -> "FlowSnapshot":
@@ -682,6 +809,23 @@ class _Window:
 
 
 @dataclass
+class _S1Roles:
+    """``s1._build_prefix``'s integer wallet ledger and roles on one snapshot's B1 rows (usol >= 0.01 SOL)."""
+
+    pos: dict[str, int]                                  # raw tokens per wallet (pooled accounts included)
+    ledger: list[tuple[str, bool, int, int, int, float]]  # (wallet, is_buy, tok, pos before, pos after, SOL)
+    roles: dict[str, frozenset[str]]
+
+
+def _wh(wallet: str) -> int:
+    """wallet_h for ordering like the lab (ties broken by the smaller hash); 0 for a non-address test wallet."""
+    try:
+        return wallet_h(wallet)
+    except (KeyError, ValueError):
+        return 0
+
+
+@dataclass
 class _Cache:
     bars: FlowBars | None = None
     agent: AgentInfo | None = None
@@ -689,6 +833,7 @@ class _Cache:
     windows: dict[int, _Window] = field(default_factory=dict)
     curve: dict[str, Any] | None = None
     positions: dict[str, Position] | None = None
+    s1: _S1Roles | None = None
 
 
 class FlowSnapshot:
@@ -719,7 +864,11 @@ class FlowSnapshot:
         self.data_lag_s = t - tracker.complete_through
         self.history_from = tracker.history_from
         self.curve_known = tracker._curve_from_creation()
+        #: the pool's history from graduation is held: early windows, AGENT, reserves and every bar are known
         self.pool_known = tracker._pool_from_start(g)
+        hf = tracker.history_from
+        #: minutes that start before this are not fully held (bars.known 0, NaN values)
+        self.bars_from = -math.inf if self.pool_known else (float(hf) if hf is not None else math.inf)
         self._c = _Cache()
 
     # ------------------------------------------------------------------ basic
@@ -750,7 +899,7 @@ class FlowSnapshot:
     def _build_bars(self) -> FlowBars:
         k = self.k
         init_y = self.meta.pool_base0
-        init_p = self.meta.pool_x0_sol / init_y
+        init_p = self.meta.pool_x0_sol / init_y if self.pool_known else math.nan
         by_min: dict[int, list[FlowRow]] = {}
         for r in self._amm():
             i = (r.trade.ts - self.m0) // 60
@@ -766,13 +915,21 @@ class FlowSnapshot:
         last_p = init_p
         last_y: float | None = init_y if self.pool_known else None
         for i in range(k):
+            if self.m0 + 60 * i < self.bars_from:
+                # began before the held history: unknown, never zero flow at a made-up price
+                vals: dict[str, Any] = dict.fromkeys(_BAR_FIELDS, math.nan)
+                vals.update(known=0.0, X=None, y=None, x_real=None)
+                last_p = math.nan
+                for f in _BAR_FIELDS:
+                    cols[f].append(vals[f])
+                continue
             rs = by_min.get(i)
             if rs:
                 o = last_p
                 posts = [r.trade.price for r in rs]
                 c = posts[-1]
-                h = max(max(posts), o, c)
-                lo = min(min(posts), o, c)
+                h = max(posts) if math.isnan(o) else max(max(posts), o, c)
+                lo = min(posts) if math.isnan(o) else min(min(posts), o, c)
                 buys = [r for r in rs if r.trade.is_buy]
                 sells = [r for r in rs if not r.trade.is_buy]
                 wb: dict[str, int] = {}
@@ -783,7 +940,7 @@ class FlowSnapshot:
                 y_end = rs[-1].y1 / TOK_RAW if rs[-1].y1 is not None else None
                 last_p = c
                 last_y = y_end
-                vals: dict[str, Any] = {
+                vals = {
                     "o": o, "h": h, "l": lo, "c": c,
                     "buy_sol": sum(r.usol for r in buys) / LAMPORTS, "sell_sol": sum(r.usol for r in sells) / LAMPORTS,
                     "buy_tok": sum(r.trade.tok_raw for r in buys) / TOK_RAW,
@@ -799,6 +956,7 @@ class FlowSnapshot:
                 vals = {"o": last_p, "h": last_p, "l": last_p, "c": last_p, "buy_sol": 0.0, "sell_sol": 0.0,
                         "buy_tok": 0.0, "sell_tok": 0.0, "n_buys": 0, "n_sells": 0, "n_dust": 0, "n_buyers": 0,
                         "n_sellers": 0, "top5_buy_sol": 0.0, "traded": 0.0}
+            vals["known"] = 1.0
             vals["y"] = last_y
             vals["X"] = vals["c"] * last_y if last_y is not None else None
             vals["x_real"] = None
@@ -807,10 +965,14 @@ class FlowSnapshot:
                 cols[f].append(vals[f])
         return FlowBars([self.m0 + 60 * i for i in range(k)], cols)
 
+    def _fresh_pool_price(self) -> float:
+        """The fresh migration pool's price, or NaN when the pool's history from graduation is not held."""
+        return self.meta.pool_x0_sol / self.meta.pool_base0 if self.pool_known else math.nan
+
     @property
     def price(self) -> float:
-        """Pool price at the end of the last completed minute (the fresh pool's price if none)."""
-        return float(self.bars.c[self.k - 1]) if self.k > 0 else self.meta.pool_x0_sol / self.meta.pool_base0
+        """Pool price at the end of the last completed minute (the fresh pool's price if none; NaN when unknown)."""
+        return float(self.bars.c[self.k - 1]) if self.k > 0 else self._fresh_pool_price()
 
     @property
     def last_price(self) -> float | None:
@@ -856,12 +1018,14 @@ class FlowSnapshot:
 
     def ret(self, window_s: float) -> float:
         j = int(math.floor((self.tau - window_s - self.m0) / 60.0)) - 1
-        p0 = float(self.bars.c[j]) if 0 <= j < self.k else self.meta.pool_x0_sol / self.meta.pool_base0
+        p0 = float(self.bars.c[j]) if 0 <= j < self.k else self._fresh_pool_price()
         return self.price / p0 - 1.0
 
     def max_high(self, window_s: float) -> float:
-        hs = [self.bars.h[i] for i in self._win(window_s)]
-        return float(max(hs)) if hs else self.price
+        hs = [float(self.bars.h[i]) for i in self._win(window_s)]
+        if any(math.isnan(h) for h in hs):
+            return math.nan
+        return max(hs) if hs else self.price
 
     def alive(self, vol_usd_15m: float = 1500.0, mcap_usd_min: float = 6000.0) -> bool:
         return self.vol_usd(900) >= vol_usd_15m and self.mcap_usd >= mcap_usd_min
@@ -878,8 +1042,9 @@ class FlowSnapshot:
     def _detect_agent(self) -> AgentInfo | None:
         """features.detect_agent(as_of=tau) on pool trades in [g, g + 420 s): candidates are wallets with buys and
         no sell in the window up to tau (the lab's b2.sql counts sells in the window only). ``detected_at`` = the
-        first buy of that wallet at which the rule matched on the buys seen so far."""
-        if not self.graduated:
+        first buy of that wallet at which the rule matched on the buys seen so far. Unknown (None) without the
+        pool's history from graduation."""
+        if not self.graduated or not self.pool_known:
             return None
         g = self.g
         cands: dict[str, dict[str, Any]] = {}
@@ -915,8 +1080,8 @@ class FlowSnapshot:
 
     @property
     def agent_resolved(self) -> bool:
-        """AGENT presence is decided: detected, or the 420 s window is over."""
-        return self.agent_detected or (self.graduated and self.tau >= self.g + AGENT_WINDOW_S)
+        """AGENT presence is decided: detected, or the 420 s window is over (never without the pool's history)."""
+        return self.agent_detected or (self.graduated and self.pool_known and self.tau >= self.g + AGENT_WINDOW_S)
 
     # ------------------------------------------------------------------ early windows
     def _window(self, w: int) -> _Window:
@@ -1147,11 +1312,13 @@ class FlowSnapshot:
         if name == "pool_quote0":
             return m.pool_x0_sol
         if name in _WINDOW_FIELDS:
+            if not self.pool_known:
+                return None                   # the window's start is not held: NULL, never a partial sum
             w = self._window(W120_S if name.startswith("w120_") else W300_S)
             return getattr(w, name.split("_", 1)[1]) if not name.endswith("top10") else w.top10
         a = self.agent
         if name == "agent_present":
-            return a is not None
+            return a is not None if self.pool_known else None
         if name in _AGENT_ID or name in _AGENT_WIN:
             if name == "w120_top5_share_ex_agent":
                 return self.top_share("w120", 5, exclude_agent=True)
@@ -1201,43 +1368,44 @@ class FlowSnapshot:
 
     # ------------------------------------------------------------------ wallets
     def positions(self) -> dict[str, Position]:
-        """Per-wallet B3 summary over every trade with ts <= tau (curve + pool, chain order; pooled excluded).
-        Meaningful only when ``history_from`` reaches back to creation (otherwise tokens bought earlier read as
-        orphan sells): check ``snap.curve_known``."""
+        """Per-wallet ``b3.sql`` summary over every trade with ts <= tau (curve + pool, chain order, dust included;
+        pooled accounts excluded), in exact integers. Meaningful only when ``history_from`` reaches back to
+        creation (otherwise tokens bought earlier read as orphan sells): check ``snap.curve_known``."""
         if self._c.positions is None:
             pos: dict[str, Position] = {}
             for r in self._rows:
                 if r.pooled:
                     continue
                 t = r.trade
+                q = t.tok_raw
                 p = pos.setdefault(t.wallet, Position())
                 p.first_ts = t.ts if p.first_ts is None else p.first_ts
                 p.last_ts = t.ts
                 if t.is_buy:
                     p.n_buys += 1
-                    p.buy_sol += r.sol
-                    p.buy_tok += r.tok
+                    p.buy_lamports += r.usol
+                    p.buy_raw += q
                     p.first_buy_ts = t.ts if p.first_buy_ts is None else p.first_buy_ts
                     if t.venue == VENUE_CURVE:
-                        p.curve_buy_sol += r.sol
-                    p.cost_sol = (p.cost_sol if p.pos_tok > 0 else 0.0) + r.sol
-                    p.pos_tok += r.tok
-                    p.peak_tok = max(p.peak_tok, p.pos_tok)
+                        p.curve_buy_lamports += r.usol
+                    p.cost_sol = (p.cost_sol if p.pos_raw > 0 else 0.0) + r.sol
+                    p.pos_raw += q
+                    p.peak_raw = max(p.peak_raw, p.pos_raw)
                 else:
                     p.n_sells += 1
-                    p.sell_sol += r.sol
-                    p.sell_tok += r.tok
+                    p.sell_lamports += r.usol
+                    p.sell_raw += q
                     p.last_sell_ts = t.ts
                     if t.venue == VENUE_CURVE:
-                        p.curve_sell_sol += r.sol
-                    held = max(p.pos_tok, 0.0)
+                        p.curve_sell_lamports += r.usol
+                    held = max(p.pos_raw, 0)
                     if held <= 0:
                         p.n_sell_without_holding += 1
-                    p.orphan_tok += max(0.0, r.tok - held)
+                    p.orphan_raw += max(0, q - held)
                     if held > 0:
-                        p.cost_sol *= 1.0 - min(r.tok, held) / held
-                    p.pos_tok -= r.tok
-                    if p.pos_tok <= 0:
+                        p.cost_sol *= 1.0 - min(q, held) / held
+                    p.pos_raw -= q
+                    if p.pos_raw <= 0:
                         p.cost_sol = 0.0
             self._c.positions = pos
         return self._c.positions
@@ -1246,54 +1414,143 @@ class FlowSnapshot:
         """B3 per-coin aggregates: buyers / sellers over all wallets (dust included), wallets that sold tokens they
         never bought (orphan), and sell-only wallets."""
         pos = self.positions()
-        orph = {w: p for w, p in pos.items() if p.orphan_tok > 0}
+        orph = {w: p for w, p in pos.items() if p.orphan_raw > 0}
         return {"n_buyers_all": sum(1 for p in pos.values() if p.n_buys > 0),
                 "n_sellers_all": sum(1 for p in pos.values() if p.n_sells > 0),
-                "n_orphan_sellers": len(orph), "orphan_seller_sell_sol": sum(p.sell_sol for p in orph.values()),
-                "orphan_tok": sum(p.orphan_tok for p in pos.values()),
+                "n_orphan_sellers": len(orph),
+                "orphan_seller_sell_sol": sum(p.sell_lamports for p in orph.values()) / LAMPORTS,
+                "orphan_tok": sum(p.orphan_raw for p in pos.values()) / TOK_RAW,
                 "n_sell_only_wallets": sum(1 for p in pos.values() if p.n_buys == 0 and p.n_sells > 0),
                 "history_complete": self.curve_known}
 
-    def orphan_sellers(self, min_frac: float = 0.02) -> dict[str, Position]:
-        """Wallets whose orphan part exceeds ``min_frac`` of what they sold (S1/D1 ORPHAN_TOL = 2 %)."""
-        return {w: p for w, p in self.positions().items() if p.sell_tok > 0 and p.orphan_tok > min_frac * p.sell_tok}
+    def _s1(self) -> _S1Roles:
+        if self._c.s1 is None:
+            self._c.s1 = self._build_s1()
+        return self._c.s1
+
+    def _build_s1(self) -> _S1Roles:
+        """``s1._build_prefix`` on the B1 rows of this snapshot: the integer ledger; TRANSFEREE (a sell whose
+        orphan part exceeds ORPHAN_TOL of it); BUNDLE (creation-slot curve buyers); SNIPER (first curve buy within
+        60 s of creation, or among the first 20 curve buyers); COMPLETER (most curve-buy SOL inside the 55-85 real
+        SOL band); the AGENT by S1's rule (>= 4 pool buys in [g, g + 420 s), no sell in the prefix); INSIDERS =
+        bundle | snipers | transferees | creator | completer, minus pooled accounts and the AGENT."""
+        m = self.meta
+        b1 = [r for r in self._rows if r.usol >= _DUST_L]
+        pooled = {r.trade.wallet for r in b1 if r.pooled}
+        pos: dict[str, int] = {}
+        ledger: list[tuple[str, bool, int, int, int, float]] = []
+        transferees: set[str] = set()
+        sold: set[str] = set()
+        for r in b1:
+            t = r.trade
+            before = pos.get(t.wallet, 0)
+            if t.is_buy:
+                after = before + t.tok_raw
+            else:
+                after = before - t.tok_raw
+                sold.add(t.wallet)
+                if max(0, t.tok_raw - max(before, 0)) > ORPHAN_TOL * t.tok_raw and t.wallet not in pooled:
+                    transferees.add(t.wallet)
+            pos[t.wallet] = after
+            ledger.append((t.wallet, t.is_buy, t.tok_raw, before, after, r.sol))
+        c_slot = self.c_slot
+        bundle: set[str] = set()
+        first: dict[str, int] = {}                 # first curve buy per wallet, in chain order
+        band: dict[str, float] = {}
+        for r in b1:
+            t = r.trade
+            if t.venue != VENUE_CURVE or not t.is_buy or t.wallet in pooled:
+                continue
+            if c_slot is not None and t.slot == c_slot:
+                bundle.add(t.wallet)
+            first.setdefault(t.wallet, t.ts)
+            if r.x0 is not None:
+                before_sol = r.x0 / LAMPORTS - m.vsol0
+                after_sol = before_sol + max(r.sol - r.fees / LAMPORTS, 0.0)
+                band[t.wallet] = band.get(t.wallet, 0.0) + max(
+                    min(after_sol, CURVE_BAND[1]) - max(before_sol, CURVE_BAND[0]), 0.0)
+        snipers = set(list(first)[:FIRST_N])
+        if m.created_ts is not None:
+            snipers.update(w for w, ts in first.items() if ts <= m.created_ts + SNIPER_S)
+        best = max(band.items(), key=lambda kv: (kv[1], -_wh(kv[0])), default=None)
+        completer = {best[0]} if best is not None and best[1] > 0 else set()
+        agent: set[str] = set()
+        if self.graduated:
+            g = int(self.g)
+            cands: dict[str, dict[str, Any]] = {}
+            for r in b1:
+                t = r.trade
+                if t.venue == VENUE_AMM and t.is_buy and g <= t.ts < g + AGENT_WINDOW_S and t.wallet not in pooled:
+                    d = cands.setdefault(t.wallet, {"ts": [], "sol": [], "sells": 0})
+                    d["ts"].append(t.ts)
+                    d["sol"].append(r.sol)
+            cands = {w: d for w, d in sorted(cands.items(), key=lambda kv: _wh(kv[0]))
+                     if len(d["ts"]) >= AGENT_MIN_BUYS and w not in sold}
+            found = detect_agent(cands, g) if cands else None
+            agent = {found["wallet"]} if found is not None else set()
+        creator = {m.creator} if m.creator and m.creator in pos else set()
+        insiders = (bundle | snipers | transferees | creator | completer) - pooled - agent
+        roles = {"creator": creator, "bundle": bundle, "snipers": snipers, "transferees": transferees,
+                 "completer": completer, "agent": agent, "insiders": insiders}
+        return _S1Roles(pos=pos, ledger=ledger, roles={k: frozenset(v) for k, v in roles.items()})
+
+    def roles(self) -> dict[str, frozenset[str]]:
+        """S1's wallet roles at tau (``s1._build_prefix``): creator, bundle, snipers, transferees, completer, agent,
+        insiders. Meaningful only with the curve's history from creation (``snap.curve_known``)."""
+        return dict(self._s1().roles)
+
+    def orphan_sellers(self, min_frac: float = ORPHAN_TOL) -> dict[str, Position]:
+        """S1's TRANSFEREES: wallets with a B1 sell (>= 0.01 SOL) whose orphan part (tokens beyond the holding
+        before it) exceeds ``min_frac`` of that sell; their :meth:`positions` entries."""
+        if min_frac == ORPHAN_TOL:
+            ws: Iterable[str] = self._s1().roles["transferees"]
+        else:
+            ws = {w for w, is_buy, tok, before, _, _ in self._s1().ledger
+                  if not is_buy and max(0, tok - max(before, 0)) > min_frac * tok and w not in self.meta.pooled}
+        pos = self.positions()
+        return {w: pos[w] for w in ws if w in pos}
+
+    def _group(self, wallets: Iterable[str]) -> dict[str, float]:
+        """S1 aggregates of a wallet set on the B1 ledger: held tokens (sum of positive positions), the set's
+        running peak, bought / sold tokens, the average-cost basis and size of the open positions."""
+        led = self._s1()
+        ws = {w for w in wallets if w in led.pos}
+        run = peak = bought = sold = 0
+        cost: dict[str, list[Any]] = {}
+        for w, is_buy, tok, before, after, sol in led.ledger:
+            if w not in ws:
+                continue
+            run += max(after, 0) - max(before, 0)
+            peak = max(peak, run)
+            c = cost.setdefault(w, [0, 0.0])
+            if is_buy:
+                bought += tok
+                c[0] += tok
+                c[1] += sol
+            else:
+                sold += tok
+                if c[0] > 0:
+                    c[1] *= 1.0 - min(tok, c[0]) / c[0]
+                c[0] -= tok
+                if c[0] <= 0:
+                    c[1] = 0.0
+        open_ = [c for c in cost.values() if c[0] > 0]
+        return {"wallets": float(len(ws)), "held_tok": sum(max(led.pos[w], 0) for w in ws) / TOK_RAW,
+                "peak_tok": peak / TOK_RAW, "bought_tok": bought / TOK_RAW, "sold_tok": sold / TOK_RAW,
+                "cost_sol": float(sum(c[1] for c in open_)), "pos_tok": sum(c[0] for c in open_) / TOK_RAW}
 
     def inventory(self) -> dict[str, Any]:
-        """Creator and early-buyer inventory at tau (whole tokens): the creator, the creation-slot BUNDLE, the
-        SNIPERS (first curve buy within 60 s of creation, or among the first 20 distinct curve buyers), and the
-        COMPLETER (largest curve buyer while real SOL >= 55). ``None`` values when curve history is missing."""
-        m = self.meta
-        if not self.curve_known or m.created_ts is None:
+        """Creator and early-buyer inventory at tau (whole tokens), on S1's roles and B1 ledger (:meth:`roles`):
+        per role the wallets, tokens held, the role's running peak, bought / sold, and the open positions' cost.
+        ``insiders`` equals ``s1._build_prefix``'s insider_hold / insider_peak / insider_cost_sol / insider_pos_pos.
+        ``{"known": False}`` without the curve's history from creation."""
+        if not self.curve_known or self.meta.created_ts is None:
             return {"known": False}
-        pos = self.positions()
-        first: list[str] = []
-        bundle: set[str] = set()
-        snipers: set[str] = set()
-        for r in self._curve():
-            t = r.trade
-            if not t.is_buy or r.pooled:
-                continue
-            if self.c_slot is not None and t.slot == self.c_slot:
-                bundle.add(t.wallet)
-            if t.wallet not in first:
-                first.append(t.wallet)
-                if t.ts <= m.created_ts + SNIPER_S:
-                    snipers.add(t.wallet)
-        snipers.update(first[:FIRST_N])
-        comp = self._curve_feats().get("completer30")
-
-        def group(ws: Iterable[str]) -> dict[str, float]:
-            ps = [pos[w] for w in ws if w in pos]
-            return {"wallets": float(len(ps)), "held_tok": sum(max(p.pos_tok, 0.0) for p in ps),
-                    "peak_tok": sum(p.peak_tok for p in ps), "bought_tok": sum(p.buy_tok for p in ps),
-                    "sold_tok": sum(p.sell_tok for p in ps), "cost_sol": sum(p.cost_sol for p in ps if p.pos_tok > 0)}
-
-        insiders = set(bundle) | snipers | ({m.creator} if m.creator else set()) | ({comp} if comp else set())
-        if self.agent is not None:
-            insiders.discard(self.agent.wallet)
-        return {"known": True, "creator": group([m.creator] if m.creator else []), "bundle": group(bundle),
-                "snipers": group(snipers), "completer": group([comp] if comp else []), "insiders": group(insiders),
-                "orphan_sellers": group(self.orphan_sellers())}
+        roles = self._s1().roles
+        out: dict[str, Any] = {"known": True}
+        for name in ("creator", "bundle", "snipers", "transferees", "completer", "insiders"):
+            out[name] = self._group(roles[name])
+        return out
 
     # ------------------------------------------------------------------ B1 rows
     def trade_rows(self, min_sol: float = DUST_SOL) -> list[dict[str, Any]]:

@@ -11,7 +11,8 @@ from typing import Any
 
 import pytest
 
-from test_flow_parity import COINS, ch_rows, tracker_for
+from nightcrawler.flow import POOLED_ACCOUNTS, VENUE_AMM, VENUE_CURVE, FlowTrade, FlowTracker, wallet_h
+from test_flow_parity import COINS, MAYHEM, ch_rows, tracker_for
 
 pd = pytest.importorskip("pandas")
 np = pytest.importorskip("numpy")
@@ -79,3 +80,99 @@ def test_m1_runs_on_the_live_snapshot() -> None:
     ok, info = m1.entry_decision(snap, m1.make_params(1.0, "rhythm"))
     assert ok is False and info["k"] == snap.k              # 2 bars: the 30-bar MECH window is not there yet
     assert m1.strategy(snap, m1.make_params(1.0, "rhythm"), None) is None
+
+
+@pytest.mark.parametrize("mint", [m for m in COINS if m != MAYHEM and COINS[m]["graduate"]["grad_delay_s"] < 119])
+@pytest.mark.parametrize("offset", [100, 140])
+def test_wallet_roles_are_s1s_own(mint: str, offset: int) -> None:
+    """snap.roles() / orphan_sellers() / inventory() are s1._build_prefix's TRANSFEREE / BUNDLE / SNIPER /
+    COMPLETER / INSIDER definitions (per-sell 2 % orphan rule on B1 rows, integer ledger), wallet for wallet."""
+    coin = COINS[mint]
+    c = coin["created_ms"] // 1000
+    snap = tracker_for(coin).as_of(c + offset, sol_usd=200.0)
+    assert snap.graduated and snap.curve_known                 # S1 decides on graduated coins only
+    st = {"c_slot": snap.c_slot or 0, "c_ts": c, "vsol0": 30.0, "creator": coin["graduate"]["creator"]}
+    P = s1._build_prefix(snap.trades.reset_index(drop=True), st, float(snap.g))
+
+    def hashes(mask: Any) -> set[int]:
+        return {int(h) for h in P.uw[mask]}
+
+    roles = snap.roles()
+    assert {wallet_h(w) for w in roles["transferees"]} == hashes(P.transferee_w)
+    assert {wallet_h(w) for w in snap.orphan_sellers()} == hashes(P.transferee_w)
+    assert {wallet_h(w) for w in roles["bundle"]} == hashes(P.bundle_w)
+    assert {wallet_h(w) for w in roles["snipers"]} == hashes(P.sniper_w)
+    assert {wallet_h(w) for w in roles["insiders"]} == hashes(P.ins_w)
+    want_comp = {int(P.uw[P.completer_code])} if P.completer_code is not None else set()
+    assert {wallet_h(w) for w in roles["completer"]} == want_comp
+    ins = snap.inventory()["insiders"]
+    assert ins["wallets"] == int(P.ins_w.sum())
+    assert ins["held_tok"] == pytest.approx(P.insider_hold, rel=1e-12, abs=1e-9)
+    assert ins["peak_tok"] == pytest.approx(P.insider_peak, rel=1e-12, abs=1e-9)
+    assert ins["cost_sol"] == pytest.approx(P.insider_cost_sol, rel=1e-9, abs=1e-12)
+    assert ins["pos_tok"] == pytest.approx(P.insider_pos_pos, rel=1e-12, abs=1e-9)
+
+
+_B58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
+
+
+def _address(i: int) -> str:
+    n = int.from_bytes(bytes((i * 37 + k * 11 + 1) % 256 for k in range(32)), "big")
+    out = ""
+    while n:
+        n, r = divmod(n, 58)
+        out = _B58[r] + out
+    return out
+
+
+def test_wallet_roles_match_s1_on_transferees_dust_and_an_agent() -> None:
+    """The fixture coins have no TRANSFEREE outside the Mayhem coin: a synthetic coin with orphan sells above and
+    below the 2 % rule, a dust orphan sell (not a B1 row), a pooled account and a 12 s BOOST cadence."""
+    c, g, c_slot = 1_800_000_000, 1_800_000_090, 1_000
+    W = [_address(i) for i in range(40)]
+    pooled = next(iter(POOLED_ACCOUNTS))
+    trades: list[FlowTrade] = []
+
+    def add(ts: int, wallet: str, buy: bool, tok: int, sol: float, venue: int = VENUE_CURVE) -> None:
+        slot = c_slot + (ts - c) * 3 + len(trades) % 3
+        sid = f"{slot:012d}{len(trades):010d}"
+        trades.append(FlowTrade(slot=slot, pos=len(trades), sid=sid, ts=ts, wallet=wallet, is_buy=buy, venue=venue,
+                                amount_sol=sol, tok_raw=tok, price=3e-8 if venue == VENUE_CURVE else 4e-7))
+
+    add(c, W[0], True, 50_000_000_000_000, 1.5)                   # creator, creation slot
+    add(c, W[1], True, 20_000_000_000_000, 0.6)                   # bundle
+    for i in range(2, 26):                                        # snipers: 60 s window, then first 20
+        add(c + 3 * i, W[i], True, 5_000_000_000_000 + i, 0.2 + 0.01 * i)
+    add(c + 70, W[26], True, 1_000_000_000_000, 0.03)
+    add(c + 71, W[26], False, 1_015_000_000_000, 0.03)            # 1.5 % orphan: not a TRANSFEREE
+    add(c + 72, W[27], True, 1_000_000_000_000, 0.03)
+    add(c + 73, W[27], False, 1_100_000_000_000, 0.033)           # 9 % orphan: TRANSFEREE
+    add(c + 74, W[28], False, 900_000_000_000, 0.02)              # sells what it never bought: TRANSFEREE
+    add(c + 75, W[29], False, 900_000_000_000, 0.004)             # the same, but dust: not a B1 row
+    add(c + 76, pooled, False, 2_000_000_000_000, 0.05)           # a pooled account is never a wallet
+    add(c + 80, W[3], False, 2_000_000_000_000, 0.1)              # a sniper sells part of its bag
+    for k in range(8):                                            # BOOST: 0.6 SOL every 12 s from g + 2
+        add(g + 2 + 12 * k, W[30], True, 1_500_000_000_000, 0.6, VENUE_AMM)
+    add(g + 5, W[31], True, 2_000_000_000_000, 0.8, VENUE_AMM)
+    add(g + 40, W[0], False, 10_000_000_000_000, 0.5, VENUE_AMM)  # the creator sells into the pool
+    add(g + 41, W[32], False, 300_000_000_000, 0.05, VENUE_AMM)   # a pool TRANSFEREE
+    tr = FlowTracker("SYNTH", created_ts=c, creator=W[0], c_slot=c_slot, g_ts=g, history_from=c)
+    tr.ingest(trades)
+    tr.mark_complete(g + 400)
+    for t in (c + 60, c + 100, g + 30, g + 60, g + 200):
+        snap = tr.as_of(t)
+        st = {"c_slot": c_slot, "c_ts": c, "vsol0": 30.0, "creator": W[0]}
+        P = s1._build_prefix(snap.trades.reset_index(drop=True), st, float(g))
+        roles = snap.roles()
+        for name, mask in (("transferees", P.transferee_w), ("bundle", P.bundle_w), ("snipers", P.sniper_w),
+                           ("insiders", P.ins_w)):
+            assert {wallet_h(w) for w in roles[name]} == {int(h) for h in P.uw[mask]}, (t, name)
+        assert {wallet_h(w) for w in roles["agent"]} == ({int(P.uw[P.agent_code])} if P.agent_code is not None
+                                                         else set())
+        ins = snap.inventory()["insiders"]
+        assert ins["held_tok"] == pytest.approx(P.insider_hold, rel=1e-12)
+        assert ins["peak_tok"] == pytest.approx(P.insider_peak, rel=1e-12)
+        assert ins["cost_sol"] == pytest.approx(P.insider_cost_sol, rel=1e-9)
+    last = tr.as_of(g + 200).roles()
+    assert last["transferees"] == {W[27], W[28], W[32]} and W[30] in last["agent"]
+    assert W[26] not in last["transferees"] and W[29] not in last["transferees"] and pooled not in last["insiders"]
