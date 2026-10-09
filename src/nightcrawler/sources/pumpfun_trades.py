@@ -28,9 +28,31 @@ trade. ``limit > 100`` -> HTTP 400 ("limit must not be greater than 100").
 * **Usage.** Every request sent is counted on the provider usage panel (``http.usage``, provider ``pumpfun``),
   failed ones too, exactly like the candle client.
 
-Nothing here is wired into the engine: an integrator creates one :class:`PumpFunTradesClient`, a
-:class:`PollScheduler`, ``watch()``-es the coins a strategy needs (with its decision checkpoints) and calls
-:meth:`PollScheduler.tick` from its loop (see ``docs`` in the commit message / module ``nightcrawler.flow``).
+BUDGET (lab data, 3,256 tradeable graduates, 34/h, 41 % non-instant): a graduate trades a median 2,657 times in
+its first 10 minutes (instant graduates 4,118; peak minute 651, p90 2,573) and then mostly dies (minutes 30-120:
+median 0.1 trades/min, p90 73). Following one coin from g to g + 120 min costs ~153 requests at one poll a minute
+(median; p90 300), almost all in the first 10 minutes. At 8 requests/min this feed fully tracks ~1 busy fresh
+graduate, or ~6-8 quiet coins at 60 s freshness; at 20/min (candles off) ~2-3 busy or ~18 quiet. Live smoke
+(2026-10-09): three fresh graduates at 4.5-14.6 trades/s outran 8/min, so :meth:`PollScheduler.demand_per_min`
+/ :meth:`PollScheduler.overloaded` exist to shed coins, and catch-up is shortest-job-first.
+
+WIRING ONE STRATEGY (nothing here does it; the engine team owns it)
+-------------------------------------------------------------------
+1. One :class:`PumpFunTradesClient` per process, sharing the candle client's cool-downs:
+   ``PumpFunTradesClient(http, cooldowns=pumpfun_client.cooldowns)``; keep candles + trades <= ~20/min.
+2. One :class:`PollScheduler`; call :meth:`PollScheduler.tick` once per engine loop (never blocks or retries).
+3. Per candidate coin: ``FlowTracker(mint, created_ts=census created_timestamp / 1000, creator=..., symbol=...,
+   g_ts=graduation time if known)`` and ``sched.watch(tracker, start_ts, checkpoints)`` with the strategy's
+   decision times on the lab grid (minute boundary + 20 s, :func:`nightcrawler.flow.grid_time`):
+   S1 from ``start_ts = created_ts`` (curve inventory), checkpoints g + 6, 8, 10, 15, 20, 30, 45, 60, 90, 120 min;
+   M1 from ``start_ts = g`` (pool only), a checkpoint every minute from age 30 to 120 min and while in a position.
+   Skip coins with ``tracker.chain_breaks > 0`` (Mayhem or liquidity events) and non-SOL pools; unwatch the
+   lowest-value coins while :meth:`PollScheduler.overloaded`.
+4. At a checkpoint: ``snap = tracker.as_of(now, sol_usd=...)``; if not ``snap.complete`` skip the decision (the
+   scheduler reports it as missed); else run the lab function unchanged (``m1.strategy(snap, params, pos)``,
+   ``s1.s1_strategy(...)``: tests/test_flow_lab_strategies.py) and map ``Enter(exits=ExitSpec(...))`` / ``Exit``
+   onto the engine's orders. The lab modules import numpy / pandas / research/lab2/common.py: port the chosen
+   function into src/ (it only reads the AsOf interface) or add those packages to the image.
 """
 
 from __future__ import annotations
@@ -40,7 +62,7 @@ import math
 import threading
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Callable, Iterable, Mapping
+from typing import Any, Iterable, Mapping
 
 import requests
 
@@ -528,11 +550,30 @@ class PollScheduler:
             if nxt - now <= self.lead_s:
                 return (1, nxt, need)
         if s.backlog_s(now) > s.window_s or s.sweep is not None:
-            return (2, s.complete_through, 0)
+            # shortest job first: under overload, finishing one coin beats keeping every coin half-stale
+            return (2, s.estimate_requests(now) / max(w.weight, 1e-9), s.complete_through)
         stale = now - s.complete_through
         if w.max_staleness_s is not None and stale >= w.max_staleness_s:
             return (3, -stale / max(w.weight, 1e-9), 0)
         return None
+
+    def demand_per_min(self, now: float | None = None) -> dict[str, float]:
+        """Requests per minute each watched coin needs to stay current: its trade rate / 100 per page, at least one
+        poll per ``max_staleness_s``. Compare the sum with ``client`` capacity (:meth:`capacity_per_min`) and
+        unwatch the least important coins when it does not fit (busy fresh graduates run 300-1,500 trades/min)."""
+        now = self.clock.now() if now is None else now
+        out = {}
+        for mint, w in self.watches.items():
+            s = w.sync
+            polls = 60.0 / w.max_staleness_s if w.max_staleness_s else 0.0
+            out[mint] = max(s.rate_tps * 60.0 / 100.0, polls) + s.estimate_requests(now) / 10.0  # backlog over 10 min
+        return out
+
+    def capacity_per_min(self) -> float:
+        return self.client.bucket.rate * 60.0
+
+    def overloaded(self, now: float | None = None) -> bool:
+        return sum(self.demand_per_min(now).values()) > self.capacity_per_min()
 
     def plan(self, now: float, budget: int) -> list[str]:
         """Up to ``budget`` mints to poll now, in priority order (one request each)."""
@@ -613,7 +654,3 @@ class PollScheduler:
                          "rate_tps": s.rate_tps, "window_s": s.window_s, "next_checkpoint": w.checkpoints[:1],
                          "missed": len(w.missed), "errors": s.errors}
         return out
-
-
-#: Hook type for integrators that want to be told when a coin's data advanced (not used here).
-OnAdvance = Callable[[str, float], None]

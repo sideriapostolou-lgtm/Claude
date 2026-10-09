@@ -21,6 +21,7 @@ from nightcrawler.flow import (
     ForbiddenFeature,
     NotYetKnown,
     detect_agent,
+    grid_time,
     pumpswap_fee_components,
     wallet_h,
 )
@@ -297,3 +298,13 @@ def test_pumpswap_fee_components_follow_the_documented_tiers() -> None:
     assert pumpswap_fee_components(410.0) == (2.0, 93.0, 30.0)          # 1.25 % below 420 SOL
     assert pumpswap_fee_components(1000.0) == (20.0, 5.0, 95.0)         # 1.20 %
     assert pumpswap_fee_components(1e6) == (20.0, 5.0, 5.0)             # 0.30 % at the top
+
+
+def test_grid_time_matches_the_lab_decision_grid() -> None:
+    g = 1_791_417_538                     # 58 s into its minute
+    m0 = g // 60 * 60
+    assert grid_time(g, 0) == m0 + 20                       # t <= g < t + 60
+    assert grid_time(g, 6 * 60) == m0 + 20 + 6 * 60         # S1 checkpoint 6 min: g + 360 lies in [t, t + 60)
+    for age in (0, 59, 60, 361, 7200):
+        t = grid_time(g, age)
+        assert t <= g + age < t + 60 and (t - m0 - 20) % 60 == 0

@@ -78,6 +78,8 @@ __all__ = [
     "FlowSnapshot",
     "FlowTracker",
     "detect_agent",
+    "grid_time",
+    "pumpswap_fee_components",
     "agent_stats",
     "curve_user_sol",
     "wallet_h",
@@ -242,6 +244,16 @@ def _invert_exact_in(net: int, bps: tuple[float, float, float]) -> int:
         if best is None or zeros > best[0]:
             best = (zeros, u)
     return best[1] if best is not None else u0
+
+
+GRID_OFFSET_S = 20             # lab decisions happen at minute boundary + 20 s (the bar that just ended is visible)
+
+
+def grid_time(g_ts: float, age_s: float) -> float:
+    """The lab's decision time for an age after graduation: the grid time t (minute boundary + 20 s) with
+    t <= g + age < t + 60 (``s1.checkpoint_time`` / ``m1._grid_time``)."""
+    m0 = int(g_ts) // 60 * 60
+    return float(m0 + GRID_OFFSET_S + 60 * math.floor((g_ts + age_s - m0 - GRID_OFFSET_S) / 60.0))
 
 
 def curve_user_sol(is_buy: bool, amount_sol: float, wallet: str,
@@ -960,16 +972,25 @@ class FlowSnapshot:
     @property
     def c_slot(self) -> int | None:
         """Creation slot: given, or inferred as the slot of the first curve trade when it happened in the creation
-        second (the creator's dev buy rides in the create transaction)."""
+        second (the creator's dev buy rides in the create transaction). When the first curve trade came later, the
+        creation slot is not observable from trades: the slot just before that trade is returned (an upper bound,
+        ``c_slot_exact`` False). No trade sits in it, so the BUNDLE (creation-slot buyers) is empty, which is exact;
+        pass the real slot (e.g. from the mint's first signature) when a strategy needs the number itself."""
         m = self.meta
         if m.c_slot is not None:
             return m.c_slot
         if m.created_ts is None or not self.curve_known:
             return None
         cur = self._curve()
-        if cur and cur[0].trade.ts <= m.created_ts:
-            return cur[0].trade.slot
-        return None
+        if not cur:
+            return None
+        return cur[0].trade.slot if cur[0].trade.ts <= m.created_ts else cur[0].trade.slot - 1
+
+    @property
+    def c_slot_exact(self) -> bool:
+        cur = self._curve()
+        return self.meta.c_slot is not None or (bool(cur) and self.meta.created_ts is not None
+                                                 and cur[0].trade.ts <= self.meta.created_ts)
 
     def _build_curve(self) -> dict[str, Any]:
         """curve.sql over curve trades with ts <= g (or tau before graduation): curve life, launch window

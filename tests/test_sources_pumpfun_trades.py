@@ -325,3 +325,33 @@ def test_scheduler_stops_on_cooldown_and_backs_off_a_bad_coin(http, fake_http, c
     calls = len(fake_http.calls)
     rep = sched.tick()
     assert rep.sent == 0 and rep.stopped == "cooldown" and len(fake_http.calls) == calls
+
+
+def test_catch_up_is_shortest_job_first_and_demand_shows_overload(http, clock) -> None:
+    client = PumpFunTradesClient(http, rate=(8 / 60, 2))
+    sched = PollScheduler(client)
+    now = clock.now()
+    busy = sched.watch(FlowTracker("BUSY"), now - 600)
+    quiet = sched.watch(FlowTracker("QUIET"), now - 300)
+    busy.sync.rate_tps = 10.0          # a fresh graduate: 600 trades a minute
+    quiet.sync.rate_tps = 0.05
+    assert sched.plan(now, 2) == ["QUIET", "BUSY"]
+    demand = sched.demand_per_min(now)
+    assert demand["BUSY"] > sched.capacity_per_min() > demand["QUIET"]
+    assert sched.overloaded(now)
+    sched.unwatch("BUSY")
+    assert not sched.overloaded(now)
+
+
+@pytest.mark.live
+def test_live_catch_up_matches_the_recorded_history() -> None:
+    """Opt-in (NIGHTCRAWLER_LIVE_TESTS=1), ~2 requests: the live API pages a recorded coin's first two minutes into
+    exactly the trades recorded on 2026-10-08."""
+    coin = COINS[INSTANT[1]]
+    c_ts = coin["created_ms"] // 1000
+    client = PumpFunTradesClient(HttpClient(), rate=(8 / 60, 2))
+    tr = FlowTracker(coin["mint"], created_ts=c_ts)
+    sync = CoinSync(tr, c_ts, window_s=120.0)
+    while tr.complete_through < c_ts + 120 and client.requests_sent < 6:
+        sync.on_page(client.fetch_page(coin["mint"], sync.next_cursor(c_ts + 10_000)), c_ts + 10_000)
+    assert [t for t in tr.trades if t.ts < c_ts + 120] == list(tracker_for(coin).trades)

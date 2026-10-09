@@ -326,10 +326,11 @@ def test_creation_slot_is_inferred_like_the_create_event(mint: str) -> None:
     snap = snap_at_window_end(tracker_for(coin), coin)
     first = snap.rows[0].trade
     if first.ts == coin["created_ms"] // 1000:
-        assert snap.c_slot == coin["graduate"]["c_slot"]          # the dev buy rides in the create transaction
+        assert snap.c_slot == coin["graduate"]["c_slot"] and snap.c_slot_exact   # the dev buy rides in the create tx
     else:                                                         # nobody traded in the creation second:
-        assert snap.c_slot is None                                # the slot is unknowable, the bundle is empty
-        assert snap["z_n_buyers"] == 0 == coin["graduate"]["z_n_buyers"]
+        assert not snap.c_slot_exact                              # the slot is unknowable: an upper bound
+        assert coin["graduate"]["c_slot"] <= snap.c_slot < first.slot
+        assert snap["z_n_buyers"] == 0 == coin["graduate"]["z_n_buyers"]   # and the bundle is empty (exact)
 
 
 def test_slow_graduate_has_no_pool_or_curve_life_yet() -> None:
