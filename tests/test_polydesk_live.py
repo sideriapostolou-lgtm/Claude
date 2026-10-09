@@ -270,3 +270,42 @@ def test_venue_positions_the_desk_never_recorded_are_adopted_and_capped(gw: Gate
     assert r["adopted"] == 2 and not ex.orders and paper.state["positions"]["n1"]["live"] is False  # paper buy, real adoptions
     dd = P.panel_state(paper.settings, NOW)
     assert dd["mode"] == "paper" and dd["real"]["open"] == 2 and dd["paper"]["open"] == 1 and dd["balance"]["cash"] == 16.27
+
+
+def test_real_buys_and_venue_adoptions_carry_their_rule_and_the_record_splits(gw: Gateway, tmp_path,
+                                                                             monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(P, "PAPER_MAX_OPEN", 0)  # the paper cap never limits real buys
+    gw.markets = [_market("w1", "climate", 1800), _market("w2", "crypto", 1800), _market("s1", "crypto", 1800)]
+    gw.quotes = {"w1": (0.96, 0.975), "w2": (0.97, 0.98), "s1": (0.02, 0.04)}  # s1 is a short setup: never placed live
+    ex = FakeExchange(cash=25.0)
+    ex.hold("held", 1.0, 0.97, title="Held before this build", outcome="Yes", event_slug="x")
+    desk = P.PolyDesk(_live_settings(tmp_path), ledger=FakeLedger(), client_factory=ex)
+    r = desk.poll(NOW)
+    assert (r["bought"], r["adopted"]) == (2, 1)
+    pos = desk.state["positions"]
+    assert pos["w1"]["live"] and pos["w1"]["rule"] == P.RULE_VERSION and pos["w1"]["spread_in"] == pytest.approx(0.015)
+    assert (pos["w1"]["bid_in"], pos["w1"]["ask_in"]) == (0.96, 0.975) and pos["w2"]["rule"] == P.RULE_VERSION
+    assert pos["held"]["rule"] == "venue" and pos["held"]["adopted"] and "spread_in" not in pos["held"]  # not this rule's buy
+    assert "s1" not in pos and not any(e["text"].startswith("Paper book full") for e in desk.state["events"])
+    zero = {"settled_total": 0, "won_total": 0, "pnl_total_usd": 0.0}
+    d = P.panel_state(desk.settings, NOW)
+    assert d["since_fix"] == {"rule": P.RULE_VERSION, "paper": {"open": 0, **zero}, "real": {"open": 2, **zero}}
+    assert d["before_fix"] == {"rule": "before the fix", "paper": {"open": 0, **zero}, "real": {"open": 1, **zero}}
+    # settlements: the rule's real record since the fix stands apart from the venue position's
+    gw.markets = []
+    gw.settlements = {"w1": 1.0, "w2": 0.0, "held": 1.0}
+    desk.poll(NOW + 2000)
+    closed = {c["slug"]: c for c in desk.state["closed"]}
+    assert closed["held"]["rule"] == "venue" and closed["w2"]["rule"] == P.RULE_VERSION  # inherited
+    d = P.panel_state(desk.settings, NOW + 2000)
+    since, before = d["since_fix"], d["before_fix"]
+    assert (since["real"]["settled_total"], since["real"]["won_total"]) == (2, 1)
+    assert since["real"]["pnl_total_usd"] == pytest.approx(closed["w1"]["pnl_usd"] + closed["w2"]["pnl_usd"])
+    assert since["paper"] == {"open": 0, **zero}
+    assert (before["real"]["settled_total"], before["real"]["won_total"]) == (1, 1)
+    assert before["real"]["pnl_total_usd"] == pytest.approx(closed["held"]["pnl_usd"])
+    assert before["paper"] == {"open": 0, **zero}
+    assert d["real"]["settled_total"] == 3 and d["real"]["pnl_total_usd"] == pytest.approx(
+        since["real"]["pnl_total_usd"] + before["real"]["pnl_total_usd"])
+    assert set(desk.state["by_rule"]) == {P.RULE_VERSION, "venue"}
+    assert "paper" not in desk.state["by_rule"]["venue"] and "paper" not in desk.state["by_rule"][P.RULE_VERSION]
