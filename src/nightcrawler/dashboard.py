@@ -8,6 +8,8 @@ daemon thread. Routes (GET only; anything else -> 405; unknown path -> 404):
 * ``/api/state`` -> 200 JSON from :func:`build_state` (``Cache-Control: no-store``).
 * ``/office`` -> the animated office (:mod:`nightcrawler.office`), same data and auth as ``/``;
   ``/office/art/<name>.jpg`` -> its bundled concept-art sets (whitelist, private cache).
+* ``/office3d`` -> the 3D town (:mod:`nightcrawler.office3d`), same data and auth as ``/``;
+  ``/office/assets/<name>`` -> its bundled three.js module (whitelist, private cache).
 * ``/`` -> the ONE mobile-first page (:mod:`nightcrawler.page`, via :func:`render_html`): money,
   the team at work, trades, learning, "ready for real money?", receipts and usage, in plain words.
   It refreshes every 15 s from ``/api/page`` while the tab is visible.
@@ -120,6 +122,7 @@ from nightcrawler.http import KV_USAGE, PROVIDERS, host_of, provider_of
 from nightcrawler.logging_setup import get_logger, redact_text
 from nightcrawler.models import LAMPORTS_PER_SOL, Position
 from nightcrawler.office import OFFICE_CSP, art_bytes, render_office_html
+from nightcrawler.office3d import ASSET_FILES, OFFICE3D_CSP, asset_bytes, render_office3d_html
 from nightcrawler.page import PAGE_CSP, REFRESH_S, render_page_html
 
 __all__ = [
@@ -564,9 +567,11 @@ class _Handler(BaseHTTPRequestHandler):
             self._send(200, b"ok", "text/plain; charset=utf-8")
             return
         is_art = parts.path.startswith("/office/art/")
-        if not is_art and parts.path not in (
+        is_asset = parts.path.startswith("/office/assets/")
+        if not is_art and not is_asset and parts.path not in (
             "/",
             "/office",
+            "/office3d",
             "/api/state",
             "/api/page",
             "/team",
@@ -607,6 +612,23 @@ class _Handler(BaseHTTPRequestHandler):
         ):  # the animated office (nightcrawler.office): same data, same auth
             headers.append(("Content-Security-Policy", OFFICE_CSP))
             self._send(200, dashboard.office, "text/html; charset=utf-8", headers)
+            return
+        if parts.path == "/office3d":  # the 3D town (nightcrawler.office3d): same data, same auth
+            headers.append(("Content-Security-Policy", OFFICE3D_CSP))
+            self._send(200, dashboard.office3d, "text/html; charset=utf-8", headers)
+            return
+        if is_asset:  # the town's bundled three.js: a fixed whitelist, never a directory listing
+            name = parts.path[len("/office/assets/") :]
+            asset = asset_bytes(name)
+            if asset is None:
+                self._send(404, b"not found", "text/plain; charset=utf-8", headers)
+                return
+            self._send(
+                200,
+                asset,
+                ASSET_FILES[name],
+                [*headers, ("Cache-Control", "private, max-age=86400")],
+            )
             return
         if is_art:  # the office's bundled sets: a fixed whitelist of JPEGs, never a directory listing
             art = art_bytes(parts.path[len("/office/art/") :])
@@ -665,7 +687,7 @@ class _Handler(BaseHTTPRequestHandler):
         extra = headers or []
         if not any(
             name == "Cache-Control" for name, _ in extra
-        ):  # the office's sets override the default
+        ):  # the office's sets and the town's assets override the default
             self.send_header("Cache-Control", "no-store")
         self.send_header("X-Content-Type-Options", "nosniff")
         self.send_header("X-Frame-Options", "DENY")
@@ -732,6 +754,7 @@ class DashboardServer:
         self._server: Any = None
         self.page = render_html(settings).encode("utf-8")
         self.office = render_office_html(settings).encode("utf-8")
+        self.office3d = render_office3d_html(settings).encode("utf-8")
         self._secrets = settings.secret_values()
         token = settings.dashboard_token.reveal() if settings.dashboard_token else None
         self._token = token

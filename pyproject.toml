@@ -32,8 +32,9 @@ where = ["src"]
 "nightcrawler.learn" = ["seeds.json"]
 # The playbook registry, generated from docs/EXPERIENCE_GROUNDED.md (docs/EXPERIENCE.md §7.1).
 "nightcrawler.experience" = ["playbook.json"]
-# The office's concept-art sets (nightcrawler.office; served at /office/art/<name>.jpg).
-"nightcrawler" = ["office_art/*.jpg"]
+# The office's concept-art sets (nightcrawler.office; served at /office/art/<name>.jpg) and the 3D town's
+# bundled three.js (nightcrawler.office3d; served at /office/assets/<name>.js).
+"nightcrawler" = ["office_art/*.jpg", "office_assets/*.js"]
 
 [tool.setuptools.dynamic]
 version = { attr = "nightcrawler.__version__" }
