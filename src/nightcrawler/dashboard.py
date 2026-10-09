@@ -10,6 +10,8 @@ daemon thread. Routes (GET only; anything else -> 405; unknown path -> 404):
   ``/office/art/<name>.jpg`` -> its bundled concept-art sets (whitelist, private cache).
 * ``/office3d`` -> the 3D town (:mod:`nightcrawler.office3d`), same data and auth as ``/``;
   ``/office/assets/<name>`` -> its bundled three.js module (whitelist, private cache).
+* ``/world`` -> the 3D world "Night Shift: Skyport" (:mod:`nightcrawler.world3d`), same data and auth
+  as ``/``; ``/office/assets/<name>`` also serves its whitelist (three.js addons, optional cast models).
 * ``/`` -> the ONE mobile-first page (:mod:`nightcrawler.page`, via :func:`render_html`): money,
   the team at work, trades, learning, "ready for real money?", receipts and usage, in plain words.
   It refreshes every 15 s from ``/api/page`` while the tab is visible.
@@ -124,6 +126,7 @@ from nightcrawler.models import LAMPORTS_PER_SOL, Position
 from nightcrawler.office import OFFICE_CSP, art_bytes, render_office_html
 from nightcrawler.office3d import ASSET_FILES, OFFICE3D_CSP, asset_bytes, render_office3d_html
 from nightcrawler.page import PAGE_CSP, REFRESH_S, render_page_html
+from nightcrawler.world3d import WORLD_ASSETS, WORLD_CSP, render_world_html, world_asset_bytes
 
 __all__ = [
     "CONTENT_SECURITY_POLICY",
@@ -572,6 +575,7 @@ class _Handler(BaseHTTPRequestHandler):
             "/",
             "/office",
             "/office3d",
+            "/world",
             "/api/state",
             "/api/page",
             "/team",
@@ -617,16 +621,22 @@ class _Handler(BaseHTTPRequestHandler):
             headers.append(("Content-Security-Policy", OFFICE3D_CSP))
             self._send(200, dashboard.office3d, "text/html; charset=utf-8", headers)
             return
-        if is_asset:  # the town's bundled three.js: a fixed whitelist, never a directory listing
+        if parts.path == "/world":  # the 3D world (nightcrawler.world3d): same data, same auth
+            headers.append(("Content-Security-Policy", WORLD_CSP))
+            self._send(200, dashboard.world, "text/html; charset=utf-8", headers)
+            return
+        if is_asset:  # three.js, its addons, the cast models: fixed whitelists, never a directory listing
             name = parts.path[len("/office/assets/") :]
-            asset = asset_bytes(name)
+            asset, media = asset_bytes(name), ASSET_FILES.get(name)
             if asset is None:
+                asset, media = world_asset_bytes(name), WORLD_ASSETS.get(name)
+            if asset is None or media is None:
                 self._send(404, b"not found", "text/plain; charset=utf-8", headers)
                 return
             self._send(
                 200,
                 asset,
-                ASSET_FILES[name],
+                media,
                 [*headers, ("Cache-Control", "private, max-age=86400")],
             )
             return
@@ -755,6 +765,7 @@ class DashboardServer:
         self.page = render_html(settings).encode("utf-8")
         self.office = render_office_html(settings).encode("utf-8")
         self.office3d = render_office3d_html(settings).encode("utf-8")
+        self.world = render_world_html(settings).encode("utf-8")
         self._secrets = settings.secret_values()
         token = settings.dashboard_token.reveal() if settings.dashboard_token else None
         self._token = token
