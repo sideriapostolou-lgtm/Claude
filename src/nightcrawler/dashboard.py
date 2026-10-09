@@ -6,7 +6,8 @@ daemon thread. Routes (GET only; anything else -> 405; unknown path -> 404):
 
 * ``/healthz`` -> 200 ``text/plain`` ``ok`` (no auth; Railway health check).
 * ``/api/state`` -> 200 JSON from :func:`build_state` (``Cache-Control: no-store``).
-* ``/office`` -> the animated office (:mod:`nightcrawler.office`), same data and auth as ``/``.
+* ``/office`` -> the animated office (:mod:`nightcrawler.office`), same data and auth as ``/``;
+  ``/office/art/<name>.jpg`` -> its bundled concept-art sets (whitelist, private cache).
 * ``/`` -> the ONE mobile-first page (:mod:`nightcrawler.page`, via :func:`render_html`): money,
   the team at work, trades, learning, "ready for real money?", receipts and usage, in plain words.
   It refreshes every 15 s from ``/api/page`` while the tab is visible.
@@ -118,7 +119,7 @@ from nightcrawler.config import Settings
 from nightcrawler.http import KV_USAGE, PROVIDERS, host_of, provider_of
 from nightcrawler.logging_setup import get_logger, redact_text
 from nightcrawler.models import LAMPORTS_PER_SOL, Position
-from nightcrawler.office import OFFICE_CSP, render_office_html
+from nightcrawler.office import OFFICE_CSP, art_bytes, render_office_html
 from nightcrawler.page import PAGE_CSP, REFRESH_S, render_page_html
 
 __all__ = [
@@ -161,7 +162,10 @@ _MONTHLY_BUDGETS = {
 
 
 def build_state(
-    ledger: Any, settings: Settings, now: float, verify_cache: dict[str, Any] | None = None
+    ledger: Any,
+    settings: Settings,
+    now: float,
+    verify_cache: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Assemble the ``/api/state`` JSON (schema in the module docstring) from the ledger ONLY.
 
@@ -180,14 +184,25 @@ def build_state(
         "engine": _engine(ledger),
         "equity": equity,
         "positions": _positions(ledger, settings, mode, equity["sol_usd"]),
-        "fills": [{**f.to_dict(), "sol": f.sol_lamports / LAMPORTS_PER_SOL} for f in ledger.fills(limit=RECENT_LIMIT)],
+        "fills": [
+            {**f.to_dict(), "sol": f.sol_lamports / LAMPORTS_PER_SOL}
+            for f in ledger.fills(limit=RECENT_LIMIT)
+        ],
         "decisions": [d.to_dict() for d in ledger.decisions(limit=RECENT_LIMIT)],
         "rejections": ledger.decision_counts(since=now - DAY_S),
-        "cocoon_rules": _cocoon_rules(ledger.safety_failures(since=now - DAY_S).values()),
+        "cocoon_rules": _cocoon_rules(
+            ledger.safety_failures(since=now - DAY_S).values()
+        ),
         "activity": {"candidates_24h": ledger.candidate_count(since=now - DAY_S)},
-        "receipts": _receipts(ledger, now, verify_cache if verify_cache is not None else {}),
+        "receipts": _receipts(
+            ledger, now, verify_cache if verify_cache is not None else {}
+        ),
         "judge": _judge(ledger, settings, now),
-        "wallet": {"address": _str_or_none(ledger.get_kv("wallet.pubkey")) if settings.is_live else None},
+        "wallet": {
+            "address": _str_or_none(ledger.get_kv("wallet.pubkey"))
+            if settings.is_live
+            else None
+        },
         "limits": {"max_open_positions": settings.max_open_positions},
         "usage": _usage(ledger, settings, now),
         "safe_mode": _safe_mode(ledger),
@@ -215,7 +230,11 @@ def _str_or_none(value: Any) -> str | None:
 
 
 def _num_or_none(value: Any) -> float | None:
-    return float(value) if isinstance(value, (int, float)) and not isinstance(value, bool) else None
+    return (
+        float(value)
+        if isinstance(value, (int, float)) and not isinstance(value, bool)
+        else None
+    )
 
 
 def _kill(ledger: Any, settings: Settings) -> str:
@@ -252,7 +271,11 @@ def _equity(ledger: Any, mode: str, now: float) -> dict[str, Any]:
         latest = today[-1] if today else None
     start_lamports = _num_or_none(ledger.get_kv(f"{mode}.start_lamports"))
     start_sol_usd = _num_or_none(ledger.get_kv(f"{mode}.start_sol_usd"))
-    start_usd = start_lamports / LAMPORTS_PER_SOL * start_sol_usd if start_lamports and start_sol_usd else None
+    start_usd = (
+        start_lamports / LAMPORTS_PER_SOL * start_sol_usd
+        if start_lamports and start_sol_usd
+        else None
+    )
     out: dict[str, Any] = {
         "sol": None,
         "usd": None,
@@ -266,23 +289,35 @@ def _equity(ledger: Any, mode: str, now: float) -> dict[str, Any]:
         "sol_price_effect_usd": None,
         "curve": [
             [ts, usd]
-            for ts, usd in ledger.equity_curve(since=now - CURVE_DAYS * DAY_S, max_points=CURVE_MAX_POINTS, mode=mode)
+            for ts, usd in ledger.equity_curve(
+                since=now - CURVE_DAYS * DAY_S, max_points=CURVE_MAX_POINTS, mode=mode
+            )
         ],
     }
     if latest is None:
         return out
-    out.update(sol=latest.equity_lamports / LAMPORTS_PER_SOL, usd=latest.equity_usd, sol_usd=latest.sol_usd)
+    out.update(
+        sol=latest.equity_lamports / LAMPORTS_PER_SOL,
+        usd=latest.equity_usd,
+        sol_usd=latest.sol_usd,
+    )
     if today:
         out["pnl_today_usd"] = latest.equity_usd - today[0].equity_usd
-        out["pnl_today_sol"] = (latest.equity_lamports - today[0].equity_lamports) / LAMPORTS_PER_SOL
+        out["pnl_today_sol"] = (
+            latest.equity_lamports - today[0].equity_lamports
+        ) / LAMPORTS_PER_SOL
     if start_lamports is not None:
-        out["pnl_total_sol"] = (latest.equity_lamports - start_lamports) / LAMPORTS_PER_SOL
+        out["pnl_total_sol"] = (
+            latest.equity_lamports - start_lamports
+        ) / LAMPORTS_PER_SOL
     if start_lamports is not None:
         out["pnl_total_trading_usd"] = out["pnl_total_sol"] * latest.sol_usd
     if start_usd is not None:
         out["pnl_total_usd"] = latest.equity_usd - start_usd
         if out["pnl_total_trading_usd"] is not None:
-            out["sol_price_effect_usd"] = out["pnl_total_usd"] - out["pnl_total_trading_usd"]
+            out["sol_price_effect_usd"] = (
+                out["pnl_total_usd"] - out["pnl_total_trading_usd"]
+            )
     return out
 
 
@@ -298,7 +333,9 @@ def _safe_mode(ledger: Any) -> dict[str, Any] | None:
     }
 
 
-def _positions(ledger: Any, settings: Settings, mode: str, sol_usd: float | None) -> list[dict[str, Any]]:
+def _positions(
+    ledger: Any, settings: Settings, mode: str, sol_usd: float | None
+) -> list[dict[str, Any]]:
     """Open positions of ``mode``; live ones recorded for ANOTHER wallet than kv ``wallet.pubkey`` (F3:
     the engine never sells or counts them) carry that wallet in ``foreign_wallet``."""
     positions = ledger.open_positions(mode=mode)
@@ -306,11 +343,17 @@ def _positions(ledger: Any, settings: Settings, mode: str, sol_usd: float | None
     lookup = getattr(ledger, "position_wallets", None)
     foreign: dict[str, Any] = {}
     if isinstance(own, str) and own and lookup is not None and positions:
-        foreign = {pid: w for pid, w in lookup([p.id for p in positions]).items() if w and w != own}
+        foreign = {
+            pid: w
+            for pid, w in lookup([p.id for p in positions]).items()
+            if w and w != own
+        }
     return [_position(p, sol_usd, foreign.get(p.id)) for p in positions]
 
 
-def _position(p: Position, sol_usd: float | None, foreign_wallet: str | None = None) -> dict[str, Any]:
+def _position(
+    p: Position, sol_usd: float | None, foreign_wallet: str | None = None
+) -> dict[str, Any]:
     """Marked with the engine's last price and the latest equity SOL price (None when unknown)."""
     value = pnl = None
     if p.last_price_usd is not None and sol_usd:
@@ -326,7 +369,9 @@ def _position(p: Position, sol_usd: float | None, foreign_wallet: str | None = N
         "value_sol": None if value is None else value / LAMPORTS_PER_SOL,
         "cost_sol": p.cost_lamports / LAMPORTS_PER_SOL,
         "unrealized_pnl_sol": None if pnl is None else pnl / LAMPORTS_PER_SOL,
-        "unrealized_pnl_pct": pnl / p.cost_lamports * 100.0 if pnl is not None and p.cost_lamports else None,
+        "unrealized_pnl_pct": pnl / p.cost_lamports * 100.0
+        if pnl is not None and p.cost_lamports
+        else None,
         "partial_taken": p.partial_taken,
         "foreign_wallet": _str_or_none(foreign_wallet),
     }
@@ -366,7 +411,11 @@ def _receipts(ledger: Any, now: float, cache: dict[str, Any]) -> dict[str, Any]:
 
 def _judge(ledger: Any, settings: Settings, now: float) -> dict[str, Any]:
     day = ledger.get_kv("judge.cost_usd_day")
-    today = _num_or_none(day.get("usd")) if isinstance(day, dict) and day.get("day") == utc_day(now) else None
+    today = (
+        _num_or_none(day.get("usd"))
+        if isinstance(day, dict) and day.get("day") == utc_day(now)
+        else None
+    )
     return {
         "mode": settings.judge_mode,
         "model": settings.judge_model,
@@ -380,18 +429,28 @@ def _usage(ledger: Any, settings: Settings, now: float) -> dict[str, Any]:
     """Provider calls this UTC day/month (kv ``usage.providers``, written by ``http.UsageTracker``)
     against each free-tier budget. Only provider names are shown - never a URL, host or key."""
     stored = ledger.get_kv(KV_USAGE)
-    stored = {k: v for k, v in stored.items() if isinstance(v, dict)} if isinstance(stored, dict) else {}
+    stored = (
+        {k: v for k, v in stored.items() if isinstance(v, dict)}
+        if isinstance(stored, dict)
+        else {}
+    )
     day = utc_day(now)
     rpc_host = host_of(settings.solana_rpc_url)
     ids = [provider_of(rpc_host, rpc_host), *_USAGE_CORE]
     ids += [p for p in PROVIDERS if p in stored and p not in ids]
-    stamps = [v["updated_at"] for v in stored.values() if _num_or_none(v.get("updated_at")) is not None]
+    stamps = [
+        v["updated_at"]
+        for v in stored.values()
+        if _num_or_none(v.get("updated_at")) is not None
+    ]
     return {
         "day": day,
         "month": day[:7],
         "warn_pct": USAGE_WARN_PCT,
         "updated_at": max(stamps, default=None),
-        "providers": [_usage_row(p, stored.get(p, {}), day, ledger, settings) for p in ids],
+        "providers": [
+            _usage_row(p, stored.get(p, {}), day, ledger, settings) for p in ids
+        ],
     }
 
 
@@ -400,11 +459,18 @@ def _period_counts(entry: dict[str, Any], period: str, key: str) -> dict[str, fl
     counts = entry.get(f"{period}_counts")
     if entry.get(period) != key or not isinstance(counts, dict):
         return {}
-    return {name: value for name, value in counts.items() if _num_or_none(value) is not None}
+    return {
+        name: value for name, value in counts.items() if _num_or_none(value) is not None
+    }
 
 
-def _usage_row(provider: str, entry: dict[str, Any], day: str, ledger: Any, settings: Settings) -> dict[str, Any]:
-    today, month = _period_counts(entry, "day", day), _period_counts(entry, "month", day[:7])
+def _usage_row(
+    provider: str, entry: dict[str, Any], day: str, ledger: Any, settings: Settings
+) -> dict[str, Any]:
+    today, month = (
+        _period_counts(entry, "day", day),
+        _period_counts(entry, "month", day[:7]),
+    )
     row: dict[str, Any] = {
         "id": provider,
         "label": PROVIDERS[provider],
@@ -421,9 +487,15 @@ def _usage_row(provider: str, entry: dict[str, Any], day: str, ledger: Any, sett
         "cost_usd_today": None,
         "cost_usd_month": None,
     }
-    if provider == "anthropic":  # budget: JUDGE_MAX_DAILY_USD, measured like the judge enforces it
+    if (
+        provider == "anthropic"
+    ):  # budget: JUDGE_MAX_DAILY_USD, measured like the judge enforces it
         judged = ledger.get_kv("judge.cost_usd_day")
-        spent = _num_or_none(judged.get("usd")) if isinstance(judged, dict) and judged.get("day") == day else None
+        spent = (
+            _num_or_none(judged.get("usd"))
+            if isinstance(judged, dict) and judged.get("day") == day
+            else None
+        )
         spent = spent if spent is not None else today.get("cost_usd", 0.0)
         row.update(
             unit="usd",
@@ -438,10 +510,18 @@ def _usage_row(provider: str, entry: dict[str, Any], day: str, ledger: Any, sett
     elif provider in _MONTHLY_BUDGETS:
         field_name, unit = _MONTHLY_BUDGETS[provider]
         budget = getattr(settings, field_name)
-        row.update(unit=unit, used=month.get(unit, 0), budget=budget if budget > 0 else None)
+        row.update(
+            unit=unit, used=month.get(unit, 0), budget=budget if budget > 0 else None
+        )
     if row["budget"]:
         row["used_pct"] = row["used"] / row["budget"] * 100.0
-        row["level"] = "over" if row["used_pct"] >= 100.0 else "warn" if row["used_pct"] >= USAGE_WARN_PCT else "ok"
+        row["level"] = (
+            "over"
+            if row["used_pct"] >= 100.0
+            else "warn"
+            if row["used_pct"] >= USAGE_WARN_PCT
+            else "ok"
+        )
     return row
 
 
@@ -483,7 +563,15 @@ class _Handler(BaseHTTPRequestHandler):
         if parts.path == "/healthz":
             self._send(200, b"ok", "text/plain; charset=utf-8")
             return
-        if parts.path not in ("/", "/office", "/api/state", "/api/page", "/team", "/api/team"):
+        is_art = parts.path.startswith("/office/art/")
+        if not is_art and parts.path not in (
+            "/",
+            "/office",
+            "/api/state",
+            "/api/page",
+            "/team",
+            "/api/team",
+        ):
             self._send(404, b"not found", "text/plain; charset=utf-8")
             return
         dashboard: DashboardServer = self.server.dashboard  # type: ignore[attr-defined]
@@ -492,33 +580,67 @@ class _Handler(BaseHTTPRequestHandler):
         if not allowed:
             self._send(401, _LOCKED_PAGE, "text/html; charset=utf-8")
             return
-        headers = [("Set-Cookie", dashboard.cookie_header(self._is_https()))] if set_cookie else []
-        if parts.path == "/team":  # the old team room page: now part of the one page (the cookie carries auth)
-            self._send(302, b"", "text/plain; charset=utf-8", [*headers, ("Location", "/")])
+        headers = (
+            [("Set-Cookie", dashboard.cookie_header(self._is_https()))]
+            if set_cookie
+            else []
+        )
+        if (
+            parts.path == "/team"
+        ):  # the old team room page: now part of the one page (the cookie carries auth)
+            self._send(
+                302, b"", "text/plain; charset=utf-8", [*headers, ("Location", "/")]
+            )
             return
-        if parts.path in ("/api/team", "/api/page"):  # live data: nightcrawler.teamroom.TeamRoom
+        if parts.path in (
+            "/api/team",
+            "/api/page",
+        ):  # live data: nightcrawler.teamroom.TeamRoom
             self._send(*dashboard.team.response(parts.path, headers))
             return
         if parts.path == "/":
             headers.append(("Content-Security-Policy", CONTENT_SECURITY_POLICY))
             self._send(200, dashboard.page, "text/html; charset=utf-8", headers)
             return
-        if parts.path == "/office":  # the animated office (nightcrawler.office): same data, same auth
+        if (
+            parts.path == "/office"
+        ):  # the animated office (nightcrawler.office): same data, same auth
             headers.append(("Content-Security-Policy", OFFICE_CSP))
             self._send(200, dashboard.office, "text/html; charset=utf-8", headers)
+            return
+        if is_art:  # the office's bundled sets: a fixed whitelist of JPEGs, never a directory listing
+            art = art_bytes(parts.path[len("/office/art/") :])
+            if art is None:
+                self._send(404, b"not found", "text/plain; charset=utf-8", headers)
+                return
+            self._send(
+                200,
+                art,
+                "image/jpeg",
+                [*headers, ("Cache-Control", "private, max-age=86400")],
+            )
             return
         try:
             body = dashboard.state_json()
         except Exception:
             log.exception("dashboard_state_failed")
-            self._send(500, b'{"error":"state unavailable"}', "application/json", headers)
+            self._send(
+                500, b'{"error":"state unavailable"}', "application/json", headers
+            )
             return
         self._send(200, body, "application/json", headers)
 
     def _not_allowed(self) -> None:
-        self._send(405, b"method not allowed (read-only dashboard)", "text/plain; charset=utf-8", [("Allow", "GET")])
+        self._send(
+            405,
+            b"method not allowed (read-only dashboard)",
+            "text/plain; charset=utf-8",
+            [("Allow", "GET")],
+        )
 
-    do_HEAD = do_POST = do_PUT = do_PATCH = do_DELETE = do_OPTIONS = do_TRACE = do_CONNECT = _not_allowed
+    do_HEAD = do_POST = do_PUT = do_PATCH = do_DELETE = do_OPTIONS = do_TRACE = (
+        do_CONNECT
+    ) = _not_allowed
 
     def _cookie(self) -> str | None:
         try:
@@ -530,15 +652,25 @@ class _Handler(BaseHTTPRequestHandler):
     def _is_https(self) -> bool:
         return self.headers.get("X-Forwarded-Proto", "").lower() == "https"
 
-    def _send(self, status: int, body: bytes, content_type: str, headers: list[tuple[str, str]] | None = None) -> None:
+    def _send(
+        self,
+        status: int,
+        body: bytes,
+        content_type: str,
+        headers: list[tuple[str, str]] | None = None,
+    ) -> None:
         self.send_response(status)
         self.send_header("Content-Type", content_type)
         self.send_header("Content-Length", str(len(body)))
-        self.send_header("Cache-Control", "no-store")
+        extra = headers or []
+        if not any(
+            name == "Cache-Control" for name, _ in extra
+        ):  # the office's sets override the default
+            self.send_header("Cache-Control", "no-store")
         self.send_header("X-Content-Type-Options", "nosniff")
         self.send_header("X-Frame-Options", "DENY")
         self.send_header("Referrer-Policy", "no-referrer")
-        for name, value in headers or []:
+        for name, value in extra:
             self.send_header(name, value)
         self.end_headers()
         if self.command != "HEAD":
@@ -546,7 +678,12 @@ class _Handler(BaseHTTPRequestHandler):
 
     # Request lines carry ?token=...: log the method, the path WITHOUT its query, and the status only.
     def log_request(self, code: int | str = "-", size: int | str = "-") -> None:
-        log.debug("dashboard_request method=%s path=%s status=%s", self.command, urlsplit(self.path).path, code)
+        log.debug(
+            "dashboard_request method=%s path=%s status=%s",
+            self.command,
+            urlsplit(self.path).path,
+            code,
+        )
 
     def log_error(self, format: str, *args: Any) -> None:
         log.debug("dashboard_bad_request status=%s", args[0] if args else "?")
@@ -584,7 +721,9 @@ class DashboardServer:
             TeamRoom,  # late: teamroom builds on this module
         )
 
-        self.team = team if team is not None else TeamRoom(settings)  # /team + /api/team
+        self.team = (
+            team if team is not None else TeamRoom(settings)
+        )  # /team + /api/team
         self.settings = settings
         self.state_provider = state_provider
         self.host = host if host is not None else settings.dashboard_host
@@ -597,31 +736,37 @@ class DashboardServer:
         token = settings.dashboard_token.reveal() if settings.dashboard_token else None
         self._token = token
         self._cookie_value = (
-            hmac.new(token.encode("utf-8"), _COOKIE_CONTEXT, hashlib.sha256).hexdigest() if token else None
+            hmac.new(token.encode("utf-8"), _COOKIE_CONTEXT, hashlib.sha256).hexdigest()
+            if token
+            else None
         )
 
     # ------------------------------------------------------------------ auth + content
-    def authorize(self, query_token: str | None, cookie: str | None) -> tuple[bool, bool]:
+    def authorize(
+        self, query_token: str | None, cookie: str | None
+    ) -> tuple[bool, bool]:
         """``(allowed, set_cookie)`` for a request carrying ``?token=`` and/or the cookie."""
         if self._token is None:
             return True, False
         if query_token is not None and _same(query_token, self._token):
             return True, True
-        if cookie is not None and (_same(cookie, self._cookie_value or "") or _same(cookie, self._token)):
+        if cookie is not None and (
+            _same(cookie, self._cookie_value or "") or _same(cookie, self._token)
+        ):
             return True, False
         return False, False
 
     def cookie_header(self, https: bool) -> str:
         """``Set-Cookie`` value: an HMAC of the token (never the token itself)."""
         secure = "; Secure" if https else ""
-        return (
-            f"{COOKIE_NAME}={self._cookie_value}; Path=/; Max-Age={COOKIE_MAX_AGE_S}; HttpOnly; SameSite=Strict{secure}"
-        )
+        return f"{COOKIE_NAME}={self._cookie_value}; Path=/; Max-Age={COOKIE_MAX_AGE_S}; HttpOnly; SameSite=Strict{secure}"
 
     def state_json(self) -> bytes:
         """The provider's state, scrubbed, as strict JSON bytes."""
         state = scrub(self.state_provider(), self._secrets)
-        return json.dumps(state, allow_nan=False, separators=(",", ":"), default=str).encode("utf-8")
+        return json.dumps(
+            state, allow_nan=False, separators=(",", ":"), default=str
+        ).encode("utf-8")
 
     # ------------------------------------------------------------------ lifecycle
     def start(self) -> threading.Thread:
@@ -632,7 +777,10 @@ class DashboardServer:
         self.team.open()  # stop() closed it
         self._server = _Server((self.host, self.port), self)
         self._thread = threading.Thread(
-            target=self._server.serve_forever, kwargs={"poll_interval": 0.5}, name="nightcrawler-dashboard", daemon=True
+            target=self._server.serve_forever,
+            kwargs={"poll_interval": 0.5},
+            name="nightcrawler-dashboard",
+            daemon=True,
         )
         self._thread.start()
         log.info(
