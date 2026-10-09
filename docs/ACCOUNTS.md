@@ -24,12 +24,18 @@ The trend desk (`src/nightcrawler/trenddesk.py`; `TRENDDESK_ENABLED`, `TRENDDESK
 of lab 3's only consistently positive rule, "sma50" trend following on BTC, ETH and SOL: hold a coin while its daily
 close is above its 50-day average, else cash. It reads Coinbase's public daily candles once a day (no account, no key)
 and keeps a pretend $100 book from the day it first ran; it has no broker, no swap, no key and no wallet, so no real
-money can move through it, and the page labels it "Paper money (pretend)" everywhere. Real money would need all of
-this first: a full year (365 days) of the desk's own forward paper results, booked day by day from its start date,
-beating simply holding the three over the same days after costs and with a smaller worst drop; that year read
-against lab 3's pre-registered bar (its 2026 TEST look failed it: promising, under-powered); and the owner's explicit
-go after reading it. Even then it would be a new, separately built and capped real-money path, with any key only in
-a Railway variable, never in this repo.
+money can move through it, and the page labels it "Paper money (pretend)" everywhere. The book is kept the way a real
+account would keep it: each coin has its own third, a sell puts that coin's money in its own cash and a buy spends
+only that cash, and nothing is moved between the thirds. Lab 3's own figures assume the book is put back to equal
+thirds every day for free; the desk keeps those only as "lab 3's way", for comparison with the lab, because that free
+re-balancing alone can decide who is ahead (on lab 3's data from 2023-06-15 to 2026-10-08 the rule's three-thirds
+book ended at $370 against $402 for holding the three bought once, while the lab's re-balanced figures showed the
+rule ahead, $393 against $377). Real money would need all of this first: a full year (365 days) of the desk's own
+forward paper results, booked day by day from its start date, in which the rule's three-thirds book beats holding the
+three (bought on day one and never touched, same costs) over the same days and with a smaller worst drop; that year
+read against lab 3's pre-registered bar (its 2026 TEST look failed it: promising, under-powered); and the owner's
+explicit go after reading it. Even then it would be a new, separately built and capped real-money path, with any key
+only in a Railway variable, never in this repo.
 
 ## Keeping track
 

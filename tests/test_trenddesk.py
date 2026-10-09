@@ -4,11 +4,15 @@
   t+1 on; nothing later can change what was booked.
 * PARITY with lab 3's own code (``research/lab3/core.py`` + ``hypotheses.py``, imported here only): on real
   Coinbase candles (``tests/fixtures/trenddesk``), with a gap and a missing day too, the desk's daily positions and
-  equity are the lab's, bit for bit.
+  lab-style equity (``growth``, ``hold_growth``) are the lab's, bit for bit; also on lab 3's full 28-coin panel where
+  the lab's cache is.
+* The books: the rule's book is three separate thirds a real account could keep (nothing re-balanced); the benchmark
+  is holding the three, bought on day one and never touched; lab 3's daily re-balanced figures are kept apart.
 * Costs (25 bps per side + $0.02 per swap on the sleeve), flips and their events, the forward-test start, the
-  runtime (fetch, completed days only, late candles, failed fetches that keep the state and say so, restarts, catch
-  up, receipts, schedule), the page / town / team-room JSON and wording (never summed with anything), the page
-  script (text only, CSP hashes in sync) and the engine wiring (off / on / a crash never stops the bot).
+  runtime (fetch, completed days only with a settling margin, late candles, failed fetches that keep the state and
+  say so, restarts, an unreadable or old record kept aside and the restart said, catch up, receipts, schedule), the
+  page / town / team-room JSON and wording (never summed with anything), the page script (text only, CSP hashes in
+  sync) and the engine wiring (off / on / a crash never stops the bot).
 """
 
 from __future__ import annotations
@@ -133,15 +137,19 @@ def save(settings: Settings, state: dict[str, Any]) -> None:
 
 def booked_state(*, last_day: str = "2026-10-07", started: str = "2026-10-01", equity: float = 101.20,
                  hold: float = 100.40, before: tuple[float, float] = (100.90, 100.10),
+                 lab: tuple[float, float] = (101.10, 100.50),
                  in_market: tuple[str, ...] = ("BTC", "SOL")) -> dict[str, Any]:
-    """A desk that booked a week: the rule's book +$1.20 since start (+$0.30 on the last day), holding +$0.40."""
+    """A desk that booked a week: the rule's book +$1.20 since start (+$0.30 on the last day), holding the three
+    (bought on day one) +$0.40; lab 3's re-balanced reckoning: the rule +$1.10, holding +$0.50."""
     st = T.empty_state()
     st.update({"sleeve_usd": 100.0, "started": started, "started_at": T.day_start(started) + 600, "last_day": last_day,
                "last_ok": NOW - 600, "last_fetch": NOW - 600})
     prev_day = utc_day(T.day_start(last_day) - DAY)
     st["history"] = [
-        {"day": prev_day, "ts": T.close_ts(prev_day), "equity_usd": before[0], "hold_usd": before[1], "in": []},
-        {"day": last_day, "ts": T.close_ts(last_day), "equity_usd": equity, "hold_usd": hold, "in": list(in_market)},
+        {"day": prev_day, "ts": T.close_ts(prev_day), "equity_usd": before[0], "bh_usd": before[1],
+         "lab_usd": 100.0, "lab_hold_usd": 100.0, "in": []},
+        {"day": last_day, "ts": T.close_ts(last_day), "equity_usd": equity, "bh_usd": hold, "lab_usd": lab[0],
+         "lab_hold_usd": lab[1], "in": list(in_market)},
     ]
     for c in T.COINS:
         st["positions"][c] = {"in": c in in_market, "since": "2026-10-03", "entry_price": 100.0 if c in in_market
@@ -285,7 +293,13 @@ def test_parity_with_lab3_on_real_coinbase_candles(start: str, sleeve: float) ->
 
 def test_parity_with_lab3_through_a_missing_candle_and_a_missing_day() -> None:
     """A candle missing for one coin (ETH on 2026-06-10: out of the universe that day, its 50-day average undefined for
-    50 days, as the lab books it) and a day missing for all three (2026-07-04: two days' move in one row)."""
+    50 days, as the lab books it) and a day missing for all three (2026-07-04: two days' move in one row).
+
+    A day missing for all three: the desk carries the positions across it; the lab's full panel would drop them. The
+    lab panel here is built from the three majors only, so it has no row for that day either; lab 3's ``run.py``
+    builds its panel from all 28 coins, where a day missing for the majors but present for another coin is a row
+    without their closes: the lab drops them that day and keeps them out for 50 days. That has never happened in
+    lab 3's data; :func:`test_parity_with_lab3_on_its_full_panel_where_the_lab_cache_is` checks the full panel."""
     pd, core, hyp = _lab3()
     candles = fixture_candles()
     del candles["ETH"]["2026-06-10"]
@@ -300,6 +314,54 @@ def test_parity_with_lab3_through_a_missing_candle_and_a_missing_day() -> None:
     by_day = {d["day"]: d for d in days}
     assert "ETH" not in by_day["2026-06-10"]["in"]
     assert all("ETH" not in by_day[d]["in"] for d in by_day if "2026-06-10" <= d <= "2026-07-29")
+
+
+def _lab3_cache() -> Path:
+    """Where lab 3's data loader keeps its Coinbase cache (``research/lab3/data.py`` ``OUT``: ``LAB3_DATA``, else the
+    session scratchpad); it is never in the repo."""
+    if not (LAB3 / "data.py").exists():  # pragma: no cover - tree absent
+        pytest.skip("research/lab3 is not in this checkout")
+    spec = importlib.util.spec_from_file_location("lab3_data_for_trenddesk", LAB3 / "data.py")
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return Path(module.OUT)
+
+
+def test_parity_with_lab3_on_its_full_panel_where_the_lab_cache_is(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Lab 3's ``run.py`` builds its panel from all 28 coins. On that panel, from lab 3's own Coinbase cache (the
+    unfinished bar the first cache kept, at or after ``fetched_at``, dropped), the desk's forward record started on
+    2023-06-15 is the lab's T3 sma50 and its holding benchmark, bit for bit, every day to the end of the cache. Runs
+    only where the cache is (it is not in the repo)."""
+    pd, core, hyp = _lab3()
+    cache = _lab3_cache()
+    if not (cache / "candles_1d.parquet").exists() or not (cache / "manifest.json").exists():
+        pytest.skip(f"lab 3's cache is not here ({cache})")
+    df = pd.read_parquet(cache / "candles_1d.parquet")
+    manifest = json.loads((cache / "manifest.json").read_text())
+    cut = {a: pd.Timestamp(v["1d"]["fetched_at"]).timestamp() for a, v in manifest.items() if "1d" in v}
+    df = df[df["ts"] < df["asset"].map(cut)].sort_values(["asset", "ts"]).reset_index(drop=True)
+    df["date"] = pd.to_datetime(df["ts"], unit="s", utc=True).dt.normalize()
+    P = core.panel(df)
+    assert len(P.assets) > 20  # the full panel, not the three majors
+    U = core.universe_mask(P)
+    U.loc[:, [c for c in U.columns if c not in hyp.MAJORS]] = False
+    start = "2023-06-15"
+    begin = pd.Timestamp(start, tz="UTC")
+    assert bool((U[list(T.COINS)] == P.close[list(T.COINS)].notna())[U.index >= begin].all(axis=None))
+    (sma50,) = [p for p in hyp.T3["GRID"] if hyp.T3["config_key"](p) == "sma50"]
+    target = hyp.T3["signal"](P, sma50)
+    target.loc[target.index < begin] = 0.0
+    hold = core.buy_and_hold(P, U)
+    hold.loc[hold.index < begin] = 0.0
+    monkeypatch.setitem(core.SPLITS, "forward", (start, None))
+    run, hold_run = (core.backtest(P, t, "forward", core.Costs(), U) for t in (target, hold))
+    candles: dict[str, dict[str, tuple[float, float]]] = {c: {} for c in T.COINS}
+    for r in df[df["asset"].isin(T.COINS)].itertuples():
+        candles[str(r.asset)][utc_day(float(r.ts))] = (float(r.close), float(r.volume))
+    _, days = T.replay(T.calendar(candles), start, 100.0)
+    assert len(days) == len(run.ret) >= 1200
+    assert _assert_parity(pd, days, run, hold_run) == len(days)
 
 
 # --------------------------------------------------------------------------- costs and flips
@@ -322,15 +384,86 @@ def test_costs_are_25_bps_per_side_plus_two_cents_a_swap_on_the_sleeve() -> None
         assert state["counters"]["swaps"] == 2
 
 
-def test_holding_the_three_is_the_benchmark_bought_at_the_start_close() -> None:
-    rows = synthetic(cross())
-    _, days = T.replay(rows, rows[50][0], 100.0)
-    first = days[0]
-    assert first["hold_usd"] == pytest.approx(100.0 - 3 * FEE_ONE)  # three buys at the first close
-    after = {d["day"]: d for d in days}[rows[61][0]]
-    expected = (1 - 3 * (1 / 3 * 25 / 1e4 + 0.0002))  # the first day after the start: only the fees
-    assert {d["day"]: d for d in days}[rows[51][0]]["hold_growth"] == pytest.approx(expected, rel=1e-15)
-    assert after["hold_growth"] > 1.0 - 0.01
+def test_holding_the_three_is_bought_at_the_start_close_and_never_touched() -> None:
+    """The benchmark is real buy-and-hold: a third of the sleeve in each coin at the first close (25 bps + $0.02 each),
+    then never re-balanced. Here BTC doubles while ETH and SOL halve: holding them once ends where the units say;
+    lab 3's daily re-balanced holding (kept only for the parity test) ends somewhere else."""
+    btc = series((100.0, 51), (200.0, 10))
+    weak = series((100.0, 51), (50.0, 10))
+    rows = synthetic({"BTC": btc, "ETH": list(weak), "SOL": list(weak)})
+    state, days = T.replay(rows, rows[50][0], 100.0)
+    first, last = days[0], days[-1]
+    assert first["bh_usd"] == pytest.approx(100.0 - 3 * FEE_ONE)  # three buys at the first close
+    units = (100.0 / 3 - FEE_ONE) / 100.0  # the same number of units of each coin, never changed again
+    assert state["bh"]["units"] == {c: pytest.approx(units, rel=1e-15) for c in T.COINS}
+    assert last["bh_usd"] == pytest.approx(units * (200.0 + 50.0 + 50.0), rel=1e-12)
+    assert last["bh_usd"] == pytest.approx(100.0 - 3 * FEE_ONE)  # +100% and twice -50%: back to the start, held
+    # prices that swing back and forth: holding once ends where it started; lab 3's holding, put back to thirds every
+    # day for free, gains 50% on each swing back ((0.5 + 2 + 2) / 3 = 1.5), which no real holder gets
+    btc2 = series((100.0, 51), (200.0, 1), (100.0, 1), (200.0, 1), (100.0, 1))
+    weak2 = series((100.0, 51), (50.0, 1), (100.0, 1), (50.0, 1), (100.0, 1))
+    _, days2 = T.replay(synthetic({"BTC": btc2, "ETH": list(weak2), "SOL": list(weak2)}), rows[50][0], 100.0)
+    held_once = days2[-1]["bh_usd"]
+    assert held_once == pytest.approx(units * 300.0, rel=1e-12) == 100.0 - 3 * FEE_ONE  # where the units say
+    fees = 1 - 3 * (1 / 3 * 25 / 1e4 + 0.0002)  # the lab books the three buys in the first day's return
+    assert days2[1]["hold_growth"] == pytest.approx(fees, rel=1e-12)  # (2 + 0.5 + 0.5) / 3 = 1: only the fees
+    rebalanced = days2[-1]["lab_hold_usd"]
+    assert rebalanced == pytest.approx(100.0 * fees * 1.5 * 1.5, rel=1e-12)
+    assert rebalanced - held_once > 100.0  # the two yardsticks are different books
+
+
+def test_holding_waits_for_a_coin_without_a_candle_on_the_first_day() -> None:
+    closes = cross(70)
+    closes["SOL"][50] = None  # SOL has no candle on the record's first day: its third waits in cash
+    state, days = T.replay(synthetic(closes), synthetic(closes)[50][0], 100.0)
+    assert state["bh"]["units"]["SOL"] == pytest.approx((100.0 / 3 - FEE_ONE) / 100.0)  # bought at its next close
+    assert days[0]["bh_usd"] == pytest.approx(100.0 - 2 * FEE_ONE)  # two thirds bought, one still cash
+    assert days[1]["bh_usd"] == pytest.approx(100.0 - 3 * FEE_ONE)
+
+
+def test_the_rules_book_is_three_thirds_a_real_account_could_keep() -> None:
+    """Each coin has its own third: BTC's winnings stay in BTC's third (nothing is sold to top the others up), a
+    sell puts that coin's money in its own cash, and only that cash is spent on its next buy. Lab 3's own figure
+    (``lab_usd``, the parity test's) moves the book back to thirds every day for free and so differs."""
+    btc = series((100.0, 60), (110.0, 1), (121.0, 1), (133.1, 1), (146.41, 1), (100.0, 1), (130.0, 6))
+    flat = series((100.0, 71))
+    rows = synthetic({"BTC": btc, "ETH": list(flat), "SOL": list(flat)})
+    state, days = T.replay(rows, rows[50][0], 100.0)
+    by_day = {d["day"]: d for d in days}
+    third = 100.0 / 3
+    units = (third - FEE_ONE) / 110.0  # bought at 110 with BTC's whole third
+    assert by_day[rows[63][0]]["equity_usd"] == pytest.approx(2 * third + units * 146.41, rel=1e-12)
+    lab = by_day[rows[63][0]]["lab_usd"]  # the lab re-balances BTC's gains away every day: a different number
+    assert abs(lab - by_day[rows[63][0]]["equity_usd"]) > 0.05
+    sold = units * 100.0  # 100 is below its 50-day average: out, at that close
+    cash = sold - (sold * 25 / 1e4 + 0.02)
+    sell = next(t for t in state["trades"] if t["side"] == "sell")
+    assert (sell["price"], sell["amount_usd"]) == (100.0, pytest.approx(sold, rel=1e-12))
+    assert by_day[rows[64][0]]["equity_usd"] == pytest.approx(2 * third + cash, rel=1e-12)
+    buy_again = [t for t in state["trades"] if t["side"] == "buy" and t["day"] == rows[65][0]]
+    assert buy_again and buy_again[0]["amount_usd"] == pytest.approx(cash, rel=1e-12)  # only BTC's own cash
+    assert state["sleeves"]["cash"]["ETH"] == state["sleeves"]["cash"]["SOL"] == pytest.approx(third)  # untouched
+
+
+def test_on_real_candles_the_benchmark_is_the_units_bought_on_day_one() -> None:
+    """On lab 3's real Coinbase candles: holding the three is exactly the units bought at the first close, valued at
+    the last close; the rule's book in thirds is what an independent per-coin replay of the desk's own swaps gives."""
+    candles = fixture_candles()
+    state, days = T.replay(T.calendar(candles), "2026-03-23", 100.0)
+    start, end = days[0]["day"], days[-1]["day"]
+    units = {c: (100.0 / 3 - FEE_ONE) / candles[c][start][0] for c in T.COINS}
+    assert days[-1]["bh_usd"] == pytest.approx(sum(units[c] * candles[c][end][0] for c in T.COINS), rel=1e-12)
+    cash, held = {c: 100.0 / 3 for c in T.COINS}, {c: 0.0 for c in T.COINS}
+    for t in reversed(state["trades"]):  # oldest first
+        c, price = t["coin"], t["price"]
+        if t["side"] == "buy":
+            held[c], cash[c] = (cash[c] - (cash[c] * 25 / 1e4 + 0.02)) / price, 0.0
+        else:
+            value = held[c] * price
+            cash[c], held[c] = value - (value * 25 / 1e4 + 0.02), 0.0
+    assert len(state["trades"]) >= 4
+    assert days[-1]["equity_usd"] == pytest.approx(
+        sum(cash[c] + held[c] * candles[c][end][0] for c in T.COINS), rel=1e-12)
 
 
 def test_flips_are_swaps_at_the_close_with_events_and_entry_prices() -> None:
@@ -401,10 +534,11 @@ def test_day_by_day_with_restarts_equals_one_replay_bit_for_bit(make_settings: C
     st = T.load_state(T.state_path(settings))
     _, days = T.replay(T.calendar(candles), "2026-06-01", 100.0)
     assert len(st["history"]) == 25 and st["sleeve_usd"] == 100.0
+    keys = ("day", "in", "growth", "hold_growth", "equity_usd", "bh_usd", "lab_usd", "lab_hold_usd")
     for h, d in zip(st["history"], days, strict=False):
-        assert (h["day"], h["in"], h["growth"], h["hold_growth"], h["equity_usd"], h["hold_usd"]) == (
-            d["day"], d["in"], d["growth"], d["hold_growth"], d["equity_usd"], d["hold_usd"])
+        assert tuple(h[k] for k in keys) == tuple(d[k] for k in keys)
     assert st["book"]["growth"] == days[24]["growth"]
+    assert T.thirds_value(st["sleeves"]) == days[24]["equity_usd"] and T.thirds_value(st["bh"]) == days[24]["bh_usd"]
 
 
 def test_a_pause_is_caught_up_from_the_same_closes(settings: Settings, fake_http: FakeHttp,
@@ -435,7 +569,7 @@ def test_a_failed_fetch_books_nothing_keeps_the_state_and_says_so(settings: Sett
         out = desk.poll(now)
         assert out["booked"] == 0
         st = T.load_state(T.state_path(settings))
-        for key in ("history", "book", "hold", "positions", "trades", "last_day", "started"):
+        for key in ("history", "sleeves", "bh", "book", "hold", "positions", "trades", "last_day", "started"):
             assert st[key] == before[key], key  # yesterday's state, untouched
         assert st["last_error"].startswith("Coinbase candles not read (")
         assert desk.next_wait(now) == T.RETRY_S
@@ -499,7 +633,9 @@ def test_every_booked_day_is_sealed_in_the_receipts(settings: Settings, fake_htt
     receipts = [r for r in ledger.receipts() if r.kind == "trenddesk_day"]
     assert [r.payload["day"] for r in receipts] == ["2026-06-01", "2026-06-02", "2026-06-03"]
     assert receipts[0].payload["equity_usd"] == pytest.approx(desk.state["history"][0]["equity_usd"], abs=1e-6)
-    assert set(receipts[0].payload) == {"day", "closes", "in", "equity_usd", "hold_usd", "swaps"}
+    assert receipts[0].payload["bh_usd"] == pytest.approx(desk.state["history"][0]["bh_usd"], abs=1e-6)
+    assert set(receipts[0].payload) == {"day", "closes", "in", "equity_usd", "bh_usd", "lab_usd", "lab_hold_usd",
+                                        "swaps"}
 
 
 def test_the_desk_polls_once_a_day_after_0005_utc_and_retries_when_behind(settings: Settings, fake_http: FakeHttp,
@@ -513,14 +649,67 @@ def test_the_desk_polls_once_a_day_after_0005_utc_and_retries_when_behind(settin
     assert desk.current(at("2026-06-02", 400)) and desk.next_wait(at("2026-06-02", 400)) == pytest.approx(DAY - 100)
 
 
-def test_an_unreadable_state_file_is_kept_aside_never_overwritten(settings: Settings, http_client: HttpClient) -> None:
+def test_a_candle_is_read_only_after_its_settling_margin(settings: Settings, fake_http: FakeHttp,
+                                                        http_client: HttpClient) -> None:
+    """A poll 30 s after midnight (the first poll after a redeploy, a retry, a host clock running ahead) books
+    nothing; the next one, from 00:02 UTC on, books the day. The fake serves the day's bar as soon as it opens."""
+    desk = desk_for(settings, fake_http, http_client)
+    desk.poll(at("2026-06-01", 9 * 3600))
+    early = at("2026-06-02", 30)
+    assert desk.poll(early)["booked"] == 0 and desk.state["last_day"] is None
+    assert desk.next_wait(early) == T.RETRY_S  # behind: the retry comes 15 minutes later
+    assert desk.poll(at("2026-06-02", 300))["booked"] == 1 and desk.state["last_day"] == "2026-06-01"
+    day = T.day_start("2026-06-01")
+    rows = [[int(day), 1, 1, 1, 150.0, 10.0]]
+    assert T.parse_candles(rows, day + DAY + T.SETTLE_S - 1) == {}
+    assert T.parse_candles(rows, day + DAY + T.SETTLE_S) == {"2026-06-01": (150.0, 10.0)}
+    assert T.SETTLE_S == 120.0
+
+
+def test_an_unreadable_state_file_is_kept_aside_and_the_new_record_says_so(
+        ledger: Ledger, settings: Settings, http_client: HttpClient) -> None:
     path = T.state_path(settings)
     path.parent.mkdir(parents=True)
     path.write_text("{not json")
     desk = T.TrendDesk(settings, http=http_client)
-    assert desk.state["started"] is None and not path.exists()
+    assert desk.state["started"] is None
     (kept,) = path.parent.glob("state.unreadable-*.json")
-    assert kept.read_text() == "{not json"
+    assert kept.read_text() == "{not json"  # never overwritten
+    assert desk.state["reset_from"] == kept.name
+    assert desk.state["events"][0]["text"] == (f"Trend desk: the saved paper record could not be read; it was kept as "
+                                               f"{kept.name} and a new record starts today (paper)")
+    saved = T.load_state(path)  # on file at once: a bot stopped before its first poll still knows
+    assert saved["reset_from"] == kept.name and saved["events"] == desk.state["events"]
+
+
+def test_an_old_version_record_is_kept_aside_and_the_page_says_the_record_restarted(
+        ledger: Ledger, settings: Settings, fake_http: FakeHttp, http_client: HttpClient) -> None:
+    """A record in another state version (here version 1, which re-balanced both books every day) cannot be read
+    as this one: it is kept aside, and the money card, the town line and the team room say the record restarted."""
+    seed(ledger)
+    old = booked_state(started="2026-01-01", last_day="2026-06-01")
+    old["version"] = 1
+    path = T.state_path(settings)
+    T.save_state(path, old)
+    desk = desk_for(settings, fake_http, http_client)
+    (kept,) = path.parent.glob("state.unreadable-*.json")
+    assert json.loads(kept.read_text())["started"] == "2026-01-01"  # the old record itself, untouched
+    desk.poll(at("2026-10-08", 9 * 3600))
+    st = T.load_state(path)
+    assert st["started"] == "2026-10-08" and st["reset_from"] == kept.name
+    assert any("could not be read" in e["text"] for e in st["events"])
+    state = build_page_state(ledger, settings, NOW)
+    assert state["money"]["trend"]["reset_from"] == kept.name
+    assert state["town"]["trend"]["line"] == ("Trend desk (paper, pretend; record restarted 2026-10-08): first booking "
+                                              "at the close of 2026-10-08 (UTC midnight); nothing booked yet")
+    desk.poll(at("2026-10-09"))
+    line = build_page_state(ledger, settings, NOW + DAY)["town"]["trend"]["line"]
+    assert line.startswith("Trend desk (paper, pretend; record restarted 2026-10-08): ")
+    strategy = {p["id"]: p for p in build_team_state(ledger, settings, NOW)["panels"]}["strategy"]
+    assert strategy["trend"]["reset_from"] == kept.name
+    assert any("could not be read" in e["text"] for e in strategy["events"])
+    T.save_state(path, {**st, "reset_from": None})
+    assert "restarted" not in build_page_state(ledger, settings, NOW + DAY)["town"]["trend"]["line"]
 
 
 def test_a_crash_inside_a_poll_is_recorded_and_the_loop_goes_on(settings: Settings, http_client: HttpClient,
@@ -565,9 +754,12 @@ def test_money_and_town_show_the_trend_desk_apart_from_everything(ledger: Ledger
     assert trend == {"mode": "paper", "label": "Paper money (pretend)", "as_of": T.close_ts("2026-10-07"),
                      "sleeve_usd": 100.0, "equity_usd": pytest.approx(101.20), "today_usd": pytest.approx(0.30),
                      "since_start_usd": pytest.approx(1.20), "hold_since_start_usd": pytest.approx(0.40),
-                     "in_market": {"BTC": True, "ETH": False, "SOL": True}, "started": "2026-10-01", "problem": None}
+                     "in_market": {"BTC": True, "ETH": False, "SOL": True}, "started": "2026-10-01", "problem": None,
+                     "lab": {"since_start_usd": pytest.approx(1.10), "hold_since_start_usd": pytest.approx(0.50)},
+                     "reset_from": None}
     assert state["town"]["trend"] == {
-        "line": "Trend desk (paper, pretend): in BTC and SOL, out of ETH; since start +$1.20 vs holding +$0.40"}
+        "line": "Trend desk (paper, pretend): in BTC and SOL, out of ETH; since start +$1.20 vs holding the three "
+                "(bought on day one, never touched) +$0.40"}
     # nothing summed: the SOL wallet, the Polymarket desk and the town's own figures and line are untouched
     for key in ("today", "since_start", "usd", "polymarket"):
         assert state["money"][key] == plain["money"][key], key
@@ -575,9 +767,10 @@ def test_money_and_town_show_the_trend_desk_apart_from_everything(ledger: Ledger
         assert state["town"][key] == plain["town"][key], key
     body = json.dumps(state, allow_nan=False)
     numbers = [float(x) for x in re.findall(r"-?\d+(?:\.\d+)?(?:e-?\d+)?", body)]
-    for summed in (-5.5 + 1.2, -5.5 + 0.3, 1.2 + 0.4, 0.3 + 0.3, 101.2 + 100.4, 1.2 - 5.5 + 0.4):  # SOL+trend, trend+hold
+    for summed in (-5.5 + 1.2, -5.5 + 0.3, 1.2 + 0.4, 0.3 + 0.3, 101.2 + 100.4, 1.2 - 5.5 + 0.4,  # SOL+trend, trend+hold
+                   1.2 + 1.1, 0.4 + 0.5, 1.1 + 0.5, -5.5 + 1.1):  # nor with lab 3's own figures
         assert not [n for n in numbers if abs(n - summed) < 1e-6], summed
-    for text in ("$4.30", "$5.20", "$1.60", "$4.70"):
+    for text in ("$4.30", "$5.20", "$1.60", "$4.70", "$2.30", "$0.90"):
         assert text not in body, text
     assert not JARGON.search(state["town"]["trend"]["line"])
 
@@ -656,7 +849,11 @@ def test_the_strategy_member_carries_the_trend_desk(ledger: Ledger, make_setting
     assert stats["Trend desk (paper)"] == "in BTC and SOL, out of ETH"
     assert (stats["Trend desk BTC (paper)"], stats["Trend desk ETH (paper)"], stats["Trend desk SOL (paper)"]) == (
         "in", "out", "in")
-    assert stats["Trend desk since start $ (paper)"] == 1.2 and stats["Holding the three instead $ (paper)"] == 0.4
+    assert stats["Trend desk since start $ (paper)"] == 1.2
+    assert stats["Holding the three instead $ (paper, bought on day one, never touched)"] == 0.4
+    assert stats["Lab benchmark (re-balanced daily, paper)"] == "rule +$1.10, holding +$0.50"
+    assert strategy["trend"]["hold_since_start_usd"] == pytest.approx(0.4)  # holding bought once, not the lab's
+    assert strategy["trend"]["lab"] == {"since_start_usd": pytest.approx(1.1), "hold_since_start_usd": pytest.approx(0.5)}
     assert "Trend desk: BTC closed above its 50-day average -> in (paper)" in [e["text"] for e in strategy["events"]]
     assert strategy["trend"]["in_market"] == {"BTC": True, "ETH": False, "SOL": True}
     assert strategy["trend"]["label"] == "Paper money (pretend)"
@@ -679,8 +876,14 @@ def test_the_page_renders_the_trend_block_and_line_as_text_only(settings: Settin
     assert "function renderTrend(tr)" in script and "renderTrend(m.trend);" in script
     assert "if (!tr || !tr.in_market) { put(box); return; }" in script  # older data without the block: no error
     assert 'el("span", "coin", tr.label)' in script and '"Paper money (pretend)"' not in script  # label from data
-    assert '"paper only"' in script and "nothing here is " in script and "added together" in script
+    assert '"paper only"' in script and "nothing " in script and "here is added together" in script
     assert "...[...(desks ? [desks.paper, desks.real] : []), t.trend].filter((d) => d && d.line)" in script
+    # the yardstick in words: holding bought once; the rule's book in thirds; lab 3's figures only as the lab's way
+    assert '"holding the three instead (bought on day one, never touched) "' in script
+    assert "Each coin has its own third of the book, as a real account would hold it" in script
+    assert "to beat holding the three, bought on day one and never touched." in script
+    assert "\"lab 3's way (back to thirds every day, for free): rule \"" in script
+    assert '"(record restarted " + (tr.started || "today")' in script and "tr.reset_from ?" in script
     for sink in ("innerHTML", "outerHTML", "insertAdjacentHTML", "document.write", "eval(", "new Function"):
         assert sink not in script, sink
     assert script.count(".replaceChildren(") == 1  # every fill goes through put()

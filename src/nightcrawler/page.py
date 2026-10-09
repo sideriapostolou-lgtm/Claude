@@ -341,21 +341,30 @@ _SCRIPT = r"""
     const coins = Object.keys(tr.in_market);
     const ins = coins.filter((c) => tr.in_market[c] === true), outs = coins.filter((c) => tr.in_market[c] !== true);
     const meta = isNum(tr.as_of)
-      ? ["since start", "holding the three instead " + usd(tr.hold_since_start_usd, true),
-        "last day " + usd(tr.today_usd, true), ins.length ? "in " + ins.join(", ") : "all cash",
-        ins.length && outs.length ? "out " + outs.join(", ") : "", "book " + usd(tr.equity_usd) + " of "
-        + usd(tr.sleeve_usd)]
+      ? ["since start", "holding the three instead (bought on day one, never touched) "
+        + usd(tr.hold_since_start_usd, true), "last day " + usd(tr.today_usd, true),
+        ins.length ? "in " + ins.join(", ") : "all cash", ins.length && outs.length ? "out " + outs.join(", ") : "",
+        "book " + usd(tr.equity_usd) + " of " + usd(tr.sleeve_usd)]
       : ["no daily close booked yet" + (tr.started ? ": the first is the close of " + tr.started + " (UTC midnight)"
         : "")];
+    // lab 3's own figures put the book back to thirds every day for free: shown for comparison, never as the result
+    const lab = isNum(tr.as_of) && tr.lab && isNum(tr.lab.since_start_usd) && isNum(tr.lab.hold_since_start_usd)
+      ? "lab 3's way (back to thirds every day, for free): rule " + usd(tr.lab.since_start_usd, true) + ", holding "
+        + usd(tr.lab.hold_since_start_usd, true) : null;
     put(box, el("p", "sub", "Trend desk", el("span", "tag", "paper only")),
       el("div", "rows", el("div", null,
         el("div", "line", el("span", "coin", tr.label), el("span", "big " + tone(tr.since_start_usd),
           usd(tr.since_start_usd, true))),
         el("div", "meta", meta.filter(Boolean).join(" · ")),
+        lab ? el("div", "meta", lab) : null,
+        tr.reset_from ? el("div", "meta", "(record restarted " + (tr.started || "today") + ": the earlier record "
+          + "could not be read and is kept aside)") : null,
         tr.problem ? el("div", "meta", tr.problem) : null)),
       el("p", "help", "Lab 3's 50-day trend rule on BTC, ETH and SOL, checked once a day after the daily close "
-        + "(UTC midnight). It has to beat simply holding the three. Kept apart from everything above: nothing here is "
-        + "added together."));
+        + "(UTC midnight). Each coin has its own third of the book, as a real account would hold it: a sell puts that "
+        + "coin's money in its own cash and a buy spends only that cash; nothing is moved between the thirds. It has "
+        + "to beat holding the three, bought on day one and never touched. Kept apart from everything above: nothing "
+        + "here is added together."));
   }
 
   function chart(curve, startUsd, ready) {

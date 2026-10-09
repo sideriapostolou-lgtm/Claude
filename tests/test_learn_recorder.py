@@ -401,6 +401,8 @@ def test_recorder_crashes_never_change_an_engine_tick(make_settings, tmp_path) -
     from nightcrawler.engine import build_app
     from world import make_world
 
+    before = set(threading.enumerate())
+
     def trade(with_crashing_recorder: bool) -> tuple[list, list]:
         clock, fake = FakeClock(1_791_475_200.0), FakeHttp()
         make_world(fake, clock)
@@ -421,9 +423,14 @@ def test_recorder_crashes_never_change_an_engine_tick(make_settings, tmp_path) -
             return results, [(d.action, d.mint, d.reason) for d in app.ledger.decisions(limit=100)]
         finally:
             thread.stop()
-            app.ledger.close()
+            app.close()  # stops the paper desks' threads too, not only the ledger
 
     assert trade(True) == trade(False)
+    # no desk thread outlives the test: a leaked one would poll 30 s later inside whichever test is running then
+    desks = [t for t in threading.enumerate() if t not in before and t.name in ("trenddesk", "polydesk")]
+    for t in desks:
+        t.join(timeout=5)
+    assert not [t.name for t in desks if t.is_alive()]
 
 
 def test_learn_enabled_false_makes_zero_learning_calls(make_settings, tmp_path) -> None:

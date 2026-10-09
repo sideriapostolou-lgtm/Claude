@@ -29,9 +29,10 @@ are ``null``.
 
 The Strategy panel also carries the trend desk (:mod:`nightcrawler.trenddesk`, a PAPER forward test of lab 3's
 50-day trend rule on BTC, ETH and SOL; its state file only): stats "Trend desk ..." (in or out per coin, since start
-against holding the three), its flips as events ("Trend desk: BTC closed above its 50-day average -> in (paper)") and
-``trend`` (the same, for the page). Its activity never sets the Strategy chip, and its figures are never summed with
-anything else.
+against holding the three bought on day one and never touched, and lab 3's own figures re-balanced daily for
+comparison only), its flips as events ("Trend desk: BTC closed above its 50-day average -> in (paper)") and ``trend``
+(the same, for the page). Its activity never sets the Strategy chip, and its figures are never summed with anything
+else.
 
 Deployed commit: only ``RAILWAY_GIT_COMMIT_SHA`` and ``RAILWAY_GIT_COMMIT_MESSAGE`` are read from the
 environment (:func:`deploy_info`), never anything else.
@@ -742,15 +743,18 @@ def _strategy(ctx: _Ctx) -> dict[str, Any]:
 
 def _trend_desk(ctx: _Ctx) -> tuple[list[dict[str, Any]], list[dict[str, Any]], dict[str, Any] | None]:
     """The trend desk (nightcrawler.trenddesk, PAPER), shown with the Strategy member: ``(stats, events, view)``.
-    Stats: in or out per coin and since start against holding the three; events: its flips (and its start); view:
-    the same figures for the page. Nothing when the desk is off or its state cannot be read."""
+    Stats: in or out per coin, and since start (the rule's book in three thirds) against holding the three (bought on
+    day one, never touched), plus lab 3's own reckoning of both (re-balanced daily for free) for comparison only;
+    events: its flips (and its start, or a restarted record); view: the same figures for the page. Nothing when the
+    desk is off or its state cannot be read."""
     if not ctx.settings.trenddesk_enabled:
         return [], [], None
     from nightcrawler import trenddesk
 
     try:
         d = trenddesk.panel_state(ctx.settings, ctx.now)
-        since, hold = float(d["since_start_usd"]), float(d["hold_since_start_usd"])
+        since, hold = float(d["since_start_usd"]), float(d["bh_since_start_usd"])
+        lab, lab_hold = float(d["lab_since_start_usd"]), float(d["lab_hold_since_start_usd"])
         booked = d.get("as_of") is not None
         in_market = {c: bool(d["in_market"].get(c)) for c in trenddesk.COINS}
         events = [ctx.event(float(e["ts"]), str(e["text"]), str(e.get("tone") or "neutral"))
@@ -762,11 +766,23 @@ def _trend_desk(ctx: _Ctx) -> tuple[list[dict[str, Any]], list[dict[str, Any]], 
                    "text")]
     stats += [_stat(f"Trend desk {c} (paper)", "in" if in_market[c] else "out", "text") for c in trenddesk.COINS]
     stats += [_stat("Trend desk since start $ (paper)", round(since, 2), "usd"),
-              _stat("Holding the three instead $ (paper)", round(hold, 2), "usd")]
+              _stat("Holding the three instead $ (paper, bought on day one, never touched)", round(hold, 2), "usd"),
+              _stat("Lab benchmark (re-balanced daily, paper)",
+                    f"rule {_usd_text(lab)}, holding {_usd_text(lab_hold)}" if booked else "nothing booked yet",
+                    "text")]
+    reset = d.get("reset_from")
     view = {"label": d.get("label"), "as_of": _num(d.get("as_of")), "started": d.get("started"),
             "in_market": in_market, "since_start_usd": since, "hold_since_start_usd": hold,
-            "today_usd": _num(d.get("today_usd")), "problem": ctx.text(d["problem"]) if d.get("problem") else None}
+            "lab": {"since_start_usd": lab, "hold_since_start_usd": lab_hold},
+            "today_usd": _num(d.get("today_usd")), "problem": ctx.text(d["problem"]) if d.get("problem") else None,
+            "reset_from": ctx.text(reset, 80) if isinstance(reset, str) and reset else None}
     return stats, events, view
+
+
+def _usd_text(value: float) -> str:
+    """``+$1.10`` / ``-$0.50`` / ``$0.00``: a signed dollar figure inside a text stat."""
+    cents = round(value, 2)
+    return ("+" if cents > 0 else "-" if cents < 0 else "") + f"${abs(cents):,.2f}"
 
 
 def _haircut_pct(f: Fill) -> float | None:

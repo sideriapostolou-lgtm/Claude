@@ -125,7 +125,9 @@ def fetch_product(product: str, granularity_s: int, since: datetime, until: date
     for c in ("low", "high", "open", "close", "volume"):
         df[c] = df[c].astype(float)
     df["ts"] = df["ts"].astype("int64")
-    return df
+    # Coinbase's ``end`` is inclusive: the candle that OPENS at ``until`` (still open when ``until`` is now's day or
+    # hour) comes back too. [since, until) means it is dropped (erratum 2026-10-09: the first cache kept it).
+    return df[df["ts"] < int(until.timestamp())].reset_index(drop=True)
 
 
 def _gaps(ts: pd.Series, granularity_s: int) -> int:
@@ -152,6 +154,8 @@ def run(granularity: str, assets: list[str] | None = None, out: Path = OUT) -> d
         product = f"{a}-USD"
         t0 = time.time()
         prev = have[have["asset"] == a] if len(have) else pd.DataFrame()
+        if len(prev):  # an unfinished bar an older cache kept (see fetch_product) is dropped, then fetched again
+            prev = prev[prev["ts"] < int(until.timestamp())]
         start = since
         if len(prev):  # incremental: refetch the last 2 bars for safety
             start = datetime.fromtimestamp(int(prev["ts"].max()) - 2 * g, tz=timezone.utc)

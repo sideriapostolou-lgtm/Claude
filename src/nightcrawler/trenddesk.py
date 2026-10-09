@@ -18,34 +18,49 @@ same equity, bit for bit.
   $1M or more. The lab's other entry filter (200 earlier bars) holds for the three majors by years; not re-checked.
 * Position: long (1) when the signal is on and the coin is in the universe, else flat (0). Decided at t's close and
   held from t's close to t+1's close: the paper swap is at t's close price.
-* Book: each coin in the universe at t is 1/n of the book over day t+1 (equal weight, brought back to 1/n every day
-  as the lab assumes, at no cost; n = the coins in the universe). Day t+1's return is the sum of
-  (1/n) x position x (close(t+1) / close(t) - 1), minus the costs of the swaps made at t's close: 25 bps per side of
-  the traded share of the book plus a $0.02 network fee per swap on the sleeve (0.02 / sleeve of the book), exactly
-  the lab's cost model.
-* Benchmark: buy-and-hold of the three, the same engine with every coin always held (bought at the start close).
-  The rule has to beat THAT, not zero.
+* A day on which NONE of the three has a candle is not in the desk's calendar (it is the union of the three coins'
+  days): the desk carries its positions across it and books two days' move in one row. Lab 3's full 28-coin panel
+  would keep such a day as a row without closes for the majors, drop them that day and keep them out for 50 days
+  (their averages undefined). It has never happened in lab 3's data (no gap in the majors since 2016-05, no day
+  missing for every coin); the parity test holds against a panel of the three majors, and on lab 3's full panel it
+  holds bit for bit for every start since 2023-06-15.
+
+THE BOOKS. Every swap costs lab 3's 25 bps of the amount traded plus a $0.02 network fee (:func:`swap_fee`).
+
+* The rule's book (``sleeves``; ``equity_usd``, what the page shows): the paper sleeve is split into three separate
+  thirds, one per coin, the way a real account would hold them. A buy spends that coin's third (all its cash) at the
+  close; a sell turns that coin back into cash in its own third; nothing is ever moved between the thirds.
+* Holding the three (``bh``; ``bh_usd``, the benchmark): each third bought at the record's first close (a coin without
+  a candle that day at its next one), with the same costs, then never touched. The rule has to beat THAT, not zero.
+* Lab 3's reckoning (``book`` / ``hold``; ``growth`` and ``lab_usd`` for the rule, ``hold_growth`` and
+  ``lab_hold_usd`` for holding): the lab's backtest puts the book back to 1/n of each coin in the universe EVERY
+  day, at no cost (n = the coins in the universe). Day t+1's return is the sum of (1/n) x position x
+  (close(t+1) / close(t) - 1), minus the costs of t's swaps: 25 bps per side of the traded share of the book plus
+  $0.02 per swap over the sleeve. The lab books a swap's cost in the NEXT day's return; ``lab_usd`` shows it on the
+  day it is paid (growth x sleeve minus the fees of that close's swaps). These figures are kept bit for bit for the
+  parity test and shown only as "lab 3's way (re-balanced to thirds daily, free)", never as the result: free daily
+  re-balancing alone can decide which book is ahead (on lab 3's data from 2023-06-15 to 2026-10-08: the rule $393.45
+  against re-balanced holding $376.95, but the rule in three thirds $370.21 against holding bought once $401.96).
 
 FORWARD TEST. The record starts on the UTC day the desk first ran (``started``); its first swaps are at that day's
 close, when the desk was already running. Nothing before it is ever booked or shown as earned. Days the bot was down
 are caught up from the same closes at the next poll (the rule is mechanical, so the book is the one it would have
-had); every booked day is sealed in the receipts chain when a ledger is attached.
-
-Bookkeeping. The lab books a swap's cost in the NEXT day's return. The desk keeps the lab's equity as ``growth`` (a
-multiplier from 1.0; the parity test compares it) and SHOWS the book after the swaps of the day's close
-(``equity_usd`` = growth x sleeve minus the fees of that close's swaps), so a fee shows on the day it is paid.
+had); every booked day is sealed in the receipts chain when a ledger is attached. A saved record that cannot be read
+is kept aside under a new name, and the new record says so for as long as it runs (``reset_from`` and an event).
 
 Runtime (:class:`TrendDesk`, one daemon thread; a crash in it never reaches the trading loop): a poll at start-up,
 then once a day shortly after 00:05 UTC. A poll fetches the last :data:`FETCH_DAYS` (more after a long pause) daily
 candles of each coin, one request each through :class:`nightcrawler.http.HttpClient` (timeout, retries with
 backoff), and books every completed day after the last booked one, up to the last day all three coins have a candle
-(a candle that is late is waited for; a day missing for good is booked as the lab books a gap). A failed fetch books
-nothing, keeps the state as it was and says so (``last_error``); the desk then retries every :data:`RETRY_S`
-seconds. No price is ever made up.
+(a candle that is late is waited for; a day missing for good is booked as the lab books a gap). A candle is read no
+sooner than :data:`SETTLE_S` after its close, so a poll right after midnight (a redeploy, a retry, a host clock
+running ahead) books nothing and the retry books the day. A failed fetch books nothing, keeps the state as it was
+and says so (``last_error``); the desk then retries every :data:`RETRY_S` seconds. No price is ever made up.
 
-State: ``DATA_DIR/trenddesk/state.json`` (atomic rewrite): the two books (rule and holding), per-coin positions with
-their entry price, the daily history (capped), the swaps (capped), events, the last fetch and the last error.
-:func:`panel_state` reads only that file. The sleeve (``TRENDDESK_SLEEVE_USD``) is fixed when the record starts.
+State: ``DATA_DIR/trenddesk/state.json`` (atomic rewrite): the four books (the rule's thirds, holding the three, and
+lab 3's two), per-coin positions with their entry price, the daily history (capped), the swaps (capped), events, the
+last fetch and the last error. :func:`panel_state` reads only that file. The sleeve (``TRENDDESK_SLEEVE_USD``) is
+fixed when the record starts.
 """
 
 from __future__ import annotations
@@ -88,11 +103,12 @@ MAX_FETCH_DAYS = 1200
 POLL_AT_S = 5 * 60  # 00:05 UTC
 RETRY_S = 15 * 60.0
 FIRST_POLL_DELAY_S = 30.0
+SETTLE_S = 120.0  # a daily candle is read no sooner than 2 minutes after its close (00:00 UTC)
 BEHIND_GRACE_S = 3600.0  # a day's close not booked an hour after midnight counts as "behind"
 HISTORY_KEEP = 800
 TRADES_KEEP = 200
 EVENTS_KEEP = 40
-STATE_VERSION = 1
+STATE_VERSION = 2  # 2: the rule's book in three thirds and holding bought once (1 re-balanced both daily)
 PAPER_LABEL = "Paper money (pretend)"
 RULE: dict[str, Any] = {
     "id": "lab3-T3-sma50",
@@ -102,8 +118,8 @@ RULE: dict[str, Any] = {
     "network_usd": NETWORK_USD,
     "source": "Coinbase Exchange public daily candles (UTC days)",
     "label": "Lab 3 rule T3 sma50: hold a coin while its daily close is above its 50-day average, else cash; BTC, "
-    "ETH and SOL, equal weight. Its 2026 TEST look FAILED the pre-registered bar (promising, under-powered), so "
-    "this desk is a paper forward test only, judged against simply holding the three",
+    "ETH and SOL, a third each. Its 2026 TEST look FAILED the pre-registered bar (promising, under-powered), so "
+    "this desk is a paper forward test only, judged against holding the three (bought on day one, never touched)",
 }
 
 Row = tuple[str, dict[str, tuple[float | None, float | None]]]
@@ -130,7 +146,9 @@ def _iso(ts: float) -> str:
 
 def parse_candles(rows: Any, now: float) -> dict[str, tuple[float, float]]:
     """Coinbase rows ``[time, low, high, open, close, volume]`` -> ``{day: (close, base volume)}``, completed UTC days
-    only (the bar's close, the next 00:00 UTC, is not after ``now``). A malformed row is dropped, never repaired."""
+    only: the bar closed (the next 00:00 UTC) at least :data:`SETTLE_S` before ``now``, so a bar still open, or one
+    read a moment after midnight (or on a host clock running ahead), is never used. A malformed row is dropped, never
+    repaired."""
     if not isinstance(rows, list):
         raise TypeError("an unexpected reply")
     out: dict[str, tuple[float, float]] = {}
@@ -143,7 +161,7 @@ def parse_candles(rows: Any, now: float) -> dict[str, tuple[float, float]]:
             continue
         if not all(math.isfinite(v) for v in (ts, close, volume)) or close <= 0 or volume < 0:
             continue
-        if ts % DAY_S or ts + DAY_S > now:
+        if ts % DAY_S or ts + DAY_S + SETTLE_S > now:
             continue
         out[utc_day(ts)] = (close, volume)
     return out
@@ -293,6 +311,52 @@ def _book_only(book: Mapping[str, Any]) -> dict[str, Any]:
     return {k: book[k] for k in ("growth", "target", "held", "universe", "close", "fee_frac")}
 
 
+# ---------------------------------------------------------------------- the books a real account could keep
+def fresh_thirds() -> dict[str, Any]:
+    """Three separate thirds of the paper sleeve, one per coin, never re-balanced: ``cash`` (None until the record's
+    first close funds it), ``units`` of the coin, and ``mark`` (the coin's last close seen: what the units are worth)."""
+    return {"cash": {c: None for c in COINS}, "units": {c: 0.0 for c in COINS}, "mark": {c: None for c in COINS}}
+
+
+def swap_fee(amount: float) -> float:
+    """Lab 3's cost of one swap of ``amount`` dollars: 25 bps of it plus the $0.02 network fee (never more than the
+    amount itself)."""
+    return min(amount, amount * COST_BPS_SIDE / 1e4 + NETWORK_USD)
+
+
+def thirds_value(thirds: Mapping[str, Any]) -> float:
+    """What the three thirds are worth: each third's cash plus its units at the coin's last close."""
+    return math.fsum(float(thirds["cash"][c] or 0.0) + float(thirds["units"][c]) * float(thirds["mark"][c] or 0.0)
+                     for c in COINS)
+
+
+def _mark(thirds: dict[str, Any], closes: Mapping[str, float | None], sleeve: float) -> None:
+    """Fund the thirds at the record's first close (a third of the sleeve each) and mark them to the day's closes (a
+    coin without a candle keeps its last close)."""
+    for c in COINS:
+        if thirds["cash"][c] is None:
+            thirds["cash"][c] = sleeve / len(COINS)
+        if closes[c] is not None:
+            thirds["mark"][c] = closes[c]
+
+
+def _swap(thirds: dict[str, Any], coin: str, side: str) -> tuple[float, float]:
+    """One swap of one third at the coin's mark (the day's close): a buy spends all of that third's cash, a sell turns
+    all of its units back into that third's cash. Returns ``(amount, fee)`` in dollars."""
+    price = float(thirds["mark"][coin])
+    if side == "buy":
+        amount = float(thirds["cash"][coin] or 0.0)
+        fee = swap_fee(amount)
+        thirds["units"][coin] = float(thirds["units"][coin]) + (amount - fee) / price
+        thirds["cash"][coin] = 0.0
+    else:
+        amount = float(thirds["units"][coin]) * price
+        fee = swap_fee(amount)
+        thirds["cash"][coin] = float(thirds["cash"][coin] or 0.0) + amount - fee
+        thirds["units"][coin] = 0.0
+    return amount, fee
+
+
 # ---------------------------------------------------------------------- state
 def empty_state() -> dict[str, Any]:
     return {
@@ -302,8 +366,11 @@ def empty_state() -> dict[str, Any]:
         "started": None,
         "started_at": None,
         "last_day": None,
-        "book": fresh_book(),
-        "hold": fresh_book(),
+        "reset_from": None,  # the name an unreadable earlier record was kept under, when this record replaced it
+        "sleeves": fresh_thirds(),  # the rule's book, three thirds (shown)
+        "bh": fresh_thirds(),  # holding the three: bought at the first close, never touched (the benchmark)
+        "book": fresh_book(),  # lab 3's reckoning of the rule (re-balanced daily, free; the parity test)
+        "hold": fresh_book(),  # lab 3's reckoning of holding (likewise)
         "positions": {c: {"in": False, "since": None, "entry_price": None, "last_close": None} for c in COINS},
         "history": [],
         "trades": [],
@@ -341,7 +408,7 @@ def state_path(settings: Settings) -> Path:
 
 
 def shown_equity(book: Mapping[str, Any], sleeve: float) -> float:
-    """The book after the swaps of its last close: the lab's equity less the fees those swaps cost."""
+    """Lab 3's book after the swaps of its last close: the lab's equity less the fees those swaps cost."""
     equity = float(book["growth"]) * sleeve
     return equity - equity * float(book["fee_frac"])
 
@@ -361,9 +428,10 @@ _FLIP_WORDS = {
 
 
 def book_day(state: dict[str, Any], rows: Sequence[Row]) -> dict[str, Any]:
-    """Book the LAST of ``rows`` (day t) into ``state``: both books advance one day, the rule decides at t's close
-    from these rows only, the swaps at t's close are logged with their fees, and the day joins the history.
-    ``rows`` must reach back at least :data:`SMA_DAYS` rows. Returns the day's summary."""
+    """Book the LAST of ``rows`` (day t) into ``state``: the rule decides at t's close from these rows only; its
+    three thirds swap at t's close (logged with their fees); holding the three buys any third not bought yet; lab 3's
+    two books advance one day; and the day joins the history. ``rows`` must reach back at least :data:`SMA_DAYS`
+    rows. Returns the day's summary."""
     day, per = rows[-1]
     sleeve = float(state["sleeve_usd"])
     closes = {c: per[c][0] for c in COINS}
@@ -374,17 +442,20 @@ def book_day(state: dict[str, Any], rows: Sequence[Row]) -> dict[str, Any]:
     rule = advance(state["book"], closes, target, universe, sleeve)
     hold = advance(state["hold"], closes, hold_target, universe, sleeve)
     state["book"], state["hold"] = _book_only(rule), _book_only(hold)
+    thirds, bh = state["sleeves"], state["bh"]
+    _mark(thirds, closes, sleeve)
+    _mark(bh, closes, sleeve)
+    for c in COINS:  # holding the three: each third bought at its first close, then never touched
+        if float(bh["cash"][c] or 0.0) > 0.0 and closes[c] is not None:
+            _swap(bh, c, "buy")
     ts = close_ts(day)
-    equity_before = float(rule["growth"]) * sleeve  # the lab's equity at t's close, before t's swaps
-    weights = _weights(universe)
     swaps = []
     for c in COINS:
         if abs(target[c] - rule["held"][c]) <= SWAP_EPS:
             continue
         side = "buy" if target[c] > rule["held"][c] else "sell"
-        price = closes[c] if closes[c] is not None else state["positions"][c].get("last_close")
-        amount = equity_before * weights[c] * abs(target[c] - rule["held"][c])
-        fee = amount * COST_BPS_SIDE / 1e4 + equity_before * NETWORK_USD / sleeve
+        price = thirds["mark"][c]  # the day's close; a coin without a candle sells at its last close
+        amount, fee = _swap(thirds, c, side)
         swap = {"day": day, "ts": ts, "coin": c, "side": side, "price": price, "amount_usd": amount, "fee_usd": fee,
                 "why": decision[c][2]}
         swaps.append(swap)
@@ -400,13 +471,13 @@ def book_day(state: dict[str, Any], rows: Sequence[Row]) -> dict[str, Any]:
     for c in COINS:
         if closes[c] is not None:
             state["positions"][c]["last_close"] = closes[c]
-    equity = shown_equity(state["book"], sleeve)
-    hold_equity = shown_equity(state["hold"], sleeve)
     row = {
         "day": day,
         "ts": ts,
-        "equity_usd": equity,
-        "hold_usd": hold_equity,
+        "equity_usd": thirds_value(thirds),  # the rule's book in three thirds, after the close's swaps (shown)
+        "bh_usd": thirds_value(bh),  # holding the three, bought on day one, never touched (the benchmark)
+        "lab_usd": shown_equity(state["book"], sleeve),  # lab 3's way: re-balanced to thirds daily, free
+        "lab_hold_usd": shown_equity(state["hold"], sleeve),
         "growth": state["book"]["growth"],
         "hold_growth": state["hold"]["growth"],
         "in": [c for c in COINS if target[c] > 0],
@@ -455,24 +526,38 @@ class TrendDesk:
         self.state = self._load()
 
     def _load(self) -> dict[str, Any]:
-        """The saved record; an unreadable file is kept aside (never overwritten) and a new record starts."""
-        if self.path.exists():
-            state = load_state(self.path)
-            if state.get("started") is None and state.get("last_day") is None:
-                try:
-                    doc = json.loads(self.path.read_text())
-                    readable = isinstance(doc, dict) and doc.get("version") == STATE_VERSION
-                except (OSError, ValueError):
-                    readable = False
-                if not readable:
-                    aside = self.path.with_name(f"state.unreadable-{int(time.time())}.json")
-                    try:
-                        os.replace(self.path, aside)
-                        log.warning("trenddesk_state_unreadable kept_as=%s", aside.name)
-                    except OSError:
-                        pass
+        """The saved record. A file that cannot be read (bad JSON, another state version) is kept aside under a new
+        name (never overwritten) and a new record starts that says so for as long as it runs: ``reset_from`` names
+        the kept file and an event tells the owner, so a restarted record never passes for the first one."""
+        if not self.path.exists():
+            return empty_state()
+        state = load_state(self.path)
+        if state.get("started") is not None or state.get("last_day") is not None:
             return state
-        return empty_state()
+        try:
+            doc = json.loads(self.path.read_text())
+            readable = isinstance(doc, dict) and doc.get("version") == STATE_VERSION
+        except (OSError, ValueError):
+            readable = False
+        if readable:
+            return state
+        now = time.time()
+        aside = self.path.with_name(f"state.unreadable-{int(now)}.json")
+        try:
+            os.replace(self.path, aside)
+        except OSError as exc:
+            log.warning("trenddesk_state_unreadable not_moved error=%s", type(exc).__name__)
+            return state
+        log.warning("trenddesk_state_unreadable kept_as=%s", aside.name)
+        state = empty_state()
+        state["reset_from"] = aside.name
+        _event(state, now, f"Trend desk: the saved paper record could not be read; it was kept as {aside.name} and a "
+                           "new record starts today (paper)", "bad")
+        try:
+            save_state(self.path, state)  # the restart is on file at once, even if the bot stops before a poll
+        except OSError as exc:
+            log.warning("trenddesk_state_save_failed error=%s", type(exc).__name__)
+        return state
 
     # ------------------------------------------------------------------ lifecycle
     def start(self) -> None:
@@ -576,7 +661,7 @@ class TrendDesk:
             booked.append(summary)
             self._receipt("trenddesk_day", {
                 "day": day, "closes": summary["closes"], "in": summary["in"],
-                "equity_usd": round(summary["equity_usd"], 6), "hold_usd": round(summary["hold_usd"], 6),
+                **{k: round(summary[k], 6) for k in ("equity_usd", "bh_usd", "lab_usd", "lab_hold_usd")},
                 "swaps": [{k: s[k] for k in ("coin", "side", "price", "fee_usd")} for s in summary["swaps"]],
             })
         if len(booked) > 1:
@@ -586,8 +671,8 @@ class TrendDesk:
         self._save()
         if booked:
             last = booked[-1]
-            log.info("trenddesk_booked days=%d last=%s equity_usd=%.2f hold_usd=%.2f in=%s", len(booked),
-                     last["day"], last["equity_usd"], last["hold_usd"], ",".join(last["in"]) or "-")
+            log.info("trenddesk_booked days=%d last=%s equity_usd=%.2f bh_usd=%.2f in=%s", len(booked),
+                     last["day"], last["equity_usd"], last["bh_usd"], ",".join(last["in"]) or "-")
         return {"booked": len(booked), "last_day": st.get("last_day"), "error": st["last_error"]}
 
 
@@ -608,16 +693,25 @@ def in_out_text(in_market: Mapping[str, bool]) -> str:
 def panel_state(settings: Settings, now: float) -> dict[str, Any]:
     """What the page and the team room show for this desk (reads the state file only). Before the first close the
     figures are the untouched sleeve and ``as_of`` is None. ``problem`` says, in plain words, when the book is behind
-    (the last daily close is not booked an hour after midnight) and why; None when it is current."""
+    (the last daily close is not booked an hour after midnight) and why; None when it is current.
+
+    The figures: ``equity_usd`` / ``today_usd`` / ``since_start_usd`` are the rule's book in three thirds (what a real
+    account following it would hold); ``bh_*`` are holding the three, bought on day one and never touched (the
+    benchmark); ``lab_*`` / ``lab_hold_*`` are lab 3's reckoning of both, re-balanced to thirds every day for free
+    (for comparison with the lab only, never the result). ``reset_from`` names the unreadable earlier record this one
+    replaced, else None."""
     st = load_state(state_path(settings))
     sleeve = float(st.get("sleeve_usd") or settings.trenddesk_sleeve_usd)
     hist = [h for h in st.get("history") or [] if isinstance(h, dict)]
     last = hist[-1] if hist else None
     prev = hist[-2] if len(hist) >= 2 else None
-    equity = float(last["equity_usd"]) if last else sleeve
-    hold = float(last["hold_usd"]) if last else sleeve
-    before = float(prev["equity_usd"]) if prev else sleeve
-    hold_before = float(prev["hold_usd"]) if prev else sleeve
+
+    def figure(key: str) -> tuple[float, float]:
+        """(the last booked day's value, the day before's) of one book; the untouched sleeve before any."""
+        return (float(last[key]) if last else sleeve), (float(prev[key]) if prev else sleeve)
+
+    (equity, before), (bh, bh_before) = figure("equity_usd"), figure("bh_usd")
+    (lab, _), (lab_hold, _) = figure("lab_usd"), figure("lab_hold_usd")
     positions = st.get("positions") or {}
     in_market = {c: bool((positions.get(c) or {}).get("in")) for c in COINS}
     last_day = st.get("last_day")
@@ -643,9 +737,14 @@ def panel_state(settings: Settings, now: float) -> dict[str, Any]:
         "equity_usd": equity,
         "today_usd": equity - before if last else 0.0,
         "since_start_usd": equity - sleeve,
-        "hold_equity_usd": hold,
-        "hold_today_usd": hold - hold_before if last else 0.0,
-        "hold_since_start_usd": hold - sleeve,
+        "bh_usd": bh,
+        "bh_today_usd": bh - bh_before if last else 0.0,
+        "bh_since_start_usd": bh - sleeve,
+        "lab_usd": lab,
+        "lab_since_start_usd": lab - sleeve,
+        "lab_hold_usd": lab_hold,
+        "lab_hold_since_start_usd": lab_hold - sleeve,
+        "reset_from": st.get("reset_from") if isinstance(st.get("reset_from"), str) else None,
         "in_market": in_market,
         "in_out": in_out_text(in_market),
         "positions": {c: dict(positions.get(c) or {}) for c in COINS},
