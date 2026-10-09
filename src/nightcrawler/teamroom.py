@@ -27,6 +27,12 @@ coins waiting), saved by the engine as ``{saved_at, items}`` snapshots every few
 ``engine.status`` (``watching``, ``crawler.nursery``; rewritten every 15 s) is newer; without either they
 are ``null``.
 
+The Strategy panel also carries the trend desk (:mod:`nightcrawler.trenddesk`, a PAPER forward test of lab 3's
+50-day trend rule on BTC, ETH and SOL; its state file only): stats "Trend desk ..." (in or out per coin, since start
+against holding the three), its flips as events ("Trend desk: BTC closed above its 50-day average -> in (paper)") and
+``trend`` (the same, for the page). Its activity never sets the Strategy chip, and its figures are never summed with
+anything else.
+
 Deployed commit: only ``RAILWAY_GIT_COMMIT_SHA`` and ``RAILWAY_GIT_COMMIT_MESSAGE`` are read from the
 environment (:func:`deploy_info`), never anything else.
 
@@ -722,15 +728,45 @@ def _strategy(ctx: _Ctx) -> dict[str, Any]:
         doing = ("Paused by the kill switch" if ctx.state["kill"] != "off"
                  else f"Paused: new buys are blocked ({plain(str(ctx.status['entries_blocked']))})")
         doing += f"; still watching {_n(size, 'coin')}." if size else "."
+    trend_stats, trend_events, trend = _trend_desk(ctx)  # after ``last``: the trend desk never sets this chip
     return _panel("strategy", status, last, ctx.text(doing),
                   _headline(f"{size} of {s.watchlist_max}" if size is not None else None, "text",
                             "coins on the watchlist"),
                   [_stat("Required dip", round(s.dip_pct * 100.0, 2), "pct"),
                    _stat("Setups found since boot", _int(counters.get("entry_signals"))),
-                   _stat("Candle checks since boot", _int(counters.get("candle_fetches")))],
-                  events, bars=[bar for _, bar in ranked[:BARS_MAX]],
+                   _stat("Candle checks since boot", _int(counters.get("candle_fetches"))), *trend_stats],
+                  events + trend_events, bars=[bar for _, bar in ranked[:BARS_MAX]],
                   bars_empty=("Watchlist not available yet." if size is None
-                              else "Nothing on the watchlist right now."))
+                              else "Nothing on the watchlist right now."), trend=trend)
+
+
+def _trend_desk(ctx: _Ctx) -> tuple[list[dict[str, Any]], list[dict[str, Any]], dict[str, Any] | None]:
+    """The trend desk (nightcrawler.trenddesk, PAPER), shown with the Strategy member: ``(stats, events, view)``.
+    Stats: in or out per coin and since start against holding the three; events: its flips (and its start); view:
+    the same figures for the page. Nothing when the desk is off or its state cannot be read."""
+    if not ctx.settings.trenddesk_enabled:
+        return [], [], None
+    from nightcrawler import trenddesk
+
+    try:
+        d = trenddesk.panel_state(ctx.settings, ctx.now)
+        since, hold = float(d["since_start_usd"]), float(d["hold_since_start_usd"])
+        booked = d.get("as_of") is not None
+        in_market = {c: bool(d["in_market"].get(c)) for c in trenddesk.COINS}
+        events = [ctx.event(float(e["ts"]), str(e["text"]), str(e.get("tone") or "neutral"))
+                  for e in d.get("events") or [] if isinstance(e, dict) and _num(e.get("ts")) is not None]
+    except (KeyError, TypeError, ValueError, AttributeError) as exc:  # a malformed state file: no trend rows
+        log.warning("trenddesk_panel_failed error=%s", type(exc).__name__)
+        return [], [], None
+    stats = [_stat("Trend desk (paper)", trenddesk.in_out_text(in_market) if booked else "no daily close booked yet",
+                   "text")]
+    stats += [_stat(f"Trend desk {c} (paper)", "in" if in_market[c] else "out", "text") for c in trenddesk.COINS]
+    stats += [_stat("Trend desk since start $ (paper)", round(since, 2), "usd"),
+              _stat("Holding the three instead $ (paper)", round(hold, 2), "usd")]
+    view = {"label": d.get("label"), "as_of": _num(d.get("as_of")), "started": d.get("started"),
+            "in_market": in_market, "since_start_usd": since, "hold_since_start_usd": hold,
+            "today_usd": _num(d.get("today_usd")), "problem": ctx.text(d["problem"]) if d.get("problem") else None}
+    return stats, events, view
 
 
 def _haircut_pct(f: Fill) -> float | None:
