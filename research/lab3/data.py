@@ -176,7 +176,8 @@ def run(granularity: str, assets: list[str] | None = None, out: Path = OUT) -> d
             "jupiter_symbol": UNIVERSE[a][0],
         }
         print(
-            f"{a:9s} {granularity}: {len(merged):6d} rows, first {manifest[a][granularity]['first_utc']}, gaps {manifest[a][granularity]['gaps']}",
+            f"{a:9s} {granularity}: {len(merged):6d} rows, first {manifest[a][granularity]['first_utc']}, "
+            f"gaps {manifest[a][granularity]['gaps']}",
             flush=True,
         )
         all_df = pd.concat(frames, ignore_index=True)
@@ -194,7 +195,8 @@ def status(out: Path = OUT) -> None:
     for a, d in sorted(m.items()):
         for gname, v in d.items():
             print(
-                f"{a:9s} {gname}: {v['rows']:6d} rows  {str(v['first_utc'])[:10]} -> {str(v['last_utc'])[:10]}  gaps {v['gaps']}"
+                f"{a:9s} {gname}: {v['rows']:6d} rows  {str(v['first_utc'])[:10]} -> {str(v['last_utc'])[:10]}  "
+                f"gaps {v['gaps']}"
             )
 
 

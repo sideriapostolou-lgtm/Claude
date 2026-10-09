@@ -70,7 +70,9 @@ def evaluate(
 def benchmarks(P: C.Panel, U: pd.DataFrame, split: str, costs: C.Costs) -> dict[str, dict]:
     out = {}
     for name, assets in BENCHMARKS.items():
-        U_b = U if assets is None else U.where(U.columns.isin(assets), False)  # a single-asset sleeve: its own universe
+        U_b = U.copy()
+        if assets is not None:  # a single-asset sleeve: its own universe
+            U_b.loc[:, [c for c in U_b.columns if c not in assets]] = False
         run = C.backtest(P, C.buy_and_hold(P, U_b, assets), split, costs, U_b)
         out[name] = C.describe(run.ret, run.exposure, run.turnover, run.cost)
     out["cash"] = {"sharpe": 0.0, "cagr": 0.0, "max_drawdown": 0.0}
@@ -158,7 +160,8 @@ def _md(hyp: dict, stage: str, doc: dict) -> str:
         f"- Split `{stage}` {C.SPLITS[stage]}; written {doc['utc']} UTC; runtime {doc['runtime_s']} s; "
         f"trials so far {doc['n_trials_total']} (lab 2 + lab 3).",
         "",
-        "| config | Sharpe | CAGR | max DD | exposure | turnover/yr | cost/yr | gross Sharpe | stress x2 | placebo Sharpe | p | excess/yr vs placebo | CI95 | DSR |",
+        "| config | Sharpe | CAGR | max DD | exposure | turnover/yr | cost/yr | gross Sharpe | stress x2 | "
+        "placebo Sharpe | p | excess/yr vs placebo | CI95 | DSR |",
         "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|---:|",
     ]
     f = lambda x, nd=2: "n/a" if x is None else f"{x:.{nd}f}"  # noqa: E731
