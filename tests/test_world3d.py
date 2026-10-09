@@ -214,7 +214,9 @@ def test_world_live_mode_is_marked(make_settings: Callable[..., Settings]) -> No
 
 def test_world_data_blocks_are_json_that_cannot_break_out(settings: Settings) -> None:
     page = render_world_html(settings)
-    for block_id, expected in (("cast", WORLD_CAST), ("rooms", WORLD_ROOMS), ("models", {})):
+    models = {cid: spec for cid, spec in CAST_MODELS.items() if (world3d.ASSET_DIR / str(spec["asset"])).is_file()}
+    assert set(models) == set(CAST_MODELS)  # the real cast models ship with the package (art/CAST_3D.md)
+    for block_id, expected in (("cast", WORLD_CAST), ("rooms", WORLD_ROOMS), ("models", models)):
         raw = _block(page, rf'<script id="{block_id}" type="application/json">(.*?)</script>')
         assert "<" not in raw and ">" not in raw and "&" not in raw
         assert json.loads(raw) == expected
@@ -390,7 +392,7 @@ def test_the_addons_are_served_behind_the_token_from_the_whitelist(
     assert status == 200 and hashlib.sha256(body).hexdigest() == THREE_SHA256  # the town's file still served
     for bad in ("/office/assets/addons/", "/office/assets/addons/loaders/", "/office/assets/addons/../../world3d.py",
                 "/office/assets/addons/%2e%2e/%2e%2e/world3d.py", "/office/assets/addons/loaders/GLTFLoader.js/",
-                "/office/assets/addons//loaders/GLTFLoader.js", "/office/assets/cast_pip.glb", "/office/assets/cast_bob.glb"):
+                "/office/assets/addons//loaders/GLTFLoader.js", "/office/assets/cast_bob.glb"):
         assert client.request(bad, headers={"Cookie": cookie})[0] == 404, bad
     status, headers, _ = client.request(ADDON, method="POST", headers={"Cookie": cookie})
     assert status == 405 and headers["Allow"] == "GET"
