@@ -387,6 +387,11 @@ class Settings:
     dashboard_token: Secret | None = _f(None, "secret", "If set, the dashboard requires ?token= or cookie. Live "
                                         "mode needs a strong one: a long random password of at least 24 characters",
                                         secret=True)
+    # The town card on the page: the desks must earn more than the bot costs to run (pagestate.town_ledger).
+    town_railway_usd_month: float = _f(5.0, "usd", "What Railway charges per month to run the bot (Hobby plan: 5). "
+                                       "The page's town card turns it into a cost per day, adds the AI judge's "
+                                       "spending and compares both with what the desks made. 0 = free hosting",
+                                       lo=0)
 
     # ---- provider usage budgets (observability team) -------------------------
     # The dashboard's Usage panel shows calls per provider per UTC day and month against these

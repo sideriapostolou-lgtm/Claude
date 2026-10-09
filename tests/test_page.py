@@ -25,7 +25,8 @@ from nightcrawler.dashboard import CONTENT_SECURITY_POLICY, COOKIE_NAME, Dashboa
 from nightcrawler.ledger import Ledger
 from nightcrawler.models import Decision, EquityPoint, Fill, Position, SafetyReport, TokenCandidate, Verdict
 from nightcrawler.page import PAGE_CSP, REFRESH_S, render_page_html
-from nightcrawler.pagestate import LEARNING_RULE, MEMBERS, STALE_BANNER_S, build_page_state, learning_card
+from nightcrawler.pagestate import (LEARNING_RULE, MEMBERS, STALE_BANNER_S, build_page_state, learning_card,
+                                    town_ledger)
 from nightcrawler.readiness import CHECK_IDS, readiness
 from nightcrawler.teamroom import ENGINE_STALE_S, TeamRoom, derive_status
 
@@ -399,6 +400,110 @@ def test_the_banner_and_the_team_agree_on_when_the_bot_is_silent(ledger: Ledger,
     silent = build_page_state(ledger, settings, NOW - 5 + ENGINE_STALE_S + 1)
     assert [a["level"] for a in silent["alerts"]] == ["bad"]
     assert all(m["status"] == "blocked" for m in silent["team"]["members"] if m["id"] != "coach")
+
+
+# --------------------------------------------------------------------------- the town: costs vs what the desks made
+
+
+def test_the_town_compares_what_the_bot_costs_with_what_the_desks_made(ledger: Ledger,
+                                                                       make_settings: Callable[..., Settings]) -> None:
+    """Railway's price per day (the monthly price / 30) plus the AI judge's spending, against the money card's own
+    result. The run starts at the ledger's first record (the first boot), not at the engine's last restart."""
+    settings = make_settings(TOWN_RAILWAY_USD_MONTH=6)  # $0.20 a day
+    seed(ledger)  # first receipt 2 days and 100 s ago, engine restarted 2 h ago, the bot lost $5.50 today
+    ledger.set_kv("judge.cost_usd_total", 0.30)
+    ledger.set_kv("judge.cost_usd_day", {"day": "2026-10-08", "usd": 0.05})
+    state = build_page_state(ledger, settings, NOW)
+    town = state["town"]
+    assert town["label"] == state["money"]["label"] == "Paper money (pretend)"
+    assert town["cost_per_day_usd"] == pytest.approx(0.20 + 0.05)
+    assert town["cost_today_usd"] == pytest.approx(0.20 * 16 / 24 + 0.05)  # 16:00 UTC: two thirds of the day
+    assert town["cost_since_start_usd"] == pytest.approx(0.20 * (2 * DAY + 100) / DAY + 0.30)
+    assert town["income_today_usd"] == state["money"]["today"]["usd"] == pytest.approx(-5.5)
+    assert town["income_since_start_usd"] == state["money"]["since_start"]["usd"] == pytest.approx(-5.5)
+    assert town["covered_today"] is False and town["covered_since_start"] is False
+    assert town["line"] == "The town costs $0.25 a day to run; the desks lost $5.50 today (paper money)."
+    assert not JARGON.search(town["line"])
+    json.dumps(town, allow_nan=False)
+
+
+def test_the_towns_clock_is_the_first_record_not_the_last_restart(ledger: Ledger, settings: Settings) -> None:
+    ledger.set_kv("engine.started_at", NOW - 3600)  # the current process has run for an hour
+    assert build_page_state(ledger, settings, NOW)["town"]["cost_since_start_usd"] == pytest.approx(5 / 30 / 24)
+    ledger.append_receipt("boot", {"version": __version__, "mode": "paper"}, ts=NOW - 10 * DAY)  # the first boot
+    assert build_page_state(ledger, settings, NOW)["town"]["cost_since_start_usd"] == pytest.approx(5 / 30 * 10)
+
+
+@pytest.mark.parametrize(("today", "since", "covered_today", "covered_since", "made"), [
+    (0.50, 3.00, True, True, "the desks made $0.50 today (paper money)"),
+    (0.05, -2.00, False, False, "the desks made $0.05 today (paper money)"),
+    (-0.40, 1.00, False, True, "the desks lost $0.40 today (paper money)"),
+    (None, None, None, None, "what the desks made today (paper money) is not known yet: no money check so far"),
+])
+def test_town_from_a_synthetic_state_covered_not_covered_or_unknown(make_settings: Callable[..., Settings],
+                                                                     today: float | None, since: float | None,
+                                                                     covered_today: bool | None,
+                                                                     covered_since: bool | None, made: str) -> None:
+    settings = make_settings(TOWN_RAILWAY_USD_MONTH=3)  # $0.10 a day
+    money = {"label": "Paper money (pretend)", "today": {"usd": today}, "since_start": {"usd": since}}
+    town = town_ledger(settings, money, {"cost_usd_total": 0.40, "cost_usd_today": 0.02}, NOW, NOW - 4 * DAY)
+    assert town["label"] == money["label"]
+    assert town["cost_per_day_usd"] == pytest.approx(0.12)
+    assert town["cost_today_usd"] == pytest.approx(0.10 * 16 / 24 + 0.02)
+    assert town["cost_since_start_usd"] == pytest.approx(0.40 + 0.40)
+    assert (town["income_today_usd"], town["income_since_start_usd"]) == (today, since)
+    assert (town["covered_today"], town["covered_since_start"]) == (covered_today, covered_since)
+    assert town["line"] == f"The town costs $0.12 a day to run; {made}."
+
+
+def test_the_town_says_what_it_does_not_know_instead_of_making_numbers_up(ledger: Ledger, settings: Settings,
+                                                                            make_settings: Callable[..., Settings]
+                                                                            ) -> None:
+    """An empty ledger: no money check and no record yet, so the income and the since-start cost are null and the
+    line says so. A judge block without figures, or with junk, counts as nothing spent; without a figure for today
+    the judge's total is spread over the days run."""
+    town = build_page_state(ledger, settings, NOW)["town"]
+    assert town["cost_per_day_usd"] == pytest.approx(5 / 30)
+    assert town["cost_today_usd"] == pytest.approx(5 / 30 * 16 / 24)
+    assert town["income_today_usd"] is None and town["covered_today"] is None
+    assert town["cost_since_start_usd"] is None and town["covered_since_start"] is None
+    assert town["line"] == ("The town costs $0.17 a day to run; what the desks made today (paper money) is not known "
+                            "yet: no money check so far. How long the town has been running is not known yet.")
+    money = {"today": {"usd": 1.0}, "since_start": {"usd": 1.0}}
+    bare = town_ledger(settings, money, None, NOW, NOW - 2 * DAY)
+    assert (bare["cost_per_day_usd"], bare["cost_since_start_usd"]) == (pytest.approx(5 / 30), pytest.approx(10 / 30))
+    spread = town_ledger(settings, money, {"cost_usd_total": 0.90}, NOW, NOW - 3 * DAY)  # no figure for today
+    assert spread["cost_per_day_usd"] == pytest.approx(5 / 30 + 0.30)  # $0.90 over the 3 days run
+    assert spread["cost_since_start_usd"] == pytest.approx(15 / 30 + 0.90)
+    junk = town_ledger(settings, money, {"cost_usd_total": "lots", "cost_usd_today": -1}, NOW, NOW - DAY)
+    assert junk["cost_per_day_usd"] == pytest.approx(5 / 30) and junk["cost_since_start_usd"] == pytest.approx(5 / 30)
+    live = town_ledger(live_settings(make_settings), money, None, NOW, None)
+    assert live["label"] == "Real money" and "today (real money)." in live["line"] and live["covered_today"] is True
+    assert live["cost_since_start_usd"] is None and live["line"].endswith("has been running is not known yet.")
+
+
+def test_the_town_card_sits_under_the_money_card_with_two_bars_of_plain_html(make_settings: Callable[..., Settings]
+                                                                             ) -> None:
+    from nightcrawler.page import _STYLE
+
+    settings = make_settings()
+    html = render_page_html(settings)
+    ids = re.findall(r'<section class="card" id="([a-z]+)"', html)
+    assert ids.index("town") == ids.index("money") + 1
+    assert '<h2>The town <small id="town-label">Paper money (pretend)</small></h2>' in html
+    assert 'id="town-line"' in html and 'id="town-bars"' in html
+    assert 'id="town-label">Real money</small>' in render_page_html(live_settings(make_settings))
+    script = page_script(settings)
+    assert "function renderTown(t)" in script and "if (s.town) renderTown(s.town);" in script
+    assert '"Costs today"' in script and '"Made today"' in script and '"not known yet"' in script
+    assert 'track(cost / scale, "cost")' in script and 'made < 0 ? "down" : "up"' in script
+    assert "isNum(made) ? track(" in script  # an income that is not known yet draws no bar at all
+    assert "canvas" not in script.lower() and "innerHTML" not in script
+    assert ".fill.cost{background:var(--muted)}" in _STYLE and ".fill.down{background:var(--down)}" in _STYLE
+    (style,) = re.findall(r"<style>(.*?)</style>", html, flags=re.DOTALL)  # the CSP hashes follow the edit
+    for text, directive in ((script, "script-src"), (style, "style-src")):
+        digest = base64.b64encode(hashlib.sha256(text.encode()).digest()).decode()
+        assert f"{directive} 'sha256-{digest}';" in PAGE_CSP
 
 
 # --------------------------------------------------------------------------- learning card
@@ -827,7 +932,7 @@ def test_page_script_never_turns_data_into_html(settings: Settings) -> None:
 def test_page_has_every_section_in_order_and_is_built_for_phones(settings: Settings) -> None:
     html = render_page_html(settings)
     ids = re.findall(r'<section class="card" id="([a-z]+)"', html)
-    assert ids == ["money", "wallet", "team", "trades", "learning", "ready", "receipts", "usage"]
+    assert ids == ["money", "town", "wallet", "team", "trades", "learning", "ready", "receipts", "usage"]
     for mid, name, role in MEMBERS:
         assert f'id="m-{mid}"' in html and f"<b>{name}</b>" in html and role in html
     assert html.count("<details") >= len(MEMBERS)  # tap a member to see its last events, no JS needed
