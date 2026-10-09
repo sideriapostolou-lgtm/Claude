@@ -243,9 +243,9 @@ class FakeDeskClient:
         return type("R", (), {"content": [block], "usage": usage, "model": request["model"], "id": "fake"})()
 
 
-# Per-model "answer without thinking first": Haiku 5.5 names it "between_tools", the others "disabled" (live API
-# errors of 2026-10-09 said so in both directions).
-THINKING_OFF = {"claude-haiku-5-5": {"type": "between_tools"}}
+# Per-model "answer without thinking first": Sonnet 5.5 names it "between_tools", Haiku 5.5 "disabled" (probed live
+# 2026-10-09: each model 400s on the other's spelling).
+THINKING_OFF = {"claude-sonnet-5-5": {"type": "between_tools"}}
 
 
 def thinking_off(model: str) -> dict[str, str]:
