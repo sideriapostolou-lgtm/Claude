@@ -325,7 +325,9 @@ def test_token_to_candidate_graduated_token(load_fixture, fake_clock):
     assert set(cand.stats) == {"5m", "1h", "6h", "24h"} and cand.stats["5m"]["numBuys"] == 374
     assert cand.audit == token["audit"] and cand.audit is not token["audit"]
     assert cand.organic_score == 0.0 and cand.socials == {}
-    assert cand.sources == ["jupiter_search"] and cand.discovered_at == now and cand.raw == {"jupiter_id": GARY}
+    assert cand.sources == ["jupiter_search"] and cand.discovered_at == now
+    # G12: Jupiter's graduation time is kept (the crawler and the engine measure age from it)
+    assert cand.raw == {"jupiter_id": GARY, "graduated_at": parse_ts("2026-10-08T13:28:26Z")}
 
 
 def test_token_to_candidate_curve_and_unknown_launchpad(load_fixture, fake_clock):
@@ -337,6 +339,21 @@ def test_token_to_candidate_curve_and_unknown_launchpad(load_fixture, fake_clock
     assert c.graduated is False and c.pool == curve["firstPool"]["id"]
     assert c.socials == {"twitter": curve["twitter"], "website": curve["website"]}
     assert u.graduated is None and u.audit["isSus"] is True and u.launchpad is None
+
+
+def test_token_to_candidate_maps_graduated_at_only_when_jupiter_sends_it(load_fixture, fake_clock):
+    """``graduatedAt`` (documented, never mapped before G12) lands in ``raw["graduated_at"]`` as epoch seconds; a
+    curve coin, an unparsable value or a missing field leaves it out (unknown, never invented)."""
+    unknown, curve, _ = load_fixture("jup_tokens_v2_recent")
+    assert "graduated_at" not in token_to_candidate(curve, fake_clock.now(), "jupiter_recent").raw
+    assert "graduated_at" not in token_to_candidate(unknown, fake_clock.now(), "jupiter_recent").raw
+    late = {"id": "M", "launchpad": "pump.fun", "graduatedPool": "P", "graduatedAt": "2026-10-08T15:00:00Z",
+            "firstPool": {"id": "C", "createdAt": "2026-10-08T12:00:00Z"}}
+    cand = token_to_candidate(late, 0.0, "s")
+    assert cand.raw["graduated_at"] == parse_ts("2026-10-08T15:00:00Z") and cand.graduated is True
+    assert cand.created_at == parse_ts("2026-10-08T12:00:00Z")  # creation stays the first pool's time
+    garbled = token_to_candidate({**late, "graduatedAt": "soon"}, 0.0, "s")
+    assert "graduated_at" not in garbled.raw and garbled.graduated is True  # the pool alone still says graduated
 
 
 def test_token_to_candidate_minimal_token_uses_created_at_fallback():

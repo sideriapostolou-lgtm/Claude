@@ -57,9 +57,12 @@ def dip_rebound_candles(now: float) -> list[Candle]:
 
 
 def jupiter_token(mint: str, symbol: str, pool: str, created: float, price: float, dev: str,
-                  dev_mints: int = 1) -> dict[str, Any]:
+                  dev_mints: int = 1, graduated: float | None = None) -> dict[str, Any]:
+    """A graduated pump.fun coin as Jupiter tokens/v2 lists it: ``graduatedPool`` comes with ``graduatedAt``
+    (``graduated``; default: at creation, an instant graduate like the real GARY)."""
     return {"id": mint, "name": symbol, "symbol": symbol, "decimals": DECIMALS, "dev": dev,
-            "graduatedPool": pool, "firstPool": {"id": pool, "createdAt": iso(created)},
+            "graduatedPool": pool, "graduatedAt": iso(created if graduated is None else graduated),
+            "firstPool": {"id": pool, "createdAt": iso(created)},
             "mcap": price * SUPPLY, "fdv": price * SUPPLY, "liquidity": 80_000.0, "usdPrice": price,
             "holderCount": 3000, "launchpad": "pump.fun", "twitter": "https://x.com/example",
             "audit": {"isSus": False, "mintAuthorityDisabled": True, "freezeAuthorityDisabled": True,

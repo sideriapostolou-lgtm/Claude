@@ -38,6 +38,9 @@ Token fields: ``id`` (mint), ``name``, ``symbol``, ``decimals``, ``dev``,
 ``numNetBuyers``), ``audit{mintAuthorityDisabled, freezeAuthorityDisabled,
 topHoldersPercentage, devBalancePercentage, devMints, devMigrations, isSus}``,
 ``organicScore`` (0-100), ``organicScoreLabel``, ``tags[]``, ``twitter``, ``website``.
+``graduatedAt`` (ISO time, set together with ``graduatedPool``; verified on GARY 2026-10-08, equal to
+GeckoTerminal's ``completed_at``) is when the coin left its bonding curve: :func:`token_to_candidate` keeps
+it as ``raw["graduated_at"]`` (G12).
 
 Price v3: ``GET {base}/price/v3?ids=a,b,c`` (<= 50 ids) ->
 ``{mint: {usdPrice, liquidity, priceChange24h, decimals, blockId}}``; unknown
@@ -290,11 +293,14 @@ def token_to_candidate(token: dict[str, Any], now: float, source: str) -> TokenC
     = ``firstPool.createdAt`` (fallback ``createdAt``); ``age_min`` from ``now``;
     ``mcap_usd``, ``fdv_usd``, ``liquidity_usd``, ``price_usd`` (usdPrice),
     ``holder_count``, ``decimals``, ``dev``, ``launchpad``; ``graduated`` =
-    True if ``graduatedPool`` else (False if ``launchpad`` else None);
+    True if ``graduatedPool`` or a parseable ``graduatedAt`` else (False if ``launchpad`` else None);
     ``organic_score``; ``audit`` = ``audit`` dict; ``stats`` =
     ``{"5m": stats5m, "1h": stats1h, "6h": stats6h, "24h": stats24h}`` (present
     ones only); ``socials`` from ``twitter`` / ``website`` / ``telegram``;
-    ``sources = [source]``; ``discovered_at = now``; ``raw = {"jupiter_id": id}``.
+    ``sources = [source]``; ``discovered_at = now``; ``raw = {"jupiter_id": id}`` plus
+    ``"graduated_at"`` = ``graduatedAt`` in epoch seconds when Jupiter sent a parseable one (G12: the crawler
+    and the engine measure a coin's age from its GRADUATION as well as from its creation; see
+    :func:`nightcrawler.crawler.graduated_at`).
 
     Raises ``ValueError`` when the token has no ``id`` (use
     :func:`tokens_to_candidates` to skip such items).
@@ -304,8 +310,12 @@ def token_to_candidate(token: dict[str, Any], now: float, source: str) -> TokenC
         raise ValueError("Jupiter token without id")
     created_at = first_not_none(parse_ts(get_path(token, "firstPool.createdAt")), parse_ts(token.get("createdAt")))
     graduated_pool = token.get("graduatedPool") or None
+    graduated_at = parse_ts(token.get("graduatedAt"))
     launchpad = token.get("launchpad") or None
     audit = token.get("audit")
+    raw: dict[str, Any] = {"jupiter_id": mint}
+    if graduated_at is not None:
+        raw["graduated_at"] = graduated_at
     return TokenCandidate(
         mint=mint,
         symbol=token.get("symbol") or "",
@@ -322,12 +332,12 @@ def token_to_candidate(token: dict[str, Any], now: float, source: str) -> TokenC
         decimals=to_int(token.get("decimals")),
         dev=token.get("dev") or None,
         launchpad=launchpad,
-        graduated=True if graduated_pool else (False if launchpad else None),
+        graduated=True if graduated_pool or graduated_at is not None else (False if launchpad else None),
         organic_score=to_float(token.get("organicScore")),
         audit=dict(audit) if isinstance(audit, dict) else {},
         stats={w: token[f"stats{w}"] for w in TRENDING_WINDOWS if isinstance(token.get(f"stats{w}"), dict)},
         socials={k: token[k] for k in _SOCIAL_KEYS if isinstance(token.get(k), str) and token[k]},
-        raw={"jupiter_id": mint},
+        raw=raw,
         discovered_at=now,
     )
 

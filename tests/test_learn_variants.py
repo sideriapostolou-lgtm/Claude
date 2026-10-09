@@ -99,36 +99,49 @@ def test_the_placebo_enters_at_its_hash_chosen_time() -> None:
     assert signal.kind == "enter" and signal.reason == "placebo"
 
 
-def test_seeds_are_the_benchmark_three_lab_points_and_the_placebo() -> None:
+def test_seeds_are_the_benchmark_three_lab_points_and_two_placebos() -> None:
     seeds = v.seed_specs(ANCHOR)
-    assert [s.family for s in seeds] == ["dip_rebound"] * 4 + ["placebo"]
+    assert [s.family for s in seeds] == ["dip_rebound"] * 4 + ["placebo"] * 2
     assert seeds[0].params == ANCHOR.to_dict()  # the Settings benchmark
-    assert len({s.hash for s in seeds}) == 5 and all(s.promotable for s in seeds[:4]) and not seeds[4].promotable
+    assert seeds[4].params == ANCHOR.to_dict()  # the R host: random entries inside the bot's own window
+    assert len({s.hash for s in seeds}) == 6 and all(s.promotable for s in seeds[:4])
+    assert not seeds[4].promotable and not seeds[5].promotable
     assert all(s.name for s in seeds)
+
+
+def test_placebo_wide_loosens_the_age_size_and_liquidity_anchors_to_their_hard_limits() -> None:
+    """The W host (docs/EXPERIENCE §4.1, B11): coins the Crawler's rules refuse get an outcome too. Loosening
+    makes it research-only by make_spec; a control spends no alpha."""
+    wide = v.seed_specs(ANCHOR)[5]
+    loosened = {k: wide.params[k] for k in v.ANCHORS if wide.params[k] != getattr(ANCHOR, k)}
+    assert loosened == {"min_age_min": 0.0, "max_age_h": 50.0, "min_mcap_usd": 0.0, "max_mcap_usd": 1e12,
+                        "min_liquidity_usd": 0.0}
+    assert {k: wide.params[k] for k in v.BOUNDS} == {k: getattr(ANCHOR, k) for k in v.BOUNDS}  # same exits
+    assert wide.control and not wide.promotable
 
 
 def test_seed_registration_spends_the_week_one_allowance(store) -> None:
     registered = v.register_seeds(store, ANCHOR, T)
-    assert len(registered) == 5
+    assert len(registered) == 6
     rows = store.variants()
-    assert sorted(r["family"] for r in rows) == ["dip_rebound"] * 4 + ["placebo"]
+    assert sorted(r["family"] for r in rows) == ["dip_rebound"] * 4 + ["placebo"] * 2
     for row in rows:
         control = row["family"] == "placebo"
         assert row["alpha"] == (0.0 if control else PAPER_ALPHA) and row["threshold"] == PAPER_THRESHOLD
-        assert row["t0"] is None and row["source"] == "seed"
-    assert [o["event"] for o in store.outbox()] == ["register"] * 5
+        assert row["t0"] is None and row["source"] == "seed" and row["promotable"] is not control
+    assert [o["event"] for o in store.outbox()] == ["register"] * 6
     assert v.register_seeds(store, ANCHOR, T + 60) == []  # idempotent
-    assert v.registrations_this_week(store, T) == REG_PER_ISO_WEEK
+    assert v.registrations_this_week(store, T) == REG_PER_ISO_WEEK  # the controls spend none of it
 
 
 def test_a_seed_the_settings_put_out_of_bounds_is_skipped_and_the_others_register(store) -> None:
     """MAX_HOLD_MIN=480 is a valid setting but outside the learner's hard range [5, 360]: the seeds that
-    inherit it (the benchmark, the placebo) are skipped with a reason; the lab points set their own."""
+    inherit it (the benchmark, the two placebos) are skipped with a reason; the lab points set their own."""
     anchor = dataclasses.replace(ANCHOR, max_hold_min=480.0)
     seeds = v.seed_specs(anchor)
     assert [s.params["max_hold_min"] for s in seeds] == [60.0, 60.0, 60.0]
     rejected = v.rejected_seeds(anchor)
-    assert len(rejected) == 2 and all("max_hold_min=480.0 outside its hard range [5, 360]" in r for r in rejected)
+    assert len(rejected) == 3 and all("max_hold_min=480.0 outside its hard range [5, 360]" in r for r in rejected)
     assert rejected[0].startswith("the Settings benchmark")
     assert v.register_seeds(store, anchor, T) == [s.hash for s in seeds]
     assert v.rejected_seeds(ANCHOR) == []

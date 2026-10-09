@@ -1374,16 +1374,28 @@ class Engine:
         return "; ".join(problems) or "no candle source"
 
     def _universe_problem(self, item: WatchItem, now: float) -> str | None:
-        """Strict entry-time window (mirrors the crawler prefilter and the backtester)."""
+        """Strict entry-time window (mirrors the crawler prefilter, the Coach replay and the backtester):
+        the tested universe (G01: pump.fun, SOL-quoted; Mayhem is the cocoon's) and the age since creation AND
+        since graduation (G12; an unknown graduation time never enters)."""
+        from nightcrawler.crawler import graduated_at, universe_problem
+
         s, c, snap = self.settings, item.candidate, item.snapshot
         if snap is None or item.snapshot_at is None:
             return "no market snapshot"
         if now - item.snapshot_at > SNAPSHOT_MAX_AGE_INTERVALS * s.watch_interval_s:
             return f"no fresh market snapshot ({(now - item.snapshot_at) / 60:.0f} min old)"
+        outside = universe_problem(c)
+        if outside is not None:
+            return outside
         if c.created_at is not None:
             age_min = (now - c.created_at) / 60
             if age_min < s.min_age_min or age_min > s.max_age_h * 60:
                 return f"age {age_min:.0f} min outside [{s.min_age_min:g} min, {s.max_age_h:g} h]"
+        graduated = graduated_at(c)
+        if graduated is None:
+            return "graduation time unknown"
+        if (now - graduated) / 60 < s.min_age_since_grad_min:
+            return f"{math.floor((now - graduated) / 60)} min since graduation (< {s.min_age_since_grad_min:g} min)"
         mcap = snap.mcap_usd if snap.mcap_usd is not None else c.mcap_usd
         if mcap is not None and not s.min_mcap_usd <= mcap <= s.max_mcap_usd:
             return f"mcap ${mcap:,.0f} outside the window"

@@ -22,7 +22,8 @@ Endpoints used:
   trades, so a page ends at the last traded interval before
   ``before_timestamp`` and the no-trade intervals at a page boundary are
   missing - :meth:`GeckoTerminalClient.ohlcv` fills them.
-* ``/networks/solana/tokens/{mint}?include=top_pools``
+* ``/networks/solana/tokens/{mint}?include=top_pools`` (its ``launchpad_details.completed_at`` is the
+  graduation time the crawler falls back to when Jupiter sent no ``graduatedAt``: :func:`graduation_time`)
 * ``/networks/solana/tokens/{mint}/info`` (holder stats lag 10-100 min and are
   null on fresh tokens).
 
@@ -55,6 +56,7 @@ __all__ = [
     "OHLCV_AGGREGATES",
     "MAX_NEW_POOLS_PAGE",
     "GeckoTerminalClient",
+    "graduation_time",
     "normalize_pool",
     "pool_to_candidate",
 ]
@@ -72,6 +74,9 @@ WINDOWS = ("m5", "m15", "m30", "h1", "h6", "h24")
 _TXN_FIELDS = ("buys", "sells", "buyers", "sellers")
 #: GeckoTerminal dex ids of bonding-curve launchpads (no AMM liquidity yet).
 CURVE_DEXES = frozenset({"pump-fun", "meteora-dbc"})
+#: pump.fun's own bonding curve on GeckoTerminal, and the launchpad name Jupiter uses for it.
+_PUMP_CURVE_DEX = "pump-fun"
+_PUMP_LAUNCHPAD = "pump.fun"
 #: GeckoTerminal dex id -> DexScreener-style id where they differ beyond dashes.
 _DEX_ALIASES = {"pump-fun": "pumpfun", "meteora-dbc": "meteoradbc"}
 
@@ -315,12 +320,20 @@ def pool_to_candidate(pool: dict[str, Any], now: float, source: str = "gt_new_po
     ``meteora-dbc`` -> ``meteoradbc``, others unchanged with ``-`` removed),
     ``graduated`` = False for curve dexes (pump-fun, meteora-dbc), else None,
     ``sources = [source]``, ``discovered_at = now``, ``raw = {"gt_pool": pool["pool"]}``.
+
+    G01: a ``pump-fun`` pool IS pump.fun's own bonding curve, so it proves the launchpad (``launchpad =
+    "pump.fun"``) and its quote is the coin's launch quote (``raw["quote_mint"]``). Any other pool proves
+    neither: anyone can open a PumpSwap pool, and a side pool's quote says nothing about the launch.
     """
     mint = pool.get("base_mint")
     if not mint or mint == SOL_MINT:
         return None
     created_at = pool.get("created_at")
     gt_dex = pool.get("dex")
+    pump_curve = gt_dex == _PUMP_CURVE_DEX
+    raw: dict[str, Any] = {"gt_pool": pool.get("pool")}
+    if pump_curve and pool.get("quote_mint"):
+        raw["quote_mint"] = pool["quote_mint"]
     return TokenCandidate(
         mint=mint,
         symbol=pool.get("base_symbol") or "",
@@ -335,10 +348,22 @@ def pool_to_candidate(pool: dict[str, Any], now: float, source: str = "gt_new_po
         price_usd=pool.get("price_usd"),
         fdv_usd=pool.get("fdv_usd"),
         decimals=pool.get("base_decimals"),
+        launchpad=_PUMP_LAUNCHPAD if pump_curve else None,
         graduated=False if gt_dex in CURVE_DEXES else None,
         discovered_at=now,
-        raw={"gt_pool": pool.get("pool")},
+        raw=raw,
     )
+
+
+def graduation_time(token: Any) -> float | None:
+    """When the coin left its launchpad's bonding curve (epoch s): ``launchpad.completed_at`` of
+    :meth:`GeckoTerminalClient.token` / :meth:`GeckoTerminalClient.token_info`, the G12 fallback when Jupiter
+    sent no ``graduatedAt`` (on GARY both said 2026-10-08T13:28:26Z). None when unknown, and when GeckoTerminal
+    itself says the curve is not completed (a time it calls unfinished is never trusted)."""
+    launchpad = token.get("launchpad") if isinstance(token, dict) else None
+    if not isinstance(launchpad, dict) or launchpad.get("completed") is False:
+        return None
+    return parse_ts(launchpad.get("completed_at"))
 
 
 # --------------------------------------------------------------------------- helpers

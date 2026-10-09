@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import math
+import random
 from pathlib import Path
 
 import pytest
@@ -27,6 +28,8 @@ SAMPLES = ROOT / "data" / "samples"
 T0 = 1_791_151_200  # 2026-10-04T22:00:00Z
 P = StrategyParams()
 FREE = CostModel(0.0, 0.0, 0.0)
+#: the fill model before G22 (stops at min(level, close) of the trigger candle): kept for comparison
+CLOSE = CostModel(0.0, 0.0, 0.0, stop_fill="close")
 META = {"coin": "TEST", "mint": "MintTest", "created_utc": iso_utc(T0 - 2 * 3600)}  # 2 h old: in the universe
 # pump to 1.0, dump to 0.30, two green breakout closes -> entry signal at the close of candle 9
 SETUP = [0.4, 0.7, 1.0, 0.8, 0.6, 0.45, 0.35, 0.30, 0.31, 0.33]
@@ -124,8 +127,12 @@ def test_fill_candle_itself_can_stop_out() -> None:
 
 
 def test_gap_below_stop_exits_at_the_open() -> None:
-    t = only_trade(Backtester(P, FREE).run(series([(0.33, 0.335, 0.33, 0.333), (0.20, 0.25, 0.19, 0.24)]), META))
+    gap = series([(0.33, 0.335, 0.33, 0.333), (0.20, 0.25, 0.19, 0.24)])
+    t = only_trade(Backtester(P, CLOSE).run(gap, META))
     assert t.exit_reason == "stop_loss" and t.exit_price == pytest.approx(0.20)
+    # G22 (the default): the sell lands inside the gap bar, at its worst price - below the stop AND the open
+    t = only_trade(Backtester(P, FREE).run(gap, META))
+    assert t.exit_reason == "stop_loss" and t.exit_price == pytest.approx(0.19) and t.exit_ts == gap[-1].ts
 
 
 def test_partial_take_profit_then_trailing_stop() -> None:
@@ -141,8 +148,10 @@ def test_partial_take_profit_then_trailing_stop() -> None:
 
 def test_trailing_gap_exits_at_the_open() -> None:
     after = [(0.33, 0.50, 0.33, 0.48), (0.30, 0.31, 0.29, 0.30)]  # partial at 0.462, then gap under trail
-    t = only_trade(Backtester(P, FREE).run(series(after), META))
+    t = only_trade(Backtester(P, CLOSE).run(series(after), META))
     assert t.exit_reason == "trailing_stop" and t.exit_price == pytest.approx((0.462 + 0.30) / 2)
+    t = only_trade(Backtester(P, FREE).run(series(after), META))  # G22: the gap bar's low
+    assert t.exit_reason == "trailing_stop" and t.exit_price == pytest.approx((0.462 + 0.29) / 2)
 
 
 def test_time_stop_at_the_open_of_the_first_candle_past_max_hold() -> None:
@@ -371,10 +380,13 @@ def test_the_trailing_peak_follows_closes_not_wicks() -> None:
     after = [(0.33, 0.34, 0.33, 0.34),
              (0.34, 0.50, 0.34, 0.48),  # partial at 0.462 (closed above); peak 0.48 (close), not the 0.50 wick
              (0.48, 0.48, 0.40, 0.41)]  # trail 0.408 hit
-    t = only_trade(Backtester(P, FREE).run(series(after), META))
+    t = only_trade(Backtester(P, CLOSE).run(series(after), META))
     assert t.partial_taken and t.exit_reason == "trailing_stop"
     assert t.exit_price == pytest.approx((0.462 + 0.48 * 0.85) / 2)
     assert Backtester(P, FREE).run(series(after), META).cost_model["peak_from"] == "close"
+    # G22: the trail is triggered by the same peak; with no later candle the sell fills at that candle's low
+    t = only_trade(Backtester(P, FREE).run(series(after), META))
+    assert t.exit_reason == "trailing_stop" and t.exit_price == pytest.approx((0.462 + 0.40) / 2)
 
 
 def test_missing_minutes_are_filled_like_the_live_candle_client() -> None:
@@ -489,3 +501,131 @@ def test_an_entry_hook_replaces_the_signal() -> None:
     trades = Backtester(P, FREE, entry_fn=at_a_time).run(candles, META).trades
     # the candle before ``when`` closes AT ``when``: decided then, filled at the next open
     assert trades[0].entry_ts == when and trades[0].signal_metrics == {"last_ts": when - 60}
+
+
+# --------------------------------------------------------------------------- G22: a stop is a market order
+
+
+def test_the_default_fill_model_is_the_honest_next_bar() -> None:
+    assert CostModel().stop_fill == "next_bar" and Backtester(P).cost_model.stop_fill == "next_bar"
+    assert Backtester(P).run(series(flat(0.33, 3)), META).cost_model["stop_fill"] == "next_bar"
+
+
+def test_an_intrabar_stop_fills_at_the_next_bars_worst_price() -> None:
+    """The stop is seen inside candle i; the sell lands in candle i+1 and gets its min(open, low)."""
+    after = [(0.33, 0.335, 0.25, 0.26), (0.24, 0.245, 0.21, 0.22)] + flat(0.22, 3)  # stop 0.2706
+    candles = series(after)
+    t = only_trade(Backtester(P, FREE).run(candles, META))
+    assert t.exit_reason == "stop_loss" and t.exit_price == pytest.approx(0.21)
+    assert t.exit_ts == candles[SIGNAL_INDEX + 2].ts  # the bar after the trigger bar
+    assert only_trade(Backtester(P, CLOSE).run(candles, META)).exit_price == pytest.approx(0.26)
+
+
+def test_a_rug_is_booked_where_it_really_fills_not_at_the_stop() -> None:
+    """RESULTS A3: rug stops booked at -51 % to -59 % really filled at -84 % to -97 %."""
+    rug = [(0.33, 0.33, 0.12, 0.15), (0.15, 0.16, 0.02, 0.03)] + flat(0.03, 3)
+    candles = series(rug)
+    level = only_trade(Backtester(P, CostModel(0.0, 0.0, 0.0, stop_fill="level")).run(candles, META))
+    close = only_trade(Backtester(P, CLOSE).run(candles, META))
+    honest = only_trade(Backtester(P, FREE).run(candles, META))
+    assert level.pnl_pct == pytest.approx(-18.0) and close.pnl_pct == pytest.approx((0.15 / 0.33 - 1) * 100)
+    assert honest.pnl_pct == pytest.approx((0.02 / 0.33 - 1) * 100) and honest.pnl_pct < -90
+
+
+def test_a_wick_through_the_stop_never_fills_better_than_the_stop() -> None:
+    """Monotone by construction: a stop that recovers is booked at the stop level (the close model's price),
+    never at the next bar's higher low."""
+    wick = series([(0.33, 0.335, 0.25, 0.32), (0.32, 0.33, 0.31, 0.32)] + flat(0.32, 3))
+    t = only_trade(Backtester(P, FREE).run(wick, META))
+    assert t.exit_reason == "stop_loss" and t.exit_price == pytest.approx(0.33 * 0.82)
+
+
+def test_time_and_trailing_exits_fill_at_the_landing_bars_worst_price() -> None:
+    hold = flat(0.33, int(P.max_hold_min) - 1) + [(0.33, 0.34, 0.30, 0.335)] + flat(0.335, 3)
+    candles = series([(0.33, 0.33, 0.33, 0.33)] + hold)
+    t = only_trade(Backtester(P, FREE).run(candles, META))
+    assert t.exit_reason == "time_stop" and t.exit_ts == t.entry_ts + P.max_hold_min * 60
+    assert t.exit_price == pytest.approx(0.30)  # decided at the open, filled inside that bar at its worst
+    assert only_trade(Backtester(P, CLOSE).run(candles, META)).exit_price == pytest.approx(0.33)
+    trail = series([(0.33, 0.34, 0.33, 0.34), (0.34, 0.50, 0.34, 0.48), (0.48, 0.48, 0.40, 0.41),
+                    (0.40, 0.42, 0.38, 0.41)] + flat(0.41, 2))
+    t = only_trade(Backtester(P, FREE).run(trail, META))
+    assert t.exit_reason == "trailing_stop" and t.exit_ts == trail[SIGNAL_INDEX + 4].ts
+    assert t.exit_price == pytest.approx((0.462 + 0.38) / 2)
+
+
+def _random_path(rng: random.Random) -> list[tuple[float, float, float, float]]:
+    out, price = [], 0.33
+    for _ in range(rng.randint(5, 160)):
+        o = price * rng.uniform(0.85, 1.12) if rng.random() < 0.1 else price  # occasional gaps
+        c = max(1e-4, o * (1 + rng.gauss(0, 0.06)) * (0.2 if rng.random() < 0.02 else 1.0))  # occasional rugs
+        h = max(o, c) * (1 + rng.uniform(0, 0.08))
+        low = min(o, c) * (1 - rng.uniform(0, 0.12))
+        out.append((o, h, low, c))
+        price = c
+    return out
+
+
+@pytest.mark.parametrize("costs", [(0.0, 0.0, 0.0), (100.0, 150.0, 0.05)])
+def test_monotone_pessimism_level_close_next_bar(costs: tuple[float, float, float]) -> None:
+    """On 300 random paths the first trade has the same entry and trigger under every fill model, and its
+    result never improves from ``level`` to ``close`` to ``next_bar``: the honest model is never optimistic."""
+    rng = random.Random(22)
+    compared = gapped = 0
+    for _ in range(300):
+        candles = series(_random_path(rng))
+        firsts = {}
+        for model in ("level", "close", "next_bar"):
+            trades = Backtester(P, CostModel(*costs, stop_fill=model)).run(candles, META).trades
+            firsts[model] = trades[0] if trades else None
+        lv, cl, nb = firsts["level"], firsts["close"], firsts["next_bar"]
+        if lv is None:
+            assert cl is None and nb is None
+            continue
+        assert cl is not None and nb is not None
+        assert lv.entry_ts == cl.entry_ts == nb.entry_ts and lv.exit_reason == cl.exit_reason == nb.exit_reason
+        assert nb.pnl_usd <= cl.pnl_usd + 1e-9 and cl.pnl_usd <= lv.pnl_usd + 1e-9
+        assert nb.exit_ts >= cl.exit_ts == lv.exit_ts
+        compared += 1
+        gapped += nb.pnl_usd < cl.pnl_usd - 1e-9
+    assert compared >= 100 and gapped >= 20  # the property was exercised, and it bites
+
+
+def test_partial_exits_are_recorded_on_the_trade() -> None:
+    after = [(0.33, 0.50, 0.33, 0.48), (0.48, 0.48, 0.40, 0.41)] + flat(0.41, 2)
+    candles = series(after)
+    t = only_trade(Backtester(P, FREE).run(candles, META))
+    assert t.partials == [{"ts": candles[SIGNAL_INDEX + 1].ts, "price": pytest.approx(0.462), "fraction": 0.5}]
+    assert only_trade(Backtester(P, FREE).run(series(flat(0.33, 3)), META)).partials == []
+
+
+# --------------------------------------------------------------------------- G12: age from graduation
+
+
+def test_entries_wait_for_the_graduation_window_when_the_graduation_time_is_known() -> None:
+    """``meta["graduated_utc"]`` (Jupiter graduatedAt live, the census first sighting in the Coach replay):
+    no entry before ``min_age_since_grad_min`` (30 = MIN_AGE_SINCE_GRAD_MIN) after it."""
+    candles = series(flat(0.33, 5))
+    decided = candles[SIGNAL_INDEX].ts + 60
+    assert Backtester(P).min_age_since_grad_min == 30.0
+    too_soon = {**META, "graduated_utc": iso_utc(decided - 29 * 60)}
+    assert Backtester(P, FREE).run(candles, too_soon).trades == []
+    assert len(Backtester(P, FREE).run(candles, {**META, "graduated_utc": decided - 30 * 60}).trades) == 1
+    assert len(Backtester(P, FREE, min_age_since_grad_min=20).run(candles, too_soon).trades) == 1
+    assert len(Backtester(P, FREE).run(candles, META).trades) == 1  # unknown graduation: not checked (documented)
+
+
+def test_from_settings_takes_the_graduation_window(make_settings) -> None:
+    from nightcrawler.config import Settings
+
+    assert Settings.__dataclass_fields__["min_age_since_grad_min"].default == Backtester(P).min_age_since_grad_min
+    assert Backtester.from_settings(make_settings(MIN_AGE_SINCE_GRAD_MIN=45)).min_age_since_grad_min == 45.0
+
+
+def test_the_watch_window_starts_at_the_later_of_maturity_and_the_graduation_window() -> None:
+    """Live, the crawler emits a slow graduate when its graduation window opens, then watches it WATCHLIST_TTL_H."""
+    candles = series(flat(0.33, 5))
+    old = {**META, "created_utc": iso_utc(T0 - 10 * 3600)}
+    assert Backtester(P, FREE, watch_ttl_h=6.0).run(candles, old).trades == []  # created 10 h ago: expired
+    slow = {**old, "graduated_utc": iso_utc(T0 - 2 * 3600)}  # graduated 2 h ago: watched since T0 - 1.5 h
+    assert len(Backtester(P, FREE, watch_ttl_h=6.0).run(candles, slow).trades) == 1

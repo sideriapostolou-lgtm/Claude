@@ -9,7 +9,10 @@ live. Rules (§4.2), applied through the backtester's optional hooks:
 * evaluation cadence (``decide_at``): decisions only at ``k * C + phase(mint)``, ``phase =
   int(sha256(mint)) mod C`` (``C`` = 180 s), with the newest VISIBLE candle;
 * entry fill (``entry_delay_s = L_obs + L_land``): ``max(open of the candle containing the landing
-  time, the close the strategy decided on)``; exits: the backtester's pessimistic intrabar rules;
+  time, the close the strategy decided on)``; exits: the backtester's pessimistic intrabar rules, stops
+  filled as market orders (G22, ``SimConfig.stop_fill = "next_bar"``: ``min(open, low)`` of the candle the
+  sell lands in, never kinder than ``min(level, close)``; results made before 2026-10-09 used ``close`` and
+  are optimistic);
 * costs (``cost_fn``): :mod:`nightcrawler.costs` - pool fee tier at that market cap, constant-product
   impact from ``K_GRAD``, Ultra 10 bps, network fee, the paper broker's 100 bps haircut instead of the
   MEV buffer, all x ``cost_scale[tier]`` (>= 1); no entry when the modelled impact exceeds
@@ -20,6 +23,16 @@ live. Rules (§4.2), applied through the backtester's optional hooks:
   GRADUATED census (it graduated at or before then). The universe is "coins that graduated", so
   buying earlier - on the bonding curve - would use the future fact that it graduates
   (research/lab: no entries before graduation).
+* age from graduation (G12, the live bot's ``MIN_AGE_SINCE_GRAD_MIN``, ``SimConfig.min_age_since_grad_min``):
+  no entry until that long after the graduation. The tape does not store Jupiter's ``graduatedAt`` yet,
+  so ``first_seen_ts`` stands in for it. THE TWIN DIFFERENCE: the census sighting comes at or after the
+  real graduation (up to one census poll, ~5 min, later), so the twin's window opens at most that much
+  LATER than the live bot's (``graduatedAt + window``) - the twin is never earlier, only slightly
+  stricter, and for a coin first seen late (a recorder outage) much stricter. A spec with no age,
+  market-cap or liquidity floor at all (the research-only ``placebo_wide`` control) has no graduation
+  window either: it measures what the bot's gates are worth (the W host, docs/EXPERIENCE §4.1). Its
+  scoreboard row carries ``"wide": true`` and is listed last, so the dashboard's placebo check keeps
+  using the placebo inside the bot's window (:func:`wide_universe`).
 
 EVIDENCE (§4.3): one observation per (variant, coin) - the net return of the FIRST $20 trade,
 ``x_raw = proceeds / stake - 1``, tested as ``x = clip(x_raw, -1, 1)``; ``x_stress`` charges the
@@ -28,6 +41,11 @@ trade's costs x 1.5. A coin counts only if ``coin.created_ts > variant.t0`` (for
 still being recorded; on a closed coin (incomplete tape) it exits at ``entry x 0.5`` (x = -50 %) at its
 time stop. A day is replayed only once every coin of it is closed or incomplete, and a day where fewer
 than 95 % of the coins completed every fetch is excluded for every variant.
+
+SIDE TABLE (PR-S, docs/EXPERIENCE §4.2): next to its evidence, every (variant, coin) with a trade or an
+ENTER signal gets one ``trades_ext`` row (:attr:`Outcome.ext`): the first trade's decision time, entry and
+exit times, exit reason (``missing_data`` for a -50 % missing-data exit) and partial exits, and every
+ENTER signal of the coin, those refused at the fill included. It is replaced or deleted with the evidence.
 
 ``sim_hash`` = sha256 of the bytes of ``replay.py``, ``costs.py`` and ``backtest.py``: evidence carries
 it, and a change means every result is recomputed: a coin replayed again keeps only the new
@@ -60,11 +78,13 @@ __all__ = [
     "L_LAND_S",
     "STAKE_USD",
     "MISSING_DATA_RETURN",
+    "MISSING_DATA_REASON",
     "COST_SCALE_VERSION",
     "LAG_MIN_SAMPLES",
     "SimConfig",
     "Outcome",
     "sim_hash",
+    "wide_universe",
     "estimate_l_obs",
     "phase_s",
     "decision_schedule",
@@ -80,6 +100,8 @@ CADENCE_S = 180.0
 L_LAND_S = 5.0
 STAKE_USD = 20.0
 MISSING_DATA_RETURN = -0.5
+#: ``trades_ext.exit_reason`` of a first trade the tape lost track of (booked at ``MISSING_DATA_RETURN``).
+MISSING_DATA_REASON = "missing_data"
 #: Version of the ``cost_scale`` table evidence was priced with (phase 2 bumps it on every ratchet).
 COST_SCALE_VERSION = 1
 LAG_MIN_SAMPLES = 500
@@ -89,7 +111,9 @@ _MODULE_FILES = (Path(__file__), Path(costs.__file__), Path(backtest.__file__))
 @dataclass(frozen=True)
 class SimConfig:
     """Simulator settings (defaults = docs/LEARNING.md §4.2). ``hooks=False`` replays with the plain
-    backtester (next-open fills, its default cost model) - a reference, never evidence."""
+    backtester (next-open fills, its default cost model) - a reference, never evidence. ``stop_fill`` is the
+    backtester's exit fill model (G22: ``next_bar``; ``close`` only to report results under the old one);
+    ``min_age_since_grad_min`` the live bot's graduation window (G12, MIN_AGE_SINCE_GRAD_MIN)."""
 
     l_obs_s: float = DEFAULT_L_OBS_S
     cadence_s: float = CADENCE_S
@@ -100,23 +124,30 @@ class SimConfig:
     sol_usd: float = costs.FALLBACK_SOL_USD
     stake_usd: float = STAKE_USD
     hooks: bool = True
+    stop_fill: str = "next_bar"
+    min_age_since_grad_min: float = backtest.DEFAULT_MIN_AGE_SINCE_GRAD_MIN
 
     @classmethod
     def from_settings(cls, settings: Any, **overrides: Any) -> "SimConfig":
-        """The paper haircut and the impact cap from Settings (read, never written)."""
+        """The paper haircut, the impact cap and the graduation window from Settings (read, never written; a
+        Settings object without the window - an older learner environment - keeps the default)."""
+        window = getattr(settings, "min_age_since_grad_min", backtest.DEFAULT_MIN_AGE_SINCE_GRAD_MIN)
         return cls(paper_slippage_bps=float(settings.paper_slippage_bps),
-                   max_price_impact_pct=float(settings.max_price_impact_pct), **overrides)
+                   max_price_impact_pct=float(settings.max_price_impact_pct),
+                   min_age_since_grad_min=float(window), **overrides)
 
 
 @dataclass
 class Outcome:
     """Result of one (variant, coin) replay. ``kind``: ``trade`` (evidence), ``missing`` (evidence at -50 %),
-    ``none`` (no trade, final), ``pending`` (not final yet) or ``excluded`` (not eligible)."""
+    ``none`` (no trade, final), ``pending`` (not final yet) or ``excluded`` (not eligible). ``ext``: the
+    ``trades_ext`` side-table row (module docstring), None without a trade and without an ENTER signal."""
 
     kind: str
     reason: str = ""
     evidence: dict[str, Any] | None = None
     decisions: list[dict[str, Any]] = field(default_factory=list)
+    ext: dict[str, Any] | None = None
 
 
 @functools.lru_cache(maxsize=1)
@@ -125,6 +156,17 @@ def sim_hash() -> str:
     for path in _MODULE_FILES:
         digest.update(path.read_bytes())
     return digest.hexdigest()
+
+
+#: The floors a wide-universe spec has dropped entirely (to their hard-range floor, 0).
+_WIDE_FLOORS = ("min_age_min", "min_mcap_usd", "min_liquidity_usd")
+
+
+def wide_universe(params: Mapping[str, Any]) -> bool:
+    """A spec with no age, market-cap or liquidity floor at all (each at 0; research-only by ``make_spec``, e.g.
+    the W host ``placebo_wide``): no graduation window either, and its scoreboard row is flagged ``wide``
+    (module docstring). A Settings anchor never looks like this unless all three settings are 0."""
+    return all(float(params.get(key, 1.0)) <= 0.0 for key in _WIDE_FLOORS)
 
 
 def estimate_l_obs(gt_lags: Sequence[float], default: float = DEFAULT_L_OBS_S) -> float:
@@ -224,7 +266,8 @@ def replay_coin(spec: VariantSpec, view: TapeView, *, t0: float | None, closed: 
         return Outcome("none" if closed else "pending", "no candles")
     params = spec.strategy_params()
     meta = {"coin": launch.get("symbol") or view.mint[:6], "mint": view.mint, "created_utc": created,
-            "supply": launch.get("supply")}
+            "supply": launch.get("supply"), "graduated_utc": view.first_seen_ts}  # the graduation proxy (G12)
+    graduation_window = 0.0 if wide_universe(spec.params) else cfg.min_age_since_grad_min
     calls: list[tuple[str, float, float, float]] = []
     sizing: dict[str, Any] = {"start_usd": 5 * cfg.stake_usd, "position_pct": 0.2, "min_position_usd": cfg.stake_usd,
               "max_position_usd": cfg.stake_usd}
@@ -241,36 +284,44 @@ def replay_coin(spec: VariantSpec, view: TapeView, *, t0: float | None, closed: 
         sol_usd = cfg.sol_usd if sol_usd is None else sol_usd
         ctx = costs.CoinCostContext()  # SOL-paired, non-Mayhem graduate: k = K_GRAD (leak-free)
         network = costs.replay_model(cfg.paper_slippage_bps).network_usd(sol_usd)
-        bt = Backtester(params, CostModel(0.0, 0.0, network), **sizing,
+        bt = Backtester(params, CostModel(0.0, 0.0, network, stop_fill=cfg.stop_fill), **sizing,
                         cost_fn=_cost_hook(cfg, params.min_liquidity_usd, ctx, sol_usd, calls),
                         decide_at=decision_schedule(view.mint, cfg), entry_delay_s=cfg.l_obs_s + cfg.l_land_s,
-                        entry_fn=logged_entry)
+                        entry_fn=logged_entry, min_age_since_grad_min=graduation_window)
     else:
-        bt = Backtester(params, CostModel(), **sizing, entry_fn=logged_entry)
+        bt = Backtester(params, CostModel(stop_fill=cfg.stop_fill), **sizing, entry_fn=logged_entry,
+                        min_age_since_grad_min=graduation_window)
     trades = bt.run(candles, meta, trade_from=view.first_seen_ts).trades
     filled = {id(t.signal_metrics): t.entry_ts for t in trades}
     # every ENTER signal, filled or refused at the fill (impact, liquidity): what the variant decided, when
     decisions = [{"t_dec": now, "last_ts": s.metrics.get("last_ts"), "entry_ts": filled.get(id(s.metrics)),
                   "metrics": dict(s.metrics)} for now, s in signals]
+    ext: dict[str, Any] = {"variant_hash": spec.hash, "mint": view.mint, "t_dec": None, "t_in": None, "t_out": None,
+                           "exit_reason": None, "partials": [], "decisions": decisions, "sim_hash": sim_hash()}
     if not trades:
-        return Outcome("none" if closed else "pending", "no entry", decisions=decisions)
+        return Outcome("none" if closed else "pending", "no entry", decisions=decisions,
+                       ext=ext if decisions else None)
     first = trades[0]
+    ext.update(t_in=float(first.entry_ts), partials=list(first.partials),
+               t_dec=next((d["t_dec"] for d in decisions if d["entry_ts"] == first.entry_ts), None))
     base = {"variant_hash": spec.hash, "mint": view.mint, "pricing": "replay", "entry_ts": float(first.entry_ts),
             "sim_hash": sim_hash(), "cost_scale_ver": COST_SCALE_VERSION}
     if first.exit_reason == "end_of_data":
         if not closed:
-            return Outcome("pending", "first trade still open where the tape ends", decisions=decisions)
+            return Outcome("pending", "first trade still open where the tape ends", decisions=decisions, ext=ext)
         exit_ts = float(first.entry_ts + params.max_hold_min * 60)
         row = {**base, "exit_ts": exit_ts, "x": MISSING_DATA_RETURN, "x_raw": MISSING_DATA_RETURN,
                "x_stress": MISSING_DATA_RETURN, "gross": MISSING_DATA_RETURN, "cost": 0.0}
-        return Outcome("missing", "tape incomplete after entry: exits at entry x 0.5", row, decisions)
+        ext.update(t_out=exit_ts, exit_reason=MISSING_DATA_REASON)
+        return Outcome("missing", "tape incomplete after entry: exits at entry x 0.5", row, decisions, ext)
     x_raw = first.pnl_usd / first.size_usd
     gross = _gross(calls) if cfg.hooks else None
     gross = x_raw if gross is None else gross
     cost = gross - x_raw
     row = {**base, "exit_ts": float(first.exit_ts), "x": ev.clip(x_raw), "x_raw": x_raw,
            "x_stress": ev.clip(gross - COST_STRESS * cost), "gross": gross, "cost": cost}
-    return Outcome("trade", first.exit_reason, row, decisions)
+    ext.update(t_out=float(first.exit_ts), exit_reason=first.exit_reason)
+    return Outcome("trade", first.exit_reason, row, decisions, ext)
 
 
 # --------------------------------------------------------------------------- the driver
@@ -342,6 +393,10 @@ def replay_day(store: Any, reader: TapeReader, day: str, now: float, cfg: SimCon
                     store.put_evidence(outcome.evidence)
                 else:  # e.g. replayed again under a new simulator: an older outcome must not linger
                     store.delete_evidence(variant["hash"], mint)
+                if outcome.ext is not None:
+                    store.put_trade_ext(outcome.ext)
+                else:
+                    store.delete_trade_ext(variant["hash"], mint)
                 store.mark_replayed(variant["hash"], mint, outcome.kind, sim, now)
             counts[outcome.kind] = counts.get(outcome.kind, 0) + 1
         if finished:
@@ -380,7 +435,8 @@ def update_scoreboard(store: Any, now: float, cfg: SimConfig | None = None) -> d
                          alpha=variant["alpha"] or PAPER_ALPHA,  # controls spend none; LB shown at the paper level
                          prev_lb=(prev.get(variant["hash"]) or {}).get("lb"))
         stats.update({"status": variant["status"], "name": variant["name"], "family": variant["family"],
-                      "control": bool(FAMILIES[variant["family"]].CONTROL), "evidence_root": evidence_root(evidence),
+                      "control": bool(FAMILIES[variant["family"]].CONTROL), "wide": wide_universe(variant["params"]),
+                      "evidence_root": evidence_root(evidence),
                       "last_exit_ts": evidence[-1]["exit_ts"] if evidence else None,
                       "trades_per_day_7d": sum(e["exit_ts"] >= now - 7 * 86400 for e in evidence) / 7.0})
         store.put_scoreboard(day, variant["hash"], stats, now)

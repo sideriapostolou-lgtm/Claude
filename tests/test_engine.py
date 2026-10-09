@@ -44,7 +44,7 @@ from nightcrawler.learn import replay as learn_replay
 from nightcrawler.learn.recorder import Recorder, RecorderThread
 from nightcrawler.learn.store import LearnStore, db_path, learn_dir
 from nightcrawler.learn.tape import TapeReader, TapeWriter, tape_day
-from nightcrawler.learn.variants import make_spec
+from nightcrawler.learn.variants import load_seeds, make_spec
 from nightcrawler.ledger import Ledger
 from nightcrawler.models import (
     SOL_MINT,
@@ -1408,7 +1408,7 @@ def test_learning_on_or_off_the_bot_trades_exactly_the_same(tmp_path, make_setti
             outbox = store.outbox()
         assert receipts and len({r.payload["outbox_id"] for r in receipts}) == len(receipts)
         assert {r.payload["outbox_id"] for r in receipts} == {o["id"] for o in outbox if o["receipt_seq"]}
-        assert [r.payload["event"] for r in receipts].count("register") == 5
+        assert [r.payload["event"] for r in receipts].count("register") == len(load_seeds())
         assert stage.status()["learner"]["last_exit"]["code"] == 0 and stage.counters["receipts"] == len(receipts)
         assert on.ledger.verify_chain() == (True, None)
         # ... and the engine's own rows reached the tape without blocking it

@@ -26,6 +26,11 @@ Tables (``PRAGMA user_version`` = :data:`SCHEMA_VERSION`):
   sim_hash, cost_scale_ver)``, ``replayed((variant_hash, mint) PK, outcome, sim_hash, ts)`` (the coins of
   a day a variant is still being replayed on) and ``replayed_days((variant_hash, day) PK, sim_hash, ts)``
   (a day it is finished with: one row instead of one per coin).
+* ``trades_ext((variant_hash, mint) PK, t_dec, t_in, t_out, exit_reason, partials JSON, decisions_json,
+  sim_hash)`` - the side table of the replay (PR-S, docs/EXPERIENCE §4.2): the first trade's decision,
+  entry and exit times, exit reason and partial exits, and EVERY enter signal of the coin (those refused at
+  the fill too). Written and deleted with its ``evidence`` row, in the same transaction. An added table
+  older builds ignore, so the version stays 1 (a rollback still opens learn.db).
 * ``scoreboard((day, variant_hash) PK, data JSON, updated_ts)``.
 * ``outbox(id PK, event, payload JSON, created_ts, receipt_seq, receipt_ts)``.
 * ``trials(day, family, n)`` (starts at the lab's 2,800), ``lease(name PK, pid, ts)``, ``meta(key PK, value)``.
@@ -51,6 +56,8 @@ from typing import Any, cast
 __all__ = ["SCHEMA_VERSION", "BUSY_TIMEOUT_S", "RECEIPT_KIND", "LAB_TRIALS", "LearnStore", "LearnStoreError",
            "learn_dir", "db_path", "drain_outbox"]
 
+#: ``PRAGMA user_version``: bump it (with a migration) only for a change OLDER builds cannot read; an added
+#: table (``trades_ext``) is created on open by ``CREATE TABLE IF NOT EXISTS`` and keeps the version.
 SCHEMA_VERSION = 1
 BUSY_TIMEOUT_S = 10.0
 #: ``models.ReceiptKind`` value of every learning receipt (the chain format is unchanged).
@@ -87,6 +94,10 @@ _SCHEMA = (
     """CREATE TABLE IF NOT EXISTS replayed_days (
         variant_hash TEXT NOT NULL, day TEXT NOT NULL, sim_hash TEXT NOT NULL, ts REAL NOT NULL,
         PRIMARY KEY (variant_hash, day))""",
+    """CREATE TABLE IF NOT EXISTS trades_ext (
+        variant_hash TEXT NOT NULL, mint TEXT NOT NULL, t_dec REAL, t_in REAL, t_out REAL, exit_reason TEXT,
+        partials TEXT NOT NULL, decisions_json TEXT NOT NULL, sim_hash TEXT NOT NULL,
+        PRIMARY KEY (variant_hash, mint))""",
     """CREATE TABLE IF NOT EXISTS scoreboard (
         day TEXT NOT NULL, variant_hash TEXT NOT NULL, data TEXT NOT NULL, updated_ts REAL NOT NULL,
         PRIMARY KEY (day, variant_hash))""",
@@ -427,6 +438,37 @@ class LearnStore:
         return {r[0] for r in self._rows("SELECT mint FROM evidence WHERE variant_hash = ? AND pricing = ?",
                                          (variant_hash, pricing))}
 
+    # ------------------------------------------------------------------ trades_ext (the replay's side table)
+    def put_trade_ext(self, row: Mapping[str, Any]) -> None:
+        """Insert or replace one (variant, coin) side-table row: ``variant_hash, mint, t_dec, t_in, t_out,
+        exit_reason, partials`` (list), ``decisions`` (list, stored as ``decisions_json``) and ``sim_hash``."""
+        self._write("INSERT OR REPLACE INTO trades_ext(variant_hash, mint, t_dec, t_in, t_out, exit_reason, partials, "
+                    "decisions_json, sim_hash) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    (row["variant_hash"], row["mint"], row["t_dec"], row["t_in"], row["t_out"], row["exit_reason"],
+                     _dumps(list(row["partials"])), _dumps(list(row["decisions"])), row["sim_hash"]))
+
+    def delete_trade_ext(self, variant_hash: str, mint: str) -> None:
+        self._write("DELETE FROM trades_ext WHERE variant_hash = ? AND mint = ?", (variant_hash, mint))
+
+    @staticmethod
+    def _trade_ext(row: sqlite3.Row) -> dict[str, Any]:
+        out = dict(row)
+        out["partials"] = json.loads(out["partials"])
+        out["decisions"] = json.loads(out.pop("decisions_json"))
+        return out
+
+    def trade_ext(self, variant_hash: str, mint: str) -> dict[str, Any] | None:
+        rows = self._rows("SELECT * FROM trades_ext WHERE variant_hash = ? AND mint = ?", (variant_hash, mint))
+        return self._trade_ext(rows[0]) if rows else None
+
+    def trades_ext(self, variant_hash: str, sim_hash: str | None = None) -> list[dict[str, Any]]:
+        """A variant's side-table rows by mint (written by the simulator ``sim_hash`` when given)."""
+        sql, params = "SELECT * FROM trades_ext WHERE variant_hash = ?", [variant_hash]
+        if sim_hash is not None:
+            sql += " AND sim_hash = ?"
+            params.append(sim_hash)
+        return [self._trade_ext(r) for r in self._rows(sql + " ORDER BY mint", params)]
+
     def mark_replayed(self, variant_hash: str, mint: str, outcome: str, sim_hash: str, now: float) -> None:
         self._write("INSERT OR REPLACE INTO replayed(variant_hash, mint, outcome, sim_hash, ts) VALUES (?, ?, ?, ?, ?)",
                     (variant_hash, mint, outcome, sim_hash, float(now)))
@@ -462,9 +504,12 @@ class LearnStore:
         return rows[0][0] if rows else None
 
     def scoreboard(self, day: str) -> list[dict[str, Any]]:
-        return [{"day": r["day"], "variant_hash": r["variant_hash"], **json.loads(r["data"]),
+        """``day``'s rows by variant hash, the research-only wide-universe rows (``"wide": true``, the W host)
+        last: whoever shows "the placebo" takes the first control, which must be the bot-universe one."""
+        rows = [{"day": r["day"], "variant_hash": r["variant_hash"], **json.loads(r["data"]),
                  "updated_ts": r["updated_ts"]}
                 for r in self._rows("SELECT * FROM scoreboard WHERE day = ? ORDER BY variant_hash", (day,))]
+        return sorted(rows, key=lambda r: r.get("wide") is True)
 
     # ------------------------------------------------------------------ outbox
     def add_outbox(self, event: str, payload: Mapping[str, Any], now: float) -> int:

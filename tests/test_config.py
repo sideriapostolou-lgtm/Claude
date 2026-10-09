@@ -329,3 +329,16 @@ def test_learning_settings(make_settings) -> None:
     for bad in ("0.5", "0", "-5"):
         with pytest.raises(ConfigError, match="LEARN_INTERVAL_MIN"):
             make_settings(LEARN_INTERVAL_MIN=bad)
+
+
+def test_the_graduation_window_is_its_own_setting(make_settings) -> None:
+    """G12: age is measured from GRADUATION (MIN_AGE_SINCE_GRAD_MIN, 30 min) as well as from creation
+    (MIN_AGE_MIN stays)."""
+    s = make_settings()
+    assert s.min_age_since_grad_min == 30.0 and s.min_age_min == 60.0
+    assert make_settings(MIN_AGE_SINCE_GRAD_MIN=45).min_age_since_grad_min == 45.0
+    assert make_settings(MIN_AGE_SINCE_GRAD_MIN=0).min_age_since_grad_min == 0.0
+    with pytest.raises(ConfigError, match="MIN_AGE_SINCE_GRAD_MIN"):
+        make_settings(MIN_AGE_SINCE_GRAD_MIN=-1)
+    with pytest.raises(ConfigError, match="MIN_AGE_SINCE_GRAD_MIN must be shorter than MAX_AGE_H"):
+        make_settings(MIN_AGE_SINCE_GRAD_MIN=3000, MAX_AGE_H=48)

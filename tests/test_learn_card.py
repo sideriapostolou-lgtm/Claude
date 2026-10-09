@@ -10,7 +10,7 @@ import pytest
 from nightcrawler.learn import card
 from nightcrawler.learn.card import EMPTY_KEYS, PRACTICE_HEADLINE, learning_card_state
 from nightcrawler.learn.store import LearnStore, db_path, learn_dir
-from nightcrawler.learn.variants import make_spec, register_seeds
+from nightcrawler.learn.variants import load_seeds, make_spec, register_seeds
 from nightcrawler.models import StrategyParams
 
 NOW = 1_791_475_200.0  # 2026-10-08T16:00Z
@@ -219,7 +219,8 @@ def test_building_the_card_never_loads_the_coin_outbox_or_evidence_rows(settings
         tracemalloc.stop()
     check_shape(state)
     assert state["headline"] == PRACTICE_HEADLINE and state["stats"]["coins_total"] == 3000
-    assert state["stats"]["day"] == 3 and [e["text"][:16] for e in state["events"]] == ["started testing "] * 5
+    assert state["stats"]["day"] == 3
+    assert [e["text"][:16] for e in state["events"]] == ["started testing "] * len(load_seeds())
     assert peak < 2_000_000, f"the card allocated {peak / 1e6:.1f} MB"
 
 
