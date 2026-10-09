@@ -6,6 +6,7 @@ daemon thread. Routes (GET only; anything else -> 405; unknown path -> 404):
 
 * ``/healthz`` -> 200 ``text/plain`` ``ok`` (no auth; Railway health check).
 * ``/api/state`` -> 200 JSON from :func:`build_state` (``Cache-Control: no-store``).
+* ``/office`` -> the animated office (:mod:`nightcrawler.office`), same data and auth as ``/``.
 * ``/`` -> the ONE mobile-first page (:mod:`nightcrawler.page`, via :func:`render_html`): money,
   the team at work, trades, learning, "ready for real money?", receipts and usage, in plain words.
   It refreshes every 15 s from ``/api/page`` while the tab is visible.
@@ -117,6 +118,7 @@ from nightcrawler.config import Settings
 from nightcrawler.http import KV_USAGE, PROVIDERS, host_of, provider_of
 from nightcrawler.logging_setup import get_logger, redact_text
 from nightcrawler.models import LAMPORTS_PER_SOL, Position
+from nightcrawler.office import OFFICE_CSP, render_office_html
 from nightcrawler.page import PAGE_CSP, REFRESH_S, render_page_html
 
 __all__ = [
@@ -158,8 +160,9 @@ _MONTHLY_BUDGETS = {
 # =========================================================================== state
 
 
-def build_state(ledger: Any, settings: Settings, now: float,
-                verify_cache: dict[str, Any] | None = None) -> dict[str, Any]:
+def build_state(
+    ledger: Any, settings: Settings, now: float, verify_cache: dict[str, Any] | None = None
+) -> dict[str, Any]:
     """Assemble the ``/api/state`` JSON (schema in the module docstring) from the ledger ONLY.
 
     No network calls: prices come from what the engine last stored
@@ -233,10 +236,12 @@ def _engine(ledger: Any) -> dict[str, Any]:
     error = ledger.get_kv("engine.last_error")
     if isinstance(error, (dict, list)):
         error = json.dumps(error, sort_keys=True, default=str)
-    return {"heartbeat": _num_or_none(ledger.get_kv("engine.heartbeat")),
-            "started_at": _num_or_none(ledger.get_kv("engine.started_at")),
-            "status": status if isinstance(status, dict) else None,
-            "last_error": _str_or_none(error)}
+    return {
+        "heartbeat": _num_or_none(ledger.get_kv("engine.heartbeat")),
+        "started_at": _num_or_none(ledger.get_kv("engine.started_at")),
+        "status": status if isinstance(status, dict) else None,
+        "last_error": _str_or_none(error),
+    }
 
 
 def _equity(ledger: Any, mode: str, now: float) -> dict[str, Any]:
@@ -248,11 +253,22 @@ def _equity(ledger: Any, mode: str, now: float) -> dict[str, Any]:
     start_lamports = _num_or_none(ledger.get_kv(f"{mode}.start_lamports"))
     start_sol_usd = _num_or_none(ledger.get_kv(f"{mode}.start_sol_usd"))
     start_usd = start_lamports / LAMPORTS_PER_SOL * start_sol_usd if start_lamports and start_sol_usd else None
-    out: dict[str, Any] = {"sol": None, "usd": None, "sol_usd": None, "start_usd": start_usd,
-                           "pnl_today_usd": None, "pnl_today_sol": None, "pnl_total_usd": None, "pnl_total_sol": None,
-                           "pnl_total_trading_usd": None, "sol_price_effect_usd": None,
-                           "curve": [[ts, usd] for ts, usd in ledger.equity_curve(
-                               since=now - CURVE_DAYS * DAY_S, max_points=CURVE_MAX_POINTS, mode=mode)]}
+    out: dict[str, Any] = {
+        "sol": None,
+        "usd": None,
+        "sol_usd": None,
+        "start_usd": start_usd,
+        "pnl_today_usd": None,
+        "pnl_today_sol": None,
+        "pnl_total_usd": None,
+        "pnl_total_sol": None,
+        "pnl_total_trading_usd": None,
+        "sol_price_effect_usd": None,
+        "curve": [
+            [ts, usd]
+            for ts, usd in ledger.equity_curve(since=now - CURVE_DAYS * DAY_S, max_points=CURVE_MAX_POINTS, mode=mode)
+        ],
+    }
     if latest is None:
         return out
     out.update(sol=latest.equity_lamports / LAMPORTS_PER_SOL, usd=latest.equity_usd, sol_usd=latest.sol_usd)
@@ -275,9 +291,11 @@ def _safe_mode(ledger: Any) -> dict[str, Any] | None:
     banner = ledger.get_kv("engine.safe_mode")
     if not isinstance(banner, dict):
         return None
-    return {"problems": [str(x) for x in banner.get("problems") or []],
-            "defaults_used": [str(x) for x in banner.get("defaults_used") or []],
-            "since": _num_or_none(banner.get("since"))}
+    return {
+        "problems": [str(x) for x in banner.get("problems") or []],
+        "defaults_used": [str(x) for x in banner.get("defaults_used") or []],
+        "since": _num_or_none(banner.get("since")),
+    }
 
 
 def _positions(ledger: Any, settings: Settings, mode: str, sol_usd: float | None) -> list[dict[str, Any]]:
@@ -298,13 +316,20 @@ def _position(p: Position, sol_usd: float | None, foreign_wallet: str | None = N
     if p.last_price_usd is not None and sol_usd:
         value = p.value_lamports(p.last_price_usd, sol_usd)
         pnl = p.pnl_lamports(p.last_price_usd, sol_usd)
-    return {"id": p.id, "mint": p.mint, "symbol": p.symbol, "opened_at": p.opened_at,
-            "entry_price_usd": p.entry_price_usd, "last_price_usd": p.last_price_usd,
-            "value_sol": None if value is None else value / LAMPORTS_PER_SOL,
-            "cost_sol": p.cost_lamports / LAMPORTS_PER_SOL,
-            "unrealized_pnl_sol": None if pnl is None else pnl / LAMPORTS_PER_SOL,
-            "unrealized_pnl_pct": pnl / p.cost_lamports * 100.0 if pnl is not None and p.cost_lamports else None,
-            "partial_taken": p.partial_taken, "foreign_wallet": _str_or_none(foreign_wallet)}
+    return {
+        "id": p.id,
+        "mint": p.mint,
+        "symbol": p.symbol,
+        "opened_at": p.opened_at,
+        "entry_price_usd": p.entry_price_usd,
+        "last_price_usd": p.last_price_usd,
+        "value_sol": None if value is None else value / LAMPORTS_PER_SOL,
+        "cost_sol": p.cost_lamports / LAMPORTS_PER_SOL,
+        "unrealized_pnl_sol": None if pnl is None else pnl / LAMPORTS_PER_SOL,
+        "unrealized_pnl_pct": pnl / p.cost_lamports * 100.0 if pnl is not None and p.cost_lamports else None,
+        "partial_taken": p.partial_taken,
+        "foreign_wallet": _str_or_none(foreign_wallet),
+    }
 
 
 def rule_id(reason: str) -> str:
@@ -329,17 +354,26 @@ def _receipts(ledger: Any, now: float, cache: dict[str, Any]) -> dict[str, Any]:
     if not cache or now - cache["verified_at"] >= VERIFY_EVERY_S:
         ok, first_bad = ledger.verify_chain()
         cache.update(verified=ok, first_bad_seq=first_bad, verified_at=now)
-    return {"head_hash": head, "seq": seq, "count": ledger.receipt_count(), "verified": cache["verified"],
-            "first_bad_seq": cache["first_bad_seq"], "verified_at": cache["verified_at"]}
+    return {
+        "head_hash": head,
+        "seq": seq,
+        "count": ledger.receipt_count(),
+        "verified": cache["verified"],
+        "first_bad_seq": cache["first_bad_seq"],
+        "verified_at": cache["verified_at"],
+    }
 
 
 def _judge(ledger: Any, settings: Settings, now: float) -> dict[str, Any]:
     day = ledger.get_kv("judge.cost_usd_day")
     today = _num_or_none(day.get("usd")) if isinstance(day, dict) and day.get("day") == utc_day(now) else None
-    return {"mode": settings.judge_mode, "model": settings.judge_model,
-            "calls": int(_num_or_none(ledger.get_kv("judge.calls")) or 0),
-            "cost_usd_total": _num_or_none(ledger.get_kv("judge.cost_usd_total")) or 0.0,
-            "cost_usd_today": today or 0.0}
+    return {
+        "mode": settings.judge_mode,
+        "model": settings.judge_model,
+        "calls": int(_num_or_none(ledger.get_kv("judge.calls")) or 0),
+        "cost_usd_total": _num_or_none(ledger.get_kv("judge.cost_usd_total")) or 0.0,
+        "cost_usd_today": today or 0.0,
+    }
 
 
 def _usage(ledger: Any, settings: Settings, now: float) -> dict[str, Any]:
@@ -352,8 +386,13 @@ def _usage(ledger: Any, settings: Settings, now: float) -> dict[str, Any]:
     ids = [provider_of(rpc_host, rpc_host), *_USAGE_CORE]
     ids += [p for p in PROVIDERS if p in stored and p not in ids]
     stamps = [v["updated_at"] for v in stored.values() if _num_or_none(v.get("updated_at")) is not None]
-    return {"day": day, "month": day[:7], "warn_pct": USAGE_WARN_PCT, "updated_at": max(stamps, default=None),
-            "providers": [_usage_row(p, stored.get(p, {}), day, ledger, settings) for p in ids]}
+    return {
+        "day": day,
+        "month": day[:7],
+        "warn_pct": USAGE_WARN_PCT,
+        "updated_at": max(stamps, default=None),
+        "providers": [_usage_row(p, stored.get(p, {}), day, ledger, settings) for p in ids],
+    }
 
 
 def _period_counts(entry: dict[str, Any], period: str, key: str) -> dict[str, float]:
@@ -366,26 +405,43 @@ def _period_counts(entry: dict[str, Any], period: str, key: str) -> dict[str, fl
 
 def _usage_row(provider: str, entry: dict[str, Any], day: str, ledger: Any, settings: Settings) -> dict[str, Any]:
     today, month = _period_counts(entry, "day", day), _period_counts(entry, "month", day[:7])
-    row: dict[str, Any] = {"id": provider, "label": PROVIDERS[provider], "unit": "calls", "period": "month",
-                           "calls_today": today.get("calls", 0), "calls_month": month.get("calls", 0),
-                           "used": month.get("calls", 0), "budget": None, "used_pct": None, "level": None,
-                           "tokens_today": None, "tokens_month": None, "cost_usd_today": None, "cost_usd_month": None}
+    row: dict[str, Any] = {
+        "id": provider,
+        "label": PROVIDERS[provider],
+        "unit": "calls",
+        "period": "month",
+        "calls_today": today.get("calls", 0),
+        "calls_month": month.get("calls", 0),
+        "used": month.get("calls", 0),
+        "budget": None,
+        "used_pct": None,
+        "level": None,
+        "tokens_today": None,
+        "tokens_month": None,
+        "cost_usd_today": None,
+        "cost_usd_month": None,
+    }
     if provider == "anthropic":  # budget: JUDGE_MAX_DAILY_USD, measured like the judge enforces it
         judged = ledger.get_kv("judge.cost_usd_day")
         spent = _num_or_none(judged.get("usd")) if isinstance(judged, dict) and judged.get("day") == day else None
         spent = spent if spent is not None else today.get("cost_usd", 0.0)
-        row.update(unit="usd", period="day", used=spent, budget=float(settings.judge_max_daily_usd),
-                   tokens_today=today.get("input_tokens", 0) + today.get("output_tokens", 0),
-                   tokens_month=month.get("input_tokens", 0) + month.get("output_tokens", 0),
-                   cost_usd_today=spent, cost_usd_month=month.get("cost_usd", 0.0))
+        row.update(
+            unit="usd",
+            period="day",
+            used=spent,
+            budget=float(settings.judge_max_daily_usd),
+            tokens_today=today.get("input_tokens", 0) + today.get("output_tokens", 0),
+            tokens_month=month.get("input_tokens", 0) + month.get("output_tokens", 0),
+            cost_usd_today=spent,
+            cost_usd_month=month.get("cost_usd", 0.0),
+        )
     elif provider in _MONTHLY_BUDGETS:
         field_name, unit = _MONTHLY_BUDGETS[provider]
         budget = getattr(settings, field_name)
         row.update(unit=unit, used=month.get(unit, 0), budget=budget if budget > 0 else None)
     if row["budget"]:
         row["used_pct"] = row["used"] / row["budget"] * 100.0
-        row["level"] = ("over" if row["used_pct"] >= 100.0 else
-                        "warn" if row["used_pct"] >= USAGE_WARN_PCT else "ok")
+        row["level"] = "over" if row["used_pct"] >= 100.0 else "warn" if row["used_pct"] >= USAGE_WARN_PCT else "ok"
     return row
 
 
@@ -401,8 +457,8 @@ def render_html(settings: Settings) -> str:
 
 
 _LOCKED_PAGE = (
-    "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\">"
-    "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><title>nightcrawler · locked</title>"
+    '<!doctype html><html lang="en"><head><meta charset="utf-8">'
+    '<meta name="viewport" content="width=device-width, initial-scale=1"><title>nightcrawler · locked</title>'
     "</head><body><h1>Locked</h1><p>This dashboard needs its token. Open the link that ends with "
     "<code>?token=YOUR_DASHBOARD_TOKEN</code>.</p></body></html>"
 ).encode()
@@ -427,7 +483,7 @@ class _Handler(BaseHTTPRequestHandler):
         if parts.path == "/healthz":
             self._send(200, b"ok", "text/plain; charset=utf-8")
             return
-        if parts.path not in ("/", "/api/state", "/api/page", "/team", "/api/team"):
+        if parts.path not in ("/", "/office", "/api/state", "/api/page", "/team", "/api/team"):
             self._send(404, b"not found", "text/plain; charset=utf-8")
             return
         dashboard: DashboardServer = self.server.dashboard  # type: ignore[attr-defined]
@@ -446,6 +502,10 @@ class _Handler(BaseHTTPRequestHandler):
         if parts.path == "/":
             headers.append(("Content-Security-Policy", CONTENT_SECURITY_POLICY))
             self._send(200, dashboard.page, "text/html; charset=utf-8", headers)
+            return
+        if parts.path == "/office":  # the animated office (nightcrawler.office): same data, same auth
+            headers.append(("Content-Security-Policy", OFFICE_CSP))
+            self._send(200, dashboard.office, "text/html; charset=utf-8", headers)
             return
         try:
             body = dashboard.state_json()
@@ -512,9 +572,17 @@ class DashboardServer:
     Whatever it returns is scrubbed of secrets again before it is served.
     """
 
-    def __init__(self, settings: Settings, state_provider: Callable[[], dict[str, Any]],
-                 host: str | None = None, port: int | None = None, team: Any = None) -> None:
-        from nightcrawler.teamroom import TeamRoom  # late: teamroom builds on this module
+    def __init__(
+        self,
+        settings: Settings,
+        state_provider: Callable[[], dict[str, Any]],
+        host: str | None = None,
+        port: int | None = None,
+        team: Any = None,
+    ) -> None:
+        from nightcrawler.teamroom import (
+            TeamRoom,  # late: teamroom builds on this module
+        )
 
         self.team = team if team is not None else TeamRoom(settings)  # /team + /api/team
         self.settings = settings
@@ -524,11 +592,13 @@ class DashboardServer:
         self._thread: threading.Thread | None = None
         self._server: Any = None
         self.page = render_html(settings).encode("utf-8")
+        self.office = render_office_html(settings).encode("utf-8")
         self._secrets = settings.secret_values()
         token = settings.dashboard_token.reveal() if settings.dashboard_token else None
         self._token = token
-        self._cookie_value = (hmac.new(token.encode("utf-8"), _COOKIE_CONTEXT, hashlib.sha256).hexdigest()
-                              if token else None)
+        self._cookie_value = (
+            hmac.new(token.encode("utf-8"), _COOKIE_CONTEXT, hashlib.sha256).hexdigest() if token else None
+        )
 
     # ------------------------------------------------------------------ auth + content
     def authorize(self, query_token: str | None, cookie: str | None) -> tuple[bool, bool]:
@@ -544,8 +614,9 @@ class DashboardServer:
     def cookie_header(self, https: bool) -> str:
         """``Set-Cookie`` value: an HMAC of the token (never the token itself)."""
         secure = "; Secure" if https else ""
-        return (f"{COOKIE_NAME}={self._cookie_value}; Path=/; Max-Age={COOKIE_MAX_AGE_S}; HttpOnly; "
-                f"SameSite=Strict{secure}")
+        return (
+            f"{COOKIE_NAME}={self._cookie_value}; Path=/; Max-Age={COOKIE_MAX_AGE_S}; HttpOnly; SameSite=Strict{secure}"
+        )
 
     def state_json(self) -> bytes:
         """The provider's state, scrubbed, as strict JSON bytes."""
@@ -560,11 +631,16 @@ class DashboardServer:
             return self._thread
         self.team.open()  # stop() closed it
         self._server = _Server((self.host, self.port), self)
-        self._thread = threading.Thread(target=self._server.serve_forever, kwargs={"poll_interval": 0.5},
-                                        name="nightcrawler-dashboard", daemon=True)
+        self._thread = threading.Thread(
+            target=self._server.serve_forever, kwargs={"poll_interval": 0.5}, name="nightcrawler-dashboard", daemon=True
+        )
         self._thread.start()
-        log.info("dashboard_listening host=%s port=%d auth=%s", self.host, self.bound_port,
-                 "token" if self._token else "none")
+        log.info(
+            "dashboard_listening host=%s port=%d auth=%s",
+            self.host,
+            self.bound_port,
+            "token" if self._token else "none",
+        )
         return self._thread
 
     @property
