@@ -66,8 +66,9 @@
    "split": "final_train",
    "debug": true,
    "n": 272,
-   "mean": -0.38468219691710126,
-   "over_variant_limit": false
+   "mean": null,
+   "over_variant_limit": false,
+   "note": "mean scrubbed: debug split (census TRAIN third), returns must stay hidden"
   },
   {
    "utc": "2026-10-08 23:08:56",
@@ -76,8 +77,9 @@
    "split": "final_train",
    "debug": true,
    "n": 272,
-   "mean": -0.38114374111924826,
-   "over_variant_limit": false
+   "mean": null,
+   "over_variant_limit": false,
+   "note": "mean scrubbed: debug split (census TRAIN third), returns must stay hidden"
   },
   {
    "utc": "2026-10-08 23:08:56",
@@ -86,8 +88,9 @@
    "split": "final_train",
    "debug": true,
    "n": 272,
-   "mean": -0.3977744751966777,
-   "over_variant_limit": false
+   "mean": null,
+   "over_variant_limit": false,
+   "note": "mean scrubbed: debug split (census TRAIN third), returns must stay hidden"
   },
   {
    "utc": "2026-10-08 23:37:04",

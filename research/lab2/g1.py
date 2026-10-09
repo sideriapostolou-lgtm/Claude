@@ -786,24 +786,10 @@ def _read_json(p: Path) -> dict | None:
         return None
 
 
-def data_gates(flow: Path | None = None) -> tuple[bool, list[str]]:
-    """PLAN 8 rule 1 (data first): V1 labels, V2 reserve chain >= 99 %, V3 cross-source >= 95 %, V4 ordering."""
-    v = _read_json((flow or C.flow_dir()) / "validation.json")
-    if v is None:
-        return False, ["FLOW/validation.json missing: run research/flow/validate.py first"]
-    bad = []
-    try:
-        if not v["V1"].get("pass"):
-            bad.append("V1 labels failed")
-        if v["V2"]["chain_ok"] / max(v["V2"]["transitions"], 1) < 0.99:
-            bad.append("V2 reserve chain < 99 %")
-        if v["V3"]["both"] / max(v["V3"]["coin_windows"], 1) < 0.95:
-            bad.append("V3 cross-source < 95 %")
-        if not v["V4"].get("pass"):
-            bad.append("V4 ordering failed")
-    except (KeyError, TypeError) as e:
-        bad.append(f"validation.json unreadable: {e!r}")
-    return not bad, bad
+def data_gates(flow: Path | None = None, split: str = "train") -> tuple[bool, list[str]]:
+    """PLAN 8 rule 1 (data first) for ``split``: common.validation_gates (V1-V4 on the split's own dates, validated
+    after that data was fetched)."""
+    return C.validation_gates(split, flow)
 
 
 def coverage_check(cov: Mapping[str, Any]) -> tuple[bool, list[str]]:
@@ -817,11 +803,7 @@ def coverage_check(cov: Mapping[str, Any]) -> tuple[bool, list[str]]:
         if d["curve_hours"] < d["hours_in_split"] or d["b2_hours"] < d["hours_in_split"]:
             notes.append(f"{d['day']}: curve {d['curve_hours']}/{d['hours_in_split']} h, "
                          f"B2 {d['b2_hours']}/{d['hours_in_split']} h")
-    ex = cov.get("excluded") or {}
-    miss = int(ex.get("b2_window_incomplete", 0)) + int(ex.get("no_b2_row", 0))
-    trad = int(cov.get("tradeable") or 0)
-    if trad and miss / trad > 0.05:
-        notes.append(f"{miss}/{trad} tradeable coins lack a complete B2 window")
+    notes += C.coverage_problems(cov)     # mid-run B2 hours, > 5 % missing B2 (incl. pool errors), SOL/USD lookahead
     return not notes, notes
 
 
@@ -858,10 +840,11 @@ def check_prereqs(stage: str, out_dir: Path = OUT_DIR, *, flow: Path | None = No
     lock = _read_json(out_dir / "prereg.lock")
     if lock and lock.get("sha256") != _sha(prereg):
         raise G1Refused("PREREG.md changed after the first TRAIN run; record changes in G1/AMENDMENTS.md instead")
-    ok, bad = data_gates(flow)
-    if not ok:
+    ok, bad = data_gates(flow, STAGE_SPLIT[stage])
+    if not ok and stage != "debug":         # debug checks mechanics only; every real stage needs stop rule 1
         raise G1Refused("PLAN 8 rule 1 (data first): " + "; ".join(bad))
-    info = {"stage": stage, "prereg_sha256": _sha(prereg), "prereg_locked": bool(lock)}
+    info = {"stage": stage, "prereg_sha256": _sha(prereg), "prereg_locked": bool(lock),
+            "data_gates": {"ok": ok, "problems": bad}}
     if stage in ("debug", "train"):
         return info
     runs = _ledger_runs(ledger_path)
@@ -934,10 +917,7 @@ def _days(ds: C.Dataset, complete: bool) -> float:
 
 def _coverage_counts(split: str, flow: Path | None, census: C.Census | None) -> dict:
     """Counts-only coverage of one split (no prices, no returns), like common.coverage_summary."""
-    f = flow or C.flow_dir()
-    g, c, b = (C._read_parquet(f / n) for n in ("graduates.parquet", "b2_coins.parquet", "b2_bars.parquet"))
-    census = census if census is not None else C.Census.load()
-    return C.Dataset.from_frames(split, g, c, b, census=census, guard=False).coverage
+    return C.coverage_dataset(split, flow, census).coverage
 
 
 def run_stage(stage: str, *, out_dir: Path = OUT_DIR, allow_partial: bool = False, ds: C.Dataset | None = None,

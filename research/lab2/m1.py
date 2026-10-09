@@ -47,6 +47,7 @@ CONFIRM or FINAL before TEST, PLAN 8 data gates V1-V4, PREREG frozen after the f
 from __future__ import annotations
 
 import argparse
+import contextlib
 import hashlib
 import json
 import math
@@ -99,7 +100,10 @@ ALLOWED_CLASSES = ("OPERATOR", "OTHER")
 AGE_MIN_S = 1800.0          # PLAN: age >= 30 min
 AGE_MAX_S = 7200.0          # data: B2 bars end at g + 180 min; entries stop at g + 120 min (>= 60 min of hold data)
 STOP_PCT = 0.10
-MAX_HOLD_S = 6 * 3600.0     # PLAN 6 h; the B2 horizon (g + 179 min) truncates it ("horizon" exits are reported)
+MAX_HOLD_S = 6 * 3600.0     # PLAN 6 h. B2 ends at g + 180 min, so the 6 h hold cannot be simulated: see EXIT_BY_AGE_S
+EXIT_BY_AGE_S = 178 * 60.0  # REGISTERED deadline (PREREG amendment 1): sell no later than g + 178 min (fills by
+                            # g + 179 min, inside the data). This is the rule M1 tests and would deploy; it never
+                            # exits on the data horizon, so no trade is censored and the rug criterion sees whole holds
 SIZE_USD = 20.0
 M_GRID = (1.0, 2.0)
 EXIT_GRID = ("rhythm", "rhythm+prec")
@@ -127,7 +131,7 @@ FIXED = {
     "steady_max_cv": STEADY_MAX_CV, "spearman_max": SPEARMAN_MAX, "carry_frac": CARRY_FRAC,
     "alive_bars": ALIVE_BARS, "rhythm_bars": RHYTHM_BARS, "mech_age_min": MECH_AGE_MIN, "dump_frac_x": DUMP_FRAC_X, "lp_frac_y": LP_FRAC_Y,
     "classes": list(ALLOWED_CLASSES), "age_min_s": AGE_MIN_S, "age_max_s": AGE_MAX_S, "stop_pct": STOP_PCT,
-    "max_hold_s": MAX_HOLD_S, "size_usd": SIZE_USD,
+    "max_hold_s": MAX_HOLD_S, "exit_by_age_s": EXIT_BY_AGE_S, "size_usd": SIZE_USD, "placebo": "class-matched",
     "fill": "common.FillConfig() default: worst, latency 30 s, entry-bar exits",
 }
 
@@ -385,13 +389,23 @@ def strategy(snap: C.AsOf, p: Mapping[str, Any], pos: C.PositionView | None):
     ok, info = entry_decision(snap, p, cls)
     if not ok:
         return None
-    return C.Enter(exits=C.ExitSpec(stop_pct=STOP_PCT, max_hold_s=MAX_HOLD_S), tag=cls,
+    return C.Enter(exits=C.ExitSpec(stop_pct=STOP_PCT, max_hold_s=MAX_HOLD_S, exit_by_age_s=EXIT_BY_AGE_S), tag=cls,
                    state={"floor": info["floor"]})
 
 
 def placebo_ok(snap: C.AsOf) -> bool:
     """Matched random control universe (PLAN 3.4 'same eligible coins'): an allowed class and alive."""
     return m1_class(snap) in ALLOWED_CLASSES and snap.alive()
+
+
+def placebo_stratum(snap: C.AsOf) -> str | None:
+    """The placebo is matched on the M1 class: an OPERATOR signal draws OPERATOR coins, an OTHER signal OTHER coins.
+    The detector mostly fires on OPERATOR coins, so an unmatched control would measure 'operator coins vs decaying
+    organic coins' instead of the detector's timing (the unmatched control is still reported)."""
+    return m1_class(snap)
+
+
+PLACEBO_CONTROLS = {"unmatched": {"eligible": placebo_ok, "strata": None}}
 
 
 # =========================================================================== MECH-wallet (PLAN verbatim; diagnostic)
@@ -682,23 +696,27 @@ def evaluate(res: C.Result, ds: C.Dataset, clusters: Mapping[str, str], *, B: in
     """Per-config report. On the debug split: counts only (n, coins, classes, exit reasons) -- never returns."""
     t = res.trades
     rugs = rug_hits(ds, t) if (len(t) and not hide) else np.zeros(0, bool)
+    cens = (t["reason"] == "horizon").to_numpy(bool) if len(t) else np.zeros(0, bool)
     base = {"config": config_key(res.meta["params"]), "params_hash": C.params_hash(res.meta["params"]),
             "hypothesis": res.meta["hypothesis"], "n": int(len(t)), "n_coins": int(t["mint"].nunique()) if len(t) else 0,
-            "by_class_n": t["tag"].value_counts().to_dict() if len(t) else {},
-            "reasons": t["reason"].value_counts().to_dict() if len(t) else {}, "n_placebo": int(len(res.placebo)),
+            "by_class_n": t["tag"].value_counts().to_dict() if len(t) else {}, "n_placebo": int(len(res.placebo)),
             "n_clusters": int(pd.Series(t["mint"].map(clusters)).nunique()) if len(t) else 0,
-            "horizon_exits": int((t["reason"] == "horizon").sum()) if len(t) else 0,
+            "horizon_exits": int(cens.sum()), "censored": int(cens.sum()),
             "trial": {k: res.meta.get(k) for k in ("config", "new_trial", "n_trials_total")}}
-    if hide:     # rug hits are an outcome label: hidden like returns
+    if hide:     # rug hits and exit reasons (stop vs time) are outcome labels: hidden like returns
         base["returns"] = "hidden on the debug split (never choose parameters on FINAL data)"
         return base
+    base["reasons"] = t["reason"].value_counts().to_dict() if len(t) else {}
     base["rug_hits"] = int(rugs.sum())
     d = C.describe(t, B=B, n_trials_total=n_trials_total)
     base.update({k: d.get(k) for k in ("mean", "median", "win_rate", "sd", "ci90", "ci95", "top_coin_share",
                                         "top3_coin_share", "mean_without_top2", "halves", "mean_hold_min",
                                         "deflated_sharpe")})
     base["rug_rate"] = float(rugs.mean()) if len(t) else None
+    base["rug_rate_uncensored"] = float(rugs[~cens].mean()) if (~cens).any() else None   # whole holds only
     base["placebo"] = C.placebo_compare(t, res.placebo, B=B) if len(res.placebo) and len(t) else None
+    pu = res.controls.get("unmatched") if res.controls else None
+    base["placebo_unmatched"] = C.placebo_compare(t, pu, B=B) if pu is not None and len(pu) and len(t) else None
     base["stress"] = {k: C.describe(v, B=200).get("mean") for k, v in res.stress.items()}
     base["portfolio"] = {k: v for k, v in C.portfolio_sim(t).items() if k != "skipped_mints"}
     base["clusters"] = _cluster_stats(t, clusters, B)
@@ -720,7 +738,9 @@ def m1_extras(ev_cand: Mapping[str, Any], ev_twin: Mapping[str, Any] | None) -> 
     mw = cl.get("mean_without_largest")
     out.append({"id": "M1.3", "name": "mean > 0 without the largest cluster", "pass": None if mw is None else bool(mw > 0),
                 "value": mw})
-    rc, rt = ev_cand.get("rug_rate"), (ev_twin or {}).get("rug_rate")
+    # measured on whole holds only: a hold cut by the data horizon cannot show the rug that ends it
+    rc = ev_cand.get("rug_rate_uncensored", ev_cand.get("rug_rate"))
+    rt = (ev_twin or {}).get("rug_rate_uncensored", (ev_twin or {}).get("rug_rate"))
     if rc is None or rt is None:
         p = None
     elif rt == 0:
@@ -738,13 +758,14 @@ def combine_verdict(base: Mapping[str, Any], extras: list[dict]) -> str:
     if base.get("auto_rejections"):
         return "REJECTED"
     crit = {c["id"]: c["pass"] for c in base["criteria"] if c["id"] != 9}
+    censored_ok = crit.pop(10, True)            # > 10 % horizon exits: the registered rule was not simulated
     if not crit.get(1) or extras[0]["pass"] is False:
         return "UNDERPOWERED"
     rest = [v for k, v in crit.items() if k != 1]
     if any(v is False for v in rest) or any(e["pass"] is False for e in extras[1:]):
         return "FAIL"
-    if any(v is None for v in rest) or any(e["pass"] is None and e.get("blocking_when_none", True)
-                                           for e in extras[1:]):
+    if any(v is None for v in rest) or censored_ok is not True or any(
+            e["pass"] is None and e.get("blocking_when_none", True) for e in extras[1:]):
         return "INCOMPLETE"
     return "PASS"
 
@@ -821,24 +842,10 @@ def _read_json(p: Path) -> dict | None:
         return None
 
 
-def data_gates(flow: Path | None = None) -> tuple[bool, list[str]]:
-    """PLAN 8 rule 1 (data first): V1 labels, V2 reserve chain >= 99 %, V3 cross-source >= 95 %, V4 ordering."""
-    v = _read_json((flow or C.flow_dir()) / "validation.json")
-    if v is None:
-        return False, ["FLOW/validation.json missing: run research/flow/validate.py first"]
-    bad = []
-    try:
-        if not v["V1"].get("pass"):
-            bad.append("V1 labels failed")
-        if v["V2"]["chain_ok"] / max(v["V2"]["transitions"], 1) < 0.99:
-            bad.append("V2 reserve chain < 99 %")
-        if v["V3"]["both"] / max(v["V3"]["coin_windows"], 1) < 0.95:
-            bad.append("V3 cross-source < 95 %")
-        if not v["V4"].get("pass"):
-            bad.append("V4 ordering failed")
-    except (KeyError, TypeError) as e:
-        bad.append(f"validation.json unreadable: {e!r}")
-    return not bad, bad
+def data_gates(flow: Path | None = None, split: str = "train") -> tuple[bool, list[str]]:
+    """PLAN 8 rule 1 (data first) for ``split``: common.validation_gates (V1-V4 on the split's own dates, validated
+    after that data was fetched)."""
+    return C.validation_gates(split, flow)
 
 
 def coverage_check(cov: Mapping[str, Any]) -> tuple[bool, list[str]]:
@@ -852,11 +859,7 @@ def coverage_check(cov: Mapping[str, Any]) -> tuple[bool, list[str]]:
         if d["curve_hours"] < d["hours_in_split"] or d["b2_hours"] < d["hours_in_split"]:
             notes.append(f"{d['day']}: curve {d['curve_hours']}/{d['hours_in_split']} h, "
                          f"B2 {d['b2_hours']}/{d['hours_in_split']} h")
-    ex = cov.get("excluded") or {}
-    miss = int(ex.get("b2_window_incomplete", 0)) + int(ex.get("no_b2_row", 0))
-    trad = int(cov.get("tradeable") or 0)
-    if trad and miss / trad > 0.05:
-        notes.append(f"{miss}/{trad} tradeable coins lack a complete B2 window")
+    notes += C.coverage_problems(cov)     # mid-run B2 hours, > 5 % missing B2 (incl. pool errors), SOL/USD lookahead
     return not notes, notes
 
 
@@ -899,10 +902,11 @@ def check_prereqs(stage: str, out_dir: Path = OUT_DIR, *, flow: Path | None = No
     if lock and lock.get("sha256") != _sha(prereg):
         raise M1Refused("PREREG.md changed after the first official TRAIN run; record changes in M1/AMENDMENTS.md "
                         "as a new version instead")
-    ok, bad = data_gates(flow)
-    if not ok:
+    ok, bad = data_gates(flow, STAGE_SPLIT[stage])
+    if not ok and stage != "debug":         # debug checks mechanics only; every real stage needs stop rule 1
         raise M1Refused("PLAN 8 rule 1 (data first): " + "; ".join(bad))
-    info = {"stage": stage, "prereg_sha256": _sha(prereg), "prereg_locked": bool(lock)}
+    info = {"stage": stage, "prereg_sha256": _sha(prereg), "prereg_locked": bool(lock),
+            "data_gates": {"ok": ok, "problems": bad}}
     if stage == "debug":
         return info
     train = _read_json(out_dir / "train.json")
@@ -976,12 +980,9 @@ def _jsonable(o: Any) -> Any:
 
 
 def _coverage_counts(split: str, flow: Path | None, census: C.Census | None) -> dict:
-    f = flow or C.flow_dir()
-    g, c, b = (C._read_parquet(f / n) for n in ("graduates.parquet", "b2_coins.parquet", "b2_bars.parquet"))
-    census = census if census is not None else C.Census.load()
     if split == "final":
-        return {s: C.Dataset.from_frames(s, g, c, b, census=census, guard=False).coverage for s in C.FINAL_SPLITS}
-    return C.Dataset.from_frames(split, g, c, b, census=census, guard=False).coverage
+        return {s: C.coverage_dataset(s, flow, census).coverage for s in C.FINAL_SPLITS}
+    return C.coverage_dataset(split, flow, census).coverage
 
 
 def _span_days(ds: C.Dataset) -> float:
@@ -1044,88 +1045,115 @@ def run_stage(stage: str, *, out_dir: Path = OUT_DIR, allow_partial: bool = Fals
     configs = stage_configs(stage, out_dir, shortlist_path)
     if not configs or any(p is None for _, _, p in configs):
         raise M1Refused("no configs to run (shortlist missing or malformed)")
-    if not debug:   # commit: every (hypothesis, config) is allowed BEFORE any data is read
-        try:
-            for _, h, p in configs:
-                C._check_run_allowed(h, p, split, ledger_path, shortlist_path)
-        except C.SplitLocked as e:
-            raise M1Refused(str(e)) from e
-    if stage == "train" and not provisional:
-        out_dir.mkdir(parents=True, exist_ok=True)
-        if not (out_dir / "prereg.lock").exists():
-            (out_dir / "prereg.lock").write_text(json.dumps({"sha256": info["prereg_sha256"],
-                                                             "locked_utc": C.utc_str(time.time())}, indent=1))
-        if rerun_reason and (out_dir / "train.json").exists():      # archive, never overwrite, an official run
-            stamp = time.strftime("%Y%m%dT%H%M%S", time.gmtime())
-            for ext in ("json", "md"):
-                p = out_dir / f"train.{ext}"
-                if p.exists():
-                    p.rename(out_dir / f"train_prev_{stamp}.{ext}")
-    if ds is None:
-        ds = C.load(split, flow=flow, census=census, _internal=(split == "val"))
-    ctab = cluster_table(ds)
-    clusters = dict(zip(ctab["mint"], ctab["cluster"]))
-    allowed = ctab[ctab["cls"].isin(ALLOWED_CLASSES)]
-    doc: dict[str, Any] = {"hypothesis": HYP, "version": VERSION, "stage": stage, "split": split,
-                           "utc": C.utc_str(time.time()), "provisional": provisional, "debug_only": debug,
-                           "prereg_sha256": info["prereg_sha256"], "rerun_reason": rerun_reason,
-                           "coverage": cov, "n_coins": len(ds), "span_days": _span_days(ds),
-                           "allowed_coins": {str(k): int(v) for k, v in allowed["cls"].value_counts().items()},
-                           "clusters_allowed": int(allowed["cluster"].nunique()),
-                           "clusters_operator": int(allowed.loc[allowed["cls"] == "OPERATOR", "cluster"].nunique())}
-    # ---- model check (TRAIN: before any P&L; debug: counts only)
-    if stage in ("train", "debug"):
-        obs = model_check_obs(ds)
-        mc = model_check(obs, B=min(B, 2000), hide=debug, clusters=clusters)
-        doc["model_check"] = mc
-        mc_run = C.record_run(HYP_MC, MC_PARAMS, split, {"n": mc["n_obs"], "mean": None}, ledger_path, debug=debug)
-        doc["model_check"]["trial"] = mc_run
+
+    def _execute(ds: C.Dataset | None) -> dict:
+        if not debug:   # commit: every (hypothesis, config) is allowed BEFORE any data is read
+            try:
+                for _, h, p in configs:
+                    C._check_run_allowed(h, p, split, ledger_path, shortlist_path)
+            except C.SplitLocked as e:
+                raise M1Refused(str(e)) from e
+        if stage == "train" and not provisional:
+            out_dir.mkdir(parents=True, exist_ok=True)
+            if not (out_dir / "prereg.lock").exists():
+                (out_dir / "prereg.lock").write_text(json.dumps({"sha256": info["prereg_sha256"],
+                                                                 "locked_utc": C.utc_str(time.time())}, indent=1))
+            if rerun_reason and (out_dir / "train.json").exists():      # archive, never overwrite, an official run
+                stamp = time.strftime("%Y%m%dT%H%M%S", time.gmtime())
+                for ext in ("json", "md"):
+                    p = out_dir / f"train.{ext}"
+                    if p.exists():
+                        p.rename(out_dir / f"train_prev_{stamp}.{ext}")
+        if ds is None:
+            ds = C.load(split, flow=flow, census=census, _internal=(split == "val"))
+        ctab = cluster_table(ds)
+        clusters = dict(zip(ctab["mint"], ctab["cluster"]))
+        allowed = ctab[ctab["cls"].isin(ALLOWED_CLASSES)]
+        doc: dict[str, Any] = {"hypothesis": HYP, "version": VERSION, "stage": stage, "split": split,
+                               "utc": C.utc_str(time.time()), "provisional": provisional, "debug_only": debug,
+                               "prereg_sha256": info["prereg_sha256"], "rerun_reason": rerun_reason,
+                               "coverage": cov, "n_coins": len(ds), "span_days": _span_days(ds),
+                               "allowed_coins": {str(k): int(v) for k, v in allowed["cls"].value_counts().items()},
+                               "clusters_allowed": int(allowed["cluster"].nunique()),
+                               "clusters_operator": int(allowed.loc[allowed["cls"] == "OPERATOR", "cluster"].nunique())}
+        # ---- model check (TRAIN: before any P&L; debug: counts only)
+        if stage in ("train", "debug"):
+            obs = model_check_obs(ds)
+            mc = model_check(obs, B=min(B, 2000), hide=debug, clusters=clusters)
+            doc["model_check"] = mc
+            mc_run = C.record_run(HYP_MC, MC_PARAMS, split, {"n": mc["n_obs"], "mean": None}, ledger_path, debug=debug)
+            doc["model_check"]["trial"] = mc_run
+            if debug:
+                doc["event_counts"] = _event_counts(ds)
+            elif mc["decision"] != "PASS":
+                v = "KILLED_MODEL_CHECK" if mc["decision"] == "KILL" else "UNDERPOWERED_MODEL_CHECK"
+                doc["decision"] = {"verdict": v, "shortlist_written": False,
+                                   "note": "PLAN 4.5: the model check precedes any P&L; the grid was not run"}
+                return _finish(doc, out_dir, stage, provisional, t0, ledger_path)
+        # ---- the configs
+        results: dict[str, C.Result] = {}
+        for role, h, p in configs:
+            results[role] = C.backtest(strategy, split, p, hypothesis=h, ds=ds, placebo=True, n_placebo=n_placebo,
+                                       placebo_eligible=placebo_ok, placebo_strata=placebo_stratum,
+                                       placebo_controls=PLACEBO_CONTROLS, stress=STRESS, declarations=DECL,
+                                       ledger_path=ledger_path, shortlist_path=shortlist_path)
+        n_tr = C.n_trials(ledger_path)
+        evals = {role: evaluate(r, ds, clusters, B=B, hide=debug, n_trials_total=n_tr) for role, r in results.items()}
+        doc["configs"] = evals
+        doc["n_trials_total"] = n_tr
+        if not debug:
+            _write_trades(out_dir, stage, provisional, results)
         if debug:
-            doc["event_counts"] = _event_counts(ds)
-        elif mc["decision"] != "PASS":
-            v = "KILLED_MODEL_CHECK" if mc["decision"] == "KILL" else "UNDERPOWERED_MODEL_CHECK"
-            doc["decision"] = {"verdict": v, "shortlist_written": False,
-                               "note": "PLAN 4.5: the model check precedes any P&L; the grid was not run"}
-            return _finish(doc, out_dir, stage, provisional, t0, ledger_path)
-    # ---- the configs
-    results: dict[str, C.Result] = {}
-    for role, h, p in configs:
-        results[role] = C.backtest(strategy, split, p, hypothesis=h, ds=ds, placebo=True, n_placebo=n_placebo,
-                                   placebo_eligible=placebo_ok, stress=STRESS, declarations=DECL,
-                                   ledger_path=ledger_path, shortlist_path=shortlist_path)
-    n_tr = C.n_trials(ledger_path)
-    evals = {role: evaluate(r, ds, clusters, B=B, hide=debug, n_trials_total=n_tr) for role, r in results.items()}
-    doc["configs"] = evals
-    doc["n_trials_total"] = n_tr
-    if not debug:
-        _write_trades(out_dir, stage, provisional, results)
-    if debug:
-        days = doc["span_days"]
-        doc["entries_per_day"] = {k: (e["n"] / days if days == days and days > 0 else None) for k, e in evals.items()}
-        doc["decision"] = {"verdict": "DEBUG", "note": "mechanics only; returns hidden"}
-    elif stage == "train":
-        dec = decide_train(evals)
-        dec["shortlist_written"] = False
-        if dec["verdict"] == "SHORTLISTED" and not provisional:
-            C.write_shortlist(HYP, dec["shortlist"], path=shortlist_path, ledger_path=ledger_path,
-                              note=f"{VERSION}: PREREG 7 pair rule, m* = {dec['m_star']:g}")
-            dec["shortlist_written"] = True
-        doc["decision"] = dec
-    elif stage == "val":
-        doc["decision"] = decide_val(evals["candidate"])
-    elif stage in ("test", "confirm"):
-        val_t = _read_trades(out_dir, "val", "candidate")
-        val_res = C.Result(trades=val_t, placebo=C._frame([]), stress={}, meta={}) if val_t is not None else None
-        base = C.verdict_entry(results["candidate"], val=val_res, min_mean=PASS_MIN_MEAN, B=B)
-        extras = m1_extras(evals["candidate"], evals.get("twin"))
-        doc["verdict"] = {"verdict": combine_verdict(base, extras), "base": base, "m1_extras": extras}
-        doc["decision"] = doc["verdict"]
-    elif stage == "final":
-        t = results["candidate"].trades
-        doc["decision"] = {"verdict": "REPORTED", "mean_positive": None if not len(t) else bool(t["ret_net"].mean() > 0),
-                           "n": int(len(t)), "per_third": {s: {"n": int(len(g)), "mean": float(g["ret_net"].mean())}
-                                                          for s, g in t.groupby("split")} if len(t) else {}}
-    return _finish(doc, out_dir, stage, provisional, t0, ledger_path)
+            days = doc["span_days"]
+            doc["entries_per_day"] = {k: (e["n"] / days if days == days and days > 0 else None) for k, e in evals.items()}
+            doc["decision"] = {"verdict": "DEBUG", "note": "mechanics only; returns hidden"}
+        elif stage == "train":
+            dec = decide_train(evals)
+            dec["shortlist_written"] = False
+            if dec["verdict"] == "SHORTLISTED" and not provisional:
+                C.write_shortlist(HYP, dec["shortlist"], path=shortlist_path, ledger_path=ledger_path,
+                                  note=f"{VERSION}: PREREG 7 pair rule, m* = {dec['m_star']:g}")
+                dec["shortlist_written"] = True
+            doc["decision"] = dec
+        elif stage == "val":
+            doc["decision"] = decide_val(evals["candidate"])
+        elif stage in ("test", "confirm"):
+            val_t = _read_trades(out_dir, "val", "candidate")
+            val_res = C.Result(trades=val_t, placebo=C._frame([]), stress={}, meta={}) if val_t is not None else None
+            base = C.verdict_entry(results["candidate"], val=val_res, min_mean=PASS_MIN_MEAN, B=B)
+            extras = m1_extras(evals["candidate"], evals.get("twin"))
+            doc["verdict"] = {"verdict": combine_verdict(base, extras), "base": base, "m1_extras": extras}
+            doc["decision"] = doc["verdict"]
+        elif stage == "final":
+            doc["decision"] = final_decision(results["candidate"].trades)
+        return _finish(doc, out_dir, stage, provisional, t0, ledger_path)
+
+    session = (C.one_shot_session(HYP, split, ledger_path, note=f"m1 --stage {stage}")
+               if split in C.ONE_RUN_SPLITS else contextlib.nullcontext())
+    try:
+        with session:           # TEST / CONFIRM / FINAL: the family's ONE look (candidate + twin inside it)
+            return _execute(ds)
+    except C.SplitLocked as e:
+        raise M1Refused(str(e)) from e
+
+
+FINAL_JUDGED = ("final_val", "final_test")
+FINAL_DESIGN = "final_train"
+
+
+def final_decision(t: pd.DataFrame) -> dict:
+    """PLAN 3.5 item 9 on the census thirds M1 never looked at. The MECH-bar detector was redesigned on the census
+    TRAIN third (PREREG 13: the steadiness test and the cluster linking), so that third is reported apart and never
+    counts towards the FINAL criterion."""
+    judged = t[t["split"].isin(FINAL_JUDGED)] if len(t) else t
+    design = t[t["split"] == FINAL_DESIGN] if len(t) else t
+    per = {s: {"n": int(len(g)), "mean": float(g["ret_net"].mean())} for s, g in t.groupby("split")} if len(t) else {}
+    return {"verdict": "REPORTED", "judged_on": list(FINAL_JUDGED), "n": int(len(judged)),
+            "mean": float(judged["ret_net"].mean()) if len(judged) else None,
+            "mean_positive": None if not len(judged) else bool(judged["ret_net"].mean() > 0), "per_third": per,
+            "design_third": {"n": int(len(design)),
+                             "mean": float(design["ret_net"].mean()) if len(design) else None,
+                             "note": "census TRAIN third: used for detector design (PREREG 13), not judged"}}
 
 
 def _trades_path(out_dir: Path, stage: str, provisional: bool) -> Path:

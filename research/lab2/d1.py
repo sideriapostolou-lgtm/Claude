@@ -969,8 +969,7 @@ def b1_mints() -> set[str] | None:
 def b1_coverage(split: str) -> dict[str, Any]:
     """Counts only (no prices): usable coins of ``split`` that P4 should have collected (creation scanned, graduated
     > 5 s after creation), and how many have B1 rows."""
-    g, c, b = _read_flow()
-    ds = C.Dataset.from_frames(split, g, c, b, census=C.Census.load(), guard=False)
+    ds = C.coverage_dataset(split)
     co = ds.coins
     elig = co[(~co["curve_partial"].astype(bool)) & (co["grad_delay_s"].fillna(-1) > G1_INSTANT_MAX_DELAY_S)]
     have = b1_mints()
@@ -979,19 +978,14 @@ def b1_coverage(split: str) -> dict[str, Any]:
             "with_b1": n_have, "frac": round(n_have / len(elig), 4) if len(elig) else 0.0,
             "coverage_complete": bool(ds.coverage.get("complete")), "coverage_usable": ds.coverage.get("usable"),
             "days_full": ds.coverage.get("days_full"), "days_expected": ds.coverage.get("days_expected"),
-            "chain_hours_scanned_frac": ds.coverage.get("chain_hours_scanned_frac")}
+            "chain_hours_scanned_frac": ds.coverage.get("chain_hours_scanned_frac"),
+            "contract_problems": C.coverage_problems(ds.coverage)}
 
 
-def validation_gates() -> tuple[bool, list[str]]:
-    """PLAN stop rule 1: V1-V4 must have passed (FLOW/validation.json)."""
-    p = C.flow_dir() / "validation.json"
-    try:
-        v = json.loads(p.read_text())
-    except (OSError, ValueError):
-        return False, ["FLOW/validation.json missing"]
-    bad = [f"{k}: {(v.get(k) or {}).get('pass')}" for k in ("V1", "V2", "V3", "V4")
-           if not isinstance(v.get(k), dict) or v[k].get("pass") is not True]
-    return not bad, bad
+def validation_gates(split: str = "train") -> tuple[bool, list[str]]:
+    """PLAN stop rule 1 for ``split``: common.validation_gates (V1-V4 on the split's own dates, validated after
+    that data was fetched)."""
+    return C.validation_gates(split)
 
 
 def check_data(split: str, allow_partial: bool = False) -> dict[str, Any]:
@@ -1005,9 +999,10 @@ def check_data(split: str, allow_partial: bool = False) -> dict[str, Any]:
     elif cov["frac"] < B1_MIN_COVERAGE:
         problems.append(f"B1 covers {cov['with_b1']}/{cov['b1_eligible']} eligible {split} coins "
                         f"(< {B1_MIN_COVERAGE:.0%})")
-    gates_ok, bad = validation_gates()
+    problems += cov.get("contract_problems") or []      # mid-run B2 hours, missing B2, SOL/USD lookahead
+    gates_ok, bad = validation_gates(split)
     if not gates_ok:
-        problems.append(f"validation gates not all PASS: {bad}")
+        problems.append(f"validation gates not all PASS (stop rule 1): {bad}")
     cov["problems"] = problems
     if problems and not allow_partial:
         raise StageRefused("data not ready: " + "; ".join(problems))
@@ -1191,8 +1186,9 @@ def stage_status() -> dict[str, Any]:
             out["stages"][st] = "prerequisites met (data checked at run time)"
         except StageRefused as e:
             out["stages"][st] = f"refused: {e}"
-    gok, bad = validation_gates()
-    out["validation_gates_ok"], out["validation_problems"] = gok, bad
+    gates = {sp: validation_gates(sp) for sp in ("train", "val", "test", "confirm", "final_test")}
+    out["validation_gates_ok"] = {sp: g[0] for sp, g in gates.items()}
+    out["validation_problems"] = {sp: g[1] for sp, g in gates.items() if not g[0]}
     md = ["# D1 status", "", f"- version `{VERSION}`, PREREG locked: {out['prereg_locked']}, trials so far: "
           f"{out['n_trials_total']}", "", "| split | usable | B1-eligible | with B1 | B2 complete |", "|---|---:|---:|---:|---|"]
     for s, c in out["splits"].items():

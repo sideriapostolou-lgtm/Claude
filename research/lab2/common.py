@@ -80,11 +80,13 @@ import calendar
 import contextlib
 import dataclasses
 import fcntl
+import gzip
 import hashlib
 import importlib.util
 import json
 import math
 import os
+import re
 import sys
 import time
 import warnings
@@ -162,6 +164,10 @@ WSOL = "So11111111111111111111111111111111111111112"
 MAYHEM_RSOL = 80.0
 SLOW_CREATE_LOOKBACK_S = 1800  # has_create = 0  =>  created < g_ts - 1800 (curve scan lookback)
 PLACEBO_AGE_TOL_S = 120        # PLAN 3.4: random entry within +-2 min of the same age
+B2_HORIZON_S = 60 * N_BARS     # backfill.HORIZON_S: B2 holds [g, g + 180 min) of every pool
+V_MIGRATION_SOL = 17.584505289  # PumpSwap virtual quote reserve of 2026-10 migration pools (fallback only)
+BLOCK_S = 6 * 3600             # PLAN 3.4 day-block bootstrap: 6-hour blocks (TEST / VAL span only 1.3-1.5 days)
+MAX_CENSORED_SHARE = 0.10      # a verdict cannot PASS when more trades than this end at the data horizon
 
 # Pooled program accounts that appear as the event `user` but sign for many people (audit 3.6). Exclude them
 # from wallet features, repeat-buyer counts, orphan / TRANSFEREE logic. Extend via research/lab2/pooled_accounts.json.
@@ -209,6 +215,10 @@ ONE_RUN_SPLITS = frozenset({"test", "confirm", "final", "final_val", "final_test
 
 class SplitLocked(PermissionError):
     """A guarded split was requested without its permission (env flag, shortlist or one-run rule)."""
+
+
+class DataNotReady(SplitLocked):
+    """The data a run would use breaks the data contract (SOL/USD lookahead, mid-run hours, stop rule 1)."""
 
 
 class ForbiddenFeature(KeyError):
@@ -527,7 +537,7 @@ class CoinData:
     row: Mapping[str, Any]
     arr: Mapping[str, np.ndarray]
     agent_nan: np.ndarray
-    init_X: float
+    init_X: float                # pricing reserve before the first pool trade: pool_quote0 + virtual reserve
     init_y: float
     legal: Mapping[str, float]
     split: str
@@ -551,6 +561,11 @@ class CoinData:
 
 
 def _dense(bars: pd.DataFrame, m0: int, init_X: float, init_y: float) -> dict[str, np.ndarray]:
+    """Dense per-minute arrays. ``init_X`` is the PRICING reserve before the first pool trade (x0 + v).
+
+    B2 prices the pool's first trade(s) without the virtual reserve: the first traded bar's ``open`` is x0 / y0 and
+    its ``low`` mixes no-v prices (both ~17 % low on the census day; closes are exact). That bar's open is therefore
+    rebuilt from the initial reserves and its low is cut to the body (min(open, close)): no wick information."""
     out = {k: np.zeros(N_BARS) for k in BAR_ARRAYS}
     idx = ((bars["minute_ts"].to_numpy(np.int64) - m0) // 60).astype(np.int64)
     ok = (idx >= 0) & (idx < N_BARS)
@@ -568,9 +583,14 @@ def _dense(bars: pd.DataFrame, m0: int, init_X: float, init_y: float) -> dict[st
     xr[idx], yc[idx] = b["x_close"].to_numpy(float), b["y_close"].to_numpy(float)
     last_c, last_y, last_x = init_X / init_y, init_y, None
     X = np.empty(N_BARS)
+    first = True
     for i in range(N_BARS):
         if traded[i] and np.isfinite(c[i]) and np.isfinite(yc[i]) and yc[i] > 0:
             last_c, last_y, last_x = c[i], yc[i], xr[i]
+            if first:                       # the pre-first-trade price is the initial pool (see docstring)
+                o[i] = init_X / init_y
+                l[i] = min(o[i], c[i])
+                first = False
             if not np.isfinite(o[i]):
                 o[i] = c[i]
             h[i] = max(h[i], o[i], c[i]) if np.isfinite(h[i]) else max(o[i], c[i])
@@ -594,6 +614,160 @@ def _b2_hours(bars: pd.DataFrame) -> set[int]:
 def _hours_needed(g: float) -> list[int]:
     m0 = int(g) // 60 * 60
     return list(range(m0 // 3600 * 3600, (m0 + 60 * N_BARS - 1) // 3600 * 3600 + 1, 3600))
+
+
+# =========================================================================== completeness of the Parquet snapshot
+
+
+@dataclass(frozen=True)
+class Completeness:
+    """Which B2 (pool, chain hour) cells and which curve hours the Parquet snapshot holds COMPLETELY.
+
+    ``source="raw_chunks"`` (:func:`completeness_from_flow`): a cell is ``ok`` only when B2 chunks consolidated into
+    the Parquet (file mtime <= the Parquet's) cover the whole hour for that pool. The backfill splits timed-out hours
+    into halves and stops between them, and marks pools done WITH an error ("timeout at minimum chunk", "too large
+    for one pool"), so "some bar exists in this hour" does not mean every pool's hour is there; a missing half would
+    otherwise become frozen, zero-volume bars. ``source="bars_only"`` (synthetic frames, :meth:`from_bars`) keeps
+    the old hour-level rule: an hour with any bar is complete for every pool."""
+
+    source: str
+    bar_hours: frozenset                       # chain hours with >= 1 bar in the Parquet
+    cells: frozenset | None                    # {(pool, hour)} fully covered; None = hour-level rule
+    errors: Mapping                            # {(pool, hour): message} the backfill gave up on
+    curve_hours: frozenset | None              # fully scanned curve hours; None = hours holding a graduate
+    b2_fetched: Mapping                        # chain hour -> newest consolidated B2 chunk fetch time (epoch s)
+    snapshot_utc: str | None
+
+    @classmethod
+    def from_bars(cls, b2_bars: pd.DataFrame) -> "Completeness":
+        return cls(source="bars_only", bar_hours=frozenset(_b2_hours(b2_bars)), cells=None, errors={},
+                   curve_hours=None, b2_fetched={}, snapshot_utc=None)
+
+    def cell(self, pool: str, hour: int) -> str:
+        """``ok`` | ``error`` (the backfill gave up on this pool-hour) | ``missing`` (not, or not yet, consolidated)."""
+        if self.cells is None:
+            return "ok" if hour in self.bar_hours else "missing"
+        if (pool, hour) in self.errors:
+            return "error"
+        return "ok" if (pool, hour) in self.cells and hour in self.bar_hours else "missing"
+
+    def hour_status(self, hour: int, active_pools: Iterable[str]) -> str:
+        """``done`` (every pool active in the hour is ok or errored, and its graduates are known), ``partial``
+        (mid-run: some pools are in, others not yet) or ``absent``."""
+        if self.cells is None:
+            return "done" if hour in self.bar_hours else "absent"
+        st = [self.cell(p, hour) for p in active_pools]
+        any_ok = any(x == "ok" for x in st)
+        if self.curve_hours is not None and any(h not in self.curve_hours
+                                                for h in range(hour - B2_HORIZON_S // 3600 * 3600, hour + 3600, 3600)):
+            return "partial" if any_ok else "absent"     # graduates of the hour not all known yet
+        if all(x != "missing" for x in st):
+            return "done"
+        return "partial" if any_ok else "absent"
+
+
+def _cache_dir() -> Path:
+    return Path(os.environ.get("LAB2_CACHE", str(_SCRATCH / "lab2_cache")))
+
+
+_CHUNK_MEM: dict[str, list] = {}
+
+
+def _b2_chunk_meta(paths: Sequence[Path]) -> dict[str, tuple[int, int, tuple, float]]:
+    """name -> (t0, t1, pools, mtime) of B2 raw chunks; parsed once per (name, mtime, size), cached on disk."""
+    cache_p = _cache_dir() / "b2_chunk_index.json"
+    disk: dict[str, list] = {}
+    try:
+        disk = json.loads(cache_p.read_text())
+    except (OSError, ValueError):
+        pass
+    out, keep, dirty = {}, {}, False
+    for p in paths:
+        st = p.stat()
+        key = f"{p.name}|{st.st_mtime_ns}|{st.st_size}"
+        m = _CHUNK_MEM.get(key) or disk.get(key)
+        if m is None:
+            with gzip.open(p, "rt") as fh:
+                d = json.load(fh)
+            m = [int(d["t0"]), int(d["t1"]), sorted({str(a[0]) for a in (d.get("params") or {}).get("act") or []})]
+            dirty = True
+        _CHUNK_MEM[key] = keep[key] = m
+        out[p.name] = (int(m[0]), int(m[1]), tuple(m[2]), st.st_mtime)
+    if dirty:
+        with contextlib.suppress(OSError):
+            cache_p.parent.mkdir(parents=True, exist_ok=True)
+            tmp = cache_p.with_suffix(f".{os.getpid()}.tmp")
+            tmp.write_text(json.dumps(keep))
+            os.replace(tmp, cache_p)
+    return out
+
+
+def _covers(intervals: list[tuple[int, int]], lo: int, hi: int) -> bool:
+    x = lo
+    for a, b in sorted(intervals):
+        if a > x:
+            return False
+        x = max(x, b)
+        if x >= hi:
+            return True
+    return x >= hi
+
+
+def completeness_from_flow(flow: Path | None = None, with_bar_hours: bool = True) -> Completeness:
+    """Completeness of the CURRENT Parquet snapshot in ``flow`` from the backfill's raw chunks (``raw/b2``,
+    ``raw/curve``) and ``state.json`` errors. Chunks fetched after the Parquet was written are not in it (the
+    backfill keeps fetching while the snapshot stays put), so they never count; ``state.json`` alone would."""
+    f = Path(flow or flow_dir())
+    snap_b2 = (f / "b2_bars.parquet").stat().st_mtime if (f / "b2_bars.parquet").exists() else math.inf
+    snap_g = (f / "graduates.parquet").stat().st_mtime if (f / "graduates.parquet").exists() else math.inf
+    cover: dict[tuple[str, int], list] = {}
+    fetched: dict[int, float] = {}
+    meta = _b2_chunk_meta(sorted((f / "raw" / "b2").glob("*.json.gz"))) if (f / "raw" / "b2").exists() else {}
+    for t0, t1, pools, mt in meta.values():
+        if mt > snap_b2:
+            continue
+        hour = t0 // 3600 * 3600
+        fetched[hour] = max(fetched.get(hour, 0.0), mt)
+        for pl in pools:
+            cover.setdefault((pl, hour), []).append((t0, t1))
+    cells = frozenset(k for k, iv in cover.items() if _covers(iv, k[1], k[1] + 3600))
+    curve_iv: dict[int, list] = {}
+    if (f / "raw" / "curve").exists():
+        for p in (f / "raw" / "curve").glob("*.json.gz"):
+            try:
+                a, b = (int(x) for x in p.name.split(".")[0].split("-")[:2])
+            except ValueError:
+                continue
+            if p.stat().st_mtime > snap_g:
+                continue
+            for h in range(a // 3600 * 3600, b, 3600):
+                curve_iv.setdefault(h, []).append((max(a, h), min(b, h + 3600)))
+    curve = frozenset(h for h, iv in curve_iv.items() if _covers(iv, h, h + 3600))
+    errors: dict[tuple[str, int], str] = {}
+    try:
+        state = json.loads((f / "state.json").read_text())
+        for h, st in (state.get("b2") or {}).items():
+            for pl, msg in (st.get("errors") or {}).items():
+                errors[(str(pl), int(h))] = str(msg)
+    except (OSError, ValueError):
+        pass
+    bar_hours = frozenset(fetched)
+    if with_bar_hours and (f / "b2_bars.parquet").exists():
+        bar_hours = frozenset(_b2_hours(_read_parquet(f / "b2_bars.parquet")))
+    return Completeness(source="raw_chunks", bar_hours=bar_hours, cells=cells, errors=errors, curve_hours=curve,
+                        b2_fetched=fetched, snapshot_utc=utc_str(snap_b2) if snap_b2 < math.inf else None)
+
+
+def _active_pools(g_all: pd.DataFrame) -> Callable[[int], list[str]]:
+    """hour -> pools whose B2 window [g, g + 180 min) overlaps the hour (backfill.b2_pools_for)."""
+    has = g_all[g_all["pool"].notna()] if "pool" in g_all else g_all.iloc[0:0]
+    gt = has["g_ts"].to_numpy(float) if len(has) else np.zeros(0)
+    pools = has["pool"].to_numpy(object) if len(has) else np.zeros(0, object)
+
+    def at(hour: int) -> list[str]:
+        sel = (gt < hour + 3600) & (gt + B2_HORIZON_S > hour)
+        return [str(x) for x in pools[sel]]
+    return at
 
 
 @dataclass
@@ -626,22 +800,26 @@ class Dataset:
     @classmethod
     def from_frames(cls, split: str, graduates: pd.DataFrame, b2_coins: pd.DataFrame, b2_bars: pd.DataFrame,
                     census: Census | None = None, sol: SolUsd | None = None, trades: pd.DataFrame | None = None,
-                    guard: bool = True, _internal: bool = False, extra_pooled: Iterable[str] = ()) -> "Dataset":
+                    guard: bool = True, _internal: bool = False, extra_pooled: Iterable[str] = (),
+                    completeness: Completeness | None = None) -> "Dataset":
+        """``completeness`` (from :func:`completeness_from_flow`) decides which (pool, hour) cells are really in
+        the tables; without it (synthetic frames) any bar in an hour makes the hour complete."""
         names = ALL_SPLITS + ("final",)
         if split not in names:
             raise ValueError(f"unknown split {split!r}; one of {names}")
         if guard:
             _check_load_guard(split, _internal)
         census = census if census is not None else Census.load()
-        sol = sol or SolUsd.from_lab(lab_data_dir())
+        sol = sol or load_sol_usd()
         g = _normalize_graduates(graduates, census)
         want = set(FINAL_SPLITS) if split == "final" else {split}
         gs = g[g["split"].isin(want)].copy()
         b2c = b2_coins.drop(columns=[c for c in ("g_ts", "grad_delay_s", "sol_quoted", "mayhem") if c in b2_coins])
         gs = gs.merge(b2c, on=["mint", "pool"], how="left", indicator="b2_merge")
-        have = _b2_hours(b2_bars)
+        comp = completeness or Completeness.from_bars(b2_bars)
         reasons = []
         for r in gs.itertuples(index=False):
+            cells = [comp.cell(str(r.pool), h) for h in _hours_needed(r.g_ts)] if r.b2_merge == "both" else []
             if not r.sol_quoted:
                 reasons.append("not_sol_quoted")
             elif r.mayhem:
@@ -650,7 +828,9 @@ class Dataset:
                 reasons.append("no_b2_row")
             elif not _virt_known(r):
                 reasons.append("virt_unknown")
-            elif not set(_hours_needed(r.g_ts)) <= have:
+            elif "error" in cells:
+                reasons.append("b2_pool_error")
+            elif "missing" in cells:
                 reasons.append("b2_window_incomplete")
             elif bool(getattr(r, "truncated", False) or False):
                 reasons.append("truncated")
@@ -667,7 +847,7 @@ class Dataset:
         tr_by = {m: d for m, d in trades.groupby("mint", sort=False)} if trades is not None and len(trades) else {}
         for r in usable.to_dict("records"):
             cds[r["mint"]] = _make_coin(r, by_mint.get(r["mint"], bars.iloc[0:0]), tr_by.get(r["mint"]), pooled)
-        cov = coverage_report(split, g, gs, usable, b2_bars, sol)
+        cov = coverage_report(split, g, gs, usable, b2_bars, sol, comp)
         return cls(split=split, coins=usable.reset_index(drop=True), bars=bars, excluded=excluded.reset_index(drop=True),
                    coverage=cov, debug_only=split in DEBUG_SPLITS, sol=sol, _cd=cds)
 
@@ -692,7 +872,9 @@ def _make_coin(r: dict, bars: pd.DataFrame, trades: pd.DataFrame | None, pooled:
     g = float(r["g_ts"])
     m0 = int(g) // 60 * 60
     y0 = float(r.get("pool_base0") or 0) or 206.9e6
-    X0 = float(r.get("pool_quote0") or 0) or 84.990359
+    v0 = r.get("virt_sol")
+    v0 = float(v0) if v0 is not None and not _isnan(v0) and float(v0) > 0 else V_MIGRATION_SOL
+    X0 = (float(r.get("pool_quote0") or 0) or 84.990359 - V_MIGRATION_SOL) + v0   # PRICING reserve x0 + v
     arr = _dense(bars, m0, X0, y0)
     agent_nan = np.full(N_BARS, np.nan)
     agent_nan.setflags(write=False)
@@ -715,6 +897,22 @@ def _make_coin(r: dict, bars: pd.DataFrame, trades: pd.DataFrame | None, pooled:
     return CoinData(mint=row["mint"], pool=row["pool"], g=g, m0=m0, row=MappingProxyType(row),
                     arr=MappingProxyType(arr), agent_nan=agent_nan, init_X=X0, init_y=y0,
                     legal=MappingProxyType(legal), split=row["split"], trades=tr)
+
+
+def _check_split_env(split: str) -> None:
+    """Env guard of a one-run split, enforced by the engine itself whatever Dataset is passed (val: shortlist)."""
+    env = GUARD_ENV.get(split)
+    if env is not None and split != "val" and os.environ.get(env) != "1":
+        raise SplitLocked(f"split {split!r} is locked: needs env {env}=1 (only the judge sets it)")
+
+
+def _check_sol_coverage(ds: "Dataset") -> None:
+    sol = ds.coverage.get("sol_usd") or {}
+    if sol.get("lookahead_coins"):
+        raise DataNotReady(f"SOL/USD series starts {(sol.get('series_utc') or ['?'])[0]}: {sol['lookahead_coins']} "
+                           f"coins of {ds.split!r} would use a later (future) SOL price; extend it (LAB2_SOL_USD)")
+    if sol.get("constant_fallback") and ds.coverage.get("from_flow"):
+        raise DataNotReady("no SOL/USD series loaded for real data: refusing a constant SOL price")
 
 
 def _check_load_guard(split: str, internal: bool) -> None:
@@ -748,32 +946,54 @@ def load(split: str, *, flow: Path | None = None, census: Census | None = None, 
             pooled = set(POOLED_ACCOUNTS) | _pooled_from_file()
             ph = set(wd.loc[wd.iloc[:, 1].isin(pooled), wd.columns[0]])
             tr = tr.assign(pooled=tr["wallet_h"].isin(ph))     # exclude from wallet features (audit 3.6)
+        comp = completeness_from_flow(f)
         if stamp ==[(f / n).stat().st_mtime_ns for n in ("graduates.parquet", "b2_coins.parquet", "b2_bars.parquet")]:
             break
         warnings.warn("FLOW tables changed while loading (re-consolidation?): reloading")
-    ds = Dataset.from_frames(split, g, c, b, census=census, sol=sol, trades=tr, guard=False)
+    ds = Dataset.from_frames(split, g, c, b, census=census, sol=sol or load_sol_usd(), trades=tr, guard=False,
+                             completeness=comp)
+    ds.coverage["from_flow"] = True
     ds.coverage["data_files"] = {n: utc_str((f / n).stat().st_mtime) for n in
                                  ("graduates.parquet", "b2_coins.parquet", "b2_bars.parquet")}
     return ds
 
 
+def load_sol_usd(lab: Path | None = None) -> SolUsd:
+    """SOL/USD minute closes: LAB/sol_usd.json (10-07 08:57 -> 10-08 18:15 today) merged with the optional
+    extension file ``LAB2_SOL_USD`` (default scratchpad/lab2_data/sol_usd_ext.json, same {"candles": [...]} format)
+    that must cover the EXT splits before any EXT stage runs (see :func:`coverage_problems`)."""
+    rows: dict[int, list] = {}
+    for path in ((lab or lab_data_dir()) / "sol_usd.json",
+                 Path(os.environ.get("LAB2_SOL_USD", str(_SCRATCH / "lab2_data" / "sol_usd_ext.json")))):
+        try:
+            for r in json.loads(Path(path).read_text())["candles"]:
+                rows.setdefault(int(r[0]), r)
+        except (OSError, ValueError, KeyError, TypeError):
+            continue
+    return SolUsd(list(rows.values())) if rows else SolUsd()
+
+
 def coverage_summary(flow: Path | None = None, census: Census | None = None) -> dict[str, dict]:
     """Coverage reports (counts only: no prices, no returns) for every split, guarded ones included."""
-    f = flow or flow_dir()
+    f = Path(flow or flow_dir())
     g, c, b = (_read_parquet(f / n) for n in ("graduates.parquet", "b2_coins.parquet", "b2_bars.parquet"))
     census = census if census is not None else Census.load()
+    comp, sol = completeness_from_flow(f), load_sol_usd()
     out = {}
     for s in ALL_SPLITS:
-        cov = Dataset.from_frames(s, g, c, b, census=census, guard=False).coverage
-        out[s] = {k: v for k, v in cov.items()}
+        cov = Dataset.from_frames(s, g, c, b, census=census, sol=sol, guard=False, completeness=comp).coverage
+        out[s] = {k: v for k, v in cov.items()} | {"from_flow": True}
     return out
 
 
 def coverage_report(split: str, g_all: pd.DataFrame, g_split: pd.DataFrame, usable: pd.DataFrame,
-                    bars: pd.DataFrame, sol: SolUsd) -> dict:
-    """Which days exist, which are partial, and whether the split can reach the PLAN minimum samples."""
-    curve_hours = set((g_all["g_ts"].to_numpy(np.int64) // 3600 * 3600).tolist())
-    b2h = _b2_hours(bars)
+                    bars: pd.DataFrame, sol: SolUsd, comp: Completeness | None = None) -> dict:
+    """Which days exist, which are partial or mid-run, SOL/USD coverage, and whether the split can reach the PLAN
+    minimum samples. Counts only (no prices, no returns)."""
+    comp = comp or Completeness.from_bars(bars)
+    curve_hours = set(comp.curve_hours) if comp.curve_hours is not None else \
+        set((g_all["g_ts"].to_numpy(np.int64) // 3600 * 3600).tolist())
+    active = _active_pools(g_all)
     if split in SPLIT_BOUNDS:
         lo, hi = SPLIT_BOUNDS[split]
     else:
@@ -781,6 +1001,14 @@ def coverage_report(split: str, g_all: pd.DataFrame, g_split: pd.DataFrame, usab
         lo = int(sub.min()) if len(sub) else FINAL_LO
         hi = int(sub.max()) + 1 if len(sub) else FINAL_LO
     hours = list(range(lo // 3600 * 3600, hi, 3600))
+    # B2 hours: creation hours of the split plus every hour a tradeable coin of the split needs
+    trad_split = g_split[g_split["tradeable"]] if "tradeable" in g_split else g_split
+    need = set(hours)
+    for gt in trad_split["g_ts"].to_numpy(float) if len(trad_split) else []:
+        need.update(_hours_needed(gt))
+    status = {h: comp.hour_status(h, active(h)) for h in sorted(need)}
+    b2h = {h for h, v in status.items() if v == "done"}
+    midrun = sorted(h for h, v in status.items() if v == "partial")
     days = []
     gs = g_split.assign(day=pd.to_datetime(g_split["created_for_split"], unit="s").dt.strftime("%Y-%m-%d"))
     us = set(usable["mint"])
@@ -794,15 +1022,22 @@ def coverage_report(split: str, g_all: pd.DataFrame, g_split: pd.DataFrame, usab
         bh = sum(h in b2h for h in dh)
         frac = n_use / len(trad) if len(trad) else 0.0
         days.append({"day": d, "hours_in_split": len(dh), "curve_hours": ch, "b2_hours": bh,
+                     "b2_hours_midrun": sum(status.get(h) == "partial" for h in dh),
                      "coins_created": int(len(sub)), "tradeable": int(len(trad)), "usable": n_use,
                      "usable_frac": round(frac, 3),
                      "partial": bool(ch < len(dh) or bh < len(dh) or frac < 0.95 or len(sub) == 0)})
     n_use = int(len(usable))
     reasons = g_split["exclude_reason"].value_counts().to_dict() if "exclude_reason" in g_split else {}
     reasons.pop("", None)
+    # SOL/USD: a price lookup before the series starts returns its FIRST price, i.e. a later (future) price
+    sol_info: dict[str, Any] = {"series_utc": [utc_str(sol.ts[0]), utc_str(sol.ts[-1])] if sol.ts else None,
+                                "constant_fallback": not sol.ts, "lookahead_coins": 0, "stale_coins": 0}
     in_sol = 0
     if n_use and sol.ts:
-        in_sol = int(((usable["g_ts"] >= sol.ts[0]) & (usable["g_ts"] + 10800 <= sol.ts[-1] + 60)).sum())
+        gu = usable["g_ts"].to_numpy(float)
+        sol_info["lookahead_coins"] = int((gu - 120 < sol.ts[0]).sum())
+        sol_info["stale_coins"] = int((gu + B2_HORIZON_S > sol.ts[-1] + 60).sum())
+        in_sol = n_use - int(((gu - 120 < sol.ts[0]) | (gu + B2_HORIZON_S > sol.ts[-1] + 60)).sum())
     power = {
         "entry_bar_coins": {"need": PLAN_MIN["entry_test_coins"], "have_usable_coins": n_use,
                             "ok": n_use >= PLAN_MIN["entry_test_coins"]},
@@ -818,9 +1053,15 @@ def coverage_report(split: str, g_all: pd.DataFrame, g_split: pd.DataFrame, usab
         notes.append("partial days present: results cover only the hours with data (see days[])")
     if hours_frac < 0.999:
         notes.append(f"only {hours_frac:.1%} of the split's chain hours have graduates scanned (backfill in progress?)")
-    if n_use and in_sol < n_use:
-        notes.append(f"SOL/USD series covers {in_sol}/{n_use} coins; others use the nearest edge price "
-                     "(affects only $->SOL sizing and the alive filter's USD volume)")
+    if midrun:
+        notes.append(f"{len(midrun)} B2 hour(s) are mid-run (some pools consolidated, others not yet), first "
+                     f"{utc_str(midrun[0])}: their coins are excluded")
+    if sol_info["lookahead_coins"]:
+        notes.append(f"SOL/USD series starts {sol_info['series_utc'][0]}: {sol_info['lookahead_coins']}/{n_use} coins "
+                     "would get a LATER (future) SOL price for $20 sizing and the USD filters")
+    elif n_use and in_sol < n_use:
+        notes.append(f"SOL/USD series covers {in_sol}/{n_use} coins; {sol_info['stale_coins']} use its last (stale) "
+                     "price after it ends (affects only $->SOL sizing and the alive filter's USD volume)")
     nc = int((~g_split["created_exact"]).sum()) if "created_exact" in g_split else 0
     return {
         "split": split, "bounds_utc": [utc_str(lo), utc_str(hi)], "debug_only": split in DEBUG_SPLITS,
@@ -831,9 +1072,122 @@ def coverage_report(split: str, g_all: pd.DataFrame, g_split: pd.DataFrame, usab
         "days_expected": round((hi - lo) / 86400, 2), "days_full": sum(1 for d in days if not d["partial"]),
         "curve_span_utc": [utc_str(min(curve_hours)), utc_str(max(curve_hours) + 3600)] if curve_hours else None,
         "b2_span_utc": [utc_str(min(b2h)), utc_str(max(b2h) + 3600)] if b2h else None,
+        "completeness_source": comp.source, "parquet_snapshot_utc": comp.snapshot_utc,
+        "b2_hours_needed": len(need), "b2_hours_done": len(b2h), "b2_hours_midrun": [utc_str(h) for h in midrun],
+        "sol_usd": sol_info,
         "power": power, "underpowered": n_use < PLAN_MIN["entry_test_coins"],
-        "complete": bool(days) and not any(d["partial"] for d in days) and hours_frac >= 0.999, "notes": notes,
+        "complete": bool(days) and not any(d["partial"] for d in days) and hours_frac >= 0.999 and not midrun,
+        "notes": notes,
     }
+
+
+def coverage_problems(cov: Mapping[str, Any], max_missing_frac: float = 0.05) -> list[str]:
+    """Data-contract problems that make every non-debug stage refuse (shared by G1 / S1 / D1 / M1):
+
+    * B2 hours mid-run (a time-split hour with one half consolidated, pools still to come);
+    * coins missing B2 (no row, incomplete window, or a pool the backfill gave up on) > 5 % of tradeable;
+    * SOL/USD: coins that would read a price from before the series starts (= a later price), or no series at all
+      on real data (a constant)."""
+    out = []
+    mr = cov.get("b2_hours_midrun") or []
+    if mr:
+        out.append(f"{len(mr)} B2 hour(s) mid-run (first {mr[0]}): wait for the backfill to finish them")
+    ex = cov.get("excluded") or {}
+    miss = sum(int(ex.get(k, 0)) for k in ("b2_window_incomplete", "no_b2_row", "b2_pool_error"))
+    trad = int(cov.get("tradeable") or 0)
+    if trad and miss / trad > max_missing_frac:
+        out.append(f"{miss}/{trad} tradeable coins lack a complete B2 window (incl. {int(ex.get('b2_pool_error', 0))} "
+                   "pools the backfill gave up on: the most active coins, not a random loss)")
+    sol = cov.get("sol_usd") or {}
+    if sol.get("lookahead_coins"):
+        out.append(f"SOL/USD series starts {(sol.get('series_utc') or ['?'])[0]}: {sol['lookahead_coins']} coins would "
+                   "use a later SOL price (lookahead); extend the series (LAB2_SOL_USD) first")
+    if sol.get("constant_fallback") and cov.get("from_flow"):
+        out.append("no SOL/USD series loaded: every USD conversion would use a constant")
+    return out
+
+
+def _split_hours(split: str) -> tuple[int, int]:
+    """Creation-time bounds of a split for the data gates (FINAL: the census day)."""
+    if split in SPLIT_BOUNDS:
+        return SPLIT_BOUNDS[split]
+    cen = Census.load() if (lab_data_dir() / "census.json").exists() else Census.empty()
+    hi = cen.created_max_ts + 1 if math.isfinite(cen.created_max_ts) else FINAL_LO + 86400
+    return FINAL_LO, int(hi)
+
+
+def _v_ok(rec: Mapping[str, Any], name: str) -> bool:
+    v = rec.get(name)
+    if not isinstance(v, Mapping):
+        return False
+    if name == "V2" and "transitions" in v:
+        return v.get("chain_ok", 0) / max(v.get("transitions", 0), 1) >= 0.99
+    if name == "V3" and "coin_windows" in v:
+        return v.get("both", 0) / max(v.get("coin_windows", 0), 1) >= 0.95
+    return v.get("pass") is True
+
+
+def validation_gates(split: str, flow: Path | None = None) -> tuple[bool, list[str]]:
+    """PLAN 8 stop rule 1 (data first) for ONE split: V1 labels, V2 reserve chain >= 99 %, V4 ordering on raw trades
+    FROM THE SPLIT'S DATES, validated after the data they cover was fetched, plus V3 cross-source (only possible on
+    the census-day launch sample).
+
+    ``FLOW/validation.json`` holds the census-day run of ``research/flow/validate.py`` (no date ranges: it covers
+    the census day only, validated at ``generated_utc`` or the file's mtime). Other dates need range records,
+    in ``validation.json["ranges"]`` or ``FLOW/validation_ranges.json`` (a list), each
+    ``{"lo_utc", "hi_utc", "validated_utc", "V1": {"pass"}, "V2": {"chain_ok", "transitions"}, "V4": {"pass"}}``.
+    A range validated BEFORE the newest B2 chunk of an hour it covers was fetched is stale for that hour."""
+    f = Path(flow or flow_dir())
+    try:
+        v = json.loads((f / "validation.json").read_text())
+    except (OSError, ValueError):
+        return False, ["FLOW/validation.json missing: run research/flow/validate.py first"]
+    bad = [f"{k} failed" for k in ("V1", "V2", "V3", "V4") if not _v_ok(v, k)]
+    ranges = list(v.get("ranges") or [])
+    with contextlib.suppress(OSError, ValueError, TypeError):
+        ranges += list(json.loads((f / "validation_ranges.json").read_text()))
+    recs = []
+    for r in ranges:
+        try:
+            recs.append((utc_ts(r["lo_utc"][:19]), utc_ts(r["hi_utc"][:19]), utc_ts(r["validated_utc"][:19]),
+                         all(_v_ok(r, k) for k in ("V1", "V2", "V4"))))
+        except (KeyError, TypeError, ValueError):
+            bad.append(f"unreadable validation range {r!r:.80}")
+    gen = v.get("generated_utc")
+    v_ts = utc_ts(gen[:19]) if isinstance(gen, str) else (f / "validation.json").stat().st_mtime
+    recs.append((FINAL_LO // 3600 * 3600, FINAL_LO + 86400 + 4 * 3600, v_ts,
+                 all(_v_ok(v, k) for k in ("V1", "V2", "V4"))))         # the census-day record itself
+    lo, hi = _split_hours(split)
+    comp = completeness_from_flow(f, with_bar_hours=False) if (f / "raw" / "b2").exists() else None
+    uncovered, stale = [], []
+    for h in range(lo // 3600 * 3600, hi, 3600):
+        ok_recs = [r for r in recs if r[3] and r[0] <= h and h + 3600 <= r[1]]
+        if not ok_recs:
+            uncovered.append(h)
+            continue
+        fetched = (comp.b2_fetched.get(h) if comp is not None else None) or 0.0
+        if fetched and max(r[2] for r in ok_recs) < fetched:
+            stale.append((h, fetched, max(r[2] for r in ok_recs)))
+    if uncovered:
+        bad.append(f"validation does not cover {len(uncovered)} chain hour(s) of split {split!r} (first "
+                   f"{utc_str(uncovered[0])}): run V1/V2/V4 on raw trades from those dates")
+    if stale:
+        h, fe, va = stale[0]
+        bad.append(f"validation of {len(stale)} hour(s) of split {split!r} predates their data (first {utc_str(h)}: "
+                   f"validated {utc_str(va)}, B2 fetched {utc_str(fe)}): re-run it on the current data")
+    return not bad, bad
+
+
+def coverage_dataset(split: str, flow: Path | None = None, census: Census | None = None,
+                     sol: SolUsd | None = None) -> "Dataset":
+    """Counts-only view of one split of the real tables, with the raw-chunk completeness and SOL/USD series that
+    :func:`load` uses (no guard: never hand it to a strategy on a guarded split)."""
+    f = Path(flow or flow_dir())
+    g, c, b = (_read_parquet(f / n) for n in ("graduates.parquet", "b2_coins.parquet", "b2_bars.parquet"))
+    ds = Dataset.from_frames(split, g, c, b, census=census if census is not None else Census.load(),
+                             sol=sol or load_sol_usd(), guard=False, completeness=completeness_from_flow(f))
+    ds.coverage["from_flow"] = True
+    return ds
 
 
 # =========================================================================== the as-of accessor
@@ -1052,6 +1406,7 @@ class ExitSpec:
     take_profit_pct: float | None = None
     trail_pct: float | None = None
     max_hold_s: float | None = None
+    exit_by_age_s: float | None = None    # time exit at coin age g + this (a registered deadline inside the data)
 
 
 @dataclass(frozen=True)
@@ -1115,19 +1470,22 @@ StrategyFn = Callable[[AsOf, Mapping[str, Any], "PositionView | None"], Any]
 # =========================================================================== engine
 
 
-def _resolve_exits(ex: ExitSpec, price: float, t_land: float) -> dict:
+def _resolve_exits(ex: ExitSpec, price: float, t_land: float, g: float | None = None) -> dict:
+    ts = [t for t in (t_land + ex.max_hold_s if ex.max_hold_s is not None else None,
+                      g + ex.exit_by_age_s if ex.exit_by_age_s is not None and g is not None else None)
+          if t is not None]
     return {"stop": price * (1 - ex.stop_pct) if ex.stop_pct is not None else None,
             "tp": price * (1 + ex.take_profit_pct) if ex.take_profit_pct is not None else None,
-            "trail": ex.trail_pct, "tstop": t_land + ex.max_hold_s if ex.max_hold_s is not None else None}
+            "trail": ex.trail_pct, "tstop": min(ts) if ts else None}
 
 
 def _simulate_coin(cd: CoinData, sol: SolUsd, cfg: FillConfig, strategy_fn: StrategyFn, params: Mapping,
-                   forced: tuple[int, Enter] | None = None) -> dict | None:
-    """Run one coin; at most one trade. ``forced`` = (decision index k, Enter) for placebo entries."""
+                   forced: tuple[int, Enter] | None = None, forced_is_placebo: bool = True) -> dict | None:
+    """Run one coin; at most one trade. ``forced`` = (decision index k, Enter) for placebo / control entries."""
     a = cd.arr
     o, h, l, c = a["o"], a["h"], a["l"], a["c"]
     worst_in, worst_out = cfg.entry_fill == "worst", cfg.exit_fill == "worst"
-    is_placebo = forced is not None
+    is_placebo = forced is not None and forced_is_placebo
     pend_in = pend_out = None
     pos = None
     done = False
@@ -1143,7 +1501,7 @@ def _simulate_coin(cd: CoinData, sol: SolUsd, cfg: FillConfig, strategy_fn: Stra
             tokens, br = simulate_buy(sol_in, p_in, cd.k_before(j), t_land, cfg.cost)
             pos = {"j_in": j, "t_dec": t_dec, "t_in": t_land, "p_in": p_in, "tokens": tokens, "sol_in": sol_in,
                    "sol_usd": s_usd, "fee_in": br["fee_bps"], "peak": p_in, "order": order,
-                   "ex": _resolve_exits(order.exits, p_in, t_land)}
+                   "ex": _resolve_exits(order.exits, p_in, t_land, cd.g)}
         if pos is not None:
             closed = None
             if pend_out is not None and pend_out[0] == j:
@@ -1242,29 +1600,28 @@ def _close(pos: dict, closed: tuple[float, str, float], j: int, cd: CoinData, cf
             "reason": reason, "tag": pos["order"].tag, "bars_held": j - pos["j_in"] + 1,
             "fee_bps_in": pos["fee_in"], "fee_bps_out": br["fee_bps"], "is_placebo": is_placebo,
             "stop_pct": ex.stop_pct, "take_profit_pct": ex.take_profit_pct, "trail_pct": ex.trail_pct,
-            "max_hold_s": ex.max_hold_s}
+            "max_hold_s": ex.max_hold_s, "exit_by_age_s": ex.exit_by_age_s}
 
 
 TRADE_COLS = ("mint", "split", "g_ts", "t_dec", "t_in", "t_out", "age_in_s", "age_dec_s", "entry_price",
               "exit_price", "mcap_in_sol", "sol_in", "sol_out", "ret_net", "ret_mid", "reason", "tag",
               "bars_held", "fee_bps_in", "fee_bps_out", "is_placebo", "stop_pct", "take_profit_pct", "trail_pct",
-              "max_hold_s")
+              "max_hold_s", "exit_by_age_s")
 
 
 def _spec_of(row: Any) -> ExitSpec:
     def f(v):
         return None if v is None or (isinstance(v, float) and math.isnan(v)) else float(v)
     return ExitSpec(stop_pct=f(row.stop_pct), take_profit_pct=f(row.take_profit_pct), trail_pct=f(row.trail_pct),
-                    max_hold_s=f(row.max_hold_s))
+                    max_hold_s=f(row.max_hold_s), exit_by_age_s=f(getattr(row, "exit_by_age_s", None)))
 
 
 def _frame(rows: list[dict], extra: Sequence[str] = ()) -> pd.DataFrame:
     return pd.DataFrame(rows, columns=list(TRADE_COLS) + list(extra))
 
 
-def run_trades(ds: Dataset, strategy_fn: StrategyFn, params: Mapping, cfg: FillConfig,
-               mints: Iterable[str] | None = None) -> pd.DataFrame:
-    """Per-trade records of ``strategy_fn`` on every usable coin of ``ds`` (no ledger, no placebo)."""
+def _engine_trades(ds: Dataset, strategy_fn: StrategyFn, params: Mapping, cfg: FillConfig,
+                   mints: Iterable[str] | None = None) -> pd.DataFrame:
     rows = []
     for m in (mints if mints is not None else ds.mints):
         r = _simulate_coin(ds.coin(m), ds.sol, cfg, strategy_fn, params)
@@ -1273,19 +1630,77 @@ def run_trades(ds: Dataset, strategy_fn: StrategyFn, params: Mapping, cfg: FillC
     return _frame(rows)
 
 
+def _guarded_look(ds: Dataset, hypothesis: str | None, params: Mapping, ledger_path: Path | None,
+                  shortlist_path: Path | None, what: str) -> bool:
+    """Guards for a low-level run on ``ds.split``; True when the look is logged (a hypothesis was named on a
+    non-debug split). A guarded split REQUIRES the hypothesis: no unlogged look at VAL / TEST / CONFIRM / FINAL."""
+    if ds.split not in GUARD_ENV:
+        return bool(hypothesis) and ds.split not in DEBUG_SPLITS
+    if not hypothesis:
+        raise SplitLocked(f"{what} on guarded split {ds.split!r} needs hypothesis= (every look there is logged)")
+    _check_split_env(ds.split)
+    _check_run_allowed(hypothesis, params, ds.split, ledger_path, shortlist_path)
+    _check_sol_coverage(ds)
+    return True
+
+
+def run_trades(ds: Dataset, strategy_fn: StrategyFn, params: Mapping, cfg: FillConfig,
+               mints: Iterable[str] | None = None, *, hypothesis: str | None = None, ledger_path: Path | None = None,
+               shortlist_path: Path | None = None) -> pd.DataFrame:
+    """Per-trade records of ``strategy_fn`` on every usable coin of ``ds`` (no placebo).
+
+    On a guarded split (val / test / confirm / final*) it is a logged look like :func:`backtest`: env flag,
+    shortlist / one-run rules, and a ledger entry whose identity includes ``cfg`` and ``mints``."""
+    mints = list(mints) if mints is not None else None
+    log = _guarded_look(ds, hypothesis, params, ledger_path, shortlist_path, "run_trades")
+    t = _engine_trades(ds, strategy_fn, params, cfg, mints)
+    if log:
+        r = t["ret_net"].to_numpy(float)
+        record_run(hypothesis, params, ds.split, {"n": int(len(r)), "mean": float(r.mean()) if len(r) else None},
+                   ledger_path, cfg=cfg, mints=mints, kind="run_trades")
+    return t
+
+
+def run_entries(ds: Dataset, strategy_fn: StrategyFn, params: Mapping, cfg: FillConfig,
+                entries: Iterable[tuple[str, float, Enter]], *, hypothesis: str | None = None,
+                ledger_path: Path | None = None, shortlist_path: Path | None = None) -> pd.DataFrame:
+    """Trades entered at GIVEN (mint, decision time t on the grid, Enter) -- e.g. a control "the same coins at the
+    same t" -- with the strategy's exit logic and the order's mechanical exits; several entries per coin allowed.
+    Guarded and logged like :func:`run_trades` (one look)."""
+    entries = list(entries)
+    log = _guarded_look(ds, hypothesis, params, ledger_path, shortlist_path, "run_entries")
+    rows = []
+    for m, t, order in entries:
+        cd = ds.coin(m)
+        k = int(round((float(t) - GRID_OFFSET_S - cd.m0) / 60.0))
+        if abs(cd.bar_start(k) + GRID_OFFSET_S - float(t)) > 1e-6:
+            raise ValueError(f"{m}: entry time {t} is not on the decision grid (minute boundary + {GRID_OFFSET_S} s)")
+        r = _simulate_coin(cd, ds.sol, cfg, strategy_fn, params, forced=(k, order), forced_is_placebo=False)
+        if r is not None:
+            rows.append(r)
+    out = _frame(rows)
+    if log:
+        r = out["ret_net"].to_numpy(float)
+        record_run(hypothesis, params, ds.split, {"n": int(len(r)), "mean": float(r.mean()) if len(r) else None},
+                   ledger_path, cfg=cfg, kind="run_entries")
+    return out
+
+
 def run_placebo(ds: Dataset, strategy_fn: StrategyFn, params: Mapping, cfg: FillConfig, signals: pd.DataFrame,
                 n_draws: int = 20, seed: int = 0, eligible: Callable[[AsOf], bool] | None = None,
-                max_tries: int = 200) -> pd.DataFrame:
+                max_tries: int = 200, strata: Callable[[AsOf], Any] | None = None) -> pd.DataFrame:
     """Matched-timing random entries (PLAN 3.4): for each signal, ``n_draws`` entries in random eligible coins of
     the same split at a decision age within +-120 s of the signal's, with the same exits (the signal's mechanical
     ExitSpec + the strategy's exit logic, called with ``pos.is_placebo = True`` and an empty state).
-    ``eligible(snap)`` optionally restricts placebo entries (e.g. alive coins only)."""
+    ``eligible(snap)`` optionally restricts placebo entries (e.g. alive coins only); ``strata(snap)`` matches them
+    on a class: a draw counts only when its stratum equals the signal's (evaluated at the signal's decision)."""
     mints = ds.mints
     rows = []
     for si, sig in enumerate(signals.itertuples(index=False)):
         ex = _spec_of(sig)
         rng = np.random.default_rng([seed, si])
         a = float(sig.age_dec_s)
+        want = strata(AsOf(ds.coin(sig.mint), float(sig.t_dec), ds.sol)) if strata is not None else None
         got = tries = 0
         while got < n_draws and tries < max_tries:
             tries += 1
@@ -1299,7 +1714,10 @@ def run_placebo(ds: Dataset, strategy_fn: StrategyFn, params: Mapping, cfg: Fill
                 continue
             k = int(cand[int(rng.integers(len(cand)))])
             t = cd.bar_start(k) + GRID_OFFSET_S
-            if eligible is not None and not eligible(AsOf(cd, t, ds.sol)):
+            snap = AsOf(cd, t, ds.sol)
+            if eligible is not None and not eligible(snap):
+                continue
+            if strata is not None and strata(snap) != want:
                 continue
             r = _simulate_coin(cd, ds.sol, cfg, strategy_fn, params, forced=(k, Enter(exits=ex, tag="placebo")))
             if r is None:
@@ -1345,15 +1763,99 @@ def _ledger(path: Path | None = None, write: bool = True):
 
 
 def n_trials(path: Path | None = None) -> int:
-    """Total trials so far: the lab's wave-1 configurations + every distinct wave-2 (hypothesis, params)."""
+    """Total trials so far: the lab's wave-1 configurations + every distinct wave-2 (hypothesis, params) look."""
     with _ledger(path, write=False) as led:
         return sum(led["baseline"].values()) + len(led["configs"])
 
 
+def hypothesis_family(hypothesis: str) -> str:
+    """'M1-twin', 'G1.dip', 'S1-control1' -> 'M1', 'G1', 'S1': the one-run rules count per family."""
+    return re.split(r"[-.]", str(hypothesis), maxsplit=1)[0]
+
+
+def split_group(split: str) -> str:
+    """'final' consumes 'final_val' and 'final_test' (and vice versa): ONE look at the census holdout."""
+    return "final" if split in ("final", "final_val", "final_test") else split
+
+
+def _ledger_key(path: Path | None) -> str:
+    return str(Path(path or trials_path()).resolve())
+
+
+_SESSIONS: dict[tuple[str, str, str], str] = {}     # (family, split group, ledger) -> open one-shot session id
+
+
+def _check_canonical_ledger(split: str, ledger_path: Path | None) -> None:
+    if (split in ONE_RUN_SPLITS or split == "val") and ledger_path is not None \
+            and _ledger_key(ledger_path) != _ledger_key(None):
+        raise SplitLocked(f"{split!r} looks are logged in the canonical ledger {trials_path()} (env LAB2_TRIALS), "
+                          f"not {ledger_path}")
+
+
+def _family_looks(led: Mapping, family: str, group: str) -> list[str]:
+    out = [f"session {x.get('session')} ({x.get('opened_utc')})" for x in led.get("one_shot_sessions", [])
+           if x.get("family") == family and x.get("split_group") == group]
+    out += [f"run {r.get('hypothesis')} on {r.get('split')} ({r.get('utc')})" for r in led.get("runs", [])
+            if not r.get("debug") and hypothesis_family(r.get("hypothesis", "")) == family
+            and split_group(r.get("split", "")) == group]
+    return out
+
+
+@contextlib.contextmanager
+def one_shot_session(hypothesis: str, split: str, ledger_path: Path | None = None, note: str = ""):
+    """The ONE look of a hypothesis family at a one-run split (TEST / CONFIRM / FINAL). Inside the session the family
+    may run several logged configs (candidate, twin, controls, sensitivity); before or after it, none. Refused when
+    the family already had a session or any run on that split group."""
+    if split not in ONE_RUN_SPLITS:
+        raise ValueError(f"{split!r} is not a one-run split")
+    _check_split_env(split)
+    _check_canonical_ledger(split, ledger_path)
+    fam, grp = hypothesis_family(hypothesis), split_group(split)
+    key = (fam, grp, _ledger_key(ledger_path))
+    if key in _SESSIONS:
+        raise SplitLocked(f"a {fam} session on {grp} is already open")
+    sid = hashlib.sha1(f"{fam}|{grp}|{time.time()}|{os.getpid()}".encode()).hexdigest()[:12]
+    with _ledger(ledger_path) as led:
+        prior = _family_looks(led, fam, grp)
+        if prior:
+            raise SplitLocked(f"{fam} already had its one {grp} look: {prior[0]}")
+        led.setdefault("one_shot_sessions", []).append({"family": fam, "split_group": grp, "split": split,
+                                                        "session": sid, "opened_utc": utc_str(time.time()),
+                                                        "note": note})
+    _SESSIONS[key] = sid
+    try:
+        yield sid
+    finally:
+        _SESSIONS.pop(key, None)
+        with _ledger(ledger_path) as led:
+            for x in led.get("one_shot_sessions", []):
+                if x.get("session") == sid:
+                    x["closed_utc"] = utc_str(time.time())
+
+
+def _cfg_dict(cfg: "FillConfig") -> dict:
+    d = dataclasses.asdict(cfg)
+    return json.loads(json.dumps(d, default=repr))
+
+
+def _look_id(cfg: "FillConfig | None", mints: Sequence[str] | None) -> str:
+    """'' for the default fills on every coin (ids stay as before); else the cfg / mints hashes, so the same params
+    under other fills or on a hand-picked subset are distinct trials."""
+    parts = []
+    if cfg is not None and _cfg_dict(cfg) != _cfg_dict(FillConfig()):
+        parts.append("cfg:" + params_hash(_cfg_dict(cfg)))
+    if mints is not None:
+        parts.append("mints:" + hashlib.sha1(",".join(sorted(map(str, mints))).encode()).hexdigest()[:12])
+    return ("|" + "|".join(parts)) if parts else ""
+
+
 def record_run(hypothesis: str, params: Mapping | None, split: str, summary: Mapping | None = None,
-               path: Path | None = None, debug: bool = False) -> dict:
-    """Log one run; a new (hypothesis, params) increments the trial counter (debug runs never do)."""
-    cid = f"{hypothesis}|{params_hash(params)}"
+               path: Path | None = None, debug: bool = False, cfg: "FillConfig | None" = None,
+               mints: Sequence[str] | None = None, kind: str = "backtest") -> dict:
+    """Log one run. A new (hypothesis, params, fills, coin subset) is a new trial (debug runs never are). Debug runs
+    store no mean: they ran on the census TRAIN third, which is FINAL data."""
+    cid = f"{hypothesis}|{params_hash(params)}{_look_id(cfg, mints)}"
+    fam = hypothesis_family(hypothesis)
     with _ledger(path) as led:
         new = False
         if not debug:
@@ -1361,19 +1863,28 @@ def record_run(hypothesis: str, params: Mapping | None, split: str, summary: Map
                 new = True
                 led["configs"][cid] = {"hypothesis": hypothesis, "params": json.loads(json.dumps(params or {}, default=repr)),
                                        "first_seen_utc": utc_str(time.time()), "splits": {}}
+                if cfg is not None and _look_id(cfg, None):
+                    led["configs"][cid]["cfg"] = _cfg_dict(cfg)
+                if mints is not None:
+                    led["configs"][cid]["n_mints"] = len(mints)
             sp = led["configs"][cid]["splits"]
             sp[split] = sp.get(split, 0) + 1
+            if split == "val":
+                vl = led.setdefault("val_looks", {})
+                vl[fam] = vl.get(fam, 0) + 1
         n_h = sum(1 for v in led["configs"].values() if v["hypothesis"] == hypothesis)
         lim = VARIANT_LIMITS.get(hypothesis)
         over = lim is not None and n_h > lim
         led["runs"].append({"utc": utc_str(time.time()), "hypothesis": hypothesis, "config": cid, "split": split,
-                            "debug": debug, "n": (summary or {}).get("n"), "mean": (summary or {}).get("mean"),
-                            "over_variant_limit": over})
+                            "debug": debug, "n": (summary or {}).get("n"),
+                            "mean": None if debug else (summary or {}).get("mean"), "over_variant_limit": over,
+                            "kind": kind, "session": _SESSIONS.get((fam, split_group(split), _ledger_key(path)))})
         total = sum(led["baseline"].values()) + len(led["configs"])
+        val_looks = (led.get("val_looks") or {}).get(fam, 0)
     if over:
         warnings.warn(f"{hypothesis}: {n_h} distinct configs > PLAN 3.4 limit {lim} (flagged in the ledger)")
     return {"config": cid, "new_trial": new, "n_trials_total": total, "hypothesis_configs": n_h,
-            "over_variant_limit": over}
+            "over_variant_limit": over, "family_val_looks": val_looks}
 
 
 def write_shortlist(hypothesis: str, configs: Sequence[Mapping], path: Path | None = None,
@@ -1395,6 +1906,7 @@ def write_shortlist(hypothesis: str, configs: Sequence[Mapping], path: Path | No
 
 def _check_run_allowed(hypothesis: str, params: Mapping | None, split: str, ledger_path: Path | None,
                        shortlist_path: Path | None) -> None:
+    _check_canonical_ledger(split, ledger_path)
     if split == "val":
         p = Path(shortlist_path or shortlist_dir()) / f"{hypothesis}.json"
         if not p.exists():
@@ -1411,9 +1923,13 @@ def _check_run_allowed(hypothesis: str, params: Mapping | None, split: str, ledg
             elif seen["sha"] != sha:
                 raise SplitLocked(f"the {hypothesis} shortlist changed after its first VAL run")
     if split in ONE_RUN_SPLITS:
+        fam, grp = hypothesis_family(hypothesis), split_group(split)
+        if (fam, grp, _ledger_key(ledger_path)) in _SESSIONS:
+            return                      # inside the family's one-shot session: every look is logged with it
         with _ledger(ledger_path, write=False) as led:
-            if any(r["hypothesis"] == hypothesis and r["split"] == split and not r.get("debug") for r in led["runs"]):
-                raise SplitLocked(f"{hypothesis} already had its one {split} run")
+            prior = _family_looks(led, fam, grp)
+        if prior:
+            raise SplitLocked(f"{hypothesis} (family {fam}) already had its one {grp} look: {prior[0]}")
 
 
 # =========================================================================== backtest
@@ -1425,18 +1941,21 @@ class Result:
     placebo: pd.DataFrame
     stress: dict[str, pd.DataFrame]
     meta: dict
+    controls: dict[str, pd.DataFrame] = field(default_factory=dict)   # extra placebo controls (diagnostics)
 
     def summary(self, B: int = 10_000, reveal: bool = False) -> dict:
-        """Stats of the run. On a debug split returns only counts unless ``reveal`` (debugging code, not params)."""
+        """Stats of the run. On a debug split returns only counts unless ``reveal`` (debugging code, not params):
+        no exit-reason counts either (stops vs take-profits reveal the outcome direction)."""
         if self.meta.get("debug_only") and not reveal:
             t = self.trades
             return {"split": self.meta["split"], "debug_only": True, "n": int(len(t)),
                     "n_coins": int(t["mint"].nunique()) if len(t) else 0, "n_placebo": int(len(self.placebo)),
-                    "reasons": t["reason"].value_counts().to_dict() if len(t) else {},
+                    "horizon_exits": int((t["reason"] == "horizon").sum()) if len(t) else 0,
                     "returns": "hidden on the debug split (never choose parameters on FINAL data)"}
         out = describe(self.trades, B=B, n_trials_total=self.meta.get("n_trials_total"))
         out["split"], out["hypothesis"], out["params"] = self.meta["split"], self.meta["hypothesis"], self.meta["params"]
         out["placebo"] = placebo_compare(self.trades, self.placebo, B=B) if len(self.placebo) else None
+        out["controls"] = {k: placebo_compare(self.trades, v, B=B) for k, v in self.controls.items() if len(v)}
         out["stress"] = {k: describe(v, B=B) for k, v in self.stress.items()}
         out["portfolio"] = portfolio_sim(self.trades)
         out["n_eligible_coins"] = self.meta.get("n_coins")
@@ -1450,33 +1969,47 @@ def backtest(strategy_fn: StrategyFn, split: str, params: Mapping | None = None,
              ds: Dataset | None = None, cfg: FillConfig | None = None, placebo: bool = True, n_placebo: int = 20,
              placebo_eligible: Callable[[AsOf], bool] | None = None, stress: Mapping[str, FillConfig] | None = None,
              seed: int = 0, declarations: Mapping[str, Any] | None = None, ledger_path: Path | None = None,
-             shortlist_path: Path | None = None, mints: Iterable[str] | None = None) -> Result:
+             shortlist_path: Path | None = None, mints: Iterable[str] | None = None,
+             placebo_strata: Callable[[AsOf], Any] | None = None,
+             placebo_controls: Mapping[str, Mapping[str, Any]] | None = None) -> Result:
     """Run ``strategy_fn(snap, params, pos)`` on every usable coin of ``split``.
 
     * one entry per coin; decisions on the minute grid (boundary + 20 s); fills per ``cfg`` (default worst);
     * placebo (matched timing, ``n_placebo`` per signal) and stress runs (default on guarded splits:
       costs x1.5) come from the SAME call, so a one-shot TEST run carries everything the verdict needs;
     * VAL needs the params in the hypothesis's shortlist; TEST / CONFIRM / FINAL run once per hypothesis;
-    * every non-debug run is logged in the trials ledger; ``declarations`` feed :func:`auto_rejections`
-      (e.g. {"uses_wallet_reputation": True, "reputation_excludes_traded_coin": True,
-      "organic_excludes": ["AGENT", "BOT", "WASH", "DUST", "MECH"]}).
+    * every non-debug run is logged in the trials ledger (identity: hypothesis, params, fills, coin subset);
+      ``declarations`` feed :func:`auto_rejections` (e.g. {"uses_wallet_reputation": True,
+      "reputation_excludes_traded_coin": True, "organic_excludes": ["AGENT", "BOT", "WASH", "DUST", "MECH"]});
+    * ``placebo_strata(snap)`` matches the placebo on a class (each draw has the signal's stratum);
+      ``placebo_controls`` = {name: {"eligible": fn | None, "strata": fn | None}} adds diagnostic controls
+      (``Result.controls``), e.g. the unmatched control next to a class-matched one.
     """
     params = dict(params or {})
+    mints = list(mints) if mints is not None else None
     cfg = cfg or FillConfig()
     debug = split in DEBUG_SPLITS
     if not debug:
+        _check_split_env(split)
         _check_run_allowed(hypothesis, params, split, ledger_path, shortlist_path)
     if ds is None:
         ds = load(split, _internal=True)
     elif ds.split != split:
         raise ValueError(f"dataset is {ds.split!r}, backtest asked for {split!r}")
-    trades = run_trades(ds, strategy_fn, params, cfg, mints)
+    if not debug:
+        _check_sol_coverage(ds)
+    trades = _engine_trades(ds, strategy_fn, params, cfg, mints)
     pl = _frame([], extra=("signal", "signal_mint"))
+    controls: dict[str, pd.DataFrame] = {}
     if placebo and len(trades):
-        pl = run_placebo(ds, strategy_fn, params, cfg, trades, n_placebo, seed, placebo_eligible)
+        pl = run_placebo(ds, strategy_fn, params, cfg, trades, n_placebo, seed, placebo_eligible,
+                         strata=placebo_strata)
+        for name, spec in (placebo_controls or {}).items():
+            controls[name] = run_placebo(ds, strategy_fn, params, cfg, trades, n_placebo, seed,
+                                         spec.get("eligible"), strata=spec.get("strata"))
     if stress is None:
         stress = {"costs_x1.5": cfg.stressed(1.5)} if (split in ONE_RUN_SPLITS or split == "val") else {}
-    st = {k: run_trades(ds, strategy_fn, params, c, mints) for k, c in stress.items()}
+    st = {k: _engine_trades(ds, strategy_fn, params, c, mints) for k, c in stress.items()}
     meta = {"hypothesis": hypothesis, "params": params, "split": split, "debug_only": debug,
             "cfg": {"size_usd": cfg.size_usd, "latency_s": cfg.latency_s, "entry_fill": cfg.entry_fill,
                     "exit_fill": cfg.exit_fill, "rent_usd": cfg.rent_usd, "entry_bar_exits": cfg.entry_bar_exits,
@@ -1485,9 +2018,10 @@ def backtest(strategy_fn: StrategyFn, split: str, params: Mapping | None = None,
             "declarations": dict(declarations or {}), "seed": seed, "utc": utc_str(time.time())}
     rets = trades["ret_net"].to_numpy(float)
     info = record_run(hypothesis, params, split, {"n": int(len(rets)), "mean": float(rets.mean()) if len(rets) else None},
-                      ledger_path, debug=debug)
+                      ledger_path, debug=debug, cfg=cfg, mints=mints)
     meta.update(info)
-    return Result(trades=trades, placebo=pl, stress=st, meta=meta)
+    meta["placebo_strata"] = getattr(placebo_strata, "__name__", None) if placebo_strata is not None else None
+    return Result(trades=trades, placebo=pl, stress=st, meta=meta, controls=controls)
 
 
 # =========================================================================== statistics
@@ -1517,6 +2051,53 @@ def coin_bootstrap_ci(values: np.ndarray, groups: Sequence[Any], level: float = 
     m = coin_bootstrap_means(values, groups, B, seed)
     a = (1 - level) / 2
     return float(np.quantile(m, a)), float(np.quantile(m, 1 - a))
+
+
+def block_bootstrap_means(values: np.ndarray, groups: Sequence[Any], blocks: Sequence[Any], B: int = 5_000,
+                          seed: int = 0) -> np.ndarray | None:
+    """PLAN 3.4 day-block bootstrap, two levels: resample time BLOCKS with replacement, then the coins inside each
+    drawn block with replacement (coins of the same hours share SOL moves and the pump.fun regime, so a coin-only
+    bootstrap treats correlated coins as independent). None with fewer than 2 blocks."""
+    v = np.asarray(values, float)
+    df = pd.DataFrame({"v": v, "c": list(groups), "b": list(blocks)})
+    if df["b"].nunique() < 2:
+        return None
+    unit = df.groupby(["b", "c"], sort=True)["v"].agg(["sum", "size"]).reset_index()
+    per = [(g["sum"].to_numpy(float), g["size"].to_numpy(float)) for _, g in unit.groupby("b", sort=True)]
+    nb = len(per)
+    rng = np.random.default_rng(seed)
+    out = np.empty(B)
+    for i in range(B):
+        S = N = 0.0
+        for bi in rng.integers(0, nb, nb):
+            su, n = per[bi]
+            idx = rng.integers(0, len(su), len(su))
+            S += su[idx].sum()
+            N += n[idx].sum()
+        out[i] = S / N
+    return out
+
+
+def block_bootstrap_ci(values: np.ndarray, groups: Sequence[Any], blocks: Sequence[Any], level: float = 0.90,
+                       B: int = 5_000, seed: int = 0) -> tuple[float, float] | None:
+    m = block_bootstrap_means(values, groups, blocks, B, seed)
+    if m is None:
+        return None
+    a = (1 - level) / 2
+    return float(np.quantile(m, a)), float(np.quantile(m, 1 - a))
+
+
+def trade_blocks(trades: pd.DataFrame) -> np.ndarray:
+    """6-hour block of each trade's ENTRY time (BLOCK_S): trades held in the same hours share the market."""
+    return (trades["t_in"].to_numpy(float) // BLOCK_S).astype(np.int64)
+
+
+def censored_share(trades: pd.DataFrame) -> float | None:
+    """Share of trades closed by the DATA horizon (g + 179 min) instead of their own rule: their outcome after
+    that point is unknown, so a rule with many of them is not the rule that was simulated."""
+    if not len(trades):
+        return None
+    return float((trades["reason"] == "horizon").mean())
 
 
 def deflated_sharpe(rets: np.ndarray, n_trials_total: int, sr_var_trials: float | None = None) -> dict:
@@ -1557,10 +2138,15 @@ def describe(trades: pd.DataFrame, B: int = 10_000, seed: int = 0, n_trials_tota
     h1, h2 = r[order[: n // 2]], r[order[n // 2:]]
     ci90 = coin_bootstrap_ci(r, coins, 0.90, B, seed)
     ci95 = coin_bootstrap_ci(r, coins, 0.95, B, seed)
+    blocks = trade_blocks(trades)
+    bm = block_bootstrap_means(r, coins, blocks, min(B, 5_000), seed)
+    ci90_b = None if bm is None else (float(np.quantile(bm, 0.05)), float(np.quantile(bm, 0.95)))
+    ci95_b = None if bm is None else (float(np.quantile(bm, 0.025)), float(np.quantile(bm, 0.975)))
     out = {
         "n": n, "n_coins": int(len(by_coin)), "mean": float(r.mean()), "median": float(np.median(r)),
         "win_rate": float((r > 0).mean()), "sd": float(r.std(ddof=1)) if n > 1 else None,
-        "ci90": ci90, "ci95": ci95,
+        "ci90": ci90, "ci95": ci95, "ci90_block": ci90_b, "ci95_block": ci95_b,
+        "n_blocks": int(len(set(blocks.tolist()))), "censored_share": censored_share(trades),
         "top_coin_share": float(by_coin.iloc[0] / total) if total > 0 else None,
         "top3_coin_share": float(by_coin.iloc[:3].sum() / total) if total > 0 else None,
         "mean_without_top2": float(top2.mean()) if len(top2) else None,
@@ -1660,7 +2246,9 @@ def verdict_entry(test: Result, *, val: Result | None = None, final: Result | No
     add(1, "sample", n >= PLAN_MIN["entry_test_trades"] and nc >= PLAN_MIN["entry_test_coins"],
         {"trades": n, "coins": nc}, ">= 60 trades from >= 40 coins")
     add(2, "mean net", None if s["mean"] is None else s["mean"] >= min_mean, s["mean"], f">= {min_mean:+.3f}")
-    add(3, "90% CI lower bound (coin bootstrap)", None if not s.get("ci90") else s["ci90"][0] > 0, s.get("ci90"), "> 0")
+    c3 = None if not s.get("ci90") or not s.get("ci90_block") else (s["ci90"][0] > 0 and s["ci90_block"][0] > 0)
+    add(3, "90% CI lower bound (coin AND 6-h block bootstrap)", c3, {"coin": s.get("ci90"), "block": s.get("ci90_block")},
+        "> 0 under both")
     add(4, "mean without top 2 trades", None if s.get("mean_without_top2") is None else s["mean_without_top2"] > 0,
         s.get("mean_without_top2"), "> 0")
     pc = placebo_compare(t, test.placebo, B=B) if len(test.placebo) else None
@@ -1680,19 +2268,23 @@ def verdict_entry(test: Result, *, val: Result | None = None, final: Result | No
     fm = describe(final.trades, B=200) if final is not None else None
     add(9, "FINAL mean > 0", None if not fm or fm["mean"] is None else fm["mean"] > 0,
         fm and {"mean": fm["mean"], "n": fm["n"]}, "> 0 (n reported)")
+    cs = s.get("censored_share")
+    add(10, "trades closed by the data horizon (censored)", None if cs is None else cs <= MAX_CENSORED_SHARE, cs,
+        f"<= {MAX_CENSORED_SHARE:.0%} (else the simulated rule is not the registered one: INCOMPLETE)")
     rej = auto_rejections(test)
+    judged = [c for c in crit[1:] if c["id"] != 10]
     if rej:
         v = "REJECTED"
     elif not crit[0]["pass"]:
         v = "UNDERPOWERED"
-    elif any(c["pass"] is False for c in crit[1:]):
+    elif any(c["pass"] is False for c in judged):
         v = "FAIL"
-    elif any(c["pass"] is None for c in crit[1:]):
+    elif any(c["pass"] is None for c in judged) or crit[-1]["pass"] is not True:
         v = "INCOMPLETE"
     else:
         v = "PASS"
     return {"verdict": v, "criteria": crit, "auto_rejections": rej, "split": test.meta.get("split"),
-            "hypothesis": test.meta.get("hypothesis")}
+            "hypothesis": test.meta.get("hypothesis"), "censored_share": cs}
 
 
 def verdict_veto(host: pd.DataFrame, flagged: Sequence[bool], *, oos_host: pd.DataFrame | None = None,

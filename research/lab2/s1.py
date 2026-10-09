@@ -771,6 +771,26 @@ def control1_strategy(snap: C.AsOf, p: Mapping, pos: C.PositionView | None):
     return C.Enter(exits=_exit_spec(p), tag=f"cp{cp}")
 
 
+def checkpoint_time(cd: C.CoinData, cp: int) -> float:
+    """The decision-grid time t (minute boundary + 20 s) with t <= g + cp min < t + 60 (see :func:`checkpoint_at`)."""
+    return float(cd.m0 + C.GRID_OFFSET_S + 60 * math.floor((cd.g + 60.0 * cp - cd.m0 - C.GRID_OFFSET_S) / 60.0))
+
+
+def control1_entries(ds: C.Dataset, p: Mapping) -> list[tuple[str, float, C.Enter]]:
+    """Control 1 (PLAN 4.3: "the same coins at the same t without the flow conditions"): EVERY coin that is
+    non-flow eligible (features computable, class allowed, alive) at checkpoint cp is entered at cp, for every cp.
+    S1 trades at cp are then compared with control trades at the same cp (:func:`matched_control_diff`), so the
+    entry age (g + 6 min sits right after the BOOST cliff) cannot drive the difference."""
+    out = []
+    for m in ds.mints:
+        cd = ds.coin(m)
+        for cp in p["checkpoints_min"]:
+            t = checkpoint_time(cd, int(cp))
+            if nonflow_ok(ds.asof(m, t)):
+                out.append((m, t, C.Enter(exits=_exit_spec(p), tag=f"cp{int(cp)}")))
+    return out
+
+
 def gate_strategy(snap: C.AsOf, p: Mapping, pos: C.PositionView | None):
     """Dose-response gate (PREREG §7): enter every eligible coin at the checkpoint, hold 30 min, tag insider_rem."""
     if pos is not None:
@@ -850,6 +870,57 @@ def diff_ci(a: pd.DataFrame, b: pd.DataFrame, B: int = 10_000, seed: int = 0) ->
     d = float(a["ret_net"].mean() - b["ret_net"].mean())
     lo, hi = np.quantile(ma - mb, [0.025, 0.975])
     return {"diff": d, "ci95": [float(lo), float(hi)], "n_a": int(len(a)), "n_b": int(len(b))}
+
+
+def matched_control_diff(sig: pd.DataFrame, ctrl: pd.DataFrame, B: int = 10_000, seed: int = 0) -> dict:
+    """S1 minus control 1 at the SAME checkpoints: mean(S1) - sum_cp w_cp mean(control at cp), w_cp = S1's share of
+    trades at cp (tags ``cp<N>``). 95 % / 90 % CIs from a JOINT coin bootstrap (a coin in both sets carries its
+    trades in both, as in d1.diff_ci). ``diff`` is None when some S1 checkpoint has no control trade."""
+    out: dict[str, Any] = {"diff": None, "ci95": None, "ci90": None, "n_sig": int(len(sig)), "n_ctrl": int(len(ctrl)),
+                           "weights": {}, "ctrl_weighted_mean": None, "unmatched_cps": []}
+    if not len(sig) or not len(ctrl):
+        return out
+    w = sig["tag"].value_counts(normalize=True).sort_index()
+    out["weights"] = {str(k): float(v) for k, v in w.items()}
+    have = set(ctrl["tag"])
+    miss = [str(k) for k in w.index if k not in have]
+    if miss:
+        out["unmatched_cps"] = miss
+        return out
+    cm = ctrl.groupby("tag")["ret_net"].mean()
+    out["ctrl_weighted_mean"] = float(sum(w[k] * cm[k] for k in w.index))
+    out["diff"] = float(sig["ret_net"].mean() - out["ctrl_weighted_mean"])
+    coins = pd.Index(pd.unique(pd.concat([sig["mint"], ctrl["mint"]], ignore_index=True)))
+    nc = len(coins)
+    i_s = coins.get_indexer(sig["mint"])
+    ss, ns = np.bincount(i_s, sig["ret_net"].to_numpy(float), nc), np.bincount(i_s, minlength=nc).astype(float)
+    per_cp = []
+    for k in w.index:
+        sub = ctrl[ctrl["tag"] == k]
+        ic = coins.get_indexer(sub["mint"])
+        per_cp.append((float(w[k]), np.bincount(ic, sub["ret_net"].to_numpy(float), nc),
+                       np.bincount(ic, minlength=nc).astype(float)))
+    rng = np.random.default_rng(seed)
+    diffs = []
+    step = max(1, int(2_000_000 // max(nc, 1)))
+    for s0 in range(0, B, step):
+        m = min(step, B - s0)
+        idx = rng.integers(0, nc, size=(m, nc))
+        W = np.zeros((m, nc))
+        np.add.at(W, (np.repeat(np.arange(m), nc), idx.ravel()), 1.0)
+        den = W @ ns
+        ok = den > 0
+        val = np.where(ok, (W @ ss) / np.where(ok, den, 1.0), np.nan)
+        for wk, sc, nc_k in per_cp:
+            d_k = W @ nc_k
+            ok &= d_k > 0
+            val = val - wk * np.where(d_k > 0, (W @ sc) / np.where(d_k > 0, d_k, 1.0), np.nan)
+        diffs.append(val[ok])
+    d = np.concatenate(diffs) if diffs else np.zeros(0)
+    if len(d) >= 100:
+        out["ci95"] = [float(np.quantile(d, 0.025)), float(np.quantile(d, 0.975))]
+        out["ci90"] = [float(np.quantile(d, 0.05)), float(np.quantile(d, 0.95))]
+    return out
 
 
 def gate_quintiles(trades: pd.DataFrame, reveal: bool = True, B: int = 10_000) -> dict:
@@ -970,8 +1041,7 @@ def universe_mask(coins: pd.DataFrame) -> pd.Series:
 
 def coverage_counts(split: str) -> dict:
     """Counts only (no prices, no returns): split coverage from common.py plus B1 coverage of the S1-universe."""
-    g, c, b = _read_flow()
-    ds = C.Dataset.from_frames(split, g, c, b, census=C.Census.load(), guard=False)
+    ds = C.coverage_dataset(split)
     uni = ds.coins[universe_mask(ds.coins)] if len(ds.coins) else ds.coins
     have = b1_mints()
     n_uni = int(len(uni))
@@ -982,7 +1052,7 @@ def coverage_counts(split: str) -> dict:
             "b1_frac": (n_b1 / n_uni) if n_uni else 0.0, "split_complete": complete,
             "chain_hours_scanned_frac": cov.get("chain_hours_scanned_frac"),
             "days_full": cov.get("days_full"), "days_expected": cov.get("days_expected"),
-            "b1_file": (C.flow_dir() / "b1_trades.parquet").exists()}
+            "b1_file": (C.flow_dir() / "b1_trades.parquet").exists(), "problems": C.coverage_problems(cov)}
 
 
 def check_data(split: str, allow_partial: bool = False) -> dict:
@@ -998,6 +1068,10 @@ def check_data(split: str, allow_partial: bool = False) -> dict:
     if not cc["split_complete"] and not allow_partial:
         problems.append(f"split {split!r} coverage incomplete (hours scanned {cc['chain_hours_scanned_frac']}, "
                         f"full days {cc['days_full']}/{cc['days_expected']})")
+    problems += cc.get("problems") or []          # common.coverage_problems (mid-run hours, SOL/USD lookahead)
+    gok, gbad = C.validation_gates(split)
+    if not gok:
+        problems.append("PLAN 8 stop rule 1 (data first): " + "; ".join(gbad))
     cc["problems"] = problems
     return cc
 
@@ -1143,6 +1217,8 @@ def _run(store: _Store, label: str, fn: Callable, split: str, params: dict, hyp:
 
 
 def _cfg_sensitivity(ds: C.Dataset, fn: Callable, params: dict, reveal: bool) -> dict:
+    """The same config under other fill assumptions. On VAL / TEST each is a LOGGED look (its own trial: the
+    ledger identity includes the fills), never a silent re-run."""
     base = C.FillConfig()
     variants = {"entry_bar_exits_off": dataclasses.replace(base, entry_bar_exits=False),
                 "exit_delay_1bar": dataclasses.replace(base, exit_delay_bars=1),
@@ -1150,7 +1226,8 @@ def _cfg_sensitivity(ds: C.Dataset, fn: Callable, params: dict, reveal: bool) ->
                 "rent_0.22": dataclasses.replace(base, rent_usd=0.22)}
     out = {}
     for k, cfg in variants.items():
-        t = C.run_trades(ds, fn, params, cfg)
+        t = C.run_trades(ds, fn, params, cfg, hypothesis=HYP,
+                         ledger_path=_DEBUG_LEDGER if ds.split in C.DEBUG_SPLITS else None)
         out[k] = {"n": int(len(t)), "mean": float(t["ret_net"].mean()) if len(t) and reveal else
                   (None if not len(t) else "hidden")}
     return out
@@ -1197,17 +1274,32 @@ def _gate(store: _Store, split: str, ds: C.Dataset | None, reveal: bool) -> dict
     return stats
 
 
+def _control1(store: _Store, split: str, ds: C.Dataset) -> C.Result:
+    """Control 1, time-matched (:func:`control1_entries`): one logged look of ``S1-control1``."""
+    t0 = time.time()
+    p = control_params()
+    if ds is None:
+        ds = load_split(split)
+    tr = C.run_entries(ds, control1_strategy, p, C.FillConfig(), control1_entries(ds, p), hypothesis=HYP_CTRL,
+                       ledger_path=_DEBUG_LEDGER if split in C.DEBUG_SPLITS else None)
+    res = C.Result(trades=tr, placebo=C._frame([], extra=("signal", "signal_mint")), stress={},
+                   meta={"hypothesis": HYP_CTRL, "params": p, "split": split, "debug_only": split in C.DEBUG_SPLITS,
+                         "n_coins": len(ds), "n_trials_total": C.n_trials(), "control": "time-matched (PLAN 4.3)",
+                         "wall_s": round(time.time() - t0, 2)})
+    store.add("control1", res)
+    return res
+
+
 def _grid(store: _Store, split: str, ds: C.Dataset | None, configs: list[dict], reveal: bool,
           stress: dict | None = None) -> tuple[list[dict], C.Result]:
     runs = [(p, _run(store, config_label(p), s1_strategy, split, p, HYP, ds, placebo=True, stress=stress))
             for p in configs]                       # the S1 config(s) first: on one-shot splits they matter most
-    ctrl = _run(store, "control1", control1_strategy, split, control_params(), HYP_CTRL, ds, placebo=False,
-                stress=stress)
+    ctrl = _control1(store, split, ds)
     rows = []
     for p, res in runs:
         lab = config_label(p)
         s = _summ(res, reveal)
-        d = diff_ci(res.trades, ctrl.trades) if reveal else {"diff": "hidden"}
+        d = matched_control_diff(res.trades, ctrl.trades) if reveal else {"diff": "hidden"}
         pc = s.get("placebo") if reveal else None
         rows.append({"label": lab, "params": p, "params_hash": C.params_hash(p), "n": int(len(res.trades)),
                      "n_coins": int(res.trades["mint"].nunique()) if len(res.trades) else 0,
@@ -1215,6 +1307,7 @@ def _grid(store: _Store, split: str, ds: C.Dataset | None, configs: list[dict], 
                      "mean_without_top2": s.get("mean_without_top2") if reveal else "hidden",
                      "ci90": s.get("ci90") if reveal else "hidden",
                      "control1_diff": d["diff"], "control1_diff_ci95": d.get("ci95"),
+                     "control1_weights": d.get("weights"), "control1_unmatched_cps": d.get("unmatched_cps"),
                      "placebo_diff": pc["mean_diff"] if pc else None,
                      "checkpoints": _cp_counts(res.trades), "summary": s, "result": res,
                      "new_trial": res.meta.get("new_trial"), "wall_s": res.meta["wall_s"]})
@@ -1358,7 +1451,10 @@ def _oos_stage(stage: str, split: str) -> dict:
     ds = load_split(split)
     store = _Store(stage)
     try:
-        return _oos_body(stage, split, data, params, ds, store)
+        with C.one_shot_session(HYP, split, note=f"s1 --stage {stage}"):   # S1 + control 1 + sensitivity: ONE look
+            return _oos_body(stage, split, data, params, ds, store)
+    except C.SplitLocked as e:
+        raise StageRefused(str(e)) from e
     except Exception as e:          # the one-shot run is in the ledger: never lose its record
         _write(stage, {"stage": stage, "status": "ERROR_AFTER_RUN", "error": repr(e), "params": params,
                        "raw_files": sorted(p.name for p in s1_dir().glob(f"{stage}_*.parquet")),
