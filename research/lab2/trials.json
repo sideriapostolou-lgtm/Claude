@@ -423,6 +423,53 @@
     "entry_bar_exits": true,
     "exit_delay_bars": 1
    }
+  },
+  "Y3|a2a7fc2be25d|cfg:a06543feac6c": {
+   "hypothesis": "Y3",
+   "params": {
+    "version": "y3-v1",
+    "box_min_age_s": 3600.0,
+    "traded_min": 0.5,
+    "ret_bo_min": 0.03,
+    "buyers_min": 5,
+    "buyers_mult": 2.0,
+    "top5_max": 0.85,
+    "net_buy": "> 0",
+    "mcap_usd_min": 6000.0,
+    "age_max_s": 7800.0,
+    "box_stop": "close below box_lo -> sell, next-bar fill",
+    "stop_pct": 0.25,
+    "max_hold_s": 1800.0,
+    "exit_by_age_s": 10680.0,
+    "size_usd": 20.0,
+    "placebo": "eligible (mcap >= $6k), stratum-matched (instant / slow)",
+    "fill": "common.FillConfig(exit_delay_bars=1): worst, latency 30 s, entry-bar stop checks, next-bar exits",
+    "N": 10,
+    "theta": 0.06,
+    "flow": "chart"
+   },
+   "first_seen_utc": "2026-10-09 04:47:44",
+   "splits": {
+    "train": 1
+   },
+   "cfg": {
+    "size_usd": 20.0,
+    "latency_s": 30.0,
+    "entry_fill": "worst",
+    "exit_fill": "worst",
+    "cost": {
+     "ultra_bps": 10.0,
+     "mev_bps": 20.0,
+     "priority_sol": 0.0002,
+     "base_fee_lamports": 5000,
+     "fee_mult": 1.0,
+     "impact_mult": 1.0,
+     "extra_hop_bps": 100.0
+    },
+    "rent_usd": 0.0,
+    "entry_bar_exits": true,
+    "exit_delay_bars": 1
+   }
   }
  },
  "runs": [
@@ -717,8 +764,20 @@
    "over_variant_limit": false,
    "kind": "backtest",
    "session": null
+  },
+  {
+   "utc": "2026-10-09 04:47:44",
+   "hypothesis": "Y3",
+   "config": "Y3|a2a7fc2be25d|cfg:a06543feac6c",
+   "split": "train",
+   "debug": false,
+   "n": 82,
+   "mean": -0.052909282257832375,
+   "over_variant_limit": false,
+   "kind": "backtest",
+   "session": null
   }
  ],
  "val_shortlists": {},
- "n_trials_total": 2587
+ "n_trials_total": 2588
 }
