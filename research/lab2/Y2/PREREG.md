@@ -244,3 +244,34 @@ ORGANIC flow; see §1), `uses_wallet_reputation = False`, `uses_truncated_window
 tercile counts, selector and alive counts, entries per config and per day, placebo counts. Returns, exit reasons and
 stress results are hidden. Its trials go to a scratch ledger. The counts are appended below before the first
 official TRAIN run; they only size the expected samples.
+
+### 12.1 Debug counts (census TRAIN third, 2026-10-09; counts only, written before any TRAIN data existed)
+
+`python research/lab2/y2.py --debug` on 450 usable coins created over 0.52 days. Returns, exit reasons and stress
+results were never computed into the report; no parameter was chosen or changed after this run.
+
+| Measure | Census TRAIN third (0.52 d) | Per day | TRAIN (4 d) | VAL (1.5 d) | TEST (1.32 d) | CONFIRM (15 d) |
+|---|---:|---:|---:|---:|---:|---:|
+| Eligible (non-instant, curve scanned) | 152 (277 instant, 21 creation not scanned) | ≈ 292 | ≈ 1,170 | ≈ 440 | ≈ 385 | ≈ 4,400 |
+| Eligible and alive at g + 30 | 47 | ≈ 90 | ≈ 360 | ≈ 135 | ≈ 120 | ≈ 1,350 |
+| T3 entries | 14 | ≈ 27 | ≈ 108 | ≈ 40 | ≈ 36 | ≈ 400 |
+| T5 entries | 7 | ≈ 13 | ≈ 54 | ≈ 20 | ≈ 18 | ≈ 200 |
+| PE11 entries | 16 | ≈ 31 | ≈ 123 | ≈ 46 | ≈ 41 | ≈ 460 |
+| ALL entries (dose) | 47 (14 top / 19 mid / 14 bottom tercile) | ≈ 90 | ≈ 360 | | | |
+
+The extrapolations assume the census day's composition holds on other days.
+
+**What the counts imply (structure, not outcomes):**
+
+- **The reference pool is warm everywhere:** median 307 eligible graduates in the trailing 24 h (minimum 299), and
+  every lookback hour is a fully scanned curve hour. Cold ranks will only occur at the start of the backfilled data.
+- **Two thirds of eligible coins are dead at g + 30** (152 → 47 alive). The selectors act on the alive third.
+- **PE11 and T3 select nearly disjoint coins.** Of the 16 alive PE11 coins, 12 are in the bottom organic tercile and
+  4 in the middle; none is in the top. Graduations in 5 s - 5 min are bundle- and sniper-heavy, which the composite
+  ranks low, and PE-11's breadth and top-3 thresholds (≥ 15 buyers, < 0.6) are lax. So the grid holds a natural
+  contrast: if PE11 beats T3, graduation speed matters more than curve dispersion; if T3 beats PE11, the reverse.
+- **TEST will be UNDERPOWERED** for every config (≈ 18-41 entries against the 60-trade bar). VAL can reach the 15-trade
+  SELECTED bar for T3 and PE11, not reliably for T5. CONFIRM (15 days) is the powered out-of-sample look.
+- **Matched-control draws:** about 10% of random (coin, time) draws are eligible and alive, so `common.run_placebo`'s
+  200 tries per signal yield ≈ 19 of the 20 draws on average (266 for 14 T3 signals; 301 for 16 PE11 signals).
+- No trade ended on the data horizon (0 `horizon` exits in every config), as designed.

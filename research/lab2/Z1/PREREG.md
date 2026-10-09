@@ -275,5 +275,36 @@ non-AGENT buy SOL), `uses_wallet_reputation = False`, `uses_truncated_windows = 
 ## 13. Debug run (census TRAIN third, counts only)
 
 `python research/lab2/z1.py --debug` writes `Z1/debug.md` and `Z1/debug.json`. Returns, exit reasons and placebo
-outcomes are hidden; its trials go to a scratch ledger, never to `trials.json`. No constant above was changed after
-it ran. Results: see the amendment-free addendum below, written after the run (counts only).
+outcomes are hidden; its trials go to a scratch ledger, never to `trials.json`. **No constant above was changed after
+it ran, and no definition needed a fix** (run 2026-10-09 02:38 UTC, 23 s).
+
+**Counts** (450 usable coins created over 0.52 days: 277 instant, 173 slow; 40,514 decision minutes at ages 30-120):
+
+| | K = 10 | K = 20 |
+|---|---:|---:|
+| coins `alive` at some decision (coin-minutes) | 142 (8,391) | 142 (8,391) |
+| coins with an active early half (rule 1) | 166 | 261 |
+| coins where sells shrank faster than buys (rule 3) | 218 | 256 |
+| coins EXHAUSTED at some decision (coin-minutes) | 42 (113) | 47 (128) |
+| coins EXHAUSTED while `alive` (coin-minutes) | 31 (82) | 30 (81) |
+| entries (one per coin) | 31 (slow 27, instant 4) | 30 (slow 25, instant 5) |
+| entry age 30-45 / 45-60 / 60-90 / 90-120 min | 8 / 7 / 10 / 6 | 8 / 3 / 12 / 7 |
+| entries per day | ≈ 60 | ≈ 58 |
+| primary placebo draws (of 20 per signal) | 532 / 620 (86 %) | 528 / 600 (88 %) |
+| price-matched control draws | 234 / 620 (38 %) | 230 / 600 (38 %) |
+| exits at the data horizon | 0 | 0 |
+
+**Expected samples**, if other days look like the census day: TRAIN (4 d) ≈ 230-240 entries per config, VAL (1.5 d)
+≈ 87-90, TEST (1.32 d) ≈ 76-79, CONFIRM (15 d) ≈ 870-890.
+
+**What the counts imply, before any TRAIN data:**
+
+- TRAIN is powered for the shortlist bar (≥ 60 trades from ≥ 40 coins); TEST sits near the PLAN's 60-trade bar.
+- The binding filters are `alive` (only 142 of 450 coins are ever alive at 30-120 min), the activity minimum and the
+  sell-share rule; "sellers halved" alone holds on most coin-minutes because activity decays.
+- Signals concentrate on **slow** graduates (27 of 31), which are 38 % of coins. The stratum-matched placebo keeps the
+  control on the same kind of coin.
+- The price-matched control fills only ~38 % of its draws: `common.run_placebo` stops after 200 random tries per
+  signal, and an alive, price-held coin of the same stratum at the same age is rare. Its `mean_diff` therefore rests
+  on ~7-8 draws per signal; it is a TRAIN qualifier, not a TEST criterion.
+- The three exit sets share their entries by construction; they differ only in exits.

@@ -68,7 +68,7 @@ the realized outcome of their earlier picks and trades only the coins G1 would c
 | **Early holders** E(c) | Wallets in c's `w300_top10` at t_d, pooled accounts and the AGENT removed, with buy SOL > 0 and window sell SOL ≤ 0.5 × buy SOL (`HOLD_FRAC`): they bought and still hold, so following them is following a holder, not a flipper |
 | **Base follow trade** of c | A $20 entry decided at t_d(c) (landing 30 s later, worst fill = max(open, high) of the landing bar), exits as in §6, fills as in §7. Simulated by common's engine (`_simulate_coin` with a forced entry) |
 | **Label** y(c) | log(max(1 + ret_net, 0.01)) of the base follow trade. Defined only for eligible coins |
-| **Resolution time** r(c) | The end of the bar in which the base follow trade's exit filled (≤ g + 61 min). The label exists for decisions with τ ≥ r(c) only |
+| **Resolution time** r(c) | The end of the bar in which the base follow trade's exit filled (≤ g + 63 min). The label exists for decisions with τ ≥ r(c) only |
 | **Registry entry** | (w, r(c), y(c), c) for every eligible history coin c (§9 history splits) and every w ∈ E(c) |
 | **Wallet record at τ** | Entries with r ≤ τ and coin ≠ the coin being decided: n_w(τ) and the mean label m_w(τ) |
 | **Skill** s_w(τ) | m_w × n_w / (n_w + 10) (PLAN §6.6 rule 3 shrinkage) |
@@ -108,7 +108,7 @@ Otherwise the coin is skipped for good (`SKIP`). The tag of each trade is its le
 | Exit | Rule |
 |---|---|
 | Stop | −30 % from the entry fill (mechanical) |
-| Time | sell at coin age g + 60 min (`exit_by_age_s` = 3,600: a registered deadline inside the data, so no trade is censored) |
+| Time | sell at coin age g + 60 min (`exit_by_age_s` = 3,600: a registered deadline inside the data, so no trade is censored). It triggers at the first bar starting at or after g + 60 min and, like the stop, fills at the adverse side of the next bar (by g + 63 min) |
 
 No take-profit, no trailing stop, no signal exit. The trade X1 takes on a coin **is** that coin's base follow trade,
 so the reputation measures exactly the P&L that following the wallet would have made.
@@ -286,5 +286,53 @@ uses_current_state_fields = False
 
 ## 14. Debug findings and expected sample (census TRAIN third, counts only)
 
-Filled in after the debug run (`python research/lab2/x1.py --debug`). Returns, labels, skills and the gate statistic
-are hidden there; no parameter was chosen on those coins.
+**The run.** `python research/lab2/x1.py --debug` writes `X1/debug.md` and `X1/debug.json` (runtime ~3 s). Returns,
+labels, skills and the gate statistic are hidden; its trials go to a scratch ledger, never to `trials.json`. **No
+definition or parameter was changed after it.** By construction the signal and gate-group counts depend on labels
+(reputation is built from outcomes), so they say a little about `final_train` outcomes; that third is never judged
+(§9 FINAL).
+
+| Count (450 usable coins created over 0.52 days) | Value |
+|---|---:|
+| Class at t_d: FACTORY / OTHER / OPERATOR | 183 / 233 / 34 |
+| Eligible (OTHER and alive at g + 7-8 min) | 145 (88 OTHER coins were already dead: the ~17.6 SOL floor, or no volume) |
+| Eligible coins with ≥ 1 early holder | 136 (4.2 holders per eligible coin) |
+| Registry: early-holder wallets / entries | 552 / 613 |
+| Wallets with ≥ 2 / ≥ 3 / ≥ 6 entries | 45 / 10 / 1 (the most for one wallet: 6) |
+| Eligible coins with a holder known at the decision (n ≥ 3 / n ≥ 6) | 5 / 0 |
+| Persistence-gate observations | 5 (need 200) |
+| Signals, every config | 0 |
+
+**What these counts imply, before any TRAIN data:**
+
+- **12.5 hours is all warm-up.** A wallet needs 3 resolved eligible picks, each resolving about an hour after its
+  decision. Among tradeable coins, early holders rarely repeat: 552 wallets for 145 coins.
+- **The registry densifies with time (counts only).** Within eligible coins, wallets with ≥ 2 / ≥ 3 entries grew
+  from 21 / 3 (first 81 eligible coins) to 34 / 9 (120) and 45 / 10 (145). The few regular holders appear on about
+  0.02-0.04 of eligible coins. At ~280 eligible coins a day (if the census day is typical), TRAIN has ~1,100 eligible
+  coins, enough for each regular holder to become known within hours and sit on ~20-45 coins. That is an
+  extrapolation from one day: **whether TRAIN reaches 200 gate observations is unknown, and UNDERPOWERED_GATE (X1
+  halts) is a plausible pre-registered outcome.**
+- **Repeat early buyers live mostly in coins X1 excludes.** Over all usable coins, 1,271 holder wallets include 130
+  with ≥ 3 entries and 66 with ≥ 6, against 10 and 1 among eligible coins: the repeats come mostly from FACTORY,
+  OPERATOR and already-dead coins (bots and operator wallets). X1 keeps those coins out of the registry and the
+  universe by design (§3: factory dumps, M1's domain, untradeable floors).
+- **Later stages are denser.** VAL and TEST inherit TRAIN's registry (§9); CONFIRM warms up inside its 15 days.
+
+| Expected eligible coins (census-day rate) | TRAIN (4 d) | VAL (1.5 d) | TEST (1.32 d) | CONFIRM (15 d) |
+|---|---:|---:|---:|---:|
+| Eligible coins | ≈ 1,100 | ≈ 420 | ≈ 370 | ≈ 4,200 |
+| Signals | unknown (0 on the census third) | | | |
+
+## 15. Commands
+
+```bash
+python research/lab2/x1.py --debug                                   # census TRAIN third: counts only
+python research/lab2/x1.py --stage train [--allow-partial]           # gate, then the 4 configs, shortlist
+python research/lab2/x1.py --stage val                               # the shortlisted config, once
+LAB2_ALLOW_TEST=1 python research/lab2/x1.py --stage test            # judge only
+LAB2_ALLOW_CONFIRM=1 python research/lab2/x1.py --stage confirm      # judge only, after TEST
+LAB2_ALLOW_FINAL=1 python research/lab2/x1.py --stage final          # judge only, after TEST
+python research/lab2/x1.py --stage <stage> --check                   # prerequisites only
+python -m pytest -q research/lab2/tests/test_x1.py
+```

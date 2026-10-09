@@ -276,5 +276,40 @@ Declarations to `auto_rejections`: `uses_organic_flow = False`, `uses_wallet_rep
 
 ## 15. Debug findings and expected sample (census TRAIN third, counts only)
 
-Filled in from `python research/lab2/x2.py --debug` (writes `X2/debug.md`, `X2/debug.json`). No returns, exit
-reasons or bin means are shown there, and no parameter above was chosen or changed after it.
+From `python research/lab2/x2.py --debug` (writes `X2/debug.md`, `X2/debug.json`; trials go to a scratch ledger,
+never to `trials.json`). 450 usable coins created over 12.5 h (0.52 days). No returns, exit reasons or bin means are
+shown, and **no parameter above was chosen or changed after the run.**
+
+| Count (features only) | c = 30 min | c = 60 min |
+|---|---:|---:|
+| `alive` at the checkpoint (= reference pool) | 137 (30%) | 102 (23%) |
+| `alive` and net flow > 0 | 96 | 73 |
+| of those, warm-up skips (n_ref < 30) | 36 | 43 |
+| n_ref p10 / p50 / p90 | 17.5 / 32 / 43.5 | 16 / 25 / 36 |
+| breadth of alive coins p10 / p50 / p90 / max (buyers per minute) | 2.2 / 16 / 62 / 228 | 2.0 / 7.7 / 33.5 / 133 |
+| top-decile entries (every config at that checkpoint) | 8 (7 OTHER, 1 FACTORY) | 2 (1 OTHER, 1 FACTORY) |
+| dose-gate observations per bin [0-.5, .5-.8, .8-.9, .9-1] | 25 / 18 / 9 / 8 | 15 / 9 / 4 / 2 |
+| Spearman(`pressure`, 10-min return) over alive coins | **0.961** | **0.980** |
+
+**What these counts imply (before any TRAIN data):**
+
+- **The AMM identity holds on real bars.** Net flow / X ranks coins almost exactly like their own 10-minute return
+  (Spearman 0.96-0.98). Ranking by it would be chart momentum (§2.5); keeping it diagnostic-only was right.
+- **Far fewer coins are alive than assumed.** I sized the 3-hour reference for about half of the coins alive at
+  g + 30; only 30% are (23% at g + 60). The reference is thin (median 32 coins at c = 30), and on this 12.5-hour
+  slice 36 of 96 gated decisions fell in the warm-up. On the 4-day TRAIN the split-start warm-up is a smaller share,
+  but quiet hours will still skip. **Not changed:** the window and the 30-coin minimum stay as registered.
+- **Expected sample** (scaling 15.4 entries a day at c = 30 and 3.8 at c = 60, if other days resemble the census
+  day; quiet hours and the split-start warm-up make these upper-end figures):
+
+  | | TRAIN (4 d) | VAL (1.5 d) | TEST (1.32 d) | CONFIRM (15 d) |
+  |---|---:|---:|---:|---:|
+  | entries per config, c = 30 | ≈ 60 | ≈ 23 | ≈ 20 | ≈ 230 |
+  | entries per config, c = 60 | ≈ 15 | ≈ 6 | ≈ 5 | ≈ 57 |
+  | dose-gate top bin | ≈ 60 (c = 30), ≈ 15 (c = 60) | | | |
+
+- **Consequences, registered now:** the c = 60 dose check is expected to be UNDERPOWERED (< 30 coins in the top
+  bin), so its four configs will probably never run; VAL will probably be SELECTED_UNDERPOWERED at best; **TEST will
+  be UNDERPOWERED** (≈ 20 trades < 60) and can only stop X2 through its sign; **CONFIRM is the powered test.**
+- **Classes.** 8 of the 10 entries are OTHER (organic / non-factory) coins, so X2.1 is not expected to bind by
+  construction; it guards against the factory farm.

@@ -26,6 +26,7 @@ import statistics as stats
 import sys
 import time
 from collections import Counter, defaultdict
+from itertools import pairwise
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -498,6 +499,25 @@ def label_pairs(ours: list[dict], theirs: list[dict]) -> list[tuple[dict, dict]]
     return out
 
 
+def quote_side_breakdown(trades: list[dict]) -> dict:
+    """PumpSwap transitions whose token side chains, by how the quote side is explained: real x chains, only
+    X = x + v chains (v on both events), or v unknown on one side (accepted as a v shift by :func:`chain_check`)."""
+    amm = [t for t in trades if t["venue"] == 1]
+    out = {"amm_pairs": 0, "token_ok": 0, "x_ok": 0, "xv_only": 0, "xv_fail": 0, "v_unknown_jump": 0}
+    for a, b in pairwise(amm):
+        out["amm_pairs"] += 1
+        if a["y1"] != b["y0"]:
+            continue
+        out["token_ok"] += 1
+        if a["x1"] == b["x0"]:
+            out["x_ok"] += 1
+        elif a.get("virt") and b.get("virt"):
+            out["xv_only" if a["x1"] + a["virt"] == b["x0"] + b["virt"] else "xv_fail"] += 1
+        else:
+            out["v_unknown_jump"] += 1
+    return out
+
+
 def block_stats(rows: list[dict], sw: dict[str, list[dict]]) -> dict:
     """V1 / V2 / V4 counts over one sampled hour. ``rows``: raw.sql rows (trades decoded); ``sw``: mint -> swap-api
     trades of the same coin over the same span (only trades present in both sources count for V1-labels / V4)."""
@@ -508,6 +528,8 @@ def block_stats(rows: list[dict], sw: dict[str, list[dict]]) -> dict:
         for k in ("pairs", "chain_ok", "label_checked", "label_ok"):
             s[k] += c[k]
         breaks += [[r["mint"], a, b] for a, b in c["breaks"][:3]]
+        for k, v in quote_side_breakdown(r["trades"]).items():
+            s["q_" + k] += v
         s["coins"] += 1
         s["trades"] += len(r["trades"])
         s["truncated"] += bool(r.get("truncated"))
@@ -538,6 +560,7 @@ def range_record(name: str, lo: str, hi: str, blocks: list[dict], validated_utc:
     v2 = {"coins": t["coins"], "transitions": t["pairs"], "chain_ok": t["chain_ok"],
           "share": t["chain_ok"] / t["pairs"] if t["pairs"] else None,
           "pass": t["pairs"] > 0 and t["chain_ok"] / t["pairs"] >= 0.99,
+          "amm_quote_side": {k[2:]: v for k, v in t.items() if k.startswith("q_")},
           "definition": "per pool, consecutive trades: token reserve chains exactly; quote side chains on x, or on "
                         "x + virt when both events carry virt, or is a virtual-reserve shift when virt is unknown"}
     v4 = {"matched_trades": t["o_matched"], "same_slot_pairs": t["o_same"], "agree": t["o_agree"],
@@ -557,14 +580,18 @@ def merge_ranges(old: list[dict], new: list[dict]) -> list[dict]:
     return [r for r in old if r.get("split") not in keys and (r.get("lo_utc"), r.get("hi_utc")) not in keys] + new
 
 
+def _load_gz(p: Path):
+    with gzip.open(p, "rt") as f:
+        return json.load(f)
+
+
 def _known_graduates(out: Path) -> tuple[dict[str, dict], list[tuple[int, int]]]:
     """Graduates from the backfill's raw curve chunks (read-only) and the [t0, t1) spans they cover."""
     grads: dict[str, dict] = {}
     spans = []
     for p in sorted((out / "raw" / "curve").glob("*.json.gz")):
         try:
-            with gzip.open(p, "rt") as f:
-                ch = json.load(f)
+            ch = _load_gz(p)
         except (OSError, ValueError):
             continue
         spans.append((int(ch["t0"]), int(ch["t1"])))
@@ -590,7 +617,7 @@ def _discover_hour(ch: CryptoHouse, slots: SlotMap, hour: int, vdir: Path) -> di
     from cryptohouse import QueryTimeout
     p = vdir / f"curve_{hour}.json.gz"
     if p.exists():
-        return json.load(gzip.open(p))
+        return _load_gz(p)
     t0, t1 = hour, hour + 3600
     while True:
         slots.ensure(t0 - CURVE_LOOKBACK_S - Q15, t1 + 2 * Q15)
@@ -648,8 +675,12 @@ def _swapapi_window(sess, throttle, mint: str, start_ms: int, end_ms: int, max_p
 
 
 def run_ranges(out: Path, ch: CryptoHouse | None, names: list[str], coins_per_hour: int = 14,
-               max_trades: int = 150, seed: int = 0, sw_rpm: float = 12.0) -> list[dict]:
+               max_trades: int = 150, seed: int = 0, sw_rpm: float = 12.0, refresh: bool = False) -> list[dict]:
+    """Range records for ``names`` (see RANGE_SPLITS). Raw blocks and swap-api windows are cached in
+    ``<out>/validation/ranges``; ``refresh`` re-fetches them (old caches kept as ``*.prev.json.gz``), which a split
+    needs once B2 chunks of its hours were fetched after its ``validated_utc``."""
     import requests
+
     from collect_trades import Throttle
     vdir = out / "validation" / "ranges"
     vdir.mkdir(parents=True, exist_ok=True)
@@ -672,6 +703,10 @@ def run_ranges(out: Path, ch: CryptoHouse | None, names: list[str], coins_per_ho
         blocks = []
         for hour in pick_hours(name, lo, hi, k, seed):
             p = vdir / f"raw_{hour}.json.gz"
+            if refresh and ch is not None:
+                for q in (p, vdir / f"sw_{hour}.json.gz"):
+                    if q.exists():
+                        os.replace(q, q.with_name(q.name.replace(".json.gz", ".prev.json.gz")))
             g = dict(grads)
             partial = not _covered(spans, hour - B2_HORIZON_S, hour + 3600)
             if not _covered(spans, hour, hour + 3600):
@@ -693,7 +728,7 @@ def run_ranges(out: Path, ch: CryptoHouse | None, names: list[str], coins_per_ho
                     json.dump({"hour": hour, "sample": sample, "scanned_to": scanned_to, "columns": cols,
                                "rows": rows, "fetched_ts": time.time(), "candidates": len(cands),
                                "candidates_partial": partial}, f)
-            d = json.load(gzip.open(p))
+            d = _load_gz(p)
             cands_n, partial = d.get("candidates", len(cands)), d.get("candidates_partial", partial)
             rows = []
             for r in d["rows"]:
@@ -702,7 +737,7 @@ def run_ranges(out: Path, ch: CryptoHouse | None, names: list[str], coins_per_ho
                 rows.append(row)
             win = {c["mint"]: c for c in d["sample"]}
             sp = vdir / f"sw_{hour}.json.gz"
-            sw = json.load(gzip.open(sp)) if sp.exists() else {}
+            sw = _load_gz(sp) if sp.exists() else {}
             for row in rows:
                 m = row["mint"]
                 if m in sw or not row["trades"]:
@@ -824,6 +859,7 @@ def main(argv=None) -> int:
     ap.add_argument("--coins-per-hour", type=int, default=14)
     ap.add_argument("--max-trades", type=int, default=150, help="raw trades per coin and sampled hour")
     ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument("--refresh", action="store_true", help="--ranges: re-fetch the sampled hours (new validated_utc)")
     args = ap.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
     out = Path(args.out)
@@ -841,7 +877,7 @@ def main(argv=None) -> int:
                 return _query(sql, tag=tag, **kw)
             ch.query = counted
         recs = run_ranges(out, ch, [s.strip() for s in args.ranges.split(",") if s.strip()], args.coins_per_hour,
-                          args.max_trades, args.seed)
+                          args.max_trades, args.seed, refresh=args.refresh)
         p = out / "validation_ranges.json"
         old = json.loads(p.read_text()) if p.exists() else []
         tmp = p.with_suffix(".tmp")

@@ -267,5 +267,48 @@ Declarations passed to `common.auto_rejections`: `uses_organic_flow = False`, `u
 
 ## 13. Debug findings and expected sample (census TRAIN third, counts only)
 
-To be filled from `python research/lab2/z2.py --debug` (`Z2/debug.md`, `Z2/debug.json`) before any TRAIN run.
-Returns, exit reasons and placebo outcomes are hidden on that split; its trials go to a scratch ledger.
+**The run.** `python research/lab2/z2.py --debug` writes `Z2/debug.md` and `Z2/debug.json`.
+
+- 450 usable coins created over 0.52 days (≈ 865 a day); 277 instant, 173 slow.
+- Returns, exit reasons and placebo outcomes are hidden. Its trials went to a scratch ledger, never `trials.json`.
+- **§1-§12, including the grid, were written before this run, and nothing in them changed after it.** The one code
+  fix came from a unit test before the run (the TRAIN decision read the primary config with a wrong keyword).
+
+**Counts.**
+
+| Measure | q = 0.03 | q = 0.06 |
+|---|---:|---:|
+| Traded bars inside the entry window (start ≥ g + 7 min, decision ≤ g + 120 min) | 16,583 | 16,583 |
+| Whale bars | 77 | 19 |
+| Coins with a whale bar = entries per config | 47 | 11 |
+| Entries per day | 90.3 | 21.1 |
+| Matched placebo draws found (of 20 per signal) | 725 of 940 | 151 of 220 |
+| Horizon (censored) exits | 0 | 0 |
+
+The four exit configs of one q share their entries (the exits differ).
+
+**Structural findings (sizes and depths at the signal; no outcome was looked at).**
+
+- **Z2's whales are mostly mid-size buys into drained pools.** 39 of the 47 first whale bars at q = 0.03 sit at
+  X < 50 SOL. Over all 77 whale bars the median depth before the bar is X = 25.5 SOL (10-90 %: 19.8-81.8), close to
+  the ≈ 17.6 SOL virtual floor of a dumped pool, and the median bound is 1.27 SOL (10-90 %: 0.78-5.2 SOL, about
+  $80-550 at $105/SOL). That is what the pre-registered size-relative-to-depth rule selects, and it is not changed.
+  Two consequences: the round trip sits at the expensive end of 1.4-5.1 % (small pools), and the depth-matched
+  placebo (§7), which compares with other drained coins at the same age, is what separates the whale's timing from
+  "dead coins".
+- 30 of the 77 whale bars hold a single buy; the median bar holds 2 buys. The bound handles dust-painted minutes (one
+  bar had 267 buys and 439 dust trades; its bound is the mean of the ≥ 4 non-dust buys).
+- Decision ages: median 35 min after g (10-90 %: 12.7-79 min).
+- The matched control found 69-77 % of its draws within `common.run_placebo`'s 200 tries: some (speed, depth) strata
+  are thin at a given age. `placebo_compare` pairs each signal with the draws it got.
+
+**Expected sample, if other days resemble the census day.**
+
+| Entries | Per day | TRAIN (4 d) | VAL (1.5 d) | TEST (1.32 d) | CONFIRM (15 d) |
+|---|---:|---:|---:|---:|---:|
+| q = 0.03 | ≈ 90 | ≈ 360 | ≈ 135 | ≈ 119 | ≈ 1,350 |
+| q = 0.06 | ≈ 21 | ≈ 85 | ≈ 32 | ≈ 28 | ≈ 315 |
+
+- Every config should reach TRAIN's 30-trade bar.
+- On TEST only q = 0.03 reaches PLAN's 60 trades from 40 coins. A q = 0.06 candidate would be UNDERPOWERED on TEST
+  and would be judged on CONFIRM.

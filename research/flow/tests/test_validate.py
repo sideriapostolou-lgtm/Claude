@@ -202,3 +202,16 @@ def test_ordering_check_ignores_swapapi_page_order(launch_amm_fixture):
     theirs.append({"tx": "U", "userAddress": "Z", "type": "sell", "slotIndexId": f"{9:012d}{30000:010d}"})
     o = V.ordering_check([a, b, c], theirs)
     assert o["matched"] == 3 and o["agree"] == o["same_slot_pairs"] == 3
+
+
+def test_quote_side_breakdown_and_chain_check_agree():
+    def t(x0, y0, x1, y1, virt=0, buy=1):
+        return {"venue": 1, "x0": x0, "y0": y0, "x1": x1, "y1": y1, "virt": virt, "is_buy": buy, "slot": 1}
+    tr = [t(100, 50, 110, 45, virt=20),        # -> next x0 = 110: real x chains
+          t(110, 45, 120, 40, virt=20),        # -> x jumps +3, v -3 on the next buy: X chains
+          t(123, 40, 133, 35, virt=17),        # -> sell with v unknown, x jumps: accepted as a v shift
+          t(134, 35, 130, 36, buy=0),          # -> token side breaks (a trade is missing)
+          t(130, 37, 140, 30, virt=17)]
+    q = V.quote_side_breakdown(tr)
+    assert q == {"amm_pairs": 4, "token_ok": 3, "x_ok": 1, "xv_only": 1, "xv_fail": 0, "v_unknown_jump": 1}
+    assert V.chain_check(tr)["chain_ok"] == q["token_ok"] - q["xv_fail"]

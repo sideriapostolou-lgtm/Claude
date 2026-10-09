@@ -52,7 +52,7 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 from statistics import NormalDist
-from typing import Any, Iterable, Mapping, Sequence
+from typing import Any, Mapping, Sequence
 
 import numpy as np
 import pandas as pd
@@ -150,7 +150,12 @@ def config_key(p: Mapping[str, Any]) -> str:
 
 def decision_index(cd: C.CoinData) -> int:
     """k_d = ceil((g + 420 - m0) / 60): the first grid decision t = m0 + 60 k + 20 with tau = t - 20 >= g + 420 s."""
-    return int(math.ceil((cd.g + DECISION_AFTER_S - cd.m0) / 60.0 - 1e-9))
+    k = int(math.ceil((cd.g + DECISION_AFTER_S - cd.m0) / 60.0))
+    while cd.m0 + 60 * k < cd.g + DECISION_AFTER_S:
+        k += 1
+    while k > 0 and cd.m0 + 60 * (k - 1) >= cd.g + DECISION_AFTER_S:
+        k -= 1
+    return k
 
 
 def decision_time(cd: C.CoinData) -> float:
@@ -199,11 +204,10 @@ def early_holders(snap: C.AsOf) -> tuple[str, ...] | None:
         return None
     if lst is None:
         return None
-    pooled = set(C.POOLED_ACCOUNTS) | C._pooled_from_file()
     out, seen = [], set()
-    for w in lst:
+    for w in lst:   # pooled accounts (incl. pooled_accounts.json) were already dropped when the coin was loaded
         addr, b, s = str(w[0]), float(w[1] or 0.0), float(w[2] or 0.0)
-        if not addr or addr in pooled or addr in seen or b <= 0 or s > HOLD_FRAC * b:
+        if not addr or addr in C.POOLED_ACCOUNTS or addr in seen or b <= 0 or s > HOLD_FRAC * b:
             continue
         seen.add(addr)
         out.append(addr)
@@ -341,7 +345,7 @@ def signal(snap: C.AsOf, reg: Registry, p: Mapping[str, Any]) -> dict:
     rep = [h for h in known if h["skill"] > float(p["theta"])]
     out.update(n_holders=len(hs), n_known=len(known), n_reputable=len(rep))
     if rep:
-        lead = sorted(rep, key=lambda h: (-h["skill"], -h["n"], h["wallet"]))[0]
+        lead = min(rep, key=lambda h: (-h["skill"], -h["n"], h["wallet"]))
         out.update(lead=lead["wallet"], lead_skill=lead["skill"], lead_n=lead["n"], enter=True)
     return out
 
@@ -414,15 +418,14 @@ def gate_obs(ds: C.Dataset, reg: Registry) -> pd.DataFrame:
     lab = reg.coins.set_index("mint") if len(reg.coins) else None
     rows = []
     for m in ds.mints:
-        if lab is None or m not in lab.index or not bool(lab.at[m, "eligible"]) or lab.at[m, "label"] is None \
-                or (isinstance(lab.at[m, "label"], float) and math.isnan(lab.at[m, "label"])):
+        if lab is None or m not in lab.index or not bool(lab.at[m, "eligible"]) or pd.isna(lab.at[m, "label"]):
             continue
         cd = ds.coin(m)
         t_d = decision_time(cd)
         snap = ds.asof(m, t_d)
         hs = holder_scores(snap, reg)
         known = [h for h in hs if h["n"] >= N_GATE and h["skill"] is not None]
-        best = sorted(known, key=lambda h: (-h["skill"], -h["n"], h["wallet"]))[0] if known else None
+        best = min(known, key=lambda h: (-h["skill"], -h["n"], h["wallet"])) if known else None
         n_rep0 = sum(1 for h in known if h["skill"] > 0)
         rows.append({"mint": m, "t_d": t_d, "label": float(lab.at[m, "label"]), "n_holders": len(hs),
                      "n_known": len(known), "rep": None if best is None else best["skill"],
@@ -479,7 +482,7 @@ def _lead_stats(t: pd.DataFrame, B: int) -> dict:
     r = t["ret_net"].to_numpy(float)
     vc = pd.Series(lead).value_counts()
     prof = pd.Series(r).groupby(lead).sum()
-    top = sorted(vc.index, key=lambda w: (-int(vc[w]), -float(prof[w]), str(w)))[0]
+    top = min(vc.index, key=lambda w: (-int(vc[w]), -float(prof[w]), str(w)))
     rest = r[lead != top]
     return {"n_leads": int(len(vc)), "ci90_lead": C.coin_bootstrap_ci(r, lead, 0.90, B),
             "top_lead": {"wallet": str(top), "trades": int(vc[top]), "share_of_trades": float(vc[top] / len(r))},
@@ -571,7 +574,7 @@ def decide_train(evals: Mapping[str, Mapping[str, Any]]) -> dict:
                      "ci90_lo": ci[0] if ci else None, "placebo_diff": pc})
     q = [r for r in rows if r["qualifies"]]
     if q:
-        best = sorted(q, key=lambda r: (-r["ci90_lo"], -r["mean"], -r["theta"], -r["n_min"]))[0]
+        best = min(q, key=lambda r: (-r["ci90_lo"], -r["mean"], -r["theta"], -r["n_min"]))
         sl = [make_params(best["theta"], best["n_min"])]
         return {"verdict": "SHORTLISTED", "best": best["config"], "rows": rows, "shortlist": sl,
                 "shortlist_hashes": [C.params_hash(x) for x in sl]}
@@ -915,7 +918,7 @@ def run_stage(stage: str, *, out_dir: Path = OUT_DIR, allow_partial: bool = Fals
             _write_trades(out_dir, stage, provisional, results)
         if debug:
             days = doc["span_days"]
-            doc["entries_per_day"] = {k: (e["n"] / days if days == days and days > 0 else None) for k, e in evals.items()}
+            doc["entries_per_day"] = {k: (e["n"] / days if math.isfinite(days) and days > 0 else None) for k, e in evals.items()}
             doc["decision"] = {"verdict": "DEBUG", "note": "mechanics only; returns hidden"}
         elif stage == "train":
             dec = decide_train(evals)
