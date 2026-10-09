@@ -870,14 +870,19 @@ def test_real_census_train_loads_with_coverage():
                                     "truncated"}
     cd = ds.coin(ds.mints[0])
     assert cd.arr["X"][0] > 0 and np.all(np.isfinite(cd.arr["c"]))
-    # the initial PRICING reserve includes the virtual reserve: X0 = pool_quote0 + v (B2's bar-0 open omits v, so
-    # the first traded bar's open is rebuilt from it and its low cut to the body)
-    firsts = [ds.coin(m) for m in ds.mints[:100]]
-    assert all(c.init_X == pytest.approx(c.row["pool_quote0"] + c.row["virt_sol"]) for c in firsts)
+    # pool_quote0 IS the initial PRICING reserve X0 = x0 + v (test_bar0_real.py); bar 0 is B2's own bar, whose open is
+    # the price before the first pool trade = pool_quote0 / pool_base0, and whose low keeps its wick
+    firsts = [ds.coin(m) for m in ds.mints]
+    assert all(c.init_X == pytest.approx(c.row["pool_quote0"], rel=1e-12) for c in firsts)
     assert np.median([c.row["virt_sol"] for c in firsts]) == pytest.approx(17.584505289, rel=1e-6)
-    ok = [abs(c.arr["o"][0] / (c.init_X / c.init_y) - 1) < 1e-12 and c.arr["l"][0] <= min(c.arr["o"][0], c.arr["c"][0])
-          for c in firsts if c.arr["traded"][0]]
-    assert all(ok)
+    b0 = ds.bars[ds.bars["minute_idx"] == 0].set_index("pool")
+    traded0 = [c for c in firsts if c.arr["traded"][0] and c.pool in b0.index]
+    assert len(traded0) > 0.9 * len(firsts)
+    assert all(c.arr["o"][0] == pytest.approx(b0.loc[c.pool, "open"], rel=1e-12) for c in traded0)
+    assert all(c.arr["l"][0] == pytest.approx(min(b0.loc[c.pool, "low"], b0.loc[c.pool, "open"]), rel=1e-12)
+               for c in traded0)
+    at_init = [abs(c.arr["o"][0] / (c.init_X / c.init_y) - 1) < 1e-6 for c in traded0]
+    assert sum(at_init) >= 0.99 * len(traded0)
 
 
 # =========================================================================== helpers added for the hypothesis builders

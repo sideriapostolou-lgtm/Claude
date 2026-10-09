@@ -6,7 +6,13 @@ S1 universe = common.py usable (SOL-quoted, not Mayhem, virtual reserve known, B
 COMPLETELY consolidated under :func:`common.completeness_from_flow`) AND creation scanned (``curve_partial`` False)
 AND ``created_exact`` AND ``grad_delay_s > 5`` (:func:`s1.universe_mask`). D1's universe (G1-chain ORGANIC) lies
 inside it, and both modules' B1 coverage gates use exactly this denominator (``s1.coverage_counts``,
-``d1.b1_coverage``). Every filter is a graduation-time fact (or our collection status), so the selection is causal.
+``d1.b1_coverage``). NOT every filter is a graduation-time fact: two common.py usable rules look after g,
+``no_b2_row`` (no pool trade in any scanned B2 hour of [g, g + 180 min)) and ``virt_unknown`` (no PumpSwap buy in
+[g, g + 180 min)), so a coin that died at migration drops out. The selection only reproduces that denominator (B1
+adds no filter of its own; B1 gaps come from time or collection errors, not outcomes). Measured with discovery
+complete (2026-10-09 04:00 UTC): neither rule removed any S1-eligible coin (TRAIN 0 / 1,420, VAL 0 / 458,
+TEST 0 / 418). Re-check ``not_usable`` (no_b2_row, virt_unknown) per split in ``b1_select.json`` before freezing a
+universe: it counts them over every graduate of the split, an upper bound for the S1-eligible ones.
 
 Window per coin: [c_ts, g_ts + 7200) = S1's checkpoints g + 6 ... g + 120 min and D1's decisions tau in
 [g + 600, g + 7180] with flow exits read up to g + 7200 (both refuse tau >= g + 7200).

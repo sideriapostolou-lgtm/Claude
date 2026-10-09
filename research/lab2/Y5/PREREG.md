@@ -12,6 +12,11 @@
 - **Freeze.** The first official TRAIN run hashes this file into `Y5/prereg.lock`. After that, `y5.py` refuses every
   stage if this file has changed. Any change is a new version (`y5-v2`) recorded in `Y5/AMENDMENTS.md`, and every
   config it adds counts as new trials.
+- **Review amendments (2026-10-09, before the lock and before any run on a non-debug split).** Y5-1: an M1-host pair
+  never looks at a split before M1's own look there (§3.2). Y5-3: the M1 host is also pinned by `m1.py`'s sha256, and
+  common.py changes are recorded and flagged (§3.2). Y5-2: the overlap with X5 is stated and measured (§3.4). The grid,
+  the sessions, the rules and the bars did not change; the four M1-host configs' params now carry the m1.py pin, so
+  their trial identities changed (nothing official had run).
 
 ## 1. Mechanism, why it could beat costs, and why it probably will not
 
@@ -72,8 +77,26 @@ in the ASIA block.
 - `m1.strategy` with `m1.make_params(1.0, "rhythm+prec")`: M1 version `m1-v1`, params hash `9c0a14afb895`. m = 1 is
   the PLAN's lowest drift-over-cost bar (the most entries); `rhythm+prec` is M1's own candidate exit set.
 - This is **fixed now**, not taken from M1's TRAIN selection, so that Y5 never inherits a search on TRAIN outcomes.
-- `y5.py` refuses every stage if `m1.VERSION` or that params hash changes (the host would no longer be the registered
-  one).
+- **The pin (review Y5-3).** `y5.py` refuses every stage if `m1.VERSION`, that params hash, or the sha256 of
+  `research/lab2/m1.py` changes: registered `b5489ac2686d66970fe93715a69dda4a38dc6395e4a48e80295859c4d289ac7a`
+  (`y5.M1_REG_SHA256`, also carried in each M1-host config's params as `host_code_sha256`). VERSION and the params
+  hash alone would miss a change to `m1.strategy`, the MECH-bar detector, the precursors or the cluster logic. Any
+  edit to `m1.py` (comments included) trips the pin: before Y5's lock it is re-registered here, after it a new Y5
+  version.
+- **The engine is not pinned, only watched.** `common.py` (fills, bars, `AsOf`) is shared by both hosts and by every
+  hypothesis, and it is still being corrected lab-wide (the bar-0 price fix). Its sha256 is written into every Y5
+  stage document; a VAL / TEST / CONFIRM / FINAL document whose common.py differs from the official TRAIN run's is
+  flagged in its header ("common.py changed since TRAIN"), not refused. So the honest claim is: Y5 refuses if M1's
+  code changes, and reports if the shared engine changed.
+- **Never ahead of M1's own look (review Y5-1).** The pinned host *is* M1's own candidate whenever M1's TRAIN picks
+  m* = 1, and common.py counts one-shot looks per hypothesis family. An M1-host pair (an M1-host candidate and
+  `M1|ALL`) run by Y5 on VAL, TEST, CONFIRM or FINAL would therefore show M1's candidate on that split before M1
+  spends its one look, and the VAL look would count against Y5's VAL counter, not M1's. So an M1-host pair runs on
+  such a split only when the canonical trials ledger shows that the **M1 family has already spent that split group**
+  (a non-debug M1 run on it, or an M1 one-shot session), or when **M1's own written decisions forbid M1 that stage**
+  (an official M1 TRAIN decision other than SHORTLISTED; an M1 VAL decision that stops M1 before TEST; an M1 TEST that
+  closes M1's CONFIRM). Otherwise the stage refuses and Y5 waits for M1. TRAIN is shared search data and is not
+  gated. R30 pairs are never gated.
 - M1's entries mostly come from one operator cluster (M1 PREREG §13). A calendar gate on M1 therefore largely measures
   one operator's daily schedule. Y5 keeps M1's cluster checks for M1-host candidates (§9, Y5.3).
 
@@ -90,6 +113,25 @@ fixed and while its debug ran. It is **not** a y5-v1 host, for three reasons tha
    still changing. A pinned host must be frozen.
 
 Adding X6 as a host is a new version (`y5-v2`) once X6's shortlist is frozen, with its own counted configs.
+
+### 3.4 Overlap with X5 (the market regime gate): stated and measured (review Y5-2)
+
+`research/lab2/x5.py` and `X5/PREREG.md` existed (03:20 UTC) before this file was written (03:31 UTC), and the
+first version of this section did not discuss them. X5 gates **the identical M1 host** (`m1.strategy` at m = 1,
+`rhythm+prec`), and g1's R0, by a market regime: graduation rate, post-graduation volume or survival over the last
+2 h against the quantile of its previous 24 h. Tradeable graduations are strongly diurnal (counts only, 7.1 days of
+graduates: from 161 at 11:00 UTC to 404 at 22:00 UTC; the US session holds 2,598 of 6,232), so X5's ON regime leans
+toward the US and late-UTC hours. On the M1 host, X5's regime gate and Y5's US / session gates therefore partly
+select the same trades.
+
+- **Not independent evidence.** A Y5 M1-host result and an X5 M1-host result must not be counted as two
+  confirmations of a timing effect. Y5's own test of the calendar is its R30 host, which X5 does not use (X5's
+  random-entry host is R0, at a random age).
+- **Measured, counts only.** The TRAIN document reports X5's M1-host TRAIN trades (read from `X5/train_trades.csv`
+  when X5 has written it) by X5 state (each signal at q = 0.5) and Y5 session of the decision. No return is read.
+  It is never decisive.
+- The M1 host stays: it was registered before X5's overlap was known, it is the likely-underpowered host anyway
+  (§13), and dropping it now would be a change chosen after seeing X5's design rather than any outcome.
 
 ## 4. The gate is a filter
 
@@ -168,7 +210,9 @@ same-bar exits (`exit_delay_bars=0`); open fills.
 A stage refuses to run unless:
 
 - `Y5/PREREG.md` exists, and matches `prereg.lock` once locked;
-- the M1 host is the registered one (`m1.VERSION` = `m1-v1`, params hash `9c0a14afb895`);
+- the M1 host is the registered one (`m1.VERSION` = `m1-v1`, params hash `9c0a14afb895`, `m1.py` sha256 as in
+  §3.2);
+- an M1-host pair on VAL, TEST, CONFIRM or FINAL: M1 has already spent that split group, or can no longer (§3.2);
 - PLAN §8 rule 1 holds for the split (`common.validation_gates`: V1-V4 on the split's dates);
 - the split's coverage is complete (every chain hour scanned for curve and B2, no mid-run B2 hour, ≤ 5 % of tradeable
   coins without a complete B2 window, SOL/USD covering the split). FINAL is exempt from the completeness check, never

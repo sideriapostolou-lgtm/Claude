@@ -2,10 +2,11 @@
 
 - **Version:** `z5-v1`.
 - **Written:** 2026-10-09, before any Z5 run on TRAIN, VAL, TEST, CONFIRM or FINAL data. TRAIN was still being
-  backfilled. Every constant, both hosts, the whole grid (§6), the decomposition (§7), the predictions (§7.3), the
-  controls (§8) and the decision rules (§9) were fixed in this file **before** the debug run on the census TRAIN third
-  (§13). That run reports counts and decision-time costs only: returns, exit reasons, fill prices and placebo outcomes
-  hidden, and no parameter chosen there.
+  backfilled. Every constant, both hosts, the whole grid (§6), the decomposition (§7) and the predictions (§7.3) were
+  fixed in this file **before** the debug run on the census TRAIN third (§13). That run reports counts and
+  decision-time costs only: returns, exit reasons, fill prices and placebo outcomes hidden, and no parameter chosen
+  there. Two robustness additions came **after** it, from counts only, and are listed in §13: the concentration check
+  (§9, Z5.4) and the class-matched diagnostic control (§8). Neither touches the grid.
 - **Code:** `research/lab2/z5.py`, on the shared foundation `research/lab2/common.py` (every feature through
   `common.AsOf`). Tests: `research/lab2/tests/test_z5.py`.
 - **Data:** `graduates`, `b2_coins`, `b2_bars` only (B2 minute bars to g + 180 min). No B1, no B3, no CryptoHouse
@@ -195,7 +196,7 @@ labelled "host already positive": the edge is the host's.
 
 | Host | Judged control (criterion 5, TRAIN qualifier) | Diagnostic controls (never judged) |
 |---|---|---|
-| R0 | random **alive** coins of the same split (R0's own universe; for a filtered config this measures cost saving + selection together) | `cost_band` (filtered configs): alive draws whose `rt` ≤ c at their decision (timing inside the cheap band; ≈ 0 expected for a random host) |
+| R0 | random **alive** coins of the same split (R0's own universe; for a filtered config this measures cost saving + selection together) | `class_matched` (every R0 config): alive draws of the signal's PLAN 4.2 class (`m1.m1_class`: OPERATOR / FACTORY / OTHER), separating class selection from cost (§13); `cost_band` (filtered configs): alive draws whose `rt` ≤ c at their decision (timing inside the cheap band; ≈ 0 expected for a random host) |
 | M1 | M1's class-matched alive control (`m1.placebo_ok`, `m1.placebo_stratum`), as M1 registers it | `unmatched` (any allowed class, alive); `cost_band` (class-matched and `rt` ≤ c) |
 
 Placebo positions run the same exits (host logic with `is_placebo`, the guard from their own fill).
@@ -225,6 +226,7 @@ CONFIRM, M1's `confirm_allowed` is false). R0 is a parameter-free null host with
    | Sample | ≥ 60 trades from ≥ 40 coins; for the M1 host also ≥ 3 operator clusters (`m1.cluster_table`, M1's own bar) |
    | Mean net | > 0 |
    | Mean without the top 2 trades | > 0 |
+   | **Concentration** | R0 host: mean > 0 on the trades whose class at the entry decision is not OPERATOR; M1 host: mean > 0 without the largest operator cluster (M1's own check) |
    | Judged-control `mean_diff` | > 0 |
    | Censored share | ≤ 10 % |
    | **The filter adds** | mean net(f) − mean net(b) > 0 |
@@ -255,10 +257,11 @@ CONFIRM, M1's `confirm_allowed` is false). R0 is a parameter-free null host with
   | Z5.1 | the filter adds: candidate mean − twin mean > 0 | yes (FAIL) |
   | Z5.2 | M1 host only: ≥ 3 operator clusters among the candidate's trades | yes (UNDERPOWERED) |
   | Z5.3 | attribution (§7): cost saving, selection, cost-alone counterfactual | no (label) |
+  | Z5.4 | concentration: the TRAIN qualifier's check (R0: mean > 0 without OPERATOR-class coins; M1: mean > 0 without the largest operator cluster) | yes (FAIL) |
 
 - REJECTED if `verdict_entry` rejects; UNDERPOWERED if it is underpowered or Z5.2 fails; FAIL if any criterion fails;
-  INCOMPLETE if any is missing or > 10 % of trades are censored; PASS otherwise. With a 1.3-day TEST and an R0 kept
-  share of roughly 10-20 %, **UNDERPOWERED is expected**.
+  INCOMPLETE if any is missing or > 10 % of trades are censored; PASS otherwise. At census-day rates (§13) an R0
+  candidate would have ≈ 130 TEST trades (powered); an M1-host candidate is underpowered on clusters (one operator).
 
 ### CONFIRM (09-16 → 10-01; one look, never searched)
 
@@ -280,7 +283,11 @@ Otherwise UNDERPOWERED (TRAIN, VAL or CONFIRM) or NO EDGE.
 
 - Unit: net return per $20 trade (`ret_net`), one entry per coin per config. Coin-bootstrap CIs (10,000 draws, 90 % and
   95 %) and the 6-hour block bootstrap (`common.describe`); mean without the top 2; top-coin share; halves; the $100 /
-  5-slot portfolio; deflated Sharpe counting every ledger trial; per-tag means (R0, M1 classes).
+  5-slot portfolio; deflated Sharpe counting every ledger trial; per-tag means.
+- **Classes and clusters** (groupings, never features): every trade carries its PLAN 4.2 class at the entry decision
+  (`m1.m1_class`, read through AsOf at t_dec) and its operator cluster (`m1.cluster_table`: coins linked by creator,
+  symbol or a top-5 early pool buyer). Both are reported per config (counts on the debug split, means otherwise). The
+  concentration check (§9) uses the class for R0 and the cluster for M1 (§13 says why).
 - **Declarations** to `auto_rejections`: `uses_organic_flow = False`, `uses_wallet_reputation = False`,
   `uses_truncated_windows = False`, `uses_current_state_fields = False`.
 - **Stop rules (PLAN §8):** rule 1 (data first) per split; rule 2 (fills are minute-bar worst fills until replayed fills
@@ -306,4 +313,60 @@ day), all in one operator cluster (M1 PREREG §13). The share of those entries i
 
 ## 13. Debug run (census TRAIN third, counts and decision-time costs only)
 
-To be filled from `python research/lab2/z5.py --debug` (`Z5/debug.md`). No parameter above may change because of it.
+**The run.** `python research/lab2/z5.py --debug` writes `Z5/debug.md` and `Z5/debug.json`: 450 usable coins created
+over 12.5 h (0.52 days), 145 s. Returns, exit reasons, fill prices, the cost decomposition and placebo outcomes are
+hidden; the trials go to a scratch ledger, never to `trials.json`. The grid (§6), c, the guard constants and the hosts
+were fixed before it and did not change.
+
+**Counts** (the round trip, market cap, fee tier and class are DECISION-time states, not outcomes):
+
+| | R0 host | M1 host |
+|---|---:|---:|
+| Host entries (per day) | 94 (181) | 24 (46) |
+| Quoted `rt` at the decision, median (IQR) | 3.29 % (1.79-3.73 %) | 1.76 % (1.44-1.96 %) |
+| Market cap at the decision, median (IQR), SOL | 1,956 (334-67,471) | 69,129 (55,219-1,096,115) |
+| Kept at c = 3.40 % / 3.00 % | 53 (56 %) / 44 (47 %) | 24 (100 %) / 24 (100 %) |
+| Ex-ante saving quoted at c = 3.40 % / 3.00 % | 0.67 / 0.88 points | 0 / 0 |
+| Class of the kept entries at c = 3.40 % | 29 OPERATOR, 17 FACTORY, 7 OTHER | 24 OPERATOR |
+| Class of the vetoed entries | 39 OTHER, 2 FACTORY | none |
+| Operator clusters among the kept entries (largest) | 21 (33 trades) | 1 (24) |
+| Filtered trades a subset of the host's / guard entries identical | yes / yes | yes / yes |
+
+**What the counts say, before any TRAIN data:**
+
+1. **The cheap tiers are a coin-class proxy.** On the census third, every R0 entry quoted at ≤ 3.00 % is an
+   OPERATOR (29), FACTORY (13) or OTHER (2) coin, and 39 of the 41 vetoed entries are OTHER (organic) coins. Operator
+   and factory pools hold hundreds to thousands of SOL (market caps to 10⁶ SOL), so their fee tier is 30-100 bps. Any
+   "net gain" of the filter is therefore expected to be class selection; the decomposition (§7) and the class-matched
+   control (§8) measure exactly that.
+2. **The saving is small, as §2 predicted.** The quoted saving is 0.67-0.88 points per trade; wave 1's random-entry
+   host lost −6.4 %. P2 and P3 are expected to hold.
+3. **The filter is a no-op on the M1 host.** All 24 M1 entries already sit in ≤ 85-bps tiers (M1 rides operator
+   coins), so the three M1-host filtered configs equal the M1 baseline trade for trade, the filter cannot add, and they
+   cannot qualify (§9). They stay in the grid because it was frozen before this run; they are three honestly spent
+   trials, and they confirm that the cost of M1's trades is already the floor of the fee schedule.
+4. **The guard's reach depends on the tier.** Above 4,420 SOL the fee boundaries are every ≈ 4,900 SOL (2.5-5 bps
+   steps), so for an operator coin at 50,000 SOL the guard is a 5-15 % stop; between 420 and 4,420 SOL the boundaries
+   are 1,000 SOL apart (a 25-60 % stop).
+
+**Definition changes made while debugging** (from structure and counts, never from outcomes; before any TRAIN data,
+no `prereg.lock` existed):
+
+1. **The concentration check** (§9, Z5.4). Item 1 means a cheap-tier R0 result could rest on one operator: all 29
+   OPERATOR entries are one operator cluster (as M1 PREREG §13 found). M1's cluster linking cannot be used for R0: its
+   shared-early-buyer link merges 66 of the 94 R0 entries (37 OTHER + 29 OPERATOR) into one component through common
+   early-buyer bots, so "without the largest cluster" would judge an arbitrary third of the trades. So R0 is judged
+   without OPERATOR-class coins (24 of the 53 kept census entries remain: ≈ 185 expected on TRAIN), and M1 keeps its
+   own cluster check.
+2. **The class-matched diagnostic control** for R0 configs (§8), for the same reason.
+3. **Cost rate instead of gross − net** (§7.1), found by a unit test while writing the code, before this run: a winner
+   pays its exit fee on a larger amount, so gross − net would have confounded the saving with selection.
+
+**Expected sample if the other days resemble the census day** (the operator can change its schedule at any time):
+
+| Config | Per day | TRAIN (4 d) | VAL (1.5 d) | TEST (1.32 d) | CONFIRM (15 d) |
+|---|---:|---:|---:|---:|---:|
+| R0 baseline | ≈ 181 | ≈ 720 | ≈ 270 | ≈ 240 | ≈ 2,700 |
+| R0, c = 3.40 % (of which not OPERATOR) | ≈ 102 (≈ 46) | ≈ 410 (≈ 185) | ≈ 150 (≈ 70) | ≈ 135 (≈ 60) | ≈ 1,500 (≈ 690) |
+| R0, c = 3.00 % (of which not OPERATOR) | ≈ 85 (≈ 29) | ≈ 340 (≈ 115) | ≈ 125 (≈ 45) | ≈ 110 (≈ 38) | ≈ 1,270 (≈ 435) |
+| M1 baseline = every M1-host config | ≈ 46, 1 cluster | ≈ 185 | ≈ 69 | ≈ 61 | ≈ 690 |

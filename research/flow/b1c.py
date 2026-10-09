@@ -7,7 +7,9 @@ and batches of 4 need ~7.5 queries per chain hour (scratchpad ``flow/B1_PLAN.md`
 P4b instead:
 
 * **Selection** = the S1 universe (``research/lab2/b1_select.py`` -> ``FLOW/b1_select.json``): usable, creation
-  scanned, created_exact, grad_delay > 5 s. Window [c_ts, g_ts + 7200). Every filter is a graduation-time fact.
+  scanned, created_exact, grad_delay > 5 s. Window [c_ts, g_ts + 7200). Not every filter is a graduation-time
+  fact: lab2 usable drops ``no_b2_row`` / ``virt_unknown`` coins, which depend on trading in [g, g + 180 min) (0
+  S1-eligible coins in TRAIN / VAL / TEST once discovery was complete); B1 itself adds no filter.
 * **Estimate** trades per (coin, clock minute) offline: pool trades = B2 ``n_buys + n_sells - n_dust`` (exact on
   the pilot), curve trades = 0.95 x (launch trades over [c, c + 120 s) + the rest of the curve life spread evenly).
 * **Pack** (:func:`pack`): sweep minutes in time order, every active coin in a fixed order, 43 B per estimated trade

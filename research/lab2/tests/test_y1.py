@@ -400,7 +400,8 @@ def test_veto_eval():
     assert v["flagged_mean"] < v["unflagged_mean"]
     assert Y.veto_eval(_host(10, 5, 0.05, -0.3), B=200, hide=False)["verdict"]["verdict"] == "UNDERPOWERED"
     h = Y.veto_eval(_host(40, 40, 0.05, -0.3), B=200, hide=True)
-    assert "verdict" not in h and "flagged_mean" not in h and h["n_flagged"] == 40
+    assert "verdict" not in h and "flagged_mean" not in h and h["n_host"] == 80
+    assert "n_flagged" not in h and "n_unflagged" not in h          # review Y1-3: a flag count is a record sign
     conf = Y.veto_eval(_host(40, 40, 0.05, -0.30), B=500, hide=False, oos_is_self=True)
     assert {c["id"] for c in conf["verdict"]["criteria"]} == {1, 2, 3}
 
@@ -424,10 +425,16 @@ def test_decide_train_rule():
     assert tie["chosen"] == "good|th0.1|T30"                             # ties: theta 0.10, then T30
     bad = {Y.config_key(p): _ev(40, 12, 0.05, 0.03, -0.01, 0.01) for p in Y.GRID_GOOD}
     assert Y.decide_train(bad)["verdict"] == "NO_CONFIG"
-    small = {Y.config_key(p): _ev(29, 12, 0.05, 0.03, 0.02, 0.01) for p in Y.GRID_GOOD}
-    assert Y.decide_train(small)["verdict"] == "UNDERPOWERED_TRAIN"
-    few_cl = {Y.config_key(p): _ev(40, 9, 0.05, 0.03, 0.02, 0.01) for p in Y.GRID_GOOD}
-    assert Y.decide_train(few_cl)["verdict"] == "UNDERPOWERED_TRAIN"
+    # review Y1-2: no GOOD config powered -> the pre-registered fixed path (GOOD(0) / T30 + its host), whatever the
+    # TRAIN returns say (they never choose it)
+    fixed = Y.make_params("good", "T30", 0.0)
+    for evs in ({Y.config_key(p): _ev(29, 12, 0.05, 0.03, 0.02, 0.01) for p in Y.GRID_GOOD},
+                {Y.config_key(p): _ev(40, 9, 0.05, 0.03, 0.02, 0.01) for p in Y.GRID_GOOD},
+                {Y.config_key(p): _ev(12, 4, -0.30, -0.30, -0.20, -0.40) for p in Y.GRID_GOOD}):
+        d = Y.decide_train(evs)
+        assert d["verdict"] == "SHORTLISTED_FIXED" and d["chosen"] == "good|th0|T30" and d["path"] == "fixed"
+        assert d["shortlist"] == {Y.HYP: [fixed], Y.HYP_HOST: [Y.make_params("host", "T30")]}
+        assert d["shortlist_hashes"][Y.HYP] == [C.params_hash(fixed)]
 
 
 def test_decide_val_confirm_and_combine():
@@ -438,6 +445,9 @@ def test_decide_val_confirm_and_combine():
     assert Y.confirm_allowed({"verdict": {"verdict": "REJECTED"}, "configs": {"candidate": {"n": 9, "mean": 1}}})[0] is False
     assert Y.confirm_allowed({"verdict": {}, "configs": {"candidate": {"n": 9, "mean": -0.1}}})[0] is False
     assert Y.confirm_allowed({"verdict": {}, "configs": {"candidate": {"n": 3, "mean": -0.1}}})[0] is True
+    # the fixed path (review Y1-2): TEST is reported only; only a structural REJECTED stops CONFIRM
+    assert Y.confirm_allowed({"verdict": {}, "configs": {"candidate": {"n": 9, "mean": -0.1}}}, fixed=True)[0] is True
+    assert Y.confirm_allowed({"verdict": {"verdict": "REJECTED"}, "configs": {}}, fixed=True)[0] is False
 
     def base(passes, rej=()):
         return {"auto_rejections": list(rej), "criteria": [{"id": i + 1, "pass": v} for i, v in enumerate(passes)]}
@@ -491,10 +501,17 @@ def test_debug_stage_hides_returns(st):
     for e in doc["configs"].values():
         assert "mean" not in e and "ci90" not in e and "placebo" not in e and "reasons" not in e
         assert "stress" not in e and "portfolio" not in e and e["returns"].startswith("hidden")
+        assert "tags" not in e and "by_tag" not in e                  # review Y1-3: a tag is a record's sign
+    for k, e in doc["configs"].items():                               # a GOOD count = records >= theta: hidden too
+        if k.startswith("good|"):
+            assert "n" not in e and "n_coins" not in e and doc["entries_per_day"].get(k) is None
     for v in doc["veto"].values():
         assert "verdict" not in v and "flagged_mean" not in v
+        assert "n_flagged" not in v and "n_unflagged" not in v and v["n_host"] == 32
     assert doc["event_counts"]["eligible_in_window"] == 32
     assert doc["configs"]["host|T30"]["n"] == 32
+    md = (st.out / "debug.md").read_text()
+    assert "flagged" not in md and "'good'" not in md and "'bad'" not in md
     led = json.loads(st.ledger.read_text())
     assert led["runs"] and all(r["debug"] for r in led["runs"]) and not led["configs"]
     assert (st.out / "debug.md").exists() and not list(st.out.glob("*_trades.csv"))
@@ -534,6 +551,61 @@ def test_provisional_train_never_unlocks_val(st):
     assert not (st.out / "prereg.lock").exists() and not (st.sl / "Y1.json").exists()
     with pytest.raises(Y.Y1Refused, match="no TRAIN result"):
         _check("val", st)
+
+
+def test_primary_fill_is_next_bar_exits(st):
+    """Review Y1-1: the registered fills are worst fills with NEXT-bar stops and time exits (the lab's realistic-exit
+    rule, as y2-y5); same-bar exits are only a stress run."""
+    assert Y.FILL == C.FillConfig(exit_delay_bars=1)
+    assert "exit_delay_bars=1" in Y.FIXED["fill"] and all(p["fill"] == Y.FIXED["fill"] for p in Y.GRID)
+    assert Y.STRESS["same_bar_exits"] == C.FillConfig()
+    assert all(c.exit_delay_bars == 1 for k, c in Y.STRESS.items() if k != "same_bar_exits")
+    _run("train", st, mk("train", T0, 15, 15, 4, "A", 1))
+    led = json.loads(st.ledger.read_text())
+    cfgs = [v.get("cfg") for v in led["configs"].values() if v["hypothesis"] in (Y.HYP, Y.HYP_HOST)]
+    assert len(cfgs) == 6 and all(c and c["exit_delay_bars"] == 1 for c in cfgs)   # the trials ran on Y.FILL
+    # a stop triggered in bar j fills at the adverse side of bar j + 1
+    coins = [{"g": T0, "creator": "S", "symbol": "SS", "drift": 0.01},
+             {"g": T0 + 7200, "creator": "S", "symbol": "SS", "drift": 0.0, "jump_at": 20, "jump": -1.0}]
+    ds = ds_of(market_frames(coins, seed=7))
+    strat = Y.make_strategy(registry(ds))
+    t = C.run_trades(ds, strat, Y.make_params("good", "T30", 0.0), Y.FILL)
+    assert len(t) == 1 and t.iloc[0]["reason"] == "stop"
+    cd, r = ds.coin(t.iloc[0]["mint"]), t.iloc[0]
+    jo = cd.bar_of(r["t_out"])
+    assert cd.arr["l"][jo - 1] <= r["entry_price"] * (1 - Y.STOP_PCT) < cd.arr["l"][jo - 2]
+    assert r["exit_price"] == pytest.approx(min(cd.arr["o"][jo], cd.arr["l"][jo]))
+    same = C.run_trades(ds, strat, Y.make_params("good", "T30", 0.0), Y.STRESS["same_bar_exits"])
+    assert cd.bar_of(same.iloc[0]["t_out"]) == jo - 1                     # the stress model fills one bar earlier
+
+
+def test_underpowered_train_takes_the_fixed_path(st):
+    """Review Y1-2: persistence PASS but no GOOD config powered -> GOOD(0) / T30 + HOST(T30), fixed a priori. VAL and
+    TEST are run once each and reported only; CONFIRM is the judged look (only a structural REJECTED stops it)."""
+    tr = _run("train", st, mk("train", T0, 5, 25, 4, "F", 6))           # 90 observations; GOOD(0): 15 trades
+    assert tr["persistence"]["decision"] == "PASS"
+    dec = tr["decision"]
+    assert dec["verdict"] == "SHORTLISTED_FIXED" and dec["chosen"] == "good|th0|T30" and dec["shortlist_written"]
+    assert json.loads((st.sl / "Y1.json").read_text())["hashes"] == [C.params_hash(Y.make_params("good", "T30", 0.0))]
+    assert tr["overall"] == "PENDING VAL"
+    _check("val", st)
+    with pytest.raises(Y.Y1Refused, match="no VAL result"):
+        _check("test", st, env=ENV_ALL)
+    (st.out / "val.json").write_text(json.dumps({"stage": "val", "decision": {"verdict": "FAIL_VAL"}}))
+    _check("test", st, env=ENV_ALL)                                       # a failed VAL does not stop the fixed path
+    assert Y.overall_verdict(st.out) == "PENDING TEST"
+    with pytest.raises(Y.Y1Refused, match="before TEST"):
+        _check("confirm", st, env=ENV_ALL)
+    (st.out / "test.json").write_text(json.dumps({"stage": "test", "verdict": {"verdict": "FAIL"},
+                                                  "configs": {"candidate": {"n": 9, "mean": -0.2}}}))
+    _check("confirm", st, env=ENV_ALL)                                    # nor does a negative TEST mean
+    _check("final", st, env=ENV_ALL)
+    assert Y.overall_verdict(st.out) == "PENDING CONFIRM"
+    (st.out / "test.json").write_text(json.dumps({"stage": "test", "verdict": {"verdict": "REJECTED"},
+                                                  "configs": {"candidate": {"n": 9, "mean": 0.2}}}))
+    with pytest.raises(Y.Y1Refused, match="REJECTED"):
+        _check("confirm", st, env=ENV_ALL)
+    assert Y.overall_verdict(st.out).startswith("NO EDGE")
 
 
 def test_full_pipeline_and_every_refusal(st, monkeypatch):

@@ -49,7 +49,7 @@ def make_frames(n: int = 24, seed: int = 1, t0: int | None = None, spacing: int 
             "z_n_buyers": 0 if slow else 2, "z_buy_tok": 0.0 if slow else 1e8, "sn60_n_buyers": 0 if slow else 5,
             "creator_buy_sol": 0.0 if slow else 1.0, "first20_buy_sol": 0.0 if slow else 20.0,
             "pool": pool, "pool_slot": 1001 + i, "pool_ts": g + 2, "pool_quote_mint": C.WSOL, "pool_creator": "PC",
-            "pool_base0": 206.9e6, "pool_quote0": 84.990359 - V0, "n_pools": 1,   # real x0; X0 = x0 + v = 84.99
+            "pool_base0": 206.9e6, "pool_quote0": 84.990359, "n_pools": 1,   # = X0 = x0 + v (real x0 = 84.99 - v)
             "grad_delay_s": float(g - c_ts) if not slow else float(g), "sol_quoted": True, "mayhem": False,
         })
         agent = agent_every and i % agent_every == 0

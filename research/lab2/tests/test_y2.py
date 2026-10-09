@@ -215,6 +215,29 @@ def test_cold_when_the_pool_is_small_or_hours_are_missing():
     assert Y.assess(snap_dec(ds, mint(120)), holed)["warm"] is False
 
 
+def test_reference_pool_lookback_before_the_split_start_must_be_scanned():
+    """Review Y2-1: T3 / T5 need the 24 h before the split start scanned for curves, or they go cold on the split's
+    first day while PE11 and ALL (which never read the pool) keep trading."""
+    lo, hi = (int(x) for x in C.SPLIT_BOUNDS["train"])
+    own = list(range(lo, hi, 3600))
+    want = list(Y.lookback_hours("train"))
+    assert len(want) == 24 and want[0] == lo - 86400 and want[-1] == lo - 3600
+    assert Y.ref_lookback_problems("train", own + want) == []
+    probs = Y.ref_lookback_problems("train", own)                           # 09-30 never scanned
+    assert len(probs) == 1 and "0/24" in probs[0] and "2026-09-30 00:00:00" in probs[0]
+    assert Y.ref_lookback_problems("train", own + want[:5] + want[6:])       # one hour missing is enough to go cold
+    assert "2026-09-15 00:00:00" in Y.ref_lookback_problems("confirm", [])[0]
+    assert Y.ref_lookback_problems("val", own) == []                         # VAL's lookback is TRAIN's last day
+    assert Y.ref_lookback_problems("train", None) == []                      # synthetic pools: every hour scanned
+    # the rule matches the pool's own coldness test: a decision at g + 30 min of the split's first coin
+    tau = lo + Y.ENTRY_AGE_S
+    holed = Y.RefPool(g=np.zeros(0), mints=np.zeros(0, object), comps=np.zeros((0, 5)),
+                      scanned_hours=np.array(own, np.int64))
+    assert holed.coverage(tau) < Y.REF_WARM_MIN
+    assert Y.RefPool(g=np.zeros(0), mints=np.zeros(0, object), comps=np.zeros((0, 5)),
+                     scanned_hours=np.array(own + want, np.int64)).coverage(tau) == 1.0
+
+
 def test_pool_never_holds_coins_created_after_the_split_end():
     t_end = C.SPLIT_BOUNDS["train"][1]
     fr = organic_frames(n=60, t0=t_end - 30 * 600 + 300, spacing=600, delays=[120.0] * 60)
@@ -511,6 +534,26 @@ def test_provisional_train_never_unlocks_val(st):
     assert not (st.out / "prereg.lock").exists() and not (st.sl / "Y2.json").exists()
     with pytest.raises(Y.Y2Refused, match="no TRAIN result"):
         _check("val", st)
+
+
+def test_cold_lookback_refuses_or_makes_train_provisional(st, monkeypatch):
+    """Review Y2-1: complete split hours are not enough; an unscanned 24 h before the split start refuses the stage
+    (TRAIN: provisional with --allow-partial) instead of silently starving T3 / T5 on day 1."""
+    monkeypatch.setattr(Y, "coverage_check", lambda cov: (True, []))      # the split's own hours: complete
+    lo, hi = (int(x) for x in C.SPLIT_BOUNDS["train"])
+    own = list(range(lo, hi, 3600))
+    fr = organic_frames(n=180, seed=1, t0=T0, spacing=600)
+    ds = ds_of(fr)
+
+    def ref(hours):
+        return Y.RefPool.from_frames(fr[0], "train", C.Census.empty(), scanned_hours=hours)
+    with pytest.raises(Y.Y2Refused, match="lookback"):
+        _run("train", st, (ds, ref(own)), _skip_coverage=False)
+    assert not (st.out / "prereg.lock").exists()
+    doc = _run("train", st, (ds, ref(own)), _skip_coverage=False, allow_partial=True)
+    assert doc["provisional"] and doc["ref_lookback"]["problems"] and not (st.out / "prereg.lock").exists()
+    doc = _run("train", st, (ds, ref(own + list(Y.lookback_hours("train")))), _skip_coverage=False)
+    assert not doc["provisional"] and doc["ref_lookback"]["problems"] == [] and (st.out / "prereg.lock").exists()
 
 
 def test_data_gates_and_missing_prereg_refuse(st):

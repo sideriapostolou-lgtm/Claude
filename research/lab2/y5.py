@@ -9,9 +9,11 @@ data, no lookahead). It is a FILTER: when the host enters outside the config's s
 re-entered later, so a gated config's trades are exactly its host's trades whose decision lies in the set.
 
 Hosts: ``R30`` (enter at the first decision >= g + 30 min if the coin is alive; catastrophe stop -50 %, 60 min hold)
-and ``M1`` (``m1.strategy`` pinned at m1-v1, m = 1, ``rhythm+prec``; refused if M1 changes). Sessions: ASIA [00, 08),
-EU [08, 16), US [16, 24) UTC. Day type (Sat/Sun = WEEKEND) is a TRAIN conditioning check, not a gate: VAL, TEST and
-FINAL hold no weekend coin. Every FEATURE the hosts read goes through :class:`common.AsOf`.
+and ``M1`` (``m1.strategy`` pinned at m1-v1, m = 1, ``rhythm+prec``: version, params hash and m1.py's sha256; refused
+if any changes; an M1-host pair never looks at VAL / TEST / CONFIRM / FINAL before M1's own look there, reviews Y5-1
+and Y5-3). Sessions: ASIA [00, 08), EU [08, 16), US [16, 24) UTC. Day type (Sat/Sun = WEEKEND) is a TRAIN
+conditioning check, not a gate: VAL, TEST and FINAL hold no weekend coin. Every FEATURE the hosts read goes through
+:class:`common.AsOf`.
 
 CLI::
 
@@ -25,7 +27,8 @@ CLI::
 
 Each stage writes ``Y5/<stage>.json`` and ``Y5/<stage>.md`` and REFUSES to run when its prerequisites are missing (no
 VAL without the written shortlist, TEST / CONFIRM / FINAL once each, never CONFIRM or FINAL before TEST, PLAN 8 data
-gates V1-V4, PREREG frozen after the first official TRAIN run, the M1 host unchanged).
+gates V1-V4, PREREG frozen after the first official TRAIN run, the M1 host unchanged, an M1-host pair never ahead of
+M1's own look).
 """
 
 from __future__ import annotations
@@ -76,6 +79,10 @@ R30_PARAMS = {"host": "R30", "rule": "alive at the first decision >= g + 30 min,
 # M1 host (pinned: PREREG 3.2)
 M1_HOST_M, M1_HOST_EXIT = 1.0, "rhythm+prec"
 M1_REG_VERSION, M1_REG_HASH = "m1-v1", "9c0a14afb895"
+# review Y5-3: m1.py itself (the host's code: entries, the MECH-bar detector, exits, classes, clusters)
+M1_REG_SHA256 = "b5489ac2686d66970fe93715a69dda4a38dc6395e4a48e80295859c4d289ac7a"
+M1_FAMILY = C.hypothesis_family(M1.HYP)          # review Y5-1: whose sealed looks an M1-host pair must not pre-empt
+X5_TRADES = HERE / "X5" / "train_trades.csv"     # review Y5-2: X5 gates the same pinned M1 host (counts only)
 SIZE_USD = 20.0
 FILL = C.FillConfig(exit_delay_bars=1)   # worst fills; stops / time exits fill on the NEXT bar at min(open, low)
 # the grid (PREREG 6)
@@ -122,7 +129,8 @@ def make_params(host: str, sessions: Sequence[str]) -> dict:
         raise ValueError(f"({host!r}, {ss}) is not in the pre-registered grid")
     hp = dict(R30_PARAMS) if host == "R30" else m1_host_params()
     hv = VERSION if host == "R30" else M1.VERSION
-    return {**FIXED, "host": host, "host_params": hp, "host_version": hv, "sessions": list(ss)}
+    pin = {} if host == "R30" else {"host_code_sha256": M1_REG_SHA256}
+    return {**FIXED, "host": host, "host_params": hp, "host_version": hv, **pin, "sessions": list(ss)}
 
 
 GRID = [make_params("R30", s) for s in R30_SETS] + [make_params("M1", s) for s in M1_SETS]
@@ -225,15 +233,94 @@ DECL = {"uses_organic_flow": False, "uses_wallet_reputation": False, "uses_trunc
         "uses_current_state_fields": False}
 
 
+def m1_code_sha256() -> str:
+    return hashlib.sha256(Path(M1.__file__).read_bytes()).hexdigest()
+
+
+def common_sha256() -> str:
+    """common.py (the engine every host and hypothesis runs on): recorded and flagged, never pinned (PREREG 3.2)."""
+    return hashlib.sha256(Path(C.__file__).read_bytes()).hexdigest()
+
+
 def host_problems() -> list[str]:
-    """The M1 host must be the registered one (PREREG 3.2)."""
+    """The M1 host must be the registered one (PREREG 3.2): version, params hash and m1.py's sha256 (review Y5-3)."""
     out = []
     if M1.VERSION != M1_REG_VERSION:
         out.append(f"m1.VERSION is {M1.VERSION!r}, Y5 registered {M1_REG_VERSION!r}")
     h = C.params_hash(m1_host_params())
     if h != M1_REG_HASH:
         out.append(f"the M1 host params hash is {h}, Y5 registered {M1_REG_HASH}")
+    sha = m1_code_sha256()
+    if sha != M1_REG_SHA256:
+        out.append(f"m1.py sha256 is {sha[:12]}, Y5 registered {M1_REG_SHA256[:12]} (the host's code changed: "
+                   "re-register it before Y5's PREREG lock, or a new Y5 version after it)")
     return out
+
+
+def _m1_never_spends(stage: str, m1_out_dir: Path) -> str | None:
+    """Why M1's own written decisions forbid M1 ``stage`` (mirrors m1.check_prereqs), or None."""
+    tr = _read_json(m1_out_dir / "train.json")
+    if not tr or tr.get("provisional"):
+        return None                                  # M1 has no official TRAIN decision yet: it may still go on
+    tv = (tr.get("decision") or {}).get("verdict")
+    if tv != "SHORTLISTED":
+        return f"M1's TRAIN decision is {tv}"
+    if stage == "val":
+        return None
+    va = _read_json(m1_out_dir / "val.json")
+    vv = (va or {}).get("decision", {}).get("verdict") if va else None
+    if va and vv not in M1.PROCEED_VAL:
+        return f"M1's VAL decision is {vv}"
+    te = _read_json(m1_out_dir / "test.json")
+    if stage == "confirm" and te and not M1.confirm_allowed(te)[0]:
+        return f"M1's TEST closed its CONFIRM ({M1.confirm_allowed(te)[1]})"
+    return None
+
+
+def m1_host_gate(stage: str, ledger_path: Path | None = None, m1_out_dir: Path | None = None) -> str | None:
+    """PREREG 3.2 (review Y5-1). Y5's M1 host is M1's own candidate whenever M1's TRAIN picks m* = 1, and common's
+    one-look rules count per family, so an M1-host pair could disclose M1's sealed VAL / TEST / CONFIRM / FINAL before
+    M1 spends its one look there. It may run on such a split only after the M1 family spent that split group in the
+    canonical trials ledger, or when M1's own written decisions forbid M1 that stage. Returns the refusal reason, or
+    None when the pair may run."""
+    if stage not in ("val", "test", "confirm", "final"):
+        return None
+    grp = C.split_group(STAGE_SPLIT[stage])
+    with C._ledger(ledger_path, write=False) as led:
+        if C._family_looks(led, M1_FAMILY, grp):
+            return None
+    if _m1_never_spends(stage, Path(m1_out_dir or M1.OUT_DIR)):
+        return None
+    return (f"M1 has not spent its own {grp} look, and may still: an M1-host pair would show M1's candidate "
+            f"(m = 1, rhythm+prec) on {grp} first (review Y5-1). Run M1's {stage.upper()} first")
+
+
+def m1_host_gate_note(stage: str, ledger_path: Path | None, m1_out_dir: Path | None) -> str:
+    grp = C.split_group(STAGE_SPLIT[stage])
+    with C._ledger(ledger_path, write=False) as led:
+        if C._family_looks(led, M1_FAMILY, grp):
+            return f"M1 spent its own {grp} look first (trials ledger)"
+    why = _m1_never_spends(stage, Path(m1_out_dir or M1.OUT_DIR))
+    return f"M1 never spends {grp}: {why}"
+
+
+def x5_overlap_counts(path: Path | None = None) -> dict:
+    """PREREG 3.4 (review Y5-2), counts only: X5's M1-host TRAIN trades (the same pinned host, gated by a market regime
+    that leans to the US / late-UTC hours) by X5 state (each signal at q = 0.5) and Y5 session of the decision. Read
+    from X5's own trades file; returns are never read into the result."""
+    p = Path(path or X5_TRADES)
+    if not p.exists():
+        return {"available": False, "note": f"{p.name} not written (X5 has not run an official TRAIN)"}
+    t = pd.read_csv(p, usecols=lambda c: c in ("role", "t_dec") or (c.startswith("st_") and c.endswith("_q0.5")))
+    h = t[t["role"] == "host-M1"] if "role" in t else t.iloc[0:0]
+    sess = [session_of(x) for x in h["t_dec"]] if len(h) else []
+    out = {}
+    for col in sorted(c for c in h.columns if c.startswith("st_")):
+        tab: dict[str, dict[str, int]] = {}
+        for s_, v in zip(sess, h[col].fillna("UNKNOWN").astype(str)):
+            tab.setdefault(v, {x: 0 for x in SESSIONS})[s_] += 1
+        out[col] = tab
+    return {"available": True, "file": str(p), "n_host_trades": int(len(h)), "by_state_and_session": out}
 
 
 # =========================================================================== trade tables (outcomes; never features)
@@ -587,7 +674,7 @@ def stage_configs(stage: str, out_dir: Path, shortlist_path: Path | None = None)
 
 def check_prereqs(stage: str, out_dir: Path = OUT_DIR, *, flow: Path | None = None, ledger_path: Path | None = None,
                   shortlist_path: Path | None = None, env: Mapping[str, str] | None = None,
-                  rerun_reason: str | None = None) -> dict:
+                  rerun_reason: str | None = None, m1_out_dir: Path | None = None) -> dict:
     """Raise :class:`Y5Refused` when ``stage`` may not run. Read-only."""
     env = os.environ if env is None else env
     out_dir = Path(out_dir)
@@ -630,6 +717,11 @@ def check_prereqs(stage: str, out_dir: Path = OUT_DIR, *, flow: Path | None = No
         raise Y5Refused("the Y5 shortlist on disk differs from the one TRAIN wrote")
     if any(p is None for p in _pair(sl)):
         raise Y5Refused("the Y5 shortlist is not a (candidate, ungated host) pair")
+    if _pair(sl)[0]["host"] == "M1":                 # review Y5-1: never M1's sealed split before M1 itself
+        why = m1_host_gate(stage, ledger_path, m1_out_dir)
+        if why:
+            raise Y5Refused(why)
+        info["m1_host_gate"] = m1_host_gate_note(stage, ledger_path, m1_out_dir)
     split = STAGE_SPLIT[stage]
     if stage == "val":
         if (out_dir / "val.json").exists():
@@ -743,14 +835,15 @@ def per_session_day(n_by_session: Mapping[str, int], expo: Mapping[str, float], 
 def run_stage(stage: str, *, out_dir: Path = OUT_DIR, allow_partial: bool = False, rerun_reason: str | None = None,
               ds: C.Dataset | None = None, census: C.Census | None = None, flow: Path | None = None,
               ledger_path: Path | None = None, shortlist_path: Path | None = None, B: int = 10_000,
-              n_placebo: int = 20, env: Mapping[str, str] | None = None, _skip_coverage: bool = False) -> dict:
+              n_placebo: int = 20, env: Mapping[str, str] | None = None, _skip_coverage: bool = False,
+              m1_out_dir: Path | None = None) -> dict:
     """Run one stage end to end and write Y5/<stage>.json + .md (``ds`` injection is for tests)."""
     t0 = time.time()
     out_dir = Path(out_dir)
     debug = stage == "debug"
     split = STAGE_SPLIT[stage]
     info = check_prereqs(stage, out_dir, flow=flow, ledger_path=ledger_path, shortlist_path=shortlist_path, env=env,
-                         rerun_reason=rerun_reason)
+                         rerun_reason=rerun_reason, m1_out_dir=m1_out_dir)
     if debug and ledger_path is None:
         ledger_path = C._SCRATCH / "lab2_debug" / "y5_debug_trials.json"   # debug never reaches the real ledger
     cov = ds.coverage if ds is not None else _coverage_counts(split, flow, census)
@@ -797,7 +890,12 @@ def run_stage(stage: str, *, out_dir: Path = OUT_DIR, allow_partial: bool = Fals
                                "utc": C.utc_str(time.time()), "provisional": provisional, "debug_only": debug,
                                "prereg_sha256": info["prereg_sha256"], "rerun_reason": rerun_reason,
                                "coverage": cov, "n_coins": len(ds), "span_days": _span_days(ds),
-                               "m1_host": {"version": M1.VERSION, "params_hash": C.params_hash(m1_host_params())}}
+                               "m1_host": {"version": M1.VERSION, "params_hash": C.params_hash(m1_host_params()),
+                                           "code_sha256": m1_code_sha256()},
+                               "m1_host_gate": info.get("m1_host_gate"), "common_sha256": common_sha256()}
+        tr_doc = _read_json(out_dir / "train.json") if stage in ("val", "test", "confirm", "final") else None
+        if tr_doc and tr_doc.get("common_sha256"):     # review Y5-3: engine changes are flagged, never silent
+            doc["common_changed_since_train"] = tr_doc["common_sha256"] != doc["common_sha256"]
         if debug:
             doc["event_counts"] = event_counts(ds)
         clusters = M1.clusters_for(ds) if any(p["host"] == "M1" for _, p in configs) else None
@@ -835,6 +933,7 @@ def run_stage(stage: str, *, out_dir: Path = OUT_DIR, allow_partial: bool = Fals
                 dec["shortlist_written"] = True
             doc["decision"] = dec
             doc["predictions"] = score_predictions(evals)
+            doc["x5_overlap"] = x5_overlap_counts()
             doc["veto_by_product"] = {h: {s: veto_report(t, [s]) for s in SESSIONS} for h, t in host_t.items()}
         elif stage == "val":
             doc["decision"] = decide_val(evals["candidate"])
@@ -963,8 +1062,15 @@ def render_md(doc: Mapping[str, Any]) -> str:
          f"- **Split:** `{doc['split']}`; usable coins: {doc['n_coins']}; span: {doc.get('span_days') or 0:.2f} days.",
          f"- **Written:** {doc['utc']} UTC; runtime {doc.get('runtime_s')} s; PREREG sha256 "
          f"`{(doc.get('prereg_sha256') or '')[:12]}`; trials in the ledger: {doc.get('n_trials_total')}; M1 host "
-         f"{(doc.get('m1_host') or {}).get('version')} `{(doc.get('m1_host') or {}).get('params_hash')}`.",
+         f"{(doc.get('m1_host') or {}).get('version')} `{(doc.get('m1_host') or {}).get('params_hash')}`, m1.py "
+         f"`{((doc.get('m1_host') or {}).get('code_sha256') or '')[:12]}`; common.py "
+         f"`{(doc.get('common_sha256') or '')[:12]}`.",
          f"- **Overall Y5 status:** {doc.get('overall')}.", ""]
+    if doc.get("common_changed_since_train"):
+        L.insert(-2, "- **Warning: common.py changed since TRAIN** (the engine every host runs on; flagged, not refused: "
+                     "PREREG 3.2). Read this stage against the TRAIN selection with that in mind.")
+    if doc.get("m1_host_gate"):
+        L.insert(-2, f"- **M1-host pair gate** (PREREG 3.2): {doc['m1_host_gate']}.")
     if doc.get("debug_only"):
         L += ["**Debug run on the census TRAIN third: mechanics and counts only. Returns are hidden and no parameter "
               "was chosen here.**", ""]
@@ -1019,6 +1125,17 @@ def render_md(doc: Mapping[str, Any]) -> str:
                     "P3_no_stable_sign_across_sessions_and_day_types"):
             L.append(f"- {key}: held = {pr[key]['held']}.")
         L.append("")
+    xo = doc.get("x5_overlap")
+    if xo:
+        L += ["## Overlap with X5 (PREREG 3.4; counts only, never decisive)", ""]
+        if not xo.get("available"):
+            L.append(f"- {xo.get('note')}.")
+        else:
+            L.append(f"- X5's M1-host TRAIN trades (the same pinned host): {xo['n_host_trades']}. By X5 state (q = 0.5) "
+                     "and Y5 session of the decision:")
+            for col, tab in xo["by_state_and_session"].items():
+                L.append(f"  - {col}: {tab}")
+        L += ["- A Y5 M1-host result and an X5 M1-host result are not independent evidence of a timing effect.", ""]
     vb = doc.get("veto_by_product")
     if vb:
         L += ["## Veto by-product (PLAN 3.5 veto bar; reported, never decisive for EDGE)", ""]

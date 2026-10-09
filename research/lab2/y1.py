@@ -22,6 +22,11 @@ Every FEATURE is read through :class:`common.AsOf` (cutoff tau = t - 20 s). The 
 Persistence gate (stop rule, TRAIN, before any P&L): Spearman(record mean, the coin's own next-30-minute mid change)
 over eligible coins; KILL when rho <= 0 or the deployer-cluster bootstrap 90 % CI lower bound <= 0.
 
+Fixed path (PREREG 9, review Y1-2): when the gate PASSes but no GOOD config is powered on TRAIN (the expected
+outcome), GOOD(0) / T30 and its host -- fixed a priori, never chosen from TRAIN returns -- run VAL and TEST once each,
+reported only, and CONFIRM (the only split that can power Y1) is the judged look. Fills: worst minute-bar fills with
+next-bar stops and time exits (``FILL``); same-bar exits are a stress run.
+
 CLI::
 
     python research/lab2/y1.py --debug                         # census TRAIN third: counts only, no returns
@@ -41,6 +46,7 @@ from __future__ import annotations
 
 import argparse
 import contextlib
+import dataclasses
 import hashlib
 import json
 import math
@@ -84,6 +90,9 @@ EXIT_HOLD_S = {"T30": 1800.0, "T60": 3600.0}
 EXIT_BY_AGE_S = 178 * 60.0          # registered deadline inside the B2 window (never binds: 60 + 60 min max)
 THETA_GRID = (0.0, 0.10)
 EXIT_GRID = ("T30", "T60")
+# PREREG 9 fixed path (review Y1-2): when no GOOD config is powered on TRAIN, this config (and HOST with its exit) goes
+# on, chosen a priori, never from TRAIN returns: theta = 0 is the veto flag's complement, T30 the record's horizon
+FIXED_THETA, FIXED_EXIT = 0.0, "T30"
 WARMUP_S = 86_400.0                 # diagnostic: decisions within 24 h of the first history graduation
 # persistence gate (stop rule)
 PG_MIN_OBS, PG_MIN_CLUSTERS, PG_B = 60, 20, 2000
@@ -94,6 +103,7 @@ TEST_NO_EVIDENCE_N = 5
 PASS_MIN_MEAN = 0.03                       # PLAN 3.5 item 2
 PASS_MIN_TRADES, PASS_MIN_CLUSTERS = 60, 10
 PROCEED_VAL = ("SELECTED", "SELECTED_UNDERPOWERED")
+SHORTLISTED = ("SHORTLISTED", "SHORTLISTED_FIXED")   # TRAIN decisions that write the shortlists
 SIZE_USD = 20.0
 
 FIXED = {
@@ -103,7 +113,7 @@ FIXED = {
     "shared_rules": ["pooled", "signs_for_others", "multi_signer>=2", f"factory_volume>={SHARED_MAX_24H}/24h"],
     "history_splits": {k: list(v) for k, v in HISTORY_SPLITS.items()}, "stop_pct": STOP_PCT,
     "exit_by_age_s": EXIT_BY_AGE_S, "size_usd": SIZE_USD, "placebo": "eligible-stratum (repeat deployer, resolved)",
-    "fill": "common.FillConfig() default: worst, latency 30 s, entry-bar exits",
+    "fill": "common.FillConfig(exit_delay_bars=1): worst, latency 30 s, entry-bar stop checks, next-bar exits",
 }
 
 
@@ -132,8 +142,10 @@ def veto_params(exit_set: str) -> dict:
 PERSIST_PARAMS = {"version": VERSION, "test": "persistence", "stat": "spearman(record_mean, next 30-min mid change)",
                   "min_obs": PG_MIN_OBS, "min_clusters": PG_MIN_CLUSTERS, "ci": "deployer-cluster bootstrap 90%",
                   "fixed": FIXED}
-STRESS = {"costs_x1.5": C.FillConfig().stressed(1.5), "rent_0.22": C.FillConfig(rent_usd=0.22),
-          "alt_fill": C.FillConfig(entry_bar_exits=False, exit_delay_bars=1)}
+FILL = C.FillConfig(exit_delay_bars=1)   # worst fills; stops / time exits fill on the NEXT bar at min(open, low)
+STRESS = {"costs_x1.5": FILL.stressed(1.5), "rent_0.22": dataclasses.replace(FILL, rent_usd=0.22),
+          "no_entry_bar_exits": dataclasses.replace(FILL, entry_bar_exits=False),
+          "same_bar_exits": C.FillConfig()}   # the harness's same-bar exits: a stress run only (review Y1-1)
 DECL = {"uses_wallet_reputation": True, "reputation_excludes_traded_coin": True, "uses_organic_flow": False,
         "uses_truncated_windows": False, "uses_current_state_fields": False}
 
@@ -563,22 +575,29 @@ def _cluster_stats(t: pd.DataFrame, clusters: Mapping[str, str], B: int) -> dict
 
 
 def evaluate(res: C.Result, clusters: Mapping[str, str], *, B: int, hide: bool, n_trials_total: int | None) -> dict:
-    """Per-config report. Debug split: counts only (n, coins, clusters, tags, placebo draws, horizon exits)."""
+    """Per-config report. Debug split: status and eligibility counts only (review Y1-3). A HOST config enters every
+    eligible coin, so its n / coins / clusters / placebo draws / horizon exits are eligibility counts. Trade tags and
+    every GOOD-config count are hidden: a tag is the sign of a record (the post-BOOST mid change of an earlier coin of
+    the debug third) and a GOOD(theta) count is the number of records >= theta."""
     t = res.trades
     p = res.meta["params"]
     cens = (t["reason"] == "horizon").to_numpy(bool) if len(t) else np.zeros(0, bool)
     base = {"config": config_key(p), "params_hash": C.params_hash(p), "hypothesis": res.meta["hypothesis"],
-            "n": int(len(t)), "n_coins": int(t["mint"].nunique()) if len(t) else 0,
-            "n_clusters": int(pd.Series(t["mint"].map(clusters)).nunique()) if len(t) else 0,
-            "tags": t["tag"].value_counts().to_dict() if len(t) else {},
-            "entry_age_min_median": float(t["age_dec_s"].median() / 60.0) if len(t) else None,
-            "n_placebo": int(len(res.placebo)),
-            "placebo_draws_per_signal": float(len(res.placebo) / len(t)) if len(t) else None,
-            "horizon_exits": int(cens.sum()),
             "trial": {k: res.meta.get(k) for k in ("config", "new_trial", "n_trials_total")}}
+    if hide and p["rule"] != "host":
+        base["returns"] = "hidden on the debug split (never choose parameters on FINAL data)"
+        base["counts"] = "hidden on the debug split (a GOOD count is the number of records >= theta: a return sign)"
+        return base
+    base.update({"n": int(len(t)), "n_coins": int(t["mint"].nunique()) if len(t) else 0,
+                 "n_clusters": int(pd.Series(t["mint"].map(clusters)).nunique()) if len(t) else 0,
+                 "entry_age_min_median": float(t["age_dec_s"].median() / 60.0) if len(t) else None,
+                 "n_placebo": int(len(res.placebo)),
+                 "placebo_draws_per_signal": float(len(res.placebo) / len(t)) if len(t) else None,
+                 "horizon_exits": int(cens.sum())})
     if hide:
         base["returns"] = "hidden on the debug split (never choose parameters on FINAL data)"
         return base
+    base["tags"] = t["tag"].value_counts().to_dict() if len(t) else {}
     base["reasons"] = t["reason"].value_counts().to_dict() if len(t) else {}
     d = C.describe(t, B=B, n_trials_total=n_trials_total)
     base.update({k: d.get(k) for k in ("mean", "median", "win_rate", "sd", "ci90", "ci95", "ci90_block", "ci95_block",
@@ -600,10 +619,11 @@ def veto_eval(host: pd.DataFrame, *, B: int, hide: bool, oos: pd.DataFrame | Non
     """The bad-record veto on host trades (PREREG 6): flagged = tag 'bad'. ``oos`` = out-of-sample host trades
     (criterion 2); ``oos_is_self`` (CONFIRM) uses the same never-searched trades for every criterion."""
     f = (host["tag"] == "bad").to_numpy(bool) if len(host) else np.zeros(0, bool)
-    out: dict[str, Any] = {"flag": VETO_RULE, "n_host": int(len(host)), "n_flagged": int(f.sum()),
-                           "n_unflagged": int((~f).sum())}
-    if hide:
+    out: dict[str, Any] = {"flag": VETO_RULE, "n_host": int(len(host))}
+    if hide:            # review Y1-3: flagged / unflagged counts are record signs (returns) of the debug third
+        out["flags"] = "hidden on the debug split (a flag is the sign of an earlier coin's record)"
         return out
+    out.update(n_flagged=int(f.sum()), n_unflagged=int((~f).sum()))
     r = host["ret_net"].to_numpy(float) if len(host) else np.zeros(0)
     out["flagged_mean"] = float(r[f].mean()) if f.any() else None
     out["unflagged_mean"] = float(r[~f].mean()) if (~f).any() else None
@@ -650,9 +670,19 @@ def combine_verdict(base: Mapping[str, Any], extras: list[dict]) -> str:
 # =========================================================================== pre-registered decisions
 
 
+def _shortlist_doc(verdict: str, cand: dict, rows: list[dict], **extra) -> dict:
+    host = make_params("host", cand["exit"])
+    return {"verdict": verdict, "chosen": config_key(cand), "rows": rows, **extra,
+            "shortlist": {HYP: [cand], HYP_HOST: [host]},
+            "shortlist_hashes": {HYP: [C.params_hash(cand)], HYP_HOST: [C.params_hash(host)]}}
+
+
 def decide_train(evals: Mapping[str, Mapping[str, Any]]) -> dict:
     """PREREG 9 TRAIN: qualify GOOD configs; pick the highest deployer-cluster 90 % CI lower bound; shortlist it and
-    HOST with the same exit (for the veto)."""
+    HOST with the same exit (for the veto). When no GOOD config is powered (the expected TRAIN outcome, PREREG 14) the
+    pre-registered FIXED path shortlists GOOD(FIXED_THETA) / FIXED_EXIT and its host without reading TRAIN returns;
+    VAL and TEST are then reported only and CONFIRM is the judged look (review Y1-2). Only reached after the
+    persistence gate PASSed."""
     rows = []
     for p in GRID_GOOD:
         e = evals[config_key(p)]
@@ -669,18 +699,16 @@ def decide_train(evals: Mapping[str, Mapping[str, Any]]) -> dict:
     if q:
         best = sorted(q, key=lambda r: (-(r["ci90_cluster_lo"] if r["ci90_cluster_lo"] is not None else -math.inf),
                                         -r["mean"], -r["theta"], EXIT_GRID.index(r["exit"])))[0]
-        cand = make_params("good", best["exit"], best["theta"])
-        host = make_params("host", best["exit"])
-        return {"verdict": "SHORTLISTED", "chosen": best["config"], "rows": rows,
-                "shortlist": {HYP: [cand], HYP_HOST: [host]},
-                "shortlist_hashes": {HYP: [C.params_hash(cand)], HYP_HOST: [C.params_hash(host)]}}
+        return _shortlist_doc("SHORTLISTED", make_params("good", best["exit"], best["theta"]), rows, path="selected")
     if any(r["powered"] for r in rows):
-        v, why = "NO_CONFIG", "a powered GOOD config failed the mean / top-2 / matched-control bars"
-    else:
-        v = "UNDERPOWERED_TRAIN"
-        why = (f"no GOOD config reached >= {TRAIN_MIN_TRADES} trades from >= {TRAIN_MIN_CLUSTERS} deployer clusters "
-               f"(best: {max(r['n'] for r in rows)} trades, {max(r['clusters'] for r in rows)} clusters)")
-    return {"verdict": v, "reason": why, "rows": rows, "shortlist": {}, "shortlist_hashes": {}}
+        return {"verdict": "NO_CONFIG", "reason": "a powered GOOD config failed the mean / top-2 / matched-control bars",
+                "rows": rows, "shortlist": {}, "shortlist_hashes": {}}
+    why = (f"no GOOD config reached >= {TRAIN_MIN_TRADES} trades from >= {TRAIN_MIN_CLUSTERS} deployer clusters "
+           f"(best: {max(r['n'] for r in rows)} trades, {max(r['clusters'] for r in rows)} clusters): the "
+           f"pre-registered fixed path (PREREG 9) carries GOOD(theta={FIXED_THETA:g}) / {FIXED_EXIT}, chosen a priori, "
+           f"to one judged CONFIRM look; VAL and TEST are reported only")
+    return _shortlist_doc("SHORTLISTED_FIXED", make_params("good", FIXED_EXIT, FIXED_THETA), rows, path="fixed",
+                          reason=why)
 
 
 def decide_val(ev_cand: Mapping[str, Any]) -> dict:
@@ -697,12 +725,15 @@ def decide_val(ev_cand: Mapping[str, Any]) -> dict:
     return {"verdict": v, "n": n, "mean": mean, "mean_without_top2": mw2, "proceed": v in PROCEED_VAL}
 
 
-def confirm_allowed(test_doc: Mapping[str, Any]) -> tuple[bool, str]:
-    """CONFIRM is spent when TEST is not REJECTED and (TEST mean > 0 or TEST n < 5 = no evidence)."""
+def confirm_allowed(test_doc: Mapping[str, Any], fixed: bool = False) -> tuple[bool, str]:
+    """CONFIRM is spent when TEST is not REJECTED and (TEST mean > 0 or TEST n < 5 = no evidence). On the fixed path
+    (PREREG 9) TEST is reported only: just a REJECTED (structural, PLAN 3.6) stops CONFIRM."""
     v = (test_doc.get("verdict") or {})
     c = (test_doc.get("configs") or {}).get("candidate") or {}
     if v.get("verdict") == "REJECTED":
         return False, "TEST was REJECTED (PLAN 3.6)"
+    if fixed:
+        return True, "ok (fixed path: TEST reported only)"
     n, mean = c.get("n", 0), c.get("mean")
     if n < TEST_NO_EVIDENCE_N or (mean is not None and mean > 0):
         return True, "ok"
@@ -808,8 +839,9 @@ def check_prereqs(stage: str, out_dir: Path = OUT_DIR, *, flow: Path | None = No
     tv = (train.get("decision") or {}).get("verdict")
     if tv == "KILLED_PERSISTENCE":
         raise Y1Refused("Y1 is dead: the persistence gate failed on TRAIN (stop rule)")
-    if tv != "SHORTLISTED":
+    if tv not in SHORTLISTED:
         raise Y1Refused(f"TRAIN decision {tv}: Y1 stopped before VAL")
+    fixed = tv == "SHORTLISTED_FIXED"
     want = train["decision"].get("shortlist_hashes") or {}
     for h in (HYP, HYP_HOST):
         sl = _shortlist(h, shortlist_path)
@@ -827,13 +859,13 @@ def check_prereqs(stage: str, out_dir: Path = OUT_DIR, *, flow: Path | None = No
         if not val:
             raise Y1Refused("no VAL result (Y1/val.json): TEST needs a VAL decision first")
         vv = (val.get("decision") or {}).get("verdict")
-        if vv not in PROCEED_VAL:
+        if vv not in PROCEED_VAL and not fixed:           # the fixed path reports VAL, never stops on it
             raise Y1Refused(f"VAL decision {vv}: Y1 stopped (PLAN 8 rule 7 input); TEST is not spent")
     test = _read_json(out_dir / "test.json")
     if stage in ("confirm", "final") and not test:
         raise Y1Refused(f"never {stage.upper()} before TEST: run --stage test first")
     if stage == "confirm":
-        ok2, why = confirm_allowed(test)
+        ok2, why = confirm_allowed(test, fixed=fixed)
         if not ok2:
             raise Y1Refused(why)
     if (out_dir / f"{stage}.json").exists():
@@ -1022,15 +1054,16 @@ def run_stage(stage: str, *, out_dir: Path = OUT_DIR, allow_partial: bool = Fals
         stratum = make_stratum(reg)
         results: dict[str, C.Result] = {}
         for role, h, p in configs:
-            results[role] = C.backtest(strategy, split, p, hypothesis=h, ds=ds, placebo=True, n_placebo=n_placebo,
-                                       placebo_eligible=placebo_eligible, placebo_strata=stratum,
+            results[role] = C.backtest(strategy, split, p, hypothesis=h, ds=ds, cfg=FILL, placebo=True,
+                                       n_placebo=n_placebo, placebo_eligible=placebo_eligible, placebo_strata=stratum,
                                        placebo_controls=PLACEBO_CONTROLS, stress=STRESS, declarations=DECL,
                                        ledger_path=ledger_path, shortlist_path=shortlist_path)
         n_tr = C.n_trials(ledger_path)
         evals = {role: evaluate(r, clusters, B=B, hide=debug, n_trials_total=n_tr) for role, r in results.items()}
         doc["configs"] = evals
         if debug:
-            doc["entries_per_day"] = {k: (e["n"] / span if span == span and span > 0 else None) for k, e in evals.items()}
+            doc["entries_per_day"] = {k: (e["n"] / span if "n" in e and span == span and span > 0 else None)
+                                      for k, e in evals.items()}
         if not debug:
             _write_trades(out_dir, stage, provisional, results)
         # ---- the bad-record veto (PREREG 6)
@@ -1056,10 +1089,10 @@ def run_stage(stage: str, *, out_dir: Path = OUT_DIR, allow_partial: bool = Fals
         elif stage == "train":
             dec = decide_train(evals)
             dec["shortlist_written"] = False
-            if dec["verdict"] == "SHORTLISTED" and not provisional:
+            if dec["verdict"] in SHORTLISTED and not provisional:
                 for h in (HYP, HYP_HOST):
                     C.write_shortlist(h, dec["shortlist"][h], path=shortlist_path, ledger_path=ledger_path,
-                                      note=f"{VERSION}: PREREG 9 rule, chosen {dec['chosen']}")
+                                      note=f"{VERSION}: PREREG 9 {dec['path']} path, chosen {dec['chosen']}")
                 dec["shortlist_written"] = True
             doc["decision"] = dec
         elif stage == "val":
@@ -1135,18 +1168,19 @@ def overall_verdict(out_dir: Path, pending: Mapping[str, Any] | None = None) -> 
         return "UNDERPOWERED (TRAIN)"
     if tv == "NO_CONFIG":
         return "NO EDGE (nothing qualified on TRAIN)"
+    fixed = tv == "SHORTLISTED_FIXED"               # VAL and TEST are reported only on the fixed path
     va = doc("val")
     if not va:
         return "PENDING VAL"
     vv = (va.get("decision") or {}).get("verdict")
-    if vv == "FAIL_VAL":
+    if vv == "FAIL_VAL" and not fixed:
         return "NO EDGE (failed VAL; PLAN 8 rule 7 input)"
-    if vv == "UNDERPOWERED_VAL":
+    if vv == "UNDERPOWERED_VAL" and not fixed:
         return "UNDERPOWERED (VAL)"
     te = doc("test")
     if not te:
         return "PENDING TEST"
-    ok, why = confirm_allowed(te)
+    ok, why = confirm_allowed(te, fixed=fixed)
     if not ok:
         return f"NO EDGE ({why})"
     co = doc("confirm")
@@ -1214,15 +1248,20 @@ def render_md(doc: Mapping[str, Any]) -> str:
     if cf:
         L += ["## Configs", ""]
         if doc.get("debug_only"):
-            L += ["| config | trades | coins | clusters | tags | placebo draws/signal | horizon exits | entries/day |",
-                  "|---|---:|---:|---:|---|---:|---:|---:|"]
+            L += ["| config | trades | coins | clusters | placebo draws/signal | horizon exits | entries/day |",
+                  "|---|---:|---:|---:|---:|---:|---:|"]
             for k, e in cf.items():
+                if "n" not in e:          # GOOD configs: their counts are record signs (review Y1-3)
+                    L.append(f"| {e['config']} | hidden | hidden | hidden | hidden | hidden | hidden |")
+                    continue
                 epd = (doc.get("entries_per_day") or {}).get(k)
                 pds = e.get("placebo_draws_per_signal")
                 pds_s = "n/a" if pds is None else f"{pds:.1f}"
                 epd_s = "n/a" if epd is None else f"{epd:.1f}"
-                L.append(f"| {e['config']} | {e['n']} | {e['n_coins']} | {e['n_clusters']} | {e['tags']} | "
+                L.append(f"| {e['config']} | {e['n']} | {e['n_coins']} | {e['n_clusters']} | "
                          f"{pds_s} | {e['horizon_exits']} | {epd_s} |")
+            L += ["", "GOOD-config counts, trade tags and veto flags are hidden on the debug split: each is the sign "
+                  "of an earlier coin's record (review Y1-3)."]
         else:
             L += ["| role | config | n | clusters | mean | 90% CI coin | 90% CI 6-h block | 90% CI cluster | w/o top 2 | "
                   "placebo diff (eligible) | placebo diff (unmatched) | costs ×1.5 |",
@@ -1241,7 +1280,8 @@ def render_md(doc: Mapping[str, Any]) -> str:
         L += ["## Bad-record veto (PREREG 6)", ""]
         items = ve.items() if "flag" not in ve else [("host", ve)]
         for k, v in items:
-            line = f"- {k}: host trades {v['n_host']}, flagged {v['n_flagged']}, unflagged {v['n_unflagged']}"
+            line = (f"- {k}: host trades {v['n_host']}, flagged {v['n_flagged']}, unflagged {v['n_unflagged']}"
+                    if "n_flagged" in v else f"- {k}: host trades {v['n_host']}; flags hidden on the debug split")
             if "verdict" in v:
                 line += (f"; flagged mean {_pct(v.get('flagged_mean'))}, unflagged mean {_pct(v.get('unflagged_mean'))}; "
                          f"verdict **{v['verdict'].get('verdict')}**")

@@ -17,6 +17,14 @@
 - **Freeze.** The first official TRAIN run hashes this file into `Y1/prereg.lock`. After that, `y1.py` refuses every
   stage if this file has changed. A change is a new version (`y1-v2`) in `Y1/AMENDMENTS.md`, and its configs are new
   trials.
+- **Review amendments (2026-10-09, before the lock and before any TRAIN, VAL, TEST, CONFIRM or FINAL run).** Three
+  review findings changed this file and `y1.py`; nothing had run on a non-debug split, and no TRAIN return was seen:
+  - **Y1-1** (§5, §7): the primary fill model is now next-bar exits (`FillConfig(exit_delay_bars=1)`), as in Y2-Y5;
+    same-bar exits are a stress run. The trial identities changed with the fill model.
+  - **Y1-2** (§9, §14): an explicit **fixed path** for the expected underpowered TRAIN, so that CONFIRM, the only split
+    that can power Y1, is reachable.
+  - **Y1-3** (§14, debug output): the debug run no longer reports trade tags, GOOD-config counts or veto flag counts,
+    which are signs of earlier coins' records.
 
 ## 1. Hypothesis and mechanism
 
@@ -130,9 +138,10 @@ The entry window is age ∈ [420 s, 60 min]. The 420 s start is the AGENT window
 - Both also carry `exit_by_age_s` = g + 178 min. It never binds: the last entry is at age 60 min, plus a 60-minute
   hold.
 - No trade can end on the data horizon. Criterion 10 (≤ 10% censored) is still checked.
-- Fills use common.py's `FillConfig()`: $20, latency 30 s, entry at max(open, high), exits at min(open, low),
-  entry-bar exits on, stops checked from the entry bar, PumpSwap tier by date + 10 bps Ultra + 20 bps buffer,
-  network fees, pricing on X = x + v.
+- Fills use `common.FillConfig(exit_delay_bars=1)` (`y1.FILL`): $20, latency 30 s, entry at max(open, high), stops
+  checked from the entry bar, and **next-bar exits**: a stop or time exit triggered in bar j fills at min(open, low) of
+  bar j + 1. Costs: PumpSwap tier by date + 10 bps Ultra + 20 bps buffer, network fees, pricing on X = x + v.
+- The harness's same-bar exits (`FillConfig()`, the stop filling inside its trigger bar) are only a stress run (§7).
 
 ## 6. The bad-record veto (the gate variant)
 
@@ -161,8 +170,8 @@ The entry window is age ∈ [420 s, 60 min]. The 420 s start is the AGENT window
 - Each params dict carries every constant in §2-§6, the fill model and the version. Any change is a new trial.
 - TEST / CONFIRM / FINAL re-run shortlisted configs under the same identities, adding no new trials.
 
-**Stress runs** (same call, never used to select): costs × 1.5; rent $0.22; `entry_bar_exits=False` with
-`exit_delay_bars=1`.
+**Stress runs** (same call, never used to select), all on the next-bar model unless named: costs × 1.5; rent $0.22;
+`entry_bar_exits=False`; same-bar exits (`FillConfig()`, `exit_delay_bars=0`).
 
 ## 8. Persistence gate (stop rule; TRAIN, before any P&L)
 
@@ -218,8 +227,20 @@ A stage refuses to run unless:
 5. **Shortlists**, written before VAL:
    - `Y1` = [the chosen GOOD config];
    - `Y1-host` = [HOST with the same exit], for the veto.
-6. If nothing qualifies: **NO_CONFIG** when some GOOD config met the sample bar, otherwise
-   **UNDERPOWERED_TRAIN**.
+6. If nothing qualifies: **NO_CONFIG** when some GOOD config met the sample bar (powered evidence against: Y1
+   stops). Otherwise no GOOD config is powered, and Y1 takes the **fixed path** (decision `SHORTLISTED_FIXED`):
+   - The shortlists are `Y1` = [GOOD(θ = 0) / `T30`] and `Y1-host` = [HOST / `T30`]. They are **fixed a priori in
+     this file, never chosen from TRAIN returns**: θ = 0 is the complement of the veto flag (§6), and `T30` is the
+     record's own horizon (§2.3). Both are already TRAIN trials, so the fixed path adds no trial.
+   - VAL and TEST run once each, in the usual order, and are **reported only**: a FAIL_VAL, an UNDERPOWERED_VAL or a
+     TEST mean ≤ 0 never stops the fixed path. A TEST `REJECTED` (a structural §3.6 rejection) still does.
+   - **CONFIRM is the judged look** (the only split that can power Y1, §14), with the same entry verdict. FINAL as
+     usual. The overall EDGE rule is unchanged: persistence PASS, CONFIRM PASS, FINAL mean > 0.
+   - Why this is not a search: the persistence gate (§8) is the only TRAIN outcome the fixed path reads, and it is a
+     pre-registered stop rule. Without this path the expected TRAIN outcome (§14) would end Y1 with no verdict,
+     because every later stage needs a TRAIN shortlist.
+   - An UNDERPOWERED persistence gate (< 60 observations or < 20 clusters) still halts Y1 before the grid: then Y1
+     ends **UNDERPOWERED** with no verdict.
 7. A complete TRAIN's decision is final. A re-run needs `--rerun-reason` naming a data correction.
 8. `--allow-partial` runs a PROVISIONAL TRAIN. It writes `train_prelim.*`, and never a lock or a shortlist.
 
@@ -234,7 +255,8 @@ Run both shortlisted configs once. The decision uses the candidate:
 | SELECTED_UNDERPOWERED | 5 ≤ n < 15 | proceed |
 | SELECTED | n ≥ 15 | proceed |
 
-The VAL host trades and flags are saved for the veto.
+The VAL host trades and flags are saved for the veto. On the fixed path (TRAIN step 6) the VAL decision is reported
+and never stops Y1.
 
 ### TEST (one `common.one_shot_session` for the Y1 family)
 
@@ -254,7 +276,8 @@ The VAL host trades and flags are saved for the veto.
 
 ### CONFIRM
 
-- **Precondition:** TEST not REJECTED, and either TEST mean > 0 or TEST n < 5.
+- **Precondition:** TEST not REJECTED, and either TEST mean > 0 or TEST n < 5. On the fixed path only the first
+  part applies (TEST is reported only).
 - Run the same pair once, with the same entry verdict.
 - Veto on CONFIRM itself.
 - This is the powered test.
@@ -266,6 +289,7 @@ The VAL host trades and flags are saved for the veto.
 - **Criterion 9 (mean > 0) is judged on `final_val` + `final_test` only.** `final_train` was the debug third, and
   is reported apart.
 - **Overall EDGE** requires all of: persistence PASS, VAL selected, TEST not failed, CONFIRM PASS, and FINAL mean > 0.
+  On the fixed path: persistence PASS, TEST not REJECTED, CONFIRM PASS and FINAL mean > 0 (VAL and TEST reported).
 
 ## 10. Controls
 
@@ -337,7 +361,8 @@ The VAL host trades and flags are saved for the veto.
 
 - 450 usable coins, created over 12.5 h (0.52 days).
 - History is that same third only (§2.1): 429 records from 417 creators; the structural pool has 708 graduates.
-- The persistence statistic, returns, exit reasons and the veto means are hidden.
+- The persistence statistic, returns, exit reasons and the veto means are hidden. Since review Y1-3 the debug run
+  also hides trade tags, GOOD-config counts and veto flag counts (see the disclosure below).
 - Its trials go to a scratch ledger, never to `trials.json`.
 - **Nothing in §2-§10 changed after this run.**
 
@@ -350,11 +375,19 @@ The VAL host trades and flags are saved for the veto.
 | Median age at eligibility | 7.9 min (5 of 12 waited for a pending record) | |
 | Resolved records at eligibility | one: 11 coins; two: 1 coin | |
 | Persistence-gate observations | 12 (all within 24 h of the first history graduation: warm-up) | 23 |
-| HOST entries (each exit set) | 12 (tags: 3 `good`, 9 `bad`) | 23 |
-| GOOD(θ = 0) entries | 3 | 5.8 |
-| GOOD(θ = 0.10) entries | 1 | 1.9 |
+| HOST entries (each exit set) | 12 (tags: 3 `good`, 9 `bad`; disclosed, see below) | 23 |
+| GOOD(θ = 0) entries | 3 (disclosed, see below) | 5.8 |
+| GOOD(θ = 0.10) entries | 1 (disclosed, see below) | 1.9 |
 | Matched-placebo draws per signal | 1-3 (of 20 asked: the eligible pool is tiny) | |
 | Trades ending on the data horizon | 0 | |
+
+**Disclosure (review Y1-3).** The first debug output also reported the HOST trade tags, the GOOD-config counts and
+the veto flagged / unflagged counts (marked "disclosed" above). Each is the sign of an earlier coin's record: the
+30-minute post-BOOST mid change of a census TRAIN-third coin, which is return information. They were seen after §2-§10
+were fixed, nothing was chosen from them, and the census TRAIN third is never judged (FINAL criterion 9 uses
+`final_val` and `final_test` only). It does feed FINAL's history as records, so this is stated here rather than
+hidden. The debug output no longer reports them: on the debug split Y1 reports status and eligibility counts only
+(HOST entries are eligibility counts, since HOST enters every eligible coin).
 
 **What these counts imply, before any TRAIN data.** The debug history covers only 12.5 hours. On TRAIN it grows to
 4 days, so deployers that launched on earlier days also become eligible. The rate per day should therefore be **at
@@ -363,11 +396,14 @@ least** 23. How much higher it gets is unknown, and is not estimated from sealed
 If TRAIN looks like this third:
 
 - **Persistence gate:** about 90 observations. It needs ≥ 60 observations from ≥ 20 clusters, so it is reachable.
-- **GOOD(0):** about a quarter of eligible coins on this third, so about 23 TRAIN trades. That is below the 30-trade
-  bar. **UNDERPOWERED_TRAIN is the most likely TRAIN outcome**, and it is the pre-registered answer, not a code
-  failure.
-- **VAL and TEST:** about 9 and 8 GOOD(0) trades. Both are underpowered.
-- **CONFIRM:** at 15 days, about 85 GOOD(0) trades. It is the only split that could power Y1.
+- **GOOD(0):** about a quarter of eligible coins on this third (a disclosed count, see above), so about 23 TRAIN
+  trades. That is below the 30-trade bar, so **no GOOD config is powered on TRAIN is the most likely outcome**. With
+  the persistence gate passed, Y1 then takes the **fixed path** (§9 TRAIN step 6): GOOD(0) / `T30`, fixed a priori,
+  to one judged CONFIRM look.
+- **VAL and TEST:** about 9 and 8 GOOD(0) trades. Both are underpowered; on the fixed path they are reported only.
+- **CONFIRM:** at 15 days, about 85 GOOD(0) trades. It is the only split that could power Y1, and the fixed path is
+  what makes it reachable. If the persistence gate is UNDERPOWERED on TRAIN instead, Y1 ends UNDERPOWERED with no
+  verdict.
 - **The veto:** underpowered on VAL. It needs ≥ 30 flagged and ≥ 30 unflagged VAL host trades, and VAL should give
   about 35 host trades in all.
 - **The matched control:** few draws per signal, so it is noisy. HOST, the same entry on every eligible coin, is

@@ -310,23 +310,48 @@ history splits only.
 | Fills | minute-bar worst fills with next-bar exits, not replayed fills |
 | Warm-up | AV and SV are UNKNOWN for the first ≈ 35 h of TRAIN and of CONFIRM (pool start + SLACK 6 h + B2 window + N + 24 h baseline) and for the whole census TRAIN third (§14); GR has no warm-up (structure from earlier splits) |
 
-## 13. Expected sample (extrapolated from G1's and M1's census-third counts; activity on other days may differ)
+## 13. Expected sample (extrapolated from the census-third counts of §14; activity on other days may differ)
 
-| Measure | Census third (0.52 d) | Per day | TRAIN known (≈ 2.5 d for AV/SV) | VAL (1.5 d) | TEST (1.3 d) | CONFIRM (≈ 13.5 d known) |
+| Measure | Census third (0.52 d) | Per day | TRAIN known (AV/SV ≈ 2.5 d) | VAL (1.5 d) | TEST (≈ 1.2 d known) | CONFIRM (≈ 13.5 d known) |
 |---|---:|---:|---:|---:|---:|---:|
-| R0 host trades | 94 | ≈ 181 | ≈ 450 | ≈ 270 | ≈ 240 | ≈ 2,400 |
-| R0 ON trades, q = 0.5 | | ≈ 90 | ≈ 225 | ≈ 135 | ≈ 120 | ≈ 1,200 |
-| R0 ON trades, q = 0.8 | | ≈ 36 | ≈ 90 | ≈ 54 | ≈ 48 | ≈ 490 |
-| M1 host trades | 24 | ≈ 46 | ≈ 115 | ≈ 69 | ≈ 61 | ≈ 620 |
-| M1 ON trades, q = 0.5 | | ≈ 23 | ≈ 58 | ≈ 35 | ≈ 30 | ≈ 310 |
+| R0 host trades | 94 | ≈ 181 | ≈ 450 | ≈ 270 | ≈ 215 | ≈ 2,400 |
+| R0 ON trades, q = 0.5 | 43 (GR) | ≈ 83 | ≈ 205 | ≈ 125 | ≈ 100 | ≈ 1,100 |
+| R0 ON trades, q = 0.8 | 12 (GR) | ≈ 23 | ≈ 58 | ≈ 35 | ≈ 28 | ≈ 310 |
+| M1 host trades | 24 | ≈ 46 | ≈ 115 | ≈ 69 | ≈ 55 | ≈ 620 |
+| M1 ON trades, q = 0.5 | 12 (GR) | ≈ 23 | ≈ 58 | ≈ 35 | ≈ 28 | ≈ 310 |
 
-- q = 0.8 and every M1-hosted config are expected to be UNDERPOWERED on TEST (< 60 trades) and X5.2 (≥ 6 blocks)
-  is borderline on TEST; CONFIRM is the powered test.
+- GR has no warm-up on TRAIN (≈ 3.9 known days, so about 1.5× the AV/SV figures above).
+- q = 0.8 and every M1-hosted config sit at or below TRAIN's 60-trade bar for AV and SV and are expected to be
+  UNDERPOWERED on TEST (< 60 trades); X5.2 (≥ 6 blocks) is borderline on TEST. CONFIRM is the powered test.
 - M1's entries come from one operator cluster on the census day, so an M1-hosted regime effect would be confounded
   with that operator's schedule; the M1-hosted configs are included because the lead asked for it, not because
   they are expected to be informative.
 
 ## 14. Debug run (census TRAIN third, counts only)
 
-Filled in after `python research/lab2/x5.py --debug`, before any TRAIN data exists. Returns, alive rates, signal
-values and every outcome statistic stay hidden; only counts are reported. No parameter is chosen there.
+`python research/lab2/x5.py --debug` (2026-10-09 03:47 UTC, 52 s) wrote `X5/debug.md` and `X5/debug.json`: 450
+usable coins created over 0.52 days. Returns, alive rates, signal values, the model check's statistics and exit
+reasons are hidden; the runs went to a scratch ledger, never to `trials.json`. **No definition, constant or grid
+point was changed after it.**
+
+| Count | Value |
+|---|---|
+| R0 host trades | 94 from 94 coins (180.7 a day): the same 94 as G1's `G1.R0` debug run, so the host is verbatim |
+| M1 host trades | 24 from 24 coins, all OPERATOR (46.1 a day): the same 24 entries as M1's own debug run at m = 1 |
+| R0 decisions with a known GR state | 88 of 94 (the other 6 fall after the third's creation end, 08:06:47, where the GR pool stops) |
+| R0 ON trades by GR, q = 0.5 / 0.8 | 43 (82.6 a day) / 12 (23.1 a day); OFF 45 / 76 |
+| M1 ON trades by GR, q = 0.5 | 12 of 23 known (23.1 a day) |
+| R0 / M1 decisions with a known AV or SV state | 0: the debug pool is the census TRAIN third alone, and the AV / SV warm-up (SLACK 6 h + N 2 h + 30 min or 3 h + the 24-h baseline) is longer than the third's 12.5 h. By construction, not a bug |
+| Gated trades equal to the host's ON trades | 9 of 9 configs (the gate is an exact filter) |
+| Model-check observations (alive at the R0 decision, known state) | GR 88, AV 0, SV 0 |
+| SLACK check: graduation delay | 2 of 450 graduates (0.4 %) took > 6 h from creation, 20 (4.4 %) > 1 h, none unscanned: a 6-hour SLACK leaves ≈ 0.4 % of a window's graduates outside the pool at the warm-up edge |
+
+What these counts imply before any TRAIN data:
+
+- **The model check is powered on TRAIN** if TRAIN resembles the census day: ≈ 169 GR observations a day (≈ 650 on
+  TRAIN) and ≈ 400 for AV and SV after their warm-up, against the 200 needed.
+- **q = 0.8 is thin.** GR's top-quintile ON share was 14 % of known R0 decisions, not 20 %: graduation counts are
+  persistent, so a high 2-hour count is followed by more high points and the trailing quantile catches up.
+- **AV and SV are tested only from TRAIN onward.** Nothing on the census day exercised them on real data; their
+  mechanics are covered by the unit tests (window arithmetic, coverage masks, own-coin exclusion, no lookahead with
+  every later datum garbled) and by the synthetic stage tests.

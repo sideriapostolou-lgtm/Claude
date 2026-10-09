@@ -49,7 +49,9 @@ python research/flow/backfill.py --check-discovery --since 2026-10-01 --until 20
 python research/lab2/b1_select.py                      # FLOW/b1_select.json (re-run after every consolidation)
 python research/flow/backfill.py --phase P4b --splits train,val,test --out $FLOW [--dry-run] [--retry-errors]
 
-# Everything above in one command (waits for a running P1/P2/P3; see "B1 (P4b)" below)
+# Everything above in one command (waits for a running P1/P2/P3; see "B1 (P4b)" below). Exit 0 = every split
+# done, 3 = a split still had units left after MAX_TRIES runs (rerun to resume). Stop it with `kill <pid>`: that
+# stops its running child too (after a kill -9, also pkill -f 'backfill.py --phase P4b').
 bash research/flow/run_b1.sh
 
 # Rebuild the Parquet tables from the raw chunks. Offline; no queries.
@@ -115,7 +117,7 @@ and chunks are split automatically when they do.
   | P1, 7 days | ~520 | ~5.7 (~4.6 still to go) |
   | P2, 21.8 days in total | ~1,600 | ~18 |
   | P3, 21.8 days (60-minute horizon, ~12 coins/query) | ~2,400 | ~28 |
-  | P4b (B1), TRAIN 10-01 → 10-05 (S1 universe; `--dry-run` 03:00: 250 units for the 830 coins discovered so far, 10-01 23:44 → 10-05) | ~335-365 | ~3.9 |
+  | P4b (B1), TRAIN 10-01 → 10-05 (S1 universe after full discovery: 1,420 coins, 8.49 M trades; `--dry-run` 04:00: 417 units) | ~438 | ~4.9 |
   | P4b (B1), VAL 10-05 → 10-06 12:00 (458 coins, 2.59 M trades; `--dry-run`: 130 units) | ~137 | ~1.5 |
   | P4b (B1), TEST 10-06 12:00 → 10-07 19:37 (418 coins, 2.31 M trades; `--dry-run`: 117 units) | ~123 | ~1.4 |
 
@@ -250,8 +252,12 @@ orphan sells).
 **Selection** (`research/lab2/b1_select.py` → `FLOW/b1_select.json`): the S1 universe of each split = lab2 usable
 (SOL-quoted, not Mayhem, virtual reserve known, B2 window complete under `completeness_from_flow`) ∧ creation
 scanned ∧ `created_exact` ∧ `grad_delay_s` > 5. It is exactly the denominator of `s1.coverage_counts` and of
-`d1.b1_coverage` (D1's ORGANIC universe lies inside it). Window [c_ts, g_ts + 7200). Every filter is a
-graduation-time fact. Counts and windows only; re-run it after every consolidation.
+`d1.b1_coverage` (D1's ORGANIC universe lies inside it). Window [c_ts, g_ts + 7200). Not every filter is a
+graduation-time fact: lab2 usable drops `no_b2_row` (no pool trade in any scanned B2 hour of [g, g + 180 min)) and
+`virt_unknown` (no PumpSwap buy in that window), so coins that died at migration drop out. B1 adds no filter of its
+own. With discovery complete (2026-10-09 04:00) neither rule removed an S1-eligible coin (TRAIN 0 / 1,420, VAL
+0 / 458, TEST 0 / 418); re-check `not_usable` in `b1_select.json` before freezing a universe. Counts and windows
+only; re-run it after every consolidation.
 
 **How P4b fetches** (`b1c.py`, `sql/b1c.sql`):
 

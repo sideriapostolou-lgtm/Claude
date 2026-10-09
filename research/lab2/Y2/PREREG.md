@@ -10,6 +10,9 @@
 - **Freeze.** The first official TRAIN run hashes this file into `Y2/prereg.lock`. From then on `y2.py` refuses every
   stage if this file changed. A change is a new version (`y2-v2`) in `Y2/AMENDMENTS.md`, and its configs are new
   trials.
+- **Review amendment Y2-1 (2026-10-09, before the lock and before any run on a non-debug split).** The reference
+  pool's 24 h before each split start must be scanned (§4 cold rank, §9 every stage, §12.1). No config, threshold or
+  trial changed.
 
 ## 1. Mechanism, and why it could beat costs
 
@@ -111,6 +114,15 @@ graduations are not tested.
 **Cold rank.** The rank is undefined ("cold") when |R| < 50, or when fewer than 99% of the clock hours overlapping
 (τ − 24 h, τ] are fully scanned for graduates (`Completeness.curve_hours`). A cold coin is never entered by T3 or T5.
 
+**No cold first day (review Y2-1).** PE11 and ALL never read the pool, so a cold stretch would silently remove T3 / T5
+entries only, and change the selectors' time mix against each other. The decisions of a split's first day look back
+into the 24 h **before** the split start, which the split's own coverage check does not see. So every stage also
+requires every curve hour in [split start − 24 h, split start) to be scanned (`y2.ref_lookback_problems`); otherwise it
+refuses (TRAIN: `--allow-partial` gives a PROVISIONAL run). TRAIN needs 09-30 00:00 → 10-01 00:00, VAL TRAIN's last
+day, TEST VAL's last 24 h, CONFIRM 09-15 00:00 → 09-16 00:00. FINAL is exempt as for completeness (its lookback lies
+in TEST, which ran before it). Cold ranks can still occur inside a split when its own hours have holes, but those
+hours already fail the split's coverage check.
+
 **PE11 cell** (PE-11 verbatim): 5 s < `grad_delay_s` ≤ 300 s, `curve_n_buyers` ≥ 15, top-3 share < 0.6. It needs no
 reference pool.
 
@@ -165,7 +177,8 @@ dose-response diagnostic: it is counted as a trial, run on TRAIN, TEST, CONFIRM 
 ## 9. Procedure by stage (`python research/lab2/y2.py --stage …`)
 
 **Every stage** refuses unless `Y2/PREREG.md` exists (and matches `prereg.lock` once locked), PLAN §8 rule 1 holds
-for the split (`common.validation_gates`), the split's coverage is complete (FINAL exempt, as in M1), and the guarded
+for the split (`common.validation_gates`), the split's coverage is complete (FINAL exempt, as in M1), every curve hour
+of the 24 h before the split start is scanned (§4 "No cold first day"; FINAL exempt), and the guarded
 splits have the judge's flags (`LAB2_ALLOW_TEST`, `LAB2_ALLOW_CONFIRM`, `LAB2_ALLOW_FINAL`; y2.py never sets them).
 
 ### TRAIN (all searching)
@@ -263,8 +276,11 @@ The extrapolations assume the census day's composition holds on other days.
 
 **What the counts imply (structure, not outcomes):**
 
-- **The reference pool is warm everywhere:** median 307 eligible graduates in the trailing 24 h (minimum 299), and
-  every lookback hour is a fully scanned curve hour. Cold ranks will only occur at the start of the backfilled data.
+- **The reference pool is warm everywhere on the census day:** median 307 eligible graduates in the trailing 24 h
+  (minimum 299), and every lookback hour is a fully scanned curve hour. That lookback falls in TEST hours, which are
+  scanned. Cold ranks occur at the start of the backfilled data: on 2026-10-09 the TRAIN backfill had scanned none of
+  09-30's 24 hours, so T3 / T5 would have lost most of TRAIN's first day while PE11 and ALL kept it, and the ≈ 108
+  T3 trades below assume 4 warm days. Hence the lookback requirement (§4, review Y2-1).
 - **Two thirds of eligible coins are dead at g + 30** (152 → 47 alive). The selectors act on the alive third.
 - **PE11 and T3 select nearly disjoint coins.** Of the 16 alive PE11 coins, 12 are in the bottom organic tercile and
   4 in the middle; none is in the top. Graduations in 5 s - 5 min are bundle- and sniper-heavy, which the composite

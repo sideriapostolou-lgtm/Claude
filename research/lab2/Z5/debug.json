@@ -3,10 +3,10 @@
  "version": "z5-v1",
  "stage": "debug",
  "split": "final_train",
- "utc": "2026-10-09 03:31:03",
+ "utc": "2026-10-09 03:50:38",
  "provisional": false,
  "debug_only": true,
- "prereg_sha256": "d2a0ad217c3ffc5419d3bebe3085b88816533017ba67f4015a4993a19820a8e4",
+ "prereg_sha256": "032126ee83606c5f58a3723096188893bd704b6c07cb8d7f332a7a2a2ac3fa05",
  "rerun_reason": null,
  "hosts": {
   "R0": {
@@ -122,9 +122,18 @@
    "by_tag_n": {
     "R0": 94
    },
-   "n_clusters": null,
+   "by_class_n": {
+    "OTHER": 46,
+    "OPERATOR": 29,
+    "FACTORY": 19
+   },
+   "n_clusters": 29,
+   "largest_cluster_trades": 66,
+   "largest_cluster_share": 0.7021276595744681,
    "n_placebo": 1880,
-   "n_controls": {},
+   "n_controls": {
+    "class_matched": 1472
+   },
    "horizon_exits": 0,
    "decision_rt": {
     "n": 94,
@@ -181,9 +190,17 @@
    "by_tag_n": {
     "R0": 53
    },
-   "n_clusters": null,
+   "by_class_n": {
+    "OPERATOR": 29,
+    "FACTORY": 17,
+    "OTHER": 7
+   },
+   "n_clusters": 21,
+   "largest_cluster_trades": 33,
+   "largest_cluster_share": 0.6226415094339622,
    "n_placebo": 1060,
    "n_controls": {
+    "class_matched": 709,
     "cost_band": 1002
    },
    "horizon_exits": 0,
@@ -240,9 +257,17 @@
    "by_tag_n": {
     "R0": 44
    },
-   "n_clusters": null,
+   "by_class_n": {
+    "OPERATOR": 29,
+    "FACTORY": 13,
+    "OTHER": 2
+   },
+   "n_clusters": 15,
+   "largest_cluster_trades": 30,
+   "largest_cluster_share": 0.6818181818181818,
    "n_placebo": 880,
    "n_controls": {
+    "class_matched": 562,
     "cost_band": 809
    },
    "horizon_exits": 0,
@@ -297,9 +322,17 @@
    "by_tag_n": {
     "R0": 53
    },
-   "n_clusters": null,
+   "by_class_n": {
+    "OPERATOR": 29,
+    "FACTORY": 17,
+    "OTHER": 7
+   },
+   "n_clusters": 21,
+   "largest_cluster_trades": 33,
+   "largest_cluster_share": 0.6226415094339622,
    "n_placebo": 1060,
    "n_controls": {
+    "class_matched": 709,
     "cost_band": 1002
    },
    "horizon_exits": 0,
@@ -356,7 +389,12 @@
    "by_tag_n": {
     "OPERATOR": 24
    },
+   "by_class_n": {
+    "OPERATOR": 24
+   },
    "n_clusters": 1,
+   "largest_cluster_trades": 24,
+   "largest_cluster_share": 1.0,
    "n_placebo": 300,
    "n_controls": {
     "unmatched": 480
@@ -410,7 +448,12 @@
    "by_tag_n": {
     "OPERATOR": 24
    },
+   "by_class_n": {
+    "OPERATOR": 24
+   },
    "n_clusters": 1,
+   "largest_cluster_trades": 24,
+   "largest_cluster_share": 1.0,
    "n_placebo": 300,
    "n_controls": {
     "unmatched": 480,
@@ -465,7 +508,12 @@
    "by_tag_n": {
     "OPERATOR": 24
    },
+   "by_class_n": {
+    "OPERATOR": 24
+   },
    "n_clusters": 1,
+   "largest_cluster_trades": 24,
+   "largest_cluster_share": 1.0,
    "n_placebo": 300,
    "n_controls": {
     "unmatched": 480,
@@ -520,7 +568,12 @@
    "by_tag_n": {
     "OPERATOR": 24
    },
+   "by_class_n": {
+    "OPERATOR": 24
+   },
    "n_clusters": 1,
+   "largest_cluster_trades": 24,
+   "largest_cluster_share": 1.0,
    "n_placebo": 300,
    "n_controls": {
     "unmatched": 480,
@@ -605,6 +658,21 @@
     "120.0": 14,
     "125.0": 27
    },
+   "class_by_band": {
+    "3.00-3.40%": {
+     "OTHER": 5,
+     "FACTORY": 4
+    },
+    "rt <= 3.00%": {
+     "OPERATOR": 29,
+     "FACTORY": 13,
+     "OTHER": 2
+    },
+    "rt > 3.40%": {
+     "OTHER": 39,
+     "FACTORY": 2
+    }
+   },
    "by_c": {
     "c3.40": {
      "quoted_kept": 53,
@@ -656,6 +724,11 @@
     "80.0": 4,
     "85.0": 1
    },
+   "class_by_band": {
+    "rt <= 3.00%": {
+     "OPERATOR": 24
+    }
+   },
    "by_c": {
     "c3.40": {
      "quoted_kept": 24,
@@ -690,6 +763,6 @@
   "verdict": "DEBUG",
   "note": "mechanics, counts and decision-time costs only; returns hidden"
  },
- "runtime_s": 145.3,
+ "runtime_s": 148.5,
  "overall": "PENDING (no official TRAIN run)"
 }

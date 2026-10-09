@@ -71,7 +71,7 @@ def deep(x_to: float = 170.0, drift: float = 0.6, nb: int = 4) -> dict:
 
 
 def shallow(drift: float = -0.3, nb: int = 4) -> dict:
-    """Stay near graduation depth (X ~85 -> 50 SOL by 115 min: 125-bps tier, rt ~3.7-4.0 %), alive (1.3 SOL a minute)."""
+    """Stay near graduation depth (X ~85 -> 50 SOL by 115 min: 125-bps tier, rt ~3.7-4.0 %), alive (1.3 SOL/min)."""
     return {"buy": full(0.5), "sell": full(0.5 - drift), "n_buyers": full(nb), "n_sellers": full(1)}
 
 
@@ -379,7 +379,8 @@ def test_guard_pair_is_exact():
              ("B", t[1], 0.1, 0.06, 150, "time", 2000, 2200), ("C", t[2], 0.0, -0.04, 150, "time", 1600, 1600)])
     gp = Z.guard_pair(g, h)
     assert gp["n_matched"] == 3 and gp["guard_exit_share"] == pytest.approx(1 / 3)
-    assert gp["exit_fee_saving"] == pytest.approx(5 / 1e4 / 3) and gp["exit_fee_saving_when_fired"] == pytest.approx(5e-4)
+    assert gp["exit_fee_saving"] == pytest.approx(5 / 1e4 / 3)
+    assert gp["exit_fee_saving_when_fired"] == pytest.approx(5e-4)
     assert gp["net_diff"] == pytest.approx((-0.0995 + 0.04) / 3)
     assert gp["guard_sale_at_or_above_boundary"] == 1.0          # sold at 1,490 >= G = 1,470
 
@@ -484,7 +485,7 @@ def test_no_lookahead_real_census_train():
 def _ev(p, n=80, coins=80, mean=0.05, mw2=0.04, ci_lo=0.01, pc=0.03, cs=0.0, clusters=40, pc_ci=None, mwc=0.04):
     return {"config": Z.config_key(p), "params_hash": C.params_hash(p), "host": p["host"], "c": p["c"],
             "guard": p["guard"], "n": n, "n_coins": coins, "n_clusters": clusters, "mean": mean,
-            "mean_without_top2": mw2, "mean_without_largest_cluster": mwc,
+            "mean_without_top2": mw2, "robust_mean": mwc,
             "ci90": None if ci_lo is None else (ci_lo, ci_lo + 0.1), "censored_share": cs,
             "placebo": {"mean_diff": pc, "diff_ci95": pc_ci}}
 
@@ -540,7 +541,7 @@ def test_combine_verdict_extras_and_confirm_rule():
         for i, v in over.items():
             crit[int(i[1:]) - 1]["pass"] = v
         return {"criteria": crit, "auto_rejections": []}
-    r0c, r0t = {"host": "R0", "mean": 0.05, "mean_without_largest_cluster": 0.03}, {"mean": -0.04}
+    r0c, r0t = {"host": "R0", "mean": 0.05, "mean_without_operator": 0.03}, {"mean": -0.04}
     ex = Z.z5_extras(r0c, r0t, {"cost_saving": 0.006, "attribution": "selection, not cost"})
     assert [e["id"] for e in ex] == ["Z5.1", "Z5.2", "Z5.3", "Z5.4"] and ex[0]["pass"] is True
     assert Z.combine_verdict(base(c9=None), ex) == "PASS"
@@ -551,10 +552,12 @@ def test_combine_verdict_extras_and_confirm_rule():
     assert Z.combine_verdict({**base(), "auto_rejections": ["x"]}, ex) == "REJECTED"
     assert Z.combine_verdict(base(), Z.z5_extras(r0c, {"mean": 0.06}, None)) == "FAIL"        # the filter did not add
     assert Z.combine_verdict(base(), Z.z5_extras(r0c, None, None)) == "INCOMPLETE"             # no twin
-    assert Z.combine_verdict(base(), Z.z5_extras({**r0c, "mean_without_largest_cluster": -0.01}, r0t, None)) == "FAIL"
-    assert Z.combine_verdict(base(), Z.z5_extras({**r0c, "mean_without_largest_cluster": None}, r0t, None)) \
-        == "INCOMPLETE"
-    m1c = {"host": "M1", "mean": 0.05, "n_clusters": 2, "mean_without_largest_cluster": 0.02}
+    assert Z.combine_verdict(base(), Z.z5_extras({**r0c, "mean_without_operator": -0.01}, r0t, None)) == "FAIL"
+    assert Z.combine_verdict(base(), Z.z5_extras({**r0c, "mean_without_operator": None}, r0t, None)) == "INCOMPLETE"
+    # R0 is judged without OPERATOR coins, M1 without its largest operator cluster (M1's own check)
+    assert Z.z5_extras({**r0c, "mean_without_largest_cluster": -0.5}, r0t, None)[3]["pass"] is True
+    m1c = {"host": "M1", "mean": 0.05, "n_clusters": 2, "mean_without_largest_cluster": 0.02,
+           "mean_without_operator": None}
     assert Z.combine_verdict(base(), Z.z5_extras(m1c, r0t, None)) == "UNDERPOWERED"
     assert Z.combine_verdict(base(), Z.z5_extras({**m1c, "n_clusters": 3}, r0t, None)) == "PASS"
     doc = {"verdict": {"verdict": "FAIL"}, "configs": {"candidate": {"n": 30, "mean": -0.02}}}
@@ -686,6 +689,9 @@ def test_full_pipeline_and_every_refusal(st, monkeypatch):
     d = tr["decision"]
     assert d["verdict"] == "SHORTLISTED" and d["shortlist_written"] and d["candidate"].startswith("R0|c3.")
     assert d["twin"] == "R0|c-none|hx"
+    ce = tr["configs"][d["candidate"]]
+    assert ce["robust_check"] == "mean without OPERATOR-class coins" and ce["robust_mean"] == pytest.approx(ce["mean"])
+    assert "class_matched" in ce["controls"] and "cost_band" in ce["controls"]
     dc = tr["decomposition"][d["candidate"]]
     assert dc["net_gain"] > 0 and dc["selection"] > 0 and dc["cost_saving"] > 0 and dc["subset_of_host"]
     assert (st.out / "prereg.lock").exists()
@@ -772,8 +778,9 @@ def test_debug_stage_hides_returns(st):
         for k in ("mean", "ci90", "placebo", "controls", "stress", "portfolio", "reasons", "by_tag",
                   "cost_decomposition"):
             assert k not in e
-        assert "decision_rt" in e and "n_controls" in e and "largest_cluster_trades" in e
-        assert "mean_without_largest_cluster" not in e
+        assert "decision_rt" in e and "n_controls" in e and "largest_cluster_trades" in e and "by_class_n" in e
+        for k in ("mean_without_largest_cluster", "mean_without_operator", "robust_mean", "by_class"):
+            assert k not in e
     ec = doc["event_counts"]
     assert set(ec) == {"R0", "M1"}
     for h, e in ec.items():
@@ -781,6 +788,7 @@ def test_debug_stage_hides_returns(st):
         for v in e["by_c"].values():
             assert v["subset_of_host"] is True and v["filtered_trades"] == v["quoted_kept"]
         assert e["guard_same_entries"] is True
+        assert sum(sum(v.values()) for v in e["class_by_band"].values()) == e["host_entries"]
     txt = json.dumps(doc)
     for word in ("ret_net", "ret_mid", "exit_price", "mean_diff", "tier_guard\""):
         assert word not in txt

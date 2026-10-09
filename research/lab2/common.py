@@ -45,8 +45,9 @@ THE CONTRACT (read this before writing a hypothesis)
   - NULL is ``None``, never 0: graduates without creation data have NULL launch / bundle / sniper / creator /
     curve-life columns and ``grad_delay_s`` (use ``grad_delay_lb_s``, a lower bound). ``None >= x`` raises.
 * **Fills** (:func:`simulate_buy`, :func:`simulate_sell`): PumpSwap constant product on the PRICING reserve
-  X = x + v (real + virtual quote reserve; X = close * y_close exactly in B2), k = X * y from the state at the
-  start of the fill minute, fees from ``research/lab/costs.py`` (pool tier by market cap AS OF THE TRADE DATE
+  X = x + v (real + virtual quote reserve; X = close * y_close exactly in B2; before the first pool trade
+  X0 = ``pool_quote0``, which already includes v), k = X * y from the state at the start of the fill minute, fees
+  from ``research/lab/costs.py`` (pool tier by market cap AS OF THE TRADE DATE
   via :func:`fee_bps_at`, + Jupiter Ultra 10 bps, + 20 bps paper slippage/MEV haircut), network fee per swap,
   optional token-account rent. Identical to ``costs.CostModel`` for the same k (tested).
 * **Minute-bar fill modes** (:class:`FillConfig`, default ``"worst"``, PLAN 3.3 wick_fill="worst"): decisions
@@ -182,7 +183,12 @@ MAYHEM_RSOL = 80.0
 SLOW_CREATE_LOOKBACK_S = 1800  # has_create = 0  =>  created < g_ts - 1800 (curve scan lookback)
 PLACEBO_AGE_TOL_S = 120        # PLAN 3.4: random entry within +-2 min of the same age
 B2_HORIZON_S = 60 * N_BARS     # backfill.HORIZON_S: B2 holds [g, g + 180 min) of every pool
-V_MIGRATION_SOL = 17.584505289  # PumpSwap virtual quote reserve of 2026-10 migration pools (fallback only)
+V_MIGRATION_SOL = 17.584505289  # PumpSwap virtual quote reserve of 2026-10 migration pools (real x0 = X0 - v)
+# Initial PRICING reserve X0 = x0 + v of a 2026-10 migration pool and its token reserve (fallbacks when a graduates
+# row lacks them). graduates.pool_quote0 (CreatePool's pool_quote_amount) IS X0: it already includes v (first pool
+# trade on chain: x0 67.406 + v 17.585 = 84.990 SOL). Never add virt_sol to it (tests/test_bar0_real.py).
+POOL_X0_SOL = 84.990359056
+POOL_Y0_TOKENS = 206.9e6
 BLOCK_S = 6 * 3600             # PLAN 3.4 day-block bootstrap: 6-hour blocks (TEST / VAL span only 1.3-1.5 days)
 MAX_CENSORED_SHARE = 0.10      # a verdict cannot PASS when more trades than this end at the data horizon
 
@@ -406,6 +412,15 @@ def _isnan(v: Any) -> bool:
     return isinstance(v, float) and math.isnan(v)
 
 
+def _positive_or(v: Any, default: float) -> float:
+    """``float(v)`` when it is a finite number > 0, else ``default`` (None / NaN / NA / 0 / garbage)."""
+    try:
+        f = float(v)
+    except (TypeError, ValueError):
+        return default
+    return f if math.isfinite(f) and f > 0 else default
+
+
 def _clean(v: Any) -> Any:
     """NaN / NA -> None (so arithmetic on a missing value raises instead of silently passing)."""
     if v is None or v is pd.NA:
@@ -554,7 +569,7 @@ class CoinData:
     row: Mapping[str, Any]
     arr: Mapping[str, np.ndarray]
     agent_nan: np.ndarray
-    init_X: float                # pricing reserve before the first pool trade: pool_quote0 + virtual reserve
+    init_X: float                # pricing reserve x0 + v before the first pool trade = graduates.pool_quote0
     init_y: float
     legal: Mapping[str, float]
     split: str
@@ -578,11 +593,14 @@ class CoinData:
 
 
 def _dense(bars: pd.DataFrame, m0: int, init_X: float, init_y: float) -> dict[str, np.ndarray]:
-    """Dense per-minute arrays. ``init_X`` is the PRICING reserve before the first pool trade (x0 + v).
+    """Dense per-minute arrays. ``init_X`` is the PRICING reserve before the first pool trade (x0 + v, which is
+    ``graduates.pool_quote0`` itself); ``init_X / init_y`` prices the minutes before the first trade.
 
-    B2 prices the pool's first trade(s) without the virtual reserve: the first traded bar's ``open`` is x0 / y0 and
-    its ``low`` mixes no-v prices (both ~17 % low on the census day; closes are exact). That bar's open is therefore
-    rebuilt from the initial reserves and its low is cut to the body (min(open, close)): no wick information."""
+    B2's own OHLC is kept, bar 0 included: its ``open`` is the price before the pool's first trade (= pool_quote0 /
+    pool_base0) and its high / low / close are the real post-trade extremes. Both were checked against the first
+    real pool trades (CryptoHouse raw rows and swap-api ``priceSol``: tests/test_bar0_real.py). Rebuilding bar 0
+    from (pool_quote0 + v) put its open ~20.7 % too high and cut its low to the body (finding INIT-PRICE-NO-VIRT,
+    reverted)."""
     out = {k: np.zeros(N_BARS) for k in BAR_ARRAYS}
     idx = ((bars["minute_ts"].to_numpy(np.int64) - m0) // 60).astype(np.int64)
     ok = (idx >= 0) & (idx < N_BARS)
@@ -600,14 +618,9 @@ def _dense(bars: pd.DataFrame, m0: int, init_X: float, init_y: float) -> dict[st
     xr[idx], yc[idx] = b["x_close"].to_numpy(float), b["y_close"].to_numpy(float)
     last_c, last_y, last_x = init_X / init_y, init_y, None
     X = np.empty(N_BARS)
-    first = True
     for i in range(N_BARS):
         if traded[i] and np.isfinite(c[i]) and np.isfinite(yc[i]) and yc[i] > 0:
             last_c, last_y, last_x = c[i], yc[i], xr[i]
-            if first:                       # the pre-first-trade price is the initial pool (see docstring)
-                o[i] = init_X / init_y
-                l[i] = min(o[i], c[i])
-                first = False
             if not np.isfinite(o[i]):
                 o[i] = c[i]
             h[i] = max(h[i], o[i], c[i]) if np.isfinite(h[i]) else max(o[i], c[i])
@@ -888,10 +901,8 @@ def _pooled_from_file() -> set[str]:
 def _make_coin(r: dict, bars: pd.DataFrame, trades: pd.DataFrame | None, pooled: set[str]) -> CoinData:
     g = float(r["g_ts"])
     m0 = int(g) // 60 * 60
-    y0 = float(r.get("pool_base0") or 0) or 206.9e6
-    v0 = r.get("virt_sol")
-    v0 = float(v0) if v0 is not None and not _isnan(v0) and float(v0) > 0 else V_MIGRATION_SOL
-    X0 = (float(r.get("pool_quote0") or 0) or 84.990359 - V_MIGRATION_SOL) + v0   # PRICING reserve x0 + v
+    y0 = _positive_or(r.get("pool_base0"), POOL_Y0_TOKENS)
+    X0 = _positive_or(r.get("pool_quote0"), POOL_X0_SOL)   # PRICING reserve x0 + v: pool_quote0 already includes v
     arr = _dense(bars, m0, X0, y0)
     agent_nan = np.full(N_BARS, np.nan)
     agent_nan.setflags(write=False)

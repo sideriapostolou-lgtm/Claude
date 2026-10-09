@@ -3,10 +3,10 @@
  "version": "y1-v1",
  "stage": "debug",
  "split": "final_train",
- "utc": "2026-10-09 02:44:31",
+ "utc": "2026-10-09 04:11:39",
  "provisional": false,
  "debug_only": true,
- "prereg_sha256": "a147fa7935b487681f0c86cc33b78d135059a409bee5fbe31cfd96e27a05ac70",
+ "prereg_sha256": "15301aa0ed49ae273bdc3619fb02b3b5ff6e1065aaa1561c91cbfee6c9e4b54e",
  "rerun_reason": null,
  "coverage": {
   "split": "final_train",
@@ -54,15 +54,15 @@
   "days_expected": 0.52,
   "days_full": 2,
   "curve_span_utc": [
-   "2026-10-04 18:00:00",
-   "2026-10-08 21:00:00"
+   "2026-09-30 17:00:00",
+   "2026-10-09 02:00:00"
   ],
   "b2_span_utc": [
    "2026-10-07 19:00:00",
    "2026-10-08 19:00:00"
   ],
   "completeness_source": "raw_chunks",
-  "parquet_snapshot_utc": "2026-10-09 00:30:55",
+  "parquet_snapshot_utc": "2026-10-09 03:57:17",
   "b2_hours_needed": 24,
   "b2_hours_done": 24,
   "b2_hours_midrun": [],
@@ -138,7 +138,7 @@
   "n_warmup": 12,
   "decision": "HIDDEN (debug split: no outcome statistics)",
   "trial": {
-   "config": "Y1-persist|3d027a7d331d",
+   "config": "Y1-persist|2e40f89069b2",
    "new_trial": false,
    "n_trials_total": 2575,
    "hypothesis_configs": 0,
@@ -149,138 +149,94 @@
  "configs": {
   "good|th0|T30": {
    "config": "good|th0|T30",
-   "params_hash": "43a425496150",
+   "params_hash": "81cc80479fbd",
    "hypothesis": "Y1",
-   "n": 3,
-   "n_coins": 3,
-   "n_clusters": 3,
-   "tags": {
-    "good": 3
-   },
-   "entry_age_min_median": 10.166666666666666,
-   "n_placebo": 6,
-   "placebo_draws_per_signal": 2.0,
-   "horizon_exits": 0,
    "trial": {
-    "config": "Y1|43a425496150",
+    "config": "Y1|81cc80479fbd|cfg:a06543feac6c",
     "new_trial": false,
     "n_trials_total": 2575
    },
-   "returns": "hidden on the debug split (never choose parameters on FINAL data)"
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)",
+   "counts": "hidden on the debug split (a GOOD count is the number of records >= theta: a return sign)"
   },
   "good|th0|T60": {
    "config": "good|th0|T60",
-   "params_hash": "3ef56cea2858",
+   "params_hash": "3cc6b11d40da",
    "hypothesis": "Y1",
-   "n": 3,
-   "n_coins": 3,
-   "n_clusters": 3,
-   "tags": {
-    "good": 3
-   },
-   "entry_age_min_median": 10.166666666666666,
-   "n_placebo": 6,
-   "placebo_draws_per_signal": 2.0,
-   "horizon_exits": 0,
    "trial": {
-    "config": "Y1|3ef56cea2858",
+    "config": "Y1|3cc6b11d40da|cfg:a06543feac6c",
     "new_trial": false,
     "n_trials_total": 2575
    },
-   "returns": "hidden on the debug split (never choose parameters on FINAL data)"
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)",
+   "counts": "hidden on the debug split (a GOOD count is the number of records >= theta: a return sign)"
   },
   "good|th0.1|T30": {
    "config": "good|th0.1|T30",
-   "params_hash": "a93c01de1a23",
+   "params_hash": "4ea67b954fcc",
    "hypothesis": "Y1",
-   "n": 1,
-   "n_coins": 1,
-   "n_clusters": 1,
-   "tags": {
-    "good": 1
-   },
-   "entry_age_min_median": 7.116666666666666,
-   "n_placebo": 1,
-   "placebo_draws_per_signal": 1.0,
-   "horizon_exits": 0,
    "trial": {
-    "config": "Y1|a93c01de1a23",
+    "config": "Y1|4ea67b954fcc|cfg:a06543feac6c",
     "new_trial": false,
     "n_trials_total": 2575
    },
-   "returns": "hidden on the debug split (never choose parameters on FINAL data)"
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)",
+   "counts": "hidden on the debug split (a GOOD count is the number of records >= theta: a return sign)"
   },
   "good|th0.1|T60": {
    "config": "good|th0.1|T60",
-   "params_hash": "5cceaf0bd9a7",
+   "params_hash": "4d874582f510",
    "hypothesis": "Y1",
-   "n": 1,
-   "n_coins": 1,
-   "n_clusters": 1,
-   "tags": {
-    "good": 1
-   },
-   "entry_age_min_median": 7.116666666666666,
-   "n_placebo": 1,
-   "placebo_draws_per_signal": 1.0,
-   "horizon_exits": 0,
    "trial": {
-    "config": "Y1|5cceaf0bd9a7",
+    "config": "Y1|4d874582f510|cfg:a06543feac6c",
     "new_trial": false,
     "n_trials_total": 2575
    },
-   "returns": "hidden on the debug split (never choose parameters on FINAL data)"
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)",
+   "counts": "hidden on the debug split (a GOOD count is the number of records >= theta: a return sign)"
   },
   "host|T30": {
    "config": "host|T30",
-   "params_hash": "2d30e110b286",
+   "params_hash": "e2caede11972",
    "hypothesis": "Y1-host",
+   "trial": {
+    "config": "Y1-host|e2caede11972|cfg:a06543feac6c",
+    "new_trial": false,
+    "n_trials_total": 2575
+   },
    "n": 12,
    "n_coins": 12,
    "n_clusters": 10,
-   "tags": {
-    "bad": 9,
-    "good": 3
-   },
    "entry_age_min_median": 7.858333333333333,
    "n_placebo": 39,
    "placebo_draws_per_signal": 3.25,
    "horizon_exits": 0,
-   "trial": {
-    "config": "Y1-host|2d30e110b286",
-    "new_trial": false,
-    "n_trials_total": 2575
-   },
    "returns": "hidden on the debug split (never choose parameters on FINAL data)"
   },
   "host|T60": {
    "config": "host|T60",
-   "params_hash": "2de84d749a05",
+   "params_hash": "07be97dbe702",
    "hypothesis": "Y1-host",
+   "trial": {
+    "config": "Y1-host|07be97dbe702|cfg:a06543feac6c",
+    "new_trial": false,
+    "n_trials_total": 2575
+   },
    "n": 12,
    "n_coins": 12,
    "n_clusters": 10,
-   "tags": {
-    "bad": 9,
-    "good": 3
-   },
    "entry_age_min_median": 7.858333333333333,
    "n_placebo": 39,
    "placebo_draws_per_signal": 3.25,
    "horizon_exits": 0,
-   "trial": {
-    "config": "Y1-host|2de84d749a05",
-    "new_trial": false,
-    "n_trials_total": 2575
-   },
    "returns": "hidden on the debug split (never choose parameters on FINAL data)"
   }
  },
  "entries_per_day": {
-  "good|th0|T30": 5.765637512234184,
-  "good|th0|T60": 5.765637512234184,
-  "good|th0.1|T30": 1.921879170744728,
-  "good|th0.1|T60": 1.921879170744728,
+  "good|th0|T30": null,
+  "good|th0|T60": null,
+  "good|th0.1|T30": null,
+  "good|th0.1|T60": null,
   "host|T30": 23.062550048936735,
   "host|T60": 23.062550048936735
  },
@@ -288,10 +244,9 @@
   "host|T30": {
    "flag": "record_mean < 0 at the host entry (the complement of GOOD(0))",
    "n_host": 12,
-   "n_flagged": 9,
-   "n_unflagged": 3,
+   "flags": "hidden on the debug split (a flag is the sign of an earlier coin's record)",
    "trial": {
-    "config": "Y1-veto|af1f5a547381",
+    "config": "Y1-veto|649d6f4c3c3f",
     "new_trial": false,
     "n_trials_total": 2575,
     "hypothesis_configs": 0,
@@ -302,10 +257,9 @@
   "host|T60": {
    "flag": "record_mean < 0 at the host entry (the complement of GOOD(0))",
    "n_host": 12,
-   "n_flagged": 9,
-   "n_unflagged": 3,
+   "flags": "hidden on the debug split (a flag is the sign of an earlier coin's record)",
    "trial": {
-    "config": "Y1-veto|c669408d7eb5",
+    "config": "Y1-veto|71c5e1d161a8",
     "new_trial": false,
     "n_trials_total": 2575,
     "hypothesis_configs": 0,
@@ -318,7 +272,7 @@
   "verdict": "DEBUG",
   "note": "mechanics only; returns hidden"
  },
- "runtime_s": 4.3,
+ "runtime_s": 6.3,
  "n_trials_total": 2575,
  "overall": "PENDING (no official TRAIN run)"
 }

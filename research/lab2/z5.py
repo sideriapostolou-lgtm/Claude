@@ -1,4 +1,4 @@
-"""Z5: the fee-tier cost optimizer -- does paying the cheapest pool-fee tiers alone flip any host positive? Expected: no.
+"""Z5: the fee-tier cost optimizer -- does paying the cheapest pool-fee tiers alone flip a host positive? Expected: no.
 
 Research only (wave-2 lab). Nothing here is wired into the bot. Pre-registration: ``research/lab2/Z5/PREREG.md``.
 
@@ -252,7 +252,9 @@ def placebo_spec(p: Mapping[str, Any]) -> tuple[Callable | None, Callable | None
     """(judged eligible, judged strata, diagnostic controls) of a config."""
     c = p["c"]
     if p["host"] == "R0":
-        ctl = {} if c is None else {"cost_band": {"eligible": alive_ok, "strata": cost_band(float(c))}}
+        ctl = {"class_matched": {"eligible": alive_ok, "strata": M1.placebo_stratum}}
+        if c is not None:
+            ctl["cost_band"] = {"eligible": alive_ok, "strata": cost_band(float(c))}
         return alive_ok, None, ctl
     ctl = {"unmatched": {"eligible": M1.placebo_ok, "strata": None}}
     if c is not None:
@@ -279,15 +281,20 @@ def _quantiles(x: Any) -> dict | None:
             "mean": float(a.mean())}
 
 
-def decision_state(ds: C.Dataset, t: pd.DataFrame) -> pd.DataFrame:
-    """Decision-time cost state of each trade (rt, market cap, fee tier at t_dec): known at the decision."""
+STATE_COLS = ["rt_dec", "mcap_dec_sol", "fee_bps_dec", "class_dec"]
+
+
+def decision_state(ds: C.Dataset, t: pd.DataFrame, with_class: bool = False) -> pd.DataFrame:
+    """Decision-time state of each trade (rt, market cap, fee tier and, optionally, the PLAN 4.2 class of
+    ``m1.m1_class`` at t_dec): all known at the decision."""
     rows = []
     for m, td in zip(t["mint"], t["t_dec"]):
         s = ds.asof(str(m), float(td))
         rt = round_trip_frac(s)
         rows.append({"rt_dec": np.nan if rt is None else rt, "mcap_dec_sol": s.mcap_sol,
-                     "fee_bps_dec": C.fee_bps_at(s.t, s.mcap_sol)})
-    return pd.DataFrame(rows, columns=["rt_dec", "mcap_dec_sol", "fee_bps_dec"], index=t.index)
+                     "fee_bps_dec": C.fee_bps_at(s.t, s.mcap_sol),
+                     "class_dec": str(M1.m1_class(s)) if with_class else None})
+    return pd.DataFrame(rows, columns=STATE_COLS, index=t.index)
 
 
 def _keys(t: pd.DataFrame) -> list[tuple[str, float]]:
@@ -402,11 +409,13 @@ def evaluate(res: C.Result, ds: C.Dataset, clusters: Mapping[str, str] | None, *
     prices, the fee paid at the fills, the cost decomposition or placebo outcomes."""
     t = res.trades
     p = res.meta["params"]
-    st = decision_state(ds, t) if len(t) else pd.DataFrame(columns=["rt_dec", "mcap_dec_sol", "fee_bps_dec"])
+    st = decision_state(ds, t, with_class=True) if len(t) else pd.DataFrame(columns=STATE_COLS)
+    cls = st["class_dec"].astype(str) if len(t) else pd.Series(dtype=str)
     base = {"config": config_key(p), "params_hash": C.params_hash(p), "hypothesis": res.meta["hypothesis"],
             "host": p["host"], "c": p["c"], "guard": p["guard"],
             "n": int(len(t)), "n_coins": int(t["mint"].nunique()) if len(t) else 0,
             "by_tag_n": t["tag"].value_counts().to_dict() if len(t) else {},
+            "by_class_n": cls.value_counts().to_dict() if len(t) else {},
             **cluster_stats(t, clusters, hide=hide),
             "n_placebo": int(len(res.placebo)), "n_controls": {k: int(len(v)) for k, v in res.controls.items()},
             "horizon_exits": int((t["reason"] == "horizon").sum()) if len(t) else 0,
@@ -434,7 +443,21 @@ def evaluate(res: C.Result, ds: C.Dataset, clusters: Mapping[str, str] | None, *
     base["portfolio"] = {k: v for k, v in C.portfolio_sim(t).items() if k != "skipped_mints"}
     base["by_tag"] = {s: {"n": int(len(g)), "mean": float(g["ret_net"].mean())} for s, g in t.groupby("tag")} \
         if len(t) else {}
+    base["by_class"] = {s: {"n": int(len(g)), "mean": float(g["ret_net"].mean())}
+                        for s, g in t.groupby(cls.to_numpy())} if len(t) else {}
+    non_op = t.loc[(cls != "OPERATOR").to_numpy(), "ret_net"] if len(t) else pd.Series(dtype=float)
+    base["mean_without_operator"] = float(non_op.mean()) if len(non_op) else None
+    base.update(robust_check(p["host"], base))
     return base
+
+
+def robust_check(host: str, e: Mapping[str, Any]) -> dict:
+    """PREREG 9 concentration check (TRAIN qualifier and Z5.4). R0: mean > 0 on the non-OPERATOR trades (the cheap
+    tiers are where one operator's coins sit). M1: M1's own check, mean > 0 without the largest operator cluster."""
+    if host == "R0":
+        return {"robust_check": "mean without OPERATOR-class coins", "robust_mean": e.get("mean_without_operator")}
+    return {"robust_check": "mean without the largest operator cluster",
+            "robust_mean": e.get("mean_without_largest_cluster")}
 
 
 def analysis(ds: C.Dataset, results: Mapping[str, C.Result], B: int = 2000) -> dict:
@@ -502,7 +525,7 @@ def decide_train(evals: Mapping[str, Mapping[str, Any]]) -> dict:
         powered = (e["n"] >= TRAIN_MIN_TRADES and e["n_coins"] >= TRAIN_MIN_COINS
                    and (p["host"] != "M1" or (e.get("n_clusters") or 0) >= MIN_CLUSTERS))
         adds = None if e.get("mean") is None or b.get("mean") is None else e["mean"] - b["mean"]
-        mwc = e.get("mean_without_largest_cluster")
+        mwc = e.get("robust_mean")
         good = bool(powered and e.get("mean") is not None and e["mean"] > 0
                     and e.get("mean_without_top2") is not None and e["mean_without_top2"] > 0
                     and mwc is not None and mwc > 0
@@ -511,7 +534,8 @@ def decide_train(evals: Mapping[str, Mapping[str, Any]]) -> dict:
         ci = e.get("ci90")
         rows.append({"config": key, "baseline": bkey, "host": p["host"], "powered": bool(powered), "qualifies": good,
                      "n": e["n"], "coins": e["n_coins"], "clusters": e.get("n_clusters"), "mean": e.get("mean"),
-                     "mean_without_top2": e.get("mean_without_top2"), "mean_without_largest_cluster": mwc,
+                     "mean_without_top2": e.get("mean_without_top2"), "robust_check": e.get("robust_check"),
+                     "robust_mean": mwc,
                      "ci90_lo": ci[0] if ci else None, "control_diff": pc, "filter_adds": adds,
                      "censored_share": cs})
     q = sorted((r for r in rows if r["qualifies"]),
@@ -523,7 +547,9 @@ def decide_train(evals: Mapping[str, Mapping[str, Any]]) -> dict:
         return {"verdict": "SHORTLISTED", "rows": rows, "candidate": config_key(best), "twin": config_key(sl[0]),
                 "shortlist": sl, "shortlist_hashes": [C.params_hash(x) for x in sl]}
     if any(r["powered"] for r in rows):
-        v, why = "NO_CONFIG", "a powered filtered config failed the mean / top-2 / control / censoring / filter-adds bars"
+        v = "NO_CONFIG"
+        why = ("a powered filtered config failed the mean / top-2 / concentration / control / censoring / "
+               "filter-adds bars")
     else:
         v = "UNDERPOWERED_TRAIN"
         why = (f"no filtered config reached >= {TRAIN_MIN_TRADES} trades from >= {TRAIN_MIN_COINS} coins (M1 host: and "
@@ -565,10 +591,12 @@ def z5_extras(ev_c: Mapping[str, Any], ev_t: Mapping[str, Any] | None, dec: Mapp
                 "blocking_when_none": False,
                 "value": {k: d.get(k) for k in ("cost_saving", "selection", "net_gain", "cost_alone_counterfactual",
                                                 "cost_alone_flips_host", "attribution")}})
-    mwc = ev_c.get("mean_without_largest_cluster")
-    out.append({"id": "Z5.4", "name": "mean > 0 without the largest operator cluster",
+    rc = robust_check(str(ev_c.get("host")), ev_c)
+    mwc = rc["robust_mean"]
+    out.append({"id": "Z5.4", "name": f"concentration: {rc['robust_check']} > 0",
                 "pass": None if mwc is None else bool(mwc > 0),
-                "value": {"mean_without_largest_cluster": mwc, "largest_cluster_share": ev_c.get("largest_cluster_share"),
+                "value": {"robust_mean": mwc, "by_class_n": ev_c.get("by_class_n"),
+                          "largest_cluster_share": ev_c.get("largest_cluster_share"),
                           "n_clusters": ev_c.get("n_clusters")}})
     return out
 
@@ -609,7 +637,7 @@ FINAL_DEBUG = "final_train"
 
 
 def final_decision(t: pd.DataFrame, twin: pd.DataFrame | None = None) -> dict:
-    """PLAN 3.5 item 9 on the census thirds Z5 never looked at (the TRAIN third hosted the debug run: reported apart)."""
+    """PLAN 3.5 item 9 on the census thirds Z5 never looked at (the TRAIN third hosted the debug run: apart)."""
     judged = t[t["split"].isin(FINAL_JUDGED)] if len(t) else t
     dbg = t[t["split"] == FINAL_DEBUG] if len(t) else t
     per = {s: {"n": int(len(g)), "mean": float(g["ret_net"].mean())} for s, g in t.groupby("split")} if len(t) else {}
@@ -835,13 +863,18 @@ def event_counts(ds: C.Dataset, results: Mapping[str, C.Result], days: float) ->
         if b is None:
             continue
         t = b.trades
-        st = decision_state(ds, t) if len(t) else pd.DataFrame(columns=["rt_dec", "mcap_dec_sol", "fee_bps_dec"])
+        st = decision_state(ds, t, with_class=True) if len(t) else pd.DataFrame(columns=STATE_COLS)
         rt = st["rt_dec"].to_numpy(float)
+        band = np.where(~np.isfinite(rt), "rt unknown", np.where(rt <= C_GRID[1], "rt <= 3.00%",
+                                                                 np.where(rt <= C_GRID[0], "3.00-3.40%", "rt > 3.40%")))
         h: dict[str, Any] = {"host_entries": int(len(t)),
                              "host_entries_per_day": (len(t) / days) if math.isfinite(days) and days > 0 else None,
                              "decision_rt": _quantiles(rt), "decision_mcap_sol": _quantiles(st["mcap_dec_sol"]),
                              "decision_fee_bps": {str(k): int(v) for k, v in
                                                   st["fee_bps_dec"].value_counts().sort_index().items()},
+                             "class_by_band": {str(bd): {str(k): int(v) for k, v in
+                                                         st.loc[band == bd, "class_dec"].value_counts().items()}
+                                               for bd in sorted(set(band.tolist()))},
                              "by_c": {}}
         for c in C_GRID:
             keep = np.isfinite(rt) & (rt <= c)
@@ -1089,7 +1122,8 @@ def render_md(doc: Mapping[str, Any]) -> str:
               "| host | entries | per day | decision rt | decision mcap (SOL) | fee tier at decision (bps: n) |",
               "|---|---:|---:|---|---|---|"]
         for h, e in ec.items():
-            L.append(f"| {h} | {e['host_entries']} | {e['host_entries_per_day'] and round(e['host_entries_per_day'], 1)}"
+            epd = e["host_entries_per_day"]
+            L.append(f"| {h} | {e['host_entries']} | {'n/a' if epd is None else round(epd, 1)}"
                      f" | {_q(e['decision_rt'], 100, '{:.2f}%')} | {_q(e['decision_mcap_sol'], 1, '{:,.0f}')} | "
                      f"{e['decision_fee_bps']} |")
         L += ["", "| host | c | kept (quoted) | kept share | ex-ante saving (quoted rt) | filtered trades | "
@@ -1099,6 +1133,8 @@ def render_md(doc: Mapping[str, Any]) -> str:
                 L.append(f"| {h} | {c} | {v['quoted_kept']} | {_pct(v['quoted_kept_share'], 1)} | "
                          f"{_pct(v['ex_ante_saving'], 2)} | {v['filtered_trades']} | {v['subset_of_host']} |")
         for h, e in ec.items():
+            L.append(f"- {h}: PLAN 4.2 class at the entry decision, by quoted round trip: {e.get('class_by_band')}.")
+        for h, e in ec.items():
             if "guard_config_trades" in e:
                 L.append(f"- {h} guard config: {e['guard_config_trades']} trades; same entries as the c3.40 host-exit "
                          f"config: {e['guard_same_entries']}.")
@@ -1107,24 +1143,28 @@ def render_md(doc: Mapping[str, Any]) -> str:
     if cf:
         L += ["## Configs", ""]
         if doc.get("debug_only"):
-            L += ["| config | trades | coins | operator clusters | largest cluster trades | placebo trades | controls | "
-                  "horizon exits | entries/day |", "|---|---:|---:|---:|---:|---:|---|---:|---:|"]
+            L += ["| config | trades | coins | class at decision | operator clusters | largest cluster trades | "
+                  "placebo trades | controls | horizon exits | entries/day |",
+                  "|---|---:|---:|---|---:|---:|---:|---|---:|---:|"]
             for k, e in cf.items():
                 epd = (doc.get("entries_per_day") or {}).get(k)
-                L.append(f"| {e['config']} | {e['n']} | {e['n_coins']} | {e.get('n_clusters')} | "
+                L.append(f"| {e['config']} | {e['n']} | {e['n_coins']} | {e.get('by_class_n')} | "
+                         f"{e.get('n_clusters')} | "
                          f"{e.get('largest_cluster_trades')} | {e['n_placebo']} | {e['n_controls']} | "
                          f"{e['horizon_exits']} | {'n/a' if epd is None else f'{epd:.1f}'} |")
         else:
-            L += ["| role | config | n | coins | clusters | mean | 90% CI coin | 90% CI 6-h block | w/o top 2 | w/o largest "
-                  "cluster | judged control diff | cost-band diff | costs ×1.5 | open fills | gross move | cost rate | "
-                  "censored |", "|---|---|---:|---:|---:|---:|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|"]
+            L += ["| role | config | n | coins | classes | mean | 90% CI coin | 90% CI 6-h block | w/o top 2 | "
+                  "concentration check | judged control diff | class-matched diff | cost-band diff | costs ×1.5 | "
+                  "open fills | gross move | cost rate | censored |",
+                  "|---|---|---:|---:|---|---:|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|"]
             for k, e in cf.items():
                 ctl = e.get("controls") or {}
                 cd = e.get("cost_decomposition") or {}
-                L.append(f"| {k} | {e['config']} | {e['n']} | {e['n_coins']} | {e.get('n_clusters')} | "
+                L.append(f"| {k} | {e['config']} | {e['n']} | {e['n_coins']} | {e.get('by_class_n')} | "
                          f"{_pct(e.get('mean'))} | {_ci(e.get('ci90'))} | {_ci(e.get('ci90_block'))} | "
-                         f"{_pct(e.get('mean_without_top2'))} | {_pct(e.get('mean_without_largest_cluster'))} | "
+                         f"{_pct(e.get('mean_without_top2'))} | {_pct(e.get('robust_mean'))} | "
                          f"{_pct((e.get('placebo') or {}).get('mean_diff'))} | "
+                         f"{_pct((ctl.get('class_matched') or {}).get('mean_diff'))} | "
                          f"{_pct((ctl.get('cost_band') or {}).get('mean_diff'))} | "
                          f"{_pct((e.get('stress') or {}).get('costs_x1.5'))} | "
                          f"{_pct((e.get('stress') or {}).get('open_fills'))} | "
@@ -1140,14 +1180,16 @@ def render_md(doc: Mapping[str, Any]) -> str:
         for k, d in dc.items():
             L.append(f"| {k} | {d['config']} | {_pct(d.get('kept_share'), 0)} | {_pct(d.get('net_gain'), 2)} | "
                      f"{_pct(d.get('cost_saving'), 2)} | {_pct(d.get('selection'), 2)} | "
-                     f"{_pct((d.get('ex_ante_rt') or {}).get('saving'), 2)} | {_pct((d.get('host') or {}).get('net'))} | "
+                     f"{_pct((d.get('ex_ante_rt') or {}).get('saving'), 2)} | "
+                     f"{_pct((d.get('host') or {}).get('net'))} | "
                      f"{_pct(d.get('cost_alone_counterfactual'), 2)} | {d.get('cost_alone_flips_host')} | "
                      f"{(d.get('veto_view') or {}).get('verdict')} |")
         for k, d in dc.items():
             gp = d.get("guard_vs_host_exit")
             if gp:
                 L.append(f"- {k} guard vs host exit: matched {gp['n_matched']}, guard closed "
-                         f"{_pct(gp.get('guard_exit_share'), 0)}, exit-fee saving {_pct(gp.get('exit_fee_saving'), 3)}, "
+                         f"{_pct(gp.get('guard_exit_share'), 0)}, exit-fee saving "
+                         f"{_pct(gp.get('exit_fee_saving'), 3)}, "
                          f"net difference {_pct(gp.get('net_diff'), 2)}, guard sales at or above the boundary "
                          f"{_pct(gp.get('guard_sale_at_or_above_boundary'), 0)}.")
         L.append("")
@@ -1162,7 +1204,7 @@ def render_md(doc: Mapping[str, Any]) -> str:
     L += ["## Decision", "", f"- **{dec.get('verdict')}**."]
     for r in dec.get("rows") or []:
         L.append(f"- {r['config']}: n {r['n']}, coins {r['coins']}, clusters {r['clusters']}, mean {_pct(r['mean'])}, "
-                 f"w/o largest cluster {_pct(r.get('mean_without_largest_cluster'))}, 90% CI low "
+                 f"{r.get('robust_check')} {_pct(r.get('robust_mean'))}, 90% CI low "
                  f"{_pct(r['ci90_lo'])}, control diff {_pct(r['control_diff'])}, filter adds "
                  f"{_pct(r['filter_adds'])}, qualifies {r['qualifies']}.")
     if "shortlist_written" in dec:
@@ -1177,7 +1219,8 @@ def render_md(doc: Mapping[str, Any]) -> str:
             L.append(f"- Auto-rejections: {dec['base']['auto_rejections']}.")
         L.append("- PLAN 3.5 #9 (FINAL mean > 0) is judged in the overall verdict after the FINAL stage.")
     if "twin_mean" in dec:
-        L.append(f"- VAL candidate n {dec.get('n')}, mean {_pct(dec.get('mean'))}; twin mean {_pct(dec.get('twin_mean'))}.")
+        L.append(f"- VAL candidate n {dec.get('n')}, mean {_pct(dec.get('mean'))}; twin mean "
+                 f"{_pct(dec.get('twin_mean'))}.")
     if dec.get("reason"):
         L.append(f"- Reason: {dec['reason']}.")
     if dec.get("note"):

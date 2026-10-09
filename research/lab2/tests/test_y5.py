@@ -171,6 +171,101 @@ def test_unregistered_configs_raise(host, ss):
         Y.make_params(host, ss)
 
 
+def test_m1_code_pin(monkeypatch, st):
+    """Review Y5-3: the M1 host is also pinned by m1.py's sha256 (a code change that keeps VERSION and the params);
+    the M1-host configs carry the registered pin, the R30 ones do not."""
+    assert len(Y.M1_REG_SHA256) == 64 and Y.host_problems() == []
+    assert all(p["host_code_sha256"] == Y.M1_REG_SHA256 for p in Y.GRID if p["host"] == "M1")
+    assert all("host_code_sha256" not in p for p in Y.GRID if p["host"] == "R30")
+    monkeypatch.setattr(Y, "M1_REG_SHA256", "0" * 64)
+    assert any("m1.py" in x for x in Y.host_problems())
+    with pytest.raises(Y.Y5Refused, match="M1 host"):
+        _check("debug", st)
+
+
+ENV_ALL = {"LAB2_ALLOW_TEST": "1", "LAB2_ALLOW_CONFIRM": "1", "LAB2_ALLOW_FINAL": "1"}
+
+
+def _m1_pair_shortlisted(d) -> None:
+    """A TRAIN result that shortlisted the pair (M1|US, M1|ALL) (written directly: the gate is a prerequisite)."""
+    cand = Y.make_params("M1", ["US"])
+    pair = [cand, Y.host_config(cand)]
+    C.write_shortlist("Y5", pair, path=d.sl, ledger_path=d.ledger)
+    (d.out / "train.json").write_text(json.dumps({"stage": "train", "provisional": False, "decision": {
+        "verdict": "SHORTLISTED", "shortlist_hashes": [C.params_hash(x) for x in pair]}}))
+
+
+def test_m1_host_pair_waits_for_m1s_own_look(st, monkeypatch, tmp_path):
+    """Review Y5-1: Y5's M1 host (m = 1, rhythm+prec) IS M1's candidate whenever M1's TRAIN picks m* = 1, so an
+    M1-host pair may look at VAL / TEST / CONFIRM / FINAL only after the M1 family spent its own look there (trials
+    ledger), or once M1's own written decisions forbid M1 that stage."""
+    for k in ENV_ALL:
+        monkeypatch.setenv(k, "1")
+    m1_out = tmp_path / "M1"
+    m1_out.mkdir()
+
+    def chk(stage):
+        return _check(stage, st, env=ENV_ALL, m1_out_dir=m1_out)
+    _m1_pair_shortlisted(st)
+    with pytest.raises(Y.Y5Refused, match="M1 has not spent its own val look"):
+        chk("val")
+    C.record_run("M1", M1.GRID[1], "val", {"n": 3, "mean": 0.0}, path=st.ledger)          # M1's VAL look
+    assert chk("val")["m1_host_gate"].startswith("M1 spent")
+    (st.out / "val.json").write_text(json.dumps({"stage": "val", "decision": {"verdict": "SELECTED"}}))
+    with pytest.raises(Y.Y5Refused, match="M1 has not spent its own test look"):
+        chk("test")
+    with C.one_shot_session("M1", "test", st.ledger):                                    # M1's one TEST look
+        pass
+    chk("test")
+    (st.out / "test.json").write_text(json.dumps({"stage": "test", "verdict": {"verdict": "UNDERPOWERED"},
+                                                  "configs": {"candidate": {"n": 3, "mean": 0.1}}}))
+    with pytest.raises(Y.Y5Refused, match="confirm"):
+        chk("confirm")
+    # M1's own TEST failed, so M1 never spends CONFIRM: nothing left to protect there
+    (m1_out / "train.json").write_text(json.dumps({"provisional": False, "decision": {"verdict": "SHORTLISTED"}}))
+    (m1_out / "val.json").write_text(json.dumps({"decision": {"verdict": "SELECTED"}}))
+    (m1_out / "test.json").write_text(json.dumps({"verdict": {"verdict": "FAIL"},
+                                                  "configs": {"candidate": {"n": 20, "mean": -0.1}}}))
+    assert "never spends" in chk("confirm")["m1_host_gate"]
+    with pytest.raises(Y.Y5Refused, match="final"):
+        chk("final")                                                  # M1 may still run FINAL after its TEST
+    with C.one_shot_session("M1", "final", st.ledger):
+        pass
+    chk("final")
+
+
+def test_m1_host_pair_runs_when_m1_stopped_before_the_split(st, tmp_path):
+    m1_out = tmp_path / "M1"
+    m1_out.mkdir()
+    _m1_pair_shortlisted(st)
+    (m1_out / "train.json").write_text(json.dumps({"provisional": False,
+                                                   "decision": {"verdict": "UNDERPOWERED_TRAIN"}}))
+    assert "never spends" in _check("val", st, m1_out_dir=m1_out)["m1_host_gate"]
+    (m1_out / "train.json").write_text(json.dumps({"provisional": True, "decision": {"verdict": "UNDERPOWERED_TRAIN"}}))
+    with pytest.raises(Y.Y5Refused, match="M1 has not spent"):
+        _check("val", st, m1_out_dir=m1_out)                         # a provisional M1 TRAIN decides nothing
+    assert Y.m1_host_gate("val", st.ledger, m1_out) is not None and Y.m1_host_gate("train", st.ledger, m1_out) is None
+
+
+def test_x5_overlap_counts_are_counts_only(tmp_path):
+    """Review Y5-2: X5 gates the same pinned M1 host by a (diurnal) market regime. Y5 reports, counts only, how X5's
+    M1-host TRAIN trades spread over X5's states and Y5's sessions."""
+    p = tmp_path / "train_trades.csv"
+    rows = [("host-M1", "2026-10-02 03:00:20", "ON"), ("host-M1", "2026-10-02 18:00:20", "ON"),
+            ("host-M1", "2026-10-02 10:00:20", "OFF"), ("host-M1", "2026-10-02 20:00:20", None),
+            ("host-R0", "2026-10-02 03:00:20", "ON"), ("candidate", "2026-10-02 18:00:20", "ON")]
+    pd.DataFrame([{"role": r, "t_dec": ts(t), "ret_net": 0.5, "mean": 1.0, "st_GR_q0.5": s, "st_GR_q0.8": "OFF",
+                   "st_SV_q0.5": "UNKNOWN"} for r, t, s in rows]).to_csv(p, index=False)
+    out = Y.x5_overlap_counts(p)
+    assert out["available"] and out["n_host_trades"] == 4
+    assert out["by_state_and_session"]["st_GR_q0.5"] == {"ON": {"ASIA": 1, "EU": 0, "US": 1},
+                                                         "OFF": {"ASIA": 0, "EU": 1, "US": 0},
+                                                         "UNKNOWN": {"ASIA": 0, "EU": 0, "US": 1}}
+    assert set(out["by_state_and_session"]) == {"st_GR_q0.5", "st_SV_q0.5"}            # q = 0.5 only
+    assert "ret_net" not in json.dumps(out) and "mean" not in json.dumps(out)
+    assert Y.x5_overlap_counts(tmp_path / "missing.csv")["available"] is False
+
+
 def test_m1_host_change_is_refused(monkeypatch, st):
     assert Y.host_problems() == []
     monkeypatch.setattr(M1, "VERSION", "m1-v2")
@@ -476,6 +571,10 @@ def st(tmp_path, monkeypatch):
     d.flow.mkdir()
     (d.out / "PREREG.md").write_text("# Y5 test prereg\n")
     (d.flow / "validation.json").write_text(json.dumps(VALID))
+    # the pin is checked against today's m1.py by the CLI; tests of the pipeline must not break when M1's team edits
+    # m1.py (test_m1_code_pin checks the refusal itself)
+    monkeypatch.setattr(Y, "M1_REG_SHA256", Y.m1_code_sha256())
+    monkeypatch.setattr(Y, "X5_TRADES", tmp_path / "X5" / "train_trades.csv")
     return d
 
 
@@ -515,6 +614,8 @@ def test_full_pipeline_and_every_refusal(st, monkeypatch):
     led = json.loads(st.ledger.read_text())
     assert sum(1 for v in led["configs"].values() if v["hypothesis"] == "Y5") == 11
     assert led["n_trials_total"] == 2575 + 11
+    assert tr["common_sha256"] == Y.common_sha256() and tr["m1_host"]["code_sha256"] == Y.m1_code_sha256()
+    assert tr["x5_overlap"]["available"] is False                       # X5 has not written TRAIN trades here
     with pytest.raises(Y.Y5Refused, match="final"):
         _check("train", st)                                               # a decision on complete TRAIN is final
     # PREREG frozen
@@ -531,8 +632,10 @@ def test_full_pipeline_and_every_refusal(st, monkeypatch):
     with pytest.raises(Y.Y5Refused, match="shortlist"):
         _check("val", st)
     (st.sl / "Y5.json").write_text(sl)
-    # ---- VAL (Mon 10-05)
+    # ---- VAL (Mon 10-05); common.py "changed" since TRAIN: flagged, not refused (review Y5-3)
+    monkeypatch.setattr(Y, "common_sha256", lambda: "f" * 64)
     va = _run("val", st, market("val", ["2026-10-05"], 20, 5, "V"))
+    assert va["common_changed_since_train"] is True and "changed since TRAIN" in (st.out / "val.md").read_text()
     assert set(va["configs"]) == {"candidate", "host"} and va["decision"]["verdict"] == "SELECTED"
     assert va["configs"]["candidate"]["config"] == "R30|ASIA" and va["configs"]["host"]["config"] == "R30|ALL"
     assert va["decision"]["host_rel_diff"] > 0.5 and va["veto_by_product"]["flagged_sessions"] == ["EU", "US"]

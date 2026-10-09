@@ -4,6 +4,7 @@ Each test failed before its fix. Synthetic data only, except where a test reads 
 
 import gzip
 import json
+import math
 import os
 import time
 from pathlib import Path
@@ -13,7 +14,7 @@ import pandas as pd
 import pytest
 
 import common as C
-from conftest import V0, make_frames
+from conftest import make_frames
 
 SOL = C.SolUsd(fallback=100.0)
 T0 = C.utc_ts("2026-10-02 00:00")
@@ -35,38 +36,50 @@ def _enter_at(age_min, exits=C.ExitSpec(max_hold_s=600), tag=""):
     return strat
 
 
-# =========================================================================== INIT-PRICE-NO-VIRT
+# =========================================================================== INIT-PRICE-NO-VIRT (reverted)
+# graduates.pool_quote0 ALREADY includes the virtual reserve (X0 = x0 + v = 84.990 SOL; checked against the first real
+# pool trades in test_bar0_real.py). The finding's fix added virt_sol again (bar 0 opened ~20.7 % high) and cut bar 0's
+# low to the body. These tests pin the corrected behaviour on synthetic frames.
 
 
-def test_initial_price_includes_the_virtual_reserve():
+def test_initial_price_is_pool_quote0_over_pool_base0():
     g, c, b = make_frames(n=4, seed=2)
     ds = _ds(frames=(g, c, b))
     m = ds.mints[0]
     cd = ds.coin(m)
     r = g[g["mint"] == m].iloc[0]
-    x0, y0 = float(r["pool_quote0"]), float(r["pool_base0"])
-    v = float(c.loc[c["mint"] == m, "virt_sol"].iloc[0])
-    assert cd.init_X == pytest.approx(x0 + v) and cd.init_y == pytest.approx(y0)
-    assert cd.k_before(0) == pytest.approx((x0 + v) * y0)
+    X0, y0 = float(r["pool_quote0"]), float(r["pool_base0"])
+    assert cd.init_X == pytest.approx(X0) and cd.init_y == pytest.approx(y0)    # virt_sol NOT added
+    assert cd.k_before(0) == pytest.approx(X0 * y0)
     snap = C.AsOf(cd, cd.g + 5, SOL)                      # nothing completed yet: k = 0
-    assert snap.k == 0 and snap.price == pytest.approx((x0 + v) / y0)
+    assert snap.k == 0 and snap.price == pytest.approx(X0 / y0)
+    assert snap.price == pytest.approx(cd.arr["o"][0])    # = B2's bar-0 open (the synthetic pool opens at X0 / y0)
 
 
-def test_first_bar_open_and_low_are_repaired_when_b2_dropped_the_virtual_reserve():
-    """B2 bar 0: open = x0 / y0 (no v) and the low mixes no-v prices; closes are (x + v) / y."""
+def test_first_bar_keeps_b2_open_and_low_wick():
+    """Bar 0 is B2's own bar: a low below the body (a real first-minute dip) survives, the open is not rebuilt."""
     g, c, b = make_frames(n=4, seed=2)
     m = g["mint"].iloc[1]
-    r = g[g["mint"] == m].iloc[0]
-    x0, y0 = float(r["pool_quote0"]), float(r["pool_base0"])
     i0 = b.index[(b["mint"] == m) & (b["minute_idx"] == 0)][0]
-    b.loc[i0, "open"] = x0 / y0                            # what B2 emits (17 % low)
-    b.loc[i0, "low"] = 1.02 * x0 / y0                      # the first trade priced without v
+    o, cl = float(b.loc[i0, "open"]), float(b.loc[i0, "close"])
+    b.loc[i0, "low"] = 0.5 * min(o, cl)                    # a wick below open and close
+    b.loc[i0, "high"] = 1.5 * max(o, cl)
     ds = _ds(frames=(g, c, b))
     cd = ds.coin(m)
-    p_init = (x0 + V0) / y0
-    assert cd.arr["o"][0] == pytest.approx(p_init)
-    assert cd.arr["l"][0] >= min(p_init, cd.arr["c"][0]) * (1 - 1e-12)
-    assert cd.arr["h"][0] >= max(p_init, cd.arr["c"][0]) * (1 - 1e-12)
+    assert cd.arr["o"][0] == pytest.approx(o)
+    assert cd.arr["l"][0] == pytest.approx(0.5 * min(o, cl))
+    assert cd.arr["h"][0] == pytest.approx(1.5 * max(o, cl))
+
+
+def test_missing_pool_reserves_fall_back_to_the_migration_pool():
+    g, c, b = make_frames(n=4, seed=2)
+    g["pool_quote0"] = [np.nan, 0.0, None, -1.0]
+    g["pool_base0"] = [np.nan, 0.0, None, -1.0]
+    ds = _ds(frames=(g, c, b))
+    for m in ds.mints:
+        cd = ds.coin(m)
+        assert cd.init_X == pytest.approx(C.POOL_X0_SOL) and cd.init_y == pytest.approx(C.POOL_Y0_TOKENS)
+        assert math.isfinite(cd.k_before(0))
 
 
 # =========================================================================== COV-PARTIAL-HOUR

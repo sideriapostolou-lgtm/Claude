@@ -32,7 +32,8 @@ CLI::
 
 Each stage writes ``Y2/<stage>.json`` and ``Y2/<stage>.md`` and REFUSES to run when its prerequisites are missing
 (no VAL without the written shortlist, TEST / CONFIRM / FINAL once each, never CONFIRM or FINAL before TEST, PLAN 8
-data gates V1-V4, PREREG frozen after the first official TRAIN run).
+data gates V1-V4, the reference pool's 24 h before the split start scanned, PREREG frozen after the first official
+TRAIN run).
 """
 
 from __future__ import annotations
@@ -381,6 +382,43 @@ def alive_ok(snap: C.AsOf) -> bool:
 PLACEBO_CONTROLS = {"unmatched": {"eligible": alive_ok, "strata": None}}
 
 
+def scanned_curve_hours(flow: Path | None = None, graduates: pd.DataFrame | None = None) -> tuple[set, str]:
+    """Clock hours fully scanned for graduates: the raw curve chunks, else (no raw chunks) the hours holding one."""
+    f = Path(flow or C.flow_dir())
+    if (f / "raw" / "curve").exists():
+        return set(C.completeness_from_flow(f, with_bar_hours=False).curve_hours), "raw_curve_chunks"
+    if graduates is None:
+        graduates = C._read_parquet(f / "graduates.parquet")
+    hours = set((graduates["g_ts"].to_numpy(np.int64) // 3600 * 3600).tolist()) if len(graduates) else set()
+    return hours, "hours_holding_a_graduate"
+
+
+def lookback_hours(split: str) -> np.ndarray:
+    """The clock hours of [split start - 24 h, split start): the reference window of the split's first decisions
+    (PREREG 4 cold rule). Empty for splits without fixed bounds (the census thirds)."""
+    if split not in C.SPLIT_BOUNDS:
+        return np.zeros(0, np.int64)
+    lo = float(C.SPLIT_BOUNDS[split][0])
+    a = int(math.floor((lo - REF_LOOKBACK_S) / 3600.0)) * 3600
+    b = int(math.ceil(lo / 3600.0)) * 3600
+    return np.arange(a, b, 3600, dtype=np.int64)
+
+
+def ref_lookback_problems(split: str, scanned_hours: Iterable[int] | None) -> list[str]:
+    """PREREG 8 (review Y2-1): every curve hour in the 24 h before the split start must be scanned. Otherwise T3 / T5
+    are cold (never enter) on the split's first day while PE11 and ALL, which never read the pool, still trade: the
+    selectors' time mix would differ. ``scanned_hours`` None = every hour scanned (synthetic pools only)."""
+    want = lookback_hours(split)
+    if scanned_hours is None or not len(want):
+        return []
+    have = np.isin(want, np.fromiter((int(h) for h in scanned_hours), np.int64))
+    if have.all():
+        return []
+    return [f"reference-pool lookback: curve {int(have.sum())}/{len(want)} h scanned in "
+            f"[{C.utc_str(want[0])}, {C.utc_str(want[-1] + 3600)}) UTC (T3 / T5 would be cold on the split's first "
+            f"day); backfill those hours first"]
+
+
 def ref_pool_for(ds: C.Dataset, *, flow: Path | None = None, census: C.Census | None = None,
                  graduates: pd.DataFrame | None = None) -> RefPool:
     """The reference pool of a real split: graduates.parquet, scanned curve hours from the raw chunks."""
@@ -388,11 +426,7 @@ def ref_pool_for(ds: C.Dataset, *, flow: Path | None = None, census: C.Census | 
     census = census if census is not None else C.Census.load()
     if graduates is None:
         graduates = C._read_parquet(f / "graduates.parquet")
-    if (f / "raw" / "curve").exists():
-        hours, src = C.completeness_from_flow(f, with_bar_hours=False).curve_hours, "raw_curve_chunks"
-    else:
-        hours = set((graduates["g_ts"].to_numpy(np.int64) // 3600 * 3600).tolist()) if len(graduates) else set()
-        src = "hours_holding_a_graduate"
+    hours, src = scanned_curve_hours(f, graduates)
     g_min = float(ds.coins["g_ts"].min()) - REF_LOOKBACK_S - 3600.0 if len(ds) else None
     g_max = float(ds.coins["g_ts"].max()) + ENTRY_AGE_S + 3600.0 if len(ds) else None
     return RefPool.from_frames(graduates, ds.split, census, scanned_hours=hours, g_min=g_min, g_max=g_max,
@@ -813,8 +847,14 @@ def run_stage(stage: str, *, out_dir: Path = OUT_DIR, allow_partial: bool = Fals
         ledger_path = C._SCRATCH / "lab2_debug" / "y2_debug_trials.json"   # debug runs never reach the real ledger
     cov = ds.coverage if ds is not None else _coverage_counts(split, flow, census)
     provisional = False
+    lookback = None
     if not (debug or _skip_coverage or stage == "final"):
         ok, notes = coverage_check(cov)
+        # the reference pool's 24 h before the split start (review Y2-1); an injected pool (tests) brings its hours
+        hrs = ref.scanned_hours if ref is not None else scanned_curve_hours(flow)[0]
+        lookback = {"hours": len(lookback_hours(split)), "problems": ref_lookback_problems(split, hrs)}
+        if lookback["problems"]:
+            ok, notes = False, list(notes) + lookback["problems"]
         if not ok:
             if stage == "train" and allow_partial and cov.get("usable"):
                 provisional = True
@@ -857,8 +897,8 @@ def run_stage(stage: str, *, out_dir: Path = OUT_DIR, allow_partial: bool = Fals
         doc: dict[str, Any] = {"hypothesis": HYP, "version": VERSION, "stage": stage, "split": split,
                                "utc": C.utc_str(time.time()), "provisional": provisional, "debug_only": debug,
                                "prereg_sha256": info["prereg_sha256"], "rerun_reason": rerun_reason,
-                               "coverage": cov, "n_coins": len(ds), "span_days": _span_days(ds),
-                               "event_counts": event_counts(ds, ref)}
+                               "coverage": cov, "ref_lookback": lookback, "n_coins": len(ds),
+                               "span_days": _span_days(ds), "event_counts": event_counts(ds, ref)}
         results: dict[str, C.Result] = {}
         for role, p in configs:
             is_dose = p["selector"] == DOSE_SELECTOR
@@ -986,6 +1026,10 @@ def render_md(doc: Mapping[str, Any]) -> str:
          f"- **Written:** {doc['utc']} UTC; runtime {doc.get('runtime_s')} s; PREREG sha256 "
          f"`{(doc.get('prereg_sha256') or '')[:12]}`; trials in the ledger: {doc.get('n_trials_total')}.",
          f"- **Overall Y2 status:** {doc.get('overall')}.", ""]
+    lb = doc.get("ref_lookback")
+    if lb:
+        txt = "; ".join(lb["problems"]) if lb["problems"] else f"all {lb['hours']} curve hours scanned"
+        L.insert(-2, f"- **Reference-pool lookback** (24 h before the split start, PREREG 8): {txt}.")
     if doc.get("debug_only"):
         L += ["**Debug run on the census TRAIN third: mechanics and counts only. Returns are hidden and no parameter "
               "was chosen here.**", ""]

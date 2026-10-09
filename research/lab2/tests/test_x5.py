@@ -4,7 +4,7 @@ exact filter of the host, the model check, the pre-registered decision rules, an
 refusal.
 
 Scale: the window / gate arithmetic and the coverage rules are tested at the registered constants. The stage tests
-shrink the time scale (N = 30 min, a 6-hour baseline, SLACK 30 min) so a synthetic market of a few hundred coins
+shrink the time scale (N = 30 min, a 6-hour baseline, SLACK 30 min, >= 3 SV records) so a synthetic market of a few hundred coins
 covers the warm-up; the stage mechanics do not depend on the time scale."""
 
 import json
@@ -22,6 +22,7 @@ from test_m1 import coin_bars, full
 
 SOL = C.SolUsd(fallback=100.0)
 PERIOD = 3 * 3600                     # synthetic regimes: hot 00-03, 06-09, 12-15, 18-21 UTC; cold otherwise
+LIFE_MIN = 100                        # an active synthetic coin trades for its first 100 minutes
 
 
 def hot(ts: float) -> bool:
@@ -41,7 +42,7 @@ def _grad_row(mint: str, pool: str, g: int, i: int, delay: int = 3) -> dict:
             "completer30": f"COMP{i}", "l_buy_sol": 40.0, "l_n_buyers": 12, "z_n_buyers": 2, "z_buy_tok": 1e8,
             "sn60_n_buyers": 5, "creator_buy_sol": 1.0, "first20_buy_sol": 20.0, "pool": pool, "pool_slot": 1001 + i,
             "pool_ts": g + 2, "pool_quote_mint": C.WSOL, "pool_creator": "PC", "pool_base0": 206.9e6,
-            "pool_quote0": 84.990359 - V0, "n_pools": 1, "grad_delay_s": float(delay), "sol_quoted": True,
+            "pool_quote0": 84.990359, "n_pools": 1, "grad_delay_s": float(delay), "sol_quoted": True,   # X0 = x0 + v
             "mayhem": False}
 
 
@@ -58,22 +59,24 @@ def _coin_row(mint: str, pool: str, g: int, factory: bool = True) -> dict:
             "w120_top5_share_ex_agent": 28.0 / 30.0 if factory else 0.33, "grad_delay_s": 3.0}
 
 
-def _coin_bars(mint: str, pool: str, g: int, active: bool, drift: float, rng, noise: float = 0.8,
-               vb: float = 1.5) -> list[dict]:
+def _coin_bars(mint: str, pool: str, g: int, active: bool, drift: float, rng, noise: float = 0.8) -> list[dict]:
+    """Per-minute base volume follows the CURRENT regime (2.5 SOL a side in hot minutes, 0.6 in cold ones)."""
     m0 = g // 60 * 60
     ts = m0 + 60 * np.arange(186)
     d = np.array([drift if hot(t) else -drift for t in ts])
+    vbs = np.array([2.5 if hot(t) else 0.6 for t in ts])
     dX = rng.normal(d, noise)
     X_, y = 84.990359, 206.9e6
     k = X_ * y
     rows = []
     for j in range(186):
-        if not active and j > 0:
-            break                                       # a dead coin: nothing after its graduation minute
+        if (not active and j > 0) or j >= LIFE_MIN:
+            break                                       # dead at once, or dies after LIFE_MIN minutes
         X1 = max(X_ + float(dX[j]), 20.0)
         y1 = k / X1
         p0, p1 = X_ / y, X1 / y1
         net = X1 - X_
+        vb = float(vbs[j])
         rows.append({"minute_ts": int(ts[j]), "n_buys": 5, "n_sells": 3, "n_dust": 0,
                      "buy_sol": max(net, 0.0) + vb, "sell_sol": max(-net, 0.0) + vb,
                      "buy_tok": max(y - y1, 0.0), "sell_tok": max(y1 - y, 0.0), "n_buyers": 4, "n_sellers": 3,
@@ -118,6 +121,7 @@ def small(monkeypatch):
     monkeypatch.setattr(X, "WINDOW_S", 1800.0)
     monkeypatch.setattr(X, "BASE_N", 24)
     monkeypatch.setattr(X, "SLACK_S", 1800.0)
+    monkeypatch.setattr(X, "SV_MIN_RECORDS", 3)              # a 30-min window of cold hours holds ~4 graduates
     monkeypatch.setattr(X, "STRESS", {"costs_x1.5": X.FILL.stressed(1.5)})
 
 
@@ -233,7 +237,8 @@ def test_coverage_masks_and_pools_follow_the_registered_rules():
     # GR: structure from the earlier (CONFIRM-dated) graduates is in the pool, the VAL-dated ones are not
     gr = set(reg.recs["GR"].own)
     assert set(early[0]["mint"]) <= gr and not (set(late[0]["mint"]) & gr)
-    assert reg.known["GR"][: 8].all()                        # known before TRAIN starts: hours scanned, s < 10-05
+    s = reg.points()
+    assert reg.known["GR"][(s >= t0 - 9 * 3600) & (s < t0)].all()     # before TRAIN: earlier graduates, s < 10-05
     # AV / SV come from the history datasets only
     assert set(reg.recs["SV"].own) == set(ds.mints) and set(reg.recs["AV"].own) <= set(ds.mints)
     # SV records are stamped g + 30 min; AV records at bar end, only for bars starting at age >= 10 min
@@ -266,6 +271,7 @@ def test_end_of_pool_is_unknown():
 def _garble_after(frames, s0: float, rng):
     """Every bar that ends after s0 and every graduate after s0 replaced by garbage; new graduates added after s0."""
     g, c, b = (x.copy() for x in frames)
+    b = b.astype({k: "float64" for k in ("buy_sol", "sell_sol", "n_buyers", "n_sellers")})
     fut = b["minute_ts"] + 60 > s0
     for col in ("buy_sol", "sell_sol", "n_buyers", "n_sellers"):
         b.loc[fut, col] = rng.uniform(0, 1e4, fut.sum())
@@ -340,15 +346,17 @@ def test_gated_r0_equals_host_trades_in_on_regime(small, tmp_ledger):
         assert list(got["mint"]) == list(want["mint"]) and np.allclose(got["ret_net"], want["ret_net"])
         ev = X.evaluate(res, lab, B=200, hide=False, n_trials_total=None)
         assert ev["gate_consistent"] and ev["n"] == ev["host_states"].get("ON", 0)
-        assert len(res.placebo) > 0 and set(res.stress) == {"costs_x1.5"}
-    assert (lab[X.state_col("SV", 0.5)] != "UNKNOWN").sum() > 30
+        assert (len(res.placebo) > 0) == (len(res.trades) > 0) and set(res.stress) == {"costs_x1.5"}
+        assert len(res.trades) > 0
+    for sig in X.SIGNALS:
+        assert (lab[X.state_col(sig, 0.5)] != "UNKNOWN").sum() > 30
 
 
 def test_gated_m1_host_filters_m1_entries(small, tmp_ledger):
     """M1 fires on pure-bot coins (non-instant, so class OTHER); the gate keeps exactly the ON ones."""
     t0 = C.utc_ts("2026-10-01 00:00")
     g, c, b = regime_market(t0, t0 + 20 * 3600, 10)
-    bots = g["mint"].iloc[200:260:3].tolist()
+    bots = g["mint"].iloc[240:292:2].tolist()          # graduated in the hot 12-15 h and the cold 15-18 h
     for m in bots:
         r = g[g["mint"] == m].iloc[0]
         g.loc[g["mint"] == m, "c_ts"] = int(r["g_ts"]) - 600
@@ -427,13 +435,11 @@ def test_decide_train_edge_ranking_and_veto_fallback():
 
 
 def test_decide_val_confirm_and_verdict_combination():
-    p = X.GRID[0]
     good = {"config": "a", "params_hash": "h1", "n": 20, "mean": 0.05, "mean_without_top2": 0.02}
     weak = {"config": "b", "params_hash": "h2", "n": 8, "mean": 0.05, "mean_without_top2": 0.01}
     bad = {"config": "c", "params_hash": "h3", "n": 20, "mean": -0.05, "mean_without_top2": -0.06}
     d = X.decide_val({"rank1": bad, "rank2": good}, ["rank1", "rank2"], "EDGE")
-    assert d["verdict"] == "SELECTED" and d["candidate_role"] == "rank2" and d["candidate_hash"] == "h2" or \
-        d["candidate_hash"] == "h1"
+    assert d["verdict"] == "SELECTED" and d["candidate_role"] == "rank2" and d["candidate_hash"] == "h1"
     assert X.decide_val({"rank1": weak}, ["rank1"], "EDGE")["verdict"] == "SELECTED_UNDERPOWERED"
     assert X.decide_val({"rank1": bad}, ["rank1"], "EDGE")["verdict"] == "FAIL_VAL"
     vok = {"verdict": "INCOMPLETE", "criteria": [{"id": 1, "pass": True}, {"id": 3, "pass": True}]}
@@ -561,35 +567,38 @@ def test_full_pipeline_and_every_refusal(st, small, monkeypatch):
     for k in env_all:            # common enforces the real env flags; x5's ``env=`` drives x5's own checks
         monkeypatch.setenv(k, "1")
     D = lambda s: C.utc_ts(s)                                                     # noqa: E731
-    F_tr = regime_market(D("2026-10-01 00:00"), D("2026-10-02 12:00"), 21)
-    F_va = regime_market(D("2026-10-04 16:00"), D("2026-10-05 18:00"), 22, tag="V")
-    F_te = regime_market(D("2026-10-06 04:00"), C.FINAL_LO, 23, gap_hot=300, gap_cold=900, tag="T")
-    F_co = regime_market(D("2026-09-20 00:00"), D("2026-09-22 12:00"), 24, gap_hot=300, gap_cold=900, tag="C")
-    F_fi = regime_market(D("2026-10-07 10:00"), C.FINAL_LO + 8 * 3600, 25, gap_hot=300, gap_cold=900, tag="F")
+    kw = {"drift": 0.6}                                  # a strong regime effect: the machinery must find it
+    F_tr = regime_market(D("2026-10-01 00:00"), D("2026-10-02 12:00"), 21, **kw)
+    F_va = regime_market(D("2026-10-04 16:00"), D("2026-10-05 18:00"), 22, tag="V", **kw)
+    F_te = regime_market(D("2026-10-06 04:00"), C.FINAL_LO, 23, gap_hot=300, gap_cold=900, tag="T", **kw)
+    F_co = regime_market(D("2026-09-20 00:00"), D("2026-09-22 12:00"), 24, gap_hot=300, gap_cold=900, tag="C", **kw)
+    F_fi = regime_market(D("2026-10-07 10:00"), C.FINAL_LO + 14 * 3600, 25, gap_hot=300, gap_cold=900, tag="F", **kw)
     G = pd.concat([f[0] for f in (F_tr, F_va, F_te, F_co, F_fi)], ignore_index=True)
     with pytest.raises(X.X5Refused, match="no TRAIN result"):
         _check("val", st)
     # ---- TRAIN: model check PASS, 2 hosts + 9 gated configs, the EDGE shortlist (top 2) and the host shortlist
     ds_tr = ds_of(F_tr, "train")
     tr = _run("train", st, ds_tr, [ds_tr], G)
-    assert tr["model_check"]["decision"] == "PASS" and set(tr["model_check"]["pass_signals"]) == set(X.SIGNALS)
-    assert set(tr["configs"]) == {X.config_key(p) for p in X.GRID} and set(tr["hosts"]) == {"R0", "M1"}
+    ps = tr["model_check"]["pass_signals"]
+    assert tr["model_check"]["decision"] == "PASS" and "GR" in ps
+    assert set(tr["configs"]) == {X.config_key(p) for p in X.GRID if p["signal"] in ps}   # failed signals never run
+    assert set(tr["grid_run"]) == set(tr["configs"]) and set(tr["hosts"]) == {"R0", "M1"}
     assert all(e["gate_consistent"] for e in tr["configs"].values())
     assert tr["decision"]["verdict"] == "SHORTLISTED_EDGE" and tr["decision"]["shortlist_written"]
     assert len(tr["decision"]["ranked"]) == 2 and tr["decision"]["hosts"] == ["R0"]
     assert (st.out / "prereg.lock").exists() and (st.out / "train.md").exists()
     assert (st.sl / "X5.json").exists() and (st.sl / "X5.host-R0.json").exists()
     led = json.loads(st.ledger.read_text())
-    assert sum(1 for v in led["configs"].values() if C.hypothesis_family(v["hypothesis"]) == "X5") == 12
+    assert sum(1 for v in led["configs"].values() if C.hypothesis_family(v["hypothesis"]) == "X5") == \
+        3 + 3 * len(ps)                                     # model check + 2 hosts + 3 gated per passing signal
     # PREREG frozen
     (st.out / "PREREG.md").write_text("# edited\n")
     with pytest.raises(X.X5Refused, match="changed"):
         _check("val", st)
     (st.out / "PREREG.md").write_text("# X5 test prereg\n")
-    with pytest.raises(X.X5Refused, match="no VAL result"):
-        _check("test", st, env=env_all)
-    with pytest.raises(X.X5Refused, match="before TEST"):
-        _check("confirm", st, env=env_all)
+    for stage in ("test", "confirm", "final"):
+        with pytest.raises(X.X5Refused, match="no VAL result"):
+            _check(stage, st, env=env_all)
     hs = (st.sl / "X5.host-R0.json").read_text()
     (st.sl / "X5.host-R0.json").unlink()
     with pytest.raises(X.X5Refused, match="host shortlist"):
@@ -678,7 +687,9 @@ def test_real_census_train_third_regime_pools():
     G = C._read_parquet(f / "graduates.parquet")
     ch = C.completeness_from_flow(f, with_bar_hours=False).curve_hours
     reg = X.build_regime("debug", ds, [ds], G, cen, ch)
-    assert not reg.known["AV"].any() and not reg.known["SV"].any()          # never warms up on the 12.5-h third
+    lo = float(C.FINAL_LO)          # coverage starts late in the 12.5-h third; its 24-h baseline never does
+    assert C.utc_ts(reg.meta["first_known_utc"]["SV"]) >= lo + X.SLACK_S + X.WINDOW_S + X.SV_AGE_S
+    assert C.utc_ts(reg.meta["first_known_utc"]["AV"]) >= lo + X.SLACK_S + X.WINDOW_S + C.B2_HORIZON_S
     share = X._known_share_of_coins(ds, reg)
     assert share["GR"] > 0.5 and share["AV"] == 0 and share["SV"] == 0
     g = C._normalize_graduates(G, cen).set_index("mint")
