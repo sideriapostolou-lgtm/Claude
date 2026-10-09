@@ -13,7 +13,7 @@ Railway variables when deployed) under the variable names below.
 | Alchemy (alchemy.com) | Not yet | Free | Optional research backup for full transaction history | `ALCHEMY_API_KEY` | 30M compute units per month |
 | Anthropic (console.anthropic.com) | Not yet | Pay per use | Optional AI judge ("Jev") | `ANTHROPIC_API_KEY` | Capped by `JUDGE_MAX_DAILY_USD` |
 | CryptoHouse (crypto.clickhouse.com) | No account needed | Free, public | Main research source for historical pump.fun trades | — | ~90 queries/hour per IP (shared through the proxy) |
-| Railway (railway.com) | Yes. Project `nightcrawler`, service `bot`, volume `nightcrawler-data` at `/data`, domain `bot-production-9d67.up.railway.app` (created 2026-10-08, paper mode) | Owner's plan (~$5/month expected) | Hosts the bot 24/7; deploys branch `claude/nightcrawler-memecoin-bot-Gwnb1S`, redeploying only on `src/**`, `pyproject.toml`, `Dockerfile`, `railway.json`, `README.md` | Service variables hold `JUPITER_API_KEY`, `SOLANA_RPC_URL` (Helius), `DASHBOARD_TOKEN` | Watch monthly usage in the Railway dashboard |
+| Railway (railway.com) | Yes. Project `nightcrawler`, service `bot`, volume `nightcrawler-data` at `/data`, domain `bot-production-9d67.up.railway.app` (created 2026-10-08, paper mode) | Hobby (~$5/month expected). **No volume backups on this plan** (`maxBackupsCount: 0`, checked 2026-10-09); Pro (~$20/month) would allow scheduled backups | Hosts the bot 24/7; deploys branch `claude/nightcrawler-memecoin-bot-Gwnb1S`. Pushes do NOT auto-deploy: a deploy is triggered by reconnecting the service source (Railway MCP `connect-service-source`) | Service variables hold `JUPITER_API_KEY`, `SOLANA_RPC_URL` (Helius), `DASHBOARD_TOKEN`, `BOT_WALLET_MODE=generated` | Watch monthly usage in the Railway dashboard |
 
 ## Keeping track
 
@@ -25,3 +25,7 @@ Railway variables when deployed) under the variable names below.
   Railway volume (`/data/wallet/bot-keypair.json`); no variable, chat or file in this repo holds it. The owner
   funds it from Phantom (Send, SOL, the address on the dashboard) and takes it back with `WITHDRAW_TO`. Never
   delete the `nightcrawler-data` volume or the service while SOL is in that wallet: withdraw first.
+- Bot wallet created on Railway 2026-10-09 04:13 UTC. Public address (safe to share):
+  `AfRcUJ9vP5JrA66UMHV4LeGHfWZKzFKep7tRdaZm5c8W`. Owner's decision (2026-10-09): keep it, with no volume
+  backups, holding only about $100 and withdrawing to Phantom when needed; revisit Pro backups if the balance
+  grows.
