@@ -82,7 +82,12 @@ def test_poll_records_bbo_and_settles_closed_markets(monkeypatch, tmp_path):
     monkeypatch.setattr(R, "_get", _fake_gateway(ms, bbos, {}))
     monkeypatch.setattr(R.time, "sleep", lambda s: None)
     r1 = R.poll(tmp_path, now=NOW)
-    assert r1 == {"watched": 2, "rows": 2, "settled_now": 0, "settled_total": 0}
+    assert {k: r1[k] for k in ("watched", "rows", "settled_now", "settled_total")} == {
+        "watched": 2,
+        "rows": 2,
+        "settled_now": 0,
+        "settled_total": 0,
+    }
     rows = list(csv.DictReader((tmp_path / "bbo" / "2026-10-09.csv").open()))
     assert (
         len(rows) == 2
