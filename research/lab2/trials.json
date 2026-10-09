@@ -74,7 +74,8 @@
    },
    "first_seen_utc": "2026-10-09 04:43:06",
    "splits": {
-    "train": 1
+    "train": 1,
+    "val": 1
    }
   },
   "G1.R0|27a79bc60126": {
@@ -91,7 +92,8 @@
    },
    "first_seen_utc": "2026-10-09 04:43:09",
    "splits": {
-    "train": 1
+    "train": 1,
+    "val": 1
    }
   },
   "G1|1e4842f81140": {
@@ -101,7 +103,8 @@
    },
    "first_seen_utc": "2026-10-09 04:43:20",
    "splits": {
-    "train": 1
+    "train": 1,
+    "val": 1
    }
   },
   "G1|79941ea68199": {
@@ -121,7 +124,8 @@
    },
    "first_seen_utc": "2026-10-09 04:43:20",
    "splits": {
-    "train": 1
+    "train": 1,
+    "val": 1
    }
   },
   "M1-modelcheck|869e50779074": {
@@ -2055,6 +2059,817 @@
     "entry_bar_exits": true,
     "exit_delay_bars": 1
    }
+  },
+  "Z3|8f06f7b25ef6|cfg:a06543feac6c": {
+   "hypothesis": "Z3",
+   "params": {
+    "version": "z3-v2",
+    "crash_drop": 0.7,
+    "crash_on": "close vs max(open, previous close)",
+    "big_seller_frac_x": 0.25,
+    "big_seller_bound": "largest single sell trade >= (sell_sol - 0.01 d) / (n_sells - d), d = max(0, n_dust - n_buys)",
+    "min_crash_bar": 2,
+    "state_dd": 0.7,
+    "state_quiet_bars": 15,
+    "age_min_s": 420.0,
+    "age_max_s": 7200.0,
+    "stop_pct": 0.5,
+    "exit_by_age_s": 10680.0,
+    "size_usd": 20.0,
+    "placebo": "drawdown-matched (post-crash state, no crash in 15 bars); unmatched control",
+    "fill": "common.FillConfig(exit_delay_bars=1): worst, latency 30 s, entry-bar stop checks, next-bar exits",
+    "entry": "now",
+    "hold_min": 15,
+    "max_hold_s": 900.0
+   },
+   "first_seen_utc": "2026-10-09 05:09:51",
+   "splits": {
+    "train": 1
+   },
+   "cfg": {
+    "size_usd": 20.0,
+    "latency_s": 30.0,
+    "entry_fill": "worst",
+    "exit_fill": "worst",
+    "cost": {
+     "ultra_bps": 10.0,
+     "mev_bps": 20.0,
+     "priority_sol": 0.0002,
+     "base_fee_lamports": 5000,
+     "fee_mult": 1.0,
+     "impact_mult": 1.0,
+     "extra_hop_bps": 100.0
+    },
+    "rent_usd": 0.0,
+    "entry_bar_exits": true,
+    "exit_delay_bars": 1
+   }
+  },
+  "Z3|ca9acc142e01|cfg:a06543feac6c": {
+   "hypothesis": "Z3",
+   "params": {
+    "version": "z3-v2",
+    "crash_drop": 0.7,
+    "crash_on": "close vs max(open, previous close)",
+    "big_seller_frac_x": 0.25,
+    "big_seller_bound": "largest single sell trade >= (sell_sol - 0.01 d) / (n_sells - d), d = max(0, n_dust - n_buys)",
+    "min_crash_bar": 2,
+    "state_dd": 0.7,
+    "state_quiet_bars": 15,
+    "age_min_s": 420.0,
+    "age_max_s": 7200.0,
+    "stop_pct": 0.5,
+    "exit_by_age_s": 10680.0,
+    "size_usd": 20.0,
+    "placebo": "drawdown-matched (post-crash state, no crash in 15 bars); unmatched control",
+    "fill": "common.FillConfig(exit_delay_bars=1): worst, latency 30 s, entry-bar stop checks, next-bar exits",
+    "entry": "now",
+    "hold_min": 60,
+    "max_hold_s": 3600.0
+   },
+   "first_seen_utc": "2026-10-09 05:11:30",
+   "splits": {
+    "train": 1
+   },
+   "cfg": {
+    "size_usd": 20.0,
+    "latency_s": 30.0,
+    "entry_fill": "worst",
+    "exit_fill": "worst",
+    "cost": {
+     "ultra_bps": 10.0,
+     "mev_bps": 20.0,
+     "priority_sol": 0.0002,
+     "base_fee_lamports": 5000,
+     "fee_mult": 1.0,
+     "impact_mult": 1.0,
+     "extra_hop_bps": 100.0
+    },
+    "rent_usd": 0.0,
+    "entry_bar_exits": true,
+    "exit_delay_bars": 1
+   }
+  },
+  "Z3|22841237f229|cfg:a06543feac6c": {
+   "hypothesis": "Z3",
+   "params": {
+    "version": "z3-v2",
+    "crash_drop": 0.7,
+    "crash_on": "close vs max(open, previous close)",
+    "big_seller_frac_x": 0.25,
+    "big_seller_bound": "largest single sell trade >= (sell_sol - 0.01 d) / (n_sells - d), d = max(0, n_dust - n_buys)",
+    "min_crash_bar": 2,
+    "state_dd": 0.7,
+    "state_quiet_bars": 15,
+    "age_min_s": 420.0,
+    "age_max_s": 7200.0,
+    "stop_pct": 0.5,
+    "exit_by_age_s": 10680.0,
+    "size_usd": 20.0,
+    "placebo": "drawdown-matched (post-crash state, no crash in 15 bars); unmatched control",
+    "fill": "common.FillConfig(exit_delay_bars=1): worst, latency 30 s, entry-bar stop checks, next-bar exits",
+    "entry": "confirm",
+    "hold_min": 5,
+    "max_hold_s": 300.0
+   },
+   "first_seen_utc": "2026-10-09 05:13:08",
+   "splits": {
+    "train": 1
+   },
+   "cfg": {
+    "size_usd": 20.0,
+    "latency_s": 30.0,
+    "entry_fill": "worst",
+    "exit_fill": "worst",
+    "cost": {
+     "ultra_bps": 10.0,
+     "mev_bps": 20.0,
+     "priority_sol": 0.0002,
+     "base_fee_lamports": 5000,
+     "fee_mult": 1.0,
+     "impact_mult": 1.0,
+     "extra_hop_bps": 100.0
+    },
+    "rent_usd": 0.0,
+    "entry_bar_exits": true,
+    "exit_delay_bars": 1
+   }
+  },
+  "Z3|e33dc547ef8c|cfg:a06543feac6c": {
+   "hypothesis": "Z3",
+   "params": {
+    "version": "z3-v2",
+    "crash_drop": 0.7,
+    "crash_on": "close vs max(open, previous close)",
+    "big_seller_frac_x": 0.25,
+    "big_seller_bound": "largest single sell trade >= (sell_sol - 0.01 d) / (n_sells - d), d = max(0, n_dust - n_buys)",
+    "min_crash_bar": 2,
+    "state_dd": 0.7,
+    "state_quiet_bars": 15,
+    "age_min_s": 420.0,
+    "age_max_s": 7200.0,
+    "stop_pct": 0.5,
+    "exit_by_age_s": 10680.0,
+    "size_usd": 20.0,
+    "placebo": "drawdown-matched (post-crash state, no crash in 15 bars); unmatched control",
+    "fill": "common.FillConfig(exit_delay_bars=1): worst, latency 30 s, entry-bar stop checks, next-bar exits",
+    "entry": "confirm",
+    "hold_min": 15,
+    "max_hold_s": 900.0
+   },
+   "first_seen_utc": "2026-10-09 05:14:47",
+   "splits": {
+    "train": 1
+   },
+   "cfg": {
+    "size_usd": 20.0,
+    "latency_s": 30.0,
+    "entry_fill": "worst",
+    "exit_fill": "worst",
+    "cost": {
+     "ultra_bps": 10.0,
+     "mev_bps": 20.0,
+     "priority_sol": 0.0002,
+     "base_fee_lamports": 5000,
+     "fee_mult": 1.0,
+     "impact_mult": 1.0,
+     "extra_hop_bps": 100.0
+    },
+    "rent_usd": 0.0,
+    "entry_bar_exits": true,
+    "exit_delay_bars": 1
+   }
+  },
+  "Z3|5e057d80eb0b|cfg:a06543feac6c": {
+   "hypothesis": "Z3",
+   "params": {
+    "version": "z3-v2",
+    "crash_drop": 0.7,
+    "crash_on": "close vs max(open, previous close)",
+    "big_seller_frac_x": 0.25,
+    "big_seller_bound": "largest single sell trade >= (sell_sol - 0.01 d) / (n_sells - d), d = max(0, n_dust - n_buys)",
+    "min_crash_bar": 2,
+    "state_dd": 0.7,
+    "state_quiet_bars": 15,
+    "age_min_s": 420.0,
+    "age_max_s": 7200.0,
+    "stop_pct": 0.5,
+    "exit_by_age_s": 10680.0,
+    "size_usd": 20.0,
+    "placebo": "drawdown-matched (post-crash state, no crash in 15 bars); unmatched control",
+    "fill": "common.FillConfig(exit_delay_bars=1): worst, latency 30 s, entry-bar stop checks, next-bar exits",
+    "entry": "confirm",
+    "hold_min": 60,
+    "max_hold_s": 3600.0
+   },
+   "first_seen_utc": "2026-10-09 05:16:27",
+   "splits": {
+    "train": 1
+   },
+   "cfg": {
+    "size_usd": 20.0,
+    "latency_s": 30.0,
+    "entry_fill": "worst",
+    "exit_fill": "worst",
+    "cost": {
+     "ultra_bps": 10.0,
+     "mev_bps": 20.0,
+     "priority_sol": 0.0002,
+     "base_fee_lamports": 5000,
+     "fee_mult": 1.0,
+     "impact_mult": 1.0,
+     "extra_hop_bps": 100.0
+    },
+    "rent_usd": 0.0,
+    "entry_bar_exits": true,
+    "exit_delay_bars": 1
+   }
+  },
+  "Z4|c6acfc940693|cfg:a06543feac6c": {
+   "hypothesis": "Z4",
+   "params": {
+    "version": "z4-v1",
+    "dec_age_s": 1800.0,
+    "ref_age_s": 420.0,
+    "h_rec_s": 1800.0,
+    "rec_k": 3,
+    "record": "mid change t_ref -> t_ref + 30 min, t_ref = first grid time >= g + 420 s; usable members, resolved (t_end <= t), g_p < g",
+    "members": "structural graduates with g_p in [t - N, g), known creator != own creator, shared theme token",
+    "tokens": "NFKD fold, letter/digit runs + camelCase/digit parts, casefold, >= 3 chars ASCII / >= 2 other, not all digits, not a stop word",
+    "stopwords_sha1": "51aacbda33e8",
+    "hot_theta": 0.25,
+    "crowd_k": 3,
+    "history_splits": {
+     "debug": [
+      "final_train"
+     ],
+     "train": [
+      "train"
+     ],
+     "val": [
+      "train",
+      "val"
+     ],
+     "test": [
+      "train",
+      "val",
+      "test"
+     ],
+     "confirm": [
+      "confirm"
+     ],
+     "final": [
+      "train",
+      "val",
+      "test",
+      "final_train",
+      "final_val",
+      "final_test"
+     ]
+    },
+    "stop_pct": 0.5,
+    "hold_s": 3600.0,
+    "exit_by_age_s": 10680.0,
+    "size_usd": 20.0,
+    "alive": "AsOf.alive() defaults",
+    "placebo": "eligible-member stratum at the draw's time, alive; unmatched control reported; MOM: market-heat control (eligible members whose market heat >= theta at their own time), reported",
+    "fill": "common.FillConfig(exit_delay_bars=1): worst, latency 30 s, entry-bar stops, exits in the next bar",
+    "lookback_h": 3,
+    "lookback_s": 10800.0,
+    "rule": "mom",
+    "theta": 0.25
+   },
+   "first_seen_utc": "2026-10-09 05:16:50",
+   "splits": {
+    "train": 1
+   },
+   "cfg": {
+    "size_usd": 20.0,
+    "latency_s": 30.0,
+    "entry_fill": "worst",
+    "exit_fill": "worst",
+    "cost": {
+     "ultra_bps": 10.0,
+     "mev_bps": 20.0,
+     "priority_sol": 0.0002,
+     "base_fee_lamports": 5000,
+     "fee_mult": 1.0,
+     "impact_mult": 1.0,
+     "extra_hop_bps": 100.0
+    },
+    "rent_usd": 0.0,
+    "entry_bar_exits": true,
+    "exit_delay_bars": 1
+   }
+  },
+  "Z4|46e6dddec0b0|cfg:a06543feac6c": {
+   "hypothesis": "Z4",
+   "params": {
+    "version": "z4-v1",
+    "dec_age_s": 1800.0,
+    "ref_age_s": 420.0,
+    "h_rec_s": 1800.0,
+    "rec_k": 3,
+    "record": "mid change t_ref -> t_ref + 30 min, t_ref = first grid time >= g + 420 s; usable members, resolved (t_end <= t), g_p < g",
+    "members": "structural graduates with g_p in [t - N, g), known creator != own creator, shared theme token",
+    "tokens": "NFKD fold, letter/digit runs + camelCase/digit parts, casefold, >= 3 chars ASCII / >= 2 other, not all digits, not a stop word",
+    "stopwords_sha1": "51aacbda33e8",
+    "hot_theta": 0.25,
+    "crowd_k": 3,
+    "history_splits": {
+     "debug": [
+      "final_train"
+     ],
+     "train": [
+      "train"
+     ],
+     "val": [
+      "train",
+      "val"
+     ],
+     "test": [
+      "train",
+      "val",
+      "test"
+     ],
+     "confirm": [
+      "confirm"
+     ],
+     "final": [
+      "train",
+      "val",
+      "test",
+      "final_train",
+      "final_val",
+      "final_test"
+     ]
+    },
+    "stop_pct": 0.5,
+    "hold_s": 3600.0,
+    "exit_by_age_s": 10680.0,
+    "size_usd": 20.0,
+    "alive": "AsOf.alive() defaults",
+    "placebo": "eligible-member stratum at the draw's time, alive; unmatched control reported; MOM: market-heat control (eligible members whose market heat >= theta at their own time), reported",
+    "fill": "common.FillConfig(exit_delay_bars=1): worst, latency 30 s, entry-bar stops, exits in the next bar",
+    "lookback_h": 3,
+    "lookback_s": 10800.0,
+    "rule": "mom",
+    "theta": 1.0
+   },
+   "first_seen_utc": "2026-10-09 05:16:51",
+   "splits": {
+    "train": 1
+   },
+   "cfg": {
+    "size_usd": 20.0,
+    "latency_s": 30.0,
+    "entry_fill": "worst",
+    "exit_fill": "worst",
+    "cost": {
+     "ultra_bps": 10.0,
+     "mev_bps": 20.0,
+     "priority_sol": 0.0002,
+     "base_fee_lamports": 5000,
+     "fee_mult": 1.0,
+     "impact_mult": 1.0,
+     "extra_hop_bps": 100.0
+    },
+    "rent_usd": 0.0,
+    "entry_bar_exits": true,
+    "exit_delay_bars": 1
+   }
+  },
+  "Z4|19004c97fc20|cfg:a06543feac6c": {
+   "hypothesis": "Z4",
+   "params": {
+    "version": "z4-v1",
+    "dec_age_s": 1800.0,
+    "ref_age_s": 420.0,
+    "h_rec_s": 1800.0,
+    "rec_k": 3,
+    "record": "mid change t_ref -> t_ref + 30 min, t_ref = first grid time >= g + 420 s; usable members, resolved (t_end <= t), g_p < g",
+    "members": "structural graduates with g_p in [t - N, g), known creator != own creator, shared theme token",
+    "tokens": "NFKD fold, letter/digit runs + camelCase/digit parts, casefold, >= 3 chars ASCII / >= 2 other, not all digits, not a stop word",
+    "stopwords_sha1": "51aacbda33e8",
+    "hot_theta": 0.25,
+    "crowd_k": 3,
+    "history_splits": {
+     "debug": [
+      "final_train"
+     ],
+     "train": [
+      "train"
+     ],
+     "val": [
+      "train",
+      "val"
+     ],
+     "test": [
+      "train",
+      "val",
+      "test"
+     ],
+     "confirm": [
+      "confirm"
+     ],
+     "final": [
+      "train",
+      "val",
+      "test",
+      "final_train",
+      "final_val",
+      "final_test"
+     ]
+    },
+    "stop_pct": 0.5,
+    "hold_s": 3600.0,
+    "exit_by_age_s": 10680.0,
+    "size_usd": 20.0,
+    "alive": "AsOf.alive() defaults",
+    "placebo": "eligible-member stratum at the draw's time, alive; unmatched control reported; MOM: market-heat control (eligible members whose market heat >= theta at their own time), reported",
+    "fill": "common.FillConfig(exit_delay_bars=1): worst, latency 30 s, entry-bar stops, exits in the next bar",
+    "lookback_h": 12,
+    "lookback_s": 43200.0,
+    "rule": "mom",
+    "theta": 0.25
+   },
+   "first_seen_utc": "2026-10-09 05:16:54",
+   "splits": {
+    "train": 1
+   },
+   "cfg": {
+    "size_usd": 20.0,
+    "latency_s": 30.0,
+    "entry_fill": "worst",
+    "exit_fill": "worst",
+    "cost": {
+     "ultra_bps": 10.0,
+     "mev_bps": 20.0,
+     "priority_sol": 0.0002,
+     "base_fee_lamports": 5000,
+     "fee_mult": 1.0,
+     "impact_mult": 1.0,
+     "extra_hop_bps": 100.0
+    },
+    "rent_usd": 0.0,
+    "entry_bar_exits": true,
+    "exit_delay_bars": 1
+   }
+  },
+  "Z4|848ba0665b7e|cfg:a06543feac6c": {
+   "hypothesis": "Z4",
+   "params": {
+    "version": "z4-v1",
+    "dec_age_s": 1800.0,
+    "ref_age_s": 420.0,
+    "h_rec_s": 1800.0,
+    "rec_k": 3,
+    "record": "mid change t_ref -> t_ref + 30 min, t_ref = first grid time >= g + 420 s; usable members, resolved (t_end <= t), g_p < g",
+    "members": "structural graduates with g_p in [t - N, g), known creator != own creator, shared theme token",
+    "tokens": "NFKD fold, letter/digit runs + camelCase/digit parts, casefold, >= 3 chars ASCII / >= 2 other, not all digits, not a stop word",
+    "stopwords_sha1": "51aacbda33e8",
+    "hot_theta": 0.25,
+    "crowd_k": 3,
+    "history_splits": {
+     "debug": [
+      "final_train"
+     ],
+     "train": [
+      "train"
+     ],
+     "val": [
+      "train",
+      "val"
+     ],
+     "test": [
+      "train",
+      "val",
+      "test"
+     ],
+     "confirm": [
+      "confirm"
+     ],
+     "final": [
+      "train",
+      "val",
+      "test",
+      "final_train",
+      "final_val",
+      "final_test"
+     ]
+    },
+    "stop_pct": 0.5,
+    "hold_s": 3600.0,
+    "exit_by_age_s": 10680.0,
+    "size_usd": 20.0,
+    "alive": "AsOf.alive() defaults",
+    "placebo": "eligible-member stratum at the draw's time, alive; unmatched control reported; MOM: market-heat control (eligible members whose market heat >= theta at their own time), reported",
+    "fill": "common.FillConfig(exit_delay_bars=1): worst, latency 30 s, entry-bar stops, exits in the next bar",
+    "lookback_h": 12,
+    "lookback_s": 43200.0,
+    "rule": "mom",
+    "theta": 1.0
+   },
+   "first_seen_utc": "2026-10-09 05:16:55",
+   "splits": {
+    "train": 1
+   },
+   "cfg": {
+    "size_usd": 20.0,
+    "latency_s": 30.0,
+    "entry_fill": "worst",
+    "exit_fill": "worst",
+    "cost": {
+     "ultra_bps": 10.0,
+     "mev_bps": 20.0,
+     "priority_sol": 0.0002,
+     "base_fee_lamports": 5000,
+     "fee_mult": 1.0,
+     "impact_mult": 1.0,
+     "extra_hop_bps": 100.0
+    },
+    "rent_usd": 0.0,
+    "entry_bar_exits": true,
+    "exit_delay_bars": 1
+   }
+  },
+  "Z4-host|81d43b0c8286|cfg:a06543feac6c": {
+   "hypothesis": "Z4-host",
+   "params": {
+    "version": "z4-v1",
+    "dec_age_s": 1800.0,
+    "ref_age_s": 420.0,
+    "h_rec_s": 1800.0,
+    "rec_k": 3,
+    "record": "mid change t_ref -> t_ref + 30 min, t_ref = first grid time >= g + 420 s; usable members, resolved (t_end <= t), g_p < g",
+    "members": "structural graduates with g_p in [t - N, g), known creator != own creator, shared theme token",
+    "tokens": "NFKD fold, letter/digit runs + camelCase/digit parts, casefold, >= 3 chars ASCII / >= 2 other, not all digits, not a stop word",
+    "stopwords_sha1": "51aacbda33e8",
+    "hot_theta": 0.25,
+    "crowd_k": 3,
+    "history_splits": {
+     "debug": [
+      "final_train"
+     ],
+     "train": [
+      "train"
+     ],
+     "val": [
+      "train",
+      "val"
+     ],
+     "test": [
+      "train",
+      "val",
+      "test"
+     ],
+     "confirm": [
+      "confirm"
+     ],
+     "final": [
+      "train",
+      "val",
+      "test",
+      "final_train",
+      "final_val",
+      "final_test"
+     ]
+    },
+    "stop_pct": 0.5,
+    "hold_s": 3600.0,
+    "exit_by_age_s": 10680.0,
+    "size_usd": 20.0,
+    "alive": "AsOf.alive() defaults",
+    "placebo": "eligible-member stratum at the draw's time, alive; unmatched control reported; MOM: market-heat control (eligible members whose market heat >= theta at their own time), reported",
+    "fill": "common.FillConfig(exit_delay_bars=1): worst, latency 30 s, entry-bar stops, exits in the next bar",
+    "lookback_h": 3,
+    "lookback_s": 10800.0,
+    "rule": "host"
+   },
+   "first_seen_utc": "2026-10-09 05:17:04",
+   "splits": {
+    "train": 1
+   },
+   "cfg": {
+    "size_usd": 20.0,
+    "latency_s": 30.0,
+    "entry_fill": "worst",
+    "exit_fill": "worst",
+    "cost": {
+     "ultra_bps": 10.0,
+     "mev_bps": 20.0,
+     "priority_sol": 0.0002,
+     "base_fee_lamports": 5000,
+     "fee_mult": 1.0,
+     "impact_mult": 1.0,
+     "extra_hop_bps": 100.0
+    },
+    "rent_usd": 0.0,
+    "entry_bar_exits": true,
+    "exit_delay_bars": 1
+   }
+  },
+  "Z4-host|76f6e3c4a86a|cfg:a06543feac6c": {
+   "hypothesis": "Z4-host",
+   "params": {
+    "version": "z4-v1",
+    "dec_age_s": 1800.0,
+    "ref_age_s": 420.0,
+    "h_rec_s": 1800.0,
+    "rec_k": 3,
+    "record": "mid change t_ref -> t_ref + 30 min, t_ref = first grid time >= g + 420 s; usable members, resolved (t_end <= t), g_p < g",
+    "members": "structural graduates with g_p in [t - N, g), known creator != own creator, shared theme token",
+    "tokens": "NFKD fold, letter/digit runs + camelCase/digit parts, casefold, >= 3 chars ASCII / >= 2 other, not all digits, not a stop word",
+    "stopwords_sha1": "51aacbda33e8",
+    "hot_theta": 0.25,
+    "crowd_k": 3,
+    "history_splits": {
+     "debug": [
+      "final_train"
+     ],
+     "train": [
+      "train"
+     ],
+     "val": [
+      "train",
+      "val"
+     ],
+     "test": [
+      "train",
+      "val",
+      "test"
+     ],
+     "confirm": [
+      "confirm"
+     ],
+     "final": [
+      "train",
+      "val",
+      "test",
+      "final_train",
+      "final_val",
+      "final_test"
+     ]
+    },
+    "stop_pct": 0.5,
+    "hold_s": 3600.0,
+    "exit_by_age_s": 10680.0,
+    "size_usd": 20.0,
+    "alive": "AsOf.alive() defaults",
+    "placebo": "eligible-member stratum at the draw's time, alive; unmatched control reported; MOM: market-heat control (eligible members whose market heat >= theta at their own time), reported",
+    "fill": "common.FillConfig(exit_delay_bars=1): worst, latency 30 s, entry-bar stops, exits in the next bar",
+    "lookback_h": 12,
+    "lookback_s": 43200.0,
+    "rule": "host"
+   },
+   "first_seen_utc": "2026-10-09 05:17:15",
+   "splits": {
+    "train": 1
+   },
+   "cfg": {
+    "size_usd": 20.0,
+    "latency_s": 30.0,
+    "entry_fill": "worst",
+    "exit_fill": "worst",
+    "cost": {
+     "ultra_bps": 10.0,
+     "mev_bps": 20.0,
+     "priority_sol": 0.0002,
+     "base_fee_lamports": 5000,
+     "fee_mult": 1.0,
+     "impact_mult": 1.0,
+     "extra_hop_bps": 100.0
+    },
+    "rent_usd": 0.0,
+    "entry_bar_exits": true,
+    "exit_delay_bars": 1
+   }
+  },
+  "Z4-exh|deff3972cbcd": {
+   "hypothesis": "Z4-exh",
+   "params": {
+    "version": "z4-v1",
+    "test": "veto",
+    "flag": "heat >= 0.25 at the host entry (tag 'hot')",
+    "host": {
+     "version": "z4-v1",
+     "dec_age_s": 1800.0,
+     "ref_age_s": 420.0,
+     "h_rec_s": 1800.0,
+     "rec_k": 3,
+     "record": "mid change t_ref -> t_ref + 30 min, t_ref = first grid time >= g + 420 s; usable members, resolved (t_end <= t), g_p < g",
+     "members": "structural graduates with g_p in [t - N, g), known creator != own creator, shared theme token",
+     "tokens": "NFKD fold, letter/digit runs + camelCase/digit parts, casefold, >= 3 chars ASCII / >= 2 other, not all digits, not a stop word",
+     "stopwords_sha1": "51aacbda33e8",
+     "hot_theta": 0.25,
+     "crowd_k": 3,
+     "history_splits": {
+      "debug": [
+       "final_train"
+      ],
+      "train": [
+       "train"
+      ],
+      "val": [
+       "train",
+       "val"
+      ],
+      "test": [
+       "train",
+       "val",
+       "test"
+      ],
+      "confirm": [
+       "confirm"
+      ],
+      "final": [
+       "train",
+       "val",
+       "test",
+       "final_train",
+       "final_val",
+       "final_test"
+      ]
+     },
+     "stop_pct": 0.5,
+     "hold_s": 3600.0,
+     "exit_by_age_s": 10680.0,
+     "size_usd": 20.0,
+     "alive": "AsOf.alive() defaults",
+     "placebo": "eligible-member stratum at the draw's time, alive; unmatched control reported; MOM: market-heat control (eligible members whose market heat >= theta at their own time), reported",
+     "fill": "common.FillConfig(exit_delay_bars=1): worst, latency 30 s, entry-bar stops, exits in the next bar",
+     "lookback_h": 3,
+     "lookback_s": 10800.0,
+     "rule": "host"
+    }
+   },
+   "first_seen_utc": "2026-10-09 05:17:19",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Z4-exh|853ae15e79a8": {
+   "hypothesis": "Z4-exh",
+   "params": {
+    "version": "z4-v1",
+    "test": "veto",
+    "flag": "heat >= 0.25 at the host entry (tag 'hot')",
+    "host": {
+     "version": "z4-v1",
+     "dec_age_s": 1800.0,
+     "ref_age_s": 420.0,
+     "h_rec_s": 1800.0,
+     "rec_k": 3,
+     "record": "mid change t_ref -> t_ref + 30 min, t_ref = first grid time >= g + 420 s; usable members, resolved (t_end <= t), g_p < g",
+     "members": "structural graduates with g_p in [t - N, g), known creator != own creator, shared theme token",
+     "tokens": "NFKD fold, letter/digit runs + camelCase/digit parts, casefold, >= 3 chars ASCII / >= 2 other, not all digits, not a stop word",
+     "stopwords_sha1": "51aacbda33e8",
+     "hot_theta": 0.25,
+     "crowd_k": 3,
+     "history_splits": {
+      "debug": [
+       "final_train"
+      ],
+      "train": [
+       "train"
+      ],
+      "val": [
+       "train",
+       "val"
+      ],
+      "test": [
+       "train",
+       "val",
+       "test"
+      ],
+      "confirm": [
+       "confirm"
+      ],
+      "final": [
+       "train",
+       "val",
+       "test",
+       "final_train",
+       "final_val",
+       "final_test"
+      ]
+     },
+     "stop_pct": 0.5,
+     "hold_s": 3600.0,
+     "exit_by_age_s": 10680.0,
+     "size_usd": 20.0,
+     "alive": "AsOf.alive() defaults",
+     "placebo": "eligible-member stratum at the draw's time, alive; unmatched control reported; MOM: market-heat control (eligible members whose market heat >= theta at their own time), reported",
+     "fill": "common.FillConfig(exit_delay_bars=1): worst, latency 30 s, entry-bar stops, exits in the next bar",
+     "lookback_h": 12,
+     "lookback_s": 43200.0,
+     "rule": "host"
+    }
+   },
+   "first_seen_utc": "2026-10-09 05:17:19",
+   "splits": {
+    "train": 1
+   }
   }
  },
  "runs": [
@@ -2721,8 +3536,228 @@
    "over_variant_limit": false,
    "kind": "backtest",
    "session": null
+  },
+  {
+   "utc": "2026-10-09 05:09:51",
+   "hypothesis": "Z3",
+   "config": "Z3|8f06f7b25ef6|cfg:a06543feac6c",
+   "split": "train",
+   "debug": false,
+   "n": 51,
+   "mean": -0.04994774433463643,
+   "over_variant_limit": false,
+   "kind": "backtest",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 05:11:30",
+   "hypothesis": "Z3",
+   "config": "Z3|ca9acc142e01|cfg:a06543feac6c",
+   "split": "train",
+   "debug": false,
+   "n": 51,
+   "mean": -0.04934627570616754,
+   "over_variant_limit": false,
+   "kind": "backtest",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 05:13:08",
+   "hypothesis": "Z3",
+   "config": "Z3|22841237f229|cfg:a06543feac6c",
+   "split": "train",
+   "debug": false,
+   "n": 11,
+   "mean": -0.051124609219199875,
+   "over_variant_limit": false,
+   "kind": "backtest",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 05:14:47",
+   "hypothesis": "Z3",
+   "config": "Z3|e33dc547ef8c|cfg:a06543feac6c",
+   "split": "train",
+   "debug": false,
+   "n": 11,
+   "mean": -0.050625760741485705,
+   "over_variant_limit": false,
+   "kind": "backtest",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 05:16:27",
+   "hypothesis": "Z3",
+   "config": "Z3|5e057d80eb0b|cfg:a06543feac6c",
+   "split": "train",
+   "debug": false,
+   "n": 11,
+   "mean": -0.050610462909495044,
+   "over_variant_limit": false,
+   "kind": "backtest",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 05:16:50",
+   "hypothesis": "Z4",
+   "config": "Z4|c6acfc940693|cfg:a06543feac6c",
+   "split": "train",
+   "debug": false,
+   "n": 65,
+   "mean": -0.39822651962583994,
+   "over_variant_limit": false,
+   "kind": "backtest",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 05:16:51",
+   "hypothesis": "Z4",
+   "config": "Z4|46e6dddec0b0|cfg:a06543feac6c",
+   "split": "train",
+   "debug": false,
+   "n": 25,
+   "mean": -0.5154117075726661,
+   "over_variant_limit": false,
+   "kind": "backtest",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 05:16:54",
+   "hypothesis": "Z4",
+   "config": "Z4|19004c97fc20|cfg:a06543feac6c",
+   "split": "train",
+   "debug": false,
+   "n": 102,
+   "mean": -0.4799008506331144,
+   "over_variant_limit": false,
+   "kind": "backtest",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 05:16:55",
+   "hypothesis": "Z4",
+   "config": "Z4|848ba0665b7e|cfg:a06543feac6c",
+   "split": "train",
+   "debug": false,
+   "n": 34,
+   "mean": -0.6077134708399575,
+   "over_variant_limit": false,
+   "kind": "backtest",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 05:17:04",
+   "hypothesis": "Z4-host",
+   "config": "Z4-host|81d43b0c8286|cfg:a06543feac6c",
+   "split": "train",
+   "debug": false,
+   "n": 508,
+   "mean": -0.358310703200474,
+   "over_variant_limit": false,
+   "kind": "backtest",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 05:17:15",
+   "hypothesis": "Z4-host",
+   "config": "Z4-host|76f6e3c4a86a|cfg:a06543feac6c",
+   "split": "train",
+   "debug": false,
+   "n": 697,
+   "mean": -0.3671336709593491,
+   "over_variant_limit": false,
+   "kind": "backtest",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 05:17:19",
+   "hypothesis": "Z4-exh",
+   "config": "Z4-exh|deff3972cbcd",
+   "split": "train",
+   "debug": false,
+   "n": 508,
+   "mean": null,
+   "over_variant_limit": false,
+   "kind": "backtest",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 05:17:19",
+   "hypothesis": "Z4-exh",
+   "config": "Z4-exh|853ae15e79a8",
+   "split": "train",
+   "debug": false,
+   "n": 697,
+   "mean": null,
+   "over_variant_limit": false,
+   "kind": "backtest",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 05:17:40",
+   "hypothesis": "G1.dip",
+   "config": "G1.dip|e6b014d6ddb8",
+   "split": "val",
+   "debug": false,
+   "n": 62,
+   "mean": -0.22624003960586733,
+   "over_variant_limit": false,
+   "kind": "backtest",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 05:17:41",
+   "hypothesis": "G1.R0",
+   "config": "G1.R0|27a79bc60126",
+   "split": "val",
+   "debug": false,
+   "n": 314,
+   "mean": -0.18563884725240434,
+   "over_variant_limit": false,
+   "kind": "backtest",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 05:17:44",
+   "hypothesis": "G1",
+   "config": "G1|1e4842f81140",
+   "split": "val",
+   "debug": false,
+   "n": 148,
+   "mean": -0.24365701750107513,
+   "over_variant_limit": false,
+   "kind": "backtest",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 05:17:44",
+   "hypothesis": "G1",
+   "config": "G1|b843b614c9a2",
+   "split": "val",
+   "debug": false,
+   "n": 170,
+   "mean": -0.29663816065286375,
+   "over_variant_limit": false,
+   "kind": "backtest",
+   "session": null
   }
  ],
- "val_shortlists": {},
- "n_trials_total": 2618
+ "val_shortlists": {
+  "G1.dip": {
+   "sha": "1218275dcafa318eefe4bd3716c9ed79f8495afe",
+   "first_val_run_utc": "2026-10-09 05:17:33"
+  },
+  "G1.R0": {
+   "sha": "cf40c286317e66748605e525dd2e645a8c7ec240",
+   "first_val_run_utc": "2026-10-09 05:17:33"
+  },
+  "G1": {
+   "sha": "2f3a7e71f76e8031ee45a084fc6a3768caff58cb",
+   "first_val_run_utc": "2026-10-09 05:17:33"
+  }
+ },
+ "n_trials_total": 2631,
+ "val_looks": {
+  "G1": 4
+ }
 }
