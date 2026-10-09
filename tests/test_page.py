@@ -422,7 +422,9 @@ def test_the_town_compares_what_the_bot_costs_with_what_the_desks_made(ledger: L
     assert town["income_today_usd"] == state["money"]["today"]["usd"] == pytest.approx(-5.5)
     assert town["income_since_start_usd"] == state["money"]["since_start"]["usd"] == pytest.approx(-5.5)
     assert town["covered_today"] is False and town["covered_since_start"] is False
-    assert town["line"] == "The town costs $0.25 a day to run; the desks lost $5.50 today (paper money)."
+    assert town["line"] == ("The town costs $0.25 a day to run; the Solana desk lost $5.50 today (paper money) and "
+                            "the Polymarket desk has not finished a round yet (paper money, pretend).")
+    assert town["polymarket"]["real"] is None  # no real book: the desk never ran here
     assert not JARGON.search(town["line"])
     json.dumps(town, allow_nan=False)
 
@@ -467,8 +469,9 @@ def test_the_town_says_what_it_does_not_know_instead_of_making_numbers_up(ledger
     assert town["cost_today_usd"] == pytest.approx(5 / 30 * 16 / 24)
     assert town["income_today_usd"] is None and town["covered_today"] is None
     assert town["cost_since_start_usd"] is None and town["covered_since_start"] is None
-    assert town["line"] == ("The town costs $0.17 a day to run; what the desks made today (paper money) is not known "
-                            "yet: no money check so far. How long the town has been running is not known yet.")
+    assert town["line"] == ("The town costs $0.17 a day to run; what the Solana desk made today (paper money) is not "
+                            "known yet: no money check so far; the Polymarket desk has not finished a round yet (paper "
+                            "money, pretend). How long the town has been running is not known yet.")
     money = {"today": {"usd": 1.0}, "since_start": {"usd": 1.0}}
     bare = town_ledger(settings, money, None, NOW, NOW - 2 * DAY)
     assert (bare["cost_per_day_usd"], bare["cost_since_start_usd"]) == (pytest.approx(5 / 30), pytest.approx(10 / 30))

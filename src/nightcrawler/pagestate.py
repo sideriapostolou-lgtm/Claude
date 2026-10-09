@@ -15,10 +15,18 @@ Schema (lists capped: members 9, events <= 5, open trades <= 10, closed trades 1
                 "since_start": {"usd", "pct"}, "today": {"usd", "pct"},   # the bot's own result (in SOL,
                 "sol_price_effect_usd",                                   #  shown at today's SOL price)
                 "curve": [[ts, usd], ...], "chart_ready": bool,           # chart after one hour of data
-                "as_of": ts|null},                                        # the last money check
+                "as_of": ts|null,                                         # the last money check
+                "polymarket": {"mode": "paper"|"live", "label", "as_of": ts|null,   # see POLYMARKET; null: desk off
+                               "paper": {"label": "Paper money (pretend)", "open", "today_usd", "since_start_usd",
+                                         "settled_today", "won_today", "settled_total", "won_total"},
+                               "real": {"label": "Real money", (the same keys), "at_risk_usd", "contracts",
+                                        "cost_usd", "value_usd", "venue_at", "cash_usd", "cash_at"}|null}|null},
       "town": {"label", "cost_per_day_usd", "cost_today_usd", "cost_since_start_usd": float|null,  # see TOWN
                "income_today_usd": float|null, "income_since_start_usd": float|null,
-               "covered_today": bool|null, "covered_since_start": bool|null, "line"},
+               "covered_today": bool|null, "covered_since_start": bool|null, "line",
+               "polymarket": {"paper": {"label", "open", "today_usd", "since_start_usd", "line"},  # the desk in words
+                              "real": {"label", "open", "contracts", "cost_usd", "value_usd", "today_usd",
+                                       "settled_today", "won_today", "since_start_usd", "cash_usd", "line"}|null}|null},
       "team": {"counts": {status: n}, "members": [{"id", "name", "role", "status", "why", "doing",
                                                     "last_activity", "events", "bars"?}]},
                                                     # status "absent": the Coach is not built (not counted)
@@ -50,9 +58,21 @@ prorated over the part of the UTC day that has passed (since the start, when the
 judge's spend today. ``cost_since_start_usd``: Railway's price over the run so far plus the judge's total. The run
 starts at the ledger's first record (the first boot on this volume) or at ``engine.started_at``, whichever is
 earlier: a redeploy restarts the engine, not the bill, the judge's total or the money since start. Income is the
-money card's own result (``money.today.usd``, ``money.since_start.usd``). Whatever is not known is null (income
-before the first money check; the since-start cost before the first record) and the line says so; ``covered_*``
-is null while either side is unknown.
+money card's own result (``money.today.usd``, ``money.since_start.usd``): the SOL bot's figures, nothing else.
+Whatever is not known is null (income before the first money check; the since-start cost before the first record)
+and the line says so; ``covered_*`` is null while either side is unknown. The Polymarket desk is counted apart
+(``town.polymarket``, POLYMARKET below): one line for its paper book and, only while it has a real book, one for its
+real money, and ``line`` names each desk ("the Solana desk lost $3.18 and the Polymarket desk lost $1,345.53 today
+(paper money, pretend)"); no figure of one kind of money is ever added to another.
+
+POLYMARKET (:func:`polymarket_desk`): the Polymarket desk's books (:func:`nightcrawler.polydesk.panel_state`, its
+state file only), kept apart from the SOL wallet and from each other. ``paper`` is the desk's own paper tally (the
+candidate rule's pretend tickets); ``real`` is what came from the venue's own book: the open positions the venue
+holds (``live``), the desk's real settlements, the venue's contract count, cost and value (``exchange``) and its
+cash (``balance``). ``real`` is null unless the desk has a real book (an open real position, a real settlement or
+a contract at the venue) or the venue's cash was read; ``money.polymarket`` is null when the desk is off
+(``POLYDESK_ENABLED``) or its state cannot be read: nothing is shown rather than a made-up zero. A paper tally of
+zero before the desk's first round is marked ``as_of: null`` ("no round finished yet").
 
 LEARNING: :func:`learning_card` calls ``nightcrawler.learn.card.learning_card_state(settings, now)`` when
 that module exists (it is built on another branch) and keeps only these keys, each type-checked::
@@ -131,13 +151,14 @@ from nightcrawler.dashboard import build_state, scrub
 from nightcrawler.logging_setup import get_logger, redact_text
 from nightcrawler.models import LAMPORTS_PER_SOL, EquityPoint
 from nightcrawler.page import LEARNING_RULE, MEMBERS, REFRESH_S
+from nightcrawler.polydesk import panel_state
 from nightcrawler.readiness import readiness
 from nightcrawler.teamroom import ENGINE_STALE_S, FUTURE_SKEW_S, build_team_state, derive_status, duration_text
 from nightcrawler.withdraw import fresh_balance, last_withdrawal, live_hold, page_view, saved_state, withdrawn_lamports
 
 __all__ = ["EXPERIENCE_CAVEAT", "EXPERIENCE_CHIPS", "EXPERIENCE_KINDS", "EXPERIENCE_MONEY_LINE", "LEARNING_RULE",
-           "MEMBERS", "PLAYBOOK_PATH", "STALE_BANNER_S", "TOWN_MONTH_DAYS", "WALLET_MAX_AGE_S", "build_page_state",
-           "experience_card", "learning_card", "town_ledger"]
+           "MEMBERS", "PAPER_LABEL", "PLAYBOOK_PATH", "REAL_LABEL", "STALE_BANNER_S", "TOWN_MONTH_DAYS",
+           "WALLET_MAX_AGE_S", "build_page_state", "experience_card", "learning_card", "polymarket_desk", "town_ledger"]
 
 log = get_logger(__name__)
 
@@ -167,6 +188,11 @@ COACH_WINDOW_S = 26 * 3600.0
 DAY_S = 86_400.0
 #: The town's hosting bill is a monthly price: a day of it is 1/30.
 TOWN_MONTH_DAYS = 30.0
+#: The money labels: the page must always make clear when the money is pretend.
+PAPER_LABEL = "Paper money (pretend)"
+REAL_LABEL = "Real money"
+#: The page's own minus sign (U+2212), as its script prints a signed dollar figure.
+_MINUS = "−"
 
 #: The experience state (the report cards) is re-read at most this often.
 EXPERIENCE_TTL_S = 60.0
@@ -653,9 +679,10 @@ def _latest_point(ledger: Any, mode: str) -> EquityPoint | None:
 
 
 def _money(settings: Settings, eq: dict[str, Any], point: EquityPoint | None,
-           withdrawn: tuple[int, int] = (0, 0)) -> dict[str, Any]:
+           withdrawn: tuple[int, int] = (0, 0), desk: dict[str, Any] | None = None) -> dict[str, Any]:
     """``withdrawn``: live SOL (all time, today) sent back to the owner with WITHDRAW_TO - added back to the
-    results, so taking money out never reads as a trading loss."""
+    results, so taking money out never reads as a trading loss. ``desk``: :func:`polymarket_desk`, carried under
+    ``polymarket`` apart from every SOL figure (never added to them)."""
     sol, sol_usd = eq["sol"], eq["sol_usd"]
     total, today = eq["pnl_total_sol"], eq["pnl_today_sol"]
     since_usd = eq["pnl_total_trading_usd"]
@@ -678,6 +705,7 @@ def _money(settings: Settings, eq: dict[str, Any], point: EquityPoint | None,
         "sol_price_effect_usd": eq["sol_price_effect_usd"],
         "curve": curve, "chart_ready": span >= CHART_MIN_SPAN_S,
         "as_of": point.ts if point is not None else (curve[-1][0] if curve else None),
+        "polymarket": desk,
     }
 
 
@@ -692,11 +720,21 @@ def _withdrawn(ledger: Any, settings: Settings, point: EquityPoint | None, now: 
 
 def _money_label(settings: Settings) -> str:
     """The money card's label: the page must always make clear when the money is pretend."""
-    return "Real money" if settings.is_live else "Paper money (pretend)"
+    return REAL_LABEL if settings.is_live else PAPER_LABEL
 
 
 def _dollars(value: float) -> str:
     return f"${abs(value):,.2f}"
+
+
+def _signed(value: float) -> str:
+    """``+$1.20`` / ``−$1,345.53`` / ``$0.00``, to the cent, as the page's script prints a signed dollar figure."""
+    cents = round(value, 2)
+    return ("+" if cents > 0 else _MINUS if cents < 0 else "") + _dollars(cents)
+
+
+def _verb(value: float) -> str:
+    return "lost" if value < 0 else "made"
 
 
 def _run_started(ledger: Any, state: Mapping[str, Any]) -> float | None:
@@ -709,12 +747,123 @@ def _run_started(ledger: Any, state: Mapping[str, Any]) -> float | None:
     return min(known) if known else None
 
 
+# =========================================================================== the Polymarket desk
+
+
+def polymarket_desk(settings: Settings, now: float) -> dict[str, Any] | None:
+    """The Polymarket desk's books for the money card and the town (POLYMARKET in the module docstring), paper and
+    real kept apart and never added together. None when the desk is off (``POLYDESK_ENABLED``) or its state cannot
+    be read: nothing is shown rather than a made-up zero. Never raises."""
+    if not settings.polydesk_enabled:
+        return None
+    try:
+        desk = panel_state(settings, now)
+    except (KeyError, TypeError, ValueError, AttributeError) as exc:  # a malformed state file: never take the page down
+        log.warning("polydesk_panel_failed error=%s", type(exc).__name__)
+        return None
+    raw_real, venue, balance = _xp_map(desk.get("real")), _xp_map(desk.get("exchange")), _xp_map(desk.get("balance"))
+    real = _book(raw_real, REAL_LABEL)
+    real.update({
+        "at_risk_usd": _num(raw_real.get("at_risk_usd")) or 0.0,
+        "contracts": _num(venue.get("contracts")), "cost_usd": _num(venue.get("cost_usd")),
+        "value_usd": _num(venue.get("value_usd")), "venue_at": _num(venue.get("at")),
+        "cash_usd": _num(balance.get("cash")), "cash_at": _num(balance.get("at")),
+    })
+    live = desk.get("mode") == "live"
+    return {
+        "mode": "live" if live else "paper", "label": REAL_LABEL if live else PAPER_LABEL,
+        "as_of": _num(desk.get("last_ok")),
+        "paper": _book(_xp_map(desk.get("paper")), PAPER_LABEL),
+        # the venue's cash alone (a key, no contracts) is real money to show, but not a real book for the town
+        "real": real if _real_book(real) or real["cash_usd"] is not None else None,
+    }
+
+
+def _book(raw: Mapping[str, Any], label: str) -> dict[str, Any]:
+    """One of the desk's two tallies (the panel's ``paper`` or ``real``), type-checked. The desk keeps these as
+    running counts from zero, so a missing one is zero."""
+    today = _xp_map(raw.get("today"))
+    return {"label": label, "open": _count(raw.get("open")) or 0,
+            "today_usd": _num(today.get("pnl_usd")) or 0.0, "since_start_usd": _num(raw.get("pnl_total_usd")) or 0.0,
+            "settled_today": _count(today.get("settled")) or 0, "won_today": _count(today.get("won")) or 0,
+            "settled_total": _count(raw.get("settled_total")) or 0, "won_total": _count(raw.get("won_total")) or 0}
+
+
+def _real_book(real: Mapping[str, Any]) -> bool:
+    """Real money in play: an open real position, a real settlement, or a contract the venue's own book holds."""
+    return bool(real["open"] or real["settled_total"] or (real.get("contracts") or 0) > 0)
+
+
+def _desk_lines(desk: Mapping[str, Any] | None) -> dict[str, Any] | None:
+    """``town.polymarket``: the desk's books (:func:`polymarket_desk`) in words, one line per kind of money, never
+    added together; the real line only while the desk has a real book."""
+    if desk is None:
+        return None
+    paper, real = desk["paper"], desk.get("real")
+    line = (f"Polymarket desk (paper, pretend): today {_signed(paper['today_usd'])}, since start "
+            f"{_signed(paper['since_start_usd'])}, {paper['open']} open")
+    if desk.get("as_of") is None:
+        line += "; no round finished yet"
+    out: dict[str, Any] = {"paper": {"label": PAPER_LABEL, "open": paper["open"], "today_usd": paper["today_usd"],
+                                     "since_start_usd": paper["since_start_usd"], "line": line}, "real": None}
+    if real is not None and _real_book(real):
+        out["real"] = {"label": REAL_LABEL, "open": real["open"], "contracts": real["contracts"],
+                       "cost_usd": real["cost_usd"], "value_usd": real["value_usd"], "today_usd": real["today_usd"],
+                       "settled_today": real["settled_today"], "won_today": real["won_today"],
+                       "since_start_usd": real["since_start_usd"], "cash_usd": real["cash_usd"],
+                       "line": _real_line(real)}
+    return out
+
+
+def _real_line(real: Mapping[str, Any]) -> str:
+    """The real line, e.g. ``Polymarket desk (REAL money): 8 contracts at the venue, cost $7.80, worth $7.95 now;
+    settled today 0/0 won $0.00; since start +$0.50; cash at the venue $16.27``. A part the venue has not answered
+    says so instead of showing a zero."""
+    contracts, cost, value, cash = real["contracts"], real["cost_usd"], real["value_usd"], real["cash_usd"]
+    if contracts is not None:
+        venue = f"{contracts:g} contract{'' if contracts == 1 else 's'} at the venue"
+        venue += f", cost {_dollars(cost)}" if cost is not None else ""
+        venue += f", worth {_dollars(value)} now" if value is not None else ""
+    else:
+        venue = f"{real['open']} open ({_dollars(real['at_risk_usd'])} at risk), the venue's book not read yet"
+    held = f"cash at the venue {_dollars(cash)}" if cash is not None else "cash at the venue not read yet"
+    return (f"Polymarket desk (REAL money): {venue}; settled today {real['won_today']}/{real['settled_today']} won "
+            f"{_signed(real['today_usd'])}; since start {_signed(real['since_start_usd'])}; {held}")
+
+
+def _with_desk(made: str, income_today: float | None, desk: Mapping[str, Any], *, live: bool) -> str:
+    """The town's sentence with the Polymarket desk's paper result beside the SOL bot's: the two desks are named
+    apart and never added. Both pretend and both known, in one breath: "the Solana desk lost $3.18 and the
+    Polymarket desk lost $1,345.53 today (paper money, pretend)"."""
+    joiner = "; " if income_today is None else " and "
+    if desk.get("as_of") is None:
+        return f"{made}{joiner}the Polymarket desk has not finished a round yet (paper money, pretend)"
+    poly = desk["paper"]["today_usd"]
+    if income_today is not None and not live:
+        return (f"the Solana desk {_verb(income_today)} {_dollars(income_today)} and the Polymarket desk "
+                f"{_verb(poly)} {_dollars(poly)} today (paper money, pretend)")
+    return f"{made}{joiner}the Polymarket desk {_verb(poly)} {_dollars(poly)} today (paper money, pretend)"
+
+
+def _real_sentence(real: Mapping[str, Any]) -> str:
+    """The desk's real money in the town's line: its own sentence, never part of the paper figures."""
+    since = f"since start {_signed(real['since_start_usd'])}."
+    if not real["settled_today"]:
+        return f" Polymarket real money: nothing settled today; {since}"
+    return (f" Polymarket real money: {_verb(real['today_usd'])} {_dollars(real['today_usd'])} today "
+            f"({real['won_today']}/{real['settled_today']} won); {since}")
+
+
+# =========================================================================== the town
+
+
 def town_ledger(settings: Settings, money: Mapping[str, Any], judge: Mapping[str, Any] | None, now: float,
                 started_at: float | None) -> dict[str, Any]:
     """The town's books (TOWN in the module docstring): what running the bot costs against what the desks made,
-    today and since the start. ``money`` is the page's money card, ``judge`` the ``judge`` block of ``/api/state``
-    (None, or missing or junk figures, count as nothing recorded), ``started_at`` when the run began (None: not
-    known). Never a made-up number: an unknown side is null and the line says so."""
+    today and since the start. ``money`` is the page's money card (its ``polymarket`` block, :func:`polymarket_desk`
+    or absent, is the Polymarket desk: counted apart, in its own lines, never in the income figures), ``judge`` the
+    ``judge`` block of ``/api/state`` (None, or missing or junk figures, count as nothing recorded), ``started_at``
+    when the run began (None: not known). Never a made-up number: an unknown side is null and the line says so."""
     spend = _xp_map(judge)
     fixed_day = settings.town_railway_usd_month / TOWN_MONTH_DAYS
     uptime_s = max(0.0, now - started_at) if started_at is not None else None
@@ -730,12 +879,20 @@ def town_ledger(settings: Settings, money: Mapping[str, Any], judge: Mapping[str
     cost_since = fixed_day * uptime_s / DAY_S + judge_total if uptime_s is not None else None
     income_today = _num(_xp_map(money.get("today")).get("usd"))
     income_since = _num(_xp_map(money.get("since_start")).get("usd"))
+    desk = money.get("polymarket")  # the Polymarket desk's books, or nothing: the desk is off
+    desk = desk if isinstance(desk, Mapping) and isinstance(desk.get("paper"), Mapping) else None
     kind = "real money" if settings.is_live else "paper money"
+    who = "Solana desk" if desk is not None else "desks"
     if income_today is None:
-        made = f"what the desks made today ({kind}) is not known yet: no money check so far"
+        made = f"what the {who} made today ({kind}) is not known yet: no money check so far"
     else:
-        made = f"the desks {'lost' if income_today < 0 else 'made'} {_dollars(income_today)} today ({kind})"
+        made = f"the {who} {_verb(income_today)} {_dollars(income_today)} today ({kind})"
+    if desk is not None:
+        made = _with_desk(made, income_today, desk, live=settings.is_live)
     line = f"The town costs {_dollars(cost_per_day)} a day to run; {made}."
+    real = desk.get("real") if desk is not None else None
+    if real is not None and _real_book(real):
+        line += _real_sentence(real)
     if cost_since is None:
         line += " How long the town has been running is not known yet."
     return {
@@ -749,6 +906,7 @@ def town_ledger(settings: Settings, money: Mapping[str, Any], judge: Mapping[str
         "covered_since_start": (income_since >= cost_since if income_since is not None and cost_since is not None
                                 else None),
         "line": line,
+        "polymarket": _desk_lines(desk),
     }
 
 
@@ -944,7 +1102,8 @@ def build_page_state(ledger: Any, settings: Settings, now: float, engine_status:
     alerts = _alerts(ledger, state, now, withdrawal, settings)
     point = _latest_point(ledger, "live" if settings.is_live else "paper")
     address, wallet_sol, wallet_read_at = _wallet(ledger, settings, state, point, now)
-    money = _money(settings, state["equity"], point, _withdrawn(ledger, settings, point, now))
+    desk = polymarket_desk(settings, now)  # the Polymarket desk's books, apart from the SOL wallet (never summed)
+    money = _money(settings, state["equity"], point, _withdrawn(ledger, settings, point, now), desk)
     receipts = state["receipts"]
     head = receipts["head_hash"]
     out = {

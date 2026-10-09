@@ -1,6 +1,8 @@
 """The ONE dashboard page at ``/`` (owner: O6): built for an owner who checks the bot from a phone.
 
-Top to bottom, in plain words: money (a big dollar number and a chart), the bot wallet (its public address with
+Top to bottom, in plain words: money (a big dollar number and a chart; under it the Polymarket desk's two books,
+paper and real, never added to the SOL wallet or to each other), the town (what running the bot costs against what
+each desk made), the bot wallet (its public address with
 a copy button, its SOL and how to fund it from Phantom), the team (one row per bot member, tap for its report
 card and last events; the team's practice record on top and the playbook's counts below, docs/EXPERIENCE.md
 §9), trades, learning (the Coach), "ready for real money?" (a six-step checklist)
@@ -153,6 +155,7 @@ ol.events li.bad span::before{background:var(--critical)}
 .fill.cost{background:var(--muted)}.fill.up{background:var(--up)}.fill.down{background:var(--down)}
 .rows>div{border-top:1px solid var(--hair);padding:10px 0}
 .rows>div:first-child{border-top:0}
+#town-desks p{margin-top:8px}
 .line{display:flex;justify-content:space-between;align-items:baseline;gap:10px;min-width:0}
 .line>*{min-width:0}
 .coin{font-weight:650;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -296,6 +299,36 @@ _SCRIPT = r"""
     }
     $("money-help").textContent = help.join(" ");
     put($("chart"), chart(m.curve || [], m.start_usd, m.chart_ready));
+    renderPolymarket(m.polymarket);
+  }
+
+  // The Polymarket desk's two books under the SOL wallet (money.polymarket), never added to it or to each other.
+  // The real row only when the venue's own book holds contracts, a real settlement exists or the venue's cash was
+  // read; the paper row always. The labels are the data's own; a part the venue has not answered says so.
+  function renderPolymarket(pm) {
+    const box = $("money-polymarket");
+    if (!pm || !pm.paper) { put(box); return; }
+    const join = (...bits) => bits.filter(Boolean).join(" · ");
+    const count = (n, one, many) => (isNum(n) ? n.toLocaleString() + " " + (n === 1 ? one : many) : "");
+    const won = (w, s) => (isNum(w) && isNum(s) ? w + "/" + s + " won" : "");
+    const row = (book, meta) => el("div", null,
+      el("div", "line", el("span", "coin", book.label), el("span", "big " + tone(book.since_start_usd),
+        usd(book.since_start_usd, true))),
+      el("div", "meta", meta));
+    const r = pm.real, p = pm.paper, rows = [];
+    if (r) {
+      const venue = isNum(r.contracts) ? count(r.contracts, "contract held", "contracts held")
+        + (isNum(r.cost_usd) ? ", cost " + usd(r.cost_usd) : "") + (isNum(r.value_usd) ? ", worth " + usd(r.value_usd) + " now" : "")
+        : count(r.open, "open position", "open positions") + ", the venue's book not read yet";
+      rows.push(row(r, join("settled since start", isNum(r.cash_usd) ? "cash at the venue " + usd(r.cash_usd)
+        : "cash at the venue not read yet", venue, join("today " + usd(r.today_usd, true), won(r.won_today, r.settled_today)))));
+    }
+    const settled = won(p.won_total, p.settled_total);
+    rows.push(row(p, join("since start", count(p.open, "open paper position", "open paper positions"),
+      "today " + usd(p.today_usd, true), settled ? settled + " since start" : "")));
+    put(box, el("p", "sub", "Polymarket desk", el("span", "tag", pm.mode === "live" ? "real money ON" : "real money OFF")),
+      el("div", "rows", ...rows),
+      el("p", "help", "Kept apart from the SOL wallet above, and paper from real: nothing here is added together."));
   }
 
   function chart(curve, startUsd, ready) {
@@ -360,12 +393,16 @@ _SCRIPT = r"""
       + (covered === true ? " · covered" : covered === false ? " · not covered" : "");
     const verdict = t.covered_today === true ? el("span", "tag", "covered")
       : t.covered_today === false ? el("span", "tag", "not covered") : null;
+    const desks = t.polymarket;  // the Polymarket desk's lines (town.polymarket); the bar stays the Solana desk's
     put($("town-bars"),
       el("div", "bar", el("span", null, "Costs today"), el("b", "num", usd(cost)),
         isNum(cost) ? track(cost / scale, "cost") : null, el("small", null, since(t.cost_since_start_usd, false, null))),
-      el("div", "bar", el("span", null, "Made today", verdict), el("b", "num " + tone(made), usd(made, true)),
+      el("div", "bar", el("span", null, desks ? "Made today, Solana desk" : "Made today", verdict),
+        el("b", "num " + tone(made), usd(made, true)),
         isNum(made) ? track(Math.abs(made) / scale, made < 0 ? "down" : "up") : null,
         el("small", null, since(t.income_since_start_usd, true, t.covered_since_start))));
+    put($("town-desks"), ...(desks ? [desks.paper, desks.real] : []).filter((d) => d && d.line)
+      .map((d) => el("p", "meta", d.line)));
   }
 
   // ---------------------------------------------------------------- A2. the bot wallet: where to send SOL
@@ -810,11 +847,11 @@ def render_page_html(settings: Settings) -> str:
         "<div class=\"tile\"><div class=\"label\">Today</div><b id=\"today-usd\">—</b><span id=\"today-pct\"></span>"
         "</div></div>"
         "<p class=\"help\">Since start and today count only the bot's own trading, at today's price of SOL.</p>"
-        "<p class=\"help\" id=\"money-help\"></p><div id=\"chart\"></div></section>\n"
+        "<p class=\"help\" id=\"money-help\"></p><div id=\"chart\"></div><div id=\"money-polymarket\"></div></section>\n"
 
         "<section class=\"card\" id=\"town\">"
         f"<h2>The town <small id=\"town-label\">{label}</small></h2>"
-        "<p class=\"lead\" id=\"town-line\">Loading…</p><div id=\"town-bars\"></div>"
+        "<p class=\"lead\" id=\"town-line\">Loading…</p><div id=\"town-bars\"></div><div id=\"town-desks\"></div>"
         "<p class=\"help\">To keep the town alive, the desks must earn more than it costs to run: the hosting plan "
         "plus the AI judge's spending.</p></section>\n"
 
