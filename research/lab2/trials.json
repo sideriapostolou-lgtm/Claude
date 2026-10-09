@@ -6252,6 +6252,136 @@
    "splits": {
     "train": 1
    }
+  },
+  "K1|2d791bb28692|cfg:a06543feac6c": {
+   "hypothesis": "K1",
+   "params": {
+    "version": "k1-v1",
+    "prompt_version": "desk-v1",
+    "decision_age_s": 1800.0,
+    "alive_vol_usd_15m": 1500.0,
+    "alive_mcap_usd": 6000.0,
+    "exit_by_age_s": 10680.0,
+    "size_usd": 20.0,
+    "exits": "the desk's stop_pct in [0.20, 0.50] and max_hold_min in [15, 120], clamped",
+    "placebo": "judged control: same timing on ANY alive coin (20 draws per signal); no class matching",
+    "fill": "common.FillConfig(exit_delay_bars=1): worst, latency 30 s, entry-bar exits, next-bar exits",
+    "temperature": 0.0,
+    "config": "panel",
+    "roles": [
+     "scout",
+     "skeptic",
+     "risk"
+    ],
+    "role_model": "claude-haiku-5-5",
+    "decider_model": "claude-sonnet-5-5"
+   },
+   "first_seen_utc": "2026-10-09 15:26:28",
+   "splits": {
+    "train": 1
+   },
+   "cfg": {
+    "size_usd": 20.0,
+    "latency_s": 30.0,
+    "entry_fill": "worst",
+    "exit_fill": "worst",
+    "cost": {
+     "ultra_bps": 10.0,
+     "mev_bps": 20.0,
+     "priority_sol": 0.0002,
+     "base_fee_lamports": 5000,
+     "fee_mult": 1.0,
+     "impact_mult": 1.0,
+     "extra_hop_bps": 100.0
+    },
+    "rent_usd": 0.0,
+    "entry_bar_exits": true,
+    "exit_delay_bars": 1
+   }
+  },
+  "K1|f24855db56c0|cfg:a06543feac6c": {
+   "hypothesis": "K1",
+   "params": {
+    "version": "k1-v1",
+    "prompt_version": "desk-v1",
+    "decision_age_s": 1800.0,
+    "alive_vol_usd_15m": 1500.0,
+    "alive_mcap_usd": 6000.0,
+    "exit_by_age_s": 10680.0,
+    "size_usd": 20.0,
+    "exits": "the desk's stop_pct in [0.20, 0.50] and max_hold_min in [15, 120], clamped",
+    "placebo": "judged control: same timing on ANY alive coin (20 draws per signal); no class matching",
+    "fill": "common.FillConfig(exit_delay_bars=1): worst, latency 30 s, entry-bar exits, next-bar exits",
+    "temperature": 0.0,
+    "config": "solo-sonnet",
+    "roles": [],
+    "role_model": null,
+    "decider_model": "claude-sonnet-5-5"
+   },
+   "first_seen_utc": "2026-10-09 15:26:31",
+   "splits": {
+    "train": 1
+   },
+   "cfg": {
+    "size_usd": 20.0,
+    "latency_s": 30.0,
+    "entry_fill": "worst",
+    "exit_fill": "worst",
+    "cost": {
+     "ultra_bps": 10.0,
+     "mev_bps": 20.0,
+     "priority_sol": 0.0002,
+     "base_fee_lamports": 5000,
+     "fee_mult": 1.0,
+     "impact_mult": 1.0,
+     "extra_hop_bps": 100.0
+    },
+    "rent_usd": 0.0,
+    "entry_bar_exits": true,
+    "exit_delay_bars": 1
+   }
+  },
+  "K1|d0c0077d8902|cfg:a06543feac6c": {
+   "hypothesis": "K1",
+   "params": {
+    "version": "k1-v1",
+    "prompt_version": "desk-v1",
+    "decision_age_s": 1800.0,
+    "alive_vol_usd_15m": 1500.0,
+    "alive_mcap_usd": 6000.0,
+    "exit_by_age_s": 10680.0,
+    "size_usd": 20.0,
+    "exits": "the desk's stop_pct in [0.20, 0.50] and max_hold_min in [15, 120], clamped",
+    "placebo": "judged control: same timing on ANY alive coin (20 draws per signal); no class matching",
+    "fill": "common.FillConfig(exit_delay_bars=1): worst, latency 30 s, entry-bar exits, next-bar exits",
+    "temperature": 0.0,
+    "config": "solo-haiku",
+    "roles": [],
+    "role_model": null,
+    "decider_model": "claude-haiku-5-5"
+   },
+   "first_seen_utc": "2026-10-09 15:26:34",
+   "splits": {
+    "train": 1
+   },
+   "cfg": {
+    "size_usd": 20.0,
+    "latency_s": 30.0,
+    "entry_fill": "worst",
+    "exit_fill": "worst",
+    "cost": {
+     "ultra_bps": 10.0,
+     "mev_bps": 20.0,
+     "priority_sol": 0.0002,
+     "base_fee_lamports": 5000,
+     "fee_mult": 1.0,
+     "impact_mult": 1.0,
+     "extra_hop_bps": 100.0
+    },
+    "rent_usd": 0.0,
+    "entry_bar_exits": true,
+    "exit_delay_bars": 1
+   }
   }
  },
  "runs": [
@@ -8778,6 +8908,42 @@
    "over_variant_limit": false,
    "kind": "measurement",
    "session": null
+  },
+  {
+   "utc": "2026-10-09 15:26:28",
+   "hypothesis": "K1",
+   "config": "K1|2d791bb28692|cfg:a06543feac6c",
+   "split": "train",
+   "debug": false,
+   "n": 0,
+   "mean": null,
+   "over_variant_limit": false,
+   "kind": "backtest",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 15:26:31",
+   "hypothesis": "K1",
+   "config": "K1|f24855db56c0|cfg:a06543feac6c",
+   "split": "train",
+   "debug": false,
+   "n": 0,
+   "mean": null,
+   "over_variant_limit": false,
+   "kind": "backtest",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 15:26:34",
+   "hypothesis": "K1",
+   "config": "K1|d0c0077d8902|cfg:a06543feac6c",
+   "split": "train",
+   "debug": false,
+   "n": 0,
+   "mean": null,
+   "over_variant_limit": false,
+   "kind": "backtest",
+   "session": null
   }
  ],
  "val_shortlists": {
@@ -8806,7 +8972,7 @@
    "first_val_run_utc": "2026-10-09 09:41:27"
   }
  },
- "n_trials_total": 2764,
+ "n_trials_total": 2767,
  "val_looks": {
   "G1": 4,
   "O1": 1,
