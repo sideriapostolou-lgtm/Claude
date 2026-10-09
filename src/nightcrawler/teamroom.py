@@ -903,12 +903,23 @@ def _receipts(ctx: _Ctx) -> dict[str, Any]:
                   hash={"head": head, "short": f"{head[:8]}…{head[-8:]}", "explainer": RECEIPTS_EXPLAINER})
 
 
+def _since_fix_stats(since: dict[str, Any], book: str) -> list[dict[str, Any]]:
+    """The current rule version's own record for one book (``paper`` / ``real``), as two stats."""
+    rec = _dict(since.get(book))
+    return [_stat(f"Since fix ({book}) won/settled", f"{_int(rec.get('won_total')) or 0}/"
+                                                     f"{_int(rec.get('settled_total')) or 0}", "text"),
+            _stat(f"Since fix $ ({book})", round(_num(rec.get("pnl_total_usd")) or 0.0, 2), "usd")]
+
+
 def _predict(ctx: _Ctx) -> dict[str, Any]:
-    """The Polymarket desk (nightcrawler.polydesk): paper positions and settlements from its state file."""
+    """The Polymarket desk (nightcrawler.polydesk): paper positions and settlements from its state file. The
+    desk's own ``Lesson: ...`` events ride along in ``events``; its ``lessons``, ``since_fix`` (the current rule
+    version's record, paper and real apart), ``before_fix`` and ``worst`` row ride along for the page."""
     from nightcrawler.polydesk import panel_state
 
     d = panel_state(ctx.settings, ctx.now)
     events = [ctx.event(float(e["ts"]), str(e["text"]), str(e.get("tone") or "neutral")) for e in d["events"]]
+    since = _dict(d.get("since_fix"))
     last = d["last_ok"]
     if not d["enabled"]:
         status: tuple[str, str] = ("idle", "switched off (POLYDESK_ENABLED)")
@@ -957,26 +968,33 @@ def _predict(ctx: _Ctx) -> dict[str, Any]:
                  _stat("All time $ (real)", round(real["pnl_total_usd"], 2), "usd")]
         if isinstance(bal, dict) and bal.get("cash") is not None:
             stats.append(_stat("Polymarket cash", round(float(bal["cash"]), 2), "usd"))
+        stats += _since_fix_stats(since, "real")
         if paper["open"] or paper["settled_total"]:
             stats += [_stat("Open (paper, running off)", paper["open"], "count"),
-                      _stat("All time $ (paper)", round(paper["pnl_total_usd"], 2), "usd")]
+                      _stat("All time $ (paper)", round(paper["pnl_total_usd"], 2), "usd"),
+                      *_since_fix_stats(since, "paper")]
         headline = _headline(real["open"], "count", "real positions open")
-    else:
-        stats = [_stat("Watching", d["watched"], "count"), _stat("Open (paper)", d["open"], "count"),
-                 _stat("Today $ (paper)", round(t["pnl_usd"], 2), "usd"),
-                 _stat("All time $ (paper)", round(d["pnl_total_usd"], 2), "usd")]
+    else:  # the paper tallies, never the combined book: real venue contracts can sit in the book in paper mode
+        pt = paper.get("today") or t
+        stats = [_stat("Watching", d["watched"], "count"), _stat("Open (paper)", paper.get("open", d["open"]), "count"),
+                 _stat("Today $ (paper)", round(pt["pnl_usd"], 2), "usd"),
+                 _stat("All time $ (paper)", round(paper.get("pnl_total_usd", d["pnl_total_usd"]), 2), "usd"),
+                 *_since_fix_stats(since, "paper")]
         if isinstance(bal, dict) and bal.get("cash") is not None:
             stats.append(_stat("Polymarket cash", round(float(bal["cash"]), 2), "usd"))
         if real and (real["open"] or real["settled_total"]):
             stats += [_stat("Open (real)", real["open"], "count"), _stat("At risk (real)", round(real["at_risk_usd"], 2), "usd"),
-                      _stat("All time $ (real)", round(real["pnl_total_usd"], 2), "usd")]
+                      _stat("All time $ (real)", round(real["pnl_total_usd"], 2), "usd"),
+                      *_since_fix_stats(since, "real")]
         if venue and float(venue.get("contracts") or 0) > 0:
             stats += [_stat("Venue contracts (real)", float(venue["contracts"]), "count"),
                       _stat("Venue value (real)", round(float(venue["value_usd"]), 2), "usd")]
         headline = _headline(paper.get("open", d["open"]), "count", "paper positions open")
     return _panel("predict", status, last, ctx.text(doing), headline, stats, events, rule=d["rule"],
                   positions=d["positions"], label=d["label"], mode=d.get("mode"),
-                  open_real=int(real.get("open") or 0), open_paper=int(paper.get("open") or 0))
+                  open_real=int(real.get("open") or 0), open_paper=int(paper.get("open") or 0),
+                  lessons=[ctx.text(str(s)) for s in d.get("lessons") or []], since_fix=d.get("since_fix"),
+                  before_fix=d.get("before_fix"), worst=d.get("worst"))
 
 
 def _upgrades(ctx: _Ctx, deploy: dict[str, str | None], started_at: float | None) -> dict[str, Any]:

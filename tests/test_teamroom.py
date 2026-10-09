@@ -732,3 +732,43 @@ def test_json_stays_small_on_a_busy_ledger(ledger: Ledger, settings: Settings) -
         assert len(panel["events"]) <= EVENTS_MAX and len(panel.get("bars", [])) <= 5
         assert all(len(e["text"]) <= 160 for e in panel["events"])
     assert panels(state)["crawler"]["headline"]["value"] == 303
+
+
+# --------------------------------------------------------------------------- the Polymarket desk's panel
+
+
+def test_the_polymarket_panel_shows_the_rule_record_since_the_fix_and_its_lessons(ledger: Ledger,
+                                                                                 settings: Settings) -> None:
+    """The desk's state file carries the current rule version's own rows, older rows and a venue adoption: the
+    panel's stats show the record since the fix apart from the whole book (paper and real apart), every
+    paper-labelled figure is paper only, and the lessons, the worst row and the desk's Lesson event ride along."""
+    from nightcrawler import polydesk as P
+    from tests.test_polydesk import _row
+
+    st = P.empty_state()
+    st["closed"] = ([_row(f"old{i}", "sports", 0.98, False, -20.0) for i in range(6)]
+                    + [_row(f"new{i}", "crypto", 0.98, True, 0.3, spread=0.01, rule=P.RULE_VERSION) for i in range(5)]
+                    + [_row("venue1", "sports", 0.97, False, -0.99, live=True, rule=P.RULE_VENUE)])
+    st["counters"].update({"settled": 12, "won": 5})
+    st["days"] = {"2026-10-08": {"pnl_usd": -120.0 + 1.5 - 0.99, "settled": 12, "won": 5}}
+    st["live_days"] = {"2026-10-08": {"pnl_usd": -0.99, "settled": 1, "won": 0}}
+    st["live_pnl_total_usd"] = -0.99
+    st["last_ok"] = NOW - 60
+    st["events"] = [{"ts": NOW - 60, "text": "Lesson: Tight books in crypto: 5 of 5 won, +$1.50 (paper).", "tone": "good"}]
+    P.save_state(P.state_path(settings), st)
+    ledger.set_kv("engine.heartbeat", NOW - 5)
+    predict = panels(build_team_state(ledger, settings, NOW))["predict"]
+    assert stat(predict, "Since fix (paper) won/settled") == "5/5" and stat(predict, "Since fix $ (paper)") == 1.5
+    assert stat(predict, "Since fix (real) won/settled") == "0/0" and stat(predict, "Since fix $ (real)") == 0.0
+    assert stat(predict, "All time $ (paper)") == pytest.approx(-118.5)  # paper only: the real loss is not in it
+    assert stat(predict, "All time $ (real)") == pytest.approx(-0.99) and stat(predict, "Open (paper)") == 0
+    assert predict["since_fix"] == {"rule": "2026-10-09b",
+                                    "paper": {"open": 0, "settled_total": 5, "won_total": 5, "pnl_total_usd": pytest.approx(1.5)},
+                                    "real": {"open": 0, "settled_total": 0, "won_total": 0, "pnl_total_usd": 0.0}}
+    assert predict["before_fix"]["paper"]["settled_total"] == 6 and predict["before_fix"]["real"]["settled_total"] == 1
+    assert predict["lessons"][-1] == "Tight books in crypto: 5 of 5 won, +$1.50 (paper)." and len(predict["lessons"]) == 5
+    assert predict["lessons"][0].startswith("Unknown book (no quote saved at entry): 0 of 6 won, -$120 (paper); 0 of 1 won")
+    assert predict["worst"]["book"] == "paper" and predict["worst"]["pnl_usd"] == -20.0
+    assert predict["events"][0]["text"].startswith("Lesson: Tight books in crypto") and predict["events"][0]["ts"] == NOW - 60
+    assert predict["label"] == "Paper money (pretend)" and predict["status"] == "working"
+    json.dumps(predict, allow_nan=False)

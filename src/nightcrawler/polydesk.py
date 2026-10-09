@@ -29,6 +29,24 @@ State lives in ``DATA_DIR/polydesk/state.json`` (atomic rewrite): open positions
 daily P&L, counters, the last poll, the live status and the last balance. The team-room panel
 (:func:`panel_state`) reads that file. The rule is a CANDIDATE: it earns a real seat only by passing lab 4's
 TRAIN / VAL / TEST, and the page says "paper" or "real" everywhere this desk's numbers appear.
+
+**The desk learns from its own record** (2026-10-09, after the paper rule lost 46 of 114 settlements in a day):
+
+* Rule versions. Every position the rule opens (paper or real) is stamped ``rule`` = :data:`RULE_VERSION` (bumped
+  whenever the rule changes; ``2026-10-09b`` is the :data:`MAX_SPREAD` guard) plus the book at entry: ``bid_in``,
+  ``ask_in``, ``spread_in``. A position adopted from the venue's book is stamped ``rule: "venue"`` (not this
+  rule's buy, no quote). Closed rows inherit the fields; rows from before the stamp have no ``rule`` and count as
+  "before the fix". The panel's ``since_fix`` is the current version's own record (open, settled, won, P&L; paper
+  and real apart) and ``before_fix`` everything else, so a new rule is never judged on an old rule's losses. The
+  per-rule record is kept as it settles (``by_rule``), not re-read from the capped closed list.
+* Lessons. From its last :data:`CLOSED_KEEP` settlements (at least :data:`LESSONS_MIN_ROWS`), the desk derives up
+  to :data:`LESSONS_MAX` plain sentences (:func:`lessons`): by category, by the book's spread at entry (tight /
+  wide / unknown book), by price band, by time to the end, and tight books per category. Every sentence carries
+  the count and the result, paper and real stated apart. ``worst`` is the single biggest losing row. When a lesson
+  is new (not a changed count: a new group, a flipped sign, a book that joined) the desk records one
+  ``Lesson: ...`` event, so the office can say it; the sentences it last derived are kept in ``last_lessons``.
+* The paper book is capped at :data:`PAPER_MAX_OPEN` open paper positions at once, so it can never balloon past
+  what the owner can read; a market skipped for the cap is not marked tried and may be bought once a slot frees.
 """
 
 from __future__ import annotations
@@ -36,6 +54,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -83,6 +102,15 @@ ADOPTED_END_GUESS_S = 3 * 3600.0  # a venue position on a market the watch list 
 EVENTS_KEEP = 40
 STATE_VERSION = 1
 FIRST_POLL_DELAY_S = 20.0
+RULE_VERSION = "2026-10-09b"  # bump when the rule changes; "b" = the MAX_SPREAD guard added 2026-10-09 18:07 UTC
+RULE_VENUE = "venue"  # a position adopted from the venue's book: not this rule's buy
+BEFORE_FIX = "before the fix"  # rows with no rule stamp (bought before RULE_VERSION existed)
+PAPER_MAX_OPEN = 60  # open paper positions at once: the paper book stays readable
+LESSONS_MIN_ROWS = 10  # settled rows before the desk states a lesson
+LESSONS_MAX = 5
+_DIGITS = re.compile(r"\d[\d,.]*")
+_CUTS = ("spread", "category", "price", "time", "tight")
+_CATEGORY_WORDS = {"sports": "sports", "crypto": "crypto"}
 
 
 def _get(
@@ -275,6 +303,9 @@ def empty_state() -> dict[str, Any]:
         "balance": None,
         "live_days": {},
         "live_pnl_total_usd": 0.0,
+        "by_rule": {},
+        "last_lessons": [],
+        "paper_full": False,
     }
 
 
@@ -284,10 +315,142 @@ def load_state(path: Path) -> dict[str, Any]:
         if isinstance(doc, dict) and doc.get("version") == STATE_VERSION:
             base = empty_state()
             base.update(doc)
+            if not base["by_rule"]:  # a file from before the per-rule record: rebuilt from the rows it kept
+                base["by_rule"] = _by_rule_from_rows(base["closed"])
             return base
     except (OSError, ValueError):
         pass
     return empty_state()
+
+
+# ---------------------------------------------------------------------- the desk's own record
+def _rule_of(row: dict[str, Any]) -> str:
+    return str(row.get("rule") or BEFORE_FIX)
+
+
+def _book_of(row: dict[str, Any]) -> str:
+    return "real" if row.get("live") else "paper"
+
+
+def _tally(by_rule: dict[str, Any], row: dict[str, Any], pnl: float, won: bool) -> None:
+    """One settlement into the per-rule record: ``by_rule[rule][paper|real] = {settled, won, pnl_usd}``."""
+    rec = by_rule.setdefault(_rule_of(row), {}).setdefault(_book_of(row), {"settled": 0, "won": 0, "pnl_usd": 0.0})
+    rec["settled"] += 1
+    rec["won"] += int(won)
+    rec["pnl_usd"] += pnl
+
+
+def _by_rule_from_rows(closed: list[dict[str, Any]]) -> dict[str, Any]:
+    out: dict[str, Any] = {}
+    for row in closed:
+        if row.get("won") is None or _num(row.get("pnl_usd")) is None:
+            continue
+        _tally(out, row, float(row["pnl_usd"]), bool(row["won"]))
+    return out
+
+
+def _money(value: float) -> str:
+    sign = "-" if value < 0 else "+"
+    size = abs(value)
+    return f"{sign}${size:,.0f}" if size >= 100 else f"{sign}${size:.2f}"
+
+
+def _cuts(row: dict[str, Any]) -> list[tuple[str, str]]:
+    """``(cut, group)`` for one settled row: its category, the book's spread at entry, the price band, the time
+    to the end at entry, and (tight books only) the category again."""
+    cat = str(row.get("category") or "other")
+    word = _CATEGORY_WORDS.get(cat, "other markets")
+    out = [("category", word.capitalize() if cat in _CATEGORY_WORDS else "Other markets (not sports or crypto)")]
+    spread = _num(row.get("spread_in"))
+    if spread is None:
+        out.append(("spread", "Unknown book (no quote saved at entry)"))
+    elif spread <= MAX_SPREAD + 1e-9:
+        out.append(("spread", f"Tight books (spread {MAX_SPREAD:.2f} or less)"))
+        out.append(("tight", f"Tight books in {word}"))
+    else:
+        out.append(("spread", f"Wide books (spread over {MAX_SPREAD:.2f})"))
+    p = float(row.get("p_in") or 0.0)
+    if p >= 0.99:
+        band = "Bought at 0.99 or above"
+    elif p >= 0.97:
+        band = "Bought at 0.97-0.99"
+    elif p >= 0.95:
+        band = "Bought at 0.95-0.97"
+    else:
+        band = "Bought under 0.95"
+    out.append(("price", band))
+    if cat == "sports":
+        when = "Sports in play"
+    elif row.get("end_known") is False:
+        when = "End time unknown at entry"
+    else:
+        left = float(row.get("end_ts") or 0.0) - float(row.get("t_in") or 0.0)
+        when = "Bought in the last hour before the end" if left <= 3600.0 else "Bought more than an hour before the end"
+    out.append(("time", when))
+    return out
+
+
+def _sentence(label: str, rows: list[dict[str, Any]]) -> tuple[str, float]:
+    """``(sentence, weight)``: the group's count and result per book, paper and real stated apart, never added;
+    the weight (the larger of the two books' absolute results) ranks the lessons."""
+    parts = []
+    weight = 0.0
+    for book in ("paper", "real"):
+        rs = [r for r in rows if _book_of(r) == book]
+        if not rs:
+            continue
+        pnl = sum(float(r["pnl_usd"]) for r in rs)
+        parts.append(f"{sum(1 for r in rs if r.get('won'))} of {len(rs)} won, {_money(pnl)} ({book})")
+        weight = max(weight, abs(pnl))
+    text = f"{label}: " + "; ".join(parts)
+    if label.startswith("Wide books"):
+        text += " — never again (now blocked)"
+    return text + ".", weight
+
+
+def lessons(closed: list[dict[str, Any]]) -> list[str]:
+    """Up to :data:`LESSONS_MAX` plain sentences from the settled rows (at least :data:`LESSONS_MIN_ROWS`, else
+    none): the most telling group of each cut (by the larger absolute result in either book), biggest first."""
+    rows = [r for r in closed if r.get("won") is not None and _num(r.get("pnl_usd")) is not None]
+    if len(rows) < LESSONS_MIN_ROWS:
+        return []
+    groups: dict[tuple[str, str], list[dict[str, Any]]] = {}
+    for r in rows:
+        for key in _cuts(r):
+            groups.setdefault(key, []).append(r)
+    scored = {key: _sentence(key[1], rs) for key, rs in groups.items()}
+    picked: list[tuple[str, str]] = []
+    for cut in _CUTS:
+        best = max((k for k in scored if k[0] == cut), key=lambda k: scored[k][1], default=None)
+        if best is not None:
+            picked.append(best)
+    rest = sorted((k for k in scored if k not in picked), key=lambda k: -scored[k][1])
+    picked += rest[: max(0, LESSONS_MAX - len(picked))]
+    picked.sort(key=lambda k: -scored[k][1])
+    return [scored[k][0] for k in picked[:LESSONS_MAX]]
+
+
+def lesson_key(text: str) -> str:
+    """A lesson with its numbers blanked: a changed count is the same lesson; a new group, a flipped sign or a
+    book that joined is a new one."""
+    return _DIGITS.sub("#", text)
+
+
+def worst_row(closed: list[dict[str, Any]]) -> dict[str, Any] | None:
+    """The single biggest losing settled row, labelled paper or real as the row is; None without a loss."""
+    rows = [r for r in closed if r.get("won") is not None and _num(r.get("pnl_usd")) is not None and r["pnl_usd"] < 0]
+    if not rows:
+        return None
+    r = min(rows, key=lambda r: float(r["pnl_usd"]))
+    return {
+        "question": str(r.get("question") or r.get("slug") or "")[:120],
+        "p_in": _num(r.get("p_in")),
+        "category": str(r.get("category") or "other"),
+        "pnl_usd": float(r["pnl_usd"]),
+        "book": _book_of(r),
+        "rule": _rule_of(r),
+        "settled_at": _num(r.get("settled_at")),
+    }
 
 
 def save_state(path: Path, state: dict[str, Any]) -> None:
@@ -339,6 +502,7 @@ class PolyDesk:
             "theta": self.theta,
             "hours": self.hours,
             "ticket_usd": self.ticket,
+            "version": RULE_VERSION,
             "label": f"candidate rule: buy at >= {self.theta:.2f} within the last {self.hours:g} h when bid and ask "
             f"are within {MAX_SPREAD:.2f}, ${self.ticket:.0f} paper tickets. Lab 4 TRAIN (2026-10-09): NO EDGE in any "
             "cell after fees, so this rule never gets real money",
@@ -467,6 +631,7 @@ class PolyDesk:
         settled = self._settle(now, {m["slug"] for m in watch})
         if bought and st["mode"] == "live" and self.reader is not None:
             adopted += self._reconcile(now, watch)  # the venue summary after this round's real buys
+        self._learn(now)
         st["watched"] = len(watch)
         st["last_ok"] = now
         st["last_error"] = None
@@ -536,6 +701,7 @@ class PolyDesk:
                 "live": True,
                 "adopted": True,
                 "end_known": m is not None,
+                "rule": RULE_VENUE,
             }
             st["counters"]["bought"] += 1
             adopted += 1
@@ -599,6 +765,8 @@ class PolyDesk:
         st = self.state
         bought = 0
         tried: set[str] = set(st.setdefault("tried", []))
+        paper_open = sum(1 for p in st["positions"].values() if not p.get("live"))
+        st["paper_full"] = bool(st.get("paper_full")) and paper_open >= PAPER_MAX_OPEN
         for m in watch:
             slug = m["slug"]
             if slug in st["positions"] or slug in tried:
@@ -624,6 +792,7 @@ class PolyDesk:
                 continue
             price = min(price, MAX_PRICE)
             coef = m["fee_coef"] if m.get("fee_coef") is not None else US_TAKER
+            stamp = {"rule": RULE_VERSION, "bid_in": float(bid), "ask_in": float(ask), "spread_in": float(ask) - float(bid)}
             if st["mode"] == "live" and self.client is not None:
                 if side != "long":
                     continue  # live: the YES side only (the venue prices every order on YES); shorts stay paper-only
@@ -660,6 +829,7 @@ class PolyDesk:
                     "event": m.get("event"),
                     "live": True,
                     "order_id": fill.get("id"),
+                    **stamp,
                 }
                 st["counters"]["bought"] += 1
                 bought += 1
@@ -673,6 +843,11 @@ class PolyDesk:
                     "polydesk_order_filled",
                     {"slug": slug, "order_id": fill.get("id"), "contracts": shares, "price": p_fill, "cost_usd": cost},
                 )
+                continue
+            if paper_open >= PAPER_MAX_OPEN:  # not marked tried: the market may be bought once a slot frees
+                if not st["paper_full"]:
+                    st["paper_full"] = True
+                    self._event(now, f"Paper book full ({PAPER_MAX_OPEN} open): no new paper buys until some settle.")
                 continue
             shares = self.ticket / price
             fee = shares * coef * price * (1.0 - price)
@@ -689,8 +864,10 @@ class PolyDesk:
                 "end_ts": m["end_ts"],
                 "event": m.get("event"),
                 "live": False,
+                **stamp,
             }
             tried.add(slug)
+            paper_open += 1
             st["counters"]["bought"] += 1
             bought += 1
             self._event(
@@ -763,6 +940,7 @@ class PolyDesk:
             d["pnl_usd"] += pnl
             d["settled"] += 1
             d["won"] += int(won)
+            _tally(st.setdefault("by_rule", {}), pos, pnl, won)
             st["closed"].insert(
                 0,
                 {**pos, "settled_at": now, "value": value, "pnl_usd": pnl, "won": won},
@@ -792,13 +970,28 @@ class PolyDesk:
             time.sleep(REQ_SLEEP_S)
         return settled
 
+    def _learn(self, now: float) -> None:
+        """The desk reads its own settled rows after every round. A NEW lesson (a group, a sign or a book not in
+        the last derived set; a changed count is not news) is said once as a ``Lesson: ...`` event."""
+        st = self.state
+        new = lessons(st["closed"])
+        old = st.get("last_lessons") or []
+        known = {lesson_key(t) for t in old}
+        fresh = [t for t in new if lesson_key(t) not in known]
+        if fresh:
+            self._event(now, f"Lesson: {fresh[0]}", "bad" if "-$" in fresh[0] else "good")
+        if new != old:
+            st["last_lessons"] = new
+
 
 # ---------------------------------------------------------------------- the panel's view
 def panel_state(settings: Settings, now: float) -> dict[str, Any]:
     """What the team room shows for this desk (reads the state file only). Paper and real money are
     tallied apart (``paper`` / ``real``: open positions, money at risk, today's and all-time results), so
     paper positions left over from before a switch to live are never shown as real ones. The top-level
-    ``open``/``today``/``*_total`` keys are the combined book."""
+    ``open``/``today``/``*_total`` keys are the combined book. ``since_fix`` is the current rule version's own
+    record and ``before_fix`` everything else (older rows, venue adoptions), each with paper and real apart;
+    ``lessons`` and ``worst`` are derived from the closed rows (module docstring)."""
     st = load_state(state_path(settings))
     enabled = bool(settings.polydesk_enabled)
     today = datetime.fromtimestamp(now, UTC).strftime("%Y-%m-%d")
@@ -835,6 +1028,26 @@ def panel_state(settings: Settings, now: float) -> dict[str, Any]:
             "pnl_usd": float(day["pnl_usd"]) - real_today["pnl_usd"],
             "settled": int(day["settled"]) - real_today["settled"],
             "won": int(day["won"]) - real_today["won"],
+        },
+    }
+    since_rec = (st.get("by_rule") or {}).get(RULE_VERSION) or {}
+    since_open = [p for p in st["positions"].values() if p.get("rule") == RULE_VERSION]
+
+    def _since(book: str) -> dict[str, Any]:
+        rec = since_rec.get(book) or {}
+        return {
+            "open": sum(1 for p in since_open if _book_of(p) == book),
+            "settled_total": int(rec.get("settled") or 0),
+            "won_total": int(rec.get("won") or 0),
+            "pnl_total_usd": float(rec.get("pnl_usd") or 0.0),
+        }
+
+    since_fix: dict[str, Any] = {"rule": RULE_VERSION, "paper": _since("paper"), "real": _since("real")}
+    before_fix: dict[str, Any] = {  # everything the current rule did not buy: the whole book less its own record
+        "rule": BEFORE_FIX,
+        **{
+            book: {k: whole[k] - since_fix[book][k] for k in ("open", "settled_total", "won_total", "pnl_total_usd")}
+            for book, whole in (("paper", paper), ("real", real))
         },
     }
     return {
@@ -875,4 +1088,9 @@ def panel_state(settings: Settings, now: float) -> dict[str, Any]:
         ],
         "events": st.get("events", [])[:EVENTS_KEEP],
         "polls": int(c.get("polls") or 0),
+        "since_fix": since_fix,
+        "before_fix": before_fix,
+        "lessons": lessons(st["closed"]),
+        "worst": worst_row(st["closed"]),
+        "paper_max_open": PAPER_MAX_OPEN,
     }
