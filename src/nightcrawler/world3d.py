@@ -1558,7 +1558,7 @@ _M_WORLD = r"""
       vertexShader: "varying vec2 vUv; varying float vFade; void main() { vUv = uv; vec4 c = modelViewMatrix * instanceMatrix * vec4(0.0, 0.0, 0.0, 1.0); vFade = smoothstep(1.4, 3.6, -c.z); c.xy += position.xy * length(instanceMatrix[0].xyz); gl_Position = projectionMatrix * c; }",
       fragmentShader: "uniform sampler2D uMap; varying vec2 vUv; varying float vFade; void main() { float a = texture2D(uMap, vUv).r; gl_FragColor = vec4(vec3(1.0, 0.62, 0.3) * a * 0.55 * vFade, 1.0); }" });
     const halos = new THREE.InstancedMesh(new THREE.PlaneGeometry(1, 1), haloMat, lanterns.length);
-    lanterns.forEach(function (q, i) { halos.setMatrixAt(i, mat4([q.p[0], q.p[1] + 1.88 * q.h, q.p[2]], null, 0.9)); });
+    lanterns.forEach(function (q, i) { halos.setMatrixAt(i, mat4([q.p[0], q.p[1] + 1.88 * q.h, q.p[2]], null, 0.72)); });
     halos.frustumCulled = false; halos.renderOrder = 4; scene.add(halos); props.lanternHalos = halos;
     // plants
     instanced(crag(0.5, 1, 3, 1), MAT.leaf, bushes, false);
@@ -2288,7 +2288,7 @@ _M_LIFE = r"""
       a.walking = a.state === "out" || a.state === "back";
       a.yaw += angleDiff(a.yawGoal, a.yaw) * (1 - Math.exp(-dt * (a.walking ? 7 : 3)));
       a.yawS += angleDiff(a.yaw, a.yawS) * (1 - Math.exp(-dt * 1.4));
-      const working = a.members.some(function (id) { return (members[id] || {}).status === "working"; });
+      let working = false; for (let j = 0; j < a.members.length; j++) if (members[a.members[j]] && members[a.members[j]].status === "working") working = true;
       const st = a.st;
       st.walking = a.walking; st.speed = a.speed; st.working = working && a.state === "home"; st.seated = a.state === "home" && (k === "nyx" || k === "rook");
       st.carrying = !!a.carrying; st.glide = a.glide;
@@ -2413,7 +2413,7 @@ _M_LIFE = r"""
     const gap = _w1.distanceTo(_w2);
     cube.mesh.position.addVectors(_w1, _w2).multiplyScalar(0.5);
     cube.mesh.position.x += Math.sin(a.yaw) * 0.05; cube.mesh.position.z += Math.cos(a.yaw) * 0.05;
-    cube.mesh.scale.setScalar(clamp(gap / 0.3, 0.75, 1.4));
+    cube.mesh.scale.setScalar(clamp(gap / 0.36, 0.7, 1.15));
   }
   // ambient life: now and then one idle member strolls (coffee at the kiosk, a word with Voss at the table); no
   // words, no numbers, and never while there is real work in the queue or the camera is on a real moment
@@ -2499,7 +2499,7 @@ _M_LIFE = r"""
 
   // Rook's model lost its amber eyes: two small glowing spheres on his Head bone, facing forward, gently pulsing
   const rookEyeMat = new THREE.MeshBasicMaterial({ color: hdr(0xffa22e, 3.2) });
-  const rookEyeHalo = new THREE.SpriteMaterial({ map: glowTex, color: 0xff9a2a, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.8 });
+  const rookEyeHalo = new THREE.SpriteMaterial({ map: glowTex, color: 0xff7a14, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.4 });
   function rookEyes(A) {
     const head = A.bones && A.bones.Head; let mesh = null;
     A.model.traverse(function (o) { if (o.isSkinnedMesh && !mesh) mesh = o; });
@@ -2524,7 +2524,7 @@ _M_LIFE = r"""
       const at = head.worldToLocal(A.root.localToWorld(new THREE.Vector3(ex, ey, front - r * 0.25)));
       eye.position.copy(at); eye.scale.set(1.25 / headS, 0.8 / headS, 0.6 / headS);  // an amber slit, facing forward
       eye.quaternion.copy(head.getWorldQuaternion(new THREE.Quaternion()).invert().multiply(A.root.getWorldQuaternion(new THREE.Quaternion())));
-      const halo = new THREE.Sprite(rookEyeHalo); halo.position.copy(at); halo.scale.setScalar(r * 6 / headS);
+      const halo = new THREE.Sprite(rookEyeHalo); halo.position.copy(at); halo.scale.setScalar(r * 4.5 / headS);
       head.add(eye, halo);
     });
     A.eyes = true;
@@ -2566,12 +2566,13 @@ _M_LIFE = r"""
   async function loadMember(id, libReady) {
     const a = actors[id], spec = MODEL_CAST[id];
     try {
+      // the model downloads alongside the move library; it swaps in once both are here
+      const files = Promise.all([gltfLoader.loadAsync(ASSET + spec.asset)].concat(spec.cart ? [gltfLoader.loadAsync(ASSET + spec.cart)] : []));
+      files.catch(function () {});  // (handled below, after the library)
       const lib = await libReady, kind = String(spec.kind || "prop");
       if (!motionMod) throw new Error("no motion module");
       if (kind === "biped" && !lib) throw new Error("no move library");
-      const files = [gltfLoader.loadAsync(ASSET + spec.asset)];
-      if (spec.cart) files.push(gltfLoader.loadAsync(ASSET + spec.cart));
-      const got = await Promise.all(files);
+      const got = await files;
       const s = { id: id, file: spec.asset, kind: kind, walk: spec.walk || "walk_casual", yaw: Number(spec.yaw) || 0,
                   height: spec.cart ? Number(spec.body_height) || 0.4 : Number(spec.height) || a.height };
       const A = new motionMod.Actor(got[0].scene, s, lib);
@@ -2600,7 +2601,7 @@ _M_LIFE = r"""
     airship: [propSpot(WF, 27.3, -0.3, -1.5, Math.PI / 2)],
     kiosk: [propSpot(WF, 23.55, 0, 5.5, -Math.PI / 2)],
     rookdesk: [propSpot(VT2, 0.2, 0, -0.62)],
-    arch: [propSpot(WS2, 0, 0, 4.55), propSpot(DN2, 0, 0, 4.55)],
+    arch: [propSpot(WS2, 0, 0, 4.55), propSpot(DN2, 0, 0, 4.55), { at: V3(0, 1.8, -9.3), yaw: 0 }],  // the workshop, the den, the observatory steps
     lantern: LANTERN_SPOTS.map(function (q) { return { at: q, yaw: 0 }; }),
     island: ISLAND_SPOTS.map(function (q) { return { at: V3(q[0], q[1], q[2]), yaw: q[3], bob: q[4] }; }),
   };
@@ -2618,7 +2619,7 @@ _M_LIFE = r"""
     lantern: function (h) {  // a warm bulb and a soft halo in the lantern's head; the procedural lamps it replaces make way
       const bulb = new THREE.Mesh(G.sph(0.06, 12, 8), props.lanternBulbs.material); bulb.position.y = 2.27; bulb.scale.set(1, 1.4, 1); h.add(bulb);
       const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: 0xffa04d, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.5 }));
-      halo.position.y = 2.27; halo.scale.setScalar(1.1); h.add(halo); (props.lanternGlow = props.lanternGlow || []).push(halo);
+      halo.position.y = 2.27; halo.scale.setScalar(0.8); h.add(halo); (props.lanternGlow = props.lanternGlow || []).push(halo);
       if (props.lanternGlow.length < PLACE.lantern.length) return;  // the rest once, after the last copy is placed
       const zero = new THREE.Matrix4().makeScale(0, 0, 0);
       lanterns.forEach(function (q, i) {
@@ -2745,7 +2746,10 @@ _M_LIFE = r"""
   flushStatic();
   const LIGHT = { working: 0x4be08a, waiting: 0xf5b133, blocked: 0xff4d4d, idle: 0x6c717c, absent: 0x6c717c };
   const WORST = ["blocked", "working", "waiting", "idle"];
-  function worstStatus(ids) { const st = ids.map(function (id) { return (members[id] || {}).status; }); for (let i = 0; i < WORST.length; i++) if (st.indexOf(WORST[i]) >= 0) return WORST[i]; return "idle"; }
+  function worstStatus(ids) {  // (no allocation: the acting asks every frame)
+    for (let i = 0; i < WORST.length; i++) for (let j = 0; j < ids.length; j++) { const m = members[ids[j]]; if (m && m.status === WORST[i]) return WORST[i]; }
+    return "idle";
+  }
   function updateLamps() {
     Object.keys(lamps).forEach(function (k) {
       const st = worstStatus(ROOMS[k].members), c = LIGHT[st] || LIGHT.idle, L = lamps[k];
@@ -2798,7 +2802,7 @@ _M_LIFE = r"""
   // portrait phone it comes closer so faces stay readable. Each shot fills one reused object (no allocation).
   const _arr = { pos: V3(0, 0, 0), look: V3(0, 0, 0) }, _map = { pos: V3(0, 0, 0), look: V3(1, 0, 1) }, _fol = { pos: V3(0, 0, 0), look: V3(0, 0, 0) };
   function arrivalShot(t) {
-    const tall = camera.aspect < 0.85, z = (tall ? 5.0 : 7.4) + Math.sin(t * 0.055) * (tall ? 0.45 : 0.9), x = 0.1 + Math.sin(t * 0.041) * 0.35;
+    const tall = camera.aspect < 0.85, z = (tall ? 5.0 : 6.55) + Math.sin(t * 0.055) * (tall ? 0.45 : 0.4), x = 0.1 + Math.sin(t * 0.041) * 0.35;
     _arr.pos.set(x, 2.05 + Math.sin(t * 0.09) * 0.07, z);
     _arr.look.set(-0.45 + Math.sin(t * 0.032) * (tall ? 0.8 : 2.0), 0.95, -0.9);
     return _arr;
@@ -2828,6 +2832,17 @@ _M_LIFE = r"""
     const f = blocked(_fh, want); if (f < 1) want.lerpVectors(_fh, want, Math.max(0.25, f - 0.08));
     _fol.look.copy(base).addScaledVector(_fwd, lead ? 0.1 : 2.0).setY(base.y + h * (lead ? 0.5 : 0.55));
     return _fol;
+  }
+  // a close shot of someone where they stopped (a hand-off, a delivery): in front of them, a little to the side
+  const _face = { pos: V3(0, 0, 0), look: V3(0, 0, 0) };
+  function faceShot(a) {
+    const base = a.group.position, h = a.height;
+    _fwd.set(Math.sin(a.yawS), 0, Math.cos(a.yawS)); _side.set(_fwd.z, 0, -_fwd.x);
+    _fh.copy(base); _fh.y += h * 0.7;
+    const want = _face.pos.copy(base).addScaledVector(_fwd, 1.9 + h * 0.55).addScaledVector(_side, 0.7); want.y += Math.max(1.4, h * 0.85 + 0.5);
+    const f = blocked(_fh, want); if (f < 1) want.lerpVectors(_fh, want, Math.max(0.3, f - 0.08));
+    _face.look.copy(base).setY(base.y + h * 0.6);
+    return _face;
   }
   function roomShot(room) { return SHOTS[room] || SHOTS.table; }
   const cam = { pos: V3(0, 0, 0), look: V3(0, 0, 0) };
@@ -2880,31 +2895,38 @@ _M_LIFE = r"""
   // the director: who the drone is on
   let focus = null, pinned = null, idleSince = 0, tour = -1, tourUntil = 0;
   const TOUR = ["workshop", "den", "table", "vault", "archive", "dock", "observatory"];
+  // each shot's key and function made once (the director runs every frame: no new strings or closures)
+  const ROOMCUT = {};
+  Object.keys(SHOTS).forEach(function (r) { ROOMCUT[r] = { key: "room:" + r, fn: function () { return SHOTS[r]; } }; });
+  ACTOR_KEYS.forEach(function (k) { const a = actors[k];
+    a.cuts = { follow: { key: "follow:" + k, fn: function () { return followShot(a); } }, face: { key: "face:" + k, fn: function () { return faceShot(a); } } }; });
+  function cutRoom(room) { const c = ROOMCUT[room] || ROOMCUT.table; cut(c.key, c.fn); }
   function director() {
     if (pinned) {
       if (pinned === "map") cut("map", mapShot);
-      else if (pinned === "observatory") cut("room:observatory", function () { return SHOTS.observatory; });
-      else { const a = actors[pinned]; if (a && a.walking) cut("follow:" + a.key, function () { return followShot(a); });
-             else if (a) cut("room:" + a.room, function () { return roomShot(a.room); }); }
+      else if (pinned === "observatory") cutRoom("observatory");
+      else { const a = actors[pinned]; if (a && a.walking) cut(a.cuts.follow.key, a.cuts.follow.fn); else if (a) cutRoom(a.room); }
       return;
     }
     if (focus && simT < focus.until) {
       const a = focus.actor;
-      if (a.walking && simT > focus.start + focus.lead) cut("follow:" + a.key, function () { return followShot(a); });
-      else if (!a.walking) cut("room:" + a.room, function () { return roomShot(a.room); });
+      if (a.walking && simT > focus.start + focus.lead) cut(a.cuts.follow.key, a.cuts.follow.fn);
+      else if (!a.walking && a.state === "visit") cut(a.cuts.face.key, a.cuts.face.fn);
+      else if (!a.walking) cutRoom(a.room);
       return;
     }
     if (focus) { focus = null; idleSince = simT; tour = -1; }
     if (simT - idleSince < 40) { cut("arrival", arrivalShot); return; }
     if (simT >= tourUntil) { tour += 1; tourUntil = simT + 12;
       if (tour >= TOUR.length) { tour = -1; idleSince = simT; cut("arrival", arrivalShot); return; } }
-    const room = TOUR[tour]; cut("room:" + room, function () { return roomShot(room); });
+    cutRoom(TOUR[tour]);
   }
   function focusOn(actor, lead, seconds) { if (!actor) return; focus = { actor: actor, start: simT, lead: lead, until: simT + seconds }; renderCard(); }
 
   // ============================================================= THE HUD: bubbles, labels, chips, the caption
   const _v = new THREE.Vector3();
-  function toScreen(p) { const v = _v.copy(p).project(camera); return { x: (v.x + 1) / 2 * window.innerWidth, y: (1 - v.y) / 2 * window.innerHeight, ok: v.z < 1 && v.z > -1 }; }
+  const _scr = { x: 0, y: 0, ok: false };  // (one reused result: read it before the next call)
+  function toScreen(p) { const v = _v.copy(p).project(camera); _scr.x = (v.x + 1) / 2 * window.innerWidth; _scr.y = (1 - v.y) / 2 * window.innerHeight; _scr.ok = v.z < 1 && v.z > -1; return _scr; }
   const bubbles = [];
   function speak(actor, memberId, text, tone, seconds) {
     if (!actor || !text) return;
@@ -2932,10 +2954,13 @@ _M_LIFE = r"""
     const at = (LAMP_AT[k] || V3(0, 0, 0)).clone(); at.y += 2.2;
     const d = document.createElement("div"); d.className = "label"; d.textContent = ROOMS[k].title; d.style.opacity = "0"; labelsEl.appendChild(d); return { el: d, at: at };
   });
+  let labelsShown = false;
   function updateLabels() {
     const show = shotKey === "map";
-    labels.forEach(function (l) { const s = toScreen(l.at), ok = show && s.ok && s.x > 10 && s.x < window.innerWidth - 10 && s.y > 100 && s.y < window.innerHeight - 160;
-      l.el.style.opacity = ok ? "1" : "0"; if (ok) { l.el.style.left = (s.x - l.el.offsetWidth / 2) + "px"; l.el.style.top = s.y + "px"; } });
+    if (!show && !labelsShown) return;  // (only the map shows them; nothing to do otherwise)
+    labelsShown = show;
+    for (let i = 0; i < labels.length; i++) { const l = labels[i], s = toScreen(l.at), ok = show && s.ok && s.x > 10 && s.x < window.innerWidth - 10 && s.y > 100 && s.y < window.innerHeight - 160;
+      l.el.style.opacity = ok ? "1" : "0"; if (ok) { l.el.style.left = (s.x - l.el.offsetWidth / 2) + "px"; l.el.style.top = s.y + "px"; } }
   }
   function dropLabel(pnl, at) {
     const won = (pnl || 0) >= 0; dropEl.textContent = fmtSigned(pnl); dropEl.style.color = won ? "var(--good)" : "var(--bad)";
@@ -3030,6 +3055,7 @@ _M_LIFE = r"""
     jet.queue.unshift({ dest: "vault", hold: 4.5, carry: won ? "gold" : "red", onArrive: function (a) {
       deliverCube(a, pnl);
       if (pnl > 0) oneShot(a, "cheer"); else if (pnl < 0) oneShot(a, "shrug");
+      if (focus && focus.actor === a) focus.until = Math.max(focus.until, simT + (pnl > 0 ? 10 : 5));  // the camera stays for it
     } });
     focusOn(jet, 2.0, 8);
   }
@@ -3155,7 +3181,7 @@ _M_LIFE = r"""
     if (props.islands) for (let i = 0; i < props.islands.length; i++) { const q = props.islands[i]; q.h.position.y = q.y + Math.sin(simT * 0.21 + q.ph) * 0.35; q.h.rotation.y += dt * 0.004; }
     if (props.lanternGlow) for (let i = 0; i < props.lanternGlow.length; i++) {  // the prop lanterns' halos fade near the lens too
       const s = props.lanternGlow[i]; s.getWorldPosition(_pp); s.material.opacity = 0.5 * smoothstep(_pp.distanceTo(camera.position), 1.6, 4.0); }
-    rookEyeMat.color.setRGB(1, 0.635, 0.18).multiplyScalar(2.6 + Math.sin(simT * 1.7) * 0.9); rookEyeHalo.opacity = 0.62 + Math.sin(simT * 1.7) * 0.2;
+    rookEyeMat.color.setRGB(1, 0.42, 0.06).multiplyScalar(1.8 + Math.sin(simT * 1.7) * 0.55); rookEyeHalo.opacity = 0.36 + Math.sin(simT * 1.7) * 0.12;
     for (let i = 0; i < props.drones.length; i++) { const d = props.drones[i], a = simT * d.speed + d.phase;
       d.g.position.set(Math.cos(a) * d.r, d.y + Math.sin(simT * 0.9 + d.phase) * 0.3, Math.sin(a) * d.r * 0.8 + 1); d.g.rotation.y = -a; d.g.rotation.z = Math.sin(simT * 2 + d.phase) * 0.05; }
     for (let i = 0; i < props.parcels.n; i++) { const u = ((simT * 2.2 + i * tubeLen / props.parcels.n) % tubeLen) / tubeLen;
@@ -3163,6 +3189,7 @@ _M_LIFE = r"""
     props.parcels.im.instanceMatrix.needsUpdate = true;
     for (let i = 0; i < screens.length; i++) { const s = screens[i]; s.mesh.material.color.setScalar(s.base * (0.92 + Math.sin(simT * 1.7 + s.phase) * 0.08)); }
     board.lookAt(camera.position.x, board.position.y, camera.position.z);
+    board.material.opacity = smoothstep(camera.position.distanceTo(board.position), 2.0, 4.2);  // it never fills the lens
     const r = actors.rook; if (r && !r.actor && r.impact > 0.5) { const d = r.group.position.distanceTo(camera.position); if (d < 9) shake = Math.max(shake, (1 - d / 9) * r.impact); }
     ambientLife();
   }
