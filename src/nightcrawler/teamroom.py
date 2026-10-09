@@ -933,9 +933,17 @@ def _predict(ctx: _Ctx) -> dict[str, Any]:
             doing += (f" Paper (pretend, from before the switch): {paper['open']} still running off; "
                       f"{paper['won_total']}/{paper['settled_total']} won, {paper['pnl_total_usd']:+.2f} $.")
     else:
-        doing = (f"Watching {d['watched']:,} markets; {d['open']} paper positions open; today {t['won']}/{t['settled']} "
-                 f"settled won, {t['pnl_usd']:+.2f} $; all time {d['won_total']}/{d['settled_total']} won, "
-                 f"{d['pnl_total_usd']:+.2f} $ (paper money, pretend)." + account)
+        pt = paper.get("today") or t
+        paper_text = (f"Paper (pretend): {paper.get('open', d['open'])} open; today {pt['won']}/{pt['settled']} won, "
+                      f"{pt['pnl_usd']:+.2f} $; all time {paper.get('won_total', d['won_total'])}/"
+                      f"{paper.get('settled_total', d['settled_total'])} won, {paper.get('pnl_total_usd', d['pnl_total_usd']):+.2f} $.")
+        if real and (real["open"] or real["settled_total"]):
+            rt = real["today"]
+            doing = (f"REAL money (no new buys): {real['open']} open, ${real['at_risk_usd']:.2f} at risk; today "
+                     f"{rt['won']}/{rt['settled']} won, {rt['pnl_usd']:+.2f} $; all time {real['won_total']}/"
+                     f"{real['settled_total']} won, {real['pnl_total_usd']:+.2f} $. " + paper_text + account)
+        else:
+            doing = f"Watching {d['watched']:,} markets. " + paper_text + account
     venue = d.get("exchange") if isinstance(d.get("exchange"), dict) else None
     if venue and float(venue.get("contracts") or 0) > 0:
         doing += (f" Venue holds {float(venue['contracts']):g} real contract(s): cost ${float(venue['cost_usd']):.2f}, "
@@ -959,10 +967,13 @@ def _predict(ctx: _Ctx) -> dict[str, Any]:
                  _stat("All time $ (paper)", round(d["pnl_total_usd"], 2), "usd")]
         if isinstance(bal, dict) and bal.get("cash") is not None:
             stats.append(_stat("Polymarket cash", round(float(bal["cash"]), 2), "usd"))
+        if real and (real["open"] or real["settled_total"]):
+            stats += [_stat("Open (real)", real["open"], "count"), _stat("At risk (real)", round(real["at_risk_usd"], 2), "usd"),
+                      _stat("All time $ (real)", round(real["pnl_total_usd"], 2), "usd")]
         if venue and float(venue.get("contracts") or 0) > 0:
             stats += [_stat("Venue contracts (real)", float(venue["contracts"]), "count"),
                       _stat("Venue value (real)", round(float(venue["value_usd"]), 2), "usd")]
-        headline = _headline(d["open"], "count", "paper positions open")
+        headline = _headline(paper.get("open", d["open"]), "count", "paper positions open")
     return _panel("predict", status, last, ctx.text(doing), headline, stats, events, rule=d["rule"],
                   positions=d["positions"], label=d["label"], mode=d.get("mode"),
                   open_real=int(real.get("open") or 0), open_paper=int(paper.get("open") or 0))

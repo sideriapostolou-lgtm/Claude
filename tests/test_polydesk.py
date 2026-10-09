@@ -283,3 +283,14 @@ def test_page_members_carry_the_desks_positions() -> None:
                                                 "live": False}]
     assert members["predict"]["label"] == "Paper money (pretend)" and "positions" not in members["crawler"]
     assert (members["predict"]["open_real"], members["predict"]["open_paper"]) == (0, 0)  # counts come from the panel
+
+
+def test_a_wide_or_one_sided_book_is_never_near_certain(gw: Gateway, tmp_path) -> None:
+    """2026-10-09: the paper desk bought asks above theta on books like bid 0.14 / ask 0.69 and lost 60% of them."""
+    gw.markets = [_market("wide", "crypto", 1800), _market("gap", "crypto", 1800), _market("oneside", "crypto", 1800),
+                  _market("tight", "crypto", 1800)]
+    gw.quotes = {"wide": (0.14, 0.98), "gap": (0.02, 0.98), "oneside": (None, 0.99), "tight": (0.97, 0.98)}
+    desk = _desk(tmp_path)
+    r = desk.poll(NOW)
+    assert r["bought"] == 1 and set(desk.state["positions"]) == {"tight"}
+    assert "wide" not in desk.state["tried"] and "within 0.03" in desk.state["rule"]["label"]

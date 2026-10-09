@@ -76,6 +76,7 @@ NOT_LIVE_PERIODS = {"NS", "", "CAN", "SUS", "PST", "FT", "AOT", "FINAL", "ENDED"
 THREADS = 8
 REQ_SLEEP_S = 0.05
 MAX_PRICE = 0.999
+MAX_SPREAD = 0.03  # a quote counts as near-certain only when bid and ask agree (a wide book is not a belief)
 US_TAKER = 0.0695
 CLOSED_KEEP = 200
 ADOPTED_END_GUESS_S = 3 * 3600.0  # a venue position on a market the watch list no longer carries: check settlement after this
@@ -338,8 +339,8 @@ class PolyDesk:
             "theta": self.theta,
             "hours": self.hours,
             "ticket_usd": self.ticket,
-            "label": f"candidate rule: buy at >= {self.theta:.2f} within the last {self.hours:g} h, "
-            f"${self.ticket:.0f} paper tickets (not yet passed the lab)",
+            "label": f"candidate rule: buy at >= {self.theta:.2f} within the last {self.hours:g} h when bid and ask "
+            f"are within {MAX_SPREAD:.2f}, ${self.ticket:.0f} paper tickets (not yet passed the lab)",
         }
         self._stop = threading.Event()
         self._thread: threading.Thread | None = None
@@ -607,6 +608,11 @@ class PolyDesk:
             if not q:
                 continue
             ask, bid = q.get("best_ask"), q.get("best_bid")
+            # Both sides of the book must say "near-certain". A thin book quoting bid 0.14 / ask 0.69 has an ask
+            # that can sit above theta while the market believes nothing of the kind; the paper desk bought such
+            # quotes on 2026-10-09 and lost 60% of them. The lab's rule reads trade prints, which have no such gap.
+            if ask is None or bid is None or ask - bid > MAX_SPREAD + 1e-9:
+                continue
             side: str | None = None
             price = 0.0
             if ask is not None and ask >= self.theta:
