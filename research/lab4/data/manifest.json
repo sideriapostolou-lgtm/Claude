@@ -1,0 +1,12 @@
+{
+ "fills": 8514,
+ "markets_listed": 5,
+ "markets_with_tapes": 5,
+ "run": {
+  "lookback_days": 3.0,
+  "min_volume": 50000.0,
+  "since": "2026-10-08T00:00:00+00:00",
+  "until": "2026-10-09T14:38:56.613361+00:00",
+  "updated_at": "2026-10-09T14:39:05+00:00"
+ }
+}
