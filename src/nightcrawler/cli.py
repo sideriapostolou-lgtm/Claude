@@ -18,6 +18,11 @@ Subcommands (all accept ``--env-file`` and ``--log-level`` before the subcommand
 * ``reset-halt [--yes]`` - clear a drawdown halt (writes a ``reset`` receipt).
 * ``config [--json]`` - print public settings (no secrets).
 * ``dashboard`` - serve the dashboard only (reads the ledger).
+* ``learn status [--json]`` - what the learning loop has taped, registered, scored and receipted
+  (reads ``DATA_DIR/learn/learn.db`` read-only; never creates it).
+* ``learn run [--incremental] [--max-seconds S]`` - one learner run now (docs/LEARNING.md §2): the bot
+  starts the same command every LEARN_INTERVAL_MIN with ``--parent-pid``, which also lowers its
+  priority and limits (nice 19, 1 GB, CPU) and stops it when the bot is gone.
 
 Exit codes: :data:`EXIT_OK` 0, :data:`EXIT_ERROR` 1 (runtime failure),
 :data:`EXIT_USAGE` 2 (argparse), :data:`EXIT_CONFIG` 3 (invalid settings, live
@@ -148,6 +153,16 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--json", action="store_true")
 
     sub.add_parser("dashboard", help="serve the read-only dashboard only")
+
+    s = sub.add_parser("learn", help="the self-learning loop (docs/LEARNING.md)")
+    ls = s.add_subparsers(dest="learn_cmd", metavar="ACTION")
+    ls.required = True
+    r = ls.add_parser("status", help="coins taped, strategy versions scored, receipts waiting")
+    r.add_argument("--json", action="store_true")
+    r = ls.add_parser("run", help="replay finished days and score every strategy version now")
+    r.add_argument("--incremental", action="store_true", help="only what is new since the last run (the default)")
+    r.add_argument("--max-seconds", type=float, default=None, help="wall budget (default 600)")
+    r.add_argument("--parent-pid", type=int, default=None, help=argparse.SUPPRESS)  # set by the bot
     return p
 
 
@@ -762,6 +777,112 @@ def cmd_dashboard(args: argparse.Namespace, settings: Settings) -> int:
     return EXIT_OK
 
 
+def _utc(ts: Any) -> str:
+    if not isinstance(ts, (int, float)):
+        return "-"
+    return datetime.fromtimestamp(ts, tz=timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+
+
+def _learn_report(settings: Settings, now: float) -> dict[str, Any]:
+    """Everything ``learn status`` shows, read-only (learn.db, and the running bot's status in the ledger)."""
+    from nightcrawler.learn.card import learning_card_state
+    from nightcrawler.learn.store import LearnStore, db_path
+
+    card = learning_card_state(settings, now)
+    report: dict[str, Any] = {"enabled": settings.learn_enabled, "path": str(db_path(settings.data_dir)),
+                              "interval_min": settings.learn_interval_min, "cap_gb": settings.learn_disk_cap_gb,
+                              "card": card, "store": None, "variants": [], "last_run": None, "last_ok": None,
+                              "recorder": None}
+    if settings.db_path.is_file():
+        with _open_ledger(settings) as ledger:
+            status = ledger.get_kv("engine.status")
+        report["recorder"] = status.get("learning") if isinstance(status, dict) else None
+    if not db_path(settings.data_dir).is_file():
+        return report
+    with LearnStore(db_path(settings.data_dir), readonly=True) as store:
+        report.update(store=store.summary(), last_run=store.get_meta("learner.last_run"),
+                      last_ok=store.get_meta("learner.last_ok"))
+        day = store.latest_scoreboard_day()
+        board = {r["variant_hash"]: r for r in store.scoreboard(day)} if day else {}
+        for v in store.variants():
+            row = board.get(v["hash"], {})
+            report["variants"].append({"hash12": v["hash"][:12], "name": v["name"], "family": v["family"],
+                                       "status": v["status"], "t0": v["t0"], "n": row.get("n", 0),
+                                       "mean": row.get("mean"), "proof": row.get("proof", 0.0)})
+    return report
+
+
+def _print_learn_report(report: dict[str, Any]) -> None:
+    from nightcrawler.learn.job import describe_run
+
+    card, stats = report["card"], report["card"].get("stats") or {}
+    state = f"on, the learner runs every {report['interval_min']:g} min" if report["enabled"] else "off"
+    print(f"Learning: {state} · disk {stats.get('disk_gb', 0.0):.3f} GB of {report['cap_gb']:g} GB")
+    print(f"Card: {card['headline']}")
+    for warning in card.get("warnings") or ():
+        print(f"Warning: {warning}")
+    store = report["store"]
+    if store is None:
+        print(f"no learning data yet at {report['path']} (the bot's recorder creates it)")
+    else:
+        coins, fetches, outbox = store["coins"], store["fetches"], store["outbox"]
+        days = store["days"]
+        span = f" ({days[0]} .. {days[-1]})" if days else ""
+        print(f"Coins taped: {coins['total']:,} (open {coins['open']:,}, closed {coins['closed']:,}, incomplete "
+              f"{coins['incomplete']:,}) over {len(days)} day(s){span}")
+        print(f"Fetch queue: {fetches['pending']:,} to do, {fetches['done']:,} done, {fetches['failed']:,} given up")
+        print(f"Strategy versions ({len(report['variants'])}):")
+        for v in report["variants"]:
+            mean = "-" if v["mean"] is None else f"{100 * v['mean']:+.1f}%"
+            frozen = f"frozen {_utc(v['t0'])}" if v["t0"] is not None else "not receipted yet"
+            print(f"  #{v['hash12']}  {v['status']:<8} n={v['n']:<5} avg {mean:>7}  proof {100 * v['proof']:3.0f}%  "
+                  f"{v['name']}  [{frozen}]")
+        print(f"Outbox: {outbox['rows']:,} rows, {outbox['receipted']:,} receipted, waiting for the bot to receipt "
+              f"them: {outbox['pending']:,}")
+        last = report["last_run"]
+        print(f"Last run: {_utc(last.get('finished'))}, {describe_run(last)}" if last else "Last run: never")
+    rec = report["recorder"]
+    if isinstance(rec, dict):
+        r = rec.get("recorder") or {}
+        alive = "alive" if r.get("alive") else "not running"
+        print(f"Recorder (in the bot): {alive}, {r.get('census_calls', 0)} census calls, "
+              f"{r.get('enrolled', 0)} coins enrolled, {r.get('candle_calls', 0)} candle and "
+              f"{r.get('snap_calls', 0)} snapshot calls, {r.get('errors', 0)} errors, {r.get('breaker_trips', 0)} "
+              f"rate-limit pauses, {r.get('given_up', 0)} fetches given up, {r.get('emits_dropped', 0)} rows dropped")
+
+
+def cmd_learn(args: argparse.Namespace, settings: Settings) -> int:
+    if args.learn_cmd == "status":
+        _setup_logging(args, settings, quiet=True)
+        report = _learn_report(settings, _make_clock().now())
+        if args.json:
+            print(json.dumps(report, indent=2, sort_keys=True, default=str))
+        else:
+            _print_learn_report(report)
+        return EXIT_OK
+    from nightcrawler.learn import job
+
+    _setup_logging(args, settings)
+    if not settings.learn_enabled:
+        print("nightcrawler: learning is off (LEARN_ENABLED=false): nothing to do", file=sys.stderr)
+        return EXIT_OK
+    max_s = args.max_seconds if args.max_seconds is not None else job.INCREMENTAL_MAX_S
+    limits = job.apply_limits(max_s) if args.parent_pid is not None else None
+    stop = threading.Event()
+    previous: dict[signal.Signals, Any] = {}
+    if threading.current_thread() is threading.main_thread():
+        for sig in (signal.SIGTERM, signal.SIGINT):
+            previous[sig] = signal.signal(sig, lambda *_: stop.set())
+    try:
+        summary = job.run_job(job.JobConfig.from_settings(settings, max_seconds=max_s, parent_pid=args.parent_pid),
+                              stop_event=stop, limits=limits)
+    finally:
+        for sig, handler in previous.items():
+            signal.signal(sig, handler)
+    print(job.describe_run(summary), flush=True)
+    return EXIT_OK
+
+
 HANDLERS: dict[str, Callable[[argparse.Namespace, Settings], int]] = {
     "run": cmd_run,
     "scan": cmd_scan,
@@ -774,16 +895,28 @@ HANDLERS: dict[str, Callable[[argparse.Namespace, Settings], int]] = {
     "reset-halt": cmd_reset_halt,
     "config": cmd_config,
     "dashboard": cmd_dashboard,
+    "learn": cmd_learn,
 }
+
+
+def _config_errors() -> tuple[type[Exception], ...]:
+    """Errors that mean "fix the configuration". Imported only when an error is being matched: a command
+    that never touches the broker or the ledger - the learner child above all - never loads them."""
+    from nightcrawler.broker.base import LiveNotAllowed
+    from nightcrawler.broker.wallet import WalletError
+
+    return LiveNotAllowed, WalletError
+
+
+def _ledger_error() -> type[Exception]:
+    from nightcrawler.ledger import LedgerError
+
+    return LedgerError
 
 
 def main(argv: Sequence[str] | None = None) -> int:
     """Parse ``argv``, load settings, dispatch. Returns an exit code (never raises SystemExit
     except from argparse's own ``--help``/usage errors)."""
-    from nightcrawler.broker.base import LiveNotAllowed
-    from nightcrawler.broker.wallet import WalletError
-    from nightcrawler.ledger import LedgerError
-
     parser = build_parser()
     args = parser.parse_args(argv)
     safe_mode: dict[str, Any] | None = None
@@ -808,10 +941,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     except UserError as exc:
         print(f"nightcrawler: {exc}", file=sys.stderr)
         return exc.exit_code
-    except (LiveNotAllowed, WalletError) as exc:
+    except _config_errors() as exc:  # an except clause is evaluated only when an error reaches it
         print(f"nightcrawler: {exc}", file=sys.stderr)
         return EXIT_CONFIG
-    except LedgerError as exc:
+    except _ledger_error() as exc:
         print(f"nightcrawler: ledger problem: {exc}", file=sys.stderr)
         return EXIT_ERROR
     except KeyboardInterrupt:

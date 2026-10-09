@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import json
 import logging
+import os
+import signal
 import socket
 import sqlite3
 import urllib.error
@@ -18,6 +20,7 @@ from nightcrawler import cli
 from nightcrawler import engine as engine_mod
 from nightcrawler.cli import EXIT_CONFIG, EXIT_ERROR, EXIT_OK, EXIT_USAGE, EXIT_VERIFY_FAILED, main
 from nightcrawler.config import load_settings
+from nightcrawler.learn import job as learn_job
 from nightcrawler.ledger import Ledger
 from world import GARY, World, make_world
 
@@ -387,3 +390,62 @@ def test_version_and_usage_errors(capsys) -> None:
     with pytest.raises(SystemExit) as info:
         main(["no-such-command"])
     assert info.value.code == EXIT_USAGE
+
+
+# =========================================================================== learn
+
+
+def test_learn_status_before_any_learning_data(env, capsys) -> None:
+    assert nc("learn", "status") == EXIT_OK
+    out = capsys.readouterr().out
+    assert "Collecting data, day 1" in out and "no learning data yet" in out
+    assert not (env / "learn").exists()  # looking never creates anything
+
+
+def test_learn_run_then_status(env, monkeypatch, capsys) -> None:
+    applied: list[float] = []
+    monkeypatch.setattr(learn_job, "apply_limits", lambda seconds: applied.append(seconds) or {})
+    term = signal.getsignal(signal.SIGTERM)
+    assert nc("learn", "run") == EXIT_OK
+    assert signal.getsignal(signal.SIGTERM) == term  # its stop handlers are removed again
+    out = capsys.readouterr().out
+    assert "learner ok" in out and "registered 5" in out
+    assert applied == []  # a person's run is theirs to limit; only the bot's own child limits itself
+    assert nc("learn", "status") == EXIT_OK
+    out = capsys.readouterr().out
+    assert "Strategy versions (5)" in out and "random entry (control)" in out
+    assert "waiting for the bot to receipt them: 6" in out and "last run" in out.lower()
+    assert nc("learn", "status", "--json") == EXIT_OK
+    data = json.loads(capsys.readouterr().out)
+    assert data["store"]["variants"] == 5 and data["store"]["outbox"]["pending"] == 6
+    assert data["card"]["state"] == "collecting" and data["last_run"]["status"] == "ok"
+    assert data["enabled"] is True and data["recorder"] is None  # no bot has run here
+
+
+def test_learn_says_which_seed_the_settings_put_out_of_bounds(env, monkeypatch, capsys) -> None:
+    monkeypatch.setattr(learn_job, "apply_limits", lambda seconds: {})
+    monkeypatch.setenv("MAX_HOLD_MIN", "480")  # a valid setting, beyond the learner's hard range [5, 360]
+    assert nc("learn", "run") == EXIT_OK
+    out = capsys.readouterr().out
+    assert "learner ok" in out and "registered 3" in out and "skipped 2 seeds" in out
+    assert nc("learn", "status") == EXIT_OK
+    out = capsys.readouterr().out
+    assert "Warning: Not tested (outside the learner's limits): the Settings benchmark" in out
+    assert "max_hold_min=480.0 outside its hard range [5, 360]" in out
+
+
+def test_learn_with_learning_off_does_nothing(env, monkeypatch, capsys) -> None:
+    monkeypatch.setenv("LEARN_ENABLED", "false")
+    assert nc("learn", "run") == EXIT_OK
+    assert "LEARN_ENABLED=false" in capsys.readouterr().err
+    assert nc("learn", "status") == EXIT_OK
+    assert "Learning is off" in capsys.readouterr().out
+    assert not (env / "learn").exists()
+
+
+def test_the_bots_learner_child_limits_itself_and_exits_when_the_bot_is_gone(env, monkeypatch, capsys) -> None:
+    applied: list[float] = []
+    monkeypatch.setattr(learn_job, "apply_limits", lambda seconds: applied.append(seconds) or {"nice": 19})
+    code = nc("learn", "run", "--incremental", "--parent-pid", str(os.getppid() + 7919), "--max-seconds", "30")
+    assert code == EXIT_OK and applied == [30.0]
+    assert "stopped (parent gone)" in capsys.readouterr().out

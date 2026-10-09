@@ -113,6 +113,8 @@ nightcrawler run                  # paper trading + dashboard on http://localhos
 | `nightcrawler reset-halt [--yes]` | Clear a drawdown halt (also possible from Railway with `RESET_HALT_TOKEN`). |
 | `nightcrawler config [--json]` | Show the settings in use (secrets are never shown). |
 | `nightcrawler dashboard` | Serve only the dashboard, without trading. |
+| `nightcrawler learn status [--json]` | What the learning loop has recorded, which strategy versions it is testing in the shadow, and what still waits to be receipted. |
+| `nightcrawler learn run` | Replay finished days and score every strategy version now (the bot does this by itself every `LEARN_INTERVAL_MIN`). |
 
 Exit codes: 0 ok, 1 error, 2 usage, 3 bad settings / live mode refused, 4 receipts broken or audit drift.
 

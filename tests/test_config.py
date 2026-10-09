@@ -320,3 +320,12 @@ def test_mask_problem_keeps_problems_without_a_quoted_value() -> None:
     for problem in ("STOP_LOSS_PCT=18.0 must be <= 1 (a FRACTION: 0.20 means 20%)",
                     f"TRADING_MODE=live requires LIVE_CONFIRM={LIVE_CONFIRM_PHRASE} (exact)"):
         assert mask_problem(problem) == problem
+
+
+def test_learning_settings(make_settings) -> None:
+    s = make_settings()
+    assert (s.learn_enabled, s.learn_disk_cap_gb, s.learn_interval_min) == (True, 3.0, 30.0)
+    assert make_settings(LEARN_INTERVAL_MIN="1").learn_interval_min == 1.0
+    for bad in ("0.5", "0", "-5"):
+        with pytest.raises(ConfigError, match="LEARN_INTERVAL_MIN"):
+            make_settings(LEARN_INTERVAL_MIN=bad)

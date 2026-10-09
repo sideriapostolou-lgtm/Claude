@@ -345,6 +345,15 @@ class Settings:
     pumpfun_candles: bool = _f(True, "bool", "pump.fun coins: take 1m candles from pump.fun's swap API when "
                                "GeckoTerminal fails, rate-limits or lags (one source per series, never mixed)")
 
+    # ---- learning (docs/LEARNING.md) ------------------------------------------
+    learn_enabled: bool = _f(True, "bool", "Self-learning loop: record every pump.fun graduate and test strategy "
+                             "versions in the shadow. It never trades, never changes risk settings and uses its "
+                             "own small API budget; false = no learning calls at all")
+    learn_disk_cap_gb: float = _f(3.0, "gb", "Disk cap for DATA_DIR/learn (oldest sealed days are deleted first; "
+                                  "the ledger always has priority)", lo=0.1, lo_open=False)
+    learn_interval_min: float = _f(30.0, "minutes", "How often the bot starts the learner in the background "
+                                   "(replays finished days, scores every strategy version)", lo=1.0, lo_open=False)
+
     # ---- dashboard ----------------------------------------------------------
     port: int = _f(8080, "port", "Dashboard port (Railway sets PORT)", lo=1, hi=65535)
     dashboard_host: str = _f("0.0.0.0", "text", "Dashboard bind address")

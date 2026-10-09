@@ -44,7 +44,10 @@ src/nightcrawler/
   cocoon.py          Cocoon.check() -> SafetyReport (FAIL CLOSED)                          O2
   radar.py           Radar.scan() -> RadarSignal                                           O2
   strategy.py        PURE entry_signal / exit_signal / exit_levels                         O3
-  backtest.py        Backtester (no lookahead), CostModel, sweep                           O3
+  backtest.py        Backtester (no lookahead), CostModel, sweep (+ learning replay hooks) O3
+  costs.py           per-trade cost model shared with the lab (port of research/lab)       O3
+  learn/             self-learning loop: tape, recorder, variants, replay, evidence, card  O7 (docs/LEARNING.md)
+    job.py           `learn run --incremental`: the learner child (lease, limits, scoreboard) O7
   dataset.py         collect() unbiased multi-coin candles                                 O3
   judge.py           Judge.decide() via Anthropic API, build_features                      O4
   broker/base.py     Broker protocol + execution errors                                    O5
@@ -60,7 +63,7 @@ src/nightcrawler/
   readiness.py       "ready for real money?" checklist over steps 1-5 (never optimistic)   O6
   botwallet.py       paper mode: the bot wallet's SOL for that checklist (kv, every 10 min) O6
   teamroom.py        /api/team: every bot member's status from real data (+ TeamRoom glue) O6
-  engine.py          Engine.tick()/run_forever(), build_engine                             Integrator
+  engine.py          Engine.tick()/run_forever(), build_engine, LearnStage                 Integrator
   cli.py             `nightcrawler` console script                                         Integrator
 scripts/
   verify_receipts.py standalone receipts verifier (Python stdlib only, never imports nightcrawler)
@@ -177,8 +180,8 @@ blindly: failed or unknown outcomes are reconciled and re-quoted.
 Integration details (see `engine.py` docstring for the full contract):
 
 * Tick order: `kill` -> `reconcile` -> `live_start` (live, until recorded) ->
-  `drift` -> `positions` -> `discover` -> `watch` -> `equity` -> `persist` -> `heartbeat`
-  (exits before entries). `discover` and `watch` stop after a budget of
+  `drift` -> `positions` -> `discover` -> `watch` -> `equity` -> `learn` (LEARN_ENABLED) -> `bot_wallet`
+  -> `persist` -> `heartbeat` (exits before entries). `discover` and `watch` stop after a budget of
   POSITION_INTERVAL_S and run the kill check and `positions` (when due) between
   candidates, so a slow upstream never starves a stop-loss. An `error` receipt
   is written at most once per 5 min for the same stage+error (log every time).
@@ -451,3 +454,25 @@ The one-page dashboard added `KEYS_ROTATED_ON` (step 4 of its "ready for real mo
 * **O6**: chain append/verify/tamper detection/export; thread-safety under
   concurrent readers; audit drift detection; dashboard routes, auth, schema,
   no secrets in HTML/JSON.
+
+## 13. Learning
+
+The self-learning loop (recorder, forward tape, shadow replay of frozen strategy variants,
+e-process scoreboard, receipts through an outbox) is specified in
+[docs/LEARNING.md](LEARNING.md), which also tracks what is built and what is still to wire.
+Its rules, in one line each: learning never trades and never writes Settings; trading never
+waits for it (own HTTP client, non-blocking emits); only the engine writes receipts; the
+learner (`nightcrawler.learn`, except the recorder) imports none of `broker`, `wallet`,
+`risk`, `judge`, `http` or `sources`, and the learner process loads no broker, wallet, ledger,
+HTTP or source-client module at all (`sources/__init__` and `cli.main` import those lazily);
+`LEARN_ENABLED=false` makes no learning call at all.
+
+Wiring (phase 1): `build_app` gives the engine a `LearnStage` (LEARN_ENABLED). `run_forever` starts
+the recorder thread after the `boot` receipt (which carries `code_hashes` and `sim_hash`) and stops it
+at shutdown. The `learn` stage receipts the learn.db outbox as kind `learn` (exactly once per row,
+never waiting more than 50 ms for a lock) and starts `nightcrawler learn run --incremental` every
+LEARN_INTERVAL_MIN as a child process (nice 19, 1 GB address space, CPU and 600 s wall limits, no
+secrets in its environment, SIGTERM forwarded at shutdown, exits by itself when the bot is gone). The
+engine hands its candle evaluations, `enter`/`reject_*` decisions, fills and lags to the recorder's
+queue without ever blocking. Learning failures are counted in `engine.status["learning"]` and never
+become `error` receipts; `nightcrawler learn status` shows what was taped, scored and receipted.

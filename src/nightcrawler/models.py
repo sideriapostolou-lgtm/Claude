@@ -148,6 +148,7 @@ ReceiptKind = Literal[
     "halt",  # risk halt engaged (drawdown)
     "reset",  # manual halt reset
     "note",  # free-form operator note
+    "learn",  # learning loop event from the learn.db outbox (docs/LEARNING.md §8); payload has event + outbox_id
 ]
 
 # --------------------------------------------------------------------------- helpers

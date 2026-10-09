@@ -8,8 +8,8 @@ same stage at most once per :data:`ERROR_RECEIPT_EVERY_S`) - the loop never dies
 
 Stage order inside one tick: ``kill`` -> ``reconcile`` -> ``live_start`` (live, until
 recorded) -> ``drift`` -> ``positions`` -> ``discover`` -> ``watch`` -> ``equity`` ->
-``persist`` -> ``heartbeat`` (exits before entries). ``discover`` and ``watch`` stop after a wall-clock
-budget of POSITION_INTERVAL_S and run the kill check and (when due) ``positions``
+``learn`` (LEARN_ENABLED) -> ``persist`` -> ``heartbeat`` (exits before entries). ``discover``
+and ``watch`` stop after a wall-clock budget of POSITION_INTERVAL_S and run the kill check and (when due) ``positions``
 between candidates, so a slow upstream (RugCheck 429s, an LLM timeout) never delays a
 stop-loss by more than one slow call.
 
@@ -150,6 +150,16 @@ BOT_WALLET_SECRET changed) is never valued, sold or counted - it is noted at boo
     WATCHLIST_MAX with items past WATCHLIST_TTL_H unwatched at once, the cocoon queue only when
     saved within :data:`QUEUE_RESTORE_MAX_AGE_S`, the nursery bounded and age-expired by the crawler.
 
+``learn`` (:data:`LEARN_STAGE_S`, only with LEARN_ENABLED; docs/LEARNING.md)
+    :class:`LearnStage`: receipts the learning outbox (kind ``learn``, exactly once per row), starts
+    the learner child (``nightcrawler learn run --incremental``) every LEARN_INTERVAL_MIN and reaps it.
+    The recorder thread is started after the boot receipt and stopped at shutdown (the learner gets
+    SIGTERM). The engine's own observations go to the tape without ever waiting: ``evals`` (every
+    candle evaluation and every ``enter``/``reject_*`` decision, after its receipt), ``fills`` (every
+    entry and exit fill) and ``lag`` (every candle fetch, every equity point). Nothing learning does
+    can change a tick: its failures are counted in ``engine.status["learning"]``, never receipted as
+    errors, and trading reads nothing from it.
+
 ``heartbeat`` (:data:`HEARTBEAT_S`)
     kv ``engine.heartbeat`` = now and ``engine.status`` (counters for the dashboard/API).
 
@@ -169,7 +179,9 @@ import logging
 import math
 import os
 import signal
+import sqlite3
 import threading
+import time
 from collections import Counter, deque
 from dataclasses import dataclass, field
 from typing import Any, Callable
@@ -179,6 +191,8 @@ from nightcrawler.botwallet import CHECK_EVERY_S as BOT_WALLET_CHECK_S, record_b
 from nightcrawler.clock import Clock, RealClock, iso_utc
 from nightcrawler.config import Settings, mask_problem
 from nightcrawler.http import HttpError
+from nightcrawler.learn import job as learn_job
+from nightcrawler.learn.store import LearnStore, db_path, drain_outbox
 from nightcrawler.logging_setup import get_logger
 from nightcrawler.models import (
     SOL_MINT,
@@ -203,6 +217,7 @@ from nightcrawler.strategy import entry_signal, exit_signal, rolling_high
 __all__ = [
     "WatchItem",
     "Engine",
+    "LearnStage",
     "App",
     "build_app",
     "build_engine",
@@ -220,6 +235,12 @@ __all__ = [
     "SIGNATURE_CHECK_S",
     "STATE_SAVE_S",
     "QUEUE_RESTORE_MAX_AGE_S",
+    "LEARN_STAGE_S",
+    "LEARN_FIRST_RUN_S",
+    "LEARN_DRAIN_PER_RUN",
+    "LEARN_DB_TIMEOUT_S",
+    "LEARNER_OVERRUN_S",
+    "LEARNER_TERM_GRACE_S",
 ]
 
 log = get_logger(__name__)
@@ -279,6 +300,20 @@ SIGNATURE_CHECK_S = 5.0
 STATE_SAVE_S = 600.0
 #: Candidates saved waiting for the cocoon are re-queued at boot only when saved at most this long ago.
 QUEUE_RESTORE_MAX_AGE_S = 3600.0
+#: The ``learn`` stage (receipt the learning outbox, start and reap the learner) runs this often (seconds).
+LEARN_STAGE_S = 5.0
+#: The first learner run (it registers the seeds) starts this long after boot, then every LEARN_INTERVAL_MIN.
+LEARN_FIRST_RUN_S = 60.0
+#: Learning outbox rows receipted per ``learn`` stage at most.
+LEARN_DRAIN_PER_RUN = 10
+#: The engine's learn.db connection waits at most this long for a lock: trading never waits for learning.
+LEARN_DB_TIMEOUT_S = 0.05
+#: A learner still running this long past its wall budget gets SIGTERM ...
+LEARNER_OVERRUN_S = 60.0
+#: ... and SIGKILL this long after a SIGTERM it ignored (also at shutdown, inside Railway's 30 s drain).
+LEARNER_TERM_GRACE_S = 2.0
+#: The same learning failure is logged at most this often (seconds).
+LEARN_LOG_EVERY_S = 600.0
 _FINAL_CHAIN = ("landed", "failed")
 
 _SAFETY_METRIC_KEYS = ("top10_pct", "max_holder_pct", "creator_pct", "insider_pct", "graph_insiders",
@@ -340,6 +375,54 @@ def _only_unavailable(report: SafetyReport) -> bool:
     """True when a failed report failed ONLY because a source could not be consulted (retryable)."""
     return bool(report.unverified) and all(str(r).startswith("source unavailable")
                                            for r in report.hard_fail_reasons)
+
+
+def _provenance() -> dict[str, Any]:
+    """Code hashes and ``sim_hash`` for the boot receipt (docs/LEARNING.md §8); {} if they cannot be read."""
+    try:
+        return learn_job.provenance()
+    except Exception as exc:  # never stops a boot
+        log.warning("provenance_failed error=%s", _err(exc))
+        return {}
+
+
+def _closed_ts(candles: list[Candle], now: float) -> int | None:
+    closed = [c.ts for c in candles if c.ts + 60 <= now]
+    return closed[-1] if closed else None
+
+
+def _lag_row(item: WatchItem, now: float, previous: float | None) -> dict[str, Any]:
+    """``lag`` tape row of a candle fetch: how late the newest closed candle arrived (``gt_lag_s``)."""
+    last = _closed_ts(item.candles, now)
+    return {"ts": now, "mint": item.mint, "source": item.candle_source,
+            "gt_lag_s": now - (last + 60) if last is not None else None,
+            "interval_s": now - previous if previous is not None else None}
+
+
+def _eval_row(item: WatchItem, now: float, signal_: Signal | None, reason: str) -> dict[str, Any]:
+    """``evals`` tape row of one candle evaluation (``kind`` ``stale`` when the candles were too old)."""
+    return {"ts": now, "mint": item.mint, "kind": signal_.kind if signal_ is not None else "stale",
+            "reason": reason, "last_ts": _closed_ts(item.candles, now),
+            "metrics": dict(signal_.metrics) if signal_ is not None else {},
+            "snapshot": item.snapshot.to_dict() if item.snapshot is not None else None,
+            "snapshot_at": item.snapshot_at, "candle_source": item.candle_source}
+
+
+def _decision_row(d: Decision) -> dict[str, Any]:
+    """``evals`` tape row of an ``enter`` / ``reject_*`` decision (written after its receipt)."""
+    inputs, v = d.inputs or {}, d.verdict
+    safety = inputs.get("safety")
+    return {"ts": d.ts, "mint": d.mint, "decision": d.action, "reason": d.reason, "signal": inputs.get("signal"),
+            "snapshot": inputs.get("snapshot"), "candle_source": inputs.get("candle_source"),
+            "safety": {k: safety.get(k) for k in ("passed", "hard_fail_reasons", "warnings", "unverified")}
+            if isinstance(safety, dict) else None,
+            "verdict": {"decision": v.decision, "confidence": v.confidence, "source": v.source} if v else None}
+
+
+def _fill_row(fill: Fill, quote: Any, decision: Decision | None) -> dict[str, Any]:
+    """``fills`` tape row: the fill, the decision time and the quote it was filled against."""
+    return {"ts": fill.ts, "mint": fill.mint, "side": fill.side, "mode": fill.mode, "fill": fill.to_dict(),
+            "decision_ts": decision.ts if decision is not None else None, "quote": _quote_summary(quote)}
 
 
 def foreign_positions_of(ledger: Any, wallet: str) -> list[dict[str, Any]]:
@@ -427,6 +510,218 @@ class WatchItem:
         return 1.0 - price / found[0]
 
 
+# ======================================================================= learning
+
+
+def _benchmark_hash(settings: Settings) -> str | None:
+    """``variant_hash`` of what the engine trades: the ``dip_rebound`` family at the Settings strategy."""
+    try:
+        from nightcrawler.learn.variants import make_spec
+
+        return make_spec("dip_rebound", {}, settings.strategy_params()).hash
+    except Exception as exc:
+        log.warning("learning_variant_hash_failed error=%s", _err(exc))
+        return None
+
+
+class LearnStage:
+    """The engine side of the learning loop (docs/LEARNING.md §2): best effort, never raises, never waits.
+
+    * :meth:`start` (``run_forever``, after the boot receipt): start the recorder thread
+      (``start_recorder()``); the first learner run is due :data:`LEARN_FIRST_RUN_S` later.
+    * :meth:`run` (the ``learn`` stage): receipt up to :data:`LEARN_DRAIN_PER_RUN` outbox rows as ``learn``
+      receipts, exactly once each (:func:`~nightcrawler.learn.store.drain_outbox`, S2), over a connection
+      that waits at most :data:`LEARN_DB_TIMEOUT_S` for a lock (a busy learn.db is tried again next time;
+      the engine never creates learn.db); reap a finished learner; start the next one (``spawn()``) every
+      LEARN_INTERVAL_MIN, one at a time. One still running :data:`LEARNER_OVERRUN_S` past its wall budget
+      gets SIGTERM, then SIGKILL.
+    * :meth:`emit`: an ``evals`` / ``fills`` / ``lag`` row into the recorder's queue with ``put_nowait`` (a
+      full queue drops it, counted). The row is BUILT inside, so a bug in it costs only that row.
+    * :meth:`stop` (shutdown): SIGTERM to the learner (SIGKILL after :data:`LEARNER_TERM_GRACE_S`), stop the
+      recorder.
+
+    Nothing here reaches trading (S1, S5): a failure is counted, logged (type only, the same one at most
+    every :data:`LEARN_LOG_EVERY_S`) and shown in :meth:`status`; no ``error`` receipt, no
+    ``engine.last_error``. Learning reads Settings and never writes them (S7).
+    """
+
+    def __init__(self, settings: Settings, ledger: Any, *, start_recorder: Callable[[], Any],
+                 spawn: Callable[[], Any]) -> None:
+        self.settings = settings
+        self.ledger = ledger
+        self._start_recorder = start_recorder
+        self._spawn = spawn
+        self.interval_s = float(settings.learn_interval_min) * 60.0
+        self.max_run_s = learn_job.INCREMENTAL_MAX_S
+        self.variant_hash = _benchmark_hash(settings)
+        self.started = False
+        self.recorder: Any = None  # RecorderThread (``.recorder`` takes the emits)
+        self.store: LearnStore | None = None
+        self.process: Any = None  # the running learner (Popen-like)
+        self.spawned_at: float | None = None
+        self.terminated_at: float | None = None
+        self.next_run_at: float | None = None
+        self.last_exit: dict[str, Any] | None = None
+        self.last_error: str | None = None
+        self.counters: Counter[str] = Counter()
+        self._logged: dict[str, tuple[str, float]] = {}
+
+    def _failed(self, part: str, exc: BaseException) -> None:
+        self.last_error = f"{part}: {type(exc).__name__}"
+        last, now = self._logged.get(part), time.monotonic()
+        if last is None or last[0] != self.last_error or now - last[1] >= LEARN_LOG_EVERY_S:
+            self._logged[part] = (self.last_error, now)
+            log.warning("learning_failed part=%s error=%s (trading unaffected)", part, type(exc).__name__)
+
+    def start(self, now: float) -> None:
+        if self.started:
+            return
+        self.started = True
+        self.next_run_at = now + min(LEARN_FIRST_RUN_S, self.interval_s)
+        try:
+            self.recorder = self._start_recorder()
+        except Exception as exc:
+            self.counters["recorder_failed"] += 1
+            self._failed("recorder", exc)
+        log.info("learning_started recorder=%s learner_every_min=%g", "on" if self.recorder else "off",
+                 self.interval_s / 60)
+
+    def run(self, now: float) -> None:
+        if not self.started:
+            return
+        self._drain()
+        self._reap(now)
+        if self.process is None and self.next_run_at is not None and now >= self.next_run_at:
+            self._launch(now)
+
+    def _drain(self) -> None:
+        try:
+            if self.store is None:
+                path = db_path(self.settings.data_dir)
+                if not path.is_file():
+                    return  # the recorder and the learner create learn.db, never the engine
+                self.store = LearnStore(path, busy_timeout_s=LEARN_DB_TIMEOUT_S)
+            if self.store.next_outbox() is None:
+                return  # nothing to receipt: a plain read, no write lock taken
+            self.counters["receipts"] += drain_outbox(self.store, self.ledger, LEARN_DRAIN_PER_RUN)
+        except sqlite3.OperationalError as exc:
+            if "locked" in str(exc) or "busy" in str(exc):
+                self.counters["db_busy"] += 1  # the learner is writing: next time
+                return
+            self._drain_failed(exc)
+        except Exception as exc:
+            self._drain_failed(exc)
+
+    def _drain_failed(self, exc: Exception) -> None:
+        self.counters["drain_failed"] += 1
+        self._failed("drain", exc)
+        store, self.store = self.store, None  # reopened next time (learn.db may have been replaced)
+        if store is not None:
+            try:
+                store.close()
+            except Exception:
+                pass
+
+    def _reap(self, now: float) -> None:
+        p = self.process
+        if p is None:
+            return
+        try:
+            code = p.poll()
+            if code is None:
+                if self.terminated_at is not None:
+                    if now - self.terminated_at >= LEARNER_TERM_GRACE_S:
+                        p.kill()
+                        self.counters["killed"] += 1
+                elif now - (self.spawned_at or now) > self.max_run_s + LEARNER_OVERRUN_S:
+                    p.terminate()
+                    self.terminated_at = now
+                    self.counters["terminated"] += 1
+                    log.warning("learner_overrun pid=%s seconds=%.0f: SIGTERM", getattr(p, "pid", None),
+                                now - (self.spawned_at or now))
+                return
+        except Exception as exc:
+            self._failed("learner", exc)
+            return
+        self.last_exit = {"code": code, "at": now, "seconds": round(now - (self.spawned_at or now), 1)}
+        self.counters["runs_ok" if code == 0 else "runs_failed"] += 1
+        if code != 0:
+            log.warning("learner_exit code=%s seconds=%.0f (trading unaffected)", code, self.last_exit["seconds"])
+        self.process, self.terminated_at = None, None
+
+    def _launch(self, now: float) -> None:
+        self.next_run_at = now + self.interval_s
+        try:
+            process = self._spawn()
+        except Exception as exc:
+            self.counters["spawn_failed"] += 1
+            self._failed("spawn", exc)
+            return
+        if process is None:
+            return
+        self.process, self.spawned_at, self.terminated_at = process, now, None
+        self.counters["runs_started"] += 1
+        log.info("learner_started pid=%s", getattr(process, "pid", None))
+
+    def emit(self, stream: str, build: Callable[[], dict[str, Any]]) -> None:
+        recorder = getattr(self.recorder, "recorder", None)
+        if recorder is None:
+            return
+        try:
+            extra = {"variant_hash": self.variant_hash} if stream in ("evals", "fills") else {}
+            row = _clean({"v": 1, **build(), **extra})
+            if recorder.emit(stream, row):
+                self.counters["emits"] += 1
+            else:
+                self.counters["emits_dropped"] += 1
+        except Exception as exc:
+            self.counters["emit_failed"] += 1
+            self._failed("emit", exc)
+
+    def stop(self) -> None:
+        p, self.process = self.process, None
+        if p is not None:
+            try:
+                if p.poll() is None:
+                    p.terminate()  # SIGTERM forwarded: the learner commits its coin and exits
+                    try:
+                        p.wait(timeout=LEARNER_TERM_GRACE_S)
+                    except Exception:
+                        p.kill()
+                        p.wait(timeout=LEARNER_TERM_GRACE_S)
+            except Exception as exc:
+                self._failed("learner", exc)
+        if self.recorder is not None:
+            try:
+                self.recorder.stop()
+            except Exception as exc:
+                self._failed("recorder", exc)
+        if self.store is not None:
+            try:
+                self.store.close()
+            except Exception:
+                pass
+            self.store = None
+
+    def status(self) -> dict[str, Any]:
+        """For ``engine.status["learning"]`` (dashboard, ``nightcrawler learn status``)."""
+        try:
+            rec, p = self.recorder, self.process
+            recorder = None
+            if rec is not None:
+                stats = getattr(getattr(rec, "recorder", None), "stats", None)
+                recorder = {"alive": bool(rec.is_alive()), "crashes": getattr(rec, "crashes", 0),
+                            "last_error": getattr(rec, "last_error", None),
+                            **(dict(stats) if isinstance(stats, dict) else {})}
+            return {"recorder": recorder,
+                    "learner": {"running": p is not None, "pid": getattr(p, "pid", None) if p is not None else None,
+                                "started_at": self.spawned_at if p is not None else None,
+                                "next_run_at": self.next_run_at, "last_exit": self.last_exit},
+                    "counters": dict(self.counters), "last_error": self.last_error}
+        except Exception as exc:
+            return {"error": type(exc).__name__}
+
+
 # ======================================================================= engine
 
 
@@ -435,7 +730,7 @@ class Engine:
 
     def __init__(self, settings: Settings, *, clock: Clock, ledger: Any, crawler: Any, cocoon: Any,
                  radar: Any, judge: Any, risk: Any, broker: Any, sources: Any = None,
-                 stop_event: threading.Event | None = None, pumpfun: Any = None) -> None:
+                 stop_event: threading.Event | None = None, pumpfun: Any = None, learning: Any = None) -> None:
         self.settings = settings
         self.clock = clock
         self.ledger = ledger
@@ -472,6 +767,8 @@ class Engine:
         self._gt_paused_until = 0.0
         #: set by :meth:`enter_safe_mode` (invalid configuration with open live positions)
         self.safe_mode: dict[str, Any] | None = None
+        #: :class:`LearnStage` (LEARN_ENABLED) or None
+        self.learning = learning
 
     # ------------------------------------------------------------------ loop
     def tick(self, now: float) -> dict[str, Any]:
@@ -485,11 +782,13 @@ class Engine:
         self._run("reconcile", self.reconcile_unresolved, now, results)
         if not self._live_start_ok and self._due("live_start", s.position_interval_s, now):
             self._run("live_start", self._ensure_live_start, now, results)
+        learn = (("learn", LEARN_STAGE_S, self.run_learning),) if self.learning is not None else ()
         for name, interval, fn in (("drift", DRIFT_CHECK_S, self.check_drift),
                                    ("positions", s.position_interval_s, self.manage_positions),
                                    ("discover", s.discovery_interval_s, self.discover),
                                    ("watch", s.watch_interval_s, self.watch),
                                    ("equity", s.equity_interval_s, self.snapshot_equity),
+                                   *learn,
                                    ("bot_wallet", BOT_WALLET_CHECK_S, self.check_bot_wallet),
                                    ("persist", STATE_SAVE_S, self.save_state),
                                    ("heartbeat", HEARTBEAT_S, self._heartbeat)):
@@ -509,20 +808,33 @@ class Engine:
         if not self.stop_event.is_set() and self._due("positions", self.settings.position_interval_s, now):
             self._run("positions", self.manage_positions, now, self._results)
 
+    def run_learning(self, now: float) -> None:
+        """The ``learn`` stage (:class:`LearnStage`; never raises)."""
+        self.learning.run(now)
+
+    def _emit(self, stream: str, build: Callable[[], dict[str, Any]]) -> None:
+        """Hand a row to the learning tape (never blocks, never raises; nothing without learning)."""
+        if self.learning is not None:
+            self.learning.emit(stream, build)
+
     def _over_budget(self, started: float) -> bool:
         """True once a slow stage has used up its wall-clock budget (POSITION_INTERVAL_S)."""
         return self.clock.now() - started > self.settings.position_interval_s
 
     def run_forever(self) -> None:
-        """Write a ``boot`` receipt (version, mode, public settings), then loop ``tick`` until
-        :attr:`stop_event` is set. Installs SIGTERM/SIGINT handlers when on the main thread."""
+        """Write a ``boot`` receipt (version, mode, public settings, code hashes and ``sim_hash``), start
+        learning (LEARN_ENABLED), then loop ``tick`` until :attr:`stop_event` is set. Installs SIGTERM/SIGINT
+        handlers when on the main thread; at shutdown the learner gets SIGTERM and the recorder stops."""
         self._install_signal_handlers()
         now = self.clock.now()
         self.ledger.append_receipt("boot", {"version": __version__, "mode": self.settings.trading_mode,
-                                            "settings": self.settings.public_dict(), "pid": os.getpid()}, ts=now)
+                                            "settings": self.settings.public_dict(), "pid": os.getpid(),
+                                            **_provenance()}, ts=now)
         self._restore_state()  # after the boot receipt: an adopted in-flight swap is noted under this boot
         self.ledger.set_kv("engine.started_at", now)
         self._boot_checks(now)
+        if self.learning is not None:
+            self.learning.start(now)
         self._set_status(now, "running")
         log.info("engine_start version=%s mode=%s judge=%s data_dir=%s", __version__, self.settings.trading_mode,
                  self.settings.judge_mode, self.settings.data_dir)
@@ -536,6 +848,8 @@ class Engine:
         finally:
             now = self.clock.now()
             self.save_state(now)  # a redeploy resumes the watchlist and the nursery (RT-14)
+            if self.learning is not None:
+                self.learning.stop()
             try:
                 self._set_status(now, "stopped")
                 self.ledger.append_receipt("note", {"event": "shutdown", "version": __version__}, ts=now)
@@ -993,16 +1307,20 @@ class Engine:
             log.warning("candles_failed mint=%s pool=%s error=%s", item.mint, item.pool, fetched)
             return
         candles, source = fetched
+        previous = item.candles_at
         item.candles, item.candles_at, item.candle_source = list(candles), now, source
         self.counters["candle_fetches"] += 1
         self.counters[f"candles.{source}"] += 1
+        self._emit("lag", lambda: _lag_row(item, now, previous))
         stale = _candles_stale(item.candles, now)
         if stale:  # GeckoTerminal lags: deciding on an old close could buy far above it
             item.last_signal_reason = stale
+            self._emit("evals", lambda: _eval_row(item, now, None, stale))
             log.info("entry_skipped mint=%s reason=%s", item.mint, stale)
             return
         signal_ = entry_signal(item.candles, item.snapshot, self.params, now)
         item.last_signal_reason = signal_.reason
+        self._emit("evals", lambda: _eval_row(item, now, signal_, signal_.reason))
         if signal_.kind != "enter":
             return
         problem = self._universe_problem(item, now)
@@ -1148,7 +1466,8 @@ class Engine:
         inputs = {**base, "sizing": sizing, "quote": _quote_summary(quote), "decimals": decimals,
                   "safety": _safety_summary(item.safety), "judge_mode": self.settings.judge_mode}
         with self.ledger.transaction():
-            self._decide(self.clock.now(), mint, "enter", signal_.reason, inputs, symbol=symbol, verdict=verdict)
+            decision = self._decide(self.clock.now(), mint, "enter", signal_.reason, inputs, symbol=symbol,
+                                    verdict=verdict)
             self._set_inflight(mint, "buy", quote, decimals, None, symbol, item.pool, "entry")
         market_price = item.snapshot.price_usd if item.snapshot is not None else None
         opened: list[Position] = []
@@ -1177,6 +1496,7 @@ class Engine:
         position = opened[0]
         self._safety[mint] = item.safety
         self.counters["entries"] += 1
+        self._emit("fills", lambda: _fill_row(fill, quote, decision))
         log.info("position_open id=%s mint=%s symbol=%s sol=%.4f price=%.10g tokens=%d", position.id, mint, symbol,
                  lamports_to_sol(fill.sol_lamports), fill.price_usd, fill.token_amount)
         return fill
@@ -1365,8 +1685,8 @@ class Engine:
             return None
         action = "exit" if full or amount >= position.token_amount else "exit_partial"
         with self.ledger.transaction():
-            self._decide(self.clock.now(), position.mint, action, reason, {**base, "quote": _quote_summary(quote)},
-                         symbol=position.symbol)
+            decision = self._decide(self.clock.now(), position.mint, action, reason,
+                                    {**base, "quote": _quote_summary(quote)}, symbol=position.symbol)
             self._set_inflight(position.mint, "sell", quote, position.token_decimals, position.id, position.symbol,
                                position.pool, reason, extra=extra)
 
@@ -1393,6 +1713,7 @@ class Engine:
             self._swap_crashed(position.mint, "sell", quote, position.token_decimals, position.id, position.symbol,
                                position.pool, reason, exc, extra=extra)
             raise
+        self._emit("fills", lambda: _fill_row(fill, quote, decision))
         return fill
 
     def _sellable(self, position: Position, now: float) -> int | None:
@@ -1899,6 +2220,7 @@ class Engine:
                             positions_value_lamports=value, open_positions=len(positions),
                             mode=self.settings.trading_mode)  # type: ignore[arg-type]
         self.ledger.record_equity(point)
+        self._emit("lag", lambda: {"ts": now, "kind": "equity", "sol_usd": sol_usd})
 
     # ------------------------------------------------------------------ status
     def _heartbeat(self, now: float) -> None:
@@ -1925,6 +2247,7 @@ class Engine:
             "prefilter_rejections": dict(self.prefilter_reasons.most_common(12)),
             "crawler": crawler_stats,
             "stages": self.last_results,
+            "learning": self.learning.status() if self.learning is not None else None,
         })
 
     def _cocoon_counters(self) -> dict[str, int]:
@@ -1942,7 +2265,10 @@ class Engine:
         decision = Decision(ts=ts, mint=mint, action=action, reason=reason[:500],  # type: ignore[arg-type]
                             inputs=_clean(inputs), verdict=verdict, symbol=symbol)
         self.counters[f"decision.{action}"] += 1
-        return self.ledger.record_decision(decision)
+        recorded = self.ledger.record_decision(decision)
+        if action == "enter" or action.startswith("reject_"):
+            self._emit("evals", lambda: _decision_row(recorded))
+        return recorded
 
 
 # ======================================================================= wiring
@@ -2008,6 +2334,8 @@ def build_app(settings: Settings, clock: Clock | None = None, *, session: Any = 
     from nightcrawler.teamroom import TeamRoom
 
     stop_event = threading.Event()
+    # the recorder thread gets a clock of its own in production: the engine's returns at once after SIGTERM
+    learn_clock = clock if clock is not None else RealClock()
     clock = clock if clock is not None else RealClock(stop_event)
     settings.ensure_data_dir()
     if http is None:
@@ -2042,9 +2370,16 @@ def build_app(settings: Settings, clock: Clock | None = None, *, session: Any = 
         judge = Judge(settings, clock=clock, ledger=ledger)
         risk = RiskManager(settings, ledger, clock)
         auditor = Auditor(ledger, broker, clock)
+        learning = None
+        if settings.learn_enabled:  # LEARN_ENABLED=false: no recorder, no learner, no learn.db
+            from nightcrawler.learn.recorder import start_recorder
+
+            learning = LearnStage(settings, ledger,
+                                  start_recorder=lambda: start_recorder(settings, session=session, clock=learn_clock),
+                                  spawn=lambda: learn_job.spawn_learner(settings))
         engine = Engine(settings, clock=clock, ledger=ledger, crawler=crawler, cocoon=cocoon, radar=radar,
                         judge=judge, risk=risk, broker=broker, sources=sources, stop_event=stop_event,
-                        pumpfun=pumpfun)
+                        pumpfun=pumpfun, learning=learning)
         verify_cache: dict[str, Any] = {}
         dashboard = DashboardServer(settings, lambda: build_state(ledger, settings, clock.now(), verify_cache),
                                     team=TeamRoom(settings, ledger, clock))

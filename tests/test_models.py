@@ -173,3 +173,12 @@ def test_to_jsonable_handles_containers() -> None:
     out = to_jsonable({"t": (1, 2), "s": {3}, "p": Path("/data"), 4: SAMPLES[0]})
     assert out == {"t": [1, 2], "s": [3], "p": "/data", "4": SAMPLES[0].to_dict()}
     assert LAMPORTS_PER_SOL == 10**9
+
+
+def test_learning_receipts_have_their_own_kind() -> None:
+    from typing import get_args
+
+    from nightcrawler.learn.store import RECEIPT_KIND
+    from nightcrawler.models import ReceiptKind
+
+    assert RECEIPT_KIND == "learn" and "learn" in get_args(ReceiptKind)

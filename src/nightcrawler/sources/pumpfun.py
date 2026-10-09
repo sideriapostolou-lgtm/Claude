@@ -19,12 +19,23 @@ address pump.fun does not know -> ``[]``. The API also answers for NON-pump coin
 their (tiny) pump venue trades, so callers must use it for pump.fun coins only
 (:func:`is_pumpfun_coin`).
 
-RATE LIMITS: the host sits behind Cloudflare. The engine gives it its own conservative bucket
-(:data:`RATE_LIMIT`, ~12 requests/min). A 429 (or a Cloudflare 403/503 block page) starts a
-COOL-DOWN of ``Retry-After`` seconds (default :data:`DEFAULT_COOLDOWN_S`, at most
-:data:`MAX_COOLDOWN_S`; ``Retry-After: 0`` counts as the default) during which every call raises
-:class:`PumpFunCoolingDown` without sending anything. Requests are never retried inline: the
-engine runs every stage in one thread, so a fallback must never block a stop-loss.
+The learning recorder (docs/LEARNING.md §3.1) also reads pump.fun's coin CENSUS (verified live
+2026-10-08 by the strategy lab, ``research/lab/fetch.py``)::
+
+    GET https://frontend-api-v3.pump.fun/coins?offset=<0..1000>&limit=<=70&sort=created_timestamp
+        &order=DESC&includeNsfw=true&complete=true
+
+-> a JSON list of raw coin rows (graduated coins, newest CREATED first; launch fields such as
+``mint, name, symbol, creator, created_timestamp`` (ms), ``quote_mint``, ``mayhem_state``, plus
+current-state fields). Offsets above 1000 return ``[]`` (the newest ~1,070 graduates). The
+recorder keeps rows RAW (:meth:`PumpFunClient.census_page`, :meth:`PumpFunClient.raw_candles`).
+
+RATE LIMITS: the hosts sit behind Cloudflare. The engine gives the swap API its own conservative
+bucket (:data:`RATE_LIMIT`, ~12 requests/min). A 429 (or a Cloudflare 403/503 block page) starts a
+COOL-DOWN of that HOST of ``Retry-After`` seconds (default :data:`DEFAULT_COOLDOWN_S`, at most
+:data:`MAX_COOLDOWN_S`; ``Retry-After: 0`` counts as the default) during which every call to it
+raises :class:`PumpFunCoolingDown` without sending anything. Requests are never retried inline:
+the engine runs every stage in one thread, so a fallback must never block a stop-loss.
 
 Failures raise :class:`nightcrawler.http.HttpError` (or :class:`PumpFunCoolingDown`).
 """
@@ -47,6 +58,10 @@ __all__ = [
     "HOST",
     "RATE_LIMIT",
     "CANDLES_MAX_LIMIT",
+    "CENSUS_BASE_URL",
+    "CENSUS_HOST",
+    "CENSUS_PAGE",
+    "CENSUS_MAX_OFFSET",
     "DEFAULT_COOLDOWN_S",
     "MAX_COOLDOWN_S",
     "COOLDOWN_STATUSES",
@@ -65,6 +80,12 @@ HOST = host_of(BASE_URL)
 #: covers one watch tick's candle fetches (MAX_CANDLE_FETCH_PER_TICK) without blocking the engine thread.
 RATE_LIMIT: tuple[float, float] = (12 / 60, 3)
 CANDLES_MAX_LIMIT = 1000
+#: pump.fun's coin census (frontend API); see the module docstring.
+CENSUS_BASE_URL = "https://frontend-api-v3.pump.fun"
+CENSUS_HOST = host_of(CENSUS_BASE_URL)
+#: Largest page the census serves, and the largest offset it answers (newer pages shift rows down).
+CENSUS_PAGE = 70
+CENSUS_MAX_OFFSET = 1000
 #: Cool-down after a 429 / Cloudflare block without a usable Retry-After (seconds).
 DEFAULT_COOLDOWN_S = 60.0
 #: Longest cool-down honoured from a Retry-After header (seconds).
@@ -122,12 +143,19 @@ class PumpFunClient:
     """Candles from pump.fun's swap API over the shared :class:`HttpClient` (its session, rate
     buckets and stats; see the module docstring for the cool-down and why nothing is retried)."""
 
-    def __init__(self, http: HttpClient, base_url: str = BASE_URL, clock: Clock | None = None) -> None:
+    def __init__(self, http: HttpClient, base_url: str = BASE_URL, clock: Clock | None = None,
+                 census_url: str = CENSUS_BASE_URL) -> None:
         self.http = http
         self.base_url = base_url.rstrip("/")
+        self.census_url = census_url.rstrip("/")
         self.clock = clock if clock is not None else http.clock
-        #: epoch seconds before which no request is sent (after a 429 / Cloudflare block)
-        self.cooldown_until = 0.0
+        #: host -> epoch seconds before which no request is sent to it (after a 429 / Cloudflare block)
+        self.cooldowns: dict[str, float] = {}
+
+    @property
+    def cooldown_until(self) -> float:
+        """Cool-down end of the candle (swap API) host; 0 when it is not cooling down."""
+        return self.cooldowns.get(host_of(self.base_url), 0.0)
 
     def candles(self, mint: str, minutes: int, before: int | None = None) -> list[Candle]:
         """1m candles covering ``[end - minutes*60, end)`` ASCENDING, gap-filled (``end`` =
@@ -138,19 +166,36 @@ class PumpFunClient:
         end = int(before) if before is not None else int(self.clock.now())
         start = end - int(minutes) * _INTERVAL_S
         limit = min(CANDLES_MAX_LIMIT, int(minutes) + 1)
-        rows = self._get(f"/v1/coins/{mint}/candles", {"interval": "1m", "limit": limit})
+        rows = self._get(f"{self.base_url}/v1/coins/{mint}/candles", {"interval": "1m", "limit": limit})
         candles = fill_gaps(parse_candles(rows), _INTERVAL_S)
         return [c for c in candles if start <= c.ts < end]
 
+    def raw_candles(self, mint: str, limit: int = CANDLES_MAX_LIMIT) -> list[Any]:
+        """The newest ``limit`` traded minutes AS SERVED (ascending ``{"timestamp": ms, "open", ...}`` rows;
+        the newest may still be open). A non-list body gives ``[]``."""
+        rows = self._get(f"{self.base_url}/v1/coins/{mint}/candles",
+                         {"interval": "1m", "limit": max(1, min(CANDLES_MAX_LIMIT, int(limit)))})
+        return rows if isinstance(rows, list) else []
+
+    def census_page(self, offset: int, limit: int = CENSUS_PAGE) -> list[Any]:
+        """One page of the graduated-coin census, newest created first, rows AS SERVED.
+        ``offset`` must be in ``[0, CENSUS_MAX_OFFSET]`` (ValueError otherwise; nothing is sent)."""
+        if not 0 <= int(offset) <= CENSUS_MAX_OFFSET:
+            raise ValueError(f"census offset must be 0..{CENSUS_MAX_OFFSET}, got {offset}")
+        rows = self._get(f"{self.census_url}/coins", {
+            "offset": int(offset), "limit": max(1, min(CENSUS_PAGE, int(limit))), "sort": "created_timestamp",
+            "order": "DESC", "includeNsfw": "true", "complete": "true"})
+        return rows if isinstance(rows, list) else []
+
     # ------------------------------------------------------------------ transport
-    def _get(self, path: str, params: dict[str, Any]) -> Any:
+    def _get(self, url: str, params: dict[str, Any]) -> Any:
         """One GET through the shared session and rate bucket; ``retry`` never (see module docstring).
         Every request sent is counted on the provider usage panel (``http.usage``), failed ones too."""
         now = self.clock.now()
-        if now < self.cooldown_until:
-            raise PumpFunCoolingDown(self.cooldown_until - now)
-        url = f"{self.base_url}{path}"
         host = host_of(url)
+        until = self.cooldowns.get(host, 0.0)
+        if now < until:
+            raise PumpFunCoolingDown(until - now)
         stats = self.http.stats[host]
         stats["rate_wait_s"] += self.http.limiter.acquire(host)
         stats["requests"] += 1
@@ -164,6 +209,7 @@ class PumpFunClient:
                 usage.maybe_flush()
 
     def _send(self, url: str, params: dict[str, Any], now: float, stats: dict[str, float]) -> Any:
+        host = host_of(url)
         try:
             resp = self.http.session.request("GET", url, params=params, json=None,
                                              headers=dict(self.http.default_headers), timeout=self.http.timeout_s)
@@ -176,8 +222,8 @@ class PumpFunClient:
             stats["errors"] += 1
             if status in COOLDOWN_STATUSES:
                 seconds = self._cooldown_s(getattr(resp, "headers", None) or {}, now)
-                self.cooldown_until = now + seconds
-                log.warning("pumpfun_backoff status=%s cooldown_s=%.0f", status, seconds)
+                self.cooldowns[host] = now + seconds
+                log.warning("pumpfun_backoff host=%s status=%s cooldown_s=%.0f", host, status, seconds)
             raise HttpError(f"HTTP {status}", url=url, status=status, body=_text(resp), payload=_json(resp),
                             retryable=status in COOLDOWN_STATUSES or status >= 500)
         content = getattr(resp, "content", b"")

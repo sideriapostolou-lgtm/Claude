@@ -19,7 +19,8 @@ from nightcrawler.backtest import (
     load_series,
 )
 from nightcrawler.clock import iso_utc
-from nightcrawler.models import Candle, StrategyParams
+from nightcrawler.models import Candle, Signal, StrategyParams
+from nightcrawler.strategy import entry_signal
 
 ROOT = Path(__file__).resolve().parents[1]
 SAMPLES = ROOT / "data" / "samples"
@@ -402,3 +403,89 @@ def test_the_backtest_universe_can_mirror_the_live_watch_window() -> None:
 def test_from_settings_mirrors_the_live_watch_window(make_settings) -> None:
     assert Backtester.from_settings(make_settings(WATCHLIST_TTL_H=4)).watch_ttl_h == 4.0
     assert Backtester.from_settings(make_settings(), any_age=True).watch_ttl_h is None
+
+
+# --------------------------------------------------------------------------- learning hooks (docs/LEARNING.md §4.2)
+
+
+def _sample_runs(bt: Backtester) -> list[dict]:
+    out = []
+    for fname in ("higgs_1m.json", "hooki_1m.json"):
+        candles, meta = load_series(SAMPLES / fname)
+        out.append(bt.run(candles, meta).to_dict(include_equity_curve=True))
+    for after in ([(0.33, 0.50, 0.33, 0.48), (0.48, 0.48, 0.40, 0.41)], flat(0.33, 130), [(0.33, 0.33, 0.2, 0.21)]):
+        out.append(bt.run(series(after), META).to_dict(include_equity_curve=True))
+    return out
+
+
+def test_hooks_default_to_none_and_change_nothing() -> None:
+    plain = Backtester(P)
+    assert (plain.cost_fn, plain.decide_at, plain.entry_delay_s, plain.entry_fn) == (None, None, None, None)
+    explicit = Backtester(P, cost_fn=None, decide_at=None, entry_delay_s=None, entry_fn=None)
+    runs = _sample_runs(plain)
+    assert sum(len(r["trades"]) for r in runs) >= 5
+    assert _sample_runs(explicit) == runs
+
+
+def test_identity_hooks_reproduce_the_default_run() -> None:
+    cm = CostModel()
+
+    def same_costs(side: str, price: float, size_usd: float) -> float:
+        return cm.buy_fill(price, size_usd) if side == "buy" else cm.sell_fill(price, size_usd)
+
+    hooked = Backtester(P, cost_fn=same_costs, decide_at=lambda now: now, entry_fn=entry_signal)
+    assert _sample_runs(hooked) == _sample_runs(Backtester(P))
+
+
+def test_decide_at_moves_or_skips_decisions() -> None:
+    candles = series([(0.33, 0.335, 0.329, 0.334)] + flat(0.334, 5))
+    assert Backtester(P, FREE, decide_at=lambda now: None).run(candles, META).trades == []
+    seen: list[float] = []
+
+    def later(now: float) -> float:
+        seen.append(now)
+        return now + 70  # decided 70 s after the candle closed: the entry lands in the candle after next
+
+    t = only_trade(Backtester(P, FREE, decide_at=later).run(candles, META))
+    assert t.entry_ts == candles[SIGNAL_INDEX + 2].ts and t.entry_price == pytest.approx(candles[SIGNAL_INDEX + 2].o)
+    assert seen[0] == candles[0].ts + 60  # asked once per closed candle while flat
+
+
+def test_entry_delay_fills_at_the_worse_of_the_landing_open_and_the_decision_close() -> None:
+    signal_close = SETUP[-1]
+    up = series([(0.33, 0.34, 0.33, 0.335), (0.336, 0.34, 0.335, 0.338)] + flat(0.338, 3))
+    t = only_trade(Backtester(P, FREE, entry_delay_s=65).run(up, META))
+    assert t.entry_ts == up[SIGNAL_INDEX + 2].ts  # decided at the signal close, landing 65 s later
+    assert t.entry_price == pytest.approx(0.336)  # landing open above the decision close
+    down = series([(0.33, 0.33, 0.32, 0.325), (0.32, 0.325, 0.31, 0.32)] + flat(0.32, 3))
+    t = only_trade(Backtester(P, FREE, entry_delay_s=65).run(down, META))
+    assert t.entry_price == pytest.approx(signal_close)  # never below the price the strategy decided on
+    assert Backtester(P, FREE, entry_delay_s=65).run(series([(0.33, 0.33, 0.33, 0.33)]), META).trades == []
+
+
+def test_a_cost_hook_can_refuse_an_entry_and_prices_both_sides() -> None:
+    candles = series(flat(0.33, 5))
+    refuse = Backtester(P, FREE, cost_fn=lambda side, price, size: math.inf if side == "buy" else price)
+    assert refuse.run(candles, META).trades == []
+    calls: list[tuple[str, float, float]] = []
+
+    def two_pct(side: str, price: float, size_usd: float) -> float:
+        calls.append((side, price, size_usd))
+        return price * (1.02 if side == "buy" else 0.98)
+
+    t = only_trade(Backtester(P, FREE, cost_fn=two_pct).run(candles, META))
+    assert t.entry_price == pytest.approx(0.33 * 1.02) and t.exit_price == pytest.approx(0.33 * 0.98)
+    assert [c[0] for c in calls] == ["buy", "sell"] and calls[0][2] == pytest.approx(20.0)
+
+
+def test_an_entry_hook_replaces_the_signal() -> None:
+    candles = series(flat(0.33, 40))
+    when = candles[20].ts
+
+    def at_a_time(window, snapshot, params, now):
+        kind = "enter" if now >= when else "none"
+        return Signal(kind=kind, reason="placebo", confidence=0.0, metrics={"last_ts": window[-1].ts})
+
+    trades = Backtester(P, FREE, entry_fn=at_a_time).run(candles, META).trades
+    # the candle before ``when`` closes AT ``when``: decided then, filled at the next open
+    assert trades[0].entry_ts == when and trades[0].signal_metrics == {"last_ts": when - 60}

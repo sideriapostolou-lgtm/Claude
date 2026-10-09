@@ -13,6 +13,9 @@ from nightcrawler.http import HttpClient, HttpError
 from nightcrawler.models import Candle
 from nightcrawler.sources.pumpfun import (
     CANDLES_MAX_LIMIT,
+    CENSUS_HOST,
+    CENSUS_MAX_OFFSET,
+    CENSUS_PAGE,
     DEFAULT_COOLDOWN_S,
     HOST,
     MAX_COOLDOWN_S,
@@ -207,6 +210,56 @@ def test_every_request_counts_on_the_usage_panel(client, http, fake_http, clock,
 ])
 def test_is_pumpfun_coin(launchpad, dex, expected) -> None:
     assert is_pumpfun_coin(launchpad=launchpad, dex=dex) is expected
+
+
+# --------------------------------------------------------------------------- census + raw candles (learning recorder)
+
+CENSUS = "frontend-api-v3.pump.fun/coins"
+JET = "BhMNZtBDSvG38oMRBJqoxLVzWr7Wfs4tWaW8wM69pump"  # tests/fixtures/pumpfun_candles_jet_1m.json
+
+
+def test_census_page_sends_the_documented_query_and_returns_raw_rows(client, fake_http) -> None:
+    fake_http.register_fixture(CENSUS, "pumpfun_census_coins")
+    rows = client.census_page(140)
+    assert rows == load_fixture("pumpfun_census_coins")  # raw: the recorder stores rows as seen
+    [call] = fake_http.calls
+    assert call.url == f"https://{CENSUS_HOST}/coins"
+    assert call.params == {"offset": 140, "limit": CENSUS_PAGE, "sort": "created_timestamp", "order": "DESC",
+                           "includeNsfw": "true", "complete": "true"}
+    assert [r["created_timestamp"] for r in rows] == sorted((r["created_timestamp"] for r in rows), reverse=True)
+
+
+@pytest.mark.parametrize("offset", [-1, CENSUS_MAX_OFFSET + 1])
+def test_census_page_refuses_offsets_the_api_does_not_serve(client, fake_http, offset) -> None:
+    with pytest.raises(ValueError):
+        client.census_page(offset)
+    assert fake_http.calls == []
+
+
+def test_census_page_ignores_a_non_list_body(client, fake_http) -> None:
+    fake_http.register(CENSUS, {"message": "unexpected"})
+    assert client.census_page(0) == []
+
+
+def test_census_and_candles_cool_down_separately(client, fake_http, clock) -> None:
+    fake_http.register(CENSUS, "<html>Cloudflare</html>", status=429, headers={"Retry-After": "300"})
+    fake_http.register_fixture(CANDLES, "pumpfun_candles_1m")
+    with pytest.raises(HttpError):
+        client.census_page(0)
+    with pytest.raises(PumpFunCoolingDown):
+        client.census_page(0)
+    assert client.cooldowns[CENSUS_HOST] == pytest.approx(clock.now() + 300)
+    assert client.cooldown_until == 0.0 and client.candles(INU, minutes=30)  # the swap API is unaffected
+
+
+def test_raw_candles_are_the_rows_as_served(client, fake_http) -> None:
+    fake_http.register_fixture(CANDLES, "pumpfun_candles_jet_1m")
+    rows = client.raw_candles(JET)
+    assert rows == load_fixture("pumpfun_candles_jet_1m") and len(rows) == 147
+    assert fake_http.calls[0].params == {"interval": "1m", "limit": CANDLES_MAX_LIMIT}
+    assert parse_candles(rows)[0].ts == 1_791_404_520  # JET was created 1791404554: complete from creation
+    fake_http.register(CANDLES, {"statusCode": 200})
+    assert client.raw_candles(JET, limit=5) == [] and fake_http.calls[-1].params["limit"] == 5
 
 
 # --------------------------------------------------------------------------- live

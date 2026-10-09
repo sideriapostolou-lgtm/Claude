@@ -70,6 +70,25 @@ Clarifications of the rules above (all deterministic, all documented in results)
   network fees. ``pnl_pct`` is percent of ``size_usd``; ``exposure_pct`` is
   the share of marked candles with a position open.
 
+Optional hooks for the learning loop's replay (docs/LEARNING.md §4.2). All default to ``None``,
+which is exactly the behaviour above (``tests/test_backtest.py`` proves it):
+
+* ``cost_fn(side, price, usd_size) -> effective USD per token`` replaces
+  :meth:`CostModel.buy_fill` / :meth:`CostModel.sell_fill` (network fees stay
+  ``network_fee_usd_per_side``). A buy priced ``None``, non-finite or <= 0 is
+  REFUSED (impact or liquidity cap): no entry, no cooldown.
+* ``decide_at(now) -> decision time | None``: called for each closed candle
+  while flat with its close time ``now``; returns when the strategy decides
+  with that candle as its newest visible one (observation lag, evaluation
+  cadence), or None for no decision. The universe check, the strategy and the
+  cooldown then use the decision time.
+* ``entry_delay_s``: the entry lands ``entry_delay_s`` after the decision and
+  fills at ``max(open of the candle containing the landing time, the close the
+  strategy decided on)``. Default: the candle containing the decision time
+  (the next candle), at its open.
+* ``entry_fn`` replaces :func:`nightcrawler.strategy.entry_signal` (same
+  signature), e.g. the placebo family's hash-timed random entry.
+
 Metrics (per series and aggregated): ``trades, wins, losses, win_rate_pct,
 total_return_pct, net_pnl_usd, avg_trade_pct, median_trade_pct,
 max_drawdown_pct, profit_factor, fees_usd, exposure_pct, best_trade_pct,
@@ -90,11 +109,11 @@ import os
 import statistics
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Iterable, Mapping, Sequence
+from typing import Any, Callable, Iterable, Mapping, Sequence
 
 from nightcrawler import risk
 from nightcrawler.logging_setup import get_logger
-from nightcrawler.models import Candle, Position, StrategyParams, fill_gaps
+from nightcrawler.models import Candle, MarketSnapshot, Position, Signal, StrategyParams, fill_gaps
 from nightcrawler.sources._parse import parse_ts, to_float
 from nightcrawler.strategy import CANDLE_INTERVAL_S, entry_signal, exit_levels
 
@@ -110,6 +129,13 @@ __all__ = [
 ]
 
 log = get_logger(__name__)
+
+#: ``cost_fn(side, price, usd_size)`` -> effective USD per token (None/inf/<= 0 refuses a buy).
+CostFn = Callable[[str, float, float], "float | None"]
+#: ``decide_at(candle close time)`` -> decision time, or None for no decision.
+DecideAt = Callable[[float], "float | None"]
+#: Same signature as :func:`nightcrawler.strategy.entry_signal`.
+EntryFn = Callable[[Sequence[Candle], "MarketSnapshot | None", StrategyParams, float], Signal]
 
 
 @dataclass(frozen=True, slots=True)
@@ -189,7 +215,9 @@ class Backtester:
 
     def __init__(self, params: StrategyParams, cost_model: CostModel | None = None, start_usd: float = 100.0,
                  position_pct: float = 0.20, min_position_usd: float = 5.0, max_position_usd: float = 25.0,
-                 watch_ttl_h: float | None = None) -> None:
+                 watch_ttl_h: float | None = None, *, cost_fn: CostFn | None = None,
+                 decide_at: DecideAt | None = None, entry_delay_s: float | None = None,
+                 entry_fn: EntryFn | None = None) -> None:
         self.params = params
         self.cost_model = cost_model or CostModel()
         self.start_usd = start_usd
@@ -198,6 +226,11 @@ class Backtester:
         self.max_position_usd = max_position_usd
         #: None = any age; else entries only within ``watch_ttl_h`` of maturity (see module docstring).
         self.watch_ttl_h = watch_ttl_h
+        #: Learning-loop replay hooks (module docstring); all None = the rules above, unchanged.
+        self.cost_fn = cost_fn
+        self.decide_at = decide_at
+        self.entry_delay_s = entry_delay_s
+        self.entry_fn = entry_fn
 
     @classmethod
     def from_settings(cls, settings: Any, cost_model: CostModel | None = None, *,
@@ -257,7 +290,8 @@ class Backtester:
 
     def _with_params(self, params: StrategyParams) -> "Backtester":
         return Backtester(params, self.cost_model, self.start_usd, self.position_pct, self.min_position_usd,
-                          self.max_position_usd, self.watch_ttl_h)
+                          self.max_position_usd, self.watch_ttl_h, cost_fn=self.cost_fn, decide_at=self.decide_at,
+                          entry_delay_s=self.entry_delay_s, entry_fn=self.entry_fn)
 
     def _aggregate(self, series: Sequence[tuple[list[Candle], dict[str, Any]]]) -> dict[str, float]:
         return aggregate_metrics([self.run(c, m) for c, m in series], self.start_usd)
@@ -285,6 +319,14 @@ class _OpenTrade:
     sold_value_usd: float = 0.0  # sum(tokens * net fill price)
 
 
+@dataclass(frozen=True, slots=True)
+class _PendingEntry:
+    metrics: dict[str, Any]
+    size_usd: float
+    fill_at: float  # fills in the candle containing this time
+    floor_price: float | None  # entry_delay_s: never fill below the close the strategy decided on
+
+
 class _SeriesRun:
     """State machine for one series; see the module docstring for every rule."""
 
@@ -308,17 +350,16 @@ class _SeriesRun:
         self.trades: list[BacktestTrade] = []
         self.curve: list[tuple[int, float]] = []
         self.open: _OpenTrade | None = None
-        self.pending: tuple[dict[str, Any], float] | None = None  # (signal metrics, size_usd)
+        self.pending: _PendingEntry | None = None
         self.cooldown_until = -math.inf
         self.exposed = 0
 
     def run(self) -> BacktestResult:
         for i, c in enumerate(self.candles):
             busy = self.pending is not None or self.open is not None  # a position lives in this candle
-            if self.pending is not None:
-                metrics, size = self.pending
-                self.pending = None
-                self._fill_entry(c, metrics, size)
+            if self.pending is not None and c.ts + CANDLE_INTERVAL_S > self.pending.fill_at:
+                pending, self.pending = self.pending, None
+                self._fill_entry(c, pending)
             if self.open is not None:
                 self._manage(self.open, c)
             now = c.ts + CANDLE_INTERVAL_S
@@ -327,7 +368,7 @@ class _SeriesRun:
             if now >= self.trade_until and not busy:
                 break
             self._mark(c)
-            if self.open is None and now < self.trade_until:
+            if self.open is None and self.pending is None and now < self.trade_until:
                 self._consider_entry(i, now)
         if self.open is not None:
             last = self.candles[-1]
@@ -337,15 +378,22 @@ class _SeriesRun:
 
     # ---------------------------------------------------------------- entries
     def _consider_entry(self, i: int, now: float) -> None:
+        if self.bt.decide_at is not None:  # learning replay: lagged, cadenced decisions
+            decided = self.bt.decide_at(now)
+            if decided is None:
+                return
+            now = decided
         if now < self.cooldown_until or not self._in_universe(self.candles[i], now):
             return
         lo = bisect.bisect_left(self.ts, now - self.p.dip_lookback_h * 3600)
-        signal = entry_signal(self.candles[lo:i + 1], None, self.p, now)
+        signal = (self.bt.entry_fn or entry_signal)(self.candles[lo:i + 1], None, self.p, now)
         if signal.kind != "enter":
             return
         size = self.bt.size_usd(self.cash)
         if size > 0:
-            self.pending = (signal.metrics, size)
+            delay = self.bt.entry_delay_s
+            self.pending = _PendingEntry(signal.metrics, size, now + (delay or 0.0),
+                                         None if delay is None else self.candles[i].c)
 
     def _passes_maturity_prefilter(self) -> bool:
         """The crawler's mcap window at maturity (``MIN_AGE_MIN``), on the last candle at/before it.
@@ -368,16 +416,24 @@ class _SeriesRun:
             return self.p.min_mcap_usd <= c.c * self.supply <= self.p.max_mcap_usd
         return True
 
-    def _fill_entry(self, c: Candle, metrics: dict[str, Any], size: float) -> None:
+    def _fill_entry(self, c: Candle, pending: _PendingEntry) -> None:
+        metrics, size = pending.metrics, pending.size_usd
+        mid = c.o if pending.floor_price is None else max(c.o, pending.floor_price)
+        if self.bt.cost_fn is None:
+            price = self.costs.buy_fill(mid, size)
+        else:
+            hooked = self.bt.cost_fn("buy", mid, size)
+            if hooked is None or not math.isfinite(hooked) or hooked <= 0:
+                return  # refused by the cost hook (impact or liquidity cap): no trade
+            price = hooked
         network = self.costs.network_fee_usd_per_side
-        price = self.costs.buy_fill(c.o, size)
         tokens = size / price
         self.cash -= size + network
         position = Position(id=f"bt_{self.coin}_{c.ts}", mint=str(self.meta.get("mint") or ""), symbol=self.coin,
                             pool=self.meta.get("pool"), opened_at=float(c.ts), token_decimals=0,
                             entry_price_usd=price, peak_price_usd=price)
         self.open = _OpenTrade(position=position, tokens=tokens, size_usd=size, invested_usd=size + network,
-                               fees_usd=size - tokens * c.o + network, metrics=metrics)
+                               fees_usd=size - tokens * mid + network, metrics=metrics)
 
     # ---------------------------------------------------------------- exits
     def _manage(self, trade: _OpenTrade, c: Candle) -> None:
@@ -425,7 +481,8 @@ class _SeriesRun:
 
     def _sell(self, trade: _OpenTrade, tokens: float, price: float) -> None:
         gross = tokens * price
-        net_price = self.costs.sell_fill(price, gross)
+        net_price = (self.costs.sell_fill(price, gross) if self.bt.cost_fn is None
+                     else max(0.0, self.bt.cost_fn("sell", price, gross) or 0.0))
         network = self.costs.network_fee_usd_per_side
         proceeds = tokens * net_price - network
         self.cash += proceeds
