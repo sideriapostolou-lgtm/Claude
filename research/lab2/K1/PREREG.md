@@ -82,3 +82,9 @@ registered reproducibility guarantee therefore rests on the decision cache (ever
 prompt version, config and brief hash and never re-asked), not on deterministic sampling. Prompt version unchanged
 (`desk-v1`). Budget caps unchanged. The owner funded $25 of credits on 2026-10-09 and chose to supply the key in the
 chat; TRAIN runs with `--budget-usd 14`, VAL and TEST with `--budget-usd 5.5` so the whole exam fits the credit.
+
+## Amendment 2 (2026-10-09 13:05 UTC, before any real decision was scored)
+
+The live smoke test showed Haiku 5.5 spending its whole 400-token memo budget on hidden thinking (31 characters of
+memo survived). The desk now sends `thinking: disabled` on every call and allows 500 output tokens per memo; the
+decider keeps 400. This keeps the exam at ~$0.005 per panel decision. Prompts unchanged (`desk-v1`).

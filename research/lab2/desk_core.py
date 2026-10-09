@@ -47,7 +47,7 @@ SIZE_USD_MAX = 20.0
 SIZE_USD_MIN = 5.0
 STOP_PCT_BOUNDS = (0.20, 0.50)
 HOLD_MIN_BOUNDS = (15, 120)
-MEMO_MAX_TOKENS = 400
+MEMO_MAX_TOKENS = 500
 DECISION_MAX_TOKENS = 400
 MAX_REASON_CHARS = 240
 TEMPERATURE = 0.0
@@ -247,6 +247,8 @@ def _request(model: str, system: str, user: str, max_tokens: int, schema: dict |
     req: dict[str, Any] = {
         "model": model,
         "max_tokens": max_tokens,  # no sampling parameters: the Claude 5 API has none (PREREG amendment 1)
+        # amendment 2: hidden reasoning ate the memo budget; "between_tools" is this API's "no thinking before answering"
+        "thinking": {"type": "between_tools"},
         "system": [{"type": "text", "text": system, "cache_control": {"type": "ephemeral"}}],
         "messages": [{"role": "user", "content": user}],
     }
