@@ -101,7 +101,7 @@ LAG_PARTITION_SLACK_D = 3
 DAYS_META = "learner.days"
 #: Settings the learner child reads; everything else - every secret above all - stays in the engine.
 CHILD_SETTINGS = ("data_dir", "learn_enabled", "learn_disk_cap_gb", "learn_interval_min", "paper_slippage_bps",
-                  "max_price_impact_pct", "log_level", *StrategyParams.FIELDS_FROM_SETTINGS)
+                  "max_price_impact_pct", "min_age_since_grad_min", "log_level", *StrategyParams.FIELDS_FROM_SETTINGS)
 #: Process environment the child keeps (no application variable).
 CHILD_OS_ENV = ("PATH", "LANG", "LC_ALL", "TZ", "HOME", "TMPDIR", "SYSTEMROOT", "PYTHONDONTWRITEBYTECODE",
                 "PYTHONUNBUFFERED")

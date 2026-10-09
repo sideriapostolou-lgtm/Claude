@@ -258,6 +258,14 @@ def test_the_learner_child_gets_no_secret_and_only_the_settings_it_reads(make_se
     assert env["PYTHONPATH"].split(os.pathsep) == [root, "/somewhere/else"]  # the child runs THIS code
 
 
+def test_the_learner_replays_the_live_graduation_window(make_settings) -> None:
+    """G12: the shadow book enters on the same graduation window as the live bot, also when the owner changes it."""
+    settings = make_settings(MIN_AGE_SINCE_GRAD_MIN=45)
+    child = Settings.from_env(learner_env(settings, base={"PATH": "/usr/bin"}))
+    assert child.min_age_since_grad_min == 45
+    assert rp.SimConfig.from_settings(child).min_age_since_grad_min == 45
+
+
 def test_an_installed_package_is_found_without_touching_pythonpath(make_settings, monkeypatch) -> None:
     monkeypatch.setattr(job, "_code_root", lambda: None)  # nightcrawler lives in site-packages (the Docker image)
     assert "PYTHONPATH" not in learner_env(make_settings(), base={"PATH": "/usr/bin"})
