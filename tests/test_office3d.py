@@ -247,8 +247,13 @@ def test_office3d_without_token_is_open_like_the_page(serve: Callable[..., Clien
     assert status == 200 and headers["Content-Type"].startswith("application/javascript")
 
 
-def test_the_page_and_the_office_link_to_the_town(settings: Settings) -> None:
+def test_the_page_links_the_3d_world_and_the_town_stays_reachable(
+        serve: Callable[..., Client], ledger: Ledger, settings: Settings) -> None:
     page = render_page_html(settings)
-    assert '<a class="office" href="office3d" title="The 3D world">3D</a>' in page
-    assert page.index('href="office"') < page.index('href="office3d"')  # next to the Office link
+    assert '<a class="office" href="world" title="The 3D world">3D</a>' in page  # the page's 3D link is the world
+    assert 'href="office3d"' not in page
+    assert page.index('href="office"') < page.index('href="world"')  # next to the Office link
     assert 'href="office"' in render_office3d_html(settings)  # and the way back from the town
+    client = serve(settings, ledger)
+    status, _, body = client.request("/office3d")  # the town is still served at its own address
+    assert status == 200 and b"the town and its cast are drawings" in body

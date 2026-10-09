@@ -878,7 +878,7 @@ def render_page_html(settings: Settings) -> str:
         f"<body data-refresh=\"{REFRESH_S}\">\n<main id=\"main\">\n"
         f"<header class=\"top\"><b class=\"mode{' live' if live else ''}\" id=\"mode\">{mode}</b>"
         "<a class=\"office\" href=\"office\" title=\"Watch the team at work\">Office</a>"
-        "<a class=\"office\" href=\"office3d\" title=\"The 3D world\">3D</a>"
+        "<a class=\"office\" href=\"world\" title=\"The 3D world\">3D</a>"
         f"<span class=\"name\">nightcrawler</span><span class=\"updated\" id=\"updated\">loading…</span></header>\n"
         "<div id=\"alerts\" role=\"status\"></div>\n"
         "<div class=\"alert warn\" id=\"offline\" role=\"status\" hidden></div>\n"
