@@ -353,7 +353,7 @@ def test_the_model_manifest_names_one_whitelisted_glb_per_actor() -> None:
     for key, spec in CAST_MODELS.items():
         assert spec["asset"] == f"cast_{key}.glb" and WORLD_ASSETS[f"cast_{key}.glb"] == "model/gltf-binary"
         assert isinstance(spec["height"], float) and 0.5 < spec["height"] < 3.0
-    assert CAST_MODELS["rook"]["height"] > 1.8 * CAST_MODELS["pip"]["height"]  # Rook is twice the others
+    assert float(str(CAST_MODELS["rook"]["height"])) > 1.8 * float(str(CAST_MODELS["pip"]["height"]))  # twice Pip
     others = [float(str(s["height"])) for k, s in CAST_MODELS.items() if k != "rook"]
     assert float(str(CAST_MODELS["rook"]["height"])) > 1.6 * max(others)  # clearly the biggest of the lineup
     assert WORLD_ASSETS[CART_MODEL] == "model/gltf-binary"
@@ -395,9 +395,11 @@ def test_the_tiny_glb_is_a_valid_binary_gltf() -> None:
 def test_models_on_disk_reports_the_real_files() -> None:
     on = models_on_disk()
     assert on["motion"] is True  # the move library, its manifest and both modules ship
-    assert set(on["cast"]) == set(CAST_MODELS) and set(on["props"]) == set(PROP_MODELS)  # type: ignore[arg-type]
-    assert on["cast"]["mote"] == dict(CAST_MODELS["mote"], cart=CART_MODEL)  # type: ignore[index]
-    assert on["cast"]["jet"] == CAST_MODELS["jet"] and on["props"]["arch"] == PROP_MODELS["arch"]  # type: ignore[index]
+    cast_on, props_on = on["cast"], on["props"]
+    assert isinstance(cast_on, dict) and isinstance(props_on, dict)
+    assert set(cast_on) == set(CAST_MODELS) and set(props_on) == set(PROP_MODELS)
+    assert cast_on["mote"] == dict(CAST_MODELS["mote"], cart=CART_MODEL)
+    assert cast_on["jet"] == CAST_MODELS["jet"] and props_on["arch"] == PROP_MODELS["arch"]
     for name in list(MOTION_FILES) + [CART_MODEL] + [str(s["asset"]) for s in [*CAST_MODELS.values(), *PROP_MODELS.values()]]:
         assert (world3d.ASSET_DIR / name).is_file(), name
 

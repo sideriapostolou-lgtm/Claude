@@ -2221,12 +2221,12 @@ _M_LIFE = r"""
   // ground speed: the drawing's own pace; a real biped walks at its own walk's measured speed (the feet do not
   // slide). Jet hurries with a closed trade's cube (the carry move, quicker); Voss takes quick penguin steps and
   // glides when the way is long (wings spread).
-  const WALK_RATE = { carry: 3.2, walk_penguin: 2.4 };
+  const WALK_RATE = { carry: 3.2, walk_penguin: 2.4, other: 1.25 };  // (a brisker cadence: the playback and the ground speed scale together)
   function walkClip(a) { return a.carrying ? "carry" : (a.actor && a.actor.spec.walk) || "walk_casual"; }
   function walkSpeedOf(a) {
     const A = a.actor;
     if (!A || A.spec.kind !== "biped") return a.speed * (a.key === "voss" ? lerp(1, 2.3, a.glide) : 1);
-    const name = walkClip(a), feet = (A.library.info(name).speed_hips_per_s || 0) * A.hipsHeight * (WALK_RATE[name] || 1);
+    const name = walkClip(a), feet = (A.library.info(name).speed_hips_per_s || 0) * A.hipsHeight * (WALK_RATE[name] || WALK_RATE.other);
     return a.key === "voss" ? lerp(Math.max(0.15, feet), 1.5, a.glide) : Math.max(0.15, feet);
   }
   function travelSpeed(a) { return a.key === "voss" ? (a.actor ? 1.35 : 1.8) : walkSpeedOf(a); }
@@ -2380,7 +2380,7 @@ _M_LIFE = r"""
     const A = a.actor, biped = A.spec.kind === "biped";
     if (biped) {
       let loop = a.station, rate = 1;
-      if (st.walking) { loop = walkClip(a); rate = WALK_RATE[loop] || 1; if (a.key === "voss" && a.glide > 0.35) { loop = "idle"; rate = 1; } }
+      if (st.walking) { loop = walkClip(a); rate = WALK_RATE[loop] || WALK_RATE.other; if (a.key === "voss" && a.glide > 0.35) { loop = "idle"; rate = 1; } }
       else if (a.speaking) loop = "talk";
       else if (a.listening) loop = "listen";
       if (st.walking && A.oneShot) endOneShot(A);
@@ -2470,7 +2470,7 @@ _M_LIFE = r"""
     root.traverse(function (o) {
       if (!o.isMesh) return;
       o.castShadow = Q.shadows; o.receiveShadow = true;
-      [].concat(o.material).forEach(function (m) { if (m && "envMapIntensity" in m) m.envMapIntensity = envK; });
+      [].concat(o.material).forEach(function (m) { if (m && m !== bellMat && "envMapIntensity" in m) m.envMapIntensity = envK; });
     });
   }
   function shrinkTextures(root, size, keys) {
