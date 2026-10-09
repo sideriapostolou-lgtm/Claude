@@ -128,3 +128,8 @@ so P4 is the hypothesis that matters for the owner's path; P2 (sports) stays as 
 Re-costing rule: a cell selected on polymarket.com data is re-evaluated with the US fee (0.0695) before any paper
 desk is built; the US venue's own books are then recorded live (a recorder on the public gateway) so the paper desk
 fills at that venue's printed prices, not at polymarket.com's.
+
+Correction to the counts above (2026-10-09 15:12 UTC, still before any TRAIN return): the recorder's first live
+poll of the US gateway found **537** non-sports markets ending within 48 hours: 477 crypto (hourly and weekly
+"BTC above / below a strike" markets) and 60 climate (daily city high-temperature brackets). The "~5 crypto per
+day" settlement count above undercounts the hourly crypto series; the recorder measures the real supply.

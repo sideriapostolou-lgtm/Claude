@@ -31,7 +31,8 @@ def _fake_gateway(markets, bbos, settlements):
     def fake_get(path, params=None, tries=4):
         if path == "/markets":
             off = params["offset"]
-            return {"markets": markets[off : off + params["limit"]]}
+            ms = [m for m in markets if m["category"] == params["categories"]]
+            return {"markets": ms[off : off + params["limit"]]}
         if path.endswith("/bbo"):
             slug = path.split("/")[2]
             return {
