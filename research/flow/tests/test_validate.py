@@ -88,3 +88,89 @@ def test_swapapi_amount_convention_per_trade(launch_fixture, launch_amm_fixture)
             else:
                 assert abs(V.net_swap_sol(t) - a) <= 2e-9
     assert n >= 240
+
+
+# ---- per-split range records (validate.py --ranges) ------------------------------------------------------------
+
+
+def _g(mint, g_ts, **kw):
+    d = {"mint": mint, "pool": "P" + mint, "g_ts": g_ts, "c_ts": g_ts - 600, "has_create": 1,
+         "pool_quote_mint": V.WSOL, "is_mayhem": 0, "rsol_complete": 85.0}
+    d.update(kw)
+    return d
+
+
+def test_pick_hours_one_per_segment_inside_the_split():
+    lo, hi = V._uts("2026-10-06 12:00:00"), V._uts("2026-10-07 19:37:30")
+    hs = V.pick_hours("test", lo, hi, 2)
+    assert hs == V.pick_hours("test", lo, hi, 2)            # deterministic
+    assert len(hs) == 2 and all(lo <= h and h + 3600 <= hi for h in hs)
+    mid = lo + 16 * 3600                                       # 31 whole hours -> segments of 15 and 16
+    assert hs[0] < lo + 15 * 3600 <= hs[1] < mid + 15 * 3600
+    assert V.pick_hours("x", lo, lo + 3600, 4) == [lo]        # never more hours than the split holds
+
+
+def test_range_candidates_universe_creation_rule_and_window():
+    H = V._uts("2026-10-03 12:00:00")
+    lo, hi = V._uts("2026-10-01 00:00:00"), V._uts("2026-10-05 00:00:00")
+    grads = {g["mint"]: g for g in [
+        _g("a", H - 2 * 3600),                                # graduated 2 h before: window = the whole hour
+        _g("b", H + 1200),                                    # graduates inside the hour: window starts at g
+        _g("c", H - 4 * 3600),                                # B2 window over before the hour
+        _g("d", H + 100, pool=None),                          # no pool
+        _g("e", H + 100, pool_quote_mint="USD1"),             # not SOL-quoted
+        _g("f", H + 100, is_mayhem=1),                        # Mayhem flag
+        _g("h", H + 100, rsol_complete=40.0),                 # Mayhem by real SOL at completion
+        _g("i", H + 100, has_create=0, c_ts=0),               # creation unknown -> g - 1800 (inside the split)
+        _g("j", H + 100, c_ts=lo - 10),                       # created before the split
+        _g("k", H + 100, c_ts=lo - 10),                       # ... but the census says otherwise
+    ]}
+    out = {c["mint"]: c for c in V.range_candidates(grads, lo, hi, H, {"k": lo + 5})}
+    assert set(out) == {"a", "b", "i", "k"}
+    assert (out["a"]["lo"], out["a"]["hi"]) == (H, H + 3600)
+    assert (out["b"]["lo"], out["b"]["hi"]) == (H + 1200, H + 3600)
+    assert out["i"]["c_ts"] == H + 100 - 1800 and out["k"]["c_ts"] == lo + 5
+    late = V.range_candidates({"z": _g("z", H - 3 * 3600 + 600)}, lo, hi, H)
+    assert late[0]["hi"] == H + 600                           # B2 ends inside the hour
+
+
+def _row(fx):
+    return {"mint": fx["mint"], "truncated": 0, "trades": _trades(fx)}
+
+
+def test_range_record_passes_on_real_amm_window(launch_amm_fixture):
+    fx = launch_amm_fixture
+    st = V.block_stats([_row(fx)], {fx["mint"]: fx["swapapi"]["trades"]})
+    rec = V.range_record("val", "2026-10-05 00:00:00", "2026-10-06 12:00:00",
+                         [{"hour_utc": "2026-10-05 05:00:00", "stats": st}], "2026-10-09 02:00:00")
+    assert rec["V1"]["pass"] and rec["V2"]["pass"] and rec["V4"]["pass"]
+    assert rec["V2"]["transitions"] == len(fx["cryptohouse"]["trades"]) - 2 and rec["V2"]["chain_ok"] >= rec["V2"]["transitions"] - 1
+    assert rec["V1"]["swapapi_label_checked"] >= len(fx["swapapi"]["trades"]) - 1
+    assert rec["V4"]["same_slot_pairs"] > 0
+    # the fields research/lab2/common.validation_gates reads
+    for k in ("lo_utc", "hi_utc", "validated_utc"):
+        assert len(rec[k]) == 19
+    assert {"chain_ok", "transitions"} <= set(rec["V2"]) and "pass" in rec["V1"] and "pass" in rec["V4"]
+
+
+def test_range_record_fails_on_missing_trades_and_wrong_labels(launch_amm_fixture):
+    fx = launch_amm_fixture
+    row = _row(fx)
+    amm = [i for i, t in enumerate(row["trades"]) if t["venue"] == 1]
+    gapped = dict(row, trades=[t for i, t in enumerate(row["trades"]) if i not in amm[5:40:5]])   # 7 missing
+    bad_sw = [dict(x, type="sell" if x["type"] == "buy" else "buy") if i % 50 == 0 else x
+              for i, x in enumerate(fx["swapapi"]["trades"])]
+    st = V.block_stats([gapped], {fx["mint"]: bad_sw})
+    rec = V.range_record("val", "a" * 19, "b" * 19, [{"hour_utc": "h", "stats": st}], "c" * 19)
+    assert not rec["V2"]["pass"] and rec["V2"]["transitions"] - rec["V2"]["chain_ok"] >= 7
+    assert not rec["V1"]["pass"] and rec["V1"]["swapapi_label_agree"] < rec["V1"]["swapapi_label_checked"]
+    empty = V.range_record("val", "a" * 19, "b" * 19, [{"hour_utc": "h", "stats": V.block_stats([], {})}], "c" * 19)
+    assert not (empty["V1"]["pass"] or empty["V2"]["pass"] or empty["V4"]["pass"])
+
+
+def test_merge_ranges_replaces_same_split_only():
+    old = [{"split": "train", "lo_utc": "1", "hi_utc": "2", "v": 0}, {"split": "val", "lo_utc": "3", "hi_utc": "4"},
+           {"lo_utc": "5", "hi_utc": "6"}]
+    new = [{"split": "train", "lo_utc": "1", "hi_utc": "2", "v": 1}, {"split": "x", "lo_utc": "5", "hi_utc": "6"}]
+    got = V.merge_ranges(old, new)
+    assert [r.get("split") for r in got] == ["val", "train", "x"] and got[1]["v"] == 1

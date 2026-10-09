@@ -7,12 +7,16 @@ Phases (each resumable; every query is checkpointed to disk before the next one 
   (window of ``LAB/census.json``) is processed first, then whole days going back from the newest.
 * **P2** the same, extended to ``--days 21`` (U_ext starts 2026-09-16).
 * **P3** B3 per-(wallet, coin) position summaries (``sql/b3.sql``) for graduates already in P1/P2.
-* **P4** B1 raw non-dust trades (``sql/raw.sql``) for non-factory coins.
+* **P4b** B1 raw non-dust trades for the lab2 S1 universe (``FLOW/b1_select.json``), packed into <= 30-minute
+  time slabs (``sql/b1c.sql``, ``b1c.py``), splits strictly in the order given (TRAIN first). Separate state file
+  ``state_b1.json``. (The old coin-batch **P4**, ``sql/b1.sql``, cannot pass the 95 % coverage gate and refuses to
+  run.)
 
 Run::
 
     python research/flow/backfill.py --phase P1 --days 7 --out $SCRATCH/flow
-    python research/flow/backfill.py --phase P1 --days 7 --out $SCRATCH/flow --max-minutes 80
+    python research/flow/backfill.py --phase P1 --since 2026-10-01 --until 2026-10-09 --out $SCRATCH/flow
+    python research/flow/backfill.py --phase P4b --splits train,val,test --out $SCRATCH/flow [--dry-run]
     python research/flow/backfill.py --consolidate --out $SCRATCH/flow
 
 Chunks are clock-aligned (15-minute slot anchors from ``solana.blocks``). Curve chunks are 1 hour with a
@@ -25,6 +29,8 @@ next server interval.
 from __future__ import annotations
 
 import argparse
+import contextlib
+import fcntl
 import gzip
 import hashlib
 import json
@@ -39,6 +45,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from cryptohouse import CHError, CryptoHouse, QueryTimeout, ResultTooLarge, Budget, summarize_log  # noqa: E402
 from decode import render_sql, sql_in, sql_tuples  # noqa: E402
+import b1c  # noqa: E402
 import features  # noqa: E402
 
 log = logging.getLogger("backfill")
@@ -62,15 +69,37 @@ def floor_to(ts: float, step: int) -> int:
     return int(ts // step) * step
 
 
+def parse_utc(s: str) -> int:
+    """'YYYY-MM-DD[ HH:MM[:SS]]' (UTC) or epoch seconds -> epoch seconds."""
+    s = str(s).strip()
+    if s.isdigit():
+        return int(s)
+    for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%dT%H:%M", "%Y-%m-%d"):
+        try:
+            return int(datetime.strptime(s, fmt).replace(tzinfo=timezone.utc).timestamp())
+        except ValueError:
+            continue
+    raise ValueError(f"not a UTC time: {s!r}")
+
+
+def atomic_write_text(path: Path, text: str) -> None:
+    tmp = path.with_name(f".{path.name}.{os.getpid()}.tmp")
+    tmp.write_text(text)
+    os.replace(tmp, path)
+
+
 # ----------------------------------------------------------------------------------------------
 # storage
 
 
 class Store:
-    def __init__(self, out: Path):
+    """Raw chunks under ``raw/<kind>/`` plus one state file. Two processes must never share a state file (each
+    rewrites it whole and would drop the other's updates): P1-P3 use ``state.json``, P4b ``state_b1.json``."""
+
+    def __init__(self, out: Path, state_name: str = "state.json"):
         self.out = Path(out)
         self.out.mkdir(parents=True, exist_ok=True)
-        self.state_path = self.out / "state.json"
+        self.state_path = self.out / state_name
         self.state = json.loads(self.state_path.read_text()) if self.state_path.exists() else {}
         for k in ("curve", "b2", "b3", "raw", "slotmap", "errors"):
             self.state.setdefault(k, {})
@@ -113,7 +142,14 @@ class SlotMap:
         self.path = store.out / "slotmap.json"
         self.m: dict[int, tuple[int, int]] = {}
         if self.path.exists():
-            self.m = {int(k): tuple(v) for k, v in json.loads(self.path.read_text()).items()}
+            for attempt in range(5):          # another process may be rewriting it (atomic since 2026-10-09)
+                try:
+                    self.m = {int(k): tuple(v) for k, v in json.loads(self.path.read_text()).items()}
+                    break
+                except json.JSONDecodeError:
+                    if attempt == 4:
+                        raise
+                    time.sleep(1)
 
     def ensure(self, t_lo: int, t_hi: int) -> None:
         t_lo, t_hi = floor_to(t_lo, Q15), floor_to(t_hi, Q15) + Q15
@@ -128,7 +164,7 @@ class SlotMap:
             for t, lo, hi, _n in res.rows:
                 self.m[int(t)] = (int(lo), int(hi))
             a = b
-        self.path.write_text(json.dumps({str(k): v for k, v in sorted(self.m.items())}))
+        atomic_write_text(self.path, json.dumps({str(k): v for k, v in sorted(self.m.items())}))
 
     def first_slot(self, t: int) -> int:
         return self.m[floor_to(t, Q15)][0]
@@ -145,8 +181,9 @@ class SlotMap:
 
 
 class Backfill:
-    def __init__(self, out: Path, ch: CryptoHouse, deadline: float | None, max_queries: int | None):
-        self.store = Store(out)
+    def __init__(self, out: Path, ch: CryptoHouse, deadline: float | None, max_queries: int | None,
+                 state_name: str = "state.json"):
+        self.store = Store(out, state_name)
         self.ch = ch
         self.slots = SlotMap(self.store, ch)
         self.deadline = deadline
@@ -365,7 +402,10 @@ class Backfill:
                 self.write_manifest()
         return True
 
-    def p1(self, days: float, now_limit: int, census_first: bool = True) -> None:
+    def p1(self, days: float, now_limit: int, census_first: bool = True, since: int | None = None) -> None:
+        """Census day first, then whole days back from the newest hour. ``start_all`` is hour-aligned (B2 and curve
+        state keys are hours): ``--days 8.x`` used to produce non-aligned keys, and ``--days 7`` cannot reach
+        10-01 00:00. ``since`` overrides ``days`` with an absolute start (floored to the hour)."""
         ranges = []
         if census_first:
             c = json.loads((LAB / "census.json").read_text())
@@ -373,7 +413,7 @@ class Backfill:
             ce = floor_to(c["census_finished_ts"], HOUR) + HOUR
             ranges.append((cs, min(ce, now_limit)))
         end = floor_to(now_limit, HOUR)
-        start_all = max(UEXT_START, end - int(days * 86400))
+        start_all = floor_to(max(UEXT_START, since if since is not None else end - int(days * 86400)), HOUR)
         d = end
         while d > start_all:
             ranges.append((max(start_all, d - 86400), d))
@@ -475,9 +515,52 @@ class Backfill:
 # consolidation (offline)
 
 
-def consolidate(out: Path) -> dict:
-    import pyarrow as pa
+@contextlib.contextmanager
+def consolidate_lock(out: Path):
+    """Exclusive ``flock`` on ``FLOW/consolidate.lock``: P1, P4b and manual runs all consolidate."""
+    lp = Path(out) / "consolidate.lock"
+    with open(lp, "a+") as lf:
+        fcntl.flock(lf.fileno(), fcntl.LOCK_EX)
+        try:
+            yield
+        finally:
+            fcntl.flock(lf.fileno(), fcntl.LOCK_UN)
+
+
+@contextlib.contextmanager
+def state_lock(path: Path, wait: bool = True):
+    """One process per state file (P1-P3: ``state.lock``, P4b: ``state_b1.lock``); a second one waits."""
+    with open(path, "a+") as lf:
+        try:
+            fcntl.flock(lf.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            if not wait:
+                raise
+            log.warning("%s is held by another backfill process: waiting for it", path.name)
+            fcntl.flock(lf.fileno(), fcntl.LOCK_EX)
+        try:
+            yield
+        finally:
+            fcntl.flock(lf.fileno(), fcntl.LOCK_UN)
+
+
+def write_parquet(table, path: Path) -> None:
+    """tmp + os.replace: a reader never sees a half-written table."""
     import pyarrow.parquet as pq
+
+    tmp = path.with_name(f".{path.name}.{os.getpid()}.tmp")
+    pq.write_table(table, tmp, compression="zstd")
+    os.replace(tmp, path)
+
+
+def consolidate(out: Path) -> dict:
+    """Rebuild the Parquet tables from the raw chunks (offline), under the consolidate lock."""
+    with consolidate_lock(out):
+        return _consolidate(Path(out))
+
+
+def _consolidate(out: Path) -> dict:
+    import pyarrow as pa
 
     store = Store(out)
     # graduates
@@ -505,8 +588,7 @@ def consolidate(out: Path) -> dict:
         else:
             d["curve_partial"] = False
     if grads:
-        pq.write_table(pa.Table.from_pylist(sorted(grads.values(), key=lambda d: d["g_ts"])),
-                       out / "graduates.parquet", compression="zstd")
+        write_parquet(pa.Table.from_pylist(sorted(grads.values(), key=lambda d: d["g_ts"])), out / "graduates.parquet")
     # B2: merge per pool
     per_pool: dict[str, list] = {}
     for ch in store.load_chunks("b2"):
@@ -546,9 +628,9 @@ def consolidate(out: Path) -> dict:
         })
         coin_rows.append(m)
     if bars_rows:
-        pq.write_table(pa.Table.from_pylist(bars_rows), out / "b2_bars.parquet", compression="zstd")
+        write_parquet(pa.Table.from_pylist(bars_rows), out / "b2_bars.parquet")
     if coin_rows:
-        pq.write_table(pa.Table.from_pylist(coin_rows), out / "b2_coins.parquet", compression="zstd")
+        write_parquet(pa.Table.from_pylist(coin_rows), out / "b2_coins.parquet")
     # B3 wallets (long format)
     wrows = []
     wf = ("wallet_h", "wallet", "n_buys", "n_sells", "buy_sol", "sell_sol", "buy_tok", "sell_tok", "curve_buy_sol",
@@ -562,48 +644,147 @@ def consolidate(out: Path) -> dict:
                 row["mint"] = d["mint"]
                 wrows.append(row)
     if wrows:
-        pq.write_table(pa.Table.from_pylist(wrows), out / "b3_positions.parquet", compression="zstd")
-    # B1 raw trades (P4, slim tuples from sql/b1.sql)
-    tf = ("slot", "tx_idx", "pix", "ix", "ts", "venue", "is_buy", "wallet_h", "usol", "tok", "x0", "y0", "fees", "virt_ksol")
-    trows, wdict = [], {}
-    for ch in store.load_chunks("raw"):
-        for r in ch["rows"]:
-            d = dict(zip(ch["columns"], r))
-            for t in d["trades"]:
-                row = dict(zip(tf, t))
-                row["mint"] = d["mint"]
-                row["src"] = 0
-                trows.append(row)
-            for h, a in d.get("wallet_dict") or []:
-                wdict[h] = a
-    if trows:
-        pq.write_table(pa.Table.from_pylist(trows), out / "b1_trades.parquet", compression="zstd")
-    if wdict:
-        pq.write_table(pa.Table.from_pylist([{"wallet_h": h, "wallet": a} for h, a in wdict.items()]),
-                       out / "wallet_dict.parquet", compression="zstd")
+        write_parquet(pa.Table.from_pylist(wrows), out / "b3_positions.parquet")
+    # B1 raw trades (P4b, compact tuples from sql/b1c.sql): complete coins only
+    b1sum = consolidate_b1(out, grads, bars_rows)
     summary = {"graduates": len(grads), "b2_coins": len(coin_rows), "b2_bars": len(bars_rows),
-               "b3_positions": len(wrows), "b1_trades": len(trows)}
+               "b3_positions": len(wrows), **b1sum}
     log.info("consolidated: %s", summary)
     return summary
+
+
+B1_SCHEMA = (("slot", "int64"), ("tx_idx", "int64"), ("pix", "int64"), ("ix", "int64"), ("ts", "int64"),
+             ("venue", "int64"), ("is_buy", "int64"), ("wallet_h", "uint64"), ("usol", "int64"), ("tok", "int64"),
+             ("x0", "int64"), ("y0", "int64"), ("fees", "int64"), ("virt_ksol", "int64"), ("mint", "string"),
+             ("src", "int64"))
+
+
+def consolidate_b1(out: Path, grads: dict, bars_rows: list) -> dict:
+    """``raw/b1c`` -> ``b1_trades.parquet`` (complete coins only, same schema as before), ``b1_coins.parquet``
+    (every fetched or selected coin: pieces, complete, B1 = B2 gate) and ``b1_manifest.json`` (per split)."""
+    import pyarrow as pa
+
+    if not (out / "raw" / "b1c").exists():
+        return {"b1_trades": 0}
+    pool_nd: dict[str, dict[int, float]] = {}
+    for b in bars_rows:
+        d = pool_nd.setdefault(b["pool"], {})
+        d[int(b["minute_ts"])] = d.get(int(b["minute_ts"]), 0.0) + float(
+            (b.get("n_buys") or 0) + (b.get("n_sells") or 0) - (b.get("n_dust") or 0))
+    sel_p = out / "b1_select.json"
+    selection = b1c.load_selection(sel_p) if sel_p.exists() else None
+    res = b1c.consolidate_b1(out, grads, pool_nd, selection)
+    tr = res["trades"]
+    stale = out / "wallet_dict.parquet"     # P4 only; P4b keeps no dictionary (S1/D1 hash pooled accounts)
+    if tr is not None:
+        schema = pa.schema([(k, getattr(pa, t)()) for k, t in B1_SCHEMA])
+        write_parquet(pa.Table.from_arrays([pa.array(tr[k], type=schema.field(k).type) for k, _ in B1_SCHEMA],
+                                           schema=schema), out / "b1_trades.parquet")
+        if stale.exists():
+            stale.unlink()
+    elif (out / "b1_trades.parquet").exists():
+        (out / "b1_trades.parquet").unlink()      # no complete coin: never leave an older table behind
+    if res["coins"]:
+        write_parquet(pa.Table.from_pylist(res["coins"]), out / "b1_coins.parquet")
+    man = {"written_utc": utc(time.time()), "rule": "complete = fetched pieces cover [c_ts, g_ts + 7200); only "
+           "complete coins are in b1_trades.parquet; gate = B1 pool trades per minute vs B2 non-dust (flag > 0.5 %)",
+           "selection": str(sel_p) if selection is not None else None,
+           "selection_written_utc": (json.loads(sel_p.read_text()).get("written_utc") if selection is not None else None),
+           "summary": res["summary"], "splits": res["manifest"]}
+    atomic_write_text(out / "b1_manifest.json", json.dumps(man, indent=1))
+    return res["summary"]
 
 
 # ----------------------------------------------------------------------------------------------
 
 
+def run_p4b(bf: "Backfill", out: Path, splits: list[str], target: float, max_scan_s: int, retry_errors: bool,
+            dry_run: bool, selection_path: Path | None = None) -> dict:
+    """P4b: B1 for the S1 universe of ``splits`` (in that order), from ``FLOW/b1_select.json``."""
+    import pandas as pd
+
+    sel_p = Path(selection_path or out / "b1_select.json")
+    if not sel_p.exists():
+        raise SystemExit(f"{sel_p} missing: run `python research/lab2/b1_select.py` after consolidating")
+    doc = json.loads(sel_p.read_text())
+    sel = b1c.load_selection(sel_p)
+    unknown = [s for s in splits if s not in sel]
+    if unknown:
+        raise SystemExit(f"splits {unknown} not in {sel_p} (has {sorted(sel)})")
+    snap = (doc.get("snapshot") or {}).get("graduates.parquet_mtime")
+    gp = out / "graduates.parquet"
+    if snap is not None and gp.exists() and gp.stat().st_mtime > float(snap) + 1:
+        log.warning("b1_select.json predates graduates.parquet (re-run research/lab2/b1_select.py): newly usable "
+                    "coins are not selected yet")
+    coins = [c for s in splits for c in sel[s]]
+    g = pd.read_parquet(gp, columns=["mint", "g_ts", "c_ts", "curve_n_buys", "curve_n_sells", "l_n_buys", "l_n_sells"])
+    b = pd.read_parquet(out / "b2_bars.parquet", columns=["mint", "minute_ts", "n_buys", "n_sells", "n_dust"])
+    est = b1c.estimates_from_frames(coins, g, b)
+    runner = b1c.Runner(bf, sel, splits, est, target=target, max_scan_s=max_scan_s, retry_errors=retry_errors)
+    before = runner.progress()
+    report = {"written_utc": utc(time.time()), "splits_order": splits, "dry_run": dry_run, "before": before}
+    if dry_run:
+        for s in splits:
+            units = runner.plan(s)
+            spans = [u.span for u in units]
+            report.setdefault("plan", {})[s] = {
+                "units": len(units), "est_mb": round(sum(u.est_bytes for u in units) / 1e6, 2),
+                "est_trades": round(sum(u.est_trades for u in units)),
+                "mean_fill_kb": round(sum(u.est_bytes for u in units) / max(len(units), 1) / 1e3, 1),
+                "mean_span_min": round(sum(spans) / max(len(spans), 1) / 60, 1),
+                "first_utc": utc(min(u.t0 for u in units)) if units else None,
+                "last_utc": utc(max(u.t1 for u in units)) if units else None}
+        print(json.dumps(report, indent=1))
+        return report
+    try:
+        report["finished"] = runner.run()
+    finally:
+        report["after"] = runner.progress()
+        report["run"] = runner.run_stats
+        report["queries_this_run"] = bf.n_queries
+        atomic_write_text(out / "b1_progress.json", json.dumps(report, indent=1))
+    return report
+
+
+def discovery_gaps(state: dict, since: int, until: int) -> dict:
+    """Curve hours of [since - 3 h, until) and B2 hours of [since, until) not done yet (P1 discovery coverage)."""
+    s, u = floor_to(since, HOUR), floor_to(until, HOUR)
+    cur = [utc(h) for h in range(s - 3 * HOUR, u, HOUR) if not (state.get("curve", {}).get(str(h)) or {}).get("done")]
+    b2 = [utc(h) for h in range(s, u, HOUR) if not (state.get("b2", {}).get(str(h)) or {}).get("done")]
+    return {"since": utc(s), "until": utc(u), "curve": cur, "b2": b2}
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--phase", choices=["P1", "P2", "P3", "P4"])
+    ap.add_argument("--phase", choices=["P1", "P2", "P3", "P4", "P4b"])
     ap.add_argument("--days", type=float, default=7)
+    ap.add_argument("--since", default=None, help="P1/P2: absolute start (UTC 'YYYY-MM-DD[ HH:MM]'), overrides --days")
+    ap.add_argument("--until", default=None, help="P1/P2: do not scan past this UTC time (skips hours outside every "
+                                                  "split); default: now - 45 min")
     ap.add_argument("--out", default=f"{SCRATCH}/flow")
     ap.add_argument("--max-minutes", type=float, default=None, help="stop after this much wall time")
     ap.add_argument("--max-queries", type=int, default=None, help="stop after this many queries in this run")
     ap.add_argument("--max-per-hour", type=int, default=90)
     ap.add_argument("--no-census-first", action="store_true")
     ap.add_argument("--consolidate", action="store_true", help="build Parquet tables from raw chunks (offline)")
+    ap.add_argument("--no-consolidate", action="store_true", help="skip the consolidation at the end of a phase")
     ap.add_argument("--b3-batch", type=int, default=12)
     ap.add_argument("--b3-horizon-min", type=int, default=60, help="B3 window = [created, g + this]")
-    ap.add_argument("--raw-batch", type=int, default=4)
+    ap.add_argument("--splits", default="train,val,test", help="P4b: splits in priority order (TRAIN first)")
+    ap.add_argument("--target-bytes", type=float, default=b1c.TARGET_BYTES, help="P4b: packed result size per query")
+    ap.add_argument("--max-scan-min", type=int, default=b1c.MAX_SCAN_S // 60, help="P4b: slab length cap")
+    ap.add_argument("--selection", default=None, help="P4b: b1_select.json (default FLOW/b1_select.json)")
+    ap.add_argument("--retry-errors", action="store_true", help="P4b: retry coins marked as errors")
+    ap.add_argument("--dry-run", action="store_true", help="P4b: print the packing plan, send no query")
+    ap.add_argument("--check-discovery", action="store_true",
+                    help="offline: exit 0 when every curve hour of [since - 3 h, until) and B2 hour of [since, until) "
+                         "is done in state.json, else 1 (prints the gaps)")
     args = ap.parse_args(argv)
+    if args.check_discovery:
+        gaps = discovery_gaps(Store(Path(args.out)).state, parse_utc(args.since or "2026-10-01"),
+                              parse_utc(args.until or utc(time.time() - 45 * 60)))
+        print(json.dumps(gaps))
+        return 0 if not gaps["curve"] and not gaps["b2"] else 1
 
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
@@ -612,37 +793,54 @@ def main(argv=None) -> int:
     if args.consolidate and not args.phase:
         print(json.dumps(consolidate(out), indent=1))
         return 0
+    if args.phase == "P4":
+        log.error("P4 (sql/b1.sql coin batches) cannot reach the 95 %% B1 coverage gate (timeouts, coins > 1 MB): "
+                  "use --phase P4b")
+        return 2
+    p4b = args.phase == "P4b"
+    lock = contextlib.nullcontext() if (p4b and args.dry_run) else \
+        state_lock(out / ("state_b1.lock" if p4b else "state.lock"))
+    with lock:
+        rc = _run_phase(args, out, p4b)
+    if rc is not None:
+        return rc
+    if args.phase and not args.no_consolidate:
+        consolidate(out)
+    return 0
+
+
+def _run_phase(args, out: Path, p4b: bool) -> int | None:
     ch = CryptoHouse(log_path=os.environ.get("CH_QUERY_LOG", str(out / "ch_query_log.jsonl")),
                      budget=Budget(max_per_hour=args.max_per_hour))
     deadline = time.time() + args.max_minutes * 60 if args.max_minutes else None
-    bf = Backfill(out, ch, deadline, args.max_queries)
+    bf = Backfill(out, ch, deadline, args.max_queries, state_name="state_b1.json" if p4b else "state.json")
     now_limit = floor_to(time.time() - 45 * 60, Q15)   # CryptoHouse lags real time by minutes
+    if args.until:
+        now_limit = min(now_limit, floor_to(parse_utc(args.until), Q15))
     try:
         if args.phase in ("P1", "P2"):
             days = args.days if args.phase == "P1" else max(args.days, 21)
-            bf.p1(days, now_limit, census_first=not args.no_census_first)
+            bf.p1(days, now_limit, census_first=not args.no_census_first,
+                  since=parse_utc(args.since) if args.since else None)
         elif args.phase == "P3":
             bf.run_windows("b3", "b3", bf.coin_windows(args.b3_horizon_min * 60), args.b3_batch,
                            {"min_wallet_usol": 50_000_000})
-        elif args.phase == "P4":
-            def non_factory(g):
-                # instant graduates (bought out within 5 s of creation, alone or as a bundle) are the factory class
-                if g.get("is_mayhem") or (g.get("rsol_complete") or 0) < 80:
-                    return False            # Mayhem: not tradeable
-                if g.get("pool_quote_mint") != "So11111111111111111111111111111111111111112":
-                    return False            # non-SOL quote: not tradeable
-                return not (g.get("has_create") and (g["g_ts"] - g["c_ts"]) <= 5)
-            bf.run_windows("raw", "b1", bf.coin_windows(120 * 60, non_factory), args.raw_batch,
-                           {"min_usol": 10_000_000, "max_trades": 20000})
+        elif p4b:
+            splits = [s.strip() for s in args.splits.split(",") if s.strip()]
+            rep = run_p4b(bf, out, splits, args.target_bytes, args.max_scan_min * 60, args.retry_errors,
+                          args.dry_run, Path(args.selection) if args.selection else None)
+            if args.dry_run:
+                return 0
+            log.info("P4b finished=%s queries(run)=%s after=%s", rep.get("finished"), bf.n_queries,
+                     json.dumps(rep.get("after")))
     except CHError as e:
         log.error("stopped on server error: %s", e)
     finally:
-        man = bf.write_manifest()
-        log.info("manifest: graduates=%s curve_hours=%s b2_hours=%s queries(run)=%s",
-                 man["graduates"], man["curve_hours_done"], man["b2_hours_done"], man["this_run"]["queries"])
-    if args.phase:
-        consolidate(out)
-    return 0
+        if not p4b:
+            man = bf.write_manifest()
+            log.info("manifest: graduates=%s curve_hours=%s b2_hours=%s queries(run)=%s",
+                     man["graduates"], man["curve_hours_done"], man["b2_hours_done"], man["this_run"]["queries"])
+    return None
 
 
 if __name__ == "__main__":

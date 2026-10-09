@@ -64,7 +64,7 @@ CHECKPOINTS_MIN = (6, 8, 10, 15, 20, 30, 45, 60, 90, 120)
 GATE_CHECKPOINTS_MIN = (10, 30)
 GATE_HOLD_S = 1800
 B1_HORIZON_S = 7200            # P4 window = [created, g + 120 min)
-B1_MAX_TRADES = 20000          # P4 max_trades per coin: a prefix this long may be truncated
+B1_MAX_TRADES: int | None = None   # P4b (backfill) never truncates; None skips the check (P4 cut at 20,000)
 SUPPLY = 1e9                   # whole tokens
 TOK = 1e6                      # raw token units per whole token
 LAMPORTS = 1e9
@@ -475,7 +475,7 @@ def s1_features(snap: C.AsOf, tau: float | None = None) -> dict:
     pre = tr.iloc[:n]
     if n and (pre["ts"].to_numpy(np.int64) > tau).any():          # defence in depth (non-monotone block times)
         pre = pre[pre["ts"].to_numpy(np.int64) <= tau]
-    if len(pre) >= B1_MAX_TRADES:
+    if B1_MAX_TRADES is not None and len(pre) >= B1_MAX_TRADES:
         return _na("b1_truncated", True)
     if not len(pre):
         return _na("no_trades_before_tau", False)

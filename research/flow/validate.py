@@ -24,6 +24,7 @@ import os
 import random
 import statistics as stats
 import sys
+import time
 from collections import defaultdict
 from pathlib import Path
 
@@ -421,6 +422,287 @@ def run(out: Path, max_hours: int, ch: CryptoHouse | None) -> dict:
     return res
 
 
+# ----------------------------------------------------------------------------------------------
+# per-split range records: PLAN stop rule 1 on each split's own dates (read by research/lab2/common.validation_gates)
+#
+# For each split, a few chain hours are drawn at random, one per equal segment of the split. In each hour a random
+# sample of lab-universe graduates (SOL-quoted, not Mayhem, created in the split by the lab's rule) whose B2 window
+# [g, g + 180 min) overlaps the hour is fetched with raw.sql (one query per hour), window = the hour inside B2, first
+# ``max_trades`` trades per coin. V2 = chain_check (token side + X = x + v, audit fix 7) and V1 (reserve moves) on
+# those trades; V1 (labels) and V4 (intra-slot order) against swap-api trades of the same coins and times.
+
+RANGE_SPLITS = {   # name: (lo_utc, hi_utc, sampled chain hours); census = the census day incl. TEST's last hour
+    "confirm": ("2026-09-16 00:00:00", "2026-10-01 00:00:00", 4),
+    "train": ("2026-10-01 00:00:00", "2026-10-05 00:00:00", 4),
+    "val": ("2026-10-05 00:00:00", "2026-10-06 12:00:00", 2),
+    "test": ("2026-10-06 12:00:00", "2026-10-07 19:37:30", 2),
+    "census": ("2026-10-07 19:00:00", "2026-10-08 19:00:00", 2),
+}
+WSOL = "So11111111111111111111111111111111111111112"
+B2_HORIZON_S = 180 * 60
+SLOW_CREATE_S = 1800          # has_create = 0: created before g - 1800 (curve scan lookback); the lab uses g - 1800
+
+
+def _uts(s: str) -> int:
+    from datetime import datetime, timezone
+    return int(datetime.strptime(s[:19], "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc).timestamp())
+
+
+def pick_hours(name: str, lo: int, hi: int, k: int, seed: int = 0) -> list[int]:
+    """k chain hours lying fully inside [lo, hi), one drawn at random from each of k equal contiguous segments."""
+    hours = list(range(-(-lo // 3600) * 3600, hi - 3599, 3600))
+    k = max(1, min(k, len(hours)))
+    rng = random.Random(f"{name}:{seed}")
+    return [rng.choice(hours[i * len(hours) // k:(i + 1) * len(hours) // k]) for i in range(k)]
+
+
+def range_candidates(grads: dict[str, dict], lo: int, hi: int, hour: int,
+                     census_created: dict[str, float] | None = None) -> list[dict]:
+    """Lab-universe graduates created in [lo, hi) whose B2 window meets ``hour``; window = hour inside B2.
+
+    Creation time as the lab assigns splits: census time for census coins, else c_ts when the CreateEvent was
+    scanned, else g - 1800. Excluded: no pool, non-SOL quote, Mayhem (flag, or real SOL < 80 at completion)."""
+    cc = census_created or {}
+    out = []
+    for m, g in grads.items():
+        if not g.get("pool") or g.get("pool_quote_mint") != WSOL:
+            continue
+        if g.get("is_mayhem") or (g.get("rsol_complete") or 0) < 80:
+            continue
+        gt = int(g["g_ts"])
+        if not (gt < hour + 3600 and gt + B2_HORIZON_S > hour):
+            continue
+        c = cc.get(m) or (g["c_ts"] if g.get("has_create") and g.get("c_ts") else gt - SLOW_CREATE_S)
+        if lo <= c < hi:
+            out.append({"mint": m, "pool": g["pool"], "g_ts": gt, "c_ts": int(c),
+                        "lo": max(gt, hour), "hi": min(gt + B2_HORIZON_S, hour + 3600)})
+    return sorted(out, key=lambda d: d["mint"])
+
+
+def block_stats(rows: list[dict], sw: dict[str, list[dict]]) -> dict:
+    """V1 / V2 / V4 counts over one sampled hour. ``rows``: raw.sql rows (trades decoded); ``sw``: mint -> swap-api
+    trades of the same coin over the same span (only trades present in both sources count for V1-labels / V4)."""
+    s = defaultdict(int)
+    breaks = []
+    for r in rows:
+        c = chain_check(r["trades"])
+        for k in ("pairs", "chain_ok", "label_checked", "label_ok"):
+            s[k] += c[k]
+        breaks += [[r["mint"], a, b] for a, b in c["breaks"][:3]]
+        s["coins"] += 1
+        s["trades"] += len(r["trades"])
+        s["truncated"] += bool(r.get("truncated"))
+        st = sw.get(r["mint"]) or []
+        idx = {(x["tx"], x["userAddress"]): x for x in st}
+        for t in r["trades"]:
+            x = idx.get((t["tx"], t["user"]))
+            if x:
+                s["sw_label_n"] += 1
+                s["sw_label_ok"] += (x["type"] == "buy") == bool(t["is_buy"])
+        o = ordering_check(r["trades"], st)
+        s["o_matched"] += o["matched"]
+        s["o_same"] += o["same_slot_pairs"]
+        s["o_agree"] += o["agree"]
+    return dict(s, breaks=breaks[:10])
+
+
+def range_record(name: str, lo: str, hi: str, blocks: list[dict], validated_utc: str) -> dict:
+    """One ``validation_ranges.json`` record from per-hour :func:`block_stats` (pass rules as in :func:`run`)."""
+    t = defaultdict(int)
+    for b in blocks:
+        for k, v in b["stats"].items():
+            if isinstance(v, int):
+                t[k] += v
+    v1 = {"reserve_label_agree": t["label_ok"], "reserve_label_checked": t["label_checked"],
+          "swapapi_label_agree": t["sw_label_ok"], "swapapi_label_checked": t["sw_label_n"]}
+    v1["pass"] = (t["label_checked"] > 0 and t["label_ok"] / t["label_checked"] >= 0.999
+                  and t["sw_label_n"] > 0 and t["sw_label_ok"] / t["sw_label_n"] >= 0.999)
+    v2 = {"coins": t["coins"], "transitions": t["pairs"], "chain_ok": t["chain_ok"],
+          "share": t["chain_ok"] / t["pairs"] if t["pairs"] else None,
+          "pass": t["pairs"] > 0 and t["chain_ok"] / t["pairs"] >= 0.99,
+          "definition": "per pool, consecutive trades: token reserve chains exactly; quote side chains on x, or on "
+                        "x + virt when both events carry virt, or is a virtual-reserve shift when virt is unknown"}
+    v4 = {"matched_trades": t["o_matched"], "same_slot_pairs": t["o_same"], "agree": t["o_agree"],
+          "share": t["o_agree"] / t["o_same"] if t["o_same"] else None,
+          "pass": t["o_same"] > 0 and t["o_agree"] / t["o_same"] >= 0.995}
+    return {"split": name, "lo_utc": lo, "hi_utc": hi, "validated_utc": validated_utc, "V1": v1, "V2": v2, "V4": v4,
+            "sample": {"hours": [b["hour_utc"] for b in blocks], "coins": t["coins"], "trades": t["trades"],
+                       "coins_truncated": t["truncated"], "swapapi_trades": t["sw_n"],
+                       "blocks": [{k: b[k] for k in b if k != "stats"} | {"breaks": b["stats"].get("breaks")}
+                                  for b in blocks]},
+            "source": "research/flow/validate.py --ranges"}
+
+
+def merge_ranges(old: list[dict], new: list[dict]) -> list[dict]:
+    """Replace records of the same split (or the same lo/hi) and keep the rest."""
+    keys = {r.get("split") for r in new} | {(r["lo_utc"], r["hi_utc"]) for r in new}
+    return [r for r in old if r.get("split") not in keys and (r.get("lo_utc"), r.get("hi_utc")) not in keys] + new
+
+
+def _known_graduates(out: Path) -> tuple[dict[str, dict], list[tuple[int, int]]]:
+    """Graduates from the backfill's raw curve chunks (read-only) and the [t0, t1) spans they cover."""
+    grads: dict[str, dict] = {}
+    spans = []
+    for p in sorted((out / "raw" / "curve").glob("*.json.gz")):
+        try:
+            with gzip.open(p, "rt") as f:
+                ch = json.load(f)
+        except (OSError, ValueError):
+            continue
+        spans.append((int(ch["t0"]), int(ch["t1"])))
+        for r in ch["rows"]:
+            d = dict(zip(ch["columns"], r))
+            old = grads.get(d["mint"])
+            if old is None or (d["has_create"] and not old["has_create"]):
+                grads[d["mint"]] = d
+    return grads, spans
+
+
+def _covered(spans: list[tuple[int, int]], a: int, b: int) -> bool:
+    t = a
+    for s0, s1 in sorted(spans):
+        if s0 <= t < s1:
+            t = s1
+    return t >= b
+
+
+def _discover_hour(ch: CryptoHouse, slots: SlotMap, hour: int, vdir: Path) -> dict:
+    """curve.sql for one chain hour the backfill has not scanned (graduates of that hour only; cached)."""
+    from backfill import CURVE_LOOKBACK_S, LAUNCH_S
+    from cryptohouse import QueryTimeout
+    p = vdir / f"curve_{hour}.json.gz"
+    if p.exists():
+        return json.load(gzip.open(p))
+    t0, t1 = hour, hour + 3600
+    while True:
+        slots.ensure(t0 - CURVE_LOOKBACK_S - Q15, t1 + 2 * Q15)
+        params = dict(s_lo=slots.first_slot(t0 - CURVE_LOOKBACK_S), s0=slots.first_slot(t0),
+                      s1=slots.last_slot_before(t1), s1_pool=slots.last_slot_before(t1 + Q15),
+                      t_lo=utc(t0 - CURVE_LOOKBACK_S - 120), t_hi=utc(t1 + Q15 + 120), launch_s=LAUNCH_S)
+        try:
+            res = ch.query(render_sql("curve", **params), tag=f"validate:curve:{utc(t0)}")
+            break
+        except QueryTimeout:
+            if t1 - t0 <= Q15:
+                raise
+            t1 = t0 + floor_to((t1 - t0) // 2, Q15)
+            log.warning("curve discovery %s timed out; using [%s, %s)", utc(hour), utc(t0), utc(t1))
+    d = {"t0": t0, "t1": t1, "columns": res.columns, "rows": res.rows, "fetched_ts": time.time()}
+    with gzip.open(p, "wt") as f:
+        json.dump(d, f)
+    return d
+
+
+def _fetch_block(ch: CryptoHouse, slots: SlotMap, coins: list[dict], max_trades: int) -> tuple[list, list, int]:
+    """raw.sql over the coins' windows (one hour). Halves the coin set on a 1 MB overflow and the time span on a
+    timeout (windows clipped to the first half). -> (columns, rows, span end actually scanned)."""
+    from cryptohouse import QueryTimeout, ResultTooLarge
+    t0 = floor_to(min(c["lo"] for c in coins), Q15)
+    t1 = floor_to(max(c["hi"] for c in coins) - 1, Q15) + Q15
+    while True:
+        cs = [c for c in coins if c["lo"] < t1]
+        slots.ensure(t0, t1)
+        params = dict(s0=slots.first_slot(t0), s1=slots.last_slot_before(t1), t0=utc(t0), t1=utc(t1),
+                      win=sql_tuples([(c["mint"], c["pool"], c["lo"], min(c["hi"], t1)) for c in cs]),
+                      mints=sql_in([c["mint"] for c in cs]), min_usol=0, max_trades=max_trades)
+        try:
+            res = ch.query(render_sql("raw", **params), tag=f"validate:range:{utc(t0)}:{len(cs)}")
+            return res.columns, res.rows, t1
+        except ResultTooLarge:
+            if len(coins) == 1:
+                return [], [], t1
+            h = len(coins) // 2
+            c1, r1, e1 = _fetch_block(ch, slots, coins[:h], max_trades)
+            c2, r2, e2 = _fetch_block(ch, slots, coins[h:], max_trades)
+            return c1 or c2, r1 + r2, min(e1, e2)
+        except QueryTimeout:
+            if t1 - t0 <= Q15:
+                raise
+            t1 = t0 + floor_to((t1 - t0) // 2, Q15)
+            log.warning("range block %s timed out; scanning [%s, %s) only", utc(t0), utc(t0), utc(t1))
+
+
+def _swapapi_window(sess, throttle, mint: str, start_ms: int, end_ms: int, max_pages: int = 8) -> dict:
+    from collect_trades import fetch_window
+    trades, complete = fetch_window(sess, throttle, mint, start_ms, end_ms, max_pages)
+    return {"start_ms": start_ms, "end_ms": end_ms, "complete": complete, "trades": trades}
+
+
+def run_ranges(out: Path, ch: CryptoHouse | None, names: list[str], coins_per_hour: int = 14,
+               max_trades: int = 150, seed: int = 0, sw_rpm: float = 12.0) -> list[dict]:
+    import requests
+    from collect_trades import Throttle
+    vdir = out / "validation" / "ranges"
+    vdir.mkdir(parents=True, exist_ok=True)
+    slots = SlotMap(Store(out), ch) if ch else None
+    if slots is not None:
+        slots.path = vdir / "slotmap.json"     # never rewrite the backfill's shared slot map
+    grads, spans = _known_graduates(out)
+    try:
+        census = json.loads((LAB / "census.json").read_text())
+        census_created = {c["mint"]: c["created_timestamp"] / 1000 for c in census["coins"]}
+    except (OSError, ValueError, KeyError):
+        census_created = {}
+    sess = requests.Session()
+    sess.headers["User-Agent"] = "nightcrawler-research/0.1"
+    throttle = Throttle(sw_rpm)
+    records = []
+    for name in names:
+        lo_s, hi_s, k = RANGE_SPLITS[name]
+        lo, hi = _uts(lo_s), _uts(hi_s)
+        blocks = []
+        for hour in pick_hours(name, lo, hi, k, seed):
+            p = vdir / f"raw_{hour}.json.gz"
+            g = dict(grads)
+            partial = not _covered(spans, hour - B2_HORIZON_S, hour + 3600)
+            if not _covered(spans, hour, hour + 3600):
+                if ch is None and not (vdir / f"curve_{hour}.json.gz").exists():
+                    log.warning("%s %s: no graduates known and offline; skipped", name, utc(hour))
+                    continue
+                d = _discover_hour(ch, slots, hour, vdir)
+                for r in d["rows"]:
+                    x = dict(zip(d["columns"], r))
+                    g.setdefault(x["mint"], x)
+            cands = range_candidates(g, lo, hi, hour, census_created)
+            sample = random.Random(f"{name}:{hour}:{seed}").sample(cands, min(coins_per_hour, len(cands)))
+            if not p.exists():
+                if ch is None or not sample:
+                    log.warning("%s %s: nothing to fetch (%d candidates)", name, utc(hour), len(cands))
+                    continue
+                cols, rows, scanned_to = _fetch_block(ch, slots, sample, max_trades)
+                with gzip.open(p, "wt") as f:
+                    json.dump({"hour": hour, "sample": sample, "scanned_to": scanned_to, "columns": cols,
+                               "rows": rows, "fetched_ts": time.time()}, f)
+            d = json.load(gzip.open(p))
+            rows = []
+            for r in d["rows"]:
+                row = dict(zip(d["columns"], r))
+                row["trades"] = [dict(zip(TRADE_FIELDS, t)) for t in row["trades"]]
+                rows.append(row)
+            win = {c["mint"]: c for c in d["sample"]}
+            sp = vdir / f"sw_{hour}.json.gz"
+            sw = json.load(gzip.open(sp)) if sp.exists() else {}
+            for row in rows:
+                m = row["mint"]
+                if m in sw or not row["trades"]:
+                    continue
+                c = win[m]
+                end = (row["trades"][-1]["ts"] + 1) if row["truncated"] else min(c["hi"], d["scanned_to"])
+                sw[m] = _swapapi_window(sess, throttle, m, c["lo"] * 1000, end * 1000)
+                with gzip.open(sp, "wt") as f:
+                    json.dump(sw, f)
+            st = block_stats(rows, {m: v["trades"] for m, v in sw.items()})
+            st["sw_n"] = sum(len(v["trades"]) for m, v in sw.items() if m in win)
+            st["sw_incomplete"] = sum(1 for m, v in sw.items() if m in win and not v["complete"])
+            blocks.append({"hour_utc": utc(hour), "candidates": len(cands), "candidates_partial": partial,
+                           "sampled": len(d["sample"]), "scanned_to_utc": utc(d["scanned_to"]),
+                           "ch_fetched_utc": utc(d["fetched_ts"]), "stats": st})
+        if blocks:
+            v_utc = min(b["ch_fetched_utc"] for b in blocks)   # conservative: the oldest CryptoHouse snapshot used
+            records.append(range_record(name, lo_s, hi_s, blocks, v_utc))
+    return records
+
+
 def write_report(out: Path, res: dict) -> None:
     def pf(v):
         return "PASS" if v else "FAIL"
@@ -515,10 +797,39 @@ def main(argv=None) -> int:
     ap.add_argument("--out", default=f"{SCRATCH}/flow")
     ap.add_argument("--max-hours", type=int, default=10, help="launch-sample creation hours to fetch (1 query each)")
     ap.add_argument("--offline", action="store_true", help="use cached raw validation data only")
+    ap.add_argument("--ranges", default="", help="per-split range records instead of the census run, e.g. "
+                    f"train,val,test,census (of {','.join(RANGE_SPLITS)}); merged into <out>/validation_ranges.json")
+    ap.add_argument("--max-per-hour", type=int, default=90, help="CryptoHouse queries per rolling hour (shared log)")
+    ap.add_argument("--coins-per-hour", type=int, default=14)
+    ap.add_argument("--max-trades", type=int, default=150, help="raw trades per coin and sampled hour")
+    ap.add_argument("--seed", type=int, default=0)
     args = ap.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
     out = Path(args.out)
-    ch = None if args.offline else CryptoHouse(log_path=os.environ.get("CH_QUERY_LOG", str(out / "ch_query_log.jsonl")))
+    from cryptohouse import Budget
+    ch = None if args.offline else CryptoHouse(log_path=os.environ.get("CH_QUERY_LOG", str(out / "ch_query_log.jsonl")),
+                                               budget=Budget(max_per_hour=args.max_per_hour))
+    if args.ranges:
+        t_start = time.time()
+        n_calls = [0]
+        if ch is not None:
+            _query = ch.query
+
+            def counted(sql, tag="", **kw):      # this run's CryptoHouse calls (slot-map lookups included)
+                n_calls[0] += 1
+                return _query(sql, tag=tag, **kw)
+            ch.query = counted
+        recs = run_ranges(out, ch, [s.strip() for s in args.ranges.split(",") if s.strip()], args.coins_per_hour,
+                          args.max_trades, args.seed)
+        p = out / "validation_ranges.json"
+        old = json.loads(p.read_text()) if p.exists() else []
+        tmp = p.with_suffix(".tmp")
+        tmp.write_text(json.dumps(merge_ranges(old, recs), indent=1, default=str))
+        os.replace(tmp, p)
+        mine = [e for e in (ch.qlog.entries(since=t_start) if ch else []) if (e.get("tag") or "").startswith("validate:")]
+        print(json.dumps({"records": recs, "query_calls_this_run": n_calls[0], "validate_log_entries": len(mine)},
+                         indent=1, default=str))
+        return 0
     res = run(out, args.max_hours, ch)
     (out / "validation.json").write_text(json.dumps(res, indent=1, default=str))
     write_report(out, res)

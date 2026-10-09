@@ -79,7 +79,7 @@ E1_VOL_USD_15M = 1500.0          # USD volume over the last 15 completed minutes
 # decision window: B1 covers [created, g + 120 min); entries only while the prefix is complete
 B1_HORIZON_S = 7200
 MAX_DECISION_AGE_S = 7200        # t - g <= 7200  ->  tau <= g + 7180
-B1_MAX_TRADES = 20000            # P4 keeps the first 20,000 trades per coin: a prefix this long may be truncated
+B1_MAX_TRADES: int | None = None   # P4b (backfill) never truncates; None skips the check (P4 cut at 20,000)
 B1_MIN_COVERAGE = 0.95
 
 # seller window and classes (PLAN 4.4)
@@ -596,9 +596,9 @@ def flow_features(snap: C.AsOf, tau_entry: float | None = None) -> dict[str, Any
     tr = snap.trades
     if tr is None:
         return None
-    if snap.tau > snap.g + B1_HORIZON_S:
+    if snap.tau >= snap.g + B1_HORIZON_S:           # B1 holds ts < g + 7200 (as S1)
         return {"ok": False, "why": "beyond_b1_window"}
-    if len(tr) >= B1_MAX_TRADES:
+    if B1_MAX_TRADES is not None and len(tr) >= B1_MAX_TRADES:
         return {"ok": False, "why": "b1_trade_cap"}
     st = static_of(snap)
     L, n, last = _ledger_for(snap.mint, tr)
@@ -726,7 +726,7 @@ def placebo_eligible(snap: C.AsOf) -> bool:
     if not universe(snap)[0]:
         return False
     tr = snap.trades
-    if tr is None or len(tr) >= B1_MAX_TRADES:
+    if tr is None or (B1_MAX_TRADES is not None and len(tr) >= B1_MAX_TRADES):
         return False
     return e1_check(snap)["nonflow_ok"]
 
