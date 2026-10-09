@@ -1,19 +1,22 @@
 """The Polymarket desk's risk manager (nightcrawler.polydesk + nightcrawler.deskguard): the pause and its
 lifecycle (a losing record stops new buys, open positions still settle, a changed rule or the owner's switch lifts
-it), the winning flag, the real book in live mode, the per-settlement record it judges, the panel's shape, and the
-proof that the guard never touches real money (mode, client, live settings). No network, no keys."""
+it), the rule id (theta and hours are part of the rule), events (a game's markets are one draw), the early stop and
+the small book while a rule is unproven, the winning flag (never a candidate while lab 4 has not passed the rule),
+the real book in live mode, the per-settlement record it judges and its size, the panel's shape, and the proof that
+the guard never touches real money (mode, client, live settings). No network, no keys."""
 
 from __future__ import annotations
 
 import inspect
 import json
+from datetime import UTC, datetime
 from typing import Any
 
 import pytest
 
 from nightcrawler import deskguard
 from nightcrawler import polydesk as P
-from nightcrawler.config import ConfigError, Settings
+from nightcrawler.config import Settings
 from tests.test_polydesk import NOW, Gateway, _market, _row
 from tests.test_polydesk_live import KEY, FakeExchange, FakeLedger, _live_settings
 
@@ -21,7 +24,7 @@ from tests.test_polydesk_live import KEY, FakeExchange, FakeLedger, _live_settin
 LOSING = ([0.40] * 9 + [-20.0]) * 6
 #: Nine +$1 then a -$3, ten times: +$0.60 a settlement over 100 settlements (deskguard: winning).
 WINNING = ([1.0] * 9 + [-3.0]) * 10
-#: Thirty settlements that prove nothing either way (deskguard: unclear).
+#: Forty settlements that prove nothing either way (deskguard: unclear).
 UNCLEAR = [1.0] * 9 + [-3.0] + [0.1] * 30
 
 
@@ -37,20 +40,23 @@ def _settings(tmp_path: Any, **env: str) -> Settings:
     return Settings.from_env({"DATA_DIR": str(tmp_path), **env})
 
 
-def _record(pnls: list[float]) -> dict[str, Any]:
-    return {"settled": len(pnls), "won": sum(x > 0 for x in pnls), "pnl_usd": sum(pnls), "pnls": list(pnls)}
+def _record(pnls: list[float], stake: float = 20.0) -> dict[str, Any]:
+    """A book's record as the desk keeps it: every settlement its own event (``keys``), ``stake`` at risk each."""
+    return {"settled": len(pnls), "won": sum(x > 0 for x in pnls), "pnl_usd": sum(pnls), "pnls": list(pnls),
+            "costs": [stake] * len(pnls), "keys": [f"k{i}" for i in range(len(pnls))]}
 
 
 def _seed(settings: Settings, paper: list[float] | None = None, real: list[float] | None = None,
           **extra: Any) -> None:
-    """A state file whose CURRENT rule has these per-settlement records (paper and real apart)."""
+    """A state file whose CURRENT rule (polydesk.rule_id) has these per-settlement records (paper and real apart;
+    a real settlement risks a $0.98 contract)."""
     st = P.empty_state()
     rec: dict[str, Any] = {}
     if paper is not None:
         rec["paper"] = _record(paper)
     if real is not None:
-        rec["real"] = _record(real)
-    st["by_rule"] = {P.RULE_VERSION: rec}
+        rec["real"] = _record(real, stake=0.98)
+    st["by_rule"] = {P.rule_id(settings): rec}
     st.update(extra)
     P.save_state(P.state_path(settings), st)
 
@@ -59,15 +65,22 @@ def _said(desk: P.PolyDesk, start: str) -> list[dict[str, Any]]:
     return [e for e in desk.state["events"] if e["text"].startswith(start)]
 
 
+def _hhmm(ts: float) -> str:
+    return datetime.fromtimestamp(ts, UTC).strftime("%H:%M UTC")
+
+
 # --------------------------------------------------------------------------- the pause, end to end
 
 
-def test_a_losing_record_pauses_new_buys_and_open_positions_still_settle(gw: Gateway, tmp_path) -> None:
-    """Built through real rounds (N = 10 here): 14 paper buys, 12 settle with 10 losses, the risk manager pauses the
-    desk in that same round; the 2 still open settle normally while paused; no new market is bought; said once."""
+def test_a_losing_record_pauses_new_buys_and_open_positions_still_settle(gw: Gateway, tmp_path,
+                                                                         monkeypatch: pytest.MonkeyPatch) -> None:
+    """Built through real rounds (N = 10 here, the small book widened to 20): 14 paper buys, 12 settle with 10
+    losses, the risk manager pauses the desk in that same round; the 2 still open settle normally while paused; no
+    new market is bought; said once; the line says since when, what the record said then and what it says now."""
+    monkeypatch.setattr(P, "PAPER_LEARNING_OPEN", 20)
     settings = _settings(tmp_path, POLYDESK_GUARD_MIN_N="10")
-    gw.markets = [_market(f"m{i}", "crypto", 1800) for i in range(12)] + [_market(f"late{i}", "crypto", 3000)
-                                                                           for i in range(2)]
+    gw.markets = [_market(f"m{i}", "crypto", 1800 + i) for i in range(12)] + [_market(f"late{i}", "crypto", 3000 + i)
+                                                                               for i in range(2)]
     gw.quotes = {m["slug"]: (0.97, 0.98) for m in gw.markets}
     desk = P.PolyDesk(settings)
     assert desk.poll(NOW)["bought"] == 14 and desk.state["paused"] is None
@@ -77,14 +90,16 @@ def test_a_losing_record_pauses_new_buys_and_open_positions_still_settle(gw: Gat
     r = desk.poll(NOW + 1900)
     assert r["settled"] == 12 and len(desk.state["positions"]) == 2
     paused = desk.state["paused"]
-    assert paused is not None and paused["at"] == NOW + 1900 and paused["rule"] == P.RULE_VERSION
-    assert paused["reason"].startswith("12 settled, 10 lost, -$") and "even at best" in paused["reason"]
+    assert paused is not None and paused["at"] == NOW + 1900 and paused["rule"] == P.rule_id(settings)
+    assert paused["reason"].startswith("12 events (12 settled), 10 lost, -$") and "even at best" in paused["reason"]
+    assert "% of the stake an event (95 % sure)" in paused["reason"]  # judged per dollar at risk, per event
     said = _said(desk, "Risk manager paused the desk: ")
     assert len(said) == 1 and said[0]["tone"] == "bad" and said[0]["text"].endswith(paused["reason"])
-    rec = desk.state["by_rule"][P.RULE_VERSION]["paper"]
-    assert len(rec["pnls"]) == 12 == rec["settled"] and sum(rec["pnls"]) == pytest.approx(rec["pnl_usd"])
+    rec = desk.state["by_rule"][P.rule_id(settings)]["paper"]
+    assert len(rec["pnls"]) == len(rec["costs"]) == len(rec["keys"]) == 12 == rec["settled"]
+    assert sum(rec["pnls"]) == pytest.approx(rec["pnl_usd"], abs=1e-3) and set(rec["costs"]) == {20.0}
     # paused: a new near-certain market is not bought (and not marked tried), the open ones settle normally
-    gw.markets = [_market("late0", "crypto", 3000 - 2000), _market("late1", "crypto", 3000 - 2000),
+    gw.markets = [_market("late0", "crypto", 3000 - 2000), _market("late1", "crypto", 3001 - 2000),
                   _market("n1", "crypto", 1800)]
     gw.quotes["n1"] = (0.97, 0.98)
     assert desk.poll(NOW + 2000)["bought"] == 0
@@ -98,8 +113,15 @@ def test_a_losing_record_pauses_new_buys_and_open_positions_still_settle(gw: Gat
     d = P.panel_state(settings, NOW + 3200)
     g = d["guard"]
     assert g["on"] and g["paused"] == paused and g["paused_real"] is None and g["real"] is None
-    assert g["paper"]["paused"] and g["paper"]["n"] == 14 and g["paper"]["phrase"] in ("losing", "not proven yet")
-    assert g["paper"]["line"] == f"Paused by the risk manager (paper buys stopped): {paused['reason']}."
+    assert g["paper"]["paused"] and g["paper"]["n"] == 14 and g["paper"]["paused_at"] == NOW + 1900
+    assert g["paper"]["paused_since"] == _hhmm(NOW + 1900)
+    now_reason = g["paper"]["reason"]
+    assert now_reason.startswith("14 events (14 settled), 10 lost") and now_reason != paused["reason"]
+    assert g["paper"]["line"] == (f"Paused by the risk manager since {_hhmm(NOW + 1900)} (paper buys stopped; then: "
+                                  f"{paused['reason']}); the paper record now: {now_reason}.")
+    # a day later the time carries its date
+    assert P.panel_state(settings, NOW + 86400)["guard"]["paper"]["paused_since"] == datetime.fromtimestamp(
+        NOW + 1900, UTC).strftime("%Y-%m-%d %H:%M UTC")
     json.dumps(d, allow_nan=False)
 
 
@@ -110,11 +132,13 @@ def test_a_new_rule_version_starts_a_fresh_record_and_lifts_the_pause(gw: Gatewa
     gw.markets = [_market("n1", "crypto", 1800)]
     gw.quotes = {"n1": (0.97, 0.98)}
     desk = P.PolyDesk(settings)
-    assert desk.poll(NOW)["bought"] == 0 and desk.state["paused"]["rule"] == P.RULE_VERSION
-    old = P.RULE_VERSION
-    monkeypatch.setattr(P, "RULE_VERSION", "2026-10-10a")  # the rule changed
+    old = P.rule_id(settings)
+    assert desk.poll(NOW)["bought"] == 0 and desk.state["paused"]["rule"] == old
+    monkeypatch.setattr(P, "RULE_VERSION", "2026-10-10a")  # the rule's code changed
+    new = P.rule_id(settings)
+    assert new != old and new.startswith("2026-10-10a|t0.970|")
     assert desk.poll(NOW + 60)["bought"] == 1 and desk.state["paused"] is None
-    assert desk.state["positions"]["n1"]["rule"] == "2026-10-10a"
+    assert desk.state["positions"]["n1"]["rule"] == new
     lifted = _said(desk, "Risk manager lifted the pause on the desk")
     assert len(lifted) == 1 and lifted[0]["text"].endswith("the rule changed, its record starts from zero")
     assert desk.state["guard"]["paper"]["verdict"] == "learning" and desk.state["guard"]["paper"]["n"] == 0
@@ -124,6 +148,39 @@ def test_a_new_rule_version_starts_a_fresh_record_and_lifts_the_pause(gw: Gatewa
     st["paused"] = {"at": NOW, "reason": "old", "rule": old}
     P.save_state(P.state_path(settings), st)
     assert P.panel_state(settings, NOW + 60)["guard"]["paused"] is None
+
+
+def test_a_changed_theta_or_hours_is_a_new_rule_with_its_own_record_and_pause(gw: Gateway, tmp_path) -> None:
+    """The owner sets POLYDESK_THETA=0.99 after the 0.97 rule was paused: a different rule, so it starts its own
+    record and is not held by the 0.97 rule's pause (nor credited with its results). A ticket change is the same
+    rule (judged per dollar at risk). Rows stamped with the bare version (before the rule id) are an older rule."""
+    base = _settings(tmp_path)
+    _seed(base, paper=LOSING)
+    gw.markets = [_market("n1", "crypto", 1800)]
+    gw.quotes = {"n1": (0.99, 0.995)}
+    desk = P.PolyDesk(base)
+    assert desk.poll(NOW)["bought"] == 0 and desk.state["paused"]["rule"] == "2026-10-09b|t0.970|h1|s0.03"
+    bigger = P.PolyDesk(_settings(tmp_path, POLYDESK_TICKET_USD="50"))  # the same rule, a bigger ticket
+    assert bigger.rule == desk.rule and bigger.poll(NOW + 30)["bought"] == 0 and bigger.state["paused"] is not None
+    strict = _settings(tmp_path, POLYDESK_THETA="0.99")
+    assert P.rule_id(strict) == "2026-10-09b|t0.990|h1|s0.03" != P.rule_id(_settings(tmp_path, POLYDESK_HOURS="2"))
+    desk2 = P.PolyDesk(strict)
+    r = desk2.poll(NOW + 60)
+    assert r["bought"] == 1 and desk2.state["paused"] is None and desk2.state["rule"]["id"] == P.rule_id(strict)
+    assert desk2.state["positions"]["n1"]["rule"] == P.rule_id(strict)
+    assert len(_said(desk2, "Risk manager lifted the pause on the desk: the rule changed")) == 1
+    d = P.panel_state(strict, NOW + 60)
+    assert d["since_fix"]["rule"] == P.rule_id(strict) and d["since_fix"]["paper"]["open"] == 1
+    assert d["since_fix"]["paper"]["settled_total"] == 0 and d["guard"]["paper"]["n"] == 0  # not the 0.97 rule's
+    assert d["before_fix"]["paper"]["settled_total"] == 0  # the counters hold no settlement in this seeded file
+    # a file from before the rule id: its pause and record carry the bare version, an older rule
+    legacy = _settings(tmp_path / "legacy")
+    st = P.empty_state()
+    st["by_rule"] = {P.RULE_VERSION: {"paper": _record(LOSING)}}
+    st["paused"] = {"at": NOW, "reason": "old", "rule": P.RULE_VERSION}
+    P.save_state(P.state_path(legacy), st)
+    g = P.panel_state(legacy, NOW)["guard"]
+    assert g["paused"] is None and g["paper"]["n"] == 0 and g["rule"] == P.rule_id(legacy)
 
 
 def test_the_owners_switch_turns_the_guard_off(gw: Gateway, tmp_path) -> None:
@@ -142,10 +199,11 @@ def test_the_owners_switch_turns_the_guard_off(gw: Gateway, tmp_path) -> None:
     assert len(said) == 1 and said[0]["text"] == "Risk manager switched off by the owner: the pause on the desk is lifted"
     desk2.poll(NOW + 120)
     assert len(_said(desk2, "Risk manager switched off")) == 1
+    assert desk2._paper_cap() == P.PAPER_MAX_OPEN  # off: no small book either
     g = P.panel_state(off, NOW + 120)["guard"]
-    assert g["on"] is False and g["paused"] is None and not g["paper"]["paused"]
+    assert g["on"] is False and g["paused"] is None and not g["paper"]["paused"] and g["paper_cap"] == 60
     assert g["paper"]["verdict"] == "losing"  # the verdict is still shown, it just stops nothing
-    assert g["paper"]["line"].startswith("Risk manager off (the owner's switch); the paper record is losing: 60 settled")
+    assert g["paper"]["line"].startswith("Risk manager off (the owner's switch); the paper record is losing: 60 events")
     # with the guard off from the start, a losing record says nothing and stops nothing
     fresh = _settings(tmp_path / "f", POLYDESK_GUARD="false")
     _seed(fresh, paper=LOSING)
@@ -153,7 +211,41 @@ def test_the_owners_switch_turns_the_guard_off(gw: Gateway, tmp_path) -> None:
     assert desk3.poll(NOW)["bought"] == 1 and not _said(desk3, "Risk manager")
 
 
-def test_a_winning_record_is_only_a_flag_for_the_owner(gw: Gateway, tmp_path) -> None:
+# --------------------------------------------------------------------------- size follows evidence
+
+
+def test_a_disaster_rule_is_stopped_early_and_an_unproven_rule_keeps_a_small_book(gw: Gateway, tmp_path) -> None:
+    """29 straight -$20 settlements are not "still learning" any more (the early stop), so that round buys nothing;
+    a rule with no record buys at most PAPER_LEARNING_OPEN; a winning one (or the guard off) fills PAPER_MAX_OPEN."""
+    gw.markets = [_market(f"x{i}", "crypto", 1800 + i) for i in range(80)]
+    gw.quotes = {m["slug"]: (0.97, 0.98) for m in gw.markets}
+    disaster = _settings(tmp_path / "d")
+    _seed(disaster, paper=[-20.0] * 29)
+    desk = P.PolyDesk(disaster)
+    assert desk.poll(NOW)["bought"] == 0 and not desk.state["positions"]
+    v = desk.state["guard"]["paper"]
+    assert v["verdict"] == "losing" and v["early"] and v["n"] == 29
+    assert desk.state["paused"]["reason"].endswith("(99 % sure, early stop)")
+    fresh = P.PolyDesk(_settings(tmp_path / "f"))
+    assert fresh.poll(NOW)["bought"] == P.PAPER_LEARNING_OPEN == 10
+    full = _said(fresh, "Paper book full")
+    assert [e["text"] for e in full] == [("Paper book full (10 open, the most until the rule's paper record is "
+                                          "winning): no new paper buys until some settle.")]
+    assert P.panel_state(fresh.settings, NOW)["guard"]["paper_cap"] == 10
+    proven = _settings(tmp_path / "w")
+    _seed(proven, paper=WINNING)
+    assert P.PolyDesk(proven).poll(NOW)["bought"] == P.PAPER_MAX_OPEN == 60
+    assert P.panel_state(proven, NOW)["guard"]["paper_cap"] == 60
+    unclear = _settings(tmp_path / "u")
+    _seed(unclear, paper=UNCLEAR)
+    assert P.PolyDesk(unclear).poll(NOW)["bought"] == 10  # not proven yet: still small
+    assert P.PolyDesk(_settings(tmp_path / "o", POLYDESK_GUARD="off")).poll(NOW)["bought"] == 60
+
+
+# --------------------------------------------------------------------------- the winning flag
+
+
+def test_a_winning_record_is_not_a_candidate_while_lab4_has_not_passed_the_rule(gw: Gateway, tmp_path) -> None:
     settings = _settings(tmp_path)
     _seed(settings, paper=WINNING)
     gw.markets = [_market("n1", "crypto", 1800)]
@@ -162,20 +254,60 @@ def test_a_winning_record_is_only_a_flag_for_the_owner(gw: Gateway, tmp_path) ->
     def no_client(*args: Any) -> Any:
         raise AssertionError("the guard must never open a real-money client")
 
-    desk = P.PolyDesk(settings, client_factory=no_client)
+    ledger = FakeLedger()
+    desk = P.PolyDesk(settings, ledger=ledger, client_factory=no_client)
+    assert P.RULE_LAB_PASSED is False
     assert desk.poll(NOW)["bought"] == 1  # nothing is paused
-    cand = desk.state["candidate"]
-    assert cand == {"at": NOW, "reason": cand["reason"], "rule": P.RULE_VERSION}
-    assert cand["reason"].startswith("100 settled, 10 lost, +$60.00 in all; at worst")
-    said = _said(desk, "Candidate for real money (owner decides): ")
-    assert len(said) == 1 and said[0]["tone"] == "good" and said[0]["text"].endswith(cand["reason"])  # not clipped
+    flag = desk.state["candidate"]
+    assert flag == {"at": NOW, "reason": flag["reason"], "rule": P.rule_id(settings), "lab_passed": False}
+    assert flag["reason"].startswith("100 events (100 settled), 10 lost, +$60.00 in all; at worst")
+    said = _said(desk, "Paper record clears the risk manager's bar (lab 4 has not passed this rule: no real money): ")
+    assert len(said) == 1 and said[0]["tone"] == "good"
+    assert said[0]["text"].endswith("100 events (100 settled), 10 lost, +$60.00 in all")  # not clipped
+    assert not _said(desk, "Candidate for real money")  # never called a candidate
+    assert [p for k, p in ledger.receipts if k == "polydesk_candidate"] == [
+        {"rule": P.rule_id(settings), "n": 100, "total_usd": 60.0, "lab_passed": False, "cleared": False}]
     assert desk.state["mode"] == "paper" and desk.client is None and desk.reader is None
     desk.poll(NOW + 60)
-    assert len(_said(desk, "Candidate for real money")) == 1 and desk.state["candidate"]["at"] == NOW  # said once
+    assert len(_said(desk, "Paper record clears")) == 1 and desk.state["candidate"]["at"] == NOW  # said once
     g = P.panel_state(settings, NOW + 60)["guard"]
-    assert g["candidate"]["rule"] == P.RULE_VERSION and g["paper"]["verdict"] == "winning"
-    assert g["paper"]["line"].startswith("Risk manager (paper, winning): a candidate for real money, the owner decides.")
+    assert g["candidate"] is None and g["clears_bar"] is True and g["paper"]["verdict"] == "winning"
+    assert g["paper"]["line"].startswith("Risk manager (paper, winning): the record clears the bar, but lab 4 has not "
+                                         "passed this rule, so no real money. 100 events")
     assert P.panel_state(settings, NOW + 60)["label"] == "Paper money (pretend)"
+    # the record falls back below the bar: one event, a receipt, and the flag is gone
+    rec = desk.state["by_rule"][P.rule_id(settings)]["paper"]
+    for i in range(6):
+        P._tally(desk.state["by_rule"], {"rule": desk.rule, "live": False, "cost_usd": 20.0, "category": "crypto",
+                                         "end_ts": NOW + i}, -20.0, False)
+    desk.poll(NOW + 120)
+    assert desk.state["candidate"] is None and desk.state["candidate_said"] is None
+    gone = _said(desk, "No longer clears the risk manager's bar: the paper record is ")
+    assert len(gone) == 1 and "106 events (106 settled), 16 lost" in gone[0]["text"]
+    assert [p for k, p in ledger.receipts if k == "polydesk_candidate"][-1] == {
+        "rule": P.rule_id(settings), "n": 106, "total_usd": pytest.approx(-60.0), "lab_passed": False, "cleared": True}
+    # it clears the bar again later: said again
+    del rec["pnls"][-6:], rec["costs"][-6:], rec["keys"][-6:]
+    desk.poll(NOW + 180)
+    again: Any = desk.state["candidate"]
+    assert len(_said(desk, "Paper record clears")) == 2 and again["at"] == NOW + 180
+
+
+def test_a_rule_that_passed_lab4_is_called_a_candidate_and_the_owner_decides(gw: Gateway, tmp_path,
+                                                                             monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(P, "RULE_LAB_PASSED", True)  # only once a rule passes lab 4 TEST
+    settings = _settings(tmp_path)
+    _seed(settings, paper=WINNING)
+    desk = P.PolyDesk(settings)
+    desk.poll(NOW)
+    assert len(_said(desk, "Candidate for real money (owner decides): 100 events")) == 1
+    g = P.panel_state(settings, NOW)["guard"]
+    assert g["candidate"]["lab_passed"] is True and g["paper"]["line"].startswith(
+        "Risk manager (paper, winning): a candidate for real money, the owner decides.")
+    assert desk.state["mode"] == "paper"  # a candidate is a flag: the owner decides, nothing switches
+    off = P.PolyDesk(_settings(tmp_path, POLYDESK_GUARD="off"))
+    off.poll(NOW + 60)
+    assert [e["text"] for e in _said(off, "No longer a candidate")] == ["No longer a candidate: the risk manager is off"]
 
 
 # --------------------------------------------------------------------------- real money: stops, never starts
@@ -211,11 +343,12 @@ def test_the_guard_never_alters_mode_or_live_settings(gw: Gateway, tmp_path, rec
 
 
 def test_the_guards_code_writes_nothing_but_its_own_keys() -> None:
-    """The source itself: the guard method writes only its keys, and deskguard has no way to reach money."""
-    src = inspect.getsource(P.PolyDesk._guard)
-    for forbidden in ('"mode"', "self.client", '"live_halted"', '"live_status"', "settings.replace", "_connect",
-                      "buy_long_ioc"):
-        assert forbidden not in src, forbidden
+    """The source itself: the guard's methods write only their keys, and deskguard has no way to reach money."""
+    for method in (P.PolyDesk._guard, P.PolyDesk._flag, P.PolyDesk._paper_cap, P.PolyDesk._paused):
+        src = inspect.getsource(method)
+        for forbidden in ('"mode"', "self.client", '"live_halted"', '"live_status"', "settings.replace", "_connect",
+                          "buy_long_ioc", "setattr", "os.environ"):
+            assert forbidden not in src, (method.__name__, forbidden)
     pure = inspect.getsource(deskguard)
     for forbidden in ("import requests", "polymarket", "Settings", "open(", "time.time"):
         assert forbidden not in pure, forbidden
@@ -231,16 +364,18 @@ def test_live_a_losing_real_record_stops_real_buys_and_never_starts_any(gw: Gate
     desk = P.PolyDesk(settings, ledger=ledger, client_factory=ex)
     assert desk.state["mode"] == "live"
     assert desk.poll(NOW)["bought"] == 0 and not ex.orders and "w1" not in desk.state["tried"]
-    assert desk.state["paused_real"]["rule"] == P.RULE_VERSION and desk.state["paused"] is None
-    said = _said(desk, "Risk manager paused real buys: 12 settled, 8 lost, -$7.76 in all")
+    assert desk.state["paused_real"]["rule"] == P.rule_id(settings) and desk.state["paused"] is None
+    said = _said(desk, "Risk manager paused real buys: 12 events (12 settled), 8 lost, -$7.76 in all")
     assert len(said) == 1
     guard_receipts = [p for k, p in ledger.receipts if k == "polydesk_guard"]
-    assert guard_receipts == [{"book": "real", "paused": True, "rule": P.RULE_VERSION, "verdict": "losing", "n": 12,
-                               "total_usd": pytest.approx(-7.76)}]
+    assert guard_receipts == [{"book": "real", "paused": True, "rule": P.rule_id(settings), "verdict": "losing",
+                               "n": 12, "total_usd": pytest.approx(-7.76)}]
     assert desk.state["mode"] == "live" and desk.client is ex  # stopped buying; nothing else changed
     g = P.panel_state(settings, NOW)["guard"]
     assert g["real"]["paused"] and g["real"]["verdict"] == "losing" and not g["paper"]["paused"]
-    assert g["real"]["line"].startswith("Paused by the risk manager (real buys stopped): 12 settled, 8 lost")
+    assert g["real"]["line"] == (f"Paused by the risk manager since {_hhmm(NOW)} (real buys stopped): "
+                                 f"{g['real']['reason']}.")
+    assert g["real"]["reason"].startswith("12 events (12 settled), 8 lost, -$7.76 in all; even at best -")
 
 
 def test_live_a_losing_paper_record_stops_real_buys_too(gw: Gateway, tmp_path) -> None:
@@ -255,8 +390,9 @@ def test_live_a_losing_paper_record_stops_real_buys_too(gw: Gateway, tmp_path) -
     assert desk.state["paused"] is not None and desk.state["paused_real"] is None and desk.state["mode"] == "live"
     g = P.panel_state(settings, NOW)["guard"]
     assert g["paper"]["paused"] and g["real"]["paused"]  # shown on the real line too
-    assert g["real"]["line"] == ("Paused by the risk manager (real buys stopped): the paper record is losing, "
-                                 f"{desk.state['paused']['reason']}.")
+    assert g["real"]["line"] == (f"Paused by the risk manager since {_hhmm(NOW)} (real buys stopped; then: the paper "
+                                 f"record was losing, {desk.state['paused']['reason']}); the real record now: "
+                                 f"{g['real']['reason']}.")
     # the owner's switch lets the live desk buy again (the caps still apply)
     desk2 = P.PolyDesk(_live_settings(tmp_path, POLYDESK_GUARD="off"), ledger=FakeLedger(), client_factory=ex)
     assert desk2.poll(NOW + 60)["bought"] == 1 and [o["slug"] for o in ex.orders] == ["w1"]
@@ -265,50 +401,110 @@ def test_live_a_losing_paper_record_stops_real_buys_too(gw: Gateway, tmp_path) -
 # --------------------------------------------------------------------------- the record it judges
 
 
+def test_a_games_markets_and_a_ladder_ending_together_are_one_event_each() -> None:
+    """The desk can be long the leader and short the draw and the trailer of one game: one result settles all three.
+    A crypto ladder's markets end together on one price. Each is one draw; two games of the same name on different
+    days are two."""
+    by_rule: dict[str, Any] = {}
+    game = {"rule": "r", "live": False, "cost_usd": 20.0, "category": "sports", "event": "Ajax vs PSV",
+            "end_ts": NOW + 21600}
+    rows = [(game, 0.5), (game, 0.4), (game, 0.3),  # one game, three markets
+            ({**game, "end_ts": NOW + 86400 + 21600}, -20.0),  # the same names a day later: another game
+            ({**game, "event": None, "category": "crypto", "end_ts": NOW + 3600}, 0.4),  # a ladder ...
+            ({**game, "event": None, "category": "crypto", "end_ts": NOW + 3600}, -20.0),  # ... ending together
+            ({**game, "event": None, "category": "crypto", "end_ts": NOW + 7200}, 0.4)]  # another hour: apart
+    for row, pnl in rows:
+        P._tally(by_rule, row, pnl, pnl > 0)
+    keys = by_rule["r"]["paper"]["keys"]
+    assert keys[0] == keys[1] == keys[2] != keys[3] and keys[4] == keys[5] != keys[6]
+    assert keys[0].startswith("e") and len(keys[0]) < 24 and keys[4] == f"crypto:{int(NOW + 3600)}"  # short keys
+    settings = Settings.from_env({})
+    v = P.judge_book(settings, {P.rule_id(settings): by_rule["r"]}, "paper")
+    assert (v.n, v.settled, v.losses) == (4, 7, 2) and v.unit == "stake" and v.per == "event"
+    assert v.reason.startswith("4 of 30 events needed before judging")
+
+
 def test_every_settlement_is_kept_per_rule_and_book_and_older_files_are_backfilled(tmp_path,
                                                                                   monkeypatch: pytest.MonkeyPatch
                                                                                   ) -> None:
     settings = _settings(tmp_path)
-    # closed rows are newest first; the per-settlement list is oldest first
-    closed = [_row("c3", "crypto", 0.98, False, -20.0, rule=P.RULE_VERSION),
+    rule = P.rule_id(settings)
+    # closed rows are newest first; the per-settlement lists are oldest first
+    closed = [_row("c3", "crypto", 0.98, False, -20.0, rule=rule),
               _row("old", "crypto", 0.98, True, 0.5),  # before the fix: another rule's row
-              {**_row("u1", "crypto", 0.98, False, 0.0, rule=P.RULE_VERSION), "won": None, "pnl_usd": None},
-              _row("c2", "crypto", 0.98, True, 0.3, rule=P.RULE_VERSION),
-              _row("r1", "crypto", 0.97, True, 0.02, rule=P.RULE_VERSION, live=True),
-              _row("c1", "crypto", 0.98, True, 0.4, rule=P.RULE_VERSION)]
+              {**_row("u1", "crypto", 0.98, False, 0.0, rule=rule), "won": None, "pnl_usd": None},
+              _row("c2", "crypto", 0.98, True, 0.3, rule=rule, end_left=3600.0),
+              _row("r1", "crypto", 0.97, True, 0.02, rule=rule, live=True),
+              _row("c1", "crypto", 0.98, True, 0.4, rule=rule)]
     st = P.empty_state()
     st["closed"] = closed
-    st["by_rule"] = {P.RULE_VERSION: {"paper": {"settled": 3, "won": 2, "pnl_usd": -19.3},
-                                      "real": {"settled": 1, "won": 1, "pnl_usd": 0.02}}}
+    st["by_rule"] = {rule: {"paper": {"settled": 3, "won": 2, "pnl_usd": -19.3},
+                            "real": {"settled": 1, "won": 1, "pnl_usd": 0.02}}}
     P.save_state(P.state_path(settings), st)
-    loaded = P.load_state(P.state_path(settings))
-    assert loaded["by_rule"][P.RULE_VERSION]["paper"]["pnls"] == [0.4, 0.3, -20.0]
-    assert loaded["by_rule"][P.RULE_VERSION]["real"]["pnls"] == [0.02]
+    loaded = P.load_state(P.state_path(settings))["by_rule"][rule]
+    assert loaded["paper"]["pnls"] == [0.4, 0.3, -20.0] and loaded["paper"]["costs"] == [20.0] * 3
+    assert loaded["paper"]["keys"] == [f"crypto:{int(NOW + 1800)}", f"crypto:{int(NOW + 3600)}",
+                                       f"crypto:{int(NOW + 1800)}"]
+    assert loaded["real"] == {"settled": 1, "won": 1, "pnl_usd": 0.02, "pnls": [0.02], "costs": [0.97],
+                              "keys": [f"crypto:{int(NOW + 1800)}"]}
+    # a record whose lists are out of line (an older build added P&Ls only) is rebuilt from the kept rows
+    st["by_rule"] = {rule: {"paper": {"settled": 9, "won": 8, "pnl_usd": 1.0, "pnls": [0.1] * 9}}}
+    P.save_state(P.state_path(settings), st)
+    rebuilt = P.load_state(P.state_path(settings))["by_rule"][rule]["paper"]
+    assert rebuilt["pnls"] == [0.4, 0.3, -20.0] and len(rebuilt["keys"]) == len(rebuilt["costs"]) == 3
+    assert rebuilt["settled"] == 9  # the totals stay the desk's own
     st["by_rule"] = {}  # a file from before the per-rule record: rebuilt, with the lists
     P.save_state(P.state_path(settings), st)
-    rebuilt = P.load_state(P.state_path(settings))["by_rule"]
-    assert rebuilt[P.RULE_VERSION]["paper"]["pnls"] == [0.4, 0.3, -20.0]
-    assert rebuilt["before the fix"]["paper"]["pnls"] == [0.5]
-    # the list keeps the newest GUARD_KEEP
+    by_rule = P.load_state(P.state_path(settings))["by_rule"]
+    assert by_rule[rule]["paper"]["pnls"] == [0.4, 0.3, -20.0] and by_rule["before the fix"]["paper"]["pnls"] == [0.5]
+    # the lists keep the newest GUARD_KEEP, in line; P&Ls are kept to 1e-4
     monkeypatch.setattr(P, "GUARD_KEEP", 3)
-    by_rule: dict[str, Any] = {}
+    fresh: dict[str, Any] = {}
     for i in range(5):
-        P._tally(by_rule, {"rule": "r", "live": False}, float(i), True)
-    assert by_rule["r"]["paper"]["pnls"] == [2.0, 3.0, 4.0] and by_rule["r"]["paper"]["settled"] == 5
+        P._tally(fresh, {"rule": "r", "live": False, "cost_usd": 20.0, "category": "crypto", "end_ts": NOW + i},
+                 i + 0.123456789, True)
+    rec = fresh["r"]["paper"]
+    assert rec["pnls"] == [2.1235, 3.1235, 4.1235] and rec["settled"] == 5
+    assert rec["keys"] == [f"crypto:{int(NOW) + i}" for i in (2, 3, 4)] and rec["costs"] == [20.0] * 3
+    assert rec["pnl_usd"] == pytest.approx(sum(i + 0.123456789 for i in range(5)))  # the total stays exact
+    # a record whose lists lost their line (a hand-edited file) is still judged on the newest settlements
+    odd = {"pnls": [-20.0] * 12, "costs": [20.0] * 3, "keys": ["a"] * 20}
+    v = P.judge_book(settings, {rule: {"paper": odd}}, "paper")
+    assert v.settled == 3 and v.n == 1  # the 9 P&Ls without a known stake are dropped; the rest is one event
+
+
+def test_older_rules_keep_only_their_newest_settlements(gw: Gateway, tmp_path) -> None:
+    """Only the current rule is judged, so an older rule's lists are trimmed to GUARD_KEEP_OLD when the desk saves;
+    its settled / won / P&L totals stay whole. The state file stays small (it is rewritten every round)."""
+    settings = _settings(tmp_path)
+    st = P.empty_state()
+    big = _record([0.4] * 999 + [-20.0])
+    st["by_rule"] = {"2026-10-09b": {"paper": dict(big)}, P.rule_id(settings): {"paper": _record([0.4] * 999 + [-20.0])}}
+    P.save_state(P.state_path(settings), st)
+    desk = P.PolyDesk(settings)  # the desk saves once it starts
+    saved = P.load_state(P.state_path(settings))["by_rule"]
+    old = saved["2026-10-09b"]["paper"]
+    assert len(old["pnls"]) == len(old["costs"]) == len(old["keys"]) == P.GUARD_KEEP_OLD == 200
+    assert old["pnls"][-1] == -20.0 and old["settled"] == 1000 and old["pnl_usd"] == pytest.approx(big["pnl_usd"])
+    assert len(saved[desk.rule]["paper"]["pnls"]) == 1000  # the current rule keeps its record
+    size = P.state_path(settings).stat().st_size
+    assert size < 60_000, size
 
 
 def test_the_panel_carries_the_guard_view(tmp_path) -> None:
     settings = _settings(tmp_path)
     fresh = P.panel_state(settings, NOW)["guard"]
-    assert set(fresh) == {"on", "rule", "paper", "real", "paused", "paused_real", "candidate"}
-    assert fresh["on"] and fresh["rule"] == P.RULE_VERSION and fresh["real"] is None
-    assert (fresh["paused"], fresh["paused_real"], fresh["candidate"]) == (None, None, None)
+    assert set(fresh) == {"on", "rule", "paper", "real", "paused", "paused_real", "candidate", "clears_bar",
+                          "paper_cap"}
+    assert fresh["on"] and fresh["rule"] == P.rule_id(settings) and fresh["real"] is None
+    assert (fresh["paused"], fresh["paused_real"], fresh["candidate"], fresh["clears_bar"]) == (None, None, None, False)
     paper = fresh["paper"]
     assert paper["verdict"] == "learning" and paper["paused"] is False and paper["n"] == 0 and paper["min_n"] == 30
-    assert paper["line"] == ("Risk manager (paper, still learning): 0 of 30 settlements needed before judging; so far "
+    assert paper["line"] == ("Risk manager (paper, still learning): 0 of 30 events needed before judging; so far "
                              "$0.00, 0 lost.")
     assert {"verdict", "reason", "n", "losses", "total", "mean", "lower", "upper", "win_lower", "stressed",
-            "loss_rate_hi", "benchmark", "min_n", "win_n", "phrase", "paused", "line"} == set(paper)
+            "loss_rate_hi", "benchmark", "min_n", "win_n", "settled", "summary", "unit", "per", "early", "phrase",
+            "paused", "paused_at", "paused_since", "line"} == set(paper)
     _seed(settings, paper=UNCLEAR, real=[0.02] * 3)
     g = P.panel_state(settings, NOW)["guard"]
     assert g["paper"]["verdict"] == "unclear" and g["paper"]["line"].startswith("Risk manager (paper, not proven yet): ")
@@ -316,5 +512,7 @@ def test_the_panel_carries_the_guard_view(tmp_path) -> None:
     json.dumps(g, allow_nan=False)
     custom = _settings(tmp_path, POLYDESK_GUARD_MIN_N="50", POLYDESK_GUARD_WIN_N="200")
     assert P.panel_state(custom, NOW)["guard"]["paper"]["verdict"] == "learning"  # 40 settled < 50
-    with pytest.raises(ConfigError, match="POLYDESK_GUARD_WIN_N=50 must be at least POLYDESK_GUARD_MIN_N=60"):
-        _settings(tmp_path, POLYDESK_GUARD_MIN_N="60", POLYDESK_GUARD_WIN_N="50")
+    # MIN_N above WIN_N no longer stops the bot from booting: WIN_N is raised to MIN_N
+    odd = _settings(tmp_path, POLYDESK_GUARD_MIN_N="150", POLYDESK_GUARD_WIN_N="100")
+    assert (odd.polydesk_guard_min_n, odd.polydesk_guard_win_n) == (150, 100)
+    assert P.panel_state(odd, NOW)["guard"]["paper"]["win_n"] == 150

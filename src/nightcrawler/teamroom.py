@@ -45,7 +45,7 @@ environment (:func:`deploy_info`), never anything else.
                   "events": [{"ts": float, "text": str, "tone": "good"|"bad"|"neutral"}],   # newest first
                   "bars"?: [{"label", "value": fraction|null, "text"}], "bars_empty"?: str,
                   "meter"?: {"used", "limit", "fraction", "text"}, "hash"?: {"head", "short", "explainer"},
-                  "desks"?: [{"desk", "verdict", "phrase", "reason", "paused", "line"}]}]   # risk: each desk's verdict
+                  "desks"?: [{"desk", "verdict", "phrase", "reason", "paused", "since", "line"}]}]   # risk: each desk's verdict
     }
 
 Units: ``count``, ``sol``, ``usd``, ``pct`` (percent), ``ts`` (epoch s), ``dur`` (seconds), ``text``.
@@ -835,12 +835,24 @@ def _loss_meter(ctx: _Ctx) -> dict[str, Any]:
     return {"used": used, "limit": limit, "fraction": fraction, "text": text}
 
 
+def _verdict_stat(v: dict[str, Any]) -> str:
+    """A desk book's verdict as a stat value: ``not proven yet``, or ``paused since 18:40 UTC; now losing`` (the
+    pause and what the record says now, which may have moved since)."""
+    phrase = str(v.get("phrase") or "")
+    if not v.get("paused"):
+        return phrase
+    since = v.get("paused_since") or v.get("since")
+    return f"paused since {since}; now {phrase}" if since else f"paused; now {phrase}"
+
+
 def _desk_verdicts(ctx: _Ctx) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     """``(desks, events)``: the risk manager's verdict on each paper desk's current rule (``nightcrawler.deskguard``
     through the desk's panel state: Polymarket paper, and Polymarket real once it has a real record), and the
     desk's own risk-manager events. Nothing while the desk is off or its state cannot be read."""
     if not ctx.settings.polydesk_enabled:
         return [], []
+    from nightcrawler.polydesk import GUARD_EVENTS
+
     try:
         d = ctx.polydesk()
     except (KeyError, TypeError, ValueError, AttributeError):  # a malformed state file never takes the panel down
@@ -853,9 +865,10 @@ def _desk_verdicts(ctx: _Ctx) -> tuple[list[dict[str, Any]], list[dict[str, Any]
             continue
         desks.append({"desk": name, "verdict": str(v.get("verdict") or ""), "phrase": str(v.get("phrase") or ""),
                       "reason": ctx.text(v.get("reason") or ""), "paused": bool(v.get("paused")),
-                      "line": ctx.text(v.get("line") or "", 240)})
+                      "since": ctx.text(v.get("paused_since"), 40) if v.get("paused_since") else None,
+                      "line": ctx.text(v.get("line") or "", 3 * TEXT_MAX)})
     events = [ctx.event(float(e["ts"]), str(e["text"]), str(e.get("tone") or "neutral")) for e in d.get("events") or []
-              if isinstance(e, dict) and str(e.get("text") or "").startswith(("Risk manager", "Candidate for real"))]
+              if isinstance(e, dict) and str(e.get("text") or "").startswith(GUARD_EVENTS)]
     return desks, events
 
 
@@ -893,7 +906,7 @@ def _risk(ctx: _Ctx) -> dict[str, Any]:
             doing = f"Used {meter['fraction'] * 100:.0f}% of today's loss allowance; {slots}."
     paused = [x["desk"] for x in desks if x["paused"]]
     if paused:
-        doing += f" Paused {' and '.join(paused)} buys: the record loses money."
+        doing += f" Paused {' and '.join(paused)} buys: the record was losing."
     return _panel("risk", status, last, ctx.text(doing),
                   _headline(eq["sol"], "sol", "equity (" + ("bot wallet" if s.is_live else "paper wallet") + ")"),
                   [_stat("Equity (USD)", eq["usd"], "usd"), _stat("Today", eq["pnl_today_sol"], "sol"),
@@ -901,8 +914,7 @@ def _risk(ctx: _Ctx) -> dict[str, Any]:
                    _stat("Kill switch", ctx.state["kill"], "text"),
                    _stat("Halted", ctx.text(ctx.state["halted"]["reason"] or "yes", 60)
                          if ctx.state["halted"]["halted"] else "no", "text"),
-                   *(_stat(x["desk"], f"{x['phrase']}, paused" if x["paused"] else x["phrase"], "text")
-                     for x in desks)],
+                   *(_stat(x["desk"], _verdict_stat(x), "text") for x in desks)],
                   events, meter=meter, desks=desks)
 
 
@@ -1006,8 +1018,10 @@ def _predict(ctx: _Ctx) -> dict[str, Any]:
     guard = _dict(d.get("guard"))
     g_paper, g_real = _dict(guard.get("paper")), _dict(guard.get("real"))
     book = "real" if live else "paper"  # the buys this mode makes (live: a losing paper record stops them too)
-    if (g_real if live else g_paper).get("paused"):  # the pause first: the most important thing the desk says
-        doing = f"Paused by the risk manager: no new {book} buys, the record loses money. " + doing
+    lead = g_real if live else g_paper
+    if lead.get("paused"):  # the pause first: the most important thing the desk says
+        when = f" since {lead['paused_since']}" if lead.get("paused_since") else ""
+        doing = f"Paused by the risk manager{when}: no new {book} buys, the record was losing. " + doing
     if live:
         stats = [_stat("Watching", d["watched"], "count"), _stat("Open (real)", real["open"], "count"),
                  _stat("At risk (real)", round(real["at_risk_usd"], 2), "usd"),
@@ -1039,8 +1053,7 @@ def _predict(ctx: _Ctx) -> dict[str, Any]:
         headline = _headline(paper.get("open", d["open"]), "count", "paper positions open")
     for book, v in (("paper", g_paper), ("real", g_real)):
         if v:
-            stats.append(_stat(f"Risk manager ({book})", f"{v.get('phrase')}, paused" if v.get("paused")
-                               else str(v.get("phrase") or ""), "text"))
+            stats.append(_stat(f"Risk manager ({book})", _verdict_stat(v), "text"))
     return _panel("predict", status, last, ctx.text(doing), headline, stats, events, rule=d["rule"],
                   positions=d["positions"], label=d["label"], mode=d.get("mode"),
                   open_real=int(real.get("open") or 0), open_paper=int(paper.get("open") or 0),
