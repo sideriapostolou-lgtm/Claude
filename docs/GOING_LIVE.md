@@ -16,14 +16,23 @@ the Phantom app, the Coinbase app, and the Railway website.
 
 - [ ] **Paper mode ran on Railway for at least 1-2 weeks,** with the dashboard's heartbeat
       green most of the time.
-- [ ] **Paper results beat costs over many trades.** Run `nightcrawler report` ("Closed
-      trades: ... SOL"), or read the dashboard's "Since start" tile: it is the bot's own result,
-      counted **in SOL** and shown at today's SOL price. Do not judge by the big dollar number:
-      over a week or two, SOL's own price moves far more than the bot's results, and the page
-      lists that "price of SOL" effect separately. The SOL result should be positive *after* fees, over at least 20-30 closed
-      trades, and not just thanks to one lucky trade. If it isn't, stop here. A losing paper
-      bot will be a losing live bot. (Paper fills already assume 1 % worse than the quote,
-      `PAPER_SLIPPAGE_BPS=100`, because real swaps land below the quote.)
+- [ ] **The paper trades proved an edge: the Coach's stage 2 passed** (the dashboard's checklist
+      ticks step 2 only then). That takes **at least 150 paper trades over at least 14 days**, and
+      an anytime-valid lower bound on their average result after every cost that is **above 0**
+      (an e-value of at least 200 on fresh paper fills for the first attempt, more for later ones;
+      [LEARNING.md](LEARNING.md) §5.4). "Positive over a few dozen trades" is not proof: memecoin
+      results swing so much that a strategy with no edge at all is positive over 30 trades about
+      half the time, while this gate lets one through well under 1 % of the time. Judge the bot's
+      own result **in SOL** (`nightcrawler report`,
+      "Closed trades: ... SOL", or the dashboard's "Since start" tile), never by the big dollar
+      number: SOL's own price moves far more than the bot's results. If stage 2 has not passed,
+      stop here: a losing paper bot will be a losing live bot. (Paper fills already assume 1 %
+      worse than the quote, `PAPER_SLIPPAGE_BPS=100`, because real swaps land below the quote.)
+- [ ] **The stake is at most a quarter of Kelly at that lower bound** (computed on a return
+      distribution that includes rugs), never the edge's point estimate. At $100 that means the
+      minimum ticket: set `POSITION_PCT=0.05` ($5 tickets) for at least the first 50 live trades.
+      Every ticket is also sized as if a rug could take 95 % of it, so one day can lose at most
+      `DAILY_RISK_BUDGET_PCT` (15 %) of its starting money even if every open coin rugs.
 - [ ] **Receipts verify.** The dashboard shows "verified", or `nightcrawler receipts verify`
       says OK.
 - [ ] **The audit is clean.** `nightcrawler report` says `Result: OK` (exit code 0).
@@ -109,6 +118,7 @@ Then, in the same **Variables** tab, set:
 | `TRADING_MODE` | `live` |
 | `LIVE_CONFIRM` | `I_ACCEPT_REAL_MONEY_RISK` (exactly, capital letters) |
 | `KILL_SWITCH` | `off` (it was `sell_all` for the paper close-out) |
+| `POSITION_PCT` | `0.05`: $5 tickets, a quarter of Kelly at most (section 0), for at least the first 50 live trades |
 | `MAX_WALLET_USD` | `150` (leave the default unless you know why) |
 | `SOLANA_RPC_URL` | your Helius URL (optional, recommended) |
 
@@ -153,7 +163,11 @@ again.
 
 **If it says "Halted":** equity fell 50 % from its peak. Take that seriously before
 resuming. To resume anyway, set `RESET_HALT_TOKEN` to a new value (for example today's date)
-and deploy.
+and deploy. Before that point the bot already buys less: a new ticket must leave the money above
+the halt line even if every open coin rugs (`[cushion]` in the receipts), the day's worst case
+must fit in `DAILY_RISK_BUDGET_PCT` (`[risk_budget]`), and all open tickets together may risk at
+most `MAX_AT_RISK_PCT` of the money (`[at_risk]`). These only ever shrink or refuse a buy; sells
+are never blocked.
 
 ## 6. How to stop and take your money back
 
@@ -177,8 +191,13 @@ managed by their normal exits.
 ## What can still go wrong (even with every guardrail)
 
 - **Rugs faster than the stop.** A pool can be emptied between two checks, ten seconds apart.
-  The stop-loss sells at whatever price is left.
-- **Gaps.** Prices jump past the -18 % stop. Losses per trade can be much bigger than 18 %.
+  The stop-loss sells at whatever price is left. When the price feeds go quiet on a coin (Jupiter
+  drops coins it flags right after a rug), the bot asks Jupiter for a sell quote of the whole
+  position after 30 seconds and uses that as the price; two failed quotes in a row and it sells,
+  trying again every 10 seconds.
+- **Gaps.** Prices jump past the -18 % stop. Losses per trade can be much bigger than 18 %: the
+  rugs we measured took 84-97 % in one sell. That is why the risk limits count 95 % of every
+  ticket: a refused buy whose reason starts "worst case today" means exactly that.
 - **Fees and slippage** on every trade, plus MEV (Jupiter Ultra reduces it but can't remove it).
 - **Outages.** Jupiter, RugCheck, GeckoTerminal or Railway can go down. The bot fails closed
   (no new buys), but it can't sell if Jupiter can't quote.

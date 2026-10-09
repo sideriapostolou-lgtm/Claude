@@ -7,7 +7,11 @@ computed over steps 1-5; step 6, the real-money switch, is the action the owner 
 
 1. ``edge`` - the learning card names a promoted champion that is not ``CASH`` (doing nothing) AND
    reports ``champion_passed_locked_test: true`` (it beat trading costs on data it never saw).
-2. ``paper_match`` - item 1 is done AND the card reports ``paper_matches_backtest: true``.
+2. ``paper_match`` - item 1 is done AND the Coach's stage 2 passed (card ``state`` ``live_ready`` or ``live``:
+   at least ``S2_MIN_N`` paper trades over ``S2_MIN_DAYS`` days with an anytime-valid lower bound on the mean
+   net result above 0, docs/LEARNING.md §5.4 and docs/GOING_LIVE.md §0; "positive over 20-30 trades" is not
+   proof - a strategy with no edge passes it about half the time) AND the card reports
+   ``paper_matches_backtest: true``.
 3. ``wallet`` - a bot wallet is configured (``BOT_WALLET_SECRET``, required in live mode) with a known
    address and a recently read SOL balance above 0 (its SOL, not the value of the coins it holds).
 4. ``keys`` - ``KEYS_ROTATED_ON`` is a real date (``YYYY-MM-DD``), not in the future.
@@ -36,12 +40,13 @@ from nightcrawler.config import (
     dashboard_token_problem,
     parse_rotation_date,
 )
+from nightcrawler.learn.gate import S2_MIN_DAYS, S2_MIN_N
 
-__all__ = ["CHECK_IDS", "CHECK_LABELS", "STEPS", "readiness"]
+__all__ = ["CHECK_IDS", "CHECK_LABELS", "STAGE2_STATES", "STEPS", "readiness"]
 
 CHECK_LABELS: dict[str, str] = {
     "edge": "A strategy proved an edge on unseen data",
-    "paper_match": "Paper results match the test results",
+    "paper_match": f"Paper trades proved it ({S2_MIN_N}+ trades, {S2_MIN_DAYS}+ days)",
     "wallet": "Bot wallet set up and funded",
     "keys": "Keys shared in chat replaced",
     "locked": "Dashboard locked with a password link",
@@ -52,6 +57,10 @@ CHECK_IDS = tuple(CHECK_LABELS)
 STEPS = 5
 #: A champion with this name means "do nothing": no strategy is better than holding cash.
 CASH = "CASH"
+#: Learning card states that mean the Coach's stage 2 passed (a ``live_ready`` receipt, LEARNING §5.4).
+STAGE2_STATES = frozenset({"live_ready", "live"})
+_STAGE2_MISSING = (f"Not yet — real money needs {S2_MIN_N}+ paper trades over {S2_MIN_DAYS}+ days whose always-valid "
+                   "lower bound on the average result is above 0.")
 REASON_MAX = 160
 #: KEYS_ROTATED_ON may be "tomorrow" in UTC for an owner in a time zone ahead of UTC.
 _DATE_SLACK = datetime.timedelta(days=1)
@@ -94,10 +103,13 @@ def _learning(card: Mapping[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]:
     else:
         edge = _item("edge", False, "Not yet — no strategy has beaten trading costs on unseen data so far.")
 
-    if proven and card.get("paper_matches_backtest") is True:
-        paper = _item("paper_match", True, "Paper trades behave like the test said they would.")
+    stage2 = card.get("state") in STAGE2_STATES
+    if proven and stage2 and card.get("paper_matches_backtest") is True:
+        paper = _item("paper_match", True, "Passed stage 2 on real quotes, and paper trades behave like the test.")
     elif not proven:
         paper = _item("paper_match", False, "Needs a proven strategy first")
+    elif not stage2:
+        paper = _item("paper_match", False, _STAGE2_MISSING)
     else:
         why = card.get("paper_matches_backtest_reason")
         paper = _item("paper_match", False, why.strip() if isinstance(why, str) and why.strip()

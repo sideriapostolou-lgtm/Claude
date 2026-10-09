@@ -146,7 +146,8 @@ def test_full_trade_from_discovery_to_trailing_exit(make_rig) -> None:
     [position] = rig.ledger.open_positions()
     [buy] = rig.ledger.fills()
     assert position.mint == GARY and position.entry_fill_ids == [buy.id] and position.token_amount == buy.token_amount
-    assert buy.side == "buy" and buy.sol_lamports == 200_000_000  # 20 % of $100 at $100/SOL
+    # 20 % of $100 would risk $19 in a rug (L_MAX 0.95): capped to the 15 % daily risk budget, $15.79 (G38)
+    assert buy.side == "buy" and buy.sol_lamports == int(0.15 * 1_000_000_000 / 0.95)
     haircut = 1 - rig.settings.paper_slippage_bps / 1e4  # paper fills land PAPER_SLIPPAGE_BPS below the quote
     assert position.entry_price_usd == pytest.approx(w.price / (1 - SWAP_COST) / haircut, rel=1e-4)
     # the decision receipt came BEFORE the fill receipt
@@ -1414,9 +1415,10 @@ def test_learning_on_or_off_the_bot_trades_exactly_the_same(tmp_path, make_setti
         # ... and the engine's own rows reached the tape without blocking it
         day = tape_day(START)
         reader = TapeReader(learn_dir(on.settings.data_dir) / "tape")
+        taped = ("enter", "watch", "unwatch", "exit", "exit_partial")  # PR-E: every decision that moves a coin
         decided = [d.action for d in reversed(on.ledger.decisions(limit=1000))
-                   if d.action == "enter" or d.action.startswith("reject_")]
-        assert decided[:2] == ["reject_cocoon", "enter"]
+                   if d.action in taped or d.action.startswith("reject_")]
+        assert decided == ["reject_cocoon", "watch", "enter", "exit_partial", "exit", "reject_risk", "reject_risk"]
         assert wait_for(lambda: len(reader.rows(day, "fills")) == 3 and reader.rows(day, "lag")
                         and [r["decision"] for r in reader.rows(day, "evals") if "decision" in r] == decided)
         benchmark = make_spec("dip_rebound", {}, on.settings.strategy_params()).hash
