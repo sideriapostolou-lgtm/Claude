@@ -2794,7 +2794,7 @@ _M_LIFE = r"""
   const SHOTS = {
     table: { pos: V3(-1.3, 1.7, 3.05), look: V3(-0.45, 0.98, -0.1) },
     workshop: rig(WS2, [0.95, 1.55, 1.15], [-0.05, 0.92, -1.3]),
-    den: rig(DN2, [0.95, 2.05, 0.8], [-0.2, 1.1, -2.2]),
+    den: rig(DN2, [1.95, 1.6, -1.7], [-0.3, 0.85, -1.2]),  // beside the desk: Nyx in profile at the screens
     archive: rig(AR2, [0.35, 1.35, 0.55], [-1.3, 0.72, -1.5]),
     vault: rig(VT2, [1.5, 1.85, 1.9], [0.0, 1.55, -1.45]),
     dock: { pos: V3(20.9, 1.65, 0.75), look: V3(23.4, 0.8, -1.7) },
@@ -3064,6 +3064,7 @@ _M_LIFE = r"""
     // Jet carries the cube to the vault; there he cheers only for a winning trade and shrugs at a losing one
     jet.queue.unshift({ dest: "vault", hold: 4.5, carry: won ? "gold" : "red", onArrive: function (a) {
       deliverCube(a, pnl);
+      a.yawGoal = a.destYaw + Math.PI;  // the cube goes in through the hatch; he turns round to the walkway for it
       if (pnl > 0) oneShot(a, "cheer"); else if (pnl < 0) oneShot(a, "shrug");
       if (focus && focus.actor === a) focus.until = Math.max(focus.until, simT + (pnl > 0 ? 10 : 5));  // the camera stays for it
     } });
