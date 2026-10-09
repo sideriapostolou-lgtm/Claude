@@ -26,17 +26,34 @@ import desk_core as D  # noqa: E402
 import k1 as K  # noqa: E402
 
 
+def _subset(ds: C.Dataset, mints: list[str]) -> C.Dataset:
+    """A Dataset view over ``mints`` only (same coins objects, same split, same coverage)."""
+    import copy
+
+    sub = copy.copy(ds)
+    keep = set(mints)
+    sub.coins = ds.coins[ds.coins["mint"].isin(keep)].reset_index(drop=True)
+    if getattr(ds, "_cd", None) is not None:
+        sub._cd = {m: cd for m, cd in ds._cd.items() if m in keep}
+    return sub
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--split", choices=("train", "val", "test"), required=True)
     ap.add_argument("--config", choices=tuple(D.CONFIGS), required=True)
     ap.add_argument("--budget-usd", type=float, required=True)
     ap.add_argument("--status", action="store_true", help="count cached vs needed decisions and exit (no API)")
+    ap.add_argument("--shard", default=None, help="i/n: only coins with index %% n == i (parallel workers share the cache)")
     a = ap.parse_args(argv)
     if a.split == "test" and os.environ.get("LAB2_ALLOW_TEST") != "1":
         print("REFUSED: TEST deliberation needs LAB2_ALLOW_TEST=1 (the judge must have read VAL)", file=sys.stderr)
         return 2
     ds = C.load(a.split, _internal=(a.split == "val"))
+    if a.shard:
+        i, n = (int(x) for x in a.shard.split("/"))
+        keep = [m for k, m in enumerate(ds.mints) if k % n == i]
+        ds = ds.subset(keep) if hasattr(ds, "subset") else _subset(ds, keep)
     if a.status:
         out = K.deliberate_split(ds, [a.config], None, D.Budget(max_usd=0.0), K.CACHE)
         print(json.dumps({"split": a.split, "config": a.config, **{k: v for k, v in out.items() if k != "buys"}}))
