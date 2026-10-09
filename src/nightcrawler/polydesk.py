@@ -401,11 +401,12 @@ class PolyDesk:
         self._thread = threading.Thread(target=self._loop, name="polydesk", daemon=True)
         self._thread.start()
         log.info(
-            "polydesk_started theta=%.2f hours=%g ticket_usd=%.0f poll_s=%g (paper)",
+            "polydesk_started theta=%.2f hours=%g ticket_usd=%.0f poll_s=%g (%s)",
             self.theta,
             self.hours,
             self.ticket,
             self.poll_s,
+            "LIVE: %g contract(s) per order" % self.contracts if self.state.get("mode") == "live" else "paper",
         )
 
     def stop(self) -> None:
