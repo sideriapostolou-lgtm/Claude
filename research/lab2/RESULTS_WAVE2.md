@@ -37,11 +37,12 @@ post-hoc observation, NOT a result; it would need its own pre-registered hypothe
 | Y2 curve-phase organic share | TRAIN | REFUSED | needs 17 more curve hours of 2026-09-30 (24 h lookback) |
 | Y1 creator reputation | held | — | review finding Y1-1 (same-bar stops) not yet applied |
 | Y5 time-of-day, Z5 fee-tier optimizer | held | — | pinned M1 as host (M1 killed); re-spec needed |
+| O1 operator-backed graduates (post-hoc lead; PREREG discloses) | VAL | **FAIL_VAL** | TRAIN: all 6 configs beat same-age random entries by +13..+33 pp (CIs well above 0) but sit at -3.0%..+0.4% absolute; VAL candidate t60|tight -2.2% [-6.2, +1.4], +19.8 pp vs random. Operator coins do not bleed; they do not pay either |
 | S1 insider supply spent, D1 capitulation dips | waiting | — | need B1 wallet trades (P4b fetch running) |
 | q1-q12 idea-mill queue | parked | — | designers cut off by the agent weekly limit; resume after 2026-10-13 |
 
 ## Reading
 
-Nothing passed. On this window the market drifts about -20% per trade for an outside buyer at seconds of
+Nothing passed. The one robust relative finding: OPERATOR-class graduates (>= 500 SOL non-agent buying from <= 30 buyers in the first 120 s) lose far less than every other class at 30-115 min (break-even vs -20%); that is a candidate universe filter for any future entry idea, not an edge. On this window the market drifts about -20% per trade for an outside buyer at seconds of
 latency; the per-minute-bar ideas did not find a pocket that beats that plus 1.4-5.1% costs. The open leads
 are wallet-level (S1, D1), the operator-class observation above, and the idea-mill queue.
