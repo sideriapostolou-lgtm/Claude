@@ -3770,6 +3770,638 @@
    "splits": {
     "train": 1
    }
+  },
+  "Y1-persist|2e40f89069b2": {
+   "hypothesis": "Y1-persist",
+   "params": {
+    "version": "y1-v1",
+    "test": "persistence",
+    "stat": "spearman(record_mean, next 30-min mid change)",
+    "min_obs": 60,
+    "min_clusters": 20,
+    "ci": "deployer-cluster bootstrap 90%",
+    "fixed": {
+     "version": "y1-v1",
+     "e_age_s": 420.0,
+     "e_age_max_s": 3600.0,
+     "h_rec_s": 1800.0,
+     "rec_k": 3,
+     "record": "mid change t_ref -> t_ref + 30 min, t_ref = first grid time >= g + 420 s; usable earlier graduates of the same creator, resolved (t_end <= t), g_p < g",
+     "shared_rules": [
+      "pooled",
+      "signs_for_others",
+      "multi_signer>=2",
+      "factory_volume>=24/24h"
+     ],
+     "history_splits": {
+      "debug": [
+       "final_train"
+      ],
+      "train": [
+       "train"
+      ],
+      "val": [
+       "train",
+       "val"
+      ],
+      "test": [
+       "train",
+       "val",
+       "test"
+      ],
+      "confirm": [
+       "confirm"
+      ],
+      "final": [
+       "train",
+       "val",
+       "test",
+       "final_train",
+       "final_val",
+       "final_test"
+      ]
+     },
+     "stop_pct": 0.5,
+     "exit_by_age_s": 10680.0,
+     "size_usd": 20.0,
+     "placebo": "eligible-stratum (repeat deployer, resolved)",
+     "fill": "common.FillConfig(exit_delay_bars=1): worst, latency 30 s, entry-bar stop checks, next-bar exits"
+    }
+   },
+   "first_seen_utc": "2026-10-09 08:48:32",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Y1|81cc80479fbd|cfg:a06543feac6c": {
+   "hypothesis": "Y1",
+   "params": {
+    "version": "y1-v1",
+    "e_age_s": 420.0,
+    "e_age_max_s": 3600.0,
+    "h_rec_s": 1800.0,
+    "rec_k": 3,
+    "record": "mid change t_ref -> t_ref + 30 min, t_ref = first grid time >= g + 420 s; usable earlier graduates of the same creator, resolved (t_end <= t), g_p < g",
+    "shared_rules": [
+     "pooled",
+     "signs_for_others",
+     "multi_signer>=2",
+     "factory_volume>=24/24h"
+    ],
+    "history_splits": {
+     "debug": [
+      "final_train"
+     ],
+     "train": [
+      "train"
+     ],
+     "val": [
+      "train",
+      "val"
+     ],
+     "test": [
+      "train",
+      "val",
+      "test"
+     ],
+     "confirm": [
+      "confirm"
+     ],
+     "final": [
+      "train",
+      "val",
+      "test",
+      "final_train",
+      "final_val",
+      "final_test"
+     ]
+    },
+    "stop_pct": 0.5,
+    "exit_by_age_s": 10680.0,
+    "size_usd": 20.0,
+    "placebo": "eligible-stratum (repeat deployer, resolved)",
+    "fill": "common.FillConfig(exit_delay_bars=1): worst, latency 30 s, entry-bar stop checks, next-bar exits",
+    "rule": "good",
+    "theta": 0.0,
+    "exit": "T30"
+   },
+   "first_seen_utc": "2026-10-09 08:48:33",
+   "splits": {
+    "train": 1
+   },
+   "cfg": {
+    "size_usd": 20.0,
+    "latency_s": 30.0,
+    "entry_fill": "worst",
+    "exit_fill": "worst",
+    "cost": {
+     "ultra_bps": 10.0,
+     "mev_bps": 20.0,
+     "priority_sol": 0.0002,
+     "base_fee_lamports": 5000,
+     "fee_mult": 1.0,
+     "impact_mult": 1.0,
+     "extra_hop_bps": 100.0
+    },
+    "rent_usd": 0.0,
+    "entry_bar_exits": true,
+    "exit_delay_bars": 1
+   }
+  },
+  "Y1|3cc6b11d40da|cfg:a06543feac6c": {
+   "hypothesis": "Y1",
+   "params": {
+    "version": "y1-v1",
+    "e_age_s": 420.0,
+    "e_age_max_s": 3600.0,
+    "h_rec_s": 1800.0,
+    "rec_k": 3,
+    "record": "mid change t_ref -> t_ref + 30 min, t_ref = first grid time >= g + 420 s; usable earlier graduates of the same creator, resolved (t_end <= t), g_p < g",
+    "shared_rules": [
+     "pooled",
+     "signs_for_others",
+     "multi_signer>=2",
+     "factory_volume>=24/24h"
+    ],
+    "history_splits": {
+     "debug": [
+      "final_train"
+     ],
+     "train": [
+      "train"
+     ],
+     "val": [
+      "train",
+      "val"
+     ],
+     "test": [
+      "train",
+      "val",
+      "test"
+     ],
+     "confirm": [
+      "confirm"
+     ],
+     "final": [
+      "train",
+      "val",
+      "test",
+      "final_train",
+      "final_val",
+      "final_test"
+     ]
+    },
+    "stop_pct": 0.5,
+    "exit_by_age_s": 10680.0,
+    "size_usd": 20.0,
+    "placebo": "eligible-stratum (repeat deployer, resolved)",
+    "fill": "common.FillConfig(exit_delay_bars=1): worst, latency 30 s, entry-bar stop checks, next-bar exits",
+    "rule": "good",
+    "theta": 0.0,
+    "exit": "T60"
+   },
+   "first_seen_utc": "2026-10-09 08:48:34",
+   "splits": {
+    "train": 1
+   },
+   "cfg": {
+    "size_usd": 20.0,
+    "latency_s": 30.0,
+    "entry_fill": "worst",
+    "exit_fill": "worst",
+    "cost": {
+     "ultra_bps": 10.0,
+     "mev_bps": 20.0,
+     "priority_sol": 0.0002,
+     "base_fee_lamports": 5000,
+     "fee_mult": 1.0,
+     "impact_mult": 1.0,
+     "extra_hop_bps": 100.0
+    },
+    "rent_usd": 0.0,
+    "entry_bar_exits": true,
+    "exit_delay_bars": 1
+   }
+  },
+  "Y1|4ea67b954fcc|cfg:a06543feac6c": {
+   "hypothesis": "Y1",
+   "params": {
+    "version": "y1-v1",
+    "e_age_s": 420.0,
+    "e_age_max_s": 3600.0,
+    "h_rec_s": 1800.0,
+    "rec_k": 3,
+    "record": "mid change t_ref -> t_ref + 30 min, t_ref = first grid time >= g + 420 s; usable earlier graduates of the same creator, resolved (t_end <= t), g_p < g",
+    "shared_rules": [
+     "pooled",
+     "signs_for_others",
+     "multi_signer>=2",
+     "factory_volume>=24/24h"
+    ],
+    "history_splits": {
+     "debug": [
+      "final_train"
+     ],
+     "train": [
+      "train"
+     ],
+     "val": [
+      "train",
+      "val"
+     ],
+     "test": [
+      "train",
+      "val",
+      "test"
+     ],
+     "confirm": [
+      "confirm"
+     ],
+     "final": [
+      "train",
+      "val",
+      "test",
+      "final_train",
+      "final_val",
+      "final_test"
+     ]
+    },
+    "stop_pct": 0.5,
+    "exit_by_age_s": 10680.0,
+    "size_usd": 20.0,
+    "placebo": "eligible-stratum (repeat deployer, resolved)",
+    "fill": "common.FillConfig(exit_delay_bars=1): worst, latency 30 s, entry-bar stop checks, next-bar exits",
+    "rule": "good",
+    "theta": 0.1,
+    "exit": "T30"
+   },
+   "first_seen_utc": "2026-10-09 08:48:34",
+   "splits": {
+    "train": 1
+   },
+   "cfg": {
+    "size_usd": 20.0,
+    "latency_s": 30.0,
+    "entry_fill": "worst",
+    "exit_fill": "worst",
+    "cost": {
+     "ultra_bps": 10.0,
+     "mev_bps": 20.0,
+     "priority_sol": 0.0002,
+     "base_fee_lamports": 5000,
+     "fee_mult": 1.0,
+     "impact_mult": 1.0,
+     "extra_hop_bps": 100.0
+    },
+    "rent_usd": 0.0,
+    "entry_bar_exits": true,
+    "exit_delay_bars": 1
+   }
+  },
+  "Y1|4d874582f510|cfg:a06543feac6c": {
+   "hypothesis": "Y1",
+   "params": {
+    "version": "y1-v1",
+    "e_age_s": 420.0,
+    "e_age_max_s": 3600.0,
+    "h_rec_s": 1800.0,
+    "rec_k": 3,
+    "record": "mid change t_ref -> t_ref + 30 min, t_ref = first grid time >= g + 420 s; usable earlier graduates of the same creator, resolved (t_end <= t), g_p < g",
+    "shared_rules": [
+     "pooled",
+     "signs_for_others",
+     "multi_signer>=2",
+     "factory_volume>=24/24h"
+    ],
+    "history_splits": {
+     "debug": [
+      "final_train"
+     ],
+     "train": [
+      "train"
+     ],
+     "val": [
+      "train",
+      "val"
+     ],
+     "test": [
+      "train",
+      "val",
+      "test"
+     ],
+     "confirm": [
+      "confirm"
+     ],
+     "final": [
+      "train",
+      "val",
+      "test",
+      "final_train",
+      "final_val",
+      "final_test"
+     ]
+    },
+    "stop_pct": 0.5,
+    "exit_by_age_s": 10680.0,
+    "size_usd": 20.0,
+    "placebo": "eligible-stratum (repeat deployer, resolved)",
+    "fill": "common.FillConfig(exit_delay_bars=1): worst, latency 30 s, entry-bar stop checks, next-bar exits",
+    "rule": "good",
+    "theta": 0.1,
+    "exit": "T60"
+   },
+   "first_seen_utc": "2026-10-09 08:48:35",
+   "splits": {
+    "train": 1
+   },
+   "cfg": {
+    "size_usd": 20.0,
+    "latency_s": 30.0,
+    "entry_fill": "worst",
+    "exit_fill": "worst",
+    "cost": {
+     "ultra_bps": 10.0,
+     "mev_bps": 20.0,
+     "priority_sol": 0.0002,
+     "base_fee_lamports": 5000,
+     "fee_mult": 1.0,
+     "impact_mult": 1.0,
+     "extra_hop_bps": 100.0
+    },
+    "rent_usd": 0.0,
+    "entry_bar_exits": true,
+    "exit_delay_bars": 1
+   }
+  },
+  "Y1-host|e2caede11972|cfg:a06543feac6c": {
+   "hypothesis": "Y1-host",
+   "params": {
+    "version": "y1-v1",
+    "e_age_s": 420.0,
+    "e_age_max_s": 3600.0,
+    "h_rec_s": 1800.0,
+    "rec_k": 3,
+    "record": "mid change t_ref -> t_ref + 30 min, t_ref = first grid time >= g + 420 s; usable earlier graduates of the same creator, resolved (t_end <= t), g_p < g",
+    "shared_rules": [
+     "pooled",
+     "signs_for_others",
+     "multi_signer>=2",
+     "factory_volume>=24/24h"
+    ],
+    "history_splits": {
+     "debug": [
+      "final_train"
+     ],
+     "train": [
+      "train"
+     ],
+     "val": [
+      "train",
+      "val"
+     ],
+     "test": [
+      "train",
+      "val",
+      "test"
+     ],
+     "confirm": [
+      "confirm"
+     ],
+     "final": [
+      "train",
+      "val",
+      "test",
+      "final_train",
+      "final_val",
+      "final_test"
+     ]
+    },
+    "stop_pct": 0.5,
+    "exit_by_age_s": 10680.0,
+    "size_usd": 20.0,
+    "placebo": "eligible-stratum (repeat deployer, resolved)",
+    "fill": "common.FillConfig(exit_delay_bars=1): worst, latency 30 s, entry-bar stop checks, next-bar exits",
+    "rule": "host",
+    "exit": "T30"
+   },
+   "first_seen_utc": "2026-10-09 08:48:37",
+   "splits": {
+    "train": 1
+   },
+   "cfg": {
+    "size_usd": 20.0,
+    "latency_s": 30.0,
+    "entry_fill": "worst",
+    "exit_fill": "worst",
+    "cost": {
+     "ultra_bps": 10.0,
+     "mev_bps": 20.0,
+     "priority_sol": 0.0002,
+     "base_fee_lamports": 5000,
+     "fee_mult": 1.0,
+     "impact_mult": 1.0,
+     "extra_hop_bps": 100.0
+    },
+    "rent_usd": 0.0,
+    "entry_bar_exits": true,
+    "exit_delay_bars": 1
+   }
+  },
+  "Y1-host|07be97dbe702|cfg:a06543feac6c": {
+   "hypothesis": "Y1-host",
+   "params": {
+    "version": "y1-v1",
+    "e_age_s": 420.0,
+    "e_age_max_s": 3600.0,
+    "h_rec_s": 1800.0,
+    "rec_k": 3,
+    "record": "mid change t_ref -> t_ref + 30 min, t_ref = first grid time >= g + 420 s; usable earlier graduates of the same creator, resolved (t_end <= t), g_p < g",
+    "shared_rules": [
+     "pooled",
+     "signs_for_others",
+     "multi_signer>=2",
+     "factory_volume>=24/24h"
+    ],
+    "history_splits": {
+     "debug": [
+      "final_train"
+     ],
+     "train": [
+      "train"
+     ],
+     "val": [
+      "train",
+      "val"
+     ],
+     "test": [
+      "train",
+      "val",
+      "test"
+     ],
+     "confirm": [
+      "confirm"
+     ],
+     "final": [
+      "train",
+      "val",
+      "test",
+      "final_train",
+      "final_val",
+      "final_test"
+     ]
+    },
+    "stop_pct": 0.5,
+    "exit_by_age_s": 10680.0,
+    "size_usd": 20.0,
+    "placebo": "eligible-stratum (repeat deployer, resolved)",
+    "fill": "common.FillConfig(exit_delay_bars=1): worst, latency 30 s, entry-bar stop checks, next-bar exits",
+    "rule": "host",
+    "exit": "T60"
+   },
+   "first_seen_utc": "2026-10-09 08:48:40",
+   "splits": {
+    "train": 1
+   },
+   "cfg": {
+    "size_usd": 20.0,
+    "latency_s": 30.0,
+    "entry_fill": "worst",
+    "exit_fill": "worst",
+    "cost": {
+     "ultra_bps": 10.0,
+     "mev_bps": 20.0,
+     "priority_sol": 0.0002,
+     "base_fee_lamports": 5000,
+     "fee_mult": 1.0,
+     "impact_mult": 1.0,
+     "extra_hop_bps": 100.0
+    },
+    "rent_usd": 0.0,
+    "entry_bar_exits": true,
+    "exit_delay_bars": 1
+   }
+  },
+  "Y1-veto|649d6f4c3c3f": {
+   "hypothesis": "Y1-veto",
+   "params": {
+    "version": "y1-v1",
+    "test": "veto",
+    "flag": "record_mean < 0 at the host entry (the complement of GOOD(0))",
+    "host": {
+     "version": "y1-v1",
+     "e_age_s": 420.0,
+     "e_age_max_s": 3600.0,
+     "h_rec_s": 1800.0,
+     "rec_k": 3,
+     "record": "mid change t_ref -> t_ref + 30 min, t_ref = first grid time >= g + 420 s; usable earlier graduates of the same creator, resolved (t_end <= t), g_p < g",
+     "shared_rules": [
+      "pooled",
+      "signs_for_others",
+      "multi_signer>=2",
+      "factory_volume>=24/24h"
+     ],
+     "history_splits": {
+      "debug": [
+       "final_train"
+      ],
+      "train": [
+       "train"
+      ],
+      "val": [
+       "train",
+       "val"
+      ],
+      "test": [
+       "train",
+       "val",
+       "test"
+      ],
+      "confirm": [
+       "confirm"
+      ],
+      "final": [
+       "train",
+       "val",
+       "test",
+       "final_train",
+       "final_val",
+       "final_test"
+      ]
+     },
+     "stop_pct": 0.5,
+     "exit_by_age_s": 10680.0,
+     "size_usd": 20.0,
+     "placebo": "eligible-stratum (repeat deployer, resolved)",
+     "fill": "common.FillConfig(exit_delay_bars=1): worst, latency 30 s, entry-bar stop checks, next-bar exits",
+     "rule": "host",
+     "exit": "T30"
+    }
+   },
+   "first_seen_utc": "2026-10-09 08:48:44",
+   "splits": {
+    "train": 1
+   }
+  },
+  "Y1-veto|71c5e1d161a8": {
+   "hypothesis": "Y1-veto",
+   "params": {
+    "version": "y1-v1",
+    "test": "veto",
+    "flag": "record_mean < 0 at the host entry (the complement of GOOD(0))",
+    "host": {
+     "version": "y1-v1",
+     "e_age_s": 420.0,
+     "e_age_max_s": 3600.0,
+     "h_rec_s": 1800.0,
+     "rec_k": 3,
+     "record": "mid change t_ref -> t_ref + 30 min, t_ref = first grid time >= g + 420 s; usable earlier graduates of the same creator, resolved (t_end <= t), g_p < g",
+     "shared_rules": [
+      "pooled",
+      "signs_for_others",
+      "multi_signer>=2",
+      "factory_volume>=24/24h"
+     ],
+     "history_splits": {
+      "debug": [
+       "final_train"
+      ],
+      "train": [
+       "train"
+      ],
+      "val": [
+       "train",
+       "val"
+      ],
+      "test": [
+       "train",
+       "val",
+       "test"
+      ],
+      "confirm": [
+       "confirm"
+      ],
+      "final": [
+       "train",
+       "val",
+       "test",
+       "final_train",
+       "final_val",
+       "final_test"
+      ]
+     },
+     "stop_pct": 0.5,
+     "exit_by_age_s": 10680.0,
+     "size_usd": 20.0,
+     "placebo": "eligible-stratum (repeat deployer, resolved)",
+     "fill": "common.FillConfig(exit_delay_bars=1): worst, latency 30 s, entry-bar stop checks, next-bar exits",
+     "rule": "host",
+     "exit": "T60"
+    }
+   },
+   "first_seen_utc": "2026-10-09 08:48:44",
+   "splits": {
+    "train": 1
+   }
   }
  },
  "runs": [
@@ -5024,6 +5656,114 @@
    "over_variant_limit": false,
    "kind": "backtest",
    "session": null
+  },
+  {
+   "utc": "2026-10-09 08:48:32",
+   "hypothesis": "Y1-persist",
+   "config": "Y1-persist|2e40f89069b2",
+   "split": "train",
+   "debug": false,
+   "n": 135,
+   "mean": null,
+   "over_variant_limit": false,
+   "kind": "backtest",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 08:48:33",
+   "hypothesis": "Y1",
+   "config": "Y1|81cc80479fbd|cfg:a06543feac6c",
+   "split": "train",
+   "debug": false,
+   "n": 49,
+   "mean": -0.29830991832466897,
+   "over_variant_limit": false,
+   "kind": "backtest",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 08:48:34",
+   "hypothesis": "Y1",
+   "config": "Y1|3cc6b11d40da|cfg:a06543feac6c",
+   "split": "train",
+   "debug": false,
+   "n": 49,
+   "mean": -0.2674421747068745,
+   "over_variant_limit": false,
+   "kind": "backtest",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 08:48:34",
+   "hypothesis": "Y1",
+   "config": "Y1|4ea67b954fcc|cfg:a06543feac6c",
+   "split": "train",
+   "debug": false,
+   "n": 20,
+   "mean": -0.5628601370208987,
+   "over_variant_limit": false,
+   "kind": "backtest",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 08:48:35",
+   "hypothesis": "Y1",
+   "config": "Y1|4d874582f510|cfg:a06543feac6c",
+   "split": "train",
+   "debug": false,
+   "n": 20,
+   "mean": -0.5084742976268659,
+   "over_variant_limit": false,
+   "kind": "backtest",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 08:48:37",
+   "hypothesis": "Y1-host",
+   "config": "Y1-host|e2caede11972|cfg:a06543feac6c",
+   "split": "train",
+   "debug": false,
+   "n": 135,
+   "mean": -0.38524477933729956,
+   "over_variant_limit": false,
+   "kind": "backtest",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 08:48:40",
+   "hypothesis": "Y1-host",
+   "config": "Y1-host|07be97dbe702|cfg:a06543feac6c",
+   "split": "train",
+   "debug": false,
+   "n": 135,
+   "mean": -0.4163679278035968,
+   "over_variant_limit": false,
+   "kind": "backtest",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 08:48:44",
+   "hypothesis": "Y1-veto",
+   "config": "Y1-veto|649d6f4c3c3f",
+   "split": "train",
+   "debug": false,
+   "n": 135,
+   "mean": null,
+   "over_variant_limit": false,
+   "kind": "backtest",
+   "session": null
+  },
+  {
+   "utc": "2026-10-09 08:48:44",
+   "hypothesis": "Y1-veto",
+   "config": "Y1-veto|71c5e1d161a8",
+   "split": "train",
+   "debug": false,
+   "n": 135,
+   "mean": null,
+   "over_variant_limit": false,
+   "kind": "backtest",
+   "session": null
   }
  ],
  "val_shortlists": {
@@ -5044,7 +5784,7 @@
    "first_val_run_utc": "2026-10-09 05:30:01"
   }
  },
- "n_trials_total": 2662,
+ "n_trials_total": 2671,
  "val_looks": {
   "G1": 4,
   "O1": 1
