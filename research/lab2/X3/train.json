@@ -1,0 +1,295 @@
+{
+ "hypothesis": "X3",
+ "version": "x3-v1",
+ "stage": "train",
+ "split": "train",
+ "utc": "2026-10-09 04:44:31",
+ "provisional": false,
+ "debug_only": false,
+ "prereg_sha256": "6210e5a6a39b736e04d7a1139f83c991072f31b570dd5dad7bc56566efef917d",
+ "rerun_reason": null,
+ "coverage": {
+  "split": "train",
+  "bounds_utc": [
+   "2026-10-01 00:00:00",
+   "2026-10-05 00:00:00"
+  ],
+  "debug_only": false,
+  "graduates_in_split": 5435,
+  "tradeable": 3863,
+  "usable": 3863,
+  "excluded": {
+   "mayhem": 1422,
+   "not_sol_quoted": 150
+  },
+  "created_inexact": 943,
+  "has_create0": 943,
+  "chain_hours_scanned_frac": 1.0,
+  "days": [
+   {
+    "day": "2026-10-01",
+    "hours_in_split": 24,
+    "curve_hours": 24,
+    "b2_hours": 24,
+    "b2_hours_midrun": 0,
+    "coins_created": 1261,
+    "tradeable": 989,
+    "usable": 989,
+    "usable_frac": 1.0,
+    "partial": false
+   },
+   {
+    "day": "2026-10-02",
+    "hours_in_split": 24,
+    "curve_hours": 24,
+    "b2_hours": 24,
+    "b2_hours_midrun": 0,
+    "coins_created": 1255,
+    "tradeable": 933,
+    "usable": 933,
+    "usable_frac": 1.0,
+    "partial": false
+   },
+   {
+    "day": "2026-10-03",
+    "hours_in_split": 24,
+    "curve_hours": 24,
+    "b2_hours": 24,
+    "b2_hours_midrun": 0,
+    "coins_created": 1632,
+    "tradeable": 966,
+    "usable": 966,
+    "usable_frac": 1.0,
+    "partial": false
+   },
+   {
+    "day": "2026-10-04",
+    "hours_in_split": 24,
+    "curve_hours": 24,
+    "b2_hours": 24,
+    "b2_hours_midrun": 0,
+    "coins_created": 1287,
+    "tradeable": 975,
+    "usable": 975,
+    "usable_frac": 1.0,
+    "partial": false
+   }
+  ],
+  "days_expected": 4.0,
+  "days_full": 4,
+  "curve_span_utc": [
+   "2026-09-30 17:00:00",
+   "2026-10-09 02:00:00"
+  ],
+  "b2_span_utc": [
+   "2026-10-01 00:00:00",
+   "2026-10-05 04:00:00"
+  ],
+  "completeness_source": "raw_chunks",
+  "parquet_snapshot_utc": "2026-10-09 03:57:17",
+  "b2_hours_needed": 100,
+  "b2_hours_done": 100,
+  "b2_hours_midrun": [],
+  "sol_usd": {
+   "series_utc": [
+    "2026-09-15 00:00:00",
+    "2026-10-08 23:59:00"
+   ],
+   "constant_fallback": false,
+   "lookahead_coins": 0,
+   "stale_coins": 0
+  },
+  "power": {
+   "entry_bar_coins": {
+    "need": 40,
+    "have_usable_coins": 3863,
+    "ok": true
+   },
+   "x1_r0_trades_5_seeds": {
+    "need": 500,
+    "max_possible": 19315,
+    "ok": true
+   },
+   "g1_flagged_coins_val": {
+    "need": 200,
+    "max_possible": 3863,
+    "ok": true
+   }
+  },
+  "underpowered": false,
+  "complete": true,
+  "notes": [],
+  "from_flow": true
+ },
+ "n_coins": 3863,
+ "span_days": 4.0,
+ "gate": {
+  "n_events": 19,
+  "n_coins": 19,
+  "n_events_with_draws": 19,
+  "mean_draws_per_event": 20.0,
+  "by_bucket": {
+   "d1470": 12,
+   "d3440": 7
+  },
+  "n_events_deep_confirm": 5,
+  "n_events_shallow": 173,
+  "need": {
+   "events": 50,
+   "coins": 30,
+   "rule": "excess_H >= mean rt for some H"
+  },
+  "per_horizon": {
+   "10": {
+    "n": 19,
+    "n_coins": 19,
+    "excess": -0.033811861624964024,
+    "mean_rt": 0.03158996757019647,
+    "mean_label": -0.0774986367658241,
+    "mean_draw": -0.04368677514086006,
+    "excess_ci95_coin": [
+     -0.2178762827156454,
+     0.1501015192778994
+    ],
+    "pass": false
+   },
+   "30": {
+    "n": 19,
+    "n_coins": 19,
+    "excess": -0.07662371376921402,
+    "mean_rt": 0.03158996757019647,
+    "mean_label": -0.13837770911422254,
+    "mean_draw": -0.061753995345008535,
+    "excess_ci95_coin": [
+     -0.2974337756401102,
+     0.1344807640974552
+    ],
+    "pass": false
+   }
+  },
+  "decision": "UNDERPOWERED",
+  "passing_horizons": [],
+  "diagnostics": {
+   "bucket_d1470": {
+    "10": {
+     "n": 12,
+     "n_coins": 12,
+     "excess": -0.08984657005691248,
+     "mean_rt": 0.03263507634319809,
+     "mean_label": -0.11552207612788573,
+     "mean_draw": -0.02567550607097327,
+     "excess_ci95_coin": [
+      -0.3149020541086702,
+      0.11381884158855785
+     ]
+    },
+    "30": {
+     "n": 12,
+     "n_coins": 12,
+     "excess": -0.24738058768698742,
+     "mean_rt": 0.03263507634319809,
+     "mean_label": -0.2684432086844157,
+     "mean_draw": -0.021062620997428314,
+     "excess_ci95_coin": [
+      -0.46281649909820166,
+      -0.021316313067070658
+     ]
+    }
+   },
+   "bucket_d3440": {
+    "10": {
+     "n": 7,
+     "n_coins": 7,
+     "excess": 0.06224763854409042,
+     "mean_rt": 0.029798352530765116,
+     "mean_label": -0.012315597859432703,
+     "mean_draw": -0.07456323640352312,
+     "excess_ci95_coin": [
+      -0.22112107599771255,
+      0.38382949442018
+     ]
+    },
+    "30": {
+     "n": 7,
+     "n_coins": 7,
+     "excess": 0.21610235580411177,
+     "mean_rt": 0.029798352530765116,
+     "mean_label": 0.0845917187203943,
+     "mean_draw": -0.1315106370837175,
+     "excess_ci95_coin": [
+      -0.1574872415189525,
+      0.5178226403163099
+     ]
+    }
+   },
+   "deep_confirm": {
+    "10": {
+     "n": 5,
+     "n_coins": 5,
+     "excess": -0.023720666647546188,
+     "mean_rt": 0.03239347984393283,
+     "mean_label": -0.07120870517629603,
+     "mean_draw": -0.047488038528749846,
+     "excess_ci95_coin": [
+      -0.2358510554459779,
+      0.17226079594313784
+     ]
+    },
+    "30": {
+     "n": 5,
+     "n_coins": 5,
+     "excess": -0.1045290600917826,
+     "mean_rt": 0.03239347984393283,
+     "mean_label": -0.2310583441001534,
+     "mean_draw": -0.12652928400837077,
+     "excess_ci95_coin": [
+      -0.42924067373067964,
+      0.1947183805835015
+     ]
+    }
+   },
+   "shallow": {
+    "10": {
+     "n": 173,
+     "n_coins": 160,
+     "excess": 0.022823613128270036,
+     "mean_rt": 0.03783928484105945,
+     "mean_label": 0.004284301274092134,
+     "mean_draw": -0.018539311854177908,
+     "excess_ci95_coin": [
+      -0.03985409638811362,
+      0.09119471494836451
+     ]
+    },
+    "30": {
+     "n": 173,
+     "n_coins": 160,
+     "excess": 0.04142382049423769,
+     "mean_rt": 0.03783928484105945,
+     "mean_label": -0.02611300457626239,
+     "mean_draw": -0.06753682507050009,
+     "excess_ci95_coin": [
+      -0.044058843355347044,
+      0.12550719715689512
+     ]
+    }
+   }
+  },
+  "trial": {
+   "config": "X3-gate|1385a4516cdc|cfg:a06543feac6c",
+   "new_trial": true,
+   "n_trials_total": 2584,
+   "hypothesis_configs": 1,
+   "over_variant_limit": false,
+   "family_val_looks": 0
+  }
+ },
+ "decision": {
+  "verdict": "UNDERPOWERED_GATE",
+  "shortlist_written": false,
+  "note": "PREREG 8: the reversion gate precedes any strategy P&L; the grid was not run"
+ },
+ "runtime_s": 17.7,
+ "n_trials_total": 2584,
+ "overall": "UNDERPOWERED (too few deep-pool climaxes for the reversion gate on TRAIN)"
+}

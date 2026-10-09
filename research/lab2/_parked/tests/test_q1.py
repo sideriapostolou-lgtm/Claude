@@ -314,7 +314,7 @@ def _poison_future(frames, T):
 @pytest.mark.parametrize("seed", range(3))
 def test_registry_and_vetoes_unchanged_by_future_garbage(seed):
     rng = np.random.default_rng(seed)
-    frames = market_frames(dump_market(T0, 100), seed=seed)
+    frames = market_frames(dump_market(T0, 150), seed=seed)
     clean = ds_of(frames)
     reg_c = Q.build_registry([clean])
     T = T0 + int(rng.integers(9.5 * 3600, 11.5 * 3600))

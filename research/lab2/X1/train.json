@@ -1,0 +1,200 @@
+{
+ "hypothesis": "X1",
+ "version": "x1-v1",
+ "stage": "train",
+ "split": "train",
+ "utc": "2026-10-09 04:44:16",
+ "provisional": false,
+ "debug_only": false,
+ "prereg_sha256": "e86be45299958f53f0fd160fd6a0e0327d64c8f11d0407a071f0823c3d32234d",
+ "rerun_reason": null,
+ "coverage": {
+  "split": "train",
+  "bounds_utc": [
+   "2026-10-01 00:00:00",
+   "2026-10-05 00:00:00"
+  ],
+  "debug_only": false,
+  "graduates_in_split": 5435,
+  "tradeable": 3863,
+  "usable": 3863,
+  "excluded": {
+   "mayhem": 1422,
+   "not_sol_quoted": 150
+  },
+  "created_inexact": 943,
+  "has_create0": 943,
+  "chain_hours_scanned_frac": 1.0,
+  "days": [
+   {
+    "day": "2026-10-01",
+    "hours_in_split": 24,
+    "curve_hours": 24,
+    "b2_hours": 24,
+    "b2_hours_midrun": 0,
+    "coins_created": 1261,
+    "tradeable": 989,
+    "usable": 989,
+    "usable_frac": 1.0,
+    "partial": false
+   },
+   {
+    "day": "2026-10-02",
+    "hours_in_split": 24,
+    "curve_hours": 24,
+    "b2_hours": 24,
+    "b2_hours_midrun": 0,
+    "coins_created": 1255,
+    "tradeable": 933,
+    "usable": 933,
+    "usable_frac": 1.0,
+    "partial": false
+   },
+   {
+    "day": "2026-10-03",
+    "hours_in_split": 24,
+    "curve_hours": 24,
+    "b2_hours": 24,
+    "b2_hours_midrun": 0,
+    "coins_created": 1632,
+    "tradeable": 966,
+    "usable": 966,
+    "usable_frac": 1.0,
+    "partial": false
+   },
+   {
+    "day": "2026-10-04",
+    "hours_in_split": 24,
+    "curve_hours": 24,
+    "b2_hours": 24,
+    "b2_hours_midrun": 0,
+    "coins_created": 1287,
+    "tradeable": 975,
+    "usable": 975,
+    "usable_frac": 1.0,
+    "partial": false
+   }
+  ],
+  "days_expected": 4.0,
+  "days_full": 4,
+  "curve_span_utc": [
+   "2026-09-30 17:00:00",
+   "2026-10-09 02:00:00"
+  ],
+  "b2_span_utc": [
+   "2026-10-01 00:00:00",
+   "2026-10-05 04:00:00"
+  ],
+  "completeness_source": "raw_chunks",
+  "parquet_snapshot_utc": "2026-10-09 03:57:17",
+  "b2_hours_needed": 100,
+  "b2_hours_done": 100,
+  "b2_hours_midrun": [],
+  "sol_usd": {
+   "series_utc": [
+    "2026-09-15 00:00:00",
+    "2026-10-08 23:59:00"
+   ],
+   "constant_fallback": false,
+   "lookahead_coins": 0,
+   "stale_coins": 0
+  },
+  "power": {
+   "entry_bar_coins": {
+    "need": 40,
+    "have_usable_coins": 3863,
+    "ok": true
+   },
+   "x1_r0_trades_5_seeds": {
+    "need": 500,
+    "max_possible": 19315,
+    "ok": true
+   },
+   "g1_flagged_coins_val": {
+    "need": 200,
+    "max_possible": 3863,
+    "ok": true
+   }
+  },
+  "underpowered": false,
+  "complete": true,
+  "notes": [],
+  "from_flow": true
+ },
+ "n_coins": 3863,
+ "span_days": 4.0,
+ "history_splits": [
+  "train"
+ ],
+ "registry": {
+  "history_coins": 3863,
+  "eligible_coins": 1492,
+  "labelled_coins": 1492,
+  "by_split": {
+   "train": 3863
+  },
+  "wallets": 4658,
+  "entries": 6275,
+  "wallets_ge3_entries": 322,
+  "wallets_ge6_entries": 65,
+  "max_entries_one_wallet": 42,
+  "history_start_utc": "2026-10-01 00:01:23"
+ },
+ "gate": {
+  "n_eligible": 1492,
+  "n_obs": 405,
+  "holder_split": {
+   "known": 405,
+   "unknown": 1087
+  },
+  "n_warmup_obs": 57,
+  "need": {
+   "obs": 200,
+   "rho": 0.1,
+   "p_one_sided": 0.01,
+   "block_ci90_low": "> 0"
+  },
+  "groups": {
+   "unknown": 1087,
+   "known_not_reputable": 396,
+   "reputable": 9
+  },
+  "n_score_wallets": 134,
+  "rho": -0.012570881690463154,
+  "p_one_sided": 0.5997390001137016,
+  "ci90_block": [
+   -0.13732378084212196,
+   0.09887548827486341
+  ],
+  "decision": "KILL",
+  "diagnostics": {
+   "label_mean_by_group": {
+    "known_not_reputable": -0.7575554171007066,
+    "reputable": -0.5965144107336376,
+    "unknown": -1.0806574708057686
+   },
+   "label_mean_by_rep_tercile": {
+    "high": -0.7233402501782473,
+    "low": -0.8532853997400438,
+    "mid": -0.685304534292691
+   },
+   "rho_without_warmup": -0.021138039844123237
+  },
+  "trial": {
+   "config": "X1-persist|65da3e6d2712",
+   "new_trial": true,
+   "n_trials_total": 2583,
+   "hypothesis_configs": 1,
+   "over_variant_limit": false,
+   "family_val_looks": 0
+  }
+ },
+ "decision": {
+  "verdict": "KILLED_GATE",
+  "shortlist_written": false,
+  "note": "PREREG 8: the persistence gate precedes any P&L; the grid was not run"
+ },
+ "runtime_s": 16.1,
+ "n_trials_total": 2583,
+ "overall": "KILLED (persistence gate: wallet skill does not persist)"
+}

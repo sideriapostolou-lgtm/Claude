@@ -572,8 +572,12 @@ def test_full_pipeline_and_every_refusal(st, monkeypatch):
         _check("val", st)
     with pytest.raises(Q.Q7Refused, match="before TEST"):
         _check("confirm", st, env=ENV_ALL)
-    # ---- TEST: locked without the judge's flag, then once
+    # ---- TEST: refused without the VAL trades or the judge's flag, then once
     ds_test = market("test", C.utc_ts("2026-10-06 13:00"), 60, 3)
+    (st.out / "val_trades.csv").rename(st.out / "val_trades_moved.csv")
+    with pytest.raises(Q.Q7Refused, match="val_trades.csv missing"):
+        _check("test", st, env=ENV_ALL)
+    (st.out / "val_trades_moved.csv").rename(st.out / "val_trades.csv")
     with pytest.raises(Q.Q7Refused, match="LAB2_ALLOW_TEST"):
         _run("test", st, ds_test)
     te = _run("test", st, ds_test, env=ENV_ALL)

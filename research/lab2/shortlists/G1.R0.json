@@ -1,0 +1,20 @@
+{
+ "configs": [
+  {
+   "age_hi_min": 115.0,
+   "age_lo_min": 30.0,
+   "alive_mcap_usd": 6000.0,
+   "alive_vol_usd_15m": 1500.0,
+   "host": "R0_random_alive",
+   "max_hold_s": 3600.0,
+   "seed": 0,
+   "stop_pct": 0.5
+  }
+ ],
+ "hashes": [
+  "27a79bc60126"
+ ],
+ "hypothesis": "G1.R0",
+ "note": "fixed host",
+ "written_utc": "2026-10-09 04:43:26"
+}
