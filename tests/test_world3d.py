@@ -1097,13 +1097,48 @@ def test_the_flights_keep_to_the_walkways_and_clear_the_walls(settings: Settings
     assert "const f = clearTo(_eye, _live.pos)" in module and "if (clearTo(_eye, _pt) < 0.985) return false;" in module
 
 
+@pytest.mark.skipif(shutil.which("node") is None, reason="Node is not installed")
+def test_a_walker_beside_something_solid_is_filmed_from_the_clear_side(settings: Settings, tmp_path: Path) -> None:
+    """The final check's frames: a follow shot of Voss leaving the table pushed the lens into the table rim, and Jet's
+    walk along the dock put the lens inside the glass parcel tube. The tube is a chain of camera blockers now, and a
+    walker whose drone side is blocked is filmed from the clearest of the follow and dolly sides instead (a cut, at
+    most once in 1.5 s, and only when another side is clearly better)."""
+    module = _module(render_world_html(settings))
+    assert "tubeCurve.getPointAt(i / n, a); tubeCurve.getPointAt((i + 1) / n, b);" in module
+    assert "blockers.push({ inv: m.clone().invert(), half: V3(0.27, 0.27, len / 2 + 0.12) });" in module
+    assert "eyeOf(RUN.a, _eye); if (RUN.a.walking) sideStep();" in _function_source(module, "liveDirector")
+    # a flight's pan never stares down at the paving: past a gentle tilt the look gives way to the way ahead
+    assert "? 1 - steep : 0) - FLY.see)" in _function_source(module, "flyPose")
+    tries = re.search(r"  const WALK_TRY = [^\n]*;", module)
+    assert tries is not None
+    step = _function_source(module, "sideStep")
+    out = _node(f"""
+let simT = 10;
+const RUN = {{ g: "follow", side: 1, stepAt: -1e9, mm: 28, clear: 0.4, a: {{}} }}, LENS_MM = {{ follow: 28, dolly: 30 }};
+const _eye = {{}}, _live = {{ pos: {{}}, look: {{}} }}, _dst = {{ pos: {{}}, look: {{}} }};
+let clear = {{ "follow1": 0.3, "follow-1": 1, "dolly1": 0.6, "dolly-1": 0.6 }};
+const walkPose = function (a, out) {{ out.pos.k = RUN.g + RUN.side; }};
+const clearTo = function (e, p) {{ return clear[p.k]; }};
+{tries.group(0)}
+{step}
+walkPose(RUN.a, _live); sideStep(); const first = [RUN.g, RUN.side, RUN.stepAt, RUN.clear, _live.pos.k];
+clear = {{ "follow1": 1, "follow-1": 0.2, "dolly1": 0.6, "dolly-1": 0.6 }}; simT = 10.5; sideStep(); const soon = [RUN.g, RUN.side];
+simT = 12; clear = {{ "follow1": 0.3, "follow-1": 0.35, "dolly1": 0.4, "dolly-1": 0.3 }}; sideStep(); const stuck = [RUN.g, RUN.side];
+console.log(JSON.stringify({{ first: first, soon: soon, stuck: stuck }}));
+""", tmp_path)
+    assert out["first"] == ["follow", -1, 10, 1, "follow-1"]  # the clear side, re-posed at once
+    assert out["soon"] == ["follow", -1]  # never twice in 1.5 s (no flicker)
+    assert out["stuck"] == ["follow", -1]  # nothing clearly better: it stays (and comes in closer as before)
+
+
 def test_the_director_allocates_nothing_per_frame(settings: Settings) -> None:
     """The director and the camera's moves run every frame: no new objects, closures or copies there (each shot's
     setup and each flight's plan allocate nothing either beyond reusing their records)."""
     module = _module(render_world_html(settings))
     for name in ("liveDirector", "shotPose", "actorPose", "posePos", "poseLook", "stationPose", "walkPose", "placePose",
                  "flyPose", "flyPoint", "cruise", "eyeOf", "fovFor", "setFov", "renderLive", "readLive", "startShot",
-                 "setupActor", "shape", "poseClear", "planFlight", "routeNodes", "nearestNode", "flyClear", "clearTo", "liveSubject"):
+                 "setupActor", "shape", "poseClear", "planFlight", "routeNodes", "nearestNode", "flyClear", "clearTo", "liveSubject",
+                 "sideStep"):
         body = re.sub(r"//[^\n]*", "", _function_source(module, name))
         for banned in ("new ", ".clone(", "function (", ".map(", ".filter(", ".concat(", ".slice(", "Array.from", "=> "):
             assert banned not in body, (name, banned)

@@ -3507,6 +3507,16 @@ _M_LIFE = r"""
     blocker(F, -1.08, 1.7, 0, 0, 0.2, 1.7, 0.38); blocker(F, 1.08, 1.7, 0, 0, 0.2, 1.7, 0.38); blocker(F, 0, 3.05, 0, 0, 1.28, 0.35, 0.38);
   });
   if (HAS("lantern")) LANTERN_SPOTS.forEach(function (q) { blocker(WF, q.x, 1.3, q.z, 0, 0.2, 1.3, 0.2); });
+  // the glass parcel tube runs along the rails at the drone's own height (the dock walkway, the bridges): a chain of
+  // thin boxes along it, so no shot or flight ever puts the lens inside the glass
+  (function () {
+    const L = tubeCurve.getLength(), n = Math.ceil(L / 1.4), a = V3(0, 0, 0), b = V3(0, 0, 0), d = V3(0, 0, 0), q = new THREE.Quaternion(), m = new THREE.Matrix4();
+    for (let i = 0; i < n; i++) {
+      tubeCurve.getPointAt(i / n, a); tubeCurve.getPointAt((i + 1) / n, b); d.copy(b).sub(a); const len = d.length(); if (len < 1e-3) continue;
+      q.setFromUnitVectors(V3(0, 0, 1), d.normalize()); m.compose(a.clone().add(b).multiplyScalar(0.5), q, V3(1, 1, 1));
+      blockers.push({ inv: m.clone().invert(), half: V3(0.27, 0.27, len / 2 + 0.12) });
+    }
+  })();
   const FLY_BLOCK = [];  // (the same oriented boxes as blockers)
   (function () { const m = new THREE.Matrix4().makeTranslation(0, 1.7, 0); FLY_BLOCK.push({ inv: m.invert(), half: V3(1.2, 1.25, 1.2) }); })();
   const _fo = new THREE.Vector3(), _fd = new THREE.Vector3(), _fr = new THREE.Ray(), _fb = new THREE.Box3(), _fh2 = new THREE.Vector3();
@@ -3554,7 +3564,7 @@ _M_LIFE = r"""
   const FALLBACK = { ots: "closeup", crane: "closeup", low: "closeup", orbit: "closeup", closeup: "station", station: "closeup" };
   // the shot in progress (one record, reused): its subject, type, side, the move's parameters, when its own move
   // starts (after the flight) and how long it lasts
-  const RUN = { seq: -1, a: null, place: null, g: "", side: 1, az: 0, sweep: 0, d0: 2, d1: 2, y0: 1.6, y1: 1.6, ly: 0, lf: 0,
+  const RUN = { seq: -1, a: null, place: null, g: "", side: 1, stepAt: -1e9, az: 0, sweep: 0, d0: 2, d1: 2, y0: 1.6, y1: 1.6, ly: 0, lf: 0,
                 mag: 0, t0: 0, dur: 6, mm: 28, clear: 1, lastT: 0, rig: null, wide: false, cutAt: -1e9 };
   const _eye = V3(0, 0, 0), _fw = V3(0, 0, 0), _sd = V3(0, 0, 0), _pt = V3(0, 0, 0), _lq = V3(0, 0, 0);
   const _live = { pos: V3(0, 0, 0), look: V3(0, 0, 0) }, _dst = { pos: V3(0, 0, 0), look: V3(0, 0, 0) };
@@ -3638,6 +3648,20 @@ _M_LIFE = r"""
       out.pos.copy(base).addScaledVector(_sd, RUN.side * (1.9 + 0.4 * h)).addScaledVector(_fw, 0.6); out.pos.y = base.y + Math.max(1.35, eyeH + 0.35);  // (over the rails)
       out.look.addScaledVector(_fw, camera.aspect < 1 ? 0.15 : 0.45);  // (a narrow phone screen: the walker stays in frame)
     }
+  }
+  // a walker whose way puts something solid between them and the drone (the table, a post, the tube): the drone takes
+  // their other side, or travels alongside, instead of pushing the lens into it (a cut, at most once in 1.5 s)
+  const WALK_TRY = ["follow", 1, "follow", -1, "dolly", 1, "dolly", -1];
+  function sideStep() {
+    if ((RUN.g !== "follow" && RUN.g !== "dolly") || simT - RUN.stepAt < 1.5) return;
+    const f = clearTo(_eye, _live.pos); if (f >= 0.5) return;
+    const g0 = RUN.g, s0 = RUN.side; let best = f + 0.2, bg = g0, bs = s0;
+    for (let i = 0; i < WALK_TRY.length; i += 2) {
+      RUN.g = WALK_TRY[i]; RUN.side = WALK_TRY[i + 1]; walkPose(RUN.a, _dst);
+      const q = clearTo(_eye, _dst.pos); if (q > best) { best = q; bg = RUN.g; bs = RUN.side; }
+    }
+    RUN.g = bg; RUN.side = bs; RUN.stepAt = simT;
+    if (bg !== g0 || bs !== s0) { RUN.mm = LENS_MM[bg]; RUN.clear = 1; walkPose(RUN.a, _live); }
   }
   function actorPose(a, t, out) {
     const e = progressAt(t);
@@ -3784,7 +3808,10 @@ _M_LIFE = r"""
     // the pan from the last subject to the next stays at their height; while a wall hides it, the drone looks
     // where it flies instead (out holds the next shot: its look and its place take over at the end)
     _lq.copy(FLY.fromLook).lerp(out.look, ease(u));
-    FLY.see += ((blocked(_fp, _lq) > 0.95 ? 1 : 0) - FLY.see) * (1 - Math.exp(-dt * 5));
+    // (the pan's midpoint can pass right under the drone: past a gentle tilt the look gives way to the way ahead,
+    // never a stare down at the paving)
+    const hd = Math.hypot(_lq.x - _fp.x, _lq.z - _fp.z), steep = clamp(((_fp.y - _lq.y) / Math.max(hd, 0.01) - 0.35) / 0.5, 0, 1);
+    FLY.see += ((blocked(_fp, _lq) > 0.95 ? 1 - steep : 0) - FLY.see) * (1 - Math.exp(-dt * 5));
     _ahead.lerp(_lq, FLY.see);
     out.look.lerp(_ahead, 1 - smoothstep(u, 0.7, 1));
     out.pos.lerp(_fp, 1 - smoothstep(u, 0.75, 1));  // (so a moving subject is met where it is)
@@ -3853,7 +3880,8 @@ _M_LIFE = r"""
     else if (RUN.a && RUN.a.walking && RUN.g !== "follow" && RUN.g !== "dolly" && !FLY.on) startShot(true);  // (they set off: follow)
     shotPose(simT, _live);
     if (RUN.a && RUN.g !== "station" && !FLY.on) {  // never through a wall or the furniture: if the subject moved behind one, come in closer
-      eyeOf(RUN.a, _eye); const f = clearTo(_eye, _live.pos), want = f < 0.999 ? clamp(f - 0.1, 0.35, 1) : 1;
+      eyeOf(RUN.a, _eye); if (RUN.a.walking) sideStep();
+      const f = clearTo(_eye, _live.pos), want = f < 0.999 ? clamp(f - 0.1, 0.35, 1) : 1;
       RUN.clear += (want - RUN.clear) * (1 - Math.exp(-dt * (want < RUN.clear ? 9 : 2)));
       if (RUN.clear < 0.999) _live.pos.sub(_eye).multiplyScalar(RUN.clear).add(_eye);
       const floor = RUN.a.group.position.y + 0.45; if (_live.pos.y < floor) _live.pos.y = floor;
