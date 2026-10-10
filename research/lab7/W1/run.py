@@ -159,6 +159,17 @@ def fair_matrix(ts: np.ndarray, snap_ts: np.ndarray, fair_snap: np.ndarray, comm
     return out
 
 
+def market_fair_snap(line: Any, sides: pd.DataFrame, a_is_home: bool) -> np.ndarray:
+    """(2, n_snapshots): each outcome's fair per Pinnacle snapshot, by lab 6's ``side_fair``. A 2-way market's
+    outcome 0 is Polymarket's team A (``team_is_a``), mapped to Pinnacle's home or away by ``a_is_home``; a soccer
+    market's outcome 0 is Yes (its result's probability) and outcome 1 is No (one minus it)."""
+    fs = []
+    for r in sides.sort_values("o").itertuples(index=False):
+        team_is_a = (int(r.o) == 0) if r.result == "team" else None
+        fs.append(L6.side_fair(line, METHOD, r.result, bool(r.yes), a_is_home, team_is_a))
+    return np.vstack(fs).astype(float)
+
+
 @dataclass
 class Spec:
     """Everything about one Polymarket market except its tape (workers load the tape)."""
@@ -209,11 +220,7 @@ def build_specs(split: str, lab6_data: Path = LAB6_DATA, lab4: Path = C.LAB4_DAT
             counts["markets"] += 1
             if not windows:
                 counts["markets_without_windows"] += 1
-            fs = []
-            for r in s.itertuples(index=False):
-                team_is_a = (int(r.o) == 0) if r.result == "team" else None  # 2-way: team A is outcome 0
-                fs.append(L6.side_fair(line, METHOD, r.result, bool(r.yes), bool(game.a_is_home), team_is_a))
-            fair_snap = np.vstack(fs).astype(float)
+            fair_snap = market_fair_snap(line, s, bool(game.a_is_home))
             specs.append(Spec(
                 id=mid, game_id=str(game.game_id), league=str(game.league), kind=str(game.kind), split=split,
                 question=str(game.question), rate_com=float(s["rate"].iloc[0]),
