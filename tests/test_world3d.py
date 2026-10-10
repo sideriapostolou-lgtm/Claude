@@ -686,19 +686,25 @@ const ROOMS = {{ observatory: {{ title: "The observatory", members: ["coach"] }}
 const status = {{ judge: "working", broker: "idle", coach: "waiting" }};
 const worstStatus = function (ids) {{ return ids.length ? status[ids[0]] : "idle"; }};
 let pinned = null; const renderCard = function () {{}};
+// (the live director's pin and its way back, as the page wires them: a chip pins, the live chip goes back to live)
+const togglePin = function (k) {{ pinned = pinned === k ? null : k; renderChips(); }}, goLive = function () {{ pinned = null; renderChips(); }};
 const chipEls = [];
 {build}
 {render}
-renderChips(); const first = chips.children.slice();
+renderChips(); const first = chips.children.slice(), onOf = function () {{ return first.map(function (b) {{ return b.className; }}); }};
+const live0 = onOf();
 status.broker = "working"; renderChips(); renderChips();
-first[1].onclick();
+first[2].onclick(); const pinnedOn = onOf();
+first[0].onclick(); const back = onOf();
 console.log(JSON.stringify({{ n: chips.children.length, same: chips.children.every(function (b, i) {{ return b === first[i]; }}),
   dots: first.map(function (b) {{ return b.children[0].className === undefined ? null : b.children[0].className; }}),
-  on: first.map(function (b) {{ return b.className; }}) }}));
+  live0: live0, on: pinnedOn, back: back }}));
 """, tmp_path)
-    assert out["n"] == 4 and out["same"] is True
-    assert out["dots"] == ["working", "working", "waiting", None]  # Jet's dot followed the poll; the map has none
-    assert out["on"] == ["", "on", "", ""]
+    assert out["n"] == 5 and out["same"] is True
+    assert out["dots"] == [None, "working", "working", "waiting", None]  # Jet's dot followed the poll; live and map have none
+    assert out["live0"] == ["on live", "", "", "", ""]  # the broadcast is on until something is pinned
+    assert out["on"] == ["", "", "on", "", ""]
+    assert out["back"] == ["on live", "", "", "", ""]  # the live chip unpins
 
 
 @pytest.mark.skipif(shutil.which("node") is None, reason="Node is not installed")
@@ -787,3 +793,323 @@ console.log(JSON.stringify({{ open: open, swung: swung, closed: closed }}));
     dist = sum((p - q) ** 2 for p, q in zip(closed["look"], head, strict=True)) ** 0.5
     ahead = sum((p - q) ** 2 for p, q in zip(out["open"]["look"], head, strict=True)) ** 0.5
     assert dist < 0.5 * ahead  # ...and looks at the walker, not the floor two metres ahead
+
+
+# --------------------------------------------------------------------------- the live director
+
+#: Runs the page's pure planner (the block between its markers, cut from the rendered module) through the scenarios
+#: the tests check, with a seeded random: a quiet ten minutes (coverage in every three-minute window, holds, angles,
+#: the wide ratio, the hard cuts), a fresh event and its phases, Jet's carry and drop, a lesson, the pins (a
+#: character, the observatory, the map) and their clocks. Prints one JSON object.
+_PLANNER_HARNESS = r"""
+const fs = require("node:fs");
+const src = fs.readFileSync(process.argv[2], "utf8");
+const { makePlanner, LIVE_PLACES, LIVE_GRAMMAR, LIVE_CFG } = new Function(src + "\nreturn { makePlanner, LIVE_PLACES, LIVE_GRAMMAR, LIVE_CFG };")();
+function rng(seed) { let s = seed >>> 0 || 1; return function () { s ^= s << 13; s >>>= 0; s ^= s >>> 17; s ^= s << 5; s >>>= 0; return s / 4294967296; }; }
+const ACTORS = %(actors)s, ROOMS = %(rooms)s, STEP = LIVE_CFG.step;
+// where things stand (metres: the rooms' places in the layout, roughly; the planner only compares distances)
+const AT = { voss: [-1, 0], pip: [-12.5, -3], nyx: [12.5, -3], rook: [10.8, 10.6], mote: [-10.5, 10.5], jet: [23, -1.5],
+  arrival: [0, 6], overhead: [0, 1], courtyard: [0, 0], bridge: [0, 12], telescope: [0.6, -16.7], walkway: [20, 3], airship: [26, -1.6],
+  kiosk: [23, 5.4], vaultsign: [10.5, 11], shelves: [-10, 11], bench: [-12.5, -3], screens: [13, -3] };
+const PLACES = LIVE_PLACES.map((p) => Object.assign({}, p, { x: AT[p.id][0], z: AT[p.id][1], angles: 3 }));
+function planner(seed) {
+  return makePlanner(ACTORS.map(([id, room]) => ({ id, room, x: AT[id][0], z: AT[id][1] })), PLACES, { random: rng(seed), alias: { observatory: "telescope" } });
+}
+function live(working) {
+  const st = { actors: {}, focus: null };
+  ACTORS.forEach(([id, room]) => { st.actors[id] = { room, x: AT[id][0], z: AT[id][1], walking: false, carrying: false, speaking: false,
+    working: working.indexOf(id) >= 0, thinking: false, visiting: false }; });
+  return st;
+}
+function roomOf(subject) { const a = ACTORS.find((x) => x[0] === subject), p = LIVE_PLACES.find((x) => x.id === subject); return a ? a[1] : p ? p.room : null; }
+const isWide = (id) => !!LIVE_PLACES.find((p) => p.id === id && p.wide);
+const out = { places: LIVE_PLACES, grammar: LIVE_GRAMMAR, cfg: LIVE_CFG, quiet: [] };
+for (const seed of [1, 7, 42]) {  // a quiet ten minutes, five members working, three seeds
+  const P = planner(seed), st = live(["pip", "nyx", "voss", "rook", "mote"]), seen = [];
+  for (let t = 0; t <= 600; t += STEP) {
+    const seq = P.shot.seq; P.plan(t, st);
+    if (P.shot.seq !== seq) seen.push({ t, subject: P.shot.subject, grammar: P.shot.grammar, angle: P.shot.angle, hard: P.shot.hard, wide: isWide(P.shot.subject) });
+  }
+  const gaps = [];  // every three-minute window: who and which room had no airtime
+  for (let t0 = 0; t0 <= 420; t0 += 5) {
+    const w = seen.filter((s) => s.t >= t0 && s.t < t0 + 180);
+    ROOMS.forEach((r) => { if (!w.some((s) => roomOf(s.subject) === r)) gaps.push(r + "@" + t0); });
+    ACTORS.forEach(([id]) => { if (!w.some((s) => s.subject === id)) gaps.push(id + "@" + t0); });
+  }
+  const holds = seen.slice(1).map((s, i) => s.t - seen[i].t);
+  let maxWideIn6 = 0; seen.forEach((s, i) => { maxWideIn6 = Math.max(maxWideIn6, seen.slice(Math.max(0, i - 5), i + 1).filter((x) => x.wide).length); });
+  const angles = {};
+  seen.forEach((s) => { (angles[s.subject] = angles[s.subject] || new Set()).add(s.angle); });
+  const visits = {}; seen.forEach((s) => { visits[s.subject] = (visits[s.subject] || 0) + 1; });
+  out.quiet.push({ seed, shots: seen.length, first: seen[0], gaps, minHold: Math.min(...holds), maxHold: Math.max(...holds),
+    wides: seen.filter((s) => s.wide).length, maxWideIn6, repeats: seen.filter((s, i) => i && s.subject === seen[i - 1].subject).length,
+    angles: Object.fromEntries(Object.entries(angles).map(([k, v]) => [k, v.size])), visits,
+    anglesSeen: Object.fromEntries(ACTORS.map(([id]) => [id, P.anglesSeen(id)])), grammars: [...new Set(seen.map((s) => s.grammar))].sort(),
+    hardCuts: seen.filter((s) => s.hard).length, actorShots: seen.filter((s) => ACTORS.some(([id]) => id === s.subject)).length });
+}
+{  // a fresh event cuts into the rotation at the next plan step, even a shot that has just begun
+  const P = planner(3), st = live(["pip", "nyx"]); let t = 0;
+  const step = () => { t += STEP; P.plan(t, st); };
+  while (t < 30) step();
+  const seq0 = P.shot.seq; while (P.shot.seq === seq0) step();
+  const begun = t; step(); step();  // half a second into a rotation shot
+  const before = { subject: P.shot.subject, event: P.shot.event };
+  st.focus = { actor: "pip", kind: "speak", start: t, until: t + 10 }; st.actors.pip.speaking = true; const asked = t;
+  step();
+  const first = { subject: P.shot.subject, event: P.shot.event, phase: P.shot.phase, grammar: P.shot.grammar, hard: P.shot.hard,
+    after: +(t - asked).toFixed(2), rotationHeld: +(asked - begun).toFixed(2) };
+  // a second fresh event inside the first one's minimum hold waits for it, then cuts
+  const evStart = t; step(); step();
+  st.focus = { actor: "rook", kind: "speak", start: t, until: t + 9 }; st.actors.rook.speaking = true;
+  let secondAt = null; while (t < evStart + 6 && secondAt === null) { step(); if (P.shot.subject === "rook") secondAt = +(t - evStart).toFixed(2); }
+  const second = { subject: P.shot.subject, phase: P.shot.phase, hard: P.shot.hard, heldFirst: secondAt };
+  // its phases: the walk (follow or dolly, a flight: same event), then the visit
+  st.actors.rook.speaking = false; st.actors.rook.walking = true; st.focus.until = t + 14; for (let i = 0; i < 16; i++) step();
+  const walking = { subject: P.shot.subject, phase: P.shot.phase, grammar: P.shot.grammar, hard: P.shot.hard };
+  st.actors.rook.walking = false; st.actors.rook.visiting = true; for (let i = 0; i < 16; i++) step();
+  const visiting = { subject: P.shot.subject, phase: P.shot.phase, grammar: P.shot.grammar };
+  // over: back to the rotation
+  st.focus = null; st.actors.rook.visiting = false; const t0 = t; let resumedAt = null;
+  while (t < t0 + 20 && resumedAt === null) { step(); if (!P.shot.event) resumedAt = +(t - t0).toFixed(2); }
+  out.event = { before, first, second, walking, visiting, resumedAt };
+}
+{  // Jet's carry: the trade line at the dock, the carry walk, the drop at the vault; a lesson at the table
+  const Q = planner(5), s2 = live([]); let u = 0; const step2 = () => { u += STEP; Q.plan(u, s2); };
+  while (u < 20) step2();
+  s2.focus = { actor: "jet", kind: "carry", start: u, until: u + 8 }; s2.actors.jet.speaking = true;
+  for (let i = 0; i < 14; i++) step2(); const speak = { subject: Q.shot.subject, phase: Q.shot.phase, grammar: Q.shot.grammar };
+  s2.actors.jet.walking = true; s2.actors.jet.carrying = true; s2.focus.until = u + 12; for (let i = 0; i < 14; i++) step2();
+  const carry = { phase: Q.shot.phase, grammar: Q.shot.grammar };
+  s2.actors.jet.walking = false; s2.actors.jet.carrying = false; s2.actors.jet.visiting = true; s2.actors.jet.room = "vault";
+  for (let i = 0; i < 14; i++) step2(); const drop = { phase: Q.shot.phase, grammar: Q.shot.grammar, room: Q.shot.room };
+  s2.focus = { actor: "voss", kind: "lesson", start: u, until: u + 13 }; s2.actors.jet.visiting = false;
+  for (let i = 0; i < 14; i++) step2(); const lesson = { subject: Q.shot.subject, phase: Q.shot.phase, grammar: Q.shot.grammar };
+  out.carry = { speak, carry, drop, lesson };
+}
+{  // the pins: the clock, a pinned character keeps the camera (still moving round it), the map waits, then live again
+  const P = planner(1), st = live(["pip"]); let t = 90;
+  for (let k = 90; k < 100; k += STEP) P.plan(k, st);
+  P.pin("voss", 100); t = 100;
+  const subjects = new Set(), shots = new Set(); let lastSeq = P.shot.seq;
+  for (; t < 125; t += STEP) { P.plan(t, st); subjects.add(P.shot.subject); if (P.shot.seq !== lastSeq) { lastSeq = P.shot.seq; shots.add(P.shot.grammar + ":" + P.shot.angle); } }
+  const clock = { at100: null, left100: null };
+  out.pin = { subjects: [...subjects], shots: shots.size };
+  P.plan(125, st); out.pin.after = { pinned: P.pinned(125), subject: P.shot.subject, event: P.shot.event };
+  const C = planner(1); C.pin("voss", 100);
+  Object.assign(out.pin, { at100: C.pinned(100), left100: C.pinLeft(100), at112: C.pinned(112), left112: C.pinLeft(112), at124: C.pinned(124.9),
+    at125: C.pinned(125), left125: C.pinLeft(125) });
+  C.pin("map", 200); C.unpin(); out.pin.afterUnpin = C.pinned(200.1);
+  const M = planner(2), sm = live([]);
+  for (let k = 0; k < 20; k += STEP) M.plan(k, sm);
+  M.pin("map", 20); const frozen = M.shot.seq; for (let k = 20; k < 45; k += STEP) M.plan(k, sm);
+  const mapHeld = M.shot.seq === frozen; M.plan(45.25, sm);
+  out.map = { held: mapHeld, back: M.shot.seq !== frozen && !M.pinned(45.25) };
+  const O = planner(4), so = live([]); O.plan(0, so); O.pin("observatory", 1); O.plan(1, so);
+  out.observatory = { subject: O.shot.subject };
+  O.unpin(); O.plan(1.25, so); out.observatory.unpinned = O.shot.subject;
+  const H = planner(6), sh = live([]); H.plan(0, sh); const hold = H.shot.hold; H.extend(2.5);
+  out.extend = { added: +(H.shot.hold - hold).toFixed(2) };
+}
+console.log(JSON.stringify(out));
+"""
+
+
+def _planner_source(module: str) -> str:
+    start, end = module.index("// >>> live planner"), module.index("// <<< live planner")
+    return module[start:end]
+
+
+def _function_source(module: str, name: str) -> str:
+    """The source of one function in the module (from its declaration to the next declaration at its indent)."""
+    start = module.index(f"\n  function {name}(")
+    following = re.search(r"\n  (?:function |const |let |if \(|// )", module[start + 1:])
+    return module[start:start + 1 + (following.start() if following else len(module))]
+
+
+_REPORT: dict[str, Any] = {}
+
+
+def _director_report(settings: Settings, tmp_path: Path) -> dict[str, Any]:
+    """The planner's Node run (once per session: it is deterministic under the harness's seeded random)."""
+    import shutil
+    import subprocess
+
+    if shutil.which("node") is None:
+        pytest.skip("Node is not installed")
+    if not _REPORT:
+        actors = [[key, str(WORLD_CAST[key]["room"])] for key in WORLD_CAST]
+        (tmp_path / "planner.js").write_text(_planner_source(_module(render_world_html(settings))))
+        (tmp_path / "run.js").write_text(_PLANNER_HARNESS % {"actors": json.dumps(actors), "rooms": json.dumps(list(WORLD_ROOMS))})
+        res = subprocess.run(["node", str(tmp_path / "run.js"), str(tmp_path / "planner.js")], capture_output=True, text=True,
+                             timeout=120, check=True)
+        _REPORT.update(json.loads(res.stdout))
+    return _REPORT
+
+
+def test_the_live_director_owns_the_camera_by_default(settings: Settings) -> None:
+    """Live is the default: the director plans and flies every shot unless the viewer pinned something; a tap pins
+    for a while and times out; "live" (the chip or the tag) returns at once; the map times out the same way."""
+    module = _module(render_world_html(settings))
+    assert "function director() { liveDirector(); }" in module
+    director = _function_source(module, "liveDirector")
+    assert "const p = PLANNER.pinned(simT); if (p !== pinned) { pinned = p; nextPlanAt = 0; renderChips(); renderCard(); }" in director
+    assert 'if (pinned === "map") {' in director and 'cut("map", mapShot)' in director  # the page's own overview
+    assert "readLive(); PLANNER.plan(simT, LIVE_STATE);" in director and "startShot(false);" in director
+    # an event's walk stays on air until the walker arrives (where the arrival keeps it for the drop or hand-off)
+    assert 'if (focus && focus.actor.state === "out" && !focus.actor.ambient && focus.until < simT + 1) focus.until = simT + 1;' in director
+    assert "function togglePin(k) { if (pinned === k) PLANNER.unpin(); else PLANNER.pin(k, simT);" in module
+    assert "function goLive() { PLANNER.unpin(); pinned = null;" in module and "liveEl.onclick = goLive;" in module
+    # the chips (made once): "live" first, which goes back to live; every other chip pins through the director
+    build = _js_body(module, "  function buildChips() {")
+    assert 'add(null, "live", null);' in build and "b.onclick = key ? function () { togglePin(key); } : goLive;" in build
+    assert 'pinned ? "" : "on live"' in _js_body(module, "  function renderChips() {")
+    assert "pin: 25" in module and '{ alias: { observatory: "telescope" } }' in module  # 25 s; the observatory chip
+    # the planner is pure: no three.js, no DOM, no page state or clock inside its block
+    code = re.sub(r"//[^\n]*", "", _planner_source(module)).replace("live.actors[", "")
+    for banned in ("THREE", "document", "window", "simT", "camera", "cam.", "performance", "Date", "scene", "actors["):
+        assert banned not in code, banned
+    # the director keeps to its own section, after the page's camera, shots and blockers it calls
+    section = module[module.index("// ============================================================= THE LIVE DIRECTOR"):
+                     module.index("// ============================================================= THE LOOP")]
+    assert "// >>> live planner" in section and "function liveDirector()" in section
+    for helper in ("blocked(", "blocker(", "arrivalShot(t)", "mapShot", "SHOTS[a.homeRoom]", "cut(\"map\""):
+        assert helper in section, helper
+    for owned in ("function cut(", "function updateCamera(", "const SHOTS = {", "function arrivalShot("):
+        assert owned not in section and owned in module, owned
+
+
+def test_the_shot_grammar_is_every_type_with_its_lens(settings: Settings) -> None:
+    """Close-up, over-the-shoulder, follow, low, crane, slow orbit (30-60 degrees), dolly, establishing wide, the
+    room's own framing and the places' moves, each with a 24-35 mm lens; every place has its three rigs."""
+    module = _module(render_world_html(settings))
+    lenses = dict(re.findall(r"(\w+): (\d+)", _block(module, r"const LENS_MM = \{(.*?)\};")))
+    grammar = json.loads(re.sub(r",\s*}", "}", re.sub(r"(\w+):", r'"\1":', _block(module, r"const LIVE_GRAMMAR = (\{.*?\});"))))
+    types = {t for kinds in grammar.values() for t in kinds}
+    assert types == {"station", "closeup", "ots", "orbit", "low", "crane", "follow", "dolly", "place", "wide"}
+    assert set(lenses) == types and all(24 <= int(mm) <= 35 for mm in lenses.values()), lenses
+    assert lenses["closeup"] == "35" and lenses["wide"] == "24"
+    shape, slots = _function_source(module, "shape"), _block(module, r"const OFF = \{(.*?)\};")
+    for kind in ("closeup", "low", "orbit", "crane", "ots"):
+        assert f'g === "{kind}"' in shape and len(re.findall(rf"\b{kind}: \[([^\]]*)\]", slots)[0].split(",")) == 6, kind
+    assert "clamp(frameDist(S, 0.8, mm), 1.2 + 0.15 * h, 2.2 + 0.2 * h)" in shape  # the close-up: 1.3-2.7 m, the face filling it
+    assert "(0.55 + 0.15 * (RUN.seq % 4))" in shape  # the orbit: 0.55-1.0 rad (31-57 degrees) over the hold
+    assert 'if (RUN.g === "follow")' in module and "addScaledVector(_fw, 1.45 + 0.5 * h)" in module  # ahead and beside
+    places = re.findall(r'\{ id: "(\w+)", room', _planner_source(module))
+    assert len(places) == 12 and len(set(places)) == 12
+    parts = re.split(r"\n    (\w+): \[", module[module.index("const RIGS = {"):module.index("function placePose(")])
+    rigs = dict(zip(parts[1::2], parts[2::2]))
+    assert sorted(rigs) == sorted(places)
+    for place, text in rigs.items():
+        assert text.count("rigOf(") + text.count("null,") == 3, place
+    assert "if (!v) { const s = arrivalShot(t); out.pos.copy(s.pos).lerp(s.look, 0.08 * e);" in module  # the opener: the page's arrival
+
+
+def test_the_live_tag_says_only_its_fixed_words(settings: Settings) -> None:
+    """The LIVE tag's own words are fixed ("LIVE", "pinned · back to live in N s"); the subject's name and kind, the
+    room and what each member is doing are the card's rows: the cast's and rooms' fixed descriptions and the data's
+    own words, as text."""
+    page = render_world_html(settings)
+    module = _module(page)
+    assert '<b id="live">LIVE</b><span class="name">NIGHT SHIFT: SKYPORT</span>' in page
+    assert module.count("liveEl.textContent = ") == 1
+    assert 'liveEl.textContent = n < 0 ? "LIVE" : "pinned · back to live in " + n + " s";' in module
+    assert 'const room = card.querySelector(".room .name")' in module  # the room line keeps the tag beside it
+    assert "else if (!pinned) { const s = liveSubject(); actor = s.actor; roomKey = s.room; }" in module
+    assert 'room.textContent = (actor && actor.walking ? "ON THE WAY" : spec ? spec.title : "").toUpperCase();' in module
+    assert 'who.appendChild(document.createTextNode(c.name + " · " + c.kind))' in module
+    assert 'a.textContent = nameOf(id) + ": " + (m.doing || m.why || "")' in module  # the member's own words
+    section = module[module.index("// ============================================================= THE LIVE DIRECTOR"):
+                     module.index("// ============================================================= THE LOOP")]
+    assert re.findall(r"textContent = ", section) == ["textContent = "]  # nothing else here writes on screen
+    assert "innerHTML" not in section and "fillText" not in section
+
+
+def test_an_event_pre_empts_the_broadcast_within_one_plan_step(settings: Settings, tmp_path: Path) -> None:
+    report = _director_report(settings, tmp_path)
+    ev, step = report["event"], report["cfg"]["step"]
+    assert step == 0.25 and ev["before"]["subject"] != "pip" and not ev["before"]["event"]
+    assert ev["first"]["rotationHeld"] < report["cfg"]["minHold"]  # even a rotation shot that has just begun
+    assert ev["first"]["after"] <= step and ev["first"]["grammar"] in report["grammar"]["speak"]  # within 0.25 s
+    assert {k: ev["first"][k] for k in ("subject", "event", "phase", "hard")} == {"subject": "pip", "event": True, "phase": "speak", "hard": True}
+    assert 3 <= ev["second"]["heldFirst"] <= 3 + step  # an event shot holds its 3 s, then the next one cuts in
+    assert {k: ev["second"][k] for k in ("subject", "phase", "hard")} == {"subject": "rook", "phase": "speak", "hard": True}
+    assert ev["walking"] == {"subject": "rook", "phase": "walk", "grammar": ev["walking"]["grammar"], "hard": False}
+    assert ev["walking"]["grammar"] in ("follow", "dolly")  # the hand-off walk: followed (a flight, not a cut)
+    assert ev["visiting"]["phase"] == "visit" and ev["visiting"]["grammar"] in report["grammar"]["visit"]
+    assert ev["resumedAt"] is not None and ev["resumedAt"] <= report["cfg"]["maxHold"]  # then back to the rotation
+    carry = report["carry"]
+    assert carry["speak"]["subject"] == "jet" and carry["speak"]["phase"] == "speak"
+    assert carry["carry"]["phase"] == "carry" and carry["carry"]["grammar"] in ("follow", "dolly")
+    assert carry["drop"] == {"phase": "drop", "grammar": carry["drop"]["grammar"], "room": "vault"}
+    assert carry["drop"]["grammar"] in ("low", "crane")  # the drop at the vault: a low or a crane shot
+    assert carry["lesson"]["subject"] == "voss" and carry["lesson"]["phase"] == "lesson"
+    assert carry["lesson"]["grammar"] in ("ots", "closeup", "orbit")
+
+
+def test_the_broadcast_covers_every_room_and_character(settings: Settings, tmp_path: Path) -> None:
+    """Without events: every room and character on air in any three minutes, three angles each over ten minutes,
+    every shot held (3 s at least; the rotation 5-10 s), never the same subject twice running, wides at most one in
+    six, about every third shot a hard cut, the crew most of the airtime."""
+    report = _director_report(settings, tmp_path)
+    for quiet in report["quiet"]:
+        assert quiet["first"]["subject"] == "arrival" and quiet["first"]["hard"]  # it opens on the pack's arrival
+        assert quiet["gaps"] == [], quiet["gaps"][:5]
+        assert quiet["minHold"] >= 5 and quiet["maxHold"] <= 10 and quiet["repeats"] == 0
+        assert quiet["maxWideIn6"] <= 1 and quiet["wides"] * 6 <= quiet["shots"]
+        assert all(n >= 3 for n in quiet["anglesSeen"].values()), quiet["anglesSeen"]
+        assert all(quiet["angles"][k] >= min(3, quiet["visits"][k]) for k in quiet["visits"]), (quiet["angles"], quiet["visits"])
+        assert {"station", "closeup", "ots", "orbit", "low", "crane", "place", "wide"} <= set(quiet["grammars"])
+        assert 0.28 <= quiet["hardCuts"] / quiet["shots"] <= 0.4
+        assert quiet["actorShots"] / quiet["shots"] >= 0.5
+
+
+def test_a_pin_times_out_back_to_live(settings: Settings, tmp_path: Path) -> None:
+    report = _director_report(settings, tmp_path)
+    pin = report["pin"]
+    assert {k: pin[k] for k in ("at100", "left100", "at112", "left112", "at124", "at125", "left125", "afterUnpin")} == {
+        "at100": "voss", "left100": 25, "at112": "voss", "left112": 13, "at124": "voss", "at125": None, "left125": 0, "afterUnpin": None}
+    assert pin["subjects"] == ["voss"] and pin["shots"] >= 3  # pinned: on Voss only, still moving round him
+    assert pin["after"]["pinned"] is None and pin["after"]["subject"] != "voss"  # then straight back to the broadcast
+    assert report["map"] == {"held": True, "back": True}  # the map holds the plan, then times out back to live
+    assert report["observatory"] == {"subject": "telescope", "unpinned": report["observatory"]["unpinned"]}
+    assert report["observatory"]["unpinned"] != "telescope"  # "live" returns at once
+    assert report["extend"] == {"added": 2.5}  # a flight to a shot does not eat its hold
+
+
+def test_the_flights_keep_to_the_walkways_and_clear_the_walls(settings: Settings) -> None:
+    """Between shots the drone flies the cast's own walkways at drone height (never climbing over a wall), the way
+    cut short where a straight line is clear of every wall, furniture blocker and the table's hologram, its corners
+    rounded; a long way or no safe way is a hard cut. The hero arches and the lanterns are blockers too."""
+    module = _module(render_world_html(settings))
+    assert "const FLY_H = 2.05, FLY_MAX = 26;" in module and "CLEAR_Y" not in module
+    plan = _function_source(module, "planFlight")
+    assert "if (!flyClear(from, to)) {" in plan and "nearestNode(from), e = nearestNode(to)" in plan
+    assert "while (j > i + 1 && !flyClear(WP[i], WP[j])) j--;" in plan  # string-pulled
+    assert "if (len > FLY_MAX) return false;" in plan
+    assert "if (blocked(a, b) < 0.999) return false;" in _function_source(module, "flyClear")
+    assert "!planFlight(cam.pos, _dst.pos)) { hard = true; if (!reframe) PLANNER.cutHard(); }" in module
+    assert 'if (HAS("arch")) PLACE.arch.forEach(function (q) {' in module  # the workshop, den and observatory arches
+    assert 'if (HAS("lantern")) LANTERN_SPOTS.forEach(' in module
+    assert "FLY.dur = clamp(0.9 + FLY.len / 7, 1.2, 4.0)" in module  # eased, at most 4 s
+    assert 'hop("c0", V3(7.4, FLY_H, 2.6)' in module  # the open-air way between the courtyard and the outer walkway
+    # every shot is checked clear of the walls before it starts, and pulled in if the subject moves behind one
+    assert "if (poseClear(a, yaw + off)) { RUN.az = yaw + off; return; }" in module
+    assert "const f = clearTo(_eye, _live.pos)" in module and "if (clearTo(_eye, _pt) < 0.985) return false;" in module
+
+
+def test_the_director_allocates_nothing_per_frame(settings: Settings) -> None:
+    """The director and the camera's moves run every frame: no new objects, closures or copies there (each shot's
+    setup and each flight's plan allocate nothing either beyond reusing their records)."""
+    module = _module(render_world_html(settings))
+    for name in ("liveDirector", "shotPose", "actorPose", "posePos", "poseLook", "stationPose", "walkPose", "placePose",
+                 "flyPose", "flyPoint", "cruise", "eyeOf", "fovFor", "setFov", "renderLive", "readLive", "startShot",
+                 "setupActor", "shape", "poseClear", "planFlight", "routeNodes", "nearestNode", "flyClear", "clearTo", "liveSubject"):
+        body = re.sub(r"//[^\n]*", "", _function_source(module, name))
+        for banned in ("new ", ".clone(", "function (", ".map(", ".filter(", ".concat(", ".slice(", "Array.from", "=> "):
+            assert banned not in body, (name, banned)
+    planner = _planner_source(module)
+    plan = planner[planner.index("    function plan("):planner.index("    return {\n      shot: shot")]
+    for banned in ("new ", ".map(", ".filter(", "=> "):
+        assert banned not in plan, banned
+    assert "govern(dtRaw);" in module and "director(); updateCamera(dtRaw, simT);" in module  # the fps governor stays
+    assert 'if (params.get("debug") === "1") window.__world =' in module and module.count("window.__world") == 1

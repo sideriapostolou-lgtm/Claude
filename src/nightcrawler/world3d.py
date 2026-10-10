@@ -30,6 +30,12 @@ horizontal, close behind the crew; never a top-down tycoon view.
   (a shrug for a loss), Rook nods at good news and worries at bad, a blocked or waiting member thinks, the
   Polymarket desk's lessons make Voss think, then talk. Idle members get ambient life (coffee, looking around,
   chatting with a neighbour) that shows no words and no numbers.
+* The camera is live all the time (the module's LIVE DIRECTOR section): a director plans the next shot from what
+  is happening now (a fresh event first, then whoever works at a station, then the life of the place), films it as
+  one of a few moving shot types (close-up, over-the-shoulder, follow, low angle, crane, slow orbit, dolly,
+  establishing wide; a 24-35 mm lens) and flies the drone between shots along the walkways (never over a wall or
+  through one) or cuts. Its memory of each subject's last airtime and angle keeps every room and character on air.
+  A chip pins the camera for 25 seconds, then it goes back to live; the LIVE tag says which.
 
 Honesty rules (the same as the office's and the town's, non-negotiable):
 
@@ -302,7 +308,15 @@ header .money #clock { font-size: 10px; color: var(--dim); display: block; }
 #card { position: fixed; left: 12px; right: 12px; bottom: calc(76px + env(safe-area-inset-bottom));
         background: var(--glass); border: 1px solid rgba(224,178,94,.32); border-radius: 12px; padding: 7px 11px;
         backdrop-filter: blur(8px); max-width: 560px; }
-#card .room { font-size: 10.5px; letter-spacing: .16em; color: var(--brass); font-weight: 700; }
+#card .room { font-size: 10.5px; letter-spacing: .16em; color: var(--brass); font-weight: 700; display: flex; align-items: center; gap: 8px; }
+#card .room .name { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#live { flex: 0 0 auto; font-size: 10px; letter-spacing: .14em; font-weight: 800; color: #fff; background: var(--bad);
+        border-radius: 999px; padding: 1px 8px 1px 7px; cursor: pointer; text-transform: uppercase; }
+#live::before { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #fff;
+                margin-right: 5px; vertical-align: 1px; animation: livedot 1.4s ease-in-out infinite; }
+#live.pinned { background: rgba(224,178,94,.92); color: #1d1a16; text-transform: none; letter-spacing: .04em; font-weight: 700; }
+#live.pinned::before { animation: none; background: #1d1a16; }
+@keyframes livedot { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
 #card .who { font-weight: 700; font-size: 14px; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 #card .who small { font-weight: 400; color: var(--dim); margin-left: 6px; font-size: 12px; }
 #card .rows { margin-top: 3px; font-size: 12px; color: var(--dim); }
@@ -321,6 +335,7 @@ header .money #clock { font-size: 10px; color: var(--dim); display: block; }
                 border: 1px solid rgba(224,178,94,.35); border-radius: 999px; padding: 4px 11px; cursor: pointer;
                 min-height: 32px; backdrop-filter: blur(6px); }
 #chips button.on { border-color: var(--brass); background: rgba(224,178,94,.28); }
+#chips button.live { border-color: var(--bad); background: rgba(255,107,97,.3); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; font-size: 11px; }
 #chips button i { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 6px; background: #6c717c; }
 #chips button i.working { background: var(--good); } #chips button i.blocked { background: var(--bad); }
 #chips button i.waiting { background: var(--warn); }
@@ -3007,36 +3022,12 @@ _M_LIFE = r"""
   canvas.addEventListener("pointerup", up); canvas.addEventListener("pointercancel", up);
   canvas.addEventListener("wheel", function (e) { e.preventDefault(); user.zoom = clamp(user.zoom * (1 + e.deltaY * 0.0012), 0.5, 1.8); lastInputAt = performance.now(); }, { passive: false });
 
-  // the director: who the drone is on
-  let focus = null, pinned = null, idleSince = 0, tour = -1, tourUntil = 0;
-  const TOUR = ["workshop", "den", "table", "vault", "archive", "dock", "observatory"];
-  // each shot's key and function made once (the director runs every frame: no new strings or closures)
-  const ROOMCUT = {};
-  Object.keys(SHOTS).forEach(function (r) { ROOMCUT[r] = { key: "room:" + r, fn: function () { return SHOTS[r]; } }; });
-  ACTOR_KEYS.forEach(function (k) { const a = actors[k];
-    a.cuts = { follow: { key: "follow:" + k, fn: function () { return followShot(a); } }, face: { key: "face:" + k, fn: function () { return faceShot(a); } } }; });
-  function cutRoom(room) { const c = ROOMCUT[room] || ROOMCUT.table; cut(c.key, c.fn); }
-  function director() {
-    if (pinned) {
-      if (pinned === "map") cut("map", mapShot);
-      else if (pinned === "observatory") cutRoom("observatory");
-      else { const a = actors[pinned]; if (a && a.walking) cut(a.cuts.follow.key, a.cuts.follow.fn); else if (a) cutRoom(a.room); }
-      return;
-    }
-    if (focus && simT < focus.until) {
-      const a = focus.actor;
-      if (a.walking && simT > focus.start + focus.lead) cut(a.cuts.follow.key, a.cuts.follow.fn);
-      else if (!a.walking && a.state === "visit") cut(a.cuts.face.key, a.cuts.face.fn);
-      else if (!a.walking) cutRoom(a.room);
-      return;
-    }
-    if (focus) { focus = null; idleSince = simT; tour = -1; }
-    if (simT - idleSince < 40) { cut("arrival", arrivalShot); return; }
-    if (simT >= tourUntil) { tour += 1; tourUntil = simT + 12;
-      if (tour >= TOUR.length) { tour = -1; idleSince = simT; cut("arrival", arrivalShot); return; } }
-    cutRoom(TOUR[tour]);
-  }
-  function focusOn(actor, lead, seconds) { if (!actor) return; focus = { actor: actor, start: simT, lead: lead, until: simT + seconds }; renderCard(); }
+  // the director: who the drone is on. THE LIVE DIRECTOR below owns the camera: a broadcast that never waits for a
+  // tap; a pin (a chip, the map) holds it on one thing for a while and times out back to the broadcast.
+  let focus = null, pinned = null;
+  function director() { liveDirector(); }
+  // a real moment the camera goes to: who, how long, and what kind (speak, lesson, carry) for the director
+  function focusOn(actor, lead, seconds, kind) { if (!actor) return; focus = { actor: actor, start: simT, lead: lead, until: simT + seconds, kind: kind || "speak" }; renderCard(); }
 
   // ============================================================= THE HUD: bubbles, labels, chips, the caption
   const _v = new THREE.Vector3();
@@ -3060,7 +3051,7 @@ _M_LIFE = r"""
       const b = bubbles[i];
       if (simT >= b.until) { b.el.remove(); bubbles.splice(i, 1); continue; }
       const s = toScreen(b.actor.headAt);
-      const visible = s.ok && s.x > -30 && s.x < Wd + 30 && s.y > 30 && s.y < bottom + 60;
+      const visible = s.ok && s.x > -30 && s.x < Wd + 30 && s.y > 30 && s.y < bottom + 60 && blocked(camera.position, b.actor.headAt) > 0.98;  // (not through a wall)
       b.el.style.opacity = visible ? "1" : "0";
       if (visible) { const bw = b.el.offsetWidth, bh = b.el.offsetHeight, left = clamp(s.x - 30, 8, Wd - bw - 8);
         b.el.style.left = left + "px"; b.el.style.top = clamp(s.y - bh - 14, top, bottom - bh) + "px"; b.el.style.setProperty("--tail", clamp(s.x - left - 10, 12, bw - 30) + "px"); }
@@ -3100,9 +3091,10 @@ _M_LIFE = r"""
     const add = function (key, text, ids) {
       const b = document.createElement("button"), dot = ids ? document.createElement("i") : null;
       if (dot) b.appendChild(dot); b.appendChild(document.createTextNode(text));
-      b.onclick = function () { pinned = pinned === key ? null : key; renderChips(); renderCard(); };
+      b.onclick = key ? function () { togglePin(key); } : goLive;  // (a pin times out back to live: the director)
       chips.appendChild(b); chipEls.push({ b: b, dot: dot, key: key, ids: ids || [] });
     };
+    add(null, "live", null);  // the broadcast (on while nothing is pinned)
     Object.keys(CAST).forEach(function (k) { if (actors[k]) add(k, CAST[k].name, CAST[k].members); });
     add("observatory", ROOMS.observatory ? ROOMS.observatory.title : "The observatory", ROOMS.observatory ? ROOMS.observatory.members : []);
     add("map", "map", null);
@@ -3110,18 +3102,17 @@ _M_LIFE = r"""
   function renderChips() {
     if (!chipEls.length) buildChips();
     for (let i = 0; i < chipEls.length; i++) {
-      const c = chipEls[i], on = pinned === c.key ? "on" : ""; if (c.b.className !== on) c.b.className = on;
+      const c = chipEls[i], on = c.key ? (pinned === c.key ? "on" : "") : pinned ? "" : "on live"; if (c.b.className !== on) c.b.className = on;
       if (c.dot) { const st = worstStatus(c.ids); if (c.dot.className !== st) c.dot.className = st; }
     }
   }
   function renderCard() {
-    const room = card.querySelector(".room"), who = card.querySelector(".who"), rows = card.querySelector(".rows");
+    const room = card.querySelector(".room .name"), who = card.querySelector(".who"), rows = card.querySelector(".rows");
     rows.textContent = ""; who.textContent = "";
     let roomKey = null, actor = null;
     if (pinned && actors[pinned]) { actor = actors[pinned]; roomKey = actor.room; }
     else if (pinned === "observatory") roomKey = "observatory";
-    else if (focus) { actor = focus.actor; roomKey = actor.walking ? null : actor.room; }
-    else if (shotKey.indexOf("room:") === 0) roomKey = shotKey.slice(5);
+    else if (!pinned) { const s = liveSubject(); actor = s.actor; roomKey = s.room; }  // the broadcast's subject
     if (roomKey && !actor) actor = actors[Object.keys(actors).find(function (k) { return actors[k].homeRoom === roomKey; })] || null;
     if (actor || roomKey) {
       const spec = ROOMS[roomKey] || ROOMS[actor ? actor.homeRoom : ""] || null;
@@ -3173,7 +3164,7 @@ _M_LIFE = r"""
     }
     const walks = dest && dest !== actor.homeRoom && actor.queue.length < 3;
     if (walks) actor.queue.push({ dest: dest, hold: 3.5 });
-    focusOn(actor, 3.5, walks ? 8 : 10);
+    focusOn(actor, 3.5, walks ? 8 : 10, lesson ? "lesson" : "speak");
   }
   function onClosed(t) {
     const jet = actors.jet; if (!jet) return;
@@ -3186,14 +3177,15 @@ _M_LIFE = r"""
       if (pnl > 0) oneShot(a, "cheer"); else if (pnl < 0) oneShot(a, "shrug");
       if (focus && focus.actor === a) focus.until = Math.max(focus.until, simT + (pnl > 0 ? 10 : 5));  // the camera stays for it
     } });
-    focusOn(jet, 2.0, 8);
+    focusOn(jet, 2.0, 8, "carry");
   }
   function chatter() {
     // never over a real moment: while the drone is on one, or an event's own words are still up, nobody chatters
     if (focus && simT < focus.until) return;
     for (let i = 0; i < bubbles.length; i++) if (bubbles[i].kind !== "chatter" && simT < bubbles[i].until) return;
-    const ids = Object.keys(members).filter(function (id) { const a = actors[actorOf[id]]; if (!a) return false; const s = toScreen(a.headAt);
-      return s.ok && s.x > 0 && s.x < window.innerWidth && s.y > 60 && s.y < window.innerHeight - 140; });
+    const on = liveActor();  // (the one on camera says what they are doing; otherwise whoever is in view)
+    const ids = Object.keys(members).filter(function (id) { const a = actors[actorOf[id]]; if (!a || (on && a !== on)) return false; const s = toScreen(a.headAt);
+      return s.ok && s.x > 0 && s.x < window.innerWidth && s.y > 60 && s.y < window.innerHeight - 140 && blocked(camera.position, a.headAt) > 0.98; });
     const working = ids.filter(function (id) { return members[id].status === "working"; });
     const pool = (working.length ? working : ids).filter(function (id) { const m = members[id]; return m.doing || (m.events && m.events.length) || m.why; });
     if (!pool.length) return;
@@ -3342,6 +3334,564 @@ _M_LIFE = r"""
     ambientLife();
   }
 
+  // ============================================================= THE LIVE DIRECTOR: an always-on broadcast
+  // The owner's direction: the camera is live all the time, flying and cutting between what is happening right now,
+  // like a film. A fresh event comes first (whoever speaks, the listeners in frame; a hand-off walk; Jet's carry to
+  // the vault, the drop and the cheer or the shrug; a lesson at the table; a blocked or waiting member thinking),
+  // then whoever works at a station, then the life of the place (the courtyard, the telescope, the bridge with the
+  // islands behind, the dock and its airship, the kiosk). Every shot moves (a push-in, an orbit, a crane, a dolly, a
+  // drift) and is one of a few named types; between shots the drone flies a safe way along the walkways (never over
+  // the walls) or, about every third shot, cuts. Memory of what each subject and room last had on air, and from
+  // which angle, keeps everyone on screen. Only real statuses and events choose the shots. The planner is pure (no
+  // three.js, no DOM): tests/test_world3d.py runs the block between the >>> and <<< markers in Node. The only words
+  // this section writes are the LIVE tag's fixed ones; the card under it shows the data's own words. The director
+  // keeps to this section: it calls the page's camera, shots and blockers above, and changes none of them.
+  // >>> live planner (pure)
+  // the places the director films between the characters (the operator below gives each its rigs and a position),
+  // the room each one shows (for coverage) and whether it is a wide establishing shot (never more than one in six)
+  const LIVE_PLACES = [
+    { id: "arrival", room: "table", wide: true }, { id: "overhead", room: "table", wide: true },
+    { id: "courtyard", room: "table" }, { id: "bridge", room: null }, { id: "telescope", room: "observatory" },
+    { id: "walkway", room: "dock" }, { id: "airship", room: "dock" }, { id: "kiosk", room: "dock" },
+    { id: "vaultsign", room: "vault" }, { id: "shelves", room: "archive" }, { id: "bench", room: "workshop" },
+    { id: "screens", room: "den" },
+  ];
+  // the shot types the director may pick, by what the subject is doing right now (the operator makes each real;
+  // "station" is the room's own framing, the shots table above)
+  const LIVE_GRAMMAR = {
+    work: ["station", "closeup", "ots", "orbit", "low", "crane"], idle: ["closeup", "orbit", "low", "crane", "station"],
+    think: ["closeup", "low", "orbit"], speak: ["closeup", "ots", "low"], lesson: ["ots", "closeup", "orbit"],
+    walk: ["follow", "dolly"], carry: ["follow", "dolly"], visit: ["closeup", "ots", "orbit"], drop: ["low", "crane"],
+    place: ["place"], wide: ["wide"],
+  };
+  // seconds (and metres): a shot holds at least minHold before another event or phase takes it (a fresh event cuts
+  // into the rotation at once), an event shot is re-framed after maxHold, a character unseen for actorStarve or a
+  // room unseen for roomStarve comes next, a wide at most once in wideEvery shots, a pin lasts pin; angles round a
+  // character; a flight goes to a neighbour within flyRange (a hard cut, every third shot, goes anywhere); the plan
+  // runs every step
+  const LIVE_CFG = { minHold: 3, maxHold: 14, actorStarve: 105, roomStarve: 95, wideEvery: 6, pin: 25, angles: 6, flyRange: 17, step: 0.25 };
+  function makePlanner(actorSpecs, placeSpecs, opts) {
+    const o = opts || {}, cfg = {};
+    Object.keys(LIVE_CFG).forEach(function (k) { cfg[k] = o[k] != null ? o[k] : LIVE_CFG[k]; });
+    const rnd = o.random || Math.random, alias = o.alias || {};
+    const subjects = [], byId = {}, roomSeen = {};
+    function subject(spec, kind, n) {
+      const s = { id: spec.id, kind: kind, room: spec.room || null, wide: !!spec.wide, x: spec.x || 0, z: spec.z || 0,
+                  seen: kind === "actor" ? -1e9 : -90 * rnd(), shots: 0, angles: n, used: [], mask: 0, grammars: {} };
+      for (let i = 0; i < n; i++) s.used.push(-1e9);
+      subjects.push(s); byId[s.id] = s; if (s.room) roomSeen[s.room] = -1e9;
+    }
+    actorSpecs.forEach(function (a) { subject(a, "actor", cfg.angles); });
+    placeSpecs.forEach(function (p) { subject(p, "place", p.angles || 3); });
+    // the current shot (one object, mutated in place: the operator reads it every frame)
+    const shot = { seq: 0, subject: "", kind: "", grammar: "", angle: 0, room: null, start: -1e9, hold: 0, hard: false,
+                   event: false, phase: "", pinned: false };
+    const pin = { id: null, until: -1e9 };
+    let sinceWide = 1e3, sinceHard = 0, lastFocus = null, places = 0;
+    function lru(s, list, now) {  // the shot type this subject has gone longest without (ties at random)
+      let best = list[0], bestT = Infinity;
+      for (let i = 0; i < list.length; i++) { const t = (s.grammars[list[i]] != null ? s.grammars[list[i]] : -1e9) + rnd() * 0.5;
+        if (t < bestT) { bestT = t; best = list[i]; } }
+      s.grammars[best] = now; return best;
+    }
+    function freshAngle(s, now) {  // the angle this subject has gone longest without: every angle before any repeats
+      let best = 0, bestT = Infinity;
+      for (let i = 0; i < s.angles; i++) { const t = s.used[i] + rnd() * 0.5; if (t < bestT) { bestT = t; best = i; } }
+      s.used[best] = now; s.mask |= 1 << best; return best;
+    }
+    function begin(s, kind, list, hold, now, event, phase, hard, room, angle) {
+      shot.seq += 1; shot.subject = s.id; shot.kind = kind; shot.grammar = lru(s, list, now);
+      if (angle != null) { shot.angle = angle; s.used[angle] = now; s.mask |= 1 << angle; } else shot.angle = freshAngle(s, now);
+      shot.room = room || null; shot.start = now; shot.hold = hold; shot.event = !!event; shot.phase = phase || "";
+      shot.hard = !!hard; shot.pinned = !!pin.id; sinceHard = hard ? 0 : sinceHard + 1;
+      s.seen = now; s.shots += 1; if (room && room in roomSeen) roomSeen[room] = now;
+      sinceWide = s.wide ? 0 : sinceWide + 1; places = kind === "place" ? places + 1 : 0;
+      return shot;
+    }
+    function pinnedNow(now) { if (pin.id && now >= pin.until) pin.id = null; return pin.id; }
+    function focusOf(live, now) { const f = live.focus; return f && now < f.until && byId[f.actor] ? f : null; }
+    function phaseOf(live, f) {  // what the event's character is doing right now decides the shot type
+      const a = live.actors[f.actor];
+      if (!a) return "speak";
+      if (a.walking) return a.carrying ? "carry" : "walk";
+      if (a.visiting) return f.kind === "carry" ? "drop" : "visit";
+      return f.kind === "lesson" ? "lesson" : "speak";
+    }
+    function onEvent(f, now, live) {
+      const phase = phaseOf(live, f), fresh = f.start !== lastFocus, held = now - shot.start;
+      const onIt = shot.event && !fresh && shot.subject === f.actor && shot.phase === phase;
+      if (onIt && held < cfg.maxHold) return shot;  // on it: hold while this phase of the event lasts
+      if (shot.event && held < cfg.minHold) return shot;  // an event shot holds its minimum; the next phase waits
+      lastFocus = f.start;
+      const a = live.actors[f.actor];
+      return begin(byId[f.actor], "event", LIVE_GRAMMAR[phase] || LIVE_GRAMMAR.speak,
+                   Math.min(cfg.maxHold, Math.max(cfg.minHold + 2, f.until - now)), now, true, phase, fresh, a ? a.room : null);
+    }
+    function frame(s, now, live, hard) {  // the next shot of a subject: its type and hold by what it is doing
+      const a = s.kind === "actor" ? live.actors[s.id] : null;
+      let list = LIVE_GRAMMAR.place, hold = 6 + rnd() * 3;
+      if (s.wide) { list = LIVE_GRAMMAR.wide; hold = 5 + rnd() * 2; }
+      else if (a) {
+        const k = a.walking ? (a.carrying ? "carry" : "walk") : a.visiting ? "visit" : a.thinking ? "think"
+          : a.speaking ? "speak" : a.working ? "work" : "idle";
+        list = LIVE_GRAMMAR[k]; hold = k === "work" ? 6 + rnd() * 4 : 5.5 + rnd() * 3;
+      }
+      return begin(s, s.kind, list, hold, now, false, "", hard, a ? a.room : s.room);
+    }
+    function rotate(now, live) {
+      // the rotation: whoever has gone longest unseen, real work and a blocked or waiting member first, the places
+      // between them; a room or a character starved of airtime jumps the queue; a flight (two in three shots) goes
+      // to a neighbour, a hard cut anywhere; never the same subject twice running, rarely the same room
+      const allowWide = sinceWide >= cfg.wideEvery - 1, flight = sinceHard < 2, cur = byId[shot.subject] || null;
+      const cl = cur && cur.kind === "actor" ? live.actors[cur.id] : null;
+      const cx = cl ? cl.x : cur ? cur.x : 0, cz = cl ? cl.z : cur ? cur.z : 0, curRoom = cl ? cl.room : cur ? cur.room : null;
+      let best = null, bestScore = -Infinity;
+      for (let i = 0; i < subjects.length; i++) {
+        const s = subjects[i];
+        if (s === cur || (s.wide && !allowWide)) continue;
+        const a = s.kind === "actor" ? live.actors[s.id] : null, room = a ? a.room : s.room, age = Math.min(now - s.seen, 900);
+        let score = age * (a ? (a.thinking ? 1.7 : a.working ? 1.5 : 1.0) : s.wide ? 0.45 : 0.6);
+        if (a && (a.walking || a.visiting || a.speaking)) score += 25;
+        if (!a && places >= 2) score -= 400;  // the crew between the places: never three places running
+        if (room && room === curRoom) score -= 45;
+        if (room && room in roomSeen && now - roomSeen[room] > cfg.roomStarve) score += 2000 + Math.min(900, now - roomSeen[room]);
+        if (a && age > cfg.actorStarve) score += 1500 + age;
+        if (flight && cur) { const x = a ? a.x : s.x, z = a ? a.z : s.z; if (Math.hypot(x - cx, z - cz) > cfg.flyRange) score -= 600; }
+        score += rnd() * 8;
+        if (score > bestScore) { bestScore = score; best = s; }
+      }
+      return best ? frame(best, now, live, !flight) : shot;
+    }
+    function plan(now, live) {
+      // live: { actors: { id: { room, x, z, walking, carrying, speaking, working, thinking, visiting } },
+      //         focus: { actor, kind, start, until } | null }
+      const pid = pinnedNow(now), f = focusOf(live, now);
+      if (!shot.seq && !pid && byId.arrival) return begin(byId.arrival, "place", LIVE_GRAMMAR.wide, 6 + rnd(), now, false, "", true, "table", 0);
+      if (pid) {  // pinned: the camera stays on that subject, still moving round it; the map: the plan waits
+        const s = byId[alias[pid] || pid];
+        if (!s) { shot.pinned = true; return shot; }
+        if (f && f.actor === s.id) return onEvent(f, now, live);
+        if (shot.subject === s.id && shot.pinned && now - shot.start < (shot.event ? cfg.minHold : shot.hold)) return shot;
+        return frame(s, now, live, false);
+      }
+      if (f) return onEvent(f, now, live);
+      if (shot.seq && !shot.pinned && now - shot.start < shot.hold) return shot;
+      return rotate(now, live);
+    }
+    return {
+      shot: shot, subjects: subjects, roomSeen: roomSeen, cfg: cfg, plan: plan,
+      pin: function (id, now) { pin.id = id; pin.until = now + cfg.pin; },
+      unpin: function () { pin.id = null; },
+      pinned: pinnedNow,
+      pinLeft: function (now) { return pin.id ? Math.max(0, pin.until - now) : 0; },
+      extend: function (seconds) { shot.hold += seconds; },  // the flight to a shot does not eat its hold
+      cutHard: function () { shot.hard = true; sinceHard = 0; },  // the operator had to cut (no safe way to fly)
+      anglesSeen: function (id) { let n = 0, m = byId[id] ? byId[id].mask : 0; while (m) { n += m & 1; m >>= 1; } return n; },
+    };
+  }
+  // <<< live planner
+  // ------------------------------------------------------------- the operator: the drone that makes each planned shot real
+  // What the drone keeps out of besides the walls (already blockers): the furniture, the hero arches at the workshop,
+  // den and observatory doors (their posts and lintels; the opening stays free to fly through), the lantern posts,
+  // the moored airship. The flights also keep clear of the hologram over the mission table (flight-only: Voss
+  // stands at its edge).
+  const TABLE_HALF = HAS("missiontable") ? 0.66 : 1.78;
+  blocker(VT2, 0.9, 1.3, -2.63, 0, 1.4, 1.3, 0.5); blocker(VT2, 0.2, 0.65, -0.62, 0, 1.1, 0.65, 0.45);
+  blocker(DN2, 0, 0.75, -1.9, 0, 1.3, 0.75, 0.5); blocker(WS2, 0, 0.4, -0.62, 0, 1.2, 0.4, 0.5);
+  blocker(WF, 0, 0.5, 0, 0, TABLE_HALF, 0.5, TABLE_HALF); blocker(AR2, -2.4, 1.4, -2.69, 0, 1.3, 1.4, 0.4); blocker(AR2, 2.4, 1.4, -2.69, 0, 1.3, 1.4, 0.4);
+  blocker(WF, 23.5, 1.2, 5.5, 0, 0.75, 1.2, 1.45); blocker(WF, 24.5, 0.6, -2.2, 0, 0.35, 0.6, 0.3); blocker(OB2, 0.6, 1.2, -1.2, 0, 0.9, 1.2, 0.9);
+  if (HAS("airship")) blocker(WF, 27.3, 1.3, -1.5, 0, 1.0, 1.6, 1.55);
+  if (HAS("workbench")) blocker(WS2, -0.4, 1.05, -0.85, 0, 0.16, 0.22, 0.16);  // the bench lamp, at Pip's face height
+  if (HAS("arch")) PLACE.arch.forEach(function (q) {
+    const F = roomFrame(q.at.x, q.at.y, q.at.z, q.yaw);
+    blocker(F, -1.08, 1.7, 0, 0, 0.2, 1.7, 0.38); blocker(F, 1.08, 1.7, 0, 0, 0.2, 1.7, 0.38); blocker(F, 0, 3.05, 0, 0, 1.28, 0.35, 0.38);
+  });
+  if (HAS("lantern")) LANTERN_SPOTS.forEach(function (q) { blocker(WF, q.x, 1.3, q.z, 0, 0.2, 1.3, 0.2); });
+  const FLY_BLOCK = [];  // (the same oriented boxes as blockers)
+  (function () { const m = new THREE.Matrix4().makeTranslation(0, 1.7, 0); FLY_BLOCK.push({ inv: m.invert(), half: V3(1.2, 1.25, 1.2) }); })();
+  const _fo = new THREE.Vector3(), _fd = new THREE.Vector3(), _fr = new THREE.Ray(), _fb = new THREE.Box3(), _fh2 = new THREE.Vector3();
+  function flyClear(a, b) {  // a straight stretch the drone can fly: no wall, furniture or hologram on it
+    if (blocked(a, b) < 0.999) return false;
+    const len = a.distanceTo(b); if (len < 1e-3) return true;
+    for (let i = 0; i < FLY_BLOCK.length; i++) {
+      const q = FLY_BLOCK[i]; _fo.copy(a).applyMatrix4(q.inv); _fd.copy(b).applyMatrix4(q.inv).sub(_fo).normalize(); _fr.set(_fo, _fd);
+      _fb.min.copy(q.half).negate(); _fb.max.copy(q.half);
+      if (_fr.intersectBox(_fb, _fh2) && _fh2.distanceTo(_fo) < len) return false;
+    }
+    return true;
+  }
+  function clearTo(from, to) {  // how far a look from a character reaches: the blockers and (seen from outside it) the hologram
+    let f = blocked(from, to);
+    const q = FLY_BLOCK[0], len = from.distanceTo(to); if (len < 1e-3) return f;
+    _fo.copy(from).applyMatrix4(q.inv); _fb.min.copy(q.half).negate(); _fb.max.copy(q.half);
+    if (_fb.containsPoint(_fo)) return f;  // (Voss at the table stands under it)
+    _fd.copy(to).applyMatrix4(q.inv).sub(_fo).normalize(); _fr.set(_fo, _fd);
+    if (_fr.intersectBox(_fb, _fh2)) f = Math.min(f, _fh2.distanceTo(_fo) / len);
+    return f;
+  }
+
+  // the lens: each shot type has its focal length (35 mm equivalent on the long side of the screen, 24-35 mm; a
+  // portrait phone a little wider), eased between shots; the page's own lens (resize) comes back for the map
+  const LENS_MM = { station: 28, closeup: 35, ots: 30, low: 26, orbit: 28, crane: 26, follow: 28, dolly: 30, place: 28, wide: 24 };
+  const lens = { fov: 0, set: -1, base: 55, from: 0, to: 0 };
+  function fovFor(mm) {
+    const tall = camera.aspect < 1, f = tall ? 24 + (mm - 24) * 0.6 : mm, half = Math.atan(18 / f);
+    return 2 * Math.atan(tall ? Math.tan(half) : Math.tan(half) / camera.aspect) * 180 / Math.PI;
+  }
+  function setFov(f) { if (Math.abs(camera.fov - f) > 0.02) { camera.fov = f; camera.updateProjectionMatrix(); } lens.fov = f; lens.set = camera.fov; }
+  // how far away a shot must be to fill `fill` of the screen's height with `size` metres of the subject
+  function frameDist(size, fill, mm) { return size / (2 * Math.tan(fovFor(mm) * Math.PI / 360) * fill); }
+
+  // the characters' eye height (a fraction of the drawn height: the faces are what the shots are about)
+  const EYE = { voss: 0.72, pip: 0.68, nyx: 0.62, rook: 0.84, mote: 0.5, jet: 0.72 };
+  function eyeOf(a, out) { out.copy(a.group.position); out.y += a.height * (EYE[a.key] || 0.7); return out; }
+  // the angle slots round a character, from its facing (radians; the planner's angle picks one, the operator checks
+  // it is clear and otherwise turns to the nearest clear side): three-quarter fronts for the faces, the shoulders
+  // from behind for over-the-shoulder
+  const OFF = { closeup: [0.45, -0.45, 0.85, -0.85, 0.2, -0.2], low: [0.6, -0.6, 1.05, -1.05, 0.3, -0.3],
+                orbit: [1.25, -1.25, 0.95, -0.95, 1.5, -1.5], crane: [0.55, -0.55, 0.95, -0.95, 0.25, -0.25],
+                ots: [2.75, -2.75, 2.5, -2.5, 2.92, -2.92] };
+  const FALLBACK = { ots: "closeup", crane: "closeup", low: "closeup", orbit: "closeup", closeup: "station", station: "closeup" };
+  // the shot in progress (one record, reused): its subject, type, side, the move's parameters, when its own move
+  // starts (after the flight) and how long it lasts
+  const RUN = { seq: -1, a: null, place: null, g: "", side: 1, az: 0, sweep: 0, d0: 2, d1: 2, y0: 1.6, y1: 1.6, ly: 0, lf: 0,
+                mag: 0, t0: 0, dur: 6, mm: 28, clear: 1, lastT: 0, rig: null, wide: false, cutAt: -1e9 };
+  const _eye = V3(0, 0, 0), _fw = V3(0, 0, 0), _sd = V3(0, 0, 0), _pt = V3(0, 0, 0), _lq = V3(0, 0, 0);
+  const _live = { pos: V3(0, 0, 0), look: V3(0, 0, 0) }, _dst = { pos: V3(0, 0, 0), look: V3(0, 0, 0) };
+  function ease(u) { return u <= 0 ? 0 : u >= 1 ? 1 : u * u * (3 - 2 * u); }
+  function progressAt(t) { return ease((t - RUN.t0) / Math.max(1, RUN.dur)); }
+  function posePos(a, az, e, out) {  // a shot round a character: the camera at progress e of the move
+    const base = a.group.position, d = lerp(RUN.d0, RUN.d1, e), ang = az + RUN.sweep * e;
+    return out.set(base.x + Math.sin(ang) * d, base.y + lerp(RUN.y0, RUN.y1, e), base.z + Math.cos(ang) * d);
+  }
+  function poseLook(a, out) {
+    eyeOf(a, out); out.y += RUN.ly;
+    if (RUN.lf) { out.x += Math.sin(a.yawS) * RUN.lf; out.z += Math.cos(a.yawS) * RUN.lf; }  // over the shoulder: what is in front of them
+    return out;
+  }
+  function poseClear(a, az) {  // the whole move is clear of the walls and the furniture
+    eyeOf(a, _eye);
+    for (let k = 0; k <= 2; k++) { posePos(a, az, k / 2, _pt); if (clearTo(_eye, _pt) < 0.985) return false; }
+    return true;
+  }
+  function shape(a, g, slot) {  // the move's parameters for a shot type on a character (metres above its floor)
+    const h = a.height, eyeH = h * (EYE[a.key] || 0.7), mm = LENS_MM[g] || 28;
+    RUN.g = g; RUN.mm = mm; RUN.sweep = 0; RUN.ly = 0; RUN.lf = 0;
+    if (g === "closeup") {  // the face readable (1.2-2.7 m: a big one further), at the eye line, a slow push-in and drift
+      const S = 0.75 * h + 0.3, d = clamp(frameDist(S, 0.8, mm), 1.2 + 0.15 * h, 2.2 + 0.2 * h);  // (a big one from further)
+      RUN.d0 = d * 1.1; RUN.d1 = d * 0.9; RUN.y0 = RUN.y1 = eyeH + 0.04; RUN.sweep = 0.12 * RUN.side; RUN.ly = -0.08 * S;
+    } else if (g === "low") {  // up at the character from knee height, sliding sideways
+      const S = 1.1 * h + 0.25, d = clamp(frameDist(S, 0.85, mm), 1.6, 3.6);
+      RUN.d0 = d; RUN.d1 = d * 0.94; RUN.y0 = 0.35 + 0.15 * h; RUN.y1 = RUN.y0 + 0.15; RUN.sweep = 0.22 * RUN.side; RUN.ly = -0.05 * h;
+    } else if (g === "orbit") {  // a slow orbit, 30-60 degrees over the hold, towards the face
+      const S = h + 0.6, d = clamp(frameDist(S, 0.8, mm), 1.9, 4.2), off = OFF.orbit[slot % 6];
+      RUN.d0 = RUN.d1 = d; RUN.y0 = RUN.y1 = eyeH + 0.35 + 0.1 * h; RUN.sweep = -Math.sign(off) * (0.55 + 0.15 * (RUN.seq % 4)); RUN.ly = -0.22 * h;
+      RUN.mag = Math.abs(RUN.sweep);
+    } else if (g === "crane") {  // a crane down to the character (up and away on the odd angles)
+      const S = 1.1 * h + 0.4, d = clamp(frameDist(S, 0.8, mm), 1.9, 4.0), hi = Math.min(eyeH + 0.95 + 0.2 * h, 3.6), lo = eyeH + 0.15 + 0.05 * h;
+      RUN.d0 = d * 1.05; RUN.d1 = d * 0.92; RUN.y0 = slot % 2 ? lo : hi; RUN.y1 = slot % 2 ? hi : lo; RUN.sweep = 0.15 * RUN.side; RUN.ly = -0.15 * h;
+    } else if (g === "ots") {  // over the shoulder: the bench, the screens or the table in front of them in frame
+      const d = 0.75 + 0.35 * h;
+      RUN.d0 = d * 1.08; RUN.d1 = d * 0.95; RUN.y0 = RUN.y1 = eyeH + 0.2 + 0.08 * h; RUN.sweep = 0.1 * RUN.side; RUN.ly = -0.12 - 0.1 * h; RUN.lf = 1.0 + 0.5 * h;
+    }
+  }
+  function setupActor(a, ps) {
+    let g = ps.grammar;
+    if (a.walking) g = g === "dolly" ? "dolly" : "follow";
+    else if (g === "follow" || g === "dolly") g = "closeup";
+    for (let tries = 0; tries < 4; tries++) {
+      if (g === "station" && (a.state !== "home" || !SHOTS[a.homeRoom])) { if (tries) break; g = "closeup"; }
+      shape(a, g, ps.angle);
+      if (g === "station") return;
+      if (g === "follow" || g === "dolly") {  // a walker: the clearer side of them
+        eyeOf(a, _eye); walkPose(a, _dst); const f = clearTo(_eye, _dst.pos); RUN.side = -RUN.side; walkPose(a, _dst);
+        if (clearTo(_eye, _dst.pos) <= f) RUN.side = -RUN.side;
+        return;
+      }
+      const offs = OFF[g], pref = offs[ps.angle % offs.length], ots = g === "ots", yaw = a.yawS;
+      for (let shrink = 0; shrink < 2; shrink++) {
+        // the slot, its mirror, then the nearest clear side (a face shot stays in front, over-the-shoulder behind)
+        for (let k = 0; k < 18; k++) {
+          const off = k === 0 ? pref : k === 1 ? -pref : pref + (k % 2 ? 1 : -1) * Math.ceil((k - 1) / 2) * 0.28;
+          if (ots ? Math.abs(angleDiff(off, 0)) < 2.1 : Math.abs(off) > 1.8) continue;
+          if (g === "orbit") RUN.sweep = -Math.sign(off) * RUN.mag;  // (an orbit turns towards the face)
+          if (poseClear(a, yaw + off)) { RUN.az = yaw + off; return; }
+        }
+        RUN.d0 *= 0.8; RUN.d1 *= 0.8;
+      }
+      g = FALLBACK[g];
+    }
+    shape(a, "closeup", ps.angle); RUN.az = a.yawS + OFF.closeup[ps.angle % 6];  // (nothing clear: closer in, below)
+  }
+  function stationPose(a, e, out) {  // the room's own framing (the shots table above), with a slow push-in and drift
+    const S = SHOTS[a.homeRoom];
+    _lq.copy(S.look).sub(S.pos); _sd.set(_lq.z, 0, -_lq.x).normalize();
+    out.pos.copy(S.pos).addScaledVector(_lq, 0.1 * e).addScaledVector(_sd, (e - 0.5) * 0.35 * RUN.side); out.look.copy(S.look);
+  }
+  function walkPose(a, out) {  // a walker: ahead and beside, facing back (follow), or beside, travelling along (dolly)
+    const base = a.group.position, h = a.height, eyeH = h * (EYE[a.key] || 0.7);
+    _fw.set(Math.sin(a.yawS), 0, Math.cos(a.yawS)); _sd.set(_fw.z, 0, -_fw.x); eyeOf(a, out.look);
+    if (RUN.g === "follow") {
+      out.pos.copy(base).addScaledVector(_fw, 1.45 + 0.5 * h).addScaledVector(_sd, RUN.side * (0.55 + 0.1 * h)); out.pos.y = base.y + Math.max(1.3, eyeH + 0.32 + 0.1 * h);
+      out.look.addScaledVector(_fw, 0.1); out.look.y -= 0.08 * h;
+    } else {
+      out.pos.copy(base).addScaledVector(_sd, RUN.side * (1.9 + 0.4 * h)).addScaledVector(_fw, 0.6); out.pos.y = base.y + Math.max(1.35, eyeH + 0.35);  // (over the rails)
+      out.look.addScaledVector(_fw, camera.aspect < 1 ? 0.15 : 0.45);  // (a narrow phone screen: the walker stays in frame)
+    }
+  }
+  function actorPose(a, t, out) {
+    const e = progressAt(t);
+    if (RUN.g === "station") stationPose(a, e, out);
+    else if (RUN.g === "follow" || RUN.g === "dolly") walkPose(a, out);
+    else { posePos(a, RUN.az, e, out.pos); poseLook(a, out.look); }
+    return out;
+  }
+  // the places' rigs: three per place, each a move from p0 to p1 (through pm for an arc) while the look goes l0 -> l1
+  function rigOf(F, p0, l0, p1, l1, pm) {
+    return { p0: F.at(p0[0], p0[1], p0[2]), l0: F.at(l0[0], l0[1], l0[2]), p1: F.at(p1[0], p1[1], p1[2]), l1: F.at(l1[0], l1[1], l1[2]), pm: pm ? F.at(pm[0], pm[1], pm[2]) : null };
+  }
+  const RIGS = {
+    arrival: [null,  // the pack's arrival (the arrival shot above, drifting)
+              rigOf(WF, [0.1, 1.5, 9.0], [0, 1.1, 0], [0.3, 3.2, 12.6], [0, 1.0, 0]),  // a crane up and back: the courtyard through the arch
+              rigOf(WF, [0, 2.5, 19.6], [0, 1.2, 2.0], [0, 2.2, 15.4], [0, 1.1, 1.0])],  // from the arrival pad, down the bridge
+    overhead: [rigOf(WF, [-4.0, 5.2, 7.0], [0, 1.0, -0.3], [-2.0, 3.0, 4.6], [0, 1.0, -0.3]),  // a crane down into the courtyard
+               rigOf(WF, [2.4, 5.6, -7.6], [0, 1.0, 0.5], [1.8, 3.2, -4.8], [0, 1.0, 0.5]),  // from over the observatory steps
+               rigOf(WF, [5.6, 4.6, 3.0], [0, 1.0, 0], [1.2, 4.2, 6.4], [0, 1.0, 0], [4.4, 4.5, 5.8])],  // a high orbit segment
+    courtyard: [rigOf(WF, [3.2, 1.9, 3.0], [0, 1.0, -0.2], [-3.0, 1.9, 3.1], [0, 1.0, 0.2], [0.2, 1.95, 4.4]),  // an orbit round the table
+                rigOf(WF, [4.6, 1.3, -1.2], [0, 1.1, 0], [3.0, 1.5, -0.6], [-0.4, 1.0, 0.2]),  // a low push-in from the den side
+                rigOf(WF, [-2.5, 3.4, -5.0], [0, 1.0, 0], [-2.0, 2.0, -3.6], [0, 1.0, 0])],  // a crane from the steps
+    bridge: [rigOf(WF, [-1.0, 2.2, 13.2], [14, 2.0, -6], [0.8, 2.0, 11.8], [12, 2.0, -6]),  // across the bridge, the den and the islands beyond
+             rigOf(WF, [-0.6, 2.0, 13.5], [-0.3, 1.0, -0.5], [-0.6, 2.0, 9.0], [-0.45, 1.0, -0.2]),  // a dolly in, to the table
+             rigOf(WF, [0.6, 1.0, 14.0], [0, 2.0, 4.0], [0.4, 1.2, 12.8], [-0.2, 1.6, 2.0])],  // low, the courtyard through the brass arch
+    telescope: [rigOf(OB2, [-2.6, 2.1, 1.6], [0.6, 1.4, -1.2], [3.0, 2.1, 1.4], [0.6, 1.4, -1.2], [0.4, 2.2, 2.8]),  // an orbit
+                rigOf(OB2, [-1.4, 3.6, 2.6], [0.6, 1.7, -1.2], [-1.0, 1.9, 1.6], [0.6, 1.3, -1.2]),  // a crane down
+                rigOf(OB2, [2.2, 0.9, 0.6], [0.6, 2.0, -1.2], [1.6, 1.1, 0.2], [0.4, 2.3, -1.3])],  // low, up at the scope and the dome
+    walkway: [rigOf(WF, [19.4, 1.85, 12.0], [21.0, 1.1, 2.0], [19.4, 1.85, 4.0], [23.0, 1.6, -1.5]),  // a dolly north to the dock
+              rigOf(WF, [19.6, 1.8, -4.0], [20.5, 1.0, 5.0], [19.6, 1.8, 3.0], [22.5, 1.0, 5.5]),  // a dolly south to the kiosk
+              rigOf(WF, [18.0, 4.0, 9.0], [19.5, 0.8, 3.0], [18.9, 2.2, 7.0], [21.5, 1.0, 1.5])],  // a crane over the walkway
+    airship: [rigOf(WF, [20.4, 1.3, 1.2], [26.5, 2.4, -1.6], [21.4, 1.5, 0.2], [26.5, 2.4, -1.6]),  // a low push-in from the walkway
+              rigOf(WF, [21.0, 2.4, -0.2], [26.5, 2.2, -1.5], [22.2, 2.3, -0.6], [26.8, 2.4, -1.5]),  // along the pier
+              rigOf(WF, [22.3, 1.2, -0.2], [25.5, 1.8, -1.8], [22.0, 2.9, 0.8], [27.0, 2.6, -1.5])],  // a crane up from the console
+    kiosk: [rigOf(WF, [19.6, 1.8, 2.7], [23.0, 1.0, 5.4], [20.8, 1.55, 3.6], [23.2, 1.1, 5.3]),  // a push-in to the counter
+            rigOf(WF, [21.0, 1.7, 8.9], [23.2, 1.2, 5.0], [21.6, 1.6, 7.6], [23.2, 1.2, 5.0]),  // along the counter from the south
+            rigOf(WF, [21.4, 1.35, 4.0], [23.3, 1.3, 5.2], [21.8, 1.4, 4.6], [23.3, 1.25, 5.6])],  // low over the counter top
+    vaultsign: [rigOf(VT2, [1.9, 1.7, 2.2], [0.4, 1.3, -0.9], [1.4, 2.4, 1.0], [0.9, 3.3, -2.9]),  // a crane up from the desk to the sign
+                rigOf(VT2, [-1.2, 2.3, 3.0], [0.9, 3.4, -2.9], [-0.6, 2.4, 1.6], [0.9, 3.4, -2.9]),  // a push from the door
+                rigOf(VT2, [-1.6, 0.9, 1.4], [0.9, 2.2, -2.7], [-1.2, 1.1, 0.8], [0.9, 3.2, -2.9])],  // low, up at the door and the sign
+    shelves: [rigOf(AR2, [-1.8, 1.7, 0.9], [-2.4, 1.6, -2.69], [1.8, 1.7, 0.9], [2.4, 1.6, -2.69]),  // a dolly across the shelves
+              rigOf(AR2, [0.6, 1.5, 1.2], [-1.3, 0.8, -1.5], [0.1, 1.35, 0.4], [-1.3, 0.8, -1.5]),  // a push-in to the bell
+              rigOf(AR2, [1.4, 3.6, 1.8], [-1.0, 1.2, -1.6], [0.8, 1.9, 1.0], [-1.4, 0.9, -1.5])],  // a crane down
+    bench: [rigOf(WS2, [1.8, 1.4, 0.9], [0, 0.95, -0.7], [-1.6, 1.4, 0.9], [0, 0.95, -0.7], [0.2, 1.3, 1.5]),  // an orbit over the bench
+            rigOf(WS2, [0.9, 1.6, 2.6], [0, 0.9, -0.7], [0.6, 1.35, 1.1], [0, 0.9, -0.7]),  // a push-in from the door
+            rigOf(WS2, [-1.6, 3.5, 1.8], [0, 1.0, -0.8], [-1.0, 1.8, 1.0], [0, 1.0, -0.8])],  // a crane down
+    screens: [rigOf(DN2, [2.2, 1.65, -0.4], [0, 1.2, -2.1], [-2.2, 1.65, -0.4], [0, 1.2, -2.1]),  // a dolly along the screens
+              rigOf(DN2, [0.8, 1.7, 2.4], [0, 1.2, -2.0], [0.5, 1.5, 0.9], [0, 1.2, -2.0]),  // a push-in from the door
+              rigOf(DN2, [-1.9, 1.0, -1.0], [0.4, 1.3, -2.0], [-1.4, 1.05, -0.6], [0.4, 1.3, -2.0])],  // low across the desk
+  };
+  function placePose(R, t, out) {
+    const e = progressAt(t), v = R[PLANNER.shot.angle % R.length];
+    if (!v) { const s = arrivalShot(t); out.pos.copy(s.pos).lerp(s.look, 0.08 * e); out.look.copy(s.look); return out; }  // (pushing in)
+    const w = 1 - e;
+    if (v.pm) out.pos.copy(v.p0).multiplyScalar(w * w).addScaledVector(v.pm, 2 * w * e).addScaledVector(v.p1, e * e);
+    else out.pos.lerpVectors(v.p0, v.p1, e);
+    out.look.lerpVectors(v.l0, v.l1, e);
+    return out;
+  }
+  function shotPose(t, out) {  // the planned shot right now (its own move; still at its first frame during the flight)
+    if (RUN.a) return actorPose(RUN.a, t, out);
+    if (RUN.rig) return placePose(RUN.rig, t, out);
+    const s = arrivalShot(t); out.pos.copy(s.pos); out.look.copy(s.look); return out;
+  }
+
+  // ------------------------------------------------------------- the flights between shots
+  // The drone flies the cast's own walkways at drone height (through the doorways, up the observatory steps; the
+  // places round the table left out), cut short wherever a straight line is clear, its corners rounded; it never
+  // climbs over a wall. Where there is no safe way, or the way is long, the director cuts instead.
+  const FLY_H = 2.05, FLY_MAX = 26;
+  const CN = [], CN_AT = {};
+  Object.keys(NAV).forEach(function (k) { if (k.indexOf("tb") === 0) return; CN_AT[k] = CN.length; CN.push({ p: NAV[k].p.clone().setY(NAV[k].p.y + FLY_H), edges: [] }); });
+  Object.keys(CN_AT).forEach(function (k) { NAV[k].edges.forEach(function (e) { if (CN_AT[e] != null) CN[CN_AT[k]].edges.push(CN_AT[e]); }); });
+  function hop(id, p, links) {  // a camera-only waypoint (open air: no one walks there)
+    CN_AT[id] = CN.length; CN.push({ p: p, edges: [] });
+    links.forEach(function (k) { if (CN_AT[k] == null) return; CN[CN_AT[id]].edges.push(CN_AT[k]); CN[CN_AT[k]].edges.push(CN_AT[id]); });
+  }
+  hop("c0", V3(7.4, FLY_H, 2.6), ["e45", "e340"]); hop("c1", V3(12.6, FLY_H, 3.6), ["c0", "vtX", "dnSo"]);  // beside the den and the vault
+  const cnDist = new Float64Array(CN.length), cnPrev = new Int16Array(CN.length), cnDone = new Uint8Array(CN.length), cnRoute = [];
+  function nearestNode(p) {  // the closest walkway point in plain view of p
+    let best = -1, bd = Infinity;
+    for (let i = 0; i < CN.length; i++) { const d = CN[i].p.distanceToSquared(p); if (d < bd && flyClear(p, CN[i].p)) { bd = d; best = i; } }
+    return best;
+  }
+  function routeNodes(s, e) {  // the shortest walkway route (node indices into cnRoute), or false
+    cnDist.fill(Infinity); cnPrev.fill(-1); cnDone.fill(0); cnDist[s] = 0;
+    for (;;) {
+      let u = -1, bu = Infinity; for (let i = 0; i < CN.length; i++) if (!cnDone[i] && cnDist[i] < bu) { bu = cnDist[i]; u = i; }
+      if (u < 0 || u === e) break; cnDone[u] = 1;
+      const ed = CN[u].edges;
+      for (let j = 0; j < ed.length; j++) { const v = ed[j], d = bu + CN[u].p.distanceTo(CN[v].p); if (d < cnDist[v]) { cnDist[v] = d; cnPrev[v] = u; } }
+    }
+    if (cnDist[e] === Infinity) return false;
+    cnRoute.length = 0; for (let v = e; v >= 0; v = cnPrev[v]) cnRoute.push(v); cnRoute.reverse(); return true;
+  }
+  const WP = [], FLY = { on: false, start: 0, dur: 2, len: 0, n: 0, pts: [], cum: new Float64Array(160), fromLook: V3(0, 0, 0), fov0: 55, i: 0, see: 1 };
+  for (let i = 0; i < 40; i++) WP.push(V3(0, 0, 0));
+  for (let i = 0; i < 160; i++) FLY.pts.push(V3(0, 0, 0));
+  function addPt(p) { if (FLY.n < FLY.pts.length) FLY.pts[FLY.n++].copy(p); }
+  function planFlight(from, to) {  // the way from the drone to the next shot, sampled into FLY.pts; false: cut instead
+    let n = 0; WP[n++].copy(from);
+    if (!flyClear(from, to)) {
+      const s = nearestNode(from), e = nearestNode(to);
+      if (s < 0 || e < 0 || !routeNodes(s, e)) return false;
+      for (let i = 0; i < cnRoute.length && n < WP.length - 1; i++) WP[n++].copy(CN[cnRoute[i]].p);
+    }
+    WP[n++].copy(to);
+    let out = 1, i = 0;  // string-pull: keep only the turns a straight line cannot skip
+    while (i < n - 1) { let j = n - 1; while (j > i + 1 && !flyClear(WP[i], WP[j])) j--;
+      if (j === i + 1 && !flyClear(WP[i], WP[j])) return false;
+      WP[out++].copy(WP[j]); i = j; }
+    n = out;
+    let len = 0; for (let k = 1; k < n; k++) len += WP[k].distanceTo(WP[k - 1]);
+    if (len > FLY_MAX) return false;
+    // sample, the corners rounded (a quadratic curve within r of each turn)
+    FLY.n = 0; addPt(WP[0]);
+    for (let k = 1; k < n - 1; k++) {
+      const a = WP[k - 1], c = WP[k], b = WP[k + 1], r = Math.min(1.3, 0.45 * c.distanceTo(a), 0.45 * c.distanceTo(b));
+      _lq.copy(a).sub(c).setLength(r).add(c); _pt.copy(b).sub(c).setLength(r).add(c);  // where the curve leaves and rejoins the lines
+      for (let m = 0; m <= 6; m++) { const u = m / 6, w = 1 - u;
+        _eye.copy(_lq).multiplyScalar(w * w).addScaledVector(c, 2 * w * u).addScaledVector(_pt, u * u); addPt(_eye); }
+    }
+    addPt(WP[n - 1]);
+    FLY.cum[0] = 0; for (let k = 1; k < FLY.n; k++) FLY.cum[k] = FLY.cum[k - 1] + FLY.pts[k].distanceTo(FLY.pts[k - 1]);
+    FLY.len = FLY.cum[FLY.n - 1]; FLY.i = 0;
+    return true;
+  }
+  function flyPoint(s, out) {  // the point s metres along the flight
+    let i = Math.min(FLY.i, FLY.n - 2); while (i > 0 && FLY.cum[i] > s) i--; while (i < FLY.n - 2 && FLY.cum[i + 1] < s) i++;
+    const seg = Math.max(1e-6, FLY.cum[i + 1] - FLY.cum[i]); FLY.i = i;
+    return out.lerpVectors(FLY.pts[i], FLY.pts[i + 1], clamp((s - FLY.cum[i]) / seg, 0, 1));
+  }
+  function cruise(u) {  // speed up over the first third, cruise, slow down over the last third (distance 0..1)
+    const a = 0.3;
+    if (u < a) return u * u / (2 * a * (1 - a));
+    if (u > 1 - a) return 1 - (1 - u) * (1 - u) / (2 * a * (1 - a));
+    return (u - a / 2) / (1 - a);
+  }
+  const _ahead = V3(0, 0, 0), _fp = V3(0, 0, 0);
+  function flyPose(t, dt, out) {  // during a flight: along the way, the look panning from the last subject to the next
+    const u = clamp((t - FLY.start) / FLY.dur, 0, 1), s = cruise(u) * FLY.len;
+    flyPoint(s, _fp);
+    const k = FLY.i; flyPoint(Math.min(FLY.len, s + 3), _ahead); _ahead.y -= 0.35; FLY.i = k;
+    // the pan from the last subject to the next stays at their height; while a wall hides it, the drone looks
+    // where it flies instead (out holds the next shot: its look and its place take over at the end)
+    _lq.copy(FLY.fromLook).lerp(out.look, ease(u));
+    FLY.see += ((blocked(_fp, _lq) > 0.95 ? 1 : 0) - FLY.see) * (1 - Math.exp(-dt * 5));
+    _ahead.lerp(_lq, FLY.see);
+    out.look.lerp(_ahead, 1 - smoothstep(u, 0.7, 1));
+    out.pos.lerp(_fp, 1 - smoothstep(u, 0.75, 1));  // (so a moving subject is met where it is)
+    return u >= 1;
+  }
+
+  // ------------------------------------------------------------- the director: plan, then fly or cut, then film
+  const PLACE_AT = {};
+  const PLANNER = makePlanner(ACTOR_KEYS.map(function (k) { const p = actors[k].pos; return { id: k, room: actors[k].homeRoom, x: p.x, z: p.z }; }),
+    LIVE_PLACES.map(function (p) { const R = RIGS[p.id], v = R[0] || R[1]; PLACE_AT[p.id] = p;
+      return { id: p.id, room: p.room, wide: p.wide, x: v.l0.x, z: v.l0.z, angles: R.length }; }),
+    { alias: { observatory: "telescope" } });
+  const liveEl = el("live");
+  // what the planner sees (filled every plan step, reused: nothing allocated)
+  const LIVE_STATE = { actors: {}, focus: null }, LIVE_FOCUS = { actor: "", kind: "", start: 0, until: 0 };
+  ACTOR_KEYS.forEach(function (k) { LIVE_STATE.actors[k] = { room: "", x: 0, z: 0, walking: false, carrying: false, speaking: false, working: false, thinking: false, visiting: false }; });
+  function readLive() {
+    for (let i = 0; i < ACTOR_KEYS.length; i++) {
+      const a = actors[ACTOR_KEYS[i]], s = LIVE_STATE.actors[a.key], w = worstStatus(a.members);
+      s.room = a.room; s.x = a.pos.x; s.z = a.pos.z; s.walking = a.walking; s.carrying = !!a.carrying; s.speaking = a.speaking;
+      s.visiting = a.state === "visit"; s.working = a.st.working; s.thinking = a.state === "home" && (w === "blocked" || w === "waiting");
+    }
+    if (focus && simT < focus.until) {
+      LIVE_FOCUS.actor = focus.actor.key; LIVE_FOCUS.kind = focus.kind || "speak"; LIVE_FOCUS.start = focus.start; LIVE_FOCUS.until = focus.until;
+      LIVE_STATE.focus = LIVE_FOCUS;
+    } else LIVE_STATE.focus = null;
+  }
+  function liveShot() { return _live; }  // (the drone already flies it: the camera follows it exactly)
+  function startShot(reframe) {  // a new planned shot (or, reframe, the same subject's shot set up again: they set off)
+    const ps = PLANNER.shot, a = actors[ps.subject] || null;
+    RUN.seq = ps.seq; RUN.a = a; RUN.rig = a ? null : RIGS[ps.subject] || null; RUN.wide = !a && !!PLACE_AT[ps.subject] && !!PLACE_AT[ps.subject].wide;
+    RUN.side = ps.angle % 2 ? -1 : 1; RUN.clear = 1; RUN.t0 = simT; RUN.dur = reframe ? Math.max(3, ps.start + ps.hold - simT) : ps.hold;
+    if (a) setupActor(a, ps); else { RUN.g = RUN.wide ? "wide" : "place"; RUN.mm = LENS_MM[RUN.g]; }
+    shotKey = "live"; shotFn = liveShot; tween = null;
+    shotPose(simT, _dst);
+    let hard = !reframe && (ps.hard || cam.pos.lengthSq() === 0);
+    // (a fresh event right after a cut flies there instead: two cuts in a breath would flicker)
+    if (hard && ps.event && simT - RUN.cutAt < 1.5 && cam.pos.lengthSq() > 0 && planFlight(cam.pos, _dst.pos)) hard = false;
+    else if (!hard && !planFlight(cam.pos, _dst.pos)) { hard = true; if (!reframe) PLANNER.cutHard(); }
+    if (hard) { FLY.on = false; cam.pos.copy(_dst.pos); cam.look.copy(_dst.look); setFov(fovFor(RUN.mm)); RUN.cutAt = simT; }
+    else {
+      FLY.on = true; FLY.start = simT; FLY.dur = clamp(0.9 + FLY.len / 7, 1.2, 4.0); FLY.fromLook.copy(cam.look);
+      FLY.fov0 = lens.fov; FLY.see = 1; RUN.t0 = simT + FLY.dur; if (!reframe) PLANNER.extend(FLY.dur);
+    }
+    if (!reframe) renderCard();
+  }
+  let nextPlanAt = 0, lastFocusStart = -1;
+  function liveDirector() {
+    const dt = clamp(simT - RUN.lastT, 0, 0.1); RUN.lastT = simT;
+    if (camera.fov !== lens.set) { lens.base = camera.fov; lens.fov = camera.fov; lens.set = camera.fov; }  // (resized)
+    const p = PLANNER.pinned(simT); if (p !== pinned) { pinned = p; nextPlanAt = 0; renderChips(); renderCard(); }  // (a pin timed out)
+    // an event's walk (a hand-off, Jet's carry) stays on air until they arrive (the arrival keeps it for the drop)
+    if (focus && focus.actor.state === "out" && !focus.actor.ambient && focus.until < simT + 1) focus.until = simT + 1;
+    if (focus && simT >= focus.until) focus = null;
+    renderLive();
+    if (pinned === "map") {  // the overview (the page's own map shot and lens)
+      if (shotKey !== "map") { FLY.on = false; cut("map", mapShot); }
+      setFov(lens.fov + (lens.base - lens.fov) * Math.min(1, dt * 3)); PLANNER.plan(simT, LIVE_STATE); return;
+    }
+    const fresh = !!focus && focus.start !== lastFocusStart;  // a fresh event is planned at once
+    if (simT >= nextPlanAt || fresh || shotKey !== "live") {
+      nextPlanAt = simT + PLANNER.cfg.step; if (focus) lastFocusStart = focus.start;
+      readLive(); PLANNER.plan(simT, LIVE_STATE);
+    }
+    if (shotKey !== "live" || PLANNER.shot.seq !== RUN.seq) startShot(false);
+    else if (RUN.a && RUN.a.walking && RUN.g !== "follow" && RUN.g !== "dolly" && !FLY.on) startShot(true);  // (they set off: follow)
+    shotPose(simT, _live);
+    if (RUN.a && RUN.g !== "station" && !FLY.on) {  // never through a wall or the furniture: if the subject moved behind one, come in closer
+      eyeOf(RUN.a, _eye); const f = clearTo(_eye, _live.pos), want = f < 0.999 ? clamp(f - 0.1, 0.35, 1) : 1;
+      RUN.clear += (want - RUN.clear) * (1 - Math.exp(-dt * (want < RUN.clear ? 9 : 2)));
+      if (RUN.clear < 0.999) _live.pos.sub(_eye).multiplyScalar(RUN.clear).add(_eye);
+      const floor = RUN.a.group.position.y + 0.45; if (_live.pos.y < floor) _live.pos.y = floor;
+    }
+    const target = fovFor(RUN.mm);
+    if (FLY.on) {
+      const u = clamp((simT - FLY.start) / FLY.dur, 0, 1);
+      setFov(lerp(FLY.fov0, target, ease(u)));
+      if (flyPose(simT, dt, _live)) FLY.on = false;
+    } else setFov(lens.fov + (target - lens.fov) * Math.min(1, dt * 2.5));
+    cam.pos.copy(_live.pos); cam.look.copy(_live.look);
+  }
+  function liveActor() { return pinned === "map" ? null : RUN.a; }  // who the broadcast is on (their words come up)
+  // the card follows the broadcast: the subject (a character, or the room a place shows)
+  const _subj = { actor: null, room: null };
+  function liveSubject() {
+    const ps = PLANNER.shot, a = actors[ps.subject];
+    _subj.actor = a || null; _subj.room = a ? (a.walking ? null : a.room) : PLACE_AT[ps.subject] ? PLACE_AT[ps.subject].room : null;
+    return _subj;
+  }
+  // the LIVE tag: its own words are fixed ("LIVE", "pinned · back to live in N s"); everything else on the card is data
+  let liveShown = -2;  // (the seconds on the tag, -1 for LIVE: it is rewritten only when they change)
+  function renderLive() {
+    const n = pinned ? Math.ceil(PLANNER.pinLeft(simT)) : -1;
+    if (n === liveShown) return;
+    liveShown = n; liveEl.textContent = n < 0 ? "LIVE" : "pinned · back to live in " + n + " s"; liveEl.className = n < 0 ? "" : "pinned";
+  }
+  function togglePin(k) { if (pinned === k) PLANNER.unpin(); else PLANNER.pin(k, simT); pinned = PLANNER.pinned(simT); nextPlanAt = 0; renderChips(); renderCard(); renderLive(); }
+  function goLive() { PLANNER.unpin(); pinned = null; nextPlanAt = 0; renderChips(); renderCard(); renderLive(); }
+  liveEl.onclick = goLive;
+  if (params.get("debug") === "1") window.__world = { planner: PLANNER, shot: PLANNER.shot, run: RUN, fly: FLY, cam: cam, camera: camera, state: LIVE_STATE, blockers: blockers,
+    pinned: function () { return pinned; },
+    force: function (subject, grammar, angle, hold, fly) {  // (the screenshot harness: film one subject in one way now)
+      const s = PLANNER.shot; s.seq += 1; s.subject = subject; s.grammar = grammar; s.angle = angle || 0; s.start = simT; s.hold = hold || 30;
+      s.hard = !fly; s.event = false; s.pinned = false;
+      PLANNER.subjects.forEach(function (q) { if (q.id === subject) q.seen = simT; });
+    } };
+
   // ============================================================= THE LOOP (paused while the tab is hidden)
   let simT = 0, last = performance.now(), raf = 0, started = false, resizeNext = false;
   function frame(now) {
@@ -3423,7 +3973,8 @@ def render_world_html(settings: Settings) -> str:
         f'<script id="rooms" type="application/json">{_json_block(WORLD_ROOMS)}</script>\n'
         f'<script id="models" type="application/json">{_json_block(models_on_disk())}</script>\n'
         '<div id="labels"></div>\n<div id="bubbles"></div>\n<div id="drop"></div>\n'
-        '<div id="card"><div class="room">NIGHT SHIFT: SKYPORT</div><div class="who">Loading…</div>'
+        '<div id="card"><div class="room"><b id="live">LIVE</b><span class="name">NIGHT SHIFT: SKYPORT</span></div>'
+        '<div class="who">Loading…</div>'
         '<div class="rows"></div><span id="loading" hidden></span></div>\n'
         '<div id="chips"></div>\n'
         '<p id="boot">Loading the 3D world… It needs a browser with JavaScript modules and WebGL; '
