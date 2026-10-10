@@ -72,6 +72,8 @@ LOOKBACK_S = 24 * 3600.0  # entry windows start at commence - 24 h
 STALENESS_S = float(L6.STALENESS_S)  # 30 min (lab 6)
 METHOD = "mult"  # lab 6's declared no-vig method
 WORKERS = int(os.environ.get("LAB7_WORKERS", "4"))
+PLACEBO_DRAWS_ = C.PLACEBO_DRAWS  # 200
+PLACEBO_BUDGET = 40_000_000  # PREREG §6: counterparts (draws x real trips) for the reading-only placebos
 
 
 # --------------------------------------------------------------------------------------------- cells
@@ -336,7 +338,7 @@ def extra_readings(f: pd.DataFrame, B: int = C.BOOTSTRAP_B) -> dict[str, Any]:
 
 
 def evaluate(split: str, cells: list[Cell], placebo_keys: set[str] | None, B: int = C.BOOTSTRAP_B,
-             workers: int = WORKERS, keep_trips: set[str] | None = None) -> tuple[list[dict[str, Any]], dict]:
+             workers: int = WORKERS) -> tuple[list[dict[str, Any]], dict, dict[str, pd.DataFrame]]:
     """Walk every cell over the split's markets (one tape in memory per worker), then the random-entry placebo for
     the cells in ``placebo_keys`` (None = the cells that clear PLAN §7 conditions 1-5)."""
     global _SPECS, _CELLS
@@ -365,7 +367,17 @@ def evaluate(split: str, cells: list[Cell], placebo_keys: set[str] | None, B: in
         s = C.summarize(f, split, missed[c.key], B=B)
         out.append({"cell": c.key, "selectable": c.selectable, "m": c.m, "exits": c.exits.__dict__, "summary": s,
                     "checks": C.bar_checks(s), "extra": extra_readings(f, B), "_frame": f})
-    want = {c["cell"] for c in out if all(c["checks"].values())} if placebo_keys is None else set(placebo_keys)
+    decide = {c["cell"] for c in out if all(c["checks"].values())}  # PLAN §7: cells clearing conditions 1-5
+    want = decide | (set(placebo_keys) if placebo_keys is not None else set())
+    cost = PLACEBO_DRAWS_ * sum(c["summary"]["n"] for c in out if c["cell"] in want)
+    counts["placebo_counterparts_requested"] = int(cost)
+    if cost > PLACEBO_BUDGET:
+        # PREREG §6 fallback (reading-only placebos): the cells clearing 1-5, plus the six selectable cells with the
+        # highest CI95 lower bounds
+        ranked = sorted((c for c in out if c["selectable"] and c["summary"]["n"]),
+                        key=lambda c: (-c["summary"]["ci95"][0], -c["summary"]["mean_net_us"], c["cell"]))
+        want = decide | {c["cell"] for c in ranked[:6]}
+        counts["placebo_fallback"] = True
     t1 = time.time()
     jobs: dict[int, list[tuple[str, int]]] = {}
     for key in sorted(want):
@@ -380,14 +392,20 @@ def evaluate(split: str, cells: list[Cell], placebo_keys: set[str] | None, B: in
         c["placebo"] = (C.placebo_reading(blocks[c["cell"]], s["mean_net_us"]) if c["cell"] in want
                         and s["mean_net_us"] is not None else None)
         c["bar"] = C.bar(s, c["placebo"])
-        if keep_trips and c["cell"] in keep_trips and len(c["_frame"]):
-            OUT_DIR.mkdir(parents=True, exist_ok=True)
-            safe = c["cell"].replace("|", "_")
-            c["_frame"].to_parquet(OUT_DIR / f"{split}_{safe}.parquet", index=False, compression="zstd")
-        del c["_frame"]
+    frames = {c["cell"]: c.pop("_frame") for c in out}
     counts["placebo_s"] = round(time.time() - t1, 1)
     counts["placebo_cells"] = len(want)
-    return out, counts
+    return out, counts, frames
+
+
+def save_trips(frame: pd.DataFrame, split: str, key: str) -> str | None:
+    """PLAN §9: per-trade files only for the selected, VAL and TEST cells (zstd parquet outside git)."""
+    if not len(frame):
+        return None
+    OUT_DIR.mkdir(parents=True, exist_ok=True)
+    path = OUT_DIR / f"{split}_{key.replace('|', '_')}.parquet"
+    frame.to_parquet(path, index=False, compression="zstd")
+    return str(path)
 
 
 def _fmt(v: Any, nd: int = 4) -> str:
@@ -504,15 +522,15 @@ def run_stage(stage: str, B: int = C.BOOTSTRAP_B, workers: int = WORKERS) -> dic
         raise RuntimeError("W1/PREREG.md must exist (and be final) before any return is computed")
     all_cells = grid()
     if stage == "train":
-        cells, placebo_keys, keep = all_cells, {c.key for c in all_cells if c.selectable}, None
+        cells, placebo_keys = all_cells, {c.key for c in all_cells if c.selectable}
     else:
         prev = json.loads((HERE / ("train.json" if stage == "val" else "val.json")).read_text())
         key = (prev.get("selected") or {}).get("cell")
         if not key or (stage == "test" and not prev.get("passes")):
             raise RuntimeError(f"{stage.upper()} is not run: the previous stage selected or passed no cell")
         cells = [c for c in all_cells if c.key == key]
-        placebo_keys, keep = {key}, {key}
-    res, counts = evaluate(split, cells, placebo_keys, B=B, workers=workers, keep_trips=keep)
+        placebo_keys = {key}
+    res, counts, frames = evaluate(split, cells, placebo_keys, B=B, workers=workers)
     sel_pool = [{"cell": c["cell"], "selectable": c["selectable"], "summary": c["summary"], "bar": c["bar"]}
                 for c in res]
     if stage == "train":
@@ -530,15 +548,14 @@ def run_stage(stage: str, B: int = C.BOOTSTRAP_B, workers: int = WORKERS) -> dic
     pool = [c for c in res if c["selectable"] and c["summary"]["n"]]
     best = sel_full or (max(pool, key=lambda c: (c["summary"]["ci95"][0], c["summary"]["mean_net_us"]))
                         if pool else None)
-    if chosen is not None and stage == "train":
-        # PLAN §9: per-trade file of the selected cell (re-walked once, small)
-        evaluate(split, [c for c in all_cells if c.key == chosen["cell"]], set(), B=200, workers=workers,
-                 keep_trips={chosen["cell"]})
+    trips_file = save_trips(frames[chosen["cell"]], split, chosen["cell"]) if chosen else None
+    if stage != "train" and not chosen:
+        trips_file = save_trips(frames[res[0]["cell"]], split, res[0]["cell"])  # a VAL / TEST cell, pass or fail
     n_total = C.record_runs(_ledger_rows(res, split, stage))
     doc = {"hyp": HYP, "stage": stage, "split": split, "utc": datetime.now(UTC).isoformat(timespec="seconds"),
            "plan_sha256": C.prereg_sha256(C.PLAN), "prereg_sha256": C.prereg_sha256(PREREG), "counts": counts,
            "decision": decision, "passes": passes, "selected": sel_full, "best": best, "cells": res,
-           "n_trials_total": n_total}
+           "n_trials_total": n_total, "trips_file": trips_file}
     doc["plain"] = plain_words(doc)
     (HERE / f"{stage}.json").write_text(json.dumps(doc, indent=1, sort_keys=True, default=str) + "\n")
     (HERE / f"{stage}.md").write_text(write_md(stage, doc))

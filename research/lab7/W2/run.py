@@ -96,8 +96,15 @@ TP_MODES = ("taker", "maker")
 VOL_S = 3600  # lab 5 S2's primary realized-variance window
 RATE_COM = 0.07  # polymarket.com's crypto family rate
 MIN_FILLS = 50
-PLACEBO_READING_TOP = 3  # PREREG §6: placebo readings for the 3 best selectable cells by CI95 lower bound
+PLACEBO_READING_TOP = 1  # PREREG §6: a placebo reading for the best selectable cell by CI95 lower bound (TRAIN)
 EXTRA_COLUMNS = ["cell", "sub", "symbol", "fair_sig", "fair_fill"]
+REASONS = ("tp", "fair", "sl", "time", "settle", "tp->settle", "fair->settle", "sl->settle", "time->settle")
+LEGS = ("taker", "maker", "settle")
+NUM_COLUMNS = [
+    "o", "t_signal", "p_signal", "t_entry", "p_entry", "shares", "entry_print_size", "t_trigger", "t_exit", "p_exit",
+    "late_stop", "hold_s", "fee_us", "fee_com", "fee_stress", "pnl_us", "pnl_com", "pnl_stress", "net_us", "net_com",
+    "net_stress", "fair_sig", "fair_fill",
+]
 
 
 # --------------------------------------------------------------------------------------------- cells
