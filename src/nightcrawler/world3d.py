@@ -338,7 +338,7 @@ _IMPORTMAP = json.dumps(
 
 _M_SETUP = r"""
 import * as THREE from "three";
-import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
+import { mergeGeometries, mergeVertices } from "three/addons/utils/BufferGeometryUtils.js";
 import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
 import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
@@ -394,6 +394,8 @@ function main() {
               shadows: !LITE && !slow && Math.min(W0, H0) >= 600, msaa: LITE ? 0 : 4,
               // phones: half-size prop textures (GPU memory) and fewer decorative copies (lanterns, islands)
               small: LITE || slow || Math.min(W0, H0) < 600 || (navigator.deviceMemory || 8) <= 4 };
+  // any touch screen (tablets: iPadOS reports no deviceMemory and is >= 600 px) also gets the half-size textures
+  Q.smallTex = Q.small || (navigator.maxTouchPoints || 0) > 1;
   renderer.setPixelRatio(Q.dpr);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -544,6 +546,21 @@ function main() {
     ctx.fillStyle = g; ctx.fillRect(0, 0, 64, 64);
   });
   glowTex.wrapS = glowTex.wrapT = THREE.ClampToEdgeWrapping;
+  // a lamp's halo: a bright core that falls off fast (read by its alpha: the colour of every drawn texel is white)
+  const haloTex = canvasTex(64, 64, function (ctx) {
+    const g = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+    g.addColorStop(0, "rgba(255,255,255,1)"); g.addColorStop(0.12, "rgba(255,255,255,.7)"); g.addColorStop(0.35, "rgba(255,255,255,.18)");
+    g.addColorStop(0.7, "rgba(255,255,255,.04)"); g.addColorStop(1, "rgba(255,255,255,0)");
+    ctx.fillStyle = g; ctx.fillRect(0, 0, 64, 64);
+  });
+  haloTex.wrapS = haloTex.wrapT = THREE.ClampToEdgeWrapping;
+  // book spines: gilt bands top and bottom, a title panel (no letters), on white (the instance colour tints it)
+  const spineTex = canvasTex(64, 128, function (ctx, w, h) {
+    ctx.fillStyle = grey(232); ctx.fillRect(0, 0, w, h);
+    ctx.fillStyle = "rgba(255,214,140,.95)"; [10, 18, h - 22, h - 14].forEach(function (y) { ctx.fillRect(0, y, w, 3); });
+    ctx.fillStyle = grey(70, 0.55); ctx.fillRect(10, 34, w - 20, 26); ctx.strokeStyle = "rgba(255,214,140,.9)"; ctx.lineWidth = 2; ctx.strokeRect(10, 34, w - 20, 26);
+    ctx.fillStyle = grey(40, 0.25); ctx.fillRect(0, 0, 4, h); ctx.fillRect(w - 4, 0, 4, h);
+  });
 
   // ------------------------------------------------------------- shared materials (vertex-coloured, so one per surface)
   const MAT = {
@@ -554,11 +571,12 @@ function main() {
     iron: new THREE.MeshStandardMaterial({ vertexColors: true, metalness: 0.6, roughness: 0.45, envMapIntensity: 0.9 }),
     wood: new THREE.MeshStandardMaterial({ vertexColors: true, map: woodTex, roughness: 0.5, envMapIntensity: 0.7 }),
     cloth: new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.92, side: THREE.DoubleSide, envMapIntensity: 0.4 }),
-    rock: new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.96, flatShading: true, envMapIntensity: 0.35 }),
+    rock: new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.94, envMapIntensity: 0.35 }),  // (smooth: carved rock, not facets)
     leaf: new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.7, envMapIntensity: 0.45 }),
     glass: new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: 0.04, transparent: true, opacity: 0.14, clearcoat: 1,
                                             clearcoatRoughness: 0.03, envMapIntensity: 2.2, depthWrite: false, side: THREE.DoubleSide }),
     glow: new THREE.MeshBasicMaterial({ vertexColors: true }),
+    books: new THREE.MeshStandardMaterial({ map: spineTex, roughness: 0.66, envMapIntensity: 0.5 }),
   };
   // plants sway in the wind (instanced leaves only: each instance by its own position)
   MAT.leaf.onBeforeCompile = function (sh) {
@@ -638,7 +656,7 @@ function main() {
         const m = new THREE.Mesh(geo, MAT[k]); m.receiveShadow = k !== "glow" && k !== "glass";
         m.castShadow = Q.shadows && k !== "glow" && k !== "glass" && k !== "leaf"; if (k === "glass") m.renderOrder = 2; g.add(m);
       });
-      if (standinBooks.length) g.add(instanced(paint(G.box(1, 1, 1), 0xffffff), MAT.plain, standinBooks, false));
+      if (standinBooks.length) g.add(instanced(paint(G.box(1, 1, 1), 0xffffff), MAT.books, standinBooks, false));
       buckets.clear(); saved.forEach(function (v, k) { buckets.set(k, v); }); standinBooks = null;
       scene.add(g); (STANDIN[key] = STANDIN[key] || []).push(g);
     }
@@ -751,9 +769,11 @@ function main() {
     sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.03; sun.shadow.radius = 3;
   }
   const rimFill = new THREE.DirectionalLight(0x7f8cff, 0.55); rimFill.position.set(30, 22, -40); scene.add(rimFill);
+  // a warm key on whoever the drone films (a lamp just off frame, as on a film set): faces read warm, never black
+  const keyLight = new THREE.PointLight(0xffa862, 0, 9, 1.6); scene.add(keyLight);
   const practicals = {};
   function practical(key, color, x, y, z, intensity, dist) {
-    const L = new THREE.PointLight(color, intensity, dist || 10, 2); L.position.set(x, y, z); scene.add(L);
+    const L = new THREE.PointLight(color, intensity, (dist || 10) * 1.4, 1.6); L.position.set(x, y, z); scene.add(L);
     practicals[key] = { light: L, base: intensity }; return L;
   }
 """
@@ -986,7 +1006,7 @@ _M_WORLD = r"""
     WF.add("brass", G.cyl(0.035, 0.05, 0.5, 10), [c[0], 0.25, c[1]], null, null, BRASS);
     WF.add("brass", G.tor(0.18, 0.018, 6, 22), [c[0], 0.18, c[1]], [Math.PI / 2, 0, 0], null, BRASS_DARK);
   });
-  practical("table", 0x62ffd0, 0, 2.1, 0, 16, 9);
+  practical("table", 0x8affdc, 0, 2.1, 0, 3.5, 5);  // (a restrained mint accent: the courtyard stays warm stone)
 
   // ------------------------------------------------------------- the main pedestrian bridge (the arrival), the promenade, the pad
   WF.add("pavers", G.box(3.0, 0.03, 9.2), [0, -0.015, 10.6], null, null, 0xeadcc2);
@@ -1132,11 +1152,11 @@ _M_WORLD = r"""
     F.add("brass", G.cyl(0.03 * s, 0.05 * s, 0.42 * s, 10), [x, 0.21 * s, z], null, null, BRASS);
     F.add("brass", G.cyl(0.25 * s, 0.27 * s, 0.04 * s, 18), [x, 0.03 * s, z], null, null, BRASS_DARK);
   }
-  function screenTex(kind, hue) {
+  function screenTex(kind, hue, glass) {  // glass: the holo-card look (mint and amber lines on dark green glass)
     return canvasTex(512, 320, function (ctx, w, h) {
       const r = rng(kind.length * 97 + hue.length);
-      const g = ctx.createLinearGradient(0, 0, 0, h); g.addColorStop(0, "#151a3c"); g.addColorStop(1, "#0b0f26"); ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
-      ctx.strokeStyle = "rgba(140,170,255,.12)"; ctx.lineWidth = 1; for (let x = 0; x < w; x += 32) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke(); }
+      const g = ctx.createLinearGradient(0, 0, 0, h); g.addColorStop(0, glass ? "#10302e" : "#151a3c"); g.addColorStop(1, glass ? "#06151a" : "#0b0f26"); ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+      ctx.strokeStyle = glass ? "rgba(125,255,216,.14)" : "rgba(140,170,255,.12)"; ctx.lineWidth = 1; for (let x = 0; x < w; x += 32) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke(); }
       for (let y = 0; y < h; y += 32) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke(); }
       ctx.strokeStyle = hue; ctx.fillStyle = hue; ctx.lineWidth = 3; ctx.shadowColor = hue; ctx.shadowBlur = 12;
       if (kind === "nodes") { const pts = []; for (let i = 0; i < 9; i++) pts.push([60 + r() * (w - 120), 50 + r() * (h - 100)]);
@@ -1158,8 +1178,8 @@ _M_WORLD = r"""
     });
   }
   const screens = [];
-  function screen(F, x, y, z, ry, w, h, kind, hue, tilt, k) {
-    const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: screenTex(kind, hue), color: hdr(0xffffff, k || 1.5), toneMapped: true }));
+  function screen(F, x, y, z, ry, w, h, kind, hue, tilt, k, glass) {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: screenTex(kind, hue, glass), color: hdr(0xffffff, k || 1.5), toneMapped: true }));
     // the glass sits just proud of its brass frame (inside the frame it would be hidden)
     const front = V3(0, 0, 0.024).applyAxisAngle(V3(1, 0, 0), tilt || 0).applyAxisAngle(V3(0, 1, 0), ry);
     F.place(m, x + front.x, y + front.y, z + front.z, ry); m.rotation.x = tilt || 0; m.rotation.order = "YXZ";
@@ -1221,7 +1241,8 @@ _M_WORLD = r"""
   WS.add("wood", G.cyl(0.2, 0.2, 0.06, 18), [1.2, 0.55, -1.75], null, null, WALNUT); WS.add("brass", G.cyl(0.03, 0.04, 0.52, 8), [1.2, 0.27, -1.75], null, null, BRASS);
   hangingLamp(WS, -1.0, 4.4, -0.7, 1.1); hangingLamp(WS, 1.2, 4.4, 0.6, 1.2);
   pot(WS, -3.2, 2.9, 1.2); pot(WS, 3.2, 2.9, 1.0);
-  (function () { const p = WS.at(0, 2.7, -0.5); practical("workshop", 0xffa553, p.x, p.y, p.z, 30, 10); })();
+  // the workshop's warm lamp hangs in front of the bench, at the height that lights Pip's face across it
+  (function () { const p = WS.at(0.35, 2.15, 0.45); practical("workshop", 0xffa553, p.x, p.y, p.z, 24, 10); })();
 
   // -- the analysis den (right): Nyx's curved desk, four glass screens, a round window
   const DN = RF.den;
@@ -1262,7 +1283,15 @@ _M_WORLD = r"""
   DN.add("glow", G.ico(0.09, 0), [-1.6, 2.05, -3.1], null, [1, 1.6, 1], hdr(0xc08bff, 3));
   hangingLamp(DN, 0.9, 4.4, 0.4, 1.3); hangingLamp(DN, -1.2, 4.4, 1.3, 1.0);
   pot(DN, 3.2, 2.9, 1.1); pot(DN, -3.2, 2.9, 1.2); pot(DN, -3.1, -2.8, 1.0);
-  (function () { const p = DN.at(0, 2.7, -1.4); practical("den", 0xb27dff, p.x, p.y, p.z, 26, 10); })();
+  // two curved holographic panels over Nyx's desk, turned to her chair (lines and shapes, never words; one on phones)
+  (Q.small ? [[0, "wave", "#9d7bff", 0]] : [[-0.52, "wave", "#9d7bff", 0.43], [0.52, "nodes", "#79e9ff", -0.43]]).forEach(function (q) {
+    const g = new THREE.PlaneGeometry(0.74, 0.46, 10, 1), pp = g.attributes.position;
+    for (let i = 0; i < pp.count; i++) pp.setZ(i, -pp.getX(i) * pp.getX(i) * 0.45);  // bent toward her
+    const m = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ map: screenTex(q[1], q[2]), color: hdr(0xffffff, 1.3), transparent: true, opacity: 0.9,
+      blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
+    m.renderOrder = 3; DN.place(m, q[0], 1.62, -2.22, q[3]);
+  });
+  (function () { const p = DN.at(0, 2.7, -1.4); practical("den", 0xb27dff, p.x, p.y, p.z, 36, 10); })();
 
   // -- the archive (front-left): tall bookshelves, lavender memory crystals, a ladder, a reading desk
   const AR = RF.archive;
@@ -1275,8 +1304,11 @@ _M_WORLD = r"""
   AR.add("brass", G.cyl(0.02, 0.02, 3.6, 8), [-3.0, 1.8, -1.8], [0.2, 0, 0], null, BRASS);
   AR.add("brass", G.cyl(0.02, 0.02, 3.6, 8), [-3.0, 1.8, -1.3], [0.2, 0, 0], null, BRASS);
   for (let k = 0; k < 9; k++) AR.add("brass", G.cyl(0.012, 0.012, 0.5, 6), [-3.0 + 0.0, 0.25 + k * 0.38, -1.55 - (0.25 + k * 0.38 - 1.8) * 0.2], [Math.PI / 2, 0, 0], null, BRASS_DARK);
+  const PEDESTAL = [[0, 0], [0.3, 0], [0.3, 0.05], [0.25, 0.09], [0.21, 0.12], [0.2, 0.17], [0.15, 0.22], [0.13, 0.3], [0.12, 0.58], [0.14, 0.62],
+    [0.13, 0.65], [0.17, 0.7], [0.22, 0.76], [0.24, 0.82], [0.22, 0.85], [0, 0.85]].map(function (q) { return new THREE.Vector2(q[0], q[1]); });
   [[-2.1, 1.5], [2.3, 1.7], [2.2, -1.5], [-0.9, -2.3]].forEach(function (q, i) {
-    AR.add("brass", G.cyl(0.18, 0.24, 0.85, 18), [q[0], 0.43, q[1]], null, null, BRASS_DARK);
+    AR.add("brass", new THREE.LatheGeometry(PEDESTAL, 28), [q[0], 0, q[1]], null, null, function (x, y) { return _c.set(y > 0.6 || y < 0.13 ? BRASS : BRASS_DARK); });
+    AR.add("wood", G.tor(0.125, 0.02, 6, 20), [q[0], 0.45, q[1]], [Math.PI / 2, 0, 0], null, WALNUT_DARK);
     AR.add("brass", G.tor(0.2, 0.025, 6, 20), [q[0], 0.86, q[1]], [Math.PI / 2, 0, 0], null, BRASS);
     AR.add("glass", G.sph(0.26, 20, 14, 0, TAU, 0, Math.PI / 2), [q[0], 0.86, q[1]], null, [1, 1.5, 1]);
     AR.add("glow", G.ico(0.11, 0), [q[0], 1.1, q[1]], [0, i, 0], [1, 1.9, 1], hdr(i % 2 ? 0xc596ff : 0x9fd8ff, 3.2));
@@ -1330,12 +1362,14 @@ _M_WORLD = r"""
   armillary(VT, 2.6, 0, 2.4, 0.7);
   hangingLamp(VT, -0.5, 4.4, -0.6, 1.1); hangingLamp(VT, 1.1, 4.4, 0.4, 1.2);
   pot(VT, -3.0, 2.6, 1.1); pot(VT, 3.0, -2.6, 1.0);
+  pot(VT, -4.05, -1.45, 1.1); pot(VT, -4.05, 1.15, 1.0);  // flowers flanking the document hatch (Jet's backdrop at the vault)
   (function () { const p = VT.at(0.2, 2.7, -0.6); practical("vault", 0xffb057, p.x, p.y, p.z, 26, 10); })();
 
   // -- the observatory (rear, raised): round walls with tall windows, a glass dome, the brass telescope
   const OB = RF.observatory;
   OB.add("pavers", G.cyl(5.5, 5.5, 0.04, 72), [0, -0.019, 0], null, null, 0xdcd4ca);
-  OB.add("plain", G.cyl(1.4, 1.4, 0.01, 48), [0.6, 0.004, -1.2], null, null, 0x1d2350);
+  OB.add("cloth", G.cyl(1.4, 1.4, 0.01, 48), [0.6, 0.004, -1.2], null, null, 0x5a2a46);
+  OB.add("brass", new THREE.RingGeometry(1.33, 1.4, 72).rotateX(-Math.PI / 2), [0.6, 0.012, -1.2], null, null, BRASS);
   [1.45, 3.2, 5.2].forEach(function (r) { OB.add("brass", new THREE.RingGeometry(r - 0.03, r + 0.03, 96).rotateX(-Math.PI / 2), [0, 0.006, 0], null, null, BRASS); });
   for (let i = 0; i < 8; i++) { const g = G.box(0.04, 0.004, 3.6); g.translate(0, 0, 3.4); OB.add("brass", g, [0, 0.007, 0], [0, i * Math.PI / 4, 0], null, BRASS_DARK); }
   (function () {
@@ -1346,8 +1380,8 @@ _M_WORLD = r"""
       archWall(OB, chord, 4.0, 0.4, solid ? [] : [{ x: 0, w: 1.25, y0: 0.75, sp: 2.75 }], [x, 0, z], Math.PI / 2 - a + Math.PI, CREAM);
       const ea = a0 + i * step; column(OB, Math.cos(ea) * (R + 0.05), Math.sin(ea) * (R + 0.05), 4.0, 0.26);
       if (solid) { const sx = Math.cos(a) * (R - 0.25), sz = Math.sin(a) * (R - 0.25), ry = Math.PI / 2 - a + Math.PI;
-        screen(OB, sx, 1.95, sz, ry, 1.5, 0.95, i === 3 ? "stars" : "rings", i === 3 ? "#8fb0ff" : "#b892ff", 0, 1.6);
-        const up = V3(Math.cos(a) * (R - 0.24), 3.15, Math.sin(a) * (R - 0.24)); screen(OB, up.x, up.y, up.z, ry, 0.7, 0.5, "stars", "#a6c2ff", 0, 1.4); }
+        screen(OB, sx, 1.95, sz, ry, 1.5, 0.95, i === 3 ? "stars" : "rings", i === 3 ? "#8dffdc" : "#ffcf7a", 0, 1.5, true);
+        const up = V3(Math.cos(a) * (R - 0.24), 3.15, Math.sin(a) * (R - 0.24)); screen(OB, up.x, up.y, up.z, ry, 0.7, 0.5, "stars", "#ffd98f", 0, 1.35, true); }
     }
     column(OB, Math.cos(a1) * (R + 0.05), Math.sin(a1) * (R + 0.05), 4.0, 0.26);
     OB.add("stone", G.tor(R, 0.24, 8, 64, a1 - a0), [0, 4.1, 0], [Math.PI / 2, 0, a0], [1, 1, 0.8], CREAM2);
@@ -1364,7 +1398,7 @@ _M_WORLD = r"""
   OB.add("plain", G.box(0.3, 0.05, 0.22), [-2.7, 0.83, -3.4], [0, 0.4, 0], null, 0x6a2a2a); OB.add("plain", G.box(0.28, 0.02, 0.2), [-2.4, 0.81, -3.5], [0, 0.7, 0], null, PAPER);
   armillary(OB, 3.2, 0, -2.6, 0.9);
   pot(OB, -4.6, 1.5, 1.2); pot(OB, 4.6, 1.5, 1.2); pot(OB, -4.2, -2.5, 1.1);
-  (function () { const p = OB.at(0, 3.2, -1.0); practical("observatory", 0x8ea2ff, p.x, p.y, p.z, 16, 11); })();
+  (function () { const p = OB.at(0, 3.2, -1.0); practical("observatory", 0xc9b2ff, p.x, p.y, p.z, 26, 11); })();
   // the steps up from the courtyard, with carved side walls and brass handrails
   for (let i = 0; i < 10; i++) { const zf = -6.2 - 0.25 * i, depth = zf + 8.8;
     WF.add("stone", G.box(3.2, 0.18 * (i + 1), depth), [0, 0.09 * (i + 1), zf - depth / 2], null, null, i % 2 ? CREAM : 0xe9dabf);
@@ -1449,20 +1483,32 @@ _M_WORLD = r"""
       for (let i = 0; i < 8; i++) { const a = i / 8 * TAU; ctx.beginPath(); ctx.moveTo(Math.cos(a) * c * 0.2, Math.sin(a) * c * 0.2); ctx.lineTo(Math.cos(a) * c * 0.8, Math.sin(a) * c * 0.8); ctx.stroke(); }
     });
     holoTex.wrapS = holoTex.wrapT = THREE.ClampToEdgeWrapping;
-    const disc = new THREE.Mesh(new THREE.CircleGeometry(1.44, 96).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: holoTex, color: hdr(0x9dffe0, 1.9), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
+    // (restrained: every layer is additive, so the map reads as mint lines and islands, never a white blob)
+    const disc = new THREE.Mesh(new THREE.CircleGeometry(1.44, 96).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: holoTex, color: hdr(0x9dffe0, 0.9), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
     disc.position.y = 0.792; scene.add(disc); props.holoDisc = disc;
-    const holoMat = new THREE.MeshBasicMaterial({ color: hdr(0x7dffd8, 1.5), transparent: true, opacity: 0.42, blending: THREE.AdditiveBlending, depthWrite: false });
+    // the hero table's own top is small: a dark glass top on a walnut and brass rim carries the map (the concept's
+    // wide waist-high table), shown once the prop is in
+    const holoBase = new THREE.Group(); holoBase.visible = false; scene.add(holoBase); props.holoBase = holoBase;
+    holoBase.add(new THREE.Mesh(G.cyl(1.0, 1.0, 0.03, 72).translate(0, -0.015, 0), new THREE.MeshStandardMaterial({ color: 0x0a1c1f, roughness: 0.16, metalness: 0.35, envMapIntensity: 1.1 })));
+    holoBase.add(new THREE.Mesh(paint(G.tor(1.0, 0.032, 8, 120).rotateX(Math.PI / 2), BRASS), MAT.brass));
+    const rimW = new THREE.Mesh(paint(G.tor(1.045, 0.06, 10, 120).rotateX(Math.PI / 2), WALNUT), MAT.wood); rimW.scale.y = 0.7; rimW.position.y = -0.03; holoBase.add(rimW);
+    const holoMat = new THREE.MeshBasicMaterial({ color: hdr(0x7dffd8, 0.8), transparent: true, opacity: 0.24, blending: THREE.AdditiveBlending, depthWrite: false });
+    const winMat = new THREE.MeshBasicMaterial({ color: hdr(0xffa040, 1.0), transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending, depthWrite: false });
     const mini = new THREE.Group(); mini.position.y = 1.05; scene.add(mini); props.holoMini = mini;
     const S = 0.062, spots = [[0, 0, 0.5, 0], [-11.8, -3, 0.38, 1], [11.8, -3, 0.38, 2], [-9.8, 9.4, 0.34, 3], [9.8, 9.4, 0.34, 4], [0, -15.5, 0.42, 5], [19.5, 0, 0.22, 6], [0, 20.4, 0.2, 7]];
-    const mg = [];
+    const mg = [], wg = [];
     spots.forEach(function (s) {
       const x = s[0] * S, z = s[1] * S, r = s[2];
       const rock = G.cone(r * 0.9, r * 1.1, 8).rotateX(Math.PI); rock.translate(x, -r * 0.55, z); mg.push(rock);
       const top = G.cyl(r * 0.9, r * 0.9, 0.02, 16); top.translate(x, 0, z); mg.push(top);
-      const b = s[3] === 5 ? G.sph(r * 0.45, 12, 8, 0, TAU, 0, Math.PI / 2) : s[3] === 0 ? G.cyl(r * 0.25, r * 0.25, 0.05, 16) : G.box(r * 0.7, r * 0.45, r * 0.6); b.translate(x, s[3] === 5 ? 0.01 : r * 0.22, z); mg.push(b);
-      if (s[3] === 1 || s[3] === 2 || s[3] === 5) { const t = G.cone(r * 0.2, r * 0.5, 6); t.translate(x + r * 0.2, r * 0.6, z); mg.push(t); }
+      const bh = r * 0.72, b = s[3] === 5 ? G.sph(r * 0.45, 12, 8, 0, TAU, 0, Math.PI / 2) : s[3] === 0 ? G.cyl(r * 0.25, r * 0.25, 0.05, 16) : G.box(r * 0.7, bh, r * 0.6);
+      b.translate(x, s[3] === 5 ? 0.01 : s[3] === 0 ? r * 0.22 : bh / 2, z); mg.push(b);
+      if (s[3] === 1 || s[3] === 2 || s[3] === 5) { const t = G.cone(r * 0.2, r * 0.8, 6); t.translate(x + r * 0.2, r * 0.95, z); mg.push(t); }
+      if (s[3] !== 0 && s[3] !== 5) for (let k = 0; k < 3; k++) {  // lit windows on the little buildings
+        const wb = G.box(r * 0.07, r * 0.09, 0.004); wb.translate(x + (k - 1) * r * 0.2, bh * (k === 1 ? 0.62 : 0.4), z + r * 0.302); wg.push(wb); }
     });
     mini.add(new THREE.Mesh(mergeGeometries(mg.map(prep), false), holoMat));
+    mini.add(new THREE.Mesh(mergeGeometries(wg.map(prep), false), winMat));
     const dome = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.SphereGeometry(1.35, 16, 6, 0, TAU, 0, Math.PI / 2), 1),
       new THREE.LineBasicMaterial({ color: hdr(0x7dffd8, 1.2), transparent: true, opacity: 0.22, blending: THREE.AdditiveBlending, depthWrite: false }));
     dome.scale.y = 0.55; dome.position.y = 0.8; scene.add(dome); props.holoDome = dome;
@@ -1485,6 +1531,7 @@ _M_WORLD = r"""
     props.holoFit = function (r, y) {
       const k = r / 1.44; props.holoK = k; props.holoY = y;
       disc.scale.setScalar(k); disc.position.y = y; mini.scale.setScalar(k); dome.scale.set(k, 0.55 * k, k); dome.position.y = y + 0.008 * k;
+      holoBase.scale.set(r * 1.03, 1, r * 1.03); holoBase.position.y = y - 0.002;
       cards.scale.setScalar(k); cards.position.y = y + 0.63 * k;
     };
     props.holoFit(1.44, 0.792);
@@ -1554,16 +1601,18 @@ _M_WORLD = r"""
     const lgeo = mergeGeometries(lg, false);
     props.lanternPosts = instanced(lgeo, MAT.brass, lanterns.map(function (q) { return { p: q.p, s: [1, q.h, 1] }; }));
     props.lanternBulbs = instanced(paint(G.sph(0.06, 10, 8), 0xffffff), new THREE.MeshBasicMaterial({ vertexColors: true, color: hdr(0xffc47e, 6) }), lanterns.map(function (q) { return { p: [q.p[0], q.p[1] + 1.88 * q.h, q.p[2]], s: [1, 1.5, 1] }; }));
-    // soft halos round the lanterns: one additive billboard draw
-    const haloMat = new THREE.ShaderMaterial({ transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, uniforms: { uMap: { value: glowTex } },
-      // (a halo fades out as the drone comes close, so a lamp passing the lens never blooms over the shot)
-      vertexShader: "varying vec2 vUv; varying float vFade; void main() { vUv = uv; vec4 c = modelViewMatrix * instanceMatrix * vec4(0.0, 0.0, 0.0, 1.0); vFade = smoothstep(1.4, 3.6, -c.z); c.xy += position.xy * length(instanceMatrix[0].xyz); gl_Position = projectionMatrix * c; }",
-      fragmentShader: "uniform sampler2D uMap; varying vec2 vUv; varying float vFade; void main() { float a = texture2D(uMap, vUv).r; gl_FragColor = vec4(vec3(1.0, 0.62, 0.3) * a * 0.4 * vFade, 1.0); }" });
+    // soft halos round the lanterns: one additive billboard draw. The halo is read by the texture's alpha (its colour
+    // is white wherever anything is drawn, so the red channel would be a flat disc), drawn a little toward the drone
+    // so it glows over the lamp head instead of behind it (walls still hide it), and it fades out as the drone comes
+    // close, so a lamp passing the lens never blooms over the shot
+    const haloMat = new THREE.ShaderMaterial({ transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, uniforms: { uMap: { value: haloTex } },
+      vertexShader: "varying vec2 vUv; varying float vFade; void main() { vUv = uv; vec4 c = modelViewMatrix * instanceMatrix * vec4(0.0, 0.0, 0.0, 1.0); vFade = smoothstep(1.4, 3.6, -c.z); c.xyz += normalize(-c.xyz) * 0.22; c.xy += position.xy * length(instanceMatrix[0].xyz); gl_Position = projectionMatrix * c; }",
+      fragmentShader: "uniform sampler2D uMap; varying vec2 vUv; varying float vFade; void main() { float a = texture2D(uMap, vUv).a; gl_FragColor = vec4(vec3(1.0, 0.62, 0.3) * a * 0.32 * vFade, 1.0); }" });
     const halos = new THREE.InstancedMesh(new THREE.PlaneGeometry(1, 1), haloMat, lanterns.length);
-    lanterns.forEach(function (q, i) { halos.setMatrixAt(i, mat4([q.p[0], q.p[1] + 1.88 * q.h, q.p[2]], null, 0.72)); });
+    lanterns.forEach(function (q, i) { halos.setMatrixAt(i, mat4([q.p[0], q.p[1] + 1.88 * q.h, q.p[2]], null, 0.5)); });
     halos.frustumCulled = false; halos.renderOrder = 4; scene.add(halos); props.lanternHalos = halos;
-    // plants
-    instanced(crag(0.5, 1, 3, 1), MAT.leaf, bushes, false);
+    // plants (the bushes smooth-shaded: lumpy and soft, not faceted)
+    instanced((function () { const g = crag(0.5, 1, 3, 1); g.deleteAttribute("normal"); g.deleteAttribute("uv"); const m = mergeVertices(g); m.computeVertexNormals(); return m; })(), MAT.leaf, bushes, false);
     const bloomGeo = (function () { const parts = [], r = rng(5); for (let i = 0; i < 9; i++) { const g = G.sph(0.3, 6, 5); g.translate((r() - 0.5) * 0.6, (r() - 0.5) * 0.4, (r() - 0.5) * 0.6); parts.push(prep(g)); } return mergeGeometries(parts, false); })();
     instanced(bloomGeo, MAT.leaf, blooms, false);
     instanced(paint(crag(0.5, 0, 9, 0.55), 0xffffff), MAT.leaf, leaves.map(function (q) { return { p: q.p, r: q.r, s: q.s, c: [0x4a8a3e, 0x3c7a3a, 0x5e9a48][Math.floor((q.p[0] * 13 + q.p[1] * 7) % 3 + 3) % 3] }; }), false);
@@ -1572,7 +1621,7 @@ _M_WORLD = r"""
     instanced(raceme, MAT.leaf, racemes, false);
     const cyp = new THREE.LatheGeometry([[0, 0], [0.12, 0], [0.12, 0.6], [0.55, 0.9], [0.75, 1.6], [0.8, 2.4], [0.7, 3.4], [0.5, 4.4], [0.25, 5.2], [0, 5.7]].map(function (q) { return new THREE.Vector2(q[0], q[1] / 5.7); }), 12);
     instanced(paint(cyp, function (x, y) { return _c.set(y < 0.1 ? 0x5a3a26 : 0x2f5e36).lerp(col(0x4f8a46), clamp(y * 0.8, 0, 0.6)); }), MAT.leaf, cypresses, true);
-    instanced(paint(G.box(1, 1, 1), 0xffffff), MAT.plain, books, false);
+    instanced(paint(G.box(1, 1, 1), 0xffffff), MAT.books, books, false);
   })();
   flushStatic();
 """
@@ -2114,12 +2163,13 @@ _M_CAST = r"""
   };
   function makeBell(radius, height) {
     const g = new THREE.Group(); g.name = "bell";
+    const bellBrass = MAT.brass.clone();  // its own brass (Mote's fade-in must never touch the world's shared brass)
     const prof = [[1.0, 0], [1.02, 0.04], [1.0, 0.55], [0.95, 0.68], [0.85, 0.8], [0.68, 0.9], [0.46, 0.965], [0.22, 0.995], [0.001, 1.0]];
     const glass = new THREE.Mesh(new THREE.LatheGeometry(prof.map(function (q) { return new THREE.Vector2(q[0] * radius, q[1] * height); }), 48), bellMat);
     glass.renderOrder = 6; g.add(glass);
-    const brass = function (geo, p, r) { const m = new THREE.Mesh(paint(geo, BRASS), MAT.brass); m.position.set(p[0], p[1], p[2]); if (r) m.rotation.set(r[0], r[1], r[2]); m.castShadow = Q.shadows; g.add(m); return m; };
+    const brass = function (geo, p, r) { const m = new THREE.Mesh(paint(geo, BRASS), bellBrass); m.position.set(p[0], p[1], p[2]); if (r) m.rotation.set(r[0], r[1], r[2]); m.castShadow = Q.shadows; g.add(m); return m; };
     brass(G.tor(radius * 1.02, radius * 0.075, 10, 48), [0, radius * 0.06, 0], [Math.PI / 2, 0, 0]);
-    brass(G.tor(radius * 1.0, radius * 0.03, 6, 48), [0, height * 0.55, 0], [Math.PI / 2, 0, 0]).material = MAT.brass;
+    brass(G.tor(radius * 1.0, radius * 0.03, 6, 48), [0, height * 0.55, 0], [Math.PI / 2, 0, 0]);
     brass(G.sph(radius * 0.13, 14, 10), [0, height + radius * 0.08, 0]);
     brass(G.tor(radius * 0.12, radius * 0.035, 8, 20), [0, height + radius * 0.27, 0]);
     return g;
@@ -2446,14 +2496,18 @@ _M_LIFE = r"""
       : loading.set < loading.setN ? "loading the set " + loading.set + "/" + loading.setN : "";
     loadingEl.textContent = text; loadingEl.hidden = !text;
   }
-  // a quick fade-in (the model over its drawing), then the drawing goes
+  // a quick fade-in (the model over its drawing), then the drawing goes. Only the model's own materials fade: the
+  // world's shared ones (the merged stonework, brass and lamps, the drawings') are never touched, or every railing
+  // and lamp on the island would blink out while one character or prop arrives
   const fades = [];
+  let SHARED_MATS = null;
   function fadeIn(root, seconds, done) {
+    if (!SHARED_MATS) SHARED_MATS = new Set(Object.values(MAT).concat(Object.values(CMAT), [props.lanternBulbs.material, shadowMat, bellMat]));
     const keep = [];
     root.traverse(function (o) { if (!o.isMesh) return; [].concat(o.material).forEach(function (m) {
-      if (keep.some(function (k) { return k.m === m; })) return;
+      if (!m || SHARED_MATS.has(m) || keep.some(function (k) { return k.m === m; })) return;
       keep.push({ m: m, t: m.transparent, o: m.opacity }); m.transparent = true; m.opacity = 0; m.needsUpdate = true; }); });
-    fades.push({ keep: keep, t: 0, dur: seconds, done: done });
+    fades.push({ root: root, keep: keep, t: 0, dur: seconds, done: done });
   }
   function updateFades(dt) {
     for (let i = fades.length - 1; i >= 0; i--) {
@@ -2495,13 +2549,15 @@ _M_LIFE = r"""
   }
   function dropModel(a, e) {  // a model that misbehaves goes; the drawing comes back
     console.warn("world: model for " + a.key + " failed, back to the drawing", e);
+    for (let i = fades.length - 1; i >= 0; i--) if (fades[i].root === a.model) fades.splice(i, 1);  // (its fade must not hide the drawing later)
     if (a.model) a.group.remove(a.model); a.model = null; a.actor = null; a.rig = null; a.body.visible = true; a.body.scale.setScalar(1);
     a.shadow.scale.setScalar(1); a.head.position.y = a.height0 || a.head.position.y;
   }
 
   // Rook's model lost its amber eyes: two small glowing spheres on his Head bone, facing forward, gently pulsing
-  const rookEyeMat = new THREE.MeshBasicMaterial({ color: hdr(0xffa22e, 3.2) });
-  const rookEyeHalo = new THREE.SpriteMaterial({ map: glowTex, color: 0xff7a14, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.4 });
+  // (kept near 1: brighter, ACES tone mapping turns the amber to cream)
+  const rookEyeMat = new THREE.MeshBasicMaterial({ color: hdr(0xffa22e, 1.3) });
+  const rookEyeHalo = new THREE.SpriteMaterial({ map: haloTex, color: 0xff7a14, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.7 });
   function rookEyes(A) {
     const head = A.bones && A.bones.Head; let mesh = null;
     A.model.traverse(function (o) { if (o.isSkinnedMesh && !mesh) mesh = o; });
@@ -2517,7 +2573,7 @@ _M_LIFE = r"""
       mesh.getVertexPosition(i, v); v.applyMatrix4(toRoot); pts.push(v.clone()); box.expandByPoint(v);
     }
     if (pts.length < 20) return;
-    const size = box.getSize(new THREE.Vector3()), r = Math.max(0.018, size.x * 0.075), headS = head.getWorldScale(new THREE.Vector3()).x / A.root.getWorldScale(v).x;
+    const size = box.getSize(new THREE.Vector3()), r = Math.max(0.03, size.x * 0.1), headS = head.getWorldScale(new THREE.Vector3()).x / A.root.getWorldScale(v).x;
     [-1, 1].forEach(function (s) {
       const ex = (box.min.x + box.max.x) / 2 + s * size.x * 0.2, ey = box.min.y + size.y * 0.56;
       let front = box.min.z;  // the face's surface in front of this eye
@@ -2526,7 +2582,7 @@ _M_LIFE = r"""
       const at = head.worldToLocal(A.root.localToWorld(new THREE.Vector3(ex, ey, front - r * 0.25)));
       eye.position.copy(at); eye.scale.set(1.25 / headS, 0.8 / headS, 0.6 / headS);  // an amber slit, facing forward
       eye.quaternion.copy(head.getWorldQuaternion(new THREE.Quaternion()).invert().multiply(A.root.getWorldQuaternion(new THREE.Quaternion())));
-      const halo = new THREE.Sprite(rookEyeHalo); halo.position.copy(at); halo.scale.setScalar(r * 4.5 / headS);
+      const halo = new THREE.Sprite(rookEyeHalo); halo.position.copy(at); halo.scale.setScalar(r * 7 / headS);
       head.add(eye, halo);
     });
     A.eyes = true;
@@ -2556,13 +2612,13 @@ _M_LIFE = r"""
       if (o.isSkinnedMesh) { o.computeBoundingSphere(); o.boundingSphere.radius *= 1.6; }
     });
     if (a.key === "rook") rookEyes(A);
-    if (a.key === "mote") moteGlow(A);
+    if (a.key === "mote") { moteGlow(A); A.glow = []; }  // (its whole body glows: no eyes to blink, so nothing flickers)
     if (A.spec.kind === "biped") { A.play("idle", 0); A.update(0.016); }  // never a T-pose, not even for a frame
     a.height0 = a.head.position.y;
     a.group.add(holder); a.actor = A; a.model = holder; a.height = top; a.head.position.set(0, top + 0.12, 0);
     const foot = Math.max(A.size.x, A.size.z, cartScene ? 0.8 : 0) * 0.55;
     a.shadow.scale.setScalar(clamp(foot / a.shadowR, 0.6, 3.2));
-    fadeIn(holder, 0.45, function () { a.body.visible = false; });
+    fadeIn(holder, 0.45, function () { if (a.model === holder) a.body.visible = false; });
     console.info("world: real model for " + a.key + " in place");
   }
   async function loadMember(id, libReady) {
@@ -2576,7 +2632,7 @@ _M_LIFE = r"""
       if (kind === "biped" && !lib) throw new Error("no move library");
       const got = await files;
       // phones: the colour maps stay sharp (faces read close up); the normal, roughness and glow maps go to half size
-      if (Q.small) got.forEach(function (g, i) { shrinkTextures(g.scene, 512, i ? null : ["normalMap", "roughnessMap", "metalnessMap", "emissiveMap"]); });
+      if (Q.smallTex) got.forEach(function (g, i) { shrinkTextures(g.scene, 512, i ? null : ["normalMap", "roughnessMap", "metalnessMap", "emissiveMap"]); });
       const s = { id: id, file: spec.asset, kind: kind, walk: spec.walk || "walk_casual", yaw: Number(spec.yaw) || 0,
                   height: spec.cart ? Number(spec.body_height) || 0.4 : Number(spec.height) || a.height };
       const A = new motionMod.Actor(got[0].scene, s, lib);
@@ -2611,19 +2667,36 @@ _M_LIFE = r"""
   };
   const placed = {};  // prop id -> the placed holders
   const PLACED = {
-    missiontable: function (h) {  // the hologram over the prop's own top; Voss and the visitors step up to it
-      const s = h.children[0].userData.size, r = Math.max(s.x, s.z) / 2, top = DAIS_Y + s.y * 0.86;
-      props.holoFit(Math.max(0.95, r * 1.6), top + 0.03); props.holoDisc.material.color.multiplyScalar(0.55); props.holoMini.children[0].material.opacity = 0.3; tableSpots(r, top); ["tbH", "tbW", "tbN"].forEach(resettle);
-      board.position.y = 2.05;
+    missiontable: function (h) {  // the hologram on a wide dark glass top over the prop (a waist-high table, not a pedestal); Voss and the visitors step up to its rim
+      const k = 0.85; h.scale.setScalar(k);  // (a touch lower: the crew are 0.9-1.3 m tall)
+      const s = h.children[0].userData.size, r = Math.max(s.x, s.z) / 2 * k, top = DAIS_Y + s.y * k, R = Math.max(0.95, r * 1.6);
+      props.holoFit(R, top + 0.03); props.holoDisc.material.opacity = 0.75; props.holoBase.visible = true; tableSpots(R + 0.08, top); ["tbH", "tbW", "tbN"].forEach(resettle);
+      boardY = 2.05; placeBoard();
     },
-    workbench: function (h) { const s = h.children[0].userData.size; benchAt(s.y * 0.63, -0.62 - s.z / 2 + 0.1); },
+    workbench: function (h) {  // Pip's hands on the bench; the bench's green lamp (its highest point) glows warm under its shade
+      const s = h.children[0].userData.size; benchAt(s.y * 0.63, -0.62 - s.z / 2 + 0.1);
+      h.updateMatrixWorld(true);
+      const v = new THREE.Vector3(), lamp = new THREE.Vector3(); let n = 0, topY = -Infinity;
+      const scan = function (fn) { h.traverse(function (o) { if (!o.isMesh) return; const p = o.geometry.attributes.position;
+        for (let i = 0; i < p.count; i += 3) { o.getVertexPosition(i, v); v.applyMatrix4(o.matrixWorld); fn(v); } }); };
+      scan(function (q) { if (q.y > topY) topY = q.y; });
+      scan(function (q) { if (q.y > topY - 0.06) { lamp.add(q); n++; } });
+      if (!n) return;
+      lamp.divideScalar(n).setY(topY - 0.13);
+      const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: haloTex, color: 0xffc070, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.6 }));
+      glow.position.copy(lamp); glow.scale.setScalar(0.3); glow.renderOrder = 4; scene.add(glow);
+      const bulb = new THREE.Mesh(paint(G.sph(0.03, 12, 8), 0xffffff), new THREE.MeshBasicMaterial({ vertexColors: true, color: hdr(0xffd08a, 4) })); bulb.position.copy(lamp); scene.add(bulb);
+    },
     telescope: function (h) { props.telescopeModel = h; h.userData.yaw = h.rotation.y; },
     airship: function (h) { props.airshipModel = h; h.userData.y = h.position.y; },
     island: function (h, i) { (props.islands = props.islands || []).push({ h: h, y: h.position.y, k: PLACE.island[i].bob, ph: i * 1.7 }); },
     lantern: function (h) {  // a warm bulb and a soft halo in the lantern's head; the procedural lamps it replaces make way
-      const bulb = new THREE.Mesh(G.sph(0.06, 12, 8), props.lanternBulbs.material); bulb.position.y = 2.27; bulb.scale.set(1, 1.4, 1); h.add(bulb);
-      const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: 0xffa04d, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.5 }));
-      halo.position.y = 2.27; halo.scale.setScalar(0.8); h.add(halo); (props.lanternGlow = props.lanternGlow || []).push(halo);
+      // (the bulb has its own material: the prop's fade-in must not blank the procedural lamps' shared one)
+      if (!props.heroBulbMat) props.heroBulbMat = props.lanternBulbs.material.clone();
+      const bulb = new THREE.Mesh(paint(G.sph(0.06, 12, 8), 0xffffff), props.heroBulbMat); bulb.position.y = 2.27; bulb.scale.set(1, 1.4, 1); h.add(bulb);
+      // the halo glows over the lamp head (moved a little toward the drone every frame), small and soft: a glow, not a disc
+      const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: haloTex, color: 0xffa04d, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.32 }));
+      halo.position.y = 2.27; halo.scale.setScalar(0.42); halo.renderOrder = 4; h.add(halo); (props.lanternGlow = props.lanternGlow || []).push(halo);
       if (props.lanternGlow.length < PLACE.lantern.length) return;  // the rest once, after the last copy is placed
       const zero = new THREE.Matrix4().makeScale(0, 0, 0);
       lanterns.forEach(function (q, i) {
@@ -2632,12 +2705,21 @@ _M_LIFE = r"""
       });
       props.lanternPosts.instanceMatrix.needsUpdate = true; props.lanternBulbs.instanceMatrix.needsUpdate = true; props.lanternHalos.instanceMatrix.needsUpdate = true;
     },
+    arch: function (h) {  // the arches are solid stone: the drone never flies through a pillar or the lintel (oriented boxes)
+      const s = h.children[0].userData.size, wide = s.x >= s.z, W = wide ? s.x : s.z, D = (wide ? s.z : s.x) / 2 + 0.05, pw = W * 0.2;
+      h.updateMatrixWorld(true);
+      [[-(W - pw) / 2, s.y / 2, pw / 2, s.y / 2], [(W - pw) / 2, s.y / 2, pw / 2, s.y / 2], [0, s.y * 0.86, W / 2, s.y * 0.14]].forEach(function (q) {
+        const c = wide ? V3(q[0], q[1], 0) : V3(0, q[1], q[0]);
+        const m = new THREE.Matrix4().multiplyMatrices(h.matrixWorld, new THREE.Matrix4().makeTranslation(c.x, c.y, c.z));
+        blockers.push({ inv: m.clone().invert(), half: wide ? V3(q[2], q[3], D) : V3(D, q[3], q[2]) });
+      });
+    },
   };
   async function loadProp(id) {
     const spec = MODEL_PROPS[id];
     try {
       const gltf = await gltfLoader.loadAsync(ASSET + spec.asset);
-      if (Q.small) shrinkTextures(gltf.scene, 512);
+      if (Q.smallTex) shrinkTextures(gltf.scene, 512);
       const holders = PLACE[id].map(function (spot, i) {
         const h = new THREE.Group(); h.name = "prop:" + id;
         h.add(fitModel(i ? gltf.scene.clone() : gltf.scene, Number(spec.height) || 1, Number(spec.yaw) || 0));
@@ -2698,7 +2780,15 @@ _M_LIFE = r"""
   }
   drawVaultSign("—", "", null);
   // the Polymarket desk's ticket board over the mission table (only the desk's own positions)
-  const board = makeBoard(1024, 560, 2.3, 1.26, { double: true }); board.position.set(0.15, 2.18, -0.55); board.visible = false; scene.add(board);
+  const board = makeBoard(1024, 560, 2.3, 1.26, { double: true }); board.visible = false; board.renderOrder = 8; scene.add(board);  // (after the lamp halos)
+  // where it hangs: over the table on a portrait phone (smaller, so the whole line stays inside the frame), beside it
+  // on a wide screen (the observatory and its telescope own the middle of the arrival shot)
+  let boardY = 2.18;
+  function placeBoard() {
+    const tall = camera.aspect < 0.85;
+    board.scale.setScalar(tall ? 0.62 : 1); board.position.set(tall ? -0.3 : 2.05, boardY + (tall ? 0.12 : 0.2), tall ? -0.55 : -0.9);
+  }
+  placeBoard();
   function drawBoard(desk) {
     const c = board.userData.canvas, ctx = c.getContext("2d"); if (!ctx) return;
     ctx.clearRect(0, 0, c.width, c.height);
@@ -2762,29 +2852,32 @@ _M_LIFE = r"""
   }
   // the trade cube Jet carries to the vault: gold for a win, red for a loss
   const cube = { mesh: new THREE.Group(), flight: null };
-  const cubeOuter = new THREE.Mesh(G.rbox(0.24, 0.24, 0.24, 0.35, 14), new THREE.MeshPhysicalMaterial({ color: 0xffd36a, emissive: 0xffb02a, emissiveIntensity: 1.2,
-    roughness: 0.1, transparent: true, opacity: 0.55, clearcoat: 1, depthWrite: false }));
-  const cubeCore = new THREE.Mesh(G.rbox(0.12, 0.12, 0.12, 0.4, 10), new THREE.MeshBasicMaterial({ color: hdr(0xffd36a, 5) }));
-  cube.mesh.add(cubeOuter, cubeCore); cube.mesh.visible = false; scene.add(cube.mesh);
+  // a translucent glowing crystal: a clear shell, a soft core and a lattice of lines inside it so its facets read
+  const cubeOuter = new THREE.Mesh(G.rbox(0.24, 0.24, 0.24, 0.35, 14), new THREE.MeshPhysicalMaterial({ color: 0xffd36a, emissive: 0xffb02a, emissiveIntensity: 0.45,
+    roughness: 0.05, transparent: true, opacity: 0.4, clearcoat: 1, depthWrite: false }));
+  const cubeCore = new THREE.Mesh(G.rbox(0.1, 0.1, 0.1, 0.4, 10), new THREE.MeshBasicMaterial({ color: hdr(0xffd36a, 1.6) }));
+  const cubeLattice = new THREE.LineSegments(mergeGeometries([new THREE.EdgesGeometry(G.box(0.19, 0.19, 0.19)), new THREE.EdgesGeometry(new THREE.OctahedronGeometry(0.105))], false),
+    new THREE.LineBasicMaterial({ color: hdr(0xffd36a, 1.4), transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false }));
+  cube.mesh.add(cubeOuter, cubeCore, cubeLattice); cube.mesh.visible = false; scene.add(cube.mesh);
   const vaultFlash = new THREE.Mesh(G.tor(1.05, 0.06, 10, 64), new THREE.MeshBasicMaterial({ color: hdr(0xffd36a, 4), transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false }));
   // the vault door's face: the procedural door's, or the hero door's (it stands proud of the wall)
   const DOOR = HAS("vaultdoor") ? { y: 1.32, z: -2.24, r: 0.95 } : { y: 1.55, z: -2.62, r: 1.0 };
   VT2.place(vaultFlash, 0.9, DOOR.y, DOOR.z, 0); vaultFlash.scale.setScalar(DOOR.r); let flashUntil = 0;
   function showCube(kind) {
     const won = kind === "gold", c = won ? 0xffd36a : 0xff5a4a;
-    cubeOuter.material.color.setHex(c); cubeOuter.material.emissive.setHex(won ? 0xffb02a : 0xff2a1a); cubeCore.material.color.copy(hdr(c, 5));
+    cubeOuter.material.color.setHex(c); cubeOuter.material.emissive.setHex(won ? 0xffb02a : 0xff2a1a); cubeCore.material.color.copy(hdr(c, 1.6)); cubeLattice.material.color.copy(hdr(c, 1.4));
     vaultFlash.material.color.copy(hdr(c, 4)); cube.mesh.visible = true; cube.flight = null;
   }
   function deliverCube(a, pnl) {
     const from = cube.mesh.position.clone(), to = VT2.at(0.9, DOOR.y, DOOR.z + 0.12), mid = VT2.at(-3.5, 1.0, -0.2);
-    cube.flight = { t: 0, from: from, mid: mid, to: to, pnl: pnl }; a.carrying = null;
+    cube.flight = { t: 0, from: from, mid: mid, to: to, pnl: pnl, who: a }; a.carrying = null;
   }
   function updateCube(dt) {
     if (cube.flight) {
       const f = cube.flight; f.t += dt / 1.8; const u = Math.min(1, f.t);
       const p = u < 0.4 ? f.from.clone().lerp(f.mid, u / 0.4) : f.mid.clone().lerp(f.to, (u - 0.4) / 0.6); p.y += Math.sin(u * Math.PI) * 0.4;
       cube.mesh.position.copy(p); cube.mesh.rotation.y += dt * 3; cube.mesh.scale.setScalar(1 - Math.max(0, u - 0.85) * 5);
-      if (u >= 1) { cube.flight = null; cube.mesh.visible = false; cube.mesh.scale.setScalar(1); flashUntil = simT + 2.2; dropLabel(f.pnl, f.to); }
+      if (u >= 1) { cube.flight = null; cube.mesh.visible = false; cube.mesh.scale.setScalar(1); flashUntil = simT + 2.2; dropLabel(f.pnl, f.to, f.who); }
     } else if (cube.mesh.visible) cube.mesh.rotation.y += dt * 1.5;
     vaultFlash.material.opacity = flashUntil > simT ? Math.min(1, (flashUntil - simT) / 1.2) * 0.9 : 0;
   }
@@ -2794,9 +2887,9 @@ _M_LIFE = r"""
   const SHOTS = {
     table: { pos: V3(-1.3, 1.7, 3.05), look: V3(-0.45, 0.98, -0.1) },
     workshop: rig(WS2, [0.95, 1.55, 1.15], [-0.05, 0.92, -1.3]),
-    den: rig(DN2, [1.95, 1.6, -1.7], [-0.3, 0.85, -1.2]),  // beside the desk: Nyx in profile at the screens
+    den: rig(DN2, [-1.6, 1.5, 0.4], [0.3, 1.0, -1.9]),  // over Nyx's shoulder, onto her desk and its holographic panels
     archive: rig(AR2, [0.35, 1.35, 0.55], [-1.3, 0.72, -1.5]),
-    vault: rig(VT2, [1.5, 1.85, 1.9], [0.0, 1.55, -1.45]),
+    vault: rig(VT2, [-1.2, 1.9, 0.9], [0.2, 1.7, -1.55]),  // in front of the risk desk, up at Rook's face, the vault door behind him
     dock: { pos: V3(20.9, 1.65, 0.75), look: V3(23.4, 0.8, -1.7) },
     kiosk: { pos: V3(19.4, 1.8, 3.0), look: V3(22.6, 0.95, 5.6) },
     observatory: rig(OB2, [-2.9, 2.1, 3.3], [0.6, 1.5, -1.5]),
@@ -2805,10 +2898,10 @@ _M_LIFE = r"""
   // close behind the railings, the mission table and Voss ahead, the observatory and its telescope behind; on a
   // portrait phone it comes closer so faces stay readable. Each shot fills one reused object (no allocation).
   const _arr = { pos: V3(0, 0, 0), look: V3(0, 0, 0) }, _map = { pos: V3(0, 0, 0), look: V3(1, 0, 1) }, _fol = { pos: V3(0, 0, 0), look: V3(0, 0, 0) };
-  function arrivalShot(t) {
-    const tall = camera.aspect < 0.85, z = (tall ? 5.0 : 6.55) + Math.sin(t * 0.055) * (tall ? 0.45 : 0.4), x = (tall ? -0.35 : 0.1) + Math.sin(t * 0.041) * (tall ? 0.25 : 0.35);
-    _arr.pos.set(x, 2.05 + Math.sin(t * 0.09) * 0.07, z);
-    _arr.look.set((tall ? -0.8 : -0.45) + Math.sin(t * 0.032) * (tall ? 0.5 : 2.0), 0.95, -0.9);
+  function arrivalShot(t) {  // (Voss 3-4 m away on a phone, about 5 m on a wide screen; the table in the lower third)
+    const tall = camera.aspect < 0.85, z = (tall ? 4.0 : 5.2) + Math.sin(t * 0.055) * (tall ? 0.35 : 0.4), x = (tall ? -0.5 : 0.1) + Math.sin(t * 0.041) * (tall ? 0.2 : 0.35);
+    _arr.pos.set(x, 1.8 + Math.sin(t * 0.09) * 0.07, z);
+    _arr.look.set((tall ? -0.55 : -0.45) + Math.sin(t * 0.032) * (tall ? 0.25 : 1.6), 1.0, -0.6);
     return _arr;
   }
   function mapShot(t) { const a = 0.35 + t * 0.025; _map.pos.set(Math.sin(a) * 34, 25, Math.cos(a) * 34 + 2); return _map; }
@@ -2827,14 +2920,26 @@ _M_LIFE = r"""
   const _fwd = new THREE.Vector3(), _side = new THREE.Vector3(), _fh = new THREE.Vector3();
   // follow a walker from close behind; a courier with a closed trade's cube is led instead (the drone flies ahead,
   // facing him, so the cube in his hands and his visor read)
+  // (a wall or an arch between the walker and the drone's place: the drone first tries the other side and wider
+  // offsets, keeping its side while that side is clear; only if every side is blocked does it close in, and then it
+  // looks at the walker, never at the floor ahead of him)
+  const FOLLOW_SIDES = [0.75, -0.75, 1.6, -1.6, 0];
+  function followAt(base, back, side, up) { _try.copy(base).addScaledVector(_fwd, back).addScaledVector(_side, side); _try.y += up; return blocked(_fh, _try); }
   function followShot(a) {
-    const base = a.group.position, h = a.height, lead = !!a.carrying;
+    const base = a.group.position, h = a.height, lead = !!a.carrying, back = lead ? 1.7 + h * 0.6 : -(2.2 + h * 0.75), up = lead ? Math.max(1.35, h + 0.5) : Math.max(1.6, h + 0.75);
     _fwd.set(Math.sin(a.yawS), 0, Math.cos(a.yawS)); _side.set(_fwd.z, 0, -_fwd.x);
     _fh.copy(base); _fh.y += h * 0.85;
-    const want = _fol.pos.copy(base).addScaledVector(_fwd, lead ? 1.7 + h * 0.6 : -(2.2 + h * 0.75)).addScaledVector(_side, lead ? 0.5 : 0.75);
-    want.y += lead ? Math.max(1.35, h + 0.5) : Math.max(1.6, h + 0.75);
-    const f = blocked(_fh, want); if (f < 1) want.lerpVectors(_fh, want, Math.max(0.25, f - 0.08));
+    let side = a.folSide == null ? (lead ? 0.5 : 0.75) : a.folSide, f = followAt(base, back, side, up);
+    if (f < 0.98) for (let i = 0; i < FOLLOW_SIDES.length; i++) {
+      const s = FOLLOW_SIDES[i] * (lead ? 0.67 : 1); if (s === side) continue;
+      const g = followAt(base, back, s, up); if (g > f + 0.1) { f = g; side = s; }
+    }
+    a.folSide = side;
+    const want = _fol.pos.copy(base).addScaledVector(_fwd, back).addScaledVector(_side, side);
+    want.y += up;
+    if (f < 1) want.lerpVectors(_fh, want, Math.max(0.25, f - 0.08));
     _fol.look.copy(base).addScaledVector(_fwd, lead ? 0.1 : 2.0).setY(base.y + h * (lead ? 0.5 : 0.55));
+    if (f < 1) _fol.look.lerp(_fh, 1 - Math.max(0.25, f - 0.08));
     return _fol;
   }
   // a close shot of someone where they stopped (a hand-off, a delivery): in front of them, a little to the side
@@ -2861,7 +2966,7 @@ _M_LIFE = r"""
     if (key === shotKey) { shotFn = fn; return; }
     shotKey = key; shotFn = fn; const s = fn(simT), d = s.pos.distanceTo(cam.pos);
     if (cam.pos.lengthSq() === 0) { cam.pos.copy(s.pos); cam.look.copy(s.look); tween = null; return; }
-    tween = { from: cam.pos.clone(), fromLook: cam.look.clone(), t: 0, dur: clamp(1.0 + d / 6.5, 1.1, 5.5), lift: d > 8 ? Math.min(7, d * 0.24) : 0 };
+    tween = { from: cam.pos.clone(), fromLook: cam.look.clone(), t: 0, dur: clamp(1.0 + d / 6.5, 1.1, 4.0), lift: d > 8 ? Math.min(3.5, d * 0.18) : 0 };
     renderCard();
   }
   const user = { yaw: 0, pitch: 0, zoom: 1 }; let lastInputAt = -1e9, shake = 0;
@@ -2871,6 +2976,7 @@ _M_LIFE = r"""
     if (tween) {
       tween.t += dt / tween.dur; const u = Math.min(1, tween.t), e = u * u * (3 - 2 * u);
       cam.pos.lerpVectors(tween.from, s.pos, e); cam.pos.y += Math.sin(Math.PI * e) * tween.lift; cam.look.lerpVectors(tween.fromLook, s.look, e);
+      cam.look.y += Math.sin(Math.PI * e) * tween.lift * 0.6;  // the look rises with the drone: a glide that keeps the horizon
       if (u >= 1) tween = null;
     } else {
       const kp = 1 - Math.exp(-dt * 2.2), kl = 1 - Math.exp(-dt * 3.2);
@@ -2939,17 +3045,18 @@ _M_LIFE = r"""
   function toScreen(p) { const v = _v.copy(p).project(camera); _scr.x = (v.x + 1) / 2 * window.innerWidth; _scr.y = (1 - v.y) / 2 * window.innerHeight; _scr.ok = v.z < 1 && v.z > -1; return _scr; }
   const bubbles = [];
   function speak(actor, memberId, text, tone, seconds) {
-    if (!actor || !text) return;
+    if (!actor || !text) return null;
     const i = bubbles.findIndex(function (b) { return b.actor === actor; }); if (i >= 0) { bubbles[i].el.remove(); bubbles.splice(i, 1); }
     while (bubbles.length >= 2) bubbles.shift().el.remove();
     const d = document.createElement("div"); d.className = "bubble" + (tone === "good" ? " good" : tone === "bad" ? " bad" : "");
     const s = document.createElement("small"); s.textContent = actor.name.toUpperCase() + " · " + nameOf(memberId);
     const p = document.createElement("span"); p.textContent = text;
     d.appendChild(s); d.appendChild(p); d.style.opacity = "0"; bubblesEl.appendChild(d);
-    bubbles.push({ el: d, actor: actor, until: simT + (seconds || 8) });
+    const b = { el: d, actor: actor, until: simT + (seconds || 8), kind: "event" }; bubbles.push(b); return b;
   }
   function updateBubbles() {
     const Wd = window.innerWidth, Hg = window.innerHeight, top = 96, bottom = Hg - 150;
+    const hide = shotKey === "map"; if (bubblesEl.hidden !== hide) bubblesEl.hidden = hide;  // (the map is for the room names)
     for (let i = bubbles.length - 1; i >= 0; i--) {
       const b = bubbles[i];
       if (simT >= b.until) { b.el.remove(); bubbles.splice(i, 1); continue; }
@@ -2970,31 +3077,43 @@ _M_LIFE = r"""
     if (!show && !labelsShown) return;  // (only the map shows them; nothing to do otherwise)
     labelsShown = show;
     for (let i = 0; i < labels.length; i++) { const l = labels[i], s = toScreen(l.at), ok = show && s.ok && s.x > 10 && s.x < window.innerWidth - 10 && s.y > 100 && s.y < window.innerHeight - 160;
-      l.el.style.opacity = ok ? "1" : "0"; if (ok) { l.el.style.left = (s.x - l.el.offsetWidth / 2) + "px"; l.el.style.top = s.y + "px"; } }
+      l.el.style.opacity = ok ? "1" : "0";
+      if (ok) { const w = l.el.offsetWidth; l.el.style.left = clamp(s.x - w / 2, 8, window.innerWidth - w - 8) + "px"; l.el.style.top = s.y + "px"; } }
   }
-  function dropLabel(pnl, at) {
+  // the closed trade's own pnl_usd floats up beside the courier who brought it, for as long as he cheers or shrugs
+  const DROP_S = 6;
+  function dropLabel(pnl, at, who) {
     const won = (pnl || 0) >= 0; dropEl.textContent = fmtSigned(pnl); dropEl.style.color = won ? "var(--good)" : "var(--bad)";
     dropEl.style.transition = "none"; dropEl.style.opacity = "1"; dropEl.style.transform = "translateY(0)";
-    drop = { at: at.clone(), until: simT + 2.8 };
+    drop = { at: at.clone(), who: who || null, until: simT + DROP_S };
   }
   let drop = null;
   function updateDrop() {
     if (!drop) return; const left = drop.until - simT; if (left <= 0) { dropEl.style.opacity = "0"; drop = null; return; }
-    const s = toScreen(drop.at); dropEl.style.left = (s.x - dropEl.offsetWidth / 2) + "px"; dropEl.style.top = (s.y - 40 - (2.8 - left) * 26) + "px"; dropEl.style.opacity = String(Math.min(1, left));
+    const s = toScreen(drop.who ? drop.who.headAt : drop.at), up = (DROP_S - left) * 9;
+    dropEl.style.left = (drop.who ? s.x + 34 : s.x - dropEl.offsetWidth / 2) + "px"; dropEl.style.top = (s.y - 30 - up) + "px"; dropEl.style.opacity = String(Math.min(1, left));
   }
-  function statusDot(ids) { const i = document.createElement("i"); i.className = worstStatus(ids); return i; }
+  // the chips are made once (a tap never lands on a button being replaced, the row keeps its scroll); each poll only
+  // updates their status dots and which one is on
+  const chipEls = [];
+  function buildChips() {
+    chips.textContent = ""; chipEls.length = 0;
+    const add = function (key, text, ids) {
+      const b = document.createElement("button"), dot = ids ? document.createElement("i") : null;
+      if (dot) b.appendChild(dot); b.appendChild(document.createTextNode(text));
+      b.onclick = function () { pinned = pinned === key ? null : key; renderChips(); renderCard(); };
+      chips.appendChild(b); chipEls.push({ b: b, dot: dot, key: key, ids: ids || [] });
+    };
+    Object.keys(CAST).forEach(function (k) { if (actors[k]) add(k, CAST[k].name, CAST[k].members); });
+    add("observatory", ROOMS.observatory ? ROOMS.observatory.title : "The observatory", ROOMS.observatory ? ROOMS.observatory.members : []);
+    add("map", "map", null);
+  }
   function renderChips() {
-    chips.textContent = "";
-    Object.keys(CAST).forEach(function (k) {
-      if (!actors[k]) return; const c = CAST[k], b = document.createElement("button");
-      b.appendChild(statusDot(c.members)); b.appendChild(document.createTextNode(c.name)); b.className = pinned === k ? "on" : "";
-      b.onclick = function () { pinned = pinned === k ? null : k; renderChips(); renderCard(); }; chips.appendChild(b);
-    });
-    [["observatory", ROOMS.observatory ? ROOMS.observatory.title : "The observatory"], ["map", "map"]].forEach(function (q) {
-      const b = document.createElement("button"); if (q[0] === "observatory") b.appendChild(statusDot(ROOMS.observatory ? ROOMS.observatory.members : []));
-      b.appendChild(document.createTextNode(q[1])); b.className = pinned === q[0] ? "on" : "";
-      b.onclick = function () { pinned = pinned === q[0] ? null : q[0]; renderChips(); renderCard(); }; chips.appendChild(b);
-    });
+    if (!chipEls.length) buildChips();
+    for (let i = 0; i < chipEls.length; i++) {
+      const c = chipEls[i], on = pinned === c.key ? "on" : ""; if (c.b.className !== on) c.b.className = on;
+      if (c.dot) { const st = worstStatus(c.ids); if (c.dot.className !== st) c.dot.className = st; }
+    }
   }
   function renderCard() {
     const room = card.querySelector(".room"), who = card.querySelector(".who"), rows = card.querySelector(".rows");
@@ -3064,20 +3183,23 @@ _M_LIFE = r"""
     // Jet carries the cube to the vault; there he cheers only for a winning trade and shrugs at a losing one
     jet.queue.unshift({ dest: "vault", hold: 4.5, carry: won ? "gold" : "red", onArrive: function (a) {
       deliverCube(a, pnl);
-      a.yawGoal = a.destYaw + Math.PI;  // the cube goes in through the hatch; he turns round to the walkway for it
+      a.yawGoal = Math.atan2(camera.position.x - a.pos.x, camera.position.z - a.pos.z);  // the cube goes in through the hatch; he turns to the drone for it
       if (pnl > 0) oneShot(a, "cheer"); else if (pnl < 0) oneShot(a, "shrug");
       if (focus && focus.actor === a) focus.until = Math.max(focus.until, simT + (pnl > 0 ? 10 : 5));  // the camera stays for it
     } });
     focusOn(jet, 2.0, 8);
   }
   function chatter() {
+    // never over a real moment: while the drone is on one, or an event's own words are still up, nobody chatters
+    if (focus && simT < focus.until) return;
+    for (let i = 0; i < bubbles.length; i++) if (bubbles[i].kind !== "chatter" && simT < bubbles[i].until) return;
     const ids = Object.keys(members).filter(function (id) { const a = actors[actorOf[id]]; if (!a) return false; const s = toScreen(a.headAt);
       return s.ok && s.x > 0 && s.x < window.innerWidth && s.y > 60 && s.y < window.innerHeight - 140; });
     const working = ids.filter(function (id) { return members[id].status === "working"; });
     const pool = (working.length ? working : ids).filter(function (id) { const m = members[id]; return m.doing || (m.events && m.events.length) || m.why; });
     if (!pool.length) return;
     const id = pool[chatterIdx++ % pool.length], m = members[id];
-    speak(actors[actorOf[id]], id, m.doing || ((m.events || [])[0] || {}).text || m.why, null, 8);
+    const b = speak(actors[actorOf[id]], id, m.doing || ((m.events || [])[0] || {}).text || m.why, null, 8); if (b) b.kind = "chatter";
   }
   function apply(d) {
     const first = !data;
@@ -3116,10 +3238,12 @@ _M_LIFE = r"""
 
   // ============================================================= TIME OF DAY (the viewer's clock): blue hour, night, a pastel day
   const PAL = {
-    night: { top: 0x0a0e30, mid: 0x262064, hor: 0x6b4a8e, below: 0x4a3a78, sun: 0x9a7ab8, stars: 1.0, hemi: 0.85, hsky: 0x7f78d6, sunI: 0.9, sunC: 0xb8a0ff, fog: 0x3a3070, prac: 1.35, exp: 1.12, el: 0.12 },
-    blue: { top: 0x161a52, mid: 0x4d3f93, hor: 0xf2a07a, below: 0xa486c4, sun: 0xffb98a, stars: 0.7, hemi: 1.25, hsky: 0xb4a2ff, sunI: 2.6, sunC: 0xffb27c, fog: 0xb294c4, prac: 1.0, exp: 1.08, el: 0.085 },
-    day: { top: 0x3a64c8, mid: 0x8aa2e6, hor: 0xffd0b4, below: 0xc7b4e0, sun: 0xfff0d8, stars: 0.0, hemi: 1.7, hsky: 0xd2dcff, sunI: 3.2, sunC: 0xfff1dc, fog: 0xc8bce0, prac: 0.6, exp: 1.0, el: 0.4 },
+    // night: a cobalt sky over warm stone (a peach moon, warm bounce from the paving, the lamps carry the interiors)
+    night: { top: 0x0a0e30, mid: 0x262064, hor: 0x6b4a8e, below: 0x4a3a78, sun: 0x9a7ab8, stars: 1.0, hemi: 0.8, hsky: 0x8c7cbc, hgnd: 0x9a6038, sunI: 1.9, sunC: 0xffa878, fog: 0x3a3070, prac: 1.8, exp: 1.2, el: 0.12, key: 11 },
+    blue: { top: 0x161a52, mid: 0x4d3f93, hor: 0xf2a07a, below: 0xa486c4, sun: 0xffb98a, stars: 0.7, hemi: 1.0, hsky: 0xae9ce8, hgnd: 0x8a5a3a, sunI: 2.9, sunC: 0xffac74, fog: 0xb294c4, prac: 1.15, exp: 1.08, el: 0.085, key: 6 },
+    day: { top: 0x3a64c8, mid: 0x8aa2e6, hor: 0xffd0b4, below: 0xc7b4e0, sun: 0xfff0d8, stars: 0.0, hemi: 1.7, hsky: 0xd2dcff, hgnd: 0x8a6a50, sunI: 3.2, sunC: 0xfff1dc, fog: 0xc8bce0, prac: 0.6, exp: 1.0, el: 0.4, key: 1.5 },
   };
+  let keyBase = 0;
   function tint() {
     const d = new Date(), h = d.getHours() + d.getMinutes() / 60;
     const day = clamp(Math.min((h - 8) / 1.5, (16.5 - h) / 1.5), 0, 1), night = clamp(Math.max(Math.min((h - 21) / 1.5, 1), Math.min((5.5 - h) / 1.5, 1)), 0, 1);
@@ -3130,7 +3254,7 @@ _M_LIFE = r"""
     skyU.uSunCol.value.copy(mix("sun")); skyU.uStars.value = num("stars");
     const sd = V3(sunDir.x, num("el"), sunDir.z).normalize(); skyU.uSunDir.value.copy(sd); cloudU.uSunDir.value.copy(sd); sun.userData.dir = sd;
     if (!Q.shadows) sun.position.copy(sd).multiplyScalar(60);
-    hemi.intensity = num("hemi"); hemi.color.copy(mix("hsky")); sun.intensity = num("sunI"); sun.color.copy(mix("sunC"));
+    hemi.intensity = num("hemi"); hemi.color.copy(mix("hsky")); hemi.groundColor.copy(mix("hgnd")); sun.intensity = num("sunI"); sun.color.copy(mix("sunC")); keyBase = num("key");
     scene.fog.color.copy(mix("fog")); cloudU.uFar.value.copy(mix("fog")); renderer.toneMappingExposure = num("exp");
     cloudU.uLit.value.copy(col(0xffc7a6).lerp(col(0xfff1e6), day).lerp(col(0x8a78c8), night));
     cloudU.uShade.value.copy(col(0x7d64b4).lerp(col(0xa898d8), day).lerp(col(0x2e2660), night));
@@ -3144,7 +3268,7 @@ _M_LIFE = r"""
       const rt = new THREE.WebGLRenderTarget(W0, H0, { type: THREE.HalfFloatType, samples: Q.msaa });
       composer = new EffectComposer(renderer, rt);
       composer.addPass(new RenderPass(scene, camera));
-      bloom = new UnrealBloomPass(new THREE.Vector2(Math.max(1, W0 / 2), Math.max(1, H0 / 2)), 0.6, 0.55, 0.82); bloom.enabled = Q.bloom; composer.addPass(bloom);
+      bloom = new UnrealBloomPass(new THREE.Vector2(Math.max(1, W0 / 2), Math.max(1, H0 / 2)), 0.42, 0.55, 0.9); bloom.enabled = Q.bloom; composer.addPass(bloom);
       composer.addPass(new OutputPass());
     } catch (e) { console.warn("world: no post-processing", e); composer = null; }
   }
@@ -3152,11 +3276,11 @@ _M_LIFE = r"""
     const w = window.innerWidth, h = window.innerHeight, aspect = w / h;
     renderer.setPixelRatio(Q.dpr); renderer.setSize(w, h, false);
     camera.aspect = aspect; camera.fov = aspect >= 1 ? 55 : clamp(2 * Math.atan(Math.tan(THREE.MathUtils.degToRad(20)) / aspect) * 180 / Math.PI, 55, 75);
-    camera.updateProjectionMatrix();
+    camera.updateProjectionMatrix(); placeBoard();
     if (composer) { composer.setPixelRatio(Q.dpr); composer.setSize(w, h); }
   }
   window.addEventListener("resize", resize);
-  let fpsN = 0, fpsT = 0, governed = FULLQ || LITE;
+  let fpsN = 0, fpsT = 0, governed = FULLQ || LITE, settleAt = 0, bloomByGovernor = false, bloomRetried = false, fastWindows = 0;
   function trimDecor() {  // the last step down: the distant islands and the extra lantern copies go (the crew stays)
     let n = 0;
     (props.islands || []).forEach(function (q) { if (q.h.visible) { q.h.visible = false; n++; } });
@@ -3164,19 +3288,29 @@ _M_LIFE = r"""
     (placed.arch || []).forEach(function (h) { if (h.visible) { h.visible = false; n++; } });
     return n;
   }
+  // Never judged while the models download, decode and upload (a loading stall is not this device's real speed), nor
+  // for 3 s after the last one lands; then a window under 28 fps steps one thing down, and if bloom went off but the
+  // device turns out fast (two windows at 50+ fps), bloom comes back once.
   function govern(dt) {
-    if (governed) return; fpsN += 1; fpsT += dt; if (fpsT < 5) return;
+    if (governed) return;
+    const now = performance.now();
+    if ((loading.crew < loading.crewN || loading.set < loading.setN) && now < 120000) { fpsN = 0; fpsT = 0; settleAt = now + 3000; return; }
+    if (now < settleAt) { fpsN = 0; fpsT = 0; return; }
+    fpsN += 1; fpsT += dt; if (fpsT < 5) return;
     const fps = fpsN / fpsT; fpsN = 0; fpsT = 0;
-    if (fps >= 28) { if (loading.set >= loading.setN && loading.crew >= loading.crewN) governed = true; return; }
-    if (bloom && bloom.enabled) { bloom.enabled = false; console.info("world: bloom off (" + fps.toFixed(0) + " fps)"); return; }
+    if (fps >= 50 && bloomByGovernor) { if (++fastWindows >= 2) { bloomByGovernor = false; bloomRetried = true; bloom.enabled = true; console.info("world: bloom back on (" + fps.toFixed(0) + " fps)"); } return; }
+    fastWindows = 0;
+    if (fps >= 28) { if (!bloomByGovernor) governed = true; return; }
+    if (bloom && bloom.enabled) { bloom.enabled = false; bloomByGovernor = !bloomRetried; console.info("world: bloom off (" + fps.toFixed(0) + " fps)"); return; }
+    bloomByGovernor = false;  // (a second slow window: no way back up from here)
     if (Q.dpr > 1) { Q.dpr = 1; resizeNext = true; console.info("world: pixel ratio 1"); return; }  // (resized just before the next draw: no blank frame)
     if (Q.shadows) { Q.shadows = false; renderer.shadowMap.enabled = false; sun.castShadow = false; console.info("world: shadows off"); return; }
     if (trimDecor()) { console.info("world: fewer decorations"); return; }
-    if (loading.set >= loading.setN && loading.crew >= loading.crewN) governed = true;
+    governed = true;
   }
 
   // ============================================================= AMBIENT LIFE (decorative: no words, no numbers)
-  const tubeLen = props.parcels.len, _pm = new THREE.Matrix4(), _pp = new THREE.Vector3();
+  const tubeLen = props.parcels.len, _pm = new THREE.Matrix4(), _pp = new THREE.Vector3(), _pq = new THREE.Vector3();
   function updateProps(dt) {
     props.holoDisc.rotation.y += dt * 0.08; props.holoMini.rotation.y -= dt * 0.05; props.holoMini.position.y = props.holoY + (0.258 + Math.sin(simT * 0.9) * 0.025) * props.holoK;
     props.holoDome.rotation.y += dt * 0.03; props.holoCards.rotation.y += dt * 0.12;
@@ -3190,9 +3324,13 @@ _M_LIFE = r"""
     }
     if (props.airshipModel) { const m = props.airshipModel; m.position.y = m.userData.y + Math.sin(simT * 0.6) * 0.07; m.rotation.z = Math.sin(simT * 0.5) * 0.012; }
     if (props.islands) for (let i = 0; i < props.islands.length; i++) { const q = props.islands[i]; q.h.position.y = q.y + Math.sin(simT * 0.21 + q.ph) * 0.35; q.h.rotation.y += dt * 0.004; }
-    if (props.lanternGlow) for (let i = 0; i < props.lanternGlow.length; i++) {  // the prop lanterns' halos fade near the lens too
-      const s = props.lanternGlow[i]; s.getWorldPosition(_pp); s.material.opacity = 0.5 * smoothstep(_pp.distanceTo(camera.position), 1.6, 4.0); }
-    rookEyeMat.color.setRGB(1, 0.42, 0.06).multiplyScalar(1.8 + Math.sin(simT * 1.7) * 0.55); rookEyeHalo.opacity = 0.36 + Math.sin(simT * 1.7) * 0.12;
+    if (props.lanternGlow) for (let i = 0; i < props.lanternGlow.length; i++) {  // the prop lanterns' halos: over the lamp head, a little toward the drone, fading near the lens
+      const s = props.lanternGlow[i], h = s.parent; _pp.set(h.position.x, h.position.y + 2.27, h.position.z);
+      const d = _pp.distanceTo(camera.position); _pq.copy(camera.position).sub(_pp).multiplyScalar(0.22 / Math.max(0.01, d)).applyAxisAngle(UP, -h.rotation.y);
+      s.position.set(_pq.x, 2.27 + _pq.y, _pq.z); s.material.opacity = 0.32 * smoothstep(d, 1.6, 4.0); }
+    rookEyeMat.color.setRGB(1, 0.42, 0.06).multiplyScalar(1.15 + Math.sin(simT * 1.7) * 0.25); rookEyeHalo.opacity = 0.62 + Math.sin(simT * 1.7) * 0.12;
+    // the warm key: between the drone and what it films, a little above (strongest at night, faint by day)
+    keyLight.position.copy(cam.look).lerp(camera.position, 0.45); keyLight.position.y += 0.8; keyLight.intensity = keyBase;
     for (let i = 0; i < props.drones.length; i++) { const d = props.drones[i], a = simT * d.speed + d.phase;
       d.g.position.set(Math.cos(a) * d.r, d.y + Math.sin(simT * 0.9 + d.phase) * 0.3, Math.sin(a) * d.r * 0.8 + 1); d.g.rotation.y = -a; d.g.rotation.z = Math.sin(simT * 2 + d.phase) * 0.05; }
     for (let i = 0; i < props.parcels.n; i++) { const u = ((simT * 2.2 + i * tubeLen / props.parcels.n) % tubeLen) / tubeLen;

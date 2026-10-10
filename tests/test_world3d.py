@@ -10,7 +10,9 @@ import hashlib
 import http.client
 import json
 import re
+import shutil
 import struct
+import subprocess
 import tomllib
 from collections.abc import Callable, Iterator
 from pathlib import Path, PurePosixPath
@@ -564,3 +566,184 @@ def test_a_dropped_in_model_is_served_and_announced(serve: Callable[..., Client]
     raw = _block(page.decode("utf-8"), r'<script id="models" type="application/json">(.*?)</script>')
     assert status == 200 and json.loads(raw) == {"motion": False, "cast": {"jet": CAST_MODELS["jet"]}, "props": {}}
     assert client.request("/office/assets/cast_rook.glb")[0] == 404  # whitelisted, but not dropped in
+
+
+# --------------------------------------------------------------------------- the polish round (regressions)
+
+
+def _js_body(module: str, start: str) -> str:
+    """The source from ``start`` to the brace that closes the first block after it (strings and comments skipped)."""
+    i = module.index(start)
+    j, depth, quote = module.index("{", i), 0, ""
+    while True:
+        ch = module[j]
+        if quote:
+            if ch == "\\":
+                j += 1
+            elif ch == quote:
+                quote = ""
+        elif ch in "\"'":
+            quote = ch
+        elif module.startswith("//", j):
+            j = module.index("\n", j)
+        elif ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth == 0:
+                return module[i:j + 1]
+        j += 1
+
+
+def _node(script: str, tmp_path: Path) -> Any:
+    path = tmp_path / "check.mjs"
+    path.write_text(script, encoding="utf-8")
+    res = subprocess.run(["node", str(path)], capture_output=True, text=True, timeout=60, check=False)
+    assert res.returncode == 0, res.stderr
+    return json.loads(res.stdout.strip().splitlines()[-1])
+
+
+def test_the_lantern_halos_are_soft_glows_over_the_lamp_heads(settings: Settings) -> None:
+    """A canvas texture's colour is white wherever anything is drawn: the halos read its alpha (the red channel made a
+    flat pale disc), sit a little toward the drone (so they glow over the lamp head, walls still hide them), and the
+    ticket board draws after them."""
+    module = _module(render_world_html(settings))
+    assert "texture2D(uMap, vUv).a" in module and "texture2D(uMap, vUv).r" not in module
+    assert "c.xyz += normalize(-c.xyz) * 0.22;" in module
+    lantern = _js_body(module, "    lantern: function (h) {")
+    assert "props.heroBulbMat = props.lanternBulbs.material.clone()" in lantern
+    assert "map: haloTex" in lantern and "halo.scale.setScalar(0.42)" in lantern
+    assert "board.renderOrder = 8;" in module
+
+
+@pytest.mark.skipif(shutil.which("node") is None, reason="Node is not installed")
+def test_the_arches_are_camera_blockers(settings: Settings, tmp_path: Path) -> None:
+    """The hero arches register their pillars and lintel as oriented boxes: a drone line through a pillar is blocked,
+    one through the opening is clear (the follow shot used to fly into the stonework)."""
+    module = _module(render_world_html(settings))
+    arch = _js_body(module, "    arch: function (h) {").replace("    arch: function (h) {", "const arch = function (h) {", 1)
+    blocked = _js_body(module, "  function blocked(from, to) {")
+    three = (world3d.ASSET_DIR / "three.module.min.js").as_uri()
+    out = _node(f"""
+import * as THREE from {json.dumps(three)};
+const V3 = function (x, y, z) {{ return new THREE.Vector3(x, y, z); }};
+const blockers = [];
+const _o = new THREE.Vector3(), _d = new THREE.Vector3(), _r = new THREE.Ray(), _b = new THREE.Box3(), _hit = new THREE.Vector3();
+{arch};
+{blocked}
+const h = new THREE.Group(), inner = new THREE.Group(); inner.userData.size = V3(2.54, 3.4, 0.71); h.add(inner);
+h.position.set(-7.25, 0, -3); h.rotation.y = Math.PI / 2;  // the workshop door: the arch spans world z
+arch(h);
+const through = function (z) {{ return blocked(V3(-9, 1.2, z), V3(-5.5, 1.2, z)); }};
+console.log(JSON.stringify({{ n: blockers.length, pillar: through(-3 + 1.1), opening: through(-3),
+  lintel: blocked(V3(-9, 3.2, -3), V3(-5.5, 3.2, -3)) }}));
+""", tmp_path)
+    assert out["n"] == 3
+    assert out["pillar"] < 1 and out["lintel"] < 1 and out["opening"] == 1
+
+
+@pytest.mark.skipif(shutil.which("node") is None, reason="Node is not installed")
+def test_a_fade_in_never_touches_the_worlds_shared_materials(settings: Settings, tmp_path: Path) -> None:
+    """Mote's bell is made with its own brass, the hero lantern bulbs with their own material, and fadeIn() skips the
+    world's shared materials whatever is under the root (every railing used to blink out when Mote arrived)."""
+    module = _module(render_world_html(settings))
+    bell = _js_body(module, "  function makeBell(radius, height) {")
+    assert "const bellBrass = MAT.brass.clone();" in bell and bell.count("MAT.brass") == 1  # (only to clone it)
+    fade = _js_body(module, "  function fadeIn(root, seconds, done) {")
+    out = _node(f"""
+const mat = function (name) {{ return {{ name: name, transparent: false, opacity: 1, needsUpdate: false }}; }};
+const MAT = {{ brass: mat("brass"), stone: mat("stone") }}, CMAT = {{ eye: mat("eye"), brass: MAT.brass }};
+const props = {{ lanternBulbs: {{ material: mat("bulbs") }} }}, shadowMat = mat("shadow"), bellMat = mat("bell");
+const fades = []; let SHARED_MATS = null;
+{fade}
+const own = mat("own");
+const meshes = [{{ isMesh: true, material: MAT.brass }}, {{ isMesh: true, material: [own, props.lanternBulbs.material] }},
+  {{ isMesh: true, material: CMAT.eye }}];
+fadeIn({{ traverse: function (fn) {{ meshes.forEach(fn); }} }}, 0.5, null);
+console.log(JSON.stringify({{ brass: MAT.brass.opacity, bulbs: props.lanternBulbs.material.opacity, eye: CMAT.eye.opacity,
+  own: own.opacity, kept: fades[0].keep.length }}));
+""", tmp_path)
+    assert out == {"brass": 1, "bulbs": 1, "eye": 1, "own": 0, "kept": 1}
+    # a model dropped mid-fade: its fade goes, and a late callback never hides the drawing that came back
+    assert "if (fades[i].root === a.model) fades.splice(i, 1);" in module
+    assert "fadeIn(holder, 0.45, function () { if (a.model === holder) a.body.visible = false; });" in module
+
+
+@pytest.mark.skipif(shutil.which("node") is None, reason="Node is not installed")
+def test_the_chips_are_made_once_and_only_updated(settings: Settings, tmp_path: Path) -> None:
+    """Every /api/page poll used to clear and rebuild the chip row, so a tap could land on a detached button: the
+    buttons are made once, later polls only update the status dots and which chip is on."""
+    module = _module(render_world_html(settings))
+    build = _js_body(module, "  function buildChips() {")
+    render = _js_body(module, "  function renderChips() {")
+    assert 'chips.textContent = ""' not in render
+    out = _node(f"""
+const el = function (tag) {{ return {{ tag: tag, className: "", children: [], appendChild: function (c) {{ this.children.push(c); }} }}; }};
+const document = {{ createElement: el, createTextNode: function (t) {{ return {{ text: t }}; }} }};
+const chips = el("div"); Object.defineProperty(chips, "textContent", {{ set: function () {{ chips.children = []; }} }});
+const CAST = {{ voss: {{ name: "Voss", members: ["judge"] }}, jet: {{ name: "Jet", members: ["broker"] }} }}, actors = {{ voss: {{}}, jet: {{}} }};
+const ROOMS = {{ observatory: {{ title: "The observatory", members: ["coach"] }} }};
+const status = {{ judge: "working", broker: "idle", coach: "waiting" }};
+const worstStatus = function (ids) {{ return ids.length ? status[ids[0]] : "idle"; }};
+let pinned = null; const renderCard = function () {{}};
+const chipEls = [];
+{build}
+{render}
+renderChips(); const first = chips.children.slice();
+status.broker = "working"; renderChips(); renderChips();
+first[1].onclick();
+console.log(JSON.stringify({{ n: chips.children.length, same: chips.children.every(function (b, i) {{ return b === first[i]; }}),
+  dots: first.map(function (b) {{ return b.children[0].className === undefined ? null : b.children[0].className; }}),
+  on: first.map(function (b) {{ return b.className; }}) }}));
+""", tmp_path)
+    assert out["n"] == 4 and out["same"] is True
+    assert out["dots"] == ["working", "working", "waiting", None]  # Jet's dot followed the poll; the map has none
+    assert out["on"] == ["", "on", "", ""]
+
+
+@pytest.mark.skipif(shutil.which("node") is None, reason="Node is not installed")
+def test_the_fps_governor_ignores_loading_and_can_step_back_up(settings: Settings, tmp_path: Path) -> None:
+    """A loading stall (models decoding and uploading) never costs the phone its bloom, pixel ratio or shadows; after
+    the set is in, a slow window turns bloom off, and two fast windows bring it back once (never a see-saw)."""
+    module = _module(render_world_html(settings))
+    state = re.search(r"  let fpsN = 0, fpsT = 0,[^\n]*;", module)
+    assert state is not None
+    govern = _js_body(module, "  function govern(dt) {")
+    out = _node(f"""
+let clock = 0; const performance = {{ now: function () {{ return clock; }} }};
+const FULLQ = false, LITE = false; console.info = function () {{}};
+const loading = {{ crew: 0, crewN: 6, set: 0, setN: 12 }}, bloom = {{ enabled: true }}, Q = {{ dpr: 2, shadows: true }};
+const renderer = {{ shadowMap: {{}} }}, sun = {{}}; let resizeNext = false;
+const trimDecor = function () {{ return 0; }};
+{state.group(0)}
+{govern}
+const run = function (seconds, fps) {{ for (let i = 0; i < seconds * fps; i++) {{ clock += 1000 / fps; govern(1 / fps); }} }};
+const log = [];
+run(30, 4); log.push([bloom.enabled, Q.dpr]);  // loading the crew and the set at 4 fps: nothing changes
+loading.crew = 6; loading.set = 12; run(2, 60); run(6, 20); log.push([bloom.enabled, Q.dpr]);  // settled, then slow
+run(11, 60); log.push([bloom.enabled, Q.dpr]);  // fast again: bloom back on
+run(6, 20); log.push([bloom.enabled, Q.dpr]);  // slow again: bloom off for good
+run(11, 60); log.push([bloom.enabled, Q.dpr]);
+console.log(JSON.stringify(log));
+""", tmp_path)
+    assert out == [[True, 2], [False, 2], [True, 2], [False, 2], [False, 2]]
+
+
+def test_chatter_never_talks_over_a_real_moment(settings: Settings) -> None:
+    """The generic status chatter used to replace Jet's trade bubble and Voss's lesson: event bubbles are tagged,
+    chatter waits while the drone is on a real moment or an event's words are up."""
+    module = _module(render_world_html(settings))
+    chatter = _js_body(module, "  function chatter() {")
+    assert "if (focus && simT < focus.until) return;" in chatter
+    assert 'if (bubbles[i].kind !== "chatter" && simT < bubbles[i].until) return;' in chatter
+    assert 'if (b) b.kind = "chatter";' in chatter
+    assert 'until: simT + (seconds || 8), kind: "event" }' in module
+
+
+def test_the_phone_keeps_the_ticket_board_and_the_map_labels_inside_the_frame(settings: Settings) -> None:
+    module = _module(render_world_html(settings))
+    place = _js_body(module, "  function placeBoard() {")
+    assert "camera.aspect < 0.85" in place and "board.scale.setScalar(tall ? 0.62 : 1)" in place
+    assert "camera.updateProjectionMatrix(); placeBoard();" in module  # re-placed on every resize
+    assert "clamp(s.x - w / 2, 8, window.innerWidth - w - 8)" in module  # a room label never runs off the edge
+    assert 'const hide = shotKey === "map"; if (bubblesEl.hidden !== hide) bubblesEl.hidden = hide;' in module
