@@ -141,8 +141,8 @@ def test_the_cast_covers_the_team_and_the_sets_exist() -> None:
 def test_office_live_mode_is_marked(make_settings: Callable[..., Settings]) -> None:
     page = render_office_html(live_settings(make_settings))
     assert (
-        'class="mode live" id="mode">LIVE</b>' in page
-        and "Night Shift: Skyport · live" in page
+        'class="mode live" id="mode">SOLANA BOT: REAL</b>' in page
+        and "Night Shift: Skyport · Solana bot real" in page
     )
 
 

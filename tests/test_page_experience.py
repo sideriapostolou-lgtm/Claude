@@ -484,7 +484,7 @@ def test_the_page_draws_range_bars_and_chips_as_text_only(settings: Settings) ->
         assert name in script, name
     assert ".style.left" in script and ".style.width" in script  # positions through the CSSOM: CSP-safe
     assert 'setAttribute("aria-label"' in script and "likely between" in script
-    assert "renderTeam(s.team, s.experience)" in page_script(settings)
+    assert "renderTeam(s.team, s.experience, s.plain)" in page_script(settings)
     for sink in ("innerHTML", "outerHTML", "insertAdjacentHTML", "document.write", "eval(", "new Function"):
         assert sink not in script, sink
 

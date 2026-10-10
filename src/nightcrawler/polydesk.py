@@ -1403,7 +1403,8 @@ def panel_state(settings: Settings, now: float) -> dict[str, Any]:
                 "live": bool(p.get("live")),
                 "cost_usd": float(p.get("cost_usd") or 0.0),
             }
-            for p in sorted(st["positions"].values(), key=lambda p: -p["t_in"])[:10]
+            # the real-money ones first (the 3D board shows the first three), each book newest first
+            for p in sorted(st["positions"].values(), key=lambda p: (not p.get("live"), -p["t_in"]))[:10]
         ],
         "events": st.get("events", [])[:EVENTS_KEEP],
         "polls": int(c.get("polls") or 0),

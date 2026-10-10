@@ -943,7 +943,8 @@ def test_page_has_every_section_in_order_and_is_built_for_phones(settings: Setti
     assert "prefers-color-scheme:dark" in html and "body{margin:0;background:var(--page)" in html
     assert f'data-refresh="{REFRESH_S}"' in html and 10 <= REFRESH_S <= 15
     assert "visibilitychange" in html and "document.hidden" in html  # pauses while hidden, refreshes on return
-    assert "Paper money (pretend)" in html and ">PAPER<" in html
+    assert "Paper money (pretend)" in html and ">PAPER<" not in html  # the badge waits for the data (plain.real)
+    assert '<b class="mode" id="mode" hidden></b>' in html
     assert 'id="learn-rule" hidden' in html and "Ready for real money?" in html  # the rule only from real data
     assert "min-height:44px" in html  # tap targets
     assert not re.search(r"""(?:src|href)\s*=\s*["']?(?:https?:)?//""", html)
@@ -962,7 +963,7 @@ def test_page_texts_are_plain_words(settings: Settings) -> None:
 
 def test_live_page_says_real_money(make_settings: Callable[..., Settings]) -> None:
     html = render_page_html(live_settings(make_settings))
-    assert ">LIVE<" in html and "Real money" in html
+    assert ">REAL MONEY ON<" in html and "Real money" in html
 
 
 def test_page_csp_hashes_match_the_inline_script_and_style(settings: Settings) -> None:

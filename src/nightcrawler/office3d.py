@@ -1013,8 +1013,8 @@ function main() {
   function apply(d) {
     const first = !data;
     offline = false; lastOkAt = Date.now(); body.classList.remove("offline");
-    const mode = d.mode === "LIVE" ? "LIVE" : "PAPER";
-    modeEl.textContent = mode; modeEl.className = "mode" + (mode === "LIVE" ? " live" : "");
+    const mode = d.mode === "LIVE" ? "LIVE" : "PAPER";  // the Solana bot's own mode, and said so (the desks are apart)
+    modeEl.textContent = mode === "LIVE" ? "SOLANA BOT: REAL" : "SOLANA BOT: PRETEND"; modeEl.className = "mode" + (mode === "LIVE" ? " live" : "");
     const money = d.money || {}, since = (money.since_start || {}).usd, sol = (d.wallet || {}).sol;
     moneyEl.textContent = fmtUsd(money.usd);
     sinceEl.textContent = since == null ? (money.label || "") : fmtSigned(since) + " since start";
@@ -1088,7 +1088,7 @@ def _json_block(value: object) -> str:
 def render_office3d_html(settings: Settings) -> str:
     """The complete 3D town page (static; the module loads live data and the bundled three.js). Pure: no ledger data."""
     live = settings.is_live
-    mode = "LIVE" if live else "PAPER"
+    mode = "SOLANA BOT: REAL" if live else "SOLANA BOT: PRETEND"  # the Solana bot's own mode (the desks are apart)
     members = "".join(
         f'<span data-id="{html.escape(mid)}" data-name="{html.escape(name)}" data-role="{html.escape(role)}"></span>'
         for mid, name, role in MEMBERS
@@ -1099,7 +1099,7 @@ def render_office3d_html(settings: Settings) -> str:
         '<meta name="color-scheme" content="dark">\n<meta name="theme-color" content="#0a0f24">\n'
         '<meta name="robots" content="noindex, nofollow">\n<meta name="referrer" content="no-referrer">\n'
         '<meta name="apple-mobile-web-app-capable" content="yes">\n'
-        f'<link rel="icon" href="data:,">\n<title>Night Shift: the town · {mode.lower()}</title>\n'
+        f'<link rel="icon" href="data:,">\n<title>Night Shift: the town · Solana bot {"real" if live else "pretend"}</title>\n'
         f"<style>{_STYLE}</style>\n</head>\n"
         f'<body data-refresh="{REFRESH_S}" data-pipeline="{",".join(PIPELINE)}">\n'
         '<canvas id="view"></canvas><div id="vignette"></div>\n'

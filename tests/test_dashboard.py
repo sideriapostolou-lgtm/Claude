@@ -181,7 +181,8 @@ def test_routes_without_token(serve: Callable[..., Client], ledger: Ledger, sett
     assert status == 200 and headers["Content-Type"] == "text/html; charset=utf-8"
     assert headers["Content-Security-Policy"] == CONTENT_SECURITY_POLICY
     assert headers["X-Frame-Options"] == "DENY" and headers["X-Content-Type-Options"] == "nosniff"
-    assert b"PAPER" in body and "Set-Cookie" not in headers
+    # the page's badge waits for the data's plain words (never a bare PAPER while real money may be on)
+    assert b'<b class="mode" id="mode" hidden></b>' in body and b">PAPER<" not in body and "Set-Cookie" not in headers
     assert client.request("/nope")[0] == 404
     assert client.request("/api/state/extra")[0] == 404
 
@@ -274,7 +275,7 @@ def test_render_html_has_no_secrets_and_no_external_assets(secret_settings: Sett
     assert not re.search(r"""(?:src|href)\s*=\s*["']?(?:https?:)?//""", html)
     assert "@import" not in html and "url(" not in html
     assert set(re.findall(r"https?://[^\s\"'<>]+", html)) == {"http://www.w3.org/2000/svg"}  # SVG namespace only
-    assert ">LIVE<" in html
+    assert ">REAL MONEY ON<" in html  # the bot itself live: the badge says real money before the first answer
 
 
 def test_csp_hashes_match_the_inline_script_and_style(settings: Settings) -> None:
@@ -296,7 +297,7 @@ def test_page_is_built_for_phones(settings: Settings) -> None:
     html = render_html(settings)
     assert 'name="viewport"' in html and "width=device-width" in html
     assert "prefers-color-scheme:dark" in html and "body{margin:0;background:var(--page)" in html
-    assert 'data-refresh="15"' in html and ">PAPER<" in html
+    assert 'data-refresh="15"' in html and '<b class="mode" id="mode" hidden></b>' in html  # waits for the data
     assert "What is this?" in html and "innerHTML" not in html  # untrusted text goes in via textContent only
 
 

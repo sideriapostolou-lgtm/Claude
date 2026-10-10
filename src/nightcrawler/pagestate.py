@@ -11,16 +11,18 @@ Schema (lists capped: members 9, events <= 5, open trades <= 10, closed trades 1
     {
       "version", "generated_at", "mode": "PAPER"|"LIVE", "refresh_s",
       "alerts": [{"level": "bad"|"warn", "text"}],                    # header banners, worst first
-      "plain": {"headline",                                           # the whole screen in plain words: see PLAIN
-                "real": {"label": "Real money", "on": bool, "paused": str|null, "at_risk_usd": float|null,
-                         "open_bets": int|null, "cash_usd": float|null, "line", "limits": str|null,
-                         "verdict": str|null, "research": str|null},
-                "pretend": {"label": "Practice (pretend money)", "line"},
+      "plain": {"about", "headline",                                  # the whole screen in plain words: see PLAIN
+                "real": {"label": "Real money", "on": bool, "reported": bool, "paused": str|null,
+                         "paused_kind": "risk"|"day"|"full"|null, "at_risk_usd": float|null,
+                         "open_bets": int|null, "cash_usd": float|null, "result": str|null, "line",
+                         "how": str|null, "limits": str|null, "verdict": str|null, "research": str|null},
+                "pretend": {"label": "Practice (pretend money)", "line", "body"},
                 "now": [str] (<= 3),
                 "team": [{"id", "name", "job", "plain_role", "status_word": "working"|"waiting"|"idle"|"stuck",
                           "members": [member id], "latest": str|null, "latest_ts": float|null,
                           "latest_ago": str|null}],
                 "said": {member id: {"ts", "text"}},                  # each member's newest event, plain words
+                "jobs": {member id: str},                             # each member's own job (bubble labels)
                 "glossary": [{"word", "means"}]},
       "money": {"label", "usd", "start_usd", "sol", "sol_usd", "withdrawn_sol",  # live: sent back to the owner
                 "since_start": {"usd", "pct"}, "today": {"usd", "pct"},   # the bot's own result (in SOL,
@@ -118,22 +120,31 @@ desk is off (``TRENDDESK_ENABLED``) or its state cannot be read.
 
 PLAIN (:func:`plain_words`): the screen in plain words for a newcomer (both pages put it on top), built from this
 page's own data only: every sentence is a FIXED template filled with the data's numbers and words, never an invented
-fact. ``real`` is real money, called "real money" only where the data says so (the Polymarket desk's ``mode: live``;
-the Solana bot only when the bot itself runs live): ``on``, the line (the venue's cash, the money in open real bets
-and the real result since start with the finished bets won; "up $X since start (real money)" is the only way a gain
-is ever worded), ``paused`` (why no new real bet goes out now: the risk manager's pause, since when; the day's loss
-limit reached; the open-money limit full; else null), the desk's hard limits from its settings and the lab's verdict
-on its rule (:data:`nightcrawler.polydesk.RULE_LAB_PASSED`: no edge, so tiny amounts only), plus the research line
-while no strategy has passed its locked test. Off, the line says so with the desk's own reason (``status``) when the
-owner asked for live. ``pretend`` names each practice book apart, always "pretend": the Solana bot (since start), the
-Polymarket desk's paper book (today) and the trend desk (since start, or when it starts). ``now``: up to
+fact. ``about`` says what the app is (:data:`PLAIN_ABOUT`). ``real`` is real money, called "real money" only where the
+data says so (the Polymarket desk's ``mode: live``; the Solana bot only when the bot itself runs live): ``on``, the
+line (the venue's cash, the money in open real bets and the real result since start with the finished bets won; "up
+$X since start (real money)" is the only way a gain is ever worded), ``result`` (that result alone, once a real bet
+has finished; the Solana bot's while it runs live), ``how`` (how the rule bets, from its settings: the price it buys
+at, what a win and a loss are worth), ``paused`` (why no new real bet goes out now: the risk manager's pause, since
+when; the day's loss limit reached; the open-money limit full, which is waiting, not a pause; ``paused_kind`` says
+which: ``risk``, ``day`` or ``full``; else null), the desk's hard limits from its settings and the lab's verdict on its
+rule (:data:`nightcrawler.polydesk.RULE_LAB_PASSED`: no edge, so tiny amounts only; while it bets no real money, a
+verdict that says so instead), plus the research line while no strategy has passed its locked test. Off, the line
+says so with the desk's own reason (``status``) when the owner asked for live, and what is still at the venue; the
+headline then says real money is off only when no real bet is still open. ``reported`` is false only while the owner
+asked for live (``POLYDESK_MODE=live``) and the desk has not said anything yet (no state, no reason, no round): the
+page then says it cannot tell instead of "pretend". ``pretend`` names each practice book apart, always "pretend": the
+Solana bot (since start), the Polymarket desk's paper bets (since start, today's change beside it) and the trend desk
+(since start, or when it starts); ``body`` is the same sentence without its label. ``now``: up to
 :data:`PLAIN_NOW_MAX` of the team's freshest events (the last :data:`PLAIN_NOW_WINDOW_S`, the receipts' own log left
 out), each "Name: what happened · how long ago", the common kinds put in plain words by fixed templates
-(:func:`plain_event`), any other one as the bot wrote it. ``team``: the six characters of the 3D world
-(:data:`nightcrawler.office3d.CAST3D`, the members each one plays) with a fixed one-line job (:data:`PLAIN_JOBS`),
-the worst status of their members in one word ("stuck" for blocked) and their latest event; ``said`` is each
-member's newest event in the same plain words (the 3D world's speech bubbles say it). ``glossary``: the
-words still on screen, each with one line. Real and pretend figures are never added together, nor anything else.
+(:func:`plain_event`), any other one as the bot wrote it ("paper" said "pretend"). ``team``: the six characters of the
+3D world (:data:`nightcrawler.office3d.CAST3D`, the members each one plays) with a fixed one-line job
+(:data:`PLAIN_JOBS`, saying which money each one handles, real only where the data says live), the worst status of
+their members in one word ("stuck" for blocked) and their latest event; ``said`` is each member's newest event in the
+same plain words (the 3D world's speech bubbles say it) and ``jobs`` each member's own job
+(:data:`PLAIN_MEMBER_JOBS`: a bubble's label). ``glossary``: the words still on screen, each with one line. Real and
+pretend figures are never added together, nor anything else.
 
 LEARNING: :func:`learning_card` calls ``nightcrawler.learn.card.learning_card_state(settings, now)`` when
 that module exists (it is built on another branch) and keeps only these keys, each type-checked::
@@ -221,9 +232,10 @@ from nightcrawler.teamroom import ENGINE_STALE_S, FUTURE_SKEW_S, build_team_stat
 from nightcrawler.withdraw import fresh_balance, last_withdrawal, live_hold, page_view, saved_state, withdrawn_lamports
 
 __all__ = ["EXPERIENCE_CAVEAT", "EXPERIENCE_CHIPS", "EXPERIENCE_KINDS", "EXPERIENCE_MONEY_LINE", "GLOSSARY",
-           "LEARNING_RULE", "MEMBERS", "PAPER_LABEL", "PLAIN_JOBS", "PLAYBOOK_PATH", "PRETEND_LABEL", "REAL_LABEL",
-           "STALE_BANNER_S", "TOWN_MONTH_DAYS", "WALLET_MAX_AGE_S", "build_page_state", "experience_card",
-           "learning_card", "plain_event", "plain_words", "polymarket_desk", "town_ledger", "trend_desk"]
+           "LEARNING_RULE", "MEMBERS", "PAPER_LABEL", "PLAIN_ABOUT", "PLAIN_JOBS", "PLAIN_MEMBER_JOBS", "PLAYBOOK_PATH",
+           "PRETEND_LABEL", "REAL_LABEL", "STALE_BANNER_S", "TOWN_MONTH_DAYS", "WALLET_MAX_AGE_S", "build_page_state",
+           "experience_card", "learning_card", "plain_event", "plain_words", "polymarket_desk", "town_ledger",
+           "trend_desk"]
 
 log = get_logger(__name__)
 
@@ -261,11 +273,29 @@ PRETEND_LABEL = "Practice (pretend money)"
 #: The page's own minus sign (U+2212), as its script prints a signed dollar figure.
 _MINUS = "−"
 
+#: PLAIN: what the app is, in one sentence (``plain.about``): the first line of the plain words on both pages.
+PLAIN_ABOUT = ("Nightcrawler is a bot: a computer program that finds trades and bets and places them by itself, day "
+               "and night.")
 #: PLAIN: each character's job in one line (``plain.team``), keyed and named like
 #: :data:`nightcrawler.office3d.CAST3D`, in the order the pages list them (where a coin's trip starts first).
+#: ``{desk}`` is the Polymarket desk's money and ``{solana}`` the Solana bot's, each "real money" only while the data
+#: says that one is live, else "pretend money" (:func:`_plain_team`); the receipts are no money at all.
 PLAIN_JOBS: dict[str, str] = {
-    "pip": "finds new coins", "nyx": "checks each coin for scams", "rook": "keeps every bet small and stops losses",
-    "jet": "places the trades", "mote": "keeps the tamper-proof records", "voss": "runs the prediction-market desk",
+    "pip": "finds new crypto coins for the Solana bot ({solana})",
+    "nyx": "checks each coin for scams and waits for the buy signal ({solana})",
+    "rook": "keeps each coin trade small and stops losses ({solana})",
+    "jet": "places the Solana bot's trades ({solana})",
+    "mote": "keeps the tamper-proof records",
+    "voss": "bets on yes/no questions at Polymarket ({desk}) and asks the AI judge about coins",
+}
+#: PLAIN: each bot member's own job in a few words (``plain.jobs``: the 3D world's speech-bubble labels), so an event
+#: is labelled with the part of the bot that made it, never with another part its character also plays.
+PLAIN_MEMBER_JOBS: dict[str, str] = {
+    "crawler": "finds new coins", "cocoon": "checks each coin for scams", "strategy": "waits for the buy signal",
+    "radar": "checks for danger right before a buy", "judge": "asks the AI judge about each coin",
+    "broker": "places the Solana bot's trades", "risk": "keeps each trade small and stops losses",
+    "receipts": "keeps the tamper-proof records", "coach": "learns from the bot's past trades",
+    "predict": "bets on yes/no questions at Polymarket",
 }
 #: A member's status chip in one plain word (the worst of a character's members wins, in this order).
 PLAIN_STATUS = {"blocked": "stuck", "working": "working", "waiting": "waiting", "idle": "idle"}
@@ -273,25 +303,36 @@ PLAIN_NOW_MAX = 3
 #: "Right now" is the last six hours: an older event is not happening now (its age is said either way).
 PLAIN_NOW_WINDOW_S = 6 * 3600.0
 PLAIN_EVENT_MAX = 110  # one event's words, before "· N min ago"
-#: The real-money desk counts as small (the headline's "one small desk") while its open-money cap is at most this.
+#: The headline: at most this many characters (two lines on a 390 px phone).
+PLAIN_HEADLINE_MAX = 90
+#: The real-money bets count as small (the headline's "Voss's small Polymarket bets") while their open-money cap is
+#: at most this.
 PLAIN_SMALL_DESK_USD = 50.0
-#: The lab's verdict on the Polymarket desk's rule (polydesk.RULE_LAB_PASSED), shown wherever its real money is.
-VERDICT_NO_EDGE = "This rule did not pass our tests for a real edge, so it trades only tiny real amounts with hard limits."
+#: The lab's verdict on the Polymarket desk's rule (polydesk.RULE_LAB_PASSED), shown wherever its real money is: while
+#: it bets real money, and apart while it does not (it then never says the rule trades real amounts).
+VERDICT_NO_EDGE = ("This rule did not pass our tests for a real edge (proof that it wins over many bets), so it trades "
+                   "only tiny real amounts with hard limits.")
+VERDICT_NO_EDGE_OFF = ("This rule did not pass our tests for a real edge (proof that it wins over many bets); it "
+                       "places no new real-money bets now.")
 VERDICT_PASSED = "This rule passed our lab's locked test; it still trades only small real amounts with hard limits."
+VERDICT_PASSED_OFF = "This rule passed our lab's locked test; it places no new real-money bets now."
 #: The research record so far, shown while neither the desk's rule nor the Coach's champion has passed its locked test.
 RESEARCH_LINE = "No strategy tested so far has passed our lab's test for a real edge."
 #: The words still on screen somewhere, each in one line (``plain.glossary``). Fixed text: no figure in here.
 GLOSSARY: tuple[tuple[str, str], ...] = (
     ("Real money", "Actual dollars at stake. The pages call money real only where the bot's own data says so."),
     ("Pretend money (paper)", "Practice: trades made on paper with made-up money, so nothing is won or lost for real."),
+    ("Prediction market", "A market where people buy yes or no on a question about the future; Polymarket is one."),
     ("Polymarket", "A US exchange for yes/no questions about the future; each correct contract pays $1."),
-    ("The desk", "The Polymarket desk: the part of the bot that bets on Polymarket's questions."),
+    ("Contract", "One Polymarket share: it pays $1 if its answer comes true and nothing if not."),
+    ("A real edge", "Proof, from tests on past data, that a way of betting wins more than it loses over many bets."),
+    ("The desk", "The Polymarket desk: the part of the bot that bets on Polymarket's questions (Voss in the 3D world)."),
     ("Settled", "A bet is settled when its question is decided and it pays out, or not."),
     ("The risk manager", "A safety check that stops new bets when a rule's own record shows it losing money."),
-    ("Hard limits", ("Caps written into the code: how much can be in bets at once, and how much can be lost "
-                     "before it stops.")),
-    ("Receipts", ("The tamper-proof record: every decision is sealed the moment it happens, so nothing can be "
-                  "changed later.")),
+    ("Hard limits", ("Caps in the bot's settings, checked before every bet: how much can be in bets at once, and how "
+                     "much can be lost before it stops.")),
+    ("Receipts", ("The tamper-proof record: every decision is sealed the moment it happens, so any later change would "
+                  "show.")),
     ("The vault", ("In the 3D world, the vault stands for the Solana bot's money; its sign says if it is real or "
                    "pretend.")),
     ("Trend desk", ("A practice desk that holds Bitcoin, Ether or Solana only while each is above its 50-day "
@@ -1300,8 +1341,18 @@ _EVENT_TEMPLATES: tuple[tuple[str, re.Pattern[str], str], ...] = tuple(
         ("predict", r"Order rejected by the venue \([^)]*\): (?P<q>.+)", "Polymarket refused a real-money order · {q}"),
         ("predict", rf"REAL position found at the venue: (?P<q>.+) · [\d.]+ contracts? at [\d.]+ \({_MONEY}\)",
          "found a real-money bet already at Polymarket: ${usd} · {q}"),
+        # the desk's own stops (polydesk's caps, the risk manager): what they mean for real money
+        ("predict", r"Daily loss cap reached: no more real buys today\.",
+         "hit today's loss limit: no more real-money bets until midnight UTC"),
+        ("predict", r"Total loss cap reached: real trading stopped, back to paper\.",
+         "hit the total loss limit: real money is off for good, practice only"),
+        ("predict", r"Risk manager paused (?P<what>.+?): (?P<why>.+)",
+         "the risk manager paused {what}: its record is losing ({why})"),
+        ("predict", r"Paper book full .*", "the practice book is full: no new pretend bets until some finish"),
+        # a candidate row only (teamroom._crawler: the coin, then its age, worth or feed); anything else as written
         ("crawler", r"(?P<coin>[^·]+?) · (?P<age>[\d.]+ (?:min|h) old)(?: · .*)?", "found a new coin: {coin} ({age})"),
-        ("crawler", r"(?P<coin>[^·]+?)(?: · .*)?", "found a new coin: {coin}"),
+        ("crawler", r"(?P<coin>[^·]+?) · (?:worth [^·]+|found on [^·]+)(?: · .*)?", "found a new coin: {coin}"),
+        ("crawler", r"(?P<coin>[^\s·]+)", "found a new coin: {coin}"),
         ("cocoon", r"PASS (?P<coin>.+?) · .*", "{coin} passed the scam check"),
         ("cocoon", r"REJECT (?P<coin>.+?) · (?P<why>.+)", "threw out {coin}: {why}"),
         ("radar", r"FLAGGED (?P<coin>.+?) · (?P<why>.+)", "spotted danger on {coin}: {why}"),
@@ -1319,14 +1370,27 @@ _EVENT_TEMPLATES: tuple[tuple[str, re.Pattern[str], str], ...] = tuple(
         ("receipts", r"#(?P<n>\d+) (?P<what>.+?) · [0-9a-f]{8}", "sealed record #{n} in the tamper-proof log ({what})"),
     )
 )
-_BOOK_WORDS = ((re.compile(r"\(paper\)"), "(pretend money)"), (re.compile(r"\(real\)"), "(real money)"))
+
+
+def _pretend_word(found: re.Match[str]) -> str:
+    """The bot's own word "paper" (or "Paper", a sentence's first word) said as "pretend"; a ticker such as "PAPER"
+    is a coin's name and stays as it is."""
+    return "Pretend" if found.group(1) == "P" else "pretend"
+
+
+#: The books' words in an event the templates leave as the bot wrote it: "(paper)" first, then a standalone "paper".
+_BOOK_WORDS: tuple[tuple[re.Pattern[str], str | Callable[[re.Match[str]], str]], ...] = (
+    (re.compile(r"\(paper\)"), "(pretend money)"), (re.compile(r"\(real\)"), "(real money)"),
+    (re.compile(r"\b([Pp])aper\b"), _pretend_word),
+)
 
 
 def plain_event(member: str, text: str, *, live: bool = False) -> str:
     """One team event in plain words (``plain.now``, ``plain.team[].latest``): the first fixed template of
     :data:`_EVENT_TEMPLATES` that matches the member's event, filled with the event's own words and numbers; any
-    other event as the bot wrote it ("(paper)" said as "(pretend money)"). ``live``: the Solana bot trades real money
-    (its buys and sells then say "real money", else "pretend money"). Clipped to :data:`PLAIN_EVENT_MAX`."""
+    other event as the bot wrote it ("(paper)" said as "(pretend money)" and "paper" as "pretend"). ``live``: the
+    Solana bot trades real money (its buys and sells then say "real money", else "pretend money"). Clipped to
+    :data:`PLAIN_EVENT_MAX`."""
     kind = "real money" if live else "pretend money"
     for who, pattern, template in _EVENT_TEMPLATES:
         found = pattern.fullmatch(text) if who == member else None
@@ -1361,6 +1425,10 @@ def _change(value: float | None, *, real: bool) -> str:
     return "even since start"
 
 
+def _money_word(live: bool) -> str:
+    return "real money" if live else "pretend money"
+
+
 def _real_figures(real: Mapping[str, Any], *, venue: bool = True) -> str:
     """The real book in words: the venue's cash, the money in open real bets, the result since start and the finished
     bets won (never one figure added to another). ``venue``: name the venue after the cash."""
@@ -1374,25 +1442,36 @@ def _real_figures(real: Mapping[str, Any], *, venue: bool = True) -> str:
     return f"{cash_part} and {bets}; {result}"
 
 
-def _real_paused(settings: Settings, desk: Mapping[str, Any], real: Mapping[str, Any]) -> str | None:
-    """Why the live desk sends no new real bet right now, from its own data, or None: the risk manager's pause (the
-    paper record's stops real buys too), the UTC day's loss cap, or the open-money cap already full at the rule's
-    lowest price (``polydesk_theta``)."""
+def _real_paused(settings: Settings, desk: Mapping[str, Any], real: Mapping[str, Any]) -> tuple[str, str] | None:
+    """``(kind, sentence)``: why the live desk sends no new real bet right now, from its own data, or None. ``risk``:
+    the risk manager's pause (the paper record's stops real buys too); ``day``: the UTC day's loss cap; ``full``: the
+    open-money cap already full at the rule's lowest price (``polydesk_theta``), which is waiting, not a pause."""
     guard = _xp_map(desk.get("guard"))
     for book, record in ((guard, "the rule's practice record"), (_xp_map(guard.get("real")), "its real-money record")):
         if book.get("paused"):
             since = f" since {book['since']}" if book.get("since") else ""
-            return f"Paused by the risk manager{since}: {record} was losing money, so it places no new real bets."
+            return "risk", f"Paused by the risk manager{since}: {record} was losing money, so it places no new real bets."
     today = _num(real.get("today_usd")) or 0.0
     daily = float(settings.polydesk_live_daily_loss_usd)
     if today <= -daily:
-        return (f"Stopped for today: it lost {_dollars(today)} today and the daily limit is {_limit(daily)}. "
-                "It can bet again after midnight UTC.")
+        return "day", (f"Stopped for today: it lost {_dollars(today)} today and the daily limit is {_limit(daily)}. "
+                       "It can bet again after midnight UTC.")
     held, cap = _num(real.get("at_risk_usd")) or 0.0, float(settings.polydesk_live_max_open_usd)
     if held + float(settings.polydesk_theta) * float(settings.polydesk_live_contracts) > cap + 1e-9:
-        return (f"Waiting: {_dollars(held)} is already in open bets and the most allowed at once is {_limit(cap)}; "
-                "it bets again when one finishes.")
+        return "full", (f"Waiting: {_dollars(held)} is already in open bets and the most allowed at once is "
+                        f"{_limit(cap)}; it bets again when one finishes.")
     return None
+
+
+def _desk_silent(settings: Settings, desk: Mapping[str, Any] | None) -> bool:
+    """The owner asked for live (``POLYDESK_MODE=live``) but the desk has said nothing yet: no state that says live, no
+    reason of its own why not, no round finished (a missing or unreadable state file reads as an empty paper one).
+    The page then cannot know whether real money is on, and says so instead of "pretend"."""
+    if not (settings.polydesk_enabled and settings.polydesk_mode == "live"):
+        return False
+    if desk is None:
+        return True
+    return desk.get("mode") != "live" and not desk.get("status") and desk.get("as_of") is None
 
 
 def _plain_real(settings: Settings, money: Mapping[str, Any], desk: Mapping[str, Any] | None, *,
@@ -1401,41 +1480,67 @@ def _plain_real(settings: Settings, money: Mapping[str, Any], desk: Mapping[str,
     raw = desk.get("real") if desk is not None else None
     real: Mapping[str, Any] = raw if isinstance(raw, Mapping) else {}
     desk_live = desk is not None and desk.get("mode") == "live"
+    silent = not desk_live and _desk_silent(settings, desk)
     sentences = []
     if desk_live:
         sentences.append(f"Real money: {_real_figures(real)}.")
+    elif silent:
+        sentences.append("Real money: no report yet from Voss's Polymarket bets, so this page cannot say if any is "
+                         "at stake there.")
+    solana = _num(_xp_map(money.get("since_start")).get("usd")) if settings.is_live else None
     if settings.is_live:
-        since = _num(_xp_map(money.get("since_start")).get("usd"))
-        sentences.append(f"The Solana bot trades real money: {_change(since, real=True)}.")
+        sentences.append(f"The Solana bot trades real money: {_change(solana, real=True)}.")
     if not sentences:
         reason = desk.get("status") if desk is not None and settings.polydesk_mode == "live" else None
         line = "Real money is off" + (f": {str(reason).rstrip('.')}" if reason else "")
         if real:
             line += f". Still at Polymarket: {_real_figures(real, venue=False)}."
         else:
-            line += "." if reason else ": every desk is practising with pretend money."
+            line += "." if reason else ": everything is practice with pretend money."
         sentences.append(line)
+    paused = _real_paused(settings, desk, real) if desk is not None and desk_live else None
+    settled = _count(real.get("settled_total")) or 0
+    if desk is not None and settled:  # the desk's real bets: the result once one has finished
+        result: str | None = _change(_num(real.get("since_start_usd")) or 0.0, real=True)
+    elif settings.is_live and solana is not None:
+        result = _change(solana, real=True)
+    else:
+        result = None
     cap = float(settings.polydesk_live_contracts)
     per = "one contract (under $1)" if cap == 1 else f"{cap:g} contracts (under {_limit(cap)})"
     limits = (f"Hard limits: {per} per bet, at most {_limit(settings.polydesk_live_max_open_usd)} in bets at once, "
               f"stops for the day after losing {_limit(settings.polydesk_live_daily_loss_usd)}, stops for good after "
               f"losing {_limit(settings.polydesk_live_total_loss_usd)}.")
+    # how the rule bets, from its settings: live buys are YES only (polydesk: shorts stay paper-only); a contract pays
+    # $1, so a win is at most the rest of the dollar and a loss the whole price
+    theta = round(float(settings.polydesk_theta) * 100)
+    how = (f"How it bets: it buys {'YES' if desk_live else 'YES or NO'} at {theta}¢ or more on questions that look "
+           f"almost decided. A right answer pays $1, so a win makes at most {100 - theta}¢ a contract and a loss "
+           "costs the whole price.")
+    if RULE_LAB_PASSED:
+        verdict = VERDICT_PASSED if desk_live else VERDICT_PASSED_OFF
+    else:
+        verdict = VERDICT_NO_EDGE if desk_live else VERDICT_NO_EDGE_OFF
     return {
-        "label": REAL_LABEL, "on": desk_live or settings.is_live,
-        "paused": _real_paused(settings, desk, real) if desk is not None and desk_live else None,
+        "label": REAL_LABEL, "on": desk_live or settings.is_live, "reported": not silent,
+        "paused": paused[1] if paused else None,
+        "paused_kind": paused[0] if paused else None,
         "at_risk_usd": (_num(real.get("at_risk_usd")) or 0.0) if real or desk_live else None,
         "open_bets": (_count(real.get("open")) or 0) if real or desk_live else None,
         "cash_usd": _num(real.get("cash_usd")),
+        "result": result,
         "line": " ".join(sentences),
+        "how": how if desk is not None else None,
         "limits": limits if desk is not None else None,
-        "verdict": (VERDICT_PASSED if RULE_LAB_PASSED else VERDICT_NO_EDGE) if desk is not None else None,
+        "verdict": verdict if desk is not None else None,
         "research": RESEARCH_LINE if not (RULE_LAB_PASSED or passed) else None,
     }
 
 
 def _plain_pretend(settings: Settings, money: Mapping[str, Any], desk: Mapping[str, Any] | None,
                    trend: Mapping[str, Any] | None, now: float) -> dict[str, Any]:
-    """``plain.pretend``: each practice book in its own clause, always "pretend", never added together."""
+    """``plain.pretend``: each practice book in its own clause, always "pretend", never added together; the
+    Polymarket desk's paper book since start like the others (today's change beside it)."""
     parts = []
     if not settings.is_live:
         since = _num(_xp_map(money.get("since_start")).get("usd"))
@@ -1443,13 +1548,16 @@ def _plain_pretend(settings: Settings, money: Mapping[str, Any], desk: Mapping[s
                      else f"the Solana bot is {_change(since, real=False)}")
     if desk is not None:
         paper = _xp_map(desk.get("paper"))
+        since = _num(paper.get("since_start_usd"))
         if desk.get("as_of") is None:
-            book = "the Polymarket practice book has not finished a round yet"
+            book = "Polymarket practice bets have not finished a round yet"
+        elif since is None:
+            book = "Polymarket practice bets have no result yet"
         else:
+            book = f"Polymarket practice bets are {_change(since, real=False)}"
             today = round(_num(paper.get("today_usd")) or 0.0, 2)
-            book = "the Polymarket practice book is " + (
-                f"up {_dollars(today)} today" if today > 0 else f"down {_dollars(today)} today" if today < 0
-                else "even today")
+            if today:
+                book += f" ({_signed(today)} today)"
         if _xp_map(desk.get("guard")).get("paused"):
             book += " (paused by the risk manager)"
         parts.append(book)
@@ -1461,23 +1569,39 @@ def _plain_pretend(settings: Settings, money: Mapping[str, Any], desk: Mapping[s
             parts.append("the trend desk starts tonight (midnight UTC)")
         else:
             parts.append("the trend desk has not booked its first day yet")
-    line = f"{PRETEND_LABEL}: " + ("; ".join(parts) if parts else "nothing is practising right now") + "."
-    return {"label": PRETEND_LABEL, "line": line}
+    body = ("; ".join(parts) if parts else "nothing is practising right now") + "."
+    return {"label": PRETEND_LABEL, "line": f"{PRETEND_LABEL}: {body}", "body": body[:1].upper() + body[1:]}
 
 
 def _plain_headline(settings: Settings, desk: Mapping[str, Any] | None, real: Mapping[str, Any]) -> str:
-    """One sentence for the top of both pages (at most 90 characters: two lines on a phone)."""
+    """One sentence for the top of both pages (at most :data:`PLAIN_HEADLINE_MAX` characters: two lines on a phone).
+    Real money is said to be off only when no real bet is open either."""
     desk_live = desk is not None and desk.get("mode") == "live"
-    small = "one small desk" if settings.polydesk_live_max_open_usd <= PLAIN_SMALL_DESK_USD else "one desk"
+    cap = float(settings.polydesk_live_max_open_usd)
+    bets = "Voss's small Polymarket bets" if cap <= PLAIN_SMALL_DESK_USD else "Voss's Polymarket bets"
     if desk_live and settings.is_live:
-        return f"Real money is on for the Solana bot and {small}; the rest is pretend money."
+        return "Real money is on for the Solana bot and Voss's Polymarket bets; the rest is pretend money."
+    if settings.is_live and not real.get("reported", True):
+        return "Real money is on for the Solana bot; no report yet from Voss's Polymarket bets."
     if settings.is_live:
         return "Real money is on for the Solana bot; everything else is practice with pretend money."
-    if desk_live and real.get("paused"):
-        return f"Real money is on for {small} but paused right now; the rest is pretend money."
+    kind = real.get("paused_kind")
+    if desk_live and kind == "risk":
+        return "Real money is on for Voss's Polymarket bets but paused now; the rest is pretend money."
+    if desk_live and kind == "day":
+        return "Real money is on for Voss's Polymarket bets but stopped for today; the rest is pretend."
+    if desk_live and kind == "full":
+        return f"Real money is on for Voss's Polymarket bets, at its {_limit(cap)} limit; the rest is pretend."
     if desk_live:
-        return f"Real money is on for {small}; everything else is practice with pretend money."
-    return "No real money is being bet right now: every desk is practising with pretend money."
+        return f"Real money is on only for {bets}; the rest is pretend money."
+    if not real.get("reported", True):
+        return "Real money: no report yet from Voss's Polymarket bets; the rest is pretend money."
+    n = real.get("open_bets") or 0
+    if n > 0:  # off for new bets, but real money is still out in open bets at the venue
+        held = f"{_dollars(real.get('at_risk_usd') or 0.0)} is still in {n} open bet{'' if n == 1 else 's'}"
+        line = f"Real money is off for new bets, but {held}; the rest is pretend."
+        return line if len(line) <= PLAIN_HEADLINE_MAX else f"Real money is off for new bets, but {held}."
+    return "No real money is being bet right now: everything is practice with pretend money."
 
 
 def _cast_members(key: str) -> list[str]:
@@ -1486,11 +1610,12 @@ def _cast_members(key: str) -> list[str]:
     return [str(m) for m in raw] if isinstance(raw, list) else []
 
 
-def _plain_team(members: list[dict[str, Any]], now: float, *, live: bool
+def _plain_team(members: list[dict[str, Any]], now: float, *, live: bool, desk_live: bool
                 ) -> tuple[list[dict[str, Any]], list[str], dict[str, dict[str, Any]]]:
     """``(plain.team, plain.now, plain.said)``: the six characters with their job, status word and latest event; the
     team's freshest events in the last :data:`PLAIN_NOW_WINDOW_S` (the receipts' own log left out: it records every
-    step); and each member's newest event in plain words (the 3D world's speech bubbles)."""
+    step); and each member's newest event in plain words (the 3D world's speech bubbles). ``live``: the Solana bot
+    trades real money; ``desk_live``: the Polymarket desk does (each job says which money it handles)."""
     actor_of = {m: key for key in CAST3D for m in _cast_members(key)}
     by_id = {m["id"]: m for m in members}
     events = []
@@ -1515,9 +1640,10 @@ def _plain_team(members: list[dict[str, Any]], now: float, *, live: bool
         if mid not in said:
             said[mid] = {"ts": ts, "text": plain_event(mid, text, live=live)}
     team = []
-    for key, job in PLAIN_JOBS.items():
+    for key, template in PLAIN_JOBS.items():
         spec = CAST3D[key]
         ids = _cast_members(key)
+        job = template.format(desk=_money_word(desk_live), solana=_money_word(live))
         statuses = {by_id[m]["status"] for m in ids if m in by_id}
         word = next((PLAIN_STATUS[s] for s in PLAIN_STATUS if s in statuses), "idle")
         latest = next(((ts, mid, text) for ts, mid, text in events if mid in ids), None)
@@ -1540,14 +1666,17 @@ def plain_words(settings: Settings, money: Mapping[str, Any], members: list[dict
     trend = money.get("trend")
     trend = trend if isinstance(trend, Mapping) else None
     real = _plain_real(settings, money, desk, passed=passed)
-    team, lines, said = _plain_team(members, now, live=settings.is_live)
+    desk_live = desk is not None and desk.get("mode") == "live"
+    team, lines, said = _plain_team(members, now, live=settings.is_live, desk_live=desk_live)
     return {
+        "about": PLAIN_ABOUT,
         "headline": _plain_headline(settings, desk, real),
         "real": real,
         "pretend": _plain_pretend(settings, money, desk, trend, now),
         "now": lines,
         "team": team,
         "said": said,
+        "jobs": {mid: PLAIN_MEMBER_JOBS[mid] for mid, _, _ in MEMBERS if mid in PLAIN_MEMBER_JOBS},
         "glossary": [{"word": word, "means": means} for word, means in GLOSSARY],
     }
 

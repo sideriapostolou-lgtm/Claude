@@ -1,12 +1,16 @@
 """The ONE dashboard page at ``/`` (owner: O6): built for an owner who checks the bot from a phone.
 
-Top to bottom, in plain words: "In plain words" (``plain``: one headline, the real money with its hard limits and the
-lab's verdict, the practice books, always "pretend", what just happened, who is who and what the words mean; every
-sentence is the data's own), money (a big dollar number and a chart; under it the Polymarket desk's two books,
+Top to bottom, in plain words: the header's badge and the tab's title say real money only where ``plain.real`` does
+(on, real bets still open, or pretend money; nothing before the first answer unless the bot itself runs live), with
+the links to the 3D team and its pictures; "In plain words" (``plain``: what the app is, one headline, the real money
+with its result, how it bets, its hard limits and the lab's verdict, the practice books, always "pretend", what just
+happened, who is who and what the words mean; every sentence is the data's own), the Solana bot's money ("Pretend:"
+or "Real:" before a big dollar number, and a chart; under it the Polymarket desk's two books,
 paper and real, never added to the SOL wallet or to each other, and the trend desk's paper book, a forward test of
 lab 3's 50-day trend rule on BTC, ETH and SOL, never added to anything either), the town (what running the bot costs
 against what each desk made, with the trend desk's own line under the bars), the bot wallet (its public address with
-a copy button, its SOL and how to fund it from Phantom), the team (one row per bot member, tap for its report
+a copy button, its SOL and how to fund it from Phantom), the team (one row per bot member with the character who
+plays it in the 3D world and the plain words, tap for its report
 card and last events; the team's practice record on top and the playbook's counts below, docs/EXPERIENCE.md
 §9), trades, learning (the Coach), "ready for real money?" (a six-step checklist)
 and, small at the bottom, receipts and service usage. Data: ``/api/page``
@@ -62,12 +66,15 @@ html{-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--page);color:var(--ink);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,
 sans-serif;padding:12px 16px calc(28px + env(safe-area-inset-bottom))}
 main{max-width:640px;margin:0 auto}
-.top{display:flex;align-items:center;gap:8px;min-height:32px;font-size:13px;color:var(--ink2)}
+.top{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;min-height:32px;font-size:13px;color:var(--ink2)}
 .top .name{font-weight:700;color:var(--ink);font-size:15px}
 .top .updated{margin-left:auto;text-align:right}
+.top .links{flex:1 1 100%;display:flex;flex-wrap:wrap;gap:4px 16px;font-size:14px}
+.top .links a{color:var(--accent);font-weight:600;padding:4px 0}
 .mode{display:inline-block;color:#fff;background:var(--paper);border-radius:6px;padding:1px 7px;font-size:12px;
 font-weight:800;letter-spacing:.08em}
 .mode.live{background:var(--live)}
+.mode[hidden]{display:none}
 .alert{margin-top:8px;padding:10px 14px;border-radius:12px;font-weight:600;font-size:14px;overflow-wrap:anywhere}
 .alert.bad{background:var(--alert);color:#fff}
 .alert.warn{background:var(--warn);color:#1c1400}
@@ -202,7 +209,11 @@ footer{color:var(--ink2);font-size:12px;text-align:center;margin-top:18px}
 .box.on{border:2px solid var(--live)}
 .tag.on{background:var(--live);border-color:var(--live);color:#fff}
 .box .verdict-line{font-weight:650;color:var(--ink)}
+.box .figs{display:flex;flex-wrap:wrap;gap:0 16px;margin-top:2px}
+#plain-about{font-size:15px;color:var(--ink2);margin:8px 0 0}
 #plain-now>div{font-size:15px;overflow-wrap:anywhere}
+#plain-team .chip{flex:none}
+.hero-tag{font-size:20px;font-weight:650;color:var(--ink2);letter-spacing:0}
 """
 
 _SCRIPT = r"""
@@ -289,15 +300,28 @@ _SCRIPT = r"""
   // with its hard limits and the lab's verdict), the practice books (always "pretend"), what just happened, who is
   // who and what the words mean. Every sentence is the data's own; the page adds only fixed words around them.
   const STATUS_CHIP = {working: "working", waiting: "waiting", idle: "idle", stuck: "blocked"};
+  // The header's badge and the tab's title: real money only where the plain words say it (plain.real), and still
+  // red while a real bet is open after real betting stopped; before the first answer they claim nothing.
+  function moneyWords(r) {
+    if (!r) return null;
+    if (r.on) return {badge: "REAL MONEY ON", live: true, title: "real money on"};
+    if (r.reported === false) return {badge: "REAL MONEY: NO REPORT YET", live: false, title: "real money: no report yet"};
+    if (r.open_bets > 0) return {badge: "REAL BETS STILL OPEN", live: true, title: "real bets still open"};
+    return {badge: "PRETEND MONEY", live: false, title: "pretend money"};
+  }
   function renderPlain(p) {
     if (!p || !p.real || !p.pretend) return;  // older data without the block: the card keeps "Loading…"
+    $("plain-about").textContent = p.about || "";
     $("plain-headline").textContent = p.headline;
-    const r = p.real, held = r.on && isNum(r.at_risk_usd) ? usd(r.at_risk_usd) + " at risk now" : null;
-    put($("plain-real"), el("div", "box" + (r.on ? " on" : ""),
-      el("div", "line", el("span", "coin", r.label, el("span", "tag" + (r.on ? " on" : ""), r.on ? "ON" : "OFF")),
-        held ? el("span", "big", held) : null),
-      el("p", "meta", r.line), r.paused ? el("p", "warning", r.paused) : null,
-      r.limits ? el("p", "help", r.limits) : null, r.verdict ? el("p", "help verdict-line", r.verdict) : null,
+    const r = p.real, open = r.on || r.open_bets > 0;
+    const held = open && isNum(r.at_risk_usd) ? usd(r.at_risk_usd) + (r.on ? " at risk now" : " still in open bets") : null;
+    put($("plain-real"), el("div", "box" + (open ? " on" : ""),
+      el("div", "line", el("span", "coin", r.label, el("span", "tag" + (open ? " on" : ""),
+        r.on ? "ON" : r.reported === false ? "NO REPORT YET" : open ? "OFF FOR NEW BETS" : "OFF"))),
+      held || r.result ? el("div", "figs", held ? el("span", "big", held) : null,
+        r.result ? el("span", "big", r.result) : null) : null,
+      el("p", "meta", r.line), r.how ? el("p", "help", r.how) : null, r.paused ? el("p", "warning", r.paused) : null,
+      r.limits ? el("p", "meta", r.limits) : null, r.verdict ? el("p", "help verdict-line", r.verdict) : null,
       r.research ? el("p", "help", r.research) : null));
     const practice = el("div", "box", el("p", "meta", p.pretend.line));  // (the line starts with its own label)
     practice.setAttribute("aria-label", p.pretend.label);
@@ -310,9 +334,10 @@ _SCRIPT = r"""
   }
 
   // ---------------------------------------------------------------- A. money
-  function renderMoney(m) {
+  // the Solana bot's wallet: its kind of money said right before the big figure (``live``: the bot runs live)
+  function renderMoney(m, live) {
     $("money-label").textContent = m.label;
-    $("money-value").textContent = isNum(m.usd) ? usd(m.usd) : "—";
+    put($("money-value"), el("span", "hero-tag", live ? "Real: " : "Pretend: "), isNum(m.usd) ? usd(m.usd) : "—");
     for (const [id, part] of [["since", m.since_start], ["today", m.today]]) {
       const value = $(id + "-usd"), share = $(id + "-pct");
       value.textContent = usd(part.usd, true);
@@ -548,15 +573,19 @@ _SCRIPT = r"""
   }
   const BAR_TITLES = {strategy: "How close each watched coin is to the setup",
     cocoon: "Why coins were thrown out, last 24 h"};
-  function renderTeam(t, x) {
+  function renderTeam(t, x, plain) {
     const c = t.counts;
     $("team-counts").textContent = ["working", "waiting", "idle", "blocked"].filter((k) => c[k])
       .map((k) => c[k] + " " + k).join(" · ");
     const graded = x && x.source === "state";
+    const cast = (plain && plain.team) || [];
     for (const m of t.members) {
       const node = $("m-" + m.id);
       if (!node) continue;
       const card = graded ? x.members[m.id] || null : null;
+      // the character who plays this member in the 3D world and the plain words (one set of names for both)
+      const ch = cast.find((k) => (k.members || []).includes(m.id));
+      if (m.role) node.querySelector(".who small").textContent = m.role + (ch ? " · played by " + ch.name : "");
       node.className = "member " + m.status;
       put(node.querySelector(".state"), chip(m.status), card ? skillChip(card) : null);
       node.querySelector(".doing").textContent = m.doing || "";
@@ -813,15 +842,17 @@ _SCRIPT = r"""
 
   function render(s) {
     last = s;
-    const mode = $("mode");
-    mode.textContent = s.mode;
-    mode.className = "mode" + (s.mode === "LIVE" ? " live" : "");
+    const words = moneyWords(s.plain && s.plain.real), mode = $("mode");
+    mode.textContent = words ? words.badge : "";
+    mode.hidden = !words;
+    mode.className = "mode" + (words && words.live ? " live" : "");
+    document.title = "nightcrawler" + (words ? " · " + words.title : "");
     put($("alerts"), ...s.alerts.map((a) => el("div", "alert " + a.level, a.text)));
     renderPlain(s.plain);
-    renderMoney(s.money);
+    renderMoney(s.money, s.mode === "LIVE");
     if (s.town) renderTown(s.town);
     if (s.wallet) renderWallet(s.wallet);
-    renderTeam(s.team, s.experience);
+    renderTeam(s.team, s.experience, s.plain);
     renderTrades(s.trades);
     renderLearning(s.learning);
     renderReady(s.ready);
@@ -898,7 +929,10 @@ def _member(mid: str, name: str, role: str) -> str:
 def render_page_html(settings: Settings) -> str:
     """The complete page (static: the script fills in live data; no ledger data, no secrets). Pure."""
     live = settings.is_live
-    mode = "LIVE" if live else "PAPER"
+    # the badge and the title claim real money before the first answer only when the bot itself runs live (real
+    # money is then on whatever the desks say); otherwise they wait for the data (plain.real) and claim nothing
+    badge = '<b class="mode live" id="mode">REAL MONEY ON</b>' if live else '<b class="mode" id="mode" hidden></b>'
+    title = "nightcrawler · real money on" if live else "nightcrawler"
     label = "Real money" if live else "Paper money (pretend)"
     members = "".join(_member(*m) for m in MEMBERS)
     return (
@@ -909,26 +943,28 @@ def render_page_html(settings: Settings) -> str:
         "<meta name=\"theme-color\" content=\"#0e0e0d\" media=\"(prefers-color-scheme: dark)\">\n"
         "<meta name=\"robots\" content=\"noindex, nofollow\">\n<meta name=\"referrer\" content=\"no-referrer\">\n"
         "<meta name=\"apple-mobile-web-app-capable\" content=\"yes\">\n"
-        f"<link rel=\"icon\" href=\"data:,\">\n<title>nightcrawler · {mode.lower()}</title>\n"
+        f"<link rel=\"icon\" href=\"data:,\">\n<title>{title}</title>\n"
         f"<style>{_STYLE}</style>\n</head>\n"
         f"<body data-refresh=\"{REFRESH_S}\">\n<main id=\"main\">\n"
-        f"<header class=\"top\"><b class=\"mode{' live' if live else ''}\" id=\"mode\">{mode}</b>"
-        "<a class=\"office\" href=\"office\" title=\"Watch the team at work\">Office</a>"
-        "<a class=\"office\" href=\"world\" title=\"The 3D world\">3D</a>"
-        f"<span class=\"name\">nightcrawler</span><span class=\"updated\" id=\"updated\">loading…</span></header>\n"
+        f"<header class=\"top\">{badge}"
+        f"<span class=\"name\">nightcrawler</span><span class=\"updated\" id=\"updated\">loading…</span>"
+        "<nav class=\"links\"><a class=\"office\" href=\"world\" title=\"The bot's team at work, live in 3D\">"
+        "Watch the team (3D)</a><a class=\"office\" href=\"office\" title=\"The same team as pictures\">Pictures</a>"
+        "</nav></header>\n"
         "<div id=\"alerts\" role=\"status\"></div>\n"
         "<div class=\"alert warn\" id=\"offline\" role=\"status\" hidden></div>\n"
 
-        "<section class=\"card\" id=\"plain\"><h2>In plain words</h2>"
+        "<section class=\"card\" id=\"plain\"><h2>In plain words</h2><p id=\"plain-about\"></p>"
         "<p class=\"lead\" id=\"plain-headline\">Loading…</p><div id=\"plain-real\"></div>"
         "<div id=\"plain-pretend\"></div><p class=\"sub\">Right now</p><div class=\"rows\" id=\"plain-now\"></div>"
         "<details class=\"about\"><summary>Who is who</summary><div class=\"rows\" id=\"plain-team\"></div>"
-        "<p class=\"help\">The six characters of the 3D world; each acts out one part of the bot.</p></details>"
+        "<p class=\"help\">The six characters of the 3D world; each acts out one part of the bot.</p>"
+        "<p class=\"help\"><a href=\"world\">Watch them in 3D</a></p></details>"
         "<details class=\"about\"><summary>What the words mean</summary><div class=\"rows\" id=\"plain-words\"></div>"
         "</details></section>\n"
 
         "<section class=\"card\" id=\"money\">"
-        f"<h2>Money <small id=\"money-label\">{label}</small></h2>"
+        f"<h2>Solana bot <small id=\"money-label\">{label}</small></h2>"
         "<div class=\"hero\" id=\"money-value\">—</div>"
         "<div class=\"tiles\"><div class=\"tile\"><div class=\"label\">Since start</div>"
         "<b id=\"since-usd\">—</b><span id=\"since-pct\"></span></div>"
