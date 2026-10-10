@@ -32,7 +32,12 @@ from nightcrawler.pagestate import (
     plain_finished,
     plain_ticker,
 )
-from nightcrawler.world3d import _STYLE_CHANNEL, WORLD_CSP, render_world_html
+from nightcrawler.world3d import (
+    _STYLE_CHANNEL,
+    _STYLE_RECORDS,
+    WORLD_CSP,
+    render_world_html,
+)
 
 NODE = pytest.mark.skipif(shutil.which("node") is None, reason="Node is not installed")
 ACTOR_OF = {m: key for key, spec in CAST3D.items() for m in spec["members"]}  # type: ignore[union-attr]
@@ -268,6 +273,17 @@ def test_the_banner_names_the_bet_on_a_phone(settings: Settings) -> None:
     assert ">REPLAY<" not in html and not re.search(r"[\"'][^\"'\n]*\bREPLAY\b", html)  # (on screen: never)
     assert "Replay" not in _js_body(_module(html), "  function renderGuide() {")
     assert "hudTop = replayEl.offsetHeight + 6;" in _js_body(_channel(_module(html)), "    function showReplay(it) {")
+
+
+def test_the_banner_stops_short_of_the_postcard_button() -> None:
+    """The banner and the record room's postcard button share the row under the bar (the banner on the left, the
+    button on the right): on a phone the banner's width leaves the button clear, with a gap."""
+    banner = re.search(r"#replay \{[^}]*?left: (\d+)px;[^}]*?max-width: calc\(100% - (\d+)px\)", _STYLE_CHANNEL)
+    button = re.search(r"#postcard \{[^}]*?right: (\d+)px;[^}]*?width: (\d+)px;", _STYLE_RECORDS)
+    assert banner is not None and button is not None
+    left, inset = int(banner.group(1)), int(banner.group(2))
+    right, width = int(button.group(1)), int(button.group(2))
+    assert inset - left >= right + width + 8  # (the banner's right edge stays 8 px or more left of the button)
 
 
 def test_the_guide_says_what_the_channel_means(settings: Settings) -> None:

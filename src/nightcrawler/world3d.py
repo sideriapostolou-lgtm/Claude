@@ -478,7 +478,8 @@ body.offline #ticker-track { animation-play-state: paused; }
 body.ticker #honest { bottom: calc(4px + env(safe-area-inset-bottom)); }
 body.ticker #chips { bottom: calc(46px + env(safe-area-inset-bottom)); }
 body.ticker #card, body.ticker #guide { bottom: calc(85px + env(safe-area-inset-bottom)); }
-#replay { position: fixed; left: 12px; top: calc(var(--bar, 110px) + 4px); max-width: calc(100% - 24px); display: flex; align-items: center;
+/* the banner stops short of the record room's postcard button (40 px at the right, same row) */
+#replay { position: fixed; left: 12px; top: calc(var(--bar, 110px) + 4px); max-width: calc(100% - 76px); display: flex; align-items: center;
           gap: 6px; padding: 5px 10px 5px 6px; border-radius: 10px; background: rgba(20,15,38,.9); border: 1px solid rgba(224,178,94,.6);
           box-shadow: 0 6px 22px rgba(0,0,0,.45); pointer-events: none; font-size: 13px; line-height: 1.25; white-space: nowrap; z-index: 6;
           opacity: 0; transform: translateY(-6px); visibility: hidden; transition: opacity .35s ease, transform .35s ease, visibility 0s linear .35s; }
