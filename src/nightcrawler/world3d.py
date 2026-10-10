@@ -46,6 +46,18 @@ horizontal, close behind the crew; never a top-down tycoon view.
   (what you are looking at: what the app is and the team; real money vs practice; the camera), shown by itself on the
   first visit (remembered in ``localStorage`` when the browser allows it) and closed by itself after a minute and a
   half without a touch.
+* The record room (the module's THE RECORD ROOM section, CSS in ``_STYLE_RECORDS``): a brass ledger plaque in the
+  vault ("N sealed receipts · verified" or "first bad entry #k", the head hash's short form); Rook's risk wall
+  beside it (the risk member's ``risk_wall``: today's loss allowance, the trade slots, the daily stop, each desk's
+  verdict and pause, and in red the real desk's caps); a trophy shelf in the archive (one brass trophy per won
+  trade or settled real bet, a red tile per loss, newest nearest Mote, the real bets on their own top tier, "+N
+  more" past what fits, a card with the last five results each tagged REAL or pretend); "What the labs found" over
+  it (``research``); the trend desk's board at the observatory (``money.trend``, pretend). A camera button makes a
+  postcard of the frame with the real-money line, the practice line, the time and a fixed footer burned in (a PNG
+  download, the share sheet on a phone; never the token or the address). The "yesterday" chip plays a one-minute
+  film of the previous day in the owner's zone (``recap``): a title card, each record's own words while the
+  director flies to whoever made it, the vault with real money's start and end and the practice line; "Nothing
+  happened yesterday" on an empty day; by itself once at 00:05 when the page was already open.
 
 Honesty rules (the same as the office's and the town's, non-negotiable):
 
@@ -408,6 +420,37 @@ button.close { position: absolute; right: 6px; top: 4px; width: 38px; height: 38
           font-size: 10.5px; color: var(--dim); text-align: center; text-shadow: 0 1px 2px #000; pointer-events: none;
           white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 body.offline #view { filter: grayscale(.75) brightness(.7); }
+"""
+
+#: The record room's own styles (the postcard button and its note, yesterday's film); the film takes the LIVE card's
+#: place at the bottom (the card, the bubbles and the drop wait, hidden, while it plays) and never the centre.
+_STYLE_RECORDS = r"""
+#postcard { position: fixed; right: 12px; top: calc(var(--bar, 110px) + 4px); width: 40px; height: 40px; padding: 0; border-radius: 50%;
+            border: 1px solid rgba(224,178,94,.5); background: var(--glass2); cursor: pointer; z-index: 6; backdrop-filter: blur(6px); }
+#postcard:focus-visible, #film button:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
+#postcard i { position: absolute; left: 10px; top: 14px; width: 20px; height: 14px; border: 2px solid var(--brass); border-radius: 4px; box-sizing: border-box; }
+#postcard i::before { content: ""; position: absolute; left: 4px; top: 1px; width: 8px; height: 8px; border: 2px solid var(--brass); border-radius: 50%; box-sizing: border-box; }
+#postcard i::after { content: ""; position: absolute; left: 2px; top: -5px; width: 7px; height: 3px; background: var(--brass); border-radius: 2px 2px 0 0; }
+#rec-toast { position: fixed; right: 12px; top: calc(var(--bar, 110px) + 50px); padding: 5px 11px; border-radius: 999px; font-size: 12px;
+             background: var(--glass2); border: 1px solid var(--brass); color: var(--fg); z-index: 6; pointer-events: none; }
+#rec-toast[hidden], #film[hidden], #film [hidden] { display: none; }
+#film { position: fixed; left: 12px; right: 12px; bottom: calc(76px + env(safe-area-inset-bottom)); max-width: 560px; z-index: 7;
+        background: var(--glass2); border: 1px solid var(--brass); border-left-width: 5px; border-radius: 12px; padding: 7px 11px 9px;
+        backdrop-filter: blur(8px); box-shadow: 0 8px 30px rgba(0,0,0,.45); }
+#film.good { border-color: var(--good); } #film.bad { border-color: #c98a84; } #film.real { border-color: var(--bad); }
+#film .frow { display: flex; align-items: center; gap: 8px; }
+#film .ftag { font-size: 10.5px; letter-spacing: .14em; font-weight: 800; color: #1d1a16; background: var(--brass); border-radius: 999px;
+              padding: 1px 8px; white-space: nowrap; }
+#film .fprog { flex: 1 1 auto; font-size: 11px; color: var(--dim); font-variant-numeric: tabular-nums; }
+#film .fclose { flex: 0 0 auto; width: 34px; height: 30px; margin: -4px -6px -4px 0; font: inherit; font-size: 20px; line-height: 1;
+                color: var(--fg); background: none; border: 0; cursor: pointer; }
+#film h3 { margin: 3px 0 0; font-size: 14px; font-weight: 700; letter-spacing: .02em; overflow-wrap: anywhere; }
+#film p { margin: 3px 0 0; font-size: 13.5px; line-height: 1.38; overflow-wrap: anywhere; }
+#film .ftext:empty { display: none; }
+#film .freal { padding: 5px 8px; border: 2px solid var(--bad); border-radius: 8px; font-weight: 700; }
+#film .fpretend { color: #c9d6ff; }
+#film .fnote { color: var(--dim); font-size: 12px; }
+body.film #card, body.film #bubbles, body.film #drop { visibility: hidden; }
 """
 
 #: Resolves the addons' bare ``three`` imports (and the module's own) to the bundled files on this server.
@@ -3569,7 +3612,494 @@ _M_LIFE = r"""
     const r = actors.rook; if (r && !r.actor && r.impact > 0.5) { const d = r.group.position.distanceTo(camera.position); if (d < 9) shake = Math.max(shake, (1 - d / 9) * r.impact); }
     ambientLife();
   }
+"""
 
+_M_RECORDS = r"""
+  // ============================================================= THE RECORD ROOM (Builder B): the ledger plaque, the trophy
+  // shelf, Rook's risk wall, the trend and research boards, the postcard and yesterday's film
+  // Every word here is /api/page's own (receipts, trades.summary, team.members[risk].risk_wall, money.trend, research,
+  // recap, plain) or the fixed copy below, drawn as canvas text or set as textContent, never markup; real money is
+  // called real only where the data says so, practice always says pretend; nothing here invents a figure or a
+  // result. The section keeps to itself: its own meshes, its own DOM elements and CSS (_STYLE_RECORDS), the page's
+  // data read once a poll lands (recFrame, called once a frame from THE LOOP), the camera moved only through the
+  // director's own pin (togglePin, goLive) and window.__skyport.records for whoever needs a hook.
+  const REC = { seen: null, sig: "", chip: null, toastUntil: 0, shelf: { real: 0, pretend: 0, realMore: 0, pretendMore: 0 },
+                lines: [], postcardLines: null, trendScreen: null };
+  const REC_INK = "#3a2410", REC_HI = "rgba(255,240,200,.75)", REC_FONT = "ui-sans-serif, system-ui, sans-serif";
+  const REC_SLATE = "#8f9bb3", REC_AMBER = "#f5b133", REC_GOOD = "#5fe39a", REC_BAD = "#ff8a80";
+  function recFit(ctx, text, maxW) {  // the text, cut with "…" to fit maxW canvas pixels (only ever while redrawing)
+    const s = String(text == null ? "" : text); if (ctx.measureText(s).width <= maxW) return s;
+    let lo = 0, hi = s.length;
+    while (lo < hi) { const mid = (lo + hi + 1) >> 1; if (ctx.measureText(s.slice(0, mid) + "…").width <= maxW) lo = mid; else hi = mid - 1; }
+    return s.slice(0, lo).replace(/\s+$/, "") + "…";
+  }
+  function recWrap(ctx, text, maxW, maxLines) {  // words into at most maxLines lines; the last one cut with "…"
+    const words = String(text == null ? "" : text).split(/\s+/).filter(Boolean), out = [];
+    let line = "";
+    for (let i = 0; i < words.length; i++) {
+      const next = line ? line + " " + words[i] : words[i];
+      if (ctx.measureText(next).width <= maxW || !line) { line = next; continue; }
+      out.push(line); line = words[i];
+      if (out.length === maxLines - 1) { line = words.slice(i).join(" "); break; }
+    }
+    if (line) out.push(out.length === maxLines - 1 ? recFit(ctx, line, maxW) : line);
+    return out.slice(0, maxLines);
+  }
+  // the text at the largest size up to px that fits maxW (set as ctx.font), cut with "…" only below minPx
+  function recSized(ctx, text, maxW, px, minPx, pre) {
+    const s = String(text == null ? "" : text);
+    ctx.font = pre + px + "px " + REC_FONT; const w = ctx.measureText(s).width;
+    if (w > maxW) ctx.font = pre + Math.max(minPx, Math.floor(px * maxW / w)) + "px " + REC_FONT;
+    return recFit(ctx, s, maxW);
+  }
+  function recCount(n, one, many) { return Number(n || 0).toLocaleString("en-US") + " " + (Number(n) === 1 ? one : many); }
+  // an opaque canvas board on a wall of room frame F (facing the frame's +z turned by ry), in a frame of colour `rim`
+  function recBoard(F, x, y, z, ry, cw, ch, ww, wh, rim) {
+    const m = makeBoard(cw, ch, ww, wh); m.material.transparent = false; m.material.depthWrite = true; m.renderOrder = 0;
+    F.place(m, x, y, z, ry);
+    if (rim != null) { const b = V3(0, 0, -0.022).applyAxisAngle(UP, ry);
+      F.add("brass", G.rbox(ww + 0.07, wh + 0.07, 0.035, 0.2, 14), [x + b.x, y, z + b.z], [0, ry, 0], null, rim); }
+    return m;
+  }
+  function recEngrave(ctx, text, x, y) {  // brass engraving: a light edge under dark ink
+    ctx.fillStyle = REC_HI; ctx.fillText(text, x + 2, y + 2); ctx.fillStyle = REC_INK; ctx.fillText(text, x, y);
+  }
+
+  // ------------------------------------------------------------- the ledger plaque (the vault, right of the door)
+  const recPlaque = recBoard(VT2, 2.8, 2.2, -2.955, 0, 1024, 512, 0.84, 0.42, BRASS_DARK);  // (clear of the door's stone ring)
+  function recDrawPlaque(rc) {
+    const c = recPlaque.userData.canvas, ctx = c.getContext("2d"); if (!ctx) return;
+    const W = c.width, H = c.height, g = ctx.createLinearGradient(0, 0, W, H);
+    g.addColorStop(0, "#f2d38e"); g.addColorStop(0.55, "#d8a54b"); g.addColorStop(1, "#b07a2c"); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    ctx.lineWidth = 10; ctx.strokeStyle = "#7d5420"; roundRect(ctx, 22, 22, W - 44, H - 44, 28); ctx.stroke();
+    ctx.fillStyle = "#7d5420"; [[54, 54], [W - 54, 54], [54, H - 54], [W - 54, H - 54]].forEach(function (q) { ctx.beginPath(); ctx.arc(q[0], q[1], 9, 0, TAU); ctx.fill(); });
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.font = "bold 34px " + REC_FONT; recEngrave(ctx, "THE LEDGER", W / 2, 92);
+    const n = rc && isNum(rc.count) ? rc.count : null;
+    const state = !rc ? "" : rc.verified === true ? "verified" : rc.verified === false ? "first bad entry #" + rc.first_bad_seq : "not checked yet";
+    recEngrave(ctx, recSized(ctx, n == null ? "no records yet" : recCount(n, "sealed receipt", "sealed receipts") + " · " + state, W - 140, 58, 36, "bold "), W / 2, 220);
+    ctx.font = "44px ui-monospace, Menlo, Consolas, monospace";
+    recEngrave(ctx, recFit(ctx, rc && rc.head_short ? "head " + rc.head_short : "", W - 160), W / 2, 318);
+    ctx.font = "28px " + REC_FONT; recEngrave(ctx, "each record is sealed to the one before it", W / 2, 408);
+    recPlaque.userData.tex.needsUpdate = true;
+  }
+
+  // ------------------------------------------------------------- Rook's risk wall (the vault's back wall, above the cubbies)
+  const recWall = recBoard(VT2, -1.78, 2.84, -2.955, 0, 1024, 720, 1.4, 0.984, WALNUT_DARK);  // (just over the cubbies)
+  const REC_STOPS = { halt: "halted after a big drop", kill: "the kill switch is on", daily_loss: "today's loss limit" };
+  const REC_VERDICT = { winning: REC_GOOD, losing: REC_BAD, learning: REC_SLATE, unclear: REC_SLATE };
+  function recBar(ctx, x, y, w, h, frac, colour) {
+    ctx.fillStyle = "rgba(255,255,255,.1)"; roundRect(ctx, x, y, w, h, h / 2); ctx.fill();
+    if (frac > 0) { ctx.fillStyle = colour; roundRect(ctx, x, y, Math.max(h, w * Math.min(1, frac)), h, h / 2); ctx.fill(); }
+  }
+  function recDrawWall(wall, caps, label) {
+    const c = recWall.userData.canvas, ctx = c.getContext("2d"); if (!ctx) return;
+    const W = c.width, H = c.height, g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, "#2d1d14"); g.addColorStop(1, "#160e09"); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    ctx.lineWidth = 8; ctx.strokeStyle = "#c99a48"; roundRect(ctx, 12, 12, W - 24, H - 24, 22); ctx.stroke();
+    ctx.textAlign = "left"; ctx.textBaseline = "middle";
+    ctx.fillStyle = "#ffe3a6"; ctx.font = "bold 40px " + REC_FONT; ctx.fillText("ROOK'S RISK WALL", 40, 58);
+    // the Solana bot: today's loss allowance (a dial), the trade slots, the daily stop
+    ctx.fillStyle = "#e9dcc4"; ctx.fillText(recSized(ctx, "Solana bot · " + (label || ""), 460, 26, 20, ""), 40, 108);
+    const w = wall || {}, pct = isNum(w.allowance_used_pct) ? w.allowance_used_pct : null, cx = 200, cy = 300, R = 128;
+    ctx.lineCap = "round"; ctx.lineWidth = 26; ctx.strokeStyle = "rgba(255,255,255,.12)"; ctx.beginPath(); ctx.arc(cx, cy, R, Math.PI, TAU); ctx.stroke();
+    if (pct != null && pct > 0) { ctx.strokeStyle = pct >= 90 ? REC_BAD : pct >= 50 ? REC_AMBER : REC_GOOD;
+      ctx.beginPath(); ctx.arc(cx, cy, R, Math.PI, Math.PI + Math.PI * Math.min(1, pct / 100)); ctx.stroke(); }
+    ctx.lineCap = "butt"; ctx.textAlign = "center";
+    ctx.fillStyle = "#fff4dc"; ctx.font = "bold 64px " + REC_FONT; ctx.fillText(pct == null ? "—" : Math.round(pct) + "%", cx, cy - 26);
+    ctx.fillStyle = "#d4c8b3"; ctx.font = "24px " + REC_FONT;
+    ctx.fillText(pct == null ? "no money check yet today" : "of today's loss allowance", cx, cy + 34);
+    ctx.textAlign = "left"; ctx.font = "26px " + REC_FONT; ctx.fillStyle = "#e9dcc4";
+    const used = isNum(w.slots_used) ? w.slots_used : 0, max = isNum(w.slots_max) ? w.slots_max : 0;
+    ctx.fillText("Trade slots: " + used + " of " + max + " in use", 40, 384);
+    for (let i = 0; i < Math.min(max, 10); i++) { ctx.fillStyle = i < used ? "#e0b25e" : "rgba(255,255,255,.12)"; roundRect(ctx, 40 + i * 46, 404, 36, 30, 6); ctx.fill(); }
+    const stop = w.daily_stop === true ? "Daily stop: ON, no new buys today" : w.daily_stop === false ? "Daily stop: off" : "Daily stop: not known yet";
+    ctx.fillStyle = w.daily_stop ? REC_AMBER : "#e9dcc4"; ctx.fillText(stop, 40, 464);
+    if (w.stopped_by) { ctx.fillStyle = REC_AMBER; ctx.fillText(recFit(ctx, "New buys stopped: " + (REC_STOPS[w.stopped_by] || w.stopped_by), W - 80), 40, 500); }
+    // each desk's risk manager: its verdict on the rule's own record, and its pause
+    ctx.fillStyle = "#e9dcc4"; ctx.font = "26px " + REC_FONT; ctx.fillText("The desks' risk manager", 540, 108);
+    const desks = Array.isArray(w.desks) ? w.desks : [];
+    if (!desks.length) { ctx.fillStyle = "#a99c88"; ctx.fillText("no desk to judge", 540, 160); }
+    desks.slice(0, 4).forEach(function (d, i) {
+      const y = 160 + i * 74; ctx.fillStyle = "#fff4dc"; ctx.font = "bold 28px " + REC_FONT; ctx.fillText(recFit(ctx, String(d.desk || ""), 420), 540, y);
+      ctx.font = "26px " + REC_FONT; ctx.fillStyle = REC_VERDICT[d.verdict] || REC_SLATE;
+      ctx.fillText(recFit(ctx, String(d.verdict || "") + (d.paused ? " · new buys paused" : ""), 420), 540, y + 34);
+    });
+    // the real desk's caps (red: real money only)
+    const y0 = 560;
+    if (caps) {
+      ctx.strokeStyle = "#ff6b61"; ctx.lineWidth = 4; roundRect(ctx, 32, y0 - 34, W - 64, 168, 16); ctx.stroke();
+      ctx.fillStyle = "#ffb3ab"; ctx.font = "bold 26px " + REC_FONT;
+      ctx.fillText(recFit(ctx, (caps.label || "") + " · the Polymarket desk's hard limits" + (caps.on ? "" : " (no new real bets now)"), W - 110), 52, y0);
+      [["In open bets", caps.open_usd, caps.open_max_usd], ["Lost today (UTC)", caps.day_loss_usd, caps.day_max_usd],
+       ["Lost in total", caps.total_loss_usd, caps.total_max_usd]].forEach(function (q, i) {
+        const x = 52 + i * 316, v = isNum(q[1]) ? q[1] : 0, m = isNum(q[2]) && q[2] > 0 ? q[2] : null;
+        ctx.fillStyle = "#e9dcc4"; ctx.font = "24px " + REC_FONT; ctx.fillText(q[0], x, y0 + 44);
+        ctx.fillStyle = "#fff4dc"; ctx.font = "bold 26px " + REC_FONT; ctx.fillText(fmtUsd(v) + (m ? " of " + fmtUsd(m) : ""), x, y0 + 80);
+        recBar(ctx, x, y0 + 100, 280, 14, m ? v / m : 0, m && v / m >= 0.8 ? REC_BAD : "#e0b25e");
+      });
+    } else { ctx.fillStyle = "#a99c88"; ctx.font = "26px " + REC_FONT; ctx.fillText("Real money: no real-money bets on record.", 40, y0 + 40); }
+    recWall.userData.tex.needsUpdate = true;
+  }
+
+  // ------------------------------------------------------------- the trophy shelf (the archive, under its back window)
+  // One brass trophy per won trade and one tile per loss (red; an even trade a grey one), newest nearest Mote (the left
+  // end): the top tier is the Polymarket desk's real bets, the three inside the practice trades; the card on the top
+  // says which is which, the counts, "+N more" for what does not fit and the last five results.
+  const SHELF = { realCap: 32, tierCap: 50, tiers: 3, z: -2.8, realX0: -0.27, x0: -1.2, step: 0.0484, topY: 1.02, tierY: [0.665, 0.345, 0.035] };
+  (function () {
+    const z0 = -2.97, d = 0.34, zc = z0 + d / 2, W = 2.5;
+    AR2.add("wood", G.box(W, 1.0, 0.03), [0, 0.5, z0 + 0.015], null, null, WALNUT_DARK);
+    [-1, 1].forEach(function (s) { AR2.add("wood", G.box(0.05, 1.0, d), [s * (W / 2 + 0.025), 0.5, zc], null, null, WALNUT); });
+    SHELF.tierY.forEach(function (y) { AR2.add("wood", G.box(W, 0.03, d), [0, y - 0.015, zc], null, null, WALNUT);
+      AR2.add("brass", G.box(W, 0.014, 0.012), [0, y - 0.008, z0 + d + 0.004], null, null, BRASS); });
+    AR2.add("wood", G.rbox(W + 0.14, 0.05, d + 0.06, 0.2, 12), [0, 0.995, zc + 0.01], null, null, WALNUT);
+    AR2.add("brass", G.box(W + 0.12, 0.016, 0.014), [0, 0.99, z0 + d + 0.045], null, null, BRASS);
+    blocker(AR2, 0, 0.55, zc, 0, W / 2 + 0.1, 0.6, d / 2 + 0.06);
+  })();
+  const recTrophyGeo = prep(paint(new THREE.LatheGeometry([[0, 0], [0.016, 0], [0.016, 0.006], [0.006, 0.011], [0.0045, 0.03], [0.008, 0.036],
+    [0.016, 0.048], [0.019, 0.074], [0.016, 0.074], [0.0, 0.052]].map(function (q) { return new THREE.Vector2(q[0], q[1]); }), 14), BRASS));
+  const recCap = SHELF.realCap + SHELF.tierCap * SHELF.tiers;
+  const recTrophies = new THREE.InstancedMesh(recTrophyGeo, MAT.brass, recCap), recTiles = new THREE.InstancedMesh(
+    prep(paint(G.rbox(0.03, 0.046, 0.009, 0.3, 8), 0xffffff)), new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.42, metalness: 0.15 }), recCap);
+  [recTrophies, recTiles].forEach(function (im) { im.count = 0; im.castShadow = false; im.receiveShadow = true; im.frustumCulled = false; scene.add(im); });
+  const _rm = new THREE.Matrix4(), _rq = new THREE.Quaternion(), _rp = new THREE.Vector3(), _rs = new THREE.Vector3(1, 1, 1);
+  const REC_LOSS = col(0xd8453b), REC_EVEN = col(0x9a9aa6);
+  function recSlot(im, i, x, y, tilt) {
+    _rp.set(x, y, SHELF.z).applyMatrix4(AR2.M); _rq.setFromEuler(_e.set(tilt, AR2.yaw, 0, "YXZ")); _rm.compose(_rp, _rq, _rs); im.setMatrixAt(i, _rm);
+  }
+  // the card on the cabinet's top, standing at its left end (nearest Mote), tilted back
+  const recCard = makeBoard(1024, 704, 0.9, 0.62); recCard.material.transparent = false; recCard.material.depthWrite = true; recCard.renderOrder = 0;
+  AR2.place(recCard, -0.78, 1.36, -2.84, 0); recCard.rotation.order = "YXZ"; recCard.rotation.x = -0.2;
+  AR2.add("wood", G.box(0.94, 0.03, 0.16), [-0.78, 1.035, -2.86], null, null, WALNUT_DARK);
+  AR2.add("brass", G.box(0.02, 0.6, 0.02), [-0.78, 1.33, -2.95], [-0.2, 0, 0], null, BRASS_DARK);
+  function recDrawShelf(sum, closed) {
+    const real = sum && sum.real ? sum.real : null, rOrder = real && typeof real.order === "string" ? real.order : "";
+    const pOrder = sum && typeof sum.order === "string" ? sum.order : "";
+    let nT = 0, nL = 0;
+    const put = function (ch, x, y) {
+      if (ch === "W") { recSlot(recTrophies, nT++, x, y, 0); return; }
+      recSlot(recTiles, nL, x, y + 0.023, -0.12); recTiles.setColorAt(nL++, ch === "L" ? REC_LOSS : REC_EVEN);
+    };
+    const nr = Math.min(SHELF.realCap, rOrder.length), np = Math.min(SHELF.tierCap * SHELF.tiers, pOrder.length);
+    for (let i = 0; i < nr; i++) put(rOrder[i], SHELF.realX0 + (i + 0.5) * SHELF.step, SHELF.topY);
+    for (let i = 0; i < np; i++) put(pOrder[i], SHELF.x0 + (i % SHELF.tierCap + 0.5) * SHELF.step, SHELF.tierY[Math.floor(i / SHELF.tierCap)]);
+    recTrophies.count = nT; recTiles.count = nL;
+    recTrophies.instanceMatrix.needsUpdate = true; recTiles.instanceMatrix.needsUpdate = true; if (recTiles.instanceColor) recTiles.instanceColor.needsUpdate = true;
+    const realN = real ? (Number(real.won) || 0) + (Number(real.lost) || 0) : 0, pretN = sum ? Number(sum.total) || 0 : 0;
+    REC.shelf.real = nr; REC.shelf.pretend = np; REC.shelf.realMore = Math.max(0, realN - nr); REC.shelf.pretendMore = Math.max(0, pretN - np);
+    // the card: which shelf is which, the counts, and the last five results (real or pretend, each said so)
+    const c = recCard.userData.canvas, ctx = c.getContext("2d"); if (!ctx) return;
+    const W = c.width, H = c.height;
+    ctx.fillStyle = "#f4ead4"; ctx.fillRect(0, 0, W, H); ctx.lineWidth = 12; ctx.strokeStyle = "#a8742c"; ctx.strokeRect(6, 6, W - 12, H - 12);
+    ctx.textAlign = "left"; ctx.textBaseline = "middle"; ctx.fillStyle = "#5a3a12"; ctx.font = "bold 40px " + REC_FONT; ctx.fillText("THE TROPHY SHELF", 40, 54);
+    ctx.font = "26px " + REC_FONT; ctx.fillStyle = "#6c5a44"; ctx.fillText(recFit(ctx, "a trophy per win, a red tile per loss (grey: even); newest on the left", W - 80), 40, 96);
+    const more = function (n) { return n ? " · +" + n.toLocaleString("en-US") + " more" : ""; };
+    ctx.font = "bold 30px " + REC_FONT; ctx.fillStyle = "#b3261e";
+    ctx.fillText(recFit(ctx, "Top: " + (real ? (real.label || "") + " · Polymarket bets" : "real money: no real bets on record"), W - 80), 40, 150);
+    ctx.font = "28px " + REC_FONT; ctx.fillStyle = "#3a2a18";
+    if (real) ctx.fillText(recFit(ctx, recCount(real.won, "won", "won") + " · " + recCount(real.lost, "lost", "lost") + more(REC.shelf.realMore), W - 80), 40, 188);
+    ctx.font = "bold 30px " + REC_FONT; ctx.fillStyle = "#2f4d6e";
+    ctx.fillText(recFit(ctx, "Inside: " + (sum ? (sum.label || "") + " · Solana bot trades" : ""), W - 80), 40, 240);
+    ctx.font = "28px " + REC_FONT; ctx.fillStyle = "#3a2a18";
+    if (sum) ctx.fillText(recFit(ctx, recCount(sum.won, "won", "won") + " · " + recCount(sum.lost, "lost", "lost") + (sum.even ? " · " + recCount(sum.even, "even", "even") : "") + more(REC.shelf.pretendMore), W - 80), 40, 278);
+    ctx.fillStyle = "#a8742c"; ctx.fillRect(40, 318, W - 80, 3);
+    ctx.fillStyle = "#5a3a12"; ctx.font = "bold 28px " + REC_FONT; ctx.fillText("Latest results", 40, 354);
+    REC.lines = recLatest(sum, closed);
+    ctx.font = "26px " + REC_FONT;
+    REC.lines.forEach(function (l, i) { ctx.fillStyle = l.real ? "#b3261e" : l.won ? "#2f6b3f" : "#7a3028"; ctx.font = (l.real ? "bold " : "") + "26px " + REC_FONT;
+      ctx.fillText(recFit(ctx, l.text, W - 80), 40, 398 + i * 56); });
+    if (!REC.lines.length) { ctx.fillStyle = "#6c5a44"; ctx.fillText("No trade or real bet has finished yet.", 40, 398); }
+    recCard.userData.tex.needsUpdate = true;
+  }
+  function recLatest(sum, closed) {  // the last five results, newest first: the desk's real lines and the bot's own trades
+    const out = [];
+    ((sum && sum.real && Array.isArray(sum.real.lines)) ? sum.real.lines : []).forEach(function (l) {
+      out.push({ ts: isNum(l.ts) ? l.ts : 0, real: true, won: !!l.won, text: String(l.text || "") }); });
+    const tag = sum && sum.label === "Real money" ? "REAL" : "pretend";
+    (Array.isArray(closed) ? closed : []).forEach(function (t) {
+      out.push({ ts: isNum(t.closed_at) ? t.closed_at : 0, real: tag === "REAL", won: t.result === "won",
+                 text: tag + " · " + String(t.coin || "") + " " + String(t.result || "") + " " + fmtSigned(t.pnl_usd) + (t.why ? " · " + t.why : "") });
+    });
+    out.sort(function (a, b) { return b.ts - a.ts; });
+    return out.slice(0, 5);
+  }
+
+  // ------------------------------------------------------------- what the labs found (hung in the archive's back window)
+  const recLabs = recBoard(AR2, 0, 2.35, -2.95, 0, 1024, 768, 1.5, 1.125, BRASS_DARK);
+  [-0.6, 0.6].forEach(function (x) { AR2.add("brass", G.cyl(0.008, 0.008, 0.85, 6), [x, 2.91 + 0.425, -2.95], null, null, BRASS_DARK); });
+  const REC_LAB_COLOUR = { "NO EDGE": REC_SLATE, "PROMISING": REC_AMBER, "PASS": REC_GOOD };
+  function recDrawLabs(res) {
+    const c = recLabs.userData.canvas, ctx = c.getContext("2d"); if (!ctx) return;
+    const W = c.width, H = c.height, g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, "#1d2238"); g.addColorStop(1, "#11152a"); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    ctx.lineWidth = 8; ctx.strokeStyle = "#c99a48"; roundRect(ctx, 10, 10, W - 20, H - 20, 20); ctx.stroke();
+    ctx.textAlign = "left"; ctx.textBaseline = "middle"; ctx.fillStyle = "#ffe3a6"; ctx.font = "bold 42px " + REC_FONT; ctx.fillText("What the labs found", 36, 58);
+    const labs = res && Array.isArray(res.labs) ? res.labs : [];
+    labs.slice(0, 6).forEach(function (l, i) {
+      const y = 126 + i * 96, verdict = String(l.verdict || "");
+      ctx.font = "bold 26px " + REC_FONT; ctx.fillStyle = "#e0b25e"; ctx.fillText(String(l.lab || ""), 36, y);
+      ctx.font = "bold 22px " + REC_FONT; const vw = ctx.measureText(verdict).width + 26;
+      ctx.fillStyle = REC_LAB_COLOUR[verdict] || REC_SLATE; roundRect(ctx, 128, y - 17, vw, 34, 17); ctx.fill();
+      ctx.fillStyle = "#11152a"; ctx.fillText(verdict, 141, y + 1);
+      ctx.fillStyle = "#f2ecdf"; ctx.font = "24px " + REC_FONT; ctx.fillText(recFit(ctx, String(l.question || ""), W - 160 - vw), 146 + vw, y);
+      ctx.fillStyle = "#b7b0a2"; ctx.font = "22px " + REC_FONT; ctx.fillText(recFit(ctx, (isNum(l.trials) ? recCount(l.trials, "trial", "trials") + " · " : "") + String(l.reading || ""), W - 164), 128, y + 36);
+    });
+    if (!labs.length) { ctx.fillStyle = "#b7b0a2"; ctx.font = "26px " + REC_FONT; ctx.fillText("Not in this version.", 36, 130); }
+    if (res && isNum(res.trials_total)) { ctx.fillStyle = "#ffe3a6"; ctx.font = "bold 26px " + REC_FONT;
+      ctx.fillText(recFit(ctx, recCount(res.trials_total, "trial", "trials") + " counted · " + String(res.rule || ""), W - 72), 36, H - 46); }
+    recLabs.userData.tex.needsUpdate = true;
+  }
+
+  // ------------------------------------------------------------- the trend desk's board (the observatory: the holo screen
+  // on the back wall's right-hand panel; the decorative screen it covers comes back when the desk is off)
+  const recTrend = (function () {
+    const at = OB2.at(Math.cos(283.75 * Math.PI / 180) * 5.3, 1.95, Math.sin(283.75 * Math.PI / 180) * 5.3);
+    let best = null, bd = 0.6;
+    for (let i = 0; i < screens.length; i++) { const d = screens[i].mesh.position.distanceTo(at); if (d < bd) { bd = d; best = screens[i].mesh; } }
+    const m = makeBoard(1024, 648, 1.5, 0.95, { k: 1.25 }); m.material.transparent = false; m.material.depthWrite = true; m.renderOrder = 0;
+    if (best) { m.position.copy(best.position); m.quaternion.copy(best.quaternion); m.position.addScaledVector(V3(0, 0, 1).applyQuaternion(best.quaternion), 0.004); }
+    else OB2.place(m, at.x, at.y, at.z, 0);
+    m.visible = false; scene.add(m); REC.trendScreen = best; return m;
+  })();
+  function recDrawTrend(tr) {
+    recTrend.visible = !!tr; if (REC.trendScreen) REC.trendScreen.visible = !tr;  // off: the decorative screen comes back
+    if (!tr) return;
+    const c = recTrend.userData.canvas, ctx = c.getContext("2d"); if (!ctx) return;
+    const W = c.width, H = c.height, g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, "#10302e"); g.addColorStop(1, "#06151a"); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    ctx.strokeStyle = "rgba(125,255,216,.12)"; ctx.lineWidth = 1; for (let x = 0; x < W; x += 32) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
+    ctx.textAlign = "left"; ctx.textBaseline = "middle"; ctx.fillStyle = "#aefbe2"; ctx.font = "bold 40px " + REC_FONT;
+    ctx.fillText(recFit(ctx, "Trend desk · " + (tr.label || ""), W - 80), 40, 56);
+    ctx.fillStyle = "#cfe9e2"; ctx.font = "24px " + REC_FONT; ctx.fillText("Hold a coin while its price is above its 50-day average, else cash", 40, 100);
+    const inm = tr.in_market || {};
+    ["BTC", "ETH", "SOL"].forEach(function (coin, i) {
+      const x = 40 + i * 318, on = inm[coin] === true;
+      ctx.lineWidth = 4; ctx.strokeStyle = on ? "#7dffd8" : "rgba(196,226,218,.4)"; roundRect(ctx, x, 136, 292, 150, 18); ctx.stroke();
+      ctx.fillStyle = on ? "rgba(125,255,216,.16)" : "rgba(255,255,255,.04)"; roundRect(ctx, x, 136, 292, 150, 18); ctx.fill();
+      ctx.fillStyle = "#e8fff7"; ctx.font = "bold 44px " + REC_FONT; ctx.fillText(coin, x + 24, 184);
+      ctx.fillStyle = on ? "#7dffd8" : "#9fb8b1"; ctx.font = "bold 34px " + REC_FONT; ctx.fillText(on ? "IN" : "OUT", x + 24, 244);
+      ctx.font = "22px " + REC_FONT; ctx.fillText(on ? "holding it" : "in cash", x + 120, 246);
+    });
+    ctx.fillStyle = "#e8fff7"; ctx.font = "bold 32px " + REC_FONT;
+    if (tr.as_of == null) ctx.fillText(recFit(ctx, tr.started ? "First booking at the close of " + tr.started + " (UTC midnight)" : "Not started yet", W - 80), 40, 350);
+    else {
+      ctx.fillText("Since start: " + fmtSigned(tr.since_start_usd), 40, 350);
+      ctx.fillStyle = "#cfe9e2"; ctx.fillText("Holding the three: " + fmtSigned(tr.hold_since_start_usd), 40, 404);
+      ctx.font = "22px " + REC_FONT; ctx.fillText("(bought on day one and never touched)", 40, 444);
+    }
+    if (tr.problem) { ctx.fillStyle = "#ffd27a"; ctx.font = "24px " + REC_FONT; ctx.fillText(recFit(ctx, String(tr.problem), W - 80), 40, 500); }
+    ctx.fillStyle = "#9fb8b1"; ctx.font = "24px " + REC_FONT; ctx.fillText(recFit(ctx, tr.mode === "paper" ? "Pretend money: practice only, lab 3's rule tested forward" : String(tr.label || ""), W - 80), 40, H - 46);
+    recTrend.userData.tex.needsUpdate = true;
+  }
+  flushStatic();  // (the record room's frames, the cabinet and the hangers: merged like the rest of the set)
+
+  // ------------------------------------------------------------- the page's data, when a poll lands
+  function recApply(d) {
+    const risk = ((d.team && d.team.members) || []).find(function (m) { return m.id === "risk"; }) || null;
+    const sum = d.trades && d.trades.summary ? d.trades.summary : null, wall = risk && risk.risk_wall ? risk.risk_wall : null;
+    // (each board is redrawn only when its own data changed: one signature per poll)
+    const parts = [JSON.stringify(d.receipts || null), JSON.stringify(wall), JSON.stringify(sum) + JSON.stringify((d.trades || {}).closed || null),
+                   JSON.stringify(d.research || null), JSON.stringify((d.money || {}).trend || null)];
+    const old = REC.parts || [];
+    if (parts[0] !== old[0]) recDrawPlaque(d.receipts || null);
+    if (parts[1] !== old[1]) recDrawWall(wall, wall ? wall.real_caps : null, sum ? sum.label : (d.money || {}).label);
+    if (parts[2] !== old[2]) recDrawShelf(sum, (d.trades || {}).closed);
+    if (parts[3] !== old[3]) recDrawLabs(d.research || null);
+    if (parts[4] !== old[4]) recDrawTrend((d.money || {}).trend || null);
+    REC.parts = parts;
+    if (REC.chip) REC.chip.hidden = !d.recap;
+    filmAuto(d);
+  }
+
+  // ------------------------------------------------------------- the postcard: this frame with the real-money line burned in
+  const recBtn = document.createElement("button"); recBtn.type = "button"; recBtn.id = "postcard";
+  recBtn.title = "Postcard: save this view with the real-money line"; recBtn.setAttribute("aria-label", recBtn.title);
+  recBtn.appendChild(document.createElement("i")); body.appendChild(recBtn);
+  const recToast = document.createElement("div"); recToast.id = "rec-toast"; recToast.setAttribute("role", "status"); recToast.hidden = true; body.appendChild(recToast);
+  const REC_FOOT = "nightcrawler · a visualisation of the bot's own ledger";
+  function recRealLine(r) {  // "Real money: down $2.52 since start · $4.82 in bets" (plain.real's own figures)
+    if (!r) return "Real money: not in this version";
+    if (!r.on && r.reported === false) return (r.label || "Real money") + ": no report yet";
+    const parts = [r.result || (r.on ? "no bet has finished yet" : "off")];
+    if (isNum(r.at_risk_usd) && r.open_bets > 0) parts.push(fmtUsd(r.at_risk_usd) + " in bets");
+    return (r.label || "Real money") + ": " + parts.join(" · ");
+  }
+  function recPostcardLines(now) {
+    return { real: recRealLine(plain && plain.real), red: !!(plain && plain.real && realWords(plain.real).red),
+             practice: plain && plain.pretend ? plain.pretend.line : "Practice (pretend money): not in this version",
+             when: now.toLocaleString([], { weekday: "short", day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }),
+             foot: REC_FOOT };
+  }
+  function recPostcard(now) {  // a new 2D canvas: the frame as the drone sees it, then the lines along the bottom
+    if (composer) composer.render(0); else renderer.render(scene, camera);  // (read at once, before the browser clears it)
+    const src = renderer.domElement, sw = src.width, sh = src.height; if (!sw || !sh) return null;
+    // (a phone's frame is scaled up so the words are sharp; nothing larger than 1600 px)
+    const big = Math.max(sw, sh), k = Math.min(1600 / big, Math.max(1, 1280 / big)), w = Math.round(sw * k), h = Math.round(sh * k);
+    const c = document.createElement("canvas"); c.width = w; c.height = h; const ctx = c.getContext("2d"); if (!ctx) return null;
+    ctx.imageSmoothingQuality = "high"; ctx.drawImage(src, 0, 0, w, h);
+    const L = recPostcardLines(now), u = Math.max(13, Math.round(Math.min(w, h * 0.9) / 30)), pad = Math.round(u * 1.1);
+    // the real-money line shrinks to fit (never below three quarters) before it would be cut
+    let rs = Math.round(u * 1.15); ctx.font = "bold " + rs + "px " + REC_FONT;
+    const realW = w - 2 * pad - u, natural = ctx.measureText(L.real).width;
+    if (natural > realW) { rs = Math.max(Math.round(u * 0.75), Math.floor(rs * realW / natural)); ctx.font = "bold " + rs + "px " + REC_FONT; }
+    const real = recFit(ctx, L.real, realW), rw = ctx.measureText(real).width;
+    ctx.font = u + "px " + REC_FONT; const practice = recWrap(ctx, L.practice, w - 2 * pad, 3);
+    ctx.font = Math.round(u * 0.85) + "px " + REC_FONT; const tail = L.when + " · " + L.foot;
+    const foot = ctx.measureText(tail).width <= w - 2 * pad ? [tail] : [recFit(ctx, L.when, w - 2 * pad), recFit(ctx, L.foot, w - 2 * pad)];
+    const bandH = Math.round(u * (4.1 + practice.length * 1.45 + foot.length * 1.3));
+    const g = ctx.createLinearGradient(0, h - bandH, 0, h); g.addColorStop(0, "rgba(14,10,34,0)"); g.addColorStop(0.28, "rgba(14,10,34,.82)"); g.addColorStop(1, "rgba(14,10,34,.94)");
+    ctx.fillStyle = g; ctx.fillRect(0, h - bandH, w, bandH);
+    ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
+    let y = h - bandH + Math.round(u * 2.3);
+    ctx.font = "bold " + rs + "px " + REC_FONT;
+    ctx.fillStyle = L.red ? "#cf3129" : "rgba(66,64,84,.95)"; roundRect(ctx, pad - u * 0.45, y - rs, rw + u * 0.9, rs * 1.4, u * 0.5); ctx.fill();
+    ctx.fillStyle = "#ffffff"; ctx.fillText(real, pad, y);
+    ctx.font = u + "px " + REC_FONT; ctx.fillStyle = "#c9d6ff";
+    for (let i = 0; i < practice.length; i++) { y += Math.round(u * 1.45); ctx.fillText(practice[i], pad, y); }
+    ctx.font = Math.round(u * 0.85) + "px " + REC_FONT; ctx.fillStyle = "#e0b25e"; y += Math.round(u * 0.25);
+    for (let i = 0; i < foot.length; i++) { y += Math.round(u * 1.3); ctx.fillText(foot[i], pad, y); }
+    REC.postcardLines = { real: real, practice: practice, when: L.when, foot: L.foot, lines: foot, size: [w, h] };
+    return c;
+  }
+  function recToastSay(text) { recToast.textContent = text; recToast.hidden = false; REC.toastUntil = simT + 2.6; }
+  function recFileName(now) {
+    const p = function (n) { return (n < 10 ? "0" : "") + n; };
+    return "nightcrawler-postcard-" + now.getFullYear() + p(now.getMonth() + 1) + p(now.getDate()) + "-" + p(now.getHours()) + p(now.getMinutes()) + ".png";
+  }
+  function recSaveBlob(blob, name) {
+    const url = URL.createObjectURL(blob), a = document.createElement("a");
+    a.href = url; a.download = name; a.rel = "noopener"; body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 5000); recToastSay("Postcard saved");
+  }
+  function recShoot() {
+    const now = new Date();
+    let c = null; try { c = recPostcard(now); } catch (e) { console.warn("world: no postcard", e); }
+    if (!c || !c.toBlob) { recToastSay("This browser cannot make a postcard"); return; }
+    c.toBlob(function (blob) {
+      if (!blob) { recToastSay("This browser cannot make a postcard"); return; }
+      const name = recFileName(now), touch = (navigator.maxTouchPoints || 0) > 0;
+      let file = null; try { file = new File([blob], name, { type: "image/png" }); } catch (e) { file = null; }
+      // phones: the share sheet with the picture only (no address, no link), else a download
+      if (touch && file && navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        navigator.share({ files: [file], title: "nightcrawler" }).then(function () { recToastSay("Postcard ready"); })
+          .catch(function (e) { if (!e || e.name !== "AbortError") recSaveBlob(blob, name); });
+      } else recSaveBlob(blob, name);
+    }, "image/png");
+  }
+  recBtn.onclick = recShoot;
+
+  // ------------------------------------------------------------- yesterday's film (recap): a title card, the day's beats (the
+  // drone flies to whoever made each record and shows its line), then the vault with real money's start and end and the
+  // practice line; "Nothing happened yesterday" on an empty day. It plays by itself once at 00:05 in the owner's time
+  // zone (five minutes after the recapped day ends, by the server's clock) when the page was already open then.
+  const FILM = { on: false, auto: false, t0: 0, hold: null, n: 0, beat: 5, phase: -2, pin: null, recap: null, autoDone: "", firstSeen: null };
+  const FILM_TITLE_S = 4, FILM_END_S = 8, FILM_SPAN_S = 48, FILM_EMPTY_S = 5;
+  const filmEl = document.createElement("div"); filmEl.id = "film"; filmEl.hidden = true; filmEl.setAttribute("role", "status");
+  const filmRow = document.createElement("div"), filmTag = document.createElement("b"), filmProg = document.createElement("span");
+  const filmClose = document.createElement("button"), filmWho = document.createElement("h3"), filmText = document.createElement("p");
+  const filmReal = document.createElement("p"), filmPretend = document.createElement("p"), filmNote = document.createElement("p");
+  filmRow.className = "frow"; filmTag.className = "ftag"; filmProg.className = "fprog"; filmClose.type = "button"; filmClose.className = "fclose";
+  filmClose.textContent = "×"; filmClose.setAttribute("aria-label", "Stop the film, back to the live camera");
+  filmText.className = "ftext"; filmReal.className = "freal"; filmPretend.className = "fpretend"; filmNote.className = "fnote";
+  filmRow.appendChild(filmTag); filmRow.appendChild(filmProg); filmRow.appendChild(filmClose);
+  [filmRow, filmWho, filmText, filmReal, filmPretend, filmNote].forEach(function (n) { filmEl.appendChild(n); });
+  body.appendChild(filmEl);
+  filmClose.onclick = function () { filmStop(true); };
+  function filmWhen(ts, tz, opts) {  // a time or a date in the recap's own zone (the owner's), else the viewer's
+    try { return new Date(ts * 1000).toLocaleString([], Object.assign({ timeZone: tz }, opts)); }
+    catch (e) { return new Date(ts * 1000).toLocaleString([], opts); }
+  }
+  function filmPlay(recap, auto) {
+    if (!recap || !Array.isArray(recap.events) || FILM.on) return false;
+    FILM.on = true; FILM.auto = !!auto; FILM.recap = recap; FILM.t0 = simT; FILM.hold = null; FILM.n = Math.min(12, recap.events.length);
+    FILM.beat = FILM.n ? clamp(FILM_SPAN_S / FILM.n, 4, 6) : 0; FILM.phase = -2; FILM.pin = null;
+    closePanel(); closeGuide();
+    const r = card.getBoundingClientRect(); filmEl.style.bottom = Math.max(8, Math.round(window.innerHeight - r.bottom)) + "px";
+    body.classList.add("film"); filmEl.hidden = false; if (REC.chip) REC.chip.className = "on";
+    filmStep(); return true;
+  }
+  function filmStop(back) {
+    if (!FILM.on) return;
+    FILM.on = false; body.classList.remove("film"); filmEl.hidden = true; if (REC.chip) REC.chip.className = "";
+    if (back && FILM.pin && pinned === FILM.pin) goLive();
+    FILM.pin = null;
+  }
+  function filmPin(k) {  // the director's own pin, renewed for each beat (a second beat on the same subject keeps it)
+    if (!k) return;
+    if (pinned === k) PLANNER.pin(k, simT); else togglePin(k);
+    FILM.pin = pinned;
+  }
+  function filmShow(phase) {
+    const r = FILM.recap, tz = r.tz || "UTC";
+    filmReal.hidden = true; filmPretend.hidden = true; filmNote.hidden = true; filmEl.className = "";
+    if (phase === -1) {  // the title card
+      const date = Array.isArray(r.window) && isNum(r.window[0]) ? filmWhen(r.window[0] + 43200, tz, { weekday: "long", day: "numeric", month: "long" }) : String(r.date || "");
+      filmTag.textContent = "YESTERDAY"; filmProg.textContent = "";
+      filmWho.textContent = FILM.n ? date : "Nothing happened yesterday";
+      filmText.textContent = FILM.n ? "What the team did, from its own records: " + recCount(FILM.n, "moment", "moments") + " of " + recCount(r.events_total, "record", "records") + "."
+        : date + " (" + tz + "): the bot recorded nothing that day.";
+      filmNote.textContent = "The camera visits each member in turn; every line is the bot's own record of that day."; filmNote.hidden = !FILM.n;
+      return;
+    }
+    if (phase === 98) {  // the vault: how the day ended, real money apart from the practice line
+      filmPin("vaultsign"); PLANNER.pin("vaultsign", simT, 1);  // (the push from the door: the sign, the door, the plaque)
+      filmTag.textContent = "YESTERDAY · THE VAULT"; filmProg.textContent = "";
+      filmWho.textContent = "How the day ended"; filmText.textContent = r.real ? "" : "No real-money bets on record that day.";
+      if (r.real && r.real.line) { filmReal.textContent = r.real.line; filmReal.hidden = false; filmEl.className = "real"; }
+      if (r.pretend && r.pretend.line) { filmPretend.textContent = r.pretend.line; filmPretend.hidden = false; }
+      return;
+    }
+    const ev = r.events[phase] || {}, key = actorOf[ev.member] || (ev.member === "coach" ? "observatory" : null);
+    filmPin(key);
+    filmTag.textContent = "YESTERDAY · " + (isNum(ev.ts) ? filmWhen(ev.ts, tz, { hour: "2-digit", minute: "2-digit", timeZoneName: "short" }) : "");
+    filmProg.textContent = (phase + 1) + " of " + FILM.n;
+    const job = plain && plain.jobs ? plain.jobs[ev.member] : null;
+    filmWho.textContent = (key && CAST[key] ? CAST[key].name.toUpperCase() : nameOf(ev.member)) + (job ? " · " + job : "");
+    filmText.textContent = String(ev.text || ""); filmEl.className = ev.tone === "good" ? "good" : ev.tone === "bad" ? "bad" : "";
+  }
+  function filmStep() {
+    if (FILM.pin && pinned !== FILM.pin) { filmStop(false); return; }  // the viewer took the camera (a chip, the LIVE tag)
+    if (FILM.hold != null && FILM.pin) PLANNER.pin(FILM.pin, simT);  // (a held frame keeps its camera)
+    const t = FILM.hold != null ? FILM.hold : simT - FILM.t0, beats = FILM.n * FILM.beat;
+    const phase = !FILM.n ? (t < FILM_EMPTY_S ? -1 : 99) : t < FILM_TITLE_S ? -1 : t < FILM_TITLE_S + beats
+      ? Math.floor((t - FILM_TITLE_S) / FILM.beat) : t < FILM_TITLE_S + beats + FILM_END_S ? 98 : 99;
+    if (phase === FILM.phase) return;
+    FILM.phase = phase;
+    if (phase === 99) filmStop(true); else filmShow(phase);
+  }
+  function filmAuto(d) {  // once, at 00:05 in the owner's zone, if the page was open then (the server's clock decides)
+    const r = d.recap; if (!r || !Array.isArray(r.window) || !isNum(r.window[1])) return;
+    const now = isNum(d.generated_at) ? d.generated_at : Date.now() / 1000, due = r.window[1] + 300;
+    if (FILM.firstSeen == null) FILM.firstSeen = now;
+    if (FILM.on || FILM.autoDone === r.date || FILM.firstSeen >= due || now < due || now > due + 3300) return;
+    if (panelKind || !guideEl.hidden) return;  // (someone is reading: next poll)
+    FILM.autoDone = r.date; filmPlay(r, true);
+  }
+
+  // ------------------------------------------------------------- once a frame (from THE LOOP): nothing allocated
+  function recFrame() {
+    if (data !== REC.seen) { REC.seen = data; if (data) recApply(data); }
+    if (!REC.chip && chipEls.length) {  // the "yesterday" chip, second in the row, once the row is made
+      const b = document.createElement("button"); b.type = "button"; b.textContent = "yesterday"; b.hidden = !(data && data.recap);
+      b.title = "Yesterday in a minute: the day's records, one member at a time"; b.setAttribute("aria-label", b.title);
+      b.onclick = function () { if (FILM.on) filmStop(true); else filmPlay(data && data.recap, false); };
+      chips.insertBefore(b, chips.children[1] || null); REC.chip = b; chipsEnd();
+    }
+    if (FILM.on) filmStep();
+    if (REC.toastUntil && simT >= REC.toastUntil) { REC.toastUntil = 0; recToast.hidden = true; }
+  }
+  window.__skyport = Object.assign(window.__skyport || {}, { records: {
+    film: { play: function (recap) { return filmPlay(recap || (data && data.recap), false); }, stop: function () { filmStop(true); },
+            // (to t seconds into the film; hold keeps it there, for a test or a screenshot, until the next seek)
+            seek: function (t, hold) { if (FILM.on) { FILM.t0 = simT - t; FILM.hold = hold ? t : null; filmStep(); } },
+            state: function () { return { on: FILM.on, phase: FILM.phase, n: FILM.n, beat: FILM.beat, pin: FILM.pin, auto: FILM.auto }; } },
+    postcard: { take: function () { return recPostcard(new Date()); }, save: recShoot, lines: function () { return REC.postcardLines; } },
+    shelf: function () { return { trophies: recTrophies.count, tiles: recTiles.count, shown: REC.shelf, latest: REC.lines }; },
+  } });
+"""
+
+_M_DIRECTOR = r"""
   // ============================================================= THE LIVE DIRECTOR: an always-on broadcast
   // The owner's direction: the camera is live all the time, flying and cutting between what is happening right now,
   // like a film. A fresh event comes first (whoever speaks, the listeners in frame; a hand-off walk; Jet's carry to
@@ -3622,7 +4152,7 @@ _M_LIFE = r"""
     // the current shot (one object, mutated in place: the operator reads it every frame)
     const shot = { seq: 0, subject: "", kind: "", grammar: "", angle: 0, room: null, start: -1e9, hold: 0, hard: false,
                    event: false, phase: "", pinned: false };
-    const pin = { id: null, until: -1e9 };
+    const pin = { id: null, until: -1e9, angle: null };
     let sinceWide = 1e3, sinceHard = 0, lastFocus = null, places = 0;
     function lru(s, list, now) {  // the shot type this subject has gone longest without (ties at random)
       let best = list[0], bestT = Infinity;
@@ -3663,7 +4193,7 @@ _M_LIFE = r"""
       return begin(byId[f.actor], "event", LIVE_GRAMMAR[phase] || LIVE_GRAMMAR.speak,
                    Math.min(cfg.maxHold, Math.max(cfg.minHold + 2, f.until - now)), now, true, phase, fresh, a ? a.room : null);
     }
-    function frame(s, now, live, hard) {  // the next shot of a subject: its type and hold by what it is doing
+    function frame(s, now, live, hard, angle) {  // the next shot of a subject: its type and hold by what it is doing
       const a = s.kind === "actor" ? live.actors[s.id] : null;
       let list = LIVE_GRAMMAR.place, hold = 6 + rnd() * 3;
       if (s.wide) { list = LIVE_GRAMMAR.wide; hold = 5 + rnd() * 2; }
@@ -3672,7 +4202,7 @@ _M_LIFE = r"""
           : a.speaking ? "speak" : a.working ? "work" : "idle";
         list = LIVE_GRAMMAR[k]; hold = k === "work" ? 6 + rnd() * 4 : 5.5 + rnd() * 3;
       }
-      return begin(s, s.kind, list, hold, now, false, "", hard, a ? a.room : s.room);
+      return begin(s, s.kind, list, hold, now, false, "", hard, a ? a.room : s.room, angle);
     }
     function rotate(now, live) {
       // the rotation: whoever has gone longest unseen, real work and a blocked or waiting member first, the places
@@ -3708,7 +4238,8 @@ _M_LIFE = r"""
         if (!s) { shot.pinned = true; return shot; }
         if (f && f.actor === s.id) return onEvent(f, now, live);
         if (shot.subject === s.id && shot.pinned && now - shot.start < (shot.event ? cfg.minHold : shot.hold)) return shot;
-        return frame(s, now, live, false);
+        const ang = pin.angle; pin.angle = null;  // (a pin may ask for one angle first: the recap film's closing shot)
+        return frame(s, now, live, false, ang);
       }
       if (f) return onEvent(f, now, live);
       if (shot.seq && !shot.pinned && now - shot.start < shot.hold) return shot;
@@ -3716,7 +4247,9 @@ _M_LIFE = r"""
     }
     return {
       shot: shot, subjects: subjects, roomSeen: roomSeen, cfg: cfg, plan: plan,
-      pin: function (id, now) { pin.id = id; pin.until = now + cfg.pin; },
+      pin: function (id, now, angle) {  // (renewing the same pin keeps an angle it asked for and has not used yet)
+        if (angle != null || id !== pin.id) pin.angle = angle == null ? null : angle;
+        pin.id = id; pin.until = now + cfg.pin; },
       unpin: function () { pin.id = null; },
       pinned: pinnedNow,
       pinLeft: function (now) { return pin.id ? Math.max(0, pin.until - now) : 0; },
@@ -4166,6 +4699,7 @@ _M_LIFE = r"""
     simT += dt; uTime.value = simT;
     if (data && !offline && simT >= chatterAt) { chatter(); chatterAt = simT + 12; }
     if (resizeNext) { resizeNext = false; resize(); }
+    recFrame();  // the record room: its boards when a poll lands, the film's beats, the postcard's note
     updateActors(dt); updateCube(dt); updateProps(dt); updateFades(dtRaw); director(); updateCamera(dtRaw, simT);
     updateBubbles(); updateLabels(); updateDrop();
     if (composer) composer.render(dtRaw); else renderer.render(scene, camera);
@@ -4185,7 +4719,9 @@ _M_LIFE = r"""
 }
 """
 
-_MODULE = _M_SETUP + _M_WORLD + _M_CAST + _M_LIFE
+_MODULE = _M_SETUP + _M_WORLD + _M_CAST + _M_LIFE + _M_RECORDS + _M_DIRECTOR
+#: The page's one style element: the world's styles, then the record room's own block.
+_STYLE_ALL = _STYLE + _STYLE_RECORDS
 
 
 def _sha256_source(text: str) -> str:
@@ -4199,7 +4735,7 @@ def _sha256_source(text: str) -> str:
 WORLD_CSP = (
     f"default-src 'none'; script-src 'self' 'wasm-unsafe-eval' {_sha256_source(_MODULE)} "
     f"{_sha256_source(_IMPORTMAP)}; "
-    f"style-src {_sha256_source(_STYLE)}; connect-src 'self' blob:; img-src 'self' data: blob:; "
+    f"style-src {_sha256_source(_STYLE_ALL)}; connect-src 'self' blob:; img-src 'self' data: blob:; "
     "base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
 )
 
@@ -4225,7 +4761,7 @@ def render_world_html(settings: Settings) -> str:
         '<meta name="robots" content="noindex, nofollow">\n<meta name="referrer" content="no-referrer">\n'
         '<meta name="apple-mobile-web-app-capable" content="yes">\n'
         f'<link rel="icon" href="data:,">\n<title>{title}</title>\n'
-        f"<style>{_STYLE}</style>\n"
+        f"<style>{_STYLE_ALL}</style>\n"
         f'<script type="importmap">{_IMPORTMAP}</script>\n</head>\n'
         f'<body data-refresh="{REFRESH_S}" data-pipeline="{",".join(PIPELINE)}">\n'
         '<canvas id="view"></canvas><div id="vignette"></div>\n'
