@@ -39,6 +39,16 @@ read against lab 3's pre-registered bar (its 2026 TEST look failed it: promising
 explicit go after reading it. Even then it would be a new, separately built and capped real-money path, with any key
 only in a Railway variable, never in this repo.
 
+## Config notes
+
+- `OWNER_TZ` (default `America/Los_Angeles`; no account, no key): the owner's time zone, an IANA name such as
+  `Europe/Athens`. The 3D world's nightly recap film (`src/nightcrawler/recap.py`, `/api/page` -> `recap`) replays
+  "yesterday", the previous calendar day of this zone, from the bot's own records only (the ledger and its receipts),
+  and plays by itself at 00:05 in this zone when the page is open. A zone name the machine does not know is logged
+  as a warning at start (`config_owner_tz_unknown`) and never stops the bot: the recap then uses the UTC day and says
+  `"tz": "UTC"`, as it does on a machine with no time-zone database at all. Change it in the Railway variables when
+  the owner moves.
+
 ## Keeping track
 
 - Check provider usage before any heavy research run, and prefer the free CryptoHouse source so Helius

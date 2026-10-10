@@ -175,6 +175,7 @@ full list with explanations is in [.env.example](.env.example). The important on
 | `JUPITER_API_KEY` | (empty) | Optional; higher Jupiter rate limits. |
 | `USAGE_HELIUS_MONTHLY_CREDITS` | `1000000` | The dashboard's "Services used" card counts calls per provider per day and month; a bar turns amber at 80 % of a budget and a used-up budget gets a banner. This is the Helius free plan; `USAGE_JUPITER_MONTHLY_CALLS` and the other `USAGE_*` settings default to `0` (no budget). The judge's budget is `JUDGE_MAX_DAILY_USD`. |
 | `TOWN_RAILWAY_USD_MONTH` | `5` | What Railway charges per month to run the bot (the Hobby plan). The page's "The town" card turns it into a cost per day, adds the AI judge's spending and compares both with what the desks made, today and since the start: the desks must earn more than the town costs to run. |
+| `OWNER_TZ` | `America/Los_Angeles` | Your time zone (an IANA name such as `Europe/Athens`). The 3D world's nightly recap film replays "yesterday", the previous calendar day of this zone, from the bot's own records: by itself at 00:05 in this zone if the page is open, and on demand from the "yesterday" chip. An unknown name logs a warning and the recap uses the UTC day. |
 
 "`_PCT`" knobs come in two kinds, and the bot checks you used the right one: the strategy and
 risk knobs listed above are **fractions** (0.20 = 20 %), while `MAX_PRICE_IMPACT_PCT` and the

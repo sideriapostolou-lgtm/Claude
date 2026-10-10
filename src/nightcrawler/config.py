@@ -435,6 +435,10 @@ class Settings:
                                        "The page's town card turns it into a cost per day, adds the AI judge's "
                                        "spending and compares both with what the desks made. 0 = free hosting",
                                        lo=0)
+    # The 3D world's nightly recap film (nightcrawler.recap): "yesterday" is a calendar day of this zone.
+    owner_tz: str = _f("America/Los_Angeles", "text", "The owner's time zone, an IANA name such as Europe/Athens: "
+                       "the 3D world's nightly recap film replays the previous calendar day of this zone (it plays "
+                       "by itself at 00:05 there if the page is open, and on demand)")
 
     # ---- provider usage budgets (observability team) -------------------------
     # The dashboard's Usage panel shows calls per provider per UTC day and month against these
@@ -474,6 +478,9 @@ class Settings:
         object.__setattr__(self, "keys_rotated_on", str(self.keys_rotated_on).strip())
         object.__setattr__(self, "bot_wallet_mode", str(self.bot_wallet_mode).strip().lower())
         object.__setattr__(self, "withdraw_to", str(self.withdraw_to).strip())
+        object.__setattr__(self, "owner_tz", str(self.owner_tz).strip())
+        if _zone_unknown(self.owner_tz):  # a cosmetic setting (the recap film): warn, never refuse to start
+            logging.getLogger(__name__).warning("config_owner_tz_unknown value=%r using=UTC", self.owner_tz[:60])
         problems = self._validate()
         if problems:
             raise ConfigError(problems)
@@ -675,6 +682,25 @@ _FIELDS = {f.name: f for f in dataclasses.fields(Settings)}
 #: :meth:`Settings.add_runtime_secret`: ``id(settings) -> (settings, secrets)`` (the object is kept, so its id
 #: is never reused by another Settings; a frozen slots dataclass cannot hold the list itself).
 _RUNTIME_SECRETS: dict[int, tuple[Settings, tuple[Secret, ...]]] = {}
+
+
+def _zone_unknown(name: str) -> bool:
+    """True when ``name`` is not a time zone this machine knows (the recap then uses the UTC day and says so: a
+    warning at start, never a refusal, since the setting only names the film's day). A machine without any time-zone
+    database (even ``UTC`` fails to load) is not warned about each name."""
+    import zoneinfo
+
+    try:
+        zoneinfo.ZoneInfo(name)
+    except (zoneinfo.ZoneInfoNotFoundError, ValueError, OSError):
+        pass
+    else:
+        return False
+    try:
+        zoneinfo.ZoneInfo("UTC")
+    except (zoneinfo.ZoneInfoNotFoundError, ValueError, OSError):
+        return False
+    return True
 
 
 def _wallet_problems(s: Settings) -> list[str]:

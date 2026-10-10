@@ -38,6 +38,7 @@ Schema (lists capped: members 9, events <= 5, open trades <= 10, closed trades 1
                                          "settled_today", "won_today", "settled_total", "won_total"},
                                "real": {"label": "Real money", (the same keys), "at_risk_usd", "contracts",
                                         "cost_usd", "value_usd", "venue_at", "cash_usd", "cash_at"}|null,
+                               "real_closed": [{"question", "settled_at", "pnl_usd", "won"}] (<= 5),  # newest first
                                "guard": {"verdict", "reason", "paused", "since", "line", "on", "candidate",
                                          "real": {"verdict", "reason", "paused", "since", "line"}|null}|null,
                                "settled_real": [{"ts", "text"}] (<= 3)}|null,   # its newest REAL settlements
@@ -54,11 +55,17 @@ Schema (lists capped: members 9, events <= 5, open trades <= 10, closed trades 1
                                        "settled_today", "won_today", "since_start_usd", "cash_usd", "line"}|null}|null,
                "trend": {"line"}|null},                                   # the trend desk in words (TREND)
       "team": {"counts": {status: n}, "members": [{"id", "name", "role", "status", "why", "doing",
-                                                    "last_activity", "events", "bars"?}]},
+                                                    "last_activity", "events", "bars"?,
+                                                    "risk_wall"?: {...}}]},   # the risk member only: RISK WALL
                                                     # status "absent": the Coach is not built (not counted)
       "trades": {"open": [{"coin", "entry_usd", "now_usd", "pnl_usd", "pnl_pct", "opened_at", "partial", "foreign"}],
                  "closed": [{"coin", "opened_at", "closed_at", "pnl_usd", "pnl_pct", "result", "why"}],
+                 "summary": {"label", "won", "lost", "even", "total", "since": ts|null, "order": "WLE…", "result",
+                             "real": {"label", "won", "lost", "settled", "since", "order", "lines", "result"}|null},
                  "max_open"},
+      "recap": {"date", "tz", "window", "events", "events_total", "quiet", "closed", "real", "pretend"},  # RECAP
+      "research": {"labs": [{"lab", "question", "verdict", "date", "reading", "plain", "trials"}],  # see RESEARCH
+                   "trials_total", "as_of", "rule"},
       "learning": {"source": "card"|"missing"|"error", "state", "headline", "variants": [{"name", "n", "avg",
                    "proof"}], "data", "rule": str|null},
       "experience": {...},                                            # the report cards: see EXPERIENCE below
@@ -121,6 +128,39 @@ pretend): in BTC and SOL, out of ETH; since start +$1.20 vs holding the three (b
 +$0.40"; "record restarted <day>" after the label while ``reset_from`` is set). Its figures are never added to the
 SOL wallet's, the Polymarket desk's or the town's income: the town's own line and bars are untouched. Null when the
 desk is off (``TRENDDESK_ENABLED``) or its state cannot be read.
+
+TROPHIES (``trades.summary``, the 3D world's trophy shelf): ``closed`` is capped at 10, so the summary counts EVERY
+closed trade of the Solana bot in this mode (``won``: a positive result in SOL, ``lost``: a negative one, ``even``,
+``total``; ``label`` the money card's label: pretend unless the bot itself runs live), ``since`` is the first closing
+time (null without one) and ``order`` the results newest first, one letter each (``W``/``L``/``E``), the last
+:data:`SHELF_MAX` of them. ``real`` is the Polymarket desk's real money only (null unless the desk has a real book):
+the desk's own totals from ``money.polymarket.real`` (``won`` of ``settled``, ``lost`` the rest), ``order`` its real
+settlements newest first from the receipts (a positive result is ``W``), ``since`` the first one's time and ``lines``
+the newest real settlements in the desk's own words (``money.polymarket.real_closed``), each "REAL". ``result`` is
+the money each tier stands for, in the plain words' wording: the Solana bot's since start (the money card's, real
+money only while it trades real money) and the desk's real result since start (``money.polymarket.real``), so a row
+of trophies never reads as a profit the money does not show (a near-certain rule wins cents and loses dollars). The
+shelf draws one trophy per win and one tile per loss and says how many more are not on it; nothing else of a trade
+is in it.
+
+RISK WALL (``team.members[risk].risk_wall``, the 3D world's gauge board): the risk panel's own numbers
+(:mod:`nightcrawler.teamroom`: the share of today's loss allowance used, the trade slots in use, the daily stop, what
+stops new buys, each desk's verdict and pause) plus ``real_caps``: the Polymarket desk's real money against its hard
+limits, from ``money.polymarket.real`` and the settings (``open_usd`` of ``open_max_usd`` in open bets, ``day_loss_usd``
+of ``day_max_usd`` lost today (UTC), ``total_loss_usd`` of ``total_max_usd`` lost in total; ``on``: the desk bets real
+money now), null unless the desk has a real book.
+
+RECAP (:mod:`nightcrawler.recap`): yesterday, the previous calendar day of the owner's time zone (``OWNER_TZ``), from
+the ledger and its receipts only: at most 8 events in the page's plain words, each named for the member who made it
+and marked ``real`` when it is real money, the Solana bot's trades closed that day (in dollars at this page's SOL
+price, the same figure as ``trades.closed``), the real money's result since start when the day began and when it
+ended (the desk's real book only), the practice line and ``quiet`` (the ledger holds nothing at all for the day).
+The day's records are kept for :data:`nightcrawler.recap.RECAP_TTL_S` per day, zone and mode in ``memory`` (yesterday
+does not change) and worded on every page; a failure to read them gives an empty recap, never a broken page.
+
+RESEARCH (:func:`nightcrawler.research_board.research_state`): what the labs found, one row per lab, a FIXED copy of
+the verdicts recorded in ``research/`` (not shipped in the image), each also in plain words (``plain``); a test keeps
+the copy equal to the record.
 
 PLAIN (:func:`plain_words`): the screen in plain words for a newcomer (both pages put it on top), built from this
 page's own data only: every sentence is a FIXED template filled with the data's numbers and words, never an invented
@@ -227,6 +267,7 @@ import itertools
 import json
 import math
 import re
+import sqlite3
 from collections import Counter
 from collections.abc import Callable, Mapping
 from pathlib import Path
@@ -239,21 +280,24 @@ from nightcrawler.clock import utc_day
 from nightcrawler.config import Settings
 from nightcrawler.dashboard import build_state, scrub
 from nightcrawler.deskguard import VERDICTS as GUARD_VERDICTS
+from nightcrawler.ledger import LedgerError
 from nightcrawler.logging_setup import get_logger, redact_text
 from nightcrawler.models import LAMPORTS_PER_SOL, EquityPoint
 from nightcrawler.office3d import CAST3D
 from nightcrawler.page import LEARNING_RULE, MEMBERS, REFRESH_S
-from nightcrawler.polydesk import RULE_LAB_PASSED, panel_state
+from nightcrawler.polydesk import RULE_LAB_PASSED, load_state, panel_state, state_path
 from nightcrawler.readiness import readiness
+from nightcrawler.recap import RECAP_TTL_S, collect_recap, day_window, empty_recap, render_recap
+from nightcrawler.research_board import research_state
 from nightcrawler.teamroom import ENGINE_STALE_S, FUTURE_SKEW_S, build_team_state, derive_status, duration_text
 from nightcrawler.withdraw import fresh_balance, last_withdrawal, live_hold, page_view, saved_state, withdrawn_lamports
 
 __all__ = ["EXPERIENCE_CAVEAT", "EXPERIENCE_CHIPS", "EXPERIENCE_KINDS", "EXPERIENCE_MONEY_LINE", "GLOSSARY",
            "LEARNING_RULE", "MEMBERS", "PAPER_LABEL", "PLAIN_ABOUT", "PLAIN_FINISHED_MAX", "PLAIN_JOBS",
            "PLAIN_MEMBER_JOBS", "PLAIN_TICKER_MAX", "PLAIN_TICKER_WINDOW_S", "PLAYBOOK_PATH", "PRETEND_LABEL",
-           "REAL_LABEL", "STALE_BANNER_S", "TOWN_MONTH_DAYS", "WALLET_MAX_AGE_S", "build_page_state", "experience_card",
-           "learning_card", "plain_event", "plain_finished", "plain_ticker", "plain_words", "polymarket_desk",
-           "town_ledger", "trend_desk"]
+           "REAL_LABEL", "SHELF_MAX", "STALE_BANNER_S", "TOWN_MONTH_DAYS", "WALLET_MAX_AGE_S", "build_page_state",
+           "experience_card", "learning_card", "plain_event", "plain_finished", "plain_ticker", "plain_words",
+           "polymarket_desk", "real_caps", "recap_state", "town_ledger", "trend_desk"]
 
 log = get_logger(__name__)
 
@@ -267,6 +311,8 @@ _LEARN_MODULES = ("nightcrawler.learn", "nightcrawler.learn.card")
 CHART_MIN_SPAN_S = 3600.0
 OPEN_MAX = 10
 CLOSED_MAX = 10
+#: The 3D world's trophy shelf: one letter per closed trade (or real bet) in ``trades.summary``, newest first.
+SHELF_MAX = 200
 COIN_MAX = 24
 WHY_MAX = 60
 TEXT_MAX = 160
@@ -952,6 +998,7 @@ def polymarket_desk(settings: Settings, now: float) -> dict[str, Any] | None:
         "paper": _book(_xp_map(desk.get("paper")), PAPER_LABEL),
         # the venue's cash alone (a key, no contracts) is real money to show, but not a real book for the town
         "real": real if _real_book(real) or real["cash_usd"] is not None else None,
+        "real_closed": _real_closed(desk.get("real_closed")),
         "guard": _desk_guard(desk.get("guard")),
         # its newest settled REAL-money bets from its whole event log (the team row keeps only the last five events,
         # and one round can settle several bets and add a pause and a lesson): the 3D world's replays
@@ -972,6 +1019,20 @@ def _settled_real(raw: Any, text: _Text) -> list[dict[str, Any]]:
             out.append({"ts": ts, "text": words})
     out.sort(key=lambda e: -e["ts"])  # (stable: one round's settlements keep the desk's own order)
     return out[:PLAIN_FINISHED_MAX]
+
+
+def _real_closed(raw: Any) -> list[dict[str, Any]]:
+    """``money.polymarket.real_closed``: the desk's newest real settlements (panel ``real_closed``), type-checked:
+    the question (clipped), when it settled, the result in dollars and whether it won."""
+    out = []
+    for row in raw if isinstance(raw, list) else []:
+        r = _xp_map(row)
+        pnl = _num(r.get("pnl_usd"))
+        if pnl is None or not isinstance(r.get("won"), bool):
+            continue
+        out.append({"question": _clip(str(r.get("question") or ""), 80), "settled_at": _num(r.get("settled_at")),
+                    "pnl_usd": pnl, "won": r["won"]})
+    return out[:5]
 
 
 def _desk_guard(raw: Any) -> dict[str, Any] | None:
@@ -1222,6 +1283,8 @@ def _members(team: dict[str, Any], card: dict[str, Any], now: float) -> list[dic
                   "events": p["events"]}
         if p.get("bars"):
             member["bars"] = p["bars"]
+        if isinstance(p.get("risk_wall"), dict):  # the risk member's gauge board numbers (the 3D world)
+            member["risk_wall"] = dict(p["risk_wall"])
         if isinstance(p.get("positions"), list):  # the Polymarket desk's open positions (paper or real), capped
             member["positions"] = [
                 {"question": str(x.get("question") or "")[:80], "side": str(x.get("side") or ""),
@@ -1235,7 +1298,8 @@ def _members(team: dict[str, Any], card: dict[str, Any], now: float) -> list[dic
     return out
 
 
-def _trades(ledger: Any, settings: Settings, state: dict[str, Any], text: _Text) -> dict[str, Any]:
+def _trades(ledger: Any, settings: Settings, state: dict[str, Any], text: _Text,
+            desk: Mapping[str, Any] | None = None) -> dict[str, Any]:
     mode = "live" if settings.is_live else "paper"
     sol_usd = state["equity"]["sol_usd"]
     opened = [{"coin": text(p["symbol"] or _short(p["mint"]), COIN_MAX), "entry_usd": p["entry_price_usd"] or None,
@@ -1243,8 +1307,14 @@ def _trades(ledger: Any, settings: Settings, state: dict[str, Any], text: _Text)
                "pnl_pct": p["unrealized_pnl_pct"], "opened_at": p["opened_at"], "partial": p["partial_taken"],
                "foreign": bool(p.get("foreign_wallet"))}
               for p in state["positions"][:OPEN_MAX]]
-    rows = ledger.positions(status="closed", limit=5 * CLOSED_MAX, mode=mode)
+    # every closed trade of this mode (the ledger already reads them all to filter the mode): the shelf counts them
+    rows = ledger.positions(status="closed", mode=mode)
     rows.sort(key=lambda p: p.closed_at if p.closed_at is not None else p.opened_at, reverse=True)
+    results = ["W" if (pnl := p.pnl_lamports()) > 0 else "L" if pnl < 0 else "E" for p in rows]
+    closes = [p.closed_at for p in rows if p.closed_at is not None]
+    summary = {"label": _money_label(settings), "won": results.count("W"), "lost": results.count("L"),
+               "even": results.count("E"), "total": len(results), "since": min(closes) if closes else None,
+               "order": "".join(results[:SHELF_MAX]), "real": _real_shelf(ledger, desk)}
     closed = []
     for p in rows[:CLOSED_MAX]:
         pnl = p.pnl_lamports() / LAMPORTS_PER_SOL
@@ -1254,7 +1324,116 @@ def _trades(ledger: Any, settings: Settings, state: dict[str, Any], text: _Text)
                        "closed_at": p.closed_at, "pnl_usd": _times(pnl, sol_usd),
                        "pnl_pct": _pct(pnl, p.cost_lamports / LAMPORTS_PER_SOL),
                        "result": "won" if pnl > 0 else "lost" if pnl < 0 else "even", "why": text(why, WHY_MAX)})
-    return {"open": opened, "closed": closed, "max_open": settings.max_open_positions}
+    return {"open": opened, "closed": closed, "summary": summary, "max_open": settings.max_open_positions}
+
+
+def _payload(text: Any) -> Mapping[str, Any]:
+    """A receipt's JSON payload as a mapping; anything else (bad JSON, a list, a number) is an empty one."""
+    try:
+        return _xp_map(json.loads(text))
+    except (TypeError, ValueError):
+        return {}
+
+
+def _real_shelf(ledger: Any, desk: Mapping[str, Any] | None) -> dict[str, Any] | None:
+    """``trades.summary.real`` (TROPHIES in the module docstring): the Polymarket desk's real bets only, null unless the
+    desk has a real book. Totals from the money card; the order of the real settlements from the receipts (newest
+    first, at most :data:`SHELF_MAX`); the lines in the desk's own words."""
+    real = _xp_map(desk.get("real")) if isinstance(desk, Mapping) else {}
+    if not real or not _real_book(real):
+        return None
+    settled, won = _count(real.get("settled_total")) or 0, _count(real.get("won_total")) or 0
+    rows = ledger._rows("SELECT ts, payload FROM receipts WHERE kind = 'polydesk_settled' ORDER BY seq DESC LIMIT ?",
+                        [SHELF_MAX])
+    order = "".join("W" if (_num(_payload(payload).get("pnl_usd")) or 0.0) > 0 else "L" for _, payload in rows)
+    first = ledger._rows("SELECT ts FROM receipts WHERE kind = 'polydesk_settled' ORDER BY seq LIMIT 1")
+    lines = []
+    raw = _xp_map(desk).get("real_closed")
+    for row in raw if isinstance(raw, list) else []:
+        r = _xp_map(row)
+        pnl = _num(r.get("pnl_usd"))
+        if pnl is None or not isinstance(r.get("won"), bool):
+            continue
+        lines.append({"ts": _num(r.get("settled_at")), "won": r["won"],
+                      "text": f"REAL · {'won' if r['won'] else 'lost'} {_signed(pnl)} · {r.get('question') or ''}"})
+    return {"label": REAL_LABEL, "won": won, "lost": max(0, settled - won), "settled": settled,
+            "since": _num(first[0][0]) if first else None, "order": order, "lines": lines}
+
+
+def _shelf_results(trades: dict[str, Any], settings: Settings, money: Mapping[str, Any],
+                   desk: Mapping[str, Any] | None) -> dict[str, Any]:
+    """``trades.summary.result`` and ``.real.result`` (TROPHIES in the module docstring): what each shelf tier's money
+    did since start, in the plain words' wording (real money said so only where it is real)."""
+    summary = trades["summary"]
+    summary["result"] = _change(_num(_xp_map(money.get("since_start")).get("usd")), real=settings.is_live)
+    if summary["real"] is not None:
+        real = _xp_map(_xp_map(desk).get("real")) if isinstance(desk, Mapping) else {}
+        summary["real"]["result"] = _change(_num(real.get("since_start_usd")) or 0.0, real=True)
+    return trades
+
+
+def real_caps(settings: Settings, desk: Mapping[str, Any] | None) -> dict[str, Any] | None:
+    """``risk_wall.real_caps`` (RISK WALL in the module docstring): the desk's real money against its hard limits, from
+    the money card's real book and the settings; null unless the desk has a real book."""
+    real = _xp_map(desk.get("real")) if isinstance(desk, Mapping) else {}
+    if not real or not _real_book(real):
+        return None
+    return {"label": REAL_LABEL, "on": _xp_map(desk).get("mode") == "live",
+            "open_usd": round(_num(real.get("at_risk_usd")) or 0.0, 2),
+            "open_max_usd": float(settings.polydesk_live_max_open_usd),
+            "day_loss_usd": round(max(0.0, -(_num(real.get("today_usd")) or 0.0)), 2),
+            "day_max_usd": float(settings.polydesk_live_daily_loss_usd),
+            "total_loss_usd": round(max(0.0, -(_num(real.get("since_start_usd")) or 0.0)), 2),
+            "total_max_usd": float(settings.polydesk_live_total_loss_usd)}
+
+
+def _desk_questions(settings: Settings) -> dict[str, str]:
+    """The Polymarket desk's questions by market (its state file: open and kept closed rows), for the recap's real
+    records (a receipt names the market only). Empty when the desk is off or its state cannot be read."""
+    if not settings.polydesk_enabled:
+        return {}
+    try:
+        st = load_state(state_path(settings))
+    except (KeyError, TypeError, ValueError, AttributeError, OSError):
+        return {}
+    closed = st.get("closed")
+    rows = [*_xp_map(st.get("positions")).values(), *(closed if isinstance(closed, list) else [])]
+    out: dict[str, str] = {}
+    for row in rows:
+        r = _xp_map(row)
+        slug, question = r.get("slug"), r.get("question")
+        if isinstance(slug, str) and isinstance(question, str) and question and slug not in out:
+            out[slug] = _clip(question, 80)
+    return out
+
+
+def recap_state(ledger: Any, settings: Settings, now: float, memory: dict[str, Any] | None = None,
+                text: _Text | None = None, desk: Mapping[str, Any] | None = None,
+                sol_usd: float | None = None) -> dict[str, Any]:
+    """``recap`` (RECAP in the module docstring): the day's records (:func:`nightcrawler.recap.collect_recap` for this
+    mode, with the money card's Polymarket block ``desk``), kept in ``memory`` for
+    :data:`~nightcrawler.recap.RECAP_TTL_S` per day, zone and mode, worded on every call in the page's plain words with
+    the page's own SOL price (``sol_usd``: a closed trade's dollar figure is ``trades.closed``'s). A failure to read
+    them is logged and gives an empty recap: the rest of the page never depends on it."""
+    mode = "live" if settings.is_live else "paper"
+    live = settings.is_live
+    try:
+        key = (mode, settings.owner_tz, day_window(now, settings.owner_tz)[0])  # a new day is a new recap at once
+        kept = memory.get("recap") if memory is not None else None
+        if (isinstance(kept, dict) and kept.get("key") == key
+                and 0 <= now - float(kept.get("at", -1e18)) < RECAP_TTL_S and isinstance(kept.get("raw"), dict)):
+            raw: dict[str, Any] = kept["raw"]
+        else:
+            raw = collect_recap(ledger, now, tz=settings.owner_tz, mode=mode, exit_words=EXIT_WORDS, desk=desk,
+                                questions=_desk_questions(settings))
+            if memory is not None:
+                memory["recap"] = {"key": key, "at": now, "raw": raw}
+        return render_recap(raw, words=lambda member, line: plain_event(member, line, live=live),
+                            text=text if text is not None else _Text(settings), sol_usd=sol_usd)
+    except (LedgerError, sqlite3.Error, ArithmeticError, AttributeError, LookupError, OSError, TypeError,
+            ValueError) as exc:  # (a bad row must never take the page down: the film then has nothing to play)
+        log.warning("recap_failed error=%s", type(exc).__name__)
+        return empty_recap(now, settings.owner_tz)
 
 
 def _usage(state: dict[str, Any]) -> tuple[list[dict[str, Any]], list[dict[str, str]]]:
@@ -1820,9 +1999,12 @@ def build_page_state(ledger: Any, settings: Settings, now: float, engine_status:
     desk = polymarket_desk(settings, now)  # the Polymarket desk's books, apart from the SOL wallet (never summed)
     trend = trend_desk(settings, now)  # the trend desk's paper book, apart from everything else (never summed)
     money = _money(settings, state["equity"], point, _withdrawn(ledger, settings, point, now), desk, trend)
+    for m in members:  # Rook's risk wall: the desk's real money against its hard limits beside the panel's numbers
+        if m["id"] == "risk" and isinstance(m.get("risk_wall"), dict):
+            m["risk_wall"]["real_caps"] = real_caps(settings, desk)
     receipts = state["receipts"]
     head = receipts["head_hash"]
-    trades = _trades(ledger, settings, state, text)
+    trades = _shelf_results(_trades(ledger, settings, state, text, desk), settings, money, desk)
     out = {
         "version": __version__,
         "generated_at": now,
@@ -1837,6 +2019,8 @@ def build_page_state(ledger: Any, settings: Settings, now: float, engine_status:
         "town": town_ledger(settings, money, state.get("judge"), now, _run_started(ledger, state)),
         "team": {"counts": counts, "members": members},
         "trades": trades,
+        # yesterday in the owner's time zone, from the ledger and its receipts only (the 3D world's recap film)
+        "recap": recap_state(ledger, settings, now, memory, text, desk, state["equity"]["sol_usd"]),
         "learning": {"source": card["source"], "state": card["state"], "headline": card["headline"],
                      "variants": card["variants"], "data": card["data"],
                      "rule": LEARNING_RULE if card["source"] == "card" and card["can_stop_trading"] else None},
@@ -1850,6 +2034,7 @@ def build_page_state(ledger: Any, settings: Settings, now: float, engine_status:
         "receipts": {"count": receipts["count"], "verified": receipts["verified"],
                      "first_bad_seq": receipts["first_bad_seq"], "head": head, "head_short": f"{head[:8]}…{head[-8:]}"},
         "usage": usage,
+        "research": research_state(),  # what the labs found: a fixed copy of the record (RESEARCH above)
         "about": {"version": __version__, "uptime_s": team["engine"]["uptime_s"],
                   "commit": (deploy or {}).get("commit"), "started_at": team["engine"]["started_at"]},
     }

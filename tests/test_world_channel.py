@@ -175,8 +175,10 @@ def test_a_live_solana_bot_finishes_real_money_trades(ledger: Ledger, make_setti
 
 
 def _channel(module: str) -> str:
-    start = module.index("// ============================================================= THE CHANNEL")
-    return module[start:module.index("// ============================================================= THE LIVE DIRECTOR")]
+    """THE CHANNEL's section: from its header to the next section's (the record room's, then the live director's)."""
+    header = "// ============================================================= "
+    start = module.index(header + "THE CHANNEL")
+    return module[start:module.index(header, start + len(header))]
 
 
 def _pure(module: str) -> str:
@@ -194,8 +196,13 @@ def test_the_channel_keeps_to_its_own_section(settings: Settings) -> None:
     assert "function director() { liveDirector(); }" in module and "govern(dtRaw);" in module
     for foreign in ("liveDirector(", "PLANNER.", "startShot(", "govern(", "setFov("):
         assert foreign not in code, foreign
-    # its hooks: window.__skyport from this section only, the director's own debug handle unchanged
-    assert module.count("window.__skyport") == 2 == code.count("window.__skyport")  # (SKY = window.__skyport = ... || {})
+    # its hooks: window.__skyport from this section (the record room adds its own, keeping these), the director's own
+    # debug handle unchanged
+    assert code.count("window.__skyport") == 2 and "SKY = window.__skyport = window.__skyport || {};" in code
+    raw = _module(html)
+    records = re.sub(r"//[^\n]*", "", raw[raw.index("THE RECORD ROOM (Builder B)"):raw.index("= THE LIVE DIRECTOR")])
+    assert module.count("window.__skyport") == 2 + records.count("window.__skyport")
+    assert "window.__skyport = Object.assign(window.__skyport || {}, { records: {" in records
     assert module.count("window.__world") == 1
     # the old once-a-minute tint is gone: the channel's cycle owns the sky
     assert "function tint()" not in module and "setInterval(tint" not in module

@@ -389,6 +389,38 @@ def test_daily_loss_limit_reached_blocks_risk(ledger: Ledger, settings: Settings
     assert risk["status"] == "blocked" and "daily loss limit" in risk["why"]
 
 
+def test_the_risk_wall_carries_the_panel_as_numbers(ledger: Ledger, settings: Settings,
+                                                    monkeypatch: pytest.MonkeyPatch) -> None:
+    """The 3D world's gauge board (Rook's risk wall): the allowance used as a percent, the slots, the stop, what stops
+    new buys, each desk's verdict and pause: the panel's own numbers, nothing new."""
+    monkeypatch.setattr("nightcrawler.teamroom._desk_verdicts", lambda ctx: (
+        [{"desk": "Polymarket paper", "verdict": "losing", "phrase": "losing", "reason": "r", "paused": True,
+          "since": "18:40 UTC", "line": "l"},
+         {"desk": "Polymarket real", "verdict": "learning", "phrase": "still learning", "reason": "r", "paused": False,
+          "since": None, "line": "l"}], []))
+    seed(ledger)
+    risk = panels(build_team_state(ledger, settings, NOW))["risk"]
+    assert risk["risk_wall"] == {
+        "allowance_used_pct": round(risk["meter"]["fraction"] * 100, 1), "slots_used": 1, "slots_max": 3,
+        "daily_stop": False, "stopped_by": None,
+        "desks": [{"desk": "Polymarket paper", "verdict": "losing", "paused": True},
+                  {"desk": "Polymarket real", "verdict": "learning", "paused": False}]}
+    ledger.record_equity(EquityPoint(ts=NOW - 10, equity_lamports=790_000_000, sol_usd=100.0, equity_usd=79.0,
+                                     mode="paper"))
+    wall = panels(build_team_state(ledger, settings, NOW))["risk"]["risk_wall"]
+    assert wall["allowance_used_pct"] == pytest.approx(105.0) and wall["daily_stop"] is True
+    assert wall["stopped_by"] == "daily_loss"
+
+
+def test_the_risk_wall_says_null_before_the_first_money_check(ledger: Ledger, settings: Settings) -> None:
+    wall = panels(build_team_state(ledger, settings, NOW))["risk"]["risk_wall"]
+    assert wall["allowance_used_pct"] is None and wall["daily_stop"] is None and wall["stopped_by"] is None
+    assert wall["slots_used"] == 0 and wall["slots_max"] == 3
+    assert wall["desks"] == [{"desk": "Polymarket paper", "verdict": "learning", "paused": False}]  # a fresh desk
+    ledger.set_kv("risk.halted", {"halted": True, "reason": "[drawdown] -52%", "ts": NOW})
+    assert panels(build_team_state(ledger, settings, NOW))["risk"]["risk_wall"]["stopped_by"] == "halt"
+
+
 def test_risk_says_flat_on_a_day_without_gain_or_loss(ledger: Ledger, settings: Settings) -> None:
     """Exactly zero today is not "up"; a gain is."""
     for ts, lamports in ((MIDNIGHT + 60, 1_000_000_000), (NOW - 30, 1_000_000_000)):
