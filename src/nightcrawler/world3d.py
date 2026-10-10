@@ -49,9 +49,9 @@ resolves their bare ``three`` imports. The CSP allows scripts from this origin p
 map by their hashes only, and ``'wasm-unsafe-eval'`` for the meshopt decoder's bundled WebAssembly (nothing looser:
 no ``eval``, no inline scripts). Built for phones: static geometry merged per material, instancing for plants,
 railings and lanterns, the device pixel ratio capped at 1.75, one shadow-casting light (large screens only), soft
-contact shadows under every character, bloom skipped on small or slow screens, smaller prop textures on small
-screens, the ~20 MB of models never blocking the first frame, the loop paused while the tab is hidden and a plain
-fallback line without WebGL.
+contact shadows under every character, bloom skipped on small or slow screens, smaller model textures on small
+and touch screens, the ~20 MB of models never blocking the first frame (and never judged by the quality governor
+while they load), the loop paused while the tab is hidden and a plain fallback line without WebGL.
 
 Pure and static like :mod:`nightcrawler.office3d`: :func:`render_world_html` never puts ledger data into the HTML
 (the only thing it reads from disk is which whitelisted model files exist).
@@ -1246,7 +1246,7 @@ _M_WORLD = r"""
 
   // -- the analysis den (right): Nyx's curved desk, four glass screens, a round window
   const DN = RF.den;
-  roomShell(DN, { w: 7.5, d: 7.0, h: 4.4, seed: 23, floor: 0x7b5a46, floorKey: "wood",
+  roomShell(DN, { w: 7.5, d: 7.0, h: 4.4, seed: 23, floor: 0x7b5a46, floorKey: "wood", tint: 0xc2aad6,  // (violet-washed stone)
     back: [{ x: 0, w: 2.3, y0: 3.0, round: true }], left: [{ x: 1.0, w: 1.3, y0: 1.1, sp: 2.5 }], right: [{ x: 0.5, w: 1.3, sp: 1.95 }],
     front: [{ x: 0, w: 3.0, sp: 2.45 }] });
   DN.add("cloth", new THREE.CircleGeometry(1.9, 48).rotateX(-Math.PI / 2), [0, 0.012, -1.2], null, null, 0x4d2c6e);
@@ -1283,15 +1283,7 @@ _M_WORLD = r"""
   DN.add("glow", G.ico(0.09, 0), [-1.6, 2.05, -3.1], null, [1, 1.6, 1], hdr(0xc08bff, 3));
   hangingLamp(DN, 0.9, 4.4, 0.4, 1.3); hangingLamp(DN, -1.2, 4.4, 1.3, 1.0);
   pot(DN, 3.2, 2.9, 1.1); pot(DN, -3.2, 2.9, 1.2); pot(DN, -3.1, -2.8, 1.0);
-  // two curved holographic panels over Nyx's desk, turned to her chair (lines and shapes, never words; one on phones)
-  (Q.small ? [[0, "wave", "#9d7bff", 0]] : [[-0.52, "wave", "#9d7bff", 0.43], [0.52, "nodes", "#79e9ff", -0.43]]).forEach(function (q) {
-    const g = new THREE.PlaneGeometry(0.74, 0.46, 10, 1), pp = g.attributes.position;
-    for (let i = 0; i < pp.count; i++) pp.setZ(i, -pp.getX(i) * pp.getX(i) * 0.45);  // bent toward her
-    const m = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ map: screenTex(q[1], q[2]), color: hdr(0xffffff, 1.3), transparent: true, opacity: 0.9,
-      blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
-    m.renderOrder = 3; DN.place(m, q[0], 1.62, -2.22, q[3]);
-  });
-  (function () { const p = DN.at(0, 2.7, -1.4); practical("den", 0xb27dff, p.x, p.y, p.z, 36, 10); })();
+  (function () { const p = DN.at(0, 2.7, -1.4); practical("den", 0xb27dff, p.x, p.y, p.z, 18, 10); })();  // (a dim violet room: the screens glow)
 
   // -- the archive (front-left): tall bookshelves, lavender memory crystals, a ladder, a reading desk
   const AR = RF.archive;
@@ -1362,7 +1354,7 @@ _M_WORLD = r"""
   armillary(VT, 2.6, 0, 2.4, 0.7);
   hangingLamp(VT, -0.5, 4.4, -0.6, 1.1); hangingLamp(VT, 1.1, 4.4, 0.4, 1.2);
   pot(VT, -3.0, 2.6, 1.1); pot(VT, 3.0, -2.6, 1.0);
-  pot(VT, -4.05, -1.45, 1.1); pot(VT, -4.05, 1.15, 1.0);  // flowers flanking the document hatch (Jet's backdrop at the vault)
+  pot(VT, -4.0, -2.3, 1.1); pot(VT, -4.0, 2.0, 1.0);  // flowers against the wall either side of the document hatch (Jet's backdrop)
   (function () { const p = VT.at(0.2, 2.7, -0.6); practical("vault", 0xffb057, p.x, p.y, p.z, 26, 10); })();
 
   // -- the observatory (rear, raised): round walls with tall windows, a glass dome, the brass telescope
@@ -1398,7 +1390,7 @@ _M_WORLD = r"""
   OB.add("plain", G.box(0.3, 0.05, 0.22), [-2.7, 0.83, -3.4], [0, 0.4, 0], null, 0x6a2a2a); OB.add("plain", G.box(0.28, 0.02, 0.2), [-2.4, 0.81, -3.5], [0, 0.7, 0], null, PAPER);
   armillary(OB, 3.2, 0, -2.6, 0.9);
   pot(OB, -4.6, 1.5, 1.2); pot(OB, 4.6, 1.5, 1.2); pot(OB, -4.2, -2.5, 1.1);
-  (function () { const p = OB.at(0, 3.2, -1.0); practical("observatory", 0xc9b2ff, p.x, p.y, p.z, 26, 11); })();
+  (function () { const p = OB.at(0, 3.2, -1.0); practical("observatory", 0xffc49a, p.x, p.y, p.z, 22, 11); })();  // (warm lamplight under the night dome)
   // the steps up from the courtyard, with carved side walls and brass handrails
   for (let i = 0; i < 10; i++) { const zf = -6.2 - 0.25 * i, depth = zf + 8.8;
     WF.add("stone", G.box(3.2, 0.18 * (i + 1), depth), [0, 0.09 * (i + 1), zf - depth / 2], null, null, i % 2 ? CREAM : 0xe9dabf);
@@ -1450,6 +1442,8 @@ _M_WORLD = r"""
     if (!onIsland(t[0], t[1], 0.3) && i < 11) return; cypresses.push({ p: [t[0], DISCS.reduce(function (m, d) { return Math.hypot(t[0] - d[0], t[1] - d[1]) < d[2] ? Math.max(m, d[3]) : m; }, 0), t[1]], s: [1, t[2], 1] });
   });
   [[1.6, 3.9], [-1.6, 3.9], [3.9, -1.0], [-3.9, -1.0]].forEach(function (q) { pot(WF, q[0] * 1.32, q[1] * 1.32, 1.0); });
+  // a big flowered planter in the wide arrival shot's lower right corner (foreground depth; clear of the walks)
+  pot(WF, 1.55, 3.15, 1.4); bush(1.55, 0.62, 3.15, 0.42, 7, 4242);
 
   // ------------------------------------------------------------- distant floating islands with towers (silhouettes in the haze)
   (function () {
@@ -1612,7 +1606,7 @@ _M_WORLD = r"""
     lanterns.forEach(function (q, i) { halos.setMatrixAt(i, mat4([q.p[0], q.p[1] + 1.88 * q.h, q.p[2]], null, 0.5)); });
     halos.frustumCulled = false; halos.renderOrder = 4; scene.add(halos); props.lanternHalos = halos;
     // plants (the bushes smooth-shaded: lumpy and soft, not faceted)
-    instanced((function () { const g = crag(0.5, 1, 3, 1); g.deleteAttribute("normal"); g.deleteAttribute("uv"); const m = mergeVertices(g); m.computeVertexNormals(); return m; })(), MAT.leaf, bushes, false);
+    instanced((function () { const g = crag(0.5, 2, 3, 1); g.deleteAttribute("normal"); g.deleteAttribute("uv"); const m = mergeVertices(g); m.computeVertexNormals(); return m; })(), MAT.leaf, bushes, false);
     const bloomGeo = (function () { const parts = [], r = rng(5); for (let i = 0; i < 9; i++) { const g = G.sph(0.3, 6, 5); g.translate((r() - 0.5) * 0.6, (r() - 0.5) * 0.4, (r() - 0.5) * 0.6); parts.push(prep(g)); } return mergeGeometries(parts, false); })();
     instanced(bloomGeo, MAT.leaf, blooms, false);
     instanced(paint(crag(0.5, 0, 9, 0.55), 0xffffff), MAT.leaf, leaves.map(function (q) { return { p: q.p, r: q.r, s: q.s, c: [0x4a8a3e, 0x3c7a3a, 0x5e9a48][Math.floor((q.p[0] * 13 + q.p[1] * 7) % 3 + 3) % 3] }; }), false);
@@ -2555,8 +2549,8 @@ _M_LIFE = r"""
   }
 
   // Rook's model lost its amber eyes: two small glowing spheres on his Head bone, facing forward, gently pulsing
-  // (kept near 1: brighter, ACES tone mapping turns the amber to cream)
-  const rookEyeMat = new THREE.MeshBasicMaterial({ color: hdr(0xffa22e, 1.3) });
+  // (not tone-mapped: through ACES the amber turns to cream)
+  const rookEyeMat = new THREE.MeshBasicMaterial({ color: hdr(0xffa22e, 0.9), toneMapped: false });
   const rookEyeHalo = new THREE.SpriteMaterial({ map: haloTex, color: 0xff7a14, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.7 });
   function rookEyes(A) {
     const head = A.bones && A.bones.Head; let mesh = null;
@@ -2573,16 +2567,18 @@ _M_LIFE = r"""
       mesh.getVertexPosition(i, v); v.applyMatrix4(toRoot); pts.push(v.clone()); box.expandByPoint(v);
     }
     if (pts.length < 20) return;
-    const size = box.getSize(new THREE.Vector3()), r = Math.max(0.03, size.x * 0.1), headS = head.getWorldScale(new THREE.Vector3()).x / A.root.getWorldScale(v).x;
+    const size = box.getSize(new THREE.Vector3()), r = Math.max(0.03, size.x * 0.09), headS = head.getWorldScale(new THREE.Vector3()).x / A.root.getWorldScale(v).x;
     [-1, 1].forEach(function (s) {
       const ex = (box.min.x + box.max.x) / 2 + s * size.x * 0.2, ey = box.min.y + size.y * 0.56;
       let front = box.min.z;  // the face's surface in front of this eye
       for (let i = 0; i < pts.length; i++) { const p = pts[i]; if (Math.abs(p.x - ex) < size.x * 0.1 && Math.abs(p.y - ey) < size.y * 0.1 && p.z > front) front = p.z; }
       const eye = new THREE.Mesh(new THREE.SphereGeometry(r, 16, 10), rookEyeMat);
       const at = head.worldToLocal(A.root.localToWorld(new THREE.Vector3(ex, ey, front - r * 0.25)));
-      eye.position.copy(at); eye.scale.set(1.25 / headS, 0.8 / headS, 0.6 / headS);  // an amber slit, facing forward
+      eye.position.copy(at); eye.scale.set(1.3 / headS, 0.55 / headS, 0.5 / headS);  // an amber slit, facing forward
       eye.quaternion.copy(head.getWorldQuaternion(new THREE.Quaternion()).invert().multiply(A.root.getWorldQuaternion(new THREE.Quaternion())));
-      const halo = new THREE.Sprite(rookEyeHalo); halo.position.copy(at); halo.scale.setScalar(r * 7 / headS);
+      // the glow sits just in front of the face (inside it, the stone would hide it)
+      const halo = new THREE.Sprite(rookEyeHalo); halo.position.copy(head.worldToLocal(A.root.localToWorld(new THREE.Vector3(ex, ey, front + r * 1.5))));
+      halo.scale.setScalar(r * 6 / headS);
       head.add(eye, halo);
     });
     A.eyes = true;
@@ -2885,12 +2881,12 @@ _M_LIFE = r"""
   // ============================================================= THE DRONE: shots, glides between rooms, touch
   function rig(F, p, l) { return { pos: F.at(p[0], p[1], p[2]), look: F.at(l[0], l[1], l[2]) }; }
   const SHOTS = {
-    table: { pos: V3(-1.3, 1.7, 3.05), look: V3(-0.45, 0.98, -0.1) },
+    table: { pos: V3(-1.6, 1.75, 3.6), look: V3(-0.75, 0.95, -0.05) },  // (Voss at his place and the table: both inside a phone's frame)
     workshop: rig(WS2, [0.95, 1.55, 1.15], [-0.05, 0.92, -1.3]),
     den: rig(DN2, [-1.6, 1.5, 0.4], [0.3, 1.0, -1.9]),  // over Nyx's shoulder, onto her desk and its holographic panels
     archive: rig(AR2, [0.35, 1.35, 0.55], [-1.3, 0.72, -1.5]),
     vault: rig(VT2, [-1.2, 1.9, 0.9], [0.2, 1.7, -1.55]),  // in front of the risk desk, up at Rook's face, the vault door behind him
-    dock: { pos: V3(20.9, 1.65, 0.75), look: V3(23.4, 0.8, -1.7) },
+    dock: { pos: V3(22.2, 1.6, 0.95), look: V3(23.1, 0.75, -1.45) },  // (off the pier, clear of the parcel tube, the rail in front)
     kiosk: { pos: V3(19.4, 1.8, 3.0), look: V3(22.6, 0.95, 5.6) },
     observatory: rig(OB2, [-2.9, 2.1, 3.3], [0.6, 1.5, -1.5]),
   };
@@ -3328,7 +3324,7 @@ _M_LIFE = r"""
       const s = props.lanternGlow[i], h = s.parent; _pp.set(h.position.x, h.position.y + 2.27, h.position.z);
       const d = _pp.distanceTo(camera.position); _pq.copy(camera.position).sub(_pp).multiplyScalar(0.22 / Math.max(0.01, d)).applyAxisAngle(UP, -h.rotation.y);
       s.position.set(_pq.x, 2.27 + _pq.y, _pq.z); s.material.opacity = 0.32 * smoothstep(d, 1.6, 4.0); }
-    rookEyeMat.color.setRGB(1, 0.42, 0.06).multiplyScalar(1.15 + Math.sin(simT * 1.7) * 0.25); rookEyeHalo.opacity = 0.62 + Math.sin(simT * 1.7) * 0.12;
+    rookEyeMat.color.setRGB(1, 0.36, 0.04).multiplyScalar(0.86 + Math.sin(simT * 1.7) * 0.14); rookEyeHalo.opacity = 0.62 + Math.sin(simT * 1.7) * 0.12;
     // the warm key: between the drone and what it films, a little above (strongest at night, faint by day)
     keyLight.position.copy(cam.look).lerp(camera.position, 0.45); keyLight.position.y += 0.8; keyLight.intensity = keyBase;
     for (let i = 0; i < props.drones.length; i++) { const d = props.drones[i], a = simT * d.speed + d.phase;

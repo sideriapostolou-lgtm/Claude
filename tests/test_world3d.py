@@ -747,3 +747,43 @@ def test_the_phone_keeps_the_ticket_board_and_the_map_labels_inside_the_frame(se
     assert "camera.updateProjectionMatrix(); placeBoard();" in module  # re-placed on every resize
     assert "clamp(s.x - w / 2, 8, window.innerWidth - w - 8)" in module  # a room label never runs off the edge
     assert 'const hide = shotKey === "map"; if (bubblesEl.hidden !== hide) bubblesEl.hidden = hide;' in module
+
+
+@pytest.mark.skipif(shutil.which("node") is None, reason="Node is not installed")
+def test_the_follow_shot_swings_round_a_wall_before_closing_in(settings: Settings, tmp_path: Path) -> None:
+    """A wall between the walker and the drone's place: the drone takes the other side if that is clear; only when
+    every side is blocked does it close in, and then it looks at the walker (the subject used to drop out of the
+    bottom of the frame while the look stayed on the floor ahead)."""
+    module = _module(render_world_html(settings))
+    sides = re.search(r"  const FOLLOW_SIDES = [^\n]*;", module)
+    assert sides is not None
+    parts = [sides.group(0), _js_body(module, "  function followAt(base, back, side, up) {"),
+             _js_body(module, "  function followShot(a) {"), _js_body(module, "  function blocked(from, to) {")]
+    three = (world3d.ASSET_DIR / "three.module.min.js").as_uri()
+    out = _node(f"""
+import * as THREE from {json.dumps(three)};
+const V3 = function (x, y, z) {{ return new THREE.Vector3(x, y, z); }};
+let blockers = [];
+const wall = function (x, y, z, hx, hy, hz) {{ return {{ inv: new THREE.Matrix4().makeTranslation(x, y, z).invert(), half: V3(hx, hy, hz) }}; }};
+const _o = new THREE.Vector3(), _d = new THREE.Vector3(), _r = new THREE.Ray(), _b = new THREE.Box3(), _hit = new THREE.Vector3();
+const _fwd = new THREE.Vector3(), _side = new THREE.Vector3(), _fh = new THREE.Vector3(), _try = new THREE.Vector3();
+const _fol = {{ pos: V3(0, 0, 0), look: V3(0, 0, 0) }};
+{chr(10).join(parts)}
+const a = {{ group: {{ position: V3(0, 0, 0) }}, height: 1.0, yawS: 0, carrying: null }};
+const at = function () {{ const s = followShot(a); return {{ pos: s.pos.toArray(), look: s.look.toArray(), side: a.folSide }}; }};
+const open = at();
+blockers = [wall(0.4, 1.3, -1.5, 0.3, 2, 0.3)];  // a pillar on the drone's usual side
+const swung = at();
+blockers = [wall(0, 1.5, -0.8, 6, 3, 0.2)];  // a wall right behind the walker: every side is blocked
+const closed = at();
+console.log(JSON.stringify({{ open: open, swung: swung, closed: closed }}));
+""", tmp_path)
+    assert out["open"]["side"] == 0.75 and out["open"]["pos"] == pytest.approx([0.75, 1.75, -2.95])
+    assert out["swung"]["side"] == -0.75 and out["swung"]["pos"] == pytest.approx([-0.75, 1.75, -2.95])
+    assert out["swung"]["look"] == pytest.approx(out["open"]["look"])  # a clear side: the usual look ahead
+    closed = out["closed"]
+    assert closed["pos"][2] > -1.0  # it closed in toward the walker
+    head = [0.0, 0.85, 0.0]
+    dist = sum((p - q) ** 2 for p, q in zip(closed["look"], head, strict=True)) ** 0.5
+    ahead = sum((p - q) ** 2 for p, q in zip(out["open"]["look"], head, strict=True)) ** 0.5
+    assert dist < 0.5 * ahead  # ...and looks at the walker, not the floor two metres ahead
