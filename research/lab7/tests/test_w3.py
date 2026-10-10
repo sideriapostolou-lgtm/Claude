@@ -247,3 +247,35 @@ def test_run_stage_end_to_end_on_a_synthetic_universe(monkeypatch, tmp_path):
     assert md.count("\n| `") >= 296 and "Decision:" in md.splitlines()[2]
     assert json.loads((tmp_path / "train.json").read_text())["n_trials_total"] == 296
     assert doc["placebo_readings"] and all(doc["cells"][W3.CELL_CODE[k]]["placebo"] for k in doc["placebo_readings"])
+
+
+def test_an_interrupted_placebo_resumes_from_the_walk_checkpoint(monkeypatch, tmp_path):
+    tapes = {"a": _random_tape(21), "b": _random_tape(22)}
+    rows = [row(id=k, event_slug=f"ev-{k}", end=float(t.ts[-1]) - 100, closed_time=float(t.ts[-1]) + 10)
+            for k, t in tapes.items()]
+    u = pd.DataFrame(rows)
+    monkeypatch.setattr(W3, "universe", lambda split: u.copy())
+    monkeypatch.setattr(C, "load_tape", lambda mid, trades_dir=None, min_fills=0: tapes.get(str(mid)))
+    monkeypatch.setattr(W3, "HERE", tmp_path)
+    monkeypatch.setattr(W3, "OUT_DIR", tmp_path / "out")
+    (tmp_path / "PREREG.md").write_text("test prereg\n")
+    monkeypatch.setattr(W3, "PREREG", tmp_path / "PREREG.md")
+    monkeypatch.setattr(C, "record_runs", lambda entries, ledger_path=None: len(entries))
+    fresh = W3.run_stage("train", B=50, workers=1)
+    assert not (tmp_path / "out" / "walk_train.pkl").exists()  # removed after a finished stage
+    real_pass = W3.placebo_pass
+
+    def boom(*a, **k):
+        raise KeyboardInterrupt
+
+    monkeypatch.setattr(W3, "placebo_pass", boom)
+    with pytest.raises(KeyboardInterrupt):
+        W3.run_stage("train", B=50, workers=1)
+    assert (tmp_path / "out" / "walk_train.pkl").exists()
+    monkeypatch.setattr(W3, "placebo_pass", real_pass)
+    walked = []
+    monkeypatch.setattr(W3, "evaluate", lambda *a, **k: walked.append(1) or (_ for _ in ()).throw(AssertionError))
+    again = W3.run_stage("train", B=50, workers=1)  # no walk: the checkpoint carries it
+    assert not walked and again["coverage"].get("walk_from_checkpoint")
+    strip = lambda d: [{k: v for k, v in c.items()} for c in d["cells"]]  # noqa: E731
+    assert json.dumps(strip(again), sort_keys=True, default=str) == json.dumps(strip(fresh), sort_keys=True, default=str)

@@ -29,6 +29,7 @@ import json
 import math
 import multiprocessing as mp
 import os
+import pickle
 import sys
 import time
 import zlib
@@ -82,6 +83,7 @@ MIN_FILLS = 50
 WINNER_TYPES = ("moneyline",)
 WORKERS = int(os.environ.get("LAB7_WORKERS", "4"))
 PLACEBO_READING_TOP = 6
+WALK_VERSION = 1  # bump when the walk or its readings change (invalidates a checkpoint)
 PLACEBO_BUDGET = 40_000_000  # PREREG §7: counterparts (draws x real trips) for the reading-only placebos
 
 # Lab 4 P6 (PLAN Amendment 5 (b)), mirrored: the fallback end = closedTime - L for a game without a valid recorded end.
@@ -569,6 +571,18 @@ def run_stage(stage: str, B: int = C.BOOTSTRAP_B, workers: int = WORKERS) -> dic
     missed_fb: dict[str, int] = {}
     cov: dict[str, Any] = {}
     walk_s = read_s = 0.0
+    # engineering only: the walk's readings are checkpointed (outside git) so an interrupted placebo does not force
+    # a second walk; a checkpoint is used only for the same split, cells, core.py, PLAN.md and PREREG.md
+    ckpt_sig = {"split": split, "keys": keys, "core": C.prereg_sha256(LAB7 / "core.py"),
+                "plan": C.prereg_sha256(C.PLAN), "prereg": C.prereg_sha256(PREREG), "walk": WALK_VERSION}
+    ckpt = OUT_DIR / f"walk_{split}.pkl"
+    if ckpt.exists():
+        saved = pickle.loads(ckpt.read_bytes())
+        if saved.get("sig") == ckpt_sig:
+            results, counts, missed_fb, cov = saved["results"], saved["counts"], saved["missed_fb"], saved["cov"]
+            cov["walk_from_checkpoint"] = True
+            groups = {}
+            print(f"W3 {stage}: walk readings loaded from {ckpt}", flush=True)
     for ekey, gkeys in groups.items():
         arr, missed, cov_g = evaluate(u, gkeys, workers)
         walk_s += cov_g["walk_s"]
@@ -586,7 +600,11 @@ def run_stage(stage: str, B: int = C.BOOTSTRAP_B, workers: int = WORKERS) -> dic
         del arr
         print(f"W3 {stage}: entry rule {ekey} walked ({len(gkeys)} cells)", flush=True)
     results.sort(key=lambda r: CELL_CODE[r["cell"]])
-    cov["walk_s"], cov["readings_s"] = round(walk_s, 1), round(read_s, 1)
+    if not cov.get("walk_from_checkpoint"):
+        cov["walk_s"], cov["readings_s"] = round(walk_s, 1), round(read_s, 1)
+        OUT_DIR.mkdir(parents=True, exist_ok=True)
+        ckpt.write_bytes(pickle.dumps({"sig": ckpt_sig, "results": results, "counts": counts,
+                                       "missed_fb": missed_fb, "cov": cov}))
     required, reading, pinfo = placebo_plan(results, stage)
     t1 = time.time()
     blocks = placebo_pass(counts, required + reading, workers)
@@ -635,6 +653,7 @@ def run_stage(stage: str, B: int = C.BOOTSTRAP_B, workers: int = WORKERS) -> dic
     }
     out_json.write_text(json.dumps(doc, indent=1, sort_keys=True, default=_jsonable) + "\n")
     (HERE / f"{stage}.md").write_text(render_md(doc))
+    ckpt.unlink(missing_ok=True)
     print(f"W3 {stage}: {verdict} {sel_key or ''} (trials across labs 2-7: {n_total})", flush=True)
     return doc
 
