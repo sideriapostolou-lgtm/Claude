@@ -275,15 +275,19 @@ def test_the_banner_names_the_bet_on_a_phone(settings: Settings) -> None:
     assert "hudTop = replayEl.offsetHeight + 6;" in _js_body(_channel(_module(html)), "    function showReplay(it) {")
 
 
-def test_the_banner_stops_short_of_the_postcard_button() -> None:
+def test_the_banner_and_the_postcard_button_never_overlap() -> None:
     """The banner and the record room's postcard button share the row under the bar (the banner on the left, the
-    button on the right): on a phone the banner's width leaves the button clear, with a gap."""
+    button on the right). A wide screen: the banner's width leaves the button clear, with a gap. A phone (the banner's
+    result needs the whole width at 360 px): the button steps aside while the banner shows."""
     banner = re.search(r"#replay \{[^}]*?left: (\d+)px;[^}]*?max-width: calc\(100% - (\d+)px\)", _STYLE_CHANNEL)
     button = re.search(r"#postcard \{[^}]*?right: (\d+)px;[^}]*?width: (\d+)px;", _STYLE_RECORDS)
     assert banner is not None and button is not None
     left, inset = int(banner.group(1)), int(banner.group(2))
     right, width = int(button.group(1)), int(button.group(2))
     assert inset - left >= right + width + 8  # (the banner's right edge stays 8 px or more left of the button)
+    phone = _media(_STYLE_CHANNEL, "max-width: 560px")
+    assert "#replay { max-width: calc(100% - 24px); }" in phone
+    assert "body:has(#replay.on) #postcard { visibility: hidden; }" in phone
 
 
 def test_the_guide_says_what_the_channel_means(settings: Settings) -> None:

@@ -478,7 +478,7 @@ body.offline #ticker-track { animation-play-state: paused; }
 body.ticker #honest { bottom: calc(4px + env(safe-area-inset-bottom)); }
 body.ticker #chips { bottom: calc(46px + env(safe-area-inset-bottom)); }
 body.ticker #card, body.ticker #guide { bottom: calc(85px + env(safe-area-inset-bottom)); }
-/* the banner stops short of the record room's postcard button (40 px at the right, same row) */
+/* the banner stops short of the record room's postcard button (40 px at the right, same row; a phone: below) */
 #replay { position: fixed; left: 12px; top: calc(var(--bar, 110px) + 4px); max-width: calc(100% - 76px); display: flex; align-items: center;
           gap: 6px; padding: 5px 10px 5px 6px; border-radius: 10px; background: rgba(20,15,38,.9); border: 1px solid rgba(224,178,94,.6);
           box-shadow: 0 6px 22px rgba(0,0,0,.45); pointer-events: none; font-size: 13px; line-height: 1.25; white-space: nowrap; z-index: 6;
@@ -501,6 +501,10 @@ body.ticker #card, body.ticker #guide { bottom: calc(85px + env(safe-area-inset-
   #replay-what { order: 9; flex: 1 1 100%; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2;
                  -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
   #replay-what + .sep { display: none; }
+  /* the full width keeps the result on one line at 360 px; the record room's postcard button, on the same row,
+     steps aside for the banner's six seconds instead */
+  #replay { max-width: calc(100% - 24px); }
+  body:has(#replay.on) #postcard { visibility: hidden; }
 }
 .pill.sound { width: 38px; padding: 0; display: inline-flex; align-items: center; justify-content: center; margin-left: auto; color: var(--dim); }
 #bar .pill.help { margin-left: 0; }
