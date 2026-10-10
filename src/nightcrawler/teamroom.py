@@ -63,7 +63,7 @@ share of today's loss allowance used (``meter.fraction`` as a percent, null befo
 pass 100 once the limit is reached), the trade slots in use of the most allowed, whether today's loss stop is on (null
 while the allowance is unknown), what stops new buys right now if anything, and each desk's verdict with its pause.
 
-Units:``count``, ``sol``, ``usd``, ``pct`` (percent), ``ts`` (epoch s), ``dur`` (seconds), ``text``.
+Units: ``count``, ``sol``, ``usd``, ``pct`` (percent), ``ts`` (epoch s), ``dur`` (seconds), ``text``.
 """
 
 from __future__ import annotations

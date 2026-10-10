@@ -56,11 +56,11 @@ Schema (lists capped: members 9, events <= 5, open trades <= 10, closed trades 1
                                                     # status "absent": the Coach is not built (not counted)
       "trades": {"open": [{"coin", "entry_usd", "now_usd", "pnl_usd", "pnl_pct", "opened_at", "partial", "foreign"}],
                  "closed": [{"coin", "opened_at", "closed_at", "pnl_usd", "pnl_pct", "result", "why"}],
-                 "summary": {"label", "won", "lost", "even", "total", "since": ts|null, "order": "WLE…",
-                             "real": {"label", "won", "lost", "settled", "since", "order", "lines"}|null},  # TROPHIES
+                 "summary": {"label", "won", "lost", "even", "total", "since": ts|null, "order": "WLE…", "result",
+                             "real": {"label", "won", "lost", "settled", "since", "order", "lines", "result"}|null},
                  "max_open"},
-      "recap": {"date", "tz", "window", "events", "events_total", "closed", "real", "pretend"},   # see RECAP
-      "research": {"labs": [{"lab", "question", "verdict", "date", "reading", "trials"}],   # fixed: see RESEARCH
+      "recap": {"date", "tz", "window", "events", "events_total", "quiet", "closed", "real", "pretend"},  # RECAP
+      "research": {"labs": [{"lab", "question", "verdict", "date", "reading", "plain", "trials"}],  # see RESEARCH
                    "trials_total", "as_of", "rule"},
       "learning": {"source": "card"|"missing"|"error", "state", "headline", "variants": [{"name", "n", "avg",
                    "proof"}], "data", "rule": str|null},
@@ -132,8 +132,12 @@ time (null without one) and ``order`` the results newest first, one letter each 
 :data:`SHELF_MAX` of them. ``real`` is the Polymarket desk's real money only (null unless the desk has a real book):
 the desk's own totals from ``money.polymarket.real`` (``won`` of ``settled``, ``lost`` the rest), ``order`` its real
 settlements newest first from the receipts (a positive result is ``W``), ``since`` the first one's time and ``lines``
-the newest real settlements in the desk's own words (``money.polymarket.settled_real``), each "REAL". The shelf draws
-one trophy per win and one tile per loss and says "+N more" for the rest; nothing else of a trade is in it.
+the newest real settlements in the desk's own words (``money.polymarket.settled_real``), each "REAL". ``result`` is
+the money each tier stands for, in the plain words' wording: the Solana bot's since start (the money card's, real
+money only while it trades real money) and the desk's real result since start (``money.polymarket.real``), so a row
+of trophies never reads as a profit the money does not show (a near-certain rule wins cents and loses dollars). The
+shelf draws one trophy per win and one tile per loss and says how many more are not on it; nothing else of a trade
+is in it.
 
 RISK WALL (``team.members[risk].risk_wall``, the 3D world's gauge board): the risk panel's own numbers
 (:mod:`nightcrawler.teamroom`: the share of today's loss allowance used, the trade slots in use, the daily stop, what
@@ -143,13 +147,16 @@ of ``day_max_usd`` lost today (UTC), ``total_loss_usd`` of ``total_max_usd`` los
 money now), null unless the desk has a real book.
 
 RECAP (:mod:`nightcrawler.recap`): yesterday, the previous calendar day of the owner's time zone (``OWNER_TZ``), from
-the ledger and its receipts only: at most 12 events in the page's plain words, each named for the member who made it,
-the Solana bot's trades closed that day, the real money's result since start when the day began and when it ended
-(the desk's real book only) and the practice line. Kept for :data:`nightcrawler.recap.RECAP_TTL_S` per day, zone and
-mode in ``memory`` (yesterday does not change).
+the ledger and its receipts only: at most 8 events in the page's plain words, each named for the member who made it
+and marked ``real`` when it is real money, the Solana bot's trades closed that day (in dollars at this page's SOL
+price, the same figure as ``trades.closed``), the real money's result since start when the day began and when it
+ended (the desk's real book only), the practice line and ``quiet`` (the ledger holds nothing at all for the day).
+The day's records are kept for :data:`nightcrawler.recap.RECAP_TTL_S` per day, zone and mode in ``memory`` (yesterday
+does not change) and worded on every page; a failure to read them gives an empty recap, never a broken page.
 
 RESEARCH (:func:`nightcrawler.research_board.research_state`): what the labs found, one row per lab, a FIXED copy of
-the verdicts recorded in ``research/`` (not shipped in the image); a test keeps the copy equal to the record.
+the verdicts recorded in ``research/`` (not shipped in the image), each also in plain words (``plain``); a test keeps
+the copy equal to the record.
 
 PLAIN (:func:`plain_words`): the screen in plain words for a newcomer (both pages put it on top), built from this
 page's own data only: every sentence is a FIXED template filled with the data's numbers and words, never an invented
@@ -243,6 +250,7 @@ import itertools
 import json
 import math
 import re
+import sqlite3
 from collections import Counter
 from collections.abc import Callable, Mapping
 from pathlib import Path
@@ -255,13 +263,14 @@ from nightcrawler.clock import utc_day
 from nightcrawler.config import Settings
 from nightcrawler.dashboard import build_state, scrub
 from nightcrawler.deskguard import VERDICTS as GUARD_VERDICTS
+from nightcrawler.ledger import LedgerError
 from nightcrawler.logging_setup import get_logger, redact_text
 from nightcrawler.models import LAMPORTS_PER_SOL, EquityPoint
 from nightcrawler.office3d import CAST3D
 from nightcrawler.page import LEARNING_RULE, MEMBERS, REFRESH_S
 from nightcrawler.polydesk import RULE_LAB_PASSED, load_state, panel_state, state_path
 from nightcrawler.readiness import readiness
-from nightcrawler.recap import RECAP_TTL_S, build_recap, day_window
+from nightcrawler.recap import RECAP_TTL_S, collect_recap, day_window, empty_recap, render_recap
 from nightcrawler.research_board import research_state
 from nightcrawler.teamroom import ENGINE_STALE_S, FUTURE_SKEW_S, build_team_state, derive_status, duration_text
 from nightcrawler.withdraw import fresh_balance, last_withdrawal, live_hold, page_view, saved_state, withdrawn_lamports
@@ -1274,6 +1283,14 @@ def _trades(ledger: Any, settings: Settings, state: dict[str, Any], text: _Text,
     return {"open": opened, "closed": closed, "summary": summary, "max_open": settings.max_open_positions}
 
 
+def _payload(text: Any) -> Mapping[str, Any]:
+    """A receipt's JSON payload as a mapping; anything else (bad JSON, a list, a number) is an empty one."""
+    try:
+        return _xp_map(json.loads(text))
+    except (TypeError, ValueError):
+        return {}
+
+
 def _real_shelf(ledger: Any, desk: Mapping[str, Any] | None) -> dict[str, Any] | None:
     """``trades.summary.real`` (TROPHIES in the module docstring): the Polymarket desk's real bets only, null unless the
     desk has a real book. Totals from the money card; the order of the real settlements from the receipts (newest
@@ -1284,15 +1301,31 @@ def _real_shelf(ledger: Any, desk: Mapping[str, Any] | None) -> dict[str, Any] |
     settled, won = _count(real.get("settled_total")) or 0, _count(real.get("won_total")) or 0
     rows = ledger._rows("SELECT ts, payload FROM receipts WHERE kind = 'polydesk_settled' ORDER BY seq DESC LIMIT ?",
                         [SHELF_MAX])
-    order = "".join("W" if (_num(json.loads(payload).get("pnl_usd")) or 0.0) > 0 else "L" for _, payload in rows)
+    order = "".join("W" if (_num(_payload(payload).get("pnl_usd")) or 0.0) > 0 else "L" for _, payload in rows)
     first = ledger._rows("SELECT ts FROM receipts WHERE kind = 'polydesk_settled' ORDER BY seq LIMIT 1")
     lines = []
-    for row in _xp_map(desk).get("settled_real") or []:
-        pnl = float(row["pnl_usd"])
-        lines.append({"ts": row["settled_at"], "won": bool(row["won"]),
-                      "text": f"REAL · {'won' if row['won'] else 'lost'} {_signed(pnl)} · {row['question']}"})
+    raw = _xp_map(desk).get("settled_real")
+    for row in raw if isinstance(raw, list) else []:
+        r = _xp_map(row)
+        pnl = _num(r.get("pnl_usd"))
+        if pnl is None or not isinstance(r.get("won"), bool):
+            continue
+        lines.append({"ts": _num(r.get("settled_at")), "won": r["won"],
+                      "text": f"REAL · {'won' if r['won'] else 'lost'} {_signed(pnl)} · {r.get('question') or ''}"})
     return {"label": REAL_LABEL, "won": won, "lost": max(0, settled - won), "settled": settled,
             "since": _num(first[0][0]) if first else None, "order": order, "lines": lines}
+
+
+def _shelf_results(trades: dict[str, Any], settings: Settings, money: Mapping[str, Any],
+                   desk: Mapping[str, Any] | None) -> dict[str, Any]:
+    """``trades.summary.result`` and ``.real.result`` (TROPHIES in the module docstring): what each shelf tier's money
+    did since start, in the plain words' wording (real money said so only where it is real)."""
+    summary = trades["summary"]
+    summary["result"] = _change(_num(_xp_map(money.get("since_start")).get("usd")), real=settings.is_live)
+    if summary["real"] is not None:
+        real = _xp_map(_xp_map(desk).get("real")) if isinstance(desk, Mapping) else {}
+        summary["real"]["result"] = _change(_num(real.get("since_start_usd")) or 0.0, real=True)
+    return trades
 
 
 def real_caps(settings: Settings, desk: Mapping[str, Any] | None) -> dict[str, Any] | None:
@@ -1331,24 +1364,32 @@ def _desk_questions(settings: Settings) -> dict[str, str]:
 
 
 def recap_state(ledger: Any, settings: Settings, now: float, memory: dict[str, Any] | None = None,
-                text: _Text | None = None, desk: Mapping[str, Any] | None = None) -> dict[str, Any]:
-    """``recap`` (RECAP in the module docstring): :func:`nightcrawler.recap.build_recap` for this mode, in the page's
-    plain words, with the money card's Polymarket block (``desk``), kept in ``memory`` for
-    :data:`~nightcrawler.recap.RECAP_TTL_S` per day, zone and mode."""
+                text: _Text | None = None, desk: Mapping[str, Any] | None = None,
+                sol_usd: float | None = None) -> dict[str, Any]:
+    """``recap`` (RECAP in the module docstring): the day's records (:func:`nightcrawler.recap.collect_recap` for this
+    mode, with the money card's Polymarket block ``desk``), kept in ``memory`` for
+    :data:`~nightcrawler.recap.RECAP_TTL_S` per day, zone and mode, worded on every call in the page's plain words with
+    the page's own SOL price (``sol_usd``: a closed trade's dollar figure is ``trades.closed``'s). A failure to read
+    them is logged and gives an empty recap: the rest of the page never depends on it."""
     mode = "live" if settings.is_live else "paper"
-    key = (mode, settings.owner_tz, day_window(now, settings.owner_tz)[0])  # a new day is a new recap at once
-    kept = memory.get("recap") if memory is not None else None
-    if (isinstance(kept, dict) and kept.get("key") == key and 0 <= now - float(kept.get("at", -1e18)) < RECAP_TTL_S
-            and isinstance(kept.get("value"), dict)):
-        value: dict[str, Any] = kept["value"]
-        return value
     live = settings.is_live
-    value = build_recap(ledger, now, tz=settings.owner_tz, mode=mode,
-                        words=lambda member, line: plain_event(member, line, live=live), exit_words=EXIT_WORDS,
-                        desk=desk, questions=_desk_questions(settings), text=text if text is not None else _Text(settings))
-    if memory is not None:
-        memory["recap"] = {"key": key, "at": now, "value": value}
-    return value
+    try:
+        key = (mode, settings.owner_tz, day_window(now, settings.owner_tz)[0])  # a new day is a new recap at once
+        kept = memory.get("recap") if memory is not None else None
+        if (isinstance(kept, dict) and kept.get("key") == key
+                and 0 <= now - float(kept.get("at", -1e18)) < RECAP_TTL_S and isinstance(kept.get("raw"), dict)):
+            raw: dict[str, Any] = kept["raw"]
+        else:
+            raw = collect_recap(ledger, now, tz=settings.owner_tz, mode=mode, exit_words=EXIT_WORDS, desk=desk,
+                                questions=_desk_questions(settings))
+            if memory is not None:
+                memory["recap"] = {"key": key, "at": now, "raw": raw}
+        return render_recap(raw, words=lambda member, line: plain_event(member, line, live=live),
+                            text=text if text is not None else _Text(settings), sol_usd=sol_usd)
+    except (LedgerError, sqlite3.Error, ArithmeticError, AttributeError, LookupError, OSError, TypeError,
+            ValueError) as exc:  # (a bad row must never take the page down: the film then has nothing to play)
+        log.warning("recap_failed error=%s", type(exc).__name__)
+        return empty_recap(now, settings.owner_tz)
 
 
 def _usage(state: dict[str, Any]) -> tuple[list[dict[str, Any]], list[dict[str, str]]]:
@@ -1863,9 +1904,9 @@ def build_page_state(ledger: Any, settings: Settings, now: float, engine_status:
         # the town: what running the bot costs against what the desks made (same clock as the judge's total)
         "town": town_ledger(settings, money, state.get("judge"), now, _run_started(ledger, state)),
         "team": {"counts": counts, "members": members},
-        "trades": _trades(ledger, settings, state, text, desk),
+        "trades": _shelf_results(_trades(ledger, settings, state, text, desk), settings, money, desk),
         # yesterday in the owner's time zone, from the ledger and its receipts only (the 3D world's recap film)
-        "recap": recap_state(ledger, settings, now, memory, text, desk),
+        "recap": recap_state(ledger, settings, now, memory, text, desk, state["equity"]["sol_usd"]),
         "learning": {"source": card["source"], "state": card["state"], "headline": card["headline"],
                      "variants": card["variants"], "data": card["data"],
                      "rule": LEARNING_RULE if card["source"] == "card" and card["can_stop_trading"] else None},

@@ -479,6 +479,8 @@ class Settings:
         object.__setattr__(self, "bot_wallet_mode", str(self.bot_wallet_mode).strip().lower())
         object.__setattr__(self, "withdraw_to", str(self.withdraw_to).strip())
         object.__setattr__(self, "owner_tz", str(self.owner_tz).strip())
+        if _zone_unknown(self.owner_tz):  # a cosmetic setting (the recap film): warn, never refuse to start
+            logging.getLogger(__name__).warning("config_owner_tz_unknown value=%r using=UTC", self.owner_tz[:60])
         problems = self._validate()
         if problems:
             raise ConfigError(problems)
@@ -538,8 +540,6 @@ class Settings:
             url = getattr(self, name)
             if not url.startswith(("http://", "https://")):
                 problems.append(f"{name.upper()} must start with http:// or https://")
-        if _zone_unknown(self.owner_tz):
-            problems.append("OWNER_TZ must be a time zone name like America/Los_Angeles or Europe/Athens")
         return problems
 
     @classmethod
@@ -685,8 +685,9 @@ _RUNTIME_SECRETS: dict[int, tuple[Settings, tuple[Secret, ...]]] = {}
 
 
 def _zone_unknown(name: str) -> bool:
-    """True when ``name`` is not a time zone this machine knows. A machine without any time-zone database (even
-    ``UTC`` fails to load) never refuses to start over it: the recap then uses the UTC day and says so."""
+    """True when ``name`` is not a time zone this machine knows (the recap then uses the UTC day and says so: a
+    warning at start, never a refusal, since the setting only names the film's day). A machine without any time-zone
+    database (even ``UTC`` fails to load) is not warned about each name."""
     import zoneinfo
 
     try:

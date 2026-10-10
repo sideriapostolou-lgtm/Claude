@@ -1415,10 +1415,11 @@ def panel_state(settings: Settings, now: float) -> dict[str, Any]:
         "worst": worst_row(st["closed"]),
         # the newest real settlements still in the kept closed rows, newest first (the 3D world's trophy shelf)
         "real_closed": [
-            {"question": str(r.get("question") or ""), "settled_at": _num(r.get("settled_at")),
-             "pnl_usd": float(r["pnl_usd"]), "won": bool(r["won"])}
+            {"question": str(r.get("question") or ""), "settled_at": _num(r.get("settled_at")), "pnl_usd": pnl,
+             "won": bool(r["won"])}
             for r in st["closed"]
-            if r.get("live") and r.get("won") is not None and _num(r.get("pnl_usd")) is not None
+            if isinstance(r, dict) and r.get("live") and r.get("won") is not None
+            and (pnl := _num(r.get("pnl_usd"))) is not None
         ][:REAL_CLOSED_SHOWN],
         "paper_max_open": PAPER_MAX_OPEN,
         "guard": guard_view(settings, st, now),

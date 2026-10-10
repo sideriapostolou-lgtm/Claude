@@ -44,9 +44,10 @@ only in a Railway variable, never in this repo.
 - `OWNER_TZ` (default `America/Los_Angeles`; no account, no key): the owner's time zone, an IANA name such as
   `Europe/Athens`. The 3D world's nightly recap film (`src/nightcrawler/recap.py`, `/api/page` -> `recap`) replays
   "yesterday", the previous calendar day of this zone, from the bot's own records only (the ledger and its receipts),
-  and plays by itself at 00:05 in this zone when the page is open. A zone name the machine does not know stops the
-  bot at start with a plain message; a machine with no time-zone database at all uses the UTC day and the recap
-  says `"tz": "UTC"`. Change it in the Railway variables when the owner moves.
+  and plays by itself at 00:05 in this zone when the page is open. A zone name the machine does not know is logged
+  as a warning at start (`config_owner_tz_unknown`) and never stops the bot: the recap then uses the UTC day and says
+  `"tz": "UTC"`, as it does on a machine with no time-zone database at all. Change it in the Railway variables when
+  the owner moves.
 
 ## Keeping track
 

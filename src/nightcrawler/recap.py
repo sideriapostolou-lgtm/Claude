@@ -4,14 +4,15 @@ demand from the "yesterday" chip).
 
 Yesterday is the previous calendar day of the owner's time zone (``OWNER_TZ``, default ``America/Los_Angeles``):
 :func:`day_window` turns ``now`` into that day's ``[start, end)`` in epoch seconds (a daylight-saving day is 23 or 25
-hours long, as it really is). When the zone cannot be loaded (no time-zone database on the machine) the window is the
-UTC day and ``tz`` says ``"UTC"``: nothing is guessed.
+hours long, as it really is). When the zone cannot be loaded (an unknown name, or no time-zone database on the
+machine) the window is the UTC day and ``tz`` says ``"UTC"``: nothing is guessed.
 
 Schema (every key always present; an unknown value is null; lists capped)::
 
     {"date": "YYYY-MM-DD", "tz": str, "window": [start_ts, end_ts],
-     "events": [{"ts", "member", "text", "tone": "good"|"bad"|"neutral"}],   # <= RECAP_BEATS_MAX, in time order
+     "events": [{"ts", "member", "text", "tone": "good"|"bad"|"neutral", "real": bool}],  # <= RECAP_BEATS_MAX
      "events_total": int,               # how many records of these kinds the day had (the film shows a few)
+     "quiet": bool,                     # the ledger holds nothing at all for the day (no receipt, money check, ...)
      "closed": [{"coin", "closed_at", "pnl_usd": float|null, "result", "why", "label"}],   # <= RECAP_CLOSED_MAX
      "real": {"label": "Real money", "start_usd", "end_usd", "settled", "won", "line"}|null,
      "pretend": {"label": "Practice (pretend money)", "line"}|null}
@@ -19,21 +20,31 @@ Schema (every key always present; an unknown value is null; lists capped)::
 REAL DATA ONLY. Every event is one record of the day, worded by the page's own plain words (the caller's ``words``:
 :func:`nightcrawler.pagestate.plain_event`) and named for the member who made it: the Polymarket desk's real-money
 records from the receipts (a real buy, a position found at the venue, a settlement, the risk manager's pause, the total
-loss stop, the live connection), the Solana bot's closed trades, its halts, setups, refusals, danger flags, the AI
-judge's verdicts, the scam filter's passes and rejections and the first and last coin found. A busy day keeps
-:data:`RECAP_BEATS_MAX` of them: the headline records first (real money, a halt, a closed trade), then the other
-kinds in turn, each spread over the day.
+loss stop, the live connection), the Solana bot's closed trades, its halts and kill-switch changes, setups, refusals,
+danger flags, the AI judge's verdicts, the scam filter's passes and rejections and the first and last coin found.
+``real`` is true for a record of real money: every one of the desk's real-money receipts, and the Solana bot's trades
+while it trades real money itself. A busy day keeps :data:`RECAP_BEATS_MAX` of them: up to :data:`HEADLINE_MAX`
+headline records first (real money, a halt or the kill switch, a closed trade: one of each kind in turn, so a closed
+trade and the risk manager's pause always make it when the day had them), then the other kinds in turn, then more
+headlines if the rest ran dry; each kind's records spread over the day.
+
+A closed trade's dollar figure is its result in SOL at the page's own SOL price (``sol_usd``: today's, like the money
+card and ``trades.closed``, so the film and the trophy card say the same figure for the same trade); without a price
+the figure is in SOL.
 
 ``real`` is the Polymarket desk's real money (null unless the desk has a real book): its result since start when the
 day began and when it ended, worked back from the money card's own figure (``money.polymarket.real.since_start_usd``)
-minus the real settlements receipted since then, and the bets that finished that day (``won``: a positive result).
+minus the real settlements receipted since then (both null when more than :data:`QUERY_CAP` settled since the day
+began: never a figure from a partial read), and the bets that finished that day (``won``: a positive result).
 ``pretend`` is the Solana bot's practice result over the day (the equity snapshot the day started with, the last one
-of the day, measured in SOL and shown in dollars at the later snapshot's SOL price, like the money card), null while
-the bot itself trades real money (its line then joins ``real``). Gains are worded "up $X since start (real money)"
-only where the figure shows one.
+of the day, open trades at their price, measured in SOL and shown in dollars at the later snapshot's SOL price), null
+while the bot itself trades real money (its line then joins ``real``). Gains are worded "up $X" only where the figure
+shows one.
 
-Bounded: every query is limited to the day's window and capped (:data:`QUERY_CAP`), and the page's builder keeps the
-recap for :data:`RECAP_TTL_S` per day, zone and mode (``memory``).
+Bounded: every query is limited to the day's window (the settlements since the day began: from its start) and capped
+at :data:`QUERY_CAP` rows (that one at one more, to tell a whole read from a cut one), and the page's builder keeps the
+day's records (:func:`collect_recap`) for :data:`RECAP_TTL_S` per day, zone and mode; :func:`render_recap` words them
+on every page (cheap: a few lines).
 """
 
 from __future__ import annotations
@@ -49,14 +60,14 @@ from nightcrawler.models import LAMPORTS_PER_SOL, Decision, EquityPoint, Positio
 from nightcrawler.teamroom import plain
 
 __all__ = ["HEADLINE_MAX", "QUERY_CAP", "RECAP_BEATS_MAX", "RECAP_CLOSED_MAX", "RECAP_TTL_S", "build_recap",
-           "day_window", "zone_or_none"]
+           "collect_recap", "day_window", "empty_recap", "render_recap", "zone_or_none"]
 
-#: The film has 8-12 beats: the recap keeps at most this many events.
-RECAP_BEATS_MAX = 12
+#: The film's beats: the recap keeps at most this many events (about five seconds each, so the film lasts a minute).
+RECAP_BEATS_MAX = 8
 #: The headline records (real money, halts, closed trades) the film keeps before any other kind.
-HEADLINE_MAX = 8
+HEADLINE_MAX = 5
 RECAP_CLOSED_MAX = 10
-#: Yesterday does not change: the page's data builder recomputes the recap at most this often (per day and zone).
+#: Yesterday does not change: the page's data builder re-reads the day's records at most this often (per day and zone).
 RECAP_TTL_S = 1800.0
 #: The most rows one query of the recap reads (a day's window is already small; this bounds a pathological one).
 QUERY_CAP = 500
@@ -67,15 +78,20 @@ REAL_LABEL = "Real money"
 PAPER_LABEL = "Paper money (pretend)"
 PRETEND_LABEL = "Practice (pretend money)"
 _MINUS = "−"
-#: Lower is more important: the film takes one record of each kind in this order, then a second of each, and so on.
-_RANK = {"real_settled": 0, "real_halted": 0, "real_guard": 0, "halt": 0, "closed": 1, "real_buy": 1,
+#: Lower is more important (0 and 1 are the headlines): the film takes one record of each kind in this order, then a
+#: second of each, and so on.
+_RANK = {"real_settled": 0, "real_halted": 0, "real_guard": 0, "halt": 0, "kill": 0, "closed": 1, "real_buy": 1,
          "real_found": 1, "real_on": 1, "enter": 2, "reject_risk": 2, "reject_radar": 2, "exit_partial": 2,
-         "judge": 3, "buy": 3, "watch": 4, "reject_quote": 4, "reject_cocoon": 5, "unwatch": 5, "found": 5}
+         "reset": 2, "judge": 3, "buy": 3, "watch": 4, "reject_quote": 4, "reject_cocoon": 5, "unwatch": 5, "found": 5}
+#: The Solana bot's own money records: real money while it trades real money itself.
+_SOLANA_MONEY = ("closed", "buy", "enter", "exit_partial")
 _DECISIONS = ("enter", "reject_risk", "reject_radar", "reject_judge", "reject_quote", "exit_partial", "watch",
               "reject_cocoon", "unwatch")
 _REAL_KINDS = ("polydesk_settled", "polydesk_order_filled", "polydesk_position_adopted", "polydesk_guard",
                "polydesk_live_halted", "polydesk_live_connected")
 _FEEDS = (("jupiter", "Jupiter"), ("gt_", "GeckoTerminal"), ("dexscreener", "DexScreener"), ("pumpfun", "pump.fun"))
+#: The kill switch's modes in plain words (``KILL_SWITCH`` / ``DATA_DIR/KILL``; engine.handle_kill receipts each change).
+_KILL_WORDS = {"pause": "no new buys", "stop": "no new buys", "sell_all": "sell everything, buy nothing"}
 
 Words = Callable[[str, str], str]
 
@@ -134,12 +150,12 @@ def _signed(value: float) -> str:
     return ("+" if cents > 0 else _MINUS if cents < 0 else "") + _dollars(cents)
 
 
-def _change(value: float, *, real: bool) -> str:
-    """A result since start in words (the plain words' own wording): a gain is "up $X since start (real money)" for
-    real money, and only when the figure shows it."""
+def _since(value: float) -> str:
+    """A result since start in words: "up $X since start" only when the figure shows a gain (the sentence it sits in
+    already says whose money it is)."""
     cents = round(value, 2)
     if cents > 0:
-        return f"up {_dollars(cents)} since start" + (" (real money)" if real else "")
+        return f"up {_dollars(cents)} since start"
     if cents < 0:
         return f"down {_dollars(cents)} since start"
     return "even since start"
@@ -236,26 +252,18 @@ def _found_event(data: str, first_seen: float) -> dict[str, Any]:
 
 def _closed_trades(ledger: Any, mode: str, start: float, end: float, exit_words: Mapping[str, str],
                    label: str) -> list[dict[str, Any]]:
+    """The Solana bot's trades closed in the window, in SOL (the dollar figure is the page's: :func:`render_recap`)."""
     rows = _rows(ledger, "SELECT data FROM positions WHERE status = 'closed' AND closed_at >= ? AND closed_at < ? "
                          "ORDER BY closed_at, rowid LIMIT ?", [start, end, QUERY_CAP])
     out = []
     for (data,) in rows:
         p = Position.from_dict(json.loads(data))
-        if p.mode not in (None, mode):
+        if p.mode not in (None, mode) or p.closed_at is None:
             continue
         pnl_sol = p.pnl_lamports() / LAMPORTS_PER_SOL
-        # the dollar figure at the SOL price the ledger itself recorded: the sell's, else the nearest money check's
-        sell = _rows(ledger, "SELECT data FROM fills WHERE position_id = ? AND side = 'sell' ORDER BY ts DESC LIMIT 1",
-                     [p.id])
-        sol_usd = _num(_loads(sell[0][0]).get("sol_usd")) if sell else None
-        if sol_usd is None and p.closed_at is not None:
-            near = _rows(ledger, "SELECT sol_usd FROM equity WHERE ts <= ? AND mode = ? ORDER BY ts DESC, id DESC "
-                                 "LIMIT 1", [p.closed_at, mode])
-            sol_usd = _num(near[0][0]) if near else None
         reason = p.exit_reason or ""
         why = "Danger spotted, sold early" if reason.startswith("radar") else exit_words.get(reason, "Sold")
-        out.append({"coin": p.symbol or _short(p.mint), "closed_at": p.closed_at,
-                    "pnl_usd": round(pnl_sol * sol_usd, 2) if sol_usd else None, "pnl_sol": pnl_sol,
+        out.append({"coin": p.symbol or _short(p.mint), "closed_at": p.closed_at, "pnl_sol": pnl_sol,
                     "result": "won" if pnl_sol > 0 else "lost" if pnl_sol < 0 else "even", "why": why,
                     "label": label})
     return out
@@ -267,6 +275,23 @@ def _closed_event(t: Mapping[str, Any], *, live: bool) -> dict[str, Any]:
     tone = "good" if t["result"] == "won" else "bad" if t["result"] == "lost" else "neutral"
     return _event(float(t["closed_at"]), "broker", "closed", f"{t['coin']}: {t['why']} · {t['result']} {figure} ({kind})",
                   tone)
+
+
+def _halt_event(ts: float, kind: str, payload: Any) -> dict[str, Any]:
+    """A halt, a kill-switch change or a reset, worded by what its receipt says: the kill switch turned OFF is said
+    so (never "went on"), its other modes in plain words."""
+    p = _loads(payload)
+    if kind == "kill":
+        mode = str(p.get("mode") or "")
+        if mode == "off":
+            return _event(ts, "risk", "kill", "the kill switch was turned off", "neutral")
+        words = _KILL_WORDS.get(mode)
+        return _event(ts, "risk", "kill", f"the kill switch went on ({words})" if words
+                      else f"the kill switch changed: {plain(mode)}" if mode else "the kill switch changed", "bad")
+    detail = plain(str(p.get("reason") or p.get("note") or "")).strip()
+    if kind == "halt":
+        return _event(ts, "risk", "halt", f"stopped new buys: {detail}" if detail else "stopped new buys", "bad")
+    return _event(ts, "risk", "reset", f"the stop was reset: {detail}" if detail else "the stop was reset", "neutral")
 
 
 def _solana_events(ledger: Any, mode: str, start: float, end: float) -> tuple[list[dict[str, Any]], int]:
@@ -290,17 +315,13 @@ def _solana_events(ledger: Any, mode: str, start: float, end: float) -> tuple[li
         f = _loads(data)
         name = str(f.get("symbol") or _short(str(f.get("mint", ""))))
         sol = (_num(f.get("sol_lamports")) or 0.0) / LAMPORTS_PER_SOL
-        events.append(_event(float(f.get("ts") or start), "broker", "buy",
+        events.append(_event(_num(f.get("ts")) or start, "broker", "buy",
                              f"BUY {name} for {sol:.4f} SOL at {_price(_num(f.get('price_usd')))}", "neutral"))
     halts = _rows(ledger, "SELECT ts, kind, payload FROM receipts WHERE kind IN ('halt', 'kill', 'reset') "
                           "AND ts >= ? AND ts < ? ORDER BY seq LIMIT ?", [start, end, QUERY_CAP])
     total += len(halts)
     for ts, kind, payload in halts:
-        p = _loads(payload)
-        detail = plain(str(p.get("reason") or p.get("mode") or p.get("note") or "")).strip()
-        what = {"halt": "stopped new buys", "kill": "the kill switch went on"}.get(str(kind), "the stop was reset")
-        events.append(_event(float(ts), "risk", "halt", f"{what}: {detail}" if detail else what,
-                             "neutral" if kind == "reset" else "bad"))
+        events.append(_halt_event(float(ts), str(kind), payload))
     found_n = int(_rows(ledger, "SELECT COUNT(*) FROM candidates WHERE first_seen >= ? AND first_seen < ?",
                         [start, end])[0][0])
     total += found_n
@@ -314,6 +335,18 @@ def _solana_events(ledger: Any, mode: str, start: float, end: float) -> tuple[li
     return events, total
 
 
+def _quiet(ledger: Any, start: float, end: float) -> bool:
+    """True when the ledger holds nothing at all for the window: no receipt, money check, decision, fill or coin."""
+    for sql in ("SELECT 1 FROM receipts WHERE ts >= ? AND ts < ? LIMIT 1",
+                "SELECT 1 FROM equity WHERE ts >= ? AND ts < ? LIMIT 1",
+                "SELECT 1 FROM decisions WHERE ts >= ? AND ts < ? LIMIT 1",
+                "SELECT 1 FROM fills WHERE ts >= ? AND ts < ? LIMIT 1",
+                "SELECT 1 FROM candidates WHERE first_seen >= ? AND first_seen < ? LIMIT 1"):
+        if _rows(ledger, sql, [start, end]):
+            return False
+    return True
+
+
 # --------------------------------------------------------------------------- the Polymarket desk's real money
 
 
@@ -322,9 +355,10 @@ def _question(questions: Mapping[str, str], slug: str) -> str:
 
 
 def _real_events(ledger: Any, start: float, end: float, questions: Mapping[str, str]
-                 ) -> tuple[list[dict[str, Any]], list[tuple[float, float]]]:
+                 ) -> tuple[list[dict[str, Any]], list[tuple[float, float]], bool]:
     """The desk's real-money receipts of the day as events (in the desk's own wording, which the plain words know),
-    and the day's real settlements ``[(ts, pnl_usd)]``."""
+    the day's real settlements ``[(ts, pnl_usd)]`` and whether the read stopped at :data:`QUERY_CAP` (then the
+    settlements are only the first ones)."""
     marks = ",".join("?" for _ in _REAL_KINDS)
     rows = _rows(ledger, f"SELECT ts, kind, payload FROM receipts WHERE kind IN ({marks}) AND ts >= ? AND ts < ? "
                          "ORDER BY seq LIMIT ?", [*_REAL_KINDS, start, end, QUERY_CAP])
@@ -364,27 +398,38 @@ def _real_events(ledger: Any, start: float, end: float, questions: Mapping[str, 
             line = (f"the risk manager paused {what}: the record was losing" if paused
                     else f"the risk manager lifted its pause on {what}")
             events.append(_event(ts, "predict", "real_guard", line, "bad" if paused else "neutral"))
-    return events, settled
+    return events, settled, len(rows) >= QUERY_CAP
 
 
 def _real_block(ledger: Any, start: float, end: float, desk: Mapping[str, Any] | None,
-                settled: list[tuple[float, float]]) -> dict[str, Any] | None:
+                settled: list[tuple[float, float]], capped: bool = False) -> dict[str, Any] | None:
     """``real`` (module docstring): null unless the desk has a real book. The result since start when the day began and
-    when it ended: the money card's figure now minus the real settlements receipted since each moment."""
+    when it ended: the money card's figure now minus the real settlements receipted since each moment (none when
+    more than :data:`QUERY_CAP` settled since the day began: a partial read would give a wrong figure). ``capped``:
+    the day's read stopped at the cap, so the line says "at least" that many finished and no count of wins."""
     real = _dict(_dict(desk).get("real")) if desk is not None else {}
     now_total = _num(real.get("since_start_usd"))
     if not real or now_total is None:
         return None
     later = _rows(ledger, "SELECT ts, payload FROM receipts WHERE kind = 'polydesk_settled' AND ts >= ? "
-                          "ORDER BY seq LIMIT ?", [start, 20 * QUERY_CAP])
-    pnls = [(float(ts), _num(_loads(payload).get("pnl_usd")) or 0.0) for ts, payload in later]
-    start_usd = round(now_total - sum(pnl for _, pnl in pnls), 2)
-    end_usd = round(now_total - sum(pnl for ts, pnl in pnls if ts >= end), 2)
+                          "ORDER BY seq LIMIT ?", [start, QUERY_CAP + 1])
+    start_usd: float | None = None
+    end_usd: float | None = None
+    if len(later) <= QUERY_CAP:
+        pnls = [(float(ts), _num(_loads(payload).get("pnl_usd")) or 0.0) for ts, payload in later]
+        start_usd = round(now_total - sum(pnl for _, pnl in pnls), 2)
+        end_usd = round(now_total - sum(pnl for ts, pnl in pnls if ts >= end), 2)
     won = sum(1 for _, pnl in settled if pnl > 0)
     n = len(settled)
-    finished = f"{won} of {n} finished bet{'' if n == 1 else 's'} won" if n else "no bet finished that day"
-    line = (f"Real money: {_change(start_usd, real=True)} when the day began, {_change(end_usd, real=True)} when it "
-            f"ended; {finished}.")
+    if capped:
+        finished = f"at least {n} bets finished"
+    else:
+        finished = f"{won} of {n} finished bet{'' if n == 1 else 's'} won" if n else "no bet finished that day"
+    if start_usd is not None and end_usd is not None:
+        line = (f"Real money yesterday: the day began {_since(start_usd)} and ended {_since(end_usd)}; "
+                f"{finished}.")
+    else:
+        line = f"Real money yesterday: {finished}."
     return {"label": REAL_LABEL, "start_usd": start_usd, "end_usd": end_usd, "settled": n, "won": won, "line": line}
 
 
@@ -420,49 +465,80 @@ def _spread(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return [items[i] for i in dict.fromkeys([*picks, *range(n)])]
 
 
+def _take(queues: list[list[dict[str, Any]]], kept: list[dict[str, Any]], limit: int, *, mix: bool = False) -> None:
+    """One record of each queue in turn (the queues in rank order), then a second of each, until ``kept`` holds
+    ``limit`` or the queues are empty. ``mix``: within a round, a kind whose member the film has not shown yet goes
+    before one whose member it has (a film of the whole team, not of one busy member)."""
+    while len(kept) < limit and any(queues):
+        left = [i for i, queue in enumerate(queues) if queue]  # this round: one record of each kind
+        while left and len(kept) < limit:
+            seen = {e["member"] for e in kept} if mix else set()
+            pick = next((i for i in left if queues[i][0]["member"] not in seen), left[0])
+            left.remove(pick)
+            kept.append(queues[pick].pop(0))
+
+
 def _beats(events: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """At most :data:`RECAP_BEATS_MAX` events, shown in time order: the headline records first (real money, a halt,
-    a closed trade: up to :data:`HEADLINE_MAX` of them, the most important first), then one of each other kind in rank
-    order, a second of each, and so on, each kind's spread over the day."""
+    """At most :data:`RECAP_BEATS_MAX` events, shown in time order: up to :data:`HEADLINE_MAX` headline records (real
+    money, a halt or the kill switch, a closed trade: one of each kind in turn, the most important kind first), then
+    one of each other kind in rank order (a member not shown yet first), a second of each, and so on; the headlines
+    left over fill what the others could not. Every kind's records spread over the day."""
     ordered = sorted(events, key=lambda e: e["ts"])
-    top = [e for e in ordered if _RANK.get(e["kind"], 9) <= 1]
-    kept = sorted(top, key=lambda e: _RANK.get(e["kind"], 9))[:HEADLINE_MAX]  # (stable: in time order per rank)
     kinds: dict[str, list[dict[str, Any]]] = {}
     for ev in ordered:
-        if _RANK.get(ev["kind"], 9) > 1:
-            kinds.setdefault(ev["kind"], []).append(ev)
-    queues = [_spread(kinds[k]) for k in sorted(kinds, key=lambda k: (_RANK.get(k, 9), k))]
-    while len(kept) < RECAP_BEATS_MAX and any(queues):
-        for queue in queues:
-            if queue and len(kept) < RECAP_BEATS_MAX:
-                kept.append(queue.pop(0))
+        kinds.setdefault(ev["kind"], []).append(ev)
+    order = sorted(kinds, key=lambda k: (_RANK.get(k, 9), k))
+    top = [_spread(kinds[k]) for k in order if _RANK.get(k, 9) <= 1]
+    rest = [_spread(kinds[k]) for k in order if _RANK.get(k, 9) > 1]
+    kept: list[dict[str, Any]] = []
+    _take(top, kept, HEADLINE_MAX)
+    _take(rest, kept, RECAP_BEATS_MAX, mix=True)
+    _take(top, kept, RECAP_BEATS_MAX)
     return sorted(kept, key=lambda e: e["ts"])
 
 
-def build_recap(ledger: Any, now: float, *, tz: str, mode: str, words: Words, exit_words: Mapping[str, str],
-                desk: Mapping[str, Any] | None = None, questions: Mapping[str, str] | None = None,
-                text: Callable[[Any, int], str] | None = None) -> dict[str, Any]:
-    """Yesterday's recap (schema in the module docstring) for the day before the one holding ``now`` in ``tz``.
-    ``mode`` (``paper``/``live``) picks the Solana bot's trades and snapshots; ``words(member, text)`` puts a record in
-    the page's plain words; ``exit_words`` the page's words for a trade's exit; ``desk`` the money card's Polymarket
-    block (or None: the desk is off); ``questions`` the desk's questions by market (a receipt names the market only);
-    ``text`` (optional) a redacting clipper applied to every line (the page passes its own, so a secret in a ledger
-    text can never reach the film)."""
+# --------------------------------------------------------------------------- the recap
+
+
+def empty_recap(now: float, tz: str) -> dict[str, Any]:
+    """A recap with nothing in it, for the day before ``now`` (the page shows it when the records cannot be read)."""
     date, start, end, zone = day_window(now, tz)
-    clip: Callable[[Any, int], str] = text if text is not None else (lambda value, limit: _clip(str(value), limit))
+    return {"date": date, "tz": zone, "window": [start, end], "events": [], "events_total": 0, "quiet": False,
+            "closed": [], "real": None, "pretend": None}
+
+
+def collect_recap(ledger: Any, now: float, *, tz: str, mode: str, exit_words: Mapping[str, str],
+                  desk: Mapping[str, Any] | None = None, questions: Mapping[str, str] | None = None
+                  ) -> dict[str, Any]:
+    """The day's records (the bounded reads; the page keeps this per day): the day before the one holding ``now`` in
+    ``tz``. ``mode`` (``paper``/``live``) picks the Solana bot's trades and snapshots; ``exit_words`` the page's words
+    for a trade's exit; ``desk`` the money card's Polymarket block (or None: the desk is off); ``questions`` the desk's
+    questions by market (a receipt names the market only). :func:`render_recap` words it."""
+    date, start, end, zone = day_window(now, tz)
     live = mode == "live"
-    label = REAL_LABEL if live else PAPER_LABEL
     events, total = _solana_events(ledger, mode, start, end)
-    real_events, settled = _real_events(ledger, start, end, questions or {})
-    events += real_events
-    total += len(real_events)
-    closed = _closed_trades(ledger, mode, start, end, exit_words, label)
-    total += len(closed)
-    events += [_closed_event(t, live=live) for t in closed]
-    real = _real_block(ledger, start, end, desk, settled)
-    day = _solana_day(ledger, mode, start, end)
-    solana = (f"the Solana bot ended the day {_day_change(day)}" if day is not None
-              else "the Solana bot had no money check that day")
+    real_events, settled, capped = _real_events(ledger, start, end, questions or {})
+    closed = _closed_trades(ledger, mode, start, end, exit_words, REAL_LABEL if live else PAPER_LABEL)
+    total += len(real_events) + len(closed)
+    return {"date": date, "tz": zone, "window": [start, end], "live": live, "events": events + real_events,
+            "total": total, "quiet": total == 0 and _quiet(ledger, start, end), "closed": closed,
+            "real": _real_block(ledger, start, end, desk, settled, capped),
+            "day": _solana_day(ledger, mode, start, end)}
+
+
+def render_recap(raw: Mapping[str, Any], *, words: Words, text: Callable[[Any, int], str] | None = None,
+                 sol_usd: float | None = None) -> dict[str, Any]:
+    """The ``recap`` block (schema in the module docstring) from :func:`collect_recap`'s records: ``words(member,
+    text)`` puts a record in the page's plain words; ``text`` (optional) a redacting clipper applied to every line (the
+    page passes its own, so a secret in a ledger text can never reach the film); ``sol_usd`` the page's own SOL price
+    (a closed trade's dollar figure, the same as ``trades.closed``'s)."""
+    clip: Callable[[Any, int], str] = text if text is not None else (lambda value, limit: _clip(str(value), limit))
+    live = bool(raw["live"])
+    price = _num(sol_usd)
+    closed = [dict(t, pnl_usd=round(t["pnl_sol"] * price, 2) if price is not None else None) for t in raw["closed"]]
+    events = [*raw["events"], *(_closed_event(t, live=live) for t in closed)]
+    day = raw["day"]
+    real = dict(raw["real"]) if raw["real"] is not None else None
     pretend: dict[str, Any] | None = None
     if live:  # the bot itself trades real money: its day is real money, said with the real line
         sentence = "The Solana bot (real money): " + (f"ended the day {_day_change(day)}." if day is not None
@@ -472,15 +548,28 @@ def build_recap(ledger: Any, now: float, *, tz: str, mode: str, words: Words, ex
         else:
             real["line"] += " " + sentence
     else:
+        solana = (f"the Solana bot's pretend wallet ended the day {_day_change(day)}, counting open trades at their "
+                  "price" if day is not None else "the Solana bot had no money check that day")
         pretend = {"label": PRETEND_LABEL, "line": f"{PRETEND_LABEL}: {solana}."}
     return {
-        "date": date, "tz": zone, "window": [start, end],
+        "date": raw["date"], "tz": raw["tz"], "window": list(raw["window"]),
         "events": [{"ts": e["ts"], "member": e["member"], "text": clip(words(e["member"], e["text"]), TEXT_MAX),
-                    "tone": e["tone"]} for e in _beats(events)],
-        "events_total": total,
+                    "tone": e["tone"],
+                    "real": e["kind"].startswith("real_") or (live and e["kind"] in _SOLANA_MONEY)}
+                   for e in _beats(events)],
+        "events_total": int(raw["total"]),
+        "quiet": bool(raw["quiet"]),
         "closed": [{"coin": clip(t["coin"], COIN_MAX), "closed_at": t["closed_at"], "pnl_usd": t["pnl_usd"],
                     "result": t["result"], "why": clip(t["why"], 60), "label": t["label"]}
                    for t in closed[-RECAP_CLOSED_MAX:]],
         "real": real,
         "pretend": pretend,
     }
+
+
+def build_recap(ledger: Any, now: float, *, tz: str, mode: str, words: Words, exit_words: Mapping[str, str],
+                desk: Mapping[str, Any] | None = None, questions: Mapping[str, str] | None = None,
+                text: Callable[[Any, int], str] | None = None, sol_usd: float | None = None) -> dict[str, Any]:
+    """Yesterday's recap at once: :func:`collect_recap` then :func:`render_recap` (the page keeps the first per day)."""
+    raw = collect_recap(ledger, now, tz=tz, mode=mode, exit_words=exit_words, desk=desk, questions=questions)
+    return render_recap(raw, words=words, text=text, sol_usd=sol_usd)

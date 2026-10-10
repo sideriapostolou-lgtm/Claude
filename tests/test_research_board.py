@@ -37,6 +37,33 @@ EVIDENCE = {
                                                               "NOT RUN: TRAIN shortlisted no cell", "Paper only."),
     "Lab 6": ("| H1 |", "NO EDGE on TRAIN (no selectable cell qualifies)", "5,476 matched games", "Paper only."),
 }
+#: Where each result file states its own verdict: the row's verdict word must be in that phrase, word for word.
+VERDICT_IN_FILE = {
+    "Lab 1": "**Verdict: NO WINNER.**",
+    "Lab 2": "| X5 market regime gate | TRAIN | NO EDGE | nothing qualified |",
+    "Lab 3": "The verdict stands\n  as FAIL",
+    "Lab 4": "| P1 | near-certain, all markets | NO EDGE on TRAIN (no cell qualifies) |",
+    "Lab 5": "| S1 | threshold / range at a Binance close (above, below, between) | NO EDGE on TRAIN (no cell qualifies) |",
+    "Lab 6": "NO EDGE on TRAIN (no selectable cell qualifies)",
+}
+#: The plain words' facts, each beside the phrase of the result file that says it (the board shows ``plain``).
+PLAIN_FACTS = {
+    "Lab 1": (("Every finalist lost money", "**Every finalist lost money.**"),
+              ("172 coins it had never seen", "### What happened on the final exam (172 unseen coins)")),
+    "Lab 2": (("Nothing passed", "Nothing passed."),
+              ("an outside buyer of a fresh coin lost about 20% a trade",
+               "the market drifts about -20% per trade for an outside buyer")),
+    "Lab 3": (("Failed its bar", "**FAIL on the pre-registered bar**"),
+              ("it beat holding the coins", "trend following on the majors beat holding them"),
+              ("its lead over random timing could be luck",
+               "the gap to random timing with the same\n  exposure is not statistically separable from luck"),
+              ("Promising, not an edge", 'recorded as "promising, under-powered", not as an edge')),
+    "Lab 4": (("No version passed on past markets", "NO EDGE on TRAIN (no cell qualifies)"),),
+    "Lab 5": (("No version passed on past markets", "NO EDGE on TRAIN (no cell qualifies)"),
+              ("none was tried on newer data", "NOT RUN: TRAIN shortlisted no cell")),
+    "Lab 6": (("No version passed", "NO EDGE on TRAIN (no selectable cell qualifies)"),
+              ("5,476 past games", "5,476 matched games")),
+}
 
 
 def _read(rel: str) -> str:
@@ -59,19 +86,32 @@ def test_the_table_is_fixed_plain_and_well_formed() -> None:
         assert row["verdict"] in VERDICTS, row["lab"]
         assert re.fullmatch(r"\d{4}-\d{2}-\d{2}", str(row["date"])), row["lab"]
         assert isinstance(row["trials"], int) and row["trials"] > 0
-        for key in ("question", "reading"):
+        for key in ("question", "reading", "plain"):
             text = str(row[key])
             assert text and not re.search(r"[<>&]", text), (row["lab"], key)  # inserted as text only, never markup
             assert len(text) <= 130, (row["lab"], key)
+        # the plain words are for a newcomer: no researcher's shorthand (hypothesis ids, splits, cells, sma50)
+        assert not re.search(r"\b(?:[PSHTXVR]\d|TRAIN|VAL|TEST|cell|sma\d+|hypothes)", str(row["plain"])), row["lab"]
         assert (ROOT / str(row["source"])).is_file(), row["source"]
     state = research_state()
     assert set(state) == {"labs", "trials_total", "as_of", "rule"} and state["rule"] == RULE
-    assert [set(lab) for lab in state["labs"]] == [{"lab", "question", "verdict", "date", "reading", "trials"}] * 6
+    assert [set(lab) for lab in state["labs"]] == [{"lab", "question", "verdict", "date", "reading", "plain",
+                                                    "trials"}] * 6
     assert state["trials_total"] == sum(row["trials"] for row in LABS) == 2977
     assert state["as_of"] == "2026-10-09"
     assert research_state() == state  # pure
     json.dumps(state, allow_nan=False)
     assert "PASS" not in {row["verdict"] for row in LABS}  # no rule has passed its lab (RULE_LAB_PASSED stays False)
+
+
+def test_the_rule_under_the_board_is_true_of_the_table_and_never_a_real_money_claim() -> None:
+    """RULE is the one sentence the board says under the table: true of the table itself (no row passed), never a
+    policy about real money (the Polymarket desk bets real money, a small capped test, with lab 4's NO EDGE rule:
+    the page says so in its own data, plain.real.verdict)."""
+    assert RULE == "no rule has passed its lab yet" and all(row["verdict"] != "PASS" for row in LABS)
+    assert "real" not in RULE and "money" not in RULE
+    for rel in ("src/nightcrawler/research_board.py", "src/nightcrawler/pagestate.py", "src/nightcrawler/world3d.py"):
+        assert "no edge gets real money" not in _read(rel), rel
 
 
 def test_the_module_never_reads_the_research_files() -> None:
@@ -87,12 +127,15 @@ def test_each_row_restates_its_result_file(lab: str) -> None:
     text = _read(str(row["source"]))
     for phrase in EVIDENCE[lab]:
         assert phrase in text, (lab, phrase)
-    # the verdict word agrees with the file's own verdict
-    if row["verdict"] == "NO EDGE":
-        assert "NO EDGE" in text or "NO WINNER" in text or "Nothing passed" in text, lab
-        assert "PASS" not in re.sub(r"PASSED weakly|passed|Pass", "", text).replace("PASS_", ""), lab
-    else:
-        assert "promising, under-powered" in text and "FAIL" in text, lab  # a direction, not an edge
+    # the verdict word is the file's own, word for word, where the file states its verdict
+    assert VERDICT_IN_FILE[lab] in text and row["verdict"] in VERDICT_IN_FILE[lab], (lab, row["verdict"])
+    assert "PASS" not in re.sub(r"PASSED weakly|passed|Pass", "", text).replace("PASS_", ""), lab
+    if lab == "Lab 3":  # a direction, not an edge: FAIL, said first in the reading
+        assert row["verdict"] == "FAIL" and str(row["reading"]).startswith("Failed its pre-registered bar")
+    # each fact of the plain words is in the file
+    for fragment, phrase in PLAIN_FACTS[lab]:
+        assert fragment in str(row["plain"]), (lab, fragment)
+        assert phrase in text, (lab, phrase)
     assert str(row["date"]) in text or lab in ("Lab 4", "Lab 5", "Lab 6"), lab  # labs 4-6: dated by their ledgers
 
 
@@ -117,5 +160,5 @@ def test_the_counted_trials_and_dates_are_the_ledgers() -> None:
 def test_api_page_carries_the_research_block(ledger: Ledger, settings: Settings) -> None:
     state = build_page_state(ledger, settings, NOW)
     assert state["research"] == research_state()
-    assert state["research"]["labs"][2]["verdict"] == "PROMISING" and state["research"]["trials_total"] == 2977
+    assert state["research"]["labs"][2]["verdict"] == "FAIL" and state["research"]["trials_total"] == 2977
     assert all(lab["verdict"] != "PASS" for lab in state["research"]["labs"])
