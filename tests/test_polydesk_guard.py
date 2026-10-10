@@ -2,7 +2,8 @@
 lifecycle (a losing record stops new buys, open positions still settle, a changed rule or the owner's switch lifts
 it), the rule id (theta and hours are part of the rule), events (a game's markets are one draw), the early stop and
 the small book while a rule is unproven, the winning flag (never a candidate while lab 4 has not passed the rule),
-the real book in live mode, the per-settlement record it judges and its size, the panel's shape, and the proof that
+the real book in live mode, the per-settlement record it judges and its size, the panel's shape, each sport's
+practice record and its flag (a way back for a blocked sport that never lets real money bet it), and the proof that
 the guard never touches real money (mode, client, live settings). No network, no keys."""
 
 from __future__ import annotations
@@ -17,7 +18,7 @@ import pytest
 from nightcrawler import deskguard
 from nightcrawler import polydesk as P
 from nightcrawler.config import Settings
-from tests.test_polydesk import NOW, Gateway, _market, _row
+from tests.test_polydesk import NOW, Gateway, _event, _market, _open, _row
 from tests.test_polydesk_live import KEY, FakeExchange, FakeLedger, _live_settings
 
 #: Nine +$0.40 settlements then a -$20 one, six times: 90 % won and losing money (deskguard: losing).
@@ -134,9 +135,9 @@ def test_a_new_rule_version_starts_a_fresh_record_and_lifts_the_pause(gw: Gatewa
     desk = P.PolyDesk(settings)
     old = P.rule_id(settings)
     assert desk.poll(NOW)["bought"] == 0 and desk.state["paused"]["rule"] == old
-    monkeypatch.setattr(P, "RULE_VERSION", "2026-10-10a")  # the rule's code changed
+    monkeypatch.setattr(P, "RULE_VERSION", "2026-10-11a")  # the rule's code changed
     new = P.rule_id(settings)
-    assert new != old and new.startswith("2026-10-10a|t0.970|")
+    assert new != old and new.startswith("2026-10-11a|t0.970|")
     assert desk.poll(NOW + 60)["bought"] == 1 and desk.state["paused"] is None
     assert desk.state["positions"]["n1"]["rule"] == new
     lifted = _said(desk, "Risk manager lifted the pause on the desk")
@@ -159,11 +160,11 @@ def test_a_changed_theta_or_hours_is_a_new_rule_with_its_own_record_and_pause(gw
     gw.markets = [_market("n1", "crypto", 1800)]
     gw.quotes = {"n1": (0.99, 0.995)}
     desk = P.PolyDesk(base)
-    assert desk.poll(NOW)["bought"] == 0 and desk.state["paused"]["rule"] == "2026-10-09b|t0.970|h1|s0.03"
+    assert desk.poll(NOW)["bought"] == 0 and desk.state["paused"]["rule"] == "2026-10-10a|t0.970|h1|s0.03"
     bigger = P.PolyDesk(_settings(tmp_path, POLYDESK_TICKET_USD="50"))  # the same rule, a bigger ticket
     assert bigger.rule == desk.rule and bigger.poll(NOW + 30)["bought"] == 0 and bigger.state["paused"] is not None
     strict = _settings(tmp_path, POLYDESK_THETA="0.99")
-    assert P.rule_id(strict) == "2026-10-09b|t0.990|h1|s0.03" != P.rule_id(_settings(tmp_path, POLYDESK_HOURS="2"))
+    assert P.rule_id(strict) == "2026-10-10a|t0.990|h1|s0.03" != P.rule_id(_settings(tmp_path, POLYDESK_HOURS="2"))
     desk2 = P.PolyDesk(strict)
     r = desk2.poll(NOW + 60)
     assert r["bought"] == 1 and desk2.state["paused"] is None and desk2.state["rule"]["id"] == P.rule_id(strict)
@@ -344,10 +345,11 @@ def test_the_guard_never_alters_mode_or_live_settings(gw: Gateway, tmp_path, rec
 
 def test_the_guards_code_writes_nothing_but_its_own_keys() -> None:
     """The source itself: the guard's methods write only their keys, and deskguard has no way to reach money."""
-    for method in (P.PolyDesk._guard, P.PolyDesk._flag, P.PolyDesk._paper_cap, P.PolyDesk._paused):
+    for method in (P.PolyDesk._guard, P.PolyDesk._flag, P.PolyDesk._paper_cap, P.PolyDesk._paused,
+                   P.PolyDesk._sport_flags):
         src = inspect.getsource(method)
         for forbidden in ('"mode"', "self.client", '"live_halted"', '"live_status"', "settings.replace", "_connect",
-                          "buy_long_ioc", "setattr", "os.environ"):
+                          "buy_long_ioc", "setattr", "os.environ", "REAL_SPORTS_ALLOWED =", "global "):
             assert forbidden not in src, (method.__name__, forbidden)
     pure = inspect.getsource(deskguard)
     for forbidden in ("import requests", "polymarket", "Settings", "open(", "time.time"):
@@ -363,7 +365,8 @@ def test_live_a_losing_real_record_stops_real_buys_and_never_starts_any(gw: Gate
     ex = FakeExchange(cash=25.0)
     desk = P.PolyDesk(settings, ledger=ledger, client_factory=ex)
     assert desk.state["mode"] == "live"
-    assert desk.poll(NOW)["bought"] == 0 and not ex.orders and "w1" not in desk.state["tried"]
+    # no real order; the practice book (not paused) takes the pick instead, so the rule keeps being watched
+    assert desk.poll(NOW)["bought"] == 1 and not ex.orders and desk.state["positions"]["w1"]["live"] is False
     assert desk.state["paused_real"]["rule"] == P.rule_id(settings) and desk.state["paused"] is None
     said = _said(desk, "Risk manager paused real buys: 12 events (12 settled), 8 lost, -$7.76 in all")
     assert len(said) == 1
@@ -516,3 +519,138 @@ def test_the_panel_carries_the_guard_view(tmp_path) -> None:
     odd = _settings(tmp_path, POLYDESK_GUARD_MIN_N="150", POLYDESK_GUARD_WIN_N="100")
     assert (odd.polydesk_guard_min_n, odd.polydesk_guard_win_n) == (150, 100)
     assert P.panel_state(odd, NOW)["guard"]["paper"]["win_n"] == 150
+
+
+# --------------------------------------------------------------------------- per sport: the way back, never real money
+
+
+#: 150 practice games of one sport: +$2 on 146 of them, -$20 on 4 (a record deskguard.judge calls winning).
+SPORT_WINNING = [2.0] * 36 + [-20.0] + [2.0] * 36 + [-20.0] + [2.0] * 37 + [-20.0] + [2.0] * 37 + [-20.0]
+
+
+def _seed_sports(settings: Settings, sports: dict[str, list[float]], **extra: Any) -> None:
+    """A state file whose CURRENT rule has these per-sport PRACTICE records (each game its own event, $20 a game)."""
+    st = P.empty_state()
+    st["by_sport"] = {P.rule_id(settings): {sport: {"paper": _record(pnls)} for sport, pnls in sports.items()}}
+    st.update(extra)
+    P.save_state(P.state_path(settings), st)
+
+
+def _soccer_game(slug: str = "epl-ars-che-2026-10-10") -> dict[str, Any]:
+    """An English Premier League game in play (league code epl: soccer in lab 4's map), one match-winner market."""
+    return _event(slug, -3600, "2H")
+
+
+def test_settlements_are_kept_per_sport(gw: Gateway, tmp_path) -> None:
+    settings = _settings(tmp_path)
+    rule = P.rule_id(settings)
+    st = P.empty_state()
+    st["positions"] = {
+        "t1": {**_open("t1", "sports", 0.97, spread=0.01, rule=rule), "sport": "tennis", "event": "A vs B"},
+        "s1": {**_open("s1", "sports", 0.97, spread=0.01, rule=rule), "sport": "soccer", "event": "C vs D"},
+        "c1": _open("c1", "crypto", 0.97, spread=0.01, rule=rule, live=True),
+    }
+    P.save_state(P.state_path(settings), st)
+    desk = P.PolyDesk(settings)
+    gw.settlements = {"t1": 0.0, "s1": 1.0, "c1": 1.0}
+    assert desk.poll(NOW + 4000)["settled"] == 3
+    by_sport = desk.state["by_sport"][rule]
+    assert set(by_sport) == {"tennis", "soccer"}  # sports only: the crypto bet is no sport's
+    assert by_sport["tennis"]["paper"]["settled"] == 1 and by_sport["tennis"]["paper"]["won"] == 0
+    assert by_sport["soccer"]["paper"]["settled"] == 1 and by_sport["soccer"]["paper"]["won"] == 1
+    rec = by_sport["tennis"]["paper"]
+    assert len(rec["pnls"]) == len(rec["costs"]) == len(rec["keys"]) == 1 and rec["costs"] == [20.0]
+    assert desk.state["by_rule"][rule]["paper"]["settled"] == 2  # the rule's own record is unchanged by the split
+    # the panel: every sport in the history's order, real money blocked for each, the practice record beside it
+    sports = P.panel_state(settings, NOW + 4000)["sports"]
+    assert [s["sport"] for s in sports] == list(P.SPORT_HISTORY) and {s["real"] for s in sports} == {"blocked"}
+    tennis = next(s for s in sports if s["sport"] == "tennis")
+    assert tennis["history"] == "proven loser" and tennis["why"] == P.SPORT_HISTORY["tennis"][1]
+    assert tennis["paper"] == {"settled": 1, "won": 0, "pnl_usd": pytest.approx(rec["pnl_usd"]),
+                               "verdict": "learning", "phrase": "still learning"}
+    assert next(s for s in sports if s["sport"] == "cricket")["paper"] is None  # no practice game yet
+    assert P.panel_state(settings, NOW)["real_sports_allowed"] == []
+
+
+def test_a_winning_practice_sport_is_flagged_but_gets_no_real_order(gw: Gateway, tmp_path) -> None:
+    """A blocked sport's practice record clears the risk manager's bar: a flag for the owner (one event, one
+    receipt), and the next qualifying game of that sport still gets no real order."""
+    assert deskguard.judge(SPORT_WINNING, groups=[f"g{i}" for i in range(150)], stakes=[20.0] * 150).verdict == "winning"
+    settings = _live_settings(tmp_path)
+    _seed_sports(settings, {"soccer": SPORT_WINNING})
+    gw.events = [_soccer_game()]
+    gw.quotes = {"epl-ars-che-2026-10-10-ml": (0.97, 0.98)}
+    ledger = FakeLedger()
+    ex = FakeExchange(cash=25.0)
+    desk = P.PolyDesk(settings, ledger=ledger, client_factory=ex)
+    desk.poll(NOW)
+    assert ex.orders == [] and desk.state["mode"] == "live"
+    pos = desk.state["positions"]["epl-ars-che-2026-10-10-ml"]
+    assert pos["live"] is False and pos["sport"] == "soccer"  # practised, never real
+    flag = desk.state["sport_flags"]["soccer"]
+    assert flag["rule"] == P.rule_id(settings) and flag["at"] == NOW and flag["reason"].startswith("150 events")
+    said = _said(desk, "Practice record for soccer clears the risk manager's bar (150 events (150 settled), 4 lost")
+    assert len(said) == 1 and said[0]["tone"] == "good"
+    assert [p for k, p in ledger.receipts if k == "polydesk_sport_flag"] == [
+        {"sport": "soccer", "rule": P.rule_id(settings), "n": 150, "total_usd": pytest.approx(212.0), "cleared": False}]
+    assert P.REAL_SPORTS_ALLOWED == frozenset()  # the flag never lets real money bet the sport
+    desk.poll(NOW + 60)
+    assert len(_said(desk, "Practice record for soccer")) == 1 and ex.orders == []  # said once
+    soccer = next(s for s in P.panel_state(settings, NOW + 60)["sports"] if s["sport"] == "soccer")
+    assert soccer["flagged"] is True and soccer["real"] == "blocked" and soccer["paper"]["verdict"] == "winning"
+
+
+def test_tennis_and_esports_are_never_flagged(gw: Gateway, tmp_path) -> None:
+    settings = _settings(tmp_path)
+    _seed_sports(settings, {"tennis": SPORT_WINNING, "esports": SPORT_WINNING, "other": SPORT_WINNING})
+    desk = P.PolyDesk(settings, ledger=FakeLedger())
+    desk.poll(NOW)
+    assert desk.state["sport_flags"] == {} and not _said(desk, "Practice record for")
+    assert P.PROVEN_LOSERS == {"tennis", "esports"}
+    assert not any(s["flagged"] for s in P.panel_state(settings, NOW)["sports"])
+
+
+def test_the_flag_clears_when_the_record_falls_back(gw: Gateway, tmp_path) -> None:
+    settings = _settings(tmp_path)
+    _seed_sports(settings, {"table tennis": SPORT_WINNING})
+    ledger = FakeLedger()
+    desk = P.PolyDesk(settings, ledger=ledger)
+    desk.poll(NOW)
+    assert "table tennis" in desk.state["sport_flags"]
+    rule = P.rule_id(settings)
+    for i in range(8):  # eight more lost practice games: the record falls back
+        P._tally(desk.state["by_rule"], {"rule": rule, "live": False, "cost_usd": 20.0, "category": "sports",
+                                         "sport": "table tennis", "event": f"x{i}", "end_ts": NOW + i}, -20.0, False,
+                 desk.state["by_sport"])
+    desk.poll(NOW + 60)
+    assert desk.state["sport_flags"] == {}
+    gone = _said(desk, "No longer clears the risk manager's bar for table tennis: its practice record is ")
+    assert len(gone) == 1 and "158 events (158 settled), 12 lost" in gone[0]["text"]
+    assert [p["cleared"] for k, p in ledger.receipts if k == "polydesk_sport_flag"] == [False, True]
+    desk.poll(NOW + 120)
+    assert len(_said(desk, "No longer clears the risk manager's bar for table tennis")) == 1  # said once
+    # the guard switched off clears a flag too, and says why
+    _seed_sports(_settings(tmp_path / "off"), {"hockey": SPORT_WINNING})
+    on = P.PolyDesk(_settings(tmp_path / "off"))
+    on.poll(NOW)
+    assert "hockey" in on.state["sport_flags"]
+    off = P.PolyDesk(_settings(tmp_path / "off", POLYDESK_GUARD="off"))
+    off.poll(NOW + 60)
+    assert off.state["sport_flags"] == {}
+    assert [e["text"] for e in _said(off, "No longer clears the risk manager's bar for hockey")] == [
+        "No longer clears the risk manager's bar for hockey: the risk manager is off"]
+
+
+def test_older_rules_sport_lists_are_trimmed(gw: Gateway, tmp_path) -> None:
+    settings = _settings(tmp_path)
+    st = P.empty_state()
+    big = _record([0.4] * 999 + [-20.0])
+    st["by_sport"] = {"2026-10-09b|t0.970|h1|s0.03": {"tennis": {"paper": dict(big)}},
+                      P.rule_id(settings): {"tennis": {"paper": _record([0.4] * 999 + [-20.0])}}}
+    P.save_state(P.state_path(settings), st)
+    P.PolyDesk(settings)  # the desk saves once it starts
+    saved = P.load_state(P.state_path(settings))["by_sport"]
+    old = saved["2026-10-09b|t0.970|h1|s0.03"]["tennis"]["paper"]
+    assert len(old["pnls"]) == len(old["costs"]) == len(old["keys"]) == P.GUARD_KEEP_OLD
+    assert old["settled"] == 1000 and old["pnl_usd"] == pytest.approx(big["pnl_usd"])  # the totals stay whole
+    assert len(saved[P.rule_id(settings)]["tennis"]["paper"]["pnls"]) == 1000  # the current rule keeps its record

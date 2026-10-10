@@ -31,8 +31,10 @@ from nightcrawler.ledger import Ledger
 from nightcrawler.page import PAGE_CSP, render_page_html
 from nightcrawler.pagestate import (
     PAPER_LABEL,
+    PLAIN_HEADLINE_MAX,
     REAL_LABEL,
     build_page_state,
+    plain_event,
     polymarket_desk,
     town_ledger,
 )
@@ -106,7 +108,9 @@ def test_money_and_town_count_the_polymarket_desk_with_paper_and_real_kept_apart
                           "settled_today": 0, "won_today": 0, "settled_total": 2, "won_total": 2,
                           "at_risk_usd": pytest.approx(0.97), "contracts": 8.0, "cost_usd": pytest.approx(7.80),
                           "value_usd": pytest.approx(7.95), "venue_at": NOW - 60, "cash_usd": pytest.approx(16.27),
-                          "cash_at": NOW - 60}
+                          "cash_at": NOW - 60, "pending": 0, "pending_usd": 0.0,
+                          # the $3 day less the open real bet if it lost (its cost; this one carries no fee)
+                          "stop_room_usd": pytest.approx(3.0 - 0.97), "stop_room_limit": "day"}
     assert REAL_LABEL == "Real money"
     # the SOL wallet's own figures are untouched
     assert state["money"]["today"]["usd"] == pytest.approx(-5.5) and state["money"]["since_start"]["usd"] == pytest.approx(-5.5)
@@ -315,3 +319,160 @@ def test_the_page_renders_the_polymarket_block_as_text_only(settings: Settings,
     assert not re.search(r"#(?:money-polymarket|town-desks)[^{]*\{[^}]*(?:color|background)", style)
     live = render_page_html(live_settings(make_settings))
     assert 'id="money-polymarket"' in live and 'id="town-desks"' in live
+
+
+# --------------------------------------------------------------------------- what the desk skips and why (C15)
+
+
+def live_desk(**kw: Any) -> dict[str, Any]:
+    """The desk in live mode (its own state file says so), as desk_state() builds it."""
+    st = desk_state(**kw)
+    st["mode"] = "live"
+    return st
+
+
+def _numbers(text: str) -> list[str]:
+    return re.findall(r"\d[\d,]*(?:\.\d+)?", text)
+
+
+def test_plain_real_names_the_sports_rule_from_history(ledger: Ledger, settings: Settings,
+                                                         monkeypatch: pytest.MonkeyPatch) -> None:
+    from nightcrawler import pagestate
+
+    save(settings, live_desk())
+    line = build_page_state(ledger, settings, NOW)["plain"]["real"]["sports_line"]
+    assert line.startswith("No real money on sports: in history (3,070 past bets like these, 104 lost: ")
+    pooled = polydesk.SPORT_HISTORY_POOLED
+    allowed = {f"{int(pooled['buys']):,}", f"{int(pooled['lost'])}", f"{100 * pooled['loss_rate']:.1f}",
+               f"{100 * pooled['implied']:.1f}"}
+    allowed |= {n for _, why in polydesk.SPORT_HISTORY.values() for n in _numbers(why)}
+    assert _numbers(line) and set(_numbers(line)) <= allowed  # every number is the history's own
+    for sport, (verdict, _) in polydesk.SPORT_HISTORY.items():  # each judged sport is named by its verdict
+        name = {"hockey": "ice hockey", "mma/boxing": "boxing/MMA", "american football": "American football"}.get(
+            sport, sport)
+        if verdict != "mixed":
+            assert name.lower() in line.lower(), sport
+    assert "Tennis and esports favourites lost more often than their prices said" in line
+    assert not JARGON.search(line) and "paid" not in line  # no sport "paid" in history: none was proven to
+    # the wording follows the sports real money may bet: one allowed (by a code change) is named
+    monkeypatch.setattr(pagestate, "REAL_SPORTS_ALLOWED", frozenset({"soccer"}))
+    allowed_line = pagestate._sports_line()
+    assert allowed_line.startswith("Real money on sports only for soccer; in history ") and "no other sport" in allowed_line
+    assert "soccer, baseball" not in allowed_line and "baseball, basketball and cricket are unproven" in allowed_line
+
+
+def test_plain_real_says_what_it_skipped_from_counts(ledger: Ledger, settings: Settings) -> None:
+    st = live_desk()
+    counts = {"sports_no_real": 4, "incoherent_game": 1, "never_traded": 0, "game_held": 7, "stop_room": 2}
+    st["skips"] = {TODAY: {"counts": counts, "sports": {"tennis": 3, "soccer": 1}, "seen": []},
+                   YESTERDAY: {"counts": {"never_traded": 9}, "sports": {}, "seen": []}}
+    save(settings, st)
+    state = build_page_state(ledger, settings, NOW)
+    pm = state["money"]["polymarket"]
+    assert pm["skips"] == {"counts": {"sports_no_real": 4, "incoherent_game": 1, "game_held": 7, "stop_room": 2},
+                           "sports": {"tennis": 3, "soccer": 1}}  # today's only, zero parts left out
+    line = state["plain"]["real"]["skips_line"]
+    assert line == ("Today it practised 4 sports bets instead of betting real money and refused 1 game whose prices "
+                    "did not add up.")
+    assert _numbers(line) == ["4", "1"]  # the counts' own numbers; the never-traded part is zero: left out
+    st["skips"][TODAY]["counts"] = {"sports_no_real": 1, "incoherent_game": 2, "never_traded": 3}
+    save(settings, st)
+    assert build_page_state(ledger, settings, NOW)["plain"]["real"]["skips_line"] == (
+        "Today it practised 1 sports bet instead of betting real money, refused 2 games whose prices did not add up, "
+        "and skipped 3 markets that had never traded near the price.")
+    st["mode"] = "paper"  # paper mode: no real money to skip, so no sports clause
+    save(settings, st)
+    assert build_page_state(ledger, settings, NOW)["plain"]["real"]["skips_line"] == (
+        "Today it refused 2 games whose prices did not add up and skipped 3 markets that had never traded near the "
+        "price.")
+    st["skips"][TODAY]["counts"] = {"junk": 5, "sports_no_real": "many", "incoherent_game": -1}  # typed, not trusted
+    save(settings, st)
+    assert build_page_state(ledger, settings, NOW)["money"]["polymarket"]["skips"]["counts"] == {}
+
+
+def test_nothing_skipped_says_so(ledger: Ledger, settings: Settings) -> None:
+    save(settings, live_desk())
+    real = build_page_state(ledger, settings, NOW)["plain"]["real"]
+    assert real["skips_line"] == "Nothing skipped yet today."
+    assert polymarket_desk(settings, NOW)["skips"] == {"counts": {}, "sports": {}}
+
+
+def test_pending_money_is_shown(ledger: Ledger, settings: Settings) -> None:
+    st = live_desk()
+    st["pending_orders"] = {"k1": {"limit": 0.98, "contracts": 1.0, "fee_coef": 0.0695, "t_in": NOW - 30,
+                                   "question": "Will k1 happen?", "category": "crypto", "end_ts": NOW + 900}}
+    save(settings, st)
+    state = build_page_state(ledger, settings, NOW)
+    real = state["money"]["polymarket"]["real"]
+    assert (real["pending"], real["pending_usd"]) == (1, pytest.approx(0.98))
+    assert real["open"] == 1 and real["at_risk_usd"] == pytest.approx(0.97)  # never added to the open bets
+    line = state["plain"]["real"]["line"]
+    assert ("$0.97 in 1 open bet, plus $0.98 in orders Polymarket has not confirmed yet;" in line)
+    assert "1.95" not in json.dumps(state["plain"])  # the two are never summed
+    st["pending_orders"] = {}
+    save(settings, st)
+    assert "not confirmed" not in build_page_state(ledger, settings, NOW)["plain"]["real"]["line"]
+
+
+def test_room_kind_and_headline_fit(ledger: Ledger, settings: Settings) -> None:
+    """The stops count money still at risk: with $0.97 open and the day at -$2.50, one more lost bet could pass the
+    $3 day, so the desk waits; the headline says so in under two phone lines."""
+    save(settings, live_desk(live_today={"pnl_usd": -2.50, "settled": 3, "won": 0}))
+    p = build_page_state(ledger, settings, NOW)["plain"]
+    assert p["real"]["paused_kind"] == "room"
+    assert p["real"]["paused"] == "Waiting: if every open bet lost, today would pass the $3 limit, so it waits for some to finish."
+    assert p["headline"] == "Real money is on for Voss's Polymarket bets, waiting on open bets; the rest is pretend."
+    assert len(p["headline"]) <= PLAIN_HEADLINE_MAX
+    # nothing open and the day's room gone: that is the day's stop
+    save(settings, live_desk(real_open=0, live_today={"pnl_usd": -2.50, "settled": 3, "won": 0}))
+    p = build_page_state(ledger, settings, NOW)["plain"]
+    assert p["real"]["paused_kind"] == "day" and p["real"]["paused"] == (
+        "Stopped for today: one more lost bet could pass the $3 daily limit. It can bet again after midnight UTC.")
+    # nothing open and the total's room gone: at its loss limit
+    st = live_desk(real_open=0)
+    st["live_pnl_total_usd"] = -9.50
+    save(settings, st)
+    p = build_page_state(ledger, settings, NOW)["plain"]
+    assert p["real"]["paused_kind"] == "room" and p["real"]["paused"] == (
+        "Stopped: one more lost bet could pass the $10 total loss limit, so it places no new real bets.")
+    assert p["headline"] == "Real money is on for Voss's Polymarket bets, at its loss limit; the rest is pretend."
+    assert len(p["headline"]) <= PLAIN_HEADLINE_MAX
+    # with room for a bet: nothing waits
+    save(settings, live_desk())
+    assert build_page_state(ledger, settings, NOW)["plain"]["real"]["paused_kind"] is None
+
+
+def test_ticker_new_desk_events_are_worded() -> None:
+    cases = [
+        ("Order not confirmed yet at 0.980: Will k1 happen? (counted as open money until the venue shows it)",
+         "a real-money order is waiting for Polymarket to confirm it · Will k1 happen?"),
+        ("REAL buy confirmed late by the venue: Will k1 happen? · 1 contract at 0.980 ($0.98, crypto)",
+         "Polymarket confirmed a real-money bet late: $0.98 · Will k1 happen?"),
+        ("Refused a game whose prices do not add up: eBattles: Sassuolo vs. Roma (YES bids add up to 2.91)",
+         "skipped a game whose prices did not add up ($2.91 for a $1 prize): eBattles: Sassuolo vs. Roma"),
+        (("Practice record for american football clears the risk manager's bar (150 events (150 settled), 4 lost, "
+          "+$212.00 in all): real money stays off for it until a fresh conf")[:160],
+         "practice on american football looks good; real money stays off until a second check and the owner say yes"),
+    ]
+    for text, expected in cases:
+        said = plain_event("predict", text)
+        assert said == expected and not said.endswith("…") and "paper" not in said.lower(), text
+        assert not JARGON.search(said)
+
+
+def test_no_fill_still_worded() -> None:
+    """"No fill" now comes only when the venue's book really holds nothing (a quiet read after the order)."""
+    assert plain_event("predict", "No fill at 0.980: Will k1 happen? (order cancelled)") == (
+        "a real-money order found no seller and was cancelled · Will k1 happen?")
+
+
+def test_the_sports_table_rides_along_typed(settings: Settings) -> None:
+    st = desk_state()
+    save(settings, st)
+    pm = polymarket_desk(settings, NOW)
+    assert [s["sport"] for s in pm["sports"]] == list(polydesk.SPORT_HISTORY) and pm["real_sports_allowed"] == []
+    assert {s["real"] for s in pm["sports"]} == {"blocked"} and not any(s["flagged"] for s in pm["sports"])
+    tennis = pm["sports"][0]
+    assert tennis == {"sport": "tennis", "real": "blocked", "history": "proven loser",
+                      "why": polydesk.SPORT_HISTORY["tennis"][1], "paper": None, "flagged": False}
+    json.dumps(pm, allow_nan=False)

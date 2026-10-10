@@ -13,9 +13,10 @@ Schema (lists capped: members 9, events <= 5, open trades <= 10, closed trades 1
       "alerts": [{"level": "bad"|"warn", "text"}],                    # header banners, worst first
       "plain": {"about", "headline",                                  # the whole screen in plain words: see PLAIN
                 "real": {"label": "Real money", "on": bool, "reported": bool, "paused": str|null,
-                         "paused_kind": "risk"|"day"|"full"|null, "at_risk_usd": float|null,
+                         "paused_kind": "risk"|"day"|"full"|"room"|null, "at_risk_usd": float|null,
                          "open_bets": int|null, "cash_usd": float|null, "result": str|null, "line",
-                         "how": str|null, "limits": str|null, "verdict": str|null, "research": str|null},
+                         "how": str|null, "limits": str|null, "verdict": str|null, "research": str|null,
+                         "sports_line": str|null, "skips_line": str|null},
                 "pretend": {"label": "Practice (pretend money)", "line", "body"},
                 "now": [str] (<= 3),
                 "team": [{"id", "name", "job", "plain_role", "status_word": "working"|"waiting"|"idle"|"stuck",
@@ -37,11 +38,19 @@ Schema (lists capped: members 9, events <= 5, open trades <= 10, closed trades 1
                                "paper": {"label": "Paper money (pretend)", "open", "today_usd", "since_start_usd",
                                          "settled_today", "won_today", "settled_total", "won_total"},
                                "real": {"label": "Real money", (the same keys), "at_risk_usd", "contracts",
-                                        "cost_usd", "value_usd", "venue_at", "cash_usd", "cash_at"}|null,
+                                        "cost_usd", "value_usd", "venue_at", "cash_usd", "cash_at",
+                                        "pending", "pending_usd",          # orders the venue has not confirmed
+                                        "stop_room_usd": float|null,       # room left under the loss stops
+                                        "stop_room_limit": "day"|"total"|null}|null,
                                "real_closed": [{"question", "settled_at", "pnl_usd", "won"}] (<= 5),  # newest first
                                "guard": {"verdict", "reason", "paused", "since", "line", "on", "candidate",
                                          "real": {"verdict", "reason", "paused", "since", "line"}|null}|null,
-                               "settled_real": [{"ts", "text"}] (<= 3)}|null,   # its newest REAL settlements
+                               "settled_real": [{"ts", "text"}] (<= 3),   # its newest REAL settlements
+                               "skips": {"counts": {reason: n}, "sports": {sport: n}},   # today (UTC): SKIPS
+                               "sports": [{"sport", "real": "allowed"|"blocked", "history", "why",
+                                           "paper": {"settled", "won", "pnl_usd", "verdict", "phrase"}|null,
+                                           "flagged": bool}],
+                               "real_sports_allowed": [sport]}|null,
                 "trend": {"mode": "paper", "label": "Paper money (pretend)", "as_of": ts|null,   # see TREND; null: off
                           "sleeve_usd", "equity_usd", "today_usd", "since_start_usd", "hold_since_start_usd",
                           "in_market": {"BTC": bool, "ETH": bool, "SOL": bool}, "started": "YYYY-MM-DD"|null,
@@ -112,7 +121,14 @@ winning, unclear), its reason with the numbers, whether new buys are paused and 
 line, and a sentence of its own, when only the real buys are paused). ``candidate`` is true only for a rule that
 passed lab 4 (none has: a winning paper record is never called a candidate for real money). ``status`` is the
 desk's own sentence on live mode (``live_status``: why it stays on paper although live was asked for, e.g. a rejected
-key or the total-loss cap; or the day's loss cap), null when it has none.
+key or the total-loss cap; or the day's loss cap), null when it has none. ``real.pending`` / ``pending_usd`` are the
+real orders the venue has not confirmed yet (open real money until its book says), ``stop_room_usd`` what the loss
+stops still let out if every open bet and unconfirmed order lost (``stop_room_limit``: the stop that binds).
+SKIPS: ``skips`` counts today's picks the rule did not buy, or did not buy with real money, by reason (``sports_no_real``
+a game practised instead of a real bet, ``incoherent_game`` a game whose prices did not add up, ``never_traded`` a
+market not yet traded near the price, and the desk's other reasons), each market or game once a UTC day;
+``sports`` is each sport with its real-money state (no sport is allowed: lab 4's history test passed none), the
+history's verdict and reason (:data:`nightcrawler.polydesk.SPORT_HISTORY`) and its practice record.
 
 TREND (:func:`trend_desk`): the trend desk's paper book (:func:`nightcrawler.trenddesk.panel_state`, its state file
 only), a forward test of lab 3's 50-day trend rule on BTC, ETH and SOL with a pretend sleeve. PAPER ONLY: the desk
@@ -170,8 +186,12 @@ line (the venue's cash, the money in open real bets and the real result since st
 $X since start (real money)" is the only way a gain is ever worded), ``result`` (that result alone, once a real bet
 has finished; the Solana bot's while it runs live), ``how`` (how the rule bets, from its settings: the price it buys
 at, what a win and a loss are worth), ``paused`` (why no new real bet goes out now: the risk manager's pause, since
-when; the day's loss limit reached; the open-money limit full, which is waiting, not a pause; ``paused_kind`` says
-which: ``risk``, ``day`` or ``full``; else null), the desk's hard limits from its settings and the lab's verdict on its
+when; the day's loss limit reached; the open-money limit full, which is waiting, not a pause; the room left under a
+loss stop smaller than one bet if every open bet lost, which is waiting too; ``paused_kind`` says which: ``risk``,
+``day``, ``full`` or ``room``; else null), ``sports_line`` (why real money skips sports, from the history verdicts
+:data:`nightcrawler.polydesk.SPORT_HISTORY` only, naming any sport ever allowed) and ``skips_line`` (what the desk
+skipped today and why, from its own counts, the parts that are not zero), the desk's hard limits from its settings
+and the lab's verdict on its
 rule (:data:`nightcrawler.polydesk.RULE_LAB_PASSED`: no edge, so tiny amounts only; while it bets no real money, a
 verdict that says so instead), plus the research line while no strategy has passed its locked test. Off, the line
 says so with the desk's own reason (``status``) when the owner asked for live, and what is still at the venue; the
@@ -285,7 +305,16 @@ from nightcrawler.logging_setup import get_logger, redact_text
 from nightcrawler.models import LAMPORTS_PER_SOL, EquityPoint
 from nightcrawler.office3d import CAST3D
 from nightcrawler.page import LEARNING_RULE, MEMBERS, REFRESH_S
-from nightcrawler.polydesk import RULE_LAB_PASSED, load_state, panel_state, state_path
+from nightcrawler.polydesk import (
+    REAL_SPORTS_ALLOWED,
+    RULE_LAB_PASSED,
+    SKIP_REASONS,
+    SPORT_HISTORY,
+    SPORT_HISTORY_POOLED,
+    load_state,
+    panel_state,
+    state_path,
+)
 from nightcrawler.readiness import readiness
 from nightcrawler.recap import RECAP_TTL_S, collect_recap, day_window, empty_recap, render_recap
 from nightcrawler.research_board import research_state
@@ -987,6 +1016,11 @@ def polymarket_desk(settings: Settings, now: float) -> dict[str, Any] | None:
         "contracts": _num(venue.get("contracts")), "cost_usd": _num(venue.get("cost_usd")),
         "value_usd": _num(venue.get("value_usd")), "venue_at": _num(venue.get("at")),
         "cash_usd": _num(balance.get("cash")), "cash_at": _num(balance.get("at")),
+        # orders the venue has not confirmed yet (open real money until its book says) and the loss stops' room
+        "pending": _count(raw_real.get("pending")) or 0, "pending_usd": _num(raw_real.get("pending_usd")) or 0.0,
+        "stop_room_usd": _num(raw_real.get("stop_room_usd")),
+        "stop_room_limit": raw_real.get("stop_room_limit") if raw_real.get("stop_room_limit") in ("day", "total")
+        else None,
     })
     live = desk.get("mode") == "live"
     return {
@@ -1003,7 +1037,46 @@ def polymarket_desk(settings: Settings, now: float) -> dict[str, Any] | None:
         # its newest settled REAL-money bets from its whole event log (the team row keeps only the last five events,
         # and one round can settle several bets and add a pause and a lesson): the 3D world's replays
         "settled_real": _settled_real(desk.get("events"), _Text(settings)),
+        "skips": _desk_skips(desk.get("skips")),
+        "sports": _desk_sports(desk.get("sports")),
+        "real_sports_allowed": sorted({s for s in desk.get("real_sports_allowed") or [] if s in SPORT_HISTORY}),
     }
+
+
+def _desk_skips(raw: Any) -> dict[str, dict[str, int]]:
+    """``money.polymarket.skips``: today's skip counts (``polydesk.skips_view``), type-checked: the desk's own
+    reasons (:data:`nightcrawler.polydesk.SKIP_REASONS`) and sports only, each a whole number above zero."""
+    skips = _xp_map(raw)
+
+    def counts(value: Any, known: Any) -> dict[str, int]:
+        out: dict[str, int] = {}
+        for key, n in _xp_map(value).items():
+            got = _count(n)
+            if got and key in known:
+                out[str(key)] = got
+        return out
+
+    return {"counts": counts(skips.get("counts"), SKIP_REASONS), "sports": counts(skips.get("sports"), SPORT_HISTORY)}
+
+
+def _desk_sports(raw: Any) -> list[dict[str, Any]]:
+    """``money.polymarket.sports``: each sport (``polydesk.sports_view``), type-checked: whether real money may bet it,
+    the history's verdict and reason, the practice record (or null) and whether it is flagged."""
+    out: list[dict[str, Any]] = []
+    for row in raw if isinstance(raw, list) else []:
+        r = _xp_map(row)
+        if r.get("sport") not in SPORT_HISTORY or r.get("real") not in ("allowed", "blocked"):
+            continue
+        paper = _xp_map(r.get("paper"))
+        practice = None
+        if paper and paper.get("verdict") in GUARD_VERDICTS:
+            practice = {"settled": _count(paper.get("settled")) or 0, "won": _count(paper.get("won")) or 0,
+                        "pnl_usd": _num(paper.get("pnl_usd")) or 0.0, "verdict": paper["verdict"],
+                        "phrase": _clip(str(paper.get("phrase") or ""), 40)}
+        out.append({"sport": r["sport"], "real": r["real"], "history": _clip(str(r.get("history") or ""), 40),
+                    "why": _clip(str(r.get("why") or ""), TEXT_MAX), "paper": practice,
+                    "flagged": r.get("flagged") is True})
+    return out
 
 
 def _settled_real(raw: Any, text: _Text) -> list[dict[str, Any]]:
@@ -1070,8 +1143,9 @@ def _book(raw: Mapping[str, Any], label: str) -> dict[str, Any]:
 
 
 def _real_book(real: Mapping[str, Any]) -> bool:
-    """Real money in play: an open real position, a real settlement, or a contract the venue's own book holds."""
-    return bool(real["open"] or real["settled_total"] or (real.get("contracts") or 0) > 0)
+    """Real money in play: an open real position, a real settlement, a contract the venue's own book holds, or an
+    order the venue has not confirmed yet."""
+    return bool(real["open"] or real["settled_total"] or (real.get("contracts") or 0) > 0 or real.get("pending"))
 
 
 def _desk_lines(desk: Mapping[str, Any] | None) -> dict[str, Any] | None:
@@ -1561,6 +1635,14 @@ _EVENT_TEMPLATES: tuple[tuple[str, re.Pattern[str], str], ...] = tuple(
          "a real-money bet {res} ${usd} · {q}"),
         ("predict", r"No fill at [\d.]+: (?P<q>.+) \(order cancelled\)",
          "a real-money order found no seller and was cancelled · {q}"),
+        ("predict", r"Order not confirmed yet at [\d.]+: (?P<q>.+) \(counted as open money until the venue shows it\)",
+         "a real-money order is waiting for Polymarket to confirm it · {q}"),
+        ("predict", rf"REAL buy confirmed late by the venue: (?P<q>.+) · [\d.]+ contracts? at [\d.]+ \({_MONEY}.*",
+         "Polymarket confirmed a real-money bet late: ${usd} · {q}"),
+        ("predict", r"Refused a game whose prices do not add up: (?P<q>.+) \(YES bids add up to (?P<sum>[\d.]+)\)",
+         "skipped a game whose prices did not add up (${sum} for a $1 prize): {q}"),
+        ("predict", r"Practice record for (?P<s>.+?) clears the risk manager's bar.*",  # (fits PLAIN_EVENT_MAX)
+         "practice on {s} looks good; real money stays off until a second check and the owner say yes"),
         ("predict", r"Order rejected by the venue \([^)]*\): (?P<q>.+)", "Polymarket refused a real-money order · {q}"),
         ("predict", rf"REAL position found at the venue: (?P<q>.+) · [\d.]+ contracts? at [\d.]+ \({_MONEY}\)",
          "found a real-money bet already at Polymarket: ${usd} · {q}"),
@@ -1659,6 +1741,9 @@ def _real_figures(real: Mapping[str, Any], *, venue: bool = True) -> str:
     where = " at Polymarket" if venue else ""
     cash_part = f"{_dollars(cash)} cash{where}" if cash is not None else f"cash{where} not read yet"
     bets = "no open bets" if not n else f"{_dollars(held)} in {n} open bet{'' if n == 1 else 's'}"
+    pending = _num(real.get("pending_usd")) or 0.0
+    if round(pending, 2) > 0:  # orders the venue has not confirmed: real money too, never added to the bets
+        bets += f", plus {_dollars(pending)} in orders Polymarket has not confirmed yet"
     settled, won = _count(real.get("settled_total")) or 0, _count(real.get("won_total")) or 0
     result = ("no bet has finished yet" if not settled else
               f"{_change(_num(real.get('since_start_usd')) or 0.0, real=True)}, {won} of {settled} finished bets won")
@@ -1668,7 +1753,10 @@ def _real_figures(real: Mapping[str, Any], *, venue: bool = True) -> str:
 def _real_paused(settings: Settings, desk: Mapping[str, Any], real: Mapping[str, Any]) -> tuple[str, str] | None:
     """``(kind, sentence)``: why the live desk sends no new real bet right now, from its own data, or None. ``risk``:
     the risk manager's pause (the paper record's stops real buys too); ``day``: the UTC day's loss cap; ``full``: the
-    open-money cap already full at the rule's lowest price (``polydesk_theta``), which is waiting, not a pause."""
+    open-money cap already full at the rule's lowest price (``polydesk_theta``; unconfirmed orders count), which is
+    waiting, not a pause; ``room``: if every open bet lost, a loss stop would be passed by one more bet (the stops
+    count money still at risk), so it waits for some to finish; with nothing open and only the day's room gone, that
+    is the day's stop (``day``)."""
     guard = _xp_map(desk.get("guard"))
     for book, record in ((guard, "the rule's practice record"), (_xp_map(guard.get("real")), "its real-money record")):
         if book.get("paused"):
@@ -1679,11 +1767,87 @@ def _real_paused(settings: Settings, desk: Mapping[str, Any], real: Mapping[str,
     if today <= -daily:
         return "day", (f"Stopped for today: it lost {_dollars(today)} today and the daily limit is {_limit(daily)}. "
                        "It can bet again after midnight UTC.")
-    held, cap = _num(real.get("at_risk_usd")) or 0.0, float(settings.polydesk_live_max_open_usd)
-    if held + float(settings.polydesk_theta) * float(settings.polydesk_live_contracts) > cap + 1e-9:
+    pending = _num(real.get("pending_usd")) or 0.0
+    held, cap = (_num(real.get("at_risk_usd")) or 0.0) + pending, float(settings.polydesk_live_max_open_usd)
+    bet = float(settings.polydesk_theta) * float(settings.polydesk_live_contracts)
+    if held + bet > cap + 1e-9:
         return "full", (f"Waiting: {_dollars(held)} is already in open bets and the most allowed at once is "
                         f"{_limit(cap)}; it bets again when one finishes.")
-    return None
+    room = _num(real.get("stop_room_usd"))
+    if room is None or room >= bet:
+        return None
+    total = real.get("stop_room_limit") == "total"
+    limit = _limit(float(settings.polydesk_live_total_loss_usd) if total else daily)
+    if held > 0:
+        what = f"the total would pass the {limit} limit" if total else f"today would pass the {limit} limit"
+        return "room", f"Waiting: if every open bet lost, {what}, so it waits for some to finish."
+    if not total:
+        return "day", (f"Stopped for today: one more lost bet could pass the {limit} daily limit. It can bet again "
+                       "after midnight UTC.")
+    return "room", f"Stopped: one more lost bet could pass the {limit} total loss limit, so it places no new real bets."
+
+
+#: How the page names a sport of :data:`nightcrawler.polydesk.SPORT_HISTORY` for a newcomer.
+_SPORT_WORDS = {"hockey": "ice hockey", "mma/boxing": "boxing/MMA", "american football": "American football"}
+
+
+def _sports_words(sports: list[str]) -> str:
+    names = [_SPORT_WORDS.get(s, s) for s in sports]
+    return names[0] if len(names) == 1 else ", ".join(names[:-1]) + " and " + names[-1]
+
+
+def _sports_line() -> str:
+    """``plain.real.sports_line``: why real money skips sports, from lab 4's history verdicts
+    (:data:`nightcrawler.polydesk.SPORT_HISTORY`, :data:`~nightcrawler.polydesk.SPORT_HISTORY_POOLED`) and the sports
+    real money may bet (:data:`~nightcrawler.polydesk.REAL_SPORTS_ALLOWED`: none; any ever allowed is named)."""
+    allowed = [s for s in SPORT_HISTORY if s in REAL_SPORTS_ALLOWED]
+
+    def judged(verdict: str) -> list[str]:
+        return [s for s, (v, _) in SPORT_HISTORY.items() if v == verdict and s not in REAL_SPORTS_ALLOWED]
+
+    pooled = SPORT_HISTORY_POOLED
+    history = (f"in history ({int(pooled['buys']):,} past bets like these, {int(pooled['lost'])} lost: "
+               f"{100 * pooled['loss_rate']:.1f}% against the {100 * pooled['implied']:.1f}% the prices said) no "
+               f"{'other ' if allowed else ''}sport proved it pays")
+    head = (f"Real money on sports only for {_sports_words(allowed)}; {history}." if allowed
+            else f"No real money on sports: {history}.")
+    parts = []
+    if judged("proven loser"):
+        words = _sports_words(judged("proven loser"))
+        parts.append(f"{words[:1].upper()}{words[1:]} favourites lost more often than their prices said")
+    if judged("no history"):
+        little = judged("too little history")
+        parts.append(f"{_sports_words(judged('no history'))} have no history"
+                     + (f", {_sports_words(little)} too little" if little else ""))
+    if judged("unproven"):
+        parts.append(f"{_sports_words(judged('unproven'))} are unproven")
+    body = "; ".join(parts)
+    return f"{head} {body[:1].upper()}{body[1:]}. Practice bets keep watching them." if body else \
+        f"{head} Practice bets keep watching them."
+
+
+def _skips_line(desk: Mapping[str, Any], *, live: bool) -> str:
+    """``plain.real.skips_line``: what the desk skipped today and why, from its own counts (``money.polymarket.skips``),
+    the parts that are not zero; the sports part only while real money is on."""
+    counts = _xp_map(_xp_map(desk.get("skips")).get("counts"))
+
+    def n(reason: str) -> int:
+        return _count(counts.get(reason)) or 0
+
+    parts = []
+    if live and n("sports_no_real"):
+        parts.append(f"practised {n('sports_no_real')} sports bet{'' if n('sports_no_real') == 1 else 's'} instead "
+                     "of betting real money")
+    if n("incoherent_game"):
+        one = n("incoherent_game") == 1
+        parts.append(f"refused {n('incoherent_game')} game{'' if one else 's'} whose prices did not add up")
+    if n("never_traded"):
+        one = n("never_traded") == 1
+        parts.append(f"skipped {n('never_traded')} market{'' if one else 's'} that had never traded near the price")
+    if not parts:
+        return "Nothing skipped yet today."
+    said = parts[0] if len(parts) == 1 else ", ".join(parts[:-1]) + ("," if len(parts) > 2 else "") + " and " + parts[-1]
+    return f"Today it {said}."
 
 
 def _desk_silent(settings: Settings, desk: Mapping[str, Any] | None) -> bool:
@@ -1734,10 +1898,10 @@ def _plain_real(settings: Settings, money: Mapping[str, Any], desk: Mapping[str,
     limits = (f"Hard limits: {per} per bet, at most {_limit(settings.polydesk_live_max_open_usd)} in bets at once, "
               f"stops for the day after losing {_limit(settings.polydesk_live_daily_loss_usd)}, stops for good after "
               f"losing {_limit(settings.polydesk_live_total_loss_usd)}.")
-    # how the rule bets, from its settings: live buys are YES only (polydesk: shorts stay paper-only); a contract pays
-    # $1, so a win is at most the rest of the dollar and a loss the whole price
+    # how the rule bets, from its settings: YES only, practice and real alike (polydesk rule 2026-10-10a); a contract
+    # pays $1, so a win is at most the rest of the dollar and a loss the whole price
     theta = round(float(settings.polydesk_theta) * 100)
-    how = (f"How it bets: it buys {'YES' if desk_live else 'YES or NO'} at {theta}¢ or more on questions that look "
+    how = (f"How it bets: it buys YES at {theta}¢ or more on questions that look "
            f"almost decided. A right answer pays $1, so a win makes at most {100 - theta}¢ a contract and a loss "
            "costs the whole price.")
     if RULE_LAB_PASSED:
@@ -1757,6 +1921,9 @@ def _plain_real(settings: Settings, money: Mapping[str, Any], desk: Mapping[str,
         "limits": limits if desk is not None else None,
         "verdict": verdict if desk is not None else None,
         "research": RESEARCH_LINE if not (RULE_LAB_PASSED or passed) else None,
+        # why real money skips sports (lab 4's history), and what the desk skipped today and why (its own counts)
+        "sports_line": _sports_line() if desk is not None else None,
+        "skips_line": _skips_line(desk, live=desk_live) if desk is not None else None,
     }
 
 
@@ -1815,6 +1982,10 @@ def _plain_headline(settings: Settings, desk: Mapping[str, Any] | None, real: Ma
         return "Real money is on for Voss's Polymarket bets but stopped for today; the rest is pretend."
     if desk_live and kind == "full":
         return f"Real money is on for Voss's Polymarket bets, at its {_limit(cap)} limit; the rest is pretend."
+    if desk_live and kind == "room":
+        if real.get("open_bets") or (desk is not None and _xp_map(desk.get("real")).get("pending")):
+            return "Real money is on for Voss's Polymarket bets, waiting on open bets; the rest is pretend."
+        return "Real money is on for Voss's Polymarket bets, at its loss limit; the rest is pretend."
     if desk_live:
         return f"Real money is on only for {bets}; the rest is pretend money."
     if not real.get("reported", True):

@@ -1,5 +1,9 @@
 # Desk audit, 2026-10-10: where the real-money path leaks
 
+> **Update, same day:** the fixes landed as the desk's rule `2026-10-10a`. The audit's tests below were moved into
+> `tests/test_polydesk_safety.py` (adjusted where a later fix changes what they can see: sports are now practised on
+> paper only, and one order goes out per game or ladder) and now pass there with the rest of the suite.
+
 **What was read:** all of `src/nightcrawler/polydesk.py`, `polymarket_us.py`, `deskguard.py`, the desk part of `config.py`, `tests/test_polydesk.py` and `tests/test_polydesk_live.py`, at commit 84d5ba9.
 **What was checked against:** the desk's own history (`/api/polydesk` snapshot at 2026-10-10 17:50 UTC: state file plus 190 desk receipts), and about 100 gentle public reads of `gateway.polymarket.us`, no more than one a second and no key. No API key was used, printed or stored. No source file was edited. Railway was not touched.
 **Tests that prove each leak:** `research/lab4/US/desk_audit_2026-10-10_tests.py`. All 12 leak tests fail on today's code, and the one guard test (a normal game still buys once) passes. See "The tests" below.

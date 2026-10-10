@@ -60,6 +60,11 @@ LIMITS = ("Hard limits: one contract (under $1) per bet, at most $10 in bets at 
           "$3, stops for good after losing $10.")
 HOW_LIVE = ("How it bets: it buys YES at 97¢ or more on questions that look almost decided. A right answer pays $1, so "
             "a win makes at most 3¢ a contract and a loss costs the whole price.")
+#: Why real money skips sports, from lab 4's history verdicts (polydesk.SPORT_HISTORY) only.
+SPORTS_LINE = ("No real money on sports: in history (3,070 past bets like these, 104 lost: 3.4% against the 2.9% the "
+               "prices said) no sport proved it pays. Tennis and esports favourites lost more often than their prices "
+               "said; table tennis, e-soccer, ice hockey and boxing/MMA have no history, American football too little; "
+               "soccer, baseball, basketball and cricket are unproven. Practice bets keep watching them.")
 ON = "Real money is on only for Voss's small Polymarket bets; the rest is pretend money."
 OFF = "No real money is being bet right now: everything is practice with pretend money."
 #: The desk on paper with one real contract still open at the venue (desk_state()).
@@ -137,7 +142,8 @@ def test_real_money_on_with_a_position_in_plain_words(ledger: Ledger, settings: 
         "result": "down $1.78 since start",  # winning 6 of 8 and still down: the box says the result, big
         "line": "Real money: $20.38 cash at Polymarket and $0.95 in 1 open bet; down $1.78 since start, 6 of 8 "
                 "finished bets won.",
-        "how": HOW_LIVE, "limits": LIMITS, "verdict": VERDICT_NO_EDGE, "research": RESEARCH_LINE}
+        "how": HOW_LIVE, "limits": LIMITS, "verdict": VERDICT_NO_EDGE, "research": RESEARCH_LINE,
+        "sports_line": SPORTS_LINE, "skips_line": "Nothing skipped yet today."}
     assert real["verdict"] == ("This rule did not pass our tests for a real edge (proof that it wins over many bets), "
                                "so it trades only tiny real amounts with hard limits.")
     assert RESEARCH_LINE == "No strategy tested so far has passed our lab's test for a real edge."

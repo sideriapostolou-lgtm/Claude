@@ -1,6 +1,7 @@
-"""The Polymarket desk in LIVE mode, against a fake exchange client: the gate (confirm phrase, key, a balance read),
-real buys on the long side only with caps, rejected and unfilled orders, settlement with the real cost, the daily
-and total loss stops (the total stop switches back to paper for good), receipts, and the panel's labels."""
+"""The Polymarket desk in LIVE mode, against a fake exchange client: the gate (confirm phrase, key, a balance read,
+a record file that can be read), real buys on the long side only with caps, rejected and unconfirmed orders,
+settlement with the real cost, the daily and total loss stops (counting money still at risk; the total stop switches
+back to paper for good), receipts, and the panel's labels. The audit's fixes: tests/test_polydesk_safety.py."""
 
 from __future__ import annotations
 
@@ -137,68 +138,98 @@ def test_live_buys_long_only_with_caps_and_settles_at_real_cost(gw: Gateway, tmp
 
 
 def test_live_caps_open_money_rejections_and_no_fills(gw: Gateway, tmp_path) -> None:
-    gw.markets = [_market(f"m{i}", "crypto", 1800) for i in range(15)]
+    gw.markets = [_market(f"m{i}", "crypto", 1800 + i) for i in range(15)]  # fifteen ladders, one rung each
     gw.quotes = {f"m{i}": (0.97, 0.98) for i in range(15)}
     ex = FakeExchange(cash=25.0)
-    desk = P.PolyDesk(_live_settings(tmp_path, POLYDESK_LIVE_MAX_OPEN_USD="5"), ledger=FakeLedger(), client_factory=ex)
+    desk = P.PolyDesk(_live_settings(tmp_path, POLYDESK_LIVE_MAX_OPEN_USD="5", POLYDESK_LIVE_DAILY_LOSS_USD="50",
+                                     POLYDESK_LIVE_TOTAL_LOSS_USD="50"), ledger=FakeLedger(), client_factory=ex)
     desk.poll(NOW)
-    assert len(ex.orders) == 5 and len(desk.state["positions"]) == 5  # 5 x $0.98 fits under $5; the 6th does not
-    # rejected orders and no-fills leave no position and are not retried
+    real = [p for p in desk.state["positions"].values() if p["live"]]
+    assert len(ex.orders) == 5 and len(real) == 5  # 5 x $0.98 fits under $5; the 6th does not
+    paper = [p for p in desk.state["positions"].values() if not p["live"]]
+    assert len(paper) == P.PAPER_LEARNING_OPEN  # what real money could not take is practised on paper (its own cap)
+    # a rejected order leaves no position, is not retried, and holds its ladder for the round (one order per ladder)
     gw.markets = [_market("r1", "crypto", 1800), _market("z1", "crypto", 1800)]
     gw.quotes = {"r1": (0.97, 0.98), "z1": (0.97, 0.98)}
     desk2 = P.PolyDesk(_live_settings(tmp_path / "2"), ledger=FakeLedger(), client_factory=FakeExchange())
     desk2.client.reject_orders = True  # type: ignore[union-attr]
     desk2.poll(NOW)
-    assert not desk2.state["positions"] and "r1" in desk2.state["tried"] and desk2.state["counters"]["errors"] == 2
+    assert not desk2.state["positions"] and "r1" in desk2.state["tried"] and desk2.state["counters"]["errors"] == 1
+    assert [o["slug"] for o in desk2.client.orders] == ["r1"]  # type: ignore[union-attr]
+    # a reply with no fill is not the last word: counted as open money until the venue's book has spoken
     desk3 = P.PolyDesk(_live_settings(tmp_path / "3"), ledger=FakeLedger(), client_factory=FakeExchange())
     desk3.client.fill_price = 0  # type: ignore[union-attr]
     desk3.poll(NOW)
-    assert not desk3.state["positions"] and desk3.state["events"][0]["text"].startswith("No fill")
+    assert not desk3.state["positions"] and set(desk3.state["pending_orders"]) == {"r1"}
+    assert desk3.state["events"][0]["text"].startswith("Order not confirmed yet at 0.980: Will r1 happen?")
+    desk3.poll(NOW + 400)  # a quiet venue read five minutes on: it never filled
+    assert not desk3.state["positions"] and not desk3.state["pending_orders"]
+    assert desk3.state["events"][0]["text"] == "No fill at 0.980: Will r1 happen? (order cancelled)"
 
 
 def test_daily_and_total_loss_stops(gw: Gateway, tmp_path) -> None:
-    gw.markets = [_market(f"m{i}", "crypto", 1800) for i in range(4)]
+    """The stops count money still at risk (rule 2026-10-10a): a day can lose at most the daily stop even if every
+    open bet loses, so the rule's own bets stop short of it; the day's realised loss at the stop holds the line for
+    the day; the total stop, once realised (here through a contract bought elsewhere, which the venue's book makes
+    the desk's), switches the desk back to paper for good, and a restart stays on paper."""
+    settings = _live_settings(tmp_path, POLYDESK_LIVE_DAILY_LOSS_USD="2", POLYDESK_LIVE_TOTAL_LOSS_USD="3")
+    gw.markets = [_market(f"m{i}", "crypto", 1800 + i) for i in range(4)]
     gw.quotes = {f"m{i}": (0.97, 0.98) for i in range(4)}
     ledger = FakeLedger()
-    desk = P.PolyDesk(_live_settings(tmp_path, POLYDESK_LIVE_DAILY_LOSS_USD="1", POLYDESK_LIVE_TOTAL_LOSS_USD="3"),
-                      ledger=ledger, client_factory=FakeExchange())
+    ex = FakeExchange()
+    desk = P.PolyDesk(settings, ledger=ledger, client_factory=ex)
     desk.poll(NOW)
-    assert len(desk.state["positions"]) == 4
+    real = {s for s, p in desk.state["positions"].items() if p["live"]}
+    assert real == {"m0", "m1"} and len(ex.orders) == 2  # two bets ($1.96 with fees) fit the $2 day; a third would not
+    assert desk.state["positions"]["m2"]["live"] is False  # the rest is practised on paper
     gw.markets = []
-    gw.settlements = {f"m{i}": 0.0 for i in range(2)}  # two losses of ~$0.98: past the $1 daily stop, under the $3 total
+    gw.settlements = {"m0": 0.0, "m1": 0.0, "m2": 1.0, "m3": 1.0}  # both real bets lose: -$1.96, under the $2 stop
     desk.poll(NOW + 2000)
-    assert desk.state["mode"] == "live" and len(desk.state["positions"]) == 2
-    gw.markets = [_market("new", "crypto", 1800)]
+    day = datetime.fromtimestamp(NOW, UTC).strftime("%Y-%m-%d")
+    assert desk.state["mode"] == "live" and desk.state["live_days"][day]["pnl_usd"] == pytest.approx(-1.9627, abs=1e-3)
+    gw.markets = [_market("new", "crypto", 3900)]
     gw.quotes = {"new": (0.97, 0.98)}
-    desk.poll(NOW + 2100)
-    assert "new" not in desk.state["positions"] and "Daily loss cap" in desk.state["live_status"]
+    desk.poll(NOW + 2100)  # $0.04 of room left today: no real order, a practice bet instead
+    assert len(ex.orders) == 2 and desk.state["positions"]["new"]["live"] is False
+    assert desk.state["live_status"] is None  # not the daily stop: the room for one more bet that could lose
+    assert P.panel_state(settings, NOW + 2100)["skips"]["counts"]["stop_room"] == 3  # m2, m3 this morning, now new
+    # two contracts bought elsewhere show up in the venue's book and lose: past the $2 day and the $3 total
+    ex.hold("outside", 2.0, 0.97, title="Bought elsewhere", outcome="Yes")
     gw.markets = []
-    gw.settlements.update({"m2": 0.0, "m3": 0.0})  # two more losses: past the $3 total stop
     desk.poll(NOW + 2200)
+    assert desk.state["positions"]["outside"]["rule"] == "venue"
+    gw.settlements["outside"] = 0.0
+    desk.poll(NOW + 2200 + P.ADOPTED_END_GUESS_S + 1)
     assert desk.state["mode"] == "paper" and desk.state["live_halted"] and desk.client is None
+    assert desk.state["halt_reason"] == "total_loss"
     assert "Total loss cap" in desk.state["live_status"] and ledger.receipts[-1][0] == "polydesk_live_halted"
     # a restart with live settings stays on paper until the owner resets the state
-    again = P.PolyDesk(_live_settings(tmp_path, POLYDESK_LIVE_TOTAL_LOSS_USD="3"), ledger=FakeLedger(), client_factory=FakeExchange())
-    assert again.state["mode"] == "paper" and "stays on paper" in again.state["live_status"]
+    again = P.PolyDesk(_live_settings(tmp_path, POLYDESK_LIVE_TOTAL_LOSS_USD="3"), ledger=FakeLedger(),
+                       client_factory=FakeExchange())
+    assert again.state["mode"] == "paper" and again.state["live_status"] == P.TOTAL_HALT_STATUS
+    assert "stays on paper" in again.state["live_status"]
     d = P.panel_state(again.settings, NOW + 2300)
     assert d["label"] == "Paper money (pretend)" and d["live_pnl_total_usd"] < -3
 
 
 def test_panel_tells_leftover_paper_positions_from_real_ones(gw: Gateway, tmp_path) -> None:
-    gw.markets = [_market("p1", "crypto", 1800), _market("p2", "crypto", 1800)]
+    gw.markets = [_market("p1", "crypto", 1800), _market("p2", "crypto", 1801)]
     gw.quotes = {"p1": (0.97, 0.98), "p2": (0.97, 0.98)}
     paper = P.PolyDesk(Settings.from_env({"DATA_DIR": str(tmp_path)}))
     paper.poll(NOW)
     assert len(paper.state["positions"]) == 2 and not any(p.get("live") for p in paper.state["positions"].values())
     # the owner switches the same desk (same state file) to live: the paper positions run off, new buys are real
-    gw.markets = [_market("p1", "crypto", 1800), _market("p2", "crypto", 1800), _market("r1", "crypto", 1800)]
+    gw.markets = [_market("p1", "crypto", 1800), _market("p2", "crypto", 1801), _market("r1", "crypto", 1802)]
     gw.quotes["r1"] = (0.96, 0.97)
     live = P.PolyDesk(_live_settings(tmp_path), ledger=FakeLedger(), client_factory=FakeExchange())
     live.poll(NOW + 10)
     d = P.panel_state(live.settings, NOW + 10)
     assert d["mode"] == "live" and d["open"] == 3
+    worst = 0.97 + 0.0695 * 0.97 * 0.03  # if the open bet lost: its cost and the modelled fee
     assert d["real"] == {"open": 1, "at_risk_usd": pytest.approx(0.97), "settled_total": 0, "won_total": 0,
-                         "pnl_total_usd": 0.0, "today": {"pnl_usd": 0.0, "settled": 0, "won": 0}}
+                         "pnl_total_usd": 0.0, "today": {"pnl_usd": 0.0, "settled": 0, "won": 0},
+                         "pending": 0, "pending_usd": 0.0, "stop_room_usd": pytest.approx(3.0 - worst),
+                         "stop_room_limit": "day"}
     assert d["paper"]["open"] == 2 and d["paper"]["settled_total"] == 0
     assert {(x["question"], x["live"]) for x in d["positions"]} == {
         ("Will p1 happen?", False), ("Will p2 happen?", False), ("Will r1 happen?", True)}
@@ -216,7 +247,7 @@ def test_panel_tells_leftover_paper_positions_from_real_ones(gw: Gateway, tmp_pa
 
 def test_silent_fills_are_found_in_the_venues_book(gw: Gateway, tmp_path) -> None:
     """2026-10-09: six real buys filled while every order reply showed no execution. The venue's book decides."""
-    gw.markets = [_market("w1", "crypto", 1800), _market("w2", "crypto", 1800)]
+    gw.markets = [_market("w1", "crypto", 1800), _market("w2", "crypto", 1801)]
     gw.quotes = {"w1": (0.96, 0.97), "w2": (0.97, 0.98)}
     ex = FakeExchange(cash=25.0)
     ex.silent_fills = True
@@ -253,19 +284,22 @@ def test_venue_positions_the_desk_never_recorded_are_adopted_and_capped(gw: Gate
     assert hockey["cost_usd"] == pytest.approx(0.97) and not hockey["end_known"] and hockey["end_ts"] == NOW + P.ADOPTED_END_GUESS_S
     assert [k for k, _ in ledger.receipts].count("polydesk_position_adopted") == 2
     d = P.panel_state(desk.settings, NOW)
+    worst = 2 * (0.97 + 0.0695 * 0.97 * 0.03)  # both lost: their cost and the modelled fee
     assert d["real"] == {"open": 2, "at_risk_usd": pytest.approx(1.94), "settled_total": 0, "won_total": 0,
-                         "pnl_total_usd": 0.0, "today": {"pnl_usd": 0.0, "settled": 0, "won": 0}}
+                         "pnl_total_usd": 0.0, "today": {"pnl_usd": 0.0, "settled": 0, "won": 0},
+                         "pending": 0, "pending_usd": 0.0, "stop_room_usd": pytest.approx(3.0 - worst),
+                         "stop_room_limit": "day"}
     assert d["exchange"] == {"positions": 2, "contracts": 2.0, "cost_usd": pytest.approx(1.94), "value_usd": pytest.approx(1.65),
                              "at": NOW}
-    # the adopted money counts against the open cap: $1.94 held + $0.98 > $2.50
-    gw.markets.append(_market("n1", "crypto", 1800))
+    # the adopted money counts against the open cap: $1.94 held + $0.98 > $2.50 (another ladder: n1 ends later)
+    gw.markets.append(_market("n1", "crypto", 1900))
     gw.quotes["n1"] = (0.97, 0.98)
     desk.poll(NOW + 100)
-    assert not ex.orders and "n1" not in desk.state["positions"]
+    assert not ex.orders and desk.state["positions"]["n1"]["live"] is False  # practised on paper instead
     # the venue's book is shown in paper mode too (the key is set, no orders are placed)
     paper = P.PolyDesk(Settings.from_env({"DATA_DIR": str(tmp_path / "p"), **KEY}), client_factory=ex)
     assert paper.state["mode"] == "paper" and paper.client is None and paper.reader is ex
-    gw.markets = [_market("n1", "crypto", 1800)]
+    gw.markets = [_market("n1", "crypto", 1900)]
     r = paper.poll(NOW)
     assert r["adopted"] == 2 and not ex.orders and paper.state["positions"]["n1"]["live"] is False  # paper buy, real adoptions
     dd = P.panel_state(paper.settings, NOW)
@@ -309,3 +343,59 @@ def test_real_buys_and_venue_adoptions_carry_their_rule_and_the_record_splits(gw
         since["real"]["pnl_total_usd"] + before["real"]["pnl_total_usd"])
     assert set(desk.state["by_rule"]) == {P.rule_id(desk.settings), "venue"}
     assert "paper" not in desk.state["by_rule"]["venue"] and "paper" not in desk.state["by_rule"][desk.rule]
+
+
+# --------------------------------------------------------------------------- C14: a record file that cannot be read
+
+
+@pytest.mark.parametrize("junk", ["not json", '{"version": 99, "live_pnl_total_usd": -4.885}', "[1, 2]"],
+                         ids=["not-json", "another-version", "not-an-object"])
+def test_an_unreadable_state_file_refuses_live_and_keeps_a_copy(gw: Gateway, tmp_path, junk: str) -> None:
+    """The file holds the loss stops (-$4.89 so far, today's loss, the halt). Read as empty, it would re-arm the
+    full $10 total stop, so a live desk refuses real money from it, says why, and keeps the file for the owner."""
+    settings = _live_settings(tmp_path)
+    path = P.state_path(settings)
+    path.parent.mkdir(parents=True)
+    path.write_text(junk)
+    ledger = FakeLedger()
+    ex = FakeExchange(cash=17.43)
+    desk = P.PolyDesk(settings, ledger=ledger, client_factory=ex)
+    assert desk.state["mode"] == "paper" and desk.client is None and desk.state["live_halted"] is True
+    assert desk.state["halt_reason"] == "unreadable_state" and desk.state["live_status"] == P.UNREADABLE_STATUS
+    assert "loss limits cannot be trusted" in desk.state["live_status"]
+    copies = list(path.parent.glob("state.json.unreadable-*"))
+    assert len(copies) == 1 and copies[0].read_text() == junk  # the evidence, as it was
+    assert [k for k, _ in ledger.receipts] == ["polydesk_state_unreadable"]  # never polydesk_live_connected
+    assert desk.state["events"][0]["text"].startswith("The desk's record file could not be read")
+    gw.markets = [_market("w1", "crypto", 1800)]
+    gw.quotes = {"w1": (0.97, 0.98)}
+    desk.poll(NOW)
+    assert not ex.orders and desk.state["positions"]["w1"]["live"] is False  # practice only
+    assert P.load_state(path)["live_halted"] is True  # the saved state carries the halt
+
+
+def test_a_restart_after_an_unreadable_file_stays_off(gw: Gateway, tmp_path) -> None:
+    settings = _live_settings(tmp_path)
+    path = P.state_path(settings)
+    path.parent.mkdir(parents=True)
+    path.write_text("{garbage")
+    P.PolyDesk(settings, ledger=FakeLedger(), client_factory=FakeExchange())
+    ex = FakeExchange()
+    again = P.PolyDesk(settings, ledger=FakeLedger(), client_factory=ex)  # the file is readable now: the halt holds
+    assert again.state["mode"] == "paper" and again.client is None and again.state["live_status"] == P.UNREADABLE_STATUS
+    assert len(list(path.parent.glob("state.json.unreadable-*"))) == 1  # the second start found a good file
+    # POLYDESK_MODE is untouched: only the owner resets the state
+    assert again.settings.polydesk_mode == "live" and P.panel_state(settings, NOW)["mode"] == "paper"
+
+
+def test_a_good_file_still_goes_live(gw: Gateway, tmp_path) -> None:
+    settings = _live_settings(tmp_path)
+    st = P.empty_state()
+    st["live_pnl_total_usd"] = -4.885
+    P.save_state(P.state_path(settings), st)
+    desk = P.PolyDesk(settings, ledger=FakeLedger(), client_factory=FakeExchange())
+    assert desk.state["mode"] == "live" and desk.state["live_halted"] is False and desk.state["halt_reason"] is None
+    assert desk.state["live_pnl_total_usd"] == pytest.approx(-4.885)
+    assert not list(P.state_path(settings).parent.glob("state.json.unreadable-*"))
+    fresh = P.PolyDesk(_live_settings(tmp_path / "new"), ledger=FakeLedger(), client_factory=FakeExchange())
+    assert fresh.state["mode"] == "live"  # no file at all is a first start, not an unreadable one

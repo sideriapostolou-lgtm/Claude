@@ -31,8 +31,8 @@ EVIDENCE = {
     "Lab 3": ("## 2026-10-09 12:35-12:37 UTC: T3 trend following on the majors only (BTC, ETH, SOL)",
               "**FAIL on the pre-registered bar**", 'recorded as "promising, under-powered", not as an edge',
               "The verdict stands\n  as FAIL"),
-    "Lab 4": tuple(f"| {h} |" for h in ("P1", "P2", "P3", "P4", "P5")) + ("NO EDGE on TRAIN (no cell qualifies)",
-                                                                          "Paper only."),
+    "Lab 4": tuple(f"| {h} |" for h in ("P1", "P2", "P3", "P4", "P5", "P6")) + (
+        "NO EDGE on TRAIN (no cell qualifies)", "NO SPORT ALLOWED on TRAIN (no sport shows proof)", "Paper only."),
     "Lab 5": tuple(f"| {h} |" for h in ("S1", "S2", "S3")) + ("NO EDGE on TRAIN (no cell qualifies)",
                                                               "NOT RUN: TRAIN shortlisted no cell", "Paper only."),
     "Lab 6": ("| H1 |", "NO EDGE on TRAIN (no selectable cell qualifies)", "5,476 matched games", "Paper only."),
@@ -58,7 +58,8 @@ PLAIN_FACTS = {
               ("its lead over random timing could be luck",
                "the gap to random timing with the same\n  exposure is not statistically separable from luck"),
               ("Promising, not an edge", 'recorded as "promising, under-powered", not as an edge')),
-    "Lab 4": (("No version passed on past markets", "NO EDGE on TRAIN (no cell qualifies)"),),
+    "Lab 4": (("No version passed on past markets", "NO EDGE on TRAIN (no cell qualifies)"),
+              ("no sport did either", "NO SPORT ALLOWED on TRAIN (no sport shows proof)")),
     "Lab 5": (("No version passed on past markets", "NO EDGE on TRAIN (no cell qualifies)"),
               ("none was tried on newer data", "NOT RUN: TRAIN shortlisted no cell")),
     "Lab 6": (("No version passed", "NO EDGE on TRAIN (no selectable cell qualifies)"),
@@ -97,8 +98,8 @@ def test_the_table_is_fixed_plain_and_well_formed() -> None:
     assert set(state) == {"labs", "trials_total", "as_of", "rule"} and state["rule"] == RULE
     assert [set(lab) for lab in state["labs"]] == [{"lab", "question", "verdict", "date", "reading", "plain",
                                                     "trials"}] * 6
-    assert state["trials_total"] == sum(row["trials"] for row in LABS) == 2977
-    assert state["as_of"] == "2026-10-09"
+    assert state["trials_total"] == sum(row["trials"] for row in LABS) == 3005  # lab 4's P6 added 28 (2026-10-10)
+    assert state["as_of"] == "2026-10-10"
     assert research_state() == state  # pure
     json.dumps(state, allow_nan=False)
     assert "PASS" not in {row["verdict"] for row in LABS}  # no rule has passed its lab (RULE_LAB_PASSED stays False)
@@ -149,7 +150,7 @@ def test_the_counted_trials_and_dates_are_the_ledgers() -> None:
     assert {c["hypothesis"] for c in lab3["configs"].values()} == {"T1", "T2", "T3", "V1", "X1", "R1"}
     assert sum(c["hypothesis"] == "T3" for c in lab3["configs"].values()) == 5  # T3: 5 counted trials (PLAN 4)
     assert max(c["first_utc"][:10] for c in lab3["configs"].values()) == ROWS["Lab 3"]["date"]
-    for lab, hyps in (("lab4", {"P1", "P2", "P3", "P4", "P5", "C1"}), ("lab5", {"S1", "S2", "S3"}), ("lab6", {"H1"})):
+    for lab, hyps in (("lab4", {"P1", "P2", "P3", "P4", "P5", "P6", "C1"}), ("lab5", {"S1", "S2", "S3"}), ("lab6", {"H1"})):
         cells = _trials(lab)
         row = ROWS["Lab " + lab[3:]]
         assert isinstance(cells, list) and len(cells) == row["trials"], lab  # every evaluated cell is a trial
@@ -160,5 +161,5 @@ def test_the_counted_trials_and_dates_are_the_ledgers() -> None:
 def test_api_page_carries_the_research_block(ledger: Ledger, settings: Settings) -> None:
     state = build_page_state(ledger, settings, NOW)
     assert state["research"] == research_state()
-    assert state["research"]["labs"][2]["verdict"] == "FAIL" and state["research"]["trials_total"] == 2977
+    assert state["research"]["labs"][2]["verdict"] == "FAIL" and state["research"]["trials_total"] == 3005
     assert all(lab["verdict"] != "PASS" for lab in state["research"]["labs"])

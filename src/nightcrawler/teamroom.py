@@ -1061,7 +1061,7 @@ def _predict(ctx: _Ctx) -> dict[str, Any]:
                  f"{rt['pnl_usd']:+.2f} $; all time {real['won_total']}/{real['settled_total']} won, "
                  f"{real['pnl_total_usd']:+.2f} $." + account)
         if paper["open"] or paper["settled_total"]:
-            doing += (f" Paper (pretend, from before the switch): {paper['open']} still running off; "
+            doing += (f" Paper (pretend: what real money skips, sports included): {paper['open']} open; "
                       f"{paper['won_total']}/{paper['settled_total']} won, {paper['pnl_total_usd']:+.2f} $.")
     else:
         pt = paper.get("today") or t
@@ -1097,7 +1097,7 @@ def _predict(ctx: _Ctx) -> dict[str, Any]:
             stats.append(_stat("Polymarket cash", round(float(bal["cash"]), 2), "usd"))
         stats += _since_fix_stats(since, "real")
         if paper["open"] or paper["settled_total"]:
-            stats += [_stat("Open (paper, running off)", paper["open"], "count"),
+            stats += [_stat("Open (paper)", paper["open"], "count"),
                       _stat("All time $ (paper)", round(paper["pnl_total_usd"], 2), "usd"),
                       *_since_fix_stats(since, "paper")]
         headline = _headline(real["open"], "count", "real positions open")

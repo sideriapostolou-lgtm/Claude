@@ -6,37 +6,61 @@ What it does, every ``polydesk_poll_s`` seconds, in its own thread (the trading 
 
 1. Watch list from the venue's PUBLIC gateway (``gateway.polymarket.us``, no key): every open non-sports market
    ending within :data:`HORIZON_H` hours (per category, the listing is sports-first otherwise) plus the
-   match-winner markets of sports games in progress (events with a live period), capped at :data:`SPORTS_CAP`.
-2. One best bid / offer per watched market (a small thread pool, well under the gateway's 20 req/s).
-3. The candidate rule (lab 4's "near-certain grind", PLAN §2-3): once per market, the first time a side can be
-   bought at or above ``polydesk_theta`` within the last ``polydesk_hours`` before the market's end, buy
-   ``polydesk_ticket_usd`` of it on paper at the printed price (long at the ask, short at 1 - bid), pay the
-   market's own taker fee ``feeCoefficient x shares x p x (1 - p)``, hold to settlement.
-4. Settlement: a position whose market left the watch list (or ended) is settled at the venue's settlement price;
-   the paper P&L is booked and the day's total updated.
+   match-winner markets of sports games in play (the venue's own ``live`` flag set and ``ended`` not, and a
+   period not on :data:`NOT_LIVE_PERIODS`), capped at :data:`SPORTS_CAP`. Each game market carries its sport
+   (:mod:`nightcrawler.sportmap`, lab 4's own map), its count of outcomes and the game situation (period, score).
+2. One best bid / offer per watched market (a small thread pool, well under the gateway's 20 req/s), with the
+   venue's market state and its trades (the last trade, shares traded, the sizes quoted).
+3. The candidate rule (lab 4's "near-certain grind", PLAN §2-3; :meth:`PolyDesk._qualifies`): once per market, the
+   first time its YES side can be bought at or above ``polydesk_theta`` with bid and ask within
+   :data:`MAX_SPREAD`, the market OPEN and already TRADED near that price (lab 4's rule fires on trade prints: a
+   resting offer nobody has traded is not a price), in the last ``polydesk_hours`` before a non-sports market's
+   end or while a game is in play, buy ``polydesk_ticket_usd`` of it on paper at the printed ask, pay the market's
+   own taker fee ``feeCoefficient x shares x p x (1 - p)``, hold to settlement. One position per game or price
+   ladder at a time (:func:`_cluster_of`, both books together), and a game whose outcomes' YES bids add up to more
+   than :data:`COHERENT_BID_SUM`, or with two outcomes near-certain at once, is refused outright (2026-10-10: the
+   desk bought all three outcomes of one e-soccer game at 0.98, a sure loss). The YES side only since rule
+   ``2026-10-10a``: practice and real money make the same kind of bet.
+4. Settlement: a position whose market left the watch list (or ended), or whose quote says the market is no longer
+   open, is settled at the venue's settlement price; the paper P&L is booked and the day's total updated.
 
 **Live mode** (``POLYDESK_MODE=live`` + ``POLYDESK_LIVE_CONFIRM`` + the account's key in Railway variables, the
 owner's explicit switch): the same rule, but a real limit order on Polymarket US for ``polydesk_live_contracts``
-contracts of the YES side (long only: the venue prices every order on the YES side, so shorts stay paper-only),
-immediate-or-cancel at the printed ask, through :mod:`nightcrawler.polymarket_us`. Caps, checked before every
-order: money in open positions <= ``polydesk_live_max_open_usd``; the UTC day's realised loss <=
-``polydesk_live_daily_loss_usd`` (then no more buys today); total realised loss <=
-``polydesk_live_total_loss_usd`` (then the desk switches itself back to paper for good and says so; only the owner
-can switch it live again). Live starts only after a successful balance read; a rejected key leaves the desk on
+contracts of the YES side, immediate-or-cancel, through :mod:`nightcrawler.polymarket_us`, on NON-SPORTS markets
+only: :data:`REAL_SPORTS_ALLOWED` is empty, because lab 4's pre-registered history test (P6, 2026-10-10) allowed no
+sport (:data:`SPORT_HISTORY`), and it changes only by a code change after a sport passes. Just before an order the
+one market's quote is read again and the whole test re-run; the fresh ask is the limit. Caps, checked before every
+order (:func:`real_room`): money in open positions and unconfirmed orders <= ``polydesk_live_max_open_usd``; the
+UTC day's realised P&L less everything still at risk (open bets and unconfirmed orders as if all lost, fees
+included) stays above -``polydesk_live_daily_loss_usd``, and the all-time real P&L less the same stays above
+-``polydesk_live_total_loss_usd`` (realised past it, the desk switches itself back to paper for good and says so;
+only the owner can switch it live again). An order the venue does not confirm is kept in ``pending_orders`` and
+counted as open money until the venue's book shows it (then it is the rule's own buy, stamped with its rule and
+quote) or a quiet venue read :data:`PENDING_CLEAR_S` later says it never filled; no further real order goes out
+that round, and none at all in a round whose venue read failed. A market the rule picks but real money does not
+buy (a sport, a pause, a cap, the venue unread) is bought on PAPER instead, so the practice book keeps watching
+while real money is on; every such skip is counted per UTC day (``skips``) for the page. Live starts only after a
+successful balance read, and never from a record file that could not be read (its loss stops would be lost: the
+desk stays on paper, ``halt_reason`` says why, and a copy of the file is kept); a rejected key leaves the desk on
 paper with the reason on the page. Every live order and settlement is receipted in the ledger's hash chain.
 
-State lives in ``DATA_DIR/polydesk/state.json`` (atomic rewrite): open positions, the last closed positions,
-daily P&L, counters, the last poll, the live status and the last balance. The team-room panel
-(:func:`panel_state`) reads that file. The rule is a CANDIDATE: it earns a real seat only by passing lab 4's
-TRAIN / VAL / TEST, and the page says "paper" or "real" everywhere this desk's numbers appear.
+State lives in ``DATA_DIR/polydesk/state.json`` (atomic rewrite): open positions, unconfirmed orders, the last
+closed positions, daily P&L, counters, the last poll, the live status, the last balance and the day's skips. The
+team-room panel (:func:`panel_state`) reads that file. Lab 4 TRAIN found NO EDGE for the rule: real money on it is
+the owner's choice at tiny amounts, and the page says "paper" or "real" everywhere this desk's numbers appear. The
+file keeps the loss stops (``live_days``, ``live_pnl_total_usd``, ``live_halted``), so :data:`STATE_VERSION` is never
+bumped: new keys arrive through :func:`empty_state`'s defaults.
 
 **The desk learns from its own record** (2026-10-09, after the paper rule lost 46 of 114 settlements in a day):
 
 * Rule versions. Every position the rule opens (paper or real) is stamped ``rule`` = :func:`rule_id`:
-  :data:`RULE_VERSION` (bumped whenever the rule's code changes; ``2026-10-09b`` is the :data:`MAX_SPREAD` guard)
-  with the theta, hours and max spread it bought under (rows stamped before 2026-10-09 evening carry the bare
-  version, an older rule), plus the book at entry: ``bid_in``, ``ask_in``, ``spread_in``. A position adopted from
-  the venue's book is stamped ``rule: "venue"`` (not this rule's buy, no quote). Closed rows inherit the fields;
+  :data:`RULE_VERSION` (bumped whenever the rule's code changes; ``2026-10-09b`` was the :data:`MAX_SPREAD` guard,
+  ``2026-10-10a`` the audit's fixes) with the theta, hours and max spread it bought under (rows stamped before
+  2026-10-09 evening carry the bare version, an older rule), plus the book at entry: ``bid_in``, ``ask_in``,
+  ``spread_in``, the trades (``last_in``, ``traded_in``, ``bid_size_in``, ``ask_size_in``), the ``sport`` and the game
+  situation (``period``, ``score``, ``elapsed``, ``game_start``). A contract the venue holds that the desk never
+  ordered is stamped ``rule: "venue"`` (not this rule's buy, no quote); one the desk ordered and the venue confirmed
+  late keeps the order's own stamp. Closed rows inherit the fields;
   rows from before the stamp have no ``rule`` and count as "before the fix". The panel's ``since_fix`` is the
   current rule's own record (open, settled, won, P&L; paper and real apart) and ``before_fix`` everything else
   (older rules too), so a new rule is never judged on an old rule's losses. The
@@ -78,6 +102,12 @@ apart (:meth:`PolyDesk._guard`):
   ever stop buying.
 * ``learning`` / ``unclear`` change nothing. The panel (:func:`panel_state`) carries ``guard``: each book's
   verdict, reason and pause (since when), and a plain line for the page.
+* Per sport (the way back for a blocked sport, never real money by itself): every sports settlement is also kept
+  per rule, sport and book (``by_sport``) and the risk manager judges each sport's PRACTICE record the same way
+  (:func:`judge_sport`). A ``winning`` one (never tennis, esports or ``other``) sets ``sport_flags[sport]`` and says
+  so once, with a ``polydesk_sport_flag`` receipt: a flag for the owner and a fresh confirmation window, nothing
+  more. Nothing here writes :data:`REAL_SPORTS_ALLOWED`, ``mode``, the client or a setting. The panel's ``sports``
+  carries each sport's real-money state, its history verdict and its practice record.
 """
 
 from __future__ import annotations
@@ -86,9 +116,11 @@ import json
 import logging
 import os
 import re
+import shutil
 import threading
 import time
 import zlib
+from collections.abc import Mapping
 from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime
 from pathlib import Path
@@ -96,7 +128,7 @@ from typing import Any
 
 import requests
 
-from nightcrawler import deskguard
+from nightcrawler import deskguard, sportmap
 from nightcrawler.config import LIVE_CONFIRM_PHRASE, Settings
 from nightcrawler.polymarket_us import PolymarketUSClient, PolymarketUSError
 
@@ -124,7 +156,56 @@ CATEGORIES = (
     "tech",
 )
 WINNER_KINDS = ("MONEYLINE", "DRAWABLE_OUTCOME")
-NOT_LIVE_PERIODS = {"NS", "", "CAN", "SUS", "PST", "FT", "AOT", "FINAL", "ENDED"}
+#: A second check behind the venue's own ``live`` / ``ended`` flags: periods that are never play ("VFT" ended, "POST"
+#: postponed: both passed the list before 2026-10-10 while the venue said ``live: false``).
+NOT_LIVE_PERIODS = {"NS", "", "CAN", "SUS", "PST", "FT", "AOT", "FINAL", "ENDED", "VFT", "POST"}
+OPEN_STATE = "MARKET_STATE_OPEN"  # the venue's market state while it trades (its quote reply's ``state``)
+#: A game's outcomes are mutually exclusive, so a sane book's YES BIDS add up to at most $1.00 (its asks to a little
+#: more, through the spreads). More than this and the book is broken, not near-certain (2026-10-10 13:12: one
+#: e-soccer game quoted every outcome at 0.97/0.98, bids adding up to 2.91; the desk bought all three).
+COHERENT_BID_SUM = 1.02
+PENDING_CLEAR_S = 300.0  # an unconfirmed order with no contract at a venue read this long after it: never filled
+PENDING_MAX_S = 86_400.0  # ... and any unconfirmed order is dropped after a day
+TRIED_KEEP = 5000  # markets already tried, the newest kept (insertion order: never trimmed alphabetically)
+SKIPS_DAYS = 7  # UTC days of skip counts kept
+SKIPS_SEEN_KEEP = 5000  # (reason, market) marks kept per day, so each counts once
+#: Why the rule's pick was not bought (or not with real money), counted per UTC day for the page (``skips``).
+SKIP_REASONS = ("sports_no_real", "incoherent_game", "game_incomplete", "game_held", "never_traded", "price_moved",
+                "waiting_unconfirmed", "venue_unread", "stop_room")
+DAILY_NOTE = "Daily loss cap reached: no more real buys today."
+TOTAL_HALT_STATUS = "Live was switched off by the total-loss cap; the desk stays on paper until the owner resets it."
+UNREADABLE_STATUS = ("The desk's record file could not be read, so its loss limits cannot be trusted: staying on "
+                     "practice until the owner checks it.")
+#: The sports real money may bet: NONE. Lab 4's pre-registered history test (P6, PLAN.md Amendment 5,
+#: research/lab4/P6/train.json, 2026-10-10) allowed no sport on TRAIN, so VAL was not run and TEST was never read;
+#: Amendment 5(f): "the history-backed safe setting is no real-money sports buys (paper only) until a sport passes".
+#: It changes only by a code change after a pass (a new pre-registered history test through TRAIN, VAL and one TEST
+#: look, or a practice record that clears the risk manager's bar and then a fresh confirmation; never tennis,
+#: esports or "other" that way). There is no setting or variable for it.
+REAL_SPORTS_ALLOWED: frozenset[str] = frozenset()
+if "other" in REAL_SPORTS_ALLOWED:  # a mixed bucket is never judged, so it is never allowed
+    raise AssertionError("'other' can never be a real-money sport")
+#: Sports whose favourites lost more often than their prices said in lab 4's history: no practice flag for them.
+PROVEN_LOSERS = frozenset({"tennis", "esports"})
+#: Lab 4 P6 TRAIN's word on each sport (theta 0.97, the US fee), in the page's order: (verdict, the reason in plain
+#: words). Copied from research/lab4/P6/train.json; tests/test_polydesk_safety.py checks every number against it.
+SPORT_HISTORY: dict[str, tuple[str, str]] = {
+    "tennis": ("proven loser", ("ATP/WTA favourites lost 66 of 1,848 (3.6% vs the 2.8% the prices said); ITF 23 of "
+                                "223 (10.3% vs 4.4%)")),
+    "esports": ("proven loser", "57 of 821 lost (6.9% vs 3.6%)"),
+    "table tennis": ("no history", "no games to judge in the history"),
+    "e-soccer": ("no history", "no games to judge in the history"),
+    "hockey": ("no history", "no games to judge in the history"),
+    "mma/boxing": ("no history", "no games to judge in the history"),
+    "american football": ("too little history", "11 games, fewer than the 30 needed"),
+    "soccer": ("unproven", "448 buys, 10 lost (2.2% vs 3.2%): no proof either way"),
+    "baseball": ("unproven", "515 buys, 16 lost (3.1% vs 3.3%)"),
+    "basketball": ("unproven", "108 buys, 5 lost (4.6% vs 2.7%)"),
+    "cricket": ("unproven", "140 buys, 7 lost (5.0% vs 2.7%)"),
+    "other": ("mixed", "a mixed bucket, never judged"),
+}
+#: P6 TRAIN, every sport together: 3,070 buys like the desk's, 104 lost against the 2.9% the prices implied.
+SPORT_HISTORY_POOLED: dict[str, float] = {"buys": 3070, "lost": 104, "loss_rate": 0.034, "implied": 0.029}
 THREADS = 8
 REQ_SLEEP_S = 0.05
 MAX_PRICE = 0.999
@@ -136,7 +217,11 @@ EVENTS_KEEP = 40
 REAL_CLOSED_SHOWN = 5  # the panel's newest real settlements (read from the kept closed rows: the 3D trophy shelf)
 STATE_VERSION = 1
 FIRST_POLL_DELAY_S = 20.0
-RULE_VERSION = "2026-10-09b"  # bump when the rule changes; "b" = the MAX_SPREAD guard added 2026-10-09 18:07 UTC
+#: Bump when the rule changes (a fresh scorecard: the risk manager, ``since_fix`` and the pauses judge the new rule
+#: on its own record; the loss stops keep counting). "2026-10-09b" added the MAX_SPREAD guard; "2026-10-10a" (the
+#: real-money audit) buys one outcome per game or ladder, only coherent game books, only markets that traded near
+#: the price, the YES side only, and no sport with real money.
+RULE_VERSION = "2026-10-10a"
 RULE_VENUE = "venue"  # a position adopted from the venue's book: not this rule's buy
 BEFORE_FIX = "before the fix"  # rows with no rule stamp (bought before RULE_VERSION existed)
 PAPER_MAX_OPEN = 60  # open paper positions at once: the paper book stays readable
@@ -148,10 +233,14 @@ GUARD_KEEP_OLD = 200  # ... for an older rule (never judged again; its settled/w
 GUARD_LISTS = ("pnls", "costs", "keys")  # the risk manager's per-settlement lists, kept aligned
 GUARD_BOOKS = (("paused", "paper", "the desk"), ("paused_real", "real", "real buys"))  # (state key, book, name)
 #: The desk's own risk-manager events (the team room's risk member lists them).
-GUARD_EVENTS = ("Risk manager", "Candidate for real money", "Paper record clears", "No longer")
+GUARD_EVENTS = ("Risk manager", "Candidate for real money", "Paper record clears", "No longer", "Practice record for")
 #: True only once this rule passes lab 4's TEST. Until then a winning paper record is never called a candidate for
 #: real money (lab 4 TRAIN found no edge for it; a paper flag on it is most likely luck).
 RULE_LAB_PASSED = False
+#: What a position keeps of the rule's buy (the quote and trades at entry, the sport, the game and its situation):
+#: an unconfirmed order keeps the same, and the position the venue confirms late inherits it.
+_PENDING_STAMP = ("rule", "bid_in", "ask_in", "spread_in", "last_in", "traded_in", "bid_size_in", "ask_size_in",
+                  "sport", "event", "period", "score", "elapsed", "game_start")
 _DIGITS = re.compile(r"\d[\d,.]*")
 _CUTS = ("spread", "category", "price", "time", "tight")
 _CATEGORY_WORDS = {"sports": "sports", "crypto": "crypto"}
@@ -201,6 +290,15 @@ def _num(v: Any) -> float | None:
         return float(v) if v is not None and v != "" else None
     except (TypeError, ValueError):
         return None
+
+
+def _as_dict(value: Any) -> dict[str, Any]:
+    """``value`` when it is a dict (a state file's own), else a new empty one (junk is never trusted)."""
+    return value if isinstance(value, dict) else {}
+
+
+def _as_list(value: Any) -> list[Any]:
+    return value if isinstance(value, list) else []
 
 
 def _market_rec(
@@ -256,8 +354,26 @@ def open_markets(
     return out
 
 
+def _event_tags(ev: Mapping[str, Any]) -> list[str]:
+    """An event's tag slugs, lower case (the venue sends dicts with a ``slug``; plain strings are taken as they are)."""
+    return [str(t.get("slug") if isinstance(t, dict) else t).lower() for t in ev.get("tags") or []]
+
+
+def _sport(event_slug: str | None, market_slug: str, tags: list[str]) -> str:
+    """The sport of a game (:func:`nightcrawler.sportmap.sport_of`, lab 4's map: the tags first, then the league
+    code): from the event's slug, else the league word of an ``aec-`` / ``atc-`` market slug."""
+    code = event_slug
+    if not code:
+        head, _, rest = str(market_slug).partition("-")
+        code = rest if head in ("aec", "atc") else None
+    return sportmap.sport_of(code, tags)
+
+
 def live_sports_markets(now: float, cap: int = SPORTS_CAP) -> list[dict[str, Any]]:
-    """Match-winner markets of games in progress (events started within SPORTS_LOOKBACK_H with a live period)."""
+    """Match-winner markets of games in play: events started within SPORTS_LOOKBACK_H that the venue itself calls
+    ``live`` and not ``ended``, with a period that is not on :data:`NOT_LIVE_PERIODS` (a second check). Each market
+    carries its game's ``event`` (title), ``event_slug``, ``tags``, ``sport``, ``n_outcomes`` (the game's open
+    winner markets: a three-way game has three) and the situation (``period``, ``score``, ``elapsed``)."""
     start_min = datetime.fromtimestamp(now - SPORTS_LOOKBACK_H * 3600, UTC).strftime(
         "%Y-%m-%dT%H:%M:%SZ"
     )
@@ -279,16 +395,22 @@ def live_sports_markets(now: float, cap: int = SPORTS_CAP) -> list[dict[str, Any
         if not evs:
             break
         for ev in evs:
+            if ev.get("live") is not True or ev.get("ended"):
+                continue  # the venue's own word: not in play (ended, postponed, not started)
             started = parse_iso(ev.get("startTime") or ev.get("startDate"))
             period = str(ev.get("period") or "").upper()
             if started is None or started > now or period in NOT_LIVE_PERIODS:
                 continue
+            winners = []
             for m in ev.get("markets") or []:
                 kind = str(
                     m.get("sportsMarketTypeV2") or m.get("marketType") or ""
                 ).upper()
-                if not any(w in kind for w in WINNER_KINDS) or m.get("closed"):
-                    continue
+                if any(w in kind for w in WINNER_KINDS) and not m.get("closed"):
+                    winners.append(m)
+            event_slug = str(ev.get("slug") or "") or None
+            tags = _event_tags(ev)
+            for m in winners:
                 out.append(
                     _market_rec(
                         m,
@@ -297,6 +419,12 @@ def live_sports_markets(now: float, cap: int = SPORTS_CAP) -> list[dict[str, Any
                         game_start=started,
                         period=period,
                         event=str(ev.get("title") or ev.get("slug") or "")[:80],
+                        event_slug=event_slug,
+                        tags=tags,
+                        sport=_sport(event_slug, m["slug"], tags),
+                        n_outcomes=len(winners),
+                        score=str(ev.get("score"))[:20] if ev.get("score") not in (None, "") else None,
+                        elapsed=str(ev.get("elapsed"))[:10] if ev.get("elapsed") not in (None, "") else None,
                     )
                 )
         if len(evs) < PAGE:
@@ -306,13 +434,21 @@ def live_sports_markets(now: float, cap: int = SPORTS_CAP) -> list[dict[str, Any
     return out[:cap]
 
 
-def bbo(slug: str) -> dict[str, float | None]:
+def bbo(slug: str) -> dict[str, Any]:
+    """One market's quote: best bid and ask, the last trade, the venue's market ``state``, shares traded over its
+    life and the sizes quoted at the bid and the ask (``None`` for any the reply leaves out)."""
     reply = _get(f"/markets/{slug}/bbo")
     md = reply.get("marketData", reply) if isinstance(reply, dict) else {}
+    md = md if isinstance(md, dict) else {}
+    state = md.get("state")
     return {
         "best_bid": _num(md.get("bestBid")),
         "best_ask": _num(md.get("bestAsk")),
         "last": _num(md.get("lastTradePx")),
+        "state": str(state) if state else None,
+        "shares_traded": _num(md.get("sharesTraded")),
+        "bid_size": _num(md.get("bidShares")),
+        "ask_size": _num(md.get("askShares")),
     }
 
 
@@ -355,6 +491,13 @@ def empty_state() -> dict[str, Any]:
         "paused_real": None,  # {at, reason, rule}: new real buys stopped (the real record is losing)
         "candidate": None,  # {at, reason, rule}: the paper record is winning: a candidate for real money (owner decides)
         "candidate_said": None,  # the rule version whose candidacy was announced (said once per rule)
+        "halt_reason": None,  # why live_halted was set: "total_loss" (the total stop) or "unreadable_state"
+        "daily_stop_said": None,  # the UTC day the daily-stop event was said (said once a day, restarts included)
+        "pending_orders": {},  # slug -> a real order the venue has not confirmed yet (counted as open real money)
+        "skips": {},  # UTC day -> {counts: {reason: n}, sports: {sport: n}, seen: [crc32 of reason|market]}
+        "by_sport": {},  # rule -> sport -> book -> the per-settlement record (as by_rule), sports settlements only
+        "sport_flags": {},  # sport -> {at, rule, reason}: its practice record clears the risk manager's bar
+        "sport_flags_said": [],  # "rule|sport" pairs whose flag was announced (said again after it clears)
     }
 
 
@@ -372,6 +515,18 @@ def load_state(path: Path) -> dict[str, Any]:
     except (OSError, ValueError):
         pass
     return empty_state()
+
+
+def state_file_unreadable(path: Path) -> bool:
+    """True when ``path`` exists but :func:`load_state` would not read it (not JSON, not an object, another
+    :data:`STATE_VERSION`): it would start from an empty state, forgetting the loss stops it kept."""
+    if not path.exists():
+        return False
+    try:
+        doc = json.loads(path.read_text())
+    except (OSError, ValueError):
+        return True
+    return not isinstance(doc, dict) or doc.get("version") != STATE_VERSION
 
 
 # ---------------------------------------------------------------------- the desk's own record
@@ -410,11 +565,13 @@ def _stake_of(row: dict[str, Any]) -> float | None:
     return round(cost, 4) if cost is not None and cost > 0 else None
 
 
-def _tally(by_rule: dict[str, Any], row: dict[str, Any], pnl: float, won: bool) -> None:
-    """One settlement into the per-rule record: ``by_rule[rule][paper|real] = {settled, won, pnl_usd, pnls, costs,
-    keys}`` (the risk manager's input, oldest first, the newest :data:`GUARD_KEEP`, aligned: ``pnls`` the P&L to
-    1e-4, ``costs`` the money at risk, ``keys`` the event it belongs to)."""
-    rec = by_rule.setdefault(_rule_of(row), {}).setdefault(_book_of(row), {"settled": 0, "won": 0, "pnl_usd": 0.0})
+def _sport_of(row: Mapping[str, Any]) -> str:
+    """A sports row's sport (its stamp; ``other`` when it has none)."""
+    return str(row.get("sport") or "other")
+
+
+def _tally_book(books: dict[str, Any], row: dict[str, Any], pnl: float, won: bool) -> None:
+    rec = books.setdefault(_book_of(row), {"settled": 0, "won": 0, "pnl_usd": 0.0})
     rec["settled"] += 1
     rec["won"] += int(won)
     rec["pnl_usd"] += pnl
@@ -422,6 +579,17 @@ def _tally(by_rule: dict[str, Any], row: dict[str, Any], pnl: float, won: bool) 
         kept = rec.setdefault(name, [])
         kept.append(value)
         del kept[:-GUARD_KEEP]
+
+
+def _tally(by_rule: dict[str, Any], row: dict[str, Any], pnl: float, won: bool,
+           by_sport: dict[str, Any] | None = None) -> None:
+    """One settlement into the per-rule record: ``by_rule[rule][paper|real] = {settled, won, pnl_usd, pnls, costs,
+    keys}`` (the risk manager's input, oldest first, the newest :data:`GUARD_KEEP`, aligned: ``pnls`` the P&L to
+    1e-4, ``costs`` the money at risk, ``keys`` the event it belongs to). A sports settlement also goes into
+    ``by_sport[rule][sport][book]`` (the same shape) when ``by_sport`` is given."""
+    _tally_book(by_rule.setdefault(_rule_of(row), {}), row, pnl, won)
+    if by_sport is not None and row.get("category") == "sports":
+        _tally_book(by_sport.setdefault(_rule_of(row), {}).setdefault(_sport_of(row), {}), row, pnl, won)
 
 
 def _settled_rows(closed: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -466,11 +634,27 @@ def _trim_old(by_rule: Any, current: str) -> None:
     for rule, books in by_rule.items():
         if rule == current or not isinstance(books, dict):
             continue
-        for rec in books.values():
-            for name in GUARD_LISTS:
-                kept = rec.get(name) if isinstance(rec, dict) else None
-                if isinstance(kept, list):
-                    del kept[:-GUARD_KEEP_OLD]
+        _trim_books(books)
+
+
+def _trim_books(books: Mapping[str, Any]) -> None:
+    for rec in books.values():
+        for name in GUARD_LISTS:
+            kept = rec.get(name) if isinstance(rec, dict) else None
+            if isinstance(kept, list):
+                del kept[:-GUARD_KEEP_OLD]
+
+
+def _trim_old_sports(by_sport: Any, current: str) -> None:
+    """:func:`_trim_old` for the per-sport record: an older rule's sports keep their newest :data:`GUARD_KEEP_OLD`."""
+    if not isinstance(by_sport, dict):
+        return
+    for rule, sports in by_sport.items():
+        if rule == current or not isinstance(sports, dict):
+            continue
+        for books in sports.values():
+            if isinstance(books, dict):
+                _trim_books(books)
 
 
 def _fit(values: Any, n: int, filler: Any) -> list[Any]:
@@ -479,17 +663,74 @@ def _fit(values: Any, n: int, filler: Any) -> list[Any]:
     return kept[-n:] if len(kept) >= n else [filler(i) for i in range(n - len(kept))] + kept
 
 
-def judge_book(settings: Settings, by_rule: Any, book: str) -> deskguard.Verdict:
-    """The risk manager's verdict on one book (``paper`` / ``real``) of the CURRENT rule's own record
-    (:func:`rule_id`): each event one draw, judged per dollar at risk."""
-    rec = by_rule.get(rule_id(settings)) if isinstance(by_rule, dict) else None
-    rec = rec.get(book) if isinstance(rec, dict) else None
+def _judge_rec(settings: Settings, rec: Any) -> deskguard.Verdict:
     pnls = rec.get("pnls") if isinstance(rec, dict) else None
     pnls = pnls if isinstance(pnls, list) else []
     rec = rec if isinstance(rec, dict) else {}
     return deskguard.judge(pnls, groups=_fit(rec.get("keys"), len(pnls), lambda i: None),
                            stakes=_fit(rec.get("costs"), len(pnls), lambda i: None),
                            min_n=int(settings.polydesk_guard_min_n), win_n=int(settings.polydesk_guard_win_n))
+
+
+def judge_book(settings: Settings, by_rule: Any, book: str) -> deskguard.Verdict:
+    """The risk manager's verdict on one book (``paper`` / ``real``) of the CURRENT rule's own record
+    (:func:`rule_id`): each event one draw, judged per dollar at risk."""
+    rec = by_rule.get(rule_id(settings)) if isinstance(by_rule, dict) else None
+    return _judge_rec(settings, rec.get(book) if isinstance(rec, dict) else None)
+
+
+def judge_sport(settings: Settings, by_sport: Any, sport: str, book: str) -> deskguard.Verdict:
+    """:func:`judge_book` for one sport's record under the CURRENT rule (``by_sport[rule][sport][book]``): each game
+    one draw, judged per dollar at risk. A verdict for the owner's eyes; it never lets real money bet a sport."""
+    rec = by_sport.get(rule_id(settings)) if isinstance(by_sport, dict) else None
+    rec = rec.get(sport) if isinstance(rec, dict) else None
+    return _judge_rec(settings, rec.get(book) if isinstance(rec, dict) else None)
+
+
+def _day(now: float) -> str:
+    return datetime.fromtimestamp(now, UTC).strftime("%Y-%m-%d")
+
+
+def _day_pnl(st: Mapping[str, Any], now: float) -> float:
+    """The UTC day's realised real-money P&L (``live_days``)."""
+    days = _as_dict(st.get("live_days"))
+    rec = days.get(_day(now)) if isinstance(days, dict) else None
+    return float(_num(rec.get("pnl_usd")) or 0.0) if isinstance(rec, dict) else 0.0
+
+
+def _pending_of(st: Mapping[str, Any]) -> dict[str, Any]:
+    pend = st.get("pending_orders")
+    return {k: v for k, v in pend.items() if isinstance(v, dict)} if isinstance(pend, dict) else {}
+
+
+def _pending_cost(p: Mapping[str, Any]) -> float:
+    """An unconfirmed order's money: its limit times its contracts."""
+    return float(_num(p.get("limit")) or 0.0) * float(_num(p.get("contracts")) or 0.0)
+
+
+def real_room(st: Mapping[str, Any], settings: Settings, now: float) -> dict[str, float]:
+    """How much more real money the caps let out now, counting every open real bet and every unconfirmed order AS
+    IF IT ALL LOST (its cost and the modelled taker fee): ``open_room`` (the open-money cap less the money in open
+    bets and unconfirmed orders), ``day_room`` (the daily stop plus the day's realised P&L less everything at risk)
+    and ``total_room`` (the total stop plus the all-time real P&L less the same). Pure. A real order goes out only
+    when its money fits ``open_room`` and its worst case (cost plus fee) fits both stops' rooms
+    (:meth:`PolyDesk._live_refusal`), so a "$3 day" can lose at most $3 even if every open bet loses."""
+    positions = _as_dict(st.get("positions"))
+    live = [p for p in positions.values() if isinstance(p, dict) and p.get("live")]
+    pend = list(_pending_of(st).values())
+    held = sum(float(_num(p.get("cost_usd")) or 0.0) for p in live) + sum(_pending_cost(p) for p in pend)
+    at_risk = sum(float(_num(p.get("cost_usd")) or 0.0) + float(_num(p.get("fee_usd")) or 0.0) for p in live)
+    for p in pend:
+        limit, coef = float(_num(p.get("limit")) or 0.0), _num(p.get("fee_coef"))
+        at_risk += _pending_cost(p) * (1.0 + (US_TAKER if coef is None else coef) * (1.0 - limit))
+    total = float(_num(st.get("live_pnl_total_usd")) or 0.0)
+    return {
+        "open_room": float(settings.polydesk_live_max_open_usd) - held,
+        "day_room": float(settings.polydesk_live_daily_loss_usd) + _day_pnl(st, now) - at_risk,
+        "total_room": float(settings.polydesk_live_total_loss_usd) + total - at_risk,
+        "held_usd": held,
+        "at_risk_usd": at_risk,
+    }
 
 
 def _current(record: Any, rule: str) -> dict[str, Any] | None:
@@ -646,6 +887,11 @@ class PolyDesk:
             and bool(settings.polymarket_us_key_id)
             and bool(settings.polymarket_us_secret_key)
         )
+        self._venue_ok = False  # this round's venue read succeeded (real orders need it: _apply_rule)
+        self._orders_sent = 0  # real orders sent this round (the end-of-round venue read follows them)
+        # The file holds the loss stops: one that exists but cannot be read must not silently reset them (F14).
+        unreadable = state_file_unreadable(self.path)
+        copy = self._keep_unreadable() if unreadable else None
         self.state = load_state(self.path)
         self.state["rule"] = {
             "theta": self.theta,
@@ -653,18 +899,28 @@ class PolyDesk:
             "ticket_usd": self.ticket,
             "version": RULE_VERSION,
             "id": self.rule,
-            "label": f"candidate rule: buy at >= {self.theta:.2f} within the last {self.hours:g} h when bid and ask "
-            f"are within {MAX_SPREAD:.2f}, ${self.ticket:.0f} paper tickets. Lab 4 TRAIN (2026-10-09): NO EDGE in any "
-            "cell after fees, so this rule never gets real money",
+            "label": f"rule {RULE_VERSION}: buy the YES side at >= {self.theta:.2f} when bid and ask are within "
+            f"{MAX_SPREAD:.2f} and the market has traded near that price; one outcome per game or price ladder; "
+            f"non-sports in the last {self.hours:g} h, sports games while in play; ${self.ticket:.0f} practice "
+            f"tickets; real orders of {self.contracts:g} contract on non-sports only (history allows no sport). Lab 4 "
+            "TRAIN found no edge for this rule: real money is the owner's choice, at tiny amounts",
         }
         self._stop = threading.Event()
         self._thread: threading.Thread | None = None
         self.state["mode"] = "paper"
+        if unreadable:
+            self._event(time.time(), "The desk's record file could not be read: a copy is kept and the desk starts "
+                        "from an empty record" + (", on practice only." if self.live_requested else "."), "bad")
+            self._receipt("polydesk_state_unreadable", {"copy": copy, "live_requested": self.live_requested})
+            log.warning("polydesk_state_unreadable copy=%s live_requested=%s", copy, self.live_requested)
+            if self.live_requested:  # its loss stops are gone: never live from it (the saved state keeps the halt)
+                self.state["live_halted"] = True
+                self.state["halt_reason"] = "unreadable_state"
         if bool(settings.polymarket_us_key_id) and bool(settings.polymarket_us_secret_key):
             self.reader = self._open_reader()
         if self.live_requested and self.state.get("live_halted"):
             self.state["live_status"] = (
-                "Live was switched off by the total-loss cap; the desk stays on paper until the owner resets it."
+                UNREADABLE_STATUS if self.state.get("halt_reason") == "unreadable_state" else TOTAL_HALT_STATUS
             )
         elif self.live_requested:
             self._connect()
@@ -680,6 +936,17 @@ class PolyDesk:
     def rule(self) -> str:
         """The rule this desk buys under now (:func:`rule_id`)."""
         return rule_id(self.settings)
+
+    def _keep_unreadable(self) -> str | None:
+        """A copy of a record file that could not be read (``state.json.unreadable-<unix time>``), kept as evidence
+        for the owner; its name, or None when even the copy failed."""
+        target = self.path.with_name(f"{self.path.name}.unreadable-{int(time.time())}")
+        try:
+            shutil.copyfile(self.path, target)
+        except OSError as exc:
+            log.warning("polydesk_state_copy_failed error=%s", type(exc).__name__)
+            return None
+        return target.name
 
     def _open_reader(self) -> PolymarketUSClient | None:
         """A read link to the venue (balances, positions) once the key is accepted, in paper mode too: the
@@ -764,6 +1031,7 @@ class PolyDesk:
 
     def _save(self) -> None:
         _trim_old(self.state.get("by_rule"), self.rule)
+        _trim_old_sports(self.state.get("by_sport"), self.rule)
         save_state(self.path, self.state)
 
     def _event(self, ts: float, text: str, tone: str = "neutral") -> None:
@@ -782,14 +1050,20 @@ class PolyDesk:
             st["counters"]["errors"] += 1
         quotes = self._quotes(watch)
         st["counters"]["quotes"] += len(quotes)
+        self._expire_pending(now)
+        self._venue_ok = False  # set by a successful venue read below; real orders need one THIS round
         adopted = self._reconcile(now, watch) if self.reader is not None else 0
+        self._daily_line(now)
         self._guard(now)  # the record so far decides whether this round may buy
-        bought = self._apply_rule(now, watch, quotes)
-        settled = self._settle(now, {m["slug"] for m in watch})
+        self._orders_sent = 0
+        bought = self._apply_rule(now, watch, quotes, venue_ok=self._venue_ok)
+        settled = self._settle(now, {m["slug"] for m in watch}, quotes)
         if settled:
             self._guard(now)  # this round's settlements count at once (the panel, the next round)
-        if bought and st["mode"] == "live" and self.reader is not None:
-            adopted += self._reconcile(now, watch)  # the venue summary after this round's real buys
+        if self._orders_sent and self.reader is not None:
+            # the venue's book after this round's real orders, confirmed or not (a "no fill" reply is not the last
+            # word: 34 of the first 91 real fills showed only in a later read)
+            adopted += self._reconcile(now, watch)
         self._learn(now)
         st["watched"] = len(watch)
         st["last_ok"] = now
@@ -810,17 +1084,24 @@ class PolyDesk:
         }
 
     def _reconcile(self, now: float, watch: list[dict[str, Any]]) -> int:
-        """The venue's book is the truth for real money. Every contract it holds that this desk never recorded
-        (an order reply that showed no fill, a buy from another place) is adopted as a live position, so it is
-        counted against the caps, settled and shown. The venue summary is kept for the panel."""
+        """The venue's book is the truth for real money. A contract the desk ordered but the venue had not confirmed
+        (``pending_orders``) becomes the rule's own position as soon as the book shows it, with the order's rule,
+        quote and time. Every other contract it holds that this desk never recorded (a buy from another place) is
+        adopted as a ``venue`` position, so it is counted against the caps, settled and shown; a market whose real
+        result the desk already booked is never adopted again. An unconfirmed order the book still does not show
+        :data:`PENDING_CLEAR_S` after it went out never filled: it is dropped and said so. Sets ``_venue_ok``
+        (real orders need a good read this round). The venue summary is kept for the panel."""
         assert self.reader is not None
         st = self.state
         try:
             rows = self.reader.positions()
         except PolymarketUSError as exc:
             st["counters"]["errors"] += 1
+            self._venue_ok = False
             log.warning("polydesk_positions_failed status=%s", exc.status)
             return 0
+        self._venue_ok = True
+        pending = _pending_of(st)
         held = [r for r in rows if r["qty"] > 0 and not r["expired"] and r["slug"]]
         st["exchange"] = {
             "positions": len(held),
@@ -829,6 +1110,10 @@ class PolyDesk:
             "value_usd": sum(r["value"] for r in held),
             "at": now,
         }
+        # the desk's own unconfirmed orders are taken even from an expired row: their money was spent, so the
+        # result must be booked (a contract that already settled is settled at the next round)
+        held += [r for r in rows if r["qty"] > 0 and r["expired"] and r["slug"] in pending]
+        booked = {r.get("slug") for r in st["closed"] if isinstance(r, dict) and r.get("live")}
         by_slug = {m["slug"]: m for m in watch}
         adopted = 0
         for r in held:
@@ -836,12 +1121,52 @@ class PolyDesk:
             pos = st["positions"].get(slug)
             if pos is not None and pos.get("live"):
                 continue
+            pend = pending.pop(slug, None)
+            if pend is None and slug in booked:
+                continue  # its real result is booked already: the venue still listing it is no second bet (F17)
             if pos is not None:  # a paper position on the same market: the real one takes the slot, no paper P&L
                 st["closed"].insert(0, {**pos, "settled_at": now, "won": None, "unresolved": True, "replaced_by_real": True})
                 del st["closed"][CLOSED_KEEP:]
             m = by_slug.get(slug)
             price = r["avg_price"] if r["avg_price"] > 0 else (r["cost"] / r["qty"] if r["cost"] > 0 else 0.0)
             cost = r["cost"] if r["cost"] > 0 else price * r["qty"]
+            adopted += 1
+            st["counters"]["bought"] += 1
+            if pend is not None:
+                coef = _num(pend.get("fee_coef"))
+                coef = US_TAKER if coef is None else coef
+                question = str(pend.get("question") or slug)
+                category = str(pend.get("category") or "other")
+                st["positions"][slug] = {
+                    **{k: pend.get(k) for k in _PENDING_STAMP if k in pend},
+                    "slug": slug,
+                    "question": question,
+                    "category": category,
+                    "side": "long",
+                    "p_in": price,
+                    "shares": r["qty"],
+                    "fee_usd": r["qty"] * coef * price * (1.0 - price),
+                    "cost_usd": cost,
+                    "t_in": float(_num(pend.get("t_in")) or now),
+                    "end_ts": float(_num(pend.get("end_ts")) or now + ADOPTED_END_GUESS_S),
+                    "live": True,
+                    "adopted": True,
+                    "end_known": True,
+                    "order_id": pend.get("order_id"),
+                }
+                self._pending_book().pop(slug, None)
+                self._event(
+                    now,
+                    f"REAL buy confirmed late by the venue: {question[:60]} · {r['qty']:g} contract at {price:.3f} "
+                    f"(${cost:.2f}, {category})",
+                    "good",
+                )
+                self._receipt(
+                    "polydesk_order_filled",
+                    {"slug": slug, "order_id": pend.get("order_id"), "contracts": r["qty"], "price": price,
+                     "cost_usd": cost, "late": True},
+                )
+                continue
             coef = m["fee_coef"] if m is not None and m.get("fee_coef") is not None else US_TAKER
             label = f"{r['title']} · {r['outcome']}" if r["outcome"] else r["title"]
             question = m["question"] if m is not None else (label or slug)
@@ -857,13 +1182,12 @@ class PolyDesk:
                 "t_in": now,
                 "end_ts": m["end_ts"] if m is not None else now + ADOPTED_END_GUESS_S,
                 "event": m.get("event") if m is not None else None,
+                "sport": m.get("sport") if m is not None else None,
                 "live": True,
                 "adopted": True,
                 "end_known": m is not None,
                 "rule": RULE_VENUE,
             }
-            st["counters"]["bought"] += 1
-            adopted += 1
             self._event(
                 now,
                 f"REAL position found at the venue: {question[:60]} · {r['qty']:g} contract at {price:.3f} "
@@ -874,9 +1198,32 @@ class PolyDesk:
                 "polydesk_position_adopted",
                 {"slug": slug, "contracts": r["qty"], "price": price, "cost_usd": cost},
             )
+        for slug, pend in pending.items():  # still unconfirmed: a quiet read long enough after the order: no fill
+            if now - float(_num(pend.get("t_in")) or now) >= PENDING_CLEAR_S:
+                self._drop_pending(now, slug, pend, "venue_quiet")
         if adopted:
             log.info("polydesk_adopted n=%d venue_contracts=%g", adopted, st["exchange"]["contracts"])
         return adopted
+
+    def _drop_pending(self, now: float, slug: str, pend: Mapping[str, Any], why: str) -> None:
+        """An unconfirmed order the venue never filled: no longer counted as open money; said as a "No fill"."""
+        self._pending_book().pop(slug, None)
+        limit = float(_num(pend.get("limit")) or 0.0)
+        self._event(now, f"No fill at {limit:.3f}: {str(pend.get('question') or slug)[:50]} (order cancelled)")
+        self._receipt("polydesk_order_unfilled", {"slug": slug, "order_id": pend.get("order_id"), "why": why})
+
+    def _pending_book(self) -> dict[str, Any]:
+        """``state["pending_orders"]`` (a junk value in the file becomes an empty book)."""
+        pend = self.state.get("pending_orders")
+        if not isinstance(pend, dict):
+            pend = self.state["pending_orders"] = {}
+        return pend
+
+    def _expire_pending(self, now: float) -> None:
+        """Any unconfirmed order older than :data:`PENDING_MAX_S` is dropped, venue read or not."""
+        for slug, pend in _pending_of(self.state).items():
+            if now - float(_num(pend.get("t_in")) or now) >= PENDING_MAX_S:
+                self._drop_pending(now, slug, pend, "expired")
 
     def _fill_from_positions(self, slug: str, fill: dict[str, Any]) -> dict[str, Any]:
         """An order reply without executions is not the last word: the venue's book decides whether it filled."""
@@ -896,10 +1243,8 @@ class PolyDesk:
                         "cost": r["cost"] if r["cost"] > 0 else price * r["qty"], "via": "positions"}
         return fill
 
-    def _quotes(
-        self, watch: list[dict[str, Any]]
-    ) -> dict[str, dict[str, float | None]]:
-        def one(m: dict[str, Any]) -> tuple[str, dict[str, float | None]] | None:
+    def _quotes(self, watch: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
+        def one(m: dict[str, Any]) -> tuple[str, dict[str, Any]] | None:
             try:
                 q = bbo(m["slug"])
             except RuntimeError:
@@ -915,15 +1260,143 @@ class PolyDesk:
                 for slug, q in [r]
             }
 
+    # ------------------------------------------------------------------ the rule
+    def _qualifies(self, q: Mapping[str, Any] | None) -> tuple[float | None, str | None]:
+        """The rule's test on one quote: ``(price, None)`` when its YES side is near-certain, else ``(None, why)``.
+        Near-certain: a bid and an ask within :data:`MAX_SPREAD` of each other (a wide book is not a belief: on
+        2026-10-09 the desk bought asks above theta on books like 0.14 / 0.69 and lost 60 % of them), the ask at or
+        above theta, the market OPEN, and TRADED near that price: shares traded and a last trade at or above theta
+        less :data:`MAX_SPREAD` (lab 4's rule fires on trade prints; on 2026-10-10 the desk's own orders were the
+        first trades three e-soccer markets ever had). ``why`` is ``never_traded`` when only the trades fail (the
+        market may trade later, so it is not marked tried), else None. The price is the ask, at most
+        :data:`MAX_PRICE`. The YES side only: a NO bet is never bought, on paper or with real money."""
+        if not q:
+            return None, None
+        ask, bid = _num(q.get("best_ask")), _num(q.get("best_bid"))
+        if ask is None or bid is None or ask - bid > MAX_SPREAD + 1e-9 or ask < self.theta:
+            return None, None
+        if q.get("state") != OPEN_STATE:
+            return None, None
+        traded, last = _num(q.get("shares_traded")), _num(q.get("last"))
+        if traded is None or traded <= 0 or last is None or last < self.theta - MAX_SPREAD - 1e-9:
+            return None, "never_traded"
+        return min(float(ask), MAX_PRICE), None
+
+    def _stamp(self, m: Mapping[str, Any], q: Mapping[str, Any]) -> dict[str, Any]:
+        """What a new position keeps of its buy: the rule, the quote and the trades at entry (data for a later lab
+        test of a size or volume floor: no threshold on them now), its sport and, for a game, the game and its
+        situation (period, score, time played, start)."""
+        bid, ask = float(_num(q.get("best_bid")) or 0.0), float(_num(q.get("best_ask")) or 0.0)
+        stamp: dict[str, Any] = {
+            "rule": self.rule, "bid_in": bid, "ask_in": ask, "spread_in": ask - bid,
+            "last_in": _num(q.get("last")), "traded_in": _num(q.get("shares_traded")),
+            "bid_size_in": _num(q.get("bid_size")), "ask_size_in": _num(q.get("ask_size")),
+            "sport": m.get("sport"), "event": m.get("event"),
+        }
+        for key in ("period", "score", "elapsed", "game_start"):
+            if m.get(key) is not None:
+                stamp[key] = m.get(key)
+        return stamp
+
+    def _skip(self, now: float, reason: str, key: str, sport: str | None = None) -> None:
+        """Count one skip of the rule's pick for the page (``skips[day]``: "what it skipped and why"): each
+        (reason, market or game) once per UTC day; ``sports_no_real`` also by sport. :data:`SKIPS_DAYS` days kept."""
+        skips = self.state.get("skips")
+        if not isinstance(skips, dict):
+            skips = self.state["skips"] = {}
+        day = _day(now)
+        rec = skips.get(day)
+        if not isinstance(rec, dict):
+            rec = skips[day] = {"counts": {}, "sports": {}, "seen": []}
+        seen = _as_list(rec.get("seen"))
+        rec["seen"] = seen
+        mark = zlib.crc32(f"{reason}|{key}".encode())
+        if mark in seen:
+            return
+        seen.append(mark)
+        del seen[:-SKIPS_SEEN_KEEP]
+        counts = _as_dict(rec.get("counts"))
+        rec["counts"] = counts
+        counts[reason] = int(_num(counts.get(reason)) or 0) + 1
+        if reason == "sports_no_real":
+            by = _as_dict(rec.get("sports"))
+            rec["sports"] = by
+            name = sport or "other"
+            by[name] = int(_num(by.get(name)) or 0) + 1
+        for old in sorted(skips)[:-SKIPS_DAYS]:
+            del skips[old]
+
+    @staticmethod
+    def _bid_sum(sibs: list[dict[str, Any]], quotes: Mapping[str, Mapping[str, Any]],
+                 fresh: Mapping[str, Mapping[str, Any]] | None = None) -> float:
+        """A game's outcomes' YES bids added up (a missing bid counts 0); ``fresh`` quotes replace the round's."""
+        total = 0.0
+        for s in sibs:
+            q = (fresh or {}).get(s["slug"]) or quotes.get(s["slug"]) or {}
+            total += float(_num(q.get("best_bid")) or 0.0)
+        return total
+
+    def _refused_games(self, now: float, clusters: Mapping[str, list[dict[str, Any]]],
+                       quotes: Mapping[str, Mapping[str, Any]], quals: Mapping[str, tuple[float | None, str | None]],
+                       held: set[str], mark: Any) -> set[str]:
+        """The games the rule buys nothing of this round. ``game_incomplete``: fewer of the game's outcomes are
+        quoted this round than it has (the sports cap cut it, a quote failed): judged again next round, nothing
+        marked tried. ``incoherent_game``: its outcomes' YES bids add up to more than :data:`COHERENT_BID_SUM`, or two
+        of them pass the rule at once (they cannot both be near-certain): every outcome is marked tried in both
+        books, and when the rule would have bought one, one event and one count say so. A game already held is the
+        held check's (one position per game)."""
+        refused: set[str] = set()
+        tried = set(_as_list(self.state.get("tried"))) | set(self.state["positions"]) | set(self._pending_book())
+        for key, sibs in clusters.items():
+            if key in held or sibs[0].get("category") != "sports":
+                continue
+            leaders = [s for s in sibs if quals.get(s["slug"], (None, None))[0] is not None]
+            new = [s for s in leaders if s["slug"] not in tried]  # a pick the rule would still make: worth saying
+            quoted = [s for s in sibs if quotes.get(s["slug"]) is not None]
+            if len(quoted) < max(int(_num(sibs[0].get("n_outcomes")) or 0), len(sibs)):
+                refused.add(key)
+                if new:
+                    self._skip(now, "game_incomplete", key)
+                continue
+            bids = self._bid_sum(quoted, quotes)
+            if bids <= COHERENT_BID_SUM + 1e-9 and len(leaders) < 2:
+                continue
+            refused.add(key)
+            for s in sibs:
+                mark(s["slug"])
+            if new:
+                self._skip(now, "incoherent_game", key)
+                name = str(sibs[0].get("event") or sibs[0]["slug"])
+                self._event(now, f"Refused a game whose prices do not add up: {name[:60]} (YES bids add up to "
+                                 f"{bids:.2f})", "bad")
+        return refused
+
     def _apply_rule(
         self,
         now: float,
         watch: list[dict[str, Any]],
-        quotes: dict[str, dict[str, float | None]],
+        quotes: dict[str, dict[str, Any]],
+        venue_ok: bool = True,
     ) -> int:
+        """One round of the rule over the watch list (module docstring); the positions opened. Per market, in
+        order: not held, not tried and inside its window; the rule's test (:meth:`_qualifies`); its game not
+        refused (:meth:`_refused_games`) and its game or ladder not held already, in either book (a cluster bought
+        this round counts at once). Then, live, a real order unless real money may not buy it (a sport: no sport
+        has earned real money; a pause; a cap or a stop's room; the venue unread this round; an order this round
+        still unconfirmed): those are bought on PAPER instead, so the practice book keeps watching. A market a real
+        order went to (filled, unconfirmed or rejected), or whose fresh quote failed, gets no paper twin."""
         st = self.state
         bought = 0
-        tried: set[str] = set(st.setdefault("tried", []))
+        tried_list: list[str] = st["tried"] if isinstance(st.get("tried"), list) else []
+        st["tried"] = tried_list
+        tried = set(tried_list)
+
+        def mark(slug: str) -> None:  # tried: never bought again (kept in the order tried; the oldest drop first)
+            if slug not in tried:
+                tried.add(slug)
+                tried_list.append(slug)
+
+        pending = self._pending_book()
         paper_open = sum(1 for p in st["positions"].values() if not p.get("live"))
         cap = self._paper_cap()
         st["paper_full"] = bool(st.get("paper_full")) and paper_open >= cap
@@ -932,92 +1405,54 @@ class PolyDesk:
         # are not marked tried: they may be bought once the pause lifts (a changed rule, the owner's switch).
         paper_paused = self._paused("paused")
         real_paused = paper_paused or self._paused("paused_real")
+        live = st["mode"] == "live" and self.client is not None
+        held = {_cluster_of(p) for p in st["positions"].values()} | {_cluster_of(p) for p in pending.values()}
+        clusters: dict[str, list[dict[str, Any]]] = {}
+        for m in watch:
+            clusters.setdefault(_cluster_of(m), []).append(m)
+        quals = {m["slug"]: self._qualifies(quotes.get(m["slug"])) for m in watch}
+        refused = self._refused_games(now, clusters, quotes, quals, held, mark)
+        unconfirmed = False  # a real order this round the venue has not confirmed: no further real order this round
         for m in watch:
             slug = m["slug"]
-            if slug in st["positions"] or slug in tried:
+            if slug in st["positions"] or slug in tried or slug in pending:
                 continue
             if m["category"] != "sports" and now < m["end_ts"] - self.hours * 3600.0:
                 continue  # not yet inside the window (sports: the live list IS the window)
-            q = quotes.get(slug)
-            if not q:
+            price, why = quals.get(slug, (None, None))
+            if price is None:
+                if why:
+                    self._skip(now, why, slug)
                 continue
-            ask, bid = q.get("best_ask"), q.get("best_bid")
-            # Both sides of the book must say "near-certain". A thin book quoting bid 0.14 / ask 0.69 has an ask
-            # that can sit above theta while the market believes nothing of the kind; the paper desk bought such
-            # quotes on 2026-10-09 and lost 60% of them. The lab's rule reads trade prints, which have no such gap.
-            if ask is None or bid is None or ask - bid > MAX_SPREAD + 1e-9:
+            key = _cluster_of(m)
+            if key in refused:
                 continue
-            side: str | None = None
-            price = 0.0
-            if ask is not None and ask >= self.theta:
-                side, price = "long", float(ask)
-            elif bid is not None and (1.0 - bid) >= self.theta:
-                side, price = "short", float(1.0 - bid)
-            if side is None:
+            if key in held:  # one position per game or ladder, both books (a comeback is not a second bet)
+                mark(slug)
+                self._skip(now, "game_held", slug)
                 continue
-            price = min(price, MAX_PRICE)
             coef = m["fee_coef"] if m.get("fee_coef") is not None else US_TAKER
-            stamp = {"rule": self.rule, "bid_in": float(bid), "ask_in": float(ask), "spread_in": float(ask) - float(bid)}
-            if st["mode"] == "live" and self.client is not None:
-                if side != "long":
-                    continue  # live: the YES side only (the venue prices every order on YES); shorts stay paper-only
-                if real_paused:
-                    continue  # the risk manager stopped real buys (never starts any)
-                if not self._live_allows(now, price):
-                    continue
-                tried.add(slug)
-                try:
-                    fill = self.client.buy_long_ioc(slug, price, self.contracts)
-                except PolymarketUSError as exc:
-                    st["counters"]["errors"] += 1
-                    self._event(now, f"Order rejected by the venue ({exc.status}): {m['question'][:50]}", "bad")
-                    self._receipt("polydesk_order_rejected", {"slug": slug, "status": exc.status})
-                    continue
-                if fill["filled"] <= 0:
-                    fill = self._fill_from_positions(slug, fill)
-                if fill["filled"] <= 0:
-                    self._event(now, f"No fill at {price:.3f}: {m['question'][:50]} (order cancelled)")
-                    continue
-                shares = float(fill["filled"])
-                p_fill = float(fill["avg_price"])
-                cost = float(fill["cost"])
-                fee = shares * coef * p_fill * (1.0 - p_fill)
-                st["positions"][slug] = {
-                    "slug": slug,
-                    "question": m["question"],
-                    "category": m["category"],
-                    "side": "long",
-                    "p_in": p_fill,
-                    "shares": shares,
-                    "fee_usd": fee,
-                    "cost_usd": cost,
-                    "t_in": now,
-                    "end_ts": m["end_ts"],
-                    "event": m.get("event"),
-                    "live": True,
-                    "order_id": fill.get("id"),
-                    **stamp,
-                }
-                st["counters"]["bought"] += 1
-                bought += 1
-                self._event(
-                    now,
-                    f"REAL buy: {m['question'][:60]} · {shares:g} contract at {p_fill:.3f} (${cost:.2f}, "
-                    f"{m['category']})",
-                    "good",
-                )
-                self._receipt(
-                    "polydesk_order_filled",
-                    {"slug": slug, "order_id": fill.get("id"), "contracts": shares, "price": p_fill, "cost_usd": cost},
-                )
-                continue
+            if live:
+                block = self._real_block(now, m, price, coef, real_paused, venue_ok, unconfirmed)
+                if block is None:
+                    outcome = self._real_order(now, m, coef, clusters[key], quotes, mark)
+                    if outcome == "moved":
+                        continue  # the fresh look failed: not tried, no paper twin (it is judged again next round)
+                    held.add(key)  # one real order per game or ladder a round, whatever its answer
+                    if outcome == "filled":
+                        bought += 1
+                    elif outcome == "pending":
+                        unconfirmed = True
+                    continue  # no paper twin of a market a real order went to
+                if block in SKIP_REASONS:
+                    self._skip(now, block, slug, m.get("sport"))
             if paper_paused:
                 continue  # the risk manager paused paper buys; open positions still settle
             if paper_open >= cap:  # not marked tried: the market may be bought once a slot frees
                 if not st["paper_full"]:
                     st["paper_full"] = True
-                    why = "" if cap >= PAPER_MAX_OPEN else ", the most until the rule's paper record is winning"
-                    self._event(now, f"Paper book full ({cap} open{why}): no new paper buys until some settle.")
+                    why_full = "" if cap >= PAPER_MAX_OPEN else ", the most until the rule's paper record is winning"
+                    self._event(now, f"Paper book full ({cap} open{why_full}): no new paper buys until some settle.")
                 continue
             shares = self.ticket / price
             fee = shares * coef * price * (1.0 - price)
@@ -1025,45 +1460,189 @@ class PolyDesk:
                 "slug": slug,
                 "question": m["question"],
                 "category": m["category"],
-                "side": side,
+                "side": "long",
                 "p_in": price,
                 "shares": shares,
                 "fee_usd": fee,
                 "cost_usd": self.ticket,
                 "t_in": now,
                 "end_ts": m["end_ts"],
-                "event": m.get("event"),
                 "live": False,
-                **stamp,
+                **self._stamp(m, quotes[slug]),
             }
-            tried.add(slug)
+            mark(slug)
+            held.add(key)
             paper_open += 1
             st["counters"]["bought"] += 1
             bought += 1
             self._event(
                 now,
-                f"Paper buy: {m['question'][:60]} · {side} at {price:.3f} · ${self.ticket:.0f} "
+                f"Paper buy: {m['question'][:60]} · long at {price:.3f} · ${self.ticket:.0f} "
                 f"({m['category']})",
             )
-        st["tried"] = sorted(tried)[-5000:]
+        del tried_list[:-TRIED_KEEP]
         return bought
 
-    # ------------------------------------------------------------------ live caps
-    def _live_allows(self, now: float, price: float) -> bool:
+    def _real_block(self, now: float, m: Mapping[str, Any], price: float, coef: float, paused: bool,
+                    venue_ok: bool, unconfirmed: bool) -> str | None:
+        """Why real money does not buy this pick (it goes to paper instead), or None: ``sports_no_real`` (a game:
+        no sport is in :data:`REAL_SPORTS_ALLOWED`; keyed on the category, so a mislabelled sport is still blocked),
+        ``paused`` (the risk manager), ``venue_unread`` (this round's venue read failed, so last round's
+        unconfirmed fills are unknown), ``waiting_unconfirmed`` (an order this round is unconfirmed), or the caps'
+        reason (:meth:`_live_refusal`)."""
+        if m.get("category") == "sports" and m.get("sport") not in REAL_SPORTS_ALLOWED:
+            return "sports_no_real"
+        if paused:
+            return "paused"
+        if not venue_ok:
+            return "venue_unread"
+        if unconfirmed:
+            return "waiting_unconfirmed"
+        return self._live_refusal(now, price, coef)
+
+    def _real_order(self, now: float, m: dict[str, Any], coef: float, sibs: list[dict[str, Any]],
+                    quotes: Mapping[str, Mapping[str, Any]], mark: Any) -> str:
+        """One real order, after a fresh look at the one market (its round quote is about 20 s old): the quote is
+        read again and the rule's whole test re-run on it (with its game's book re-added with the fresh bid), the
+        caps re-checked at the fresh ask, which is the order's limit. ``moved`` (that look failed: nothing sent),
+        ``filled``, ``pending`` (no confirmed fill, or no answer: counted as open money until the venue's book says,
+        :meth:`_reconcile`) or ``rejected`` (the venue refused it: nothing bought)."""
+        assert self.client is not None
         st = self.state
-        s = self.settings
-        open_usd = sum(float(p.get("cost_usd") or 0.0) for p in st["positions"].values() if p.get("live"))
-        if open_usd + price * self.contracts > float(s.polydesk_live_max_open_usd):
-            return False
-        day = datetime.fromtimestamp(now, UTC).strftime("%Y-%m-%d")
-        day_pnl = float((st.get("live_days") or {}).get(day, {}).get("pnl_usd") or 0.0)
-        if day_pnl <= -float(s.polydesk_live_daily_loss_usd):
-            note = "Daily loss cap reached: no more real buys today."
-            if st.get("live_status") != note:
-                st["live_status"] = note
-                self._event(now, note, "bad")
-            return False
-        return True
+        slug = m["slug"]
+        try:
+            fresh = bbo(slug)
+        except RuntimeError:
+            self._skip(now, "price_moved", slug)
+            return "moved"
+        limit, _ = self._qualifies(fresh)
+        if (limit is not None and m.get("category") == "sports" and len(sibs) > 1
+                and self._bid_sum(sibs, quotes, {slug: fresh}) > COHERENT_BID_SUM + 1e-9):
+            limit = None  # the game's book no longer adds up with this outcome's fresh bid
+        if limit is None:
+            self._skip(now, "price_moved", slug)
+            return "moved"
+        refusal = self._live_refusal(now, limit, coef)
+        if refusal is not None:
+            if refusal in SKIP_REASONS:
+                self._skip(now, refusal, slug)
+            return "moved"
+        stamp = self._stamp(m, fresh)
+        mark(slug)
+        self._orders_sent += 1
+        try:
+            fill = self.client.buy_long_ioc(slug, limit, self.contracts)
+        except PolymarketUSError as exc:
+            st["counters"]["errors"] += 1
+            if exc.status is not None and exc.status < 500:  # the venue refused it: nothing was bought
+                self._event(now, f"Order rejected by the venue ({exc.status}): {m['question'][:50]}", "bad")
+                self._receipt("polydesk_order_rejected", {"slug": slug, "status": exc.status})
+                return "rejected"
+            self._pend(now, m, limit, coef, stamp, None)  # no answer (a timeout, a 5xx): it may have filled
+            return "pending"
+        if fill["filled"] <= 0:
+            fill = self._fill_from_positions(slug, fill)
+        if fill["filled"] <= 0:
+            self._pend(now, m, limit, coef, stamp, fill.get("id"))
+            return "pending"
+        shares = float(fill["filled"])
+        p_fill = float(fill["avg_price"])
+        cost = float(fill["cost"])
+        fee = shares * coef * p_fill * (1.0 - p_fill)
+        st["positions"][slug] = {
+            "slug": slug,
+            "question": m["question"],
+            "category": m["category"],
+            "side": "long",
+            "p_in": p_fill,
+            "shares": shares,
+            "fee_usd": fee,
+            "cost_usd": cost,
+            "t_in": now,
+            "end_ts": m["end_ts"],
+            "live": True,
+            "order_id": fill.get("id"),
+            **stamp,
+        }
+        st["counters"]["bought"] += 1
+        self._event(
+            now,
+            f"REAL buy: {m['question'][:60]} · {shares:g} contract at {p_fill:.3f} (${cost:.2f}, "
+            f"{m['category']})",
+            "good",
+        )
+        self._receipt(
+            "polydesk_order_filled",
+            {"slug": slug, "order_id": fill.get("id"), "contracts": shares, "price": p_fill, "cost_usd": cost},
+        )
+        return "filled"
+
+    def _pend(self, now: float, m: Mapping[str, Any], limit: float, coef: float, stamp: Mapping[str, Any],
+              order_id: Any) -> None:
+        """A real order the venue has not confirmed: kept in ``pending_orders`` (open real money for the caps and the
+        stops, its game or ladder held) until the venue's book shows the contract or a quiet read says it never
+        filled (:meth:`_reconcile`)."""
+        slug = m["slug"]
+        self._pending_book()[slug] = {
+            **stamp,
+            "t_in": now,
+            "order_id": order_id,
+            "limit": limit,
+            "contracts": self.contracts,
+            "fee_coef": coef,
+            "question": m["question"],
+            "category": m["category"],
+            "end_ts": m["end_ts"],
+        }
+        self._event(now, f"Order not confirmed yet at {limit:.3f}: {m['question'][:50]} (counted as open money until "
+                         "the venue shows it)")
+        self._receipt("polydesk_order_pending", {"slug": slug, "order_id": order_id, "limit": limit,
+                                                  "contracts": self.contracts})
+
+    # ------------------------------------------------------------------ live caps
+    def _live_refusal(self, now: float, price: float, coef: float = US_TAKER) -> str | None:
+        """Why the caps refuse one more real order at ``price`` now (:func:`real_room`), or None: ``open_cap`` (its
+        money does not fit the open-money cap beside the open bets and unconfirmed orders), ``day_stop`` (the day's
+        realised loss reached the daily stop: the status line and one event a day say so), ``stop_room`` (if every
+        open bet, every unconfirmed order and this one lost, fees included, the daily or the total stop would be
+        passed: the desk waits for some to finish)."""
+        st, s = self.state, self.settings
+        room = real_room(st, s, now)
+        if self.contracts * price > room["open_room"]:
+            return "open_cap"
+        if _day_pnl(st, now) <= -float(s.polydesk_live_daily_loss_usd):
+            self._daily_stop_note(now)
+            return "day_stop"
+        risk = self.contracts * price * (1.0 + coef * (1.0 - price))
+        if risk > room["day_room"] or risk > room["total_room"]:
+            return "stop_room"
+        return None
+
+    def _live_allows(self, now: float, price: float, coef: float = US_TAKER) -> bool:
+        """The caps let one more real order at ``price`` out now (:meth:`_live_refusal` has no reason)."""
+        return self._live_refusal(now, price, coef) is None
+
+    def _daily_stop_note(self, now: float) -> None:
+        """The daily stop holds: the status line says so (unless another reason holds it), and one event a UTC
+        day says it (a restart sets the line again without saying it twice)."""
+        st = self.state
+        if st.get("live_status") in (None, DAILY_NOTE):
+            st["live_status"] = DAILY_NOTE
+        day = _day(now)
+        if st.get("daily_stop_said") != day:
+            st["daily_stop_said"] = day
+            self._event(now, DAILY_NOTE, "bad")
+
+    def _daily_line(self, now: float) -> None:
+        """At the start of a live round the daily-stop line follows the stop itself: set while the day's realised
+        loss is at the stop (again after a restart, which clears it), cleared once the stop no longer holds."""
+        st = self.state
+        if st.get("mode") != "live":
+            return
+        if _day_pnl(st, now) <= -float(self.settings.polydesk_live_daily_loss_usd):
+            self._daily_stop_note(now)
+        elif st.get("live_status") == DAILY_NOTE:
+            st["live_status"] = None
 
     def _check_total_loss(self, now: float) -> None:
         st = self.state
@@ -1071,6 +1650,7 @@ class PolyDesk:
         if total <= -float(self.settings.polydesk_live_total_loss_usd) and st["mode"] == "live":
             st["mode"] = "paper"
             st["live_halted"] = True
+            st["halt_reason"] = "total_loss"
             st["live_status"] = (
                 f"Total loss cap reached ({total:+.2f} $): the desk switched itself back to paper for good; "
                 "only the owner can switch it live again."
@@ -1080,14 +1660,24 @@ class PolyDesk:
             self._receipt("polydesk_live_halted", {"live_pnl_total_usd": total})
             log.warning("polydesk_live_halted total=%.2f", total)
 
-    def _settle(self, now: float, watched: set[str]) -> int:
+    def _settle(self, now: float, watched: set[str], quotes: Mapping[str, Mapping[str, Any]] | None = None) -> int:
+        """Book the positions whose market is over: off the watch list (a game) or past its end, or (``quotes``)
+        quoted this round in a state other than OPEN (a finished game the live list still carries: while a lost bet
+        sits unbooked, the daily stop cannot see it). A market whose settlement the venue has not published yet is
+        tried again next round."""
         st = self.state
         settled = 0
+        by_sport = st.get("by_sport")
+        if not isinstance(by_sport, dict):
+            by_sport = st["by_sport"] = {}
         for slug, pos in list(st["positions"].items()):
-            if slug in watched and now < pos["end_ts"]:
-                continue
-            if pos["category"] != "sports" and now < pos["end_ts"]:
-                continue
+            q = (quotes or {}).get(slug)
+            state = q.get("state") if isinstance(q, Mapping) else None
+            if not (state and state != OPEN_STATE):  # a closed quote is booked now, listed or not
+                if slug in watched and now < pos["end_ts"]:
+                    continue
+                if pos["category"] != "sports" and now < pos["end_ts"]:
+                    continue
             try:
                 value = settlement(slug)
             except RuntimeError:
@@ -1110,7 +1700,7 @@ class PolyDesk:
             d["pnl_usd"] += pnl
             d["settled"] += 1
             d["won"] += int(won)
-            _tally(st.setdefault("by_rule", {}), pos, pnl, won)
+            _tally(st.setdefault("by_rule", {}), pos, pnl, won, by_sport)
             st["closed"].insert(
                 0,
                 {**pos, "settled_at": now, "value": value, "pnl_usd": pnl, "won": won},
@@ -1172,9 +1762,10 @@ class PolyDesk:
 
     def _guard(self, now: float) -> None:
         """The risk manager (module docstring, :mod:`nightcrawler.deskguard`) on the current rule's own record, paper
-        and real apart. It writes only ``guard``, ``paused``, ``paused_real``, ``candidate`` and ``candidate_said``,
-        events and receipts: never ``mode``, the client, ``live_halted``, ``live_status`` or a setting. A pause only
-        ever stops buying; a winning record is a flag for the owner."""
+        and real apart, and each sport's practice record (:meth:`_sport_flags`). It writes only ``guard``,
+        ``paused``, ``paused_real``, ``candidate``, ``candidate_said``, ``sport_flags`` and ``sport_flags_said``, events
+        and receipts: never ``mode``, the client, ``live_halted``, ``live_status`` or a setting. A pause only ever stops
+        buying; a winning record is a flag for the owner."""
         st = self.state
         on = bool(self.settings.polydesk_guard)
         rule = self.rule
@@ -1192,6 +1783,49 @@ class PolyDesk:
                 log.warning("polydesk_guard book=%s paused=%s n=%d verdict=%s", book, paused, verdicts[book].n,
                             verdicts[book].verdict)
         self._flag(now, on, verdicts["paper"])
+        self._sport_flags(now, on)
+
+    def _sport_flags(self, now: float, on: bool) -> None:
+        """Each sport's PRACTICE record under the current rule, judged like the rule's own (:func:`judge_sport`). A
+        winning one (never :data:`PROVEN_LOSERS` or ``other``) sets ``sport_flags[sport]``, said once with a
+        ``polydesk_sport_flag`` receipt; a flag that falls back (or of an older rule, or with the guard off) is
+        cleared with one event and a receipt, and a later return is said again. A flag for the owner that opens a
+        fresh confirmation window, nothing more: real money's sports (:data:`REAL_SPORTS_ALLOWED`) change only in
+        code."""
+        st, rule = self.state, self.rule
+        flags = _as_dict(st.get("sport_flags"))
+        said = [x for x in st.get("sport_flags_said") or [] if isinstance(x, str)]
+        by_sport = _as_dict(st.get("by_sport"))
+        current = _as_dict(by_sport.get(rule))
+        for sport in sorted(set(current) | set(flags)):
+            v = judge_sport(self.settings, by_sport, sport, "paper")
+            old = flags.get(sport) if isinstance(flags.get(sport), dict) else None
+            if on and v.verdict == deskguard.WINNING and sport not in PROVEN_LOSERS and sport != "other":
+                keep = _current(old, rule)
+                flags[sport] = {"at": keep["at"] if keep else now, "rule": rule, "reason": v.reason}
+                if f"{rule}|{sport}" not in said:
+                    said.append(f"{rule}|{sport}")
+                    self._event(now, f"Practice record for {sport} clears the risk manager's bar ({v.summary}): real "
+                                     "money stays off for it until a fresh confirmation and the owner say yes", "good")
+                    self._receipt("polydesk_sport_flag", {"sport": sport, "rule": rule, "n": v.n, "total_usd": v.total,
+                                                          "cleared": False})
+                    log.info("polydesk_sport_flag sport=%s rule=%s n=%d", sport, rule, v.n)
+                continue
+            flags.pop(sport, None)
+            if old is None:
+                continue
+            said = [x for x in said if x != f"{old.get('rule')}|{sport}"]
+            if not on:
+                why = "the risk manager is off"
+            elif old.get("rule") != rule:
+                why = "the rule changed, its record starts from zero"
+            else:
+                why = f"its practice record is {v.phrase} now, {v.summary}"
+            self._event(now, f"No longer clears the risk manager's bar for {sport}: {why}")
+            self._receipt("polydesk_sport_flag", {"sport": sport, "rule": old.get("rule"), "n": v.n,
+                                                  "total_usd": v.total, "cleared": True})
+        st["sport_flags"] = flags
+        st["sport_flags_said"] = said
 
     def _flag(self, now: float, on: bool, paper: deskguard.Verdict) -> None:
         """The winning flag (``state["candidate"]``): set while the current rule's paper record is winning, said
@@ -1310,7 +1944,10 @@ def panel_state(settings: Settings, now: float) -> dict[str, Any]:
     record (:func:`rule_id`) and ``before_fix`` everything else (older rules' rows, venue adoptions), each with
     paper and real apart;
     ``lessons`` and ``worst`` are derived from the closed rows (module docstring); ``guard`` is the risk
-    manager's view (:func:`guard_view`)."""
+    manager's view (:func:`guard_view`). ``real`` also carries the unconfirmed orders (``pending``, ``pending_usd``)
+    and the loss stops' room if everything still at risk lost (``stop_room_usd``, :func:`real_room`); ``skips`` is
+    today's count of the rule's picks not bought, or not with real money, by reason (:func:`skips_view`), ``sports``
+    each sport's real-money state, history verdict and practice record (:func:`sports_view`)."""
     st = load_state(state_path(settings))
     enabled = bool(settings.polydesk_enabled)
     today = datetime.fromtimestamp(now, UTC).strftime("%Y-%m-%d")
@@ -1330,6 +1967,8 @@ def panel_state(settings: Settings, now: float) -> dict[str, Any]:
         "settled": int(live_day.get("settled") or 0),
         "won": int(live_day.get("won") or 0),
     }
+    pending = _pending_of(st)
+    room = real_room(st, settings, now)
     real: dict[str, Any] = {
         "open": len(real_open),
         "at_risk_usd": sum(float(p.get("cost_usd") or 0.0) for p in real_open),
@@ -1337,6 +1976,12 @@ def panel_state(settings: Settings, now: float) -> dict[str, Any]:
         "won_total": real_won,
         "pnl_total_usd": real_total,
         "today": real_today,
+        # orders the venue has not confirmed yet: open real money for the caps until its book says
+        "pending": len(pending),
+        "pending_usd": sum(_pending_cost(p) for p in pending.values()),
+        # what the stops still let out if every open bet and unconfirmed order lost (real_room), and which binds
+        "stop_room_usd": min(room["day_room"], room["total_room"]),
+        "stop_room_limit": "day" if room["day_room"] <= room["total_room"] else "total",
     }
     paper: dict[str, Any] = {
         "open": open_n - len(real_open),
@@ -1423,4 +2068,42 @@ def panel_state(settings: Settings, now: float) -> dict[str, Any]:
         ][:REAL_CLOSED_SHOWN],
         "paper_max_open": PAPER_MAX_OPEN,
         "guard": guard_view(settings, st, now),
+        "skips": skips_view(st, now),
+        "sports": sports_view(settings, st),
+        "real_sports_allowed": sorted(REAL_SPORTS_ALLOWED),
     }
+
+
+def skips_view(st: Mapping[str, Any], now: float) -> dict[str, Any]:
+    """Today's skips (UTC): ``{counts: {reason: n}, sports: {sport: n}}``, each (reason, market or game) once."""
+    skips = _as_dict(st.get("skips"))
+    rec = skips.get(_day(now)) if isinstance(skips, dict) else None
+    rec = rec if isinstance(rec, dict) else {}
+
+    def counts(raw: Any) -> dict[str, int]:
+        return {str(k): int(v) for k, v in raw.items() if isinstance(v, int) and v > 0} if isinstance(raw, dict) else {}
+
+    return {"counts": counts(rec.get("counts")), "sports": counts(rec.get("sports"))}
+
+
+def sports_view(settings: Settings, st: Mapping[str, Any]) -> list[dict[str, Any]]:
+    """Per sport, in :data:`SPORT_HISTORY` order: whether real money may bet it (``allowed`` only when it is in
+    :data:`REAL_SPORTS_ALLOWED`), lab 4's history verdict and its reason, the current rule's practice record (settled,
+    won, P&L, the risk manager's verdict; None before a settlement) and whether that record is flagged."""
+    rule = rule_id(settings)
+    by_sport = _as_dict(st.get("by_sport"))
+    current = _as_dict(by_sport.get(rule))
+    flags = _as_dict(st.get("sport_flags"))
+    out = []
+    for sport, (verdict, why) in SPORT_HISTORY.items():
+        books = _as_dict(current.get(sport))
+        rec = books.get("paper") if isinstance(books.get("paper"), dict) else None
+        paper = None
+        if rec is not None:
+            v = judge_sport(settings, by_sport, sport, "paper")
+            paper = {"settled": int(_num(rec.get("settled")) or 0), "won": int(_num(rec.get("won")) or 0),
+                     "pnl_usd": float(_num(rec.get("pnl_usd")) or 0.0), "verdict": v.verdict, "phrase": v.phrase}
+        out.append({"sport": sport, "real": "allowed" if sport in REAL_SPORTS_ALLOWED else "blocked",
+                    "history": verdict, "why": why, "paper": paper,
+                    "flagged": _current(flags.get(sport), rule) is not None})
+    return out

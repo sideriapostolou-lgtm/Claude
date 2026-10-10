@@ -1,5 +1,6 @@
 """The Polymarket desk (nightcrawler.polydesk): watch list from a fake gateway, the candidate rule's paper buys
-(long and short), settlement bookkeeping, the state file, and the team-room panel. No network, no keys."""
+(the YES side only), settlement bookkeeping, the state file, and the team-room panel. No network, no keys. The
+real-money audit's fixes (2026-10-10) are tested in tests/test_polydesk_safety.py."""
 
 from __future__ import annotations
 
@@ -13,7 +14,9 @@ from nightcrawler import polydesk as P
 from nightcrawler.config import Settings
 
 #: The default settings' rule (polydesk.rule_id): the version plus theta, hours and the max spread.
-RULE = "2026-10-09b|t0.970|h1|s0.03"
+RULE = "2026-10-10a|t0.970|h1|s0.03"
+#: The rule that traded real money on 2026-10-10 before the audit's fixes (an older rule now).
+OLD_RULE = "2026-10-09b|t0.970|h1|s0.03"
 
 NOW = 1_791_560_000.0
 
@@ -33,12 +36,16 @@ def _market(slug: str, cat: str, end_offset_s: float) -> dict[str, Any]:
     }
 
 
-def _event(slug: str, start_offset_s: float, period: str) -> dict[str, Any]:
+def _event(slug: str, start_offset_s: float, period: str, live: bool = True) -> dict[str, Any]:
+    """A sports event as the gateway lists it: one match-winner market and one spread market (not a winner); the
+    venue's own ``live`` flag on by default (the desk needs it), no ``ended``, no tags."""
     return {
         "slug": slug,
         "title": f"{slug} game",
         "startTime": _iso(NOW + start_offset_s),
         "period": period,
+        "live": live,
+        "tags": [],
         "markets": [
             {
                 "slug": f"{slug}-ml",
@@ -57,12 +64,15 @@ def _event(slug: str, start_offset_s: float, period: str) -> dict[str, Any]:
 
 
 class Gateway:
-    """A fake gateway: markets per category, live events, quotes and settlements, all mutable by the test."""
+    """A fake gateway: markets per category, live events, quotes and settlements, all mutable by the test. A quote
+    carries what the real reply carries besides the book (read 2026-10-10 from the public gateway): by default the
+    last trade at the ask, 5,000 shares traded and the market OPEN; ``extra[slug]`` overrides any of them."""
 
     def __init__(self) -> None:
         self.markets: list[dict[str, Any]] = []
         self.events: list[dict[str, Any]] = []
         self.quotes: dict[str, tuple[float | None, float | None]] = {}
+        self.extra: dict[str, dict[str, Any]] = {}
         self.settlements: dict[str, float] = {}
         self.calls = 0
 
@@ -93,6 +103,10 @@ class Gateway:
                 "marketData": {
                     "bestBid": {"value": str(bid)} if bid is not None else None,
                     "bestAsk": {"value": str(ask)} if ask is not None else None,
+                    "lastTradePx": {"value": str(ask)} if ask is not None else None,
+                    "sharesTraded": "5000",
+                    "state": "MARKET_STATE_OPEN",
+                    **self.extra.get(slug, {}),
                 }
             }
         if path.endswith("/settlement"):
@@ -151,7 +165,7 @@ def test_watch_list_non_sports_and_live_games(gw: Gateway) -> None:
     )
 
 
-def test_rule_buys_long_and_short_then_settles(gw: Gateway, tmp_path) -> None:
+def test_rule_buys_long_then_settles(gw: Gateway, tmp_path) -> None:
     gw.markets = [
         _market("w1", "climate", 1800),
         _market("c1", "crypto", 1800),
@@ -161,50 +175,54 @@ def test_rule_buys_long_and_short_then_settles(gw: Gateway, tmp_path) -> None:
     gw.events = [_event("g1", -3600, "2H")]
     gw.quotes = {
         "w1": (0.96, 0.975),
-        "c1": (0.02, 0.05),
+        "c1": (0.02, 0.04),  # its NO side is near-certain: never bought since rule 2026-10-10a (YES only)
         "n1": (0.50, 0.52),
         "later": (0.98, 0.99),
         "g1-ml": (0.97, 0.98),
     }
     desk = _desk(tmp_path)
     r = desk.poll(NOW)
-    assert r["watched"] == 5 and r["bought"] == 3 and r["settled"] == 0
+    assert r["watched"] == 5 and r["bought"] == 2 and r["settled"] == 0
     pos = desk.state["positions"]
-    assert set(pos) == {
-        "w1",
-        "c1",
-        "g1-ml",
-    }  # 'later' is outside the 1 h window, 'n1' never near-certain
-    assert pos["w1"]["side"] == "long" and pos["w1"]["p_in"] == 0.975
-    assert pos["c1"]["side"] == "short" and abs(pos["c1"]["p_in"] - 0.98) < 1e-9
+    assert set(pos) == {"w1", "g1-ml"}  # 'later' is outside the 1 h window, 'n1' never near-certain, 'c1' a NO bet
+    assert pos["w1"]["side"] == "long" and pos["w1"]["p_in"] == 0.975 and pos["g1-ml"]["side"] == "long"
+    assert "c1" not in desk.state["tried"]
     fee = pos["w1"]["fee_usd"]
     assert abs(fee - (20 / 0.975) * 0.0695 * 0.975 * 0.025) < 1e-9
     assert desk.state["events"][0]["text"].startswith("Paper buy:")
     # the state file is written and reloads
     reloaded = P.load_state(desk.path)
-    assert (
-        set(reloaded["positions"]) == {"w1", "c1", "g1-ml"}
-        and reloaded["counters"]["bought"] == 3
-    )
-    # an hour later: w1 and c1 ended, the game left the live list; settle w1 long at 1 (win), c1 short at 0 (win),
-    # g1 long at 0 (loss)
+    assert set(reloaded["positions"]) == {"w1", "g1-ml"} and reloaded["counters"]["bought"] == 2
+    # an hour later: w1 ended, the game left the live list; settle w1 long at 1 (win), g1 long at 0 (loss)
     gw.markets = [_market("later", "crypto", 5 * 3600 - 3700)]
     gw.events = []
-    gw.settlements = {"w1": 1.0, "c1": 0.0, "g1-ml": 0.0}
+    gw.settlements = {"w1": 1.0, "g1-ml": 0.0}
     r2 = desk.poll(NOW + 3700)
-    assert r2["settled"] == 3 and not desk.state["positions"]
+    assert r2["settled"] == 2 and not desk.state["positions"]
     closed = {c["slug"]: c for c in desk.state["closed"]}
-    assert closed["w1"]["won"] and closed["c1"]["won"] and not closed["g1-ml"]["won"]
+    assert closed["w1"]["won"] and not closed["g1-ml"]["won"]
     assert (
         abs(closed["w1"]["pnl_usd"] - ((20 / 0.975) - fee - 20)) < 1e-9
         and closed["g1-ml"]["pnl_usd"] < -20
     )
     day = datetime.fromtimestamp(NOW + 3700, UTC).strftime("%Y-%m-%d")
     d = desk.state["days"][day]
-    assert d["settled"] == 3 and d["won"] == 2 and d["pnl_usd"] < 0
+    assert d["settled"] == 2 and d["won"] == 1 and d["pnl_usd"] < 0
     assert "w1" in desk.state["tried"]  # never bought twice
     r3 = desk.poll(NOW + 3800)
     assert r3["bought"] == 0
+
+
+def test_paper_buys_the_yes_side_only(gw: Gateway, tmp_path) -> None:
+    """Rule 2026-10-10a: practice makes the same kind of bet real money can (47 of the 73 practice "wins" before it
+    were NO bets real money cannot make). A market whose NO side looks near-certain is never bought, nor tried."""
+    gw.markets = [_market("no1", "crypto", 1800), _market("no2", "weather", 1800), _market("yes", "climate", 1800)]
+    gw.quotes = {"no1": (0.01, 0.02), "no2": (0.02, 0.03), "yes": (0.97, 0.98)}
+    desk = _desk(tmp_path)
+    assert desk.poll(NOW)["bought"] == 1
+    assert {s: p["side"] for s, p in desk.state["positions"].items()} == {"yes": "long"}
+    assert not {"no1", "no2"} & set(desk.state["tried"])
+    assert not any(" short at " in e["text"] for e in desk.state["events"])
 
 
 def test_poll_survives_a_sports_listing_failure(
@@ -320,16 +338,17 @@ def _open(slug: str, cat: str, p: float, **kw: Any) -> dict[str, Any]:
 
 def test_new_positions_carry_the_rule_version_and_the_book_at_entry(gw: Gateway, tmp_path) -> None:
     gw.markets = [_market("w1", "climate", 1800), _market("c1", "crypto", 1800)]
-    gw.quotes = {"w1": (0.96, 0.975), "c1": (0.02, 0.04)}
+    gw.quotes = {"w1": (0.96, 0.975), "c1": (0.97, 0.99)}
     desk = _desk(tmp_path)
     desk.poll(NOW)
     pos = desk.state["positions"]
     assert pos["w1"]["rule"] == P.rule_id(desk.settings) == RULE == desk.state["rule"]["id"]
-    assert desk.state["rule"]["version"] == P.RULE_VERSION == "2026-10-09b" and RULE.startswith(P.RULE_VERSION)
+    assert desk.state["rule"]["version"] == P.RULE_VERSION == "2026-10-10a" and RULE.startswith(P.RULE_VERSION)
     assert (pos["w1"]["bid_in"], pos["w1"]["ask_in"]) == (0.96, 0.975) and pos["w1"]["spread_in"] == pytest.approx(0.015)
-    assert pos["c1"]["side"] == "short" and (pos["c1"]["bid_in"], pos["c1"]["ask_in"]) == (0.02, 0.04)  # the book as quoted
+    assert pos["c1"]["side"] == "long" and (pos["c1"]["bid_in"], pos["c1"]["ask_in"]) == (0.97, 0.99)  # the book as quoted
+    assert pos["w1"]["sport"] is None  # every new position is stamped with its sport (none: not a game)
     gw.markets = []
-    gw.settlements = {"w1": 1.0, "c1": 0.0}
+    gw.settlements = {"w1": 1.0, "c1": 1.0}
     desk.poll(NOW + 1900)
     closed = {c["slug"]: c for c in desk.state["closed"]}
     assert closed["w1"]["rule"] == RULE and closed["w1"]["spread_in"] == pytest.approx(0.015)  # inherited
@@ -462,7 +481,7 @@ def test_a_new_lesson_is_said_once(gw: Gateway, tmp_path) -> None:
 def test_the_paper_book_is_capped_at_paper_max_open(gw: Gateway, tmp_path, monkeypatch: pytest.MonkeyPatch) -> None:
     assert P.PAPER_MAX_OPEN == 60
     monkeypatch.setattr(P, "PAPER_MAX_OPEN", 3)
-    gw.markets = [_market(f"m{i}", "crypto", 1800) for i in range(5)]
+    gw.markets = [_market(f"m{i}", "crypto", 1800 + i) for i in range(5)]  # five ends: five ladders, one rung each
     gw.quotes = {f"m{i}": (0.97, 0.98) for i in range(5)}
     desk = _desk(tmp_path)
     r = desk.poll(NOW)
@@ -471,10 +490,41 @@ def test_the_paper_book_is_capped_at_paper_max_open(gw: Gateway, tmp_path, monke
     assert desk.state["events"][0]["text"] == "Paper book full (3 open): no new paper buys until some settle."
     desk.poll(NOW + 60)
     assert sum(e["text"].startswith("Paper book full") for e in desk.state["events"]) == 1  # said once while full
-    gw.markets = [_market(f"m{i}", "crypto", 1800) for i in range(1, 5)]
+    gw.markets = [_market(f"m{i}", "crypto", 1800 + i) for i in range(1, 5)]
     gw.settlements = {"m0": 1.0}
     r = desk.poll(NOW + 1900)  # buys are tried before settlements: still full this round, then m0 settles
     assert (r["bought"], r["settled"]) == (0, 1)
     r = desk.poll(NOW + 2000)
     assert r["bought"] == 1 and set(desk.state["positions"]) == {"m1", "m2", "m3"} and "m4" not in desk.state["tried"]
     assert sum(e["text"].startswith("Paper book full") for e in desk.state["events"]) == 2  # full again: said again
+
+
+def test_new_rule_version_starts_a_fresh_scorecard_and_keeps_the_stops(tmp_path) -> None:
+    """Rule 2026-10-10a (the audit's fixes) judges itself on its own record from zero; the older rule's 83 real bets
+    stay under "before the fix"; the loss stops (the real totals, the day) are never reset; the file's version
+    stays 1 (a bump would wipe the stops); the label says what the rule is, and that lab 4 found no edge."""
+    settings = Settings.from_env({"DATA_DIR": str(tmp_path)})
+    st = P.empty_state()
+    st["by_rule"] = {OLD_RULE: {"real": {"settled": 83, "won": 78, "pnl_usd": -3.11, "pnls": [], "costs": [],
+                                         "keys": []}}}
+    today = datetime.fromtimestamp(NOW, UTC).strftime("%Y-%m-%d")
+    st["live_days"] = {today: {"pnl_usd": -3.11, "settled": 83, "won": 78}}
+    st["live_pnl_total_usd"] = -4.885
+    st["counters"].update({"settled": 83, "won": 78})
+    st["days"] = {today: {"pnl_usd": -3.11, "settled": 83, "won": 78}}
+    P.save_state(P.state_path(settings), st)
+    desk = P.PolyDesk(settings)
+    assert desk.rule == RULE != OLD_RULE and desk.state["version"] == P.STATE_VERSION == 1
+    d = P.panel_state(settings, NOW)
+    assert d["since_fix"]["rule"] == RULE and d["since_fix"]["real"]["settled_total"] == 0
+    assert d["since_fix"]["paper"]["settled_total"] == 0
+    assert d["before_fix"]["real"]["settled_total"] == 83 and d["before_fix"]["real"]["won_total"] == 78
+    assert d["real"]["pnl_total_usd"] == pytest.approx(-4.885) and d["real"]["today"]["pnl_usd"] == pytest.approx(-3.11)
+    saved = P.load_state(P.state_path(settings))
+    assert saved["version"] == 1 and saved["live_pnl_total_usd"] == pytest.approx(-4.885)
+    assert saved["live_days"][today]["pnl_usd"] == pytest.approx(-3.11)
+    assert saved["by_rule"][OLD_RULE]["real"]["settled"] == 83  # kept, never backfilled into the new rule
+    label = desk.state["rule"]["label"]
+    assert "no edge" in label and "never gets real money" not in label
+    assert label.startswith("rule 2026-10-10a: buy the YES side at >= 0.97") and "non-sports only" in label
+    assert d["guard"]["paper"]["n"] == 0 and d["guard"]["rule"] == RULE  # the risk manager judges the new rule alone
