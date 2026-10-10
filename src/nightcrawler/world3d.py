@@ -302,7 +302,15 @@ header .money #clock { font-size: 10px; color: var(--dim); display: block; }
 #card { position: fixed; left: 12px; right: 12px; bottom: calc(76px + env(safe-area-inset-bottom));
         background: var(--glass); border: 1px solid rgba(224,178,94,.32); border-radius: 12px; padding: 7px 11px;
         backdrop-filter: blur(8px); max-width: 560px; }
-#card .room { font-size: 10.5px; letter-spacing: .16em; color: var(--brass); font-weight: 700; }
+#card .room { font-size: 10.5px; letter-spacing: .16em; color: var(--brass); font-weight: 700; display: flex; align-items: center; gap: 8px; }
+#card .room .name { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#live { flex: 0 0 auto; font-size: 10px; letter-spacing: .14em; font-weight: 800; color: #fff; background: var(--bad);
+        border-radius: 999px; padding: 1px 8px 1px 7px; cursor: pointer; text-transform: uppercase; }
+#live::before { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #fff;
+                margin-right: 5px; vertical-align: 1px; animation: livedot 1.4s ease-in-out infinite; }
+#live.pinned { background: rgba(224,178,94,.92); color: #1d1a16; text-transform: none; letter-spacing: .04em; font-weight: 700; }
+#live.pinned::before { animation: none; background: #1d1a16; }
+@keyframes livedot { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
 #card .who { font-weight: 700; font-size: 14px; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 #card .who small { font-weight: 400; color: var(--dim); margin-left: 6px; font-size: 12px; }
 #card .rows { margin-top: 3px; font-size: 12px; color: var(--dim); }
@@ -321,6 +329,7 @@ header .money #clock { font-size: 10px; color: var(--dim); display: block; }
                 border: 1px solid rgba(224,178,94,.35); border-radius: 999px; padding: 4px 11px; cursor: pointer;
                 min-height: 32px; backdrop-filter: blur(6px); }
 #chips button.on { border-color: var(--brass); background: rgba(224,178,94,.28); }
+#chips button.live { border-color: var(--bad); background: rgba(255,107,97,.3); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; font-size: 11px; }
 #chips button i { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 6px; background: #6c717c; }
 #chips button i.working { background: var(--good); } #chips button i.blocked { background: var(--bad); }
 #chips button i.waiting { background: var(--warn); }
@@ -2857,12 +2866,26 @@ _M_LIFE = r"""
   function roomShot(room) { return SHOTS[room] || SHOTS.table; }
   const cam = { pos: V3(0, 0, 0), look: V3(0, 0, 0) };
   let shotKey = "", shotFn = null, tween = null;
-  function cut(key, fn) {
-    if (key === shotKey) { shotFn = fn; return; }
+  // the flight between shots (one record, reused: nothing allocated per cut): the drone eases over in 1.5-3 s,
+  // rising above the walls when a straight line would cross one, and enters or leaves the observatory under its
+  // dome rim (a waypoint at its open front). A hard cut (the director's rhythm, a fresh event) just lands.
+  const FLIGHT = { from: V3(0, 0, 0), fromLook: V3(0, 0, 0), via: V3(0, 0, 0), hasVia: false, k: 0.5, t: 0, dur: 2, lift: 0, lift2: 0 };
+  const CLEAR_Y = 6.6;  // above every wall, cornice and pergola beam
+  function inObservatory(p) { return p.z < -9.6 && Math.abs(p.x) < 6.2 && p.y < 9; }
+  function liftOver(a, b) { return blocked(a, b) < 1 ? Math.max(0, CLEAR_Y - Math.max(a.y, b.y)) : Math.min(0.5, a.distanceTo(b) * 0.05); }
+  function bump(v) { return smoothstep(v, 0, 0.22) * (1 - smoothstep(v, 0.78, 1)); }  // up early, down late
+  function cut(key, fn, hard) {
+    if (key === shotKey && hard === undefined) { shotFn = fn; return; }
     shotKey = key; shotFn = fn; const s = fn(simT), d = s.pos.distanceTo(cam.pos);
-    if (cam.pos.lengthSq() === 0) { cam.pos.copy(s.pos); cam.look.copy(s.look); tween = null; return; }
-    tween = { from: cam.pos.clone(), fromLook: cam.look.clone(), t: 0, dur: clamp(1.0 + d / 6.5, 1.1, 5.5), lift: d > 8 ? Math.min(7, d * 0.24) : 0 };
-    renderCard();
+    if (cam.pos.lengthSq() === 0 || hard) { cam.pos.copy(s.pos); cam.look.copy(s.look); tween = null; renderCard(); return; }
+    const F = FLIGHT; F.from.copy(cam.pos); F.fromLook.copy(cam.look); F.t = 0; F.dur = clamp(1.2 + d / 8, 1.5, 3.0);
+    const fromObs = inObservatory(cam.pos), toObs = inObservatory(s.pos);
+    F.hasVia = fromObs !== toObs;
+    if (F.hasVia) {
+      F.via.set(0, 4.6, -8.6); const d1 = F.from.distanceTo(F.via), d2 = F.via.distanceTo(s.pos); F.k = d1 / Math.max(1e-3, d1 + d2);
+      F.lift = fromObs ? 0 : liftOver(F.from, F.via); F.lift2 = toObs ? 0 : liftOver(F.via, s.pos); F.dur = clamp(1.6 + (d1 + d2) / 7, 2.0, 3.2);
+    } else F.lift = liftOver(F.from, s.pos);
+    tween = F; renderCard();
   }
   const user = { yaw: 0, pitch: 0, zoom: 1 }; let lastInputAt = -1e9, shake = 0;
   const _camP = new THREE.Vector3(), _dir = new THREE.Vector3(), _right = new THREE.Vector3(), _look = new THREE.Vector3(), UP = V3(0, 1, 0);
@@ -2870,7 +2893,10 @@ _M_LIFE = r"""
     const s = shotFn(t);
     if (tween) {
       tween.t += dt / tween.dur; const u = Math.min(1, tween.t), e = u * u * (3 - 2 * u);
-      cam.pos.lerpVectors(tween.from, s.pos, e); cam.pos.y += Math.sin(Math.PI * e) * tween.lift; cam.look.lerpVectors(tween.fromLook, s.look, e);
+      if (tween.hasVia && e < tween.k) { const v = e / tween.k; cam.pos.lerpVectors(tween.from, tween.via, v); cam.pos.y += bump(v) * tween.lift; }
+      else if (tween.hasVia) { const v = (e - tween.k) / (1 - tween.k); cam.pos.lerpVectors(tween.via, s.pos, v); cam.pos.y += bump(v) * tween.lift2; }
+      else { cam.pos.lerpVectors(tween.from, s.pos, e); cam.pos.y += bump(e) * tween.lift; }
+      cam.look.lerpVectors(tween.fromLook, s.look, e);
       if (u >= 1) tween = null;
     } else {
       const kp = 1 - Math.exp(-dt * 2.2), kl = 1 - Math.exp(-dt * 3.2);
@@ -2902,9 +2928,9 @@ _M_LIFE = r"""
   canvas.addEventListener("pointerup", up); canvas.addEventListener("pointercancel", up);
   canvas.addEventListener("wheel", function (e) { e.preventDefault(); user.zoom = clamp(user.zoom * (1 + e.deltaY * 0.0012), 0.5, 1.8); lastInputAt = performance.now(); }, { passive: false });
 
-  // the director: who the drone is on
-  let focus = null, pinned = null, idleSince = 0, tour = -1, tourUntil = 0;
-  const TOUR = ["workshop", "den", "table", "vault", "archive", "dock", "observatory"];
+  // the director: who the drone is on. A pin (a chip, the map) holds the camera for a while and times out back to
+  // the live broadcast (THE LIVE DIRECTOR below), which owns the camera the rest of the time.
+  let focus = null, pinned = null;
   // each shot's key and function made once (the director runs every frame: no new strings or closures)
   const ROOMCUT = {};
   Object.keys(SHOTS).forEach(function (r) { ROOMCUT[r] = { key: "room:" + r, fn: function () { return SHOTS[r]; } }; });
@@ -2912,26 +2938,18 @@ _M_LIFE = r"""
     a.cuts = { follow: { key: "follow:" + k, fn: function () { return followShot(a); } }, face: { key: "face:" + k, fn: function () { return faceShot(a); } } }; });
   function cutRoom(room) { const c = ROOMCUT[room] || ROOMCUT.table; cut(c.key, c.fn); }
   function director() {
+    const p = PLANNER.pinned(simT); if (p !== pinned) { pinned = p; renderChips(); renderCard(); }  // (a pin timed out)
+    if (focus && simT >= focus.until) focus = null;
     if (pinned) {
       if (pinned === "map") cut("map", mapShot);
       else if (pinned === "observatory") cutRoom("observatory");
       else { const a = actors[pinned]; if (a && a.walking) cut(a.cuts.follow.key, a.cuts.follow.fn); else if (a) cutRoom(a.room); }
-      return;
+      renderLive(); return;
     }
-    if (focus && simT < focus.until) {
-      const a = focus.actor;
-      if (a.walking && simT > focus.start + focus.lead) cut(a.cuts.follow.key, a.cuts.follow.fn);
-      else if (!a.walking && a.state === "visit") cut(a.cuts.face.key, a.cuts.face.fn);
-      else if (!a.walking) cutRoom(a.room);
-      return;
-    }
-    if (focus) { focus = null; idleSince = simT; tour = -1; }
-    if (simT - idleSince < 40) { cut("arrival", arrivalShot); return; }
-    if (simT >= tourUntil) { tour += 1; tourUntil = simT + 12;
-      if (tour >= TOUR.length) { tour = -1; idleSince = simT; cut("arrival", arrivalShot); return; } }
-    cutRoom(TOUR[tour]);
+    liveDirector();
   }
-  function focusOn(actor, lead, seconds) { if (!actor) return; focus = { actor: actor, start: simT, lead: lead, until: simT + seconds }; renderCard(); }
+  // a real moment the camera goes to: who, how long, and what kind (speak, lesson, carry) for the director
+  function focusOn(actor, lead, seconds, kind) { if (!actor) return; focus = { actor: actor, start: simT, lead: lead, until: simT + seconds, kind: kind || "speak" }; renderCard(); }
 
   // ============================================================= THE HUD: bubbles, labels, chips, the caption
   const _v = new THREE.Vector3();
@@ -2985,25 +3003,26 @@ _M_LIFE = r"""
   function statusDot(ids) { const i = document.createElement("i"); i.className = worstStatus(ids); return i; }
   function renderChips() {
     chips.textContent = "";
+    const live = document.createElement("button"); live.appendChild(document.createTextNode("live")); live.className = pinned ? "" : "on live";
+    live.onclick = goLive; chips.appendChild(live);
     Object.keys(CAST).forEach(function (k) {
       if (!actors[k]) return; const c = CAST[k], b = document.createElement("button");
       b.appendChild(statusDot(c.members)); b.appendChild(document.createTextNode(c.name)); b.className = pinned === k ? "on" : "";
-      b.onclick = function () { pinned = pinned === k ? null : k; renderChips(); renderCard(); }; chips.appendChild(b);
+      b.onclick = function () { togglePin(k); }; chips.appendChild(b);
     });
     [["observatory", ROOMS.observatory ? ROOMS.observatory.title : "The observatory"], ["map", "map"]].forEach(function (q) {
       const b = document.createElement("button"); if (q[0] === "observatory") b.appendChild(statusDot(ROOMS.observatory ? ROOMS.observatory.members : []));
       b.appendChild(document.createTextNode(q[1])); b.className = pinned === q[0] ? "on" : "";
-      b.onclick = function () { pinned = pinned === q[0] ? null : q[0]; renderChips(); renderCard(); }; chips.appendChild(b);
+      b.onclick = function () { togglePin(q[0]); }; chips.appendChild(b);
     });
   }
   function renderCard() {
-    const room = card.querySelector(".room"), who = card.querySelector(".who"), rows = card.querySelector(".rows");
+    const room = card.querySelector(".room .name"), who = card.querySelector(".who"), rows = card.querySelector(".rows");
     rows.textContent = ""; who.textContent = "";
     let roomKey = null, actor = null;
     if (pinned && actors[pinned]) { actor = actors[pinned]; roomKey = actor.room; }
     else if (pinned === "observatory") roomKey = "observatory";
-    else if (focus) { actor = focus.actor; roomKey = actor.walking ? null : actor.room; }
-    else if (shotKey.indexOf("room:") === 0) roomKey = shotKey.slice(5);
+    else if (!pinned) { const s = liveSubject(); actor = s.actor; roomKey = s.room; }  // the broadcast's subject
     if (roomKey && !actor) actor = actors[Object.keys(actors).find(function (k) { return actors[k].homeRoom === roomKey; })] || null;
     if (actor || roomKey) {
       const spec = ROOMS[roomKey] || ROOMS[actor ? actor.homeRoom : ""] || null;
@@ -3055,7 +3074,7 @@ _M_LIFE = r"""
     }
     const walks = dest && dest !== actor.homeRoom && actor.queue.length < 3;
     if (walks) actor.queue.push({ dest: dest, hold: 3.5 });
-    focusOn(actor, 3.5, walks ? 8 : 10);
+    focusOn(actor, 3.5, walks ? 8 : 10, lesson ? "lesson" : "speak");
   }
   function onClosed(t) {
     const jet = actors.jet; if (!jet) return;
@@ -3068,7 +3087,7 @@ _M_LIFE = r"""
       if (pnl > 0) oneShot(a, "cheer"); else if (pnl < 0) oneShot(a, "shrug");
       if (focus && focus.actor === a) focus.until = Math.max(focus.until, simT + (pnl > 0 ? 10 : 5));  // the camera stays for it
     } });
-    focusOn(jet, 2.0, 8);
+    focusOn(jet, 2.0, 8, "carry");
   }
   function chatter() {
     const ids = Object.keys(members).filter(function (id) { const a = actors[actorOf[id]]; if (!a) return false; const s = toScreen(a.headAt);
@@ -3205,6 +3224,272 @@ _M_LIFE = r"""
     ambientLife();
   }
 
+  // ============================================================= THE LIVE DIRECTOR: an always-on broadcast
+  // The owner's direction: the camera never sits still and never waits for a tap. A director keeps cutting and
+  // moving between what is happening right now, like a live broadcast: a fresh event first (whoever speaks, a
+  // hand-off walk, Jet's carry to the vault, a lesson at the table, Rook's pause), then whoever is working at a
+  // station, then the life of the place (the courtyard, the telescope, the bridge, the dock, the kiosk). Every shot
+  // moves (a push-in, an orbit, a crane, a dolly, a drift) and every shot is one of a few named types with
+  // parameters; the move between shots is a smooth flight (cut() above) or, about every third shot, a hard cut.
+  // Coverage memory (last seen, last angle) makes the director prefer what has not been shown. The planner is pure
+  // (no three.js, no DOM): tests/test_world3d.py extracts the block between the >>> and <<< markers and runs it in
+  // Node. Nothing here writes a word on screen: the LIVE tag's own words are fixed, the rest is the card's data.
+  // >>> live planner (pure)
+  // the places the director films between the characters (each with three rigs: the operator's RIGS below), the
+  // room each one shows (for coverage) and whether it is a wide establishing shot (never more than one in six)
+  const LIVE_PLACES = [
+    { id: "courtyard", room: "table" }, { id: "bridge", room: null }, { id: "telescope", room: "observatory" },
+    { id: "walkway", room: "dock" }, { id: "airship", room: "dock" }, { id: "kiosk", room: null },
+    { id: "vaultsign", room: "vault" }, { id: "shelves", room: "archive" }, { id: "bench", room: "workshop" },
+    { id: "screens", room: "den" }, { id: "arrival", room: null, wide: true }, { id: "overhead", room: "table", wide: true },
+  ];
+  // the shot types the director may pick, by what the subject is doing (the operator makes each one real)
+  const LIVE_GRAMMAR = {
+    work: ["closeup", "ots", "low", "orbit", "crane"], idle: ["closeup", "orbit", "low", "crane"],
+    speak: ["closeup", "ots", "low"], walk: ["follow", "dolly"], carry: ["follow", "dolly"], drop: ["low", "crane"],
+    visit: ["closeup", "ots"], lesson: ["ots", "closeup"], place: ["place"], wide: ["wide"],
+  };
+  // seconds: a shot that just started holds at least minHold (never a flicker), an event shot is re-framed after
+  // maxHold, anything unseen for starve seconds comes next, a wide shot at most every wideEvery shots, a pin lasts
+  // pin seconds; angles: how many angles the director cycles round a character
+  const LIVE_CFG = { minHold: 3, maxHold: 14, starve: 75, wideEvery: 6, pin: 25, angles: 6 };
+  function makePlanner(actorSpecs, places, opts) {
+    const cfg = {}; Object.keys(LIVE_CFG).forEach(function (k) { cfg[k] = opts && opts[k] != null ? opts[k] : LIVE_CFG[k]; });
+    const rnd = (opts && opts.random) || Math.random;
+    const subjects = [], byId = {}, roomSeen = {};
+    function subject(id, kind, room, wide, angles) {
+      const s = { id: id, kind: kind, room: room || null, wide: !!wide, angles: angles, seen: -1e9, angle: -1, mask: 0, grammar: "", shots: 0 };
+      subjects.push(s); byId[id] = s;
+    }
+    actorSpecs.forEach(function (a) { subject(a.id, "actor", a.room, false, cfg.angles); });
+    places.forEach(function (p) { subject(p.id, "place", p.room, p.wide, p.angles || 3); });
+    // the current shot (one object, mutated in place: the director reads it every frame)
+    const shot = { seq: 0, subject: "", kind: "", grammar: "", angle: 0, start: -1e9, hold: 0, hard: false, event: false, phase: "" };
+    const pin = { id: null, until: -1e9 };
+    let sinceWide = 1e3;
+    function pickAngle(s) {  // steps of one or two round the circle: three visits always show three different angles
+      const n = s.angles, step = n <= 2 ? 1 : 1 + (rnd() < 0.5 ? 0 : 1);
+      s.angle = s.angle < 0 ? Math.floor(rnd() * n) : (s.angle + step) % n; s.mask |= 1 << s.angle; return s.angle;
+    }
+    function pickGrammar(s, list) {  // never the same type twice running on one subject
+      let i = Math.floor(rnd() * list.length); if (list.length > 1 && list[i] === s.grammar) i = (i + 1) % list.length;
+      s.grammar = list[i]; return list[i];
+    }
+    function begin(s, kind, list, hold, now, event, phase) {
+      shot.seq += 1; shot.subject = s.id; shot.kind = kind; shot.grammar = pickGrammar(s, list); shot.angle = pickAngle(s);
+      shot.start = now; shot.hold = hold; shot.event = !!event; shot.phase = phase || "";
+      shot.hard = !!event || shot.seq % 3 === 0;  // the rhythm: a fresh event always cuts; otherwise about every third shot
+      s.seen = now; s.shots += 1; if (s.room) roomSeen[s.room] = now;
+      sinceWide = s.wide ? 0 : sinceWide + 1;
+      return shot;
+    }
+    function phaseOf(live, f) {  // what the event's actor is doing right now decides the shot type
+      const a = live.actors[f.actor];
+      if (!a) return "speak";
+      if (a.walking) return a.carrying ? "carry" : "walk";
+      if (a.visiting) return f.kind === "carry" ? "drop" : "visit";
+      return f.kind === "lesson" ? "lesson" : "speak";
+    }
+    function plan(now, live) {
+      // live: { actors: { id: { room, walking, carrying, speaking, working, visiting } }, focus: { actor, kind, start, until } | null }
+      const held = now - shot.start;
+      const f = live.focus && now < live.focus.until && byId[live.focus.actor] ? live.focus : null;
+      if (f) {
+        const phase = phaseOf(live, f), onIt = shot.event && shot.subject === f.actor && shot.phase === phase;
+        if (onIt && held < cfg.maxHold) return shot;  // on it: hold while this phase of the event lasts
+        if (!onIt && held < cfg.minHold) return shot;  // a shot that just started finishes its minimum: no flicker
+        return begin(byId[f.actor], "event", LIVE_GRAMMAR[phase] || LIVE_GRAMMAR.speak,
+                     Math.min(cfg.maxHold, Math.max(cfg.minHold + 2, f.until - now)), now, true, phase);
+      }
+      if (shot.seq && held < shot.hold) return shot;
+      // the rotation: the longest unseen first, with a bonus for real work in progress and for life on screen; the
+      // wide establishing shots only as a transition now and then
+      const allowWide = sinceWide >= cfg.wideEvery - 1;
+      let best = null, bestScore = -1e9, bestLive = null;
+      for (let i = 0; i < subjects.length; i++) {
+        const s = subjects[i];
+        if (s.id === shot.subject || (s.wide && !allowWide)) continue;
+        const a = s.kind === "actor" ? live.actors[s.id] : null;
+        let score = Math.min(now - s.seen, 600);
+        if (a) { if (a.working) score += 40; if (a.walking || a.visiting || a.speaking) score += 30; }
+        else score -= s.wide ? 30 : 12;
+        if (now - s.seen > cfg.starve) score += 1000;
+        score += rnd() * 10;
+        if (score > bestScore) { bestScore = score; best = s; bestLive = a; }
+      }
+      if (!best) return shot;
+      let list, hold;
+      if (best.wide) { list = LIVE_GRAMMAR.wide; hold = 5 + rnd() * 2; }
+      else if (best.kind === "place") { list = LIVE_GRAMMAR.place; hold = 7 + rnd() * 4; }
+      else if (bestLive && bestLive.walking) { list = LIVE_GRAMMAR.walk; hold = 5 + rnd() * 3; }
+      else if (bestLive && bestLive.speaking) { list = LIVE_GRAMMAR.speak; hold = 6 + rnd() * 3; }
+      else if (bestLive && bestLive.working) { list = LIVE_GRAMMAR.work; hold = 6 + rnd() * 4; }
+      else { list = LIVE_GRAMMAR.idle; hold = 5 + rnd() * 3; }
+      return begin(best, best.kind, list, hold, now, false, "");
+    }
+    return {
+      shot: shot, subjects: subjects, roomSeen: roomSeen, cfg: cfg, plan: plan,
+      pin: function (id, now) { pin.id = id; pin.until = now + cfg.pin; },
+      unpin: function () { pin.id = null; },
+      pinned: function (now) { if (pin.id && now >= pin.until) pin.id = null; return pin.id; },
+      pinLeft: function (now) { return pin.id ? Math.max(0, pin.until - now) : 0; },
+      anglesSeen: function (id) { let n = 0, m = byId[id] ? byId[id].mask : 0; while (m) { n += m & 1; m >>= 1; } return n; },
+    };
+  }
+  // <<< live planner
+  const PLANNER = makePlanner(ACTOR_KEYS.map(function (k) { return { id: k, room: actors[k].homeRoom }; }), LIVE_PLACES, {});
+  const liveEl = el("live");
+  // what the planner sees (filled every plan step, reused: nothing allocated)
+  const LIVE_STATE = { actors: {}, focus: null }, LIVE_FOCUS = { actor: "", kind: "", start: 0, until: 0 };
+  ACTOR_KEYS.forEach(function (k) { LIVE_STATE.actors[k] = { room: "", walking: false, carrying: false, speaking: false, working: false, visiting: false }; });
+  function readLive() {
+    for (let i = 0; i < ACTOR_KEYS.length; i++) {
+      const a = actors[ACTOR_KEYS[i]], s = LIVE_STATE.actors[a.key];
+      s.room = a.room; s.walking = a.walking; s.carrying = !!a.carrying; s.speaking = a.speaking; s.visiting = a.state === "visit"; s.working = a.st.working;
+    }
+    if (focus && simT < focus.until) {
+      LIVE_FOCUS.actor = focus.actor.key; LIVE_FOCUS.kind = focus.kind || "speak"; LIVE_FOCUS.start = focus.start; LIVE_FOCUS.until = focus.until;
+      LIVE_STATE.focus = LIVE_FOCUS;
+    } else LIVE_STATE.focus = null;
+  }
+  let nextPlanAt = 0, lastFocusStart = -1;
+  function liveDirector() {
+    const fresh = !!focus && focus.start !== lastFocusStart;  // a fresh event is planned at once (it still respects the minimum hold)
+    if (simT < nextPlanAt && !fresh) { if (shotKey !== "live") cut("live", liveShot, false); return; }
+    nextPlanAt = simT + 0.25; if (focus) lastFocusStart = focus.start;
+    readLive();
+    const seq = PLANNER.shot.seq;
+    PLANNER.plan(simT, LIVE_STATE);
+    if (PLANNER.shot.seq !== seq) cut("live", liveShot, PLANNER.shot.hard);
+    else if (shotKey !== "live") cut("live", liveShot, false);  // back from a pin: a smooth flight to the broadcast
+    renderLive();
+  }
+  // the furniture the drone keeps out of as well (the walls are in blockers already): the vault door, the desks and
+  // the bench, the table, the shelves, the kiosk counter, the dock console, the telescope
+  blocker(VT2, 0.9, 1.3, -2.63, 0, 1.4, 1.3, 0.5); blocker(VT2, 0.2, 0.5, -0.62, 0, 1.1, 0.5, 0.45);
+  blocker(DN2, 0, 0.75, -1.9, 0, 1.3, 0.75, 0.5); blocker(WS2, 0, 0.5, -0.62, 0, 1.2, 0.5, 0.5);
+  blocker(WF, 0, 0.5, 0, 0, 1.9, 0.5, 1.9); blocker(AR2, -2.4, 1.4, -2.69, 0, 1.3, 1.4, 0.4); blocker(AR2, 2.4, 1.4, -2.69, 0, 1.3, 1.4, 0.4);
+  blocker(WF, 23.3, 0.6, 5.5, 0, 0.6, 0.6, 1.5); blocker(WF, 24.5, 0.6, -2.2, 0, 0.35, 0.6, 0.3); blocker(OB2, 0.6, 1.2, -1.2, 0, 0.9, 1.2, 0.9);
+  // the shot grammar for a character (metres from the character, heights above its floor; the lens stays 24-35 mm)
+  const _live = { pos: V3(0, 0, 0), look: V3(0, 0, 0) }, _lf = V3(0, 0, 0), _ls = V3(0, 0, 0), _lh = V3(0, 0, 0), _lt = V3(0, 0, 0);
+  const ANGLE_OFF = [0.45, -0.45, 1.05, -1.05, 1.75, -1.75];  // the six angles round a character, from its facing
+  const liveMirror = { seq: -1, on: false };  // decided once per shot: the clearer side of a character (no flip-flop)
+  function progress(ps, t) {  // eased over the hold, then on slowly: a shot never stands still
+    const v = (t - ps.start) / Math.max(1, ps.hold); return v < 1 ? v * v * (3 - 2 * v) : 1 + (v - 1) * 0.35;
+  }
+  function actorRig(a, ps, e) {
+    const base = a.group.position, h = a.height, yaw = a.yawS, off = ANGLE_OFF[ps.angle % ANGLE_OFF.length], sideSign = ps.angle % 2 ? -1 : 1, e1 = Math.min(1, e);
+    _lf.set(Math.sin(yaw), 0, Math.cos(yaw)); _ls.set(_lf.z, 0, -_lf.x);
+    _lh.copy(base); _lh.y += h * 0.78;  // the head
+    const pos = _live.pos, look = _live.look; let ang = yaw + off, d, y;
+    switch (ps.grammar) {
+      case "closeup":  // the face readable (1.2-2 m), just above the eye line, a slow push-in
+        d = (1.2 + h * 0.45) * (1.22 - 0.22 * e1); y = base.y + Math.max(1.2, h * 0.8 + 0.3); ang += Math.sin(simT * 0.31) * 0.06;
+        look.copy(_lh); look.y -= h * 0.06; break;
+      case "ots":  // over the shoulder: the screen, bench or table in front of the character in frame, a slow drift
+        pos.copy(base).addScaledVector(_lf, -(0.85 + h * 0.4)).addScaledVector(_ls, sideSign * (0.5 + h * 0.3) + (e1 - 0.5) * 0.25); pos.y = base.y + h * 0.95 + 0.2;
+        look.copy(base).addScaledVector(_lf, 1.1 + h * 0.5); look.y = base.y + h * 0.55; return clearShot(a, pos, look);
+      case "low":  // a low angle: up at the character from knee height, drifting sideways
+        d = 2.0 + h * 0.5; y = base.y + 0.5 + h * 0.1; ang += (e1 - 0.5) * 0.3; look.copy(_lh); break;
+      case "orbit":  // a slow orbit, 30-60 degrees over the hold
+        d = 2.3 + h * 0.6; y = base.y + Math.max(1.5, h * 0.8 + 0.5); ang += (e - 0.5) * (0.55 + 0.25 * (ps.seq % 3)); look.copy(base); look.y += h * 0.6; break;
+      case "crane":  // a crane down to the character (up and away on the odd angles)
+        d = 2.4 + h * 0.5; y = base.y + (ps.angle % 2 ? lerp(Math.max(1.5, h * 0.85 + 0.4), 3.6, e1) : lerp(3.6, Math.max(1.5, h * 0.85 + 0.4), e1));
+        look.copy(base); look.y += h * 0.65; break;
+      case "follow":  // ahead and beside a walker, facing back: the face, the hands (and a carried cube) read
+        pos.copy(base).addScaledVector(_lf, 1.5 + h * 0.5).addScaledVector(_ls, sideSign * 0.8); pos.y = base.y + Math.max(1.35, h + 0.45);
+        look.copy(base).addScaledVector(_lf, 0.2); look.y = base.y + h * 0.6; return clearShot(a, pos, look);
+      case "dolly":  // beside a walker, travelling with them
+        pos.copy(base).addScaledVector(_ls, sideSign * (2.0 + h * 0.3)).addScaledVector(_lf, 0.4); pos.y = base.y + Math.max(1.4, h * 0.85 + 0.5);
+        look.copy(_lh); return clearShot(a, pos, look);
+      default: d = 2.2 + h * 0.5; y = base.y + Math.max(1.5, h * 0.8 + 0.4); look.copy(_lh);
+    }
+    pos.set(base.x + Math.sin(ang) * d, y, base.z + Math.cos(ang) * d);
+    // the clearer side of the character is decided once per shot, then kept
+    if (liveMirror.seq !== ps.seq) {
+      _lt.set(base.x + Math.sin(yaw - off) * d, y, base.z + Math.cos(yaw - off) * d);
+      liveMirror.on = blocked(_lh, pos) < 0.9 && blocked(_lh, _lt) > blocked(_lh, pos) + 0.1; liveMirror.seq = ps.seq;
+    }
+    if (liveMirror.on) { const m = ang - (yaw + off); pos.set(base.x + Math.sin(yaw - off - m) * d, y, base.z + Math.cos(yaw - off - m) * d); }
+    return clearShot(a, pos, look);
+  }
+  function clearShot(a, pos, look) {  // never through a wall or a piece of furniture: pull in towards the head
+    const f = blocked(_lh, pos); if (f < 1) pos.lerpVectors(_lh, pos, Math.max(0.45, f - 0.08));
+    const floor = a.group.position.y; if (pos.y < floor + 0.45) pos.y = floor + 0.45;
+    return _live;
+  }
+  // the places' rigs: three per place, each a move from p0 to p1 (through pm for an arc) while the look goes l0 -> l1
+  function rigOf(F, p0, l0, p1, l1, pm) {
+    return { p0: F.at(p0[0], p0[1], p0[2]), l0: F.at(l0[0], l0[1], l0[2]), p1: F.at(p1[0], p1[1], p1[2]), l1: F.at(l1[0], l1[1], l1[2]), pm: pm ? F.at(pm[0], pm[1], pm[2]) : null };
+  }
+  const RIGS = {
+    courtyard: [rigOf(WF, [3.2, 1.9, 3.0], [0, 1.0, -0.2], [-3.0, 1.9, 3.1], [0, 1.0, 0.2], [0.2, 1.95, 4.4]),  // an orbit round the table
+                rigOf(WF, [4.6, 1.3, -1.2], [0, 1.1, 0], [3.0, 1.5, -0.6], [-0.4, 1.0, 0.2]),  // a low push-in from the den side
+                rigOf(WF, [-2.5, 3.4, -5.0], [0, 1.0, 0], [-2.0, 2.0, -3.6], [0, 1.0, 0])],  // a crane from the steps
+    bridge: [rigOf(WF, [0.6, 1.95, 7.0], [-0.6, 1.6, 24], [0.6, 1.95, 11.5], [-0.3, 1.6, 24]),  // a dolly out, the islands ahead
+             rigOf(WF, [-0.6, 2.0, 13.5], [-0.3, 1.0, -0.5], [-0.6, 2.0, 9.0], [-0.45, 1.0, -0.2]),  // a dolly in, to the table
+             rigOf(WF, [1.0, 1.1, 13.4], [0, 3.4, 11.5], [0.6, 1.3, 12.3], [-0.2, 2.6, 9.0])],  // low, under the brass arch
+    telescope: [rigOf(OB2, [-2.6, 2.1, 1.6], [0.6, 1.4, -1.2], [3.0, 2.1, 1.4], [0.6, 1.4, -1.2], [0.4, 2.2, 2.8]),  // an orbit
+                rigOf(OB2, [-1.4, 3.6, 2.6], [0.6, 1.7, -1.2], [-1.0, 1.9, 1.6], [0.6, 1.3, -1.2]),  // a crane down
+                rigOf(OB2, [2.2, 0.9, 0.6], [0.6, 2.0, -1.2], [1.6, 1.1, 0.2], [0.4, 2.3, -1.3])],  // low, up at the scope and the dome
+    walkway: [rigOf(WF, [19.4, 1.85, 12.0], [21.0, 1.1, 2.0], [19.4, 1.85, 4.0], [23.0, 1.6, -1.5]),  // a dolly north to the dock
+              rigOf(WF, [19.6, 1.8, -4.0], [20.5, 1.0, 5.0], [19.6, 1.8, 3.0], [22.5, 1.0, 5.5]),  // a dolly south to the kiosk
+              rigOf(WF, [18.0, 4.0, 9.0], [19.5, 0.8, 3.0], [18.9, 2.2, 7.0], [21.5, 1.0, 1.5])],  // a crane over the walkway
+    airship: [rigOf(WF, [20.4, 1.3, 1.2], [26.5, 2.4, -1.6], [21.4, 1.5, 0.2], [26.5, 2.4, -1.6]),  // a low push-in from the walkway
+              rigOf(WF, [21.2, 1.7, -3.6], [25.5, 1.6, -1.6], [22.4, 1.8, -3.4], [26.5, 2.2, -1.5]),  // along the pier
+              rigOf(WF, [22.3, 1.2, -0.2], [25.5, 1.8, -1.8], [22.0, 2.9, 0.8], [27.0, 2.6, -1.5])],  // a crane up from the console
+    kiosk: [rigOf(WF, [19.6, 1.8, 2.7], [23.0, 1.0, 5.4], [20.8, 1.55, 3.6], [23.2, 1.1, 5.3]),  // a push-in to the counter
+            rigOf(WF, [21.0, 1.7, 8.9], [23.2, 1.2, 5.0], [21.6, 1.6, 7.6], [23.2, 1.2, 5.0]),  // along the counter from the south
+            rigOf(WF, [21.9, 1.25, 4.2], [23.3, 1.3, 5.2], [22.3, 1.3, 4.8], [23.3, 1.25, 5.6])],  // low over the counter top
+    vaultsign: [rigOf(VT2, [1.9, 1.7, 2.2], [0.4, 1.3, -0.9], [1.4, 2.4, 1.0], [0.9, 3.3, -2.9]),  // a crane up from the desk to the sign
+                rigOf(VT2, [-1.2, 2.3, 3.0], [0.9, 3.4, -2.9], [-0.6, 2.4, 1.6], [0.9, 3.4, -2.9]),  // a push from the door
+                rigOf(VT2, [-1.6, 0.9, 1.4], [0.9, 2.2, -2.7], [-1.2, 1.1, 0.8], [0.9, 3.2, -2.9])],  // low, up at the door and the sign
+    shelves: [rigOf(AR2, [-1.8, 1.7, 0.9], [-2.4, 1.6, -2.69], [1.8, 1.7, 0.9], [2.4, 1.6, -2.69]),  // a dolly across the shelves
+              rigOf(AR2, [0.6, 1.5, 1.2], [-1.3, 0.8, -1.5], [0.1, 1.35, 0.4], [-1.3, 0.8, -1.5]),  // a push-in to the bell
+              rigOf(AR2, [1.4, 3.6, 1.8], [-1.0, 1.2, -1.6], [0.8, 1.9, 1.0], [-1.4, 0.9, -1.5])],  // a crane down
+    bench: [rigOf(WS2, [1.8, 1.4, 0.9], [0, 0.95, -0.7], [-1.6, 1.4, 0.9], [0, 0.95, -0.7], [0.2, 1.3, 1.5]),  // an orbit over the bench
+            rigOf(WS2, [0.9, 1.6, 2.6], [0, 0.9, -0.7], [0.6, 1.35, 1.1], [0, 0.9, -0.7]),  // a push-in from the door
+            rigOf(WS2, [-1.6, 3.5, 1.8], [0, 1.0, -0.8], [-1.0, 1.8, 1.0], [0, 1.0, -0.8])],  // a crane down
+    screens: [rigOf(DN2, [2.2, 1.65, -0.4], [0, 1.2, -2.1], [-2.2, 1.65, -0.4], [0, 1.2, -2.1]),  // a dolly along the screens
+              rigOf(DN2, [0.8, 1.7, 2.4], [0, 1.2, -2.0], [0.5, 1.5, 0.9], [0, 1.2, -2.0]),  // a push-in from the door
+              rigOf(DN2, [-1.9, 1.0, -1.0], [0.4, 1.3, -2.0], [-1.4, 1.05, -0.6], [0.4, 1.3, -2.0])],  // low across the desk
+    arrival: [rigOf(WF, [0.3, 3.4, 18.0], [-0.4, 1.2, -0.5], [0.1, 2.3, 12.0], [-0.4, 1.2, -0.5]),  // the pack's arrival, flown in
+              rigOf(WF, [9.0, 6.0, 16.0], [0, 1.0, 0], [3.5, 3.6, 10.5], [0, 1.0, 0]),  // high over the promenade from the right
+              rigOf(WF, [-8.5, 6.5, 14.0], [0, 1.0, 0], [-3.0, 3.4, 9.5], [0, 1.0, 0])],  // from the left
+    overhead: [rigOf(WF, [-4.0, 7.5, 7.5], [0, 1.0, -0.3], [-1.6, 3.2, 4.4], [0, 1.0, -0.3]),  // a crane down into the courtyard
+               rigOf(WF, [2.5, 7.0, -9.0], [0, 1.0, 0.5], [1.8, 3.4, -4.6], [0, 1.0, 0.5]),  // from over the observatory steps
+               rigOf(WF, [6.5, 6.5, 2.0], [0, 1.0, 0], [0.5, 5.5, 8.0], [0, 1.0, 0], [4.5, 6.0, 6.0])],  // a high orbit segment
+  };
+  function liveShot(t) {
+    const ps = PLANNER.shot, a = actors[ps.subject], e = progress(ps, t);
+    if (a) return actorRig(a, ps, e);
+    const R = RIGS[ps.subject]; if (!R) return arrivalShot(t);
+    const v = R[ps.angle % R.length], e1 = Math.min(1, e), w = 1 - e1;
+    if (v.pm) _live.pos.copy(v.p0).multiplyScalar(w * w).addScaledVector(v.pm, 2 * w * e1).addScaledVector(v.p1, e1 * e1);
+    else _live.pos.lerpVectors(v.p0, v.p1, e1);
+    _live.look.lerpVectors(v.l0, v.l1, e1);
+    return _live;
+  }
+  // the card follows the broadcast: the subject (a character, or the room a place shows)
+  const _subj = { actor: null, room: null };
+  function liveSubject() {
+    const ps = PLANNER.shot, a = actors[ps.subject];
+    _subj.actor = a || null; _subj.room = a ? (a.walking ? null : a.room) : null;
+    if (!a) for (let i = 0; i < LIVE_PLACES.length; i++) if (LIVE_PLACES[i].id === ps.subject) { _subj.room = LIVE_PLACES[i].room; break; }
+    return _subj;
+  }
+  // the LIVE tag: its own words are fixed ("LIVE", "pinned · back to live in N s"); everything else on the card is data
+  let liveText = "";
+  function renderLive() {
+    const text = pinned ? "pinned · back to live in " + Math.ceil(PLANNER.pinLeft(simT)) + " s" : "LIVE";
+    if (text === liveText) return;
+    liveText = text; liveEl.textContent = text; liveEl.className = pinned ? "pinned" : "";
+  }
+  function togglePin(k) { if (pinned === k) PLANNER.unpin(); else PLANNER.pin(k, simT); pinned = PLANNER.pinned(simT); renderChips(); renderCard(); renderLive(); }
+  function goLive() { PLANNER.unpin(); pinned = null; renderChips(); renderCard(); renderLive(); }
+  liveEl.onclick = goLive;
+  if (params.get("debug") === "1") window.__world = { planner: PLANNER, shot: PLANNER.shot, cam: cam, camera: camera, state: LIVE_STATE, pinned: function () { return pinned; } };
+
   // ============================================================= THE LOOP (paused while the tab is hidden)
   let simT = 0, last = performance.now(), raf = 0, started = false, resizeNext = false;
   function frame(now) {
@@ -3286,7 +3571,8 @@ def render_world_html(settings: Settings) -> str:
         f'<script id="rooms" type="application/json">{_json_block(WORLD_ROOMS)}</script>\n'
         f'<script id="models" type="application/json">{_json_block(models_on_disk())}</script>\n'
         '<div id="labels"></div>\n<div id="bubbles"></div>\n<div id="drop"></div>\n'
-        '<div id="card"><div class="room">NIGHT SHIFT: SKYPORT</div><div class="who">Loading…</div>'
+        '<div id="card"><div class="room"><b id="live">LIVE</b><span class="name">NIGHT SHIFT: SKYPORT</span></div>'
+        '<div class="who">Loading…</div>'
         '<div class="rows"></div><span id="loading" hidden></span></div>\n'
         '<div id="chips"></div>\n'
         '<p id="boot">Loading the 3D world… It needs a browser with JavaScript modules and WebGL; '
