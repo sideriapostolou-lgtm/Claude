@@ -48,16 +48,20 @@ horizontal, close behind the crew; never a top-down tycoon view.
   half without a touch.
 * The channel (the module's THE CHANNEL section and its own CSS block, :data:`_STYLE_CHANNEL`): a thin ticker along the
   very bottom, just above the honesty line, rolls the team's last eight events ("HH:MM · Name: what happened",
-  ``plain.ticker``: the server's plain words, a dot in the event's own tone; one line, paused while the tab is hidden,
-  still for a reader who asked for less motion); a six-second REPLAY banner under the bar for each thing that
-  ``plain.finished`` newly lists, a closed trade or a settled REAL-money bet ("REPLAY · what · won $x · real money" or
-  "pretend"), with a brass bell, while the director goes to Jet at the vault or Voss at the table; a full day-night
-  cycle on the viewer's clock (dawn, day, golden hour, dusk, night with stars), colours and uniforms only; the market's
-  weather from real money only (clear; drifting clouds and dimmer lanterns while a real-money result today is below
-  zero; a storm front and rain over the vault only while the risk manager has paused the desk or a loss stop is hit);
-  and the island's sound, all synthesised with WebAudio (the wind, the fountain by the table, the kiosk's kettle, the
-  airship's engine, typing at busy desks, the bell, a whoosh on each cut), off until the viewer taps the speaker in the
-  bar (no AudioContext before that tap) and silent while the tab is hidden. The page's bus (``BUS``) carries its hooks
+  ``plain.ticker``: the server's plain words, a dot in the event's own tone; one line, paused while the tab is hidden
+  or the bot cannot be reached, a new row waiting for the loop's seam instead of pulling the strip back; for a reader
+  who asked for less motion, one whole row at a time, the next every six seconds); a six-second banner under the bar
+  for each thing that ``plain.finished`` newly lists, a closed trade or a settled REAL-money bet ("JUST FINISHED · what
+  · won $x · real money" or "pretend": the drone films it live, so it never says "replay"; on a phone the question
+  gets its own two lines under the result), with a brass bell, while the director goes to Jet at the vault or Voss at
+  the table (nothing that finished before the viewer arrived); a full day-night cycle on the viewer's clock (dawn,
+  day, golden hour, dusk, night with stars), colours and uniforms only; the market's weather from real money only
+  (clear; drifting clouds and dimmer lanterns while a real-money result today is below zero; a storm front and rain
+  over the vault only while the risk manager has paused the live desk's real bets or a loss stop is hit, its silent
+  lightning never for a reader who asked for less motion); and the island's sound, all synthesised with WebAudio (the
+  wind, the fountain by the table, the kiosk's kettle, the airship's engine, typing at busy desks, the bell, a whoosh
+  on each cut), off until the viewer taps the speaker in the bar (no AudioContext before that tap) and silent while
+  the tab is hidden. The guide's camera card says what each of them means. The page's bus (``BUS``) carries its hooks
   and ``window.__skyport`` exposes them (``sound.cut()``, ``replay.on(fn)``, ``weather.state()``, ``clock.weights()``).
 
 Honesty rules (the same as the office's and the town's, non-negotiable):
@@ -440,8 +444,14 @@ _STYLE_CHANNEL = r"""
 #ticker-track { display: inline-flex; white-space: nowrap; }
 #ticker-track.roll { animation: tick 60s linear infinite; will-change: transform; }
 body.tab-hidden #ticker-track { animation-play-state: paused; }
+body.offline #ticker-track { animation-play-state: paused; }
 @keyframes tick { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 @media (prefers-reduced-motion: reduce) { #ticker-track.roll { animation: none; } }
+/* less motion: one whole row at a time (the module moves .cur on every six seconds), cut with an ellipsis */
+#ticker.calm #ticker-track, #ticker.calm .run { display: block; }
+#ticker.calm .run { padding: 0 12px; }
+#ticker.calm .run + .run, #ticker.calm .it:not(.cur) { display: none; }
+#ticker.calm .it { display: block; overflow: hidden; text-overflow: ellipsis; padding-right: 0; }
 #ticker .run { display: inline-flex; padding-left: 12px; }
 #ticker .it { padding-right: 28px; text-shadow: 0 1px 2px #000; }
 #ticker .it i { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 6px; background: #8c92a4; }
@@ -465,6 +475,15 @@ body.ticker #card, body.ticker #guide { bottom: calc(85px + env(safe-area-inset-
 #replay .money { flex: 0 0 auto; font-size: 11px; font-weight: 700; padding: 1px 8px; border-radius: 999px;
                  background: rgba(38,60,118,.92); border: 1px solid rgba(140,170,255,.55); }
 #replay .money.real { background: #cf3129; border-color: #ff9a90; color: #fff; }
+/* a phone: the result on the first line ("JUST FINISHED · won $0.03 · real money"), what finished on its own two
+   lines under it (a bet's question is long); the bubbles keep below the taller banner (hudTop) */
+@media (max-width: 560px) {
+  #replay { flex-wrap: wrap; white-space: normal; row-gap: 2px; }
+  #replay b, #replay-outcome, #replay .money { white-space: nowrap; }
+  #replay-what { order: 9; flex: 1 1 100%; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2;
+                 -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+  #replay-what + .sep { display: none; }
+}
 .pill.sound { width: 38px; padding: 0; display: inline-flex; align-items: center; justify-content: center; margin-left: auto; color: var(--dim); }
 #bar .pill.help { margin-left: 0; }
 .pill.sound svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
@@ -473,6 +492,13 @@ body.ticker #card, body.ticker #guide { bottom: calc(85px + env(safe-area-inset-
 .pill.sound.none { opacity: .45; }
 .pill.sound:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
 @media (min-width: 760px) { .pill.sound { margin-left: 0; order: 8; } }
+/* a narrow phone with real money live: the speaker and "?" a little narrower and the gaps smaller, so "Practice
+   (pretend)" keeps room for its words (about 80 px at 360 px) */
+@media (max-width: 400px) {
+  #bar .row1 { gap: 4px; }
+  .pill.sound, #bar .pill.help { width: 32px; min-height: 34px; }
+  #bar .row1 > .pill.practice { padding: 4px 8px; }
+}
 """
 
 #: Resolves the addons' bare ``three`` imports (and the module's own) to the bundled files on this server.
@@ -3337,10 +3363,12 @@ _M_LIFE = r"""
     if (walks) actor.queue.push({ dest: dest, hold: 3.5 });
     focusOn(actor, 3.5, walks ? 8 : 10, lesson ? "lesson" : "speak");
   }
-  function onClosed(t) {
+  function onClosed(t, live) {
     const jet = actors.jet; if (!jet) return;
     const pnl = t.pnl_usd, won = (pnl || 0) >= 0;
-    speak(jet, "broker", (t.coin || "a trade") + ": " + (t.result ? t.result + " " : "") + fmtSigned(pnl), won ? "good" : "bad", 12);
+    // (the money's kind from the data, live: the Solana bot trades real money only while it runs live, else pretend)
+    speak(jet, "broker", (t.coin || "a trade") + ": " + (t.result ? t.result + " " : "") + fmtSigned(pnl)
+      + (live ? " (real money)" : " (pretend money)"), won ? "good" : "bad", 12);
     // Jet carries the cube to the vault; there he cheers only for a winning trade and shrugs at a losing one
     jet.queue.unshift({ dest: "vault", hold: 4.5, carry: won ? "gold" : "red", onArrive: function (a) {
       deliverCube(a, pnl);
@@ -3384,7 +3412,7 @@ _M_LIFE = r"""
     const nReal = desk ? Number(desk.open_real || 0) : 0;
     realBulbMat.emissiveIntensity = nReal > 0 ? 4 : 0; realHalo.material.opacity = nReal > 0 ? 0.9 : 0;
     const closed = ((d.trades || {}).closed || [])[0];
-    if (closed) { const key = closed.coin + "|" + closed.closed_at; if (!first && lastClosedKey && key !== lastClosedKey) onClosed(closed); lastClosedKey = key; }
+    if (closed) { const key = closed.coin + "|" + closed.closed_at; if (!first && lastClosedKey && key !== lastClosedKey) onClosed(closed, d.mode === "LIVE"); lastClosedKey = key; }
     const alerts = d.alerts || [];  // a real problem only (the bot down, a kill switch, a budget): the first one, in words
     statusEl.textContent = alerts.length ? alerts[0].text : ""; statusEl.hidden = !alerts.length;
     statusEl.className = alerts.length && alerts[0].level === "bad" ? "bad" : "";
@@ -3510,6 +3538,14 @@ _M_LIFE = r"""
     para(cam, "The camera is a drone: it flies to whoever has news and films them live (the LIVE CAM tag).");
     para(cam, "Tap a name at the bottom to watch that character; after " + LIVE_CFG.pin + " seconds it goes back to live.");
     para(cam, "Tap the money buttons at the top for the details; ? brings this guide back.");
+    // (THE CHANNEL's parts, in fixed words: the strip, the banner, the sky and the speaker)
+    para(cam, "The strip at the very bottom rolls the latest events, newest first, with the time each happened.");
+    para(cam, "When a trade or a real-money bet finishes, a short JUST FINISHED banner under the buttons says what it was, "
+      + "whether it won or lost, and whether the money was real or pretend.");
+    para(cam, "The light follows your own clock. The weather follows real money only: grey clouds while a real-money "
+      + "result today is below zero; a storm, with silent lightning, while the risk manager has paused real bets or "
+      + "today's loss limit has stopped them. A clear sky means only that nothing is down or paused.");
+    para(cam, "The speaker button turns the island's sounds on and off.");
   }
   function guideDots() {
     const dots = el("guide-dots").children;
@@ -3672,19 +3708,21 @@ _M_CHANNEL = r"""
   const CH_COLORS = ["top", "mid", "hor", "below", "sun", "hsky", "hgnd", "sunC", "fog", "cLit", "cShade"];
   // the market's weather, from the data alone and real money only. "clear" while every real-money result today is
   // zero or more and nothing is paused; "cloudy" (drifting clouds, dimmer lanterns) while one is below zero; "storm" (a
-  // front over the vault, rain) only while the risk manager has paused the Polymarket desk (its practice record or its
-  // real one) or a loss stop is hit (plain.real.paused_kind "risk" or "day"; "full" is waiting, not a stop). The real
-  // results today: the desk's real book (money.polymarket.real.today_usd) and the Solana bot's own while it runs live
-  // (money.today.usd under the money card's "Real money" label). Pretend money never makes weather; no figure, no claim
-  // (clear).
+  // front over the vault, rain) only while the risk manager has paused the Polymarket desk's REAL bets (its practice
+  // record's pause or its real one stops them, but only while the desk is live: a paused practice book on a desk in
+  // paper mode is pretend money) or a loss stop is hit (plain.real.paused_kind "risk" or "day", which the server sets
+  // only while the desk is live; "full" is waiting, not a stop). The real results today: the desk's real book
+  // (money.polymarket.real.today_usd) and the Solana bot's own while it runs live (money.today.usd under the money
+  // card's "Real money" label). Pretend money never makes weather; no figure, no claim (clear).
   const CH_SKY = { clear: { clouds: 0, dim: 0, wind: 0.25 }, cloudy: { clouds: 0.75, dim: 0.4, wind: 0.6 }, storm: { clouds: 0.9, dim: 0.5, wind: 0.9 } };
   function weatherOf(d, out) {
     const money = (d && d.money) || {}, desk = money.polymarket || null, real = desk && desk.real ? desk.real : null;
     const guard = desk && desk.guard ? desk.guard : null, plainReal = (d && d.plain && d.plain.real) || {};
+    const deskLive = !!(desk && desk.mode === "live");
     let known = 0, worst = null;
     const figures = [real ? real.today_usd : null, d && d.mode === "LIVE" && money.label === "Real money" && money.today ? money.today.usd : null];
     for (let i = 0; i < figures.length; i++) { const v = figures[i]; if (typeof v === "number" && isFinite(v)) { known += 1; if (worst === null || v < worst) worst = v; } }
-    const paused = !!(guard && (guard.paused === true || (guard.real && guard.real.paused === true)))
+    const paused = (deskLive && !!(guard && (guard.paused === true || (guard.real && guard.real.paused === true))))
       || plainReal.paused_kind === "risk" || plainReal.paused_kind === "day";
     const down = worst !== null && Math.round(worst * 100) < 0;
     out.sky = paused ? "storm" : down ? "cloudy" : "clear";
@@ -3693,37 +3731,48 @@ _M_CHANNEL = r"""
     out.real = known > 0; out.today = worst; out.paused = paused;
     return out;
   }
-  // a replay only for what plain.finished newly lists: nothing on the first poll (what is there already is old news),
-  // never an id seen before, never one older than the newest seen before; oldest first (each gets its turn), at most 3
-  function freshFinished(memo, list) {
-    const items = Array.isArray(list) ? list : [], fresh = [], ids = {}, first = !memo.polled;
+  // a replay only for what plain.finished newly lists: nothing that finished before the viewer arrived (the first
+  // poll's items, and anything older than that poll's own time, nowS, less two polls: an empty first list does not
+  // make old news new), never an id seen before on this visit, never one more than CH_LATE_S older than the newest
+  // seen before (a later poll may bring another item of the same second, or a desk round written a little late);
+  // oldest first (each gets its turn), at most 3. memo: { polled: false, floor: -Infinity, top: -Infinity, ids: {} }
+  const CH_LATE_S = 300;
+  function freshFinished(memo, list, nowS, refreshS) {
+    const items = Array.isArray(list) ? list : [], fresh = [], first = !memo.polled;
+    if (first) memo.floor = typeof nowS === "number" && isFinite(nowS) ? nowS - 2 * (refreshS > 0 ? refreshS : 15) : -Infinity;
     let top = memo.top;
     for (let i = 0; i < items.length; i++) {
       const it = items[i];
       if (!it || typeof it.id !== "string" || typeof it.ts !== "number" || !isFinite(it.ts) || (it.who !== "jet" && it.who !== "voss")
           || (it.result !== "won" && it.result !== "lost" && it.result !== "even")) continue;
-      if (!first && !memo.ids[it.id] && it.ts > memo.top) fresh.push(it);
-      ids[it.id] = true; if (it.ts > top) top = it.ts;
+      if (!first && !Object.prototype.hasOwnProperty.call(memo.ids, it.id) && it.ts >= memo.floor && it.ts >= memo.top - CH_LATE_S) fresh.push(it);
+      memo.ids[it.id] = it.ts; if (it.ts > top) top = it.ts;
     }
-    memo.ids = ids; memo.top = top; memo.polled = true;
+    memo.top = top; memo.polled = true;
+    // (an id that can never be news again need not be remembered: older than the floor or than the newest less CH_LATE_S)
+    const keep = Math.max(memo.floor, top - CH_LATE_S);
+    for (const id in memo.ids) if (memo.ids[id] < keep) delete memo.ids[id];
     fresh.sort(function (a, b) { return a.ts - b.ts; });
     return fresh.slice(-3);
   }
-  // the banner's words: "REPLAY · <what> · won $12.34 · pretend" (the item's own words and figures; "REPLAY" and the
-  // separators fixed); "real money" only where the item says real
+  // the banner's words: "JUST FINISHED · <what> · won $12.34 · pretend" (the item's own words and figures; "JUST
+  // FINISHED" and the separators fixed: the drone films it live, so the banner never says "replay"); "real money" only
+  // where the item says real
   function replayWords(it) {
     const usd = typeof it.usd === "number" && isFinite(it.usd) ? "$" + Math.abs(it.usd).toFixed(2) : "";
     const res = it.result === "won" || it.result === "lost" ? it.result : it.result === "even" ? "even" : "";
     const outcome = res === "even" || !usd ? res : res + " " + usd;
     const money = it.real === true && it.money === "real money" ? "real money" : "pretend";
     const what = String(it.what || "");
-    return { what: what, outcome: outcome, money: money, line: "REPLAY · " + what + " · " + outcome + " · " + money };
+    return { what: what, outcome: outcome, money: money, line: "JUST FINISHED · " + what + " · " + outcome + " · " + money };
   }
-  // an event's time on the viewer's clock: "HH:MM", or "yesterday HH:MM" before the viewer's midnight
+  // an event's time on the viewer's clock: "HH:MM" today, "yesterday HH:MM" the calendar day before, else a short date
+  // ("Oct 8 15:58"; also for a day after the viewer's, when a clock is behind)
   function tickerWhen(ts, nowMs) {
     const d = new Date(ts * 1000), n = new Date(nowMs), hh = d.getHours(), mm = d.getMinutes();
     const t = (hh < 10 ? "0" : "") + hh + ":" + (mm < 10 ? "0" : "") + mm;
-    return d.getFullYear() === n.getFullYear() && d.getMonth() === n.getMonth() && d.getDate() === n.getDate() ? t : "yesterday " + t;
+    const days = Math.round((new Date(n.getFullYear(), n.getMonth(), n.getDate()) - new Date(d.getFullYear(), d.getMonth(), d.getDate())) / 86400000);
+    return days === 0 ? t : days === 1 ? "yesterday " + t : d.toLocaleDateString(undefined, { month: "short", day: "numeric" }) + " " + t;
   }
   // a ticker row: "HH:MM · Name: the event in plain words" (the parts, so the page can style them)
   function tickerParts(it, nowMs) {
@@ -3778,11 +3827,14 @@ _M_CHANNEL = r"""
         if (!ctx) { S.failed = true; return false; }
         try { build(); } catch (e) { S.failed = true; try { ctx.close(); } catch (e2) { /* (already gone) */ } ctx = null; return false; }
       }
-      if (ctx.state === "suspended") ctx.resume();
+      if (ctx.state === "suspended") settle(ctx.resume());
       S.on = true; return true;
     };
-    S.disable = function () { S.on = false; if (ctx && ctx.state === "running") ctx.suspend(); };
-    S.hidden = function (yes) { if (!ctx) return; if (yes) { if (ctx.state === "running") ctx.suspend(); } else if (S.on && ctx.state === "suspended") ctx.resume(); };
+    // (resume and suspend return promises; a browser that refuses one outside a tap rejects it: swallowed, the
+    // speaker's next tap tries again)
+    function settle(p) { if (p && typeof p.catch === "function") p.catch(function () { /* refused: stays as it was */ }); }
+    S.disable = function () { S.on = false; if (ctx && ctx.state === "running") settle(ctx.suspend()); };
+    S.hidden = function (yes) { if (!ctx) return; if (yes) { if (ctx.state === "running") settle(ctx.suspend()); } else if (S.on && ctx.state === "suspended") settle(ctx.resume()); };
     // a source's loudness (0..1) and pan (-1 left .. 1 right), eased
     S.level = function (name, v, pan) {
       const s = src[name]; if (!ctx || !S.on || !s) return;
@@ -3815,9 +3867,11 @@ _M_CHANNEL = r"""
   // <<< channel
   try { channel(); } catch (e) { console.error("world: the channel (ticker, replay, sky, sound) could not start", e); }
   function channel() {
+    // a viewer who asked for less motion (read once): the ticker shows one row at a time, the storm never flashes
+    const CALM = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
     // ----------------------------------------------------------- the ticker: the last events in plain words (text only, ever)
-    const tickerEl = el("ticker"), tickerTrack = el("ticker-track"), TICKER_PX_S = 38;
-    let tickerKey = "", tickerItems = [], lastData = null, tickerResize = 0;
+    const tickerEl = el("ticker"), tickerTrack = el("ticker-track"), TICKER_PX_S = 38, TICKER_STEP_MS = 6000;
+    let tickerKey = "", tickerItems = [], lastData = null, tickerResize = 0, tickerPending = null, tickerCur = 0;
     function tickerRow(it, nowMs) {
       const p = tickerParts(it, nowMs), row = document.createElement("span"), dot = document.createElement("i");
       const when = document.createElement("span"), who = document.createElement("b");
@@ -3829,26 +3883,40 @@ _M_CHANNEL = r"""
       const list = d && d.plain && Array.isArray(d.plain.ticker) ? d.plain.ticker : [], nowMs = Date.now();
       const items = list.filter(function (it) { return it && typeof it.ts === "number" && isFinite(it.ts) && typeof it.text === "string" && it.text; }).slice(0, 8);
       const key = new Date(nowMs).toDateString() + "|" + window.innerWidth + "|" + items.map(function (it) { return it.ts + "|" + it.name + "|" + it.text + "|" + it.tone; }).join("\n");
-      if (key === tickerKey) return;
-      tickerKey = key; tickerItems = items; tickerTrack.textContent = ""; tickerTrack.className = "";
+      if (key === tickerKey) { tickerPending = null; return; }
+      // a rolling strip is never pulled back to its start mid-read: the new rows wait for the loop's seam, where the
+      // second copy has just become the first (it looks the same as the start)
+      if (tickerTrack.className === "roll") { tickerPending = d; return; }
+      tickerPending = null; tickerKey = key; tickerItems = items; tickerTrack.textContent = ""; tickerTrack.className = ""; tickerEl.className = "";
       const on = items.length > 0;
       tickerEl.hidden = !on; body.classList.toggle("ticker", on);
       if (!on) return;
       const run = document.createElement("span"); run.className = "run";
       items.forEach(function (it) { run.appendChild(tickerRow(it, nowMs)); });
       tickerTrack.appendChild(run);
-      // newest first, read from the left; wider than the strip, it rolls (a second copy follows so it loops without a gap)
+      // newest first, read from the left; wider than the strip, it rolls (a second copy follows so it loops without a
+      // gap), or, for a viewer who asked for less motion, shows one whole row at a time (the next every six seconds)
       if (run.offsetWidth > tickerEl.clientWidth) {
+        if (CALM) { tickerEl.className = "calm"; tickerCur = 0; run.firstChild.classList.add("cur"); return; }
         const copy = run.cloneNode(true); copy.setAttribute("aria-hidden", "true"); tickerTrack.appendChild(copy);
         tickerTrack.style.animationDuration = Math.max(12, run.offsetWidth / TICKER_PX_S).toFixed(1) + "s"; tickerTrack.className = "roll";
       }
     }
+    tickerTrack.addEventListener("animationiteration", function () {  // (the seam: rows that came in meanwhile go on now)
+      if (!tickerPending) return;
+      const d = tickerPending; tickerPending = null; tickerKey = ""; tickerTrack.className = ""; renderTicker(d);
+    });
+    if (CALM) setInterval(function () {  // (still while the tab is hidden or the bot cannot be reached)
+      if (tickerEl.className !== "calm" || body.classList.contains("tab-hidden") || body.classList.contains("offline")) return;
+      const rows = tickerTrack.firstChild ? tickerTrack.firstChild.children : null; if (!rows || rows.length < 2) return;
+      rows[tickerCur % rows.length].classList.remove("cur"); tickerCur = (tickerCur + 1) % rows.length; rows[tickerCur].classList.add("cur");
+    }, TICKER_STEP_MS);
     window.addEventListener("resize", function () { clearTimeout(tickerResize); tickerResize = setTimeout(function () { renderTicker(lastData); }, 300); });
 
     // ----------------------------------------------------------- the replay banner: only what plain.finished newly lists
     const replayEl = el("replay"), replayWhat = el("replay-what"), replayOutcome = el("replay-outcome"), replayMoney = el("replay-money");
     // (its six seconds run on the wall clock, like the rest of the overlay: the world's own time slows on a slow screen)
-    const REPLAY_MS = 6000, replayMemo = { polled: false, top: -Infinity, ids: {} }, replayQueue = [], replayHooks = [];
+    const REPLAY_MS = 6000, replayMemo = { polled: false, floor: -Infinity, top: -Infinity, ids: {} }, replayQueue = [], replayHooks = [];
     let replayUntil = 0, replayGap = 0, replayNow = null;
     function showReplay(it) {
       const w = replayWords(it);
@@ -3987,8 +4055,9 @@ _M_CHANNEL = r"""
       if (overhead.visible) overhead.rotation.y += dt * 0.004 * (1 + 2 * WXS.wind);
       stormMat.uniforms.uAlpha.value = WXS.storm * 0.95; front.visible = WXS.storm > 0.01;
       rain.material.uniforms.uAlpha.value = WXS.storm; rain.visible = rainOk && WXS.storm > 0.05;
-      if (WXS.storm > 0.3) {  // silent lightning now and then: one soft double flash in the front and on the whole island, at
-        // most every 9 s (two flashes 0.2 s apart: far from a strobe)
+      if (WXS.storm > 0.3 && !CALM) {  // silent lightning now and then: one soft double flash in the front and on the whole
+        // island, at most every 9 s (two flashes 0.2 s apart: far from a strobe); never for a viewer who asked for less
+        // motion (the dark front and the rain stay)
         if (boltT < 0 && simT >= boltAt) { boltT = 0; boltAt = simT + 9 + Math.random() * 9; }
         if (boltT >= 0) {
           boltT += dt; const f = boltT < 0.07 ? 1 : boltT < 0.16 ? 0.25 : boltT < 0.26 ? 0.6 : Math.max(0, 1 - (boltT - 0.26) / 0.3) * 0.6;
@@ -4022,20 +4091,28 @@ _M_CHANNEL = r"""
     document.addEventListener("visibilitychange", function () { const hid = document.visibilityState !== "visible"; body.classList.toggle("tab-hidden", hid); sound.hidden(hid); });
 
     // ----------------------------------------------------------- the bus: each poll, each frame
+    // (one listener per job, the replays first: the bus drops a listener that throws, so a fault in the sky or the
+    // sound can never take the replays with it)
     BUS.on("start", function () { skyStep(1e3); lampsStep(); });
-    BUS.on("data", function (d, first) {
-      lastData = d; weatherOf(d, WX);
-      if (first) { skyT = 1; WXS.clouds = WX.clouds; WXS.dim = WX.dim; WXS.wind = WX.wind; WXS.storm = WX.storm ? 1 : 0; }  // (the first answer: no slow change)
-      renderTicker(d);
-      const fresh = freshFinished(replayMemo, d && d.plain ? d.plain.finished : null);
+    BUS.on("data", function (d) {  // a replay: what plain.finished newly lists (the server's own clock says when we arrived)
+      const nowS = d && typeof d.generated_at === "number" && isFinite(d.generated_at) ? d.generated_at : Date.now() / 1000;
+      const fresh = freshFinished(replayMemo, d && d.plain ? d.plain.finished : null, nowS, REFRESH_MS / 1000);
       for (let i = 0; i < fresh.length; i++) if (replayQueue.length < 3) replayQueue.push(fresh[i]);
     });
-    BUS.on("frame", function (dt, dtRaw) {
-      skyT += dtRaw; if (skyT >= 0.25) { skyStep(skyT); skyT = 0; }
-      lampsStep(); weatherStep(dt);
+    BUS.on("data", function (d, first) {
+      weatherOf(d, WX);
+      if (first) { skyT = 1; WXS.clouds = WX.clouds; WXS.dim = WX.dim; WXS.wind = WX.wind; WXS.storm = WX.storm ? 1 : 0; }  // (the first answer: no slow change)
+    });
+    BUS.on("data", function (d) { lastData = d; renderTicker(d); });
+    BUS.on("frame", function () {  // the banner: six seconds each, one at a time, then a short gap
       const wall = performance.now();
-      if (replayUntil && wall >= replayUntil) { replayUntil = 0; replayEl.className = ""; replayGap = wall + 600; hudTop = 0; }
+      if (replayUntil && wall >= replayUntil) { replayUntil = 0; replayEl.className = ""; replayGap = wall + 600; }
+      // (the bubbles keep below the banner until its fade is over: the gap outlasts the 0.35 s fade)
+      if (!replayUntil && hudTop && wall >= replayGap) hudTop = 0;
       if (!replayUntil && replayQueue.length && wall >= replayGap) showReplay(replayQueue.shift());
+    });
+    BUS.on("frame", function (dt, dtRaw) { skyT += dtRaw; if (skyT >= 0.25) { skyStep(skyT); skyT = 0; } lampsStep(); weatherStep(dt); });
+    BUS.on("frame", function (dt, dtRaw) {
       if (cutSeen === null) cutSeen = RUN.cutAt; else if (RUN.cutAt !== cutSeen) { cutSeen = RUN.cutAt; sound.cut(); }  // (a director cut: the whoosh)
       soundT += dtRaw; if (sound.on && soundT >= 0.25) { soundT = 0; hearAll(); }
     });
@@ -4748,7 +4825,7 @@ def render_world_html(settings: Settings) -> str:
         '<div class="rows"></div><span id="loading" hidden></span></div>\n'
         '<div id="chips"></div>\n'
         # THE CHANNEL: the replay banner and the ticker (filled as text only)
-        '<div id="replay" role="status"><b>REPLAY</b><span class="sep">·</span><span id="replay-what"></span>'
+        '<div id="replay" role="status"><b>JUST FINISHED</b><span class="sep">·</span><span id="replay-what"></span>'
         '<span class="sep">·</span><span id="replay-outcome"></span><span class="sep">·</span>'
         '<span id="replay-money" class="money"></span></div>\n'
         '<div id="ticker" aria-label="The latest events" hidden><div id="ticker-track"></div></div>\n'

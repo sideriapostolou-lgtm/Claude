@@ -130,12 +130,39 @@ def test_nothing_is_finished_without_a_real_event(ledger: Ledger, settings: Sett
                     {"ts": NOW - 30, "text": "REAL buy: Will z? · 1 contract at 0.950 ($0.95, weather)", "tone": "good"}]
     save(settings, st)
     assert page(ledger, settings)["plain"]["finished"] == []  # a practice settlement and a buy are not finished real bets
-    real = member("predict", (NOW - 5, "Settled: Will y happen? · lost -0.97 $ (real)", "bad"))
-    assert plain_finished([real], [], live=False, desk_on=False) == []  # the desk off: its events say nothing
-    assert plain_finished([real], None, live=False, desk_on=True)[0]["result"] == "lost"
+    assert page(ledger, settings)["money"]["polymarket"]["settled_real"] == []
+    real = [{"ts": NOW - 5, "text": "Settled: Will y happen? · lost -0.97 $ (real)"}]
+    assert plain_finished([], None, live=False) == []  # the desk off: nothing of it
+    assert plain_finished(None, real, live=False)[0]["result"] == "lost"
     junk = [{"coin": "X", "closed_at": None, "result": "won"}, {"coin": "", "closed_at": NOW, "result": "won"},
             {"coin": "Y", "closed_at": NOW, "result": "maybe"}]
-    assert plain_finished([], junk, live=False, desk_on=True) == []
+    assert plain_finished(junk, [None, {"ts": None, "text": real[0]["text"]}, {"ts": NOW, "text": 5}], live=False) == []
+
+
+def test_a_real_bet_is_finished_however_busy_its_round(ledger: Ledger, settings: Settings) -> None:
+    """One desk round settles several markets (the practice twins too, one event each), then the risk manager's pause
+    and a lesson, all at the same second: the team row keeps only the last five events, so the real settlement is
+    read from the desk's whole log (``money.polymarket.settled_real``)."""
+    st = desk_state()
+    ts = NOW - 20
+    st["events"] = [
+        {"ts": ts, "text": "Lesson: size weather bets smaller", "tone": "neutral"},
+        {"ts": ts, "text": "Risk manager paused new buys: the rule's practice record is losing", "tone": "bad"},
+        *[{"ts": ts, "text": f"Settled: Will p{i} happen? · lost -20.0{i} $ (paper)", "tone": "bad"} for i in range(3)],
+        {"ts": ts, "text": "Settled: Will y happen? · won +0.02 $ (real)", "tone": "good"},  # the 6th
+        {"ts": ts, "text": "Settled: Will y happen? · won +40.10 $ (paper)", "tone": "good"},  # its practice twin
+        {"ts": NOW - 4000, "text": "Settled: Will z happen? · lost -0.97 $ (real)", "tone": "bad"},
+    ]
+    save(settings, st)
+    state = page(ledger, settings)
+    desk = next(m for m in state["team"]["members"] if m["id"] == "predict")
+    assert len(desk["events"]) == 5 and not [e for e in desk["events"] if "(real)" in e["text"]]  # (the old blind spot)
+    assert state["money"]["polymarket"]["settled_real"] == [
+        {"ts": ts, "text": "Settled: Will y happen? · won +0.02 $ (real)"},
+        {"ts": NOW - 4000, "text": "Settled: Will z happen? · lost -0.97 $ (real)"}]
+    bets = [f for f in state["plain"]["finished"] if f["who"] == "voss"]
+    assert [(b["what"], b["result"], b["usd"], b["real"], b["money"]) for b in bets] == [
+        ("Will y happen?", "won", 0.02, True, "real money"), ("Will z happen?", "lost", 0.97, True, "real money")]
 
 
 def test_a_live_solana_bot_finishes_real_money_trades(ledger: Ledger, make_settings: Callable[..., Settings]) -> None:
@@ -195,7 +222,62 @@ def test_the_ticker_sits_on_one_line_above_the_honesty_line() -> None:
     rule = _STYLE_CHANNEL[_STYLE_CHANNEL.index("#ticker {"):]
     assert "white-space: nowrap" in rule[:rule.index("}")] and "overflow: hidden" in rule[:rule.index("}")]  # never two lines
     assert "body.tab-hidden #ticker-track { animation-play-state: paused; }" in _STYLE_CHANNEL  # paused when hidden
+    assert "body.offline #ticker-track { animation-play-state: paused; }" in _STYLE_CHANNEL  # and while the world is frozen
     assert "@media (prefers-reduced-motion: reduce) { #ticker-track.roll { animation: none; } }" in _STYLE_CHANNEL
+    # less motion: one whole row at a time, cut with an ellipsis (never a row frozen mid-sentence at the edge)
+    assert "#ticker.calm .run + .run, #ticker.calm .it:not(.cur) { display: none; }" in _STYLE_CHANNEL
+    assert "#ticker.calm .it { display: block; overflow: hidden; text-overflow: ellipsis;" in _STYLE_CHANNEL
+
+
+def _media(css: str, query: str) -> str:
+    start = css.index("@media (" + query + ") {")
+    depth, i = 0, css.index("{", start)
+    while True:
+        depth += {"{": 1, "}": -1}.get(css[i], 0)
+        if depth == 0:
+            return css[start:i + 1]
+        i += 1
+
+
+def test_a_narrow_phone_keeps_room_for_practice() -> None:
+    """At 360 px with real money live the speaker and "?" took 44 px from "Practice (pretend)" (60 px left, its words
+    touching the pill's edges): below 400 px both are 32 px wide and the row's gaps 4 px (about 80 px for it)."""
+    rule = _media(_STYLE_CHANNEL, "max-width: 400px")
+    assert "#bar .row1 { gap: 4px; }" in rule and ".pill.sound, #bar .pill.help { width: 32px; min-height: 34px; }" in rule
+    assert "#bar .row1 > .pill.practice { padding: 4px 8px; }" in rule
+    back, real, gaps = 26, 150, 4 * 4  # (the back link, the live real-money button at 360 px, four gaps)
+    assert 360 - 24 - back - real - 2 * 32 - gaps >= 80
+
+
+def test_the_banner_names_the_bet_on_a_phone(settings: Settings) -> None:
+    """A phone gives what finished its own two lines under the result (a real-money bet's question was cut to "Will
+    the…"), and the banner says JUST FINISHED: the drone films it live, nothing is a replay."""
+    rule = _media(_STYLE_CHANNEL, "max-width: 560px")
+    assert "#replay { flex-wrap: wrap; white-space: normal; row-gap: 2px; }" in rule
+    assert "#replay-what { order: 9; flex: 1 1 100%; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2;" in rule
+    assert "#replay-what + .sep { display: none; }" in rule
+    html = render_world_html(settings)
+    assert '<div id="replay" role="status"><b>JUST FINISHED</b>' in html
+    assert ">REPLAY<" not in html and not re.search(r"[\"'][^\"'\n]*\bREPLAY\b", html)  # (on screen: never)
+    assert "Replay" not in _js_body(_module(html), "  function renderGuide() {")
+    assert "hudTop = replayEl.offsetHeight + 6;" in _js_body(_channel(_module(html)), "    function showReplay(it) {")
+
+
+def test_the_guide_says_what_the_channel_means(settings: Settings) -> None:
+    guide = _js_body(_module(render_world_html(settings)), "  function renderGuide() {")
+    for words in ("The strip at the very bottom rolls the latest events, newest first",
+                  "a short JUST FINISHED banner under the buttons", "whether the money was real or pretend",
+                  "The weather follows real money only", "A clear sky means only that nothing is down or paused.",
+                  "The speaker button turns the island's sounds on and off."):
+        assert words in guide, words
+    assert "para(cam, " in guide and "innerHTML" not in guide  # fixed words, text only
+
+
+def test_a_closed_trade_says_its_money(settings: Settings) -> None:
+    """Jet's bubble for a closed trade says which money it was (real only while the bot runs live)."""
+    module = _module(render_world_html(settings))
+    assert "onClosed(closed, d.mode === \"LIVE\")" in module
+    assert '+ (live ? " (real money)" : " (pretend money)")' in _js_body(module, "  function onClosed(t, live) {")
 
 
 def test_the_ticker_and_the_banner_write_text_only(settings: Settings) -> None:
@@ -209,14 +291,54 @@ def test_the_ticker_and_the_banner_write_text_only(settings: Settings) -> None:
     assert "replayWhat.textContent = w.what; replayOutcome.textContent = w.outcome; replayMoney.textContent = w.money;" in show
     # the queue is filled only from plain.finished's newly listed items, and only the queue shows a banner
     assert section.count("replayQueue.push(") == 1 and "replayQueue.push(fresh[i])" in section
-    assert "freshFinished(replayMemo, d && d.plain ? d.plain.finished : null)" in section
+    # (the server's own clock says when the viewer arrived: nothing that finished before is news)
+    assert "freshFinished(replayMemo, d && d.plain ? d.plain.finished : null, nowS, REFRESH_MS / 1000)" in section
+    assert "d && typeof d.generated_at === \"number\" && isFinite(d.generated_at) ? d.generated_at : Date.now() / 1000" in section
     assert section.count("showReplay(") == 2 and "showReplay(replayQueue.shift())" in section
     # six seconds on the wall clock (the world's own time slows on a slow screen and stops offline), one at a time
     assert "const REPLAY_MS = 6000" in section and "replayUntil = performance.now() + REPLAY_MS;" in show
-    assert 'if (replayUntil && wall >= replayUntil) { replayUntil = 0; replayEl.className = ""; replayGap = wall + 600; hudTop = 0; }' in section
-    # while it shows, the speech bubbles keep below it (the HUD's one hook: hudTop)
+    assert 'if (replayUntil && wall >= replayUntil) { replayUntil = 0; replayEl.className = ""; replayGap = wall + 600; }' in section
+    # while it shows, and until its fade is over (the gap outlasts the 0.35 s fade), the bubbles keep below it
     assert "hudTop = replayEl.offsetHeight + 6;" in show
+    assert "if (!replayUntil && hudTop && wall >= replayGap) hudTop = 0;" in section and section.count("hudTop = 0") == 1
+    assert "transition: opacity .35s ease" in _STYLE_CHANNEL and "replayGap = wall + 600" in section
     assert "top = Math.max(96, barBottom + 8 + hudTop)" in _js_body(_module(render_world_html(settings)), "  function updateBubbles() {")
+
+
+def test_the_ticker_never_jumps_back_mid_read(settings: Settings) -> None:
+    """A new event while the strip rolls waits for the loop's seam (the second copy has just become the first), so
+    the strip is not pulled back to its start on every poll; with less motion asked for, one row at a time."""
+    section = _channel(_module(render_world_html(settings)))
+    render = _js_body(section, "    function renderTicker(d) {")
+    assert 'if (tickerTrack.className === "roll") { tickerPending = d; return; }' in render
+    assert render.index("if (key === tickerKey) { tickerPending = null; return; }") < render.index("tickerPending = d;")
+    seam = _js_body(section, '    tickerTrack.addEventListener("animationiteration", function () {')
+    assert 'const d = tickerPending; tickerPending = null; tickerKey = ""; tickerTrack.className = ""; renderTicker(d);' in seam
+    assert 'if (CALM) { tickerEl.className = "calm"; tickerCur = 0; run.firstChild.classList.add("cur"); return; }' in render
+    assert 'const CALM = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);' in section
+    step = _js_body(section, "    if (CALM) setInterval(function () {")
+    assert 'body.classList.contains("tab-hidden") || body.classList.contains("offline")' in step and "TICKER_STEP_MS = 6000" in section
+
+
+def test_a_fault_in_the_sky_or_the_sound_cannot_stop_the_replays(settings: Settings) -> None:
+    """The bus drops a listener that throws: the replays have listeners of their own, registered first."""
+    section = re.sub(r"//[^\n]*", "", _channel(_module(render_world_html(settings))))
+    data = [m.start() for m in re.finditer(r'BUS\.on\("data"', section)]
+    frame = [m.start() for m in re.finditer(r'BUS\.on\("frame"', section)]
+    assert len(data) == 3 and len(frame) == 3
+    assert "freshFinished(" in section[data[0]:data[1]] and "renderTicker(" not in section[data[0]:data[1]]
+    assert "weatherOf(" not in section[data[0]:data[1]]
+    first_frame = section[frame[0]:frame[1]]
+    assert "showReplay(" in first_frame and "skyStep(" not in first_frame and "hearAll(" not in first_frame
+    assert "RUN.cutAt" not in section[frame[0]:frame[2]] and "hearAll()" in section[frame[2]:]
+
+
+def test_the_storm_never_flashes_for_less_motion_and_sound_errors_stay_quiet(settings: Settings) -> None:
+    section = _channel(_module(render_world_html(settings)))
+    assert "if (WXS.storm > 0.3 && !CALM) {" in _js_body(section, "    function weatherStep(dt) {")
+    pure = _pure(_module(render_world_html(settings)))
+    assert "ctx.resume()" not in pure.replace("settle(ctx.resume())", "")  # (each resume and suspend caught)
+    assert "ctx.suspend()" not in pure.replace("settle(ctx.suspend())", "")
 
 
 def test_the_sound_waits_for_the_speaker(settings: Settings) -> None:
@@ -233,7 +355,11 @@ def test_the_sound_waits_for_the_speaker(settings: Settings) -> None:
 
 def test_the_channel_allocates_nothing_per_frame(settings: Settings) -> None:
     section = _channel(_module(render_world_html(settings)))
-    bodies = [_js_body(section, 'BUS.on("frame", function (dt, dtRaw) {')]
+    bodies = []
+    at = 0
+    while (at := section.find('BUS.on("frame", function (', at + 1)) >= 0:  # (every frame listener)
+        bodies.append(_js_body(section[at:], 'BUS.on("frame", function ('))
+    assert len(bodies) == 3
     for name in ("skyStep(dt)", "lampsStep()", "weatherStep(dt)", "mixC(key, out)", "mixN(key)", "overcast(c, g)",
                  "hear(name, at, ref, base)", "hearAll()"):
         bodies.append(_js_body(section, f"    function {name} {{"))
@@ -273,25 +399,38 @@ const reused = {}; P.weatherOf(desk(-1), reused);
 out.weather = {
   none: W(null), pretendOnly: W(desk(undefined)), up: W(desk(0.03)), even: W(desk(0)), cents: W(desk(-0.004)), down: W(desk(-0.97)),
   paused: W(desk(0.5, { guard: { paused: true, real: null } })), pausedReal: W(desk(0.5, { guard: { paused: false, real: { paused: true } } })),
+  // the desk in paper mode (live turned off, or sent back by the total-loss cap): its risk manager still judges the
+  // practice record, and a pause there is pretend money
+  paperPaused: W(desk(0.5, { mode: "paper", guard: { paused: true, real: null } })),
+  paperPausedReal: W(desk(0.5, { mode: "paper", guard: { paused: false, real: { paused: true } } })),
+  paperPausedNoBook: W(desk(undefined, { mode: "paper", guard: { paused: true, real: { paused: true } } })),
   dayStop: W(Object.assign(desk(-3), { plain: { real: { paused_kind: "day" } } })), full: W(Object.assign(desk(0.2), { plain: { real: { paused_kind: "full" } } })),
   solanaLive: W({ mode: "LIVE", money: { label: "Real money", today: { usd: -2 } }, plain: {} }),
   solanaPaper: W({ mode: "PAPER", money: { label: "Paper money (pretend)", today: { usd: -2 } }, plain: {} }),
   bothWorst: W({ mode: "LIVE", money: { label: "Real money", today: { usd: 4 }, polymarket: { real: { today_usd: -0.5 } } }, plain: {} }),
   reused: P.weatherOf(null, reused) === reused && reused.sky === "clear", skies: P.CH_SKY };
-// a replay: never on the first poll, never twice, never an older one; only valid items
-const memo = { polled: false, top: -Infinity, ids: {} }, ids = (l) => l.map((i) => i.id);
+// a replay: never on the first poll, never twice, never one from before the viewer arrived, never one much older
+// than the newest seen; only valid items (N: the server's clock on the first poll; polls every 15 s)
+const N = 1760000000, R = 15, ids = (l) => l.map((i) => i.id), M = () => ({ polled: false, floor: -Infinity, top: -Infinity, ids: {} });
 const T = (id, ts, who, result) => ({ id, ts, who: who || "jet", result: result || "won", what: id, usd: 1, real: false, money: "pretend" });
-const seen = [];
-seen.push(ids(P.freshFinished(memo, [T("a", 10), T("b", 5)])));     // first poll: old news
-seen.push(ids(P.freshFinished(memo, [T("a", 10), T("b", 5)])));     // nothing new
-seen.push(ids(P.freshFinished(memo, null)));                         // no data
-seen.push(ids(P.freshFinished(memo, [T("c", 12), T("a", 10)])));     // a new one
-seen.push(ids(P.freshFinished(memo, [T("c", 12), T("a", 10)])));     // the same again
-seen.push(ids(P.freshFinished(memo, [T("old", 3), T("c", 12)])));    // older than the newest seen: not news
-seen.push(ids(P.freshFinished(memo, [T("x", 20, "rook"), T("y", 21, "jet", "maybe"), { id: 5, ts: 22 }, T("e", 30), T("d", 25, "voss")])));  // oldest first
-const empty = { polled: false, top: -Infinity, ids: {} };
-seen.push(ids(P.freshFinished(empty, []))); seen.push(ids(P.freshFinished(empty, [T("first", 1)])));  // the first ever
-out.replay = { seen, words: [
+const memo = M(), F = (list, now) => ids(P.freshFinished(memo, list, now === undefined ? N : now, R)), seen = [];
+seen.push(F([T("a", N - 100), T("b", N - 5000)]));    // first poll: old news
+seen.push(F([T("a", N - 100), T("b", N - 5000)]));    // nothing new
+seen.push(F(null));                                    // no data
+seen.push(F([T("c", N + 20), T("a", N - 100)]));      // a new one
+seen.push(F([T("c", N + 20), T("a", N - 100)]));      // the same again
+seen.push(F([T("old", N - 3000), T("c", N + 20)]));   // from before the viewer arrived: not news
+seen.push(F([T("x", N + 640, "rook"), T("y", N + 641, "jet", "maybe"), { id: 5, ts: N + 642 }, T("e", N + 600), T("d", N + 500, "voss")]));  // oldest first
+seen.push(F([T("f", N + 600), T("e", N + 600)]));       // another of the same second, a poll later: news
+seen.push(F([])); seen.push(F([T("f", N + 600), T("e", N + 600)]));  // a list that blinks out and back: nothing twice
+seen.push(F([T("g", N + 600 - 200), T("f", N + 600)])); // a desk round written a little late: still news
+seen.push(F([T("h", N + 600 - 400), T("f", N + 600)])); // much older than the newest seen: not news
+const remembered = Object.keys(memo.ids).sort();
+const late = M(), L = (list) => ids(P.freshFinished(late, list, N, R));
+// an empty first poll (the desk's block briefly missing): what then appears from before the arrival is not news
+const lateSeen = [L([]), L([T("P3", N - 8000)]), L([T("Z", N - 40)]), L([T("new", N + 30), T("P3", N - 8000)])];
+const blank = M(); const firstEver = [ids(P.freshFinished(blank, [], N, R)), ids(P.freshFinished(blank, [T("first", N + 1)], N + 15, R))];
+out.replay = { seen, remembered, lateSeen, firstEver, words: [
   P.replayWords({ what: "DEMO", result: "won", usd: 12.34, real: false, money: "pretend" }).line,
   P.replayWords({ what: "Will the Fed cut?", result: "won", usd: 0.03, real: true, money: "real money" }).line,
   P.replayWords({ what: "LIE", result: "lost", usd: 1, real: false, money: "real money" }).line,
@@ -300,7 +439,12 @@ out.replay = { seen, words: [
   P.replayWords({ what: "N", result: "lost", usd: null, real: false, money: "pretend" }).line] };
 // the ticker's times on the viewer's clock
 const now = new Date(2026, 9, 10, 14, 5).getTime(), today = new Date(2026, 9, 10, 9, 7).getTime() / 1000, yday = new Date(2026, 9, 9, 23, 59).getTime() / 1000;
+const short = (d) => d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+const oct7 = new Date(2026, 9, 7, 12, 0), oct11 = new Date(2026, 9, 11, 0, 1);
 out.ticker = { today: P.tickerWhen(today, now), yday: P.tickerWhen(yday, now),
+  days3: P.tickerWhen(oct7.getTime() / 1000, new Date(2026, 9, 10, 0, 5).getTime()), days3Want: short(oct7) + " 12:00",
+  ahead: P.tickerWhen(oct11.getTime() / 1000, new Date(2026, 9, 10, 23, 59, 50).getTime()), aheadWant: short(oct11) + " 00:01",
+  newYear: P.tickerWhen(new Date(2026, 11, 31, 23, 0).getTime() / 1000, new Date(2027, 0, 1, 8, 0).getTime()),
   parts: P.tickerParts({ ts: today, name: "Voss", text: "a real-money bet won $0.03 · Will it rain?", tone: "great" }, now) };
 // the sound: nothing made before enable(); suspended while hidden or off; the bell higher for a win; one whoosh per cut
 let made = 0; const log = [];
@@ -325,8 +469,17 @@ S.cut(); const first = S.last; S.last = ""; S.cut(); const twice = S.last;  // (
 const ctx = S.context(); ctx.currentTime = 1; S.cut(); const later = S.last;
 S.hidden(true); const hid = ctx.state; S.hidden(false); const back = ctx.state;
 S.disable(); const off = [ctx.state, S.on]; S.hidden(false); const stillOff = ctx.state; S.enable(); const again = [made, ctx.state, S.on];
-const F = P.makeSound(() => null); const failed = [F.enable(), F.failed, F.on];
-out.sound = { before, quiet, afterOn, winF, lossF, first, twice, later, hid, back, off, stillOff, again, failed, desks: S.desks };
+const Fs = P.makeSound(() => null); const failed = [Fs.enable(), Fs.failed, Fs.on];
+// a browser that refuses resume() or suspend() outside a tap rejects their promises: never an unhandled rejection
+// (Node stops the script on one, and the test fails)
+let refused = 0;
+function Refusing() { FakeCtx.call(this); this.state = "suspended";
+  this.resume = () => { refused += 1; return Promise.reject(new Error("NotAllowedError")); };
+  this.suspend = () => { refused += 1; return Promise.reject(new Error("InvalidStateError")); }; }
+const Rs = P.makeSound(() => new Refusing()); Rs.enable(); Rs.hidden(false); Rs.context().state = "running"; Rs.hidden(true); Rs.disable();
+await new Promise((ok) => setTimeout(ok, 20));
+out.sound = { before, quiet, afterOn, winF, lossF, first, twice, later, hid, back, off, stillOff, again, failed, desks: S.desks,
+  refused: [refused, Rs.on] };
 console.log(JSON.stringify(out));
 """
 
@@ -364,6 +517,9 @@ def test_the_weather_follows_real_money_only(settings: Settings, tmp_path: Path)
     assert w["up"][0] == w["even"][0] == w["cents"][0] == "clear" and w["up"][1] is True
     assert w["down"] == ["cloudy", True, cloudy["clouds"], cloudy["dim"], False]  # drifting clouds, dimmer lanterns
     assert w["paused"][0] == w["pausedReal"][0] == w["dayStop"][0] == "storm" and w["paused"][4] is True
+    # the desk in paper mode: a pause of its practice book (or of a real record it no longer bets) is not real money
+    assert w["paperPaused"][0] == w["paperPausedReal"][0] == w["paperPausedNoBook"][0] == "clear"
+    assert w["paperPaused"][4] is False and w["paperPausedNoBook"][1] is False
     assert w["full"][0] == "clear"  # the open-money limit is waiting, not a stop
     assert w["solanaLive"][0] == "cloudy" and w["solanaPaper"][0] == "clear" and w["bothWorst"][0] == "cloudy"
     assert storm["clouds"] > cloudy["clouds"] > clear["clouds"] == 0 and clear["dim"] == 0 and w["reused"] is True
@@ -372,16 +528,23 @@ def test_the_weather_follows_real_money_only(settings: Settings, tmp_path: Path)
 @NODE
 def test_no_replay_without_something_newly_finished(settings: Settings, tmp_path: Path) -> None:
     r = _pure_report(settings, tmp_path)["replay"]
-    assert r["seen"] == [[], [], [], ["c"], [], [], ["d", "e"], [], ["first"]]
-    assert r["words"] == ["REPLAY · DEMO · won $12.34 · pretend", "REPLAY · Will the Fed cut? · won $0.03 · real money",
-                          "REPLAY · LIE · lost $1.00 · pretend", "REPLAY · LIE2 · lost $1.00 · pretend",
-                          "REPLAY · E · even · pretend", "REPLAY · N · lost · pretend"]
+    assert r["seen"] == [[], [], [], ["c"], [], [], ["d", "e"], ["f"], [], [], ["g"], []]
+    assert r["remembered"] == ["d", "e", "f", "g"]  # (only ids that could still be news: bounded)
+    assert r["lateSeen"] == [[], [], [], ["new"]]  # an empty first poll: nothing from before the arrival replays
+    assert r["firstEver"] == [[], ["first"]]
+    assert r["words"] == ["JUST FINISHED · DEMO · won $12.34 · pretend",
+                          "JUST FINISHED · Will the Fed cut? · won $0.03 · real money",
+                          "JUST FINISHED · LIE · lost $1.00 · pretend", "JUST FINISHED · LIE2 · lost $1.00 · pretend",
+                          "JUST FINISHED · E · even · pretend", "JUST FINISHED · N · lost · pretend"]
 
 
 @NODE
 def test_the_ticker_says_each_events_time_on_the_viewers_clock(settings: Settings, tmp_path: Path) -> None:
     t = _pure_report(settings, tmp_path)["ticker"]
     assert t["today"] == "09:07" and t["yday"] == "yesterday 23:59"
+    # three calendar days back, or a day ahead (a viewer's clock behind the server's): a short date, never "yesterday"
+    assert t["days3"] == t["days3Want"] and t["ahead"] == t["aheadWant"] and "yesterday" not in t["days3"] + t["ahead"]
+    assert t["newYear"] == "yesterday 23:00"  # (across a year's end too)
     assert t["parts"] == {"when": "09:07 · ", "who": "Voss: ", "text": "a real-money bet won $0.03 · Will it rain?", "tone": ""}
 
 
@@ -396,3 +559,4 @@ def test_no_audio_context_before_the_tap(settings: Settings, tmp_path: Path) -> 
     assert s["off"] == ["suspended", False] and s["stillOff"] == "suspended"  # off stays off when the tab comes back
     assert s["again"] == [1, "running", True]  # one context for the whole visit
     assert s["failed"] == [False, True, False] and s["desks"] == ["voss", "pip", "nyx", "rook", "mote"]
+    assert s["refused"][0] >= 2 and s["refused"][1] is False  # refused promises caught (the script went on), now off

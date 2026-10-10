@@ -39,7 +39,8 @@ Schema (lists capped: members 9, events <= 5, open trades <= 10, closed trades 1
                                "real": {"label": "Real money", (the same keys), "at_risk_usd", "contracts",
                                         "cost_usd", "value_usd", "venue_at", "cash_usd", "cash_at"}|null,
                                "guard": {"verdict", "reason", "paused", "since", "line", "on", "candidate",
-                                         "real": {"verdict", "reason", "paused", "since", "line"}|null}|null}|null,
+                                         "real": {"verdict", "reason", "paused", "since", "line"}|null}|null,
+                               "settled_real": [{"ts", "text"}] (<= 3)}|null,   # its newest REAL settlements
                 "trend": {"mode": "paper", "label": "Paper money (pretend)", "as_of": ts|null,   # see TREND; null: off
                           "sleeve_usd", "equity_usd", "today_usd", "since_start_usd", "hold_since_start_usd",
                           "in_market": {"BTC": bool, "ETH": bool, "SOL": bool}, "started": "YYYY-MM-DD"|null,
@@ -155,10 +156,12 @@ first, each in the same plain words as ``now`` (:func:`plain_event`), with the c
 ``name``) and the event's own tone; the receipts' own log is left out (it records every step) and the same words come
 once. ``finished``: the newest :data:`PLAIN_FINISHED_MAX` things that really finished, newest first: the Solana bot's
 closed trades (``trades.closed``: the coin, its result and the dollars of its ``pnl_usd``, real money only while the
-bot itself runs live) and the Polymarket desk's settled REAL-money bets (its own events "Settled: … (real)": the
-question, won or lost and the dollars, only while the desk is on). A practice bet that settles is not in it. ``usd`` is
-the amount without its sign (the result says which way), null when unknown; ``money`` is "real money" or "pretend";
-``id`` stays the same from poll to poll, so a page replays each one once.
+bot itself runs live) and the Polymarket desk's settled REAL-money bets (its own events "Settled: … (real)", read from
+the desk's whole event log, ``money.polymarket.settled_real``, never the team row's last five: one round can settle
+several bets and add a pause and a lesson; the question, won or lost and the dollars, only while the desk is on). A
+practice bet that settles is not in it. ``usd`` is the amount without its sign (the result says which way), null when
+unknown; ``money`` is "real money" or "pretend"; ``id`` stays the same from poll to poll, so a page replays each one
+once.
 
 LEARNING: :func:`learning_card` calls ``nightcrawler.learn.card.learning_card_state(settings, now)`` when
 that module exists (it is built on another branch) and keeps only these keys, each type-checked::
@@ -324,6 +327,8 @@ PLAIN_TICKER_MAX = 8
 PLAIN_TICKER_WINDOW_S = 24 * 3600.0
 #: The newest finished trades and real-money bets the 3D world may replay (``plain.finished``).
 PLAIN_FINISHED_MAX = 3
+#: The Polymarket desk's own event for a settled REAL-money bet (polydesk: "Settled: <question> · won +0.03 $ (real)").
+_REAL_SETTLED = re.compile(r"Settled: (?P<q>.+) · (?P<res>won|lost) (?P<pnl>[+-]?\d+(?:\.\d+)?) \$ \(real\)")
 #: The headline: at most this many characters (two lines on a 390 px phone).
 PLAIN_HEADLINE_MAX = 90
 #: The real-money bets count as small (the headline's "Voss's small Polymarket bets") while their open-money cap is
@@ -948,7 +953,25 @@ def polymarket_desk(settings: Settings, now: float) -> dict[str, Any] | None:
         # the venue's cash alone (a key, no contracts) is real money to show, but not a real book for the town
         "real": real if _real_book(real) or real["cash_usd"] is not None else None,
         "guard": _desk_guard(desk.get("guard")),
+        # its newest settled REAL-money bets from its whole event log (the team row keeps only the last five events,
+        # and one round can settle several bets and add a pause and a lesson): the 3D world's replays
+        "settled_real": _settled_real(desk.get("events"), _Text(settings)),
     }
+
+
+def _settled_real(raw: Any, text: _Text) -> list[dict[str, Any]]:
+    """``money.polymarket.settled_real``: the desk's own "Settled: … (real)" events (:data:`_REAL_SETTLED`), newest
+    first, at most :data:`PLAIN_FINISHED_MAX`, each ``{ts, text}`` (the text redacted, then clipped); a practice
+    settlement, a buy, a pause or a lesson is never one."""
+    out: list[dict[str, Any]] = []
+    for ev in raw if isinstance(raw, list) else []:
+        if not isinstance(ev, Mapping) or not isinstance(ev.get("text"), str):
+            continue
+        ts, words = _num(ev.get("ts")), text(ev["text"].strip())
+        if ts is not None and _REAL_SETTLED.fullmatch(words):
+            out.append({"ts": ts, "text": words})
+    out.sort(key=lambda e: -e["ts"])  # (stable: one round's settlements keep the desk's own order)
+    return out[:PLAIN_FINISHED_MAX]
 
 
 def _desk_guard(raw: Any) -> dict[str, Any] | None:
@@ -1710,16 +1733,12 @@ def plain_ticker(members: list[dict[str, Any]], now: float, *, live: bool) -> li
     return out
 
 
-#: The Polymarket desk's own event for a settled REAL-money bet (polydesk: "Settled: <question> · won +0.03 $ (real)").
-_REAL_SETTLED = re.compile(r"Settled: (?P<q>.+) · (?P<res>won|lost) (?P<pnl>[+-]?\d+(?:\.\d+)?) \$ \(real\)")
-
-
-def plain_finished(members: list[dict[str, Any]], closed: list[dict[str, Any]] | None, *, live: bool,
-                   desk_on: bool) -> list[dict[str, Any]]:
+def plain_finished(closed: list[dict[str, Any]] | None, settled: Any, *, live: bool) -> list[dict[str, Any]]:
     """``plain.finished`` (FINISHED in the module docstring): the newest :data:`PLAIN_FINISHED_MAX` things that really
     finished, newest first: the Solana bot's closed trades (``closed``: the page's ``trades.closed`` rows; real money
-    only while the bot runs live, ``live``) and, while the Polymarket desk is on (``desk_on``), its settled real-money
-    bets from its own events. Nothing else: a practice bet that settles is not in it."""
+    only while the bot runs live, ``live``) and the Polymarket desk's settled real-money bets (``settled``: its
+    ``money.polymarket.settled_real``, read from the desk's whole event log; None while the desk is off). Nothing
+    else: a practice bet that settles is not in it."""
     items: list[dict[str, Any]] = []
     for row in closed or []:
         ts, coin, result = _num(row.get("closed_at")), row.get("coin"), row.get("result")
@@ -1729,8 +1748,9 @@ def plain_finished(members: list[dict[str, Any]], closed: list[dict[str, Any]] |
         items.append({"id": f"trade|{coin}|{ts:.3f}", "ts": ts, "who": "jet", "what": coin, "result": result,
                       "usd": round(abs(pnl), 2) if pnl is not None else None, "real": live,
                       "money": "real money" if live else "pretend"})
-    desk = next((m for m in members if m.get("id") == "predict"), None) if desk_on else None
-    for ev in (desk or {}).get("events") or []:
+    for ev in settled if isinstance(settled, list) else []:
+        if not isinstance(ev, Mapping):
+            continue
         ts, text = _num(ev.get("ts")), ev.get("text")
         found = _REAL_SETTLED.fullmatch(text.strip()) if isinstance(text, str) and ts is not None else None
         if found is None or ts is None:
@@ -1768,7 +1788,8 @@ def plain_words(settings: Settings, money: Mapping[str, Any], members: list[dict
         "glossary": [{"word": word, "means": means} for word, means in GLOSSARY],
         # the 3D world's ticker and replay banner (TICKER and FINISHED in the module docstring)
         "ticker": plain_ticker(members, now, live=settings.is_live),
-        "finished": plain_finished(members, closed, live=settings.is_live, desk_on=desk is not None),
+        "finished": plain_finished(closed, desk.get("settled_real") if desk is not None else None,
+                                   live=settings.is_live),
     }
 
 
