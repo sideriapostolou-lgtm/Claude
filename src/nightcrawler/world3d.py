@@ -3365,6 +3365,7 @@ _M_LIFE = r"""
   blocker(WF, 0, 0.5, 0, 0, TABLE_HALF, 0.5, TABLE_HALF); blocker(AR2, -2.4, 1.4, -2.69, 0, 1.3, 1.4, 0.4); blocker(AR2, 2.4, 1.4, -2.69, 0, 1.3, 1.4, 0.4);
   blocker(WF, 23.5, 1.2, 5.5, 0, 0.75, 1.2, 1.45); blocker(WF, 24.5, 0.6, -2.2, 0, 0.35, 0.6, 0.3); blocker(OB2, 0.6, 1.2, -1.2, 0, 0.9, 1.2, 0.9);
   if (HAS("airship")) blocker(WF, 27.3, 1.3, -1.5, 0, 1.0, 1.6, 1.55);
+  if (HAS("workbench")) blocker(WS2, -0.4, 1.05, -0.85, 0, 0.16, 0.22, 0.16);  // the bench lamp, at Pip's face height
   if (HAS("arch")) PLACE.arch.forEach(function (q) {
     const F = roomFrame(q.at.x, q.at.y, q.at.z, q.yaw);
     blocker(F, -1.08, 1.7, 0, 0, 0.2, 1.7, 0.38); blocker(F, 1.08, 1.7, 0, 0, 0.2, 1.7, 0.38); blocker(F, 0, 3.05, 0, 0, 1.28, 0.35, 0.38);
