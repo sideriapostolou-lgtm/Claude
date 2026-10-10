@@ -474,7 +474,7 @@ def test_the_report_cards_live_inside_the_team_card(settings: Settings) -> None:
     assert html.count('class="graded"') == len(MEMBERS)  # "Graded on 4,212 coins · 14 days" under each row
     ids = re.findall(r'<section class="card" id="([a-z]+)"', html)
     # the experience adds no card of its own (the wallet card is the bot wallet's deposit card)
-    assert ids == ["money", "town", "wallet", "team", "trades", "learning", "ready", "receipts", "usage"]
+    assert ids == ["plain", "money", "town", "wallet", "team", "trades", "learning", "ready", "receipts", "usage"]
 
 
 def test_the_page_draws_range_bars_and_chips_as_text_only(settings: Settings) -> None:
@@ -484,7 +484,7 @@ def test_the_page_draws_range_bars_and_chips_as_text_only(settings: Settings) ->
         assert name in script, name
     assert ".style.left" in script and ".style.width" in script  # positions through the CSSOM: CSP-safe
     assert 'setAttribute("aria-label"' in script and "likely between" in script
-    assert "renderTeam(s.team, s.experience)" in page_script(settings)
+    assert "renderTeam(s.team, s.experience, s.plain)" in page_script(settings)
     for sink in ("innerHTML", "outerHTML", "insertAdjacentHTML", "document.write", "eval(", "new Function"):
         assert sink not in script, sink
 

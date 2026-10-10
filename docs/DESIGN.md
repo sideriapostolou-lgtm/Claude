@@ -59,7 +59,7 @@ src/nightcrawler/
   audit.py           Auditor.reconcile(), trade P&L                                        O6
   dashboard.py       read-only phone dashboard (stdlib http.server)                        O6
   page.py            the ONE page at "/" (static HTML/CSS/JS + CSP, text-only inserts)     O6
-  pagestate.py       /api/page: money, team, trades, learning card, checklist, usage       O6
+  pagestate.py       /api/page: plain words, money, team, trades, learning card, checklist O6
   readiness.py       "ready for real money?" checklist over steps 1-5 (never optimistic)   O6
   botwallet.py       paper mode: the bot wallet's SOL for that checklist (kv, every 10 min) O6
   teamroom.py        /api/team: every bot member's status from real data (+ TeamRoom glue) O6

@@ -1,7 +1,8 @@
 """The 3D world (/world, nightcrawler.world3d): static render and purity, the CSP hashes of the inline module, import
 map and style, the cast (the town's member mapping) and the rooms covering every member, the pinned three.js addons
 and their imports, the real-model manifest and its on-disk detection (with a tiny GLB built here, never shipped), the
-route (auth, headers, methods) and the asset route serving the world's whitelist (no traversal)."""
+route (auth, headers, methods), the asset route serving the world's whitelist (no traversal), and the top bar and
+first-visit guide in plain words (text only, the guide's storage guarded)."""
 
 from __future__ import annotations
 
@@ -193,7 +194,8 @@ def _module(page: str) -> str:
 
 def test_world_is_static_and_lists_every_member(settings: Settings) -> None:
     page = render_world_html(settings)
-    assert page.startswith("<!doctype html>") and '<canvas id="view">' in page and "PAPER" in page
+    assert page.startswith("<!doctype html>") and '<canvas id="view">' in page
+    assert "<title>Night Shift: Skyport</title>" in page and "· paper" not in page  # the data says which money
     for mid, name, role in MEMBERS:
         assert f'data-id="{mid}"' in page and f'data-name="{name}"' in page and f'data-role="{role}"' in page
     assert f'data-pipeline="{",".join(PIPELINE)}"' in page
@@ -206,16 +208,22 @@ def test_world_is_static_and_lists_every_member(settings: Settings) -> None:
     assert "visibilitychange" in module and "requestAnimationFrame" in module  # paused while hidden
     assert "Math.min(0.1," in module  # the frame step is capped
     assert "no WebGL" in module and "Cannot reach the bot" in module and "Locked" in module  # the honest fallbacks
-    assert "A visualisation of the bot's own ledger: every word is the bot's data; the world and its cast are drawings." \
-        in page.replace("&#x27;", "'")
+    # one short line on a 390 px phone (it was cut off), and no "ledger"
+    assert "<p id=\"honest\">Drawings acting out the bot's own records; every word is its data.</p>" in page
+    honest = page[page.index('<p id="honest">'):]
+    assert "ledger" not in honest[:honest.index("</p>")] and len(honest[:honest.index("</p>")]) < 90
     assert 'href="office"' in page and 'href="./"' in page  # the ways back
     assert not re.search(r"""(?:src|href)\s*=\s*["']?(?:https?:)?//""", page)
     assert render_world_html(settings) == page  # pure
 
 
 def test_world_live_mode_is_marked(make_settings: Callable[..., Settings]) -> None:
+    """The bot itself live: the title says real money is on before the first answer (whatever the desks say); the
+    real-money button turns red only from the data (plain.real), never from the static page."""
     page = render_world_html(live_settings(make_settings))
-    assert 'class="mode live" id="mode">LIVE</b>' in page and "Night Shift: Skyport · live" in page
+    assert "<title>Night Shift: Skyport · real money on</title>" in page
+    assert '<button type="button" class="pill real" id="real"' in page and "pill real on" not in page
+    assert '<b id="real-label">Money</b><small id="real-sub">loading…</small><small id="real-result"></small>' in page
 
 
 def test_world_data_blocks_are_json_that_cannot_break_out(settings: Settings) -> None:
@@ -297,7 +305,7 @@ def test_the_acting_follows_the_ledger(settings: Settings) -> None:
     assert 'ev.tone === "good" && actor.key === "rook") oneShot(actor, "nod"' in module and module.count('"nod"') == 1
     # the Polymarket desk's lessons: Voss thinks, then says the desk's own words
     assert 'memberId === "predict" && /^Lesson:/.test(' in module and 'oneShot(actor, "think", 3.4)' in module
-    assert "speak(a, memberId, ev.text, ev.tone, 10)" in module
+    assert "speak(a, memberId, saidOf(memberId, ev), ev.tone, 10)" in module  # (in plain words, "paper" said pretend)
     # talk while the member's own words are up; the crew within ~6 m turn and listen
     assert 'else if (a.speaking) loop = "talk";' in module and 'else if (a.listening) loop = "listen";' in module
     assert "let best = 6.0;" in module
@@ -310,17 +318,30 @@ def test_the_honest_words_come_from_the_data(settings: Settings) -> None:
     module = _module(render_world_html(settings))
     # the vault sign: money.usd and exactly money.label
     assert "drawVaultSign(fmtUsd(money.usd), money.label || \"\"" in module
-    # the Polymarket ticket board: the desk's own label, counts and at most three positions, questions cut to 28
-    for text in ('"Polymarket desk · " + (desk.label || "")', 'nReal + " REAL · " + nPaper + " paper"',
-                 "desk.positions : []).slice(0, 3)", 'q.live ? "REAL" : "paper"', "String(q.question).slice(0, 27) + \"…\""):
+    # the Polymarket ticket board: the desk's own label, counts and at most three positions (the real-money ones
+    # first), each side YES or NO and its price in cents, questions cut to 28
+    for text in ('"Polymarket desk · " + (desk.label || "")',
+                 'nReal + " real-money bet" + (nReal === 1 ? "" : "s") + " · " + nPaper + " pretend"',
+                 "rows.slice(0, 3)", 'q.live ? "REAL" : "pretend"', "String(q.question).slice(0, 27) + \"…\"",
+                 'Math.round(100 * Number(q.p_in)) + "¢"', 'const BOARD_SIDE = { long: "YES", short: "NO" };'):
         assert text in module, text
     assert "realBulbMat.emissiveIntensity = nReal > 0 ? 4 : 0" in module  # the REAL lamp only with real positions
     # a closed trade: the cube is gold for a win, red for a loss, and the float is the trade's own pnl_usd
     assert 'carry: won ? "gold" : "red"' in module and "dropEl.textContent = fmtSigned(pnl)" in module
-    # bubbles say the member's own event text, labelled "ACTOR · Member"
-    assert 'actor.name.toUpperCase() + " · " + nameOf(memberId)' in module and "speak(actor, memberId, ev.text" in module
-    assert "(d.town && d.town.line)" in module
-    assert "alerts[0].text" in module
+    # bubbles say the member's event in the server's plain words for that very event (else its own text, "paper"
+    # said pretend), labelled "ACTOR · the job of the member who spoke" (plain.jobs), else the member's name
+    assert 'actor.name.toUpperCase() + jobOf(actor.key, memberId)' in module
+    assert "const job = plain && plain.jobs && memberId ? plain.jobs[memberId] : null;" in module
+    assert "speak(actor, memberId, saidOf(memberId, ev)" in module
+    assert "return s && s.ts === ev.ts && s.text ? s.text : pretendWords(ev.text);" in module
+    # idle chatter: the member's newest event in plain words first, else its own doing (pretend words too)
+    chatter = _js_body(module, "  function chatter() {")
+    assert "(said && said.text) || pretendWords(m.doing ||" in chatter
+    # the bar: the headline and the real money from plain, the first banner only when there is one
+    assert "headlineEl.textContent = plain.headline;" in module and "realLabel.textContent = r.label;" in module
+    assert 'realBtn.className = "pill real" + (w.red ? " on" : "")' in module
+    assert 'statusEl.textContent = alerts.length ? alerts[0].text : ""; statusEl.hidden = !alerts.length;' in module
+    assert "d.town" not in module and "townEl" not in module  # the dense town line is gone from the world
 
 
 def test_the_screenshot_switches_never_change_the_default(settings: Settings) -> None:
@@ -676,11 +697,19 @@ def test_the_chips_are_made_once_and_only_updated(settings: Settings, tmp_path: 
     module = _module(render_world_html(settings))
     build = _js_body(module, "  function buildChips() {")
     render = _js_body(module, "  function renderChips() {")
+    ends = _js_body(module, "  function chipsEnd() {")
     assert 'chips.textContent = ""' not in render
     out = _node(f"""
-const el = function (tag) {{ return {{ tag: tag, className: "", children: [], appendChild: function (c) {{ this.children.push(c); }} }}; }};
+const el = function (tag) {{ return {{ tag: tag, className: "", title: "", attrs: {{}}, children: [],
+  appendChild: function (c) {{ this.children.push(c); }}, setAttribute: function (k, v) {{ this.attrs[k] = v; }} }}; }};
 const document = {{ createElement: el, createTextNode: function (t) {{ return {{ text: t }}; }} }};
 const chips = el("div"); Object.defineProperty(chips, "textContent", {{ set: function () {{ chips.children = []; }} }});
+const cls = new Set(); chips.classList = {{ contains: function (c) {{ return cls.has(c); }},
+  toggle: function (c, on) {{ if (on) cls.add(c); else cls.delete(c); }} }};
+chips.addEventListener = function () {{}}; chips.scrollLeft = 0; chips.clientWidth = 300; chips.scrollWidth = 520;
+const team = {{ voss: {{ plain_role: "Voss bets on yes/no questions at Polymarket (real money) and asks the AI judge about coins" }} }};
+const teamOf = function (k) {{ return team[k] || null; }};
+{ends}
 const CAST = {{ voss: {{ name: "Voss", members: ["judge"] }}, jet: {{ name: "Jet", members: ["broker"] }} }}, actors = {{ voss: {{}}, jet: {{}} }};
 const ROOMS = {{ observatory: {{ title: "The observatory", members: ["coach"] }} }};
 const status = {{ judge: "working", broker: "idle", coach: "waiting" }};
@@ -696,15 +725,22 @@ const live0 = onOf();
 status.broker = "working"; renderChips(); renderChips();
 first[2].onclick(); const pinnedOn = onOf();
 first[0].onclick(); const back = onOf();
+const fadeAtStart = !cls.has("end"); chips.scrollLeft = 220; chipsEnd(); const fadeAtEnd = !cls.has("end");
 console.log(JSON.stringify({{ n: chips.children.length, same: chips.children.every(function (b, i) {{ return b === first[i]; }}),
   dots: first.map(function (b) {{ return b.children[0].className === undefined ? null : b.children[0].className; }}),
-  live0: live0, on: pinnedOn, back: back }}));
+  live0: live0, on: pinnedOn, back: back, titles: first.map(function (b) {{ return b.title; }}),
+  aria: first[1].attrs["aria-label"], fade: [fadeAtStart, fadeAtEnd] }}));
 """, tmp_path)
+    team_voss = "Voss bets on yes/no questions at Polymarket (real money) and asks the AI judge about coins"
     assert out["n"] == 5 and out["same"] is True
     assert out["dots"] == [None, "working", "working", "waiting", None]  # Jet's dot followed the poll; live and map have none
     assert out["live0"] == ["on live", "", "", "", ""]  # the broadcast is on until something is pinned
     assert out["on"] == ["", "", "on", "", ""]
     assert out["back"] == ["on live", "", "", "", ""]  # the live chip unpins
+    # each character's chip says their job (from the data); the live chip says what it is; the others nothing
+    assert out["titles"][0] == "The live camera: it follows what is happening"
+    assert out["titles"][1] == out["aria"] == team_voss and out["titles"][2:] == ["", "", ""]
+    assert out["fade"] == [True, False]  # the row fades at the right while chips are hidden there, not at its end
 
 
 @pytest.mark.skipif(shutil.which("node") is None, reason="Node is not installed")
@@ -961,7 +997,7 @@ def test_the_live_director_owns_the_camera_by_default(settings: Settings) -> Non
     assert "function goLive() { PLANNER.unpin(); pinned = null;" in module and "liveEl.onclick = goLive;" in module
     # the chips (made once): "live" first, which goes back to live; every other chip pins through the director
     build = _js_body(module, "  function buildChips() {")
-    assert 'add(null, "live", null);' in build and "b.onclick = key ? function () { togglePin(key); } : goLive;" in build
+    assert 'add(null, "live cam", null);' in build and "b.onclick = key ? function () { togglePin(key); } : goLive;" in build
     assert 'pinned ? "" : "on live"' in _js_body(module, "  function renderChips() {")
     assert "pin: 25" in module and '{ alias: { observatory: "telescope" } }' in module  # 25 s; the observatory chip
     # the planner is pure: no three.js, no DOM, no page state or clock inside its block
@@ -1005,18 +1041,28 @@ def test_the_shot_grammar_is_every_type_with_its_lens(settings: Settings) -> Non
 
 
 def test_the_live_tag_says_only_its_fixed_words(settings: Settings) -> None:
-    """The LIVE tag's own words are fixed ("LIVE", "pinned · back to live in N s"); the subject's name and kind, the
-    room and what each member is doing are the card's rows: the cast's and rooms' fixed descriptions and the data's
-    own words, as text."""
+    """The LIVE CAM tag's own words are fixed ("LIVE CAM", "pinned · back to live in N s") and it is brass, never red
+    (red means real money only); the subject's name and kind, the room (or where they are walking to) and what each
+    member is doing are the card's rows: the cast's and rooms' fixed descriptions and the data's own words, as text."""
     page = render_world_html(settings)
     module = _module(page)
-    assert '<b id="live">LIVE</b><span class="name">NIGHT SHIFT: SKYPORT</span>' in page
+    assert '<b id="live">LIVE CAM</b><span class="name">NIGHT SHIFT: SKYPORT</span>' in page
     assert module.count("liveEl.textContent = ") == 1
-    assert 'liveEl.textContent = n < 0 ? "LIVE" : "pinned · back to live in " + n + " s";' in module
+    assert 'liveEl.textContent = n < 0 ? "LIVE CAM" : "pinned · back to live in " + n + " s";' in module
+    (style,) = re.findall(r"<style>(.*?)</style>", page, flags=re.DOTALL)
+    live_css = style[style.index("#live {"):style.index("#live::before")]
+    assert "background: var(--brass)" in live_css and "var(--bad)" not in live_css
+    chip_css = style[style.index("#chips button.live {"):]
+    assert "border-color: var(--brass)" in chip_css.split("}")[0] and "var(--bad)" not in chip_css.split("}")[0]
     assert 'const room = card.querySelector(".room .name")' in module  # the room line keeps the tag beside it
     assert "else if (!pinned) { const s = liveSubject(); actor = s.actor; roomKey = s.room; }" in module
-    assert 'room.textContent = (actor && actor.walking ? "ON THE WAY" : spec ? spec.title : "").toUpperCase();' in module
-    assert 'who.appendChild(document.createTextNode(c.name + " · " + c.kind))' in module
+    # walking: the room they walk to (out on a visit, or back home), never a bare "on the way"
+    assert 'const dest = actor && actor.walking ? ROOMS[actor.state === "out" ? actor.destRoom : actor.homeRoom] : null;' in module
+    assert ('room.textContent = (actor && actor.walking ? "Walking to " + (dest ? dest.title : "the next room") : spec ? '
+            'spec.title : "").toUpperCase();') in module
+    assert "ON THE WAY" not in module
+    # the name in bold, the kind of drawing small and dim beside it
+    assert "kind.textContent = c.kind;" in module and "who.appendChild(document.createTextNode(c.name)); who.appendChild(kind);" in module
     assert 'a.textContent = nameOf(id) + ": " + (m.doing || m.why || "")' in module  # the member's own words
     section = module[module.index("// ============================================================= THE LIVE DIRECTOR"):
                      module.index("// ============================================================= THE LOOP")]
@@ -1158,3 +1204,187 @@ def test_the_director_allocates_nothing_per_frame(settings: Settings) -> None:
         assert banned not in plan, banned
     assert "govern(dtRaw);" in module and "director(); updateCamera(dtRaw, simT);" in module  # the fps governor stays
     assert 'if (params.get("debug") === "1") window.__world =' in module and module.count("window.__world") == 1
+
+
+# --------------------------------------------------------------------------- the bar and the guide (plain words)
+
+
+def test_the_world_bar_replaces_the_two_dense_lines(settings: Settings) -> None:
+    page = render_world_html(settings)
+    module = _module(page)
+    head = page[page.index('<header id="bar">'):page.index("</header>")]
+    for part in ('class="back" href="./"', 'id="real"', 'id="practice"', ">Practice (pretend)</button>", 'id="help"',
+                 'id="headline"', 'id="status" role="status" hidden'):
+        assert part in head, part
+    assert 'id="town"' not in page and 'id="foot"' not in page and 'id="money"' not in page and 'id="mode"' not in page
+    # the buttons keep to one row on a phone: a longer real-money line (the $10 stop's) narrows the practice button,
+    # whose words wrap, instead of pushing "?" down a row; on a wide screen the row joins the headline's line
+    assert head.startswith('<header id="bar"><div class="row1"><a class="back"') and "?</button></div>" in head
+    (style,) = re.findall(r"<style>(.*?)</style>", page, flags=re.DOTALL)
+    assert "#bar .row1 > .pill.practice { flex: 0 1 auto; min-width: 0; white-space: normal;" in style
+    assert "@media (min-width: 760px) { #bar .row1 { display: contents; }" in style
+    # the real-money panel: the data's line, how it bets, the paused reason, the limits, the verdict and the research
+    # line; the practice panel says its books without repeating its own title
+    panel = _js_body(module, "  function renderPanel() {")
+    for call in ("para(panelBody, r.line)", "para(panelBody, r.how)", 'para(panelBody, r.paused, "warn")',
+                 "para(panelBody, r.limits)", 'para(panelBody, r.verdict, "verdict")', 'para(panelBody, r.research, "dim")',
+                 "para(panelBody, plain.pretend.body || plain.pretend.line)"):
+        assert call in panel, call
+    assert "p.textContent = text;" in _js_body(module, "  function para(parent, text, cls) {")
+    bar = _js_body(module, "  function renderBar() {")
+    assert "realSub.textContent = w.sub;" in bar and 'realResult.textContent = w.red && r.result ? r.result : "";' in bar
+    assert '" at risk now"' in _js_body(module, "  function realWords(r) {")
+    # the LIVE card: the character's plain job and latest event
+    card = _js_body(module, "  function renderCard() {")
+    assert "a.textContent = t.plain_role;" in card and '"Latest: " + t.latest' in card
+    assert "bubbles" not in head and "innerHTML" not in page
+
+
+def test_the_guides_storage_is_guarded(settings: Settings) -> None:
+    module = _module(render_world_html(settings))
+    uses = [line for line in module.splitlines() if "localStorage" in line]
+    assert len(uses) == 2 and all("try { " in line and "catch (e)" in line for line in uses), uses
+    assert "if (first) { chatterAt = simT + 6; if (plain && !guideSeen()) openGuide(); }" in module  # first visit
+    # never long, but long enough for card 2 without a touch (a minute and a half)
+    assert "GUIDE_IDLE_MS = 90000" in module and "setTimeout(closeGuide, GUIDE_IDLE_MS)" in module
+    guide = _js_body(module, "  function renderGuide() {")
+    assert "t.plain_role" in guide and "r.line" in guide and "r.limits" in guide and "r.verdict" in guide
+    assert "r.how" in guide  # how it bets (a win makes cents, a loss the whole price)
+    # card 1 says what the app is first (plain.about), under its own title
+    assert "if (plain) para(team, plain.about);" in guide
+    assert guide.index("plain.about") < guide.index('"Six characters act out its parts, live from its own records:"')
+    page = render_world_html(settings)
+    assert '<h2 id="guide-title">What you are looking at</h2>' in page and "the LIVE CAM tag" in guide
+    assert "LIVE_CFG.pin" in guide  # the camera card says the pin's own length
+
+
+@pytest.mark.skipif(shutil.which("node") is None, reason="Node is not installed")
+def test_the_guide_survives_blocked_storage(settings: Settings, tmp_path: Path) -> None:
+    module = _module(render_world_html(settings))
+    seen, remember = _js_body(module, "  function guideSeen() {"), _js_body(module, "  function guideRemember() {")
+    out = _node(f"""
+const store = {{}};
+const window = {{ localStorage: {{ getItem: function (k) {{ return k in store ? store[k] : null; }},
+  setItem: function (k, v) {{ store[k] = String(v); }} }} }};
+const GUIDE_KEY = "nightcrawler.world.guide"; let guideShown = false;
+{seen}
+{remember}
+const a = guideSeen(); guideRemember(); const b = guideSeen(); guideShown = false; const c = guideSeen();
+Object.defineProperty(window, "localStorage", {{ get: function () {{ throw new Error("SecurityError"); }} }});
+guideShown = false; const d = guideSeen(); let threw = false;
+try {{ guideRemember(); }} catch (e) {{ threw = true; }}
+console.log(JSON.stringify([a, b, c, d, threw, guideSeen()]));
+""", tmp_path)
+    # unseen, then remembered; read back from storage; blocked storage: unseen, no error, remembered for this visit
+    assert out == [False, True, True, False, False, True]
+
+
+def test_the_world_csp_follows_the_edit(settings: Settings) -> None:
+    page = render_world_html(settings)
+    (style,) = re.findall(r"<style>(.*?)</style>", page, flags=re.DOTALL)
+    for text in (style, _module(page)):
+        digest = "'sha256-" + base64.b64encode(hashlib.sha256(text.encode()).digest()).decode() + "'"
+        assert digest in WORLD_CSP
+    assert page.count("<script") == 5
+
+
+# --------------------------------------------------------------------------- the fix round: the bar, the board, the bubbles
+
+
+@pytest.mark.skipif(shutil.which("node") is None, reason="Node is not installed")
+def test_the_real_money_button_and_title_follow_the_data(settings: Settings, tmp_path: Path) -> None:
+    """Red while real money is on, and while a real bet is still open after it stopped (never "off" in grey then);
+    "at its limit" is waiting, not a pause; the tab's title never says paper."""
+    module = _module(render_world_html(settings))
+    words = _js_body(module, "  function realWords(r) {")
+    bar = _js_body(module, "  function renderBar() {")
+    out = _node(f"""
+function isNum(v) {{ return typeof v === "number" && isFinite(v); }}
+function fmtUsd(v) {{ return v == null ? "—" : (v < 0 ? "−" : "") + "$" + Math.abs(v).toFixed(2); }}
+const box = function () {{ return {{ textContent: "", className: "", attrs: {{}}, setAttribute: function (k, v) {{ this.attrs[k] = v; }} }}; }};
+const headlineEl = box(), realLabel = box(), realSub = box(), realResult = box(), realBtn = box();
+const guideEl = {{ hidden: true }}, document = {{ title: "" }}; let panelKind = null, plain = null;
+{words}
+{bar}
+const base = {{ label: "Real money", on: true, reported: true, paused: null, paused_kind: null, at_risk_usd: 0.95,
+  open_bets: 1, result: "down $1.78 since start" }};
+const cases = {{ on: base, risk: {{ ...base, paused: "Paused by the risk manager", paused_kind: "risk" }},
+  day: {{ ...base, paused: "Stopped for today", paused_kind: "day" }},
+  full: {{ ...base, at_risk_usd: 9.7, paused: "Waiting", paused_kind: "full" }},
+  halted: {{ ...base, on: false, result: "down $10.20 since start" }},
+  off: {{ ...base, on: false, at_risk_usd: null, open_bets: null, result: null }},
+  silent: {{ ...base, on: false, reported: false, at_risk_usd: null, open_bets: null, result: null }},
+  solana: {{ ...base, reported: false, at_risk_usd: null, open_bets: null, result: null }} }};
+const o = {{}};
+for (const k of Object.keys(cases)) {{
+  plain = {{ headline: "h", real: cases[k] }}; renderBar();
+  o[k] = [realSub.textContent, realResult.textContent, realBtn.className, document.title];
+}}
+console.log(JSON.stringify(o));
+""", tmp_path)
+    assert out["on"] == ["$0.95 at risk now", "down $1.78 since start", "pill real on", "Night Shift: Skyport · real money on"]
+    assert out["risk"][0] == "paused: no new bets" and out["risk"][2] == "pill real on paused"
+    assert out["day"][0] == "stopped for today" and out["day"][2] == "pill real on paused"
+    assert out["full"][0] == "$9.70 at risk (its limit)" and out["full"][2] == "pill real on"  # waiting, not paused
+    # the $10 stop fired with a bet still open: red, the money still in it, and the result
+    assert out["halted"] == ["$0.95 still in bets", "down $10.20 since start", "pill real on",
+                             "Night Shift: Skyport · real bets still open"]
+    assert out["off"] == ["off", "", "pill real", "Night Shift: Skyport · pretend money"]
+    assert out["silent"] == ["no report yet", "", "pill real", "Night Shift: Skyport · real money: no report yet"]
+    # the bot itself live beside a desk that has not reported: real money is on, never a grey "no report"
+    assert out["solana"] == ["on", "", "pill real on", "Night Shift: Skyport · real money on"]
+    assert not [k for k, v in out.items() if "paper" in v[3]]
+
+
+@pytest.mark.skipif(shutil.which("node") is None, reason="Node is not installed")
+def test_the_board_shows_the_real_bet_first_in_plain_words(settings: Settings, tmp_path: Path) -> None:
+    """The real Fed bet came fourth (newest first) and fell off the three rows; "long 0.970" meant nothing."""
+    module = _module(render_world_html(settings))
+    side = re.search(r"  const BOARD_SIDE = [^\n]*;", module)
+    assert side is not None
+    draw = _js_body(module, "  function drawBoard(desk) {")
+    out = _node(f"""
+const said = [];
+const ctx = {{ clearRect() {{}}, fill() {{}}, stroke() {{}}, fillRect() {{}} }};
+const board = {{ userData: {{ canvas: {{ width: 1024, height: 600, getContext: function () {{ return ctx; }} }}, tex: {{}} }} }};
+function roundRect() {{}}
+function fitText(c, text) {{ said.push(text); }}
+{side.group(0)}
+{draw}
+drawBoard({{ label: "Real money", open_real: 1, open_paper: 3, positions: [
+  {{ question: "Will paper0 happen?", side: "long", p_in: 0.97, live: false }},
+  {{ question: "Will paper1 happen?", side: "short", p_in: 0.981, live: false }},
+  {{ question: "Will paper2 happen?", side: "long", p_in: 0.975, live: false }},
+  {{ question: "Will the Fed cut rates at the December 2026 meeting?", side: "long", p_in: 0.95, live: true }} ] }});
+console.log(JSON.stringify(said));
+""", tmp_path)
+    assert out == ["Polymarket desk · Real money", "1 real-money bet · 3 pretend",
+                   "REAL  YES at 95¢  Will the Fed cut rates at t…", "pretend  YES at 97¢  Will paper0 happen?",
+                   "pretend  NO at 98¢  Will paper1 happen?"]
+
+
+@pytest.mark.skipif(shutil.which("node") is None, reason="Node is not installed")
+def test_bubbles_carry_the_speakers_own_job_and_pretend_words(settings: Settings, tmp_path: Path) -> None:
+    """An AI-judge verdict is labelled with the judge's job, not the prediction-market desk's (Voss plays both); a
+    raw event says "pretend" for the bot's "paper", and a ticker called PAPER stays."""
+    module = _module(render_world_html(settings))
+    job, words, said = (_js_body(module, start) for start in ("  function jobOf(key, memberId) {",
+                                                              "  function pretendWords(text) {",
+                                                              "  function saidOf(memberId, ev) {"))
+    out = _node(f"""
+const nameOf = function (id) {{ return id === "judge" ? "Judge" : id; }};
+let plain = {{ jobs: {{ judge: "asks the AI judge about each coin", predict: "bets on yes/no questions at Polymarket" }},
+  said: {{ predict: {{ ts: 5, text: "real-money bet: $0.95 on YES · Will it rain?" }} }} }};
+{job}
+{words}
+{said}
+const o = [jobOf("voss", "judge"), jobOf("voss", "predict"), saidOf("predict", {{ ts: 5, text: "REAL buy: …" }}),
+  saidOf("predict", {{ ts: 6, text: "Paper book full (40 open): no new paper buys (paper)" }}),
+  saidOf("strategy", {{ ts: 7, text: "WATCH PAPER · newspaper" }})];
+plain = null; o.push(jobOf("voss", "judge"));
+console.log(JSON.stringify(o));
+""", tmp_path)
+    assert out == [" · asks the AI judge about each coin", " · bets on yes/no questions at Polymarket",
+                   "real-money bet: $0.95 on YES · Will it rain?",
+                   "Pretend book full (40 open): no new pretend buys (pretend money)", "WATCH PAPER · newspaper",
+                   " · Judge"]

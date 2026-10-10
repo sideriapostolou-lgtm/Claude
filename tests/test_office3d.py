@@ -113,7 +113,7 @@ def test_office3d_is_static_and_lists_every_member(settings: Settings) -> None:
 
 def test_office3d_live_mode_is_marked(make_settings: Callable[..., Settings]) -> None:
     page = render_office3d_html(live_settings(make_settings))
-    assert 'class="mode live" id="mode">LIVE</b>' in page and "Night Shift: the town · live" in page
+    assert 'class="mode live" id="mode">SOLANA BOT: REAL</b>' in page and "Night Shift: the town · Solana bot real" in page
 
 
 def test_office3d_data_blocks_are_json_that_cannot_break_out(settings: Settings) -> None:
@@ -250,9 +250,10 @@ def test_office3d_without_token_is_open_like_the_page(serve: Callable[..., Clien
 def test_the_page_links_the_3d_world_and_the_town_stays_reachable(
         serve: Callable[..., Client], ledger: Ledger, settings: Settings) -> None:
     page = render_page_html(settings)
-    assert '<a class="office" href="world" title="The 3D world">3D</a>' in page  # the page's 3D link is the world
+    # the page's 3D link is the world, said in words, next to the pictures (the office)
+    assert '<a class="office" href="world" title="The bot\'s team at work, live in 3D">Watch the team (3D)</a>' in page
+    assert '<a class="office" href="office" title="The same team as pictures">Pictures</a>' in page
     assert 'href="office3d"' not in page
-    assert page.index('href="office"') < page.index('href="world"')  # next to the Office link
     assert 'href="office"' in render_office3d_html(settings)  # and the way back from the town
     client = serve(settings, ledger)
     status, _, body = client.request("/office3d")  # the town is still served at its own address
