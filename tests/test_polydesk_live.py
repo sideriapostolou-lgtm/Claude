@@ -388,6 +388,63 @@ def test_a_restart_after_an_unreadable_file_stays_off(gw: Gateway, tmp_path) -> 
     assert again.settings.polydesk_mode == "live" and P.panel_state(settings, NOW)["mode"] == "paper"
 
 
+def test_an_unreadable_file_found_on_paper_still_keeps_a_later_live_start_off(gw: Gateway, tmp_path) -> None:
+    """A PAPER start that finds the file unreadable must save the halt too: an empty record saved without it would
+    let the next live start re-arm the full $3 day and $10 total (here $9.50 already lost: 3 real orders went out)."""
+    live = _live_settings(tmp_path)
+    path = P.state_path(live)
+    st = P.empty_state()
+    st["live_pnl_total_usd"] = -9.5
+    P.save_state(path, st)
+    path.write_text(path.read_text()[:40])  # cut short: not JSON any more
+    paper = P.PolyDesk(Settings.from_env({"DATA_DIR": str(tmp_path)}), ledger=FakeLedger(),
+                       client_factory=FakeExchange())
+    assert paper.state["mode"] == "paper" and paper.state["live_halted"] is True
+    assert paper.state["halt_reason"] == "unreadable_state" and P.load_state(path)["live_halted"] is True
+    assert "real money stays off until the owner checks it" in paper.state["events"][0]["text"]
+    assert len(list(path.parent.glob("state.json.unreadable-*"))) == 1
+    ex = FakeExchange()
+    later = P.PolyDesk(live, ledger=FakeLedger(), client_factory=ex)
+    assert later.state["mode"] == "paper" and later.client is None and later.state["live_status"] == P.UNREADABLE_STATUS
+    gw.markets = [_market(f"c{i}", "crypto", 1800 + i) for i in range(5)]
+    gw.quotes = {f"c{i}": (0.97, 0.98) for i in range(5)}
+    later.poll(NOW)
+    assert ex.orders == [] and later.state["positions"] and not any(p["live"] for p in later.state["positions"].values())
+
+
+@pytest.mark.parametrize("mode", ["real", "paper"])  # not "live": that id is the network-test marker (conftest)
+def test_an_unreadable_file_that_cannot_be_copied_is_never_written_over(
+    gw: Gateway, tmp_path, monkeypatch: pytest.MonkeyPatch, mode: str
+) -> None:
+    """When even the evidence copy fails, the desk leaves the file as it was (the only record of the loss stops)
+    and saves nothing over it, so every start finds it unreadable and keeps real money off."""
+    settings = _live_settings(tmp_path) if mode == "real" else Settings.from_env({"DATA_DIR": str(tmp_path)})
+    path = P.state_path(settings)
+    path.parent.mkdir(parents=True)
+    path.write_text("{garbage")
+    broken = {"copy": True}
+    real_copy = P.shutil.copyfile
+
+    def copyfile(src: Any, dst: Any) -> Any:
+        if broken["copy"]:
+            raise OSError("no space left on device")
+        return real_copy(src, dst)
+
+    monkeypatch.setattr(P.shutil, "copyfile", copyfile)
+    ex = FakeExchange()
+    desk = P.PolyDesk(settings, ledger=FakeLedger(), client_factory=ex)
+    assert desk.state["mode"] == "paper" and desk.state["live_halted"] is True and desk.client is None
+    gw.markets = [_market("w1", "crypto", 1800)]
+    gw.quotes = {"w1": (0.97, 0.98)}
+    desk.poll(NOW)
+    assert ex.orders == [] and path.read_text() == "{garbage"  # left as it was, through a whole round
+    assert not list(path.parent.glob("state.json.unreadable-*"))
+    broken["copy"] = False  # the next start can copy it: it finds it unreadable again and stays off
+    again = P.PolyDesk(_live_settings(tmp_path), ledger=FakeLedger(), client_factory=ex)
+    assert again.state["mode"] == "paper" and again.state["live_status"] == P.UNREADABLE_STATUS
+    assert len(list(path.parent.glob("state.json.unreadable-*"))) == 1 and P.load_state(path)["live_halted"] is True
+
+
 def test_a_good_file_still_goes_live(gw: Gateway, tmp_path) -> None:
     settings = _live_settings(tmp_path)
     st = P.empty_state()

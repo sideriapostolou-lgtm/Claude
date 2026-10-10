@@ -319,6 +319,39 @@ def test_sports_get_no_real_orders_in_live_mode(gw: Gateway2, tmp_path: Path) ->
     assert ex.orders == [] and _skips(settings)["counts"]["sports_no_real"] == 1  # once per market a day
 
 
+def test_the_page_counts_only_the_sports_bets_really_practised(gw: Gateway2, tmp_path: Path) -> None:
+    """The page says "practised N sports bets instead of betting real money": N is the practice bets made, not the
+    picks. A full practice book (10 open while a rule learns) or a paused one practises nothing more, so the picks
+    it could not take are not counted (they are once a slot frees and the bet is made)."""
+    from nightcrawler.pagestate import _skips_line
+
+    cap = P.PAPER_LEARNING_OPEN
+    games = [f"nba-g{i:02d}-2026-10-10" for i in range(cap + 5)]  # 15 games in play, each one winner at 0.97/0.98
+    gw.events = [_event(g, -3600, "Q4") for g in games]
+    gw.quotes = {f"{g}-ml": (0.97, 0.98) for g in games}
+    ex = FakeExchange(cash=25.0)
+    settings = _live_settings(tmp_path)
+    desk = _desk(settings, ex)
+    desk.poll(NOW)
+    assert ex.orders == [] and len(_practice(desk)) == cap
+    assert _skips(settings) == {"counts": {"sports_no_real": cap}, "sports": {"basketball": cap}}
+    assert _skips_line(P.panel_state(settings, NOW), live=True) == (
+        f"Today it practised {cap} sports bets instead of betting real money.")
+    # a paused practice book (its record is losing) practises nothing, so nothing is counted as practised
+    paused = _live_settings(tmp_path / "paused")
+    st = P.empty_state()
+    st["by_rule"] = {P.rule_id(paused): {"paper": {"settled": 60, "won": 54, "pnl_usd": sum(LOSING),
+                                                   "pnls": list(LOSING), "costs": [20.0] * 60,
+                                                   "keys": [f"k{i}" for i in range(60)]}}}
+    P.save_state(P.state_path(paused), st)
+    gw.events, gw.quotes = [_event(games[0], -3600, "Q4")], {f"{games[0]}-ml": (0.97, 0.98)}
+    other = _desk(paused, ex)
+    other.poll(NOW)
+    assert other.state["paused"] is not None and not other.state["positions"] and ex.orders == []
+    assert "sports_no_real" not in _skips(paused)["counts"]
+    assert _skips_line(P.panel_state(paused, NOW), live=True) == "Nothing skipped yet today."
+
+
 def test_crypto_still_gets_a_real_order(gw: Gateway2, tmp_path: Path) -> None:
     gw.markets = [_market("btc-above", "crypto", 1800)]
     gw.quotes = {"btc-above": (0.97, 0.98)}

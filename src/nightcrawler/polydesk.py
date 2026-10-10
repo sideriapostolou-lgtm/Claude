@@ -41,8 +41,10 @@ that round, and none at all in a round whose venue read failed. A market the rul
 buy (a sport, a pause, a cap, the venue unread) is bought on PAPER instead, so the practice book keeps watching
 while real money is on; every such skip is counted per UTC day (``skips``) for the page. Live starts only after a
 successful balance read, and never from a record file that could not be read (its loss stops would be lost: the
-desk stays on paper, ``halt_reason`` says why, and a copy of the file is kept); a rejected key leaves the desk on
-paper with the reason on the page. Every live order and settlement is receipted in the ledger's hash chain.
+halt is saved whatever mode that start was in, so the desk stays on paper until the owner resets it, ``halt_reason``
+says why, and a copy of the file is kept; a file that cannot even be copied is never saved over); a rejected key
+leaves the desk on paper with the reason on the page. Every live order and settlement is receipted in the ledger's
+hash chain.
 
 State lives in ``DATA_DIR/polydesk/state.json`` (atomic rewrite): open positions, unconfirmed orders, the last
 closed positions, daily P&L, counters, the last poll, the live status, the last balance and the day's skips. The
@@ -892,6 +894,7 @@ class PolyDesk:
         # The file holds the loss stops: one that exists but cannot be read must not silently reset them (F14).
         unreadable = state_file_unreadable(self.path)
         copy = self._keep_unreadable() if unreadable else None
+        self._keep_file = unreadable and copy is None  # not even copied: the only evidence, never saved over (_save)
         self.state = load_state(self.path)
         self.state["rule"] = {
             "theta": self.theta,
@@ -909,13 +912,17 @@ class PolyDesk:
         self._thread: threading.Thread | None = None
         self.state["mode"] = "paper"
         if unreadable:
-            self._event(time.time(), "The desk's record file could not be read: a copy is kept and the desk starts "
-                        "from an empty record" + (", on practice only." if self.live_requested else "."), "bad")
+            self._event(time.time(), "The desk's record file could not be read" + (
+                ": a copy is kept, the desk starts from an empty record" if copy else
+                " or copied: it is left as it is, nothing is saved over it,") + " and real money stays off until the "
+                "owner checks it.", "bad")
             self._receipt("polydesk_state_unreadable", {"copy": copy, "live_requested": self.live_requested})
             log.warning("polydesk_state_unreadable copy=%s live_requested=%s", copy, self.live_requested)
-            if self.live_requested:  # its loss stops are gone: never live from it (the saved state keeps the halt)
-                self.state["live_halted"] = True
-                self.state["halt_reason"] = "unreadable_state"
+            # Its loss stops are gone: never live from it, in whatever mode this start is (a paper start saving an
+            # empty record without the halt would let a later live start re-arm the full stops). The saved state
+            # keeps the halt until the owner resets it.
+            self.state["live_halted"] = True
+            self.state["halt_reason"] = "unreadable_state"
         if bool(settings.polymarket_us_key_id) and bool(settings.polymarket_us_secret_key):
             self.reader = self._open_reader()
         if self.live_requested and self.state.get("live_halted"):
@@ -1030,6 +1037,8 @@ class PolyDesk:
             self._stop.wait(max(5.0, self.poll_s - (time.time() - t0)))
 
     def _save(self) -> None:
+        if self._keep_file:  # an unreadable record that could not be copied: every start finds it and stays off live
+            return
         _trim_old(self.state.get("by_rule"), self.rule)
         _trim_old_sports(self.state.get("by_sport"), self.rule)
         save_state(self.path, self.state)
@@ -1300,7 +1309,8 @@ class PolyDesk:
 
     def _skip(self, now: float, reason: str, key: str, sport: str | None = None) -> None:
         """Count one skip of the rule's pick for the page (``skips[day]``: "what it skipped and why"): each
-        (reason, market or game) once per UTC day; ``sports_no_real`` also by sport. :data:`SKIPS_DAYS` days kept."""
+        (reason, market or game) once per UTC day; ``sports_no_real`` also by sport, and only once its practice bet
+        is made (a full or paused practice book practises nothing). :data:`SKIPS_DAYS` days kept."""
         skips = self.state.get("skips")
         if not isinstance(skips, dict):
             skips = self.state["skips"] = {}
@@ -1432,6 +1442,7 @@ class PolyDesk:
                 self._skip(now, "game_held", slug)
                 continue
             coef = m["fee_coef"] if m.get("fee_coef") is not None else US_TAKER
+            practised: str | None = None  # a skip counted only once the practice bet is made (the page: "practised")
             if live:
                 block = self._real_block(now, m, price, coef, real_paused, venue_ok, unconfirmed)
                 if block is None:
@@ -1444,7 +1455,9 @@ class PolyDesk:
                     elif outcome == "pending":
                         unconfirmed = True
                     continue  # no paper twin of a market a real order went to
-                if block in SKIP_REASONS:
+                if block == "sports_no_real":
+                    practised = block
+                elif block in SKIP_REASONS:
                     self._skip(now, block, slug, m.get("sport"))
             if paper_paused:
                 continue  # the risk manager paused paper buys; open positions still settle
@@ -1475,6 +1488,8 @@ class PolyDesk:
             paper_open += 1
             st["counters"]["bought"] += 1
             bought += 1
+            if practised:
+                self._skip(now, practised, slug, m.get("sport"))
             self._event(
                 now,
                 f"Paper buy: {m['question'][:60]} · long at {price:.3f} · ${self.ticket:.0f} "
