@@ -726,6 +726,8 @@ def test_the_live_director_owns_the_camera_by_default(settings: Settings) -> Non
     assert "const p = PLANNER.pinned(simT); if (p !== pinned) { pinned = p; nextPlanAt = 0; renderChips(); renderCard(); }" in director
     assert 'if (pinned === "map") {' in director and 'cut("map", mapShot)' in director  # the page's own overview
     assert "readLive(); PLANNER.plan(simT, LIVE_STATE);" in director and "startShot(false);" in director
+    # an event's walk stays on air until the walker arrives (where the arrival keeps it for the drop or hand-off)
+    assert 'if (focus && focus.actor.state === "out" && !focus.actor.ambient && focus.until < simT + 1) focus.until = simT + 1;' in director
     assert "function togglePin(k) { if (pinned === k) PLANNER.unpin(); else PLANNER.pin(k, simT);" in module
     assert "function goLive() { PLANNER.unpin(); pinned = null;" in module and "liveEl.onclick = goLive;" in module
     assert 'live.appendChild(document.createTextNode("live"))' in module and "live.onclick = goLive;" in module

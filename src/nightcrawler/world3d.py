@@ -3495,10 +3495,10 @@ _M_LIFE = r"""
     const base = a.group.position, h = a.height, eyeH = h * (EYE[a.key] || 0.7);
     _fw.set(Math.sin(a.yawS), 0, Math.cos(a.yawS)); _sd.set(_fw.z, 0, -_fw.x); eyeOf(a, out.look);
     if (RUN.g === "follow") {
-      out.pos.copy(base).addScaledVector(_fw, 1.45 + 0.5 * h).addScaledVector(_sd, RUN.side * (0.55 + 0.1 * h)); out.pos.y = base.y + eyeH + 0.32 + 0.1 * h;
+      out.pos.copy(base).addScaledVector(_fw, 1.45 + 0.5 * h).addScaledVector(_sd, RUN.side * (0.55 + 0.1 * h)); out.pos.y = base.y + Math.max(1.3, eyeH + 0.32 + 0.1 * h);
       out.look.addScaledVector(_fw, 0.1); out.look.y -= 0.08 * h;
     } else {
-      out.pos.copy(base).addScaledVector(_sd, RUN.side * (1.9 + 0.4 * h)).addScaledVector(_fw, 0.6); out.pos.y = base.y + eyeH + 0.35;
+      out.pos.copy(base).addScaledVector(_sd, RUN.side * (1.9 + 0.4 * h)).addScaledVector(_fw, 0.6); out.pos.y = base.y + Math.max(1.35, eyeH + 0.35);  // (over the rails)
       out.look.addScaledVector(_fw, camera.aspect < 1 ? 0.15 : 0.45);  // (a narrow phone screen: the walker stays in frame)
     }
   }
@@ -3596,7 +3596,7 @@ _M_LIFE = r"""
     if (cnDist[e] === Infinity) return false;
     cnRoute.length = 0; for (let v = e; v >= 0; v = cnPrev[v]) cnRoute.push(v); cnRoute.reverse(); return true;
   }
-  const WP = [], FLY = { on: false, start: 0, dur: 2, len: 0, n: 0, pts: [], cum: new Float64Array(160), fromLook: V3(0, 0, 0), fov0: 55, i: 0 };
+  const WP = [], FLY = { on: false, start: 0, dur: 2, len: 0, n: 0, pts: [], cum: new Float64Array(160), fromLook: V3(0, 0, 0), fov0: 55, i: 0, see: 1 };
   for (let i = 0; i < 40; i++) WP.push(V3(0, 0, 0));
   for (let i = 0; i < 160; i++) FLY.pts.push(V3(0, 0, 0));
   function addPt(p) { if (FLY.n < FLY.pts.length) FLY.pts[FLY.n++].copy(p); }
@@ -3640,14 +3640,17 @@ _M_LIFE = r"""
     return (u - a / 2) / (1 - a);
   }
   const _ahead = V3(0, 0, 0), _fp = V3(0, 0, 0);
-  function flyPose(t, out) {  // during a flight: along the way, the look moving from the last shot ahead and to the next
+  function flyPose(t, dt, out) {  // during a flight: along the way, the look panning from the last subject to the next
     const u = clamp((t - FLY.start) / FLY.dur, 0, 1), s = cruise(u) * FLY.len;
     flyPoint(s, _fp);
-    if (FLY.len < 5) _ahead.copy(out.look);
-    else { const k = FLY.i; flyPoint(Math.min(FLY.len, s + 2.5), _ahead); _ahead.y -= 0.45; FLY.i = k; }
-    _lq.copy(FLY.fromLook).lerp(_ahead, FLY.len < 5 ? ease(u) : smoothstep(u, 0, 0.3));
-    out.look.lerp(_lq, 1 - smoothstep(u, 0.5, 1));  // (out holds the next shot: its look takes over late)
-    out.pos.lerp(_fp, 1 - smoothstep(u, 0.75, 1));  // ... and its position, so a moving subject is met where it is
+    const k = FLY.i; flyPoint(Math.min(FLY.len, s + 3), _ahead); _ahead.y -= 0.35; FLY.i = k;
+    // the pan from the last subject to the next stays at their height; while a wall hides it, the drone looks
+    // where it flies instead (out holds the next shot: its look and its place take over at the end)
+    _lq.copy(FLY.fromLook).lerp(out.look, ease(u));
+    FLY.see += ((blocked(_fp, _lq) > 0.95 ? 1 : 0) - FLY.see) * (1 - Math.exp(-dt * 5));
+    _ahead.lerp(_lq, FLY.see);
+    out.look.lerp(_ahead, 1 - smoothstep(u, 0.7, 1));
+    out.pos.lerp(_fp, 1 - smoothstep(u, 0.75, 1));  // (so a moving subject is met where it is)
     return u >= 1;
   }
 
@@ -3687,7 +3690,7 @@ _M_LIFE = r"""
     if (hard) { FLY.on = false; cam.pos.copy(_dst.pos); cam.look.copy(_dst.look); setFov(fovFor(RUN.mm)); RUN.cutAt = simT; }
     else {
       FLY.on = true; FLY.start = simT; FLY.dur = clamp(0.9 + FLY.len / 7, 1.2, 4.0); FLY.fromLook.copy(cam.look);
-      FLY.fov0 = lens.fov; RUN.t0 = simT + FLY.dur; if (!reframe) PLANNER.extend(FLY.dur);
+      FLY.fov0 = lens.fov; FLY.see = 1; RUN.t0 = simT + FLY.dur; if (!reframe) PLANNER.extend(FLY.dur);
     }
     if (!reframe) renderCard();
   }
@@ -3696,6 +3699,8 @@ _M_LIFE = r"""
     const dt = clamp(simT - RUN.lastT, 0, 0.1); RUN.lastT = simT;
     if (camera.fov !== lens.set) { lens.base = camera.fov; lens.fov = camera.fov; lens.set = camera.fov; }  // (resized)
     const p = PLANNER.pinned(simT); if (p !== pinned) { pinned = p; nextPlanAt = 0; renderChips(); renderCard(); }  // (a pin timed out)
+    // an event's walk (a hand-off, Jet's carry) stays on air until they arrive (the arrival keeps it for the drop)
+    if (focus && focus.actor.state === "out" && !focus.actor.ambient && focus.until < simT + 1) focus.until = simT + 1;
     if (focus && simT >= focus.until) focus = null;
     renderLive();
     if (pinned === "map") {  // the overview (the page's own map shot and lens)
@@ -3720,7 +3725,7 @@ _M_LIFE = r"""
     if (FLY.on) {
       const u = clamp((simT - FLY.start) / FLY.dur, 0, 1);
       setFov(lerp(FLY.fov0, target, ease(u)));
-      if (flyPose(simT, _live)) FLY.on = false;
+      if (flyPose(simT, dt, _live)) FLY.on = false;
     } else setFov(lens.fov + (target - lens.fov) * Math.min(1, dt * 2.5));
     cam.pos.copy(_live.pos); cam.look.copy(_live.look);
   }
