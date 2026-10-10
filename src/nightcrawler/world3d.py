@@ -1129,7 +1129,10 @@ _M_WORLD = r"""
     [-1, 1].forEach(function (s) { for (let z = -d / 2; z < d / 2; z += 0.9) { const p = F.at(s * (w / 2 + 0.28), h + 0.05, z); vine(p.x, p.y, p.z, 0.3 + ((z * 7 + s * 3) % 1 + 1) % 1 * 1.2, Math.round(z * 100 + s * 7 + (o.seed || 1) * 1000)); } });
     // bushes round the outside
     for (let x = -w / 2 + 0.4; x < w / 2; x += 1.1) { const p = F.at(x, 0, -d / 2 - 0.55); if (onIsland(p.x, p.z, 0.4)) bush(p.x, 0, p.z, 0.65, 4); }
-    [-1, 1].forEach(function (s) { for (let z = -d / 2 + 0.4; z < d / 2 - 0.4; z += 1.2) { const p = F.at(s * (w / 2 + 0.6), 0, z); if (onIsland(p.x, p.z, 0.4)) bush(p.x, 0, p.z, 0.6, 3); } });
+    // (o.clear: room-local spots where someone stands outside, e.g. the vault's hatch, kept free of bushes)
+    const clearOf = function (x, z) { return !(o.clear || []).some(function (c) { return Math.hypot(x - c[0], z - c[1]) < 1.6; }); };
+    [-1, 1].forEach(function (s) { for (let z = -d / 2 + 0.4; z < d / 2 - 0.4; z += 1.2) { const p = F.at(s * (w / 2 + 0.6), 0, z);
+      if (onIsland(p.x, p.z, 0.4) && clearOf(s * (w / 2 + 0.6), z)) bush(p.x, 0, p.z, 0.6, 3); } });
   }
   const shelf = function (F, x, z, ry, w, h, rows, seed) {
     const r = rng(seed);
@@ -1316,7 +1319,7 @@ _M_WORLD = r"""
 
   // -- the vault (front-right): the round brass door, Rook's risk desk, the document hatch
   const VT = RF.vault;
-  roomShell(VT, { w: 7.0, d: 6.4, h: 4.4, seed: 51, floor: 0xd8cebe,
+  roomShell(VT, { w: 7.0, d: 6.4, h: 4.4, seed: 51, floor: 0xd8cebe, clear: [[-4.35, -0.2]],  // (Jet at the hatch)
     back: [], left: [{ x: 0.2, w: 0.8, y0: 0.6, sp: 1.15 }], right: [{ x: -0.6, w: 1.3, y0: 1.1, sp: 2.4 }],
     front: [{ x: 0, w: 2.8, sp: 2.4 }] });
   VT.add("brass", new THREE.RingGeometry(1.2, 1.28, 64).rotateX(-Math.PI / 2), [0.9, 0.012, -2.0], null, null, BRASS);
