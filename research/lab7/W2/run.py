@@ -237,15 +237,46 @@ def _init(ctx: dict[str, Any]) -> None:
     _CTX.update(ctx)
 
 
+CELL_CODE = {k: i for i, k in enumerate(CELLS)}
+
+
+def encode(f: pd.DataFrame) -> dict[str, np.ndarray]:
+    """A market's trips as numeric arrays (memory: ~4 million round trips on TRAIN); :func:`decode` inverts it."""
+    out = {c: f[c].to_numpy(dtype=float) for c in NUM_COLUMNS}
+    out["cell"] = f["cell"].map(CELL_CODE).to_numpy(dtype=np.int16)
+    out["reason"] = f["reason"].map({r: i for i, r in enumerate(REASONS)}).to_numpy(dtype=np.int8)
+    out["exit_leg"] = f["exit_leg"].map({r: i for i, r in enumerate(LEGS)}).to_numpy(dtype=np.int8)
+    return out
+
+
+def decode(arr: dict[str, np.ndarray], mask: np.ndarray, meta: pd.DataFrame, split: str) -> pd.DataFrame:
+    """The trips of ``mask`` as lab 7's trip frame (``core.TRIP_COLUMNS``) plus W2's extra columns. ``meta``: one
+    row per market index (id, event, sub, symbol)."""
+    mi = arr["mi"][mask]
+    f = pd.DataFrame({c: arr[c][mask] for c in NUM_COLUMNS})
+    f["o"] = f["o"].astype(int)
+    f["late_stop"] = f["late_stop"].astype(bool)
+    f["id"] = meta["id"].to_numpy()[mi]
+    f["event"] = meta["event"].to_numpy()[mi]
+    f["split"] = split
+    f["reason"] = np.asarray(REASONS, dtype=object)[arr["reason"][mask]]
+    f["exit_leg"] = np.asarray(LEGS, dtype=object)[arr["exit_leg"][mask]]
+    f["day"] = pd.to_datetime(f["t_exit"], unit="s", utc=True).dt.strftime("%Y-%m-%d").to_numpy()
+    f["cell"] = np.asarray(list(CELLS), dtype=object)[arr["cell"][mask]]
+    f["sub"] = meta["sub"].to_numpy()[mi]
+    f["symbol"] = meta["symbol"].to_numpy()[mi]
+    return f[C.TRIP_COLUMNS + EXTRA_COLUMNS]
+
+
 def _work(row: dict[str, Any]) -> dict[str, Any]:
     c = json.loads(row["contract"])
     mk = build_market(row, _SPOTS[c["symbol"]], _CTX["basis_sd"])
     if mk is None:
-        return {"id": row["id"], "skip": "fewer than 50 fills", "trips": None, "missed": {}}
+        return {"id": row["id"], "skip": "fewer than 50 fills", "arr": None, "missed": {}}
     cells = [CELLS[k] for k in _CTX["cells"]]
     trips, missed = market_trips(mk, cells)
-    return {"id": row["id"], "skip": None, "trips": trips, "missed": missed, "n_prints": len(mk.tape),
-            "late_close": bool(mk.hard_end < mk.end_t)}
+    return {"id": row["id"], "event": mk.event, "skip": None, "arr": encode(trips) if len(trips) else None,
+            "missed": missed, "n_prints": len(mk.tape), "late_close": bool(mk.hard_end < mk.end_t)}
 
 
 def _placebo_work(task: tuple[dict[str, Any], dict[str, int]]) -> dict[str, np.ndarray]:
@@ -285,12 +316,29 @@ def load_context(split: str, cell_keys: list[str]) -> tuple[pd.DataFrame, dict[s
     return u, {"rates": {str(k): int(v) for k, v in rates.items()}}
 
 
-def evaluate(u: pd.DataFrame, procs: int) -> tuple[pd.DataFrame, dict[str, int], dict[str, Any]]:
+def evaluate(u: pd.DataFrame, procs: int) -> tuple[dict[str, np.ndarray], pd.DataFrame, dict[str, int], dict[str, Any]]:
+    """Every market of the universe through every requested cell. Returns the encoded trips (with ``mi``, the market
+    index into ``meta``), ``meta`` (id, event, sub, symbol per market index), missed entries per cell, coverage."""
     rows = u.to_dict("records")
     t0 = time.time()
     res = _pool_map(_work, rows, procs)
-    frames = [r["trips"] for r in res if r["trips"] is not None and len(r["trips"])]
-    trips = pd.concat(frames, ignore_index=True) if frames else pd.DataFrame(columns=C.TRIP_COLUMNS + EXTRA_COLUMNS)
+    sub_by_id = dict(zip(u["id"].astype(str), u["sub"], strict=True))
+    sym_by_id = dict(zip(u["id"].astype(str), u["symbol"], strict=True))
+    with_trips = [r for r in res if r["arr"] is not None]
+    meta = pd.DataFrame(
+        {
+            "id": [str(r["id"]) for r in with_trips],
+            "event": [r["event"] for r in with_trips],
+            "sub": [sub_by_id[str(r["id"])] for r in with_trips],
+            "symbol": [sym_by_id[str(r["id"])] for r in with_trips],
+        }
+    )
+    keys = [*NUM_COLUMNS, "cell", "reason", "exit_leg"]
+    if with_trips:
+        arr = {k: np.concatenate([r["arr"][k] for r in with_trips]) for k in keys}
+        arr["mi"] = np.concatenate([np.full(len(r["arr"]["cell"]), i, dtype=np.int32) for i, r in enumerate(with_trips)])
+    else:
+        arr = {k: np.zeros(0) for k in keys} | {"cell": np.zeros(0, dtype=np.int16), "mi": np.zeros(0, dtype=np.int32)}
     missed: dict[str, int] = {}
     for r in res:
         for k, v in r["missed"].items():
@@ -307,18 +355,22 @@ def evaluate(u: pd.DataFrame, procs: int) -> tuple[pd.DataFrame, dict[str, int],
         "prints_median": float(np.median([r["n_prints"] for r in ok])) if ok else None,
         "seconds": round(time.time() - t0, 1),
     }
-    return trips, missed, cov
+    return arr, meta, missed, cov
 
 
-def placebo_pass(u: pd.DataFrame, trips: pd.DataFrame, keys: list[str], procs: int) -> dict[str, list[np.ndarray]]:
-    """One pass over the markets with trips in any of ``keys``; each market's tape is built once."""
+def placebo_pass(
+    u: pd.DataFrame, arr: dict[str, np.ndarray], meta: pd.DataFrame, keys: list[str], procs: int
+) -> dict[str, list[np.ndarray]]:
+    """One pass over the markets with trips in any of ``keys``; each market's tape is built once. Each market gets
+    as many counterparts per draw as it has real round trips in the cell (PLAN §7)."""
     if not keys:
         return {}
-    sub = trips[trips["cell"].isin(keys)]
-    need = sub.groupby(["id", "cell"]).size()
     by_id: dict[str, dict[str, int]] = {}
-    for (mid, key), n in need.items():
-        by_id.setdefault(str(mid), {})[str(key)] = int(n)
+    ids = meta["id"].to_numpy()
+    for key in keys:
+        mi = arr["mi"][arr["cell"] == CELL_CODE[key]]
+        for i, n in zip(*np.unique(mi, return_counts=True), strict=True):
+            by_id.setdefault(str(ids[i]), {})[key] = int(n)
     rows = [r for r in u.to_dict("records") if str(r["id"]) in by_id]
     tasks = [(r, by_id[str(r["id"])]) for r in rows]
     res = _pool_map(_placebo_work, tasks, procs, chunksize=8)
@@ -415,12 +467,12 @@ def run_stage(stage: str, B: int = C.BOOTSTRAP_B, procs: int = 4) -> dict[str, A
             raise RuntimeError(f"{stage.upper()} is not run: the previous stage selected no cell")
         keys = [sel]
     u, ctx_info = load_context(split, keys)
-    trips, missed, cov = evaluate(u, procs)
+    arr, meta, missed, cov = evaluate(u, procs)
     cov["fee_rates_in_catalogue"] = ctx_info["rates"]
     results = []
     for key in keys:
         cell = CELLS[key]
-        ct = trips[trips["cell"] == key] if len(trips) else trips
+        ct = decode(arr, arr["cell"] == CELL_CODE[key], meta, split)
         results.append(cell_result(cell, ct, missed.get(key, 0), split, B))
     # PLAN §7: the placebo for every selectable cell that clears conditions 1-5; PREREG §6 readings: the 3 best
     # selectable cells by CI95 lower bound and the 3 reference cells (TRAIN); VAL / TEST: the cell under test.
@@ -434,7 +486,7 @@ def run_stage(stage: str, B: int = C.BOOTSTRAP_B, procs: int = 4) -> dict[str, A
     else:
         reading = [r["cell"] for r in results if r["cell"] not in required and r["summary"]["n"] > 0]
     t0 = time.time()
-    blocks = placebo_pass(u, trips, required + reading, procs)
+    blocks = placebo_pass(u, arr, meta, required + reading, procs)
     cov["placebo_seconds"] = round(time.time() - t0, 1)
     for r in results:
         key = r["cell"]
@@ -499,7 +551,7 @@ def run_stage(stage: str, B: int = C.BOOTSTRAP_B, procs: int = 4) -> dict[str, A
     if sel_key is not None:
         C.OUT.mkdir(parents=True, exist_ok=True)
         safe = sel_key.replace("|", "_")
-        tr = trips[trips["cell"] == sel_key]
+        tr = decode(arr, arr["cell"] == CELL_CODE[sel_key], meta, split)
         tr.to_parquet(C.OUT / f"W2_{stage}_{safe}.parquet", index=False, compression="zstd")
         doc["trades_file"] = str(C.OUT / f"W2_{stage}_{safe}.parquet")
     out_json.write_text(json.dumps(doc, indent=1, sort_keys=True, default=str) + "\n")
