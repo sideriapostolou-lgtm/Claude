@@ -463,7 +463,7 @@ def write_md(stage: str, doc: dict[str, Any]) -> str:
                   f"{r['daily_stop']['days_stopped']} days, total ${_fmt(r['daily_stop']['total_usd'], 2)}", ""]
         lines += ["By league (best cell):", "", "| league | n | games | win rate | mean net | total $ |",
                   "|---|---|---|---|---|---|"]
-        for lg, v in list(x.get("by_league", {}).items())[:25]:
+        for lg, v in sorted(x.get("by_league", {}).items(), key=lambda kv: (-kv[1]["n"], kv[0]))[:25]:
             lines.append(f"| {lg} | {v['n']} | {v['events']} | {_fmt(v['win_rate'], 3)} | {_fmt(v['mean_net_us'])} | "
                          f"{_fmt(v['total_usd'], 0)} |")
         lines.append("")
@@ -480,8 +480,9 @@ def write_md(stage: str, doc: dict[str, Any]) -> str:
         chk = "".join("Y" if c["bar"]["checks"][k] else ("-" if k == "placebo" and not c.get("placebo") else "n")
                       for k in ("n", "mean", "ci_lower", "stress", "loss_guards", "placebo"))
         tag = "" if c["selectable"] else " (ref)"
+        cell_md = c["cell"].replace("|", "\\|")  # a pipe inside a table cell must be escaped, even in code
         lines.append(
-            f"| `{c['cell']}`{tag} | {s['n']} | {s.get('n_events', 0)} | {s['missed']} | {_fmt(s['trips_per_day'], 2)} | "
+            f"| `{cell_md}`{tag} | {s['n']} | {s.get('n_events', 0)} | {s['missed']} | {_fmt(s['trips_per_day'], 2)} | "
             f"{_fmt(s['win_rate'], 3)} | {_fmt(s['mean_net_us'])} | [{_fmt(s['ci95'][0])}, {_fmt(s['ci95'][1])}] | "
             f"{_fmt(s['mean_net_com'])} | {_fmt(s['mean_net_stress'])} | {_fmt(x.get('gross_mean'))} | "
             f"{_fmt(s['breakeven_win_rate'], 3)} | {_fmt(s['win_cents'], 2)} | {_fmt(s['loss_cents'], 2)} | "
@@ -582,7 +583,11 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--structure", choices=["train", "val", "test"])
     ap.add_argument("--B", type=int, default=C.BOOTSTRAP_B)
     ap.add_argument("--workers", type=int, default=WORKERS)
+    ap.add_argument("--render", choices=["train", "val", "test"], help="rewrite <stage>.md from <stage>.json only")
     a = ap.parse_args(argv)
+    if a.render:
+        doc = json.loads((HERE / f"{a.render}.json").read_text())
+        (HERE / f"{a.render}.md").write_text(write_md(a.render, doc))
     if a.structure:
         print(json.dumps(structure(a.structure), indent=1, default=str))
     if a.stage:

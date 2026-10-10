@@ -1,6 +1,6 @@
 # Lab 7 W1 pre-registration: sports pre-game convergence to Pinnacle
 
-Written 2026-10-10 ~20:40 UTC by the W1 specialist, under `research/lab7/PLAN.md` (lab7-v1). **At the time of writing
+Written 2026-10-10 ~20:34 UTC by the W1 specialist, under `research/lab7/PLAN.md` (lab7-v1). **At the time of writing
 no W1 return had been computed or read.** The only code run on real data was a structure count of the TRAIN universe
 (`run.py --structure train`: 2,161 matched games, 3,005 markets, 1,442 two-way and 1,563 soccer Yes/No markets,
 2,974 with a closing line, a median of 6.1 hours of entry windows per market) and the W1 tests. The simulator was
