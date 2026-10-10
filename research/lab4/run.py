@@ -82,6 +82,10 @@ HYPOTHESES: dict[str, dict[str, Any]] = {
         "selectable": False,
     },
 }
+# Studies with their own runner (research/lab4/<HYP>/), listed in RESULTS.md from their stage files.
+EXTRA_ROWS: dict[str, str] = {
+    "P6": "sport by sport: in-play game winners at 97c+, the live desk's rule (Amendment 5)",
+}
 MIN_N = 100
 PLACEBO_PCT = 95.0
 PLAN_VERSION = "lab4-v1 + Amendments 1-4"
@@ -428,6 +432,13 @@ def _results_md(here: Path = HERE) -> None:
             p = here / hyp / f"{stage}.json"
             cells.append(json.loads(p.read_text())["decision"] if p.exists() else "-")
         rows.append(f"| {hyp} | {h['title']} | {cells[0]} | {cells[1]} | {cells[2]} |")
+    for hyp, title in EXTRA_ROWS.items():
+        cells = []
+        for stage in ("train", "val", "test"):
+            p = here / hyp / f"{stage}.json"
+            cells.append(json.loads(p.read_text())["decision"] if p.exists() else "-")
+        if any(c != "-" for c in cells):
+            rows.append(f"| {hyp} | {title} | {cells[0]} | {cells[1]} | {cells[2]} |")
     rows += [
         "",
         "Decisions per research/lab4/PLAN.md; per-stage tables in each hypothesis folder. Paper only.",

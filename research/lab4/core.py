@@ -152,9 +152,19 @@ class Dataset:
         return markets[keep].copy()
 
     @classmethod
-    def load(cls, split: str, out_dir: Path, min_fills: int = MIN_FILLS) -> Dataset:
+    def load(
+        cls,
+        split: str,
+        out_dir: Path,
+        min_fills: int = MIN_FILLS,
+        select: Any = None,
+    ) -> Dataset:
+        """``select`` (optional): a function from the split's eligible markets to the subset whose tapes are read
+        (P6 reads only sports game-winner tapes); coverage is then counted over that subset."""
         check_split_allowed(split)
         markets = cls.eligible(pd.read_parquet(out_dir / "markets.parquet"), split)
+        if select is not None:
+            markets = select(markets)
         markets["family"] = [
             fee_family(t, bool(e))
             for t, e in zip(markets["fee_type"], markets["fees_enabled"], strict=True)
