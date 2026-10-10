@@ -3051,7 +3051,10 @@ _M_LIFE = r"""
       const b = bubbles[i];
       if (simT >= b.until) { b.el.remove(); bubbles.splice(i, 1); continue; }
       const s = toScreen(b.actor.headAt);
-      const visible = s.ok && s.x > -30 && s.x < Wd + 30 && s.y > 30 && s.y < bottom + 60 && blocked(camera.position, b.actor.headAt) > 0.98;  // (not through a wall)
+      // (not through a wall, and never from far off: a speaker 30 m away down a line of open doorways would hang
+      // their words over whoever the drone is filming close up)
+      const visible = s.ok && s.x > -30 && s.x < Wd + 30 && s.y > 30 && s.y < bottom + 60 && camera.position.distanceToSquared(b.actor.headAt) < 144
+        && blocked(camera.position, b.actor.headAt) > 0.98;
       b.el.style.opacity = visible ? "1" : "0";
       if (visible) { const bw = b.el.offsetWidth, bh = b.el.offsetHeight, left = clamp(s.x - 30, 8, Wd - bw - 8);
         b.el.style.left = left + "px"; b.el.style.top = clamp(s.y - bh - 14, top, bottom - bh) + "px"; b.el.style.setProperty("--tail", clamp(s.x - left - 10, 12, bw - 30) + "px"); }

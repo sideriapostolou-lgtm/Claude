@@ -1131,6 +1131,16 @@ console.log(JSON.stringify({{ first: first, soon: soon, stuck: stuck }}));
     assert out["stuck"] == ["follow", -1]  # nothing clearly better: it stays (and comes in closer as before)
 
 
+def test_a_bubble_shows_only_over_its_own_speaker_close_up(settings: Settings) -> None:
+    """The final check's frames: Pip's words (labelled PIP) hung over Jet in a close follow shot on the dock, because
+    Pip's head, 30 m away through a line of open doorways, projected just above Jet's. A bubble now shows only while
+    its speaker is within 12 m of the drone and in plain view."""
+    module = _module(render_world_html(settings))
+    body = _js_body(module, "  function updateBubbles() {")
+    assert "camera.position.distanceToSquared(b.actor.headAt) < 144" in body
+    assert "blocked(camera.position, b.actor.headAt) > 0.98" in body
+
+
 def test_the_director_allocates_nothing_per_frame(settings: Settings) -> None:
     """The director and the camera's moves run every frame: no new objects, closures or copies there (each shot's
     setup and each flight's plan allocate nothing either beyond reusing their records)."""
