@@ -304,7 +304,9 @@ def test_the_page_renders_the_polymarket_block_as_text_only(settings: Settings,
     assert "book.label" in script and '"Real money"' not in script  # the labels come from the data, never the page
     assert '"real money ON" : "real money OFF"' in script
     assert "const desks = t.polymarket;" in script and '"Made today, Solana desk" : "Made today"' in script
-    assert '.filter((d) => d && d.line)' in script and 'el("p", "meta", d.line)' in script
+    assert '.filter((d) => d && d.line)' in script and 'el("p", "meta", d.line, ' in script
+    # only the real desk's line carries the real "covered" tag (from the goal's real figure, never the pretend bar)
+    assert 'desks && d === desks.real && realTag ? el("span", "tag", realTag) : null' in script
     assert "nothing here is added together" in script
     for sink in ("innerHTML", "outerHTML", "insertAdjacentHTML", "document.write", "eval(", "new Function"):
         assert sink not in script, sink

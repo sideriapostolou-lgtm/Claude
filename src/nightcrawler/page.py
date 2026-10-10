@@ -487,15 +487,22 @@ _SCRIPT = r"""
   // ---------------------------------------------------------------- A1. the town: what it costs vs what the desks made
   // Two bars on one scale: what running the bot cost so far today (grey) and what the desks made today (green;
   // red for a loss). An income that is not known yet draws no bar at all; every word is fixed text or the data's.
+  // Only real money can cover the bill: the Solana bar says "covered" only while its money is real (the card's own
+  // label is the real-money label), and the real Polymarket line says it from the goal's real figure
+  // (town.goal.bill_covered_by_real).
   function renderTown(t) {
     $("town-label").textContent = t.label;
     $("town-line").textContent = t.line;
-    const cost = t.cost_today_usd, made = t.income_today_usd;
+    // (the town's label is the real-money label exactly when the page's own real-money words say it: data, not copy)
+    const realLabel = last && last.plain && last.plain.real ? last.plain.real.label : null;
+    const cost = t.cost_today_usd, made = t.income_today_usd, real = !!realLabel && t.label === realLabel;
     const scale = Math.max(isNum(cost) ? cost : 0, isNum(made) ? Math.abs(made) : 0, 0.01);
     const since = (v, signed, covered) => "since start: " + (isNum(v) ? usd(v, signed) : "not known yet")
       + (covered === true ? " · covered" : covered === false ? " · not covered" : "");
-    const verdict = t.covered_today === true ? el("span", "tag", "covered")
+    const verdict = !real ? null : t.covered_today === true ? el("span", "tag", "covered")
       : t.covered_today === false ? el("span", "tag", "not covered") : null;
+    const byReal = t.goal ? t.goal.bill_covered_by_real : null;
+    const realTag = byReal === true ? "covered by real money today" : byReal === false ? "not covered by real money today" : null;
     const desks = t.polymarket;  // the Polymarket desk's lines (town.polymarket); the bar stays the Solana desk's
     put($("town-bars"),
       el("div", "bar", el("span", null, "Costs today"), el("b", "num", usd(cost)),
@@ -503,10 +510,14 @@ _SCRIPT = r"""
       el("div", "bar", el("span", null, desks ? "Made today, Solana desk" : "Made today", verdict),
         el("b", "num " + tone(made), usd(made, true)),
         isNum(made) ? track(Math.abs(made) / scale, made < 0 ? "down" : "up") : null,
-        el("small", null, since(t.income_since_start_usd, true, t.covered_since_start))));
+        el("small", null, since(t.income_since_start_usd, true, real ? t.covered_since_start : null))));
     // the trend desk's own line (town.trend) comes last: words only, never part of the bars above
     put($("town-desks"), ...[...(desks ? [desks.paper, desks.real] : []), t.trend].filter((d) => d && d.line)
-      .map((d) => el("p", "meta", d.line)));
+      .map((d) => el("p", "meta", d.line, desks && d === desks.real && realTag ? el("span", "tag", realTag) : null)));
+  }
+  // the town's goal (plain.goal): the owner's goal for the team in its own words, and why it is not a cost
+  function renderGoal(g) {
+    put($("town-goal"), ...(g ? [el("p", "meta", g.line), el("p", "help", g.honest)] : []));
   }
 
   // ---------------------------------------------------------------- A2. the bot wallet: where to send SOL
@@ -851,6 +862,7 @@ _SCRIPT = r"""
     renderPlain(s.plain);
     renderMoney(s.money, s.mode === "LIVE");
     if (s.town) renderTown(s.town);
+    renderGoal(s.plain && s.plain.goal);
     if (s.wallet) renderWallet(s.wallet);
     renderTeam(s.team, s.experience, s.plain);
     renderTrades(s.trades);
@@ -977,8 +989,9 @@ def render_page_html(settings: Settings) -> str:
         "<section class=\"card\" id=\"town\">"
         f"<h2>The town <small id=\"town-label\">{label}</small></h2>"
         "<p class=\"lead\" id=\"town-line\">Loading…</p><div id=\"town-bars\"></div><div id=\"town-desks\"></div>"
-        "<p class=\"help\">To keep the town alive, the desks must earn more than it costs to run: the hosting plan "
-        "plus the AI judge's spending.</p></section>\n"
+        "<div id=\"town-goal\"></div>"
+        "<p class=\"help\">To run on its own, real money must earn more than the town costs to run: the hosting plan "
+        "plus the AI judge's spending. Practice money never counts.</p></section>\n"
 
         "<section class=\"card\" id=\"wallet\"><h2>Bot wallet <small id=\"wallet-kind\"></small></h2>"
         "<div id=\"wallet-body\"><p class=\"empty\">Loading…</p></div></section>\n"

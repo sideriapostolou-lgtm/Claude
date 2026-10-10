@@ -57,8 +57,10 @@ _REDS = ("#ff8a80", "#ff6b61", "#ffb3ab", "#b3261e", "#7a1f18", "#cf3129")
 
 
 def _section(module: str) -> str:
+    """The record room's section: from its header to the next section's (THE GOAL's, then the live director's)."""
     start = module.index("THE RECORD ROOM (Builder B)")
-    return module[start:module.index(_DIRECTOR)]
+    end = module.find("= THE GOAL (town goal)", start)
+    return module[start:end if end > 0 else module.index(_DIRECTOR)]
 
 
 def _helpers(module: str) -> str:
