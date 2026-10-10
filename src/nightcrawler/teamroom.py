@@ -1061,7 +1061,7 @@ def _predict(ctx: _Ctx) -> dict[str, Any]:
                  f"{rt['pnl_usd']:+.2f} $; all time {real['won_total']}/{real['settled_total']} won, "
                  f"{real['pnl_total_usd']:+.2f} $." + account)
         if paper["open"] or paper["settled_total"]:
-            doing += (f" Paper (pretend: what real money skips, sports included): {paper['open']} open; "
+            doing += (f" Paper (pretend), all rules: {paper['open']} open; "
                       f"{paper['won_total']}/{paper['settled_total']} won, {paper['pnl_total_usd']:+.2f} $.")
     else:
         pt = paper.get("today") or t

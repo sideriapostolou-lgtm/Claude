@@ -166,14 +166,19 @@ OPEN_STATE = "MARKET_STATE_OPEN"  # the venue's market state while it trades (it
 #: more, through the spreads). More than this and the book is broken, not near-certain (2026-10-10 13:12: one
 #: e-soccer game quoted every outcome at 0.97/0.98, bids adding up to 2.91; the desk bought all three).
 COHERENT_BID_SUM = 1.02
+#: Non-sports markets that share a question are ONE answer each of it (a price range's buckets, a city's high
+#: temperature bands: only one can be true), except these nested ladders, where several rungs can be near-certain
+#: at once ("BTC above 80,000" and "above 79,000"; a touch high and low). A shared question outside them is judged
+#: like a game's outcomes (:meth:`PolyDesk._refused_games`).
+NESTED_LADDER = re.compile(r"^cpc-[a-z0-9]+-(above|hit)-")
 PENDING_CLEAR_S = 300.0  # an unconfirmed order with no contract at a venue read this long after it: never filled
 PENDING_MAX_S = 86_400.0  # ... and any unconfirmed order is dropped after a day
 TRIED_KEEP = 5000  # markets already tried, the newest kept (insertion order: never trimmed alphabetically)
 SKIPS_DAYS = 7  # UTC days of skip counts kept
 SKIPS_SEEN_KEEP = 5000  # (reason, market) marks kept per day, so each counts once
 #: Why the rule's pick was not bought (or not with real money), counted per UTC day for the page (``skips``).
-SKIP_REASONS = ("sports_no_real", "incoherent_game", "game_incomplete", "game_held", "never_traded", "price_moved",
-                "waiting_unconfirmed", "venue_unread", "stop_room")
+SKIP_REASONS = ("sports_no_real", "incoherent_game", "incoherent_question", "game_incomplete", "game_held",
+                "never_traded", "price_moved", "waiting_unconfirmed", "venue_unread", "stop_room")
 DAILY_NOTE = "Daily loss cap reached: no more real buys today."
 TOTAL_HALT_STATUS = "Live was switched off by the total-loss cap; the desk stays on paper until the owner resets it."
 UNREADABLE_STATUS = ("The desk's record file could not be read, so its loss limits cannot be trusted: staying on "
@@ -1218,7 +1223,12 @@ class PolyDesk:
         """An unconfirmed order the venue never filled: no longer counted as open money; said as a "No fill"."""
         self._pending_book().pop(slug, None)
         limit = float(_num(pend.get("limit")) or 0.0)
-        self._event(now, f"No fill at {limit:.3f}: {str(pend.get('question') or slug)[:50]} (order cancelled)")
+        name = str(pend.get("question") or slug)[:50]
+        if why == "expired":  # no venue read said either way: unknown, not a "No fill"
+            self._event(now, f"Order still unconfirmed after a day at {limit:.3f}: {name} (no longer counted; a "
+                             "contract found later is adopted)")
+        else:
+            self._event(now, f"No fill at {limit:.3f}: {name} (order cancelled)")
         self._receipt("polydesk_order_unfilled", {"slug": slug, "order_id": pend.get("order_id"), "why": why})
 
     def _pending_book(self) -> dict[str, Any]:
@@ -1346,6 +1356,32 @@ class PolyDesk:
             total += float(_num(q.get("best_bid")) or 0.0)
         return total
 
+    def _refuse_questions(self, now: float, sibs: list[dict[str, Any]], quotes: Mapping[str, Mapping[str, Any]],
+                          quals: Mapping[str, tuple[float | None, str | None]], tried: set[str], mark: Any) -> None:
+        """A non-sports ladder's markets that share one question and are not a :data:`NESTED_LADDER` are the answers
+        of that question (only one can be true). Judged like a game's outcomes: YES bids adding up to more than
+        :data:`COHERENT_BID_SUM`, or two answers passing the rule at once, refuse the question (every answer marked
+        tried in both books; one event and one ``incoherent_question`` count when the rule would have bought one)."""
+        groups: dict[str, list[dict[str, Any]]] = {}
+        for m in sibs:
+            if not NESTED_LADDER.match(str(m["slug"])):
+                groups.setdefault(str(m.get("question") or ""), []).append(m)
+        for question, answers in groups.items():
+            if len(answers) < 2:
+                continue
+            leaders = [a for a in answers if quals.get(a["slug"], (None, None))[0] is not None]
+            quoted = [a for a in answers if quotes.get(a["slug"]) is not None]
+            bids = self._bid_sum(quoted, quotes)
+            if bids <= COHERENT_BID_SUM + 1e-9 and len(leaders) < 2:
+                continue
+            new = [a for a in leaders if a["slug"] not in tried]
+            for a in answers:
+                mark(a["slug"])
+            if new:
+                self._skip(now, "incoherent_question", str(answers[0]["slug"]))
+                self._event(now, f"Refused a question whose prices do not add up: {question[:60]} (YES bids add up to "
+                                 f"{bids:.2f})", "bad")
+
     def _refused_games(self, now: float, clusters: Mapping[str, list[dict[str, Any]]],
                        quotes: Mapping[str, Mapping[str, Any]], quals: Mapping[str, tuple[float | None, str | None]],
                        held: set[str], mark: Any) -> set[str]:
@@ -1358,7 +1394,10 @@ class PolyDesk:
         refused: set[str] = set()
         tried = set(_as_list(self.state.get("tried"))) | set(self.state["positions"]) | set(self._pending_book())
         for key, sibs in clusters.items():
-            if key in held or sibs[0].get("category") != "sports":
+            if key in held:
+                continue
+            if sibs[0].get("category") != "sports":
+                self._refuse_questions(now, sibs, quotes, quals, tried, mark)
                 continue
             leaders = [s for s in sibs if quals.get(s["slug"], (None, None))[0] is not None]
             new = [s for s in leaders if s["slug"] not in tried]  # a pick the rule would still make: worth saying

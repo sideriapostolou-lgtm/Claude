@@ -450,6 +450,11 @@ def test_ticker_new_desk_events_are_worded() -> None:
          "Polymarket confirmed a real-money bet late: $0.98 · Will k1 happen?"),
         ("Refused a game whose prices do not add up: eBattles: Sassuolo vs. Roma (YES bids add up to 2.91)",
          "skipped a game whose prices did not add up ($2.91 for a $1 prize): eBattles: Sassuolo vs. Roma"),
+        ("Refused a question whose prices do not add up: BTC Price Range at 5:00PM ET (YES bids add up to 1.95)",
+         "skipped a question whose prices did not add up ($1.95 for a $1 prize): BTC Price Range at 5:00PM ET"),
+        (("Order still unconfirmed after a day at 0.980: Will k1 happen? (no longer counted; a contract found later "
+          "is adopted)"),
+         "a real-money order was never confirmed by Polymarket and is no longer counted · Will k1 happen?"),
         (("Practice record for american football clears the risk manager's bar (150 events (150 settled), 4 lost, "
           "+$212.00 in all): real money stays off for it until a fresh conf")[:160],
          "practice on american football looks good; real money stays off until a second check and the owner say yes"),

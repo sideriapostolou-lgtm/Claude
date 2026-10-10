@@ -214,6 +214,63 @@ def test_one_real_position_per_ladder(gw: Gateway2, tmp_path: Path, mode: str) -
     assert {m["slug"] for m in gw.markets} <= set(desk.state["tried"])
 
 
+def _answers(slugs: list[str], question: str, end_offset_s: float = 1800) -> list[dict[str, Any]]:
+    """Non-sports markets that share one question (a price range's buckets, a city's temperature bands, a ladder)."""
+    return [{**_market(s, "crypto" if s.startswith("cpc-") else "weather", end_offset_s), "question": question}
+            for s in slugs]
+
+
+@pytest.mark.parametrize("mode", ["real_money", "paper"])
+def test_a_range_question_whose_buckets_cannot_all_be_true_buys_nothing(gw: Gateway2, tmp_path: Path,
+                                                                        mode: str) -> None:
+    """Review of 2026-10-10: two buckets of ONE 'BTC Price Range' question both quoted 0.97/0.98 (bids 1.94): only
+    one can be true, so neither price is a belief. Real money now buys non-sports only, so the game check alone
+    left this open; the question is refused like a broken game, in both books."""
+    gw.markets = _answers(["cpc-btc-range-day-x-78250", "cpc-btc-range-day-x-78500", "cpc-btc-range-day-x-78750"],
+                          "BTC Price Range at 5:00PM ET on Sat, Oct 10")
+    gw.quotes = {"cpc-btc-range-day-x-78250": (0.97, 0.98), "cpc-btc-range-day-x-78500": (0.97, 0.98),
+                 "cpc-btc-range-day-x-78750": (0.01, 0.02)}
+    ex = FakeExchange(cash=25.0)
+    settings = _live_settings(tmp_path) if mode == "real_money" else _paper(tmp_path)
+    desk = _desk(settings, ex)
+    desk.poll(NOW)
+    assert ex.orders == [] and not desk.state["positions"]
+    assert [e["text"] for e in _said(desk, "Refused a question")] == [
+        ("Refused a question whose prices do not add up: BTC Price Range at 5:00PM ET on Sat, Oct 10 (YES bids add up "
+         "to 1.95)")]
+    assert {m["slug"] for m in gw.markets} <= set(desk.state["tried"])
+    desk.poll(NOW + 60)
+    assert not desk.state["positions"] and len(_said(desk, "Refused a question")) == 1
+    assert _skips(settings)["counts"] == {"incoherent_question": 1}
+
+
+@pytest.mark.parametrize("mode", ["real_money", "paper"])
+def test_a_coherent_temperature_question_still_buys_its_leading_band(gw: Gateway2, tmp_path: Path,
+                                                                    mode: str) -> None:
+    """A sane band book (the leader 0.97/0.98, the others 0.01 bids: 1.00 in all, as every recorded band book on
+    2026-10-09 was) is bought once, with real money in live mode (weather is not a sport)."""
+    bands = [f"tc-temp-nychigh-2026-10-10-{b}" for b in ("lt60f", "gte60lt62f", "gte62lt64f", "gte64f")]
+    gw.markets = _answers(bands, "Highest temperature in NYC on Oct 10?")
+    gw.quotes = {bands[0]: (0.01, 0.02), bands[1]: (0.97, 0.98), bands[2]: (0.01, 0.02), bands[3]: (0.01, 0.02)}
+    ex = FakeExchange(cash=25.0)
+    desk = _desk(_live_settings(tmp_path) if mode == "real_money" else _paper(tmp_path), ex)
+    desk.poll(NOW)
+    assert set(desk.state["positions"]) == {bands[1]} and not _said(desk, "Refused a question")
+    assert [o["slug"] for o in ex.orders] == ([bands[1]] if mode == "real_money" else [])
+
+
+def test_a_nested_price_ladder_is_not_read_as_exclusive_answers(gw: Gateway2, tmp_path: Path) -> None:
+    """'BTC above 82,400' and 'above 82,500' share a question and can both be near-certain: not a broken book.
+    One rung is bought (one position per ladder), nothing is refused."""
+    rungs = [f"cpc-btc-above-hr-2026-10-10-0800z-{k}" for k in (82400, 82500)]
+    gw.markets = _answers(rungs, "BTC Price at 4:00AM ET on Sat, Oct 10")
+    gw.quotes = {r: (0.97, 0.98) for r in rungs}
+    ex = FakeExchange(cash=25.0)
+    desk = _desk(_live_settings(tmp_path), ex)
+    desk.poll(NOW)
+    assert len(ex.orders) == 1 and len(desk.state["positions"]) == 1 and not _said(desk, "Refused a question")
+
+
 def test_a_held_game_is_not_bought_again_on_a_comeback(gw: Gateway2, tmp_path: Path) -> None:
     """The desk holds the leader; the game turns and the other side becomes near-certain in a coherent book: it is
     not a second bet on the same game (one position per game, in both books)."""
@@ -581,7 +638,10 @@ def test_a_pending_order_expires_after_a_day(gw: Gateway2, tmp_path: Path) -> No
     desk.poll(NOW + 3600)
     assert set(desk.state["pending_orders"]) == {"k1"}  # no good read: still counted
     desk.poll(NOW + P.PENDING_MAX_S + 1)
-    assert not desk.state["pending_orders"] and len(_said(desk, "No fill at 0.980: Will k1 happen?")) == 1
+    assert not desk.state["pending_orders"] and not _said(desk, "No fill at")  # never answered: not a "No fill"
+    assert [e["text"] for e in _said(desk, "Order still unconfirmed after a day")] == [
+        ("Order still unconfirmed after a day at 0.980: Will k1 happen? (no longer counted; a contract found later is "
+         "adopted)")]
 
 
 def test_contracts_the_desk_never_ordered_stay_venue(gw: Gateway2, tmp_path: Path) -> None:
@@ -843,3 +903,13 @@ def test_the_daily_status_line_returns_after_a_restart_while_the_stop_holds(gw: 
     assert again.state["live_status"] is None
     again.poll(NOW + 60)  # ... and the first round sets it again, without saying it twice
     assert again.state["live_status"] == P.DAILY_NOTE and len(_said(again, P.DAILY_NOTE)) == 1
+
+
+def test_the_page_names_refused_questions_apart_from_games() -> None:
+    """A refused price-range question is not called a game on the page."""
+    from nightcrawler.pagestate import _skips_line
+
+    desk = {"skips": {"counts": {"incoherent_game": 1, "incoherent_question": 2}}}
+    assert _skips_line(desk, live=True) == (
+        "Today it refused 1 game whose prices did not add up and refused 2 questions whose answers' prices did not "
+        "add up.")

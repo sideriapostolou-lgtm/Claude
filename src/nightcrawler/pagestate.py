@@ -125,7 +125,8 @@ key or the total-loss cap; or the day's loss cap), null when it has none. ``real
 real orders the venue has not confirmed yet (open real money until its book says), ``stop_room_usd`` what the loss
 stops still let out if every open bet and unconfirmed order lost (``stop_room_limit``: the stop that binds).
 SKIPS: ``skips`` counts today's picks the rule did not buy, or did not buy with real money, by reason (``sports_no_real``
-a game practised instead of a real bet, ``incoherent_game`` a game whose prices did not add up, ``never_traded`` a
+a game practised instead of a real bet, ``incoherent_game`` a game whose prices did not add up, ``incoherent_question``
+the same for a non-sports question's answers (a price range's buckets), ``never_traded`` a
 market not yet traded near the price, and the desk's other reasons), each market or game once a UTC day;
 ``sports`` is each sport with its real-money state (no sport is allowed: lab 4's history test passed none), the
 history's verdict and reason (:data:`nightcrawler.polydesk.SPORT_HISTORY`) and its practice record.
@@ -1641,6 +1642,10 @@ _EVENT_TEMPLATES: tuple[tuple[str, re.Pattern[str], str], ...] = tuple(
          "Polymarket confirmed a real-money bet late: ${usd} · {q}"),
         ("predict", r"Refused a game whose prices do not add up: (?P<q>.+) \(YES bids add up to (?P<sum>[\d.]+)\)",
          "skipped a game whose prices did not add up (${sum} for a $1 prize): {q}"),
+        ("predict", r"Refused a question whose prices do not add up: (?P<q>.+) \(YES bids add up to (?P<sum>[\d.]+)\)",
+         "skipped a question whose prices did not add up (${sum} for a $1 prize): {q}"),
+        ("predict", r"Order still unconfirmed after a day at [\d.]+: (?P<q>.+) \(no longer counted.*",
+         "a real-money order was never confirmed by Polymarket and is no longer counted · {q}"),
         ("predict", r"Practice record for (?P<s>.+?) clears the risk manager's bar.*",  # (fits PLAIN_EVENT_MAX)
          "practice on {s} looks good; real money stays off until a second check and the owner say yes"),
         ("predict", r"Order rejected by the venue \([^)]*\): (?P<q>.+)", "Polymarket refused a real-money order · {q}"),
@@ -1841,6 +1846,10 @@ def _skips_line(desk: Mapping[str, Any], *, live: bool) -> str:
     if n("incoherent_game"):
         one = n("incoherent_game") == 1
         parts.append(f"refused {n('incoherent_game')} game{'' if one else 's'} whose prices did not add up")
+    if n("incoherent_question"):
+        one = n("incoherent_question") == 1
+        parts.append(f"refused {n('incoherent_question')} question{'' if one else 's'} whose answers' prices did not "
+                     "add up")
     if n("never_traded"):
         one = n("never_traded") == 1
         parts.append(f"skipped {n('never_traded')} market{'' if one else 's'} that had never traded near the price")
