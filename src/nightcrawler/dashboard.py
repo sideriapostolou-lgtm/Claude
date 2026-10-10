@@ -580,6 +580,7 @@ class _Handler(BaseHTTPRequestHandler):
             "/api/page",
             "/team",
             "/api/team",
+            "/api/polydesk",
         ):
             self._send(404, b"not found", "text/plain; charset=utf-8")
             return
@@ -604,6 +605,7 @@ class _Handler(BaseHTTPRequestHandler):
         if parts.path in (
             "/api/team",
             "/api/page",
+            "/api/polydesk",
         ):  # live data: nightcrawler.teamroom.TeamRoom
             self._send(*dashboard.team.response(parts.path, headers))
             return

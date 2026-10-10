@@ -1159,6 +1159,20 @@ def json_body(state: dict[str, Any]) -> bytes:
     return text.replace("<", "\\u003c").encode("utf-8")
 
 
+def build_polydesk_history(ledger: Any, settings: Settings, now: float, **_: Any) -> dict[str, Any]:
+    """``/api/polydesk``: the Polymarket desk's own state file (open and closed positions, days, the per-rule
+    record; ``tried`` left out) and every ``polydesk*`` receipt in the ledger, oldest first. Read-only, for
+    reviewing the desk's real and paper record bet by bet (the page shows only the newest few)."""
+    # late: polydesk is a heavy import the other routes never need
+    from nightcrawler import polydesk
+
+    state = polydesk.load_state(polydesk.state_path(settings))
+    state.pop("tried", None)
+    rows = _select(ledger, "SELECT seq, ts, kind, payload FROM receipts WHERE kind LIKE 'polydesk%' ORDER BY seq")
+    receipts = [{"seq": r[0], "ts": r[1], "kind": r[2], "payload": json.loads(r[3])} for r in rows]
+    return {"generated_at": now, "state": state, "receipts": receipts}
+
+
 class TeamRoom:
     """The live-data routes for :class:`~nightcrawler.dashboard.DashboardServer`: ``/api/team``
     (:func:`build_team_state`) and ``/api/page`` (:func:`nightcrawler.pagestate.build_page_state`, the one
@@ -1187,6 +1201,10 @@ class TeamRoom:
         """``/api/team`` for now, scrubbed of secrets."""
         return self._build(build_team_state)
 
+    def polydesk_history(self) -> dict[str, Any]:
+        """``/api/polydesk`` for now, scrubbed of secrets."""
+        return self._build(build_polydesk_history)
+
     def page_state(self) -> dict[str, Any]:
         """``/api/page`` for now, scrubbed of secrets."""
         from nightcrawler.pagestate import build_page_state  # late: pagestate builds on this module
@@ -1205,8 +1223,15 @@ class TeamRoom:
         return clean
 
     def response(self, path: str, headers: list[tuple[str, str]]) -> tuple[int, bytes, str, list[tuple[str, str]]]:
-        """``(status, body, content type, headers)`` for an AUTHORIZED request to ``/api/team`` or ``/api/page``."""
+        """``(status, body, content type, headers)`` for an AUTHORIZED request to ``/api/team``, ``/api/page`` or
+        ``/api/polydesk``."""
         page = path == "/api/page"
+        if path == "/api/polydesk":
+            try:
+                return 200, json_body(self.polydesk_history()), "application/json", headers
+            except Exception:
+                log.exception("polydesk_history_failed")
+                return 500, b'{"error":"desk history unavailable"}', "application/json", headers
         try:
             body = json_body(self.page_state() if page else self.state())
         except Exception:

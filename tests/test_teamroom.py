@@ -804,3 +804,29 @@ def test_the_polymarket_panel_shows_the_rule_record_since_the_fix_and_its_lesson
     assert predict["events"][0]["text"].startswith("Lesson: Tight books in crypto") and predict["events"][0]["ts"] == NOW - 60
     assert predict["label"] == "Paper money (pretend)" and predict["status"] == "working"
     json.dumps(predict, allow_nan=False)
+
+
+def test_the_desk_history_route_serves_the_state_file_and_every_desk_receipt(
+        serve: Callable[..., Client], ledger: Ledger, make_settings: Callable[..., Settings]) -> None:
+    """``/api/polydesk``: the desk's whole state file (without the ``tried`` list) and its receipts, oldest first,
+    behind the same token as every other route; other receipts stay out."""
+    from nightcrawler import polydesk as P
+    from tests.test_polydesk import _row
+
+    settings = make_settings(DASHBOARD_TOKEN=TOKEN)
+    st = P.empty_state()
+    st["closed"] = [_row("game1", "sports", 0.98, False, -0.98, live=True, rule=P.rule_id(settings))]
+    st["tried"] = ["game1", "game2"]
+    P.save_state(P.state_path(settings), st)
+    ledger.append_receipt("polydesk_order_filled", {"slug": "game1", "contracts": 1, "price": 0.98})
+    ledger.append_receipt("engine_started", {"mode": "paper"})
+    ledger.append_receipt("polydesk_settled", {"slug": "game1", "value": 0.0, "pnl_usd": -0.98})
+    client = serve(settings, ledger)
+    assert client.request("/api/polydesk")[0] == 401
+    status, headers, body = client.request("/api/polydesk?token=" + TOKEN)
+    assert status == 200 and headers["Content-Type"] == "application/json"
+    doc = json.loads(body)
+    assert [r["slug"] for r in doc["state"]["closed"]] == ["game1"] and "tried" not in doc["state"]
+    assert [r["kind"] for r in doc["receipts"]] == ["polydesk_order_filled", "polydesk_settled"]
+    assert doc["receipts"][1]["payload"]["pnl_usd"] == -0.98
+    assert client.request("/api/polydesk?token=" + TOKEN, method="POST")[0] == 405
