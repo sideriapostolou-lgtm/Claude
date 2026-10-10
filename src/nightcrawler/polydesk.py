@@ -133,6 +133,7 @@ US_TAKER = 0.0695
 CLOSED_KEEP = 200
 ADOPTED_END_GUESS_S = 3 * 3600.0  # a venue position on a market the watch list no longer carries: check settlement after this
 EVENTS_KEEP = 40
+REAL_CLOSED_SHOWN = 5  # the panel's newest real settlements (read from the kept closed rows: the 3D trophy shelf)
 STATE_VERSION = 1
 FIRST_POLL_DELAY_S = 20.0
 RULE_VERSION = "2026-10-09b"  # bump when the rule changes; "b" = the MAX_SPREAD guard added 2026-10-09 18:07 UTC
@@ -1412,6 +1413,13 @@ def panel_state(settings: Settings, now: float) -> dict[str, Any]:
         "before_fix": before_fix,
         "lessons": lessons(st["closed"]),
         "worst": worst_row(st["closed"]),
+        # the newest real settlements still in the kept closed rows, newest first (the 3D world's trophy shelf)
+        "real_closed": [
+            {"question": str(r.get("question") or ""), "settled_at": _num(r.get("settled_at")),
+             "pnl_usd": float(r["pnl_usd"]), "won": bool(r["won"])}
+            for r in st["closed"]
+            if r.get("live") and r.get("won") is not None and _num(r.get("pnl_usd")) is not None
+        ][:REAL_CLOSED_SHOWN],
         "paper_max_open": PAPER_MAX_OPEN,
         "guard": guard_view(settings, st, now),
     }

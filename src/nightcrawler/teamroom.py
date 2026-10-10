@@ -52,10 +52,18 @@ environment (:func:`deploy_info`), never anything else.
                   "events": [{"ts": float, "text": str, "tone": "good"|"bad"|"neutral"}],   # newest first
                   "bars"?: [{"label", "value": fraction|null, "text"}], "bars_empty"?: str,
                   "meter"?: {"used", "limit", "fraction", "text"}, "hash"?: {"head", "short", "explainer"},
-                  "desks"?: [{"desk", "verdict", "phrase", "reason", "paused", "since", "line"}]}]   # risk: each desk's verdict
+                  "desks"?: [{"desk", "verdict", "phrase", "reason", "paused", "since", "line"}],   # risk: each desk's verdict
+                  "risk_wall"?: {"allowance_used_pct": float|null, "slots_used": int, "slots_max": int,   # risk: the
+                                 "daily_stop": bool|null, "stopped_by": "halt"|"kill"|"daily_loss"|null,  # 3D world's
+                                 "desks": [{"desk", "verdict", "paused"}]}}]                            # gauge board
     }
 
-Units: ``count``, ``sol``, ``usd``, ``pct`` (percent), ``ts`` (epoch s), ``dur`` (seconds), ``text``.
+The risk member's ``risk_wall`` is the same panel as numbers, for the 3D world's gauge board (Rook's risk wall): the
+share of today's loss allowance used (``meter.fraction`` as a percent, null before the day's first money check; it may
+pass 100 once the limit is reached), the trade slots in use of the most allowed, whether today's loss stop is on (null
+while the allowance is unknown), what stops new buys right now if anything, and each desk's verdict with its pause.
+
+Units:``count``, ``sol``, ``usd``, ``pct`` (percent), ``ts`` (epoch s), ``dur`` (seconds), ``text``.
 """
 
 from __future__ import annotations
@@ -959,6 +967,12 @@ def _risk(ctx: _Ctx) -> dict[str, Any]:
     paused = [x["desk"] for x in desks if x["paused"]]
     if paused:
         doing += f" Paused {' and '.join(paused)} buys: the record was losing."
+    fraction = meter["fraction"]
+    wall = {"allowance_used_pct": round(fraction * 100.0, 1) if fraction is not None else None,
+            "slots_used": ctx.open_positions, "slots_max": s.max_open_positions,
+            "daily_stop": (fraction > 1.0) if fraction is not None else None,
+            "stopped_by": blocks[0][0] if blocks else None,
+            "desks": [{"desk": x["desk"], "verdict": x["verdict"], "paused": x["paused"]} for x in desks]}
     return _panel("risk", status, last, ctx.text(doing),
                   _headline(eq["sol"], "sol", "equity (" + ("bot wallet" if s.is_live else "paper wallet") + ")"),
                   [_stat("Equity (USD)", eq["usd"], "usd"), _stat("Today", eq["pnl_today_sol"], "sol"),
@@ -967,7 +981,7 @@ def _risk(ctx: _Ctx) -> dict[str, Any]:
                    _stat("Halted", ctx.text(ctx.state["halted"]["reason"] or "yes", 60)
                          if ctx.state["halted"]["halted"] else "no", "text"),
                    *(_stat(x["desk"], _verdict_stat(x), "text") for x in desks)],
-                  events, meter=meter, desks=desks)
+                  events, meter=meter, desks=desks, risk_wall=wall)
 
 
 def _receipt_line(r: Any) -> str:
