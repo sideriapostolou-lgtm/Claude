@@ -46,6 +46,19 @@ horizontal, close behind the crew; never a top-down tycoon view.
   (what you are looking at: what the app is and the team; real money vs practice; the camera), shown by itself on the
   first visit (remembered in ``localStorage`` when the browser allows it) and closed by itself after a minute and a
   half without a touch.
+* The channel (the module's THE CHANNEL section and its own CSS block, :data:`_STYLE_CHANNEL`): a thin ticker along the
+  very bottom, just above the honesty line, rolls the team's last eight events ("HH:MM · Name: what happened",
+  ``plain.ticker``: the server's plain words, a dot in the event's own tone; one line, paused while the tab is hidden,
+  still for a reader who asked for less motion); a six-second REPLAY banner under the bar for each thing that
+  ``plain.finished`` newly lists, a closed trade or a settled REAL-money bet ("REPLAY · what · won $x · real money" or
+  "pretend"), with a brass bell, while the director goes to Jet at the vault or Voss at the table; a full day-night
+  cycle on the viewer's clock (dawn, day, golden hour, dusk, night with stars), colours and uniforms only; the market's
+  weather from real money only (clear; drifting clouds and dimmer lanterns while a real-money result today is below
+  zero; a storm front and rain over the vault only while the risk manager has paused the desk or a loss stop is hit);
+  and the island's sound, all synthesised with WebAudio (the wind, the fountain by the table, the kiosk's kettle, the
+  airship's engine, typing at busy desks, the bell, a whoosh on each cut), off until the viewer taps the speaker in the
+  bar (no AudioContext before that tap) and silent while the tab is hidden. The page's bus (``BUS``) carries its hooks
+  and ``window.__skyport`` exposes them (``sound.cut()``, ``replay.on(fn)``, ``weather.state()``, ``clock.weights()``).
 
 Honesty rules (the same as the office's and the town's, non-negotiable):
 
@@ -58,6 +71,10 @@ Honesty rules (the same as the office's and the town's, non-negotiable):
   closed trade (gold won, red lost, the float shows ``pnl_usd``), the ticket board over the mission table lists the
   desk's own positions (the real-money ones first, each "REAL" or "pretend", YES or NO and its price in cents).
   Ambient life (coffee, typing, plants, drones, tube parcels) shows no words or numbers.
+* The channel adds nothing either: the ticker's words are ``plain.ticker``'s, the replay's are ``plain.finished``'s
+  (real money only where the item says real, else "pretend"), and a replay or a bell needs a real closed trade or a
+  real settled real-money bet. The weather reacts to real-money figures and the risk manager's pauses only (pretend
+  money never makes weather; no figure, a clear sky), and a clear sky claims no profit.
 * When the API cannot be reached, the page says so in plain words and the world freezes.
 * A footer line says the world is drawings acting out the bot's own records, every word its data (one line on a
   phone).
@@ -410,6 +427,54 @@ button.close { position: absolute; right: 6px; top: 4px; width: 38px; height: 38
 body.offline #view { filter: grayscale(.75) brightness(.7); }
 """
 
+#: THE CHANNEL's own styles (the module's THE CHANNEL section): the ticker along the very bottom, just above the honesty
+#: line (while it shows, ``body.ticker`` moves the chips, the LIVE card and the guide up by its height), the replay
+#: banner under the bar, the speaker button in the bar (left of "?"; on a wide screen before it, after the headline).
+_STYLE_CHANNEL = r"""
+#ticker { position: fixed; left: 0; right: 0; bottom: calc(22px + env(safe-area-inset-bottom)); height: 20px; overflow: hidden;
+          background: rgba(12,8,30,.66); border-top: 1px solid rgba(224,178,94,.3); border-bottom: 1px solid rgba(224,178,94,.16);
+          font-size: 11.5px; line-height: 18px; white-space: nowrap; color: var(--fg); pointer-events: none;
+          -webkit-mask-image: linear-gradient(90deg, transparent, #000 10px, #000 calc(100% - 10px), transparent);
+          mask-image: linear-gradient(90deg, transparent, #000 10px, #000 calc(100% - 10px), transparent); }
+#ticker[hidden] { display: none; }
+#ticker-track { display: inline-flex; white-space: nowrap; }
+#ticker-track.roll { animation: tick 60s linear infinite; will-change: transform; }
+body.tab-hidden #ticker-track { animation-play-state: paused; }
+@keyframes tick { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@media (prefers-reduced-motion: reduce) { #ticker-track.roll { animation: none; } }
+#ticker .run { display: inline-flex; padding-left: 12px; }
+#ticker .it { padding-right: 28px; text-shadow: 0 1px 2px #000; }
+#ticker .it i { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 6px; background: #8c92a4; }
+#ticker .it i.good { background: var(--good); } #ticker .it i.bad { background: var(--bad); }
+#ticker .it .t { color: var(--dim); font-variant-numeric: tabular-nums; }
+#ticker .it b { color: var(--brass); font-weight: 700; }
+body.ticker #honest { bottom: calc(4px + env(safe-area-inset-bottom)); }
+body.ticker #chips { bottom: calc(46px + env(safe-area-inset-bottom)); }
+body.ticker #card, body.ticker #guide { bottom: calc(85px + env(safe-area-inset-bottom)); }
+#replay { position: fixed; left: 12px; top: calc(var(--bar, 110px) + 4px); max-width: calc(100% - 24px); display: flex; align-items: center;
+          gap: 6px; padding: 5px 10px 5px 6px; border-radius: 10px; background: rgba(20,15,38,.9); border: 1px solid rgba(224,178,94,.6);
+          box-shadow: 0 6px 22px rgba(0,0,0,.45); pointer-events: none; font-size: 13px; line-height: 1.25; white-space: nowrap; z-index: 6;
+          opacity: 0; transform: translateY(-6px); visibility: hidden; transition: opacity .35s ease, transform .35s ease, visibility 0s linear .35s; }
+#replay.on { opacity: 1; transform: none; visibility: visible; transition-delay: 0s; }
+#replay b { flex: 0 0 auto; font-size: 10.5px; letter-spacing: .16em; font-weight: 800; color: #1d1a16; background: var(--brass);
+            border-radius: 5px; padding: 2px 6px 2px 7px; }
+#replay .sep { flex: 0 0 auto; color: var(--dim); }
+#replay-what { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; font-weight: 700; }
+#replay-outcome { flex: 0 0 auto; font-weight: 800; font-variant-numeric: tabular-nums; }
+#replay.won #replay-outcome { color: var(--good); } #replay.lost #replay-outcome { color: var(--bad); }
+#replay .money { flex: 0 0 auto; font-size: 11px; font-weight: 700; padding: 1px 8px; border-radius: 999px;
+                 background: rgba(38,60,118,.92); border: 1px solid rgba(140,170,255,.55); }
+#replay .money.real { background: #cf3129; border-color: #ff9a90; color: #fff; }
+.pill.sound { width: 38px; padding: 0; display: inline-flex; align-items: center; justify-content: center; margin-left: auto; color: var(--dim); }
+#bar .pill.help { margin-left: 0; }
+.pill.sound svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.pill.sound .waves { display: none; } .pill.sound.on .waves { display: inline; } .pill.sound.on .mute { display: none; }
+.pill.sound.on { color: var(--brass); border-color: var(--brass); background: rgba(224,178,94,.24); }
+.pill.sound.none { opacity: .45; }
+.pill.sound:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
+@media (min-width: 760px) { .pill.sound { margin-left: 0; order: 8; } }
+"""
+
 #: Resolves the addons' bare ``three`` imports (and the module's own) to the bundled files on this server.
 _IMPORTMAP = json.dumps(
     {"imports": {"three": "./office/assets/three.module.min.js", "three/addons/": "./office/assets/addons/"}},
@@ -460,6 +525,14 @@ function fmtUsd(v) { return v == null ? "—" : (v < 0 ? "−" : "") + "$" + Mat
 function fmtSigned(v) { return v == null ? "—" : (v >= 0 ? "+" : "−") + "$" + Math.abs(v).toFixed(2); }
 function isNum(v) { return typeof v === "number" && isFinite(v); }
 function fail(text) { boot.hidden = false; boot.textContent = text; boot.className = "bad"; canvas.hidden = true; }
+// the page's bus: a section that adds to the world listens here instead of editing the others (THE CHANNEL below;
+// whatever comes next): "start" once before the first frame, "data" after each poll (d, first), "frame" after each
+// frame's acting and camera (dt, dtRaw). Fixed arity, so emitting allocates nothing; a listener that throws is
+// dropped (logged once) and the world goes on.
+const BUS = (function () { const map = {}; return {
+  on: function (name, fn) { (map[name] = map[name] || []).push(fn); return fn; },
+  emit: function (name, a, b) { const list = map[name]; if (!list) return;
+    for (let i = 0; i < list.length; i++) { try { list[i](a, b); } catch (e) { console.error("world: a " + name + " listener failed and was dropped", e); list.splice(i--, 1); } } } }; })();
 
 let renderer = null;
 try { renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: LITE, powerPreference: "high-performance" }); }
@@ -1685,13 +1758,14 @@ _M_WORLD = r"""
     // soft halos round the lanterns: one additive billboard draw. The halo is read by the texture's alpha (its colour
     // is white wherever anything is drawn, so the red channel would be a flat disc), drawn a little toward the drone
     // so it glows over the lamp head instead of behind it (walls still hide it), and it fades out as the drone comes
-    // close, so a lamp passing the lens never blooms over the shot
-    const haloMat = new THREE.ShaderMaterial({ transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, uniforms: { uMap: { value: haloTex } },
+    // close, so a lamp passing the lens never blooms over the shot (uDim and props.lanternDim: how bright the lanterns
+    // are now, set by THE CHANNEL's clock and weather)
+    const haloMat = new THREE.ShaderMaterial({ transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, uniforms: { uMap: { value: haloTex }, uDim: { value: 1 } },
       vertexShader: "varying vec2 vUv; varying float vFade; void main() { vUv = uv; vec4 c = modelViewMatrix * instanceMatrix * vec4(0.0, 0.0, 0.0, 1.0); vFade = smoothstep(1.4, 3.6, -c.z); c.xyz += normalize(-c.xyz) * 0.22; c.xy += position.xy * length(instanceMatrix[0].xyz); gl_Position = projectionMatrix * c; }",
-      fragmentShader: "uniform sampler2D uMap; varying vec2 vUv; varying float vFade; void main() { float a = texture2D(uMap, vUv).a; gl_FragColor = vec4(vec3(1.0, 0.62, 0.3) * a * 0.32 * vFade, 1.0); }" });
+      fragmentShader: "uniform sampler2D uMap; uniform float uDim; varying vec2 vUv; varying float vFade; void main() { float a = texture2D(uMap, vUv).a; gl_FragColor = vec4(vec3(1.0, 0.62, 0.3) * a * 0.32 * vFade * uDim, 1.0); }" });
     const halos = new THREE.InstancedMesh(new THREE.PlaneGeometry(1, 1), haloMat, lanterns.length);
     lanterns.forEach(function (q, i) { halos.setMatrixAt(i, mat4([q.p[0], q.p[1] + 1.88 * q.h, q.p[2]], null, 0.5)); });
-    halos.frustumCulled = false; halos.renderOrder = 4; scene.add(halos); props.lanternHalos = halos;
+    halos.frustumCulled = false; halos.renderOrder = 4; scene.add(halos); props.lanternHalos = halos; props.lanternDim = 1;
     // plants (the bushes smooth-shaded: lumpy and soft, not faceted)
     instanced((function () { const g = crag(0.5, 2, 3, 1); g.deleteAttribute("normal"); g.deleteAttribute("uv"); const m = mergeVertices(g); m.computeVertexNormals(); return m; })(), MAT.leaf, bushes, false);
     const bloomGeo = (function () { const parts = [], r = rng(5); for (let i = 0; i < 9; i++) { const g = G.sph(0.3, 6, 5); g.translate((r() - 0.5) * 0.6, (r() - 0.5) * 0.4, (r() - 0.5) * 0.6); parts.push(prep(g)); } return mergeGeometries(parts, false); })();
@@ -3316,6 +3390,7 @@ _M_LIFE = r"""
     data = d;
     updateLamps(); renderChips(); renderCard(); measureBar();
     if (first) { chatterAt = simT + 6; if (plain && !guideSeen()) openGuide(); }
+    BUS.emit("data", d, first);  // (THE CHANNEL: the ticker, a replay, the weather)
   }
 
   // ============================================================= THE BAR: real money, practice, the headline, the guide
@@ -3462,30 +3537,9 @@ _M_LIFE = r"""
     clockEl.textContent = lastOkAt ? "updated " + new Date(lastOkAt).toLocaleTimeString() : "";
   }
 
-  // ============================================================= TIME OF DAY (the viewer's clock): blue hour, night, a pastel day
-  const PAL = {
-    // night: a cobalt sky over warm stone (a peach moon, warm bounce from the paving, the lamps carry the interiors)
-    night: { top: 0x0a0e30, mid: 0x262064, hor: 0x6b4a8e, below: 0x4a3a78, sun: 0x9a7ab8, stars: 1.0, hemi: 0.8, hsky: 0x8c7cbc, hgnd: 0x9a6038, sunI: 1.9, sunC: 0xffa878, fog: 0x3a3070, prac: 1.8, exp: 1.2, el: 0.12, key: 11 },
-    blue: { top: 0x161a52, mid: 0x4d3f93, hor: 0xf2a07a, below: 0xa486c4, sun: 0xffb98a, stars: 0.7, hemi: 1.0, hsky: 0xae9ce8, hgnd: 0x8a5a3a, sunI: 2.9, sunC: 0xffac74, fog: 0xb294c4, prac: 1.15, exp: 1.08, el: 0.085, key: 6 },
-    day: { top: 0x3a64c8, mid: 0x8aa2e6, hor: 0xffd0b4, below: 0xc7b4e0, sun: 0xfff0d8, stars: 0.0, hemi: 1.7, hsky: 0xd2dcff, hgnd: 0x8a6a50, sunI: 3.2, sunC: 0xfff1dc, fog: 0xc8bce0, prac: 0.6, exp: 1.0, el: 0.4, key: 1.5 },
-  };
+  // ============================================================= TIME OF DAY: THE CHANNEL's day-night cycle (below) sets the sky,
+  // the lights and keyBase, the warm key's strength
   let keyBase = 0;
-  function tint() {
-    const d = new Date(), h = d.getHours() + d.getMinutes() / 60;
-    const day = clamp(Math.min((h - 8) / 1.5, (16.5 - h) / 1.5), 0, 1), night = clamp(Math.max(Math.min((h - 21) / 1.5, 1), Math.min((5.5 - h) / 1.5, 1)), 0, 1);
-    const blue = Math.max(0, 1 - day - night);
-    const mix = function (key) { return col(PAL.blue[key]).multiplyScalar(blue).add(col(PAL.day[key]).multiplyScalar(day)).add(col(PAL.night[key]).multiplyScalar(night)); };
-    const num = function (key) { return PAL.blue[key] * blue + PAL.day[key] * day + PAL.night[key] * night; };
-    skyU.uTop.value.copy(mix("top")); skyU.uMid.value.copy(mix("mid")); skyU.uHorizon.value.copy(mix("hor")); skyU.uBelow.value.copy(mix("below"));
-    skyU.uSunCol.value.copy(mix("sun")); skyU.uStars.value = num("stars");
-    const sd = V3(sunDir.x, num("el"), sunDir.z).normalize(); skyU.uSunDir.value.copy(sd); cloudU.uSunDir.value.copy(sd); sun.userData.dir = sd;
-    if (!Q.shadows) sun.position.copy(sd).multiplyScalar(60);
-    hemi.intensity = num("hemi"); hemi.color.copy(mix("hsky")); hemi.groundColor.copy(mix("hgnd")); sun.intensity = num("sunI"); sun.color.copy(mix("sunC")); keyBase = num("key");
-    scene.fog.color.copy(mix("fog")); cloudU.uFar.value.copy(mix("fog")); renderer.toneMappingExposure = num("exp");
-    cloudU.uLit.value.copy(col(0xffc7a6).lerp(col(0xfff1e6), day).lerp(col(0x8a78c8), night));
-    cloudU.uShade.value.copy(col(0x7d64b4).lerp(col(0xa898d8), day).lerp(col(0x2e2660), night));
-    Object.keys(practicals).forEach(function (k) { practicals[k].light.intensity = practicals[k].base * num("prac"); });
-  }
 
   // ============================================================= RENDERING: bloom on capable screens, a quality governor
   let composer = null, bloom = null;
@@ -3554,7 +3608,7 @@ _M_LIFE = r"""
     if (props.lanternGlow) for (let i = 0; i < props.lanternGlow.length; i++) {  // the prop lanterns' halos: over the lamp head, a little toward the drone, fading near the lens
       const s = props.lanternGlow[i], h = s.parent; _pp.set(h.position.x, h.position.y + 2.27, h.position.z);
       const d = _pp.distanceTo(camera.position); _pq.copy(camera.position).sub(_pp).multiplyScalar(0.22 / Math.max(0.01, d)).applyAxisAngle(UP, -h.rotation.y);
-      s.position.set(_pq.x, 2.27 + _pq.y, _pq.z); s.material.opacity = 0.32 * smoothstep(d, 1.6, 4.0); }
+      s.position.set(_pq.x, 2.27 + _pq.y, _pq.z); s.material.opacity = 0.32 * props.lanternDim * smoothstep(d, 1.6, 4.0); }
     rookEyeMat.color.setRGB(1, 0.36, 0.04).multiplyScalar(0.86 + Math.sin(simT * 1.7) * 0.14); rookEyeHalo.opacity = 0.62 + Math.sin(simT * 1.7) * 0.12;
     // the warm key: between the drone and what it films, a little above (strongest at night, faint by day)
     keyLight.position.copy(cam.look).lerp(camera.position, 0.45); keyLight.position.y += 0.8; keyLight.intensity = keyBase;
@@ -3570,6 +3624,427 @@ _M_LIFE = r"""
     ambientLife();
   }
 
+"""
+
+_M_CHANNEL = r"""
+  // ============================================================= THE CHANNEL: the ticker, the replay banner, day and night,
+  // the market's weather and the island's sound (a section of its own, with its own CSS block, _STYLE_CHANNEL)
+  // It listens on the page's bus (BUS: "start", "data", "frame") and changes the world only through colours and
+  // uniforms, a few meshes of its own and the page's own focusOn() (the director picks the shots); it edits nobody
+  // else's code. Hooks on window.__skyport: sound.cut() (the whoosh of a cut; this section already plays one on each
+  // hard cut), replay.on(fn) (fn(item) on each replay: the director may film it its own way), replay.now(),
+  // weather.state(), clock.weights(), ticker.items(). Every word is /api/page's (plain.ticker, plain.finished) or the
+  // fixed words here; a replay only for what plain.finished newly lists (a closed trade, a settled real-money bet);
+  // the weather and the sound follow real data only; the sound is off until the viewer taps the speaker.
+  // The block between the markers is pure (no three.js, no DOM): tests/test_world_channel.py runs it in Node.
+  // >>> channel (pure)
+  // the viewer's clock as weights of five looks (they sum to 1): night until 5:00, dawn at 6:30, day from 8:15 to
+  // 16:30, golden hour from 17:45 to 18:45, dusk (the art pack's blue hour) at 19:45, night again from 21:00; eased
+  // between the anchors
+  const CH_LOOKS = ["night", "dawn", "day", "golden", "dusk"];
+  const CH_ANCHORS = [[0, "night"], [5.0, "night"], [6.5, "dawn"], [8.25, "day"], [16.5, "day"], [17.75, "golden"],
+    [18.75, "golden"], [19.75, "dusk"], [21.0, "night"], [24, "night"]];
+  function dayWeights(h, out) {
+    for (let i = 0; i < CH_LOOKS.length; i++) out[CH_LOOKS[i]] = 0;
+    const x = ((h % 24) + 24) % 24;
+    for (let i = 0; i < CH_ANCHORS.length - 1; i++) {
+      const a = CH_ANCHORS[i], b = CH_ANCHORS[i + 1];
+      if (x >= a[0] && x <= b[0]) { let u = b[0] > a[0] ? (x - a[0]) / (b[0] - a[0]) : 0; u = u * u * (3 - 2 * u); out[a[1]] += 1 - u; out[b[1]] += u; return out; }
+    }
+    out.night = 1; return out;
+  }
+  // each look: the sky (top, mid, horizon, below the horizon, the sun's glow), the hemisphere light (sky, ground),
+  // the sun's colour, the fog, the cloud sea (lit, shade); the stars, the light levels, the exposure, the sun's
+  // height (el) and side (sx: east +, west -), the warm key on the subject and how bright the lanterns are
+  const CH_PAL = {
+    night: { top: 0x0a0e30, mid: 0x262064, hor: 0x6b4a8e, below: 0x4a3a78, sun: 0x9a7ab8, hsky: 0x8c7cbc, hgnd: 0x9a6038, sunC: 0xffa878,
+             fog: 0x3a3070, cLit: 0x8a78c8, cShade: 0x2e2660, stars: 1.0, hemi: 0.8, sunI: 1.9, prac: 1.8, exp: 1.2, el: 0.12, sx: -0.84, key: 11, lantern: 1.0 },
+    dawn: { top: 0x283a7c, mid: 0x7a6cb4, hor: 0xffae8c, below: 0xb894c4, sun: 0xffc6a0, hsky: 0xc2b6f0, hgnd: 0x8c6044, sunC: 0xffb990,
+            fog: 0xc8aacc, cLit: 0xffd0bc, cShade: 0x8670b8, stars: 0.25, hemi: 1.1, sunI: 2.3, prac: 1.0, exp: 1.06, el: 0.07, sx: 0.84, key: 5, lantern: 0.55 },
+    day: { top: 0x3a64c8, mid: 0x8aa2e6, hor: 0xffd0b4, below: 0xc7b4e0, sun: 0xfff0d8, hsky: 0xd2dcff, hgnd: 0x8a6a50, sunC: 0xfff1dc,
+           fog: 0xc8bce0, cLit: 0xfff1e6, cShade: 0xa898d8, stars: 0.0, hemi: 1.7, sunI: 3.2, prac: 0.6, exp: 1.0, el: 0.4, sx: 0.0, key: 1.5, lantern: 0.15 },
+    golden: { top: 0x3a5ab4, mid: 0x9c88c4, hor: 0xffb478, below: 0xcaa6bc, sun: 0xffd49c, hsky: 0xe6d2cc, hgnd: 0x9c6c46, sunC: 0xffc27c,
+              fog: 0xd8bab4, cLit: 0xffd6a8, cShade: 0x9a7cb6, stars: 0.0, hemi: 1.4, sunI: 3.4, prac: 0.8, exp: 1.03, el: 0.15, sx: -0.84, key: 3, lantern: 0.45 },
+    dusk: { top: 0x161a52, mid: 0x4d3f93, hor: 0xf2a07a, below: 0xa486c4, sun: 0xffb98a, hsky: 0xae9ce8, hgnd: 0x8a5a3a, sunC: 0xffac74,
+            fog: 0xb294c4, cLit: 0xffc7a6, cShade: 0x7d64b4, stars: 0.7, hemi: 1.0, sunI: 2.9, prac: 1.15, exp: 1.08, el: 0.085, sx: -0.84, key: 6, lantern: 1.0 },
+  };
+  const CH_COLORS = ["top", "mid", "hor", "below", "sun", "hsky", "hgnd", "sunC", "fog", "cLit", "cShade"];
+  // the market's weather, from the data alone and real money only. "clear" while every real-money result today is
+  // zero or more and nothing is paused; "cloudy" (drifting clouds, dimmer lanterns) while one is below zero; "storm" (a
+  // front over the vault, rain) only while the risk manager has paused the Polymarket desk (its practice record or its
+  // real one) or a loss stop is hit (plain.real.paused_kind "risk" or "day"; "full" is waiting, not a stop). The real
+  // results today: the desk's real book (money.polymarket.real.today_usd) and the Solana bot's own while it runs live
+  // (money.today.usd under the money card's "Real money" label). Pretend money never makes weather; no figure, no claim
+  // (clear).
+  const CH_SKY = { clear: { clouds: 0, dim: 0, wind: 0.25 }, cloudy: { clouds: 0.75, dim: 0.4, wind: 0.6 }, storm: { clouds: 0.9, dim: 0.5, wind: 0.9 } };
+  function weatherOf(d, out) {
+    const money = (d && d.money) || {}, desk = money.polymarket || null, real = desk && desk.real ? desk.real : null;
+    const guard = desk && desk.guard ? desk.guard : null, plainReal = (d && d.plain && d.plain.real) || {};
+    let known = 0, worst = null;
+    const figures = [real ? real.today_usd : null, d && d.mode === "LIVE" && money.label === "Real money" && money.today ? money.today.usd : null];
+    for (let i = 0; i < figures.length; i++) { const v = figures[i]; if (typeof v === "number" && isFinite(v)) { known += 1; if (worst === null || v < worst) worst = v; } }
+    const paused = !!(guard && (guard.paused === true || (guard.real && guard.real.paused === true)))
+      || plainReal.paused_kind === "risk" || plainReal.paused_kind === "day";
+    const down = worst !== null && Math.round(worst * 100) < 0;
+    out.sky = paused ? "storm" : down ? "cloudy" : "clear";
+    const s = CH_SKY[out.sky];
+    out.clouds = s.clouds; out.dim = s.dim; out.wind = s.wind; out.storm = paused; out.rain = paused;
+    out.real = known > 0; out.today = worst; out.paused = paused;
+    return out;
+  }
+  // a replay only for what plain.finished newly lists: nothing on the first poll (what is there already is old news),
+  // never an id seen before, never one older than the newest seen before; oldest first (each gets its turn), at most 3
+  function freshFinished(memo, list) {
+    const items = Array.isArray(list) ? list : [], fresh = [], ids = {}, first = !memo.polled;
+    let top = memo.top;
+    for (let i = 0; i < items.length; i++) {
+      const it = items[i];
+      if (!it || typeof it.id !== "string" || typeof it.ts !== "number" || !isFinite(it.ts) || (it.who !== "jet" && it.who !== "voss")
+          || (it.result !== "won" && it.result !== "lost" && it.result !== "even")) continue;
+      if (!first && !memo.ids[it.id] && it.ts > memo.top) fresh.push(it);
+      ids[it.id] = true; if (it.ts > top) top = it.ts;
+    }
+    memo.ids = ids; memo.top = top; memo.polled = true;
+    fresh.sort(function (a, b) { return a.ts - b.ts; });
+    return fresh.slice(-3);
+  }
+  // the banner's words: "REPLAY · <what> · won $12.34 · pretend" (the item's own words and figures; "REPLAY" and the
+  // separators fixed); "real money" only where the item says real
+  function replayWords(it) {
+    const usd = typeof it.usd === "number" && isFinite(it.usd) ? "$" + Math.abs(it.usd).toFixed(2) : "";
+    const res = it.result === "won" || it.result === "lost" ? it.result : it.result === "even" ? "even" : "";
+    const outcome = res === "even" || !usd ? res : res + " " + usd;
+    const money = it.real === true && it.money === "real money" ? "real money" : "pretend";
+    const what = String(it.what || "");
+    return { what: what, outcome: outcome, money: money, line: "REPLAY · " + what + " · " + outcome + " · " + money };
+  }
+  // an event's time on the viewer's clock: "HH:MM", or "yesterday HH:MM" before the viewer's midnight
+  function tickerWhen(ts, nowMs) {
+    const d = new Date(ts * 1000), n = new Date(nowMs), hh = d.getHours(), mm = d.getMinutes();
+    const t = (hh < 10 ? "0" : "") + hh + ":" + (mm < 10 ? "0" : "") + mm;
+    return d.getFullYear() === n.getFullYear() && d.getMonth() === n.getMonth() && d.getDate() === n.getDate() ? t : "yesterday " + t;
+  }
+  // a ticker row: "HH:MM · Name: the event in plain words" (the parts, so the page can style them)
+  function tickerParts(it, nowMs) {
+    return { when: tickerWhen(it.ts, nowMs) + " · ", who: String(it.name || "") + ": ", text: String(it.text || ""),
+             tone: it.tone === "good" || it.tone === "bad" ? it.tone : "" };
+  }
+  // a struck brass bell: its partials (frequency ratio, loudness, seconds to die away)
+  const CH_BELL = [[1, 0.3, 2.6], [2.0, 0.15, 1.7], [2.76, 0.11, 1.2], [5.4, 0.045, 0.55]];
+  // the sound: everything synthesised (noise and oscillators, no files) and nothing made before enable(), which only
+  // the speaker button's tap calls (a browser plays sound only after one): the factory makes the AudioContext then.
+  // Suspended while the tab is hidden or the viewer turns it off; loudness and pan come from outside (the drone's
+  // distance to each source, the weather's wind).
+  function makeSound(factory) {
+    let ctx = null, master = null, noise = null, lastCut = -1e9;
+    const src = {}, S = { on: false, failed: false, last: "", desks: ["voss", "pip", "nyx", "rook", "mote"] };
+    function gain(v) { const g = ctx.createGain(); g.gain.value = v; return g; }
+    function filter(type, f, q) { const b = ctx.createBiquadFilter(); b.type = type; b.frequency.value = f; if (q != null) b.Q.value = q; return b; }
+    function buffer(seconds, fill) { const n = Math.floor(ctx.sampleRate * seconds), b = ctx.createBuffer(1, n, ctx.sampleRate); fill(b.getChannelData(0), n, ctx.sampleRate); return b; }
+    function loop(buf, rate) { const s = ctx.createBufferSource(); s.buffer = buf; s.loop = true; s.playbackRate.value = rate; s.start(0, Math.random() * buf.duration); return s; }
+    function wobble(hz, depth, param) { const o = ctx.createOscillator(), g = gain(depth); o.frequency.value = hz; o.connect(g); g.connect(param); o.start(); }
+    function chain(nodes) { for (let i = 0; i < nodes.length - 1; i++) nodes[i].connect(nodes[i + 1]); return nodes[nodes.length - 1]; }
+    function placed(name, out) {  // a source somewhere on the island: its own loudness and pan
+      const g = gain(0), p = ctx.createStereoPanner ? ctx.createStereoPanner() : null;
+      out.connect(g); if (p) { g.connect(p); p.connect(master); } else g.connect(master); src[name] = { g: g, p: p };
+    }
+    function build() {
+      master = gain(0); master.connect(ctx.destination); master.gain.setTargetAtTime(0.85, ctx.currentTime, 0.4);
+      noise = buffer(2, function (a, n) { for (let i = 0; i < n; i++) a[i] = Math.random() * 2 - 1; });
+      const clicks = buffer(1.7, function (a, n, rate) {  // soft key clicks at random moments
+        for (let k = 0; k < 10; k++) { const at = Math.floor(Math.random() * (n - rate * 0.02)), len = Math.floor(rate * (0.004 + Math.random() * 0.006)), amp = 0.35 + Math.random() * 0.5;
+          for (let i = 0; i < len; i++) { const e = 1 - i / len; a[at + i] += (Math.random() * 2 - 1) * amp * e * e * e; } }
+      });
+      // the wind: low-passed noise through a band that wanders (as loud as the weather says: S.wind)
+      const wf = filter("bandpass", 380, 0.6), wg = gain(0); wobble(0.11, 140, wf.frequency);
+      chain([loop(noise, 0.5), filter("lowpass", 1100), wf, wg]).connect(master); src.wind = { g: wg, p: null };
+      // the fountain by the table: a soft trickle with a slow swell
+      const water = gain(0.8); wobble(0.23, 0.25, water.gain);
+      placed("water", chain([loop(noise, 1.0), filter("bandpass", 2300, 0.8), filter("highpass", 700), water]));
+      // the kettle at the kiosk: a thin hiss that simmers
+      const kettle = gain(0.7); wobble(5.5, 0.18, kettle.gain);
+      placed("kettle", chain([loop(noise, 0.9), filter("bandpass", 3900, 7), kettle]));
+      // the airship's engine: two low tones beating, low-passed, a slow throb
+      const engine = gain(0.6), ef = filter("lowpass", 170, 0.8); wobble(1.3, 0.2, engine.gain);
+      for (let i = 0; i < 2; i++) { const o = ctx.createOscillator(); o.type = i ? "triangle" : "sawtooth"; o.frequency.value = i ? 49.6 : 47; o.connect(ef); o.start(); }
+      ef.connect(engine); placed("engine", engine);
+      // typing: the clicks looped at each desk at its own pace (heard only while that desk is busy)
+      for (let i = 0; i < S.desks.length; i++) placed("desk:" + S.desks[i], chain([loop(clicks, 0.9 + i * 0.07), filter("highpass", 1700)]));
+    }
+    S.enable = function () {
+      if (!ctx) {
+        try { ctx = factory(); } catch (e) { ctx = null; }
+        if (!ctx) { S.failed = true; return false; }
+        try { build(); } catch (e) { S.failed = true; try { ctx.close(); } catch (e2) { /* (already gone) */ } ctx = null; return false; }
+      }
+      if (ctx.state === "suspended") ctx.resume();
+      S.on = true; return true;
+    };
+    S.disable = function () { S.on = false; if (ctx && ctx.state === "running") ctx.suspend(); };
+    S.hidden = function (yes) { if (!ctx) return; if (yes) { if (ctx.state === "running") ctx.suspend(); } else if (S.on && ctx.state === "suspended") ctx.resume(); };
+    // a source's loudness (0..1) and pan (-1 left .. 1 right), eased
+    S.level = function (name, v, pan) {
+      const s = src[name]; if (!ctx || !S.on || !s) return;
+      s.g.gain.setTargetAtTime(v, ctx.currentTime, 0.3); if (s.p) s.p.pan.setTargetAtTime(pan, ctx.currentTime, 0.3);
+    };
+    // the brass bell for a closed trade or a settled real-money bet: higher for a win
+    S.bell = function (won) {
+      if (!ctx || !S.on) return;
+      const t = ctx.currentTime, f0 = won ? 784 : 523.25;
+      for (let i = 0; i < CH_BELL.length; i++) {
+        const p = CH_BELL[i], o = ctx.createOscillator(), g = ctx.createGain(); o.type = "sine"; o.frequency.value = f0 * p[0];
+        g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(p[1], t + 0.008); g.gain.exponentialRampToValueAtTime(0.0001, t + p[2]);
+        o.connect(g); g.connect(master); o.start(t); o.stop(t + p[2] + 0.05);
+      }
+      S.last = won ? "bell-won" : "bell-lost";
+    };
+    // a soft whoosh for a cut: a short burst of noise swept up through a band (twice within 0.3 s plays once)
+    S.cut = function () {
+      if (!ctx || !S.on) return;
+      const t = ctx.currentTime; if (t - lastCut < 0.3) return; lastCut = t;
+      const s = ctx.createBufferSource(), f = filter("bandpass", 300, 1.4), g = gain(0);
+      s.buffer = noise; s.connect(f); f.connect(g); g.connect(master);
+      f.frequency.setValueAtTime(300, t); f.frequency.exponentialRampToValueAtTime(2400, t + 0.34);
+      g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.16, t + 0.09); g.gain.linearRampToValueAtTime(0, t + 0.42);
+      s.start(t, Math.random()); s.stop(t + 0.45); S.last = "cut";
+    };
+    S.context = function () { return ctx; };
+    return S;
+  }
+  // <<< channel
+  try { channel(); } catch (e) { console.error("world: the channel (ticker, replay, sky, sound) could not start", e); }
+  function channel() {
+    // ----------------------------------------------------------- the ticker: the last events in plain words (text only, ever)
+    const tickerEl = el("ticker"), tickerTrack = el("ticker-track"), TICKER_PX_S = 38;
+    let tickerKey = "", tickerItems = [], lastData = null, tickerResize = 0;
+    function tickerRow(it, nowMs) {
+      const p = tickerParts(it, nowMs), row = document.createElement("span"), dot = document.createElement("i");
+      const when = document.createElement("span"), who = document.createElement("b");
+      row.className = "it"; dot.className = p.tone; when.className = "t"; when.textContent = p.when; who.textContent = p.who;
+      row.appendChild(dot); row.appendChild(when); row.appendChild(who); row.appendChild(document.createTextNode(p.text));
+      return row;
+    }
+    function renderTicker(d) {
+      const list = d && d.plain && Array.isArray(d.plain.ticker) ? d.plain.ticker : [], nowMs = Date.now();
+      const items = list.filter(function (it) { return it && typeof it.ts === "number" && isFinite(it.ts) && typeof it.text === "string" && it.text; }).slice(0, 8);
+      const key = new Date(nowMs).toDateString() + "|" + window.innerWidth + "|" + items.map(function (it) { return it.ts + "|" + it.name + "|" + it.text + "|" + it.tone; }).join("\n");
+      if (key === tickerKey) return;
+      tickerKey = key; tickerItems = items; tickerTrack.textContent = ""; tickerTrack.className = "";
+      const on = items.length > 0;
+      tickerEl.hidden = !on; body.classList.toggle("ticker", on);
+      if (!on) return;
+      const run = document.createElement("span"); run.className = "run";
+      items.forEach(function (it) { run.appendChild(tickerRow(it, nowMs)); });
+      tickerTrack.appendChild(run);
+      // newest first, read from the left; wider than the strip, it rolls (a second copy follows so it loops without a gap)
+      if (run.offsetWidth > tickerEl.clientWidth) {
+        const copy = run.cloneNode(true); copy.setAttribute("aria-hidden", "true"); tickerTrack.appendChild(copy);
+        tickerTrack.style.animationDuration = Math.max(12, run.offsetWidth / TICKER_PX_S).toFixed(1) + "s"; tickerTrack.className = "roll";
+      }
+    }
+    window.addEventListener("resize", function () { clearTimeout(tickerResize); tickerResize = setTimeout(function () { renderTicker(lastData); }, 300); });
+
+    // ----------------------------------------------------------- the replay banner: only what plain.finished newly lists
+    const replayEl = el("replay"), replayWhat = el("replay-what"), replayOutcome = el("replay-outcome"), replayMoney = el("replay-money");
+    // (its six seconds run on the wall clock, like the rest of the overlay: the world's own time slows on a slow screen)
+    const REPLAY_MS = 6000, replayMemo = { polled: false, top: -Infinity, ids: {} }, replayQueue = [], replayHooks = [];
+    let replayUntil = 0, replayGap = 0, replayNow = null;
+    function showReplay(it) {
+      const w = replayWords(it);
+      replayWhat.textContent = w.what; replayOutcome.textContent = w.outcome; replayMoney.textContent = w.money;
+      replayMoney.className = w.money === "real money" ? "money real" : "money";
+      replayEl.className = "on " + (it.result === "won" ? "won" : it.result === "lost" ? "lost" : "even");
+      replayEl.setAttribute("aria-label", w.line);
+      replayUntil = performance.now() + REPLAY_MS; replayNow = it;
+      sound.bell(it.result === "won");
+      for (let i = 0; i < replayHooks.length; i++) { try { replayHooks[i](it); } catch (e) { console.warn("world: a replay hook failed", e); } }
+    }
+    // the drone goes to who finished it (Jet carrying the trade to the vault, Voss at the table for a real bet), unless
+    // it is already on them for this very moment (Jet's carry, Voss's own words); the director frames the shot
+    replayHooks.push(function (it) {
+      const a = actors[it.who]; if (!a || (focus && focus.actor === a && simT < focus.until)) return;
+      focusOn(a, 2.5, 8, it.who === "jet" && a.carrying ? "carry" : "speak");
+    });
+
+    // ----------------------------------------------------------- day and night, and the weather on the sky (colours and uniforms only)
+    const PALC = {};
+    CH_LOOKS.forEach(function (k) { PALC[k] = {}; CH_COLORS.forEach(function (c) { PALC[k][c] = col(CH_PAL[k][c]); }); });
+    const W8 = dayWeights(13, {}), WX = weatherOf(null, {}), WXS = { clouds: 0, dim: 0, wind: 0.25, storm: 0 };  // (WXS: what the sky shows, eased)
+    const SUN_DIR = sunDir.clone(), BULB = props.lanternBulbs.material.color.clone(), PRAC = Object.keys(practicals);
+    sun.userData.dir = SUN_DIR;
+    let tzMs = 0, tzAt = -1e12, skyT = 1, lampK = 1, lampShown = -1;
+    function viewerHours() {  // the viewer's time of day in hours (the zone's offset read once a minute: nothing allocated)
+      const now = Date.now(); if (now - tzAt > 60000) { tzAt = now; tzMs = new Date(now).getTimezoneOffset() * 60000; }
+      return (((now - tzMs) / 3600000) % 24 + 24) % 24;
+    }
+    function mixC(key, out) {
+      out.setRGB(0, 0, 0);
+      for (let i = 0; i < CH_LOOKS.length; i++) { const w = W8[CH_LOOKS[i]]; if (w > 0) { const c = PALC[CH_LOOKS[i]][key]; out.r += c.r * w; out.g += c.g * w; out.b += c.b * w; } }
+      return out;
+    }
+    function mixN(key) { let v = 0; for (let i = 0; i < CH_LOOKS.length; i++) v += CH_PAL[CH_LOOKS[i]][key] * W8[CH_LOOKS[i]]; return v; }
+    function overcast(c, g) {  // grey weather: a colour pulled toward its own grey and a little darker (night stays dark)
+      if (g <= 0) return c;
+      const l = 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b, k = 1 - 0.32 * g;
+      c.r = (c.r + (l * 0.94 - c.r) * g) * k; c.g = (c.g + (l * 0.97 - c.g) * g) * k; c.b = (c.b + (l * 1.06 - c.b) * g) * k;
+      return c;
+    }
+    function skyStep(dt) {  // four times a second: the clock's look, the weather eased in over seconds (no pops)
+      dayWeights(viewerHours(), W8);
+      const k = 1 - Math.exp(-dt / 5);
+      WXS.clouds += (WX.clouds - WXS.clouds) * k; WXS.dim += (WX.dim - WXS.dim) * k; WXS.wind += (WX.wind - WXS.wind) * k;
+      WXS.storm += ((WX.storm ? 1 : 0) - WXS.storm) * k;
+      const g = WXS.clouds * 0.65;
+      overcast(mixC("top", skyU.uTop.value), g); overcast(mixC("mid", skyU.uMid.value), g); overcast(mixC("hor", skyU.uHorizon.value), g);
+      overcast(mixC("below", skyU.uBelow.value), g); overcast(mixC("sun", skyU.uSunCol.value), g);
+      skyU.uStars.value = mixN("stars") * (1 - 0.9 * WXS.clouds);
+      SUN_DIR.set(mixN("sx"), mixN("el"), sunDir.z).normalize(); skyU.uSunDir.value.copy(SUN_DIR); cloudU.uSunDir.value.copy(SUN_DIR);
+      if (!Q.shadows) sun.position.copy(SUN_DIR).multiplyScalar(60);
+      hemi.intensity = mixN("hemi") * (1 - 0.12 * g); overcast(mixC("hsky", hemi.color), g); mixC("hgnd", hemi.groundColor);
+      sun.intensity = mixN("sunI") * (1 - 0.6 * WXS.clouds); overcast(mixC("sunC", sun.color), g);
+      keyBase = mixN("key");
+      overcast(mixC("fog", scene.fog.color), g); cloudU.uFar.value.copy(scene.fog.color);
+      overcast(mixC("cLit", cloudU.uLit.value), g); overcast(mixC("cShade", cloudU.uShade.value), g);
+      renderer.toneMappingExposure = mixN("exp") * (1 - 0.12 * g);
+      const prac = mixN("prac"); for (let i = 0; i < PRAC.length; i++) { const p = practicals[PRAC[i]]; p.light.intensity = p.base * prac; }
+      lampK = mixN("lantern") * (1 - 0.6 * WXS.dim);
+    }
+    function lampsStep() {  // the lanterns: the clock's level, dimmer in grey weather, a faint flicker in a storm
+      let k = lampK;
+      if (WXS.storm > 0.05) k *= 1 - 0.18 * WXS.storm * Math.max(0, Math.sin(simT * 17.3) * Math.sin(simT * 5.1 + 1.3));
+      if (Math.abs(k - lampShown) < 0.002) return;
+      lampShown = k; props.lanternBulbs.material.color.copy(BULB).multiplyScalar(k);
+      if (props.heroBulbMat) props.heroBulbMat.color.copy(BULB).multiplyScalar(k);
+      props.lanternHalos.material.uniforms.uDim.value = k; props.lanternDim = k;
+    }
+
+    // ----------------------------------------------------------- the weather on the set: drifting clouds, the storm front, rain
+    // (one soft puff texture drawn once: a texture read per pixel, never noise; nothing is drawn while the sky is clear)
+    const puffTex = canvasTex(128, 128, function (ctx, w, h) {
+      const r = rng(91);
+      for (let i = 0; i < 14; i++) {
+        const x = w * (0.3 + r() * 0.4), y = h * (0.38 + r() * 0.24), s = w * (0.1 + r() * 0.1);
+        const g = ctx.createRadialGradient(x, y, 0, x, y, s); g.addColorStop(0, "rgba(255,255,255,.9)"); g.addColorStop(0.55, "rgba(255,255,255,.45)"); g.addColorStop(1, "rgba(255,255,255,0)");
+        ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+      }
+    }, true);
+    puffTex.wrapS = puffTex.wrapT = THREE.ClampToEdgeWrapping; puffTex.anisotropy = 1;  // (soft blobs: plain filtering)
+    function wxMat(dark) {
+      return new THREE.ShaderMaterial({
+        uniforms: { uMap: { value: puffTex }, uLit: cloudU.uLit, uShade: cloudU.uShade, uAlpha: { value: 0 }, uDark: { value: dark }, uFlash: { value: 0 } },
+        transparent: true, depthWrite: false, fog: false,
+        vertexShader: "varying vec2 vUv; void main() { vUv = uv; vec4 c = modelViewMatrix * instanceMatrix * vec4(0.0, 0.0, 0.0, 1.0); float s = length(instanceMatrix[0].xyz); c.xy += position.xy * vec2(s, s * 0.6); gl_Position = projectionMatrix * c; }",
+        fragmentShader: ["uniform sampler2D uMap; uniform vec3 uLit, uShade; uniform float uAlpha, uDark, uFlash; varying vec2 vUv;",
+          "void main() { float a = texture2D(uMap, vUv).a; vec3 c = mix(uShade * 0.6, uLit, smoothstep(0.12, 0.92, vUv.y));",
+          "  c = mix(c, c * 0.3, uDark) + vec3(0.8, 0.86, 1.0) * uFlash * a; gl_FragColor = vec4(c, a * uAlpha);",
+          "  #include <tonemapping_fragment>", "  #include <colorspace_fragment>", "}"].join("\n"),
+      });
+    }
+    const cloudMat = wxMat(0.25), stormMat = wxMat(0.72);
+    function puffs(mat, list) {
+      const im = new THREE.InstancedMesh(new THREE.PlaneGeometry(1, 1), mat, list.length);
+      list.forEach(function (q, i) { im.setMatrixAt(i, mat4(q.p, null, q.s)); });
+      im.frustumCulled = false; im.renderOrder = 1; im.visible = false; scene.add(im); return im;
+    }
+    const overhead = (function () {  // drifting clouds: a ring off the island at its own height (behind each shot's scenery),
+      // few and spread out, so a frame holds two or three (each one is a blended billboard: phones pay for every layer)
+      const r = rng(83), list = [], n = Q.small ? 7 : 11;
+      for (let i = 0; i < n; i++) {
+        const a = i / n * TAU + r() * 0.4, d = 40 + r() * 30;
+        list.push({ p: [Math.cos(a) * d, 3 + r() * 9, Math.sin(a) * d + 2], s: 13 + r() * 10 });
+      }
+      return puffs(cloudMat, list);
+    })();
+    const front = (function () {  // the storm front: a bank of dark puffs over the vault, piled up behind its door wall
+      const r = rng(84), list = [];
+      for (let i = 0; i < 8; i++) { const p = VT2.at(-6 + r() * 12, 6.5 + r() * 5, -9 + r() * 8); list.push({ p: [p.x, p.y, p.z], s: 7 + r() * 6 }); }
+      return puffs(stormMat, list);
+    })();
+    // rain over the vault only: short lines falling in the vertex shader (no work on the CPU), capped, and off on slow
+    // screens (LITE, few cores or little memory, tiny) or once the quality governor has had to step down
+    const RAIN_N = Q.small ? 140 : 280, DPR0 = Q.dpr;
+    let rainOk = !LITE && !slow && !tiny;
+    const rain = (function () {
+      const r = rng(85), pos = new Float32Array(RAIN_N * 6), drop = new Float32Array(RAIN_N * 6);
+      for (let i = 0; i < RAIN_N; i++) {
+        const x = -3.3 + r() * 6.6, z = -3.0 + r() * 6.0, y0 = r() * 7.2, sp = 7 + r() * 4;
+        for (let k = 0; k < 2; k++) { const j = (i * 2 + k) * 3; pos[j] = x; pos[j + 1] = k * 0.34; pos[j + 2] = z; drop[j] = y0; drop[j + 1] = sp; drop[j + 2] = k; }
+      }
+      const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.BufferAttribute(pos, 3)); g.setAttribute("aDrop", new THREE.BufferAttribute(drop, 3));
+      g.boundingSphere = new THREE.Sphere(V3(0, 3.6, 0), 7);
+      const m = new THREE.LineSegments(g, new THREE.ShaderMaterial({ uniforms: { uTime: uTime, uAlpha: { value: 0 } }, transparent: true, depthWrite: false, fog: false,
+        vertexShader: "attribute vec3 aDrop; uniform float uTime; varying float vA; void main() { float H = 7.2; float y = H - mod(aDrop.x + uTime * aDrop.y, H); vA = smoothstep(0.0, 0.5, y) * smoothstep(H, H - 1.2, y) * (0.35 + 0.5 * aDrop.z); gl_Position = projectionMatrix * modelViewMatrix * vec4(position.x, y + position.y, position.z, 1.0); }",
+        fragmentShader: "uniform float uAlpha; varying float vA; void main() { gl_FragColor = vec4(0.74, 0.82, 0.96, vA * uAlpha * 0.55); }" }));
+      m.position.copy(VT2.origin); m.rotation.y = VT2.yaw; m.renderOrder = 3; m.visible = false; scene.add(m); return m;
+    })();
+    let boltAt = 0, boltT = -1;
+    function weatherStep(dt) {
+      const ca = clamp((WXS.clouds - 0.12) / 0.6, 0, 1) * 0.88;
+      cloudMat.uniforms.uAlpha.value = ca; overhead.visible = ca > 0.01;
+      if (overhead.visible) overhead.rotation.y += dt * 0.004 * (1 + 2 * WXS.wind);
+      stormMat.uniforms.uAlpha.value = WXS.storm * 0.95; front.visible = WXS.storm > 0.01;
+      rain.material.uniforms.uAlpha.value = WXS.storm; rain.visible = rainOk && WXS.storm > 0.05;
+      if (WXS.storm > 0.3) {  // silent lightning now and then: one soft double flash inside the front (never a strobe)
+        if (boltT < 0 && simT >= boltAt) { boltT = 0; boltAt = simT + 9 + Math.random() * 9; }
+        if (boltT >= 0) {
+          boltT += dt; const f = boltT < 0.07 ? 1 : boltT < 0.16 ? 0.25 : boltT < 0.26 ? 0.6 : Math.max(0, 1 - (boltT - 0.26) / 0.3) * 0.6;
+          stormMat.uniforms.uFlash.value = f * WXS.storm; if (boltT > 0.6) { boltT = -1; stormMat.uniforms.uFlash.value = 0; }
+        }
+      } else if (boltT >= 0) { boltT = -1; stormMat.uniforms.uFlash.value = 0; }
+      if (rainOk && ((bloom && Q.bloom && !bloom.enabled) || Q.dpr < DPR0)) { rainOk = false; console.info("world: rain off"); }  // (the governor stepped down)
+    }
+
+    // ----------------------------------------------------------- the island's sound: off until the viewer taps the speaker
+    const sound = makeSound(function () { const AC = window.AudioContext || window.webkitAudioContext; return AC ? new AC() : null; });
+    const speakerBtn = el("sound"), HEAR = { water: V3(0, 0.9, 0), kettle: V3(23.1, 1.3, 5.3) }, _hv = new THREE.Vector3(), _hr = new THREE.Vector3();
+    let soundT = 0, cutSeen = null;  // (RUN, the director's shot record, is made after this section)
+    function showSpeaker() {
+      const words = sound.failed ? "No sound in this browser" : sound.on ? "Sound on: tap to turn it off" : "Sound off: tap for the island's sounds";
+      speakerBtn.className = "pill sound" + (sound.on ? " on" : "") + (sound.failed ? " none" : "");
+      speakerBtn.setAttribute("aria-pressed", sound.on ? "true" : "false"); speakerBtn.setAttribute("aria-label", words); speakerBtn.title = words;
+    }
+    function hear(name, at, ref, base) {  // louder as the drone comes close, panned to the side it is on
+      _hv.copy(at).sub(camera.position); const d = _hv.length(), v = base / (1 + (d / ref) * (d / ref));
+      _hr.setFromMatrixColumn(camera.matrixWorld, 0); sound.level(name, v, clamp(_hv.dot(_hr) / Math.max(1, d), -1, 1));
+    }
+    function hearAll() {
+      sound.level("wind", 0.015 + 0.1 * WXS.wind + 0.06 * WXS.storm, 0);
+      hear("water", HEAR.water, 4.5, 0.32); hear("kettle", HEAR.kettle, 3, 0.22); hear("engine", (props.airshipModel || props.airship).position, 6, 0.4);
+      for (let i = 0; i < sound.desks.length; i++) { const a = actors[sound.desks[i]]; if (a) hear("desk:" + a.key, a.headAt, 3.2, a.state === "home" && a.st.working ? 0.3 : 0); }
+    }
+    speakerBtn.onclick = function () { if (sound.on) sound.disable(); else sound.enable(); showSpeaker(); if (sound.on) hearAll(); };
+    showSpeaker();
+    document.addEventListener("visibilitychange", function () { const hid = document.visibilityState !== "visible"; body.classList.toggle("tab-hidden", hid); sound.hidden(hid); });
+
+    // ----------------------------------------------------------- the bus: each poll, each frame
+    BUS.on("start", function () { skyStep(1e3); lampsStep(); });
+    BUS.on("data", function (d, first) {
+      lastData = d; weatherOf(d, WX);
+      if (first) { skyT = 1; WXS.clouds = WX.clouds; WXS.dim = WX.dim; WXS.wind = WX.wind; WXS.storm = WX.storm ? 1 : 0; }  // (the first answer: no slow change)
+      renderTicker(d);
+      const fresh = freshFinished(replayMemo, d && d.plain ? d.plain.finished : null);
+      for (let i = 0; i < fresh.length; i++) if (replayQueue.length < 3) replayQueue.push(fresh[i]);
+    });
+    BUS.on("frame", function (dt, dtRaw) {
+      skyT += dtRaw; if (skyT >= 0.25) { skyStep(skyT); skyT = 0; }
+      lampsStep(); weatherStep(dt);
+      const wall = performance.now();
+      if (replayUntil && wall >= replayUntil) { replayUntil = 0; replayEl.className = ""; replayGap = wall + 600; }
+      if (!replayUntil && replayQueue.length && wall >= replayGap) showReplay(replayQueue.shift());
+      if (cutSeen === null) cutSeen = RUN.cutAt; else if (RUN.cutAt !== cutSeen) { cutSeen = RUN.cutAt; sound.cut(); }  // (a director cut: the whoosh)
+      soundT += dtRaw; if (sound.on && soundT >= 0.25) { soundT = 0; hearAll(); }
+    });
+    const SKY = window.__skyport = window.__skyport || {};
+    SKY.sound = { cut: function () { sound.cut(); }, on: function () { return sound.on; }, last: function () { return sound.last; } };
+    SKY.replay = { on: function (fn) { if (typeof fn === "function") replayHooks.push(fn); }, now: function () { return replayUntil ? replayNow : null; } };
+    SKY.weather = { state: function () { return Object.assign({}, WX); }, shown: function () { return Object.assign({}, WXS); } };
+    SKY.clock = { weights: function () { return Object.assign({}, W8); }, hours: viewerHours };
+    SKY.ticker = { items: function () { return tickerItems.slice(); } };
+    if (params.get("debug") === "1") SKY.weather.fx = { overhead: overhead, front: front, rain: rain, cloudMat: cloudMat, stormMat: stormMat };  // (the screenshot harness)
+  }
+"""
+
+_M_LIVE = r"""
   // ============================================================= THE LIVE DIRECTOR: an always-on broadcast
   // The owner's direction: the camera is live all the time, flying and cutting between what is happening right now,
   // like a film. A fresh event comes first (whoever speaks, the listeners in frame; a hand-off walk; Jet's carry to
@@ -4168,6 +4643,7 @@ _M_LIFE = r"""
     if (resizeNext) { resizeNext = false; resize(); }
     updateActors(dt); updateCube(dt); updateProps(dt); updateFades(dtRaw); director(); updateCamera(dtRaw, simT);
     updateBubbles(); updateLabels(); updateDrop();
+    BUS.emit("frame", dt, dtRaw);  // (THE CHANNEL: the sky and the weather, the replay banner, the sound)
     if (composer) composer.render(dtRaw); else renderer.render(scene, camera);
     govern(dtRaw);
     // the ~20 MB of models start downloading only once the drawn world is on screen
@@ -4176,7 +4652,7 @@ _M_LIFE = r"""
   }
   document.addEventListener("visibilitychange", function () { if (document.visibilityState === "visible" && !raf) { last = performance.now(); raf = requestAnimationFrame(frame); } });
 
-  resize(); tint(); setInterval(tint, 60000);
+  resize(); BUS.emit("start", 0, 0);  // (THE CHANNEL: the first frame already in the viewer's light)
   cut("arrival", arrivalShot);
   renderChips(); renderCard();
   boot.hidden = true;
@@ -4185,7 +4661,9 @@ _M_LIFE = r"""
 }
 """
 
-_MODULE = _M_SETUP + _M_WORLD + _M_CAST + _M_LIFE
+_MODULE = _M_SETUP + _M_WORLD + _M_CAST + _M_LIFE + _M_CHANNEL + _M_LIVE
+#: The page's one inline style: the base styles, then each added section's own block.
+_STYLES = _STYLE + _STYLE_CHANNEL
 
 
 def _sha256_source(text: str) -> str:
@@ -4199,7 +4677,7 @@ def _sha256_source(text: str) -> str:
 WORLD_CSP = (
     f"default-src 'none'; script-src 'self' 'wasm-unsafe-eval' {_sha256_source(_MODULE)} "
     f"{_sha256_source(_IMPORTMAP)}; "
-    f"style-src {_sha256_source(_STYLE)}; connect-src 'self' blob:; img-src 'self' data: blob:; "
+    f"style-src {_sha256_source(_STYLES)}; connect-src 'self' blob:; img-src 'self' data: blob:; "
     "base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
 )
 
@@ -4225,7 +4703,7 @@ def render_world_html(settings: Settings) -> str:
         '<meta name="robots" content="noindex, nofollow">\n<meta name="referrer" content="no-referrer">\n'
         '<meta name="apple-mobile-web-app-capable" content="yes">\n'
         f'<link rel="icon" href="data:,">\n<title>{title}</title>\n'
-        f"<style>{_STYLE}</style>\n"
+        f"<style>{_STYLES}</style>\n"
         f'<script type="importmap">{_IMPORTMAP}</script>\n</head>\n'
         f'<body data-refresh="{REFRESH_S}" data-pipeline="{",".join(PIPELINE)}">\n'
         '<canvas id="view"></canvas><div id="vignette"></div>\n'
@@ -4235,6 +4713,11 @@ def render_world_html(settings: Settings) -> str:
         '<b id="real-label">Money</b><small id="real-sub">loading…</small><small id="real-result"></small></button>'
         '<button type="button" class="pill practice" id="practice" aria-controls="panel" aria-expanded="false">'
         "Practice (pretend)</button>"
+        # THE CHANNEL's speaker: the island's sound, off until a tap (the module sets its words and state)
+        '<button type="button" class="pill sound" id="sound" aria-pressed="false" aria-label="Sound off">'
+        '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 9.5v5h3.5l4.5 4v-13l-4.5 4z"/>'
+        '<path class="waves" d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/>'
+        '<path class="mute" d="M16 9.5l5 5M21 9.5l-5 5"/></svg></button>'
         '<button type="button" class="pill help" id="help" aria-controls="guide" aria-label="How to read this screen">'
         "?</button></div>"
         '<p id="headline">Loading the world…</p><p id="status" role="status" hidden></p></header>\n'
@@ -4259,6 +4742,11 @@ def render_world_html(settings: Settings) -> str:
         '<div class="who">Loading…</div>'
         '<div class="rows"></div><span id="loading" hidden></span></div>\n'
         '<div id="chips"></div>\n'
+        # THE CHANNEL: the replay banner and the ticker (filled as text only)
+        '<div id="replay" role="status"><b>REPLAY</b><span class="sep">·</span><span id="replay-what"></span>'
+        '<span class="sep">·</span><span id="replay-outcome"></span><span class="sep">·</span>'
+        '<span id="replay-money" class="money"></span></div>\n'
+        '<div id="ticker" aria-label="The latest events" hidden><div id="ticker-track"></div></div>\n'
         '<p id="boot">Loading the 3D world… It needs a browser with JavaScript modules and WebGL; '
         'the <a href="office">Office</a> page shows the same team as pictures.</p>\n'
         "<p id=\"honest\">Drawings acting out the bot's own records; every word is its data.</p>\n"

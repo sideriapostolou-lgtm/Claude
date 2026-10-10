@@ -23,7 +23,10 @@ Schema (lists capped: members 9, events <= 5, open trades <= 10, closed trades 1
                           "latest_ago": str|null}],
                 "said": {member id: {"ts", "text"}},                  # each member's newest event, plain words
                 "jobs": {member id: str},                             # each member's own job (bubble labels)
-                "glossary": [{"word", "means"}]},
+                "glossary": [{"word", "means"}],
+                "ticker": [{"ts", "who", "name", "text", "tone"}] (<= 8),   # the 3D world's ticker: TICKER
+                "finished": [{"id", "ts", "who": "jet"|"voss", "what", "result": "won"|"lost"|"even",
+                              "usd": float|null, "real": bool, "money": "real money"|"pretend"}] (<= 3)},
       "money": {"label", "usd", "start_usd", "sol", "sol_usd", "withdrawn_sol",  # live: sent back to the owner
                 "since_start": {"usd", "pct"}, "today": {"usd", "pct"},   # the bot's own result (in SOL,
                 "sol_price_effect_usd",                                   #  shown at today's SOL price)
@@ -146,6 +149,17 @@ same plain words (the 3D world's speech bubbles say it) and ``jobs`` each member
 (:data:`PLAIN_MEMBER_JOBS`: a bubble's label). ``glossary``: the words still on screen, each with one line. Real and
 pretend figures are never added together, nor anything else.
 
+TICKER and FINISHED (:func:`plain_ticker`, :func:`plain_finished`: the 3D world's ticker and replay banner, nothing new
+in them). ``ticker``: the team's last :data:`PLAIN_TICKER_MAX` events of the last :data:`PLAIN_TICKER_WINDOW_S`, newest
+first, each in the same plain words as ``now`` (:func:`plain_event`), with the character who made it (``who``, its
+``name``) and the event's own tone; the receipts' own log is left out (it records every step) and the same words come
+once. ``finished``: the newest :data:`PLAIN_FINISHED_MAX` things that really finished, newest first: the Solana bot's
+closed trades (``trades.closed``: the coin, its result and the dollars of its ``pnl_usd``, real money only while the
+bot itself runs live) and the Polymarket desk's settled REAL-money bets (its own events "Settled: … (real)": the
+question, won or lost and the dollars, only while the desk is on). A practice bet that settles is not in it. ``usd`` is
+the amount without its sign (the result says which way), null when unknown; ``money`` is "real money" or "pretend";
+``id`` stays the same from poll to poll, so a page replays each one once.
+
 LEARNING: :func:`learning_card` calls ``nightcrawler.learn.card.learning_card_state(settings, now)`` when
 that module exists (it is built on another branch) and keeps only these keys, each type-checked::
 
@@ -232,10 +246,11 @@ from nightcrawler.teamroom import ENGINE_STALE_S, FUTURE_SKEW_S, build_team_stat
 from nightcrawler.withdraw import fresh_balance, last_withdrawal, live_hold, page_view, saved_state, withdrawn_lamports
 
 __all__ = ["EXPERIENCE_CAVEAT", "EXPERIENCE_CHIPS", "EXPERIENCE_KINDS", "EXPERIENCE_MONEY_LINE", "GLOSSARY",
-           "LEARNING_RULE", "MEMBERS", "PAPER_LABEL", "PLAIN_ABOUT", "PLAIN_JOBS", "PLAIN_MEMBER_JOBS", "PLAYBOOK_PATH",
-           "PRETEND_LABEL", "REAL_LABEL", "STALE_BANNER_S", "TOWN_MONTH_DAYS", "WALLET_MAX_AGE_S", "build_page_state",
-           "experience_card", "learning_card", "plain_event", "plain_words", "polymarket_desk", "town_ledger",
-           "trend_desk"]
+           "LEARNING_RULE", "MEMBERS", "PAPER_LABEL", "PLAIN_ABOUT", "PLAIN_FINISHED_MAX", "PLAIN_JOBS",
+           "PLAIN_MEMBER_JOBS", "PLAIN_TICKER_MAX", "PLAIN_TICKER_WINDOW_S", "PLAYBOOK_PATH", "PRETEND_LABEL",
+           "REAL_LABEL", "STALE_BANNER_S", "TOWN_MONTH_DAYS", "WALLET_MAX_AGE_S", "build_page_state", "experience_card",
+           "learning_card", "plain_event", "plain_finished", "plain_ticker", "plain_words", "polymarket_desk",
+           "town_ledger", "trend_desk"]
 
 log = get_logger(__name__)
 
@@ -303,6 +318,12 @@ PLAIN_NOW_MAX = 3
 #: "Right now" is the last six hours: an older event is not happening now (its age is said either way).
 PLAIN_NOW_WINDOW_S = 6 * 3600.0
 PLAIN_EVENT_MAX = 110  # one event's words, before "· N min ago"
+#: The 3D world's ticker (``plain.ticker``): the team's last this many events, from the last day only (each one says
+#: the time it happened, and an older one would read as today's).
+PLAIN_TICKER_MAX = 8
+PLAIN_TICKER_WINDOW_S = 24 * 3600.0
+#: The newest finished trades and real-money bets the 3D world may replay (``plain.finished``).
+PLAIN_FINISHED_MAX = 3
 #: The headline: at most this many characters (two lines on a 390 px phone).
 PLAIN_HEADLINE_MAX = 90
 #: The real-money bets count as small (the headline's "Voss's small Polymarket bets") while their open-money cap is
@@ -1655,12 +1676,79 @@ def _plain_team(members: list[dict[str, Any]], now: float, *, live: bool, desk_l
     return team, lines, said
 
 
+def plain_ticker(members: list[dict[str, Any]], now: float, *, live: bool) -> list[dict[str, Any]]:
+    """``plain.ticker`` (TICKER in the module docstring): the team's last :data:`PLAIN_TICKER_MAX` events of the last
+    :data:`PLAIN_TICKER_WINDOW_S`, newest first, in plain words (:func:`plain_event`), each with the character who made
+    it and the event's own tone; the receipts' own log left out and the same words once. ``live``: the Solana bot
+    trades real money."""
+    actor_of = {m: key for key in CAST3D for m in _cast_members(key)}
+    events = []
+    for m in members:
+        mid = m.get("id")
+        if mid == "receipts" or mid not in actor_of:
+            continue
+        for ev in m.get("events") or []:
+            ts, text = _num(ev.get("ts")), ev.get("text")
+            if ts is None or not isinstance(text, str) or not text.strip():
+                continue
+            if ts > now + FUTURE_SKEW_S or ts < now - PLAIN_TICKER_WINDOW_S:
+                continue
+            tone = ev.get("tone") if ev.get("tone") in ("good", "bad") else "neutral"
+            events.append((ts, str(mid), text.strip(), tone))
+    events.sort(key=lambda e: -e[0])  # stable: a tie keeps the members' order
+    out: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for ts, mid, text, tone in events:
+        words = plain_event(mid, text, live=live)
+        if words in seen:
+            continue
+        seen.add(words)
+        key = actor_of[mid]
+        out.append({"ts": ts, "who": key, "name": str(CAST3D[key]["name"]), "text": words, "tone": tone})
+        if len(out) >= PLAIN_TICKER_MAX:
+            break
+    return out
+
+
+#: The Polymarket desk's own event for a settled REAL-money bet (polydesk: "Settled: <question> · won +0.03 $ (real)").
+_REAL_SETTLED = re.compile(r"Settled: (?P<q>.+) · (?P<res>won|lost) (?P<pnl>[+-]?\d+(?:\.\d+)?) \$ \(real\)")
+
+
+def plain_finished(members: list[dict[str, Any]], closed: list[dict[str, Any]] | None, *, live: bool,
+                   desk_on: bool) -> list[dict[str, Any]]:
+    """``plain.finished`` (FINISHED in the module docstring): the newest :data:`PLAIN_FINISHED_MAX` things that really
+    finished, newest first: the Solana bot's closed trades (``closed``: the page's ``trades.closed`` rows; real money
+    only while the bot runs live, ``live``) and, while the Polymarket desk is on (``desk_on``), its settled real-money
+    bets from its own events. Nothing else: a practice bet that settles is not in it."""
+    items: list[dict[str, Any]] = []
+    for row in closed or []:
+        ts, coin, result = _num(row.get("closed_at")), row.get("coin"), row.get("result")
+        if ts is None or not isinstance(coin, str) or not coin or result not in ("won", "lost", "even"):
+            continue
+        pnl = _num(row.get("pnl_usd"))
+        items.append({"id": f"trade|{coin}|{ts:.3f}", "ts": ts, "who": "jet", "what": coin, "result": result,
+                      "usd": round(abs(pnl), 2) if pnl is not None else None, "real": live,
+                      "money": "real money" if live else "pretend"})
+    desk = next((m for m in members if m.get("id") == "predict"), None) if desk_on else None
+    for ev in (desk or {}).get("events") or []:
+        ts, text = _num(ev.get("ts")), ev.get("text")
+        found = _REAL_SETTLED.fullmatch(text.strip()) if isinstance(text, str) and ts is not None else None
+        if found is None or ts is None:
+            continue
+        question = found.group("q").strip()
+        items.append({"id": f"bet|{ts:.3f}|{question}", "ts": ts, "who": "voss", "what": question,
+                      "result": found.group("res"), "usd": round(abs(float(found.group("pnl"))), 2), "real": True,
+                      "money": "real money"})
+    items.sort(key=lambda i: -i["ts"])
+    return items[:PLAIN_FINISHED_MAX]
+
+
 def plain_words(settings: Settings, money: Mapping[str, Any], members: list[dict[str, Any]], now: float, *,
-                passed: bool = False) -> dict[str, Any]:
+                passed: bool = False, closed: list[dict[str, Any]] | None = None) -> dict[str, Any]:
     """``/api/page.plain`` (PLAIN in the module docstring): the screen in plain words, from this page's own data only.
     ``money`` is the money card (its ``polymarket`` and ``trend`` blocks are the two desks), ``members`` the team rows
-    (their status and events), ``passed`` whether the Coach's champion passed its locked test. Never raises on a
-    missing figure: an unknown one is said so."""
+    (their status and events), ``passed`` whether the Coach's champion passed its locked test, ``closed`` the page's
+    closed trades (``trades.closed``, for ``finished``). Never raises on a missing figure: an unknown one is said so."""
     desk = money.get("polymarket")
     desk = desk if isinstance(desk, Mapping) and isinstance(desk.get("paper"), Mapping) else None
     trend = money.get("trend")
@@ -1678,6 +1766,9 @@ def plain_words(settings: Settings, money: Mapping[str, Any], members: list[dict
         "said": said,
         "jobs": {mid: PLAIN_MEMBER_JOBS[mid] for mid, _, _ in MEMBERS if mid in PLAIN_MEMBER_JOBS},
         "glossary": [{"word": word, "means": means} for word, means in GLOSSARY],
+        # the 3D world's ticker and replay banner (TICKER and FINISHED in the module docstring)
+        "ticker": plain_ticker(members, now, live=settings.is_live),
+        "finished": plain_finished(members, closed, live=settings.is_live, desk_on=desk is not None),
     }
 
 
@@ -1710,6 +1801,7 @@ def build_page_state(ledger: Any, settings: Settings, now: float, engine_status:
     money = _money(settings, state["equity"], point, _withdrawn(ledger, settings, point, now), desk, trend)
     receipts = state["receipts"]
     head = receipts["head_hash"]
+    trades = _trades(ledger, settings, state, text)
     out = {
         "version": __version__,
         "generated_at": now,
@@ -1717,12 +1809,13 @@ def build_page_state(ledger: Any, settings: Settings, now: float, engine_status:
         "refresh_s": REFRESH_S,
         "alerts": alerts + usage_alerts,
         # the screen in plain words, from the figures below only (never one kind of money added to another)
-        "plain": plain_words(settings, money, members, now, passed=card["champion_passed_locked_test"]),
+        "plain": plain_words(settings, money, members, now, passed=card["champion_passed_locked_test"],
+                             closed=trades["closed"]),
         "money": money,
         # the town: what running the bot costs against what the desks made (same clock as the judge's total)
         "town": town_ledger(settings, money, state.get("judge"), now, _run_started(ledger, state)),
         "team": {"counts": counts, "members": members},
-        "trades": _trades(ledger, settings, state, text),
+        "trades": trades,
         "learning": {"source": card["source"], "state": card["state"], "headline": card["headline"],
                      "variants": card["variants"], "data": card["data"],
                      "rule": LEARNING_RULE if card["source"] == "card" and card["can_stop_trading"] else None},
