@@ -35,13 +35,21 @@ horizontal, close behind the crew; never a top-down tycoon view.
   one of a few moving shot types (close-up, over-the-shoulder, follow, low angle, crane, slow orbit, dolly,
   establishing wide; a 24-35 mm lens) and flies the drone between shots along the walkways (never over a wall or
   through one) or cuts. Its memory of each subject's last airtime and angle keeps every room and character on air.
-  A chip pins the camera for 25 seconds, then it goes back to live; the LIVE tag says which.
+  A chip pins the camera for 25 seconds, then it goes back to live; the LIVE tag says which. The card under it says
+  the character's job in plain words and their latest event (``/api/page.plain.team``).
+* The top bar says what a newcomer must know first, from ``/api/page.plain``: a big real-money button (red only
+  while the data says real money is on, with the money in open real bets; a tap opens its line, the hard limits and
+  the lab's verdict), a "Practice (pretend)" button (the practice books' line), the headline in one or two lines, and
+  the first banner only when there is real trouble. "?" opens a three-card guide (the team, real money vs practice,
+  the camera), shown by itself on the first visit (remembered in ``localStorage`` when the browser allows it) and
+  closed by itself after half a minute without a touch.
 
 Honesty rules (the same as the office's and the town's, non-negotiable):
 
-* Every WORD on screen comes from ``/api/page`` (names, roles, status words, event text, money, the town line, the
+* Every WORD on screen comes from ``/api/page`` (names, roles, status words, event text, money, the plain words, the
   Polymarket desk's positions) or from the fixed descriptions in this module, and is inserted as text only (never
-  as markup). The vault sign says ``money.usd`` and exactly ``money.label``.
+  as markup). The vault sign says ``money.usd`` and exactly ``money.label``. A speech bubble says the event in the
+  plain words the server gave that very event (``plain.said``), else the event's own text.
 * Nothing is invented: hand-off walks follow a new member event, Jet carries a cube to the vault only for a newly
   closed trade (gold won, red lost, the float shows ``pnl_usd``), the ticket board over the mission table lists the
   desk's own positions. Ambient life (coffee, typing, plants, drones, tube parcels) shows no words or numbers.
@@ -265,29 +273,67 @@ body { overflow: hidden; }
 #vignette { position: fixed; inset: 0; pointer-events: none;
             background: radial-gradient(ellipse at 50% 55%, rgba(0,0,0,0) 58%, rgba(10,6,24,.42) 100%),
                         linear-gradient(to bottom, rgba(12,8,30,.55), rgba(0,0,0,0) 15%, rgba(0,0,0,0) 74%, rgba(12,8,30,.62)); }
-header { position: fixed; top: 0; left: 0; right: 0; display: flex; align-items: center; gap: 10px;
-         padding: calc(8px + env(safe-area-inset-top)) 14px 6px; pointer-events: none; }
-header a, header .money { pointer-events: auto; }
-header b.mode { font-size: 11px; letter-spacing: .14em; padding: 3px 9px; border-radius: 999px;
-                background: rgba(60, 46, 100, .75); border: 1px solid rgba(224,178,94,.5); }
-header b.mode.live { background: var(--bad); color: #fff; }
-header a { color: var(--dim); text-decoration: none; font-size: 13px; text-shadow: 0 1px 2px #000; }
-header .money { margin-left: auto; text-align: right; font-variant-numeric: tabular-nums;
-                background: var(--glass); padding: 4px 10px; border-radius: 10px; border: 1px solid rgba(224,178,94,.35);
-                backdrop-filter: blur(6px); }
-header .money b { font-size: 16px; }
-header .money small { display: block; font-size: 11px; color: var(--dim); }
-header .money #clock { font-size: 10px; color: var(--dim); display: block; }
-#foot { position: fixed; left: 14px; right: 14px; top: calc(52px + env(safe-area-inset-top)); font-size: 11px;
-        color: var(--dim); text-shadow: 0 1px 2px #000, 0 0 6px rgba(0,0,0,.6); pointer-events: none; display: flex; }
-#status { flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+header { position: fixed; top: 0; left: 0; right: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+         padding: calc(8px + env(safe-area-inset-top)) 12px 14px; pointer-events: none;
+         background: linear-gradient(to bottom, rgba(14,10,34,.86), rgba(14,10,34,.6) 72%, rgba(14,10,34,0)); }
+header a, header button { pointer-events: auto; }
+header a.back { color: var(--fg); text-decoration: none; font-size: 21px; line-height: 1; padding: 6px 2px; min-width: 26px;
+                text-align: center; text-shadow: 0 1px 2px #000; }
+.pill { font: inherit; color: var(--fg); border-radius: 999px; border: 1px solid rgba(224,178,94,.45); background: var(--glass2);
+        cursor: pointer; min-height: 36px; padding: 4px 11px; white-space: nowrap; }
+.pill:focus-visible, #panel button:focus-visible, #guide button:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
+.pill.real { display: inline-flex; flex-direction: column; align-items: flex-start; justify-content: center; line-height: 1.12;
+             min-height: 42px; padding: 4px 12px 5px; border-radius: 14px; background: rgba(66,64,84,.9); border-color: rgba(255,255,255,.3); }
+.pill.real b { font-size: 15px; letter-spacing: .08em; text-transform: uppercase; }
+.pill.real small { font-size: 12px; font-variant-numeric: tabular-nums; color: var(--dim); }
+.pill.real.on { background: #cf3129; border-color: #ff9a90; color: #fff; box-shadow: 0 0 0 2px rgba(255,107,97,.22), 0 4px 16px rgba(207,49,41,.45); }
+.pill.real.on small { color: #fff; }
+.pill.real.paused small { color: #ffe08a; font-weight: 700; }
+.pill.practice { font-size: 12.5px; background: rgba(38,60,118,.86); border-color: rgba(140,170,255,.55); }
+.pill.help { font-size: 18px; font-weight: 800; width: 38px; padding: 0; margin-left: auto; }
+#headline { flex: 1 1 100%; margin: 0; font-size: 15px; line-height: 1.32; font-weight: 600; text-shadow: 0 1px 3px #000;
+            pointer-events: none; overflow-wrap: anywhere; }
+#status { flex: 1 1 100%; margin: 0; font-size: 13px; line-height: 1.3; font-weight: 700; color: var(--warn); text-shadow: 0 1px 2px #000;
+          pointer-events: none; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 #status.bad { color: var(--bad); }
+#status[hidden], #panel[hidden], #guide[hidden] { display: none; }
+#panel, #guide { z-index: 20; }  /* over the LIVE card, the bubbles and the chips */
+@media (min-width: 760px) { #headline { flex: 1 1 320px; font-size: 16px; } .pill.help { margin-left: 0; order: 9; } }
+#panel { position: fixed; left: 12px; top: calc(var(--bar, 110px) - 8px); width: min(540px, calc(100% - 24px));
+         max-height: calc(100% - var(--bar, 110px) - 160px); overflow-y: auto; background: #150f2a;
+         border: 1px solid rgba(224,178,94,.5); border-radius: 14px; padding: 12px 14px 10px; font-size: 14px; line-height: 1.42;
+         box-shadow: 0 12px 40px rgba(0,0,0,.5); }
+#panel.real { border: 2px solid #ff8a80; }
+#panel h2 { margin: 0 40px 4px 0; font-size: 16px; }
+#panel p { margin: 7px 0 0; }
+#panel .warn { color: var(--warn); font-weight: 700; }
+#panel .verdict { font-weight: 700; }
+.dim { color: var(--dim); font-size: 12.5px; }
+#panel a { color: var(--brass); }
+button.close { position: absolute; right: 6px; top: 4px; width: 38px; height: 38px; font: inherit; font-size: 22px; line-height: 1;
+               color: var(--fg); background: none; border: 0; cursor: pointer; }
+#guide { position: fixed; left: 0; right: 0; margin: 0 auto; width: min(540px, calc(100% - 24px));
+         bottom: calc(76px + env(safe-area-inset-bottom)); background: #150f2a; border: 1px solid var(--brass);
+         border-radius: 16px; padding: 12px 0 10px; box-shadow: 0 12px 40px rgba(0,0,0,.55); }
+#guide .cards { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; touch-action: pan-x pan-y; }
+#guide .cards::-webkit-scrollbar { display: none; }
+#guide .gcard { flex: 0 0 100%; scroll-snap-align: start; padding: 0 16px; font-size: 14px; line-height: 1.42;
+                max-height: min(46vh, 380px); overflow-y: auto; }
+#guide h2 { font-size: 17px; margin: 0 34px 6px 0; color: var(--brass); }
+#guide p { margin: 6px 0 0; }
+#guide ul { list-style: none; margin: 6px 0 0; padding: 0; }
+#guide li { padding: 3px 0; display: flex; align-items: center; gap: 8px; }
+#guide li span { flex: 1 1 auto; min-width: 0; }
+#guide li small { color: var(--dim); flex: 0 0 auto; }
+#guide li i, #guide .dots i { display: inline-block; flex: 0 0 auto; width: 8px; height: 8px; border-radius: 50%; background: #6c717c; }
+#guide li i.working { background: var(--good); } #guide li i.stuck { background: var(--bad); } #guide li i.waiting { background: var(--warn); }
+#guide .gnav { display: flex; align-items: center; gap: 8px; padding: 10px 16px 0; }
+#guide .dots { flex: 1 1 auto; } #guide .dots i { margin-right: 6px; background: rgba(255,255,255,.3); } #guide .dots i.on { background: var(--brass); }
+#guide .gnav button { font: inherit; font-size: 14px; min-height: 38px; padding: 4px 16px; border-radius: 999px; cursor: pointer;
+                      border: 1px solid var(--brass); background: rgba(224,178,94,.25); color: var(--fg); }
 #loading { position: absolute; right: 11px; top: 7px; font-size: 10.5px; letter-spacing: .06em; color: var(--brass);
             font-variant-numeric: tabular-nums; white-space: nowrap; }
 #loading[hidden] { display: none; }
-#town { position: fixed; left: 14px; right: 14px; top: calc(68px + env(safe-area-inset-top)); font-size: 11px;
-        line-height: 1.3; color: var(--dim); text-shadow: 0 1px 2px #000, 0 0 6px rgba(0,0,0,.6); pointer-events: none;
-        max-height: 2.7em; overflow: hidden; }
 .label { position: fixed; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; font-weight: 700;
          color: var(--brass); text-shadow: 0 1px 3px #000, 0 0 8px rgba(0,0,0,.85); pointer-events: none;
          white-space: nowrap; transition: opacity .4s ease; }
@@ -322,6 +368,8 @@ header .money #clock { font-size: 10px; color: var(--dim); display: block; }
 #card .rows { margin-top: 3px; font-size: 12px; color: var(--dim); }
 #card .rows div { display: flex; justify-content: space-between; gap: 10px; align-items: center; }
 #card .rows div span:first-child { flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#card .rows div.role { color: var(--fg); font-size: 13px; }
+#card .rows div.latest { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; margin-top: 1px; }
 .status { display: inline-block; font-size: 10.5px; padding: 0 7px; border-radius: 999px; white-space: nowrap;
           background: rgba(255,255,255,.12); }
 .status.working { background: rgba(95,227,154,.22); color: var(--good); }
@@ -371,8 +419,10 @@ const MEMBERS = Array.from(document.querySelectorAll("#members span")).map(funct
   return { id: s.dataset.id, name: s.dataset.name, role: s.dataset.role };
 });
 const el = function (id) { return document.getElementById(id); };
-const boot = el("boot"), statusEl = el("status"), clockEl = el("clock"), townEl = el("town"), loadingEl = el("loading");
-const moneyEl = el("money"), sinceEl = el("since"), modeEl = el("mode");
+const boot = el("boot"), statusEl = el("status"), clockEl = el("clock"), loadingEl = el("loading");
+const barEl = el("bar"), headlineEl = el("headline"), realBtn = el("real"), realLabel = el("real-label"), realSub = el("real-sub");
+const practiceBtn = el("practice"), helpBtn = el("help"), panelEl = el("panel"), panelTitle = el("panel-title"), panelBody = el("panel-body");
+const guideEl = el("guide"), guideCards = el("guide-cards"), guideNext = el("guide-next");
 const bubblesEl = el("bubbles"), dropEl = el("drop"), card = el("card"), chips = el("chips"), labelsEl = el("labels");
 const canvas = el("view");
 const params = new URLSearchParams(location.search);
@@ -390,6 +440,7 @@ const TAU = Math.PI * 2;
 function angleDiff(a, b) { return ((a - b + Math.PI) % TAU + TAU) % TAU - Math.PI; }
 function fmtUsd(v) { return v == null ? "—" : (v < 0 ? "−" : "") + "$" + Math.abs(v).toFixed(2); }
 function fmtSigned(v) { return v == null ? "—" : (v >= 0 ? "+" : "−") + "$" + Math.abs(v).toFixed(2); }
+function isNum(v) { return typeof v === "number" && isFinite(v); }
 function fail(text) { boot.hidden = false; boot.textContent = text; boot.className = "bad"; canvas.hidden = true; }
 
 let renderer = null;
@@ -3039,13 +3090,13 @@ _M_LIFE = r"""
     const i = bubbles.findIndex(function (b) { return b.actor === actor; }); if (i >= 0) { bubbles[i].el.remove(); bubbles.splice(i, 1); }
     while (bubbles.length >= 2) bubbles.shift().el.remove();
     const d = document.createElement("div"); d.className = "bubble" + (tone === "good" ? " good" : tone === "bad" ? " bad" : "");
-    const s = document.createElement("small"); s.textContent = actor.name.toUpperCase() + " · " + nameOf(memberId);
+    const s = document.createElement("small"); s.textContent = actor.name.toUpperCase() + jobOf(actor.key, memberId);
     const p = document.createElement("span"); p.textContent = text;
     d.appendChild(s); d.appendChild(p); d.style.opacity = "0"; bubblesEl.appendChild(d);
     const b = { el: d, actor: actor, until: simT + (seconds || 8), kind: "event" }; bubbles.push(b); return b;
   }
   function updateBubbles() {
-    const Wd = window.innerWidth, Hg = window.innerHeight, top = 96, bottom = Hg - 150;
+    const Wd = window.innerWidth, Hg = window.innerHeight, top = Math.max(96, barBottom + 8), bottom = Hg - 150;
     const hide = shotKey === "map"; if (bubblesEl.hidden !== hide) bubblesEl.hidden = hide;  // (the map is for the room names)
     for (let i = bubbles.length - 1; i >= 0; i--) {
       const b = bubbles[i];
@@ -3120,10 +3171,19 @@ _M_LIFE = r"""
     if (actor || roomKey) {
       const spec = ROOMS[roomKey] || ROOMS[actor ? actor.homeRoom : ""] || null;
       room.textContent = (actor && actor.walking ? "ON THE WAY" : spec ? spec.title : "").toUpperCase();
-      if (actor) { const c = CAST[actor.key]; who.appendChild(document.createTextNode(c.name + " · " + c.kind));
-        const small = document.createElement("small"); small.textContent = "plays " + c.members.map(nameOf).join(", "); who.appendChild(small); }
+      const t = actor ? teamOf(actor.key) : null;
+      if (actor) { const c = CAST[actor.key]; who.appendChild(document.createTextNode(c.name + " · " + c.kind)); }
       else if (spec) who.appendChild(document.createTextNode(spec.line));
-      const ids = actor ? actor.members : spec ? spec.members : [];
+      if (t) {  // the character's job and status in plain words, then their latest event (the data's own words)
+        const div = document.createElement("div"), a = document.createElement("span"), st = document.createElement("span");
+        div.className = "role"; a.textContent = t.plain_role; st.className = "status " + (STATUS_CLASS[t.status_word] || "idle"); st.textContent = t.status_word;
+        div.appendChild(a); div.appendChild(st); rows.appendChild(div);
+        const news = document.createElement("div"); news.className = "latest";
+        news.textContent = t.latest ? "Latest: " + t.latest + (t.latest_ago ? " · " + t.latest_ago : "") : "No news from " + t.name + " yet.";
+        rows.appendChild(news);
+        return;
+      }
+      const ids = actor ? actor.members : spec ? spec.members : [];  // (older data without the plain words)
       ids.slice(0, 3).forEach(function (id) {
         const m = members[id]; if (!m) return;
         const div = document.createElement("div"), a = document.createElement("span"), st = document.createElement("span");
@@ -3149,7 +3209,7 @@ _M_LIFE = r"""
     if (!res.ok) { setOffline("Cannot reach the bot's data (" + res.status + ")"); return null; }
     return res.json();
   }
-  function setOffline(text) { offline = true; statusEl.textContent = text; statusEl.className = "bad"; body.classList.add("offline"); }
+  function setOffline(text) { offline = true; statusEl.textContent = text; statusEl.hidden = false; statusEl.className = "bad"; body.classList.add("offline"); }
   function onEvent(memberId, ev) {
     const actor = actors[actorOf[memberId]]; if (!actor) return;
     const here = roomOf[memberId] || actor.homeRoom, i = PIPELINE.indexOf(memberId);
@@ -3161,7 +3221,7 @@ _M_LIFE = r"""
       actor.beats.push({ at: simT + 3.2, fn: function (a) { speak(a, memberId, ev.text, ev.tone, 10); } });
       actor.beats.sort(function (x, y) { return x.at - y.at; });
     } else {
-      speak(actor, memberId, ev.text, ev.tone, 9);
+      speak(actor, memberId, saidOf(memberId, ev), ev.tone, 9);
       if (ev.tone === "bad") oneShot(actor, "worried");  // a bad-tone event worries its speaker (Rook too)
       else if (ev.tone === "good" && actor.key === "rook") oneShot(actor, "nod", 4.5);  // Rook nods at good news
     }
@@ -3198,12 +3258,9 @@ _M_LIFE = r"""
   function apply(d) {
     const first = !data;
     offline = false; lastOkAt = Date.now(); body.classList.remove("offline");
-    const mode = d.mode === "LIVE" ? "LIVE" : "PAPER";
-    modeEl.textContent = mode; modeEl.className = "mode" + (mode === "LIVE" ? " live" : "");
+    plain = d.plain && d.plain.real && d.plain.pretend ? d.plain : null;
+    renderBar();
     const money = d.money || {}, since = (money.since_start || {}).usd;
-    moneyEl.textContent = fmtUsd(money.usd);
-    sinceEl.textContent = since == null ? (money.label || "") : fmtSigned(since) + " since start";
-    sinceEl.style.color = since == null ? "" : since >= 0 ? "var(--good)" : "var(--bad)";
     drawVaultSign(fmtUsd(money.usd), money.label || "", since == null ? null : since >= 0 ? "#58d68d" : "#ff6b61");
     ((d.team && d.team.members) || []).forEach(function (m) {
       members[m.id] = m;
@@ -3217,14 +3274,123 @@ _M_LIFE = r"""
     realBulbMat.emissiveIntensity = nReal > 0 ? 4 : 0; realHalo.material.opacity = nReal > 0 ? 0.9 : 0;
     const closed = ((d.trades || {}).closed || [])[0];
     if (closed) { const key = closed.coin + "|" + closed.closed_at; if (!first && lastClosedKey && key !== lastClosedKey) onClosed(closed); lastClosedKey = key; }
-    const alerts = d.alerts || [];
-    statusEl.textContent = alerts.length ? alerts[0].text : "Every word on screen is the bot's own data";
+    const alerts = d.alerts || [];  // a real problem only (the bot down, a kill switch, a budget): the first one, in words
+    statusEl.textContent = alerts.length ? alerts[0].text : ""; statusEl.hidden = !alerts.length;
     statusEl.className = alerts.length && alerts[0].level === "bad" ? "bad" : "";
-    townEl.textContent = (d.town && d.town.line) || "";
     data = d;
-    updateLamps(); renderChips(); renderCard();
-    if (first) chatterAt = simT + 6;
+    updateLamps(); renderChips(); renderCard(); measureBar();
+    if (first) { chatterAt = simT + 6; if (plain && !guideSeen()) openGuide(); }
   }
+
+  // ============================================================= THE BAR: real money, practice, the headline, the guide
+  // Every word here is /api/page's plain block (plain: fixed templates the server filled with the bot's own figures) or
+  // the fixed copy below; real money is red only while the data says it is on, practice always says "pretend".
+  let plain = null, panelKind = null, barBottom = 0;
+  const STATUS_CLASS = { working: "working", waiting: "waiting", idle: "idle", stuck: "blocked" };
+  function teamOf(key) { return plain && Array.isArray(plain.team) ? plain.team.find(function (t) { return t.id === key; }) || null : null; }
+  function jobOf(key, memberId) { const t = teamOf(key); return t && t.job ? " · " + t.job : memberId ? " · " + nameOf(memberId) : ""; }
+  function saidOf(memberId, ev) {  // the event's plain words when the data has them for this very event, else its own text
+    const s = plain && plain.said ? plain.said[memberId] : null;
+    return s && s.ts === ev.ts && s.text ? s.text : String(ev.text || "").replace(/\(paper\)/g, "(pretend money)");
+  }
+  function measureBar() {  // (the panel opens just under the bar, the bubbles stay below it)
+    barBottom = barEl.getBoundingClientRect().bottom; body.style.setProperty("--bar", Math.round(barBottom) + "px");
+  }
+  function renderBar() {
+    if (!plain) { headlineEl.textContent = ""; realLabel.textContent = "Money"; realSub.textContent = "not in this version"; return; }
+    const r = plain.real, held = isNum(r.at_risk_usd) ? fmtUsd(r.at_risk_usd) : null;
+    headlineEl.textContent = plain.headline;
+    realLabel.textContent = r.label;
+    realSub.textContent = !r.on ? "off" : r.paused ? "paused: no new bets" : held ? held + " at risk now" : "on";
+    realBtn.className = "pill real" + (r.on ? " on" : "") + (r.on && r.paused ? " paused" : "");
+    realBtn.setAttribute("aria-label", r.label + (r.on ? " is on" : " is off") + ": tap for the details");
+    if (panelKind) renderPanel();
+    if (!guideEl.hidden) renderGuide();
+  }
+  function para(parent, text, cls) {
+    if (!text) return null;
+    const p = document.createElement("p"); if (cls) p.className = cls; p.textContent = text; parent.appendChild(p); return p;
+  }
+  function renderPanel() {
+    panelBody.textContent = "";
+    if (!plain) { panelTitle.textContent = "Loading…"; return; }
+    if (panelKind === "real") {
+      const r = plain.real;
+      panelTitle.textContent = r.label + (!r.on ? ": off" : r.paused ? ": on, paused" : ": on"); panelEl.className = r.on ? "real" : "";
+      para(panelBody, r.line); para(panelBody, r.paused, "warn"); para(panelBody, r.limits); para(panelBody, r.verdict, "verdict");
+      para(panelBody, r.research, "dim");
+    } else {
+      panelTitle.textContent = plain.pretend.label; panelEl.className = "";
+      para(panelBody, plain.pretend.line); para(panelBody, "Pretend money is practice: nothing in it is won or lost for real.", "dim");
+    }
+  }
+  function openPanel(kind) {
+    if (panelKind === kind) { closePanel(); return; }
+    closeGuide(); panelKind = kind; renderPanel(); panelEl.hidden = false;
+    realBtn.setAttribute("aria-expanded", String(kind === "real")); practiceBtn.setAttribute("aria-expanded", String(kind === "practice"));
+  }
+  function closePanel() {
+    panelKind = null; panelEl.hidden = true; realBtn.setAttribute("aria-expanded", "false"); practiceBtn.setAttribute("aria-expanded", "false");
+  }
+  realBtn.onclick = function () { openPanel("real"); };
+  practiceBtn.onclick = function () { openPanel("practice"); };
+  el("panel-close").onclick = closePanel;
+
+  // the first-visit guide: three cards to swipe, shown once by itself (remembered in this browser when it can be:
+  // private windows and blocked storage throw, and then it simply shows again next visit), "?" brings it back. It
+  // closes by itself after GUIDE_IDLE_MS without a touch, so it never covers the scene for long.
+  const GUIDE_KEY = "nightcrawler.world.guide", GUIDE_IDLE_MS = 30000;
+  let guideTimer = 0, guidePage = 0, guideShown = false;
+  function guideSeen() {
+    if (guideShown) return true;
+    try { return window.localStorage.getItem(GUIDE_KEY) === "seen"; } catch (e) { return false; }
+  }
+  function guideRemember() {
+    guideShown = true;
+    try { window.localStorage.setItem(GUIDE_KEY, "seen"); } catch (e) { /* storage blocked: shown again next visit */ }
+  }
+  function renderGuide() {
+    const team = el("guide-team"), money = el("guide-money"), cam = el("guide-camera");
+    team.textContent = ""; money.textContent = ""; cam.textContent = "";
+    para(team, "Six characters act out the parts of the bot, live from its own records:");
+    const ul = document.createElement("ul");
+    ((plain && plain.team) || []).forEach(function (t) {
+      const li = document.createElement("li"), dot = document.createElement("i"), job = document.createElement("span");
+      const small = document.createElement("small");
+      dot.className = t.status_word; job.textContent = t.plain_role; small.textContent = t.status_word;
+      li.appendChild(dot); li.appendChild(job); li.appendChild(small); ul.appendChild(li);
+    });
+    team.appendChild(ul);
+    if (plain) {
+      const r = plain.real;
+      para(money, r.line); para(money, r.limits); para(money, r.verdict, "verdict"); para(money, plain.pretend.line);
+    }
+    para(cam, "The camera is a drone: it flies to whoever has news and films them live (the red LIVE tag).");
+    para(cam, "Tap a name at the bottom to watch that character; after " + LIVE_CFG.pin + " seconds it goes back to live.");
+    para(cam, "Tap the money buttons at the top for the details; ? brings this guide back.");
+  }
+  function guideDots() {
+    const dots = el("guide-dots").children;
+    for (let i = 0; i < dots.length; i++) dots[i].className = i === guidePage ? "on" : "";
+    guideNext.textContent = guidePage >= dots.length - 1 ? "Done" : "Next";
+  }
+  function armGuide() { clearTimeout(guideTimer); guideTimer = setTimeout(closeGuide, GUIDE_IDLE_MS); }
+  function openGuide() {
+    closePanel(); renderGuide(); guideEl.hidden = false; guideCards.scrollLeft = 0; guidePage = 0; guideDots(); armGuide();
+  }
+  function closeGuide() { if (guideEl.hidden) return; guideEl.hidden = true; clearTimeout(guideTimer); guideRemember(); }
+  guideCards.addEventListener("scroll", function () {
+    guidePage = Math.round(guideCards.scrollLeft / Math.max(1, guideCards.clientWidth)); guideDots(); armGuide();
+  }, { passive: true });
+  guideEl.addEventListener("pointerdown", armGuide);
+  guideNext.onclick = function () {
+    if (guidePage >= 2) { closeGuide(); return; }
+    guideCards.scrollTo({ left: (guidePage + 1) * guideCards.clientWidth, behavior: "smooth" }); armGuide();
+  };
+  el("guide-close").onclick = closeGuide;
+  helpBtn.onclick = function () { if (guideEl.hidden) openGuide(); else closeGuide(); };
+  canvas.addEventListener("pointerdown", function () { if (panelKind) closePanel(); });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") { closePanel(); closeGuide(); } });
   async function tick() {
     try { const d = await fetchPage(); if (d) apply(d); } catch (e) { setOffline("Cannot reach the bot right now"); }
     clockEl.textContent = lastOkAt ? "updated " + new Date(lastOkAt).toLocaleTimeString() : "";
@@ -3272,6 +3438,7 @@ _M_LIFE = r"""
     camera.aspect = aspect; camera.fov = aspect >= 1 ? 55 : clamp(2 * Math.atan(Math.tan(THREE.MathUtils.degToRad(20)) / aspect) * 180 / Math.PI, 55, 75);
     camera.updateProjectionMatrix(); placeBoard();
     if (composer) { composer.setPixelRatio(Q.dpr); composer.setSize(w, h); }
+    measureBar();  // (the bar wraps differently: the bubbles stay below it)
   }
   window.addEventListener("resize", resize);
   let fpsN = 0, fpsT = 0, governed = FULLQ || LITE, settleAt = 0, bloomByGovernor = false, bloomRetried = false, fastWindows = 0;
@@ -3994,11 +4161,26 @@ def render_world_html(settings: Settings) -> str:
         f'<script type="importmap">{_IMPORTMAP}</script>\n</head>\n'
         f'<body data-refresh="{REFRESH_S}" data-pipeline="{",".join(PIPELINE)}">\n'
         '<canvas id="view"></canvas><div id="vignette"></div>\n'
-        f'<header><b class="mode{" live" if live else ""}" id="mode">{mode}</b><a href="./">← the page</a>'
-        '<a href="office">office</a>'
-        '<span class="money"><b id="money">—</b><small id="since"></small><span id="clock"></span></span></header>\n'
-        '<div id="foot"><span id="status">Loading the world…</span></div>\n'
-        '<div id="town"></div>\n'
+        '<header id="bar"><a class="back" href="./" title="Back to the page" aria-label="Back to the page">←</a>'
+        '<button type="button" class="pill real" id="real" aria-controls="panel" aria-expanded="false">'
+        '<b id="real-label">Money</b><small id="real-sub">loading…</small></button>'
+        '<button type="button" class="pill practice" id="practice" aria-controls="panel" aria-expanded="false">'
+        "Practice (pretend)</button>"
+        '<button type="button" class="pill help" id="help" aria-controls="guide" aria-label="How to read this screen">'
+        "?</button>"
+        '<p id="headline">Loading the world…</p><p id="status" role="status" hidden></p></header>\n'
+        '<div id="panel" role="dialog" aria-labelledby="panel-title" hidden>'
+        '<button type="button" class="close" id="panel-close" aria-label="Close">×</button>'
+        '<h2 id="panel-title"></h2><div id="panel-body"></div>'
+        '<p class="dim"><span id="clock"></span> · <a href="office">the office</a></p></div>\n'
+        '<div id="guide" role="dialog" aria-labelledby="guide-title" hidden>'
+        '<button type="button" class="close" id="guide-close" aria-label="Close the guide">×</button>'
+        '<div class="cards" id="guide-cards">'
+        '<section class="gcard"><h2 id="guide-title">This is the bot\'s team at work</h2><div id="guide-team"></div></section>'
+        '<section class="gcard"><h2>Real money vs practice</h2><div id="guide-money"></div></section>'
+        '<section class="gcard"><h2>The camera follows what is happening</h2><div id="guide-camera"></div></section>'
+        '</div><div class="gnav"><span class="dots" id="guide-dots"><i class="on"></i><i></i><i></i></span>'
+        '<button type="button" id="guide-next">Next</button></div></div>\n'
         f'<div id="members" hidden>{members}</div>\n'
         f'<script id="cast" type="application/json">{_json_block(WORLD_CAST)}</script>\n'
         f'<script id="rooms" type="application/json">{_json_block(WORLD_ROOMS)}</script>\n'

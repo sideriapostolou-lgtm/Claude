@@ -1,6 +1,8 @@
 """The ONE dashboard page at ``/`` (owner: O6): built for an owner who checks the bot from a phone.
 
-Top to bottom, in plain words: money (a big dollar number and a chart; under it the Polymarket desk's two books,
+Top to bottom, in plain words: "In plain words" (``plain``: one headline, the real money with its hard limits and the
+lab's verdict, the practice books, always "pretend", what just happened, who is who and what the words mean; every
+sentence is the data's own), money (a big dollar number and a chart; under it the Polymarket desk's two books,
 paper and real, never added to the SOL wallet or to each other, and the trend desk's paper book, a forward test of
 lab 3's 50-day trend rule on BTC, ETH and SOL, never added to anything either), the town (what running the bot costs
 against what each desk made, with the trend desk's own line under the bars), the bot wallet (its public address with
@@ -193,6 +195,14 @@ button.copy{margin-top:10px;min-height:44px;padding:8px 16px;border-radius:10px;
 background:var(--accent);color:#fff;font:inherit;font-size:15px;font-weight:650;cursor:pointer}
 button.copy:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
 footer{color:var(--ink2);font-size:12px;text-align:center;margin-top:18px}
+.box{border:1px solid var(--border);border-radius:12px;padding:10px 12px;margin-top:10px;min-width:0}
+.box>.meta{font-size:15px;color:var(--ink)}
+.box p{margin:6px 0 0}
+.box>p:first-child{margin-top:0}
+.box.on{border:2px solid var(--live)}
+.tag.on{background:var(--live);border-color:var(--live);color:#fff}
+.box .verdict-line{font-weight:650;color:var(--ink)}
+#plain-now>div{font-size:15px;overflow-wrap:anywhere}
 """
 
 _SCRIPT = r"""
@@ -272,6 +282,31 @@ _SCRIPT = r"""
   function bar(label, value, text, cls, note) {
     return el("div", "bar", el("span", null, label), el("b", "num", text || ""),
       isNum(value) ? track(value, cls) : null, note ? el("small", null, note) : null);
+  }
+
+  // ---------------------------------------------------------------- 0. in plain words (plain)
+  // The whole screen in a few sentences for a newcomer: the headline, the real money (only what the data calls real,
+  // with its hard limits and the lab's verdict), the practice books (always "pretend"), what just happened, who is
+  // who and what the words mean. Every sentence is the data's own; the page adds only fixed words around them.
+  const STATUS_CHIP = {working: "working", waiting: "waiting", idle: "idle", stuck: "blocked"};
+  function renderPlain(p) {
+    if (!p || !p.real || !p.pretend) return;  // older data without the block: the card keeps "Loading…"
+    $("plain-headline").textContent = p.headline;
+    const r = p.real, held = r.on && isNum(r.at_risk_usd) ? usd(r.at_risk_usd) + " at risk now" : null;
+    put($("plain-real"), el("div", "box" + (r.on ? " on" : ""),
+      el("div", "line", el("span", "coin", r.label, el("span", "tag" + (r.on ? " on" : ""), r.on ? "ON" : "OFF")),
+        held ? el("span", "big", held) : null),
+      el("p", "meta", r.line), r.paused ? el("p", "warning", r.paused) : null,
+      r.limits ? el("p", "help", r.limits) : null, r.verdict ? el("p", "help verdict-line", r.verdict) : null,
+      r.research ? el("p", "help", r.research) : null));
+    const practice = el("div", "box", el("p", "meta", p.pretend.line));  // (the line starts with its own label)
+    practice.setAttribute("aria-label", p.pretend.label);
+    put($("plain-pretend"), practice);
+    put($("plain-now"), ...(p.now.length ? p.now.map((t) => el("div", null, t))
+      : [el("p", "empty", "Nothing new in the last six hours.")]));
+    put($("plain-team"), ...p.team.map((c) => el("div", "line", el("span", null, c.plain_role),
+      el("span", "chip " + (STATUS_CHIP[c.status_word] || "idle"), el("i"), c.status_word))));
+    put($("plain-words"), ...p.glossary.map((g) => el("div", null, el("b", null, g.word), el("div", "meta", g.means))));
   }
 
   // ---------------------------------------------------------------- A. money
@@ -782,6 +817,7 @@ _SCRIPT = r"""
     mode.textContent = s.mode;
     mode.className = "mode" + (s.mode === "LIVE" ? " live" : "");
     put($("alerts"), ...s.alerts.map((a) => el("div", "alert " + a.level, a.text)));
+    renderPlain(s.plain);
     renderMoney(s.money);
     if (s.town) renderTown(s.town);
     if (s.wallet) renderWallet(s.wallet);
@@ -882,6 +918,14 @@ def render_page_html(settings: Settings) -> str:
         f"<span class=\"name\">nightcrawler</span><span class=\"updated\" id=\"updated\">loading…</span></header>\n"
         "<div id=\"alerts\" role=\"status\"></div>\n"
         "<div class=\"alert warn\" id=\"offline\" role=\"status\" hidden></div>\n"
+
+        "<section class=\"card\" id=\"plain\"><h2>In plain words</h2>"
+        "<p class=\"lead\" id=\"plain-headline\">Loading…</p><div id=\"plain-real\"></div>"
+        "<div id=\"plain-pretend\"></div><p class=\"sub\">Right now</p><div class=\"rows\" id=\"plain-now\"></div>"
+        "<details class=\"about\"><summary>Who is who</summary><div class=\"rows\" id=\"plain-team\"></div>"
+        "<p class=\"help\">The six characters of the 3D world; each acts out one part of the bot.</p></details>"
+        "<details class=\"about\"><summary>What the words mean</summary><div class=\"rows\" id=\"plain-words\"></div>"
+        "</details></section>\n"
 
         "<section class=\"card\" id=\"money\">"
         f"<h2>Money <small id=\"money-label\">{label}</small></h2>"

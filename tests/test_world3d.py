@@ -1,7 +1,8 @@
 """The 3D world (/world, nightcrawler.world3d): static render and purity, the CSP hashes of the inline module, import
 map and style, the cast (the town's member mapping) and the rooms covering every member, the pinned three.js addons
 and their imports, the real-model manifest and its on-disk detection (with a tiny GLB built here, never shipped), the
-route (auth, headers, methods) and the asset route serving the world's whitelist (no traversal)."""
+route (auth, headers, methods), the asset route serving the world's whitelist (no traversal), and the top bar and
+first-visit guide in plain words (text only, the guide's storage guarded)."""
 
 from __future__ import annotations
 
@@ -193,7 +194,8 @@ def _module(page: str) -> str:
 
 def test_world_is_static_and_lists_every_member(settings: Settings) -> None:
     page = render_world_html(settings)
-    assert page.startswith("<!doctype html>") and '<canvas id="view">' in page and "PAPER" in page
+    assert page.startswith("<!doctype html>") and '<canvas id="view">' in page
+    assert "Night Shift: Skyport · paper" in page
     for mid, name, role in MEMBERS:
         assert f'data-id="{mid}"' in page and f'data-name="{name}"' in page and f'data-role="{role}"' in page
     assert f'data-pipeline="{",".join(PIPELINE)}"' in page
@@ -214,8 +216,12 @@ def test_world_is_static_and_lists_every_member(settings: Settings) -> None:
 
 
 def test_world_live_mode_is_marked(make_settings: Callable[..., Settings]) -> None:
+    """The title says the Solana bot's mode; the real-money button turns red only from the data (plain.real.on), never
+    from the static page: before the first answer it claims nothing."""
     page = render_world_html(live_settings(make_settings))
-    assert 'class="mode live" id="mode">LIVE</b>' in page and "Night Shift: Skyport · live" in page
+    assert "Night Shift: Skyport · live" in page
+    assert '<button type="button" class="pill real" id="real"' in page and "pill real on" not in page
+    assert '<b id="real-label">Money</b><small id="real-sub">loading…</small>' in page
 
 
 def test_world_data_blocks_are_json_that_cannot_break_out(settings: Settings) -> None:
@@ -317,10 +323,18 @@ def test_the_honest_words_come_from_the_data(settings: Settings) -> None:
     assert "realBulbMat.emissiveIntensity = nReal > 0 ? 4 : 0" in module  # the REAL lamp only with real positions
     # a closed trade: the cube is gold for a win, red for a loss, and the float is the trade's own pnl_usd
     assert 'carry: won ? "gold" : "red"' in module and "dropEl.textContent = fmtSigned(pnl)" in module
-    # bubbles say the member's own event text, labelled "ACTOR · Member"
-    assert 'actor.name.toUpperCase() + " · " + nameOf(memberId)' in module and "speak(actor, memberId, ev.text" in module
-    assert "(d.town && d.town.line)" in module
-    assert "alerts[0].text" in module
+    # bubbles say the member's event in the server's plain words for that very event (else its own text), labelled
+    # "ACTOR · job" (the member's name without the plain words)
+    assert 'actor.name.toUpperCase() + jobOf(actor.key, memberId)' in module
+    assert 'return t && t.job ? " · " + t.job : memberId ? " · " + nameOf(memberId) : "";' in module
+    assert "speak(actor, memberId, saidOf(memberId, ev)" in module
+    assert ('return s && s.ts === ev.ts && s.text ? s.text : String(ev.text || "").replace(/\\(paper\\)/g, '
+            '"(pretend money)");') in module  # pretend money says "pretend" in a bubble too
+    # the bar: the headline and the real money from plain, the first banner only when there is one
+    assert "headlineEl.textContent = plain.headline;" in module and "realLabel.textContent = r.label;" in module
+    assert 'realBtn.className = "pill real" + (r.on ? " on" : "")' in module
+    assert 'statusEl.textContent = alerts.length ? alerts[0].text : ""; statusEl.hidden = !alerts.length;' in module
+    assert "d.town" not in module and "townEl" not in module  # the dense town line is gone from the world
 
 
 def test_the_screenshot_switches_never_change_the_default(settings: Settings) -> None:
@@ -1158,3 +1172,70 @@ def test_the_director_allocates_nothing_per_frame(settings: Settings) -> None:
         assert banned not in plan, banned
     assert "govern(dtRaw);" in module and "director(); updateCamera(dtRaw, simT);" in module  # the fps governor stays
     assert 'if (params.get("debug") === "1") window.__world =' in module and module.count("window.__world") == 1
+
+
+# --------------------------------------------------------------------------- the bar and the guide (plain words)
+
+
+def test_the_world_bar_replaces_the_two_dense_lines(settings: Settings) -> None:
+    page = render_world_html(settings)
+    module = _module(page)
+    head = page[page.index('<header id="bar">'):page.index("</header>")]
+    for part in ('class="back" href="./"', 'id="real"', 'id="practice"', ">Practice (pretend)</button>", 'id="help"',
+                 'id="headline"', 'id="status" role="status" hidden'):
+        assert part in head, part
+    assert 'id="town"' not in page and 'id="foot"' not in page and 'id="money"' not in page and 'id="mode"' not in page
+    # the real-money panel: the data's line, the paused reason, the limits, the verdict and the research line
+    panel = _js_body(module, "  function renderPanel() {")
+    for call in ("para(panelBody, r.line)", 'para(panelBody, r.paused, "warn")', "para(panelBody, r.limits)",
+                 'para(panelBody, r.verdict, "verdict")', 'para(panelBody, r.research, "dim")',
+                 "para(panelBody, plain.pretend.line)"):
+        assert call in panel, call
+    assert "p.textContent = text;" in _js_body(module, "  function para(parent, text, cls) {")
+    bar = _js_body(module, "  function renderBar() {")
+    assert 'realSub.textContent = !r.on ? "off" : r.paused ?' in bar and '" at risk now"' in bar
+    # the LIVE card: the character's plain job and latest event
+    card = _js_body(module, "  function renderCard() {")
+    assert "a.textContent = t.plain_role;" in card and '"Latest: " + t.latest' in card
+    assert "bubbles" not in head and "innerHTML" not in page
+
+
+def test_the_guides_storage_is_guarded(settings: Settings) -> None:
+    module = _module(render_world_html(settings))
+    uses = [line for line in module.splitlines() if "localStorage" in line]
+    assert len(uses) == 2 and all("try { " in line and "catch (e)" in line for line in uses), uses
+    assert "if (first) { chatterAt = simT + 6; if (plain && !guideSeen()) openGuide(); }" in module  # first visit
+    assert "GUIDE_IDLE_MS = 30000" in module and "setTimeout(closeGuide, GUIDE_IDLE_MS)" in module  # never long
+    guide = _js_body(module, "  function renderGuide() {")
+    assert "t.plain_role" in guide and "r.line" in guide and "r.limits" in guide and "r.verdict" in guide
+    assert "LIVE_CFG.pin" in guide  # the camera card says the pin's own length
+
+
+@pytest.mark.skipif(shutil.which("node") is None, reason="Node is not installed")
+def test_the_guide_survives_blocked_storage(settings: Settings, tmp_path: Path) -> None:
+    module = _module(render_world_html(settings))
+    seen, remember = _js_body(module, "  function guideSeen() {"), _js_body(module, "  function guideRemember() {")
+    out = _node(f"""
+const store = {{}};
+const window = {{ localStorage: {{ getItem: function (k) {{ return k in store ? store[k] : null; }},
+  setItem: function (k, v) {{ store[k] = String(v); }} }} }};
+const GUIDE_KEY = "nightcrawler.world.guide"; let guideShown = false;
+{seen}
+{remember}
+const a = guideSeen(); guideRemember(); const b = guideSeen(); guideShown = false; const c = guideSeen();
+Object.defineProperty(window, "localStorage", {{ get: function () {{ throw new Error("SecurityError"); }} }});
+guideShown = false; const d = guideSeen(); let threw = false;
+try {{ guideRemember(); }} catch (e) {{ threw = true; }}
+console.log(JSON.stringify([a, b, c, d, threw, guideSeen()]));
+""", tmp_path)
+    # unseen, then remembered; read back from storage; blocked storage: unseen, no error, remembered for this visit
+    assert out == [False, True, True, False, False, True]
+
+
+def test_the_world_csp_follows_the_edit(settings: Settings) -> None:
+    page = render_world_html(settings)
+    (style,) = re.findall(r"<style>(.*?)</style>", page, flags=re.DOTALL)
+    for text in (style, _module(page)):
+        digest = "'sha256-" + base64.b64encode(hashlib.sha256(text.encode()).digest()).decode() + "'"
+        assert digest in WORLD_CSP
+    assert page.count("<script") == 5
