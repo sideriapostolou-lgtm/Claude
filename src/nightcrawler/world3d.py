@@ -3181,6 +3181,7 @@ _M_LIFE = r"""
   const _scr = { x: 0, y: 0, ok: false };  // (one reused result: read it before the next call)
   function toScreen(p) { const v = _v.copy(p).project(camera); _scr.x = (v.x + 1) / 2 * window.innerWidth; _scr.y = (1 - v.y) / 2 * window.innerHeight; _scr.ok = v.z < 1 && v.z > -1; return _scr; }
   const bubbles = [];
+  let hudTop = 0;  // extra room an overlay under the bar needs for now (THE CHANNEL's replay banner): bubbles keep below it
   function speak(actor, memberId, text, tone, seconds) {
     if (!actor || !text) return null;
     const i = bubbles.findIndex(function (b) { return b.actor === actor; }); if (i >= 0) { bubbles[i].el.remove(); bubbles.splice(i, 1); }
@@ -3192,7 +3193,7 @@ _M_LIFE = r"""
     const b = { el: d, actor: actor, until: simT + (seconds || 8), kind: "event" }; bubbles.push(b); return b;
   }
   function updateBubbles() {
-    const Wd = window.innerWidth, Hg = window.innerHeight, top = Math.max(96, barBottom + 8), bottom = Hg - 150;
+    const Wd = window.innerWidth, Hg = window.innerHeight, top = Math.max(96, barBottom + 8 + hudTop), bottom = Hg - 150;
     const hide = shotKey === "map"; if (bubblesEl.hidden !== hide) bubblesEl.hidden = hide;  // (the map is for the room names)
     for (let i = bubbles.length - 1; i >= 0; i--) {
       const b = bubbles[i];
@@ -3663,8 +3664,8 @@ _M_CHANNEL = r"""
             fog: 0xc8aacc, cLit: 0xffd0bc, cShade: 0x8670b8, stars: 0.25, hemi: 1.1, sunI: 2.3, prac: 1.0, exp: 1.06, el: 0.07, sx: 0.84, key: 5, lantern: 0.55 },
     day: { top: 0x3a64c8, mid: 0x8aa2e6, hor: 0xffd0b4, below: 0xc7b4e0, sun: 0xfff0d8, hsky: 0xd2dcff, hgnd: 0x8a6a50, sunC: 0xfff1dc,
            fog: 0xc8bce0, cLit: 0xfff1e6, cShade: 0xa898d8, stars: 0.0, hemi: 1.7, sunI: 3.2, prac: 0.6, exp: 1.0, el: 0.4, sx: 0.0, key: 1.5, lantern: 0.15 },
-    golden: { top: 0x3a5ab4, mid: 0x9c88c4, hor: 0xffb478, below: 0xcaa6bc, sun: 0xffd49c, hsky: 0xe6d2cc, hgnd: 0x9c6c46, sunC: 0xffc27c,
-              fog: 0xd8bab4, cLit: 0xffd6a8, cShade: 0x9a7cb6, stars: 0.0, hemi: 1.4, sunI: 3.4, prac: 0.8, exp: 1.03, el: 0.15, sx: -0.84, key: 3, lantern: 0.45 },
+    golden: { top: 0x4a62b0, mid: 0xd8a088, hor: 0xffa860, below: 0xd8a890, sun: 0xffc890, hsky: 0xf4cfa8, hgnd: 0xa86a40, sunC: 0xffb468,
+              fog: 0xe6b896, cLit: 0xffcf98, cShade: 0xa07ab0, stars: 0.0, hemi: 1.45, sunI: 3.5, prac: 0.85, exp: 1.04, el: 0.12, sx: -0.84, key: 3.5, lantern: 0.5 },
     dusk: { top: 0x161a52, mid: 0x4d3f93, hor: 0xf2a07a, below: 0xa486c4, sun: 0xffb98a, hsky: 0xae9ce8, hgnd: 0x8a5a3a, sunC: 0xffac74,
             fog: 0xb294c4, cLit: 0xffc7a6, cShade: 0x7d64b4, stars: 0.7, hemi: 1.0, sunI: 2.9, prac: 1.15, exp: 1.08, el: 0.085, sx: -0.84, key: 6, lantern: 1.0 },
   };
@@ -3855,7 +3856,7 @@ _M_CHANNEL = r"""
       replayMoney.className = w.money === "real money" ? "money real" : "money";
       replayEl.className = "on " + (it.result === "won" ? "won" : it.result === "lost" ? "lost" : "even");
       replayEl.setAttribute("aria-label", w.line);
-      replayUntil = performance.now() + REPLAY_MS; replayNow = it;
+      replayUntil = performance.now() + REPLAY_MS; replayNow = it; hudTop = replayEl.offsetHeight + 6;
       sound.bell(it.result === "won");
       for (let i = 0; i < replayHooks.length; i++) { try { replayHooks[i](it); } catch (e) { console.warn("world: a replay hook failed", e); } }
     }
@@ -3872,7 +3873,7 @@ _M_CHANNEL = r"""
     const W8 = dayWeights(13, {}), WX = weatherOf(null, {}), WXS = { clouds: 0, dim: 0, wind: 0.25, storm: 0 };  // (WXS: what the sky shows, eased)
     const SUN_DIR = sunDir.clone(), BULB = props.lanternBulbs.material.color.clone(), PRAC = Object.keys(practicals);
     sun.userData.dir = SUN_DIR;
-    let tzMs = 0, tzAt = -1e12, skyT = 1, lampK = 1, lampShown = -1;
+    let tzMs = 0, tzAt = -1e12, skyT = 1, lampK = 1, lampShown = -1, hemiBase = 1;
     function viewerHours() {  // the viewer's time of day in hours (the zone's offset read once a minute: nothing allocated)
       const now = Date.now(); if (now - tzAt > 60000) { tzAt = now; tzMs = new Date(now).getTimezoneOffset() * 60000; }
       return (((now - tzMs) / 3600000) % 24 + 24) % 24;
@@ -3883,9 +3884,10 @@ _M_CHANNEL = r"""
       return out;
     }
     function mixN(key) { let v = 0; for (let i = 0; i < CH_LOOKS.length; i++) v += CH_PAL[CH_LOOKS[i]][key] * W8[CH_LOOKS[i]]; return v; }
-    function overcast(c, g) {  // grey weather: a colour pulled toward its own grey and a little darker (night stays dark)
+    let darken = 0;  // (how much darker the weather makes every colour: grey skies, more so in a storm)
+    function overcast(c, g) {  // grey weather: a colour pulled toward its own grey and darker (night stays dark)
       if (g <= 0) return c;
-      const l = 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b, k = 1 - 0.32 * g;
+      const l = 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b, k = 1 - darken;
       c.r = (c.r + (l * 0.94 - c.r) * g) * k; c.g = (c.g + (l * 0.97 - c.g) * g) * k; c.b = (c.b + (l * 1.06 - c.b) * g) * k;
       return c;
     }
@@ -3894,18 +3896,19 @@ _M_CHANNEL = r"""
       const k = 1 - Math.exp(-dt / 5);
       WXS.clouds += (WX.clouds - WXS.clouds) * k; WXS.dim += (WX.dim - WXS.dim) * k; WXS.wind += (WX.wind - WXS.wind) * k;
       WXS.storm += ((WX.storm ? 1 : 0) - WXS.storm) * k;
-      const g = WXS.clouds * 0.65;
+      const g = WXS.clouds * 0.65, st = WXS.storm;
+      darken = 0.32 * g + 0.2 * st;
       overcast(mixC("top", skyU.uTop.value), g); overcast(mixC("mid", skyU.uMid.value), g); overcast(mixC("hor", skyU.uHorizon.value), g);
       overcast(mixC("below", skyU.uBelow.value), g); overcast(mixC("sun", skyU.uSunCol.value), g);
       skyU.uStars.value = mixN("stars") * (1 - 0.9 * WXS.clouds);
       SUN_DIR.set(mixN("sx"), mixN("el"), sunDir.z).normalize(); skyU.uSunDir.value.copy(SUN_DIR); cloudU.uSunDir.value.copy(SUN_DIR);
       if (!Q.shadows) sun.position.copy(SUN_DIR).multiplyScalar(60);
-      hemi.intensity = mixN("hemi") * (1 - 0.12 * g); overcast(mixC("hsky", hemi.color), g); mixC("hgnd", hemi.groundColor);
-      sun.intensity = mixN("sunI") * (1 - 0.6 * WXS.clouds); overcast(mixC("sunC", sun.color), g);
+      hemiBase = mixN("hemi") * (1 - 0.12 * g - 0.18 * st); hemi.intensity = hemiBase; overcast(mixC("hsky", hemi.color), g); mixC("hgnd", hemi.groundColor);
+      sun.intensity = mixN("sunI") * Math.max(0.15, 1 - 0.6 * WXS.clouds - 0.2 * st); overcast(mixC("sunC", sun.color), g);
       keyBase = mixN("key");
       overcast(mixC("fog", scene.fog.color), g); cloudU.uFar.value.copy(scene.fog.color);
       overcast(mixC("cLit", cloudU.uLit.value), g); overcast(mixC("cShade", cloudU.uShade.value), g);
-      renderer.toneMappingExposure = mixN("exp") * (1 - 0.12 * g);
+      renderer.toneMappingExposure = mixN("exp") * (1 - 0.12 * g - 0.08 * st);
       const prac = mixN("prac"); for (let i = 0; i < PRAC.length; i++) { const p = practicals[PRAC[i]]; p.light.intensity = p.base * prac; }
       lampK = mixN("lantern") * (1 - 0.6 * WXS.dim);
     }
@@ -3984,13 +3987,15 @@ _M_CHANNEL = r"""
       if (overhead.visible) overhead.rotation.y += dt * 0.004 * (1 + 2 * WXS.wind);
       stormMat.uniforms.uAlpha.value = WXS.storm * 0.95; front.visible = WXS.storm > 0.01;
       rain.material.uniforms.uAlpha.value = WXS.storm; rain.visible = rainOk && WXS.storm > 0.05;
-      if (WXS.storm > 0.3) {  // silent lightning now and then: one soft double flash inside the front (never a strobe)
+      if (WXS.storm > 0.3) {  // silent lightning now and then: one soft double flash in the front and on the whole island, at
+        // most every 9 s (two flashes 0.2 s apart: far from a strobe)
         if (boltT < 0 && simT >= boltAt) { boltT = 0; boltAt = simT + 9 + Math.random() * 9; }
         if (boltT >= 0) {
           boltT += dt; const f = boltT < 0.07 ? 1 : boltT < 0.16 ? 0.25 : boltT < 0.26 ? 0.6 : Math.max(0, 1 - (boltT - 0.26) / 0.3) * 0.6;
-          stormMat.uniforms.uFlash.value = f * WXS.storm; if (boltT > 0.6) { boltT = -1; stormMat.uniforms.uFlash.value = 0; }
+          stormMat.uniforms.uFlash.value = f * WXS.storm; hemi.intensity = hemiBase * (1 + 0.45 * f * WXS.storm);
+          if (boltT > 0.6) { boltT = -1; stormMat.uniforms.uFlash.value = 0; hemi.intensity = hemiBase; }
         }
-      } else if (boltT >= 0) { boltT = -1; stormMat.uniforms.uFlash.value = 0; }
+      } else if (boltT >= 0) { boltT = -1; stormMat.uniforms.uFlash.value = 0; hemi.intensity = hemiBase; }
       if (rainOk && ((bloom && Q.bloom && !bloom.enabled) || Q.dpr < DPR0)) { rainOk = false; console.info("world: rain off"); }  // (the governor stepped down)
     }
 
@@ -4029,7 +4034,7 @@ _M_CHANNEL = r"""
       skyT += dtRaw; if (skyT >= 0.25) { skyStep(skyT); skyT = 0; }
       lampsStep(); weatherStep(dt);
       const wall = performance.now();
-      if (replayUntil && wall >= replayUntil) { replayUntil = 0; replayEl.className = ""; replayGap = wall + 600; }
+      if (replayUntil && wall >= replayUntil) { replayUntil = 0; replayEl.className = ""; replayGap = wall + 600; hudTop = 0; }
       if (!replayUntil && replayQueue.length && wall >= replayGap) showReplay(replayQueue.shift());
       if (cutSeen === null) cutSeen = RUN.cutAt; else if (RUN.cutAt !== cutSeen) { cutSeen = RUN.cutAt; sound.cut(); }  // (a director cut: the whoosh)
       soundT += dtRaw; if (sound.on && soundT >= 0.25) { soundT = 0; hearAll(); }

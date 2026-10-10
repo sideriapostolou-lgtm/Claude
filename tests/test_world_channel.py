@@ -213,7 +213,10 @@ def test_the_ticker_and_the_banner_write_text_only(settings: Settings) -> None:
     assert section.count("showReplay(") == 2 and "showReplay(replayQueue.shift())" in section
     # six seconds on the wall clock (the world's own time slows on a slow screen and stops offline), one at a time
     assert "const REPLAY_MS = 6000" in section and "replayUntil = performance.now() + REPLAY_MS;" in show
-    assert 'if (replayUntil && wall >= replayUntil) { replayUntil = 0; replayEl.className = ""; replayGap = wall + 600; }' in section
+    assert 'if (replayUntil && wall >= replayUntil) { replayUntil = 0; replayEl.className = ""; replayGap = wall + 600; hudTop = 0; }' in section
+    # while it shows, the speech bubbles keep below it (the HUD's one hook: hudTop)
+    assert "hudTop = replayEl.offsetHeight + 6;" in show
+    assert "top = Math.max(96, barBottom + 8 + hudTop)" in _js_body(_module(render_world_html(settings)), "  function updateBubbles() {")
 
 
 def test_the_sound_waits_for_the_speaker(settings: Settings) -> None:
