@@ -32,8 +32,8 @@ from collections.abc import Callable, Mapping
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
-__all__ = ["DEFAULT_GOAL_USD", "GOAL_MAX_USD", "GOAL_MIN_USD", "MOODS", "PRETEND_TAG", "REAL_TAG", "RUNG_ORDER",
-           "day_words", "goal_words", "parse_goal", "town_goal"]
+__all__ = ["CHECK_IN_MAX", "DEFAULT_GOAL_USD", "GOAL_MAX_USD", "GOAL_MIN_USD", "MOODS", "PRETEND_TAG", "REAL_TAG",
+           "RUNG_ORDER", "day_words", "goal_words", "parse_goal", "town_goal"]
 
 log = logging.getLogger(__name__)
 
@@ -42,6 +42,8 @@ DEFAULT_GOAL_USD = 100.0
 GOAL_MIN_USD = 1.0
 GOAL_MAX_USD = 1_000_000.0
 DAY_S = 86_400.0
+#: The check-in's beats at most (the tower, the power, Voss, Rook, the reach, Mote).
+CHECK_IN_MAX = 6
 #: Closed days kept in ``town.goal.days`` (newest first) and lines of them in words.
 DAYS_MAX = 14
 DAY_LINES_MAX = 7
@@ -60,6 +62,8 @@ _GOAL_TEXT = re.compile(r"\s*\$?\s*(\d{1,3}(?:,\d{3})+|\d+)(\.\d+)?\s*")
 _WEEKDAYS = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
 _MONTHS = ("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
 _DAY_KEY = re.compile(r"\d{4}-\d{2}-\d{2}")
+#: The risk manager's verdicts in the owner's words (deskguard's own phrases; "winning" is the road's step done).
+_VERDICT_WORDS = {"learning": "still learning", "losing": "losing", "unclear": "not proven yet"}
 _warned: set[str] = set()
 _WARN_MAX = 32
 
@@ -317,8 +321,9 @@ def town_goal(inp: Mapping[str, Any], *, whole: Fmt = _whole) -> dict[str, Any]:
             nxt = {"id": up["id"], "name": up["name"], "usd": up["usd"], "gap_usd": _cents(up["usd"] - today)}
 
     # the bill is a WHOLE day's rate, compared by the cent with today's real result (the figure the page shows)
-    covered = today >= bill if today is not None and bill > 0 else None
-    share = max(0.0, min(1.0, today / bill)) if today is not None and bill > 0 else None
+    # (only once real money reported today: an unreported figure covers nothing)
+    covered = today >= bill if today is not None and bill > 0 and reported else None
+    share = max(0.0, min(1.0, today / bill)) if today is not None and bill > 0 and reported else None
     if not reported or bill <= 0:
         power = None
     elif covered is True:
@@ -333,7 +338,8 @@ def town_goal(inp: Mapping[str, Any], *, whole: Fmt = _whole) -> dict[str, Any]:
     reach = None
     if settled_today > 0 and contracts > 0 and 0 < theta < 1:
         win_max = round(contracts * (1.0 - theta), 4)
-        reach = {"win_max_per_bet_usd": _cents(win_max), "best_case_today_usd": _cents(settled_today * win_max)}
+        reach = {"win_max_per_bet_usd": _cents(win_max), "best_case_today_usd": _cents(settled_today * win_max),
+                 "loss_min_per_bet_usd": _cents(contracts * theta)}
 
     rows = _day_rows(inp.get("live_days"))
     days = streaks = best_day = None
@@ -446,7 +452,7 @@ def goal_words(goal: Mapping[str, Any], inp: Mapping[str, Any], *, dollars: Fmt,
         strip_figure = strip_short = "real money: not known yet"
     else:
         strip_figure, strip_short = f"{figure} real today", f"{figure} real"
-    strip_label = f"Goal {T}/day"
+    strip_label, strip_label_short = f"Goal {T}/day", f"Goal {T}"
     if mood in ("off", "stopped_for_good"):
         aria_today = "Today: real money is off."
     elif figure is None or mood == "unknown":
@@ -458,6 +464,13 @@ def goal_words(goal: Mapping[str, Any], inp: Mapping[str, Any], *, dollars: Fmt,
     today_words = f"{figure} real money today" if figure is not None and mood not in ("off", "stopped_for_good", "unknown") else None
     head = f"The owner's goal for the team: {T} a day in real money."
     next_words = f" Next light: {nxt['name']}, {dollars(nxt['gap_usd'])} away." if nxt else ""
+    # the embers: rungs today's real settlements reached earlier, not lit now (the tower draws them dim amber)
+    peak = goal["peak_today_usd"]
+    ember_line = None
+    if (peak is not None and figure is not None and peak > max(0.0, float(today or 0.0))
+            and any(r["reached"] and not r["lit"] for r in goal["rungs"])):
+        ember_line = (f"Earlier today real money was up to {signed(peak)}; it is {figure} now. Amber rings: reached "
+                      "earlier today, not lit now. Only what real money holds now lights a ring.")
 
     # ---- the main line, by mood
     if mood == "off":
@@ -470,7 +483,9 @@ def goal_words(goal: Mapping[str, Any], inp: Mapping[str, Any], *, dollars: Fmt,
     elif mood == "stand_down":
         why = ("stopped at the daily limit" if goal["stand_down"] == "day"
                else "the risk manager has paused real bets")
-        line = f"{head} Today so far: {figure} (real money), {why}. Rules first: we don't chase a loss.{next_words}"
+        # (no "next light": no bet can reach one before the stop lifts)
+        line = (f"{head} Today so far: {figure} (real money), {why}. Rules first: we don't chase a loss. The rings "
+                "start again at midnight UTC.")
     elif mood == "waiting":
         line = f"{head} Today so far: {figure} (real money), waiting for room under the limits. Rules first.{next_words}"
     elif mood == "goal":
@@ -498,8 +513,26 @@ def goal_words(goal: Mapping[str, Any], inp: Mapping[str, Any], *, dollars: Fmt,
                                  "today: paid by the owner")
         else:
             bill_line, plaque = f"{lead} Whether real money covers it today is not known yet.", "today: not known yet"
-    floor_line = (f"Today's real loss stop: {dollars(floor['day_loss_usd'])} used of {limit(floor['day_max_usd'])}"
-                  + (": stopped for today." if floor["hit"] else ".")) if floor else None
+    # the owner's backup generator (the bill's other half: who keeps the lights on today)
+    if power == "backup":
+        power_line: str | None = (f"The owner's backup generator is running: real money has not covered today's "
+                                  f"{bill_txt} bill yet.")
+    elif power == "own":
+        power_line = (f"Real money covered today's {bill_txt} bill: the generator is off, the lights are gold and the "
+                      "stalls are open.")
+    else:
+        power_line = None
+    floor_line = None
+    if floor:
+        loss, most = floor["day_loss_usd"], floor["day_max_usd"]
+        if not floor["hit"]:
+            floor_line = f"Today's real loss stop: {dollars(loss)} used of {limit(most)}."
+        elif loss > most + 0.005:  # (what the stop does: no new bet; the bets already open settled past it)
+            floor_line = (f"Today's real loss stop is {limit(most)}: it ended new real bets for today, and with the "
+                          f"bets already open settled, today's real loss is {dollars(loss)}.")
+        else:
+            floor_line = (f"Today's real loss stop is {limit(most)}: it ended new real bets for today, at "
+                          f"{dollars(loss)} lost.")
     lifeline_line = (f"Real money stops for good after {limit(lifeline['max_usd'])} lost in total: "
                      f"{dollars(lifeline['lost_usd'])} lost so far, {dollars(lifeline['left_usd'])} of room left."
                      if lifeline else None)
@@ -508,11 +541,18 @@ def goal_words(goal: Mapping[str, Any], inp: Mapping[str, Any], *, dollars: Fmt,
                     "deposit is not a gain)." if reserve else None)
     reach_line = None
     if reach:
-        bets = "today's one real bet" if settled == 1 else f"all {settled} of today's real bets"
-        reach_line = (f"Even if {bets} had won, this rule could have made at most "
-                      f"{dollars(reach['best_case_today_usd'])}: a win makes at most "
-                      f"{dollars(reach['win_max_per_bet_usd'])} a bet ({_lower(per)}). Reaching the {T} goal takes a "
-                      "proven edge, not bigger bets.")
+        best = dollars(reach["best_case_today_usd"])
+        if won >= settled:  # (every one won: never "even if they had won")
+            first = (f"Today's one real bet won: {best} is the most it could make, since" if settled == 1
+                     else f"All {settled} of today's real bets won: {best} is the most they could make, since")
+        else:
+            first = (f"Even if today's one real bet had won, it could have made at most {best}:" if settled == 1
+                     else f"Even if all {settled} of today's real bets had won, they could have made at most {best}:")
+        # the rule buys at its price or above: a win pays at most the rest of a dollar a contract, a loss the price
+        reach_line = (f"{first} a win pays at most {dollars(reach['win_max_per_bet_usd'])} a bet ({_lower(per)}), "
+                      f"while a loss costs the whole price, {dollars(reach['loss_min_per_bet_usd'])} or more."
+                      + (" More than this takes a proven edge, not bigger bets." if mood == "goal"
+                         else f" Reaching the {T} goal takes a proven edge, not bigger bets."))
 
     # ---- the days
     day_n, days, streaks, best = goal["day_n"], goal["days"], goal["streaks"], goal["best_day"]
@@ -543,25 +583,31 @@ def goal_words(goal: Mapping[str, Any], inp: Mapping[str, Any], *, dollars: Fmt,
     # ---- the road to the goal
     road = {r["id"]: r["done"] for r in goal["road"]}
     guard = _map(inp.get("guard_real"))
-    reason = str(guard.get("reason") or "").strip().rstrip(".")
+    # the risk manager's count only (its first part: counts and money), on the rule in use now; never its statistics
+    counted = str(guard.get("reason") or "").split(";")[0].strip().rstrip(".")
+    phrase = _VERDICT_WORDS.get(str(guard.get("verdict") or ""), "")
+    scope = f"{phrase} on the rule in use now" if phrase else "on the rule in use now"
     road_lines = [
         f"1. A rule passes the lab's test for a real edge: {'done' if road.get('lab') else 'not yet'}.",
         "2. Its real record is judged winning by the risk manager: "
-        + ("done." if road.get("record") else f"not yet ({reason})." if reason else "not yet."),
+        + ("done." if road.get("record") else f"not yet ({scope}: {counted})." if counted else "not yet."),
         "3. Only then can the owner decide on bigger limits. The goal never decides it.",
     ]
 
-    # ---- practice (pretend money): apart, never counted
+    # ---- practice (pretend money): apart, never counted; each book named for its own period
     pr = goal["practice"]
-    books = [(pr["solana_today_usd"], "the Solana bot"), (pr["polymarket_today_usd"], "Polymarket practice"),
-             (pr["trend_today_usd"], "the trend desk")]
+    books = [(pr["solana_today_usd"], "the Solana bot today"),
+             (pr["polymarket_today_usd"], "Polymarket practice today"),
+             (pr["trend_today_usd"], "the trend desk's last day")]
     named = [f"{who} {signed(v)} (pretend)" for v, who in books if v is not None]
-    practice_line = "Practice (pretend money) never counts toward the goal or powers the town."
-    if named:
-        practice_line += " Today: " + ", ".join(named) + "."
+    practice_line = "Practice (pretend money) never counts toward the goal or powers the town"
+    practice_line += (": " + ", ".join(named) + ".") if named else "."
     road_crew = pr["crew_road"]
-    crew_road_line = (f"Road to real money for the Solana bot: {road_crew['done']} of {road_crew['total']} steps done."
-                      if road_crew else None)
+    crew_road_line = None
+    if road_crew:
+        unlisted = road_crew["total"] > len(road_crew["steps"])  # (the checklist's security steps stay off the world)
+        crew_road_line = (f"Road to real money for the Solana bot: {road_crew['done']} of {road_crew['total']} "
+                          "steps done" + (" (the security steps are not listed here)." if unlisted else "."))
 
     honest = (f"The {T} is the owner's goal for the team, not a cost: "
               + (f"the town costs {bill_txt} a day to run, and the owner pays it until real money does."
@@ -580,12 +626,18 @@ def goal_words(goal: Mapping[str, Any], inp: Mapping[str, Any], *, dollars: Fmt,
         "mote": _mote(_map(inp.get("receipts"))),
     }
 
-    check_in = [b for b in (_beat("tower", REAL_TAG, line), _beat("voss", REAL_TAG, lines["voss"]),
-                            _beat("rook", REAL_TAG, lines["rook"]), _beat("voss", REAL_TAG, reach_line),
-                            _beat("mote", REAL_TAG, lines["mote"])) if b][:5]
+    # the tower's beat says what amber means when it shows; the power beat films the generator while it runs, the
+    # open stalls once real money covers the bill
+    tower = " ".join(t for t in (line, ember_line) if t)
+    power_at = "promenade" if power == "own" else "power"
+    check_in = [b for b in (_beat("tower", REAL_TAG, tower), _beat(power_at, REAL_TAG, power_line),
+                            _beat("voss", REAL_TAG, lines["voss"]), _beat("rook", REAL_TAG, lines["rook"]),
+                            _beat("voss", REAL_TAG, reach_line), _beat("mote", REAL_TAG, lines["mote"]))
+                if b][:CHECK_IN_MAX]
     vault = " ".join(t for t in (lifeline_line, floor_line, reserve_line) if t) or None
     yard = " ".join(t for t in (practice_line, crew_road_line) if t) or None
-    tour = [b for b in (_beat("tower", REAL_TAG, line), _beat("bill", REAL_TAG, bill_line),
+    tour = [b for b in (_beat("tower", REAL_TAG, tower), _beat("bill", REAL_TAG, bill_line),
+                        _beat(power_at, REAL_TAG, power_line),
                         _beat("vault", REAL_TAG, vault), _beat("board", REAL_TAG, streak_line),
                         _beat("yard", PRETEND_TAG, yard), _beat("voss", REAL_TAG, lines["voss"]),
                         _beat("rook", REAL_TAG, lines["rook"]), _beat("pip", crew_tag, lines["pip"]),
@@ -595,13 +647,17 @@ def goal_words(goal: Mapping[str, Any], inp: Mapping[str, Any], *, dollars: Fmt,
         "label": "The team's goal",
         "target_text": T, "bill_text": bill_txt,
         "strip_label": strip_label,
+        "strip_label_short": strip_label_short,
         "strip_figure": strip_figure,
         "strip_figure_short": strip_short,
         "strip": f"{strip_label} · {strip_figure}",
-        "aria": f"The owner's goal: {T} a day in real money. {aria_today} Tap for details.",
+        "aria": " ".join(t for t in (f"The owner's goal: {T} a day in real money.", aria_today, ember_line,
+                                     "Tap for details.") if t),
         "today": today_words,
         "line": line,
+        "ember_line": ember_line,
         "bill_line": bill_line,
+        "power_line": power_line,
         "plaque_line": plaque,
         "floor_line": floor_line,
         "lifeline_line": lifeline_line,
@@ -664,8 +720,10 @@ def _rook(mood: str, goal: Mapping[str, Any], T: str, per: str, paused: str | No
     """Rook (the risk manager): the limits first, the goal second."""
     if mood == "stand_down" and goal["stand_down"] == "day" and floor:
         left = (f" {dollars(lifeline['left_usd'])} left before real money stops for good." if lifeline else "")
-        return (f"Stopped for today after losing {dollars(floor['day_loss_usd'])} (the limit is "
-                f"{limit(floor['day_max_usd'])}).{left} Rules first, goal second.")
+        loss, most = floor["day_loss_usd"], floor["day_max_usd"]
+        done = (f"; with the bets already open settled, today's loss is {dollars(loss)}." if loss > most + 0.005
+                else f", at {dollars(loss)} lost.")
+        return f"The {limit(most)} daily stop ended new real bets for today{done}{left} Rules first, goal second."
     if mood == "stand_down":
         return f"Real bets are paused: {_sentence(paused or 'paused for now')} Rules first, goal second."
     if mood in ("off", "stopped_for_good") and lifeline:
@@ -714,8 +772,8 @@ def _mote(receipts: Mapping[str, Any]) -> str | None:
     """Mote (the tamper-proof records): what the record check says."""
     count = _num(receipts.get("count"))
     if receipts.get("verified") is True and count is not None:
-        return (f"Every real settlement on the tower is sealed in the records too: {int(count):,} records so far, "
-                "checked: nothing was edited.")
+        return (f"Each real settlement is also sealed in the tamper-proof records ({int(count):,} records in all), "
+                "and the check found nothing edited.")
     if receipts.get("verified") is False:
         bad = receipts.get("first_bad_seq")
         where = f" (#{bad})" if isinstance(bad, int) and not isinstance(bad, bool) else ""

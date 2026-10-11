@@ -83,18 +83,24 @@ horizontal, close behind the crew; never a top-down tycoon view.
 * The goal (the module's THE GOAL section, CSS in ``_STYLE_GOAL``): the owner's goal for the team, ``town.goal`` and
   ``plain.goal`` of ``/api/page`` (the owner's real dollars a day; a goal, never a cost). A brass goal tower at the
   rear rim of the courtyard lights one ring per rung (above zero, covers the bill, 1 % and 10 % of the goal, the goal,
-  1.5x, 2x, 3x) on REAL money only, an ember where today's real settlements reached one earlier, a gold beacon at the
-  goal, a red floor gauge for today's real loss stop; a streak board on its plinth (the day on real money, the streaks,
-  the closed days). The town's bill (``town.cost_per_day_usd``, a whole day's hosting and AI judge) is on a plaque at the
-  arrival gate; while real money today does not cover it the owner pays it and the town runs on the owner's backup power
-  (a humming brass generator by the kiosk, white lights, shuttered market stalls), once it does on its own (gold lights,
-  open stalls); visitors, bunting and, at the goal, fireworks (a still lamp ring for less motion) follow the real rungs
-  only. Practice (pretend money) has its own board at the courier pier, blue and slate, and changes nothing else. A strip
-  under the headline says the goal and today's real figure (a tap opens the goal panel: the ladder, the bill, the stops,
-  the reach, the days, the road to the goal and the practice books apart); a change seen during the visit (a rung lit or
-  gone dark, a stand-down, the goal reached once a UTC day, the desk's day closing and opening) shows in the strip and
-  plays a short programme through the record room's own (``progStart("goal")``); the "goal" chip plays the tour, and a
-  check-in plays once a visit. The goal changes no bet size, limit or rule, and nothing here reaches a desk.
+  1.5x, 2x, 3x) on REAL money only, its tags on the left (clear of the Polymarket desk's board), a dim amber ember
+  where today's real settlements reached one earlier (said in words: "reached earlier today, not lit now"), a gold
+  beacon at the goal, a red floor gauge for today's real loss stop; a streak board on its plinth (the day on real
+  money, the streaks, the closed days). The town's bill (``town.cost_per_day_usd``, a whole day's hosting and AI
+  judge) is on a plaque at the arrival gate; while real money today does not cover it the owner pays it and the town
+  runs on the owner's backup power (a humming brass generator by the kiosk, white lights, shuttered market stalls),
+  once it does on its own (gold lights, open stalls; they stay so if real money is switched off later that day); each
+  has its own camera view ("power", "promenade"), and the moment the bill's rung lights or goes dark is filmed there;
+  visitors (townsfolk with a head and a hat), bunting and, at the goal, fireworks sized for the screen (a still lamp
+  ring for less motion) follow the real rungs only. Practice (pretend money) has its own board at the courier pier,
+  blue and slate, and changes nothing else. A strip under the headline says the goal and today's real figure (a tap
+  opens the goal panel: the ladder, the bill, the stops, the reach, the days, the road to the goal and the practice
+  books apart; it keeps the reader's place and says the poll that just landed); a change seen during the visit (a rung
+  lit or gone dark, a stand-down, the goal reached once a UTC day, the desk's day closing and opening; on load only
+  yesterday's card, said as yesterday's) shows in the strip (quiet slate for a light gone dark or a stand-down) and
+  plays a short programme through the record room's own (``progStart("goal")``), each beat long enough to read and
+  Rook's words on his own wall; the "goal" chip plays the tour, and a check-in plays once a visit. The goal changes no
+  bet size, limit or rule, and nothing here reaches a desk.
 
 Honesty rules (the same as the office's and the town's, non-negotiable):
 
@@ -365,6 +371,13 @@ header a.back { color: var(--fg); text-decoration: none; font-size: 21px; line-h
 #panel, #guide { z-index: 20; }  /* over the LIVE card, the bubbles and the chips */
 @media (min-width: 760px) { #bar .row1 { display: contents; } #headline { flex: 1 1 320px; font-size: 16px; }
                              .pill.help { margin-left: 0; order: 9; } }
+/* the narrowest phones (320 px): the top row keeps its four buttons apart (a long real-money line pushed the practice
+   button under the speaker) */
+@media (max-width: 340px) {
+  #bar { padding-left: 8px; padding-right: 8px; } #bar .row1 { gap: 4px; }
+  #bar .pill.real { padding: 4px 8px 5px; } #bar .pill.real b { font-size: 13px; letter-spacing: .04em; }
+  #bar .pill.real small { font-size: 11px; } #bar .pill.real small#real-result { font-size: 10px; }
+  #bar .row1 > .pill.practice { font-size: 11px; padding: 4px 7px; } #bar .pill.sound, #bar .pill.help { width: 32px; } }
 #panel { position: fixed; left: 12px; top: calc(var(--bar, 110px) - 8px); width: min(540px, calc(100% - 24px));
          max-height: calc(100% - var(--bar, 110px) - 160px); overflow-y: auto; background: #150f2a;
          border: 1px solid rgba(224,178,94,.5); border-radius: 14px; padding: 12px 14px 10px; font-size: 14px; line-height: 1.42;
@@ -585,11 +598,13 @@ _STYLE_GOAL = r"""
 #goal .glabel { flex: 0 0 auto; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; font-weight: 800;
                 color: var(--brass); white-space: nowrap; }  /* (the goal's own words, never cut: the pips give way first) */
 #goal .gpips { flex: 1 1 auto; display: flex; align-items: center; gap: 4px; min-width: 0; overflow: hidden; }
-#goal .gpips i { flex: 0 0 auto; width: 8px; height: 8px; border-radius: 50%; background: #3a4352; }
+#goal .gpips i { flex: 0 1 8px; min-width: 4px; width: 8px; height: 8px; border-radius: 50%; background: #3a4352; }  /* (the rungs' pips give way first) */
 #goal .gpips i.lit { background: #5fe39a; } #goal .gpips i.goal { background: #ffcf7a; }
-#goal .gpips i.above, #goal .gpips i.beyond.above { background: #d9c8ff; } #goal .gpips i.ember { background: #f5b133; opacity: .55; }
-#goal .gpips i.beyond { width: 10px; border-radius: 3px; }
-#goal .gpips i.gfloor { width: 5px; height: 13px; border-radius: 2px; background: rgba(255,255,255,.08); }
+#goal .gpips i.above, #goal .gpips i.beyond.above { background: #d9c8ff; }
+/* an ember (reached earlier today, not lit now): a dark pip ringed in amber, never a lit one */
+#goal .gpips i.ember { background: #3a4352; box-shadow: inset 0 0 0 1.5px rgba(245,177,51,.9); opacity: 1; }
+#goal .gpips i.beyond { flex-shrink: 0; order: 99; width: 10px; border-radius: 3px; }  /* ("more is better": never cut) */
+#goal .gpips i.gfloor { flex-shrink: 0; width: 5px; height: 13px; border-radius: 2px; background: rgba(255,255,255,.08); }
 #goal .gpips i.gfloor.below { background: rgba(255,107,97,.42); } #goal .gpips i.gfloor.hit { background: #ff6b61; }
 #goal .gbeat { display: none; }
 #goal .gfig { flex: 0 0 auto; margin-left: auto; font-size: 13px; font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
@@ -598,11 +613,18 @@ _STYLE_GOAL = r"""
 #goal.beat .gpips { display: none; }
 #goal.beat .gbeat { display: block; flex: 1 1 auto; min-width: 0; font-size: 11px; font-weight: 800; letter-spacing: .04em; color: #ffe3a6;
                     white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* a light gone dark or a stand-down: quiet slate, still (nobody cheers) */
+#goal.beat.quiet { border-color: #8f9bb3; box-shadow: none; animation: none; } #goal.beat.quiet .gbeat { color: #e9dcc4; }
 @keyframes goalglow { 0%, 100% { box-shadow: 0 0 0 2px rgba(224,178,94,.32), 0 0 10px rgba(255,207,122,.3); }
                       50% { box-shadow: 0 0 0 2px rgba(224,178,94,.5), 0 0 22px rgba(255,207,122,.55); } }
 @media (prefers-reduced-motion: reduce) { #goal.beat { animation: none; } }
 @media (max-width: 560px) { #goal.beat .glabel { display: none; } }
+@media (max-width: 380px) { #goal .gpips { gap: 3px; } #goal .gpips i { flex-basis: 6px; width: 6px; height: 6px; } #goal .gpips i.beyond { width: 8px; } }
 @media (min-width: 760px) { #goal { flex: 0 1 420px; } }
+/* a short phone (an iPhone SE or 8, 375x667): the bar keeps to about a fifth of the screen */
+@media (max-height: 700px) and (max-width: 759px) {
+  #goal { height: 24px; padding: 0 8px; } #goal .glabel { font-size: 10px; letter-spacing: .05em; } #goal .gfig { font-size: 12px; }
+  #bar { row-gap: 4px; padding-bottom: 10px; } #headline { font-size: 14px; line-height: 1.25; } }
 /* the goal panel (the page's own panel, kind "goal"): the ladder beside the first lines, then the rest */
 #panel.goal { border-color: var(--brass); }
 #panel h3 { margin: 11px 0 0; font-size: 13.5px; color: var(--brass); }
@@ -615,7 +637,11 @@ _STYLE_GOAL = r"""
                 font-variant-numeric: tabular-nums; }
 #panel .grung i { flex: 0 0 auto; width: 9px; height: 9px; border-radius: 50%; background: #3a4352; }
 #panel .grung.lit i { background: #5fe39a; } #panel .grung.goal i { background: #ffcf7a; } #panel .grung.above i { background: #d9c8ff; }
-#panel .grung.ember i { background: #f5b133; opacity: .6; }
+#panel .grung.ember i { background: #3a4352; box-shadow: inset 0 0 0 1.5px rgba(245,177,51,.9); opacity: 1; }
+#panel .gladder.em { height: 172px; }
+#panel .gkey { display: flex; align-items: center; gap: 4px; font-size: 9px; line-height: 1.1; color: var(--dim); white-space: normal; }
+#panel .gkey i { flex: 0 0 auto; width: 8px; height: 8px; border-radius: 50%; background: #3a4352; box-shadow: inset 0 0 0 1.5px rgba(245,177,51,.9); }
+#panel .glead p.ember { color: #f2d9a8; font-size: 13px; }
 #panel .grung.lit, #panel .grung.goal, #panel .grung.above { color: var(--fg); font-weight: 700; }
 #panel .gmark { font-size: 10.5px; line-height: 1.1; font-weight: 800; padding-left: 4px; border-left: 3px solid var(--brass); white-space: nowrap;
                 font-variant-numeric: tabular-nums; }
@@ -3613,6 +3639,7 @@ _M_LIFE = r"""
     const p = document.createElement("p"); if (cls) p.className = cls; p.textContent = text; parent.appendChild(p); return p;
   }
   function renderPanel() {
+    if (panelKind === "goal") return;  // (THE GOAL draws its own panel, at the reader's place: goalPanel)
     panelBody.textContent = "";
     if (!plain) { panelTitle.textContent = "Loading…"; return; }
     if (panelKind === "real") {
@@ -4870,9 +4897,7 @@ _M_RECORDS = r"""
     FILM.hold = null; FILM.pin = null; FILM.paused = false;
     closePanel(); closeGuide();
     const r = card.getBoundingClientRect(); filmEl.style.bottom = Math.max(8, Math.round(window.innerHeight - r.bottom)) + "px";
-    // while the drone flies to the first beat: its own tag, place and title, never the last programme's words
-    const b0 = script[0]; filmTag.textContent = b0.tag; filmProg.textContent = b0.prog; filmWho.textContent = b0.who;
-    filmText.textContent = ""; filmReal.hidden = true; filmPretend.hidden = true; filmNote.hidden = true; filmEl.className = b0.cls;
+    filmIncoming(script[0]);  // (while the drone flies to the first beat: never the last programme's words)
     body.classList.add("film"); filmEl.hidden = false; filmEl.style.visibility = ""; filmChips();
     filmStep(); return true;
   }
@@ -4897,6 +4922,10 @@ _M_RECORDS = r"""
     if (pinned === b.cam) PLANNER.pin(b.cam, simT); else togglePin(b.cam);  // (a second beat on the same subject keeps it)
     FILM.pin = pinned;
   }
+  function filmIncoming(b) {  // while the drone flies to a beat: its own tag, place and title, never the last beat's words
+    filmTag.textContent = b.tag; filmProg.textContent = b.prog; filmWho.textContent = b.who;
+    filmText.textContent = ""; filmReal.hidden = true; filmPretend.hidden = true; filmNote.hidden = true; filmEl.className = b.cls;
+  }
   function filmShow(i) {  // the beat's words, once its subject is on air
     const b = FILM.script[i]; FILM.shown = i;
     filmTag.textContent = b.tag; filmProg.textContent = b.prog; filmWho.textContent = b.who; filmText.textContent = b.text;
@@ -4918,9 +4947,11 @@ _M_RECORDS = r"""
     while (i < FILM.script.length) { end += FILM.script[i].s; if (t < end) break; i++; }
     if (i === FILM.i) return;
     if (i >= FILM.script.length) { filmStop(true); return; }
+    const left = FILM.i >= 0 && FILM.script[FILM.i].cam;  // (the camera leaves the last beat's subject)
     FILM.i = i; FILM.asked = FILM.frames;
     filmCam(FILM.script[i]);
     if (!FILM.script[i].cam) filmShow(i);  // (no flight to wait for)
+    else if (left) filmIncoming(FILM.script[i]);  // (its subject's words never ride over the next one; a title card's stay)
   }
   function filmAuto(d) {  // once, at 00:05 in the owner's zone, if the page was open then (the server's clock decides)
     const r = d.recap; if (!r || !Array.isArray(r.window) || !isNum(r.window[1])) return;
@@ -4979,11 +5010,16 @@ _M_GOAL = r"""
   // look(), beat(kind, rung), checkIn(), tour(), strip(). The block between the markers is pure (no three.js, no DOM):
   // tests/test_world_goal.py runs it in Node.
   // >>> goal (pure)
-  const GOAL_RINGS = 8, GOAL_STRIP_MS = 6000, GOAL_WAIT_MAX = 2, GOAL_PENDING_S = 60, GOAL_CHECKIN_S = 40;
+  const GOAL_RINGS = 8, GOAL_STRIP_MS = 6000, GOAL_WAIT_MAX = 2, GOAL_PENDING_S = 60, GOAL_CHECKIN_S = 40, GOAL_CHECKIN_MAX = 6;
   // the rings' colours by state (never red: red is real money's losses only, on the floor gauge)
   const GOAL_COL = { dark: 0x2b3340, lit: 0x5fe39a, goal: 0xffcf7a, above: 0xd9c8ff, ember: 0xf5b133, none: 0x2b3340 };
-  // visitors by the number of rungs lit (none lit, even: one); a phone shows at most 12
-  const GOAL_VISITORS = [1, 2, 4, 6, 9, 14, 18, 21, 24], GOAL_VISITORS_PHONE = [1, 2, 4, 6, 8, 12, 12, 12, 12];
+  // visitors by the number of rungs lit (none lit, even: one); a phone shows at most 12 (never more than GOAL_SPOTS)
+  const GOAL_VISITORS = [1, 2, 4, 6, 9, 13, 16, 19, 21], GOAL_VISITORS_PHONE = [1, 2, 4, 6, 8, 12, 12, 12, 12];
+  // each ring's brightness by its state (mix: how far it fades toward the dark ring first): a lit ring glows, the goal's
+  // gold and the violet above it stay their colour (never clipped to white), an ember (reached earlier today, not lit
+  // now) is a dim brown-amber, well under any lit ring
+  const GOAL_TONE = { lit: { k: 2.4, mix: 0 }, goal: { k: 1.15, mix: 0 }, above: { k: 1.0, mix: 0 }, ember: { k: 0.5, mix: 0.6 },
+                      dark: { k: 0.9, mix: 0 }, none: { k: 0.9, mix: 0 } };
   const GOAL_REAL = "THE GOAL · REAL MONEY", GOAL_PRETEND = "PRACTICE · PRETEND MONEY";
   // moods without beats: real money is off, stopped for good, or what it did today is not known
   const GOAL_QUIET = { off: true, stopped_for_good: true, unknown: true };
@@ -5005,7 +5041,9 @@ _M_GOAL = r"""
     out.tier = tier; out.n = Math.min(GOAL_RINGS, rungs.length);
     out.rings = known ? lit : 0; out.column = known ? top : 0;
     out.beacon = known && goalLit;
-    out.gold = known && g && goalNum(g.bill_share_real) ? Math.min(1, Math.max(0, g.bill_share_real)) : 0;
+    // (the bulbs go gold with real money's share of the bill; once real money covered it today they stay gold, even
+    // after real money is switched off: the stalls stay open and the generator off, as the plaque says)
+    out.gold = g && goalNum(g.bill_share_real) && (known || g.power === "own") ? Math.min(1, Math.max(0, g.bill_share_real)) : 0;
     out.generator = g && g.power === "own" ? "off" : g && g.power === "backup" ? "on" : "idle";
     out.stalls = g && g.power === "own" ? "open" : "shut";
     out.bunting = !known ? "none" : goalLit ? "flags" : oneLit ? "bunting" : "none";
@@ -5029,14 +5067,15 @@ _M_GOAL = r"""
     return { day: g ? g.day : null, mood: g ? g.mood : null, lit: lit };
   }
   // the beats a change seen during this visit makes (prev: the last poll's snapshot, null on the first poll, which sets
-  // the state silently but for yesterday's closing card the viewer has not seen yet); seen: { has(key) } (once a UTC day)
+  // the state silently but for yesterday's closing card the viewer has not seen yet, said as yesterday's: "late"; the
+  // new day opens only when the day turns during the visit); seen: { has(key) } (once a UTC day)
   function goalChanges(prev, g, w, seen) {
     const out = [];
     if (!g || GOAL_QUIET[g.mood]) return out;
     const result = w && w.result ? w.result : null;
     if (!prev || g.day !== prev.day) {
-      if (result && !seen.has("closed." + result.day)) out.push({ kind: "closes", rung: null, day: result.day });
-      if (prev || out.length) out.push({ kind: "opens", rung: null, day: g.day });
+      if (result && !seen.has("closed." + result.day)) out.push({ kind: "closes", rung: null, day: result.day, late: !prev });
+      if (prev) out.push({ kind: "opens", rung: null, day: g.day });
       return out;
     }
     if (g.mood === "stand_down" && prev.mood !== "stand_down") out.push({ kind: "stand", rung: null, day: g.day });
@@ -5071,14 +5110,22 @@ _M_GOAL = r"""
   // beside it (never cut), so a beat never repeats it; a figure a beat does say comes first, where a narrow strip's
   // ellipsis cannot reach it.
   function goalBeatText(beat, g, w) {
-    const n = g && goalNum(g.day_n) ? g.day_n : null;
+    const fig = w && w.result ? w.result.figure : "";
     if (beat.kind === "on") return "LIGHT ON · " + beat.rung.name;
     if (beat.kind === "off") return "LIGHT OFF · " + beat.rung.name;
-    if (beat.kind === "stand") return "STAND DOWN · " + (g && g.stand_down === "risk" ? "the risk manager paused real bets" : "daily stop reached");
-    if (beat.kind === "reached") return "GOAL REACHED · same rules, same size";
-    if (beat.kind === "closes") return "DAY CLOSES · " + (w && w.result ? w.result.figure : "") + (n && n > 1 ? " · day " + (n - 1) : "");
-    if (beat.kind === "opens") return "DAY OPENS · goal " + (w ? w.target_text : "") + " a day, real money only" + (n ? " · day " + n : "");
+    if (beat.kind === "stand") return g && g.stand_down === "risk" ? "PAUSED · by the risk manager" : "STAND DOWN · daily stop reached";
+    if (beat.kind === "reached") return "GOAL REACHED · same size";
+    if (beat.kind === "closes" && beat.late) return "YESTERDAY · " + fig;  // (the first poll: yesterday's card, not a closing now; its card says UTC)
+    if (beat.kind === "closes") return "DAY CLOSES · " + fig;  // (its day number is on the programme's card)
+    if (beat.kind === "opens") return "NEW DAY (UTC) · goal " + (w ? w.target_text : "") + "/day";
     return "";
+  }
+  // a quiet beat (a light gone dark, a stand-down): slate, still, never the brass glow of a win
+  function goalQuiet(kind) { return kind === "off" || kind === "stand"; }
+  // a programme beat's seconds: at least the script's, longer for more words (about 190 a minute), 12 s at most
+  function goalSecs(s, text) {
+    const words = String(text == null ? "" : text).split(/\s+/).filter(Boolean).length;
+    return Math.max(s, Math.min(12, Math.round(0.32 * words * 2) / 2));
   }
   // the one placeholder the page fills: the desk's day end on the viewer's clock
   function goalFill(text, reset) { return String(text == null ? "" : text).split("{local_reset}").join(reset); }
@@ -5118,7 +5165,7 @@ _M_GOAL = r"""
   function goalStore() { try { return window.localStorage; } catch (e) { return null; } }
   const GOAL = { ok: false, seen: null, g: null, w: null, prev: null, queue: [], beatUntil: 0, pending: null, pendingAt: 0,
                  firstAt: -1, checkInAt: -1, checkInDone: false, chip: null, shown: -1, lastT: 0, humT: 0, hum: null, chord: null,
-                 chordRank: null, lastCue: "", sig: "", lean: 0, phone: Math.min(W0, H0) < 600, sounds: 0 };
+                 chordRank: null, lastCue: "", sig: "", lean: 0, phone: Math.min(W0, H0) < 600, sounds: 0, scroll: 0 };
   const GOAL_LOOK = { ring: [] };
   const GOAL_CALM = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
   const goalSeenStore = goalSeen(goalStore);
@@ -5136,10 +5183,12 @@ _M_GOAL = r"""
     return out;
   })();
   // the visitors' places (decorative: no words, no numbers): round the courtyard's outer ring, the bridge and the promenade
-  // (clear of the walks, the benches, the pots and the stalls; the courtyard's first, so a few visitors are in the shots)
-  const GOAL_SPOTS = [[4.6, 2.8], [-4.4, 2.6], [3.8, -3.6], [-4.0, -2.9], [5.0, -0.2], [-4.9, 0.0], [3.6, 1.6], [-3.0, 4.6],
-    [2.9, 4.9], [0.9, 13.6], [-0.9, 9.4], [0.95, 7.6], [-0.95, 12.2], [2.2, 16.85], [-2.2, 16.8], [6.0, 16.85], [-4.6, 16.8],
-    [9.0, 16.85], [-7.0, 16.8], [12.2, 16.85], [-9.4, 16.8], [15.6, 16.85], [-11.6, 16.8], [18.6, 12.2]];
+  // (clear of the walks, the benches, the pots and the stalls, and of the boards' own views: none by the bill plaque or
+  // in front of the promenade's middle; the courtyard's first, so a few visitors are in the shots, and two at the stalls
+  // early, so the open stalls have someone at them)
+  const GOAL_SPOTS = [[4.6, 2.8], [-4.4, 2.6], [-4.6, 16.8], [3.8, -3.6], [-7.0, 16.8], [-4.0, -2.9], [5.0, -0.2], [-4.9, 0.0],
+    [3.6, 1.6], [-9.4, 16.8], [-3.0, 4.6], [2.9, 4.9], [0.9, 13.6], [-0.9, 9.4], [0.95, 7.6], [6.0, 16.85], [9.0, 16.85],
+    [-11.6, 16.8], [12.2, 16.85], [15.6, 16.85], [18.6, 12.2]];
 
   function goalBuild() {
     const F = WF, X = GOAL_AT.x, Z = GOAL_AT.z, top = GOAL_RING_Y0 + GOAL_RING_DY * (GOAL_RINGS - 1) + 0.45;
@@ -5176,16 +5225,19 @@ _M_GOAL = r"""
     GP.floor = new THREE.InstancedMesh(prep(G.box(0.12, 0.05, 0.05)), new THREE.MeshBasicMaterial({ color: 0xffffff, toneMapped: false }), 16);
     for (let i = 0; i < 16; i++) { const a = Math.PI * (1.15 - i / 15 * 1.3); GP.floor.setMatrixAt(i, mat4([X + Math.cos(a) * 0.6, 1.05, Z + Math.sin(a) * 0.5], [0, -a + Math.PI / 2, 0], 1)); GP.floor.setColorAt(i, col(0x3a2a2a)); }
     GP.floor.instanceMatrix.needsUpdate = true; GP.floor.computeBoundingSphere(); scene.add(GP.floor);
-    // the ring tags (one canvas beside the rings), the plate and the streak board on the plinth
+    // the ring tags (one canvas beside the rings, on their left: the Polymarket desk's board hangs to the right of the
+    // tower in the table's shots), the plate and the streak board on the plinth
     GP.tags = makeBoard(256, 2048, 0.5, 4.0 * 1.0); GP.tags.renderOrder = 0;
-    GP.tags.position.set(X + 0.82, GOAL_RING_Y0 + GOAL_RING_DY * (GOAL_RINGS - 1) / 2, Z + 0.02); scene.add(GP.tags);
-    F.add("brass", G.box(0.04, 4.4, 0.03), [X + 0.82 - 0.27, GP.tags.position.y, Z], null, null, BRASS_DARK);
+    GP.tags.position.set(X - 0.82, GOAL_RING_Y0 + GOAL_RING_DY * (GOAL_RINGS - 1) / 2, Z + 0.02); scene.add(GP.tags);
+    F.add("brass", G.box(0.04, 4.4, 0.03), [X - 0.82 + 0.27, GP.tags.position.y, Z], null, null, BRASS_DARK);
+    // the tower view's frame: between the tags and the rings, from the plinth's top to over the beacon
+    GP.towerAt = new THREE.Object3D(); GP.towerAt.position.set(X - 0.38, 3.75, Z + 0.02); scene.add(GP.towerAt);
     GP.plate = recBoard(F, X, 0.9, Z + 0.53, 0, 1024, 96, 1.1, 0.1, BRASS_DARK);
     GP.board = recBoard(F, X, 0.46, Z + 0.535, 0, 1024, 576, 1.1, 0.62, null);
     // the town's bill: a brass plaque on the arrival gate's left post (below the vines), facing the pad
     GP.plaque = recBoard(F, -1.8, 1.05, 11.5 + 0.325, 0, 512, 712, 0.56, 0.78, BRASS_DARK);
     // the owner's backup generator by the kiosk: a brass cart, its stack puffing while the owner pays the bill
-    const GX = 21.35, GZ = 7.75;
+    const GX = 21.35, GZ = 7.3;  // (clear of the planter at the rail: its view sees the plate whole)
     F.add("brass", G.rbox(0.72, 0.5, 0.52, 0.25, 16), [GX, 0.5, GZ], null, null, BRASS);
     F.add("iron", G.rbox(0.6, 0.12, 0.44, 0.3, 12), [GX, 0.2, GZ], null, null, IRON);
     [[-0.25, -0.24], [0.25, -0.24], [-0.25, 0.24], [0.25, 0.24]].forEach(function (q) { F.add("iron", G.cyl(0.13, 0.13, 0.05, 16), [GX + q[0], 0.13, GZ + q[1]], [Math.PI / 2, 0, 0], null, IRON); });
@@ -5209,11 +5261,13 @@ _M_GOAL = r"""
     GP.white = hdr(0xfff1dc, 2.2); GP.gold = hdr(0xffc35a, 3.0); GP.dim = hdr(0xfff1dc, 0.6);
     // the visitors (one instanced body and one lantern dot each; decorative: no words, no numbers)
     GP.vis = new THREE.InstancedMesh(prep(G.cap(0.13, 0.42, 4, 10)), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.75 }), GOAL_SPOTS.length);
+    GP.visHead = new THREE.InstancedMesh(prep(G.sph(0.105, 12, 10)), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.7 }), GOAL_SPOTS.length);
+    GP.visHat = new THREE.InstancedMesh(prep(G.cyl(0.07, 0.15, 0.1, 12)), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.8 }), GOAL_SPOTS.length);
     GP.visLamp = new THREE.InstancedMesh(prep(G.sph(0.045, 8, 6)), new THREE.MeshBasicMaterial({ color: hdr(0xffd08a, 3), toneMapped: false }), GOAL_SPOTS.length);
-    const tones = [0x6b4f8f, 0x3f6f73, 0x8a5a3a, 0x4f5f8f, 0x7a3f55, 0x5f7a45];
-    GOAL_SPOTS.forEach(function (q, i) { GP.vis.setColorAt(i, col(tones[i % tones.length])); });
-    GP.vis.count = 0; GP.visLamp.count = 0; GP.vis.frustumCulled = false; GP.visLamp.frustumCulled = false;
-    scene.add(GP.vis); scene.add(GP.visLamp);
+    const tones = [0x6b4f8f, 0x3f6f73, 0x8a5a3a, 0x4f5f8f, 0x7a3f55, 0x5f7a45], skins = [0xf0cfa8, 0xd9a77a, 0xb8845a, 0xf5dcc0];
+    const hats = [0x2e2a3a, 0xb04a3a, 0xe0b25e, 0x3a5a7a, 0x5a3420];
+    GOAL_SPOTS.forEach(function (q, i) { GP.vis.setColorAt(i, col(tones[i % tones.length])); GP.visHead.setColorAt(i, col(skins[i % skins.length])); GP.visHat.setColorAt(i, col(hats[i % hats.length])); });
+    [GP.vis, GP.visHead, GP.visHat, GP.visLamp].forEach(function (m) { m.count = 0; m.frustumCulled = false; scene.add(m); });
     GP.vm = new THREE.Matrix4(); GP.vq = new THREE.Quaternion(); GP.vp = V3(0, 0, 0); GP.vs = V3(1, 1, 1); GP.ve = new THREE.Euler();
     // the market stalls round the promenade (shutters down on the owner's power, up on real money's; no words)
     GP.stalls = [];
@@ -5239,23 +5293,30 @@ _M_GOAL = r"""
     for (let i = 0; i < N; i++) { const u = rr() * 2 - 1, a = rr() * TAU, s = Math.sqrt(1 - u * u); dir[i * 3] = s * Math.cos(a); dir[i * 3 + 1] = u; dir[i * 3 + 2] = s * Math.sin(a); seed[i] = Math.floor(i / 60); }
     const fg = new THREE.BufferGeometry(); fg.setAttribute("position", new THREE.BufferAttribute(dir, 3)); fg.setAttribute("aSet", new THREE.BufferAttribute(seed, 1));
     fg.boundingSphere = new THREE.Sphere(V3(0, 0, 0), 6);
-    GP.fw = new THREE.Points(fg, new THREE.ShaderMaterial({ uniforms: { uT: { value: 0 }, uSets: { value: 0 } }, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
-      vertexShader: "attribute float aSet; uniform float uT, uSets; varying float vA; varying float vSet; void main() { float t = mod(uT - aSet * 0.55, 3.5); float on = step(aSet, uSets - 0.5);"
-        + " vec3 p = position * (1.0 - exp(-t * 2.2)) * 2.4; p.y -= 0.25 * t * t; vA = on * smoothstep(0.0, 0.1, t) * (1.0 - smoothstep(1.2, 2.2, t)); vSet = aSet;"
-        + " vec4 mv = modelViewMatrix * vec4(p, 1.0); gl_PointSize = 6.0 * (6.0 / max(1.0, -mv.z)); gl_Position = projectionMatrix * mv; }",
+    // (uPx: the drawing buffer's pixels per metre at one metre away, set while they burst, so a spark is about 16 cm on
+    // any screen and at any lens)
+    GP.fw = new THREE.Points(fg, new THREE.ShaderMaterial({ uniforms: { uT: { value: 0 }, uSets: { value: 0 }, uPx: { value: 800 } }, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+      vertexShader: "attribute float aSet; uniform float uT, uSets, uPx; varying float vA; varying float vSet; void main() { float t = mod(uT - aSet * 0.55, 3.5); float on = step(aSet, uSets - 0.5);"
+        + " vec3 p = position * (1.0 - exp(-t * 2.2)) * 1.6; p.y -= 0.25 * t * t; vA = on * smoothstep(0.0, 0.1, t) * (1.0 - smoothstep(1.2, 2.2, t)); vSet = aSet;"
+        + " vec4 mv = modelViewMatrix * vec4(p, 1.0); gl_PointSize = clamp(uPx * 0.16 / max(0.5, -mv.z), 2.0, 64.0); gl_Position = projectionMatrix * mv; }",
       fragmentShader: "varying float vA; varying float vSet; void main() { vec2 q = gl_PointCoord - 0.5; float d = smoothstep(0.5, 0.0, length(q));"
         + " vec3 c = vSet < 0.5 ? vec3(1.0, 0.81, 0.48) : vSet < 1.5 ? vec3(0.85, 0.78, 1.0) : vSet < 2.5 ? vec3(0.37, 0.89, 0.6) : vec3(0.55, 0.7, 1.0); gl_FragColor = vec4(c * 2.0, vA * d); }" }));
-    GP.fw.position.set(X, top + 3.2, Z); GP.fw.visible = false; GP.fw.frustumCulled = false; scene.add(GP.fw);
+    GP.fw.position.set(X, top + 1.2, Z); GP.fw.visible = false; GP.fw.frustumCulled = false; scene.add(GP.fw);
     // less motion: a still ring of lamps round the crown instead of the bursts
     GP.glowRing = new THREE.Mesh(G.tor(0.62, 0.035, 6, 40), new THREE.MeshBasicMaterial({ color: hdr(0xffcf7a, 2.4), toneMapped: false }));
     GP.glowRing.rotation.x = Math.PI / 2; GP.glowRing.position.set(X, top + 0.78, Z); GP.glowRing.visible = false; scene.add(GP.glowRing);
     flushStatic();  // (the plinth, the lattice, the frames, the cart, the stalls and the stalks: merged like the rest of the set)
     goalDrawPlate(); goalDrawGenPlate();
     // the boards' own camera views (the record room's way: each straight on, sized for the screen in hand)
-    recViewOf("goaltower", GP.tags, 2.6, 6.6, false, "table", 0.12);
+    recViewOf("goaltower", GP.towerAt, 2.1, 5.8, false, "table", 0.12);  // (the rings fill about 60 % of the band)
     recViewOf("goalboard", GP.board, 1.25, 0.72, false, "table", 0.3);
     recViewOf("billplaque", GP.plaque, 0.62, 0.84, false, null, 0.55);  // (from above the flower boxes by the gate)
     recViewOf("yard", GP.yard, 1.36, 0.88, false, "dock", 0.1);
+    // (the generator, its plate and its puff; panned on a phone, so the drone stays in front of the walkway's tube)
+    recViewOf("power", GP.genPlate, 1.8, 1.25, true, "kiosk", 0.3);
+    // the promenade: the four stalls, the bunting over them and the visitors at them (panned along on a phone)
+    GP.promAt = new THREE.Object3D(); GP.promAt.position.set(-7.0, 1.55, 16.6); scene.add(GP.promAt);
+    recViewOf("promenade", GP.promAt, 8.8, 3.3, true, null, 0.28);  // (from over the promenade's rail)
   }
 
   // ------------------------------------------------------------- the boards (canvas text: the data's words and the fixed copy)
@@ -5271,7 +5332,7 @@ _M_GOAL = r"""
     const c = GP.genPlate.userData.canvas, ctx = c.getContext("2d"); if (!ctx) return;
     ctx.fillStyle = "#2a1d16"; ctx.fillRect(0, 0, c.width, c.height); ctx.lineWidth = 8; ctx.strokeStyle = "#c99a48"; ctx.strokeRect(6, 6, c.width - 12, c.height - 12);
     ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillStyle = "#ffe3a6"; ctx.font = "bold 60px " + REC_FONT;
-    ctx.fillText(recFit(ctx, "OWNER'S BACKUP POWER", c.width - 40), c.width / 2, c.height / 2 + 2);
+    ctx.fillText(recSized(ctx, "OWNER'S BACKUP POWER", c.width - 44, 60, 30, "bold "), c.width / 2, c.height / 2 + 2);
     GP.genPlate.userData.tex.needsUpdate = true;
   }
   function goalDrawTags(g) {  // one tag per ring, at the ring's own height
@@ -5282,8 +5343,11 @@ _M_GOAL = r"""
     for (let i = 0; i < Math.min(GOAL_RINGS, rungs.length); i++) {
       const r = rungs[i], y = H / 2 - ((i * GOAL_RING_DY - span / 2) / h) * H, s = GOAL_LOOK.ring[i];
       ctx.fillStyle = "rgba(20,15,38,.82)"; roundRect(ctx, 6, y - 54, c.width - 12, 108, 18); ctx.fill();
-      ctx.fillStyle = s === "goal" ? "#ffcf7a" : s === "above" ? "#d9c8ff" : s === "lit" ? "#5fe39a" : s === "ember" ? "#f5b133" : "#c7c0b2";
-      ctx.fillText(recSized(ctx, goalTag(r), c.width - 36, 50, 26, "bold "), 20, y + 2);
+      ctx.fillStyle = s === "goal" ? "#ffcf7a" : s === "above" ? "#d9c8ff" : s === "lit" ? "#5fe39a" : s === "ember" ? GOAL_SLATE : "#c7c0b2";
+      if (s === "ember") {  // (reached earlier today, not lit now: in slate, and said so under it)
+        ctx.fillText(recSized(ctx, goalTag(r), c.width - 36, 38, 22, "bold "), 20, y - 16);
+        ctx.fillStyle = "#e0b25e"; ctx.fillText(recSized(ctx, "earlier today", c.width - 36, 26, 18, ""), 20, y + 26);
+      } else ctx.fillText(recSized(ctx, goalTag(r), c.width - 36, 50, 26, "bold "), 20, y + 2);
     }
     GP.tags.userData.tex.needsUpdate = true;
   }
@@ -5324,7 +5388,7 @@ _M_GOAL = r"""
     ctx.font = "bold 46px " + REC_FONT; recEngrave(ctx, "THE TOWN'S BILL", W / 2, 96);
     ctx.font = "bold 92px " + REC_FONT; recEngrave(ctx, w ? w.bill_text : "", W / 2, 236);
     ctx.font = "bold 40px " + REC_FONT; recEngrave(ctx, "a day", W / 2, 322);
-    ctx.font = "32px " + REC_FONT; recEngrave(ctx, "(hosting, real)", W / 2, 380);
+    ctx.font = "32px " + REC_FONT; recEngrave(ctx, "(hosting + AI judge, real)", W / 2, 380);
     ctx.fillStyle = "#7d5420"; ctx.fillRect(70, 440, W - 140, 4);
     ctx.font = "bold 40px " + REC_FONT;
     recWrap(ctx, w ? w.plaque_line : "", W - 110, 3).forEach(function (l, i) { recEngrave(ctx, l, W / 2, 510 + i * 54); });
@@ -5351,7 +5415,8 @@ _M_GOAL = r"""
     ctx.fillStyle = "rgba(140,180,255,.35)"; ctx.fillRect(40, y - 10, W - 80, 2); y += 30;
     const road = p && p.crew_road ? p.crew_road : null;
     ctx.fillStyle = GOAL_BLUE; ctx.font = "bold 26px " + REC_FONT;
-    ctx.fillText(recFit(ctx, w && w.crew_road_line ? w.crew_road_line : "Road to real money for the Solana bot: not known yet.", W - 80), 40, y); y += 42;
+    recWrap(ctx, w && w.crew_road_line ? w.crew_road_line : "Road to real money for the Solana bot: not known yet.", W - 80, 2)
+      .forEach(function (l) { ctx.fillText(l, 40, y); y += 38; }); y += 4;
     (road ? road.steps : []).slice(0, 6).forEach(function (s) {
       ctx.fillStyle = s.done ? "#bfe0ff" : GOAL_SLATE; ctx.font = "24px " + REC_FONT;
       ctx.fillText(recFit(ctx, (s.done ? "✓ " : "· ") + s.label, W - 80), 52, y); y += 36;
@@ -5360,12 +5425,13 @@ _M_GOAL = r"""
   }
 
   // ------------------------------------------------------------- the scene follows the look (once a poll: colours, counts)
-  const _gc = new THREE.Color();
+  const _gc = new THREE.Color(), _gd = new THREE.Color();
   function goalScene() {
     const L = GOAL_LOOK;
     for (let i = 0; i < GOAL_RINGS; i++) {
-      const s = L.ring[i] || "none", k = s === "lit" || s === "goal" || s === "above" ? 2.4 : s === "ember" ? 0.35 * 2.4 : 0.9;
-      GP.rings.setColorAt(i, _gc.set(GOAL_COL[s] || GOAL_COL.dark).multiplyScalar(k));
+      const s = L.ring[i] || "none", t = GOAL_TONE[s] || GOAL_TONE.dark;
+      _gc.set(GOAL_COL[s] || GOAL_COL.dark); if (t.mix) _gc.lerp(_gd.set(GOAL_COL.dark), t.mix);
+      GP.rings.setColorAt(i, _gc.multiplyScalar(t.k));
     }
     GP.rings.count = Math.max(1, L.n || GOAL_RINGS); if (GP.rings.instanceColor) GP.rings.instanceColor.needsUpdate = true;
     GP.column.visible = L.column > 0; GP.column.scale.y = Math.max(0.01, GOAL_RING_Y0 - 1.0 + (L.column - 1) * GOAL_RING_DY + 0.05);
@@ -5377,7 +5443,8 @@ _M_GOAL = r"""
     for (let i = 0; i < n; i++) GP.bulbs.setColorAt(i, i < gold ? GP.gold : L.generator === "idle" ? GP.dim : GP.white);
     if (GP.bulbs.instanceColor) GP.bulbs.instanceColor.needsUpdate = true;
     GP.genLamp.visible = L.generator === "on"; GP.puff.visible = L.generator === "on";
-    GP.vis.count = L.visitors; GP.visLamp.count = L.visitors;
+    const nv = Math.min(L.visitors, GOAL_SPOTS.length);
+    GP.vis.count = nv; GP.visHead.count = nv; GP.visHat.count = nv; GP.visLamp.count = nv;
     GP.stalls.forEach(function (s) { s.shutter.position.y = L.stalls === "open" ? 2.3 : 1.36; s.shutter.scale.y = L.stalls === "open" ? 0.15 : 1; s.goods.visible = L.stalls === "open"; });
     GP.flags.count = L.bunting === "flags" ? 30 : L.bunting === "bunting" ? 15 : 0;
     GP.fw.visible = L.fireworks > 0; GP.fw.material.uniforms.uSets.value = L.fireworks;
@@ -5391,8 +5458,9 @@ _M_GOAL = r"""
     const show = !!(g && w);
     if (goalStrip.hidden === show) { goalStrip.hidden = !show; measureBar(); }
     if (!show) return;
-    goalLabel.textContent = w.strip_label;
-    goalFig.textContent = window.innerWidth < 340 ? w.strip_figure_short : w.strip_figure;
+    const narrow = window.innerWidth < 340;
+    goalLabel.textContent = narrow && w.strip_label_short ? w.strip_label_short : w.strip_label;
+    goalFig.textContent = narrow || GOAL.beatUntil ? w.strip_figure_short : w.strip_figure;
     goalFig.className = "gfig " + GOAL_LOOK.figure;
     goalStrip.setAttribute("aria-label", w.aria);
     const rungs = Array.isArray(g.rungs) ? g.rungs : [];
@@ -5405,12 +5473,16 @@ _M_GOAL = r"""
     let beyond = ""; for (let i = upTo + 1; i < rungs.length; i++) if (GOAL_LOOK.ring[i] === "above") beyond = "above";
     goalPips.children[want - 1].className = "beyond " + beyond;
   }
-  goalStrip.onclick = function () { openPanel("goal"); if (panelKind === "goal") goalPanel(); };
+  goalStrip.onclick = function () { GOAL.scroll = 0; openPanel("goal"); if (panelKind === "goal") { goalPanel(); panelEl.scrollTop = 0; } };
   window.addEventListener("resize", function () { if (GOAL.g) goalStripRender(); });  // (the short figure under 340 px)
-  function goalBeatShow(text) {
-    goalBeatEl.textContent = text; goalStrip.classList.add("beat"); GOAL.beatUntil = performance.now() + GOAL_STRIP_MS;
+  function goalBeatShow(text, kind) {
+    goalBeatEl.textContent = text; goalStrip.classList.add("beat"); goalStrip.classList.toggle("quiet", goalQuiet(kind));
+    GOAL.beatUntil = performance.now() + GOAL_STRIP_MS; if (GOAL.g) goalStripRender();
   }
-  function goalBeatEnd() { GOAL.beatUntil = 0; goalStrip.classList.remove("beat"); goalBeatEl.textContent = ""; }
+  function goalBeatEnd() {
+    GOAL.beatUntil = 0; goalStrip.classList.remove("beat"); goalStrip.classList.remove("quiet"); goalBeatEl.textContent = "";
+    if (GOAL.g) goalStripRender();
+  }
 
   // ------------------------------------------------------------- the goal panel (the page's own panel, kind "goal")
   function goalReset(g) {  // the desk's day end on the viewer's clock ("5:00 pm")
@@ -5433,11 +5505,21 @@ _M_GOAL = r"""
     cellar.appendChild(fill); cellar.appendChild(lab);
     if (below) box.appendChild(mark);
     box.appendChild(cellar);
+    if (GOAL_LOOK.ring.indexOf("ember") >= 0) {  // (what the amber outline means, under the ladder)
+      const key = document.createElement("div"), dot = document.createElement("i"), txt = document.createElement("span");
+      key.className = "gkey"; txt.textContent = "amber: reached earlier today"; key.appendChild(dot); key.appendChild(txt); box.appendChild(key);
+      box.className = "gladder em";
+    }
     return box;
   }
   function goalHead(parent, text) { const h = document.createElement("h3"); h.textContent = text; parent.appendChild(h); }
-  function goalPanel() {
-    const g = GOAL.g || (data && data.town ? data.town.goal : null), w = GOAL.w || (data && data.plain ? data.plain.goal : null);
+  // the goal and its words from this very page (the strip's own gate: plain.real), never the last poll's
+  function goalOf(page) {
+    const g = page && page.town && page.town.goal ? page.town.goal : null, w = page && page.plain && page.plain.goal ? page.plain.goal : null;
+    return g && w && page.plain.real ? { g: g, w: w } : null;
+  }
+  function goalPanel(page) {
+    const fresh = goalOf(page || data), g = fresh ? fresh.g : GOAL.g, w = fresh ? fresh.w : GOAL.w;
     panelBody.textContent = ""; panelEl.className = "goal";
     if (!g || !w) { panelTitle.textContent = "The owner's goal"; para(panelBody, "Not in this version."); return; }
     goalLook(g, GOAL.phone, GOAL_CALM, GOAL_LOOK);
@@ -5447,8 +5529,9 @@ _M_GOAL = r"""
     top.className = "gtop"; lead.className = "glead";
     top.appendChild(goalLadder(g, w));
     para(lead, goalFill(w.line, reset));
+    para(lead, w.ember_line, "ember");
     para(lead, "New day in " + goalIn(g.day_end - goalNowS()) + " (" + reset + " your time).", "dim");
-    para(lead, w.bill_line);
+    para(lead, w.bill_line); para(lead, w.power_line);
     top.appendChild(lead); panelBody.appendChild(top);
     para(panelBody, w.floor_line); para(panelBody, w.lifeline_line); para(panelBody, w.reserve_line, "dim");
     if (w.reach_line) { goalHead(panelBody, g.mood === "goal" ? "What the rule can make" : "Why the meter is low"); para(panelBody, w.reach_line); }
@@ -5464,7 +5547,20 @@ _M_GOAL = r"""
     const b = document.createElement("button"); b.type = "button"; b.className = "gwatch"; b.textContent = "Watch the goal check-in";
     b.onclick = function () { closePanel(); goalCheckIn(true); }; panelBody.appendChild(b);
   }
-  BUS.on("data", function () { if (panelKind === "goal") goalPanel(); });  // (the page's renderBar redrew the panel first)
+  // a poll landed: this poll's goal first (the strip and the panel say the same figures), then the open panel drawn
+  // again at the reader's place. The place is read here, before the redraw (the page's renderPanel leaves the goal's
+  // panel alone, so nothing has shortened it yet), and set again in the same task: no frame ever shows the top, and a
+  // scroll the page has not yet told us about (a slow frame) is never lost. GOAL.scroll follows the reader too.
+  function goalOnScroll() { if (panelKind === "goal") GOAL.scroll = panelEl.scrollTop; }
+  function goalOnData(d) {
+    const at = panelKind === "goal" ? panelEl.scrollTop : 0;
+    if (GOAL.ok && d && d !== GOAL.seen) {
+      try { GOAL.seen = d; goalApply(d); } catch (e) { GOAL.ok = false; console.error("world: the goal stopped", e); }
+    }
+    if (panelKind === "goal") { goalPanel(d); panelEl.scrollTop = at; GOAL.scroll = at; }
+  }
+  panelEl.addEventListener("scroll", goalOnScroll, { passive: true });
+  BUS.on("data", goalOnData);
 
   // ------------------------------------------------------------- the guide's goal card (fixed copy and the data's figures)
   function goalGuide(box) {
@@ -5477,7 +5573,8 @@ _M_GOAL = r"""
     para(box, "What really keeps the town running is its bill: " + bill + " a day for hosting and the AI judge. Until real "
       + "money covers it, the owner pays it: that is the backup power by the kiosk.");
     para(box, "The goal tower in the courtyard lights one ring per step, from above zero to the goal and beyond, on real money "
-      + "only. It starts again at midnight UTC (" + goalReset(g) + " your time).");
+      + "only; a dim amber ring was reached earlier today and is not lit now. It starts again at midnight UTC (" + goalReset(g)
+      + " your time).");
     para(box, "Practice (pretend money) trains the team but never counts: it lights nothing, opens no stall and brings no visitors.");
     para(box, "The goal changes no bet size, limit or rule. The team gets there only with a strategy that proves itself.");
     para(box, w.honest, "dim");
@@ -5486,12 +5583,16 @@ _M_GOAL = r"""
   // ------------------------------------------------------------- the programmes: the record room's own (progStart "goal")
   const GOAL_BOARDS = { tower: ["goaltower", "THE GOAL TOWER"], bill: ["billplaque", "THE TOWN'S BILL"], board: ["goalboard", "THE STREAK BOARD"],
                         goalboard: ["goalboard", "THE STREAK BOARD"], yard: ["yard", "THE PRACTICE YARD"], riskwall: ["riskwall", "ROOK'S RISK WALL"],
-                        vault: ["riskwall", "THE VAULT"] };
+                        vault: ["riskwall", "THE VAULT"], power: ["power", "THE OWNER'S BACKUP POWER"], promenade: ["promenade", "THE PROMENADE"] };
+  // Rook's real-money words on his own wall (a pin on him can frame whoever stands near his desk): his name on the card
+  const GOAL_SPEAKS_AT = { rook: ["riskwall", "ROOK · THE RISK WALL"] };
   function goalCard(k, n, who, s, tag, text, gest, note) {  // one beat of a programme: a board's view or a character's pin
     const reset = GOAL.g ? goalReset(GOAL.g) : "", words = goalFill(text, reset), board = GOAL_BOARDS[who];
-    const real = tag !== GOAL_PRETEND, actor = !board && actors[who] ? who : "";
-    const title = board ? board[1] : CAST[who] ? CAST[who].name.toUpperCase() : String(who || "").toUpperCase();
-    const cam = board ? (REC_VIEWS[board[0]] && REC_VIEWS[board[0]].mesh.visible ? "view:" + board[0] : "") : actor;
+    const real = tag !== GOAL_PRETEND, actor = !board && actors[who] ? who : "", wall = !board && real ? GOAL_SPEAKS_AT[who] : null;
+    const view = board ? board[0] : wall ? wall[0] : "", seen = !!(view && REC_VIEWS[view] && REC_VIEWS[view].mesh.visible);
+    const at = wall && seen ? wall : null;  // (no wall in this version: the director's pin on the character, as before)
+    const title = board ? board[1] : at ? at[1] : CAST[who] ? CAST[who].name.toUpperCase() : String(who || "").toUpperCase();
+    const cam = board ? (seen ? "view:" + view : "") : at ? "view:" + view : actor;
     const money = !board && real && (who === "voss" || who === "rook");  // (red: the real-money desk's own words)
     const b = filmBeat(k, cam, s, tag, (k + 1) + " of " + n, title, board || (real && !money) ? words : "", money ? "real" : "");
     if (money) b.real = words; else if (!real) b.pretend = words;
@@ -5499,17 +5600,19 @@ _M_GOAL = r"""
     return b;
   }
   function goalScript(list) {  // [[who, seconds, tag, text, gestures, note]] -> the programme's beats (missing words: skipped)
-    const keep = list.filter(function (q) { return q[3]; }), n = keep.length;
-    return keep.map(function (q, k) { return goalCard(k, n, q[0], q[1], q[2], q[3], q[4], q[5]); });
+    const keep = list.filter(function (q) { return q[3]; }), n = keep.length;  // (a long line gets the time to read it)
+    return keep.map(function (q, k) { return goalCard(k, n, q[0], goalSecs(q[1], String(q[3]) + " " + String(q[5] || "")), q[2], q[3], q[4], q[5]); });
   }
   function goalBeatScript(beat) {
     const w = GOAL.w || {}, L = w.lines || {}, R = GOAL_REAL, P = GOAL_PRETEND, res = w.result || {};
-    const idx = goalRungAt("bill"), at = beat.rung ? goalRungAt(beat.rung.id) : -1;
-    if (beat.kind === "on") return goalScript([["tower", 5, R, w.line, [["mote", "nod"]]], ["voss", 5, R, L.voss, [["voss", idx >= 0 && at >= idx ? "cheer" : "nod"]]]]);
-    if (beat.kind === "off") return goalScript([["tower", 4, R, w.line], ["rook", 5, R, L.rook, [["rook", "nod"], ["voss", "think"]]]]);
-    if (beat.kind === "stand") return goalScript([["riskwall", 5, R, w.floor_line || w.line, [["rook", "worried"]]], ["rook", 5, R, L.rook, [["rook", "nod"]]], ["voss", 5, R, L.voss, [["voss", "think"]]]]);
-    if (beat.kind === "reached") return goalScript([["tower", 6, R, w.line], ["voss", 2.5, R, L.voss, [["voss", "cheer"]]], ["pip", 2.5, P, L.pip, [["pip", "cheer"]]],
-      ["rook", 2.5, R, L.rook, [["rook", "cheer"]]], ["jet", 2.5, P, L.jet, [["jet", "cheer"]]], ["mote", 4, R, L.mote]]);
+    const idx = goalRungAt("bill"), at = beat.rung ? goalRungAt(beat.rung.id) : -1, tower = [w.line, w.ember_line].filter(Boolean).join(" ");
+    // the bill's rung: the moment the town changes power is filmed (the stalls opening, or the generator starting)
+    const power = beat.rung && beat.rung.id === "bill" && w.power_line ? [GOAL.g && GOAL.g.power === "own" ? "promenade" : "power", 4, R, w.power_line] : null;
+    if (beat.kind === "on") return goalScript([["tower", 5, R, tower, [["mote", "nod"]]], power, ["voss", 5, R, L.voss, [["voss", idx >= 0 && at >= idx ? "cheer" : "nod"]]]].filter(Boolean));
+    if (beat.kind === "off") return goalScript([["tower", 4, R, tower], power, ["rook", 5, R, L.rook, [["rook", "nod"], ["voss", "think"]]]].filter(Boolean));
+    if (beat.kind === "stand") return goalScript([["rook", 6, R, L.rook || w.floor_line, [["rook", "worried"]]], ["voss", 5, R, L.voss, [["voss", "think"]]]]);
+    if (beat.kind === "reached") return goalScript([["tower", 6, R, w.line], ["voss", 4, R, L.voss, [["voss", "cheer"]]], ["pip", 4, P, L.pip, [["pip", "cheer"]]],
+      ["rook", 4, R, L.rook, [["rook", "cheer"]]], ["jet", 4, P, L.jet, [["jet", "cheer"]]], ["mote", 4, R, L.mote]]);
     if (beat.kind === "closes") return goalScript([["goalboard", 8, R, res.line, null, res.streak]]).map(function (b) { b.who = String(res.title || b.who); return b; });
     if (beat.kind === "opens") return goalScript([["tower", 4, R, "A new day (UTC): the rings start again from zero."], ["voss", 5, R, L.voss, [["voss", "think"]]]]);
     return [];
@@ -5522,15 +5625,18 @@ _M_GOAL = r"""
     const sk = window.__skyport, replay = sk && sk.replay ? sk.replay.now() : null;
     return guideEl.hidden && !panelKind && !FILM.on && !replay && document.visibilityState === "visible";
   }
-  function goalPlay(beat) {
+  function goalPlay(beat) {  // (a beat said once a UTC day is marked said when its programme starts, never before)
     const script = goalBeatScript(beat); GOAL.pending = null;
-    if (script.length) progStart("goal", script, false);
+    if (script.length && progStart("goal", script, false)) {
+      if (beat.kind === "closes") goalSeenStore.mark("closed." + beat.day);
+      if (beat.kind === "reached") goalSeenStore.mark("reached." + beat.day);
+    }
   }
   function goalCheckIn(force) {
     const w = GOAL.w || (data && data.plain ? data.plain.goal : null);
     if (!w || !w.programmes) return false;
     GOAL.checkInDone = true;
-    return (force || goalFree()) && progStart("goal", goalProg(w.programmes.check_in).slice(0, 5), false);
+    return (force || goalFree()) && progStart("goal", goalProg(w.programmes.check_in).slice(0, GOAL_CHECKIN_MAX), false);
   }
   function goalTour() {
     const w = GOAL.w || (data && data.plain ? data.plain.goal : null);
@@ -5608,18 +5714,13 @@ _M_GOAL = r"""
     const sig = JSON.stringify([g ? [g.rungs, g.days, g.streaks, g.day_n, g.practice] : null, w ? [w.best_line, w.plaque_line, w.bill_text, w.crew_road_line] : null]);
     if (sig !== GOAL.sig) { GOAL.sig = sig; goalDrawTags(GOAL.g); goalDrawBoard(GOAL.g, GOAL.w); goalDrawPlaque(GOAL.w); goalDrawYard(GOAL.g, GOAL.w); }
     if (!GOAL.g) return;
-    const changes = goalChanges(GOAL.prev, GOAL.g, GOAL.w, goalSeenStore);
-    for (let i = 0; i < changes.length; i++) {
-      const b = changes[i];
-      if (b.kind === "closes") goalSeenStore.mark("closed." + b.day);
-      if (b.kind === "reached") goalSeenStore.mark("reached." + b.day);
-      goalQueue(GOAL.queue, b);
-    }
+    const changes = goalChanges(GOAL.prev, GOAL.g, GOAL.w, goalSeenStore);  // (marked said when played: goalPlay)
+    for (let i = 0; i < changes.length; i++) goalQueue(GOAL.queue, changes[i]);
     GOAL.prev = goalSnap(GOAL.g);
     if (GOAL.firstAt < 0) { GOAL.firstAt = simT; GOAL.checkInAt = simT + GOAL_CHECKIN_S; }
   }
   function goalBeatStart(beat) {
-    goalBeatShow(goalBeatText(beat, GOAL.g, GOAL.w)); goalCue(beat);
+    goalBeatShow(goalBeatText(beat, GOAL.g, GOAL.w), beat.kind); goalCue(beat);
     GOAL.pending = beat; GOAL.pendingAt = simT;
     if (beat.kind === "on" || beat.kind === "reached") GOAL.lean = simT + 6;
   }
@@ -5647,16 +5748,22 @@ _M_GOAL = r"""
       GP.puff.position.y = 1.2 + u * 0.55; GP.puff.material.opacity = 0.42 * Math.sin(Math.PI * u); GP.puff.scale.setScalar(0.25 + u * 0.35);
     }
     if (L.beacon) GP.halo.material.opacity = GOAL_CALM ? 0.85 : 0.75 + Math.sin(simT * 1.4) * 0.15;
-    if (L.fireworks > 0) GP.fw.material.uniforms.uT.value += dt;
-    const n = L.visitors, lean = simT < GOAL.lean ? 0.18 : 0;
+    if (L.fireworks > 0) {
+      GP.fw.material.uniforms.uT.value += dt;
+      GP.fw.material.uniforms.uPx.value = renderer.domElement.height * camera.projectionMatrix.elements[5] / 2;
+    }
+    const n = Math.min(L.visitors, GOAL_SPOTS.length), lean = simT < GOAL.lean ? 0.18 : 0;
     for (let i = 0; i < n; i++) {
       const q = GOAL_SPOTS[i], bob = GOAL_CALM ? 0 : Math.sin(simT * 1.6 + i * 1.7) * 0.02;
       const face = Math.atan2(GOAL_AT.x - q[0], GOAL_AT.z - q[1]) + (GOAL_CALM ? 0 : Math.sin(simT * 0.21 + i) * 0.6) * (lean ? 0.2 : 1);
       GP.ve.set(lean, face, 0, "YXZ"); GP.vq.setFromEuler(GP.ve);
       GP.vp.set(q[0], 0.34 + bob, q[1]); GP.vm.compose(GP.vp, GP.vq, GP.vs); GP.vis.setMatrixAt(i, GP.vm);
+      const fx = Math.sin(face) * lean, fz = Math.cos(face) * lean;  // (a lean tips the head forward with the body)
+      GP.vp.set(q[0] + fx * 0.46, 0.8 + bob, q[1] + fz * 0.46); GP.vm.compose(GP.vp, GP.vq, GP.vs); GP.visHead.setMatrixAt(i, GP.vm);
+      GP.vp.set(q[0] + fx * 0.6, 0.93 + bob, q[1] + fz * 0.6); GP.vm.compose(GP.vp, GP.vq, GP.vs); GP.visHat.setMatrixAt(i, GP.vm);
       GP.vp.set(q[0] + Math.sin(face) * 0.16, 0.5 + bob, q[1] + Math.cos(face) * 0.16); GP.vm.compose(GP.vp, GP.vq, GP.vs); GP.visLamp.setMatrixAt(i, GP.vm);
     }
-    if (n) { GP.vis.instanceMatrix.needsUpdate = true; GP.visLamp.instanceMatrix.needsUpdate = true; }
+    if (n) { GP.vis.instanceMatrix.needsUpdate = true; GP.visHead.instanceMatrix.needsUpdate = true; GP.visHat.instanceMatrix.needsUpdate = true; GP.visLamp.instanceMatrix.needsUpdate = true; }
   }
   function goalFrame() {  // (a fault here stops the goal, never the world)
     if (!GOAL.ok) return;

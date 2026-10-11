@@ -29,7 +29,8 @@ Schema (lists capped: members 9, events <= 5, open trades <= 10, closed trades 1
                 "finished": [{"id", "ts", "who": "jet"|"voss", "what", "result": "won"|"lost"|"even",
                               "usd": float|null, "real": bool, "money": "real money"|"pretend"}] (<= 3),
                 "goal": {"label", "strip_label", "strip_figure", "strip_figure_short", "strip", "aria", "today",
-                         "line", "bill_line", "plaque_line", "floor_line", "lifeline_line", "reserve_line",
+                         "strip_label_short", "line", "ember_line", "bill_line", "power_line", "plaque_line",
+                         "floor_line", "lifeline_line", "reserve_line",
                          "reach_line", "streak_line", "day_lines" (<= 7), "best_line", "road_lines", "practice_line",
                          "crew_road_line", "honest", "postcard", "target_text", "bill_text",
                          "result": {"day", "title", "figure", "line", "streak"}|null,
@@ -126,19 +127,22 @@ the owner's goal for the team, ``TOWN_GOAL_USD`` real dollars a day (read lenien
 shown when the setting cannot be read), never a cost (``is_cost`` is always false; the town's running cost stays
 ``cost_per_day_usd`` above, a whole day's bill). Only REAL money counts toward it: ``parts`` are the Polymarket desk's
 real book (``money.polymarket.real``) and the Solana bot's own only while it runs live, ``real_today_usd`` their sum to
-the cent (null without a real book, never a zero). The rungs (above zero, covers the bill, 1 % and 10 % of the goal,
-the goal, 1.5x, 2x, 3x) light by the cent; ``reached`` also marks a rung today's real settlement receipts touched
-earlier in the day (``peak_today_usd``, null unless they add up to today's figure); ``power`` is ``own`` once real
-money covers the bill, else ``backup`` (the owner pays), null when not known. ``floor`` and ``lifeline`` are the real
-desk's day and total loss stops (``risk_wall.real_caps``), ``reserve`` the venue's cash (deposits plus results: shown,
-never counted), ``reach`` the most today's settled bets could have made by the rule's own price (an upper bound).
-``mood`` (stopped_for_good, unknown, off, stand_down, waiting, goal, own_power, climb) picks the words. ``day`` is the
-desk's own UTC day; ``days``, ``streaks`` and ``best_day`` come from its day book (``live_days`` in its state file, read
-only) and are null unless that book agrees with the money card to the cent. ``practice`` is the pretend books apart
-(``counts_toward_goal`` always false) and the Solana bot's road to real money (the checklist's labels only, never a
-reason). ``plain.goal`` says it all in fixed templates (the one token the page fills is ``{local_reset}``, the day's
-end on the viewer's clock), with each character's line and the world's two programmes (``check_in``, ``tour``). A
-failure gives null for both (``town_goal_failed`` in the logs), never a made-up zero; nothing here reaches a desk.
+the cent (null without a real book, never a zero). The rungs (above zero, covers the bill, 1 % and 10 % of the goal, the
+goal, 1.5x, 2x, 3x) light by the cent; ``reached`` also marks a rung today's real settlement receipts touched earlier in
+the day (``peak_today_usd``, null unless they add up to today's figure); ``power`` is ``own`` once real money covers the
+bill, else ``backup`` (the owner pays), null when not known (``bill_covered_by_real`` and ``bill_share_real`` too, until
+real money has reported today). ``floor`` and ``lifeline`` are the real desk's day and total loss stops
+(``risk_wall.real_caps``), ``reserve`` the venue's cash (deposits plus results: shown, never counted), ``reach`` the
+most today's settled bets could have made by the rule's own price (an upper bound) and the least a loss costs
+(``loss_min_per_bet_usd``: the rule buys at its price or above). ``mood`` (stopped_for_good, unknown, off, stand_down,
+waiting, goal, own_power, climb) picks the words. ``day`` is the desk's own UTC day; ``days``, ``streaks`` and
+``best_day`` come from its day book (``live_days`` in its state file, read only) and are null unless that book agrees
+with the money card to the cent. ``practice`` is the pretend books apart (``counts_toward_goal`` always false) and the
+Solana bot's road to real money (the checklist's labels only, never a reason, and never its security steps: ``done`` and
+``total`` still count them). ``plain.goal`` says it all in fixed templates (the one token the page fills is
+``{local_reset}``, the day's end on the viewer's clock), with each character's line and the world's two programmes
+(``check_in``, ``tour``). A failure gives null for both (``town_goal_failed`` in the logs), never a made-up zero;
+nothing here reaches a desk.
 
 POLYMARKET (:func:`polymarket_desk`): the Polymarket desk's books (:func:`nightcrawler.polydesk.panel_state`, its
 state file only), kept apart from the SOL wallet and from each other. ``paper`` is the desk's own paper tally (the
@@ -349,7 +353,7 @@ from nightcrawler.polydesk import (
     panel_state,
     state_path,
 )
-from nightcrawler.readiness import readiness
+from nightcrawler.readiness import CHECK_LABELS, readiness
 from nightcrawler.recap import RECAP_TTL_S, collect_recap, day_window, empty_recap, render_recap
 from nightcrawler.research_board import research_state
 from nightcrawler.teamroom import ENGINE_STALE_S, FUTURE_SKEW_S, build_team_state, derive_status, duration_text
@@ -1368,6 +1372,16 @@ def town_ledger(settings: Settings, money: Mapping[str, Any], judge: Mapping[str
 
 # =========================================================================== the town's goal (GOAL)
 
+#: The readiness checklist's security steps, never listed in the goal's road (their state is not for the world).
+GOAL_UNLISTED_STEPS = ("keys", "locked")
+GOAL_UNLISTED_LABELS = tuple(CHECK_LABELS[k] for k in GOAL_UNLISTED_STEPS)
+
+
+def _road_steps(ready: Mapping[str, Any]) -> list[Any]:
+    """The checklist's counted steps (its first ``total`` items: the last item, the switch itself, is the action)."""
+    items, total = _xp_list(ready.get("items")), _num(ready.get("total"))
+    return items[:int(total)] if total is not None and total >= 0 else items
+
 
 def goal_books(ledger: Any, settings: Settings, now: float) -> tuple[Any, list[float] | None]:
     """``(live_days, today_pnls)`` for :func:`goal_inputs`: the Polymarket desk's own real day book (its state file,
@@ -1437,10 +1451,14 @@ def goal_inputs(settings: Settings, page: Mapping[str, Any], now: float, *, live
         "contracts": float(settings.polydesk_live_contracts), "theta": float(settings.polydesk_theta),
         "live_days": live_days, "today_pnls": today_pnls,
         "first_real_ts": _num(_xp_map(summary.get("real")).get("since")),
-        # the Solana bot's road to real money: the checklist's labels and ticks only, never a reason
+        # the Solana bot's road to real money: the checklist's labels and ticks only, never a reason, and never its
+        # security steps (the world is the page the owner shows friends: which of those is not done stays off it;
+        # the count of steps done still counts them)
         "ready": {"done": ready.get("done"), "total": ready.get("total"),
                   "items": [{"label": _xp_map(i).get("label"), "done": _xp_map(i).get("done") is True}
-                            for i in _xp_list(ready.get("items"))]} if ready else None,
+                            for i in _road_steps(ready)
+                            if _xp_map(i).get("id") not in GOAL_UNLISTED_STEPS
+                            and _xp_map(i).get("label") not in GOAL_UNLISTED_LABELS]} if ready else None,
         "receipts": {key: receipts.get(key) for key in ("count", "verified", "first_bad_seq")},
         "trials_total": _xp_map(page.get("research")).get("trials_total"),
         "said_crawler": _xp_map(_xp_map(plain.get("said")).get("crawler")).get("text"),

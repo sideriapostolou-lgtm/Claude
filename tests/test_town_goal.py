@@ -162,7 +162,7 @@ def test_todays_snapshot_reads_as_designed(states: dict[str, dict[str, Any]]) ->
     assert g["floor"] == {"day_loss_usd": 3.11, "day_max_usd": 3.0, "hit": True}
     assert g["lifeline"] == {"lost_usd": 4.89, "max_usd": 10.0, "left_usd": 5.11, "segments_lit": 5}
     assert g["reserve"]["cash_usd"] == pytest.approx(42.43, abs=0.005)
-    assert g["reach"] == {"win_max_per_bet_usd": 0.03, "best_case_today_usd": 2.49}
+    assert g["reach"] == {"win_max_per_bet_usd": 0.03, "best_case_today_usd": 2.49, "loss_min_per_bet_usd": 0.97}
     assert g["mood"] == "stand_down" and g["stand_down"] == "day"
     assert g["days"] == [{"day": "2026-10-09", "real_usd": -1.78, "settled": 8, "won": 6, "bill_covered": False,
                           "goal_met": False}]
@@ -176,20 +176,34 @@ def test_todays_snapshot_reads_as_designed(states: dict[str, dict[str, Any]]) ->
     assert w["label"] == "The team's goal" and w["strip_label"] == "Goal $100/day" and w["target_text"] == "$100"
     assert w["strip_figure"] == f"{MINUS}$3.11 real today" and w["strip_figure_short"] == f"{MINUS}$3.11 real"
     assert w["strip"] == f"Goal $100/day · {MINUS}$3.11 real today" and w["today"] == f"{MINUS}$3.11 real money today"
-    assert w["aria"] == ("The owner's goal: $100 a day in real money. Today: down $3.11, real money. Tap for details.")
-    assert "stopped at the daily limit" in w["line"] and "Next light: Above zero, $3.12 away." in w["line"]
+    assert w["strip_label_short"] == "Goal $100"
+    assert w["aria"] == ("The owner's goal: $100 a day in real money. Today: down $3.11, real money. " + w["ember_line"]
+                         + " Tap for details.")
+    # a stand-down names no next light (no bet can reach one before the stop lifts): the rings start again at midnight
+    assert "stopped at the daily limit" in w["line"] and "Next light" not in w["line"]
+    assert w["line"].endswith("Rules first: we don't chase a loss. The rings start again at midnight UTC.")
+    # the embers in words: reached earlier today (the receipts' running high), not lit now
+    assert w["ember_line"] == (f"Earlier today real money was up to +$0.47; it is {MINUS}$3.11 now. Amber rings: reached "
+                               "earlier today, not lit now. Only what real money holds now lights a ring.")
+    assert g["peak_today_usd"] == 0.47
     assert w["bill_line"] == ("The town's bill: $0.17 a day to run (hosting and the AI judge, real costs). Today the owner "
                               "pays it: the town runs on the owner's backup power.")
     assert w["plaque_line"] == "today: paid by the owner"
-    assert w["floor_line"] == "Today's real loss stop: $3.11 used of $3: stopped for today."
+    assert w["power_line"] == ("The owner's backup generator is running: real money has not covered today's $0.17 bill "
+                               "yet.")
+    # what the stop does (no new bet; the bets already open settled past it), never "$3.11 used of $3"
+    assert w["floor_line"] == ("Today's real loss stop is $3: it ended new real bets for today, and with the bets already "
+                               "open settled, today's real loss is $3.11.")
     assert w["lifeline_line"] == ("Real money stops for good after $10 lost in total: $4.89 lost so far, $5.11 of room "
                                   "left.")
     assert w["reserve_line"].startswith("Real cash at Polymarket: $42.43 (the owner's deposits plus the results;")
-    assert w["reach_line"].startswith("Even if all 83 of today's real bets had won, this rule could have made at most $2.49")
-    assert "Reaching the $100 goal takes a proven edge, not bigger bets." in w["reach_line"]
+    assert w["reach_line"] == ("Even if all 83 of today's real bets had won, they could have made at most $2.49: a win "
+                               "pays at most $0.03 a bet (one contract a bet), while a loss costs the whole price, $0.97 "
+                               "or more. Reaching the $100 goal takes a proven edge, not bigger bets.")
     assert w["streak_line"] == "Day 2 on real money. In a row (closed days, UTC): up 0, bill covered 0, goal met 0."
     assert w["day_lines"] == [f"Fri 9 Oct (UTC): {MINUS}$1.78, 6 of 8 bets won"] and w["best_line"] is None
-    assert w["road_lines"][1].startswith("2. Its real record is judged winning by the risk manager: not yet (0 of 30")
+    assert w["road_lines"][1] == ("2. Its real record is judged winning by the risk manager: not yet (still learning on "
+                                  "the rule in use now: 0 of 30 events needed before judging).")
     assert w["postcard"] == (f"Goal $100/day (the owner's, real money only) · {MINUS}$3.11 real today · the town's bill "
                              "$0.17/day")
     assert w["result"] == {"day": "2026-10-09", "title": "Day 1 closed · Fri 9 Oct (the desk's day, UTC)",
@@ -199,11 +213,19 @@ def test_todays_snapshot_reads_as_designed(states: dict[str, dict[str, Any]]) ->
     assert w["lines"]["voss"].startswith(f"Real money today: {MINUS}$3.11, 78 of 83 bets won. The daily stop ended my day,"
                                          " and I don't chase it back.")
     assert "({local_reset} your time)" in w["lines"]["voss"]
-    assert w["lines"]["rook"] == ("Stopped for today after losing $3.11 (the limit is $3). $5.11 left before real money "
-                                  "stops for good. Rules first, goal second.")
-    assert [b["who"] for b in w["programmes"]["check_in"]] == ["tower", "voss", "rook", "voss", "mote"]
-    assert [b["who"] for b in w["programmes"]["tour"]] == ["tower", "bill", "vault", "board", "yard", "voss", "rook", "pip",
-                                                           "nyx", "jet", "mote"]
+    assert w["lines"]["rook"] == ("The $3 daily stop ended new real bets for today; with the bets already open settled, "
+                                  "today's loss is $3.11. $5.11 left before real money stops for good. Rules first, goal "
+                                  "second.")
+    assert w["lines"]["mote"] == ("Each real settlement is also sealed in the tamper-proof records (5 records in all), and "
+                                  "the check found nothing edited.")
+    assert w["practice_line"] == (f"Practice (pretend money) never counts toward the goal or powers the town: the Solana "
+                                  f"bot today {MINUS}$5.26 (pretend), Polymarket practice today {MINUS}$5.26 (pretend), "
+                                  f"the trend desk's last day {MINUS}$0.53 (pretend).")
+    assert [b["who"] for b in w["programmes"]["check_in"]] == ["tower", "power", "voss", "rook", "voss", "mote"]
+    assert [b["who"] for b in w["programmes"]["tour"]] == ["tower", "bill", "power", "vault", "board", "yard", "voss",
+                                                           "rook", "pip", "nyx", "jet", "mote"]
+    tower = w["programmes"]["tour"][0]["text"]
+    assert tower == w["line"] + " " + w["ember_line"] == w["programmes"]["check_in"][0]["text"]
     assert all(b["tag"] in (towngoal.REAL_TAG, towngoal.PRETEND_TAG) for b in w["programmes"]["tour"])
     assert {b["who"]: b["tag"] for b in w["programmes"]["tour"]}["yard"] == "PRACTICE · PRETEND MONEY"
     json.dumps(page, allow_nan=False)
@@ -280,6 +302,11 @@ def test_mood_precedence(states: dict[str, dict[str, Any]]) -> None:
     g, w = _goal(_inputs(page, "bill", real=None))
     assert g["tier"]["id"] == "unknown" and g["real_today_usd"] is None and g["power"] is None
     assert w["strip_figure"] == "real money: not known yet" and w["plaque_line"] == "today: not known yet"
+    # real money not reported today: nothing is covered, whatever the book's figure (the strip says "not known yet")
+    g, w = _goal(_inputs(page, "bill", reported=False))
+    assert g["real_today_usd"] == 0.21 and g["mood"] == "unknown"
+    assert g["bill_covered_by_real"] is None and g["bill_share_real"] is None and g["power"] is None
+    assert "covered" not in w["bill_line"] and w["plaque_line"] == "today: not known yet" and w["power_line"] is None
 
 
 # --------------------------------------------------------------------------- real money only (H1-H4, H14, H16)
@@ -501,20 +528,121 @@ def test_the_reach_is_an_upper_bound_from_the_desks_settings(states: dict[str, d
         assert states[name]["town"]["goal"]["reach"] is None and states[name]["plain"]["goal"]["reach_line"] is None
 
 
+def test_the_reach_says_what_the_bets_did_and_what_a_loss_costs(states: dict[str, dict[str, Any]]) -> None:
+    """The reach never says "even if they had won" when they all did; it names the loss side (a loss costs the whole
+    price, the rule's price or more: why 78 of 83 won can be a loss); at the goal it never says "reaching the goal"."""
+    want = {
+        "stopped_today": "Even if all 83 of today's real bets had won, they could have made at most $2.49:",
+        "losing": "Even if today's one real bet had won, it could have made at most $0.03:",
+        "tiny": "Today's one real bet won: $0.03 is the most it could make, since",
+        "bill": "All 8 of today's real bets won: $0.24 is the most they could make, since",
+        "met": "All 36 of today's real bets won: $108.00 is the most they could make, since",
+        "double": "All 75 of today's real bets won: $225.00 is the most they could make, since",
+    }
+    for name, start in want.items():
+        g, w = states[name]["town"]["goal"], states[name]["plain"]["goal"]
+        line = w["reach_line"]
+        assert line.startswith(start), (name, line)
+        per = "100 contracts a bet" if name in ("met", "double") else "one contract a bet"
+        loss = pagestate._dollars(g["reach"]["loss_min_per_bet_usd"])
+        assert f"a win pays at most {pagestate._dollars(g['reach']['win_max_per_bet_usd'])} a bet ({per}), while a loss " \
+               f"costs the whole price, {loss} or more." in line, (name, line)
+        settled, won = g["parts"][0]["settled"], g["parts"][0]["won"]
+        assert ("Even if" in line) is (won < settled), name
+        if g["mood"] == "goal":
+            assert line.endswith(" More than this takes a proven edge, not bigger bets.") and "Reaching" not in line
+        else:
+            assert line.endswith(" Reaching the $100 goal takes a proven edge, not bigger bets."), (name, line)
+    s = GS.state_settings("stopped_today")
+    assert states["stopped_today"]["town"]["goal"]["reach"]["loss_min_per_bet_usd"] == round(
+        s.polydesk_live_contracts * s.polydesk_theta, 2)  # (the rule buys at its price or above)
+
+
+def test_the_road_never_pastes_the_risk_managers_statistics(states: dict[str, dict[str, Any]]) -> None:
+    """Road step 2 says the risk manager's count on the rule in use now, never its statistics clause."""
+    page = states["stopped_today"]
+    cases = {
+        "losing": ("31 events (40 settled), 9 lost, −$4.20 in all; even at best −$0.003 an event (95 % sure)",
+                   "not yet (losing on the rule in use now: 31 events (40 settled), 9 lost, −$4.20 in all)."),
+        "unclear": ("44 events (51 settled), 3 lost, +$0.12 in all; at worst −$0.004 an event (95 % sure)",
+                    "not yet (not proven yet on the rule in use now: 44 events (51 settled), 3 lost, +$0.12 in all)."),
+        "winning": ("120 events (130 settled), 4 lost, +$2.10 in all; at worst $0.003 an event (99 % sure)", "done."),
+    }
+    for verdict, (reason, tail) in cases.items():
+        _, w = _goal(_inputs(page, "stopped_today", guard_real={"verdict": verdict, "reason": reason},
+                             **({"rule_lab_passed": True} if verdict == "winning" else {})))
+        line = w["road_lines"][1]
+        assert line == "2. Its real record is judged winning by the risk manager: " + tail, line
+        for stat in ("sure", "at worst", "even at best", ";"):
+            assert stat not in line, (verdict, stat)
+
+
+def test_the_power_line_says_who_keeps_the_lights_on(states: dict[str, dict[str, Any]]) -> None:
+    """The owner's backup generator while real money has not covered the bill; open stalls and gold lights once it
+    has; nothing when the bill is not known or there is none. Pretend money never turns it off."""
+    for name in ("stopped_today", "tiny", "losing", "off", "practice_only"):
+        assert states[name]["plain"]["goal"]["power_line"] == ("The owner's backup generator is running: real money "
+                                                               "has not covered today's $0.17 bill yet."), name
+    for name in ("bill", "met", "double"):
+        assert states[name]["plain"]["goal"]["power_line"] == ("Real money covered today's $0.17 bill: the generator "
+                                                               "is off, the lights are gold and the stalls are open."), name
+        assert [b["who"] for b in states[name]["plain"]["goal"]["programmes"]["tour"]][2] == "promenade", name
+    page = states["tiny"]
+    _, w = _goal(_inputs(page, "tiny", bill=0.0))
+    assert w["power_line"] is None and "power" not in [b["who"] for b in w["programmes"]["tour"]]
+    p = copy.deepcopy(states["practice_only"])
+    p["money"]["today"]["usd"] = 99999.0
+    _, w = _recompute(p, "practice_only")
+    assert w["power_line"].startswith("The owner's backup generator is running")
+
+
+def test_the_day_stop_says_what_it_does(states: dict[str, dict[str, Any]]) -> None:
+    """The daily stop ends new real bets; a loss past it is the bets already open settling, said so; under it, the
+    plain used-of line."""
+    page = states["stopped_today"]
+    caps = next(m for m in page["team"]["members"] if m["id"] == "risk")["risk_wall"]["real_caps"]
+    _, w = _goal(_inputs(page, "stopped_today", caps=dict(caps, day_loss_usd=3.0)))
+    assert w["floor_line"] == "Today's real loss stop is $3: it ended new real bets for today, at $3.00 lost."
+    assert w["lines"]["rook"].startswith("The $3 daily stop ended new real bets for today, at $3.00 lost. ")
+    _, w = _goal(_inputs(states["losing"], "losing"))
+    assert w["floor_line"] == "Today's real loss stop: $0.97 used of $3."
+    for name in GS.STATES:  # (never "used of" past the limit, never "the limit is" under a loss over it)
+        w = states[name]["plain"]["goal"]
+        assert "(the limit is" not in json.dumps(w), name
+
+
 def test_the_road_shows_labels_only(states: dict[str, dict[str, Any]]) -> None:
     """H10: the crew's road is the checklist's labels and ticks, never a reason, an address, KEYS_ROTATED_ON, Railway or
-    a token."""
+    a token, and never its security steps (the keys replaced, the dashboard locked: the world is the page the owner
+    shows friends); the count of steps done still counts them, and the line says they are not listed."""
+    from nightcrawler.readiness import CHECK_LABELS
+
     page = copy.deepcopy(states["stopped_today"])
     page["ready"]["items"][2]["reason"] = "Wallet AfRc…5c8W is empty — send it SOL first."
     page["ready"]["items"][3]["reason"] = "Replace the keys you pasted in chat, then set KEYS_ROTATED_ON in Railway."
     secret = "dash-token-correct-horse-battery-staple"
     g, w = _recompute(page, "stopped_today")
     road = g["practice"]["crew_road"]
-    assert [s["label"] for s in road["steps"]] == [i["label"] for i in page["ready"]["items"][:5]]
+    counted = page["ready"]["items"][:5]
+    assert [s["label"] for s in road["steps"]] == [i["label"] for i in counted if i["id"] not in ("keys", "locked")]
+    assert road["total"] == 5 and road["done"] == page["ready"]["done"]  # (the count still counts every step)
     text = json.dumps([g, w], ensure_ascii=False)
-    for bad in ("AfRc", "KEYS_ROTATED_ON", "Railway", secret, "send it SOL", "reason"):
+    for bad in ("AfRc", "KEYS_ROTATED_ON", "Railway", secret, "send it SOL", "reason", CHECK_LABELS["keys"],
+                CHECK_LABELS["locked"], "Keys shared", "Dashboard locked", "password"):
         assert bad not in text, bad
-    assert w["crew_road_line"] == f"Road to real money for the Solana bot: {road['done']} of 5 steps done."
+    for name in GS.STATES:  # (every state's goal, both blocks)
+        both = json.dumps([states[name]["town"]["goal"], states[name]["plain"]["goal"]], ensure_ascii=False)
+        assert CHECK_LABELS["keys"] not in both and CHECK_LABELS["locked"] not in both, name
+    assert w["crew_road_line"] == (f"Road to real money for the Solana bot: {road['done']} of 5 steps done (the "
+                                   "security steps are not listed here).")
+    # the security steps done: still unlisted, still counted
+    for item in page["ready"]["items"]:
+        if item["id"] in ("keys", "locked"):
+            item["done"] = True
+    page["ready"]["done"] = 2
+    g, w = _recompute(page, "stopped_today")
+    assert g["practice"]["crew_road"]["done"] == 2 and len(g["practice"]["crew_road"]["steps"]) == 3
+    assert "Keys shared" not in json.dumps([g, w], ensure_ascii=False)
 
 
 # --------------------------------------------------------------------------- careful words, true numbers

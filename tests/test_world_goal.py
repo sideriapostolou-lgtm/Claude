@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import copy
 import json
+import math
 import re
 import shutil
 from collections.abc import Iterator
@@ -151,8 +152,8 @@ def test_the_goal_leaves_the_live_director_as_it_was(module: str, section: str) 
     assert set(re.findall(r"FLY\.\w+", code)) <= {"FLY.on"} and "FLY.on =" not in code
     for foreign in ("PLANNER.", "RIGS[", "liveDirector(", "startShot(", "setFov(", " cut(", "focusOn(", "togglePin("):
         assert foreign not in code, foreign
-    assert code.count('recViewOf("') == 4 and code.count('progStart("goal", ') == 3
-    for view in ('"goaltower"', '"goalboard"', '"billplaque"', '"yard"'):
+    assert code.count('recViewOf("') == 6 and code.count('progStart("goal", ') == 3
+    for view in ('"goaltower"', '"goalboard"', '"billplaque"', '"yard"', '"power"', '"promenade"'):
         assert view in code, view
     for event in ("speak(", "replayQueue", "tickerItems", "bubblesEl", "showReplay(", "BUS.emit("):
         assert event not in code, event
@@ -201,10 +202,14 @@ def test_goal_look_follows_real_money_only(section: str, base: dict[str, Any], s
         ["bill", 2, False, "off", "open", "none", 4, 0],
         ["one", 3, False, "off", "open", "bunting", 6, 0],
         ["ten", 4, False, "off", "open", "bunting", 9, 0],
-        ["goal", 5, True, "off", "open", "flags", 14, 1],
-        ["great", 6, True, "off", "open", "flags", 18, 2],
-        ["double", 7, True, "off", "open", "flags", 21, 3],
-        ["triple", 8, True, "off", "open", "flags", 24, 4]]
+        ["goal", 5, True, "off", "open", "flags", 13, 1],
+        ["great", 6, True, "off", "open", "flags", 16, 2],
+        ["double", 7, True, "off", "open", "flags", 19, 3],
+        ["triple", 8, True, "off", "open", "flags", 21, 4]]
+    spots = _line(section, "  const GOAL_SPOTS = ")
+    n_spots = len(re.findall(r"\[-?\d+\.?\d*, -?\d+\.?\d*\]", section[section.index("  const GOAL_SPOTS = "):
+                                                                    section.index("  function goalBuild(")]))
+    assert spots and max(d["visitors"] for d in desk) <= n_spots == 21  # (never more visitors than places)
     assert [d["visitors"] for d in phone] == [0, 1, 2, 4, 6, 8, 12, 12, 12, 12]
     assert [d["figure"] for d in desk[:3]] == ["loss", "neutral", "gain"]
     assert desk[0]["gold"] == 0 and desk[2]["gold"] == pytest.approx(goals[2]["bill_share_real"]) and desk[3]["gold"] == 1
@@ -318,17 +323,18 @@ const fakeStore = function () { if (blocked) throw new Error("SecurityError");
 @needs_node
 def test_beats_fire_only_on_changes_seen_during_the_visit(section: str, states: dict[str, dict[str, Any]],
                                                           tmp_path: Path) -> None:
-    """The first poll sets the state silently (but for yesterday's closing card, once in this browser); then a rung
-    lit (LIGHT ON), gone dark (LIGHT OFF), a stand-down, the goal reached once a UTC day (in storage; with storage
-    blocked, once a page load), the day closing then opening; nothing while real money is off. The queue keeps two at
-    most, never the same twice, and GOAL REACHED takes a waiting LIGHT ON's place."""
+    """The first poll sets the state silently (but for yesterday's closing card, once in this browser, said as
+    yesterday's: never a day opening on load); then a rung lit (LIGHT ON), gone dark (LIGHT OFF), a stand-down, the goal
+    reached once a UTC day (in storage; with storage blocked, once a page load), the day closing then opening when the
+    day turns during the visit; nothing while real money is off. The queue keeps two at most, never the same twice, and
+    GOAL REACHED takes a waiting LIGHT ON's place."""
     out = _node(_pure(section) + _SEEN + f"""
 const P = {json.dumps(_pages(states))}, out = {{}};
 function run(seq, seen) {{
   let prev = null; const said = [];
   seq.forEach(function (n) {{ const s = P[n], b = goalChanges(prev, s.g, s.w, seen);
     b.forEach(function (x) {{ if (x.kind === "closes") seen.mark("closed." + x.day); if (x.kind === "reached") seen.mark("reached." + x.day); }});
-    said.push(b.map(function (x) {{ return x.kind + (x.rung ? ":" + x.rung.id : ""); }}).join(",")); prev = goalSnap(s.g); }});
+    said.push(b.map(function (x) {{ return x.kind + (x.late ? "(late)" : "") + (x.rung ? ":" + x.rung.id : ""); }}).join(",")); prev = goalSnap(s.g); }});
   return said;
 }}
 out.first = run(["stopped_today"], goalSeen(fakeStore));
@@ -353,18 +359,20 @@ goalQueue(q, {{ kind: "closes", rung: null }}); goalQueue(q, {{ kind: "opens", r
 out.dayq = q.map(function (x) {{ return x.kind; }});
 const T = function (kind, n, rung) {{ return goalBeatText({{ kind: kind, rung: rung }}, P[n].g, P[n].w); }};
 out.text = {{ on: T("on", "bill", P.bill.g.rungs[1]), off: T("off", "tiny", P.tiny.g.rungs[1]), stand: T("stand", "stopped_today"),
-  reached: T("reached", "met"), closes: T("closes", "stopped_today"), opens: T("opens", "stopped_today") }};
+  reached: T("reached", "met"), closes: T("closes", "stopped_today"), opens: T("opens", "stopped_today"),
+  late: goalBeatText({{ kind: "closes", rung: null, late: true }}, P.stopped_today.g, P.stopped_today.w) }};
+out.quiet = ["on", "off", "stand", "reached", "closes", "opens"].map(goalQuiet);
 console.log(JSON.stringify(out));
 """, tmp_path)
-    assert out["first"] == ["closes,opens"] and out["again"] == [""]  # yesterday's card once in this browser
+    assert out["first"] == ["closes(late)"] and out["again"] == [""]  # yesterday's card once in this browser, no "opens"
     assert out["walk"] == ["", "on:bill", "off:bill", "off:zero", "stand", "on:bill", "reached:goal", "off:one", "on:goal",
                            "on:double"]
     assert out["reload"] == ["", "on:goal"]  # the goal reached once a UTC day: after a reload it is a LIGHT ON
     assert out["stored"] == ["nightcrawler.world.goal.closed.2026-10-09", "nightcrawler.world.goal.reached.2026-10-10"]
-    assert out["blocked"] == ["closes,opens", "reached:goal", "off:one", "on:goal"]  # storage blocked: once this page load
-    assert out["blockedLoad"] == ["closes,opens", "reached:goal"]  # (and again on the next: nothing could be remembered)
+    assert out["blocked"] == ["closes(late)", "reached:goal", "off:one", "on:goal"]  # storage blocked: once a page load
+    assert out["blockedLoad"] == ["closes(late)", "reached:goal"]  # (and again on the next: nothing could be remembered)
     assert out["off"] == ["", "", "", "on:zero"]  # real money off says nothing; a ring lit once it is back on does
-    assert out["day"] == ["", "closes,opens"]
+    assert out["day"] == ["", "closes,opens"]  # the day turning during the visit: it closes, then a new one opens
     assert out["dedupe"] == 1 and out["queue"] == ["off", "reached"] and out["full"] == ["reached", "stand"]
     assert out["dayq"] == ["closes", "opens"]  # a new day clears the old one's beats and keeps its own two
     t = out["text"]
@@ -372,9 +380,11 @@ console.log(JSON.stringify(out));
     # first, before anything a narrow strip may cut)
     assert t["on"] == "LIGHT ON · Covers the bill" and t["off"] == "LIGHT OFF · Covers the bill"
     assert t["stand"] == "STAND DOWN · daily stop reached"
-    assert t["reached"] == "GOAL REACHED · same rules, same size"
-    assert t["closes"] == "DAY CLOSES · −$1.78 real money · day 1"
-    assert t["opens"] == "DAY OPENS · goal $100 a day, real money only · day 2"
+    assert t["reached"] == "GOAL REACHED · same size"
+    assert t["closes"] == "DAY CLOSES · −$1.78 real money"
+    assert t["late"] == "YESTERDAY · −$1.78 real money"  # (on load: yesterday's card, never "the day closes" now)
+    assert t["opens"] == "NEW DAY (UTC) · goal $100/day"
+    assert out["quiet"] == [False, True, True, False, False, False]  # a light gone dark and a stand-down: no brass glow
 
 
 @needs_node
@@ -400,6 +410,7 @@ const goalBeatEnd = function () {{ GOAL.beatUntil = 0; shown = ""; }};
 const goalCue = function () {{}}, goalMove = function () {{}}, goalHum = function () {{}}, goalChordStep = function () {{}};
 const goalGest = function () {{}}, goalApply = function () {{}}, goalChipMake = function () {{}};
 const goalBeatScript = function (b) {{ return [b, b]; }}, goalProg = function (list) {{ return list; }};
+const marked = []; const goalSeenStore = {{ mark: function (k) {{ marked.push(k); }} }};
 {_fn(section, "goalFree")}
 {_fn(section, "goalPlay")}
 {_fn(section, "goalCheckIn")}
@@ -418,6 +429,13 @@ tick(8); out.busy = [started.length, GOAL.pending ? GOAL.pending.kind : null];
 tick(70); out.expired = [started.length, GOAL.pending, GOAL.checkInDone];
 FILM.on = false; tick(1); out.checkIn = [started.slice(), GOAL.checkInDone];
 FILM.on = false; tick(60); out.once = started.length;
+// yesterday's card: marked said when its programme starts, never while it waits (a guide open for 90 s lets it expire
+// unseen: then it is not marked, and the next visit shows it)
+out.marks0 = marked.slice(); FILM.on = false; guideEl.hidden = false;
+GOAL.queue.push({{ kind: "closes", rung: null, day: "2026-10-09", late: true }}); tick(70); out.expiredMarks = marked.slice();
+guideEl.hidden = true; FILM.on = false; GOAL.queue.push({{ kind: "closes", rung: null, day: "2026-10-09", late: true }}); tick(8);
+GOAL.queue.push({{ kind: "reached", rung: GOAL.g.rungs[1], day: "2026-10-10" }}); FILM.on = false; tick(8);
+out.marks = marked.slice();
 console.log(JSON.stringify(out));
 """, tmp_path)
     assert out["guide"][0] == "LIGHT ON · Covers the bill" and out["guide"][1] == 0
@@ -425,7 +443,9 @@ console.log(JSON.stringify(out));
     assert out["free"] == ["goal:2"]
     assert out["busy"] == [1, "off"]  # another programme on air: the next beat waits
     assert out["expired"] == [1, None, False]  # a minute on, it gives up (the strip said it)
-    assert out["checkIn"] == [["goal:2", "goal:5"], True] and out["once"] == 2
+    assert out["checkIn"] == [["goal:2", "goal:6"], True] and out["once"] == 2  # (the check-in: six beats at most)
+    assert out["marks0"] == [] and out["expiredMarks"] == []  # never marked said before it played
+    assert out["marks"] == ["closed.2026-10-09", "reached.2026-10-10"]
 
 
 # --------------------------------------------------------------------------- the boards, the panel, the guide
@@ -472,7 +492,7 @@ console.log(JSON.stringify(out));
     assert board[2:] == ["−$1.78", "10-09 UTC", "No up day on real money yet."]
     assert [f for t, f in s["board"] if t == "−$1.78"] == ["#ffb3ab"]  # (a real loss: red)
     plaque = _dedup([t for t, _ in s["plaque"]])
-    assert plaque[:4] == ["THE TOWN'S BILL", "$0.17", "a day", "(hosting, real)"]
+    assert plaque[:4] == ["THE TOWN'S BILL", "$0.17", "a day", "(hosting + AI judge, real)"]  # (the bill is both)
     assert " ".join(plaque[4:]) == w["plaque_line"] == "today: paid by the owner"
     assert " ".join(_dedup([t for t, _ in out["bill"]["plaque"]])[4:]) == "today: covered by real money"
     yard = [t for t, _ in s["yard"]]
@@ -480,10 +500,16 @@ console.log(JSON.stringify(out));
                         "−$5.26 (pretend)", "Polymarket practice today", "−$5.26 (pretend)", "The trend desk's last day",
                         "−$0.53 (pretend)"]
     steps = states["stopped_today"]["town"]["goal"]["practice"]["crew_road"]["steps"]
-    assert yard[7] == w["crew_road_line"] and yard[8:] == ["· " + st["label"] for st in steps]
+    n = len(steps)  # (the road line wraps on the board: two lines at most, never cut)
+    assert " ".join(yard[7:-n]) == w["crew_road_line"] and yard[-n:] == ["· " + st["label"] for st in steps]
+    for secret in ("Keys shared in chat", "Dashboard locked"):  # the security steps stay off the world
+        assert not any(secret in t for t in yard), secret
     assert [t for t, _ in out["practice_only"]["yard"]][1:3] == ["The Solana bot today", "+$777.77 (pretend)"]
-    assert [t for t, _ in s["tags"]] == ["> $0", "bill $0.17", "$1", "$10", "$100 GOAL", "$150", "$200", "$300"]
-    assert [f for _, f in s["tags"]][:3] == ["#f5b133", "#f5b133", "#c7c0b2"]  # (embers, then dark)
+    # (embers: reached earlier today, not lit now, so in slate and said "earlier", never in a lit ring's colour)
+    assert [t for t, _ in s["tags"]] == ["> $0", "earlier today", "bill $0.17", "earlier today", "$1", "$10",
+                                         "$100 GOAL", "$150", "$200", "$300"]
+    assert [f for _, f in s["tags"]][:5] == ["#8f9bb3", "#e0b25e", "#8f9bb3", "#e0b25e", "#c7c0b2"]
+    assert [t for t, _ in out["bill"]["tags"]][:3] == ["> $0", "bill $0.17", "$1"]  # (lit: no "earlier")
     assert [f for _, f in out["double"]["tags"]][4:7] == ["#ffcf7a", "#d9c8ff", "#d9c8ff"]
     none = out["none"]
     assert [t for t, _ in none["board"]] == ["REAL MONEY: NOT STARTED", "History not available yet",
@@ -521,6 +547,7 @@ const GOAL_CALM = false;
 {_fn(section, "goalNowS")}
 {_fn(section, "goalLadder")}
 {_fn(section, "goalHead")}
+{_fn(section, "goalOf")}
 {_fn(section, "goalPanel")}
 goalPanel();
 const items = flat(panelBody, []), kids = panelBody.children, button = kids[kids.length - 1];
@@ -529,12 +556,14 @@ const ladder = kids[0].children[0].children.map(function (c) {{
 button.onclick();
 const practice = kids.filter(function (c) {{ return c.className === "gpractice"; }}).map(function (c) {{ return flat(c, []).map(function (x) {{ return x[2]; }}); }});
 console.log(JSON.stringify({{ title: panelTitle.textContent, cls: panelEl.className, items: items, closed: closed,
-  checkins: checkins, ladder: ladder, practice: practice, cellar: kids[0].children[0].children[9].children[0].style.width }}));
+  checkins: checkins, ladder: ladder, practice: practice, cellar: kids[0].children[0].children[9].children[0].style.width,
+  box: kids[0].children[0].className }}));
 """, tmp_path)
     assert out["title"] == "The owner's goal: $100 a day (real money)" and out["cls"] == "goal"
     texts = [t for _, _, t in out["items"]]
     steps = ["· " + s["label"] for s in g["practice"]["crew_road"]["steps"]]
-    order = [w["line"], "New day in ", w["bill_line"], w["floor_line"], w["lifeline_line"], w["reserve_line"],
+    order = [w["line"], w["ember_line"], "New day in ", w["bill_line"], w["power_line"], w["floor_line"],
+             w["lifeline_line"], w["reserve_line"],
              "Why the meter is low", w["reach_line"], w["streak_line"], *w["day_lines"], w["best_line"],
              "The road to the $100 goal", *w["road_lines"], w["practice_line"], w["crew_road_line"], *steps,
              w["honest"], "Watch the goal check-in"]
@@ -542,7 +571,8 @@ console.log(JSON.stringify({{ title: panelTitle.textContent, cls: panelEl.classN
     assert len(texts) == len(order)
     for text, want in zip(texts, order, strict=True):
         assert text.startswith(want.split("{local_reset}")[0]), (text, want)
-    assert re.fullmatch(r"New day in 3 h 31 min \(.+ your time\)\.", texts[1]), texts[1]
+    assert re.fullmatch(r"New day in 3 h 31 min \(.+ your time\)\.", texts[2]), texts[2]
+    assert ["p", "ember", w["ember_line"]] in out["items"] and "+$0.47" in w["ember_line"]  # (amber, in words)
     assert [t for tag, _, t in out["items"] if tag == "h3"] == ["Why the meter is low", "The road to the $100 goal"]
     assert ["p", "dim", w["reserve_line"]] in out["items"] and ["p", "dim", w["honest"]] in out["items"]
     assert out["practice"] == [[w["practice_line"], w["crew_road_line"], *steps]]
@@ -554,6 +584,7 @@ console.log(JSON.stringify({{ title: panelTitle.textContent, cls: panelEl.classN
     assert [c[0] for c in ladder[:8]] == ["grung dark"] * 6 + ["grung ember"] * 2
     assert ladder[8] == ["gmark loss", "−$3.11 real"]  # below zero the marker sits under the rungs, never at $0
     assert ladder[9] == ["gcellar", "today's loss stop"] and out["cellar"] == "100%"
+    assert ladder[10] == ["gkey", "amber: reached earlier today"] and out["box"] == "gladder em"  # (what amber means)
 
 
 @needs_node
@@ -595,6 +626,7 @@ console.log(JSON.stringify({{ a: a, none: none.children.map(function (p) {{ retu
     assert a[1].startswith("What really keeps the town running is its bill: $0.17 a day for hosting and the AI judge.")
     assert "the owner pays it: that is the backup power by the kiosk." in a[1]
     assert "on real money only" in a[2] and re.search(r"midnight UTC \(.+ your time\)\.$", a[2])
+    assert "a dim amber ring was reached earlier today and is not lit now" in a[2]  # (what amber means, in the guide)
     assert a[3].startswith("Practice (pretend money) trains the team but never counts")
     assert a[4] == ("The goal changes no bet size, limit or rule. The team gets there only with a strategy that "
                     "proves itself.")
@@ -610,13 +642,22 @@ console.log(JSON.stringify({{ a: a, none: none.children.map(function (p) {{ retu
 # --------------------------------------------------------------------------- the programmes and the chip
 
 
+def _secs(base: float, text: str, note: str = "") -> float:
+    """goalSecs: at least the script's seconds, longer for more words (0.32 s a word, to the half second), 12 at most."""
+    words = len(f"{text} {note}".split())
+    return max(base, min(12.0, round(0.32 * words * 2) / 2))
+
+
 @needs_node
 def test_the_tour_and_check_in_are_the_record_rooms_programmes(section: str, records: str,
                                                                states: dict[str, dict[str, Any]],
                                                                tmp_path: Path) -> None:
     """Each beat is a board's own view or a character's pin, with the data's words: the desk's own lines (Voss, Rook)
-    in red as real money, practice in blue as pretend, the records' Mote in neither; the beats' scripts by kind."""
+    in red as real money, practice in blue as pretend, the records' Mote in neither; Rook's real-money words on his own
+    wall (never over a shot of whoever stands near him); the owner's backup power while it runs, the promenade once
+    real money pays the bill; each beat long enough to read; the beats' scripts by kind."""
     g, w = states["stopped_today"]["town"]["goal"], states["stopped_today"]["plain"]["goal"]
+    wb, gb = states["bill"]["plain"]["goal"], states["bill"]["town"]["goal"]
     boards = section[section.index("  const GOAL_BOARDS = "):section.index("  function goalCard(")]
     fns = "\n".join(_fn(section, n) for n in ("goalReset", "goalCard", "goalScript", "goalProg", "goalCheckIn",
                                                "goalTour", "goalRungAt", "goalBeatScript"))
@@ -625,7 +666,8 @@ const actors = {{ voss: {{}}, rook: {{}}, pip: {{}}, nyx: {{}}, jet: {{}}, mote:
 const CAST = {{ voss: {{ name: "Voss" }}, rook: {{ name: "Rook" }}, pip: {{ name: "Pip" }}, nyx: {{ name: "Nyx" }},
   jet: {{ name: "Jet" }}, mote: {{ name: "Mote" }} }};
 const REC_VIEWS = {{ goaltower: {{ mesh: {{ visible: true }} }}, billplaque: {{ mesh: {{ visible: true }} }},
-  goalboard: {{ mesh: {{ visible: true }} }}, yard: {{ mesh: {{ visible: true }} }}, riskwall: {{ mesh: {{ visible: true }} }} }};
+  goalboard: {{ mesh: {{ visible: true }} }}, yard: {{ mesh: {{ visible: true }} }}, riskwall: {{ mesh: {{ visible: true }} }},
+  power: {{ mesh: {{ visible: true }} }}, promenade: {{ mesh: {{ visible: true }} }} }};
 const data = {{ plain: {{ goal: {json.dumps(w)} }} }}, GOAL = {{ g: {json.dumps(g)}, w: data.plain.goal, checkInDone: false }};
 const started = [];
 const progStart = function (kind, script) {{ started.push([kind, script]); return true; }};
@@ -637,46 +679,73 @@ goalCheckIn(false); goalTour();
 const beats = {{}};
 ["on", "off", "stand", "reached", "closes", "opens"].forEach(function (k) {{ beats[k] = goalBeatScript({{ kind: k, rung: GOAL.g.rungs[1] }}); }});
 REC_VIEWS.billplaque.mesh.visible = false; const hidden = goalProg(data.plain.goal.programmes.tour)[1].cam;
-console.log(JSON.stringify({{ started: started, beats: beats, hidden: hidden, done: GOAL.checkInDone }}));
+REC_VIEWS.billplaque.mesh.visible = true;
+// the bill's rung lit by real money (the stalls open) and gone dark (the generator starts again)
+GOAL.g = {json.dumps(gb)}; GOAL.w = {json.dumps(wb)};
+const billOn = goalBeatScript({{ kind: "on", rung: GOAL.g.rungs[1] }}), zeroOn = goalBeatScript({{ kind: "on", rung: GOAL.g.rungs[0] }});
+GOAL.g = {json.dumps(g)}; GOAL.w = {json.dumps(w)};
+const billOff = goalBeatScript({{ kind: "off", rung: GOAL.g.rungs[1] }});
+REC_VIEWS.riskwall.mesh.visible = false; const rookBeat = goalProg(data.plain.goal.programmes.check_in)[3], rookPin = [rookBeat.cam, rookBeat.who];
+console.log(JSON.stringify({{ started: started, beats: beats, hidden: hidden, done: GOAL.checkInDone, billOn: billOn,
+  zeroOn: zeroOn, billOff: billOff, rookPin: rookPin }}));
 """, tmp_path)
     (kind, check_in), (kind2, tour) = out["started"]
     assert kind == kind2 == "goal" and out["done"] is True
-    assert [b["cam"] for b in check_in] == ["view:goaltower", "voss", "rook", "voss", "mote"]
-    assert [b["cam"] for b in tour] == ["view:goaltower", "view:billplaque", "view:riskwall", "view:goalboard",
-                                        "view:yard", "voss", "rook", "pip", "nyx", "jet", "mote"]
-    assert [b["prog"] for b in check_in] == [f"{i} of 5" for i in range(1, 6)]
-    assert [b["s"] for b in tour] == [7] * 5 + [6] * 6
+    assert [b["cam"] for b in check_in] == ["view:goaltower", "view:power", "voss", "view:riskwall", "voss", "mote"]
+    assert [b["cam"] for b in tour] == ["view:goaltower", "view:billplaque", "view:power", "view:riskwall",
+                                        "view:goalboard", "view:yard", "voss", "view:riskwall", "pip", "nyx", "jet",
+                                        "mote"]
+    assert [b["prog"] for b in check_in] == [f"{i} of 6" for i in range(1, 7)]
+    texts = [b["text"] for b in w["programmes"]["tour"]]
+    assert [b["s"] for b in tour] == [_secs(7, t) for t in texts[:6]] + [_secs(6, t) for t in texts[6:]]
+    assert all(b["s"] <= 12 for b in tour) and max(b["s"] for b in tour) > 7  # (a long line gets the time to read it)
     for b in tour + check_in:
         assert "{local_reset}" not in json.dumps(b, ensure_ascii=False)
         assert b["cardH"] == 170 and b["gest"] is None
-    by = {b["cam"]: b for b in tour}
-    voss, (before, after) = by["voss"], w["lines"]["voss"].split("{local_reset}")
+    by = {b["who"]: b for b in tour}
+    voss, (before, after) = by["VOSS"], w["lines"]["voss"].split("{local_reset}")
     assert voss["cls"] == "real" and voss["text"] == "" and voss["real"].startswith(before)
     assert voss["real"].endswith(after)
-    assert by["rook"]["cls"] == "real" and by["rook"]["real"] == w["lines"]["rook"]
-    for who in ("pip", "nyx", "jet"):
-        assert by[who]["pretend"] == w["lines"][who] and by[who]["tag"] == "PRACTICE · PRETEND MONEY", who
+    rook = by["ROOK · THE RISK WALL"]  # (Rook's words on his own wall, his name on the card, red: real money)
+    assert rook["cam"] == "view:riskwall" and rook["cls"] == "real" and rook["real"] == w["lines"]["rook"]
+    assert rook["text"] == "" and "ROOK" not in by
+    assert out["rookPin"] == ["rook", "ROOK"]  # (a version without the wall: the director's pin on him, as before)
+    for who in ("PIP", "NYX", "JET"):
+        assert by[who]["pretend"] == w["lines"][who.lower()] and by[who]["tag"] == "PRACTICE · PRETEND MONEY", who
         assert by[who]["cls"] == "" and by[who]["text"] == "" and by[who]["real"] == "", who
-    assert by["view:yard"]["tag"] == "PRACTICE · PRETEND MONEY" and by["view:yard"]["cls"] == ""
-    assert by["view:yard"]["text"] == by["view:yard"]["pretend"] == w["practice_line"] + " " + w["crew_road_line"]
-    assert by["mote"]["cls"] == "" and by["mote"]["text"] == w["lines"]["mote"]  # the records are no money: not red
-    assert by["view:goaltower"]["who"] == "THE GOAL TOWER" and by["view:billplaque"]["text"] == w["bill_line"]
-    assert by["view:riskwall"]["who"] == "THE VAULT" and by["view:riskwall"]["text"] == " ".join(
+    yard = by["THE PRACTICE YARD"]
+    assert yard["tag"] == "PRACTICE · PRETEND MONEY" and yard["cls"] == ""
+    assert yard["text"] == yard["pretend"] == w["practice_line"] + " " + w["crew_road_line"]
+    assert by["MOTE"]["cls"] == "" and by["MOTE"]["text"] == w["lines"]["mote"]  # the records are no money: not red
+    tower = by["THE GOAL TOWER"]  # (the tower's beat says what amber means)
+    assert tower["text"] == w["line"] + " " + w["ember_line"] and by["THE TOWN'S BILL"]["text"] == w["bill_line"]
+    assert by["THE OWNER'S BACKUP POWER"]["text"] == w["power_line"] and by["THE OWNER'S BACKUP POWER"]["cam"] == "view:power"
+    assert by["THE VAULT"]["cam"] == "view:riskwall" and by["THE VAULT"]["text"] == " ".join(
         [w["lifeline_line"], w["floor_line"], w["reserve_line"]])
     assert out["hidden"] == ""  # a board out of this version: no view (the film holds its card)
     beats = out["beats"]
-    assert [b["cam"] for b in beats["on"]] == ["view:goaltower", "voss"]
-    assert beats["on"][1]["gest"] == [["voss", "cheer"]] and beats["on"][0]["gest"] == [["mote", "nod"]]
-    assert [b["cam"] for b in beats["off"]] == ["view:goaltower", "rook"]
-    assert [b["cam"] for b in beats["stand"]] == ["view:riskwall", "rook", "voss"]
-    assert beats["stand"][0]["text"] == w["floor_line"] and beats["stand"][0]["who"] == "ROOK'S RISK WALL"
+    assert [b["cam"] for b in beats["on"]] == ["view:goaltower", "view:power", "voss"]  # (the bill's rung: the power)
+    assert beats["on"][2]["gest"] == [["voss", "cheer"]] and beats["on"][0]["gest"] == [["mote", "nod"]]
+    assert [b["cam"] for b in beats["off"]] == ["view:goaltower", "view:power", "view:riskwall"]
+    assert [b["cam"] for b in beats["stand"]] == ["view:riskwall", "voss"]  # (Rook says the stop on his wall)
+    assert beats["stand"][0]["real"] == w["lines"]["rook"] and beats["stand"][0]["who"] == "ROOK · THE RISK WALL"
+    assert beats["stand"][0]["gest"] == [["rook", "worried"]]
     assert not any(gs[1] == "cheer" for k in ("off", "stand") for b in beats[k] for gs in (b["gest"] or []))
-    assert [b["cam"] for b in beats["reached"]] == ["view:goaltower", "voss", "pip", "rook", "jet", "mote"]
-    assert [b["s"] for b in beats["reached"]] == [6, 2.5, 2.5, 2.5, 2.5, 4]
+    assert [b["cam"] for b in beats["reached"]] == ["view:goaltower", "voss", "pip", "view:riskwall", "jet", "mote"]
+    reached_texts = [w["line"], w["lines"]["voss"], w["lines"]["pip"], w["lines"]["rook"], w["lines"]["jet"],
+                     w["lines"]["mote"]]
+    assert [b["s"] for b in beats["reached"]] == [_secs(b, t) for b, t in zip([6, 4, 4, 4, 4, 4], reached_texts,
+                                                                              strict=True)]
+    assert min(b["s"] for b in beats["reached"]) >= 4  # (never 2.5 s for a 20-word line)
     closes = beats["closes"]
     assert len(closes) == 1 and closes[0]["cam"] == "view:goalboard" and closes[0]["who"] == w["result"]["title"]
     assert closes[0]["text"] == w["result"]["line"] and closes[0]["note"] == w["result"]["streak"]
     assert beats["opens"][0]["text"] == "A new day (UTC): the rings start again from zero."
+    # the bill's rung on real money: the promenade's open stalls between the tower and Voss; another rung: no power beat
+    assert [b["cam"] for b in out["billOn"]] == ["view:goaltower", "view:promenade", "voss"]
+    assert out["billOn"][1]["text"] == wb["power_line"] and out["billOn"][1]["who"] == "THE PROMENADE"
+    assert out["billOn"][1]["s"] >= 4 and [b["cam"] for b in out["zeroOn"]] == ["view:goaltower", "voss"]
+    assert out["billOff"][1]["who"] == "THE OWNER'S BACKUP POWER" and out["billOff"][1]["text"] == w["power_line"]
 
 
 @needs_node
@@ -690,13 +759,19 @@ progStart("goal", one, false); untilShown(); const first = shot();
 const two = [filmBeat(0, "view:riskwall", 6, "THE GOAL · REAL MONEY", "1 of 2", "THE VAULT", "Real money stops for good after $10.", ""),
              filmBeat(1, "voss", 6, "THE GOAL · REAL MONEY", "2 of 2", "VOSS", "", "real")];
 FLY.on = true; progStart("goal", two, false); run(0.3); const flying = shot(); FLY.on = false; untilShown(); const arrived = shot();
-console.log(JSON.stringify({ first: first, flying: flying, arrived: arrived }));
+// the next beat: while the drone flies on to Voss, the card says his beat's tag, place and title, never the vault's words
+run(5.4); FLY.on = true; run(0.9); const between = shot(); FLY.on = false; untilShown(); const second = shot();
+console.log(JSON.stringify({ first: first, flying: flying, arrived: arrived, between: between, second: second }));
 """, tmp_path)
     assert out["first"]["real"] == "Stopped for today after losing $3.11 (the limit is $3)." and out["first"]["cls"] == "real"
     flying = out["flying"]
     assert (flying["tag"], flying["prog"], flying["who"], flying["text"]) == ("THE GOAL · REAL MONEY", "1 of 2", "THE VAULT", "")
     assert flying["real"] is None and flying["pretend"] is None and flying["note"] is None and flying["cls"] == ""
     assert out["arrived"]["text"] == "Real money stops for good after $10." and out["arrived"]["shown"] == 0
+    between = out["between"]
+    assert (between["prog"], between["who"], between["text"]) == ("2 of 2", "VOSS", "")
+    assert between["real"] is None and between["note"] is None and between["shown"] == 0
+    assert out["second"]["shown"] == 1 and out["second"]["who"] == "VOSS"
 
 
 def test_the_goal_chip_sits_first_after_live(section: str) -> None:
@@ -803,7 +878,7 @@ def test_the_goal_copy_is_careful_and_red_is_real_money(section: str) -> None:
     for red in _REDS:
         assert red not in yard, red
     assert "goal_blue" in yard and "goal_slate" in yard
-    assert '"GOAL REACHED · same rules, same size"' in section
+    assert '"GOAL REACHED · same size"' in section  # (short: the strip says it whole on a phone)
     assert ("The goal changes no bet size, limit or rule. The team gets there only with a strategy that proves "
             "itself.") in section
 
@@ -831,3 +906,225 @@ console.log(JSON.stringify([run(0.03, "Settled", true), run(-0.4, "Stop-loss at 
   run(-0.4, "Stop-loss at 89c", false), run(-0.4, "Settled: lost", true), run(0, "Settled", true)]));
 """, tmp_path)
     assert out == [["cheer"], ["nod"], ["nod", "shrug"], ["shrug"], []]
+
+
+# --------------------------------------------------------------------------- the fix round's own checks
+
+
+_SCROLL_DOM = _PANEL_DOM + r"""
+// the panel scrolls: its content is 60 px a paragraph; a layout clamps scrollTop to what the content allows
+let _top = 0;
+function lines(n) { let k = n.tag === "p" || n.tag === "h3" || n.tag === "li" || n.tag === "button" ? 1 : 0;
+  n.children.forEach(function (c) { k += lines(c); }); return k; }
+Object.defineProperty(panelEl, "scrollTop", { get: function () { return _top; },
+  set: function (v) { _top = Math.max(0, Math.min(v, lines(panelBody) * 60 - 500)); } });
+"""
+
+
+@needs_node
+def test_the_goal_panel_keeps_its_place_and_says_this_polls_figures(module: str, section: str,
+                                                                    states: dict[str, dict[str, Any]],
+                                                                    tmp_path: Path) -> None:
+    """A phone reader scrolled down the goal panel stays there through every poll, even a scroll the page has not
+    told anyone about yet (a slow frame: no scroll event before the poll lands): the page's own panel redraw leaves the
+    goal's panel alone (it drew the short practice panel there, and the layout that followed reset the scroll), and
+    the goal reads the place before it redraws. The panel says the poll that just landed, never the last one."""
+    a, b = states["stopped_today"], states["tiny"]
+    fns = "\n".join(_fn(section, n) for n in ("goalReset", "goalNowS", "goalLadder", "goalHead", "goalOf", "goalPanel",
+                                               "goalOnScroll", "goalOnData"))
+    out = _node(_pure(section) + _SCROLL_DOM + _js_body(module, "  function para(parent, text, cls) {") + f"""
+let data = {json.dumps(a)}, panelKind = "goal", plain = data.plain;
+const GOAL = {{ ok: true, seen: data, g: data.town.goal, w: data.plain.goal, phone: true, scroll: 0 }}, GOAL_LOOK = {{ ring: [] }};
+const GOAL_CALM = false; let applied = 0;
+const goalApply = function (d) {{ applied += 1; GOAL.g = d.town.goal; GOAL.w = d.plain.goal; }};
+{_js_body(module, "  function renderPanel() {")}
+{fns}
+const first = function () {{ return panelBody.children[0].children[1].children[0].textContent; }};
+goalPanel(data); const tall = lines(panelBody) * 60;
+// the reader scrolls; the page has not dispatched the scroll event yet when the poll lands
+panelEl.scrollTop = 770; const before = [panelEl.scrollTop, GOAL.scroll];
+// a poll lands: the page's renderBar redraws the open panel, a layout follows (it clamps), then the bus says "data"
+const poll = function (d) {{ data = d; plain = d.plain; renderPanel(); panelEl.scrollTop = panelEl.scrollTop; goalOnData(d);
+  goalOnScroll(); }};
+poll({json.dumps(b)}); const after = [panelEl.scrollTop, GOAL.scroll, first(), applied];
+poll({json.dumps(b)}); const again = [panelEl.scrollTop, applied];
+// the goal stopped (a fault): the panel still says this poll's own figures, never the stale ones
+GOAL.ok = false; GOAL.g = {json.dumps(b["town"]["goal"])}; GOAL.w = {json.dumps(b["plain"]["goal"])};
+poll({json.dumps(a)}); const stale = [first(), panelEl.scrollTop];
+console.log(JSON.stringify({{ tall: tall, before: before, after: after, again: again, stale: stale }}));
+""", tmp_path)
+    assert out["tall"] > 1270 and out["before"] == [770, 0]  # (no scroll event yet: the goal had not heard of it)
+    top, kept, line, applied = out["after"]
+    assert top == kept == 770  # (the reader's place, after the poll)
+    assert line == b["plain"]["goal"]["line"] and applied == 1  # (this poll's own words: applied before drawn)
+    assert out["again"] == [770, 2]
+    assert out["stale"] == [a["plain"]["goal"]["line"], 770]
+    render = _js_body(module, "  function renderPanel() {")
+    assert render.index('if (panelKind === "goal") return;') < render.index('panelBody.textContent = "";')
+    onclick = _line(section, "  goalStrip.onclick = ")
+    assert "GOAL.scroll = 0;" in onclick and "panelEl.scrollTop = 0;" in onclick  # (the strip opens it at its top)
+    assert 'panelEl.addEventListener("scroll", goalOnScroll, { passive: true });' in section
+    assert 'BUS.on("data", goalOnData);' in section
+
+
+def _lin(c: float) -> float:
+    return c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4
+
+
+def _srgb(v: float) -> float:
+    v = max(0.0, min(1.0, v))
+    return 12.92 * v if v <= 0.0031308 else 1.055 * v ** (1 / 2.4) - 0.055
+
+
+def _ring_rgb(hexcol: int, k: float, mix: float, dark: int) -> tuple[float, float, float]:
+    """A ring's colour on screen as three.js paints it (sRGB hex to linear, mixed toward the dark ring, scaled, clipped
+    by the screen: toneMapped false), back in sRGB."""
+    def rgb(h: int) -> list[float]:
+        return [_lin(((h >> s) & 255) / 255) for s in (16, 8, 0)]
+    c, d = rgb(hexcol), rgb(dark)
+    out = [(ci * (1 - mix) + di * mix) * k for ci, di in zip(c, d, strict=True)]
+    r, g, b = (_srgb(v) for v in out)
+    return r, g, b
+
+
+@needs_node
+def test_embers_are_dim_and_said_in_words(section: str, states: dict[str, dict[str, Any]], tmp_path: Path) -> None:
+    """Today's snapshot (−$3.11, the two lowest rings reached earlier today): the embers glow far dimmer than any lit
+    ring (a worse day never looks better), the gold and the violet stay their colour (never clipped to white), the pips
+    and the ladder dots are dark ringed in amber, and the words say what amber means (panel, aria, tower beat)."""
+    out = _node(_pure(section) + """
+console.log(JSON.stringify({ tone: GOAL_TONE, col: GOAL_COL }));
+""", tmp_path)
+    tone, colours = out["tone"], out["col"]
+    rgb = {s: _ring_rgb(colours[s], tone[s]["k"], tone[s]["mix"], colours["dark"]) for s in ("lit", "goal", "above",
+                                                                                              "ember", "dark")}
+    luma = {s: 0.2126 * r + 0.7152 * g + 0.0722 * b for s, (r, g, b) in rgb.items()}
+    assert luma["ember"] < 0.5 * min(luma["lit"], luma["goal"], luma["above"]), luma
+    assert luma["ember"] > luma["dark"]  # (still a mark: dimmer than lit, brighter than dark)
+    r, g, b = rgb["above"]
+    assert b - g > 0.08 and min(r, g, b) < 0.95  # (violet, not white)
+    r, g, b = rgb["goal"]
+    assert r - b > 0.25  # (gold, not white)
+    assert tone["ember"]["mix"] > 0 and "_gc.lerp(_gd.set(GOAL_COL.dark), t.mix)" in _fn(section, "goalScene")
+    for rule in ("#goal .gpips i.ember {", "#panel .grung.ember i {"):
+        css = _line(_STYLE_GOAL, rule)
+        assert "background: #3a4352" in css and "box-shadow: inset 0 0 0 1.5px" in css, css
+    w = states["stopped_today"]["plain"]["goal"]
+    assert "+$0.47" in w["ember_line"] and "Amber rings: reached earlier today, not lit now." in w["ember_line"]
+    assert w["ember_line"] in w["aria"] and w["programmes"]["tour"][0]["text"].endswith(w["ember_line"])
+    for name in ("tiny", "bill", "met", "off", "practice_only"):  # (no ember, no words about one)
+        assert states[name]["plain"]["goal"]["ember_line"] is None, name
+
+
+def _width(text: str, px: float, spacing_em: float = 0.0) -> float:
+    """Helvetica Bold's widths (per 1000 em): a bold system font's width, about."""
+    widths = {" ": 278, "!": 333, "(": 333, ")": 333, "+": 584, ",": 278, "-": 333, ".": 278, "/": 278, ":": 333,
+              "$": 556, "·": 278, "−": 584, "'": 278, "%": 889}
+    for ch in "0123456789":
+        widths[ch] = 556
+    upper = dict(zip("ABCDEFGHIJKLMNOPQRSTUVWXYZ", (722, 722, 722, 722, 667, 611, 778, 722, 278, 556, 722, 611, 833,
+                                                     722, 778, 667, 778, 722, 667, 611, 722, 667, 944, 667, 667, 611),
+                     strict=True))
+    lower = dict(zip("abcdefghijklmnopqrstuvwxyz", (556, 611, 556, 611, 556, 333, 611, 611, 278, 278, 556, 278, 889,
+                                                     611, 611, 611, 611, 389, 556, 333, 611, 556, 778, 556, 556, 500),
+                     strict=True))
+    widths |= upper | lower
+    return sum(widths.get(ch, 611) for ch in text) / 1000 * px + len(text) * spacing_em * px
+
+
+@needs_node
+def test_the_strip_beat_fits_a_phone_and_quiet_beats_stay_quiet(section: str, states: dict[str, dict[str, Any]],
+                                                                tmp_path: Path) -> None:
+    """Beside a beat the strip shows the short figure, and every beat's words with it fit 300 px at the strip's 11 px
+    bold (GOAL REACHED whole on a 360 px phone); under 340 px the label is the short one; a light gone dark and a
+    stand-down are slate and still, never the brass glow of a win."""
+    names = ["stopped_today", "tiny", "bill", "met", "double", "losing"]
+    out = _node(_pure(section) + _STRIP_DOM + f"""
+const GOAL = {{}}, GOAL_LOOK = {{ ring: [] }};
+{_fn(section, "goalStripRender")}
+const P = {json.dumps(_pages(states, names))}, out = {{ beats: [], figs: {{}} }};
+Object.keys(P).forEach(function (n) {{
+  const g = P[n].g, w = P[n].w;
+  g.rungs.forEach(function (r) {{ ["on", "off"].forEach(function (k) {{ out.beats.push([n, goalBeatText({{ kind: k, rung: r }}, g, w), w.strip_figure_short]); }}); }});
+  ["stand", "reached", "closes", "opens"].forEach(function (k) {{ out.beats.push([n, goalBeatText({{ kind: k, rung: null }}, g, w), w.strip_figure_short]); }});
+  out.beats.push([n, goalBeatText({{ kind: "closes", rung: null, late: true }}, g, w), w.strip_figure_short]);
+  out.beats.push([n, goalBeatText({{ kind: "stand", rung: null }}, Object.assign({{}}, g, {{ stand_down: "risk" }}), w), w.strip_figure_short]);
+  GOAL.g = g; GOAL.w = w; GOAL.beatUntil = 0; goalLook(g, true, false, GOAL_LOOK); goalStripRender(); const full = goalFig.textContent;
+  GOAL.beatUntil = 1234; goalStripRender(); out.figs[n] = [full, goalFig.textContent, goalLabel.textContent];
+}});
+window.innerWidth = 330; GOAL.beatUntil = 0; goalStripRender(); out.narrow = [goalLabel.textContent, goalFig.textContent];
+console.log(JSON.stringify(out));
+""", tmp_path)
+    for name, text, fig in out["beats"]:
+        width = _width(text, 11, 0.04) + 7 + _width(fig, 13)
+        assert width <= 300, (name, text, round(width))
+    for n in names:
+        w = states[n]["plain"]["goal"]
+        assert out["figs"][n] == [w["strip_figure"], w["strip_figure_short"], w["strip_label"]], n
+    assert out["narrow"] == ["Goal $100", states["losing"]["plain"]["goal"]["strip_figure_short"]]
+    quiet = _line(_STYLE_GOAL, "#goal.beat.quiet {")
+    assert "box-shadow: none" in quiet and "animation: none" in quiet and "#8f9bb3" in quiet
+    show = _fn(section, "goalBeatShow")
+    assert 'goalStrip.classList.toggle("quiet", goalQuiet(kind));' in show
+    assert 'goalStrip.classList.remove("quiet");' in _fn(section, "goalBeatEnd")
+    # (the pips: the floor and "beyond" never give way; the rungs' pips shrink first; smaller on a 360 px phone)
+    assert "flex-shrink: 0; order: 99;" in _line(_STYLE_GOAL, "#goal .gpips i.beyond {")
+    assert "flex-shrink: 0;" in _line(_STYLE_GOAL, "#goal .gpips i.gfloor {")
+    assert "flex: 0 1 8px; min-width: 4px;" in _line(_STYLE_GOAL, "#goal .gpips i {")
+    assert "@media (max-width: 380px) { #goal .gpips { gap: 3px; }" in _STYLE_GOAL
+
+
+@needs_node
+def test_the_lights_follow_real_money_once_it_covered_the_bill(section: str, states: dict[str, dict[str, Any]],
+                                                              tmp_path: Path) -> None:
+    """One rule for the town's power: the plaque, the generator, the stalls and the lights all follow whether real
+    money covered today's bill, even after real money is switched off (the tower stays dark: real money is off)."""
+    g = copy.deepcopy(states["bill"]["town"]["goal"])
+    off = dict(g, mood="off", tier={"id": "off", "rank": None, "name": "Real money is off"},
+               rungs=[dict(r, lit=False, reached=False) for r in g["rungs"]])
+    half = dict(off, power="backup", bill_covered_by_real=False, bill_share_real=0.5)
+    on, o, h = _looks(section, [g, off, half], tmp_path)
+    assert (on["generator"], on["stalls"], on["gold"]) == ("off", "open", 1)
+    assert (o["generator"], o["stalls"], o["gold"], o["rings"], o["visitors"]) == ("off", "open", 1, 0, 0)
+    assert (h["generator"], h["stalls"], h["gold"]) == ("on", "shut", 0)  # (a share while off: the owner's power)
+    assert states["bill"]["plain"]["goal"]["plaque_line"] == "today: covered by real money"
+
+
+def test_fireworks_are_sized_for_the_screen_and_burst_in_the_towers_view(section: str) -> None:
+    build, move = _fn(section, "goalBuild"), _fn(section, "goalMove")
+    assert "uPx: { value: 800 }" in build and "gl_PointSize = clamp(uPx * 0.16 / max(0.5, -mv.z), 2.0, 64.0);" in build
+    assert "GP.fw.position.set(X, top + 1.2, Z);" in build and "* 1.6; p.y -= 0.25 * t * t;" in build
+    assert ("GP.fw.material.uniforms.uPx.value = renderer.domElement.height * camera.projectionMatrix.elements[5] / 2;"
+            in move)
+    # the tower's view: framed between its tags (now on the rings' left, clear of the desk's board) and its rings
+    assert 'recViewOf("goaltower", GP.towerAt, 2.1, 5.8, false, "table", 0.12);' in build
+    assert "GP.tags.position.set(X - 0.82," in build and 'recViewOf("power", GP.genPlate, 1.8, 1.25, true, "kiosk", 0.3);' in build
+    assert 'recViewOf("promenade", GP.promAt, 8.8, 3.3, true, null, 0.28);' in build
+
+
+def test_visitors_are_townsfolk_and_keep_out_of_the_boards_views(section: str) -> None:
+    spots = section[section.index("  const GOAL_SPOTS = "):section.index("  function goalBuild(")]
+    places = [(float(x), float(z)) for x, z in re.findall(r"\[(-?\d+\.?\d*), (-?\d+\.?\d*)\]", spots)]
+    assert len(places) == 21
+    plaque = (-1.8, 11.5 + 0.325)
+    assert all(math.hypot(x - plaque[0], z - plaque[1]) > 2.5 for x, z in places)  # (none by the bill plaque)
+    for gone in ((2.2, 16.85), (-2.2, 16.8), (-0.95, 12.2)):
+        assert gone not in places
+    build, move = _fn(section, "goalBuild"), _code(_fn(section, "goalMove"))
+    assert "GP.visHead = new THREE.InstancedMesh(" in build and "GP.visHat = new THREE.InstancedMesh(" in build
+    assert "GP.visHead.setMatrixAt(i, GP.vm);" in move and "GP.visHat.setMatrixAt(i, GP.vm);" in move
+    assert "const n = Math.min(L.visitors, GOAL_SPOTS.length)" in move
+
+
+def test_the_bar_keeps_to_a_fifth_of_a_short_phone() -> None:
+    """375x667 (an iPhone SE or 8) and 320x700: the strip, the bar's gaps and the headline are smaller; at 320 px the
+    top row's four buttons keep apart (the screenshots measure it: under 146 px at 667 tall)."""
+    assert ("@media (max-height: 700px) and (max-width: 759px) {\n  #goal { height: 24px; padding: 0 8px; }"
+            in _STYLE_GOAL)
+    assert "#bar { row-gap: 4px; padding-bottom: 10px; } #headline { font-size: 14px; line-height: 1.25; } }" in _STYLE_GOAL
+    from nightcrawler.world3d import _STYLE
+    narrow = _STYLE[_STYLE.index("@media (max-width: 340px) {"):]
+    narrow = narrow[:narrow.index("} }") + 3]
+    for rule in ("#bar .pill.real b { font-size: 13px;", "#bar .row1 > .pill.practice { font-size: 11px;",
+                 "#bar .pill.sound, #bar .pill.help { width: 32px; }"):
+        assert rule in narrow, rule
