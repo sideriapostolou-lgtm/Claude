@@ -1249,8 +1249,9 @@ def test_the_world_bar_replaces_the_two_dense_lines(settings: Settings) -> None:
 def test_the_guides_storage_is_guarded(settings: Settings) -> None:
     module = _module(render_world_html(settings))
     uses = [line for line in module.splitlines() if "localStorage" in line]
-    # the guide's two, and THE GOAL's one (its once-a-day marks; tests/test_world_goal.py)
-    assert len(uses) == 3 and all("try { " in line and "catch (e)" in line for line in uses), uses
+    # the guide's two, THE GOAL's one (its once-a-day marks; tests/test_world_goal.py) and THE CINEMA's four (the mode
+    # and its first-visit card; tests/test_world_cinema.py)
+    assert len(uses) == 7 and all("try { " in line and "catch (e)" in line for line in uses), uses
     assert "if (first) { chatterAt = simT + 6; if (plain && !guideSeen()) openGuide(); }" in module  # first visit
     # never long, but long enough for card 2 without a touch (a minute and a half)
     assert "GUIDE_IDLE_MS = 90000" in module and "setTimeout(closeGuide, GUIDE_IDLE_MS)" in module
