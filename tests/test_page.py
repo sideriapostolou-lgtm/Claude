@@ -898,7 +898,7 @@ def test_json_stays_small_on_a_busy_ledger(ledger: Ledger, settings: Settings) -
     ledger.set_kv("engine.status", status_kv(watchlist=100, watching=watching))
     state = build_page_state(ledger, settings, NOW)
     body = json.dumps(state, separators=(",", ":"))
-    assert len(body) < 40_000, len(body)
+    assert len(body) < 43_000, len(body)  # (plain.hearts, the team's hearts, adds about 2.2 KB of fixed copy and lines)
     assert len(state["money"]["curve"]) <= 300 and len(state["trades"]["closed"]) == 10
     assert all(len(t["coin"]) <= 24 and len(t["why"]) <= 60 for t in state["trades"]["closed"])
 

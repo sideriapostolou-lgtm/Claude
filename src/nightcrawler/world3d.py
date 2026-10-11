@@ -101,6 +101,14 @@ horizontal, close behind the crew; never a top-down tycoon view.
   plays a short programme through the record room's own (``progStart("goal")``), each beat long enough to read and
   Rook's words on his own wall; the "goal" chip plays the tour, and a check-in plays once a visit. The goal changes no
   bet size, limit or rule, and nothing here reaches a desk.
+* The hearts (the module's THE HEARTS section, CSS in ``_STYLE_HEARTS``): the cast as people who care about the town,
+  ``plain.hearts`` of ``/api/page`` (each one's temperament, why they care, a mood from the bot's own figures and a heart
+  line in the server's fixed words). The card under the camera shows the character's heart (a heart, the mood word in
+  its own colour, never red, and the line), the guide has a card on who they are and why they care, the mood moves the
+  body through the move library only (proud: a cheer or a nod; determined: a quick walk to the goal tower and back;
+  worried, hurting, hopeful, calm, relieved: their own moves) and only while the member is idle of the director's own
+  beats; and when a real settlement is new since the last poll the team huddles at the goal tower for a few seconds,
+  a beat of the goal's own (its strip says it, its programme films the tower, then Voss's heart line).
 
 Honesty rules (the same as the office's and the town's, non-negotiable):
 
@@ -658,6 +666,20 @@ _STYLE_GOAL = r"""
 """
 
 #: Resolves the addons' bare ``three`` imports (and the module's own) to the bundled files on this server.
+#: THE HEARTS' styles: the heart row on the card under the camera (the mood word in its own colour: never red, which is
+#: real money only) and the guide's hearts card.
+_STYLE_HEARTS = r"""
+#card .rows div.heart { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+  color: var(--fg); font-size: 12px; line-height: 1.35; margin-top: 2px; }
+#card .rows div.heart + div.latest { -webkit-line-clamp: 2; }  /* (the heart says it whole; the latest event gives room) */
+#card .rows div.heart b { font-weight: 700; letter-spacing: .02em; }
+.heart.mood-proud b { color: #ffd479; } .heart.mood-determined b { color: #8fb8ff; } .heart.mood-worried b { color: #f2c46d; }
+.heart.mood-hurting b { color: #c3a6ff; } .heart.mood-hopeful b { color: #8ef0c8; } .heart.mood-calm b { color: #b4bfd2; }
+.heart.mood-relieved b { color: #9fe3ff; }
+#guide-hearts p { font-size: 13px; line-height: 1.38; margin-top: 5px; }
+#guide-hearts p b { color: var(--brass); margin-right: 4px; }
+"""
+
 _IMPORTMAP = json.dumps(
     {"imports": {"three": "./office/assets/three.module.min.js", "three/addons/": "./office/assets/addons/"}},
     separators=(",", ":"),
@@ -2609,7 +2631,10 @@ _M_LIFE = r"""
   // slide). Jet hurries with a closed trade's cube (the carry move, quicker); Voss takes quick penguin steps and
   // glides when the way is long (wings spread).
   const WALK_RATE = { carry: 3.2, walk_penguin: 2.4, other: 1.25 };  // (a brisker cadence: the playback and the ground speed scale together)
-  function walkClip(a) { return a.carrying ? "carry" : (a.actor && a.actor.spec.walk) || "walk_casual"; }
+  function walkClip(a) {  // (a heart walk to the goal tower and back is quick: THE HEARTS)
+    return a.carrying ? "carry" : a.action && a.action.quick && (a.state === "out" || a.state === "back") ? "walk_quick"
+      : (a.actor && a.actor.spec.walk) || "walk_casual";
+  }
   function walkSpeedOf(a) {
     const A = a.actor;
     if (!A || A.spec.kind !== "biped") return a.speed * (a.key === "voss" ? lerp(1, 2.3, a.glide) : 1);
@@ -2760,6 +2785,7 @@ _M_LIFE = r"""
     const visitor = visitorOf(a);  // a neighbour dropped by: chat (no words)
     if (visitor) { a.station = "chat"; a.lookTarget = visitor.headAt; return; }
     if (status === "working") { if (STATION[a.key]) STATION[a.key](a); }
+    else if (a.heartUntil > simT && a.heartLoop) a.station = a.heartLoop;  // (THE HEARTS: the mood's own loop, a while)
     else if (simT - a.homeSince > 20) a.station = Math.floor((simT + a.phase * 10) / 14) % 2 ? "look" : "idle";
   }
   function facingCamera(a) { _cp.copy(camera.position).sub(a.headAt); return _cp.length() < 6.5 && Math.abs(angleDiff(Math.atan2(_cp.x, _cp.z), a.yaw)) < 1.4; }
@@ -3458,6 +3484,9 @@ _M_LIFE = r"""
       // walking: where to (out to a visit, or back home); else the room they are in
       const dest = actor && actor.walking ? ROOMS[actor.state === "out" ? actor.destRoom : actor.homeRoom] : null;
       room.textContent = (actor && actor.walking ? "Walking to " + (dest ? dest.title : "the next room") : spec ? spec.title : "").toUpperCase();
+      // (THE HEARTS: on the way out to the goal tower, or standing at it; the way back home says home's own room)
+      const tower = actor && (actor.state === "out" ? actor.destRoom : actor.state === "visit" ? actor.room : "");
+      if (tower && /^goal_/.test(tower)) room.textContent = (actor.walking ? "Walking to the goal tower" : "At the goal tower").toUpperCase();
       const t = actor ? teamOf(actor.key) : null;
       if (actor) {  // the name in bold, what kind of drawing it is small and dim beside it
         const c = CAST[actor.key], kind = document.createElement("small"); kind.textContent = c.kind;
@@ -3468,6 +3497,7 @@ _M_LIFE = r"""
         const div = document.createElement("div"), a = document.createElement("span"), st = document.createElement("span");
         div.className = "role"; a.textContent = t.plain_role; st.className = "status " + (STATUS_CLASS[t.status_word] || "idle"); st.textContent = t.status_word;
         div.appendChild(a); div.appendChild(st); rows.appendChild(div);
+        heartRow(rows, heartOf(actor ? actor.key : t.id));  // (the heart: its mood and line, plain.hearts' own words)
         const news = document.createElement("div"); news.className = "latest";
         news.textContent = t.latest ? "Latest: " + t.latest + (t.latest_ago ? " · " + t.latest_ago : "") : "No news from " + t.name + " yet.";
         rows.appendChild(news);
@@ -3586,6 +3616,30 @@ _M_LIFE = r"""
   let plain = null, panelKind = null, barBottom = 0;
   const STATUS_CLASS = { working: "working", waiting: "waiting", idle: "idle", stuck: "blocked" };
   function teamOf(key) { return plain && Array.isArray(plain.team) ? plain.team.find(function (t) { return t.id === key; }) || null : null; }
+  // the team's hearts (plain.hearts): each character's mood and heart line, the server's words (text only)
+  function heartOf(key) {
+    const h = plain && plain.hearts && Array.isArray(plain.hearts.members) ? plain.hearts.members : null;
+    return h ? h.find(function (m) { return m.id === key; }) || null : null;
+  }
+  function heartRow(rows, h) {  // "♥ proud · Brought home $1.52 for the town today. ..." (the mood in its own colour)
+    if (!h || !/^[a-z]{3,12}$/.test(String(h.mood))) return null;  // (a mood word: its colour comes from _STYLE_HEARTS)
+    const div = document.createElement("div"), b = document.createElement("b"), line = document.createElement("span");
+    div.className = "heart mood-" + h.mood; b.textContent = "\u2665 " + h.mood; div.appendChild(b);
+    if (h.line) { line.textContent = " · " + h.line; div.appendChild(line); }
+    rows.appendChild(div); return div;
+  }
+  function heartsGuide(box) {  // the guide's hearts card: each one's temperament and why they care (fixed copy, the server's)
+    if (!box) return;
+    box.textContent = "";
+    const list = plain && plain.hearts && Array.isArray(plain.hearts.members) ? plain.hearts.members : [];
+    if (!list.length) { para(box, "The team's hearts show here once the bot's own data has arrived."); return; }
+    para(box, "Six characters who care about the town and work to keep its lights on.");
+    list.forEach(function (m) {
+      const p = para(box, " " + m.temperament + " " + m.why), b = document.createElement("b");
+      b.textContent = m.name + ":"; p.insertBefore(b, p.firstChild);
+    });
+    para(box, "\u2665 on the card under the camera: each one's mood today, from real money and their own work.", "dim");
+  }
   // a bubble's label: the job of the member who spoke (plain.jobs), never another part its character also plays
   function jobOf(key, memberId) {
     const job = plain && plain.jobs && memberId ? plain.jobs[memberId] : null;
@@ -3710,6 +3764,7 @@ _M_LIFE = r"""
       + "today's loss limit has stopped them. A clear sky means only that nothing is down or paused.");
     para(cam, "The speaker button turns the island's sounds on and off.");
     goalGuide(el("guide-goal"));  // (THE GOAL fills its own card: the owner's goal, the bill, the tower)
+    heartsGuide(el("guide-hearts"));  // (THE HEARTS: who they are and why they care)
   }
   function guideDots() {
     const dots = el("guide-dots").children;
@@ -5118,6 +5173,7 @@ _M_GOAL = r"""
     if (beat.kind === "closes" && beat.late) return "YESTERDAY · " + fig;  // (the first poll: yesterday's card, not a closing now; its card says UTC)
     if (beat.kind === "closes") return "DAY CLOSES · " + fig;  // (its day number is on the programme's card)
     if (beat.kind === "opens") return "NEW DAY (UTC) · goal " + (w ? w.target_text : "") + "/day";
+    if (beat.kind === "huddle") return "HUDDLE · at the goal tower";  // (THE HEARTS: a real settlement, new this visit)
     return "";
   }
   // a quiet beat (a light gone dark, a stand-down): slate, still, never the brass glow of a win
@@ -5615,6 +5671,7 @@ _M_GOAL = r"""
       ["rook", 4, R, L.rook, [["rook", "cheer"]]], ["jet", 4, P, L.jet, [["jet", "cheer"]]], ["mote", 4, R, L.mote]]);
     if (beat.kind === "closes") return goalScript([["goalboard", 8, R, res.line, null, res.streak]]).map(function (b) { b.who = String(res.title || b.who); return b; });
     if (beat.kind === "opens") return goalScript([["tower", 4, R, "A new day (UTC): the rings start again from zero."], ["voss", 5, R, L.voss, [["voss", "think"]]]]);
+    if (beat.kind === "huddle") return heartsHuddleScript(beat);  // (THE HEARTS: the tower, then Voss's heart)
     return [];
   }
   function goalProg(list) {  // plain.goal's programme ([{who, tag, text}]) as beats
@@ -5628,6 +5685,7 @@ _M_GOAL = r"""
   function goalPlay(beat) {  // (a beat said once a UTC day is marked said when its programme starts, never before)
     const script = goalBeatScript(beat); GOAL.pending = null;
     if (script.length && progStart("goal", script, false)) {
+      if (beat.kind === "huddle") heartsGather();  // (THE HEARTS: the cast walks to the tower while the drone flies there)
       if (beat.kind === "closes") goalSeenStore.mark("closed." + beat.day);
       if (beat.kind === "reached") goalSeenStore.mark("reached." + beat.day);
     }
@@ -5780,6 +5838,109 @@ _M_GOAL = r"""
     strip: function () { return { hidden: goalStrip.hidden, label: goalLabel.textContent, figure: goalFig.textContent, cls: goalFig.className,
       beat: goalStrip.classList.contains("beat") ? goalBeatEl.textContent : "", queue: GOAL.queue.length, pending: GOAL.pending ? GOAL.pending.kind : null,
       cue: GOAL.lastCue, pips: Array.from(goalPips.children).map(function (i) { return i.className; }) }; },
+  } });
+"""
+
+_M_HEARTS = r"""
+  // ============================================================= THE HEARTS (team hearts): the cast as people who care about
+  // the town (plain.hearts of /api/page: each one's temperament, why they care, a mood from the bot's own figures and a heart
+  // line, the server's fixed templates filled with the page's own numbers). The card under the camera shows the heart (THE
+  // HUD's heartRow), the guide its own card (heartsGuide). Here: the mood moves the body through the move library only
+  // (proud: a cheer or a nod; determined: a quick walk to the goal tower and back; worried: worried or thinking; hurting:
+  // a shrug or worried; hopeful: looking round or a wave; calm and relieved: idle or a drink), only for a member at home,
+  // idle of the director's own beats (no event of theirs on air, no words up, no walk queued, no pin, no programme); and
+  // the HUDDLE: when a real settlement is new since the last poll, the goal's own beat ("huddle", goalQueue) plays its
+  // programme through progStart("goal") (the tower, then Voss's heart) and the cast walks to the tower for a few seconds.
+  // Never a word or a number of its own: the mood words and the lines are the server's; it never edits the director.
+  const HEART_HUDDLE_S = 14, HEART_GAP_S = 40, HEART_WALK_GAP_S = 150, HEART_LOOP_S = 9;
+  // each one's place at the tower (x, z; the ring nodes the walk joins): Voss in front, Rook at the side (he towers)
+  const HEART_SPOTS = { voss: [-1.35, -3.95, ["r6", "r5"]], pip: [-2.35, -4.15, ["r5"]], jet: [-0.45, -4.2, ["r6"]],
+                        nyx: [-3.05, -4.75, ["r5"]], mote: [0.35, -4.75, ["r6"]], rook: [1.3, -4.1, ["r6", "r7"]] };
+  Object.keys(HEART_SPOTS).forEach(function (k) {
+    const q = HEART_SPOTS[k], id = "gt_" + k, yaw = Math.atan2(GOAL_AT.x - q[0], GOAL_AT.z - q[1]);  // (facing the tower)
+    node(id, V3(q[0], 0, q[1])); q[2].forEach(function (r) { link(id, r); });
+    SPOTS["goal_" + k] = { home: id, homeYaw: yaw, visit: [id], visitYaw: [yaw] };
+  });
+  // the moves each mood may play (one of the two, in turn); a loop holds a while, a one-shot plays once
+  const HEART_MOVES = { proud: ["cheer", "nod"], worried: ["worried", "think"], hurting: ["shrug", "worried"],
+                        hopeful: ["look", "wave"], calm: ["idle", "drink"], relieved: ["drink", "idle"] };
+  const HEART_LOOPS = { look: true, idle: true, drink: true };
+  const HEART_NOD = { proud: "cheer", hurting: "shrug", worried: "worried", determined: "nod", hopeful: "wave", calm: "nod", relieved: "nod" };
+  const HEART = { h: null, mood: {}, next: {}, turn: {}, seen: false, last: "", lastTs: 0, tick: 0, i: 0, huddles: 0, gathered: 0 };
+  function heartsOnData(d) {  // a poll landed: the moods, and a huddle when a real settlement is new since the last poll
+    const h = d && d.plain && d.plain.hearts && Array.isArray(d.plain.hearts.members) ? d.plain.hearts : null;
+    HEART.h = h;
+    for (let i = 0; i < ACTOR_KEYS.length; i++) {
+      const k = ACTOR_KEYS[i], m = h ? h.members.find(function (x) { return x.id === k; }) : null;
+      HEART.mood[k] = m && HEART_NOD[m.mood] ? m.mood : "";
+      if (HEART.next[k] == null) HEART.next[k] = simT + 20 + i * 7;  // (staggered: never the whole cast at once)
+    }
+    // (new: another settlement than the last one seen, and later than any seen; a poll without one forgets nothing)
+    const hud = h && h.huddle && h.huddle.id && isNum(h.huddle.ts) ? h.huddle : null;
+    if (hud && HEART.seen && String(hud.id) !== HEART.last && hud.ts > HEART.lastTs && GOAL.g) {
+      goalQueue(GOAL.queue, { kind: "huddle", rung: null, day: GOAL.g.day, huddle: hud }); HEART.huddles += 1;
+    }
+    if (hud) { HEART.last = String(hud.id); HEART.lastTs = Math.max(HEART.lastTs, hud.ts); }
+    HEART.seen = true;
+  }
+  function heartsGests(keys) {  // each one's own move for the mood the data gives them (none for a drawing)
+    return keys.filter(function (k) { return HEART.mood[k]; }).map(function (k) { return [k, HEART_NOD[HEART.mood[k]]]; });
+  }
+  function heartsHuddleScript(beat) {  // the huddle's programme: the tower with the settlement's words, then Voss's heart
+    const hud = beat.huddle || (HEART.h && HEART.h.huddle) || null, voss = heartOf("voss");
+    if (!hud || !hud.line) return [];
+    const list = [["tower", 6, GOAL_REAL, hud.line, heartsGests(["pip", "jet", "mote"])]];
+    if (voss && voss.line) list.push(["voss", 7, GOAL_REAL, voss.line, heartsGests(["voss", "rook", "nyx"])]);
+    const out = goalScript(list);
+    if (out[0]) out[0].who = "THE HUDDLE · THE GOAL TOWER";
+    if (out[1] && voss) out[1].who = "VOSS · \u2665 " + String(voss.mood).toUpperCase();
+    return out;
+  }
+  function heartsGather() {  // the huddle: everyone walks to their place at the tower, stays a few seconds, then home
+    HEART.gathered += 1;
+    for (let i = 0; i < ACTOR_KEYS.length; i++) {
+      const a = actors[ACTOR_KEYS[i]], dest = "goal_" + a.key;
+      if (!SPOTS[dest] || a.carrying) continue;  // (Jet with a trade's cube delivers it first: a real moment of its own)
+      if (a.state === "visit" && a.room === dest) { a.visitUntil = Math.max(a.visitUntil, simT + HEART_HUDDLE_S); continue; }
+      if ((a.state === "out" && a.destRoom === dest) || a.queue.some(function (q) { return q.dest === dest; })) continue;
+      const go = { dest: dest, hold: HEART_HUDDLE_S, huddle: true };
+      if (a.state === "home") a.queue.unshift(go); else if (a.queue.length < 3) a.queue.push(go);
+    }
+  }
+  function heartsFree(a) {  // at home and idle of the director's own beats: no words up, nothing queued, not pinned or the event on air
+    const st = worstStatus(a.members);
+    return a.state === "home" && !a.queue.length && !a.carrying && !a.speaking && !a.listening && !a.beats.length
+      && !(a.actor && a.actor.oneShot) && pinned !== a.key && !(focus && focus.actor === a && simT < focus.until)
+      && simT - a.homeSince > 10 && st !== "blocked" && st !== "waiting";
+  }
+  function heartsWalking() {
+    for (let i = 0; i < ACTOR_KEYS.length; i++) { const a = actors[ACTOR_KEYS[i]]; if (a.action && a.action.quick && a.state !== "home") return true; }
+    return false;
+  }
+  function heartsStep() {  // twice a second, one member in turn: the mood's body language when they are free for it
+    if (simT < HEART.tick) return;
+    HEART.tick = simT + 0.5;
+    if (!HEART.h || FILM.on || !ACTOR_KEYS.length) return;
+    const k = ACTOR_KEYS[HEART.i++ % ACTOR_KEYS.length], a = actors[k], mood = HEART.mood[k];
+    if (!a || !mood || simT < HEART.next[k] || !heartsFree(a)) return;
+    HEART.next[k] = simT + HEART_GAP_S * (1 + Math.random());
+    if (mood === "determined") {  // a quick walk to the goal tower and back (one member at a time)
+      if (!heartsWalking() && SPOTS["goal_" + k]) { a.queue.push({ dest: "goal_" + k, hold: 2.5, quick: true }); HEART.next[k] += HEART_WALK_GAP_S; }
+      return;
+    }
+    const moves = HEART_MOVES[mood]; if (!moves || !a.actor) return;
+    const name = moves[(HEART.turn[k] = (HEART.turn[k] || 0) + 1) % 2];
+    if (HEART_LOOPS[name]) { a.heartLoop = name; a.heartUntil = simT + HEART_LOOP_S; } else oneShot(a, name, 4);
+  }
+  BUS.on("data", heartsOnData);
+  BUS.on("frame", heartsStep);
+  window.__skyport = Object.assign(window.__skyport || {}, { hearts: {
+    // (for a test or a screenshot: the moods the data gave, a huddle now, and what the section has done)
+    moods: function () { return Object.assign({}, HEART.mood); },
+    huddle: function () { if (!GOAL.g || !HEART.h || !HEART.h.huddle) return 0;
+      goalQueue(GOAL.queue, { kind: "huddle", rung: null, day: GOAL.g.day, huddle: HEART.h.huddle }); return GOAL.queue.length; },
+    state: function () { return { huddles: HEART.huddles, gathered: HEART.gathered, last: HEART.last,
+      at: ACTOR_KEYS.filter(function (k) { return /^goal_/.test(actors[k].state === "out" ? actors[k].destRoom : actors[k].room); }) }; },
   } });
 """
 
@@ -6402,10 +6563,10 @@ _M_LIVE = r"""
 }
 """
 
-_MODULE = _M_SETUP + _M_WORLD + _M_CAST + _M_LIFE + _M_CHANNEL + _M_RECORDS + _M_GOAL + _M_LIVE
+_MODULE = _M_SETUP + _M_WORLD + _M_CAST + _M_LIFE + _M_CHANNEL + _M_RECORDS + _M_GOAL + _M_HEARTS + _M_LIVE
 #: The page's one inline style: the base styles, then each added section's own block (the record room's,
-#: the goal's, then the channel's).
-_STYLES = _STYLE + _STYLE_RECORDS + _STYLE_GOAL + _STYLE_CHANNEL
+#: the goal's, the hearts', then the channel's).
+_STYLES = _STYLE + _STYLE_RECORDS + _STYLE_GOAL + _STYLE_HEARTS + _STYLE_CHANNEL
 
 
 def _sha256_source(text: str) -> str:
@@ -6478,8 +6639,9 @@ def render_world_html(settings: Settings) -> str:
         '<section class="gcard"><h2 id="guide-title">What you are looking at</h2><div id="guide-team"></div></section>'
         '<section class="gcard"><h2>Real money vs practice</h2><div id="guide-money"></div></section>'
         '<section class="gcard"><h2>The team\'s goal</h2><div id="guide-goal"></div></section>'
+        '<section class="gcard"><h2>The team\'s hearts</h2><div id="guide-hearts"></div></section>'
         '<section class="gcard"><h2>The camera follows what is happening</h2><div id="guide-camera"></div></section>'
-        '</div><div class="gnav"><span class="dots" id="guide-dots"><i class="on"></i><i></i><i></i><i></i></span>'
+        '</div><div class="gnav"><span class="dots" id="guide-dots"><i class="on"></i><i></i><i></i><i></i><i></i></span>'
         '<button type="button" id="guide-next">Next</button></div></div>\n'
         f'<div id="members" hidden>{members}</div>\n'
         f'<script id="cast" type="application/json">{_json_block(WORLD_CAST)}</script>\n'
