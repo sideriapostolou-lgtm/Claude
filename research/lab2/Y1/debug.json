@@ -1,0 +1,278 @@
+{
+ "hypothesis": "Y1",
+ "version": "y1-v1",
+ "stage": "debug",
+ "split": "final_train",
+ "utc": "2026-10-09 04:11:39",
+ "provisional": false,
+ "debug_only": true,
+ "prereg_sha256": "15301aa0ed49ae273bdc3619fb02b3b5ff6e1065aaa1561c91cbfee6c9e4b54e",
+ "rerun_reason": null,
+ "coverage": {
+  "split": "final_train",
+  "bounds_utc": [
+   "2026-10-07 19:37:30",
+   "2026-10-08 08:06:47"
+  ],
+  "debug_only": true,
+  "graduates_in_split": 644,
+  "tradeable": 450,
+  "usable": 450,
+  "excluded": {
+   "mayhem": 129,
+   "not_sol_quoted": 65
+  },
+  "created_inexact": 0,
+  "has_create0": 44,
+  "chain_hours_scanned_frac": 1.0,
+  "days": [
+   {
+    "day": "2026-10-07",
+    "hours_in_split": 5,
+    "curve_hours": 5,
+    "b2_hours": 5,
+    "b2_hours_midrun": 0,
+    "coins_created": 294,
+    "tradeable": 196,
+    "usable": 196,
+    "usable_frac": 1.0,
+    "partial": false
+   },
+   {
+    "day": "2026-10-08",
+    "hours_in_split": 9,
+    "curve_hours": 9,
+    "b2_hours": 9,
+    "b2_hours_midrun": 0,
+    "coins_created": 350,
+    "tradeable": 254,
+    "usable": 254,
+    "usable_frac": 1.0,
+    "partial": false
+   }
+  ],
+  "days_expected": 0.52,
+  "days_full": 2,
+  "curve_span_utc": [
+   "2026-09-30 17:00:00",
+   "2026-10-09 02:00:00"
+  ],
+  "b2_span_utc": [
+   "2026-10-07 19:00:00",
+   "2026-10-08 19:00:00"
+  ],
+  "completeness_source": "raw_chunks",
+  "parquet_snapshot_utc": "2026-10-09 03:57:17",
+  "b2_hours_needed": 24,
+  "b2_hours_done": 24,
+  "b2_hours_midrun": [],
+  "sol_usd": {
+   "series_utc": [
+    "2026-09-15 00:00:00",
+    "2026-10-08 23:59:00"
+   ],
+   "constant_fallback": false,
+   "lookahead_coins": 0,
+   "stale_coins": 0
+  },
+  "power": {
+   "entry_bar_coins": {
+    "need": 40,
+    "have_usable_coins": 450,
+    "ok": true
+   },
+   "x1_r0_trades_5_seeds": {
+    "need": 200,
+    "max_possible": 2250,
+    "ok": true
+   },
+   "g1_flagged_coins_val": {
+    "need": 200,
+    "max_possible": 450,
+    "ok": true
+   }
+  },
+  "underpowered": false,
+  "complete": true,
+  "notes": [],
+  "from_flow": true
+ },
+ "n_coins": 450,
+ "span_days": 0.5203240740740741,
+ "history": {
+  "splits": [
+   "final_train"
+  ],
+  "coins": 450,
+  "records": 429,
+  "creators_with_records": 417,
+  "structure_coins": 708,
+  "first_history_g_utc": "2026-10-07 19:37:30"
+ },
+ "event_counts": {
+  "coins": 450,
+  "first_status": {
+   "new": 417,
+   "unknown": 21,
+   "eligible": 7,
+   "pending": 5
+  },
+  "shared_reasons": {},
+  "eligible_in_window": 12,
+  "eligible_creators": 11,
+  "eligible_age_min_median": 7.858333333333333,
+  "eligible_n_resolved": {
+   "1": 11,
+   "2": 1
+  },
+  "eligible_per_day": 23.062550048936735
+ },
+ "persistence": {
+  "n_obs": 12,
+  "n_clusters": 10,
+  "n_creators": 11,
+  "need": {
+   "obs": 60,
+   "clusters": 20
+  },
+  "n_warmup": 12,
+  "decision": "HIDDEN (debug split: no outcome statistics)",
+  "trial": {
+   "config": "Y1-persist|2e40f89069b2",
+   "new_trial": false,
+   "n_trials_total": 2575,
+   "hypothesis_configs": 0,
+   "over_variant_limit": false,
+   "family_val_looks": 0
+  }
+ },
+ "configs": {
+  "good|th0|T30": {
+   "config": "good|th0|T30",
+   "params_hash": "81cc80479fbd",
+   "hypothesis": "Y1",
+   "trial": {
+    "config": "Y1|81cc80479fbd|cfg:a06543feac6c",
+    "new_trial": false,
+    "n_trials_total": 2575
+   },
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)",
+   "counts": "hidden on the debug split (a GOOD count is the number of records >= theta: a return sign)"
+  },
+  "good|th0|T60": {
+   "config": "good|th0|T60",
+   "params_hash": "3cc6b11d40da",
+   "hypothesis": "Y1",
+   "trial": {
+    "config": "Y1|3cc6b11d40da|cfg:a06543feac6c",
+    "new_trial": false,
+    "n_trials_total": 2575
+   },
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)",
+   "counts": "hidden on the debug split (a GOOD count is the number of records >= theta: a return sign)"
+  },
+  "good|th0.1|T30": {
+   "config": "good|th0.1|T30",
+   "params_hash": "4ea67b954fcc",
+   "hypothesis": "Y1",
+   "trial": {
+    "config": "Y1|4ea67b954fcc|cfg:a06543feac6c",
+    "new_trial": false,
+    "n_trials_total": 2575
+   },
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)",
+   "counts": "hidden on the debug split (a GOOD count is the number of records >= theta: a return sign)"
+  },
+  "good|th0.1|T60": {
+   "config": "good|th0.1|T60",
+   "params_hash": "4d874582f510",
+   "hypothesis": "Y1",
+   "trial": {
+    "config": "Y1|4d874582f510|cfg:a06543feac6c",
+    "new_trial": false,
+    "n_trials_total": 2575
+   },
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)",
+   "counts": "hidden on the debug split (a GOOD count is the number of records >= theta: a return sign)"
+  },
+  "host|T30": {
+   "config": "host|T30",
+   "params_hash": "e2caede11972",
+   "hypothesis": "Y1-host",
+   "trial": {
+    "config": "Y1-host|e2caede11972|cfg:a06543feac6c",
+    "new_trial": false,
+    "n_trials_total": 2575
+   },
+   "n": 12,
+   "n_coins": 12,
+   "n_clusters": 10,
+   "entry_age_min_median": 7.858333333333333,
+   "n_placebo": 39,
+   "placebo_draws_per_signal": 3.25,
+   "horizon_exits": 0,
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)"
+  },
+  "host|T60": {
+   "config": "host|T60",
+   "params_hash": "07be97dbe702",
+   "hypothesis": "Y1-host",
+   "trial": {
+    "config": "Y1-host|07be97dbe702|cfg:a06543feac6c",
+    "new_trial": false,
+    "n_trials_total": 2575
+   },
+   "n": 12,
+   "n_coins": 12,
+   "n_clusters": 10,
+   "entry_age_min_median": 7.858333333333333,
+   "n_placebo": 39,
+   "placebo_draws_per_signal": 3.25,
+   "horizon_exits": 0,
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)"
+  }
+ },
+ "entries_per_day": {
+  "good|th0|T30": null,
+  "good|th0|T60": null,
+  "good|th0.1|T30": null,
+  "good|th0.1|T60": null,
+  "host|T30": 23.062550048936735,
+  "host|T60": 23.062550048936735
+ },
+ "veto": {
+  "host|T30": {
+   "flag": "record_mean < 0 at the host entry (the complement of GOOD(0))",
+   "n_host": 12,
+   "flags": "hidden on the debug split (a flag is the sign of an earlier coin's record)",
+   "trial": {
+    "config": "Y1-veto|649d6f4c3c3f",
+    "new_trial": false,
+    "n_trials_total": 2575,
+    "hypothesis_configs": 0,
+    "over_variant_limit": false,
+    "family_val_looks": 0
+   }
+  },
+  "host|T60": {
+   "flag": "record_mean < 0 at the host entry (the complement of GOOD(0))",
+   "n_host": 12,
+   "flags": "hidden on the debug split (a flag is the sign of an earlier coin's record)",
+   "trial": {
+    "config": "Y1-veto|71c5e1d161a8",
+    "new_trial": false,
+    "n_trials_total": 2575,
+    "hypothesis_configs": 0,
+    "over_variant_limit": false,
+    "family_val_looks": 0
+   }
+  }
+ },
+ "decision": {
+  "verdict": "DEBUG",
+  "note": "mechanics only; returns hidden"
+ },
+ "runtime_s": 6.3,
+ "n_trials_total": 2575,
+ "overall": "PENDING (no official TRAIN run)"
+}

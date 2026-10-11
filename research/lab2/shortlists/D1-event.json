@@ -1,0 +1,27 @@
+{
+ "configs": [
+  {
+   "cap_def": "strict",
+   "entry_class": "CAP",
+   "event_class": "CAP",
+   "hold_min": 30,
+   "study": "event",
+   "version": "d1-v1"
+  },
+  {
+   "cap_def": "strict",
+   "entry_class": "DIST",
+   "event_class": "DIST",
+   "hold_min": 30,
+   "study": "event",
+   "version": "d1-v1"
+  }
+ ],
+ "hashes": [
+  "0039478002d9",
+  "91d0e6229431"
+ ],
+ "hypothesis": "D1-event",
+ "note": "d1-v1 VAL gate (stop rule 4) at 30 min",
+ "written_utc": "2026-10-09 08:44:11"
+}

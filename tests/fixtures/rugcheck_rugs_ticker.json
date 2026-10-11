@@ -1,0 +1,28 @@
+{
+ "items": [
+  {
+   "mint": "HGL5LYEZrt2iuQ8pGDAxCXunRBUBfDmSyLXWU3TKHgkT",
+   "platform": "pump_fun",
+   "ruggedAt": 1791474124,
+   "timeToRugMinutes": null,
+   "peakMarketCapUSD": 1964994.248034361,
+   "liquidityPulledUSD": 59567.30425243751
+  },
+  {
+   "mint": "FKHBP3B3bqE7wHSHE3gLqoEuaeot3AzQkUTJBDzSpump",
+   "platform": "pump_fun",
+   "ruggedAt": 1791474120,
+   "timeToRugMinutes": 0,
+   "peakMarketCapUSD": 7375.632153891147,
+   "liquidityPulledUSD": 49.91431891488916
+  },
+  {
+   "mint": "5aPFeEBNuB4uGHiJVPwrtTH3kVddgLijBZXk9iempump",
+   "platform": "pump_fun",
+   "ruggedAt": 1791474120,
+   "timeToRugMinutes": null,
+   "peakMarketCapUSD": 6088.784388497252,
+   "liquidityPulledUSD": 37.018995938337426
+  }
+ ]
+}

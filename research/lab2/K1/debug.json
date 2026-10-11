@@ -1,0 +1,211 @@
+{
+ "hypothesis": "K1",
+ "version": "k1-v1",
+ "stage": "debug",
+ "split": "final_train",
+ "utc": "2026-10-09 07:17:52",
+ "provisional": false,
+ "debug_only": true,
+ "prereg_sha256": "dfa4e07032028b29954a7046ff3943492b72c5b36ca6db718962649c73fff43a",
+ "rerun_reason": null,
+ "coverage": {
+  "split": "final_train",
+  "bounds_utc": [
+   "2026-10-07 19:37:30",
+   "2026-10-08 08:06:47"
+  ],
+  "debug_only": true,
+  "graduates_in_split": 644,
+  "tradeable": 450,
+  "usable": 450,
+  "excluded": {
+   "mayhem": 129,
+   "not_sol_quoted": 65
+  },
+  "created_inexact": 0,
+  "has_create0": 44,
+  "chain_hours_scanned_frac": 1.0,
+  "days": [
+   {
+    "day": "2026-10-07",
+    "hours_in_split": 5,
+    "curve_hours": 5,
+    "b2_hours": 5,
+    "b2_hours_midrun": 0,
+    "coins_created": 294,
+    "tradeable": 196,
+    "usable": 196,
+    "usable_frac": 1.0,
+    "partial": false
+   },
+   {
+    "day": "2026-10-08",
+    "hours_in_split": 9,
+    "curve_hours": 9,
+    "b2_hours": 9,
+    "b2_hours_midrun": 0,
+    "coins_created": 350,
+    "tradeable": 254,
+    "usable": 254,
+    "usable_frac": 1.0,
+    "partial": false
+   }
+  ],
+  "days_expected": 0.52,
+  "days_full": 2,
+  "curve_span_utc": [
+   "2026-09-30 17:00:00",
+   "2026-10-09 02:00:00"
+  ],
+  "b2_span_utc": [
+   "2026-10-07 19:00:00",
+   "2026-10-08 19:00:00"
+  ],
+  "completeness_source": "raw_chunks",
+  "parquet_snapshot_utc": "2026-10-09 03:57:17",
+  "b2_hours_needed": 24,
+  "b2_hours_done": 24,
+  "b2_hours_midrun": [],
+  "sol_usd": {
+   "series_utc": [
+    "2026-09-15 00:00:00",
+    "2026-10-08 23:59:00"
+   ],
+   "constant_fallback": false,
+   "lookahead_coins": 0,
+   "stale_coins": 0
+  },
+  "power": {
+   "entry_bar_coins": {
+    "need": 40,
+    "have_usable_coins": 450,
+    "ok": true
+   },
+   "x1_r0_trades_5_seeds": {
+    "need": 200,
+    "max_possible": 2250,
+    "ok": true
+   },
+   "g1_flagged_coins_val": {
+    "need": 200,
+    "max_possible": 450,
+    "ok": true
+   }
+  },
+  "underpowered": false,
+  "complete": true,
+  "notes": [],
+  "from_flow": true
+ },
+ "n_coins": 450,
+ "span_days": 0.5203240740740741,
+ "deliberation": {
+  "coins": 450,
+  "alive_at_decision": 137,
+  "decided": 411,
+  "undecided": 0,
+  "new_calls": 411,
+  "spent_usd": 0.5425,
+  "buys": {
+   "panel": 30,
+   "solo-sonnet": 30,
+   "solo-haiku": 30
+  },
+  "budget_usd": 2.0,
+  "client": "FakeDeskClient"
+ },
+ "event_counts": {
+  "coins": 450,
+  "alive_at_decision": 137,
+  "per_config": {
+   "panel": {
+    "cached": 137,
+    "buys": 30
+   },
+   "solo-sonnet": {
+    "cached": 137,
+    "buys": 30
+   },
+   "solo-haiku": {
+    "cached": 137,
+    "buys": 30
+   }
+  },
+  "deliberation": {
+   "coins": 450,
+   "alive_at_decision": 137,
+   "decided": 411,
+   "undecided": 0,
+   "new_calls": 411,
+   "spent_usd": 0.5425
+  }
+ },
+ "configs": {
+  "panel": {
+   "config": "panel",
+   "params_hash": "2d791bb28692",
+   "hypothesis": "K1",
+   "n": 30,
+   "n_coins": 30,
+   "by_stratum_n": {
+    "OPERATOR": 30
+   },
+   "n_placebo": 600,
+   "horizon_exits": 0,
+   "trial": {
+    "config": "K1|2d791bb28692|cfg:a06543feac6c",
+    "new_trial": false,
+    "n_trials_total": 2575
+   },
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)"
+  },
+  "solo-sonnet": {
+   "config": "solo-sonnet",
+   "params_hash": "f24855db56c0",
+   "hypothesis": "K1",
+   "n": 30,
+   "n_coins": 30,
+   "by_stratum_n": {
+    "OPERATOR": 30
+   },
+   "n_placebo": 600,
+   "horizon_exits": 0,
+   "trial": {
+    "config": "K1|f24855db56c0|cfg:a06543feac6c",
+    "new_trial": false,
+    "n_trials_total": 2575
+   },
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)"
+  },
+  "solo-haiku": {
+   "config": "solo-haiku",
+   "params_hash": "d0c0077d8902",
+   "hypothesis": "K1",
+   "n": 30,
+   "n_coins": 30,
+   "by_stratum_n": {
+    "OPERATOR": 30
+   },
+   "n_placebo": 600,
+   "horizon_exits": 0,
+   "trial": {
+    "config": "K1|d0c0077d8902|cfg:a06543feac6c",
+    "new_trial": false,
+    "n_trials_total": 2575
+   },
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)"
+  }
+ },
+ "entries_per_day": {
+  "panel": 57.65637512234184,
+  "solo-sonnet": 57.65637512234184,
+  "solo-haiku": 57.65637512234184
+ },
+ "decision": {
+  "verdict": "DEBUG",
+  "note": "mechanics and counts only; returns hidden"
+ },
+ "runtime_s": 5.2,
+ "n_trials_total": 2575,
+ "overall": "PENDING (no official TRAIN run)"
+}

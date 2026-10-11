@@ -1,0 +1,11 @@
+{
+ "allowed": [],
+ "decision": "NOT RUN: TRAIN passed no sport",
+ "hyp": "P6",
+ "n_trials_total": 2991,
+ "prereg_sha256": "b82e99fafc3cf21a9633c6f6e963570ade1fe7eb41aa53d9dc420564fb677eb6",
+ "split": "val",
+ "stage": "val",
+ "title": "sport by sport: in-play game winners at 97c+ (the live desk's rule)",
+ "utc": "2026-10-10T18:29:40+00:00"
+}

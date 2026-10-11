@@ -1,0 +1,250 @@
+{
+ "stage": "debug",
+ "split": "final_train",
+ "version": "d1-v1",
+ "created_span_days": 0.52,
+ "usable_coins": 450,
+ "e1_scan_real_bars": {
+  "universe": {
+   "instant": 277,
+   "eligible": 133,
+   "g1_completed": 19,
+   "no_creation_data": 21
+  },
+  "eligible_coins": 133,
+  "e1_events": 1953,
+  "coins_with_e1": 64,
+  "e1_events_cap_feasible_ub_strict": 1754,
+  "e1_events_cap_feasible_ub_loose": 1786,
+  "coins_cap_feasible_ub_strict": 62,
+  "coins_cap_feasible_ub_loose": 63,
+  "first_e1_age_min_quartiles": [
+   10.2,
+   10.6,
+   10.9
+  ]
+ },
+ "per_day_real_bars": {
+  "eligible_coins": 255.6,
+  "e1_events": 3753.4,
+  "coins_with_e1": 123.0,
+  "coins_cap_feasible_ub_strict": 119.2,
+  "coins_cap_feasible_ub_loose": 121.1
+ },
+ "real_b1_coins_in_split": 0,
+ "synthetic_b1": {
+  "coins": 133,
+  "trades": 153313,
+  "note": "SYNTHETIC tapes: class counts and trades are pipeline checks, not estimates"
+ },
+ "runs_on_synthetic_b1": {
+  "V1": {
+   "n": 25,
+   "n_coins": 25,
+   "n_placebo": 431,
+   "placebo_per_signal": 17.2,
+   "horizon_exits": 0,
+   "tags": {
+    "CAP": 25
+   },
+   "wall_s": 4.98
+  },
+  "V2": {
+   "n": 26,
+   "n_coins": 26,
+   "n_placebo": 449,
+   "placebo_per_signal": 17.3,
+   "horizon_exits": 0,
+   "tags": {
+    "CAP": 26
+   },
+   "wall_s": 3.53
+  },
+  "V3": {
+   "n": 25,
+   "n_coins": 25,
+   "n_placebo": 431,
+   "placebo_per_signal": 17.2,
+   "horizon_exits": 0,
+   "tags": {
+    "CAP": 25
+   },
+   "wall_s": 6.89
+  },
+  "CAP@15": {
+   "n": 25,
+   "n_coins": 25,
+   "n_placebo": 431,
+   "placebo_per_signal": 17.2,
+   "horizon_exits": 0,
+   "tags": {
+    "CAP": 25
+   },
+   "wall_s": 3.41
+  },
+  "CAP@30": {
+   "n": 25,
+   "n_coins": 25,
+   "n_placebo": 431,
+   "placebo_per_signal": 17.2,
+   "horizon_exits": 0,
+   "tags": {
+    "CAP": 25
+   },
+   "wall_s": 3.24
+  },
+  "CAP@60": {
+   "n": 25,
+   "n_coins": 25,
+   "n_placebo": 431,
+   "placebo_per_signal": 17.2,
+   "horizon_exits": 0,
+   "tags": {
+    "CAP": 25
+   },
+   "wall_s": 3.59
+  },
+  "CAP_LOOSE@15": {
+   "n": 26,
+   "n_coins": 26,
+   "n_placebo": 449,
+   "placebo_per_signal": 17.3,
+   "horizon_exits": 0,
+   "tags": {
+    "CAP": 26
+   },
+   "wall_s": 3.22
+  },
+  "CAP_LOOSE@30": {
+   "n": 26,
+   "n_coins": 26,
+   "n_placebo": 449,
+   "placebo_per_signal": 17.3,
+   "horizon_exits": 0,
+   "tags": {
+    "CAP": 26
+   },
+   "wall_s": 3.31
+  },
+  "CAP_LOOSE@60": {
+   "n": 26,
+   "n_coins": 26,
+   "n_placebo": 449,
+   "placebo_per_signal": 17.3,
+   "horizon_exits": 0,
+   "tags": {
+    "CAP": 26
+   },
+   "wall_s": 3.29
+  },
+  "DIST@15": {
+   "n": 12,
+   "n_coins": 12,
+   "n_placebo": 177,
+   "placebo_per_signal": 14.8,
+   "horizon_exits": 0,
+   "tags": {
+    "DIST": 12
+   },
+   "wall_s": 5.59
+  },
+  "DIST@30": {
+   "n": 12,
+   "n_coins": 12,
+   "n_placebo": 177,
+   "placebo_per_signal": 14.8,
+   "horizon_exits": 0,
+   "tags": {
+    "DIST": 12
+   },
+   "wall_s": 4.18
+  },
+  "DIST@60": {
+   "n": 12,
+   "n_coins": 12,
+   "n_placebo": 177,
+   "placebo_per_signal": 14.8,
+   "horizon_exits": 0,
+   "tags": {
+    "DIST": 12
+   },
+   "wall_s": 4.42
+  },
+  "MIXED@15": {
+   "n": 62,
+   "n_coins": 62,
+   "n_placebo": 1011,
+   "placebo_per_signal": 16.3,
+   "horizon_exits": 0,
+   "tags": {
+    "MIXED": 62
+   },
+   "wall_s": 2.13
+  },
+  "MIXED@30": {
+   "n": 62,
+   "n_coins": 62,
+   "n_placebo": 1011,
+   "placebo_per_signal": 16.3,
+   "horizon_exits": 0,
+   "tags": {
+    "MIXED": 62
+   },
+   "wall_s": 2.05
+  },
+  "MIXED@60": {
+   "n": 62,
+   "n_coins": 62,
+   "n_placebo": 1011,
+   "placebo_per_signal": 16.3,
+   "horizon_exits": 0,
+   "tags": {
+    "MIXED": 62
+   },
+   "wall_s": 2.46
+  },
+  "ALL@15": {
+   "n": 64,
+   "n_coins": 64,
+   "n_placebo": 1054,
+   "placebo_per_signal": 16.5,
+   "horizon_exits": 0,
+   "tags": {
+    "MIXED": 60,
+    "CAP": 2,
+    "DIST": 2
+   },
+   "wall_s": 2.29
+  },
+  "ALL@30": {
+   "n": 64,
+   "n_coins": 64,
+   "n_placebo": 1054,
+   "placebo_per_signal": 16.5,
+   "horizon_exits": 0,
+   "tags": {
+    "MIXED": 60,
+    "CAP": 2,
+    "DIST": 2
+   },
+   "wall_s": 2.28
+  },
+  "ALL@60": {
+   "n": 64,
+   "n_coins": 64,
+   "n_placebo": 1054,
+   "placebo_per_signal": 16.5,
+   "horizon_exits": 0,
+   "tags": {
+    "MIXED": 60,
+    "CAP": 2,
+    "DIST": 2
+   },
+   "wall_s": 2.33
+  }
+ },
+ "wall_s": {
+  "e1_scan": 1.3,
+  "total": 69.5
+ }
+}

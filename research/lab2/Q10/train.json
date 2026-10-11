@@ -1,0 +1,821 @@
+{
+ "hypothesis": "Q10",
+ "version": "q10-v1",
+ "stage": "train",
+ "split": "train",
+ "utc": "2026-10-09 11:03:36",
+ "provisional": false,
+ "debug_only": false,
+ "prereg_sha256": "dbcfe323c0753cf08b1d94644666a416ed24a4c74e0ace488c9d61b311006466",
+ "rerun_reason": null,
+ "coverage": {
+  "split": "train",
+  "bounds_utc": [
+   "2026-10-01 00:00:00",
+   "2026-10-05 00:00:00"
+  ],
+  "debug_only": false,
+  "graduates_in_split": 5435,
+  "tradeable": 3863,
+  "usable": 3863,
+  "excluded": {
+   "mayhem": 1422,
+   "not_sol_quoted": 150
+  },
+  "created_inexact": 943,
+  "has_create0": 943,
+  "chain_hours_scanned_frac": 1.0,
+  "days": [
+   {
+    "day": "2026-10-01",
+    "hours_in_split": 24,
+    "curve_hours": 24,
+    "b2_hours": 24,
+    "b2_hours_midrun": 0,
+    "coins_created": 1261,
+    "tradeable": 989,
+    "usable": 989,
+    "usable_frac": 1.0,
+    "partial": false
+   },
+   {
+    "day": "2026-10-02",
+    "hours_in_split": 24,
+    "curve_hours": 24,
+    "b2_hours": 24,
+    "b2_hours_midrun": 0,
+    "coins_created": 1255,
+    "tradeable": 933,
+    "usable": 933,
+    "usable_frac": 1.0,
+    "partial": false
+   },
+   {
+    "day": "2026-10-03",
+    "hours_in_split": 24,
+    "curve_hours": 24,
+    "b2_hours": 24,
+    "b2_hours_midrun": 0,
+    "coins_created": 1632,
+    "tradeable": 966,
+    "usable": 966,
+    "usable_frac": 1.0,
+    "partial": false
+   },
+   {
+    "day": "2026-10-04",
+    "hours_in_split": 24,
+    "curve_hours": 24,
+    "b2_hours": 24,
+    "b2_hours_midrun": 0,
+    "coins_created": 1287,
+    "tradeable": 975,
+    "usable": 975,
+    "usable_frac": 1.0,
+    "partial": false
+   }
+  ],
+  "days_expected": 4.0,
+  "days_full": 4,
+  "curve_span_utc": [
+   "2026-09-29 21:00:00",
+   "2026-10-09 02:00:00"
+  ],
+  "b2_span_utc": [
+   "2026-10-01 00:00:00",
+   "2026-10-05 04:00:00"
+  ],
+  "completeness_source": "raw_chunks",
+  "parquet_snapshot_utc": "2026-10-09 10:40:52",
+  "b2_hours_needed": 100,
+  "b2_hours_done": 100,
+  "b2_hours_midrun": [],
+  "sol_usd": {
+   "series_utc": [
+    "2026-09-15 00:00:00",
+    "2026-10-08 23:59:00"
+   ],
+   "constant_fallback": false,
+   "lookahead_coins": 0,
+   "stale_coins": 0
+  },
+  "power": {
+   "entry_bar_coins": {
+    "need": 40,
+    "have_usable_coins": 3863,
+    "ok": true
+   },
+   "x1_r0_trades_5_seeds": {
+    "need": 500,
+    "max_possible": 19315,
+    "ok": true
+   },
+   "g1_flagged_coins_val": {
+    "need": 200,
+    "max_possible": 3863,
+    "ok": true
+   }
+  },
+  "underpowered": false,
+  "complete": true,
+  "notes": [],
+  "from_flow": true
+ },
+ "n_coins": 3863,
+ "span_days": 4.0,
+ "configs": {
+  "M6|D0.7": {
+   "config": "M6|D0.7",
+   "params_hash": "8280b9fc12e4",
+   "hypothesis": "Q10",
+   "n": 540,
+   "n_coins": 540,
+   "by_stratum_n": {
+    "lp": 540
+   },
+   "n_placebo": 10800,
+   "horizon_exits": 0,
+   "trial": {
+    "config": "Q10|8280b9fc12e4|cfg:a06543feac6c",
+    "new_trial": true,
+    "n_trials_total": 2679
+   },
+   "reasons": {
+    "stop": 496,
+    "quiet": 23,
+    "deadline": 21
+   },
+   "mean": -0.2784148832391078,
+   "median": -0.23770552351131302,
+   "win_rate": 0.07777777777777778,
+   "sd": 0.3363708863650218,
+   "ci90": [
+    -0.30195692939779134,
+    -0.25435168220860555
+   ],
+   "ci95": [
+    -0.30615461310333963,
+    -0.24972826159072564
+   ],
+   "ci90_block": [
+    -0.30642803200384644,
+    -0.24871064527144185
+   ],
+   "ci95_block": [
+    -0.31138949425486695,
+    -0.2421942194107628
+   ],
+   "n_blocks": 16,
+   "censored_share": 0.0,
+   "top_coin_share": null,
+   "top3_coin_share": null,
+   "mean_without_top2": -0.28556010987513586,
+   "halves": {
+    "first": -0.25482819252266503,
+    "second": -0.30200157395555066,
+    "consistent": false
+   },
+   "mean_hold_min": 18.87962962962963,
+   "deflated_sharpe": {
+    "sr": -0.8277020828044508,
+    "sr0": 0.15187788224036694,
+    "dsr": 0.0,
+    "n_trials": 2684,
+    "T": 540,
+    "skew": 1.2625429548159697,
+    "kurtosis": 9.538086681146655
+   },
+   "placebo": {
+    "placebo_mean": -0.2552706705590692,
+    "n_placebo": 10800,
+    "n_signals_matched": 540,
+    "mean_diff": -0.023144212680038613,
+    "diff_ci95": [
+     -0.05197341276549805,
+     0.007705972443365184
+    ]
+   },
+   "lp": {
+    "ret_mid_mean": -0.35969317421480773,
+    "ret_5050_mean": -0.19205041707368403,
+    "fee_income_ret_mean": 0.008416189946824602,
+    "lp_minus_5050": -0.08636446616542377,
+    "lp_minus_5050_ci95": [
+     -0.09799108048225418,
+     -0.07510254626126284
+    ],
+    "mean_vol_ratio_in": 24.0151695230709,
+    "mean_bars_held": 20.212962962962962
+   },
+   "stress": {
+    "costs_x1.5": -0.28547748484771646,
+    "rent_0.22": -0.2894148832391078,
+    "same_bar_exits": -0.2088231055206255,
+    "no_entry_bar_exits": -0.297774340152133
+   },
+   "portfolio": {
+    "final_equity": 15.625061976423005,
+    "max_dd_pct": 84.37493802357699,
+    "taken": 12,
+    "skipped": 528
+   },
+   "by_stratum": {
+    "lp": {
+     "n": 540,
+     "mean": -0.2784148832391078
+    }
+   },
+   "direction": "NEITHER"
+  },
+  "M6|D0.5": {
+   "config": "M6|D0.5",
+   "params_hash": "11c27f090609",
+   "hypothesis": "Q10",
+   "n": 540,
+   "n_coins": 540,
+   "by_stratum_n": {
+    "lp": 540
+   },
+   "n_placebo": 10800,
+   "horizon_exits": 0,
+   "trial": {
+    "config": "Q10|11c27f090609|cfg:a06543feac6c",
+    "new_trial": true,
+    "n_trials_total": 2680
+   },
+   "reasons": {
+    "stop": 458,
+    "deadline": 51,
+    "quiet": 31
+   },
+   "mean": -0.3600864670666098,
+   "median": -0.37584464723275296,
+   "win_rate": 0.11296296296296296,
+   "sd": 0.42501869080437105,
+   "ci90": [
+    -0.38923259250396025,
+    -0.329429939240727
+   ],
+   "ci95": [
+    -0.39422214769286,
+    -0.3231758519038021
+   ],
+   "ci90_block": [
+    -0.39584196619669715,
+    -0.3229593003741308
+   ],
+   "ci95_block": [
+    -0.4026167176481339,
+    -0.3146827993561169
+   ],
+   "n_blocks": 16,
+   "censored_share": 0.0,
+   "top_coin_share": null,
+   "top3_coin_share": null,
+   "mean_without_top2": -0.36860475546328314,
+   "halves": {
+    "first": -0.3388152790257276,
+    "second": -0.3813576551074918,
+    "consistent": false
+   },
+   "mean_hold_min": 34.522222222222226,
+   "deflated_sharpe": {
+    "sr": -0.847225015881364,
+    "sr0": 0.15187788224036694,
+    "dsr": 0.0,
+    "n_trials": 2684,
+    "T": 540,
+    "skew": 1.9567132542827579,
+    "kurtosis": 9.26086571221536
+   },
+   "placebo": {
+    "placebo_mean": -0.2928716169964626,
+    "n_placebo": 10800,
+    "n_signals_matched": 540,
+    "mean_diff": -0.0672148500701472,
+    "diff_ci95": [
+     -0.10349309048821756,
+     -0.027945312992550653
+    ]
+   },
+   "lp": {
+    "ret_mid_mean": -0.4167976192644624,
+    "ret_5050_mean": -0.2196759782305009,
+    "fee_income_ret_mean": 0.014500353442300978,
+    "lp_minus_5050": -0.14041048883610888,
+    "lp_minus_5050_ci95": [
+     -0.15531539575435394,
+     -0.12656009839261673
+    ],
+    "mean_vol_ratio_in": 24.0151695230709,
+    "mean_bars_held": 35.855555555555554
+   },
+   "stress": {
+    "costs_x1.5": -0.36625454155873416,
+    "rent_0.22": -0.3710864670666097,
+    "same_bar_exits": -0.26506227361954343,
+    "no_entry_bar_exits": -0.36332398149068007
+   },
+   "portfolio": {
+    "final_equity": 18.01126119116502,
+    "max_dd_pct": 81.98873880883498,
+    "taken": 8,
+    "skipped": 532
+   },
+   "by_stratum": {
+    "lp": {
+     "n": 540,
+     "mean": -0.3600864670666098
+    }
+   },
+   "direction": "WORSE_THAN_RANDOM"
+  },
+  "M6|deadline": {
+   "config": "M6|deadline",
+   "params_hash": "77a1c0942fb4",
+   "hypothesis": "Q10",
+   "n": 540,
+   "n_coins": 540,
+   "by_stratum_n": {
+    "lp": 540
+   },
+   "n_placebo": 10800,
+   "horizon_exits": 0,
+   "trial": {
+    "config": "Q10|77a1c0942fb4|cfg:a06543feac6c",
+    "new_trial": true,
+    "n_trials_total": 2681
+   },
+   "reasons": {
+    "quiet": 384,
+    "deadline": 156
+   },
+   "mean": -0.48191303730053126,
+   "median": -0.69593364123431,
+   "win_rate": 0.15555555555555556,
+   "sd": 0.5249288938525972,
+   "ci90": [
+    -0.5179396828689278,
+    -0.4434054983201188
+   ],
+   "ci95": [
+    -0.5240598484189746,
+    -0.43584227606807746
+   ],
+   "ci90_block": [
+    -0.5285093793665856,
+    -0.43217024660199804
+   ],
+   "ci95_block": [
+    -0.5366329466776525,
+    -0.42248800077374143
+   ],
+   "n_blocks": 16,
+   "censored_share": 0.0,
+   "top_coin_share": null,
+   "top3_coin_share": null,
+   "mean_without_top2": -0.49282305766800144,
+   "halves": {
+    "first": -0.4872573288971123,
+    "second": -0.4765687457039504,
+    "consistent": false
+   },
+   "mean_hold_min": 98.28888888888889,
+   "deflated_sharpe": {
+    "sr": -0.9180539363410523,
+    "sr0": 0.15187788224036694,
+    "dsr": 0.0,
+    "n_trials": 2684,
+    "T": 540,
+    "skew": 2.1468736136579376,
+    "kurtosis": 8.858552715953701
+   },
+   "placebo": {
+    "placebo_mean": -0.35683830362325375,
+    "n_placebo": 10800,
+    "n_signals_matched": 540,
+    "mean_diff": -0.1250747336772775,
+    "diff_ci95": [
+     -0.168795800699751,
+     -0.07718102756117405
+    ]
+   },
+   "lp": {
+    "ret_mid_mean": -0.46772389894577004,
+    "ret_5050_mean": -0.24432969490073217,
+    "fee_income_ret_mean": 0.019642852300435044,
+    "lp_minus_5050": -0.2375833423997992,
+    "lp_minus_5050_ci95": [
+     -0.25770750298123496,
+     -0.2197858759073039
+    ],
+    "mean_vol_ratio_in": 24.0151695230709,
+    "mean_bars_held": 99.62222222222222
+   },
+   "stress": {
+    "costs_x1.5": -0.4868096127208126,
+    "rent_0.22": -0.4929130373005314,
+    "same_bar_exits": -0.48138241437129364,
+    "no_entry_bar_exits": -0.48191303730053126
+   },
+   "portfolio": {
+    "final_equity": 9.176773837037882,
+    "max_dd_pct": 90.82322616296211,
+    "taken": 6,
+    "skipped": 534
+   },
+   "by_stratum": {
+    "lp": {
+     "n": 540,
+     "mean": -0.48191303730053126
+    }
+   },
+   "direction": "WORSE_THAN_RANDOM"
+  },
+  "M3|D0.7": {
+   "config": "M3|D0.7",
+   "params_hash": "72a3fd0264a6",
+   "hypothesis": "Q10",
+   "n": 599,
+   "n_coins": 599,
+   "by_stratum_n": {
+    "lp": 599
+   },
+   "n_placebo": 11980,
+   "horizon_exits": 0,
+   "trial": {
+    "config": "Q10|72a3fd0264a6|cfg:a06543feac6c",
+    "new_trial": true,
+    "n_trials_total": 2682
+   },
+   "reasons": {
+    "stop": 545,
+    "quiet": 29,
+    "deadline": 25
+   },
+   "mean": -0.2816959114023889,
+   "median": -0.23971456522441767,
+   "win_rate": 0.08347245409015025,
+   "sd": 0.3434372743492867,
+   "ci90": [
+    -0.30456999613616537,
+    -0.258146514943556
+   ],
+   "ci95": [
+    -0.308796227167232,
+    -0.25320853163508816
+   ],
+   "ci90_block": [
+    -0.3100636427330511,
+    -0.2515475144238613
+   ],
+   "ci95_block": [
+    -0.31455667407188725,
+    -0.24426000137491952
+   ],
+   "n_blocks": 16,
+   "censored_share": 0.0,
+   "top_coin_share": null,
+   "top3_coin_share": null,
+   "mean_without_top2": -0.28814598508163447,
+   "halves": {
+    "first": -0.2614368322415566,
+    "second": -0.30188746029935165,
+    "consistent": false
+   },
+   "mean_hold_min": 19.531441291040622,
+   "deflated_sharpe": {
+    "sr": -0.8202252127003988,
+    "sr0": 0.14419105630948825,
+    "dsr": 0.0,
+    "n_trials": 2684,
+    "T": 599,
+    "skew": 1.2225937726567409,
+    "kurtosis": 9.319399958659993
+   },
+   "placebo": {
+    "placebo_mean": -0.24758461072373886,
+    "n_placebo": 11980,
+    "n_signals_matched": 599,
+    "mean_diff": -0.034111300678649994,
+    "diff_ci95": [
+     -0.061698614423812276,
+     -0.0050226853686169805
+    ]
+   },
+   "lp": {
+    "ret_mid_mean": -0.3585208075923361,
+    "ret_5050_mean": -0.19149750956125286,
+    "fee_income_ret_mean": 0.008202401434533766,
+    "lp_minus_5050": -0.090198401841136,
+    "lp_minus_5050_ci95": [
+     -0.10157234491633522,
+     -0.07926652411995501
+    ],
+    "mean_vol_ratio_in": 21.976942686833027,
+    "mean_bars_held": 20.864774624373958
+   },
+   "stress": {
+    "costs_x1.5": -0.28876492248509694,
+    "rent_0.22": -0.2926959114023889,
+    "same_bar_exits": -0.20923532981149323,
+    "no_entry_bar_exits": -0.29906767935786427
+   },
+   "portfolio": {
+    "final_equity": 15.782013317325465,
+    "max_dd_pct": 84.21798668267454,
+    "taken": 12,
+    "skipped": 587
+   },
+   "by_stratum": {
+    "lp": {
+     "n": 599,
+     "mean": -0.2816959114023889
+    }
+   },
+   "direction": "WORSE_THAN_RANDOM"
+  },
+  "M3|D0.5": {
+   "config": "M3|D0.5",
+   "params_hash": "5b0dac929855",
+   "hypothesis": "Q10",
+   "n": 599,
+   "n_coins": 599,
+   "by_stratum_n": {
+    "lp": 599
+   },
+   "n_placebo": 11980,
+   "horizon_exits": 0,
+   "trial": {
+    "config": "Q10|5b0dac929855|cfg:a06543feac6c",
+    "new_trial": true,
+    "n_trials_total": 2683
+   },
+   "reasons": {
+    "stop": 502,
+    "deadline": 58,
+    "quiet": 39
+   },
+   "mean": -0.3639247482228191,
+   "median": -0.37472128261993715,
+   "win_rate": 0.11519198664440734,
+   "sd": 0.42221897767671757,
+   "ci90": [
+    -0.3917574187880863,
+    -0.3351970024925949
+   ],
+   "ci95": [
+    -0.3970593728883346,
+    -0.32947547488456275
+   ],
+   "ci90_block": [
+    -0.3972168781797274,
+    -0.3286414237770904
+   ],
+   "ci95_block": [
+    -0.40358485099296293,
+    -0.3194350130086453
+   ],
+   "n_blocks": 16,
+   "censored_share": 0.0,
+   "top_coin_share": null,
+   "top3_coin_share": null,
+   "mean_without_top2": -0.3716140542860062,
+   "halves": {
+    "first": -0.34483061971019985,
+    "second": -0.38295522964039624,
+    "consistent": false
+   },
+   "mean_hold_min": 34.87200890372844,
+   "deflated_sharpe": {
+    "sr": -0.8619336587505717,
+    "sr0": 0.14419105630948825,
+    "dsr": 0.0,
+    "n_trials": 2684,
+    "T": 599,
+    "skew": 1.9265122677242958,
+    "kurtosis": 9.279661498008556
+   },
+   "placebo": {
+    "placebo_mean": -0.28660438442348496,
+    "n_placebo": 11980,
+    "n_signals_matched": 599,
+    "mean_diff": -0.07732036379933409,
+    "diff_ci95": [
+     -0.11102466422389205,
+     -0.042878765598655715
+    ]
+   },
+   "lp": {
+    "ret_mid_mean": -0.422466220981141,
+    "ret_5050_mean": -0.22244455010121073,
+    "fee_income_ret_mean": 0.013735485283982085,
+    "lp_minus_5050": -0.14148019812160842,
+    "lp_minus_5050_ci95": [
+     -0.15504114528336121,
+     -0.12811602795826482
+    ],
+    "mean_vol_ratio_in": 21.976942686833027,
+    "mean_bars_held": 36.20534223706177
+   },
+   "stress": {
+    "costs_x1.5": -0.3700841286106014,
+    "rent_0.22": -0.3749247482228191,
+    "same_bar_exits": -0.2657902084353631,
+    "no_entry_bar_exits": -0.3673303377131067
+   },
+   "portfolio": {
+    "final_equity": 18.01126119116502,
+    "max_dd_pct": 81.98873880883498,
+    "taken": 8,
+    "skipped": 591
+   },
+   "by_stratum": {
+    "lp": {
+     "n": 599,
+     "mean": -0.3639247482228191
+    }
+   },
+   "direction": "WORSE_THAN_RANDOM"
+  },
+  "M3|deadline": {
+   "config": "M3|deadline",
+   "params_hash": "ba1e46ea869e",
+   "hypothesis": "Q10",
+   "n": 599,
+   "n_coins": 599,
+   "by_stratum_n": {
+    "lp": 599
+   },
+   "n_placebo": 11980,
+   "horizon_exits": 0,
+   "trial": {
+    "config": "Q10|ba1e46ea869e|cfg:a06543feac6c",
+    "new_trial": true,
+    "n_trials_total": 2684
+   },
+   "reasons": {
+    "quiet": 431,
+    "deadline": 168
+   },
+   "mean": -0.4801053851577182,
+   "median": -0.6907031641522217,
+   "win_rate": 0.15525876460767946,
+   "sd": 0.5183229484820263,
+   "ci90": [
+    -0.5142700953898781,
+    -0.4454606129269769
+   ],
+   "ci95": [
+    -0.521262621541334,
+    -0.43763124510298346
+   ],
+   "ci90_block": [
+    -0.5249134639387217,
+    -0.43302709746190254
+   ],
+   "ci95_block": [
+    -0.5332341874446992,
+    -0.422717937761195
+   ],
+   "n_blocks": 16,
+   "censored_share": 0.0,
+   "top_coin_share": null,
+   "top3_coin_share": null,
+   "mean_without_top2": -0.48993114002105714,
+   "halves": {
+    "first": -0.4893792835829693,
+    "second": -0.47086239972721805,
+    "consistent": false
+   },
+   "mean_hold_min": 96.10239287701724,
+   "deflated_sharpe": {
+    "sr": -0.9262668893279122,
+    "sr0": 0.14419105630948825,
+    "dsr": 0.0,
+    "n_trials": 2684,
+    "T": 599,
+    "skew": 2.1015469657645176,
+    "kurtosis": 8.755843678194216
+   },
+   "placebo": {
+    "placebo_mean": -0.35051954761729787,
+    "n_placebo": 11980,
+    "n_signals_matched": 599,
+    "mean_diff": -0.12958583754042033,
+    "diff_ci95": [
+     -0.17136877935518688,
+     -0.08682835171546509
+    ]
+   },
+   "lp": {
+    "ret_mid_mean": -0.4708507320097868,
+    "ret_5050_mean": -0.24587506545847043,
+    "fee_income_ret_mean": 0.018421753404613102,
+    "lp_minus_5050": -0.23423031969924782,
+    "lp_minus_5050_ci95": [
+     -0.25262303347984505,
+     -0.2172474582529747
+    ],
+    "mean_vol_ratio_in": 21.976942686833027,
+    "mean_bars_held": 97.43572621035058
+   },
+   "stress": {
+    "costs_x1.5": -0.4850552087958406,
+    "rent_0.22": -0.49110538515771823,
+    "same_bar_exits": -0.47954601219124376,
+    "no_entry_bar_exits": -0.4801053851577182
+   },
+   "portfolio": {
+    "final_equity": 13.58705066124504,
+    "max_dd_pct": 86.41294933875496,
+    "taken": 8,
+    "skipped": 591
+   },
+   "by_stratum": {
+    "lp": {
+     "n": 599,
+     "mean": -0.4801053851577182
+    }
+   },
+   "direction": "WORSE_THAN_RANDOM"
+  }
+ },
+ "decision": {
+  "rows": [
+   {
+    "config": "M6|D0.7",
+    "powered": true,
+    "qualifies": false,
+    "n": 540,
+    "mean": -0.2784148832391078,
+    "ci90_lo": -0.30195692939779134,
+    "placebo_diff": -0.023144212680038613,
+    "direction": "NEITHER"
+   },
+   {
+    "config": "M6|D0.5",
+    "powered": true,
+    "qualifies": false,
+    "n": 540,
+    "mean": -0.3600864670666098,
+    "ci90_lo": -0.38923259250396025,
+    "placebo_diff": -0.0672148500701472,
+    "direction": "WORSE_THAN_RANDOM"
+   },
+   {
+    "config": "M6|deadline",
+    "powered": true,
+    "qualifies": false,
+    "n": 540,
+    "mean": -0.48191303730053126,
+    "ci90_lo": -0.5179396828689278,
+    "placebo_diff": -0.1250747336772775,
+    "direction": "WORSE_THAN_RANDOM"
+   },
+   {
+    "config": "M3|D0.7",
+    "powered": true,
+    "qualifies": false,
+    "n": 599,
+    "mean": -0.2816959114023889,
+    "ci90_lo": -0.30456999613616537,
+    "placebo_diff": -0.034111300678649994,
+    "direction": "WORSE_THAN_RANDOM"
+   },
+   {
+    "config": "M3|D0.5",
+    "powered": true,
+    "qualifies": false,
+    "n": 599,
+    "mean": -0.3639247482228191,
+    "ci90_lo": -0.3917574187880863,
+    "placebo_diff": -0.07732036379933409,
+    "direction": "WORSE_THAN_RANDOM"
+   },
+   {
+    "config": "M3|deadline",
+    "powered": true,
+    "qualifies": false,
+    "n": 599,
+    "mean": -0.4801053851577182,
+    "ci90_lo": -0.5142700953898781,
+    "placebo_diff": -0.12958583754042033,
+    "direction": "WORSE_THAN_RANDOM"
+   }
+  ],
+  "primary_direction": {
+   "config": "M6|D0.7",
+   "direction": "NEITHER"
+  },
+  "verdict": "NO_CONFIG",
+  "reason": "a powered config failed the mean / top-2 / judged-control bars",
+  "shortlist": [],
+  "shortlist_hashes": [],
+  "shortlist_keys": [],
+  "shortlist_written": false
+ },
+ "runtime_s": 215.8,
+ "n_trials_total": 2684,
+ "overall": "NO EDGE (nothing qualified on TRAIN)"
+}

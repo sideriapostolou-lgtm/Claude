@@ -1,0 +1,23 @@
+{
+ "configs": [
+  {
+   "confirm_green": 2,
+   "dip_lookback_h": 6.0,
+   "dip_pct": 0.55,
+   "host": "nightcrawler_dip_rebound_default",
+   "max_age_h": 48.0,
+   "max_hold_min": 120.0,
+   "max_mcap_usd": 5000000.0,
+   "min_age_min": 60.0,
+   "min_mcap_usd": 100000.0,
+   "stop_pct": 0.18,
+   "take_profit_pct": 0.4
+  }
+ ],
+ "hashes": [
+  "e6b014d6ddb8"
+ ],
+ "hypothesis": "G1.dip",
+ "note": "fixed host",
+ "written_utc": "2026-10-09 04:43:26"
+}

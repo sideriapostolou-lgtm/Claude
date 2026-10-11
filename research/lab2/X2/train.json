@@ -1,0 +1,252 @@
+{
+ "hypothesis": "X2",
+ "version": "x2-v1",
+ "stage": "train",
+ "split": "train",
+ "utc": "2026-10-09 05:18:03",
+ "provisional": false,
+ "debug_only": false,
+ "prereg_sha256": "d05337e31cece1c46d9b2cf5e6985560c1fbd8c4db0ba23ddf720a89a04cfceb",
+ "rerun_reason": null,
+ "coverage": {
+  "split": "train",
+  "bounds_utc": [
+   "2026-10-01 00:00:00",
+   "2026-10-05 00:00:00"
+  ],
+  "debug_only": false,
+  "graduates_in_split": 5435,
+  "tradeable": 3863,
+  "usable": 3863,
+  "excluded": {
+   "mayhem": 1422,
+   "not_sol_quoted": 150
+  },
+  "created_inexact": 943,
+  "has_create0": 943,
+  "chain_hours_scanned_frac": 1.0,
+  "days": [
+   {
+    "day": "2026-10-01",
+    "hours_in_split": 24,
+    "curve_hours": 24,
+    "b2_hours": 24,
+    "b2_hours_midrun": 0,
+    "coins_created": 1261,
+    "tradeable": 989,
+    "usable": 989,
+    "usable_frac": 1.0,
+    "partial": false
+   },
+   {
+    "day": "2026-10-02",
+    "hours_in_split": 24,
+    "curve_hours": 24,
+    "b2_hours": 24,
+    "b2_hours_midrun": 0,
+    "coins_created": 1255,
+    "tradeable": 933,
+    "usable": 933,
+    "usable_frac": 1.0,
+    "partial": false
+   },
+   {
+    "day": "2026-10-03",
+    "hours_in_split": 24,
+    "curve_hours": 24,
+    "b2_hours": 24,
+    "b2_hours_midrun": 0,
+    "coins_created": 1632,
+    "tradeable": 966,
+    "usable": 966,
+    "usable_frac": 1.0,
+    "partial": false
+   },
+   {
+    "day": "2026-10-04",
+    "hours_in_split": 24,
+    "curve_hours": 24,
+    "b2_hours": 24,
+    "b2_hours_midrun": 0,
+    "coins_created": 1287,
+    "tradeable": 975,
+    "usable": 975,
+    "usable_frac": 1.0,
+    "partial": false
+   }
+  ],
+  "days_expected": 4.0,
+  "days_full": 4,
+  "curve_span_utc": [
+   "2026-09-30 17:00:00",
+   "2026-10-09 02:00:00"
+  ],
+  "b2_span_utc": [
+   "2026-10-01 00:00:00",
+   "2026-10-05 04:00:00"
+  ],
+  "completeness_source": "raw_chunks",
+  "parquet_snapshot_utc": "2026-10-09 03:57:17",
+  "b2_hours_needed": 100,
+  "b2_hours_done": 100,
+  "b2_hours_midrun": [],
+  "sol_usd": {
+   "series_utc": [
+    "2026-09-15 00:00:00",
+    "2026-10-08 23:59:00"
+   ],
+   "constant_fallback": false,
+   "lookahead_coins": 0,
+   "stale_coins": 0
+  },
+  "power": {
+   "entry_bar_coins": {
+    "need": 40,
+    "have_usable_coins": 3863,
+    "ok": true
+   },
+   "x1_r0_trades_5_seeds": {
+    "need": 500,
+    "max_possible": 19315,
+    "ok": true
+   },
+   "g1_flagged_coins_val": {
+    "need": 200,
+    "max_possible": 3863,
+    "ok": true
+   }
+  },
+  "underpowered": false,
+  "complete": true,
+  "notes": [],
+  "from_flow": true
+ },
+ "n_coins": 3863,
+ "span_days": 4.0,
+ "reference_sizes": {
+  "breadth@30": 1408,
+  "breadth@60": 931,
+  "pressure@30": 1408,
+  "pressure@60": 931
+ },
+ "dose": {
+  "per_checkpoint": {
+   "30": {
+    "n": 922,
+    "bin_counts": [
+     439,
+     301,
+     79,
+     103
+    ],
+    "bin_means": [
+     -0.19237836668899824,
+     -0.467892805601652,
+     -0.5222668769933131,
+     -0.49189639859289336
+    ],
+    "mean_all": -0.3440501624730013,
+    "inversions": 2,
+    "top_minus_all": -0.14784623611989206,
+    "spearman_pct_label": -0.35167926819894446,
+    "by_class": {
+     "OTHER": 399,
+     "FACTORY": 312,
+     "OPERATOR": 211
+    },
+    "pressure_diagnostic": {
+     "n": 922,
+     "bin_counts": [
+      258,
+      392,
+      122,
+      150
+     ],
+     "bin_means": [
+      -0.0580367541579292,
+      -0.3958953127081043,
+      -0.7610918241847942,
+      -0.3613106806349313
+     ],
+     "mean_all": -0.3440501624730013,
+     "inversions": 2,
+     "top_minus_all": -0.017260518161930027,
+     "spearman_pct_label": -0.452499211663559
+    },
+    "decision": "FAIL"
+   },
+   "60": {
+    "n": 283,
+    "bin_counts": [
+     141,
+     82,
+     29,
+     31
+    ],
+    "bin_means": [
+     -0.0995456259073563,
+     -0.22675115723691427,
+     -0.4496277262010499,
+     -0.24323477169427538
+    ],
+    "mean_all": -0.1880177036350431,
+    "inversions": 2,
+    "top_minus_all": -0.055217068059232266,
+    "spearman_pct_label": -0.2363294187024745,
+    "by_class": {
+     "OTHER": 122,
+     "OPERATOR": 104,
+     "FACTORY": 57
+    },
+    "pressure_diagnostic": {
+     "n": 283,
+     "bin_counts": [
+      67,
+      129,
+      44,
+      43
+     ],
+     "bin_means": [
+      -0.09305576407629584,
+      -0.1505610939697095,
+      -0.46709481391441304,
+      -0.16278420933206236
+     ],
+     "mean_all": -0.1880177036350431,
+     "inversions": 2,
+     "top_minus_all": 0.025233494302980747,
+     "spearman_pct_label": -0.2880400182727236
+    },
+    "decision": "FAIL"
+   }
+  },
+  "decision": "KILL",
+  "passing_checkpoints": [],
+  "need": {
+   "top_bin_coins": 30,
+   "max_inversions": 1,
+   "bins": [
+    0.0,
+    0.5,
+    0.8,
+    0.9
+   ]
+  },
+  "trial": {
+   "config": "X2-dose|a02c8849eb52|cfg:a06543feac6c",
+   "new_trial": true,
+   "n_trials_total": 2632,
+   "hypothesis_configs": 1,
+   "over_variant_limit": false,
+   "family_val_looks": 0
+  }
+ },
+ "decision": {
+  "verdict": "KILLED_DOSE",
+  "shortlist_written": false,
+  "note": "PREREG 8: the dose-response gate precedes any strategy P&L; the grid was not run"
+ },
+ "runtime_s": 15.9,
+ "n_trials_total": 2632,
+ "overall": "KILLED (dose-response gate failed on TRAIN)"
+}

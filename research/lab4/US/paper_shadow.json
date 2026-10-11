@@ -1,0 +1,552 @@
+{
+ "utc": "2026-10-09T16:16:11+00:00",
+ "quotes": 9052,
+ "markets": 1037,
+ "settlements": 23,
+ "span": [
+  "2026-10-09 15:07",
+  "2026-10-09 16:13"
+ ],
+ "cells": [
+  {
+   "family": "all",
+   "theta": 0.95,
+   "hours": 1.0,
+   "summary": {
+    "n": 59,
+    "open": 48,
+    "settled": 11,
+    "win_rate": 0.7272727272727273,
+    "mean_p_in": 0.9727272727272728,
+    "mean_net": -0.256963771040551,
+    "total_usd": -56.53202962892122,
+    "worst_usd": -20.0695,
+    "by_category": {
+     "sports": {
+      "settled": 11,
+      "win_rate": 0.7272727272727273,
+      "total_usd": -56.53202962892122
+     }
+    }
+   }
+  },
+  {
+   "family": "all",
+   "theta": 0.95,
+   "hours": 6.0,
+   "summary": {
+    "n": 89,
+    "open": 78,
+    "settled": 11,
+    "win_rate": 0.7272727272727273,
+    "mean_p_in": 0.9727272727272728,
+    "mean_net": -0.256963771040551,
+    "total_usd": -56.53202962892122,
+    "worst_usd": -20.0695,
+    "by_category": {
+     "sports": {
+      "settled": 11,
+      "win_rate": 0.7272727272727273,
+      "total_usd": -56.53202962892122
+     }
+    }
+   }
+  },
+  {
+   "family": "all",
+   "theta": 0.95,
+   "hours": 24.0,
+   "summary": {
+    "n": 100,
+    "open": 89,
+    "settled": 11,
+    "win_rate": 0.7272727272727273,
+    "mean_p_in": 0.9727272727272728,
+    "mean_net": -0.256963771040551,
+    "total_usd": -56.53202962892122,
+    "worst_usd": -20.0695,
+    "by_category": {
+     "sports": {
+      "settled": 11,
+      "win_rate": 0.7272727272727273,
+      "total_usd": -56.53202962892122
+     }
+    }
+   }
+  },
+  {
+   "family": "all",
+   "theta": 0.97,
+   "hours": 1.0,
+   "summary": {
+    "n": 50,
+    "open": 40,
+    "settled": 10,
+    "win_rate": 0.8,
+    "mean_p_in": 0.9780000000000001,
+    "mean_net": -0.18526071380117176,
+    "total_usd": -37.05214276023436,
+    "worst_usd": -20.0417,
+    "by_category": {
+     "sports": {
+      "settled": 10,
+      "win_rate": 0.8,
+      "total_usd": -37.05214276023436
+     }
+    }
+   }
+  },
+  {
+   "family": "all",
+   "theta": 0.97,
+   "hours": 6.0,
+   "summary": {
+    "n": 75,
+    "open": 65,
+    "settled": 10,
+    "win_rate": 0.8,
+    "mean_p_in": 0.9780000000000001,
+    "mean_net": -0.18526071380117176,
+    "total_usd": -37.05214276023436,
+    "worst_usd": -20.0417,
+    "by_category": {
+     "sports": {
+      "settled": 10,
+      "win_rate": 0.8,
+      "total_usd": -37.05214276023436
+     }
+    }
+   }
+  },
+  {
+   "family": "all",
+   "theta": 0.97,
+   "hours": 24.0,
+   "summary": {
+    "n": 86,
+    "open": 76,
+    "settled": 10,
+    "win_rate": 0.8,
+    "mean_p_in": 0.9780000000000001,
+    "mean_net": -0.18526071380117176,
+    "total_usd": -37.05214276023436,
+    "worst_usd": -20.0417,
+    "by_category": {
+     "sports": {
+      "settled": 10,
+      "win_rate": 0.8,
+      "total_usd": -37.05214276023436
+     }
+    }
+   }
+  },
+  {
+   "family": "all",
+   "theta": 0.99,
+   "hours": 1.0,
+   "summary": {
+    "n": 28,
+    "open": 21,
+    "settled": 7,
+    "win_rate": 0.8571428571428571,
+    "mean_p_in": 0.9900000000000001,
+    "mean_net": -0.13493770562770566,
+    "total_usd": -18.891278787878793,
+    "worst_usd": -20.0139,
+    "by_category": {
+     "sports": {
+      "settled": 7,
+      "win_rate": 0.8571428571428571,
+      "total_usd": -18.891278787878793
+     }
+    }
+   }
+  },
+  {
+   "family": "all",
+   "theta": 0.99,
+   "hours": 6.0,
+   "summary": {
+    "n": 45,
+    "open": 38,
+    "settled": 7,
+    "win_rate": 0.8571428571428571,
+    "mean_p_in": 0.9900000000000001,
+    "mean_net": -0.13493770562770566,
+    "total_usd": -18.891278787878793,
+    "worst_usd": -20.0139,
+    "by_category": {
+     "sports": {
+      "settled": 7,
+      "win_rate": 0.8571428571428571,
+      "total_usd": -18.891278787878793
+     }
+    }
+   }
+  },
+  {
+   "family": "all",
+   "theta": 0.99,
+   "hours": 24.0,
+   "summary": {
+    "n": 50,
+    "open": 43,
+    "settled": 7,
+    "win_rate": 0.8571428571428571,
+    "mean_p_in": 0.9900000000000001,
+    "mean_net": -0.13493770562770566,
+    "total_usd": -18.891278787878793,
+    "worst_usd": -20.0139,
+    "by_category": {
+     "sports": {
+      "settled": 7,
+      "win_rate": 0.8571428571428571,
+      "total_usd": -18.891278787878793
+     }
+    }
+   }
+  },
+  {
+   "family": "sports",
+   "theta": 0.95,
+   "hours": 1.0,
+   "summary": {
+    "n": 39,
+    "open": 28,
+    "settled": 11,
+    "win_rate": 0.7272727272727273,
+    "mean_p_in": 0.9727272727272728,
+    "mean_net": -0.256963771040551,
+    "total_usd": -56.53202962892122,
+    "worst_usd": -20.0695,
+    "by_category": {
+     "sports": {
+      "settled": 11,
+      "win_rate": 0.7272727272727273,
+      "total_usd": -56.53202962892122
+     }
+    }
+   }
+  },
+  {
+   "family": "sports",
+   "theta": 0.95,
+   "hours": 6.0,
+   "summary": {
+    "n": 39,
+    "open": 28,
+    "settled": 11,
+    "win_rate": 0.7272727272727273,
+    "mean_p_in": 0.9727272727272728,
+    "mean_net": -0.256963771040551,
+    "total_usd": -56.53202962892122,
+    "worst_usd": -20.0695,
+    "by_category": {
+     "sports": {
+      "settled": 11,
+      "win_rate": 0.7272727272727273,
+      "total_usd": -56.53202962892122
+     }
+    }
+   }
+  },
+  {
+   "family": "sports",
+   "theta": 0.95,
+   "hours": 24.0,
+   "summary": {
+    "n": 39,
+    "open": 28,
+    "settled": 11,
+    "win_rate": 0.7272727272727273,
+    "mean_p_in": 0.9727272727272728,
+    "mean_net": -0.256963771040551,
+    "total_usd": -56.53202962892122,
+    "worst_usd": -20.0695,
+    "by_category": {
+     "sports": {
+      "settled": 11,
+      "win_rate": 0.7272727272727273,
+      "total_usd": -56.53202962892122
+     }
+    }
+   }
+  },
+  {
+   "family": "sports",
+   "theta": 0.97,
+   "hours": 1.0,
+   "summary": {
+    "n": 30,
+    "open": 20,
+    "settled": 10,
+    "win_rate": 0.8,
+    "mean_p_in": 0.9780000000000001,
+    "mean_net": -0.18526071380117176,
+    "total_usd": -37.05214276023436,
+    "worst_usd": -20.0417,
+    "by_category": {
+     "sports": {
+      "settled": 10,
+      "win_rate": 0.8,
+      "total_usd": -37.05214276023436
+     }
+    }
+   }
+  },
+  {
+   "family": "sports",
+   "theta": 0.97,
+   "hours": 6.0,
+   "summary": {
+    "n": 30,
+    "open": 20,
+    "settled": 10,
+    "win_rate": 0.8,
+    "mean_p_in": 0.9780000000000001,
+    "mean_net": -0.18526071380117176,
+    "total_usd": -37.05214276023436,
+    "worst_usd": -20.0417,
+    "by_category": {
+     "sports": {
+      "settled": 10,
+      "win_rate": 0.8,
+      "total_usd": -37.05214276023436
+     }
+    }
+   }
+  },
+  {
+   "family": "sports",
+   "theta": 0.97,
+   "hours": 24.0,
+   "summary": {
+    "n": 30,
+    "open": 20,
+    "settled": 10,
+    "win_rate": 0.8,
+    "mean_p_in": 0.9780000000000001,
+    "mean_net": -0.18526071380117176,
+    "total_usd": -37.05214276023436,
+    "worst_usd": -20.0417,
+    "by_category": {
+     "sports": {
+      "settled": 10,
+      "win_rate": 0.8,
+      "total_usd": -37.05214276023436
+     }
+    }
+   }
+  },
+  {
+   "family": "sports",
+   "theta": 0.99,
+   "hours": 1.0,
+   "summary": {
+    "n": 16,
+    "open": 9,
+    "settled": 7,
+    "win_rate": 0.8571428571428571,
+    "mean_p_in": 0.9900000000000001,
+    "mean_net": -0.13493770562770566,
+    "total_usd": -18.891278787878793,
+    "worst_usd": -20.0139,
+    "by_category": {
+     "sports": {
+      "settled": 7,
+      "win_rate": 0.8571428571428571,
+      "total_usd": -18.891278787878793
+     }
+    }
+   }
+  },
+  {
+   "family": "sports",
+   "theta": 0.99,
+   "hours": 6.0,
+   "summary": {
+    "n": 16,
+    "open": 9,
+    "settled": 7,
+    "win_rate": 0.8571428571428571,
+    "mean_p_in": 0.9900000000000001,
+    "mean_net": -0.13493770562770566,
+    "total_usd": -18.891278787878793,
+    "worst_usd": -20.0139,
+    "by_category": {
+     "sports": {
+      "settled": 7,
+      "win_rate": 0.8571428571428571,
+      "total_usd": -18.891278787878793
+     }
+    }
+   }
+  },
+  {
+   "family": "sports",
+   "theta": 0.99,
+   "hours": 24.0,
+   "summary": {
+    "n": 16,
+    "open": 9,
+    "settled": 7,
+    "win_rate": 0.8571428571428571,
+    "mean_p_in": 0.9900000000000001,
+    "mean_net": -0.13493770562770566,
+    "total_usd": -18.891278787878793,
+    "worst_usd": -20.0139,
+    "by_category": {
+     "sports": {
+      "settled": 7,
+      "win_rate": 0.8571428571428571,
+      "total_usd": -18.891278787878793
+     }
+    }
+   }
+  },
+  {
+   "family": "nonsports",
+   "theta": 0.95,
+   "hours": 1.0,
+   "summary": {
+    "n": 20,
+    "open": 20,
+    "settled": 0,
+    "win_rate": null,
+    "mean_p_in": null,
+    "mean_net": null,
+    "total_usd": 0.0,
+    "worst_usd": null,
+    "by_category": {}
+   }
+  },
+  {
+   "family": "nonsports",
+   "theta": 0.95,
+   "hours": 6.0,
+   "summary": {
+    "n": 50,
+    "open": 50,
+    "settled": 0,
+    "win_rate": null,
+    "mean_p_in": null,
+    "mean_net": null,
+    "total_usd": 0.0,
+    "worst_usd": null,
+    "by_category": {}
+   }
+  },
+  {
+   "family": "nonsports",
+   "theta": 0.95,
+   "hours": 24.0,
+   "summary": {
+    "n": 61,
+    "open": 61,
+    "settled": 0,
+    "win_rate": null,
+    "mean_p_in": null,
+    "mean_net": null,
+    "total_usd": 0.0,
+    "worst_usd": null,
+    "by_category": {}
+   }
+  },
+  {
+   "family": "nonsports",
+   "theta": 0.97,
+   "hours": 1.0,
+   "summary": {
+    "n": 20,
+    "open": 20,
+    "settled": 0,
+    "win_rate": null,
+    "mean_p_in": null,
+    "mean_net": null,
+    "total_usd": 0.0,
+    "worst_usd": null,
+    "by_category": {}
+   }
+  },
+  {
+   "family": "nonsports",
+   "theta": 0.97,
+   "hours": 6.0,
+   "summary": {
+    "n": 45,
+    "open": 45,
+    "settled": 0,
+    "win_rate": null,
+    "mean_p_in": null,
+    "mean_net": null,
+    "total_usd": 0.0,
+    "worst_usd": null,
+    "by_category": {}
+   }
+  },
+  {
+   "family": "nonsports",
+   "theta": 0.97,
+   "hours": 24.0,
+   "summary": {
+    "n": 56,
+    "open": 56,
+    "settled": 0,
+    "win_rate": null,
+    "mean_p_in": null,
+    "mean_net": null,
+    "total_usd": 0.0,
+    "worst_usd": null,
+    "by_category": {}
+   }
+  },
+  {
+   "family": "nonsports",
+   "theta": 0.99,
+   "hours": 1.0,
+   "summary": {
+    "n": 12,
+    "open": 12,
+    "settled": 0,
+    "win_rate": null,
+    "mean_p_in": null,
+    "mean_net": null,
+    "total_usd": 0.0,
+    "worst_usd": null,
+    "by_category": {}
+   }
+  },
+  {
+   "family": "nonsports",
+   "theta": 0.99,
+   "hours": 6.0,
+   "summary": {
+    "n": 29,
+    "open": 29,
+    "settled": 0,
+    "win_rate": null,
+    "mean_p_in": null,
+    "mean_net": null,
+    "total_usd": 0.0,
+    "worst_usd": null,
+    "by_category": {}
+   }
+  },
+  {
+   "family": "nonsports",
+   "theta": 0.99,
+   "hours": 24.0,
+   "summary": {
+    "n": 34,
+    "open": 34,
+    "settled": 0,
+    "win_rate": null,
+    "mean_p_in": null,
+    "mean_net": null,
+    "total_usd": 0.0,
+    "worst_usd": null,
+    "by_category": {}
+   }
+  }
+ ]
+}

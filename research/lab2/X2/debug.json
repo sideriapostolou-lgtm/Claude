@@ -1,0 +1,404 @@
+{
+ "hypothesis": "X2",
+ "version": "x2-v1",
+ "stage": "debug",
+ "split": "final_train",
+ "utc": "2026-10-09 04:25:09",
+ "provisional": false,
+ "debug_only": true,
+ "prereg_sha256": "d05337e31cece1c46d9b2cf5e6985560c1fbd8c4db0ba23ddf720a89a04cfceb",
+ "rerun_reason": null,
+ "coverage": {
+  "split": "final_train",
+  "bounds_utc": [
+   "2026-10-07 19:37:30",
+   "2026-10-08 08:06:47"
+  ],
+  "debug_only": true,
+  "graduates_in_split": 644,
+  "tradeable": 450,
+  "usable": 450,
+  "excluded": {
+   "mayhem": 129,
+   "not_sol_quoted": 65
+  },
+  "created_inexact": 0,
+  "has_create0": 44,
+  "chain_hours_scanned_frac": 1.0,
+  "days": [
+   {
+    "day": "2026-10-07",
+    "hours_in_split": 5,
+    "curve_hours": 5,
+    "b2_hours": 5,
+    "b2_hours_midrun": 0,
+    "coins_created": 294,
+    "tradeable": 196,
+    "usable": 196,
+    "usable_frac": 1.0,
+    "partial": false
+   },
+   {
+    "day": "2026-10-08",
+    "hours_in_split": 9,
+    "curve_hours": 9,
+    "b2_hours": 9,
+    "b2_hours_midrun": 0,
+    "coins_created": 350,
+    "tradeable": 254,
+    "usable": 254,
+    "usable_frac": 1.0,
+    "partial": false
+   }
+  ],
+  "days_expected": 0.52,
+  "days_full": 2,
+  "curve_span_utc": [
+   "2026-09-30 17:00:00",
+   "2026-10-09 02:00:00"
+  ],
+  "b2_span_utc": [
+   "2026-10-07 19:00:00",
+   "2026-10-08 19:00:00"
+  ],
+  "completeness_source": "raw_chunks",
+  "parquet_snapshot_utc": "2026-10-09 03:57:17",
+  "b2_hours_needed": 24,
+  "b2_hours_done": 24,
+  "b2_hours_midrun": [],
+  "sol_usd": {
+   "series_utc": [
+    "2026-09-15 00:00:00",
+    "2026-10-08 23:59:00"
+   ],
+   "constant_fallback": false,
+   "lookahead_coins": 0,
+   "stale_coins": 0
+  },
+  "power": {
+   "entry_bar_coins": {
+    "need": 40,
+    "have_usable_coins": 450,
+    "ok": true
+   },
+   "x1_r0_trades_5_seeds": {
+    "need": 200,
+    "max_possible": 2250,
+    "ok": true
+   },
+   "g1_flagged_coins_val": {
+    "need": 200,
+    "max_possible": 450,
+    "ok": true
+   }
+  },
+  "underpowered": false,
+  "complete": true,
+  "notes": [],
+  "from_flow": true
+ },
+ "n_coins": 450,
+ "span_days": 0.5203240740740741,
+ "reference_sizes": {
+  "breadth@30": 137,
+  "breadth@60": 102,
+  "pressure@30": 137,
+  "pressure@60": 102
+ },
+ "dose": {
+  "per_checkpoint": {
+   "30": {
+    "n": 60,
+    "bin_counts": [
+     25,
+     18,
+     9,
+     8
+    ],
+    "by_class": {
+     "FACTORY": 25,
+     "OPERATOR": 21,
+     "OTHER": 14
+    },
+    "pressure_diagnostic": {
+     "n": 60,
+     "bin_counts": [
+      20,
+      19,
+      8,
+      13
+     ]
+    },
+    "decision": "UNDERPOWERED"
+   },
+   "60": {
+    "n": 30,
+    "bin_counts": [
+     15,
+     9,
+     4,
+     2
+    ],
+    "by_class": {
+     "OPERATOR": 15,
+     "FACTORY": 8,
+     "OTHER": 7
+    },
+    "pressure_diagnostic": {
+     "n": 30,
+     "bin_counts": [
+      13,
+      6,
+      7,
+      4
+     ]
+    },
+    "decision": "UNDERPOWERED"
+   }
+  },
+  "decision": "HIDDEN (debug split: no outcome statistics)",
+  "passing_checkpoints": [],
+  "need": {
+   "top_bin_coins": 30,
+   "max_inversions": 1,
+   "bins": [
+    0.0,
+    0.5,
+    0.8,
+    0.9
+   ]
+  },
+  "trial": {
+   "config": "X2-dose|a02c8849eb52|cfg:a06543feac6c",
+   "new_trial": false,
+   "n_trials_total": 2575,
+   "hypothesis_configs": 0,
+   "over_variant_limit": false,
+   "family_val_looks": 0
+  }
+ },
+ "event_counts": {
+  "coins": 450,
+  "30": {
+   "coins_with_window": 450,
+   "alive": 137,
+   "alive_netflow_pos": 96,
+   "warmup_skips": 36,
+   "top_decile_entries": 8,
+   "entries_by_class": {
+    "OTHER": 7,
+    "FACTORY": 1
+   },
+   "n_ref": {
+    "p10": 17.5,
+    "p50": 32.0,
+    "p90": 43.5,
+    "max": 47.0
+   },
+   "breadth_alive": {
+    "p10": 2.2,
+    "p50": 16.0,
+    "p90": 62.220000000000006,
+    "max": 227.9
+   },
+   "reference_size": 137,
+   "spearman_pressure_ret10_alive": 0.9613381372860155
+  },
+  "60": {
+   "coins_with_window": 450,
+   "alive": 102,
+   "alive_netflow_pos": 73,
+   "warmup_skips": 43,
+   "top_decile_entries": 2,
+   "entries_by_class": {
+    "FACTORY": 1,
+    "OTHER": 1
+   },
+   "n_ref": {
+    "p10": 16.0,
+    "p50": 25.0,
+    "p90": 36.0,
+    "max": 39.0
+   },
+   "breadth_alive": {
+    "p10": 2.0,
+    "p50": 7.65,
+    "p90": 33.47,
+    "max": 132.7
+   },
+   "reference_size": 102,
+   "spearman_pressure_ret10_alive": 0.9802206377119723
+  }
+ },
+ "configs": {
+  "c30|h30|time": {
+   "config": "c30|h30|time",
+   "params_hash": "cfaf17d8560f",
+   "hypothesis": "X2",
+   "n": 8,
+   "n_coins": 8,
+   "by_class_n": {
+    "OTHER": 7,
+    "FACTORY": 1
+   },
+   "n_placebo": 160,
+   "horizon_exits": 0,
+   "trial": {
+    "config": "X2|cfaf17d8560f|cfg:a06543feac6c",
+    "new_trial": false,
+    "n_trials_total": 2575
+   },
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)"
+  },
+  "c30|h30|time+fade": {
+   "config": "c30|h30|time+fade",
+   "params_hash": "648952a010a2",
+   "hypothesis": "X2",
+   "n": 8,
+   "n_coins": 8,
+   "by_class_n": {
+    "OTHER": 7,
+    "FACTORY": 1
+   },
+   "n_placebo": 160,
+   "horizon_exits": 0,
+   "trial": {
+    "config": "X2|648952a010a2|cfg:a06543feac6c",
+    "new_trial": false,
+    "n_trials_total": 2575
+   },
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)"
+  },
+  "c30|h60|time": {
+   "config": "c30|h60|time",
+   "params_hash": "e6b4e445729b",
+   "hypothesis": "X2",
+   "n": 8,
+   "n_coins": 8,
+   "by_class_n": {
+    "OTHER": 7,
+    "FACTORY": 1
+   },
+   "n_placebo": 160,
+   "horizon_exits": 0,
+   "trial": {
+    "config": "X2|e6b4e445729b|cfg:a06543feac6c",
+    "new_trial": false,
+    "n_trials_total": 2575
+   },
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)"
+  },
+  "c30|h60|time+fade": {
+   "config": "c30|h60|time+fade",
+   "params_hash": "fe06f6b3b683",
+   "hypothesis": "X2",
+   "n": 8,
+   "n_coins": 8,
+   "by_class_n": {
+    "OTHER": 7,
+    "FACTORY": 1
+   },
+   "n_placebo": 160,
+   "horizon_exits": 0,
+   "trial": {
+    "config": "X2|fe06f6b3b683|cfg:a06543feac6c",
+    "new_trial": false,
+    "n_trials_total": 2575
+   },
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)"
+  },
+  "c60|h30|time": {
+   "config": "c60|h30|time",
+   "params_hash": "0a8cf754bddb",
+   "hypothesis": "X2",
+   "n": 2,
+   "n_coins": 2,
+   "by_class_n": {
+    "FACTORY": 1,
+    "OTHER": 1
+   },
+   "n_placebo": 28,
+   "horizon_exits": 0,
+   "trial": {
+    "config": "X2|0a8cf754bddb|cfg:a06543feac6c",
+    "new_trial": false,
+    "n_trials_total": 2575
+   },
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)"
+  },
+  "c60|h30|time+fade": {
+   "config": "c60|h30|time+fade",
+   "params_hash": "2eedfc1c4da0",
+   "hypothesis": "X2",
+   "n": 2,
+   "n_coins": 2,
+   "by_class_n": {
+    "FACTORY": 1,
+    "OTHER": 1
+   },
+   "n_placebo": 28,
+   "horizon_exits": 0,
+   "trial": {
+    "config": "X2|2eedfc1c4da0|cfg:a06543feac6c",
+    "new_trial": false,
+    "n_trials_total": 2575
+   },
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)"
+  },
+  "c60|h60|time": {
+   "config": "c60|h60|time",
+   "params_hash": "d6612735572b",
+   "hypothesis": "X2",
+   "n": 2,
+   "n_coins": 2,
+   "by_class_n": {
+    "FACTORY": 1,
+    "OTHER": 1
+   },
+   "n_placebo": 28,
+   "horizon_exits": 0,
+   "trial": {
+    "config": "X2|d6612735572b|cfg:a06543feac6c",
+    "new_trial": false,
+    "n_trials_total": 2575
+   },
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)"
+  },
+  "c60|h60|time+fade": {
+   "config": "c60|h60|time+fade",
+   "params_hash": "3601de67605f",
+   "hypothesis": "X2",
+   "n": 2,
+   "n_coins": 2,
+   "by_class_n": {
+    "FACTORY": 1,
+    "OTHER": 1
+   },
+   "n_placebo": 28,
+   "horizon_exits": 0,
+   "trial": {
+    "config": "X2|3601de67605f|cfg:a06543feac6c",
+    "new_trial": false,
+    "n_trials_total": 2575
+   },
+   "returns": "hidden on the debug split (never choose parameters on FINAL data)"
+  }
+ },
+ "entries_per_day": {
+  "c30|h30|time": 15.375033365957824,
+  "c30|h30|time+fade": 15.375033365957824,
+  "c30|h60|time": 15.375033365957824,
+  "c30|h60|time+fade": 15.375033365957824,
+  "c60|h30|time": 3.843758341489456,
+  "c60|h30|time+fade": 3.843758341489456,
+  "c60|h60|time": 3.843758341489456,
+  "c60|h60|time+fade": 3.843758341489456
+ },
+ "decision": {
+  "verdict": "DEBUG",
+  "note": "mechanics only; returns hidden"
+ },
+ "runtime_s": 7.5,
+ "n_trials_total": 2575,
+ "overall": "PENDING (no official TRAIN run)"
+}

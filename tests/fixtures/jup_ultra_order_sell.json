@@ -1,0 +1,51 @@
+{
+ "swapType": "aggregator",
+ "inAmount": "16239400281",
+ "outAmount": "98445289",
+ "otherAmountThreshold": "98445289",
+ "swapMode": "ExactIn",
+ "slippageBps": 0,
+ "priceImpactPct": "-0.0002230429442084727",
+ "routePlan": [
+  {
+   "percent": 100,
+   "bps": 10000,
+   "usdValue": 10.713814630989086,
+   "swapInfo": {
+    "ammKey": "DQyGMAGx8nB6ykixotLNFC6eVVQjrMqz7AkRyinNkEm1",
+    "label": "Meteora DLMM",
+    "inputMint": "DoVAVzViX8Bjy3r15nwikSaSbzE6dV4ovd28aWpJpump",
+    "outputMint": "So11111111111111111111111111111111111111112",
+    "inAmount": "16239400281",
+    "outAmount": "98543832"
+   }
+  }
+ ],
+ "feeMint": "So11111111111111111111111111111111111111112",
+ "feeBps": 10,
+ "platformFee": {
+  "feeBps": 10,
+  "feeMint": "So11111111111111111111111111111111111111112"
+ },
+ "signatureFeeLamports": 0,
+ "signatureFeePayer": null,
+ "prioritizationFeeLamports": 0,
+ "prioritizationFeePayer": null,
+ "rentFeeLamports": 0,
+ "rentFeePayer": null,
+ "transaction": null,
+ "gasless": false,
+ "jitOptimized": false,
+ "taker": null,
+ "inputMint": "DoVAVzViX8Bjy3r15nwikSaSbzE6dV4ovd28aWpJpump",
+ "outputMint": "So11111111111111111111111111111111111111112",
+ "router": "metis",
+ "guaranteedPrice": false,
+ "requestId": "01a11c56-ecbe-765d-8c09-0f3b0852cef8",
+ "inUsdValue": 10.716204804859503,
+ "outUsdValue": 10.713814630989086,
+ "swapUsdValue": 10.713814630989086,
+ "priceImpact": -0.02230429442084727,
+ "mode": "ultra",
+ "totalTime": 134
+}
