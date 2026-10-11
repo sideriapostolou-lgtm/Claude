@@ -110,11 +110,16 @@ class PolymarketUSClient:
             md: dict[str, Any] = row["marketMetadata"] if isinstance(row.get("marketMetadata"), dict) else {}
             slug = key or str(row.get("marketSlug") or md.get("slug") or row.get("slug") or "")
             qty = row.get("netPositionDecimal") if row.get("netPositionDecimal") is not None else row.get("netPosition")
+            net = _f(qty)
+            short = net < 0  # the SDK's netPositionDecimal: positive = long (YES), negative = short (NO)
             out.append({
                 "slug": slug,
-                "qty": _f(qty),
-                "avg_price": _f(row.get("avgPx")),
-                "cost": _f(row.get("cost")),
+                "qty": abs(net),
+                "side": "short" if short else "long",
+                # a NO holding's average price and cost are not documented as NO prices: the desk prices it from
+                # its own order instead (never from these)
+                "avg_price": 0.0 if short else _f(row.get("avgPx")),
+                "cost": 0.0 if short else _f(row.get("cost")),
                 "value": _f(row.get("cashValue")),
                 "realized": _f(row.get("realized")),
                 "expired": bool(row.get("expired")),
@@ -128,11 +133,31 @@ class PolymarketUSClient:
     def buy_long_ioc(self, market_slug: str, price: float, quantity: float, max_block_s: int = 5) -> dict[str, Any]:
         """A limit BUY of the YES side (``ORDER_INTENT_BUY_LONG``), immediate-or-cancel, executed synchronously.
         Returns ``{"id", "filled", "avg_price", "cost"}`` from the executions (filled 0 when nothing matched)."""
+        return self._ioc(market_slug, "ORDER_INTENT_BUY_LONG", price, quantity, max_block_s)
+
+    def buy_short_ioc(self, market_slug: str, no_price: float, quantity: float, max_block_s: int = 5) -> dict[str, Any]:
+        """A limit BUY of the NO side (``ORDER_INTENT_BUY_SHORT``) at a NO price of at most ``no_price``,
+        immediate-or-cancel. The venue reads every order's price as the YES (long) side's price ("to trade the NO
+        side at any price X, set price.value = 1.00 - X", orders overview), so the order carries 1 - ``no_price``.
+        ``avg_price`` and ``cost`` are returned as NO prices."""
+        yes_limit = min(0.99, max(0.01, 1.0 - no_price))
+        fill = self._ioc(market_slug, "ORDER_INTENT_BUY_SHORT", yes_limit, quantity, max_block_s)
+        if fill["filled"] > 0 and fill["avg_price"] is not None:
+            p = float(fill["avg_price"])
+            # the execution price is the long side's (the docs' convention); a reply quoting the NO price itself is
+            # recognised by fitting the order's NO limit while 1 - p does not
+            no = p if (p <= no_price + 0.005 and 1.0 - p > no_price + 0.005) else 1.0 - p
+            fill = {**fill, "avg_price": no, "cost": no * fill["filled"]}
+        return fill
+
+    def _ioc(self, market_slug: str, intent: str, price: float, quantity: float, max_block_s: int) -> dict[str, Any]:
         body = {
             "marketSlug": market_slug,
-            "intent": "ORDER_INTENT_BUY_LONG",
+            "intent": intent,
             "type": "ORDER_TYPE_LIMIT",
-            "price": {"value": f"{price:.3f}", "currency": "USD"},
+            # four decimals: the venue quotes quarter-cents (0.5225), and a limit rounded to three could land on
+            # the wrong side of the book and never fill
+            "price": {"value": f"{price:.4f}", "currency": "USD"},
             "quantity": quantity,
             "tif": "TIME_IN_FORCE_IMMEDIATE_OR_CANCEL",
             "synchronousExecution": True,
@@ -148,8 +173,12 @@ class PolymarketUSClient:
         for e in execs if isinstance(execs, list) else []:
             if not isinstance(e, dict):
                 continue
-            q = _f(e.get("quantity") or e.get("lastQuantity") or e.get("cumQuantity"))
-            p = _f(e.get("price") or e.get("lastPrice"))
+            kind = str(e.get("type") or "").upper()
+            if "CANCEL" in kind or "REJECT" in kind or "EXPIRE" in kind:
+                continue  # a cancel, rejection or expiry report, not a fill
+            # lastShares / lastPx are the documented execution fields; the older names are kept as fallbacks
+            q = _f(e.get("lastShares") or e.get("quantity") or e.get("lastQuantity") or e.get("cumQuantity"))
+            p = _f(e.get("lastPx") or e.get("price") or e.get("lastPrice"))
             if q > 0 and p > 0:
                 filled += q
                 cost += q * p

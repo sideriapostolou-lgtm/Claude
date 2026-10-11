@@ -400,6 +400,10 @@ class Settings:
                               "sure (99 % sure from 10 events); open positions still settle; keeps the paper book at "
                               "10 open until the record is winning. It never switches real money on. off = the "
                               "owner's switch to let the desk keep buying")
+    marco_real: bool = _f(False, "bool", "Marco's loves desk: when on AND POLYDESK_MODE=live, the Polymarket desk places "
+                          "REAL orders (its contracts and every cap and stop) on the moneyline picks Million Dollar "
+                          "Marco loves (src/nightcrawler/data/marco_picks.json), the owner's explicit exception to "
+                          "the no-real-money-on-sports rule; off = his loves are followed with practice money only")
     polydesk_guard_min_n: int = _f(30, "count", "Polymarket desk's risk manager: events (a game's markets, or a "
                                    "ladder's markets ending together, count as one) of the current rule before it "
                                    "judges (fewer: still learning, unless a clear loser is stopped early from 10)",

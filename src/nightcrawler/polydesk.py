@@ -262,7 +262,10 @@ ARB_PAY_TOL = 1e-6  # a settled set that pays back less than its cost by more th
 #: What a position keeps of the rule's buy (the quote and trades at entry, the sport, the game and its situation):
 #: an unconfirmed order keeps the same, and the position the venue confirms late inherits it.
 _PENDING_STAMP = ("rule", "bid_in", "ask_in", "spread_in", "last_in", "traded_in", "bid_size_in", "ask_size_in",
-                  "sport", "event", "period", "score", "elapsed", "game_start")
+                  "sport", "event", "period", "score", "elapsed", "game_start", "side", "marco_pick")
+RULE_MARCO = "marco"  # a real order on one of Million Dollar Marco's loves (MARCO_REAL): its own record, not the rule's
+MARCO_MAX_SPREAD = 0.05  # a game market's book wider than this is not a price to copy him at
+MARCO_PRICE_BAND = (0.05, 0.95)  # his loves are games, not near-certain outcomes: a price outside this is refused
 _DIGITS = re.compile(r"\d[\d,.]*")
 _CUTS = ("spread", "category", "price", "time", "tight")
 _CATEGORY_WORDS = {"sports": "sports", "crypto": "crypto"}
@@ -1144,7 +1147,8 @@ class PolyDesk:
         self._daily_line(now)
         self._guard(now)  # the record so far decides whether this round may buy
         self._orders_sent = 0
-        bought = self._apply_rule(now, watch, quotes, venue_ok=self._venue_ok)
+        bought = self._marco_orders(now)  # the owner's exception (MARCO_REAL): his loves, real money, every cap
+        bought += self._apply_rule(now, watch, quotes, venue_ok=self._venue_ok)
         arbs = self._scan_arbs(now, watch, quotes)  # the no-lose desk: paper only, never a real order
         settled = self._settle(now, {m["slug"] for m in watch}, quotes)
         if settled:
@@ -1219,8 +1223,11 @@ class PolyDesk:
                 st["closed"].insert(0, {**pos, "settled_at": now, "won": None, "unresolved": True, "replaced_by_real": True})
                 del st["closed"][CLOSED_KEEP:]
             m = by_slug.get(slug)
+            side = "short" if r.get("side") == "short" else "long"
             price = r["avg_price"] if r["avg_price"] > 0 else (r["cost"] / r["qty"] if r["cost"] > 0 else 0.0)
-            cost = r["cost"] if r["cost"] > 0 else price * r["qty"]
+            if side == "short":  # a NO holding's venue price is not a NO price: the order's own NO limit is
+                price = float(_num((pend or {}).get("limit")) or 0.5)
+            cost = r["cost"] if r["cost"] > 0 and side == "long" else price * r["qty"]
             adopted += 1
             st["counters"]["bought"] += 1
             if pend is not None:
@@ -1233,7 +1240,7 @@ class PolyDesk:
                     "slug": slug,
                     "question": question,
                     "category": category,
-                    "side": "long",
+                    "side": side,
                     "p_in": price,
                     "shares": r["qty"],
                     "fee_usd": r["qty"] * coef * price * (1.0 - price),
@@ -1265,7 +1272,7 @@ class PolyDesk:
                 "slug": slug,
                 "question": question,
                 "category": m["category"] if m is not None else ("sports" if r["event_slug"] else "other"),
-                "side": "long",
+                "side": side,
                 "p_in": price,
                 "shares": r["qty"],
                 "fee_usd": r["qty"] * coef * price * (1.0 - price),
@@ -1707,6 +1714,121 @@ class PolyDesk:
             "polydesk_order_filled",
             {"slug": slug, "order_id": fill.get("id"), "contracts": shares, "price": p_fill, "cost_usd": cost},
         )
+        return "filled"
+
+    def _marco_orders(self, now: float) -> int:
+        """Real orders on Million Dollar Marco's loves (the owner's explicit exception to "no real money on sports",
+        switched on by MARCO_REAL in live mode only). The Marco desk (:mod:`nightcrawler.marcodesk`) finds each
+        loved moneyline's game market; this desk places ONE real IOC order per pick on the side he loves (YES for
+        the away team, NO for the home team) for :attr:`contracts`, at the fresh ask, through every cap and stop
+        (:meth:`_live_refusal`), after a good venue read this round; an unconfirmed fill is a pending order like any
+        other. A pick is tried once (``marco_real``); a refusal by the caps is retried until his buy window ends."""
+        st, s = self.state, self.settings
+        if not (s.marco_real and st["mode"] == "live" and self.client is not None and self._venue_ok):
+            return 0
+        from nightcrawler import marcodesk  # late: marcodesk imports this module
+
+        done = st.setdefault("marco_real", {})
+        mstate = marcodesk.load_state(marcodesk.state_path(s))
+        bought = 0
+        for ep in marcodesk.load_episodes():
+            for pick in ep["picks"]:
+                pid = pick["id"]
+                if pid in done or not pick.get("love") or pick.get("kind") != "moneyline" or now < ep["published"]:
+                    continue
+                rec = mstate.get("picks", {}).get(pid)
+                market = rec.get("market") if isinstance(rec, dict) else None
+                game = rec.get("game") if isinstance(rec, dict) else None
+                if not isinstance(market, dict) or not isinstance(game, dict) or not market.get("slug"):
+                    continue
+                kickoff = _num(game.get("kickoff"))
+                if kickoff is None or now > kickoff + marcodesk.LATE_BUY_S:
+                    continue
+                slug = str(market["slug"])
+                if slug in st["positions"] or slug in self._pending_book():
+                    continue
+                result = self._marco_order(now, pick, slug, bool(market.get("long")), kickoff, market.get("fee_coef"))
+                if result is not None:
+                    done[pid] = {"status": result, "slug": slug, "at": now}
+                    bought += int(result == "filled")
+        return bought
+
+    def _marco_order(self, now: float, pick: Mapping[str, Any], slug: str, long: bool, kickoff: float,
+                     fee_coef: Any) -> str | None:
+        """One real order for one of Marco's loves; None = not now (no sane price, or the caps say wait)."""
+        assert self.client is not None
+        from nightcrawler import marcodesk
+
+        st = self.state
+        try:
+            q = bbo(slug)
+        except RuntimeError:
+            return None
+        if q.get("state") and q["state"] != OPEN_STATE:
+            return None
+        bid, ask = _num(q.get("best_bid")), _num(q.get("best_ask"))
+        if bid is None or ask is None or ask - bid > MARCO_MAX_SPREAD + 1e-9:
+            return None
+        price = marcodesk.side_ask(q, long)
+        if price is None or not MARCO_PRICE_BAND[0] <= price <= MARCO_PRICE_BAND[1]:
+            return None
+        coef = _num(fee_coef)
+        coef = US_TAKER if coef is None else coef
+        if self._live_refusal(now, price, coef) is not None:
+            return None  # the caps or the stops: retried next round while his window is open
+        side = "long" if long else "short"
+        label = f"Marco's love: {marcodesk.pick_label(pick)}"
+        m = {"slug": slug, "question": label, "category": "sports", "end_ts": kickoff + 4 * 3600.0,
+             "sport": "american football", "event": str(pick.get("team") or "")}
+        stamp = {"rule": RULE_MARCO, "side": side, "marco_pick": pick["id"], "bid_in": float(bid),
+                 "ask_in": float(ask), "spread_in": float(ask) - float(bid), "sport": m["sport"], "event": m["event"]}
+        self._orders_sent += 1
+        try:
+            if long:
+                fill = self.client.buy_long_ioc(slug, price, self.contracts)
+            else:
+                fill = self.client.buy_short_ioc(slug, price, self.contracts)
+        except PolymarketUSError as exc:
+            st["counters"]["errors"] += 1
+            if exc.status is not None and exc.status < 500:
+                self._event(now, f"Order rejected by the venue ({exc.status}): {label[:50]}", "bad")
+                self._receipt("polydesk_order_rejected", {"slug": slug, "status": exc.status, "rule": RULE_MARCO})
+                return "rejected"
+            self._pend(now, m, price, coef, stamp, None)
+            return "pending"
+        if fill["filled"] <= 0:
+            try:
+                rows = self.client.positions()
+            except PolymarketUSError:
+                rows = []
+            for r in rows:
+                if r["slug"] == slug and r["qty"] > 0 and r.get("side", "long") == side:
+                    fill = {**fill, "filled": r["qty"], "avg_price": price, "cost": price * r["qty"]}
+                    break
+        if fill["filled"] <= 0:
+            self._pend(now, m, price, coef, stamp, fill.get("id"))
+            return "pending"
+        shares = float(fill["filled"])
+        p_fill = float(fill["avg_price"] or price)
+        cost = float(fill["cost"] or p_fill * shares)
+        st["positions"][slug] = {
+            **stamp,
+            "slug": slug,
+            "question": label,
+            "category": "sports",
+            "p_in": p_fill,
+            "shares": shares,
+            "fee_usd": shares * coef * p_fill * (1.0 - p_fill),
+            "cost_usd": cost,
+            "t_in": now,
+            "end_ts": m["end_ts"],
+            "live": True,
+            "order_id": fill.get("id"),
+        }
+        st["counters"]["bought"] += 1
+        self._event(now, f"REAL buy: {label[:60]} · {shares:g} contracts at {p_fill:.3f} (${cost:.2f}, sports)", "good")
+        self._receipt("polydesk_order_filled", {"slug": slug, "order_id": fill.get("id"), "contracts": shares,
+                                                "price": p_fill, "cost_usd": cost, "rule": RULE_MARCO, "side": side})
         return "filled"
 
     def _pend(self, now: float, m: Mapping[str, Any], limit: float, coef: float, stamp: Mapping[str, Any],

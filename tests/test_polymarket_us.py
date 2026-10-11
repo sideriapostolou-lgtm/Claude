@@ -57,7 +57,7 @@ def test_buy_long_ioc_body_and_executions() -> None:
     assert r == {"id": "ord-1", "filled": 1.0, "avg_price": 0.97, "cost": 0.97, "raw_executions": 1}
     body = sent[0]["body"]
     assert body["marketSlug"] == "some-market" and body["intent"] == "ORDER_INTENT_BUY_LONG"
-    assert body["type"] == "ORDER_TYPE_LIMIT" and body["price"] == {"value": "0.970", "currency": "USD"}
+    assert body["type"] == "ORDER_TYPE_LIMIT" and body["price"] == {"value": "0.9700", "currency": "USD"}
     assert body["quantity"] == 1 and body["tif"] == "TIME_IN_FORCE_IMMEDIATE_OR_CANCEL" and body["synchronousExecution"]
     assert sent[0]["method"] == "POST" and sent[0]["url"].endswith("/v1/orders")
     # nothing matched
@@ -92,7 +92,7 @@ def test_positions_are_keyed_by_slug_and_the_signature_skips_the_query() -> None
 
     c = PolymarketUSClient("key-id", SECRET_64, transport=transport, clock=lambda: 1_791_560_000.0)
     rows = c.positions()
-    assert rows == [{"slug": "aec-del-kec-sww-2026-10-09", "qty": 1.0, "avg_price": 0.97, "cost": 0.97, "value": 0.68,
+    assert rows == [{"slug": "aec-del-kec-sww-2026-10-09", "qty": 1.0, "side": "long", "avg_price": 0.97, "cost": 0.97, "value": 0.68,
                      "realized": 0.0, "expired": False, "title": "Koelner Haie vs. Schwenninger Wild Wings",
                      "outcome": "Koelner Haie", "event_slug": "del-kec-sww-2026-10-09", "updated": "2026-10-09T17:32:20Z"}]
     c._call("GET", "/v1/portfolio/positions?includeClosed=true")
@@ -110,3 +110,13 @@ def test_order_reply_with_the_fill_on_the_order_object() -> None:
     # a reply that only says "accepted" reads as no fill here: the desk then asks the venue's book
     c2 = PolymarketUSClient("key-id", SECRET_64, transport=lambda m, u, **kw: Resp(200, {"id": "o-10", "status": "ORDER_STATUS_PENDING"}))
     assert c2.buy_long_ioc("m", 0.98, 1) == {"id": "o-10", "filled": 0.0, "avg_price": None, "cost": 0.0, "raw_executions": 0}
+
+
+def test_a_no_holding_is_a_short_row_with_a_positive_quantity() -> None:
+    """netPositionDecimal: positive = long (YES), negative = short (NO) (the SDK's portfolio docs); a NO row's venue
+    price fields are not NO prices, so they are left out (the desk prices it from its own order)."""
+    venue = {"positions": {"aec-nfl-chi-gb-2026-10-11": {"netPositionDecimal": "-10.0000", "expired": False,
+                                                          "cost": {"value": "-4.7750"}, "avgPx": {"value": "0.5225"}}}}
+    c = PolymarketUSClient("key-id", SECRET_64, transport=lambda m, u, **kw: Resp(200, venue))
+    (row,) = c.positions()
+    assert (row["qty"], row["side"], row["avg_price"], row["cost"]) == (10.0, "short", 0.0, 0.0)
