@@ -35,6 +35,12 @@ Every :data:`POLL_S` seconds, in its own thread (started where the Polymarket de
 
 State: ``DATA_DIR/marcodesk/state.json`` (atomic rewrite, :func:`nightcrawler.polydesk.save_state`). The page reads it
 through :func:`panel_state` (``/api/page`` ``money.marco`` and ``plain.marco_line``), always labelled practice.
+
+The same desk follows more than one expert (:data:`FOLLOWS`, one :class:`Follow` each: Marco, and the NHL bettor
+:data:`NHL`), each in its own thread with its own state folder and picks file. A picks file changes more often than
+the bot is deployed (the NHL bettor posts every day), so each desk also reads its file's copy on the deploy branch
+(``FOLLOW_PICKS_URL`` + the file's name, a public raw GitHub URL) every :data:`REMOTE_EVERY_S`, checks it parses, and
+keeps it as ``DATA_DIR/<desk>/picks.json``; the packaged file and that copy are merged by episode id (the copy wins).
 """
 
 from __future__ import annotations
@@ -44,17 +50,45 @@ import logging
 import threading
 import time
 from collections.abc import Mapping
+from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
+
+import requests
 
 from nightcrawler import polydesk
 from nightcrawler.config import Settings
 
 log = logging.getLogger("nightcrawler.marcodesk")
 
-DATA_PATH = Path(__file__).resolve().parent / "data" / "marco_picks.json"
+PACKAGE_DATA = Path(__file__).resolve().parent / "data"
+DATA_PATH = PACKAGE_DATA / "marco_picks.json"
 STATE_VERSION = 1
+
+
+@dataclass(frozen=True)
+class Follow:
+    """One expert whose loves are followed: his picks file, his desk's state folder, the venue's sport name for his
+    games and the leagues a pick of his may be in (empty: any)."""
+
+    key: str  # the desk's folder under DATA_DIR ("marcodesk") and the page's key
+    who: str  # the page's short name for him ("Marco")
+    file: str  # the picks file's name in nightcrawler/data (and on the deploy branch)
+    sport: str  # the Polymarket desk's sport name for his games ("american football")
+    leagues: tuple[str, ...] = ()
+
+    @property
+    def data_path(self) -> Path:
+        return PACKAGE_DATA / self.file
+
+
+MARCO = Follow("marcodesk", "Marco", "marco_picks.json", "american football")
+NHL = Follow("nhldesk", "Nick Martin", "nhl_picks.json", "hockey", ("nhl",))
+FOLLOWS = (MARCO, NHL)
+REMOTE_EVERY_S = 600.0  # the deploy branch's copy of a picks file, read at most this often
+REMOTE_MAX_BYTES = 512 * 1024
+REMOTE_TIMEOUT_S = 15.0
 POLL_S = 180.0
 FIRST_POLL_DELAY_S = 30.0  # a bot built and closed within seconds (tests) never touches the network
 TICKET_USD = 20.0  # the practice ticket per pick (pretend money)
@@ -147,6 +181,47 @@ def load_episodes(path: Path | None = None) -> list[dict[str, Any]]:
                     "source_url": _text(ep.get("source_url"), 200), "picks": picks})
     out.sort(key=lambda e: -e["published"])
     return out
+
+
+def remote_path(settings: Settings, follow: Follow = MARCO) -> Path:
+    """Where the deploy branch's copy of ``follow``'s picks file is kept (see the module docstring)."""
+    return Path(settings.data_dir) / follow.key / "picks.json"
+
+
+def follow_episodes(settings: Settings, follow: Follow = MARCO) -> list[dict[str, Any]]:
+    """``follow``'s episodes, newest first: the packaged file and the branch copy merged by episode id (the copy
+    wins), each pick outside his leagues left out."""
+    by_id = {ep["id"]: ep for ep in load_episodes(follow.data_path)}
+    by_id.update({ep["id"]: ep for ep in load_episodes(remote_path(settings, follow))})
+    out = []
+    for ep in by_id.values():
+        picks = [p for p in ep["picks"] if not follow.leagues or p.get("league") in follow.leagues]
+        out.append({**ep, "picks": picks})
+    out.sort(key=lambda e: -e["published"])
+    return out
+
+
+def fetch_remote(settings: Settings, follow: Follow = MARCO) -> bool:
+    """Read the deploy branch's copy of ``follow``'s picks file and keep it when it is a picks file (a JSON object
+    with an ``episodes`` list, at most :data:`REMOTE_MAX_BYTES`); False when it is off (``off``, or not an https URL),
+    unreachable or junk (the copy already kept stays)."""
+    base = str(settings.follow_picks_url or "").strip()
+    if not base.startswith("https://"):
+        return False
+    try:
+        reply = requests.get(f"{base.rstrip('/')}/{follow.file}", timeout=REMOTE_TIMEOUT_S)
+    except requests.RequestException:
+        return False
+    if reply.status_code != 200 or len(reply.content) > REMOTE_MAX_BYTES:
+        return False
+    try:
+        doc = json.loads(reply.content)
+    except ValueError:
+        return False
+    if not isinstance(doc, dict) or not isinstance(doc.get("episodes"), list):
+        return False
+    polydesk.save_state(remote_path(settings, follow), doc)
+    return True
 
 
 def pick_line(pick: Mapping[str, Any]) -> tuple[str, float] | None:
@@ -373,29 +448,49 @@ def load_state(path: Path) -> dict[str, Any]:
     return empty_state()
 
 
-def state_path(settings: Settings) -> Path:
-    return Path(settings.data_dir) / "marcodesk" / "state.json"
+def state_path(settings: Settings, follow: Follow = MARCO) -> Path:
+    return Path(settings.data_dir) / follow.key / "state.json"
 
 
 class MarcoDesk:
     """The loves desk's runtime (one daemon thread). PAPER ONLY: it holds no client and no key, and has no order path.
     ``poll(now)`` is also callable directly (tests)."""
 
-    def __init__(self, settings: Settings, path: Path | None = None, data_path: Path | None = None) -> None:
+    def __init__(self, settings: Settings, path: Path | None = None, data_path: Path | None = None,
+                 follow: Follow = MARCO) -> None:
         self.settings = settings
-        self.path = path or state_path(settings)
-        self.data_path = data_path or DATA_PATH
+        self.follow = follow
+        self.path = path or state_path(settings, follow)
+        self.data_path = data_path  # a fixed picks file (tests); None: the packaged file and the branch copy
         self.state = load_state(self.path)
+        self._fetched_at = 0.0
         self._stop = threading.Event()
         self._thread: threading.Thread | None = None
+
+    def episodes(self) -> list[dict[str, Any]]:
+        """The picks this desk follows (:func:`follow_episodes`, or the fixed file given at construction)."""
+        if self.data_path is not None:
+            return load_episodes(self.data_path)
+        return follow_episodes(self.settings, self.follow)
+
+    def refresh(self, now: float) -> bool:
+        """The branch copy of the picks file, read at most every REMOTE_EVERY_S (the thread's loop, never poll)."""
+        if self.data_path is not None or now - self._fetched_at < REMOTE_EVERY_S:
+            return False
+        self._fetched_at = now
+        ok = fetch_remote(self.settings, self.follow)
+        if not ok:
+            log.info("followdesk_remote_unread desk=%s", self.follow.key)
+        return ok
 
     # ------------------------------------------------------------------ lifecycle
     def start(self) -> None:
         if self._thread is not None:
             return
-        self._thread = threading.Thread(target=self._loop, name="marcodesk", daemon=True)
+        self._thread = threading.Thread(target=self._loop, name=self.follow.key, daemon=True)
         self._thread.start()
-        log.info("marcodesk_started poll_s=%g ticket_usd=%.0f (paper only)", POLL_S, TICKET_USD)
+        log.info("marcodesk_started desk=%s poll_s=%g ticket_usd=%.0f (paper only)", self.follow.key, POLL_S,
+                 TICKET_USD)
 
     def stop(self) -> None:
         self._stop.set()
@@ -405,6 +500,7 @@ class MarcoDesk:
         while not self._stop.is_set():
             t0 = time.time()
             try:
+                self.refresh(t0)
                 self.poll(t0)
             except Exception as exc:  # noqa: BLE001 (a paper desk keeps going; nothing else is affected)
                 self.state["counters"]["errors"] += 1
@@ -426,7 +522,7 @@ class MarcoDesk:
         st["counters"]["polls"] += 1
         st["last_poll"] = now
         live: list[tuple[dict[str, Any], dict[str, Any]]] = []
-        for ep in load_episodes(self.data_path):
+        for ep in self.episodes():
             for pick in ep["picks"]:
                 rec = st["picks"].get(pick["id"])
                 if not isinstance(rec, dict) or rec.get("status") not in STATUSES:  # new (or junk): a fresh record
@@ -469,7 +565,7 @@ class MarcoDesk:
         rec["closed_at"] = now
         what = "found but no price before the game was under way" if found_in_time else (
             "no Polymarket US market by kickoff + 30 min")
-        self._event(now, f"Marco desk: {pick_label(pick)}: {what} (practice).", "neutral")
+        self._event(now, f"{self.follow.who} desk: {pick_label(pick)}: {what} (practice).", "neutral")
 
     def _find(self, now: float, live: list[tuple[dict[str, Any], dict[str, Any]]]) -> None:
         """Each followed pick's game (the date's listing, at most every DISCOVER_S per date), then a spread or total
@@ -537,7 +633,8 @@ class MarcoDesk:
                            "event": game.get("event")}
         rec["status"] = BOUGHT
         self.state["counters"]["bought"] += 1
-        self._event(now, f"Marco desk bought {pick_label(pick)} at {ask:.2f} (practice, pretend money).", "neutral")
+        self._event(now, f"{self.follow.who} desk bought {pick_label(pick)} at {ask:.2f} (practice, pretend money).",
+                    "neutral")
         log.info("marcodesk_bought pick=%s slug=%s ask=%.4f (paper)", pick["id"], market["slug"], ask)
         return 1
 
@@ -573,18 +670,20 @@ class MarcoDesk:
             st["counters"]["settled"] += 1
             settled += 1
             team = nickname(str(pos.get("side") or ""))
-            self._event(now, f"Marco desk settled {team or pos['slug']}: {status} {pnl:+.2f} $ (practice, pretend).",
+            self._event(now, f"{self.follow.who} desk settled {team or pos['slug']}: {status} {pnl:+.2f} $ "
+                        "(practice, pretend).",
                         "good" if pnl > 0 else "bad" if pnl < 0 else "neutral")
         return settled
 
 
 # ---------------------------------------------------------------------- the panel
-def panel_state(settings: Settings, now: float, data_path: Path | None = None) -> dict[str, Any]:
+def panel_state(settings: Settings, now: float, data_path: Path | None = None,
+                follow: Follow = MARCO) -> dict[str, Any]:
     """What the page shows (``money.marco``): the newest episode's picks with their status (plus any older pick
     still open), the price each bought pick was bought at, and the record. Read from files only (no network)."""
-    st = load_state(state_path(settings))
+    st = load_state(state_path(settings, follow))
     picks_state = st["picks"] if isinstance(st.get("picks"), dict) else {}
-    episodes = load_episodes(data_path)
+    episodes = load_episodes(data_path) if data_path is not None else follow_episodes(settings, follow)
     latest = episodes[0] if episodes else None
     rows: list[dict[str, Any]] = []
     for ep in episodes:
@@ -603,6 +702,7 @@ def panel_state(settings: Settings, now: float, data_path: Path | None = None) -
     loves = {p["rank"] for p in latest["picks"] if p["love"]} if latest else set()
     return {
         "mode": "paper",
+        "who": follow.who,
         "label": LABEL,
         "as_of": st.get("last_ok"),
         "episode": ({"id": latest["id"], "title": latest["title"], "published": latest["published"],

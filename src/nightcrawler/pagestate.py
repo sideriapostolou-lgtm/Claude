@@ -19,6 +19,7 @@ Schema (lists capped: members 9, events <= 5, open trades <= 10, closed trades 1
                          "sports_line": str|null, "skips_line": str|null, "arbs_line": str|null},
                 "pretend": {"label": "Practice (pretend money)", "line", "body"},
                 "marco_line": str|null,                               # Marco's loves desk in words: MARCO
+                "nhl_line": str|null,                                 # the NHL bettor's loves desk: MARCO
                 "now": [str] (<= 3),
                 "team": [{"id", "name", "job", "plain_role", "status_word": "working"|"waiting"|"idle"|"stuck",
                           "members": [member id], "latest": str|null, "latest_ts": float|null,
@@ -76,7 +77,8 @@ Schema (lists capped: members 9, events <= 5, open trades <= 10, closed trades 1
                           "episode": {"id", "title", "published", "source_url"}|null, "loves", "ticket_usd",
                           "picks": [{"rank", "love", "team", "opponent", "kind", "line", "quote", "game_date",
                                      "label", "status", "price", "kickoff", "event", "pnl_usd"}] (<= 12),
-                          "record": {"picks", "won", "lost", "even", "pnl_usd"}}|null},
+                          "record": {"picks", "won", "lost", "even", "pnl_usd"}}|null,
+                "nhl": {... the same as "marco", plus "who"}|null},   # the NHL bettor's loves (MARCO)
       "town": {"label", "cost_per_day_usd", "cost_today_usd", "cost_since_start_usd": float|null,  # see TOWN
                "income_today_usd": float|null, "income_since_start_usd": float|null,
                "covered_today": bool|null, "covered_since_start": bool|null, "line",
@@ -218,6 +220,8 @@ $20 practice ticket and settled at the venue's price. Each pick's ``status`` is 
 list; "not a love" for one he only mentioned), ``price`` the price it was bought at (null when not bought). ``record``
 counts settled picks and their pretend P&L. ``plain.marco_line`` says it in one fixed sentence, always "practice,
 pretend money", numbers from the state only. Null when the Polymarket desk is off or the state holds junk.
+``money.nhl`` and ``plain.nhl_line`` are the same for the NHL bettor's loves (:data:`nightcrawler.marcodesk.NHL`:
+his own desk, state and picks file, practice money only), with ``who`` his name.
 
 TROPHIES (``trades.summary``, the 3D world's trophy shelf): ``closed`` is capped at 10, so the summary counts EVERY
 closed trade of the Solana bot in this mode (``won``: a positive result in SOL, ``lost``: a negative one, ``even``,
@@ -1372,13 +1376,13 @@ def _trend_line(trend: Mapping[str, Any] | None) -> dict[str, Any] | None:
 MARCO_PICKS_MAX = 12
 
 
-def marco_desk(settings: Settings, now: float) -> dict[str, Any] | None:
+def marco_desk(settings: Settings, now: float, follow: Any = None) -> dict[str, Any] | None:
     """Marco's loves desk for the money card (MARCO in the module docstring), type-checked: its own figures, never
     added to anything else. None when the Polymarket desk is off or the state holds junk. Never raises."""
     if not settings.polydesk_enabled:
         return None
     try:
-        raw = marcodesk.panel_state(settings, now)
+        raw = marcodesk.panel_state(settings, now, follow=follow or marcodesk.MARCO)
     except (KeyError, TypeError, ValueError, AttributeError, OSError) as exc:
         log.warning("marcodesk_panel_failed error=%s", type(exc).__name__)
         return None
@@ -1413,19 +1417,21 @@ def marco_desk(settings: Settings, now: float) -> dict[str, Any] | None:
                    "source_url": _clip(str(episode.get("source_url") or ""), 200)}
     else:
         episode = None
-    return {"mode": "paper", "label": PRETEND_LABEL, "as_of": _num(raw.get("as_of")), "episode": episode,
+    return {"mode": "paper", "who": _clip(str(raw.get("who") or "Marco"), 40), "label": PRETEND_LABEL,
+            "as_of": _num(raw.get("as_of")), "episode": episode,
             "loves": _count(raw.get("loves")) or 0, "ticket_usd": _num(raw.get("ticket_usd")),
             "picks": rows[:MARCO_PICKS_MAX], "record": {**counts, "pnl_usd": pnl}}
 
 
-def marco_line(marco: Mapping[str, Any] | None) -> str | None:
+def marco_line(marco: Mapping[str, Any] | None, period: str = "this week") -> str | None:
     """``plain.marco_line``: Marco's loves in one fixed sentence, always practice and pretend, numbers from the state
     only ("Marco's loves (practice, pretend money): 3 picks this week; Packers moneyline bought at 0.48; record 2-1,
     +$6.40."). None when the desk is off or there is no episode yet."""
     if marco is None or marco.get("episode") is None:
         return None
     n = int(marco.get("loves") or 0)
-    parts = [f"Marco's loves (practice, pretend money): {n} pick{'' if n == 1 else 's'} this week"]
+    who = str(marco.get("who") or "Marco")
+    parts = [f"{who}'s loves (practice, pretend money): {n} pick{'' if n == 1 else 's'} {period}"]
     bought = [row for row in marco["picks"] if row["price"] is not None and row["status"] in marcodesk.HELD]
     if bought:
         parts.append(", ".join(f"{row['label']} bought at {row['price']:.2f}" for row in bought[:4]))
@@ -2518,6 +2524,7 @@ def build_page_state(ledger: Any, settings: Settings, now: float, engine_status:
     trend = trend_desk(settings, now)  # the trend desk's paper book, apart from everything else (never summed)
     money = _money(settings, state["equity"], point, _withdrawn(ledger, settings, point, now), desk, trend)
     money["marco"] = marco_desk(settings, now)  # Marco's loves (paper only), apart from everything else (never summed)
+    money["nhl"] = marco_desk(settings, now, marcodesk.NHL)  # the NHL bettor's loves (paper only), the same way
     for m in members:  # Rook's risk wall: the desk's real money against its hard limits beside the panel's numbers
         if m["id"] == "risk" and isinstance(m.get("risk_wall"), dict):
             m["risk_wall"]["real_caps"] = real_caps(settings, desk)
@@ -2558,6 +2565,7 @@ def build_page_state(ledger: Any, settings: Settings, now: float, engine_status:
                   "commit": (deploy or {}).get("commit"), "started_at": team["engine"]["started_at"]},
     }
     out["plain"]["marco_line"] = marco_line(money["marco"])  # MARCO: one fixed sentence, practice only
+    out["plain"]["nhl_line"] = marco_line(money["nhl"], "today")
     # the town's goal (GOAL): display only, from the figures above; a failure shows no goal at all, never a zero
     try:
         live_days, today_pnls = goal_books(ledger, settings, now)

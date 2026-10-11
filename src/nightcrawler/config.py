@@ -404,6 +404,10 @@ class Settings:
                           "REAL orders (its contracts and every cap and stop) on the moneyline picks Million Dollar "
                           "Marco loves (src/nightcrawler/data/marco_picks.json), the owner's explicit exception to "
                           "the no-real-money-on-sports rule; off = his loves are followed with practice money only")
+    follow_picks_url: str = _f("https://raw.githubusercontent.com/sideriapostolou-lgtm/Claude/refs/heads/claude/"
+                               "nightcrawler-memecoin-bot-Gwnb1S/src/nightcrawler/data", "text",
+                               "Where the loves desks read their picks files between deploys (an https folder URL: "
+                               "the deploy branch's nightcrawler/data on GitHub); off = the packaged files only")
     polydesk_guard_min_n: int = _f(30, "count", "Polymarket desk's risk manager: events (a game's markets, or a "
                                    "ladder's markets ending together, count as one) of the current rule before it "
                                    "judges (fewer: still learning, unless a clear loser is stopped early from 10)",
