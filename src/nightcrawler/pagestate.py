@@ -20,6 +20,7 @@ Schema (lists capped: members 9, events <= 5, open trades <= 10, closed trades 1
                 "pretend": {"label": "Practice (pretend money)", "line", "body"},
                 "marco_line": str|null,                               # Marco's loves desk in words: MARCO
                 "nhl_line": str|null,                                 # the NHL bettor's loves desk: MARCO
+                "arena_line": str|null,                               # the Arena (practice): nightcrawler.arena
                 "now": [str] (<= 3),
                 "team": [{"id", "name", "job", "plain_role", "status_word": "working"|"waiting"|"idle"|"stuck",
                           "members": [member id], "latest": str|null, "latest_ts": float|null,
@@ -78,7 +79,9 @@ Schema (lists capped: members 9, events <= 5, open trades <= 10, closed trades 1
                           "picks": [{"rank", "love", "team", "opponent", "kind", "line", "quote", "game_date",
                                      "label", "status", "price", "kickoff", "event", "pnl_usd"}] (<= 12),
                           "record": {"picks", "won", "lost", "even", "pnl_usd"}}|null,
-                "nhl": {... the same as "marco", plus "who"}|null},   # the NHL bettor's loves (MARCO)
+                "nhl": {... the same as "marco", plus "who"}|null,    # the NHL bettor's loves (MARCO)
+                "arena": {"label", "population", "rent_usd", "town", "today", "leaders", "candidates", "events",
+                          "grave", ...}|null},                         # the Arena: nightcrawler.arena.panel_state
       "town": {"label", "cost_per_day_usd", "cost_today_usd", "cost_since_start_usd": float|null,  # see TOWN
                "income_today_usd": float|null, "income_since_start_usd": float|null,
                "covered_today": bool|null, "covered_since_start": bool|null, "line",
@@ -372,7 +375,7 @@ from collections.abc import Callable, Mapping
 from pathlib import Path
 from typing import Any
 
-from nightcrawler import __version__, hearts, marcodesk, towngoal, trenddesk
+from nightcrawler import __version__, arena, hearts, marcodesk, towngoal, trenddesk
 from nightcrawler.botwallet import saved_balance, wallet_configured
 from nightcrawler.broker.keystore import KV_GENERATED, unused_wallet
 from nightcrawler.clock import utc_day
@@ -1421,6 +1424,23 @@ def marco_desk(settings: Settings, now: float, follow: Any = None) -> dict[str, 
             "as_of": _num(raw.get("as_of")), "episode": episode,
             "loves": _count(raw.get("loves")) or 0, "ticket_usd": _num(raw.get("ticket_usd")),
             "picks": rows[:MARCO_PICKS_MAX], "record": {**counts, "pnl_usd": pnl}}
+
+
+def arena_town(settings: Settings, now: float) -> dict[str, Any] | None:
+    """The Arena (:mod:`nightcrawler.arena`) for the page: practice money only, its own figures, never added to
+    anything; each text redacted then clipped. None when the Polymarket desk is off or the state cannot be read."""
+    if not settings.polydesk_enabled:
+        return None
+    try:
+        raw = arena.panel_state(settings, now)
+    except (KeyError, TypeError, ValueError, AttributeError, OSError) as exc:
+        log.warning("arena_panel_failed error=%s", type(exc).__name__)
+        return None
+    events = [{"ts": _num(e.get("ts")), "who": _clip(str(e.get("who") or ""), 24),
+               "text": _clip(str(e.get("text") or ""), TEXT_MAX),
+               "tone": e.get("tone") if e.get("tone") in ("good", "bad", "neutral") else "neutral"}
+              for e in _xp_list(raw.get("events")) if isinstance(e, Mapping)]
+    return {**raw, "label": PRETEND_LABEL, "events": events}
 
 
 def marco_line(marco: Mapping[str, Any] | None, period: str = "this week") -> str | None:
@@ -2525,6 +2545,7 @@ def build_page_state(ledger: Any, settings: Settings, now: float, engine_status:
     money = _money(settings, state["equity"], point, _withdrawn(ledger, settings, point, now), desk, trend)
     money["marco"] = marco_desk(settings, now)  # Marco's loves (paper only), apart from everything else (never summed)
     money["nhl"] = marco_desk(settings, now, marcodesk.NHL)  # the NHL bettor's loves (paper only), the same way
+    money["arena"] = arena_town(settings, now)  # the Arena's practice town (never summed with anything)
     for m in members:  # Rook's risk wall: the desk's real money against its hard limits beside the panel's numbers
         if m["id"] == "risk" and isinstance(m.get("risk_wall"), dict):
             m["risk_wall"]["real_caps"] = real_caps(settings, desk)
@@ -2566,6 +2587,7 @@ def build_page_state(ledger: Any, settings: Settings, now: float, engine_status:
     }
     out["plain"]["marco_line"] = marco_line(money["marco"])  # MARCO: one fixed sentence, practice only
     out["plain"]["nhl_line"] = marco_line(money["nhl"], "today")
+    out["plain"]["arena_line"] = arena.arena_line(money["arena"])
     # the town's goal (GOAL): display only, from the figures above; a failure shows no goal at all, never a zero
     try:
         live_days, today_pnls = goal_books(ledger, settings, now)

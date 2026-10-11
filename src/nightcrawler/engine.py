@@ -2537,6 +2537,7 @@ class App:
     trenddesk: Any = None
     marcodesk: Any = None
     nhldesk: Any = None
+    arena: Any = None
 
     def close(self) -> None:
         """Stop the dashboard (if running), write the last provider-usage counts and close the ledger."""
@@ -2551,6 +2552,8 @@ class App:
                 self.marcodesk.stop()
             if self.nhldesk is not None:
                 self.nhldesk.stop()
+            if self.arena is not None:
+                self.arena.stop()
             if self.dashboard is not None:
                 self.dashboard.stop()
         finally:
@@ -2667,6 +2670,16 @@ def build_app(settings: Settings, clock: Clock | None = None, *, session: Any = 
         except Exception as exc:  # noqa: BLE001 (an optional paper desk never stops the bot)
             log.warning("nhldesk_not_started error=%s", type(exc).__name__)
             nhldesk = None
+    arena_town = None
+    if settings.polydesk_enabled:  # PRACTICE only: the Arena's town of rent-paying trader bots, in its own thread
+        try:
+            from nightcrawler.arena import Arena
+
+            arena_town = Arena(settings)
+            arena_town.start()
+        except Exception as exc:  # noqa: BLE001 (an optional practice town never stops the bot)
+            log.warning("arena_not_started error=%s", type(exc).__name__)
+            arena_town = None
     trenddesk = None
     if settings.trenddesk_enabled:  # PAPER only: lab 3's 50-day trend rule on BTC, ETH and SOL, once a day
         try:
@@ -2680,7 +2693,7 @@ def build_app(settings: Settings, clock: Clock | None = None, *, session: Any = 
     return App(settings=settings, clock=clock, stop_event=stop_event, http=http, sources=sources, ledger=ledger,
                crawler=crawler, cocoon=cocoon, radar=radar, judge=judge, risk=risk, broker=broker,
                auditor=auditor, engine=engine, dashboard=dashboard, wallet=wallet, polydesk=polydesk,
-               trenddesk=trenddesk, marcodesk=marcodesk, nhldesk=nhldesk)
+               trenddesk=trenddesk, marcodesk=marcodesk, nhldesk=nhldesk, arena=arena_town)
 
 
 def build_engine(settings: Settings, clock: Clock | None = None) -> Engine:

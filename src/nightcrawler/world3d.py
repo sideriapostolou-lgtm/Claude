@@ -702,6 +702,14 @@ _STYLE_CINEMA = r"""
 @media (min-width: 760px) { :root { --lbh: 58px; --lbb: 122px; } }
 @media (max-height: 700px) and (max-width: 759px) { :root { --lbh: 44px; --lbb: 100px; } }
 #cine, #tags { display: none; }
+/* the Arena strip (practice money): its newest trades, evictions and births, one at a time, above the caption */
+body.cinema #arena { display: none; }
+body.cinema #arena.on { display: block; position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(var(--lbB) + 8px);
+  max-width: min(92vw, 660px); padding: 3px 11px; border-radius: 12px; background: rgba(8,10,20,.66); color: #dfe6f5;
+  font: 600 11px/1.4 system-ui, -apple-system, Segoe UI, sans-serif; text-align: center; overflow: hidden; max-height: 4.3em;
+  z-index: 8; pointer-events: none; }
+body.cinema #arena .atag { color: #8fb8ff; font-weight: 800; letter-spacing: .05em; margin-right: 7px; }
+body.cinema #arena .good { color: #8ef0c8; } body.cinema #arena .bad { color: #ff9a8f; }
 #intro[hidden] { display: none; }
 body.cinema #cine, body.cinema #tags { display: block; }
 /* the parts of the full view that wait behind "details" (the card and its bubbles keep their place, unseen) */
@@ -6869,6 +6877,29 @@ _M_CINEMA = r"""
     cineHudEl.setAttribute("aria-label", h.line + ". Tap for the details of the real money.");
   }
   cineHudEl.onclick = function () { openPanel("real"); };
+  // ------------------------------------------------------------- the Arena strip (money.arena: practice, text only)
+  const arenaEl = el("arena"), arenaTxt = el("arena-txt"), ARENA = { lines: [], i: 0, at: 0 };
+  function arenaLines(d) {  // the newest events (each its own words, "(practice)" said once by the strip's tag), then the line
+    const a = d && d.money && d.money.arena ? d.money.arena : null, out = [];
+    if (!a) return out;
+    const evs = Array.isArray(a.events) ? a.events : [];
+    for (let i = 0; i < evs.length && out.length < 8; i++) {
+      const e = evs[i];
+      if (e && typeof e.text === "string" && e.text) out.push({ t: e.text.replace(/,\s*practice\)/, ")").replace(/\s*\(practice[^)]*\)/, ""), k: e.tone === "good" || e.tone === "bad" ? e.tone : "" });
+    }
+    const line = d.plain && typeof d.plain.arena_line === "string" ? d.plain.arena_line : "";
+    if (line) out.push({ t: line.replace(/^The Arena \(practice money\): /, ""), k: "" });
+    return out;
+  }
+  function arenaOnData(d) { ARENA.lines = arenaLines(d); ARENA.i = 0; ARENA.at = 0; arenaEl.classList.toggle("on", ARENA.lines.length > 0); }
+  function arenaFrame() {
+    if (!CINE.on || !ARENA.lines.length) return;
+    const t = performance.now();
+    if (ARENA.at && t - ARENA.at < 5200) return;
+    ARENA.at = t;
+    const q = ARENA.lines[ARENA.i++ % ARENA.lines.length];
+    arenaTxt.textContent = q.t; arenaTxt.className = q.k;
+  }
   // ------------------------------------------------------------- the name tags (one per character, text only)
   const _cineAt = V3(0, 0, 0);
   const CINE_NAMETAGS = ACTOR_KEYS.map(function (k) {
@@ -6980,12 +7011,15 @@ _M_CINEMA = r"""
   }
   BUS.on("data", cineOnData);
   BUS.on("frame", cineFrame);
+  BUS.on("data", arenaOnData);
+  BUS.on("frame", arenaFrame);
   window.addEventListener("resize", cineMeasure);
   cineSet(!cineStored(), false);
   window.__skyport = Object.assign(window.__skyport || {}, { cinema: {
     // (for a test or a screenshot: the mode, the HUD's and the caption's words, the tags on screen, the director's holds)
     on: function () { return CINE.on; }, set: function (on) { cineSet(on, true); },
     hud: function () { return cineHudEl.textContent; },
+    arena: function () { return arenaEl.classList.contains("on") ? arenaTxt.textContent : ""; },
     caption: function () { return [cineCap1.textContent, cineCap2.hidden ? "" : cineCap2.textContent]; },
     tags: function () { return CINE_NAMETAGS.filter(function (q) { return q.op > 0; }).map(function (q) { return q.el.textContent; }); },
     intro: function (again) { if (again) { CINE.intro = false; cineIntroOpen(true); } return CINE.intro; },
@@ -7104,7 +7138,9 @@ def render_world_html(settings: Settings) -> str:
         '<div id="cine"><div id="lb-top"><button type="button" id="hud" aria-controls="panel">'
         '<span class="htag" id="hud-tag">REAL MONEY</span><b id="hud-cash">—</b><span id="hud-rest"></span></button></div>'
         '<div id="lb-bot"><div id="cap" aria-live="off"><p id="cap-1"><b>NIGHT SHIFT: SKYPORT</b></p><p id="cap-2" hidden></p>'
-        "</div></div></div>\n"
+        "</div></div>"
+        '<div id="arena" aria-hidden="true"><span class="atag">ARENA · PRACTICE</span><span id="arena-txt"></span></div>'
+        "</div>\n"
         '<div id="intro" role="dialog" aria-labelledby="intro-title" hidden><h2 id="intro-title">Skyport, live</h2>'
         '<div id="intro-body"></div><button type="button" id="intro-go">Watch</button></div>\n'
         f'<script type="module">{_MODULE}</script>\n</body>\n</html>\n'
