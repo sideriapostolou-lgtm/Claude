@@ -114,13 +114,22 @@ horizontal, close behind the crew; never a top-down tycoon view.
   $47.06 · today +$1.52 · goal $100/day": ``plain.real``, ``town.goal``, ``money.polymarket``; a tap opens the real
   money's details); in the bottom bar a caption for the shot on air ("VOSS, the real-money trader. <his newest bet>." and
   his heart line from ``plain.hearts``; a place: its name and the data's line for it); a small name tag with a two-to-four
-  word job over each character on screen; the vault's sign shows the REAL cash at Polymarket and the real result. Pretend
-  money shows nowhere in it but a character's own caption, said "practice". The director's rotation holds each shot
-  longer and flies slower. Everything else (the money buttons, the headline, the goal strip, the chips, the ticker, the
-  banner, the postcard, the guide, the boards' words, the trophies, the ticket board, the pretend wallet on the vault
-  sign) waits behind a small "details" button that brings today's full view back (remembered in ``localStorage`` when
-  the browser allows it); a first visit gets one three-line card (what this is, who does what, real vs practice)
-  instead of the guide. The Goal Tower, the hearts and the huddle, the programmes (as captions) and the speaker stay.
+  word job over each character on screen; the vault's sign shows the REAL cash at Polymarket and the real result. It is
+  REAL MONEY ONLY (the owner's word, 2026-10-11): practice money shows nowhere in it but the Arena town's, which says
+  PRACTICE itself and is never added to anything. The practice boards and props are on a layer its camera does not film
+  (the practice yard on the courier pier with its frame and posts, the trend desk's board, whose decorative screen comes
+  back, the trophy shelf and its card, the ticket board, a practice trade's cube and its flash), Rook's risk wall is drawn
+  with its real money only (the record room's ``recRealOnly``: the real desk's verdict and caps, the Solana bot's half
+  only while it trades real money), a caption, a name tag or a heart line never speaks of practice money (a character
+  whose line does is captioned by their job in plain words, its practice money word left out), a programme keeps only
+  its real beats (the record room's ``progKeep``), and today's real result glows a moment when a real settlement moves
+  it. The director's rotation holds each shot longer and flies slower, and a caption crossfades (never a blink) and
+  holds a moment before the same subject's newer words. Everything else (the money buttons, the headline, the goal
+  strip, the chips, the ticker, the banner, the postcard, the guide, the boards' words, the pretend wallet on the vault
+  sign) waits behind a small "details" button that brings today's full view back exactly (remembered in
+  ``localStorage`` when the browser allows it); a first visit gets one three-line card (what this is, who does what,
+  and "Every dollar on screen is real money, except in the Arena town, which trains with practice money") instead of
+  the guide. The Goal Tower, the hearts and the huddle, the programmes (as captions) and the speaker stay.
 
 Honesty rules (the same as the office's and the town's, non-negotiable):
 
@@ -744,17 +753,20 @@ body.cinema #vignette { background: radial-gradient(ellipse at 50% 48%, rgba(0,0
             font-variant-numeric: tabular-nums; }
 #hud-rest .up { color: var(--good); font-weight: 700; } #hud-rest .down { color: #ff8a80; font-weight: 700; }
 #hud-rest .state { color: #ffe08a; font-weight: 700; }
+/* today's real result glows a moment when a real bet's settlement moves it (its own colour: green up, red down) */
+#hud-rest .tick { animation: hudtick 2.4s ease-out both; }
+@keyframes hudtick { 0% { text-shadow: 0 0 14px currentColor, 0 0 4px currentColor; } 100% { text-shadow: 0 0 0 transparent; } }
+@media (prefers-reduced-motion: reduce) { #hud-rest .tick { animation: none; } }
 /* the caption: who and what, in the data's own words, then the heart line */
 #cap { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; justify-content: center; align-items: center;
-       text-align: center; overflow: hidden; }
+       text-align: center; overflow: hidden; transition: opacity .34s ease; }
+#cap.out { opacity: 0; }  /* (a new caption: the old words fade out, then the new ones in; never a blink) */
 #cap p { margin: 0; max-width: 52em; overflow-wrap: anywhere; display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; }
 #cap-1 { font-size: 15px; line-height: 1.3; color: #fbf3e4; -webkit-line-clamp: 2; }
 #cap-1 b { font-weight: 800; letter-spacing: .08em; color: #ffe3a6; }
 #cap-2 { margin-top: 3px !important; font-size: 12.5px; line-height: 1.3; color: #cdbfa6; font-style: italic; -webkit-line-clamp: 2; }
 #cap-2[hidden] { display: none; }
-#cap.in { animation: capin .6s ease both; }
-@keyframes capin { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
-@media (prefers-reduced-motion: reduce) { #cap.in { animation: none; } }
+@media (prefers-reduced-motion: reduce) { #cap { transition: none; } }
 @media (min-width: 760px) { #lb-top { justify-content: center; padding-left: 42px; } #hud { flex: 0 1 auto; }
                              #hud b { font-size: 24px; } #hud .htag { font-size: 11px; } #hud-rest { font-size: 14px; } #cap-1 { font-size: 18px; } #cap-2 { font-size: 14.5px; } }
 @media (max-height: 700px) and (max-width: 759px) { #cap-1 { font-size: 14px; } #cap-2 { -webkit-line-clamp: 1; } }
@@ -3329,8 +3341,9 @@ _M_LIFE = r"""
       L.mat.color.setHex(c); L.mat.emissive.setHex(c); L.mat.emissiveIntensity = st === "idle" ? 0.15 : 2.6; L.halo.material.color.setHex(c); L.halo.material.opacity = st === "idle" ? 0 : 0.85;
     });
   }
-  // the trade cube Jet carries to the vault: gold for a win, red for a loss
-  const cube = { mesh: new THREE.Group(), flight: null };
+  // the trade cube Jet carries to the vault: gold for a win, red for a loss (real: the closed trade's money is real, from
+  // the data, set when he picks it up; THE CINEMA leaves a practice trade's cube out of its real-money view)
+  const cube = { mesh: new THREE.Group(), flight: null, real: false };
   // a translucent glowing crystal: a clear shell, a soft core and a lattice of lines inside it so its facets read
   const cubeOuter = new THREE.Mesh(G.rbox(0.24, 0.24, 0.24, 0.35, 14), new THREE.MeshPhysicalMaterial({ color: 0xffd36a, emissive: 0xffb02a, emissiveIntensity: 0.45,
     roughness: 0.05, transparent: true, opacity: 0.4, clearcoat: 1, depthWrite: false }));
@@ -3666,6 +3679,7 @@ _M_LIFE = r"""
     speak(jet, "broker", (t.coin || "a trade") + ": " + (t.result ? t.result + " " : "") + fmtSigned(pnl)
       + (live ? " (real money)" : " (pretend money)"), won ? "good" : "bad", 12);
     // Jet carries the cube to the vault; there he cheers only for a winning trade and shrugs at a losing one
+    cube.real = !!live;
     jet.queue.unshift({ dest: "vault", hold: 4.5, carry: won ? "gold" : "red", onArrive: function (a) {
       deliverCube(a, pnl);
       a.yawGoal = Math.atan2(camera.position.x - a.pos.x, camera.position.z - a.pos.z);  // the cube goes in through the hatch; he turns to the drone for it
@@ -4471,8 +4485,10 @@ _M_RECORDS = r"""
   // (added to the operator's RIGS table under that key) and the operator flies there or cuts; FLY.on is only read
   // (the film's clock waits while the drone flies). Hooks on window.__skyport.records: film, tour, view, flying,
   // postcard, shelf.
+  // (realOnly: THE CINEMA's view, real money only, set through recRealOnly; wall: the risk wall's last data, to draw it again)
   const REC = { seen: null, chip: null, tourChip: null, toastUntil: 0, busy: false, parts: null,
-                shelf: { real: 0, pretend: 0, realMore: 0, pretendMore: 0 }, lines: [], postcardLines: null, trendScreen: null };
+                shelf: { real: 0, pretend: 0, realMore: 0, pretendMore: 0 }, lines: [], postcardLines: null, trendScreen: null,
+                realOnly: false, wall: null };
   const REC_INK = "#3a2410", REC_HI = "rgba(255,240,200,.75)", REC_FONT = "ui-sans-serif, system-ui, sans-serif";
   // red is real money only: a pretend warning is amber or orange, a pretend loss a dark slate tile
   const REC_SLATE = "#8f9bb3", REC_AMBER = "#f5b133", REC_ORANGE = "#ff9f43", REC_GOOD = "#5fe39a", REC_REAL = "#ff8a80";
@@ -4598,53 +4614,59 @@ _M_RECORDS = r"""
     const colour = v === "winning" ? REC_GOOD : v === "losing" ? (real ? REC_REAL : REC_AMBER) : REC_SLATE;
     return [REC_DESKS[raw] || raw, word, colour, real ? REC_REAL : "#fff4dc"];
   }
+  // REC.realOnly (THE CINEMA's view): real money only. The Solana bot's half only while it trades real money (label "Real
+  // money"), the real desk's verdict alone (the whole width, larger, when the Solana bot's half is not there), its caps.
   function recDrawWall(wall, caps, label) {
     const c = recWall.userData.canvas, ctx = c.getContext("2d"); if (!ctx) return;
-    const W = c.width, H = c.height, g = ctx.createLinearGradient(0, 0, 0, H);
+    const W = c.width, H = c.height, g = ctx.createLinearGradient(0, 0, 0, H), realOnly = !!REC.realOnly, solana = !realOnly || label === "Real money";
     g.addColorStop(0, "#2d1d14"); g.addColorStop(1, "#160e09"); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
     ctx.lineWidth = 8; ctx.strokeStyle = "#c99a48"; roundRect(ctx, 12, 12, W - 24, H - 24, 22); ctx.stroke();
     ctx.textAlign = "left"; ctx.textBaseline = "middle";
-    ctx.fillStyle = "#ffe3a6"; ctx.font = "bold 40px " + REC_FONT; ctx.fillText("ROOK'S RISK WALL", 40, 58);
-    // the Solana bot: today's loss allowance (a dial), the trade slots, the daily stop
-    ctx.fillStyle = "#e9dcc4"; ctx.fillText(recSized(ctx, "Solana bot · " + (label || ""), 460, 26, 20, ""), 40, 108);
-    const w = wall || {}, pct = isNum(w.allowance_used_pct) ? w.allowance_used_pct : null, cx = 200, cy = 300, R = 128;
-    ctx.lineCap = "round"; ctx.lineWidth = 26; ctx.strokeStyle = "rgba(255,255,255,.12)"; ctx.beginPath(); ctx.arc(cx, cy, R, Math.PI, TAU); ctx.stroke();
-    if (pct != null && pct > 0) { ctx.strokeStyle = pct >= 90 ? REC_ORANGE : pct >= 50 ? REC_AMBER : REC_GOOD;
-      ctx.beginPath(); ctx.arc(cx, cy, R, Math.PI, Math.PI + Math.PI * Math.min(1, pct / 100)); ctx.stroke(); }
-    ctx.lineCap = "butt"; ctx.textAlign = "center";
-    ctx.fillStyle = "#fff4dc"; ctx.font = "bold 64px " + REC_FONT; ctx.fillText(pct == null ? "—" : Math.round(pct) + "%", cx, cy - 26);
-    ctx.fillStyle = "#d4c8b3"; ctx.font = "26px " + REC_FONT;
-    ctx.fillText(pct == null ? "no money check yet today" : "of today's loss allowance", cx, cy + 36);
-    ctx.textAlign = "left"; ctx.font = "26px " + REC_FONT; ctx.fillStyle = "#e9dcc4";
-    const used = isNum(w.slots_used) ? w.slots_used : 0, max = isNum(w.slots_max) ? w.slots_max : 0;
-    ctx.fillText("Trade slots: " + used + " of " + max + " in use", 40, 384);
-    for (let i = 0; i < Math.min(max, 10); i++) { ctx.fillStyle = i < used ? "#e0b25e" : "rgba(255,255,255,.12)"; roundRect(ctx, 40 + i * 46, 404, 36, 30, 6); ctx.fill(); }
-    const stop = w.daily_stop === true ? "Daily stop: ON, no new buys today" : w.daily_stop === false ? "Daily stop: off" : "Daily stop: not known yet";
-    ctx.fillStyle = w.daily_stop ? REC_AMBER : "#e9dcc4"; ctx.fillText(recFit(ctx, stop, 470), 40, 464);
-    if (w.stopped_by) { ctx.fillStyle = REC_AMBER; ctx.fillText(recFit(ctx, "New buys stopped: " + (REC_STOPS[w.stopped_by] || w.stopped_by), 470), 40, 500); }
+    ctx.fillStyle = "#ffe3a6"; ctx.font = "bold 40px " + REC_FONT; ctx.fillText(realOnly ? "ROOK'S RISK WALL · REAL MONEY" : "ROOK'S RISK WALL", 40, 58);
+    const w = wall || {};
+    if (solana) {
+      // the Solana bot: today's loss allowance (a dial), the trade slots, the daily stop
+      ctx.fillStyle = "#e9dcc4"; ctx.fillText(recSized(ctx, "Solana bot · " + (label || ""), 460, 26, 20, ""), 40, 108);
+      const pct = isNum(w.allowance_used_pct) ? w.allowance_used_pct : null, cx = 200, cy = 300, R = 128;
+      ctx.lineCap = "round"; ctx.lineWidth = 26; ctx.strokeStyle = "rgba(255,255,255,.12)"; ctx.beginPath(); ctx.arc(cx, cy, R, Math.PI, TAU); ctx.stroke();
+      if (pct != null && pct > 0) { ctx.strokeStyle = pct >= 90 ? REC_ORANGE : pct >= 50 ? REC_AMBER : REC_GOOD;
+        ctx.beginPath(); ctx.arc(cx, cy, R, Math.PI, Math.PI + Math.PI * Math.min(1, pct / 100)); ctx.stroke(); }
+      ctx.lineCap = "butt"; ctx.textAlign = "center";
+      ctx.fillStyle = "#fff4dc"; ctx.font = "bold 64px " + REC_FONT; ctx.fillText(pct == null ? "—" : Math.round(pct) + "%", cx, cy - 26);
+      ctx.fillStyle = "#d4c8b3"; ctx.font = "26px " + REC_FONT;
+      ctx.fillText(pct == null ? "no money check yet today" : "of today's loss allowance", cx, cy + 36);
+      ctx.textAlign = "left"; ctx.font = "26px " + REC_FONT; ctx.fillStyle = "#e9dcc4";
+      const used = isNum(w.slots_used) ? w.slots_used : 0, max = isNum(w.slots_max) ? w.slots_max : 0;
+      ctx.fillText("Trade slots: " + used + " of " + max + " in use", 40, 384);
+      for (let i = 0; i < Math.min(max, 10); i++) { ctx.fillStyle = i < used ? "#e0b25e" : "rgba(255,255,255,.12)"; roundRect(ctx, 40 + i * 46, 404, 36, 30, 6); ctx.fill(); }
+      const stop = w.daily_stop === true ? "Daily stop: ON, no new buys today" : w.daily_stop === false ? "Daily stop: off" : "Daily stop: not known yet";
+      ctx.fillStyle = w.daily_stop ? REC_AMBER : "#e9dcc4"; ctx.fillText(recFit(ctx, stop, 470), 40, 464);
+      if (w.stopped_by) { ctx.fillStyle = REC_AMBER; ctx.fillText(recFit(ctx, "New buys stopped: " + (REC_STOPS[w.stopped_by] || w.stopped_by), 470), 40, 500); }
+    }
     // each desk's risk manager: its verdict on the rule's own record, and its pause
-    ctx.fillStyle = "#e9dcc4"; ctx.font = "26px " + REC_FONT; ctx.fillText("The desks' risk manager", 540, 108);
-    const desks = Array.isArray(w.desks) ? w.desks : [];
-    if (!desks.length) { ctx.fillStyle = "#a99c88"; ctx.fillText("no desk to judge", 540, 160); }
-    desks.slice(0, 4).forEach(function (d, i) {
-      const y = 160 + i * 84, q = recDeskWords(d);
-      ctx.fillStyle = q[3]; ctx.fillText(recSized(ctx, q[0], 440, 28, 21, "bold "), 540, y);
-      ctx.fillStyle = q[2]; ctx.fillText(recSized(ctx, q[1], 440, 26, 20, ""), 540, y + 36);
+    const dx = solana ? 540 : 40, dw = solana ? 440 : W - 80, big = !solana;
+    ctx.fillStyle = "#e9dcc4"; ctx.font = (big ? "30px " : "26px ") + REC_FONT; ctx.fillText(realOnly ? "The desks' risk manager · real money" : "The desks' risk manager", dx, 108);
+    const desks = (Array.isArray(w.desks) ? w.desks : []).filter(function (d) { return !realOnly || d.desk === "Polymarket real"; });
+    if (!desks.length) { ctx.fillStyle = "#a99c88"; ctx.fillText(realOnly ? "no verdict on real money yet" : "no desk to judge", dx, 160); }
+    desks.slice(0, big ? 1 : 4).forEach(function (d, i) {
+      const y = (big ? 196 : 160) + i * 84, q = recDeskWords(d);
+      ctx.fillStyle = q[3]; ctx.fillText(recSized(ctx, q[0], dw, big ? 46 : 28, 21, "bold "), dx, y);
+      ctx.fillStyle = q[2]; ctx.fillText(recSized(ctx, q[1], dw, big ? 38 : 26, 20, ""), dx, y + (big ? 58 : 36));
     });
-    // the real desk's caps (red: real money only)
-    const y0 = 560;
+    // the real desk's caps (red: real money only; larger and higher on the real-money wall without the Solana bot's half)
+    const y0 = big ? 400 : 560, k = big ? 1.3 : 1, px = function (n) { return Math.round(n * k) + "px "; };
     if (caps) {
-      ctx.strokeStyle = "#ff6b61"; ctx.lineWidth = 4; roundRect(ctx, 32, y0 - 34, W - 64, 168, 16); ctx.stroke();
+      ctx.strokeStyle = "#ff6b61"; ctx.lineWidth = 4; roundRect(ctx, 32, y0 - 34 * k, W - 64, 168 * k, 16); ctx.stroke();
       ctx.fillStyle = "#ffb3ab";
-      ctx.fillText(recSized(ctx, (caps.label || "") + " · the Polymarket desk's hard limits" + (caps.on ? "" : " (no new real bets now)"), W - 110, 26, 20, "bold "), 52, y0);
+      ctx.fillText(recSized(ctx, (caps.label || "") + " · the Polymarket desk's hard limits" + (caps.on ? "" : " (no new real bets now)"), W - 110, Math.round(26 * k), 20, "bold "), 52, y0);
       [["In open bets", caps.open_usd, caps.open_max_usd], ["Lost today (UTC)", caps.day_loss_usd, caps.day_max_usd],
        ["Lost in total", caps.total_loss_usd, caps.total_max_usd]].forEach(function (q, i) {
         const x = 52 + i * 316, v = isNum(q[1]) ? q[1] : 0, m = isNum(q[2]) && q[2] > 0 ? q[2] : null;
-        ctx.fillStyle = "#e9dcc4"; ctx.font = "26px " + REC_FONT; ctx.fillText(q[0], x, y0 + 44);
-        ctx.fillStyle = "#fff4dc"; ctx.font = "bold 26px " + REC_FONT; ctx.fillText(fmtUsd(v) + (m ? " of " + fmtUsd(m) : ""), x, y0 + 80);
-        recBar(ctx, x, y0 + 100, 280, 14, m ? v / m : 0, m && v / m >= 0.8 ? "#ff6b61" : "#e0b25e");
+        ctx.fillStyle = "#e9dcc4"; ctx.font = px(26) + REC_FONT; ctx.fillText(q[0], x, y0 + 44 * k);
+        ctx.fillStyle = "#fff4dc"; ctx.font = "bold " + px(26) + REC_FONT; ctx.fillText(fmtUsd(v) + (m ? " of " + fmtUsd(m) : ""), x, y0 + 80 * k);
+        recBar(ctx, x, y0 + 100 * k, 280, 14 * k, m ? v / m : 0, m && v / m >= 0.8 ? "#ff6b61" : "#e0b25e");
       });
-    } else { ctx.fillStyle = "#a99c88"; ctx.font = "26px " + REC_FONT; ctx.fillText("Real money: no real-money bets on record.", 40, y0 + 40); }
+    } else { ctx.fillStyle = "#a99c88"; ctx.font = px(26) + REC_FONT; ctx.fillText("Real money: no real-money bets on record.", 40, y0 + 40); }
     recWall.userData.tex.needsUpdate = true;
   }
 
@@ -4789,7 +4811,8 @@ _M_RECORDS = r"""
     m.visible = false; scene.add(m); REC.trendScreen = best; return m;
   })();
   function recDrawTrend(tr) {
-    recTrend.visible = !!tr; if (REC.trendScreen) REC.trendScreen.visible = !tr;  // off: the decorative screen comes back
+    // off (or THE CINEMA's view, where the board waits behind "details"): the decorative screen comes back
+    recTrend.visible = !!tr; if (REC.trendScreen) REC.trendScreen.visible = !tr || REC.realOnly;
     if (!tr) return;
     const c = recTrend.userData.canvas, ctx = c.getContext("2d"); if (!ctx) return;
     const W = c.width, H = c.height, g = ctx.createLinearGradient(0, 0, 0, H);
@@ -4861,6 +4884,15 @@ _M_RECORDS = r"""
     return V.key;
   }
 
+  // THE CINEMA's view (real money only) on or off: Rook's risk wall drawn again for it, the trend desk's screen given back
+  // there (its board waits behind "details", on the layer that view does not film)
+  function recRealOnly(on) {
+    if (REC.realOnly === !!on) return;
+    REC.realOnly = !!on;
+    if (REC.wall) recDrawWall(REC.wall[0], REC.wall[1], REC.wall[2]);
+    if (REC.trendScreen) REC.trendScreen.visible = !recTrend.visible || REC.realOnly;
+  }
+
   // ------------------------------------------------------------- the page's data, when a poll lands
   function recApply(d) {
     const risk = ((d.team && d.team.members) || []).find(function (m) { return m.id === "risk"; }) || null;
@@ -4871,7 +4903,7 @@ _M_RECORDS = r"""
                    JSON.stringify(d.research || null) + JSON.stringify(real ? [real.on, real.verdict] : null), JSON.stringify((d.money || {}).trend || null)];
     const old = REC.parts || [];
     if (parts[0] !== old[0]) recDrawPlaque(d.receipts || null);
-    if (parts[1] !== old[1]) recDrawWall(wall, wall ? wall.real_caps : null, sum ? sum.label : (d.money || {}).label);
+    if (parts[1] !== old[1]) { REC.wall = [wall, wall ? wall.real_caps : null, sum ? sum.label : (d.money || {}).label]; recDrawWall(REC.wall[0], REC.wall[1], REC.wall[2]); }
     if (parts[2] !== old[2]) recDrawShelf(sum, (d.trades || {}).closed);
     if (parts[3] !== old[3]) recDrawLabs(d.research || null, real);
     if (parts[4] !== old[4]) recDrawTrend((d.money || {}).trend || null);
@@ -5056,7 +5088,10 @@ _M_RECORDS = r"""
       .filter(function (q) { return REC_VIEWS[q[0]].mesh.visible; });
     return list.map(function (q, k) { return filmBeat(k, "view:" + q[0], q[1], "THE RECORDS", (k + 1) + " of " + list.length, q[2], q[3]); });
   }
+  // (THE CINEMA's filter: in its view a programme keeps only the beats it can show, none on practice money; null: all)
+  let progKeep = null;
   function progStart(kind, script, auto) {
+    if (progKeep) script = script.filter(progKeep);
     if (!script.length) return false;
     if (FILM.on) filmStop(false);
     FILM.on = true; FILM.kind = kind; FILM.auto = !!auto; FILM.script = script; FILM.i = -1; FILM.shown = -1; FILM.t0 = simT; FILM.lastT = simT;
@@ -5417,9 +5452,12 @@ _M_GOAL = r"""
     GP.genLamp = new THREE.Mesh(new THREE.SphereGeometry(0.035, 10, 8), new THREE.MeshBasicMaterial({ color: hdr(0xffb45a, 3), toneMapped: false }));
     GP.genLamp.position.set(GX - 0.37, 0.72, GZ - 0.15); scene.add(GP.genLamp);
     blocker(F, GX, 0.6, GZ, 0, 0.42, 0.65, 0.34);
-    // the practice yard's board on the courier pier (blue and slate: pretend money, never red)
-    GP.yard = recBoard(F, 22.85, 1.12, -2.58, 0, 1024, 646, 1.3, 0.82, 0x5a6a8a);
-    [-0.5, 0.5].forEach(function (o) { F.add("brass", G.cyl(0.02, 0.02, 0.72, 8), [22.85 + o, 0.36, -2.6], null, null, BRASS_DARK); });
+    // the practice yard's board on the courier pier (blue and slate: pretend money, never red); its frame and posts are a
+    // mesh of their own, not merged with the set, so THE CINEMA can leave the whole yard out of its real-money view
+    GP.yard = recBoard(F, 22.85, 1.12, -2.58, 0, 1024, 646, 1.3, 0.82, null);
+    const yardParts = [paint(G.rbox(1.37, 0.89, 0.035, 0.2, 14), 0x5a6a8a).translate(22.85, 1.12, -2.602)];
+    [-0.5, 0.5].forEach(function (o) { yardParts.push(paint(G.cyl(0.02, 0.02, 0.72, 8), BRASS_DARK).translate(22.85 + o, 0.36, -2.6)); });
+    GP.yardFrame = new THREE.Mesh(mergeGeometries(yardParts.map(prep), false), MAT.brass); GP.yardFrame.receiveShadow = true; scene.add(GP.yardFrame);
     // the town lights: brass stalks with a bulb each (instanced), the owner's warm white until real money pays the bill
     GOAL_LIGHTS.forEach(function (p) { F.add("brass", G.cyl(0.012, 0.012, 0.16, 6), [p.x, p.y - 0.09, p.z], null, null, BRASS_DARK); });
     GP.bulbs = new THREE.InstancedMesh(prep(G.sph(0.055, 12, 8)), new THREE.MeshBasicMaterial({ color: 0xffffff, toneMapped: false }), GOAL_LIGHTS.length);
@@ -6681,42 +6719,40 @@ _M_CINEMA = r"""
   // cash at Polymarket, today's real result, the goal; plain.real, town.goal, money.polymarket); in the bottom one a
   // caption for the shot on air (who, their job in two to four words, what they are doing, then their heart line) in the
   // data's own words; a small name tag with the job over each character on screen; the vault's sign says the REAL cash and
-  // the real result. Pretend money shows nowhere here but in a character's own caption, said "practice". Everything else
-  // (the money buttons, the headline, the goal strip, the chips, the ticker, the banner, the postcard, the guide, the
-  // boards' words) waits behind the "details" button, which brings today's full view back (remembered in this browser
-  // when it can be); a first visit gets one three-line card instead of the guide. The director's shots hold longer and
-  // its flights are slower; nothing else in it changes. The block between the markers is pure (no three.js, no DOM):
-  // tests/test_world_cinema.py runs it in Node.
+  // the real result. REAL MONEY ONLY (the owner's word, 2026-10-11): practice money shows nowhere in this view but the
+  // Arena town's, which says PRACTICE itself. The practice boards and props wait behind "details" (the practice yard on
+  // the courier pier, the trend desk's board, the trophy shelf and its card, the ticket board, a practice trade's cube:
+  // the layer this camera does not film), Rook's risk wall is drawn with its real money only (recRealOnly), a caption, a
+  // tag or a heart line about practice money gives way to the character's job in plain words, a programme keeps only its
+  // real beats (progKeep), and the first-visit card says so in one line. Everything else (the money buttons, the headline,
+  // the goal strip, the chips, the ticker, the banner, the postcard, the guide, the boards' words) waits behind the
+  // "details" button, which brings today's full view back exactly (remembered in this browser when it can be); a first
+  // visit gets one three-line card instead of the guide. The director's shots hold longer and its flights are slower; a
+  // caption crossfades (never a blink) and holds a moment before the same subject's newer words. The block between the
+  // markers is pure (no three.js, no DOM): tests/test_world_cinema.py runs it in Node.
   // >>> cinema (pure)
-  // each character's job in two to four words (fixed copy); which money each one handles comes from the data (plain.team)
+  // each character's job in two to four words (fixed copy): "real" only where the data says that character's money is
+  // real (plain.team's job), else the plain words; a tag never says practice
   const CINE_TAGS = {
-    voss: { real: "real-money trader", practice: "trader (practice)", plain: "Polymarket trader" },
-    rook: { real: "risk guard", practice: "risk guard", plain: "risk guard" },
-    pip: { real: "coin scout", practice: "coin scout (practice)", plain: "coin scout" },
-    nyx: { real: "scam checker", practice: "scam checker (practice)", plain: "scam checker" },
-    jet: { real: "trade runner", practice: "trade runner (practice)", plain: "trade runner" },
-    mote: { real: "record keeper", practice: "record keeper", plain: "record keeper" },
+    voss: { real: "real-money trader", plain: "Polymarket trader" },
+    rook: { real: "risk guard", plain: "risk guard" },
+    pip: { real: "coin scout", plain: "coin scout" },
+    nyx: { real: "scam checker", plain: "scam checker" },
+    jet: { real: "trade runner", plain: "trade runner" },
+    mote: { real: "record keeper", plain: "record keeper" },
   };
   const CINE_ORDER = ["voss", "rook", "pip", "nyx", "jet", "mote"];
   // a place's caption: its name (fixed), and for a room its keeper's job in the data's words
   const CINE_PLACES = { vault: "THE VAULT", table: "SKYPORT", observatory: "THE OBSERVATORY", dock: "THE COURIER DOCK",
                         archive: "THE ARCHIVE", workshop: "THE WORKSHOP", den: "THE ANALYSIS DEN" };
   const CINE_KEEPER = { dock: "jet", archive: "mote", workshop: "pip", den: "nyx" };
+  // practice money in the data's words ("pretend money", "(paper)", "practice"), and a figure of money (dollars, cents or a
+  // coin amount: in the words of a character whose own money is practice, a practice figure)
+  const CINE_PRACTICE = /\b(?:practi[cs](?:e|ing)\w*|pretend|paper)\b/i;
+  const CINE_FIGURE = /[$€£]\s?\d|\d\s?¢|\b\d+(?:[.,]\d+)?\s?(?:SOL|USDC|USDT|USD)\b/i;
   function cineNum(v) { return typeof v === "number" && isFinite(v); }
   function cineUsd(v) { return (v < 0 ? "−" : "") + "$" + Math.abs(v).toFixed(2); }
   function cineSigned(v) { return (v >= 0 ? "+" : "−") + "$" + Math.abs(v).toFixed(2); }
-  function cineCap(w, word) { return w.charAt(0) === w.charAt(0).toUpperCase() ? word.charAt(0).toUpperCase() + word.slice(1) : word; }
-  // pretend money said as practice (inside a character's own caption only): "(pretend money)" is "(practice)", or nothing
-  // where its clause has said practice already
-  function cinePractice(text) {
-    return String(text == null ? "" : text)
-      .replace(/\b(practice\b(?:[^.()]|\.(?=\d))*?)\s*\((?:pretend money|paper)\)/gi, "$1")
-      .replace(/\((?:practice, )?(?:pretend money|paper)\)/gi, "(practice)")
-      .replace(/\bpractice with (?:pretend|paper) money\b/gi, function (w) { return cineCap(w, "practice"); })
-      .replace(/\b(?:pretend|paper) money\b/gi, function (w) { return cineCap(w, "practice money"); })
-      .replace(/\bpretend\b/gi, function (w) { return cineCap(w, "practice"); })
-      .replace(/\s{2,}/g, " ").trim();
-  }
   function cineSentence(s) {  // the data's words as a caption's sentence: a capital first, a full stop last
     const t = String(s == null ? "" : s).trim();
     if (!t) return "";
@@ -6729,31 +6765,69 @@ _M_CINEMA = r"""
     const t = String(text == null ? "" : text).trim(), m = /^(.*?[a-z0-9)%]\.)\s+([A-Z].*)$/.exec(t);
     return m ? [m[1], m[2]] : [t, ""];
   }
+  // a line's sentences and ";" clauses, each with its own stop (cineSplit's rule: "U.S." and "$1.52" never split one;
+  // no look-behind, which an older phone's browser cannot read)
+  function cineClauses(text) {
+    const t = String(text == null ? "" : text).trim(), out = [], re = /;\s+|([a-z0-9)%][.!?])\s+(?=[A-Z])/g;
+    if (!t) return out;
+    let at = 0, m;
+    while ((m = re.exec(t)) !== null) { out.push(t.slice(at, m.index + (m[1] ? m[1].length : 1))); at = m.index + m[0].length; }
+    out.push(t.slice(at));
+    return out;
+  }
+  // a place's line (the headline, the vault's, the labs') or a heart line: each sentence or clause about practice money
+  // left out, "" when nothing is left ("Real money is on only for Voss's bets; the rest is pretend money." keeps its first
+  // half); strict (a character whose own money is practice): a clause with a money figure stays only if it says real
+  function cineReal(text, strict) {
+    const kept = cineClauses(text).filter(function (c) {
+      return !CINE_PRACTICE.test(c) && !(strict && CINE_FIGURE.test(c) && !/\breal\b/i.test(c));
+    });
+    return kept.length ? kept.join(" ").replace(/;$/, ".") : "";
+  }
+  // what a character is doing (an event, a goal line): none at all when it speaks of practice money; strict (the newest
+  // event of a character whose own money is practice): none either when it has a money figure
+  function cineLine(text, strict) {
+    const t = String(text == null ? "" : text).trim();
+    return !t || CINE_PRACTICE.test(t) || (strict && CINE_FIGURE.test(t)) ? "" : t;
+  }
+  // a job in plain words without its practice money word ("places the Solana bot's trades (pretend money)" says "places
+  // the Solana bot's trades"; "(real money)" stays); "" if it still speaks of practice
+  function cineJob(job) {
+    const t = String(job == null ? "" : job).replace(/\s*\([^()]*\b(?:practi[cs](?:e|ing)\w*|pretend|paper)\b[^()]*\)/gi, "").trim();
+    return CINE_PRACTICE.test(t) ? "" : t;
+  }
   function cineTeam(p, key) {
     const list = p && Array.isArray(p.team) ? p.team : [];
     for (let i = 0; i < list.length; i++) if (list[i] && list[i].id === key) return list[i];
     return null;
   }
-  function cineTag(key, t) {  // "" until the data says the job (its money word decides the tag's)
+  function cineOwnPractice(t) { return !!(t && typeof t.job === "string" && CINE_PRACTICE.test(t.job)); }
+  function cineTag(key, t) {  // "" until the data says the job ("real" only where its money word says real money)
     const q = CINE_TAGS[key];
     if (!q || !t || typeof t.job !== "string") return "";
-    return /\(real money\)/.test(t.job) ? q.real : /\(pretend money\)/.test(t.job) ? q.practice : q.plain;
+    return /\(real money\)/.test(t.job) ? q.real : q.plain;
   }
-  function cineHeart(p, key) {
+  function cineHeart(p, key, t) {  // the character's heart line without its sentences on practice money
     const list = p && p.hearts && Array.isArray(p.hearts.members) ? p.hearts.members : [];
-    for (let i = 0; i < list.length; i++) if (list[i] && list[i].id === key && typeof list[i].line === "string") return cineSentence(cinePractice(list[i].line));
+    for (let i = 0; i < list.length; i++) {
+      if (list[i] && list[i].id === key && typeof list[i].line === "string") return cineSentence(cineReal(list[i].line, cineOwnPractice(t)));
+    }
     return "";
   }
-  // what the character is doing, the first the data has: Voss the Polymarket desk's newest event (else his goal line),
-  // Rook today's real loss stop (else his goal line), the others their newest event; then the latest, then the job itself
+  // what the character is doing, the first the data has that is not about practice money: Voss the Polymarket desk's
+  // newest event (else his goal line), Rook today's real loss stop (else his goal line), the others their newest event
+  // (else their goal line); then the latest; else the job itself in plain words. (a goal line: its first sentence; an
+  // event's words: whole)
   function cineWhat(p, key, t) {
     const g = (p && p.goal) || {}, L = g.lines || {}, said = p && p.said && p.said.predict ? p.said.predict.text : null;
-    const list = key === "voss" ? [said, L.voss, t && t.latest] : key === "rook" ? [g.floor_line, L.rook, t && t.latest] : [t && t.latest, L[key]];
-    for (let i = 0; i < list.length; i++) {  // (a goal line: its first sentence; an event's words: whole)
-      if (typeof list[i] !== "string" || !list[i].trim()) continue;
-      return cineSentence(cinePractice(list[i] === L[key] ? cineSplit(list[i])[0] : list[i]));
+    const own = cineOwnPractice(t), latest = t ? t.latest : null;
+    const list = key === "voss" ? [[said, own], [L.voss, false, true], [latest, own]]
+      : key === "rook" ? [[g.floor_line, false], [L.rook, false, true], [latest, own]] : [[latest, own], [L[key], own, true]];
+    for (let i = 0; i < list.length; i++) {
+      const line = cineLine(list[i][0], list[i][1]);
+      if (line) return cineSentence(list[i][2] ? cineSplit(line)[0] : line);
     }
-    return t && typeof t.job === "string" ? cineSentence(cinePractice(t.job)) : "";
+    return t ? cineSentence(cineJob(t.job)) : "";
   }
   // the caption for a shot: { who, rest, second, heart }. A character: "VOSS" + ", the real-money trader. <what>." and
   // their heart line; a place: its name + " · " + the data's line for it (the vault: the real money; the courtyard: the
@@ -6762,14 +6836,14 @@ _M_CINEMA = r"""
     if (key && CINE_TAGS[key]) {
       const t = cineTeam(p, key), tag = cineTag(key, t), what = cineWhat(p, key, t);
       return { who: String((t && t.name) || name || key).toUpperCase(), rest: (tag ? ", the " + tag + "." : "") + (what ? " " + what : ""),
-               second: cineHeart(p, key), heart: true };
+               second: cineHeart(p, key, t), heart: true };
     }
     const r = (p && p.real) || {}, g = (p && p.goal) || {}, at = room && CINE_PLACES[room] ? room : "table";
     let what = "", second = "";
-    if (at === "vault") { what = cineSentence(cinePractice(r.line)); second = cineSentence(cinePractice(g.reserve_line)); }
-    else if (at === "observatory") { what = cineSentence(cinePractice(r.research)); second = cineSentence(cinePractice(r.verdict)); }
-    else if (CINE_KEEPER[at]) { const t = cineTeam(p, CINE_KEEPER[at]); what = t ? cineSentence(cinePractice(t.plain_role)) : ""; }
-    else { what = cineSentence(cinePractice(p && p.headline)); second = cineSentence(cineSplit(g.line)[0]); }  // (the goal's first sentence)
+    if (at === "vault") { what = cineSentence(cineReal(r.line)); second = cineSentence(cineReal(g.reserve_line)); }
+    else if (at === "observatory") { what = cineSentence(cineReal(r.research)); second = cineSentence(cineReal(r.verdict)); }
+    else if (CINE_KEEPER[at]) { const t = cineTeam(p, CINE_KEEPER[at]); what = t ? cineSentence(cineJob(t.plain_role)) : ""; }
+    else { what = cineSentence(cineReal(p && p.headline)); second = cineSentence(cineSplit(cineReal(g.line))[0]); }  // (the goal's first sentence)
     return { who: CINE_PLACES[at], rest: what ? " · " + what : "", second: second, heart: false };
   }
   // the HUD: real money only. The cash at Polymarket (plain.real, else the desk's real book), today's real result (the
@@ -6787,12 +6861,19 @@ _M_CINEMA = r"""
     else if (r.paused_kind === "full") state = "at its limit";
     else if (r.paused) state = "paused";
     const parts = [];
-    if (today !== null) { const c = Math.round(today * 100); parts.push({ k: c > 0 ? "up" : c < 0 ? "down" : "", t: "today " + cineSigned(today) }); }
+    if (today !== null) { const c = Math.round(today * 100); parts.push({ k: c > 0 ? "up" : c < 0 ? "down" : "", t: "today " + cineSigned(today), today: true }); }
     if (state) parts.push({ k: "state", t: state });
     if (w && typeof w.target_text === "string" && w.target_text) parts.push({ k: "", t: "goal " + w.target_text + "/day" });
     const cashText = cash !== null ? cineUsd(cash) : "—";
-    return { on: !!(r && (r.on || r.open_bets > 0)), cash: cashText, parts: parts,
+    return { on: !!(r && (r.on || r.open_bets > 0)), cash: cashText, parts: parts, today: today,
              line: "REAL MONEY " + cashText + parts.map(function (q) { return " · " + q.t; }).join("") };
+  }
+  // the HUD's today figure glows a moment when a poll moves it (today's REAL result, which moves only when a real bet
+  // settles: never the cash, which a new bet moves too): "up", "down", or "" (no change, or no figure before or now)
+  function cineTick(before, now) {
+    if (!cineNum(before) || !cineNum(now)) return "";
+    const a = Math.round(before * 100), b = Math.round(now * 100);
+    return b > a ? "up" : b < a ? "down" : "";
   }
   // the vault's sign in cinema mode: the real cash at Polymarket and the real result since start, labelled REAL
   function cineVault(pg) {
@@ -6802,19 +6883,34 @@ _M_CINEMA = r"""
     const label = "REAL · " + (r && typeof r.result === "string" && r.result ? r.result : h.cash !== "—" ? "cash at Polymarket" : "none reported");
     return { usd: h.cash, label: label, accent: since === null ? null : since >= 0 ? "#58d68d" : "#ff6b61" };
   }
-  // the first visit's card: what this is (plain.about), who does what (the tags), real vs practice (the headline)
-  function cineIntroLines(p) {
+  // the first visit's card: what this is (plain.about), who does what (the tags), and in one line which money is on screen
+  // (fixed copy, true of this view: every figure in it is real money but the Arena town's, which says PRACTICE itself;
+  // arena: the data has the Arena)
+  const CINE_MONEY = "Every dollar on screen is real money", CINE_ARENA = ", except in the Arena town, which trains with practice money";
+  function cineIntroLines(p, arena) {
     const team = [];
     for (let i = 0; i < CINE_ORDER.length; i++) { const t = cineTeam(p, CINE_ORDER[i]); if (t) team.push([String(t.name), cineTag(CINE_ORDER[i], t)]); }
-    return { about: p && typeof p.about === "string" ? p.about : "", team: team, money: cineSentence(cinePractice(p && p.headline)) };
+    return { about: p && typeof p.about === "string" ? p.about : "", team: team, money: p ? CINE_MONEY + (arena ? CINE_ARENA : "") + "." : "" };
+  }
+  // a programme's beat this view can show (progKeep): none on practice money. The goal's practice beats (their tag), the
+  // practice boards' views, a beat on someone whose words speak of practice money, a board's beat with nothing real left
+  // in its words; a beat without words of its own stays (a title card; the vault's real line)
+  const CINE_PRACTICE_VIEWS = { "view:yard": true, "view:trend": true, "view:trophies": true };
+  function cineBeat(b) {
+    if (!b || CINE_PRACTICE_VIEWS[b.cam] || CINE_PRACTICE.test(String(b.tag || ""))) return false;
+    const text = String(b.text || "").trim(), board = !b.cam || String(b.cam).indexOf("view:") === 0;
+    return !text || !!(board ? cineReal(text) : cineLine(text));
   }
   // <<< cinema
   // ------------------------------------------------------------- the mode (remembered in this browser when it can be)
   const CINE_KEY = "nightcrawler.world.details", CINE_INTRO_KEY = "nightcrawler.world.intro";
   // the director in cinema mode: each shot of the rotation holds CINE_HOLD longer, each flight CINE_FLY longer (slower);
-  // a name tag shows within CINE_FAR metres; the first-visit card closes by itself after CINE_INTRO_MS
-  const CINE_HOLD = 0.6, CINE_FLY = 0.35, CINE_FAR = 26, CINE_INTRO_MS = 30000;
-  const CINE = { on: true, seq: -1, capAt: 0, cap: "", hud: "", intro: false, introTimer: 0, introDone: false, top: 48, bottom: 112, held: 0 };
+  // a name tag shows within CINE_FAR metres; the first-visit card closes by itself after CINE_INTRO_MS; a caption fades
+  // out and in over CINE_CAP_FADE_MS and stays up at least CINE_CAP_MIN_MS before the same subject's newer words
+  const CINE_HOLD = 0.6, CINE_FLY = 0.35, CINE_FAR = 26, CINE_INTRO_MS = 30000, CINE_CAP_FADE_MS = 340, CINE_CAP_MIN_MS = 2600;
+  const CINE_CALM = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+  const CINE = { on: true, seq: -1, capAt: 0, cap: "", hud: "", intro: false, introTimer: 0, introDone: false, top: 48, bottom: 112, held: 0,
+                 capNext: null, capSwapAt: 0, capShownAt: 0, capWho: "", capRest: "", today: null, arena: false, cubeReal: null };
   const cineHudEl = el("hud"), cineHudTag = el("hud-tag"), cineCash = el("hud-cash"), cineRest = el("hud-rest");
   const cineCapEl = el("cap"), cineCap1 = el("cap-1"), cineCap2 = el("cap-2"), cineDetails = el("details"), cineTagsEl = el("tags");
   const cineIntroEl = el("intro"), cineIntroBody = el("intro-body"), cineLbTop = el("lb-top"), cineLbBot = el("lb-bot");
@@ -6830,15 +6926,30 @@ _M_CINEMA = r"""
     CINE.introDone = true;
     try { window.localStorage.setItem(CINE_INTRO_KEY, "seen"); } catch (e) { /* storage blocked: shown again next visit */ }
   }
-  // the boards whose words wait behind "details" (the labs, the trend desk, the trophy card, the practice yard: a dark
-  // panel in their frames) and the things that do (the trophies and tiles, the ticket board: not drawn)
+  // what waits behind "details" in the world itself. The practice money (on layer 1, which the camera does not film in
+  // cinema mode): the practice yard on the courier pier (its board, frame and posts), the trend desk's board (its
+  // decorative screen comes back: recRealOnly), the trophy shelf (its real and practice tiers side by side) and its card,
+  // the ticket board (each position REAL or pretend), and a practice trade's cube with its flash at the vault (cineCube).
+  // The labs' board keeps its frame with a dark panel (its words wait). Rook's risk wall is drawn with real money only
+  // (recRealOnly). Their own visibility logic is untouched: details brings each one back exactly as it was.
   const CINE_DARK = new THREE.MeshBasicMaterial({ color: 0x0e0c14 });
-  const CINE_BOARDS = [recLabs, recTrend, recCard, GP.yard].filter(Boolean).map(function (m) { return { m: m, mat: m.material }; });
-  [recTrophies, recTiles, board].forEach(function (m) { m.layers.set(1); });
+  const CINE_BOARDS = [recLabs].filter(Boolean).map(function (m) { return { m: m, mat: m.material }; });
+  const CINE_HIDDEN = [recTrophies, recTiles, board, recTrend, recCard, GP.yard, GP.yardFrame].filter(Boolean);
+  CINE_HIDDEN.forEach(function (m) { m.layers.set(1); });
+  const CINE_CUBE = [cubeOuter, cubeCore, cubeLattice, vaultFlash];
   function cineBoards(on) {
     for (let i = 0; i < CINE_BOARDS.length; i++) CINE_BOARDS[i].m.material = on ? CINE_DARK : CINE_BOARDS[i].mat;
     if (on) camera.layers.disable(1); else camera.layers.enable(1);
+    recRealOnly(on);
   }
+  function cineCube() {  // the trade cube on the layer its money says (cube.real: the closed trade's own money, from the data)
+    const real = cube.real === true;
+    if (real === CINE.cubeReal) return;
+    CINE.cubeReal = real;
+    for (let i = 0; i < CINE_CUBE.length; i++) CINE_CUBE[i].layers.set(real ? 0 : 1);
+  }
+  // a programme in cinema mode keeps only the beats this view can show (cineBeat): the record room's progStart asks
+  progKeep = function (b) { return !CINE.on || cineBeat(b); };
   function cineVaultDraw() {
     if (!data) return;
     if (CINE.on) { const v = cineVault(data); drawVaultSign(v.usd, v.label, v.accent); return; }
@@ -6858,7 +6969,9 @@ _M_CINEMA = r"""
     cineDetails.setAttribute("aria-label", CINE.on ? "Show every detail: the money buttons, the camera chips, the ticker and the boards"
       : "Back to the simple film view");
     cineBoards(CINE.on); cineVaultDraw();
-    CINE.cap = ""; CINE.capAt = 0; CINE.hud = "";
+    CINE.cap = ""; CINE.capAt = 0; CINE.hud = ""; CINE.capNext = null; CINE.capShownAt = 0; cineCapEl.classList.remove("out");
+    // (a programme already on air with a practice beat in it stops: this view never films one)
+    if (CINE.on && FILM.on && !FILM.script.every(cineBeat)) filmStop(true);
     if (CINE.on) { closePanel(); closeGuide(); } else cineIntroClose(false);
     cineMeasure(); measureBar(); renderCard();
     if (data) cineHudDraw(data);
@@ -6869,10 +6982,13 @@ _M_CINEMA = r"""
     const h = cineHud(d), sig = h.line + (h.on ? " on" : "");
     if (sig === CINE.hud) return;
     CINE.hud = sig;
+    const tick = cineTick(CINE.today, h.today);  // (today's real result moved since the last poll: it glows a moment)
+    if (cineNum(h.today)) CINE.today = h.today;
     cineHudTag.className = "htag" + (h.on ? " on" : ""); cineCash.textContent = h.cash; cineRest.textContent = "";
     h.parts.forEach(function (q) {
       cineRest.appendChild(document.createTextNode(" · "));
-      const s = document.createElement("span"); if (q.k) s.className = q.k; s.textContent = q.t; cineRest.appendChild(s);
+      const s = document.createElement("span"), cls = q.k + (q.today && tick ? " tick tick-" + tick : "");
+      if (cls.trim()) s.className = cls.trim(); s.textContent = q.t; cineRest.appendChild(s);
     });
     cineHudEl.setAttribute("aria-label", h.line + ". Tap for the details of the real money.");
   }
@@ -6940,27 +7056,39 @@ _M_CINEMA = r"""
     const id = String(ps.subject || ""), place = PLACE_AT[id], v = id.indexOf("rec:") === 0 ? REC_VIEWS[id.slice(4)] : null;
     return { key: null, room: place ? place.room : v ? v.room : null };
   }
-  function cineFilmCaption() {  // a programme on air (the goal's, the huddle, yesterday's film): its own words, as a caption
-    const b = FILM.script[FILM.i] || null, onActor = !!(b && CAST[b.cam]);
-    const real = filmReal.hidden ? "" : filmReal.textContent, text = filmText.textContent;
-    const pretend = !filmPretend.hidden && onActor ? filmPretend.textContent : "";  // (practice: a character's own words only)
-    const words = cineSplit(cinePractice(text || real || pretend)), more = text && real ? real : filmNote.hidden ? "" : filmNote.textContent;
+  // a programme on air (the goal's, the huddle, yesterday's film): its own words as a caption, real money only (its
+  // practice line never: filmPretend is not read); null for a beat this view does not show (the live caption instead)
+  function cineFilmCaption() {
+    const b = FILM.script[FILM.i] || null;
+    if (b && !cineBeat(b)) return null;
+    const real = filmReal.hidden ? "" : cineReal(filmReal.textContent), text = cineReal(filmText.textContent);
+    const words = cineSplit(text || real), more = text && real ? real : filmNote.hidden ? "" : cineReal(filmNote.textContent);
     return { who: filmWho.textContent, rest: words[0] ? " · " + words[0] : "", second: words[1] || more, heart: false };
   }
+  // the caption: computed four times a second at most; a new one fades the old words out, then its own in (never a blink;
+  // at once for a reader who asked for less motion, and for the first); the same subject's newer words wait until its
+  // caption has been up CINE_CAP_MIN_MS (a name alone gives way at once: a programme's words arriving)
   function cineCapFrame() {
+    const now = performance.now();
+    if (CINE.capNext && now >= CINE.capSwapAt) { const n = CINE.capNext; CINE.capNext = null; cineCapWrite(n, now); }
     if (simT < CINE.capAt) return;
     CINE.capAt = simT + 0.25;
-    let c;
-    if (FILM.on) c = cineFilmCaption();
-    else { const s = cineSubject(); c = cineCaption(plain, s.key, s.room, s.key && CAST[s.key] ? CAST[s.key].name : ""); }
+    let c = FILM.on ? cineFilmCaption() : null;
+    if (!c) { const s = cineSubject(); c = cineCaption(plain, s.key, s.room, s.key && CAST[s.key] ? CAST[s.key].name : ""); }
     const sig = c.who + "\n" + c.rest + "\n" + c.second;
     if (sig === CINE.cap) return;
+    if (!CINE.capNext && c.who === CINE.capWho && CINE.capRest && now - CINE.capShownAt < CINE_CAP_MIN_MS) return;
     CINE.cap = sig;
+    if (CINE_CALM || !CINE.capShownAt) { CINE.capNext = null; cineCapWrite(c, now); return; }
+    if (!CINE.capNext) { CINE.capSwapAt = now + CINE_CAP_FADE_MS; cineCapEl.classList.add("out"); }
+    CINE.capNext = c;
+  }
+  function cineCapWrite(c, now) {  // the caption's words (text only), then it fades back in
     cineCap1.textContent = "";
     const b = document.createElement("b"); b.textContent = c.who; cineCap1.appendChild(b);
     if (c.rest) cineCap1.appendChild(document.createTextNode(c.rest));
     cineCap2.textContent = c.second ? (c.heart ? "♥ " : "") + c.second : ""; cineCap2.hidden = !c.second;
-    cineCapEl.classList.remove("in"); void cineCapEl.offsetWidth; cineCapEl.classList.add("in");
+    cineCapEl.classList.remove("out"); CINE.capShownAt = now; CINE.capWho = c.who; CINE.capRest = c.rest;
   }
   // ------------------------------------------------------------- the director, slower: longer holds, slower flights
   function cineCamera() {
@@ -6976,7 +7104,7 @@ _M_CINEMA = r"""
   // ------------------------------------------------------------- the first visit's card (instead of the guide)
   function cineIntroOpen(again) {  // (again: the screenshot hook, once more, until a tap)
     if (!CINE.on || CINE.intro || !plain || (!again && cineIntroSeen())) return;
-    const L = cineIntroLines(plain);
+    const L = cineIntroLines(plain, CINE.arena);
     cineIntroBody.textContent = "";
     para(cineIntroBody, L.about);
     const who = document.createElement("p"); who.className = "who";
@@ -6999,13 +7127,14 @@ _M_CINEMA = r"""
   canvas.addEventListener("pointerdown", function () { if (CINE.intro) cineIntroClose(true); });
   // ------------------------------------------------------------- on the page's bus
   function cineOnData(d, first) {
+    CINE.arena = !!(d && d.money && d.money.arena);  // (the first-visit card names the Arena town only while the data has it)
     cineHudDraw(d); cineTagWords();
     if (CINE.on) cineVaultDraw();  // (after the page's own sign: real money in cinema mode)
     if (first) cineIntroOpen();
-    CINE.capAt = 0;  // (the caption says this poll's words at once)
+    CINE.capAt = 0;  // (the caption says this poll's words as soon as it may)
   }
   function cineFrame() {
-    cineCamera();
+    cineCamera(); cineCube();
     if (!CINE.on) return;
     cineTagsFrame(); cineCapFrame();
   }
@@ -7024,6 +7153,9 @@ _M_CINEMA = r"""
     tags: function () { return CINE_NAMETAGS.filter(function (q) { return q.op > 0; }).map(function (q) { return q.el.textContent; }); },
     intro: function (again) { if (again) { CINE.intro = false; cineIntroOpen(true); } return CINE.intro; },
     held: function () { return CINE.held; },
+    // (the practice money the camera films now: each hidden part, true while it is on screen; the wall's mode)
+    practice: function () { return { shown: CINE_HIDDEN.map(function (m) { return m.layers.test(camera.layers); }),
+      cube: CINE_CUBE[0].layers.test(camera.layers), wallRealOnly: !!REC.realOnly }; },
   } });
 
 """

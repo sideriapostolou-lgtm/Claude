@@ -1,8 +1,13 @@
 """The 3D world's cinema mode (world3d's THE CINEMA section and its CSS block, the default view): the page opens in it;
-its one HUD line shows real money only; the caption under the shot says who and what in the data's own words (pretend
-money only in a character's own caption, said "practice"); every character has a small name tag with a two-to-four word
-job; the vault's sign reads the real cash; the first visit gets one three-line card; the director's rotation holds
-longer; and the "details" button (remembered when the browser allows it) brings today's full view back exactly."""
+it is REAL MONEY ONLY (the owner's word, 2026-10-11: practice money nowhere but the Arena town's, which says PRACTICE
+itself). Its one HUD line shows real money only, today's real result glowing a moment when a real settlement moves it;
+the caption under the shot says who and what in the data's own words, never practice money (a character whose line is
+about it is captioned by their job in plain words; a heart line keeps its real sentences), and crossfades; every
+character has a small name tag with a two-to-four word job that never says practice; the vault's sign reads the real
+cash and Rook's risk wall its real money only; the practice boards and props wait behind "details"; a programme keeps
+only its real beats; the first visit gets one three-line card (every dollar on screen is real money but the Arena
+town's); the director's rotation holds longer; and the "details" button (remembered when the browser allows it) brings
+today's full view back exactly."""
 
 from __future__ import annotations
 
@@ -225,60 +230,119 @@ def test_the_vault_reads_real_money(pure: str, section: str, module: str, states
 # --------------------------------------------------------------------------- captions and job tags
 
 
+_PRACTICE_WORDS = re.compile(r"\b(?:practi[cs](?:e|ing)\w*|pretend|paper)\b", re.IGNORECASE)
+
+
 @needs_node
-def test_the_captions_come_from_the_data(pure: str, states: dict[str, dict[str, Any]], tmp_path: Path) -> None:
+def test_the_practice_words_and_the_real_words(pure: str, tmp_path: Path) -> None:
+    """The four rules a caption is made with: a place's line keeps only its sentences and clauses on real money; what a
+    character does is a line with no practice money in it at all (strict: no money figure either); a job loses its
+    practice money word; a sentence never splits inside "$1.52" or "U.S."."""
+    out = _pure_run(pure, """
+console.log(JSON.stringify({
+  real: ["Real money is on only for Voss's small Polymarket bets; the rest is pretend money.",
+         "No real money is being bet right now: everything is practice with pretend money.",
+         "Scouting for the town all day. Practice today: +$2.40 (pretend money). One proven find could help keep the lights on.",
+         "The town is up $1.52 in real money today. I deliver every trade on time; mine are practice (pretend money).",
+         "Real money: $47.06 cash at Polymarket and no open bets; down $0.26 since start, 12 of 14 finished bets won.",
+         "Will the U.S. hold rates at $1.52? Yes; a (paper) trade.", "", null].map((t) => cineReal(t)),
+  strict: ["Every bet stays at 10 contracts, the owner's choice. Today's stop: $0.00 used of $30. I guard the town's savings.",
+           "The town is up $1.52 in real money today. Up 0.5 SOL since noon.", "Down 40¢ on it. Then nothing."].map((t) => cineReal(t, true)),
+  line: ["bought HIGGS for 0.1000 SOL (pretend money)", "Practice (pretend money): found a new coin", "found a new coin: NEWEST (61 min old)",
+         "the AI judge said no to JUDGED: creator selling", "practicing the stop", "a paper trade", "  ", null].map((t) => cineLine(t)),
+  lineStrict: ["sold HIGGS +$0.42", "sold HIGGS for 0.2 SOL", "NEWEST passed the scam check", "Daily stop hit: lost $3.20 today"].map((t) => cineLine(t, true)),
+  job: ["places the Solana bot's trades (pretend money)", "bets on yes/no questions at Polymarket (real money) and asks the AI judge about coins",
+        "bets on yes/no questions at Polymarket (pretend money) and asks the AI judge about coins", "keeps the tamper-proof records",
+        "Jet places the Solana bot's trades (practice, pretend money)", "practice reps all day", null].map(cineJob),
+  clauses: ["One. Two; three. Will the U.S. win $1.52? Yes.", "No stop", ""].map(cineClauses),
+  split: ["Real money today: +$1.52, and it covers the bill. Same rule.", "Will the U.S. hold rates? Yes.", "One line only", "Down 3%. Then up."].map(cineSplit),
+}));
+""", tmp_path)
+    assert out["real"] == ["Real money is on only for Voss's small Polymarket bets.", "",
+                           "Scouting for the town all day. One proven find could help keep the lights on.",
+                           "The town is up $1.52 in real money today. I deliver every trade on time.",
+                           "Real money: $47.06 cash at Polymarket and no open bets; down $0.26 since start, 12 of 14 finished bets won.",
+                           "Will the U.S. hold rates at $1.52? Yes.", "", ""]
+    # strict (a character whose own money is practice): a figure stays only in a clause that says real
+    assert out["strict"] == ["Every bet stays at 10 contracts, the owner's choice. I guard the town's savings.",
+                             "The town is up $1.52 in real money today.", "Then nothing."]
+    assert out["line"] == ["", "", "found a new coin: NEWEST (61 min old)", "the AI judge said no to JUDGED: creator selling", "", "", "", ""]
+    assert out["lineStrict"] == ["", "", "NEWEST passed the scam check", ""]
+    assert out["job"] == ["places the Solana bot's trades",
+                          "bets on yes/no questions at Polymarket (real money) and asks the AI judge about coins",
+                          "bets on yes/no questions at Polymarket and asks the AI judge about coins", "keeps the tamper-proof records",
+                          "Jet places the Solana bot's trades", "", ""]
+    assert out["clauses"] == [["One.", "Two;", "three.", "Will the U.S. win $1.52?", "Yes."], ["No stop"], []]
+    # a long line splits after its first sentence, never inside "$1.52" or "U.S."
+    assert out["split"] == [["Real money today: +$1.52, and it covers the bill.", "Same rule."], ["Will the U.S. hold rates? Yes.", ""],
+                            ["One line only", ""], ["Down 3%.", "Then up."]]
+    # (no look-behind in the pure block: an older phone's browser cannot read one, and the whole module would not run)
+    assert "(?<" not in pure
+
+
+@needs_node
+def test_the_captions_come_from_the_data_and_say_real_money_only(pure: str, states: dict[str, dict[str, Any]], tmp_path: Path) -> None:
     win, paper = states["winning"], states["paper"]
     said = json.loads(json.dumps(win))
     said["plain"]["said"]["predict"] = {"ts": 1.0, "text": "bet $5.80 that the Packers win (real money)"}
+    pretend_said = json.loads(json.dumps(win))
+    pretend_said["plain"]["said"]["predict"] = {"ts": 1.0, "text": "practice bet (pretend money): $5.00 on YES · Will it rain?"}
     out = _pure_run(pure, """
 const cap = (p, k, room) => cineCaption(p, k, room, k ? k.charAt(0).toUpperCase() + k.slice(1) : "");
 const keys = ["voss", "rook", "pip", "nyx", "jet", "mote"], rooms = ["vault", "table", "observatory", "dock", "archive", "workshop", "den", null];
 const all = (p) => keys.map((k) => cap(p, k, null)).concat(rooms.map((r) => cap(p, null, r)));
 console.log(JSON.stringify({
   win: Object.fromEntries(keys.map((k) => [k, cap(WIN.plain, k, null)])), said: cap(SAID.plain, "voss", null),
-  places: Object.fromEntries(rooms.map((r) => [String(r), cap(WIN.plain, null, r)])), paper: cap(PAPER.plain, "voss", null),
-  none: cap(null, "voss", null), every: all(WIN.plain).concat(all(PAPER.plain)),
-  words: ["Practice (pretend money): found a coin", "bought HIGGS for 0.1000 SOL (pretend money)", "keeps money (practice, pretend money).",
-          "the rest is pretend money.", "everything is practice with pretend money.", "Pretend books", "a (paper) trade",
-          "Practice for now (pretend money), but I watch", "Practice today: +$2.40 (pretend money). One find", "mine are practice (pretend money)."]
-         .map(cinePractice),
-  split: ["Real money today: +$1.52, and it covers the bill. Same rule.", "Will the U.S. hold rates? Yes.", "One line only", "Down 3%. Then up."].map(cineSplit),
+  pretendSaid: cap(PSAID.plain, "voss", null),
+  places: Object.fromEntries(rooms.map((r) => [String(r), cap(WIN.plain, null, r)])),
+  paper: Object.fromEntries(keys.map((k) => [k, cap(PAPER.plain, k, null)])), paperTable: cap(PAPER.plain, null, "table"),
+  none: cap(null, "voss", null), every: all(WIN.plain).concat(all(PAPER.plain)).concat(all(SAID.plain)).concat(all(PSAID.plain)),
 }));
-""", tmp_path, WIN=win, SAID=said, PAPER=paper)
+""", tmp_path, WIN=win, SAID=said, PSAID=pretend_said, PAPER=paper)
     p = win["plain"]
     hearts = {m["id"]: m["line"] for m in p["hearts"]["members"]}
     team = {t["id"]: t for t in p["team"]}
-    # Voss: the Polymarket desk's newest event in the server's plain words, else his goal line; his heart line second
+    # Voss: the Polymarket desk's newest REAL event in the server's plain words, else his goal line; his heart line second
     assert out["said"]["who"] == "VOSS" and out["said"]["rest"] == ", the real-money trader. Bet $5.80 that the Packers win (real money)."
     voss_line = p["goal"]["lines"]["voss"]  # (a goal line: its first sentence)
     assert _first(voss_line) != voss_line and out["win"]["voss"]["rest"] == ", the real-money trader. " + _sentence(_first(voss_line))
+    assert out["pretendSaid"] == out["win"]["voss"]  # (a practice bet is never his caption: his goal line instead)
     assert out["win"]["voss"]["second"] == _sentence(hearts["voss"]) and out["win"]["voss"]["heart"] is True
-    # Rook: today's real loss stop; Mote: the newest record; the practice crew: their newest event, said "practice"
+    # Rook: today's real loss stop; his heart without its unlabelled figure (his own money word is practice's)
     assert out["win"]["rook"]["rest"] == ", the risk guard. " + _sentence(p["goal"]["floor_line"])
+    assert "Today's stop:" in hearts["rook"] and out["win"]["rook"]["second"] == ("Every bet stays at 10 contracts, the owner's choice. "
+                                                                                 "I guard the town's savings.")
+    # Mote: the newest record; Pip and Nyx: their newest event, which has no practice money in it (no tag says practice)
     assert out["win"]["mote"]["rest"] == ", the record keeper. " + _sentence(team["mote"]["latest"])
-    assert out["win"]["pip"]["rest"] == ", the coin scout (practice). " + _sentence(team["pip"]["latest"])
-    assert out["win"]["jet"]["rest"] == ", the trade runner (practice). Bought HIGGS for 0.1000 SOL (practice)."
-    # (the heart says "Practice today: +$2.40 (pretend money)": practice said once)
-    assert "Practice today" in hearts["pip"] and out["win"]["pip"]["second"] == _sentence(hearts["pip"].replace(" (pretend money)", ""))
-    # the places: the vault's real money, the courtyard's headline and goal, the observatory's labs, a room's keeper
+    assert out["win"]["pip"]["rest"] == ", the coin scout. " + _sentence(team["pip"]["latest"])
+    assert out["win"]["nyx"]["rest"] == ", the scam checker. " + _sentence(team["nyx"]["latest"])
+    # Jet's newest event and his goal line are practice money: his job in plain words instead
+    assert "(pretend money)" in team["jet"]["latest"] and "pretend money" in p["goal"]["lines"]["jet"]
+    assert out["win"]["jet"]["rest"] == ", the trade runner. Places the Solana bot's trades."
+    # the hearts keep their real sentences only ("Practice today: +$2.40 (pretend money)" is gone, figure and all)
+    assert "Practice today: +$2.40" in hearts["pip"]
+    assert out["win"]["pip"]["second"] == "Scouting for the town all day. One proven find could help keep the lights on."
+    assert out["win"]["nyx"]["second"] == "Every scam I stop is money the town keeps."
+    assert out["win"]["jet"]["second"] == "The town is up $1.52 in real money today. I deliver every trade on time."
+    # the places: the vault's real money, the courtyard's real headline and goal, the observatory's labs, a room's keeper
     real, goal = p["real"], p["goal"]
     assert out["places"]["vault"] == {"who": "THE VAULT", "rest": " · " + _sentence(real["line"]), "second": _sentence(goal["reserve_line"]), "heart": False}
-    assert out["places"]["table"]["rest"] == " · " + _sentence(p["headline"].replace("pretend money", "practice money"))
+    assert p["headline"].endswith("; the rest is pretend money.")
+    assert out["places"]["table"]["rest"] == " · Real money is on only for Voss's small Polymarket bets."
     assert out["places"]["table"]["second"] == _sentence(_first(goal["line"])) and out["places"]["null"] == out["places"]["table"]
     assert out["places"]["observatory"]["rest"] == " · " + _sentence(real["research"])
-    assert out["places"]["dock"]["rest"] == " · Jet places the Solana bot's trades (practice)."
-    # a long line splits after its first sentence, never inside "$1.52" or "U.S."
-    assert out["split"] == [["Real money today: +$1.52, and it covers the bill.", "Same rule."], ["Will the U.S. hold rates? Yes.", ""],
-                            ["One line only", ""], ["Down 3%.", "Then up."]]
-    # practice money is said "practice", once; and no caption ever says pretend
-    assert out["words"] == ["Practice: found a coin", "bought HIGGS for 0.1000 SOL (practice)", "keeps money (practice).",
-                            "the rest is practice money.", "everything is practice.", "Practice books", "a (practice) trade",
-                            "Practice for now, but I watch", "Practice today: +$2.40. One find", "mine are practice."]
+    assert out["places"]["dock"]["rest"] == " · Jet places the Solana bot's trades."
+    # with real money off: Voss is the Polymarket trader (never "practice"), the courtyard says no practice line
+    assert out["paper"]["voss"]["rest"].startswith(", the Polymarket trader.")
+    assert p["headline"] != paper["plain"]["headline"] and out["paperTable"]["rest"] == ""
+    # no caption, in any state, says practice, pretend or paper, or carries a practice figure
+    pretend_figures = {"$2.40", "$1.72", "0.1000 SOL", f"${paper['money']['usd']:.2f}", f"${win['money']['usd']:.2f}"}
+    pretend_figures -= {f"${win['plain']['real']['cash_usd']:.2f}"}
     for c in out["every"]:
         text = c["who"] + c["rest"] + " " + c["second"]
-        assert "pretend" not in text.lower() and "paper" not in text.lower(), text
-    # with real money off Voss is a practice trader; before the first poll a caption is the name alone
-    assert out["paper"]["rest"].startswith(", the trader (practice). ")
+        assert not _PRACTICE_WORDS.search(text), text
+        assert not any(f in text for f in pretend_figures), text
+    # before the first poll a caption is the name alone
     assert out["none"] == {"who": "VOSS", "rest": "", "second": "", "heart": True}
 
 
@@ -289,12 +353,15 @@ const tags = (p) => Object.fromEntries(CINE_ORDER.map((k) => [k, cineTag(k, cine
 console.log(JSON.stringify({ keys: Object.keys(CINE_TAGS), tags: CINE_TAGS, win: tags(WIN.plain), paper: tags(PAPER.plain), none: tags(null) }));
 """, tmp_path, WIN=states["winning"], PAPER=states["paper"])
     assert sorted(out["keys"]) == sorted(WORLD_CAST) == sorted(_KEYS)
-    assert out["win"] == {"voss": "real-money trader", "rook": "risk guard", "pip": "coin scout (practice)",
-                          "nyx": "scam checker (practice)", "jet": "trade runner (practice)", "mote": "record keeper"}
-    assert out["paper"]["voss"] == "trader (practice)" and out["none"] == {k: "" for k in _KEYS}  # (no data: no claim)
+    assert out["win"] == {"voss": "real-money trader", "rook": "risk guard", "pip": "coin scout", "nyx": "scam checker",
+                          "jet": "trade runner", "mote": "record keeper"}
+    # real money off: the plain words (never "practice"); no data: no claim
+    assert out["paper"]["voss"] == "Polymarket trader" and out["none"] == {k: "" for k in _KEYS}
     for tag in out["tags"].values():
+        assert sorted(tag) == ["plain", "real"]
         for words in tag.values():
-            assert 2 <= len(words.replace("(practice)", "").split()) + ("(practice)" in words) <= 4, words
+            assert 2 <= len(words.split()) <= 4 and not _PRACTICE_WORDS.search(words), words
+    assert out["tags"]["voss"]["real"] == "real-money trader" and all("real" not in t["plain"] for t in out["tags"].values())
     # one tag per character, as text, over their head while they are on screen (in plain view, near enough)
     assert "const CINE_NAMETAGS = ACTOR_KEYS.map(function (k) {" in section
     assert "b.textContent = CAST[k].name.toUpperCase();" in section and "q.job.textContent = tag;" in section
@@ -307,17 +374,22 @@ console.log(JSON.stringify({ keys: Object.keys(CINE_TAGS), tags: CINE_TAGS, win:
 @needs_node
 def test_the_first_visit_card_says_three_things_from_the_data(pure: str, section: str, states: dict[str, dict[str, Any]],
                                                               tmp_path: Path) -> None:
-    out = _pure_run(pure, "console.log(JSON.stringify([cineIntroLines(WIN.plain), cineIntroLines(null)]));", tmp_path,
-                    WIN=states["winning"])
+    out = _pure_run(pure, "console.log(JSON.stringify([cineIntroLines(WIN.plain, true), cineIntroLines(WIN.plain, false), cineIntroLines(null, true)]));",
+                    tmp_path, WIN=states["winning"])
     p = states["winning"]["plain"]
     assert out[0]["about"] == p["about"]  # what this is
-    assert out[0]["team"] == [["Voss", "real-money trader"], ["Rook", "risk guard"], ["Pip", "coin scout (practice)"],
-                              ["Nyx", "scam checker (practice)"], ["Jet", "trade runner (practice)"], ["Mote", "record keeper"]]
-    assert out[0]["money"] == "Real money is on only for Voss's small Polymarket bets; the rest is practice money."
-    assert out[1] == {"about": "", "team": [], "money": ""}
+    assert out[0]["team"] == [["Voss", "real-money trader"], ["Rook", "risk guard"], ["Pip", "coin scout"],
+                              ["Nyx", "scam checker"], ["Jet", "trade runner"], ["Mote", "record keeper"]]
+    # one short line: every dollar here is real money but the Arena town's (named only while the data has the Arena)
+    assert out[0]["money"] == "Every dollar on screen is real money, except in the Arena town, which trains with practice money."
+    assert out[1]["money"] == "Every dollar on screen is real money."
+    assert out[2] == {"about": "", "team": [], "money": ""}
+    assert len(out[0]["money"].split()) <= 20
     opener = _js_body(section, "  function cineIntroOpen(")
     assert "cineIntroSeen()" in opener and "setTimeout(function () { cineIntroClose(true); }, CINE_INTRO_MS)" in opener
     assert "para(cineIntroBody, L.about);" in opener and 'para(cineIntroBody, L.money, "money");' in opener
+    assert "cineIntroLines(plain, CINE.arena)" in opener
+    assert "CINE.arena = !!(d && d.money && d.money.arena);" in _js_body(section, "  function cineOnData(")
 
 
 # --------------------------------------------------------------------------- the details button and the director
@@ -339,32 +411,69 @@ const signs = [], drawVaultSign = (u, l, a) => signs.push([u, l]);
 {fmt}
 const closePanel = () => calls.push("closePanel"), closeGuide = () => calls.push("closeGuide"), cineIntroClose = () => calls.push("introClose");
 const cineMeasure = () => {{}}, measureBar = () => calls.push("measureBar"), renderCard = () => calls.push("renderCard"), cineHudDraw = () => calls.push("hud");
+const recRealOnly = (on) => calls.push("realOnly:" + on), cineCapEl = {{ classList: {{ remove: (c) => calls.push("capIn") }} }};
+const FILM = {{ on: false, script: [] }}, filmStop = (back) => {{ calls.push("filmStop:" + back); FILM.on = false; }};
 let data = DATA;
 {fns}
 const snap = () => [cls.has("cinema"), cineDetails.textContent, cineDetails.attrs["aria-pressed"], CINE_BOARDS[0].m.material.id,
                     layers.on[layers.on.length - 1], signs[signs.length - 1], store[CINE_KEY] || null];
-cineSet(true, false); const a = snap(); calls.length = 0;
+cineSet(true, false); const a = snap(), ca = calls.slice(); calls.length = 0;
 cineSet(false, true); const b = snap(), cb = calls.slice(); calls.length = 0;
-cineSet(true, true); const c = snap(), cc = calls.slice();
-console.log(JSON.stringify({{ a, b, c, cb, cc }}));
+cineSet(true, true); const c = snap(), cc = calls.slice(); calls.length = 0;
+// a programme already on air: one with a practice beat stops when the cinema comes back, a real one plays on
+cineSet(false, true); FILM.on = true; FILM.script = [{{ cam: "view:goaltower", tag: "THE GOAL · REAL MONEY", text: "Real money today: +$1.52." }},
+                                                   {{ cam: "view:yard", tag: "PRACTICE · PRETEND MONEY", text: "Practice (pretend money) never counts." }}];
+calls.length = 0; cineSet(true, true); const stopped = calls.filter((x) => x.indexOf("filmStop") === 0);
+cineSet(false, true); FILM.on = true; FILM.script = [FILM.script[0]]; calls.length = 0; cineSet(true, true);
+const kept = calls.filter((x) => x.indexOf("filmStop") === 0);
+console.log(JSON.stringify({{ a, b, c, ca, cb, cc, stopped, kept, filmOn: FILM.on }}));
 """, tmp_path, DATA=states["winning"])
     win = states["winning"]
     cash, money = f"${win['plain']['real']['cash_usd']:.2f}", win["money"]
     real_sign = [cash, "REAL · " + win["plain"]["real"]["result"]]
     assert out["a"] == [True, "details", "false", "dark", ["disable", 1], real_sign, None]
+    assert "realOnly:true" in out["ca"] and "capIn" in out["ca"]  # (Rook's wall real money only; the caption written afresh)
     # details: the class off (every hidden part back), the boards' own words and the trophies back, the page's own sign
-    # (money.usd and exactly money.label), remembered; the card drawn again for the full view
+    # (money.usd and exactly money.label), Rook's whole wall, remembered; the card drawn again for the full view
     assert out["b"] == [False, "simple view", "true", "page", ["enable", 1], [f"${money['usd']:.2f}", money["label"]], "1"]
-    assert "renderCard" in out["cb"] and "introClose" in out["cb"] and "closePanel" not in out["cb"]
+    assert "renderCard" in out["cb"] and "introClose" in out["cb"] and "closePanel" not in out["cb"] and "realOnly:false" in out["cb"]
     # back to cinema: forgotten, the panel and the guide closed
     assert out["c"] == [True, "details", "false", "dark", ["disable", 1], real_sign, None]
-    assert "closePanel" in out["cc"] and "closeGuide" in out["cc"]
-    # what waits behind "details" in the world itself: the boards' words (a dark panel in their frames), the trophies and the
-    # ticket board (another layer); their own visibility logic is untouched
-    assert "[recLabs, recTrend, recCard, GP.yard].filter(Boolean)" in section
-    assert "[recTrophies, recTiles, board].forEach(function (m) { m.layers.set(1); });" in section
+    assert "closePanel" in out["cc"] and "closeGuide" in out["cc"] and "realOnly:true" in out["cc"]
+    assert out["stopped"] == ["filmStop:true"] and out["kept"] == [] and out["filmOn"] is True
+
+
+def test_the_practice_money_in_the_world_waits_behind_details(section: str, module: str) -> None:
+    """The practice boards and props are on layer 1 (the cinema's camera does not film it; details enables it again):
+    the practice yard with its own frame and posts, the trend desk's board, the trophy shelf and its card, the ticket
+    board; a trade cube only while its trade's money is practice. Their own visibility logic is untouched."""
+    assert ("const CINE_HIDDEN = [recTrophies, recTiles, board, recTrend, recCard, GP.yard, GP.yardFrame].filter(Boolean);"
+            in section)
+    assert "CINE_HIDDEN.forEach(function (m) { m.layers.set(1); });" in section
+    assert "const CINE_BOARDS = [recLabs].filter(Boolean)" in section  # (the labs' words wait: a dark panel in its frame)
+    boards = _js_body(section, "  function cineBoards(on) {")
+    assert "if (on) camera.layers.disable(1); else camera.layers.enable(1);" in boards and "recRealOnly(on);" in boards
     code = re.sub(r"//[^\n]*", "", section)
     assert ".visible =" not in code
+    # the yard's frame and posts are a mesh of their own (not merged with the set), so the whole yard goes
+    goal = module[module.index("= THE GOAL (town goal)"):module.index("= THE HEARTS (team hearts)")]
+    build = _js_body(goal, "  function goalBuild() {")
+    assert "GP.yard = recBoard(F, 22.85, 1.12, -2.58, 0, 1024, 646, 1.3, 0.82, null);" in build  # (no rim merged into F)
+    assert "GP.yardFrame = new THREE.Mesh(mergeGeometries(yardParts.map(prep), false), MAT.brass);" in build
+    assert "scene.add(GP.yardFrame)" in build and 'F.add("brass", G.cyl(0.02, 0.02, 0.72, 8), [22.85' not in build
+    # the cube: its money from the data (set when Jet picks it up for a closed trade), on the layer that money says
+    assert "const cube = { mesh: new THREE.Group(), flight: null, real: false };" in module
+    assert "cube.real = !!live;" in _js_body(module, "  function onClosed(t, live) {")
+    cube = _js_body(section, "  function cineCube() {")
+    assert "const real = cube.real === true;" in cube and "CINE_CUBE[i].layers.set(real ? 0 : 1);" in cube
+    assert "const CINE_CUBE = [cubeOuter, cubeCore, cubeLattice, vaultFlash];" in section
+    assert "cineCamera(); cineCube();" in _js_body(section, "  function cineFrame() {")
+    # the trend desk's decorative screen comes back in the cinema (its board is hidden there)
+    records = module[module.index("THE RECORD ROOM (Builder B)"):module.index("= THE GOAL (town goal)")]
+    assert "REC.trendScreen.visible = !tr || REC.realOnly;" in _js_body(records, "  function recDrawTrend(tr) {")
+    real_only = _js_body(records, "  function recRealOnly(on) {")
+    assert "recDrawWall(REC.wall[0], REC.wall[1], REC.wall[2]);" in real_only
+    assert "REC.trendScreen.visible = !recTrend.visible || REC.realOnly;" in real_only
 
 
 @needs_node
@@ -398,10 +507,166 @@ console.log(JSON.stringify({{ a, again, b, c, d: [h3, PLANNER.shot.hold], held: 
 
 def test_the_caption_follows_the_shot_and_the_programmes(section: str) -> None:
     capf = _js_body(section, "  function cineCapFrame() {")
-    assert "if (FILM.on) c = cineFilmCaption();" in capf and "cineCaption(plain, s.key, s.room" in capf
-    assert "cineCap1.textContent = " in capf and "createTextNode(c.rest)" in capf and "innerHTML" not in capf
+    assert "let c = FILM.on ? cineFilmCaption() : null;" in capf and "cineCaption(plain, s.key, s.room" in capf
+    write = _js_body(section, "  function cineCapWrite(c, now) {")
+    assert "cineCap1.textContent = " in write and "createTextNode(c.rest)" in write and "innerHTML" not in write
     film = _js_body(section, "  function cineFilmCaption() {")
-    # a programme's own words; its practice words only on a character's own beat, said practice
-    assert "!filmPretend.hidden && onActor ? filmPretend.textContent" in film and "cinePractice(text || real || pretend)" in film
+    # a programme's own words, real money only: its practice line is never read, a practice beat gives way to the live caption
+    assert "filmPretend" not in film and "if (b && !cineBeat(b)) return null;" in film
+    assert "cineReal(filmText.textContent)" in film and "cineReal(filmReal.textContent)" in film
     sub = _js_body(section, "  function cineSubject() {")
     assert "PLANNER.shot" in sub and "PLACE_AT[id]" in sub and "REC_VIEWS[id.slice(4)]" in sub
+
+
+@needs_node
+def test_the_caption_crossfades_and_holds_a_moment(section: str, tmp_path: Path) -> None:
+    """A new caption fades the old words out, then writes its own and fades in (never a blink); the first one, and every
+    one for a reader who asked for less motion, is written at once; the same subject's newer words wait until its caption
+    has been up a moment (a name alone gives way at once: a programme's words arriving)."""
+    fns = "\n".join(_js_body(section, f"  function {n}(") for n in ("cineCapFrame", "cineCapWrite"))
+    body = """
+let now = 1000, simT = 0, plain = null, CINE_CALM = false;
+const performance = { now: () => now };
+const CINE_CAP_FADE_MS = 340, CINE_CAP_MIN_MS = 2600;
+const CINE = { capAt: 0, cap: "", capNext: null, capSwapAt: 0, capShownAt: 0, capWho: "", capRest: "" };
+const FILM = { on: false }, cineFilmCaption = () => null, CAST = {};
+let next = { who: "VOSS", rest: ", the real-money trader. A.", second: "", heart: true };
+const cineSubject = () => ({ key: "voss", room: "table" }), cineCaption = () => next;
+const cls = new Set(), cineCapEl = { classList: { add: (c) => cls.add(c), remove: (c) => cls.delete(c) } };
+const node = () => ({ textContent: "", hidden: false, kids: [], appendChild(n) { this.kids.push(n); this.textContent += n.textContent; } });
+const cineCap1 = node(), cineCap2 = node();
+const document = { createElement: () => ({ textContent: "" }), createTextNode: (t) => ({ textContent: t }) };
+""" + fns + """
+const shown = () => [cineCap1.textContent, cls.has("out")];
+const step = (ms) => { now += ms; simT += ms / 1000; cineCapFrame(); return shown(); };
+const out = {};
+out.first = step(0);                                      // the first caption: at once
+next = { who: "VOSS", rest: ", the real-money trader. B.", second: "", heart: true };
+out.held = step(300);                                     // the same subject's newer words: not yet (up 0.3 s)
+out.later = step(2500);                                   // up 2.8 s: the old words fade out
+out.swapped = step(400);                                  // then the new ones, fading in
+next = { who: "ROOK", rest: ", the risk guard. C.", second: "", heart: true };
+out.cut = step(300);                                      // another subject: fades out at once (no hold)
+out.cutIn = step(400);
+CINE_CALM = true; next = { who: "PIP", rest: ", the coin scout. D.", second: "", heart: true };
+out.calm = step(300);                                     // less motion: written at once, no fade
+console.log(JSON.stringify(out));
+"""
+    out = _node(body, tmp_path)
+    assert out["first"] == ["VOSS, the real-money trader. A.", False]
+    assert out["held"] == ["VOSS, the real-money trader. A.", False]
+    assert out["later"] == ["VOSS, the real-money trader. A.", True]
+    assert out["swapped"] == ["VOSS, the real-money trader. B.", False]
+    assert out["cut"] == ["VOSS, the real-money trader. B.", True]
+    assert out["cutIn"] == ["ROOK, the risk guard. C.", False]
+    assert out["calm"] == ["PIP, the coin scout. D.", False]
+    cap = [b for sels, b in _rules(_STYLE_CINEMA) if "#cap" in sels]
+    assert any("transition: opacity .34s ease" in b for b in cap) and any("transition: none" in b for b in cap)
+    assert "@media (prefers-reduced-motion: reduce) { #cap { transition: none; } }" in _STYLE_CINEMA
+    assert any("opacity: 0" in b for sels, b in _rules(_STYLE_CINEMA) if "#cap.out" in sels)
+
+
+@needs_node
+def test_todays_real_result_glows_when_a_real_settlement_moves_it(pure: str, section: str, tmp_path: Path) -> None:
+    out = _pure_run(pure, """
+console.log(JSON.stringify([cineTick(1.52, 2.10), cineTick(1.52, -0.4), cineTick(1.52, 1.524), cineTick(null, 1.52), cineTick(1.52, null),
+  cineHud({ plain: { real: { on: true, cash_usd: 47.06 }, goal: { target_text: "$100" } }, town: { goal: { real_today_usd: 1.52 } } }).today]));
+""", tmp_path)
+    assert out == ["up", "down", "", "", "", 1.52]
+    draw = _js_body(section, "  function cineHudDraw(d) {")
+    # (today's figure only, never the cash: a new bet moves the cash too, and that is no loss)
+    assert "const tick = cineTick(CINE.today, h.today);" in draw and '(q.today && tick ? " tick tick-" + tick : "")' in draw
+    assert "if (cineNum(h.today)) CINE.today = h.today;" in draw
+    tick = [b for sels, b in _rules(_STYLE_CINEMA) if "#hud-rest .tick" in sels]
+    assert any("animation: hudtick" in b for b in tick) and any("animation: none" in b for b in tick)  # (still for less motion)
+    assert not any(red in b for b in tick for red in _REDS)  # (it glows in the figure's own colour: no colour of its own)
+
+
+# --------------------------------------------------------------------------- the programmes: real beats only
+
+
+@needs_node
+def test_a_programme_in_the_cinema_keeps_only_its_real_beats(pure: str, module: str, states: dict[str, dict[str, Any]],
+                                                              tmp_path: Path) -> None:
+    """The record room's progStart asks THE CINEMA's filter (progKeep): in cinema mode a programme has no beat on practice
+    money (the goal's practice beats, the practice boards' views, a beat on someone whose words speak of practice money);
+    the details view plays every beat as before."""
+    w = states["winning"]["plain"]["goal"]
+    boards = {"tower": "goaltower", "bill": "billplaque", "board": "goalboard", "yard": "yard", "vault": "riskwall",
+              "power": "power", "promenade": "promenade"}
+    tour = [{"cam": "view:" + boards[b["who"]] if b["who"] in boards else b["who"], "tag": b["tag"], "text": b["text"]}
+            for b in w["programmes"]["tour"]]
+    recap = [{"cam": "", "tag": "YESTERDAY", "text": "What the team did, from its own records: 3 moments of 40 records."},
+             {"cam": "jet", "tag": "YESTERDAY", "text": "bought HIGGS for 0.1000 SOL (pretend money)"},
+             {"cam": "voss", "tag": "YESTERDAY · REAL MONEY", "text": "bet $5.80 that the Packers win (real money)"},
+             {"cam": "mote", "tag": "YESTERDAY", "text": "sealed record #3 in the tamper-proof log"},
+             {"cam": "view:riskwall", "tag": "YESTERDAY · THE VAULT", "text": "", "real": "Real money: up $1.20.", "pretend": "Practice: +$3 (pretend)."},
+             {"cam": "view:trophies", "tag": "THE RECORDS", "text": "A trophy per win and a tile per loss."},
+             {"cam": "view:trend", "tag": "THE RECORDS", "text": "Pretend money: in or out of each coin."}]
+    start = _js_body(module, "  function progStart(kind, script, auto) {")
+    out = _pure_run(pure, """
+const CINE = { on: true }, started = [];
+let progKeep = function (b) { return !CINE.on || cineBeat(b); };
+let FILM = { on: false }; const filmStop = () => {}, closePanel = () => {}, closeGuide = () => {}, filmIncoming = () => {}, filmChips = () => {}, filmStep = () => {};
+const card = { getBoundingClientRect: () => ({ bottom: 700 }) }, window = { innerHeight: 780 }, simT = 0;
+const filmEl = { style: {}, hidden: true }, body = { classList: { add: () => {} } };
+""" + start + """
+const run = (script) => { FILM = { on: false }; progStart("goal", script, false); return FILM.script ? FILM.script.map((b) => b.cam + "|" + b.tag) : null; };
+const cinema = { tour: run(TOUR), recap: run(RECAP), practiceOnly: progStart("goal", [TOUR.find((b) => b.cam === "view:yard")], false) };
+CINE.on = false;
+const details = { tour: run(TOUR), recap: run(RECAP) };
+console.log(JSON.stringify({ cinema, details }));
+""", tmp_path, TOUR=tour, RECAP=recap)
+    kept = out["cinema"]["tour"]
+    assert [b.split("|")[0] for b in kept] == [b["cam"] for b in tour if b["tag"] == "THE GOAL · REAL MONEY" and b["cam"] not in ("pip", "nyx", "jet")]
+    assert not any("view:yard" in b or "PRACTICE" in b for b in kept)
+    assert {b["cam"] for b in tour if b["tag"] == "PRACTICE · PRETEND MONEY"} >= {"view:yard"}  # (the harness has practice beats)
+    assert out["cinema"]["recap"] == ["|YESTERDAY", "voss|YESTERDAY · REAL MONEY", "mote|YESTERDAY", "view:riskwall|YESTERDAY · THE VAULT"]
+    assert out["cinema"]["practiceOnly"] is False  # (nothing real left: no programme at all)
+    assert len(out["details"]["tour"]) == len(tour) and len(out["details"]["recap"]) == len(recap)  # (details: every beat)
+    assert "if (progKeep) script = script.filter(progKeep);" in start and "let progKeep = null;" in module
+    assert "progKeep = function (b) { return !CINE.on || cineBeat(b); };" in module
+
+
+# --------------------------------------------------------------------------- Rook's risk wall: real money only
+
+
+@needs_node
+def test_rooks_wall_in_the_cinema_is_real_money_only(module: str, tmp_path: Path) -> None:
+    from tests.test_world_records import _helpers, _section
+
+    sec = _section(module)
+    tables = "\n".join(re.search(r"^" + re.escape(s) + r".*$", sec, re.MULTILINE).group(0)  # type: ignore[union-attr]
+                       for s in ("  const REC_STOPS = ", "  const REC_DESKS = "))
+    out = _node(_helpers(module) + f"""
+const recWall = board(1024, 720);
+{tables}
+{_js_body(sec, "  function recBar(")}
+{_js_body(sec, "  function recDeskWords(d) {")}
+{_js_body(sec, "  function recDrawWall(wall, caps, label) {")}
+const wall = {{ allowance_used_pct: 25, slots_used: 1, slots_max: 3, daily_stop: false,
+  desks: [{{ desk: "Polymarket paper", verdict: "winning", paused: false }}, {{ desk: "Polymarket real", verdict: "losing", paused: false }}] }};
+const caps = {{ label: "Real money", on: true, open_usd: 4.82, open_max_usd: 30, day_loss_usd: 0.97, day_max_usd: 30, total_loss_usd: 2.52, total_max_usd: 40 }};
+REC.realOnly = true;
+recDrawWall(wall, caps, "Paper money (pretend)"); const real = painted();
+recDrawWall(Object.assign({{}}, wall, {{ desks: [wall.desks[0]] }}), caps, "Paper money (pretend)"); const none = texts();
+recDrawWall(wall, caps, "Real money"); const live = texts();
+REC.realOnly = false; recDrawWall(wall, caps, "Paper money (pretend)"); const full = texts();
+console.log(JSON.stringify({{ real, none, live, full }}));
+""", tmp_path)
+    words = [d["t"] for d in out["real"]]
+    assert words[:2] == ["ROOK'S RISK WALL · REAL MONEY", "The desks' risk manager · real money"]
+    for t in ("Polymarket REAL money", "losing", "Real money · the Polymarket desk's hard limits", "$4.82 of $30.00", "$0.97 of $30.00",
+              "$2.52 of $40.00"):
+        assert t in words, t
+    # no practice anywhere on it: not the Solana bot's practice half, not the practice desk, not its verdict
+    for t in words:
+        assert not _PRACTICE_WORDS.search(t) and "Solana" not in t and "slots" not in t and "%" not in t, t
+    colour = {d["t"]: d["fill"] for d in out["real"]}
+    assert colour["Polymarket REAL money"] in _REDS and colour["losing"] in _REDS  # (red: the real desk only)
+    assert "no verdict on real money yet" in out["none"] and not any("Polymarket practice" in t for t in out["none"])
+    # while the Solana bot trades real money its half is real money too, and stays
+    assert "Solana bot · Real money" in out["live"] and "Polymarket practice (pretend money)" not in out["live"]
+    # the details view: the whole wall as before (the record room's own test pins its words)
+    assert "Solana bot · Paper money (pretend)" in out["full"] and "Polymarket practice (pretend money)" in out["full"]
+    assert out["full"][0] == "ROOK'S RISK WALL"
