@@ -776,6 +776,12 @@ def render_md(doc: dict[str, Any]) -> str:
             "TRAIN_SELECTED": f"SELECTED `{doc['selected']}` on TRAIN for VAL"}.get(doc["verdict"], doc["verdict"])
     lines = [f"# Lab 7 W4, {doc['title']}: {doc['stage'].upper()}", "", f"**Decision: {head}**", ""]
     lines += plain_words(doc)
+    if (HERE / f"{doc['stage']}_diag.md").exists():
+        lines += [f"Post-hoc reading (written after this result was read; decides nothing): "
+                  f"[`{doc['stage']}_diag.md`]({doc['stage']}_diag.md) shows that 7 % of entries filled outside the "
+                  "0.15-0.85 band (the price moved between the signal and the fill) and that a few of them, a fill "
+                  "at 0.001 buying 20,000 contracts off a 40-contract print, explain the largest gains and the best "
+                  "day. Without them every cell still loses.", ""]
     lines += [
         f"Run {doc['utc']} on split `{doc['split']}` ({doc['plan_version']}). PLAN.md sha256 `{doc['plan_sha256'][:12]}`, "
         f"W4/PREREG.md sha256 `{doc['prereg_sha256'][:12]}`. Universe: {cov['markets']} markets in the seven "
