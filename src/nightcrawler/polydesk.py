@@ -1035,6 +1035,7 @@ class PolyDesk:
         self._venue_ok = False  # this round's venue read succeeded (real orders need it: _apply_rule)
         self._orders_sent = 0  # real orders sent this round (the end-of-round venue read follows them)
         self._closed_seen: set[tuple[str, float, bool]] = set()  # venue rows already logged (_log_closed_rows)
+        self._activity_seen: set[tuple[str, str, str]] = set()  # account activities already logged (_log_activities)
         # The file holds the loss stops: one that exists but cannot be read must not silently reset them (F14).
         unreadable = state_file_unreadable(self.path)
         copy = self._keep_unreadable() if unreadable else None
@@ -1260,6 +1261,7 @@ class PolyDesk:
             return 0
         self._venue_ok = True
         self._log_closed_rows(rows)
+        self._log_activities()
         pending = _pending_of(st)
         held = [r for r in rows if r["qty"] > 0 and not r["expired"] and r["slug"]]
         st["exchange"] = {
@@ -1393,6 +1395,34 @@ class PolyDesk:
                      "updated=%s desk_holds=%s", r["slug"], r.get("side"), r["qty"], float(r.get("realized") or 0.0),
                      float(r.get("value") or 0.0), float(r.get("cost") or 0.0), bool(r.get("expired")),
                      r.get("updated"), isinstance(held, dict))
+        return logged
+
+    def _log_activities(self) -> int:
+        """Read only: the account's newest activities (:meth:`PolymarketUSClient.activities`: trades, desk's or the
+        owner's own in the app, settlements, deposits, withdrawals), each logged once, in the venue's own numbers.
+        A read that fails is skipped (the round goes on). Returns the activities logged."""
+        reader = self.reader
+        fetch = getattr(reader, "activities", None)
+        if not callable(fetch):
+            return 0
+        try:
+            rows = fetch(50)
+        except PolymarketUSError as exc:
+            log.info("polydesk_activities_unread status=%s", exc.status)
+            return 0
+        logged = 0
+        for a in reversed(rows if isinstance(rows, list) else []):  # oldest first
+            if not isinstance(a, dict):
+                continue
+            key = (str(a.get("kind")), str(a.get("id")), str(a.get("time")))
+            if key in self._activity_seen:
+                continue
+            self._activity_seen.add(key)
+            logged += 1
+            log.info("polydesk_activity kind=%s slug=%s qty=%g price=%.4f realized=%.4f cost_basis=%.4f amount=%.4f "
+                     "side=%s time=%s", a.get("kind"), a.get("slug"), float(a.get("qty") or 0.0),
+                     float(a.get("price") or 0.0), float(a.get("realized") or 0.0),
+                     float(a.get("cost_basis") or 0.0), float(a.get("amount") or 0.0), a.get("side"), a.get("time"))
         return logged
 
     def _owner_resume(self, now: float) -> bool:

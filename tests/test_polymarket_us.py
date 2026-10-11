@@ -120,3 +120,35 @@ def test_a_no_holding_is_a_short_row_with_a_positive_quantity() -> None:
     c = PolymarketUSClient("key-id", SECRET_64, transport=lambda m, u, **kw: Resp(200, venue))
     (row,) = c.positions()
     assert (row["qty"], row["side"], row["avg_price"], row["cost"]) == (10.0, "short", 0.0, 0.0)
+
+
+def test_activities_read_the_accounts_trades_settlements_and_deposits() -> None:
+    """READ ONLY (the SDK's GET /v1/portfolio/activities): a cash-out in the app is a trade with its realized P&L."""
+    seen: list[tuple[str, str]] = []
+    reply = {"activities": [
+        {"type": "ACTIVITY_TYPE_TRADE", "trade": {"id": "t9", "marketSlug": "aec-nfl-nyg-was-2026-10-11",
+                                                   "updateTime": "2026-10-11T20:20:00Z", "price": {"value": "0.55"},
+                                                   "qtyDecimal": "10", "realizedPnl": {"value": "-0.80"},
+                                                   "costBasis": {"value": "6.30"}}},
+        {"type": "ACTIVITY_TYPE_POSITION_RESOLUTION",
+         "positionResolution": {"marketSlug": "aec-nfl-chi-gb-2026-10-11", "updateTime": "2026-10-11T20:40:00Z",
+                                "tradeId": "r1", "side": "short", "afterPosition": {"realized": {"value": "5.22"}}}},
+        {"type": "ACTIVITY_TYPE_ACCOUNT_DEPOSIT",
+         "accountBalanceChange": {"transactions": [{"transactionId": "d1", "amount": {"value": "25"},
+                                                    "updateTime": "2026-10-11T05:00:00Z"}]}},
+        "junk",
+    ], "eof": True}
+
+    def transport(method: str, url: str, **kw: Any) -> Resp:
+        seen.append((method, url))
+        return Resp(200, reply)
+
+    c = PolymarketUSClient("key-id", SECRET_64, transport=transport)
+    rows = c.activities(500)
+    assert seen[0][0] == "GET" and seen[0][1].endswith("/v1/portfolio/activities?limit=100&sortOrder=SORT_ORDER_DESCENDING")
+    assert [r["kind"] for r in rows] == ["trade", "position_resolution", "account_deposit"]
+    sale = rows[0]
+    assert (sale["slug"], sale["price"], sale["qty"], sale["realized"], sale["cost_basis"]) == (
+        "aec-nfl-nyg-was-2026-10-11", 0.55, 10.0, -0.80, 6.30)
+    assert rows[1]["realized"] == 5.22 and rows[1]["side"] == "short" and rows[1]["id"] == "r1"
+    assert rows[2]["amount"] == 25.0 and rows[2]["id"] == "d1"

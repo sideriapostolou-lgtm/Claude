@@ -100,3 +100,19 @@ def test_the_switch_never_clears_an_unreadable_record_halt(tmp_path: Path) -> No
                       client_factory=FakeExchange())
     assert desk.state["mode"] == "paper" and desk.state["live_halted"]
     assert json.loads(P.state_path(desk.settings).read_text()).get("resume_token_used") is None
+
+
+def test_the_desk_logs_each_account_activity_once(gw: Gateway, tmp_path: Path,  # noqa: F811
+                                                  caplog: pytest.LogCaptureFixture) -> None:
+    class Ex(FakeExchange):
+        def activities(self, limit: int = 50) -> list[dict[str, Any]]:
+            return [{"kind": "trade", "id": "t9", "slug": "aec-nfl-nyg-was-2026-10-11", "time": "2026-10-11T20:20:00Z",
+                     "price": 0.55, "qty": 10.0, "realized": -0.8, "cost_basis": 6.3, "amount": 0.0, "side": ""}]
+
+    desk = P.PolyDesk(_live_settings(tmp_path), ledger=FakeLedger(), client_factory=Ex())
+    with caplog.at_level("INFO", logger="nightcrawler.polydesk"):
+        desk.poll(NOW)
+        desk.poll(NOW + 90)
+    lines = [r.getMessage() for r in caplog.records if r.getMessage().startswith("polydesk_activity ")]
+    assert lines == ["polydesk_activity kind=trade slug=aec-nfl-nyg-was-2026-10-11 qty=10 price=0.5500 "
+                     "realized=-0.8000 cost_basis=6.3000 amount=0.0000 side= time=2026-10-11T20:20:00Z"]

@@ -130,6 +130,38 @@ class PolymarketUSClient:
             })
         return out
 
+    def activities(self, limit: int = 50) -> list[dict[str, Any]]:
+        """READ ONLY: the account's newest activities (the SDK's ``GET /v1/portfolio/activities``, newest first),
+        one flat row each: ``{"kind": "trade" | "resolution" | "deposit" | "withdrawal" | ..., "id", "slug", "time",
+        "price", "qty", "realized", "cost_basis", "amount"}`` (missing figures are 0.0). A trade is a buy or a sale
+        on the account, the desk's or the owner's own in the app (a cash-out shows here with its realized P&L)."""
+        doc = self._call("GET", f"/v1/portfolio/activities?limit={max(1, min(int(limit), 100))}"
+                                "&sortOrder=SORT_ORDER_DESCENDING")
+        rows = doc.get("activities") if isinstance(doc, dict) else None
+        out: list[dict[str, Any]] = []
+        for a in rows if isinstance(rows, list) else []:
+            if not isinstance(a, dict):
+                continue
+            kind = str(a.get("type") or "").removeprefix("ACTIVITY_TYPE_").lower()
+            t, res, bal = (_dict(a.get(k)) for k in ("trade", "positionResolution", "accountBalanceChange"))
+            txs = bal.get("transactions")
+            tx = _dict(txs[0]) if isinstance(txs, list) and txs else {}
+            after = _dict(res.get("afterPosition"))
+            out.append({
+                "kind": kind,
+                "id": str(t.get("id") or res.get("tradeId") or tx.get("transactionId") or ""),
+                "slug": str(t.get("marketSlug") or res.get("marketSlug") or ""),
+                "time": str(t.get("updateTime") or t.get("createTime") or res.get("updateTime")
+                            or tx.get("updateTime") or ""),
+                "price": _f(t.get("price")),
+                "qty": _f(t.get("qtyDecimal") if t.get("qtyDecimal") is not None else t.get("qty")),
+                "realized": _f(t.get("realizedPnl")) if t else _f(after.get("realized")),
+                "cost_basis": _f(t.get("costBasis")),
+                "amount": _f(tx.get("amount")),
+                "side": str(res.get("side") or ""),
+            })
+        return out
+
     def buy_long_ioc(self, market_slug: str, price: float, quantity: float, max_block_s: int = 5) -> dict[str, Any]:
         """A limit BUY of the YES side (``ORDER_INTENT_BUY_LONG``), immediate-or-cancel, executed synchronously.
         Returns ``{"id", "filled", "avg_price", "cost"}`` from the executions (filled 0 when nothing matched)."""
@@ -194,6 +226,10 @@ class PolymarketUSClient:
         return {"id": str(oid) if oid is not None else None, "filled": filled,
                 "avg_price": (cost / filled) if filled > 0 else None, "cost": cost,
                 "raw_executions": len(execs) if isinstance(execs, list) else 0}
+
+
+def _dict(v: Any) -> dict[str, Any]:
+    return v if isinstance(v, dict) else {}
 
 
 def _f(v: Any) -> float:
