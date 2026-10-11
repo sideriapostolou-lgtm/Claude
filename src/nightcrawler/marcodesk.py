@@ -41,6 +41,10 @@ The same desk follows more than one expert (:data:`FOLLOWS`, one :class:`Follow`
 the bot is deployed (the NHL bettor posts every day), so each desk also reads its file's copy on the deploy branch
 (``FOLLOW_PICKS_URL`` + the file's name, a public raw GitHub URL) every :data:`REMOTE_EVERY_S`, checks it parses, and
 keeps it as ``DATA_DIR/<desk>/picks.json``; the packaged file and that copy are merged by episode id (the copy wins).
+An expert with a public pick page (:attr:`Follow.source`: Nick Martin's Action Network profile, where every pick is
+logged before the game with its units) is also read every :data:`SOURCE_EVERY_S` (:func:`fetch_source`): his NHL
+picks become ``DATA_DIR/<desk>/source.json``, one episode per game day; a love is a full-size pre-game moneyline.
+The NHL desk is practice money only.
 """
 
 from __future__ import annotations
@@ -77,6 +81,7 @@ class Follow:
     file: str  # the picks file's name in nightcrawler/data (and on the deploy branch)
     sport: str  # the Polymarket desk's sport name for his games ("american football")
     leagues: tuple[str, ...] = ()
+    source: str = ""  # a public page that lists his picks as data (an Action Network profile), read by the desk
 
     @property
     def data_path(self) -> Path:
@@ -84,11 +89,18 @@ class Follow:
 
 
 MARCO = Follow("marcodesk", "Marco", "marco_picks.json", "american football")
-NHL = Follow("nhldesk", "Nick Martin", "nhl_picks.json", "hockey", ("nhl",))
+NHL = Follow("nhldesk", "Nick Martin", "nhl_picks.json", "hockey", ("nhl",),
+             "https://www.actionnetwork.com/picks/profile/nicholaskmartin")
 FOLLOWS = (MARCO, NHL)
 REMOTE_EVERY_S = 600.0  # the deploy branch's copy of a picks file, read at most this often
 REMOTE_MAX_BYTES = 512 * 1024
 REMOTE_TIMEOUT_S = 15.0
+SOURCE_EVERY_S = 900.0  # an expert's own pick page, read at most this often
+SOURCE_MAX_BYTES = 4 * 1024 * 1024
+SOURCE_KEEP_DAYS = 14  # game days kept in the file built from his page
+SOURCE_LOVE_UNITS = 1.0  # a love on his page: a full-size (1 unit or more) pre-game NHL moneyline
+AN_MONEYLINE = {"ml_home", "ml_away"}
+AN_POSTED = {"published", "settled"}  # a pick he posted (pending or graded); anything else was withdrawn
 POLL_S = 180.0
 FIRST_POLL_DELAY_S = 30.0  # a bot built and closed within seconds (tests) never touches the network
 TICKET_USD = 20.0  # the practice ticket per pick (pretend money)
@@ -188,17 +200,118 @@ def remote_path(settings: Settings, follow: Follow = MARCO) -> Path:
     return Path(settings.data_dir) / follow.key / "picks.json"
 
 
+def source_path(settings: Settings, follow: Follow = MARCO) -> Path:
+    """Where the picks read from ``follow``'s own page are kept (:func:`fetch_source`)."""
+    return Path(settings.data_dir) / follow.key / "source.json"
+
+
 def follow_episodes(settings: Settings, follow: Follow = MARCO) -> list[dict[str, Any]]:
-    """``follow``'s episodes, newest first: the packaged file and the branch copy merged by episode id (the copy
-    wins), each pick outside his leagues left out."""
+    """``follow``'s episodes, newest first: the packaged file, the branch copy and the picks read from his own page
+    merged by episode id (later ones win), each pick outside his leagues left out."""
     by_id = {ep["id"]: ep for ep in load_episodes(follow.data_path)}
     by_id.update({ep["id"]: ep for ep in load_episodes(remote_path(settings, follow))})
+    by_id.update({ep["id"]: ep for ep in load_episodes(source_path(settings, follow))})
     out = []
     for ep in by_id.values():
         picks = [p for p in ep["picks"] if not follow.leagues or p.get("league") in follow.leagues]
         out.append({**ep, "picks": picks})
     out.sort(key=lambda e: -e["published"])
     return out
+
+
+def _us_date(iso: Any) -> str | None:
+    """A game's US (Eastern) date from its UTC start: '2026-10-12T02:30:00Z' -> '2026-10-11'."""
+    ts = polydesk.parse_iso(iso)
+    return None if ts is None else (datetime.fromtimestamp(ts, UTC) - timedelta(hours=4)).strftime("%Y-%m-%d")
+
+
+def action_picks(html: str) -> list[dict[str, Any]]:
+    """An Action Network profile page's picks (its embedded ``__NEXT_DATA__``) as raw picks of the picks-file schema
+    plus ``source_id`` and ``created``: every NHL pick he posted (pending or graded) with its game; [] when there is
+    none.
+    A love (:data:`SOURCE_LOVE_UNITS`) is a pre-game, full-game NHL moneyline of at least one unit: his long-shot
+    specials (a quarter or half unit), props, live bets and other bet types are kept as "not a love"."""
+    start = html.find('id="__NEXT_DATA__"')
+    start = html.find(">", start) + 1 if start >= 0 else -1
+    end = html.find("</script>", start) if start > 0 else -1
+    if start <= 0 or end < 0:
+        return []
+    try:
+        doc = json.loads(html[start:end])
+        profile = doc["props"]["pageProps"]["profile"]
+        rows = profile["picks"]
+    except (ValueError, KeyError, TypeError):
+        return []
+    out: list[dict[str, Any]] = []
+    for row in rows if isinstance(rows, list) else []:
+        if not isinstance(row, dict) or row.get("status") not in AN_POSTED or row.get("league_name") != "nhl":
+            continue
+        game = row.get("game")
+        teams = {t.get("id"): t for t in (game.get("teams") or []) if isinstance(t, dict)} if isinstance(
+            game, dict) else {}
+        mine, date = teams.get(row.get("side_id")), _us_date(row.get("starts_at"))
+        if not isinstance(game, dict) or not isinstance(mine, dict) or date is None:
+            continue
+        other_id = game.get("home_team_id") if row.get("side_id") == game.get("away_team_id") else game.get(
+            "away_team_id")
+        other = teams.get(other_id) if other_id != row.get("side_id") else None
+        units = polydesk._num(row.get("units")) or 0.0
+        play = _text(row.get("play"), 80)
+        moneyline = row.get("type") in AN_MONEYLINE and row.get("period") == "game"
+        live = row.get("is_live") is True or "live" in play.lower()
+        out.append({"source_id": str(row.get("id")), "created": _text(row.get("created_at"), 30),
+                    "love": moneyline and not live and units >= SOURCE_LOVE_UNITS, "league": "nhl",
+                    "team": _text(mine.get("full_name"), 60),
+                    "opponent": _text(other.get("full_name"), 60) if isinstance(other, dict) else None,
+                    "kind": "moneyline" if moneyline else "prop", "line": "ML" if moneyline else play,
+                    "quote": f"{play} ({units:g}u)", "game_date": date})
+    return out
+
+
+def merge_source(old: Any, picks: list[dict[str, Any]], who: str, url: str, now: float) -> dict[str, Any]:
+    """The picks file built from an expert's page: one episode per game day (id ``<desk>-<date>``, published at
+    his first pick of that day), each pick kept once by its ``source_id`` with the rank it was first seen at (a pick
+    scrolled off his page stays), the last :data:`SOURCE_KEEP_DAYS` days."""
+    days: dict[str, dict[str, Any]] = {}
+    for ep in (old.get("episodes") if isinstance(old, dict) else None) or []:
+        if isinstance(ep, dict) and isinstance(ep.get("game_date"), str) and isinstance(ep.get("picks"), list):
+            days[ep["game_date"]] = ep
+    for pick in sorted(picks, key=lambda p: p["created"]):
+        ep = days.setdefault(pick["game_date"], {"id": f"{who.lower().replace(' ', '-')}-{pick['game_date']}",
+                                                  "game_date": pick["game_date"],
+                                                  "title": f"{who}'s NHL picks for {pick['game_date']}",
+                                                  "published": pick["created"], "source_url": url, "picks": []})
+        if any(p.get("source_id") == pick["source_id"] for p in ep["picks"]):
+            continue
+        ep["picks"].append({**pick, "rank": len(ep["picks"]) + 1})
+        if pick["created"] < str(ep.get("published") or "~"):
+            ep["published"] = pick["created"]
+    cutoff = (datetime.fromtimestamp(now, UTC) - timedelta(days=SOURCE_KEEP_DAYS)).strftime("%Y-%m-%d")
+    kept = sorted((ep for date, ep in days.items() if date >= cutoff), key=lambda e: e["game_date"], reverse=True)
+    return {"about": f"Built by the bot from {url}", "episodes": kept}
+
+
+def fetch_source(settings: Settings, follow: Follow, now: float) -> bool:
+    """Read ``follow``'s own pick page (:attr:`Follow.source`), add its new picks to his file (:func:`merge_source`);
+    False when there is no page, it is unreachable or holds no picks (the file already kept stays)."""
+    if not follow.source.startswith("https://"):
+        return False
+    try:
+        reply = requests.get(follow.source, timeout=REMOTE_TIMEOUT_S, headers={"User-Agent": "Mozilla/5.0"})
+    except requests.RequestException:
+        return False
+    if reply.status_code != 200 or len(reply.content) > SOURCE_MAX_BYTES:
+        return False
+    picks = action_picks(reply.content.decode("utf-8", errors="replace"))
+    if not picks:
+        return False
+    path = source_path(settings, follow)
+    try:
+        old = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        old = None
+    polydesk.save_state(path, merge_source(old, picks, follow.who, follow.source, now))
+    return True
 
 
 def fetch_remote(settings: Settings, follow: Follow = MARCO) -> bool:
@@ -464,6 +577,7 @@ class MarcoDesk:
         self.data_path = data_path  # a fixed picks file (tests); None: the packaged file and the branch copy
         self.state = load_state(self.path)
         self._fetched_at = 0.0
+        self._sourced_at = 0.0
         self._stop = threading.Event()
         self._thread: threading.Thread | None = None
 
@@ -475,12 +589,20 @@ class MarcoDesk:
 
     def refresh(self, now: float) -> bool:
         """The branch copy of the picks file, read at most every REMOTE_EVERY_S (the thread's loop, never poll)."""
-        if self.data_path is not None or now - self._fetched_at < REMOTE_EVERY_S:
+        if self.data_path is not None:
             return False
-        self._fetched_at = now
-        ok = fetch_remote(self.settings, self.follow)
-        if not ok:
-            log.info("followdesk_remote_unread desk=%s", self.follow.key)
+        ok = False
+        if now - self._fetched_at >= REMOTE_EVERY_S:
+            self._fetched_at = now
+            ok = fetch_remote(self.settings, self.follow)
+            if not ok:
+                log.info("followdesk_remote_unread desk=%s", self.follow.key)
+        if self.follow.source and now - self._sourced_at >= SOURCE_EVERY_S:
+            self._sourced_at = now
+            sourced = fetch_source(self.settings, self.follow, now)
+            if not sourced:
+                log.info("followdesk_source_unread desk=%s", self.follow.key)
+            ok = ok or sourced
         return ok
 
     # ------------------------------------------------------------------ lifecycle

@@ -43,7 +43,7 @@ def branch(monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
     """The deploy branch as a fake ``requests.get``: ``files`` maps a URL to (status, body)."""
     seen: dict[str, Any] = {"urls": [], "files": {}}
 
-    def get(url: str, timeout: float) -> Reply:
+    def get(url: str, timeout: float, headers: dict[str, str] | None = None) -> Reply:
         seen["urls"].append(url)
         status, body = seen["files"].get(url, (404, b"Not Found"))
         return Reply(status, body)
@@ -106,10 +106,13 @@ def test_the_desk_reads_the_branch_in_its_loop_never_in_poll(branch: dict[str, A
     desk = M.MarcoDesk(_settings(tmp_path, FOLLOW_PICKS_URL=BASE), follow=M.NHL)
     desk.poll(NOW)
     assert branch["urls"] == []
-    assert desk.refresh(NOW) is False and branch["urls"] == [f"{BASE}/nhl_picks.json"]  # 404: kept nothing
-    assert desk.refresh(NOW + 60) is False and len(branch["urls"]) == 1  # at most every REMOTE_EVERY_S
+    assert desk.refresh(NOW) is False  # both 404: kept nothing
+    assert branch["urls"] == [f"{BASE}/nhl_picks.json", M.NHL.source]
+    assert desk.refresh(NOW + 60) is False and len(branch["urls"]) == 2  # at most every REMOTE_EVERY_S
     desk.refresh(NOW + M.REMOTE_EVERY_S)
-    assert len(branch["urls"]) == 2
+    assert branch["urls"][2:] == [f"{BASE}/nhl_picks.json"]  # his page: at most every SOURCE_EVERY_S
+    desk.refresh(NOW + M.SOURCE_EVERY_S)
+    assert branch["urls"][3:] == [M.NHL.source]
 
 
 def test_an_nhl_love_is_bought_on_paper_in_its_own_state(gw: Gateway, tmp_path: Path) -> None:  # noqa: F811
@@ -142,3 +145,74 @@ def test_the_nhl_desk_never_sends_a_real_order() -> None:
     assert "polymarket_us" not in inspect.getsource(M) and "buy_long_ioc" not in inspect.getsource(M)
     real = inspect.getsource(P.PolyDesk._marco_orders)
     assert "NHL" not in real and "nhldesk" not in real and "follow_episodes" not in real
+
+
+def _team(tid: int, name: str) -> dict[str, Any]:
+    return {"id": tid, "full_name": name, "display_name": name.split()[-1], "abbr": name[:3].upper()}
+
+
+def _an_pick(pid: int, side: int, units: float = 1.0, kind: str = "ml_away", play: str = "NYR -120",
+             status: str = "published", live: bool = False, league: str = "nhl", created: str = "2026-10-11T15:00:00.000Z",
+             starts: str = "2026-10-11T23:00:00.000Z") -> dict[str, Any]:
+    """A pick as his Action Network profile page embeds it (read 2026-10-11): Rangers (101) at Flyers (102)."""
+    return {"id": pid, "league_name": league, "play": play, "type": kind, "period": "game", "side_id": side,
+            "units": units, "status": status, "is_live": live, "created_at": created, "starts_at": starts,
+            "game": {"id": 9, "away_team_id": 101, "home_team_id": 102, "start_time": starts,
+                     "teams": [_team(101, "New York Rangers"), _team(102, "Philadelphia Flyers")]}}
+
+
+def _page(picks: list[dict[str, Any]]) -> str:
+    data = {"props": {"pageProps": {"profile": {"name": "Nick Martin", "picks": picks}}}}
+    return f'<html><script id="__NEXT_DATA__" type="application/json">{json.dumps(data)}</script></html>'
+
+
+def test_his_page_reads_as_picks_and_only_full_size_pregame_moneylines_are_loves() -> None:
+    picks = M.action_picks(_page([
+        _an_pick(1, 101),                                              # a love: Rangers moneyline, 1u, pre-game
+        _an_pick(2, 102, units=2.0, kind="ml_home", play="PHI +100"),  # a love too (2u)
+        _an_pick(3, 101, units=0.5, play="NYR +400 regulation"),        # a half-unit special: not a love
+        _an_pick(4, 101, live=True, play="NYR -150 (Live)"),           # live: not a love
+        _an_pick(5, 101, kind="spread_away", play="NYR -1.5"),         # puck line: shown, never a love
+        _an_pick(6, 101, status="deleted"),                            # withdrawn: gone
+        _an_pick(7, 101, league="nfl"),                                # not hockey: gone
+    ]))
+    assert [(p["source_id"], p["love"], p["kind"], p["team"]) for p in picks] == [
+        ("1", True, "moneyline", "New York Rangers"), ("2", True, "moneyline", "Philadelphia Flyers"),
+        ("3", False, "moneyline", "New York Rangers"), ("4", False, "moneyline", "New York Rangers"),
+        ("5", False, "prop", "New York Rangers")]
+    assert picks[0]["opponent"] == "Philadelphia Flyers" and picks[1]["opponent"] == "New York Rangers"
+    assert picks[0]["game_date"] == "2026-10-11" and picks[0]["quote"] == "NYR -120 (1u)"
+    assert M.action_picks("<html>no data</html>") == [] and M.action_picks(_page([])) == []
+
+
+def test_a_late_game_belongs_to_its_us_date() -> None:
+    late = M.action_picks(_page([_an_pick(1, 101, starts="2026-10-12T02:30:00.000Z")]))
+    assert late[0]["game_date"] == "2026-10-11"  # 10:30 pm Eastern on the 11th
+
+
+def test_the_file_built_from_his_page_keeps_ranks_and_picks_that_scroll_off() -> None:
+    now = datetime(2026, 10, 11, 16, 0, tzinfo=UTC).timestamp()
+    first = M.merge_source(None, M.action_picks(_page([_an_pick(1, 101)])), "Nick Martin", "https://x", now)
+    later = M.merge_source(first, M.action_picks(_page([_an_pick(2, 102, kind="ml_home",
+                                                                created="2026-10-11T17:00:00.000Z")])),
+                           "Nick Martin", "https://x", now)
+    (ep,) = later["episodes"]
+    assert ep["id"] == "nick-martin-2026-10-11" and ep["published"] == "2026-10-11T15:00:00.000Z"
+    assert [(p["rank"], p["source_id"]) for p in ep["picks"]] == [(1, "1"), (2, "2")]
+    assert M.merge_source(later, M.action_picks(_page([_an_pick(1, 101)])), "Nick Martin", "https://x", now) == later
+    old = M.merge_source(None, M.action_picks(_page([_an_pick(1, 101)])), "Nick Martin", "https://x",
+                         now + (M.SOURCE_KEEP_DAYS + 1) * 86_400)
+    assert old["episodes"] == []  # older than the days kept
+
+
+def test_his_page_feeds_the_desk(branch: dict[str, Any], gw: Gateway, tmp_path: Path) -> None:  # noqa: F811
+    kick = datetime(2026, 10, 11, 23, 0, tzinfo=UTC).timestamp()
+    gw.events.append(_game("New York Rangers", "Philadelphia Flyers", "nyr-phi", kickoff=kick, league="nhl"))
+    gw.quotes["aec-nhl-nyr-phi-2026-10-11"] = (0.53, 0.54)
+    branch["files"][M.NHL.source] = (200, _page([_an_pick(1, 101), _an_pick(3, 101, units=0.5)]).encode())
+    desk = M.MarcoDesk(_settings(tmp_path, FOLLOW_PICKS_URL="off"), follow=M.NHL)
+    assert desk.refresh(kick - 7200) is True
+    desk.poll(kick - 7200)
+    recs = {pid.split("|")[1]: rec for pid, rec in desk.state["picks"].items()}
+    assert recs["1"]["status"] == M.BOUGHT and recs["1"]["position"]["price"] == pytest.approx(0.54)
+    assert recs["2"]["status"] == M.NOT_LOVE
