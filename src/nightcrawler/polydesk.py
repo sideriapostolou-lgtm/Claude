@@ -1261,7 +1261,7 @@ class PolyDesk:
             return 0
         self._venue_ok = True
         self._log_closed_rows(rows)
-        self._log_activities()
+        self._book_sales(now, self._log_activities())
         pending = _pending_of(st)
         held = [r for r in rows if r["qty"] > 0 and not r["expired"] and r["slug"]]
         st["exchange"] = {
@@ -1397,33 +1397,138 @@ class PolyDesk:
                      r.get("updated"), isinstance(held, dict))
         return logged
 
-    def _log_activities(self) -> int:
-        """Read only: the account's newest activities (:meth:`PolymarketUSClient.activities`: trades, desk's or the
-        owner's own in the app, settlements, deposits, withdrawals), each logged once, in the venue's own numbers.
-        A read that fails is skipped (the round goes on). Returns the activities logged."""
+    def _log_activities(self) -> list[dict[str, Any]]:
+        """The account's newest activities (:meth:`PolymarketUSClient.activities`: trades, desk's or the owner's own
+        in the app, settlements, deposits, withdrawals), each logged once, in the venue's own numbers. A read that
+        fails is skipped (the round goes on). Returns the rows read, oldest first."""
         reader = self.reader
         fetch = getattr(reader, "activities", None)
         if not callable(fetch):
-            return 0
+            return []
         try:
             rows = fetch(50)
         except PolymarketUSError as exc:
             log.info("polydesk_activities_unread status=%s", exc.status)
-            return 0
-        logged = 0
-        for a in reversed(rows if isinstance(rows, list) else []):  # oldest first
+            return []
+        rows = [a for a in reversed(rows if isinstance(rows, list) else []) if isinstance(a, dict)]  # oldest first
+        for a in rows:
             if not isinstance(a, dict):
                 continue
             key = (str(a.get("kind")), str(a.get("id")), str(a.get("time")))
             if key in self._activity_seen:
                 continue
             self._activity_seen.add(key)
-            logged += 1
             log.info("polydesk_activity kind=%s slug=%s qty=%g price=%.4f realized=%.4f cost_basis=%.4f amount=%.4f "
                      "side=%s time=%s", a.get("kind"), a.get("slug"), float(a.get("qty") or 0.0),
                      float(a.get("price") or 0.0), float(a.get("realized") or 0.0),
                      float(a.get("cost_basis") or 0.0), float(a.get("amount") or 0.0), a.get("side"), a.get("time"))
-        return logged
+        return rows
+
+    def _book_sales(self, now: float, activities: list[dict[str, Any]]) -> int:
+        """A closing trade on the account (an activity of kind ``trade`` with a realized result) on a market the
+        desk holds for real is the owner cashing the desk's bet out in the app (the desk itself never sells): the
+        desk books that part of its position closed at the venue's own realized P&L (it counts in the day and total
+        stops like any real result: it is the desk's bet). One the desk already booked from the market's settlement,
+        sold before that, has its booking corrected to the sale's realized P&L. Each trade is booked once
+        (``sales_seen``). The by-rule record keeps the settlement's figure. Returns the trades booked."""
+        st = self.state
+        kept = st.get("sales_seen")
+        seen: dict[str, Any] = dict(kept) if isinstance(kept, dict) else {}
+        booked = 0
+        for a in activities:
+            if a.get("kind") != "trade" or not a.get("id") or not a.get("realized"):
+                continue
+            sid, slug = str(a["id"]), str(a.get("slug") or "")
+            when = parse_iso(a.get("time"))
+            if sid in seen or not slug or when is None:
+                continue
+            pos = st["positions"].get(slug)
+            if isinstance(pos, dict) and pos.get("live") and not pos.get("owner"):
+                if when >= float(_num(pos.get("t_in")) or 0.0):
+                    self._book_sale(now, slug, pos, a)
+                    seen[sid] = now
+                    booked += 1
+                continue
+            row = next((r for r in st["closed"] if isinstance(r, dict) and r.get("slug") == slug and r.get("live")
+                        and not r.get("owner") and when >= float(_num(r.get("t_in")) or 0.0)
+                        and when <= float(_num(r.get("settled_at")) or 0.0)), None)
+            if row is not None:
+                self._correct_booking(now, row, a)
+                seen[sid] = now
+                booked += 1
+        if booked:
+            st["sales_seen"] = dict(sorted(seen.items(), key=lambda kv: kv[1])[-200:])
+        return booked
+
+    def _book_sale(self, now: float, slug: str, pos: dict[str, Any], a: Mapping[str, Any]) -> None:
+        """The owner sold ``a["qty"]`` of the desk's position in the app: that part is booked closed at the venue's
+        realized P&L (all of it when the sale covers the position)."""
+        st = self.state
+        shares = float(_num(pos.get("shares")) or 0.0)
+        qty = min(float(_num(a.get("qty")) or shares), shares) if shares > 0 else 0.0
+        part = qty / shares if shares > 0 else 1.0
+        pnl = float(_num(a.get("realized")) or 0.0)
+        cost = float(_num(pos.get("cost_usd")) or 0.0) * part
+        fee = float(_num(pos.get("fee_usd")) or 0.0) * part
+        won = pnl > 0
+        row = {**pos, "shares": qty, "cost_usd": cost, "fee_usd": fee, "settled_at": now, "value": None,
+               "pnl_usd": pnl, "won": won, "sold_in_app": True, "sale_price": _num(a.get("price")),
+               "sale_id": str(a.get("id"))}
+        if part >= 0.999:
+            del st["positions"][slug]
+        else:
+            pos["shares"], pos["cost_usd"], pos["fee_usd"] = shares - qty, float(pos["cost_usd"]) - cost, float(
+                pos.get("fee_usd") or 0.0) - fee
+        st["closed"].insert(0, row)
+        del st["closed"][CLOSED_KEEP:]
+        day = _day(now)
+        d = st["days"].setdefault(day, {"pnl_usd": 0.0, "settled": 0, "won": 0})
+        d["pnl_usd"] += pnl
+        d["settled"] += 1
+        d["won"] += int(won)
+        by_sport = st.get("by_sport")
+        _tally(st.setdefault("by_rule", {}), row, pnl, won, by_sport if isinstance(by_sport, dict) else None)
+        d_live = st.setdefault("live_days", {}).setdefault(day, {"pnl_usd": 0.0, "settled": 0, "won": 0})
+        d_live["pnl_usd"] += pnl
+        d_live["settled"] = int(d_live.get("settled") or 0) + 1
+        d_live["won"] = int(d_live.get("won") or 0) + int(won)
+        st["live_pnl_total_usd"] = float(st.get("live_pnl_total_usd") or 0.0) + pnl
+        st["counters"]["settled"] += 1
+        st["counters"]["won"] += int(won)
+        self._event(now, f"Cashed out in the app: {pos['question'][:60]} · {qty:g} contracts · {pnl:+.2f} $ (real, "
+                         "the venue's own figure)", "good" if won else "bad")
+        self._receipt("polydesk_sold_in_app", {"slug": slug, "contracts": qty, "price": _num(a.get("price")),
+                                               "pnl_usd": pnl, "trade_id": str(a.get("id"))})
+        log.info("polydesk_sold_in_app slug=%s qty=%g price=%.4f pnl=%.4f", slug, qty, float(_num(a.get("price"))
+                                                                                          or 0.0), pnl)
+        self._check_total_loss(now)
+
+    def _correct_booking(self, now: float, row: dict[str, Any], a: Mapping[str, Any]) -> None:
+        """The desk booked ``row`` from the market's settlement, but the owner had sold it in the app before: its
+        P&L becomes the sale's realized figure (a second sale of the same market adds its own), and the day and
+        total stops move by the difference."""
+        st = self.state
+        realized = float(_num(a.get("realized")) or 0.0)
+        old = float(_num(row.get("pnl_usd")) or 0.0)
+        new = realized if not row.get("sold_in_app") else old + realized
+        delta = new - old
+        was_won, won = bool(row.get("won")), new > 0
+        row.update({"pnl_usd": new, "won": won, "sold_in_app": True, "sale_price": _num(a.get("price")),
+                    "sale_id": str(a.get("id"))})
+        day = _day(float(_num(row.get("settled_at")) or now))
+        for book in (st.setdefault("days", {}), st.setdefault("live_days", {})):
+            rec = book.setdefault(day, {"pnl_usd": 0.0, "settled": 0, "won": 0})
+            rec["pnl_usd"] = float(_num(rec.get("pnl_usd")) or 0.0) + delta
+            rec["won"] = max(0, int(_num(rec.get("won")) or 0) + int(won) - int(was_won))
+        st["live_pnl_total_usd"] = float(st.get("live_pnl_total_usd") or 0.0) + delta
+        st["counters"]["won"] = max(0, int(st["counters"].get("won") or 0) + int(won) - int(was_won))
+        self._event(now, f"Cashed out in the app before it settled: {str(row.get('question') or row['slug'])[:60]} "
+                         f"· {new:+.2f} $ (was booked {old:+.2f} $; real, the venue's own figure)",
+                    "good" if won else "bad")
+        self._receipt("polydesk_sale_corrected", {"slug": row["slug"], "pnl_usd": new, "was_usd": old,
+                                                  "trade_id": str(a.get("id"))})
+        log.info("polydesk_sale_corrected slug=%s pnl=%.4f was=%.4f", row["slug"], new, old)
+        self._check_total_loss(now)
 
     def _owner_resume(self, now: float) -> bool:
         """The owner's switch back to real money (``POLYDESK_RESUME_TOKEN``): a value not used before clears a

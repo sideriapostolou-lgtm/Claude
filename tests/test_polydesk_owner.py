@@ -6,6 +6,7 @@ once per value, with every cap and stop unchanged."""
 from __future__ import annotations
 
 import json
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -116,3 +117,86 @@ def test_the_desk_logs_each_account_activity_once(gw: Gateway, tmp_path: Path,  
     lines = [r.getMessage() for r in caplog.records if r.getMessage().startswith("polydesk_activity ")]
     assert lines == ["polydesk_activity kind=trade slug=aec-nfl-nyg-was-2026-10-11 qty=10 price=0.5500 "
                      "realized=-0.8000 cost_basis=6.3000 amount=0.0000 side= time=2026-10-11T20:20:00Z"]
+
+
+SALE_T = "2026-10-09T16:00:00Z"  # after the position's buy (NOW is 2026-10-09 15:33 UTC), before its settlement
+
+
+class SaleEx(FakeExchange):
+    """The account's activity feed, scripted: the owner's cash-outs in the app."""
+
+    def __init__(self, sales: list[dict[str, Any]], **kw: Any) -> None:
+        super().__init__(**kw)
+        self.sales = sales
+
+    def activities(self, limit: int = 50) -> list[dict[str, Any]]:
+        return list(reversed(self.sales))  # newest first, as the venue sends them
+
+
+def _sale(slug: str, qty: float, price: float, realized: float, sid: str = "t1", when: str = SALE_T) -> dict[str, Any]:
+    return {"kind": "trade", "id": sid, "slug": slug, "time": when, "price": price, "qty": qty, "realized": realized,
+            "cost_basis": 6.46, "amount": 0.0, "side": ""}
+
+
+def _held(desk: P.PolyDesk, slug: str = "aec-nfl-nyg-was", shares: float = 10.0, **kw: Any) -> dict[str, Any]:
+    pos = {"slug": slug, "question": "Marco's love: Commanders moneyline", "category": "crypto", "side": "short",
+           "p_in": 0.63, "shares": shares, "fee_usd": 0.16, "cost_usd": 6.30, "t_in": NOW, "end_ts": NOW + 86_400,
+           "live": True, "rule": P.RULE_MARCO, **kw}
+    desk.state["positions"][slug] = pos
+    return pos
+
+
+def test_a_cash_out_in_the_app_closes_the_desks_bet_at_the_venues_figure(gw: Gateway, tmp_path: Path) -> None:  # noqa: F811
+    ledger = FakeLedger()
+    ex = SaleEx([_sale("aec-nfl-nyg-was", 10, 0.0975, -5.54)])
+    desk = P.PolyDesk(_live_settings(tmp_path), ledger=ledger, client_factory=ex)
+    _held(desk)
+    desk.poll(NOW + 3600)
+    assert "aec-nfl-nyg-was" not in desk.state["positions"]
+    row = desk.state["closed"][0]
+    assert row["sold_in_app"] and row["pnl_usd"] == pytest.approx(-5.54) and row["won"] is False
+    assert desk.state["live_pnl_total_usd"] == pytest.approx(-5.54)
+    assert ("polydesk_sold_in_app", {"slug": "aec-nfl-nyg-was", "contracts": 10.0, "price": 0.0975,
+                                     "pnl_usd": -5.54, "trade_id": "t1"}) in ledger.receipts
+    desk.poll(NOW + 3700)  # the same trade is never booked twice
+    assert desk.state["live_pnl_total_usd"] == pytest.approx(-5.54)
+
+
+def test_a_booking_from_the_settlement_is_corrected_to_the_sale(gw: Gateway, tmp_path: Path) -> None:  # noqa: F811
+    ex = SaleEx([_sale("aec-nfl-nyg-was", 10, 0.0975, -5.54)])
+    desk = P.PolyDesk(_live_settings(tmp_path), ledger=FakeLedger(), client_factory=ex)
+    settled_at = NOW + 2 * 3600  # booked at the 0.50 settlement after the owner had sold
+    day = datetime.fromtimestamp(settled_at, UTC).strftime("%Y-%m-%d")
+    desk.state["closed"].insert(0, {"slug": "aec-nfl-nyg-was", "question": "Commanders", "live": True,
+                                    "rule": P.RULE_MARCO, "t_in": NOW, "settled_at": settled_at, "value": 0.5,
+                                    "pnl_usd": -1.46, "won": False, "shares": 10.0})
+    desk.state["live_pnl_total_usd"] = -1.46
+    desk.state["live_days"] = {day: {"pnl_usd": -1.46, "settled": 1, "won": 0}}
+    desk.poll(NOW + 3 * 3600)
+    row = desk.state["closed"][0]
+    assert row["sold_in_app"] and row["pnl_usd"] == pytest.approx(-5.54)
+    assert desk.state["live_pnl_total_usd"] == pytest.approx(-5.54)
+    assert desk.state["live_days"][day]["pnl_usd"] == pytest.approx(-5.54)
+
+
+def test_a_partial_cash_out_keeps_the_rest_open(gw: Gateway, tmp_path: Path) -> None:  # noqa: F811
+    ex = SaleEx([_sale("aec-nfl-nyg-was", 4, 0.30, -1.30)])
+    desk = P.PolyDesk(_live_settings(tmp_path), ledger=FakeLedger(), client_factory=ex)
+    _held(desk)
+    desk.poll(NOW + 3600)
+    rest = desk.state["positions"]["aec-nfl-nyg-was"]
+    assert rest["shares"] == pytest.approx(6.0) and rest["cost_usd"] == pytest.approx(6.30 * 0.6)
+    assert desk.state["closed"][0]["shares"] == pytest.approx(4.0)
+    assert desk.state["live_pnl_total_usd"] == pytest.approx(-1.30)
+
+
+def test_the_owners_own_bets_and_older_trades_are_not_the_desks(gw: Gateway, tmp_path: Path) -> None:  # noqa: F811
+    early = datetime.fromtimestamp(NOW - 3600, UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+    ex = SaleEx([_sale("parlay", 300, 0.03, 21.55, sid="p1"), _sale("aec-nfl-nyg-was", 10, 0.1, -5.0, sid="t0",
+                                                                    when=early)])
+    desk = P.PolyDesk(_live_settings(tmp_path), ledger=FakeLedger(), client_factory=ex)
+    _held(desk, "parlay", 300.0, owner=True, rule=P.RULE_OWNER)
+    _held(desk)
+    desk.poll(NOW + 3600)
+    assert "parlay" in desk.state["positions"] and "aec-nfl-nyg-was" in desk.state["positions"]
+    assert float(desk.state.get("live_pnl_total_usd") or 0.0) == 0.0
