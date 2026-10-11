@@ -231,8 +231,12 @@ class Arena:
     def _save(self) -> None:
         polydesk.save_state(self.path, self.state)
 
-    def _event(self, now: float, who: str, text: str, tone: str = "neutral") -> None:
-        self.state["events"].insert(0, {"ts": now, "who": who, "text": text[:160], "tone": tone})
+    def _event(self, now: float, who: str, text: str, tone: str = "neutral", kind: str = "", usd: float | None = None,
+               ) -> None:
+        """One line of the town's story: ``kind`` buy | sale | born | evicted (the world animates each), ``usd`` the
+        sale's P&L or the buy's stake (practice)."""
+        self.state["events"].insert(0, {"ts": now, "who": who, "text": text[:160], "tone": tone, "kind": kind,
+                                        "usd": None if usd is None else round(float(usd), 4)})
         del self.state["events"][EVENTS_KEEP:]
 
     # ------------------------------------------------------------------ the market data
@@ -348,7 +352,8 @@ class Arena:
             self._today(now)["born"] += 1
             if parent_id is not None:
                 pname = parent["name"]
-                self._event(now, name, f"{name} moved in: a child of {pname}, trading {style(genes)}.", "good")
+                self._event(now, name, f"{name} moved in: a child of {pname}, trading {style(genes)}.", "good",
+                            kind="born")
 
     # ------------------------------------------------------------------ trading
     def _entries(self, now: float, markets: list[dict[str, Any]], quotes: Mapping[str, Mapping[str, Any]]) -> int:
@@ -389,7 +394,8 @@ class Arena:
                 self._today(now)["buys"] += 1
                 opened += 1
                 self._event(now, res["name"], f"{res['name']} bought {side.upper()} at {price:.2f}: "
-                            f"{str(m.get('event') or m.get('question') or '')[:70]} (${stake:.2f}, practice).")
+                            f"{str(m.get('event') or m.get('question') or '')[:70]} (${stake:.2f}, practice).",
+                            kind="buy", usd=stake)
                 break
         return opened
 
@@ -458,7 +464,7 @@ class Arena:
         today["trades"] += 1
         today["pnl_usd"] = float(today["pnl_usd"]) + pnl
         self._event(now, res["name"], f"{res['name']} {why}: {pos['what'][:60]} {pnl:+.2f} $ (practice).",
-                    "good" if pnl > 0 else "bad" if pnl < 0 else "neutral")
+                    "good" if pnl > 0 else "bad" if pnl < 0 else "neutral", kind="sale", usd=pnl)
 
     def _sell_all(self, now: float, res: dict[str, Any], quotes: Mapping[str, Mapping[str, Any]], why: str) -> None:
         for pos in list(res["positions"].values()):
@@ -489,7 +495,7 @@ class Arena:
         st["town"]["evicted"] += 1
         self._today(now)["evicted"] += 1
         self._event(now, res["name"], f"{res['name']} was evicted: {why} after {days:.1f} days "
-                    f"({res['trades']} trades, {float(res['pnl_usd']):+.2f} $).", "bad")
+                    f"({res['trades']} trades, {float(res['pnl_usd']):+.2f} $).", "bad", kind="evicted")
 
 
 # ---------------------------------------------------------------------- the panel
@@ -514,7 +520,8 @@ def panel_state(settings: Settings, now: float, leaders: int = 5) -> dict[str, A
         money = float(res.get("cash") or 0.0) + held
         days = (now - float(res.get("born") or now)) / 86_400.0
         profit = money - START_CASH  # rent already paid out of the cash
-        rows.append({"name": res["name"], "gen": res.get("gen"), "money_usd": round(money, 2),
+        rows.append({"id": str(res.get("id") or ""), "name": res["name"], "gen": res.get("gen"),
+                     "born": res.get("born"), "last_trade": res.get("last_trade"), "money_usd": round(money, 2),
                      "profit_usd": round(profit, 2), "trades": res.get("trades", 0), "wins": res.get("wins", 0),
                      "open": len(res.get("positions") or {}), "days": round(days, 1), "style": style(res["genes"]),
                      "candidate": days >= CANDIDATE_DAYS and int(res.get("trades") or 0) >= CANDIDATE_TRADES
@@ -526,7 +533,7 @@ def panel_state(settings: Settings, now: float, leaders: int = 5) -> dict[str, A
             "start_cash": START_CASH, "town": st["town"], "today": st["today"] if st["today"].get("day") == _day(
                 now) else {"day": _day(now), "born": 0, "evicted": 0, "buys": 0, "trades": 0, "pnl_usd": 0.0},
             "leaders": rows[:leaders], "candidates": [r for r in rows if r["candidate"]][:leaders],
-            "events": st["events"][:8], "grave": st["grave"][:5]}
+            "residents": rows[:POPULATION], "events": st["events"][:24], "grave": st["grave"][:5]}
 
 
 def arena_line(panel: Mapping[str, Any] | None) -> str | None:

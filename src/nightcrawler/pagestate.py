@@ -1438,7 +1438,9 @@ def arena_town(settings: Settings, now: float) -> dict[str, Any] | None:
         return None
     events = [{"ts": _num(e.get("ts")), "who": _clip(str(e.get("who") or ""), 24),
                "text": _clip(str(e.get("text") or ""), TEXT_MAX),
-               "tone": e.get("tone") if e.get("tone") in ("good", "bad", "neutral") else "neutral"}
+               "tone": e.get("tone") if e.get("tone") in ("good", "bad", "neutral") else "neutral",
+               "kind": e.get("kind") if e.get("kind") in ("buy", "sale", "born", "evicted") else "",
+               "usd": _num(e.get("usd"))}
               for e in _xp_list(raw.get("events")) if isinstance(e, Mapping)]
     return {**raw, "label": PRETEND_LABEL, "events": events}
 
