@@ -110,6 +110,13 @@ apart (:meth:`PolyDesk._guard`):
   so once, with a ``polydesk_sport_flag`` receipt: a flag for the owner and a fresh confirmation window, nothing
   more. Nothing here writes :data:`REAL_SPORTS_ALLOWED`, ``mode``, the client or a setting. The panel's ``sports``
   carries each sport's real-money state, its history verdict and its practice record.
+
+**The no-lose desk** (PAPER only, 2026-10-11; :meth:`PolyDesk._scan_arbs`): when every answer of ONE question (a
+game's winner markets, or a non-sports exclusive-answer group) can be bought for at most 1 - :data:`ARB_MIN_EDGE`
+in total, each leg's taker fee included, one set pays $1 whatever happens. Each such moment is recorded once per
+group per UTC day (``arbs``), checked again the next round (``still_there``: real or stale) and bought on paper as
+:data:`ARB_PAPER_SETS` set (``arb_key`` legs, outside the paper caps, never in the rule's record); a settled set is
+booked to ``arb_book``, and one that pays back less than it cost is flagged loudly (``polydesk_arb_broken``).
 """
 
 from __future__ import annotations
@@ -244,6 +251,14 @@ GUARD_EVENTS = ("Risk manager", "Candidate for real money", "Paper record clears
 #: True only once this rule passes lab 4's TEST. Until then a winning paper record is never called a candidate for
 #: real money (lab 4 TRAIN found no edge for it; a paper flag on it is most likely luck).
 RULE_LAB_PASSED = False
+#: The no-lose desk (arbitrage, PAPER only): every answer of ONE question bought for at most this far under $1 in
+#: total, the taker fee on each leg included, pays exactly $1 at settlement whatever happens (module docstring).
+ARB_MIN_EDGE = 0.01
+ARB_PAPER_SETS = 1  # contract-sets bought on paper per arb: one share of every answer at its ask
+ARB_DAYS = 7  # UTC days of found arbs kept (a set still open is kept until it settles)
+ARB_KEEP = 300  # ... and at most this many finished records
+ARB_SHOWN = 5  # the panel's newest arbs
+ARB_PAY_TOL = 1e-6  # a settled set that pays back less than its cost by more than this is broken
 #: What a position keeps of the rule's buy (the quote and trades at entry, the sport, the game and its situation):
 #: an unconfirmed order keeps the same, and the position the venue confirms late inherits it.
 _PENDING_STAMP = ("rule", "bid_in", "ask_in", "spread_in", "last_in", "traded_in", "bid_size_in", "ask_size_in",
@@ -505,6 +520,8 @@ def empty_state() -> dict[str, Any]:
         "by_sport": {},  # rule -> sport -> book -> the per-settlement record (as by_rule), sports settlements only
         "sport_flags": {},  # sport -> {at, rule, reason}: its practice record clears the risk manager's bar
         "sport_flags_said": [],  # "rule|sport" pairs whose flag was announced (said again after it clears)
+        "arbs": [],  # the no-lose sets found (oldest first): PolyDesk._scan_arbs
+        "arb_book": {"sets": 0, "settled_sets": 0, "pnl_usd": 0.0, "broken": 0},  # their paper sets' own tally
     }
 
 
@@ -577,6 +594,59 @@ def _sport_of(row: Mapping[str, Any]) -> str:
     return str(row.get("sport") or "other")
 
 
+def _is_arb(row: Mapping[str, Any]) -> bool:
+    """A leg of a no-lose set (``arb_key``): never part of the near-certain rule's record, caps or lessons."""
+    return bool(row.get("arb_key"))
+
+
+def _fee(coef: float, price: float) -> float:
+    """The venue's taker fee on one contract bought at ``price``."""
+    return coef * price * (1.0 - price)
+
+
+def _arb_open(rec: Mapping[str, Any]) -> bool:
+    """A found arb whose paper set is still open (some leg not settled yet)."""
+    s = rec.get("set")
+    return isinstance(s, dict) and s.get("status") == "open"
+
+
+def _arb_groups(watch: list[dict[str, Any]]) -> dict[str, tuple[str, list[dict[str, Any]]]]:
+    """The watch list's exclusive-answer groups, ``key -> (kind, members)``: a game whose winner markets are all on
+    the list (``n_outcomes``, at least two; the sports cap may cut one), and a non-sports question two or more
+    markets share inside one ladder (:func:`_cluster_of`) that is not a :data:`NESTED_LADDER`."""
+    clusters: dict[str, list[dict[str, Any]]] = {}
+    for m in watch:
+        clusters.setdefault(_cluster_of(m), []).append(m)
+    out: dict[str, tuple[str, list[dict[str, Any]]]] = {}
+    for key, sibs in clusters.items():
+        if sibs[0].get("category") == "sports":
+            if len(sibs) >= max(int(_num(sibs[0].get("n_outcomes")) or 0), 2):
+                out[key] = ("game", sibs)
+            continue
+        groups: dict[str, list[dict[str, Any]]] = {}
+        for m in sibs:
+            if not NESTED_LADDER.match(str(m["slug"])):
+                groups.setdefault(str(m.get("question") or ""), []).append(m)
+        for question, answers in groups.items():
+            if question and len(answers) >= 2:
+                out[f"{key}|q{zlib.crc32(question.encode()):08x}"] = ("question", answers)
+    return out
+
+
+def _arb_legs(members: list[dict[str, Any]], quotes: Mapping[str, Mapping[str, Any]]) -> list[dict[str, Any]] | None:
+    """Each answer's leg ``{slug, ask, ask_size, fee}`` (the fee per contract at the ask), or None unless every
+    answer is quoted with an ask and its market OPEN."""
+    legs = []
+    for m in members:
+        q = quotes.get(m["slug"])
+        ask = _num(q.get("best_ask")) if q else None
+        if q is None or ask is None or not 0.0 < ask < 1.0 or q.get("state") != OPEN_STATE:
+            return None
+        coef = m["fee_coef"] if m.get("fee_coef") is not None else US_TAKER
+        legs.append({"slug": m["slug"], "ask": ask, "ask_size": _num(q.get("ask_size")), "fee": _fee(coef, ask)})
+    return legs
+
+
 def _tally_book(books: dict[str, Any], row: dict[str, Any], pnl: float, won: bool) -> None:
     rec = books.setdefault(_book_of(row), {"settled": 0, "won": 0, "pnl_usd": 0.0})
     rec["settled"] += 1
@@ -593,7 +663,9 @@ def _tally(by_rule: dict[str, Any], row: dict[str, Any], pnl: float, won: bool,
     """One settlement into the per-rule record: ``by_rule[rule][paper|real] = {settled, won, pnl_usd, pnls, costs,
     keys}`` (the risk manager's input, oldest first, the newest :data:`GUARD_KEEP`, aligned: ``pnls`` the P&L to
     1e-4, ``costs`` the money at risk, ``keys`` the event it belongs to). A sports settlement also goes into
-    ``by_sport[rule][sport][book]`` (the same shape) when ``by_sport`` is given."""
+    ``by_sport[rule][sport][book]`` (the same shape) when ``by_sport`` is given. A no-lose set's leg never counts."""
+    if _is_arb(row):
+        return
     _tally_book(by_rule.setdefault(_rule_of(row), {}), row, pnl, won)
     if by_sport is not None and row.get("category") == "sports":
         _tally_book(by_sport.setdefault(_rule_of(row), {}).setdefault(_sport_of(row), {}), row, pnl, won)
@@ -601,7 +673,8 @@ def _tally(by_rule: dict[str, Any], row: dict[str, Any], pnl: float, won: bool,
 
 def _settled_rows(closed: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """The closed rows that are settlements (an unresolved or replaced row has no P&L), oldest first."""
-    return [r for r in reversed(closed) if r.get("won") is not None and _num(r.get("pnl_usd")) is not None]
+    return [r for r in reversed(closed)
+            if r.get("won") is not None and _num(r.get("pnl_usd")) is not None and not _is_arb(r)]
 
 
 def _by_rule_from_rows(closed: list[dict[str, Any]]) -> dict[str, Any]:
@@ -808,7 +881,7 @@ def _sentence(label: str, rows: list[dict[str, Any]]) -> tuple[str, float]:
 def lessons(closed: list[dict[str, Any]]) -> list[str]:
     """Up to :data:`LESSONS_MAX` plain sentences from the settled rows (at least :data:`LESSONS_MIN_ROWS`, else
     none): the most telling group of each cut (by the larger absolute result in either book), biggest first."""
-    rows = [r for r in closed if r.get("won") is not None and _num(r.get("pnl_usd")) is not None]
+    rows = [r for r in closed if r.get("won") is not None and _num(r.get("pnl_usd")) is not None and not _is_arb(r)]
     if len(rows) < LESSONS_MIN_ROWS:
         return []
     groups: dict[tuple[str, str], list[dict[str, Any]]] = {}
@@ -835,7 +908,8 @@ def lesson_key(text: str) -> str:
 
 def worst_row(closed: list[dict[str, Any]]) -> dict[str, Any] | None:
     """The single biggest losing settled row, labelled paper or real as the row is; None without a loss."""
-    rows = [r for r in closed if r.get("won") is not None and _num(r.get("pnl_usd")) is not None and r["pnl_usd"] < 0]
+    rows = [r for r in closed if r.get("won") is not None and _num(r.get("pnl_usd")) is not None and r["pnl_usd"] < 0
+            and not _is_arb(r)]
     if not rows:
         return None
     r = min(rows, key=lambda r: float(r["pnl_usd"]))
@@ -1071,6 +1145,7 @@ class PolyDesk:
         self._guard(now)  # the record so far decides whether this round may buy
         self._orders_sent = 0
         bought = self._apply_rule(now, watch, quotes, venue_ok=self._venue_ok)
+        arbs = self._scan_arbs(now, watch, quotes)  # the no-lose desk: paper only, never a real order
         settled = self._settle(now, {m["slug"] for m in watch}, quotes)
         if settled:
             self._guard(now)  # this round's settlements count at once (the panel, the next round)
@@ -1078,6 +1153,7 @@ class PolyDesk:
             # the venue's book after this round's real orders, confirmed or not (a "no fill" reply is not the last
             # word: 34 of the first 91 real fills showed only in a later read)
             adopted += self._reconcile(now, watch)
+        self._arb_sets(now)
         self._learn(now)
         st["watched"] = len(watch)
         st["last_ok"] = now
@@ -1095,6 +1171,7 @@ class PolyDesk:
             "bought": bought,
             "settled": settled,
             "adopted": adopted,
+            "arbs": arbs,
         }
 
     def _reconcile(self, now: float, watch: list[dict[str, Any]]) -> int:
@@ -1446,7 +1523,7 @@ class PolyDesk:
                 tried_list.append(slug)
 
         pending = self._pending_book()
-        paper_open = sum(1 for p in st["positions"].values() if not p.get("live"))
+        paper_open = sum(1 for p in st["positions"].values() if not p.get("live") and not _is_arb(p))
         cap = self._paper_cap()
         st["paper_full"] = bool(st.get("paper_full")) and paper_open >= cap
         # The risk manager's pauses (self._guard): a losing paper record stops paper AND real buys (real money never
@@ -1455,7 +1532,8 @@ class PolyDesk:
         paper_paused = self._paused("paused")
         real_paused = paper_paused or self._paused("paused_real")
         live = st["mode"] == "live" and self.client is not None
-        held = {_cluster_of(p) for p in st["positions"].values()} | {_cluster_of(p) for p in pending.values()}
+        held = ({_cluster_of(p) for p in st["positions"].values() if not _is_arb(p)}
+                | {_cluster_of(p) for p in pending.values()})
         clusters: dict[str, list[dict[str, Any]]] = {}
         for m in watch:
             clusters.setdefault(_cluster_of(m), []).append(m)
@@ -1741,10 +1819,17 @@ class PolyDesk:
                     now > pos["end_ts"] + 7 * 86400
                 ):  # never settled in a week: drop it as unresolved (no P&L)
                     pos["pnl_usd"] = None
-                    st["closed"].insert(
-                        0, {**pos, "settled_at": now, "won": None, "unresolved": True}
-                    )
+                    if _is_arb(pos):  # a no-lose set's leg that never paid: its set counts it as paying nothing
+                        self._arb_leg(pos, None)
+                    else:
+                        st["closed"].insert(
+                            0, {**pos, "settled_at": now, "won": None, "unresolved": True}
+                        )
                     del st["positions"][slug]
+                continue
+            if _is_arb(pos):  # booked to its set (arb_book, _arb_sets), never to the rule's record or the day's
+                self._arb_leg(pos, value)
+                del st["positions"][slug]
                 continue
             payout = pos["shares"] * (value if pos["side"] == "long" else 1.0 - value)
             pnl = payout - pos["fee_usd"] - float(pos.get("cost_usd", self.ticket))
@@ -1796,6 +1881,163 @@ class PolyDesk:
             self._event(now, f"Lesson: {fresh[0]}", "bad" if "-$" in fresh[0] else "good")
         if new != old:
             st["last_lessons"] = new
+
+    # ------------------------------------------------------------------ the no-lose desk (paper only)
+    def _arb_book(self) -> dict[str, Any]:
+        """``state["arb_book"]``: the no-lose sets' own paper tally (a junk value becomes a zero one)."""
+        book = _as_dict(self.state.get("arb_book"))
+        for key in ("sets", "settled_sets", "broken"):
+            book[key] = int(_num(book.get(key)) or 0)
+        book["pnl_usd"] = float(_num(book.get("pnl_usd")) or 0.0)
+        self.state["arb_book"] = book
+        return book
+
+    def _scan_arbs(self, now: float, watch: list[dict[str, Any]], quotes: Mapping[str, Mapping[str, Any]]) -> int:
+        """The no-lose desk (module docstring), PAPER only: it never calls the venue's order client. Last round's
+        new arbs are checked again first (:meth:`_arb_recheck`). Then every complete group (:func:`_arb_groups`,
+        :func:`_arb_legs`) whose answers cost at most 1 - :data:`ARB_MIN_EDGE` in total, fees included, is recorded
+        once per group per UTC day (one event, one ``polydesk_arb_seen`` receipt) and bought on paper
+        (:meth:`_arb_buy`). The newest :data:`ARB_DAYS` days are kept (an open set until it settles). Returns the
+        number of new arbs."""
+        st = self.state
+        arbs = [a for a in _as_list(st.get("arbs")) if isinstance(a, dict)]
+        self._arb_recheck(now, watch, quotes, arbs)
+        day = _day(now)
+        seen = {a.get("id") for a in arbs}
+        found = 0
+        for key, (kind, members) in _arb_groups(watch).items():
+            legs = _arb_legs(members, quotes)
+            if legs is None:
+                continue
+            total = sum(leg["ask"] + leg["fee"] for leg in legs)
+            arb_id = f"{key}|{day}"
+            if total > 1.0 - ARB_MIN_EDGE + 1e-9 or arb_id in seen:
+                continue
+            seen.add(arb_id)
+            first = members[0]
+            name = str((first.get("event") if kind == "game" else None) or first.get("question") or first["slug"])
+            sizes = [leg["ask_size"] for leg in legs]
+            rec: dict[str, Any] = {
+                "id": arb_id, "at": now, "day": day, "key": key, "kind": kind, "name": name[:120],
+                "category": first.get("category"), "sport": first.get("sport"), "n": len(legs), "legs": legs,
+                "total": round(total, 6), "edge": round(1.0 - total, 6),
+                "min_size": min(s for s in sizes if s is not None) if None not in sizes else None,
+                "still_there": None,
+            }
+            rec["set"] = self._arb_buy(now, rec, members)
+            arbs.append(rec)
+            found += 1
+            self._event(now, f"No-lose set found: {name[:60]}: all {len(legs)} answers for ${total:.2f} (pays $1.00)",
+                        "good")
+            self._receipt("polydesk_arb_seen", {"id": arb_id, "kind": kind, "name": name[:80], "total": rec["total"],
+                                                "edge": rec["edge"], "min_size": rec["min_size"], "legs": legs,
+                                                "paper_bought": bool(rec["set"].get("bought"))})
+            log.info("polydesk_arb_seen kind=%s n=%d total=%.4f min_size=%s", kind, len(legs), total, rec["min_size"])
+        recent = set(sorted({str(a.get("day")) for a in arbs})[-ARB_DAYS:])
+        kept = [a for a in arbs if str(a.get("day")) in recent or _arb_open(a)]
+        done = [id(a) for a in kept if not _arb_open(a)]
+        drop = set(done[:max(0, len(kept) - ARB_KEEP)])
+        st["arbs"] = [a for a in kept if id(a) not in drop]
+        return found
+
+    def _arb_recheck(self, now: float, watch: list[dict[str, Any]], quotes: Mapping[str, Mapping[str, Any]],
+                     arbs: list[dict[str, Any]]) -> None:
+        """Was each arb not yet checked still buyable this round (real, or stale)? ``still_there`` is True only when
+        every leg is quoted OPEN at or under the ask recorded and the set still costs at most 1 - :data:`ARB_MIN_EDGE`,
+        fees included; False once a leg left the watch list; unknown (checked again next round) while a leg's quote
+        failed this round."""
+        watched = {m["slug"]: m for m in watch}
+        for rec in arbs:
+            if rec.get("still_there") is not None or float(_num(rec.get("at")) or now) >= now:
+                continue
+            legs = [leg for leg in _as_list(rec.get("legs")) if isinstance(leg, dict)]
+            if not legs or any(leg.get("slug") not in watched for leg in legs):
+                rec["still_there"], rec["checked_at"] = False, now
+                continue
+            if any(quotes.get(str(leg["slug"])) is None for leg in legs):
+                continue
+            total, ok = 0.0, True
+            for leg in legs:
+                q, m = quotes[str(leg["slug"])], watched[leg["slug"]]
+                ask, was = _num(q.get("best_ask")), _num(leg.get("ask"))
+                if ask is None or was is None or q.get("state") != OPEN_STATE or ask > was + 1e-9:
+                    ok = False
+                    break
+                total += ask + _fee(m["fee_coef"] if m.get("fee_coef") is not None else US_TAKER, ask)
+            rec["still_there"], rec["checked_at"] = ok and total <= 1.0 - ARB_MIN_EDGE + 1e-9, now
+
+    def _arb_buy(self, now: float, rec: Mapping[str, Any], members: list[dict[str, Any]]) -> dict[str, Any]:
+        """The paper set-buy: :data:`ARB_PAPER_SETS` share of every answer at its ask (one paper position per leg,
+        ``arb_key`` stamped; outside the paper caps: a set is one draw). None bought when a leg's market is already
+        held (positions are kept per market) or has a real order waiting. Never a real order."""
+        st = self.state
+        legs = rec["legs"]
+        if any(leg["slug"] in st["positions"] or leg["slug"] in self._pending_book() for leg in legs):
+            return {"bought": False, "status": None, "why": "a leg's market is already held"}
+        shares = float(ARB_PAPER_SETS)
+        for m, leg in zip(members, legs):
+            st["positions"][leg["slug"]] = {
+                "slug": leg["slug"], "question": m["question"], "category": m["category"], "side": "long",
+                "p_in": leg["ask"], "shares": shares, "fee_usd": leg["fee"] * shares, "cost_usd": leg["ask"] * shares,
+                "t_in": now, "end_ts": m["end_ts"], "live": False, "arb_key": rec["id"], "ask_size_in": leg["ask_size"],
+                "sport": m.get("sport"), "event": m.get("event"),
+            }
+        self._arb_book()["sets"] += 1
+        return {"bought": True, "status": "open", "sets": ARB_PAPER_SETS, "cost_usd": round(rec["total"] * shares, 6),
+                "results": {}, "payout_usd": None, "pnl_usd": None, "settled_at": None}
+
+    def _arb_leg(self, pos: Mapping[str, Any], value: float | None) -> None:
+        """One leg of an open set settled (``value``: the venue's settlement price; None: never settled in a week,
+        so it paid nothing): its payout kept on the set for :meth:`_arb_sets`."""
+        rec = next((a for a in _as_list(self.state.get("arbs"))
+                    if isinstance(a, dict) and a.get("id") == pos.get("arb_key") and _arb_open(a)), None)
+        if rec is None:
+            return
+        payout = float(_num(pos.get("shares")) or 0.0) * value if value is not None else 0.0
+        rec["set"].setdefault("results", {})[str(pos.get("slug"))] = {"value": value, "payout_usd": round(payout, 6)}
+
+    def _arb_sets(self, now: float) -> None:
+        """Book each open set whose legs have all left the book: its P&L (what its legs paid less what the set cost,
+        fees included) into ``arb_book``. A set that pays back less than its cost DISPROVES the no-lose claim for
+        that kind of question (a void or cancel rule, a mis-grouped market): one loud event and a
+        ``polydesk_arb_broken`` receipt. A leg that left without a result (a real position took its market) voids
+        the set, uncounted."""
+        st = self.state
+        for rec in _as_list(st.get("arbs")):
+            if not isinstance(rec, dict) or not _arb_open(rec):
+                continue
+            s, rid = rec["set"], rec.get("id")
+            legs = [leg for leg in _as_list(rec.get("legs")) if isinstance(leg, dict)]
+            if any(_as_dict(st["positions"].get(leg.get("slug"))).get("arb_key") == rid for leg in legs):
+                continue  # a leg still open
+            results, name = _as_dict(s.get("results")), str(rec.get("name") or "")[:60]
+            if any(str(leg.get("slug")) not in results for leg in legs):
+                s.update(status="void", settled_at=now)
+                self._event(now, f"No-lose set voided: {name} (a leg closed without a result; not counted)")
+                continue
+            payout = sum(float(_num(_as_dict(r).get("payout_usd")) or 0.0) for r in results.values())
+            cost = float(_num(s.get("cost_usd")) or 0.0)
+            pnl = payout - cost
+            sets = float(_num(s.get("sets")) or 1.0)
+            book = self._arb_book()
+            book["settled_sets"] += 1
+            book["pnl_usd"] += pnl
+            s.update(status="settled", payout_usd=round(payout, 6), pnl_usd=round(pnl, 6), settled_at=now,
+                     payout_per_set=round(payout / sets, 6))
+            if pnl >= -ARB_PAY_TOL:
+                self._event(now, f"No-lose set paid: {name}: ${payout:.2f} back for ${cost:.2f} ({pnl:+.2f} $, "
+                                 "practice)", "good")
+                continue
+            s["status"] = "broken"
+            book["broken"] += 1
+            self._event(now, f"No-lose set BROKEN: {name}: paid ${payout:.2f} for ${cost:.2f} ({pnl:+.2f} $, "
+                             "practice): not no-lose for this kind of question", "bad")
+            self._receipt("polydesk_arb_broken", {
+                "id": rid, "kind": rec.get("kind"), "name": name, "category": rec.get("category"),
+                "sport": rec.get("sport"), "cost_usd": cost, "payout_usd": payout, "pnl_usd": pnl,
+                "legs": [{"slug": leg.get("slug"), "ask": leg.get("ask"),
+                          "value": _as_dict(results.get(str(leg.get("slug")))).get("value")} for leg in legs]})
+            log.warning("polydesk_arb_broken kind=%s cost=%.4f payout=%.4f", rec.get("kind"), cost, payout)
 
     # ------------------------------------------------------------------ the risk manager
     def _paused(self, key: str) -> bool:
@@ -2001,18 +2243,21 @@ def panel_state(settings: Settings, now: float) -> dict[str, Any]:
     manager's view (:func:`guard_view`). ``real`` also carries the unconfirmed orders (``pending``, ``pending_usd``)
     and the loss stops' room if everything still at risk lost (``stop_room_usd``, :func:`real_room`); ``skips`` is
     today's count of the rule's picks not bought, or not with real money, by reason (:func:`skips_view`), ``sports``
-    each sport's real-money state, history verdict and practice record (:func:`sports_view`)."""
+    each sport's real-money state, history verdict and practice record (:func:`sports_view`). The no-lose sets'
+    paper legs are not the rule's positions: they are left out of every count above and shown in ``arbs``
+    (:func:`arbs_view`)."""
     st = load_state(state_path(settings))
+    positions = {k: p for k, p in st["positions"].items() if isinstance(p, dict) and not _is_arb(p)}
     enabled = bool(settings.polydesk_enabled)
     today = datetime.fromtimestamp(now, UTC).strftime("%Y-%m-%d")
     day = st["days"].get(today, {"pnl_usd": 0.0, "settled": 0, "won": 0})
     total = sum(float(d.get("pnl_usd") or 0.0) for d in st["days"].values())
     c = st["counters"]
-    open_n = len(st["positions"])
+    open_n = len(positions)
     live = st.get("mode") == "live"
     live_days = st.get("live_days") or {}
     live_day = live_days.get(today) or {}
-    real_open = [p for p in st["positions"].values() if p.get("live")]
+    real_open = [p for p in positions.values() if p.get("live")]
     real_settled = sum(int(d.get("settled") or 0) for d in live_days.values())
     real_won = sum(int(d.get("won") or 0) for d in live_days.values())
     real_total = float(st.get("live_pnl_total_usd") or 0.0)
@@ -2050,7 +2295,7 @@ def panel_state(settings: Settings, now: float) -> dict[str, Any]:
     }
     rule = rule_id(settings)
     since_rec = (st.get("by_rule") or {}).get(rule) or {}
-    since_open = [p for p in st["positions"].values() if p.get("rule") == rule]
+    since_open = [p for p in positions.values() if p.get("rule") == rule]
 
     def _since_book(book: str) -> dict[str, Any]:
         rec = since_rec.get(book) or {}
@@ -2104,7 +2349,7 @@ def panel_state(settings: Settings, now: float) -> dict[str, Any]:
                 "cost_usd": float(p.get("cost_usd") or 0.0),
             }
             # the real-money ones first (the 3D board shows the first three), each book newest first
-            for p in sorted(st["positions"].values(), key=lambda p: (not p.get("live"), -p["t_in"]))[:10]
+            for p in sorted(positions.values(), key=lambda p: (not p.get("live"), -p["t_in"]))[:10]
         ],
         "events": st.get("events", [])[:EVENTS_KEEP],
         "polls": int(c.get("polls") or 0),
@@ -2125,6 +2370,31 @@ def panel_state(settings: Settings, now: float) -> dict[str, Any]:
         "skips": skips_view(st, now),
         "sports": sports_view(settings, st),
         "real_sports_allowed": sorted(REAL_SPORTS_ALLOWED),
+        "arbs": arbs_view(st, now),
+    }
+
+
+def arbs_view(st: Mapping[str, Any], now: float) -> dict[str, Any]:
+    """The no-lose desk for the panel (paper only): today's (UTC) arbs found, bought on paper, checked again the next
+    round and still buyable then; the paper sets' all-time tally (``arb_book``: bought, open, settled, P&L, broken);
+    and the :data:`ARB_SHOWN` newest arbs, each ``{name, total, edge, min_size, still_there}``."""
+    arbs = [a for a in _as_list(st.get("arbs")) if isinstance(a, dict)]
+    today = [a for a in arbs if a.get("day") == _day(now)]
+    book = _as_dict(st.get("arb_book"))
+    newest = sorted(arbs, key=lambda a: -float(_num(a.get("at")) or 0.0))[:ARB_SHOWN]
+    return {
+        "today_seen": len(today),
+        "today_bought": sum(1 for a in today if _as_dict(a.get("set")).get("bought") is True),
+        "today_checked": sum(1 for a in today if isinstance(a.get("still_there"), bool)),
+        "today_still_there": sum(1 for a in today if a.get("still_there") is True),
+        "sets_paper": int(_num(book.get("sets")) or 0),
+        "open_sets": sum(1 for a in arbs if _arb_open(a)),
+        "settled_sets": int(_num(book.get("settled_sets")) or 0),
+        "pnl_usd": float(_num(book.get("pnl_usd")) or 0.0),
+        "broken": int(_num(book.get("broken")) or 0),
+        "last": [{"name": str(a.get("name") or ""), "total": _num(a.get("total")), "edge": _num(a.get("edge")),
+                  "min_size": _num(a.get("min_size")), "still_there": a.get("still_there")
+                  if isinstance(a.get("still_there"), bool) else None} for a in newest],
     }
 
 

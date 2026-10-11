@@ -143,7 +143,7 @@ def test_real_money_on_with_a_position_in_plain_words(ledger: Ledger, settings: 
         "line": "Real money: $20.38 cash at Polymarket and $0.95 in 1 open bet; down $1.78 since start, 6 of 8 "
                 "finished bets won.",
         "how": HOW_LIVE, "limits": LIMITS, "verdict": VERDICT_NO_EDGE, "research": RESEARCH_LINE,
-        "sports_line": SPORTS_LINE, "skips_line": "Nothing skipped yet today."}
+        "sports_line": SPORTS_LINE, "skips_line": "Nothing skipped yet today.", "arbs_line": None}
     assert real["verdict"] == ("This rule did not pass our tests for a real edge (proof that it wins over many bets), "
                                "so it trades only tiny real amounts with hard limits.")
     assert RESEARCH_LINE == "No strategy tested so far has passed our lab's test for a real edge."

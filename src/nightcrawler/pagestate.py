@@ -16,7 +16,7 @@ Schema (lists capped: members 9, events <= 5, open trades <= 10, closed trades 1
                          "paused_kind": "risk"|"day"|"full"|"room"|null, "at_risk_usd": float|null,
                          "open_bets": int|null, "cash_usd": float|null, "result": str|null, "line",
                          "how": str|null, "limits": str|null, "verdict": str|null, "research": str|null,
-                         "sports_line": str|null, "skips_line": str|null},
+                         "sports_line": str|null, "skips_line": str|null, "arbs_line": str|null},
                 "pretend": {"label": "Practice (pretend money)", "line", "body"},
                 "now": [str] (<= 3),
                 "team": [{"id", "name", "job", "plain_role", "status_word": "working"|"waiting"|"idle"|"stuck",
@@ -58,7 +58,11 @@ Schema (lists capped: members 9, events <= 5, open trades <= 10, closed trades 1
                                "sports": [{"sport", "real": "allowed"|"blocked", "history", "why",
                                            "paper": {"settled", "won", "pnl_usd", "verdict", "phrase"}|null,
                                            "flagged": bool}],
-                               "real_sports_allowed": [sport]}|null,
+                               "real_sports_allowed": [sport],
+                               "arbs": {"today_seen", "today_bought", "today_checked", "today_still_there",  # ARBS
+                                        "sets_paper", "open_sets", "settled_sets", "pnl_usd", "broken",
+                                        "last": [{"name", "total", "edge", "min_size": float|null,
+                                                  "still_there": bool|null}] (<= 5)}}|null,
                 "trend": {"mode": "paper", "label": "Paper money (pretend)", "as_of": ts|null,   # see TREND; null: off
                           "sleeve_usd", "equity_usd", "today_usd", "since_start_usd", "hold_since_start_usd",
                           "in_market": {"BTC": bool, "ETH": bool, "SOL": bool}, "started": "YYYY-MM-DD"|null,
@@ -167,6 +171,10 @@ the same for a non-sports question's answers (a price range's buckets), ``never_
 market not yet traded near the price, and the desk's other reasons), each market or game once a UTC day;
 ``sports`` is each sport with its real-money state (no sport is allowed: lab 4's history test passed none), the
 history's verdict and reason (:data:`nightcrawler.polydesk.SPORT_HISTORY`) and its practice record.
+ARBS: ``arbs`` is the desk's no-lose check (``polydesk.arbs_view``, PRACTICE only, never real money): today's (UTC)
+questions whose every answer cost under $1 together, fees included (``today_seen``), how many it bought on paper,
+checked again a round later and found still buyable, the paper sets' all-time tally (bought, open, settled, P&L in
+pretend dollars, ``broken``: sets that paid back less than they cost) and the newest five; each number type-checked.
 
 TREND (:func:`trend_desk`): the trend desk's paper book (:func:`nightcrawler.trenddesk.panel_state`, its state file
 only), a forward test of lab 3's 50-day trend rule on BTC, ETH and SOL with a pretend sleeve. PAPER ONLY: the desk
@@ -229,7 +237,8 @@ loss stop smaller than one bet if every open bet lost, which is waiting too; ``p
 ``day``, ``full`` or ``room``; else null), ``sports_line`` (why real money skips sports, from the history verdicts
 :data:`nightcrawler.polydesk.SPORT_HISTORY` only, naming any sport ever allowed) and ``skips_line`` (what the desk
 skipped today and why, from its own counts, the parts that are not zero), the desk's hard limits from its settings
-and the lab's verdict on its
+and ``arbs_line`` (the no-lose check, "No-lose check (practice): ...", only on a day it found one; null
+otherwise), the desk's hard limits from its settings and the lab's verdict on its
 rule (:data:`nightcrawler.polydesk.RULE_LAB_PASSED`: no edge, so tiny amounts only; while it bets no real money, a
 verdict that says so instead), plus the research line while no strategy has passed its locked test. Off, the line
 says so with the desk's own reason (``status``) when the owner asked for live, and what is still at the venue; the
@@ -344,6 +353,7 @@ from nightcrawler.models import LAMPORTS_PER_SOL, EquityPoint
 from nightcrawler.office3d import CAST3D
 from nightcrawler.page import LEARNING_RULE, MEMBERS, REFRESH_S
 from nightcrawler.polydesk import (
+    ARB_SHOWN,
     REAL_SPORTS_ALLOWED,
     RULE_LAB_PASSED,
     SKIP_REASONS,
@@ -1079,7 +1089,30 @@ def polymarket_desk(settings: Settings, now: float) -> dict[str, Any] | None:
         "skips": _desk_skips(desk.get("skips")),
         "sports": _desk_sports(desk.get("sports")),
         "real_sports_allowed": sorted({s for s in desk.get("real_sports_allowed") or [] if s in SPORT_HISTORY}),
+        "arbs": _desk_arbs(desk.get("arbs"), _Text(settings)),
     }
+
+
+#: ``money.polymarket.arbs``' whole-number counts (``polydesk.arbs_view``).
+ARB_COUNTS = ("today_seen", "today_bought", "today_checked", "today_still_there", "sets_paper", "open_sets",
+              "settled_sets", "broken")
+
+
+def _desk_arbs(raw: Any, text: _Text) -> dict[str, Any]:
+    """``money.polymarket.arbs``: the no-lose check (``polydesk.arbs_view``, practice only), type-checked: whole
+    counts (a missing one is zero), the paper sets' P&L, and the newest arbs (a name redacted then clipped, the total
+    and edge as numbers, the smallest ask size or null, still there a round later true / false / null)."""
+    a = _xp_map(raw)
+    last = []
+    for row in _xp_list(a.get("last"))[:ARB_SHOWN]:
+        r = _xp_map(row)
+        total, edge, there = _num(r.get("total")), _num(r.get("edge")), r.get("still_there")
+        if total is None or edge is None or not isinstance(r.get("name"), str):
+            continue
+        last.append({"name": text(r["name"], 80), "total": total, "edge": edge, "min_size": _num(r.get("min_size")),
+                     "still_there": there if isinstance(there, bool) else None})
+    return {**{key: _count(a.get(key)) or 0 for key in ARB_COUNTS}, "pnl_usd": _num(a.get("pnl_usd")) or 0.0,
+            "last": last}
 
 
 def _desk_skips(raw: Any) -> dict[str, dict[str, int]]:
@@ -1808,6 +1841,13 @@ _EVENT_TEMPLATES: tuple[tuple[str, re.Pattern[str], str], ...] = tuple(
         ("predict", r"Risk manager paused (?P<what>.+?): (?P<why>.+)",
          "the risk manager paused {what}: its record is losing ({why})"),
         ("predict", r"Paper book full .*", "the practice book is full: no new pretend bets until some finish"),
+        # the no-lose check (practice only)
+        ("predict", r"No-lose set found: (?P<q>.+): all (?P<n>\d+) answers for \$(?P<sum>[\d.]+) \(pays \$1\.00\)",
+         "practice found a question whose {n} answers cost ${sum} together and pay $1 whatever happens: {q}"),
+        ("predict", r"No-lose set paid: (?P<q>.+?): \$(?P<pay>[\d.]+) back for \$(?P<cost>[\d.]+) .*",
+         "a practice no-lose set paid ${pay} back for ${cost} (pretend money): {q}"),
+        ("predict", r"No-lose set BROKEN: (?P<q>.+?): paid \$(?P<pay>[\d.]+) for \$(?P<cost>[\d.]+) .*",
+         "a practice no-lose set paid only ${pay} for ${cost} (pretend money): not no-lose after all · {q}"),
         # a candidate row only (teamroom._crawler: the coin, then its age, worth or feed); anything else as written
         ("crawler", r"(?P<coin>[^·]+?) · (?P<age>[\d.]+ (?:min|h) old)(?: · .*)?", "found a new coin: {coin} ({age})"),
         ("crawler", r"(?P<coin>[^·]+?) · (?:worth [^·]+|found on [^·]+)(?: · .*)?", "found a new coin: {coin}"),
@@ -2008,6 +2048,35 @@ def _skips_line(desk: Mapping[str, Any], *, live: bool) -> str:
     return f"Today it {said}."
 
 
+def _arbs_line(desk: Mapping[str, Any]) -> str | None:
+    """``plain.real.arbs_line``: the no-lose check in one sentence, from the desk's own counts
+    (``money.polymarket.arbs``), only on a UTC day it found one (else None). Always "practice": no real money."""
+    arbs = _xp_map(desk.get("arbs"))
+
+    def n(key: str) -> int:
+        return _count(arbs.get(key)) or 0
+
+    seen, bought, checked, there, broken = (n("today_seen"), n("today_bought"), n("today_checked"),
+                                            n("today_still_there"), n("broken"))
+    if not seen:
+        return None
+    one = seen == 1
+    found = f"found {seen} question{'' if one else 's'} whose every answer cost under $1 together today, fees included"
+    parts = [found]
+    if bought == seen:
+        parts.append("practice bought " + ("the set" if one else "both sets" if seen == 2 else f"all {seen} sets"))
+    elif bought:
+        parts.append(f"practice bought {bought} of the sets")
+    else:
+        parts.append("practice bought none (an answer was already held)")
+    if checked:
+        parts.append(f"{there if there else 'none'} {'was' if there <= 1 else 'were'} still there at the next look")
+    if broken:
+        sets = "1 practice set paid back less than it" if broken == 1 else f"{broken} practice sets paid back less than they"
+        parts.append(f"{sets} cost, so that kind of question is not no-lose")
+    return f"No-lose check (practice): {'; '.join(parts)}."
+
+
 def _desk_silent(settings: Settings, desk: Mapping[str, Any] | None) -> bool:
     """The owner asked for live (``POLYDESK_MODE=live``) but the desk has said nothing yet: no state that says live, no
     reason of its own why not, no round finished (a missing or unreadable state file reads as an empty paper one).
@@ -2082,6 +2151,8 @@ def _plain_real(settings: Settings, money: Mapping[str, Any], desk: Mapping[str,
         # why real money skips sports (lab 4's history), and what the desk skipped today and why (its own counts)
         "sports_line": _sports_line() if desk is not None else None,
         "skips_line": _skips_line(desk, live=desk_live) if desk is not None else None,
+        # the no-lose check (practice only), on a day it found a question whose every answer cost under $1
+        "arbs_line": _arbs_line(desk) if desk is not None else None,
     }
 
 
