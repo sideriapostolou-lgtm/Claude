@@ -22,6 +22,7 @@ from tests.test_world_records import _REDS
 
 needs_node = pytest.mark.skipif(shutil.which("node") is None, reason="Node is not installed")
 _HEADER, _DIRECTOR = "= THE HEARTS (team hearts)", "= THE LIVE DIRECTOR: an always-on broadcast"
+_TOWN = "= THE TOWN (the Arena)"  # (the next section: tests/test_world_town.py)
 
 
 @pytest.fixture(scope="module")
@@ -36,7 +37,7 @@ def module(page: str) -> str:
 
 @pytest.fixture(scope="module")
 def section(module: str) -> str:
-    return module[module.index(_HEADER):module.index(_DIRECTOR)]
+    return module[module.index(_HEADER):module.index(_TOWN)]
 
 
 @pytest.fixture(scope="module")
