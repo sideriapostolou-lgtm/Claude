@@ -31,6 +31,7 @@ from tests.test_world_records import _REDS, _film, _helpers
 needs_node = pytest.mark.skipif(shutil.which("node") is None, reason="Node is not installed")
 _HEADER, _DIRECTOR, _LOOP = "= THE GOAL (town goal)", "= THE LIVE DIRECTOR: an always-on broadcast", "= THE LOOP (paused"
 _RECORDS = "THE RECORD ROOM (Builder B)"
+_TOWN = "= THE TOWN (the Arena)"  # (the section after THE HEARTS: tests/test_world_town.py)
 #: the gambler's words (H6), never in the section's own copy either
 _BANNED = re.compile(r"win it back|make it back|double (?:down|up)|\ball in\b|jackpot|\bluck(?:y)?\b|gambl|hurry|"
                      r"need to win|must win|push harder|bet more|deadline|skilled|genius|expert|chase it",
@@ -50,7 +51,7 @@ def module(page: str) -> str:
 @pytest.fixture(scope="module")
 def section(module: str) -> str:
     start = module.index(_HEADER)
-    return module[module.rindex("\n", 0, start) + 1:module.index(_DIRECTOR)]
+    return module[module.rindex("\n", 0, start) + 1:module.index(_TOWN)]
 
 
 @pytest.fixture(scope="module")
