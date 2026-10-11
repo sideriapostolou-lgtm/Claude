@@ -298,12 +298,18 @@ def fetch_source(settings: Settings, follow: Follow, now: float) -> bool:
         return False
     try:
         reply = requests.get(follow.source, timeout=REMOTE_TIMEOUT_S, headers={"User-Agent": "Mozilla/5.0"})
-    except requests.RequestException:
+    except requests.RequestException as exc:
+        log.info("followdesk_source_unread desk=%s reason=%s", follow.key, type(exc).__name__)
         return False
     if reply.status_code != 200 or len(reply.content) > SOURCE_MAX_BYTES:
+        log.info("followdesk_source_unread desk=%s reason=http_%s bytes=%d", follow.key, reply.status_code,
+                 len(reply.content))
         return False
-    picks = action_picks(reply.content.decode("utf-8", errors="replace"))
-    if not picks:
+    text = reply.content.decode("utf-8", errors="replace")
+    picks = action_picks(text)
+    if not picks:  # a quiet day (no NHL game pick on his page), or a page without its data
+        log.info("followdesk_source_unread desk=%s reason=%s", follow.key,
+                 "no_nhl_picks" if "__NEXT_DATA__" in text else "no_page_data")
         return False
     path = source_path(settings, follow)
     try:
@@ -599,10 +605,7 @@ class MarcoDesk:
                 log.info("followdesk_remote_unread desk=%s", self.follow.key)
         if self.follow.source and now - self._sourced_at >= SOURCE_EVERY_S:
             self._sourced_at = now
-            sourced = fetch_source(self.settings, self.follow, now)
-            if not sourced:
-                log.info("followdesk_source_unread desk=%s", self.follow.key)
-            ok = ok or sourced
+            ok = fetch_source(self.settings, self.follow, now) or ok
         return ok
 
     # ------------------------------------------------------------------ lifecycle
