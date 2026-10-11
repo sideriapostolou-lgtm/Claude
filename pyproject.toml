@@ -37,8 +37,9 @@ where = ["src"]
 # (with the meshopt decoder), the real cast and hero props, the move library, its manifest and the modules that
 # play it (nightcrawler.world3d; served at /office/assets/addons/..., cast_*.glb, prop_*.glb, clips.glb,
 # cast_manifest.json, cast_rig.js and cast_motion.js).
+# Marco's loves (nightcrawler.marcodesk): the picks file the weekly transcription routine writes.
 "nightcrawler" = ["office_art/*.jpg", "office_assets/*.js", "office_assets/*.json", "office_assets/addons/**/*.js",
-                  "office_assets/*.glb"]
+                  "office_assets/*.glb", "data/*.json"]
 
 [tool.setuptools.dynamic]
 version = { attr = "nightcrawler.__version__" }

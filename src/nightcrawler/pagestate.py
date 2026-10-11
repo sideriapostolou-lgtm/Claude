@@ -18,6 +18,7 @@ Schema (lists capped: members 9, events <= 5, open trades <= 10, closed trades 1
                          "how": str|null, "limits": str|null, "verdict": str|null, "research": str|null,
                          "sports_line": str|null, "skips_line": str|null, "arbs_line": str|null},
                 "pretend": {"label": "Practice (pretend money)", "line", "body"},
+                "marco_line": str|null,                               # Marco's loves desk in words: MARCO
                 "now": [str] (<= 3),
                 "team": [{"id", "name", "job", "plain_role", "status_word": "working"|"waiting"|"idle"|"stuck",
                           "members": [member id], "latest": str|null, "latest_ts": float|null,
@@ -70,7 +71,12 @@ Schema (lists capped: members 9, events <= 5, open trades <= 10, closed trades 1
                           "sleeve_usd", "equity_usd", "today_usd", "since_start_usd", "hold_since_start_usd",
                           "in_market": {"BTC": bool, "ETH": bool, "SOL": bool}, "started": "YYYY-MM-DD"|null,
                           "problem": str|null, "lab": {"since_start_usd", "hold_since_start_usd"}|null,
-                          "reset_from": str|null}|null},
+                          "reset_from": str|null}|null,
+                "marco": {"mode": "paper", "label": "Practice (pretend money)", "as_of": ts|null,  # see MARCO; null: off
+                          "episode": {"id", "title", "published", "source_url"}|null, "loves", "ticket_usd",
+                          "picks": [{"rank", "love", "team", "opponent", "kind", "line", "quote", "game_date",
+                                     "label", "status", "price", "kickoff", "event", "pnl_usd"}] (<= 12),
+                          "record": {"picks", "won", "lost", "even", "pnl_usd"}}|null},
       "town": {"label", "cost_per_day_usd", "cost_today_usd", "cost_since_start_usd": float|null,  # see TOWN
                "income_today_usd": float|null, "income_since_start_usd": float|null,
                "covered_today": bool|null, "covered_since_start": bool|null, "line",
@@ -204,6 +210,14 @@ pretend): in BTC and SOL, out of ETH; since start +$1.20 vs holding the three (b
 +$0.40"; "record restarted <day>" after the label while ``reset_from`` is set). Its figures are never added to the
 SOL wallet's, the Polymarket desk's or the town's income: the town's own line and bars are untouched. Null when the
 desk is off (``TRENDDESK_ENABLED``) or its state cannot be read.
+
+MARCO (:func:`marco_desk`): Marco's loves desk (:mod:`nightcrawler.marcodesk`, its state file and the packaged picks
+file only), PAPER ONLY: the picks "Million Dollar Marco" says he loves, each bought once on paper at the ask with a
+$20 practice ticket and settled at the venue's price. Each pick's ``status`` is one of
+:data:`nightcrawler.marcodesk.STATUSES` ("not on Polymarket US" for a parlay, a prop or a line the venue does not
+list; "not a love" for one he only mentioned), ``price`` the price it was bought at (null when not bought). ``record``
+counts settled picks and their pretend P&L. ``plain.marco_line`` says it in one fixed sentence, always "practice,
+pretend money", numbers from the state only. Null when the Polymarket desk is off or the state holds junk.
 
 TROPHIES (``trades.summary``, the 3D world's trophy shelf): ``closed`` is capped at 10, so the summary counts EVERY
 closed trade of the Solana bot in this mode (``won``: a positive result in SOL, ``lost``: a negative one, ``even``,
@@ -354,7 +368,7 @@ from collections.abc import Callable, Mapping
 from pathlib import Path
 from typing import Any
 
-from nightcrawler import __version__, hearts, towngoal, trenddesk
+from nightcrawler import __version__, hearts, marcodesk, towngoal, trenddesk
 from nightcrawler.botwallet import saved_balance, wallet_configured
 from nightcrawler.broker.keystore import KV_GENERATED, unused_wallet
 from nightcrawler.clock import utc_day
@@ -387,7 +401,7 @@ __all__ = ["EXPERIENCE_CAVEAT", "EXPERIENCE_CHIPS", "EXPERIENCE_KINDS", "EXPERIE
            "LEARNING_RULE", "MEMBERS", "PAPER_LABEL", "PLAIN_ABOUT", "PLAIN_FINISHED_MAX", "PLAIN_JOBS",
            "PLAIN_MEMBER_JOBS", "PLAIN_TICKER_MAX", "PLAIN_TICKER_WINDOW_S", "PLAYBOOK_PATH", "PRETEND_LABEL",
            "REAL_LABEL", "SHELF_MAX", "STALE_BANNER_S", "TOWN_MONTH_DAYS", "WALLET_MAX_AGE_S", "build_page_state",
-           "experience_card", "goal_books", "goal_inputs", "hearts_block", "hearts_inputs", "learning_card", "plain_event", "plain_finished",
+           "experience_card", "goal_books", "goal_inputs", "hearts_block", "hearts_inputs", "learning_card", "marco_desk", "marco_line", "plain_event", "plain_finished",
            "plain_ticker", "plain_words", "polymarket_desk", "real_caps", "recap_state", "town_goal_block",
            "town_ledger", "trend_desk"]
 
@@ -1350,6 +1364,80 @@ def _trend_line(trend: Mapping[str, Any] | None) -> dict[str, Any] | None:
     if trend.get("problem"):
         line += "; behind: the newest daily close is not booked yet"
     return {"line": line}
+
+
+# =========================================================================== Marco's loves desk
+
+#: ``money.marco``'s pick rows at most (the newest episode's picks and any older one still open).
+MARCO_PICKS_MAX = 12
+
+
+def marco_desk(settings: Settings, now: float) -> dict[str, Any] | None:
+    """Marco's loves desk for the money card (MARCO in the module docstring), type-checked: its own figures, never
+    added to anything else. None when the Polymarket desk is off or the state holds junk. Never raises."""
+    if not settings.polydesk_enabled:
+        return None
+    try:
+        raw = marcodesk.panel_state(settings, now)
+    except (KeyError, TypeError, ValueError, AttributeError, OSError) as exc:
+        log.warning("marcodesk_panel_failed error=%s", type(exc).__name__)
+        return None
+    record = _xp_map(raw.get("record"))
+    counts = {key: _count(record.get(key)) for key in ("picks", "won", "lost", "even")}
+    pnl = _num(record.get("pnl_usd"))
+    if any(value is None for value in counts.values()) or pnl is None or not math.isfinite(pnl):
+        return None
+    rows = []
+    for row in _xp_list(raw.get("picks")):
+        if not isinstance(row, Mapping) or row.get("status") not in marcodesk.STATUSES:
+            continue
+        if row.get("kind") not in marcodesk.KINDS or _count(row.get("rank")) is None:
+            continue
+        price = _num(row.get("price"))
+        pnl_row = _num(row.get("pnl_usd"))
+        rows.append({"rank": _count(row.get("rank")), "love": row.get("love") is True,
+                     "team": _clip(str(row.get("team") or ""), 60),
+                     "opponent": _clip(row["opponent"], 60) if isinstance(row.get("opponent"), str) else None,
+                     "kind": row["kind"], "line": _clip(str(row.get("line") or ""), 20),
+                     "quote": _clip(str(row.get("quote") or ""), TEXT_MAX),
+                     "game_date": _clip(str(row.get("game_date") or ""), 10),
+                     "label": _clip(str(row.get("label") or ""), 80), "status": row["status"],
+                     "price": price if price is not None and 0.0 < price < 1.0 else None,
+                     "kickoff": _num(row.get("kickoff")),
+                     "event": _clip(row["event"], 80) if isinstance(row.get("event"), str) else None,
+                     "pnl_usd": pnl_row if pnl_row is not None and math.isfinite(pnl_row) else None})
+    episode = raw.get("episode")
+    if isinstance(episode, Mapping):
+        episode = {"id": _clip(str(episode.get("id") or ""), 60), "title": _clip(str(episode.get("title") or ""), 120),
+                   "published": _num(episode.get("published")),
+                   "source_url": _clip(str(episode.get("source_url") or ""), 200)}
+    else:
+        episode = None
+    return {"mode": "paper", "label": PRETEND_LABEL, "as_of": _num(raw.get("as_of")), "episode": episode,
+            "loves": _count(raw.get("loves")) or 0, "ticket_usd": _num(raw.get("ticket_usd")),
+            "picks": rows[:MARCO_PICKS_MAX], "record": {**counts, "pnl_usd": pnl}}
+
+
+def marco_line(marco: Mapping[str, Any] | None) -> str | None:
+    """``plain.marco_line``: Marco's loves in one fixed sentence, always practice and pretend, numbers from the state
+    only ("Marco's loves (practice, pretend money): 3 picks this week; Packers moneyline bought at 0.48; record 2-1,
+    +$6.40."). None when the desk is off or there is no episode yet."""
+    if marco is None or marco.get("episode") is None:
+        return None
+    n = int(marco.get("loves") or 0)
+    parts = [f"Marco's loves (practice, pretend money): {n} pick{'' if n == 1 else 's'} this week"]
+    bought = [row for row in marco["picks"] if row["price"] is not None and row["status"] in marcodesk.HELD]
+    if bought:
+        parts.append(", ".join(f"{row['label']} bought at {row['price']:.2f}" for row in bought[:4]))
+    else:
+        parts.append("nothing bought yet")
+    record = marco["record"]
+    if record["picks"]:
+        even = f"-{record['even']}" if record["even"] else ""
+        parts.append(f"record {record['won']}-{record['lost']}{even}, {_signed(record['pnl_usd'])}")
+    else:
+        parts.append("no results yet")
+    return "; ".join(parts) + "."
 
 
 # =========================================================================== the town
@@ -2429,6 +2517,7 @@ def build_page_state(ledger: Any, settings: Settings, now: float, engine_status:
     desk = polymarket_desk(settings, now)  # the Polymarket desk's books, apart from the SOL wallet (never summed)
     trend = trend_desk(settings, now)  # the trend desk's paper book, apart from everything else (never summed)
     money = _money(settings, state["equity"], point, _withdrawn(ledger, settings, point, now), desk, trend)
+    money["marco"] = marco_desk(settings, now)  # Marco's loves (paper only), apart from everything else (never summed)
     for m in members:  # Rook's risk wall: the desk's real money against its hard limits beside the panel's numbers
         if m["id"] == "risk" and isinstance(m.get("risk_wall"), dict):
             m["risk_wall"]["real_caps"] = real_caps(settings, desk)
@@ -2468,6 +2557,7 @@ def build_page_state(ledger: Any, settings: Settings, now: float, engine_status:
         "about": {"version": __version__, "uptime_s": team["engine"]["uptime_s"],
                   "commit": (deploy or {}).get("commit"), "started_at": team["engine"]["started_at"]},
     }
+    out["plain"]["marco_line"] = marco_line(money["marco"])  # MARCO: one fixed sentence, practice only
     # the town's goal (GOAL): display only, from the figures above; a failure shows no goal at all, never a zero
     try:
         live_days, today_pnls = goal_books(ledger, settings, now)
