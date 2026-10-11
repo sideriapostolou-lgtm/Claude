@@ -175,3 +175,15 @@ def test_the_page_shows_the_arena_as_practice(tmp_path: Path) -> None:
     assert block["events"][0]["text"].endswith("practice).") and block["today"]["buys"] == 1
     off = Settings.from_env({"DATA_DIR": str(tmp_path), "POLYDESK_ENABLED": "0"})
     assert arena_town(off, NOW) is None
+
+
+def test_the_towns_result_moves_with_the_bids(tmp_path: Path) -> None:
+    town = _town(tmp_path, _genes(tp=0.40, sl=0.60, hold_h=72))
+    m = _market("btc-up", hours=20)
+    town.poll(NOW, markets=[m], quotes={"btc-up": _q(0.49, 0.50)})
+    pos = next(r for r in town.state["residents"].values() if r["positions"])["positions"]["btc-up"]
+    town.poll(NOW + 60, markets=[m], quotes={"btc-up": _q(0.60, 0.61)})  # still held: marked at the new bid
+    panel = A.panel_state(town.settings, NOW + 70)
+    assert panel["open_bets"] == 1
+    assert panel["result_usd"] == pytest.approx(pos["shares"] * 0.60 - pos["cost_usd"], abs=0.01)
+    assert "the town's trading +$" in A.arena_line(panel) and "1 bet open" in A.arena_line(panel)

@@ -45,17 +45,17 @@ log = logging.getLogger("nightcrawler.arena")
 
 STATE_VERSION = 1
 LABEL = "Practice (pretend money)"
-POLL_S = 120.0
+POLL_S = 60.0
 FIRST_POLL_DELAY_S = 45.0
 UNIVERSE_EVERY_S = 15 * 60.0  # the market lists, read again at most this often
-QUOTES_PER_ROUND = 40  # markets quoted per round besides the ones held (a rotating sample of the lists)
+QUOTES_PER_ROUND = 80  # markets quoted per round besides the ones held (a rotating sample of the lists)
 SETTLE_EVERY_S = 600.0  # an ended market's settlement, asked at most this often
 VOID_AFTER_S = 7 * 86_400.0  # an ended market never settled this long: the position is closed at its cost
 POPULATION = 24
 START_CASH = 20.0
 RENT_USD = 1.00  # paid by every resident at each new UTC day (20 days of rent in its start cash)
 BROKE_USD = 1.0  # below this (cash plus positions at the bid) a resident cannot trade: evicted at once
-MAX_POSITIONS = 2  # per resident
+MAX_POSITIONS = 3  # per resident
 MIN_TICKET_USD = 0.50
 COOLDOWN_S = 30 * 60.0  # a resident does not buy back a market it sold this recently
 CANDIDATE_DAYS = 7
@@ -289,6 +289,10 @@ class Arena:
         self._fill_homes(now)
         st["last_ok"] = now
         self._save()
+        today = self._today(now)
+        log.info("arena_round residents=%d quotes=%d buys=%d sales=%d evicted=%d today_buys=%d today_sales=%d "
+                 "today_pnl=%.2f", len(st["residents"]), len(quotes), opened, closed, evicted, today["buys"],
+                 today["trades"], float(today["pnl_usd"]))
         return {"opened": opened, "closed": closed, "evicted": evicted}
 
     def _today(self, now: float) -> dict[str, Any]:
@@ -403,6 +407,7 @@ class Arena:
                 _, bid = side_prices(q, pos["side"])
                 if bid is None or bid <= 0.0:
                     continue
+                pos["mark"], pos["mark_at"] = bid, now  # what it would sell for now (the page's live worth)
                 why = None
                 if bid >= pos["price"] + float(genes["tp"]):
                     why = "took profit"
@@ -490,13 +495,22 @@ class Arena:
 # ---------------------------------------------------------------------- the panel
 def panel_state(settings: Settings, now: float, leaders: int = 5) -> dict[str, Any]:
     """What the page shows (``money.arena``), from the state file only (no network): the town's counts, today's,
-    the leaders (by money, positions at their cost), the candidates, the newest events and evictions."""
+    the leaders (by money: each position at its last bid, its cost before one was seen), the town's trading result
+    since the start (``result_usd``: every trade closed, by residents and by the evicted, plus the open positions at
+    their last bid; rent apart), the open bets, the candidates, the newest events and evictions."""
     st = load_state(state_path(settings))
     rows = []
+    open_bets, unrealized, realized = 0, 0.0, 0.0
     for res in st["residents"].values():
         if not isinstance(res, dict) or not isinstance(res.get("genes"), dict):
             continue
-        held = sum(float(p.get("cost_usd") or 0.0) for p in (res.get("positions") or {}).values())
+        positions = [p for p in (res.get("positions") or {}).values() if isinstance(p, dict)]
+        worth = [float(p["shares"]) * float(p["mark"]) if polydesk._num(p.get("mark")) is not None else float(
+            p.get("cost_usd") or 0.0) for p in positions]
+        held = sum(worth)
+        open_bets += len(positions)
+        unrealized += held - sum(float(p.get("cost_usd") or 0.0) for p in positions)
+        realized += float(res.get("pnl_usd") or 0.0)
         money = float(res.get("cash") or 0.0) + held
         days = (now - float(res.get("born") or now)) / 86_400.0
         profit = money - START_CASH  # rent already paid out of the cash
@@ -506,7 +520,9 @@ def panel_state(settings: Settings, now: float, leaders: int = 5) -> dict[str, A
                      "candidate": days >= CANDIDATE_DAYS and int(res.get("trades") or 0) >= CANDIDATE_TRADES
                      and profit > 0})
     rows.sort(key=lambda r: -r["money_usd"])
+    realized += sum(float(g.get("pnl_usd") or 0.0) for g in st["grave"] if isinstance(g, dict))
     return {"label": LABEL, "as_of": st.get("last_ok"), "population": len(rows), "rent_usd": RENT_USD,
+            "result_usd": round(realized + unrealized, 2), "open_bets": open_bets,
             "start_cash": START_CASH, "town": st["town"], "today": st["today"] if st["today"].get("day") == _day(
                 now) else {"day": _day(now), "born": 0, "evicted": 0, "buys": 0, "trades": 0, "pnl_usd": 0.0},
             "leaders": rows[:leaders], "candidates": [r for r in rows if r["candidate"]][:leaders],
@@ -524,6 +540,11 @@ def arena_line(panel: Mapping[str, Any] | None) -> str | None:
     line = (f"The Arena (practice money): {panel['population']} traders paying ${float(panel['rent_usd']):.2f} rent "
             f"a day; today {buys} buy{'' if buys == 1 else 's'}, {sales} sale{'' if sales == 1 else 's'} and "
             f"{evicted} eviction{'' if evicted == 1 else 's'}")
+    result = polydesk._num(panel.get("result_usd"))
+    if result is not None:
+        sign = "+" if result >= 0 else "-"
+        n = int(panel.get("open_bets") or 0)
+        line += f"; the town's trading {sign}${abs(result):.2f} so far, {n} bet{'' if n == 1 else 's'} open"
     leaders = panel.get("leaders") or []
     if leaders:
         top = leaders[0]
