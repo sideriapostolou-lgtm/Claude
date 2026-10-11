@@ -390,6 +390,81 @@ def test_the_first_visit_card_says_three_things_from_the_data(pure: str, section
     assert "para(cineIntroBody, L.about);" in opener and 'para(cineIntroBody, L.money, "money");' in opener
     assert "cineIntroLines(plain, CINE.arena)" in opener
     assert "CINE.arena = !!(d && d.money && d.money.arena);" in _js_body(section, "  function cineOnData(")
+    # (the first poll opens the card from apply(), before the bus says "data": the card reads the Arena from the page)
+    assert opener.split("\n")[2].strip() == "CINE.arena = !!(data && data.money && data.money.arena);"
+
+
+@needs_node
+def test_the_first_visit_card_names_the_arena_on_the_very_first_poll(pure: str, section: str, module: str,
+                                                                       states: dict[str, dict[str, Any]], tmp_path: Path) -> None:
+    """The page's own order on its first answer: apply() keeps the page (data), opens the card (openGuide ->
+    cineIntroOpen), and only then says "data" on the bus (cineOnData). With an Arena in that very first answer the card
+    says "except in the Arena town"; without one it does not."""
+    apply = _js_body(module, "  function apply(d) {")
+    assert apply.index("data = d;") < apply.index("openGuide();") < apply.index('BUS.emit("data", d, first);')
+    fns = _js_body(module, "  function openGuide() {") + "\n" + _js_body(section, "  function cineIntroOpen(")
+    page = json.loads(json.dumps(states["winning"]))
+    page["money"]["arena"] = {"label": "pretend", "population": 24, "rent_usd": 1.0, "residents": [], "events": []}
+    bare = json.loads(json.dumps(states["winning"]))
+    bare["money"].pop("arena", None)
+    out = _pure_run(pure, """
+const made = [];
+const document = { createElement: function (t) { const n = { tag: t, kids: [], className: "", textContent: "", appendChild: function (c) { this.kids.push(c); } }; made.push(n); return n; },
+                   createTextNode: function (t) { return { textContent: t }; } };
+const cineIntroBody = { kids: [], set textContent(v) { this.kids = []; }, appendChild: function (c) { this.kids.push(c); } };
+const cineIntroEl = { hidden: true }, setTimeout = function () { return 1; }, clearTimeout = function () {};
+const cineIntroSeen = function () { return false; }, cineIntroClose = function () {}, CINE_INTRO_MS = 30000;
+const closePanel = function () {}, renderGuide = function () {}, armGuide = function () {}, guideDots = function () {};
+function para(parent, text, cls) { if (!text) return null; const q = { tag: "p", className: cls || "", textContent: text }; parent.appendChild(q); return q; }
+let data = null, plain = null, CINE = null;
+""" + fns + """
+const said = function (d) {
+  CINE = { on: true, intro: false, introDone: false, introTimer: 0, arena: false };
+  data = d; plain = d.plain; openGuide();  // (apply(): the page kept, then the card, then the bus)
+  const money = cineIntroBody.kids.filter(function (k) { return k.className === "money"; })[0];
+  return money ? money.textContent : null;
+};
+console.log(JSON.stringify([said(ARENA), said(BARE)]));
+""", tmp_path, ARENA=page, BARE=bare)
+    assert out[0] == "Every dollar on screen is real money, except in the Arena town, which trains with practice money."
+    assert out[1] == "Every dollar on screen is real money."
+
+
+def test_no_practice_money_in_the_cinema_but_the_towns_own_visit(page: str, section: str) -> None:
+    """The Arena has no strip, ticker or line of its own in this view: nothing in the cinema's markup, style or code
+    shows money.arena or plain.arena_line (the town's visits say its words, each beat's title PRACTICE MONEY once; the
+    card above names it in one fixed line)."""
+    cine = page[page.index('<div id="cine">'):page.index('<div id="intro"')]
+    assert not re.search(r"arena|practice|pretend", cine, flags=re.IGNORECASE), cine
+    assert 'id="arena' not in page and "#arena" not in _STYLE_CINEMA
+    code = re.sub(r"//[^\n]*", "", section)
+    for gone in ("arenaEl", "arenaTxt", "arenaLines", "arenaOnData", "arenaFrame", "arena_line", "ARENA."):
+        assert gone not in code, gone
+    # the only reads of the Arena: whether the data has one (the card's fixed line), never its figures or its words
+    reads = re.findall(r"money\.arena[\w.\[]*", code)
+    assert reads and set(reads) == {"money.arena"}, reads
+    assert "arena:" not in _js_body(section, "  window.__skyport = Object.assign(window.__skyport || {}, { cinema: {")
+
+
+@needs_node
+def test_the_cinemas_words_never_carry_the_arenas_figures(pure: str, states: dict[str, dict[str, Any]], tmp_path: Path) -> None:
+    """A page with a busy Arena (practice dollars in every resident, event and line): the HUD, the vault's sign and
+    every character's and place's caption say none of its figures."""
+    page = json.loads(json.dumps(states["winning"]))
+    page["money"]["arena"] = {"population": 24, "rent_usd": 1.0, "result_usd": -143.86, "open_bets": 33, "start_cash": 20.0,
+                              "residents": [{"id": "6", "name": "Fin-6", "money_usd": 13.57, "open": 3}],
+                              "events": [{"ts": 1, "who": "Ada-1", "kind": "evicted", "usd": None,
+                                          "text": "Ada-1 was evicted: went broke after 0.7 days (12 trades, -8.84 $)."}]}
+    page["plain"]["arena_line"] = ("The Arena (practice money): 24 traders paying $1.00 rent a day; the town's trading "
+                                   "-$143.86 so far, 33 bets open; leader Cy-3 up $2.13.")
+    out = _pure_run(pure, """
+const keys = ["voss", "rook", "pip", "nyx", "jet", "mote", null], rooms = ["vault", "table", "observatory", "dock", "archive", "workshop", "den"];
+const caps = keys.map(function (k) { return cineCaption(P.plain, k, null, k || ""); }).concat(rooms.map(function (r) { return cineCaption(P.plain, null, r, ""); }));
+console.log(JSON.stringify({ hud: cineHud(P), vault: cineVault(P), caps: caps }));
+""", tmp_path, P=page)
+    blob = json.dumps(out)
+    for figure in ("13.57", "8.84", "143.86", "2.13", "Fin-6", "Ada-1", "Arena", "24 traders"):
+        assert figure not in blob, figure
 
 
 # --------------------------------------------------------------------------- the details button and the director

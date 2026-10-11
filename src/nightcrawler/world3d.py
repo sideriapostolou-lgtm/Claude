@@ -116,7 +116,8 @@ horizontal, close behind the crew; never a top-down tycoon view.
   his heart line from ``plain.hearts``; a place: its name and the data's line for it); a small name tag with a two-to-four
   word job over each character on screen; the vault's sign shows the REAL cash at Polymarket and the real result. It is
   REAL MONEY ONLY (the owner's word, 2026-10-11): practice money shows nowhere in it but the Arena town's, which says
-  PRACTICE itself and is never added to anything. The practice boards and props are on a layer its camera does not film
+  PRACTICE itself and is never added to anything (only while its own visit is on air: no strip or ticker of it over any
+  other shot). The practice boards and props are on a layer its camera does not film
   (the practice yard on the courier pier with its frame and posts, the trend desk's board, whose decorative screen comes
   back, the trophy shelf and its card, the ticket board, a practice trade's cube and its flash), Rook's risk wall is drawn
   with its real money only (the record room's ``recRealOnly``: the real desk's verdict and caps, the Solana bot's half
@@ -134,17 +135,29 @@ horizontal, close behind the crew; never a top-down tycoon view.
   town of trader bots, as a district of its own on an islet off the west terrace, reached by a rope bridge and seen from
   the courtyard between the workshop and the archive (``money.arena`` and ``plain.arena_line`` of ``/api/page``;
   ``generated_at`` for the next rent). One small house per resident round a market (the exchange) and a town hall: its
-  floors by its money, its windows lit while it has bets open, its roof the colour of the market it trades, a name plate
-  with its money; a resident gone goes dark and sinks, leaving its lot VACANT until a newcomer's house rises there. Only
-  the page's new events move it, each once, spread over the poll: a buy sends a glowing parcel to the market, a sale won
-  bursts gold coins over the house, a sale lost a slate puff (red is real money's), an eviction and a birth as above;
-  between polls only ambient life (the lamps, chimney smoke over the houses with bets open, the market's core). The
-  hall's board says "THE TOWN · PRACTICE MONEY" once, the population and the rent, today's buys, sales, evictions and
-  newcomers, the town's trading result, the richest and the time to the next rent (00:00 UTC). The cinema visits it every
-  few minutes and soon after an eviction or a birth (a programme of the record room's: the town, the hall's board, the
-  house of the newest moment, which waits to play on air; each beat's title says practice once, its words are
-  ``plain.arena_line``'s own clauses or the event's), never over a real-money replay; the details view gets a "town"
-  chip. The town is never added to any money, never red, never called real. Hooks on ``window.__skyport.town``.
+  floors by its money against the start cash (``money.arena.start_cash``: three at the start, one more for each $2 up,
+  one less for each $2 down, so a house rises as its resident makes money), a gold trim on its eaves while it is in
+  profit, its windows lit while it has bets open, its roof the colour of the market it trades, a name plate with its
+  money; a resident gone goes dark and sinks, leaving its lot VACANT until a newcomer's house rises there. Each house has
+  its villager, its resident, dressed in its roof's colour: on the doorstep by day, indoors at night (the viewer's
+  clock). Only the page's new events move it, each once, spread over the poll: a buy sends a glowing parcel to the
+  market and its villager walks there and back, a sale won bursts gold coins over the house while its villager cheers on
+  the doorstep, a sale lost a slate puff and a shrug (red is real money's), an eviction sends the villager off over the
+  rope bridge with a bundle while the house sinks, a newcomer walks in over it and its house rises as they reach the lot;
+  each moment's own who and money float over the house a moment ("Mae-13 +$0.43", "Hal-8 −$2.07", "Yul-25 moved in",
+  "Ada-1 moved out"; three at once at most), and a house's plate, floors and lights change only as its last moment plays.
+  Between polls only ambient life (the lamps, chimney smoke over the houses with bets open, the market's core). The
+  Arena's words are written as the rest of the world writes them ("−$8.84", residents, a newcomer without its genes).
+  The hall's board says "THE TOWN · PRACTICE MONEY" once, the population and the rent, today's buys, sales, evictions
+  and newcomers, the town's trading result, the richest and the time to the next rent (00:00 UTC). The cinema visits it
+  every few minutes and soon after an eviction or a birth (a programme of the record room's: the whole village, from
+  high over the round islet on a phone, the hall's board, the house of the newest moment with its name and money over
+  its ridge; each beat's title says practice once, its words are ``plain.arena_line``'s own clauses or the event's); in
+  the cinema the town's moments wait and play only while the village is on air (the wide beat lasts as long as they
+  need, up to 20 s), and a visit never starts, and stops, while a real-money moment (a real-money replay, a moment of
+  the goal's: a rung, a stand-down, the huddle) waits; the details view gets a "town" chip and a card for its views.
+  The town is never added to any money, never red, never called real, and nothing of it shows over any other shot.
+  Hooks on ``window.__skyport.town``.
 
 Honesty rules (the same as the office's and the town's, non-negotiable):
 
@@ -458,6 +471,9 @@ button.close { position: absolute; right: 6px; top: 4px; width: 38px; height: 38
 #loading { position: absolute; right: 11px; top: 7px; font-size: 10.5px; letter-spacing: .06em; color: var(--brass);
             font-variant-numeric: tabular-nums; white-space: nowrap; }
 #loading[hidden] { display: none; }
+/* (a narrow phone: the card's right-hand status goes under its title, never over it) */
+@media (max-width: 419px) { #card { display: flex; flex-direction: column; } #card .room { order: 0; }
+  #loading { position: static; order: 1; align-self: flex-start; margin-top: 1px; } #card .who, #card .rows { order: 2; } }
 .label { position: fixed; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; font-weight: 700;
          color: var(--brass); text-shadow: 0 1px 3px #000, 0 0 8px rgba(0,0,0,.85); pointer-events: none;
          white-space: nowrap; transition: opacity .4s ease; }
@@ -733,15 +749,6 @@ _STYLE_CINEMA = r"""
 @media (min-width: 760px) { :root { --lbh: 58px; --lbb: 122px; } }
 @media (max-height: 700px) and (max-width: 759px) { :root { --lbh: 44px; --lbb: 100px; } }
 #cine, #tags { display: none; }
-/* the Arena strip (practice money): its newest trades, evictions and births, one at a time, above the caption */
-body.cinema #arena { display: none; }
-body.cinema #arena.on { display: block; position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(var(--lbB) + 8px);
-  max-width: min(92vw, 660px); padding: 3px 11px; border-radius: 12px; background: rgba(8,10,20,.66); color: #dfe6f5;
-  font: 600 11px/1.4 system-ui, -apple-system, Segoe UI, sans-serif; text-align: center; overflow: hidden; max-height: 4.3em;
-  z-index: 8; pointer-events: none; }
-body.cinema #arena.on.town { display: none; }
-body.cinema #arena .atag { color: #8fb8ff; font-weight: 800; letter-spacing: .05em; margin-right: 7px; }
-body.cinema #arena .good { color: #8ef0c8; } body.cinema #arena .bad { color: #ff9a8f; }
 #intro[hidden] { display: none; }
 body.cinema #cine, body.cinema #tags { display: block; }
 /* the parts of the full view that wait behind "details" (the card and its bubbles keep their place, unseen) */
@@ -3617,6 +3624,9 @@ _M_LIFE = r"""
     }
     chipsEnd();
   }
+  // a section's own card for a view of its own while it is pinned (THE TOWN's: "rec:town" and its other views): its key ->
+  // a function that returns { room, who, line } from the data (text only), or null for the card's own words
+  const CARD_FOR = {};
   function renderCard() {
     const room = card.querySelector(".room .name"), who = card.querySelector(".who"), rows = card.querySelector(".rows");
     rows.textContent = ""; who.textContent = "";
@@ -3656,6 +3666,10 @@ _M_LIFE = r"""
         a.textContent = nameOf(id) + ": " + (m.doing || m.why || ""); st.className = "status " + m.status; st.textContent = m.status;
         div.appendChild(a); div.appendChild(st); rows.appendChild(div);
       });
+    } else if (pinned && CARD_FOR[pinned] && CARD_FOR[pinned]()) {
+      const c = CARD_FOR[pinned]();
+      room.textContent = c.room; who.appendChild(document.createTextNode(c.who));
+      if (c.line) { const div = document.createElement("div"), sp = document.createElement("span"); sp.textContent = c.line; div.appendChild(sp); rows.appendChild(div); }
     } else {
       room.textContent = shotKey === "map" ? "THE HEADQUARTERS" : "NIGHT SHIFT: SKYPORT"; who.appendChild(document.createTextNode("The team"));
       const counts = (data && data.team && data.team.counts) || {}, div = document.createElement("div"), sp = document.createElement("span");
@@ -6127,17 +6141,25 @@ _M_TOWN = r"""
   // gone goes dark and sinks, leaving its lot VACANT until a newcomer's house rises there. Only the page's new events move
   // it, each once (keyed by ts, who, kind and text: one resident can sell and buy in one round), spread over the poll: a buy
   // sends a glowing parcel to the market, a sale won bursts gold coins over the house, a sale lost a slate puff, an eviction
-  // sinks the house and a birth raises one; between polls only ambient life (the lamps, chimney smoke over the houses with
-  // bets open, the market's core turning). The section never edits the live director: it films through the record room's
-  // views and programmes (recViewOf, recView, progStart("town", ...)) as THE GOAL does, and reads focus, pinned, FILM and
-  // the channel's replay only. In the cinema (the default view) it visits the town every few minutes and soon after an
-  // eviction or a birth, never over a real-money replay; the details view gets a "town" chip. Hooks on window.__skyport.town:
-  // houses(), lots(), events(), queue(), board(), visit(), view(id), state(). The block between the markers is pure (no
-  // three.js, no DOM): tests/test_world_town.py runs it in Node.
+  // sinks the house and a birth raises one; each house's villager (its resident) walks, cheers, shrugs, leaves over the
+  // bridge or arrives by it with the moment, the moment's own who and money float over the house, and the house's plate,
+  // floors and lights follow its last moment; between polls only ambient life (the lamps, chimney smoke over the houses
+  // with bets open, the market's core turning, the villagers on their doorsteps by day). The section never edits the live
+  // director: it films through the record room's views and programmes (recViewOf, recView, progStart("town", ...)) as THE
+  // GOAL does, and reads focus, pinned, FILM, the goal's waiting moments and the channel's replay only. In the cinema (the
+  // default view) it visits the town every few minutes and soon after an eviction or a birth, and its moments play only
+  // while the village is on air; real money first (a real-money replay or a moment of the goal's stops a visit and keeps
+  // the next one waiting); the details view gets a "town" chip and a card (CARD_FOR). Hooks on window.__skyport.town:
+  // houses(), lots(), events(), queue(), board(), visit(), view(id), state(), folk(), labels(). The block between the
+  // markers is pure (no three.js, no DOM): tests/test_world_town.py runs it in Node.
   // >>> town (pure)
-  const TOWN_LOTS = 24, TOWN_FLOORS_MAX = 7, TOWN_FLOOR_USD = 8, TOWN_SEEN_MAX = 600;
+  const TOWN_LOTS = 24, TOWN_FLOORS_MAX = 7, TOWN_FLOOR_USD = 2, TOWN_START_USD = 20, TOWN_SEEN_MAX = 600;
   // a poll's moments are spread over TOWN_SPREAD of the poll, TOWN_GAP_MIN to TOWN_GAP_MAX seconds apart (calm, never a burst)
   const TOWN_SPREAD = 0.8, TOWN_GAP_MIN = 0.45, TOWN_GAP_MAX = 1.6;
+  // the visit's wide beat: TOWN_WIDE_S, longer by TOWN_WIDE_PER for each moment waiting, at most TOWN_WIDE_MAX; the moments
+  // waiting are paced into it (at least TOWN_PACE_MIN apart); past TOWN_QUEUE_MAX waiting, the least kinds give way first
+  const TOWN_WIDE_S = 8, TOWN_WIDE_PER = 0.9, TOWN_WIDE_MAX = 20, TOWN_PACE_MIN = 0.35, TOWN_QUEUE_MAX = 48;
+  const TOWN_DROP = ["parcel", "even", "puff", "coins"];
   const TOWN_TAG = "PRACTICE MONEY", TOWN_TITLE = "THE TOWN · PRACTICE MONEY", TOWN_PREFIX = /^The Arena \(practice money\):\s*/;
   // what each kind of event does (a sale: coins when it won, a puff when it lost, a small one when even)
   const TOWN_KIND = { buy: "parcel", sale: "sale", born: "rise", evicted: "sink" };
@@ -6155,10 +6177,18 @@ _M_TOWN = r"""
   function townN(n) { return townNum(n) ? Math.max(0, Math.round(n)) : 0; }
   function townCount(n, one, many) { const k = townN(n); return k.toLocaleString("en-US") + " " + (k === 1 ? one : many); }
   function townEase(u) { return u <= 0 ? 0 : u >= 1 ? 1 : u * u * (3 - 2 * u); }
-  // a house's floors by its money (practice dollars): one more for each $8, at least one, at most seven ($20 to start: 3)
-  function townFloors(money) {
+  // a house's floors by its money against the town's start cash (money.arena.start_cash, practice dollars): three at the
+  // start, one more for each $2 above it, one less for each $2 below, at least one, at most seven ($20 to start: $22 has
+  // four floors, $24 five, $18 two, $16 one), so a house rises as its resident makes money and shrinks as it loses
+  function townFloors(money, start) {
     if (!townNum(money) || money <= 0) return 1;
-    return Math.max(1, Math.min(TOWN_FLOORS_MAX, 1 + Math.floor(money / TOWN_FLOOR_USD)));
+    const s = townNum(start) && start > 0 ? start : TOWN_START_USD;
+    return Math.max(1, Math.min(TOWN_FLOORS_MAX, 3 + Math.floor((money - s) / TOWN_FLOOR_USD + 1e-9)));
+  }
+  // in profit: more money than the start cash (to the cent): its roof gets a gold trim
+  function townProfit(money, start) {
+    const s = townNum(start) && start > 0 ? start : TOWN_START_USD;
+    return townNum(money) && Math.round(money * 100) > Math.round(s * 100);
   }
   // the market a resident trades: its style's first word ("crypto, YES 0.10-0.35, ..."), else none
   function townFamily(style) {
@@ -6267,9 +6297,19 @@ _M_TOWN = r"""
     const m = Math.max(0, Math.floor(seconds / 60)), h = Math.floor(m / 60);
     return m < 1 ? "under a minute" : h ? h + " h " + (m % 60) + " min" : m + " min";
   }
+  // the Arena's words as the rest of the world writes them: money as "+$0.07" and "−$8.84" (never "-8.84 $" or "-$143.86"),
+  // its people "residents" (the hall's board's word for the same count), a newcomer's line without its trading genes
+  // ("Yul-25 moved in: a child of Cy-3 (trades weather)."; the details panel's rows keep the whole style)
+  function townTidy(text) {
+    return String(text == null ? "" : text)
+      .replace(/([+-])(\d+(?:\.\d+)?) \$/g, function (m, s, n) { return (s === "-" ? "−" : "+") + "$" + n; })
+      .replace(/(^|[\s(])-\$(?=\d)/g, "$1−$")
+      .replace(/\b(\d[\d,]*) traders paying\b/g, "$1 residents paying")
+      .replace(/(moved in: a child of [^,]+), trading ([a-z]+)\b.*$/i, "$1 (trades $2).");
+  }
   // plain.arena_line in clauses, its "The Arena (practice money): " left to each beat's title (practice said once)
   function townClauses(line) {
-    const t = String(line == null ? "" : line).replace(TOWN_PREFIX, "").trim().replace(/\.$/, "");
+    const t = townTidy(String(line == null ? "" : line).replace(TOWN_PREFIX, "")).trim().replace(/\.$/, "");
     return t ? t.split(/;\s+/) : [];
   }
   function townSentence(s) {
@@ -6278,7 +6318,7 @@ _M_TOWN = r"""
     return /[.!?…]$/.test(u) ? u : u + ".";
   }
   function townWords(text) {  // an event's own words, its "(practice)" left to the beat's title
-    return String(text == null ? "" : text).replace(/,\s*practice\)/gi, ")").replace(/\s*\((?:practice|practice money|pretend money)\)/gi, "")
+    return townTidy(String(text == null ? "" : text).replace(/,\s*practice\)/gi, ")").replace(/\s*\((?:practice|practice money|pretend money)\)/gi, ""))
       .replace(/\s{2,}/g, " ").trim();
   }
   // the town hall's board: every figure money.arena's, the next rent from generated_at (rentS), practice said once (title)
@@ -6296,10 +6336,14 @@ _M_TOWN = r"""
       top: top ? "Richest: " + top.name + " · " + townUsd(top.money_usd) : "",
       next: rentS == null ? "" : "Next rent in " + townIn(rentS) + " · 00:00 UTC" };
   }
+  // the wide beat's seconds: longer while moments wait to play in it (each one on air), never a long stare
+  function townWideS(waiting) { return Math.min(TOWN_WIDE_MAX, TOWN_WIDE_S + TOWN_WIDE_PER * Math.max(0, townN(waiting))); }
+  // the gap between n waiting moments paced into a beat of s seconds (a second's lead-in, two at the end)
+  function townPace(n, s) { return n <= 1 ? 0 : Math.min(TOWN_GAP_MAX, Math.max(TOWN_PACE_MIN, (s - 3) / (n - 1))); }
   // the visit's beats: the town (the line's first clauses), the hall (the town's trading; the next rent), then the house of
   // the moment it films close up (its own words; the leader's clause under them), else the leader's house. Each beat's
-  // title says practice once.
-  function townScript(a, line, rentS, spot) {
+  // title says practice once. (waiting: the moments waiting to play, which the wide beat is long enough to show)
+  function townScript(a, line, rentS, spot, waiting) {
     const c = townClauses(line), out = [];
     if (!a || !c.length) return out;
     let trading = "", lead = "";
@@ -6307,7 +6351,7 @@ _M_TOWN = r"""
     for (let i = 0; i < c.length; i++) {
       if (/^the town's trading /.test(c[i])) trading = c[i]; else if (/^leader /.test(c[i])) lead = c[i]; else rest.push(c[i]);
     }
-    out.push({ view: "town", s: 8, who: "THE TOWN · " + TOWN_TAG, text: townSentence(rest[0]), note: townSentence(rest.slice(1).join("; ")), name: "" });
+    out.push({ view: "town", s: townWideS(waiting), who: "THE TOWN · " + TOWN_TAG, text: townSentence(rest[0]), note: townSentence(rest.slice(1).join("; ")), name: "" });
     out.push({ view: "townhall", s: 7, who: "THE TOWN HALL · " + TOWN_TAG, text: townSentence(trading),
                note: rentS == null ? "" : "Next rent in " + townIn(rentS) + " (00:00 UTC).", name: "" });
     const res = Array.isArray(a.residents) ? a.residents : [], top = res[0] && typeof res[0].name === "string" ? res[0] : null;
@@ -6318,16 +6362,84 @@ _M_TOWN = r"""
     } else if (top) out.push({ view: "townhouse", s: 6, who: top.name.toUpperCase() + " · " + TOWN_TAG, text: townSentence(lead), note: "", name: top.name });
     return out;
   }
+  // a backlog stays bounded: past max moments waiting, the oldest of the least kind give way (the buys, then an even, then
+  // a sale lost, then a sale won); who lives where (a rise, a sink) and the close-up's moment are never dropped -> the
+  // number still over max (only rises and sinks)
+  function townTrim(queue, max) {
+    let over = -max;
+    for (let i = 0; i < queue.length; i++) if (!queue[i].done) over += 1;
+    for (let k = 0; k < TOWN_DROP.length && over > 0; k++) {
+      for (let i = 0; i < queue.length && over > 0; i++) {
+        const q = queue[i];
+        if (!q.done && !q.hold && q.act === TOWN_DROP[k]) { q.done = true; over -= 1; }
+      }
+    }
+    return Math.max(0, over);
+  }
+  // the words that float over a house as its moment plays, from the event's own who and money (practice: the town's
+  // colours, mint up and slate down, never red): "Mae-13 +$0.43", "Hal-8 −$2.07", "Yul-25 moved in", "Ada-1 moved out",
+  // "Kai-7 bought YES"; null when there is nothing to say
+  function townLabel(q) {
+    if (!q || typeof q.who !== "string" || !q.who) return null;
+    const e = q.ev && typeof q.ev === "object" ? q.ev : {}, usd = townNum(e.usd) ? e.usd : null;
+    if (q.act === "coins" || q.act === "puff") return usd === null ? null : { text: q.who + " " + townSigned(usd), tone: q.act === "coins" ? "up" : "down" };
+    if (q.act === "even") return { text: q.who + " broke even", tone: "even" };
+    if (q.act === "rise") return { text: q.who + " moved in", tone: "in" };
+    if (q.act === "sink") return { text: q.who + " moved out", tone: "out" };
+    if (q.act === "parcel") { const m = /\bbought (YES|NO)\b/.exec(String(e.text || "")); return { text: q.who + " bought" + (m ? " " + m[1] : ""), tone: "buy" }; }
+    return null;
+  }
+  // the villagers' walks (town metres, x east, z south; the market at 0, 0): each lot's door, its doorstep, its trip to the
+  // market and back (an inner house straight in; an outer one by the lane round the inner ring and the nearest gap in it)
+  // and its way out to the rope bridge (by the inner path or the lane to the street, east) -> per lot { door, step,
+  // trip: [x, z, ...], away: [x, z, ...] } (away ends at the bridge's head; the scene adds the bridge itself)
+  const TOWN_LANE_R = 4.85, TOWN_PATH_R = 2.5, TOWN_MARKET_R = 2.2, TOWN_BRIDGE_X = 8.45, TOWN_DOOR = 0.76;
+  function townArc(out, R, a0, a1) {  // points along a circle from angle a0 to a1 (degrees, the short way), a0 excluded
+    let d = ((a1 - a0) % 360 + 540) % 360 - 180;
+    const n = Math.max(1, Math.ceil(Math.abs(d) / 8));
+    for (let k = 1; k <= n; k++) { const a = (a0 + d * k / n) * Math.PI / 180; out.push(Math.sin(a) * R, Math.cos(a) * R); }
+  }
+  function townWalks(lots) {
+    const inner = [];
+    for (let i = 0; i < lots.length; i++) if (lots[i].ring === 0) inner.push(lots[i].deg);
+    inner.sort(function (a, b) { return a - b; });
+    const gaps = [];  // (the middle of each gap between two inner houses, the way in from the lane)
+    for (let i = 0; i < inner.length; i++) { const a = inner[i], b = i + 1 < inner.length ? inner[i + 1] : inner[0] + 360; gaps.push(((a + b) / 2 + 540) % 360 - 180); }
+    const P = function (R, deg) { const a = deg * Math.PI / 180; return [Math.sin(a) * R, Math.cos(a) * R]; };
+    return lots.map(function (q) {
+      const R = Math.hypot(q.x, q.z), door = P(R - TOWN_DOOR, q.deg), step = P(R - TOWN_DOOR - 0.2, q.deg), trip = door.slice(), away = door.slice();
+      if (q.ring === 0) {
+        trip.push.apply(trip, P(TOWN_MARKET_R, q.deg));
+        away.push.apply(away, P(TOWN_PATH_R, q.deg)); townArc(away, TOWN_PATH_R, q.deg, 90);
+      } else {
+        let g = gaps[0], best = 999;
+        for (let k = 0; k < gaps.length; k++) { const d = Math.abs(((gaps[k] - q.deg) % 360 + 540) % 360 - 180); if (d < best) { best = d; g = gaps[k]; } }
+        trip.push.apply(trip, P(TOWN_LANE_R, q.deg)); townArc(trip, TOWN_LANE_R, q.deg, g); trip.push.apply(trip, P(TOWN_MARKET_R, g));
+        away.push.apply(away, P(TOWN_LANE_R, q.deg)); townArc(away, TOWN_LANE_R, q.deg, 90);
+      }
+      away.push(TOWN_BRIDGE_X, 0);
+      return { door: door, step: step, trip: trip, away: away };
+    });
+  }
   // <<< town
   // the town's place (an islet west of the courtyard, a little lower: seen between the workshop and the archive), its
   // storeys, the house's width; the visits' seconds (the first after the town's first poll, then one every TOWN_EVERY_S
   // from the end of the last, an eviction or a birth brings it forward to TOWN_DRAMA_S after the last one; a visit starts
   // when moments are waiting or TOWN_OVERDUE_S late); a moment held for the close-up waits at most TOWN_HOLD_S
-  const TOWN_AT = V3(-31, -0.8, 3.0), TOWN_FLOOR_H = 0.55, TOWN_W = 1.32, TOWN_HALL_Z = -6.6, TOWN_QUEUE_MAX = 48;
+  const TOWN_AT = V3(-31, -0.8, 3.0), TOWN_FLOOR_H = 0.55, TOWN_W = 1.32, TOWN_HALL_Z = -6.6;
   const TOWN_FIRST_S = 35, TOWN_EVERY_S = 140, TOWN_DRAMA_S = 50, TOWN_OVERDUE_S = 40, TOWN_HOLD_S = 45, TOWN_VACANT_S = 1.6;
   const TOWN_RISE_S = 2.6, TOWN_SINK_S = 3.2, TOWN_PARCEL_S = 1.5, TOWN_COIN_S = 1.7, TOWN_PUFF_S = 1.5, TOWN_RING_S = 1.6;
+  // the villagers (one per house, its resident: walking at TOWN_WALK m/s, a trip's stop at the market TOWN_STOP_S, a cheer
+  // TOWN_CHEER_S, a shrug TOWN_SHRUG_S; the way out over the bridge at most TOWN_LEAVE_S, a newcomer's last stretch in at
+  // most TOWN_ARRIVE_S, from TOWN_COME_M metres out (TOWN_NEAR_M for the close-up's), and the words over a house TOWN_LABEL_S
+  const TOWN_WALK = 2.1, TOWN_STOP_S = 0.5, TOWN_CHEER_S = 1.8, TOWN_SHRUG_S = 1.5, TOWN_LEAVE_S = 7, TOWN_ARRIVE_S = 5,
+        TOWN_COME_M = 11, TOWN_NEAR_M = 3, TOWN_LABEL_S = 2.5, TOWN_LABELS = 3;
   const TOWN_BLUE = "#c9d6ff", TOWN_BLUE2 = "#8cb4ff", TOWN_SLATE = "#8f9bb3", TOWN_MINT = "#8ef0c8", TOWN_LILAC = "#c3a6ff",
         TOWN_AMBER = "#ffcf7a", TOWN_CREAM = "#fff4dc";
+  const TOWN_TONE = { up: TOWN_MINT, down: TOWN_SLATE, even: TOWN_SLATE, "in": TOWN_AMBER, out: TOWN_SLATE, buy: TOWN_BLUE };
+  // a villager's moves (L.vm): at home (on the doorstep by day, inside at night), a trip to the market and back, a cheer, a
+  // shrug, the way out over the bridge (a bundle on the back), the way in (the house rises as they reach it)
+  const V_HOME = 0, V_TRIP = 1, V_CHEER = 2, V_SHRUG = 3, V_LEAVE = 4, V_ARRIVE = 5;
   // roofs by the market the resident trades, walls by the lot (decorative), the dark of a house gone
   const TOWN_ROOF = { crypto: 0xd08a3a, weather: 0x5d7fb3, sports: 0x4f8a52, "": 0xb06a4a };
   const TOWN_WALLS = [0xe2c9a6, 0xd9bfa4, 0xd6cdb4, 0xdcc0b0, 0xcfcab6, 0xe0caa0, 0xd3c2ae];
@@ -6336,9 +6448,10 @@ _M_TOWN = r"""
   const TOWN_LOT = townLots(TOWN_LOTS);
   const TOWN = { ok: false, seen: null, keys: { keys: {}, order: [] }, first: true, a: null, line: "", gen: null, genAt: 0, lots: [],
                  byId: {}, queue: [], clock: 0, lastT: 0, played: [], plays: 0, visiting: false, visitStart: 0, lastEnd: -1e9, nextAt: Infinity,
-                 spotBeat: -1, houseBeat: -1, spotWords: null, aimName: "", visits: 0, chip: null, boardSig: "", rentMin: -2, rentT: 0, pulse: 0, chimeAt: 0, board: null, wait: 0 };
+                 spotBeat: -1, houseBeat: -1, spotWords: null, aimName: "", aimLot: -1, visits: 0, chip: null, boardSig: "", rentMin: -2, rentT: 0, pulse: 0, chimeAt: 0, board: null, wait: 0,
+                 start: TOWN_START_USD, night: false, heroOn: false, walking: 0, cut: false };
   const TL = [], TP = {};  // the lots in the scene (one record each, made once) and the town's meshes
-  const TOWN_WAIT = new Uint8Array(TOWN_LOTS);
+  const TOWN_WAIT = new Uint8Array(TOWN_LOTS), TOWN_PEND = new Uint8Array(TOWN_LOTS);
   const _tm = new THREE.Matrix4(), _tq = new THREE.Quaternion(), _tp = V3(0, 0, 0), _ts = V3(1, 1, 1), _te = new THREE.Euler();
   const _tc = new THREE.Color(), _tz = new THREE.Matrix4().makeScale(0, 0, 0);
   const TOWN_DARK = col(0x34323f);
@@ -6381,10 +6494,27 @@ _M_TOWN = r"""
       }
     });
     // ------------------------------------------------------------- the lots: a paved pad each, a post for its name plate
+    const walks = townWalks(TOWN_LOT);
+    // (a walk in world metres, xyz a point, with its running length: the islet's paths, then for the way out the bridge's
+    // planks from its head to the west terrace, the rope's sag and all)
+    const world = function (xz, bridge) {
+      const pts = [];
+      for (let k = 0; k < xz.length; k += 2) { const p = TF.at(xz[k], 0, xz[k + 1]); pts.push(p.x, p.y, p.z); }
+      if (bridge) for (let k = 1; k <= 12; k++) { const p = bridge(1 - k / 12); pts.push(p.x, p.y + 0.03, p.z); }
+      const P = new Float32Array(pts), D = new Float32Array(pts.length / 3);
+      for (let k = 1; k < D.length; k++) D[k] = D[k - 1] + Math.hypot(P[k * 3] - P[k * 3 - 3], P[k * 3 + 1] - P[k * 3 - 2], P[k * 3 + 2] - P[k * 3 - 1]);
+      return { P: P, D: D, len: D[D.length - 1] };
+    };
+    const bridgeAt = function (t) { const B = TF.at(TOWN_BRIDGE_X, 0, 0), A = V3(-16.0, 0.0, 3.85); return A.lerp(B, t).add(V3(0, -0.3 * Math.sin(Math.PI * t) - 0.03, 0)); };
     for (let i = 0; i < TOWN_LOTS; i++) {
       const q = TOWN_LOT[i], L = { i: i, x: q.x, z: q.z, yaw: q.yaw, ring: q.ring, occ: null, money: null, open: 0, fam: "", cand: false,
         h: TOWN_FLOOR_H * 3, hT: TOWN_FLOOR_H * 3, y: 0, lit: 0, litT: 0, dark: 0, state: "empty", t0: 0, vacantAt: -1e9, plate: "",
-        moving: true, hidden: false, wall: col(TOWN_WALLS[i % TOWN_WALLS.length]), roof: col(TOWN_ROOF[""]) };
+        moving: true, hidden: false, wall: col(TOWN_WALLS[i % TOWN_WALLS.length]), roof: col(TOWN_ROOF[""]), profit: false, pend: null,
+        // the villager: its move, when it began, how long it takes, where along its walk it starts and ends, its record on
+        // the way in, whether it is drawn (and must be written again), and its walks
+        vm: V_HOME, vt0: 0, vdur: 0, vd0: 0, vd1: 0, arr: null, vOn: false, vDirty: true,
+        trip: world(walks[i].trip, null), away: world(walks[i].away, bridgeAt) };
+      const st = TF.at(walks[i].step[0], 0, walks[i].step[1]); L.sx = st.x; L.sz = st.z;
       const dx = Math.sin(q.yaw), dz = Math.cos(q.yaw);  // (the door's way: toward the market)
       const c = TF.at(q.x, 0, q.z); L.cx = c.x; L.cz = c.z; L.dx = dx; L.dz = dz; L.yawW = TF.yaw + q.yaw;
       L.fx = c.x + dx * (TOWN_W / 2 + 0.02); L.fz = c.z + dz * (TOWN_W / 2 + 0.02);
@@ -6495,9 +6625,30 @@ _M_TOWN = r"""
     TP.chim = new THREE.InstancedMesh(chimGeo, new THREE.MeshStandardMaterial({ color: 0x9a6a50, roughness: 0.9 }), TOWN_LOTS);
     TP.flags = new THREE.InstancedMesh(flagGeo, new THREE.MeshStandardMaterial({ vertexColors: true, metalness: 0.5, roughness: 0.4, side: THREE.DoubleSide }), TOWN_LOTS);
     TP.bounds = new THREE.Sphere(V3(TOWN_AT.x, TOWN_AT.y + 3, TOWN_AT.z), 14);
-    [TP.body, TP.roof, TP.chim, TP.flags].forEach(function (m) {
-      for (let i = 0; i < TOWN_LOTS; i++) { m.setMatrixAt(i, _tz); if (m !== TP.flags) m.setColorAt(i, _tc.set(0xffffff)); }
-      m.boundingSphere = TP.bounds; m.castShadow = Q.shadows && m !== TP.flags; m.receiveShadow = true; scene.add(m);
+    // (in profit, more money than the start cash: a gold trim round the eaves and a gold finial on the ridge)
+    const trimGeo = (function () {
+      const s = TOWN_W * 0.75 * Math.SQRT1_2 + 0.03, t = 0.07, parts = [];
+      [[0, s], [0, -s], [s, 0], [-s, 0]].forEach(function (p, k) { parts.push(prep(paint(G.box(k < 2 ? 2 * s + t : t, 0.07, k < 2 ? t : 2 * s + t).translate(p[0], 0.03, p[1]), 0xffffff))); });
+      parts.push(prep(paint(G.sph(0.075, 12, 8).translate(0, 0.78, 0), 0xffffff)));
+      return mergeGeometries(parts, false);
+    })();
+    TP.trim = new THREE.InstancedMesh(trimGeo, new THREE.MeshStandardMaterial({ color: 0xffcf5a, metalness: 0.75, roughness: 0.3, emissive: 0x6a4500,
+      emissiveIntensity: 0.9 }), TOWN_LOTS);
+    [TP.body, TP.roof, TP.chim, TP.flags, TP.trim].forEach(function (m) {
+      for (let i = 0; i < TOWN_LOTS; i++) { m.setMatrixAt(i, _tz); if (m !== TP.flags && m !== TP.trim) m.setColorAt(i, _tc.set(0xffffff)); }
+      m.boundingSphere = TP.bounds; m.castShadow = Q.shadows && m !== TP.flags && m !== TP.trim; m.receiveShadow = true; scene.add(m);
+    });
+    // ------------------------------------------------------------- the villagers: one per house, four instanced draws
+    // (a body in the colour of the market its resident trades, a head, two hands, a bundle for the way out)
+    TP.folkBody = new THREE.InstancedMesh(G.cap(0.075, 0.16, 4, 10).translate(0, 0.155, 0), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.8 }), TOWN_LOTS);
+    const skin = new THREE.MeshStandardMaterial({ color: 0xf2d2b0, roughness: 0.7 });
+    TP.folkHead = new THREE.InstancedMesh(G.sph(0.072, 14, 10).translate(0, 0.37, 0), skin, TOWN_LOTS);
+    TP.folkHands = new THREE.InstancedMesh(mergeGeometries([G.sph(0.03, 8, 6).translate(-0.1, 0, 0.02), G.sph(0.03, 8, 6).translate(0.1, 0, 0.02)], false), skin, TOWN_LOTS);
+    TP.folkPack = new THREE.InstancedMesh(G.rbox(0.14, 0.15, 0.1, 0.4, 10).translate(0, 0.23, -0.11), new THREE.MeshStandardMaterial({ color: 0xa8865a, roughness: 0.9 }), TOWN_LOTS);
+    TP.folkBounds = new THREE.Sphere(V3(TOWN_AT.x + 4, TOWN_AT.y + 1, TOWN_AT.z), 19);  // (the way out reaches the west terrace)
+    [TP.folkBody, TP.folkHead, TP.folkHands, TP.folkPack].forEach(function (m) {
+      for (let i = 0; i < TOWN_LOTS; i++) { m.setMatrixAt(i, _tz); if (m === TP.folkBody) m.setColorAt(i, _tc.set(0xffffff)); }
+      m.boundingSphere = TP.folkBounds; m.castShadow = false; m.receiveShadow = false; scene.add(m);
     });
     // ------------------------------------------------------------- the name plates: one atlas, one draw, each facing the drone
     const pc = document.createElement("canvas"); pc.width = 1024; pc.height = 512; TP.plateCtx = pc.getContext("2d");
@@ -6519,11 +6670,36 @@ _M_TOWN = r"""
       fragmentShader: ["uniform sampler2D uMap; varying vec2 vUv;", "void main() { vec4 c = texture2D(uMap, vUv); if (c.a < 0.5) discard; gl_FragColor = vec4(c.rgb, 1.0);",
                        "  #include <colorspace_fragment>", "}"].join("\n") }));
     scene.add(TP.plates);
+    // ------------------------------------------------------------- the words over a house as its moment plays (three at
+    // once) and the close-up's own name tag (the fourth, half as big again): one atlas, one draw, a fixed size on screen
+    const lc = document.createElement("canvas"); lc.width = 1024; lc.height = 256; TP.labelCtx = lc.getContext("2d");
+    TP.labelTex = new THREE.CanvasTexture(lc); TP.labelTex.colorSpace = THREE.SRGBColorSpace; TP.labelTex.anisotropy = maxAniso;
+    const NL = TOWN_LABELS + 1, lpos = new Float32Array(NL * 12), lcor = new Float32Array(NL * 8), luv = new Float32Array(NL * 8), la = new Float32Array(NL * 4),
+          lk = new Float32Array(NL * 4), lidx = [];
+    for (let i = 0; i < NL; i++) {
+      const u0 = (i % 2) / 2, u1 = (i % 2 + 1) / 2, v1 = 1 - Math.floor(i / 2) / 2, v0 = 1 - (Math.floor(i / 2) + 1) / 2, UV = [u0, v0, u1, v0, u1, v1, u0, v1];
+      for (let k = 0; k < 4; k++) { lcor[(i * 4 + k) * 2] = CR[k * 2]; lcor[(i * 4 + k) * 2 + 1] = CR[k * 2 + 1]; luv[(i * 4 + k) * 2] = UV[k * 2]; luv[(i * 4 + k) * 2 + 1] = UV[k * 2 + 1];
+        lk[i * 4 + k] = i === TOWN_LABELS ? 1.5 : 1; }
+      lidx.push(i * 4, i * 4 + 1, i * 4 + 2, i * 4, i * 4 + 2, i * 4 + 3);
+    }
+    const lg = new THREE.BufferGeometry(); lg.setAttribute("position", new THREE.BufferAttribute(lpos, 3)); lg.setAttribute("aCorner", new THREE.BufferAttribute(lcor, 2));
+    lg.setAttribute("uv", new THREE.BufferAttribute(luv, 2)); lg.setAttribute("aA", new THREE.BufferAttribute(la, 1)); lg.setAttribute("aK", new THREE.BufferAttribute(lk, 1));
+    lg.setIndex(lidx); lg.boundingSphere = TP.folkBounds;
+    TP.uPx = { value: 800 };  // (the drawing buffer's pixels per metre at one metre: a puff or a wisp of smoke keeps its size in metres)
+    TP.uLW = { value: 260 };  // (a label's width in the drawing buffer's pixels: the same on screen near or far)
+    TP.labels = new THREE.Mesh(lg, new THREE.ShaderMaterial({ uniforms: { uMap: { value: TP.labelTex }, uPx: TP.uPx, uW: TP.uLW }, transparent: true, depthWrite: false, depthTest: false,
+      vertexShader: "attribute vec2 aCorner; attribute float aA; attribute float aK; uniform float uPx, uW; varying vec2 vUv; varying float vA; void main() { vUv = uv; vA = aA;"
+        + " vec4 mv = modelViewMatrix * vec4(position, 1.0); float w = aK * uW * max(0.5, -mv.z) / max(1.0, uPx); mv.xy += aCorner * vec2(w, w * 0.25);"
+        + " gl_Position = aA > 0.0 ? projectionMatrix * mv : vec4(2.0, 2.0, 2.0, 1.0); }",
+      fragmentShader: ["uniform sampler2D uMap; varying vec2 vUv; varying float vA;", "void main() { vec4 c = texture2D(uMap, vUv); gl_FragColor = vec4(c.rgb, c.a * vA);",
+                       "  #include <colorspace_fragment>", "}"].join("\n") }));
+    TP.labels.renderOrder = 12; TP.labels.frustumCulled = false; scene.add(TP.labels);
+    TP.L = [];
+    for (let i = 0; i < NL; i++) TP.L.push({ on: false, t0: 0, lot: -1, x: 0, y: 0, z: 0, a: 0, rise: 0, still: false });
     // ------------------------------------------------------------- what moves: parcels, coins, puffs, rings (pools made once)
     TP.parcels = new THREE.InstancedMesh(prep(paint(G.rbox(0.17, 0.17, 0.17, 0.4, 10), 0xffffff)), new THREE.MeshBasicMaterial({ color: hdr(0x7dffd8, 2.4), toneMapped: false }), 16);
     TP.coins = new THREE.InstancedMesh(G.cyl(0.07, 0.07, 0.018, 14).rotateX(Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0xffcf5a, metalness: 0.85, roughness: 0.25,
       emissive: 0x7a5200, emissiveIntensity: 0.7 }), Q.small ? 60 : 96);
-    TP.uPx = { value: 800 };  // (the drawing buffer's pixels per metre at one metre: a puff or a wisp of smoke keeps its size in metres)
     const NP = 40, pg2 = new THREE.BufferGeometry();
     pg2.setAttribute("position", new THREE.BufferAttribute(new Float32Array(NP * 3), 3)); pg2.setAttribute("aS", new THREE.BufferAttribute(new Float32Array(NP), 1));
     pg2.setAttribute("aA", new THREE.BufferAttribute(new Float32Array(NP), 1)); pg2.setAttribute("aC", new THREE.BufferAttribute(new Float32Array(NP * 3), 3));
@@ -6616,11 +6792,32 @@ _M_TOWN = r"""
     }
     TP.plateDirty = true;
   }
+  function townLabelDraw(i, text, color) {  // a label's cell in its atlas (drawn when its moment plays: the event's own words)
+    const ctx = TP.labelCtx; if (!ctx) return;
+    const x = (i % 2) * 512, y = Math.floor(i / 2) * 128;
+    ctx.clearRect(x, y, 512, 128);
+    ctx.font = "bold 58px " + REC_FONT;
+    const w = Math.min(496, Math.max(150, ctx.measureText(text).width + 60));
+    ctx.fillStyle = "rgba(10,16,34,.9)"; roundRect(ctx, x + 256 - w / 2, y + 14, w, 100, 50); ctx.fill();
+    ctx.lineWidth = 5; ctx.strokeStyle = color; roundRect(ctx, x + 256 - w / 2, y + 14, w, 100, 50); ctx.stroke();
+    ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillStyle = color;
+    ctx.fillText(recSized(ctx, text, 460, 58, 30, "bold "), x + 256, y + 66);
+    TP.labelTex.needsUpdate = true;
+  }
+  function townHeroDraw() {  // the close-up's tag: its resident's name and money (the plate's own words), or none
+    const L = TOWN.aimLot >= 0 ? TL[TOWN.aimLot] : null;
+    if (!L || !L.occ) { TOWN.heroOn = false; return; }
+    townLabelDraw(TOWN_LABELS, L.occ.name + (townNum(L.money) ? "  " + townUsd(L.money) : ""), TOWN_CREAM);
+  }
 
   // ------------------------------------------------------------- a poll landed: who lives where, what happened, the board
   function townTargets(L, r) {
-    L.money = townNum(r.money_usd) ? r.money_usd : null; L.hT = townFloors(r.money_usd) * TOWN_FLOOR_H; L.litT = townN(r.open) > 0 ? 1 : 0;
-    L.cand = r.candidate === true; L.moving = true;
+    L.money = townNum(r.money_usd) ? r.money_usd : null; L.hT = townFloors(r.money_usd, TOWN.start) * TOWN_FLOOR_H; L.litT = townN(r.open) > 0 ? 1 : 0;
+    L.cand = r.candidate === true; L.profit = townProfit(r.money_usd, TOWN.start); L.moving = true;
+  }
+  function townSettle(L) {  // a resident's figures held back for its moments (the plate, the floors, the lights) at last
+    const r = L.pend; L.pend = null;
+    if (r && L.occ && L.occ.id === String(r.id)) { townTargets(L, r); townPlate(L); }
   }
   function townMoveIn(L, r) {  // a resident in its house (its colours, its plate)
     L.occ = { id: String(r.id), name: String(r.name || "") }; L.fam = townFamily(r.style); L.roof.set(TOWN_ROOF[L.fam]);
@@ -6632,6 +6829,7 @@ _M_TOWN = r"""
     TOWN.gen = isNum(d.generated_at) ? d.generated_at : null; TOWN.genAt = performance.now();
     if (!a) { TOWN.a = null; townBoard(); return; }  // (no report this poll: the houses stay as they were)
     TOWN.a = a; TOWN.line = d.plain && typeof d.plain.arena_line === "string" ? d.plain.arena_line : "";
+    TOWN.start = isNum(a.start_cash) && a.start_cash > 0 ? a.start_cash : TOWN_START_USD;  // (the floors count from it)
     const res = Array.isArray(a.residents) ? a.residents : [];
     TOWN.byId = {}; res.forEach(function (r) { if (r && r.id != null) TOWN.byId[String(r.id)] = r; });
     const m = townAssign(TOWN.lots.length ? TOWN.lots : null, res, TOWN_LOTS, simT);
@@ -6646,10 +6844,6 @@ _M_TOWN = r"""
       });
       TOWN.nextAt = simT + TOWN_FIRST_S;
     } else {
-      m.lots.forEach(function (q, i) {  // the residents still in their houses: their money and their bets
-        const L = TL[i], r = q.id != null ? TOWN.byId[q.id] : null;
-        if (r && L.occ && L.occ.id === q.id) { townTargets(L, r); townPlate(L); }
-      });
       const lotOf = {};
       m.lots.forEach(function (q, i) { if (q.id != null) lotOf[q.name] = i; });
       m.gone.forEach(function (g) { if (lotOf[g.name] == null) lotOf[g.name] = g.lot; });
@@ -6658,9 +6852,17 @@ _M_TOWN = r"""
       for (let i = TOWN.queue.length - 1; i >= 0; i--) if (!TOWN.queue[i].done) { at = Math.max(at, TOWN.queue[i].at + gap); break; }
       plan.forEach(function (q, k) { q.at = at + k * gap; q.done = false; q.hold = false; q.heldAt = 0; });
       TOWN.queue = TOWN.queue.filter(function (q) { return !q.done; }).concat(plan);
-      for (let i = 0, over = TOWN.queue.length - TOWN_QUEUE_MAX; i < TOWN.queue.length && over > 0; i++) {
-        const q = TOWN.queue[i]; if (!q.hold && (q.act === "parcel" || q.act === "even")) { q.done = true; over -= 1; }
-      }
+      townTrim(TOWN.queue, TOWN_QUEUE_MAX);  // (a slow screen never builds a backlog: the buys give way first)
+      TOWN.queue = TOWN.queue.filter(function (q) { return !q.done; });
+      // the residents still in their houses: their money and their bets, now, or for a house with a moment still to play
+      // when its last one plays (the coins before the plate's new money and the taller house, never after)
+      const waits = {};
+      TOWN.queue.forEach(function (q) { waits[q.lot] = true; });
+      m.lots.forEach(function (q, i) {
+        const L = TL[i], r = q.id != null ? TOWN.byId[q.id] : null;
+        if (!r || !L.occ || L.occ.id !== q.id) return;
+        if (waits[i]) L.pend = r; else { L.pend = null; townTargets(L, r); townPlate(L); }
+      });
       if (plan.some(function (q) { return q.act === "rise" || q.act === "sink"; }))
         TOWN.nextAt = Math.min(TOWN.nextAt, Math.max(simT, TOWN.lastEnd + TOWN_DRAMA_S));
     }
@@ -6694,14 +6896,16 @@ _M_TOWN = r"""
     return L.state === "up" || L.state === "rising";
   }
   function townQueue() {
-    TOWN_WAIT.fill(0);
+    TOWN_WAIT.fill(0); TOWN_PEND.fill(0);
     const spotOn = FILM.on && FILM.kind === "town" && TOWN.spotBeat >= 0 && FILM.shown === TOWN.spotBeat;
     let waiting = 0;
     for (let i = 0; i < TOWN.queue.length; i++) {
       const q = TOWN.queue[i]; if (q.done) continue;
-      const L = TL[q.lot]; waiting += 1;
+      const L = TL[q.lot]; waiting += 1; TOWN_PEND[q.lot] = 1;
       if (TOWN_WAIT[q.lot] || TOWN.clock < q.at) { TOWN_WAIT[q.lot] = 1; continue; }  // (a lot's moments play in their order)
       if (q.hold && !spotOn && simT - q.heldAt < TOWN_HOLD_S) { TOWN_WAIT[q.lot] = 1; continue; }  // (the close-up's: on air)
+      // (one walker a lot: its villager on its way to the market, out of town or in finishes first; a few seconds at most)
+      if (L.vm === V_TRIP || L.vm === V_LEAVE || L.vm === V_ARRIVE) { TOWN_WAIT[q.lot] = 1; continue; }
       if (!townReady(q, L)) {
         // who lives where is never dropped: a sink with no house standing is done; a rise waits for its lot (a house still
         // standing there goes first); a moment of a house that never stands again is dropped after 14 s
@@ -6711,22 +6915,41 @@ _M_TOWN = r"""
         if (q.done) waiting -= 1;
         continue;
       }
-      townPlay(q, L); q.done = true; waiting -= 1;
+      townPlay(q, L); q.done = true; waiting -= 1; TOWN_PEND[q.lot] = 0;  // (its lot's next moment, if any, says so again)
     }
+    // a house's figures held back for its moments: once none is left to play, the plate, the floors and the lights catch up
+    for (let i = 0; i < TL.length; i++) if (TL[i].pend && !TOWN_PEND[i]) townSettle(TL[i]);
     TOWN.wait = waiting;
   }
   function townPlay(q, L) {
     if (q.act === "rise") {
       const r = (q.id != null && TOWN.byId[q.id]) || { id: q.id, name: q.who, money_usd: null, open: 0, style: "" };
-      townMoveIn(L, r); L.h = L.hT; L.state = "rising"; L.t0 = simT; L.lit = 0; L.dark = 0; L.y = -(L.h + 1.0);
-      townRing(L, 0xffcf7a); townChime("rise");
+      // the newcomer walks in over the bridge (the last stretch: a short one for the close-up) and the house rises as they
+      // reach the lot; for less motion it rises at once
+      L.arr = r;
+      if (TOWN_CALM) townArrived(L);
+      else { L.state = "arriving"; townFolkGo(L, V_ARRIVE, q.hold ? TOWN_NEAR_M : TOWN_COME_M); }
     } else if (q.act === "sink") {
       L.state = "sinking"; L.t0 = simT; townRing(L, 0x8f9bb3); townPuff(L, 0.1, 6, 0x9a8f86, 1.4); townChime("sink");
-    } else if (q.act === "parcel") townParcel(L);
-    else if (q.act === "coins") { if (TOWN_CALM) townRing(L, 0xffcf7a); else townCoins(L); townChime("coins"); }  // (less motion: a ring, no fountain)
-    else if (q.act === "puff") townPuff(L, L.h + 0.9, 5, 0x7f86a3, 1.0);
+      if (!TOWN_CALM && L.vOn) townFolkGo(L, V_LEAVE, 0);  // (its resident walks off over the bridge with a bundle)
+    } else if (q.act === "parcel") { townParcel(L); if (!TOWN_CALM && !TOWN.night) townFolkGo(L, V_TRIP, 0); }  // (to the market and back)
+    else if (q.act === "coins") { if (TOWN_CALM) townRing(L, 0xffcf7a); else townCoins(L); townChime("coins"); townFolkGo(L, V_CHEER, 0); }  // (less motion: a ring, no fountain)
+    else if (q.act === "puff") { townPuff(L, L.h + 0.9, 5, 0x7f86a3, 1.0); townFolkGo(L, V_SHRUG, 0); }
     else townPuff(L, L.h + 0.9, 3, 0xd8d6d0, 0.7);
+    if (q.act !== "rise") townLabelShow(q, L);  // (a newcomer's words come up as its house does: townArrived)
+    if (q.act !== "rise" && q.act !== "sink" && L.pend && !townLeft(q)) townSettle(L);  // (its last moment: the figures follow)
     q.playedAt = simT; TOWN.played.unshift(q); if (TOWN.played.length > 12) TOWN.played.length = 12; TOWN.plays += 1;
+    if (TP.plateDirty) { TP.plateDirty = false; TP.plateTex.needsUpdate = true; }
+  }
+  function townLeft(q) {  // another moment of q's lot still to play after it
+    for (let i = 0; i < TOWN.queue.length; i++) { const o = TOWN.queue[i]; if (o !== q && !o.done && o.lot === q.lot) return true; }
+    return false;
+  }
+  function townArrived(L) {  // the newcomer has reached the lot: the house rises (its colours, its plate)
+    const r = L.arr; L.arr = null;
+    if (!r) { L.state = "vacant"; return; }
+    townMoveIn(L, r); L.h = L.hT; L.state = "rising"; L.t0 = simT; L.lit = 0; L.dark = 0; L.y = -(L.h + 1.0); L.moving = true;
+    townRing(L, 0xffcf7a); townChime("rise"); townLabelShow({ act: "rise", who: L.occ.name }, L);
     if (TP.plateDirty) { TP.plateDirty = false; TP.plateTex.needsUpdate = true; }
   }
   // ------------------------------------------------------------- the effects (pools made once)
@@ -6752,6 +6975,117 @@ _M_TOWN = r"""
   function townRing(L, color) {
     for (let i = 0; i < TP.rings.length; i++) { const r = TP.rings[i]; if (r.on) continue;
       r.on = true; r.t0 = simT; r.m.visible = true; r.m.material.color.copy(hdr(color, 2.2)); r.m.position.set(L.cx, TOWN_AT.y + 0.08, L.cz); return; }
+  }
+  // ------------------------------------------------------------- the villagers (one per house: its resident)
+  function townFolkGo(L, mode, metres) {  // a villager's move begins (the moment's own: a trip, a cheer, a shrug, out, in)
+    L.vm = mode; L.vt0 = simT; L.vDirty = true;
+    if (mode === V_TRIP) L.vdur = 2 * L.trip.len / TOWN_WALK + TOWN_STOP_S;
+    else if (mode === V_CHEER) L.vdur = TOWN_CHEER_S;
+    else if (mode === V_SHRUG) L.vdur = TOWN_SHRUG_S;
+    else if (mode === V_LEAVE) { L.vd0 = 0; L.vd1 = L.away.len; L.vdur = clamp(L.away.len / TOWN_WALK, 3, TOWN_LEAVE_S); }
+    else if (mode === V_ARRIVE) { L.vd0 = Math.min(L.away.len, metres); L.vd1 = 0; L.vdur = clamp(L.vd0 / TOWN_WALK, 1, TOWN_ARRIVE_S); }
+    // (dressed in the colour of the market its resident trades: a newcomer's own, before its house has any)
+    _tc.copy(L.roof); if (mode === V_ARRIVE && L.arr) _tc.set(TOWN_ROOF[townFamily(L.arr.style)]);
+    TP.folkBody.setColorAt(L.i, _tc); if (TP.folkBody.instanceColor) TP.folkBody.instanceColor.needsUpdate = true;
+  }
+  const TOWN_POSE = new Float32Array(4);  // (x, y, z, yaw of a point along a walk: made once)
+  function townAlong(W, d) {  // the point d metres along walk W, facing the way it goes
+    const P = W.P, D = W.D, n = D.length; let k = 1;
+    while (k < n - 1 && D[k] < d) k++;
+    const u = clamp((d - D[k - 1]) / Math.max(1e-6, D[k] - D[k - 1]), 0, 1), a = (k - 1) * 3, b = k * 3;
+    TOWN_POSE[0] = P[a] + (P[b] - P[a]) * u; TOWN_POSE[1] = P[a + 1] + (P[b + 1] - P[a + 1]) * u; TOWN_POSE[2] = P[a + 2] + (P[b + 2] - P[a + 2]) * u;
+    TOWN_POSE[3] = Math.atan2(P[b] - P[a], P[b + 2] - P[a + 2]);
+  }
+  function townFolkPut(i, x, y, z, yaw, lean, hy, hx, pack) {  // one villager's four parts (numbers only)
+    _tq.setFromEuler(_te.set(0, yaw, lean, "YXZ")); _tp.set(x, y, z); _ts.set(1, 1, 1); _tm.compose(_tp, _tq, _ts);
+    TP.folkBody.setMatrixAt(i, _tm); TP.folkHead.setMatrixAt(i, _tm); TP.folkPack.setMatrixAt(i, pack ? _tm : _tz);
+    _tp.y = y + hy; _ts.set(hx, 1, 1); TP.folkHands.setMatrixAt(i, _tm.compose(_tp, _tq, _ts));
+  }
+  function townFolkHide(i) { TP.folkBody.setMatrixAt(i, _tz); TP.folkHead.setMatrixAt(i, _tz); TP.folkHands.setMatrixAt(i, _tz); TP.folkPack.setMatrixAt(i, _tz); }
+  function townFolk() {  // once a frame: the villagers on the move every frame, the others only when something changed
+    let any = false, walking = 0;
+    for (let i = 0; i < TL.length; i++) {
+      const L = TL[i], t = simT - L.vt0, gy = TOWN_AT.y + L.y;
+      if (L.vm !== V_HOME && t >= L.vdur) {  // (the move is over: home again, gone, or arrived and the house rises)
+        const m = L.vm; L.vm = V_HOME; L.vDirty = true;
+        if (m === V_ARRIVE) townArrived(L);
+      }
+      if (L.vm === V_TRIP || L.vm === V_LEAVE || L.vm === V_ARRIVE) {
+        walking += 1; any = true; L.vOn = true; L.vDirty = true;
+        let d = 0, back = false;
+        if (L.vm === V_TRIP) { const go = L.trip.len / TOWN_WALK; d = t < go ? t * TOWN_WALK : t < go + TOWN_STOP_S ? L.trip.len : Math.max(0, L.trip.len - (t - go - TOWN_STOP_S) * TOWN_WALK); back = t >= go + TOWN_STOP_S; }
+        else d = L.vd0 + (L.vd1 - L.vd0) * clamp(t / L.vdur, 0, 1);
+        townAlong(L.vm === V_TRIP ? L.trip : L.away, d);
+        const yaw = TOWN_POSE[3] + (back || L.vm === V_ARRIVE ? Math.PI : 0), bob = Math.abs(Math.sin(t * 11)) * 0.035;
+        townFolkPut(i, TOWN_POSE[0], TOWN_POSE[1] + bob, TOWN_POSE[2], yaw, Math.sin(t * 11) * 0.06, 0.2, 1, L.vm === V_LEAVE);
+        continue;
+      }
+      // at home: standing on the doorstep for a cheer or a shrug, sitting there by day, inside at night; none in an empty lot
+      const home = L.occ && (L.state === "up" || L.state === "rising"), act = L.vm === V_CHEER || L.vm === V_SHRUG;
+      const on = !!home && (act || !TOWN.night);
+      if (act && on) {
+        any = true; L.vOn = true; L.vDirty = true;
+        const u = clamp(t / L.vdur, 0, 1), cheer = L.vm === V_CHEER, jump = cheer && !TOWN_CALM ? Math.abs(Math.sin(u * Math.PI * 3)) * 0.13 : 0;
+        const shrug = !cheer && !TOWN_CALM ? Math.sin(u * Math.PI * 4) * 0.12 : 0;
+        townFolkPut(i, L.sx, gy + jump, L.sz, L.yawW, shrug, cheer ? 0.47 : 0.3, cheer ? 1.15 : 1.7, false);
+        continue;
+      }
+      if (on === L.vOn && !L.vDirty) continue;
+      L.vOn = on; L.vDirty = false; any = true;
+      if (on) townFolkPut(i, L.sx, gy - 0.06, L.sz, L.yawW, 0, 0.17, 1, false);  // (sitting: a little lower, hands in the lap)
+      else townFolkHide(i);
+      if (on) TP.folkBody.setColorAt(i, L.roof);
+    }
+    TOWN.walking = walking;
+    if (any) {
+      TP.folkBody.instanceMatrix.needsUpdate = true; TP.folkHead.instanceMatrix.needsUpdate = true; TP.folkHands.instanceMatrix.needsUpdate = true;
+      TP.folkPack.instanceMatrix.needsUpdate = true; if (TP.folkBody.instanceColor) TP.folkBody.instanceColor.needsUpdate = true;
+    }
+  }
+  // ------------------------------------------------------------- the words over a house (three at once) and the close-up's tag
+  function townLabelShow(q, L) {
+    const w = townLabel(q); if (!w) return;
+    let k = -1, old = -1;
+    for (let i = 0; i < TOWN_LABELS; i++) {
+      const s = TP.L[i]; if (!s.on) { k = i; break; }
+      if (old < 0 || s.t0 < TP.L[old].t0) old = i;
+    }
+    if (k < 0) { if (q.act === "parcel") return; k = old; }  // (a buy only into a free slot: the others take the oldest)
+    const s = TP.L[k]; s.on = true; s.t0 = simT; s.lot = L.i; s.x = L.cx; s.z = L.cz; s.y = TOWN_AT.y + Math.max(L.h, 0.5) + 1.3;
+    // (never over another one: a label the size it has on screen from here, stacked above any it would cover)
+    const lw = TP.uLW.value * Math.max(0.5, camera.position.distanceTo(_tp.set(s.x, s.y, s.z))) / Math.max(1, TP.uPx.value), lh = lw * 0.3;
+    s.still = TP.mark.visible && L.i === TOWN.aimLot;  // (the close-up's house: just under its own name tag, in the frame)
+    if (s.still) s.y = TOWN_AT.y + Math.max(L.hT, L.h) + 1.25 - 0.34 * lw;
+    for (let pass = 0; pass < TOWN_LABELS && !s.still; pass++) {
+      let moved = false;
+      for (let i = 0; i < TOWN_LABELS; i++) {
+        const o = TP.L[i];
+        if (i === k || !o.on || Math.hypot(o.x - s.x, o.z - s.z) > lw || Math.abs(o.y + (o.rise || 0) - s.y) > lh) continue;
+        s.y = o.y + (o.rise || 0) + lh; moved = true;
+      }
+      if (!moved) break;
+    }
+    s.rise = 0;
+    townLabelDraw(k, w.text, TOWN_TONE[w.tone] || TOWN_BLUE);
+  }
+  function townLabelsStep() {  // once a frame: each label rises and fades over TOWN_LABEL_S (for less motion it only fades)
+    let any = false;
+    const A = TP.labels.geometry.attributes;
+    for (let i = 0; i < TP.L.length; i++) {
+      const s = TP.L[i];
+      if (i === TOWN_LABELS) {  // (the close-up's name tag: while its beat is on air, over the ridge)
+        const on = TOWN.heroOn && TOWN.aimLot >= 0, L = on ? TL[TOWN.aimLot] : null, a = on ? 1 : 0;
+        if (on) { const y = TOWN_AT.y + Math.max(L.hT, L.h) + 1.25; if (s.y !== y || s.x !== L.cx) { s.x = L.cx; s.y = y; s.z = L.cz; any = true; } }
+        if (a !== s.a) { s.a = a; any = true; }
+      } else if (s.on) {
+        const u = (simT - s.t0) / TOWN_LABEL_S;
+        if (u >= 1) { s.on = false; s.a = 0; any = true; }
+        else { s.a = Math.min(1, u / 0.1) * (1 - smoothstep(u, 0.72, 1)); s.rise = TOWN_CALM || s.still ? 0 : 0.9 * townEase(u); any = true; }
+      } else continue;
+      for (let k = 0; k < 4; k++) { A.position.setXYZ(i * 4 + k, s.x, s.y + (s.rise || 0), s.z); A.aA.setX(i * 4 + k, s.a); }
+    }
+    if (any) { A.position.needsUpdate = true; A.aA.needsUpdate = true; }
+    TP.uLW.value = clamp(window.innerWidth * 0.34, 130, 230) * renderer.getPixelRatio();
   }
   function townFx() {
     let any = false;
@@ -6784,9 +7118,9 @@ _M_TOWN = r"""
   }
   // ------------------------------------------------------------- the houses (written only while something about them moves)
   function townWrite(L) {
-    const i = L.i, show = L.state !== "vacant" && L.state !== "empty";
+    const i = L.i, show = L.state !== "vacant" && L.state !== "empty" && L.state !== "arriving";
     if (!show) {
-      if (!L.hidden) { L.hidden = true; TP.body.setMatrixAt(i, _tz); TP.roof.setMatrixAt(i, _tz); TP.chim.setMatrixAt(i, _tz); TP.flags.setMatrixAt(i, _tz);
+      if (!L.hidden) { L.hidden = true; TP.body.setMatrixAt(i, _tz); TP.roof.setMatrixAt(i, _tz); TP.chim.setMatrixAt(i, _tz); TP.flags.setMatrixAt(i, _tz); TP.trim.setMatrixAt(i, _tz);
         TP.lt[i] = 0; TP.smoke.geometry.attributes.aOn.array.fill(0, i * 3, i * 3 + 3); TP.smoke.geometry.attributes.aOn.needsUpdate = true;
         TP.dirty = true; }
       return;
@@ -6796,6 +7130,7 @@ _M_TOWN = r"""
     _tq.setFromEuler(_te.set(0, yaw, 0, "YXZ"));
     _tp.set(L.cx, base, L.cz); _ts.set(TOWN_W, Math.max(0.05, L.h), TOWN_W); TP.body.setMatrixAt(i, _tm.compose(_tp, _tq, _ts));
     _tp.y = base + L.h; _ts.set(1, 1, 1); TP.roof.setMatrixAt(i, _tm.compose(_tp, _tq, _ts));
+    _ts.setScalar(L.profit && L.state !== "sinking" ? 1 : 0); TP.trim.setMatrixAt(i, _tm.compose(_tp, _tq, _ts));  // (in profit: gold eaves)
     _ts.setScalar(L.cand && L.state === "up" ? 1 : 0); _tp.y = base + L.h + 0.74; TP.flags.setMatrixAt(i, _tm.compose(_tp, _tq, _ts));
     const cs = Math.cos(yaw), sn = Math.sin(yaw), ox = 0.36 * cs - 0.3 * sn, oz = -0.36 * sn - 0.3 * cs;
     _ts.set(1, 1, 1); _tp.set(L.cx + ox, base + L.h - 0.06, L.cz + oz); TP.chim.setMatrixAt(i, _tm.compose(_tp, _tq, _ts));
@@ -6826,7 +7161,7 @@ _M_TOWN = r"""
     }
     if (TP.dirty) {
       TP.dirty = false;
-      townFlush(TP.body); townFlush(TP.roof); townFlush(TP.chim); townFlush(TP.flags);
+      townFlush(TP.body); townFlush(TP.roof); townFlush(TP.chim); townFlush(TP.flags); townFlush(TP.trim);
       TP.body.geometry.attributes.aFloors.needsUpdate = true; TP.body.geometry.attributes.aLit.needsUpdate = true;
     }
     if (TP.plateDirty) { TP.plateDirty = false; TP.plateTex.needsUpdate = true; }
@@ -6841,6 +7176,8 @@ _M_TOWN = r"""
     const mark = FILM.on && FILM.kind === "town" && TOWN.houseBeat >= 0 && FILM.shown === TOWN.houseBeat;
     if (mark !== TP.mark.visible) TP.mark.visible = mark;
     if (mark) TP.mark.material.opacity = TOWN_CALM ? 0.8 : 0.6 + Math.sin(simT * 2.2) * 0.25;
+    // (and its name and money over its ridge, half as big again as a plate: the house's own plate faces its door)
+    if (mark !== TOWN.heroOn) { TOWN.heroOn = mark; if (mark) townHeroDraw(); }
     TP.uPx.value = renderer.domElement.height * camera.projectionMatrix.elements[5] / 2;
   }
   // ------------------------------------------------------------- the sound (silent until the speaker is tapped; near the town)
@@ -6863,9 +7200,11 @@ _M_TOWN = r"""
 
   // ------------------------------------------------------------- the visits: the record room's programme ("town")
   function townCinema() { const c = window.__skyport && window.__skyport.cinema; return !!(c && typeof c.on === "function" && c.on()); }
-  function townFree() {  // nothing else is on: no guide, panel, programme, pin, fresh moment or replay, no first-visit card
+  function townFree() {  // nothing else is on: no guide, panel, programme, pin, fresh moment or replay, no first-visit card,
+    // and no real-money moment of the goal's waiting to play (a rung, a stand-down, the huddle: real money first)
     const sk = window.__skyport, replay = sk && sk.replay ? sk.replay.now() : null, c = sk && sk.cinema;
     return guideEl.hidden && !panelKind && !FILM.on && !replay && !pinned && !(focus && simT < focus.until)
+      && !GOAL.pending && !GOAL.queue.length
       && !(c && typeof c.intro === "function" && c.intro()) && document.visibilityState === "visible";
   }
   function townLotOf(name) { for (let i = 0; i < TL.length; i++) if (TL[i].occ && TL[i].occ.name === name) return i; return -1; }
@@ -6874,17 +7213,29 @@ _M_TOWN = r"""
     const L = TL[lot], H = Math.max(L.hT, L.h) + 0.85 + 1.2, V = REC_VIEWS.townhouse;
     TP.houseAt.position.set(L.cx - L.dx * TOWN_W / 2, TOWN_AT.y + H / 2, L.cz - L.dz * TOWN_W / 2); TP.houseAt.rotation.y = L.yawW + Math.PI;
     V.h = H + 0.6; V.w = 3.2; V.lift = L.ring ? 0.55 : 1.0;
-    TP.mark.position.set(L.cx, TOWN_AT.y + 0.06, L.cz);
+    TP.mark.position.set(L.cx, TOWN_AT.y + 0.06, L.cz); TOWN.aimLot = lot;  // (its own name tag rides over its ridge: townHeroDraw)
+  }
+  // the whole village for the screen in hand: a landscape screen pans across it from the south-west, low over the roofs; a
+  // portrait one (a phone) sees the whole round islet from high above, the hall, the market, every house and the bridge
+  function townWideFit() {
+    const V = REC_VIEWS.town, tall = window.innerWidth < window.innerHeight;
+    V.pan = !tall; V.w = tall ? 17.5 : 15.5; V.h = tall ? 16 : 7.4; V.lift = tall ? 0.95 : 0.46;
+    TP.wideAt.position.copy(TF.at(tall ? 0.6 : -0.2, 1.8, tall ? -0.6 : -2.4)); TP.wideAt.rotation.y = tall ? 0 : -0.35;
   }
   function townVisit(manual) {
     if (!TOWN.ok || !TOWN.a || (FILM.on && FILM.kind === "town")) return false;
     const k = townSpot(TOWN.queue), q = k >= 0 ? TOWN.queue[k] : null;
-    const words = townScript(TOWN.a, TOWN.line, townRentNow(), q ? { who: q.who, text: q.ev && typeof q.ev.text === "string" ? q.ev.text : "" } : null);
+    let waiting = 0;
+    for (let i = 0; i < TOWN.queue.length; i++) if (!TOWN.queue[i].done && i !== k) waiting += 1;
+    const words = townScript(TOWN.a, TOWN.line, townRentNow(), q ? { who: q.who, text: q.ev && typeof q.ev.text === "string" ? q.ev.text : "" } : null, waiting);
     if (!words.length) return false;  // (no line: no visit)
     const last = words[words.length - 1], lot = last.view !== "townhouse" ? -1 : q ? q.lot : townLotOf(last.name);
     if (last.view === "townhouse" && lot < 0) words.pop();
     else if (lot >= 0) townAim(lot);
-    REC_VIEWS.town.lift = window.innerWidth < window.innerHeight ? 0.62 : 0.46;  // (a portrait screen's wide is nearer: higher, over the roofs)
+    townWideFit();
+    // the moments waiting are paced into the wide beat, in their order, each on air (the close-up's waits for its own)
+    const gap = townPace(waiting, words[0].s);
+    for (let i = 0, n = 0; i < TOWN.queue.length; i++) { const o = TOWN.queue[i]; if (o.done || i === k) continue; o.at = TOWN.clock + 1 + n * gap; n += 1; }
     TOWN.spotWords = q ? { who: q.who, text: q.ev && typeof q.ev.text === "string" ? q.ev.text : "" } : null; TOWN.aimName = lot >= 0 ? last.name : "";
     const n = words.length, beats = words.map(function (w, i) {
       const b = filmBeat(i, "view:" + w.view, w.s, "THE TOWN", (i + 1) + " of " + n, w.who, w.text, "practice");
@@ -6896,6 +7247,12 @@ _M_TOWN = r"""
     TOWN.visiting = true; TOWN.visitStart = simT; TOWN.nextAt = Infinity; TOWN.visits += 1;
     return true;
   }
+  function townCard() {  // the card under a view of the town (details): practice said once, the board's own figures
+    const B = TOWN.board;
+    if (!B || !B.ok) return null;
+    return { room: "THE TOWN", who: "The Arena · " + TOWN_TAG.toLowerCase(), line: [B.pop, B.rent].filter(Boolean).join(", ") };
+  }
+  CARD_FOR["rec:town"] = CARD_FOR["rec:townhall"] = CARD_FOR["rec:townhouse"] = townCard;
   function townChipMake() {  // "town", after "records" in the chip row: the visit
     const b = document.createElement("button"); b.type = "button"; b.textContent = "town";
     b.title = "The town (practice money): its trader bots pay rent each day or move out"; b.setAttribute("aria-label", b.title);
@@ -6907,16 +7264,28 @@ _M_TOWN = r"""
     if (!TOWN.chip && REC.tourChip) townChipMake();
     const mine = FILM.on && FILM.kind === "town";
     if (TOWN.chip) { const on = mine ? "on" : ""; if (TOWN.chip.className !== on) TOWN.chip.className = on; if (TOWN.chip.hidden === !!TOWN.a) TOWN.chip.hidden = !TOWN.a; }
-    if (TOWN.visiting && !mine) {  // the visit is over (or the viewer took the camera): its held moment plays now
-      TOWN.visiting = false; TOWN.lastEnd = simT; TOWN.nextAt = simT + TOWN_EVERY_S; TOWN.spotBeat = -1;
+    if (TOWN.visiting && !mine) {  // the visit is over (or the viewer took the camera): its held moment plays now; one cut
+      // short for real money comes back sooner (its moments still wait to play on air)
+      TOWN.visiting = false; TOWN.lastEnd = simT; TOWN.nextAt = simT + (TOWN.cut ? TOWN_DRAMA_S : TOWN_EVERY_S); TOWN.cut = false; TOWN.spotBeat = -1;
       for (let i = 0; i < TOWN.queue.length; i++) TOWN.queue[i].hold = false;
     }
-    if (mine) { const sk = window.__skyport, rp = sk && sk.replay ? sk.replay.now() : null; if (rp && rp.real === true) filmStop(true); }  // (real money first)
-    // the moments' clock waits while the drone flies to a visit's first beat (at most 5 s), so they play on air
-    if (!(mine && FILM.shown < 0 && simT - TOWN.visitStart < 5)) TOWN.clock += dt;
-    townQueue(); townHouses(dt); townFx(); townAmbient(dt);
-    if (simT >= TOWN.rentT) { TOWN.rentT = simT + 1; const r = townRentNow(); if ((r == null ? -1 : Math.floor(r / 60)) !== TOWN.rentMin) townBoard(); }
+    // real money first: a real-money replay, or a moment of the goal's waiting (a rung, a stand-down, the huddle), stops a visit
+    if (mine) { const sk = window.__skyport, rp = sk && sk.replay ? sk.replay.now() : null; if (GOAL.pending || (rp && rp.real === true)) { TOWN.cut = true; filmStop(true); } }
+    // the moments' clock: in the cinema it runs only while a beat of the visit that shows the houses is on air (the whole
+    // village, the close-up; not the hall's board), so every moment plays on screen; in the details view it runs always
+    // but while the drone flies to a visit's first beat (at most 5 s)
+    const b = mine && FILM.shown >= 0 && FILM.shown === FILM.i ? FILM.script[FILM.shown] : null, showing = !!b && b.cam !== "view:townhall";
+    if (showing || (!townCinema() && !(mine && FILM.shown < 0 && simT - TOWN.visitStart < 5))) TOWN.clock += dt;
+    townQueue(); townHouses(dt); townFolk(); townFx(); townLabelsStep(); townAmbient(dt);
+    if (simT >= TOWN.rentT) { TOWN.rentT = simT + 1; townNight(); const r = townRentNow(); if ((r == null ? -1 : Math.floor(r / 60)) !== TOWN.rentMin) townBoard(); }
     if (!TOWN.visiting && TOWN.a && simT >= TOWN.nextAt && (TOWN.wait > 0 || simT >= TOWN.nextAt + TOWN_OVERDUE_S) && townCinema() && townFree()) townVisit(false);
+  }
+  function townNight() {  // once a second: night on the viewer's clock (THE CHANNEL's), when the villagers are indoors
+    const c = window.__skyport && window.__skyport.clock, w = c && typeof c.weights === "function" ? c.weights() : null;
+    const night = !!(w && w.night > 0.5);
+    if (night === TOWN.night) return;
+    TOWN.night = night;
+    for (let i = 0; i < TL.length; i++) TL[i].vDirty = true;
   }
   function townFrame(dt) {  // (a fault here stops the town, never the world)
     if (!TOWN.ok) return;
@@ -6929,16 +7298,19 @@ _M_TOWN = r"""
     // (for a test or a screenshot: the houses standing, each lot, the moments played (newest first), the board's words)
     houses: function () { return TL.filter(function (L) { return L.state === "up" || L.state === "rising"; }).length; },
     lots: function () { return TL.map(function (L) { return { lot: L.i, name: L.occ ? L.occ.name : "", state: L.state, floors: Math.round(L.hT / TOWN_FLOOR_H),
-      lit: L.state === "up" && L.litT > 0, family: L.fam, candidate: L.cand }; }); },
+      lit: L.state === "up" && L.litT > 0, family: L.fam, candidate: L.cand, profit: L.profit, money: L.money, held: !!L.pend }; }); },
     events: function () { return TOWN.played.map(function (q) { return { act: q.act, lot: q.lot, who: q.who, kind: q.ev ? q.ev.kind : "", ts: q.ev ? q.ev.ts : null,
       usd: q.ev ? q.ev.usd : null, text: q.ev ? q.ev.text : "" }; }); },
     queue: function () { return TOWN.queue.filter(function (q) { return !q.done; }).map(function (q) { return { act: q.act, lot: q.lot, who: q.who,
       in: Math.round((q.at - TOWN.clock) * 10) / 10, hold: q.hold, state: TL[q.lot].state }; }); },
     board: function () { return TOWN.board; },
     visit: function () { return townVisit(true); },
-    view: function (id, hold) { return recView(id || "town", hold || 20, true, 150); },
+    view: function (id, hold) { if (!id || id === "town") townWideFit(); return recView(id || "town", hold || 20, true, 150); },
     state: function () { return { ok: TOWN.ok, visiting: TOWN.visiting, visits: TOWN.visits, plays: TOWN.plays, nextIn: TOWN.nextAt - simT,
-      spot: TOWN.spotBeat, waiting: TOWN.wait }; },
+      spot: TOWN.spotBeat, waiting: TOWN.wait, clock: TOWN.clock, walking: TOWN.walking, night: TOWN.night, hero: TOWN.heroOn }; },
+    // (the villagers: each lot's move and whether it is drawn; the words over the houses now)
+    folk: function () { return TL.map(function (L) { return { lot: L.i, move: ["home", "trip", "cheer", "shrug", "leave", "arrive"][L.vm], shown: L.vOn }; }); },
+    labels: function () { return TP.L.map(function (s, i) { return { on: i === TOWN_LABELS ? TOWN.heroOn : s.on, lot: i === TOWN_LABELS ? TOWN.aimLot : s.lot, alpha: s.a }; }); },
   } });
 """
 
@@ -7842,33 +8214,8 @@ _M_CINEMA = r"""
     cineHudEl.setAttribute("aria-label", h.line + ". Tap for the details of the real money.");
   }
   cineHudEl.onclick = function () { openPanel("real"); };
-  // ------------------------------------------------------------- the Arena strip (money.arena: practice, text only)
-  const arenaEl = el("arena"), arenaTxt = el("arena-txt"), ARENA = { lines: [], i: 0, at: 0 };
-  function arenaLines(d) {  // the newest events (each its own words, "(practice)" said once by the strip's tag), then the line
-    const a = d && d.money && d.money.arena ? d.money.arena : null, out = [];
-    if (!a) return out;
-    const evs = Array.isArray(a.events) ? a.events : [];
-    for (let i = 0; i < evs.length && out.length < 8; i++) {
-      const e = evs[i];
-      if (e && typeof e.text === "string" && e.text) out.push({ t: e.text.replace(/,\s*practice\)/, ")").replace(/\s*\(practice[^)]*\)/, ""), k: e.tone === "good" || e.tone === "bad" ? e.tone : "" });
-    }
-    const line = d.plain && typeof d.plain.arena_line === "string" ? d.plain.arena_line : "";
-    if (line) out.push({ t: line.replace(/^The Arena \(practice money\): /, ""), k: "" });
-    return out;
-  }
-  function arenaOnData(d) { ARENA.lines = arenaLines(d); ARENA.i = 0; ARENA.at = 0; arenaEl.classList.toggle("on", ARENA.lines.length > 0); }
-  function arenaFrame() {
-    if (!CINE.on || !ARENA.lines.length) return;
-    // (while the town's own visit is on air its caption says the Arena's words: the strip waits, one practice line at a time)
-    const town = FILM.on && FILM.kind === "town";
-    if (town !== arenaEl.classList.contains("town")) arenaEl.classList.toggle("town", town);
-    if (town) return;
-    const t = performance.now();
-    if (ARENA.at && t - ARENA.at < 5200) return;
-    ARENA.at = t;
-    const q = ARENA.lines[ARENA.i++ % ARENA.lines.length];
-    arenaTxt.textContent = q.t; arenaTxt.className = q.k;
-  }
+  // (the Arena's practice money has no strip of its own in this view: the town's visits say its words, each beat's title
+  // PRACTICE MONEY once, and nothing of it shows over any other shot)
   // ------------------------------------------------------------- the name tags (one per character, text only)
   const _cineAt = V3(0, 0, 0);
   const CINE_NAMETAGS = ACTOR_KEYS.map(function (k) {
@@ -7956,6 +8303,8 @@ _M_CINEMA = r"""
   }
   // ------------------------------------------------------------- the first visit's card (instead of the guide)
   function cineIntroOpen(again) {  // (again: the screenshot hook, once more, until a tap)
+    // (the first poll opens this card from apply(), before the bus says "data": the Arena is read from the page itself)
+    CINE.arena = !!(data && data.money && data.money.arena);
     if (!CINE.on || CINE.intro || !plain || (!again && cineIntroSeen())) return;
     const L = cineIntroLines(plain, CINE.arena);
     cineIntroBody.textContent = "";
@@ -7993,15 +8342,12 @@ _M_CINEMA = r"""
   }
   BUS.on("data", cineOnData);
   BUS.on("frame", cineFrame);
-  BUS.on("data", arenaOnData);
-  BUS.on("frame", arenaFrame);
   window.addEventListener("resize", cineMeasure);
   cineSet(!cineStored(), false);
   window.__skyport = Object.assign(window.__skyport || {}, { cinema: {
     // (for a test or a screenshot: the mode, the HUD's and the caption's words, the tags on screen, the director's holds)
     on: function () { return CINE.on; }, set: function (on) { cineSet(on, true); },
     hud: function () { return cineHudEl.textContent; },
-    arena: function () { return arenaEl.classList.contains("on") ? arenaTxt.textContent : ""; },
     caption: function () { return [cineCap1.textContent, cineCap2.hidden ? "" : cineCap2.textContent]; },
     tags: function () { return CINE_NAMETAGS.filter(function (q) { return q.op > 0; }).map(function (q) { return q.el.textContent; }); },
     intro: function (again) { if (again) { CINE.intro = false; cineIntroOpen(true); } return CINE.intro; },
@@ -8124,9 +8470,7 @@ def render_world_html(settings: Settings) -> str:
         '<div id="cine"><div id="lb-top"><button type="button" id="hud" aria-controls="panel">'
         '<span class="htag" id="hud-tag">REAL MONEY</span><b id="hud-cash">—</b><span id="hud-rest"></span></button></div>'
         '<div id="lb-bot"><div id="cap" aria-live="off"><p id="cap-1"><b>NIGHT SHIFT: SKYPORT</b></p><p id="cap-2" hidden></p>'
-        "</div></div>"
-        '<div id="arena" aria-hidden="true"><span class="atag">ARENA · PRACTICE</span><span id="arena-txt"></span></div>'
-        "</div>\n"
+        "</div></div></div>\n"
         '<div id="intro" role="dialog" aria-labelledby="intro-title" hidden><h2 id="intro-title">Skyport, live</h2>'
         '<div id="intro-body"></div><button type="button" id="intro-go">Watch</button></div>\n'
         f'<script type="module">{_MODULE}</script>\n</body>\n</html>\n'
