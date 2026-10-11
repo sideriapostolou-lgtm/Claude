@@ -1034,6 +1034,7 @@ class PolyDesk:
         )
         self._venue_ok = False  # this round's venue read succeeded (real orders need it: _apply_rule)
         self._orders_sent = 0  # real orders sent this round (the end-of-round venue read follows them)
+        self._closed_seen: set[tuple[str, float, bool]] = set()  # venue rows already logged (_log_closed_rows)
         # The file holds the loss stops: one that exists but cannot be read must not silently reset them (F14).
         unreadable = state_file_unreadable(self.path)
         copy = self._keep_unreadable() if unreadable else None
@@ -1258,6 +1259,7 @@ class PolyDesk:
             log.warning("polydesk_positions_failed status=%s", exc.status)
             return 0
         self._venue_ok = True
+        self._log_closed_rows(rows)
         pending = _pending_of(st)
         held = [r for r in rows if r["qty"] > 0 and not r["expired"] and r["slug"]]
         st["exchange"] = {
@@ -1372,6 +1374,26 @@ class PolyDesk:
         if adopted:
             log.info("polydesk_adopted n=%d venue_contracts=%g", adopted, st["exchange"]["contracts"])
         return adopted
+
+    def _log_closed_rows(self, rows: list[dict[str, Any]]) -> int:
+        """Read only: every venue row with a realized result (no contracts left, or some sold), logged once per
+        change of that figure, in the venue's own numbers (a position the owner cashed out in the app shows here
+        before the desk books anything). Returns the rows logged."""
+        logged = 0
+        for r in rows:
+            if not r.get("slug") or (r["qty"] > 0 and not r.get("realized")):
+                continue
+            key = (str(r["slug"]), round(float(r.get("realized") or 0.0), 4), bool(r.get("expired")))
+            if key in self._closed_seen:
+                continue
+            self._closed_seen.add(key)
+            logged += 1
+            held = self.state["positions"].get(r["slug"]) if isinstance(self.state.get("positions"), dict) else None
+            log.info("polydesk_venue_row slug=%s side=%s qty=%g realized=%.4f value=%.4f cost=%.4f expired=%s "
+                     "updated=%s desk_holds=%s", r["slug"], r.get("side"), r["qty"], float(r.get("realized") or 0.0),
+                     float(r.get("value") or 0.0), float(r.get("cost") or 0.0), bool(r.get("expired")),
+                     r.get("updated"), isinstance(held, dict))
+        return logged
 
     def _owner_resume(self, now: float) -> bool:
         """The owner's switch back to real money (``POLYDESK_RESUME_TOKEN``): a value not used before clears a
