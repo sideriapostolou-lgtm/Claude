@@ -572,6 +572,16 @@ def rule_id(settings: Settings) -> str:
     return f"{RULE_VERSION}|t{float(settings.polydesk_theta):.3f}|h{float(settings.polydesk_hours):g}|s{MAX_SPREAD}"
 
 
+def _spendable(bal: dict[str, Any]) -> dict[str, Any]:
+    """The venue's balance as the page shows it: a NO (short) holding posts its full $1 a contract as collateral and
+    the venue counts that inside ``cash`` (2026-10-11: cash $81.88, buying power $51.88 with 30 NO contracts open), so
+    ``cash`` is the buying power whenever that is lower; the venue's own figure is kept as ``cash_reported``."""
+    cash, power = _num(bal.get("cash")), _num(bal.get("buying_power"))
+    if cash is not None and power is not None and power < cash:
+        return {**bal, "cash_reported": cash, "cash": power}
+    return bal
+
+
 def _cluster_of(row: dict[str, Any]) -> str:
     """The draw a settlement belongs to: a game's markets settle on one result (``event``, with its end time so two
     games of the same name stay apart), a ladder's markets (same category, same end time) on one price; each such
@@ -1164,7 +1174,7 @@ class PolyDesk:
         st["last_error"] = None
         if self.reader is not None:
             try:
-                st["balance"] = {**self.reader.balances(), "at": now}
+                st["balance"] = _spendable({**self.reader.balances(), "at": now})
             except PolymarketUSError as exc:
                 st["counters"]["errors"] += 1
                 log.warning("polydesk_balance_failed status=%s", exc.status)

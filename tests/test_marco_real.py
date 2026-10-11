@@ -148,3 +148,9 @@ def test_the_client_prices_a_no_buy_on_the_yes_side_and_reads_documented_fills()
     assert fill["filled"] == 10 and fill["avg_price"] == pytest.approx(0.4775) and fill["cost"] == pytest.approx(4.775)
     long_fill = client.buy_long_ioc("k1", 0.98, 1)
     assert long_fill["filled"] == 1 and long_fill["avg_price"] == pytest.approx(0.98)
+
+
+def test_the_page_cash_is_the_buying_power_while_no_collateral_is_posted() -> None:
+    bal = P._spendable({"cash": 81.8779, "buying_power": 51.8779, "at": 1.0})
+    assert bal["cash"] == 51.8779 and bal["cash_reported"] == 81.8779
+    assert P._spendable({"cash": 42.0, "buying_power": 42.0}) == {"cash": 42.0, "buying_power": 42.0}
