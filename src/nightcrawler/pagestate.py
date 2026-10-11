@@ -27,7 +27,15 @@ Schema (lists capped: members 9, events <= 5, open trades <= 10, closed trades 1
                 "glossary": [{"word", "means"}],
                 "ticker": [{"ts", "who", "name", "text", "tone"}] (<= 8),   # the 3D world's ticker: TICKER
                 "finished": [{"id", "ts", "who": "jet"|"voss", "what", "result": "won"|"lost"|"even",
-                              "usd": float|null, "real": bool, "money": "real money"|"pretend"}] (<= 3)},
+                              "usd": float|null, "real": bool, "money": "real money"|"pretend"}] (<= 3),
+                "goal": {"label", "strip_label", "strip_figure", "strip_figure_short", "strip", "aria", "today",
+                         "strip_label_short", "line", "ember_line", "bill_line", "power_line", "plaque_line",
+                         "floor_line", "lifeline_line", "reserve_line",
+                         "reach_line", "streak_line", "day_lines" (<= 7), "best_line", "road_lines", "practice_line",
+                         "crew_road_line", "honest", "postcard", "target_text", "bill_text",
+                         "result": {"day", "title", "figure", "line", "streak"}|null,
+                         "lines": {character: str|null}, "programmes": {"check_in", "tour": [{"who", "tag", "text"}]}
+                         }|null},                                      # the town's goal in words: GOAL
       "money": {"label", "usd", "start_usd", "sol", "sol_usd", "withdrawn_sol",  # live: sent back to the owner
                 "since_start": {"usd", "pct"}, "today": {"usd", "pct"},   # the bot's own result (in SOL,
                 "sol_price_effect_usd",                                   #  shown at today's SOL price)
@@ -62,7 +70,12 @@ Schema (lists capped: members 9, events <= 5, open trades <= 10, closed trades 1
                "polymarket": {"paper": {"label", "open", "today_usd", "since_start_usd", "line"},  # the desk in words
                               "real": {"label", "open", "contracts", "cost_usd", "value_usd", "today_usd",
                                        "settled_today", "won_today", "since_start_usd", "cash_usd", "line"}|null}|null,
-               "trend": {"line"}|null},                                   # the trend desk in words (TREND)
+               "trend": {"line"}|null,                                    # the trend desk in words (TREND)
+               "goal": {"label", "target_usd", "target_ok", "is_cost": false, "counts": "real money only", "day",
+                        "day_start", "day_end", "day_n", "real_on", "real_today_usd", "parts", "peak_today_usd",
+                        "bill_per_day_usd", "bill_covered_by_real", "bill_share_real", "power", "rungs", "progress",
+                        "tier", "next", "beyond_usd", "floor", "lifeline", "reserve", "reach", "mood", "stand_down",
+                        "days", "streaks", "best_day", "road", "practice"}|null},   # the town's goal: GOAL
       "team": {"counts": {status: n}, "members": [{"id", "name", "role", "status", "why", "doing",
                                                     "last_activity", "events", "bars"?,
                                                     "risk_wall"?: {...}}]},   # the risk member only: RISK WALL
@@ -105,7 +118,31 @@ Whatever is not known is null (income before the first money check; the since-st
 and the line says so; ``covered_*`` is null while either side is unknown. The Polymarket desk is counted apart
 (``town.polymarket``, POLYMARKET below): one line for its paper book and, only while it has a real book, one for its
 real money, and ``line`` names each desk ("the Solana desk lost $3.18 and the Polymarket desk lost $1,345.53 today
-(paper money, pretend)"); no figure of one kind of money is ever added to another.
+(paper money, pretend)"); no figure of one kind of money is ever added to another. Only real money can cover the bill;
+practice never counts (``covered_*`` compare the money card's own figures and stay as they were for the 2D page, which
+says "covered" only while that card is real money; ``goal.bill_covered_by_real`` is the real one: GOAL below).
+
+GOAL (:func:`town_goal_block`, :mod:`nightcrawler.towngoal`): DISPLAY ONLY, the 3D world's goal tower. ``town.goal`` is
+the owner's goal for the team, ``TOWN_GOAL_USD`` real dollars a day (read leniently: ``target_ok`` is false and 100 is
+shown when the setting cannot be read), never a cost (``is_cost`` is always false; the town's running cost stays
+``cost_per_day_usd`` above, a whole day's bill). Only REAL money counts toward it: ``parts`` are the Polymarket desk's
+real book (``money.polymarket.real``) and the Solana bot's own only while it runs live, ``real_today_usd`` their sum to
+the cent (null without a real book, never a zero). The rungs (above zero, covers the bill, 1 % and 10 % of the goal, the
+goal, 1.5x, 2x, 3x) light by the cent; ``reached`` also marks a rung today's real settlement receipts touched earlier in
+the day (``peak_today_usd``, null unless they add up to today's figure); ``power`` is ``own`` once real money covers the
+bill, else ``backup`` (the owner pays), null when not known (``bill_covered_by_real`` and ``bill_share_real`` too, until
+real money has reported today). ``floor`` and ``lifeline`` are the real desk's day and total loss stops
+(``risk_wall.real_caps``), ``reserve`` the venue's cash (deposits plus results: shown, never counted), ``reach`` the
+most today's settled bets could have made by the rule's own price (an upper bound) and the least a loss costs
+(``loss_min_per_bet_usd``: the rule buys at its price or above). ``mood`` (stopped_for_good, unknown, off, stand_down,
+waiting, goal, own_power, climb) picks the words. ``day`` is the desk's own UTC day; ``days``, ``streaks`` and
+``best_day`` come from its day book (``live_days`` in its state file, read only) and are null unless that book agrees
+with the money card to the cent. ``practice`` is the pretend books apart (``counts_toward_goal`` always false) and the
+Solana bot's road to real money (the checklist's labels only, never a reason, and never its security steps: ``done`` and
+``total`` still count them). ``plain.goal`` says it all in fixed templates (the one token the page fills is
+``{local_reset}``, the day's end on the viewer's clock), with each character's line and the world's two programmes
+(``check_in``, ``tour``). A failure gives null for both (``town_goal_failed`` in the logs), never a made-up zero;
+nothing here reaches a desk.
 
 POLYMARKET (:func:`polymarket_desk`): the Polymarket desk's books (:func:`nightcrawler.polydesk.panel_state`, its
 state file only), kept apart from the SOL wallet and from each other. ``paper`` is the desk's own paper tally (the
@@ -294,7 +331,7 @@ from collections.abc import Callable, Mapping
 from pathlib import Path
 from typing import Any
 
-from nightcrawler import __version__, trenddesk
+from nightcrawler import __version__, towngoal, trenddesk
 from nightcrawler.botwallet import saved_balance, wallet_configured
 from nightcrawler.broker.keystore import KV_GENERATED, unused_wallet
 from nightcrawler.clock import utc_day
@@ -316,7 +353,7 @@ from nightcrawler.polydesk import (
     panel_state,
     state_path,
 )
-from nightcrawler.readiness import readiness
+from nightcrawler.readiness import CHECK_LABELS, readiness
 from nightcrawler.recap import RECAP_TTL_S, collect_recap, day_window, empty_recap, render_recap
 from nightcrawler.research_board import research_state
 from nightcrawler.teamroom import ENGINE_STALE_S, FUTURE_SKEW_S, build_team_state, derive_status, duration_text
@@ -326,8 +363,9 @@ __all__ = ["EXPERIENCE_CAVEAT", "EXPERIENCE_CHIPS", "EXPERIENCE_KINDS", "EXPERIE
            "LEARNING_RULE", "MEMBERS", "PAPER_LABEL", "PLAIN_ABOUT", "PLAIN_FINISHED_MAX", "PLAIN_JOBS",
            "PLAIN_MEMBER_JOBS", "PLAIN_TICKER_MAX", "PLAIN_TICKER_WINDOW_S", "PLAYBOOK_PATH", "PRETEND_LABEL",
            "REAL_LABEL", "SHELF_MAX", "STALE_BANNER_S", "TOWN_MONTH_DAYS", "WALLET_MAX_AGE_S", "build_page_state",
-           "experience_card", "learning_card", "plain_event", "plain_finished", "plain_ticker", "plain_words",
-           "polymarket_desk", "real_caps", "recap_state", "town_ledger", "trend_desk"]
+           "experience_card", "goal_books", "goal_inputs", "learning_card", "plain_event", "plain_finished",
+           "plain_ticker", "plain_words", "polymarket_desk", "real_caps", "recap_state", "town_goal_block",
+           "town_ledger", "trend_desk"]
 
 log = get_logger(__name__)
 
@@ -1332,6 +1370,117 @@ def town_ledger(settings: Settings, money: Mapping[str, Any], judge: Mapping[str
     }
 
 
+# =========================================================================== the town's goal (GOAL)
+
+#: The readiness checklist's security steps, never listed in the goal's road (their state is not for the world).
+GOAL_UNLISTED_STEPS = ("keys", "locked")
+GOAL_UNLISTED_LABELS = tuple(CHECK_LABELS[k] for k in GOAL_UNLISTED_STEPS)
+
+
+def _road_steps(ready: Mapping[str, Any]) -> list[Any]:
+    """The checklist's counted steps (its first ``total`` items: the last item, the switch itself, is the action)."""
+    items, total = _xp_list(ready.get("items")), _num(ready.get("total"))
+    return items[:int(total)] if total is not None and total >= 0 else items
+
+
+def goal_books(ledger: Any, settings: Settings, now: float) -> tuple[Any, list[float] | None]:
+    """``(live_days, today_pnls)`` for :func:`goal_inputs`: the Polymarket desk's own real day book (its state file,
+    read only: the books its daily stop uses; None while the desk is off or the file cannot be read) and today's real
+    settlements' results in their order (the ``polydesk_settled`` receipts since the UTC day began; None on a read
+    error). Never raises."""
+    live_days: Any = None
+    if settings.polydesk_enabled:
+        try:
+            live_days = load_state(state_path(settings)).get("live_days")
+        except (KeyError, TypeError, ValueError, AttributeError, OSError):
+            live_days = None
+    pnls: list[float] | None
+    try:
+        rows = ledger._rows("SELECT payload FROM receipts WHERE kind = 'polydesk_settled' AND ts >= ? ORDER BY seq",
+                            [now - now % DAY_S])
+        pnls = [_num(_payload(row[0]).get("pnl_usd")) or 0.0 for row in rows]
+    except (LedgerError, sqlite3.Error, AttributeError, LookupError, TypeError, ValueError) as exc:
+        log.warning("town_goal_receipts_failed error=%s", type(exc).__name__)
+        pnls = None
+    return live_days, pnls
+
+
+def goal_inputs(settings: Settings, page: Mapping[str, Any], now: float, *, live_days: Any,
+                today_pnls: Any) -> dict[str, Any]:
+    """What :mod:`nightcrawler.towngoal` reads (GOAL in the module docstring): this page's own figures (``page``: the
+    assembled ``/api/page``), the desk's real day book and today's real settlements (:func:`goal_books`) and the
+    settings the words quote (the target, the desk's contracts a bet, its price and its hard limits). Read only:
+    nothing here reaches a desk."""
+    money = _xp_map(page.get("money"))
+    desk = _xp_map(money.get("polymarket"))
+    real = desk.get("real") if isinstance(desk.get("real"), Mapping) else None
+    plain = _xp_map(page.get("plain"))
+    preal = _xp_map(plain.get("real"))
+    members = [_xp_map(m) for m in _xp_list(_xp_map(page.get("team")).get("members"))]
+    risk = next((m for m in members if m.get("id") == "risk"), {})
+    radar = next((m for m in members if m.get("id") == "radar"), {})
+    caps = _xp_map(risk.get("risk_wall")).get("real_caps")
+    guard = _xp_map(_xp_map(desk.get("guard")).get("real"))
+    trades = _xp_map(page.get("trades"))
+    summary = _xp_map(trades.get("summary"))
+    closed = _xp_list(trades.get("closed"))
+    last = _xp_map(closed[0]) if closed else {}
+    ready = _xp_map(page.get("ready"))
+    receipts = _xp_map(page.get("receipts"))
+    trend = _xp_map(money.get("trend"))
+    live = settings.is_live
+    paused = preal.get("paused")
+    return {
+        "target": towngoal.parse_goal(settings.town_goal_usd),
+        "now": now, "day": utc_day(now),
+        "real_on": preal.get("on") is True, "reported": preal.get("reported") is not False,
+        "paused": paused if isinstance(paused, str) and paused else None,
+        "paused_kind": preal.get("paused_kind"),
+        "desk_mode": desk.get("mode"),
+        "real": {key: real.get(key) for key in ("today_usd", "settled_today", "won_today", "since_start_usd",
+                                                 "cash_usd", "cash_at")} if real is not None else None,
+        "solana_live": live,
+        "solana_today_usd": _num(_xp_map(money.get("today")).get("usd")) if live else None,
+        "bill": _num(_xp_map(page.get("town")).get("cost_per_day_usd")),
+        "caps": dict(caps) if isinstance(caps, Mapping) else None,
+        "limits": {"open_max_usd": float(settings.polydesk_live_max_open_usd),
+                   "day_max_usd": float(settings.polydesk_live_daily_loss_usd),
+                   "total_max_usd": float(settings.polydesk_live_total_loss_usd)},
+        "guard_real": {"verdict": guard.get("verdict"), "reason": guard.get("reason")} if guard else None,
+        "rule_lab_passed": bool(RULE_LAB_PASSED),
+        "contracts": float(settings.polydesk_live_contracts), "theta": float(settings.polydesk_theta),
+        "live_days": live_days, "today_pnls": today_pnls,
+        "first_real_ts": _num(_xp_map(summary.get("real")).get("since")),
+        # the Solana bot's road to real money: the checklist's labels and ticks only, never a reason, and never its
+        # security steps (the world is the page the owner shows friends: which of those is not done stays off it;
+        # the count of steps done still counts them)
+        "ready": {"done": ready.get("done"), "total": ready.get("total"),
+                  "items": [{"label": _xp_map(i).get("label"), "done": _xp_map(i).get("done") is True}
+                            for i in _road_steps(ready)
+                            if _xp_map(i).get("id") not in GOAL_UNLISTED_STEPS
+                            and _xp_map(i).get("label") not in GOAL_UNLISTED_LABELS]} if ready else None,
+        "receipts": {key: receipts.get(key) for key in ("count", "verified", "first_bad_seq")},
+        "trials_total": _xp_map(page.get("research")).get("trials_total"),
+        "said_crawler": _xp_map(_xp_map(plain.get("said")).get("crawler")).get("text"),
+        "radar_doing": radar.get("doing"),
+        "last_closed": {key: last.get(key) for key in ("coin", "pnl_usd", "why")} if last else None,
+        "trades_won": summary.get("won"), "trades_lost": summary.get("lost"),
+        "practice_wallet_usd": None if live else _num(_xp_map(money.get("since_start")).get("usd")),
+        # practice (pretend money): shown apart, never counted toward the goal
+        "practice": {"solana_today_usd": None if live else _num(_xp_map(money.get("today")).get("usd")),
+                     "polymarket_today_usd": _num(_xp_map(desk.get("paper")).get("today_usd")) if desk else None,
+                     "trend_today_usd": _num(trend.get("today_usd")) if trend else None},
+    }
+
+
+def town_goal_block(settings: Settings, page: Mapping[str, Any], now: float, *, live_days: Any,
+                    today_pnls: Any) -> tuple[dict[str, Any], dict[str, Any]]:
+    """``(town.goal, plain.goal)`` (GOAL in the module docstring), worded with this page's own money formatters."""
+    inputs = goal_inputs(settings, page, now, live_days=live_days, today_pnls=today_pnls)
+    goal = towngoal.town_goal(inputs, whole=_limit)
+    return goal, towngoal.goal_words(goal, inputs, dollars=_dollars, signed=_signed, limit=_limit)
+
+
 def _coach(card: dict[str, Any], now: float) -> tuple[str, str]:
     if card["source"] == "missing":
         return "absent", "not built yet"
@@ -2218,5 +2367,13 @@ def build_page_state(ledger: Any, settings: Settings, now: float, engine_status:
         "about": {"version": __version__, "uptime_s": team["engine"]["uptime_s"],
                   "commit": (deploy or {}).get("commit"), "started_at": team["engine"]["started_at"]},
     }
+    # the town's goal (GOAL): display only, from the figures above; a failure shows no goal at all, never a zero
+    try:
+        live_days, today_pnls = goal_books(ledger, settings, now)
+        out["town"]["goal"], out["plain"]["goal"] = town_goal_block(settings, out, now, live_days=live_days,
+                                                                     today_pnls=today_pnls)
+    except Exception as exc:  # noqa: BLE001 - the goal must never take the page down
+        log.warning("town_goal_failed error=%s", type(exc).__name__)
+        out["town"]["goal"] = out["plain"]["goal"] = None
     clean: dict[str, Any] = scrub(out, text.secrets)
     return clean

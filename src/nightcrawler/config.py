@@ -439,6 +439,10 @@ class Settings:
     owner_tz: str = _f("America/Los_Angeles", "text", "The owner's time zone, an IANA name such as Europe/Athens: "
                        "the 3D world's nightly recap film replays the previous calendar day of this zone (it plays "
                        "by itself at 00:05 there if the page is open, and on demand)")
+    # The 3D world's town goal (nightcrawler.towngoal, /api/page town.goal): text, read leniently there, so a typo
+    # can never stop the bot from starting; no desk, limit or rule reads it.
+    town_goal_usd: str = _f("100", "text", "DISPLAY ONLY: the owner's goal for the team in real money a day, shown in "
+                            "the 3D world; no desk reads it; a value it cannot read shows 100")
 
     # ---- provider usage budgets (observability team) -------------------------
     # The dashboard's Usage panel shows calls per provider per UTC day and month against these

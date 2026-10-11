@@ -48,6 +48,12 @@ only in a Railway variable, never in this repo.
   as a warning at start (`config_owner_tz_unknown`) and never stops the bot: the recap then uses the UTC day and says
   `"tz": "UTC"`, as it does on a machine with no time-zone database at all. Change it in the Railway variables when
   the owner moves.
+- `TOWN_GOAL_USD` (default `100`; no account, no key): DISPLAY ONLY. The owner's goal for the team in real
+  dollars a day, shown by the 3D world's goal tower (`src/nightcrawler/towngoal.py`, `/api/page` -> `town.goal`
+  and `plain.goal`). Only real money counts toward it and it is never a cost: the town's real running cost is
+  still `TOWN_RAILWAY_USD_MONTH` plus the AI judge. No desk, limit or rule reads it (a test keeps every desk
+  module from even naming it). A value it cannot read (or outside 1 to 1,000,000) is logged as `town_goal_bad`
+  and shows 100; it never stops the bot.
 
 ## Keeping track
 

@@ -296,13 +296,18 @@ def test_the_module_loads_the_real_cast_with_the_meshopt_decoder(settings: Setti
 def test_the_acting_follows_the_ledger(settings: Settings) -> None:
     """Moves are acting triggered by real events and statuses; nothing invents a result."""
     module = _module(render_world_html(settings))
-    # Jet carries a real closed trade's cube (the carry walk), cheers only for a win and shrugs only at a loss
+    # (THE GOAL section moves the cast on the goal's own real-money beats: tests/test_world_goal.py; the rest here)
+    goal = module[module.index("= THE GOAL (town goal)"):module.index("= THE LIVE DIRECTOR")]
+    life = module.replace(goal, "")
+    # Jet carries a real closed trade's cube (the carry walk), cheers only for a win and shrugs only at a loss (a loss cut
+    # at its stop, as planned, gets a nod)
     assert 'carry: won ? "gold" : "red"' in module and 'return a.carrying ? "carry"' in module
-    assert 'if (pnl > 0) oneShot(a, "cheer"); else if (pnl < 0) oneShot(a, "shrug");' in module
-    assert module.count('"cheer"') == 1 and module.count('"shrug"') == 1
-    # worried only on a bad-tone event; Rook nods only on a good-tone one
-    assert 'if (ev.tone === "bad") oneShot(actor, "worried");' in module and module.count('"worried"') == 1
-    assert 'ev.tone === "good" && actor.key === "rook") oneShot(actor, "nod"' in module and module.count('"nod"') == 1
+    assert ('if (pnl > 0) oneShot(a, "cheer");\n      else if (pnl < 0 && !(/^Stop-loss/.test(String(t.why || "")) && '
+            'oneShot(a, "nod"))) oneShot(a, "shrug");') in module
+    assert life.count('"cheer"') == 1 and life.count('"shrug"') == 1
+    # worried only on a bad-tone event; Rook nods only on a good-tone one (and Jet at a stop-loss)
+    assert 'if (ev.tone === "bad") oneShot(actor, "worried");' in module and life.count('"worried"') == 1
+    assert 'ev.tone === "good" && actor.key === "rook") oneShot(actor, "nod"' in module and life.count('"nod"') == 2
     # the Polymarket desk's lessons: Voss thinks, then says the desk's own words
     assert 'memberId === "predict" && /^Lesson:/.test(' in module and 'oneShot(actor, "think", 3.4)' in module
     assert "speak(a, memberId, saidOf(memberId, ev), ev.tone, 10)" in module  # (in plain words, "paper" said pretend)
@@ -1232,7 +1237,8 @@ def test_the_world_bar_replaces_the_two_dense_lines(settings: Settings) -> None:
         assert call in panel, call
     assert "p.textContent = text;" in _js_body(module, "  function para(parent, text, cls) {")
     bar = _js_body(module, "  function renderBar() {")
-    assert "realSub.textContent = w.sub;" in bar and 'realResult.textContent = w.red && r.result ? r.result : "";' in bar
+    assert "realSub.textContent = w.sub;" in bar
+    assert 'realResult.textContent = w.red && r.result ? String(r.result).replace(/ \\(real money\\)$/, "") : "";' in bar
     assert '" at risk now"' in _js_body(module, "  function realWords(r) {")
     # the LIVE card: the character's plain job and latest event
     card = _js_body(module, "  function renderCard() {")
@@ -1243,7 +1249,8 @@ def test_the_world_bar_replaces_the_two_dense_lines(settings: Settings) -> None:
 def test_the_guides_storage_is_guarded(settings: Settings) -> None:
     module = _module(render_world_html(settings))
     uses = [line for line in module.splitlines() if "localStorage" in line]
-    assert len(uses) == 2 and all("try { " in line and "catch (e)" in line for line in uses), uses
+    # the guide's two, and THE GOAL's one (its once-a-day marks; tests/test_world_goal.py)
+    assert len(uses) == 3 and all("try { " in line and "catch (e)" in line for line in uses), uses
     assert "if (first) { chatterAt = simT + 6; if (plain && !guideSeen()) openGuide(); }" in module  # first visit
     # never long, but long enough for card 2 without a touch (a minute and a half)
     assert "GUIDE_IDLE_MS = 90000" in module and "setTimeout(closeGuide, GUIDE_IDLE_MS)" in module
@@ -1314,7 +1321,8 @@ const cases = {{ on: base, risk: {{ ...base, paused: "Paused by the risk manager
   halted: {{ ...base, on: false, result: "down $10.20 since start" }},
   off: {{ ...base, on: false, at_risk_usd: null, open_bets: null, result: null }},
   silent: {{ ...base, on: false, reported: false, at_risk_usd: null, open_bets: null, result: null }},
-  solana: {{ ...base, reported: false, at_risk_usd: null, open_bets: null, result: null }} }};
+  solana: {{ ...base, reported: false, at_risk_usd: null, open_bets: null, result: null }},
+  gain: {{ ...base, result: "up $98.62 since start (real money)" }} }};
 const o = {{}};
 for (const k of Object.keys(cases)) {{
   plain = {{ headline: "h", real: cases[k] }}; renderBar();
@@ -1333,6 +1341,8 @@ console.log(JSON.stringify(o));
     assert out["silent"] == ["no report yet", "", "pill real", "Night Shift: Skyport · real money: no report yet"]
     # the bot itself live beside a desk that has not reported: real money is on, never a grey "no report"
     assert out["solana"] == ["on", "", "pill real on", "Night Shift: Skyport · real money on"]
+    # a gain under the REAL MONEY label: "real money" said once (its "(real money)" pushed the bar off a phone)
+    assert out["gain"][1] == "up $98.62 since start" and out["gain"][2] == "pill real on"
     assert not [k for k, v in out.items() if "paper" in v[3]]
 
 
