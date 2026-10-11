@@ -607,9 +607,10 @@ def test_the_guide_has_four_cards_and_the_goal_card_says_not_a_cost(page: str, m
                                                                     states: dict[str, dict[str, Any]],
                                                                     tmp_path: Path) -> None:
     cards = re.findall(r'<section class="gcard"><h2[^>]*>([^<]*)</h2><div id="([^"]+)">', page)
-    assert [c[1] for c in cards] == ["guide-team", "guide-money", "guide-goal", "guide-camera"]
+    # (the team's hearts card after the goal's: tests/test_world_hearts.py)
+    assert [c[1] for c in cards] == ["guide-team", "guide-money", "guide-goal", "guide-hearts", "guide-camera"]
     assert cards[2][0] == "The team's goal"
-    assert '<span class="dots" id="guide-dots"><i class="on"></i><i></i><i></i><i></i></span>' in page
+    assert '<span class="dots" id="guide-dots"><i class="on"></i><i></i><i></i><i></i><i></i></span>' in page
     assert 'if (guidePage >= el("guide-dots").children.length - 1) { closeGuide(); return; }' in module
     assert "guidePage >= 2" not in module
     assert 'goalGuide(el("guide-goal"));' in _js_body(module, "  function renderGuide() {")

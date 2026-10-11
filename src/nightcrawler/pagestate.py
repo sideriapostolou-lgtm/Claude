@@ -35,7 +35,10 @@ Schema (lists capped: members 9, events <= 5, open trades <= 10, closed trades 1
                          "crew_road_line", "honest", "postcard", "target_text", "bill_text",
                          "result": {"day", "title", "figure", "line", "streak"}|null,
                          "lines": {character: str|null}, "programmes": {"check_in", "tour": [{"who", "tag", "text"}]}
-                         }|null},                                      # the town's goal in words: GOAL
+                         }|null,                                       # the town's goal in words: GOAL
+                "hearts": {"label", "signal", "huddle": {"id", "ts", "result", "usd", "line"}|null,
+                           "members": [{"id", "name", "temperament", "why", "money", "mood", "line": str|null}]
+                           }|null},                                    # the team's hearts: HEARTS
       "money": {"label", "usd", "start_usd", "sol", "sol_usd", "withdrawn_sol",  # live: sent back to the owner
                 "since_start": {"usd", "pct"}, "today": {"usd", "pct"},   # the bot's own result (in SOL,
                 "sol_price_effect_usd",                                   #  shown at today's SOL price)
@@ -121,6 +124,17 @@ real money, and ``line`` names each desk ("the Solana desk lost $3.18 and the Po
 (paper money, pretend)"); no figure of one kind of money is ever added to another. Only real money can cover the bill;
 practice never counts (``covered_*`` compare the money card's own figures and stay as they were for the 2D page, which
 says "covered" only while that card is real money; ``goal.bill_covered_by_real`` is the real one: GOAL below).
+
+HEARTS (:func:`hearts_block`, :mod:`nightcrawler.hearts`): DISPLAY ONLY, the 3D world's cast as people who care about
+the town. ``plain.hearts`` gives each of the six characters a fixed temperament and a fixed sentence on why they care (the
+town's lights), a mood (proud, determined, worried, hurting, hopeful, calm, relieved) chosen only from this page's own
+figures (``town.goal``: today's real result, its mood, the stops' room; the newest real settlement today in
+``plain.finished`` and whether it won; each character's status in ``plain.team``; the record check), and one heart line,
+a fixed template per member and mood filled with those figures only (a missing figure gives no line, never a zero).
+Real and pretend money are never added; the practice crew (Pip, Nyx, Jet) say practice or pretend whenever they speak of
+their money (and say nothing while the Solana bot trades real money). ``huddle`` is the newest real settlement today
+(the world gathers the cast at the goal tower when it is new). Built after the goal; null without one, and a failure
+gives null (``hearts_failed`` in the logs).
 
 GOAL (:func:`town_goal_block`, :mod:`nightcrawler.towngoal`): DISPLAY ONLY, the 3D world's goal tower. ``town.goal`` is
 the owner's goal for the team, ``TOWN_GOAL_USD`` real dollars a day (read leniently: ``target_ok`` is false and 100 is
@@ -331,7 +345,7 @@ from collections.abc import Callable, Mapping
 from pathlib import Path
 from typing import Any
 
-from nightcrawler import __version__, towngoal, trenddesk
+from nightcrawler import __version__, hearts, towngoal, trenddesk
 from nightcrawler.botwallet import saved_balance, wallet_configured
 from nightcrawler.broker.keystore import KV_GENERATED, unused_wallet
 from nightcrawler.clock import utc_day
@@ -363,7 +377,7 @@ __all__ = ["EXPERIENCE_CAVEAT", "EXPERIENCE_CHIPS", "EXPERIENCE_KINDS", "EXPERIE
            "LEARNING_RULE", "MEMBERS", "PAPER_LABEL", "PLAIN_ABOUT", "PLAIN_FINISHED_MAX", "PLAIN_JOBS",
            "PLAIN_MEMBER_JOBS", "PLAIN_TICKER_MAX", "PLAIN_TICKER_WINDOW_S", "PLAYBOOK_PATH", "PRETEND_LABEL",
            "REAL_LABEL", "SHELF_MAX", "STALE_BANNER_S", "TOWN_MONTH_DAYS", "WALLET_MAX_AGE_S", "build_page_state",
-           "experience_card", "goal_books", "goal_inputs", "learning_card", "plain_event", "plain_finished",
+           "experience_card", "goal_books", "goal_inputs", "hearts_block", "hearts_inputs", "learning_card", "plain_event", "plain_finished",
            "plain_ticker", "plain_words", "polymarket_desk", "real_caps", "recap_state", "town_goal_block",
            "town_ledger", "trend_desk"]
 
@@ -1491,6 +1505,22 @@ def _coach(card: dict[str, Any], now: float) -> tuple[str, str]:
                          else None, idle="no new lesson recently")
 
 
+def hearts_inputs(settings: Settings, page: Mapping[str, Any]) -> dict[str, Any]:
+    """What :mod:`nightcrawler.hearts` reads (HEARTS in the module docstring): this page's own ``town.goal`` (the real
+    result, the goal's mood, the stops' room), ``plain.team`` (each character's status), ``plain.finished`` (the newest
+    real settlements), the record check and the desk's bet size (contracts a bet and its price, the figures one miss
+    costs). Read only: nothing here reaches a desk."""
+    plain, town, receipts = _xp_map(page.get("plain")), _xp_map(page.get("town")), _xp_map(page.get("receipts"))
+    return {"goal": town.get("goal"), "team": plain.get("team"), "finished": plain.get("finished"),
+            "receipts": {key: receipts.get(key) for key in ("count", "verified")},
+            "contracts": float(settings.polydesk_live_contracts), "theta": float(settings.polydesk_theta)}
+
+
+def hearts_block(settings: Settings, page: Mapping[str, Any]) -> dict[str, Any] | None:
+    """``plain.hearts`` (HEARTS in the module docstring), worded with this page's own money formatters."""
+    return hearts.team_hearts(hearts_inputs(settings, page), dollars=_dollars, signed=_signed, limit=_limit)
+
+
 def _members(team: dict[str, Any], card: dict[str, Any], now: float) -> list[dict[str, Any]]:
     panels = {p["id"]: p for p in team["panels"]}
     out = []
@@ -2375,5 +2405,11 @@ def build_page_state(ledger: Any, settings: Settings, now: float, engine_status:
     except Exception as exc:  # noqa: BLE001 - the goal must never take the page down
         log.warning("town_goal_failed error=%s", type(exc).__name__)
         out["town"]["goal"] = out["plain"]["goal"] = None
+    # the team's hearts (HEARTS): display only, from the goal and the figures above; a failure shows no hearts at all
+    try:
+        out["plain"]["hearts"] = hearts_block(settings, out)
+    except Exception as exc:  # noqa: BLE001 - the hearts must never take the page down
+        log.warning("hearts_failed error=%s", type(exc).__name__)
+        out["plain"]["hearts"] = None
     clean: dict[str, Any] = scrub(out, text.secrets)
     return clean
