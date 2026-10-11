@@ -109,12 +109,25 @@ horizontal, close behind the crew; never a top-down tycoon view.
   worried, hurting, hopeful, calm, relieved: their own moves) and only while the member is idle of the director's own
   beats; and when a real settlement is new since the last poll the team huddles at the goal tower for a few seconds,
   a beat of the goal's own (its strip says it, its programme films the tower, then Voss's heart line).
+* The cinema (the module's THE CINEMA section, CSS in ``_STYLE_CINEMA``): the DEFAULT view, for a friend who has never
+  seen it. Two thin letterbox bars and a gentle grade; in the top bar one HUD line of REAL money only ("REAL MONEY
+  $47.06 · today +$1.52 · goal $100/day": ``plain.real``, ``town.goal``, ``money.polymarket``; a tap opens the real
+  money's details); in the bottom bar a caption for the shot on air ("VOSS, the real-money trader. <his newest bet>." and
+  his heart line from ``plain.hearts``; a place: its name and the data's line for it); a small name tag with a two-to-four
+  word job over each character on screen; the vault's sign shows the REAL cash at Polymarket and the real result. Pretend
+  money shows nowhere in it but a character's own caption, said "practice". The director's rotation holds each shot
+  longer and flies slower. Everything else (the money buttons, the headline, the goal strip, the chips, the ticker, the
+  banner, the postcard, the guide, the boards' words, the trophies, the ticket board, the pretend wallet on the vault
+  sign) waits behind a small "details" button that brings today's full view back (remembered in ``localStorage`` when
+  the browser allows it); a first visit gets one three-line card (what this is, who does what, real vs practice)
+  instead of the guide. The Goal Tower, the hearts and the huddle, the programmes (as captions) and the speaker stay.
 
 Honesty rules (the same as the office's and the town's, non-negotiable):
 
 * Every WORD on screen comes from ``/api/page`` (names, roles, status words, event text, money, the plain words, the
   Polymarket desk's positions) or from the fixed descriptions in this module, and is inserted as text only (never
-  as markup). The vault sign says ``money.usd`` and exactly ``money.label``. A speech bubble says the event in the
+  as markup). The vault sign says ``money.usd`` and exactly ``money.label`` (the details view; the cinema's says the
+  real cash at Polymarket and ``plain.real.result``, labelled REAL). A speech bubble says the event in the
   plain words the server gave that very event (``plain.said``), else the event's own text ("paper" said "pretend"),
   and is labelled with the job of the member who made it (``plain.jobs``), never another part its character plays.
 * Nothing is invented: hand-off walks follow a new member event, Jet carries a cube to the vault only for a newly
@@ -678,6 +691,95 @@ _STYLE_HEARTS = r"""
 .heart.mood-relieved b { color: #9fe3ff; }
 #guide-hearts p { font-size: 13px; line-height: 1.38; margin-top: 5px; }
 #guide-hearts p b { color: var(--brass); margin-right: 4px; }
+"""
+
+#: THE CINEMA's styles (the default view, ``body.cinema``): two thin letterbox bars, the one-line real-money HUD in the
+#: top one, the film-style caption in the bottom one, the characters' name tags, the first-visit intro card, a gentle
+#: grade. Every rule that hides a part of the full view is scoped under ``body.cinema``, so the "details" button (which
+#: only removes that class) brings the full view back exactly as it was. Last in the page's style: it wins the ties.
+_STYLE_CINEMA = r"""
+:root { --lbh: 48px; --lbb: 112px; --lbT: calc(var(--lbh) + env(safe-area-inset-top)); --lbB: calc(var(--lbb) + env(safe-area-inset-bottom)); }
+@media (min-width: 760px) { :root { --lbh: 58px; --lbb: 122px; } }
+@media (max-height: 700px) and (max-width: 759px) { :root { --lbh: 44px; --lbb: 100px; } }
+#cine, #tags { display: none; }
+#intro[hidden] { display: none; }
+body.cinema #cine, body.cinema #tags { display: block; }
+/* the parts of the full view that wait behind "details" (the card and its bubbles keep their place, unseen) */
+body.cinema #chips, body.cinema #ticker, body.cinema #replay, body.cinema #postcard, body.cinema #rec-toast, body.cinema #film,
+body.cinema #guide, body.cinema #labels, body.cinema #bubbles, body.cinema #drop, body.cinema #headline, body.cinema #goal,
+body.cinema #bar .row1 > :not(#sound) { display: none !important; }
+body.cinema #card { visibility: hidden; pointer-events: none; }
+/* the bar keeps only the speaker (small, in the top bar's corner) and a real problem's line (under the top bar) */
+body.cinema #bar { top: var(--lbT); padding: 6px 12px 0; background: none; z-index: 9; }
+body.cinema #bar .row1 { display: block; height: 0; }
+body.cinema #sound { position: fixed; right: 8px; top: calc(env(safe-area-inset-top) + (var(--lbh) - 28px) / 2); width: 28px; height: 28px;
+                     min-height: 28px; margin: 0; }
+body.cinema #sound svg { width: 17px; height: 17px; }
+body.cinema #panel { top: calc(var(--lbT) + 6px); max-height: calc(100% - var(--lbT) - var(--lbB) - 12px); }
+/* the film look: near-black bars, a soft vignette and a faint warm-and-cool grade (one still overlay: cheap on a phone) */
+#lb-top, #lb-bot { position: fixed; left: 0; right: 0; z-index: 8; background: #060509; }
+#lb-top { top: 0; height: var(--lbT); padding: env(safe-area-inset-top) 40px 0 11px; display: flex; align-items: center;
+          box-shadow: 0 1px 0 rgba(224,178,94,.16); }
+#lb-bot { bottom: 0; height: var(--lbB); padding: 7px 16px calc(26px + env(safe-area-inset-bottom)); display: flex;
+          box-shadow: 0 -1px 0 rgba(224,178,94,.16); }
+body.cinema #vignette { background: radial-gradient(ellipse at 50% 48%, rgba(0,0,0,0) 50%, rgba(6,4,14,.5) 100%),
+                                     linear-gradient(to bottom, rgba(18,34,58,.16), rgba(0,0,0,0) 40%, rgba(0,0,0,0) 60%, rgba(64,34,12,.14)); }
+/* the HUD: real money only, one line ("REAL MONEY $47.06 · today +$1.52 · goal $100/day"); a tap opens its details */
+#hud { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 5px; height: 100%; margin: 0; padding: 0; border: 0;
+       background: none; color: var(--fg); font: inherit; cursor: pointer; text-align: left; white-space: nowrap; overflow: hidden; }
+#hud:focus-visible, #details:focus-visible, #intro button:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
+#hud .htag { flex: 0 0 auto; font-size: 9.5px; font-weight: 800; letter-spacing: .05em; padding: 3px 5px 2px; border-radius: 4px;
+             color: #fff; background: #4a4656; }
+#hud .htag.on { background: #cf3129; }  /* (red only while the data says real money is on: red is real money's) */
+#hud b { flex: 0 0 auto; font-size: 18px; font-weight: 800; letter-spacing: .01em; font-variant-numeric: tabular-nums; }
+#hud-rest { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; font-size: 11.5px; color: var(--dim);
+            font-variant-numeric: tabular-nums; }
+#hud-rest .up { color: var(--good); font-weight: 700; } #hud-rest .down { color: #ff8a80; font-weight: 700; }
+#hud-rest .state { color: #ffe08a; font-weight: 700; }
+/* the caption: who and what, in the data's own words, then the heart line */
+#cap { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; justify-content: center; align-items: center;
+       text-align: center; overflow: hidden; }
+#cap p { margin: 0; max-width: 52em; overflow-wrap: anywhere; display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; }
+#cap-1 { font-size: 15px; line-height: 1.3; color: #fbf3e4; -webkit-line-clamp: 2; }
+#cap-1 b { font-weight: 800; letter-spacing: .08em; color: #ffe3a6; }
+#cap-2 { margin-top: 3px !important; font-size: 12.5px; line-height: 1.3; color: #cdbfa6; font-style: italic; -webkit-line-clamp: 2; }
+#cap-2[hidden] { display: none; }
+#cap.in { animation: capin .6s ease both; }
+@keyframes capin { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { #cap.in { animation: none; } }
+@media (min-width: 760px) { #lb-top { justify-content: center; padding-left: 42px; } #hud { flex: 0 1 auto; }
+                             #hud b { font-size: 24px; } #hud .htag { font-size: 11px; } #hud-rest { font-size: 14px; } #cap-1 { font-size: 18px; } #cap-2 { font-size: 14.5px; } }
+@media (max-height: 700px) and (max-width: 759px) { #cap-1 { font-size: 14px; } #cap-2 { -webkit-line-clamp: 1; } }
+@media (max-width: 370px) { #hud b { font-size: 16.5px; } #hud .htag { letter-spacing: .02em; } #hud-rest { font-size: 10.5px; } }
+/* the honesty line and the "details" button share the bottom bar's foot */
+body.cinema #honest { left: 12px; right: 80px; bottom: calc(7px + env(safe-area-inset-bottom)); text-align: left; z-index: 9;
+                      color: rgba(212,200,179,.62); font-size: 9.5px; text-shadow: none; }
+#details { position: fixed; z-index: 6; right: 60px; top: calc(var(--bar, 110px) + 8px); font: inherit; font-size: 11px; font-weight: 700;
+           letter-spacing: .08em; text-transform: uppercase; color: var(--fg); background: var(--glass2); cursor: pointer;
+           border: 1px solid rgba(224,178,94,.5); border-radius: 999px; min-height: 30px; padding: 3px 11px; }
+body.cinema #details { z-index: 9; right: 8px; top: auto; bottom: calc(3px + env(safe-area-inset-bottom)); min-height: 22px; padding: 1px 9px;
+                       font-size: 10px; color: var(--dim); background: none; border-color: rgba(255,255,255,.2); }
+@media (max-width: 560px) { body:not(.cinema):has(#replay.on) #details { visibility: hidden; } }
+/* the name tags: each character's name and a two-to-four-word job, small, over their head while they are on screen */
+#tags { position: fixed; inset: 0; z-index: 4; pointer-events: none; overflow: hidden; }
+.ntag { position: absolute; left: 0; top: 0; transform: translate3d(-400px, -400px, 0); opacity: 0; transition: opacity .4s ease;
+        padding: 2px 8px 3px; border-radius: 8px; background: rgba(6,5,12,.46); text-align: center; white-space: nowrap; }
+.ntag b { display: block; font-size: 10.5px; line-height: 1.2; font-weight: 800; letter-spacing: .16em; color: #fff6e6; }
+.ntag span { display: block; font-size: 10.5px; line-height: 1.2; font-style: italic; color: #e8d8ba; }
+.ntag span:empty { display: none; }
+.ntag.real span { color: #ffd2cc; }
+/* the first visit: one card (what this is, who does what, real vs practice), then the film */
+#intro { position: fixed; left: 50%; top: 46%; z-index: 12; transform: translate(-50%, -50%); width: min(440px, calc(100% - 32px));
+         background: rgba(10,8,18,.9); border: 1px solid rgba(224,178,94,.5); border-radius: 14px; padding: 13px 16px 12px;
+         box-shadow: 0 14px 44px rgba(0,0,0,.55); font-size: 14px; line-height: 1.4; }
+#intro h2 { margin: 0 0 4px; font-size: 12px; letter-spacing: .18em; color: var(--brass); text-transform: uppercase; }
+#intro p { margin: 6px 0 0; }
+#intro p.who { display: grid; grid-template-columns: auto 1fr; gap: 1px 10px; font-size: 13px; color: var(--dim); }
+#intro p.who span { display: contents; }
+#intro p.who b { color: var(--fg); }
+#intro p.money { color: #ffe3a6; font-weight: 600; }
+#intro button { font: inherit; font-size: 14px; margin-top: 10px; min-height: 36px; padding: 4px 18px; border-radius: 999px; cursor: pointer;
+                border: 1px solid var(--brass); background: rgba(224,178,94,.25); color: var(--fg); }
 """
 
 _IMPORTMAP = json.dumps(
@@ -3773,6 +3875,7 @@ _M_LIFE = r"""
   }
   function armGuide() { clearTimeout(guideTimer); guideTimer = setTimeout(closeGuide, GUIDE_IDLE_MS); }
   function openGuide() {
+    if (CINE.on) { cineIntroOpen(); return; }  // (THE CINEMA: its three-line card instead; the guide waits behind "details")
     closePanel(); renderGuide(); guideEl.hidden = false; guideCards.scrollLeft = 0; guidePage = 0; guideDots(); armGuide();
   }
   function closeGuide() { if (guideEl.hidden) return; guideEl.hidden = true; clearTimeout(guideTimer); guideRemember(); }
@@ -6563,10 +6666,342 @@ _M_LIVE = r"""
 }
 """
 
-_MODULE = _M_SETUP + _M_WORLD + _M_CAST + _M_LIFE + _M_CHANNEL + _M_RECORDS + _M_GOAL + _M_HEARTS + _M_LIVE
+_M_CINEMA = r"""
+  // ============================================================= THE CINEMA (cinema mode, the default view)
+  // The owner's direction: simple, like a film, so a friend who has never seen it knows in five seconds who does what and
+  // how much REAL money there is. Two thin letterbox bars; in the top one a single HUD line of real money only (the real
+  // cash at Polymarket, today's real result, the goal; plain.real, town.goal, money.polymarket); in the bottom one a
+  // caption for the shot on air (who, their job in two to four words, what they are doing, then their heart line) in the
+  // data's own words; a small name tag with the job over each character on screen; the vault's sign says the REAL cash and
+  // the real result. Pretend money shows nowhere here but in a character's own caption, said "practice". Everything else
+  // (the money buttons, the headline, the goal strip, the chips, the ticker, the banner, the postcard, the guide, the
+  // boards' words) waits behind the "details" button, which brings today's full view back (remembered in this browser
+  // when it can be); a first visit gets one three-line card instead of the guide. The director's shots hold longer and
+  // its flights are slower; nothing else in it changes. The block between the markers is pure (no three.js, no DOM):
+  // tests/test_world_cinema.py runs it in Node.
+  // >>> cinema (pure)
+  // each character's job in two to four words (fixed copy); which money each one handles comes from the data (plain.team)
+  const CINE_TAGS = {
+    voss: { real: "real-money trader", practice: "trader (practice)", plain: "Polymarket trader" },
+    rook: { real: "risk guard", practice: "risk guard", plain: "risk guard" },
+    pip: { real: "coin scout", practice: "coin scout (practice)", plain: "coin scout" },
+    nyx: { real: "scam checker", practice: "scam checker (practice)", plain: "scam checker" },
+    jet: { real: "trade runner", practice: "trade runner (practice)", plain: "trade runner" },
+    mote: { real: "record keeper", practice: "record keeper", plain: "record keeper" },
+  };
+  const CINE_ORDER = ["voss", "rook", "pip", "nyx", "jet", "mote"];
+  // a place's caption: its name (fixed), and for a room its keeper's job in the data's words
+  const CINE_PLACES = { vault: "THE VAULT", table: "SKYPORT", observatory: "THE OBSERVATORY", dock: "THE COURIER DOCK",
+                        archive: "THE ARCHIVE", workshop: "THE WORKSHOP", den: "THE ANALYSIS DEN" };
+  const CINE_KEEPER = { dock: "jet", archive: "mote", workshop: "pip", den: "nyx" };
+  function cineNum(v) { return typeof v === "number" && isFinite(v); }
+  function cineUsd(v) { return (v < 0 ? "−" : "") + "$" + Math.abs(v).toFixed(2); }
+  function cineSigned(v) { return (v >= 0 ? "+" : "−") + "$" + Math.abs(v).toFixed(2); }
+  function cineCap(w, word) { return w.charAt(0) === w.charAt(0).toUpperCase() ? word.charAt(0).toUpperCase() + word.slice(1) : word; }
+  // pretend money said as practice (inside a character's own caption only): "(pretend money)" is "(practice)", or nothing
+  // where its clause has said practice already
+  function cinePractice(text) {
+    return String(text == null ? "" : text)
+      .replace(/\b(practice\b(?:[^.()]|\.(?=\d))*?)\s*\((?:pretend money|paper)\)/gi, "$1")
+      .replace(/\((?:practice, )?(?:pretend money|paper)\)/gi, "(practice)")
+      .replace(/\bpractice with (?:pretend|paper) money\b/gi, function (w) { return cineCap(w, "practice"); })
+      .replace(/\b(?:pretend|paper) money\b/gi, function (w) { return cineCap(w, "practice money"); })
+      .replace(/\bpretend\b/gi, function (w) { return cineCap(w, "practice"); })
+      .replace(/\s{2,}/g, " ").trim();
+  }
+  function cineSentence(s) {  // the data's words as a caption's sentence: a capital first, a full stop last
+    const t = String(s == null ? "" : s).trim();
+    if (!t) return "";
+    const u = t.charAt(0).toUpperCase() + t.slice(1);
+    return /[.!?…]$/.test(u) ? u : u + ".";
+  }
+  // a line's first sentence and the rest ("U.S." and "$1.52" never split one: a full stop after a small letter, a digit
+  // or a bracket, then a capital)
+  function cineSplit(text) {
+    const t = String(text == null ? "" : text).trim(), m = /^(.*?[a-z0-9)%]\.)\s+([A-Z].*)$/.exec(t);
+    return m ? [m[1], m[2]] : [t, ""];
+  }
+  function cineTeam(p, key) {
+    const list = p && Array.isArray(p.team) ? p.team : [];
+    for (let i = 0; i < list.length; i++) if (list[i] && list[i].id === key) return list[i];
+    return null;
+  }
+  function cineTag(key, t) {  // "" until the data says the job (its money word decides the tag's)
+    const q = CINE_TAGS[key];
+    if (!q || !t || typeof t.job !== "string") return "";
+    return /\(real money\)/.test(t.job) ? q.real : /\(pretend money\)/.test(t.job) ? q.practice : q.plain;
+  }
+  function cineHeart(p, key) {
+    const list = p && p.hearts && Array.isArray(p.hearts.members) ? p.hearts.members : [];
+    for (let i = 0; i < list.length; i++) if (list[i] && list[i].id === key && typeof list[i].line === "string") return cineSentence(cinePractice(list[i].line));
+    return "";
+  }
+  // what the character is doing, the first the data has: Voss the Polymarket desk's newest event (else his goal line),
+  // Rook today's real loss stop (else his goal line), the others their newest event; then the latest, then the job itself
+  function cineWhat(p, key, t) {
+    const g = (p && p.goal) || {}, L = g.lines || {}, said = p && p.said && p.said.predict ? p.said.predict.text : null;
+    const list = key === "voss" ? [said, L.voss, t && t.latest] : key === "rook" ? [g.floor_line, L.rook, t && t.latest] : [t && t.latest, L[key]];
+    for (let i = 0; i < list.length; i++) {  // (a goal line: its first sentence; an event's words: whole)
+      if (typeof list[i] !== "string" || !list[i].trim()) continue;
+      return cineSentence(cinePractice(list[i] === L[key] ? cineSplit(list[i])[0] : list[i]));
+    }
+    return t && typeof t.job === "string" ? cineSentence(cinePractice(t.job)) : "";
+  }
+  // the caption for a shot: { who, rest, second, heart }. A character: "VOSS" + ", the real-money trader. <what>." and
+  // their heart line; a place: its name + " · " + the data's line for it (the vault: the real money; the courtyard: the
+  // headline and the goal; the observatory: the labs' verdict; a room: its keeper's job)
+  function cineCaption(p, key, room, name) {
+    if (key && CINE_TAGS[key]) {
+      const t = cineTeam(p, key), tag = cineTag(key, t), what = cineWhat(p, key, t);
+      return { who: String((t && t.name) || name || key).toUpperCase(), rest: (tag ? ", the " + tag + "." : "") + (what ? " " + what : ""),
+               second: cineHeart(p, key), heart: true };
+    }
+    const r = (p && p.real) || {}, g = (p && p.goal) || {}, at = room && CINE_PLACES[room] ? room : "table";
+    let what = "", second = "";
+    if (at === "vault") { what = cineSentence(cinePractice(r.line)); second = cineSentence(cinePractice(g.reserve_line)); }
+    else if (at === "observatory") { what = cineSentence(cinePractice(r.research)); second = cineSentence(cinePractice(r.verdict)); }
+    else if (CINE_KEEPER[at]) { const t = cineTeam(p, CINE_KEEPER[at]); what = t ? cineSentence(cinePractice(t.plain_role)) : ""; }
+    else { what = cineSentence(cinePractice(p && p.headline)); second = cineSentence(cineSplit(g.line)[0]); }  // (the goal's first sentence)
+    return { who: CINE_PLACES[at], rest: what ? " · " + what : "", second: second, heart: false };
+  }
+  // the HUD: real money only. The cash at Polymarket (plain.real, else the desk's real book), today's real result (the
+  // goal's, else the desk's), the desk's state when it is not simply on, the goal. Never a pretend figure.
+  function cineHud(pg) {
+    const p = pg && pg.plain ? pg.plain : null, r = p && p.real ? p.real : null;
+    const pm = pg && pg.money && pg.money.polymarket ? pg.money.polymarket : null, pr = pm && pm.real ? pm.real : null;
+    const g = pg && pg.town && pg.town.goal ? pg.town.goal : null, w = p && p.goal ? p.goal : null;
+    const cash = r && cineNum(r.cash_usd) ? r.cash_usd : pr && cineNum(pr.cash_usd) ? pr.cash_usd : null;
+    const today = g && cineNum(g.real_today_usd) ? g.real_today_usd : pr && cineNum(pr.today_usd) ? pr.today_usd : null;
+    let state = "";
+    if (!r) state = p ? "no report yet" : "loading";
+    else if (!r.on) state = r.open_bets > 0 ? "off for new bets" : r.reported === false ? "no report yet" : "off";
+    else if (r.paused_kind === "day") state = "stopped for today";
+    else if (r.paused_kind === "full") state = "at its limit";
+    else if (r.paused) state = "paused";
+    const parts = [];
+    if (today !== null) { const c = Math.round(today * 100); parts.push({ k: c > 0 ? "up" : c < 0 ? "down" : "", t: "today " + cineSigned(today) }); }
+    if (state) parts.push({ k: "state", t: state });
+    if (w && typeof w.target_text === "string" && w.target_text) parts.push({ k: "", t: "goal " + w.target_text + "/day" });
+    const cashText = cash !== null ? cineUsd(cash) : "—";
+    return { on: !!(r && (r.on || r.open_bets > 0)), cash: cashText, parts: parts,
+             line: "REAL MONEY " + cashText + parts.map(function (q) { return " · " + q.t; }).join("") };
+  }
+  // the vault's sign in cinema mode: the real cash at Polymarket and the real result since start, labelled REAL
+  function cineVault(pg) {
+    const h = cineHud(pg), r = pg && pg.plain && pg.plain.real ? pg.plain.real : null;
+    const pm = pg && pg.money && pg.money.polymarket ? pg.money.polymarket : null, pr = pm && pm.real ? pm.real : null;
+    const since = pr && cineNum(pr.since_start_usd) ? pr.since_start_usd : null;
+    const label = "REAL · " + (r && typeof r.result === "string" && r.result ? r.result : h.cash !== "—" ? "cash at Polymarket" : "none reported");
+    return { usd: h.cash, label: label, accent: since === null ? null : since >= 0 ? "#58d68d" : "#ff6b61" };
+  }
+  // the first visit's card: what this is (plain.about), who does what (the tags), real vs practice (the headline)
+  function cineIntroLines(p) {
+    const team = [];
+    for (let i = 0; i < CINE_ORDER.length; i++) { const t = cineTeam(p, CINE_ORDER[i]); if (t) team.push([String(t.name), cineTag(CINE_ORDER[i], t)]); }
+    return { about: p && typeof p.about === "string" ? p.about : "", team: team, money: cineSentence(cinePractice(p && p.headline)) };
+  }
+  // <<< cinema
+  // ------------------------------------------------------------- the mode (remembered in this browser when it can be)
+  const CINE_KEY = "nightcrawler.world.details", CINE_INTRO_KEY = "nightcrawler.world.intro";
+  // the director in cinema mode: each shot of the rotation holds CINE_HOLD longer, each flight CINE_FLY longer (slower);
+  // a name tag shows within CINE_FAR metres; the first-visit card closes by itself after CINE_INTRO_MS
+  const CINE_HOLD = 0.6, CINE_FLY = 0.35, CINE_FAR = 26, CINE_INTRO_MS = 30000;
+  const CINE = { on: true, seq: -1, capAt: 0, cap: "", hud: "", intro: false, introTimer: 0, introDone: false, top: 48, bottom: 112, held: 0 };
+  const cineHudEl = el("hud"), cineHudTag = el("hud-tag"), cineCash = el("hud-cash"), cineRest = el("hud-rest");
+  const cineCapEl = el("cap"), cineCap1 = el("cap-1"), cineCap2 = el("cap-2"), cineDetails = el("details"), cineTagsEl = el("tags");
+  const cineIntroEl = el("intro"), cineIntroBody = el("intro-body"), cineLbTop = el("lb-top"), cineLbBot = el("lb-bot");
+  function cineStored() { try { return window.localStorage.getItem(CINE_KEY) === "1"; } catch (e) { return false; } }
+  function cineStore(details) {  // (storage blocked: the choice lasts this visit)
+    try { if (details) window.localStorage.setItem(CINE_KEY, "1"); else window.localStorage.removeItem(CINE_KEY); } catch (e) { return; }
+  }
+  function cineIntroSeen() {
+    if (CINE.introDone) return true;
+    try { return window.localStorage.getItem(CINE_INTRO_KEY) === "seen"; } catch (e) { return false; }
+  }
+  function cineIntroRemember() {
+    CINE.introDone = true;
+    try { window.localStorage.setItem(CINE_INTRO_KEY, "seen"); } catch (e) { /* storage blocked: shown again next visit */ }
+  }
+  // the boards whose words wait behind "details" (the labs, the trend desk, the trophy card, the practice yard: a dark
+  // panel in their frames) and the things that do (the trophies and tiles, the ticket board: not drawn)
+  const CINE_DARK = new THREE.MeshBasicMaterial({ color: 0x0e0c14 });
+  const CINE_BOARDS = [recLabs, recTrend, recCard, GP.yard].filter(Boolean).map(function (m) { return { m: m, mat: m.material }; });
+  [recTrophies, recTiles, board].forEach(function (m) { m.layers.set(1); });
+  function cineBoards(on) {
+    for (let i = 0; i < CINE_BOARDS.length; i++) CINE_BOARDS[i].m.material = on ? CINE_DARK : CINE_BOARDS[i].mat;
+    if (on) camera.layers.disable(1); else camera.layers.enable(1);
+  }
+  function cineVaultDraw() {
+    if (!data) return;
+    if (CINE.on) { const v = cineVault(data); drawVaultSign(v.usd, v.label, v.accent); return; }
+    // (the details view: the sign as the page draws it, money.usd and exactly money.label)
+    const money = data.money || {}, since = (money.since_start || {}).usd;
+    drawVaultSign(fmtUsd(money.usd), money.label || "", since == null ? null : since >= 0 ? "#58d68d" : "#ff6b61");
+  }
+  function cineMeasure() {
+    const t = cineLbTop.getBoundingClientRect(), b = cineLbBot.getBoundingClientRect();
+    if (t.height) CINE.top = t.bottom;
+    if (b.height) CINE.bottom = window.innerHeight - b.top;
+  }
+  function cineSet(on, store) {
+    CINE.on = !!on; body.classList.toggle("cinema", CINE.on);
+    if (store) cineStore(!CINE.on);
+    cineDetails.textContent = CINE.on ? "details" : "simple view"; cineDetails.setAttribute("aria-pressed", String(!CINE.on));
+    cineDetails.setAttribute("aria-label", CINE.on ? "Show every detail: the money buttons, the camera chips, the ticker and the boards"
+      : "Back to the simple film view");
+    cineBoards(CINE.on); cineVaultDraw();
+    CINE.cap = ""; CINE.capAt = 0; CINE.hud = "";
+    if (CINE.on) { closePanel(); closeGuide(); } else cineIntroClose(false);
+    cineMeasure(); measureBar(); renderCard();
+    if (data) cineHudDraw(data);
+  }
+  cineDetails.onclick = function () { cineSet(!CINE.on, true); };
+  // ------------------------------------------------------------- the HUD (text only)
+  function cineHudDraw(d) {
+    const h = cineHud(d), sig = h.line + (h.on ? " on" : "");
+    if (sig === CINE.hud) return;
+    CINE.hud = sig;
+    cineHudTag.className = "htag" + (h.on ? " on" : ""); cineCash.textContent = h.cash; cineRest.textContent = "";
+    h.parts.forEach(function (q) {
+      cineRest.appendChild(document.createTextNode(" · "));
+      const s = document.createElement("span"); if (q.k) s.className = q.k; s.textContent = q.t; cineRest.appendChild(s);
+    });
+    cineHudEl.setAttribute("aria-label", h.line + ". Tap for the details of the real money.");
+  }
+  cineHudEl.onclick = function () { openPanel("real"); };
+  // ------------------------------------------------------------- the name tags (one per character, text only)
+  const _cineAt = V3(0, 0, 0);
+  const CINE_NAMETAGS = ACTOR_KEYS.map(function (k) {
+    const d = document.createElement("div"), b = document.createElement("b"), s = document.createElement("span");
+    d.className = "ntag"; b.textContent = CAST[k].name.toUpperCase(); d.appendChild(b); d.appendChild(s); cineTagsEl.appendChild(d);
+    return { k: k, el: d, job: s, w: 0, h: 0, op: -1, see: false, seeAt: 0, x: 0, y: 0 };
+  });
+  function cineTagWords() {
+    for (let i = 0; i < CINE_NAMETAGS.length; i++) {
+      const q = CINE_NAMETAGS[i], tag = cineTag(q.k, teamOf(q.k));
+      if (q.job.textContent !== tag) { q.job.textContent = tag; q.w = 0; }
+      const cls = "ntag" + (q.k === "voss" && tag === CINE_TAGS.voss.real ? " real" : "");
+      if (q.el.className !== cls) q.el.className = cls;
+    }
+  }
+  function cineTagsFrame() {  // over each character's head while they are in the frame, in plain view and near enough
+    const Wd = window.innerWidth, top = CINE.top + 4, bottom = window.innerHeight - CINE.bottom - 6;
+    for (let i = 0; i < CINE_NAMETAGS.length; i++) {
+      const q = CINE_NAMETAGS[i], a = actors[q.k];
+      if (!a) continue;
+      _cineAt.copy(a.headAt);  // (just over the top of the head: the model's own top, a little above it)
+      const dist = camera.position.distanceTo(_cineAt), s = toScreen(_cineAt), sx = s.x, sy = s.y;
+      let show = s.ok && sx > -60 && sx < Wd + 60 && sy > top + 30 && sy < bottom && dist < CINE_FAR && dist > 0.5;
+      if (show && simT >= q.seeAt) { q.see = blocked(camera.position, a.headAt) > 0.98; q.seeAt = simT + 0.25; }
+      show = show && q.see;
+      const op = show ? Math.round(clamp((CINE_FAR - dist) / 7, 0, 1) * 20) / 20 : 0;
+      if (op !== q.op) { q.op = op; q.el.style.opacity = String(op); }
+      if (!op) continue;
+      if (!q.w) { q.w = q.el.offsetWidth; q.h = q.el.offsetHeight; }
+      const x = Math.round(clamp(sx - q.w / 2, 6, Wd - q.w - 6)), y = Math.round(Math.max(top, sy - q.h - 2));
+      if (x !== q.x || y !== q.y) { q.x = x; q.y = y; q.el.style.transform = "translate3d(" + x + "px," + y + "px,0)"; }
+    }
+  }
+  // ------------------------------------------------------------- the caption (text only, four times a second at most)
+  function cineSubject() {  // who or what is on air: a character, else the room a place (or a board's view) shows
+    const ps = PLANNER.shot, a = pinned && actors[pinned] ? actors[pinned] : actors[ps.subject] || null;
+    if (a) return { key: a.key, room: a.room };
+    const id = String(ps.subject || ""), place = PLACE_AT[id], v = id.indexOf("rec:") === 0 ? REC_VIEWS[id.slice(4)] : null;
+    return { key: null, room: place ? place.room : v ? v.room : null };
+  }
+  function cineFilmCaption() {  // a programme on air (the goal's, the huddle, yesterday's film): its own words, as a caption
+    const b = FILM.script[FILM.i] || null, onActor = !!(b && CAST[b.cam]);
+    const real = filmReal.hidden ? "" : filmReal.textContent, text = filmText.textContent;
+    const pretend = !filmPretend.hidden && onActor ? filmPretend.textContent : "";  // (practice: a character's own words only)
+    const words = cineSplit(cinePractice(text || real || pretend)), more = text && real ? real : filmNote.hidden ? "" : filmNote.textContent;
+    return { who: filmWho.textContent, rest: words[0] ? " · " + words[0] : "", second: words[1] || more, heart: false };
+  }
+  function cineCapFrame() {
+    if (simT < CINE.capAt) return;
+    CINE.capAt = simT + 0.25;
+    let c;
+    if (FILM.on) c = cineFilmCaption();
+    else { const s = cineSubject(); c = cineCaption(plain, s.key, s.room, s.key && CAST[s.key] ? CAST[s.key].name : ""); }
+    const sig = c.who + "\n" + c.rest + "\n" + c.second;
+    if (sig === CINE.cap) return;
+    CINE.cap = sig;
+    cineCap1.textContent = "";
+    const b = document.createElement("b"); b.textContent = c.who; cineCap1.appendChild(b);
+    if (c.rest) cineCap1.appendChild(document.createTextNode(c.rest));
+    cineCap2.textContent = c.second ? (c.heart ? "♥ " : "") + c.second : ""; cineCap2.hidden = !c.second;
+    cineCapEl.classList.remove("in"); void cineCapEl.offsetWidth; cineCapEl.classList.add("in");
+  }
+  // ------------------------------------------------------------- the director, slower: longer holds, slower flights
+  function cineCamera() {
+    const s = PLANNER.shot;
+    if (s.seq === CINE.seq) return;
+    CINE.seq = s.seq;
+    // (the rotation's own shots only: an event, a pin and a programme keep their timing; the operator has just set up
+    // this shot, so its move is spread over the longer hold)
+    if (!CINE.on || s.event || s.pinned || FILM.on || RUN.seq !== s.seq) return;
+    const add = RUN.dur * CINE_HOLD; PLANNER.extend(add); RUN.dur += add; CINE.held += 1;
+    if (FLY.on && FLY.start === simT) { const f = FLY.dur * CINE_FLY; FLY.dur += f; RUN.t0 += f; PLANNER.extend(f); }
+  }
+  // ------------------------------------------------------------- the first visit's card (instead of the guide)
+  function cineIntroOpen(again) {  // (again: the screenshot hook, once more, until a tap)
+    if (!CINE.on || CINE.intro || !plain || (!again && cineIntroSeen())) return;
+    const L = cineIntroLines(plain);
+    cineIntroBody.textContent = "";
+    para(cineIntroBody, L.about);
+    const who = document.createElement("p"); who.className = "who";
+    L.team.forEach(function (q) {
+      const s = document.createElement("span"), b = document.createElement("b"); b.textContent = q[0]; s.appendChild(b);
+      if (q[1]) s.appendChild(document.createTextNode(q[1])); who.appendChild(s);
+    });
+    cineIntroBody.appendChild(who);
+    para(cineIntroBody, L.money, "money");
+    cineIntroEl.hidden = false; CINE.intro = true;
+    clearTimeout(CINE.introTimer);
+    if (!again) CINE.introTimer = setTimeout(function () { cineIntroClose(true); }, CINE_INTRO_MS);
+  }
+  function cineIntroClose(remember) {
+    if (!CINE.intro) return;
+    CINE.intro = false; cineIntroEl.hidden = true; clearTimeout(CINE.introTimer);
+    if (remember) cineIntroRemember();
+  }
+  el("intro-go").onclick = function () { cineIntroClose(true); };
+  canvas.addEventListener("pointerdown", function () { if (CINE.intro) cineIntroClose(true); });
+  // ------------------------------------------------------------- on the page's bus
+  function cineOnData(d, first) {
+    cineHudDraw(d); cineTagWords();
+    if (CINE.on) cineVaultDraw();  // (after the page's own sign: real money in cinema mode)
+    if (first) cineIntroOpen();
+    CINE.capAt = 0;  // (the caption says this poll's words at once)
+  }
+  function cineFrame() {
+    cineCamera();
+    if (!CINE.on) return;
+    cineTagsFrame(); cineCapFrame();
+  }
+  BUS.on("data", cineOnData);
+  BUS.on("frame", cineFrame);
+  window.addEventListener("resize", cineMeasure);
+  cineSet(!cineStored(), false);
+  window.__skyport = Object.assign(window.__skyport || {}, { cinema: {
+    // (for a test or a screenshot: the mode, the HUD's and the caption's words, the tags on screen, the director's holds)
+    on: function () { return CINE.on; }, set: function (on) { cineSet(on, true); },
+    hud: function () { return cineHudEl.textContent; },
+    caption: function () { return [cineCap1.textContent, cineCap2.hidden ? "" : cineCap2.textContent]; },
+    tags: function () { return CINE_NAMETAGS.filter(function (q) { return q.op > 0; }).map(function (q) { return q.el.textContent; }); },
+    intro: function (again) { if (again) { CINE.intro = false; cineIntroOpen(true); } return CINE.intro; },
+    held: function () { return CINE.held; },
+  } });
+
+"""
+
+#: Where THE CINEMA's section goes: at the end of the page's main(), after THE LOOP's frame and before the first frame
+#: (its listeners are on the bus before the first poll; every part of the world it reads is made by then).
+_CINEMA_AT = '  resize(); BUS.emit("start", 0, 0);'
+_MODULE = (_M_SETUP + _M_WORLD + _M_CAST + _M_LIFE + _M_CHANNEL + _M_RECORDS + _M_GOAL + _M_HEARTS
+           + _M_LIVE.replace(_CINEMA_AT, _M_CINEMA + _CINEMA_AT, 1))
 #: The page's one inline style: the base styles, then each added section's own block (the record room's,
 #: the goal's, the hearts', then the channel's).
-_STYLES = _STYLE + _STYLE_RECORDS + _STYLE_GOAL + _STYLE_HEARTS + _STYLE_CHANNEL
+_STYLES = _STYLE + _STYLE_RECORDS + _STYLE_GOAL + _STYLE_HEARTS + _STYLE_CHANNEL + _STYLE_CINEMA
 
 
 def _sha256_source(text: str) -> str:
@@ -6608,7 +7043,8 @@ def render_world_html(settings: Settings) -> str:
         f'<link rel="icon" href="data:,">\n<title>{title}</title>\n'
         f"<style>{_STYLES}</style>\n"
         f'<script type="importmap">{_IMPORTMAP}</script>\n</head>\n'
-        f'<body data-refresh="{REFRESH_S}" data-pipeline="{",".join(PIPELINE)}">\n'
+        # (THE CINEMA is the default view from the first paint; the module takes the class off for "details")
+        f'<body data-refresh="{REFRESH_S}" data-pipeline="{",".join(PIPELINE)}" class="cinema">\n'
         '<canvas id="view"></canvas><div id="vignette"></div>\n'
         '<header id="bar"><div class="row1">'
         '<a class="back" href="./" title="Back to the page" aria-label="Back to the page">←</a>'
@@ -6647,6 +7083,8 @@ def render_world_html(settings: Settings) -> str:
         f'<script id="cast" type="application/json">{_json_block(WORLD_CAST)}</script>\n'
         f'<script id="rooms" type="application/json">{_json_block(WORLD_ROOMS)}</script>\n'
         f'<script id="models" type="application/json">{_json_block(models_on_disk())}</script>\n'
+        # (THE CINEMA's "details" button; in the full view it stays over the bubbles: the way back is always in reach)
+        '<button type="button" id="details" aria-pressed="false">details</button>\n'
         '<div id="labels"></div>\n<div id="bubbles"></div>\n<div id="drop"></div>\n'
         '<div id="card"><div class="room"><b id="live">LIVE CAM</b><span class="name">NIGHT SHIFT: SKYPORT</span></div>'
         '<div class="who">Loading…</div>'
@@ -6660,5 +7098,14 @@ def render_world_html(settings: Settings) -> str:
         '<p id="boot">Loading the 3D world… It needs a browser with JavaScript modules and WebGL; '
         'the <a href="office">Office</a> page shows the same team as pictures.</p>\n'
         "<p id=\"honest\">Drawings acting out the bot's own records; every word is its data.</p>\n"
+        # THE CINEMA: the name tags, the letterbox bars (the real-money HUD, the caption) and the first-visit card (the
+        # module fills them as text only)
+        '<div id="tags" aria-hidden="true"></div>\n'
+        '<div id="cine"><div id="lb-top"><button type="button" id="hud" aria-controls="panel">'
+        '<span class="htag" id="hud-tag">REAL MONEY</span><b id="hud-cash">—</b><span id="hud-rest"></span></button></div>'
+        '<div id="lb-bot"><div id="cap" aria-live="off"><p id="cap-1"><b>NIGHT SHIFT: SKYPORT</b></p><p id="cap-2" hidden></p>'
+        "</div></div></div>\n"
+        '<div id="intro" role="dialog" aria-labelledby="intro-title" hidden><h2 id="intro-title">Skyport, live</h2>'
+        '<div id="intro-body"></div><button type="button" id="intro-go">Watch</button></div>\n'
         f'<script type="module">{_MODULE}</script>\n</body>\n</html>\n'
     )
