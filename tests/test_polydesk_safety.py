@@ -644,7 +644,9 @@ def test_a_pending_order_expires_after_a_day(gw: Gateway2, tmp_path: Path) -> No
          "adopted)")]
 
 
-def test_contracts_the_desk_never_ordered_stay_venue(gw: Gateway2, tmp_path: Path) -> None:
+def test_contracts_the_desk_never_ordered_are_the_owners_own_bets(gw: Gateway2, tmp_path: Path) -> None:
+    """A contract in the shared account with no desk order behind it is the owner's own bet (2026-10-11): shown,
+    never counted in the desk's caps or stops."""
     gw.markets = [_market("k1", "crypto", 1800)]
     gw.quotes = {"k1": (0.97, 0.98)}
     ex = LaggingExchange(cash=25.0)
@@ -652,9 +654,11 @@ def test_contracts_the_desk_never_ordered_stay_venue(gw: Gateway2, tmp_path: Pat
     desk = _desk(_live_settings(tmp_path), ex)
     desk.poll(NOW)
     pos = desk.state["positions"]
-    assert pos["elsewhere"]["rule"] == "venue" and "ask_in" not in pos["elsewhere"]
+    assert pos["elsewhere"]["rule"] == P.RULE_OWNER and pos["elsewhere"]["owner"] and "ask_in" not in pos["elsewhere"]
     assert pos["k1"]["rule"] == desk.rule  # the desk's own order, confirmed late
-    assert _said(desk, "REAL position found at the venue: Bought in the app · Yes")
+    assert _said(desk, "Your own bet is in the account: Bought in the app · Yes")
+    room = P.real_room(desk.state, desk.settings, NOW)
+    assert room["held_usd"] == pytest.approx(pos["k1"]["cost_usd"])  # the owner's bet is not the desk's money
 
 
 def test_a_settled_market_is_never_adopted_twice(gw: Gateway2, tmp_path: Path) -> None:

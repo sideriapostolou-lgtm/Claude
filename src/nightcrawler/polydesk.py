@@ -237,6 +237,16 @@ FIRST_POLL_DELAY_S = 20.0
 #: the price, the YES side only, and no sport with real money.
 RULE_VERSION = "2026-10-10a"
 RULE_VENUE = "venue"  # a position adopted from the venue's book: not this rule's buy
+#: A bet the OWNER placed himself in the shared Polymarket US account (2026-10-11: his own parlays tripped the desk's
+#: total-loss stop; at his word they never count). Shown and settled for the page, never counted in the desk's caps,
+#: day or total stops: a venue position with no unconfirmed or dropped desk order behind it is his
+#: (:meth:`PolyDesk._reconcile`).
+RULE_OWNER = "owner"
+DROPPED_KEEP_S = 7 * 86_400.0  # a desk order the venue said it never filled: a contract found later is still the desk's
+#: Rows adopted as ``venue`` before owner bets were told apart are re-read once (:func:`_owner_migration`): from this
+#: time on the desk orders at most 10 contracts, so a venue row with more shares than that is the owner's own bet.
+OWNER_MIGRATION_FROM = 1791676800.0  # 2026-10-11T00:00:00Z
+OWNER_MIGRATION_MAX_DESK_SHARES = 10.5
 BEFORE_FIX = "before the fix"  # rows with no rule stamp (bought before RULE_VERSION existed)
 PAPER_MAX_OPEN = 60  # open paper positions at once: the paper book stays readable
 PAPER_LEARNING_OPEN = 10  # open paper positions at once until the rule's paper record is winning (size small)
@@ -538,10 +548,51 @@ def load_state(path: Path) -> dict[str, Any]:
                 base["by_rule"] = _by_rule_from_rows(base["closed"])
             else:
                 _backfill_pnls(base["by_rule"], base["closed"])
+            _owner_migration(base)
             return base
     except (OSError, ValueError):
         pass
     return empty_state()
+
+
+def _is_owner_venue_row(row: Any) -> bool:
+    """A venue row adopted since :data:`OWNER_MIGRATION_FROM` with more shares than the desk ever orders: the owner's
+    own bet (his parlays of 2026-10-11 held hundreds of contracts; the desk orders at most 10)."""
+    return (isinstance(row, dict) and bool(row.get("live")) and row.get("rule") == RULE_VENUE and not row.get("owner")
+            and float(_num(row.get("t_in")) or 0.0) >= OWNER_MIGRATION_FROM
+            and float(_num(row.get("shares")) or 0.0) > OWNER_MIGRATION_MAX_DESK_SHARES)
+
+
+def _owner_migration(st: dict[str, Any]) -> float:
+    """Once per state file (the owner's word, 2026-10-11): his own bets adopted as ``venue`` rows before they were
+    told apart (:func:`_is_owner_venue_row`) are marked :data:`RULE_OWNER`, and the real P&L of those already settled
+    is taken back out of their day (``live_days``) and the total (``live_pnl_total_usd``) and kept as
+    ``owner_pnl_usd``. Returns the P&L taken out (0 when already done)."""
+    if st.get("owner_migrated"):
+        return 0.0
+    st["owner_migrated"] = True
+    for pos in _as_dict(st.get("positions")).values():
+        if _is_owner_venue_row(pos):
+            pos["rule"], pos["owner"] = RULE_OWNER, True
+    kept = st.get("live_days")
+    days: dict[str, Any] = kept if isinstance(kept, dict) else {}
+    out = 0.0
+    for row in st.get("closed") or []:
+        if not _is_owner_venue_row(row):
+            continue
+        row["rule"], row["owner"] = RULE_OWNER, True
+        pnl = _num(row.get("pnl_usd"))
+        if pnl is None:
+            continue
+        out += pnl
+        rec = days.get(_day(float(_num(row.get("settled_at")) or 0.0)))
+        if isinstance(rec, dict):
+            rec["pnl_usd"] = float(_num(rec.get("pnl_usd")) or 0.0) - pnl
+            rec["settled"] = max(0, int(_num(rec.get("settled")) or 0) - 1)
+            rec["won"] = max(0, int(_num(rec.get("won")) or 0) - int(bool(row.get("won"))))
+    st["live_pnl_total_usd"] = float(_num(st.get("live_pnl_total_usd")) or 0.0) - out
+    st["owner_pnl_usd"] = float(_num(st.get("owner_pnl_usd")) or 0.0) + out
+    return out
 
 
 def state_file_unreadable(path: Path) -> bool:
@@ -809,7 +860,7 @@ def real_room(st: Mapping[str, Any], settings: Settings, now: float) -> dict[str
     when its money fits ``open_room`` and its worst case (cost plus fee) fits both stops' rooms
     (:meth:`PolyDesk._live_refusal`), so a "$3 day" can lose at most $3 even if every open bet loses."""
     positions = _as_dict(st.get("positions"))
-    live = [p for p in positions.values() if isinstance(p, dict) and p.get("live")]
+    live = [p for p in positions.values() if isinstance(p, dict) and p.get("live") and not p.get("owner")]
     pend = list(_pending_of(st).values())
     held = sum(float(_num(p.get("cost_usd")) or 0.0) for p in live) + sum(_pending_cost(p) for p in pend)
     at_risk = sum(float(_num(p.get("cost_usd")) or 0.0) + float(_num(p.get("fee_usd")) or 0.0) for p in live)
@@ -1017,6 +1068,7 @@ class PolyDesk:
             self.state["halt_reason"] = "unreadable_state"
         if bool(settings.polymarket_us_key_id) and bool(settings.polymarket_us_secret_key):
             self.reader = self._open_reader()
+        self._owner_resume(time.time())
         if self.live_requested and self.state.get("live_halted"):
             self.state["live_status"] = (
                 UNREADABLE_STATUS if self.state.get("halt_reason") == "unreadable_state" else TOTAL_HALT_STATUS
@@ -1278,6 +1330,9 @@ class PolyDesk:
             coef = m["fee_coef"] if m is not None and m.get("fee_coef") is not None else US_TAKER
             label = f"{r['title']} · {r['outcome']}" if r["outcome"] else r["title"]
             question = m["question"] if m is not None else (label or slug)
+            dropped = _as_dict(st.get("dropped_orders")).get(slug)
+            mine = dropped is not None and now - float(_num(dropped) or 0.0) <= DROPPED_KEEP_S
+            owner = not mine  # no desk order behind it: the owner bought it himself (RULE_OWNER)
             st["positions"][slug] = {
                 "slug": slug,
                 "question": question,
@@ -1294,16 +1349,21 @@ class PolyDesk:
                 "live": True,
                 "adopted": True,
                 "end_known": m is not None,
-                "rule": RULE_VENUE,
+                "rule": RULE_OWNER if owner else RULE_VENUE,
+                "owner": owner,
             }
-            self._event(
-                now,
-                f"REAL position found at the venue: {question[:60]} · {r['qty']:g} contract at {price:.3f} "
-                f"(${cost:.2f})",
-                "good",
-            )
+            if owner:
+                self._event(now, f"Your own bet is in the account: {question[:60]} · {r['qty']:g} contracts "
+                                 f"(${cost:.2f}); the desk never counts it in its limits", "neutral")
+            else:
+                self._event(
+                    now,
+                    f"REAL position found at the venue: {question[:60]} · {r['qty']:g} contract at {price:.3f} "
+                    f"(${cost:.2f})",
+                    "good",
+                )
             self._receipt(
-                "polydesk_position_adopted",
+                "polydesk_owner_bet_seen" if owner else "polydesk_position_adopted",
                 {"slug": slug, "contracts": r["qty"], "price": price, "cost_usd": cost},
             )
         for slug, pend in pending.items():  # still unconfirmed: a quiet read long enough after the order: no fill
@@ -1313,9 +1373,37 @@ class PolyDesk:
             log.info("polydesk_adopted n=%d venue_contracts=%g", adopted, st["exchange"]["contracts"])
         return adopted
 
+    def _owner_resume(self, now: float) -> bool:
+        """The owner's switch back to real money (``POLYDESK_RESUME_TOKEN``): a value not used before clears a
+        total-loss halt once (never a halt for an unreadable record file), so a live start connects again; the caps
+        and stops are unchanged, so a total still past the cap leaves no room for a real order. Receipted."""
+        token = str(self.settings.polydesk_resume_token or "").strip()[:60]
+        st = self.state
+        if not token or token == st.get("resume_token_used"):
+            return False
+        if not (st.get("live_halted") and st.get("halt_reason") == "total_loss"):
+            return False
+        total = float(_num(st.get("live_pnl_total_usd")) or 0.0)
+        st["resume_token_used"] = token
+        st["live_halted"] = False
+        st["halt_reason"] = None
+        st["live_status"] = None
+        self._event(now, f"The owner switched real money back on (the desk's own real result {total:+.2f} $; every "
+                         "cap and stop as before).", "good")
+        self._receipt("polydesk_live_resumed", {"token": token, "live_pnl_total_usd": total})
+        log.warning("polydesk_live_resumed total=%.2f", total)
+        return True
+
     def _drop_pending(self, now: float, slug: str, pend: Mapping[str, Any], why: str) -> None:
-        """An unconfirmed order the venue never filled: no longer counted as open money; said as a "No fill"."""
+        """An unconfirmed order the venue never filled: no longer counted as open money; said as a "No fill". The
+        market is remembered :data:`DROPPED_KEEP_S` (``dropped_orders``): a contract found there later is the desk's
+        own, never taken for the owner's."""
         self._pending_book().pop(slug, None)
+        dropped = self.state.get("dropped_orders")
+        dropped = {k: v for k, v in dropped.items() if now - float(_num(v) or 0.0) <= DROPPED_KEEP_S} if isinstance(
+            dropped, dict) else {}
+        dropped[slug] = now
+        self.state["dropped_orders"] = dropped
         limit = float(_num(pend.get("limit")) or 0.0)
         name = str(pend.get("question") or slug)[:50]
         if why == "expired":  # no venue read said either way: unknown, not a "No fill"
@@ -1981,13 +2069,16 @@ class PolyDesk:
             st["counters"]["settled"] += 1
             st["counters"]["won"] += int(won)
             settled += 1
-            word = "real" if pos.get("live") else "paper"
+            word = "your own bet" if pos.get("owner") else "real" if pos.get("live") else "paper"
             self._event(
                 now,
                 f"Settled: {pos['question'][:60]} · {'won' if won else 'lost'} {pnl:+.2f} $ ({word})",
                 "good" if won else "bad",
             )
-            if pos.get("live"):
+            if pos.get("live") and pos.get("owner"):  # the owner's own bet: shown, never in the desk's stops
+                st["owner_pnl_usd"] = float(_num(st.get("owner_pnl_usd")) or 0.0) + pnl
+                self._receipt("polydesk_owner_bet_settled", {"slug": slug, "value": value, "pnl_usd": pnl})
+            elif pos.get("live"):
                 d_live = st.setdefault("live_days", {}).setdefault(day, {"pnl_usd": 0.0, "settled": 0, "won": 0})
                 d_live["pnl_usd"] += pnl
                 d_live["settled"] = int(d_live.get("settled") or 0) + 1

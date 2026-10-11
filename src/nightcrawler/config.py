@@ -395,6 +395,9 @@ class Settings:
     polydesk_live_total_loss_usd: float = _f(10.0, "usd", "Polymarket desk live: after losing this much in total the "
                                              "desk switches itself back to paper for good (only the owner can "
                                              "switch it live again)", lo=1, hi=100_000)
+    polydesk_resume_token: str = _f("", "text", "The owner's switch to turn real money back on after the total-loss "
+                                    "cap switched the desk to paper: set it to a NEW value (e.g. today's date) and "
+                                    "redeploy; each value works once. The caps and stops stay as they are")
     polydesk_guard: bool = _f(True, "bool", "Polymarket desk's risk manager (nightcrawler.deskguard): pauses new buys "
                               "(paper, and real in live mode) while the current rule's own record is losing, 95 % "
                               "sure (99 % sure from 10 events); open positions still settle; keeps the paper book at "

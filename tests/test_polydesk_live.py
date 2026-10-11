@@ -170,8 +170,9 @@ def test_live_caps_open_money_rejections_and_no_fills(gw: Gateway, tmp_path) -> 
 def test_daily_and_total_loss_stops(gw: Gateway, tmp_path) -> None:
     """The stops count money still at risk (rule 2026-10-10a): a day can lose at most the daily stop even if every
     open bet loses, so the rule's own bets stop short of it; the day's realised loss at the stop holds the line for
-    the day; the total stop, once realised (here through a contract bought elsewhere, which the venue's book makes
-    the desk's), switches the desk back to paper for good, and a restart stays on paper."""
+    the day; the total stop, once realised (here through a desk order the venue had said never filled, whose
+    contracts show up in its book after all: the desk's own), switches the desk back to paper for good, and a restart
+    stays on paper."""
     settings = _live_settings(tmp_path, POLYDESK_LIVE_DAILY_LOSS_USD="2", POLYDESK_LIVE_TOTAL_LOSS_USD="3")
     gw.markets = [_market(f"m{i}", "crypto", 1800 + i) for i in range(4)]
     gw.quotes = {f"m{i}": (0.97, 0.98) for i in range(4)}
@@ -193,7 +194,9 @@ def test_daily_and_total_loss_stops(gw: Gateway, tmp_path) -> None:
     assert len(ex.orders) == 2 and desk.state["positions"]["new"]["live"] is False
     assert desk.state["live_status"] is None  # not the daily stop: the room for one more bet that could lose
     assert P.panel_state(settings, NOW + 2100)["skips"]["counts"]["stop_room"] == 3  # m2, m3 this morning, now new
-    # two contracts bought elsewhere show up in the venue's book and lose: past the $2 day and the $3 total
+    # a desk order the venue said never filled shows up after all (two contracts) and loses: past the $2 day and
+    # the $3 total
+    desk.state["dropped_orders"] = {"outside": NOW + 2150}
     ex.hold("outside", 2.0, 0.97, title="Bought elsewhere", outcome="Yes")
     gw.markets = []
     desk.poll(NOW + 2200)
@@ -268,13 +271,15 @@ def test_venue_positions_the_desk_never_recorded_are_adopted_and_capped(gw: Gate
     gw.markets = [_market("k1", "crypto", 1800)]
     gw.quotes = {"k1": (0.96, 0.97)}
     ex = FakeExchange(cash=16.27)
-    # real contracts bought under an earlier build: one on a watched market, one on a market the list no longer carries
+    # the desk's own real contracts its record lost (orders the venue had said never filled): one on a watched
+    # market, one on a market the list no longer carries
     ex.hold("k1", 1.0, 0.97)
     ex.hold("aec-del-kec-sww", 1.0, 0.97, title="Koelner Haie vs. Schwenninger Wild Wings", outcome="Koelner Haie",
             event_slug="del-kec-sww")
     ex.book["aec-del-kec-sww"]["value"] = 0.68
     ledger = FakeLedger()
     desk = P.PolyDesk(_live_settings(tmp_path, POLYDESK_LIVE_MAX_OPEN_USD="2.5"), ledger=ledger, client_factory=ex)
+    desk.state["dropped_orders"] = {"k1": NOW - 600, "aec-del-kec-sww": NOW - 600}
     r = desk.poll(NOW)
     assert r["adopted"] == 2 and not ex.orders  # k1 is held already, so it is not bought again
     pos = desk.state["positions"]
@@ -314,6 +319,7 @@ def test_real_buys_and_venue_adoptions_carry_their_rule_and_the_record_splits(gw
     ex = FakeExchange(cash=25.0)
     ex.hold("held", 1.0, 0.97, title="Held before this build", outcome="Yes", event_slug="x")
     desk = P.PolyDesk(_live_settings(tmp_path), ledger=FakeLedger(), client_factory=ex)
+    desk.state["dropped_orders"] = {"held": NOW - 600}  # the desk's own order, once reported as no fill
     r = desk.poll(NOW)
     assert (r["bought"], r["adopted"]) == (2, 1)
     pos = desk.state["positions"]
