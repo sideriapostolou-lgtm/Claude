@@ -70,11 +70,17 @@ Template:
   from 20:55 to 22:35 UTC, so the desk never warmed up. 1,500 returns still pin sigma to about 1.8 % (1/sqrt(2n)).
   Missing seconds are still never invented, and the one-hour warm-up stays.
 - Verified: full pytest 3,960 passed / 12 skipped; mypy clean; ruff clean on the changed files.
-- Not verified / skipped: the deploy after this push and the first practice windows (checked next). Kalshi live
-  stays off until practice windows run and fee precision is verified.
-- Real money touched? no. Polymarket desk unchanged; Kalshi live off.
-- Next step: confirm "Practice feeds running" and windows > 0 in speeddesk_status, then the Kalshi live switch
-  (owner's caps $2 window / $4 open / $3 day / $5 total).
+- Deployed 8882ece (23:02 UTC): `speeddesk_status` shows "Practice feeds running" with sigma_min_samples 1500.
+  Correction: the trailing hour crossed the old 3,000 bar on its own at about 22:36 UTC, and practice traded
+  8 windows today by 23:03 (+$4.54 total: Polymarket US +$14.19 over 5 windows, Kalshi -$9.65 over 3, both
+  settled Kalshi windows lost). The new bar keeps it trading through quiet hours.
+- Real money touched? YES, on the owner's word ("run it live on Kalshi", "Small test" caps, "get it all up and
+  running"; he approved each Railway call): `SPEEDDESK_KALSHI_MODE=live` and `SPEEDDESK_KALSHI_LIVE_CONFIRM` set
+  at 23:04 UTC. Logged `REAL MONEY (Kalshi)`, authenticated, cash $25.003, caps $2/$4/$3/$5, no orders ("no edge
+  after conservative fee rounding"). The owner confirmed his account was opened on kalshi.com, so
+  `SPEEDDESK_KALSHI_ACCOUNT_TYPE=direct` was set at ~23:08 UTC. Polymarket desk unchanged.
+- Next step: watch the first real Kalshi orders and fills, and report them to the owner. Kill switch:
+  `SPEEDDESK_KALSHI_MODE=paper`.
 
 ## 2026-10-12 22:22 UTC, Codex, branch codex/lucas-ladder-audit
 - Owner request: audit LucasMeow's full public history, backtest far-strike monthly crypto NO on Kalshi's
