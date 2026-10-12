@@ -13,6 +13,47 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-12 18:55 UTC, Codex, branch codex/speed-desk
+- Changed: built the owner's speed desk in practice only, including Claude's concurrent `df66c13` Kalshi
+  adapter addition. Coinbase BTC-USD ticks drive the normal-CDF fair value and observed one-second volatility.
+  Polymarket US uses its SDK market WebSocket and authenticated trade prints; Kalshi uses public books and
+  actual, paginated trade prints. US fallback books are capped at 1 request/second; Kalshi books at 2/second.
+- Safety and accounting: there is no speed-desk real-order implementation, and `SPEEDDESK_MODE=live` is rejected.
+  Tests poison the SDK order resource and exercise fills, queue depletion, cancellation, settlement and shutdown.
+  The owner explicitly approved one starter clip, followed only by balancing buys until within the imbalance cap.
+  Independent practice caps are $20/window, $20 across open windows and a $10 settled-loss stop at UTC midnight.
+  Pending reservations, partial fills, pair costs and venue-specific fees count toward those limits.
+- Honest fills: takes use the first eligible book observation after a minimum 250 ms; REST requests must start
+  after that delay and actual latency is reported. A missing ask cancels, and a later rebound cannot fill that
+  old decision. Resting bids consume actual sell-aggressor trade volume only after the queue ahead; no fills
+  from a price touch. A gap cancels queues, and one venue cannot borrow another venue's stream permission.
+  US maker rebates follow the documented independent per-fill half-even cent rounding; Kalshi follows its
+  July 7, 2026 fee schedule (cost plus fee rounded up to $0.0001). Unknown rules/fees do not qualify.
+- Persistence/reporting: `/data/speeddesk/receipts.db` commits receipts and state together, then mirrors
+  `/data/speeddesk/state.json` atomically. Restart preserves fills/results and cancels pending simulated orders.
+  The separate PRACTICE page reports traded/settled windows, fills, locked-pair versus directional P&L after
+  fees, wins/losses, worst window, unique-order fill rates and actual latency. UTC daily reports include observed
+  time and partial-day flags; current plus the latest 31 reports are in `/api/page`. No pretend dollars enter
+  real account cash, real profit or the town's goal.
+- Verified: full suite 3,148 passed, 21 skipped (12 opt-in network tests; 9 optional pandas/numpy/scipy cases).
+  A further 161 focused speed-desk tests passed after the final first-recheck, request-timestamp, retry and
+  venue-terms changes. Mypy passed on all 88 source files; Ruff passed on all 19 changed Python files. Independent randomized review ran 15,000 decisions/
+  partial-trade steps without breaking the reserved $20 budget or fee-inclusive pair cap.
+  Phone/dashboard fixture checks passed at 320, 390 and 1280 pixels, without console errors or horizontal overflow.
+- Public live checks: actual Coinbase ticks, both venues' metadata/books and settlement endpoints worked; Kalshi
+  actual trade prints worked. A 20-second whole-runtime check warmed up without a fill or traceback. US public
+  fallback reproduced HTTP 429 after a short burst, so it records the status and backs off 30 seconds; it never
+  fills against stale fallback data. The primary authenticated US stream requires production verification.
+- Real money touched? Shared configuration and startup wiring change under the owner's explicit build/push
+  instruction; this deploy restarts the existing real-money bot. Its trading rules, caps and order paths are
+  unchanged, and Marco remains off. No Railway variables or credentials were changed or stored.
+- Pending: exact-commit deployment/startup verification below; at least 72 hours of practice observation.
+  Volatility needs a full hour and at least 3,000 actual adjacent one-second returns before decisions. No claim
+  of profit or successful three-day trial is made. Daily reports are produced in the app/receipts; recurring chat
+  delivery is not configured because this environment has no persistent Railway secret binding.
+  Leave Claude's existing 19:45 UTC Bitcoin-filter check unchanged. Real money still requires the owner's exact
+  dollar amounts and positive practice after fees over 3+ days; there is no automatic promotion.
+
 ## 2026-10-12 17:04 UTC, Codex, crew movement cleanup
 - Changed: at the owner's request, kept the existing town, cast, camera, layout and event choreography, and
   polished how the crew moves. Walks now ease into motion, slow for corners and brake before arrival;

@@ -21,12 +21,32 @@ from fakes import FakeClock
 from nightcrawler import __version__
 from nightcrawler.botwallet import KV_BOT_WALLET
 from nightcrawler.config import LIVE_CONFIRM_PHRASE, Settings
-from nightcrawler.dashboard import CONTENT_SECURITY_POLICY, COOKIE_NAME, DashboardServer, build_state, render_html
+from nightcrawler.dashboard import (
+    CONTENT_SECURITY_POLICY,
+    COOKIE_NAME,
+    DashboardServer,
+    build_state,
+    render_html,
+)
 from nightcrawler.ledger import Ledger
-from nightcrawler.models import Decision, EquityPoint, Fill, Position, SafetyReport, TokenCandidate, Verdict
+from nightcrawler.models import (
+    Decision,
+    EquityPoint,
+    Fill,
+    Position,
+    SafetyReport,
+    TokenCandidate,
+    Verdict,
+)
 from nightcrawler.page import PAGE_CSP, REFRESH_S, render_page_html
-from nightcrawler.pagestate import (LEARNING_RULE, MEMBERS, STALE_BANNER_S, build_page_state, learning_card,
-                                    town_ledger)
+from nightcrawler.pagestate import (
+    LEARNING_RULE,
+    MEMBERS,
+    STALE_BANNER_S,
+    build_page_state,
+    learning_card,
+    town_ledger,
+)
 from nightcrawler.readiness import CHECK_IDS, readiness
 from nightcrawler.teamroom import ENGINE_STALE_S, TeamRoom, derive_status
 
@@ -898,9 +918,16 @@ def test_json_stays_small_on_a_busy_ledger(ledger: Ledger, settings: Settings) -
     ledger.set_kv("engine.status", status_kv(watchlist=100, watching=watching))
     state = build_page_state(ledger, settings, NOW)
     body = json.dumps(state, separators=(",", ":"))
-    # (plain.hearts, the team's hearts, adds about 2.2 KB of fixed copy and lines; money.marco and plain.marco_line,
-    # Marco's loves, about 2.2 KB more: six picks with his words)
-    assert len(body) < 45_500, len(body)
+    # Preserve the existing page's budget; the separate speed-desk empty report has its own bounded allowance.
+    # Recorded history is bounded independently to 31 days in test_speeddesk_integration.py.
+    before_speeddesk = json.loads(body)
+    speed_report = before_speeddesk["money"].pop("speeddesk")
+    speed_line = before_speeddesk["plain"].pop("speeddesk_line")
+    original_body = json.dumps(before_speeddesk, separators=(",", ":"))
+    added_body = json.dumps({"speeddesk": speed_report, "speeddesk_line": speed_line}, separators=(",", ":"))
+    assert len(original_body) < 45_500, len(original_body)
+    assert len(added_body) < 1_500, len(added_body)
+    assert len(body) < 47_000, len(body)
     assert len(state["money"]["curve"]) <= 300 and len(state["trades"]["closed"]) == 10
     assert all(len(t["coin"]) <= 24 and len(t["why"]) <= 60 for t in state["trades"]["closed"])
 
@@ -937,7 +964,8 @@ def test_page_script_never_turns_data_into_html(settings: Settings) -> None:
 def test_page_has_every_section_in_order_and_is_built_for_phones(settings: Settings) -> None:
     html = render_page_html(settings)
     ids = re.findall(r'<section class="card" id="([a-z]+)"', html)
-    assert ids == ["plain", "money", "town", "wallet", "team", "trades", "learning", "ready", "receipts", "usage"]
+    assert ids == ["plain", "money", "town", "speeddesk", "wallet", "team", "trades", "learning", "ready", "receipts",
+                   "usage"]
     for mid, name, role in MEMBERS:
         assert f'id="m-{mid}"' in html and f"<b>{name}</b>" in html and role in html
     assert html.count("<details") >= len(MEMBERS)  # tap a member to see its last events, no JS needed

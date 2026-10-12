@@ -200,12 +200,14 @@ import sqlite3
 import threading
 import time
 from collections import Counter, deque
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 from nightcrawler import __version__
-from nightcrawler.botwallet import CHECK_EVERY_S as BOT_WALLET_CHECK_S, record_balance
+from nightcrawler.botwallet import CHECK_EVERY_S as BOT_WALLET_CHECK_S
+from nightcrawler.botwallet import record_balance
 from nightcrawler.clock import Clock, RealClock, iso_utc
 from nightcrawler.config import Settings, mask_problem
 from nightcrawler.hashing import canonical_json
@@ -236,37 +238,37 @@ from nightcrawler.sources.pumpfun import is_pumpfun_coin
 from nightcrawler.strategy import entry_signal, exit_signal, rolling_high
 
 __all__ = [
-    "WatchItem",
+    "BLIND_PRICE_MAX_AGE_S",
+    "BLIND_PROBE_MAX_IMPACT_PCT",
+    "BLIND_QUOTE_FAILURES",
+    "COCOON_QUEUE_MAX",
+    "DRIFT_CHECK_S",
+    "EXIT_MAX_IMPACT_PCT",
+    "GT_CANDLE_PAUSE_S",
+    "HOLDINGS_SETTLE_S",
+    "LEARNER_OVERRUN_S",
+    "LEARNER_TERM_GRACE_S",
+    "LEARN_DB_TIMEOUT_S",
+    "LEARN_DRAIN_PER_RUN",
+    "LEARN_FIRST_RUN_S",
+    "LEARN_STAGE_S",
+    "MAX_CANDLE_FETCH_PER_TICK",
+    "MAX_COCOON_PER_TICK",
+    "MEMBERS",
+    "QUEUE_RESTORE_MAX_AGE_S",
+    "RECONCILE_AFTER_S",
+    "SEEN_TAPE_TTL_S",
+    "SIGNATURE_CHECK_S",
+    "SNAPSHOT_MISSING_UNWATCH_S",
+    "STATE_SAVE_S",
+    "TICK_S",
+    "App",
     "Engine",
     "LearnStage",
-    "App",
+    "WatchItem",
     "build_app",
     "build_engine",
     "foreign_positions_of",
-    "MAX_COCOON_PER_TICK",
-    "MAX_CANDLE_FETCH_PER_TICK",
-    "COCOON_QUEUE_MAX",
-    "EXIT_MAX_IMPACT_PCT",
-    "TICK_S",
-    "DRIFT_CHECK_S",
-    "RECONCILE_AFTER_S",
-    "SNAPSHOT_MISSING_UNWATCH_S",
-    "GT_CANDLE_PAUSE_S",
-    "HOLDINGS_SETTLE_S",
-    "SIGNATURE_CHECK_S",
-    "STATE_SAVE_S",
-    "QUEUE_RESTORE_MAX_AGE_S",
-    "LEARN_STAGE_S",
-    "LEARN_FIRST_RUN_S",
-    "LEARN_DRAIN_PER_RUN",
-    "LEARN_DB_TIMEOUT_S",
-    "LEARNER_OVERRUN_S",
-    "LEARNER_TERM_GRACE_S",
-    "BLIND_PRICE_MAX_AGE_S",
-    "BLIND_QUOTE_FAILURES",
-    "BLIND_PROBE_MAX_IMPACT_PCT",
-    "SEEN_TAPE_TTL_S",
-    "MEMBERS",
     "member_hashes",
     "team_hash",
 ]
@@ -445,7 +447,7 @@ def _provenance() -> dict[str, Any]:
     """Code hashes and ``sim_hash`` for the boot receipt (docs/LEARNING.md §8); {} if they cannot be read."""
     try:
         return learn_job.provenance()
-    except Exception as exc:  # never stops a boot
+    except Exception as exc:  # never stops a boot  # noqa: BLE001 - isolate existing optional provider failures from the running engine
         log.warning("provenance_failed error=%s", _err(exc))
         return {}
 
@@ -635,7 +637,7 @@ def _benchmark_hash(settings: Settings) -> str | None:
         from nightcrawler.learn.variants import make_spec
 
         return make_spec("dip_rebound", {}, settings.strategy_params()).hash
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - isolate existing optional provider failures from the running engine
         log.warning("learning_variant_hash_failed error=%s", _err(exc))
         return None
 
@@ -697,7 +699,7 @@ class LearnStage:
         self.next_run_at = now + min(LEARN_FIRST_RUN_S, self.interval_s)
         try:
             self.recorder = self._start_recorder()
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - isolate existing optional provider failures from the running engine
             self.counters["recorder_failed"] += 1
             self._failed("recorder", exc)
         log.info("learning_started recorder=%s learner_every_min=%g", "on" if self.recorder else "off",
@@ -726,7 +728,7 @@ class LearnStage:
                 self.counters["db_busy"] += 1  # the learner is writing: next time
                 return
             self._drain_failed(exc)
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - isolate existing optional provider failures from the running engine
             self._drain_failed(exc)
 
     def _drain_failed(self, exc: Exception) -> None:
@@ -736,7 +738,7 @@ class LearnStage:
         if store is not None:
             try:
                 store.close()
-            except Exception:
+            except Exception:  # noqa: BLE001, S110 - isolate existing optional provider failures from the running engine
                 pass
 
     def _reap(self, now: float) -> None:
@@ -757,7 +759,7 @@ class LearnStage:
                     log.warning("learner_overrun pid=%s seconds=%.0f: SIGTERM", getattr(p, "pid", None),
                                 now - (self.spawned_at or now))
                 return
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - isolate existing optional provider failures from the running engine
             self._failed("learner", exc)
             return
         self.last_exit = {"code": code, "at": now, "seconds": round(now - (self.spawned_at or now), 1)}
@@ -770,7 +772,7 @@ class LearnStage:
         self.next_run_at = now + self.interval_s
         try:
             process = self._spawn()
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - isolate existing optional provider failures from the running engine
             self.counters["spawn_failed"] += 1
             self._failed("spawn", exc)
             return
@@ -790,7 +792,7 @@ class LearnStage:
             return
         try:
             rows = build()
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - isolate existing optional provider failures from the running engine
             self._emit_failed(exc)
             return
         extra = {"variant_hash": self.variant_hash} if stream in ("evals", "fills") else {}
@@ -800,7 +802,7 @@ class LearnStage:
                     self.counters["emits"] += 1
                 else:
                     self.counters["emits_dropped"] += 1
-            except Exception as exc:
+            except Exception as exc:  # noqa: BLE001 - isolate existing optional provider failures from the running engine
                 self._emit_failed(exc)
 
     def _emit_failed(self, exc: Exception) -> None:
@@ -815,20 +817,20 @@ class LearnStage:
                     p.terminate()  # SIGTERM forwarded: the learner commits its coin and exits
                     try:
                         p.wait(timeout=LEARNER_TERM_GRACE_S)
-                    except Exception:
+                    except Exception:  # noqa: BLE001 - isolate existing optional provider failures from the running engine
                         p.kill()
                         p.wait(timeout=LEARNER_TERM_GRACE_S)
-            except Exception as exc:
+            except Exception as exc:  # noqa: BLE001 - isolate existing optional provider failures from the running engine
                 self._failed("learner", exc)
         if self.recorder is not None:
             try:
                 self.recorder.stop()
-            except Exception as exc:
+            except Exception as exc:  # noqa: BLE001 - isolate existing optional provider failures from the running engine
                 self._failed("recorder", exc)
         if self.store is not None:
             try:
                 self.store.close()
-            except Exception:
+            except Exception:  # noqa: BLE001, S110 - isolate existing optional provider failures from the running engine
                 pass
             self.store = None
 
@@ -847,7 +849,7 @@ class LearnStage:
                                 "started_at": self.spawned_at if p is not None else None,
                                 "next_run_at": self.next_run_at, "last_exit": self.last_exit},
                     "counters": dict(self.counters), "last_error": self.last_error}
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - isolate existing optional provider failures from the running engine
             return {"error": type(exc).__name__}
 
 
@@ -998,7 +1000,7 @@ class Engine:
             try:
                 self._set_status(now, "stopped")
                 self.ledger.append_receipt("note", {"event": "shutdown", "version": __version__}, ts=now)
-            except Exception as exc:  # pragma: no cover - ledger already broken
+            except Exception as exc:  # pragma: no cover - ledger already broken  # noqa: BLE001 - isolate existing optional provider failures from the running engine
                 log.warning("engine_shutdown_record_failed error=%s", _err(exc))
             log.info("engine_stop")
 
@@ -1078,7 +1080,7 @@ class Engine:
         try:
             fn(now)
             results[name] = "ok"
-        except Exception as exc:  # the loop never dies
+        except Exception as exc:  # the loop never dies  # noqa: BLE001 - isolate existing optional provider failures from the running engine
             results[name] = f"error: {type(exc).__name__}"
             self._record_error(name, exc, now)
 
@@ -1092,7 +1094,7 @@ class Engine:
             if last is None or last[0] != text or now - last[1] >= ERROR_RECEIPT_EVERY_S:
                 self.ledger.append_receipt("error", {"stage": stage, "error": text}, ts=now)
                 self._error_receipts[stage] = (text, now)
-        except Exception as inner:  # the ledger itself may be the problem
+        except Exception as inner:  # the ledger itself may be the problem  # noqa: BLE001 - isolate existing optional provider failures from the running engine
             log.error("engine_error_record_failed stage=%s error=%s", stage, _err(inner))
 
     def _restore_state(self) -> None:
@@ -1109,12 +1111,12 @@ class Engine:
             inflight = self.ledger.get_kv("engine.inflight")
             if isinstance(inflight, dict) and inflight:
                 self._adopt_inflight({str(k): dict(v) for k, v in inflight.items() if isinstance(v, dict)})
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - isolate existing optional provider failures from the running engine
             log.warning("engine_restore_failed error=%s", _err(exc))
         for restore in (self._restore_watchlist, self._restore_queue, self._restore_nursery):  # best effort
             try:
                 restore(self.clock.now())
-            except Exception as exc:
+            except Exception as exc:  # noqa: BLE001 - isolate existing optional provider failures from the running engine
                 log.warning("engine_restore_failed part=%s error=%s", restore.__name__, _err(exc))
 
     def _adopt_inflight(self, inflight: dict[str, dict[str, Any]]) -> None:
@@ -1140,14 +1142,14 @@ class Engine:
         waiting = [c.to_dict() for c in [*self.queue, *(c for _, c in self._cocoon_retry)][:COCOON_QUEUE_MAX]]
         try:
             self.ledger.set_kv("engine.cocoon_queue", _clean({"saved_at": now, "items": waiting}))
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - isolate existing optional provider failures from the running engine
             log.warning("state_save_failed part=cocoon_queue error=%s", _err(exc))
         export = getattr(self.crawler, "export_nursery", None)
         if export is None:
             return
         try:
             self.ledger.set_kv("crawler.nursery", {"saved_at": now, "items": _clean(export())})
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - isolate existing optional provider failures from the running engine
             log.warning("state_save_failed part=nursery error=%s", _err(exc))
 
     def _save_watchlist(self, now: float) -> None:
@@ -1157,7 +1159,7 @@ class Engine:
                  for item in sorted(self.watchlist.values(), key=lambda i: i.added_at)]
         try:
             self.ledger.set_kv("engine.watchlist", _clean({"saved_at": now, "items": items}))
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - isolate existing optional provider failures from the running engine
             log.warning("state_save_failed part=watchlist error=%s", _err(exc))
 
     def _restore_watchlist(self, now: float) -> None:
@@ -1231,7 +1233,7 @@ class Engine:
                     previous)
             self._kill_mode = mode
             self._last_run.pop("sell_all", None)
-        if mode == "sell_all" and self._due("sell_all", self.settings.position_interval_s, now):
+        if mode == "sell_all" and self._due("sell_all", self.settings.position_interval_s, now):  # noqa: SIM102 - keep the existing staged safety checks unchanged
             if self._open_positions():
                 self.sell_all("kill_switch")
         return mode
@@ -1279,7 +1281,7 @@ class Engine:
             return None
         try:
             return int(fee_of())
-        except Exception as exc:  # sizing falls back to the NETWORK_FEE_SOL floor
+        except Exception as exc:  # sizing falls back to the NETWORK_FEE_SOL floor  # noqa: BLE001 - isolate existing optional provider failures from the running engine
             log.warning("network_fee_unavailable error=%s", _err(exc))
             return None
 
@@ -1529,7 +1531,7 @@ class Engine:
         else:
             try:
                 gt = list(self.sources.gecko.ohlcv(item.pool, minutes))
-            except Exception as exc:
+            except Exception as exc:  # noqa: BLE001 - isolate existing optional provider failures from the running engine
                 if isinstance(exc, HttpError) and exc.status == 429:
                     self._gt_paused_until = now + GT_CANDLE_PAUSE_S
                     log.warning("gt_candles_paused seconds=%.0f: GeckoTerminal rate limit", GT_CANDLE_PAUSE_S)
@@ -1541,7 +1543,7 @@ class Engine:
         if pump and self.pumpfun is not None:  # pump already implies a pump.fun client
             try:
                 pf = list(self.pumpfun.candles(item.mint, minutes))
-            except Exception as exc:
+            except Exception as exc:  # noqa: BLE001 - isolate existing optional provider failures from the running engine
                 problems.append(f"pump.fun {_err(exc)}")
             else:
                 if pf and (not gt or not _candles_stale(pf, now)):
@@ -1583,7 +1585,12 @@ class Engine:
 
     # ------------------------------------------------------------------ entries
     def _try_enter(self, item: WatchItem, signal_: Signal, now: float) -> Fill | None:
-        from nightcrawler.broker.base import BrokerError, QuoteRejected, SwapFailed, SwapUnknown
+        from nightcrawler.broker.base import (
+            BrokerError,
+            QuoteRejected,
+            SwapFailed,
+            SwapUnknown,
+        )
         from nightcrawler.judge import build_features
 
         c = item.candidate
@@ -1646,7 +1653,7 @@ class Engine:
             self._decide(self.clock.now(), mint, "reject_quote", str(exc), {**base, "sizing": sizing},
                          symbol=symbol, verdict=verdict)
             return None
-        except Exception as exc:  # transport / Jupiter errors: no trade
+        except Exception as exc:  # transport / Jupiter errors: no trade  # noqa: BLE001 - isolate existing optional provider failures from the running engine
             self._decide(self.clock.now(), mint, "reject_quote", f"quote failed: {_err(exc)}",
                          {**base, "sizing": sizing}, symbol=symbol, verdict=verdict)
             return None
@@ -1752,14 +1759,14 @@ class Engine:
         info = self.sources.rpc.mint_info(item.mint) if self.sources is not None else None
         decimals = (info or {}).get("decimals")
         if not isinstance(decimals, int):
-            raise ValueError(f"token decimals unknown for {item.mint}")
+            raise ValueError(f"token decimals unknown for {item.mint}")  # noqa: TRY004 - preserve the existing public validation exception
         item.candidate.decimals = decimals
         return decimals
 
     def _wallet_usd(self) -> float | None:
         try:
             return float(self.broker.wallet_value_usd())
-        except Exception as exc:  # unknown wallet value refuses the entry (risk rule)
+        except Exception as exc:  # unknown wallet value refuses the entry (risk rule)  # noqa: BLE001 - isolate existing optional provider failures from the running engine
             log.warning("wallet_value_unavailable error=%s", _err(exc))
             return None
 
@@ -1776,14 +1783,14 @@ class Engine:
                 continue  # never act on a mint whose last live swap is unresolved
             try:
                 self._manage_one(position, prices.get(position.mint), now)
-            except Exception as exc:  # one position must not block the others
+            except Exception as exc:  # one position must not block the others  # noqa: BLE001 - isolate existing optional provider failures from the running engine
                 self._record_error(f"position:{position.symbol or position.mint[:8]}", exc, now)
 
     def _prices(self, mints: list[str]) -> dict[str, float]:
         prices: dict[str, float] = {}
         try:
             prices = dict(self.sources.jupiter.prices(mints)) if self.sources is not None else {}
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - isolate existing optional provider failures from the running engine
             log.warning("price_feed_failed source=jupiter error=%s", _err(exc))
         missing = [m for m in mints if m not in prices]
         if missing:
@@ -1855,12 +1862,12 @@ class Engine:
                                       max_impact_pct=BLIND_PROBE_MAX_IMPACT_PCT)
             try:
                 sol_usd = float(self.broker.sol_price_usd())
-            except Exception:  # the quote values its own SOL leg
+            except Exception:  # the quote values its own SOL leg  # noqa: BLE001 - isolate existing optional provider failures from the running engine
                 sol_usd = implied_sol_usd(quote) or 0.0
             price = effective_price_usd(quote.out_amount, quote.in_amount, position.token_decimals, sol_usd)
             if not (math.isfinite(price) and price > 0):
                 raise ValueError(f"the quote implies no price ({quote.out_amount} lamports, SOL ${sol_usd})")
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - isolate existing optional provider failures from the running engine
             failures = self._blind_failures[position.id] = self._blind_failures.get(position.id, 0) + 1
             log.warning("position_blind_quote_failed id=%s mint=%s failures=%d error=%s", position.id, position.mint,
                         failures, _err(exc))
@@ -1880,7 +1887,7 @@ class Engine:
             return Signal(kind="exit", reason="time_stop", confidence=1.0, metrics=metrics)
         try:
             sol_usd = float(self.broker.sol_price_usd())
-        except Exception:
+        except Exception:  # noqa: BLE001 - isolate existing optional provider failures from the running engine
             sol_usd = 0.0
         basis = (position.cost_lamports * position.token_amount // position.initial_token_amount
                  if position.initial_token_amount > 0 else position.cost_lamports)
@@ -1894,10 +1901,15 @@ class Engine:
 
     def _exit(self, position: Position, reason: str, fraction: float, now: float,
               inputs: dict[str, Any] | None = None) -> Fill | None:
-        from nightcrawler.broker.base import BrokerError, QuoteRejected, SwapFailed, SwapUnknown
+        from nightcrawler.broker.base import (
+            BrokerError,
+            QuoteRejected,
+            SwapFailed,
+            SwapUnknown,
+        )
 
         full = fraction >= 1.0
-        amount = position.token_amount if full else int(math.floor(position.token_amount * fraction))
+        amount = position.token_amount if full else int(math.floor(position.token_amount * fraction))  # noqa: RUF046 - preserve explicit integer conversion at this existing boundary
         if amount <= 0:
             return None
         # F10: a full exit sells what the wallet REALLY holds; the rest of the books is written off,
@@ -1917,7 +1929,7 @@ class Engine:
         try:
             quote = self.broker.quote("sell", position.mint, amount, position.token_decimals,
                                       max_impact_pct=max_impact)
-        except Exception as exc:  # QuoteRejected, HttpError, JupiterError ...
+        except Exception as exc:  # QuoteRejected, HttpError, JupiterError ...  # noqa: BLE001 - isolate existing optional provider failures from the running engine
             self._hold(position, f"{reason}: sell quote failed: {_err(exc)}", base, now)
             return None
         action = "exit" if full or amount >= position.token_amount else "exit_partial"
@@ -1968,7 +1980,7 @@ class Engine:
                 return None
         try:
             held = int(self.broker.balances().tokens.get(position.mint, 0))
-        except Exception as exc:  # unknown balance: never write anything off on it
+        except Exception as exc:  # unknown balance: never write anything off on it  # noqa: BLE001 - isolate existing optional provider failures from the running engine
             log.warning("exit_balance_unavailable mint=%s error=%s", position.mint, _err(exc))
             return None
         others = sum(p.token_amount for p in self._open_positions() if p.mint == position.mint and p.id != position.id)
@@ -1989,7 +2001,7 @@ class Engine:
             return None
         try:
             onchain = int(read(mint))
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - isolate existing optional provider failures from the running engine
             log.warning("exit_chain_balance_unavailable mint=%s ultra=%d error=%s: trusting the books this attempt",
                         mint, indexed, _err(exc))
             return None
@@ -2020,7 +2032,7 @@ class Engine:
         Call it OUTSIDE a ledger transaction (it may ask Jupiter)."""
         try:
             return float(self.broker.sol_price_usd())
-        except Exception:
+        except Exception:  # noqa: BLE001 - isolate existing optional provider failures from the running engine
             return self._last_sol_usd()
 
     def _last_sol_usd(self) -> float:
@@ -2159,7 +2171,7 @@ class Engine:
             with self.ledger.transaction():
                 self.ledger.set_kv("engine.unresolved", _clean(self.unresolved))
                 self.ledger.set_kv("engine.inflight", _clean(self.inflight))
-        except Exception as inner:
+        except Exception as inner:  # noqa: BLE001 - isolate existing optional provider failures from the running engine
             log.critical("swap_unknown_not_persisted mint=%s error=%s", mint, _err(inner))
         log.error("swap_unknown mint=%s side=%s: entries blocked until reconciled (%s)", mint, side, _err(exc))
 
@@ -2234,7 +2246,7 @@ class Engine:
         index that can miss a coin: it never books or clears a swap); None when the RPC fails (retried)."""
         try:
             return int(read(mint))
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - isolate existing optional provider failures from the running engine
             log.warning("reconcile_chain_balance_unavailable mint=%s error=%s: retrying", mint, _err(exc))
             return None
 
@@ -2254,7 +2266,7 @@ class Engine:
             u["chain_checked_at"] = now
             try:
                 status = status_of(signature)
-            except Exception as exc:  # RPC trouble: the time-based wallet check still settles it
+            except Exception as exc:  # RPC trouble: the time-based wallet check still settles it  # noqa: BLE001 - isolate existing optional provider failures from the running engine
                 log.warning("swap_status_unavailable mint=%s error=%s", mint, _err(exc))
                 continue
             if status in _FINAL_CHAIN:
@@ -2362,7 +2374,7 @@ class Engine:
             price = float(self.broker.sol_price_usd())
             if price > 0:
                 return price
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - isolate existing optional provider failures from the running engine
             log.warning("reconcile_sol_price_unavailable error=%s", _err(exc))
         usd, lamports = (q.get("in_usd"), q.get("in_amount")) if side == "buy" else (
             q.get("out_usd"), q.get("expected_out_amount"))
@@ -2417,7 +2429,7 @@ class Engine:
         try:
             return float(self.broker.wallet_value_usd()) - lamports_to_sol(int(balances.sol_lamports)) * float(
                 self.broker.sol_price_usd())
-        except Exception as exc:  # fail closed: unknown value of unknown tokens blocks entries
+        except Exception as exc:  # fail closed: unknown value of unknown tokens blocks entries  # noqa: BLE001 - isolate existing optional provider failures from the running engine
             log.warning("drift_value_unavailable error=%s", _err(exc))
             return math.inf
 
@@ -2538,12 +2550,16 @@ class App:
     marcodesk: Any = None
     nhldesk: Any = None
     arena: Any = None
+    speeddesk: threading.Thread | None = None
 
     def close(self) -> None:
         """Stop the dashboard (if running), write the last provider-usage counts and close the ledger."""
         from nightcrawler.http import attach_usage_store, flush_usage
 
         try:
+            self.stop_event.set()
+            if self.speeddesk is not None:
+                self.speeddesk.join(timeout=5)
             if self.polydesk is not None:
                 self.polydesk.stop()
             if self.trenddesk is not None:
@@ -2680,6 +2696,17 @@ def build_app(settings: Settings, clock: Clock | None = None, *, session: Any = 
         except Exception as exc:  # noqa: BLE001 (an optional practice town never stops the bot)
             log.warning("arena_not_started error=%s", type(exc).__name__)
             arena_town = None
+    speeddesk = None
+    if settings.speeddesk_enabled:
+        try:
+            from nightcrawler.speeddesk import run_speeddesk
+
+            speeddesk = threading.Thread(target=run_speeddesk, args=(settings, stop_event),
+                                         name="speeddesk", daemon=True)
+            speeddesk.start()
+        except Exception as exc:  # noqa: BLE001 - practice data failure never stops the existing desks
+            log.warning("speeddesk_not_started mode=PRACTICE error=%s", type(exc).__name__)
+            speeddesk = None
     trenddesk = None
     if settings.trenddesk_enabled:  # PAPER only: lab 3's 50-day trend rule on BTC, ETH and SOL, once a day
         try:
@@ -2693,7 +2720,7 @@ def build_app(settings: Settings, clock: Clock | None = None, *, session: Any = 
     return App(settings=settings, clock=clock, stop_event=stop_event, http=http, sources=sources, ledger=ledger,
                crawler=crawler, cocoon=cocoon, radar=radar, judge=judge, risk=risk, broker=broker,
                auditor=auditor, engine=engine, dashboard=dashboard, wallet=wallet, polydesk=polydesk,
-               trenddesk=trenddesk, marcodesk=marcodesk, nhldesk=nhldesk, arena=arena_town)
+               trenddesk=trenddesk, marcodesk=marcodesk, nhldesk=nhldesk, arena=arena_town, speeddesk=speeddesk)
 
 
 def build_engine(settings: Settings, clock: Clock | None = None) -> Engine:

@@ -110,6 +110,16 @@ def settings(make_settings: Callable[..., Settings]) -> Settings:
 
 
 @pytest.fixture(autouse=True)
+def _offline_speeddesk(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Default-enabled practice streams never escape a wiring test onto a real network."""
+    if request.node.get_closest_marker("live"):
+        return
+    from nightcrawler import speeddesk
+
+    monkeypatch.setattr(speeddesk, "run_speeddesk", lambda settings, stop_event: None)
+
+
+@pytest.fixture(autouse=True)
 def _bitcoin_far_from_the_line(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) -> None:
     """Offline tests of the Polymarket desk see Bitcoin far from every line (the distance check passes), so they
     keep testing the rest of the rule; tests/test_btcdistance.py tests the check itself."""

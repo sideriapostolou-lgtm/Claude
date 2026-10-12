@@ -26,7 +26,13 @@ from nightcrawler.config import LIVE_CONFIRM_PHRASE, Settings
 from nightcrawler.dashboard import DashboardServer, build_state
 from nightcrawler.ledger import Ledger
 from nightcrawler.page import MEMBERS, render_page_html
-from nightcrawler.pagestate import EXPERIENCE_KINDS, EXPERIENCE_CAVEAT, EXPERIENCE_MONEY_LINE, build_page_state, experience_card
+from nightcrawler.pagestate import (
+    EXPERIENCE_CAVEAT,
+    EXPERIENCE_KINDS,
+    EXPERIENCE_MONEY_LINE,
+    build_page_state,
+    experience_card,
+)
 from nightcrawler.teamroom import TeamRoom
 
 NOW = 1_791_475_200.0  # 2026-10-08T16:00:00Z
@@ -103,8 +109,8 @@ def full_state() -> dict[str, Any]:
     """About two weeks in (the §9 phone mock-up): every card collecting or without skill, Crawler at its bar."""
     return {
         "source": "state",
-        "headline": ["Practice record: 16,240 new coins graded over 14 days; 3,912 past coins practised "
-                     "(first 3 hours only).",
+        "headline": [("Practice record: 16,240 new coins graded over 14 days; 3,912 past coins practised "
+                      "(first 3 hours only)."),
                      "Skills shown (99% check): 0 of 4. Still collecting: 2 (Radar, Cocoon); Jev is off."],
         "bars_line": "Bars: Crawler meets the bar · Broker not measured on paper · Risk collecting.",
         "money_line": EXPERIENCE_MONEY_LINE,
@@ -474,7 +480,8 @@ def test_the_report_cards_live_inside_the_team_card(settings: Settings) -> None:
     assert html.count('class="graded"') == len(MEMBERS)  # "Graded on 4,212 coins · 14 days" under each row
     ids = re.findall(r'<section class="card" id="([a-z]+)"', html)
     # the experience adds no card of its own (the wallet card is the bot wallet's deposit card)
-    assert ids == ["plain", "money", "town", "wallet", "team", "trades", "learning", "ready", "receipts", "usage"]
+    assert ids == ["plain", "money", "town", "speeddesk", "wallet", "team", "trades", "learning", "ready", "receipts",
+                   "usage"]
 
 
 def test_the_page_draws_range_bars_and_chips_as_text_only(settings: Settings) -> None:

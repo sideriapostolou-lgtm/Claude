@@ -177,10 +177,21 @@ session scratchpad that you will not have.
 
 ## 9. Work in flight and backlog (in priority order)
 
-0. **The speed desk (owner's top priority, 2026-10-12):** build it from `docs/SPEEDDESK_SPEC.md`, practice mode first.
-   It copies the public bot "dangerously-skip-permissions" (research/lab8/skip/READING.md) on the US 15m and 1h
-   Bitcoin windows. Also live since 2026-10-12: the Bitcoin distance bar now depends on price and time left
-   (`btcdistance.REQUIRED_Z`), and `MARCO_REAL=0`.
+0. **The speed desk (owner's top priority, 2026-10-12):** implementation follows `docs/SPEEDDESK_SPEC.md`,
+   **practice only** (`speeddesk.py`, its model and venue adapters, independent engine thread). It uses Coinbase
+   Bitcoin ticks with Polymarket US 15m/1h books; the public Kalshi KXBTC15M adapter is separately controlled by
+   `SPEEDDESK_KALSHI_ENABLED`. All speed-desk settings are `SPEEDDESK_*`; the independent practice budgets default
+   to $20 per window, $20 across open windows, and a $10 UTC daily loss stop. The owner's approved starter clip
+   permits the first practice buy, then only balancing buys until the 25 % imbalance cap is satisfied. No real
+   order resource is available, and `SPEEDDESK_MODE=live` is rejected.
+   State and receipts live under `/data/speeddesk/`; `/api/page` has `money.speeddesk.today` plus the latest 31
+   UTC calendar-day reports. The page labels this **PRACTICE**, keeps locked-pair and directional results apart,
+   reports fill rates and latency, and never adds pretend results to cash or the town's real profit.
+   **Deploy verification and the at-least-three-day observation are pending** until recorded in `docs/WORKLOG.md`.
+   Partial days and missing/stale feeds are reported honestly. Positive practice after fees over 3+ days is still
+   insufficient for real money without the owner's exact dollar amounts; no setting automatically promotes it.
+   Also live since 2026-10-12: the Bitcoin distance bar depends on price and time left (`btcdistance.REQUIRED_Z`),
+   and `MARCO_REAL=0`.
 
 1. **Lab 8, the distance-filtered grind (the owner's idea).** Buy 95-99c only when Bitcoin is far from the strike,
    measured in how much it normally moves in the time left (z = ln(S/K) / (sigma x sqrt(minutes left))). Done so
