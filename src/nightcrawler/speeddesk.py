@@ -14,6 +14,7 @@ import logging
 import math
 import os
 import threading
+import time
 from collections.abc import Callable
 from dataclasses import asdict, replace
 from datetime import UTC, datetime, timedelta
@@ -24,6 +25,12 @@ from .clock import Clock, RealClock
 from .config import Settings
 from .ledger import Ledger
 from .speeddesk_live import KalshiLiveDesk, LiveSnapshot
+from .speeddesk_metrics import (
+    LatencyMetrics,
+    TickReceipt,
+    WindowEvidence,
+    fresh_window_slugs,
+)
 from .speeddesk_model import (
     VENUES,
     Book,
@@ -34,6 +41,7 @@ from .speeddesk_model import (
     Window,
     utc_day,
 )
+from .speeddesk_scorecard import window_scorecard
 from .speeddesk_venues import MarketFeeds
 
 log = logging.getLogger("nightcrawler.speeddesk")
@@ -76,10 +84,13 @@ class SpeedRunner:
     """Owns one event loop, independent caps, durable receipts and daily reports."""
 
     def __init__(self, settings: Settings, stop: threading.Event, *, clock: Clock | None = None,
+                 monotonic: Callable[[], float] = time.monotonic,
                  feed_factory: Callable[..., Any] = MarketFeeds,
                  live_factory: Callable[..., Any] = KalshiLiveDesk) -> None:
         config = practice_config(settings)
         self.clock = clock or RealClock(stop)
+        self.monotonic = monotonic
+        self.tick_receipt: TickReceipt | None = None
         self.stop = stop
         self.directory = settings.data_dir / "speeddesk"
         self.directory.mkdir(parents=True, exist_ok=True)
@@ -141,6 +152,8 @@ class SpeedRunner:
                 self.opening_logged = set()
                 self.venue_reporting_started_at = self.started_at
                 self.venue_coverage = {}
+            self.metrics = LatencyMetrics(self.clock.now(), saved.get("latency_metrics") if saved else None)
+            self.evidence = WindowEvidence(self.clock.now(), saved.get("window_evidence") if saved else None)
             # Previously stored reports contain only combined metrics. Keep
             # those totals, and let the model identify missing venue history.
             for day, report in self.reports.items():
@@ -153,6 +166,7 @@ class SpeedRunner:
             try:
                 self.live = live_factory(settings, self.directory / "kalshi_live", self.live_snapshot,
                                          clock=self.clock.now,
+                                         monotonic=self.monotonic,
                                          direct_member_verified=settings.speeddesk_kalshi_account_type == "direct")
                 self.live.on_windows(list(self.desk.windows.values()))
             except Exception as exc:  # noqa: BLE001 — isolate live state failure from the running practice trial.
@@ -179,11 +193,19 @@ class SpeedRunner:
             # Repeated unchanged skips belong in the heartbeat reason map, not
             # thousands of identical receipts on every tick.
             if event.event != "speeddesk_skip":
-                self.record(event.event, asdict(event))
+                payload = asdict(event)
+                if event.event in ("speeddesk_take", "speeddesk_rest"):
+                    venue = self.desk.window_venues.get(event.window, "unknown")
+                    payload["timing"] = self.metrics.decision(
+                        venue, event.at, self.tick_receipt, self.monotonic())
+                if event.event == "speeddesk_fill":
+                    self.evidence.fill({**payload, "is_taker": event.kind == "take"})
+                self.record(event.event, payload)
         if self.pending:
             self.checkpoint(self.clock.now())
 
     def on_tick(self, price: float, event_at: float, received_at: float) -> None:
+        received_mono = self.monotonic()
         if not 0 <= received_at - event_at <= self.desk.config.stale_s:
             return
         previous_prices = self.desk.tape.prices
@@ -192,6 +214,7 @@ class SpeedRunner:
         # ticks, including same-second revisions. Rejected ticks do not dirty
         # the sigma cache or publish an opening that the model never accepted.
         if self.desk.tape.prices is not previous_prices:
+            self.tick_receipt = TickReceipt(event_at, received_at, received_mono)
             self._bitcoin_revision += 1
             if int(event_at) in self._live_opening_seconds:
                 self._live_windows_dirty = True
@@ -223,6 +246,7 @@ class SpeedRunner:
             self._live_call("on_trade", trade)
 
     def on_windows(self, windows: list[Window]) -> None:
+        self.evidence.discover([asdict(window) for window in windows], self.clock.now())
         self._live_windows_dirty = True
         for window in windows:
             previous = self.desk.windows.get(window.slug)
@@ -236,6 +260,9 @@ class SpeedRunner:
         self._live_call("on_windows", windows)
 
     def on_status(self, status: dict[str, Any]) -> None:
+        if status.get("coinbase") != "connected" or not status.get("trade_stream"):
+            self.evidence.last_fresh.clear()
+        self.evidence.last_fresh.difference_update(status.get("gap_windows", []))
         old = self.feed_status
         self.feed_status = status
         if (status.get("gap_windows") or (old.get("trade_stream") and not status.get("trade_stream"))
@@ -268,6 +295,23 @@ class SpeedRunner:
         if venue is None:
             report["venues"] = {name: self.summary(day, name) for name in VENUES}
         else:
+            report["latency"] = self.metrics.report(day, venue)
+            windows = [asdict(window) for window in self.desk.windows.values()
+                       if window.venue == venue and window.end <= self.clock.now()]
+            report["scorecard"] = window_scorecard(
+                day, windows=windows, fills=self.evidence.fills, settlements=[asdict(row) for row in self.desk.closed],
+                coverage=self.evidence.coverage(windows), scope="practice", as_of=self.clock.now(),
+                day_coverage_complete=self.evidence.complete_kalshi_day(day, windows, self.clock.now())
+                if venue == "kalshi" else False)
+            report["scorecard"].update(self.evidence.availability(
+                [window for window in windows if utc_day(window["end"]) == day]))
+            if day < utc_day(self.clock.now() - 30 * 86400):
+                # Detailed evidence is bounded; preserve an already published
+                # older report instead of revising known history into no data.
+                previous = self.reports.get(day, {}).get("venues", {}).get(venue, {})
+                for key in ("latency", "scorecard"):
+                    if key in previous:
+                        report[key] = previous[key]
             coverage = self.venue_coverage.get(day, {}).get(venue, {})
             # No backfilling coverage from combined uptime on upgrade.
             predates_coverage = day < utc_day(self.venue_reporting_started_at)
@@ -383,7 +427,7 @@ class SpeedRunner:
                             bitcoin_price=self.desk.tape.price, bitcoin_at=self.desk.tape.last_at,
                             sigma=self._live_sigma(now),
                             maker_windows=frozenset(maker_windows & slugs),
-                            outcomes=self._live_outcomes)
+                            outcomes=self._live_outcomes, tick_receipt=self.tick_receipt)
 
     def live_panel(self, now: float) -> dict[str, Any]:
         current = self._live_call("panel")
@@ -436,6 +480,8 @@ class SpeedRunner:
         state = {"version": 1, "mode": "practice", "started_at": self.started_at, "updated_at": now,
                  "model": self.desk.to_state(), "reports": self.reports, "observed_seconds": self.observed,
                  "feed_latency": self.feed_latency, "opening_logged": sorted(self.opening_logged),
+                 "latency_metrics": self.metrics.state(),
+                 "window_evidence": self.evidence.state(),
                  "venue_reporting_started_at": self.venue_reporting_started_at,
                  "venue_coverage": self.venue_coverage,
                  "panel": self.panel(now)}
@@ -452,6 +498,16 @@ class SpeedRunner:
 
     def step(self, now: float) -> None:
         self._refresh_live_snapshot()
+        windows = [asdict(window) for window in self.desk.windows.values()]
+        makers = self.feeds.maker_windows() if hasattr(self.feeds, "maker_windows") else set()
+        if not self.feed_status.get("trade_stream"):
+            makers = set()
+        self.evidence.advance(now, windows, fresh_window_slugs(windows, self.desk.books,
+                                                              self.desk.tape.last_at, makers, now))
+        # Public observation cadence is independent of slower account reads.
+        # This report-only callback performs no trading or private I/O.
+        if self.live is not None and hasattr(self.live, "observe_market"):
+            self._live_call("observe_market", now)
         # Count observed runtime, never claim coverage for offline gaps.
         duration = max(0.0, min(1.0, now - self.last_step))
         interval_start = now - duration

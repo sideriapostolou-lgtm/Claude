@@ -13,6 +13,62 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-12 21:31 UTC, Codex, branch codex/speeddesk-mission
+- Owner's latest mission: audit the source wallet from inception, extend read-only observation to multiple
+  Bitcoin exchanges, preregister a 70% held-out fill target (side, 5 seconds, 2c), measure speed, preserve the
+  capped Kalshi companion and add separate daily comparisons. Pulled deploy head `43dcf87`, including Claude's
+  newer lab9 research, before editing. Original watcher journal origin remains 2026-10-12 20:51:15 UTC.
+- Owner answered **Directly on Kalshi**. Recorded this factual account classification in ACCOUNTS/SPEC/handoff.
+  Portable default remains `unknown`; production needs `SPEEDDESK_KALSHI_ACCOUNT_TYPE=direct` before activating
+  its separate `MODE=live` / `LIVE_CONFIRM=yes` gates. No Railway variables or secrets changed.
+- History: complete activity pagination returned 558,293 rows plus a separately paginated TIP row. Independent
+  public Polygon evidence verifies creation of the observed wallet at 2026-07-17 13:58:39 UTC, initial pUSD
+  balance zero, then $4,000 collateral deposited at 14:00:46. First trade debited $45.9847: 84 shares at 53c
+  plus $1.4647 fee. The $100 claim is unsupported for this wallet; other wallets/whole bankroll remain unknown.
+  Full activity includes 18,503 ETH-five-minute trades, contradicting generalization of the recent BTC-only
+  sample to the entire history. `HISTORY.md` supplies collection cutoffs, completeness and accounting limits.
+- Material accounting discrepancy: the official P&L point at 20:46:21 reports trade_pnl $281,602.16 and economic
+  P&L $139,259.61, but complete activity reports $55,985.3012 more credited income through that same point than
+  its wallet_income aggregate. Three sampled missing credits match actual on-chain pUSD transfers. Archived
+  cash at its exact source block is $26,458.900105; the activity cash reconstruction still differs by $3.857710.
+  Provider aggregate economics, verified cash, funding and income are kept separate; no single reconciled
+  after-fee profit or small-bankroll clone result is claimed. Full trade/role reconciliation continues below.
+- Public capture: added anonymous Kraken and Gemini BTC/USD streams alongside Coinbase, genuine trade IDs,
+  source and socket-receipt clocks, process-scoped monotonic provenance, gaps and causal 1/5/30s features.
+  New feature epoch is separate from preserved original origin. Local Kraken/Gemini probes connected; actual
+  Railway verification is recorded below. Apparent delivery age never proves predictive leadership. A single
+  public Binance ping records availability, persists denials and never retries or routes around a restriction.
+- Research: prospective fixed-candidate prediction batches reference actual journaled feature hashes/sequence
+  prefixes, stamped after computation. Replay restores batches, never reconstructs old predictions. Explicit
+  offline one-to-one public-print scoring reports all BTC5m fills (including SELL misses), precision, recall
+  bounds, unknown linkage and simple baselines. Execution timing is still unqualified; default fitting and
+  strict target remain blocked. No result is falsely called held-out, a private algorithm, or a live rule.
+- Timing/scorecards: additive daily median/p95 input-age and decision-to-ack measurements with counts, missing
+  observations and overflow handling; practice has no actual acknowledgments. Separate original Kalshi/US
+  practice, real Kalshi and practice-twin window-end UTC cohorts retain quiet windows, missing coverage,
+  unresolved real orders, actual maker/taker role uncertainty, fees, pair cost, imbalance and settled results.
+  Observed strategy history is separate from fresh-market availability; known stale/no-buy periods are not
+  missing cash history. Completed companion reports persist for the latest 31 days. Cap review remains only
+  informational: three consecutive complete positive-after-fee days plus qualified rule matching; owner only.
+- Safety fix: final live send guard now rechecks source timestamps, rejecting missing, future or >3-second-old
+  WebSocket books even when local receipt looks fresh. Fake-clock tests cover aging between decision and send.
+  No live rule, amount, venue, order retry policy, credential, polydesk.py or Bitcoin-distance rule changed.
+  Claude's distance-filter FYI is recorded as his observation; it required no action in this session.
+- Review/validation: independent reviewers covered chain funding, cash/rebate reconciliation,
+  timestamp provenance, scoring denominators and live caps/cancellation/accounting. Phone browser checks
+  at 320/390/1280 px pass without horizontal overflow or JavaScript errors; observations never enter cash,
+  profit or town totals. Full release suite: **3,814 passed, 21 skipped** (opt-in network and optional scientific
+  dependencies). Mypy passed 102 source files; changed-file Ruff and whitespace checks passed. Final REST
+  freshness also uses request-start age, rejecting missing/future/old proof before sending. Deployment and
+  latest daily measurements are recorded after verification below.
+- Real money touched? Yes: owner-authorized Kalshi live guard/telemetry code and service restart on shipment;
+  no real order, activation, cap raise, region move or private balance request in this session. Existing
+  polydesk continues independently. Ship paper, verify exact commit, then owner controls activation.
+- Still pending: three future complete observation days, qualified execution labels, held-out rule success,
+  five-minute-to-fifteen-minute transfer economics, proven feed lead and any first real Kalshi orders. Neither
+  elapsed time nor source-wallet profit proves this bot earns money. Daily runtime reports are persisted;
+  subsequent sessions must copy verified observations into this worklog.
+
 ## 2026-10-12 20:45 UTC, Codex, branch codex/skipwatch
 - Owner request: learn the public source bot before adapting a rule to real Kalshi trading, within the
   existing $2/window, $4 open, $3 UTC daily stop and $5 total stop. Added observation and faster market data;

@@ -13,6 +13,7 @@ from collections import defaultdict, deque
 from dataclasses import dataclass
 from typing import Any
 
+from .skipwatch_bitcoin import BitcoinObservations
 from .speeddesk_model import fair_up
 
 
@@ -32,6 +33,7 @@ class SkipwatchModel:
         self.book_ready: set[str] = set()
         self.book_history: dict[str, deque[dict[str, Any]]] = defaultdict(lambda: deque(maxlen=20_000))
         self.btc: deque[tuple[float, float, float]] = deque(maxlen=100_000)
+        self.bitcoin = BitcoinObservations()
         self.seconds: dict[int, tuple[float, float]] = {}
         self.health: dict[str, dict[str, Any]] = {}
         self.trades: deque[dict[str, Any]] = deque(maxlen=20_000)
@@ -51,6 +53,7 @@ class SkipwatchModel:
     def ingest(self, kind: str, data: dict[str, Any], observed_at: float) -> bool:
         """Apply one recorded event. False identifies an already journaled fill."""
         self.last_event_at = observed_at
+        self.bitcoin.ingest(kind, data, observed_at)
         if kind == "market":
             window = str(data["market_id"])
             self.markets[window] = dict(data)
@@ -84,7 +87,7 @@ class SkipwatchModel:
             top = {side: sorted(levels[side].items(), reverse=side == "bids")[:5] for side in ("bids", "asks")}
             self.book_history[token].append({"at": at, "observed_at": observed_at, **top,
                                               "valid": token in self.book_ready and data.get("valid", True) is True})
-        elif kind == "bitcoin_tick":
+        elif kind == "bitcoin_tick" and data.get("source", "coinbase") == "coinbase":
             at, price = float(data["exchange_at"]), float(data["price"])
             if price > 0 and at <= observed_at + 1:
                 self.btc.append((at, observed_at, price))
@@ -220,7 +223,9 @@ class SkipwatchModel:
                                    "imbalance": (inventory["up"] - inventory["down"]) / total if total else 0.0,
                                    "inventory_scope": "public fills observed by this process; not account positions",
                                    "fair_source": "Coinbase normal-CDF proxy; not settlement oracle",
-                                   "coverage": self.coverage(at, token)}
+                                   "coverage": self.coverage(at, token),
+                                   "bitcoin_feature_epoch_started_at": self.bitcoin.epoch,
+                                   "bitcoin_venues": self.bitcoin.features(at)}
         for seconds in (1, 5, 30):
             prior = self._btc_before(at - seconds)
             features[f"move_{seconds}s"] = math.log(tick[2] / prior[2]) if (
@@ -232,6 +237,9 @@ class SkipwatchModel:
             features[f"{key}_top_size"] = levels[0][1] if levels else None
         features["depth_scope"] = "best five displayed price levels"
         return features
+
+    def bitcoin_summary(self, now: float) -> dict[str, Any]:
+        return self.bitcoin.summary(now)
 
     def _print_candidates(self, fill: dict[str, Any]) -> tuple[list[dict[str, Any]], str]:
         """Describe public associations without treating block time as execution.

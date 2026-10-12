@@ -1488,6 +1488,55 @@ def arena_town(settings: Settings, now: float) -> dict[str, Any] | None:
     return {**raw, "label": PRETEND_LABEL, "events": events}
 
 
+def _speed_scorecard(raw: Any) -> dict[str, Any] | None:
+    """Window-cohort evidence is separate from fill-day and settlement-day totals."""
+    if not isinstance(raw, Mapping):
+        return None
+    scope, venue, day = raw.get("scope"), raw.get("venue"), raw.get("day")
+    if (scope not in ("real", "practice", "practice_twin") or venue not in ("kalshi", "polymarket_us", None)
+            or not isinstance(day, str) or parse_rotation_date(day) is None):
+        return None
+    figures: dict[str, Any] = {key: _count(raw.get(key)) for key in (
+        "eligible_windows", "complete_windows", "unknown_coverage_windows", "gap_windows", "traded_windows",
+        "zero_fill_windows", "fills", "unsettled_traded_windows", "settled_traded_windows", "unknown_role_fills",
+    )}
+    figures.update({key: _num(raw.get(key)) for key in (
+        "fills_per_window", "fills_per_traded_window", "matched_pair_cost_usd", "fees_usd", "pnl_usd",
+        "locked_usd", "directional_usd", "pnl_per_window_usd", "worst_window_usd", "settled_pnl_usd",
+        "observed_window_seconds", "fresh_market_window_seconds", "fresh_market_fraction", "evidence_started_at",
+    )})
+    for key in ("both_sides_share", "both_sides_traded_share", "median_imbalance", "taker_fill_share", "role_coverage"):
+        value = _num(raw.get(key))
+        figures[key] = value if value is not None and 0 <= value <= 1 else None
+    return {**figures, "day": day, "scope": scope, "venue": venue,
+            "day_complete": raw.get("day_complete") is True,
+            "utc_day_ended": raw.get("utc_day_ended") is True,
+            "evidence_restore_error": raw.get("evidence_restore_error") is True,
+            "clock_reversals": _count(raw.get("clock_reversals")),
+            "cohort": "window end UTC day", "automatic_promotion": False, "cap_change_allowed": False}
+
+
+def _speed_latency(raw: Any) -> dict[str, Any]:
+    """Only measured timing evidence reaches the page; missing samples stay unknown."""
+    source = _xp_map(raw)
+    result = {}
+    for name in ("btc_exchange_to_decision", "btc_receipt_to_decision", "decision_to_ack"):
+        row = _xp_map(source.get(name))
+        if not row:
+            continue
+        result[name] = {
+            **{key: _count(row.get(key)) for key in (
+                "observations", "samples", "missing", "invalid", "errors", "timeouts",
+            )},
+            **{key: row.get(key) if isinstance(row.get(key), bool) else None
+               for key in ("complete", "partial_day", "applicable", "overflow")},
+            **{key: (value if (value := _num(row.get(key))) is not None and value >= 0 else None)
+               for key in ("median_ms", "p95_ms", "started_at")},
+            "unit": "ms", "cohort": "intents_created_on_utc_day",
+        }
+    return result
+
+
 def _speed_report(today: Mapping[str, Any], day: str, *, with_venues: bool = True) -> dict[str, Any]:
     """Normalize one UTC practice-day report without turning missing evidence into zero."""
     figures: dict[str, Any] = {
@@ -1517,6 +1566,8 @@ def _speed_report(today: Mapping[str, Any], day: str, *, with_venues: bool = Tru
     figures["fill_rate_basis"] = ("orders_placed_on_day"
                                   if today.get("fill_rate_basis") == "orders_placed_on_day" else None)
     figures["latency_definition"] = "Decision to practice fill; resting orders include waiting time"
+    figures["latency"] = _speed_latency(today.get("latency"))
+    figures["scorecard"] = _speed_scorecard(today.get("scorecard"))
     if with_venues:
         source = _xp_map(today.get("venues"))
         figures["venues"] = {
@@ -1562,6 +1613,21 @@ def _kalshi_live_panel(raw: Any, settings: Settings, now: float) -> dict[str, An
         today = {}
     total = _xp_map(raw.get("total"))
     money_keys = ("fees_usd", "locked_usd", "directional_usd", "pnl_usd")
+    def real_report(row: Mapping[str, Any], report_day: str) -> dict[str, Any]:
+        return {"day": report_day, "latency": _speed_latency(row.get("latency")),
+                "scorecard": _speed_scorecard(row.get("scorecard")),
+                **{key: _num(row.get(key)) for key in money_keys},
+                **{key: _count(row.get(key)) for key in ("windows", "fills")}}
+
+    reports = {}
+    for report_day, value in _xp_map(raw.get("reports")).items():
+        if (isinstance(report_day, str) and parse_rotation_date(report_day) is not None and report_day < day
+                and isinstance(value, Mapping) and value.get("day") == report_day):
+            reports[report_day] = {"day": report_day,
+                                  "real": real_report(_xp_map(value.get("real")), report_day),
+                                  "practice_twin": _speed_report(_xp_map(value.get("practice_twin")), report_day,
+                                                                 with_venues=False)}
+    reports = {key: reports[key] for key in sorted(reports)[-31:]}
     twin = _xp_map(raw.get("practice_twin"))
     if twin.get("day") != day:
         twin = {}
@@ -1579,8 +1645,7 @@ def _kalshi_live_panel(raw: Any, settings: Settings, now: float) -> dict[str, An
         "real_orders_available": active, "total_halted": raw.get("total_halted") is True,
         "cleanup_pending": raw.get("cleanup_pending") is True,
         "caps": {key: _num(caps.get(key)) for key in ("window_usd", "open_usd", "day_stop_usd", "total_stop_usd")},
-        "today": {"day": day, **{key: _num(today.get(key)) for key in money_keys},
-                  **{key: _count(today.get(key)) for key in ("windows", "fills")}},
+        "today": real_report(today, day), "reports": reports,
         "total": {key: _num(total.get(key)) for key in money_keys},
         "practice_twin": _speed_report(twin, day, with_venues=False),
     }
@@ -1640,11 +1705,39 @@ def skipwatch_panel(settings: Settings, now: float) -> dict[str, Any] | None:
     for key in ("precision", "recall", "f1", "coverage", "feature_coverage"):
         value = _num(fit_summary.get(key))
         metrics[key] = value if value is not None and 0 <= value <= 1 else None
+    bitcoin = _xp_map(raw.get("bitcoin_sources"))
+    bitcoin_venues = _xp_map(bitcoin.get("venues"))
+    source_reports = {}
+    for name in ("coinbase", "kraken", "gemini"):
+        source = _xp_map(bitcoin_venues.get(name))
+        source_reports[name] = {
+            **{key: _num(source.get(key)) for key in (
+                "price", "exchange_at", "received_at", "receipt_age_ms", "apparent_source_age_ms",
+                "first_seen_at", "apparent_source_age_median_ms", "apparent_source_age_p95_ms",
+            )},
+            **{key: _count(source.get(key)) for key in ("age_samples", "future_clock_samples")},
+            **{key: source.get(key) if isinstance(source.get(key), bool) else None
+               for key in ("fresh", "connected")},
+        }
+    availability = _xp_map(probes.get("binance_availability"))
+    availability_labels = {"access_denied_no_retry": "Access denied; no retry or workaround",
+                           "public_ping_reachable_feed_not_tested": "Public ping reachable; feed not tested",
+                           "http_unavailable_no_retry": "HTTP check unavailable; no retry",
+                           "transport_unavailable": "Connection check unavailable"}
+    target = _xp_map(raw.get("execution_target"))
     return {
         "label": "PUBLIC WATCHER", "real_orders_available": False, "as_of": as_of,
         "stale": as_of is None or now - as_of > 60 or as_of > now + FUTURE_SKEW_S,
         "status": text.opt(raw.get("status")) or "Waiting for public observations", "problem": problem or text.opt(raw.get("problem")),
         "started_at": _num(raw.get("started_at")),
+        **({"bitcoin_sources": {"feature_epoch_started_at": _num(bitcoin.get("feature_epoch_started_at")),
+                                "venues": source_reports, "leadership_status": "not_established"}} if bitcoin else {}),
+        **({"binance_availability": {"status": availability_labels.get(str(availability.get("result")), "Not checked yet"),
+                                     "at": _num(availability.get("at"))}} if availability else {}),
+        **({"execution_target": {"recall_target": .70, "time_tolerance_s": 5, "price_tolerance_usd": .02,
+                                 "shadow_started_at": _num(target.get("shadow_started_at")),
+                                 "qualified_epoch_started_at": None, "strict_recall": None,
+                                 "strict_gate_passed": False}} if target else {}),
         **{key: _count(raw.get(key)) for key in ("windows_observed", "wallet_fills", "matched_inferred", "ambiguous",
                                                "unmatched", "gaps")},
         "storage_bytes": _num(raw.get("storage_bytes")), "max_storage_bytes": _num(raw.get("max_storage_bytes")),

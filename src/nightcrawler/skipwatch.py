@@ -12,10 +12,12 @@ import shutil
 import sys
 import threading
 import time
+import uuid
 from collections.abc import Callable
 from typing import Any
 
 from .config import Settings
+from .skipwatch_execution import PROTOCOL_HASH, PredictionRecorder
 from .skipwatch_journal import (
     BATCH_BYTES,
     GENESIS,
@@ -46,6 +48,7 @@ class SkipwatchRunner:
             raise RuntimeError("Watcher journal is already owned by another process") from None
         self.seq, self.previous_hash = 0, GENESIS
         self.started_at = self.clock()
+        self.receipt_clock_id = uuid.uuid4().hex
         self.storage_bytes = 0
         self.journal: ObservationJournal | None = None
         self.max_bytes = int(settings.skipwatch_max_storage_mb * 1024 * 1024)
@@ -81,10 +84,12 @@ class SkipwatchRunner:
         checkpoint_seq = int(saved.get("seq", 0))
         checkpoint_matched = checkpoint_seq == 0
         self.model = SkipwatchModel(self.started_at, poll_s=self.settings.skipwatch_poll_s)
+        self.predictions = PredictionRecorder(self.started_at)
         for record in iter_records(self.directory):
             if self.seq == 0:
                 self.started_at = float(record["session_started_at"])
                 self.model = SkipwatchModel(self.started_at, poll_s=self.settings.skipwatch_poll_s)
+                self.predictions = PredictionRecorder(self.started_at)
             self.seq, self.previous_hash = int(record["seq"]), str(record["hash"])
             self.journal.recover_record(record)
             if self.seq == checkpoint_seq:
@@ -93,6 +98,7 @@ class SkipwatchRunner:
                 checkpoint_matched = True
             self.last_observed_at = float(record["observed_at"])
             self.model.ingest(record["kind"], record["payload"], self.last_observed_at)
+            self.predictions.restore(record["kind"], record["payload"])
         if not checkpoint_matched:
             raise ValueError("Watcher source journal is missing checkpointed records")
         self.wallet_watermark = self.model.wallet_watermark
@@ -129,6 +135,7 @@ class SkipwatchRunner:
             self.paused, self.problem = True, "Observation paused: receipt clock moved backwards"
             self.model.gaps += 1
             self.model.health.clear()
+            self.model.bitcoin.ingest("gap", {"source": "runtime"}, observed_at)
             log.error("skipwatch_clock_gap")
             self.checkpoint()
             return False
@@ -145,7 +152,14 @@ class SkipwatchRunner:
         self.storage_bytes = self.journal.storage_bytes
         self.last_observed_at = observed_at
         self.model.ingest(kind, data, observed_at)
-        if kind in {"window_summary", "gap", "skipwatch_us_5m_listing"}:
+        if kind == "opportunity":
+            batches = self.predictions.observe(data, seq=self.seq, issued_at=self.clock(),
+                                               monotonic_ns=time.monotonic_ns(), clock_id=self.receipt_clock_id)
+            for batch in batches:
+                issued = self.clock()
+                batch.update(at=issued, observed_at=issued, issued_monotonic_ns=time.monotonic_ns())
+                self.emit("execution_prediction_batch", batch, issued)
+        if kind in {"window_summary", "gap", "skipwatch_us_5m_listing", "skipwatch_binance_availability"}:
             log.info("skipwatch_%s %s", kind, json.dumps(data, allow_nan=False, separators=(",", ":")))
         return True
 
@@ -171,6 +185,10 @@ class SkipwatchRunner:
                                    for market in current)
         if self.paused:
             coverage = dict.fromkeys(("bitcoin", "book", "wallet", "trades"), False)
+        bitcoin_sources = self.model.bitcoin_summary(now)
+        if self.paused:
+            for source in bitcoin_sources["venues"].values():
+                source.update(fresh=False, connected=False)
         return {"enabled": self.settings.skipwatch_enabled, "as_of": now, "started_at": self.started_at,
                 "status": "PAUSED" if self.paused else "OBSERVING PUBLIC DATA", "problem": self.problem,
                 "windows_observed": len(self.model.observed_windows), "wallet_fills": len(self.model.seen_fills),
@@ -183,6 +201,12 @@ class SkipwatchRunner:
                 "last_btc_at": self.model.btc[-1][1] if self.model.btc else None,
                 "latest_window": current[0].get("slug") if current else None,
                 "fit": self.fit_status, "probes": self.probes.state() if self.probes else self.saved_probes,
+                "bitcoin_sources": bitcoin_sources,
+                "execution_target": {"protocol_hash": PROTOCOL_HASH, "recall_target": .70,
+                                     "time_tolerance_s": 5, "price_tolerance_usd": .02,
+                                     "shadow_started_at": self.predictions.started_at,
+                                     "qualified_epoch_started_at": None, "strict_recall": None,
+                                     "strict_gate_passed": False, "status": "execution_timing_unqualified"},
                 "cancellations_visible": False, "real_orders_available": False,
                 "confidence_note": "Public fills and possible print matches; exact orders and identity are unknown"}
 
@@ -271,9 +295,10 @@ class SkipwatchRunner:
             from .skipwatch_alerts import PublicProbes
             self.probes_factory = PublicProbes
         self.probes = self.probes_factory(clock=self.clock, initial=self.saved_probes,
-                                          region=os.getenv("RAILWAY_REPLICA_REGION"))
+                                          region=os.getenv("RAILWAY_REPLICA_REGION"), check_availability=True)
         watermark = self.wallet_watermark
-        feeds = self.feed_factory(self.settings, on_event=self.on_event, clock=self.clock, wallet_since=watermark)
+        feeds = self.feed_factory(self.settings, on_event=self.on_event, clock=self.clock, wallet_since=watermark,
+                                  receipt_clock_id=self.receipt_clock_id)
         tasks = [asyncio.create_task(feeds.run(self.stop)), asyncio.create_task(self._probes()),
                  asyncio.create_task(self._fit())]
         try:
@@ -285,7 +310,7 @@ class SkipwatchRunner:
                 now = self.clock()
                 if not self.paused:
                     for event in self.model.due(now):
-                        self.emit(event.kind, event.payload, now)
+                        self.emit(event.kind, event.payload, self.clock())
                 if now - self.last_heartbeat >= 60:
                     log.info("skipwatch_status %s", json.dumps(self.panel(), allow_nan=False, separators=(",", ":")))
                     self.last_heartbeat = now

@@ -203,3 +203,29 @@ def test_listing_backoff_retains_first_seen_and_does_not_delay_independent_kalsh
     assert probe.state()["us_5m"]["checks"] == checks and probe.state()["us_5m"]["first_seen_at"] == NOW
     assert probe.state()["us_5m"]["backoff_until"] == NOW + 120
     assert calls.count(KALSHI_STATUS) == 3
+
+
+@pytest.mark.parametrize('status', [403, 451, 429, 503, 200])
+def test_one_public_binance_check_is_persisted_and_never_retried_or_enables_feed(status):
+    from nightcrawler.skipwatch_alerts import BINANCE_PING
+
+    get, calls = transport(listed=False)
+
+    def probe_get(url):
+        if url == BINANCE_PING:
+            calls.append(url)
+            return Reply({}, status)
+        return get(url)
+
+    probe = PublicProbes(get=probe_get, clock=lambda: NOW, region='us-west2', check_availability=True)
+    events = probe.poll()
+    event = next(item for item in events if item['kind'] == 'skipwatch_binance_availability')
+    assert event['http_status'] == status
+    assert not event['feed_enabled'] and not event['retry_scheduled']
+    if status in (403, 451):
+        assert event['result'] == 'access_denied_no_retry'
+    probe.poll()
+    restored = PublicProbes(get=probe_get, clock=lambda: NOW + 60, region='us-west2',
+                            check_availability=True, initial=probe.state())
+    restored.poll()
+    assert calls.count(BINANCE_PING) == 1

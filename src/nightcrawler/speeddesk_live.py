@@ -18,7 +18,7 @@ import time
 import uuid
 from collections.abc import Callable
 from dataclasses import asdict, dataclass, field, replace
-from datetime import datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any, Literal
 
@@ -32,6 +32,12 @@ from .speeddesk_live_model import (
     LiveRiskBook,
     OrderSnapshot,
 )
+from .speeddesk_metrics import (
+    LatencyMetrics,
+    TickReceipt,
+    WindowEvidence,
+    fresh_window_slugs,
+)
 from .speeddesk_model import (
     Book,
     PracticeDesk,
@@ -42,6 +48,7 @@ from .speeddesk_model import (
     fair_up,
     utc_day,
 )
+from .speeddesk_scorecard import window_scorecard
 
 log = logging.getLogger("nightcrawler.speeddesk")
 PREFIX = "nc-speed-"
@@ -58,6 +65,7 @@ class LiveSnapshot:
     sigma: float | None = None
     maker_windows: frozenset[str] = frozenset()
     outcomes: dict[str, bool] = field(default_factory=dict)
+    tick_receipt: TickReceipt | None = None
 
 
 @dataclass
@@ -140,9 +148,11 @@ class KalshiLiveDesk:
 
     def __init__(self, settings: Settings, directory: Path, snapshot: Callable[[], LiveSnapshot], *,
                  clock: Callable[[], float] = time.time,
+                 monotonic: Callable[[], float] = time.monotonic,
                  client_factory: Callable[[], Any] | None = None,
                  direct_member_verified: bool = False) -> None:
         self.settings, self.directory, self.snapshot, self.clock = settings, directory, snapshot, clock
+        self.monotonic = monotonic
         self.directory.mkdir(parents=True, exist_ok=True)
         self._lock_stream = (directory / "controller.lock").open("a", encoding="utf-8")
         try:
@@ -230,6 +240,9 @@ class KalshiLiveDesk:
                 self.changed_windows = set(saved.get("changed_windows", []))
                 self.final_outcomes = saved.get("final_outcomes", {})
                 self.latest_events = saved.get("latest_events", [])[-20:]
+            self.metrics = LatencyMetrics(clock(), saved.get("latency_metrics") if saved else None)
+            self.evidence = WindowEvidence(clock(), saved.get("window_evidence") if saved else None)
+            self.reports: dict[str, dict[str, Any]] = dict(saved.get("reports", {})) if saved else {}
             token = _secret(settings.speeddesk_kalshi_resume_token)
             if token:
                 self.book.apply_resume_token(token)
@@ -285,11 +298,15 @@ class KalshiLiveDesk:
                 # A contradictory venue fill reopens a frozen liability in the
                 # accounting book; never hide it from cancellation or recovery.
                 intent.terminal, intent.uncertain, intent.cancel_requested = False, True, True
+        self._daily_reports()
         state = {"version": 1, "started_at": self.started_at, "updated_at": self.clock(),
                  "book": self.book.to_state(), "intents": {key: asdict(value) for key, value in self.intents.items()},
                  "twin": self.twin.to_state(), "fatal_reason": self.fatal_reason,
                  "foreign_windows": sorted(self.foreign_windows), "final_outcomes": self.final_outcomes,
                  "changed_windows": sorted(self.changed_windows),
+                 "latency_metrics": self.metrics.state(),
+                 "window_evidence": self.evidence.state(),
+                 "reports": self.reports,
                  "latest_events": self.latest_events, "panel": self.panel()}
         with self.ledger.transaction():
             for kind, payload in self.pending:
@@ -310,12 +327,15 @@ class KalshiLiveDesk:
         for event in events:
             if event.event != "speeddesk_skip":
                 self._record("speeddesk_twin", **asdict(event))
+                if event.event == "speeddesk_fill":
+                    self.evidence.fill({**asdict(event), "is_taker": event.kind == "take"})
 
     def on_tick(self, price: float, event_at: float, received_at: float) -> None:
         if 0 <= received_at - event_at <= 3:
             self.twin.tick_btc(price, event_at)
 
     def on_windows(self, windows: list[Window]) -> None:
+        self.evidence.discover([asdict(window) for window in windows if window.venue == "kalshi"], self.clock())
         for window in windows:
             if window.venue == "kalshi" and window.slug.startswith("KXBTC15M-"):
                 previous = self.book.windows.get(window.slug)
@@ -335,6 +355,9 @@ class KalshiLiveDesk:
             self._twin_events(self.twin.on_trade(trade, self.clock()))
 
     def on_status(self, status: dict[str, Any]) -> None:
+        if status.get("coinbase") != "connected" or not status.get("trade_stream"):
+            self.evidence.last_fresh.clear()
+        self.evidence.last_fresh.difference_update(status.get("gap_windows", []))
         for slug in status.get("gap_windows", []):
             self._twin_events(self.twin.cancel(self.clock(), slug, "venue_feed_gap"))
 
@@ -365,7 +388,11 @@ class KalshiLiveDesk:
             book = snapshot.books.get((window.slug, side))
             if book is None or not 0 <= now - book.at <= 3:
                 return "Kalshi book stale"
+            if book.source == "rest" and (book.requested_at is None or not 0 <= now - book.requested_at <= 3):
+                return "Kalshi book stale"
             if book.requested_at is not None and not 0 <= book.at - book.requested_at <= 3:
+                return "Kalshi book stale"
+            if book.source != "rest" and (book.exchange_at is None or not 0 <= now - book.exchange_at <= 3):
                 return "Kalshi book stale"
         if window.slug in self.foreign_windows:
             return "Owner activity in this window; bot leaves it alone"
@@ -497,7 +524,8 @@ class KalshiLiveDesk:
         return ActualFill(fill_id=str(raw["fill_id"]), order_id=intent.order_id,
                           client_order_id=intent.client_order_id, window=intent.window, side=intent.side,
                           price=_number(raw[f"{outcome}_price_dollars"]), size=_number(raw["count_fp"]),
-                          fee_usd=_number(raw["fee_cost"]), at=at)
+                          fee_usd=_number(raw["fee_cost"]), at=at,
+                          is_taker=raw.get("is_taker") if type(raw.get("is_taker")) is bool else None)
 
     def _validate_order(self, raw: dict[str, Any], intent: Intent) -> None:
         outcome = "yes" if intent.side == "up" else "no"
@@ -676,6 +704,7 @@ class KalshiLiveDesk:
                            if not self.fee_verified else "Edge after conservative rounded fees is too small")
             return False
         client_id = PREFIX + uuid.uuid4().hex
+        decision_mono = self.monotonic()
         try:
             self.book.reserve_intent(window.slug, side, kind, price, size, now,
                                      client_order_id=client_id, fair=fair)
@@ -685,11 +714,14 @@ class KalshiLiveDesk:
         intent = Intent(client_id, window.slug, side, kind, price, size, fair, now)
         self.intents[client_id] = intent
         self._record("speeddesk_live_order", client_order_id=client_id, window=window.slug,
-                     side=side, kind=kind, price=price, size=size, fair=fair, state="durable intent")
+                     side=side, kind=kind, price=price, size=size, fair=fair, state="durable intent",
+                     timing=self.metrics.decision("real_kalshi", now, snapshot.tick_receipt, decision_mono))
         # The order identifier and its complete worst-case liability reach disk
         # before the first network byte can leave this process.
         self.checkpoint()
         twin_event = self.twin.place(window.slug, side, kind, price, size, fair, now)
+        if twin_event.event in ("speeddesk_take", "speeddesk_rest"):
+            self.metrics.decision("practice_twin", now, snapshot.tick_receipt, decision_mono)
         intent.twin_order_id = twin_event.order_id
         self._twin_events([twin_event])
         self.checkpoint()
@@ -705,8 +737,18 @@ class KalshiLiveDesk:
                 raise ValueError("Create response has no order identifier")
             self.book.mark_submitted(client_id, intent.order_id)
             self._record("speeddesk_live_order", client_order_id=client_id, order_id=intent.order_id,
-                         window=window.slug, state="accepted; waiting for real fills")
+                         window=window.slug, state="accepted; waiting for real fills",
+                         timing=self.metrics.observe("real_kalshi", "decision_to_ack", now,
+                                                     (self.monotonic() - decision_mono) * 1000))
+        except asyncio.CancelledError:
+            self._record("speeddesk_live_timing", client_order_id=client_id,
+                         timing=self.metrics.observe("real_kalshi", "decision_to_ack", now, None, "missing"))
+            raise
         except Exception as exc:  # noqa: BLE001 — uncertain requests retain their complete reservation.
+            self._record("speeddesk_live_timing", client_order_id=client_id,
+                         timing=self.metrics.observe("real_kalshi", "decision_to_ack", now, None,
+                                                     "timeout" if isinstance(exc, KalshiClientError)
+                                                     and exc.timed_out else "error"))
             if isinstance(exc, KalshiClientError) and not exc.uncertain:
                 self.book.reject_intent(client_id, "definite_create_rejection", confirmed=True)
                 intent.terminal = True
@@ -800,7 +842,14 @@ class KalshiLiveDesk:
                 if await self._send(window, side, kind, price, float(size), fair):
                     return
 
+    def observe_market(self, observed_at: float) -> None:
+        market = self.snapshot()
+        windows = [asdict(window) for window in market.windows]
+        self.evidence.advance(observed_at, windows, fresh_window_slugs(
+            windows, market.books, market.bitcoin_at, market.maker_windows, observed_at))
+
     async def step(self) -> None:
+        self.observe_market(self.clock())
         self._twin_events(self.twin.advance(self.clock()))
         if not await self._ensure_client():
             self._heartbeat()
@@ -899,7 +948,8 @@ class KalshiLiveDesk:
                          "day_stop_usd": self.settings.speeddesk_kalshi_day_stop_usd,
                          "total_stop_usd": self.settings.speeddesk_kalshi_total_stop_usd},
                 "today": self._summary(utc_day(self.clock())), "total": self._summary(None),
-                "practice_twin": self.twin.daily_summary(utc_day(self.clock()), venue="kalshi"),
+                "practice_twin": self._twin_summary(utc_day(self.clock())),
+                "reports": self.reports,
                 "latest_events": self.latest_events[-10:]}
 
     def _summary(self, day: str | None) -> dict[str, Any]:
@@ -913,6 +963,8 @@ class KalshiLiveDesk:
         maker_fills = sum(item.client_order_id in filled_ids for item in makers)
         latency = [max(0.0, fill.at - self.intents[fill.client_order_id].at) * 1000 for fill in fills]
         return {"day": day, "windows": len({fill.window for fill in fills}), "fills": len(fills),
+                "latency": self.metrics.report(day, "real_kalshi", real=True) if day is not None else None,
+                "scorecard": self.scorecard(day) if day is not None else None,
                 "settled_windows": len(settlements),
                 "fees_usd": sum(fill.fee_usd for fill in fills),
                 "locked_usd": sum(item.locked_usd for item in settlements),
@@ -925,6 +977,50 @@ class KalshiLiveDesk:
                 "maker_fill_rate": maker_fills / len(makers) if makers else None,
                 "avg_latency_ms": sum(latency) / len(latency) if latency else None,
                 "latency_definition": "durable real decision to venue fill timestamp; maker includes resting time"}
+
+    def scorecard(self, day: str, *, twin: bool = False) -> dict[str, Any]:
+        windows = [asdict(window) for window in self.book.windows.values() if window.end <= self.clock()]
+        fills = self.evidence.fills if twin else [asdict(row) for row in self.book.fills.values()]
+        settlements = ([asdict(row) for row in self.twin.closed] if twin else
+                       [asdict(row) for row in self.book.settled.values()])
+        coverage = self.evidence.coverage(windows)
+        if not twin:
+            for window in windows:
+                if self.book.integrity_error or any(
+                    intent.window == window["slug"] and (not intent.terminal or intent.uncertain
+                        or self.book.intents[intent.client_order_id].reservation_active)
+                    for intent in self.intents.values()
+                ):
+                    coverage[window["slug"]] = None
+        report = window_scorecard(day, windows=windows, fills=fills, settlements=settlements,
+                                coverage=coverage, scope="practice_twin" if twin else "real",
+                                as_of=self.clock(), day_coverage_complete=self.evidence.complete_kalshi_day(
+                                    day, windows, self.clock()))
+        report.update(self.evidence.availability([window for window in windows if utc_day(window["end"]) == day]))
+        return report
+
+    def _twin_summary(self, day: str) -> dict[str, Any]:
+        return {**self.twin.daily_summary(day, venue="kalshi"),
+                "latency": self.metrics.report(day, "practice_twin"), "scorecard": self.scorecard(day, twin=True)}
+
+    def _daily_reports(self) -> None:
+        today = datetime.fromtimestamp(self.clock(), UTC).date()
+        day = max(datetime.fromtimestamp(self.started_at, UTC).date(), today - timedelta(days=31))
+        while day < today:
+            key = day.isoformat()
+            report: dict[str, Any] = {"day": key, "real": self._summary(key), "practice_twin": self._twin_summary(key)}
+            if day < today - timedelta(days=30):
+                previous = self.reports.get(key, {})
+                for scope in ("real", "practice_twin"):
+                    for field_name in ("scorecard", "latency"):
+                        if field_name in previous.get(scope, {}):
+                            report[scope][field_name] = previous[scope][field_name]
+            if self.reports.get(key) != report:
+                kind = "speeddesk_live_daily_correction" if key in self.reports else "speeddesk_live_daily"
+                self.reports[key] = report
+                self._record(kind, **report)
+            day += timedelta(days=1)
+        self.reports = {day: self.reports[day] for day in sorted(self.reports)[-31:]}
 
     def close(self) -> None:
         if not self.closed:

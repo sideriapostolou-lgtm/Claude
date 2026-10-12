@@ -1,4 +1,4 @@
-"""Public observation only: wallet rows, BTC five-minute books and Coinbase.
+"""Public observation only: wallet rows, BTC five-minute books and USD spot feeds.
 
 Verified 2026-10-12: docs.polymarket.com/migrate/data-api-v1-to-v2,
 data-api.polymarket.com/v2/openapi.json, and the raw API tab of
@@ -24,10 +24,12 @@ from collections.abc import Callable
 from email.utils import parsedate_to_datetime
 from typing import Any
 from urllib.parse import urlencode, urlsplit
+from uuid import uuid4
 
 import requests
 
-from .speeddesk_feeds import COINBASE_WS, coinbase_ticks, number, timestamp
+from .skipwatch_bitcoin import PublicBitcoinFeeds, iso_precision
+from .speeddesk_feeds import COINBASE_WS, number, timestamp
 
 WALLET = "0xc53375ff94e96100f2b30a4b5775db35218d69a9"
 DATA = "https://data-api.polymarket.com/v2/trades"
@@ -154,8 +156,14 @@ class SkipwatchFeeds:
     def __init__(self, settings: Any = None, *, on_event: Callable[[str, dict[str, Any], float], None],
                  clock: Callable[[], float] = time.time, rest_get: Callable[[str], Any] | None = None,
                  coinbase_connect: Any = None, clob_connect: Any = None,
-                 wallet_since: float | None = None) -> None:
+                 wallet_since: float | None = None, monotonic_ns: Callable[[], int] = time.monotonic_ns,
+                 bitcoin_connectors: dict[str, Callable[..., Any]] | None = None,
+                 receipt_clock_id: str | None = None) -> None:
         self.on_event, self.clock = on_event, clock
+        self.monotonic_ns, self.receipt_clock_id = monotonic_ns, receipt_clock_id or str(uuid4())
+        self.bitcoin_feeds = PublicBitcoinFeeds(on_event=on_event, receipt_clock_id=self.receipt_clock_id,
+                                               clock=clock, monotonic_ns=monotonic_ns,
+                                               connectors=bitcoin_connectors)
         self.poll_s = float(getattr(settings, "skipwatch_poll_s", 2.5))
         if not 2 <= self.poll_s <= 3:
             raise ValueError("Wallet polling must stay between two and three seconds")
@@ -174,6 +182,7 @@ class SkipwatchFeeds:
         self._health_last: dict[str, tuple[str, float]] = {}
         self._generation = 0
         self._coinbase_sequence: int | None = None
+        self._coinbase_generation = 0
 
     def _emit(self, kind: str, payload: dict[str, Any], received_at: float | None = None) -> None:
         self.on_event(kind, payload, self.clock() if received_at is None else received_at)
@@ -453,7 +462,7 @@ class SkipwatchFeeds:
                 self._emit("market_rule_change", {**identity, "old_tick_size": _price(raw.get("old_tick_size")),
                            "new_tick_size": _price(raw.get("new_tick_size"))}, received_at)
 
-    def coinbase_message(self, reply: Any, received_at: float) -> None:
+    def coinbase_message(self, reply: Any, received_at: float, received_monotonic_ns: int | None = None) -> None:
         # Coinbase documents one counter per connection, including subscription
         # acknowledgements and heartbeats; per-channel tracking creates false gaps.
         sequence = reply.get("sequence_num") if isinstance(reply, dict) else None
@@ -463,9 +472,35 @@ class SkipwatchFeeds:
         if sequence != expected:
             raise PublicFeedError("sequence_gap", "Coinbase sequence gap")
         self._coinbase_sequence = sequence
-        for price, at in coinbase_ticks(reply):
+        if reply.get("channel") != "market_trades":
+            return
+        mono = self.monotonic_ns() if received_monotonic_ns is None else received_monotonic_ns
+        rows: list[tuple[float, float, dict[str, Any], bool]] = []
+        events = reply.get("events")
+        for event in events if isinstance(events, list) else []:
+            trades = event.get("trades") if isinstance(event, dict) else None
+            for trade in trades if isinstance(trades, list) else []:
+                if not isinstance(trade, dict) or trade.get("product_id") != "BTC-USD":
+                    continue
+                price, at = number(trade.get("price")), timestamp(trade.get("time"))
+                if price is not None and price > 0 and at is not None:
+                    rows.append((price, at, trade, event.get("type") == "snapshot"))
+        # Preserve the original watcher's ordered price/time observations. New
+        # research metadata never changes the separate financial Coinbase tape.
+        for price, at, trade, snapshot in sorted(rows, key=lambda row: row[1]):
+            identity = trade.get("trade_id")
+            known_identity = isinstance(identity, (int, str)) and not isinstance(identity, bool) and bool(str(identity))
             self._emit("bitcoin_tick", {"source": "coinbase", "price": price, "exchange_at": at,
-                       "sequence": sequence, "sequence_scope": "connection"}, received_at)
+                       "sequence": sequence, "sequence_scope": "connection", "sequence_available": True,
+                       "symbol": "BTC-USD", "base": "BTC", "quote": "USD", "quantity": number(trade.get("size")),
+                       "trade_id": str(identity) if known_identity else None,
+                       "exchange_timestamp_raw": trade.get("time"), "exchange_timestamp_domain": "coinbase_trade_event",
+                       "timestamp_precision_s": iso_precision(str(trade.get("time", ""))),
+                       "source_clock_accuracy": "unknown",
+                       "received_at": received_at, "received_monotonic_ns": mono,
+                       "receipt_clock_id": self.receipt_clock_id, "receipt_clock": "application_receive",
+                       "connection_generation": self._coinbase_generation, "snapshot": snapshot,
+                       "continuity_valid": True}, received_at)
 
     async def _wallet_loop(self) -> None:
         while True:
@@ -529,24 +564,28 @@ class SkipwatchFeeds:
             try:
                 async with connector(COINBASE_WS, open_timeout=10, ping_interval=20, ping_timeout=10) as ws:
                     self._coinbase_sequence = None
+                    self._coinbase_generation += 1
                     for channel in ("market_trades", "heartbeats"):
                         await ws.send(json.dumps({"type": "subscribe", "product_ids": ["BTC-USD"],
                                                   "channel": channel}))
                     self._health("coinbase", "connected", opening_source="Coinbase spot; not venue resolution")
                     while True:
-                        reply = json.loads(await asyncio.wait_for(ws.recv(), timeout=10))
-                        received_at = self.clock()
-                        self.coinbase_message(reply, received_at)
+                        payload = await asyncio.wait_for(ws.recv(), timeout=10)
+                        received_at, mono = self.clock(), self.monotonic_ns()
+                        self.coinbase_message(json.loads(payload), received_at, mono)
             except Exception as exc:  # noqa: BLE001 - timestamped observations resume only after reconnect.
                 self._health("coinbase", "gap", error=type(exc).__name__,
                              reason=exc.reason if isinstance(exc, PublicFeedError) else "connection_failed")
                 await asyncio.sleep(2)
 
     async def run(self, stop: threading.Event) -> None:
+        self._emit("bitcoin_feature_epoch", {"version": 1, "sources": ["coinbase", "kraken", "gemini"],
+                   "quote": "USD", "receipt_clock_id": self.receipt_clock_id,
+                   "method": "observed public trades; existing financial tape unchanged"})
         self._health("wallet", "starting", wallet_watermark=self.wallet_watermark,
                      lookback_s=LOOKBACK, public_only=True)
         tasks = [asyncio.create_task(loop()) for loop in
-                 (self._wallet_loop, self._discovery_loop, self._clob_loop, self._coinbase_loop)]
+                 (self._wallet_loop, self._discovery_loop, self._clob_loop, self._coinbase_loop, self.bitcoin_feeds.run)]
         try:
             while not stop.is_set():
                 for task in tasks:
