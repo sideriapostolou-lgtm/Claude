@@ -1,0 +1,1625 @@
+{
+ "ColdMath": {
+  "wallet": "0x594edb9112f526fa6a80b8f858a6379c8a2c1c11",
+  "record": {
+   "first": "2025-11-10",
+   "last": "2026-10-12",
+   "pnl_total": 147444,
+   "peak": 151651,
+   "mdd": 14603,
+   "pnl_30d": 5719,
+   "pnl_90d": 12451,
+   "pnl_180d": 29296,
+   "months_up": "8/12",
+   "worst_month": -1828,
+   "worst_day": -13040,
+   "best_day": 5925,
+   "up_day_frac": 0.72,
+   "months": {
+    "2025-11": -334,
+    "2025-12": 8911,
+    "2026-01": 13780,
+    "2026-02": 29306,
+    "2026-03": 42232,
+    "2026-04": 45070,
+    "2026-05": -1828,
+    "2026-06": -1262,
+    "2026-07": -578,
+    "2026-08": 153,
+    "2026-09": 9058,
+    "2026-10": 2936
+   }
+  },
+  "profile": {
+   "n_trades": 3492,
+   "span_days": 1.4,
+   "from": "2026-10-11",
+   "to": "2026-10-12",
+   "types": {
+    "TRADE": 3492,
+    "REDEEM": 506,
+    "MAKER_REBATE": 1,
+    "TAKER_REBATE": 1
+   },
+   "cat_trades": {
+    "sports": 3285,
+    "other": 207
+   },
+   "cat_usd": {
+    "sports": 94232,
+    "other": 5072
+   },
+   "sell_frac": 0.0,
+   "buy_price_buckets": {
+    "<.10": 19,
+    "<.30": 112,
+    "<.70": 2237,
+    "<.90": 1124
+   },
+   "median_buy_price": 0.65,
+   "median_trade_usd": 17.45,
+   "mean_trade_usd": 28.44,
+   "outcome_yes_frac_buys": 0.12,
+   "median_lead_h_to_slugdate_end": null,
+   "trades_per_day": 2585.5
+  }
+ },
+ "gopfan2": {
+  "wallet": "0xf2f6af4f27ec2dcf4072095ab804016e14cd5817",
+  "record": {
+   "first": "2024-11-28",
+   "last": "2026-10-12",
+   "pnl_total": 1665102,
+   "peak": 1712955,
+   "mdd": 369065,
+   "pnl_30d": 155998,
+   "pnl_90d": 97900,
+   "pnl_180d": 137718,
+   "months_up": "19/24",
+   "worst_month": -234891,
+   "worst_day": -232214,
+   "best_day": 222406,
+   "up_day_frac": 0.61,
+   "months": {
+    "2024-11": 232757,
+    "2024-12": 98885,
+    "2025-01": 86588,
+    "2025-02": 83287,
+    "2025-03": 113730,
+    "2025-04": 188490,
+    "2025-05": -234891,
+    "2025-06": 136419,
+    "2025-07": 140846,
+    "2025-08": 73985,
+    "2025-09": 58431,
+    "2025-10": 207983,
+    "2025-11": -78812,
+    "2025-12": -108934,
+    "2026-01": 12049,
+    "2026-02": 214093,
+    "2026-03": 239053,
+    "2026-04": 71737,
+    "2026-05": -36525,
+    "2026-06": 50696,
+    "2026-07": -99627,
+    "2026-08": 23648,
+    "2026-09": 162379,
+    "2026-10": 28835
+   }
+  },
+  "profile": {
+   "n_trades": 3559,
+   "span_days": 141.5,
+   "from": "2026-05-18",
+   "to": "2026-10-06",
+   "types": {
+    "YIELD": 147,
+    "REWARD": 110,
+    "MAKER_REBATE": 48,
+    "TRADE": 3559,
+    "REDEEM": 35,
+    "MERGE": 9,
+    "CONVERSION": 1,
+    "REFERRAL_REWARD": 81,
+    "SPLIT": 1,
+    "TAKER_REBATE": 9
+   },
+   "cat_trades": {
+    "other": 2023,
+    "sports": 1409,
+    "econ": 93,
+    "crypto": 34
+   },
+   "cat_usd": {
+    "other": 1359476,
+    "sports": 396318,
+    "crypto": 113787,
+    "econ": 56692
+   },
+   "sell_frac": 0.12,
+   "buy_price_buckets": {
+    "<.02": 68,
+    "<.10": 533,
+    "<.30": 210,
+    "<.70": 1561,
+    "<.90": 614,
+    "<.97": 70,
+    ">=.97": 65
+   },
+   "median_buy_price": 0.52,
+   "median_trade_usd": 10.41,
+   "mean_trade_usd": 541.24,
+   "outcome_yes_frac_buys": 0.58,
+   "median_lead_h_to_slugdate_end": 4441.8,
+   "trades_per_day": 25.1
+  }
+ },
+ "neobrother": {
+  "wallet": "0x6297b93ea37ff92a57fd636410f3b71ebf74517e",
+  "record": {
+   "first": "2025-01-06",
+   "last": "2026-10-12",
+   "pnl_total": 38140,
+   "peak": 38411,
+   "mdd": 764,
+   "pnl_30d": 411,
+   "pnl_90d": 1879,
+   "pnl_180d": 7961,
+   "months_up": "20/22",
+   "worst_month": -49,
+   "worst_day": -431,
+   "best_day": 4686,
+   "up_day_frac": 0.61,
+   "months": {
+    "2025-01": -49,
+    "2025-02": 120,
+    "2025-03": 1777,
+    "2025-04": 1645,
+    "2025-05": 1671,
+    "2025-06": 1241,
+    "2025-07": 1946,
+    "2025-08": 846,
+    "2025-09": 6023,
+    "2025-10": 1291,
+    "2025-11": 1141,
+    "2025-12": 1952,
+    "2026-01": 2099,
+    "2026-02": 3368,
+    "2026-03": 3568,
+    "2026-04": 2230,
+    "2026-05": 1433,
+    "2026-06": 2115,
+    "2026-07": 3380,
+    "2026-08": 119,
+    "2026-09": 269,
+    "2026-10": -46
+   }
+  },
+  "profile": {
+   "n_trades": 3410,
+   "span_days": 73.3,
+   "from": "2026-07-31",
+   "to": "2026-10-12",
+   "types": {
+    "TRADE": 3410,
+    "REDEEM": 553,
+    "REWARD": 8,
+    "MERGE": 26,
+    "MAKER_REBATE": 3
+   },
+   "cat_trades": {
+    "weather": 3410
+   },
+   "cat_usd": {
+    "weather": 13176
+   },
+   "sell_frac": 0.1,
+   "buy_price_buckets": {
+    "<.02": 1143,
+    "<.10": 1276,
+    "<.30": 520,
+    "<.70": 60,
+    "<.90": 12,
+    "<.97": 23,
+    ">=.97": 22
+   },
+   "median_buy_price": 0.03,
+   "median_trade_usd": 0.4,
+   "mean_trade_usd": 3.86,
+   "outcome_yes_frac_buys": 0.92,
+   "median_lead_h_to_slugdate_end": 13.5,
+   "trades_per_day": 46.5,
+   "weather_cities_top": {
+    "San Francisco": 436,
+    "Cape Town": 240,
+    "New York City": 239,
+    "Tokyo": 197,
+    "Chicago": 184,
+    "Sao Paulo": 170,
+    "Moscow": 164,
+    "Munich": 156,
+    "Dallas": 146,
+    "Paris": 137,
+    "Wellington": 124,
+    "London": 122
+   },
+   "weather_yes_frac": 0.92,
+   "weather_median_price": 0.03
+  }
+ },
+ "aenews2": {
+  "wallet": "0x44c1dfe43260c94ed4f1d00de2e1f80fb113ebc1",
+  "record": {
+   "first": "2024-11-28",
+   "last": "2026-10-12",
+   "pnl_total": 2439160,
+   "peak": 2488808,
+   "mdd": 355721,
+   "pnl_30d": 194926,
+   "pnl_90d": 81021,
+   "pnl_180d": 543206,
+   "months_up": "15/24",
+   "worst_month": -213237,
+   "worst_day": -140934,
+   "best_day": 820521,
+   "up_day_frac": 0.6,
+   "months": {
+    "2024-11": 841998,
+    "2024-12": 44633,
+    "2025-01": 122363,
+    "2025-02": -86024,
+    "2025-03": -27305,
+    "2025-04": 177970,
+    "2025-05": -70159,
+    "2025-06": 221761,
+    "2025-07": 88453,
+    "2025-08": 11415,
+    "2025-09": 89769,
+    "2025-10": 93361,
+    "2025-11": -22984,
+    "2025-12": 295336,
+    "2026-01": 113240,
+    "2026-02": -60666,
+    "2026-03": 166417,
+    "2026-04": -14537,
+    "2026-05": -213237,
+    "2026-06": 696771,
+    "2026-07": -187700,
+    "2026-08": -95388,
+    "2026-09": 69092,
+    "2026-10": 184580
+   }
+  },
+  "profile": {
+   "n_trades": 3484,
+   "span_days": 86.1,
+   "from": "2026-07-18",
+   "to": "2026-10-12",
+   "types": {
+    "TRADE": 3484,
+    "YIELD": 48,
+    "TAKER_REBATE": 47,
+    "REWARD": 99,
+    "MERGE": 62,
+    "REDEEM": 202,
+    "MAKER_REBATE": 47,
+    "CONVERSION": 11
+   },
+   "cat_trades": {
+    "other": 1784,
+    "econ": 899,
+    "sports": 773,
+    "finance": 28
+   },
+   "cat_usd": {
+    "other": 5060647,
+    "sports": 946018,
+    "econ": 240624,
+    "finance": 46586
+   },
+   "sell_frac": 0.2,
+   "buy_price_buckets": {
+    "<.02": 392,
+    "<.10": 288,
+    "<.30": 545,
+    "<.70": 708,
+    "<.90": 324,
+    "<.97": 175,
+    ">=.97": 367
+   },
+   "median_buy_price": 0.399,
+   "median_trade_usd": 11.82,
+   "mean_trade_usd": 1806.51,
+   "outcome_yes_frac_buys": 0.64,
+   "median_lead_h_to_slugdate_end": 310.3,
+   "trades_per_day": 40.5
+  }
+ },
+ "Hans323": {
+  "wallet": "0x0f37cb80dee49d55b5f6d9e595d52591d6371410",
+  "record": {
+   "first": "2024-11-28",
+   "last": "2026-10-12",
+   "pnl_total": 89951,
+   "peak": 91634,
+   "mdd": 13033,
+   "pnl_30d": 2734,
+   "pnl_90d": 4181,
+   "pnl_180d": 12809,
+   "months_up": "20/24",
+   "worst_month": -11554,
+   "worst_day": -8945,
+   "best_day": 9922,
+   "up_day_frac": 0.62,
+   "months": {
+    "2024-11": -166,
+    "2024-12": 191,
+    "2025-01": 104,
+    "2025-02": 2108,
+    "2025-03": 8838,
+    "2025-04": 2572,
+    "2025-05": 6473,
+    "2025-06": 3234,
+    "2025-07": 3516,
+    "2025-08": 8442,
+    "2025-09": 5201,
+    "2025-10": 7391,
+    "2025-11": 27856,
+    "2025-12": 12035,
+    "2026-01": -11554,
+    "2026-02": 1140,
+    "2026-03": 370,
+    "2026-04": -306,
+    "2026-05": 12,
+    "2026-06": 5437,
+    "2026-07": 3795,
+    "2026-08": 691,
+    "2026-09": 2575,
+    "2026-10": -5
+   }
+  },
+  "profile": {
+   "n_trades": 3112,
+   "span_days": 130.3,
+   "from": "2026-06-04",
+   "to": "2026-10-12",
+   "types": {
+    "TRADE": 3112,
+    "REDEEM": 528,
+    "YIELD": 130,
+    "REWARD": 73,
+    "CONVERSION": 3,
+    "SPLIT": 26,
+    "MAKER_REBATE": 46,
+    "MERGE": 79,
+    "TAKER_REBATE": 3
+   },
+   "cat_trades": {
+    "other": 1349,
+    "weather": 1244,
+    "sports": 508,
+    "econ": 11
+   },
+   "cat_usd": {
+    "other": 361440,
+    "sports": 134890,
+    "weather": 93553,
+    "econ": 2464
+   },
+   "sell_frac": 0.25,
+   "buy_price_buckets": {
+    "<.02": 279,
+    "<.10": 164,
+    "<.30": 234,
+    "<.70": 444,
+    "<.90": 285,
+    "<.97": 127,
+    ">=.97": 798
+   },
+   "median_buy_price": 0.75,
+   "median_trade_usd": 20.14,
+   "mean_trade_usd": 190.34,
+   "outcome_yes_frac_buys": 0.5,
+   "median_lead_h_to_slugdate_end": 9.1,
+   "trades_per_day": 23.9,
+   "weather_cities_top": {
+    "New York City": 387,
+    "Miami": 127,
+    "Shenzhen": 57,
+    "Singapore": 44,
+    "San Francisco": 34,
+    "null": 33,
+    "London": 28,
+    "Austin": 23,
+    "Wellington": 22,
+    "Manila": 21,
+    "Paris": 17,
+    "Dallas": 15
+   },
+   "weather_yes_frac": 0.47,
+   "weather_median_price": 0.7
+  }
+ },
+ "HighTempTation": {
+  "wallet": "0x6011655c4afb76f36dd1b08a137a1ba73466b31e",
+  "record": {
+   "first": "2026-03-06",
+   "last": "2026-10-12",
+   "pnl_total": 97728,
+   "peak": 97728,
+   "mdd": 1100,
+   "pnl_30d": 13914,
+   "pnl_90d": 56236,
+   "pnl_180d": 97753,
+   "months_up": "6/8",
+   "worst_month": -15,
+   "worst_day": -1024,
+   "best_day": 3300,
+   "up_day_frac": 0.94,
+   "months": {
+    "2026-03": -10,
+    "2026-04": -15,
+    "2026-05": 4809,
+    "2026-06": 22938,
+    "2026-07": 28108,
+    "2026-08": 22164,
+    "2026-09": 15167,
+    "2026-10": 4567
+   }
+  },
+  "profile": {
+   "n_trades": 3928,
+   "span_days": 44.2,
+   "from": "2026-08-29",
+   "to": "2026-10-12",
+   "types": {
+    "TRADE": 3928,
+    "TAKER_REBATE": 42,
+    "REDEEM": 30
+   },
+   "cat_trades": {
+    "weather": 3928
+   },
+   "cat_usd": {
+    "weather": 680443
+   },
+   "sell_frac": 0.55,
+   "buy_price_buckets": {
+    "<.30": 2,
+    "<.70": 13,
+    "<.90": 137,
+    "<.97": 641,
+    ">=.97": 985
+   },
+   "median_buy_price": 0.971,
+   "median_trade_usd": 66.88,
+   "mean_trade_usd": 173.23,
+   "outcome_yes_frac_buys": 0.02,
+   "median_lead_h_to_slugdate_end": 17.0,
+   "trades_per_day": 89.0,
+   "weather_cities_top": {
+    "Cape Town": 107,
+    "Mexico City": 100,
+    "Lucknow": 96,
+    "Wellington": 95,
+    "Taipei": 89,
+    "Buenos Aires": 76,
+    "Ankara": 74,
+    "Sao Paulo": 73,
+    "Tel Aviv": 67,
+    "Panama City": 61,
+    "Paris": 58,
+    "Karachi": 53
+   },
+   "weather_yes_frac": 0.02,
+   "weather_median_price": 0.971
+  }
+ },
+ "automatedAItradingbot": {
+  "wallet": "0xd8f8c13644ea84d62e1ec88c5d1215e436eb0f11",
+  "record": {
+   "first": "2025-02-01",
+   "last": "2026-10-12",
+   "pnl_total": 88949,
+   "peak": 89264,
+   "mdd": 2503,
+   "pnl_30d": -4,
+   "pnl_90d": -40,
+   "pnl_180d": 6466,
+   "months_up": "17/21",
+   "worst_month": -1367,
+   "worst_day": -1781,
+   "best_day": 7574,
+   "up_day_frac": 0.49,
+   "months": {
+    "2025-02": 3089,
+    "2025-03": 4426,
+    "2025-04": 212,
+    "2025-05": 4150,
+    "2025-06": 5867,
+    "2025-07": -1367,
+    "2025-08": 3189,
+    "2025-09": 1804,
+    "2025-10": 1221,
+    "2025-11": 21433,
+    "2025-12": 10569,
+    "2026-01": 10247,
+    "2026-02": 8440,
+    "2026-03": 6423,
+    "2026-04": 8210,
+    "2026-05": 781,
+    "2026-06": 155,
+    "2026-07": 106,
+    "2026-08": -1,
+    "2026-09": -6,
+    "2026-10": 0
+   }
+  },
+  "profile": {
+   "n_trades": 3560,
+   "span_days": 78.3,
+   "from": "2026-04-27",
+   "to": "2026-07-14",
+   "types": {
+    "REDEEM": 319,
+    "TRADE": 3560,
+    "MERGE": 32,
+    "CONVERSION": 31,
+    "TAKER_REBATE": 1,
+    "MAKER_REBATE": 18,
+    "YIELD": 19,
+    "REWARD": 2,
+    "SPLIT": 18
+   },
+   "cat_trades": {
+    "weather": 2966,
+    "sports": 510,
+    "other": 84
+   },
+   "cat_usd": {
+    "weather": 19950,
+    "sports": 12921,
+    "other": 934
+   },
+   "sell_frac": 0.24,
+   "buy_price_buckets": {
+    "<.02": 956,
+    "<.10": 781,
+    "<.30": 448,
+    "<.70": 192,
+    "<.90": 10,
+    "<.97": 319,
+    ">=.97": 3
+   },
+   "median_buy_price": 0.045,
+   "median_trade_usd": 2.32,
+   "mean_trade_usd": 9.5,
+   "outcome_yes_frac_buys": 0.73,
+   "median_lead_h_to_slugdate_end": 18.2,
+   "trades_per_day": 45.5,
+   "weather_cities_top": {
+    "Seoul": 563,
+    "Hong Kong": 427,
+    "Moscow": 203,
+    "London": 156,
+    "Shenzhen": 144,
+    "Tokyo": 137,
+    "Amsterdam": 92,
+    "Singapore": 88,
+    "Ankara": 72,
+    "Paris": 59,
+    "Qingdao": 54,
+    "Wellington": 53
+   },
+   "weather_yes_frac": 0.82,
+   "weather_median_price": 0.023
+  }
+ },
+ "badatmath": {
+  "wallet": "0x8fbd7cf5f806f563080864694415829f7229a959",
+  "record": {
+   "first": "2026-01-11",
+   "last": "2026-10-12",
+   "pnl_total": 73607,
+   "peak": 73607,
+   "mdd": 19600,
+   "pnl_30d": 28188,
+   "pnl_90d": 60665,
+   "pnl_180d": 74097,
+   "months_up": "6/10",
+   "worst_month": -2677,
+   "worst_day": -7154,
+   "best_day": 6290,
+   "up_day_frac": 0.66,
+   "months": {
+    "2026-01": 105,
+    "2026-02": -417,
+    "2026-03": -179,
+    "2026-04": -76,
+    "2026-05": 3002,
+    "2026-06": 23453,
+    "2026-07": 22207,
+    "2026-08": -2677,
+    "2026-09": 7877,
+    "2026-10": 20312
+   }
+  },
+  "profile": {
+   "n_trades": 3453,
+   "span_days": 8.3,
+   "from": "2026-10-04",
+   "to": "2026-10-12",
+   "types": {
+    "TRADE": 3453,
+    "REDEEM": 108,
+    "MERGE": 418,
+    "TAKER_REBATE": 8,
+    "REWARD": 7,
+    "MAKER_REBATE": 6
+   },
+   "cat_trades": {
+    "weather": 3453
+   },
+   "cat_usd": {
+    "weather": 99574
+   },
+   "sell_frac": 0.22,
+   "buy_price_buckets": {
+    "<.02": 1,
+    "<.10": 24,
+    "<.30": 809,
+    "<.70": 1525,
+    "<.90": 338,
+    "<.97": 1
+   },
+   "median_buy_price": 0.4,
+   "median_trade_usd": 8.8,
+   "mean_trade_usd": 28.84,
+   "outcome_yes_frac_buys": 0.55,
+   "median_lead_h_to_slugdate_end": 35.8,
+   "trades_per_day": 418.2,
+   "weather_cities_top": {
+    "Los Angeles": 119,
+    "Warsaw": 113,
+    "Chongqing": 94,
+    "San Francisco": 91,
+    "Chengdu": 91,
+    "Sao Paulo": 86,
+    "Paris": 81,
+    "Houston": 79,
+    "Jeddah": 78,
+    "Dallas": 78,
+    "Denver": 73,
+    "Tel Aviv": 73
+   },
+   "weather_yes_frac": 0.55,
+   "weather_median_price": 0.4
+  }
+ },
+ "BeefSlayer": {
+  "wallet": "0x331bf91c132af9d921e1908ca0979363fc47193f",
+  "record": {
+   "first": "2025-09-18",
+   "last": "2026-10-12",
+   "pnl_total": 87366,
+   "peak": 88091,
+   "mdd": 1648,
+   "pnl_30d": 4322,
+   "pnl_90d": 19407,
+   "pnl_180d": 28912,
+   "months_up": "11/14",
+   "worst_month": -109,
+   "worst_day": -1037,
+   "best_day": 4613,
+   "up_day_frac": 0.67,
+   "months": {
+    "2025-09": -40,
+    "2025-10": 871,
+    "2025-11": 2066,
+    "2025-12": 2973,
+    "2026-01": 12297,
+    "2026-02": 10624,
+    "2026-03": 20537,
+    "2026-04": 15524,
+    "2026-05": -74,
+    "2026-06": 3007,
+    "2026-07": -109,
+    "2026-08": 11828,
+    "2026-09": 7531,
+    "2026-10": 333
+   }
+  },
+  "profile": {
+   "n_trades": 3698,
+   "span_days": 23.8,
+   "from": "2026-09-19",
+   "to": "2026-10-12",
+   "types": {
+    "TRADE": 3698,
+    "REDEEM": 269,
+    "MAKER_REBATE": 14,
+    "REWARD": 18,
+    "TAKER_REBATE": 1
+   },
+   "cat_trades": {
+    "weather": 3676,
+    "other": 22
+   },
+   "cat_usd": {
+    "weather": 42887,
+    "other": 1894
+   },
+   "sell_frac": 0.1,
+   "buy_price_buckets": {
+    "<.02": 1720,
+    "<.10": 903,
+    "<.30": 344,
+    "<.70": 181,
+    "<.90": 84,
+    "<.97": 40,
+    ">=.97": 39
+   },
+   "median_buy_price": 0.014,
+   "median_trade_usd": 0.2,
+   "mean_trade_usd": 12.11,
+   "outcome_yes_frac_buys": 0.93,
+   "median_lead_h_to_slugdate_end": 15.6,
+   "trades_per_day": 155.3,
+   "weather_cities_top": {
+    "New York City": 607,
+    "Atlanta": 545,
+    "Dallas": 529,
+    "Miami": 426,
+    "Seattle": 311,
+    "Austin": 254,
+    "Chicago": 203,
+    "null": 158,
+    "Houston": 108,
+    "Denver": 103,
+    "Paris": 25,
+    "San Francisco": 18
+   },
+   "weather_yes_frac": 0.94,
+   "weather_median_price": 0.013
+  }
+ },
+ "russell110320": {
+  "wallet": "0x118689b24aead1d6e9507b8068d056b2ec4f051b",
+  "record": {
+   "first": "2024-11-28",
+   "last": "2026-10-12",
+   "pnl_total": 75832,
+   "peak": 82095,
+   "mdd": 26184,
+   "pnl_30d": -4826,
+   "pnl_90d": 16271,
+   "pnl_180d": 33855,
+   "months_up": "16/24",
+   "worst_month": -15930,
+   "worst_day": -10198,
+   "best_day": 11968,
+   "up_day_frac": 0.6,
+   "months": {
+    "2024-11": 1437,
+    "2024-12": -3445,
+    "2025-01": -1748,
+    "2025-02": -7975,
+    "2025-03": 8915,
+    "2025-04": -4833,
+    "2025-05": -15930,
+    "2025-06": 1578,
+    "2025-07": 2027,
+    "2025-08": 11302,
+    "2025-09": -7978,
+    "2025-10": 1328,
+    "2025-11": 9484,
+    "2025-12": 10970,
+    "2026-01": 4900,
+    "2026-02": 12073,
+    "2026-03": 15929,
+    "2026-04": 7193,
+    "2026-05": 7025,
+    "2026-06": 2795,
+    "2026-07": 7611,
+    "2026-08": 18074,
+    "2026-09": -1696,
+    "2026-10": -3204
+   }
+  },
+  "profile": {
+   "n_trades": 3739,
+   "span_days": 674.6,
+   "from": "2024-12-06",
+   "to": "2026-10-12",
+   "types": {
+    "TRADE": 3739,
+    "REDEEM": 139,
+    "MAKER_REBATE": 13,
+    "TAKER_REBATE": 14,
+    "MERGE": 1,
+    "REWARD": 92,
+    "YIELD": 2
+   },
+   "cat_trades": {
+    "weather": 2758,
+    "other": 768,
+    "sports": 103,
+    "finance": 92,
+    "econ": 18
+   },
+   "cat_usd": {
+    "weather": 473808,
+    "other": 470955,
+    "sports": 112436,
+    "finance": 54069,
+    "econ": 10383
+   },
+   "sell_frac": 0.19,
+   "buy_price_buckets": {
+    "<.02": 10,
+    "<.10": 58,
+    "<.30": 446,
+    "<.70": 1349,
+    "<.90": 829,
+    "<.97": 341,
+    ">=.97": 12
+   },
+   "median_buy_price": 0.6,
+   "median_trade_usd": 37.62,
+   "mean_trade_usd": 299.99,
+   "outcome_yes_frac_buys": 0.79,
+   "median_lead_h_to_slugdate_end": 9.0,
+   "trades_per_day": 5.5,
+   "weather_cities_top": {
+    "null": 2263,
+    "New York City": 18
+   },
+   "weather_yes_frac": 0.84,
+   "weather_median_price": 0.5
+  }
+ },
+ "Handsanitizer23": {
+  "wallet": "0x05e70727a2e2dcd079baa2ef1c0b88af06bb9641",
+  "record": {
+   "first": "2026-02-20",
+   "last": "2026-10-12",
+   "pnl_total": 65971,
+   "peak": 66567,
+   "mdd": 18315,
+   "pnl_30d": 0,
+   "pnl_90d": 0,
+   "pnl_180d": -270,
+   "months_up": "1/9",
+   "worst_month": -3228,
+   "worst_day": -6996,
+   "best_day": 45769,
+   "up_day_frac": 0.46,
+   "months": {
+    "2026-02": -3228,
+    "2026-03": 69795,
+    "2026-04": -596,
+    "2026-05": 0,
+    "2026-06": 0,
+    "2026-07": 0,
+    "2026-08": 0,
+    "2026-09": 0,
+    "2026-10": 0
+   }
+  },
+  "profile": {
+   "n_trades": 220,
+   "span_days": 68.4,
+   "from": "2026-02-19",
+   "to": "2026-04-29",
+   "types": {
+    "TRADE": 220,
+    "REDEEM": 25
+   },
+   "cat_trades": {
+    "weather": 169,
+    "crypto": 39,
+    "other": 7,
+    "sports": 5
+   },
+   "cat_usd": {
+    "weather": 585882,
+    "other": 11086,
+    "crypto": 4693,
+    "sports": 140
+   },
+   "sell_frac": 0.0,
+   "buy_price_buckets": {
+    "<.02": 176,
+    "<.10": 8,
+    "<.30": 5,
+    "<.70": 6,
+    "<.90": 10,
+    "<.97": 5,
+    ">=.97": 10
+   },
+   "median_buy_price": 0.002,
+   "median_trade_usd": 0.05,
+   "mean_trade_usd": 2735.46,
+   "outcome_yes_frac_buys": 0.29,
+   "median_lead_h_to_slugdate_end": 11.8,
+   "trades_per_day": 3.2,
+   "weather_cities_top": {
+    "Guangzhou": 131,
+    "Atlanta": 7,
+    "Hong Kong": 3,
+    "Shenzhen": 3,
+    "Lucknow": 3,
+    "Shanghai": 3,
+    "Wellington": 3,
+    "Miami": 2,
+    "Munich": 2,
+    "Tokyo": 2,
+    "Dallas": 2,
+    "Seoul": 2
+   },
+   "weather_yes_frac": 0.12,
+   "weather_median_price": 0.002
+  }
+ },
+ "duderr": {
+  "wallet": "0x8f7a4b414417911e7e9bd738399874792cdbdb40",
+  "record": {
+   "first": "2025-01-02",
+   "last": "2026-10-12",
+   "pnl_total": 194021,
+   "peak": 218839,
+   "mdd": 48202,
+   "pnl_30d": -2125,
+   "pnl_90d": -1856,
+   "pnl_180d": -17092,
+   "months_up": "15/22",
+   "worst_month": -17499,
+   "worst_day": -12774,
+   "best_day": 36717,
+   "up_day_frac": 0.56,
+   "months": {
+    "2025-01": 1128,
+    "2025-02": 4738,
+    "2025-03": -4,
+    "2025-04": 8105,
+    "2025-05": 1405,
+    "2025-06": 30760,
+    "2025-07": 1497,
+    "2025-08": 4759,
+    "2025-09": 1499,
+    "2025-10": 39826,
+    "2025-11": -17499,
+    "2025-12": 26186,
+    "2026-01": -465,
+    "2026-02": 15314,
+    "2026-03": 51646,
+    "2026-04": 31439,
+    "2026-05": -3016,
+    "2026-06": -1220,
+    "2026-07": -235,
+    "2026-08": 299,
+    "2026-09": -2306,
+    "2026-10": 163
+   }
+  },
+  "profile": {
+   "n_trades": 3812,
+   "span_days": 173.9,
+   "from": "2026-04-19",
+   "to": "2026-10-10",
+   "types": {
+    "TRADE": 3812,
+    "MAKER_REBATE": 12,
+    "REDEEM": 97,
+    "TAKER_REBATE": 1,
+    "YIELD": 3,
+    "MERGE": 9,
+    "SPLIT": 13,
+    "REWARD": 40,
+    "CONVERSION": 13
+   },
+   "cat_trades": {
+    "other": 3577,
+    "sports": 208,
+    "finance": 15,
+    "econ": 9,
+    "crypto": 3
+   },
+   "cat_usd": {
+    "other": 3332768,
+    "sports": 136665,
+    "crypto": 21802,
+    "finance": 7392,
+    "econ": 4976
+   },
+   "sell_frac": 0.44,
+   "buy_price_buckets": {
+    "<.02": 36,
+    "<.10": 268,
+    "<.30": 920,
+    "<.70": 480,
+    "<.90": 53,
+    "<.97": 56,
+    ">=.97": 328
+   },
+   "median_buy_price": 0.27,
+   "median_trade_usd": 23.72,
+   "mean_trade_usd": 919.1,
+   "outcome_yes_frac_buys": 0.83,
+   "median_lead_h_to_slugdate_end": 146.9,
+   "trades_per_day": 21.9
+  }
+ },
+ "bama124": {
+  "wallet": "0xe5c8026239919339b988fdb150a7ef4ea196d3e7",
+  "record": {
+   "first": "2024-11-28",
+   "last": "2026-10-12",
+   "pnl_total": 1406338,
+   "peak": 1406356,
+   "mdd": 18,
+   "pnl_30d": 0,
+   "pnl_90d": 0,
+   "pnl_180d": 0,
+   "months_up": "2/24",
+   "worst_month": -13,
+   "worst_day": -17,
+   "best_day": 1406292,
+   "up_day_frac": 0.58,
+   "months": {
+    "2024-11": 1406292,
+    "2024-12": 60,
+    "2025-01": -13,
+    "2025-02": -1,
+    "2025-03": 0,
+    "2025-04": 0,
+    "2025-05": 0,
+    "2025-06": 0,
+    "2025-07": 0,
+    "2025-08": 0,
+    "2025-09": 0,
+    "2025-10": 0,
+    "2025-11": 0,
+    "2025-12": 0,
+    "2026-01": 0,
+    "2026-02": 0,
+    "2026-03": 0,
+    "2026-04": 0,
+    "2026-05": 0,
+    "2026-06": 0,
+    "2026-07": 0,
+    "2026-08": 0,
+    "2026-09": 0,
+    "2026-10": 0
+   }
+  },
+  "profile": {
+   "n_trades": 3887,
+   "span_days": 145.9,
+   "from": "2024-08-08",
+   "to": "2025-01-01",
+   "types": {
+    "TRADE": 3887,
+    "REDEEM": 78,
+    "REWARD": 33,
+    "MERGE": 2
+   },
+   "cat_trades": {
+    "other": 2191,
+    "econ": 723,
+    "crypto": 531,
+    "sports": 218,
+    "finance": 199,
+    "weather": 25
+   },
+   "cat_usd": {
+    "other": 3425478,
+    "econ": 752264,
+    "sports": 585701,
+    "crypto": 422189,
+    "finance": 49805,
+    "weather": 5993
+   },
+   "sell_frac": 0.1,
+   "buy_price_buckets": {
+    "<.02": 8,
+    "<.10": 78,
+    "<.30": 385,
+    "<.70": 989,
+    "<.90": 1138,
+    "<.97": 738,
+    ">=.97": 159
+   },
+   "median_buy_price": 0.79,
+   "median_trade_usd": 68.07,
+   "mean_trade_usd": 1348.45,
+   "outcome_yes_frac_buys": 0.33,
+   "median_lead_h_to_slugdate_end": null,
+   "trades_per_day": 26.6,
+   "weather_cities_top": {
+    "null": 25
+   },
+   "weather_yes_frac": 1.0,
+   "weather_median_price": 0.17
+  }
+ },
+ "gopfan": {
+  "wallet": "0x6af75d4e4aaf700450efbac3708cce1665810ff1",
+  "record": {
+   "first": "2024-11-28",
+   "last": "2026-10-12",
+   "pnl_total": 114700,
+   "peak": 114700,
+   "mdd": 0,
+   "pnl_30d": 0,
+   "pnl_90d": 0,
+   "pnl_180d": 0,
+   "months_up": "4/24",
+   "worst_month": 0,
+   "worst_day": 0,
+   "best_day": 114258,
+   "up_day_frac": 0.71,
+   "months": {
+    "2024-11": 114258,
+    "2024-12": 0,
+    "2025-01": 0,
+    "2025-02": 0,
+    "2025-03": 0,
+    "2025-04": 0,
+    "2025-05": 0,
+    "2025-06": 0,
+    "2025-07": 0,
+    "2025-08": 0,
+    "2025-09": 0,
+    "2025-10": 0,
+    "2025-11": 0,
+    "2025-12": 0,
+    "2026-01": 0,
+    "2026-02": 0,
+    "2026-03": 442,
+    "2026-04": 0,
+    "2026-05": 0,
+    "2026-06": 0,
+    "2026-07": 0,
+    "2026-08": 0,
+    "2026-09": 0,
+    "2026-10": 0
+   }
+  },
+  "profile": {
+   "n_trades": 3832,
+   "span_days": 310.8,
+   "from": "2024-06-26",
+   "to": "2025-05-02",
+   "types": {
+    "TRADE": 3832,
+    "REDEEM": 47,
+    "REWARD": 55,
+    "CONVERSION": 35,
+    "MERGE": 31
+   },
+   "cat_trades": {
+    "other": 3093,
+    "sports": 278,
+    "crypto": 212,
+    "finance": 147,
+    "weather": 101,
+    "econ": 1
+   },
+   "cat_usd": {
+    "other": 787193,
+    "sports": 322188,
+    "crypto": 72263,
+    "weather": 22435,
+    "finance": 16238,
+    "econ": 500
+   },
+   "sell_frac": 0.28,
+   "buy_price_buckets": {
+    "<.02": 19,
+    "<.10": 875,
+    "<.30": 640,
+    "<.70": 649,
+    "<.90": 372,
+    "<.97": 191,
+    ">=.97": 12
+   },
+   "median_buy_price": 0.24,
+   "median_trade_usd": 17.11,
+   "mean_trade_usd": 318.58,
+   "outcome_yes_frac_buys": 0.75,
+   "median_lead_h_to_slugdate_end": null,
+   "trades_per_day": 12.3,
+   "weather_cities_top": {
+    "null": 70
+   },
+   "weather_yes_frac": 0.84,
+   "weather_median_price": 0.31
+  }
+ },
+ "Bilberry": {
+  "wallet": "0xbf13934a1fec7d3211fc15c138d84ac2a691b91a",
+  "record": {
+   "first": "2025-12-30",
+   "last": "2026-10-12",
+   "pnl_total": 56432,
+   "peak": 61859,
+   "mdd": 5663,
+   "pnl_30d": 34893,
+   "pnl_90d": 55688,
+   "pnl_180d": 55592,
+   "months_up": "5/11",
+   "worst_month": -55,
+   "worst_day": -4276,
+   "best_day": 5087,
+   "up_day_frac": 0.67,
+   "months": {
+    "2025-12": 109,
+    "2026-01": -55,
+    "2026-02": 741,
+    "2026-03": -21,
+    "2026-04": -28,
+    "2026-05": 0,
+    "2026-06": -1,
+    "2026-07": 0,
+    "2026-08": 4611,
+    "2026-09": 48115,
+    "2026-10": 2962
+   }
+  },
+  "profile": {
+   "n_trades": 3302,
+   "span_days": 10.5,
+   "from": "2026-10-02",
+   "to": "2026-10-12",
+   "types": {
+    "TRADE": 3302,
+    "REDEEM": 688,
+    "TAKER_REBATE": 10
+   },
+   "cat_trades": {
+    "weather": 3302
+   },
+   "cat_usd": {
+    "weather": 194949
+   },
+   "sell_frac": 0.47,
+   "buy_price_buckets": {
+    "<.02": 5,
+    "<.10": 122,
+    "<.30": 567,
+    "<.70": 857,
+    "<.90": 200
+   },
+   "median_buy_price": 0.38,
+   "median_trade_usd": 19.84,
+   "mean_trade_usd": 59.04,
+   "outcome_yes_frac_buys": 0.53,
+   "median_lead_h_to_slugdate_end": 37.8,
+   "trades_per_day": 315.5,
+   "weather_cities_top": {
+    "Atlanta": 97,
+    "New York City": 77,
+    "Warsaw": 75,
+    "Los Angeles": 74,
+    "Hong Kong": 72,
+    "Chicago": 62,
+    "Helsinki": 58,
+    "Munich": 57,
+    "Moscow": 57,
+    "Busan": 56,
+    "Madrid": 56,
+    "null": 55
+   },
+   "weather_yes_frac": 0.53,
+   "weather_median_price": 0.38
+  }
+ },
+ "LowTempTation": {
+  "wallet": "0x8e40e10d9b34b28c77c4962be5026c6fdd1f3797",
+  "record": {
+   "first": "2026-08-05",
+   "last": "2026-10-12",
+   "pnl_total": 13416,
+   "peak": 13416,
+   "mdd": 860,
+   "pnl_30d": 5132,
+   "pnl_90d": 13416,
+   "pnl_180d": 13416,
+   "months_up": "3/3",
+   "worst_month": 2460,
+   "worst_day": -860,
+   "best_day": 824,
+   "up_day_frac": 0.99,
+   "months": {
+    "2026-08": 6879,
+    "2026-09": 4077,
+    "2026-10": 2460
+   }
+  },
+  "profile": {
+   "n_trades": 1424,
+   "span_days": 68.6,
+   "from": "2026-08-04",
+   "to": "2026-10-12",
+   "types": {
+    "TRADE": 1424,
+    "REDEEM": 9,
+    "TAKER_REBATE": 1
+   },
+   "cat_trades": {
+    "weather": 1424
+   },
+   "cat_usd": {
+    "weather": 112089
+   },
+   "sell_frac": 0.72,
+   "buy_price_buckets": {
+    "<.10": 1,
+    "<.30": 18,
+    "<.70": 115,
+    "<.90": 11,
+    "<.97": 70,
+    ">=.97": 182
+   },
+   "median_buy_price": 0.966,
+   "median_trade_usd": 29.1,
+   "mean_trade_usd": 78.71,
+   "outcome_yes_frac_buys": 0.38,
+   "median_lead_h_to_slugdate_end": 15.9,
+   "trades_per_day": 20.7,
+   "weather_cities_top": {
+    "Cape Town": 32,
+    "Buenos Aires": 25,
+    "Sao Paulo": 25,
+    "Mexico City": 23,
+    "Panama City": 20,
+    "Lucknow": 18,
+    "Manila": 15,
+    "Taipei": 15,
+    "Ankara": 15,
+    "Denver": 15,
+    "Madrid": 12,
+    "Karachi": 11
+   },
+   "weather_yes_frac": 0.38,
+   "weather_median_price": 0.966
+  }
+ },
+ "WrongBy1Degree": {
+  "wallet": "0x0a0c42f6b1da5a633ec1a4d45ba76eb486c1a853",
+  "record": {
+   "first": "2026-05-13",
+   "last": "2026-10-12",
+   "pnl_total": 8021,
+   "peak": 11673,
+   "mdd": 5361,
+   "pnl_30d": 4956,
+   "pnl_90d": 6928,
+   "pnl_180d": 8021,
+   "months_up": "5/6",
+   "worst_month": -488,
+   "worst_day": -3976,
+   "best_day": 2909,
+   "up_day_frac": 0.57,
+   "months": {
+    "2026-05": 1000,
+    "2026-06": 260,
+    "2026-07": 3,
+    "2026-08": 1289,
+    "2026-09": 5959,
+    "2026-10": -488
+   }
+  },
+  "profile": {
+   "n_trades": 3441,
+   "span_days": 20.9,
+   "from": "2026-09-21",
+   "to": "2026-10-12",
+   "types": {
+    "REDEEM": 537,
+    "TRADE": 3441,
+    "TAKER_REBATE": 17,
+    "MAKER_REBATE": 2,
+    "REWARD": 3
+   },
+   "cat_trades": {
+    "weather": 3441
+   },
+   "cat_usd": {
+    "weather": 58320
+   },
+   "sell_frac": 0.0,
+   "buy_price_buckets": {
+    "<.02": 21,
+    "<.10": 310,
+    "<.30": 1098,
+    "<.70": 1200,
+    "<.90": 809
+   },
+   "median_buy_price": 0.38,
+   "median_trade_usd": 15.38,
+   "mean_trade_usd": 16.95,
+   "outcome_yes_frac_buys": 0.54,
+   "median_lead_h_to_slugdate_end": 39.3,
+   "trades_per_day": 164.3,
+   "weather_cities_top": {
+    "Chicago": 203,
+    "Dallas": 142,
+    "Paris": 139,
+    "null": 137,
+    "Ankara": 118,
+    "Madrid": 115,
+    "Miami": 114,
+    "Wellington": 113,
+    "Cape Town": 106,
+    "Taipei": 98,
+    "Amsterdam": 93,
+    "Austin": 91
+   },
+   "weather_yes_frac": 0.54,
+   "weather_median_price": 0.38
+  }
+ },
+ "WeatherGuru": {
+  "wallet": "0xb6fbce093cdd139858c44148a6598d8ec028c038",
+  "record": {
+   "first": "2026-06-28",
+   "last": "2026-10-12",
+   "pnl_total": 9461,
+   "peak": 10896,
+   "mdd": 2976,
+   "pnl_30d": 2108,
+   "pnl_90d": 10436,
+   "pnl_180d": 9461,
+   "months_up": "2/5",
+   "worst_month": -1058,
+   "worst_day": -1361,
+   "best_day": 1535,
+   "up_day_frac": 0.55,
+   "months": {
+    "2026-06": -218,
+    "2026-07": -1058,
+    "2026-08": 4460,
+    "2026-09": 6457,
+    "2026-10": -180
+   }
+  },
+  "profile": {
+   "n_trades": 3345,
+   "span_days": 34.3,
+   "from": "2026-09-08",
+   "to": "2026-10-12",
+   "types": {
+    "TRADE": 3345,
+    "REDEEM": 626,
+    "TAKER_REBATE": 29
+   },
+   "cat_trades": {
+    "weather": 3345
+   },
+   "cat_usd": {
+    "weather": 97447
+   },
+   "sell_frac": 0.01,
+   "buy_price_buckets": {
+    "<.10": 22,
+    "<.30": 814,
+    "<.70": 2008,
+    "<.90": 422,
+    "<.97": 50
+   },
+   "median_buy_price": 0.4,
+   "median_trade_usd": 16.88,
+   "mean_trade_usd": 29.13,
+   "outcome_yes_frac_buys": 0.76,
+   "median_lead_h_to_slugdate_end": 40.9,
+   "trades_per_day": 97.5,
+   "weather_cities_top": {
+    "null": 287,
+    "Paris": 252,
+    "London": 251,
+    "New York City": 227,
+    "Miami": 177,
+    "Los Angeles": 162,
+    "Shanghai": 156,
+    "Jeddah": 128,
+    "Chicago": 117,
+    "Taipei": 104,
+    "Ankara": 98,
+    "Warsaw": 94
+   },
+   "weather_yes_frac": 0.76,
+   "weather_median_price": 0.4
+  }
+ },
+ "Poligarch": {
+  "wallet": "0xb40e89677d59665d5188541ad860450a6e2a7cc9",
+  "record": {
+   "first": "2025-08-30",
+   "last": "2026-10-12",
+   "pnl_total": 207067,
+   "peak": 207616,
+   "mdd": 3825,
+   "pnl_30d": 6772,
+   "pnl_90d": 27651,
+   "pnl_180d": 99702,
+   "months_up": "12/15",
+   "worst_month": -820,
+   "worst_day": -3542,
+   "best_day": 7522,
+   "up_day_frac": 0.72,
+   "months": {
+    "2025-08": -28,
+    "2025-09": -517,
+    "2025-10": 1197,
+    "2025-11": 853,
+    "2025-12": -820,
+    "2026-01": 17105,
+    "2026-02": 33437,
+    "2026-03": 33342,
+    "2026-04": 44194,
+    "2026-05": 27175,
+    "2026-06": 13821,
+    "2026-07": 11726,
+    "2026-08": 11131,
+    "2026-09": 12037,
+    "2026-10": 2417
+   }
+  },
+  "profile": {
+   "n_trades": 2847,
+   "span_days": 0.7,
+   "from": "2026-10-12",
+   "to": "2026-10-12",
+   "types": {
+    "TRADE": 2847,
+    "REDEEM": 1153
+   },
+   "cat_trades": {
+    "weather": 2662,
+    "other": 164,
+    "crypto": 14,
+    "sports": 7
+   },
+   "cat_usd": {
+    "weather": 13642,
+    "other": 2659,
+    "crypto": 140,
+    "sports": 40
+   },
+   "sell_frac": 0.0,
+   "buy_price_buckets": {
+    "<.02": 5,
+    "<.10": 124,
+    "<.30": 515,
+    "<.70": 1480,
+    "<.90": 616,
+    "<.97": 88,
+    ">=.97": 19
+   },
+   "median_buy_price": 0.52,
+   "median_trade_usd": 3.77,
+   "mean_trade_usd": 5.79,
+   "outcome_yes_frac_buys": 0.48,
+   "median_lead_h_to_slugdate_end": 15.1,
+   "trades_per_day": 4077.3,
+   "weather_cities_top": {
+    "London": 142,
+    "Miami": 138,
+    "Los Angeles": 120,
+    "Helsinki": 116,
+    "Austin": 101,
+    "Paris": 96,
+    "Madrid": 79,
+    "Houston": 76,
+    "Seattle": 73,
+    "Chicago": 72,
+    "Cape Town": 68,
+    "San Francisco": 66
+   },
+   "weather_yes_frac": 0.48,
+   "weather_median_price": 0.52
+  }
+ }
+}
