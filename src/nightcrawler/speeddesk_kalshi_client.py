@@ -97,7 +97,11 @@ class KalshiClient:
             raise KalshiClientError("authentication", "invalid Ed25519 signing key") from None
         self._key_id = key_text.strip()
         self._signer = signer
-        self._transport = transport or requests.request
+        # One kept-alive connection: a fresh TCP + TLS handshake per call cost
+        # several round trips to Kalshi (decision-to-acknowledgement was 641 ms
+        # on the first live order, 2026-10-12). Calls are serialized by _lock.
+        self._session: requests.Session | None = None if transport else requests.Session()
+        self._transport = transport or self._session.request  # type: ignore[union-attr]
         self._clock = clock or RealClock()
         self._interval, self._page_size, self._max_pages = min_interval_s, page_size, max_pages
         self._lock = threading.Lock()
@@ -105,7 +109,9 @@ class KalshiClient:
         self._rate_failures = 0
 
     def close(self) -> None:
-        """No persistent transport or credential file is opened by this client."""
+        """Close the kept-alive HTTP connection; no credential file is ever opened."""
+        if self._session is not None:
+            self._session.close()
 
     def headers(self, method: str, path: str) -> dict[str, str]:
         """Fresh Ed25519 signature; callers must never log the returned headers."""

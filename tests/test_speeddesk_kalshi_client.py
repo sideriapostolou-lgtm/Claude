@@ -367,3 +367,19 @@ def test_bad_read_or_cancel_filters_never_reach_transport(signing_key: Any, acti
     with pytest.raises(KalshiClientError):
         action(client(signing_key, transport))
     assert transport.calls == []
+
+
+def test_default_transport_keeps_one_connection_alive(signing_key: Any, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Every call reuses one requests.Session (no new TLS handshake per order); close() releases it."""
+    sessions: list[requests.Session] = []
+
+    def fake_request(self: requests.Session, method: str, url: str, **kwargs: Any) -> Response:
+        sessions.append(self)
+        return Response({"balance": 2500})
+
+    monkeypatch.setattr(requests.Session, "request", fake_request)
+    live = KalshiClient(Secret("throwaway-test-id"), Secret(pem(signing_key)), clock=FakeClock(1000))
+    live.balance()
+    live.balance()
+    assert len(sessions) == 2 and sessions[0] is sessions[1]
+    live.close()
