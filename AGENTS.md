@@ -27,14 +27,17 @@ your first change, and add an entry to `docs/WORKLOG.md` at the end of every ses
    Never force-push it, never rewrite its history, and pull first so you never overwrite someone else's commit. Use
    a `codex/<short-description>` branch and a pull request when the change is big or when the owner wants to look
    first. **Real-money code** (`polydesk.py`, `polymarket_us.py`, `marcodesk.py`, `deskguard.py`, `broker/`,
-   `risk.py`, `withdraw.py`, `config.py`) changes only on the owner's go-ahead in the current conversation.
+   `risk.py`, `withdraw.py`, `config.py`, `speeddesk_live*.py`, `speeddesk_kalshi_client.py`) changes only on the owner's go-ahead in the current conversation.
 5. **The owner's "stop".** If the owner says stop, real money must go off. With a Railway token: set
    `POLYDESK_MODE=paper` on service `bot`. Railway redeploys, and from then on the desk sends no new real orders;
    open bets still settle. Then confirm in the logs that it started in paper mode. Without a token: give him the
-   emergency steps in `docs/HANDOFF.md` section 1 at once.
+   emergency steps in `docs/HANDOFF.md` section 1 at once. The separate Kalshi speed desk must also stop:
+   set `SPEEDDESK_KALSHI_MODE=paper`, verify cancellation of its resting bids, and reconcile remaining exposure.
+   Filled bets still settle; never claim that paper mode closed them. Setting only POLYDESK_MODE does not stop Kalshi.
 6. **Green before push.** Tests and mypy must pass, and ruff must pass on the Python files you changed (the repo
    has about 470 older ruff findings in untouched files; do not mass-fix them in an unrelated pull request). Any change to real-money code (`polydesk.py`,
-   `polymarket_us.py`, `marcodesk.py`, `deskguard.py`, `broker/`, `risk.py`, `withdraw.py`, `config.py`) needs
+   `polymarket_us.py`, `marcodesk.py`, `deskguard.py`, `broker/`, `risk.py`, `withdraw.py`, `config.py`,
+   `speeddesk_live*.py`, `speeddesk_kalshi_client.py`) needs
    tests that pin the safety behaviour, and the pull request must say "touches real money" in its title.
 7. **Honest results.** Research follows the labs' rules (pre-registered plan, TRAIN -> VAL -> one look at TEST).
    "NO EDGE" is a valid answer. Never present paper or backtest results as real money. Report real money in the

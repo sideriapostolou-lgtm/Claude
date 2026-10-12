@@ -480,7 +480,7 @@ def test_the_report_cards_live_inside_the_team_card(settings: Settings) -> None:
     assert html.count('class="graded"') == len(MEMBERS)  # "Graded on 4,212 coins · 14 days" under each row
     ids = re.findall(r'<section class="card" id="([a-z]+)"', html)
     # the experience adds no card of its own (the wallet card is the bot wallet's deposit card)
-    assert ids == ["plain", "money", "town", "speeddesk", "wallet", "team", "trades", "learning", "ready", "receipts",
+    assert ids == ["plain", "money", "town", "speeddesk", "kalshilive", "wallet", "team", "trades", "learning", "ready", "receipts",
                    "usage"]
 
 

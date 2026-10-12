@@ -3,6 +3,10 @@
 Goal: copy the method of the public Polymarket bot "dangerously-skip-permissions" as closely as our venue allows,
 **in practice mode first**. Read `AGENTS.md` first: real money only on the owner's exact word with amounts named.
 
+**Owner update, 2026-10-12:** section 9 authorizes a separate, tightly capped Kalshi live companion before the
+three-day practice trial finishes. The original trial continues, and the Polymarket US leg remains practice.
+Deployment itself must leave the new companion in paper mode; the owner activates its two live switches.
+
 ## 1. What the original bot does (measured, research/lab8/skip/READING.md)
 
 From its newest 2,000 public fills (2026-10-12, 3.2 hours, 38 windows), with `pull.py`, `an.py` and
@@ -166,3 +170,103 @@ Use the repo's fake clocks and fakes (`tests/fakes.py`). Tests and mypy must pas
 Honest expectation: the original makes money on deep international 5-minute books with speed and about
 $1,800 per window. Ours runs on thin 15m and 1h US books, so the practice run decides whether it earns anything.
 Report what happens, good or bad.
+
+## 9. Kalshi live companion: owner's explicit decision, 2026-10-12
+
+The owner superseded the earlier pause and the three-day prerequisite for **Kalshi only**. Build and test the
+live-capable companion, ship it in paper mode, then give the owner the activation settings. Do not change
+`polydesk.py`, the existing real Polymarket desk or the Polymarket US practice leg. Continue the original
+practice trial and keep an additional honest practice twin of the live companion's decisions for comparison.
+
+### Owner's hard limits
+
+| Setting | Default and maximum | Includes |
+| --- | ---: | --- |
+| `SPEEDDESK_KALSHI_WINDOW_USD` | $2 | Actual buys, fees, unfilled reservations and uncertain requests in one KXBTC15M window |
+| `SPEEDDESK_KALSHI_OPEN_USD` | $4 | All unsettled windows and pending orders |
+| `SPEEDDESK_KALSHI_DAY_STOP_USD` | $3 | UTC-day settled drawdown plus money still at risk; resets at 00:00 UTC without dropping carried exposure |
+| `SPEEDDESK_KALSHI_TOTAL_STOP_USD` | $5 | Settled drawdown since the last authorized resume plus money still at risk |
+| `SPEEDDESK_KALSHI_CUTOFF_S` | 180 seconds | End real buying after the first 12 minutes; configured cutoff may never be below 60 seconds |
+
+Fees and resting orders count at their worst permitted cost. Kalshi cash is another limit, never permission
+to exceed a strategy cap. A total stop persists through restarts and returns the companion to paper. A new
+nonempty `SPEEDDESK_KALSHI_RESUME_TOKEN` acknowledges a fresh $5 stop budget; it must preserve lifetime P&L,
+fills, fees, existing exposure and the current day's stop. Store only a fingerprint, never the token value.
+Reusing an old/pre-halt token or changing ordinary settings cannot silently clear the halt or corrupt state.
+
+These are risk controls for a paid experiment, not a profit promise or an absolute guarantee against an
+exchange failure. We copy the observed rules, not the original bot's speed, 5-minute venue, liquidity or size.
+
+### Activation and stop
+
+New buys require all of the following in the current process:
+
+1. `SPEEDDESK_KALSHI_MODE=live` (default `paper`).
+2. `SPEEDDESK_KALSHI_LIVE_CONFIRM=yes`.
+3. Both `KALSHI_KEY_ID` and `KALSHI_PRIVATE_KEY` are present.
+4. An authenticated balance read has succeeded this run.
+
+Valid window rules, fresh data, conservative fee allowances, reconciled account state and remaining budget are
+also required. Any authentication failure leaves this companion in paper with a visible reason; it must not
+stop the existing polydesk process. Record the correct account type before activation; do not set `direct` merely to bypass missing fee evidence.
+Activation variables are set by the owner on Railway **after** the paper
+deployment is verified. The kill switch is `SPEEDDESK_KALSHI_MODE=paper`.
+
+Fresh paper operation never constructs the authenticated client. Returning from live to paper still needs
+authenticated, cancel/read-only recovery for prior live orders; this recovery cannot submit a new order.
+Already filled exposure remains real until it settles, and the page must say so even with new buying off.
+
+### Verified API and accounting
+
+- Use the current official V2 event-order endpoint, `POST /trade-api/v2/portfolio/events/orders`, rather than
+  guessing legacy request fields. Prices are fixed-point YES dollars; `bid` buys YES and `ask` is the economic
+  equivalent of buying NO at `1 - yes_price`. Count and price use the documented fixed-point strings.
+- Kalshi nets opposite outcomes. Preserve actual gross fill lots to attribute locked versus directional
+  results, but reconcile their signed difference against actual net positions. Never fabricate a gross
+  account position or double-count the cash released by a matched pair. Unattributed positions/orders in a
+  target market block it; the bot must not offset or cancel the owner's activity.
+- Use a fixed bot prefix and a unique `client_order_id` on every request. Persist the intent and full
+  reservation before sending. Never blindly retry a create after timeout/5xx; reconcile by client ID. An
+  empty or delayed list is not proof that no order exists. Unknown requests retain their budget.
+- IOC takes use the edge after rounded fees. Resting orders are post-only, use venue expiry, and are repriced
+  when fair value moves more than 1c. Self-trade prevention is `taker_at_cross`, so the incoming bot order is
+  cancelled rather than an owner's resting order. Mutation routing follows the documented exchange shard;
+  account reads must cover all relevant shards and complete pagination.
+- Live accounting uses actual fill `fee_cost`, not simulated fee estimates. The July 7, 2026 schedule and
+  current fee-rounding guide distinguish Direct balance precision ($0.0001) from non-direct ($0.01), with
+  six-decimal trade fees and a per-order rounding accumulator. Fractional executions can occur even for a
+  whole-contract request. Subaccount 0 exists for both account types and does **not** prove Direct membership.
+  Until the owner confirms the account type, reserve using the conservative $0.01 grid and show that reason.
+  At the smallest permitted partial fill this costs at least $1 per contract, so no binary price can clear
+  a positive edge: live switches alone will not produce orders while precision remains unverified. Direct
+  precision must be explicitly established before enabling the cheaper bound. The nonsecret
+  `SPEEDDESK_KALSHI_ACCOUNT_TYPE` records the owner's factual confirmation: `direct` for a personal direct
+  Kalshi account, `fcm` for a broker/FCM account, `unknown` by default. It never grants live permission. Reservations remain conservative
+  about partial fills and do not spend an expected rounding rebate.
+- KXBTC15M rules use the 60-second average of CF Benchmarks BRTI at each boundary; YES wins ties. Read and
+  validate current rules/fees for every eligible window. Unknown terms disable that window.
+- Cancel only bot-owned resting orders at startup, cutoff, stale Bitcoin (>3 s), shutdown, repeated errors
+  and mode changes. A cancel request alone does not release exposure: reconcile terminal status and all
+  actual fills. Prevent overlapping processes from independently spending the same persisted budget.
+
+Official sources checked for this implementation:
+
+- <https://docs.kalshi.com/api-reference/orders/create-order-v2>
+- <https://docs.kalshi.com/openapi.yaml>
+- <https://docs.kalshi.com/getting_started/fee_rounding>
+- <https://docs.kalshi.com/getting_started/subaccounts>
+- <https://kalshi.com/docs/kalshi-fee-schedule.pdf>
+
+### Evidence before activation
+
+Fake-only tests must cover all four switches, permanent Polymarket US isolation, paper/no-create behavior,
+fees and partial fills within every cap, UTC rollover and durable total stops, cancellation triggers,
+unknown-create reconciliation, startup recovery, process overlap, actual-fill accounting, net settlement
+attribution, and throwaway-key signing of the exact documented message. Run the full tests, source mypy and
+changed-file Ruff. Independent reviewers check the safety invariants before merging.
+
+Logs use `speeddesk_live_order`, `_fill`, `_cancel`, `_reject` and `_status`, without credentials. The page
+separates **REAL MONEY (Kalshi)** from practice and keeps Kalshi cash/results separate from Polymarket cash
+and the existing town figures. Verify the exact deployed commit and a paper `speeddesk_live_status` before
+giving the owner the activation settings. After the owner activates, inspect the first windows and record
+orders, fills, fees, locked/directional P&L, gaps and anomalies in `docs/WORKLOG.md`.

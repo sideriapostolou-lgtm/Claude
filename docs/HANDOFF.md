@@ -37,6 +37,10 @@ Use a pull request for bigger changes or when the owner wants to review first.
    running, the desk sends no new real orders. It does **not** close or sell open bets; they settle at the venue (or
    the owner cashes them out in the app). The desk sends immediate-or-cancel orders, so nothing should be left
    resting on the book, but check the app's Orders tab.
+4. **Kalshi speed desk:** also set `SPEEDDESK_KALSHI_MODE=paper`. The companion cancels its own resting bids
+   and reconciles them before releasing their budget; filled bets remain real until settlement. If cancellation
+   is unconfirmed, check the Kalshi Orders tab and cancel the bot's bids there. Its stop is separate from
+   `POLYDESK_MODE`; stopping all real buying requires both switches.
 
 ## 2. System map (src/nightcrawler)
 
@@ -178,12 +182,13 @@ session scratchpad that you will not have.
 ## 9. Work in flight and backlog (in priority order)
 
 0. **The speed desk (owner's top priority, 2026-10-12):** implementation follows `docs/SPEEDDESK_SPEC.md`,
-   **practice only** (`speeddesk.py`, its model and venue adapters, independent engine thread). It uses Coinbase
+   original **practice trial** (`speeddesk.py`, its model and venue adapters, independent engine thread). It uses Coinbase
    Bitcoin ticks with Polymarket US 15m/1h books; the public Kalshi KXBTC15M adapter is separately controlled by
    `SPEEDDESK_KALSHI_ENABLED`. All speed-desk settings are `SPEEDDESK_*`; the independent practice budgets default
    to $20 per window, $20 across open windows, and a $10 UTC daily loss stop. The owner's approved starter clip
-   permits the first practice buy, then only balancing buys until the 25 % imbalance cap is satisfied. No real
-   order resource is available, and `SPEEDDESK_MODE=live` is rejected.
+   permits the first practice buy, then only balancing buys until the 25 % imbalance cap is satisfied. The
+   original trial cannot place real orders, and `SPEEDDESK_MODE=live` is rejected. The separately gated Kalshi
+   companion below is the only speed-desk live path.
    State and receipts live under `/data/speeddesk/`; `/api/page` has `money.speeddesk.today` plus the latest 31
    UTC calendar-day reports. The page labels this **PRACTICE**, keeps locked-pair and directional results apart,
    reports fill rates and latency, and never adds pretend results to cash or the town's real profit.
@@ -196,8 +201,19 @@ session scratchpad that you will not have.
    PR #7). Both venue
    trade feeds are verified; existing polydesk remains LIVE at 10 contracts. The at-least-three-day observation
    is still pending, with the first conservative review no earlier than 2026-10-15 19:09 UTC. See `docs/WORKLOG.md`.
-   Partial days and missing/stale feeds are reported honestly. Positive practice after fees over 3+ days is still
-   insufficient for real money without the owner's exact dollar amounts; no setting automatically promotes it.
+   Partial days and missing/stale feeds are reported honestly. **Later owner decision, 2026-10-12:** the owner
+   waived the three-day prerequisite for a separate Kalshi-only companion, with exact $2/window, $4 open,
+   $3 UTC day stop and $5 total stop limits. See spec section 9. This companion ships **paper by default**,
+   uses actual account fills/fees/positions and a separate honest practice twin, and never promotes itself.
+   The owner activates `SPEEDDESK_KALSHI_MODE=live` and `SPEEDDESK_KALSHI_LIVE_CONFIRM=yes` only after the
+   deployment check. Until Direct-account fee precision is established, conservative rounding excludes all
+   positive-edge orders; the panel says why. Set the factual `SPEEDDESK_KALSHI_ACCOUNT_TYPE=direct` only
+   if the owner confirms a personal account opened directly with Kalshi; `fcm` for a broker/FCM, otherwise
+   leave `unknown`. This account fact does not authorize orders. Total stop requires a never-before-used resume token. Companion
+   receipts live in `/data/speeddesk/kalshi_live/`; the page exposes `money.speeddesk.kalshi_live`, separately
+   from Polymarket cash and town totals. Polymarket US speed trading remains practice permanently.
+   New logs: `speeddesk_live_order`, `_fill`, `_cancel`, `_reject`, `_status`. Resting bids have a 30-second
+   venue expiry, cancel on cutoff/staleness/stop/startup, and keep their reservation until fills reconcile.
    Also live since 2026-10-12: the Bitcoin distance bar depends on price and time left (`btcdistance.REQUIRED_Z`),
    and `MARCO_REAL=0`.
 

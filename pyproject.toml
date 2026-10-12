@@ -12,6 +12,7 @@ dependencies = [
     "requests>=2.31",
     "polymarket-us==2.4.1",  # speed desk market-data WebSocket only; never its order resource
     "websockets>=13,<16",
+    "cryptography>=43",  # Kalshi Ed25519 PKCS#8 signing; initialized only after live opt-in
 ]
 
 [project.optional-dependencies]

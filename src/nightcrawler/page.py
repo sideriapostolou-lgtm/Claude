@@ -217,6 +217,8 @@ footer{color:var(--ink2);font-size:12px;text-align:center;margin-top:18px}
 #speeddesk-venues{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr))}
 #speeddesk .speed-venue{margin-top:0}
 #speeddesk .speed-venue h3{margin:0;font-size:16px}
+#kalshilive .num{white-space:normal;text-align:right;overflow-wrap:anywhere}
+#kalshilive h2 small{white-space:normal}
 .hero-tag{font-size:20px;font-weight:650;color:var(--ink2);letter-spacing:0}
 """
 
@@ -306,11 +308,13 @@ _SCRIPT = r"""
   const STATUS_CHIP = {working: "working", waiting: "waiting", idle: "idle", stuck: "blocked"};
   // The header's badge and the tab's title: real money only where the plain words say it (plain.real), and still
   // red while a real bet is open after real betting stopped; before the first answer they claim nothing.
-  function moneyWords(r) {
+  function moneyWords(r, k) {
     if (!r) return null;
-    if (r.on) return {badge: "REAL MONEY ON", live: true, title: "real money on"};
-    if (r.reported === false) return {badge: "REAL MONEY: NO REPORT YET", live: false, title: "real money: no report yet"};
+    if (r.on || (k && k.active)) return {badge: "REAL MONEY ON", live: true, title: "real money on"};
+    if (k && k.has_real_exposure) return {badge: "REAL EXPOSURE AT KALSHI", live: true, title: "real exposure at Kalshi"};
     if (r.open_bets > 0) return {badge: "REAL BETS STILL OPEN", live: true, title: "real bets still open"};
+    if (k && (k.stale || !k.mode)) return {badge: "KALSHI: STATUS UNKNOWN", live: false, title: "Kalshi: status unknown"};
+    if (r.reported === false) return {badge: "REAL MONEY: NO REPORT YET", live: false, title: "real money: no report yet"};
     return {badge: "PRETEND MONEY", live: false, title: "pretend money"};
   }
   function renderPlain(p) {
@@ -335,6 +339,47 @@ _SCRIPT = r"""
     put($("plain-team"), ...p.team.map((c) => el("div", "line", el("span", null, c.plain_role),
       el("span", "chip " + (STATUS_CHIP[c.status_word] || "idle"), el("i"), c.status_word))));
     put($("plain-words"), ...p.glossary.map((g) => el("div", null, el("b", null, g.word), el("div", "meta", g.means))));
+  }
+
+  function renderKalshiLive(k) {
+    const panel = $("kalshilive");
+    panel.hidden = !k;
+    if (!k) return;
+    const d = k.today || {}, total = k.total || {}, caps = k.caps || {}, twin = k.practice_twin || {};
+    const count = (v) => isNum(v) ? String(v) : "—";
+    const row = (label, value) => el("div", "line", el("span", null, label), el("b", "num", value));
+    $("kalshi-live-mode").textContent = k.stale || !k.mode ? "STATUS UNKNOWN" : k.label;
+    $("kalshi-live-status").textContent = (k.stale ? "Report behind; current mode is unknown. " : "")
+      + k.status + (k.reason ? " · " + k.reason : "");
+    const warnings = [];
+    if (k.has_real_exposure) warnings.push(k.stale
+      ? "Last report still showed real exposure. Its current size is unconfirmed."
+      : k.active ? "Real cash is committed to Kalshi bets." : "Real exposure remains; new real orders are off.");
+    if (k.cleanup_pending) warnings.push("Order cleanup is pending. Reserved money remains at risk until confirmed.");
+    if (k.total_halted) warnings.push("Total loss stop is latched. The owner must supply a new resume token to resume.");
+    $("kalshi-live-warning").textContent = warnings.join(" ");
+    $("kalshi-live-warning").hidden = !warnings.length;
+    $("kalshi-live-account-label").textContent = k.stale ? "Last recorded real account · current values unconfirmed"
+      : "Real Kalshi account · separate from Polymarket and the town";
+    put($("kalshi-live-account"), row("Available cash (fresh balance)", usd(k.cash_usd)),
+      row("Reserved for orders", usd(k.reserved_usd)), row("Open position risk", usd(k.open_risk_usd)),
+      row("Total money at risk", usd(k.at_risk_usd)), row("Open orders / positions", count(k.open_orders) + " / " + count(k.positions)));
+    put($("kalshi-live-today"), row("Windows traded / real fills", count(d.windows) + " / " + count(d.fills)),
+      row("Actual fees", usd(d.fees_usd)), row("Locked pairs, after fees", usd(d.locked_usd, true)),
+      row("Direction, after fees", usd(d.directional_usd, true)), row("Settled result, after fees", usd(d.pnl_usd, true)));
+    put($("kalshi-live-total"), row("Actual fees", usd(total.fees_usd)),
+      row("Locked pairs, after fees", usd(total.locked_usd, true)), row("Direction, after fees", usd(total.directional_usd, true)),
+      row("Settled result, after fees", usd(total.pnl_usd, true)));
+    put($("kalshi-live-twin"), row("Windows traded / pretend fills", count(twin.windows) + " / " + count(twin.fills)),
+      row("Pretend locked pairs, after fees", usd(twin.locked_usd, true)),
+      row("Pretend direction, after fees", usd(twin.directional_usd, true)),
+      row("Pretend settled result, after fees", usd(twin.pnl_usd, true)));
+    $("kalshi-live-limits").textContent = "Limits, fees included: " + usd(caps.window_usd) + " per window; "
+      + usd(caps.open_usd) + " across open windows; " + usd(caps.day_stop_usd) + " daily loss stop; "
+      + usd(caps.total_stop_usd) + " total loss stop. Stops include money at risk. These limits cannot guarantee "
+      + "protection against exchange or network failures.";
+    $("kalshi-live-updated").textContent = "Report: " + (isNum(k.as_of) ? ago(k.as_of) : "not received")
+      + ". Cash checked: " + (isNum(k.cash_at) ? ago(k.cash_at) : "not received") + ".";
   }
 
   // ---------------------------------------------------------------- A. money
@@ -936,7 +981,8 @@ _SCRIPT = r"""
 
   function render(s) {
     last = s;
-    const words = moneyWords(s.plain && s.plain.real), mode = $("mode");
+    const kalshi = s.money.speeddesk && s.money.speeddesk.kalshi_live;
+    const words = moneyWords(s.plain && s.plain.real, kalshi), mode = $("mode");
     mode.textContent = words ? words.badge : "";
     mode.hidden = !words;
     mode.className = "mode" + (words && words.live ? " live" : "");
@@ -945,6 +991,7 @@ _SCRIPT = r"""
     renderPlain(s.plain);
     renderMoney(s.money, s.mode === "LIVE");
     renderSpeedDesk(s.money.speeddesk, s.plain && s.plain.speeddesk_line);
+    renderKalshiLive(kalshi);
     if (s.town) renderTown(s.town);
     renderGoal(s.plain && s.plain.goal);
     if (s.wallet) renderWallet(s.wallet);
@@ -1092,6 +1139,21 @@ def render_page_html(settings: Settings) -> str:
         "Fill delay includes time a resting bid waited. "
         "Practice never adds to your cash or the town's real profit.</p>"
         "<p class=\"help\" id=\"speeddesk-feed\"></p></section>\n"
+
+        "<section class=\"card\" id=\"kalshilive\" hidden><h2>Kalshi live desk "
+        "<small id=\"kalshi-live-mode\">PRACTICE</small></h2>"
+        "<p class=\"lead\" id=\"kalshi-live-status\"></p><p class=\"warning\" id=\"kalshi-live-warning\" hidden></p>"
+        "<p class=\"sub\" id=\"kalshi-live-account-label\"></p><div class=\"rows\" id=\"kalshi-live-account\"></div>"
+        "<p class=\"sub\">Actual real-money results today (UTC)</p><div class=\"rows\" id=\"kalshi-live-today\"></div>"
+        "<details class=\"about\"><summary>Actual real-money results since start</summary>"
+        "<div class=\"rows\" id=\"kalshi-live-total\"></div></details>"
+        "<details class=\"about\"><summary>Practice twin today · PRACTICE</summary>"
+        "<p class=\"help\">The same decisions, simulated fills. Pretend results are separate from actual Kalshi fills.</p>"
+        "<div class=\"rows\" id=\"kalshi-live-twin\"></div></details>"
+        "<p class=\"help\" id=\"kalshi-live-limits\"></p>"
+        "<p class=\"help\">Paper mode stops new real orders; existing bets still settle. Cash is not profit. "
+        "Kalshi results stay separate from Polymarket cash and the town totals. Missing figures mean unknown.</p>"
+        "<p class=\"help\" id=\"kalshi-live-updated\"></p></section>\n"
 
         "<section class=\"card\" id=\"wallet\"><h2>Bot wallet <small id=\"wallet-kind\"></small></h2>"
         "<div id=\"wallet-body\"><p class=\"empty\">Loading…</p></div></section>\n"

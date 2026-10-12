@@ -13,6 +13,50 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-12 20:08 UTC, Codex, branch codex/kalshi-live
+- Owner authorization: the current handoff supersedes the earlier pause and practice-only restriction for
+  **Kalshi KXBTC15M only**. Built the requested live-capable companion and will deploy it **PAPER by default**.
+  The existing Polymarket real desk, `polydesk.py`, Marco settings and public speed-desk practice trial are
+  unchanged. Original practice continues; positive-after-fees evidence has not been established.
+- Changed: separately gated Ed25519 client for the documented V2 event-order API, durable real-fill ledger,
+  serialized execution controller, and an honest twin of live decisions. Unique prefixed intents/reservations
+  are saved before HTTP; timeout/5xx creates are reconciled rather than retried. Actual fills, fees, net
+  positions and venue settlement timestamps drive real inventory and locked/directional results.
+- Limits: $2/window including fees and pending orders, $4 across windows, $3 UTC daily loss plus money at risk,
+  $5 total stop requiring a never-used resume token. The first clip preserves room for its opposite side.
+  Cancels cover startup, cutoff (180 s default), stale BTC (>3 s), mode/auth/error/risk stops and shutdown.
+  Requests in flight are drained; cancellations keep reservations until terminal status and fills agree.
+  Resting orders expire after at most 30 s as a fallback. Process lock and journal validation prevent an
+  overlapping or corrupt controller from resetting the budget. Real exposure survives switching to paper.
+- API/fee evidence: official current OpenAPI, V2 orders, fee-rounding guide and July 7, 2026 fee schedule,
+  plus current KXBTC15M series/rules checked. Kalshi nets opposite holdings; gross actual fill lots retain
+  attribution while signed net positions reconcile. No actual credentials or private account calls were
+  used during development; signing tests use generated throwaway keys, all execution tests use fakes.
+- Important unresolved account fact: primary subaccount 0 and an Ed25519 key do not prove Direct membership.
+  Asked the owner whether the account was opened directly with Kalshi or through a broker/FCM; no answer yet.
+  Added factual `SPEEDDESK_KALSHI_ACCOUNT_TYPE=unknown|direct|fcm`, default unknown. Unknown/FCM reserves the
+  worst whole-cent rounding on each possible .01-contract fragment, which prevents every positive-edge
+  candidate. `direct` is only for a confirmed Direct account, not a permission or a shortcut around fees.
+  The two live switches alone therefore do not guarantee trading while this fact remains unknown.
+- Page: separate REAL MONEY (Kalshi)/PRACTICE companion with actual cash, fees, exposure, caps/stops and real
+  versus twin results. Existing Polymarket cash and town totals do not include Kalshi or pretend profit.
+  Stale evidence or revoked current settings cannot claim live buying. Failed callbacks/panels are isolated
+  from the practice trial, close the send gate immediately and trigger cleanup. Worker-thread send guards
+  read atomically published copied market inputs; gaps invalidate them before any checkpoint disk work.
+- Verification: final full suite **3,406 passed, 21 skipped** (12 opt-in network tests and 9 optional
+  scientific dependencies). Source mypy passed all 91 files; Ruff passed all 19 changed Python files.
+  Added-line secret scan found no credential patterns, key material, JWTs or long random literals. Independent client/model/controller/runtime/UI review found and fixed
+  cancellation races, stale fee/input guards, terminal-evidence recovery, token replay and UTC attribution.
+  Synthetic browser checks at 320/390/1280 px passed, including actual cash separate from simulated P&L.
+- Real money touched? Authorized real-money capability/configuration and service restart, **no activation**,
+  no real order and no Railway variable/key change in this session. Four switches remain necessary, including
+  a successful balance read this run. Kill switch: `SPEEDDESK_KALSHI_MODE=paper`; open fills still settle.
+- Pending: default-paper deploy verification and owner confirmation of account fee type. After
+  those, the owner sets `SPEEDDESK_KALSHI_MODE=live` and `SPEEDDESK_KALSHI_LIVE_CONFIRM=yes`; watch the first
+  real windows and report orders/fills/fees/P&L/anomalies. No real execution/profit result is claimed here.
+  We copy rules, not the original bot's speed, venue or size; small losses are the likely paid-experiment
+  outcome. The $5 budget is a code risk limit, not an absolute promise against exchange/network failure.
+
 ## 2026-10-12 19:33 UTC, Codex, branch codex/speed-desk
 - Changed: pulled first and read Claude's Kalshi account/signing handoff in `docs/ACCOUNTS.md` and spec
   section 2b. His `d80424f` is already included. Recorded the explicit restriction: **public REST only,

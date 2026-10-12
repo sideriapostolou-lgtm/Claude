@@ -964,7 +964,7 @@ def test_page_script_never_turns_data_into_html(settings: Settings) -> None:
 def test_page_has_every_section_in_order_and_is_built_for_phones(settings: Settings) -> None:
     html = render_page_html(settings)
     ids = re.findall(r'<section class="card" id="([a-z]+)"', html)
-    assert ids == ["plain", "money", "town", "speeddesk", "wallet", "team", "trades", "learning", "ready", "receipts",
+    assert ids == ["plain", "money", "town", "speeddesk", "kalshilive", "wallet", "team", "trades", "learning", "ready", "receipts",
                    "usage"]
     for mid, name, role in MEMBERS:
         assert f'id="m-{mid}"' in html and f"<b>{name}</b>" in html and role in html

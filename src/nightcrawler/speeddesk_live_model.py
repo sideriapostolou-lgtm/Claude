@@ -1,0 +1,614 @@
+"""Durable Kalshi-only execution accounting, with no network or credentials.
+
+Reservations precede network requests and survive uncertainty. Only owned,
+identified venue fills change holdings. A requested cancellation is not proof
+that the remaining exposure disappeared. The practice ledger is never read.
+"""
+
+from __future__ import annotations
+
+import hashlib
+import itertools
+import math
+from dataclasses import asdict, dataclass
+from decimal import ROUND_CEILING, Decimal
+from typing import Any, Literal
+
+from .speeddesk_model import (
+    EPSILON,
+    Holding,
+    Inventory,
+    Side,
+    Window,
+    settlement,
+    utc_day,
+)
+
+CLIENT_PREFIX = "nc-speed-"
+Kind = Literal["take", "rest"]
+
+
+class LiveRejected(ValueError):
+    def __init__(self, reason: str) -> None:
+        self.reason = reason
+        super().__init__(reason)
+
+
+@dataclass(frozen=True)
+class LiveLimits:
+    window_usd: float = 2.0
+    open_usd: float = 4.0
+    day_loss_usd: float = 3.0
+    total_loss_usd: float = 5.0
+    pair_cap: float = 0.99
+    max_imbalance: float = 0.25
+    clip: float = 25.0
+    cutoff_s: float = 180.0
+    cash_max_age_s: float = 5.0
+    fee_precision: float = 0.01
+    min_fill_qty: float = 0.01
+
+    def __post_init__(self) -> None:
+        if any(not math.isfinite(value) or value < 0 for value in asdict(self).values()):
+            raise ValueError("Invalid live limits")
+        for name, hard in (("window_usd", 2.0), ("open_usd", 4.0),
+                           ("day_loss_usd", 3.0), ("total_loss_usd", 5.0)):
+            object.__setattr__(self, name, min(getattr(self, name), hard))
+        object.__setattr__(self, "pair_cap", min(self.pair_cap, 0.99))
+        object.__setattr__(self, "max_imbalance", min(self.max_imbalance, 0.25))
+        object.__setattr__(self, "cutoff_s", max(60.0, self.cutoff_s))
+        if self.fee_precision not in (0.0001, 0.01) or self.min_fill_qty != 0.01:
+            raise ValueError("Unsupported live fee precision or execution increment")
+
+
+def reserve_unit_cost(price: float, coefficient: float, precision: float = 0.01) -> float:
+    """Upper cost bound for every partition into actual .01-contract fills.
+
+    The default covers unknown/non-direct account precision. The $.0001
+    direct-member precision must be established before selecting that bound.
+    No future fee-accumulator rebate is spent in advance.
+    """
+    if not (math.isfinite(price) and 0 < price < 1 and math.isfinite(coefficient)
+            and 0 <= coefficient <= 1 and precision in (0.0001, 0.01)):
+        raise LiveRejected("fee_unknown")
+    p, k, increment, grid = Decimal(str(price)), Decimal(str(coefficient)), Decimal(".01"), Decimal(str(precision))
+    cost = increment * (p + k * p * (1 - p))
+    return float((cost / grid).to_integral_value(rounding=ROUND_CEILING) * grid / increment)
+
+
+@dataclass
+class LiveIntent:
+    client_order_id: str
+    window: str
+    side: Side
+    kind: Kind
+    price: float
+    size: float
+    created_at: float
+    unit_reserve: float
+    fair: float | None = None
+    order_id: str | None = None
+    status: str = "intent"
+    filled_size: float = 0.0
+    reported_filled_size: float = 0.0
+    venue_remaining_size: float | None = None
+    reservation_active: bool = True
+    cancel_requested: bool = False
+    last_snapshot_at: float | None = None
+    uncertainty: str | None = None
+
+    @property
+    def remaining(self) -> float:
+        return max(0.0, self.size - self.filled_size)
+
+    @property
+    def reserved(self) -> float:
+        return self.remaining * self.unit_reserve if self.reservation_active else 0.0
+
+
+@dataclass(frozen=True)
+class ActualFill:
+    fill_id: str
+    order_id: str
+    client_order_id: str
+    window: str
+    side: Side
+    price: float
+    size: float
+    fee_usd: float
+    at: float
+
+
+@dataclass(frozen=True)
+class OrderSnapshot:
+    client_order_id: str
+    order_id: str
+    status: str
+    filled_size: float
+    remaining_size: float
+    at: float
+
+
+@dataclass(frozen=True)
+class LiveSettlement:
+    window: str
+    settlement_id: str
+    at: float
+    up_wins: bool
+    up_shares: float
+    down_shares: float
+    cost_usd: float
+    fee_usd: float
+    paired_credit_usd: float
+    net_payout_usd: float
+    payout_usd: float
+    locked_usd: float
+    direction_usd: float
+    pnl_usd: float
+
+
+class LiveRiskBook:
+    def __init__(self, limits: LiveLimits | None = None) -> None:
+        self.limits = limits or LiveLimits()
+        self.windows: dict[str, Window] = {}
+        self.intents: dict[str, LiveIntent] = {}
+        self.inventory: dict[str, Inventory] = {}
+        self.fills: dict[str, ActualFill] = {}
+        self.settled: dict[str, LiveSettlement] = {}
+        self.day_pnl: dict[str, float] = {}
+        self.realized_pnl = 0.0
+        self.stop_anchor = 0.0
+        self.halted = False
+        self.halt_reason: str | None = None
+        self.integrity_error: str | None = None
+        self.resume_token_hash: str | None = None
+        self.seen_resume_hashes: set[str] = set()
+        self.bootstrap_order: dict[str, str] = {}
+        self.cash_usd: float | None = None
+        self.cash_at: float | None = None
+        self.cash_debits = 0.0
+
+    def add_window(self, window: Window) -> None:
+        if (window.venue != "kalshi" or not window.slug.startswith("KXBTC15M-")
+                or not all(math.isfinite(value) for value in (window.start, window.end))
+                or abs(window.end - window.start - 900) > EPSILON):
+            raise LiveRejected("kalshi_15m_only")
+        if window.slug not in self.windows:
+            self.windows[window.slug] = window
+        self.inventory.setdefault(window.slug, Inventory())
+
+    def update_cash(self, cash_usd: float, now: float) -> None:
+        if not math.isfinite(cash_usd) or cash_usd < 0 or not math.isfinite(now):
+            raise LiveRejected("cash_unknown")
+        if self.cash_at is not None and now < self.cash_at:
+            raise LiveRejected("cash_stale")
+        self.cash_usd, self.cash_at, self.cash_debits = cash_usd, now, 0.0
+
+    def unit_reserve(self, window: str, price: float, kind: Kind) -> float:
+        spec = self.windows[window]
+        coefficient = spec.taker_coefficient if kind == "take" else spec.maker_coefficient
+        if coefficient is None:
+            raise LiveRejected("fee_unknown")
+        return reserve_unit_cost(price, coefficient, self.limits.fee_precision)
+
+    @property
+    def reserved_usd(self) -> float:
+        return sum(intent.reserved for intent in self.intents.values())
+
+    @property
+    def open_cost_usd(self) -> float:
+        # Keep gross acquisition cost at risk until venue settlement, even
+        # though opposite-side buys have already netted at the exchange.
+        return sum(value.spent for window, value in self.inventory.items() if window not in self.settled)
+
+    @property
+    def at_risk_usd(self) -> float:
+        return self.open_cost_usd + self.reserved_usd
+
+    def _refresh_stops(self, now: float) -> None:
+        loss = max(0.0, self.stop_anchor - self.realized_pnl)
+        if loss + self.at_risk_usd >= self.limits.total_loss_usd - EPSILON:
+            self.halted, self.halt_reason = True, "total_loss"
+
+    def risk_status(self, now: float) -> dict[str, Any]:
+        self._refresh_stops(now)
+        day_loss = max(0.0, -self.day_pnl.get(utc_day(now), 0.0))
+        total_loss = max(0.0, self.stop_anchor - self.realized_pnl)
+        available = None if self.cash_usd is None else max(0.0, self.cash_usd - self.cash_debits - self.reserved_usd)
+        return {"halted": self.halted, "halt_reason": self.halt_reason,
+                "integrity_error": self.integrity_error, "reserved_usd": self.reserved_usd,
+                "open_cost_usd": self.open_cost_usd, "at_risk_usd": self.at_risk_usd,
+                "day_pnl_usd": self.day_pnl.get(utc_day(now), 0.0), "day_loss_usd": day_loss,
+                "day_at_risk_usd": day_loss + self.at_risk_usd,
+                "day_stopped": day_loss + self.at_risk_usd >= self.limits.day_loss_usd - EPSILON,
+                "total_pnl_usd": self.realized_pnl, "total_loss_usd": total_loss,
+                "total_at_risk_usd": total_loss + self.at_risk_usd,
+                "available_cash_usd": available, "cash_at": self.cash_at,
+                "limits": asdict(self.limits)}
+
+    def _reject(self, reason: str) -> None:
+        raise LiveRejected(reason)
+
+    def _inventory_guard(self, window: str, side: Side, size: float, unit: float) -> str:
+        inventory = self.inventory[window]
+        pending = [intent for intent in self.intents.values() if intent.window == window and intent.reserved > EPSILON]
+        total = inventory.up.shares + inventory.down.shares
+        difference = inventory.up.shares - inventory.down.shares
+        starter_id = self.bootstrap_order.get(window)
+        starter = self.intents.get(starter_id or "")
+        bootstrap = (abs(difference) > self.limits.max_imbalance * total + EPSILON
+                     or bool(starter and starter.reservation_active))
+        if total <= EPSILON:
+            if pending:
+                return "starter_pending"
+            if size > self.limits.clip + EPSILON:
+                return "starter_clip"
+        elif bootstrap:
+            light: Side = "down" if difference > 0 else "up"
+            if abs(difference) <= EPSILON or side != light:
+                return "balancing_only"
+            if size + sum(item.remaining for item in pending if item.side == light) > abs(difference) + EPSILON:
+                return "balancing_size"
+        for flags in itertools.product((False, True), repeat=len(pending)):
+            shares = {"up": inventory.up.shares, "down": inventory.down.shares}
+            paid = {"up": inventory.up.total, "down": inventory.down.total}
+            for include, intent in zip(flags, pending, strict=True):
+                if include:
+                    shares[intent.side] += intent.remaining
+                    paid[intent.side] += intent.reserved
+            shares[side] += size
+            paid[side] += size * unit
+            if (total > EPSILON and not bootstrap and abs(shares["up"] - shares["down"])
+                    > self.limits.max_imbalance * sum(shares.values()) + EPSILON):
+                return "imbalance"
+            if min(shares.values()) > EPSILON and sum(paid[key] / shares[key] for key in shares) > self.limits.pair_cap + EPSILON:
+                return "pair_cap"
+        return ""
+
+    def can_buy(self, window: str, side: Side, kind: Kind, price: float, size: float, now: float) -> str:
+        self._refresh_stops(now)
+        if self.integrity_error:
+            return "reconciliation_error"
+        if self.halted:
+            return self.halt_reason or "halted"
+        if window not in self.windows or window in self.settled:
+            return "window_unknown_or_settled"
+        spec = self.windows[window]
+        if now < spec.start or now >= spec.end - self.limits.cutoff_s:
+            return "cutoff"
+        if not (math.isfinite(price) and 0 < price < 1 and abs(price * 100 - round(price * 100)) < EPSILON
+                and math.isfinite(size) and size >= 1 and abs(size - round(size)) < EPSILON
+                and side in ("up", "down") and kind in ("take", "rest")):
+            return "invalid_order"
+        if size > self.limits.clip + EPSILON:
+            return "clip"
+        if self.cash_at is None or self.cash_usd is None or not 0 <= now - self.cash_at <= self.limits.cash_max_age_s:
+            return "cash_stale"
+        if any(item.window == window and item.side == side and item.reservation_active for item in self.intents.values()):
+            return "order_pending"
+        try:
+            unit = self.unit_reserve(window, price, kind)
+        except LiveRejected as exc:
+            return exc.reason
+        cost = size * unit
+        current = self.inventory[window].spent + sum(item.reserved for item in self.intents.values() if item.window == window)
+        if current + cost > self.limits.window_usd + EPSILON:
+            return "window_budget"
+        if self.at_risk_usd + cost > self.limits.open_usd + EPSILON:
+            return "open_budget"
+        if max(0.0, -self.day_pnl.get(utc_day(now), 0.0)) + self.at_risk_usd + cost >= self.limits.day_loss_usd - EPSILON:
+            return "day_stop"
+        if max(0.0, self.stop_anchor - self.realized_pnl) + self.at_risk_usd + cost >= self.limits.total_loss_usd - EPSILON:
+            return "total_budget"
+        if cost + self.reserved_usd + self.cash_debits > self.cash_usd + EPSILON:
+            return "cash_budget"
+        return self._inventory_guard(window, side, size, unit)
+
+    def reserve_intent(self, window: str, side: Side, kind: Kind, price: float, size: float,
+                       now: float, client_order_id: str, fair: float | None = None) -> LiveIntent:
+        if (not client_order_id.startswith(CLIENT_PREFIX) or len(client_order_id) <= len(CLIENT_PREFIX)
+                or client_order_id in self.intents):
+            raise LiveRejected("client_order_id")
+        reason = self.can_buy(window, side, kind, price, size, now)
+        if reason:
+            raise LiveRejected(reason)
+        intent = LiveIntent(client_order_id, window, side, kind, price, size, now,
+                            self.unit_reserve(window, price, kind), fair)
+        self.intents[client_order_id] = intent
+        if self.inventory[window].up.shares + self.inventory[window].down.shares <= EPSILON:
+            self.bootstrap_order[window] = client_order_id
+        return intent
+
+    def mark_submitted(self, client_order_id: str, order_id: str) -> None:
+        intent = self.intents[client_order_id]
+        if not order_id or (intent.order_id is not None and intent.order_id != order_id):
+            self.integrity_error = "order_identity_changed"
+            raise LiveRejected(self.integrity_error)
+        if any(item.order_id == order_id and item.client_order_id != client_order_id for item in self.intents.values()):
+            self.integrity_error = "order_identity_duplicate"
+            raise LiveRejected(self.integrity_error)
+        if intent.order_id == order_id:
+            return  # repeated discovery cannot erase terminal reconciliation evidence
+        intent.order_id, intent.status, intent.uncertainty = order_id, "submitted", None
+
+    def mark_uncertain(self, client_order_id: str, reason: str) -> None:
+        intent = self.intents[client_order_id]
+        safe_reason = reason if reason.isidentifier() and len(reason) <= 64 else "unknown_request_outcome"
+        intent.status, intent.uncertainty = "uncertain", safe_reason
+
+    def reject_intent(self, client_order_id: str, reason: str, *, confirmed: bool = False) -> bool:
+        """Release only a never-accepted create with definitive caller proof.
+
+        A later rejection cannot disprove an earlier ambiguous create. That
+        intent still requires authoritative order/fill reconciliation.
+        """
+        intent = self.intents[client_order_id]
+        if (not confirmed or intent.order_id is not None or intent.filled_size > EPSILON
+                or intent.status not in ("intent", "rejected")):
+            raise LiveRejected("rejection_unconfirmed")
+        if intent.status == "rejected":
+            return False
+        intent.reservation_active = False
+        intent.status = "rejected"
+        intent.uncertainty = reason if reason.isidentifier() and len(reason) <= 64 else "create_rejected"
+        return True
+
+    def request_cancel(self, client_order_id: str) -> None:
+        self.intents[client_order_id].cancel_requested = True
+
+    def record_fill(self, fill: ActualFill) -> bool:
+        if fill.fill_id in self.fills:
+            if self.fills[fill.fill_id] != fill:
+                self.integrity_error = "fill_changed"
+                raise LiveRejected(self.integrity_error)
+            return False
+        intent = self.intents.get(fill.client_order_id)
+        if intent is None:
+            return False  # owner's orders and account positions never get adopted
+        if (not fill.fill_id or not fill.order_id or fill.window != intent.window or fill.side != intent.side
+                or (intent.order_id is not None and fill.order_id != intent.order_id)):
+            self.integrity_error = "fill_identity_mismatch"
+            raise LiveRejected(self.integrity_error)
+        if not (all(math.isfinite(value) for value in (fill.price, fill.size, fill.fee_usd, fill.at))
+                and 0 < fill.price < 1 and fill.size > 0 and fill.fee_usd >= 0
+                and abs(fill.size * 100 - round(fill.size * 100)) < EPSILON):
+            self.integrity_error = "fill_values_invalid"
+            raise LiveRejected(self.integrity_error)
+        if fill.window in self.settled:
+            self.integrity_error = "fill_after_settlement"
+            raise LiveRejected(self.integrity_error)
+        released_before_fill = not intent.reservation_active
+        self.mark_submitted(fill.client_order_id, fill.order_id)
+        holding = getattr(self.inventory[fill.window], fill.side)
+        holding.shares += fill.size
+        holding.cost += fill.size * fill.price
+        holding.fees += fill.fee_usd
+        self.fills[fill.fill_id] = fill
+        intent.filled_size += fill.size
+        self.cash_debits += fill.size * fill.price + fill.fee_usd
+        if released_before_fill:
+            # Authoritative new execution contradicts the earlier claim
+            # that all terminal fills were reconciled. Keep the real cost
+            # and reserve every still-possible contract until reconciled.
+            self.integrity_error = "fill_after_terminal_confirmation"
+            intent.reservation_active = True
+        if intent.filled_size >= intent.size - EPSILON:
+            intent.reservation_active = False
+            intent.status = "filled"
+        if (intent.filled_size > intent.size + EPSILON or fill.price > intent.price + EPSILON
+                or fill.size * fill.price + fill.fee_usd > fill.size * intent.unit_reserve + EPSILON):
+            self.integrity_error = "fill_exceeded_reserved_terms"
+        self._refresh_stops(fill.at)
+        return True
+
+    def reconcile_order(self, snapshot: OrderSnapshot, *, fills_complete: bool = False) -> bool:
+        intent = self.intents.get(snapshot.client_order_id)
+        if intent is None:
+            return False
+        if intent.last_snapshot_at is not None and snapshot.at < intent.last_snapshot_at:
+            return False
+        if (snapshot.status not in ("resting", "canceled", "executed")
+                or not all(math.isfinite(value) and value >= 0 for value in (snapshot.filled_size, snapshot.remaining_size, snapshot.at))
+                or snapshot.filled_size + snapshot.remaining_size > intent.size + EPSILON):
+            self.integrity_error = "order_snapshot_invalid"
+            raise LiveRejected(self.integrity_error)
+        if snapshot.filled_size + EPSILON < intent.reported_filled_size:
+            intent.uncertainty = "order_fill_count_regressed"
+            return False
+        if not intent.reservation_active and snapshot.remaining_size > EPSILON:
+            intent.reservation_active = True
+            self.integrity_error = "order_terminal_regressed"
+            raise LiveRejected(self.integrity_error)
+        self.mark_submitted(snapshot.client_order_id, snapshot.order_id)
+        intent.last_snapshot_at = snapshot.at
+        intent.reported_filled_size = max(intent.reported_filled_size, snapshot.filled_size)
+        intent.venue_remaining_size = snapshot.remaining_size
+        intent.status = snapshot.status
+        reconciled = abs(snapshot.filled_size - intent.filled_size) <= EPSILON
+        if fills_complete and snapshot.filled_size + EPSILON < intent.filled_size:
+            self.integrity_error = "order_fill_count_mismatch"
+            raise LiveRejected(self.integrity_error)
+        if (snapshot.status in ("canceled", "executed") and fills_complete and reconciled
+                and snapshot.remaining_size <= EPSILON):
+            intent.reservation_active = False
+            intent.uncertainty = None
+            return True
+        return False
+
+    def expected_position(self, window: str) -> float:
+        value = self.inventory.get(window, Inventory())
+        return 0.0 if window in self.settled else value.up.shares - value.down.shares
+
+    def settle(self, window: str, up_wins: bool, now: float, settlement_id: str,
+               *, net_payout_usd: float | None = None) -> LiveSettlement | None:
+        if window in self.settled:
+            return None
+        if (not settlement_id or window not in self.windows or not isinstance(up_wins, bool)
+                or not math.isfinite(now) or now < self.windows[window].end):
+            raise LiveRejected("settlement_invalid")
+        if any(item.window == window and item.reservation_active for item in self.intents.values()):
+            raise LiveRejected("settlement_orders_unreconciled")
+        inventory = self.inventory[window]
+        gross = settlement(window, inventory, up_wins, now)
+        pairs = min(inventory.up.shares, inventory.down.shares)
+        expected_net = gross.payout_usd - pairs
+        if net_payout_usd is not None and (not math.isfinite(net_payout_usd) or abs(net_payout_usd - expected_net) > 0.000001):
+            self.integrity_error = "settlement_net_payout_mismatch"
+            raise LiveRejected(self.integrity_error)
+        # Each bought opposite pair nets to $1 before final settlement. Add
+        # that credit once and only the remaining signed position's payout.
+        result = LiveSettlement(window, settlement_id, now, up_wins, gross.up_shares, gross.down_shares,
+                                gross.cost_usd, gross.fee_usd, pairs, expected_net, gross.payout_usd,
+                                gross.locked_usd, gross.direction_usd, gross.pnl_usd)
+        self.settled[window] = result
+        self.realized_pnl += result.pnl_usd
+        self.day_pnl[utc_day(now)] = self.day_pnl.get(utc_day(now), 0.0) + result.pnl_usd
+        self._refresh_stops(now)
+        return result
+
+    def apply_resume_token(self, token: str) -> bool:
+        if not token:
+            return False
+        digest = hashlib.sha256(token.encode()).hexdigest()
+        if digest in self.seen_resume_hashes:
+            return False
+        self.seen_resume_hashes.add(digest)
+        self.resume_token_hash = digest
+        if not self.halted or self.integrity_error:
+            return False
+        self.stop_anchor = self.realized_pnl
+        self.halted, self.halt_reason = False, None
+        return True
+
+    def to_state(self) -> dict[str, Any]:
+        return {"version": 1, "venue": "kalshi", "limits": asdict(self.limits),
+                "windows": {key: asdict(value) for key, value in self.windows.items()},
+                "intents": {key: asdict(value) for key, value in self.intents.items()},
+                "inventory": {key: asdict(value) for key, value in self.inventory.items()},
+                "fills": {key: asdict(value) for key, value in self.fills.items()},
+                "settled": {key: asdict(value) for key, value in self.settled.items()},
+                "day_pnl": self.day_pnl, "realized_pnl": self.realized_pnl, "stop_anchor": self.stop_anchor,
+                "halted": self.halted, "halt_reason": self.halt_reason, "integrity_error": self.integrity_error,
+                "resume_token_hash": self.resume_token_hash, "seen_resume_hashes": sorted(self.seen_resume_hashes),
+                "bootstrap_order": self.bootstrap_order}
+
+    @classmethod
+    def from_state(cls, state: dict[str, Any], limits: LiveLimits | None = None) -> LiveRiskBook:
+        if state.get("version") != 1 or state.get("venue") != "kalshi":
+            raise ValueError("Unsupported live accounting state")
+        book = cls(limits or LiveLimits(**state["limits"]))
+        for value in state["windows"].values():
+            book.add_window(Window(**value))
+        book.intents = {key: LiveIntent(**value) for key, value in state["intents"].items()}
+        book.inventory = {key: Inventory(Holding(**value["up"]), Holding(**value["down"]))
+                          for key, value in state["inventory"].items()}
+        book.fills = {key: ActualFill(**value) for key, value in state["fills"].items()}
+        book.settled = {key: LiveSettlement(**value) for key, value in state["settled"].items()}
+        book.day_pnl = state["day_pnl"]
+        book.realized_pnl, book.stop_anchor = state["realized_pnl"], state["stop_anchor"]
+        book.halted, book.halt_reason = state["halted"], state["halt_reason"]
+        book.integrity_error, book.resume_token_hash = state["integrity_error"], state["resume_token_hash"]
+        book.seen_resume_hashes = set(state.get("seen_resume_hashes", []))
+        if book.resume_token_hash is not None:
+            book.seen_resume_hashes.add(book.resume_token_hash)
+        book.bootstrap_order = state["bootstrap_order"]
+        # A restart cannot release uncertain orders or reuse an old balance.
+        book._validate_state()
+        return book
+
+    def _validate_state(self) -> None:
+        if set(self.inventory) != set(self.windows) or not isinstance(self.halted, bool):
+            raise ValueError("Invalid persisted window or stop state")
+        if any(not isinstance(value, str) or len(value) != 64 or any(char not in "0123456789abcdef" for char in value)
+               for value in self.seen_resume_hashes):
+            raise ValueError("Invalid persisted resume token hash")
+        values = [self.realized_pnl, self.stop_anchor, *self.day_pnl.values()]
+        values.extend(value for inventory in self.inventory.values() for holding in (inventory.up, inventory.down)
+                      for value in (holding.shares, holding.cost, holding.fees))
+        if not all(isinstance(value, (int, float)) and math.isfinite(value) for value in values):
+            raise ValueError("Invalid persisted live accounting")
+        if any(holding.shares < 0 or holding.cost < 0 or holding.fees < 0
+               for inventory in self.inventory.values() for holding in (inventory.up, inventory.down)):
+            raise ValueError("Negative persisted live holdings")
+        order_ids: set[str] = set()
+        for key, intent in self.intents.items():
+            if (key != intent.client_order_id or not key.startswith(CLIENT_PREFIX) or intent.window not in self.windows
+                    or intent.side not in ("up", "down") or intent.kind not in ("take", "rest")
+                    or not all(math.isfinite(value) and value >= 0 for value in
+                               (intent.price, intent.size, intent.unit_reserve, intent.filled_size,
+                                intent.created_at, intent.reported_filled_size))
+                    or not 0 < intent.price < 1 or intent.size < 1
+                    or abs(intent.size - round(intent.size)) > EPSILON
+                    or abs(intent.price * 100 - round(intent.price * 100)) > EPSILON
+                    or intent.unit_reserve < intent.price - EPSILON
+                    or not isinstance(intent.reservation_active, bool)
+                    or not isinstance(intent.cancel_requested, bool)):
+                raise ValueError("Invalid persisted live intent")
+            for value in (intent.last_snapshot_at, intent.venue_remaining_size, intent.fair):
+                if value is not None and (not math.isfinite(value) or value < 0):
+                    raise ValueError("Invalid persisted live intent metadata")
+            if intent.order_id is not None:
+                if not intent.order_id or intent.order_id in order_ids:
+                    raise ValueError("Duplicate persisted venue order")
+                order_ids.add(intent.order_id)
+            full = intent.filled_size >= intent.size - EPSILON
+            rejected = intent.status == "rejected" and intent.order_id is None and intent.filled_size <= EPSILON
+            terminal = (intent.status in ("canceled", "executed") and intent.order_id is not None
+                        and intent.last_snapshot_at is not None and intent.venue_remaining_size == 0
+                        and abs(intent.reported_filled_size - intent.filled_size) <= EPSILON)
+            if not intent.reservation_active and not (full or rejected or terminal):
+                raise ValueError("Persisted reservation lacks terminal evidence")
+        if any(window not in self.windows or identity not in self.intents or self.intents[identity].window != window
+               for window, identity in self.bootstrap_order.items()):
+            raise ValueError("Invalid persisted opening intent")
+        rebuilt = {window: Inventory() for window in self.inventory}
+        quantities: dict[str, float] = {}
+        for key, fill in self.fills.items():
+            owner_intent = self.intents.get(fill.client_order_id)
+            if (key != fill.fill_id or owner_intent is None or fill.window != owner_intent.window
+                    or fill.side != owner_intent.side or fill.order_id != owner_intent.order_id or fill.window not in rebuilt
+                    or not all(math.isfinite(value) for value in (fill.size, fill.price, fill.fee_usd, fill.at))
+                    or fill.size <= 0 or not 0 < fill.price < 1 or fill.fee_usd < 0
+                    or abs(fill.size * 100 - round(fill.size * 100)) > EPSILON):
+                raise ValueError("Invalid persisted actual fill")
+            holding = getattr(rebuilt[fill.window], fill.side)
+            holding.shares += fill.size
+            holding.cost += fill.size * fill.price
+            holding.fees += fill.fee_usd
+            quantities[fill.client_order_id] = quantities.get(fill.client_order_id, 0.0) + fill.size
+        for window, inventory in self.inventory.items():
+            if window not in self.windows:
+                raise ValueError("Unknown persisted live window")
+            for side in ("up", "down"):
+                observed, expected = getattr(inventory, side), getattr(rebuilt[window], side)
+                if any(abs(getattr(observed, name) - getattr(expected, name)) > EPSILON
+                       for name in ("shares", "cost", "fees")):
+                    raise ValueError("Persisted live inventory does not match actual fills")
+        for key, intent in self.intents.items():
+            if abs(intent.filled_size - quantities.get(key, 0.0)) > EPSILON:
+                raise ValueError("Persisted order quantity does not match actual fills")
+        if abs(self.realized_pnl - sum(result.pnl_usd for result in self.settled.values())) > EPSILON:
+            raise ValueError("Persisted realized result does not match settlements")
+        rebuilt_days: dict[str, float] = {}
+        for window, result in self.settled.items():
+            amounts = (result.at, result.up_shares, result.down_shares, result.cost_usd, result.fee_usd,
+                       result.paired_credit_usd, result.net_payout_usd, result.payout_usd,
+                       result.locked_usd, result.direction_usd, result.pnl_usd)
+            if (window != result.window or window not in self.windows or not result.settlement_id
+                    or not isinstance(result.up_wins, bool) or not all(math.isfinite(value) for value in amounts)
+                    or result.at < self.windows[window].end
+                    or any(intent.window == window and intent.reservation_active for intent in self.intents.values())):
+                raise ValueError("Unknown persisted settlement")
+            expected_result = settlement(window, self.inventory[window], result.up_wins, result.at)
+            pairs = min(expected_result.up_shares, expected_result.down_shares)
+            if any(abs(getattr(result, name) - getattr(expected_result, name)) > EPSILON
+                   for name in ("up_shares", "down_shares", "cost_usd", "fee_usd", "payout_usd",
+                                "locked_usd", "direction_usd", "pnl_usd")) or (
+                    abs(result.paired_credit_usd - pairs) > EPSILON
+                    or abs(result.net_payout_usd - expected_result.payout_usd + pairs) > EPSILON):
+                raise ValueError("Persisted settlement does not match actual inventory")
+            day = utc_day(result.at)
+            rebuilt_days[day] = rebuilt_days.get(day, 0.0) + result.pnl_usd
+        if any(abs(self.day_pnl.get(day, 0.0) - rebuilt_days.get(day, 0.0)) > EPSILON
+               for day in self.day_pnl.keys() | rebuilt_days.keys()):
+            raise ValueError("Persisted day result does not match settlements")
