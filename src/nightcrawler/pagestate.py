@@ -11,6 +11,7 @@ Schema (lists capped: members 9, events <= 5, open trades <= 10, closed trades 1
     {
       "version", "generated_at", "mode": "PAPER"|"LIVE", "refresh_s",
       "alerts": [{"level": "bad"|"warn", "text"}],                    # header banners, worst first
+      "skipwatch": {... public observation, listing alert and HTTP latency; never money or profit}|null,
       "plain": {"about", "headline",                                  # the whole screen in plain words: see PLAIN
                 "real": {"label": "Real money", "on": bool, "reported": bool, "paused": str|null,
                          "paused_kind": "risk"|"day"|"full"|"room"|null, "at_risk_usd": float|null,
@@ -1585,6 +1586,90 @@ def _kalshi_live_panel(raw: Any, settings: Settings, now: float) -> dict[str, An
     }
 
 
+def skipwatch_panel(settings: Settings, now: float) -> dict[str, Any] | None:
+    """Read only the watcher's saved panel. No network, account call, or contribution to any money totals."""
+    if not settings.skipwatch_enabled:
+        return None
+    raw: Mapping[str, Any] = {}
+    problem = None
+    try:
+        with (settings.data_dir / "skipwatch" / "state.json").open("rb") as stream:
+            body = stream.read(8 * 1024 * 1024 + 1)
+        if len(body) > 8 * 1024 * 1024:
+            raise ValueError("watcher_state_too_large")
+        saved = _xp_map(json.loads(body))
+        raw = _xp_map(saved.get("panel"))
+        if not raw:
+            problem = "Watcher panel is missing from its saved state"
+    except FileNotFoundError:
+        problem = "Waiting for the first public observation"
+    except (OSError, ValueError, TypeError):
+        problem = "Saved watcher report is unreadable; observations are unknown"
+    text = _Text(settings)
+    as_of = _num(raw.get("as_of"))
+    probes = _xp_map(raw.get("probes"))
+    us, latency = _xp_map(probes.get("us_5m")), _xp_map(probes.get("kalshi_latency"))
+    region = latency.get("region")
+    from nightcrawler.skipwatch_alerts import LIMITATION, MARKET_PATTERN, REGION_PATTERN
+
+    region = region if isinstance(region, str) and REGION_PATTERN.fullmatch(region) else None
+    first, start, end = _num(us.get("first_seen_at")), _num(us.get("first_window_start")), _num(us.get("first_window_end"))
+    market = us.get("first_market")
+    valid_listing = (first is not None and first <= now + FUTURE_SKEW_S and start is not None
+                     and end is not None and end - start == 300 and isinstance(market, str)
+                     and MARKET_PATTERN.fullmatch(market))
+    coverage = _xp_map(raw.get("coverage"))
+    fit = _xp_map(raw.get("fit"))
+    fit_summary = _xp_map(fit.get("summary"))
+    fit_labels = {"collecting_train": "Collecting prospective training data",
+                  "frozen": "Rule frozen; waiting for the held-out day",
+                  "insufficient_training": "Not enough training evidence", "no_predictive_edge": "No predictive edge found",
+                  "insufficient_evidence": "Not enough held-out evidence",
+                  "predictive_pattern_only": "Predictive pattern observed; profitability remains untested",
+                  "research_blocked": "Research paused"}
+    fit_status = text.opt(fit.get("status"))
+    reason_labels = {"wallet_coverage_below_90pct": "Wallet coverage below 90%",
+                     "feature_coverage_below_80pct": "Usable feature coverage below 80%",
+                     "too_few_eligible_opportunities": "Not enough usable opportunities",
+                     "too_few_positive_bins": "Not enough time bins with observed fills",
+                     "too_few_windows": "Not enough observed windows"}
+    metrics = {}
+    for key in ("precision", "recall", "f1", "coverage", "feature_coverage"):
+        value = _num(fit_summary.get(key))
+        metrics[key] = value if value is not None and 0 <= value <= 1 else None
+    return {
+        "label": "PUBLIC WATCHER", "real_orders_available": False, "as_of": as_of,
+        "stale": as_of is None or now - as_of > 60 or as_of > now + FUTURE_SKEW_S,
+        "status": text.opt(raw.get("status")) or "Waiting for public observations", "problem": problem or text.opt(raw.get("problem")),
+        "started_at": _num(raw.get("started_at")),
+        **{key: _count(raw.get(key)) for key in ("windows_observed", "wallet_fills", "matched_inferred", "ambiguous",
+                                               "unmatched", "gaps")},
+        "storage_bytes": _num(raw.get("storage_bytes")), "max_storage_bytes": _num(raw.get("max_storage_bytes")),
+        "last_wallet_at": _num(raw.get("last_wallet_at")), "last_btc_at": _num(raw.get("last_btc_at")),
+        "latest_window": text.opt(raw.get("latest_window"), 100),
+        "fit_status": fit_labels.get(fit_status or "", fit_status) or "Collecting: two prospective days for training, then one held-out day",
+        "fit_reason": text.opt(fit.get("reason")),
+        "fit_summary": {**metrics, "stage": text.opt(fit_summary.get("stage"), 50),
+                        "rows": _count(fit_summary.get("rows")),
+                        "reasons": [reason_labels.get(str(reason), text(reason, 120))
+                                    for reason in _xp_list(fit_summary.get("reasons"))[:5]]},
+        "freeze_due_at": _num(fit.get("freeze_due_at")), "test_due_at": _num(fit.get("test_due_at")),
+        "coverage": {**{key: coverage.get(key) if isinstance(coverage.get(key), bool) else None
+                         for key in ("bitcoin", "book", "wallet", "trades")},
+                     "wallet_watermark": _num(coverage.get("wallet_watermark"))},
+        "cancellations_visible": False,
+        "us_5m": {"first_seen_at": first if valid_listing else None, "first_market": market if valid_listing else None,
+                  "first_window_start": start if valid_listing else None, "first_window_end": end if valid_listing else None,
+                  "last_checked_at": _num(us.get("last_checked_at")), "last_success_at": _num(us.get("last_success_at")),
+                  "backoff_until": _num(us.get("backoff_until")),
+                  "checks": _count(us.get("checks")), "errors": _count(us.get("errors")),
+                  "status": text.opt(us.get("status")) or "Listing checks have not reported yet"},
+        "kalshi_latency": {**{key: _num(latency.get(key)) for key in ("median_ms", "p95_ms", "last_rtt_ms", "last_checked_at", "backoff_until")},
+                           **{key: _count(latency.get(key)) for key in ("measurements", "successful_samples", "errors", "timeouts")},
+                           "region": region, "rolling_window_s": 3600, "limitation": LIMITATION},
+    }
+
+
 def speed_desk(settings: Settings, now: float) -> dict[str, Any] | None:
     """The speed desk's independent practice report. Missing figures stay unknown, never real or summed.
 
@@ -1616,11 +1701,16 @@ def speed_desk(settings: Settings, now: float) -> dict[str, Any] | None:
     reports = {key: reports[key] for key in sorted(reports)[-31:]}
     text = _Text(settings)
     as_of = _num(raw.get("as_of"))
+    volatility = _xp_map(raw.get("volatility"))
     return {"mode": "paper", "label": "PRACTICE (pretend money)", "as_of": as_of,
             "stale": as_of is None or now - as_of > 60 or as_of > now + FUTURE_SKEW_S,
             "status": text.opt(raw.get("status")) or "Waiting for the first practice report",
             "problem": text.opt(raw.get("problem")) or (None if day_matches else "Today's practice report is unavailable"),
             "today": _speed_report(today, day), "reports": reports,
+            "volatility": ({"source": "observed one-second Coinbase returns", "samples": _count(volatility.get("samples")),
+                            "required_samples": _count(volatility.get("required_samples")),
+                            "required_elapsed_s": _num(volatility.get("required_elapsed_s")),
+                            "ready": volatility.get("ready") is True} if volatility else None),
             "kalshi_live": _kalshi_live_panel(raw.get("kalshi_live"), settings, now),
             "btc_age_s": _num(raw.get("btc_age_s")), "book_age_s": _num(raw.get("book_age_s"))}
 
@@ -2771,6 +2861,7 @@ def build_page_state(ledger: Any, settings: Settings, now: float, engine_status:
         "mode": state["mode"],
         "refresh_s": REFRESH_S,
         "alerts": alerts + usage_alerts,
+        "skipwatch": skipwatch_panel(settings, now),
         # the screen in plain words, from the figures below only (never one kind of money added to another)
         "plain": plain_words(settings, money, members, now, passed=card["champion_passed_locked_test"],
                              closed=trades["closed"]),

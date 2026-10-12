@@ -923,11 +923,13 @@ def test_json_stays_small_on_a_busy_ledger(ledger: Ledger, settings: Settings) -
     before_speeddesk = json.loads(body)
     speed_report = before_speeddesk["money"].pop("speeddesk")
     speed_line = before_speeddesk["plain"].pop("speeddesk_line")
+    watcher_report = before_speeddesk.pop("skipwatch")
     original_body = json.dumps(before_speeddesk, separators=(",", ":"))
     added_body = json.dumps({"speeddesk": speed_report, "speeddesk_line": speed_line}, separators=(",", ":"))
     assert len(original_body) < 45_500, len(original_body)
     assert len(added_body) < 1_500, len(added_body)
-    assert len(body) < 47_000, len(body)
+    assert len(json.dumps(watcher_report, separators=(",", ":"))) < 1_800
+    assert len(body) < 48_800, len(body)
     assert len(state["money"]["curve"]) <= 300 and len(state["trades"]["closed"]) == 10
     assert all(len(t["coin"]) <= 24 and len(t["why"]) <= 60 for t in state["trades"]["closed"])
 
@@ -964,7 +966,7 @@ def test_page_script_never_turns_data_into_html(settings: Settings) -> None:
 def test_page_has_every_section_in_order_and_is_built_for_phones(settings: Settings) -> None:
     html = render_page_html(settings)
     ids = re.findall(r'<section class="card" id="([a-z]+)"', html)
-    assert ids == ["plain", "money", "town", "speeddesk", "kalshilive", "wallet", "team", "trades", "learning", "ready", "receipts",
+    assert ids == ["plain", "money", "town", "speeddesk", "kalshilive", "skipwatch", "wallet", "team", "trades", "learning", "ready", "receipts",
                    "usage"]
     for mid, name, role in MEMBERS:
         assert f'id="m-{mid}"' in html and f"<b>{name}</b>" in html and role in html

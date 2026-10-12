@@ -25,6 +25,7 @@ import requests
 
 from .config import Settings
 from .speeddesk_feeds import number, timestamp
+from .speeddesk_kalshi_ws import KalshiMarketWS
 from .speeddesk_model import Book, Level, Trade, Window
 
 log = logging.getLogger("nightcrawler.speeddesk_kalshi")
@@ -142,12 +143,13 @@ def _public_get(path: str) -> Any:
 
 
 class KalshiFeeds:
-    """No account, private key, SDK or order resource exists in this adapter."""
+    """Public REST plus optional authenticated market WS; no account/order client."""
 
     def __init__(self, settings: Settings, *, on_tick: Callable[[float, float, float], None],
                  on_book: Callable[[Book], None], on_trade: Callable[[Trade], None],
                  on_windows: Callable[[list[Window]], None], on_status: Callable[[dict[str, Any]], None],
-                 clock: Callable[[], float] = time.time, rest_get: Callable[[str], Any] | None = None) -> None:
+                 clock: Callable[[], float] = time.time, rest_get: Callable[[str], Any] | None = None,
+                 ws_connect: Callable[..., Any] | None = None) -> None:
         self.on_book, self.on_trade = on_book, on_trade
         self.on_windows, self.on_status = on_windows, on_status
         self._clock, self._get = clock, rest_get or _public_get
@@ -156,12 +158,54 @@ class KalshiFeeds:
         self._last_trades = -math.inf
         self._book_index = 0
         self._tape_since: dict[str, float] = {}
+        self._rest_trade_at: dict[str, float] = {}
+        self._transport: dict[str, str] = {}
+        self._ws_status: dict[str, Any] = {}
+        self._ws: KalshiMarketWS | None = None
+        if settings.speeddesk_kalshi_ws_enabled and settings.kalshi_key_id and settings.kalshi_private_key:
+            self._ws = KalshiMarketWS(settings, tickers=lambda: frozenset(self.windows), on_book=self._ws_book,
+                                     on_trade=self.on_trade, on_status=self._ws_report, clock=clock,
+                                     ws_connect=ws_connect)
         self._status: dict[str, Any] = {"markets": "connecting_public_rest", "trade_stream": False,
                                        "venue": "kalshi", "transport": "public_rest"}
 
     def _report(self, **changes: Any) -> None:
+        changes.setdefault("gap_windows", [])
         self._status.update(changes)
         self.on_status(dict(self._status))
+
+    def _publish(self, **changes: Any) -> None:
+        now = self._clock()
+        rest = {slug for slug, at in self._rest_trade_at.items()
+                if slug in self.windows and self._transport.get(slug) != "websocket" and 0 <= now - at <= 3}
+        websocket = set(self._ws_status.get("ws_maker_windows", [])) & set(self.windows)
+        makers = sorted(rest | websocket)
+        self._report(**{**self._ws_status, "maker_windows": makers, "trade_stream": bool(makers),
+                        "transport": "market_websocket" if self._ws_status.get("ws_books") else "public_rest",
+                        "gap_windows": [], **changes})
+
+    def _ws_report(self, status: dict[str, Any]) -> None:
+        self._ws_status = {key: value for key, value in status.items() if key != "gap_windows"}
+        gaps = status.get("gap_windows", [])
+        for ticker in gaps:
+            self._rest_trade_at.pop(ticker, None)
+        self._publish(gap_windows=gaps)
+
+    def _deliver_book(self, book: Book) -> None:
+        if book.window not in self.windows:
+            return
+        previous = self._transport.get(book.window)
+        if previous is not None and previous != book.source:
+            # A fresh REST view or reconnect cannot carry old queue priority
+            # across a transport gap, even when the prices happen to match.
+            self._rest_trade_at.pop(book.window, None)
+            self._publish(gap_windows=[book.window])
+        self._transport[book.window] = book.source
+        self.on_book(book)
+
+    def _ws_book(self, book: Book) -> None:
+        if book.window in self.windows:
+            self._deliver_book(book)
 
     async def refresh_windows(self) -> None:
         now = self._clock()
@@ -193,12 +237,15 @@ class KalshiFeeds:
                     continue
                 windows[window.slug] = window
             if set(windows) != set(self.windows):
-                self._report(trade_stream=False)
+                self._rest_trade_at.clear()
+                self._report(trade_stream=False, maker_windows=[], gap_windows=sorted(self.windows))
             self.windows = windows
             self.on_windows(list(windows.values()))
             self._report(markets="public_rest" if windows else "no_verified_windows")
         except Exception as exc:  # noqa: BLE001 — failed metadata disables this venue; no fabricated rules.
-            self._report(markets="metadata_unavailable", trade_stream=False)
+            self._rest_trade_at.clear()
+            self._report(markets="metadata_unavailable", trade_stream=False, maker_windows=[],
+                         gap_windows=sorted(self.windows))
             self.windows = {}
             self.on_windows([])
             log.warning("speeddesk_feed_kalshi_metadata_failed error=%s", type(exc).__name__)
@@ -206,6 +253,8 @@ class KalshiFeeds:
     async def poll_book(self) -> bool:
         now = self._clock()
         current = [window for window in self.windows.values() if window.start <= now < window.end]
+        fresh = self._ws.fresh_books() if self._ws else frozenset()
+        current = [window for window in current if window.slug not in fresh]
         if now - self._last_book < 0.5 or not current:
             return False
         window = current[self._book_index % len(current)]
@@ -222,16 +271,20 @@ class KalshiFeeds:
             books = parse_books(reply, window.slug, self._clock())
             if not books:
                 raise ValueError("Invalid book")
-            for book in books:
-                self.on_book(replace(book, requested_at=requested_at))
+            # An older REST request must not replace a newer WS snapshot.
+            if self._ws is None or window.slug not in self._ws.fresh_books():
+                for book in books:
+                    self._deliver_book(replace(book, requested_at=requested_at))
         except Exception as exc:  # noqa: BLE001 — gaps cancel simulated makers and retain unknown depth.
-            self._report(markets="book_unavailable", trade_stream=False)
+            self._rest_trade_at.pop(window.slug, None)
+            self._publish(markets="book_unavailable", gap_windows=[window.slug])
             log.warning("speeddesk_feed_kalshi_book_failed error=%s", type(exc).__name__)
         return True
 
     async def poll_trades(self) -> bool:
         now = self._clock()
         current = [window for window in self.windows.values() if window.start <= now < window.end]
+        current = [window for window in current if window.slug not in self._ws_status.get("ws_maker_windows", [])]
         if now - self._last_trades < 1 or not current:
             return False
         self._last_trades = now
@@ -253,18 +306,22 @@ class KalshiFeeds:
             else:
                 raise ValueError("Tape pagination gap")
             received_at = self._clock()
+            if window.slug not in self.windows:
+                return True
             trades = parse_trades(rows, window.slug, received_at)
             # Missing prints cannot be reconstructed. New queue positions are
             # enabled only after a complete poll contains an actual fresh print.
             if any(received_at - 3 <= trade.at <= received_at for trade in trades):
-                self._report(markets="public_rest", trade_stream=True)
+                self._rest_trade_at[window.slug] = max(trade.at for trade in trades)
+            self._publish(markets="market_websocket" if self._ws_status.get("ws_books") else "public_rest")
             for trade in trades:
                 self.on_trade(trade)
             self._tape_since[window.slug] = float(int(now))
             self._tape_since = {slug: stamp for slug, stamp in self._tape_since.items() if slug in self.windows}
         except Exception as exc:  # noqa: BLE001 — never fill makers across an incomplete tape.
             self._tape_since[window.slug] = now
-            self._report(markets="trade_tape_gap", trade_stream=False)
+            self._rest_trade_at.pop(window.slug, None)
+            self._publish(markets="trade_tape_gap", gap_windows=[window.slug])
             log.warning("speeddesk_feed_kalshi_trade_gap error=%s", type(exc).__name__)
         return True
 
@@ -285,7 +342,7 @@ class KalshiFeeds:
         return value
 
     async def run(self, stop: threading.Event) -> None:
-        log.info("speeddesk_feed_kalshi_started mode=PRACTICE transport=public_rest books_max_hz=2")
+        log.info("speeddesk_feed_kalshi_started mode=MARKET_DATA websocket=%s books_max_hz=2", self._ws is not None)
 
         async def metadata() -> None:
             while True:
@@ -303,6 +360,8 @@ class KalshiFeeds:
                 await asyncio.sleep(0.1)
 
         tasks = [asyncio.create_task(job()) for job in (metadata, books, trades)]
+        if self._ws is not None:
+            tasks.append(asyncio.create_task(self._ws.run(stop)))
         try:
             while not stop.is_set():
                 for task in tasks:
@@ -313,4 +372,4 @@ class KalshiFeeds:
             for task in tasks:
                 task.cancel()
             await asyncio.gather(*tasks, return_exceptions=True)
-            self._report(markets="stopped", trade_stream=False)
+            self._report(markets="stopped", trade_stream=False, maker_windows=[], gap_windows=sorted(self.windows))

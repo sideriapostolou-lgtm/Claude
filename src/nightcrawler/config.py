@@ -426,8 +426,10 @@ class Settings:
                                        "only; never in a file or the repo)", secret=True)
     # ---- Bitcoin speed desk: practice books plus a separately gated Kalshi companion ----
     speeddesk_enabled: bool = _f(True, "bool", "Run the Bitcoin speed desk's independent practice trial")
-    speeddesk_kalshi_enabled: bool = _f(True, "bool", "Also read public Kalshi Bitcoin 15-minute windows for the "
-                                          "speed desk's practice trial; no Kalshi keys or real orders")
+    speeddesk_kalshi_enabled: bool = _f(True, "bool", "Also read Kalshi Bitcoin 15-minute market data for the "
+                                          "speed desk; this switch never authorizes orders")
+    speeddesk_kalshi_ws_enabled: bool = _f(True, "bool", "Use the read-only Kalshi market WebSocket when keys "
+                                             "are present, with public REST fallback; never enables orders")
     speeddesk_mode: str = _f("paper", "text", "Speed desk: practice only; real orders are unavailable",
                                choices=("paper",))
     speeddesk_window_usd: float = _f(20.0, "usd", "Speed desk: maximum practice spend per window, fees included",
@@ -478,7 +480,16 @@ class Settings:
         None, "secret", "Kalshi account key id, supplied by the owner in Railway; never logged", secret=True)
     kalshi_private_key: Secret | None = _f(  # noqa: RUF009 - _f returns a dataclasses.field
         None, "secret", "Kalshi signing key, supplied by the owner in Railway; never logged or stored in desk "
-        "state. Public practice market data never needs this key", secret=True)
+        "state. Public REST needs no key; the authorized read-only market WebSocket uses it", secret=True)
+    # ---- Public source-bot observation, separate from every trading desk ----
+    skipwatch_enabled: bool = _f(True, "bool", "Observe the source bot's PUBLIC trades and books; never places "
+                                    "orders or enables a money strategy")
+    skipwatch_poll_s: float = _f(2.5, "seconds", "Public wallet-trade poll interval; rate limits back off longer",
+                                   lo=2, hi=3)
+    skipwatch_max_storage_mb: int = _f(4096, "count", "Maximum watcher journal size in MiB; stop capture with a "
+                                         "visible gap at the limit, never delete research evidence", lo=64, hi=16384)
+    skipwatch_min_free_mb: int = _f(128, "count", "Keep this much disk free in MiB for the trading desks; halt "
+                                      "watcher capture before using it", lo=64, hi=4096)
     trenddesk_enabled: bool = _f(True, "bool", "The trend desk: a PAPER forward test of lab 3's 50-day trend rule on "
                                  "BTC, ETH and SOL, from Coinbase's public daily candles once a day (never real money, "
                                  "never a key)")
@@ -577,10 +588,17 @@ class Settings:
                     and (isinstance(value, bool) or not isinstance(value, (int, float)))):
                 problems.append(f"{env} must be a finite number")
                 continue
+            if f.name in ("skipwatch_poll_s", "skipwatch_max_storage_mb", "skipwatch_min_free_mb"):
+                if isinstance(value, bool) or not isinstance(value, (int, float)):
+                    problems.append(f"{env} must be a finite number")
+                    continue
+                if f.name.endswith("_mb") and not isinstance(value, int):
+                    problems.append(f"{env} must be a whole number of MiB")
+                    continue
             if meta.get("choices") and value not in meta["choices"]:
                 problems.append(f"{env}={value!r} must be one of {', '.join(meta['choices'])}")
             if isinstance(value, (int, float)) and not isinstance(value, bool):
-                if f.name.startswith("speeddesk_") and not math.isfinite(value):
+                if f.name.startswith(("speeddesk_", "skipwatch_")) and not math.isfinite(value):
                     problems.append(f"{env} must be finite")
                     continue
                 lo, hi = meta.get("lo"), meta.get("hi")

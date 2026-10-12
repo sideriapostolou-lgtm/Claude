@@ -219,6 +219,20 @@ session scratchpad that you will not have.
    Also live since 2026-10-12: the Bitcoin distance bar depends on price and time left (`btcdistance.REQUIRED_Z`),
    and `MARCO_REAL=0`.
 
+   **Source-bot watcher and faster feed (2026-10-12 owner update):** the owner wants an evidence-backed
+   real Kalshi strategy as the eventual result, within the same $2/$4/$3/$5 caps. `skipwatch.py` is an
+   independent, public-only observation worker; it never sends orders or enables a strategy. See spec
+   section 10 and `research/lab8/skip/PLAN.md`. It records the source wallet, international BTC five-minute
+   books/trades and Coinbase ticks under `/data/skipwatch/`, and exposes a separate public-watcher panel.
+   It preserves its original start time through redeploys, freezes a fixed model after 48 elapsed hours
+   and checks the untouched final day after 72 hours, subject to coverage. No real rulebook or profit is
+   established yet. Exact private orders/cancellations cannot be recovered from public fills.
+   The Kalshi market adapter now supports the separately authorized authenticated **read-only** WebSocket,
+   even when the companion is paper; REST remains a bounded fallback. This supersedes the earlier
+   public-REST-only credential restriction for market data, not any live order gate. HTTP RTT probes and
+   a verified US five-minute listing alert are separate from trading. No Railway region or variables
+   changed. Check the newest WORKLOG entry for actual deployed behavior and remaining observation time.
+
 1. **Lab 8, the distance-filtered grind (the owner's idea).** Buy 95-99c only when Bitcoin is far from the strike,
    measured in how much it normally moves in the time left (z = ln(S/K) / (sigma x sqrt(minutes left))). Done so
    far (`research/lab8/`): `us_venue.md` (the US crypto markets, all Bitcoin, settle on CF Benchmarks' BRTI;

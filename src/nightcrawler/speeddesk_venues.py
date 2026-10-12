@@ -29,15 +29,26 @@ class MarketFeeds:
         self.status[venue] = value
         windows = set(self.adapters[venue].windows)
         previous_windows = self.known_windows.get(venue, set())
-        gap = sorted(windows | previous_windows) if previous.get("trade_stream") and not value.get("trade_stream") else []
+        gap = windows | previous_windows if previous.get("trade_stream") and not value.get("trade_stream") else set()
+        # A sequence gap can precede the first trade. Propagate it independently
+        # of the other venue's health and of the aggregate tape flag.
+        explicit = value.get("gap_windows", [])
+        if isinstance(explicit, list):
+            gap |= {slug for slug in explicit if isinstance(slug, str)} & (windows | previous_windows)
         self.known_windows[venue] = windows
         self._on_status({"coinbase": self.status.get("polymarket_us", {}).get("coinbase", "connecting"),
-                         "markets": "venue_adapters", "venues": dict(self.status), "gap_windows": gap,
+                         "markets": "venue_adapters", "venues": dict(self.status), "gap_windows": sorted(gap),
                          "trade_stream": any(item.get("trade_stream") for item in self.status.values())})
 
     def maker_windows(self) -> set[str]:
-        return {slug for venue, adapter in self.adapters.items() if self.status.get(venue, {}).get("trade_stream")
-                for slug in adapter.windows}
+        result: set[str] = set()
+        for venue, adapter in self.adapters.items():
+            status = self.status.get(venue, {})
+            if not status.get("trade_stream"):
+                continue
+            explicit = status.get("maker_windows")
+            result |= set(adapter.windows) & set(explicit) if isinstance(explicit, list) else set(adapter.windows)
+        return result
 
     async def settlement(self, slug: str) -> float | None:
         venue = "kalshi" if slug.startswith("KXBTC15M-") else "polymarket_us"

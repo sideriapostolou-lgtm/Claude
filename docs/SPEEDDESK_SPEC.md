@@ -270,3 +270,87 @@ separates **REAL MONEY (Kalshi)** from practice and keeps Kalshi cash/results se
 and the existing town figures. Verify the exact deployed commit and a paper `speeddesk_live_status` before
 giving the owner the activation settings. After the owner activates, inspect the first windows and record
 orders, fills, fees, locked/directional P&L, gaps and anomalies in `docs/WORKLOG.md`.
+
+## 10. Public source-bot watcher and faster market data (owner, 2026-10-12)
+
+The owner wants real Kalshi trading as the eventual result of learning the source bot, within the existing
+$2/window, $4 open, $3 UTC daily stop and $5 total stop. Observation and statistical fitting do not themselves
+authorize an automatic strategy change. The existing live companion remains separately gated; the watcher
+never places an order, trades on Polymarket international, changes money settings or moves the Railway region.
+
+### Public observations
+
+`skipwatch.py` runs in its own engine thread. Its public-only adapter observes wallet
+`0xc53375ff94e96100f2b30a4b5775db35218d69a9`, current and next international Bitcoin five-minute Up/Down
+windows, CLOB market books/trade prints and Coinbase BTC-USD ticks. The current Data API is `/v2/trades`:
+explicit `taker_only=false`, complete cursor pagination, stable row deduplication and a rolling overlap.
+Polls default to 2.5 seconds; rate limits extend the interval. Both maker and taker fills must be included.
+Window start comes from `eventStartTime`, not the market creation date. Keep each discovered market's rules
+and settlement evidence. These international markets use the specified Chainlink reference; Kalshi uses
+BRTI. Coinbase opening/fair probability is a labeled research proxy, not either settlement oracle.
+
+Every observation records source time where available and local receipt time. Price/size/time matches to
+public prints are inferred, ambiguous or unmatched; they do not establish private decision milliseconds,
+submitted order size, maker/taker identity or cancellations. Unknowns remain unknown. CLOB has no documented
+market-channel sequence counter, so observed reconnect gaps do not prove that every silent loss is detectable.
+The journal retains reconstructible prices/sizes/timestamps; opaque delta book hashes and validated redundant
+fields may be omitted from its normalized representation. Source data cannot enter a feature before receipt.
+
+Records live under `/data/skipwatch/`: UTC-dated, hash-chained JSONL batches and losslessly compressed sealed
+segments. A UTC day can contain multiple segments rather than one huge file. Batched fsync bounds unflushed
+data to about one second; restarts and interrupted tails are recorded as gaps. Checkpoint witnesses reject
+missing durable records. Default storage cap is 4096 MiB, with a 128 MiB free-space reserve for the other desks.
+Reaching either bound stops observation visibly; it never silently deletes evidence. These limits do not
+guarantee three days of storage during an unusually busy feed. Actual storage/coverage must be monitored.
+Per-window summaries and late revisions use `skipwatch_window_summary`; current health uses `skipwatch_status`.
+
+### Fixed research protocol and later rulebook
+
+`research/lab8/skip/PLAN.md` is registered before prospective analysis. Its packaged implementation is
+`skipwatch_fit.py`; `research/lab8/skip/fit.py` is the offline command. The original persisted start time defines
+the splits: hours 0–36 fit, 36–48 validation, 48–72 untouched test. A fixed 24-candidate grid uses fair/quote
+edge, time remaining, observed side balance, displayed depth and Bitcoin movement. One causal opportunity
+per side/second predicts the next complete public timestamp second, with covered negative examples and a
+30-second reporting grace. Compare precision, recall and F1 against never-buy, always-buy and fixed-prevalence
+baselines; report sizing error, coverage, quiet periods and mismatches. Inadequate evidence is a valid result.
+
+The research-only sigma uses at least 300 actual adjacent one-second returns; opening uses an actual tick
+already known at window start and at most three seconds old. Missing observations never become zero returns.
+This does not lower the financial desk's 3,000-return warm-up. Its status now shows the actual sample count.
+After 48 hours, freeze the selected rule and its protocol/input digests before evaluating the final day.
+After 72 hours, evaluate once and retain that immutable result. Slow research runs in a separate process,
+so fitting does not hold the trading interpreter. Artifacts and the resulting rulebook live under
+`/data/skipwatch/research/`; repository `RULES.md` stays pending until verified findings are copied back.
+
+Fill prediction is not net profit, and copying five-minute patterns to fifteen-minute Kalshi markets is an
+untested transfer. Public fills do not establish our queue, fees, rebates or achievable fills. No fitter output
+is imported into an execution rule automatically. Report the evidence and its gaps before implementing a
+funded strategy change. Never claim the exact private algorithm or a profitable clone from a short sample.
+
+### Kalshi speed, latency and the US five-minute alert
+
+`SPEEDDESK_KALSHI_WS_ENABLED=true` enables a narrow market-only Ed25519 signer for
+`wss://external-api-ws.kalshi.com/trade-api/ws/v2`. The owner explicitly authorized use of the existing Railway
+key for this read-only feed, even when the companion is paper. Sign timestamp + `GET` + `/trade-api/ws/v2`;
+subscribe only to public-market `orderbook_delta` and `trade`, with explicit YES-price normalization.
+Validate snapshot/delta sequencing by subscription ID. Gaps, stale or backlogged data invalidate maker queues;
+REST remains capped at two book requests per second. Source timestamp or conservative request-start evidence,
+not receipt time invented as exchange time, is required for honest delayed practice fills.
+
+Public `GET /exchange/status` probes report successful HTTP round-trip median/p95 separately from timeout/error
+counts, WebSocket age and order latency. One region's timings do not establish that a move will help; no
+Railway region or stored data is moved. Account reconciliation still contributes to full execution latency.
+
+The public US probe checks the five-minute series and validates an actual market's BTC/UP_DOWN/5m/BRTI terms
+and start/end before logging `skipwatch_us_5m_listing`. Its first verified observation stays on the page.
+The series alone is not a listing; failed requests are unknown. This bounded latest-event check does not
+prove completeness across long outages, and discovering a market never adds it to a trading universe.
+All watcher data is shown outside cash, profit and town totals. It describes observed public activity, not
+money earned by this account.
+
+Official references checked: <https://data-api.polymarket.com/v2/openapi.json>,
+<https://docs.polymarket.com/migrate/data-api-v1-to-v2.md>,
+<https://docs.polymarket.com/developers/CLOB/websocket/market-channel>,
+<https://docs.cdp.coinbase.com/coinbase-app/advanced-trade-apis/websocket/websocket-channels>,
+<https://docs.kalshi.com/websockets/orderbook-updates>, and
+<https://docs.kalshi.com/websockets/public-trades>. Current provider schemas take precedence over old examples.
