@@ -18,6 +18,7 @@ from typing import Any, Literal
 Side = Literal["up", "down"]
 FeeRounding = Literal["half_even", "kalshi"]
 EPSILON = 1e-9
+VENUES = ("polymarket_us", "kalshi")
 
 
 @dataclass(frozen=True)
@@ -290,6 +291,10 @@ class PracticeDesk:
         self.orders: dict[int, PracticeOrder] = {}
         self.closed: list[Settlement] = []
         self.days: dict[str, dict[str, float]] = {}
+        self.venue_days: dict[str, dict[str, dict[str, float]]] = {venue: {} for venue in VENUES}
+        self.venue_incomplete_days: set[str] = set()
+        self.venue_filled_orders: set[int] = set()
+        self.window_venues: dict[str, str] = {}
         self.traded_days: dict[str, set[str]] = {}
         self.filled_orders: dict[str, set[int]] = {}
         self.next_order_id = 1
@@ -309,6 +314,8 @@ class PracticeDesk:
         if window.start_price is None:
             window.start_price = self.tape.opening(window.start)
         self.windows[window.slug] = window
+        if window.venue in VENUES:
+            self.window_venues.setdefault(window.slug, window.venue)
         self.inventory.setdefault(window.slug, Inventory())
 
     def tick_btc(self, price: float, at: float) -> None:
@@ -340,9 +347,25 @@ class PracticeDesk:
     def _day(self, now: float) -> dict[str, float]:
         return self.days.setdefault(utc_day(now), {})
 
-    def _count(self, now: float, name: str, value: float = 1.0) -> None:
+    def _venue_day(self, now: float, window: str | None) -> dict[str, float] | None:
+        venue = self.window_venues.get(window or "")
+        if venue not in VENUES:
+            # Never assign unidentified activity to whichever venue is visible.
+            self.venue_incomplete_days.add(utc_day(now))
+            return None
+        return self.venue_days[venue].setdefault(utc_day(now), {})
+
+    def _count_venue(self, now: float, name: str, value: float, window: str | None) -> None:
+        day = self._venue_day(now, window)
+        if day is not None:
+            day[name] = day.get(name, 0.0) + value
+
+    def _count(self, now: float, name: str, value: float = 1.0, *, window: str | None = None,
+               track_venue: bool = True) -> None:
         day = self._day(now)
         day[name] = day.get(name, 0.0) + value
+        if track_venue:
+            self._count_venue(now, name, value, window)
 
     def _event(self, event: str, now: float, window: str, *, order: PracticeOrder | None = None,
                reason: str = "", size: float | None = None, fee: float = 0.0) -> Decision:
@@ -443,7 +466,7 @@ class PracticeDesk:
             if window is None or window == order.window:
                 events.append(self._event("speeddesk_cancel", now, order.window, order=order, reason=reason))
                 del self.orders[order_id]
-                self._count(now, f"{order.kind}_cancelled")
+                self._count(now, f"{order.kind}_cancelled", window=order.window)
         return events
 
     def place(self, window: str, side: Side, kind: Literal["take", "rest"], price: float,
@@ -482,8 +505,8 @@ class PracticeDesk:
         if inventory.up.shares + inventory.down.shares <= EPSILON:
             self.bootstrap_order[window] = order.order_id
             self.bootstrap_side[window] = side
-        self._count(now, f"{kind}_orders")
-        self._count(now, f"{kind}_requested_shares", size)
+        self._count(now, f"{kind}_orders", window=window)
+        self._count(now, f"{kind}_requested_shares", size, window=window)
         self.last_reason[window] = ""
         return self._event(f"speeddesk_{kind}", now, window, order=order)
 
@@ -497,15 +520,20 @@ class PracticeDesk:
         traded = self.traded_days.setdefault(utc_day(now), set())
         if order.window not in traded:
             traded.add(order.window)
-            self._count(now, "windows_traded")
+            self._count(now, "windows_traded", window=order.window)
         filled = self.filled_orders.setdefault(utc_day(now), set())
         if order.order_id not in filled:
             filled.add(order.order_id)
-            self._count(now, f"{order.kind}_filled_orders")
-        self._count(now, "fills")
-        self._count(now, f"{order.kind}_filled_shares", size)
-        self._count(now, "latency_ms_total", max(0.0, now - order.placed_at) * 1000)
-        self._count(now, "fees_usd", fee)
+            self._count(now, f"{order.kind}_filled_orders", track_venue=False)
+        # Per-venue rates are placement-day cohorts, so a later partial fill
+        # cannot become a second successful order or a >100% midnight rate.
+        if order.order_id not in self.venue_filled_orders:
+            self.venue_filled_orders.add(order.order_id)
+            self._count_venue(order.placed_at, f"{order.kind}_filled_orders", 1.0, order.window)
+        self._count(now, "fills", window=order.window)
+        self._count(now, f"{order.kind}_filled_shares", size, window=order.window)
+        self._count(now, "latency_ms_total", max(0.0, now - order.placed_at) * 1000, window=order.window)
+        self._count(now, "fees_usd", fee, window=order.window)
         if order.remaining <= EPSILON:
             self.orders.pop(order.order_id, None)
         return self._event("speeddesk_fill", now, order.window, order=order, size=size, fee=fee)
@@ -531,7 +559,7 @@ class PracticeDesk:
             book = self.books[(order.window, order.side)]
             if now > order.active_at + self.config.stale_s + EPSILON:
                 del self.orders[order.order_id]
-                self._count(now, "take_completed")
+                self._count(now, "take_completed", window=order.window)
                 events.append(self._event("speeddesk_cancel", now, order.window, order=order,
                                           reason="latency_recheck_missing"))
                 continue
@@ -541,7 +569,7 @@ class PracticeDesk:
                 # reject it, even before a qualifying post-delay confirmation.
                 # Never hold that decision open for the old price to return.
                 del self.orders[order.order_id]
-                self._count(now, "take_completed")
+                self._count(now, "take_completed", window=order.window)
                 events.append(self._event("speeddesk_cancel", now, order.window, order=order,
                                           reason="ask_moved"))
                 continue
@@ -563,7 +591,7 @@ class PracticeDesk:
             # IOC residual is never converted into a later resting order.
             if order.order_id in self.orders:
                 del self.orders[order.order_id]
-            self._count(now, "take_completed")
+            self._count(now, "take_completed", window=order.window)
             if size <= EPSILON:
                 events.append(self._event("speeddesk_cancel", now, order.window, order=order, reason="ask_moved"))
         return events
@@ -639,7 +667,7 @@ class PracticeDesk:
                 if not take and makers_enabled and abs(fair - order.fair) <= self.config.reprice + EPSILON:
                     return []
                 del self.orders[order.order_id]
-                self._count(now, "rest_cancelled")
+                self._count(now, "rest_cancelled", window=window.slug)
                 reason = "take_available" if take else "reprice" if makers_enabled else "trade_stream_missing"
                 events.append(self._event("speeddesk_cancel", now, window.slug, order=order, reason=reason))
         kind: Literal["take", "rest"] = "rest"
@@ -689,23 +717,28 @@ class PracticeDesk:
         result = settlement(window, self.inventory[window], up_wins, now)
         self.closed.append(result)
         if result.up_shares + result.down_shares > 0:
-            self._count(now, "windows")
-            self._count(now, "won" if result.pnl_usd > 0 else "lost" if result.pnl_usd < 0 else "flat")
+            self._count(now, "windows", window=window)
+            self._count(now, "won" if result.pnl_usd > 0 else "lost" if result.pnl_usd < 0 else "flat", window=window)
             for key in ("pnl_usd", "locked_usd", "direction_usd"):
-                self._count(now, key, getattr(result, key))
+                self._count(now, key, getattr(result, key), window=window)
             day = self._day(now)
             day["worst_window_usd"] = min(day.get("worst_window_usd", result.pnl_usd), result.pnl_usd)
+            venue_day = self._venue_day(now, window)
+            if venue_day is not None:
+                venue_day["worst_window_usd"] = min(venue_day.get("worst_window_usd", result.pnl_usd), result.pnl_usd)
         return result
 
-    def daily_summary(self, now: float | str) -> dict[str, Any]:
+    def daily_summary(self, now: float | str, venue: str | None = None) -> dict[str, Any]:
         day = now if isinstance(now, str) else utc_day(now)
-        data = self.days.get(day, {})
+        if venue is not None and venue not in VENUES:
+            raise ValueError("Unknown speed desk venue")
+        data = self.days.get(day, {}) if venue is None else self.venue_days[venue].get(day, {})
         fills = data.get("fills", 0)
         take_orders = data.get("take_orders", 0)
         maker_orders = data.get("rest_orders", 0)
         take_fills = data.get("take_filled_orders", 0)
         maker_fills = data.get("rest_filled_orders", 0)
-        return {"day": day, "windows": data.get("windows_traded", 0),
+        report = {"day": day, "windows": data.get("windows_traded", 0),
                 "settled_windows": data.get("windows", 0), "fills": fills,
                 "locked_usd": data.get("locked_usd", 0),
                 "directional_usd": data.get("direction_usd", 0), "pnl_usd": data.get("pnl_usd", 0),
@@ -716,6 +749,15 @@ class PracticeDesk:
                 "take_fill_rate": take_fills / take_orders if take_orders else None,
                 "maker_fill_rate": maker_fills / maker_orders if maker_orders else None,
                 "avg_latency_ms": data.get("latency_ms_total", 0) / fills if fills else None}
+        if venue is not None:
+            complete = day not in self.venue_incomplete_days
+            if not complete:
+                # Old aggregate receipts cannot identify past venue attempts,
+                # partial executions or latency. No guessed split or false zero.
+                report = {key: value if key == "day" else None for key, value in report.items()}
+            report.update({"venue": venue, "reporting_complete": complete,
+                           "fill_rate_basis": "orders_placed_on_day"})
+        return report
 
     def to_state(self) -> dict[str, Any]:
         return {"version": 1, "mode": "practice", "config": asdict(self.config),
@@ -723,6 +765,10 @@ class PracticeDesk:
                 "inventory": {slug: asdict(value) for slug, value in self.inventory.items()},
                 "orders": [asdict(order) for order in self.orders.values()],
                 "closed": [asdict(item) for item in self.closed], "days": self.days,
+                "venue_reporting_version": 1, "venue_days": self.venue_days,
+                "venue_incomplete_days": sorted(self.venue_incomplete_days),
+                "venue_filled_orders": sorted(self.venue_filled_orders),
+                "window_venues": self.window_venues,
                 "traded_days": {day: sorted(windows) for day, windows in self.traded_days.items()},
                 "filled_orders": {day: sorted(orders) for day, orders in self.filled_orders.items()},
                 "next_order_id": self.next_order_id, "last_reason": self.last_reason,
@@ -732,6 +778,22 @@ class PracticeDesk:
                 "bitcoin": {"started_at": self.tape.started_at, "last_at": self.tape.last_at, "price": self.tape.price,
                             "prices": {str(key): value for key, value in self.tape.prices.items()},
                             "first_prices": {str(key): value for key, value in self.tape.first_prices.items()}}}
+
+    def _migrate_venue_reporting(self, state: dict[str, Any]) -> None:
+        """An all-zero warm-up can split exactly; historical activity cannot."""
+        self.venue_incomplete_days.update(day for day, counters in self.days.items()
+                                          if any(value != 0 for value in counters.values()))
+        self.venue_incomplete_days.update(day for day, windows in self.traded_days.items() if windows)
+        self.venue_incomplete_days.update(day for day, orders in self.filled_orders.items() if orders)
+        for result in self.closed:
+            if result.up_shares + result.down_shares > 0:
+                self.venue_incomplete_days.add(utc_day(result.at))
+        for order in state.get("orders", []):
+            self.venue_incomplete_days.add(utc_day(float(order["placed_at"])))
+        for window, inventory in self.inventory.items():
+            if inventory.up.shares + inventory.down.shares > 0 and window in self.windows:
+                self.venue_incomplete_days.add(utc_day(self.windows[window].start))
+        self.venue_filled_orders = set().union(*self.filled_orders.values())
 
     @classmethod
     def from_state(cls, state: dict[str, Any], config: SpeedConfig | None = None) -> PracticeDesk:
@@ -747,6 +809,15 @@ class PracticeDesk:
         desk.days = state["days"]
         desk.traded_days = {day: set(windows) for day, windows in state.get("traded_days", {}).items()}
         desk.filled_orders = {day: set(orders) for day, orders in state.get("filled_orders", {}).items()}
+        if "venue_reporting_version" in state:
+            if state["venue_reporting_version"] != 1:
+                raise ValueError("Unsupported venue reporting state")
+            desk.venue_days = {venue: state["venue_days"][venue] for venue in VENUES}
+            desk.venue_incomplete_days = set(state["venue_incomplete_days"])
+            desk.venue_filled_orders = set(state["venue_filled_orders"])
+            desk.window_venues = {window: venue for window, venue in state["window_venues"].items() if venue in VENUES}
+        else:
+            desk._migrate_venue_reporting(state)
         desk.next_order_id = int(state["next_order_id"])
         desk.last_reason = state.get("last_reason", {})
         desk.bootstrap_order = state.get("bootstrap_order", {})

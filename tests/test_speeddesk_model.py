@@ -588,3 +588,184 @@ def test_multiday_history_is_preserved_without_reconsidering_every_closed_window
     assert len(state["closed"]) == 1000
     assert len(state["windows"]) == 1001
     assert len(state["inventory"]) == 1001
+
+
+def both_venues() -> PracticeDesk:
+    model = desk()
+    model.add_window(Window("kalshi15m", 1000, 1900, 100, taker_coefficient=0,
+                            maker_coefficient=0, venue="kalshi"))
+    refresh_both(model, 1010)
+    return model
+
+
+def refresh_both(model: PracticeDesk, now: float) -> None:
+    refresh(model, now)
+    for side in ("up", "down"):
+        model.on_book(replace(model.books[("btc15m", side)], window="kalshi15m"))
+
+
+def trade_both_venues() -> PracticeDesk:
+    model = both_venues()
+    model.place("btc15m", "up", "take", .4, 5, .6, 1010)
+    refresh_both(model, 1010.25)
+    model.advance(1010.25)
+    model.place("btc15m", "down", "take", .4, 5, .6, 1010.25)
+    refresh_both(model, 1010.5)
+    model.advance(1010.5)
+    model.place("kalshi15m", "up", "rest", .3, 5, .5, 1010.5)
+    refresh_both(model, 1011)
+    model.on_trade(Trade("kalshi15m", "up", .3, 15, 1011, "up-fill", "sell"))
+    model.place("kalshi15m", "down", "rest", .3, 3, .5, 1011)
+    refresh_both(model, 1011.5)
+    model.on_trade(Trade("kalshi15m", "down", .3, 13, 1011.5, "down-fill", "sell"))
+    return model
+
+
+def legacy_state(model: PracticeDesk) -> dict:
+    state = json.loads(json.dumps(model.to_state()))
+    for name in ("venue_reporting_version", "venue_days", "venue_incomplete_days",
+                 "venue_filled_orders", "window_venues"):
+        state.pop(name)
+    return state
+
+
+def test_daily_counters_and_settlements_are_attributed_to_their_actual_venue():
+    model = trade_both_venues()
+    model.settle("btc15m", True, 1900)
+    model.settle("kalshi15m", True, 1900)
+    us = model.daily_summary(1900, "polymarket_us")
+    kalshi = model.daily_summary(1900, "kalshi")
+    total = model.daily_summary(1900)
+    assert us["windows"] == kalshi["windows"] == 1
+    assert us["fills"] == kalshi["fills"] == 2
+    assert us["take_attempts"] == us["take_fills"] == 2
+    assert us["maker_orders"] == us["maker_fills"] == 0
+    assert kalshi["take_attempts"] == kalshi["take_fills"] == 0
+    assert kalshi["maker_orders"] == kalshi["maker_fills"] == 2
+    assert us["take_fill_rate"] == kalshi["maker_fill_rate"] == 1
+    assert us["avg_latency_ms"] == 250 and kalshi["avg_latency_ms"] == 500
+    assert us["pnl_usd"] == pytest.approx(1)
+    assert kalshi["locked_usd"] == pytest.approx(1.2)
+    assert kalshi["directional_usd"] == pytest.approx(1.4)
+    assert us["worst_usd"] == pytest.approx(1)
+    assert kalshi["worst_usd"] == pytest.approx(2.6)
+    for metric in ("windows", "settled_windows", "fills", "locked_usd", "directional_usd", "pnl_usd", "won", "lost"):
+        assert us[metric] + kalshi[metric] == pytest.approx(total[metric])
+    assert us["reporting_complete"] and kalshi["reporting_complete"]
+    assert us["fill_rate_basis"] == "orders_placed_on_day"
+
+
+def test_separate_reports_do_not_split_or_increase_combined_risk_caps():
+    model = both_venues()
+    model.config = replace(model.config, open_usd=6)
+    assert model.place("btc15m", "up", "take", .4, 10, .6, 1010).event == "speeddesk_take"
+    assert model.place("kalshi15m", "up", "take", .4, 10, .6, 1010).reason == "open_budget"
+    assert model.daily_summary(1010, "polymarket_us")["take_attempts"] == 1
+    assert model.daily_summary(1010, "kalshi")["take_attempts"] == 0
+    assert model.daily_summary(1010)["take_attempts"] == 1
+
+
+def test_venue_reports_survive_restart_without_reclassifying_window_metadata():
+    model = trade_both_venues()
+    model.add_window(replace(model.windows["kalshi15m"], venue="polymarket_us"))
+    model.settle("kalshi15m", False, 1900)
+    expected = {venue: model.daily_summary(1900, venue) for venue in ("polymarket_us", "kalshi")}
+    restored = PracticeDesk.from_state(json.loads(json.dumps(model.to_state())))
+    assert restored.window_venues["kalshi15m"] == "kalshi"
+    for venue, summary in expected.items():
+        assert restored.daily_summary(1900, venue) == summary
+    assert expected["kalshi"]["settled_windows"] == 1
+    assert expected["polymarket_us"]["settled_windows"] == 0
+
+
+def test_midnight_fill_rates_follow_placement_cohort_while_fills_follow_execution_day():
+    model = PracticeDesk(SpeedConfig(window_usd=100, open_usd=100))
+    model.add_window(Window("cross-midnight", 86380, 87280, 100, maker_coefficient=0, venue="kalshi"))
+
+    def fresh(now):
+        model.tick_btc(100, now)
+        for side in ("up", "down"):
+            model.on_book(Book("cross-midnight", side, (Level(.3, 10),), (Level(.4, 100),), now, str(now)))
+
+    fresh(86399)
+    model.place("cross-midnight", "up", "rest", .3, 5, .5, 86399)
+    before = model.daily_summary(86399, "kalshi")
+    assert before["maker_orders"] == 1 and before["maker_fill_rate"] == 0
+    fresh(86400.5)
+    model.on_trade(Trade("cross-midnight", "up", .3, 12, 86400.5, "first", "sell"))
+    fresh(86401)
+    model.on_trade(Trade("cross-midnight", "up", .3, 3, 86401, "second", "sell"))
+    yesterday = model.daily_summary(86399, "kalshi")
+    today = model.daily_summary(86401, "kalshi")
+    assert yesterday["maker_fills"] == yesterday["maker_orders"] == 1
+    assert yesterday["maker_fill_rate"] == 1 and yesterday["fills"] == 0
+    assert today["fills"] == 2 and today["windows"] == 1
+    assert today["maker_orders"] == today["maker_fills"] == 0
+    assert today["maker_fill_rate"] is None and today["avg_latency_ms"] == 1750
+    assert model.daily_summary(86401)["maker_fills"] == 1  # existing aggregate semantics
+    restored = PracticeDesk.from_state(json.loads(json.dumps(model.to_state())))
+    assert restored.daily_summary(86399, "kalshi") == yesterday
+    assert restored.daily_summary(86401, "kalshi") == today
+
+
+def test_zero_activity_legacy_warmup_migrates_to_exact_zero_venue_reports():
+    state = legacy_state(both_venues())
+    state["days"] = {utc_day(1010): {"fills": 0, "pnl_usd": 0, "take_orders": 0, "rest_orders": 0}}
+    restored = PracticeDesk.from_state(state)
+    for venue in ("polymarket_us", "kalshi"):
+        report = restored.daily_summary(1010, venue)
+        assert report["reporting_complete"]
+        assert report["fills"] == report["take_attempts"] == report["maker_orders"] == report["pnl_usd"] == 0
+        assert report["worst_usd"] is None and report["avg_latency_ms"] is None
+    assert not restored.venue_incomplete_days
+
+
+def test_legacy_activity_never_becomes_invented_venue_attempts_or_latency():
+    model = trade_both_venues()
+    model.settle("btc15m", True, 1900)
+    aggregate = model.daily_summary(1900)
+    restored = PracticeDesk.from_state(legacy_state(model))
+    assert restored.daily_summary(1900) == aggregate
+    for venue in ("polymarket_us", "kalshi"):
+        report = restored.daily_summary(1900, venue)
+        assert report["day"] == utc_day(1900) and report["venue"] == venue
+        assert not report["reporting_complete"]
+        for key in aggregate:
+            if key != "day":
+                assert report[key] is None
+    again = PracticeDesk.from_state(json.loads(json.dumps(restored.to_state())))
+    assert again.daily_summary(1900, "kalshi") == restored.daily_summary(1900, "kalshi")
+    assert again.daily_summary(86401, "kalshi")["reporting_complete"]
+    assert again.daily_summary(86401, "kalshi")["fills"] == 0
+
+
+def test_legacy_outstanding_attempt_is_unknown_even_before_any_fill():
+    model = both_venues()
+    model.place("kalshi15m", "up", "rest", .3, 5, .5, 1010)
+    state = legacy_state(model)
+    state["days"] = {}  # missing old counters cannot turn that surviving order into zero activity
+    restored = PracticeDesk.from_state(state)
+    assert not restored.daily_summary(1010, "kalshi")["reporting_complete"]
+    assert not restored.orders  # normal restart cancellation still applies
+
+
+def test_unknown_venue_activity_is_never_assigned_to_a_known_venue():
+    model = desk()
+    model.add_window(Window("unknown", 1000, 1900, 100, maker_coefficient=0, venue="unidentified"))
+    for side in ("up", "down"):
+        model.on_book(replace(model.books[("btc15m", side)], window="unknown"))
+    model.place("unknown", "up", "rest", .3, 5, .5, 1010)
+    assert model.daily_summary(1010)["maker_orders"] == 1
+    assert set(model.venue_days) == {"polymarket_us", "kalshi"}
+    for venue in model.venue_days:
+        report = model.daily_summary(1010, venue)
+        assert not report["reporting_complete"] and report["maker_orders"] is None
+    with pytest.raises(ValueError):
+        model.daily_summary(1010, "unidentified")
+
+
+def test_incomplete_new_reporting_state_fails_closed_instead_of_returning_false_zero():
+    state = both_venues().to_state()
+    state.pop("venue_days")
+    with pytest.raises(KeyError):
+        PracticeDesk.from_state(state)

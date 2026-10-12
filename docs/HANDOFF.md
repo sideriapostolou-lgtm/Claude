@@ -187,6 +187,11 @@ session scratchpad that you will not have.
    State and receipts live under `/data/speeddesk/`; `/api/page` has `money.speeddesk.today` plus the latest 31
    UTC calendar-day reports. The page labels this **PRACTICE**, keeps locked-pair and directional results apart,
    reports fill rates and latency, and never adds pretend results to cash or the town's real profit.
+   Both `today` and each completed report include `venues.kalshi` and `venues.polymarket_us`; the phone page
+   shows separate venue cards and expandable daily history. Uptime/Bitcoin latency are shared, while fresh
+   book/trade coverage is measured per venue. Missing historical splits stay unknown. Per-venue order fill
+   rates use the order's placement day; execution counts and settlement profits use their actual UTC day.
+   These reports do not change the desk's shared practice budgets or the existing real-money desks.
    **Deployed and verified 2026-10-12 19:09 UTC** on `1e45cc3` (initial implementation PR #7). Both venue
    trade feeds are verified; existing polydesk remains LIVE at 10 contracts. The at-least-three-day observation
    is still pending, with the first conservative review no earlier than 2026-10-15 19:09 UTC. See `docs/WORKLOG.md`.
