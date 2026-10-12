@@ -177,6 +177,11 @@ session scratchpad that you will not have.
 
 ## 9. Work in flight and backlog (in priority order)
 
+0. **The speed desk (owner's top priority, 2026-10-12):** build it from `docs/SPEEDDESK_SPEC.md`, practice mode first.
+   It copies the public bot "dangerously-skip-permissions" (research/lab8/skip/READING.md) on the US 15m and 1h
+   Bitcoin windows. Also live since 2026-10-12: the Bitcoin distance bar now depends on price and time left
+   (`btcdistance.REQUIRED_Z`), and `MARCO_REAL=0`.
+
 1. **Lab 8, the distance-filtered grind (the owner's idea).** Buy 95-99c only when Bitcoin is far from the strike,
    measured in how much it normally moves in the time left (z = ln(S/K) / (sigma x sqrt(minutes left))). Done so
    far (`research/lab8/`): `us_venue.md` (the US crypto markets, all Bitcoin, settle on CF Benchmarks' BRTI;
