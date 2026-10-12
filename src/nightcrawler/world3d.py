@@ -8184,7 +8184,8 @@ _M_CINEMA = r"""
   function cineMoneyDetails(pg) {
     const pm = pg && pg.money && pg.money.polymarket, r = pm && pm.real;
     const lines = ["Account cash is the spendable cash at Polymarket, shared with your own bets and deposits. It is not bot profit.",
-      "Polymarket bot profit counts settlements and cash-outs booked from 00:00 UTC; your own bets and deposits are excluded."];
+      "Polymarket bot profit counts settlements and cash-outs booked from 00:00 UTC; your own bets and deposits are excluded.",
+      "The town’s Bot today card uses Pacific midnight; this tour and safety limits show UTC."];
     if (pg && pg.mode === "LIVE") lines.push("Bots today also includes the live Solana bot’s daily result.");
     [["Cash checked", r && r.cash_at], ["Positions checked", r && r.venue_at], ["Desk report", pm && pm.as_of]].forEach(function (q) {
       const d = new Date(q[1] * 1000);

@@ -10,7 +10,7 @@ TYCOON_HTML = """
     <span id="ty-state" role="status">Connecting</span><button type="button" id="ty-mode">Camera tour</button></div>
   <div class="ty-money">
     <button type="button" id="ty-cash-card" aria-controls="panel"><span>Available cash</span><b id="ty-cash">—</b><small>Polymarket account</small></button>
-    <button type="button" id="ty-today-card" aria-controls="panel"><span>Bot today</span><b id="ty-today">—</b><small>Since 00:00 UTC</small></button>
+    <button type="button" id="ty-today-card" aria-controls="panel"><span>Bot today</span><b id="ty-today">—</b><small>Since midnight PT</small></button>
     <button type="button" id="ty-bets-card" aria-controls="panel"><span>Account bets</span><b id="ty-bets">—</b><small id="ty-held">Includes your own</small></button>
   </div>
   <button type="button" id="ty-alert" aria-controls="panel" hidden></button>
@@ -195,6 +195,7 @@ TYCOON_UI = r"""
     else if (s.cash !== null && !s.cashAsOf) oldMoney.push("Cash update time unknown");
     if (s.venueStale) oldMoney.push("Account bets checked " + tyAge(s.venueAge));
     else if (s.count !== null && !s.venueAsOf) oldMoney.push("Account bets update time unknown");
+    if (s.todayStale) oldMoney.push("Profit checked " + tyAge(s.todayAge));
     tyText("ty-fresh", offline ? "Connection lost · showing the last report" : s.stale ? "Last report " + tyAge(s.deskAge) + " · figures may be old"
       : oldMoney.length ? oldMoney.join(" · ") + " · may be old"
       : s.updated ? "Cash checked " + tyAge(s.cashAge) + " · bets " + tyAge(s.venueAge) : "Waiting for the bot’s report…");
@@ -291,9 +292,14 @@ TYCOON_UI = r"""
       if (s.event) { para(panelBody, "Recorded " + tyAge(s.event.age) + ".", "dim"); para(panelBody, s.eventNote, "dim"); }
     } else if (panelKind === "ty-today") {
       panelTitle.textContent = "Bot’s result today"; para(panelBody, fmtSigned(s.today));
-      para(panelBody, "The bot’s profit or loss booked since 00:00 UTC, including settlements and cash-outs. Your own bets, deposits and practice money are not counted here.");
+      para(panelBody, "The bot’s recorded profit or loss since 12:00 a.m. Pacific, including settlements and cash-outs. Daylight saving time is handled automatically. Your own bets, deposits and practice money are excluded.");
+      if (s.todayDate) para(panelBody, "Pacific date: " + s.todayDate + ".", "dim");
+      if (s.today == null) para(panelBody, s.todayStatus === "incomplete"
+        ? "A complete Pacific-day total could not be verified from the saved records."
+        : "Waiting for a complete Pacific-day report.", "warn");
       para(panelBody, "This uses the time the bot records the result. A result discovered late can appear on a different day from Polymarket’s history.", "dim");
-      para(panelBody, s.asOf ? "Bot report checked " + tyAge(s.deskAge) + "." : "Bot report time not available.", "dim");
+      para(panelBody, "Trading safety limits and the camera tour keep their UTC day; this card uses your Pacific day.", "dim");
+      para(panelBody, s.todayAsOf ? "Profit report checked " + tyAge(s.todayAge) + "." : "Profit report time not available.", "dim");
       para(panelBody, "Open bets can still win or lose. This number is not a forecast.", "dim");
     } else {
       panelTitle.textContent = "Available account cash"; para(panelBody, fmtUsd(s.cash));
@@ -304,7 +310,8 @@ TYCOON_UI = r"""
       para(panelBody, s.cashAsOf ? "Cash reported " + tyAge(Math.max(0, Date.now() / 1000 - s.cashAsOf)) + "." : "Cash update time not reported.", "dim");
     }
     const oldAccount = panelKind === "ty-bets" && (s.venueStale || !s.venueAsOf)
-      || panelKind === "ty-cash" && (s.cashStale || !s.cashAsOf);
+      || panelKind === "ty-cash" && (s.cashStale || !s.cashAsOf)
+      || panelKind === "ty-today" && s.todayStale;
     if (s.stale || offline || oldAccount) para(panelBody, "Showing the last report. Wait for a fresh update before treating these as current figures.", "warn");
     panelEl.scrollTop = scroll; return true;
   }

@@ -384,15 +384,20 @@ _SCRIPT = r"""
       el("div", "meta", meta));
     const r = pm.real, p = pm.paper, rows = [];
     if (r) {
+      const pacific = r.today_pacific || {}, known = pacific.status === "ok"
+        && pacific.tz === "America/Los_Angeles" && isNum(pacific.pnl_usd);
       const venue = isNum(r.contracts) ? count(r.contracts, "contract held", "contracts held")
         + (isNum(r.cost_usd) ? ", cost " + usd(r.cost_usd) : "") + (isNum(r.value_usd) ? ", worth " + usd(r.value_usd) + " now" : "")
         : count(r.open, "open position", "open positions") + ", the venue's book not read yet";
       rows.push(row(r, join("bot profit/loss since start", isNum(r.cash_usd) ? "available account cash " + usd(r.cash_usd)
-        : "account cash not read yet", venue, join("bot today (UTC) " + usd(r.today_usd, true), won(r.won_today, r.settled_today))),
+        : "account cash not read yet", venue, "bot since midnight Pacific " + usd(known ? pacific.pnl_usd : null, true)),
         r.label + " · bot profit/loss"));
-      rows.push(el("p", "meta", "Cash and open bets include your own activity. Bot profit excludes your own bets and deposits; "
-        + "today counts settlements and cash-outs booked from 00:00 UTC."));
-      const checks = [["Cash checked", r.cash_at], ["Positions checked", r.venue_at], ["Desk report", pm.as_of]]
+      rows.push(el("p", "meta", "Cash and open bets include your own activity. Bot profit excludes your own bets and deposits. "
+        + "The Pacific day uses the bot’s booking time, not the venue event date. Safety limits still reset at 00:00 UTC."));
+      if (!known) rows.push(el("p", "meta", pacific.status === "incomplete"
+        ? "Pacific-day record incomplete; today’s result is not available." : "Pacific-day result not available yet."));
+      const checks = [["Cash checked", r.cash_at], ["Positions checked", r.venue_at], ["Desk report", pm.as_of],
+        ["Pacific profit checked", pacific.as_of]]
         .map(([label, ts]) => checkedUtc(ts) ? label + " " + checkedUtc(ts) : "").filter(Boolean);
       if (checks.length) rows.push(el("p", "meta", checks.join(" · ")));
     }

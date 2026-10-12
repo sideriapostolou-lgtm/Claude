@@ -13,6 +13,34 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-12 18:19 UTC, Codex, branch codex/tycoon-town-view, PR #6
+- Clarified: the owner means 12:00 a.m. Pacific by "since midnight". The town's Bot today card and the main
+  Polymarket daily figure now use America/Los_Angeles calendar days with daylight saving time. Labels say
+  "Since midnight PT" / "since midnight Pacific". The camera tour explains that its combined daily figure and
+  trading safety limits still use UTC.
+- Changed: added a read-only Pacific-day adapter over the retained closed rows. It includes recorded bot
+  settlements and cash-outs, preserves corrections on the original booking day, and excludes owner/practice/
+  unresolved rows. Before returning a total, it checks both result count and P&L against every overlapping UTC
+  day book. Truncated, malformed, mismatched or unfinished-poll records yield an unknown result; yesterday's
+  snapshot cannot establish today's zero. Source time is kept, and no UTC value is relabelled as Pacific.
+- Verified: full `python -m pytest -q`: 3,118 passed, 21 skipped; mypy passed all 88 source files; changed-file
+  Ruff passed. Tests cover two UTC dates, exact midnight, both 23/25-hour DST days, cash-out correction dates,
+  owner exclusion, missing/zero data and independent freshness. An integration test proves a Pacific +$0.23
+  display leaves a UTC -$1.27 loss-limit input unchanged and writes no state. Independent helper review found
+  no blocking issues. Browser fixture checks passed at 320x568, 390x844 and 1280x800, with no page errors or
+  overflow; incomplete Pacific data shows unknown, and the optional tour remains explicitly UTC.
+- Live log comparison: read 51 activity rows from deployment 1972f365 (50 replayed at startup plus the 18:00
+  resolution), with venue timestamps from 03:32 through 18:00 UTC. The 14 nonzero Bitcoin results on/after
+  Pacific midnight (07:00 UTC on Oct 12), through 11:00 a.m. Pacific, sum to +$1.67 in the venue's logged realized
+  amounts; the $10 deposit is excluded. This is a logged activity subtotal, not verified current cash or a full
+  account/book reconciliation. The exact meaning/current value of the owner's $14.39 remains unconfirmed.
+- Real money touched? No protected trading code, orders, caps, settings, state books or reset times changed.
+  Merged target docs through 870bb7d, preserving the owner's MARCO_REAL=0 change. Prior cash-out accounting
+  edge cases remain unresolved; this adapter validates coverage of the recorded book, not correctness or
+  completeness of all venue activity. The same 21 network/optional-dependency checks remain skipped.
+- Next: PR #6 awaits review/merge; this update is not deployed. After merge verify exact Railway SHA, LIVE
+  startup and no tracebacks, then compare the live protected page with the account and record the result.
+
 ## 2026-10-12 18:08 UTC, Codex, branch codex/tycoon-town-view, PR #6
 - Asked: reconcile the owner's reported $14.39 and earnings since midnight with the actual Polymarket connection.
   Asked whether that amount is cash or profit and which timezone defines midnight; no answer yet. Kept the

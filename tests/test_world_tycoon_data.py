@@ -43,7 +43,10 @@ def page() -> dict[str, Any]:
                 "mode": "live", "as_of": NOW - 90,
                 "paper": {"today_usd": 888, "open": 50},
                 "real": {"cash_usd": 14.22, "cash_at": NOW - 90, "venue_at": NOW - 90,
-                         "today_usd": 0.23, "open": 2, "at_risk_usd": 24.97, "venue_open": 3,
+                         "today_usd": 999.23, "today_pacific": {"date": "2027-01-15",
+                             "tz": "America/Los_Angeles", "start": NOW - 3600, "end": NOW + 82800,
+                             "as_of": NOW - 90, "status": "ok", "pnl_usd": 0.23, "settled": 1},
+                         "open": 2, "at_risk_usd": 24.97, "venue_open": 3,
                          "cost_usd": 26.41, "value_usd": 27.10, "pending": 1, "pending_usd": 9.70},
             },
         },
@@ -94,6 +97,7 @@ def test_actual_page_desk_fields_include_owner_open_bets_but_not_owner_profit(
     st = desk_state(live_today={"pnl_usd": 0.23, "settled": 1, "won": 1})
     st["positions"]["owner"] = dict(position("owner", live=True, cost_usd=24), rule="owner", owner=True)
     st["owner_pnl_usd"] = -52.38
+    st["closed"] = [{"live": True, "owner": False, "settled_at": DESK_NOW - 120, "pnl_usd": 0.23, "won": True}]
     save(settings, st)
     source = polymarket_desk(settings, DESK_NOW)
     out = run(tmp_path, {"generated_at": DESK_NOW, "money": {"polymarket": source}}, now=DESK_NOW)
@@ -115,14 +119,40 @@ def test_missing_records_never_become_zero(tmp_path: Path, value: Any) -> None:
 def test_reported_zero_and_negative_result_are_not_missing(tmp_path: Path) -> None:
     p = page()
     p["money"]["polymarket"]["real"].update(cash_usd=0, today_usd=-9.81, open=0, at_risk_usd=0, venue_open=0, value_usd=0)
+    p["money"]["polymarket"]["real"]["today_pacific"]["pnl_usd"] = -9.81
     out = run(tmp_path, p)
     assert (out["cash"], out["today"], out["count"], out["value"]) == (0, -9.81, 0, 0)
     p["money"]["polymarket"]["as_of"] = None
     out = run(tmp_path, p)
     assert out["cash"] == 0  # a separately reported balance may precede the first complete desk round
-    assert out["today"] is None and out["count"] == 0 and out["value"] == 0
+    assert out["today"] == -9.81 and out["count"] == 0 and out["value"] == 0
     assert out["recorded"] == {"count": None, "cost": None}
     assert out["state"] == "unknown"
+
+
+@pytest.mark.parametrize("change", [None, {"status": "incomplete"}, {"status": "unavailable"},
+                                   {"tz": "UTC"}, {"end": NOW}, {"start": NOW + 1},
+                                   {"as_of": NOW - 7200}, {"pnl_usd": False}])
+def test_pacific_today_never_relabels_the_utc_total(tmp_path: Path, change: dict[str, Any] | None) -> None:
+    p = page()
+    real = p["money"]["polymarket"]["real"]
+    assert real["today_usd"] == 999.23
+    if change is None:
+        real.pop("today_pacific")
+    else:
+        real["today_pacific"].update(change)
+    out = run(tmp_path, p)
+    assert out["today"] is None
+    assert out["labels"]["todayNote"] == "Since midnight PT"
+
+
+def test_pacific_profit_has_its_own_checked_age_and_true_zero(tmp_path: Path) -> None:
+    p = page()
+    p["money"]["polymarket"]["real"]["today_pacific"].update(pnl_usd=0, as_of=NOW - 900)
+    out = run(tmp_path, p)
+    assert out["today"] == 0 and out["todayStatus"] == "ok"
+    assert out["todayAge"] == 900 and out["todayStale"]
+    assert not out["cashStale"] and not out["deskStale"]
 
 
 def test_account_holdings_do_not_fall_back_to_old_desk_positions(tmp_path: Path) -> None:
@@ -147,7 +177,7 @@ def test_spendable_cash_and_venue_balance_are_not_profit(tmp_path: Path) -> None
     out = run(tmp_path, p)
     assert (out["cash"], out["reportedCash"], out["buyingPower"]) == (4.59, 14.39, 4.59)
     assert out["today"] == 0.23  # neither account balance nor a cash difference
-    assert out["labels"]["todayNote"] == "Since 00:00 UTC"
+    assert out["labels"]["todayNote"] == "Since midnight PT"
     p["generated_at"] = NOW  # a fresh web response cannot freshen the balance
     real["cash_at"] = NOW - 1200
     out = run(tmp_path, p)
@@ -346,6 +376,7 @@ def test_invalid_money_is_not_coerced(tmp_path: Path) -> None:
     p["plain"]["real"]["cash_usd"] = None
     p["money"]["polymarket"]["real"].update(cash_usd="14.22", today_usd=False, open=1.5, at_risk_usd=-20,
                                           venue_open=1.5, value_usd=-20)
+    p["money"]["polymarket"]["real"]["today_pacific"]["pnl_usd"] = False
     out = run(tmp_path, p)
     assert all(out[k] is None for k in ("cash", "today", "count", "value"))
 

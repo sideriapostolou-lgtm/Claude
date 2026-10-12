@@ -70,6 +70,13 @@ TYCOON_DATA = r"""
     const d = tycoonObject(value), money = tycoonObject(d.money), pm = tycoonObject(money.polymarket);
     const real = tycoonObject(pm.real), plainReal = tycoonObject(tycoonObject(d.plain).real);
     const now = tycoonNumber(nowSeconds), updated = tycoonStamp(d.generated_at, now), asOf = tycoonStamp(pm.as_of, now);
+    const day = tycoonObject(real.today_pacific), start = tycoonStamp(day.start, now), end = tycoonNumber(day.end);
+    const dayMatches = now !== null && day.tz === "America/Los_Angeles" && start !== null && end !== null
+      && start <= now && now < end;
+    const todayAsOf = dayMatches ? tycoonStamp(day.as_of, now) : null;
+    const todayReady = dayMatches && todayAsOf !== null && todayAsOf >= start && day.status === "ok"
+      && tycoonNumber(day.pnl_usd) !== null;
+    const todayAge = tycoonAge(todayAsOf, now), todayStale = tycoonOld(todayAge, TYCOON_DESK_STALE_S);
     const cashAsOf = tycoonStamp(real.cash_at, now), venueAsOf = tycoonStamp(real.venue_at, now);
     const pageAge = tycoonAge(updated, now), deskAge = tycoonAge(asOf, now);
     const cashAge = tycoonAge(cashAsOf, now), venueAge = tycoonAge(venueAsOf, now);
@@ -101,7 +108,10 @@ TYCOON_DATA = r"""
     }
     const cash = tycoonNumber(real.cash_usd), fallbackCash = tycoonNumber(plainReal.cash_usd);
     return { cash: cash !== null ? cash : fallbackCash,
-      today: asOf !== null ? tycoonNumber(real.today_usd) : null,
+      today: todayReady ? tycoonNumber(day.pnl_usd) : null,
+      todayAsOf: todayAsOf, todayAge: todayAge, todayStale: todayStale,
+      todayDate: dayMatches ? tycoonText(day.date) : "",
+      todayStatus: todayReady ? "ok" : dayMatches && day.status === "incomplete" ? "incomplete" : "unavailable",
       count: venueAsOf !== null ? tycoonCount(real.venue_open) : null,
       value: venueAsOf !== null ? tycoonCost(real.value_usd) : null,
       recorded: { count: asOf !== null ? tycoonCount(real.open) : null,
@@ -115,7 +125,7 @@ TYCOON_DATA = r"""
       pageAge: pageAge, deskAge: deskAge, cashAge: cashAge, venueAge: venueAge,
       stale: stale, pageStale: pageStale, deskStale: deskStale, cashStale: cashStale, venueStale: venueStale,
       labels: { cash: "Available cash", cashNote: "Polymarket account", cashDetail: "Shared with your own bets",
-        today: "Bot today", todayNote: "Since 00:00 UTC", todayDetail: "Bot profit booked since 00:00 UTC; excludes your own bets",
+        today: "Bot today", todayNote: "Since midnight PT", todayDetail: "Bot profit booked since midnight Pacific; excludes your own bets",
         bets: "Account bets", betsNote: "Includes your own bets", betsDetail: "Open markets and their value reported by Polymarket" },
       event: tycoonLatest(d, now), crew: tycoonCrew(d, now, now !== null && updated !== null && !pageStale,
         now !== null && asOf !== null && !deskStale), positions: positions,

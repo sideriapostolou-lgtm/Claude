@@ -241,10 +241,11 @@ console.log(JSON.stringify({known: known, live: cineMoneyDetails(page), unknown:
 """, tmp_path)
     assert "not bot profit" in out["known"][0]
     assert "booked from 00:00 UTC" in out["known"][1] and "your own bets and deposits are excluded" in out["known"][1]
-    assert out["known"][2:] == ["Cash checked 2026-10-12 16:00 UTC.", "Positions checked 2026-10-12 15:45 UTC.",
+    assert out["known"][2] == "The town’s Bot today card uses Pacific midnight; this tour and safety limits show UTC."
+    assert out["known"][3:] == ["Cash checked 2026-10-12 16:00 UTC.", "Positions checked 2026-10-12 15:45 UTC.",
                                "Desk report 2026-10-12 16:01 UTC."]
     assert "Bots today also includes the live Solana bot’s daily result." in out["live"]
-    assert out["unknown"] == out["invalid"] == out["known"][:2]
+    assert out["unknown"] == out["invalid"] == out["known"][:3]
     assert "cineMoneyDetails(data).forEach" in _js_body(module, "  function renderPanel() {")
 
 

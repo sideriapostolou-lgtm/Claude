@@ -55,6 +55,8 @@ Schema (lists capped: members 9, events <= 5, open trades <= 10, closed trades 1
                                         "venue_open": int|null,           # current venue holdings, not tracked open
                                         "cost_usd", "value_usd", "venue_at", "cash_usd", "cash_at",
                                         "cash_reported_usd", "buying_power_usd",  # balance details, never profit
+                                        "today_pacific": {"date", "tz", "start", "end", "as_of", "status",
+                                                          "pnl_usd", "settled", "reason"},  # display only
                                         "pending", "pending_usd",          # orders the venue has not confirmed
                                         "stop_room_usd": float|null,       # room left under the loss stops
                                         "stop_room_limit": "day"|"total"|null}|null,
@@ -187,6 +189,11 @@ current venue list. Legacy ``cost_usd`` is kept for compatibility but can omit N
 whole-account commitment figure. ``cash_usd`` keeps the existing spendable-cash figure; ``cash_reported_usd`` is
 the venue balance before the lower-buying-power adjustment, and ``buying_power_usd`` its separately reported
 buying power. All are USD account balances, not profit, with ``cash_at`` the balance snapshot time.
+``today_pacific`` is a separate read-only display day (America/Los_Angeles, with daylight saving time), computed
+from retained real bot closed rows after their count and P&L match each overlapping UTC day book. Incomplete
+history or a missing/current-day unfinished snapshot gives a null result, never a UTC fallback. Cash-outs and
+corrections keep their recorded settlement date. This checks the recorded book, not full venue reconciliation;
+``today_usd`` and every safety/goal input keep the existing UTC calculation.
 ``real`` is null unless the desk has a real book (an open real position, a real settlement or a contract at the
 venue), the venue's cash was read or a dated venue position count was reported; ``money.polymarket`` is null when the desk is off
 (``POLYDESK_ENABLED``) or its state cannot be read: nothing is shown rather than a made-up zero. A paper tally of
@@ -408,6 +415,7 @@ from nightcrawler.polydesk import (
     panel_state,
     state_path,
 )
+from nightcrawler.polymarket_day import pacific_booked_day
 from nightcrawler.readiness import CHECK_LABELS, readiness
 from nightcrawler.recap import (
     RECAP_TTL_S,
@@ -1148,6 +1156,13 @@ def polymarket_desk(settings: Settings, now: float) -> dict[str, Any] | None:
         "stop_room_limit": raw_real.get("stop_room_limit") if raw_real.get("stop_room_limit") in ("day", "total")
         else None,
     })
+    # A separate display day; UTC books above still drive the existing safety readouts.
+    day_state: Mapping[str, Any] | None
+    try:
+        day_state = load_state(state_path(settings))
+    except (KeyError, TypeError, ValueError, AttributeError, OSError):
+        day_state = None
+    real["today_pacific"] = pacific_booked_day(day_state, now)
     live = desk.get("mode") == "live"
     return {
         "mode": "live" if live else "paper", "label": REAL_LABEL if live else PAPER_LABEL,

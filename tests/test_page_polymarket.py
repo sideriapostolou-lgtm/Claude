@@ -37,6 +37,7 @@ from nightcrawler.pagestate import (
     build_page_state,
     plain_event,
     polymarket_desk,
+    real_caps,
     town_ledger,
 )
 from tests.test_world3d import _js_body, _node
@@ -93,6 +94,28 @@ def save(settings: Settings, state: dict[str, Any]) -> None:
     polydesk.save_state(polydesk.state_path(settings), state)
 
 
+def test_pacific_display_day_does_not_change_utc_loss_limit_inputs(settings: Settings) -> None:
+    midnight_utc = datetime.fromtimestamp(NOW, UTC).replace(hour=0, minute=0, second=0).timestamp()
+    st = desk_state(live_today={"pnl_usd": -1.27, "settled": 2, "won": 1})
+    st["closed"] = [
+        {"live": True, "settled_at": midnight_utc + 3 * 3600, "pnl_usd": -1.50, "won": False},
+        {"live": True, "settled_at": midnight_utc + 9 * 3600, "pnl_usd": 0.23, "won": True},
+        {"live": True, "owner": True, "rule": "owner", "settled_at": NOW - 120, "pnl_usd": -20, "won": False},
+        {"live": False, "settled_at": NOW - 120, "pnl_usd": 100, "won": True},
+    ]
+    save(settings, st)
+    before = polydesk.state_path(settings).read_bytes()
+    desk = polymarket_desk(settings, NOW)
+    assert desk is not None
+    real = desk["real"]
+    assert real["today_pacific"]["status"] == "ok"
+    assert real["today_pacific"]["pnl_usd"] == pytest.approx(0.23)
+    assert real["today_pacific"]["settled"] == 1
+    assert real["today_usd"] == pytest.approx(-1.27)
+    assert real_caps(settings, desk)["day_loss_usd"] == pytest.approx(1.27)
+    assert polydesk.state_path(settings).read_bytes() == before
+
+
 # --------------------------------------------------------------------------- the JSON: paper and real, apart
 
 
@@ -106,7 +129,8 @@ def test_money_and_town_count_the_polymarket_desk_with_paper_and_real_kept_apart
     assert pm["paper"] == {"label": "Paper money (pretend)", "open": 2, "today_usd": pytest.approx(-1345.53),
                            "since_start_usd": pytest.approx(-1333.63), "settled_today": 114, "won_today": 68,
                            "settled_total": 121, "won_total": 75}
-    assert pm["real"] == {"label": REAL_LABEL, "open": 1, "today_usd": 0.0, "since_start_usd": pytest.approx(0.50),
+    utc_book = {k: v for k, v in pm["real"].items() if k != "today_pacific"}
+    assert utc_book == {"label": REAL_LABEL, "open": 1, "today_usd": 0.0, "since_start_usd": pytest.approx(0.50),
                           "settled_today": 0, "won_today": 0, "settled_total": 2, "won_total": 2,
                           "at_risk_usd": pytest.approx(0.97), "venue_open": 8, "contracts": 8.0, "cost_usd": pytest.approx(7.80),
                           "value_usd": pytest.approx(7.95), "venue_at": NOW - 60, "cash_usd": pytest.approx(16.27),
@@ -405,22 +429,37 @@ const words = node => typeof node === "string" ? node : (node.children || []).ma
 """ + hooks + """
 const pm = {mode: "live", as_of: 1791820860,
   paper: {label: "Paper money", since_start_usd: 800, today_usd: 100, open: 0},
-  real: {label: "Real money", since_start_usd: -10.39, today_usd: 0.14, cash_usd: 14.39,
+  real: {label: "Real money", since_start_usd: -10.39, today_usd: 0.14, won_today: 98, settled_today: 99, cash_usd: 14.39,
+    today_pacific: {date: "2026-10-12", tz: "America/Los_Angeles", start: 1791788400, end: 1791874800,
+      as_of: 1791820860, status: "ok", pnl_usd: 1.25, settled: 7},
     contracts: 2, cost_usd: 1.95, value_usd: 1.98, cash_at: 1791820800, venue_at: 1791819900}};
 renderPolymarket(pm); const known = words(box);
 pm.as_of = null; pm.real.cash_at = null; pm.real.venue_at = null; pm.real.cash_usd = null;
-renderPolymarket(pm);
-console.log(JSON.stringify({known: known, missing: words(box), invalid: [null, -1, "today", Infinity].map(checkedUtc)}));
+renderPolymarket(pm); const missing = words(box), pacific = pm.real.today_pacific;
+const variants = [null, {...pacific, status: "incomplete"}, {...pacific, status: "unavailable"},
+  {...pacific, tz: "UTC"}, {...pacific, pnl_usd: null}].map(function (v) {
+    pm.real.today_pacific = v; renderPolymarket(pm); return words(box);
+  });
+pm.real.today_pacific = {...pacific, pnl_usd: 0}; renderPolymarket(pm);
+console.log(JSON.stringify({known: known, missing: missing, unknown: variants, zero: words(box),
+  invalid: [null, -1, "today", Infinity].map(checkedUtc)}));
 """, tmp_path)
     assert "Real money · bot profit/loss | −$10.39" in out["known"]
-    assert "available account cash $14.39" in out["known"] and "bot today (UTC) +$0.14" in out["known"]
-    assert "today counts settlements and cash-outs booked from 00:00 UTC" in out["known"]
+    assert "available account cash $14.39" in out["known"] and "bot since midnight Pacific +$1.25" in out["known"]
+    assert "+$0.14" not in out["known"] and "98/99 won" not in out["known"]  # UTC figures must not leak into the local day
+    assert "booking time, not the venue event date" in out["known"]
+    assert "Safety limits still reset at 00:00 UTC" in out["known"]
     assert "Cash checked 2026-10-12 16:00 UTC" in out["known"]
     assert "Positions checked 2026-10-12 15:45 UTC" in out["known"]
     assert "Desk report 2026-10-12 16:01 UTC" in out["known"]
     assert "account cash not read yet" in out["missing"]
     assert "Cash checked" not in out["missing"] and "Positions checked" not in out["missing"]
     assert "Desk report" not in out["missing"] and out["invalid"] == ["", "", "", ""]
+    for unknown in out["unknown"]:
+        assert "bot since midnight Pacific —" in unknown and "not available" in unknown
+        assert "+$0.14" not in unknown and "+$1.25" not in unknown and "98/99 won" not in unknown
+    assert "Pacific-day record incomplete" in out["unknown"][1]
+    assert "bot since midnight Pacific $0.00" in out["zero"] and "not available" not in out["zero"]
 
 
 # --------------------------------------------------------------------------- what the desk skips and why (C15)

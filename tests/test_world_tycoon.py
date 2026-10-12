@@ -33,7 +33,7 @@ def test_town_is_ready_before_the_first_frame_and_keeps_one_shared_details_panel
     assert page.count('id="ty-header"') == 1
     assert page.count('id="ty-dock"') == 1
     assert "Available cash" in TYCOON_HTML and "Bot today" in TYCOON_HTML and "Account bets" in TYCOON_HTML
-    assert "Polymarket account" in TYCOON_HTML and "Since 00:00 UTC" in TYCOON_HTML
+    assert "Polymarket account" in TYCOON_HTML and "Since midnight PT" in TYCOON_HTML
     assert 'id="ty-mode">Camera tour' in TYCOON_HTML
     assert 'id="ty-alert" aria-controls="panel" hidden' in TYCOON_HTML
     assert 'el("ty-alert").onclick = function () { openPanel("ty-alerts"); };' in module
