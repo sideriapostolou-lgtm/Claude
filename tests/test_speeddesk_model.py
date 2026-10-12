@@ -566,3 +566,25 @@ def test_kalshi_reservations_cover_centicent_partial_fees_and_survive_restart():
     restored = PracticeDesk.from_state(json.loads(json.dumps(model.to_state())))
     assert restored.windows["btc15m"].fee_rounding == "kalshi"
     assert restored.inventory == model.inventory
+
+
+def test_multiday_history_is_preserved_without_reconsidering_every_closed_window(monkeypatch):
+    model = desk()
+    for index in range(1000):
+        name = f"settled-{index}"
+        model.add_window(Window(name, 0, 900, 100))
+        model.closed.append(settlement(name, Inventory(), True, 900))
+    checked = []
+    original = model.blocked
+
+    def count(window, now):
+        checked.append(window.slug)
+        return original(window, now)
+
+    monkeypatch.setattr(model, "blocked", count)
+    model.evaluate(1010)
+    assert checked == ["btc15m", "btc15m"]
+    state = model.to_state()
+    assert len(state["closed"]) == 1000
+    assert len(state["windows"]) == 1001
+    assert len(state["inventory"]) == 1001

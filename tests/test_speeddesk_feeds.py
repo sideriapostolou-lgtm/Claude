@@ -1,15 +1,19 @@
 from __future__ import annotations
 
 import asyncio
+import base64
+import json
+import logging
 from copy import deepcopy
 from datetime import UTC, datetime
+from types import SimpleNamespace
 from typing import Any
 
 import pytest
 import requests
 from fakes import FakeClock
 
-from nightcrawler.config import Settings
+from nightcrawler.config import Secret, Settings
 from nightcrawler.speeddesk_feeds import (
     LiveFeeds,
     coinbase_ticks,
@@ -293,3 +297,82 @@ def test_trade_stream_is_confirmed_by_a_current_print_and_disabled_immediately_o
     feed._ws_closed()
     assert statuses[-1]["trade_stream"] is False
     assert not feed._market_connected
+
+
+def test_actual_sdk_authenticates_settings_secret_wrappers_in_memory(
+    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture,
+) -> None:
+    """Use the real SDK signing/factory code; only its network transport is fake."""
+    import polymarket_us.client as sdk_client
+    import polymarket_us.websocket.base as sdk_socket
+
+    key_id = "speed-feed-test-key"
+    secret = base64.b64encode(bytes(range(32))).decode()
+    settings = Settings.from_env({"POLYMARKET_US_KEY_ID": key_id, "POLYMARKET_US_SECRET_KEY": secret})
+    assert isinstance(settings.polymarket_us_key_id, Secret)
+    assert isinstance(settings.polymarket_us_secret_key, Secret)
+    statuses: list[Any] = []
+    captured_headers: list[dict[str, str]] = []
+
+    class ForbiddenOrders:
+        def __init__(self, _client: Any) -> None:
+            pass
+
+        def __getattr__(self, name: str) -> Any:
+            raise AssertionError(f"Practice touched SDK orders resource: {name}")
+
+    async def scenario() -> None:
+        subscribed = asyncio.Event()
+        blocker = asyncio.Event()
+
+        class Socket:
+            def __init__(self) -> None:
+                self.state = SimpleNamespace(name="OPEN")
+
+            def __aiter__(self) -> Socket:
+                return self
+
+            async def __anext__(self) -> str:
+                await blocker.wait()
+                raise StopAsyncIteration
+
+            async def send(self, text: str) -> None:
+                message = json.loads(text)
+                subscription = message.get("subscribe", {})
+                if subscription.get("subscriptionType") == "SUBSCRIPTION_TYPE_TRADE":
+                    subscribed.set()
+
+            async def close(self, _code: int, _reason: str) -> None:
+                self.state.name = "CLOSED"
+                blocker.set()
+
+        async def connect(url: str, *, additional_headers: dict[str, str]) -> Socket:
+            assert url == "wss://api.polymarket.us/v1/ws/markets"
+            # Actual SDK auth has decoded and signed the fake 32-byte seed here.
+            assert additional_headers["X-PM-Access-Key"] == key_id
+            assert len(base64.b64decode(additional_headers["X-PM-Signature"])) == 64
+            captured_headers.append(additional_headers)
+            return Socket()
+
+        monkeypatch.setattr(sdk_socket, "connect", connect)
+        monkeypatch.setattr(sdk_client, "Orders", ForbiddenOrders)
+        feed = LiveFeeds(settings, on_tick=lambda *_: None, on_book=lambda _: None, on_trade=lambda _: None,
+                         on_windows=lambda _: None, on_status=statuses.append, clock=lambda: START)
+        window = parse_window(market(), SLUG)
+        assert window is not None
+        feed.windows[SLUG] = window
+        task = asyncio.create_task(feed._markets())
+        try:
+            await asyncio.wait_for(subscribed.wait(), timeout=2)
+            assert any(status["markets"] == "connected" for status in statuses)
+        finally:
+            task.cancel()
+            await asyncio.gather(task, return_exceptions=True)
+            if feed._client is not None:
+                feed._client.close()
+
+    caplog.set_level(logging.INFO)
+    asyncio.run(scenario())
+    assert len(captured_headers) == 1
+    assert key_id not in caplog.text and secret not in caplog.text
+    assert "speeddesk_feed_markets_connected" in caplog.text

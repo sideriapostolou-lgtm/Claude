@@ -47,7 +47,18 @@ Template:
 - Real money touched? Shared configuration and startup wiring change under the owner's explicit build/push
   instruction; this deploy restarts the existing real-money bot. Its trading rules, caps and order paths are
   unchanged, and Marco remains off. No Railway variables or credentials were changed or stored.
-- Pending: exact-commit deployment/startup verification below; at least 72 hours of practice observation.
+- First deploy: Railway deployment `df62a929-dab5-469c-a287-294b858e4f42` reached SUCCESS on exact merge
+  `6937e54e90fea9ce3bb08c7a85684b771d5fdb74` (PR #7). At 19:00:25 UTC, polydesk logged LIVE with 10 contracts
+  and speeddesk logged practice/real_orders=false. Coinbase and Kalshi live data arrived. Verification caught
+  repeated TypeError reconnects in the authenticated US feed: environment loading wraps credentials as `Secret`,
+  while the SDK expects strings. The correction unwraps them only inside the in-memory SDK authentication
+  boundary. A new regression exercises the actual SDK's signing and WebSocket classes with a fake transport;
+  it also poisons the order resource. No credential values were logged, stored or changed.
+- Follow-up checks: full suite 3,154 passed, 21 skipped; mypy on 88 source files and changed-file Ruff passed.
+  The follow-up also labels a single stale venue as degraded rather than pausing the whole desk, and skips
+  settled windows during decision loops so a three-day history does not create quadratic work. A 1,000-window
+  regression retains all accounting/history while checking only active windows.
+- Pending: corrected-deploy verification below; at least 72 hours of practice observation.
   Volatility needs a full hour and at least 3,000 actual adjacent one-second returns before decisions. No claim
   of profit or successful three-day trial is made. Daily reports are produced in the app/receipts; recurring chat
   delivery is not configured because this environment has no persistent Railway secret binding.

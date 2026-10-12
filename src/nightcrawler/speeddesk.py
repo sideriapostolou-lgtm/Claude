@@ -210,8 +210,10 @@ class SpeedRunner:
         status = "Warming up Bitcoin volatility" if warm else "Practice feeds running"
         if btc_at is None or not 0 <= now - btc_at <= self.desk.config.stale_s:
             status = "Practice paused: Bitcoin feed stale"
-        elif not books or now - min(books) > self.desk.config.stale_s:
+        elif not books or now - max(books) > self.desk.config.stale_s:
             status = "Practice paused: waiting for fresh books"
+        elif now - min(books) > self.desk.config.stale_s:
+            status += "; some venue books are stale"
         if not self.feed_status.get("trade_stream"):
             status += "; trade stream unavailable, maker fills disabled"
         return {"mode": "paper", "as_of": now, "started_at": self.started_at,

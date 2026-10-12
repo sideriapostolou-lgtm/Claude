@@ -21,7 +21,7 @@ from typing import Any
 
 import requests
 
-from .config import Settings
+from .config import Secret, Settings
 from .speeddesk_model import Book, Level, Trade, Window
 
 log = logging.getLogger("nightcrawler.speeddesk_feeds")
@@ -338,7 +338,12 @@ class LiveFeeds:
         if self._client is None:
             from polymarket_us import PolymarketUS
 
-            self._client = PolymarketUS(key_id=self._key_id, secret_key=self._secret_key,
+            # Settings.from_env wraps credentials in Secret, even though these
+            # legacy fields are annotated str. The SDK must receive plaintext
+            # only at this in-memory authentication boundary, never str(Secret).
+            key_id = self._key_id.reveal() if isinstance(self._key_id, Secret) else self._key_id
+            secret_key = self._secret_key.reveal() if isinstance(self._secret_key, Secret) else self._secret_key
+            self._client = PolymarketUS(key_id=key_id, secret_key=secret_key,
                                        timeout=10, max_retries=0)
         while True:
             ws = None

@@ -517,7 +517,10 @@ class PracticeDesk:
         Waiting is bounded and cannot continue past a failed first recheck.
         """
         events = []
+        closed = {item.window for item in self.closed}
         for window in self.windows.values():
+            if window.slug in closed:
+                continue
             reason = self.blocked(window, now)
             if reason:
                 self.last_reason[window.slug] = reason
@@ -598,7 +601,10 @@ class PracticeDesk:
                  maker_windows: set[str] | None = None) -> list[Decision]:
         events = self.advance(now)
         sigma = self.tape.sigma(now, self.config.sigma_min_samples, self.config.sigma_warmup_s)
+        closed = {item.window for item in self.closed}
         for window in self.windows.values():
+            if window.slug in closed:
+                continue
             reason = self.blocked(window, now)
             if reason or sigma is None:
                 self.last_reason[window.slug] = reason or "volatility_warming"
