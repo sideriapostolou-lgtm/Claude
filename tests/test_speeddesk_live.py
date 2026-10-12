@@ -390,3 +390,31 @@ def test_starter_leaves_budget_for_a_balancing_whole_pair(tmp_path: Path) -> Non
         assert desk.book.at_risk_usd <= 2
     finally:
         desk.close()
+
+
+def test_cancel_404_for_an_order_already_gone_does_not_pause_trading(tmp_path: Path) -> None:
+    """2026-10-12: a repeat cancel of an order Kalshi had already canceled returned 404 and the desk paused
+    itself for minutes. A 404 means nothing of ours rests there: keep the reservation, let the order list
+    confirm it, and do not count it as an account error."""
+    desk, account, clock = make_desk(tmp_path)
+    try:
+        asyncio.run(desk.step())
+        assert [order["status"] for order in account.orders] == ["resting"]
+
+        def gone(order_id: str, *, ticker: str) -> dict[str, Any]:
+            account.cancels.append(order_id)
+            for order in account.orders:
+                order.update(status="canceled", remaining_count_fp="0.00")
+            raise KalshiClientError("cancel", "request rejected", status=404)
+
+        account.cancel = gone  # type: ignore[method-assign]
+        clock.advance(711)  # past the cutoff: the resting bid must be canceled
+        asyncio.run(desk.step())
+        assert account.cancels == ["order-1"]
+        assert desk.errors == 0
+        assert not any(event["event"] == "speeddesk_live_reject" for event in desk.latest_events)
+        clock.advance(5)
+        asyncio.run(desk.step())
+        assert all(intent.terminal for intent in desk.intents.values())
+    finally:
+        desk.close()
