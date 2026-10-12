@@ -13,6 +13,38 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-12 23:56 UTC, Codex, branch codex/tycoon-overview
+- Owner request: simplify the live app into a phone-first Theme Park Tycoon 2-inspired business town, with
+  fewer buttons and real business connections. Pulled deploy head `b91b7d6` unchanged; recovered the previously
+  unmerged PR #6 town work (`c5f5020`) into this branch. This session supersedes that unfinished UI rollout.
+- The town is now the home page at `/` and `/world`; detailed reports move to `/reports`, with the existing
+  auth gate/cookie/CSP split preserved. A single Menu replaces the persistent crew/control grid. Buildings and
+  small name labels are tappable; one selected workstation card offers details and a return to the steady town.
+  Reports, account holdings, research, keyboard crew navigation, optional tour and both-desk stop instructions
+  remain available behind Menu. WebGL failure has a working reports link. No trading API or mode control added.
+- Added connected bright grass grounds, wide paths following the actual walk graph, colorful cutaway pavilions,
+  striped canopies, trees, fences and soft daylight. Existing characters and movement remain. Removed the old
+  practice island and UTC goal props from this view; the optional tour restores them. New park geometry uses
+  nine batches, and town mode hides the expensive cloud layer. No physical-device performance claim.
+- Cash is explicitly Polymarket account cash, not profit. The separate PM bot result uses midnight Pacific;
+  incomplete retained books stay unknown. Five decorative gardens use that day's reconciled recorded net profit
+  at 1c / 25c / $1 / $5 / $10; losses/corrections can retract them and midnight resets them. No practice, deposits,
+  owner bets or elapsed animation time earn upgrades. Kalshi cash/exposure/UTC P&L remain separate, including
+  independent cash freshness and unfinished cancellation warnings. Research counters stay read-only/practice.
+- Verification: final full suite **4,396 passed, 21 skipped** (opt-in network / missing optional scientific
+  packages). Final canvas-tap, drag-is-not-a-tap, dialog focus/refresh/return and WebGL-fallback checks passed.
+  Mypy passed all 113 source files and Ruff passed every changed Python file. Diff secret scan and whitespace
+  check passed. Browser checks verified root routing, fixed camera, separate money, two gardens from a synthetic
+  45c result, all six workstation visits, return/tour, stable menu focus, WebGL fallback and no horizontal
+  overflow at 320x568, 390x844 and 1280x800. Final phone screenshot visually reviewed; displayed balances are
+  synthetic fixtures, not current account evidence. Final desktop screenshot also visually reviewed; both
+  captures had no JavaScript exceptions. Deployment status follows below.
+- Real money touched? No strategy, order execution, mode, caps, credentials or protected financial modules
+  changed. This source/UI deployment restarts the shared live bot, as the owner explicitly requested.
+- Deployment limitation: this environment has no Railway secret binding or dashboard token. Can check the
+  exact GitHub/Railway deploy status and public health, but cannot claim startup logs or authenticated live
+  balances were inspected. The earlier request for a secure Railway token / owner or Claude log check remains.
+
 ## 2026-10-12 23:15 UTC, Codex, branch codex/weather-lock-stopwatch
 - Owner request: build a read-only weather lock stopwatch on Railway for at least three days. Pulled
   deploy head `9f32451` before work, then incorporated Claude's `8882ece` warm-up fix, `941b261` account

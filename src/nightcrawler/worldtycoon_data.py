@@ -14,6 +14,75 @@ TYCOON_DATA = r"""
   function tycoonAge(ts, now) { return ts !== null && now !== null ? Math.max(0, now - ts) : null; }
   function tycoonOld(age, limit) { return age !== null && age > limit; }
   function tycoonDollars(v) { return "$" + Math.abs(v).toFixed(2); }
+  function tycoonUtcDate(now) {
+    // Convert the caller's timestamp only; this adapter never reads a clock.
+    if (now === null || now <= 0 || now > 8640000000000) return "";
+    return new Date(now * 1000).toISOString().slice(0, 10);
+  }
+  function tycoonGrowth(s) {
+    const thresholds = [0.01, 0.25, 1, 5, 10];
+    const qualified = s.todayStatus === "ok" && s.today !== null && s.updated !== null && s.asOf !== null
+      && s.on !== null && !s.pageStale && !s.deskStale && !s.todayStale;
+    // These are today's decorative gardens, not account capital or purchased buildings.
+    // A loss, a correction or Pacific midnight can remove an earned decoration.
+    const level = qualified ? thresholds.filter(function (p) { return s.today >= p - 1e-9; }).length : null;
+    return { qualified: qualified, level: level, pnl_usd: s.today, thresholds: thresholds,
+      label: "Polymarket bot profit since midnight PT", date: s.todayDate,
+      reason: qualified ? null : s.pageStale || s.deskStale || s.todayStale ? "Waiting for a fresh profit report"
+        : "Waiting for a complete Pacific-day bot profit report" };
+  }
+  function tycoonKalshi(d, now, pageCurrent) {
+    const raw = tycoonObject(tycoonObject(tycoonObject(d.money).speeddesk).kalshi_live);
+    const asOf = tycoonStamp(raw.as_of, now), cashAt = tycoonStamp(raw.cash_at, now);
+    const age = tycoonAge(asOf, now), cashAge = tycoonAge(cashAt, now);
+    const present = Object.keys(raw).length > 0, mode = raw.mode === "live" || raw.mode === "paper" ? raw.mode : null;
+    const stale = present && (!pageCurrent || raw.stale === true || asOf === null || tycoonOld(age, 60));
+    const current = present && pageCurrent && now !== null && asOf !== null && !stale;
+    const active = current && mode === "live" && raw.active === true && raw.authenticated === true
+      && raw.real_orders_available === true;
+    const hasExposure = raw.has_real_exposure === true;
+    const state = !present ? "unknown" : stale ? "stale" : active ? "live" : hasExposure ? "exposure"
+      : mode === "paper" ? "practice" : "unknown";
+    const today = tycoonObject(raw.today), total = tycoonObject(raw.total), date = tycoonUtcDate(now);
+    const dayCurrent = date !== "" && today.day === date;
+    const cashStale = cashAt === null || tycoonOld(cashAge, 60) || stale;
+    return { name: "Kalshi", state: state, active: active, practice: state === "practice", mode: mode,
+      stateText: state === "live" ? "Real-money trading is enabled" : state === "exposure" ? "Real bets remain open"
+        : state === "practice" ? "Practice only; no new real orders" : state === "stale" ? "Waiting for a fresh Kalshi report"
+        : "No current Kalshi report",
+      reason: tycoonText(raw.reason), asOf: asOf, age: age, stale: stale, current: current,
+      cash: cashAt !== null ? tycoonCost(raw.cash_usd) : null, cashAt: cashAt, cashAge: cashAge, cashStale: cashStale,
+      today: dayCurrent ? tycoonNumber(today.pnl_usd) : null, todayDate: dayCurrent ? date : "",
+      todayNote: "Bot profit since midnight UTC", todayStale: stale || !dayCurrent,
+      total: tycoonNumber(total.pnl_usd), fees: dayCurrent ? tycoonCost(today.fees_usd) : null,
+      locked: dayCurrent ? tycoonNumber(today.locked_usd) : null,
+      directional: dayCurrent ? tycoonNumber(today.directional_usd) : null,
+      hasExposure: hasExposure, exposure: tycoonCost(raw.at_risk_usd), positions: tycoonCount(raw.positions),
+      orders: tycoonCount(raw.open_orders), reserved: tycoonCost(raw.reserved_usd),
+      cleanupPending: raw.cleanup_pending === true,
+      note: "Separate Kalshi account. Cash is not profit. Its UTC result does not count toward Pacific-day gardens." };
+  }
+  function tycoonResearch(d, now, pageCurrent) {
+    const speed = tycoonObject(tycoonObject(d.money).speeddesk);
+    const rows = [
+      { key: "speed", name: "Bitcoin lab", scope: "PRACTICE", raw: speed, limit: 60,
+        count: tycoonObject(speed.today).day === tycoonUtcDate(now) ? tycoonCount(tycoonObject(speed.today).fills) : null,
+        countLabel: "practice fills today (UTC)" },
+      { key: "watcher", name: "Bot research", scope: "READ ONLY", raw: tycoonObject(d.skipwatch), limit: 60,
+        count: tycoonCount(tycoonObject(d.skipwatch).wallet_fills), countLabel: "public fills recorded" },
+      { key: "weather", name: "Weather lab", scope: "READ ONLY", raw: tycoonObject(d.weatherwatch), limit: 120,
+        count: tycoonCount(tycoonObject(d.weatherwatch).active_watches), countLabel: "markets being watched" },
+    ];
+    return rows.map(function (r) {
+      const stamp = tycoonStamp(r.raw.as_of, now), age = tycoonAge(stamp, now);
+      const current = pageCurrent && now !== null && stamp !== null && r.raw.stale !== true && !tycoonOld(age, r.limit);
+      const problem = tycoonText(r.raw.problem);
+      return { key: r.key, name: r.name, scope: r.scope, current: current,
+        state: !current ? "unknown" : problem ? "attention" : "observing",
+        status: !current ? "Waiting for a current report" : problem || tycoonText(r.raw.status) || "Observing",
+        asOf: stamp, age: age, count: r.count, countLabel: r.countLabel, realOrders: false };
+    });
+  }
   function tycoonLatest(d, now) {
     const plain = tycoonObject(d.plain), items = [], finished = Array.isArray(plain.finished) ? plain.finished : [];
     for (let i = 0; i < finished.length; i++) {
@@ -107,7 +176,7 @@ TYCOON_DATA = r"""
         price: p !== null && p >= 0 && p <= 1 ? p : null, scope: "account", owner: "unknown" });
     }
     const cash = tycoonNumber(real.cash_usd), fallbackCash = tycoonNumber(plainReal.cash_usd);
-    return { cash: cash !== null ? cash : fallbackCash,
+    const summary = { cash: cash !== null ? cash : fallbackCash,
       today: todayReady ? tycoonNumber(day.pnl_usd) : null,
       todayAsOf: todayAsOf, todayAge: todayAge, todayStale: todayStale,
       todayDate: dayMatches ? tycoonText(day.date) : "",
@@ -132,6 +201,11 @@ TYCOON_DATA = r"""
       pending: { count: asOf !== null ? tycoonCount(real.pending) : null, held: asOf !== null ? tycoonCost(real.pending_usd) : null },
       positionsNote: "Recorded positions, not the current venue book. App sales can leave these records behind; ownership is not supplied.",
       eventNote: "Latest recorded real event; historical settlements may later be corrected." };
+    const pageCurrent = now !== null && updated !== null && !pageStale;
+    summary.growth = tycoonGrowth(summary);
+    summary.accounts = { kalshi: tycoonKalshi(d, now, pageCurrent) };
+    summary.research = tycoonResearch(d, now, pageCurrent);
+    return summary;
   }
   // <<< tycoon data
 """

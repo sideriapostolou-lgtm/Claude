@@ -32,9 +32,11 @@ def test_town_is_ready_before_the_first_frame_and_keeps_one_shared_details_panel
     assert page.count('id="panel"') == 1
     assert page.count('id="ty-header"') == 1
     assert page.count('id="ty-dock"') == 1
-    assert "Available cash" in TYCOON_HTML and "Bot today" in TYCOON_HTML and "Account bets" in TYCOON_HTML
-    assert "Polymarket account" in TYCOON_HTML and "Since midnight PT" in TYCOON_HTML
-    assert 'id="ty-mode">Camera tour' in TYCOON_HTML
+    assert "Polymarket cash" in TYCOON_HTML and "PM bot profit" in TYCOON_HTML
+    assert "today PT" in TYCOON_HTML
+    assert 'id="ty-more"' in TYCOON_HTML
+    assert 'id="ty-crew"' not in TYCOON_HTML
+    assert 'id="ty-selection" aria-label="Selected workstation" hidden' in TYCOON_HTML
     assert 'id="ty-alert" aria-controls="panel" hidden' in TYCOON_HTML
     assert 'el("ty-alert").onclick = function () { openPanel("ty-alerts"); };' in module
     assert module.index("tycoonBuildCrew(); tycoonView(true);") < module.index('resize(); BUS.emit("start", 0, 0);')
@@ -148,13 +150,16 @@ def test_account_freshness_and_service_alerts_survive_fresh_page_updates(module:
     out = _node("""
 const nodes = {}, el = function (id) { return nodes[id] || (nodes[id] = {
   textContent: "", className: "", setAttribute: function () {} }); };
+const document = { createElement: function (tag) { return { tagName: tag.toUpperCase(), textContent: "",
+  appendChild: function () {}, setAttribute: function () {} }; } };
 const TY_UI = { summary: null, people: [], markers: [] }, TYCOON = { selected: null }, CAST = {};
 let data = {}, offline = false;
 const statusEl = { textContent: "" };
 const fmtUsd = function (n) { return n === null ? "—" : "$" + n.toFixed(2); };
-const fmtSigned = fmtUsd, tycoonMeasure = function () {};
+const fmtSigned = fmtUsd, tycoonMeasure = function () {}, tycoonParkApply = function () {};
 let panelKind = null, paragraphs = [];
-const panelBody = { textContent: "" }, panelEl = { scrollTop: 140, className: "" }, panelTitle = { textContent: "" };
+const panelBody = { textContent: "", appendChild: function () {} };
+const panelEl = { scrollTop: 140, className: "" }, panelTitle = { textContent: "" };
 const para = function (parent, text, cls) { paragraphs.push({ text: text, cls: cls || "" }); };
 const current = { state: "on", cash: 12, today: 0.25, count: 2, value: 3, crew: [], positions: [], pending: null,
   event: null, stale: false, updated: 1000000, pageAge: 1, deskAge: 2,
@@ -167,7 +172,8 @@ const show = function (change, kind) {
   const fresh = el("ty-fresh").textContent;
   panelKind = kind; paragraphs = []; tycoonPanel();
   return { fresh: fresh, warnings: paragraphs.filter(function (p) { return p.cls === "warn"; }).length,
-    scroll: panelEl.scrollTop, count: el("ty-bets").textContent, cash: el("ty-cash").textContent,
+    warningMessages: paragraphs.filter(function (p) { return p.cls === "warn"; }).map(function (p) { return p.text; }),
+    scroll: panelEl.scrollTop, cash: el("ty-cash").textContent,
     state: el("ty-state").textContent, alert: el("ty-alert").textContent, hidden: el("ty-alert").hidden,
     messages: paragraphs.map(function (p) { return p.text; }) };
 };
@@ -175,6 +181,25 @@ const reports = { fresh: show({}, "ty-bets"),
   venue: show({ venueAge: 900, venueStale: true }, "ty-bets"),
   cash: show({ cashAge: 7200, cashStale: true }, "ty-cash"),
   unknownVenue: show({ venueAsOf: null }, "ty-bets"), unknownCash: show({ cashAsOf: null }, "ty-cash") };
+reports.accountCashOld = show({ cashAge: 7200, cashStale: true }, "ty-accounts");
+reports.accountVenueOld = show({ venueAge: 900, venueStale: true }, "ty-accounts");
+reports.accountCashUnknown = show({ cashAsOf: null }, "ty-accounts");
+const kalshi = { state: "live", stateText: "Real-money trading is enabled", active: true, practice: false,
+  cash: 25, exposure: 1.98, today: -0.34, reason: "", stale: false, cashAt: 999998, cashAge: 2,
+  cashStale: false, todayStale: false, cleanupPending: false };
+const account = function (change) {
+  return show({ accounts: { kalshi: Object.assign({}, kalshi, change) } }, "ty-accounts");
+};
+reports.kalshiFresh = account({});
+reports.kalshiCashOld = account({ cashAge: 120, cashStale: true });
+reports.kalshiTodayUnknown = account({ today: null, todayStale: true });
+reports.kalshiCashUnknown = account({ cash: null, cashAt: null, cashAge: null, cashStale: true });
+reports.kalshiCleanup = account({ state: "exposure", active: false, practice: false,
+  stateText: "Real bets remain open", cleanupPending: true });
+reports.kalshiPractice = account({ state: "practice", active: false, practice: true, exposure: 0 });
+reports.kalshiStale = account({ state: "stale", active: false, practice: false, stale: true,
+  stateText: "Waiting for a fresh Kalshi report" });
+reports.pmBuysOff = show({ state: "off" }, "ty-bets");
 data = { alerts: [{ text: "The bot is stopped." }, { text: "Polymarket orders need attention." }] };
 reports.alerted = show({}, "ty-alerts");
 reports.refreshed = show({ updated: 1001000, pageAge: 0, deskAge: 0 }, "ty-alerts");
@@ -192,9 +217,31 @@ console.log(JSON.stringify(reports));
     for name in ("venue", "cash", "unknownVenue", "unknownCash"):
         assert out[name]["warnings"] == 1
         assert out[name]["scroll"] == 140
-        assert out[name]["count"] == "2" and out[name]["cash"] == "$12.00"
+        assert out[name]["cash"] == "$12.00"
+    for name in ("accountCashOld", "accountVenueOld", "accountCashUnknown"):
+        assert out[name]["warnings"] == 1
+        assert "Wait for a fresh update" in out[name]["warningMessages"][0]
+    assert out["kalshiFresh"]["warnings"] == 0
+    assert "Available cash: $12.00" in out["kalshiFresh"]["messages"]
+    assert "REAL MONEY (Kalshi) · cash $25.00" in out["kalshiFresh"]["messages"]
+    assert "Money at risk: $1.98 · today (UTC): $-0.34" in out["kalshiFresh"]["messages"]
+    assert "Accounts stay separate. Kalshi’s UTC day is not added to Polymarket’s Pacific day." in out["kalshiFresh"]["messages"]
+    assert out["kalshiCashOld"]["warnings"] == 1
+    assert "Kalshi cash checked 2m ago." in out["kalshiCashOld"]["messages"]
+    assert out["kalshiCashOld"]["warningMessages"] == ["Kalshi cash may be old; waiting for a fresh balance read."]
+    assert out["kalshiTodayUnknown"]["warningMessages"] == ["Kalshi’s UTC-day result is delayed or unavailable."]
+    assert "Money at risk: $1.98 · today (UTC): —" in out["kalshiTodayUnknown"]["messages"]
+    assert "Kalshi cash update time is unknown." in out["kalshiCashUnknown"]["messages"]
+    assert "REAL MONEY (Kalshi) · cash —" in out["kalshiCashUnknown"]["messages"]
+    assert out["kalshiCleanup"]["warningMessages"] == ["Resting-order cancellation and reconciliation are still pending."]
+    assert "Real bets remain open · cash $25.00" in out["kalshiCleanup"]["messages"]
+    assert not any("PRACTICE (Kalshi)" in text for text in out["kalshiCleanup"]["messages"])
+    assert "PRACTICE (Kalshi) · cash $25.00" in out["kalshiPractice"]["messages"]
+    assert out["kalshiStale"]["warningMessages"] == ["Kalshi’s report is delayed or missing. These figures may be old."]
+    assert not any("REAL MONEY (Kalshi)" in text for text in out["kalshiStale"]["messages"])
+    assert out["pmBuysOff"]["state"] == "PM buys off"
     for name in ("alerted", "refreshed"):
-        assert out[name]["state"] == "Real bets enabled"
+        assert out[name]["state"] == "PM live"
         assert out[name]["hidden"] is False and out[name]["alert"] == "The bot is stopped."
         assert "Cash checked <1m ago" in out[name]["fresh"]
         assert "The bot is stopped." in out[name]["messages"]

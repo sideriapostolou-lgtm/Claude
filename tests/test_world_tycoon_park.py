@@ -63,7 +63,8 @@ console.log(JSON.stringify({ lazy, active, reused, total, hidden: !group.visible
   originalUntouched: before === JSON.stringify(original.toJSON()), final: tycoonParkState() }));
 """)
     assert out["lazy"]["meshes"] == 0
-    assert out["active"]["on"] and 0 < out["active"]["meshes"] <= 3
+    # Four merged scenery batches and five independently earned terrace gardens.
+    assert out["active"]["on"] and 0 < out["active"]["meshes"] <= 9
     assert set(out["active"]["departments"]) == set(world3d.WORLD_ROOMS)
     assert out["reused"] and out["total"] == 2 and out["hidden"]
     assert out["pathsUntouched"] and out["originalUntouched"] and not out["final"]["on"]
@@ -99,3 +100,86 @@ console.log(JSON.stringify({ heights, matchesWalkGraph, clearance, finite: Array
     assert out["triangles"] < 5000
     for height in out["heights"].values():
         assert height is not None and 0 <= height < 0.012
+
+
+def test_only_qualified_daily_real_profit_reveals_earned_gardens(tmp_path: Path) -> None:
+    out = _run(tmp_path, """
+tycoonPark(true);
+const show = (growth) => { tycoonParkApply({ growth }); return tycoonParkState(); };
+const before = tycoonParkState();
+const earned = show({ qualified: true, level: 3, pnl_usd: 1.25 });
+const loss = show({ qualified: true, level: 1, pnl_usd: .12 });
+const midnight = show({ qualified: true, level: 0, pnl_usd: 0 });
+const stale = show({ qualified: false, level: 5, pnl_usd: 100 });
+const malformed = show({ qualified: true, level: 12, pnl_usd: 100 });
+tycoonParkApply({ cash: 1000, practice: { result: 5000 } });
+const unrelated = tycoonParkState();
+console.log(JSON.stringify({ before, earned, loss, midnight, stale, malformed, unrelated }));
+""")
+    assert out["before"]["earnedGardens"] == 0
+    assert out["earned"]["earnedGardens"] == 3
+    assert out["loss"]["earnedGardens"] == 1
+    assert out["midnight"]["earnedGardens"] == 0
+    for key in ("stale", "malformed", "unrelated"):
+        assert out[key]["earnedGardens"] == 0
+        assert not out[key]["growth"]["qualified"]
+        assert out[key]["growth"]["pnl_usd"] is None
+
+
+def test_utc_and_practice_props_are_excluded_from_daily_town_then_restored(tmp_path: Path) -> None:
+    out = _run(tmp_path, """
+const camera = new THREE.PerspectiveCamera();
+const GP = { rings: new THREE.Mesh(), yard: new THREE.Mesh(), stalls: [{ shutter: new THREE.Mesh(), goods: new THREE.Mesh() }] };
+GP.yard.layers.set(1);
+const TP = { houses: new THREE.Mesh(), rings: [{ m: new THREE.Mesh() }] };
+const nodes = [GP.rings, GP.yard, GP.stalls[0].shutter, TP.houses, TP.rings[0].m];
+const masks = nodes.map(n => n.layers.mask);
+tycoonPark(true);
+const excluded = nodes.every(n => !n.layers.test(camera.layers));
+// Existing financial animation can update visible without exposing the wrong money book.
+nodes.forEach(n => { n.visible = true; });
+const stillExcluded = nodes.every(n => !n.layers.test(camera.layers));
+tycoonPark(false);
+console.log(JSON.stringify({ excluded, stillExcluded, restored: nodes.every((n, i) => n.layers.mask === masks[i]) }));
+""")
+    assert out == {"excluded": True, "stillExcluded": True, "restored": True}
+
+
+def test_connected_land_has_bounded_geometry_and_original_floor_clearance(tmp_path: Path) -> None:
+    out = _run(tmp_path, """
+tycoonPark(true);
+const group = TYCOON_PARK_STATE.group;
+const triangles = group.children.reduce((sum, m) => sum + (m.geometry.index ? m.geometry.index.count / 3 : m.geometry.attributes.position.count / 3), 0);
+const ray = new THREE.Raycaster(new THREE.Vector3(18, 10, 14), new THREE.Vector3(0, -1, 0));
+const hit = ray.intersectObjects(group.children).find(h => h.object.name === 'tycoon:lawns-and-paving');
+console.log(JSON.stringify({ triangles, lawn: hit && hit.point.y, finite: group.children.every(m => Array.from(m.geometry.attributes.position.array).every(Number.isFinite)) }));
+""")
+    assert out["finite"]
+    assert out["triangles"] < 20000
+    assert -0.16 < out["lawn"] < 0
+
+
+def test_building_taps_follow_actual_floor_coordinates(tmp_path: Path) -> None:
+    out = _run(tmp_path, """
+const camera = new THREE.PerspectiveCamera(42, 1, .1, 1000);
+camera.position.set(45, 70, 65); camera.lookAt(0, 0, 0); camera.updateMatrixWorld(true);
+const renderer = { domElement: { getBoundingClientRect: () => ({left:0,top:0,right:600,bottom:600,width:600,height:600}) } };
+const project = p => { const q = p.clone().project(camera); return [(q.x + 1) * 300, (1 - q.y) * 300]; };
+tycoonPark(true);
+const picks = {};
+for (const [room, who] of Object.entries({workshop:'pip',den:'nyx',archive:'mote',vault:'rook',observatory:'observatory'})) {
+  picks[who] = tycoonParkPick(...project(RF[room].origin));
+}
+picks.voss = tycoonParkPick(...project(new THREE.Vector3(0,0,0)));
+picks.jet = tycoonParkPick(...project(new THREE.Vector3(23.2,0,-1.5)));
+const outside = tycoonParkPick(-100,20);
+const lawn = tycoonParkPick(...project(new THREE.Vector3(22,0,17)));
+tycoonPark(false); const hidden = tycoonParkPick(...project(RF.workshop.origin));
+console.log(JSON.stringify({picks, outside, lawn, hidden}));
+""")
+    assert out["picks"] == {key: key for key in (
+        "pip", "nyx", "mote", "rook", "observatory", "voss", "jet",
+    )}
+    assert out["outside"] is None
+    assert out["lawn"] is None
+    assert out["hidden"] is None

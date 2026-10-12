@@ -539,7 +539,7 @@ def test_the_saved_watchlist_is_read_in_the_engine_format_and_never_beats_a_newe
     assert [(b["label"], b["value"]) for b in strategy["bars"]] == [("ZZZ", pytest.approx(50 / 55))]
     assert strategy["headline"]["value"] == "1 of 15"
     fresh = panels(build_team_state(ledger, settings, NOW, engine_status=status_kv(ts=NOW - 5)))["strategy"]
-    assert fresh["headline"]["value"] == "4 of 15" and [b["label"] for b in fresh["bars"]][0] == "BBB"
+    assert fresh["headline"]["value"] == "4 of 15" and fresh["bars"][0]["label"] == "BBB"
 
 
 def test_dedicated_kv_keys_win_over_the_status(ledger: Ledger, settings: Settings) -> None:
@@ -575,8 +575,8 @@ def test_setup_proximity_is_parsed_from_the_strategy_reason(signal: str | None, 
 def test_routes_without_a_token(serve: Callable[..., Client], ledger: Ledger, settings: Settings) -> None:
     seed(ledger)
     client = serve(settings, ledger)
-    status, headers, body = client.request("/team")  # the old team page is part of the one page now
-    assert (status, headers["Location"], body) == (302, "/", b"")
+    status, headers, body = client.request("/team")  # the old team page is part of reports now
+    assert (status, headers["Location"], body) == (302, "/reports", b"")
     assert headers["Cache-Control"] == "no-store" and headers["X-Frame-Options"] == "DENY"
     status, headers, body = client.request("/api/team")
     assert status == 200 and headers["Content-Type"] == "application/json"
@@ -594,7 +594,7 @@ def test_token_gate_on_both_routes(serve: Callable[..., Client], ledger: Ledger,
         status, headers, body = client.request(path)
         assert status == 401 and b"Locked" in body and "Set-Cookie" not in headers
     status, headers, _ = client.request("/team?token=" + TOKEN)
-    assert status == 302 and headers["Location"] == "/"
+    assert status == 302 and headers["Location"] == "/reports"
     cookie = headers["Set-Cookie"].split(";", 1)[0]
     assert TOKEN not in cookie
     assert client.request("/api/team", headers={"Cookie": cookie})[0] == 200

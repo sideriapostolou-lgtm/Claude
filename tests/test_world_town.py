@@ -132,7 +132,8 @@ def test_the_town_is_its_own_section_after_the_hearts_and_before_the_director(pa
     # on the page's bus (no line in THE LOOP), a fault stops the town and never the world
     code = _code(section)
     assert 'BUS.on("data", townOnData);' in code and 'BUS.on("frame", townFrame);' in code and "BUS.emit(" not in code
-    assert "try { townBuild(); TOWN.ok = true; }" in code
+    assert "const beforeTown = new Set(scene.children); townBuild();" in code
+    assert "scene.add(TY_TOWN_STATIC); TOWN.ok = true;" in code
     assert "try { townStep(clamp(dt, 0, 0.1)); } catch (e) { TOWN.ok = false;" in _js_body(section, "  function townFrame(")
     assert "townFrame" not in _js_body(module, "  function frame(now) {")
     # text only, no storage of its own

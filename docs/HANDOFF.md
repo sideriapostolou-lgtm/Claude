@@ -18,7 +18,7 @@ first; its hard rules win over anything here. Older history: `git log` (320+ com
 | Memecoin engine (`engine.py`, `crawler.py` ...) | The original Solana memecoin bot | paper |
 
 The owner watches it all through a token-protected website (`dashboard.py`): a one-page money view at `/` and a 3D
-town at `/world`, where real money is the only thing filmed.
+town at `/` (also `/world`), with detailed reports at `/reports`.
 
 **Today's state (2026-10-12 ~15:40 UTC):** real money is ON. The crypto rule is 48 bets, 48 wins, about +$3.40.
 The owner wants to scale it, and lab 8 is testing his idea for a smarter version before any size goes up.
@@ -135,29 +135,37 @@ needs none of them to write code or run tests.
 
 ## 6. The owner's pages
 
-`/` is the one page: money, team, trades, learning, receipts. `/world` is the 3D floating-island town, "Night
-Shift: Skyport". It opens in a phone-first steady town view: available account cash, the bot's realized result
-today, account-wide open bets and six selectable workstations. Account cash and open bets include the owner's
-activity; the bot's daily result does not. Missing/stale reports are labelled.
+`/` and `/world` open the steady, phone-first tycoon town. `/reports` retains the detailed money,
+team, trades, learning and receipts page; `/team` redirects there. Authentication and read-only APIs are unchanged.
+The town has a compact Polymarket cash / Bot today header, one Menu, six tappable workstations and a passive
+recent-result line. Tap a building or its name to visit; Back to town restores the overview. The menu holds
+accounts/open bets, research desks, the accessible crew list, detailed reports, help, the optional camera tour
+and instructions for stopping both real-money desks. No trading switches are exposed by the town.
+
 The owner confirmed on 2026-10-12 that "today" means **since 12:00 a.m. Pacific**. The town's Bot today card and
-the main Polymarket daily display use `real.today_pacific` (America/Los_Angeles, including daylight saving).
+Polymarket daily display use `real.today_pacific` (America/Los_Angeles, including daylight saving).
 It sums recorded bot results only when the retained closed rows' count and profit match every overlapping UTC
-day book; incomplete records show an unknown total. This is a check of the recorded book, not complete venue
-reconciliation. Cash-outs and corrections keep their recorded booking day, which may differ from venue event
-time. UTC trading loss limits, goal calculations and the explicitly labelled camera-tour aggregate stay UTC.
-The town's account-bet count/value come from the dated venue snapshot (`real.venue_open`,
-`value_usd`, `venue_at`), not tracked desk positions that can remain after an app sale. Any individual desk
-records are labelled separately. Cash shows its own checked age; opening it explains available cash, the venue's
-reported balance and buying power. A new page refresh does not make an old balance fresh.
-Practice workstations are marked; the practice islet's floating dollar labels are hidden. The Theme Park Tycoon 2-inspired presentation adds lawns,
-department colors, paths on the existing walk graph and cutaway rooms. Tap a teammate for a steady close view,
-or the town/workstation title for its role and the two business workflows. Service alerts remain visible;
-"Real bets enabled" describes the money setting, not a health guarantee. Rook's account-open cost is shown
-separately from the bot-only cap. "Camera tour" restores the original cinema, whose
-money scenes show real money only. `/api/page` is the JSON behind both. Every page needs `?token=`
-(`DASHBOARD_TOKEN`). To see a change, run
-`nightcrawler dashboard` locally in paper mode and screenshot it with Playwright/Chromium at phone and desktop
-widths. The owner checks everything from a phone.
+day book; incomplete records show an unknown total. This checks the saved book, not complete venue reconciliation.
+Cash-outs and corrections keep their recorded booking day, which may differ from venue event time. Account cash
+and holdings include the owner's own activity; the bot's result excludes it. Cash is not profit. Account-bet
+count/value use the separately dated venue snapshot (`real.venue_open`, `value_usd`, `venue_at`), not tracked
+positions that can remain after an app sale. Each balance has its own age: a fresh page cannot freshen old cash.
+
+Theme Park Tycoon 2-inspired grounds connect the existing cast and navigation paths: bright lawns, wide paths,
+colorful cutaway workstations and soft daylight. Five decorative gardens unlock at $0.01 / $0.25 / $1 / $5 / $10
+of fresh, reconciled Polymarket bot net profit **today**. They reset at Pacific midnight, can recede after losses
+or corrections, and disappear when the source is unavailable. They are not purchased upgrades or lifetime wealth;
+deposits, owner bets, practice gains and elapsed viewing time never unlock them. Original UTC goal props and the
+practice arena are hidden in town mode. The optional camera tour retains its existing UTC visuals.
+
+Kalshi stays separate in Menu → Accounts: its own cash, real exposure, UTC-day result, mode, freshness and any
+pending cancellation. The header labels each venue independently. Research desks show observed counts and scope,
+never real profit. Character movement is decorative; workstation descriptions and recent results use saved bot
+reports. `/api/page` remains the common data source. The reports page is also the WebGL-failure fallback.
+
+Every page requires `?token=` (`DASHBOARD_TOKEN`) or its authenticated cookie. Preview locally in paper mode and
+screenshot the actual WebGL scene at phone and desktop widths. Preview fixtures are synthetic, never evidence
+of current account balances. The owner checks everything from a phone.
 
 ## 7. Research and its honesty rules
 

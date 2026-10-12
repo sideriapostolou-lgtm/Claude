@@ -882,7 +882,11 @@ function angleDiff(a, b) { return ((a - b + Math.PI) % TAU + TAU) % TAU - Math.P
 function fmtUsd(v) { return v == null ? "—" : (v < 0 ? "−" : "") + "$" + Math.abs(v).toFixed(2); }
 function fmtSigned(v) { return v == null ? "—" : (v >= 0 ? "+" : "−") + "$" + Math.abs(v).toFixed(2); }
 function isNum(v) { return typeof v === "number" && isFinite(v); }
-function fail(text) { boot.hidden = false; boot.textContent = text; boot.className = "bad"; canvas.hidden = true; }
+function fail(text) {
+  boot.hidden = false; boot.textContent = text + " "; boot.className = "bad"; canvas.hidden = true;
+  body.classList.add("world-failed");
+  const reports = document.createElement("a"); reports.href = "/reports"; reports.textContent = "Open detailed reports"; boot.appendChild(reports);
+}
 // the page's bus: a section that adds to the world listens here instead of editing the others (THE CHANNEL below;
 // whatever comes next): "start" once before the first frame, "data" after each poll (d, first), "frame" after each
 // frame's acting and camera (dt, dtRaw). Fixed arity, so emitting allocates nothing; a listener that throws is
@@ -3600,16 +3604,20 @@ _M_LIFE = r"""
     sky.position.copy(camera.position); cloudU.uCam.value.copy(camera.position);
     if (Q.shadows) { sun.target.position.copy(cam.look); sun.position.copy(cam.look).addScaledVector(sun.userData.dir || sunDir, 60); }
   }
-  const pointers = new Map(); let pinchD = 0, dragged = 0;
+  const pointers = new Map(); let pinchD = 0, dragged = 0, multiTouch = false;
   function pinchDist() { const p = Array.from(pointers.values()); return p.length < 2 ? 0 : Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y); }
-  canvas.addEventListener("pointerdown", function (e) { pointers.set(e.pointerId, { x: e.clientX, y: e.clientY }); try { canvas.setPointerCapture(e.pointerId); } catch (err) {} lastInputAt = performance.now(); pinchD = pinchDist(); dragged = 0; });
+  canvas.addEventListener("pointerdown", function (e) { if (!pointers.size) multiTouch = false; else multiTouch = true; pointers.set(e.pointerId, { x: e.clientX, y: e.clientY }); try { canvas.setPointerCapture(e.pointerId); } catch (err) {} lastInputAt = performance.now(); pinchD = pinchDist(); dragged = 0; });
   canvas.addEventListener("pointermove", function (e) {
     const p = pointers.get(e.pointerId); if (!p) return;
     const dx = e.clientX - p.x, dy = e.clientY - p.y; p.x = e.clientX; p.y = e.clientY; lastInputAt = performance.now(); dragged += Math.abs(dx) + Math.abs(dy);
     if (pointers.size === 1) { user.yaw = clamp(user.yaw - dx * 0.0045, -0.95, 0.95); user.pitch = clamp(user.pitch - dy * 0.0035, -0.35, 0.3); }
     else if (pointers.size === 2) { const d = pinchDist(); if (pinchD > 0 && d > 0) user.zoom = clamp(user.zoom * pinchD / d, 0.5, 1.8); pinchD = d; }
   });
-  const up = function (e) { pointers.delete(e.pointerId); pinchD = pinchDist(); };
+  const up = function (e) {
+    const tap = e.type === "pointerup" && pointers.size === 1 && !multiTouch && dragged < 8;
+    pointers.delete(e.pointerId); pinchD = pinchDist();
+    if (tap && tycoonActive()) { const station = tycoonParkPick(e.clientX, e.clientY); if (station) tycoonChoose(station); }
+  };
   canvas.addEventListener("pointerup", up); canvas.addEventListener("pointercancel", up);
   canvas.addEventListener("wheel", function (e) { e.preventDefault(); user.zoom = clamp(user.zoom * (1 + e.deltaY * 0.0012), 0.5, 1.8); lastInputAt = performance.now(); }, { passive: false });
 
@@ -3857,7 +3865,7 @@ _M_LIFE = r"""
   // ============================================================= THE BAR: real money, practice, the headline, the guide
   // Every word here is /api/page's plain block (plain: fixed templates the server filled with the bot's own figures) or
   // the fixed copy below; real money is red only while the data says it is on, practice always says "pretend".
-  let plain = null, panelKind = null, barBottom = 0;
+  let plain = null, panelKind = null, barBottom = 0, panelReturnFocus = null;
   const STATUS_CLASS = { working: "working", waiting: "waiting", idle: "idle", stuck: "blocked" };
   function teamOf(key) { return plain && Array.isArray(plain.team) ? plain.team.find(function (t) { return t.id === key; }) || null : null; }
   // the team's hearts (plain.hearts): each character's mood and heart line, the server's words (text only)
@@ -3955,11 +3963,15 @@ _M_LIFE = r"""
   }
   function openPanel(kind) {
     if (panelKind === kind) { closePanel(); return; }
+    if (panelEl.hidden) panelReturnFocus = document.activeElement;
     closeGuide(); panelKind = kind; renderPanel(); panelEl.hidden = false;
+    if (kind.indexOf("ty-") === 0) el("panel-close").focus({ preventScroll: true });
     realBtn.setAttribute("aria-expanded", String(kind === "real")); practiceBtn.setAttribute("aria-expanded", String(kind === "practice"));
   }
   function closePanel() {
     panelKind = null; panelEl.hidden = true; realBtn.setAttribute("aria-expanded", "false"); practiceBtn.setAttribute("aria-expanded", "false");
+    if (panelReturnFocus && panelReturnFocus.isConnected && panelReturnFocus.getClientRects().length) panelReturnFocus.focus({ preventScroll: true });
+    panelReturnFocus = null;
   }
   realBtn.onclick = function () { openPanel("real"); };
   practiceBtn.onclick = function () { openPanel("practice"); };
@@ -7382,7 +7394,13 @@ _M_TOWN = r"""
     if (!TOWN.ok) return;
     try { townStep(clamp(dt, 0, 0.1)); } catch (e) { TOWN.ok = false; console.error("world: the town stopped", e); }
   }
-  try { townBuild(); TOWN.ok = true; } catch (e) { console.error("world: the town could not start", e); }
+  let TY_TOWN_STATIC = null;
+  try {
+    const beforeTown = new Set(scene.children); townBuild();
+    TY_TOWN_STATIC = new THREE.Group(); TY_TOWN_STATIC.name = "legacy-practice-town";
+    scene.children.slice().forEach(function (child) { if (!beforeTown.has(child)) TY_TOWN_STATIC.add(child); });
+    scene.add(TY_TOWN_STATIC); TOWN.ok = true;
+  } catch (e) { console.error("world: the town could not start", e); }
   BUS.on("data", townOnData);
   BUS.on("frame", townFrame);
   window.__skyport = Object.assign(window.__skyport || {}, { town: {
@@ -8508,7 +8526,7 @@ def render_world_html(settings: Settings) -> str:
     return (
         '<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n'
         '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n'
-        '<meta name="color-scheme" content="dark">\n<meta name="theme-color" content="#1b1f4a">\n'
+        '<meta name="color-scheme" content="dark">\n<meta name="theme-color" content="#91d3ee">\n'
         '<meta name="robots" content="noindex, nofollow">\n<meta name="referrer" content="no-referrer">\n'
         '<meta name="apple-mobile-web-app-capable" content="yes">\n'
         f'<link rel="icon" href="data:,">\n<title>{title}</title>\n'
@@ -8518,7 +8536,7 @@ def render_world_html(settings: Settings) -> str:
         f'<body data-refresh="{REFRESH_S}" data-pipeline="{",".join(PIPELINE)}" class="cinema tycoon">\n'
         '<canvas id="view"></canvas><div id="vignette"></div>\n'
         '<header id="bar"><div class="row1">'
-        '<a class="back" href="./" title="Back to the page" aria-label="Back to the page">←</a>'
+        '<a class="back" href="/reports" title="Detailed reports" aria-label="Detailed reports">←</a>'
         '<button type="button" class="pill real" id="real" aria-controls="panel" aria-expanded="false">'
         '<b id="real-label">Money</b><small id="real-sub">loading…</small><small id="real-result"></small></button>'
         '<button type="button" class="pill practice" id="practice" aria-controls="panel" aria-expanded="false">'

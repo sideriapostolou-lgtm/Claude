@@ -6,6 +6,7 @@ import copy
 import json
 import shutil
 import subprocess
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -382,6 +383,142 @@ def test_invalid_money_is_not_coerced(tmp_path: Path) -> None:
 
 
 def test_adapter_has_no_browser_or_money_side_effects() -> None:
-    for forbidden in ("document", "window", "fetch(", "Date.", "performance.", "localStorage", "THREE", "simT"):
+    for forbidden in ("document", "window", "fetch(", "Date.now", "new Date()", "performance.", "localStorage", "THREE", "simT"):
         assert forbidden not in TYCOON_DATA
     assert "// >>> tycoon data (pure)" in TYCOON_DATA and "// <<< tycoon data" in TYCOON_DATA
+
+
+@pytest.mark.parametrize(("profit", "level"), [(-5, 0), (0, 0), (.009, 0), (.01, 1), (.24, 1),
+                                               (.25, 2), (1, 3), (5, 4), (10, 5), (9999, 5)])
+def test_daily_gardens_follow_actual_net_profit_milestones(tmp_path: Path, profit: float, level: int) -> None:
+    p = page()
+    p["money"]["polymarket"]["real"]["today_pacific"]["pnl_usd"] = profit
+    out = run(tmp_path, p)
+    assert out["growth"] == {
+        "qualified": True, "level": level, "pnl_usd": profit, "thresholds": [.01, .25, 1, 5, 10],
+        "label": "Polymarket bot profit since midnight PT", "date": "2027-01-15", "reason": None,
+    }
+
+
+def test_cash_practice_utc_profit_and_event_replays_do_not_grow_gardens(tmp_path: Path) -> None:
+    p = page()
+    expected = run(tmp_path, p)["growth"]
+    p["money"]["polymarket"]["real"].update(cash_usd=50000, today_usd=80000, since_start_usd=90000)
+    p["money"]["polymarket"]["paper"]["today_usd"] = 100000
+    p["town"] = {"goal": {"real_today_usd": 80000, "tier": {"rank": 5}}}
+    p["plain"]["finished"][0]["usd"] = 100000
+    p["plain"]["finished"] *= 20
+    assert run(tmp_path, p)["growth"] == expected
+
+
+@pytest.mark.parametrize("source", ["page", "desk", "profit", "unknown_mode", "incomplete", "midnight"])
+def test_unconfirmed_or_stale_profit_cannot_claim_daily_upgrades(tmp_path: Path, source: str) -> None:
+    p = page()
+    pm = p["money"]["polymarket"]
+    if source == "page":
+        p["generated_at"] = NOW - 61
+    elif source == "desk":
+        pm["as_of"] = NOW - 601
+    elif source == "profit":
+        pm["real"]["today_pacific"]["as_of"] = NOW - 601
+    elif source == "unknown_mode":
+        pm["mode"] = None
+    elif source == "incomplete":
+        pm["real"]["today_pacific"]["status"] = "incomplete"
+    else:
+        pm["real"]["today_pacific"]["end"] = NOW
+    growth = run(tmp_path, p)["growth"]
+    assert growth["qualified"] is False and growth["level"] is None
+    assert growth["reason"]
+
+
+def test_losses_remove_daily_decorations_and_paper_mode_keeps_real_results(tmp_path: Path) -> None:
+    p = page()
+    p["money"]["polymarket"]["real"]["today_pacific"]["pnl_usd"] = 5
+    assert run(tmp_path, p)["growth"]["level"] == 4
+    p["money"]["polymarket"]["mode"] = "paper"
+    p["money"]["polymarket"]["real"]["today_pacific"]["pnl_usd"] = .20
+    assert run(tmp_path, p)["growth"]["level"] == 1
+    assert run(tmp_path, {})["growth"]["level"] is None
+
+
+def kalshi() -> dict[str, Any]:
+    return {
+        "as_of": NOW - 5, "cash_at": NOW - 10, "cash_usd": 25, "mode": "live", "active": True,
+        "authenticated": True, "real_orders_available": True, "stale": False,
+        "has_real_exposure": True, "at_risk_usd": 1.98, "positions": 1, "open_orders": 2, "reserved_usd": .99,
+        "today": {"day": datetime.fromtimestamp(NOW, UTC).date().isoformat(), "pnl_usd": -.34,
+                  "fees_usd": .013, "locked_usd": .10, "directional_usd": -.44},
+        "total": {"pnl_usd": .87},
+        "practice_twin": {"pnl_usd": 10000},
+    }
+
+
+def test_kalshi_is_a_separate_real_account_with_its_own_utc_day(tmp_path: Path) -> None:
+    p = page()
+    expected_growth = run(tmp_path, p)["growth"]
+    p["money"]["speeddesk"] = {"mode": "paper", "kalshi_live": kalshi(), "today": {"pnl_usd": 20000}}
+    out = run(tmp_path, p)
+    account = out["accounts"]["kalshi"]
+    assert account["state"] == "live" and account["active"] is True
+    assert (account["cash"], account["today"], account["total"]) == (25, -.34, .87)
+    assert (account["exposure"], account["positions"], account["orders"]) == (1.98, 1, 2)
+    assert account["todayNote"] == "Bot profit since midnight UTC"
+    assert (out["cash"], out["today"]) == (14.22, .23)
+    assert out["growth"] == expected_growth
+
+
+@pytest.mark.parametrize("change", [{"as_of": NOW - 61}, {"as_of": None}, {"stale": True},
+                                    {"active": False}, {"authenticated": False}, {"real_orders_available": False}])
+def test_kalshi_live_claim_requires_its_current_sanitized_report(tmp_path: Path, change: dict[str, Any]) -> None:
+    p = page()
+    p["money"]["speeddesk"] = {"kalshi_live": {**kalshi(), **change}}
+    account = run(tmp_path, p)["accounts"]["kalshi"]
+    assert account["active"] is False and account["state"] != "live"
+
+
+def test_kalshi_stale_cash_and_utc_midnight_stay_visible_as_unknown_age_or_date(tmp_path: Path) -> None:
+    p = page()
+    account = kalshi()
+    account["cash_at"] = NOW - 61
+    account["today"]["day"] = "2000-01-01"
+    p["money"]["speeddesk"] = {"kalshi_live": account}
+    out = run(tmp_path, p)["accounts"]["kalshi"]
+    assert out["cash"] == 25 and out["cashStale"] is True
+    assert out["today"] is None and out["todayStale"] is True
+    account["cash_at"] = None
+    assert run(tmp_path, p)["accounts"]["kalshi"]["cash"] is None
+    p["generated_at"] = NOW - 61
+    assert run(tmp_path, p)["accounts"]["kalshi"]["state"] == "stale"
+
+
+def test_kalshi_paper_mode_keeps_open_real_exposure_explicit(tmp_path: Path) -> None:
+    p = page()
+    account = kalshi()
+    account.update(mode="paper", active=False, real_orders_available=False, cleanup_pending=True)
+    p["money"]["speeddesk"] = {"kalshi_live": account}
+    out = run(tmp_path, p)["accounts"]["kalshi"]
+    assert out["state"] == "exposure" and out["practice"] is False and out["cleanupPending"] is True
+    account.update(has_real_exposure=False, at_risk_usd=0, positions=0, open_orders=0, reserved_usd=0)
+    assert run(tmp_path, p)["accounts"]["kalshi"]["state"] == "practice"
+    out = run(tmp_path, {})["accounts"]["kalshi"]
+    assert out["state"] == "unknown" and out["cash"] is None and out["today"] is None
+
+
+def test_research_shows_observations_only_and_never_creates_financial_growth(tmp_path: Path) -> None:
+    p = page()
+    expected_growth = run(tmp_path, p)["growth"]
+    p["money"]["speeddesk"] = {"as_of": NOW - 2, "stale": False, "status": "Watching Bitcoin",
+                               "today": {"day": datetime.fromtimestamp(NOW, UTC).date().isoformat(),
+                                         "fills": 100, "pnl_usd": 9999}}
+    p["skipwatch"] = {"as_of": NOW - 2, "wallet_fills": 200, "status": "Recording public trades"}
+    p["weatherwatch"] = {"as_of": NOW - 119, "active_watches": 3, "status": "Observing weather",
+                         "today": {"conditional_hold_pnl_usd": 9999}}
+    out = run(tmp_path, p)
+    assert out["growth"] == expected_growth
+    assert [(r["scope"], r["count"]) for r in out["research"]] == [("PRACTICE", 100), ("READ ONLY", 200), ("READ ONLY", 3)]
+    assert all(r["state"] == "observing" and r["realOrders"] is False for r in out["research"])
+    p["weatherwatch"]["as_of"] = NOW - 121
+    assert run(tmp_path, p)["research"][2]["state"] == "unknown"
+    p["generated_at"] = NOW - 61
+    assert all(r["current"] is False for r in run(tmp_path, p)["research"])
