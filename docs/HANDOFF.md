@@ -192,7 +192,8 @@ session scratchpad that you will not have.
    book/trade coverage is measured per venue. Missing historical splits stay unknown. Per-venue order fill
    rates use the order's placement day; execution counts and settlement profits use their actual UTC day.
    These reports do not change the desk's shared practice budgets or the existing real-money desks.
-   **Deployed and verified 2026-10-12 19:09 UTC** on `1e45cc3` (initial implementation PR #7). Both venue
+   **Deployed and verified 2026-10-12 19:27 UTC** on `c329133` (venue reporting PR #8; initial implementation
+   PR #7). Both venue
    trade feeds are verified; existing polydesk remains LIVE at 10 contracts. The at-least-three-day observation
    is still pending, with the first conservative review no earlier than 2026-10-15 19:09 UTC. See `docs/WORKLOG.md`.
    Partial days and missing/stale feeds are reported honestly. Positive practice after fees over 3+ days is still

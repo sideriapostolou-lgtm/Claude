@@ -13,7 +13,7 @@ Template:
 - Next step: ...
 ```
 
-## 2026-10-12 19:24 UTC, Codex, branch codex/speed-desk
+## 2026-10-12 19:24 UTC, Codex, branch codex/speed-desk, PR #8
 - Changed: pulled the latest deploy branch (`2a7dbd0`) and reviewed the Kalshi section 2b addition. Both venue
   adapters were already deployed; this follow-up adds the owner's requested daily reporting **per venue**.
   Kalshi KXBTC15M and Polymarket US 15m/1h share the existing strategy, honest practice fills and practice
@@ -40,9 +40,19 @@ Template:
 - Real money touched? This authorized push restarts the live service. No real-money code, settings, amounts,
   keys or Railway variables changed. The speed desk has no real-order path; existing polydesk stays LIVE
   at 10 contracts, and Marco stays off. Practice budgets and the loss stop remain shared across venues.
-- Deploy verification: pending the push below; record exact Railway commit/startup/feed evidence here after
-  it finishes. Before this update, the 19:16 UTC heartbeat confirmed both venue streams connected, warm-up,
-  zero fills and zero practice P&L.
+- Deploy verified: PR #8 merged as `c329133ce5aea5654524e7a876fd668aea3ab852`. Railway deployment
+  `c4e7918e-e3cf-4cbc-b4b1-cf1253c7040d` reached SUCCESS on that exact commit. At 19:26:50 UTC, startup
+  logged speeddesk practice/real_orders=false and `polydesk_started ... (LIVE: 10 contract(s) per order)`.
+  The prior trial start `1791831625.5335124` survived the restart. Coinbase and the US market socket connected;
+  Kalshi logged public REST with books_max_hz=2. `/healthz` returned HTTP 200/ok.
+  Deployment-scoped searches for tracebacks, speed-desk halt/state failures, US socket disconnect/errors and
+  error-level logs found no matching application lines; only the Railway CLI's config-format deprecation notice.
+- Day 0 snapshot at 19:27:50 UTC: both venue trade streams true, Bitcoin age 0.155 s, book age 0.592 s,
+  warming-up status and no problem. **Each venue** reports zero traded windows, zero fills, $0 locked-pair
+  and $0 directional practice P&L. Worst window, fill rates and fill latency remain unavailable with no trades.
+  Shared mean Coinbase feed latency was 118.4 ms. Since instrumentation began at 19:26:50, fresh-data coverage
+  was 56.86 s per venue; maker coverage was 50.41 s on US and 56.86 s on Kalshi. Partial day is explicit.
+  This verifies wiring and restart preservation, not profit or a completed trial.
 - Pending: the three-day practice observation is still running, not passed. Daily reports are generated in
   the app and receipts per venue. Automatic chat delivery still lacks persistent Railway access in this
   environment. Preserve Claude's existing 19:45 UTC Bitcoin-filter check. Positive practice after fees for
