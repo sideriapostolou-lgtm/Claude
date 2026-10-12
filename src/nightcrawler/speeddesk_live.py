@@ -452,7 +452,11 @@ class KalshiLiveDesk:
             self.reason = "Kalshi account reconciliation failed; new orders paused"
         # Exception messages may contain request material. Record only type and
         # our fixed reason, never response bodies, headers, or key identifiers.
-        self._record("speeddesk_live_reject", reason=self.reason, error=type(exc).__name__)
+        # KalshiClientError's operation, reason and HTTP status are fixed strings
+        # and an integer (safe by its contract) and name the call that failed.
+        detail = ({"operation": exc.operation, "detail": exc.reason, "status": exc.status}
+                  if isinstance(exc, KalshiClientError) else {})
+        self._record("speeddesk_live_reject", reason=self.reason, error=type(exc).__name__, **detail)
 
     async def _ensure_client(self) -> bool:
         if self.client is not None:
