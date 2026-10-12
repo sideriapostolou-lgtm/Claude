@@ -13,6 +13,24 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-12 16:47 UTC, Codex, branch claude/nightcrawler-memecoin-bot-Gwnb1S
+- Changed: at the owner's request, authenticated an isolated read-only Railway CLI session using a credential
+  held in process memory. No credential was written to a file, committed, or saved in persistent Codex settings.
+  Recorded the previously pending independent verification of PR #5's deployment.
+- Verified directly with Railway: project nightcrawler, environment production, bot online. Deployment 0866daea
+  is SUCCESS with commit 1cd27824, matching PR #5's merge. Logs at 16:23:02 UTC show
+  `polydesk_started theta=0.97 hours=1 ticket_usd=20 poll_s=90 (LIVE: 10 contract(s) per order)`;
+  at 16:23:03 UTC the separate memecoin engine starts in paper mode. A deployment-scoped Traceback search
+  returned no matching log entries. Railway received docs-only push 7c363e6 and marked it SKIPPED with
+  `No changes to watched files`, leaving the live deployment unchanged.
+- Checks: only this worklog changed. Application/test/build inputs still match tested 88780dd, so prior results
+  apply: 2,969 passed, 21 skipped; mypy passed on 82 source files. No Python files changed for the lint gate.
+- Not verified: a watched-file push triggering a successful build remains untested. Persistent RAILWAY_TOKEN
+  environment setup is still absent; this read-only credential session does not configure future environments.
+- Real money touched? no. Only status/log reads and documentation; no orders, deploys or variable changes.
+- Next step: keep checking the exact deployed commit and intended startup mode after authorized watched-file
+  changes. The next such change must also verify that the GitHub push starts the deployment automatically.
+
 ## 2026-10-12 16:38 UTC, Codex, branch claude/nightcrawler-memecoin-bot-Gwnb1S
 - Changed: read the new rules at 209191b, synced the local deploy branch, aligned stale handoff wording with
   direct pushes for small tested changes, and clarified that PR #5's deployment was triggered by source setup.
