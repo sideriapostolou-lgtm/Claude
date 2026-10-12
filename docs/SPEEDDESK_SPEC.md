@@ -129,6 +129,17 @@ Per window, from its start until `CUTOFF_S` (60 s) before its end:
 - `/api/page` exposes the current report under `money.speeddesk.today` and the latest 31 completed calendar
   days under `money.speeddesk.reports`; the visible page labels all figures **PRACTICE**. Missing or stale data
   is identified, never invented as zero. None of these results adds to account cash, real profit or town goals.
+- **Per venue (owner, 2026-10-12):** each current and completed daily report includes `venues.kalshi` and
+  `venues.polymarket_us`, with traded/settled windows, fills, locked-pair and directional results after fees,
+  worst window, fill rates and latency. Per-venue fill rates follow orders placed that UTC day; executions
+  count on the fill day and profits on the settlement day. A late first fill revises its placement-day rate
+  with a `speeddesk_daily_correction` receipt. Existing combined reports remain available.
+  Shared app uptime and Coinbase feed latency are explicitly labeled shared. Fresh-data coverage is measured
+  separately for each venue (fresh Bitcoin and both books of at least one active window); maker coverage also
+  needs that window's verified trade stream. Coverage includes volatility warm-up and does not prove profit.
+  Coverage begins when instrumentation starts, never from inferred historical uptime. Older combined-only
+  days with activity have unknown venue metrics; an empty warm-up day can retain exact zero counts. Splitting
+  reports does not split the shared speed-desk practice budgets or loss stop.
 
 ## 7. Tests (required before any push)
 
@@ -145,7 +156,8 @@ Use the repo's fake clocks and fakes (`tests/fakes.py`). Tests and mypy must pas
 ## 8. Rollout
 
 1. Build it in practice, deploy (pushes to `src/**` auto-deploy), and run it **at least 3 days**.
-2. Report per day: windows, fills, locked vs directional P&L, worst window, fill rates, and average latency.
+2. Report per day **per venue**: windows, fills, locked vs directional P&L, worst window, fill rates, and average
+   latency, with partial-day/data-coverage limitations visible.
 3. Real money only if practice is positive after fees over 3+ days **and** the owner names the amounts
    (`WINDOW_USD`, `OPEN_USD`, `DAY_STOP_USD`). Start small.
    The implementation accepts only `SPEEDDESK_MODE=paper`; there is no automatic promotion or real-order path.

@@ -214,6 +214,9 @@ footer{color:var(--ink2);font-size:12px;text-align:center;margin-top:18px}
 #plain-now>div{font-size:15px;overflow-wrap:anywhere}
 #plain-team .chip{flex:none}
 #speeddesk .num{white-space:normal;text-align:right;overflow-wrap:anywhere}
+#speeddesk-venues{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr))}
+#speeddesk .speed-venue{margin-top:0}
+#speeddesk .speed-venue h3{margin:0;font-size:16px}
 .hero-tag{font-size:20px;font-weight:650;color:var(--ink2);letter-spacing:0}
 """
 
@@ -343,6 +346,52 @@ _SCRIPT = r"""
     const rate = (v, fills, attempts) => isNum(v)
       ? v.toFixed(1) + "% (" + count(fills) + "/" + count(attempts) + " orders)" : "—";
     const row = (label, value) => el("div", "line", el("span", null, label), el("b", "num", value));
+    const hours = (v) => isNum(v) ? (v / 3600).toFixed(1) + " hours" : "—";
+    const milliseconds = (v) => isNum(v) ? v.toFixed(0) + " ms" : "—";
+    const stamp = (v) => isNum(v) ? new Date(v * 1000).toISOString().replace("T", " ").replace(".000Z", " UTC") : null;
+    const opened = new Set(Array.from(panel.querySelectorAll("[data-speed-detail][open]"),
+      (node) => node.dataset.speedDetail));
+    function detail(key, title, ...children) {
+      const node = el("details", "about", el("summary", null, title), ...children);
+      node.dataset.speedDetail = key;
+      node.open = opened.has(key);
+      return node;
+    }
+    function venueCard(report, name, key, day) {
+      const v = report || {}, known = Boolean(report), coverage = [];
+      if (v.enabled === false) coverage.push("Practice adapter off.");
+      if (!known) coverage.push("No venue report for this day. Figures are unknown.");
+      else if (v.reporting_complete === false) coverage.push("Incomplete venue history; some earlier figures are unavailable.");
+      else if (v.reporting_complete !== true) coverage.push("Completeness of this venue record is unknown.");
+      if (v.partial_day === true) coverage.push("Partial day observed.");
+      if (v.fresh_data_seconds === 0 && v.enabled !== false) coverage.push("No fresh venue data recorded for this day.");
+      if (v.reporting_complete !== true && stamp(v.reporting_started_at)) {
+        coverage.push("Venue reporting started " + stamp(v.reporting_started_at) + ".");
+      }
+      return el("div", "box speed-venue", el("div", "line", el("h3", null, name), el("span", "tag", "PRACTICE")),
+        el("p", "meta", day + " UTC"), coverage.length ? el("p", "meta", coverage.join(" ")) : null,
+        el("div", "rows", row("Traded windows / fills", count(v.windows) + " / " + count(v.fills)),
+          row("Locked pairs, after fees", usd(v.locked_usd, true)), row("Direction, after fees", usd(v.directional_usd, true)),
+          row("Net result, after fees", usd(v.pnl_usd, true)), row("Worst settled window", usd(v.worst_usd, true))),
+        detail(key + "-metrics", "Fill rates, latency and coverage", el("div", "rows",
+          row("Windows settled", count(v.settled_windows)), row("Won / lost windows", count(v.won) + " / " + count(v.lost)),
+          row("Instant-order fill rate", rate(v.take_fill_rate_pct, v.take_fills, v.take_attempts)),
+          row("Resting-order fill rate", rate(v.maker_fill_rate_pct, v.maker_fills, v.maker_orders)),
+          row("Average fill delay", milliseconds(v.avg_latency_ms)),
+          row("Shared Bitcoin feed delay", milliseconds(v.avg_bitcoin_feed_latency_ms)),
+          row("App running (shared)", hours(v.observed_seconds)), row("Fresh Bitcoin + venue books", hours(v.fresh_data_seconds)),
+          row("Also had trade prints", hours(v.maker_data_seconds))),
+          el("p", "help", v.fill_rate_basis === "orders_placed_on_day"
+            ? "Fill rates: orders placed this UTC day." : "Fill-rate time basis is unavailable."),
+          el("p", "help", "Fresh coverage requires Bitcoin and this venue's current books. App running time is shared "
+            + "between venues and does not mean usable data was available. Fresh coverage includes volatility warm-up; "
+            + "it measures usable feeds, not time allowed to trade.")));
+    }
+    function venueCards(report, key, day) {
+      const venues = report.venues || {};
+      return [venueCard(venues.kalshi, "Kalshi", key + "-kalshi", day),
+        venueCard(venues.polymarket_us, "Polymarket US", key + "-polymarket_us", day)];
+    }
     $("speeddesk-summary").textContent = line || "Waiting for a recorded practice result.";
     $("speeddesk-status").textContent = (desk.stale ? "Report behind: " : "") + desk.status
       + (desk.problem ? " · " + desk.problem : "");
@@ -354,9 +403,14 @@ _SCRIPT = r"""
       row("Instant-order fill rate", rate(d.take_fill_rate_pct, d.take_fills, d.take_attempts)),
       row("Resting-order fill rate", rate(d.maker_fill_rate_pct, d.maker_fills, d.maker_orders)),
       row("Average fill delay", isNum(d.avg_latency_ms) ? d.avg_latency_ms.toFixed(0) + " ms" : "—"),
-      row("Bitcoin feed delay", isNum(d.avg_bitcoin_feed_latency_ms)
+      row("Shared Bitcoin feed delay", isNum(d.avg_bitcoin_feed_latency_ms)
         ? d.avg_bitcoin_feed_latency_ms.toFixed(0) + " ms" : "—"),
-      row("Observed today", isNum(d.observed_seconds) ? (d.observed_seconds / 3600).toFixed(1) + " hours" : "—"));
+      row("App running today", hours(d.observed_seconds)));
+    put($("speeddesk-venues"), ...venueCards(d, "today", d.day || "Today"));
+    const reports = Object.entries(desk.reports || {}).sort(([a], [b]) => b.localeCompare(a));
+    put($("speeddesk-history-body"), ...(reports.length ? reports.map(([day, report]) =>
+      detail("day-" + day, day + " UTC · practice report", ...venueCards(report, "day-" + day, day)))
+      : [el("p", "empty", "No completed daily reports yet.")]));
     $("speeddesk-feed").textContent = "Last Bitcoin tick: "
       + (isNum(desk.btc_age_s) ? desk.btc_age_s.toFixed(1) + " seconds ago" : "not received")
       + "; last book: " + (isNum(desk.book_age_s) ? desk.book_age_s.toFixed(1) + " seconds ago" : "not received")
@@ -1025,10 +1079,16 @@ def render_page_html(settings: Settings) -> str:
 
         "<section class=\"card\" id=\"speeddesk\" hidden><h2>Bitcoin speed desk <small>PRACTICE</small></h2>"
         "<p class=\"lead\" id=\"speeddesk-summary\">Waiting for a recorded practice result.</p>"
-        "<p class=\"meta\" id=\"speeddesk-status\"></p><div class=\"rows\" id=\"speeddesk-figures\"></div>"
+        "<p class=\"meta\" id=\"speeddesk-status\"></p><p class=\"sub\">Today by venue</p>"
+        "<div id=\"speeddesk-venues\"></div>"
+        "<details class=\"about\"><summary>Combined practice totals today</summary>"
+        "<div class=\"rows\" id=\"speeddesk-figures\"></div></details>"
+        "<details class=\"about\" id=\"speeddesk-history\"><summary>Completed daily reports by venue</summary>"
+        "<div id=\"speeddesk-history-body\"></div></details>"
         "<p class=\"help\">Pretend money only. Today starts at midnight UTC. Results use settled windows and include "
         "fees; open windows can still lose. Locked pairs and direction are separate parts of the same result. "
         "Fill rates count orders with any fill, not contracts. "
+        "Per-venue rates follow orders placed that day; fills and settled results are counted on the day they happen. "
         "Fill delay includes time a resting bid waited. "
         "Practice never adds to your cash or the town's real profit.</p>"
         "<p class=\"help\" id=\"speeddesk-feed\"></p></section>\n"

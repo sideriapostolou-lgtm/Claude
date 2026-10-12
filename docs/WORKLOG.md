@@ -13,6 +13,41 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-12 19:24 UTC, Codex, branch codex/speed-desk
+- Changed: pulled the latest deploy branch (`2a7dbd0`) and reviewed the Kalshi section 2b addition. Both venue
+  adapters were already deployed; this follow-up adds the owner's requested daily reporting **per venue**.
+  Kalshi KXBTC15M and Polymarket US 15m/1h share the existing strategy, honest practice fills and practice
+  budgets. Kalshi still uses public GET requests only, with books capped at two requests/second and verified
+  settlement/tie/fee rules. No Kalshi account credential is read by this adapter.
+- Reporting: `today.venues` and each completed report's `venues` distinguish Kalshi from Polymarket US.
+  Each reports traded/settled windows, fills, fee-inclusive locked-pair versus direction P&L, worst window,
+  unique-order fill rates and latency. Venue attribution is persisted; order rates follow placement-day
+  cohorts, while fills and settlements use their actual UTC day. A late fill corrects the earlier rate with
+  an audited, idempotent `speeddesk_daily_correction` receipt. Existing combined metrics remain available.
+- Honesty: per-venue fresh-book/Bitcoin and maker-tape coverage is separate from shared app uptime and
+  Coinbase latency. Old coverage is not inferred, and old combined-only activity has unknown venue figures;
+  the existing empty warm-up can retain exact zero counts. Missing feeds and partial days stay visible.
+  Restarts preserve results, counters and coverage. Historical reports remain on the page and in daily
+  receipts; heartbeat logs no longer repeat the growing completed-day history every minute.
+- Page: separate PRACTICE cards and expandable completed-day history, with fill rates, latency and coverage
+  details. None of these numbers enters real cash, real P&L or town goals. Browser checks with synthetic data
+  passed at 320, 390 and 1280 pixels, with no overflow/errors; expanded details survive refresh.
+- Verified: full suite 3,165 passed, 21 skipped (12 opt-in network checks, 9 missing optional scientific
+  dependencies). The latest 113 model/runtime/integration tests also passed, plus a final 17 runtime checks
+  after trimming historical reports from heartbeats. Mypy passed on all 88 source files; Ruff passed all
+  seven changed Python files. Independent adapter/reporting review found no blocking issue; added-line
+  secret scan found no matches. Checked open PRs; unrelated town PR #6 remains untouched.
+- Real money touched? This authorized push restarts the live service. No real-money code, settings, amounts,
+  keys or Railway variables changed. The speed desk has no real-order path; existing polydesk stays LIVE
+  at 10 contracts, and Marco stays off. Practice budgets and the loss stop remain shared across venues.
+- Deploy verification: pending the push below; record exact Railway commit/startup/feed evidence here after
+  it finishes. Before this update, the 19:16 UTC heartbeat confirmed both venue streams connected, warm-up,
+  zero fills and zero practice P&L.
+- Pending: the three-day practice observation is still running, not passed. Daily reports are generated in
+  the app and receipts per venue. Automatic chat delivery still lacks persistent Railway access in this
+  environment. Preserve Claude's existing 19:45 UTC Bitcoin-filter check. Positive practice after fees for
+  3+ days and the owner's exact dollar amounts are both required before any real-money speed desk work.
+
 ## 2026-10-12 18:55 UTC, Codex, branch codex/speed-desk
 - Changed: built the owner's speed desk in practice only, including Claude's concurrent `df66c13` Kalshi
   adapter addition. Coinbase BTC-USD ticks drive the normal-CDF fair value and observed one-second volatility.

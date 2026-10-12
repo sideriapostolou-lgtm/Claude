@@ -88,7 +88,10 @@ Schema (lists capped: members 9, events <= 5, open trades <= 10, closed trades 1
                               "fills", "locked_usd", "directional_usd", "pnl_usd", "won", "lost", "worst_usd",
                               "take_attempts", "take_fills", "maker_orders", "maker_fills", "take_fill_rate_pct",
                               "maker_fill_rate_pct", "avg_latency_ms", "avg_bitcoin_feed_latency_ms",
-                              "observed_seconds", "partial_day", "latency_definition"},
+                              "observed_seconds", "fresh_data_seconds", "maker_data_seconds", "partial_day",
+                              "coverage_started_at", "reporting_started_at", "reporting_complete", "enabled",
+                              "fill_rate_basis", "latency_definition", "venues": {"kalshi": {...},
+                              "polymarket_us": {...}}},  # same metrics per venue; unknowns never inferred from totals
                               "reports": {UTC day: {... same figures and "reported_at"}} (<= 31)}|null},
       "town": {"label", "cost_per_day_usd", "cost_today_usd", "cost_since_start_usd": float|null,  # see TOWN
                "income_today_usd": float|null, "income_since_start_usd": float|null,
@@ -1483,7 +1486,7 @@ def arena_town(settings: Settings, now: float) -> dict[str, Any] | None:
     return {**raw, "label": PRETEND_LABEL, "events": events}
 
 
-def _speed_report(today: Mapping[str, Any], day: str) -> dict[str, Any]:
+def _speed_report(today: Mapping[str, Any], day: str, *, with_venues: bool = True) -> dict[str, Any]:
     """Normalize one UTC practice-day report without turning missing evidence into zero."""
     figures: dict[str, Any] = {
         key: _count(today.get(key)) for key in (
@@ -1493,7 +1496,8 @@ def _speed_report(today: Mapping[str, Any], day: str) -> dict[str, Any]:
     }
     figures.update({key: _num(today.get(key)) for key in (
         "locked_usd", "directional_usd", "pnl_usd", "worst_usd", "avg_latency_ms",
-        "observed_seconds", "avg_bitcoin_feed_latency_ms",
+        "observed_seconds", "avg_bitcoin_feed_latency_ms", "fresh_data_seconds", "maker_data_seconds",
+        "coverage_started_at", "reporting_started_at",
     )})
     for kind, denominator in (("take", "take_attempts"), ("maker", "maker_orders")):
         attempts, fills = figures[denominator], figures[f"{kind}_fills"]
@@ -1505,8 +1509,19 @@ def _speed_report(today: Mapping[str, Any], day: str) -> dict[str, Any]:
     figures["mode"] = "paper"
     figures["label"] = "PRACTICE (pretend money)"
     figures["partial_day"] = today.get("partial_day") if isinstance(today.get("partial_day"), bool) else None
+    for key in ("reporting_complete", "enabled"):
+        figures[key] = today.get(key) if isinstance(today.get(key), bool) else None
     figures["reported_at"] = _num(today.get("reported_at"))
+    figures["fill_rate_basis"] = ("orders_placed_on_day"
+                                  if today.get("fill_rate_basis") == "orders_placed_on_day" else None)
     figures["latency_definition"] = "Decision to practice fill; resting orders include waiting time"
+    if with_venues:
+        source = _xp_map(today.get("venues"))
+        figures["venues"] = {
+            venue: _speed_report(source[venue], day, with_venues=False)
+            for venue in ("polymarket_us", "kalshi")
+            if isinstance(source.get(venue), Mapping) and source[venue].get("day") == day
+        }
     return figures
 
 

@@ -23,6 +23,7 @@ from .clock import Clock, RealClock
 from .config import Settings
 from .ledger import Ledger
 from .speeddesk_model import (
+    VENUES,
     Book,
     Decision,
     PracticeDesk,
@@ -85,9 +86,14 @@ class SpeedRunner:
         self.last_checkpoint = -math.inf
         self.last_heartbeat = -math.inf
         self.last_step = self.clock.now()
+        self.last_fresh_venues: set[str] = set()
+        self.last_maker_venues: set[str] = set()
         self.feed_status: dict[str, Any] = {"coinbase": "connecting", "markets": "connecting",
                                            "trade_stream": False}
         self.problem: str | None = None
+        self.enabled_venues = {"polymarket_us"}
+        if settings.speeddesk_kalshi_enabled:
+            self.enabled_venues.add("kalshi")
         try:
             saved = self.ledger.get_kv(STATE_KEY)
             if saved is None and self.path.exists():
@@ -102,6 +108,8 @@ class SpeedRunner:
                 self.observed: dict[str, float] = saved.get("observed_seconds", {})
                 self.feed_latency: dict[str, list[float]] = saved.get("feed_latency", {})
                 self.opening_logged: set[str] = set(saved.get("opening_logged", []))
+                self.venue_reporting_started_at = float(saved.get("venue_reporting_started_at", self.clock.now()))
+                self.venue_coverage: dict[str, dict[str, dict[str, float]]] = saved.get("venue_coverage", {})
                 for order in saved["model"].get("orders", []):
                     self.record("speeddesk_cancel", {**order, "at": self.clock.now(), "reason": "restart"})
             else:
@@ -111,6 +119,13 @@ class SpeedRunner:
                 self.observed = {}
                 self.feed_latency = {}
                 self.opening_logged = set()
+                self.venue_reporting_started_at = self.started_at
+                self.venue_coverage = {}
+            # Previously stored reports contain only combined metrics. Keep
+            # those totals, and let the model identify missing venue history.
+            for day, report in self.reports.items():
+                if "venues" not in report:
+                    report["venues"] = {venue: self.summary(day, venue) for venue in VENUES}
             self.feeds = feed_factory(settings, on_tick=self.on_tick, on_book=self.on_book,
                                       on_trade=self.on_trade, on_windows=self.on_windows,
                                       on_status=self.on_status, clock=self.clock.now)
@@ -119,6 +134,9 @@ class SpeedRunner:
             raise
 
     def record(self, kind: str, payload: dict[str, Any]) -> None:
+        venue = self.desk.window_venues.get(payload.get("window", ""))
+        if venue is not None:
+            payload = {**payload, "venue": venue}
         self.pending.append((kind, {"mode": "practice", **payload}))
 
     def decisions(self, events: list[Decision]) -> None:
@@ -177,15 +195,32 @@ class SpeedRunner:
                 self.decisions(self.desk.cancel(self.clock.now(), slug, "venue_feed_gap"))
                 self.desk.books = {key: book for key, book in self.desk.books.items() if key[0] != slug}
 
-    def summary(self, day: str) -> dict[str, Any]:
-        report = self.desk.daily_summary(day)
+    def summary(self, day: str, venue: str | None = None) -> dict[str, Any]:
+        report = self.desk.daily_summary(day, venue=venue)
         latency = self.feed_latency.get(day, [0.0, 0.0])
         report.update(observed_seconds=self.observed.get(day, 0.0),
                       avg_bitcoin_feed_latency_ms=latency[0] / latency[1] if latency[1] else None,
+                      bitcoin_feed_latency_scope="shared Coinbase feed",
                       latency_definition="decision to simulated fill; maker includes resting time")
         for prefix in ("take", "maker"):
             attempts = report["take_attempts" if prefix == "take" else "maker_orders"]
-            report[f"{prefix}_fill_rate_pct"] = 100 * report[f"{prefix}_fills"] / attempts if attempts else None
+            fills = report[f"{prefix}_fills"]
+            report[f"{prefix}_fill_rate_pct"] = 100 * fills / attempts if attempts and fills is not None else None
+        if venue is None:
+            report["venues"] = {name: self.summary(day, name) for name in VENUES}
+        else:
+            coverage = self.venue_coverage.get(day, {}).get(venue, {})
+            # No backfilling coverage from combined uptime on upgrade.
+            predates_coverage = day < utc_day(self.venue_reporting_started_at)
+            fresh = None if predates_coverage else coverage.get("fresh_data_seconds", 0.0)
+            report.update(venue=venue, enabled=venue in self.enabled_venues if day == utc_day(self.clock.now()) else None,
+                          reporting_started_at=self.venue_reporting_started_at,
+                          coverage_started_at=self.venue_reporting_started_at,
+                          fresh_data_seconds=fresh,
+                          maker_data_seconds=None if predates_coverage else coverage.get("maker_data_seconds", 0.0),
+                          partial_day=fresh is None or fresh < 86395,
+                          coverage_definition="fresh Bitcoin and both books of at least one active venue window; "
+                          "maker coverage also requires its verified trade stream; warm-up is included")
         return report
 
     def daily_reports(self, now: float) -> None:
@@ -199,6 +234,14 @@ class SpeedRunner:
                               started_at=self.started_at, reported_at=now)
                 self.reports[key] = report
                 self.record("speeddesk_daily", report)
+            else:
+                venues = {venue: self.summary(key, venue) for venue in VENUES}
+                if self.reports[key].get("venues") != venues:
+                    # A carry-over order's first fill updates its placement-day
+                    # fill-rate cohort without moving execution P&L across days.
+                    self.reports[key]["venues"] = venues
+                    self.reports[key]["revised_at"] = now
+                    self.record("speeddesk_daily_correction", self.reports[key])
             day += timedelta(days=1)
 
     def panel(self, now: float) -> dict[str, Any]:
@@ -229,6 +272,8 @@ class SpeedRunner:
         state = {"version": 1, "mode": "practice", "started_at": self.started_at, "updated_at": now,
                  "model": self.desk.to_state(), "reports": self.reports, "observed_seconds": self.observed,
                  "feed_latency": self.feed_latency, "opening_logged": sorted(self.opening_logged),
+                 "venue_reporting_started_at": self.venue_reporting_started_at,
+                 "venue_coverage": self.venue_coverage,
                  "panel": self.panel(now)}
         with self.ledger.transaction():
             for kind, payload in self.pending:
@@ -244,16 +289,63 @@ class SpeedRunner:
     def step(self, now: float) -> None:
         # Count observed runtime, never claim coverage for offline gaps.
         duration = max(0.0, min(1.0, now - self.last_step))
-        self.observed[utc_day(now)] = self.observed.get(utc_day(now), 0.0) + duration
-        self.last_step = now
+        interval_start = now - duration
         maker_windows = self.feeds.maker_windows() if hasattr(self.feeds, "maker_windows") else None
+        fresh, maker = self._coverage_windows(now, maker_windows)
+        interval_fresh = fresh & self.last_fresh_venues
+        interval_maker = maker & self.last_maker_venues
+        # Split the small observed interval at UTC midnight rather than moving
+        # yesterday's final fraction into today's report.
+        while interval_start < now:
+            day = utc_day(interval_start)
+            midnight = datetime.combine(datetime.fromtimestamp(interval_start, UTC).date() + timedelta(days=1),
+                                        datetime.min.time(), UTC).timestamp()
+            end = min(now, midnight)
+            elapsed = end - interval_start
+            self.observed[day] = self.observed.get(day, 0.0) + elapsed
+            for venue in self.enabled_venues:
+                coverage = self.venue_coverage.setdefault(day, {}).setdefault(venue, {})
+                for key, active in (("fresh_data_seconds", interval_fresh), ("maker_data_seconds", interval_maker)):
+                    if venue in active:
+                        coverage[key] = coverage.get(key, 0.0) + elapsed
+            interval_start = end
+        self.last_step = now
+        self.last_fresh_venues, self.last_maker_venues = fresh, maker
         self.decisions(self.desk.evaluate(now, makers_enabled=bool(self.feed_status.get("trade_stream")),
                                           maker_windows=maker_windows))
         if now - self.last_heartbeat >= 60:
-            self.record("speeddesk_status", self.panel(now))
+            heartbeat = self.panel(now)
+            # Completed reports already have daily receipts and remain in the
+            # page state. Do not duplicate a growing trial history every minute.
+            heartbeat.pop("reports")
+            self.record("speeddesk_status", heartbeat)
             self.last_heartbeat = now
         if self.pending or now - self.last_checkpoint >= 5:
             self.checkpoint(now)
+
+    def _coverage_windows(self, now: float, maker_windows: set[str] | None) -> tuple[set[str], set[str]]:
+        fresh: set[str] = set()
+        maker: set[str] = set()
+        btc_at = self.desk.tape.last_at
+        if btc_at is None or not 0 <= now - btc_at <= self.desk.config.stale_s:
+            return fresh, maker
+        for window in self.desk.windows.values():
+            if window.venue not in self.enabled_venues or not window.start <= now < window.end:
+                continue
+            books = [self.desk.books.get((window.slug, side)) for side in ("up", "down")]
+            if not all(book is not None and 0 <= now - book.at <= self.desk.config.stale_s for book in books):
+                continue
+            if any(book is not None and (
+                (book.source == "rest" and book.requested_at is not None
+                 and not 0 <= book.at - book.requested_at <= self.desk.config.stale_s)
+                or (book.source != "rest" and book.exchange_at is not None
+                    and not 0 <= now - book.exchange_at <= self.desk.config.stale_s)
+            ) for book in books):
+                continue
+            fresh.add(window.venue)
+            if self.feed_status.get("trade_stream") and (maker_windows is None or window.slug in maker_windows):
+                maker.add(window.venue)
+        return fresh, maker
 
     async def _settlements(self) -> None:
         while not self.stop.is_set():

@@ -181,6 +181,91 @@ def test_daily_history_keeps_coverage_and_never_invents_missing_values(make_sett
     assert min(history) == utc_day(now - 31 * 86_400) and max(history) == yesterday
 
 
+def test_venue_reports_preserve_separate_results_rates_and_real_data_coverage(
+        make_settings, fake_clock, monkeypatch) -> None:
+    now = fake_clock.now()
+    raw = report(now)
+    day = utc_day(now)
+    shared = {"day": day, "mode": "live", "label": "REAL", "reporting_complete": True,
+              "reporting_started_at": now - 3600, "coverage_started_at": now - 3500,
+              "enabled": True, "observed_seconds": 3600, "avg_bitcoin_feed_latency_ms": 120,
+              "fill_rate_basis": "orders_placed_on_day"}
+    raw["today"]["venues"] = {
+        "polymarket_us": {**shared, "pnl_usd": 0.22, "locked_usd": 0.24, "directional_usd": -0.02,
+                          "windows": 2, "fills": 4, "take_attempts": 10, "take_fills": 3,
+                          "maker_orders": 4, "maker_fills": 1, "fresh_data_seconds": 3300,
+                          "maker_data_seconds": 3200},
+        "kalshi": {**shared, "pnl_usd": -0.07, "locked_usd": 0.01, "directional_usd": -0.08,
+                   "windows": 1, "fills": 1, "take_attempts": 3, "take_fills": 1,
+                   "maker_orders": 2, "maker_fills": 0, "fresh_data_seconds": 200,
+                   "maker_data_seconds": 0},
+        "unknown_venue": {**shared, "pnl_usd": 999},
+    }
+    monkeypatch.setattr(speeddesk, "panel_state", lambda *args: raw)
+    panel = pagestate.speed_desk(make_settings(), now)
+    assert panel["today"]["pnl_usd"] == 0.15
+    venues = panel["today"]["venues"]
+    assert set(venues) == {"kalshi", "polymarket_us"}
+    us, kalshi = venues["polymarket_us"], venues["kalshi"]
+    assert us["pnl_usd"] == 0.22 and kalshi["pnl_usd"] == -0.07
+    assert us["take_fill_rate_pct"] == 30 and kalshi["take_fill_rate_pct"] == pytest.approx(100 / 3)
+    assert us["maker_fill_rate_pct"] == 25 and kalshi["maker_fill_rate_pct"] == 0
+    assert us["mode"] == kalshi["mode"] == "paper"
+    assert us["label"] == kalshi["label"] == "PRACTICE (pretend money)"
+    assert us["observed_seconds"] == kalshi["observed_seconds"] == 3600
+    assert us["fresh_data_seconds"] == 3300 and kalshi["fresh_data_seconds"] == 200
+    assert us["maker_data_seconds"] == 3200 and kalshi["maker_data_seconds"] == 0
+    assert us["reporting_complete"] is True and us["fill_rate_basis"] == "orders_placed_on_day"
+    assert us["reporting_started_at"] == now - 3600 and us["coverage_started_at"] == now - 3500
+
+
+def test_legacy_and_disabled_venue_reports_are_unknown_or_incomplete_not_zero(
+        make_settings, fake_clock, monkeypatch) -> None:
+    now = fake_clock.now()
+    raw = report(now)
+    monkeypatch.setattr(speeddesk, "panel_state", lambda *args: raw)
+    assert pagestate.speed_desk(make_settings(), now)["today"]["venues"] == {}
+    raw["today"]["venues"] = {
+        "polymarket_us": {"day": utc_day(now), "reporting_complete": False,
+                          "reporting_started_at": now, "pnl_usd": 0.15, "take_attempts": None,
+                          "take_fills": None, "fills": None},
+        "kalshi": {"day": utc_day(now), "enabled": False, "reporting_complete": False},
+    }
+    venues = pagestate.speed_desk(make_settings(), now)["today"]["venues"]
+    assert venues["polymarket_us"]["pnl_usd"] == 0.15
+    assert venues["polymarket_us"]["fills"] is None
+    assert venues["polymarket_us"]["take_fill_rate_pct"] is None
+    assert venues["kalshi"]["enabled"] is False and venues["kalshi"]["pnl_usd"] is None
+    assert venues["kalshi"]["fresh_data_seconds"] is None
+    assert venues["kalshi"]["fill_rate_basis"] is None
+    raw["today"]["venues"]["kalshi"]["day"] = utc_day(now - 86_400)
+    assert set(pagestate.speed_desk(make_settings(), now)["today"]["venues"]) == {"polymarket_us"}
+
+
+def test_completed_daily_reports_keep_venue_breakdown_and_unknown_history(
+        make_settings, fake_clock, monkeypatch) -> None:
+    now = fake_clock.now()
+    raw = report(now)
+    yesterday, older = utc_day(now - 86_400), utc_day(now - 2 * 86_400)
+    raw["reports"] = {
+        yesterday: {"day": yesterday, "pnl_usd": 1.0, "venues": {
+            "kalshi": {"day": yesterday, "pnl_usd": 1.3, "reporting_complete": True},
+            "polymarket_us": {"day": yesterday, "pnl_usd": -0.3, "reporting_complete": False}}},
+        older: {"day": older, "pnl_usd": 4.0},
+    }
+    monkeypatch.setattr(speeddesk, "panel_state", lambda *args: raw)
+    history = pagestate.speed_desk(make_settings(), now)["reports"]
+    assert history[yesterday]["venues"]["kalshi"]["pnl_usd"] == 1.3
+    assert history[yesterday]["venues"]["polymarket_us"]["pnl_usd"] == -0.3
+    assert history[yesterday]["venues"]["polymarket_us"]["reporting_complete"] is False
+    assert history[older]["venues"] == {} and history[older]["pnl_usd"] == 4.0
+    html = render_page_html(make_settings())
+    assert 'id="speeddesk-venues"' in html and "Completed daily reports by venue" in html
+    assert "No venue report for this day" in html and "Incomplete venue history" in html
+    assert "App running (shared)" in html and "Fresh Bitcoin + venue books" in html
+    assert "Fill rates: orders placed this UTC day." in html
+
+
 def test_page_never_adds_practice_result_to_cash_real_profit_or_town(make_settings, fake_clock, monkeypatch) -> None:
     settings = make_settings(POLYDESK_ENABLED=False, TRENDDESK_ENABLED=False)
     now = fake_clock.now()
@@ -190,6 +275,7 @@ def test_page_never_adds_practice_result_to_cash_real_profit_or_town(make_settin
         first = pagestate.build_page_state(ledger, settings, now)
         raw["today"]["locked_usd"] = 12345
         raw["today"]["pnl_usd"] = 12344.90
+        raw["today"]["venues"] = {"kalshi": {"day": utc_day(now), "pnl_usd": 12344.90}}
         second = pagestate.build_page_state(ledger, settings, now)
     assert second["money"]["speeddesk"]["today"]["pnl_usd"] == 12344.90
     for key in ("usd", "today", "since_start", "polymarket"):
