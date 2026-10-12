@@ -13,6 +13,54 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-12 23:15 UTC, Codex, branch codex/weather-lock-stopwatch
+- Owner request: build a read-only weather lock stopwatch on Railway for at least three days. Pulled
+  deploy head `9f32451` before work, then incorporated Claude's concurrent `8882ece` warm-up fix unchanged.
+  Read AGENTS, HANDOFF section 9, newest log entries and the Lab 9 report/scout evidence.
+- Preregistered `docs/WEATHERWATCH_SPEC.md`: actual first receipt and model-dispatch clocks, ten-minute
+  captures, two distinct observations (not duplicate METAR copies), exact contract stations and separate
+  97c/98c one-contract quote-persistence scenarios. No orders, balances, account reads or money activation.
+  Kalshi's existing narrow signer is used only for its market WebSocket; US remains public gateway only.
+- Added independent `weatherwatch` worker, source adapters, official CLI parser, pure measurement model,
+  bounded hash-chained evidence under `/data/weatherwatch`, atomic panel state, and daily JSON/Markdown
+  artifacts. Restart replays source evidence, preserves origin/first-seen IDs, clears stale quotes and records
+  a gap. A 256-event / 4 MiB callback queue serializes receipt-to-dispatch ordering; storage exhaustion pauses
+  capture rather than deleting evidence. Local full replay of 52,570 synthetic events took 3.632 seconds;
+  this is not a guarantee for a full 512 MiB journal or the Railway host.
+- Public inventory checked all 126 matching series with no request failures: 944 current contracts,
+  comprising 642 supported Kalshi daily contracts and 60 US twins; 242 remain explicitly unsupported
+  (241 non-daily/custom/missing periods, one future Paris date conflict). 58 series had no open markets.
+  These are discovery counts, not proof of deployed capture. Chicago rain uses CLIORD/KORD, while its
+  temperature contracts use CLIMDW/KMDW. No station is borrowed from another venue.
+- Source limits: sampled NWS responses cache 300 seconds and Aviation Weather 60 seconds. Honor cache,
+  request budgets and 429 cooldowns. NOAA's anonymous MADIS guest endpoint returned ASOS-HFM at five-minute
+  cadence, not native one-minute OMO. Poll it at least 60 seconds apart per station, honoring its cache.
+  One local KMDW probe at 23:11:14 UTC had a 22:55 reading: 974.07 seconds (16.2 minutes) old. This is
+  not a Railway latency estimate. Preserve that distinction and censor all startup/backfill arrivals.
+  Official CLI reports retain exact station/climate day, partial versus complete status and corrections;
+  they are a separate comparison from actual venue settlement. TWC is not silently replaced with NWS.
+- Captures preserve unknown/stale book times and sequence gaps; second-by-second samples never manufacture
+  fresh liquidity. US's authenticated stream is outside the public-only scope, so use bounded public REST
+  depth and show its anonymous trade tape as unavailable. Rain uses a verified within-day interval as a
+  conservative lower bound, never sums overlapping rolling totals or assumes missing hours are dry.
+- Phone panel keeps measured depth and alternative conditional fee-aware results separate from real cash,
+  town profit and every trading cap. An entry needs a distinct eligible quote after at least 250 ms; a 99c
+  sale requires an actual qualifying bid and both taker fees. Missing quotes, source qualification, final
+  settlements or fee evidence stay unknown. No guaranteed lock, actual fill or achievable daily profit is claimed.
+- Verification: full suite `python -m pytest -q`: **4,224 passed, 21 skipped** (opt-in network and absent
+  optional scientific dependencies). Final weather-specific regression suite also passed after the last
+  restart/station-isolation fixes. Mypy passed all 108 source files; Ruff passed every changed Python file.
+  Independent review cleared the read-only boundary, source/confirmation rules, fee handling, serialized
+  journal/replay, capacity and source-revision behavior. Actual parser-to-page fake tests cover both venues,
+  disappearing quotes, winning/losing settlements, MADIS, rain and no orders. Browser checks at 320/390/1280
+  pixels found no script errors or horizontal overflow. Secret-pattern diff scan found no matches.
+- Real money touched? `config.py` receives only six independent observation settings, and the engine starts
+  one read-only worker. No existing financial defaults, orders, keys, account amounts, caps, Railway variables,
+  `polydesk.py` or real execution modules changed. Shipping app files restarts the existing live service.
+- Deployment/three-day result: pending. This Codex environment has no Railway token; asked for a secret set
+  through settings or Claude's startup-log check, never a pasted token. A later session must copy verified
+  daily artifacts into WORKLOG. Three days of observations and achievable cents/day cannot be claimed now.
+
 ## 2026-10-12 23:00 UTC, Claude, branch claude/nightcrawler-memecoin-bot-Gwnb1S
 - Owner request: "fix it all, get it all up and running and test it".
 - Changed: the speed desk's volatility warm-up bar went from 3,000 to 1,500 adjacent one-second returns

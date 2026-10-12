@@ -262,6 +262,31 @@ session scratchpad that you will not have.
    sampled rules use The Weather Company, and report arrival/our fills remain unknown. Research only:
    no runtime/deploy/money change. Do not convert source-wallet wins or public prints into permission to trade.
 
+0b. **Weather lock stopwatch (latest owner request, 2026-10-12):** build an independent **read-only**
+   observation worker, not a weather trading desk. The prospective protocol is
+   [WEATHERWATCH_SPEC.md](WEATHERWATCH_SPEC.md). It watches the exact station in each Kalshi
+   `KXHIGH*`/`KXLOWT*`/`KXRAIN*` market's own rules, plus the five Polymarket US high-temperature
+   families, and records actual weather receipt times and ten-minute book paths. Kalshi may use the
+   existing market-only WebSocket signer; Polymarket US stays on its public gateway. Public US trade
+   capture is unavailable. The verified public MADIS ASOS-HFM feed has five-minute observations;
+   it is not a one-minute confirmation feed. One local Midway probe lagged the valid reading by
+   16.2 minutes; this is not a Railway latency result. Native MADIS one-minute OMO access is
+   unverified, and arrival lag/cache limits remain measured constraints. Unsupported stations, series and
+   periods stay explicit.
+   Two distinct accepted readings (not two copies of one METAR) are required for confirmation;
+   source/day/precision differences mean even a confirmed proxy is **not an irrevocable TWC lock**.
+   Separate 97c/98c one-contract scenarios require fresh quotes surviving a modeled 250 ms delay;
+   fees and actual settlements are included, but these are conditional estimates, never real fills.
+   Rain uses one verified positive interval as a conservative lower bound, never sums overlapping
+   rolling totals or treats missing hours as zero. Official NWS CLI products are matched to their
+   actual station/climate day and compared separately from venue settlements.
+   State/source evidence lives under `/data/weatherwatch/`; daily JSON/Markdown reports and a separate
+   MEASURE ONLY panel retain gaps and unknown achievable cents/day. Storage is bounded and pauses at
+   the cap rather than deleting the source chain. Run at least three days after verified startup;
+   later sessions put verified daily findings in WORKLOG. No weather orders, amounts or money switches
+   are authorized by this measurement request. Check the newest WORKLOG for shipment and actual
+   startup/coverage status; deployment alone does not complete the three-day observation.
+
 1. **Lab 8, the distance-filtered grind (the owner's idea).** Buy 95-99c only when Bitcoin is far from the strike,
    measured in how much it normally moves in the time left (z = ln(S/K) / (sigma x sqrt(minutes left))). Done so
    far (`research/lab8/`): `us_venue.md` (the US crypto markets, all Bitcoin, settle on CF Benchmarks' BRTI;
