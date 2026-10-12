@@ -1838,6 +1838,11 @@ class PolyDesk:
                     elif outcome == "pending":
                         unconfirmed = True
                     continue  # no paper twin of a market a real order went to
+                if block in ("too_close", "distance_unknown"):
+                    # The owner's distance rule: not tried, no paper twin, the ladder not held, so the market is
+                    # judged again next round (z grows as the close nears) and a farther rung may pass now.
+                    self._skip(now, block, slug)
+                    continue
                 if block == "sports_no_real":
                     practised = block
                 elif block in SKIP_REASONS:

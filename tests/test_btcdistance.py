@@ -103,9 +103,25 @@ def test_the_desk_buys_real_bitcoin_only_far_from_the_line(gw: Gateway2, tmp_pat
     desk = P.PolyDesk(settings, ledger=FakeLedger(), client_factory=ex, distance=_Fixed(z, why))
     desk.poll(NOW)
     assert len(ex.orders) == real and len(_real(desk)) == real
-    if not real:  # practised on paper instead, and counted for the page
-        assert len(_practice(desk)) == 1
+    if not real:  # waits: no paper twin, not tried, so the next round judges it again; counted for the page
+        assert _practice(desk) == {}
+        assert "cpc-btc-above-hr-2026-10-12-1400z-81900" not in desk.state["tried"]
         assert _skips(settings)["counts"] == {why: 1}
+
+
+def test_a_too_close_rung_does_not_block_a_farther_one(gw: Gateway2, tmp_path: Path) -> None:
+    near, far = "cpc-btc-above-hr-2026-10-12-1400z-82400", "cpc-btc-above-hr-2026-10-12-1400z-81900"
+    gw.markets = [_market(near, "crypto", 1800), _market(far, "crypto", 1800)]
+    gw.quotes = {near: (0.97, 0.98), far: (0.98, 0.99)}
+
+    class ByStrike(_Fixed):
+        def check(self, slug: str, end_ts: float, now: float | None = None) -> tuple[float | None, str | None]:
+            return (2.0, "too_close") if slug == near else (4.6, None)
+
+    ex = FakeExchange(cash=25.0)
+    desk = P.PolyDesk(_live_settings(tmp_path), ledger=FakeLedger(), client_factory=ex, distance=ByStrike(None, None))
+    desk.poll(NOW)
+    assert [o["slug"] for o in ex.orders] == [far] and set(_real(desk)) == {far}
 
 
 def test_other_markets_skip_the_check(gw: Gateway2, tmp_path: Path) -> None:
