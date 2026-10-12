@@ -13,6 +13,56 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-12 22:22 UTC, Codex, branch codex/lucas-ladder-audit
+- Owner request: audit LucasMeow's full public history, backtest far-strike monthly crypto NO on Kalshi's
+  own history, build practice only if that test is positive after fees, and measure the weather runner-up.
+  Pulled deploy head `f6ac07c` before work; read Lab 9's scout report and current repo instructions.
+- Preregistered `research/lab9/LUCAS_PLAN.md` and `WEATHER_PLAN.md`, committed as `295159b` before any new
+  Kalshi strategy returns. Fixed monthly splits/candidate grid, causal hourly inputs, fee/capital treatment,
+  missing-data rules and the distinction between observed prints and achievable fills. Lucas's wallet audit
+  is descriptive, not a fitted or held-out strategy. No app, Railway settings or real-money activation changed.
+- Independent review found scout candle-close lookahead, unsigned distance that could mislabel a crossed
+  barrier, sparse wallet sampling and a drawdown/profit ratio that is not bankroll drawdown. Replaced those
+  assumptions with full public history, written contract deadlines, archived cash and causal candle inputs.
+- Lucas audit: 8,520 activity rows, 8,043 fills, all 94 indexed funding receipts and 25 monthly archived-cash
+  observations. The selected BTC/ETH monthly NO cohort contains 3,912 buys, 131 strikes and 29 ladders;
+  that monthly family also has 551 sells. Median buy price 99.4c, observed maximum 99.9c; maker share is
+  95.27% by fill count but 50.47% by dollars. Corrected descriptive median z 3.23 and days left 8.71.
+  The originally proposed 96–99c subset has 54/54 resolved NO outcomes, with correlated strikes and
+  unverified prior-touch/execution timing; this is not a Kalshi profitability result or a learned hard rule.
+- Funding/profit distinctions: first indexed $100.03265 deposit was withdrawn 148 seconds later; the
+  small SOL trades preceded $299,353 fresh March 2025 funding and much larger BTC/ETH entries. Total net
+  outside funding is $397,582.68. Legacy chart latest +$344,871.84 and v2 economic +$345,504.07 use different
+  definitions/times; a $864.3154 provider-income discrepancy remains. May 2026 is negative, -$792.30 legacy
+  or -$656.34 economic. Monthly cash reconciles within 2–4 millionths; cash is not whole portfolio equity.
+  Exact private triggers, unfilled orders, intended caps and monthly bankroll drawdown remain unknown.
+- Kalshi inventory: 339 monthly contracts, only nine completed observation months (January–September 2026),
+  309 finalized-market tapes and 337,889 unique prints after 9,168 identical tier duplicates. All requested
+  cursors exhausted; three June tape quantities still fall short of metadata volume. Rules include 103
+  minimum-direction contradictions and 14 January maximum averaging conflicts. Proper historic CF index
+  samples/prior-touch state, opposing books/queues and pre-July fee-rounding evidence were not established.
+- Frozen TRAIN diagnostic: 91 markets / 96,680 prints, with 16,675 regular NO prints in 96–99c having causal
+  spot proxies. January has four losing NO markets and negative mean printed-payoff sensitivity, including
+  high-z observations; February/March diagnostic means are positive. These are not achievable fills,
+  portfolio returns or a completed strategy backtest. No candidate selected; VAL/TEST prints unscored.
+  Verdict **INSUFFICIENT DATA**. The positive after-fee build condition is unmet, so no practice desk was built.
+- Weather measurement: 252 contracts, 42 city-days, 92 conservative METAR observation proxies. In three
+  minutes there were 193 prints / 11,331.57 contracts; 1,062 contracts at 97–98c in only five windows,
+  including 65 in the direction hitting NO bids. All sampled rules name The Weather Company, not NWS.
+  Report arrival, source/day equivalence and our queue/fills remain unknown. No weather desk or P&L invented.
+- Verification: independent methodology/accounting/weather review cleared final claims. Full suite
+  `python -m pytest -q`: **3,938 passed, 21 skipped** (opt-in network/optional scientific dependencies).
+  Mypy passed all 102 application source files and each of seven new research scripts; Ruff passed all
+  changed Python files. Meaningful new fake tests cover causal inputs, rules deadlines, historical joins,
+  pagination/integrity, fees, unknown execution and untouched validation/test data. Raw public captures
+  remain in session-local `/tmp/lab9-*`; portable reports, CSVs and hashes are committed with reproduction steps.
+- Real money touched? **No.** Research, tests and documentation only; no application files, account keys,
+  orders, Railway settings, caps or deployment restart. Existing desks and the public watcher are unchanged.
+- Next: resolve contract/version/index history and collect actual source-arrival/book/queue evidence before
+  an executable prospective test. More months must arrive or a verified comparable archive be found; do not
+  treat missing months as zeros or promote printed-payoff tables to a positive backtest. Any real-money
+  amounts still require the owner's exact instruction.
+
 ## 2026-10-12 21:31 UTC, Codex, branch codex/speeddesk-mission
 - Owner's latest mission: audit the source wallet from inception, extend read-only observation to multiple
   Bitcoin exchanges, preregister a 70% held-out fill target (side, 5 seconds, 2c), measure speed, preserve the

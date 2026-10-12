@@ -1,5 +1,17 @@
 # Lab 9: the next bot to copy (2026-10-12)
 
+**Full-audit update, later on October 12:** the scout findings below are preserved
+as exploratory history, not a build verdict. Read [LUCAS_RULES.md](LUCAS_RULES.md),
+[KALSHI_BACKTEST.md](KALSHI_BACKTEST.md) and [WEATHER_WINDOW.md](WEATHER_WINDOW.md)
+before using them. The full monthly BTC/ETH NO cohort includes sells, pays a median
+99.4c, and has substantial external funding; its observable behavior is not the
+simple 96–99c, never-sell rule inferred from the sample. The Kalshi series expose
+only nine completed calendar months, with unresolved rules/index/execution
+evidence. No positive, achievable after-fee backtest has been established, so the
+condition for building the practice desk has not been met. Weather shows
+some 97–98c prints, but current sampled contracts use The Weather Company and
+historical report arrival and our achievable fills remain unknown.
+
 The owner's brief:
 - Find a public bot whose method we can reverse engineer.
 - It must trade a market he can use today, work at $25-$100 and not need speed.
