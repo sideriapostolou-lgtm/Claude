@@ -1,7 +1,7 @@
 """The distance filter for the Polymarket desk's Bitcoin bets (the owner's rule, 2026-10-12).
 
 Real money buys a Bitcoin outcome only when Bitcoin sits far from the line for the time left:
-``z = ln(S / K) / (sigma * sqrt(minutes left)) >= MIN_Z``. Here S is Coinbase's BTC-USD price now, K is the line
+``z = ln(S / K) / (sigma * sqrt(minutes left))`` at least the bar for that price and time left (:data:`REQUIRED_Z`). Here S is Coinbase's BTC-USD price now, K is the line
 (the strike of an "above" market, or the window's opening price for an up-or-down market), and sigma is the realized
 volatility per sqrt(minute): sqrt(mean of squared 1-minute log returns) over the last 60 complete minutes, the
 estimator of research/lab8/tail.py. The desk only buys the long side (YES: "above", "Up"), so z measures how far
@@ -28,7 +28,31 @@ from typing import Any
 
 import requests
 
-MIN_Z = 4.0
+MIN_Z = 4.0  # the first version's flat bar (2026-10-12 17:36 UTC); now the floor only for an unknown price
+#: The bar since 2026-10-12 ~18:30 UTC, at the owner's "make it less far from the line but lock still so it can
+#: keep filling": the smallest z whose miss rate over the last 365 days (research/lab8/year_backtest.py, Binance 1m
+#: closes 2025-10-12 .. 2026-10-11, the worst case of a strike exactly at that z) is at most 75 % of the break-even
+#: miss rate at that price after the US fee. Rows: the minutes-left bucket (<= 10, 20, 30, 45; up to 60 uses 45);
+#: columns: the price paid (a price under 0.95 uses the 0.95 column, which asks for more distance than it needs).
+REQUIRED_Z: dict[int, dict[float, float]] = {
+    10: {0.95: 1.6, 0.96: 1.8, 0.97: 1.9, 0.98: 2.2, 0.99: 2.8},
+    20: {0.95: 1.8, 0.96: 1.9, 0.97: 2.1, 0.98: 2.4, 0.99: 3.1},
+    30: {0.95: 2.0, 0.96: 2.1, 0.97: 2.4, 0.98: 2.7, 0.99: 3.3},
+    45: {0.95: 2.0, 0.96: 2.2, 0.97: 2.4, 0.98: 2.6, 0.99: 3.6},
+}
+MAX_MINUTES = 60.0
+
+
+def required_z(price: float | None, minutes_left: float) -> float | None:
+    """The bar for a buy at ``price`` with ``minutes_left`` to go (:data:`REQUIRED_Z`); None past
+    :data:`MAX_MINUTES`. An unknown price gets :data:`MIN_Z`."""
+    if minutes_left <= 0 or minutes_left > MAX_MINUTES:
+        return None
+    if price is None:
+        return MIN_Z
+    row = next(REQUIRED_Z[b] for b in (10, 20, 30, 45) if minutes_left <= b) if minutes_left <= 45 else REQUIRED_Z[45]
+    cents = min(0.99, max(0.95, math.ceil(round(price * 100, 6)) / 100))
+    return row[round(cents, 2)]
 VOL_MINUTES = 60
 MIN_VOL_MINUTES = 50  # at least this many of the last 60 one-minute returns, or no verdict
 CACHE_S = 20.0
@@ -110,7 +134,8 @@ class Distance:
         self._cache = (now, candles)
         return candles
 
-    def check(self, slug: str, end_ts: float, now: float | None = None) -> tuple[float | None, str | None]:
+    def check(self, slug: str, end_ts: float, now: float | None = None,
+              price: float | None = None) -> tuple[float | None, str | None]:
         now = time.time() if now is None else now
         spec = parse(slug)
         candles = self._candles(now) if spec else None
@@ -123,7 +148,9 @@ class Distance:
         else:
             opens = {int(t): o for t, o, _ in candles}
             line = opens.get(int(spec["start_ts"]))
-        z = z_score(spot, line, sigma, (end_ts - now) / 60.0) if (sigma and line) else None
-        if z is None:
+        minutes = (end_ts - now) / 60.0
+        z = z_score(spot, line, sigma, minutes) if (sigma and line) else None
+        bar = required_z(price, minutes) if self.min_z == MIN_Z else self.min_z
+        if z is None or bar is None:
             return None, "distance_unknown"
-        return z, (None if z >= self.min_z else "too_close")
+        return z, (None if z >= bar else "too_close")

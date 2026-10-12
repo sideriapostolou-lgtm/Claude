@@ -1903,19 +1903,19 @@ class PolyDesk:
             return "waiting_unconfirmed"
         refusal = self._live_refusal(now, price, coef)
         if refusal is None and btcdistance.is_crypto(str(m.get("slug") or "")):
-            refusal = self._too_close(now, m)
+            refusal = self._too_close(now, m, price)
         return refusal
 
-    def _too_close(self, now: float, m: Mapping[str, Any]) -> str | None:
+    def _too_close(self, now: float, m: Mapping[str, Any], price: float | None = None) -> str | None:
         """The owner's rule (2026-10-12, :mod:`nightcrawler.btcdistance`): a real crypto buy only when Bitcoin sits at
-        least ``MIN_Z`` volatility units on the winning side for the time left; ``too_close`` or ``distance_unknown``
+        least the bar for its price and time left (``btcdistance.REQUIRED_Z``) on the winning side; ``too_close`` or ``distance_unknown``
         (fail closed) send the pick to paper instead. Logged once per market (``polydesk_distance``)."""
         slug = str(m.get("slug") or "")
-        z, why = self.distance.check(slug, float(_num(m.get("end_ts")) or 0.0), now)
+        z, why = self.distance.check(slug, float(_num(m.get("end_ts")) or 0.0), now, price)
         if slug not in self._distance_logged:
             self._distance_logged.add(slug)
-            log.info("polydesk_distance slug=%s z=%s min_z=%.1f real=%s", slug,
-                     "none" if z is None else f"{z:.2f}", self.distance.min_z, "yes" if why is None else why)
+            log.info("polydesk_distance slug=%s z=%s price=%s real=%s", slug,
+                     "none" if z is None else f"{z:.2f}", price, "yes" if why is None else why)
         return why
 
     def _real_order(self, now: float, m: dict[str, Any], coef: float, sibs: list[dict[str, Any]],

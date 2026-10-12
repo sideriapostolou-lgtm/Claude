@@ -81,7 +81,8 @@ class _Fixed(B.Distance):
         super().__init__(fetch=list)
         self.result = (z, why)
 
-    def check(self, slug: str, end_ts: float, now: float | None = None) -> tuple[float | None, str | None]:
+    def check(self, slug: str, end_ts: float, now: float | None = None,
+              price: float | None = None) -> tuple[float | None, str | None]:
         return self.result
 
 
@@ -115,7 +116,8 @@ def test_a_too_close_rung_does_not_block_a_farther_one(gw: Gateway2, tmp_path: P
     gw.quotes = {near: (0.97, 0.98), far: (0.98, 0.99)}
 
     class ByStrike(_Fixed):
-        def check(self, slug: str, end_ts: float, now: float | None = None) -> tuple[float | None, str | None]:
+        def check(self, slug: str, end_ts: float, now: float | None = None,
+                  price: float | None = None) -> tuple[float | None, str | None]:
             return (2.0, "too_close") if slug == near else (4.6, None)
 
     ex = FakeExchange(cash=25.0)
@@ -132,3 +134,22 @@ def test_other_markets_skip_the_check(gw: Gateway2, tmp_path: Path) -> None:
                       distance=_Fixed(None, "distance_unknown"))
     desk.poll(NOW)
     assert len(ex.orders) == 1
+
+
+def test_the_bar_depends_on_price_and_time_left() -> None:
+    assert B.required_z(0.99, 25) == 3.3 and B.required_z(0.98, 8) == 2.2 and B.required_z(0.95, 50) == 2.0
+    assert B.required_z(0.90, 8) == B.REQUIRED_Z[10][0.95]  # under 95c: the 95c column (more distance than needed)
+    assert B.required_z(0.985, 8) == B.REQUIRED_Z[10][0.99]  # a part cent rounds up: the stricter column
+    assert B.required_z(None, 8) == B.MIN_Z and B.required_z(0.99, 61) is None and B.required_z(0.99, 0) is None
+
+
+def test_a_cheaper_price_needs_less_distance() -> None:
+    """2.5 units with 8 minutes left: enough at 97c (bar 1.9), not at 99c (bar 2.8)."""
+    now = _ts("2026-10-12 13:52")
+    end = _ts("2026-10-12 14:00")
+    sig = 0.0004
+    spot = 81_900.0 * math.exp(2.5 * sig * math.sqrt(8.0))
+    d = B.Distance(fetch=lambda: _candles(now, spot, step=sig))
+    z, why = d.check("cpc-btc-above-hr-2026-10-12-1400z-81900", end, now, price=0.97)
+    assert why is None and z == pytest.approx(2.5, abs=0.15)
+    assert d.check("cpc-btc-above-hr-2026-10-12-1400z-81900", end, now, price=0.99)[1] == "too_close"

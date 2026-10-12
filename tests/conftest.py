@@ -117,4 +117,4 @@ def _bitcoin_far_from_the_line(request: pytest.FixtureRequest, monkeypatch: pyte
         return
     from nightcrawler import btcdistance
 
-    monkeypatch.setattr(btcdistance.Distance, "check", lambda self, slug, end_ts, now=None: (99.0, None))
+    monkeypatch.setattr(btcdistance.Distance, "check", lambda self, slug, end_ts, now=None, price=None: (99.0, None))
