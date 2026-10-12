@@ -15,7 +15,9 @@ Template:
 
 ## 2026-10-12 23:15 UTC, Codex, branch codex/weather-lock-stopwatch
 - Owner request: build a read-only weather lock stopwatch on Railway for at least three days. Pulled
-  deploy head `9f32451` before work, then incorporated Claude's concurrent `8882ece` warm-up fix unchanged.
+  deploy head `9f32451` before work, then incorporated Claude's `8882ece` warm-up fix, `941b261` account
+  update and `853109d` error-detail change unchanged. Claude recorded activating the separate Kalshi desk;
+  this weather change does not activate, disable or enlarge any financial desk.
   Read AGENTS, HANDOFF section 9, newest log entries and the Lab 9 report/scout evidence.
 - Preregistered `docs/WEATHERWATCH_SPEC.md`: actual first receipt and model-dispatch clocks, ten-minute
   captures, two distinct observations (not duplicate METAR copies), exact contract stations and separate
@@ -48,8 +50,8 @@ Template:
   sale requires an actual qualifying bid and both taker fees. Missing quotes, source qualification, final
   settlements or fee evidence stay unknown. No guaranteed lock, actual fill or achievable daily profit is claimed.
 - Verification: full suite `python -m pytest -q`: **4,224 passed, 21 skipped** (opt-in network and absent
-  optional scientific dependencies). Final weather-specific regression suite also passed after the last
-  restart/station-isolation fixes. Mypy passed all 108 source files; Ruff passed every changed Python file.
+  optional scientific dependencies). Final weather-specific regression suite: **285 passed** after the
+  last restart/station-isolation fixes; weather plus the concurrently updated live desk: **310 passed**. Mypy passed all 108 source files; Ruff passed every changed Python file.
   Independent review cleared the read-only boundary, source/confirmation rules, fee handling, serialized
   journal/replay, capacity and source-revision behavior. Actual parser-to-page fake tests cover both venues,
   disappearing quotes, winning/losing settlements, MADIS, rain and no orders. Browser checks at 320/390/1280
@@ -57,9 +59,14 @@ Template:
 - Real money touched? `config.py` receives only six independent observation settings, and the engine starts
   one read-only worker. No existing financial defaults, orders, keys, account amounts, caps, Railway variables,
   `polydesk.py` or real execution modules changed. Shipping app files restarts the existing live service.
-- Deployment/three-day result: pending. This Codex environment has no Railway token; asked for a secret set
-  through settings or Claude's startup-log check, never a pasted token. A later session must copy verified
-  daily artifacts into WORKLOG. Three days of observations and achievable cents/day cannot be claimed now.
+- Published PR **#13**, merged as `36c03a5c25ca8980dd8e28d5be3772e08cf39944`. Railway linked exact-commit
+  deployment `c7bd9858-d0fd-4919-8b48-8b44f0b3640a` and reported **success** for that SHA. A subsequent
+  public `/healthz` read returned **200 / ok**. Source-worker startup and financial-desk logs remain unverified.
+  This Codex environment has no Railway token; asked for a secret set through settings or Claude's
+  startup-log check, never a pasted token. Verify `weatherwatch_status mode=MEASURE_ONLY`, source coverage,
+  `polydesk_started ... LIVE`, the existing Kalshi desk status, and no tracebacks. HTTP health alone does
+  not establish these facts. A later session must copy verified daily artifacts into WORKLOG. Three days
+  of observations and achievable cents/day cannot be claimed now.
 
 ## 2026-10-12 23:00 UTC, Claude, branch claude/nightcrawler-memecoin-bot-Gwnb1S
 - Owner request: "fix it all, get it all up and running and test it".
