@@ -10,6 +10,8 @@ readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     "requests>=2.31",
+    "polymarket-us==2.4.1",  # speed desk market-data WebSocket only; never its order resource
+    "websockets>=13,<16",
 ]
 
 [project.optional-dependencies]

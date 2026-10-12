@@ -21,6 +21,7 @@ Schema (lists capped: members 9, events <= 5, open trades <= 10, closed trades 1
                 "marco_line": str|null,                               # Marco's loves desk in words: MARCO
                 "nhl_line": str|null,                                 # the NHL bettor's loves desk: MARCO
                 "arena_line": str|null,                               # the Arena (practice): nightcrawler.arena
+                "speeddesk_line": str|null,                           # separate Bitcoin PRACTICE trial, UTC today
                 "now": [str] (<= 3),
                 "team": [{"id", "name", "job", "plain_role", "status_word": "working"|"waiting"|"idle"|"stuck",
                           "members": [member id], "latest": str|null, "latest_ts": float|null,
@@ -81,7 +82,14 @@ Schema (lists capped: members 9, events <= 5, open trades <= 10, closed trades 1
                           "record": {"picks", "won", "lost", "even", "pnl_usd"}}|null,
                 "nhl": {... the same as "marco", plus "who"}|null,    # the NHL bettor's loves (MARCO)
                 "arena": {"label", "population", "rent_usd", "town", "today", "leaders", "candidates", "events",
-                          "grave", ...}|null},                         # the Arena: nightcrawler.arena.panel_state
+                          "grave", ...}|null,                          # the Arena: nightcrawler.arena.panel_state
+                "speeddesk": {"mode": "paper", "label": "PRACTICE (pretend money)", "as_of", "stale", "status",
+                              "problem", "btc_age_s", "book_age_s", "today": {"day", "windows", "settled_windows",
+                              "fills", "locked_usd", "directional_usd", "pnl_usd", "won", "lost", "worst_usd",
+                              "take_attempts", "take_fills", "maker_orders", "maker_fills", "take_fill_rate_pct",
+                              "maker_fill_rate_pct", "avg_latency_ms", "avg_bitcoin_feed_latency_ms",
+                              "observed_seconds", "partial_day", "latency_definition"},
+                              "reports": {UTC day: {... same figures and "reported_at"}} (<= 31)}|null},
       "town": {"label", "cost_per_day_usd", "cost_today_usd", "cost_since_start_usd": float|null,  # see TOWN
                "income_today_usd": float|null, "income_since_start_usd": float|null,
                "covered_today": bool|null, "covered_since_start": bool|null, "line",
@@ -375,11 +383,18 @@ from collections.abc import Callable, Mapping
 from pathlib import Path
 from typing import Any
 
-from nightcrawler import __version__, arena, hearts, marcodesk, towngoal, trenddesk
+from nightcrawler import (
+    __version__,
+    arena,
+    hearts,
+    marcodesk,
+    towngoal,
+    trenddesk,
+)
 from nightcrawler.botwallet import saved_balance, wallet_configured
 from nightcrawler.broker.keystore import KV_GENERATED, unused_wallet
 from nightcrawler.clock import utc_day
-from nightcrawler.config import Settings
+from nightcrawler.config import Settings, parse_rotation_date
 from nightcrawler.dashboard import build_state, scrub
 from nightcrawler.deskguard import VERDICTS as GUARD_VERDICTS
 from nightcrawler.ledger import LedgerError
@@ -399,10 +414,29 @@ from nightcrawler.polydesk import (
     state_path,
 )
 from nightcrawler.readiness import CHECK_LABELS, readiness
-from nightcrawler.recap import RECAP_TTL_S, collect_recap, day_window, empty_recap, render_recap
+from nightcrawler.recap import (
+    RECAP_TTL_S,
+    collect_recap,
+    day_window,
+    empty_recap,
+    render_recap,
+)
 from nightcrawler.research_board import research_state
-from nightcrawler.teamroom import ENGINE_STALE_S, FUTURE_SKEW_S, build_team_state, derive_status, duration_text
-from nightcrawler.withdraw import fresh_balance, last_withdrawal, live_hold, page_view, saved_state, withdrawn_lamports
+from nightcrawler.teamroom import (
+    ENGINE_STALE_S,
+    FUTURE_SKEW_S,
+    build_team_state,
+    derive_status,
+    duration_text,
+)
+from nightcrawler.withdraw import (
+    fresh_balance,
+    last_withdrawal,
+    live_hold,
+    page_view,
+    saved_state,
+    withdrawn_lamports,
+)
 
 __all__ = ["EXPERIENCE_CAVEAT", "EXPERIENCE_CHIPS", "EXPERIENCE_KINDS", "EXPERIENCE_MONEY_LINE", "GLOSSARY",
            "LEARNING_RULE", "MEMBERS", "PAPER_LABEL", "PLAIN_ABOUT", "PLAIN_FINISHED_MAX", "PLAIN_JOBS",
@@ -652,7 +686,9 @@ def learning_card(settings: Settings, now: float, ledger: Any, memory: dict[str,
 def _load_card(settings: Settings, now: float) -> tuple[str, Any]:
     """``("ok", raw card)``, ``("missing", None)`` when the module is not installed, or ``("error", None)``."""
     try:
-        from nightcrawler.learn.card import learning_card_state  # built on another branch; may be absent
+        from nightcrawler.learn.card import (
+            learning_card_state,  # built on another branch; may be absent
+        )
     except ModuleNotFoundError as exc:
         if exc.name in _LEARN_MODULES:
             return "missing", None
@@ -663,7 +699,7 @@ def _load_card(settings: Settings, now: float) -> tuple[str, Any]:
         return "error", None
     try:
         return "ok", learning_card_state(settings, now)
-    except Exception as exc:  # a broken learning module must never take the page down
+    except Exception as exc:  # a broken learning module must never take the page down  # noqa: BLE001 - isolate existing optional provider failures from the running engine
         log.warning("learning_card_failed error=%s", type(exc).__name__)
         return "error", None
 
@@ -760,7 +796,7 @@ def experience_card(settings: Settings, now: float, card: Mapping[str, Any], mem
         return _xp_state(raw, _Text(settings), now, live=settings.is_live, coach_state=coach, static=static)
     except _Refused as exc:
         log.warning("experience_state_refused reason=%s", exc)
-    except Exception as exc:  # a strange object from another team's module must never take the page down
+    except Exception as exc:  # a strange object from another team's module must never take the page down  # noqa: BLE001 - isolate existing optional provider failures from the running engine
         log.warning("experience_state_failed error=%s", type(exc).__name__)
     return _xp_empty("error", static)
 
@@ -768,7 +804,9 @@ def experience_card(settings: Settings, now: float, card: Mapping[str, Any], mem
 def _load_experience(settings: Settings, now: float) -> tuple[str, Any]:
     """``("ok", raw state)``, ``("missing", None)`` when the module is not installed, or ``("error", None)``."""
     try:
-        from nightcrawler.experience.state import experience_state  # built by another team; may be absent
+        from nightcrawler.experience.state import (
+            experience_state,  # built by another team; may be absent
+        )
     except ModuleNotFoundError as exc:
         if exc.name in _EXPERIENCE_MODULES:
             return "missing", None
@@ -779,7 +817,7 @@ def _load_experience(settings: Settings, now: float) -> tuple[str, Any]:
         return "error", None
     try:
         return "ok", experience_state(settings, now)
-    except Exception as exc:  # a broken experience module must never take the page down
+    except Exception as exc:  # a broken experience module must never take the page down  # noqa: BLE001 - isolate existing optional provider failures from the running engine
         log.warning("experience_state_failed error=%s", type(exc).__name__)
         return "error", None
 
@@ -1445,6 +1483,84 @@ def arena_town(settings: Settings, now: float) -> dict[str, Any] | None:
     return {**raw, "label": PRETEND_LABEL, "events": events}
 
 
+def _speed_report(today: Mapping[str, Any], day: str) -> dict[str, Any]:
+    """Normalize one UTC practice-day report without turning missing evidence into zero."""
+    figures: dict[str, Any] = {
+        key: _count(today.get(key)) for key in (
+            "windows", "settled_windows", "fills", "won", "lost", "take_attempts", "take_fills",
+            "maker_orders", "maker_fills",
+        )
+    }
+    figures.update({key: _num(today.get(key)) for key in (
+        "locked_usd", "directional_usd", "pnl_usd", "worst_usd", "avg_latency_ms",
+        "observed_seconds", "avg_bitcoin_feed_latency_ms",
+    )})
+    for kind, denominator in (("take", "take_attempts"), ("maker", "maker_orders")):
+        attempts, fills = figures[denominator], figures[f"{kind}_fills"]
+        figures[f"{kind}_fill_rate_pct"] = (
+            fills / attempts * 100.0
+            if attempts is not None and attempts > 0 and fills is not None and fills <= attempts else None
+        )
+    figures["day"] = day
+    figures["mode"] = "paper"
+    figures["label"] = "PRACTICE (pretend money)"
+    figures["partial_day"] = today.get("partial_day") if isinstance(today.get("partial_day"), bool) else None
+    figures["reported_at"] = _num(today.get("reported_at"))
+    figures["latency_definition"] = "Decision to practice fill; resting orders include waiting time"
+    return figures
+
+
+def speed_desk(settings: Settings, now: float) -> dict[str, Any] | None:
+    """The speed desk's independent practice report. Missing figures stay unknown, never real or summed.
+
+    ``today`` uses UTC, matching this desk's specified daily stop. The owner's recap time zone does not change
+    the speed desk's trial-day boundary. Fill rates count attempted orders, not contracts. ``reports`` contains
+    the last 31 recorded calendar days, each explicitly practice and retaining partial-day coverage.
+    """
+    if not settings.speeddesk_enabled:
+        return None
+    raw: Mapping[str, Any]
+    try:
+        from nightcrawler import speeddesk
+
+        raw = speeddesk.panel_state(settings, now)
+    except (KeyError, TypeError, ValueError, AttributeError, OSError, ImportError) as exc:
+        log.warning("speeddesk_panel_failed error=%s", type(exc).__name__)
+        raw = {"problem": "Practice report unavailable"}
+    raw = _xp_map(raw)
+    day = utc_day(now)
+    today = _xp_map(raw.get("today"))
+    day_matches = today.get("day") == day
+    if not day_matches:
+        today = {}  # an older or undated bucket is not today's performance
+    reports = {}
+    for key, report in _xp_map(raw.get("reports")).items():
+        if (isinstance(key, str) and parse_rotation_date(key) is not None and key < day
+                and isinstance(report, Mapping) and report.get("day") == key):
+            reports[key] = _speed_report(report, key)
+    reports = {key: reports[key] for key in sorted(reports)[-31:]}
+    text = _Text(settings)
+    as_of = _num(raw.get("as_of"))
+    return {"mode": "paper", "label": "PRACTICE (pretend money)", "as_of": as_of,
+            "stale": as_of is None or now - as_of > 60 or as_of > now + FUTURE_SKEW_S,
+            "status": text.opt(raw.get("status")) or "Waiting for the first practice report",
+            "problem": text.opt(raw.get("problem")) or (None if day_matches else "Today's practice report is unavailable"),
+            "today": _speed_report(today, day), "reports": reports,
+            "btc_age_s": _num(raw.get("btc_age_s")), "book_age_s": _num(raw.get("book_age_s"))}
+
+
+def speed_line(desk: Mapping[str, Any] | None) -> str | None:
+    """A separately labelled practice summary; no contribution to cash, real profit, goals or stops."""
+    if desk is None:
+        return None
+    today = _xp_map(desk.get("today"))
+    line = "Bitcoin speed desk (PRACTICE, pretend money): "
+    if any(today.get(key) is None for key in ("windows", "fills", "pnl_usd")):
+        return line + "waiting for a recorded result."
+    return (f"{line}{today['windows']} windows traded today (UTC), {today['fills']} fills; "
+            f"settled result {_signed(today['pnl_usd'])}, fees included.")
+
+
 def marco_line(marco: Mapping[str, Any] | None, period: str = "this week") -> str | None:
     """``plain.marco_line``: Marco's loves in one fixed sentence, always practice and pretend, numbers from the state
     only ("Marco's loves (practice, pretend money): 3 picks this week; Packers moneyline bought at 0.48; record 2-1,
@@ -1881,11 +1997,11 @@ def _alerts(ledger: Any, state: dict[str, Any], now: float, withdrawal: dict[str
         out.append(("bad", "Kill switch is ON: the bot buys nothing new (open trades are still looked after)."))
     unused = unused_wallet(settings, ledger) if settings is not None else None
     if unused is not None:
-        out.append(("bad", f"The bot's own wallet {unused or '(address unknown)'} is not in use: BOT_WALLET_MODE is "
+        out.append(("bad", f"The bot's own wallet {unused or '(address unknown)'} is not in use: BOT_WALLET_MODE is "  # noqa: ISC004 - intentional continued display text
                            "not 'generated'. If it holds SOL, only the bot can move it: set BOT_WALLET_MODE=generated "
                            "(delete BOT_WALLET_SECRET), then take it back with WITHDRAW_TO."))
     if state["halted"]["halted"]:
-        out.append(("bad", "Stopped buying: the money fell too far from its high. It stays stopped until you "
+        out.append(("bad", "Stopped buying: the money fell too far from its high. It stays stopped until you "  # noqa: ISC004 - intentional continued display text
                            "reset it (RESET_HALT_TOKEN in Railway)."))
     status = state["engine"]["status"] or {}
     if status.get("drift"):
@@ -2552,6 +2668,7 @@ def build_page_state(ledger: Any, settings: Settings, now: float, engine_status:
     money["marco"] = marco_desk(settings, now)  # Marco's loves (paper only), apart from everything else (never summed)
     money["nhl"] = marco_desk(settings, now, marcodesk.NHL)  # the NHL bettor's loves (paper only), the same way
     money["arena"] = arena_town(settings, now)  # the Arena's practice town (never summed with anything)
+    money["speeddesk"] = speed_desk(settings, now)  # separate practice trial, never real profit or town income
     for m in members:  # Rook's risk wall: the desk's real money against its hard limits beside the panel's numbers
         if m["id"] == "risk" and isinstance(m.get("risk_wall"), dict):
             m["risk_wall"]["real_caps"] = real_caps(settings, desk)
@@ -2594,6 +2711,7 @@ def build_page_state(ledger: Any, settings: Settings, now: float, engine_status:
     out["plain"]["marco_line"] = marco_line(money["marco"])  # MARCO: one fixed sentence, practice only
     out["plain"]["nhl_line"] = marco_line(money["nhl"], "today")
     out["plain"]["arena_line"] = arena.arena_line(money["arena"])
+    out["plain"]["speeddesk_line"] = speed_line(money["speeddesk"])
     # the town's goal (GOAL): display only, from the figures above; a failure shows no goal at all, never a zero
     try:
         live_days, today_pnls = goal_books(ledger, settings, now)

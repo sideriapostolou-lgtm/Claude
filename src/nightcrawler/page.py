@@ -213,6 +213,7 @@ footer{color:var(--ink2);font-size:12px;text-align:center;margin-top:18px}
 #plain-about{font-size:15px;color:var(--ink2);margin:8px 0 0}
 #plain-now>div{font-size:15px;overflow-wrap:anywhere}
 #plain-team .chip{flex:none}
+#speeddesk .num{white-space:normal;text-align:right;overflow-wrap:anywhere}
 .hero-tag{font-size:20px;font-weight:650;color:var(--ink2);letter-spacing:0}
 """
 
@@ -334,6 +335,34 @@ _SCRIPT = r"""
   }
 
   // ---------------------------------------------------------------- A. money
+  function renderSpeedDesk(desk, line) {
+    const panel = $("speeddesk");
+    panel.hidden = !desk;
+    if (!desk) return;
+    const d = desk.today || {}, count = (v) => isNum(v) ? String(v) : "—";
+    const rate = (v, fills, attempts) => isNum(v)
+      ? v.toFixed(1) + "% (" + count(fills) + "/" + count(attempts) + " orders)" : "—";
+    const row = (label, value) => el("div", "line", el("span", null, label), el("b", "num", value));
+    $("speeddesk-summary").textContent = line || "Waiting for a recorded practice result.";
+    $("speeddesk-status").textContent = (desk.stale ? "Report behind: " : "") + desk.status
+      + (desk.problem ? " · " + desk.problem : "");
+    put($("speeddesk-figures"),
+      row("Windows traded today", count(d.windows)), row("Windows settled today", count(d.settled_windows)),
+      row("Practice fills", count(d.fills)), row("Locked pairs, after fees", usd(d.locked_usd, true)),
+      row("Direction, after fees", usd(d.directional_usd, true)), row("Total settled result", usd(d.pnl_usd, true)),
+      row("Won / lost windows", count(d.won) + " / " + count(d.lost)), row("Worst settled window", usd(d.worst_usd, true)),
+      row("Instant-order fill rate", rate(d.take_fill_rate_pct, d.take_fills, d.take_attempts)),
+      row("Resting-order fill rate", rate(d.maker_fill_rate_pct, d.maker_fills, d.maker_orders)),
+      row("Average fill delay", isNum(d.avg_latency_ms) ? d.avg_latency_ms.toFixed(0) + " ms" : "—"),
+      row("Bitcoin feed delay", isNum(d.avg_bitcoin_feed_latency_ms)
+        ? d.avg_bitcoin_feed_latency_ms.toFixed(0) + " ms" : "—"),
+      row("Observed today", isNum(d.observed_seconds) ? (d.observed_seconds / 3600).toFixed(1) + " hours" : "—"));
+    $("speeddesk-feed").textContent = "Last Bitcoin tick: "
+      + (isNum(desk.btc_age_s) ? desk.btc_age_s.toFixed(1) + " seconds ago" : "not received")
+      + "; last book: " + (isNum(desk.book_age_s) ? desk.book_age_s.toFixed(1) + " seconds ago" : "not received")
+      + ". Report: " + (isNum(desk.as_of) ? new Date(desk.as_of * 1000).toISOString() : "not received") + ".";
+  }
+
   // the Solana bot's wallet: its kind of money said right before the big figure (``live``: the bot runs live)
   function renderMoney(m, live) {
     $("money-label").textContent = m.label;
@@ -861,6 +890,7 @@ _SCRIPT = r"""
     put($("alerts"), ...s.alerts.map((a) => el("div", "alert " + a.level, a.text)));
     renderPlain(s.plain);
     renderMoney(s.money, s.mode === "LIVE");
+    renderSpeedDesk(s.money.speeddesk, s.plain && s.plain.speeddesk_line);
     if (s.town) renderTown(s.town);
     renderGoal(s.plain && s.plain.goal);
     if (s.wallet) renderWallet(s.wallet);
@@ -992,6 +1022,16 @@ def render_page_html(settings: Settings) -> str:
         "<div id=\"town-goal\"></div>"
         "<p class=\"help\">To run on its own, real money must earn more than the town costs to run: the hosting plan "
         "plus the AI judge's spending. Practice money never counts.</p></section>\n"
+
+        "<section class=\"card\" id=\"speeddesk\" hidden><h2>Bitcoin speed desk <small>PRACTICE</small></h2>"
+        "<p class=\"lead\" id=\"speeddesk-summary\">Waiting for a recorded practice result.</p>"
+        "<p class=\"meta\" id=\"speeddesk-status\"></p><div class=\"rows\" id=\"speeddesk-figures\"></div>"
+        "<p class=\"help\">Pretend money only. Today starts at midnight UTC. Results use settled windows and include "
+        "fees; open windows can still lose. Locked pairs and direction are separate parts of the same result. "
+        "Fill rates count orders with any fill, not contracts. "
+        "Fill delay includes time a resting bid waited. "
+        "Practice never adds to your cash or the town's real profit.</p>"
+        "<p class=\"help\" id=\"speeddesk-feed\"></p></section>\n"
 
         "<section class=\"card\" id=\"wallet\"><h2>Bot wallet <small id=\"wallet-kind\"></small></h2>"
         "<div id=\"wallet-body\"><p class=\"empty\">Loading…</p></div></section>\n"

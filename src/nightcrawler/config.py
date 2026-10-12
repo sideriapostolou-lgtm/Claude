@@ -24,26 +24,28 @@ from __future__ import annotations
 import dataclasses
 import datetime
 import logging
+import math
 import os
 import re
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Iterable, Mapping
+from typing import Any
 from urllib.parse import parse_qsl, urlsplit
 
 __all__ = [
     "DASHBOARD_TOKEN_MIN_LEN",
     "LIVE_CONFIRM_PHRASE",
-    "Secret",
     "ConfigError",
+    "Secret",
     "Settings",
     "dashboard_token_problem",
     "load_settings",
-    "parse_rotation_date",
-    "parse_dotenv",
-    "redact_url",
-    "redact_rpc_url",
     "mask_problem",
+    "parse_dotenv",
+    "parse_rotation_date",
+    "redact_rpc_url",
+    "redact_url",
 ]
 
 LIVE_CONFIRM_PHRASE = "I_ACCEPT_REAL_MONEY_RISK"
@@ -91,10 +93,10 @@ class Secret:
     def __hash__(self) -> int:
         return hash(("Secret", self._value))
 
-    def __copy__(self) -> "Secret":
+    def __copy__(self) -> Secret:
         return self
 
-    def __deepcopy__(self, memo: dict) -> "Secret":
+    def __deepcopy__(self, memo: dict) -> Secret:
         return self
 
     def __reduce__(self):  # refuse to pickle secrets by accident
@@ -208,7 +210,7 @@ class Settings:
     trading_mode: str = _f("paper", "text", "paper (default, simulated fills from live quotes) or live (real money)",
                            choices=("paper", "live"))
     live_confirm: str = _f("", "text", f"Must equal {LIVE_CONFIRM_PHRASE} for TRADING_MODE=live")
-    data_dir: Path = _f(Path("./data"), "path", "Where the SQLite ledger, KILL file and datasets live (Railway: /data)")
+    data_dir: Path = _f(Path("./data"), "path", "Where the SQLite ledger, KILL file and datasets live (Railway: /data)")  # noqa: RUF009 - _f returns a dataclasses.field with validation metadata
     log_level: str = _f("INFO", "text", "Logging level", choices=("DEBUG", "INFO", "WARNING", "ERROR"))
     kill_switch: str = _f("off", "text", "off | stop (no new entries) | sell_all (exit everything, then stop). "
                           "Case, '-' and spaces are forgiven (sell-all); any other word means stop. "
@@ -330,7 +332,7 @@ class Settings:
     radar_interval_s: float = _f(180.0, "seconds", "Radar re-scan interval for open positions", lo=10)
 
     # ---- judge (Jev) --------------------------------------------------------
-    anthropic_api_key: Secret | None = _f(None, "secret", "Enables the AI judge", secret=True)
+    anthropic_api_key: Secret | None = _f(None, "secret", "Enables the AI judge", secret=True)  # noqa: RUF009 - _f returns a dataclasses.field with validation metadata
     judge_mode: str = _f("", "text", "off | advisory | required (default: required when ANTHROPIC_API_KEY is set, "
                          "else off)", choices=("off", "advisory", "required"))
     judge_model: str = _f("claude-opus-5-5", "text", "Anthropic model id for the judge")
@@ -343,15 +345,15 @@ class Settings:
                                     "JUDGE_MODE=required)", lo=0)
 
     # ---- endpoints & keys ---------------------------------------------------
-    jupiter_api_key: Secret | None = _f(None, "secret", "Optional Jupiter key (header x-api-key)", secret=True)
+    jupiter_api_key: Secret | None = _f(None, "secret", "Optional Jupiter key (header x-api-key)", secret=True)  # noqa: RUF009 - _f returns a dataclasses.field with validation metadata
     jupiter_base_url: str = _f("", "url", "Default: https://api.jup.ag with a key, else https://lite-api.jup.ag")
     solana_rpc_url: str = _f("https://api.mainnet-beta.solana.com", "url",
                              "Solana JSON-RPC endpoint (a free Helius key is recommended)")
-    bot_wallet_secret: Secret | None = _f(None, "secret", "The bot wallet: base58 64-byte secret (Phantom export) "
+    bot_wallet_secret: Secret | None = _f(None, "secret", "The bot wallet: base58 64-byte secret (Phantom export) "  # noqa: RUF009 - _f returns a dataclasses.field with validation metadata
                                           "or JSON byte array (solana-keygen). Required for live; in paper mode "
                                           "only its address is used (quotes and the dashboard's balance check)",
                                           secret=True)
-    x_bearer_token: Secret | None = _f(None, "secret", "Optional X/Twitter token (unused by default)", secret=True)
+    x_bearer_token: Secret | None = _f(None, "secret", "Optional X/Twitter token (unused by default)", secret=True)  # noqa: RUF009 - _f returns a dataclasses.field with validation metadata
     # ---- the bot's own wallet and taking the money back (broker/keystore.py, withdraw.py) ----
     bot_wallet_mode: str = _f("env", "text", "env = the wallet in BOT_WALLET_SECRET; generated = the bot makes its own "
                               "wallet on the first start (paper mode) and keeps the key in DATA_DIR/wallet/ where "
@@ -422,6 +424,31 @@ class Settings:
                                    secret=True)
     polymarket_us_secret_key: str = _f("", "text", "Polymarket US API secret key (a Railway variable; the live desk "
                                        "only; never in a file or the repo)", secret=True)
+    # ---- Bitcoin speed desk: independent PRACTICE book, no real-order mode ----
+    speeddesk_enabled: bool = _f(True, "bool", "Run the Bitcoin speed desk's independent practice trial")
+    speeddesk_kalshi_enabled: bool = _f(True, "bool", "Also read public Kalshi Bitcoin 15-minute windows for the "
+                                          "speed desk's practice trial; no Kalshi keys or real orders")
+    speeddesk_mode: str = _f("paper", "text", "Speed desk: practice only; real orders are unavailable",
+                               choices=("paper",))
+    speeddesk_window_usd: float = _f(20.0, "usd", "Speed desk: maximum practice spend per window, fees included",
+                                      lo=0, lo_open=True, hi=1_000_000)
+    speeddesk_open_usd: float = _f(20.0, "usd", "Speed desk: maximum practice spend across open windows",
+                                    lo=0, lo_open=True, hi=1_000_000)
+    speeddesk_day_stop_usd: float = _f(10.0, "usd", "Speed desk: stop new practice buys at this settled daily loss "
+                                        "until midnight UTC", lo=0, lo_open=True, hi=1_000_000)
+    speeddesk_take_edge: float = _f(0.02, "fraction", "Speed desk: minimum taker edge after fees", lo=0, hi=1)
+    speeddesk_make_edge: float = _f(0.03, "fraction", "Speed desk: resting bid discount below fair value",
+                                     lo=0, hi=1)
+    speeddesk_pair_cap: float = _f(0.99, "fraction", "Speed desk: maximum matched pair cost including fees",
+                                    lo=0, lo_open=True, hi=1)
+    speeddesk_max_imbalance: float = _f(0.25, "fraction", "Speed desk: maximum imbalance as a share of total "
+                                         "contracts", lo=0, hi=1)
+    speeddesk_clip: float = _f(25.0, "count", "Speed desk: maximum contracts per practice order",
+                                lo=0, lo_open=True, hi=100_000)
+    speeddesk_cutoff_s: float = _f(60.0, "seconds", "Speed desk: stop new practice buys this long before close",
+                                    lo=0, hi=899)
+    speeddesk_latency_ms: float = _f(250.0, "milliseconds", "Speed desk: minimum delay before checking that a "
+                                      "taker's quoted ask still exists", lo=1, hi=60_000)
     trenddesk_enabled: bool = _f(True, "bool", "The trend desk: a PAPER forward test of lab 3's 50-day trend rule on "
                                  "BTC, ETH and SOL, from Coinbase's public daily candles once a day (never real money, "
                                  "never a key)")
@@ -438,7 +465,7 @@ class Settings:
     # ---- dashboard ----------------------------------------------------------
     port: int = _f(8080, "port", "Dashboard port (Railway sets PORT)", lo=1, hi=65535)
     dashboard_host: str = _f("0.0.0.0", "text", "Dashboard bind address")
-    dashboard_token: Secret | None = _f(None, "secret", "If set, the dashboard requires ?token= or cookie. Live "
+    dashboard_token: Secret | None = _f(None, "secret", "If set, the dashboard requires ?token= or cookie. Live "  # noqa: RUF009 - _f returns a dataclasses.field with validation metadata
                                         "mode needs a strong one: a long random password of at least 24 characters",
                                         secret=True)
     # The town card on the page: the desks must earn more than the bot costs to run (pagestate.town_ledger).
@@ -509,6 +536,9 @@ class Settings:
             if meta.get("choices") and value not in meta["choices"]:
                 problems.append(f"{env}={value!r} must be one of {', '.join(meta['choices'])}")
             if isinstance(value, (int, float)) and not isinstance(value, bool):
+                if f.name.startswith("speeddesk_") and not math.isfinite(value):
+                    problems.append(f"{env} must be finite")
+                    continue
                 lo, hi = meta.get("lo"), meta.get("hi")
                 unit = meta.get("unit")
                 hint = " (a FRACTION: 0.20 means 20%)" if unit == "fraction" else (
@@ -558,7 +588,7 @@ class Settings:
         return problems
 
     @classmethod
-    def from_env(cls, env: Mapping[str, str] | None = None) -> "Settings":
+    def from_env(cls, env: Mapping[str, str] | None = None) -> Settings:
         """Build from a mapping of ENV_NAME -> string (default ``os.environ``).
 
         Unknown keys are ignored; blank values mean "use the default".
@@ -580,7 +610,7 @@ class Settings:
             raise ConfigError(problems)
         return cls(**kwargs)
 
-    def replace(self, **changes: Any) -> "Settings":
+    def replace(self, **changes: Any) -> Settings:
         """Copy with changes (re-validated). Strings for secret fields are wrapped."""
         for name, value in list(changes.items()):
             f = _FIELDS[name]
@@ -599,11 +629,11 @@ class Settings:
 
     @property
     def sol_reserve_lamports(self) -> int:
-        return int(round(self.sol_reserve * 1_000_000_000))
+        return int(round(self.sol_reserve * 1_000_000_000))  # noqa: RUF046 - preserve explicit integer conversion at this existing boundary
 
     @property
     def network_fee_lamports(self) -> int:
-        return int(round(self.network_fee_sol * 1_000_000_000))
+        return int(round(self.network_fee_sol * 1_000_000_000))  # noqa: RUF046 - preserve explicit integer conversion at this existing boundary
 
     @property
     def db_path(self) -> Path:
@@ -763,7 +793,7 @@ def _coerce(f: dataclasses.Field, raw: str) -> Any:
             v = float(raw)
         except ValueError:
             raise ValueError(f"expected a number, got {raw!r}") from None
-        if v != v or v in (float("inf"), float("-inf")):
+        if v != v or v in (float("inf"), float("-inf")):  # noqa: PLR0124 - explicit NaN check for parsed floats
             raise ValueError(f"expected a finite number, got {raw!r}")
         return v
     if isinstance(default, Path):

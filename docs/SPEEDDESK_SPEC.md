@@ -56,7 +56,9 @@ or stops with `polydesk.py`.
 
 1. **Bitcoin ticks:** a WebSocket to Coinbase Advanced Trade `wss://advanced-trade-ws.coinbase.com`, `ticker` or
    `market_trades` for BTC-USD (public, no key). Keep the last price, a rolling 60-minute set of 1-second returns
-   for sigma, and a staleness clock. Stale over 3 s means no new orders, and resting orders are cancelled.
+   for sigma, and a staleness clock. Warm up for a full hour and require at least 3,000 observed adjacent
+   one-second returns in the trailing hour; never invent zero returns across gaps. Stale over 3 s means no new
+   orders, and resting orders are cancelled.
 2. **Books:** the Polymarket US markets WebSocket (`polymarket_us` SDK `client.ws.markets()`; it needs the key
    variables already in Railway), subscribed to the current and next 15m and 1h windows. Fall back to REST
    `/v1/markets/{slug}/book` at most once per second if the stream drops.
@@ -77,20 +79,38 @@ Per window, from its start until `CUTOFF_S` (60 s) before its end:
   shares. A buy that would break it is skipped.
 - **Imbalance cap:** |Up shares - Down shares| <= `MAX_IMBALANCE` (25 %) of the window's total. The heavy side
   stops buying until the light side catches up.
+  **Owner-approved practice start (2026-10-12):** an empty window may place one starter order of at most `CLIP`
+  shares, still within all dollar budgets. While the starter is pending or the holdings exceed the imbalance
+  cap, only buys on the lighter side that reduce the gap are allowed; they cannot overshoot it. Normal 25 %
+  enforcement resumes once balanced enough. Unfilled opposite-side orders never count as already balanced
+  holdings. This exception permits practice to start from zero; it authorizes no real orders.
 - **Window budget:** at most `WINDOW_USD` ($20 in practice; real only by the owner's number) spent per window, and
-  at most `OPEN_USD` across open windows.
+  at most `OPEN_USD` across open windows. `OPEN_USD` defaults conservatively to **$20 in practice**. Fees and
+  outstanding order reservations count toward both budgets.
 - **Hold to settlement**, as the original does. No selling.
 - **Day stop:** if the day's settled P&L <= -`DAY_STOP_USD` ($10), no new buys until 00:00 UTC.
 
 ## 5. Practice mode (the first deliverable): honest fills only
 
 - **Taker fills:** fill at the ask at the moment of decision, for at most the ask size shown, then add latency:
-  re-check the book `LATENCY_MS` (250) later, and fill only if the ask is still there at that price.
+  re-check the book no earlier than `LATENCY_MS` (250) later, and fill only if the ask is still there at that price.
+  Use the first qualifying observation, never a later favorable rebound: a REST request must start after that
+  delay, or a WebSocket update must have a post-delay exchange timestamp. Report actual decision-to-fill latency;
+  REST may take longer than 250 ms. Cancel if fresh evidence does not arrive within a further 3 seconds.
 - **Maker fills:** a resting bid fills only when the venue's trade stream prints at or below our price, after the
   size resting ahead of us at that price (queue position from the book when the bid was placed) has traded. Never
   fill a bid just because the price touched it.
 - Settle each window from the venue's settlement endpoint. Book P&L per window, split into the matched-pair
   (locked) part and the directional part, fees included.
+- Polymarket US fee implementation: the standard non-combo schedule at
+  <https://docs.polymarket.us/fees> (checked 2026-10-12) gives taker coefficient `0.0695` and maker coefficient
+  `-0.0125`, rounded per execution to cents using half-even (banker's) rounding. The maker rebate is used only
+  for a market matching that documented standard schedule; an unknown schedule disables maker simulation.
+  These are Polymarket US fees, not a fee assumption for another venue.
+- Kalshi uses <https://kalshi.com/docs/kalshi-fee-schedule.pdf> (effective July 7, 2026) with verified series
+  `fee_type` and `fee_multiplier`. Current `KXBTC15M` is quadratic with multiplier 1: taker coefficient 0.07,
+  maker fee zero. Its cost-plus-fee rounds upward to $0.0001. Unknown event fee overrides disable that window;
+  public trade prints require complete pagination, valid venue quantities and explicit aggressor direction.
 
 ## 6. Logging and page
 
@@ -98,6 +118,13 @@ Per window, from its start until `CUTOFF_S` (60 s) before its end:
   side, price, size, fair, edge, latency ms, Bitcoin price and staleness.
 - Page panel: windows traded today, fills, matched-pair profit vs directional profit, win/loss windows, worst
   window, and a clear **PRACTICE** label.
+- Trial days and the day stop use **UTC midnight**. The desk writes daily reports to its independent state and
+  receipts, including observed seconds, whether a day is partial, fill rates, and average latency. Fill rates
+  count unique orders with a fill divided by orders placed, not contracts; maker fill latency includes resting
+  time. Bitcoin feed latency is reported separately.
+- `/api/page` exposes the current report under `money.speeddesk.today` and the latest 31 completed calendar
+  days under `money.speeddesk.reports`; the visible page labels all figures **PRACTICE**. Missing or stale data
+  is identified, never invented as zero. None of these results adds to account cash, real profit or town goals.
 
 ## 7. Tests (required before any push)
 
@@ -117,6 +144,7 @@ Use the repo's fake clocks and fakes (`tests/fakes.py`). Tests and mypy must pas
 2. Report per day: windows, fills, locked vs directional P&L, worst window, fill rates, and average latency.
 3. Real money only if practice is positive after fees over 3+ days **and** the owner names the amounts
    (`WINDOW_USD`, `OPEN_USD`, `DAY_STOP_USD`). Start small.
+   The implementation accepts only `SPEEDDESK_MODE=paper`; there is no automatic promotion or real-order path.
 4. Log every session in `docs/WORKLOG.md`. Claude reviews when back.
 
 Honest expectation: the original makes money on deep international 5-minute books with speed and about
