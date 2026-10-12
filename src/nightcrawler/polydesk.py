@@ -137,7 +137,7 @@ from typing import Any
 
 import requests
 
-from nightcrawler import deskguard, sportmap
+from nightcrawler import btcdistance, deskguard, sportmap
 from nightcrawler.config import LIVE_CONFIRM_PHRASE, Settings
 from nightcrawler.polymarket_us import PolymarketUSClient, PolymarketUSError
 
@@ -185,7 +185,8 @@ SKIPS_DAYS = 7  # UTC days of skip counts kept
 SKIPS_SEEN_KEEP = 5000  # (reason, market) marks kept per day, so each counts once
 #: Why the rule's pick was not bought (or not with real money), counted per UTC day for the page (``skips``).
 SKIP_REASONS = ("sports_no_real", "incoherent_game", "incoherent_question", "game_incomplete", "game_held",
-                "never_traded", "price_moved", "waiting_unconfirmed", "venue_unread", "stop_room")
+                "never_traded", "price_moved", "waiting_unconfirmed", "venue_unread", "stop_room", "too_close",
+                "distance_unknown")
 DAILY_NOTE = "Daily loss cap reached: no more real buys today."
 TOTAL_HALT_STATUS = "Live was switched off by the total-loss cap; the desk stays on paper until the owner resets it."
 UNREADABLE_STATUS = ("The desk's record file could not be read, so its loss limits cannot be trusted: staying on "
@@ -1013,8 +1014,10 @@ class PolyDesk:
         path: Path | None = None,
         ledger: Any = None,
         client_factory: Any = None,
+        distance: btcdistance.Distance | None = None,
     ) -> None:
         self.settings = settings
+        self.distance = distance or btcdistance.Distance()  # the owner's "far from the line" check (real Bitcoin buys)
         self.ledger = ledger
         self.path = path or state_path(settings)
         self.theta = float(settings.polydesk_theta)
@@ -1036,6 +1039,7 @@ class PolyDesk:
         self._orders_sent = 0  # real orders sent this round (the end-of-round venue read follows them)
         self._closed_seen: set[tuple[str, float, bool]] = set()  # venue rows already logged (_log_closed_rows)
         self._activity_seen: set[tuple[str, str, str]] = set()  # account activities already logged (_log_activities)
+        self._distance_logged: set[str] = set()  # markets whose distance check was logged (_too_close)
         # The file holds the loss stops: one that exists but cannot be read must not silently reset them (F14).
         unreadable = state_file_unreadable(self.path)
         copy = self._keep_unreadable() if unreadable else None
@@ -1892,7 +1896,22 @@ class PolyDesk:
             return "venue_unread"
         if unconfirmed:
             return "waiting_unconfirmed"
-        return self._live_refusal(now, price, coef)
+        refusal = self._live_refusal(now, price, coef)
+        if refusal is None and btcdistance.is_crypto(str(m.get("slug") or "")):
+            refusal = self._too_close(now, m)
+        return refusal
+
+    def _too_close(self, now: float, m: Mapping[str, Any]) -> str | None:
+        """The owner's rule (2026-10-12, :mod:`nightcrawler.btcdistance`): a real crypto buy only when Bitcoin sits at
+        least ``MIN_Z`` volatility units on the winning side for the time left; ``too_close`` or ``distance_unknown``
+        (fail closed) send the pick to paper instead. Logged once per market (``polydesk_distance``)."""
+        slug = str(m.get("slug") or "")
+        z, why = self.distance.check(slug, float(_num(m.get("end_ts")) or 0.0), now)
+        if slug not in self._distance_logged:
+            self._distance_logged.add(slug)
+            log.info("polydesk_distance slug=%s z=%s min_z=%.1f real=%s", slug,
+                     "none" if z is None else f"{z:.2f}", self.distance.min_z, "yes" if why is None else why)
+        return why
 
     def _real_order(self, now: float, m: dict[str, Any], coef: float, sibs: list[dict[str, Any]],
                     quotes: Mapping[str, Mapping[str, Any]], mark: Any) -> str:

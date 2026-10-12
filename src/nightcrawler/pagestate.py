@@ -2188,6 +2188,10 @@ def _skips_line(desk: Mapping[str, Any], *, live: bool) -> str:
     if n("never_traded"):
         one = n("never_traded") == 1
         parts.append(f"skipped {n('never_traded')} market{'' if one else 's'} that had never traded near the price")
+    if live and n("too_close"):
+        one = n("too_close") == 1
+        parts.append(f"kept {n('too_close')} Bitcoin bet{'' if one else 's'} on practice because Bitcoin was too close to "
+                     "the line")
     if not parts:
         return "Nothing skipped yet today."
     said = parts[0] if len(parts) == 1 else ", ".join(parts[:-1]) + ("," if len(parts) > 2 else "") + " and " + parts[-1]

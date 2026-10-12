@@ -13,14 +13,15 @@ from __future__ import annotations
 
 import os
 import random
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 import pytest
 import requests
-
 from fakes import FIXTURES_DIR, FakeClock, FakeHttp
 from fakes import load_fixture as _load_fixture
+
 from nightcrawler.config import Settings
 from nightcrawler.http import HttpClient
 
@@ -106,3 +107,14 @@ def make_settings(tmp_data_dir: Path) -> Callable[..., Settings]:
 @pytest.fixture
 def settings(make_settings: Callable[..., Settings]) -> Settings:
     return make_settings()
+
+
+@pytest.fixture(autouse=True)
+def _bitcoin_far_from_the_line(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Offline tests of the Polymarket desk see Bitcoin far from every line (the distance check passes), so they
+    keep testing the rest of the rule; tests/test_btcdistance.py tests the check itself."""
+    if request.module.__name__.endswith("test_btcdistance"):
+        return
+    from nightcrawler import btcdistance
+
+    monkeypatch.setattr(btcdistance.Distance, "check", lambda self, slug, end_ts, now=None: (99.0, None))
