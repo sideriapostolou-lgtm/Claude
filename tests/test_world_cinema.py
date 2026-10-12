@@ -189,13 +189,13 @@ console.log(JSON.stringify({ win: show(WIN), lose: show(LOSE), paper: show(PAPER
   none: show(null), empty: show({}) }));
 """, tmp_path, WIN=win, LOSE=lose, PAPER=paper, PAUSED=paused, STOPPED=stopped)
     cash = win["plain"]["real"]["cash_usd"]
-    assert out["win"] == [f"REAL MONEY ${cash:.2f} · today +$1.52 · goal $100/day", True, f"${cash:.2f}", ["up", ""]]
-    assert out["lose"][0] == f"REAL MONEY ${lose['plain']['real']['cash_usd']:.2f} · today −$8.82 · goal $100/day"
+    assert out["win"] == [f"ACCOUNT CASH ${cash:.2f} · bots today (UTC) +$1.52 · goal $100/day", True, f"${cash:.2f}", ["up", ""]]
+    assert out["lose"][0] == f"ACCOUNT CASH ${lose['plain']['real']['cash_usd']:.2f} · bots today (UTC) −$8.82 · goal $100/day"
     assert out["lose"][3] == ["down", ""]
-    assert out["paused"][0].endswith(" · today +$1.52 · paused · goal $100/day")
-    assert out["stopped"][0].endswith(" · today +$1.52 · stopped for today · goal $100/day")
-    assert out["paper"] == ["REAL MONEY — · off · goal $100/day", False, "—", ["state", ""]]
-    assert out["none"][0] == "REAL MONEY — · loading" and out["empty"][0] == "REAL MONEY — · loading"
+    assert out["paused"][0].endswith(" · bots today (UTC) +$1.52 · paused · goal $100/day")
+    assert out["stopped"][0].endswith(" · bots today (UTC) +$1.52 · stopped for today · goal $100/day")
+    assert out["paper"] == ["ACCOUNT CASH — · off · goal $100/day", False, "—", ["state", ""]]
+    assert out["none"][0] == "ACCOUNT CASH — · loading" and out["empty"][0] == "ACCOUNT CASH — · loading"
     # never a pretend figure: the paper wallet, the practice books and the trend desk say nothing here
     for name in ("winning", "losing_big", "paper"):
         line = out[{"winning": "win", "losing_big": "lose", "paper": "paper"}[name]][0]
@@ -216,11 +216,11 @@ def test_the_vault_reads_real_money(pure: str, section: str, module: str, states
                     WIN=states["winning"], LOSE=states["losing_big"], PAPER=states["paper"])
     win, lose, paper = out
     real = states["winning"]["plain"]["real"]
-    assert win["usd"] == f"${real['cash_usd']:.2f}" and win["label"] == "REAL · " + real["result"]
+    assert win["usd"] == f"${real['cash_usd']:.2f}" and win["label"] == "POLYMARKET ACCOUNT CASH"
     since = states["winning"]["money"]["polymarket"]["real"]["since_start_usd"]
     assert win["accent"] == ("#58d68d" if since >= 0 else "#ff6b61")
-    assert lose["label"] == "REAL · " + states["losing_big"]["plain"]["real"]["result"]
-    assert paper == {"usd": "—", "label": "REAL · none reported", "accent": None}  # (no real money: never the pretend wallet)
+    assert lose["label"] == "POLYMARKET ACCOUNT CASH"
+    assert paper == {"usd": "—", "label": "ACCOUNT CASH · none reported", "accent": None}  # no pretend wallet
     # in cinema mode the sign is drawn again after the page's own (money.usd, money.label: the details view's) on each poll
     draw = _js_body(section, "  function cineVaultDraw() {")
     assert "if (CINE.on) { const v = cineVault(data); drawVaultSign(v.usd, v.label, v.accent); return; }" in draw
@@ -228,6 +228,24 @@ def test_the_vault_reads_real_money(pure: str, section: str, module: str, states
     assert "if (CINE.on) cineVaultDraw();" in _js_body(section, "  function cineOnData(")
     apply = _js_body(module, "  function apply(d) {")
     assert apply.index("drawVaultSign(fmtUsd(money.usd), money.label") < apply.index('BUS.emit("data", d, first);')
+
+
+@needs_node
+def test_cash_details_name_the_booked_day_and_each_source_check(pure: str, module: str, tmp_path: Path) -> None:
+    out = _pure_run(pure, """
+const page = {mode: "PAPER", money: {polymarket: {as_of: 1791820860,
+  real: {cash_at: 1791820800, venue_at: 1791819900}}}};
+const known = cineMoneyDetails(page); page.mode = "LIVE";
+console.log(JSON.stringify({known: known, live: cineMoneyDetails(page), unknown: cineMoneyDetails(null),
+  invalid: cineMoneyDetails({money: {polymarket: {as_of: Infinity, real: {cash_at: -1, venue_at: "today"}}}})}));
+""", tmp_path)
+    assert "not bot profit" in out["known"][0]
+    assert "booked from 00:00 UTC" in out["known"][1] and "your own bets and deposits are excluded" in out["known"][1]
+    assert out["known"][2:] == ["Cash checked 2026-10-12 16:00 UTC.", "Positions checked 2026-10-12 15:45 UTC.",
+                               "Desk report 2026-10-12 16:01 UTC."]
+    assert "Bots today also includes the live Solana bot’s daily result." in out["live"]
+    assert out["unknown"] == out["invalid"] == out["known"][:2]
+    assert "cineMoneyDetails(data).forEach" in _js_body(module, "  function renderPanel() {")
 
 
 # --------------------------------------------------------------------------- captions and job tags
@@ -508,7 +526,7 @@ console.log(JSON.stringify({{ a, b, c, ca, cb, cc, stopped, kept, filmOn: FILM.o
 """, tmp_path, DATA=states["winning"])
     win = states["winning"]
     cash, money = f"${win['plain']['real']['cash_usd']:.2f}", win["money"]
-    real_sign = [cash, "REAL · " + win["plain"]["real"]["result"]]
+    real_sign = [cash, "POLYMARKET ACCOUNT CASH"]
     assert out["a"] == [True, "details", "false", "dark", ["disable", 1], real_sign, None]
     assert "realOnly:true" in out["ca"] and "capIn" in out["ca"]  # (Rook's wall real money only; the caption written afresh)
     # details: the class off (every hidden part back), the boards' own words and the trophies back, the page's own sign

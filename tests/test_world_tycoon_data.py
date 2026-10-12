@@ -43,7 +43,7 @@ def page() -> dict[str, Any]:
                 "mode": "live", "as_of": NOW - 90,
                 "paper": {"today_usd": 888, "open": 50},
                 "real": {"cash_usd": 14.22, "cash_at": NOW - 90, "venue_at": NOW - 90,
-                         "today_usd": 0.23, "open": 2, "at_risk_usd": 24.97,
+                         "today_usd": 0.23, "open": 2, "at_risk_usd": 24.97, "venue_open": 3,
                          "cost_usd": 26.41, "value_usd": 27.10, "pending": 1, "pending_usd": 9.70},
             },
         },
@@ -75,7 +75,7 @@ def page() -> dict[str, Any]:
 
 def test_account_and_bot_figures_remain_separate(tmp_path: Path) -> None:
     out = run(tmp_path, page())
-    assert (out["cash"], out["today"], out["count"], out["held"]) == (14.22, 0.23, 2, 24.97)
+    assert (out["cash"], out["today"], out["count"], out["value"]) == (14.22, 0.23, 3, 27.10)
     assert out["labels"]["cash"] == "Available cash"
     assert out["labels"]["today"] == "Bot today"
     assert out["labels"]["bets"] == "Account bets"
@@ -97,7 +97,8 @@ def test_actual_page_desk_fields_include_owner_open_bets_but_not_owner_profit(
     save(settings, st)
     source = polymarket_desk(settings, DESK_NOW)
     out = run(tmp_path, {"generated_at": DESK_NOW, "money": {"polymarket": source}}, now=DESK_NOW)
-    assert out["count"] == 2 and out["held"] == pytest.approx(24.97)
+    assert out["count"] == 8 and out["value"] == pytest.approx(7.95)
+    assert out["recorded"] == {"count": 2, "cost": pytest.approx(24.97)}
     assert out["today"] == pytest.approx(0.23)
     assert out["labels"]["betsNote"] == "Includes your own bets"
     assert out["state"] == "off"  # the fixture retains real history in safe paper mode
@@ -106,21 +107,51 @@ def test_actual_page_desk_fields_include_owner_open_bets_but_not_owner_profit(
 @pytest.mark.parametrize("value", [None, {}, {"money": None, "plain": None}, {"generated_at": NOW}])
 def test_missing_records_never_become_zero(tmp_path: Path, value: Any) -> None:
     out = run(tmp_path, value)
-    assert all(out[k] is None for k in ("cash", "today", "count", "held", "on", "asOf"))
+    assert all(out[k] is None for k in ("cash", "today", "count", "value", "on", "asOf"))
     assert out["state"] == "unknown"
     assert out["event"] is None and out["crew"] == [] and out["positions"] == []
 
 
 def test_reported_zero_and_negative_result_are_not_missing(tmp_path: Path) -> None:
     p = page()
-    p["money"]["polymarket"]["real"].update(cash_usd=0, today_usd=-9.81, open=0, at_risk_usd=0)
+    p["money"]["polymarket"]["real"].update(cash_usd=0, today_usd=-9.81, open=0, at_risk_usd=0, venue_open=0, value_usd=0)
     out = run(tmp_path, p)
-    assert (out["cash"], out["today"], out["count"], out["held"]) == (0, -9.81, 0, 0)
+    assert (out["cash"], out["today"], out["count"], out["value"]) == (0, -9.81, 0, 0)
     p["money"]["polymarket"]["as_of"] = None
     out = run(tmp_path, p)
     assert out["cash"] == 0  # a separately reported balance may precede the first complete desk round
-    assert out["today"] is None and out["count"] is None and out["held"] is None
+    assert out["today"] is None and out["count"] == 0 and out["value"] == 0
+    assert out["recorded"] == {"count": None, "cost": None}
     assert out["state"] == "unknown"
+
+
+def test_account_holdings_do_not_fall_back_to_old_desk_positions(tmp_path: Path) -> None:
+    p = page()
+    real = p["money"]["polymarket"]["real"]
+    real.update(venue_open=0, value_usd=0)  # owner sold; desk still records two bets
+    out = run(tmp_path, p)
+    assert (out["count"], out["value"]) == (0, 0)
+    assert out["recorded"] == {"count": 2, "cost": 24.97}
+    assert "not the current venue book" in out["positionsNote"]
+    real.pop("venue_open")
+    assert run(tmp_path, p)["count"] is None
+    real.update(venue_open=3, venue_at=None)
+    out = run(tmp_path, p)
+    assert out["count"] is None and out["value"] is None
+
+
+def test_spendable_cash_and_venue_balance_are_not_profit(tmp_path: Path) -> None:
+    p = page()
+    real = p["money"]["polymarket"]["real"]
+    real.update(cash_usd=4.59, cash_reported_usd=14.39, buying_power_usd=4.59)
+    out = run(tmp_path, p)
+    assert (out["cash"], out["reportedCash"], out["buyingPower"]) == (4.59, 14.39, 4.59)
+    assert out["today"] == 0.23  # neither account balance nor a cash difference
+    assert out["labels"]["todayNote"] == "Since 00:00 UTC"
+    p["generated_at"] = NOW  # a fresh web response cannot freshen the balance
+    real["cash_at"] = NOW - 1200
+    out = run(tmp_path, p)
+    assert out["cashAge"] == 1200 and out["cashStale"]
 
 
 def test_practice_cannot_fill_the_real_cards(tmp_path: Path) -> None:
@@ -129,7 +160,7 @@ def test_practice_cannot_fill_the_real_cards(tmp_path: Path) -> None:
     p["plain"]["real"].update(on=False, cash_usd=None)
     p["plain"]["finished"] = p["plain"]["finished"][1:]
     out = run(tmp_path, p)
-    assert (out["cash"], out["today"], out["count"], out["held"]) == (None, None, None, None)
+    assert (out["cash"], out["today"], out["count"], out["value"]) == (None, None, None, None)
     assert out["state"] == "off" and out["event"] is None
     p["plain"]["real"]["on"] = True  # another real desk cannot turn Polymarket on in this view
     assert run(tmp_path, p)["state"] == "off"
@@ -139,7 +170,7 @@ def test_real_history_remains_visible_after_new_bets_are_off(tmp_path: Path) -> 
     p = page()
     p["money"]["polymarket"]["mode"] = "paper"
     out = run(tmp_path, p)
-    assert out["state"] == "off" and out["today"] == 0.23 and out["held"] == 24.97
+    assert out["state"] == "off" and out["today"] == 0.23 and out["value"] == 27.10
     assert out["stateText"] == "No new bot bets"
 
 
@@ -185,7 +216,8 @@ def test_owner_account_total_cannot_claim_the_bot_is_full(tmp_path: Path, settin
     assert source["plain"]["real"]["paused_kind"] == "full"  # upstream compares shared $24.97 to bot cap
     assert source["money"]["polymarket"]["status"] is None
     out = run(tmp_path, source, now=DESK_NOW)
-    assert out["count"] == 2 and out["held"] == pytest.approx(24.97)
+    assert out["count"] == 8 and out["value"] == pytest.approx(7.95)
+    assert out["recorded"] == {"count": 2, "cost": pytest.approx(24.97)}
     assert out["state"] == "on" and out["pauseKind"] is None
     assert out["stateText"] == "Real-money desk is on"
 
@@ -312,9 +344,10 @@ def test_mote_recorded_work_and_status_reason_follow_the_selected_role(tmp_path:
 def test_invalid_money_is_not_coerced(tmp_path: Path) -> None:
     p = page()
     p["plain"]["real"]["cash_usd"] = None
-    p["money"]["polymarket"]["real"].update(cash_usd="14.22", today_usd=False, open=1.5, at_risk_usd=-20)
+    p["money"]["polymarket"]["real"].update(cash_usd="14.22", today_usd=False, open=1.5, at_risk_usd=-20,
+                                          venue_open=1.5, value_usd=-20)
     out = run(tmp_path, p)
-    assert all(out[k] is None for k in ("cash", "today", "count", "held"))
+    assert all(out[k] is None for k in ("cash", "today", "count", "value"))
 
 
 def test_adapter_has_no_browser_or_money_side_effects() -> None:

@@ -134,8 +134,13 @@ needs none of them to write code or run tests.
 `/` is the one page: money, team, trades, learning, receipts. `/world` is the 3D floating-island town, "Night
 Shift: Skyport". It opens in a phone-first steady town view: available account cash, the bot's realized result
 today, account-wide open bets and six selectable workstations. Account cash and open bets include the owner's
-activity; the bot's daily result does not. Missing/stale reports are labelled. Practice workstations are marked;
-the practice islet's floating dollar labels are hidden. The Theme Park Tycoon 2-inspired presentation adds lawns,
+activity; the bot's daily result does not. Missing/stale reports are labelled.
+The daily period is explicitly **booked since 00:00 UTC**, not necessarily the owner's local midnight or the
+venue event date. The town's account-bet count/value come from the dated venue snapshot (`real.venue_open`,
+`value_usd`, `venue_at`), not tracked desk positions that can remain after an app sale. Any individual desk
+records are labelled separately. Cash shows its own checked age; opening it explains available cash, the venue's
+reported balance and buying power. A new page refresh does not make an old balance fresh.
+Practice workstations are marked; the practice islet's floating dollar labels are hidden. The Theme Park Tycoon 2-inspired presentation adds lawns,
 department colors, paths on the existing walk graph and cutaway rooms. Tap a teammate for a steady close view,
 or the town/workstation title for its role and the two business workflows. Service alerts remain visible;
 "Real bets enabled" describes the money setting, not a health guarantee. Rook's account-open cost is shown

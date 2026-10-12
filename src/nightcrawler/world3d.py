@@ -3945,6 +3945,7 @@ _M_LIFE = r"""
       const r = plain.real, w = realWords(r);
       panelTitle.textContent = r.label + ": " + w.title; panelEl.className = w.red ? "real" : "";
       para(panelBody, r.line); para(panelBody, r.how); para(panelBody, r.paused, "warn"); para(panelBody, r.limits);
+      cineMoneyDetails(data).forEach(function (line) { para(panelBody, line, "dim"); });
       para(panelBody, r.verdict, "verdict"); para(panelBody, r.research, "dim");
     } else {  // (the title is the label: the body says the books without it)
       panelTitle.textContent = plain.pretend.label; panelEl.className = "";
@@ -8173,12 +8174,23 @@ _M_CINEMA = r"""
     else if (r.paused_kind === "full") state = "at its limit";
     else if (r.paused) state = "paused";
     const parts = [];
-    if (today !== null) { const c = Math.round(today * 100); parts.push({ k: c > 0 ? "up" : c < 0 ? "down" : "", t: "today " + cineSigned(today), today: true }); }
+    if (today !== null) { const c = Math.round(today * 100); parts.push({ k: c > 0 ? "up" : c < 0 ? "down" : "", t: "bots today (UTC) " + cineSigned(today), today: true }); }
     if (state) parts.push({ k: "state", t: state });
     if (w && typeof w.target_text === "string" && w.target_text) parts.push({ k: "", t: "goal " + w.target_text + "/day" });
     const cashText = cash !== null ? cineUsd(cash) : "—";
     return { on: !!(r && (r.on || r.open_bets > 0)), cash: cashText, parts: parts, today: today,
-             line: "REAL MONEY " + cashText + parts.map(function (q) { return " · " + q.t; }).join("") };
+             line: "ACCOUNT CASH " + cashText + parts.map(function (q) { return " · " + q.t; }).join("") };
+  }
+  function cineMoneyDetails(pg) {
+    const pm = pg && pg.money && pg.money.polymarket, r = pm && pm.real;
+    const lines = ["Account cash is the spendable cash at Polymarket, shared with your own bets and deposits. It is not bot profit.",
+      "Polymarket bot profit counts settlements and cash-outs booked from 00:00 UTC; your own bets and deposits are excluded."];
+    if (pg && pg.mode === "LIVE") lines.push("Bots today also includes the live Solana bot’s daily result.");
+    [["Cash checked", r && r.cash_at], ["Positions checked", r && r.venue_at], ["Desk report", pm && pm.as_of]].forEach(function (q) {
+      const d = new Date(q[1] * 1000);
+      if (cineNum(q[1]) && q[1] > 0 && isFinite(d.getTime())) lines.push(q[0] + " " + d.toISOString().slice(0, 16).replace("T", " ") + " UTC.");
+    });
+    return lines;
   }
   // the HUD's today figure glows a moment when a poll moves it (today's REAL result, which moves only when a real bet
   // settles: never the cash, which a new bet moves too): "up", "down", or "" (no change, or no figure before or now)
@@ -8187,12 +8199,12 @@ _M_CINEMA = r"""
     const a = Math.round(before * 100), b = Math.round(now * 100);
     return b > a ? "up" : b < a ? "down" : "";
   }
-  // the vault's sign in cinema mode: the real cash at Polymarket and the real result since start, labelled REAL
+  // the vault's amount is account cash at Polymarket; its label must not read as the bot's profit
   function cineVault(pg) {
-    const h = cineHud(pg), r = pg && pg.plain && pg.plain.real ? pg.plain.real : null;
+    const h = cineHud(pg);
     const pm = pg && pg.money && pg.money.polymarket ? pg.money.polymarket : null, pr = pm && pm.real ? pm.real : null;
     const since = pr && cineNum(pr.since_start_usd) ? pr.since_start_usd : null;
-    const label = "REAL · " + (r && typeof r.result === "string" && r.result ? r.result : h.cash !== "—" ? "cash at Polymarket" : "none reported");
+    const label = h.cash !== "—" ? "POLYMARKET ACCOUNT CASH" : "ACCOUNT CASH · none reported";
     return { usd: h.cash, label: label, accent: since === null ? null : since >= 0 ? "#58d68d" : "#ff6b61" };
   }
   // the first visit's card: what this is (plain.about), who does what (the tags), and in one line which money is on screen
@@ -8560,7 +8572,7 @@ def render_world_html(settings: Settings) -> str:
         # module fills them as text only)
         '<div id="tags" aria-hidden="true"></div>\n'
         '<div id="cine"><div id="lb-top"><button type="button" id="hud" aria-controls="panel">'
-        '<span class="htag" id="hud-tag">REAL MONEY</span><b id="hud-cash">—</b><span id="hud-rest"></span></button></div>'
+        '<span class="htag" id="hud-tag">ACCOUNT CASH</span><b id="hud-cash">—</b><span id="hud-rest"></span></button></div>'
         '<div id="lb-bot"><div id="cap" aria-live="off"><p id="cap-1"><b>NIGHT SHIFT: SKYPORT</b></p><p id="cap-2" hidden></p>'
         "</div></div></div>\n"
         '<div id="intro" role="dialog" aria-labelledby="intro-title" hidden><h2 id="intro-title">Skyport, live</h2>'

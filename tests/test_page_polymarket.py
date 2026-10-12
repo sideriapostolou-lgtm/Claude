@@ -8,6 +8,7 @@ import base64
 import hashlib
 import json
 import re
+import shutil
 from collections.abc import Callable, Iterator
 from datetime import UTC, datetime
 from pathlib import Path
@@ -38,6 +39,7 @@ from nightcrawler.pagestate import (
     polymarket_desk,
     town_ledger,
 )
+from tests.test_world3d import _js_body, _node
 
 TODAY = datetime.fromtimestamp(NOW, UTC).strftime("%Y-%m-%d")
 YESTERDAY = datetime.fromtimestamp(NOW - DAY, UTC).strftime("%Y-%m-%d")
@@ -106,8 +108,9 @@ def test_money_and_town_count_the_polymarket_desk_with_paper_and_real_kept_apart
                            "settled_total": 121, "won_total": 75}
     assert pm["real"] == {"label": REAL_LABEL, "open": 1, "today_usd": 0.0, "since_start_usd": pytest.approx(0.50),
                           "settled_today": 0, "won_today": 0, "settled_total": 2, "won_total": 2,
-                          "at_risk_usd": pytest.approx(0.97), "contracts": 8.0, "cost_usd": pytest.approx(7.80),
+                          "at_risk_usd": pytest.approx(0.97), "venue_open": 8, "contracts": 8.0, "cost_usd": pytest.approx(7.80),
                           "value_usd": pytest.approx(7.95), "venue_at": NOW - 60, "cash_usd": pytest.approx(16.27),
+                          "cash_reported_usd": pytest.approx(16.27), "buying_power_usd": pytest.approx(16.27),
                           "cash_at": NOW - 60, "pending": 0, "pending_usd": 0.0,
                           # the $3 day less the open real bet if it lost (its cost; this one carries no fee)
                           "stop_room_usd": pytest.approx(3.0 - 0.97), "stop_room_limit": "day"}
@@ -288,6 +291,71 @@ def test_junk_in_the_desks_file_is_typed_not_trusted(settings: Settings) -> None
     json.dumps(polymarket_desk(settings, NOW), allow_nan=False)
 
 
+def test_current_venue_holdings_are_separate_from_tracked_owner_positions(settings: Settings) -> None:
+    st = desk_state(venue={"positions": 0, "contracts": 0.0, "cost_usd": 0.0, "value_usd": 0.0, "at": NOW - 90})
+    st["positions"]["owner"] = dict(position("owner", live=True, cost_usd=24), owner=True, rule="owner")
+    save(settings, st)
+    real = polymarket_desk(settings, NOW)["real"]
+    assert real["venue_open"] == 0 and real["contracts"] == 0 and real["value_usd"] == 0
+    assert real["venue_at"] == NOW - 90
+    # Compatibility: the recorded book and cap inputs are untouched by the current-account display.
+    assert real["open"] == 2 and real["at_risk_usd"] == pytest.approx(24.97)
+    assert real["stop_room_usd"] == pytest.approx(3 - 0.97)
+    assert real["stop_room_limit"] == "day"
+
+
+def test_a_known_empty_venue_snapshot_survives_without_a_tracked_book_or_cash(settings: Settings) -> None:
+    st = desk_state(real_open=0, balance=None,
+                    venue={"positions": 0, "contracts": 0.0, "value_usd": 0.0, "at": NOW - 7200})
+    st["live_days"], st["live_pnl_total_usd"] = {}, 0.0
+    save(settings, st)
+    real = polymarket_desk(settings, NOW)["real"]
+    assert real is not None and real["venue_open"] == 0
+    assert real["venue_at"] == NOW - 7200  # a read-model rebuild never refreshes the venue's age
+    assert real["cash_usd"] is None and real["cash_reported_usd"] is None and real["buying_power_usd"] is None
+
+
+@pytest.mark.parametrize("count", [None, True, -1, 1.5, "8", float("nan"), 10**9 + 1])
+def test_missing_or_invalid_venue_count_stays_unknown(settings: Settings, count: Any) -> None:
+    save(settings, desk_state(venue={**VENUE, "positions": count}))
+    real = polymarket_desk(settings, NOW)["real"]
+    assert real["venue_open"] is None and real["open"] == 1
+    assert real["contracts"] == 8 and real["value_usd"] == pytest.approx(7.95)
+
+
+@pytest.mark.parametrize("stamp", [None, 0, -1, True, "now", float("nan"), NOW + 61])
+def test_account_snapshot_timestamps_are_checked_without_inventing_freshness(settings: Settings, stamp: Any) -> None:
+    save(settings, desk_state(venue={**VENUE, "at": stamp}, balance={**CASH, "at": stamp}))
+    real = polymarket_desk(settings, NOW)["real"]
+    assert real["venue_at"] is None and real["venue_open"] is None and real["cash_at"] is None
+    assert real["cash_usd"] == pytest.approx(CASH["cash"])  # reported amount remains, its time is unknown
+
+
+def test_venue_value_is_not_rebuilt_from_missing_no_side_cost(settings: Settings) -> None:
+    # Existing venue parser deliberately does not claim to know NO-side cost. Value is a separate venue figure.
+    save(settings, desk_state(venue={"positions": 1, "contracts": 30.0, "cost_usd": 0.0,
+                                     "value_usd": 12.50, "at": NOW - 60}))
+    real = polymarket_desk(settings, NOW)["real"]
+    assert real["venue_open"] == 1 and real["contracts"] == 30
+    assert real["value_usd"] == pytest.approx(12.50) and real["cost_usd"] == 0
+    assert "venue_positions" not in real  # no live venue rows exist in the persisted summary
+
+
+def test_cash_details_keep_spendable_cash_apart_from_the_reported_balance(settings: Settings) -> None:
+    save(settings, desk_state(balance={"cash": 51.88, "cash_reported": 81.88, "buying_power": 51.88, "at": NOW - 90}))
+    real = polymarket_desk(settings, NOW)["real"]
+    assert real["cash_usd"] == pytest.approx(51.88)
+    assert real["cash_reported_usd"] == pytest.approx(81.88)
+    assert real["buying_power_usd"] == pytest.approx(51.88) and real["cash_at"] == NOW - 90
+    save(settings, desk_state(balance={"cash": 0, "buying_power": 0, "at": NOW - 60}))
+    real = polymarket_desk(settings, NOW)["real"]
+    assert real["cash_usd"] == real["cash_reported_usd"] == real["buying_power_usd"] == 0
+    save(settings, desk_state(balance={"cash": 14.39, "cash_reported": "unknown", "buying_power": True, "at": NOW - 60}))
+    real = polymarket_desk(settings, NOW)["real"]
+    assert real["cash_usd"] == pytest.approx(14.39)
+    assert real["cash_reported_usd"] is None and real["buying_power_usd"] is None
+
+
 # --------------------------------------------------------------------------- the page itself
 
 
@@ -321,6 +389,38 @@ def test_the_page_renders_the_polymarket_block_as_text_only(settings: Settings,
     assert not re.search(r"#(?:money-polymarket|town-desks)[^{]*\{[^}]*(?:color|background)", style)
     live = render_page_html(live_settings(make_settings))
     assert 'id="money-polymarket"' in live and 'id="town-desks"' in live
+
+
+@pytest.mark.skipif(shutil.which("node") is None, reason="Node is not installed")
+def test_polymarket_cash_profit_and_source_checks_are_distinct(settings: Settings, tmp_path: Path) -> None:
+    script = page_script(settings)
+    hooks = "\n".join(_js_body(script, f"  function {name}(") for name in ("usd", "checkedUtc", "renderPolymarket"))
+    out = _node("""
+const box = {children: []}, $ = function () { return box; };
+const el = function (tag, cls, ...kids) { return {children: kids.filter(k => k !== null && k !== undefined && k !== false)}; };
+const put = function (node, ...kids) { node.children = kids; };
+const isNum = v => typeof v === "number" && isFinite(v);
+const tone = () => "", sign = (v, signed) => v < 0 ? "−" : signed && v > 0 ? "+" : "";
+const words = node => typeof node === "string" ? node : (node.children || []).map(words).join(" | ");
+""" + hooks + """
+const pm = {mode: "live", as_of: 1791820860,
+  paper: {label: "Paper money", since_start_usd: 800, today_usd: 100, open: 0},
+  real: {label: "Real money", since_start_usd: -10.39, today_usd: 0.14, cash_usd: 14.39,
+    contracts: 2, cost_usd: 1.95, value_usd: 1.98, cash_at: 1791820800, venue_at: 1791819900}};
+renderPolymarket(pm); const known = words(box);
+pm.as_of = null; pm.real.cash_at = null; pm.real.venue_at = null; pm.real.cash_usd = null;
+renderPolymarket(pm);
+console.log(JSON.stringify({known: known, missing: words(box), invalid: [null, -1, "today", Infinity].map(checkedUtc)}));
+""", tmp_path)
+    assert "Real money · bot profit/loss | −$10.39" in out["known"]
+    assert "available account cash $14.39" in out["known"] and "bot today (UTC) +$0.14" in out["known"]
+    assert "today counts settlements and cash-outs booked from 00:00 UTC" in out["known"]
+    assert "Cash checked 2026-10-12 16:00 UTC" in out["known"]
+    assert "Positions checked 2026-10-12 15:45 UTC" in out["known"]
+    assert "Desk report 2026-10-12 16:01 UTC" in out["known"]
+    assert "account cash not read yet" in out["missing"]
+    assert "Cash checked" not in out["missing"] and "Positions checked" not in out["missing"]
+    assert "Desk report" not in out["missing"] and out["invalid"] == ["", "", "", ""]
 
 
 # --------------------------------------------------------------------------- what the desk skips and why (C15)

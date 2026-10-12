@@ -13,6 +13,43 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-12 18:08 UTC, Codex, branch codex/tycoon-town-view, PR #6
+- Asked: reconcile the owner's reported $14.39 and earnings since midnight with the actual Polymarket connection.
+  Asked whether that amount is cash or profit and which timezone defines midnight; no answer yet. Kept the
+  existing UTC booking day and made it explicit. Earlier preview images were fixtures, not live account balances.
+- Fixed: the town's account-bet card now uses the venue snapshot count and value, separately from tracked desk
+  positions, which can remain after an owner cash-out. Known zero remains zero, unknown stays unknown. Old desk
+  position details are explicitly records, not the current venue list. Cash always shows its own checked age;
+  its details distinguish spendable cash, venue balance and buying power. Main dashboard and camera tour now
+  label cash versus bot profit and expose independent source timestamps. No cash differences become profit.
+- Live evidence (read-only logs/status): Railway deployment 1972f365-f1ef-4b12-9d2b-69ad519d8dd5 is SUCCESS,
+  commit 03f526ea3426f25e388d110f5358aa556350109a. At 17:47:36 UTC it connected with cash/buying power $4.59
+  and started LIVE with 10 contracts per order. Earlier deployment aeb5bc19 connected at 17:10:07 with $14.31.
+  These are historical snapshots, neither verifies the owner's current $14.39. Venue activity logs confirm
+  +$0.20 resolutions at 15:00 and 15:15, +$0.20 at 16:15, +$0.10 at 17:00 and +$0.30 at 18:00 UTC; also a $10
+  deposit at 16:09 and an app sale at 15:56. This is not a complete daily ledger or proof of ownership of every
+  logged account trade. No traceback/balance-failure match appeared in the queried deployment logs.
+- Verified: full `python -m pytest -q`: 3,055 passed, 21 skipped; mypy passed all 87 source files; Ruff passed
+  every changed Python file. Focused tests cover stale owner records versus current venue totals, missing/zero
+  snapshots, invalid times, balance/buying-power separation and unchanged recorded bot profit. Browser fixture
+  check passed at 320x568, 390x844 and 1280x800, including money details and the optional camera tour, with no
+  page errors or horizontal overflow. Browser money was synthetic; real trading was not started locally.
+- Open reconciliation limits: the protected production `/api/page` snapshot was unavailable, and logs expose
+  only bounded account activity plus startup balances. Exact current cash and the complete since-midnight total
+  are NOT reconciled. Booking uses detection day, not venue event day. Activity polling reads only the newest
+  50 rows. Separate in-memory reproductions found two existing cash-out accounting defects: a fully sold
+  break-even position remains tracked, and a late partial-sale correction can omit profit on the remaining
+  shares' settlement (10 shares originally +$0.28; 4 sold at -$0.10; correction becomes -$0.10 instead of +$0.068).
+  These findings are not established as the cause of the live discrepancy. They need a separate accounting fix
+  and tests because those books also feed real-money loss limits; this PR does not alter them.
+- Real money touched? No protected trading files, orders, strategy, caps, variables or stored account books
+  changed. Only display/read-model code and tests/docs. Lint cleanup in the newly touched read-model file is
+  formatting and annotations for existing exception boundaries. The same 21 network/optional dependency tests
+  remain skipped. This update is on PR #6, not deployed; merge still restarts the existing live bot.
+- Next: compare an authorized current dashboard/account snapshot with the owner's stated period, then address
+  confirmed accounting discrepancies without changing owner bets or risk settings. After merge, verify the exact
+  deployment SHA, LIVE startup and logs and record the result here.
+
 ## 2026-10-12 17:55 UTC, Codex, branch codex/tycoon-town-view, PR prepared
 - Changed: the owner asked for a phone-first steady town, then named Theme Park Tycoon 2 as the visual reference.
   Kept the existing cast, buildings and navigation; added green grounds, department colors, paths on the actual

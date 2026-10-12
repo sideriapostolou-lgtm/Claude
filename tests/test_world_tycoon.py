@@ -33,7 +33,7 @@ def test_town_is_ready_before_the_first_frame_and_keeps_one_shared_details_panel
     assert page.count('id="ty-header"') == 1
     assert page.count('id="ty-dock"') == 1
     assert "Available cash" in TYCOON_HTML and "Bot today" in TYCOON_HTML and "Account bets" in TYCOON_HTML
-    assert "Polymarket account" in TYCOON_HTML and "Realized · UTC" in TYCOON_HTML
+    assert "Polymarket account" in TYCOON_HTML and "Since 00:00 UTC" in TYCOON_HTML
     assert 'id="ty-mode">Camera tour' in TYCOON_HTML
     assert 'id="ty-alert" aria-controls="panel" hidden' in TYCOON_HTML
     assert 'el("ty-alert").onclick = function () { openPanel("ty-alerts"); };' in module
@@ -156,7 +156,7 @@ const fmtSigned = fmtUsd, tycoonMeasure = function () {};
 let panelKind = null, paragraphs = [];
 const panelBody = { textContent: "" }, panelEl = { scrollTop: 140, className: "" }, panelTitle = { textContent: "" };
 const para = function (parent, text, cls) { paragraphs.push({ text: text, cls: cls || "" }); };
-const current = { state: "on", cash: 12, today: 0.25, count: 2, held: 3, crew: [], positions: [], pending: null,
+const current = { state: "on", cash: 12, today: 0.25, count: 2, value: 3, crew: [], positions: [], pending: null,
   event: null, stale: false, updated: 1000000, pageAge: 1, deskAge: 2,
   cashAsOf: 999999, cashAge: 1, cashStale: false, venueAsOf: 999999, venueAge: 1, venueStale: false };
 let sample = current;
@@ -184,7 +184,7 @@ offline = false; data = { alerts: [] };
 reports.cleared = show({}, "ty-alerts");
 console.log(JSON.stringify(reports));
 """, tmp_path)
-    assert out["fresh"]["warnings"] == 0 and "Updated <1m ago" in out["fresh"]["fresh"]
+    assert out["fresh"]["warnings"] == 0 and "Cash checked <1m ago" in out["fresh"]["fresh"]
     assert "Account bets checked 15m ago" in out["venue"]["fresh"]
     assert "Cash checked 2h ago" in out["cash"]["fresh"]
     assert "Account bets update time unknown" in out["unknownVenue"]["fresh"]
@@ -196,7 +196,7 @@ console.log(JSON.stringify(reports));
     for name in ("alerted", "refreshed"):
         assert out[name]["state"] == "Real bets enabled"
         assert out[name]["hidden"] is False and out[name]["alert"] == "The bot is stopped."
-        assert "Updated <1m ago" in out[name]["fresh"]
+        assert "Cash checked <1m ago" in out[name]["fresh"]
         assert "The bot is stopped." in out[name]["messages"]
         assert "Polymarket orders need attention." in out[name]["messages"]
         assert any("reports the Polymarket money setting" in text for text in out[name]["messages"])

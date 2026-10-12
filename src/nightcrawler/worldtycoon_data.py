@@ -102,8 +102,12 @@ TYCOON_DATA = r"""
     const cash = tycoonNumber(real.cash_usd), fallbackCash = tycoonNumber(plainReal.cash_usd);
     return { cash: cash !== null ? cash : fallbackCash,
       today: asOf !== null ? tycoonNumber(real.today_usd) : null,
-      count: asOf !== null ? tycoonCount(real.open) : null,
-      held: asOf !== null ? tycoonCost(real.at_risk_usd) : null,
+      count: venueAsOf !== null ? tycoonCount(real.venue_open) : null,
+      value: venueAsOf !== null ? tycoonCost(real.value_usd) : null,
+      recorded: { count: asOf !== null ? tycoonCount(real.open) : null,
+        cost: asOf !== null ? tycoonCost(real.at_risk_usd) : null },
+      reportedCash: cashAsOf !== null ? tycoonNumber(real.cash_reported_usd) : null,
+      buyingPower: cashAsOf !== null ? tycoonNumber(real.buying_power_usd) : null,
       on: on, state: state, pauseKind: pauseKind, deskStatus: deskStatus,
       stateText: state === "stale" ? "Waiting for a fresh update" : state === "unknown" ? "No current desk report"
         : state === "off" ? deskStatus || "No new bot bets" : state === "paused" ? pauseText : "Real-money desk is on",
@@ -111,12 +115,12 @@ TYCOON_DATA = r"""
       pageAge: pageAge, deskAge: deskAge, cashAge: cashAge, venueAge: venueAge,
       stale: stale, pageStale: pageStale, deskStale: deskStale, cashStale: cashStale, venueStale: venueStale,
       labels: { cash: "Available cash", cashNote: "Polymarket account", cashDetail: "Shared with your own bets",
-        today: "Bot today", todayNote: "Realized · UTC", todayDetail: "Bot settlements and cash-outs booked today; excludes your own bets",
-        bets: "Account bets", betsNote: "Includes your own bets", betsDetail: "Recorded cost in open real bets, excluding unconfirmed orders" },
+        today: "Bot today", todayNote: "Since 00:00 UTC", todayDetail: "Bot profit booked since 00:00 UTC; excludes your own bets",
+        bets: "Account bets", betsNote: "Includes your own bets", betsDetail: "Open markets and their value reported by Polymarket" },
       event: tycoonLatest(d, now), crew: tycoonCrew(d, now, now !== null && updated !== null && !pageStale,
         now !== null && asOf !== null && !deskStale), positions: positions,
       pending: { count: asOf !== null ? tycoonCount(real.pending) : null, held: asOf !== null ? tycoonCost(real.pending_usd) : null },
-      positionsNote: "Account positions; ownership is not supplied. The list may be incomplete.",
+      positionsNote: "Recorded positions, not the current venue book. App sales can leave these records behind; ownership is not supplied.",
       eventNote: "Latest recorded real event; historical settlements may later be corrected." };
   }
   // <<< tycoon data

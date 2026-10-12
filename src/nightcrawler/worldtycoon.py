@@ -10,7 +10,7 @@ TYCOON_HTML = """
     <span id="ty-state" role="status">Connecting</span><button type="button" id="ty-mode">Camera tour</button></div>
   <div class="ty-money">
     <button type="button" id="ty-cash-card" aria-controls="panel"><span>Available cash</span><b id="ty-cash">—</b><small>Polymarket account</small></button>
-    <button type="button" id="ty-today-card" aria-controls="panel"><span>Bot today</span><b id="ty-today">—</b><small>Realized · UTC</small></button>
+    <button type="button" id="ty-today-card" aria-controls="panel"><span>Bot today</span><b id="ty-today">—</b><small>Since 00:00 UTC</small></button>
     <button type="button" id="ty-bets-card" aria-controls="panel"><span>Account bets</span><b id="ty-bets">—</b><small id="ty-held">Includes your own</small></button>
   </div>
   <button type="button" id="ty-alert" aria-controls="panel" hidden></button>
@@ -189,7 +189,7 @@ TYCOON_UI = r"""
     el("ty-alert").hidden = !warning; tyText("ty-alert", warning || "");
     tyText("ty-cash", fmtUsd(s.cash)); tyText("ty-today", fmtSigned(s.today)); tyText("ty-bets", s.count == null ? "—" : s.count);
     el("ty-today").className = s.today > 0 ? "positive" : s.today < 0 ? "negative" : "";
-    tyText("ty-held", s.held == null ? "Includes your own" : fmtUsd(s.held) + " committed");
+    tyText("ty-held", s.value == null ? "Includes your own" : fmtUsd(s.value) + " value");
     const oldMoney = [];
     if (s.cashStale) oldMoney.push("Cash checked " + tyAge(s.cashAge));
     else if (s.cash !== null && !s.cashAsOf) oldMoney.push("Cash update time unknown");
@@ -197,7 +197,7 @@ TYCOON_UI = r"""
     else if (s.count !== null && !s.venueAsOf) oldMoney.push("Account bets update time unknown");
     tyText("ty-fresh", offline ? "Connection lost · showing the last report" : s.stale ? "Last report " + tyAge(s.deskAge) + " · figures may be old"
       : oldMoney.length ? oldMoney.join(" · ") + " · may be old"
-      : s.updated ? "Updated " + tyAge(s.pageAge) + " · account bets include your own" : "Waiting for the bot’s report…");
+      : s.updated ? "Cash checked " + tyAge(s.cashAge) + " · bets " + tyAge(s.venueAge) : "Waiting for the bot’s report…");
     const chosen = s.crew.find(function (c) { return c.key === TYCOON.selected; }) || (CAST[TYCOON.selected] ? {
       name: CAST[TYCOON.selected].name, job: "Workstation", status: "unknown", doing: "Waiting for a crew report.", age: null, practice: null,
     } : null);
@@ -273,14 +273,17 @@ TYCOON_UI = r"""
     } else if (panelKind === "ty-bets") {
       panelTitle.textContent = "Account’s open real bets";
       para(panelBody, "This Polymarket account is shared by you and the bot. These totals include your own bets.");
-      para(panelBody, (s.count == null ? "Open count not reported" : s.count + " open bets") + (s.held == null ? "" : " · " + fmtUsd(s.held) + " committed"));
+      para(panelBody, (s.count == null ? "Venue open count not reported" : s.count + " open markets at Polymarket")
+        + (s.value == null ? "" : " · " + fmtUsd(s.value) + " reported value"));
+      para(panelBody, "Value is what Polymarket reports for the holdings. It is separate from available cash and from realized profit.", "dim");
       if (s.pending && s.pending.count) para(panelBody, s.pending.count + " bot orders awaiting confirmation; separate from open bets.", "dim");
-      if (!s.positions.length) para(panelBody, s.count === 0 ? "No open real bets reported." : "No individual bet details in this report.", "dim");
+      if (!s.positions.length) para(panelBody, s.count === 0 ? "No open real bets reported by Polymarket." : "No individual bet records in this report.", "dim");
+      if (s.positions.length) para(panelBody, "Desk records · may differ from current holdings", "dim");
       for (const p of s.positions) {
         const row = document.createElement("div"); row.className = "ty-position";
         para(row, p.question); para(row, p.side + (p.price == null ? "" : " · entry " + Math.round(p.price * 100) + "¢"), "dim"); panelBody.appendChild(row);
       }
-      if (s.positions.length) para(panelBody, "Reported positions only; the feed may show fewer rows than the total. It does not identify which belong to you.", "dim");
+      if (s.positions.length) para(panelBody, s.positionsNote, "dim");
       para(panelBody, s.venueAsOf ? "Account positions checked " + tyAge(s.venueAge) + "." : "Account positions update time not reported.", "dim");
     } else if (panelKind === "ty-result") {
       panelTitle.textContent = "Recent real result";
@@ -288,11 +291,16 @@ TYCOON_UI = r"""
       if (s.event) { para(panelBody, "Recorded " + tyAge(s.event.age) + ".", "dim"); para(panelBody, s.eventNote, "dim"); }
     } else if (panelKind === "ty-today") {
       panelTitle.textContent = "Bot’s result today"; para(panelBody, fmtSigned(s.today));
-      para(panelBody, "The bot’s realized profit or loss booked today (UTC), including settlements and cash-outs. Your own bets, deposits and practice money are not counted here.");
+      para(panelBody, "The bot’s profit or loss booked since 00:00 UTC, including settlements and cash-outs. Your own bets, deposits and practice money are not counted here.");
+      para(panelBody, "This uses the time the bot records the result. A result discovered late can appear on a different day from Polymarket’s history.", "dim");
+      para(panelBody, s.asOf ? "Bot report checked " + tyAge(s.deskAge) + "." : "Bot report time not available.", "dim");
       para(panelBody, "Open bets can still win or lose. This number is not a forecast.", "dim");
     } else {
       panelTitle.textContent = "Available account cash"; para(panelBody, fmtUsd(s.cash));
       para(panelBody, "Spendable cash reported by Polymarket for your shared account. It can include deposits and your own activity. It is not the bot’s profit.");
+      if (s.reportedCash != null) para(panelBody, "Polymarket balance: " + fmtUsd(s.reportedCash) + ".", "dim");
+      if (s.buyingPower != null) para(panelBody, "Available buying power: " + fmtUsd(s.buyingPower) + ".", "dim");
+      para(panelBody, "Money in open bets is shown separately. The town refreshes saved account reports; it is not a tick-by-tick balance feed.", "dim");
       para(panelBody, s.cashAsOf ? "Cash reported " + tyAge(Math.max(0, Date.now() / 1000 - s.cashAsOf)) + "." : "Cash update time not reported.", "dim");
     }
     const oldAccount = panelKind === "ty-bets" && (s.venueStale || !s.venueAsOf)
