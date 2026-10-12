@@ -32,9 +32,10 @@ secrets, no deploys, pull requests only, tests green, honest numbers.
 1. **Fastest:** in the Polymarket app, delete the API key the bot uses. Its orders are refused at once.
 2. **Stop the whole service:** in the Railway dashboard, open project `nightcrawler`, then service `bot`, then
    Deployments, and remove the active deployment.
-3. **Real money off, bot keeps running (what an AI with Railway access does):** set `POLYDESK_MODE=paper` on
-   service `bot`, then deploy from the branch (section 4). A variable change alone does **not** stop the running
-   deployment.
+3. **Real money off, bot keeps running:** set `POLYDESK_MODE=paper` on service `bot`. Once the new deployment is
+   running, the desk sends no new real orders. It does **not** close or sell open bets; they settle at the venue (or
+   the owner cashes them out in the app). The desk sends immediate-or-cancel orders, so nothing should be left
+   resting on the book, but check the app's Orders tab.
 
 ## 2. System map (src/nightcrawler)
 
@@ -104,11 +105,14 @@ secrets, no deploys, pull requests only, tests green, honest numbers.
 * Railway project `nightcrawler`, service `bot`, volume `nightcrawler-data` at `/data`, domain
   `bot-production-9d67.up.railway.app`. Builds use `Dockerfile` and `railway.json`. More in `docs/RAILWAY.md`
   and `docs/GOING_LIVE.md`.
-* **Pushes do not deploy.** A deploy happens when the service source is reconnected to the branch
-  `claude/nightcrawler-memecoin-bot-Gwnb1S` (Railway MCP `connect-service-source`, or the dashboard: service
-  `bot`, then Settings, then Source). A variable change alone starts a build of the repo's default branch, which
-  has no app code. That build fails within seconds and the running deployment carries on, so a variable takes
-  effect only on the next build from the branch.
+* **Deploy on push (since 2026-10-12 ~15:52 UTC).** The service source is connected to the branch
+  `claude/nightcrawler-memecoin-bot-Gwnb1S`, so a push or merge there starts a deploy, but **only** when it
+  touches a watched path: `src/**`, `pyproject.toml`, `Dockerfile`, `railway.json` or `README.md`. Other pushes
+  (docs, research, `.github`) are recorded as SKIPPED and the running deployment stays. That is what happened to
+  70c955b. So a test of "merge deploys" must touch a watched file. After every merge that should deploy, check that
+  Railway built that exact commit and that the logs show `polydesk_started ... (LIVE ...)`. Not yet verified with a
+  real push: that a watched-file push deploys, and that a variable change now rebuilds this branch (before the
+  connection it built the default branch and failed).
 * Restarts are safe. State lives on the volume, and the desk re-reads the venue each round.
 * Without Railway access you cannot deploy. Write the deploy as steps for the owner, or leave it for Claude.
 
