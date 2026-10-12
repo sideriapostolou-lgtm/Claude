@@ -13,6 +13,22 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-12 16:38 UTC, Codex, branch claude/nightcrawler-memecoin-bot-Gwnb1S
+- Changed: read the new rules at 209191b, synced the local deploy branch, aligned stale handoff wording with
+  direct pushes for small tested changes, and clarified that PR #5's deployment was triggered by source setup.
+  Installed Railway CLI 5.65.0 in this session from its official release via the environment proxy; npm's
+  postinstall download tried a direct connection and failed. Persistent setup-script configuration is unchanged.
+- Verified: GitHub confirms PR #5 merged as 1cd27824. The current environment permits internet access, the CLI
+  runs, and the token-presence check reports no RAILWAY_TOKEN (no values printed). Application, test and build
+  files still match the tested revision 88780dd: prior results remain 2,969 passed, 21 skipped; mypy passed
+  for 82 source files. This change has no Python files to lint and touches only unwatched docs paths.
+- Not verified: Railway status/logs cannot be read until the owner adds the project token to environment
+  secrets. Claude's entries below record the successful restart and enabled autodeploy; Codex has not
+  independently confirmed them. A watched-path push triggering a successful deployment remains unverified.
+- Real money touched? no; documentation and local CLI setup only, no app code or Railway settings changed.
+- Next step: owner adds RAILWAY_TOKEN through environment settings, then Codex checks the active deployment's
+  commit and fresh startup logs. The next authorized watched-path change must also verify deploy on push.
+
 ## 2026-10-12 16:35 UTC, Claude, branch claude/nightcrawler-memecoin-bot-Gwnb1S
 - Changed: the owner installed the Railway GitHub App. Autodeploy still said NO_INSTALLATION until the service source
   was reconnected with the repo's exact casing, `sideriapostolou-lgtm/Claude`. Autodeploy is now enabled (Railway

@@ -26,7 +26,8 @@ The owner wants to scale it, and lab 8 is testing his idea for a smarter version
 ## 1. Hard rules and the emergency stop
 
 The rules are in `AGENTS.md`. They boil down to: no real-money change without the owner's specific word, no
-secrets, no deploys, pull requests only, tests green, honest numbers.
+secrets, finished and tested small changes pushed to the deploy branch, every deploy checked, honest numbers.
+Use a pull request for bigger changes or when the owner wants to review first.
 
 **Emergency stop.** The owner can do these alone, with no AI:
 1. **Fastest:** in the Polymarket app, delete the API key the bot uses. Its orders are refused at once.
@@ -111,8 +112,8 @@ secrets, no deploys, pull requests only, tests green, honest numbers.
   when it touches a watched path: `src/**`, `pyproject.toml`, `Dockerfile`, `railway.json` or `README.md`. Other
   pushes are SKIPPED and the live deployment stays. The first push-triggered build is still to be seen. After every
   deploy, check that Railway built that exact commit and that the logs show `polydesk_started ... (LIVE ...)` with
-  no tracebacks. The first merge deployed this way: PR #5, commit 1cd27824, deployment 0866daea, 16:23 UTC
-  (triggered by setting the branch).
+  no tracebacks. PR #5's merge commit 1cd27824 ran as deployment 0866daea at 16:23 UTC, triggered by setting the
+  source branch rather than by the merge itself. That restart does not verify deploy on push.
 * Restarts are safe. State lives on the volume, and the desk re-reads the venue each round.
 * Any worker's push to the branch deploys (see AGENTS.md rule 3). To read logs a worker needs the owner's Railway
   token in its environment as `RAILWAY_TOKEN` (Railway CLI: `railway logs`, `railway status`). Never `railway
@@ -230,8 +231,9 @@ real. Never claim something is done or verified when it is not.
 
 * At the start: read `AGENTS.md`, this file and the latest `docs/WORKLOG.md` entries, then check open pull
   requests.
-* At the end: leave the tree clean (commit or drop your changes), push your branch, open or update the pull
-  request, and add a `docs/WORKLOG.md` entry: date, who, what changed, what was verified (tests and their
-  output), what was not, and the next step.
+* At the end: add a `docs/WORKLOG.md` entry with date, who, what changed, what was verified (tests and their
+  output), what was not, and the next step. Leave the tree clean. For small tested changes, pull and push the
+  deploy branch per AGENTS.md; for bigger changes or owner review, push a codex/ branch and open or update its
+  pull request. After a watched-path push, verify the exact deployed commit and intended startup mode.
 * Never leave a half-made real-money change on a branch without a big "DO NOT MERGE" in its pull request.
 * Update this file when the system changes, especially sections 3, 8 and 9.
