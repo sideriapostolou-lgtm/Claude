@@ -187,7 +187,9 @@ session scratchpad that you will not have.
    State and receipts live under `/data/speeddesk/`; `/api/page` has `money.speeddesk.today` plus the latest 31
    UTC calendar-day reports. The page labels this **PRACTICE**, keeps locked-pair and directional results apart,
    reports fill rates and latency, and never adds pretend results to cash or the town's real profit.
-   **Deploy verification and the at-least-three-day observation are pending** until recorded in `docs/WORKLOG.md`.
+   **Deployed and verified 2026-10-12 19:09 UTC** on `1e45cc3` (initial implementation PR #7). Both venue
+   trade feeds are verified; existing polydesk remains LIVE at 10 contracts. The at-least-three-day observation
+   is still pending, with the first conservative review no earlier than 2026-10-15 19:09 UTC. See `docs/WORKLOG.md`.
    Partial days and missing/stale feeds are reported honestly. Positive practice after fees over 3+ days is still
    insufficient for real money without the owner's exact dollar amounts; no setting automatically promotes it.
    Also live since 2026-10-12: the Bitcoin distance bar depends on price and time left (`btcdistance.REQUIRED_Z`),

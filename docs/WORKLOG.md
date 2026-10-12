@@ -58,7 +58,23 @@ Template:
   The follow-up also labels a single stale venue as degraded rather than pausing the whole desk, and skips
   settled windows during decision loops so a three-day history does not create quadratic work. A 1,000-window
   regression retains all accounting/history while checking only active windows.
-- Pending: corrected-deploy verification below; at least 72 hours of practice observation.
+- Corrected deploy verified: Railway deployment `e8bcd674-e5ed-4584-b24f-8ffb222c47ba` reached SUCCESS on
+  exact commit `1e45cc34809f2b6fef1835616687b2a82b0c9b42`. At 19:08:05 UTC its logs show speeddesk practice,
+  `real_orders=false`, and `polydesk_started ... (LIVE: 10 contract(s) per order)`. Coinbase and the authenticated
+  Polymarket US market WebSocket connected. At 19:09:05 UTC both venues reported verified trade streams,
+  Bitcoin age 0.400 s, book age 0.286 s and warming-up status with no problem. Deployment-scoped Traceback,
+  speeddesk halt/state-error, market disconnect/error and error-level searches found no matching application
+  log lines. Public `/healthz` returned HTTP 200/ok. The unchanged trial start timestamp proves restart recovery.
+- Final focused regression run: 163 speed-desk tests passed, including the actual SDK signing/connection path,
+  first-recheck timing, per-venue reconnect isolation, persistence and the 1,000-window history case.
+- Day 0 snapshot (19:09 UTC): 0 windows traded, 0 fills, $0 locked and $0 directional settled practice P&L.
+  Worst window, fill rates and fill latency are unavailable because there are no trades yet. Mean observed
+  Bitcoin feed latency was 126.6 ms. This is warm-up evidence, not a profitable trial result.
+- Synced Claude's concurrent docs-only `d80424f` (Kalshi account/key-name notes); Railway marked that commit
+  SKIPPED, leaving the verified application deployment above active. This adapter continues to use public
+  Kalshi data and does not read the new account credentials.
+- Pending: at least 72 hours of practice observation; a conservative review cannot occur before
+  2026-10-15 19:09 UTC, and gaps/insufficient evidence must extend the trial.
   Volatility needs a full hour and at least 3,000 actual adjacent one-second returns before decisions. No claim
   of profit or successful three-day trial is made. Daily reports are produced in the app/receipts; recurring chat
   delivery is not configured because this environment has no persistent Railway secret binding.
