@@ -13,6 +13,31 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-12 16:09 UTC, Codex, branch codex/live-on-merge-template, PR prepared
+- Changed: prepared a LIVE ON MERGE PR template and linked AGENTS.md from README.md. README.md is watched by
+  Railway, so merging this documentation-only change is expected to rebuild and restart the existing live bot.
+- Verified: `python -m pytest -q`: 2,969 passed, 21 skipped; `mypy src/nightcrawler`: passed (82 source files).
+  Merged deploy head 3c8b220 without conflicts and read the updated AGENTS.md and HANDOFF.md. Read-only review
+  passed. `src/`, `tests/`, `pyproject.toml`, Dockerfile and railway.json are unchanged from both the tested
+  commit 88780dd and current deploy head 3c8b220, so those test/type results still apply. Changed-Python lint
+  has no files to check and satisfies the updated AGENTS.md rule 6; no exception is needed.
+- Not verified / skipped: `ruff check src tests` with Ruff 0.17.0 fails on 468 pre-existing findings. An older
+  Ruff 0.14.14 also fails (6 findings); no historical lint pin/config exists. The first `pytest -q` invocation
+  failed collection because the repo root was not on the import path; `python -m pytest -q` resolved that.
+  The final suite skips 12 opt-in network tests and 9 checks/modules needing optional pandas/numpy/scipy.
+  No Railway deployment or startup logs were checked. The full-repo lint findings are outside this PR's
+  changed-file gate; no lint rules or trading files were changed to bypass them.
+- Real money touched? No trading-code, settings or cap changes. A merge is expected to restart the bot with
+  its existing live settings. Codex has not changed Railway or merged into the deploy branch.
+- Next step: open the PR into claude/nightcrawler-memecoin-bot-Gwnb1S. Owner
+  merges, then opens Railway > nightcrawler > bot > Deployments and matches the successful active deployment
+  to the resulting merge/squash commit SHA; check fresh `polydesk_started ... (LIVE: 10 contract(s) per order)`
+  logs with no tracebacks and fresh dashboard updates, then record the evidence in this worklog through a
+  follow-up PR. Railway access/logs are not available to Codex here, so the owner or Claude must supply that
+  evidence. A healthz response alone is insufficient. Variable-change deployment remains separately unverified.
+  GitHub's default branch differs from this deploy branch, so AI-created PRs must supply the template fields
+  explicitly; automatic GitHub template prefilling is not established.
+
 ## 2026-10-12 15:50 UTC, Claude, branch claude/nightcrawler-memecoin-bot-Gwnb1S, PR #4
 - Changed: wrote AGENTS.md, docs/HANDOFF.md and this log so another AI worker can continue safely. Earlier today:
   lab 8 scout files (research/lab8, commit 0877feb). Yesterday: the desk books the owner's in-app cash-outs from the
