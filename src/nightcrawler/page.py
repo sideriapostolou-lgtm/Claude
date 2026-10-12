@@ -343,11 +343,70 @@ _SCRIPT = r"""
     put($("plain-words"), ...p.glossary.map((g) => el("div", null, el("b", null, g.word), el("div", "meta", g.means))));
   }
 
+  function speedScorecard(card) {
+    if (!card) return el("p", "help", "Comparison evidence is not available yet.");
+    const count = (v) => isNum(v) ? String(v) : "—";
+    const share = (v) => isNum(v) ? (100 * v).toFixed(1) + "%" : "—";
+    const row = (label, value) => el("div", "line", el("span", null, label), el("b", "num", value));
+    const qty = (v) => isNum(v) ? v.toFixed(2) : "—";
+    return el("div", "rows", el("p", "meta", card.day + " UTC · windows ending this day"
+        + (card.day_complete ? " · complete" : " · incomplete evidence")),
+      row("Fully observed / known windows", count(card.complete_windows) + " / " + count(card.eligible_windows)),
+      row("Traded / quiet observed windows", count(card.traded_windows) + " / " + count(card.zero_fill_windows)),
+      row("Both sides bought · target ≥90%", share(card.both_sides_share)),
+      row("Taker fills · target about 67%", share(card.taker_fill_share)),
+      row("Fills with known maker/taker role", share(card.role_coverage)),
+      row("Median side imbalance · target ≤15%", share(card.median_imbalance)),
+      row("Average pair cost with fees · target <$1", isNum(card.matched_pair_cost_usd)
+        ? "$" + card.matched_pair_cost_usd.toFixed(4) : "—"),
+      row("Fills per observed window", qty(card.fills_per_window)),
+      row("Settled pairs / direction", usd(card.locked_usd, true) + " / " + usd(card.directional_usd, true)),
+      row("Net result per observed window", usd(card.pnl_per_window_usd, true)),
+      row("Worst settled traded window", usd(card.worst_window_usd, true)),
+      row("Traded windows awaiting settlement", count(card.unsettled_traded_windows)),
+      card.evidence_restore_error ? el("p", "warning", "Saved observation history is incomplete or invalid.") : null,
+      card.clock_reversals > 0 ? el("p", "warning", "A clock reversal interrupted observation coverage.") : null,
+      el("p", "help", "Rates include fully observed quiet windows. Incomplete windows are excluded and reported above. "
+        + "These window groups differ from the fill-day and settlement-day totals. Missing figures mean unknown."),
+      el("p", "help", "Higher caps need three complete consecutive UTC days, each positive after fees, plus a verified "
+        + "70% held-out rule match. Only you can raise the caps."));
+  }
+
+  function speedTiming(raw) {
+    const metrics = raw || {}, ms = (v) => isNum(v) ? v.toFixed(1) + " ms" : "—";
+    const count = (v) => isNum(v) ? String(v) : "—";
+    const rows = [["Bitcoin tick age at decision", "btc_exchange_to_decision"],
+      ["Time in our app before decision", "btc_receipt_to_decision"],
+      ["Decision to real order acknowledgment", "decision_to_ack"]].map(([label, key]) => {
+      const m = metrics[key] || {};
+      const value = m.applicable === false ? "Not applicable"
+        : ms(m.median_ms) + " / " + ms(m.p95_ms);
+      return el("div", null, el("div", "line", el("span", null, label), el("b", "num", value)),
+        m.applicable === false ? null : el("p", "help", count(m.samples) + " measured of " + count(m.observations)
+          + " decisions; " + count(m.missing) + " missing; " + count(m.errors) + " errors; "
+          + count(m.timeouts) + " timeouts."
+          + (m.complete === false ? " Incomplete timing record." : "")
+          + (m.partial_day === true ? " Partial day." : "")
+          + (m.overflow > 0 ? " Sample limit reached; percentiles unavailable." : "")));
+    });
+    return el("div", "rows", el("p", "meta", "Median / p95 · decisions made this UTC day"), ...rows,
+      el("p", "help", "Bitcoin timing measures the age of the input used, not proof that the tick triggered the decision. "
+        + "Exchange clocks may differ. An order acknowledgment is not a fill."));
+  }
+
   function renderKalshiLive(k) {
     const panel = $("kalshilive");
     panel.hidden = !k;
     if (!k) return;
     const d = k.today || {}, total = k.total || {}, caps = k.caps || {}, twin = k.practice_twin || {};
+    const opened = new Set(Array.from(panel.querySelectorAll("[data-kalshi-detail][open]"),
+      (node) => node.dataset.kalshiDetail));
+    function detail(key, title, ...children) {
+      const node = el("details", "about", el("summary", null, title), ...children);
+      node.dataset.kalshiDetail = key;
+      node.open = opened.has(key);
+      return node;
+    }
     const count = (v) => isNum(v) ? String(v) : "—";
     const row = (label, value) => el("div", "line", el("span", null, label), el("b", "num", value));
     $("kalshi-live-mode").textContent = k.stale || !k.mode ? "STATUS UNKNOWN" : k.label;
@@ -368,14 +427,27 @@ _SCRIPT = r"""
       row("Total money at risk", usd(k.at_risk_usd)), row("Open orders / positions", count(k.open_orders) + " / " + count(k.positions)));
     put($("kalshi-live-today"), row("Windows traded / real fills", count(d.windows) + " / " + count(d.fills)),
       row("Actual fees", usd(d.fees_usd)), row("Locked pairs, after fees", usd(d.locked_usd, true)),
-      row("Direction, after fees", usd(d.directional_usd, true)), row("Settled result, after fees", usd(d.pnl_usd, true)));
+      row("Direction, after fees", usd(d.directional_usd, true)), row("Settled result, after fees", usd(d.pnl_usd, true)),
+      detail("today-comparison", "Daily comparison with the source bot", speedScorecard(d.scorecard)),
+      detail("today-timing", "Decision timing", speedTiming(d.latency)));
     put($("kalshi-live-total"), row("Actual fees", usd(total.fees_usd)),
       row("Locked pairs, after fees", usd(total.locked_usd, true)), row("Direction, after fees", usd(total.directional_usd, true)),
       row("Settled result, after fees", usd(total.pnl_usd, true)));
     put($("kalshi-live-twin"), row("Windows traded / pretend fills", count(twin.windows) + " / " + count(twin.fills)),
       row("Pretend locked pairs, after fees", usd(twin.locked_usd, true)),
       row("Pretend direction, after fees", usd(twin.directional_usd, true)),
-      row("Pretend settled result, after fees", usd(twin.pnl_usd, true)));
+      row("Pretend settled result, after fees", usd(twin.pnl_usd, true)), speedScorecard(twin.scorecard));
+    const history = Object.entries(k.reports || {}).sort(([a], [b]) => b.localeCompare(a));
+    put($("kalshi-live-history"), ...(history.length ? history.map(([day, report]) => {
+      const actual = report.real || {}, practice = report.practice_twin || {};
+      return detail("day-" + day, day + " UTC · actual and practice twin",
+        el("p", "sub", "Actual Kalshi results"),
+        row("Windows traded / actual fills", count(actual.windows) + " / " + count(actual.fills)),
+        row("Actual fees / settled result", usd(actual.fees_usd) + " / " + usd(actual.pnl_usd, true)),
+        speedScorecard(actual.scorecard), detail("timing-" + day, "Actual decision timing", speedTiming(actual.latency)),
+        el("p", "sub", "Practice twin · pretend money"),
+        row("Pretend settled result", usd(practice.pnl_usd, true)), speedScorecard(practice.scorecard));
+    }) : [el("p", "help", "No completed daily companion reports yet.")]));
     $("kalshi-live-limits").textContent = "Limits, fees included: " + usd(caps.window_usd) + " per window; "
       + usd(caps.open_usd) + " across open windows; " + usd(caps.day_stop_usd) + " daily loss stop; "
       + usd(caps.total_stop_usd) + " total loss stop. Stops include money at risk. These limits cannot guarantee "
@@ -407,6 +479,24 @@ _SCRIPT = r"""
       : (isNum(w.freeze_due_at) ? "Rule freeze due: " + stamp(w.freeze_due_at) + ". " : "")
       + (isNum(w.test_due_at) ? "Held-out review due: " + stamp(w.test_due_at) + ". " : "")
       + (fit.reasons || []).join(" · ");
+    const target = w.execution_target || {};
+    $("skipwatch-execution-target").textContent = "Target: predict at least 70% of held-out fills on the right side, "
+      + "within 5 seconds and 2¢. Verified result: not available; execution timing remains unqualified. "
+      + (isNum(target.shadow_started_at) ? "Prospective test predictions began " + stamp(target.shadow_started_at) + ". " : "")
+      + "Public-print proxy scores cannot pass this target.";
+    const bitcoin = w.bitcoin_sources || {}, sources = bitcoin.venues || {};
+    put($("skipwatch-bitcoin-sources"), ...[["Coinbase", "coinbase"], ["Kraken", "kraken"], ["Gemini", "gemini"]]
+      .map(([label, key]) => {
+        const v = sources[key] || {};
+        return el("div", null, row(label, w.stale ? "Report behind" : v.fresh === true ? "Fresh trades"
+          : v.connected === true ? "Connected; trades stale" : "Not confirmed"),
+          row("Apparent delivery age · median / p95", ms(v.apparent_source_age_median_ms) + " / " + ms(v.apparent_source_age_p95_ms)),
+          el("p", "help", count(v.age_samples) + " measured trades; " + count(v.future_clock_samples) + " clock anomalies."));
+      }));
+    $("skipwatch-bitcoin-note").textContent = "No feed leader established. Exchange clock differences affect apparent age. "
+      + "These are research feeds; the money desk's Bitcoin input is unchanged. "
+      + (isNum(bitcoin.feature_epoch_started_at) ? "New feed observations began " + stamp(bitcoin.feature_epoch_started_at) + ". " : "")
+      + "Binance: " + ((w.binance_availability || {}).status || "Not checked yet") + ".";
     const coverage = w.coverage || {};
     put($("skipwatch-coverage"), ...[["Bitcoin", "bitcoin"], ["Order books", "book"], ["Wallet polling", "wallet"], ["Market prints", "trades"]]
       .map(([label, key]) => row(label, w.stale ? "Report behind" : coverage[key] === true ? (key === "trades" ? "Connected" : "Fresh data")
@@ -486,7 +576,9 @@ _SCRIPT = r"""
             ? "Fill rates: orders placed this UTC day." : "Fill-rate time basis is unavailable."),
           el("p", "help", "Fresh coverage requires Bitcoin and this venue's current books. App running time is shared "
             + "between venues and does not mean usable data was available. Fresh coverage includes volatility warm-up; "
-            + "it measures usable feeds, not time allowed to trade.")));
+            + "it measures usable feeds, not time allowed to trade.")),
+        detail(key + "-comparison", "Daily comparison with the source bot", speedScorecard(v.scorecard)),
+        detail(key + "-timing", "Decision timing", speedTiming(v.latency)));
     }
     function venueCards(report, key, day) {
       const venues = report.venues || {};
@@ -1207,6 +1299,8 @@ def render_page_html(settings: Settings) -> str:
         "<details class=\"about\"><summary>Practice twin today · PRACTICE</summary>"
         "<p class=\"help\">The same decisions, simulated fills. Pretend results are separate from actual Kalshi fills.</p>"
         "<div class=\"rows\" id=\"kalshi-live-twin\"></div></details>"
+        "<details class=\"about\"><summary>Completed daily Kalshi reports</summary>"
+        "<div id=\"kalshi-live-history\"></div></details>"
         "<p class=\"help\" id=\"kalshi-live-limits\"></p>"
         "<p class=\"help\">Paper mode stops new real orders; existing bets still settle. Cash is not profit. "
         "Kalshi results stay separate from Polymarket cash and the town totals. Missing figures mean unknown.</p>"
@@ -1217,6 +1311,7 @@ def render_page_html(settings: Settings) -> str:
         "<p class=\"meta\" id=\"skipwatch-fit\"></p>"
         "<details class=\"about\"><summary>Rule prediction evidence</summary><div class=\"rows\" id=\"skipwatch-fit-metrics\"></div>"
         "<p class=\"help\" id=\"skipwatch-fit-timing\"></p>"
+        "<p class=\"help\" id=\"skipwatch-execution-target\"></p>"
         "<p class=\"help\">Precision measures how often predicted fill opportunities were followed by a fill; recall "
         "measures how many fill opportunities the rule predicted. These are time bins, not exact orders. "
         "Missing values mean evidence is not ready.</p></details>"
@@ -1226,6 +1321,8 @@ def render_page_html(settings: Settings) -> str:
         "exact timing and maker/taker identity are not proven. Cancellations are not visible. This watcher places no orders.</p>"
         "<details class=\"about\"><summary>Observation coverage and storage</summary>"
         "<div class=\"rows\" id=\"skipwatch-coverage\"></div><p class=\"help\" id=\"skipwatch-storage\"></p></details>"
+        "<details class=\"about\"><summary>Bitcoin feeds and timing</summary>"
+        "<div class=\"rows\" id=\"skipwatch-bitcoin-sources\"></div><p class=\"help\" id=\"skipwatch-bitcoin-note\"></p></details>"
         "<p class=\"sub\">US five-minute listing alert</p><p id=\"skipwatch-listing\"></p>"
         "<p class=\"meta\" id=\"skipwatch-market\"></p><p class=\"help\" id=\"skipwatch-listing-check\"></p>"
         "<details class=\"about\"><summary>Kalshi latency from this server</summary>"

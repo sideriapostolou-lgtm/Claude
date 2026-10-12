@@ -38,9 +38,10 @@ class KalshiClientError(RuntimeError):
     """Safe to log: never includes a key, signature, URL, request or response body."""
 
     def __init__(self, operation: str, reason: str, *, status: int | None = None,
-                 uncertain: bool = False) -> None:
+                 uncertain: bool = False, timed_out: bool = False) -> None:
         self.operation, self.reason = operation, reason
         self.status, self.uncertain = status, uncertain
+        self.timed_out = timed_out
         super().__init__(f"Kalshi {operation}: {reason}" + (f" (HTTP {status})" if status is not None else ""))
 
     @property
@@ -139,7 +140,9 @@ class KalshiClient:
             try:
                 response = self._transport(method, url, headers=headers, json=body,
                                            timeout=TIMEOUT, allow_redirects=False)
-            except (requests.RequestException, TimeoutError, OSError):
+            except (requests.Timeout, TimeoutError):
+                raise KalshiClientError(operation, "transport failure", uncertain=mutates, timed_out=True) from None
+            except (requests.RequestException, OSError):
                 raise KalshiClientError(operation, "transport failure", uncertain=mutates) from None
             status = getattr(response, "status_code", None)
             if not isinstance(status, int) or isinstance(status, bool):

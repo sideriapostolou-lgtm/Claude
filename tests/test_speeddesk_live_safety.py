@@ -114,7 +114,7 @@ def companion(path: Path, *, settings: Settings | None = None,
 
     def snapshot() -> LiveSnapshot:
         books = {(window.slug, side): Book(window.slug, side, (Level(.3, 10),), (Level(.4, 10),),
-                                          clock.now(), "fake-book") for side in ("up", "down")}
+                                          clock.now(), "fake-book", exchange_at=clock.now()) for side in ("up", "down")}
         return LiveSnapshot(windows=(window,), books=books, bitcoin_price=100, bitcoin_at=clock.now(),
                             sigma=.001, maker_windows=frozenset({window.slug}))
 

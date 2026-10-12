@@ -22,3 +22,9 @@ Public fills cannot prove unseen orders or their cancellations, exact execution
 milliseconds, the wallet's private features, or fees/rebates. A predictive rule
 on international five-minute fills would still require separate testing before
 use on Kalshi fifteen-minute markets. Nothing here activates real money.
+
+The mission's 70% fill-match target is preregistered with five-second/two-cent
+tolerances and one-to-one matching in PLAN.md. Fixed candidate predictions are
+now recorded prospectively, while the strict execution gate stays blocked.
+Explicit public-print proxy audits report all fills, precision, uncertainty and
+spam baselines; they are not held-out strategy verdicts and cannot activate money.

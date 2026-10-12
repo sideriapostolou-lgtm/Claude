@@ -12,7 +12,7 @@ Deployment itself must leave the new companion in paper mode; the owner activate
 From its newest 2,000 public fills (2026-10-12, 3.2 hours, 38 windows), with `pull.py`, `an.py` and
 `deep.py` in research/lab8/skip and the scratchpad:
 
-- **Markets:** only Bitcoin Up/Down 5-minute windows on Polymarket international. It trades every window.
+- **Markets in this sample:** only Bitcoin Up/Down 5-minute windows on Polymarket international. It trades every sampled window. The later full-history audit also found Ethereum five-minute trades; do not generalize this recent sample to its whole history.
 - **Holding:** buys only, never sells, holds to settlement.
 - **Two-sided:** it buys **both Up and Down** in 37 of 38 windows, nearly balanced (median imbalance 13 %).
 - **Prices:** anywhere from 0.10 to 0.90, mostly 0.30-0.70. It buys whichever side is cheap at that moment.
@@ -210,8 +210,10 @@ New buys require all of the following in the current process:
 Valid window rules, fresh data, conservative fee allowances, reconciled account state and remaining budget are
 also required. Any authentication failure leaves this companion in paper with a visible reason; it must not
 stop the existing polydesk process. Record the correct account type before activation; do not set `direct` merely to bypass missing fee evidence.
-Activation variables are set by the owner on Railway **after** the paper
-deployment is verified. The kill switch is `SPEEDDESK_KALSHI_MODE=paper`.
+The owner confirmed on 2026-10-12 that this account was opened **directly on Kalshi**.
+The factual setting is `SPEEDDESK_KALSHI_ACCOUNT_TYPE=direct`; the portable default remains `unknown`.
+No account-type or live variable was changed in this session. The owner records the account type and sets
+the activation variables on Railway **after** the paper deployment is verified. The kill switch is `SPEEDDESK_KALSHI_MODE=paper`.
 
 Fresh paper operation never constructs the authenticated client. Returning from live to paper still needs
 authenticated, cancel/read-only recovery for prior live orders; this recovery cannot submit a new order.
@@ -366,3 +368,60 @@ Official references checked: <https://data-api.polymarket.com/v2/openapi.json>,
 <https://docs.cdp.coinbase.com/coinbase-app/advanced-trade-apis/websocket/websocket-channels>,
 <https://docs.kalshi.com/websockets/orderbook-updates>, and
 <https://docs.kalshi.com/websockets/public-trades>. Current provider schemas take precedence over old examples.
+
+
+## 11. Expanded replication mission (latest owner instruction, 2026-10-12)
+
+This supersedes earlier informal promises to copy an exact private algorithm. The objective is a measured
+approximation on a venue the owner may use. Public observations cannot guarantee recovery of private
+cancellations, intentions, hidden liquidity or reaction time. Five-minute international Polymarket and
+15-minute Kalshi differ in settlement reference, fees, market duration, available size and execution.
+The source bot's apparent speed advantage and alleged $100 beginning are hypotheses to test.
+
+### History and funding
+
+`research/lab8/skip/history.py` collects official public activity/trades with a fixed cutoff, complete cursor
+pagination, rate-limit backoff and raw-page digests. `history_chain.py` independently checks public Polygon
+receipts. Funding, holdings value, fees, rebates, realized/unrealized position result and economic result
+remain separate. `HISTORY.md` states coverage and unknowns, including daily balance/drawdown limitations.
+The observed wallet was created on July 17 and initially funded with $4,000; this is not evidence of the
+owner's complete bankroll or a $100 phase. Never fabricate a small-bankroll playbook from that claim.
+
+### New observations and evaluation target
+
+Record genuine Coinbase, Kraken and Gemini BTC/USD trades, source timestamps, local receipt clocks,
+identifiers and feed gaps. Keep independent feature clocks for new feeds without resetting the original
+watcher origin. Local reachability is not proof of Railway reachability. Never route around a restricted
+exchange or label apparent source-clock age as proven predictive leadership. The financial desk keeps its
+existing Coinbase input and volatility rules; research does not silently choose a faster money feed.
+
+The owner's target is **at least 70% of held-out source fills**, correct side, within **5 seconds**, and
+price within **2 cents**. Freeze protocol, candidates and predictions before evaluation; fit on earlier
+days and test on a held-out day. Match predictions one-to-one, report precision, false positives and simple
+baselines, and retain all observed source fills in the denominator with unknown-label bounds. Public-event
+proxy scoring is separate from qualified causal execution scoring. Block inclusion is not execution time;
+unknown clock/linkage evidence blocks the strict gate. A new feature/protocol epoch cannot borrow earlier
+unrecorded features or manufacture a completed three-day trial. See `PLAN.md` and `RULES.md` for the pinned
+protocol, current status and remaining timing qualification. No fitter output activates an execution rule.
+
+### Timing and daily comparison
+
+Record median/p95 and sample/missing/error counts for public Kalshi HTTP round trip, age of the exact
+Bitcoin input at each decision, local receipt-to-decision time, and real decision-to-order acknowledgment.
+Clock uncertainty is explicit. Paper has no real acknowledgment samples. Acknowledgment is not a fill, and
+input age does not prove that the tick caused the decision. One Railway region's observations cannot
+establish that moving would help; do not move the service or stored data.
+
+The daily comparison keeps source observations, Kalshi real, its practice twin, and the original two
+practice venues separate. Use window-end UTC cohorts for both-sides rate, actual taker share, final share
+imbalance, quantity-weighted matched-pair cost including fees, fills/window, settled locked/directional
+result and worst settled window. Fully observed eligible zero-fill windows remain in the activity
+denominator. Historical missing coverage stays unknown; pending settlements do not become zero profit.
+Targets: both sides in at least 90% of windows, taker share about two-thirds, median imbalance at most 15%,
+and average pair cost below $1 including fees. These are comparisons, never instructions to force trades.
+
+A higher-cap proposal requires **three consecutive complete UTC days, each positive after fees**, and the
+qualified held-out rule-match target. Unknown evidence fails the gate. Only the owner changes caps.
+Ship the companion in paper, verify the exact deployment and existing polydesk, then provide activation
+settings. After the owner activates, record actual orders, fills, fees and settlement results. Future
+three-day observations and first live fills cannot be claimed during the implementation session.

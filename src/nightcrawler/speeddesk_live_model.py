@@ -10,7 +10,7 @@ from __future__ import annotations
 import hashlib
 import itertools
 import math
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from decimal import ROUND_CEILING, Decimal
 from typing import Any, Literal
 
@@ -117,6 +117,8 @@ class ActualFill:
     size: float
     fee_usd: float
     at: float
+    # Optional venue evidence; legacy unknown is not a financial fill change.
+    is_taker: bool | None = field(default=None, compare=False)
 
 
 @dataclass(frozen=True)

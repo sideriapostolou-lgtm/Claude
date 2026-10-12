@@ -626,12 +626,35 @@ def main() -> None:
     parser.add_argument("--session-start", "--session-started-at", dest="session_start", type=float,
                         required=True, help="Original persisted prospective start, epoch seconds")
     parser.add_argument("--now", type=float, default=None, help="Evidence clock, epoch seconds (default current time)")
+    parser.add_argument("--execution-score", action="store_true",
+                        help="Explicit offline public-event proxy audit; cannot qualify or activate execution rules")
+    parser.add_argument("--cohort-start", type=float, help="First five-minute market-window start in proxy audit")
+    parser.add_argument("--cohort-end", type=float, help="Exclusive market-window end, at most one day later")
+    parser.add_argument("--candidate", default="ask:0.02:30", help="Fixed preregistered candidate for proxy audit")
     arguments = parser.parse_args()
     directory = arguments.data_dir or arguments.directory
     if directory is None:
         parser.error("A watcher data directory is required")
     if hasattr(os, "nice"):
         os.nice(10)  # CPU-heavy prospective research yields priority to the financial process.
+    if arguments.execution_score:
+        from .skipwatch_execution import score_journal
+
+        if arguments.cohort_start is None or arguments.cohort_end is None:
+            parser.error("Proxy audit requires --cohort-start and --cohort-end")
+        try:
+            report = score_journal(directory, cohort_start=arguments.cohort_start,
+                                   cohort_end=arguments.cohort_end, candidate_id=arguments.candidate)
+            identity = hashlib.sha256(_canonical(report)).hexdigest()
+            target = directory / "research" / "execution" / f"proxy-{identity}.json"
+            _atomic_new(target, report)
+            print(json.dumps({"status": report["status"], "scope": report["scope"],
+                              "artifact": str(target), "strict_gate_passed": False,
+                              "live_promotion": False}, sort_keys=True, allow_nan=False))
+        except (OSError, EOFError, ValueError, KeyError, TypeError) as exc:
+            print(json.dumps({"status": "research_blocked", "reason": type(exc).__name__,
+                              "strict_gate_passed": False, "live_promotion": False}, sort_keys=True))
+        return
     status = run_due(directory, arguments.now if arguments.now is not None else time.time(), arguments.session_start)
     keys = ("status", "reason", "summary", "candidate", "session_started_at", "frozen_at", "evaluated_at",
             "freeze_due_at", "test_due_at", "holdout_status", "live_promotion", "retry_after_s",

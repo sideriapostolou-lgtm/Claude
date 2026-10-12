@@ -26,6 +26,7 @@ from .speeddesk_feeds import number, timestamp
 US_BASE = "https://gateway.polymarket.us"
 US_EVENTS = US_BASE + "/v1/events?seriesId=387&limit=10&offset=0&orderBy=endDate&orderDirection=desc"
 KALSHI_STATUS = "https://api.elections.kalshi.com/trade-api/v2/exchange/status"
+BINANCE_PING = "https://api.binance.com/api/v3/ping"
 ROLLING_SECONDS = 3600
 MAX_SAMPLES = 256
 MAX_BACKOFF_SECONDS = 7 * 86400
@@ -71,8 +72,9 @@ class PublicProbes:
 
     def __init__(self, *, get: Callable[[str], Any] | None = None, clock: Callable[[], float] = time.time,
                  monotonic: Callable[[], float] = time.monotonic, region: str | None = None,
-                 initial: Mapping[str, Any] | None = None) -> None:
+                 initial: Mapping[str, Any] | None = None, check_availability: bool = False) -> None:
         self.get, self.clock, self.monotonic = get or _public_get, clock, monotonic
+        self.check_availability = check_availability
         self.region = region if isinstance(region, str) and REGION_PATTERN.fullmatch(region) else None
         self._lock = threading.Lock()
         self._state: dict[str, Any] = {}
@@ -119,7 +121,10 @@ class PublicProbes:
         with self._lock:
             raw_retry = initial.get("retry_at")
             retry_at = raw_retry if isinstance(raw_retry, Mapping) else {}
+            availability = initial.get("binance_availability")
             self._state = {"version": 1, "region": self.region, "as_of": None, "us_5m": restored, "samples": samples,
+                           "binance_availability": (dict(availability) if isinstance(availability, Mapping)
+                                                    and initial.get("region") == self.region else None),
                            "retry_at": {host: min(now + MAX_BACKOFF_SECONDS, max(now, number(retry_at.get(host)) or now))
                                         for host in ("us", "kalshi")}}
 
@@ -229,12 +234,36 @@ class PublicProbes:
             us["status"] = "Listing check failed (" + type(exc).__name__ + "); saved first observation retained"
         return []
 
+    def _availability(self, state: dict[str, Any]) -> list[dict[str, Any]]:
+        """One public availability request, persisted across restarts. Never bypass or retry a denial."""
+        if state.get("binance_availability") is not None:
+            return []
+        status, result = None, "transport_unavailable"
+        try:
+            response = self.get(BINANCE_PING)
+            value = response.status_code
+            status = value if isinstance(value, int) and 100 <= value <= 599 else None
+            if status in (403, 451):
+                result = "access_denied_no_retry"
+            elif status == 200 and response.json() == {}:
+                result = "public_ping_reachable_feed_not_tested"
+            else:
+                result = "http_unavailable_no_retry"
+        except Exception:  # noqa: BLE001 — transport/provider text is neither needed nor safe to echo.
+            result = "transport_unavailable"
+        evidence = {"at": self.clock(), "region": self.region, "http_status": status, "result": result,
+                    "requests": 1, "feed_enabled": False, "retry_scheduled": False}
+        state["binance_availability"] = evidence
+        return [{"kind": "skipwatch_binance_availability", **evidence}]
+
     def poll(self) -> list[dict[str, Any]]:
         """One sequential probe cycle. Returned first-seen event must be durably logged by the caller."""
         state = self.state()
         state.pop("kalshi_latency", None)
         self._latency(state)
         events = self._listing(state)
+        if self.check_availability:
+            events.extend(self._availability(state))
         state["as_of"] = self.clock()
         with self._lock:
             self._state = state

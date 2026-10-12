@@ -207,9 +207,9 @@ session scratchpad that you will not have.
    uses actual account fills/fees/positions and a separate honest practice twin, and never promotes itself.
    The owner activates `SPEEDDESK_KALSHI_MODE=live` and `SPEEDDESK_KALSHI_LIVE_CONFIRM=yes` only after the
    deployment check. Until Direct-account fee precision is established, conservative rounding excludes all
-   positive-edge orders; the panel says why. Set the factual `SPEEDDESK_KALSHI_ACCOUNT_TYPE=direct` only
-   if the owner confirms a personal account opened directly with Kalshi; `fcm` for a broker/FCM, otherwise
-   leave `unknown`. This account fact does not authorize orders. Total stop requires a never-before-used resume token. Companion
+   positive-edge orders; the panel says why. The owner confirmed **opened directly on Kalshi** on 2026-10-12. Record the factual
+   `SPEEDDESK_KALSHI_ACCOUNT_TYPE=direct` before activation; this session did not change Railway variables.
+   Portable defaults remain `unknown`; `fcm` is for broker/FCM accounts. This account fact does not authorize orders. Total stop requires a never-before-used resume token. Companion
    receipts live in `/data/speeddesk/kalshi_live/`; the page exposes `money.speeddesk.kalshi_live`, separately
    from Polymarket cash and town totals. Polymarket US speed trading remains practice permanently.
    **Companion deployment verified 2026-10-12 20:14 UTC:** PR #9, commit `38d8a42`, Railway SUCCESS,
@@ -234,6 +234,15 @@ session scratchpad that you will not have.
    public-REST-only credential restriction for market data, not any live order gate. HTTP RTT probes and
    a verified US five-minute listing alert are separate from trading. No Railway region or variables
    changed. Check the newest WORKLOG entry for actual deployed behavior and remaining observation time.
+
+   **Expanded mission (latest owner instruction):** full public history and funding audit first, then
+   multi-exchange Bitcoin observations, a preregistered held-out fill-matching target of at least 70%
+   (right side, within 5 seconds, price within 2c), measured timing and a separate daily scorecard.
+   See spec section 11 and `research/lab8/skip/HISTORY.md`. Independent chain evidence supports a $4,000
+   opening balance in this observed wallet, not the claimed $100. Public block timestamps do not establish
+   execution timing; proxy scores cannot silently pass the strict target. Three complete consecutive UTC
+   days each positive after fees plus the verified rule-match target are evidence for **asking** the owner
+   about higher caps, never automatic permission. Existing $2/$4/$3/$5 limits remain unchanged.
 
 1. **Lab 8, the distance-filtered grind (the owner's idea).** Buy 95-99c only when Bitcoin is far from the strike,
    measured in how much it normally moves in the time left (z = ln(S/K) / (sigma x sqrt(minutes left))). Done so

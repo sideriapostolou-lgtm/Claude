@@ -36,6 +36,97 @@ features can follow execution, and their scores cannot identify triggers,
 constitute a trading rule or enable money. A new causal protocol must be
 registered before any execution-label model selection or held-out evaluation.
 
+## Mission amendment: fixed public-event shadow predictions, before any score
+
+The owner's updated target is **at least 70% of held-out source fills**, the
+correct outcome, within **five seconds and $0.02**, with precision and false
+positives visible. No numeric precision floor was supplied by the owner. A
+recall-only score cannot establish a useful model.
+
+`skipwatch-execution-v3` now preregisters an observation stage, **not a qualified
+execution study**. Its exact machine protocol/hash live in
+`src/nightcrawler/skipwatch_execution.py`. It records fixed-grid predictions
+prospectively from already received opportunity snapshots. The journal retains
+its original session origin; `shadow_started_at` identifies this added observer
+protocol. `qualified_epoch_started_at` remains null. No old data is silently
+reassigned to a new training/holdout epoch.
+
+The existing 24 candidates remain fixed: three edges, two cutoffs and four
+original templates. Coinbase fair/opening and trend remain explanatory proxies;
+new Kraken/other-feed features are separate diagnostics, not a hidden best-of-
+feeds search. Each candidate emits at most one outcome prediction per market
+per second. If both qualify, greatest current quote edge wins, then Up on an
+exact tie. The first paired up/down snapshot is used; missing/stale/future
+features produce no prediction. Quote prices are those actually observed, not
+prices selected later from the tolerance band. Quantity is unknown at this
+stage; one prediction can claim at most one wallet fill regardless of size.
+The journal records the feature sequences/hashes, process clock, actual issue
+time, candidate, side and price. A restart restores emitted bins rather than
+reconstructing hypothetical historical predictions.
+
+An explicit offline `--execution-score --cohort-start ... --cohort-end ...`
+CLI audits a fixed candidate on at most one day's predetermined five-minute
+market-window cohort. This is **not held-out testing or candidate selection**.
+It writes a content-addressed proxy artifact under `research/execution/` and
+cannot bypass the production fitting pause. All observed source fill rows for
+the BTC five-minute cohort stay in the denominator, including SELL, unknown
+action, unmatched and ambiguous rows. Buy-only predictions cannot match SELLs.
+Unknown cohort membership is separately counted and blocks completeness.
+A subset's recall is always labeled separately from all-row recall. Other market families such as ETH are outside this declared BTC five-minute
+universe; the report does not claim to reproduce all of the wallet's activity.
+
+Assignment uses maximum-cardinality bipartite matching with unit capacity on
+both predictions and fill rows. Deterministic traversal orders edges by time
+error, price error and stable IDs; it does not claim globally minimum total
+error. A strict hit requires verified settled identity and an independently
+qualified execution interval [L,U], decision d < L and U-d <= 5, the same side,
+and price error <= $0.02. This is more conservative than symmetric +/-5s and
+does not reward an after-trade reaction. No public timestamp evidence is
+currently qualified, so the strict execution gate remains blocked. A JSON
+claim saying "verified" cannot qualify an unknown clock source.
+
+Proxy hits use a uniquely associated public print timestamp, with the same
+before-event/time/price rules, and are labeled **inferred public event time,
+not exact execution or private reaction**. Two wallet rows sharing one observed
+print make those associations ambiguous unless a future reviewed fragment
+protocol proves otherwise. The present scorer does not infer complementary or
+aggregate timing. Unresolved fills contribute to capacity-constrained possible-
+match bounds, not verified hits or silent negatives. Report predictions,
+all-row and identifiable-subset recall, all-prediction precision, linkage
+coverage, possible upper bounds and confirmed-false-positive lower bounds.
+
+Never-predict, dense both-sides/every-second, and single-side greatest-edge
+baselines use the same matching rules. The dense baseline is explicitly a spam
+comparison, not an allowed candidate. Future qualification must beat active
+non-spam baselines in precision/F1; this is a preregistered anti-spam criterion,
+not an additional owner instruction about money. Current output keeps
+`held_out`, `baseline_passed`, `anti_spam_passed`, `strict_gate_passed` and
+`live_promotion` false; descriptive proxy scores cannot turn them on.
+
+The [official current contract sources](https://github.com/Polymarket/ctf-exchange-v2/tree/ccc0596074f4dfd62c944fbca4de252893b82b4b)
+show that OrderFilled.maker is the order owner, including on an active order;
+OrdersMatched identifies the active/taker order. The two active events repeat
+one economic settlement. A full version-correct receipt can therefore resolve
+some complementary/aggregate economic identity and settled roles, but block
+inclusion still does not supply off-chain execution time. Public CLOB docs
+expose an event timestamp without a reviewed matching-clock guarantee. Hash or
+1-minus-price arithmetic alone never proves wallet identity or timing.
+
+Before training resumes, separately validate timing/clock bounds, complete
+receipt/print linkage, label finalization and coverage. Then append an explicit
+new qualified protocol epoch at a predetermined five-minute boundary; preserve
+the original tape. Proposed model phases remain 36h fit, 12h validation, frozen
+candidate, then a separate complete 24h untouched holdout, with any delayed
+freeze/holdout start recorded. Unknown-time rows censor all feasible target
+horizons when constructing negatives; they stay in the headline denominator.
+Final evidence minima/finality policy must be frozen before those phases begin.
+No prospective strategy metrics were inspected to select this protocol.
+
+Source-match scores are not our after-fee profit, queue position or a validated
+Kalshi transfer. An eventual qualified rule starts in a separate honest practice
+trial. No real promotion, private order/cancellation inference, cap increase,
+credential operation or region change is authorized by this observer stage.
+
 ## Original version 1 proposal, retained for audit
 
 The causal execution interpretation of the target below is withdrawn by the
