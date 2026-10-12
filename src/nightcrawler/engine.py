@@ -2552,6 +2552,7 @@ class App:
     arena: Any = None
     speeddesk: threading.Thread | None = None
     skipwatch: threading.Thread | None = None
+    weatherwatch: threading.Thread | None = None
 
     def close(self) -> None:
         """Stop the dashboard (if running), write the last provider-usage counts and close the ledger."""
@@ -2581,6 +2582,9 @@ class App:
                 self.arena.stop()
             if self.dashboard is not None:
                 self.dashboard.stop()
+            if self.weatherwatch is not None:
+                # Read-only recording must not delay existing desk cleanup.
+                self.weatherwatch.join(timeout=1)
         finally:
             try:
                 flush_usage(self.http)  # never raises; the last minute of counts is not lost
@@ -2728,6 +2732,17 @@ def build_app(settings: Settings, clock: Clock | None = None, *, session: Any = 
         except Exception as exc:  # noqa: BLE001 — public observation cannot stop any trading desk.
             log.warning("skipwatch_not_started mode=observation error=%s", type(exc).__name__)
             skipwatch = None
+    weatherwatch = None
+    if settings.weatherwatch_enabled:
+        try:
+            from nightcrawler.weatherwatch import run_weatherwatch
+
+            weatherwatch = threading.Thread(target=run_weatherwatch, args=(settings, stop_event),
+                                            name="weatherwatch", daemon=True)
+            weatherwatch.start()
+        except Exception as exc:  # noqa: BLE001 - read-only observations cannot stop existing desks.
+            log.warning("weatherwatch_not_started mode=observation error=%s", type(exc).__name__)
+            weatherwatch = None
     if settings.trenddesk_enabled:  # PAPER only: lab 3's 50-day trend rule on BTC, ETH and SOL, once a day
         try:
             from nightcrawler.trenddesk import TrendDesk
@@ -2741,7 +2756,7 @@ def build_app(settings: Settings, clock: Clock | None = None, *, session: Any = 
                crawler=crawler, cocoon=cocoon, radar=radar, judge=judge, risk=risk, broker=broker,
                auditor=auditor, engine=engine, dashboard=dashboard, wallet=wallet, polydesk=polydesk,
                trenddesk=trenddesk, marcodesk=marcodesk, nhldesk=nhldesk, arena=arena_town,
-               speeddesk=speeddesk, skipwatch=skipwatch)
+               speeddesk=speeddesk, skipwatch=skipwatch, weatherwatch=weatherwatch)
 
 
 def build_engine(settings: Settings, clock: Clock | None = None) -> Engine:

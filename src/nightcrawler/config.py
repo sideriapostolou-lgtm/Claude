@@ -490,6 +490,19 @@ class Settings:
                                          "visible gap at the limit, never delete research evidence", lo=64, hi=16384)
     skipwatch_min_free_mb: int = _f(128, "count", "Keep this much disk free in MiB for the trading desks; halt "
                                       "watcher capture before using it", lo=64, hi=4096)
+    # ---- Weather observation only: no order client or money switches ----
+    weatherwatch_enabled: bool = _f(True, "bool", "Measure weather observations and public market depth; "
+                                        "never places orders or enables trading")
+    weatherwatch_max_storage_mb: int = _f(512, "count", "Maximum weather evidence storage in MiB; halt capture "
+                                            "with a visible gap at the limit", lo=64, hi=4096)
+    weatherwatch_min_free_mb: int = _f(128, "count", "Keep this much disk free in MiB for existing desks",
+                                         lo=64, hi=4096)
+    weatherwatch_retention_days: int = _f(7, "count", "Daily weather report retention in UTC days; "
+                                            "raw journal evidence is never automatically deleted", lo=4, hi=31)
+    weatherwatch_discovery_s: float = _f(300.0, "seconds", "Refresh weather market discovery at this interval",
+                                           lo=60, hi=3600)
+    weatherwatch_max_active_watches: int = _f(20, "count", "Maximum simultaneous ten-minute weather market "
+                                                "observations; skipped watches are reported", lo=1, hi=100)
     trenddesk_enabled: bool = _f(True, "bool", "The trend desk: a PAPER forward test of lab 3's 50-day trend rule on "
                                  "BTC, ETH and SOL, from Coinbase's public daily candles once a day (never real money, "
                                  "never a key)")
@@ -595,10 +608,21 @@ class Settings:
                 if f.name.endswith("_mb") and not isinstance(value, int):
                     problems.append(f"{env} must be a whole number of MiB")
                     continue
+            if f.name.startswith("weatherwatch_"):
+                if meta.get("unit") == "bool":
+                    if not isinstance(value, bool):
+                        problems.append(f"{env} must be a boolean")
+                        continue
+                elif isinstance(value, bool) or not isinstance(value, (int, float)):
+                    problems.append(f"{env} must be a finite number")
+                    continue
+                elif meta.get("unit") == "count" and not isinstance(value, int):
+                    problems.append(f"{env} must be a whole number")
+                    continue
             if meta.get("choices") and value not in meta["choices"]:
                 problems.append(f"{env}={value!r} must be one of {', '.join(meta['choices'])}")
             if isinstance(value, (int, float)) and not isinstance(value, bool):
-                if f.name.startswith(("speeddesk_", "skipwatch_")) and not math.isfinite(value):
+                if f.name.startswith(("speeddesk_", "skipwatch_", "weatherwatch_")) and not math.isfinite(value):
                     problems.append(f"{env} must be finite")
                     continue
                 lo, hi = meta.get("lo"), meta.get("hi")

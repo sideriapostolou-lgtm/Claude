@@ -1651,6 +1651,106 @@ def _kalshi_live_panel(raw: Any, settings: Settings, now: float) -> dict[str, An
     }
 
 
+def weatherwatch_panel(settings: Settings, now: float) -> dict[str, Any] | None:
+    """Expose bounded saved observations only; never read an account or mix them into money totals."""
+    if not settings.weatherwatch_enabled:
+        return None
+    waiting = {"label": "READ-ONLY WEATHER STOPWATCH", "status": "Waiting for the first weather observation",
+               "stale": True, "real_orders_available": False}
+    try:
+        with (settings.data_dir / "weatherwatch" / "state.json").open("rb") as stream:
+            body = stream.read(8 * 1024 * 1024 + 1)
+        if len(body) > 8 * 1024 * 1024:
+            raise ValueError("weather_state_too_large")
+        raw = _xp_map(_xp_map(json.loads(body)).get("panel"))
+        if not raw:
+            return {**waiting, "status": "Weather report is missing; observations are unknown"}
+    except FileNotFoundError:
+        return waiting
+    except (OSError, ValueError, TypeError):
+        return {**waiting, "status": "Saved weather report is unreadable; observations are unknown"}
+    text = _Text(settings)
+    as_of = _num(raw.get("as_of"))
+    stale = as_of is None or as_of > now + FUTURE_SKEW_S or now - as_of > 120
+
+    def nonnegative(value: Any) -> float | None:
+        number = _num(value)
+        return number if number is not None and number >= 0 else None
+
+    def scenarios_report(value: Any) -> dict[str, Any]:
+        venues, reports = _xp_map(value), {}
+        for venue in ("kalshi", "polymarket_us"):
+            thresholds = _xp_map(venues.get(venue))
+            scenarios = {}
+            for threshold in ("0.97", "0.98"):
+                row = _xp_map(thresholds.get(threshold))
+                if not row:
+                    continue
+                scenarios[threshold] = {
+                    **{key: _count(row.get(key)) for key in (
+                        "candidate_markets", "conditional_entries", "unassessed_markets", "exit_observations",
+                        "settled_entries", "pending_hold_entries")},
+                    **{key: nonnegative(row.get(key)) for key in (
+                        "displayed_contracts_at_assessment", "conditional_capital_usd")},
+                    **{key: _num(row.get(key)) for key in (
+                        "conditional_exit_pnl_usd", "conditional_hold_pnl_usd")},
+                    "execution_proven": False, "qualified_pnl_usd": None,
+                }
+            if scenarios:
+                reports[venue] = scenarios
+        return reports
+
+    def daily_report(value: Any) -> dict[str, Any]:
+        row = _xp_map(value)
+        disagreements = {}
+        for key in ("settlement_disagreements", "cli_disagreements"):
+            rows = row.get(key)
+            disagreements[key] = len(rows) if isinstance(rows, list) else None
+        if not _count(row.get("cli_comparisons")):
+            disagreements["cli_disagreements"] = None
+        return {
+            "day": text.opt(row.get("day"), 10), "complete": row.get("complete") is True,
+            **{key: _count(row.get(key)) for key in (
+                "candidate_locks", "confirmed_observation_proxies", "gaps", "rejected_readings", "trade_prints",
+                "cli_reports", "cli_comparisons")},
+            **disagreements, "recorded_seconds": nonnegative(row.get("recorded_seconds")),
+            "conditional_scenarios": scenarios_report(row.get("conditional_scenarios")),
+            "qualified_cents_per_day": None,
+        }
+
+    today = _xp_map(raw.get("today"))
+    source_rows, health = _xp_map(today.get("sources")), _xp_map(raw.get("health"))
+    sources = {}
+    for name in ("nws", "aviationweather", "madis_hfm", "asos_1minute"):
+        row, status = _xp_map(source_rows.get(name)), _xp_map(health.get(name))
+        if row or status:
+            sources[name] = {
+                "status": text.opt(status.get("status")), "reason": text.opt(status.get("reason")),
+                "readings": _count(row.get("readings")), "overflow": row.get("overflow") is True,
+                "bootstrap_readings": _count(row.get("bootstrap_readings")),
+                "latency_samples": _count(row.get("latency_samples")),
+                "median_latency_s": None if row.get("overflow") is True else nonnegative(row.get("median")),
+                "p95_latency_s": None if row.get("overflow") is True else nonnegative(row.get("p95")),
+            }
+    history = {}
+    reports = _xp_map(raw.get("reports"))
+    for day in sorted((key for key in reports if isinstance(key, str) and re.fullmatch(r"\d{4}-\d{2}-\d{2}", key)),
+                      reverse=True)[:7]:
+        history[day] = daily_report(reports[day])
+    return {
+        "label": "READ-ONLY WEATHER STOPWATCH", "real_orders_available": False,
+        "as_of": as_of, "started_at": _num(raw.get("started_at")), "stale": stale,
+        "status": text.opt(raw.get("status")) or "Observing weather and displayed market depth",
+        "problem": text.opt(raw.get("problem")),
+        **{key: _count(raw.get(key)) for key in ("active_watches", "capacity_skips", "markets", "restarts")},
+        "modeled_quote_delay_s": nonnegative(raw.get("modeled_quote_delay_s")),
+        "actual_order_latency_s": None, "qualified_cents_per_day": None,
+        "scenarios_overlap": True, "scenario_quantity": 1,
+        "storage_bytes": nonnegative(raw.get("storage_bytes")),
+        "sources": sources, "today": daily_report(today), "reports": history,
+    }
+
+
 def skipwatch_panel(settings: Settings, now: float) -> dict[str, Any] | None:
     """Read only the watcher's saved panel. No network, account call, or contribution to any money totals."""
     if not settings.skipwatch_enabled:
@@ -2960,6 +3060,7 @@ def build_page_state(ledger: Any, settings: Settings, now: float, engine_status:
         "refresh_s": REFRESH_S,
         "alerts": alerts + usage_alerts,
         "skipwatch": skipwatch_panel(settings, now),
+        "weatherwatch": weatherwatch_panel(settings, now),
         # the screen in plain words, from the figures below only (never one kind of money added to another)
         "plain": plain_words(settings, money, members, now, passed=card["champion_passed_locked_test"],
                              closed=trades["closed"]),

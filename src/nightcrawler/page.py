@@ -221,6 +221,8 @@ footer{color:var(--ink2);font-size:12px;text-align:center;margin-top:18px}
 #kalshilive h2 small{white-space:normal}
 #skipwatch .num{white-space:normal;text-align:right;overflow-wrap:anywhere}
 #skipwatch-market{overflow-wrap:anywhere}
+#weatherwatch .num{white-space:normal;text-align:right;overflow-wrap:anywhere}
+#weatherwatch-venues{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr))}
 .hero-tag{font-size:20px;font-weight:650;color:var(--ink2);letter-spacing:0}
 """
 
@@ -454,6 +456,74 @@ _SCRIPT = r"""
       + "protection against exchange or network failures.";
     $("kalshi-live-updated").textContent = "Report: " + (isNum(k.as_of) ? ago(k.as_of) : "not received")
       + ". Cash checked: " + (isNum(k.cash_at) ? ago(k.cash_at) : "not received") + ".";
+  }
+
+  function renderWeatherwatch(w) {
+    $("weatherwatch").hidden = !w;
+    if (!w) return;
+    const number = (v) => isNum(v) ? String(v) : "—";
+    const seconds = (v) => isNum(v) ? v.toFixed(1) + " s" : "—";
+    const row = (label, value) => el("div", "line", el("span", null, label), el("b", "num", value));
+    const venueName = (key) => key === "kalshi" ? "Kalshi" : "Polymarket US";
+    const scenarioRows = (v) => [
+      row("Candidate markets", number(v.candidate_markets)),
+      row("Markets not assessed", number(v.unassessed_markets)),
+      row("Displayed contracts at assessment", number(v.displayed_contracts_at_assessment)),
+      row("Conditional one-contract entries", number(v.conditional_entries)),
+      row("Conditional capital required", usd(v.conditional_capital_usd)),
+      row("Settled / pending entries", number(v.settled_entries) + " / " + number(v.pending_hold_entries)),
+      row("Settled hold subtotal, after fees", usd(v.conditional_hold_pnl_usd, true)),
+      row("99¢ sale observations", number(v.exit_observations)),
+      row("Observed sale subtotal, after fees", usd(v.conditional_exit_pnl_usd, true))];
+    const venueRows = (v, prefix) => [row("Estimated cents per day", "Not measured"),
+      ...["0.97", "0.98"].map((threshold) => detail(prefix + "-" + threshold,
+        "Alternative: buy at " + (Number(threshold) * 100).toFixed(0) + "¢ or less",
+        ...scenarioRows(v[threshold] || {})))];
+    const today = w.today || {};
+    $("weatherwatch-status").textContent = (w.stale ? "Report behind: " : "") + w.status
+      + (w.problem ? " · " + w.problem : "");
+    put($("weatherwatch-counts"), row("UTC day", today.day || "Not reported"),
+      row("Threshold candidates", number(today.candidate_locks)),
+      row("Confirmed observation proxies", number(today.confirmed_observation_proxies)),
+      row("Active ten-minute watches", number(w.active_watches)),
+      row("Capacity skips / evidence gaps", number(w.capacity_skips) + " / " + number(today.gaps)),
+      row("Final CLI reports / comparisons", number(today.cli_reports) + " / " + number(today.cli_comparisons)),
+      row("CLI disagreements observed", isNum(today.cli_disagreements) ? number(today.cli_disagreements) : "Not measured"),
+      row("Settlement disagreements observed", number(today.settlement_disagreements)));
+    put($("weatherwatch-venues"), ...["kalshi", "polymarket_us"].map((key) => {
+      const v = (today.conditional_scenarios || {})[key] || {};
+      return el("div", "about", el("h3", null, venueName(key)),
+        el("div", "rows", ...venueRows(v, "today-" + key)));
+    }));
+    put($("weatherwatch-sources"), ...[["NWS", "nws"], ["Aviation Weather", "aviationweather"],
+      ["NOAA MADIS ASOS (5-minute)", "madis_hfm"], ["One-minute ASOS", "asos_1minute"]]
+      .map(([label, key]) => {
+        const source = (w.sources || {})[key] || {};
+        return el("div", "about", el("p", "sub", label),
+          row("First-seen delay · median / p95", seconds(source.median_latency_s) + " / " + seconds(source.p95_latency_s)),
+          row("Recorded readings", number(source.readings)),
+          row("Readings in latency estimate", number(source.latency_samples)),
+          row("Startup / backfill readings excluded", number(source.bootstrap_readings)),
+          el("p", "help", source.status || "Not measured"),
+          ...(source.reason ? [el("p", "help", source.reason)] : []));
+      }));
+    const reports = Object.entries(w.reports || {}).sort(([a], [b]) => b.localeCompare(a));
+    put($("weatherwatch-history"), ...(reports.length ? reports.map(([day, report]) => {
+      const lines = [el("p", "help", report.complete ? "Complete recorded day" : "Partial day or evidence gaps"),
+        row("Final CLI reports / comparisons", number(report.cli_reports) + " / " + number(report.cli_comparisons)),
+        row("CLI disagreements observed", isNum(report.cli_disagreements) ? number(report.cli_disagreements) : "Not measured")];
+      for (const key of ["kalshi", "polymarket_us"]) {
+        const v = (report.conditional_scenarios || {})[key];
+        if (v) lines.push(el("p", "sub", venueName(key)), ...venueRows(v, day + "-" + key));
+      }
+      return detail("weather-day-" + day, day + " UTC", ...lines);
+    }) : [el("p", "help", "No completed daily weather report yet.")]));
+    $("weatherwatch-storage").textContent = "Stored evidence: "
+      + (isNum(w.storage_bytes) ? (w.storage_bytes / 1048576).toFixed(1) + " MiB" : "unknown")
+      + ". Last report: " + (isNum(w.as_of) ? ago(w.as_of) : "not received") + ".";
+    $("weatherwatch-method").textContent = "The 97¢ and 98¢ scenarios overlap: never add their results. Each tests "
+      + "one contract per market after a modeled " + seconds(w.modeled_quote_delay_s)
+      + " quote delay. Actual order latency and resting-order fills have not been measured.";
   }
 
   function renderSkipwatch(w) {
@@ -1141,6 +1211,7 @@ _SCRIPT = r"""
     renderSpeedDesk(s.money.speeddesk, s.plain && s.plain.speeddesk_line);
     renderKalshiLive(kalshi);
     renderSkipwatch(s.skipwatch);
+    renderWeatherwatch(s.weatherwatch);
     if (s.town) renderTown(s.town);
     renderGoal(s.plain && s.plain.goal);
     if (s.wallet) renderWallet(s.wallet);
@@ -1328,6 +1399,24 @@ def render_page_html(settings: Settings) -> str:
         "<details class=\"about\"><summary>Kalshi latency from this server</summary>"
         "<div class=\"rows\" id=\"skipwatch-latency\"></div><p class=\"help\" id=\"skipwatch-latency-note\"></p>"
         "</details></section>\n"
+
+        "<section class=\"card\" id=\"weatherwatch\" hidden><h2>Weather lock stopwatch "
+        "<small>READ-ONLY WEATHER STOPWATCH</small></h2>"
+        "<p class=\"lead\" id=\"weatherwatch-status\"></p><div class=\"rows\" id=\"weatherwatch-counts\"></div>"
+        "<p class=\"help\">Observed thresholds are not guaranteed wins. We use each venue's written station and "
+        "settlement rules, reject suspect readings, and require confirmation before tracking a threshold.</p>"
+        "<div id=\"weatherwatch-venues\"></div>"
+        "<p class=\"help\" id=\"weatherwatch-method\"></p>"
+        "<p class=\"help\">This observer sends no orders. Displayed contracts are measured at our first usable "
+        "observation; they are not guaranteed fills. Missing results mean unknown. Hypothetical results stay "
+        "separate from cash, profit and the town.</p>"
+        "<details class=\"about\"><summary>Weather publication delay by source</summary>"
+        "<div id=\"weatherwatch-sources\"></div>"
+        "<p class=\"help\">First-seen delay is when this server first received a reading minus its valid time. "
+        "It includes publication delay and polling; it is not order execution latency.</p></details>"
+        "<details class=\"about\"><summary>Daily weather measurements</summary>"
+        "<div id=\"weatherwatch-history\"></div></details>"
+        "<p class=\"help\" id=\"weatherwatch-storage\"></p></section>\n"
 
         "<section class=\"card\" id=\"wallet\"><h2>Bot wallet <small id=\"wallet-kind\"></small></h2>"
         "<div id=\"wallet-body\"><p class=\"empty\">Loading…</p></div></section>\n"
