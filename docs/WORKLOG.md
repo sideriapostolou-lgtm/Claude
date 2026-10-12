@@ -13,6 +13,26 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-12 19:33 UTC, Codex, branch codex/speed-desk
+- Changed: pulled first and read Claude's Kalshi account/signing handoff in `docs/ACCOUNTS.md` and spec
+  section 2b. His `d80424f` is already included. Recorded the explicit restriction: **public REST only,
+  PRACTICE ONLY; do not add code that reads Kalshi credentials or places Kalshi orders**. Claude's read-only
+  account/key verification is attributed to his handoff, not a new account check performed here.
+- Current application is the later reporting release `c329133`, preserving the trial started before the
+  clean `1e45cc3` startup. No app files changed. At 19:32:50 UTC, each venue still had 0 traded/settled windows,
+  0 fills, $0 locked-pair and $0 directional settled practice P&L, and 0 take/rest attempts. Worst window,
+  take/maker fill rates and decision-to-fill latency remain unavailable until trades occur.
+- Live evidence: both trade streams connected, warming-up status, problem=null, real_orders_available=false;
+  Bitcoin age 0.430 s and book age 0.433 s. Shared mean Bitcoin feed delay: 116.0 ms. Fresh-data/maker coverage
+  since instrumentation: US 352.66/346.05 s; Kalshi 351.69/351.69 s. Partial-day flags remain true. US fallback
+  retains its last HTTP 429 status while the primary WebSocket is connected and supplying fresh books.
+- Verification: latest Railway heartbeat read; application tree identical to the previously tested release.
+  Documentation-only diff and secret scan passed; no code tests rerun, no credentials read, no settings or
+  real money changed. This WORKLOG push does not match the app's watched deploy paths.
+- Pending: at least three days of practice evidence and daily per-venue reporting. Warm-up requires a full
+  hour plus at least 3,000 observed adjacent one-second returns; a clock time does not guarantee a practice
+  fill. The positive-after-fees requirement and owner's exact dollar amounts still gate any future real work.
+
 ## 2026-10-12 19:30 UTC, Codex, branch codex/speed-desk
 - Changed: recorded the owner's instruction to retain the existing Kalshi Ed25519 key and keep the speed
   desk **PRACTICE ONLY**. The key type is the owner's report; no credentials were inspected, changed, deleted
