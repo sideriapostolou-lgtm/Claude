@@ -132,8 +132,16 @@ needs none of them to write code or run tests.
 ## 6. The owner's pages
 
 `/` is the one page: money, team, trades, learning, receipts. `/world` is the 3D floating-island town, "Night
-Shift: Skyport". Its cinema shows real money only, practice props stay hidden, and the town district sits on an
-islet. `/api/page` is the JSON behind both. Every page needs `?token=` (`DASHBOARD_TOKEN`). To see a change, run
+Shift: Skyport". It opens in a phone-first steady town view: available account cash, the bot's realized result
+today, account-wide open bets and six selectable workstations. Account cash and open bets include the owner's
+activity; the bot's daily result does not. Missing/stale reports are labelled. Practice workstations are marked;
+the practice islet's floating dollar labels are hidden. The Theme Park Tycoon 2-inspired presentation adds lawns,
+department colors, paths on the existing walk graph and cutaway rooms. Tap a teammate for a steady close view,
+or the town/workstation title for its role and the two business workflows. Service alerts remain visible;
+"Real bets enabled" describes the money setting, not a health guarantee. Rook's account-open cost is shown
+separately from the bot-only cap. "Camera tour" restores the original cinema, whose
+money scenes show real money only. `/api/page` is the JSON behind both. Every page needs `?token=`
+(`DASHBOARD_TOKEN`). To see a change, run
 `nightcrawler dashboard` locally in paper mode and screenshot it with Playwright/Chromium at phone and desktop
 widths. The owner checks everything from a phone.
 

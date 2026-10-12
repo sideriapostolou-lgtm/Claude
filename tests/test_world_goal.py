@@ -936,6 +936,7 @@ def test_the_goal_panel_keeps_its_place_and_says_this_polls_figures(module: str,
                                                "goalOnScroll", "goalOnData"))
     out = _node(_pure(section) + _SCROLL_DOM + _js_body(module, "  function para(parent, text, cls) {") + f"""
 let data = {json.dumps(a)}, panelKind = "goal", plain = data.plain;
+const tycoonPanel = function () {{ return false; }};  // the reader opened the existing goal panel
 const GOAL = {{ ok: true, seen: data, g: data.town.goal, w: data.plain.goal, phone: true, scroll: 0 }}, GOAL_LOOK = {{ ring: [] }};
 const GOAL_CALM = false; let applied = 0;
 const goalApply = function (d) {{ applied += 1; GOAL.g = d.town.goal; GOAL.w = d.plain.goal; }};

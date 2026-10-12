@@ -13,6 +13,37 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-12 17:55 UTC, Codex, branch codex/tycoon-town-view, PR prepared
+- Changed: the owner asked for a phone-first steady town, then named Theme Park Tycoon 2 as the visual reference.
+  Kept the existing cast, buildings and navigation; added green grounds, department colors, paths on the actual
+  walk graph, cutaway rooms and six selectable workstations. The camera stays put until the viewer moves it;
+  the original camera tour remains available. Roof plants follow the cutaway and return with the original roofs.
+- Connected: available Polymarket account cash, account-wide open bets and the bot's realized result today use
+  existing `/api/page` fields. Owner bets, practice money, pending orders and bot results stay distinct. Cash
+  and account-position ages are checked separately; missing data stays unknown. Actual service alerts remain
+  visible. The role panel explains the separate Solana and Polymarket workflows without inventing handoffs.
+  Fixed two display scope errors: Rook's whole-account open cost no longer becomes a gauge against the bot-only
+  cap, and that same account total cannot create a false "full" pause in the new HUD. Trading decisions are unchanged.
+- Verified: synced the deploy branch through 03f526e; `python -m pytest -q`: 3,033 passed, 21 skipped;
+  `mypy src/nightcrawler`: passed, 87 source files; Ruff passed on all changed Python files; diff check and
+  secret-pattern scan passed. No protected trading file differs from the deploy branch. Initial test runs
+  exposed old default-mode/section-boundary assertions; those now test the new default and preserved cinema.
+- Browser: inspected local fixture screenshots at 390x844, 320x568 and 1280x800, including settled Voss/Pip views.
+  Final phone/desktop captures load the original models, with no page/console errors or horizontal overflow.
+  Functional checks exercised all six selectors, a steady camera, the two workflow explanations, 18 account
+  positions with preserved reading scroll, independent stale cash/positions, a loss, paper mode, missing values,
+  disconnection/recovery and the optional camera tour. Geometry tests verify cutaway restoration, unchanged
+  collisions/routes and no floating roof vegetation. Unit checks also cover service alerts and sign-in failures.
+- Limits/skips: preview figures are sample data, not current venue balances. Software-rendered Chromium required
+  the existing lite mode and paused frames for still captures; one earlier screenshot attempt timed out.
+  Physical-phone frame rate and the protected production dashboard were not checked. The 21 skips are the same
+  12 opt-in network tests and 9 checks/modules requiring optional pandas/numpy/scipy; real trading was not started locally.
+- Real money touched? No order/strategy/cap/settings changes. This is a larger change, so AGENTS.md rule 4 uses
+  a feature branch and pull request. Merging the watched `src/**` changes will rebuild/restart the existing live bot.
+- Next step: owner reviews/merges the PR. Then match Railway's successful deployment to that exact merge SHA,
+  check fresh `polydesk_started ... (LIVE: 10 contract(s) per order)` and no tracebacks, verify the live page,
+  and add the deployment evidence here. This tycoon change has not been deployed yet.
+
 ## 2026-10-12 17:04 UTC, Codex, crew movement cleanup
 - Changed: at the owner's request, kept the existing town, cast, camera, layout and event choreography, and
   polished how the crew moves. Walks now ease into motion, slow for corners and brake before arrival;
