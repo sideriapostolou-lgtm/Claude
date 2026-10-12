@@ -152,7 +152,7 @@ def test_the_town_never_edits_the_live_director(module: str, section: str) -> No
     """It films through the record room's views and programmes (recViewOf, recView, progStart("town")) and reads FILM,
     focus, pinned and the channel's replay only: no planner, rig, cut or flight of its own, no event of the crew's."""
     director = module[module.index(_DIRECTOR):module.index(_LOOP)]
-    cinema = module[module.index(_CINEMA):module.index('  resize(); BUS.emit("start", 0, 0);')]
+    cinema = module[module.index(_CINEMA):module.index("// >>> tycoon data (pure)")]
     for name in ("TOWN", "townStep", "townVisit", "townFrame", "TP.", "TL["):
         assert name not in director and name not in cinema, name
     code = _code(section)
@@ -668,6 +668,7 @@ def test_real_money_first_a_huddle_queued_during_a_visit_plays_at_once(module: s
     the town's moments' clock runs only while a beat that shows the houses is on air."""
     out = _node(r"""
 let simT = 0, data = { x: 1 }, panelKind = null, pinned = null, focus = null, CINEMA = true;
+const tycoonActive = function () { return false; };  // exercise the optional cinema's visit/huddle scheduling
 const document = { visibilityState: "visible" }, guideEl = { hidden: true }, performance = { now: function () { return simT * 1000; } };
 const window = { __skyport: { replay: { now: function () { return null; } }, cinema: { on: function () { return CINEMA; }, intro: function () { return false; } } } };
 const FILM = { on: false, kind: "", script: [], i: -1, shown: -1 }, log = [];

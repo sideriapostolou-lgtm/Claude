@@ -207,8 +207,10 @@ def test_the_channel_keeps_to_its_own_section(settings: Settings) -> None:
     assert code.count("window.__skyport") == 2 and "SKY = window.__skyport = window.__skyport || {};" in code
     raw = _module(html)
     records = re.sub(r"//[^\n]*", "", raw[raw.index("THE RECORD ROOM (Builder B)"):raw.index("= THE LIVE DIRECTOR")])
-    cinema = re.sub(r"//[^\n]*", "", raw[raw.index("= THE CINEMA (cinema mode"):raw.index('  resize(); BUS.emit("start"')])
-    assert module.count("window.__skyport") == 2 + records.count("window.__skyport") + cinema.count("window.__skyport")
+    cinema = re.sub(r"//[^\n]*", "", raw[raw.index("= THE CINEMA (cinema mode"):raw.index("// >>> tycoon data (pure)")])
+    tycoon = re.sub(r"//[^\n]*", "", raw[raw.index("// >>> tycoon data (pure)"):raw.index('  resize(); BUS.emit("start"')])
+    assert module.count("window.__skyport") == (2 + records.count("window.__skyport")
+                                               + cinema.count("window.__skyport") + tycoon.count("window.__skyport"))
     assert "window.__skyport = Object.assign(window.__skyport || {}, { cinema: {" in cinema  # (THE CINEMA keeps these too)
     assert "window.__skyport = Object.assign(window.__skyport || {}, { records: {" in records
     assert module.count("window.__world") == 1
@@ -216,8 +218,10 @@ def test_the_channel_keeps_to_its_own_section(settings: Settings) -> None:
     assert "function tint()" not in module and "setInterval(tint" not in module
     # its own CSS block, in the one hashed style
     (style,) = re.findall(r"<style>(.*?)</style>", html, flags=re.DOTALL)
-    # (then THE CINEMA's, last so that its scoped rules win the ties: tests/test_world_cinema.py)
-    assert style.endswith(_STYLE_CHANNEL + _STYLE_CINEMA) and "#ticker {" not in style[:-len(_STYLE_CHANNEL + _STYLE_CINEMA)]
+    # The optional cinema and default town controls each override their own scoped presentation.
+    from nightcrawler.worldtycoon import TYCOON_STYLE
+    suffix = _STYLE_CHANNEL + _STYLE_CINEMA + TYCOON_STYLE
+    assert style.endswith(suffix) and "#ticker {" not in style[:-len(suffix)]
     assert "#ticker {" not in _STYLE_CINEMA
     assert "'sha256-" in WORLD_CSP and "'unsafe-inline'" not in WORLD_CSP
     # the speaker sits in the bar before "?", the ticker just above the honesty line, the banner with the overlay

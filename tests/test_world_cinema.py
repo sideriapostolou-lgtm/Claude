@@ -1,4 +1,4 @@
-"""The 3D world's cinema mode (world3d's THE CINEMA section and its CSS block, the default view): the page opens in it;
+"""The 3D world's optional cinema mode (world3d's THE CINEMA section and its CSS block):
 it is REAL MONEY ONLY (the owner's word, 2026-10-11: practice money nowhere but the Arena town's, which says PRACTICE
 itself). Its one HUD line shows real money only, today's real result glowing a moment when a real settlement moves it;
 the caption under the shot says who and what in the data's own words, never practice money (a character whose line is
@@ -27,7 +27,7 @@ from tests.test_world3d import _js_body, _module, _node
 from tests.test_world_records import _REDS
 
 needs_node = pytest.mark.skipif(shutil.which("node") is None, reason="Node is not installed")
-_HEADER, _END = "= THE CINEMA (cinema mode, the default view)", '  resize(); BUS.emit("start", 0, 0);'
+_HEADER, _END = "= THE CINEMA (cinema mode,", '  resize(); BUS.emit("start", 0, 0);'
 _KEYS = ("voss", "rook", "pip", "nyx", "jet", "mote")
 
 
@@ -43,7 +43,7 @@ def module(page: str) -> str:
 
 @pytest.fixture(scope="module")
 def section(module: str) -> str:
-    return module[module.index(_HEADER):module.index(_END)]
+    return module[module.index(_HEADER):module.index("// >>> tycoon data (pure)")]
 
 
 @pytest.fixture(scope="module")
@@ -63,7 +63,8 @@ def states() -> dict[str, dict[str, Any]]:
 def _pure_run(pure: str, body: str, tmp_path: Path, **data: Any) -> Any:
     """Run ``body`` (which ends by printing one JSON line) after the pure block, with ``data`` as JS constants."""
     consts = "".join(f"const {k} = {json.dumps(v)};\n" for k, v in data.items())
-    return _node(pure + "\n" + consts + body, tmp_path)
+    # These isolated tests exercise the optional camera tour, with the town overview switched off.
+    return _node(pure + "\nfunction tycoonActive() { return false; }\n" + consts + body, tmp_path)
 
 
 def _sentence(s: str) -> str:  # the caption's own sentence rule (cineSentence), for the expectations
@@ -77,19 +78,21 @@ def _first(s: str) -> str:  # a long line's first sentence (cineSplit)
     return m.group(1) if m else s.strip()
 
 
-# --------------------------------------------------------------------------- the default view
+# --------------------------------------------------------------------------- the optional camera tour
 
 
-def test_cinema_is_the_default_view(page: str, module: str, section: str) -> None:
-    assert re.search(r'<body [^>]*class="cinema">', page)  # (from the first paint, before the module runs)
+def test_cinema_remains_available_under_the_default_town_view(page: str, module: str, section: str) -> None:
+    assert re.search(r'<body [^>]*class="cinema tycoon">', page)  # cinema's money filters also protect the overview
     assert '<button type="button" id="details" aria-pressed="false">details</button>' in page
     for part in ('<div id="lb-top"><button type="button" id="hud" aria-controls="panel">', '<b id="hud-cash">—</b>',
                  '<div id="lb-bot"><div id="cap" aria-live="off">', '<div id="tags" aria-hidden="true"></div>',
                  '<div id="intro" role="dialog" aria-labelledby="intro-title" hidden>'):
         assert part in page, part
-    # the mode: cinema unless this browser remembers "details"; the section runs before the first frame and the first poll
+    # The optional cinema retains its settings; the new town view takes priority before the first frame.
     assert "cineSet(!cineStored(), false);" in section
     assert 'const CINE_KEY = "nightcrawler.world.details"' in section
+    assert module.index("cineSet(!cineStored(), false);") < module.index("tycoonBuildCrew(); tycoonView(true);")
+    assert module.index("tycoonBuildCrew(); tycoonView(true);") < module.index(_END)
     assert module.index(_HEADER) > module.index("= THE LOOP (paused") and module.index(_HEADER) < module.index(_END)
     # the guide waits behind "details": a first visit in cinema mode gets the three-line card instead
     assert _js_body(module, "  function openGuide() {").split("\n")[1].strip().startswith(
@@ -186,13 +189,13 @@ console.log(JSON.stringify({ win: show(WIN), lose: show(LOSE), paper: show(PAPER
   none: show(null), empty: show({}) }));
 """, tmp_path, WIN=win, LOSE=lose, PAPER=paper, PAUSED=paused, STOPPED=stopped)
     cash = win["plain"]["real"]["cash_usd"]
-    assert out["win"] == [f"REAL MONEY ${cash:.2f} · today +$1.52 · goal $100/day", True, f"${cash:.2f}", ["up", ""]]
-    assert out["lose"][0] == f"REAL MONEY ${lose['plain']['real']['cash_usd']:.2f} · today −$8.82 · goal $100/day"
+    assert out["win"] == [f"ACCOUNT CASH ${cash:.2f} · bots today (UTC) +$1.52 · goal $100/day", True, f"${cash:.2f}", ["up", ""]]
+    assert out["lose"][0] == f"ACCOUNT CASH ${lose['plain']['real']['cash_usd']:.2f} · bots today (UTC) −$8.82 · goal $100/day"
     assert out["lose"][3] == ["down", ""]
-    assert out["paused"][0].endswith(" · today +$1.52 · paused · goal $100/day")
-    assert out["stopped"][0].endswith(" · today +$1.52 · stopped for today · goal $100/day")
-    assert out["paper"] == ["REAL MONEY — · off · goal $100/day", False, "—", ["state", ""]]
-    assert out["none"][0] == "REAL MONEY — · loading" and out["empty"][0] == "REAL MONEY — · loading"
+    assert out["paused"][0].endswith(" · bots today (UTC) +$1.52 · paused · goal $100/day")
+    assert out["stopped"][0].endswith(" · bots today (UTC) +$1.52 · stopped for today · goal $100/day")
+    assert out["paper"] == ["ACCOUNT CASH — · off · goal $100/day", False, "—", ["state", ""]]
+    assert out["none"][0] == "ACCOUNT CASH — · loading" and out["empty"][0] == "ACCOUNT CASH — · loading"
     # never a pretend figure: the paper wallet, the practice books and the trend desk say nothing here
     for name in ("winning", "losing_big", "paper"):
         line = out[{"winning": "win", "losing_big": "lose", "paper": "paper"}[name]][0]
@@ -213,11 +216,11 @@ def test_the_vault_reads_real_money(pure: str, section: str, module: str, states
                     WIN=states["winning"], LOSE=states["losing_big"], PAPER=states["paper"])
     win, lose, paper = out
     real = states["winning"]["plain"]["real"]
-    assert win["usd"] == f"${real['cash_usd']:.2f}" and win["label"] == "REAL · " + real["result"]
+    assert win["usd"] == f"${real['cash_usd']:.2f}" and win["label"] == "POLYMARKET ACCOUNT CASH"
     since = states["winning"]["money"]["polymarket"]["real"]["since_start_usd"]
     assert win["accent"] == ("#58d68d" if since >= 0 else "#ff6b61")
-    assert lose["label"] == "REAL · " + states["losing_big"]["plain"]["real"]["result"]
-    assert paper == {"usd": "—", "label": "REAL · none reported", "accent": None}  # (no real money: never the pretend wallet)
+    assert lose["label"] == "POLYMARKET ACCOUNT CASH"
+    assert paper == {"usd": "—", "label": "ACCOUNT CASH · none reported", "accent": None}  # no pretend wallet
     # in cinema mode the sign is drawn again after the page's own (money.usd, money.label: the details view's) on each poll
     draw = _js_body(section, "  function cineVaultDraw() {")
     assert "if (CINE.on) { const v = cineVault(data); drawVaultSign(v.usd, v.label, v.accent); return; }" in draw
@@ -225,6 +228,25 @@ def test_the_vault_reads_real_money(pure: str, section: str, module: str, states
     assert "if (CINE.on) cineVaultDraw();" in _js_body(section, "  function cineOnData(")
     apply = _js_body(module, "  function apply(d) {")
     assert apply.index("drawVaultSign(fmtUsd(money.usd), money.label") < apply.index('BUS.emit("data", d, first);')
+
+
+@needs_node
+def test_cash_details_name_the_booked_day_and_each_source_check(pure: str, module: str, tmp_path: Path) -> None:
+    out = _pure_run(pure, """
+const page = {mode: "PAPER", money: {polymarket: {as_of: 1791820860,
+  real: {cash_at: 1791820800, venue_at: 1791819900}}}};
+const known = cineMoneyDetails(page); page.mode = "LIVE";
+console.log(JSON.stringify({known: known, live: cineMoneyDetails(page), unknown: cineMoneyDetails(null),
+  invalid: cineMoneyDetails({money: {polymarket: {as_of: Infinity, real: {cash_at: -1, venue_at: "today"}}}})}));
+""", tmp_path)
+    assert "not bot profit" in out["known"][0]
+    assert "booked from 00:00 UTC" in out["known"][1] and "your own bets and deposits are excluded" in out["known"][1]
+    assert out["known"][2] == "The town’s Bot today card uses Pacific midnight; this tour and safety limits show UTC."
+    assert out["known"][3:] == ["Cash checked 2026-10-12 16:00 UTC.", "Positions checked 2026-10-12 15:45 UTC.",
+                               "Desk report 2026-10-12 16:01 UTC."]
+    assert "Bots today also includes the live Solana bot’s daily result." in out["live"]
+    assert out["unknown"] == out["invalid"] == out["known"][:3]
+    assert "cineMoneyDetails(data).forEach" in _js_body(module, "  function renderPanel() {")
 
 
 # --------------------------------------------------------------------------- captions and job tags
@@ -391,7 +413,7 @@ def test_the_first_visit_card_says_three_things_from_the_data(pure: str, section
     assert "cineIntroLines(plain, CINE.arena)" in opener
     assert "CINE.arena = !!(d && d.money && d.money.arena);" in _js_body(section, "  function cineOnData(")
     # (the first poll opens the card from apply(), before the bus says "data": the card reads the Arena from the page)
-    assert opener.split("\n")[2].strip() == "CINE.arena = !!(data && data.money && data.money.arena);"
+    assert opener.index("CINE.arena = !!(data && data.money && data.money.arena);") < opener.index("cineIntroLines(plain, CINE.arena)")
 
 
 @needs_node
@@ -505,7 +527,7 @@ console.log(JSON.stringify({{ a, b, c, ca, cb, cc, stopped, kept, filmOn: FILM.o
 """, tmp_path, DATA=states["winning"])
     win = states["winning"]
     cash, money = f"${win['plain']['real']['cash_usd']:.2f}", win["money"]
-    real_sign = [cash, "REAL · " + win["plain"]["real"]["result"]]
+    real_sign = [cash, "POLYMARKET ACCOUNT CASH"]
     assert out["a"] == [True, "details", "false", "dark", ["disable", 1], real_sign, None]
     assert "realOnly:true" in out["ca"] and "capIn" in out["ca"]  # (Rook's wall real money only; the caption written afresh)
     # details: the class off (every hidden part back), the boards' own words and the trophies back, the page's own sign
@@ -731,9 +753,10 @@ console.log(JSON.stringify({{ real, none, live, full }}));
 """, tmp_path)
     words = [d["t"] for d in out["real"]]
     assert words[:2] == ["ROOK'S RISK WALL · REAL MONEY", "The desks' risk manager · real money"]
-    for t in ("Polymarket REAL money", "losing", "Real money · the Polymarket desk's hard limits", "$4.82 of $30.00", "$0.97 of $30.00",
+    for t in ("Polymarket REAL money", "losing", "Real money · the Polymarket desk's hard limits", "Account open", "$4.82 incl. yours", "Bot cap $30.00", "$0.97 of $30.00",
               "$2.52 of $40.00"):
         assert t in words, t
+    assert "$4.82 of $30.00" not in words  # account positions also include the owner's bets, outside the bot's cap
     # no practice anywhere on it: not the Solana bot's practice half, not the practice desk, not its verdict
     for t in words:
         assert not _PRACTICE_WORDS.search(t) and "Solana" not in t and "slots" not in t and "%" not in t, t

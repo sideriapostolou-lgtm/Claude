@@ -136,8 +136,26 @@ needs none of them to write code or run tests.
 ## 6. The owner's pages
 
 `/` is the one page: money, team, trades, learning, receipts. `/world` is the 3D floating-island town, "Night
-Shift: Skyport". Its cinema shows real money only, practice props stay hidden, and the town district sits on an
-islet. `/api/page` is the JSON behind both. Every page needs `?token=` (`DASHBOARD_TOKEN`). To see a change, run
+Shift: Skyport". It opens in a phone-first steady town view: available account cash, the bot's realized result
+today, account-wide open bets and six selectable workstations. Account cash and open bets include the owner's
+activity; the bot's daily result does not. Missing/stale reports are labelled.
+The owner confirmed on 2026-10-12 that "today" means **since 12:00 a.m. Pacific**. The town's Bot today card and
+the main Polymarket daily display use `real.today_pacific` (America/Los_Angeles, including daylight saving).
+It sums recorded bot results only when the retained closed rows' count and profit match every overlapping UTC
+day book; incomplete records show an unknown total. This is a check of the recorded book, not complete venue
+reconciliation. Cash-outs and corrections keep their recorded booking day, which may differ from venue event
+time. UTC trading loss limits, goal calculations and the explicitly labelled camera-tour aggregate stay UTC.
+The town's account-bet count/value come from the dated venue snapshot (`real.venue_open`,
+`value_usd`, `venue_at`), not tracked desk positions that can remain after an app sale. Any individual desk
+records are labelled separately. Cash shows its own checked age; opening it explains available cash, the venue's
+reported balance and buying power. A new page refresh does not make an old balance fresh.
+Practice workstations are marked; the practice islet's floating dollar labels are hidden. The Theme Park Tycoon 2-inspired presentation adds lawns,
+department colors, paths on the existing walk graph and cutaway rooms. Tap a teammate for a steady close view,
+or the town/workstation title for its role and the two business workflows. Service alerts remain visible;
+"Real bets enabled" describes the money setting, not a health guarantee. Rook's account-open cost is shown
+separately from the bot-only cap. "Camera tour" restores the original cinema, whose
+money scenes show real money only. `/api/page` is the JSON behind both. Every page needs `?token=`
+(`DASHBOARD_TOKEN`). To see a change, run
 `nightcrawler dashboard` locally in paper mode and screenshot it with Playwright/Chromium at phone and desktop
 widths. The owner checks everything from a phone.
 
