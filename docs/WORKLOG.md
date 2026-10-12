@@ -13,6 +13,29 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-12 19:30 UTC, Codex, branch codex/speed-desk
+- Changed: recorded the owner's instruction to retain the existing Kalshi Ed25519 key and keep the speed
+  desk **PRACTICE ONLY**. The key type is the owner's report; no credentials were inspected, changed, deleted
+  or stored, and no signing benchmark was run. The Kalshi practice adapter continues to use public data only.
+- Day 0 partial snapshot, 2026-10-12 19:29:50 UTC: **Kalshi** has 0 traded/settled windows, 0 fills, $0 locked-pair
+  and $0 directional settled practice P&L; **Polymarket US** also has 0 traded/settled windows, 0 fills,
+  $0 locked-pair and $0 directional settled practice P&L. Both have 0 take/rest attempts. Worst window,
+  take/maker fill rates and fill latency are unavailable with no trades; none is reported as a successful zero.
+- Feed evidence: both venue trade streams connected, Bitcoin age 0.377 s, book age 0.415 s, warming up Bitcoin
+  volatility, problem=null and real_orders_available=false. Shared mean Coinbase feed delay was 117.4 ms.
+  Shared observed uptime was 1,750.42 s. Since per-venue instrumentation began at 19:26:50, fresh-data coverage
+  was 172.55 s per venue; maker coverage was 166.09 s on US and 172.55 s on Kalshi. Days remain marked partial.
+  US REST fallback's last status was HTTP 429/rate_limited; the primary market WebSocket remained connected
+  with fresh books. This is warm-up evidence, not a profit result.
+- Verified: latest branch pulled; Railway still runs successful application commit `c329133` in deployment
+  `c4e7918e-e3cf-4cbc-b4b1-cf1253c7040d`. Previous docs-only `41e7881` was SKIPPED as expected. Independent
+  read-only review confirmed the paper-only guard and public Kalshi adapter remain unchanged. The prior
+  session's passing tests/mypy/changed-file Ruff apply to this unchanged application tree; no Python file
+  changed and no code checks were rerun for this documentation-only entry. Diff and secret scan checked.
+- Real money touched? No. This session changes only WORKLOG and requests no deployment or settings change.
+- Next step: continue the 3+ day practice observation and record daily per-venue results here. Real speed-desk
+  orders remain unavailable; the owner's exact dollar amounts and positive practice after fees are still required.
+
 ## 2026-10-12 19:24 UTC, Codex, branch codex/speed-desk, PR #8
 - Changed: pulled the latest deploy branch (`2a7dbd0`) and reviewed the Kalshi section 2b addition. Both venue
   adapters were already deployed; this follow-up adds the owner's requested daily reporting **per venue**.
