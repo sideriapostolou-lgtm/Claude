@@ -13,7 +13,7 @@ Template:
 - Next step: ...
 ```
 
-## 2026-10-12 20:08 UTC, Codex, branch codex/kalshi-live
+## 2026-10-12 20:08 UTC, Codex, branch codex/kalshi-live, PR #9
 - Owner authorization: the current handoff supersedes the earlier pause and practice-only restriction for
   **Kalshi KXBTC15M only**. Built the requested live-capable companion and will deploy it **PAPER by default**.
   The existing Polymarket real desk, `polydesk.py`, Marco settings and public speed-desk practice trial are
@@ -51,7 +51,21 @@ Template:
 - Real money touched? Authorized real-money capability/configuration and service restart, **no activation**,
   no real order and no Railway variable/key change in this session. Four switches remain necessary, including
   a successful balance read this run. Kill switch: `SPEEDDESK_KALSHI_MODE=paper`; open fills still settle.
-- Pending: default-paper deploy verification and owner confirmation of account fee type. After
+- Deploy verified at 20:14 UTC: PR #9 merged as **38d8a42e35ca5a13920b288299e7375c25077417**.
+  Railway deployment `951a04c7-34c4-49dc-8a9d-5791c1b89c24` reached SUCCESS on that exact commit. Startup
+  at 20:11:55 UTC logged `speeddesk_live_status` mode=paper/configured_mode=paper, PRACTICE, authenticated=false,
+  real_orders_available=false, no pending orders/exposure, and all four owner dollar limits. Cash is unknown,
+  not a new confirmation of the earlier $25 balance. Existing `polydesk_started` remained LIVE at 10 contracts.
+  Deployment-scoped traceback/halt/state/error searches returned no application matches; only the Railway CLI
+  config deprecation warning. `/healthz` returned HTTP 200/ok after this deployment reached SUCCESS.
+- Day 0 partial snapshot at 20:12:55 UTC: original **Kalshi** and **Polymarket US** trials each retain 0
+  traded/settled windows, 0 fills/attempts, $0 locked/directional settled P&L. Worst window, fill rates and
+  decision-to-fill latency are unavailable until trades occur. Both public trade feeds connected, problem=null;
+  Bitcoin age 0.925 s, book age 0.085 s, mean shared Bitcoin feed delay 113.51 ms. Fresh/maker coverage since
+  instrumentation: US 2,719.84/2,711.42 s; Kalshi 2,718.44/2,718.08 s. Volatility is still warming up: enough
+  elapsed clock time alone does not satisfy the required 3,000 observed adjacent one-second returns. Original
+  trial start `1791831625.5335124` survived the restart; no profitability/trading result is inferred from uptime.
+- Pending: owner confirmation of account fee type and sufficient observed volatility data. After
   those, the owner sets `SPEEDDESK_KALSHI_MODE=live` and `SPEEDDESK_KALSHI_LIVE_CONFIRM=yes`; watch the first
   real windows and report orders/fills/fees/P&L/anomalies. No real execution/profit result is claimed here.
   We copy rules, not the original bot's speed, venue or size; small losses are the likely paid-experiment

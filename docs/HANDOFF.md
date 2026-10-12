@@ -212,6 +212,8 @@ session scratchpad that you will not have.
    leave `unknown`. This account fact does not authorize orders. Total stop requires a never-before-used resume token. Companion
    receipts live in `/data/speeddesk/kalshi_live/`; the page exposes `money.speeddesk.kalshi_live`, separately
    from Polymarket cash and town totals. Polymarket US speed trading remains practice permanently.
+   **Companion deployment verified 2026-10-12 20:14 UTC:** PR #9, commit `38d8a42`, Railway SUCCESS,
+   `speeddesk_live_status` PRACTICE/real_orders_available=false; existing polydesk still LIVE at 10 contracts.
    New logs: `speeddesk_live_order`, `_fill`, `_cancel`, `_reject`, `_status`. Resting bids have a 30-second
    venue expiry, cancel on cutoff/staleness/stop/startup, and keep their reservation until fills reconcile.
    Also live since 2026-10-12: the Bitcoin distance bar depends on price and time left (`btcdistance.REQUIRED_Z`),
