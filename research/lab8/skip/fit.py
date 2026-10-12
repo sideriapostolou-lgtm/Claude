@@ -1,4 +1,4 @@
-"""Run the preregistered offline analysis of a prospective skipwatch journal."""
+"""Report the execution-timing pause; this CLI cannot enable strategy fitting."""
 
 from nightcrawler.skipwatch_fit import main
 

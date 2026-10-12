@@ -70,6 +70,111 @@ def test_exact_print_matches_remain_inferred_and_larger_print_is_not_exact(sizes
     assert observation["confidence"] == expected
     assert observation["maker_taker"] == "unknown" and observation["cancellations"] == "unobservable"
     assert observation["prior_up"] is None
+    assert observation["causal_fit_eligible"] is False
+    assert observation["execution_time_inferred"] is False
+
+
+def linked_trade(value, at=1000.25, *, observed_at=None, **changes):
+    data = {"trade_id": "print", "market_id": "m", "token_id": "u", "side": "up",
+            "exchange_at": at, "price": .4, "size": 10, "transaction_hash": "settling-transaction",
+            **changes}
+    value.ingest("public_trade", data, observed_at if observed_at is not None else at + .1)
+
+
+def linked_fill(value, at=1003, *, observed_at=1006, **changes):
+    value.ingest("wallet_fill", {"fill_id": "f", "market_id": "m", "token_id": "u", "side": "up",
+                                  "exchange_at": at, "block_at": at, "timestamp_domain": "block",
+                                  "price": .4, "size": 10, "transaction_hash": "settling-transaction",
+                                  **changes}, observed_at)
+
+
+def observed_fill(value, now=1011):
+    return next(event.payload for event in value.due(now) if event.kind == "wallet_observation")
+
+
+@pytest.mark.parametrize("block_at", [1003, 1050])
+def test_unique_transaction_link_uses_print_context_without_tuned_block_lag_limit(block_at):
+    value = model()
+    snapshot(value, 1000)
+    value.ingest("bitcoin_tick", {"exchange_at": 1000, "price": 60_000}, 1000)
+    linked_trade(value)
+    # Later context was unknown at the inferred print time and must be excluded.
+    value.ingest("book_snapshot", {"token_id": "u", "exchange_at": 1002, "valid": True,
+                                   "bids": [[.5, 30]], "asks": [[.55, 30]]}, 1002)
+    value.ingest("bitcoin_tick", {"exchange_at": 1002, "price": 61_000}, 1002)
+    linked_fill(value, at=block_at, observed_at=block_at + 3)
+    observation = observed_fill(value, block_at + 8)
+    assert observation["confidence"] == "inferred"
+    assert observation["match_method"] == "transaction_token_price_size"
+    assert observation["block_at"] == block_at and observation["block_timestamp_domain"] == "block"
+    assert observation["matched_event_at"] == observation["at"] == 1000.25
+    assert observation["matched_event_timestamp_domain"] == "clob_event"
+    assert observation["timestamp_domain"] == "clob_event_inferred"
+    assert observation["execution_time_inferred"] is True
+    assert observation["execution_identity_verified"] is False
+    assert observation["causal_fit_eligible"] is False
+    assert observation["bid"] == .4 and observation["btc_price"] == 60_000
+    assert observation["candidate_evidence"][0]["transaction_hash"] == "settling-transaction"
+
+
+@pytest.mark.parametrize("trade_changes", [
+    {"transaction_hash": "different-transaction"},
+    {"market_id": "other-window"},
+    {"token_id": "d", "side": "down", "price": .6},
+    {"size": 20},
+    {"price": .41},
+])
+def test_hash_does_not_override_window_token_price_or_quantity_identity(trade_changes):
+    value = model()
+    linked_trade(value, at=1002.5, **trade_changes)
+    linked_fill(value)
+    observation = observed_fill(value)
+    assert observation["confidence"] == "unmatched"
+    assert observation["matched_event_at"] is None
+    assert observation["timestamp_domain"] == "block"
+
+
+@pytest.mark.parametrize("trade_at,expected", [(1003.999, "inferred"), (1004.001, "unmatched")])
+def test_transaction_link_cannot_use_event_after_block_second_upper_bound(trade_at, expected):
+    value = model()
+    linked_trade(value, at=trade_at)
+    linked_fill(value)
+    assert observed_fill(value)["confidence"] == expected
+
+
+def test_multiple_economically_identical_transaction_prints_remain_ambiguous():
+    value = model()
+    linked_trade(value, at=1000.25, trade_id="print-1")
+    linked_trade(value, at=1000.5, trade_id="print-2")
+    linked_fill(value)
+    observation = observed_fill(value)
+    assert observation["confidence"] == "ambiguous" and observation["candidate_prints"] == 2
+    assert observation["matched_event_at"] is None and observation["execution_time_inferred"] is False
+    assert observation["at"] == observation["block_at"] == 1003
+
+
+@pytest.mark.parametrize("trade_at,expected", [(1002.5, "inferred"), (1000.25, "unmatched")])
+def test_no_hash_heuristic_keeps_old_range_but_cannot_infer_execution_time(trade_at, expected):
+    value = model()
+    linked_trade(value, at=trade_at, transaction_hash=None)
+    linked_fill(value)
+    observation = observed_fill(value)
+    assert observation["confidence"] == expected
+    assert observation["matched_event_at"] is None and observation["execution_time_inferred"] is False
+    assert observation["causal_fit_eligible"] is False
+    assert observation["at"] == observation["block_at"] == 1003
+
+
+def test_retention_and_observation_start_bound_transaction_links():
+    value = model()
+    linked_trade(value, at=1000, observed_at=1000.1)
+    linked_fill(value, at=1050, observed_at=1115)
+    assert observed_fill(value, 1120.2)["confidence"] == "unmatched"
+    prior = model()
+    prior.started_at = 1001
+    linked_trade(prior, at=1000, observed_at=1001.1)
+    linked_fill(prior)
+    assert observed_fill(prior)["confidence"] == "unmatched"
 
 
 def test_quiet_windows_are_observed_and_missing_wallet_poll_never_counts_as_coverage():

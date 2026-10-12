@@ -124,7 +124,11 @@ def parse_wallet_fill(raw: Any) -> dict[str, Any]:
     return {"source": "wallet", "wallet": WALLET, "market_id": _string(raw.get("condition_id")),
             "token_id": _string(raw.get("token_id")), "side": side if side in ("up", "down") else "unknown",
             "action": action, "price": _price(raw.get("price")), "size": _amount(raw.get("size"), positive=True),
-            "exchange_at": at, "timestamp_precision_s": 1, "slug": slug,
+            # DataAPI v2 documents a block timestamp, not an execution time.
+            # Keep exchange_at only as a compatibility alias for old journals.
+            "exchange_at": at, "block_at": at, "timestamp_domain": "block",
+            "exchange_at_semantics": "block_timestamp_compatibility_alias",
+            "timestamp_precision_s": 1, "slug": slug,
             "transaction_hash": _string(raw.get("transaction_hash")), "maker_taker": "unknown",
             "identity_precision": "public_row_content_and_duplicate_ordinal"}
 
@@ -439,8 +443,11 @@ class SkipwatchFeeds:
                          "size": _amount(raw.get("size"), positive=True),
                          "aggressor": {"BUY": "buy", "SELL": "sell"}.get(str(raw.get("side")), "unknown"),
                          "transaction_hash": str(tx)[:256] if tx else None,
-                         "id_source": "content_hash", "identity_exact": False}
-                identity_fields = {key: value for key, value in trade.items() if key != "generation"}
+                         "id_source": "content_hash", "identity_exact": False,
+                         "timestamp_domain": "clob_event", "timestamp_precision_s": .001}
+                # Observer annotations must not change a print's stable identity.
+                identity_fields = {key: value for key, value in trade.items()
+                                   if key not in {"generation", "timestamp_domain", "timestamp_precision_s"}}
                 self._emit("public_trade", {**trade, "trade_id": _digest(identity_fields)}, received_at)
             elif kind == "tick_size_change":
                 self._emit("market_rule_change", {**identity, "old_tick_size": _price(raw.get("old_tick_size")),

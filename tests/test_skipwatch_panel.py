@@ -59,6 +59,20 @@ def test_missing_disabled_or_old_report_does_not_invent_counts_coverage_or_curre
     assert pagestate.skipwatch_panel(settings, now)["stale"]
 
 
+def test_unverified_execution_time_never_promises_a_scheduled_rule_verdict(make_settings, fake_clock):
+    settings, now = make_settings(), fake_clock.now()
+    raw = sample(now)
+    raw["fit"] = {"status": "awaiting_verified_execution_time", "automatic_verdict_scheduled": False,
+                  "freeze_due_at": now + 86400, "test_due_at": now + 172800,
+                  "reason": "Block inclusion time is not execution time", "summary": {"stage": "timing_unverified"}}
+    save(settings, raw)
+    panel = pagestate.skipwatch_panel(settings, now)
+    assert "execution timing unverified" in panel["fit_status"]
+    assert panel["freeze_due_at"] is None and panel["test_due_at"] is None
+    assert not panel["automatic_verdict_scheduled"]
+    assert panel["fit_reason"] == raw["fit"]["reason"] and panel["wallet_fills"] == 123
+
+
 @pytest.mark.parametrize("body", [b"{broken", b"{}", b"x" * (8 * 1024 * 1024 + 1)])
 def test_broken_missing_or_oversized_panel_is_unknown_without_taking_down_page(make_settings, fake_clock, body):
     settings = make_settings()

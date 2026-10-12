@@ -1,7 +1,9 @@
-"""Causal observations of a public wallet; no order or account capability.
+"""Descriptive public-wallet observations; no order or account capability.
 
 Observed inventory is only the public fills collected by this watcher. The
 Coinbase fair-value proxy is explanatory, not the market settlement oracle.
+Block timestamps do not establish execution or private decision times. Even a
+unique public-print association remains an inference, not a causal-fit label.
 """
 
 from __future__ import annotations
@@ -112,7 +114,7 @@ class SkipwatchModel:
             self.seen_fills.add(identity)
             if len(self.seen_fills) > 200_000 or len(self.pending) > 10_000:
                 raise ValueError("Public wallet observation memory limit reached")
-            at = float(data.get("exchange_at", data.get("at", observed_at)))
+            at = float(data.get("block_at", data.get("exchange_at", data.get("at", observed_at))))
             window = str(data.get("market_id", data.get("window", "")))
             side = str(data.get("side", "unknown"))
             item = {**data, "at": at, "observed_at": observed_at, "window": window}
@@ -231,37 +233,79 @@ class SkipwatchModel:
         features["depth_scope"] = "best five displayed price levels"
         return features
 
+    def _print_candidates(self, fill: dict[str, Any]) -> tuple[list[dict[str, Any]], str]:
+        """Describe public associations without treating block time as execution.
+
+        A settling transaction can contain multiple fills. Its hash alone never
+        proves an order's identity; token, window, price and quantity must agree.
+        Complementary outcomes and aggregate prints intentionally do not match.
+        """
+        block_at = float(fill["at"])
+        token, window = fill.get("token_id"), fill["window"]
+        market = self.markets.get(window)
+        token_identity = self.tokens.get(str(token))
+        verified_token = (market is not None and token_identity is not None
+                          and token_identity[0] == window
+                          and fill.get("side") == token_identity[1])
+        strong, heuristic = [], []
+        for trade in self.trades:
+            at = float(trade["exchange_at"])
+            if (trade.get("token_id") != token
+                    or abs(float(trade["price"]) - float(fill["price"])) > 1e-6
+                    or abs(float(trade["size"]) - float(fill["size"])) > 1e-6):
+                continue
+            fill_hash, trade_hash = fill.get("transaction_hash"), trade.get("transaction_hash")
+            if fill_hash and trade_hash:
+                if (fill_hash == trade_hash and verified_token and market is not None
+                        and trade.get("market_id") == window
+                        and float(market["start"]) <= at < float(market["end"])
+                        and self.started_at <= at <= math.floor(block_at) + 1):
+                    strong.append(trade)
+            elif abs(at - block_at) <= 1:
+                # Preserve the old descriptive fallback, never a causal label.
+                heuristic.append(trade)
+        if strong:
+            return strong, "transaction_token_price_size"
+        return heuristic, "price_size_block_second_heuristic" if heuristic else "none"
+
     def due(self, now: float) -> list[Observation]:
+        self._prune(now)
         events: list[Observation] = []
         for identity, fill in list(self.pending.items()):
             if now - fill["observed_at"] < 5:
                 continue
             at = float(fill["at"])
-            candidates = [trade for trade in self.trades
-                          if trade.get("token_id") == fill.get("token_id")
-                          and abs(float(trade["exchange_at"]) - at) <= 1
-                          and abs(float(trade["price"]) - float(fill["price"])) <= 1e-6
-                          and abs(float(trade["size"]) - float(fill["size"])) <= 1e-6
-                          and (not trade.get("transaction_hash") or not fill.get("transaction_hash")
-                               or trade["transaction_hash"] == fill["transaction_hash"])]
+            candidates, method = self._print_candidates(fill)
             confidence = "inferred" if len(candidates) == 1 else "ambiguous" if candidates else "unmatched"
-            # These historical observations are descriptive. The fitter uses
-            # prospective opportunity records, never a fill's price or size.
-            payload = {**self.features(fill["window"], str(fill.get("side", "unknown")), at),
+            linked = len(candidates) == 1 and method == "transaction_token_price_size"
+            matched_at = float(candidates[0]["exchange_at"]) if linked else None
+            context_at = matched_at if matched_at is not None else at
+            # A qualified association supplies descriptive event-time context,
+            # not the private decision time or authorization for causal fitting.
+            payload = {**self.features(fill["window"], str(fill.get("side", "unknown")), context_at),
                        "fill_id": identity, "wallet_observed_at": fill["observed_at"],
+                       "block_at": at, "block_timestamp_domain": "block", "block_timestamp_precision_s": 1,
+                       "timestamp_domain": "clob_event_inferred" if linked else "block",
+                       "matched_event_at": matched_at,
+                       "matched_event_timestamp_domain": "clob_event" if linked else None,
+                       "execution_time_inferred": linked, "execution_identity_verified": False,
+                       "causal_fit_eligible": False, "match_method": method,
                        "price": fill["price"], "size": fill["size"], "action": fill.get("action"),
                        "confidence": confidence, "candidate_prints": len(candidates),
                        "candidate_evidence": [{"trade_id": item.get("trade_id"), "at": item["exchange_at"],
                                                "observed_at": item["observed_at"], "price": item["price"],
-                                               "size": item["size"]} for item in candidates[:10]],
+                                               "size": item["size"], "token_id": item.get("token_id"),
+                                               "market_id": item.get("market_id"),
+                                               "transaction_hash": item.get("transaction_hash"),
+                                               "timestamp_domain": "clob_event"} for item in candidates[:10]],
                        "maker_taker": "unknown", "cancellations": "unobservable",
-                       "matching_precision": "price/size and public one-second timestamps; identity is not proven",
+                       "matching_precision": "price/size tolerance 1e-6; uniqueness is among observed print candidates, not proven one-to-one fills; identity is not proven; no-hash block-second heuristic cannot establish execution time",
                        "context_scope": "causal history retained for at most 120s / 20000 book updates per token; missing coverage remains unknown"}
             # The observation itself must not claim pre-fill inventory: our
             # current inventory includes delayed public fills learned afterward.
             for key in ("prior_up", "prior_down", "imbalance"):
                 payload[key] = None
-            events.append(Observation("wallet_observation", payload, at))
+            events.append(Observation("wallet_observation", payload, context_at))
         if self.last_opportunity != int(now):
             self.last_opportunity = int(now)
             coverage = {"at": now, "observed_at": now, **self.coverage(now)}

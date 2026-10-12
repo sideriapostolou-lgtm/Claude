@@ -1,4 +1,46 @@
-# Skipwatch prospective plan, version 1
+# Skipwatch prospective plan: timing amendment before analysis
+
+## 2026-10-12 amendment: automatic strategy inference paused
+
+The official [Data API v2 OpenAPI](https://data-api.polymarket.com/v2/openapi.json)
+describes `Trade.timestamp` as **"Block
+timestamp of the fill, epoch seconds"** and `transaction_hash` as **"Hash of the
+settling transaction."** A block timestamp is not an execution timestamp.
+The features immediately before that block second may therefore occur AFTER
+the actual trade. Local receipt causality alone does not repair this error.
+
+This amendment is registered before any training, validation or test metric was
+computed on the prospective production tape. A separate public timing diagnostic
+found settling-transaction-linked CLOB events earlier than wallet block times;
+that limited diagnostic is not strategy evidence and supplies no new lag cutoff.
+
+Production now reports `awaiting_verified_execution_time` and keeps recording.
+It refreshes the runtime RULES.md with this pending warning, without reading
+previous strategy artifacts. It neither scans the archive for fitting nor
+generates an execution-rule verdict at 48 or 72 hours. The original observation origin and raw tape remain
+unchanged; the original split timestamps are historical planned boundaries,
+not promised verdict dates. Existing artifacts are preserved, never silently
+retuned or overwritten.
+
+Before causal fitting can resume, a separate preregistered protocol must establish
+execution-time semantics, reliable matching and clock/lag uncertainty bounds,
+and conservative treatment of unmatched/ambiguous fills and negative examples.
+Same transaction alone does not identify a unique fill. Complementary outcomes,
+aggregated prints and maker fragments require explicit validation. No matching
+rule or timing tolerance will be selected to improve a strategy score.
+
+The Python research machinery is retained behind the explicitly named
+`block_publication_research=True` argument, with no production CLI bypass.
+Such outputs are **noncausal block-publication associations only**: their
+features can follow execution, and their scores cannot identify triggers,
+constitute a trading rule or enable money. A new causal protocol must be
+registered before any execution-label model selection or held-out evaluation.
+
+## Original version 1 proposal, retained for audit
+
+The causal execution interpretation of the target below is withdrawn by the
+amendment above. The original clock is preserved; this text is not permission
+to run automatic strategy inference on block-time labels.
 
 Registered before prospective observations or returns are analyzed. The older
 2,000-fill sample in READING.md motivates hypotheses only; it is never training

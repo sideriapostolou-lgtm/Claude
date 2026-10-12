@@ -1622,12 +1622,15 @@ def skipwatch_panel(settings: Settings, now: float) -> dict[str, Any] | None:
     fit = _xp_map(raw.get("fit"))
     fit_summary = _xp_map(fit.get("summary"))
     fit_labels = {"collecting_train": "Collecting prospective training data",
+                  "awaiting_verified_execution_time": "Rule fitting paused: execution timing unverified",
                   "frozen": "Rule frozen; waiting for the held-out day",
                   "insufficient_training": "Not enough training evidence", "no_predictive_edge": "No predictive edge found",
                   "insufficient_evidence": "Not enough held-out evidence",
                   "predictive_pattern_only": "Predictive pattern observed; profitability remains untested",
                   "research_blocked": "Research paused"}
     fit_status = text.opt(fit.get("status"))
+    timing_paused = (fit_status == "awaiting_verified_execution_time"
+                     or fit.get("automatic_verdict_scheduled") is False)
     reason_labels = {"wallet_coverage_below_90pct": "Wallet coverage below 90%",
                      "feature_coverage_below_80pct": "Usable feature coverage below 80%",
                      "too_few_eligible_opportunities": "Not enough usable opportunities",
@@ -1647,13 +1650,15 @@ def skipwatch_panel(settings: Settings, now: float) -> dict[str, Any] | None:
         "storage_bytes": _num(raw.get("storage_bytes")), "max_storage_bytes": _num(raw.get("max_storage_bytes")),
         "last_wallet_at": _num(raw.get("last_wallet_at")), "last_btc_at": _num(raw.get("last_btc_at")),
         "latest_window": text.opt(raw.get("latest_window"), 100),
-        "fit_status": fit_labels.get(fit_status or "", fit_status) or "Collecting: two prospective days for training, then one held-out day",
+        "fit_status": fit_labels.get(fit_status or "", fit_status) or "Collecting public observations; no learned rule is ready",
         "fit_reason": text.opt(fit.get("reason")),
         "fit_summary": {**metrics, "stage": text.opt(fit_summary.get("stage"), 50),
                         "rows": _count(fit_summary.get("rows")),
                         "reasons": [reason_labels.get(str(reason), text(reason, 120))
                                     for reason in _xp_list(fit_summary.get("reasons"))[:5]]},
-        "freeze_due_at": _num(fit.get("freeze_due_at")), "test_due_at": _num(fit.get("test_due_at")),
+        "automatic_verdict_scheduled": not timing_paused,
+        "freeze_due_at": None if timing_paused else _num(fit.get("freeze_due_at")),
+        "test_due_at": None if timing_paused else _num(fit.get("test_due_at")),
         "coverage": {**{key: coverage.get(key) if isinstance(coverage.get(key), bool) else None
                          for key in ("bitcoin", "book", "wallet", "trades")},
                      "wallet_watermark": _num(coverage.get("wallet_watermark"))},

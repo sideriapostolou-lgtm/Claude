@@ -78,10 +78,34 @@ Template:
   found no blocking issue; 53 focused boundary/depth tests passed. The public watcher itself replayed 57 seconds of records in
   0.175 s and was left unchanged. Freshness thresholds and immediate delayed-fill rechecks stay intact.
 - Performance-fix validation: **3,611 passed, 21 skipped**; mypy passed 98 source files, Ruff passed all four
-  changed Python files, and diff whitespace checks passed. Production feed verification follows deployment.
+  changed Python files, and diff whitespace checks passed. Commit `02267789fafbee485b97a5d238bbf62c4ddef09e`
+  reached Railway SUCCESS as `dd1530a0-589a-4c0d-b638-ca2caaf140d2`. At 21:15:01 and 21:16:01 UTC, both
+  heartbeats showed Kalshi ws_connected=true, transport=market_websocket, fresh current-window books and
+  maker prints, problem=null. Oldest active book ages were 0.016/0.171 s; Bitcoin ages 0.158/0.345 s. Public
+  health returned 200/ok. These are observed feed ages, not order execution latency.
+- Timestamp audit before any fitted result: official Data API v2 OpenAPI describes Trade.timestamp as
+  "Block timestamp of the fill, epoch seconds." A fresh public-only 60-second probe captured 22 wallet fills
+  with same-transaction public prints 1.333–3.674 s earlier (median 2.184 s). Six matched token/price/size;
+  sixteen involved complementary outcomes, including four aggregate prints. The original +/-1 s matcher
+  therefore missed legitimate links. More seriously, immediately pre-block features can be post-execution.
+  Automatic strategy fitting is paused pending a separately preregistered verified execution-time protocol;
+  observations continue and no raw evidence or original clock is discarded. No trigger, fee-adjusted profit
+  or exact private playbook is inferred from these diagnostic samples.
+- Collection correction preserves explicit block time and separately records conservative same-transaction,
+  same-token/window/price/quantity print associations without the invalid +/-1 s requirement. It links 6/22
+  fills in the saved probe; 16 complementary/aggregate cases remain unmatched. Even linked event times are
+  inferred, not proof of private decision time or one-to-one wallet identity, and never authorize fitting.
+  The production fitter now returns a timing pause without scanning the archive or reading/replacing old
+  frozen/test artifacts; it refreshes only the pending rulebook. Explicit Python-only block-publication
+  association diagnostics remain noncausal; there is no production CLI bypass. Independent review passed
+  110 relevant tests; all 164 watcher tests passed. A synthetic 390 px browser check shows the timing pause,
+  continuing collection and no promised verdict date, without overflow or JavaScript errors.
+- Timing-correction validation: **3,630 passed, 21 skipped**; mypy passed all 98 source files and Ruff passed
+  all ten changed Python files. Whitespace checks passed. Production verification follows the tested push.
 - Pending: the source-watch origin is `1791838275.2081728` (20:51:15 UTC). At least 72 actual elapsed hours
-  with sufficient coverage are needed: freeze due 2026-10-14 20:51:15 UTC, held-out result no earlier than
-  2026-10-15 20:51:15 UTC. No learned rule, profitable result or automatic real promotion is claimed.
+  with sufficient coverage were planned: original freeze milestone 2026-10-14 20:51:15 UTC and held-out
+  milestone 2026-10-15 20:51:15 UTC. These dates alone cannot yield a rule verdict while timing is unresolved.
+  No learned rule, profitable result or automatic real promotion is claimed.
 
 ## 2026-10-12 20:08 UTC, Codex, branch codex/kalshi-live, PR #9
 - Owner authorization: the current handoff supersedes the earlier pause and practice-only restriction for

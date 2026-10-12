@@ -113,6 +113,9 @@ def test_wallet_rows_never_invent_maker_role_execution_ms_or_fee() -> None:
     row = parse_wallet_fill(wallet(price=0.7700000307, size=0.001))
     assert row["price"] == 0.7700000307 and row["size"] == 0.001
     assert row["maker_taker"] == "unknown" and row["timestamp_precision_s"] == 1
+    assert row["block_at"] == row["exchange_at"] == START + 1
+    assert row["timestamp_domain"] == "block"
+    assert row["exchange_at_semantics"] == "block_timestamp_compatibility_alias"
     assert "fee" not in row and row["action"] == "buy"
     assert row["transaction_hash"] == "transaction-1"
 
@@ -322,6 +325,9 @@ def test_public_trade_hash_stays_stable_across_reconnect_and_retains_transaction
     assert prints[0]["trade_id"] == prints[1]["trade_id"]
     assert prints[0]["transaction_hash"] == "public-transaction"
     assert prints[0]["identity_exact"] is False and prints[0]["aggressor"] == "sell"
+    assert prints[0]["timestamp_domain"] == "clob_event"
+    assert prints[0]["timestamp_precision_s"] == .001
+    assert prints[0]["exchange_at"] == START + 11
 
 
 def test_coinbase_sequence_is_global_across_heartbeats_and_subscriptions() -> None:

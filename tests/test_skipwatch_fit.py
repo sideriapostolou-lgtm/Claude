@@ -150,19 +150,21 @@ def test_corrupt_or_truncated_source_is_blocked_before_freeze(tmp_path, corrupti
             row["session_started_at"] = 1
         lines[4] = json.dumps(row)
         path.write_text("\n".join(lines) + "\n")
-    result = fit.run_due(tmp_path, 48 * 3600, 0)
+    result = fit.run_due(tmp_path, 48 * 3600, 0, block_publication_research=True)
     assert result["status"] == "research_blocked"
     assert not (tmp_path / "research" / "frozen.json").exists()
 
 
 def test_pending_and_insufficient_training_never_spend_test_or_invent_profit(tmp_path):
-    pending = fit.run_due(tmp_path, 100, 0)
+    pending = fit.run_due(tmp_path, 100, 0, block_publication_research=True)
     assert pending["status"] == "collecting_train" and pending["summary"]["precision"] is None
+    assert pending["causal_execution_inference"] is False
     journal(tmp_path, covered() + [("opportunity", opportunity(), 10.25)])
-    result = fit.run_due(tmp_path, 72 * 3600, 0)
+    result = fit.run_due(tmp_path, 72 * 3600, 0, block_publication_research=True)
     assert result["status"] == "insufficient_training" and result["holdout_status"] == "unread"
     assert not (tmp_path / "research" / "test.json").exists()
     assert result["live_promotion"] is False
+    assert result["causal_execution_inference"] is False
     assert "feature_coverage_below_80pct" in result["fit"]["insufficient"]
     assert "not the wallet's exact private algorithm" in (tmp_path / "research" / "RULES.md").read_text()
 
@@ -213,20 +215,27 @@ def qualified_events():
 def test_frozen_choice_precedes_one_look_test_and_is_not_refitted(tmp_path, monkeypatch):
     short_protocol(monkeypatch)
     path = journal(tmp_path, qualified_events())
-    frozen = fit.run_due(tmp_path, 240, 0)
+    frozen = fit.run_due(tmp_path, 240, 0, block_publication_research=True)
     assert frozen["status"] == "frozen"
     assert not (tmp_path / "research" / "test.json").exists()
     trained_bytes = (tmp_path / "research" / "frozen.json").read_bytes()
-    tested = fit.run_due(tmp_path, 360, 0)
-    assert tested["status"] == "predictive_pattern_only"
+    tested = fit.run_due(tmp_path, 360, 0, block_publication_research=True)
+    assert tested["status"] == "block_publication_association_only"
+    assert tested["causal_execution_inference"] is False
+    assert "not execution triggers" in tested["interpretation"]
     assert tested["test"]["scores"][tested["candidate"]["id"]]["precision"] == 1
     assert tested["summary"]["stage"] == "held_out"
     saved = (tmp_path / "research" / "test.json").read_bytes()
     path.write_text("changed source after the one-look result\n")
-    again = fit.run_due(tmp_path, 400, 0)
-    assert again["status"] == "predictive_pattern_only"
+    again = fit.run_due(tmp_path, 400, 0, block_publication_research=True)
+    assert again["status"] == "block_publication_association_only"
     assert (tmp_path / "research" / "test.json").read_bytes() == saved
     assert (tmp_path / "research" / "frozen.json").read_bytes() == trained_bytes
+    assert json.loads(trained_bytes)["causal_execution_inference"] is False
+    assert json.loads(saved)["causal_execution_inference"] is False
+    rulebook = (tmp_path / "research" / "RULES.md").read_text()
+    assert "Block-publication association research" in rulebook
+    assert "Features may follow the actual trade" in rulebook
 
 
 def test_test_cannot_run_without_freeze_or_before_third_period_finishes(tmp_path, monkeypatch):
@@ -243,7 +252,7 @@ def test_protocol_change_does_not_silently_reselect_a_frozen_rule(tmp_path, monk
     journal(tmp_path, covered())
     fit.freeze(tmp_path, 48 * 3600, 0)
     monkeypatch.setattr(fit, "PLAN_HASH", "different-research-protocol")
-    result = fit.run_due(tmp_path, 48 * 3600, 0)
+    result = fit.run_due(tmp_path, 48 * 3600, 0, block_publication_research=True)
     assert result["status"] == "research_blocked" and not result["live_promotion"]
 
 
@@ -275,24 +284,70 @@ def test_saved_research_artifact_cannot_be_silently_changed(tmp_path):
     artifact = json.loads(path.read_text())
     artifact["candidate"]["edge"] = .99
     path.write_text(json.dumps(artifact))
-    assert fit.run_due(tmp_path, 72 * 3600, 0)["status"] == "research_blocked"
+    assert fit.run_due(tmp_path, 72 * 3600, 0, block_publication_research=True)["status"] == "research_blocked"
 
 
-def test_packaged_cli_returns_small_pending_status_without_source_or_network(tmp_path):
+def test_packaged_cli_returns_timing_pause_without_source_or_network(tmp_path):
     completed = subprocess.run([sys.executable, "-m", "nightcrawler.skipwatch_fit", "--data-dir", str(tmp_path),
                                 "--now", "100", "--session-started-at", "0"],
                                capture_output=True, text=True, check=True)
     result = json.loads(completed.stdout)
-    assert result["status"] == "collecting_train" and result["summary"]["precision"] is None
+    assert result["status"] == "awaiting_verified_execution_time" and result["summary"]["precision"] is None
     assert result["freeze_due_at"] == 48 * 3600 and result["test_due_at"] == 72 * 3600
+    assert result["automatic_verdict_scheduled"] is result["causal_execution_inference"] is False
     assert len(completed.stdout) < 2000 and completed.stderr == ""
+
+
+@pytest.mark.parametrize("elapsed", [100, 48 * 3600, 72 * 3600, 80 * 3600])
+def test_default_pause_never_reads_or_fits_and_preserves_origin_and_artifacts(tmp_path, monkeypatch, elapsed):
+    origin = 1000.25
+    research = tmp_path / "research"
+    research.mkdir()
+    preserved = {}
+    for name in ("frozen.json", "test.json", "blocked.json"):
+        content = b'{"old_metrics":"must never become current strategy evidence"}'
+        (research / name).write_bytes(content)
+        preserved[name] = content
+    (research / "RULES.md").write_text("Old automatic execution-rule verdict placeholder")
+
+    def forbidden(*args, **kwargs):
+        pytest.fail("Unresolved block timestamps must not read source or fitted artifacts")
+
+    for name in ("Tape", "records", "freeze", "evaluate", "_load_artifact", "_atomic_new"):
+        monkeypatch.setattr(fit, name, forbidden)
+    result = fit.run_due(tmp_path, origin + elapsed, origin)
+    assert result["status"] == "awaiting_verified_execution_time"
+    assert result["session_started_at"] == origin
+    assert result["freeze_due_at"] == origin + 48 * 3600
+    assert result["test_due_at"] == origin + 72 * 3600
+    assert result["automatic_verdict_scheduled"] is False
+    assert result["causal_execution_inference"] is result["live_promotion"] is False
+    assert "block inclusion" in result["reason"]
+    assert result["summary"]["stage"] == "timing_unverified"
+    assert all(result["summary"][key] is None for key in ("precision", "recall", "f1", "rows", "coverage"))
+    assert "candidate" not in result
+    for name, content in preserved.items():
+        assert (research / name).read_bytes() == content
+    rulebook = (research / "RULES.md").read_text()
+    assert "Strategy fitting is paused" in rulebook
+    assert "not scheduled automatic verdicts" in rulebook
+    assert "Old automatic" not in rulebook
+
+
+def test_cli_has_no_block_timestamp_research_bypass(tmp_path):
+    completed = subprocess.run([sys.executable, "-m", "nightcrawler.skipwatch_fit", "--data-dir", str(tmp_path),
+                                "--now", "259200", "--session-started-at", "0", "--block-publication-research"],
+                               capture_output=True, text=True, check=False)
+    assert completed.returncode == 2
+    assert "unrecognized arguments" in completed.stderr
+    assert not (tmp_path / "research").exists()
 
 
 def test_integrity_failure_is_persisted_and_never_repeats_the_expensive_scan(tmp_path, monkeypatch):
     path = journal(tmp_path, covered())
     with path.open("a") as source:
         source.write("truncated")
-    first = fit.run_due(tmp_path, 48 * 3600, 0)
+    first = fit.run_due(tmp_path, 48 * 3600, 0, block_publication_research=True)
     assert first["status"] == "research_blocked"
     assert (tmp_path / "research" / "blocked.json").exists()
 
@@ -300,7 +355,7 @@ def test_integrity_failure_is_persisted_and_never_repeats_the_expensive_scan(tmp
         pytest.fail("A blocked phase reread the source archive")
 
     monkeypatch.setattr(fit, "Tape", no_read)
-    second = fit.run_due(tmp_path, 72 * 3600, 0)
+    second = fit.run_due(tmp_path, 72 * 3600, 0, block_publication_research=True)
     assert second["status"] == "research_blocked" and second["phase"] == "train_freeze"
 
 

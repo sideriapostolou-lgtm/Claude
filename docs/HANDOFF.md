@@ -224,8 +224,10 @@ session scratchpad that you will not have.
    independent, public-only observation worker; it never sends orders or enables a strategy. See spec
    section 10 and `research/lab8/skip/PLAN.md`. It records the source wallet, international BTC five-minute
    books/trades and Coinbase ticks under `/data/skipwatch/`, and exposes a separate public-watcher panel.
-   It preserves its original start time through redeploys, freezes a fixed model after 48 elapsed hours
-   and checks the untouched final day after 72 hours, subject to coverage. No real rulebook or profit is
+   It preserves its original start time through redeploys. **Automatic fitting is paused:** the wallet API
+   timestamps blockchain inclusion after execution, so immediately preceding features could be post-trade.
+   A verified execution-time labeling protocol must be preregistered before any rule verdict; reaching the
+   original 48/72-hour milestones is insufficient. Raw collection continues. No real rulebook or profit is
    established yet. Exact private orders/cancellations cannot be recovered from public fills.
    The Kalshi market adapter now supports the separately authorized authenticated **read-only** WebSocket,
    even when the companion is paper; REST remains a bounded fallback. This supersedes the earlier

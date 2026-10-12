@@ -1,4 +1,4 @@
-"""Offline, preregistered public-fill prediction; never trading or activation.
+"""Offline public-data research; execution-rule inference is paused.
 
 Two streaming passes retain labels/coverage, not the large opportunity tape.
 Future records cannot select a rule. The immutable test artifact is one look.
@@ -30,9 +30,10 @@ GRACE = 30
 SCHEMA = 1
 MAX_WALLET_ROWS = 250_000
 PROTOCOL: dict[str, Any] = {
-    "name": "skipwatch-prospective-v1", "fit_hours": FIT_HOURS,
+    "name": "skipwatch-publication-association-v2", "fit_hours": FIT_HOURS,
     "train_hours": TRAIN_HOURS, "test_hours": TEST_HOURS, "reporting_grace_s": GRACE,
-    "target": "next_complete_public_timestamp_second", "edges": [0.0, 0.02, 0.04],
+    "target": "block_publication_association_only", "causal_execution_inference": False,
+    "edges": [0.0, 0.02, 0.04],
     "cutoffs": [30, 60], "templates": ["ask", "bid", "bid_balance", "bid_trend_depth"],
     "wallet_coverage_min": 0.90, "min_rows": {"fit": 2000, "validation": 500, "test": 500},
     "min_positive": {"fit": 50, "validation": 20, "test": 20},
@@ -463,10 +464,11 @@ def freeze(directory: Path, now: float, anchor: float) -> dict[str, Any]:
               "frozen_at": now, "training_cutoff": cutoff, "freeze_late_seconds": max(0, now - cutoff),
               "input_digest": tape.digest.hexdigest(), "source_counts": dict(tape.counts),
               "stages_read": ["fit", "validation"], "status": "frozen" if enough and beats else
-              "insufficient_training" if not enough else "no_predictive_edge",
+              "insufficient_training" if not enough else "no_block_publication_association",
               "candidate": selected, "prevalence": prevalence, "size_estimate": fitted["median_positive_bin_size"],
               "fit": fitted, "validation": validation, "live_promotion": False,
-              "interpretation": "Public execution prediction only; private orders/cancellations remain unobservable"}
+              "causal_execution_inference": False,
+              "interpretation": "Block-publication association only; features may be AFTER actual execution"}
     _atomic_new(target, result)
     return result
 
@@ -497,8 +499,10 @@ def evaluate(directory: Path, now: float, anchor: float) -> dict[str, Any]:
               "candidate": frozen["candidate"], "frozen_artifact_hash": hashlib.sha256(_canonical(frozen)).hexdigest(),
               "input_digest": tape.digest.hexdigest(), "test": tested, "live_promotion": False,
               "status": "insufficient_evidence" if frozen["status"] != "frozen" or tested["insufficient"] else
-              "predictive_pattern_only" if beats else "no_predictive_edge",
+              "block_publication_association_only" if beats else "no_block_publication_association",
               "net_profit_usd": None, "transfer_to_kalshi": "untested_5m_to_15m_hypothesis"}
+    result["causal_execution_inference"] = False
+    result["interpretation"] = "Block-publication association only; not execution triggers or trading rules"
     _atomic_new(target, result)
     return result
 
@@ -508,12 +512,13 @@ def _rulebook(directory: Path, status: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     stage = status["status"]
     candidate = status.get("candidate")
-    text = ("# Public-fill research\n\n"
+    text = ("# Block-publication association research\n\n"
             f"Status: **{stage}**. No real-money rule has been activated.\n\n"
             "The preregistered clock uses 36 hours fitting, 12 hours validation, then one separate 24-hour test. "
-            "Only already-received features predict the next complete public timestamp second.\n\n")
+            "The target is the wallet row's BLOCK timestamp, not its execution time. Features may follow the actual trade. "
+            "These associations cannot identify execution triggers or justify trading rules.\n\n")
     if candidate:
-        text += f"Frozen candidate: `{candidate['id']}`. This is a public-execution hypothesis, not the wallet's exact private algorithm.\n\n"
+        text += f"Frozen association candidate: `{candidate['id']}`. This is not an execution rule and not the wallet's exact private algorithm.\n\n"
     detail = status.get("test", status.get("validation"))
     if detail:
         text += (f"Eligible opportunities: {detail['rows']}; positive seconds: {detail['positive']}; "
@@ -526,18 +531,45 @@ def _rulebook(directory: Path, status: dict[str, Any]) -> None:
              "Coinbase fair value is a proxy; the five-minute venue settles on Chainlink's specified TWAP. "
              "A five-to-fifteen-minute Kalshi transfer remains untested, with different fees, liquidity and settlement. "
              "Evidence here cannot enable trading or change the owner's caps.\n")
+    if stage == "awaiting_verified_execution_time":
+        text = ("# Pending: execution timing is unresolved\n\n"
+                "Strategy fitting is paused. The public wallet timestamp is block inclusion time, "
+                "not execution time. Prices immediately before that block timestamp can follow the trade. "
+                "No causal rule, strategy score or trading verdict is available.\n\n"
+                "Observation continues with the original start time and raw tape preserved. "
+                "The original 48/72-hour split boundaries are not scheduled automatic verdicts. "
+                "A separate preregistered execution-timing protocol is required before fitting can resume. "
+                "Existing frozen/test artifacts are preserved without reading or reusing their metrics. "
+                "Nothing here activates real money.\n")
     temporary = path.with_suffix(".tmp")
     temporary.write_text(text, encoding="utf-8")
     os.replace(temporary, path)
 
 
-def run_due(directory: Path, now: float, session_started_at: float) -> dict[str, Any]:
-    """Runtime calls this in an isolated worker; it never imports trading code."""
+def run_due(directory: Path, now: float, session_started_at: float, *,
+            block_publication_research: bool = False) -> dict[str, Any]:
+    """Production only reports the timing pause and never scans/fits the tape.
+
+    An explicit Python research call may inspect noncausal block-publication
+    associations. The production CLI deliberately provides no bypass switch.
+    """
     blocked_path = directory / "research" / "blocked.json"
     phase = "train_freeze"
     try:
         _number(now)
         _number(session_started_at)
+        if not block_publication_research:
+            paused = {"status": "awaiting_verified_execution_time", "session_started_at": session_started_at,
+                    "freeze_due_at": session_started_at + TRAIN_HOURS * 3600,
+                    "test_due_at": session_started_at + TEST_HOURS * 3600,
+                    "automatic_verdict_scheduled": False, "live_promotion": False,
+                    "causal_execution_inference": False,
+                    "reason": "Wallet timestamps identify block inclusion, not execution time; strategy fitting is paused",
+                    "summary": {"stage": "timing_unverified", "precision": None, "recall": None, "f1": None,
+                                "coverage": None, "feature_coverage": None, "rows": None,
+                                "reasons": ["Keep collecting; a new preregistered execution-timing protocol is required"]}}
+            _rulebook(directory, paused)
+            return paused
         if blocked_path.exists():
             return _load_artifact(blocked_path, session_started_at)
         if now < session_started_at + TRAIN_HOURS * 3600:
@@ -554,7 +586,9 @@ def run_due(directory: Path, now: float, session_started_at: float) -> dict[str,
         detail = status.get("test", status.get("validation"))
         chosen = status.get("candidate")
         score = detail["scores"][chosen["id"]] if detail and chosen else {}
-        status = {**status, "freeze_due_at": session_started_at + TRAIN_HOURS * 3600,
+        status = {**status, "causal_execution_inference": False,
+                  "interpretation": "Noncausal block-publication association only; not execution triggers or trading rules",
+                  "freeze_due_at": session_started_at + TRAIN_HOURS * 3600,
                   "test_due_at": session_started_at + TEST_HOURS * 3600, "summary": {
             "stage": "held_out" if "test" in status else "validation" if detail else "collecting",
             "precision": score.get("precision"), "recall": score.get("recall"), "f1": score.get("f1"),
@@ -567,6 +601,7 @@ def run_due(directory: Path, now: float, session_started_at: float) -> dict[str,
     except (OSError, EOFError, ValueError, KeyError, TypeError) as exc:
         # Fixed reason only: never serialize arbitrary file/request contents.
         failure = {"status": "research_blocked", "reason": type(exc).__name__, "live_promotion": False,
+                   "causal_execution_inference": False,
                    "plan_hash": PLAN_HASH, "session_started_at": session_started_at, "phase": phase,
                    "summary": {"stage": "blocked", "precision": None, "recall": None, "f1": None,
                                "coverage": None, "feature_coverage": None, "rows": None,
@@ -599,7 +634,8 @@ def main() -> None:
         os.nice(10)  # CPU-heavy prospective research yields priority to the financial process.
     status = run_due(directory, arguments.now if arguments.now is not None else time.time(), arguments.session_start)
     keys = ("status", "reason", "summary", "candidate", "session_started_at", "frozen_at", "evaluated_at",
-            "freeze_due_at", "test_due_at", "holdout_status", "live_promotion", "retry_after_s")
+            "freeze_due_at", "test_due_at", "holdout_status", "live_promotion", "retry_after_s",
+            "automatic_verdict_scheduled", "causal_execution_inference")
     print(json.dumps({key: status[key] for key in keys if key in status}, sort_keys=True, allow_nan=False))
 
 

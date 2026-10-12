@@ -397,12 +397,14 @@ _SCRIPT = r"""
       row("Ambiguous / unmatched", count(w.ambiguous) + " / " + count(w.unmatched)), row("Recorded data gaps", count(w.gaps)));
     $("skipwatch-fit").textContent = w.fit_status + (w.fit_reason ? " · " + w.fit_reason : "");
     const fit = w.fit_summary || {}, share = (v) => isNum(v) ? (v * 100).toFixed(1) + "%" : "—";
-    const stage = {collecting: "Collecting future data", training: "Training", validation: "Validation", held_out: "Held-out day", blocked: "Paused"};
+    const stage = {collecting: "Collecting future data", training: "Training", validation: "Validation", held_out: "Held-out day", blocked: "Paused", timing_unverified: "Execution timing unverified"};
     put($("skipwatch-fit-metrics"), row("Evaluation stage", stage[fit.stage] || fit.stage || "Not reported"),
       row("Precision / recall", share(fit.precision) + " / " + share(fit.recall)),
       row("Eligible rows / wallet coverage", count(fit.rows) + " / " + share(fit.coverage)),
       row("Usable feature coverage", share(fit.feature_coverage)));
-    $("skipwatch-fit-timing").textContent = (isNum(w.freeze_due_at) ? "Rule freeze due: " + stamp(w.freeze_due_at) + ". " : "")
+    $("skipwatch-fit-timing").textContent = w.automatic_verdict_scheduled === false
+      ? "Collection continues. No rule verdict is scheduled until execution timing is verified."
+      : (isNum(w.freeze_due_at) ? "Rule freeze due: " + stamp(w.freeze_due_at) + ". " : "")
       + (isNum(w.test_due_at) ? "Held-out review due: " + stamp(w.test_due_at) + ". " : "")
       + (fit.reasons || []).join(" · ");
     const coverage = w.coverage || {};

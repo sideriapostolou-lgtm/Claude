@@ -294,6 +294,9 @@ Every observation records source time where available and local receipt time. Pr
 public prints are inferred, ambiguous or unmatched; they do not establish private decision milliseconds,
 submitted order size, maker/taker identity or cancellations. Unknowns remain unknown. CLOB has no documented
 market-channel sequence counter, so observed reconnect gaps do not prove that every silent loss is detectable.
+The wallet API's integer timestamp is **block inclusion time**, not execution time. A public probe on
+October 12 found same-transaction prints 1.333–3.674 seconds earlier. Preserve both clocks; do not demand
+that their timestamps agree within one second or treat the block clock as a trading decision clock.
 The journal retains reconstructible prices/sizes/timestamps; opaque delta book hashes and validated redundant
 fields may be omitted from its normalized representation. Source data cannot enter a feature before receipt.
 
@@ -309,17 +312,25 @@ Per-window summaries and late revisions use `skipwatch_window_summary`; current 
 
 `research/lab8/skip/PLAN.md` is registered before prospective analysis. Its packaged implementation is
 `skipwatch_fit.py`; `research/lab8/skip/fit.py` is the offline command. The original persisted start time defines
-the splits: hours 0–36 fit, 36–48 validation, 48–72 untouched test. A fixed 24-candidate grid uses fair/quote
+the proposed splits: hours 0–36 fit, 36–48 validation, 48–72 untouched test. A fixed 24-candidate grid uses fair/quote
 edge, time remaining, observed side balance, displayed depth and Bitcoin movement. One causal opportunity
 per side/second predicts the next complete public timestamp second, with covered negative examples and a
 30-second reporting grace. Compare precision, recall and F1 against never-buy, always-buy and fixed-prevalence
 baselines; report sizing error, coverage, quiet periods and mismatches. Inadequate evidence is a valid result.
 
+**Timing amendment, before any model result:** automatic fitting and rule verdicts are paused with
+`awaiting_verified_execution_time`. Features preceding a block timestamp can follow the actual trade,
+so the original public-second target cannot establish execution triggers. Observation and the original
+clock continue. A separately preregistered, verified execution-time labeling and coverage protocol is
+required before fitting can resume; complementary-outcome and aggregated public prints need explicit
+treatment. Passing 48 or 72 hours alone does not release this block. Explicit offline block-publication
+association research remains noncausal and cannot supply a trading rule or net-profit claim.
+
 The research-only sigma uses at least 300 actual adjacent one-second returns; opening uses an actual tick
 already known at window start and at most three seconds old. Missing observations never become zero returns.
 This does not lower the financial desk's 3,000-return warm-up. Its status now shows the actual sample count.
-After 48 hours, freeze the selected rule and its protocol/input digests before evaluating the final day.
-After 72 hours, evaluate once and retain that immutable result. Slow research runs in a separate process,
+Once a valid timing protocol exists, freeze the selected rule and its protocol/input digests before
+evaluating any held-out data, and retain that immutable result. Slow research runs in a separate process,
 so fitting does not hold the trading interpreter. Artifacts and the resulting rulebook live under
 `/data/skipwatch/research/`; repository `RULES.md` stays pending until verified findings are copied back.
 
