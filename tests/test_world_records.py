@@ -167,7 +167,7 @@ console.log(JSON.stringify(runs));
 @needs_node
 def test_rooks_risk_wall_reads_only_the_api_numbers_and_red_is_real_money(settings: Settings, tmp_path: Path) -> None:
     """The gauges come from team.members[risk].risk_wall and its real_caps; with nothing (or half a wall) the wall
-    says so in words; a paused day and the real desk's caps (open $ vs $10, today's loss vs $3, total vs $10). The
+    says so in words; account open cost stays separate from the bot cap, today's loss vs $3, total vs $10. The
     desks by the page's words (practice always pretend, the real one REAL), and red for real money only: a pretend
     gauge past 90% or a losing practice rule is orange or amber, never red."""
     _, module = _page(settings)
@@ -191,7 +191,12 @@ strokes.length = 0; recDrawWall(paused, caps, "Paper money (pretend)"); const fu
 recDrawWall(paused, Object.assign({{}}, caps, {{ on: false }}), "Paper money (pretend)"); runs.push(texts());
 recDrawWall(Object.assign({{}}, paused, {{ desks: [{{ desk: "Polymarket paper", verdict: "winning", paused: false }}] }}), null, "Paper money (pretend)");
 const winning = painted();
-console.log(JSON.stringify({{ runs: runs, full: full, strokes: fullStrokes, winning: winning }}));
+recDrawWall(paused, Object.assign({{}}, caps, {{ open_usd: 104.82 }}), "Paper money (pretend)");
+const sharedAccount = texts();
+recDrawWall(paused, Object.assign({{}}, caps, {{ open_usd: null, day_loss_usd: null }}), "Paper money (pretend)");
+const missingAmounts = texts();
+console.log(JSON.stringify({{ runs: runs, full: full, strokes: fullStrokes, winning: winning,
+  sharedAccount: sharedAccount, missingAmounts: missingAmounts }}));
 """, tmp_path)
     runs = out["runs"]
     for run in runs:
@@ -206,7 +211,7 @@ console.log(JSON.stringify({{ runs: runs, full: full, strokes: fullStrokes, winn
     for words in ("Solana bot · Paper money (pretend)", "104%", "of today's loss allowance", "Trade slots: 3 of 3 in use",
                   "Daily stop: ON, no new buys today", "New buys stopped: today's loss limit",
                   "Polymarket practice (pretend money)", "losing · new buys paused", "Polymarket REAL money", "losing",
-                  "Real money · the Polymarket desk's hard limits", "In open bets", "$4.82 of $10.00", "Lost today (UTC)",
+                  "Real money · the Polymarket desk's hard limits", "Account open", "$4.82 incl. yours", "Bot cap $10.00", "Lost today (UTC)",
                   "$0.97 of $3.00", "Lost in total", "$2.52 of $10.00"):
         assert words in full, words
     assert "Polymarket paper" not in full and "Polymarket real" not in full  # never the desk's raw name
@@ -218,6 +223,9 @@ console.log(JSON.stringify({{ runs: runs, full: full, strokes: fullStrokes, winn
     assert "#ff9f43" in out["strokes"] and not any(s in _REDS for s in out["strokes"][:3])  # the 104% gauge: orange
     win = {d["t"]: d["fill"] for d in out["winning"]}
     assert "winning (pretend)" in win and win["winning (pretend)"] not in _REDS  # a pretend win says pretend
+    assert "$104.82 incl. yours" in out["sharedAccount"] and "Bot cap $10.00" in out["sharedAccount"]
+    assert "$104.82 of $10.00" not in out["sharedAccount"]
+    assert "— incl. yours" in out["missingAmounts"] and "— of $3.00" in out["missingAmounts"]
 
 
 @needs_node
@@ -546,13 +554,16 @@ console.log(JSON.stringify({{ making: making, busy: busy, queued: queued, done: 
 # --------------------------------------------------------------------------- yesterday's film and the records tour
 
 _FILM_STUBS = r"""
+let tycoonMode = false;
+function tycoonActive() { return tycoonMode; }
 const el = function (tag) { return { tag: tag, hidden: false, className: "", textContent: "", style: {}, children: [], attrs: {},
   appendChild: function (c) { this.children.push(c); }, setAttribute: function (k, v) { this.attrs[k] = v; } }; };
 const document = { createElement: el };
 const bodyCls = new Set(), body = { appendChild: function () {}, classList: { add: function (c) { bodyCls.add(c); }, remove: function (c) { bodyCls.delete(c); } } };
 const card = { getBoundingClientRect: function () { return { bottom: 700 }; } }, window = { innerHeight: 800 };
 const guideEl = { hidden: true }; let panelKind = null, simT = 0, pinned = null, wentLive = 0, data = null;
-const closePanel = function () {}, closeGuide = function () {};
+let panelCloses = 0, guideCloses = 0;
+const closePanel = function () { panelCloses += 1; }, closeGuide = function () { guideCloses += 1; };
 const pins = [], views = [], FLY = { on: false };
 const PLANNER = { pin: function (k, t) { pins.push(k); pinned = k; } };
 const togglePin = function (k) { pinned = pinned === k ? null : k; if (pinned) pins.push(k); };

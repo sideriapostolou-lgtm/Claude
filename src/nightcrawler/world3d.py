@@ -2,8 +2,8 @@
 
 The owner handed over a professional art pack (``office_art/``: the world layout, the arrival drone shot, the
 mission table, one workstation per member, the crew lineup). This page builds that world in three.js at the scale
-of its cast and films it the way the pack asks: a drone 1.6-2.4 m above the walkway, a 24-35 mm lens, near
-horizontal, close behind the crew; never a top-down tycoon view.
+of its cast. The default phone-first tycoon view keeps a steady town overview, real-money totals and selectable
+workstations. The optional camera tour films the original low drone shots close behind the crew.
 
 * The layout is the pack's canonical one, seen from the entrance bridge: the round mission courtyard with the mint
   holographic table in the middle, the raised observatory with its brass telescope at the rear, Pip's warm workshop
@@ -109,7 +109,7 @@ horizontal, close behind the crew; never a top-down tycoon view.
   worried, hurting, hopeful, calm, relieved: their own moves) and only while the member is idle of the director's own
   beats; and when a real settlement is new since the last poll the team huddles at the goal tower for a few seconds,
   a beat of the goal's own (its strip says it, its programme films the tower, then Voss's heart line).
-* The cinema (the module's THE CINEMA section, CSS in ``_STYLE_CINEMA``): the DEFAULT view, for a friend who has never
+* The cinema (the module's THE CINEMA section, CSS in ``_STYLE_CINEMA``): the optional camera tour, for a friend who has never
   seen it. Two thin letterbox bars and a gentle grade; in the top bar one HUD line of REAL money only ("REAL MONEY
   $47.06 · today +$1.52 · goal $100/day": ``plain.real``, ``town.goal``, ``money.polymarket``; a tap opens the real
   money's details); in the bottom bar a caption for the shot on air ("VOSS, the real-money trader. <his newest bet>." and
@@ -206,6 +206,7 @@ from nightcrawler.config import Settings
 from nightcrawler.office import PIPELINE
 from nightcrawler.office3d import CAST3D
 from nightcrawler.page import MEMBERS, REFRESH_S
+from nightcrawler.worldtycoon import TYCOON_HTML, TYCOON_MODULE, TYCOON_STYLE
 
 __all__ = [
     "ADDON_FILES",
@@ -740,7 +741,7 @@ _STYLE_TOWN = r"""
 #film.practice .fnote { color: #c9d6ff; }
 """
 
-#: THE CINEMA's styles (the default view, ``body.cinema``): two thin letterbox bars, the one-line real-money HUD in the
+#: THE CINEMA's styles (the camera tour, ``body.cinema``): two thin letterbox bars, the one-line real-money HUD in the
 #: top one, the film-style caption in the bottom one, the characters' name tags, the first-visit intro card, a gentle
 #: grade. Every rule that hides a part of the full view is scoped under ``body.cinema``, so the "details" button (which
 #: only removes that class) brings the full view back exactly as it was. Last in the page's style: it wins the ties.
@@ -846,6 +847,7 @@ import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js"
 import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 
 const body = document.body;
+function tycoonActive() { return body.classList.contains("tycoon"); }
 const REFRESH_MS = Math.max(4000, 1000 * (parseInt(body.dataset.refresh, 10) || 15));
 const PIPELINE = (body.dataset.pipeline || "").split(",").filter(Boolean);
 const CAST = JSON.parse(document.getElementById("cast").textContent);
@@ -880,7 +882,11 @@ function angleDiff(a, b) { return ((a - b + Math.PI) % TAU + TAU) % TAU - Math.P
 function fmtUsd(v) { return v == null ? "—" : (v < 0 ? "−" : "") + "$" + Math.abs(v).toFixed(2); }
 function fmtSigned(v) { return v == null ? "—" : (v >= 0 ? "+" : "−") + "$" + Math.abs(v).toFixed(2); }
 function isNum(v) { return typeof v === "number" && isFinite(v); }
-function fail(text) { boot.hidden = false; boot.textContent = text; boot.className = "bad"; canvas.hidden = true; }
+function fail(text) {
+  boot.hidden = false; boot.textContent = text + " "; boot.className = "bad"; canvas.hidden = true;
+  body.classList.add("world-failed");
+  const reports = document.createElement("a"); reports.href = "/reports"; reports.textContent = "Open detailed reports"; boot.appendChild(reports);
+}
 // the page's bus: a section that adds to the world listens here instead of editing the others (THE CHANNEL below;
 // whatever comes next): "start" once before the first frame, "data" after each poll (d, first), "frame" after each
 // frame's acting and camera (dt, dtRaw). Fixed arity, so emitting allocates nothing; a listener that throws is
@@ -1621,25 +1627,78 @@ _M_WORLD = r"""
   practical("kiosk", 0xffbd74, 22.6, 2.2, 5.5, 18, 8);
 
   // ------------------------------------------------------------- the departments
+  // Preserve the cinema shells as separate meshes. The town view lifts the roof and upper walls, like a
+  // dollhouse, so its workers remain visible; the original collision boxes and walking routes stay in place.
+  const TY_CUTAWAY = { on: false, parts: [], leaves: [], racemes: [] };
+  function tycoonShellPart(name, fn) {
+    const saved = new Map(buckets), group = new THREE.Group(); group.name = "cutaway:" + name; buckets.clear();
+    try {
+      fn();
+      buckets.forEach(function (list, key) {
+        const geo = mergeGeometries(list.map(prep), false); if (!geo) return;
+        if (UVSCALE[key]) worldUV(geo, UVSCALE[key]); geo.computeBoundingSphere();
+        const mesh = new THREE.Mesh(geo, MAT[key]);
+        mesh.receiveShadow = key !== "glow" && key !== "glass";
+        mesh.castShadow = Q.shadows && ["stone", "wood", "brass", "plain", "iron", "cloth"].includes(key);
+        if (key === "glass") mesh.renderOrder = 2;
+        mesh.matrixAutoUpdate = false; mesh.updateMatrix(); group.add(mesh);
+      });
+    } finally { buckets.clear(); saved.forEach(function (list, key) { buckets.set(key, list); }); }
+    scene.add(group); return group;
+  }
+  function tycoonCutaway(on) {
+    TY_CUTAWAY.on = !!on;
+    TY_CUTAWAY.parts.forEach(function (part) { part.cover.visible = !TY_CUTAWAY.on; if (part.low) part.low.visible = TY_CUTAWAY.on; });
+  }
+  function vineLeafInstances(list) {
+    return list.map(function (q) { return { p: q.p, r: q.r, s: q.s,
+      c: [0x4a8a3e, 0x3c7a3a, 0x5e9a48][Math.floor((q.p[0] * 13 + q.p[1] * 7) % 3 + 3) % 3] }; });
+  }
+  function tycoonRoofVines(leafGeo, racemeGeo) {
+    // All four roofs share two instanced meshes. Ground plants stay in their ordinary visible collections.
+    const cover = new THREE.Group(); cover.name = "cutaway:roof-vines";
+    cover.add(instanced(leafGeo, MAT.leaf, vineLeafInstances(TY_CUTAWAY.leaves), false));
+    cover.add(instanced(racemeGeo, MAT.leaf, TY_CUTAWAY.racemes, false));
+    cover.visible = !TY_CUTAWAY.on; scene.add(cover); TY_CUTAWAY.parts.push({ cover: cover });
+  }
+  function tycoonLowWall(F, w, t, ops, p, ry, tint) {
+    const height = 0.72, doors = ops.filter(function (o) { return !o.y0; }).sort(function (a, b) { return a.x - b.x; });
+    const cuts = [-w / 2].concat(doors.flatMap(function (o) { return [o.x - o.w / 2, o.x + o.w / 2]; })).concat([w / 2]);
+    for (let i = 0; i < cuts.length; i += 2) {
+      const width = cuts[i + 1] - cuts[i]; if (width < 0.2) continue;
+      const centre = V3((cuts[i] + cuts[i + 1]) / 2, height / 2, 0).applyAxisAngle(V3(0, 1, 0), ry || 0).add(V3(...p));
+      F.add("stone", G.box(width, height, t), centre.toArray(), [0, ry || 0, 0], null, tint || CREAM);
+      centre.y = p[1] + height + 0.025;
+      F.add("stone", G.box(width, 0.05, t + 0.1), centre.toArray(), [0, ry || 0, 0], null, CREAM2);
+    }
+  }
   function roomShell(F, o) {
     const w = o.w, d = o.d, h = o.h, t = 0.42;
     F.add(o.floorKey || "pavers", G.box(w, 0.04, d), [0, -0.019, 0], null, null, o.floor || 0xeadcc4);
     F.add("stone", G.box(w + 0.8, 0.6, d + 0.8), [0, -0.33, 0], null, null, STONE_DARK);
-    archWall(F, w + t, h, t, o.back || [], [0, 0, -d / 2], 0, o.tint);
-    archWall(F, d, h, t, o.left || [], [-w / 2, 0, 0], Math.PI / 2, o.tint);
-    archWall(F, d, h, t, o.right || [], [w / 2, 0, 0], -Math.PI / 2, o.tint);
-    archWall(F, w + t, h, t, o.front || [], [0, 0, d / 2], 0, o.tint);
-    // cornice, a brass band, the corner columns, pergola beams under an open sky
-    F.add("stone", G.box(w + t + 0.36, 0.24, d + t + 0.36), [0, h + 0.12, 0], null, null, CREAM2);
-    F.add("stone", G.box(w + t - 1.2, 0.3, d + t - 1.2), [0, h + 0.12, 0], null, null, CREAM2);
-    F.add("brass", G.box(w + t + 0.38, 0.05, d + t + 0.38), [0, h - 0.02, 0], null, null, BRASS);
-    [[-1, 1], [1, 1], [-1, -1], [1, -1]].forEach(function (c) { column(F, c[0] * (w / 2 + 0.12), c[1] * (d / 2 + 0.12), h, 0.27); });
-    for (let z = -d / 2 + 0.7; z < d / 2 - 0.4; z += 1.05) F.add("wood", G.box(w + 0.1, 0.2, 0.15), [0, h + 0.36, z], null, null, WALNUT_DARK);
-    F.add("wood", G.box(0.15, 0.2, d + 0.1), [-w / 4, h + 0.56, 0], null, null, WALNUT_DARK); F.add("wood", G.box(0.15, 0.2, d + 0.1), [w / 4, h + 0.56, 0], null, null, WALNUT_DARK);
-    // flower-heavy vines over the front and the sides
-    vinesAlong(F, -w / 2 - 0.1, w / 2 + 0.1, h + 0.05, d / 2 + 0.28, 0.32, 1.5, o.seed || 1);
-    vinesAlong(F, -w / 2 + 0.3, w / 2 - 0.3, h + 0.3, 0.6, 0.6, 0.8, (o.seed || 1) + 5);
-    [-1, 1].forEach(function (s) { for (let z = -d / 2; z < d / 2; z += 0.9) { const p = F.at(s * (w / 2 + 0.28), h + 0.05, z); vine(p.x, p.y, p.z, 0.3 + ((z * 7 + s * 3) % 1 + 1) % 1 * 1.2, Math.round(z * 100 + s * 7 + (o.seed || 1) * 1000)); } });
+    const walls = [[w + t, o.back || [], [0, 0, -d / 2], 0], [d, o.left || [], [-w / 2, 0, 0], Math.PI / 2],
+      [d, o.right || [], [w / 2, 0, 0], -Math.PI / 2], [w + t, o.front || [], [0, 0, d / 2], 0]];
+    const cover = tycoonShellPart("room:" + (o.seed || 0), function () {
+      walls.forEach(function (wall) { archWall(F, wall[0], h, t, wall[1], wall[2], wall[3], o.tint); });
+      // The original full slabs, cornice and pergola are restored together in camera tours.
+      F.add("stone", G.box(w + t + 0.36, 0.24, d + t + 0.36), [0, h + 0.12, 0], null, null, CREAM2);
+      F.add("stone", G.box(w + t - 1.2, 0.3, d + t - 1.2), [0, h + 0.12, 0], null, null, CREAM2);
+      F.add("brass", G.box(w + t + 0.38, 0.05, d + t + 0.38), [0, h - 0.02, 0], null, null, BRASS);
+      [[-1, 1], [1, 1], [-1, -1], [1, -1]].forEach(function (c) { column(F, c[0] * (w / 2 + 0.12), c[1] * (d / 2 + 0.12), h, 0.27); });
+      for (let z = -d / 2 + 0.7; z < d / 2 - 0.4; z += 1.05) F.add("wood", G.box(w + 0.1, 0.2, 0.15), [0, h + 0.36, z], null, null, WALNUT_DARK);
+      F.add("wood", G.box(0.15, 0.2, d + 0.1), [-w / 4, h + 0.56, 0], null, null, WALNUT_DARK); F.add("wood", G.box(0.15, 0.2, d + 0.1), [w / 4, h + 0.56, 0], null, null, WALNUT_DARK);
+      // These vines belong to the roof; any future stems also enter the removable cover's geometry bucket.
+      const leafStart = leaves.length, racemeStart = racemes.length;
+      vinesAlong(F, -w / 2 - 0.1, w / 2 + 0.1, h + 0.05, d / 2 + 0.28, 0.32, 1.5, o.seed || 1);
+      vinesAlong(F, -w / 2 + 0.3, w / 2 - 0.3, h + 0.3, 0.6, 0.6, 0.8, (o.seed || 1) + 5);
+      [-1, 1].forEach(function (s) { for (let z = -d / 2; z < d / 2; z += 0.9) { const p = F.at(s * (w / 2 + 0.28), h + 0.05, z); vine(p.x, p.y, p.z, 0.3 + ((z * 7 + s * 3) % 1 + 1) % 1 * 1.2, Math.round(z * 100 + s * 7 + (o.seed || 1) * 1000)); } });
+      leaves.splice(leafStart).forEach(function (leaf) { TY_CUTAWAY.leaves.push(leaf); });
+      racemes.splice(racemeStart).forEach(function (flower) { TY_CUTAWAY.racemes.push(flower); });
+    });
+    const low = tycoonShellPart("low:" + (o.seed || 0), function () {
+      walls.forEach(function (wall) { tycoonLowWall(F, wall[0], t, wall[1], wall[2], wall[3], o.tint); });
+    });
+    cover.visible = !TY_CUTAWAY.on; low.visible = TY_CUTAWAY.on; TY_CUTAWAY.parts.push({ cover: cover, low: low });
     // bushes round the outside
     for (let x = -w / 2 + 0.4; x < w / 2; x += 1.1) { const p = F.at(x, 0, -d / 2 - 0.55); if (onIsland(p.x, p.z, 0.4)) bush(p.x, 0, p.z, 0.65, 4); }
     // (o.clear: room-local spots where someone stands outside, e.g. the vault's hatch, kept free of bushes)
@@ -2126,10 +2185,12 @@ _M_WORLD = r"""
     instanced((function () { const g = crag(0.5, 2, 3, 1); g.deleteAttribute("normal"); g.deleteAttribute("uv"); const m = mergeVertices(g); m.computeVertexNormals(); return m; })(), MAT.leaf, bushes, false);
     const bloomGeo = (function () { const parts = [], r = rng(5); for (let i = 0; i < 9; i++) { const g = G.sph(0.3, 6, 5); g.translate((r() - 0.5) * 0.6, (r() - 0.5) * 0.4, (r() - 0.5) * 0.6); parts.push(prep(g)); } return mergeGeometries(parts, false); })();
     instanced(bloomGeo, MAT.leaf, blooms, false);
-    instanced(paint(crag(0.5, 0, 9, 0.55), 0xffffff), MAT.leaf, leaves.map(function (q) { return { p: q.p, r: q.r, s: q.s, c: [0x4a8a3e, 0x3c7a3a, 0x5e9a48][Math.floor((q.p[0] * 13 + q.p[1] * 7) % 3 + 3) % 3] }; }), false);
+    const leafGeo = paint(crag(0.5, 0, 9, 0.55), 0xffffff);
+    instanced(leafGeo, MAT.leaf, vineLeafInstances(leaves), false);
     const raceme = (function () { const parts = [], r = rng(8); for (let i = 0; i < 12; i++) { const t = i / 11, g = G.sph(0.11 * (1 - t * 0.6), 6, 5);
       g.translate((r() - 0.5) * 0.12 * (1 - t), -t * 0.6, (r() - 0.5) * 0.12 * (1 - t)); paint(g, _c.set(0xffffff).lerp(col(0xc9b0ff), t)); parts.push(prep(g)); } return mergeGeometries(parts, false); })();
     instanced(raceme, MAT.leaf, racemes, false);
+    tycoonRoofVines(leafGeo.clone(), raceme.clone());
     const cyp = new THREE.LatheGeometry([[0, 0], [0.12, 0], [0.12, 0.6], [0.55, 0.9], [0.75, 1.6], [0.8, 2.4], [0.7, 3.4], [0.5, 4.4], [0.25, 5.2], [0, 5.7]].map(function (q) { return new THREE.Vector2(q[0], q[1] / 5.7); }), 12);
     instanced(paint(cyp, function (x, y) { return _c.set(y < 0.1 ? 0x5a3a26 : 0x2f5e36).lerp(col(0x4f8a46), clamp(y * 0.8, 0, 0.6)); }), MAT.leaf, cypresses, true);
     instanced(paint(G.box(1, 1, 1), 0xffffff), MAT.books, books, false);
@@ -3519,6 +3580,7 @@ _M_LIFE = r"""
   const user = { yaw: 0, pitch: 0, zoom: 1 }; let lastInputAt = -1e9, shake = 0;
   const _camP = new THREE.Vector3(), _dir = new THREE.Vector3(), _right = new THREE.Vector3(), _look = new THREE.Vector3(), UP = V3(0, 1, 0);
   function updateCamera(dt, t) {
+    if (tycoonCameraUpdate(dt, t)) return;
     const s = shotFn(t);
     if (tween) {
       tween.t += dt / tween.dur; const u = Math.min(1, tween.t), e = u * u * (3 - 2 * u);
@@ -3542,16 +3604,20 @@ _M_LIFE = r"""
     sky.position.copy(camera.position); cloudU.uCam.value.copy(camera.position);
     if (Q.shadows) { sun.target.position.copy(cam.look); sun.position.copy(cam.look).addScaledVector(sun.userData.dir || sunDir, 60); }
   }
-  const pointers = new Map(); let pinchD = 0, dragged = 0;
+  const pointers = new Map(); let pinchD = 0, dragged = 0, multiTouch = false;
   function pinchDist() { const p = Array.from(pointers.values()); return p.length < 2 ? 0 : Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y); }
-  canvas.addEventListener("pointerdown", function (e) { pointers.set(e.pointerId, { x: e.clientX, y: e.clientY }); try { canvas.setPointerCapture(e.pointerId); } catch (err) {} lastInputAt = performance.now(); pinchD = pinchDist(); dragged = 0; });
+  canvas.addEventListener("pointerdown", function (e) { if (!pointers.size) multiTouch = false; else multiTouch = true; pointers.set(e.pointerId, { x: e.clientX, y: e.clientY }); try { canvas.setPointerCapture(e.pointerId); } catch (err) {} lastInputAt = performance.now(); pinchD = pinchDist(); dragged = 0; });
   canvas.addEventListener("pointermove", function (e) {
     const p = pointers.get(e.pointerId); if (!p) return;
     const dx = e.clientX - p.x, dy = e.clientY - p.y; p.x = e.clientX; p.y = e.clientY; lastInputAt = performance.now(); dragged += Math.abs(dx) + Math.abs(dy);
     if (pointers.size === 1) { user.yaw = clamp(user.yaw - dx * 0.0045, -0.95, 0.95); user.pitch = clamp(user.pitch - dy * 0.0035, -0.35, 0.3); }
     else if (pointers.size === 2) { const d = pinchDist(); if (pinchD > 0 && d > 0) user.zoom = clamp(user.zoom * pinchD / d, 0.5, 1.8); pinchD = d; }
   });
-  const up = function (e) { pointers.delete(e.pointerId); pinchD = pinchDist(); };
+  const up = function (e) {
+    const tap = e.type === "pointerup" && pointers.size === 1 && !multiTouch && dragged < 8;
+    pointers.delete(e.pointerId); pinchD = pinchDist();
+    if (tap && tycoonActive()) { const station = tycoonParkPick(e.clientX, e.clientY); if (station) tycoonChoose(station); }
+  };
   canvas.addEventListener("pointerup", up); canvas.addEventListener("pointercancel", up);
   canvas.addEventListener("wheel", function (e) { e.preventDefault(); user.zoom = clamp(user.zoom * (1 + e.deltaY * 0.0012), 0.5, 1.8); lastInputAt = performance.now(); }, { passive: false });
 
@@ -3799,7 +3865,7 @@ _M_LIFE = r"""
   // ============================================================= THE BAR: real money, practice, the headline, the guide
   // Every word here is /api/page's plain block (plain: fixed templates the server filled with the bot's own figures) or
   // the fixed copy below; real money is red only while the data says it is on, practice always says "pretend".
-  let plain = null, panelKind = null, barBottom = 0;
+  let plain = null, panelKind = null, barBottom = 0, panelReturnFocus = null;
   const STATUS_CLASS = { working: "working", waiting: "waiting", idle: "idle", stuck: "blocked" };
   function teamOf(key) { return plain && Array.isArray(plain.team) ? plain.team.find(function (t) { return t.id === key; }) || null : null; }
   // the team's hearts (plain.hearts): each character's mood and heart line, the server's words (text only)
@@ -3879,6 +3945,7 @@ _M_LIFE = r"""
     const p = document.createElement("p"); if (cls) p.className = cls; p.textContent = text; parent.appendChild(p); return p;
   }
   function renderPanel() {
+    if (tycoonPanel()) return;
     if (panelKind === "goal") return;  // (THE GOAL draws its own panel, at the reader's place: goalPanel)
     panelBody.textContent = "";
     if (!plain) { panelTitle.textContent = "Loading…"; return; }
@@ -3886,6 +3953,7 @@ _M_LIFE = r"""
       const r = plain.real, w = realWords(r);
       panelTitle.textContent = r.label + ": " + w.title; panelEl.className = w.red ? "real" : "";
       para(panelBody, r.line); para(panelBody, r.how); para(panelBody, r.paused, "warn"); para(panelBody, r.limits);
+      cineMoneyDetails(data).forEach(function (line) { para(panelBody, line, "dim"); });
       para(panelBody, r.verdict, "verdict"); para(panelBody, r.research, "dim");
     } else {  // (the title is the label: the body says the books without it)
       panelTitle.textContent = plain.pretend.label; panelEl.className = "";
@@ -3895,11 +3963,15 @@ _M_LIFE = r"""
   }
   function openPanel(kind) {
     if (panelKind === kind) { closePanel(); return; }
+    if (panelEl.hidden) panelReturnFocus = document.activeElement;
     closeGuide(); panelKind = kind; renderPanel(); panelEl.hidden = false;
+    if (kind.indexOf("ty-") === 0) el("panel-close").focus({ preventScroll: true });
     realBtn.setAttribute("aria-expanded", String(kind === "real")); practiceBtn.setAttribute("aria-expanded", String(kind === "practice"));
   }
   function closePanel() {
     panelKind = null; panelEl.hidden = true; realBtn.setAttribute("aria-expanded", "false"); practiceBtn.setAttribute("aria-expanded", "false");
+    if (panelReturnFocus && panelReturnFocus.isConnected && panelReturnFocus.getClientRects().length) panelReturnFocus.focus({ preventScroll: true });
+    panelReturnFocus = null;
   }
   realBtn.onclick = function () { openPanel("real"); };
   practiceBtn.onclick = function () { openPanel("practice"); };
@@ -4721,12 +4793,17 @@ _M_RECORDS = r"""
       ctx.strokeStyle = "#ff6b61"; ctx.lineWidth = 4; roundRect(ctx, 32, y0 - 34 * k, W - 64, 168 * k, 16); ctx.stroke();
       ctx.fillStyle = "#ffb3ab";
       ctx.fillText(recSized(ctx, (caps.label || "") + " · the Polymarket desk's hard limits" + (caps.on ? "" : " (no new real bets now)"), W - 110, Math.round(26 * k), 20, "bold "), 52, y0);
-      [["In open bets", caps.open_usd, caps.open_max_usd], ["Lost today (UTC)", caps.day_loss_usd, caps.day_max_usd],
+      [["Account open", caps.open_usd, caps.open_max_usd], ["Lost today (UTC)", caps.day_loss_usd, caps.day_max_usd],
        ["Lost in total", caps.total_loss_usd, caps.total_max_usd]].forEach(function (q, i) {
-        const x = 52 + i * 316, v = isNum(q[1]) ? q[1] : 0, m = isNum(q[2]) && q[2] > 0 ? q[2] : null;
+        const x = 52 + i * 316, v = isNum(q[1]) ? q[1] : null, m = isNum(q[2]) && q[2] > 0 ? q[2] : null;
         ctx.fillStyle = "#e9dcc4"; ctx.font = px(26) + REC_FONT; ctx.fillText(q[0], x, y0 + 44 * k);
+        // Open cost includes the owner's bets; the cap applies to the bot alone. Never compare those scopes.
+        if (i === 0) {
+          ctx.fillStyle = "#fff4dc"; ctx.font = "bold " + px(26) + REC_FONT; ctx.fillText(fmtUsd(v) + " incl. yours", x, y0 + 80 * k);
+          ctx.fillStyle = "#e9dcc4"; ctx.font = px(20) + REC_FONT; ctx.fillText("Bot cap " + fmtUsd(m), x, y0 + 113 * k); return;
+        }
         ctx.fillStyle = "#fff4dc"; ctx.font = "bold " + px(26) + REC_FONT; ctx.fillText(fmtUsd(v) + (m ? " of " + fmtUsd(m) : ""), x, y0 + 80 * k);
-        recBar(ctx, x, y0 + 100 * k, 280, 14 * k, m ? v / m : 0, m && v / m >= 0.8 ? "#ff6b61" : "#e0b25e");
+        if (v !== null) recBar(ctx, x, y0 + 100 * k, 280, 14 * k, m ? v / m : 0, m && v / m >= 0.8 ? "#ff6b61" : "#e0b25e");
       });
     } else { ctx.fillStyle = "#a99c88"; ctx.font = px(26) + REC_FONT; ctx.fillText("Real money: no real-money bets on record.", 40, y0 + 40); }
     recWall.userData.tex.needsUpdate = true;
@@ -5158,7 +5235,7 @@ _M_RECORDS = r"""
     if (FILM.on) filmStop(false);
     FILM.on = true; FILM.kind = kind; FILM.auto = !!auto; FILM.script = script; FILM.i = -1; FILM.shown = -1; FILM.t0 = simT; FILM.lastT = simT;
     FILM.hold = null; FILM.pin = null; FILM.paused = false;
-    closePanel(); closeGuide();
+    if (!tycoonActive()) { closePanel(); closeGuide(); }
     const r = card.getBoundingClientRect(); filmEl.style.bottom = Math.max(8, Math.round(window.innerHeight - r.bottom)) + "px";
     filmIncoming(script[0]);  // (while the drone flies to the first beat: never the last programme's words)
     body.classList.add("film"); filmEl.hidden = false; filmEl.style.visibility = ""; filmChips();
@@ -5180,6 +5257,7 @@ _M_RECORDS = r"""
     if (REC.tourChip) REC.tourChip.className = FILM.on && FILM.kind === "tour" ? "on" : "";
   }
   function filmCam(b) {  // the beat's subject on air: a board's view, a character (the director's own pin), or no change
+    if (tycoonActive()) return;  // gestures still play, but only the viewer moves the tycoon camera
     if (!b.cam) return;
     if (b.cam.indexOf("view:") === 0) { FILM.pin = recView(b.cam.slice(5), b.s + 4, false, b.cardH) || FILM.pin; return; }
     if (pinned === b.cam) PLANNER.pin(b.cam, simT); else togglePin(b.cam);  // (a second beat on the same subject keeps it)
@@ -7224,7 +7302,7 @@ _M_TOWN = r"""
   }
 
   // ------------------------------------------------------------- the visits: the record room's programme ("town")
-  function townCinema() { const c = window.__skyport && window.__skyport.cinema; return !!(c && typeof c.on === "function" && c.on()); }
+  function townCinema() { if (tycoonActive()) return false; const c = window.__skyport && window.__skyport.cinema; return !!(c && typeof c.on === "function" && c.on()); }
   function townFree() {  // nothing else is on: no guide, panel, programme, pin, fresh moment or replay, no first-visit card,
     // and no real-money moment of the goal's waiting to play (a rung, a stand-down, the huddle: real money first)
     const sk = window.__skyport, replay = sk && sk.replay ? sk.replay.now() : null, c = sk && sk.cinema;
@@ -7316,7 +7394,13 @@ _M_TOWN = r"""
     if (!TOWN.ok) return;
     try { townStep(clamp(dt, 0, 0.1)); } catch (e) { TOWN.ok = false; console.error("world: the town stopped", e); }
   }
-  try { townBuild(); TOWN.ok = true; } catch (e) { console.error("world: the town could not start", e); }
+  let TY_TOWN_STATIC = null;
+  try {
+    const beforeTown = new Set(scene.children); townBuild();
+    TY_TOWN_STATIC = new THREE.Group(); TY_TOWN_STATIC.name = "legacy-practice-town";
+    scene.children.slice().forEach(function (child) { if (!beforeTown.has(child)) TY_TOWN_STATIC.add(child); });
+    scene.add(TY_TOWN_STATIC); TOWN.ok = true;
+  } catch (e) { console.error("world: the town could not start", e); }
   BUS.on("data", townOnData);
   BUS.on("frame", townFrame);
   window.__skyport = Object.assign(window.__skyport || {}, { town: {
@@ -7866,6 +7950,7 @@ _M_LIVE = r"""
   }
   let nextPlanAt = 0, lastFocusStart = -1;
   function liveDirector() {
+    if (tycoonActive()) return;
     const dt = clamp(simT - RUN.lastT, 0, 0.1); RUN.lastT = simT;
     if (camera.fov !== lens.set) { lens.base = camera.fov; lens.fov = camera.fov; lens.set = camera.fov; }  // (resized)
     const p = PLANNER.pinned(simT); if (p !== pinned) { pinned = p; nextPlanAt = 0; renderChips(); renderCard(); }  // (a pin timed out)
@@ -7959,7 +8044,7 @@ _M_LIVE = r"""
 """
 
 _M_CINEMA = r"""
-  // ============================================================= THE CINEMA (cinema mode, the default view)
+  // ============================================================= THE CINEMA (cinema mode, optional camera tour)
   // The owner's direction: simple, like a film, so a friend who has never seen it knows in five seconds who does what and
   // how much REAL money there is. Two thin letterbox bars; in the top one a single HUD line of real money only (the real
   // cash at Polymarket, today's real result, the goal; plain.real, town.goal, money.polymarket); in the bottom one a
@@ -8107,12 +8192,24 @@ _M_CINEMA = r"""
     else if (r.paused_kind === "full") state = "at its limit";
     else if (r.paused) state = "paused";
     const parts = [];
-    if (today !== null) { const c = Math.round(today * 100); parts.push({ k: c > 0 ? "up" : c < 0 ? "down" : "", t: "today " + cineSigned(today), today: true }); }
+    if (today !== null) { const c = Math.round(today * 100); parts.push({ k: c > 0 ? "up" : c < 0 ? "down" : "", t: "bots today (UTC) " + cineSigned(today), today: true }); }
     if (state) parts.push({ k: "state", t: state });
     if (w && typeof w.target_text === "string" && w.target_text) parts.push({ k: "", t: "goal " + w.target_text + "/day" });
     const cashText = cash !== null ? cineUsd(cash) : "—";
     return { on: !!(r && (r.on || r.open_bets > 0)), cash: cashText, parts: parts, today: today,
-             line: "REAL MONEY " + cashText + parts.map(function (q) { return " · " + q.t; }).join("") };
+             line: "ACCOUNT CASH " + cashText + parts.map(function (q) { return " · " + q.t; }).join("") };
+  }
+  function cineMoneyDetails(pg) {
+    const pm = pg && pg.money && pg.money.polymarket, r = pm && pm.real;
+    const lines = ["Account cash is the spendable cash at Polymarket, shared with your own bets and deposits. It is not bot profit.",
+      "Polymarket bot profit counts settlements and cash-outs booked from 00:00 UTC; your own bets and deposits are excluded.",
+      "The town’s Bot today card uses Pacific midnight; this tour and safety limits show UTC."];
+    if (pg && pg.mode === "LIVE") lines.push("Bots today also includes the live Solana bot’s daily result.");
+    [["Cash checked", r && r.cash_at], ["Positions checked", r && r.venue_at], ["Desk report", pm && pm.as_of]].forEach(function (q) {
+      const d = new Date(q[1] * 1000);
+      if (cineNum(q[1]) && q[1] > 0 && isFinite(d.getTime())) lines.push(q[0] + " " + d.toISOString().slice(0, 16).replace("T", " ") + " UTC.");
+    });
+    return lines;
   }
   // the HUD's today figure glows a moment when a poll moves it (today's REAL result, which moves only when a real bet
   // settles: never the cash, which a new bet moves too): "up", "down", or "" (no change, or no figure before or now)
@@ -8121,12 +8218,12 @@ _M_CINEMA = r"""
     const a = Math.round(before * 100), b = Math.round(now * 100);
     return b > a ? "up" : b < a ? "down" : "";
   }
-  // the vault's sign in cinema mode: the real cash at Polymarket and the real result since start, labelled REAL
+  // the vault's amount is account cash at Polymarket; its label must not read as the bot's profit
   function cineVault(pg) {
-    const h = cineHud(pg), r = pg && pg.plain && pg.plain.real ? pg.plain.real : null;
+    const h = cineHud(pg);
     const pm = pg && pg.money && pg.money.polymarket ? pg.money.polymarket : null, pr = pm && pm.real ? pm.real : null;
     const since = pr && cineNum(pr.since_start_usd) ? pr.since_start_usd : null;
-    const label = "REAL · " + (r && typeof r.result === "string" && r.result ? r.result : h.cash !== "—" ? "cash at Polymarket" : "none reported");
+    const label = h.cash !== "—" ? "POLYMARKET ACCOUNT CASH" : "ACCOUNT CASH · none reported";
     return { usd: h.cash, label: label, accent: since === null ? null : since >= 0 ? "#58d68d" : "#ff6b61" };
   }
   // the first visit's card: what this is (plain.about), who does what (the tags), and in one line which money is on screen
@@ -8328,6 +8425,7 @@ _M_CINEMA = r"""
   }
   // ------------------------------------------------------------- the first visit's card (instead of the guide)
   function cineIntroOpen(again) {  // (again: the screenshot hook, once more, until a tap)
+    if (tycoonActive()) return;
     // (the first poll opens this card from apply(), before the bus says "data": the Arena is read from the page itself)
     CINE.arena = !!(data && data.money && data.money.arena);
     if (!CINE.on || CINE.intro || !plain || (!again && cineIntroSeen())) return;
@@ -8389,10 +8487,10 @@ _M_CINEMA = r"""
 _CINEMA_AT = '  resize(); BUS.emit("start", 0, 0);'
 _MODULE = (_M_SETUP + _M_WORLD + _M_CAST + _M_LIFE + _M_CHANNEL + _M_RECORDS + _M_GOAL + _M_HEARTS
            + _M_TOWN  # (THE TOWN: after the record room it films through, before the director it never edits)
-           + _M_LIVE.replace(_CINEMA_AT, _M_CINEMA + _CINEMA_AT, 1))
+           + _M_LIVE.replace(_CINEMA_AT, _M_CINEMA + TYCOON_MODULE + _CINEMA_AT, 1))
 #: The page's one inline style: the base styles, then each added section's own block (the record room's,
 #: the goal's, the hearts', the town's, then the channel's).
-_STYLES = _STYLE + _STYLE_RECORDS + _STYLE_GOAL + _STYLE_HEARTS + _STYLE_TOWN + _STYLE_CHANNEL + _STYLE_CINEMA
+_STYLES = _STYLE + _STYLE_RECORDS + _STYLE_GOAL + _STYLE_HEARTS + _STYLE_TOWN + _STYLE_CHANNEL + _STYLE_CINEMA + TYCOON_STYLE
 
 
 def _sha256_source(text: str) -> str:
@@ -8428,17 +8526,17 @@ def render_world_html(settings: Settings) -> str:
     return (
         '<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n'
         '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n'
-        '<meta name="color-scheme" content="dark">\n<meta name="theme-color" content="#1b1f4a">\n'
+        '<meta name="color-scheme" content="dark">\n<meta name="theme-color" content="#91d3ee">\n'
         '<meta name="robots" content="noindex, nofollow">\n<meta name="referrer" content="no-referrer">\n'
         '<meta name="apple-mobile-web-app-capable" content="yes">\n'
         f'<link rel="icon" href="data:,">\n<title>{title}</title>\n'
         f"<style>{_STYLES}</style>\n"
         f'<script type="importmap">{_IMPORTMAP}</script>\n</head>\n'
-        # (THE CINEMA is the default view from the first paint; the module takes the class off for "details")
-        f'<body data-refresh="{REFRESH_S}" data-pipeline="{",".join(PIPELINE)}" class="cinema">\n'
+        # The tycoon overview uses cinema's real-money visibility rules, with its own controls.
+        f'<body data-refresh="{REFRESH_S}" data-pipeline="{",".join(PIPELINE)}" class="cinema tycoon">\n'
         '<canvas id="view"></canvas><div id="vignette"></div>\n'
         '<header id="bar"><div class="row1">'
-        '<a class="back" href="./" title="Back to the page" aria-label="Back to the page">←</a>'
+        '<a class="back" href="/reports" title="Detailed reports" aria-label="Detailed reports">←</a>'
         '<button type="button" class="pill real" id="real" aria-controls="panel" aria-expanded="false">'
         '<b id="real-label">Money</b><small id="real-sub">loading…</small><small id="real-result"></small></button>'
         '<button type="button" class="pill practice" id="practice" aria-controls="panel" aria-expanded="false">'
@@ -8493,10 +8591,10 @@ def render_world_html(settings: Settings) -> str:
         # module fills them as text only)
         '<div id="tags" aria-hidden="true"></div>\n'
         '<div id="cine"><div id="lb-top"><button type="button" id="hud" aria-controls="panel">'
-        '<span class="htag" id="hud-tag">REAL MONEY</span><b id="hud-cash">—</b><span id="hud-rest"></span></button></div>'
+        '<span class="htag" id="hud-tag">ACCOUNT CASH</span><b id="hud-cash">—</b><span id="hud-rest"></span></button></div>'
         '<div id="lb-bot"><div id="cap" aria-live="off"><p id="cap-1"><b>NIGHT SHIFT: SKYPORT</b></p><p id="cap-2" hidden></p>'
         "</div></div></div>\n"
         '<div id="intro" role="dialog" aria-labelledby="intro-title" hidden><h2 id="intro-title">Skyport, live</h2>'
         '<div id="intro-body"></div><button type="button" id="intro-go">Watch</button></div>\n'
-        f'<script type="module">{_MODULE}</script>\n</body>\n</html>\n'
+        f'{TYCOON_HTML}<script type="module">{_MODULE}</script>\n</body>\n</html>\n'
     )

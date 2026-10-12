@@ -54,7 +54,11 @@ Schema (lists capped: members 9, events <= 5, open trades <= 10, closed trades 1
                                "paper": {"label": "Paper money (pretend)", "open", "today_usd", "since_start_usd",
                                          "settled_today", "won_today", "settled_total", "won_total"},
                                "real": {"label": "Real money", (the same keys), "at_risk_usd", "contracts",
+                                        "venue_open": int|null,           # current venue holdings, not tracked open
                                         "cost_usd", "value_usd", "venue_at", "cash_usd", "cash_at",
+                                        "cash_reported_usd", "buying_power_usd",  # balance details, never profit
+                                        "today_pacific": {"date", "tz", "start", "end", "as_of", "status",
+                                                          "pnl_usd", "settled", "reason"},  # display only
                                         "pending", "pending_usd",          # orders the venue has not confirmed
                                         "stop_room_usd": float|null,       # room left under the loss stops
                                         "stop_room_limit": "day"|"total"|null}|null,
@@ -188,10 +192,23 @@ nothing here reaches a desk.
 
 POLYMARKET (:func:`polymarket_desk`): the Polymarket desk's books (:func:`nightcrawler.polydesk.panel_state`, its
 state file only), kept apart from the SOL wallet and from each other. ``paper`` is the desk's own paper tally (the
-candidate rule's pretend tickets); ``real`` is what came from the venue's own book: the open positions the venue
-holds (``live``), the desk's real settlements, the venue's contract count, cost and value (``exchange``) and its
-cash (``balance``). ``real`` is null unless the desk has a real book (an open real position, a real settlement or
-a contract at the venue) or the venue's cash was read; ``money.polymarket`` is null when the desk is off
+candidate rule's pretend tickets); ``real.open`` and ``at_risk_usd`` are the desk's tracked live positions and
+their recorded cost, including the owner's positions; those rows can remain after an owner cash-out. The separate
+``real.venue_open`` is the count of current holdings in the last venue snapshot (``exchange.positions``), alongside
+the existing venue ``contracts`` sum, ``value_usd`` and ``venue_at``. These are shared-account totals, not bot-only
+positions. A zero venue count is known empty; missing, invalid or undated counts stay null. An old snapshot keeps
+its original timestamp. The exchange payload retains no per-position rows; the team's tracked list is not a
+current venue list. Legacy ``cost_usd`` is kept for compatibility but can omit NO-side cost and is not a reliable
+whole-account commitment figure. ``cash_usd`` keeps the existing spendable-cash figure; ``cash_reported_usd`` is
+the venue balance before the lower-buying-power adjustment, and ``buying_power_usd`` its separately reported
+buying power. All are USD account balances, not profit, with ``cash_at`` the balance snapshot time.
+``today_pacific`` is a separate read-only display day (America/Los_Angeles, with daylight saving time), computed
+from retained real bot closed rows after their count and P&L match each overlapping UTC day book. Incomplete
+history or a missing/current-day unfinished snapshot gives a null result, never a UTC fallback. Cash-outs and
+corrections keep their recorded settlement date. This checks the recorded book, not full venue reconciliation;
+``today_usd`` and every safety/goal input keep the existing UTC calculation.
+``real`` is null unless the desk has a real book (an open real position, a real settlement or a contract at the
+venue), the venue's cash was read or a dated venue position count was reported; ``money.polymarket`` is null when the desk is off
 (``POLYDESK_ENABLED``) or its state cannot be read: nothing is shown rather than a made-up zero. A paper tally of
 zero before the desk's first round is marked ``as_of: null`` ("no round finished yet"). ``guard`` is the desk's
 risk manager (:mod:`nightcrawler.deskguard` on the current rule's own record): the verdict (learning, losing,
@@ -418,6 +435,7 @@ from nightcrawler.polydesk import (
     panel_state,
     state_path,
 )
+from nightcrawler.polymarket_day import pacific_booked_day
 from nightcrawler.readiness import CHECK_LABELS, readiness
 from nightcrawler.recap import (
     RECAP_TTL_S,
@@ -704,7 +722,7 @@ def _load_card(settings: Settings, now: float) -> tuple[str, Any]:
         return "error", None
     try:
         return "ok", learning_card_state(settings, now)
-    except Exception as exc:  # a broken learning module must never take the page down  # noqa: BLE001 - isolate existing optional provider failures from the running engine
+    except Exception as exc:  # noqa: BLE001 - a broken learning module must never take the page down
         log.warning("learning_card_failed error=%s", type(exc).__name__)
         return "error", None
 
@@ -801,7 +819,7 @@ def experience_card(settings: Settings, now: float, card: Mapping[str, Any], mem
         return _xp_state(raw, _Text(settings), now, live=settings.is_live, coach_state=coach, static=static)
     except _Refused as exc:
         log.warning("experience_state_refused reason=%s", exc)
-    except Exception as exc:  # a strange object from another team's module must never take the page down  # noqa: BLE001 - isolate existing optional provider failures from the running engine
+    except Exception as exc:  # noqa: BLE001 - a strange object from another team's module must never take the page down
         log.warning("experience_state_failed error=%s", type(exc).__name__)
     return _xp_empty("error", static)
 
@@ -822,7 +840,7 @@ def _load_experience(settings: Settings, now: float) -> tuple[str, Any]:
         return "error", None
     try:
         return "ok", experience_state(settings, now)
-    except Exception as exc:  # a broken experience module must never take the page down  # noqa: BLE001 - isolate existing optional provider failures from the running engine
+    except Exception as exc:  # noqa: BLE001 - a broken experience module must never take the page down
         log.warning("experience_state_failed error=%s", type(exc).__name__)
         return "error", None
 
@@ -1137,18 +1155,34 @@ def polymarket_desk(settings: Settings, now: float) -> dict[str, Any] | None:
         log.warning("polydesk_panel_failed error=%s", type(exc).__name__)
         return None
     raw_real, venue, balance = _xp_map(desk.get("real")), _xp_map(desk.get("exchange")), _xp_map(desk.get("balance"))
+    venue_at, cash_at = _num(venue.get("at")), _num(balance.get("at"))
+    if venue_at is not None and (venue_at <= 0 or venue_at > now + FUTURE_SKEW_S):
+        venue_at = None
+    if cash_at is not None and (cash_at <= 0 or cash_at > now + FUTURE_SKEW_S):
+        cash_at = None
     real = _book(raw_real, REAL_LABEL)
     real.update({
         "at_risk_usd": _num(raw_real.get("at_risk_usd")) or 0.0,
+        # Current venue count is separate from tracked open rows, which can outlive an owner's sale.
+        "venue_open": _count(venue.get("positions")) if venue_at is not None else None,
         "contracts": _num(venue.get("contracts")), "cost_usd": _num(venue.get("cost_usd")),
-        "value_usd": _num(venue.get("value_usd")), "venue_at": _num(venue.get("at")),
-        "cash_usd": _num(balance.get("cash")), "cash_at": _num(balance.get("at")),
+        "value_usd": _num(venue.get("value_usd")), "venue_at": venue_at,
+        "cash_usd": _num(balance.get("cash")), "cash_at": cash_at,
+        "cash_reported_usd": _num(balance.get("cash_reported") if "cash_reported" in balance else balance.get("cash")),
+        "buying_power_usd": _num(balance.get("buying_power")),
         # orders the venue has not confirmed yet (open real money until its book says) and the loss stops' room
         "pending": _count(raw_real.get("pending")) or 0, "pending_usd": _num(raw_real.get("pending_usd")) or 0.0,
         "stop_room_usd": _num(raw_real.get("stop_room_usd")),
         "stop_room_limit": raw_real.get("stop_room_limit") if raw_real.get("stop_room_limit") in ("day", "total")
         else None,
     })
+    # A separate display day; UTC books above still drive the existing safety readouts.
+    day_state: Mapping[str, Any] | None
+    try:
+        day_state = load_state(state_path(settings))
+    except (KeyError, TypeError, ValueError, AttributeError, OSError):
+        day_state = None
+    real["today_pacific"] = pacific_booked_day(day_state, now)
     live = desk.get("mode") == "live"
     return {
         "mode": "live" if live else "paper", "label": REAL_LABEL if live else PAPER_LABEL,
@@ -1158,7 +1192,7 @@ def polymarket_desk(settings: Settings, now: float) -> dict[str, Any] | None:
         "status": _Text(settings).opt(desk.get("live_status")),
         "paper": _book(_xp_map(desk.get("paper")), PAPER_LABEL),
         # the venue's cash alone (a key, no contracts) is real money to show, but not a real book for the town
-        "real": real if _real_book(real) or real["cash_usd"] is not None else None,
+        "real": real if _real_book(real) or real["cash_usd"] is not None or real["venue_open"] is not None else None,
         "real_closed": _real_closed(desk.get("real_closed")),
         "guard": _desk_guard(desk.get("guard")),
         # its newest settled REAL-money bets from its whole event log (the team row keeps only the last five events,
@@ -2361,12 +2395,12 @@ def _alerts(ledger: Any, state: dict[str, Any], now: float, withdrawal: dict[str
         out.append(("bad", "Kill switch is ON: the bot buys nothing new (open trades are still looked after)."))
     unused = unused_wallet(settings, ledger) if settings is not None else None
     if unused is not None:
-        out.append(("bad", f"The bot's own wallet {unused or '(address unknown)'} is not in use: BOT_WALLET_MODE is "  # noqa: ISC004 - intentional continued display text
+        out.append(("bad", (f"The bot's own wallet {unused or '(address unknown)'} is not in use: BOT_WALLET_MODE is "
                            "not 'generated'. If it holds SOL, only the bot can move it: set BOT_WALLET_MODE=generated "
-                           "(delete BOT_WALLET_SECRET), then take it back with WITHDRAW_TO."))
+                           "(delete BOT_WALLET_SECRET), then take it back with WITHDRAW_TO.")))
     if state["halted"]["halted"]:
-        out.append(("bad", "Stopped buying: the money fell too far from its high. It stays stopped until you "  # noqa: ISC004 - intentional continued display text
-                           "reset it (RESET_HALT_TOKEN in Railway)."))
+        out.append(("bad", ("Stopped buying: the money fell too far from its high. It stays stopped until you "
+                           "reset it (RESET_HALT_TOKEN in Railway).")))
     status = state["engine"]["status"] or {}
     if status.get("drift"):
         out.append(("bad", "The wallet doesn't match the bot's own records: new buys are blocked until it's checked."))
