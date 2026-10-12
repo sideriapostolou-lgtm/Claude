@@ -24,6 +24,13 @@ Definitions (FIXED before any table was computed):
 * move = ln(close_T / S) / (sigma * sqrt(m)). Miss of a YES-above contract with spot z units above K: move < -z.
   The other side (spot z units BELOW a level, buying "below" / the No of "above"): move >= z, reported as ``up``.
 * Percent distance d (spot d above the level, K = S / (1 + d)): miss iff ln(close_T / S) < -ln(1 + d); ``up``: >=.
+* Latency / adverse-fill stress, side ``adverse``: the ``down`` cell kept only for hours whose minute right AFTER the
+  checkpoint moved toward the level (the order fills a minute late, and only when the price is coming at you); the
+  strike stays where the checkpoint put it. Not defined for m = 1.
+* Known bias (written down AFTER the first run, when a 1 s check of the 2025-09-17 18:00 UTC miss showed the whole
+  ETH fall inside the last 7 seconds): the US venue settles on the MEAN of 60 BRTI seconds before T, this uses the
+  Binance close at T. For m = 1-2 the close is noisier than that mean (a move in the last seconds counts in full),
+  so these rates overstate the venue's misses there; for m >= 10 the difference is small. Nothing was changed for it.
 * Per cell (symbol, target set, vol, m, level, side): n hours, misses, rate, the normal-theory value (Phi(-z); with
   the 60-minute vol also Student t with 60 df, the exact null when sigma is estimated from 60 returns), a one-sided
   95 % exact binomial (Clopper-Pearson) upper bound (hours are the independent unit: one observation per hour per
@@ -56,7 +63,7 @@ import sys
 import time
 import warnings
 from concurrent.futures import ThreadPoolExecutor
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 from decimal import ROUND_HALF_EVEN, Decimal
 from pathlib import Path
 from typing import Any
@@ -716,7 +723,7 @@ def stage_report() -> None:
                 L += [f"### G{sec}. {sym}, {tname}, z with the trailing {v} vol: miss rate P(move < -z) (misses)", ""]
                 L += _matrix(cells, sym, target, "z", v, "down", "rate") + [""]
                 if sym == "BTCUSDT":
-                    L += [f"95 % upper bound (the larger of exact binomial and day-cluster bootstrap):", ""]
+                    L += ["95 % upper bound (the larger of exact binomial and day-cluster bootstrap):", ""]
                     L += _matrix(cells, sym, target, "z", v, "down", "upper") + [""]
                 L += ["Highest price 0.95-0.99 the cell clears WITH ROOM (upper bound below break-even); 'none' = point below break-even at 0.95 but no room; 'above' = point at or above it:", ""]
                 L += _matrix(cells, sym, target, "z", v, "down", "room") + [""]
