@@ -13,6 +13,21 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-12 23:58 UTC, Claude, branch claude/nightcrawler-memecoin-bot-Gwnb1S
+- Changed: moved the bot to Virginia (Railway region us-east4-eqdc4a, volume moved with it; deployment 985c3880,
+  live 23:50:52 UTC). Then fixed what the move broke: Kalshi's market feed rejected any message stamped even
+  0-7 ms ahead of our clock, so from Virginia (about 1 ms from Kalshi) the book connection dropped every 2-4 s.
+  `speeddesk_kalshi_ws._fresh_ms` now accepts up to 250 ms ahead (CLOCK_SKEW_S) and clamps such a time to receipt,
+  so every later `0 <= now - exchange_at` check still holds. More than 250 ms ahead still drops the connection.
+- Verified: failing-first test `test_a_few_milliseconds_of_clock_difference_...`; full suite 4,253 passed, 12 skipped;
+  ruff and mypy clean on the changed files (repo-wide ruff has 392 pre-existing findings, unchanged). After the
+  move: polydesk_started LIVE, Kalshi "REAL MONEY" authenticated, cash $25.01; first acks 214-353 ms (California
+  median was 422-615 ms).
+- Not verified / skipped: whether Coinbase or Polymarket US times also read slightly ahead from Virginia (their
+  checks have the same zero tolerance); checked next from the latency metrics.
+- Real money touched? No setting or cap changed (Kalshi still $2 window, $4 open, $3 day, $5 total).
+- Next step: confirm no `speeddesk_feed_kalshi_ws_gap` after this deploys; PR #14 (cancel 404) still to go live.
+
 ## 2026-10-12 23:15 UTC, Codex, branch codex/weather-lock-stopwatch
 - Owner request: build a read-only weather lock stopwatch on Railway for at least three days. Pulled
   deploy head `9f32451` before work, then incorporated Claude's `8882ece` warm-up fix, `941b261` account
