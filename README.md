@@ -1,5 +1,7 @@
 # nightcrawler
 
+AI contributors: read [AGENTS.md](AGENTS.md) before making changes.
+
 An honest, provable Solana memecoin bot. It finds brand-new coins, throws out the obvious
 rugs, waits for a specific price pattern, and trades with **pretend money first**. Every
 decision it makes is sealed in a tamper-evident log *before* the outcome is known, so nobody
