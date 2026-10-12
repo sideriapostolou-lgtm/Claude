@@ -1,9 +1,10 @@
 # AGENTS.md: rules for any AI worker on this repo (Codex, ChatGPT, Claude)
 
 You are a teammate on the owner's team. The owner is Sideri: he works from a phone, wants plain words, real
-numbers and constant progress, and runs a small real-money trading desk from this code. You work through
-**pull requests only**. Read `docs/HANDOFF.md` before your first change, and add an entry to
-`docs/WORKLOG.md` at the end of every session.
+numbers and constant progress, and runs a small real-money trading desk from this code. On 2026-10-12 the owner
+asked that every AI worker work exactly like Claude does: push to the deploy branch, which deploys automatically,
+and read the live bot's Railway logs. That access comes with every rule below. Read `docs/HANDOFF.md` before
+your first change, and add an entry to `docs/WORKLOG.md` at the end of every session.
 
 ## Hard rules (never break these)
 
@@ -15,14 +16,22 @@ numbers and constant progress, and runs a small real-money trading desk from thi
    password. Keys live only in the Railway service's variables. Never run a tool that lists Railway variable
    values. Never create or commit a `.env` file. Before every push, scan the diff for secret-looking strings
    (long random strings, `sk-`, `jup_`, private keys) and stop if you find one.
-3. **No deploys.** Do not deploy, restart the service or change a Railway variable. You have no Railway access on
-   purpose. If a change needs a deploy, say so in the pull request and in `docs/WORKLOG.md`, with exact steps for
-   the owner (see `docs/HANDOFF.md` section 4).
-4. **Branches.** Work on `codex/<short-description>` (Claude uses `claude/...`). Open the pull request into
-   `claude/nightcrawler-memecoin-bot-Gwnb1S`, the deploy branch. Never push to the deploy branch directly,
-   never force-push it, never rewrite its history.
-5. **The owner's "stop".** If the owner says stop, real money must go off. You cannot do it yourself, so give him
-   the emergency steps in `docs/HANDOFF.md` section 1.
+3. **Deploys.** A push to `claude/nightcrawler-memecoin-bot-Gwnb1S` that touches `src/**`, `pyproject.toml`,
+   `Dockerfile`, `railway.json` or `README.md` deploys to the live real-money bot within a minute or two. So push
+   only work that is finished and tested. After every such push, check the deploy: Railway built that exact commit,
+   and the logs show `polydesk_started ... (LIVE ...)` with no tracebacks. If the owner put a Railway token in your
+   environment (`RAILWAY_TOKEN`), use it for logs and status only. Never print the token, never run a command that
+   prints variable values, and never change a Railway variable unless the owner names the variable and value.
+   Without a token, ask the owner or Claude to check the deploy.
+4. **Branches.** Small, tested changes go straight to `claude/nightcrawler-memecoin-bot-Gwnb1S`, as Claude does.
+   Never force-push it, never rewrite its history, and pull first so you never overwrite someone else's commit. Use
+   a `codex/<short-description>` branch and a pull request when the change is big or when the owner wants to look
+   first. **Real-money code** (`polydesk.py`, `polymarket_us.py`, `marcodesk.py`, `deskguard.py`, `broker/`,
+   `risk.py`, `withdraw.py`, `config.py`) changes only on the owner's go-ahead in the current conversation.
+5. **The owner's "stop".** If the owner says stop, real money must go off. With a Railway token: set
+   `POLYDESK_MODE=paper` on service `bot`. Railway redeploys, and from then on the desk sends no new real orders;
+   open bets still settle. Then confirm in the logs that it started in paper mode. Without a token: give him the
+   emergency steps in `docs/HANDOFF.md` section 1 at once.
 6. **Green before push.** Tests and mypy must pass, and ruff must pass on the Python files you changed (the repo
    has about 470 older ruff findings in untouched files; do not mass-fix them in an unrelated pull request). Any change to real-money code (`polydesk.py`,
    `polymarket_us.py`, `marcodesk.py`, `deskguard.py`, `broker/`, `risk.py`, `withdraw.py`, `config.py`) needs

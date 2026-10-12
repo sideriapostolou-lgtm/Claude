@@ -114,7 +114,9 @@ secrets, no deploys, pull requests only, tests green, honest numbers.
   no tracebacks. The first merge deployed this way: PR #5, commit 1cd27824, deployment 0866daea, 16:23 UTC
   (triggered by setting the branch).
 * Restarts are safe. State lives on the volume, and the desk re-reads the venue each round.
-* Without Railway access you cannot deploy. Write the deploy as steps for the owner, or leave it for Claude.
+* Any worker's push to the branch deploys (see AGENTS.md rule 3). To read logs a worker needs the owner's Railway
+  token in its environment as `RAILWAY_TOKEN` (Railway CLI: `railway logs`, `railway status`). Never `railway
+  variables` without `--set`, because it prints secret values.
 
 ## 5. Accounts and credentials (names only)
 
@@ -217,6 +219,14 @@ doing anything. He likes the town, the team and the "keep the town alive" framin
 real. Never claim something is done or verified when it is not.
 
 ## 12. Handoff protocol between AI workers
+
+**Setting up ChatGPT/Codex to work like Claude (owner, one time):**
+1. Codex settings: connect GitHub with access to `sideriapostolou-lgtm/Claude`. It can then push to the deploy branch.
+2. Railway: project `nightcrawler`, then Settings, then Tokens. Create a **project token** for environment
+   `production` and paste it into Codex's environment settings as the secret `RAILWAY_TOKEN`. Paste it nowhere else.
+3. Codex environment: turn on internet access, and add `npm i -g @railway/cli` to its setup script.
+4. If Codex can only open pull requests in your setup, you keep tapping Merge. That is a Codex limit, not a rule.
+
 
 * At the start: read `AGENTS.md`, this file and the latest `docs/WORKLOG.md` entries, then check open pull
   requests.
