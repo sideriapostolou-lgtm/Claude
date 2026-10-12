@@ -238,11 +238,18 @@ session scratchpad that you will not have.
    **Expanded mission (latest owner instruction):** full public history and funding audit first, then
    multi-exchange Bitcoin observations, a preregistered held-out fill-matching target of at least 70%
    (right side, within 5 seconds, price within 2c), measured timing and a separate daily scorecard.
-   See spec section 11 and `research/lab8/skip/HISTORY.md`. Independent chain evidence supports a $4,000
+   See spec section 11 and `research/lab8/skip/HISTORY.md` plus its 88-point daily cash CSV. All 535,592
+   indexed fills are reconciled across public APIs; provider income and cash discrepancies remain explicit.
+   Independent chain evidence supports a $4,000
    opening balance in this observed wallet, not the claimed $100. Public block timestamps do not establish
    execution timing; proxy scores cannot silently pass the strict target. Three complete consecutive UTC
    days each positive after fees plus the verified rule-match target are evidence for **asking** the owner
    about higher caps, never automatic permission. Existing $2/$4/$3/$5 limits remain unchanged.
+
+   **Latest shipment:** PR #11, `eb44e03`, Railway reports SUCCESS at 2026-10-12 22:15:53 UTC and public
+   health returns `ok`. Read-only Railway token process ended during continuation; the owner was asked to
+   add an environment secret. New startup/feed/mode logs remain unverified pending restored access.
+   Do not turn this platform success into a claim of healthy feed capture or money activation.
 
 1. **Lab 8, the distance-filtered grind (the owner's idea).** Buy 95-99c only when Bitcoin is far from the strike,
    measured in how much it normally moves in the time left (z = ln(S/K) / (sigma x sqrt(minutes left))). Done so

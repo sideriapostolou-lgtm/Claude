@@ -33,6 +33,16 @@ Template:
   cash at its exact source block is $26,458.900105; the activity cash reconstruction still differs by $3.857710.
   Provider aggregate economics, verified cash, funding and income are kept separate; no single reconciled
   after-fee profit or small-bankroll clone result is claimed. Full trade/role reconciliation continues below.
+- Final history audit: all 535,592 all-trades rows exactly reconcile as an economic multiset to activity;
+  303,703 taker rows are a verified subset, leaving 231,889 maker fills (43.30%). All 18 indexed funding
+  amounts match public-chain receipts. All 88 historical pUSD balances and block headers were collected.
+  A separate TIP receipt has $0.085780 more debit than its API row, leaving **$3.771930** of cash discrepancy
+  unresolved. Some daily chart points reference much older blocks (maximum observed lag 86,401 seconds),
+  so provider-grid changes are not certified UTC-day returns. `HISTORY.md` and `HISTORY_daily.csv` contain
+  full coverage, scaling and accounting limits. Research validation: 25 tests plus Ruff and mypy pass.
+  Closed BTC windows: 88.55% bought both outcomes across history, 95.23% in partial October; median purchase
+  cash/window rose from $85.60 in partial July to $397.49 in partial October. Those are observed spending
+  statistics, not capital requirements, achievable fills or profit at our $2 cap.
 - Public capture: added anonymous Kraken and Gemini BTC/USD streams alongside Coinbase, genuine trade IDs,
   source and socket-receipt clocks, process-scoped monotonic provenance, gaps and causal 1/5/30s features.
   New feature epoch is separate from preserved original origin. Local Kraken/Gemini probes connected; actual
@@ -61,6 +71,22 @@ Template:
   dependencies). Mypy passed 102 source files; changed-file Ruff and whitespace checks passed. Final REST
   freshness also uses request-start age, rejecting missing/future/old proof before sending. Deployment and
   latest daily measurements are recorded after verification below.
+- Deployment: PR #11 merged as `eb44e03c1062801dcdcb667506def9091b40307d`. Railway's GitHub deployment
+  `7025145018` for that exact SHA reports **SUCCESS at 2026-10-12 22:15:53 UTC**; Railway deployment ID
+  `f787c170-d629-4f06-8ee0-e3f8d307785a`. Public `/healthz` returned HTTP 200 and exact `ok`, no redirect.
+  The temporary read-only Railway token process ended during the owner's continuation; neither Railway
+  token environment variable nor a saved CLI login is available. Owner was asked to add `RAILWAY_TOKEN`
+  securely as an environment secret. New startup logs, actual Kraken/Gemini trades, Kalshi mode and clean
+  polydesk startup remain **unverified after this deploy** until access is restored. A successful platform
+  deployment/health check is not proof of those details. No token was copied from chat or written to disk.
+- Last direct logs before deploy, 2026-10-12 21:57 UTC: both original practice venues had **0 traded windows,
+  0 fills, $0 locked and $0 directional settled result**; worst window, fill rates and fill latency unknown.
+  Financial volatility had 2,305/3,000 observed adjacent returns and was still warming up, so an hour of
+  elapsed time is not a promise to trade. Companion remained PAPER, no real fills, $0 exposure; no new
+  authenticated cash check. At 21:46 the public watcher had 210 wallet rows, 29 inferred matches, original
+  origin intact and current four-source coverage fresh. HTTP RTT had 107 successes, no errors/timeouts,
+  median 48.91 ms, p95 201.18 ms in us-west2. No verified US5m market in 107 bounded latest-event checks
+  (one earlier lookup error). These observations describe the **previous deployed version**, not the new one.
 - Real money touched? Yes: owner-authorized Kalshi live guard/telemetry code and service restart on shipment;
   no real order, activation, cap raise, region move or private balance request in this session. Existing
   polydesk continues independently. Ship paper, verify exact commit, then owner controls activation.
