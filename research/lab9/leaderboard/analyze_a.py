@@ -5,6 +5,7 @@ Output: stage_a.csv (all wallets) and prints the shortlist (twin-able markets, l
 import csv
 import json
 import statistics as st
+import time
 import sys
 from collections import Counter, defaultdict
 from pathlib import Path
@@ -59,7 +60,18 @@ def pnl_stats(series):
 
     mean = st.mean(diffs) if diffs else 0
     sd = st.pstdev(diffs) if len(diffs) > 1 else 0
+    act_t = [t[i] for i in range(1, len(p)) if abs(diffs[i - 1]) > 1e-6]
+    months = defaultdict(float)
+    for i in range(1, len(p)):
+        months[time.strftime("%Y-%m", time.gmtime(t[i]))] += diffs[i - 1]
+    act_months = [v for v in months.values() if abs(v) > 1e-6]
     return {
+        "first_active": time.strftime("%Y-%m-%d", time.gmtime(act_t[0])) if act_t else "",
+        "last_active": time.strftime("%Y-%m-%d", time.gmtime(act_t[-1])) if act_t else "",
+        "active_span_days": ((act_t[-1] - act_t[0]) / DAY) if act_t else 0,
+        "months_active": len(act_months),
+        "months_up": sum(1 for v in act_months if v > 0),
+        "worst_month": min(act_months) if act_months else 0,
         "first_day": s[0]["t"], "last_day": s[-1]["t"], "days": len(p),
         "active_days": len(nz), "pnl_total": last, "pnl_span": total,
         "mdd": mdd, "mdd_frac_of_peak": (mdd / mdd_peak) if mdd_peak > 0 else None,
