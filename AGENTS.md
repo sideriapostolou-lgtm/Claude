@@ -23,7 +23,8 @@ numbers and constant progress, and runs a small real-money trading desk from thi
    never force-push it, never rewrite its history.
 5. **The owner's "stop".** If the owner says stop, real money must go off. You cannot do it yourself, so give him
    the emergency steps in `docs/HANDOFF.md` section 1.
-6. **Green before push.** Tests, ruff and mypy must pass. Any change to real-money code (`polydesk.py`,
+6. **Green before push.** Tests and mypy must pass, and ruff must pass on the Python files you changed (the repo
+   has about 470 older ruff findings in untouched files; do not mass-fix them in an unrelated pull request). Any change to real-money code (`polydesk.py`,
    `polymarket_us.py`, `marcodesk.py`, `deskguard.py`, `broker/`, `risk.py`, `withdraw.py`, `config.py`) needs
    tests that pin the safety behaviour, and the pull request must say "touches real money" in its title.
 7. **Honest results.** Research follows the labs' rules (pre-registered plan, TRAIN -> VAL -> one look at TEST).
@@ -37,7 +38,7 @@ numbers and constant progress, and runs a small real-money trading desk from thi
 ```bash
 pip install -e ".[dev]"            # Python 3.11+; installs pytest, mypy and the optional extras
 pytest -q                          # about 3,000 tests; all must pass (a few skip without network)
-pip install ruff && ruff check src tests   # lint (ruff is not in the dev extras)
+pip install ruff && git diff --name-only origin/claude/nightcrawler-memecoin-bot-Gwnb1S -- '*.py' | xargs -r ruff check   # lint the files you changed
 mypy src/nightcrawler              # types (also run by tests/test_typecheck.py)
 python -m nightcrawler --help      # the CLI; `nightcrawler run` starts the engine in paper mode by default
 ```
