@@ -13,6 +13,13 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-12 16:35 UTC, Claude, branch claude/nightcrawler-memecoin-bot-Gwnb1S
+- Changed: the owner installed the Railway GitHub App. Autodeploy still said NO_INSTALLATION until the service source
+  was reconnected with the repo's exact casing, `sideriapostolou-lgtm/Claude`. Autodeploy is now enabled (Railway
+  assistant check). The reconnect built docs-only bfde287, which was SKIPPED. The live deployment 0866daea is unchanged.
+- Not verified: a push-triggered build. The next merge that touches src/ or README.md is the test.
+- Real money touched? no.
+
 ## 2026-10-12 16:25 UTC, Claude, branch claude/nightcrawler-memecoin-bot-Gwnb1S, after PR #5
 - Changed: the owner merged PR #5 at 16:17:13 UTC (merge commit 1cd27824). No deployment followed. Railway's
   assistant found the cause: the service source had no branch, and auto-deploy reports `NO_INSTALLATION` (the

@@ -105,15 +105,14 @@ secrets, no deploys, pull requests only, tests green, honest numbers.
 * Railway project `nightcrawler`, service `bot`, volume `nightcrawler-data` at `/data`, domain
   `bot-production-9d67.up.railway.app`. Builds use `Dockerfile` and `railway.json`. More in `docs/RAILWAY.md`
   and `docs/GOING_LIVE.md`.
-* **Deploys.** The service source is `sideriapostolou-lgtm/claude`, branch `claude/nightcrawler-memecoin-bot-Gwnb1S`
-  (branch set 2026-10-12 16:21 UTC). **Deploy on push does not work yet:** Railway reports autodeploy
-  `NO_INSTALLATION`, meaning the Railway GitHub App is not installed for the repo. Until the owner installs it
-  (github.com/settings/installations, then Railway, Configure, add the repo; then enable autodeploy on service `bot`
-  in Railway), a merge does NOT deploy. Someone with Railway access must trigger the build (reconnect the source
-  or redeploy). Once autodeploy works, it fires only for watched paths: `src/**`, `pyproject.toml`, `Dockerfile`,
-  `railway.json`, `README.md`; other pushes are SKIPPED. After every deploy, check that Railway built that exact
-  commit and that the logs show `polydesk_started ... (LIVE ...)` with no tracebacks. First verified deploy of a
-  merge: PR #5, commit 1cd27824, deployment 0866daea, 2026-10-12 16:23 UTC.
+* **Deploys.** The service source is `sideriapostolou-lgtm/Claude` (exact GitHub casing, capital C), branch
+  `claude/nightcrawler-memecoin-bot-Gwnb1S`. **Autodeploy is ON since 2026-10-12 16:32 UTC.** Lowercase `claude`
+  made Railway report `NO_INSTALLATION`; the exact casing fixed it. A push or merge to the branch deploys, but only
+  when it touches a watched path: `src/**`, `pyproject.toml`, `Dockerfile`, `railway.json` or `README.md`. Other
+  pushes are SKIPPED and the live deployment stays. The first push-triggered build is still to be seen. After every
+  deploy, check that Railway built that exact commit and that the logs show `polydesk_started ... (LIVE ...)` with
+  no tracebacks. The first merge deployed this way: PR #5, commit 1cd27824, deployment 0866daea, 16:23 UTC
+  (triggered by setting the branch).
 * Restarts are safe. State lives on the volume, and the desk re-reads the venue each round.
 * Without Railway access you cannot deploy. Write the deploy as steps for the owner, or leave it for Claude.
 
