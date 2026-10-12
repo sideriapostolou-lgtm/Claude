@@ -100,6 +100,17 @@ class SpeedRunner:
         self.live_started = False
         self.last_live_panel: dict[str, Any] = {}
         self._live_market_snapshot = LiveSnapshot()
+        self._bitcoin_revision = 0
+        self._sigma_key: tuple[int, int, int, float, float | None, bool] | None = None
+        self._sigma_prices: dict[int, float] | None = None
+        self._sigma_value: float | None = None
+        self._live_windows_dirty = True
+        self._live_windows: tuple[Window, ...] = ()
+        self._live_slugs: frozenset[str] = frozenset()
+        self._live_opening_seconds: set[int] = set()
+        self._live_windows_generation = 0
+        self._live_outcome_key: tuple[int, int, int] | None = None
+        self._live_outcomes: dict[str, bool] = {}
         self.enabled_venues = {"polymarket_us"}
         if settings.speeddesk_kalshi_enabled:
             self.enabled_venues.add("kalshi")
@@ -175,7 +186,15 @@ class SpeedRunner:
     def on_tick(self, price: float, event_at: float, received_at: float) -> None:
         if not 0 <= received_at - event_at <= self.desk.config.stale_s:
             return
+        previous_prices = self.desk.tape.prices
         self.desk.tick_btc(price, event_at)
+        # BitcoinTape replaces its observed-price dictionary only on accepted
+        # ticks, including same-second revisions. Rejected ticks do not dirty
+        # the sigma cache or publish an opening that the model never accepted.
+        if self.desk.tape.prices is not previous_prices:
+            self._bitcoin_revision += 1
+            if int(event_at) in self._live_opening_seconds:
+                self._live_windows_dirty = True
         self._refresh_live_snapshot()
         self._live_call("on_tick", price, event_at, received_at)
         daily = self.feed_latency.setdefault(utc_day(received_at), [0.0, 0.0])
@@ -204,6 +223,7 @@ class SpeedRunner:
             self._live_call("on_trade", trade)
 
     def on_windows(self, windows: list[Window]) -> None:
+        self._live_windows_dirty = True
         for window in windows:
             previous = self.desk.windows.get(window.slug)
             terms = ("taker_coefficient", "maker_coefficient", "tick_size", "min_trade_qty", "fee_rounding")
@@ -318,19 +338,52 @@ class SpeedRunner:
         """Return an atomic market view, including from the HTTP worker thread."""
         return self._live_market_snapshot
 
+    def _live_sigma(self, now: float) -> float | None:
+        """Cache only unchanged mathematical inputs; price/book freshness is never cached.
+
+        ``sigma`` uses completed seconds but its elapsed warm-up can cross in
+        the middle of one second. The predicate is therefore part of the key,
+        alongside accepted-tick revision, completed second and both settings.
+        Keep a single dictionary reference too, so a restored/replaced tape
+        cannot reuse a result from an earlier set of observations.
+        """
+        tape, config = self.desk.tape, self.desk.config
+        warmed = tape.started_at is not None and now - tape.started_at >= config.sigma_warmup_s
+        key = (self._bitcoin_revision, int(now) - 1, config.sigma_min_samples, config.sigma_warmup_s,
+               tape.started_at, warmed)
+        if key != self._sigma_key or tape.prices is not self._sigma_prices:
+            value = tape.sigma(now, config.sigma_min_samples, config.sigma_warmup_s)
+            self._sigma_key, self._sigma_prices, self._sigma_value = key, tape.prices, value
+        return self._sigma_value
+
+    def _refresh_live_windows(self) -> None:
+        # The model mutates an opening on its first accepted Bitcoin tick in
+        # that second; all other venue terms arrive through on_windows. Copies
+        # remain independent of the model and earlier worker-thread snapshots.
+        self._live_windows = tuple(replace(window) for window in self.desk.windows.values() if window.venue == "kalshi")
+        self._live_slugs = frozenset(window.slug for window in self._live_windows)
+        self._live_opening_seconds = {int(window.start) for window in self._live_windows
+                                     if window.start_price is None and math.isfinite(window.start)}
+        self._live_windows_generation += 1
+        self._live_windows_dirty = False
+
     def _refresh_live_snapshot(self) -> None:
         """Publish on the event loop; never mix a previous price with a new timestamp."""
         now = self.clock.now()
-        windows = tuple(replace(window) for window in self.desk.windows.values() if window.venue == "kalshi")
-        slugs = {window.slug for window in windows}
+        if self._live_windows_dirty:
+            self._refresh_live_windows()
+        slugs = self._live_slugs
+        outcome_key = (id(self.desk.closed), len(self.desk.closed), self._live_windows_generation)
+        if outcome_key != self._live_outcome_key:
+            self._live_outcomes = {item.window: item.up_wins for item in self.desk.closed if item.window in slugs}
+            self._live_outcome_key = outcome_key
         maker_windows = self.feeds.maker_windows() if hasattr(self.feeds, "maker_windows") else set()
-        self._live_market_snapshot = LiveSnapshot(windows=windows,
+        self._live_market_snapshot = LiveSnapshot(windows=self._live_windows,
                             books={key: book for key, book in self.desk.books.items() if key[0] in slugs},
                             bitcoin_price=self.desk.tape.price, bitcoin_at=self.desk.tape.last_at,
-                            sigma=self.desk.tape.sigma(now, self.desk.config.sigma_min_samples,
-                                                       self.desk.config.sigma_warmup_s),
+                            sigma=self._live_sigma(now),
                             maker_windows=frozenset(maker_windows & slugs),
-                            outcomes={item.window: item.up_wins for item in self.desk.closed if item.window in slugs})
+                            outcomes=self._live_outcomes)
 
     def live_panel(self, now: float) -> dict[str, Any]:
         current = self._live_call("panel")

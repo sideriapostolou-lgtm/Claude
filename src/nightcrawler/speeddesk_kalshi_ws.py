@@ -15,6 +15,7 @@ import logging
 import math
 import threading
 import time
+from bisect import bisect_left
 from collections.abc import Callable
 from typing import Any, TypeGuard
 
@@ -97,10 +98,30 @@ class MarketState:
         self.channels: dict[int, str] = {}
         self.sequences: dict[int, int] = {}
         self.depth: dict[str, dict[str, dict[float, float]]] = {}
+        self.bids: dict[str, dict[str, tuple[Level, ...]]] = {}
+        self.asks: dict[str, dict[str, tuple[Level, ...]]] = {}
         self.book_at: dict[str, float] = {}
         self.trade_at: dict[str, float] = {}
         self.exchange_at: dict[str, float] = {}
         self.unproven: set[str] = set()
+
+    def _snapshot_levels(self, ticker: str) -> None:
+        self.bids[ticker], self.asks[ticker] = {}, {}
+        for side, levels in self.depth[ticker].items():
+            ordered = sorted(levels.items(), reverse=True)
+            self.bids[ticker][side] = tuple(Level(price, size) for price, size in ordered)
+            self.asks[ticker][side] = tuple(Level(round(1 - price, 8), size) for price, size in ordered)
+
+    def _changed_level(self, ticker: str, side: str, price: float, size: float) -> None:
+        """Reuse immutable levels; one delta never rebuilds every other price."""
+        bids, asks = self.bids[ticker][side], self.asks[ticker][side]
+        index = bisect_left(bids, -price, key=lambda level: -level.price)
+        present = index < len(bids) and bids[index].price == price
+        if (present and bids[index].size == size) or (not present and size == 0):
+            return
+        after = index + int(present)
+        self.bids[ticker][side] = bids[:index] + ((Level(price, size),) if size else ()) + bids[after:]
+        self.asks[ticker][side] = asks[:index] + ((Level(round(1 - price, 8), size),) if size else ()) + asks[after:]
 
     def apply(self, raw: Any, now: float) -> tuple[tuple[Book, ...], tuple[Trade, ...]]:
         if not isinstance(raw, dict) or not isinstance(raw.get("msg"), dict):
@@ -174,6 +195,7 @@ class MarketState:
                     if size:
                         depth[side][price] = size
             self.depth[ticker] = depth
+            self._snapshot_levels(ticker)
         else:
             if ticker not in self.depth:
                 raise MarketDataGap("snapshot_required")
@@ -192,8 +214,8 @@ class MarketState:
                 level[price] = size
             else:
                 level.pop(price, None)
-        yes_levels, no_levels = (tuple(Level(price, size) for price, size in sorted(self.depth[ticker][side].items(), reverse=True))
-                                 for side in ("yes", "no"))
+            self._changed_level(ticker, side, price, size)
+        yes_levels, no_levels = self.bids[ticker]["yes"], self.bids[ticker]["no"]
         if yes_levels and no_levels and yes_levels[0].price + no_levels[0].price >= 1:
             raise MarketDataGap("crossed_book")
         if at is None:
@@ -208,9 +230,9 @@ class MarketState:
         self.unproven.discard(ticker)
         self.exchange_at[ticker], self.book_at[ticker] = at, now
         sequence = f"kalshi-ws:{sid}:{seq}"
-        return (Book(ticker, "up", yes_levels, tuple(Level(round(1 - x.price, 8), x.size) for x in no_levels),
+        return (Book(ticker, "up", yes_levels, self.asks[ticker]["no"],
                      now, sequence, at),
-                Book(ticker, "down", no_levels, tuple(Level(round(1 - x.price, 8), x.size) for x in yes_levels),
+                Book(ticker, "down", no_levels, self.asks[ticker]["yes"],
                      now, sequence, at)), ()
 
 

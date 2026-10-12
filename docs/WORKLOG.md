@@ -66,7 +66,19 @@ Template:
   Snapshots now seed depth only; genuine fresh delta engine timestamps alone can prove post-delay liquidity.
   Publication-only updates stay unproven with REST fallback. Independent review and regressions confirm
   no false delayed IOC evidence. Corrected full suite: **3,604 passed, 21 skipped**; mypy 98 source files,
-  changed-file Ruff and diff checks passed. Corrected deployment verification follows the small tested push.
+  changed-file Ruff and diff checks passed. Commit `e5370d4` deployed successfully as Railway
+  `de8a461a-28a4-4060-b9fc-d98aea3013e6` at 20:59 UTC, preserving the watcher origin and PAPER companion.
+- Follow-up production check found processing backlog still exceeding the unchanged three-second freshness
+  limit. Profiles isolated repeated deep-book Level reconstruction and complete volatility/window copying
+  on every callback. The reader now patches immutable tuples at the changed price, preserving every delta,
+  level and callback; the runtime caches only unchanged volatility inputs and unchanged window metadata.
+  A synthetic 1,000-delta/300-level-per-side reader profile fell from 1.454 s to 0.031 s; this is local CPU
+  time, not an exchange or order-latency claim. A separate 2,000-update full runner/twin callback profile
+  fell from 7.117 s to 2.237 s, retaining all callbacks and both immediate advance paths. Independent review
+  found no blocking issue; 53 focused boundary/depth tests passed. The public watcher itself replayed 57 seconds of records in
+  0.175 s and was left unchanged. Freshness thresholds and immediate delayed-fill rechecks stay intact.
+- Performance-fix validation: **3,611 passed, 21 skipped**; mypy passed 98 source files, Ruff passed all four
+  changed Python files, and diff whitespace checks passed. Production feed verification follows deployment.
 - Pending: the source-watch origin is `1791838275.2081728` (20:51:15 UTC). At least 72 actual elapsed hours
   with sufficient coverage are needed: freeze due 2026-10-14 20:51:15 UTC, held-out result no earlier than
   2026-10-15 20:51:15 UTC. No learned rule, profitable result or automatic real promotion is claimed.

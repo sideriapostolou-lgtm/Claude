@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import base64
 import json
+import random
 import threading
 from collections import deque
 from dataclasses import replace
@@ -32,7 +33,7 @@ from nightcrawler.speeddesk_kalshi_ws import (
     MarketHandshake,
     MarketState,
 )
-from nightcrawler.speeddesk_model import Window
+from nightcrawler.speeddesk_model import Level, Window
 
 NEXT = "KXBTC15M-26OCT121500-00"
 
@@ -282,6 +283,41 @@ def test_delta_publication_without_engine_timestamp_is_not_liquidity_confirmatio
     del change["msg"]["ts_ms"]
     assert reader.apply(change, START + 1.1) == ((), ())
     assert not reader.book_at and not reader.exchange_at and reader.unproven == {TICKER}
+
+
+def test_incremental_depth_matches_complete_rebuild_on_every_insert_change_and_delete() -> None:
+    reader = state()
+    expected = {"yes": {0.4: 2.5, 0.39: 3.0}, "no": {0.59: 4.0, 0.58: 5.0}}
+    randomizer = random.Random(1042)
+    for sequence in range(3, 503):
+        side = randomizer.choice(("yes", "no"))
+        price = round(0.1 + 0.01 * randomizer.randrange(29), 2)
+        old = expected[side].get(price, 0.0)
+        change = -old if old and randomizer.random() < 0.4 else 0.25
+        new = round(old + change, 2)
+        if new:
+            expected[side][price] = new
+        else:
+            expected[side].pop(price, None)
+        frame = delta(seq=sequence, at=START + 1.2)
+        frame["msg"].update(side=side, price_dollars=str(price if side == "yes" else round(1 - price, 8)),
+                            delta_fp=str(change))
+        (up, down), _ = reader.apply(frame, START + 1.2)
+        yes = tuple(Level(p, q) for p, q in sorted(expected["yes"].items(), reverse=True))
+        no = tuple(Level(p, q) for p, q in sorted(expected["no"].items(), reverse=True))
+        assert up.bids == yes and down.bids == no
+        assert up.asks == tuple(Level(round(1 - level.price, 8), level.size) for level in no)
+        assert down.asks == tuple(Level(round(1 - level.price, 8), level.size) for level in yes)
+        assert up.sequence == down.sequence == f"kalshi-ws:7:{sequence}"
+
+
+def test_cached_levels_do_not_mutate_previously_published_books() -> None:
+    reader = state()
+    (before_up, before_down), _ = reader.apply(delta(), START + 1.1)
+    (after_up, after_down), _ = reader.apply(delta(seq=4, at=START + 1.2), START + 1.2)
+    assert before_up.asks[0].size == before_down.bids[0].size == 2.75
+    assert after_up.asks[0].size == after_down.bids[0].size == 1.5
+    assert before_up.bids is after_up.bids and before_down.asks is after_down.asks
 
 
 def test_staleness_and_disconnect_revoke_per_window_permission_without_heartbeat_refresh() -> None:
