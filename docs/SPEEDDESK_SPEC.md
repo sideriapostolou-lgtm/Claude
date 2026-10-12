@@ -32,6 +32,22 @@ From its newest 2,000 public fills (2026-10-12, 3.2 hours, 38 windows), with `pu
   the venue docs. Do not assume a rebate.
 - US books are thin (one hourly ladder traded $165 in its life). Expect much less than the original's ~$3k/day.
 
+## 2b. Kalshi: the better venue for this (checked 2026-10-12 18:45 UTC)
+
+- Kalshi lists **Bitcoin Up/Down 15-minute** windows (series `KXBTC15M`, e.g. `KXBTC15M-26OCT121445-45`).
+  It has no 5-minute series. The books are much deeper than Polymarket US: one live window showed **6,074 contracts
+  at the best ask** and **166,913 contracts traded in 24 hours**. That is the closest match to the original's
+  markets that a US account can trade.
+- Public market data needs no key: REST `https://api.elections.kalshi.com/trade-api/v2/markets?series_ticker=KXBTC15M`
+  and `/markets/{ticker}/orderbook`; prices come as `yes_ask_dollars` / `no_ask_dollars` and sizes as `*_size_fp`.
+  Kalshi's WebSocket and all orders need the owner's Kalshi API key (variables `KALSHI_KEY_ID` and
+  `KALSHI_PRIVATE_KEY`, set by the owner in Railway only, never in chat or the repo).
+- Read the window's rules for its settlement source and tie rule, and Kalshi's fee schedule for taker and maker
+  fees. Do not assume either.
+- Build the speed desk with a **venue adapter**: Polymarket US (15m/1h) and Kalshi (KXBTC15M), same rules and
+  practice fills. Practice on Kalshi can start now from public REST books (poll at most 2 per second). Real money on
+  Kalshi needs the key and the owner's amounts.
+
 ## 3. Architecture
 
 New module `src/nightcrawler/speeddesk.py`, started by `engine.py` as its own thread with an asyncio loop. It has
