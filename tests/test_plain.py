@@ -617,12 +617,18 @@ def test_the_badge_follows_the_plain_words_never_paper(ledger: Ledger, settings:
     save(settings, desk_state(real_open=0, venue=None, balance=None))
     reals["paper"] = plain(ledger, settings)["real"]
     reals["silent"] = plain(ledger, make_settings(**LIVE_DESK, DATA_DIR=str(tmp_path / "empty")))["real"]
-    words = _js_body(page_script(settings), "  function moneyWords(r) {")
+    words = _js_body(page_script(settings), "  function moneyWords(r, k) {")
     out = _node(f"{words}\nconst reals = {json.dumps(reals)};\nconst o = {{}};\n"
                 "for (const k of Object.keys(reals)) o[k] = moneyWords(reals[k]);\no.none = moneyWords(null);\n"
+                "o.kalshi = moneyWords(reals.paper, {active:true,mode:'live'});\n"
+                "o.kalshi_open = moneyWords(reals.paper, {active:false,mode:'paper',has_real_exposure:true});\n"
+                "o.kalshi_stale = moneyWords(reals.paper, {active:false,mode:'live',stale:true});\n"
                 "console.log(JSON.stringify(o));", tmp_path)
     assert out["live"] == {"badge": "REAL MONEY ON", "live": True, "title": "real money on"}
     assert out["still_open"] == {"badge": "REAL BETS STILL OPEN", "live": True, "title": "real bets still open"}
     assert out["paper"] == {"badge": "PRETEND MONEY", "live": False, "title": "pretend money"}
     assert out["silent"]["badge"] == "REAL MONEY: NO REPORT YET" and out["none"] is None
+    assert out["kalshi"]["badge"] == "REAL MONEY ON" and out["kalshi"]["live"]
+    assert out["kalshi_open"]["badge"] == "REAL EXPOSURE AT KALSHI" and out["kalshi_open"]["live"]
+    assert out["kalshi_stale"]["badge"] == "KALSHI: STATUS UNKNOWN"
     assert not [k for k, v in out.items() if v and "PAPER" in v["badge"]]

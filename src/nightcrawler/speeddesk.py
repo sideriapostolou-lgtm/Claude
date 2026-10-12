@@ -1,8 +1,9 @@
-"""Independent Bitcoin speed desk. All holdings and orders are practice only.
+"""Independent Bitcoin practice desk with a separately gated Kalshi companion.
 
 The receipt ledger is the durable source of truth; state.json is its atomic,
 read-only dashboard mirror. A crash can lose a cached quote, never a booked
-fill. Only the read-only feed adapter receives venue credentials.
+fill. Real Kalshi accounting lives in the companion's own ledger; the
+Polymarket US leg and this original practice trial never submit real orders.
 """
 
 from __future__ import annotations
@@ -14,7 +15,7 @@ import math
 import os
 import threading
 from collections.abc import Callable
-from dataclasses import asdict
+from dataclasses import asdict, replace
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
@@ -22,6 +23,7 @@ from typing import Any
 from .clock import Clock, RealClock
 from .config import Settings
 from .ledger import Ledger
+from .speeddesk_live import KalshiLiveDesk, LiveSnapshot
 from .speeddesk_model import (
     VENUES,
     Book,
@@ -59,7 +61,7 @@ def _atomic_json(path: Path, value: dict[str, Any]) -> None:
 
 
 def panel_state(settings: Settings, now: float) -> dict[str, Any]:
-    """Read practice evidence only. Missing/corrupt reports are not zero profit."""
+    """Read practice evidence and the separate Kalshi execution status."""
     path = settings.data_dir / "speeddesk" / "state.json"
     state = json.loads(path.read_text(encoding="utf-8"))
     if state.get("version") != 1 or state.get("mode") != "practice":
@@ -74,7 +76,8 @@ class SpeedRunner:
     """Owns one event loop, independent caps, durable receipts and daily reports."""
 
     def __init__(self, settings: Settings, stop: threading.Event, *, clock: Clock | None = None,
-                 feed_factory: Callable[..., Any] = MarketFeeds) -> None:
+                 feed_factory: Callable[..., Any] = MarketFeeds,
+                 live_factory: Callable[..., Any] = KalshiLiveDesk) -> None:
         config = practice_config(settings)
         self.clock = clock or RealClock(stop)
         self.stop = stop
@@ -91,6 +94,12 @@ class SpeedRunner:
         self.feed_status: dict[str, Any] = {"coinbase": "connecting", "markets": "connecting",
                                            "trade_stream": False}
         self.problem: str | None = None
+        self.live: KalshiLiveDesk | None = None
+        self.live_problem: str | None = None
+        self.live_task: asyncio.Task[None] | None = None
+        self.live_started = False
+        self.last_live_panel: dict[str, Any] = {}
+        self._live_market_snapshot = LiveSnapshot()
         self.enabled_venues = {"polymarket_us"}
         if settings.speeddesk_kalshi_enabled:
             self.enabled_venues.add("kalshi")
@@ -129,6 +138,21 @@ class SpeedRunner:
             self.feeds = feed_factory(settings, on_tick=self.on_tick, on_book=self.on_book,
                                       on_trade=self.on_trade, on_windows=self.on_windows,
                                       on_status=self.on_status, clock=self.clock.now)
+            self._refresh_live_snapshot()
+            try:
+                self.live = live_factory(settings, self.directory / "kalshi_live", self.live_snapshot,
+                                         clock=self.clock.now,
+                                         direct_member_verified=settings.speeddesk_kalshi_account_type == "direct")
+                self.live.on_windows(list(self.desk.windows.values()))
+            except Exception as exc:  # noqa: BLE001 — isolate live state failure from the running practice trial.
+                self.live_problem = "Kalshi companion unavailable; new real orders disabled; inspect live logs"
+                log.error("speeddesk_live_status mode=paper reason=initialization_failed error=%s", type(exc).__name__)
+                if self.live is not None:
+                    try:
+                        self.live.close()
+                    except Exception:  # noqa: BLE001 — a companion cleanup fault must not stop public feeds.
+                        log.error("speeddesk_live_status mode=paper reason=initialization_cleanup_failed")
+                self.live = None
         except BaseException:
             self.ledger.close()
             raise
@@ -152,6 +176,8 @@ class SpeedRunner:
         if not 0 <= received_at - event_at <= self.desk.config.stale_s:
             return
         self.desk.tick_btc(price, event_at)
+        self._refresh_live_snapshot()
+        self._live_call("on_tick", price, event_at, received_at)
         daily = self.feed_latency.setdefault(utc_day(received_at), [0.0, 0.0])
         daily[0] += (received_at - event_at) * 1000
         daily[1] += 1
@@ -165,6 +191,8 @@ class SpeedRunner:
 
     def on_book(self, book: Book) -> None:
         if self.desk.on_book(book):
+            self._refresh_live_snapshot()
+            self._live_call("on_book", book)
             # Resolve the first eligible post-delay snapshot immediately. A
             # later favorable update may never replace a failed recheck.
             self.decisions(self.desk.advance(self.clock.now()))
@@ -173,19 +201,28 @@ class SpeedRunner:
         allowed = not hasattr(self.feeds, "maker_windows") or trade.window in self.feeds.maker_windows()
         if self.feed_status.get("trade_stream") and allowed:
             self.decisions(self.desk.on_trade(trade, self.clock.now()))
+            self._live_call("on_trade", trade)
 
     def on_windows(self, windows: list[Window]) -> None:
         for window in windows:
             previous = self.desk.windows.get(window.slug)
             terms = ("taker_coefficient", "maker_coefficient", "tick_size", "min_trade_qty", "fee_rounding")
             if previous is not None and any(getattr(previous, key) != getattr(window, key) for key in terms):
+                self._live_market_snapshot = replace(self._live_market_snapshot, books={}, maker_windows=frozenset())
                 self.decisions(self.desk.cancel(self.clock.now(), window.slug, "venue_terms_changed"))
                 self.desk.books = {key: book for key, book in self.desk.books.items() if key[0] != window.slug}
             self.desk.add_window(window)
+        self._refresh_live_snapshot()
+        self._live_call("on_windows", windows)
 
     def on_status(self, status: dict[str, Any]) -> None:
         old = self.feed_status
         self.feed_status = status
+        if (status.get("gap_windows") or (old.get("trade_stream") and not status.get("trade_stream"))
+                or (old.get("coinbase") == "connected" and status.get("coinbase") != "connected")):
+            # Invalidate before a checkpoint releases the GIL to a pending HTTP
+            # send guard. Known disconnects cannot borrow the previous book.
+            self._live_market_snapshot = replace(self._live_market_snapshot, books={}, maker_windows=frozenset())
         if ((old.get("trade_stream") and not status.get("trade_stream"))
                 or (old.get("coinbase") == "connected" and status.get("coinbase") != "connected")):
             self.decisions(self.desk.cancel(self.clock.now(), reason="feed_gap"))
@@ -194,6 +231,8 @@ class SpeedRunner:
             for slug in status.get("gap_windows", []):
                 self.decisions(self.desk.cancel(self.clock.now(), slug, "venue_feed_gap"))
                 self.desk.books = {key: book for key, book in self.desk.books.items() if key[0] != slug}
+        self._refresh_live_snapshot()
+        self._live_call("on_status", status)
 
     def summary(self, day: str, venue: str | None = None) -> dict[str, Any]:
         report = self.desk.daily_summary(day, venue=venue)
@@ -265,7 +304,71 @@ class SpeedRunner:
                 "book_age_s": max(0.0, now - min(books)) if books else None,
                 "today": self.summary(utc_day(now)), "reports": self.reports,
                 "feeds": self.feed_status, "window_reasons": dict(self.desk.last_reason),
-                "real_orders_available": False}
+                "real_orders_available": False, "kalshi_live": self.live_panel(now)}
+
+    def live_snapshot(self) -> LiveSnapshot:
+        """Return an atomic market view, including from the HTTP worker thread."""
+        return self._live_market_snapshot
+
+    def _refresh_live_snapshot(self) -> None:
+        """Publish on the event loop; never mix a previous price with a new timestamp."""
+        now = self.clock.now()
+        windows = tuple(replace(window) for window in self.desk.windows.values() if window.venue == "kalshi")
+        slugs = {window.slug for window in windows}
+        maker_windows = self.feeds.maker_windows() if hasattr(self.feeds, "maker_windows") else set()
+        self._live_market_snapshot = LiveSnapshot(windows=windows,
+                            books={key: book for key, book in self.desk.books.items() if key[0] in slugs},
+                            bitcoin_price=self.desk.tape.price, bitcoin_at=self.desk.tape.last_at,
+                            sigma=self.desk.tape.sigma(now, self.desk.config.sigma_min_samples,
+                                                       self.desk.config.sigma_warmup_s),
+                            maker_windows=frozenset(maker_windows & slugs),
+                            outcomes={item.window: item.up_wins for item in self.desk.closed if item.window in slugs})
+
+    def live_panel(self, now: float) -> dict[str, Any]:
+        current = self._live_call("panel")
+        if isinstance(current, dict):
+            self.last_live_panel = dict(current)
+        panel = dict(self.last_live_panel)
+        if self.live_problem is not None or self.live is None:
+            # Failure cannot turn unverified actual exposure into pretend zero.
+            panel.update(as_of=now, mode="paper", authenticated=False, real_orders_available=False,
+                         reason=self.live_problem or "Kalshi companion unavailable", exposure_unknown=True)
+        return panel
+
+    def _live_call(self, method: str, *args: Any) -> Any:
+        if self.live is None or self.live_problem is not None:
+            return None
+        try:
+            return getattr(self.live, method)(*args)
+        except Exception as exc:  # noqa: BLE001 — companion callbacks cannot stop the public practice trial.
+            self.live_problem = "Kalshi companion halted; real exposure unknown; inspect live logs"
+            # Close the last-moment send gate immediately, before async cleanup.
+            self.live.stopping = True
+            log.error("speeddesk_live_status mode=paper reason=callback_failed error=%s", type(exc).__name__)
+            if self.live_started and self.live_task is not None and not self.live_task.done():
+                self.live_task.cancel()
+            return None
+
+    async def _run_live(self) -> None:
+        assert self.live is not None
+        self.live_started = True
+        try:
+            if self.live_problem is not None:
+                return
+            await self.live.run(self.stop)
+            if not self.stop.is_set():
+                raise RuntimeError("Kalshi companion exited before shutdown")
+        except asyncio.CancelledError:
+            raise
+        except Exception as exc:  # noqa: BLE001 — preserve the public practice trial after a companion fault.
+            self.live_problem = "Kalshi companion halted; new real orders disabled; inspect live logs"
+            log.error("speeddesk_live_status mode=paper reason=companion_halted error=%s", type(exc).__name__)
+        finally:
+            try:
+                await self.live.shutdown()
+            except Exception as exc:  # noqa: BLE001 — retain reservations and show cleanup uncertainty.
+                self.live_problem = "Kalshi cleanup unconfirmed; real exposure may remain; inspect live logs"
+                log.error("speeddesk_live_status mode=paper reason=cleanup_unconfirmed error=%s", type(exc).__name__)
 
     def checkpoint(self, now: float) -> None:
         self.daily_reports(now)
@@ -287,6 +390,7 @@ class SpeedRunner:
         self.last_checkpoint = now
 
     def step(self, now: float) -> None:
+        self._refresh_live_snapshot()
         # Count observed runtime, never claim coverage for offline gaps.
         duration = max(0.0, min(1.0, now - self.last_step))
         interval_start = now - duration
@@ -357,8 +461,11 @@ class SpeedRunner:
                 if outcome not in (0.0, 1.0):
                     continue
                 now = self.clock.now()
+                if window.venue == "kalshi":
+                    self._live_call("on_settlement", window.slug, outcome == 1.0, now)
                 self.decisions(self.desk.cancel(now, window.slug, "settled"))
                 result = self.desk.settle(window.slug, outcome == 1.0, now)
+                self._refresh_live_snapshot()
                 if result is not None:
                     self.record("speeddesk_window", {**asdict(result), "side": "both", "price": None,
                                                      "size": result.up_shares + result.down_shares,
@@ -373,6 +480,7 @@ class SpeedRunner:
                                           "trial_started_at": self.started_at, "config": asdict(self.desk.config)})
         self.checkpoint(self.clock.now())
         tasks = [asyncio.create_task(self.feeds.run(self.stop)), asyncio.create_task(self._settlements())]
+        self.live_task = asyncio.create_task(self._run_live()) if self.live is not None else None
         try:
             while not self.stop.is_set():
                 for task in tasks:
@@ -386,11 +494,19 @@ class SpeedRunner:
             for task in tasks:
                 task.cancel()
             await asyncio.gather(*tasks, return_exceptions=True)
+            if self.live_task is not None:
+                if not self.stop.is_set() and not self.live_task.done():
+                    self.live_task.cancel()
+                await asyncio.gather(self.live_task, return_exceptions=True)
             self.decisions(self.desk.cancel(self.clock.now(), reason="shutdown"))
             self.checkpoint(self.clock.now())
 
     def close(self) -> None:
-        self.ledger.close()
+        try:
+            if self.live is not None:
+                self.live.close()
+        finally:
+            self.ledger.close()
 
 
 def run_speeddesk(settings: Settings, stop_event: threading.Event) -> None:

@@ -92,7 +92,8 @@ Schema (lists capped: members 9, events <= 5, open trades <= 10, closed trades 1
                               "coverage_started_at", "reporting_started_at", "reporting_complete", "enabled",
                               "fill_rate_basis", "latency_definition", "venues": {"kalshi": {...},
                               "polymarket_us": {...}}},  # same metrics per venue; unknowns never inferred from totals
-                              "reports": {UTC day: {... same figures and "reported_at"}} (<= 31)}|null},
+                              "reports": {UTC day: {... same figures and "reported_at"}} (<= 31),
+                              "kalshi_live": {... separate authenticated account; never added to town cash}}|null},
       "town": {"label", "cost_per_day_usd", "cost_today_usd", "cost_since_start_usd": float|null,  # see TOWN
                "income_today_usd": float|null, "income_since_start_usd": float|null,
                "covered_today": bool|null, "covered_since_start": bool|null, "line",
@@ -397,7 +398,7 @@ from nightcrawler import (
 from nightcrawler.botwallet import saved_balance, wallet_configured
 from nightcrawler.broker.keystore import KV_GENERATED, unused_wallet
 from nightcrawler.clock import utc_day
-from nightcrawler.config import Settings, parse_rotation_date
+from nightcrawler.config import Secret, Settings, parse_rotation_date
 from nightcrawler.dashboard import build_state, scrub
 from nightcrawler.deskguard import VERDICTS as GUARD_VERDICTS
 from nightcrawler.ledger import LedgerError
@@ -1525,6 +1526,65 @@ def _speed_report(today: Mapping[str, Any], day: str, *, with_venues: bool = Tru
     return figures
 
 
+def _kalshi_live_panel(raw: Any, settings: Settings, now: float) -> dict[str, Any] | None:
+    """Whitelist the companion's saved account report; never query an account from the page.
+
+    An old live report cannot prove that live is still on. Recorded exposure remains visible even after the
+    switches return to paper. Cash needs its own fresh observation, independently of the report heartbeat.
+    """
+    if not isinstance(raw, Mapping) and settings.speeddesk_kalshi_mode != "live":
+        return None
+    raw = _xp_map(raw)
+    text = _Text(settings)
+    as_of, cash_at = _num(raw.get("as_of")), _num(raw.get("cash_at"))
+    stale = as_of is None or now - as_of > 60 or as_of > now + FUTURE_SKEW_S
+    mode = raw.get("mode") if raw.get("mode") in ("paper", "live") else None
+    authenticated = raw.get("authenticated") is True
+    configured = (settings.speeddesk_enabled and settings.speeddesk_kalshi_enabled
+                  and settings.speeddesk_kalshi_mode == "live"
+                  and settings.speeddesk_kalshi_live_confirm == Secret("yes")
+                  and bool(settings.kalshi_key_id) and bool(settings.kalshi_private_key))
+    settings_changed = mode == "live" and not configured
+    if settings_changed:
+        mode = "paper"  # a saved report cannot override a new deployment's disabled live gates
+    active = configured and not stale and mode == "live" and authenticated and raw.get("real_orders_available") is True
+    cash_fresh = not stale and cash_at is not None and -FUTURE_SKEW_S <= now - cash_at <= 60
+    figures: dict[str, Any] = {}
+    for key in ("reserved_usd", "open_risk_usd", "at_risk_usd"):
+        value = _num(raw.get(key))
+        figures[key] = value if value is not None and value >= 0 else None
+    figures.update({key: _count(raw.get(key)) for key in ("open_orders", "positions")})
+    exposure = any(value is not None and value > 0 for value in figures.values())
+    today = _xp_map(raw.get("today"))
+    day = utc_day(now)
+    if today.get("day") != day:
+        today = {}
+    total = _xp_map(raw.get("total"))
+    money_keys = ("fees_usd", "locked_usd", "directional_usd", "pnl_usd")
+    twin = _xp_map(raw.get("practice_twin"))
+    if twin.get("day") != day:
+        twin = {}
+    caps = _xp_map(raw.get("caps"))
+    cash = _num(raw.get("cash_usd"))
+    return {
+        **figures, "mode": mode, "configured_mode": settings.speeddesk_kalshi_mode,
+        "account_type": settings.speeddesk_kalshi_account_type,
+        "label": "REAL MONEY (Kalshi)" if active else "PRACTICE", "active": active,
+        "stale": stale, "as_of": as_of, "authenticated": authenticated,
+        "status": "PRACTICE" if settings_changed else text.opt(raw.get("status")) or "Waiting for the Kalshi companion report",
+        "reason": ("Current settings disable real orders; waiting for an updated companion report."
+                   if settings_changed else text.opt(raw.get("reason"))), "has_real_exposure": exposure,
+        "cash_usd": cash if cash_fresh and cash is not None and cash >= 0 else None, "cash_at": cash_at,
+        "real_orders_available": active, "total_halted": raw.get("total_halted") is True,
+        "cleanup_pending": raw.get("cleanup_pending") is True,
+        "caps": {key: _num(caps.get(key)) for key in ("window_usd", "open_usd", "day_stop_usd", "total_stop_usd")},
+        "today": {"day": day, **{key: _num(today.get(key)) for key in money_keys},
+                  **{key: _count(today.get(key)) for key in ("windows", "fills")}},
+        "total": {key: _num(total.get(key)) for key in money_keys},
+        "practice_twin": _speed_report(twin, day, with_venues=False),
+    }
+
+
 def speed_desk(settings: Settings, now: float) -> dict[str, Any] | None:
     """The speed desk's independent practice report. Missing figures stay unknown, never real or summed.
 
@@ -1561,6 +1621,7 @@ def speed_desk(settings: Settings, now: float) -> dict[str, Any] | None:
             "status": text.opt(raw.get("status")) or "Waiting for the first practice report",
             "problem": text.opt(raw.get("problem")) or (None if day_matches else "Today's practice report is unavailable"),
             "today": _speed_report(today, day), "reports": reports,
+            "kalshi_live": _kalshi_live_panel(raw.get("kalshi_live"), settings, now),
             "btc_age_s": _num(raw.get("btc_age_s")), "book_age_s": _num(raw.get("book_age_s"))}
 
 
@@ -2634,11 +2695,25 @@ def plain_words(settings: Settings, money: Mapping[str, Any], members: list[dict
     trend = money.get("trend")
     trend = trend if isinstance(trend, Mapping) else None
     real = _plain_real(settings, money, desk, passed=passed)
+    headline = _plain_headline(settings, desk, real)
+    kalshi = _xp_map(_xp_map(money.get("speeddesk")).get("kalshi_live"))
+    if kalshi:
+        # These existing figures still belong only to Polymarket/Solana. Kalshi has its own account card.
+        real["label"] = "REAL MONEY · Polymarket / Solana"
+        real["line"] = str(real["line"]).replace("Real money is off", "Polymarket / Solana real money is off").replace(
+            ": everything is practice with pretend money.", ".")
+        if kalshi.get("active"):
+            headline = ("Real money is on at Kalshi and other desks. Each account is shown separately."
+                        if real.get("on") else "Kalshi is using real money. The other desks report their own status below.")
+        elif kalshi.get("has_real_exposure"):
+            headline = "Kalshi has real exposure. Check its order status and the other desk reports below."
+        elif kalshi.get("stale") or kalshi.get("mode") is None:
+            headline = "Kalshi's current status is unknown. Check the desk reports before relying on totals."
     desk_live = desk is not None and desk.get("mode") == "live"
     team, lines, said = _plain_team(members, now, live=settings.is_live, desk_live=desk_live)
     return {
         "about": PLAIN_ABOUT,
-        "headline": _plain_headline(settings, desk, real),
+        "headline": headline,
         "real": real,
         "pretend": _plain_pretend(settings, money, desk, trend, now),
         "now": lines,

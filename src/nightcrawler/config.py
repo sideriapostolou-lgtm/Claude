@@ -30,7 +30,7 @@ import re
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 from urllib.parse import parse_qsl, urlsplit
 
 __all__ = [
@@ -424,7 +424,7 @@ class Settings:
                                    secret=True)
     polymarket_us_secret_key: str = _f("", "text", "Polymarket US API secret key (a Railway variable; the live desk "
                                        "only; never in a file or the repo)", secret=True)
-    # ---- Bitcoin speed desk: independent PRACTICE book, no real-order mode ----
+    # ---- Bitcoin speed desk: practice books plus a separately gated Kalshi companion ----
     speeddesk_enabled: bool = _f(True, "bool", "Run the Bitcoin speed desk's independent practice trial")
     speeddesk_kalshi_enabled: bool = _f(True, "bool", "Also read public Kalshi Bitcoin 15-minute windows for the "
                                           "speed desk's practice trial; no Kalshi keys or real orders")
@@ -449,6 +449,36 @@ class Settings:
                                     lo=0, hi=899)
     speeddesk_latency_ms: float = _f(250.0, "milliseconds", "Speed desk: minimum delay before checking that a "
                                       "taker's quoted ask still exists", lo=1, hi=60_000)
+    speeddesk_kalshi_mode: str = _f("paper", "text", "Kalshi speed companion: paper by default; live requires "
+                                      "the owner's exact confirmation and authenticated account checks",
+                                      choices=("paper", "live"))
+    speeddesk_kalshi_account_type: Literal["unknown", "direct", "fcm"] = _f(
+        "unknown", "text", "Owner-attested Kalshi fee category, not permission to trade: direct uses $0.0001 "
+        "fee rounding; unknown or fcm reserves the conservative $0.01 bound. Never infer the account type",
+        choices=("unknown", "direct", "fcm"))
+    speeddesk_kalshi_live_confirm: Secret | None = _f(  # noqa: RUF009 - _f returns a dataclasses.field
+        None, "secret", "Must equal yes exactly before the Kalshi speed companion may submit real orders; "
+        "mode must also be live", secret=True)
+    speeddesk_kalshi_resume_token: Secret | None = _f(  # noqa: RUF009 - _f returns a dataclasses.field
+        None, "secret", "Owner-controlled Kalshi total-stop reset: a new value works once; only its hash may be "
+        "persisted, never its value. Does not change any cap or enable live mode", secret=True)
+    speeddesk_kalshi_window_usd: float = _f(2.0, "usd", "Kalshi live companion: fee-inclusive maximum spend per "
+                                            "window; owner-authorized ceiling $2", lo=0, lo_open=True, hi=2)
+    speeddesk_kalshi_open_usd: float = _f(4.0, "usd", "Kalshi live companion: fee-inclusive maximum open exposure "
+                                          "and pending reservations; owner-authorized ceiling $4",
+                                          lo=0, lo_open=True, hi=4)
+    speeddesk_kalshi_day_stop_usd: float = _f(3.0, "usd", "Kalshi live companion: daily loss stop; "
+                                              "owner-authorized ceiling $3", lo=0, lo_open=True, hi=3)
+    speeddesk_kalshi_total_stop_usd: float = _f(5.0, "usd", "Kalshi live companion: persistent total-loss stop; "
+                                                "owner-authorized ceiling $5", lo=0, lo_open=True, hi=5)
+    speeddesk_kalshi_cutoff_s: float = _f(180.0, "seconds", "Kalshi live companion: stop buying this long before "
+                                          "window close; default trades only the first 12 minutes of a 15m window",
+                                          lo=60, hi=899)
+    kalshi_key_id: Secret | None = _f(  # noqa: RUF009 - _f returns a dataclasses.field
+        None, "secret", "Kalshi account key id, supplied by the owner in Railway; never logged", secret=True)
+    kalshi_private_key: Secret | None = _f(  # noqa: RUF009 - _f returns a dataclasses.field
+        None, "secret", "Kalshi signing key, supplied by the owner in Railway; never logged or stored in desk "
+        "state. Public practice market data never needs this key", secret=True)
     trenddesk_enabled: bool = _f(True, "bool", "The trend desk: a PAPER forward test of lab 3's 50-day trend rule on "
                                  "BTC, ETH and SOL, from Coinbase's public daily candles once a day (never real money, "
                                  "never a key)")
@@ -521,6 +551,11 @@ class Settings:
         object.__setattr__(self, "bot_wallet_mode", str(self.bot_wallet_mode).strip().lower())
         object.__setattr__(self, "withdraw_to", str(self.withdraw_to).strip())
         object.__setattr__(self, "owner_tz", str(self.owner_tz).strip())
+        for name in ("kalshi_key_id", "kalshi_private_key", "speeddesk_kalshi_resume_token",
+                     "speeddesk_kalshi_live_confirm"):
+            value = getattr(self, name)
+            if isinstance(value, str):
+                object.__setattr__(self, name, Secret(value) if value else None)
         if _zone_unknown(self.owner_tz):  # a cosmetic setting (the recap film): warn, never refuse to start
             logging.getLogger(__name__).warning("config_owner_tz_unknown value=%r using=UTC", self.owner_tz[:60])
         problems = self._validate()
@@ -533,6 +568,15 @@ class Settings:
             meta = f.metadata
             value = getattr(self, f.name)
             env = f.name.upper()
+            if f.name in ("kalshi_key_id", "kalshi_private_key", "speeddesk_kalshi_resume_token",
+                          "speeddesk_kalshi_live_confirm"):
+                if value is not None and not isinstance(value, Secret):
+                    problems.append(f"{env} must be a secret string")
+                continue
+            if (f.name.startswith("speeddesk_kalshi_") and meta.get("unit") in ("usd", "seconds")
+                    and (isinstance(value, bool) or not isinstance(value, (int, float)))):
+                problems.append(f"{env} must be a finite number")
+                continue
             if meta.get("choices") and value not in meta["choices"]:
                 problems.append(f"{env}={value!r} must be one of {', '.join(meta['choices'])}")
             if isinstance(value, (int, float)) and not isinstance(value, bool):
@@ -691,7 +735,9 @@ class Settings:
         out: dict[str, Any] = {}
         for f in dataclasses.fields(self):
             v = getattr(self, f.name)
-            if f.metadata.get("secret"):
+            if f.name == "speeddesk_kalshi_live_confirm":
+                out["speeddesk_kalshi_live_confirmed"] = v == Secret("yes")
+            elif f.metadata.get("secret"):
                 out[f"{f.name}_set"] = bool(v)
             elif f.name == "live_confirm":
                 out["live_confirmed"] = v == LIVE_CONFIRM_PHRASE

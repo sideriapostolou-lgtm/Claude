@@ -181,7 +181,8 @@ def test_describe_covers_every_field() -> None:
     assert all(r["help"] and r["unit"] for r in rows)
     assert {r["env"] for r in rows if r["secret"]} == {
         "ANTHROPIC_API_KEY", "JUPITER_API_KEY", "BOT_WALLET_SECRET", "X_BEARER_TOKEN", "DASHBOARD_TOKEN",
-        "POLYMARKET_US_KEY_ID", "POLYMARKET_US_SECRET_KEY"}
+        "POLYMARKET_US_KEY_ID", "POLYMARKET_US_SECRET_KEY", "KALSHI_KEY_ID", "KALSHI_PRIVATE_KEY",
+        "SPEEDDESK_KALSHI_LIVE_CONFIRM", "SPEEDDESK_KALSHI_RESUME_TOKEN"}
 
 
 def test_env_example_lists_every_setting() -> None:
@@ -252,6 +253,7 @@ def test_rpc_keys_in_the_url_path_are_secret(make_settings, url, key) -> None:
 
 def test_http_errors_from_a_path_key_rpc_never_show_the_key(make_settings) -> None:
     from fakes import FakeClock, FakeHttp
+
     from nightcrawler.http import HttpClient, HttpError
 
     s = make_settings(SOLANA_RPC_URL=QUICKNODE)

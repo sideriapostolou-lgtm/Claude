@@ -2559,7 +2559,11 @@ class App:
         try:
             self.stop_event.set()
             if self.speeddesk is not None:
-                self.speeddesk.join(timeout=5)
+                # Give real Kalshi requests time to drain and owned bids time
+                # to cancel inside Railway's shutdown grace period.
+                self.speeddesk.join(timeout=25)
+                if self.speeddesk.is_alive():
+                    log.error("speeddesk_live_status mode=paper reason=shutdown_cleanup_unconfirmed")
             if self.polydesk is not None:
                 self.polydesk.stop()
             if self.trenddesk is not None:
