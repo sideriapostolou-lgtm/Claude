@@ -40,8 +40,12 @@ From its newest 2,000 public fills (2026-10-12, 3.2 hours, 38 windows), with `pu
   markets that a US account can trade.
 - Public market data needs no key: REST `https://api.elections.kalshi.com/trade-api/v2/markets?series_ticker=KXBTC15M`
   and `/markets/{ticker}/orderbook`; prices come as `yes_ask_dollars` / `no_ask_dollars` and sizes as `*_size_fp`.
-  Kalshi's WebSocket and all orders need the owner's Kalshi API key (variables `KALSHI_KEY_ID` and
-  `KALSHI_PRIVATE_KEY`, set by the owner in Railway only, never in chat or the repo).
+  Kalshi's WebSocket, balances and all orders need the owner's Kalshi API key: an **Ed25519** key in variables
+  `KALSHI_KEY_ID` and `KALSHI_PRIVATE_KEY` (PKCS#8 PEM), set on the Railway `bot` service on 2026-10-12 and verified
+  with a read-only balance call ($25.00 cash). Never print, log or commit them. Sign each request with headers
+  `KALSHI-ACCESS-KEY`, `KALSHI-ACCESS-TIMESTAMP` (ms) and `KALSHI-ACCESS-SIGNATURE` = base64 Ed25519 signature of
+  timestamp + METHOD + path (path includes `/trade-api/v2`, no query string). Washington blocks Kalshi sports and
+  politics for this account; Crypto stays open, so `KXBTC15M` is tradable.
 - Read the window's rules for its settlement source and tie rule, and Kalshi's fee schedule for taker and maker
   fees. Do not assume either.
 - Build the speed desk with a **venue adapter**: Polymarket US (15m/1h) and Kalshi (KXBTC15M), same rules and
