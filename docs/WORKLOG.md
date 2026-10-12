@@ -13,6 +13,21 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-12 16:25 UTC, Claude, branch claude/nightcrawler-memecoin-bot-Gwnb1S, after PR #5
+- Changed: the owner merged PR #5 at 16:17:13 UTC (merge commit 1cd27824). No deployment followed. Railway's
+  assistant found the cause: the service source had no branch, and auto-deploy reports `NO_INSTALLATION` (the
+  Railway GitHub App is not installed for this repo, so GitHub never notifies Railway). It set
+  `source.branch = claude/nightcrawler-memecoin-bot-Gwnb1S` (nothing else) and committed it. That built the branch
+  head: deployment 0866daea, commit 1cd27824, SUCCESS at 16:23 UTC.
+- Verified (Railway logs of 0866daea): `polydesk_live_connected cash=14.22`,
+  `polydesk_started ... (LIVE: 10 contract(s) per order)`, `engine_start ... mode=paper` (the memecoin engine is
+  paper, as intended), no tracebacks. The old deployment 4a8b5d52 was replaced.
+- Not verified / blocked: deploy on push still does not work until the owner installs the Railway GitHub App for
+  sideriapostolou-lgtm/claude (github.com/settings/installations, then Railway, Configure, Repository access) and
+  enables autodeploy in Railway (service bot, Settings). Until then, merges do NOT deploy by themselves.
+- Real money touched? no. Same app code, same settings; the bot restarted once.
+- Next step: the owner installs the GitHub App; the next app-code merge confirms deploy on push.
+
 ## 2026-10-12 16:09 UTC, Codex, branch codex/live-on-merge-template, PR prepared
 - Changed: prepared a LIVE ON MERGE PR template and linked AGENTS.md from README.md. README.md is watched by
   Railway, so merging this documentation-only change is expected to rebuild and restart the existing live bot.
