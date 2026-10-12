@@ -110,10 +110,12 @@ Use a pull request for bigger changes or when the owner wants to review first.
   `claude/nightcrawler-memecoin-bot-Gwnb1S`. **Autodeploy is ON since 2026-10-12 16:32 UTC.** Lowercase `claude`
   made Railway report `NO_INSTALLATION`; the exact casing fixed it. A push or merge to the branch deploys, but only
   when it touches a watched path: `src/**`, `pyproject.toml`, `Dockerfile`, `railway.json` or `README.md`. Other
-  pushes are SKIPPED and the live deployment stays. The first push-triggered build is still to be seen. After every
-  deploy, check that Railway built that exact commit and that the logs show `polydesk_started ... (LIVE ...)` with
+  pushes are SKIPPED and the live deployment stays. **Deploy on push verified 2026-10-12:** the visual cleanup
+  `0f55628` automatically created deployment `aeb5bc19`, SUCCESS; startup at 17:10:07 UTC shows
+  `polydesk_started ... (LIVE: 10 contract(s) per order)`, with no tracebacks and a passing `/healthz`.
+  After every deploy, check that Railway built that exact commit and that the logs show `polydesk_started ... (LIVE ...)` with
   no tracebacks. PR #5's merge commit 1cd27824 ran as deployment 0866daea at 16:23 UTC, triggered by setting the
-  source branch rather than by the merge itself. That restart does not verify deploy on push.
+  source branch rather than by the merge itself. That earlier restart alone did not verify deploy on push.
 * Restarts are safe. State lives on the volume, and the desk re-reads the venue each round.
 * Any worker's push to the branch deploys (see AGENTS.md rule 3). To read logs a worker needs the owner's Railway
   token in its environment as `RAILWAY_TOKEN` (Railway CLI: `railway logs`, `railway status`). Never `railway

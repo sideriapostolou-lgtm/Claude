@@ -32,8 +32,15 @@ Template:
   and real network tests were not enabled for a presentation change.
 - Real money touched? No trading-code, order, cap or variable changes. Publishing the small tested cleanup
   to the deploy branch restarts the bot with its existing live settings under the owner's authorized workflow.
-- Deploy check: pending publication; match the resulting commit and fresh startup logs, then record the result
-  in a documentation-only follow-up.
+- Deploy verified: direct push `0f55628d5609db53a71f27b74558590d68f6df17` automatically created deployment
+  `aeb5bc19-1095-46da-b931-bd682088279f`, which reached SUCCESS. At 17:10:07 UTC its logs show
+  `polydesk_started theta=0.97 hours=1 ticket_usd=20 poll_s=90 (LIVE: 10 contract(s) per order)`;
+  at 17:10:08 UTC the separate memecoin engine started in paper mode. Deployment-scoped ERROR/Traceback
+  searches returned no matching errors. The public `/healthz` returned HTTP 200 with `ok` after a transient
+  HTTP 502 during the container transition. This confirms the first watched-file push deployed automatically.
+  The protected live dashboard was not opened; its presentation was checked with local fixtures above.
+- Next step: owner refreshes `/world` to see the cleanup. This verification and the handoff correction are
+  documentation-only and do not cause a second runtime deployment.
 
 ## 2026-10-12 16:47 UTC, Codex, branch claude/nightcrawler-memecoin-bot-Gwnb1S
 - Changed: at the owner's request, authenticated an isolated read-only Railway CLI session using a credential
