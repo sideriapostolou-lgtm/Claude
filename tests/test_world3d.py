@@ -274,7 +274,7 @@ def test_the_module_loads_the_real_cast_with_the_meshopt_decoder(settings: Setti
     assert 'import("three/addons/libs/meshopt_decoder.module.js")' in module
     assert "await decoder.ready;" in module and "gltfLoader.setMeshoptDecoder(decoder);" in module
     # the bodies in motion: cast_motion.js (same origin), its move library and actors
-    assert 'import("./office/assets/cast_motion.js")' in module and "m.loadLibrary(gltfLoader, ASSET)" in module
+    assert 'import("./office/assets/cast_motion.js?v=2")' in module and "m.loadLibrary(gltfLoader, ASSET)" in module
     assert "new motionMod.Actor(got[0].scene, s, lib)" in module
     # progressive: never before the first frame; the crew first, then the set nearest the camera; a counter line
     assert "if (!started) { started = true; setTimeout(function () { loadModels()" in module

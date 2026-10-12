@@ -2764,6 +2764,7 @@ _M_LIFE = r"""
     a.name = CAST[k].name; a.members = CAST[k].members; a.homeRoom = CAST[k].room; a.room = a.homeRoom;
     a.homeNode = sp.home; a.node = sp.home; a.pos = NAV[sp.home].p.clone(); a.yaw = sp.homeYaw; a.yawGoal = a.yaw; a.yawS = a.yaw;
     a.state = "home"; a.queue = []; a.speed = SPEED[k]; a.height = HEIGHT[k]; a.glide = 0; a.homeSince = 0;
+    a.moveSpeed = 0; a.groundSpeed = 0;
     // the acting state (reused every frame: nothing is allocated in the loop)
     a.st = { walking: false, speed: a.speed, working: false, seated: false, carrying: false, glide: 0 };
     a.headAt = V3(0, 0, 0); a.beats = []; a.nextThink = 0; a.nextReach = 6 + Math.random() * 8; a.reachUntil = 0;
@@ -2799,33 +2800,55 @@ _M_LIFE = r"""
     const ids = route(a.node, v.id); if (!ids) return;
     a.path = ids.map(function (id) { return NAV[id].p.clone(); }); a.path[0] = a.pos.clone(); a.seg = 0;
     a.state = "out"; a.action = action; a.destNode = v.id; a.destYaw = v.yaw; a.destRoom = action.dest; a.ambient = !!action.ambient;
+    a.moveSpeed = 0;
     a.carrying = action.carry || null; if (a.carrying) showCube(a.carrying);
     if (focus && focus.actor === a) focus.until = Math.max(focus.until, simT + 2 + pathLength(a) / travelSpeed(a));
   }
   function walkBack(a) {
     const ids = route(a.node, a.homeNode); if (!ids) { a.state = "home"; return; }
     a.path = ids.map(function (id) { return NAV[id].p.clone(); }); a.path[0] = a.pos.clone(); a.seg = 0; a.state = "back"; a.room = a.homeRoom; a.ambient = false;
+    a.moveSpeed = 0;
   }
   // a home place moved (the table changed): whoever stands there steps to the new place
   function resettle(nodeId) {
     ACTOR_KEYS.forEach(function (k) { const a = actors[k];
       if (a.node !== nodeId || (a.state !== "home" && a.state !== "visit")) return;
-      a.path = [a.pos.clone(), NAV[nodeId].p.clone()]; a.seg = 0;
+      a.path = [a.pos.clone(), NAV[nodeId].p.clone()]; a.seg = 0; a.moveSpeed = 0;
       if (a.state === "home") a.state = "back"; else { a.state = "out"; a.action = { dest: a.destRoom, hold: Math.max(1, a.visitUntil - simT) }; }
     });
   }
-  const _wdir = new THREE.Vector3();
+  const _wdir = new THREE.Vector3(), _wnext = new THREE.Vector3();
   function stepWalk(a, dt) {
+    if (dt <= 0 || !a.path) return;
     const remaining = pathLength(a);
     if (a.key === "voss") a.glide += ((remaining > (a.actor ? 3.0 : 4.5) && a.state !== "home" ? 1 : 0) - a.glide) * Math.min(1, dt * 1.6);
-    let left = walkSpeedOf(a) * dt;
+    // Ease into a trip and brake before the last step or a sharp corner. The route stays on the walkways;
+    // the body has time to face its next stretch before the feet take it there.
+    while (a.seg < a.path.length - 1 && a.pos.distanceToSquared(a.path[a.seg + 1]) < 1e-10) { a.pos.copy(a.path[++a.seg]); }
+    const pace = walkSpeedOf(a), accel = pace * 2.8, brake = pace * 3.8;
+    const brakeStep = brake * dt;
+    let target = Math.min(pace, Math.sqrt(2 * brake * remaining + brakeStep * brakeStep) - brakeStep);
+    if (a.seg < a.path.length - 1) {
+      _wdir.copy(a.path[a.seg + 1]).sub(a.pos); const d = _wdir.length(); _wdir.normalize();
+      if (Math.abs(_wdir.x) + Math.abs(_wdir.z) > 0.01) a.yawGoal = Math.atan2(_wdir.x, _wdir.z);
+      if (a.seg < a.path.length - 2) {
+        _wnext.copy(a.path[a.seg + 2]).sub(a.path[a.seg + 1]).normalize();
+        const bend = Math.max(0, _wdir.dot(_wnext)), corner = pace * bend * bend;
+        target = Math.min(target, Math.sqrt(corner * corner + 2 * brake * d + brakeStep * brakeStep) - brakeStep);
+      }
+      const facing = clamp((Math.cos(angleDiff(a.yawGoal, a.yaw)) - 0.35) / 0.65, 0, 1);
+      target *= facing;
+    }
+    a.moveSpeed += clamp(target - a.moveSpeed, -brake * dt, accel * dt);
+    let left = a.moveSpeed * dt, moved = 0;
     while (left > 0 && a.seg < a.path.length - 1) {
       const to = a.path[a.seg + 1], d = to.distanceTo(a.pos);
-      if (d <= left) { a.pos.copy(to); a.seg += 1; left -= d; }
-      else { _wdir.copy(to).sub(a.pos).normalize(); a.pos.addScaledVector(_wdir, left); left = 0; if (Math.abs(_wdir.x) + Math.abs(_wdir.z) > 0.01) a.yawGoal = Math.atan2(_wdir.x, _wdir.z); }
+      if (d <= left) { a.pos.copy(to); a.seg += 1; left -= d; moved += d; }
+      else { _wdir.copy(to).sub(a.pos).normalize(); a.pos.addScaledVector(_wdir, left); moved += left; left = 0; }
     }
+    a.groundSpeed = moved / dt;
     if (a.seg >= a.path.length - 1) {
-      a.path = null;
+      a.path = null; a.moveSpeed = 0;
       if (a.state === "out") { a.state = "visit"; a.node = a.destNode; a.room = a.destRoom; a.yawGoal = a.destYaw; a.visitUntil = simT + (a.action.hold || 3);
         if (a.action.onArrive) a.action.onArrive(a); if (focus && focus.actor === a) focus.until = Math.max(focus.until, simT + (a.action.hold || 3) + 1.5); }
       else { a.state = "home"; a.node = a.homeNode; a.room = a.homeRoom; a.yawGoal = SPOTS[a.homeRoom].homeYaw; a.homeSince = simT; }
@@ -2844,6 +2867,7 @@ _M_LIFE = r"""
     }
     for (let i = 0; i < ACTOR_KEYS.length; i++) {
       const k = ACTOR_KEYS[i], a = actors[k];
+      a.groundSpeed = 0;
       a.listening = !!a.listenTo;
       while (a.beats.length && simT >= a.beats[0].at) a.beats.shift().fn(a);
       const busy = !!(a.actor && a.actor.oneShot);  // a one-shot move (a nod, a cheer) finishes before a walk starts
@@ -2856,7 +2880,7 @@ _M_LIFE = r"""
       a.yawS += angleDiff(a.yaw, a.yawS) * (1 - Math.exp(-dt * 1.4));
       let working = false; for (let j = 0; j < a.members.length; j++) if (members[a.members[j]] && members[a.members[j]].status === "working") working = true;
       const st = a.st;
-      st.walking = a.walking; st.speed = a.speed; st.working = working && a.state === "home"; st.seated = a.state === "home" && (k === "nyx" || k === "rook");
+      st.walking = a.walking; st.speed = a.groundSpeed; st.working = working && a.state === "home"; st.seated = a.state === "home" && (k === "nyx" || k === "rook");
       st.carrying = !!a.carrying; st.glide = a.glide;
       a.group.position.set(a.pos.x, a.pos.y + a.glide * 0.38, a.pos.z); a.group.rotation.y = a.yaw;
       if (a.actor) {
@@ -2900,7 +2924,7 @@ _M_LIFE = r"""
   function endOneShot(A) {
     if (!A.oneShot) return;
     A.oneShot.fadeOut(0.35); A.oneShot = null;
-    if (A.current) A.current.reset().fadeIn(0.35).play();
+    if (A.current) { A.current.enabled = true; A.current.paused = false; A.current.setEffectiveWeight(1).fadeIn(0.35).play(); }
   }
   function visitorOf(a) {
     for (let i = 0; i < ACTOR_KEYS.length; i++) { const v = actors[ACTOR_KEYS[i]]; if (v !== a && v.state === "visit" && v.ambient && v.room === a.homeRoom) return v; }
@@ -2945,7 +2969,7 @@ _M_LIFE = r"""
     const A = a.actor, biped = A.spec.kind === "biped";
     if (biped) {
       let loop = a.station, rate = 1;
-      if (st.walking) { loop = walkClip(a); rate = WALK_RATE[loop] || WALK_RATE.other; if (a.key === "voss" && a.glide > 0.35) { loop = "idle"; rate = 1; } }
+      if (st.walking) { loop = walkClip(a); rate = (WALK_RATE[loop] || WALK_RATE.other) * a.groundSpeed / walkSpeedOf(a); if (a.key === "voss" && a.glide > 0.35) { loop = "idle"; rate = 1; } }
       else if (a.speaking) loop = "talk";
       else if (a.listening) loop = "listen";
       if (st.walking && A.oneShot) endOneShot(A);
@@ -3262,7 +3286,8 @@ _M_LIFE = r"""
     } catch (e) { console.warn("world: no model loader, keeping the drawings", e); loading.crewN = loading.setN = 0; showLoading(); return; }
     if (castIds.length) {
       // the move library and the six characters together; a biped swaps in once the library is also ready
-      const libReady = import("./office/assets/cast_motion.js").then(function (m) { motionMod = m; return m.loadLibrary(gltfLoader, ASSET); })
+      // The module is cached for a day; refresh it with this movement update for returning viewers.
+      const libReady = import("./office/assets/cast_motion.js?v=2").then(function (m) { motionMod = m; return m.loadLibrary(gltfLoader, ASSET); })
         .then(function (lib) { return lib && lib.rest && lib.manifest && lib.manifest.clips && Object.keys(lib.manifest.clips).length ? lib : null; })
         .catch(function (e) { console.warn("world: no move library, the bipeds keep their drawings", e); return null; });
       await Promise.all(castIds.map(function (id) { return loadMember(id, libReady); }));

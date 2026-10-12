@@ -170,10 +170,19 @@ export class Actor {
       return true;
     }
     if (this.current === a) return true;
+    const phase = info.walk && this.current && this.library.info(this.loopName).walk
+      ? (this.current.time / this.current.getClip().duration) % 1 : null;
     a.reset().setEffectiveTimeScale(1).setEffectiveWeight(1).fadeIn(fade).play();
+    if (phase !== null) a.time = phase * a.getClip().duration;
     if (this.current) this.current.fadeOut(fade);
     this.current = a; this.loopName = name;
     return true;
+  }
+
+  resumeLoop(fade = 0.35) {
+    if (!this.current) return;
+    this.current.enabled = true; this.current.paused = false;
+    this.current.setEffectiveWeight(1).fadeIn(fade).play();
   }
 
   // Walk along points [{x, z}], at the walk's own speed; then call back.
@@ -211,7 +220,7 @@ export class Actor {
     if (this.mixer) {
       if (this.oneShot && this.time >= this.oneShotEnds) {
         this.oneShot.fadeOut(0.35); this.oneShot = null;
-        if (this.current) this.current.reset().fadeIn(0.35).play();
+        this.resumeLoop(0.35);
       }
       this.mixer.update(dt);
       this._layers(dt);

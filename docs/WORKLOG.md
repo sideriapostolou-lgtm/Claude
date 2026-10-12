@@ -13,6 +13,28 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-12 17:04 UTC, Codex, crew movement cleanup
+- Changed: at the owner's request, kept the existing town, cast, camera, layout and event choreography, and
+  polished how the crew moves. Walks now ease into motion, slow for corners and brake before arrival;
+  footsteps track the distance covered. Switching walk clips or returning from a gesture preserves the loop's
+  phase. The motion module URL is versioned so returning browsers receive the update, and the page also
+  remains compatible with older cached actors. No new earnings, events or activity are invented.
+- Verified: `python -m pytest -q`: 2,974 passed, 21 skipped; mypy passed on 82 source files; Ruff passed on all
+  three changed Python files. The final import-cache change passed a further 55 world/movement tests.
+  Independent review exercised 144 round trips over the actual navigation graph at 10/30/60 fps: every
+  destination and return reached, each arrival callback fired once. Tests also cover paused frames, stairs,
+  braking, matching gait to travel and legacy actor compatibility.
+- Browser check: local fixture data only, Chromium at 390x844 (normal and reduced motion) and 1280x800; inspected screenshots, all models
+  loaded, no page/console errors, failed asset requests or horizontal overflow. The new motion-module URL
+  loaded successfully. This environment renders WebGL in software: the first desktop screenshot attempt
+  timed out; the repeat used the app's existing lite mode. No claim about physical-phone frame rate is made.
+- Skipped: the same 12 opt-in network tests and 9 tests/modules needing optional pandas/numpy/scipy. Trading
+  and real network tests were not enabled for a presentation change.
+- Real money touched? No trading-code, order, cap or variable changes. Publishing the small tested cleanup
+  to the deploy branch restarts the bot with its existing live settings under the owner's authorized workflow.
+- Deploy check: pending publication; match the resulting commit and fresh startup logs, then record the result
+  in a documentation-only follow-up.
+
 ## 2026-10-12 16:47 UTC, Codex, branch claude/nightcrawler-memecoin-bot-Gwnb1S
 - Changed: at the owner's request, authenticated an isolated read-only Railway CLI session using a credential
   held in process memory. No credential was written to a file, committed, or saved in persistent Codex settings.
