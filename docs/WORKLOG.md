@@ -45,6 +45,14 @@ Template:
   exact GitHub/Railway deploy status and public health, but cannot claim startup logs or authenticated live
   balances were inspected. The earlier request for a secure Railway token / owner or Claude log check remains.
 
+- Deployment verified at 23:58 UTC: PR #15 merged as `e03ede748aeacd288bb89677539ab41da2ef07de`.
+  Railway's `nightcrawler - bot` status on that exact commit is **success**, deployment
+  `282a969e-3238-4c55-8990-22a876c4b656`. Public `/healthz` returned HTTP 200 `ok` after that success,
+  at 23:58:11 UTC. PR #6 was automatically marked merged through ancestry; there is no second UI rollout
+  awaiting an owner tap. Source deployment is complete. Startup/trading logs and the authenticated live
+  account page remain unverified without their credentials; HTTP health is not trading-health evidence.
+  This verification note is documentation-only and should not trigger another rebuild.
+
 ## 2026-10-12 23:15 UTC, Codex, branch codex/weather-lock-stopwatch
 - Owner request: build a read-only weather lock stopwatch on Railway for at least three days. Pulled
   deploy head `9f32451` before work, then incorporated Claude's `8882ece` warm-up fix, `941b261` account
