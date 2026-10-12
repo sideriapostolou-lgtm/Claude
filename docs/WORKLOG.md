@@ -13,6 +13,21 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-12 23:00 UTC, Claude, branch claude/nightcrawler-memecoin-bot-Gwnb1S
+- Owner request: "fix it all, get it all up and running and test it".
+- Changed: the speed desk's volatility warm-up bar went from 3,000 to 1,500 adjacent one-second returns
+  (`SpeedConfig.sigma_min_samples`, `BitcoinTape.sigma` default), with a quiet-hour test and SPEEDDESK_SPEC.md
+  lines 68 and 333. Root cause of "0 practice windows all day": not the restarts (the tape persists in state), but
+  the bar. Coinbase prints in only about 60-80 % of seconds in quiet hours, and the logs showed 2,086-2,979 returns
+  from 20:55 to 22:35 UTC, so the desk never warmed up. 1,500 returns still pin sigma to about 1.8 % (1/sqrt(2n)).
+  Missing seconds are still never invented, and the one-hour warm-up stays.
+- Verified: full pytest 3,960 passed / 12 skipped; mypy clean; ruff clean on the changed files.
+- Not verified / skipped: the deploy after this push and the first practice windows (checked next). Kalshi live
+  stays off until practice windows run and fee precision is verified.
+- Real money touched? no. Polymarket desk unchanged; Kalshi live off.
+- Next step: confirm "Practice feeds running" and windows > 0 in speeddesk_status, then the Kalshi live switch
+  (owner's caps $2 window / $4 open / $3 day / $5 total).
+
 ## 2026-10-12 22:22 UTC, Codex, branch codex/lucas-ladder-audit
 - Owner request: audit LucasMeow's full public history, backtest far-strike monthly crypto NO on Kalshi's
   own history, build practice only if that test is positive after fees, and measure the weather runner-up.

@@ -65,8 +65,8 @@ or stops with `polydesk.py`.
 
 1. **Bitcoin ticks:** a WebSocket to Coinbase Advanced Trade `wss://advanced-trade-ws.coinbase.com`, `ticker` or
    `market_trades` for BTC-USD (public, no key). Keep the last price, a rolling 60-minute set of 1-second returns
-   for sigma, and a staleness clock. Warm up for a full hour and require at least 3,000 observed adjacent
-   one-second returns in the trailing hour; never invent zero returns across gaps. Stale over 3 s means no new
+   for sigma, and a staleness clock. Warm up for a full hour and require at least 1,500 observed adjacent
+   one-second returns in the trailing hour (3,000 until 2026-10-12, never reached in quiet hours); never invent zero returns across gaps. Stale over 3 s means no new
    orders, and resting orders are cancelled.
 2. **Books:** the Polymarket US markets WebSocket (`polymarket_us` SDK `client.ws.markets()`; it needs the key
    variables already in Railway), subscribed to the current and next 15m and 1h windows. Fall back to REST
@@ -330,7 +330,8 @@ association research remains noncausal and cannot supply a trading rule or net-p
 
 The research-only sigma uses at least 300 actual adjacent one-second returns; opening uses an actual tick
 already known at window start and at most three seconds old. Missing observations never become zero returns.
-This does not lower the financial desk's 3,000-return warm-up. Its status now shows the actual sample count.
+The financial desk's warm-up bar is 1,500 returns since 2026-10-12: at 3,000 it never warmed up in quiet hours
+(2,086-2,979 seen all evening). Its status shows the actual sample count.
 Once a valid timing protocol exists, freeze the selected rule and its protocol/input digests before
 evaluating any held-out data, and retain that immutable result. Slow research runs in a separate process,
 so fitting does not hold the trading interpreter. Artifacts and the resulting rulebook live under

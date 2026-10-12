@@ -81,7 +81,10 @@ class SpeedConfig:
     latency_ms: float = 250.0
     stale_s: float = 3.0
     reprice: float = 0.01
-    sigma_min_samples: int = 3000
+    # 3,000 was never reached in quiet hours: Coinbase prints in only about 60-80 % of seconds, so the trailing
+    # hour held 2,086-2,979 adjacent one-second returns all evening on 2026-10-12 and the desk never traded.
+    # 1,500 returns still pin sigma to about 1.8 % (1 / sqrt(2n)); missing seconds are still never invented.
+    sigma_min_samples: int = 1500
     sigma_warmup_s: float = 3600.0
 
     def __post_init__(self) -> None:
@@ -168,7 +171,7 @@ class BitcoinTape:
     def opening(self, start: float) -> float | None:
         return self.first_prices.get(int(start))
 
-    def sigma(self, now: float, minimum: int = 3000, warmup_s: float = 3600.0) -> float | None:
+    def sigma(self, now: float, minimum: int = 1500, warmup_s: float = 3600.0) -> float | None:
         if self.started_at is None or now - self.started_at < warmup_s:
             return None
         last_complete = int(now) - 1

@@ -417,9 +417,22 @@ def test_full_hour_warmup_with_observed_seconds_coverage_not_synthetic_returns()
             tape.tick(math.exp(second * .001), second)
     assert tape.sigma(3600) is None  # first accepted tick was at second 1
     assert tape.sigma(3601) == pytest.approx(.001)
-    for second in range(1000):
+    for second in range(2400):
         tape.prices.pop(second, None)
-    assert tape.sigma(3601) is None
+    assert tape.sigma(3601) is None  # about 1,080 adjacent returns left, under the 1,500 bar
+
+
+def test_quiet_hour_with_sparse_coinbase_prints_still_warms_up():
+    """2026-10-12: trailing hours with 2,086-2,979 adjacent returns kept the desk warming up all evening under the
+    old 3,000 bar. A quiet hour (a print in 3 of 4 seconds) must warm up now, still without invented returns."""
+    tape = BitcoinTape()
+    for second in range(3601):
+        if second % 4:
+            tape.tick(math.exp(second * .001), second)
+    adjacent = sum(s in tape.prices and s - 1 in tape.prices for s in range(1, 3601))
+    assert 1500 <= adjacent < 3000
+    assert SpeedConfig().sigma_min_samples == 1500
+    assert tape.sigma(3601) == pytest.approx(.001)
 
 
 def test_fresh_rest_observation_proves_quiet_book_without_old_event_becoming_fresh_ws():
