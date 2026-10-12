@@ -101,7 +101,28 @@ Template:
   110 relevant tests; all 164 watcher tests passed. A synthetic 390 px browser check shows the timing pause,
   continuing collection and no promised verdict date, without overflow or JavaScript errors.
 - Timing-correction validation: **3,630 passed, 21 skipped**; mypy passed all 98 source files and Ruff passed
-  all ten changed Python files. Whitespace checks passed. Production verification follows the tested push.
+  all ten changed Python files. Whitespace and added-line secret checks passed.
+- Final deployment verified: commit `7f5af1798b327d75d228c3fae5c745ed77a414b9`, Railway
+  `601ac282-fd2b-4b37-be2d-494b33079d1d`, SUCCESS. Polydesk started at 21:23:34 UTC in LIVE mode at 10
+  contracts. Health returned 200/ok. Two subsequent speed heartbeats show Kalshi's market WebSocket
+  connected with current books/prints; the companion remains PAPER with $2/$4/$3/$5 caps, no exposure or
+  new real orders. Deployment-scoped traceback, watcher-halt and Kalshi WS-gap searches found no matches.
+- Watcher resumed at 21:24:50 after journal replay, preserving origin and history and recording an 82-second
+  restart gap rather than implying continuous coverage. At 21:25:50 all four watcher feeds were fresh,
+  problem=null, 165 wallet fills and 3 inferred associations recorded, storage 34,206,241 bytes with
+  4,476,096,512 bytes free. Its status explicitly says awaiting_verified_execution_time and
+  automatic_verdict_scheduled=false. Full replay startup cost grows with archive size; avoid unnecessary
+  application restarts during collection. The original collection clock is unchanged.
+- Partial-day report at 21:25:36 UTC: original Kalshi and Polymarket US trials each still show 0 traded/
+  settled windows, 0 attempts/fills and $0 locked/directional settled P&L. Worst window, fill rates and
+  decision-to-fill latency remain unavailable. Financial volatility had 2,124/3,000 required observed
+  adjacent returns; the shared mean Bitcoin feed delay was 200.95 ms. That heartbeat's BTC age was 3.161 s,
+  correctly pausing practice through the unchanged stale-data guard; this is not a profitable trading result.
+- Region/listing observations: 65 successful public Kalshi HTTP probes in us-west2, median 91.07 ms,
+  p95 257.06 ms, zero probe errors/timeouts. These are single-region HTTP round trips, not order latency;
+  evidence does not establish a benefit from moving the bot, and no region was changed. No verified US
+  five-minute window among 65 bounded latest-event checks (one earlier listing error). No money settings,
+  private account reads, credential values or real execution files were changed by these corrections.
 - Pending: the source-watch origin is `1791838275.2081728` (20:51:15 UTC). At least 72 actual elapsed hours
   with sufficient coverage were planned: original freeze milestone 2026-10-14 20:51:15 UTC and held-out
   milestone 2026-10-15 20:51:15 UTC. These dates alone cannot yield a rule verdict while timing is unresolved.
