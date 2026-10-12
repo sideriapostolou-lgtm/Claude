@@ -251,6 +251,17 @@ session scratchpad that you will not have.
    add an environment secret. New startup/feed/mode logs remain unverified pending restored access.
    Do not turn this platform success into a claim of healthy feed capture or money activation.
 
+0a. **Lab 9 LucasMeow audit, completed 2026-10-12:** the owner's conditional request was practice only after
+   a positive Kalshi backtest. Read `research/lab9/LUCAS_RULES.md`, `KALSHI_BACKTEST.md` and `WEATHER_WINDOW.md`;
+   the earlier `REPORT.md` scout is explicitly superseded where those audits disagree. Full wallet: 8,043 fills,
+   substantial outside funding, core median 99.4c and 551 sells in the monthly BTC/ETH family. Kalshi: only
+   nine completed months, conflicting rule text, missing historical CF index and order-book/queue evidence;
+   TRAIN printed-payoff sensitivities contain January losses but are **not strategy P&L**. Verdict is
+   **INSUFFICIENT DATA**, no candidate selected, VAL/TEST unscored, no practice desk built. Weather: 1,062
+   target-price printed contracts across five observation-proxy windows, only 65 hitting NO bids; actual
+   sampled rules use The Weather Company, and report arrival/our fills remain unknown. Research only:
+   no runtime/deploy/money change. Do not convert source-wallet wins or public prints into permission to trade.
+
 1. **Lab 8, the distance-filtered grind (the owner's idea).** Buy 95-99c only when Bitcoin is far from the strike,
    measured in how much it normally moves in the time left (z = ln(S/K) / (sigma x sqrt(minutes left))). Done so
    far (`research/lab8/`): `us_venue.md` (the US crypto markets, all Bitcoin, settle on CF Benchmarks' BRTI;
