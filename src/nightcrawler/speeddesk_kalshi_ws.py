@@ -59,9 +59,14 @@ def _price(value: Any) -> float:
     return parsed
 
 
-def _fresh_ms(value: Any, now: float) -> float:
-    if not _integer(value) or not 0 <= now - value / 1000 <= STALE_S:
-        raise MarketDataGap("timestamp_missing_or_stale")
+def _fresh_ms(value: Any, now: float, domain: str) -> float:
+    if not _integer(value):
+        raise MarketDataGap(f"timestamp_missing_or_stale:{domain}:missing_or_invalid")
+    age = now - value / 1000
+    if not 0 <= age <= STALE_S:
+        # Only a fixed timestamp domain and numeric age: never frame contents,
+        # credentials, headers or arbitrary server exception text.
+        raise MarketDataGap(f"timestamp_missing_or_stale:{domain}:age_s={age:.3f}")
     return float(value / 1000)
 
 
@@ -124,10 +129,11 @@ class MarketState:
         # Sending time is explicitly optional in Kalshi's schema. Genuine
         # source time can prove a delta/trade fresh without it. Local receipt
         # NEVER supplies the missing post-delay evidence.
-        sent = _fresh_ms(raw["sending_ts_ms"], now) if "sending_ts_ms" in raw else None
+        if "sending_ts_ms" in raw:
+            _fresh_ms(raw["sending_ts_ms"], now, f"{kind}_network")
         at: float | None
         if kind == "trade":
-            at = _fresh_ms(msg.get("ts_ms"), now)
+            at = _fresh_ms(msg.get("ts_ms"), now, "trade_engine")
             yes, no, size = _price(msg.get("yes_price_dollars")), _price(msg.get("no_price_dollars")), _quantity(msg.get("count_fp"))
             side, book_side = msg.get("taker_outcome_side"), msg.get("taker_book_side")
             identity = msg.get("trade_id")
@@ -146,7 +152,11 @@ class MarketState:
                                "buy" if side == "yes" else "sell", now),
                         Trade(ticker, "down", no, size, at, "kalshi:" + identity + ":down",
                               "sell" if side == "yes" else "buy", now))
-        at = sent
+        # Snapshot sending_ts_ms is network publication time, not when the
+        # underlying book was captured. It cannot prove post-delay liquidity.
+        # Also, comparing it with a later delta's earlier engine timestamp
+        # falsely reports a reversal despite a valid increasing sequence.
+        at = None
         if kind == "orderbook_snapshot":
             depth: dict[str, dict[float, float]] = {"yes": {}, "no": {}}
             for side in ("yes", "no"):
@@ -168,12 +178,7 @@ class MarketState:
             if ticker not in self.depth:
                 raise MarketDataGap("snapshot_required")
             if "ts_ms" in msg:
-                source_at = _fresh_ms(msg["ts_ms"], now)
-                at = min(sent, source_at) if sent is not None else source_at
-            elif "ts" in msg:
-                # Do not replace an explicitly older exchange timestamp with
-                # the newer send clock. Missing precision uses REST fallback.
-                raise MarketDataGap("millisecond_timestamp_required")
+                at = _fresh_ms(msg["ts_ms"], now, "book_engine")
             side = msg.get("side")
             if side not in ("yes", "no"):
                 raise MarketDataGap("invalid_book_side")

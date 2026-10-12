@@ -56,8 +56,20 @@ Template:
 - Real money touched? Authorized market-input/config changes and the forthcoming service restart; no real
   order, account read, money activation, credential disclosure or change to polydesk.py. Existing live gates
   and unknown-account conservative fee bound remain unchanged.
-- Deploy and pending observation: verification follows the tested merge. Need at least 72 actual elapsed
-  hours with sufficient coverage; no learned rule, profitable result or automatic real promotion is claimed.
+- First deploy verified: PR #10 merged as `fd368966cea625a09b23693b8a017e691f81cb92`; Railway deployment
+  `e9c068bd-1e6f-4362-9136-fab2ce031627` reached SUCCESS. Startup 20:51:15 UTC showed the watcher collecting,
+  Kalshi companion PAPER with all caps/no exposure, and polydesk LIVE at 10 contracts; health returned 200/ok.
+  At 20:52:15 all four watcher feeds were fresh, 45 wallet fills recorded, and storage reserve intact. The
+  20:50–20:55 window summary recorded 19 public fills/487.76 shares, explicitly incomplete coverage.
+- Production verification found and fixed a market-feed bug before completion: a snapshot's network publish
+  clock was compared with a later delta's engine clock, causing false book_time_reversed reconnects.
+  Snapshots now seed depth only; genuine fresh delta engine timestamps alone can prove post-delay liquidity.
+  Publication-only updates stay unproven with REST fallback. Independent review and regressions confirm
+  no false delayed IOC evidence. Corrected full suite: **3,604 passed, 21 skipped**; mypy 98 source files,
+  changed-file Ruff and diff checks passed. Corrected deployment verification follows the small tested push.
+- Pending: the source-watch origin is `1791838275.2081728` (20:51:15 UTC). At least 72 actual elapsed hours
+  with sufficient coverage are needed: freeze due 2026-10-14 20:51:15 UTC, held-out result no earlier than
+  2026-10-15 20:51:15 UTC. No learned rule, profitable result or automatic real promotion is claimed.
 
 ## 2026-10-12 20:08 UTC, Codex, branch codex/kalshi-live, PR #9
 - Owner authorization: the current handoff supersedes the earlier pause and practice-only restriction for

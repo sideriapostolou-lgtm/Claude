@@ -75,7 +75,10 @@ def state(*, with_snapshot: bool = True) -> MarketState:
     result.apply(ack(), START + 1)
     result.apply(ack("trade", 9), START + 1)
     if with_snapshot:
-        result.apply(snapshot(), START + 1)
+        result.apply(snapshot(seq=1), START + 1)
+        warmup = delta(seq=2, at=START + 1)
+        warmup["msg"]["delta_fp"] = "0.00"
+        result.apply(warmup, START + 1)
     return result
 
 
@@ -104,12 +107,11 @@ def test_market_signer_requires_both_keys_and_ed25519() -> None:
 
 def test_yes_scale_snapshot_and_no_delta_are_converted_back_to_outcome_prices() -> None:
     reader = state(with_snapshot=False)
-    (up, down), prints = reader.apply(snapshot(), START + 1)
-    assert not prints
-    assert (up.bids[0].price, up.asks[0].price, down.bids[0].price, down.asks[0].price) == (0.4, 0.41, 0.59, 0.6)
-    assert up.at == up.exchange_at == START + 1
-    assert up.source == "websocket"
+    assert reader.apply(snapshot(), START + 1) == ((), ())
     (up, down), _ = reader.apply(delta(), START + 1.1)
+    assert (up.bids[0].price, up.asks[0].price, down.bids[0].price, down.asks[0].price) == (0.4, 0.41, 0.59, 0.6)
+    assert up.at == up.exchange_at == START + 1.1
+    assert up.source == "websocket"
     assert up.asks[0].size == down.bids[0].size == 2.75
     assert up.sequence == "kalshi-ws:7:3"
     raw = delta(seq=4, at=START + 1.2)
@@ -125,7 +127,10 @@ def test_missing_empty_side_is_valid_but_deltas_require_that_markets_snapshot() 
     reader = state(with_snapshot=False)
     raw = snapshot()
     del raw["msg"]["no_dollars_fp"]
-    (up, down), _ = reader.apply(raw, START + 1)
+    assert reader.apply(raw, START + 1) == ((), ())
+    change = delta()
+    change["msg"].update(side="yes", price_dollars="0.40", delta_fp="1.00")
+    (up, down), _ = reader.apply(change, START + 1.1)
     assert not up.asks and not down.bids
 
 
@@ -254,6 +259,31 @@ def test_stale_source_delta_cannot_hide_behind_missing_optional_send_timestamp()
         state().apply(raw, START + 1.1)
 
 
+def test_snapshot_publication_and_delta_engine_clocks_never_create_false_reversal_or_ioc_proof() -> None:
+    reader = state(with_snapshot=False)
+    # A hypothetical IOC becomes eligible at .250. Publication after .250
+    # does not prove that a snapshot was captured or a change occurred then.
+    assert reader.apply(snapshot(at=START + 1.3), START + 1.31) == ((), ())
+    change = delta(at=START + 1.2)
+    change["sending_ts_ms"] = int((START + 1.4) * 1000)
+    (up, down), _ = reader.apply(change, START + 1.41)
+    assert up.exchange_at == down.exchange_at == START + 1.2
+    assert up.exchange_at < START + 1.25  # Remains ineligible for this IOC.
+    assert up.at > START + 1.25
+    later = delta(seq=4, at=START + 1.5)
+    later["msg"]["delta_fp"] = "1.25"
+    (up, _), _ = reader.apply(later, START + 1.51)
+    assert up.exchange_at == START + 1.5
+
+
+def test_delta_publication_without_engine_timestamp_is_not_liquidity_confirmation() -> None:
+    reader = state()
+    change = delta()
+    del change["msg"]["ts_ms"]
+    assert reader.apply(change, START + 1.1) == ((), ())
+    assert not reader.book_at and not reader.exchange_at and reader.unproven == {TICKER}
+
+
 def test_staleness_and_disconnect_revoke_per_window_permission_without_heartbeat_refresh() -> None:
     clock, statuses = FakeClock(START + 1.2), []
     config, _ = settings()
@@ -302,7 +332,7 @@ def test_fake_connection_subscribes_only_market_channels_and_invalidates_before_
     config, _ = settings()
     statuses: list[dict[str, Any]] = []
     stop, books, prints = threading.Event(), [], []
-    socket = FakeSocket([ack(), ack("trade", 9), snapshot(), print_frame(), delta(seq=99)], stop, statuses)
+    socket = FakeSocket([ack(), ack("trade", 9), snapshot(), delta(), print_frame(), delta(seq=99)], stop, statuses)
     calls: list[tuple[str, dict[str, Any]]] = []
 
     def factory(url: str, **kwargs: Any) -> FakeSocket:
@@ -330,8 +360,8 @@ def test_fake_connection_subscribes_only_market_channels_and_invalidates_before_
 def test_reconnect_requires_new_snapshot_and_accepts_reset_subscription_sequences() -> None:
     config, _ = settings()
     stop, statuses, books = threading.Event(), [], []
-    first = FakeSocket([ack(), snapshot(), delta(seq=99)], stop, statuses, stop_on_close=False)
-    second = FakeSocket([ack(), ack("trade", 9), snapshot(), print_frame()], stop, statuses)
+    first = FakeSocket([ack(), snapshot(), delta(), delta(seq=99)], stop, statuses, stop_on_close=False)
+    second = FakeSocket([ack(), ack("trade", 9), snapshot(), delta(), print_frame()], stop, statuses)
     sockets = deque((first, second))
 
     def factory(*args: Any, **kwargs: Any) -> FakeSocket:
@@ -403,7 +433,7 @@ def test_rest_fallback_keeps_two_hz_limit_and_matching_prices_still_reset_queue(
     assert window is not None and feed._ws is not None
     feed.windows[TICKER] = window
     feed._ws.connected, feed._ws.state = True, state()
-    (up, down), _ = state(with_snapshot=False).apply(snapshot(), START + 1)
+    (up, down), _ = state().apply(delta(), START + 1.1)
     feed._ws_book(up)
     feed._ws_book(down)
     assert not asyncio.run(feed.poll_book())  # Fresh WS suppresses REST entirely.
@@ -441,7 +471,8 @@ def test_inflight_rest_response_cannot_overwrite_newer_websocket_snapshot() -> N
         clock.advance(0.2)
         feed._ws.connected = True
         feed._ws.state = state(with_snapshot=False)
-        fresh, _ = feed._ws.state.apply(snapshot(at=clock.now()), clock.now())
+        feed._ws.state.apply(snapshot(at=clock.now()), clock.now())
+        fresh, _ = feed._ws.state.apply(delta(at=clock.now()), clock.now())
         for item in fresh:
             feed._ws_book(item)
         return book()

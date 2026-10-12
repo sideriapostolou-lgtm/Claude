@@ -19,8 +19,9 @@ From its newest 2,000 public fills (2026-10-12, 3.2 hours, 38 windows), with `pu
 - **Timing:** fills spread over the first ~4 minutes of each window, almost none in the last minute.
 - **Fill type:** **67 % taker** (it takes resting asks) and **33 % maker** (its resting bids get hit).
 - **Size:** about 3,500 shares (~$1,800) per window, median fill 24 shares.
-- **Pricing:** at 1-minute resolution, the price it paid equals fair value on average (median fair minus price
-  -0.006). So its edge is **speed**: it reacts to Bitcoin ticks before the book reprices, faster than a minute.
+- **Pricing:** at 1-minute resolution, the price it paid equals the scout's fair-value proxy on average
+  (median fair minus price -0.006). Faster reactions are a hypothesis, not proof of its private signal or edge.
+  The prospective watcher in section 10 tests specified patterns without treating this coarse sample as validation.
 - **Result:** +$1,067 before fees over 38 windows. 25 won, 13 lost; best +$202, worst -$193. About a third came
   from matched pairs under $1 (+$344) and two-thirds from direction (+$723).
 
