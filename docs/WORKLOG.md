@@ -58,6 +58,8 @@ Template:
   remain in session-local `/tmp/lab9-*`; portable reports, CSVs and hashes are committed with reproduction steps.
 - Real money touched? **No.** Research, tests and documentation only; no application files, account keys,
   orders, Railway settings, caps or deployment restart. Existing desks and the public watcher are unchanged.
+- Published through PR **#12**, merged as `88195ae281070605a8904f3bb452f71863c72470` into the deploy branch.
+  The merge contains no Railway-watched app paths; this research shipment does not require a bot restart.
 - Next: resolve contract/version/index history and collect actual source-arrival/book/queue evidence before
   an executable prospective test. More months must arrive or a verified comparable archive be found; do not
   treat missing months as zeros or promote printed-payoff tables to a positive backtest. Any real-money
