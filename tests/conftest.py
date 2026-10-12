@@ -120,6 +120,16 @@ def _offline_speeddesk(request: pytest.FixtureRequest, monkeypatch: pytest.Monke
 
 
 @pytest.fixture(autouse=True)
+def _offline_skipwatch(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Engine tests never start real public sockets; observer tests inject fake transports directly."""
+    if request.node.get_closest_marker("live"):
+        return
+    from nightcrawler import skipwatch
+
+    monkeypatch.setattr(skipwatch, "run_skipwatch", lambda settings, stop_event: None)
+
+
+@pytest.fixture(autouse=True)
 def _bitcoin_far_from_the_line(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) -> None:
     """Offline tests of the Polymarket desk see Bitcoin far from every line (the distance check passes), so they
     keep testing the rest of the rule; tests/test_btcdistance.py tests the check itself."""

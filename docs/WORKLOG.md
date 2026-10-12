@@ -13,6 +13,52 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-12 20:45 UTC, Codex, branch codex/skipwatch
+- Owner request: learn the public source bot before adapting a rule to real Kalshi trading, within the
+  existing $2/window, $4 open, $3 UTC daily stop and $5 total stop. Added observation and faster market data;
+  no strategy promotion, international orders, cap changes, Railway variable changes or region move.
+- Changed: independent public watcher for the fixed source wallet, current/next BTC five-minute CLOB books
+  and prints, and Coinbase ticks. Data API v2 explicitly includes maker rows and tiny fractional fills,
+  completes cursor pagination before advancing coverage, and deduplicates overlapping public rows. Window
+  rules/settlement evidence and both source/receipt times are retained. Matches are inferred/ambiguous/unknown;
+  public fills cannot reveal exact private orders, cancellation rules, maker identity or decision milliseconds.
+- Durable capture: UTC JSONL batches and verified lossless gzip segments, one-second fsync batching, startup
+  lock/recovery, hash/checkpoint integrity, explicit gaps and a preserved prospective origin. Default journal
+  cap 4096 MiB with 128 MiB disk reserve; pressure pauses visibly without deleting evidence. Grouped deltas
+  avoid duplicating book depth; opaque delta hashes are omitted. A measured compression tradeoff selects
+  gzip level 6. Storage depends on activity and does not guarantee three days within four GiB.
+- Research: preregistered 24-candidate protocol, first 36 hours fit, next 12 validation, final 24 untouched
+  test; causal one-second opportunities with covered negatives, reporting grace, precision/recall/F1 and
+  simple baselines. Immutable phase artifacts and separate low-priority subprocess prevent repeated model
+  selection or blocking the trading interpreter. RULES.md remains pending; predicted source fills are not
+  evidence of our net profit or a validated five-minute-to-fifteen-minute transfer.
+- Speed and page: separately authorized Ed25519 market-only Kalshi WebSocket, subscription sequencing,
+  snapshot recovery, genuine source timestamps and bounded REST fallback. No account/order methods in this
+  reader; paper mode may authenticate market data without enabling buys. Added successful public HTTP RTT
+  median/p95, errors/timeouts and region context; this is not order latency or proof a region move helps.
+  Verified US five-minute listing alert stays on the separate public-watcher panel. Cash/profit/town totals
+  remain unchanged. The existing financial volatility threshold is unchanged; its actual sample count is
+  now shown so an hour of elapsed time cannot be mistaken for enough observations.
+- Public smoke (local environment, no actual keys/account calls): 57 seconds recorded 31 historical wallet
+  fills (9 Up/22 Down), 8,048 grouped delta frames, 138 snapshots, 67 public prints and 257 Coinbase ticks.
+  All 108 prospective opportunities had fresh book/wallet/trade coverage; 106 had fresh Bitcoin. Ten brief
+  non-atomic BBO inconsistencies were recorded as invalid depth until full-snapshot recovery, not silent
+  valid books. Initial historical fills had no observed matching prints; no exact match or profit claimed.
+  Journal replay/integrity passed. Two successful HTTP probes came through this environment's proxy and
+  are not Railway latency evidence. No verified US five-minute window in two bounded latest-event checks.
+- Review: independent checks fixed checkpointed-tail loss, descriptor limits, subsecond outage coverage,
+  ambiguous labels, stale/untimestamped Kalshi messages and non-atomic public CLOB updates. Synthetic page
+  checks at 320/390/1280 px passed without overflow/JS errors or any change to money totals.
+- Validation: final full suite **3,602 passed, 21 skipped** (12 opt-in network tests and 9 optional scientific
+  dependency checks); mypy passed all 98 source files; Ruff passed all 28 changed Python files. Added-line
+  secret scan found no credential patterns, private-key material, JWTs or long random literals. An earlier
+  overlapping test run saw the already-fixed outage-coverage regression; the final run used frozen source.
+- Real money touched? Authorized market-input/config changes and the forthcoming service restart; no real
+  order, account read, money activation, credential disclosure or change to polydesk.py. Existing live gates
+  and unknown-account conservative fee bound remain unchanged.
+- Deploy and pending observation: verification follows the tested merge. Need at least 72 actual elapsed
+  hours with sufficient coverage; no learned rule, profitable result or automatic real promotion is claimed.
+
 ## 2026-10-12 20:08 UTC, Codex, branch codex/kalshi-live, PR #9
 - Owner authorization: the current handoff supersedes the earlier pause and practice-only restriction for
   **Kalshi KXBTC15M only**. Built the requested live-capable companion and will deploy it **PAPER by default**.

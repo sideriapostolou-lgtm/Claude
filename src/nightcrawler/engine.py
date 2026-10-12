@@ -2551,6 +2551,7 @@ class App:
     nhldesk: Any = None
     arena: Any = None
     speeddesk: threading.Thread | None = None
+    skipwatch: threading.Thread | None = None
 
     def close(self) -> None:
         """Stop the dashboard (if running), write the last provider-usage counts and close the ledger."""
@@ -2564,6 +2565,10 @@ class App:
                 self.speeddesk.join(timeout=25)
                 if self.speeddesk.is_alive():
                     log.error("speeddesk_live_status mode=paper reason=shutdown_cleanup_unconfirmed")
+            if self.skipwatch is not None:
+                # It observes the shared stop immediately; real-order cleanup
+                # above gets priority inside the service shutdown grace period.
+                self.skipwatch.join(timeout=1)
             if self.polydesk is not None:
                 self.polydesk.stop()
             if self.trenddesk is not None:
@@ -2712,6 +2717,17 @@ def build_app(settings: Settings, clock: Clock | None = None, *, session: Any = 
             log.warning("speeddesk_not_started mode=PRACTICE error=%s", type(exc).__name__)
             speeddesk = None
     trenddesk = None
+    skipwatch = None
+    if settings.skipwatch_enabled:
+        try:
+            from nightcrawler.skipwatch import run_skipwatch
+
+            skipwatch = threading.Thread(target=run_skipwatch, args=(settings, stop_event),
+                                         name="skipwatch", daemon=True)
+            skipwatch.start()
+        except Exception as exc:  # noqa: BLE001 — public observation cannot stop any trading desk.
+            log.warning("skipwatch_not_started mode=observation error=%s", type(exc).__name__)
+            skipwatch = None
     if settings.trenddesk_enabled:  # PAPER only: lab 3's 50-day trend rule on BTC, ETH and SOL, once a day
         try:
             from nightcrawler.trenddesk import TrendDesk
@@ -2724,7 +2740,8 @@ def build_app(settings: Settings, clock: Clock | None = None, *, session: Any = 
     return App(settings=settings, clock=clock, stop_event=stop_event, http=http, sources=sources, ledger=ledger,
                crawler=crawler, cocoon=cocoon, radar=radar, judge=judge, risk=risk, broker=broker,
                auditor=auditor, engine=engine, dashboard=dashboard, wallet=wallet, polydesk=polydesk,
-               trenddesk=trenddesk, marcodesk=marcodesk, nhldesk=nhldesk, arena=arena_town, speeddesk=speeddesk)
+               trenddesk=trenddesk, marcodesk=marcodesk, nhldesk=nhldesk, arena=arena_town,
+               speeddesk=speeddesk, skipwatch=skipwatch)
 
 
 def build_engine(settings: Settings, clock: Clock | None = None) -> Engine:

@@ -219,6 +219,8 @@ footer{color:var(--ink2);font-size:12px;text-align:center;margin-top:18px}
 #speeddesk .speed-venue h3{margin:0;font-size:16px}
 #kalshilive .num{white-space:normal;text-align:right;overflow-wrap:anywhere}
 #kalshilive h2 small{white-space:normal}
+#skipwatch .num{white-space:normal;text-align:right;overflow-wrap:anywhere}
+#skipwatch-market{overflow-wrap:anywhere}
 .hero-tag{font-size:20px;font-weight:650;color:var(--ink2);letter-spacing:0}
 """
 
@@ -380,6 +382,58 @@ _SCRIPT = r"""
       + "protection against exchange or network failures.";
     $("kalshi-live-updated").textContent = "Report: " + (isNum(k.as_of) ? ago(k.as_of) : "not received")
       + ". Cash checked: " + (isNum(k.cash_at) ? ago(k.cash_at) : "not received") + ".";
+  }
+
+  function renderSkipwatch(w) {
+    $("skipwatch").hidden = !w;
+    if (!w) return;
+    const count = (v) => isNum(v) ? String(v) : "—";
+    const row = (label, value) => el("div", "line", el("span", null, label), el("b", "num", value));
+    const ms = (v) => isNum(v) ? v.toFixed(1) + " ms" : "—";
+    const stamp = (v) => isNum(v) ? new Date(v * 1000).toISOString().slice(0, 19).replace("T", " ") + " UTC" : "—";
+    $("skipwatch-status").textContent = (w.stale ? "Report behind: " : "") + w.status + (w.problem ? " · " + w.problem : "");
+    put($("skipwatch-counts"), row("Windows observed", count(w.windows_observed)),
+      row("Wallet-reported fills", count(w.wallet_fills)), row("Inferred print matches", count(w.matched_inferred)),
+      row("Ambiguous / unmatched", count(w.ambiguous) + " / " + count(w.unmatched)), row("Recorded data gaps", count(w.gaps)));
+    $("skipwatch-fit").textContent = w.fit_status + (w.fit_reason ? " · " + w.fit_reason : "");
+    const fit = w.fit_summary || {}, share = (v) => isNum(v) ? (v * 100).toFixed(1) + "%" : "—";
+    const stage = {collecting: "Collecting future data", training: "Training", validation: "Validation", held_out: "Held-out day", blocked: "Paused"};
+    put($("skipwatch-fit-metrics"), row("Evaluation stage", stage[fit.stage] || fit.stage || "Not reported"),
+      row("Precision / recall", share(fit.precision) + " / " + share(fit.recall)),
+      row("Eligible rows / wallet coverage", count(fit.rows) + " / " + share(fit.coverage)),
+      row("Usable feature coverage", share(fit.feature_coverage)));
+    $("skipwatch-fit-timing").textContent = (isNum(w.freeze_due_at) ? "Rule freeze due: " + stamp(w.freeze_due_at) + ". " : "")
+      + (isNum(w.test_due_at) ? "Held-out review due: " + stamp(w.test_due_at) + ". " : "")
+      + (fit.reasons || []).join(" · ");
+    const coverage = w.coverage || {};
+    put($("skipwatch-coverage"), ...[["Bitcoin", "bitcoin"], ["Order books", "book"], ["Wallet polling", "wallet"], ["Market prints", "trades"]]
+      .map(([label, key]) => row(label, w.stale ? "Report behind" : coverage[key] === true ? (key === "trades" ? "Connected" : "Fresh data")
+        : coverage[key] === false ? "Unavailable / stale" : "Unknown")),
+      row("Wallet data checked through", isNum(coverage.wallet_watermark) ? ago(coverage.wallet_watermark) : "—"),
+      row("Latest wallet fill received", isNum(w.last_wallet_at) ? ago(w.last_wallet_at) : "—"),
+      row("Last Bitcoin tick", isNum(w.last_btc_at) ? ago(w.last_btc_at) : "—"));
+    $("skipwatch-storage").textContent = "Stored: " + (isNum(w.storage_bytes) ? (w.storage_bytes / 1048576).toFixed(1) + " MiB" : "—")
+      + " of " + (isNum(w.max_storage_bytes) ? (w.max_storage_bytes / 1048576).toFixed(0) + " MiB" : "—") + ".";
+    const us = w.us_5m || {}, found = isNum(us.first_seen_at) && us.first_market;
+    $("skipwatch-listing").textContent = found ? "Polymarket US: a verified BTC five-minute window was observed."
+      : "Polymarket US: no verified five-minute window reported by this watcher yet.";
+    $("skipwatch-listing").className = found ? "lead up" : "meta";
+    $("skipwatch-market").textContent = found ? us.first_market + " · first seen by this watcher " + ago(us.first_seen_at)
+      + " (" + stamp(us.first_seen_at) + "). Window: " + stamp(us.first_window_start) + " to " + stamp(us.first_window_end) + "." : "";
+    $("skipwatch-listing-check").textContent = us.status + ". Last successful check: "
+      + (isNum(us.last_success_at) ? ago(us.last_success_at) : "not reported") + ". "
+      + (isNum(us.backoff_until) && us.backoff_until > nowS() ? "Venue requested a pause until " + stamp(us.backoff_until) + ". " : "")
+      + "This is a listing alert; it does not enable trading.";
+    const latency = w.kalshi_latency || {};
+    put($("skipwatch-latency"), row("HTTP round trip · median / p95", ms(latency.median_ms) + " / " + ms(latency.p95_ms)),
+      row("Successful samples / requests", count(latency.successful_samples) + " / " + count(latency.measurements)),
+      row("Failed requests / timeouts", count(latency.errors) + " / " + count(latency.timeouts)),
+      row("Server region (runtime metadata)", latency.region || "Not reported"),
+      row("Last HTTP probe", isNum(latency.last_checked_at) ? ago(latency.last_checked_at) : "—"),
+      isNum(latency.backoff_until) && latency.backoff_until > nowS() ? row("Venue-requested pause until", stamp(latency.backoff_until)) : null);
+    $("skipwatch-latency-note").textContent = "Public GET /exchange/status, last reported one-hour sample. p95 is the nearest-rank "
+      + "95th percentile of successful requests; timeouts are included in failed requests. HTTP round trip includes "
+      + "network and server response time and can include DNS/TLS setup; it is not WebSocket data age. " + latency.limitation;
   }
 
   // ---------------------------------------------------------------- A. money
@@ -992,6 +1046,7 @@ _SCRIPT = r"""
     renderMoney(s.money, s.mode === "LIVE");
     renderSpeedDesk(s.money.speeddesk, s.plain && s.plain.speeddesk_line);
     renderKalshiLive(kalshi);
+    renderSkipwatch(s.skipwatch);
     if (s.town) renderTown(s.town);
     renderGoal(s.plain && s.plain.goal);
     if (s.wallet) renderWallet(s.wallet);
@@ -1154,6 +1209,26 @@ def render_page_html(settings: Settings) -> str:
         "<p class=\"help\">Paper mode stops new real orders; existing bets still settle. Cash is not profit. "
         "Kalshi results stay separate from Polymarket cash and the town totals. Missing figures mean unknown.</p>"
         "<p class=\"help\" id=\"kalshi-live-updated\"></p></section>\n"
+
+        "<section class=\"card\" id=\"skipwatch\" hidden><h2>Source bot watch <small>PUBLIC WATCHER</small></h2>"
+        "<p class=\"lead\" id=\"skipwatch-status\"></p><div class=\"rows\" id=\"skipwatch-counts\"></div>"
+        "<p class=\"meta\" id=\"skipwatch-fit\"></p>"
+        "<details class=\"about\"><summary>Rule prediction evidence</summary><div class=\"rows\" id=\"skipwatch-fit-metrics\"></div>"
+        "<p class=\"help\" id=\"skipwatch-fit-timing\"></p>"
+        "<p class=\"help\">Precision measures how often predicted fill opportunities were followed by a fill; recall "
+        "measures how many fill opportunities the rule predicted. These are time bins, not exact orders. "
+        "Missing values mean evidence is not ready.</p></details>"
+        "<p class=\"help\">We are testing how well rules predict future trades. No measured profit or permission to trade "
+        "comes from this watcher; liquidity and latency observations do not prove an edge.</p>"
+        "<p class=\"help\">Wallet-reported fills are public evidence. Matching them to market prints is an inference; "
+        "exact timing and maker/taker identity are not proven. Cancellations are not visible. This watcher places no orders.</p>"
+        "<details class=\"about\"><summary>Observation coverage and storage</summary>"
+        "<div class=\"rows\" id=\"skipwatch-coverage\"></div><p class=\"help\" id=\"skipwatch-storage\"></p></details>"
+        "<p class=\"sub\">US five-minute listing alert</p><p id=\"skipwatch-listing\"></p>"
+        "<p class=\"meta\" id=\"skipwatch-market\"></p><p class=\"help\" id=\"skipwatch-listing-check\"></p>"
+        "<details class=\"about\"><summary>Kalshi latency from this server</summary>"
+        "<div class=\"rows\" id=\"skipwatch-latency\"></div><p class=\"help\" id=\"skipwatch-latency-note\"></p>"
+        "</details></section>\n"
 
         "<section class=\"card\" id=\"wallet\"><h2>Bot wallet <small id=\"wallet-kind\"></small></h2>"
         "<div id=\"wallet-body\"><p class=\"empty\">Loading…</p></div></section>\n"

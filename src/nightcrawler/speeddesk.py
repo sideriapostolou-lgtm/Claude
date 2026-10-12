@@ -289,7 +289,12 @@ class SpeedRunner:
                  if book.window in self.desk.windows and self.desk.windows[book.window].start <= now
                  < self.desk.windows[book.window].end]
         warm = self.desk.tape.sigma(now, self.desk.config.sigma_min_samples) is None
+        last_complete = int(now) - 1
+        samples = sum(second in self.desk.tape.prices and second - 1 in self.desk.tape.prices
+                      for second in range(last_complete - 3599, last_complete + 1))
         status = "Warming up Bitcoin volatility" if warm else "Practice feeds running"
+        if warm:
+            status += f" ({samples:,}/{self.desk.config.sigma_min_samples:,} observed one-second returns)"
         if btc_at is None or not 0 <= now - btc_at <= self.desk.config.stale_s:
             status = "Practice paused: Bitcoin feed stale"
         elif not books or now - max(books) > self.desk.config.stale_s:
@@ -302,6 +307,9 @@ class SpeedRunner:
                 "status": status, "problem": self.problem,
                 "btc_age_s": max(0.0, now - btc_at) if btc_at is not None else None,
                 "book_age_s": max(0.0, now - min(books)) if books else None,
+                "volatility": {"source": "observed one-second Coinbase returns", "samples": samples,
+                               "required_samples": self.desk.config.sigma_min_samples, "ready": not warm,
+                               "required_elapsed_s": self.desk.config.sigma_warmup_s},
                 "today": self.summary(utc_day(now)), "reports": self.reports,
                 "feeds": self.feed_status, "window_reasons": dict(self.desk.last_reason),
                 "real_orders_available": False, "kalshi_live": self.live_panel(now)}
