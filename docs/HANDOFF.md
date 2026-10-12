@@ -11,7 +11,7 @@ first; its hard rules win over anything here. Older history: `git log` (320+ com
 | desk | what it does | money |
 |---|---|---|
 | Polymarket desk (`polydesk.py`) | Buys near-certain crypto outcomes (mostly Bitcoin hourly "above $X" markets at 95-99c) on Polymarket US, plus Marco's NFL picks | **REAL** |
-| Marco desk (`marcodesk.py`, `MARCO`) | Copies the NFL moneyline picks "Million Dollar Marco" says he loves; the Polymarket desk places them for real | **REAL** (`MARCO_REAL=1`) |
+| Marco desk (`marcodesk.py`, `MARCO`) | Copies the NFL moneyline picks "Million Dollar Marco" says he loves; the Polymarket desk places them for real | practice since 2026-10-12 (`MARCO_REAL=0`, the owner's word) |
 | NHL desk (`marcodesk.py`, `NHL`) | Copies Nick Martin's NHL picks from Action Network | practice only (the owner said no real money) |
 | Arena (`arena.py`) | 24 bot "residents" that trade, pay $1 rent a day and get evicted when broke | practice only |
 | Trend desk (`trenddesk.py`) | SMA-50 trend following on BTC, ETH and SOL | paper |
