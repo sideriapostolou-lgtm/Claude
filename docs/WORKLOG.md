@@ -46,6 +46,21 @@ Template:
   After that wording fix: **4,615 passed, 21 skipped**; mypy **118 files** and changed-file Ruff passed.
   Four authenticated post-deploy API samples confirmed valid Kalshi checkpoints arriving after request start
   stay available, with their original timestamps and zero qualified cancellation-request events.
+- Final source `9052dce193e52edae27cb4a69c6adaf51d4ccf58` deployed SUCCESS as Railway
+  `b344ae86-c82f-4702-a909-3f551d588450`. Polymarket started LIVE 10 at 05:38:45 UTC; Kalshi reported
+  authenticated REAL MONEY at 05:38:49, caps unchanged, no integrity error or cleanup pending. Current-deploy
+  startup/error queries returned zero tracebacks/errors/warnings. Health returned 200 `ok`; authenticated
+  `/api/page` confirmed the corrected cancellation wording and valid Kalshi checkpoint/Pacific result.
+- Live 390px phone browser passed without horizontal overflow or JavaScript exceptions. Menu choices remain
+  Money / Team / Help (plus close); the fallback has zero buttons and one back link, valid live status and
+  separate cash/report/profit clocks. Screenshots were visually checked. A first browser check read fallback
+  placeholders before its request completed; the corrected readiness wait verified the populated fallback.
+  The last source-only change after that browser run was the cancellation sentence, verified through the live API.
+- At the 05:39 UTC check, Polymarket cash was $10.048737, its Pacific bot result remained explicitly incomplete;
+  Kalshi cash was $21.4275 and recorded Pacific bot result -$1.0276. These are dated snapshots, not future
+  balances or independent venue reconciliation. Missing ownership/booking history and known source-accounting
+  limitations remain unresolved; town growth stays gated on complete results. Trading logic and limits were
+  not changed. This final verification entry is docs-only and does not request another source rebuild.
 
 ## 2026-10-13 05:15 UTC, Codex, branch codex/town-truth-fixes
 - Owner request: make the connected town app accurate and clear, retaining the phone-first tycoon view and
