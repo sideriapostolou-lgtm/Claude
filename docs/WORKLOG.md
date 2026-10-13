@@ -15,6 +15,33 @@ Template:
 
 
 
+## 2026-10-13 18:04 UTC, Codex, Kalshi strategy evidence and Claude handoff
+- Owner request: investigate a profitable Kalshi strategy and supply an exact Claude Code prompt. Added
+  `research/kalshi_edge_search/REPORT.md`, `CLAUDE_PROMPT.md`, illustrative fee arithmetic, timestamped public
+  books and evidence hashes. The verdict is no proven executable winner; favorite-side passive making is
+  the strongest historical lead found, with BTC15M inventory-controlled making a separate unproved fast lane.
+- Fresh evidence: 12 snapshots across four crypto series, 16 successful public requests. All complementary
+  ask pairs cost $1.01 before fees; all 12 depth-supported pair probes lost after assumed standard fees.
+  One ETH top level supports only 0.40 contracts, explicitly distinguished from one-contract quote arithmetic.
+  Public incentive snapshot: 5,462 active programs, none on the four checked crypto 15-minute series.
+- Reviewed: official rules/fees/rounding, published favorite-maker evidence, a public failed BTC maker,
+  and existing wallet, fresh-move, monthly-touch and weather artifacts. Independent reviews corrected a
+  median/mean wording issue and clarified historical maker fees, test-bank initialization and verdicts.
+  The Claude handoff requires conservative fills, complete settlement cohorts, finite future holdouts,
+  small-bank economics and no automatic live promotion. The new coordination file was pulled and read;
+  the handoff asks Claude to audit the arena before duplicating infrastructure.
+- Verified: pytest 4,706 passed / 14 skipped (optional network/dependency/data skips), mypy clean for 119
+  source files. Checks ran on b539aed; the subsequent upstream 64f9322 changes only AGENTS/COORDINATION docs,
+  with no source/test/dependency change. No Python files changed here, so changed-file Ruff is not applicable.
+  All evidence JSON/hashes and relative document links validated; raw-book arithmetic recomputed independently.
+- Not verified: no new strategy backtest, no 48-hour/three-day collector run, no current account reconciliation,
+  no proof of profitable live execution, no exact reconstruction of private wallet rules. The new collection
+  is a seconds-long book diagnostic. Future validation remains a Claude assignment, not background work started.
+- Real money touched? no. No trading source, variables, keys, caps, orders, UI or deployment-trigger files changed.
+  This docs/public-data shipment does not restart the bot; no new runtime deployment is claimed.
+- Next step: owner can give Claude the saved prompt; first implementation deliverable is a bounded read-only
+  data/execution feasibility report, followed by preregistered research rather than another unverified live rule.
+
 ## 2026-10-13 17:15 UTC, Claude, branch claude/kalshi-starter-cap
 - Changed: the Kalshi companion's orders are capped at `SPEEDDESK_KALSHI_CLIP` contracts (default 5, was the practice
   clip of 25), so the first buy in a window is 5 contracts instead of 10 at the $10 window budget. Balancing and lock
