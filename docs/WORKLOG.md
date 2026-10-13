@@ -15,6 +15,44 @@ Template:
 
 
 
+## 2026-10-13 20:05 UTC, Claude, branch claude/kalshi-fix-speed, no PR (local commits, not pushed)
+- Changed (one commit each, on top of claude/nightcrawler-memecoin-bot-Gwnb1S at c3ab6f8):
+  a3f068b loss plan bug 3 + speed step 1: between complete scans the order and fill reads pass `min_ts`
+  (oldest unfinished/uncertain/reserved order or one window ago, minus 60 s); complete reads at startup, every
+  60 s, after a window opens and while an integrity reset waits; reconcile timings, pages, rows, bytes and
+  failed checks in the status line.
+  4e20408 speed step 0: Kalshi `ts_ms` and clock offset on order/cancel records, per-phase step() timings,
+  event-loop lag probe, cancel timings, Coinbase Exchange `/time` clock probe (logging only).
+  80703e8 loss plan bug 2: stale-priced resting bids are cancelled even while account data are stale.
+  6a29919 loss plan bug 1: money at risk is each window's worst case over its pending orders; the open, day and
+  lifetime checks use what an order adds to it; a money stop no longer cancels a bid that only lowers it.
+  1ce14d3 loss plan item 4: Kalshi fair value uses time left minus 39.5 s (60-second settlement average).
+  c9ac533 speed step 3: constant-work Bitcoin tape, sigma cache keyed on completed seconds.
+  7a2aba2 speed step 4: Coinbase Exchange `matches` primary (two connections), Advanced Trade backup, trade-id
+  dedupe, 250 ms future-skew tolerance (staleness limits unchanged).
+  8562fc5 speed step 8: signed client on external-api.kalshi.com; one requests.Session per worker thread for
+  the speed desk's public pollers.
+  a716565 speed step 2: the pre-send write is one synced journal row; full state at most once a second and at
+  once after fills, settlements, stops, releases and owner actions; no saves in cancel; practice ledger NORMAL;
+  an order journaled but never sent is released only after its market closes and two complete lists miss it.
+- Unchanged: every cap and stop ($10 window, $20 open, day stop, lifetime stop), the 5-contract clip, a
+  reservation before every send and its release only on venue proof, the fsync before every create, which
+  orders the strategy places (except bug fixes 1 and 2), `exchange_index`, Railway variables and keys, town UI
+  files, the arena branch. No new setting, so `.env.example` is unchanged.
+- Verified: full suite 4,810 passed, 12 skipped (Python 3.13); ruff clean on changed files; `mypy` clean.
+  99 tests in the 8 new test files. The bug 1 and bug 2 tests fail without their fixes; the crash tests fail
+  under five deliberate breakages (no journal row, fills saved late, replay skipped, release before the close,
+  release after one list). Build-machine measurements: tape 0.37 -> 0.0007 ms per tick, sigma per trade
+  0.70 -> 0.15 ms; new TLS connection about 480 ms against 46 ms kept alive; pre-send write 1.65 -> 0.54 ms
+  median (one fdatasync each, counted with strace). Exchange `matches` arrive 50 to 61 ms (median) before
+  Advanced Trade's batches in the 2026-10-13 recording.
+- Not verified / skipped: nothing deployed or pushed; no live Railway timings (the ~57 ms Railway fsync stays
+  in the pre-send row). Left out of step 8: polydesk, weatherwatch_markets and skipwatch_alerts HTTP, and an
+  explicit `exchange_index` (needs that shard's collateral).
+- Real money touched? no.
+- Next step: review, push and deploy at a safe minute; then read the new `reconcile`, `phases`, `loop` and
+  `clock` status blocks on Railway to confirm the gains live.
+
 ## 2026-10-13 20:20 UTC, Claude, branch claude/kalshi-ladder-ship
 - Owner decision (2026-10-13 ~20:15 UTC, answering the open first-buy question in SPEEDDESK_SPEC 9.2): "Keep 5 at
   every rung".
