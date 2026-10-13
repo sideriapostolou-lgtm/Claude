@@ -18,8 +18,9 @@ def test_kalshi_companion_ships_paper_with_exact_owner_ceiling_defaults() -> Non
     assert settings.speeddesk_kalshi_resume_token is None
     assert settings.kalshi_key_id is None and settings.kalshi_private_key is None
     assert (settings.speeddesk_kalshi_window_usd, settings.speeddesk_kalshi_open_usd,
-            settings.speeddesk_kalshi_day_stop_usd, settings.speeddesk_kalshi_total_stop_usd) == (2, 4, 3, 5)
+            settings.speeddesk_kalshi_day_stop_usd, settings.speeddesk_kalshi_total_stop_usd) == (5, 10, 6, 10)
     assert settings.speeddesk_kalshi_cutoff_s == 180
+    assert settings.speeddesk_kalshi_lock_s == 240 and settings.speeddesk_kalshi_lock_max_price == .97
     assert settings.speeddesk_mode == "paper"
     assert (settings.speeddesk_window_usd, settings.speeddesk_open_usd, settings.speeddesk_day_stop_usd) == (20, 20, 10)
     assert not settings.public_dict()["speeddesk_kalshi_live_confirmed"]
@@ -28,8 +29,8 @@ def test_kalshi_companion_ships_paper_with_exact_owner_ceiling_defaults() -> Non
 
 
 @pytest.mark.parametrize("name,maximum", [
-    ("speeddesk_kalshi_window_usd", 2), ("speeddesk_kalshi_open_usd", 4),
-    ("speeddesk_kalshi_day_stop_usd", 3), ("speeddesk_kalshi_total_stop_usd", 5),
+    ("speeddesk_kalshi_window_usd", 5), ("speeddesk_kalshi_open_usd", 10),
+    ("speeddesk_kalshi_day_stop_usd", 6), ("speeddesk_kalshi_total_stop_usd", 10),
 ])
 def test_kalshi_limits_cannot_exceed_authorized_ceiling_or_bypass_numeric_guards(name, maximum) -> None:
     assert getattr(Settings(**{name: maximum / 2}), name) == maximum / 2

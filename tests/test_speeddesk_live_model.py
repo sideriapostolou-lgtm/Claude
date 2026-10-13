@@ -21,6 +21,10 @@ from nightcrawler.speeddesk_model import Window, utc_day
 WINDOW = "KXBTC15M-TEST-A"
 
 
+# The caps before the owner's 2026-10-13 raise; mechanism tests keep these exact numbers.
+SMALL = LiveLimits(window_usd=2, open_usd=4, day_loss_usd=3, total_loss_usd=5, fee_precision=.0001)
+
+
 def make_book(*, limits: LiveLimits | None = None, cash: float = 100) -> LiveRiskBook:
     book = LiveRiskBook(limits or LiveLimits(fee_precision=.0001))
     book.add_window(Window(WINDOW, 1000, 1900, 100, taker_coefficient=.07,
@@ -59,8 +63,10 @@ def losing_window(book: LiveRiskBook, index: int, start: float, *, size=4, price
 def test_hard_limits_can_only_be_reduced_and_cutoff_never_below_one_minute():
     limits = LiveLimits(window_usd=200, open_usd=400, day_loss_usd=300, total_loss_usd=500,
                         pair_cap=1, max_imbalance=1, cutoff_s=0)
-    assert (limits.window_usd, limits.open_usd, limits.day_loss_usd, limits.total_loss_usd) == (2, 4, 3, 5)
+    assert (limits.window_usd, limits.open_usd, limits.day_loss_usd, limits.total_loss_usd) == (5, 10, 6, 10)
     assert limits.pair_cap == .99 and limits.max_imbalance == .25 and limits.cutoff_s == 60
+    # New buys never outlast the lock period, and a lock never pays a dollar.
+    assert LiveLimits(cutoff_s=300, lock_s=100).lock_s == 300 and LiveLimits(lock_max_price=1).lock_max_price == .99
     assert LiveLimits(window_usd=.5).window_usd == .5
     with pytest.raises(ValueError):
         LiveLimits(open_usd=float("nan"))
@@ -199,11 +205,11 @@ def test_repeated_order_discovery_preserves_terminal_evidence_across_restart():
 
 
 def test_window_open_day_and_cash_caps_include_fee_reservations():
-    book = make_book()
+    book = make_book(limits=SMALL)
     assert book.can_buy(WINDOW, "up", "take", .4, 5, 1010) == "window_budget"
     book.limits = replace(book.limits, open_usd=.8)
     assert book.can_buy(WINDOW, "up", "take", .4, 2, 1010) == "open_budget"
-    book = make_book(cash=.8)
+    book = make_book(limits=SMALL, cash=.8)
     assert book.can_buy(WINDOW, "up", "take", .4, 2, 1010) == "cash_budget"
     first = reserve(book)
     actual_fill(book, first, fee=.0168)
@@ -328,7 +334,7 @@ def test_settlement_waits_for_cancelled_unknown_orders_and_checks_venue_net_reve
 
 
 def test_day_stop_includes_settled_losses_and_old_open_exposure_across_midnight():
-    book = make_book()
+    book = make_book(limits=SMALL)
     losing_window(book, 1, 1000)
     later = "KXBTC15M-LATER"
     book.add_window(Window(later, 1900, 2800, 100, taker_coefficient=.07, maker_coefficient=0, venue="kalshi"))
@@ -462,3 +468,49 @@ def test_live_cutoff_and_tick_quantity_validation_are_fail_closed():
     assert book.can_buy(WINDOW, "up", "take", .4, 1, 1720) == "cutoff"
     assert book.can_buy(WINDOW, "up", "take", .405, 1, 1010) == "invalid_order"
     assert book.can_buy(WINDOW, "up", "take", .4, .5, 1010) == "invalid_order"
+
+
+def test_a_complete_pair_risks_nothing_and_only_unpaired_cost_counts():
+    book = make_book()
+    up = reserve(book, size=3)
+    actual_fill(book, up, fee=.02)
+    assert book.open_cost_usd == pytest.approx(1.22) and book.open_loss_usd == pytest.approx(1.22)
+    down = reserve(book, side="down", price=.5, size=3, name="down")
+    actual_fill(book, down, fee=.01)
+    # Gross cost stays visible, but 3 up + 3 down pay $3 whatever happens: nothing is at risk.
+    assert book.open_cost_usd == pytest.approx(2.73)
+    assert book.open_loss_usd == 0 and book.at_risk_usd == 0
+
+
+def test_lock_only_completes_reconciled_unpaired_contracts_near_the_close():
+    book = make_book()
+    actual_fill(book, reserve(book, size=3), fee=.01)
+    book.update_cash(100, 1700)
+    assert book.lock_side(WINDOW) == ("down", 3)
+    assert book.can_lock(WINDOW, "down", .8, 3, 1650) == "not_lock_time"  # lock period starts 240 s out
+    assert book.can_lock(WINDOW, "down", .8, 3, 1885) == "not_lock_time"  # never in the final 20 s
+    assert book.can_lock(WINDOW, "up", .3, 1, 1700) == "lock_size"  # the heavy side never grows
+    assert book.can_lock(WINDOW, "down", .8, 4, 1700) == "lock_size"  # never more than is unpaired
+    assert book.can_lock(WINDOW, "down", .98, 3, 1700) == "lock_price"  # a decided window is left alone
+    assert book.can_buy(WINDOW, "down", "take", .8, 3, 1700) == "cutoff"  # a normal buy is refused here
+    # Money stops bound loss, and a lock only lowers it, so they do not block it.
+    book.day_pnl[utc_day(1700)] = -6
+    book.halted = True
+    assert book.can_lock(WINDOW, "down", .8, 3, 1700) == ""
+    lock = book.reserve_intent(WINDOW, "down", "take", .8, 3, 1700, "nc-speed-lock", lock=True)
+    assert lock.lock and book.reserved_usd == pytest.approx(3 * reserve_unit_cost(.8, .07, .0001))  # it holds cash
+    assert book.at_risk_usd == pytest.approx(book.open_loss_usd)  # but is not counted as new risk
+    assert book.can_lock(WINDOW, "down", .8, 1, 1701) == "order_pending"
+    with pytest.raises(LiveRejected):
+        book.reserve_intent(WINDOW, "down", "rest", .8, 1, 1701, "nc-speed-rest-lock", lock=True)
+    book.integrity_error = "fill_changed"
+    assert book.can_lock(WINDOW, "down", .8, 1, 1701) == "reconciliation_error"
+
+
+def test_state_saved_before_locks_existed_still_loads():
+    book = make_book()
+    reserve(book)
+    state = json.loads(json.dumps(book.to_state()))
+    for value in state["intents"].values():
+        del value["lock"]
+    assert not next(iter(LiveRiskBook.from_state(state).intents.values())).lock

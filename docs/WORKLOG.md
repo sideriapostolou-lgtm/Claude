@@ -13,6 +13,27 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-13 00:55 UTC, Claude, branch claude/virginia-kalshi-clock-fix, PR #16
+- Owner request: "Raise the money but make sure it's completely locked in and perfect and knows when to sell".
+  Asked for numbers; the owner chose "2.5x": $5 per window, $10 open, $6 UTC day stop, $10 total stop.
+- Changed: caps raised in config defaults/ceilings and `LiveLimits` hard ceilings. Money at risk is now what
+  can still be lost (each unsettled window's cost minus $1 per complete up+down pair; gross cost stays as
+  `open_cost_usd`), so a complete pair no longer counts as risk and a lock cannot trip a false total-stop halt.
+  New locked-in rule (spec 9.1): from `SPEEDDESK_KALSHI_LOCK_S`=240 s before the close new buys stop; until 20 s
+  before the close a window with more of one side buys the other side immediate-or-cancel for exactly the
+  unpaired contracts at up to `SPEEDDESK_KALSHI_LOCK_MAX_PRICE`=0.97. A lock bypasses edge, pair cap, window
+  budget and loss stops (it can only lower the loss), but never runs with live off, after a failure, in an
+  owner-traded window or before the window's orders reconcile. From the PR #16 review (no confirmed defects):
+  the pausing third refusal now keeps Kalshi's code, and the panel shows an error pause as `waiting`.
+- Verified: failing-first lock tests (losing move locks a $1.14 loss instead of up to $2.08; winning move locks
+  profit; 98c left alone; final 20 s left alone; runs in a day stop, never with live off; guard refuses once the
+  pair is complete) and risk-book tests; they fail on the PR #16 code. Full suite and mypy below in the PR.
+- Not verified: live behaviour of a lock (first one will show `speeddesk_live_order` kind `lock`). If Railway
+  sets the four cap variables explicitly, the panel will still report $2/$4/$3/$5 after deploy and they must be
+  set to $5/$10/$6/$10 (owner already chose these numbers).
+- Real money touched? Yes once merged: caps 2.5x and the lock rule, by the owner's explicit choice.
+- Next step: second review of this change, owner merges PR #16, confirm caps and the first lock in the logs.
+
 ## 2026-10-13 00:10 UTC, Codex, branch codex/town-only
 - Owner request: remove all the other confusing buttons and old app views. Started from deployed `4df5586`.
 - Town navigation now has exactly **Money, Team, Help**. Removed camera-tour switching, the Office footer,

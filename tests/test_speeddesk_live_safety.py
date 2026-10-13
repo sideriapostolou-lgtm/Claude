@@ -209,7 +209,7 @@ def test_unknown_create_is_durable_and_paper_restart_never_submits_again(tmp_pat
 
 
 def test_partial_fill_and_failed_cancel_keep_cash_and_loss_risk_reserved(tmp_path: Path) -> None:
-    desk, account, clock, window = companion(tmp_path)
+    desk, account, clock, window = companion(tmp_path, settings=configured(speeddesk_kalshi_window_usd=2, speeddesk_kalshi_open_usd=4, speeddesk_kalshi_day_stop_usd=3, speeddesk_kalshi_total_stop_usd=5))
     arm_fake(desk, account, clock)
     try:
         assert asyncio.run(desk._send(window, "up", "take", .4, 2, .6))

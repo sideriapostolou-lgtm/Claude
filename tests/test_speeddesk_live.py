@@ -81,14 +81,20 @@ class FakeAccount:
         pass
 
 
+# The caps before the owner's 2026-10-13 raise; mechanism tests that count contracts keep them.
+SMALL_CAPS = {"speeddesk_kalshi_window_usd": 2.0, "speeddesk_kalshi_open_usd": 4.0,
+              "speeddesk_kalshi_day_stop_usd": 3.0, "speeddesk_kalshi_total_stop_usd": 5.0}
+
+
 def make_desk(tmp_path: Path, *, mode: str = "live", confirm: str | None = "yes",
-              keys: bool = True, direct: bool = True) -> tuple[KalshiLiveDesk, FakeAccount, FakeClock]:
+              keys: bool = True, direct: bool = True,
+              caps: dict[str, float] | None = None) -> tuple[KalshiLiveDesk, FakeAccount, FakeClock]:
     clock = FakeClock()
     account = FakeAccount(clock)
     settings = Settings(data_dir=tmp_path, speeddesk_kalshi_mode=mode,
                         speeddesk_kalshi_live_confirm=Secret(confirm) if confirm else None,
                         kalshi_key_id=Secret("fake-key-id") if keys else None,
-                        kalshi_private_key=Secret("fake-private-key") if keys else None)
+                        kalshi_private_key=Secret("fake-private-key") if keys else None, **(caps or {}))
     window = Window(TICKER, clock.now() - 10, clock.now() + 890, start_price=80000,
                     venue="kalshi", taker_coefficient=.07, maker_coefficient=0,
                     min_trade_qty=.01, fee_rounding="kalshi")
@@ -146,7 +152,7 @@ def test_fee_precision_is_never_guessed_from_account_access(tmp_path: Path) -> N
 
 
 def test_intent_is_durable_before_real_order_and_twin_has_no_authority(tmp_path: Path) -> None:
-    desk, account, _ = make_desk(tmp_path)
+    desk, account, _ = make_desk(tmp_path, caps=SMALL_CAPS)
     original = account.create_order
 
     def inspect(**kwargs: Any) -> dict[str, Any]:
@@ -355,7 +361,7 @@ def test_eventually_visible_create_id_is_resolved_without_adopting_foreign_fills
 
 @pytest.mark.parametrize("stop", ["day", "total", "integrity"])
 def test_financial_stop_also_cancels_existing_real_orders(tmp_path: Path, stop: str) -> None:
-    desk, account, clock = make_desk(tmp_path)
+    desk, account, clock = make_desk(tmp_path, caps=SMALL_CAPS)
     try:
         asyncio.run(desk.step())
         if stop == "day":
@@ -373,7 +379,7 @@ def test_financial_stop_also_cancels_existing_real_orders(tmp_path: Path, stop: 
 
 
 def test_starter_leaves_budget_for_a_balancing_whole_pair(tmp_path: Path) -> None:
-    desk, account, _ = make_desk(tmp_path)
+    desk, account, _ = make_desk(tmp_path, caps=SMALL_CAPS)
     try:
         asyncio.run(desk.step())
         intent = next(iter(desk.intents.values()))
@@ -395,7 +401,8 @@ def test_starter_leaves_budget_for_a_balancing_whole_pair(tmp_path: Path) -> Non
 def test_one_refused_order_keeps_trading_but_three_refusals_in_a_row_pause(tmp_path: Path) -> None:
     """2026-10-12 23:39: one create_order 400 paused new orders as an "account reconciliation" failure.
     A single definite refusal is about that one order: record Kalshi's code and keep trading. Three in a
-    row still pause, so a real account problem (no cash on the shard) cannot spam orders."""
+    row still pause between attempts, as every refusal did before (a lasting account problem such as no
+    cash on the shard still retries, rate-limited by the pause and a fresh account read each time)."""
     desk, account, clock = make_desk(tmp_path)
     account.create_error = KalshiClientError("create_order", "request rejected", status=400,
                                              code="post_only_cross")
@@ -411,6 +418,9 @@ def test_one_refused_order_keeps_trading_but_three_refusals_in_a_row_pause(tmp_p
             asyncio.run(desk.step())
         assert len(account.creates) == 3
         assert desk.errors == 1 and desk.clock() < desk.retry_at
+        assert [event["code"] for event in desk.latest_events if event["event"] == "speeddesk_live_reject"][-1] \
+            == "post_only_cross"  # the pausing refusal keeps Kalshi's reason too
+        assert desk.panel()["trading_now"] is False and "Paused" in desk.panel()["waiting"]
     finally:
         desk.close()
 
@@ -470,5 +480,141 @@ def test_label_stays_real_money_between_orders(tmp_path: Path) -> None:
         assert panel["mode"] == "live" and panel["status"] == "REAL MONEY (Kalshi)"
         assert panel["real_orders_available"] is True
         assert panel["trading_now"] is False and panel["waiting"] == "Kalshi account data stale"
+    finally:
+        desk.close()
+
+
+# The locked-in rule (owner, 2026-10-13): near the close a half-filled pair is completed, never left as a coin flip.
+
+def at_lock_time(desk: KalshiLiveDesk, clock: FakeClock, *, up_ask: float, down_ask: float,
+                 before_close: float = 239) -> None:
+    """Move to `before_close` seconds before the close with fresh books at these asks."""
+    window = desk.book.windows[TICKER]
+    clock.advance(window.end - before_close - clock.now())
+    books = {(TICKER, side): Book(TICKER, side, (Level(round(ask - .02, 2), 10),), (Level(ask, 10),),
+                                 clock.now(), "book", source="rest", requested_at=clock.now())
+             for side, ask in (("up", up_ask), ("down", down_ask))}
+    snapshot = LiveSnapshot((window,), books, 80000, clock.now(), .001, frozenset({TICKER}))
+    desk.snapshot = lambda: snapshot  # type: ignore[method-assign]
+    for book in books.values():
+        desk.on_book(book)
+
+
+def fill_order(account: FakeAccount, clock: FakeClock, index: int, *, side: str, price: float, size: int) -> None:
+    order = account.orders[index]
+    order.update(status="executed", fill_count_fp=f"{size:.2f}", remaining_count_fp="0.00")
+    outcome = "yes" if side == "up" else "no"
+    account.executions.append({"fill_id": f"fill-{index}", "order_id": order["order_id"], "ticker": TICKER,
+                               "outcome_side": outcome, "book_side": "bid" if side == "up" else "ask",
+                               "count_fp": f"{size:.2f}", f"{outcome}_price_dollars": f"{price:.2f}",
+                               "fee_cost": f"{int(.07 * price * (1 - price) * size * 10000) / 10000:.4f}",
+                               "ts": clock.now()})
+
+
+def starter_filled(desk: KalshiLiveDesk, account: FakeAccount, clock: FakeClock) -> None:
+    asyncio.run(desk.step())
+    assert [(c["side"], c["kind"], c["price"], c["size"]) for c in account.creates] == [("up", "take", .4, 5)]
+    fill_order(account, clock, 0, side="up", price=.4, size=5)
+    account.account_positions = [{"ticker": TICKER, "position_fp": "5.00"}]
+
+
+def steps(desk: KalshiLiveDesk, clock: FakeClock, count: int = 3) -> None:
+    for _ in range(count):
+        asyncio.run(desk.step())
+        clock.advance(.3)
+
+
+def test_lock_completes_a_losing_half_pair_and_caps_the_loss(tmp_path: Path) -> None:
+    """Bitcoin moved against the starter: the bot pays up to complete the pair instead of riding a coin flip."""
+    desk, account, clock = make_desk(tmp_path)
+    try:
+        starter_filled(desk, account, clock)
+        at_lock_time(desk, clock, up_ask=.22, down_ask=.8)
+        steps(desk, clock)
+        assert len(account.creates) == 2
+        lock = account.creates[1]
+        assert (lock["side"], lock["kind"], lock["price"], lock["size"]) == ("down", "take", .8, 5)
+        assert lock["expiration_ts"] is None  # immediate-or-cancel, never resting into the close
+        # Edge, pair cap and buying cutoff would all have refused it as a normal buy.
+        assert desk.book.can_buy(TICKER, "down", "take", .8, 5, clock.now()) == "cutoff"
+        risk_before = desk.book.open_loss_usd
+        fill_order(account, clock, 1, side="down", price=.8, size=5)
+        account.account_positions = []  # Kalshi nets up+down into $1 each at once
+        steps(desk, clock)
+        assert desk.book.lock_side(TICKER) == (None, 0.0)
+        assert len(account.creates) == 2
+        # Locked: 5 x ($0.40 + $0.80) + $0.14 fees - $5 = $1.14 whatever happens, instead of up to $2.08.
+        assert desk.book.open_loss_usd == pytest.approx(1.14) and risk_before == pytest.approx(2.084)
+        assert desk.book.at_risk_usd == pytest.approx(desk.book.open_loss_usd)
+        assert not desk.book.halted
+        assert any(event.get("kind") == "lock" for event in desk.latest_events)
+    finally:
+        desk.close()
+
+
+def test_lock_turns_a_winning_half_pair_into_locked_profit(tmp_path: Path) -> None:
+    desk, account, clock = make_desk(tmp_path)
+    try:
+        starter_filled(desk, account, clock)
+        at_lock_time(desk, clock, up_ask=.9, down_ask=.08)
+        steps(desk, clock)
+        lock = account.creates[1]
+        assert (lock["side"], lock["price"], lock["size"]) == ("down", .08, 5)
+        fill_order(account, clock, 1, side="down", price=.08, size=5)
+        account.account_positions = []
+        steps(desk, clock)
+        assert desk.book.open_loss_usd == 0  # $2.40 + fees paid for $5 guaranteed
+    finally:
+        desk.close()
+
+
+def test_a_decided_window_or_the_final_seconds_are_left_alone(tmp_path: Path) -> None:
+    desk, account, clock = make_desk(tmp_path)
+    try:
+        starter_filled(desk, account, clock)
+        at_lock_time(desk, clock, up_ask=.02, down_ask=.98)  # above the 97c lock price: already decided
+        steps(desk, clock)
+        assert len(account.creates) == 1
+        assert any(event["event"] == "speeddesk_live_lock" and event["reason"] == "lock_price"
+                   for event in desk.latest_events)
+        at_lock_time(desk, clock, up_ask=.3, down_ask=.7, before_close=15)  # too close to the close
+        steps(desk, clock)
+        assert len(account.creates) == 1
+    finally:
+        desk.close()
+
+
+def test_lock_still_completes_during_a_money_stop_but_never_with_live_off(tmp_path: Path) -> None:
+    desk, account, clock = make_desk(tmp_path)
+    try:
+        starter_filled(desk, account, clock)
+        at_lock_time(desk, clock, up_ask=.3, down_ask=.7)
+        desk.settings = replace(desk.settings, speeddesk_kalshi_mode="paper")
+        steps(desk, clock)
+        assert len(account.creates) == 1  # live switches off: nothing is ever sent
+        desk.settings = replace(desk.settings, speeddesk_kalshi_mode="live")
+        desk.book.day_pnl[utc_day(clock.now())] = -6  # daily loss stop is in force
+        assert desk.book.risk_status(clock.now())["day_stopped"]
+        steps(desk, clock)
+        assert [(c["side"], c["price"]) for c in account.creates[1:]] == [("down", .7)]
+    finally:
+        desk.close()
+
+
+def test_lock_guard_refuses_once_the_pair_is_already_complete(tmp_path: Path) -> None:
+    desk, account, clock = make_desk(tmp_path)
+    try:
+        starter_filled(desk, account, clock)
+        at_lock_time(desk, clock, up_ask=.3, down_ask=.7)
+        original = account.create_order
+
+        def complete_first(**kwargs: Any) -> dict[str, Any]:
+            # Another fill completes the pair between the decision and the send.
+            desk.book.inventory[TICKER].down.shares = 5
+            return original(**kwargs)
+
+        account.create_order = complete_first  # type: ignore[method-assign]
+        steps(desk, clock, 1)
+        assert len(account.creates) == 1
     finally:
         desk.close()

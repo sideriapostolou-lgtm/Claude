@@ -464,15 +464,24 @@ class Settings:
     speeddesk_kalshi_resume_token: Secret | None = _f(  # noqa: RUF009 - _f returns a dataclasses.field
         None, "secret", "Owner-controlled Kalshi total-stop reset: a new value works once; only its hash may be "
         "persisted, never its value. Does not change any cap or enable live mode", secret=True)
-    speeddesk_kalshi_window_usd: float = _f(2.0, "usd", "Kalshi live companion: fee-inclusive maximum spend per "
-                                            "window; owner-authorized ceiling $2", lo=0, lo_open=True, hi=2)
-    speeddesk_kalshi_open_usd: float = _f(4.0, "usd", "Kalshi live companion: fee-inclusive maximum open exposure "
-                                          "and pending reservations; owner-authorized ceiling $4",
-                                          lo=0, lo_open=True, hi=4)
-    speeddesk_kalshi_day_stop_usd: float = _f(3.0, "usd", "Kalshi live companion: daily loss stop; "
-                                              "owner-authorized ceiling $3", lo=0, lo_open=True, hi=3)
-    speeddesk_kalshi_total_stop_usd: float = _f(5.0, "usd", "Kalshi live companion: persistent total-loss stop; "
-                                                "owner-authorized ceiling $5", lo=0, lo_open=True, hi=5)
+    # Owner-authorized 2026-10-13 ("2.5x"): $5 per window, $10 open, -$6 day, -$10 total.
+    speeddesk_kalshi_window_usd: float = _f(5.0, "usd", "Kalshi live companion: fee-inclusive maximum spend per "
+                                            "window; owner-authorized ceiling $5", lo=0, lo_open=True, hi=5)
+    speeddesk_kalshi_open_usd: float = _f(10.0, "usd", "Kalshi live companion: fee-inclusive maximum money that "
+                                          "open windows and pending orders can still lose; owner-authorized "
+                                          "ceiling $10", lo=0, lo_open=True, hi=10)
+    speeddesk_kalshi_day_stop_usd: float = _f(6.0, "usd", "Kalshi live companion: daily loss stop; "
+                                              "owner-authorized ceiling $6", lo=0, lo_open=True, hi=6)
+    speeddesk_kalshi_total_stop_usd: float = _f(10.0, "usd", "Kalshi live companion: persistent total-loss stop; "
+                                                "owner-authorized ceiling $10", lo=0, lo_open=True, hi=10)
+    speeddesk_kalshi_lock_s: float = _f(240.0, "seconds", "Kalshi live companion: from this long before the close, "
+                                        "new buys stop and a half-filled pair is completed (locked) instead of "
+                                        "riding to settlement; never shorter than the buying cutoff",
+                                        lo=60, hi=899)
+    speeddesk_kalshi_lock_max_price: float = _f(0.97, "fraction", "Kalshi live companion: highest price paid per "
+                                                "contract to complete a half-filled pair; above it the window is "
+                                                "already decided and the pair is left as it is",
+                                                lo=0.5, hi=0.99)
     speeddesk_kalshi_cutoff_s: float = _f(180.0, "seconds", "Kalshi live companion: stop buying this long before "
                                           "window close; default trades only the first 12 minutes of a 15m window",
                                           lo=60, hi=899)
