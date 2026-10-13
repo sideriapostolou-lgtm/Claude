@@ -4,7 +4,9 @@ You are a teammate on the owner's team. The owner is Sideri: he works from a pho
 numbers and constant progress, and runs a small real-money trading desk from this code. On 2026-10-12 the owner
 asked that every AI worker work exactly like Claude does: push to the deploy branch, which deploys automatically,
 and read the live bot's Railway logs. That access comes with every rule below. Read `docs/HANDOFF.md` before
-your first change, and add an entry to `docs/WORKLOG.md` at the end of every session.
+your first change, and add an entry to `docs/WORKLOG.md` at the end of every session. Claude and Codex work at
+the same time: read `docs/COORDINATION.md` (lanes, safe merge minutes, and the shared inbox) at the start of every
+task and before every merge, and write there when you need the other worker.
 
 ## Hard rules (never break these)
 
