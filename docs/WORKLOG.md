@@ -15,7 +15,24 @@ Template:
 
 
 
-## 2026-10-13 16:35 UTC, Codex, branch codex/kalshi-town-focus
+## 2026-10-13 16:54 UTC, Codex, Kalshi town interaction follow-up
+- Found during the deployed phone check: the once-per-second Money redraw could detach a disclosure while
+  someone tapped it. Legacy 3D risk/ledger signs also still described Polymarket/shared records in the Kalshi town.
+- Changed: preserve the actual disclosure and summary nodes while updating their contents and freshness.
+  Open details survive real cash updates, stale reports and offline warnings; Team retains keyboard focus
+  through report updates. The two legacy signs are hidden
+  through the park's reversible layers; Kalshi safeguards and receipts remain in Money and its workstations.
+- Verified: full pytest 4,689 passed / 14 skipped (same optional/network skips as the initial shipment), mypy clean for 119
+  files, and Ruff clean for all four changed Python files. Regression coverage preserves summary identity
+  through actual account changes and checks both legacy signs hide, then restore outside the tycoon view.
+  Independent review found no blockers. Normal browser taps on the replay now open Polymarket details and
+  keep them open; 390x844/320x568 layouts and the fallback summary have no overflow or JS errors.
+  A separate normal Team-to-Voss tap across an API refresh also passed with focus preserved and no JS errors.
+- Deployment: pending the tested corrective push and authenticated live phone check.
+- Real money touched? No trading code, settings, caps or orders changed. Polymarket stays live on the owner's
+  explicit choice; the town's foreground remains Kalshi.
+
+## 2026-10-13 16:35 UTC, Codex, branch codex/kalshi-town-focus, PR #34
 - Owner scope: focus the town on Kalshi. When asked about the separate real desk, the owner explicitly chose
   "Keep Polymarket live; only simplify the app." No trading-mode variables, strategy, limits or order code changed.
 - Changed: the town header, cash sign, foreground crew, activity and daily gardens now use Kalshi only. Cash
@@ -36,8 +53,13 @@ Template:
 - Live baseline: read-only app API returned both desk modes live and a validated Kalshi Pacific-day book.
   Current sources do not provide an account-reconciliation timestamp; the UI still says it is unknown. Saved
   fill-derived holdings are not presented as an independently verified current itemized account snapshot.
-- Deployment verification: pending this UI shipment; append the exact commit, Railway result and post-deploy
-  browser/mode check after it finishes. No profit claim or new trading authority is part of this change.
+- Deployment: PR #34 merged as `a53ae32942fa8bbc2da016d1ad7fca1b0f778cc4`; Railway deployment
+  `9603b81e-5686-4529-bf16-68b117d9dd93` succeeded on that exact commit. Startup at 16:40 UTC showed
+  Polymarket LIVE (10 contracts/order) and Kalshi REAL MONEY with existing enforced caps $10/window,
+  $20 open, $6 daily stop and $10 total stop. Health returned 200; the bounded startup check found no
+  tracebacks. Authenticated API and phone view confirmed Kalshi focus and both live modes. The live
+  disclosure-tap check exposed a refresh issue, addressed in the follow-up entry above. No profit claim
+  or new trading authority is part of this change.
 
 ## 2026-10-13 15:15 UTC, Codex, highest-value next-step review
 - Changed: pulled through `2681ff6`, read PR #29's fresh-move result/code and PR #30's timing changes, and

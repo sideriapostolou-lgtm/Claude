@@ -326,6 +326,10 @@ TYCOON_PARK = r"""
       if (TP.rings) TP.rings.forEach(function (ring) { hide(ring.m); });
     }
     if (typeof TY_TOWN_STATIC !== "undefined") hide(TY_TOWN_STATIC);
+    // These older signs describe Polymarket limits and the shared legacy ledger.
+    // Kalshi safeguards and receipts live in its workstation and Money details.
+    if (typeof recWall !== "undefined") hide(recWall);
+    if (typeof recPlaque !== "undefined") hide(recPlaque);
     if (typeof props !== "undefined" && props.islands) props.islands.forEach(function (island) { hide(island.h); });
     // Jet's actual workstation remains at the parcel depot. This older decorative aircraft and gangway do
     // not represent an order, holding or delivery, so remove them from the phone town with reversible layers.

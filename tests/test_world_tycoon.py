@@ -201,7 +201,14 @@ class Node {
     this.dataset={}; this.attributes={}; this.hidden=false; this.open=false; this.scrollTop=140; }
   set textContent(text) { this.own=String(text); this.children=[]; }
   get textContent() { return this.own+this.children.map(n=>n.textContent).join(""); }
-  appendChild(child) { child.parentElement=this; this.children.push(child); return child; }
+  appendChild(child) { if(child.parentElement) child.parentElement.removeChild(child);
+    child.parentElement=this; this.children.push(child); return child; }
+  removeChild(child) { if(document.activeElement && child.contains(document.activeElement))document.activeElement=null;
+    const index=this.children.indexOf(child);if(index>=0)this.children.splice(index,1);
+    child.parentElement=null;return child; }
+  insertBefore(child,reference) { if(child.parentElement)child.parentElement.removeChild(child);
+    const index=reference?this.children.indexOf(reference):this.children.length;
+    child.parentElement=this;this.children.splice(index,0,child);return child; }
   setAttribute(key,value) { this.attributes[key]=value; }
   contains(node) { return this===node || this.children.some(c=>c.contains(node)); }
   querySelectorAll(selector) { const all=this.children.flatMap(c=>[c,...c.querySelectorAll("*")]);
@@ -228,7 +235,8 @@ function draw(kind="ty-accounts") {
   return {cash:el("ty-cash").textContent,today:el("ty-today").textContent,state:el("ty-state").textContent,
     fresh:el("ty-fresh").textContent,exposure:el("ty-exposure").textContent,alert:el("ty-alert").textContent,
     alertHidden:el("ty-alert").hidden,growth:el("ty-growth").textContent,scroll:panelEl.scrollTop,
-    messages:paragraphs.map(p=>p.text),warnings:paragraphs.filter(p=>p.cls==="warn").map(p=>p.text),
+    messages:panelBody.querySelectorAll("p").map(p=>p.textContent),
+    warnings:panelBody.querySelectorAll("p").filter(p=>p.className==="warn").map(p=>p.textContent),
     details:panelBody.querySelectorAll("details").map(d=>({title:d.querySelector("summary").textContent,
       open:d.open,text:d.textContent})),direct:panelBody.children.filter(n=>n.tagName!=="DETAILS").map(n=>n.textContent),
     menu:panelBody.querySelectorAll(".ty-menu-row").map(n=>n.textContent)};
@@ -239,7 +247,7 @@ function draw(kind="ty-accounts") {
 def run_ui(module: str, tmp_path: Path, code: str, value: dict[str, Any] | None = None) -> Any:
     hooks = "\n".join(_js_body(module, f"  function {name}(") for name in (
         "tyAge", "tyFee", "tyText", "tycoonDraw", "tycoonFocusWarning", "tycoonDetails", "tycoonBusinessDetails",
-        "tycoonResearchDetails", "tycoonOtherAlerts", "tycoonPanel",
+        "tycoonResearchDetails", "tycoonOtherAlerts", "tycoonPanelMerge", "tycoonPanel",
     ))
     return _node(TYCOON_DATA + "\nconst data=" + json.dumps(value if value is not None else connected())
                  + f";const now={NOW};\n" + _UI_STUB + hooks + code, tmp_path)
@@ -394,3 +402,49 @@ console.log(JSON.stringify({first,second:read()}));
     assert all(row["status"] == "working" for row in out["first"])
     assert next(row for row in out["second"] if row["key"] == "pip")["label"] == "Pip · background"
     assert '.ty-marker[data-background="true"] b::before { background: #91a4ab; }' in TYCOON_STYLE
+
+
+@needs_node
+def test_live_panel_keeps_tappable_nodes_until_displayed_data_or_freshness_changes(
+    module: str, tmp_path: Path,
+) -> None:
+    out = run_ui(module, tmp_path, r"""
+draw();
+const first=panelBody.children[0],summary=panelBody.querySelectorAll("details")[0].querySelector("summary");
+Date.now=()=>(now+1)*1000;draw();
+const stable=first===panelBody.children[0] && summary===panelBody.querySelectorAll("details")[0].querySelector("summary");
+const labelsBefore=panelBody.textContent;
+data.money.speeddesk.kalshi_live.cash_usd=24.50;draw();
+const changed=panelBody.textContent!==labelsBefore;
+const stayedAttached=summary===panelBody.querySelectorAll("details")[0].querySelector("summary");
+const changedNode=panelBody.children[0];
+Date.now=()=>(now+61)*1000;
+const old=draw();
+const stale=old.cash==="—" && old.state==="Kalshi · data delayed"
+  && panelBody.textContent.includes("Kalshi’s report is delayed or missing");
+const staleNode=panelBody.children[0];offline=true;draw();
+const disconnected=panelBody.textContent.includes("Connection lost. Showing the last report");
+// Reopening after another view replaced the contents cannot accidentally reuse the old cache.
+const prior=panelBody.children[0];panelBody.textContent="Another panel";draw();
+const restored=panelBody.children.length>0 && prior!==panelBody.children[0];
+console.log(JSON.stringify({stable,changed,stayedAttached,stale,disconnected,restored}));
+""")
+    assert out == {"stable": True, "changed": True, "stayedAttached": True,
+                   "stale": True, "disconnected": True, "restored": True}
+
+
+@needs_node
+def test_team_button_keeps_keyboard_focus_when_live_report_refreshes(module: str, tmp_path: Path) -> None:
+    out = run_ui(module, tmp_path, r"""
+const members=tycoonSummary(data,now).crew;
+TY_UI.people=members.map(c=>{const b=new Node("button"),job=new Node("small"),scope=new Node("small");
+  b.className="ty-person";b.dataset.key=c.key;b.appendChild(job);b.appendChild(scope);
+  return {key:c.key,b,job,scope};});
+draw("ty-team");
+const button=panelBody.querySelectorAll(".ty-person").find(n=>n.dataset.key==="voss");button.focus();
+data.money.speeddesk.kalshi_live.cash_usd=24.50;
+draw("ty-team");
+console.log(JSON.stringify({same:panelBody.querySelectorAll(".ty-person").find(n=>n.dataset.key==="voss")===button,
+  focused:document.activeElement===button,allPresent:panelBody.querySelectorAll(".ty-person").length===members.length}));
+""")
+    assert out == {"same": True, "focused": True, "allPresent": True}

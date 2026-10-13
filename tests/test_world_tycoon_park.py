@@ -126,13 +126,14 @@ console.log(JSON.stringify({ before, earned, loss, midnight, stale, malformed, u
         assert out[key]["growth"]["pnl_usd"] is None
 
 
-def test_utc_and_practice_props_are_excluded_from_daily_town_then_restored(tmp_path: Path) -> None:
+def test_other_money_props_are_excluded_from_kalshi_town_then_restored(tmp_path: Path) -> None:
     out = _run(tmp_path, """
 const camera = new THREE.PerspectiveCamera();
 const GP = { rings: new THREE.Mesh(), yard: new THREE.Mesh(), stalls: [{ shutter: new THREE.Mesh(), goods: new THREE.Mesh() }] };
 GP.yard.layers.set(1);
 const TP = { houses: new THREE.Mesh(), rings: [{ m: new THREE.Mesh() }] };
-const nodes = [GP.rings, GP.yard, GP.stalls[0].shutter, TP.houses, TP.rings[0].m];
+const recWall = new THREE.Mesh(), recPlaque = new THREE.Mesh();
+const nodes = [GP.rings, GP.yard, GP.stalls[0].shutter, TP.houses, TP.rings[0].m, recWall, recPlaque];
 const masks = nodes.map(n => n.layers.mask);
 tycoonPark(true);
 const excluded = nodes.every(n => !n.layers.test(camera.layers));
