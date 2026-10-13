@@ -665,8 +665,11 @@ class KalshiLiveDesk:
                     and abs(current) <= EPS):
                 row = settlement_rows.get(ticker)
                 # A flat paired position needs no settlement payout. A
-                # directional holding requires the venue's actual receipt.
-                if row is None and abs(expected) > EPS:
+                # directional holding requires the venue's actual receipt,
+                # except where the owner closed it out by hand: the account is
+                # flat in that market, so Kalshi writes no row; the bot settles
+                # its own contracts from the finalized outcome instead.
+                if row is None and abs(expected) > EPS and ticker not in self.foreign_windows:
                     consistent = False
                     continue
                 payout = _number(row["revenue"]) / 100 if row is not None else 0.0

@@ -381,3 +381,34 @@ def test_an_unexplained_position_in_a_bot_window_still_stops_new_orders(tmp_path
         assert desk.account_at is None
     finally:
         desk.close()
+
+
+def test_owner_closing_out_the_bots_position_by_hand_settles_instead_of_freezing(tmp_path: Path) -> None:
+    """Review of the owner-window fix: if the owner sells the bot's contracts by hand, Kalshi nets them and the
+    account is flat in that market, so the venue writes no settlement row. The bot must settle its own contracts
+    from the final outcome instead of waiting forever for a receipt that will never come."""
+    desk, account, clock, window = companion(tmp_path)
+    arm_fake(desk, account, clock)
+    try:
+        assert asyncio.run(desk._send(window, "up", "take", .4, 2, .6))
+        intent = next(iter(desk.intents.values()))
+        account.rows[0].update(status="executed", fill_count_fp="2.00", remaining_count_fp="0.00")
+        account.prints = [{"fill_id": "bot-two", "order_id": intent.order_id, "ticker": window.slug,
+                           "outcome_side": "yes", "book_side": "bid", "yes_price_dollars": "0.4000",
+                           "count_fp": "2.00", "fee_cost": "0.0336", "ts": clock.now() + .25},
+                          {"fill_id": "owner-sells-them", "order_id": "owner-order", "ticker": window.slug,
+                           "outcome_side": "no", "book_side": "ask", "no_price_dollars": "0.5500",
+                           "count_fp": "2.00", "fee_cost": "0.0346", "ts": clock.now() + .5}]
+        account.holdings = []  # the owner's 2 down net the bot's 2 up: the account is flat here
+        clock.advance(1)
+        asyncio.run(desk._reconcile())
+        assert window.slug in desk.foreign_windows and desk.account_at is not None
+        desk.final_outcomes[window.slug] = True  # the market finalized: up won
+        account.settled = []  # flat accounts get no settlement row
+        clock.set(window.end + 30)
+        asyncio.run(desk._reconcile())
+        assert desk.account_at is not None  # not frozen
+        assert desk.book.settled[window.slug].pnl_usd == pytest.approx(2 - .8336)  # the bot's 2 up won
+        assert desk.book.integrity_error is None and not desk.fatal_reason
+    finally:
+        desk.close()
