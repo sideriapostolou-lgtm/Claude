@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import json
+import math
+import random
 import threading
+import time
 from dataclasses import fields
 from pathlib import Path
 from typing import Any
@@ -12,7 +15,7 @@ import pytest
 from fakes import FakeClock
 from speeddesk_golden import FIXTURE, coverage, run
 
-from nightcrawler import speeddesk_live_model
+from nightcrawler import speeddesk_live_model, speeddesk_model
 from nightcrawler.config import Settings
 from nightcrawler.speeddesk import SpeedRunner
 from nightcrawler.speeddesk_model import (
@@ -311,3 +314,211 @@ def test_forget_drops_only_settled_or_void_windows_without_orders() -> None:
     void = kdesk()
     void.forget(SLUG, void=True)
     assert not void.windows
+
+
+# ---------------------------------------------------------------------- the live risk book's rules (review 2026-10-13)
+def _twins(seed: int) -> tuple[PracticeDesk, speeddesk_live_model.LiveRiskBook, float]:
+    """The same random state in a practice desk with the live rules switched on and in the live risk book: an older
+    unsettled window and the current one, random holdings, a pending bid or not, a random day so far."""
+    rng = random.Random(seed)
+    now = START + 120
+    practice = kdesk(day_stop_counts_risk=True, hedged_open_budget=True, open_usd=10)
+    book = speeddesk_live_model.LiveRiskBook(speeddesk_live_model.LiveLimits(
+        window_usd=10, open_usd=10, day_loss_usd=6, total_loss_usd=10, clip=5, fee_precision=0.0001))
+    older = "KXBTC15M-older"
+    for slug, start in ((older, START - 900), (SLUG, START)):
+        window = Window(slug, start, start + 900, None, taker_coefficient=0.07, maker_coefficient=0.0,
+                        venue_start_price=80_000, venue="kalshi", fee_rounding="kalshi")
+        if slug != SLUG:
+            practice.add_window(window)
+        book.add_window(Window(**window.__dict__))
+    book.update_cash(50.0, now)
+    for slug in (older, SLUG):
+        up, down = rng.choice((0, 2, 4, 5, 8)), rng.choice((0, 2, 4, 5, 8))
+        price_up, price_down = rng.choice((0.3, 0.45, 0.6)), rng.choice((0.3, 0.45, 0.6))
+        for inventory in (practice.inventory, book.inventory):
+            inventory[slug] = Inventory(Holding(up, up * price_up), Holding(down, down * price_down))
+    if rng.random() < 0.5:
+        slug, side, size, price = rng.choice((older, SLUG)), rng.choice(("up", "down")), rng.choice((1, 3, 5)), 0.4
+        practice.orders[99] = speeddesk_model.PracticeOrder(99, slug, side, "rest", price, size, size, now - 5,  # type: ignore[arg-type]
+                                                            now - 4.75, 0.45, 0.0, 0.0, "", "kalshi", 0.01)
+        book.intents["nc-speed-x"] = speeddesk_live_model.LiveIntent(
+            "nc-speed-x", slug, side, "rest", price, size, now - 5, book.unit_reserve(slug, price, "rest"))  # type: ignore[arg-type]
+    day = rng.choice((0.0, -1.0, -3.0, -4.0, -5.5, 2.0))
+    practice.days[utc_day(now)] = {"pnl_usd": day}
+    book.day_pnl[utc_day(now)] = day
+    return practice, book, now
+
+
+def test_the_live_stops_and_open_budget_match_the_live_risk_book() -> None:
+    """The review's probe and a sweep: with the two fields on, every budget answer (window, open, day stop) of the
+    practice desk is the live risk book's, for every size of a resting bid."""
+    budgets = {"window_budget", "open_budget", "day_stop"}
+    # place() checks these in practice; live's lifetime total stop is deliberately not copied (kalshi_arena).
+    before_budgets = {"order_pending", "clip", "cutoff", "invalid_order", "cash_stale", "total_loss", "halted"}
+    compared = seen = 0
+    for seed in range(400):
+        practice, book, now = _twins(seed)
+        for side in ("up", "down"):
+            for size in range(1, 6):
+                live = book.can_buy(SLUG, side, "rest", 0.45, size, now)  # type: ignore[arg-type]
+                ours = practice.can_buy(SLUG, side, 0.45, size, 0.0, now)  # type: ignore[arg-type]
+                if live in before_budgets:
+                    continue
+                compared += 1
+                if live in budgets or ours in budgets:
+                    assert ours == live, (seed, side, size, ours, live)
+                    seen += 1
+    assert compared > 3000 and seen > 400  # the sweep reaches each budget often
+    # The probe itself: after a $4 morning a 5-lot at 0.45 is refused live; the old practice rule rested it.
+    old = kdesk()
+    old.days[utc_day(START + 30)] = {"pnl_usd": -4.0}
+    assert old.can_buy(SLUG, "up", 0.45, 5, 0.0, START + 30) == ""
+    new = kdesk(day_stop_counts_risk=True)
+    new.days[utc_day(START + 30)] = {"pnl_usd": -4.0}
+    assert new.can_buy(SLUG, "up", 0.45, 5, 0.0, START + 30) == "day_stop"
+    assert new.can_buy(SLUG, "up", 0.45, 4, 0.0, START + 30) == ""  # 4 + 1.80 < 6, as live allows 4
+    quote(new, START + 30)
+    new.evaluate(START + 30)
+    assert orders(new) == [("up", "rest", 4.0, False)]
+
+
+def test_a_complete_pair_risks_nothing_against_the_open_budget() -> None:
+    older = "KXBTC15M-older"
+
+    def desk(**changes: Any) -> PracticeDesk:
+        made = kdesk(open_usd=10, **changes)
+        made.add_window(Window(older, START - 900, START, None, taker_coefficient=0.07, maker_coefficient=0.0,
+                               venue_start_price=80_000, venue="kalshi", fee_rounding="kalshi"))
+        made.inventory[older] = Inventory(Holding(10, 4.75), Holding(10, 4.75))  # a $9.50 pair, unsettled
+        return made
+
+    assert desk().can_buy(SLUG, "up", 0.45, 5, 0.0) == "open_budget"  # gross spend: 9.50 + 2.25 > 10
+    assert desk(hedged_open_budget=True).can_buy(SLUG, "up", 0.45, 5, 0.0) == ""  # at risk: 0 + 2.25
+
+
+def test_resting_bids_expire_after_thirty_seconds_and_queue_again() -> None:
+    def books(desk: PracticeDesk, at: float, queue: float) -> None:
+        desk.tick_btc(80_000, at)
+        for side in ("up", "down"):  # a bid queue at the desk's resting price (fair 0.50 - edge 0.03)
+            desk.on_book(Book(SLUG, side, (Level(0.47, queue),), (Level(0.6, 50),), at, f"{side}-{at}", at))  # type: ignore[arg-type]
+
+    desk = kdesk(rest_ttl_s=30)
+    placed = START + 10.6
+    books(desk, placed, 10)
+    desk.evaluate(placed)
+    (order,) = desk.orders.values()
+    assert order.queue_ahead == 10  # the bid shown at its price, from the book of the moment
+    expires = math.floor(placed) + 30  # live: expiration_ts = int(now) + 30
+    books(desk, expires + 0.05, 10)  # fresh feeds: nothing else cancels it
+    events = sell(desk, "up", order.price, 3, expires + 0.1)
+    assert not [event for event in events if event.event == "speeddesk_fill"] and order.queue_ahead == 10
+    books(desk, expires + 0.2, 4)
+    events = desk.evaluate(expires + 0.2)
+    assert ("speeddesk_cancel", "expired") in [(event.event, event.reason) for event in events]
+    (fresh,) = desk.orders.values()
+    assert fresh.order_id != order.order_id and fresh.queue_ahead == 4  # behind the book again
+    before = kdesk()
+    books(before, placed, 10)
+    before.evaluate(placed)
+    books(before, expires + 0.2, 4)
+    before.evaluate(expires + 0.2)
+    assert [item.order_id for item in before.orders.values()] == [1]  # default: rests until cancelled
+
+
+def test_the_fee_reserve_check_is_lives() -> None:
+    for price in (0.01, 0.07, 0.33, 0.45, 0.5, 0.62, 0.97, 0.99):
+        for coefficient in (0.0, 0.0175, 0.07):
+            for precision in (0.01, 0.0001):
+                assert speeddesk_model.unit_reserve(price, coefficient, precision) == (
+                    speeddesk_live_model.reserve_unit_cost(price, coefficient, precision))
+    def maker_fee(desk: PracticeDesk) -> PracticeDesk:
+        desk.windows[SLUG].maker_coefficient = 0.0175  # a series with maker fees
+        return desk
+
+    fair = 0.5 + 0.0  # quote() puts Bitcoin on the strike: fair 0.5, a bid at 0.47
+    assert fair == 0.5
+    plain = maker_fee(kdesk())
+    quote(plain, START + 10)
+    plain.evaluate(START + 10)
+    assert orders(plain) == [("up", "rest", 5.0, False)]  # today's rule ignores the fee on the edge
+    checked = maker_fee(kdesk(edge_fee_precision=0.0001))
+    quote(checked, START + 10)
+    checked.evaluate(START + 10)
+    assert not checked.orders and checked.last_reason[SLUG] == "edge_after_fee"  # 0.50 - 0.4744 < 0.03, as live
+    zero = kdesk(edge_fee_precision=0.0001)  # no maker fee (production): the same bid as today
+    quote(zero, START + 10)
+    zero.evaluate(START + 10)
+    assert orders(zero) == [("up", "rest", 5.0, False)]
+    unverified = kdesk(edge_fee_precision=0.01)  # an account not attested direct: live sends nothing
+    quote(unverified, START + 10)
+    unverified.evaluate(START + 10)
+    assert not unverified.orders and unverified.last_reason[SLUG] == "edge_after_fee"
+
+
+def test_a_resting_starter_stops_when_its_no_first_buy_period_begins() -> None:
+    desk = kdesk(starter_stop_s=600)
+    quote(desk, END - 610)
+    desk.evaluate(END - 610)
+    assert orders(desk) == [("up", "rest", 5.0, False)]
+    price = next(iter(desk.orders.values())).price
+    quote(desk, END - 590)  # the same fair value: no reprice would cancel it
+    events = desk.evaluate(END - 590)
+    assert ("speeddesk_cancel", "starter_hold") in [(event.event, event.reason) for event in events]
+    assert not desk.orders and desk.last_reason[SLUG] == "starter_late"
+    sell(desk, "up", price, 20, END - 589)
+    assert desk.inventory[SLUG].up.shares == 0  # no first buy inside the period (the review's probe filled 5)
+
+
+def test_the_protective_stop_has_its_own_price_cap() -> None:
+    desk = kdesk(stop_s=600, stop_pair_cost=1.10, lock_max_price=0.90)
+    hold(desk, 5, 0, price=0.20)  # a cheap heavy side: completing costs 0.20 + 0.93 + fee
+    quote(desk, END - 500, down=0.93)
+    desk.evaluate(END - 500)
+    assert orders(desk) == [("down", "take", 5.0, True)]  # the stop fires above the lock's own 0.90 cap
+    lock = kdesk(lock_s=240, lock_max_price=0.90)
+    hold(lock, 5, 0, price=0.20)
+    quote(lock, END - 200, down=0.93)
+    lock.evaluate(END - 200)
+    assert not [order for order in orders(lock) if order[3]]  # the lock keeps its cap
+
+
+def test_forget_keeps_only_today_and_yesterday_in_the_day_tables() -> None:
+    desk = kdesk()
+    for offset in range(5):
+        day = utc_day(START - offset * 86_400)
+        desk.days[day] = {"pnl_usd": -1.0}
+        desk.traded_days[day] = {"x"}
+        desk.filled_orders[day] = {1, 2}
+        desk.venue_days["kalshi"][day] = {"fills": 1.0}
+    desk.venue_filled_orders = {1, 2, 3}
+    desk.forget(SLUG, void=True)
+    kept = {utc_day(START), utc_day(START - 86_400)}
+    assert set(desk.days) == set(desk.traded_days) == set(desk.filled_orders) == set(desk.venue_days["kalshi"]) == kept
+    assert desk.venue_filled_orders == set() and all(not value for value in desk.filled_orders.values())
+    assert desk.days[utc_day(START)] == {"pnl_usd": -1.0}  # today's P&L (the day stop) stays
+
+
+def test_the_dedupe_memory_is_a_desk_attribute_with_todays_default() -> None:
+    desk = kdesk()
+    assert desk.trade_memory == 10_000
+    desk.trade_memory = 3
+    for n in range(10):
+        desk.on_trade(Trade(SLUG, "up", 0.3, 1, START + n, f"p{n}", "sell", START + n), START + n)  # type: ignore[arg-type]
+    assert len(desk.trade_order) == len(desk.seen_trades) == 3
+
+
+def test_config_state_costs_no_more_than_asdict() -> None:
+    """It runs in the live companion's durable checkpoint (the twin's to_state), before a real order's first byte."""
+    from dataclasses import asdict
+
+    config = SpeedConfig(clip=5, window_usd=10)
+    assert config_state(config) == {key: value for key, value in asdict(config).items() if key not in OPT_IN_FIELDS}
+    best: dict[str, float] = {}
+    for _ in range(5):  # interleaved best-of, so a busy machine slows both alike
+        for name, call in (("asdict", asdict), ("config_state", config_state)):
+            started = time.perf_counter()
+            for _ in range(2000):
+                call(config)
+            best[name] = min(best.get(name, math.inf), time.perf_counter() - started)
+    assert best["config_state"] <= best["asdict"] * 1.2, best
