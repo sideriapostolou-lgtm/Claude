@@ -40,6 +40,12 @@ Template:
   deployment can be checked by exact Railway/GitHub commit status and public health; startup/trading logs and
   authenticated live balances remain unavailable. Deployment verification follows below.
 
+- Deployment verified at 00:14 UTC: PR #17 merged as `569f8b9d8dc07e851179ebe867d1edc7e6e78da0`.
+  Railway's `nightcrawler - bot` check on that exact commit is **success**, deployment
+  `59962b28-2182-4782-bcc8-ef579e46f312`. Public `/healthz` returned HTTP 200 `ok` afterward at
+  00:14:30 UTC. Startup/trading logs and authenticated live balances remain unverified without their
+  credentials; health is not evidence of trading health. This follow-up is documentation only.
+
 ## 2026-10-12 23:56 UTC, Codex, branch codex/tycoon-overview
 - Owner request: simplify the live app into a phone-first Theme Park Tycoon 2-inspired business town, with
   fewer buttons and real business connections. Pulled deploy head `b91b7d6` unchanged; recovered the previously
