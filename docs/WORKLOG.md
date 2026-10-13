@@ -34,7 +34,9 @@ Template:
 - Real money touched? No order logic, risk limits, mode switches, credentials or saved financial books changed.
   The authorized follow-up source push restarts the same live desks. Before integrating the newer deploy head,
   validation passed: **4,603 tests, 21 skipped**, mypy **117 files**, changed-file Ruff and whitespace checks.
-  Validation of the combined head and exact deployment evidence follow below.
+  Integrated deploy head `11cef3f` (Claude's separate practice-coin change) without conflicts. Combined build:
+  **4,615 passed, 21 skipped**; mypy passed **118 files**; changed-file Ruff and whitespace checks passed.
+  Independent final review found no blocker. Exact follow-up deployment evidence follows below.
 
 ## 2026-10-13 05:15 UTC, Codex, branch codex/town-truth-fixes
 - Owner request: make the connected town app accurate and clear, retaining the phone-first tycoon view and
