@@ -502,6 +502,20 @@ class KalshiLiveDesk:
             self._record("speeddesk_live_cancel", client_order_id=intent.client_order_id,
                          order_id=intent.order_id, window=intent.window, reason=reason,
                          state="requested; reservation retained until fills reconcile")
+        except KalshiClientError as exc:
+            if exc.operation == "cancel" and exc.status == 404 and not exc.uncertain:
+                # Nothing of ours is resting under that ID (already canceled or
+                # filled; seen 2026-10-12 when a repeat cancel looped for minutes).
+                # Keep the reservation and let the order list confirm it; this is
+                # not an account error and must not pause trading.
+                self._record("speeddesk_live_cancel", client_order_id=intent.client_order_id,
+                             order_id=intent.order_id, window=intent.window, reason=reason,
+                             state="not resting on Kalshi (404); reservation retained until reconciled")
+            else:
+                intent.uncertain = True
+                self.book.mark_uncertain(intent.client_order_id, "cancel_unconfirmed")
+                self._error(exc)
+                self.cancel_retry_at[intent.client_order_id] = self.retry_at
         except Exception as exc:  # noqa: BLE001 — uncertain cancellation retains the full reservation.
             intent.uncertain = True
             self.book.mark_uncertain(intent.client_order_id, "cancel_unconfirmed")

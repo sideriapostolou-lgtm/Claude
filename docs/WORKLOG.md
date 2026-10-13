@@ -73,6 +73,22 @@ Template:
   account page remain unverified without their credentials; HTTP health is not trading-health evidence.
   This verification note is documentation-only and should not trigger another rebuild.
 
+## 2026-10-12 23:45 UTC, Claude, branch claude/nightcrawler-memecoin-bot-Gwnb1S
+- Owner request: make the real-money Kalshi speed desk actually trade, and "get fast".
+- Kalshi exchange sharding: crypto markets live on shard 2 and the owner's $25 was on shard 0, so every
+  create returned 404 `insufficient_shard_balance` ("Exchange user not found"). Claude moved $25.00 0 -> 2
+  with `POST /portfolio/intra_exchange_instance_transfer` (owner approved). The next orders were accepted.
+- First real fill: 23:30:20 UTC, 2 NO (Down) at $0.45 as taker on KXBTC15M-26OCT121945-45, fee $0.0347.
+- Bugs fixed: 853109d logs the failing Kalshi call in `speeddesk_live_reject`. 0bdc67a: a repeat cancel of an
+  order Kalshi had already canceled returned 404, and the desk paused new orders from 23:31 to the 23:38
+  restart; a 404 on cancel is now "already gone" and the order list confirms it (test fails without the fix).
+- Speed: b91b7d6 reuses one kept-alive HTTP session for Kalshi (decision-to-ack was 641 ms; median 422 ms
+  over the first 9 acks, mostly before the change).
+- Verified: full pytest 4,253 passed / 12 skipped; mypy clean; ruff clean on changed files. Read-only checks:
+  `GET /portfolio/orders` lists V2 orders with status canceled/executed/resting as the code expects.
+- Real money touched? yes, on the owner's word: Kalshi live (caps $2/$4/$3/$5) and the shard transfer.
+- Next step: confirm fills and settlements over the next windows; ChatGPT does the loop-stall and region work.
+
 ## 2026-10-12 23:15 UTC, Codex, branch codex/weather-lock-stopwatch
 - Owner request: build a read-only weather lock stopwatch on Railway for at least three days. Pulled
   deploy head `9f32451` before work, then incorporated Claude's `8882ece` warm-up fix, `941b261` account
