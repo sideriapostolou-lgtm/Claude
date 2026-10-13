@@ -209,8 +209,10 @@ def test_the_channel_keeps_to_its_own_section(settings: Settings) -> None:
     records = re.sub(r"//[^\n]*", "", raw[raw.index("THE RECORD ROOM (Builder B)"):raw.index("= THE LIVE DIRECTOR")])
     cinema = re.sub(r"//[^\n]*", "", raw[raw.index("= THE CINEMA (cinema mode"):raw.index("// >>> tycoon data (pure)")])
     tycoon = re.sub(r"//[^\n]*", "", raw[raw.index("// >>> tycoon data (pure)"):raw.index('  resize(); BUS.emit("start"')])
+    business = re.sub(r"//[^\n]*", "", raw[raw.index("= REAL BUSINESS ACTIVITY"):raw.index("= THE CINEMA (cinema mode")])
     assert module.count("window.__skyport") == (2 + records.count("window.__skyport")
-                                               + cinema.count("window.__skyport") + tycoon.count("window.__skyport"))
+                                               + cinema.count("window.__skyport") + tycoon.count("window.__skyport")
+                                               + business.count("window.__skyport"))
     assert "window.__skyport = Object.assign(window.__skyport || {}, { cinema: {" in cinema  # (THE CINEMA keeps these too)
     assert "window.__skyport = Object.assign(window.__skyport || {}, { records: {" in records
     assert module.count("window.__world") == 1
@@ -336,7 +338,9 @@ def test_the_ticker_and_the_banner_write_text_only(settings: Settings) -> None:
     assert 'if (replayUntil && wall >= replayUntil) { replayUntil = 0; replayEl.className = ""; replayGap = wall + 600; }' in section
     # while it shows, and until its fade is over (the gap outlasts the 0.35 s fade), the bubbles keep below it
     assert "hudTop = replayEl.offsetHeight + 6;" in show
-    assert "if (!replayUntil && hudTop && wall >= replayGap) hudTop = 0;" in section and section.count("hudTop = 0") == 1
+    assert "if (!replayUntil && hudTop && wall >= replayGap) hudTop = 0;" in section and section.count("hudTop = 0") == 2
+    # The town uses its own qualified venue receipts: the old banner must not replay paper wins there.
+    assert 'tycoonActive()) { replayQueue.length = 0; replayUntil = 0; replayEl.className = ""; hudTop = 0; return; }' in section
     assert "transition: opacity .35s ease" in _STYLE_CHANNEL and "replayGap = wall + 600" in section
     assert "top = Math.max(96, barBottom + 8 + hudTop)" in _js_body(_module(render_world_html(settings)), "  function updateBubbles() {")
 

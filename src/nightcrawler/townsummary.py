@@ -19,6 +19,7 @@ _STYLE = """
 a { display: inline-block; min-height: 44px; padding: 11px 0; color: #176c9d; font-weight: 700; }
 a:focus-visible { outline: 3px solid #d99716; outline-offset: 4px; }
 h1 { font-size: 27px; letter-spacing: -.03em; margin: 10px 0 6px; } h2 { font-size: 19px; margin: 0 0 10px; }
+h3 { font-size: 15px; margin: 18px 0 10px; }
 p { font-size: 14px; line-height: 1.5; margin: 8px 0; } .muted { color: #506b7b; }
 section { margin-top: 16px; padding: 18px; background: #fff; border: 1px solid #d8e7ee; border-radius: 14px; }
 .status { font-weight: 700; } .warning { color: #754708; background: #fff2d4; border-radius: 8px; padding: 9px 11px; }
@@ -45,6 +46,12 @@ _UI = r"""
     if (age < 86400) return Math.floor(age / 3600) + " hours ago";
     return Math.floor(age / 86400) + " days ago";
   }
+  function summaryFee(value) {
+    if (typeof value !== "number" || !isFinite(value) || value < 0) return "Not reported";
+    if (value > 0 && value < .0001) return "<$0.0001";
+    return value > 0 && value < .01 ? "$" + value.toFixed(4) : summaryMoney(value, false);
+  }
+  function summaryQuantity(value) { return value === null ? "Not reported" : String(value); }
   function summaryText(id, text) {
     const node = document.getElementById(id); if (node.textContent !== text) node.textContent = text;
   }
@@ -64,6 +71,36 @@ _UI = r"""
       children.push(item);
     });
     list.replaceChildren.apply(list, children);
+  }
+  function summaryBusiness(prefix, venue, available) {
+    summaryText(prefix + "-business-time", available
+      ? (venue.current ? "Source checked " : "Last saved source: ") + summaryAge(venue.age) + ". " + venue.sourceNote
+      : "Waiting for venue connection details.");
+    summaryText(prefix + "-business-basis", venue.positionsBasis ? "Positions: " + venue.positionsBasis : "Position source not reported.");
+    summaryWarning(prefix + "-business-warning", venue.issues);
+    const rows = [], positions = venue.positions.slice(0, 8), orders = venue.orders.slice(0, 8);
+    positions.forEach(function (p) {
+      const scope = p.scope === "owner" ? "Your own bet" : p.scope === "bot" ? "Bot bet" : "Owner/bot not identified";
+      rows.push({ name: "Position · " + (p.title || "Market not reported"), lines: [
+        scope + " · " + (p.side || "Side not reported") + " · Contracts: " + summaryQuantity(p.quantity) + ".",
+        "Recorded cost: " + summaryMoney(p.cost, false) + "; price: " + summaryMoney(p.price, false) + ".",
+        "Fee: " + summaryFee(p.fee) + (p.feeBasis ? " (" + p.feeBasis + ")" : " (basis not reported)") + ".",
+      ] });
+    });
+    orders.forEach(function (o) {
+      rows.push({ name: "Order · " + (o.title || "Market not reported"), lines: [
+        (o.side || "Side not reported") + " · " + o.status + ".",
+        "Contracts: " + summaryQuantity(o.quantity) + "; filled: " + summaryQuantity(o.filled)
+          + "; remaining: " + summaryQuantity(o.remaining) + ".",
+        "Money reserved: " + summaryMoney(o.reserved, false) + ". An order is not a confirmed fill or profit.",
+      ] });
+    });
+    if (!rows.length) rows.push({ name: available ? "Saved positions and orders" : "Venue details unavailable",
+      lines: [available ? "No positions or orders listed in this saved report." : "Missing records do not mean zero holdings or fees."] });
+    summaryList(prefix + "-business", rows);
+    const clipped = venue.positions.length > positions.length || venue.orders.length > orders.length
+      || venue.truncated.positions === true || venue.truncated.orders === true;
+    summaryText(prefix + "-business-more", clipped ? "Only the first saved positions and orders are shown; this is not the full account history." : "");
   }
   function summaryRender() {
     const s = tycoonSummary(summaryData, Date.now() / 1000), k = s.accounts.kalshi;
@@ -98,15 +135,29 @@ _UI = r"""
       : k.practice ? "PRACTICE (Kalshi) · new real orders off" : k.stateText));
     summaryText("kalshi-cash", summaryMoney(k.cash, false));
     summaryText("kalshi-profit", summaryMoney(k.today, true));
+    summaryText("kalshi-pacific-profit", summaryMoney(k.todayPacific.value, true));
     summaryText("kalshi-risk", summaryMoney(k.exposure, false));
-    summaryText("kalshi-times", "Account checked " + summaryAge(k.age) + "; cash " + summaryAge(k.cashAge) + ".");
+    summaryText("kalshi-times", "Account checked " + summaryAge(k.age) + "; cash " + summaryAge(k.cashAge)
+      + "; Pacific profit " + summaryAge(k.todayPacific.age) + ".");
     summaryText("kalshi-reason", k.reason || "Kalshi has its own cash, positions and limits.");
     const kalshiWarnings = [];
     if (k.stale) kalshiWarnings.push("The Kalshi desk report is delayed or missing.");
     if (k.cashStale) kalshiWarnings.push("A current Kalshi cash balance is not available.");
     if (k.todayStale) kalshiWarnings.push("The UTC-day result is delayed or unavailable.");
+    if (!k.todayPacific.current) kalshiWarnings.push("A complete, current Pacific-day result is not available yet.");
     if (k.cleanupPending) kalshiWarnings.push("Resting-order cancellation and reconciliation are still pending.");
     summaryWarning("kalshi-warning", kalshiWarnings);
+    summaryBusiness("pm", s.business.venues.polymarket_us, s.business.available);
+    summaryBusiness("kalshi", s.business.venues.kalshi, s.business.available);
+    summaryList("activity", s.activity.length ? s.activity.slice(0, 12).map(function (e) {
+      const lines = [e.text, "Recorded " + summaryAge(e.age) + (e.current ? "." : "; awaiting a current source check.")];
+      if (e.fee !== null) lines.push("Recorded fee: " + summaryFee(e.fee)
+        + (e.feeBasis ? " (" + e.feeBasis + ")" : " (basis not reported)") + ".");
+      return { name: (e.venue === "kalshi" ? "Kalshi" : "Polymarket US")
+        + (e.scope === "owner" ? " · Your activity" : " · Bot activity"), lines: lines };
+    }) : [{ name: "No recorded real activity available", lines: ["Waiting for venue order, fill or settlement records. Practice activity is separate."] }]);
+    summaryText("activity-more", s.activity.length > 12 || s.business.venues.polymarket_us.truncated.events === true
+      || s.business.venues.kalshi.truncated.events === true ? "Recent saved events only; this is not the full account history." : "");
     const work = { working: "Recently active", waiting: "Waiting", idle: "Idle", stuck: "Needs attention", unknown: "No current report" };
     summaryList("crew", s.crew.length ? s.crew.map(function (c) {
       return { name: c.name + " · " + c.job,
@@ -117,7 +168,7 @@ _UI = r"""
     summaryList("research", s.research.map(function (r) {
       const lines = [history + r.status];
       if (r.count !== null) lines.push("Recorded: " + r.count + " " + r.countLabel + ".");
-      lines.push("Report checked " + summaryAge(r.age) + ".");
+      lines.push(r.timeLabel + " " + summaryAge(r.age) + ".");
       return { name: r.name + " · " + r.scope, lines: lines };
     }));
   }
@@ -178,20 +229,33 @@ def render_summary_html() -> str:
         '<dt>Account’s open markets</dt><dd id="pm-open">Not reported</dd>'
         '<dt>Reported value of those holdings</dt><dd id="pm-value">Not reported</dd></dl>'
         '<p class="muted">Cash and holdings include your own bets. Bot profit excludes your own bets, deposits and practice results.</p>'
-        '<p id="pm-times" class="times">Report times unknown.</p><p id="pm-warning" class="warning" hidden></p></section>'
+        '<p id="pm-times" class="times">Report times unknown.</p><p id="pm-warning" class="warning" hidden></p>'
+        '<h3>Recorded holdings and orders</h3><p id="pm-business-time" class="times"></p>'
+        '<p id="pm-business-basis" class="muted"></p><p id="pm-business-warning" class="warning" hidden></p>'
+        '<ul id="pm-business"><li>Waiting for venue details.</li></ul><p id="pm-business-more" class="muted"></p></section>'
         '<section aria-labelledby="kalshi-title"><h2 id="kalshi-title">Kalshi</h2>'
         '<p id="kalshi-state" class="status">No current Kalshi report</p>'
         '<dl><dt>Account cash</dt><dd id="kalshi-cash">Not reported</dd>'
+        '<dt>Bot profit since midnight Pacific</dt><dd id="kalshi-pacific-profit">Not reported</dd>'
         '<dt>Bot profit since midnight UTC</dt><dd id="kalshi-profit">Not reported</dd>'
         '<dt>Bot money at risk, including resting orders</dt><dd id="kalshi-risk">Not reported</dd></dl>'
         '<p id="kalshi-reason" class="muted">Kalshi has its own cash, positions and limits.</p>'
-        '<p class="muted">Its UTC-day result stays separate from Polymarket’s Pacific day. Cash is not profit.</p>'
-        '<p id="kalshi-times" class="times">Report times unknown.</p><p id="kalshi-warning" class="warning" hidden></p></section>'
+        '<p class="muted">The Pacific and UTC results cover different hours. They are not added together. Cash is not profit.</p>'
+        '<p id="kalshi-times" class="times">Report times unknown.</p><p id="kalshi-warning" class="warning" hidden></p>'
+        '<h3>Recorded holdings and orders</h3><p id="kalshi-business-time" class="times"></p>'
+        '<p id="kalshi-business-basis" class="muted"></p><p id="kalshi-business-warning" class="warning" hidden></p>'
+        '<ul id="kalshi-business"><li>Waiting for venue details.</li></ul><p id="kalshi-business-more" class="muted"></p></section>'
+        '<section aria-labelledby="activity-title"><h2 id="activity-title">Recent real activity</h2>'
+        '<p class="muted">Orders, fills and settlements from each venue. Your own activity stays separate from bot profit.</p>'
+        '<ul id="activity"><li>Waiting for venue records.</li></ul><p id="activity-more" class="muted"></p></section>'
         '<section aria-labelledby="crew-title"><h2 id="crew-title">Your team</h2>'
         '<ul id="crew"><li>Waiting for a crew report.</li></ul></section>'
         '<section aria-labelledby="research-title"><h2 id="research-title">Research</h2>'
         '<p class="muted">Practice and public observations do not count as real profit.</p>'
         '<ul id="research"><li>Waiting for observation reports.</li></ul></section>'
+        '<section aria-labelledby="growth-title"><h2 id="growth-title">How the town grows</h2>'
+        '<p>Garden upgrades use both bots’ recorded profit since midnight Pacific, only when both books are complete and current. '
+        'Losses can remove gardens, and midnight resets them. Deposits, your own bets and practice results do not count.</p></section>'
         '<section aria-labelledby="stop-title"><h2 id="stop-title">Stop new real orders</h2>'
         '<p>On Railway’s bot service, set both <code>POLYDESK_MODE=paper</code> and '
         '<code>SPEEDDESK_KALSHI_MODE=paper</code>.</p>'
