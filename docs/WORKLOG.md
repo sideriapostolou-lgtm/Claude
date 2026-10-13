@@ -13,6 +13,29 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-13 04:45 UTC, Claude, branch claude/kalshi-order-list-lag
+- Owner request: "Turn the real money back on make sure the system is perfect".
+- Done first: PR #19 deployed (924494b). The startup log named the 02:00 UTC stop `order_terminal_regressed`.
+  Claude set `SPEEDDESK_KALSHI_INTEGRITY_RESET_TOKEN` (the owner's "Yes, reset it"); at 04:37:44 UTC the stop
+  cleared ("the books and Kalshi matched with nothing open", cash $25.98) and REAL MONEY (Kalshi) resumed at
+  caps $5/$10/$6/$10. First trade after: 5 Down at 17c in the 04:45 window; the lock rule declined to pair it
+  at 04:41 because Up was above the 97c cap (`lock_price`), as designed.
+- Root cause of the 02:00 stop (from the logs): a 1-contract resting buy at 44c filled at 02:00:03; the fills
+  list showed it, and half a second later Kalshi's order list still showed the order resting with nothing
+  filled. The fill had released the order's hold, so the check read "a finished order came back" and stopped
+  real money for good. The books were right (the window settled normally at 02:15).
+- Changed: an order report that shows fewer fills than the bot already booked from Kalshi's fills list is
+  older than those fills: the read counts as not reconciled (no new orders) and the next read decides. If the
+  lag lasts over 30 s (`ORDER_LIST_LAG_S`), the old checks apply and the stop fires as before. A report that
+  agrees with the booked fills yet shows a released order open again still stops at once.
+- Verified: failing-first tests replaying the 02:00 sequence (fails on 924494b with `order_terminal_regressed`,
+  passes here), the partial-fill variant (`order_fill_count_mismatch`), the 30 s escalation, and a true
+  regression still stopping, and a stale report of an already-finished order not pausing trading. Full suite
+  4549 passed; mypy and ruff clean. No subagent review (weekly limit until 14:00 UTC); self-reviewed.
+- Not this PR's: 14 tests in test_learn_recorder.py and test_engine.py (memecoin learning recorder) fail from
+  about 04:00 UTC on the deployed code too; they pin fixed dates while something reads the real clock. Next.
+- Real money touched? Yes: real money back on (owner's word); this fix only changes when a lagging read stops it.
+
 ## 2026-10-13 03:10 UTC, Claude, branch claude/kalshi-integrity-reset
 - Owner request: Kalshi went to PRACTICE at 02:00:03 UTC with "real account reconciliation needs review" (a
   persisted reconciliation stop set by the pre-#16 code; nothing ever cleared it). Asked; the owner chose "Yes,

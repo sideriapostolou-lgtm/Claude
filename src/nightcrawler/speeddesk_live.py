@@ -56,6 +56,9 @@ log = logging.getLogger("nightcrawler.speeddesk")
 PREFIX = "nc-speed-"
 STATE_KEY = "kalshi_live_state"
 EPS = 1e-8
+# How long Kalshi's order list may trail its fills list before the mismatch stops real orders for good
+# (seen trailing by under a second on 2026-10-13; every read in between counts as not yet reconciled).
+ORDER_LIST_LAG_S = 30.0
 
 
 @dataclass(frozen=True)
@@ -203,6 +206,8 @@ class KalshiLiveDesk:
         # What the owner's approved one-time reset of that stop is waiting for (each reason logged once).
         self.reset_blocker = ""
         self.reset_reported: set[str] = set()
+        # When each order's Kalshi report was first seen trailing its booked fills (ORDER_LIST_LAG_S).
+        self.order_list_lag: dict[str, float] = {}
         limits = LiveLimits(window_usd=settings.speeddesk_kalshi_window_usd,
                             open_usd=settings.speeddesk_kalshi_open_usd,
                             day_loss_usd=settings.speeddesk_kalshi_day_stop_usd,
@@ -669,8 +674,19 @@ class KalshiLiveDesk:
                                   status=status,  # type: ignore[arg-type]
                                   filled_size=_number(raw["fill_count_fp"]),
                                   remaining_size=_number(raw["remaining_count_fp"]), at=self.clock())
-            confirmed = self.book.reconcile_order(order, fills_complete=True)
-            if order.filled_size > self.book.intents[intent.client_order_id].filled_size + EPS:
+            booked = self.book.intents[intent.client_order_id].filled_size
+            # An order already confirmed finished never waits on a stale report (the book ignores those).
+            behind = order.filled_size + EPS < booked and not intent.terminal
+            if behind:  # the order list trails the fills already booked; tolerated for ORDER_LIST_LAG_S
+                since = self.order_list_lag.setdefault(intent.client_order_id, self.clock())
+            else:
+                self.order_list_lag.pop(intent.client_order_id, None)
+            confirmed = self.book.reconcile_order(
+                order, fills_complete=True,
+                lag_ok=behind and self.clock() - since <= ORDER_LIST_LAG_S)
+            if behind:
+                consistent = False  # no new orders until a fresh read agrees
+            elif order.filled_size > booked + EPS:
                 consistent = False
             elif abs(order.filled_size - self.book.intents[intent.client_order_id].filled_size) <= EPS:
                 intent.uncertain = False

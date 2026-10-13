@@ -612,3 +612,47 @@ def test_corrupt_persisted_reset_approval_fails_closed(value):
         LiveRiskBook.from_state(state)
     state.pop("integrity_reset_armed")  # a state from before the reset existed still loads
     assert LiveRiskBook.from_state(state).integrity_reset_armed is None
+
+
+# Kalshi's order list can trail its fills list (2026-10-13 02:00:03 UTC: a one-contract fill was booked, then the
+# order was still listed as resting with nothing filled, and the old check stopped real money for good).
+
+def test_order_report_behind_booked_fills_waits_instead_of_stopping():
+    book = make_book()
+    intent = reserve(book, kind="rest", price=.44, size=1)
+    actual_fill(book, intent, size=1, fee=0)  # the fills list shows the whole order filled: its hold is released
+    behind = snapshot(intent, status="resting", filled=0, remaining=1, at=1012)
+    assert not book.reconcile_order(behind, fills_complete=True, lag_ok=True)
+    assert book.integrity_error is None and intent.uncertainty == "order_list_behind_fills"
+    assert book.reconcile_order(snapshot(intent, status="executed", filled=1, remaining=0, at=1013),
+                                fills_complete=True)
+    assert book.integrity_error is None and not intent.reservation_active
+
+
+def test_order_report_behind_booked_fills_still_stops_once_the_lag_is_too_long():
+    book = make_book()
+    intent = reserve(book, kind="rest", price=.44, size=1)
+    actual_fill(book, intent, size=1, fee=0)
+    with pytest.raises(LiveRejected, match="order_terminal_regressed"):
+        book.reconcile_order(snapshot(intent, status="resting", filled=0, remaining=1, at=1012), fills_complete=True)
+
+
+def test_partly_filled_order_report_behind_booked_fills_waits_too():
+    book = make_book()
+    intent = reserve(book, size=4)
+    actual_fill(book, intent, size=3, fee=.0168)
+    behind = snapshot(intent, status="resting", filled=1, remaining=3, at=1012)
+    assert not book.reconcile_order(behind, fills_complete=True, lag_ok=True)
+    assert book.integrity_error is None and intent.reservation_active
+    with pytest.raises(LiveRejected, match="order_fill_count_mismatch"):
+        book.reconcile_order(replace(behind, at=1013), fills_complete=True)
+
+
+def test_a_true_regression_still_stops_even_while_lag_is_tolerated():
+    """An order report that agrees with the booked fills yet shows a released order open again is not lag."""
+    book = make_book()
+    intent = reserve(book, size=4)
+    assert book.reconcile_order(snapshot(intent), fills_complete=True)
+    with pytest.raises(LiveRejected, match="order_terminal_regressed"):
+        book.reconcile_order(snapshot(intent, status="resting", remaining=4, at=1013), fills_complete=True,
+                             lag_ok=True)

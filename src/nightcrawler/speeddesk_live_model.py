@@ -490,7 +490,7 @@ class LiveRiskBook:
         self._refresh_stops(fill.at)
         return True
 
-    def reconcile_order(self, snapshot: OrderSnapshot, *, fills_complete: bool = False) -> bool:
+    def reconcile_order(self, snapshot: OrderSnapshot, *, fills_complete: bool = False, lag_ok: bool = False) -> bool:
         intent = self.intents.get(snapshot.client_order_id)
         if intent is None:
             return False
@@ -503,6 +503,12 @@ class LiveRiskBook:
             raise LiveRejected(self.integrity_error)
         if snapshot.filled_size + EPSILON < intent.reported_filled_size:
             intent.uncertainty = "order_fill_count_regressed"
+            return False
+        if lag_ok and snapshot.filled_size + EPSILON < intent.filled_size:
+            # Kalshi's order list can trail its fills list (2026-10-13 02:00:03 UTC: a one-contract fill was
+            # booked, then the order was still listed as resting with nothing filled). A report older than fills
+            # already booked proves nothing new; the caller re-reads, and stops for good if the lag persists.
+            intent.uncertainty = "order_list_behind_fills"
             return False
         if not intent.reservation_active and snapshot.remaining_size > EPSILON:
             intent.reservation_active = True
