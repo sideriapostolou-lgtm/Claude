@@ -9,10 +9,11 @@ TYCOON_HTML = """
   <div class="ty-heading"><div><span class="ty-logo" aria-hidden="true">N</span><h1>Nightcrawler<span>YOUR BUSINESS TYCOON</span></h1></div>
     <button type="button" id="ty-more" aria-controls="panel" aria-label="Open town menu">Menu <span aria-hidden="true">☰</span></button></div>
   <div class="ty-money">
-    <div><span>Polymarket cash</span><b id="ty-cash">—</b><small>PM bot profit · today PT <strong id="ty-today">—</strong></small></div>
-    <div><span>Kalshi cash</span><b id="ty-kalshi-cash">—</b><small>Bot profit · today PT <strong id="ty-kalshi-today">—</strong></small></div>
+    <div><span>Kalshi cash</span><b id="ty-cash">—</b><small>Available account cash</small></div>
+    <div><span>Kalshi bot profit</span><b id="ty-today">—</b><small>Since midnight Pacific</small></div>
   </div>
   <div class="ty-status"><span id="ty-state" role="status">Connecting</span><span id="ty-fresh">Waiting for reports</span></div>
+  <div id="ty-exposure">Waiting for Kalshi account records</div>
   <button type="button" id="ty-alert" aria-controls="panel" hidden></button>
 </section>
 <div id="ty-markers" aria-label="Town workstations"></div>
@@ -55,8 +56,9 @@ body.tycoon #ty-header { top: calc(8px + env(safe-area-inset-top)); left: 9px; r
 .ty-money .positive { color: #238243; } .ty-money .negative { color: #b13c3c; }
 .ty-status { display: flex; gap: 5px; align-items: baseline; justify-content: space-between; margin-top: 5px; font-size: 8px; line-height: 1.25; color: #607787; }
 #ty-state { flex-shrink: 0; font-weight: 700; } #ty-state.on { color: #256c47; }
-#ty-state.paused, #ty-state.stale, #ty-state.offline { color: #985a12; }
+#ty-state.paused, #ty-state.stale, #ty-state.offline, #ty-state.blocked, #ty-state.exposure { color: #985a12; }
 #ty-fresh { text-align: right; max-width: 50%; }
+#ty-exposure { margin-top: 4px; font-size: 9px; line-height: 1.3; color: #56768b; }
 #ty-alert { width: 100%; min-height: 44px; margin-top: 7px; padding: 6px 9px; text-align: left; cursor: pointer;
   font: inherit; font-size: 11px; border-radius: 8px; border: 1px solid #e0b965; color: #70460b; background: #fff1c9; }
 #ty-alert[hidden], body.tycoon #ty-selection[hidden] { display: none; }
@@ -80,6 +82,8 @@ body.tycoon #ty-markers { display: block; position: fixed; inset: 0; pointer-eve
 .ty-marker b::before { content: ""; display: inline-block; width: 5px; height: 5px; border-radius: 50%; margin-right: 4px; vertical-align: middle; background: #91a4ab; }
 .ty-marker[data-status="working"] b::before { background: #47a466; }
 .ty-marker[data-status="stuck"] b::before { background: #d08c29; }
+.ty-marker[data-background="true"] b { background: #edf2f5; color: #667e8b; font-size: 9px; border-bottom-color: #bdccd4; }
+.ty-marker[data-background="true"] b::before { background: #91a4ab; }
 .ty-marker small { display: none; }
 .ty-marker[hidden] { display: none; }
 body.tycoon #cine, body.tycoon #tags, body.tycoon #intro, body.tycoon #details, body.tycoon #bar,
@@ -109,6 +113,11 @@ body.tycoon #panel .ty-flow-card { border-color: #d1e2e9; }
 .ty-money > div > small { display: block; font-size: 8px; line-height: 1.25; color: #607787; margin-top: 2px; }
 .ty-money strong { font-size: 10px; color: #203846; white-space: nowrap; }
 .ty-flow-card, .ty-position { overflow-wrap: anywhere; }
+.ty-details { border-top: 1px solid #c8dce8; margin-top: 12px; padding-top: 4px; }
+.ty-details > summary { min-height: 44px; display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; font-weight: 750; }
+.ty-details > summary::before { content: "▸"; color: #167cb9; }
+.ty-details[open] > summary::before { content: "▾"; }
+.ty-details > summary:focus-visible { outline: 3px solid #ffb72e; outline-offset: 2px; }
 .ty-position small { color: #bbc9bd; }
 .ty-flow-card { padding: 12px; margin-top: 12px; border: 1px solid #c8dbc033; border-left: 4px solid #9acbae; border-radius: 10px; }
 .ty-flow-card h3 { margin: 0 0 8px; font-size: 16px; } .ty-flow-card p { margin: 8px 0; } .ty-flow-card.practice { border-left-color: #bdabdf; }
@@ -122,7 +131,7 @@ body.tycoon #panel .ty-flow-card { border-color: #d1e2e9; }
 
 TYCOON_UI = r"""
   // ============================================================= TYCOON CONTROLS (read-only)
-  const TY_UI = { summary: null, stamp: -1, markers: [], people: [], top: 140, bottom: 70 };
+  const TY_UI = { summary: null, stamp: -1, markers: [], people: [], top: 140, bottom: 70, openDetails: {} };
   const tyHeader = el("ty-header"), tyDock = el("ty-dock"), tyMarkers = el("ty-markers");
   function tyAge(seconds) {
     if (seconds == null || !isFinite(seconds)) return "time unknown";
@@ -175,11 +184,12 @@ TYCOON_UI = r"""
       m.style.borderBottomColor = colour; m.style.setProperty("--ty-department", colour);
       m.onclick = b.onclick; tyMarkers.appendChild(m);
       const at = LAMP_AT[CAST[key].room].clone(); at.y += 2.2;
-      TY_UI.markers.push({ key: key, el: m, sub: sub, at: at, w: 0 });
+      TY_UI.markers.push({ key: key, el: m, label: label, sub: sub, at: at, w: 0 });
     }
   }
   function tycoonDraw() {
     const s = tycoonSummary(data, Date.now() / 1000); TY_UI.summary = s;
+    if (typeof cineVaultDraw === "function") cineVaultDraw();
     if (offline) {
       s.activitySources = { polymarket_us: false, kalshi: false };
       (s.activity || []).forEach(function (e) { e.current = false; });
@@ -187,28 +197,26 @@ TYCOON_UI = r"""
     }
     tycoonParkApply(s);
     if (typeof tycoonBusinessApply === "function") tycoonBusinessApply(s);
-    const state = offline ? "offline" : s.state;
-    const stateWords = { on: "PM live", off: "PM buys off", paused: "PM paused", stale: "Data delayed", offline: "Reconnecting", unknown: "No report yet" };
-    const status = el("ty-state"); status.className = state; status.textContent = (stateWords[state] || "No report yet")
-      + (s.accounts && s.accounts.kalshi ? " · Kalshi " + s.accounts.kalshi.state : "");
-    const alerts = data && Array.isArray(data.alerts) ? data.alerts : [];
-    const warning = offline ? statusEl.textContent : alerts.length ? alerts[0].text : "";
+    const f = s.focus, k = f.account, state = offline ? "offline" : f.state;
+    const stateWords = { live: "REAL MONEY · Kalshi", "pairs only": "REAL MONEY · completing pairs",
+      practice: "PRACTICE · Kalshi", exposure: "Kalshi · real bets remain", blocked: "Kalshi · buys blocked",
+      stale: "Kalshi · data delayed", offline: "Reconnecting", unknown: "Kalshi · waiting for report" };
+    const status = el("ty-state"); status.className = state === "live" ? "on" : state;
+    status.textContent = stateWords[state] || "Kalshi · waiting for report";
+    const warning = tycoonFocusWarning(s, offline);
     el("ty-alert").hidden = !warning; tyText("ty-alert", warning || "");
-    tyText("ty-cash", fmtUsd(s.cash)); tyText("ty-today", fmtSigned(s.today));
-    const kalshiCash = s.accounts && s.accounts.kalshi;
-    tyText("ty-kalshi-cash", fmtUsd(kalshiCash ? kalshiCash.cash : null));
-    tyText("ty-kalshi-today", fmtSigned(kalshiCash && kalshiCash.todayPacific ? kalshiCash.todayPacific.value : null));
-    el("ty-today").className = s.today > 0 ? "positive" : s.today < 0 ? "negative" : "";
+    tyText("ty-cash", fmtUsd(f.cash)); tyText("ty-today", fmtSigned(f.today));
+    el("ty-today").className = f.today > 0 ? "positive" : f.today < 0 ? "negative" : "";
     const oldMoney = [];
-    if (s.cashStale) oldMoney.push("Cash checked " + tyAge(s.cashAge));
-    else if (s.cash !== null && !s.cashAsOf) oldMoney.push("Cash update time unknown");
-    if (s.venueStale) oldMoney.push("Account bets checked " + tyAge(s.venueAge));
-    else if (s.count !== null && !s.venueAsOf) oldMoney.push("Account bets update time unknown");
-    if (s.todayStale) oldMoney.push("Profit checked " + tyAge(s.todayAge));
-    if (kalshiCash && kalshiCash.cashStale) oldMoney.push("Kalshi cash needs an update");
-    tyText("ty-fresh", offline ? "Connection lost · showing the last report" : s.stale ? "Last report " + tyAge(s.deskAge) + " · figures may be old"
-      : oldMoney.length ? oldMoney.join(" · ") + " · may be old"
-      : s.updated ? "Cash checked " + tyAge(s.cashAge) + " · bets " + tyAge(s.venueAge) : "Waiting for the bot’s report…");
+    if (f.cashStale) oldMoney.push(f.cashAt ? "Cash checked " + tyAge(f.cashAge) : "Cash time unknown");
+    if (k.accountStale) oldMoney.push(k.accountAt ? "Account checked " + tyAge(k.accountAge) : "Account time unknown");
+    if (!f.todayCurrent) oldMoney.push("Profit needs verification");
+    tyText("ty-fresh", offline ? "Connection lost · last report" : f.stale ? "Waiting for fresh Kalshi data"
+      : oldMoney.length ? oldMoney.join(" · ")
+      : f.cashAt ? "Cash checked " + tyAge(f.cashAge) : "Waiting for Kalshi");
+    const count = function (n, word) { return n === null ? word + " unknown" : n + " " + word; };
+    tyText("ty-exposure", count(f.positions, "positions") + " · " + count(f.orders, "waiting orders")
+      + " · " + fmtUsd(f.exposure) + " at risk" + (offline || k.accountStale ? " · last report" : ""));
     const chosen = s.crew.find(function (c) { return c.key === TYCOON.selected; }) || (CAST[TYCOON.selected] ? {
       name: CAST[TYCOON.selected].name, job: "Workstation", status: "unknown", doing: "Waiting for a crew report.", age: null, practice: null,
     } : null);
@@ -218,7 +226,7 @@ TYCOON_UI = r"""
       const n = s.crew.filter(function (c) { return c.status === k; }).length;
       return n ? n + " " + ({ working: "active", waiting: "waiting", idle: "idle", stuck: "need attention", unknown: "unreported" }[k]) : "";
     }).filter(Boolean).join(" · ");
-    tyText("ty-context", chosen ? (chosen.practice ? "PRACTICE DESK" : "TEAM WORKSTATION") : "YOUR CREW");
+    tyText("ty-context", chosen ? (chosen.background ? chosen.practice ? "BACKGROUND PRACTICE" : "BACKGROUND DESK" : "KALSHI WORKSTATION") : "YOUR CREW");
     tyText("ty-focus", chosen ? chosen.name + " · " + chosen.job : "The whole town");
     el("ty-info").setAttribute("aria-label", chosen ? "About " + chosen.name + "’s workstation" : "How the town works");
     tyText("ty-doing", chosen ? (workWords[chosen.status] || "No current report") + ". " + chosen.doing + (chosen.age == null ? "" : " · " + tyAge(chosen.age))
@@ -237,24 +245,49 @@ TYCOON_UI = r"""
     for (const m of TY_UI.markers) {
       const c = s.crew.find(function (q) { return q.key === m.key; });
       m.el.dataset.status = c ? c.status : "unknown";
+      const background = c ? c.background === true : ["pip", "nyx"].includes(m.key);
+      m.el.dataset.background = String(background);
+      const markerName = c ? c.name : CAST[m.key].name;
+      const label = markerName + (background ? c && c.practice === true ? " · practice" : " · background" : "");
+      if (m.label.textContent !== label) { m.label.textContent = label; m.w = 0; }
       if (c) {
         const job = c.practice ? c.job + " · practice" : c.job;
         if (m.sub.textContent !== job) { m.sub.textContent = job; m.w = 0; }
         m.el.setAttribute("aria-label", "View " + c.name + "’s workstation");
       } else { m.sub.textContent = "No current report"; m.w = 0; }
     }
-    tyText("ty-event-text", s.event ? s.event.text : "Waiting for recorded real-money activity");
+    tyText("ty-event-text", s.event ? s.event.text : "Kalshi · waiting for the next recorded event");
     tyText("ty-event-age", s.event ? tyAge(s.event.age) : "");
     const growth = s.growth;
     tyText("ty-growth", growth && growth.qualified ? "Gardens " + growth.level + "/5 · " + growth.label
-      : "Town growth waits for complete results · tap a building to visit");
+      : "Kalshi gardens wait for verified profit · tap a building to visit");
     if (panelKind && panelKind.indexOf("ty-") === 0 && panelKind !== "ty-menu") tycoonPanel();
     tycoonMeasure();
   }
-  function tycoonBusinessDetails(parent, s) {
+  function tycoonFocusWarning(s, disconnected) {
+    if (disconnected) return statusEl.textContent || "Connection lost. Showing the last Kalshi report.";
+    const f = s.focus, k = f.account;
+    if (k.integrityNote) return k.integrityNote;
+    if (k.cleanupPending) return "Kalshi order cancellation and account checks are still pending.";
+    if (f.stale || f.state === "unknown") return "Waiting for a fresh Kalshi connection. Figures may be old.";
+    if (k.totalHalted) return k.stopNote;
+    if (k.locksOnly) return k.stateText;
+    if (f.book.status === "incomplete") return "Kalshi records need review; profit and town growth are unverified.";
+    if (f.cashStale) return "Kalshi cash needs a fresh balance read.";
+    return "";
+  }
+  function tycoonDetails(parent, title, key) {
+    const box = document.createElement("details"), label = document.createElement("summary");
+    box.className = "ty-details"; box.dataset.detailKey = key; label.textContent = title;
+    const state = TY_UI.openDetails || (TY_UI.openDetails = {});
+    box.open = state[key] === true;
+    box.ontoggle = function () { state[key] = box.open; };
+    box.appendChild(label); parent.appendChild(box); return box;
+  }
+  function tycoonBusinessDetails(parent, s, venueKey) {
     const heading = function (words) { const h = document.createElement("h3"); h.textContent = words; parent.appendChild(h); };
     const amount = function (value) { return value === null ? "unknown" : String(value); };
-    ["polymarket_us", "kalshi"].forEach(function (key) {
+    [venueKey || "kalshi"].forEach(function (key) {
       const v = s.business.venues[key]; heading(v.name + " · recorded orders and bets");
       para(parent, v.sourceNote || "Waiting for saved venue records.", "dim");
       para(parent, v.asOf ? (key === "kalshi" ? "Saved checkpoint " : "Completed desk update ") + tyAge(v.age)
@@ -280,14 +313,31 @@ TYCOON_UI = r"""
       } else para(parent, "No individual holdings recorded here; check the account totals above.", "dim");
       if (v.truncated.orders || v.truncated.positions || v.truncated.events) para(parent, "Showing the most recent records; this list is not the entire history.", "dim");
     });
-    heading("Latest real activity");
-    if (!s.activity.length) para(parent, "No real event records available yet.", "dim");
-    s.activity.slice(0, 12).forEach(function (e) {
+    const activity = s.business.activity.filter(function (e) { return e.venue === (venueKey || "kalshi"); });
+    heading("Latest " + (venueKey === "polymarket_us" ? "Polymarket" : "Kalshi") + " activity");
+    if (!activity.length) para(parent, "No real event records available yet.", "dim");
+    activity.slice(0, 12).forEach(function (e) {
       para(parent, e.text);
       para(parent, tyAge(e.age) + (e.current ? "" : " · source needs an update")
         + (e.fee !== null ? " · " + (e.feeBasis || "recorded") + " fee " + tyFee(e.fee) : ""), "dim");
     });
     para(parent, "Orders reserve money; only fills create holdings. Held-to-settlement profit includes recorded fees. Cash-outs use venue realized figures; fee inclusion may be unknown. A cancellation request does not prove the order was cancelled.", "dim");
+  }
+  function tycoonResearchDetails(parent, s) {
+    (s.research || []).forEach(function (r) {
+      const h = document.createElement("h3"); h.textContent = r.name + " · " + r.scope; parent.appendChild(h);
+      para(parent, r.status);
+      if (r.count !== null) para(parent, r.count + " " + r.countLabel, "dim");
+      para(parent, r.asOf ? (r.timeLabel || "Report checked") + " " + tyAge(r.age) : "No current report", "dim");
+    });
+    para(parent, "Research and practice stay separate from real money. They never change Kalshi cash, profit or gardens.", "dim");
+  }
+  function tycoonOtherAlerts(parent) {
+    const alerts = data && Array.isArray(data.alerts) ? data.alerts.filter(function (a) { return a && a.text; }) : [];
+    if (!alerts.length) return;
+    const other = tycoonDetails(parent, "Other service notices (" + alerts.length + ")", "service-notices");
+    alerts.forEach(function (a) { para(other, a.text, "warn"); });
+    para(other, "These notices keep their original desk or service scope. They do not describe Kalshi unless they name it.", "dim");
   }
   function tycoonPanel() {
     if (!panelKind || panelKind.indexOf("ty-") !== 0) return false;
@@ -298,7 +348,10 @@ TYCOON_UI = r"""
     const focusedRow = typeof document !== "undefined" && document.activeElement
       && document.activeElement.classList.contains("ty-menu-row") && panelBody.contains(document.activeElement)
       ? document.activeElement.textContent : null;
+    const focusedDetails = document.activeElement && document.activeElement.tagName === "SUMMARY"
+      && panelBody.contains(document.activeElement) ? document.activeElement.parentElement.dataset.detailKey : null;
     const s = TY_UI.summary || tycoonSummary(data, Date.now() / 1000), scroll = panelEl.scrollTop;
+    const f = s.focus, k = f.account;
     panelBody.textContent = ""; panelEl.className = "";
     const row = function (title, target, action) {
       const b = document.createElement(target && target[0] === "/" ? "a" : "button");
@@ -314,27 +367,26 @@ TYCOON_UI = r"""
       panelTitle.textContent = "Your team";
       para(panelBody, "Tap a teammate or their building to visit their workstation.", "dim");
       const crew = document.createElement("div"); crew.className = "ty-menu-crew";
-      TY_UI.people.forEach(function (p) { crew.appendChild(p.b); }); panelBody.appendChild(crew);
-      para(panelBody, "The observatory shows the Bitcoin and weather research desks. Research is separate from real money.", "dim");
+      TY_UI.people.filter(function (p) { return !["pip", "nyx"].includes(p.key); }).forEach(function (p) { crew.appendChild(p.b); });
+      panelBody.appendChild(crew);
+      const background = tycoonDetails(panelBody, "Background practice and research", "team-background");
+      const labs = document.createElement("div"); labs.className = "ty-menu-crew";
+      TY_UI.people.filter(function (p) { return ["pip", "nyx"].includes(p.key); }).forEach(function (p) { labs.appendChild(p.b); });
+      background.appendChild(labs); tycoonResearchDetails(background, s);
+      para(panelBody, "The town follows Kalshi. Polymarket remains separate; its real-money status is in Money.", "dim");
     } else if (panelKind === "ty-help") {
       panelTitle.textContent = "Help";
       para(panelBody, "Tap a building to see who works there. Drag to look around; pinch to zoom. Town returns to the full view.");
       para(panelBody, "Walking and chatting are decoration. Work descriptions and money come from the bot’s recorded reports.");
-      para(panelBody, "Garden upgrades reflect both bots’ combined recorded profit since midnight Pacific: 1¢, 25¢, $1, $5 and $10. Both books must be complete and current. Losses can remove gardens; midnight resets them. Practice, deposits and your own bets do not count.", "dim");
-      para(panelBody, "Jet shows order and fill receipts; Mote records settled results. Only a newly received, dated, real bot profit can trigger a gold delivery. Old events are never replayed on reconnect. Neither movement nor a submitted order means money was made.", "dim");
+      para(panelBody, "Garden upgrades reflect Kalshi bot profit since midnight Pacific: 1¢, 25¢, $1, $5 and $10. Its saved results must be complete and current. Losses can remove gardens; midnight resets them. Polymarket, practice, deposits and your own bets do not count.", "dim");
+      para(panelBody, "Jet shows Kalshi order and fill receipts; Mote records its settled results. Only a newly received, dated, real Kalshi bot profit can trigger a gold delivery. Old events are never replayed on reconnect. Neither movement nor a submitted order means money was made.", "dim");
       const title = document.createElement("h3"); title.textContent = "Stop new real orders"; panelBody.appendChild(title);
       para(panelBody, "On Railway’s bot service, set both POLYDESK_MODE = paper and SPEEDDESK_KALSHI_MODE = paper.");
       para(panelBody, "After the restart, verify both desks are in practice and Kalshi’s resting bids were cancelled and remaining exposure reconciled.");
       para(panelBody, "Already filled bets still win or lose at settlement. This page gives instructions; it does not change trading settings.", "warn");
     } else if (panelKind === "ty-research") {
       panelTitle.textContent = "Research desks";
-      (s.research || []).forEach(function (r) {
-        const h = document.createElement("h3"); h.textContent = r.name + " · " + r.scope; panelBody.appendChild(h);
-        para(panelBody, r.status);
-        if (r.count !== null) para(panelBody, r.count + " " + r.countLabel, "dim");
-        para(panelBody, r.asOf ? (r.timeLabel || "Report checked") + " " + tyAge(r.age) : "No current report", "dim");
-      });
-      para(panelBody, "Research and practice results never count as real profit or unlock gardens.", "dim");
+      tycoonResearchDetails(panelBody, s);
     } else if (panelKind === "ty-stop") {
       panelTitle.textContent = "Stop new real orders";
       para(panelBody, "On Railway’s bot service, set both:");
@@ -342,63 +394,72 @@ TYCOON_UI = r"""
       para(panelBody, "Wait for the restart and verify that both desks report practice. Check that Kalshi’s resting bids were cancelled and its remaining exposure was reconciled.");
       para(panelBody, "Already filled bets stay open and still win or lose at settlement. This page shows instructions; it does not change trading settings.", "warn");
     } else if (panelKind === "ty-accounts") {
-      panelTitle.textContent = "Your money";
-      para(panelBody, "POLYMARKET US", "dim");
-      para(panelBody, "Available cash: " + fmtUsd(s.cash));
-      para(panelBody, "Open markets: " + (s.count == null ? "not reported" : s.count) + " · value " + fmtUsd(s.value));
-      para(panelBody, "Shared with your own bets. Cash is not profit. " + (s.stateText || "Money mode not reported."), "dim");
-      para(panelBody, "Bot profit today (midnight Pacific): " + fmtSigned(s.today));
-      para(panelBody, "Profit excludes your own bets, deposits and practice. It uses the bot’s recorded booking time; late discoveries can differ from venue history.", "dim");
-      if (s.limits && [s.limits.open, s.limits.day, s.limits.total].some(function (n) { return n !== null; })) para(panelBody, "Reported limits: " + fmtUsd(s.limits.open) + " open · " + fmtUsd(s.limits.day)
-        + " daily loss stop · " + fmtUsd(s.limits.total) + " total loss stop. Safety days use UTC.", "dim");
-      para(panelBody, s.cashAsOf ? "Cash checked " + tyAge(s.cashAge) + "." : "Cash update time unknown.", "dim");
-      para(panelBody, s.venueAsOf ? "Open bets checked " + tyAge(s.venueAge) + "." : "Open-bet update time unknown.", "dim");
-      if (s.todayReason || s.today === null || s.todayStale) para(panelBody, s.todayReason || "The Pacific-day profit report is unavailable or old.", "warn");
-      if (s.pending && s.pending.count) para(panelBody, s.pending.count + " bot orders still awaiting confirmation.", "warn");
-      if (s.positions.length && !(s.business && s.business.available)) {
-        para(panelBody, "Recorded bets · may differ from current account holdings", "dim");
-        s.positions.forEach(function (p) { para(panelBody, p.side + " · " + p.question); });
-        para(panelBody, s.positionsNote, "dim");
+      panelTitle.textContent = "Kalshi money";
+      para(panelBody, (k.active ? "REAL MONEY (Kalshi)" : k.practice ? "PRACTICE (Kalshi)" : k.stateText) + " · cash " + fmtUsd(f.cash));
+      para(panelBody, "Bot profit today (midnight Pacific): " + fmtSigned(f.today));
+      para(panelBody, "Cash is the account balance. Profit is settled bot winnings minus losses and fees; they are different numbers.", "dim");
+      para(panelBody, "Money at risk: " + fmtUsd(k.exposure) + " · " + (k.positions === null ? "unknown" : k.positions) + " positions");
+      para(panelBody, (k.orders === null ? "Unknown" : k.orders) + " waiting orders · cash reserved " + fmtUsd(k.reserved));
+      para(panelBody, k.cashAt ? "Kalshi cash checked " + tyAge(k.cashAge) + "." : "Kalshi cash update time is unknown.", "dim");
+      if (k.reason && !k.integrityNote && !k.locksOnly) para(panelBody, k.reason, "dim");
+      if (k.active && k.locksOnly) para(panelBody, k.stateText, "warn");
+      if (k.totalHalted) para(panelBody, k.stopNote, "warn");
+      if (k.integrityNote) para(panelBody, k.integrityNote, "warn");
+      if (k.integrityResetNote) para(panelBody, k.integrityResetNote, "warn");
+      if (k.cashStale) para(panelBody, "Kalshi cash may be old; waiting for a fresh balance read.", "warn");
+      if (!f.todayCurrent) para(panelBody, f.todayReason || "Kalshi’s Pacific-day profit is unverified.", "warn");
+      if (k.cleanupPending) para(panelBody, "Resting-order cancellation and reconciliation are still pending.", "warn");
+      if (k.stale) para(panelBody, "Kalshi’s report is delayed or missing. These figures may be old.", "warn");
+      if (s.business.available) {
+        const receipts = tycoonDetails(panelBody, "Kalshi orders, positions and receipts", "kalshi-receipts");
+        tycoonBusinessDetails(receipts, s, "kalshi");
       }
-      const k = s.accounts && s.accounts.kalshi;
-      para(panelBody, "KALSHI", "dim");
-      if (k) {
-        para(panelBody, (k.active ? "REAL MONEY (Kalshi)" : k.practice ? "PRACTICE (Kalshi)" : k.stateText) + " · cash " + fmtUsd(k.cash));
-        if (k.active && k.locksOnly) para(panelBody, k.stateText, "warn");
-        para(panelBody, "Money at risk: " + fmtUsd(k.exposure) + " · today (UTC): " + fmtSigned(k.today));
-        if (k.riskNote) para(panelBody, k.riskNote, "dim");
-        if (k.todayPacific) para(panelBody, "Bot profit today (midnight Pacific): " + fmtSigned(k.todayPacific.value));
-        if (k.todayPacific && k.todayPacific.reason) para(panelBody, k.todayPacific.reason, "warn");
-        if (k.limits && [k.limits.window, k.limits.open, k.limits.day, k.limits.total].some(function (n) { return n !== null; })) para(panelBody, "New-bet limits: " + fmtUsd(k.limits.window) + " per window · " + fmtUsd(k.limits.open)
-          + " at risk · " + fmtUsd(k.limits.day) + " daily loss stop · " + fmtUsd(k.limits.total) + " total loss stop (UTC).", "dim");
-        if (k.limitsNote) para(panelBody, k.limitsNote, "dim");
-        if (k.totalHalted) para(panelBody, k.stopNote, "warn");
-        para(panelBody, "Cash reserved for orders: " + fmtUsd(k.reserved == null ? null : k.reserved) + ".", "dim");
-        if (k.reserveNote) para(panelBody, k.reserveNote, "dim");
-        para(panelBody, "Fees paid today (UTC): " + tyFee(k.fees == null ? null : k.fees) + ". Settled profit already includes its fees.", "dim");
-        para(panelBody, "Settled profit split (UTC): matched pairs " + fmtSigned(k.locked == null ? null : k.locked)
-          + " · direction " + fmtSigned(k.directional == null ? null : k.directional), "dim");
-        if (k.reason && !k.integrityNote && !k.locksOnly) para(panelBody, k.reason, "dim");
-        para(panelBody, k.cashAt ? "Kalshi cash checked " + tyAge(k.cashAge) + "." : "Kalshi cash update time is unknown.", "dim");
-        para(panelBody, k.asOf ? "Kalshi desk report " + tyAge(k.age) + "." : "Kalshi desk report time is unknown.", "dim");
-        para(panelBody, k.accountAt ? "Account reconciliation recorded " + tyAge(k.accountAge)
-          + (k.accountStale ? " · may be old." : ".") : "Account reconciliation time is not recorded; a desk report or checkpoint does not prove the account was checked.", "dim");
-        if (k.integrityNote) para(panelBody, k.integrityNote, "warn");
-        if (k.integrityResetNote) para(panelBody, k.integrityResetNote, "warn");
-        if (k.cashStale) para(panelBody, "Kalshi cash may be old; waiting for a fresh balance read.", "warn");
-        if (k.todayStale) para(panelBody, "Kalshi’s UTC-day result is delayed or unavailable.", "warn");
-        if (k.cleanupPending) para(panelBody, "Resting-order cancellation and reconciliation are still pending.", "warn");
-        if (k.stale) para(panelBody, "Kalshi’s report is delayed or missing. These figures may be old.", "warn");
-      } else para(panelBody, "Waiting for a Kalshi account report.", "dim");
-      para(panelBody, "Accounts stay separate. Kalshi’s UTC day is not added to Polymarket’s Pacific day.", "dim");
-      if (s.business && s.business.available) tycoonBusinessDetails(panelBody, s);
+      const limits = tycoonDetails(panelBody, "Limits, fees and account checks", "kalshi-checks");
+      if (k.limits && [k.limits.window, k.limits.open, k.limits.day, k.limits.total].some(function (n) { return n !== null; })) para(limits, "New-bet limits: " + fmtUsd(k.limits.window) + " per window · " + fmtUsd(k.limits.open)
+        + " at risk · " + fmtUsd(k.limits.day) + " daily loss stop · " + fmtUsd(k.limits.total) + " total loss stop (UTC).", "dim");
+      if (k.limitsNote) para(limits, k.limitsNote, "dim");
+      if (k.riskNote) para(limits, k.riskNote, "dim");
+      if (k.reserveNote) para(limits, k.reserveNote, "dim");
+      para(limits, "Fees paid today (UTC): " + tyFee(k.fees == null ? null : k.fees) + ". Settled profit already includes its fees.", "dim");
+      para(limits, "Settled profit (UTC): " + fmtSigned(k.today) + " · matched pairs " + fmtSigned(k.locked == null ? null : k.locked)
+        + " · direction " + fmtSigned(k.directional == null ? null : k.directional), "dim");
+      if (k.todayStale) para(limits, "Kalshi’s UTC-day result is delayed or unavailable.", "warn");
+      para(limits, k.asOf ? "Kalshi desk report " + tyAge(k.age) + "." : "Kalshi desk report time is unknown.", "dim");
+      para(limits, k.accountAt ? "Account reconciliation recorded " + tyAge(k.accountAge)
+        + (k.accountStale ? " · may be old." : ".") : "Account reconciliation time is not recorded; a desk report or checkpoint does not prove the account was checked.", "dim");
+      const pmMode = s.stale || s.state === "unknown" ? "status needs update" : s.on === true ? "REAL MONEY" : "new real buys off";
+      const other = tycoonDetails(panelBody, "Polymarket · " + pmMode + " · separate account", "polymarket-account");
+      para(other, "Polymarket keeps running separately. It is not practice when real money is on. Its results do not change this Kalshi town.", "dim");
+      para(other, "POLYMARKET US", "dim");
+      para(other, "Available cash: " + fmtUsd(s.cash));
+      para(other, "Open markets: " + (s.count == null ? "not reported" : s.count) + " · value " + fmtUsd(s.value));
+      para(other, "Shared with your own bets. Cash is not profit. " + (s.stateText || "Money mode not reported."), "dim");
+      para(other, "Bot profit today (midnight Pacific): " + fmtSigned(s.today));
+      para(other, "Profit excludes your own bets, deposits and practice. It uses the bot’s recorded booking time; late discoveries can differ from venue history.", "dim");
+      if (s.limits && [s.limits.open, s.limits.day, s.limits.total].some(function (n) { return n !== null; })) para(other, "Reported limits: " + fmtUsd(s.limits.open) + " open · " + fmtUsd(s.limits.day)
+        + " daily loss stop · " + fmtUsd(s.limits.total) + " total loss stop. Safety days use UTC.", "dim");
+      para(other, s.cashAsOf ? "Cash checked " + tyAge(s.cashAge) + "." : "Cash update time unknown.", "dim");
+      para(other, s.venueAsOf ? "Open bets checked " + tyAge(s.venueAge) + "." : "Open-bet update time unknown.", "dim");
+      if (s.todayReason || s.today === null || s.todayStale) para(other, s.todayReason || "The Pacific-day profit report is unavailable or old.", "warn");
+      if (s.pending && s.pending.count) para(other, s.pending.count + " bot orders still awaiting confirmation.", "warn");
+      if (s.positions.length && !(s.business && s.business.available)) {
+        para(other, "Recorded bets · may differ from current account holdings", "dim");
+        s.positions.forEach(function (p) { para(other, p.side + " · " + p.question); });
+        para(other, s.positionsNote, "dim");
+      }
+      if (s.cashStale || !s.cashAsOf || s.venueStale || !s.venueAsOf || s.stale) para(other, "Polymarket’s account figures need a fresh update.", "warn");
+      if (s.business.available) tycoonBusinessDetails(other, s, "polymarket_us");
+      const practice = tycoonDetails(panelBody, "Background practice and research", "money-background");
+      tycoonResearchDetails(practice, s);
+      tycoonOtherAlerts(panelBody);
     } else if (panelKind === "ty-alerts") {
-      panelTitle.textContent = "Town needs attention";
-      const alerts = data && Array.isArray(data.alerts) ? data.alerts : [];
-      if (offline) para(panelBody, statusEl.textContent, "warn");
-      alerts.forEach(function (a) { if (a && a.text) para(panelBody, a.text, "warn"); });
-      if (!offline && !alerts.length) para(panelBody, "No current alerts reported.");
-      para(panelBody, "The real-bets label reports the Polymarket money setting. Each message above describes the service or desk named in that message.", "dim");
+      panelTitle.textContent = "Kalshi connection";
+      const warning = tycoonFocusWarning(s, offline);
+      para(panelBody, warning || "No current Kalshi connection warning.", warning ? "warn" : "dim");
+      para(panelBody, k.stateText);
+      if (f.todayReason) para(panelBody, f.todayReason, "warn");
+      if (k.accountAt) para(panelBody, "Account checked " + tyAge(k.accountAge) + ".", "dim");
+      tycoonOtherAlerts(panelBody);
     } else if (panelKind === "ty-flow") {
       const chosen = s.crew.find(function (c) { return c.key === TYCOON.selected; });
       panelTitle.textContent = chosen ? chosen.name + "’s workstation" : "How your town works";
@@ -407,76 +468,55 @@ TYCOON_UI = r"""
         para(panelBody, chosen.recordedWork || chosen.doing, "dim");
         if (chosen.age !== null) para(panelBody, "Last activity recorded " + tyAge(chosen.age) + ".", "dim");
       }
-      const lane = function (title, words, practice) {
-        const card = document.createElement("section"), h = document.createElement("h3");
-        card.className = "ty-flow-card" + (practice ? " practice" : ""); h.textContent = title; card.appendChild(h);
-        words.forEach(function (w) { para(card, w); }); panelBody.appendChild(card);
-      };
-      lane("Polymarket · Bitcoin desk", [s.state === "unknown" ? "Waiting for a current desk report." : s.stateText,
-        "Voss’s desk watches Polymarket, checks its own limits and places its own bets. Open bets remain until they settle or are closed, even when new bets are off.",
-        "Its cash and open bets include your own activity. Its profit counts only the bot’s recorded real-money result."], false);
-      const kalshi = s.accounts && s.accounts.kalshi;
-      lane("Bitcoin speed desk · Kalshi", [kalshi ? kalshi.stateText : "Waiting for a Kalshi report.",
-        "Kalshi has its own cash, positions and limits. See Money for its order receipts, real fills, fees and settlements. Both profit labels at the top use midnight Pacific; the desk’s safety stops still use UTC."], kalshi && kalshi.practice);
-      const coinCrew = s.crew.filter(function (c) { return ["pip", "nyx"].includes(c.key); });
-      const practice = coinCrew.length === 2 && coinCrew.every(function (c) { return c.practice === true; });
-      const realCoins = coinCrew.some(function (c) { return c.practice === false; });
-      lane("Coin team · " + (practice ? "practice money" : realCoins ? "see each desk’s money mode" : "mode not reported"), [
-        "Pip finds coins → Nyx checks them and watches for a setup → Rook checks trade size and loss limits → Nyx checks for danger again.",
-        "This coin pipeline reports its own money mode. It does not feed either real Bitcoin desk. Pip and Nyx remain its visible workstations.",
-        "Voss monitors the two Bitcoin desks. Jet displays order receipts, Rook reports safeguards, and Mote displays actual results. Each desk sends its own orders."], practice);
-      if (s.business && s.business.available) {
-        ["polymarket_us", "kalshi"].forEach(function (key) {
-          const venue = s.business.venues[key];
-          if (venue.sourceNote) para(panelBody, venue.name + ": " + venue.sourceNote, "dim");
-        });
+      if (chosen && ["pip", "nyx"].includes(chosen.key)) {
+        para(panelBody, "This coin team runs separately in the background. Its own report shows its money mode. Its work does not create Kalshi orders or change the town’s money.", "dim");
+        const practice = tycoonDetails(panelBody, "Practice and research reports", "workstation-background");
+        tycoonResearchDetails(practice, s);
+      } else {
+        para(panelBody, "Kalshi · " + k.stateText);
+        para(panelBody, "Voss follows the Kalshi Bitcoin desk. Rook shows its safeguards. Jet relays actual order and fill receipts. Mote records fees and settlements.", "dim");
+        para(panelBody, "A waiting order reserves cash. A fill becomes a position. Settlement changes the bot’s profit; only recorded profit earns gardens.", "dim");
+        if (chosen && chosen.key === "rook") {
+          if (k.riskNote) para(panelBody, k.riskNote, "dim");
+          if (k.integrityNote) para(panelBody, k.integrityNote, "warn");
+          if (k.totalHalted) para(panelBody, k.stopNote, "warn");
+          if (k.limitsNote) para(panelBody, k.limitsNote, "dim");
+        }
+        if (s.business.available) {
+          const receipts = tycoonDetails(panelBody, "Kalshi receipts", "workstation-receipts");
+          tycoonBusinessDetails(receipts, s, "kalshi");
+        }
       }
-      para(panelBody, "Paths connect departments. Walking, resting and chatting keep the town alive; they do not mean an order was placed. Money changes only when the bot reports it.", "dim");
+      para(panelBody, "Walking and chatting are decoration. This view does not send orders or change any trading setting.", "dim");
     } else if (panelKind === "ty-bets") {
-      panelTitle.textContent = "Account’s open real bets";
-      para(panelBody, "This Polymarket account is shared by you and the bot. These totals include your own bets.");
-      para(panelBody, (s.count == null ? "Venue open count not reported" : s.count + " open markets at Polymarket")
-        + (s.value == null ? "" : " · " + fmtUsd(s.value) + " reported value"));
-      para(panelBody, "Value is what Polymarket reports for the holdings. It is separate from available cash and from realized profit.", "dim");
-      if (s.pending && s.pending.count) para(panelBody, s.pending.count + " bot orders awaiting confirmation; separate from open bets.", "dim");
-      if (!s.positions.length) para(panelBody, s.count === 0 ? "No open real bets reported by Polymarket." : "No individual bet records in this report.", "dim");
-      if (s.positions.length) para(panelBody, "Desk records · may differ from current holdings", "dim");
-      for (const p of s.positions) {
-        const row = document.createElement("div"); row.className = "ty-position";
-        para(row, p.question); para(row, p.side + (p.price == null ? "" : " · entry " + Math.round(p.price * 100) + "¢"), "dim"); panelBody.appendChild(row);
-      }
-      if (s.positions.length) para(panelBody, s.positionsNote, "dim");
-      para(panelBody, s.venueAsOf ? "Account positions checked " + tyAge(s.venueAge) + "." : "Account positions update time not reported.", "dim");
+      panelTitle.textContent = "Kalshi positions and orders";
+      para(panelBody, "Money at risk: " + fmtUsd(f.exposure));
+      if (s.business.available) tycoonBusinessDetails(panelBody, s, "kalshi");
+      else para(panelBody, "Waiting for Kalshi’s recorded positions.", "dim");
     } else if (panelKind === "ty-result") {
       panelTitle.textContent = "Recent real result";
       para(panelBody, s.event ? s.event.text : "No recent real settlement reported.");
       if (s.event) { para(panelBody, "Recorded " + tyAge(s.event.age) + ".", "dim"); para(panelBody, s.eventNote, "dim"); }
     } else if (panelKind === "ty-today") {
-      panelTitle.textContent = "Bot’s result today"; para(panelBody, fmtSigned(s.today));
-      para(panelBody, "The bot’s recorded profit or loss since 12:00 a.m. Pacific, including settlements and cash-outs. Daylight saving time is handled automatically. Your own bets, deposits and practice money are excluded.");
-      if (s.todayDate) para(panelBody, "Pacific date: " + s.todayDate + ".", "dim");
-      if (s.todayReason || s.today == null) para(panelBody, s.todayReason || "The Pacific-day profit report is unavailable.", "warn");
-      para(panelBody, "This uses the time the bot records the result. A result discovered late can appear on a different day from Polymarket’s history.", "dim");
-      para(panelBody, "Garden upgrades reflect both bots’ combined recorded profit today: 1¢, 25¢, $1, $5 and $10. Both Pacific-day books must be complete and current. Gardens can recede after a loss and reset at midnight Pacific. Practice gains and your own bets never unlock them.", "dim");
-      para(panelBody, "Trading safety limits keep their UTC day; this result uses your Pacific day.", "dim");
-      para(panelBody, s.todayAsOf ? "Profit report checked " + tyAge(s.todayAge) + "." : "Profit report time not available.", "dim");
-      para(panelBody, "Open bets can still win or lose. This number is not a forecast.", "dim");
+      panelTitle.textContent = "Kalshi bot profit today"; para(panelBody, fmtSigned(f.today));
+      para(panelBody, "Real Kalshi bot profit after recorded fees, since midnight Pacific. Deposits, practice and Polymarket results do not count.");
+      if (f.todayDate) para(panelBody, "Pacific date: " + f.todayDate + ".", "dim");
+      if (f.todayReason) para(panelBody, f.todayReason, "warn");
+      para(panelBody, "Gardens mark 1¢, 25¢, $1, $5 and $10 in verified Kalshi profit. Losses can remove them; midnight Pacific resets them. Trading limits still use UTC.", "dim");
+      para(panelBody, "Open positions can still win or lose. This result is not a forecast.", "dim");
     } else {
-      panelTitle.textContent = "Available account cash"; para(panelBody, fmtUsd(s.cash));
-      para(panelBody, "Spendable cash reported by Polymarket for your shared account. It can include deposits and your own activity. It is not the bot’s profit.");
-      if (s.reportedCash != null) para(panelBody, "Polymarket balance: " + fmtUsd(s.reportedCash) + ".", "dim");
-      if (s.buyingPower != null) para(panelBody, "Available buying power: " + fmtUsd(s.buyingPower) + ".", "dim");
-      para(panelBody, "Money in open bets is shown separately. The town refreshes saved account reports; it is not a tick-by-tick balance feed.", "dim");
-      para(panelBody, s.cashAsOf ? "Cash reported " + tyAge(Math.max(0, Date.now() / 1000 - s.cashAsOf)) + "." : "Cash update time not reported.", "dim");
+      panelTitle.textContent = "Kalshi account cash"; para(panelBody, fmtUsd(f.cash));
+      para(panelBody, "Cash reported by Kalshi is separate from the bot’s profit and the money still at risk.");
+      para(panelBody, f.cashAt ? "Cash reported " + tyAge(f.cashAge) + "." : "Cash update time not reported.", "dim");
     }
-    const oldAccount = panelKind === "ty-accounts" && (s.cashStale || !s.cashAsOf || s.venueStale || !s.venueAsOf)
-      || panelKind === "ty-bets" && (s.venueStale || !s.venueAsOf)
-      || panelKind === "ty-cash" && (s.cashStale || !s.cashAsOf)
-      || panelKind === "ty-today" && s.todayStale;
-    if (s.stale || offline || oldAccount) para(panelBody, "Showing the last report. Wait for a fresh update before treating these as current figures.", "warn");
+    if (offline) para(panelBody, "Connection lost. Showing the last report; wait for a fresh update.", "warn");
     if (focusedRow) {
       const match = Array.from(panelBody.querySelectorAll(".ty-menu-row")).find(function (node) { return node.textContent === focusedRow; });
       if (match) match.focus({ preventScroll: true });
+    }
+    if (focusedDetails) {
+      const detail = Array.from(panelBody.querySelectorAll("details")).find(function (node) { return node.dataset.detailKey === focusedDetails; });
+      if (detail) detail.querySelector("summary").focus({ preventScroll: true });
     }
     panelEl.scrollTop = scroll; return true;
   }

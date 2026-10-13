@@ -258,8 +258,11 @@ def test_venue_positions_orders_fees_and_owner_activity_keep_their_scope(tmp_pat
     assert "Money reserved: $0.98" in first["kalshi-business"]["text"]
     assert "Some fees were not reported" in first["pm-business-warning"]["text"]
     activity = first["activity"]["text"]
-    assert "Kalshi · Bot activity" in activity and "Polymarket US · Your activity" in activity
-    assert "Recorded fee: <$0.0001 (estimated)" in activity and "Recorded 1 minutes ago" in activity
+    assert "Kalshi · Bot activity" in activity and "Polymarket" not in activity
+    assert "Recorded 1 minutes ago" in activity
+    pm_activity = first["pm-activity"]["text"]
+    assert "Polymarket US · Your activity" in pm_activity and "Kalshi" not in pm_activity
+    assert "Recorded fee: <$0.0001 (estimated)" in pm_activity
     assert "Recorded fee: $0.0033 (actual)" in activity
     assert "Pretend fill" not in activity
 
@@ -366,3 +369,54 @@ def test_saved_inventory_and_activity_are_bounded_and_untrusted_text_is_safe(tmp
     assert "not the full account history" in first["kalshi-business-more"]["text"]
     assert "not the full account history" in first["activity-more"]["text"]
     assert attack in first["activity"]["text"] and set(out["tags"]) <= {"li", "strong", "p"}
+
+
+def test_kalshi_is_first_and_other_accounts_and_research_start_collapsed() -> None:
+    html = render_summary_html()
+    assert html.index('id="kalshi-title"') < html.index('id="activity-title"') < html.index('id="other-account"')
+    assert html.index('id="other-account"') < html.index('id="pm-title"') < html.index('id="background"')
+    for detail_id in ("other-account", "background", "stop-help"):
+        opening = re.search(fr'<details\b[^>]*id="{detail_id}"[^>]*>', html)
+        assert opening is not None and "open" not in opening.group(0)
+    other = html.split('<details id="other-account">', 1)[1].split("</details>", 1)[0]
+    assert 'id="pm-mode"' in other.split("</summary>", 1)[0]
+    assert 'id="pm-overview"' in other.split("</summary>", 1)[0]
+    assert 'id="pm-business"' in other and 'id="pm-activity"' in other
+    assert "The town grows from Kalshi bot profit" in html
+    assert "Polymarket results and practice results do not count" in html
+    assert "use both bots’ recorded profit" not in html
+
+
+@needs_node
+@pytest.mark.parametrize(("mode", "label"), [("live", "LIVE setting"), ("paper", "PRACTICE setting"), (None, "mode not reported")])
+def test_other_account_mode_remains_explicit_without_becoming_kalshi_activity(tmp_path: Path, mode: str | None, label: str) -> None:
+    value = connected_page()
+    value["money"]["polymarket"]["mode"] = mode
+    first = run(tmp_path, value)["first"]
+    assert first["pm-mode"]["text"] == "Polymarket US · " + label
+    assert first["pm-cash"]["text"] == "$14.39"
+    assert "Your basketball bet filled" in first["pm-activity"]["text"]
+    assert "Your basketball bet filled" not in first["activity"]["text"]
+    if mode == "paper":
+        assert "Existing real bets can still settle" in first["pm-overview"]["text"]
+
+
+@needs_node
+def test_secondary_account_problem_is_visible_in_closed_summary(tmp_path: Path) -> None:
+    value = connected_page()
+    value["money"]["polymarket"]["real"]["today_pacific"].update(status="incomplete", reason="day_book_mismatch", pnl_usd=None)
+    first = run(tmp_path, value)["first"]
+    assert "profit today is unverified" in first["pm-overview"]["text"]
+    assert "do not match" in first["pm-overview"]["text"]
+    assert first["kalshi-pacific-profit"]["text"] == "+$0.56"
+
+
+@needs_node
+def test_background_service_notices_are_not_attributed_to_kalshi(tmp_path: Path) -> None:
+    value = connected_page()
+    value["alerts"] = [{"level": "bad", "text": "The bot is stopped."}]
+    first = run(tmp_path, value)["first"]
+    assert "1 service notice(s) to review" in first["background-status"]["text"]
+    assert first["service-warning"]["text"] == "The bot is stopped."
+    assert "The bot is stopped." not in first["kalshi-state"]["text"]
+    assert "The bot is stopped." not in first["kalshi-warning"]["text"]

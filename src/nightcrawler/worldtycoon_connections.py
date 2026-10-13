@@ -18,8 +18,17 @@ TYCOON_CONNECTIONS = r"""
   function tycoonPacific(raw, now, limit, sourceCurrent) {
     const day = tycoonObject(raw), start = tycoonStamp(day.start, now), end = tycoonNumber(day.end);
     const at = tycoonStamp(day.as_of, now), age = tycoonAge(at, now);
+    let date = "";
+    if (now !== null && now > 0 && now < 8640000000000) {
+      try {
+        const parts = new Intl.DateTimeFormat("en-US", { timeZone: "America/Los_Angeles",
+          year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date(now * 1000));
+        const part = function (type) { const p = parts.find(function (item) { return item.type === type; }); return p ? p.value : ""; };
+        date = part("year") + "-" + part("month") + "-" + part("day");
+      } catch (_) { /* A missing Pacific calendar never falls back to the UTC day. */ }
+    }
     const matches = now !== null && start !== null && end !== null && start <= now && now < end
-      && day.tz === "America/Los_Angeles" && at !== null && at >= start;
+      && day.tz === "America/Los_Angeles" && date !== "" && day.date === date && at !== null && at >= start;
     const known = matches && day.status === "ok" && tycoonNumber(day.pnl_usd) !== null;
     return { value: known ? tycoonNumber(day.pnl_usd) : null, date: matches ? tycoonText(day.date) : "",
       asOf: at, age: age, current: known && sourceCurrent && !tycoonOld(age, limit),
@@ -79,35 +88,39 @@ TYCOON_CONNECTIONS = r"""
     const sum = pm.value !== null && k.value !== null ? tycoonNumber(pm.value + k.value) : null;
     const complete = available && pm.current && k.current && pm.date !== "" && pm.date === k.date && sum !== null;
     return { available: available, venues: venues, activity: activity.slice(0, 60),
+      kalshiActivity: activity.filter(function (e) { return e.venue === "kalshi"; }),
       today: complete ? sum : null, todayCurrent: complete, date: complete ? pm.date : "" };
   }
   function tycoonBusinessCrew(s) {
-    if (!s.business.available) return s.crew;
-    const pm = s.business.venues.polymarket_us, k = s.business.venues.kalshi;
-    const kalshi = s.accounts.kalshi, venues = [pm, k], fresh = venues.some(function (v) { return v.reportFresh; });
+    const k = s.business.venues.kalshi, kalshi = s.accounts.kalshi;
+    const fresh = kalshi.current && k.reportFresh;
     const latest = s.activity.find(function (e) { return e.scope === "bot" && e.current; });
-    const pmText = "Polymarket: " + s.stateText + ".", kText = "Kalshi: " + kalshi.stateText + ".";
+    const kText = "Kalshi: " + kalshi.stateText + ".";
     const roles = {
-      voss: { job: "Bitcoin desks", detail: "Monitors Polymarket and the separate Kalshi Bitcoin desk.",
-        doing: pmText + " " + kText },
-      rook: { job: "Money safeguards", detail: "Reports each desk’s own limits and stops. The safeguards run in the trading desks.",
-        doing: pmText + " " + kText + (kalshi.integrityNote ? " " + kalshi.integrityNote : "")
+      voss: { job: "Kalshi Bitcoin", detail: "Shows the Kalshi Bitcoin desk’s reported state. Polymarket stays separate in Money.",
+        doing: kText + (kalshi.waiting || kalshi.reason ? " " + (kalshi.waiting || kalshi.reason) : "") },
+      rook: { job: "Kalshi safeguards", detail: "Reports Kalshi’s limits and stops. The trading desk enforces them.",
+        doing: kText + (kalshi.integrityNote ? " " + kalshi.integrityNote : "")
           + (kalshi.totalHalted ? " " + kalshi.stopNote : "")
-          + (s.todayStatus === "incomplete" ? " " + s.todayReason : "")
-          + (venues.some(function (v) { return v.status === "incomplete"; }) ? " Saved money records need review." : "")
+          + (k.status === "incomplete" ? " Saved Kalshi money records need review." : "")
+          + (!k.day.current ? " " + k.day.reason : "")
           + (kalshi.cleanupPending ? " Kalshi cancellation is still pending." : "") },
-      jet: { job: "Order status", detail: "Shows real order receipts from both venues. Each trading desk places its own orders.",
-        doing: "Polymarket: " + (s.pending.count === null ? "unreported" : s.pending.count + " unconfirmed orders")
-          + ". Kalshi: " + (kalshi.orders === null ? "unreported" : kalshi.orders + " open orders")
+      jet: { job: "Kalshi orders", detail: "Shows Kalshi order receipts. The trading desk places its own orders.",
+        doing: (kalshi.current ? "Kalshi: " : "Last Kalshi report: ")
+          + (kalshi.orders === null ? "order count unreported" : kalshi.orders + " open orders")
           + ". A submitted order is not a fill or profit." },
-      mote: { job: "Money records", detail: "Keeps the venue records separate: orders, fills, fees and settled results.",
-        doing: latest ? latest.text : "Waiting for recorded real-money activity." },
+      mote: { job: "Kalshi records", detail: "Shows Kalshi fills, actual fees and settled bot results. Practice never counts as profit.",
+        doing: latest ? latest.text : "Waiting for recorded Kalshi activity." },
     };
     return s.crew.map(function (c) {
-      const role = roles[c.key]; if (!role) return c;
+      const role = roles[c.key];
+      if (!role) return Object.assign({}, c, { background: true,
+        job: c.practice === true ? "Practice " + (c.key === "pip" ? "scouting" : "checks") : "Background " + c.job.toLowerCase(),
+        jobDetail: c.jobDetail + " This work stays behind the scenes and does not grow the Kalshi town." });
       const attention = kalshi.cleanupPending || kalshi.integrityError || kalshi.integrityReset || kalshi.totalHalted
-        || s.state === "paused" || s.todayStatus === "incomplete" || venues.some(function (v) { return v.status === "incomplete"; });
+        || k.status === "incomplete";
       return Object.assign({}, c, { job: role.job, jobDetail: role.detail, doing: role.doing, recordedWork: role.doing,
+        statusReason: role.doing, background: false,
         status: !fresh ? "unknown" : c.key === "rook" && attention ? "stuck"
           : latest && latest.age <= 60 ? "working" : "waiting",
         practice: null, age: latest ? latest.age : null });

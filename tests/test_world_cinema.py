@@ -231,6 +231,32 @@ def test_the_vault_reads_real_money(pure: str, section: str, module: str, states
 
 
 @needs_node
+def test_tycoon_vault_uses_kalshi_cash_and_never_falls_back_to_polymarket(section: str, tmp_path: Path) -> None:
+    draw = _js_body(section, "  function cineVaultDraw() {")
+    out = _node(r"""
+const data = { money: { usd: 10000 } }, CINE = { on: true }, signs = [];
+let offline = false, account = { cash: 25, cashStale: false };
+function tycoonActive() { return true; }
+function tycoonSummary() { return { accounts: { kalshi: account } }; }
+function cineVault() { throw new Error("Polymarket must not supply town cash"); }
+function fmtUsd(v) { return v === null ? "—" : "$" + v.toFixed(2); }
+function drawVaultSign(usd, label, accent) { signs.push({ usd, label, accent }); }
+""" + draw + r"""
+cineVaultDraw();
+account.cashStale = true; cineVaultDraw();
+account = { cash: 30, cashStale: false }; offline = true; cineVaultDraw();
+account.cash = null; cineVaultDraw();
+console.log(JSON.stringify(signs));
+""", tmp_path)
+    assert out == [
+        {"usd": "$25.00", "label": "KALSHI ACCOUNT CASH", "accent": None},
+        {"usd": "$25.00", "label": "LAST RECORDED KALSHI CASH", "accent": None},
+        {"usd": "$30.00", "label": "LAST RECORDED KALSHI CASH", "accent": None},
+        {"usd": "—", "label": "KALSHI CASH · awaiting balance", "accent": None},
+    ]
+
+
+@needs_node
 def test_cash_details_name_the_booked_day_and_each_source_check(pure: str, module: str, tmp_path: Path) -> None:
     out = _pure_run(pure, """
 const page = {mode: "PAPER", money: {polymarket: {as_of: 1791820860,
