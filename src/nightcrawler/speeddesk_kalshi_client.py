@@ -16,6 +16,7 @@ from __future__ import annotations
 import base64
 import re
 import threading
+from collections import deque
 from collections.abc import Callable
 from decimal import Decimal, InvalidOperation
 from typing import Any, Literal
@@ -32,6 +33,9 @@ from .config import Secret
 BASE_URL = "https://api.elections.kalshi.com"
 API_PATH = "/trade-api/v2"
 TIMEOUT = (3.05, 10.0)
+# Half of Kalshi's Basic-tier limits (20 reads and 10 writes per second, docs.kalshi.com rate limits),
+# counted apart so an order never queues behind the account reads that came just before it.
+READS_PER_S, WRITES_PER_S = 10, 5
 
 
 _ERROR_CODE = re.compile(r"[a-z0-9_]{1,64}")
@@ -102,9 +106,10 @@ class KalshiClient:
     """
 
     def __init__(self, key_id: str | Secret, private_key: str | Secret, *, transport: Any = None,
-                 clock: Clock | None = None, min_interval_s: float = 0.2,
+                 clock: Clock | None = None, reads_per_s: int = READS_PER_S, writes_per_s: int = WRITES_PER_S,
                  page_size: int = 1000, max_pages: int = 100) -> None:
-        if not 0.1 <= min_interval_s <= 60 or not 1 <= page_size <= 1000 or not 1 <= max_pages <= 1000:
+        if (not 1 <= reads_per_s <= READS_PER_S or not 1 <= writes_per_s <= WRITES_PER_S
+                or not 1 <= page_size <= 1000 or not 1 <= max_pages <= 1000):
             raise KalshiClientError("configuration", "invalid request limits")
         try:
             key_text, pem = _plain(key_id), _plain(private_key)
@@ -123,10 +128,25 @@ class KalshiClient:
         self._session: requests.Session | None = None if transport else requests.Session()
         self._transport = transport or self._session.request  # type: ignore[union-attr]
         self._clock = clock or RealClock()
-        self._interval, self._page_size, self._max_pages = min_interval_s, page_size, max_pages
+        self._page_size, self._max_pages = page_size, max_pages
+        self._limits = {False: reads_per_s, True: writes_per_s}
+        self._recent: dict[bool, deque[float]] = {False: deque(), True: deque()}
         self._lock = threading.Lock()
-        self._next_request = 0.0
+        self._blocked_until = 0.0
         self._rate_failures = 0
+
+    def _wait_turn(self, mutates: bool) -> None:
+        """Rolling one-second budgets, reads and writes apart; a 429 backoff holds every later call."""
+        recent, limit = self._recent[mutates], self._limits[mutates]
+        while True:
+            now = self._clock.now()
+            while recent and recent[0] <= now - 1.0:
+                recent.popleft()
+            wait = max(self._blocked_until - now, recent[0] + 1.0 - now if len(recent) >= limit else 0.0)
+            if wait <= 0:
+                recent.append(now)
+                return
+            self._clock.sleep(wait)
 
     def close(self) -> None:
         """Close the kept-alive HTTP connection; no credential file is ever opened."""
@@ -153,8 +173,7 @@ class KalshiClient:
         url = BASE_URL + full_path + ("?" + query_string if query_string else "")
         mutates = method != "GET"
         with self._lock:
-            self._clock.sleep(max(0.0, self._next_request - self._clock.now()))
-            self._next_request = self._clock.now() + self._interval
+            self._wait_turn(mutates)
             headers = self.headers(method, full_path)
             if before_send is not None:
                 try:
@@ -175,7 +194,7 @@ class KalshiClient:
                 raise KalshiClientError(operation, "invalid response status", uncertain=mutates)
             if status == 429:
                 self._rate_failures += 1
-                self._next_request = self._clock.now() + min(30.0, 2.0 ** min(self._rate_failures, 5))
+                self._blocked_until = self._clock.now() + min(30.0, 2.0 ** min(self._rate_failures, 5))
             else:
                 self._rate_failures = 0
             if not 200 <= status < 300:

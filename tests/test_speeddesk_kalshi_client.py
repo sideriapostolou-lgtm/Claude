@@ -304,7 +304,7 @@ def test_invalid_direct_feature_response_fails_closed(signing_key: Any, body: An
         c.subaccount_balances()
 
 
-def test_global_spacing_and_rate_backoff_only_apply_to_future_explicit_calls(signing_key: Any) -> None:
+def test_rate_backoff_only_applies_to_future_explicit_calls(signing_key: Any) -> None:
     clock = FakeClock(1000)
     transport = Transport(Response({}), Response({}, 429), Response({}, 429), Response({}))
     c = client(signing_key, transport, clock=clock)
@@ -312,31 +312,62 @@ def test_global_spacing_and_rate_backoff_only_apply_to_future_explicit_calls(sig
     with pytest.raises(KalshiClientError) as first:
         c.balance()
     assert first.value.status == 429 and len(transport.calls) == 2
-    assert clock.now() == pytest.approx(1000.2)
+    assert clock.now() == pytest.approx(1000.0)  # two reads fit the one-second read budget
     with pytest.raises(KalshiClientError):
         c.balance()
-    assert clock.now() == pytest.approx(1002.2) and len(transport.calls) == 3
+    assert clock.now() == pytest.approx(1002.0) and len(transport.calls) == 3
     c.balance()
-    assert clock.now() == pytest.approx(1006.2) and len(transport.calls) == 4
+    assert clock.now() == pytest.approx(1006.0) and len(transport.calls) == 4
+
+
+def test_reads_are_held_to_ten_in_any_rolling_second(signing_key: Any) -> None:
+    clock = FakeClock(1000)
+    transport = Transport(*[Response({}) for _ in range(21)])
+    c = client(signing_key, transport, clock=clock)
+    sent = []
+    for _ in range(21):
+        c.balance()
+        sent.append(clock.now())
+    assert sent[:10] == [1000.0] * 10
+    assert sent[10] == pytest.approx(1001.0) and sent[20] == pytest.approx(1002.0)
+    assert all(later - earlier >= 1.0 - 1e-9 for earlier, later in zip(sent, sent[10:], strict=False))
+
+
+def test_an_order_never_waits_behind_the_account_reads_before_it(signing_key: Any) -> None:
+    clock = FakeClock(1000)
+    transport = Transport(*[Response({}) for _ in range(10)], ack())
+    c = client(signing_key, transport, clock=clock)
+    for _ in range(10):
+        c.balance()  # the read budget for this second is now spent
+    create(c)
+    assert clock.now() == 1000.0 and len(transport.calls) == 11
 
 
 def test_send_guard_runs_after_rate_wait_immediately_before_transport(signing_key: Any) -> None:
     clock = FakeClock(1000)
-    transport = Transport(Response({}))
+    transport = Transport(*[ack() for _ in range(5)])
     c = client(signing_key, transport, clock=clock)
-    c.balance()
+    for _ in range(5):
+        create(c)  # the write budget for this second is now spent
     observed: list[float] = []
 
     def stale_after_wait() -> bool:
         observed.append(clock.now())
-        return clock.now() < 1000.1
+        return clock.now() < 1000.5
 
     with pytest.raises(KalshiClientError) as error:
         create(c, before_send=stale_after_wait)
-    assert observed == [1000.2]
+    assert observed == [pytest.approx(1001.0)]
     assert not error.value.uncertain
     assert error.value.reason == "send_guard_rejected"
-    assert len(transport.calls) == 1  # Only the preceding balance read reached HTTP.
+    assert len(transport.calls) == 5  # Only the earlier creates reached HTTP.
+
+
+@pytest.mark.parametrize("limits", [{"reads_per_s": 0}, {"reads_per_s": 11}, {"writes_per_s": 0},
+                                    {"writes_per_s": 6}])
+def test_request_budgets_cannot_exceed_half_of_kalshis_basic_limits(signing_key: Any, limits: Any) -> None:
+    with pytest.raises(KalshiClientError, match="invalid request limits"):
+        client(signing_key, Transport(), **limits)
 
 
 def test_send_guard_error_fails_closed_without_sensitive_details(signing_key: Any) -> None:
