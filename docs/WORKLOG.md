@@ -15,6 +15,42 @@ Template:
 
 
 
+## 2026-10-13 19:05 UTC, Claude, branch claude/kalshi-arena
+- Owner's ask: "Give our bots the incentive they're giving Grok bots: make money or die."
+- Changed: a **Kalshi arena** (`nightcrawler/kalshi_arena.py`, PRACTICE money only).
+  - Twelve practice Kalshi Bitcoin 15-minute desks with their own genes trade the live windows. One control
+    (`Live`) always runs the live rules and is the benchmark.
+  - Each resident gets $50 of pretend money and pays $0.20 rent a UTC day. It is evicted when it cannot pay, falls
+    under $10, or `deskguard.judge` calls it losing; children of the richest fill every empty home.
+  - A candidate (winning on 100+ windows and a paired t >= 2 against the control) is shown only.
+  - Opt-in `SpeedConfig` fields for the genes: starter size and timing, rounds, whole contracts, the live lock and a
+    protective stop. A golden fixture generated BEFORE them proves the defaults unchanged.
+  - The speed desk's loop gains three bounded appends (books, prints, status); `on_tick` is untouched.
+  - The page gets `money.kalshi_arena` from a small `panel.json`. Four practice settings (`KALSHI_ARENA_*`), and
+    `docs/SPEEDDESK_SPEC.md` section 12.
+- Verified:
+  - the full suite (`python -m pytest -q`): 4,779 passed, 13 skipped (12 network skips plus the opt-in timing test;
+    the base branch had 4,708 passed, 12 skipped); mypy on `src/` clean; ruff clean on every changed Python file;
+  - the live loop's extra cost: 0.13 us a put; a book plus a print through the runner takes about 21 us with or
+    without the arena (difference -0.3 us mean, +3 us p99, noise);
+  - arena work slices in CPU time: median 0.21 ms, p99 0.30 ms, p99.9 0.49 ms, about 0.5 % of a core at 60 books a
+    second;
+  - the opt-in wall-clock test (`NIGHTCRAWLER_PERF_TESTS=1`, arena running and parked in alternate blocks, machine
+    at load average about 9 on 4 cores): p99 lateness of a 1 ms loop rose +0.07, -0.04 and +0.20 ms (bound 0.5 ms);
+  - a parked arena drops exactly the overflow; a crashing arena halts itself after 5 errors and the live desk trades
+    on.
+- Not verified / skipped:
+  - production's own lateness, until the `kalshi_arena_status` lines are read after deploy;
+  - the Kalshi account size: $50 as asked, `docs/ACCOUNTS.md` says $25.00 at the first read (not re-read: no key
+    here);
+  - the stop's meaning (read as a stop-loss: complete once the completion cost rises to T);
+  - the UI shows nothing yet (Codex's files; key described in `docs/COORDINATION.md`);
+  - not pushed (local commits only).
+- Real money touched? no: a practice town. The speed desk's loop gains three bounded appends; no live setting, limit
+  or order path changed, and `speeddesk_live*.py`, `deskguard.py` and `engine.py` are unchanged.
+- Next step: deploy in a safe merge minute, then read `kalshi_arena_status` (slice p99, duty, drops). Ask the owner
+  the four questions (account size, broke line $10 or $40, the stop's meaning, a forward-check line for candidates).
+
 ## 2026-10-13 17:15 UTC, Claude, branch claude/kalshi-starter-cap
 - Changed: the Kalshi companion's orders are capped at `SPEEDDESK_KALSHI_CLIP` contracts (default 5, was the practice
   clip of 25), so the first buy in a window is 5 contracts instead of 10 at the $10 window budget. Balancing and lock
