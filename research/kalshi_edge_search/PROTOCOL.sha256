@@ -1,0 +1,4 @@
+40ccfe87ed86b3fd62ee16ebba9862f8be8bbc66a229cfdc7f138ee26a305040  PROTOCOL.md
+# kalshi-familyA-v1: PROTOCOL.md sha256 40ccfe87ed86b3fd62ee16ebba9862f8be8bbc66a229cfdc7f138ee26a305040
+# recorded 2026-10-13T18:51:50Z, before any Family A return was computed, any quote was simulated or any recorder data existed
+# check: cd research/kalshi_edge_search && sha256sum -c PROTOCOL.sha256

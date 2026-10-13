@@ -15,6 +15,27 @@ Template:
 
 
 
+## 2026-10-13 18:53 UTC, Claude, branch claude/kalshi-family-a, no PR (local commit only)
+- Changed: preregistered Family A (favourite-side passive maker bids on slower Kalshi markets) before any return
+  exists: `research/kalshi_edge_search/PROTOCOL.md` (`kalshi-familyA-v1`), frozen with SHA-256
+  `40ccfe87ed86b3fd62ee16ebba9862f8be8bbc66a229cfdc7f138ee26a305040` in `PROTOCOL.sha256`. It fixes the universe
+  (Crypto, Climate and Weather, Commodities, Financials only; Washington blocks the rest), exclusions with reasons,
+  risk clusters, the four variants (two paid-price bands x join / improve one tick, one contract), post-only,
+  stale-quote, repricing, cutoff and rotation rules, the simulated $25 account ($2 / $4 / $3 / $5), queue-aware
+  fills, the pessimistic model and latency stresses, Kalshi's per-order fee rounding, matched and no-trade
+  baselines, TRAIN 7 -> resolve -> VAL 7 -> resolve -> freeze -> 28-day TEST (>= 200 clusters, >= 14 settlement
+  days, 30-day follow-up), alpha 0.020 + 0.005 for one replacement, net $/calendar day after operating costs, the
+  verdicts, and what the shared recorder captures for KXBTC15M (Family B lives in the arena).
+- Verified: `sha256sum -c PROTOCOL.sha256` passes. Docs-only change; no Python touched, so tests/ruff/mypy were not
+  rerun for this commit.
+- Not verified / skipped: no recorder exists yet and nothing is collecting; no 48-hour capture, no quote simulated,
+  no return computed. Stated risk: the 200-cluster TEST floor is probably out of reach at these limits, so the
+  likely verdict is INCONCLUSIVE; the 2 GB default disk cap needs an owner decision (bigger volume or compaction)
+  before TRAIN.
+- Real money touched? no. No settings, caps, keys, trading code or deploy-trigger files changed; nothing pushed.
+- Next step: build the read-only recorder (`python -m nightcrawler.kalshi_recorder`, engine hook OFF by default)
+  with the no-order-call test, then the hosting/cost proposal Codex asked for, then Phase 0 (48 h of capture).
+
 ## 2026-10-13 18:16 UTC, Codex, next highest-leverage milestone
 - Reviewed: latest inbox/worklog through 7c0c993, the prior recorder proposal and current research handoff.
   Independent read-only review reached the same recommendation: get Claude's existing recorder running
