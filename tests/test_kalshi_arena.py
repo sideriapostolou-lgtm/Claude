@@ -738,3 +738,37 @@ def test_the_state_file_is_fsynced(tmp_path: Path, monkeypatch: pytest.MonkeyPat
     monkeypatch.setattr(kalshi_arena.os, "fsync", lambda fd: synced.append(fd) or real(fd))
     arena._save(clock.now())
     assert len(synced) == 1  # state.json (the town's only record); the panel is a display copy
+
+
+def test_a_failed_write_leaves_no_temporary_file(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """A full disk: the partial temporary copy is removed (DATA_DIR is the live desk's volume too) and the last good
+    file stands."""
+    import errno
+
+    path = tmp_path / "state.json"
+    kalshi_arena._write(path, '{"good": 1}', durable=True)
+
+    def full(_fd: int) -> None:
+        raise OSError(errno.ENOSPC, "No space left on device")
+
+    monkeypatch.setattr(kalshi_arena.os, "fsync", full)
+    with pytest.raises(OSError):
+        kalshi_arena._write(path, '{"good": 2}' + " " * 100_000, durable=True)
+    assert sorted(item.name for item in tmp_path.iterdir()) == ["state.json"]
+    assert json.loads(path.read_text(encoding="utf-8")) == {"good": 1}
+
+
+def test_the_panel_says_the_control_runs_the_configured_limits_not_the_ladder(tmp_path: Path) -> None:
+    """The town reads Settings once: every resident, the control included, runs the configured limits, which are the
+    live earned-growth ladder's rung 0. After a live promotion live trades a bigger window; the page says so."""
+    from nightcrawler.speeddesk_live_ladder import rung_limits
+
+    settings = Settings(data_dir=tmp_path)
+    fixed, base = fixed_config(settings), kalshi_arena._limits(settings)
+    rung0, rung1 = rung_limits(base, 0), rung_limits(base, 1)
+    assert (fixed["window_usd"], fixed["open_usd"], fixed["day_stop_usd"]) == (
+        rung0.window_usd, rung0.open_usd, rung0.day_loss_usd)
+    assert rung1.window_usd > fixed["window_usd"]  # what the note owns up to
+    assert "rung 0" in kalshi_arena.NOTE and "promotion" in kalshi_arena.NOTE and len(kalshi_arena.NOTE) <= 400
+    arena, clock = town(tmp_path)
+    assert arena.panel(clock.now())["note"] == kalshi_arena.NOTE

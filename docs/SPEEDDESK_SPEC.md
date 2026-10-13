@@ -637,6 +637,9 @@ setting. A candidate is shown to the owner; real money stays with the live compa
   or with the real desk.
 - **Control:** one resident (`Live`) always runs the live rules. Its genes come from the deployed settings through
   `LiveLimits`' own clamps (`live_genes`). It is never evicted, and every comparison is against it.
+  **It runs the configured limits, which are the earned-growth ladder's rung 0 (9.2):** the town reads Settings once
+  at start and never the ladder, so after a live promotion (rung 1: $15/$30/$9) live trades a bigger window than
+  every resident, the control included. The panel's note says so; nothing here reads or writes the ladder's state.
 - **Start cash:** $50 of pretend money each (`START_CASH`, the account size the owner gave; `docs/ACCOUNTS.md`
   records $25.00 at the first balance read on 2026-10-12, to be confirmed).
 - **Rent:** the first window settled on a new UTC day charges every resident, the control included,
@@ -774,6 +777,19 @@ objects lengthened every garbage collection. A process boundary removes all of i
   8 ms, without one 0.1 ms. A book is applied to the residents only if it is the latest for its window and side in
   the pass, or a resident waits on a take or lock there (a take is checked against the first book after its
   latency); prints are de-duplicated once for all residents.
+  - Its boot takes the idle class and nice 19 BEFORE it imports this package (the imports are most of a start's
+    CPU, about 70 ms; at a restart they would otherwise compete at normal priority with the live desk's own start).
+  - One town per DATA_DIR: it holds `DATA_DIR/kalshi_arena/town.lock` (an exclusive `flock`) for its life; a second
+    town (a wedged one outliving its bot outside a container, or a second bot on the same volume, whose live desk the
+    controller lock refuses but whose arena would otherwise start) waits 5 s for it (an old town's final save after
+    a quick restart), then exits without writing (`kalshi_arena_busy`, exit 4).
+  - It imports no `speeddesk_live*` module (`LiveLimits` is imported only where the live process builds the
+    configuration), nothing of an order path and nothing that speaks HTTP or TLS, and it inherits no file of the
+    live desk (`close_fds`: not the companion's `controller.lock`, not a ledger). Shown on the real process
+    (`test_the_real_town_imports_no_order_path_and_inherits_no_live_file`). Its empty environment is not an OS
+    boundary: a process of the same user (root on Railway) can read its parent's `/proc/<pid>/environ`; the town's
+    code never does, and nothing else in it reaches a key.
+  - A write that fails (a full disk) removes its temporary file, since DATA_DIR is the live desk's volume too.
 - **Isolation, proven by tests (`tests/test_kalshi_arena_feed.py`):**
   - a stand-in hardened like the town spinning on every core: the live loop's 1 ms sleeps wake as on time as with
     no town (median 0.076 -> 0.073 ms, p90 0.125 -> 0.133 ms);
@@ -807,7 +823,7 @@ objects lengthened every garbage collection. A process boundary removes all of i
   the town ledger.
 - Logs: `kalshi_arena_started` and `_town` (the process), `_born`, `_evicted`, `_candidate`, `_control`,
   `_control_changed`, `_regime_changed`, `_void`, `_status`, `_feed` (the live side), `_state_reset`, `_step_failed`,
-  `_halted`, `_exited`, `_stopped`, `_not_started` and `_close_failed`, with no exception text.
+  `_halted`, `_busy`, `_exited`, `_stopped`, `_not_started` and `_close_failed`, with no exception text.
 - A bad `KALSHI_ARENA_*` value turns the arena off with `config_kalshi_arena_off bad=<NAME>` (never the value); it
   never stops the engine, and with it the real-money Kalshi companion.
 

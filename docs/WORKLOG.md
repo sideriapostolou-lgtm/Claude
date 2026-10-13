@@ -15,6 +15,29 @@ Template:
 
 
 
+## 2026-10-13 22:30 UTC, Claude, branch claude/kalshi-arena (preflight: real-money isolation and the live loop)
+- Changed (practice code only; `speeddesk.py`, `speeddesk_live*.py`, `config.py` untouched):
+  - the control runs the configured limits, the live ladder's rung 0, and never follows a promotion (live's rung 1
+    is $15/$30/$9 while every resident stays at $10/$20/$6): now said in the panel note and the spec;
+  - one town per DATA_DIR (`town.lock`, waits 5 s, then `kalshi_arena_busy`, exit 4): two bots on one volume ran
+    two towns writing one state.json;
+  - the town's process no longer imports `speeddesk_live_model` (only the live process builds the config);
+  - the town takes the idle class and nice 19 before its imports (about 70-90 ms of CPU ran at normal priority);
+  - a failed write (full disk) removes its temporary file on the shared volume.
+- Verified: on the real SpeedRunner loop at 400 books a second with each town failure (cannot spawn, dies at start,
+  dies later, killed, stopped, never reads, its directory a file, ENOSPC on a full tmpfs): no error escaped, every
+  book and print reached the live companion, steps stayed at 50 ms (p99 57-65 ms, as with the arena off); 10 minutes
+  with a town that never reads: 239,990 books delivered, the link's list and partial frame bounded, no Python heap
+  growth from kalshi_arena.py. SIGTERM (plain and as PID 1): the live shutdown and checkpoint first, the town reaped
+  within 0.3 s (1.0 s cap when wedged), no orphan, no zombie. The deploy-branch model and this one: the golden fixture
+  byte for byte, and 797,000 fuzz steps (twin place() and evaluate()) byte-identical. The arena costs the live
+  thread about 0.2-0.3 ms of CPU a 50 ms step at 400 books a second, healthy or stuck; RSS grows the same with it
+  off. Full suite 4,912 passed, 13 skipped (3.13); arena and genes suites also on 3.12; ruff and mypy clean.
+- Not verified / skipped: Railway itself (PID 1 there assumed from the exec-form start); the town can still read its
+  parent's /proc environ as the same user (root on Railway): its code never does, not an OS boundary; not pushed.
+- Real money touched? no.
+- Next step: merge at a safe minute with the other preflight lenses.
+
 ## 2026-10-13 21:20 UTC, Claude, branch claude/kalshi-arena (review fixes)
 - Changed, after three reviews (every major finding reproduced first):
   - **The town runs in its own process.** A town thread could stall the live loop (a spinning pass raised a 1 ms

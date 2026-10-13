@@ -736,3 +736,120 @@ def test_the_town_barely_delays_a_one_millisecond_loop_at_a_busy_rate(tmp_path: 
     assert statistics.median(loaded) - statistics.median(off) < 0.05
     assert quantile(loaded, 0.9) - quantile(off, 0.9) < 0.25
     assert p99(loaded) - p99(off) < 0.5 or p99(off) > 1.0  # a shared machine's own tail beyond 1 ms is noise
+
+
+# ---------------------------------------------------------------------- preflight: the real town's process, end to end
+# Python 3.12's pathlib imports urllib.parse (string handling only); a client needs one of these.
+NO_ORDER_PATH = ("nightcrawler.speeddesk_live", "nightcrawler.speeddesk_kalshi", "nightcrawler.polymarket_us",
+                 "nightcrawler.broker", "nightcrawler.polydesk", "requests", "websockets", "aiohttp", "httpx", "ssl",
+                 "_ssl", "http.client", "urllib.request", "asyncio")
+
+
+def test_the_real_town_imports_no_order_path_and_inherits_no_live_file(tmp_path: Path, capfd: Any) -> None:
+    """The exact worker command (plus -X importtime, which only reports) started by a SpeedRunner holding the REAL
+    Kalshi companion's controller lock and ledgers: the town's process holds none of them (a town outliving its bot
+    would otherwise lock a restarted live desk out), and over a whole session it imports no module of an order path,
+    no speeddesk_live module at all, and nothing that speaks HTTP or TLS."""
+    clock = FakeClock(time.time())
+    runner = SpeedRunner(Settings(data_dir=tmp_path), threading.Event(), clock=clock, feed_factory=LocalFeeds)
+    link = runner.arena
+    try:
+        assert runner.live is not None and isinstance(link, ArenaLink)
+        live_files = {os.readlink(f"/proc/self/fd/{fd}") for fd in os.listdir("/proc/self/fd")
+                      if os.path.exists(f"/proc/self/fd/{fd}")} if Path("/proc/self/fd").exists() else set()
+        command = worker_command()
+        link.command = [command[0], "-X", "importtime", *command[1:]]
+        link.start()
+        assert link.proc is not None and wait_for(lambda: (tmp_path / "kalshi_arena" / "state.json").exists())
+        fds = Path(f"/proc/{link.proc.pid}/fd")
+        if fds.exists():
+            held = {item.name: os.readlink(item) for item in fds.iterdir()}
+            own = str(tmp_path / "kalshi_arena" / "town.lock")
+            assert any(path.endswith("controller.lock") for path in live_files)  # the parent holds the live lock
+            assert not [path for path in held.values()
+                        if path != own and ("speeddesk" in path or path.endswith((".db", ".lock")))], held
+            assert sum(path.startswith("socket:") for path in held.values()) == 1 and len(held) <= 5, held
+        now = time.time()
+        window = Window("KXBTC15M-mods", now + 1, now + 901, None, taker_coefficient=0.07, maker_coefficient=0.0,
+                        venue_start_price=80_000, venue="kalshi", fee_rounding="kalshi")
+        for step in range(20):
+            now = time.time()
+            link.feed_book(Book(window.slug, "up", (Level(.45, 10),), (Level(.55, 10),), now, f"u{step}", now))
+            link.feed_trade(Trade(window.slug, "up", 0.45, 2.0, now, f"t{step}", "sell", now))
+            link.flush(LiveSnapshot(windows=(window,), bitcoin_price=80_000.0, bitcoin_at=now, sigma=0.0003,
+                                    maker_windows=frozenset({window.slug})))
+            time.sleep(0.05)
+    finally:
+        runner.close()
+    assert link.proc is not None and link.proc.wait(10) == 0
+    modules = {line.rsplit("|", 1)[1].strip() for line in capfd.readouterr().err.splitlines()
+               if line.startswith("import time:") and "|" in line}
+    assert "nightcrawler.kalshi_arena" in modules and "nightcrawler.speeddesk_model" in modules
+    assert not {name for name in modules if name.startswith(NO_ORDER_PATH)}, sorted(modules)
+
+
+def test_one_town_per_data_dir(tmp_path: Path, caplog: Any) -> None:
+    """A second town on the same DATA_DIR (a wedged one outliving its bot outside a container, or a second bot on the
+    same volume) exits at once and never writes; after the first exits, a town starts again."""
+    import socket
+
+    caplog.set_level(logging.INFO, "nightcrawler.kalshi_arena")
+    first = ArenaLink(ArenaConfig(data_dir=tmp_path))
+    first.start()
+    state = tmp_path / "kalshi_arena" / "state.json"
+    try:
+        assert wait_for(state.exists)
+        before = state.stat().st_mtime_ns
+        ours, theirs = socket.socketpair()
+        ours.sendall(frame(("config", kalshi_arena.config_wire(ArenaConfig(data_dir=tmp_path)))))
+        ours.close()  # without the lock, a second town would run one pass, save and return 0
+        clock = {"now": time.time()}
+
+        def wait(seconds: float) -> None:
+            clock["now"] += seconds
+
+        code = kalshi_arena.serve(theirs.fileno(), clock=lambda: clock["now"], sleep=wait, alarm=lambda _s: None)
+        theirs.close()
+        assert code == kalshi_arena.EXIT_BUSY and "kalshi_arena_busy" in caplog.text
+        assert clock["now"] - time.time() >= kalshi_arena.LOCK_WAIT_S - 1  # it waited for the old town first
+        assert state.stat().st_mtime_ns == before  # the second town wrote nothing
+    finally:
+        first.close(wait_s=10)
+    assert first.proc is not None and first.proc.wait(10) == 0
+    # An old town that finishes while the new one waits: the new one takes over.
+    import fcntl
+
+    held = (tmp_path / "kalshi_arena" / "town.lock").open("a", encoding="utf-8")
+    fcntl.flock(held.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+    waits: list[float] = []
+
+    def release_after_two(seconds: float) -> None:
+        waits.append(seconds)
+        if len(waits) == 2:
+            held.close()  # the old town's process ends
+
+    ours, theirs = socket.socketpair()
+    ours.sendall(frame(("config", kalshi_arena.config_wire(ArenaConfig(data_dir=tmp_path)))))
+    ours.close()
+    assert kalshi_arena.serve(theirs.fileno(), sleep=release_after_two, alarm=lambda _s: None) == 0
+    assert len(waits) >= 2
+    theirs.close()
+
+
+@pytest.mark.skipif(not hasattr(os, "SCHED_IDLE"), reason="the idle scheduling class is Linux only")
+def test_the_town_lowers_its_priority_before_it_imports_the_package(tmp_path: Path) -> None:
+    """The exact boot of worker_command, pointed at a stand-in package: when ``nightcrawler.kalshi_arena`` is first
+    imported (most of a start's CPU), the process already runs in the idle class at nice 19."""
+    import subprocess
+
+    package = tmp_path / "nightcrawler"
+    package.mkdir()
+    (package / "__init__.py").write_text("", encoding="utf-8")
+    (package / "kalshi_arena.py").write_text(
+        "import os\nSEEN = (os.getpriority(os.PRIO_PROCESS, 0), os.sched_getscheduler(0) == os.SCHED_IDLE)\n"
+        "def worker_main():\n    print(*SEEN)\n    return 0\n", encoding="utf-8")
+    command = worker_command()
+    result = subprocess.run([*command[:-1], str(tmp_path), "99"], capture_output=True, text=True, timeout=30,
+                            check=True, env=kalshi_arena.worker_env())
+    nice, idle = result.stdout.split()
+    assert int(nice) == 19 and idle == "True"

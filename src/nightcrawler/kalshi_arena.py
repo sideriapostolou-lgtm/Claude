@@ -46,6 +46,7 @@ final save. A child that dies is logged (``kalshi_arena_exited``); the live desk
 from __future__ import annotations
 
 import contextlib
+import fcntl
 import hashlib
 import json
 import logging
@@ -69,7 +70,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Protocol
 
 from .deskguard import LOSING, PHRASES, WINNING, judge
-from .speeddesk_live_model import LiveLimits
 from .speeddesk_model import (
     BitcoinTape,
     Book,
@@ -83,6 +83,7 @@ from .speeddesk_model import (
 
 if TYPE_CHECKING:
     from .config import Settings
+    from .speeddesk_live_model import LiveLimits
 
 log = logging.getLogger("nightcrawler.kalshi_arena")
 
@@ -122,6 +123,8 @@ MEMORY_BYTES = 1 << 30  # the town's address-space limit: a runaway town fails a
 SETTLED_KEEP = 200  # settled windows remembered, so none is ever added again
 FRAME_MAX = 64 << 20  # a frame larger than this is a broken stream
 EXIT_HALTED = 3
+EXIT_BUSY = 4  # another town already holds DATA_DIR/kalshi_arena/town.lock
+LOCK_WAIT_S = 5.0  # ... after waiting this long for it (an old town's final save)
 # The live loop's side (ArenaLink).
 PENDING_MAX = 1024  # books and prints held between two flushes (about 2.5 s of a busy market); beyond, dropped
 FLUSH_MAX = 256  # events encoded per flush: a flush after a stall costs at most about 1 ms
@@ -132,9 +135,13 @@ RECENT_S = VOID_AFTER_S + 900.0  # windows that closed longer ago than this are 
 LINK_STATUS_S = 300.0
 EXIT_WAIT_S = 1.0  # at shutdown, after the live companion stopped: time for the town's final save
 TERMS = ("taker_coefficient", "maker_coefficient", "tick_size", "min_trade_qty", "fee_rounding")
+# The control (and every resident) runs the CONFIGURED live limits, which are the earned-growth ladder's rung 0: the
+# town reads Settings once and never the ladder (speeddesk_live_ladder), so after a live promotion live trades a bigger
+# window than the town. The page says so (the note, at most pagestate's 400 characters).
 NOTE = ("Practice town: every resident fills on its own against the same live Kalshi prints; the control runs the live "
-        "rules as the practice model simulates them, so the comparison is against it. A candidate is a lead for a "
-        "pre-registered test, not proof; real money changes only on the owner's word.")
+        "rules as the practice model simulates them, at the configured limits (the live ladder's rung 0; it does not "
+        "follow a promotion), so the comparison is against it. A candidate is a lead for a pre-registered test, not "
+        "proof; real money changes only on the owner's word.")
 NAMES = ("Ada", "Bo", "Cy", "Dex", "Eve", "Fin", "Gus", "Hal", "Ivy", "Jax", "Kai", "Lux", "Mae", "Nox", "Oz", "Pip",
          "Quin", "Rex", "Sol", "Tex", "Uma", "Vic", "Wren", "Xia", "Yul", "Zed", "Ari", "Bex", "Cal", "Dot", "Echo",
          "Fox", "Gem", "Hex", "Ink", "Jet", "Kit", "Lev", "Moe", "Nia")
@@ -259,7 +266,10 @@ def child_genes(parent: Mapping[str, Any], rng: random.Random) -> dict[str, Any]
 
 
 def _limits(settings: Settings) -> LiveLimits:
-    """The live companion's limits from the deployed settings, with LiveLimits' own clamps (speeddesk_live)."""
+    """The live companion's limits from the deployed settings, with LiveLimits' own clamps (speeddesk_live). Only
+    the live process calls this (arena_config), so the town's own process never imports a speeddesk_live module."""
+    from .speeddesk_live_model import LiveLimits
+
     return LiveLimits(window_usd=settings.speeddesk_kalshi_window_usd, open_usd=settings.speeddesk_kalshi_open_usd,
                       day_loss_usd=settings.speeddesk_kalshi_day_stop_usd,
                       total_loss_usd=settings.speeddesk_kalshi_total_stop_usd, pair_cap=settings.speeddesk_pair_cap,
@@ -510,10 +520,15 @@ class FrameReader:
 
 def worker_command() -> list[str]:
     """The town's process: this interpreter, isolated (no environment variables, no user site, no current
-    directory), importing this package from where it is installed."""
+    directory), importing this package from where it is installed. It takes the idle scheduling class and the lowest
+    priority BEFORE it imports anything of this package: the imports are most of a start's CPU (about 70 ms), and at a
+    restart they would otherwise compete at normal priority with the live desk's own start (worker_main's
+    :func:`_harden` then does the rest)."""
     root = str(Path(__file__).resolve().parent.parent)
-    boot = ("import sys; sys.path.insert(0, sys.argv[1]); "
-            "from nightcrawler.kalshi_arena import worker_main; sys.exit(worker_main())")
+    boot = ("import os, sys\n"
+            "try:\n    os.sched_setscheduler(0, os.SCHED_IDLE, os.sched_param(0))\nexcept Exception:\n    pass\n"
+            "try:\n    os.nice(19)\nexcept Exception:\n    pass\n"
+            "sys.path.insert(0, sys.argv[1]); from nightcrawler.kalshi_arena import worker_main; sys.exit(worker_main())")
     return [sys.executable, "-I", "-X", "utf8", "-c", boot, root]
 
 
@@ -906,14 +921,20 @@ def _clean_row(raw: Any) -> dict[str, Any]:
 
 def _write(path: Path, text: str, *, durable: bool = False) -> None:
     """Atomic: a temporary sibling, then a rename; ``durable`` also fsyncs it first (the town's only record; this
-    runs in the town's own process, never the live desk's)."""
+    runs in the town's own process, never the live desk's). A write that fails (a full disk) removes its temporary
+    file: DATA_DIR is the live desk's volume too, and a partial copy left behind would keep its space."""
     temporary = path.with_name(path.name + ".tmp")
-    with temporary.open("w", encoding="utf-8") as stream:
-        stream.write(text)
-        if durable:
-            stream.flush()
-            os.fsync(stream.fileno())
-    os.replace(temporary, path)
+    try:
+        with temporary.open("w", encoding="utf-8") as stream:
+            stream.write(text)
+            if durable:
+                stream.flush()
+                os.fsync(stream.fileno())
+        os.replace(temporary, path)
+    except BaseException:
+        with contextlib.suppress(OSError):
+            temporary.unlink()
+        raise
 
 
 # ---------------------------------------------------------------------- the town
@@ -1664,7 +1685,8 @@ def _harden() -> None:
 def serve(fd: int, *, clock: Callable[[], float] = time.time, sleep: Callable[[float], None] = time.sleep,
           alarm: Callable[[int], Any] = signal.alarm) -> int:
     """Run the town on the frames read from ``fd`` until the link closes it: 0 after the final save,
-    :data:`EXIT_HALTED` after :data:`HALT_AFTER` failed passes in a row, 2 without a configuration. Each pass
+    :data:`EXIT_HALTED` after :data:`HALT_AFTER` failed passes in a row, 2 without a configuration,
+    :data:`EXIT_BUSY` when another town already runs on the same DATA_DIR (:func:`_town_lock`). Each pass
     sleeps on its own timer, takes what arrived, then runs; a pass (or anything else) that hangs for :data:`HANG_S`
     is killed by the kernel (SIGALRM has no handler here)."""
     reader = FrameReader(fd)
@@ -1680,6 +1702,39 @@ def serve(fd: int, *, clock: Callable[[], float] = time.time, sleep: Callable[[f
                 log.warning("kalshi_arena_no_config")
                 return 2
             sleep(0.05)
+    lock = _town_lock(Path(config.data_dir) / "kalshi_arena", clock=clock, sleep=sleep)
+    if isinstance(lock, int):
+        return lock
+    with lock:
+        return _serve(reader, config, clock=clock, sleep=sleep, alarm=alarm)
+
+
+def _town_lock(directory: Path, *, clock: Callable[[], float], sleep: Callable[[float], None]) -> Any:
+    """One town per DATA_DIR: an exclusive lock held for the process's life (the kernel drops it at any exit). A
+    second town (a wedged one outliving its bot outside a container, or a second bot on the same volume whose live
+    desk its controller lock refused) waits :data:`LOCK_WAIT_S` for it (an old town's final save after a quick
+    restart), then exits with :data:`EXIT_BUSY` and never writes. Returns the open lock file, or the exit code."""
+    try:
+        directory.mkdir(parents=True, exist_ok=True)
+        stream = (directory / "town.lock").open("a", encoding="utf-8")
+    except OSError as exc:
+        log.error("kalshi_arena_halted error=%s (no town lock)", type(exc).__name__)
+        return EXIT_HALTED
+    deadline = clock() + LOCK_WAIT_S
+    while True:
+        try:
+            fcntl.flock(stream.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+            return stream
+        except OSError:
+            if clock() >= deadline:
+                stream.close()
+                log.warning("kalshi_arena_busy (another town holds this DATA_DIR; this one exits without writing)")
+                return EXIT_BUSY
+            sleep(0.1)
+
+
+def _serve(reader: FrameReader, config: ArenaConfig, *, clock: Callable[[], float], sleep: Callable[[float], None],
+           alarm: Callable[[int], Any]) -> int:
     view = WireView()
     arena = KalshiArena(config, lambda: view, clock=clock)
     log.info("kalshi_arena_town pid=%d residents=%d control_rule=%s regime=%s (practice only)", os.getpid(),
