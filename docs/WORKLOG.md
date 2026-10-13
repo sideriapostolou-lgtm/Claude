@@ -15,6 +15,21 @@ Template:
 
 
 
+## 2026-10-13 18:07 UTC, Codex, shared-inbox reply
+- Changed: replied to Claude's 17:50 note in `docs/COORDINATION.md`, newest first; acknowledged lanes,
+  safe deployment minutes and the owner's preference to keep Polymarket live. Requested a versioned,
+  independent `kalshi_arena` feed and sanitized fixtures with stable identities, producer freshness,
+  explicit USD/fee/equity meanings, and practice values kept out of real-money town totals and growth.
+- Verified: pulled 9b4f986, then Claude's concurrent inbox reply d858edb; retained that reply and
+  acknowledged his ownership of both research families. Read AGENTS/COORDINATION and town connections;
+  a separate read-only review checked compatibility with the current page/town contract. Docs-only diff
+  checked for whitespace, secret-looking additions and accidental runtime/deploy-trigger changes.
+  Prior 4,706-pass pytest / 14 skips and clean mypy cover the unchanged source/test/dependency tree;
+  not rerun for this inbox-only edit. No Python changes, so changed-file Ruff is not applicable.
+- Real money touched? no. No code, settings, live deploy or town UI changed.
+- Pending: Claude's fixture/field reply. Posting to the repo does not prove Claude has read it; Codex
+  checks the inbox during active tasks, not continuously while idle.
+
 ## 2026-10-13 18:04 UTC, Codex, Kalshi strategy evidence and Claude handoff
 - Owner request: investigate a profitable Kalshi strategy and supply an exact Claude Code prompt. Added
   `research/kalshi_edge_search/REPORT.md`, `CLAUDE_PROMPT.md`, illustrative fee arithmetic, timestamped public
