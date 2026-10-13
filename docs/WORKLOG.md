@@ -33,6 +33,46 @@ Template:
   send-guard tests (failing first); client code-parsing test; full suite 4,260 passed, 12 skipped.
 - Next step: confirm no `speeddesk_feed_kalshi_ws_gap` after this deploys; PR #14 (cancel 404) still to go live.
 
+## 2026-10-12 23:56 UTC, Codex, branch codex/tycoon-overview
+- Owner request: simplify the live app into a phone-first Theme Park Tycoon 2-inspired business town, with
+  fewer buttons and real business connections. Pulled deploy head `b91b7d6` unchanged; recovered the previously
+  unmerged PR #6 town work (`c5f5020`) into this branch. This session supersedes that unfinished UI rollout.
+- The town is now the home page at `/` and `/world`; detailed reports move to `/reports`, with the existing
+  auth gate/cookie/CSP split preserved. A single Menu replaces the persistent crew/control grid. Buildings and
+  small name labels are tappable; one selected workstation card offers details and a return to the steady town.
+  Reports, account holdings, research, keyboard crew navigation, optional tour and both-desk stop instructions
+  remain available behind Menu. WebGL failure has a working reports link. No trading API or mode control added.
+- Added connected bright grass grounds, wide paths following the actual walk graph, colorful cutaway pavilions,
+  striped canopies, trees, fences and soft daylight. Existing characters and movement remain. Removed the old
+  practice island and UTC goal props from this view; the optional tour restores them. New park geometry uses
+  nine batches, and town mode hides the expensive cloud layer. No physical-device performance claim.
+- Cash is explicitly Polymarket account cash, not profit. The separate PM bot result uses midnight Pacific;
+  incomplete retained books stay unknown. Five decorative gardens use that day's reconciled recorded net profit
+  at 1c / 25c / $1 / $5 / $10; losses/corrections can retract them and midnight resets them. No practice, deposits,
+  owner bets or elapsed animation time earn upgrades. Kalshi cash/exposure/UTC P&L remain separate, including
+  independent cash freshness and unfinished cancellation warnings. Research counters stay read-only/practice.
+- Verification: final full suite **4,396 passed, 21 skipped** (opt-in network / missing optional scientific
+  packages). Final canvas-tap, drag-is-not-a-tap, dialog focus/refresh/return and WebGL-fallback checks passed.
+  Mypy passed all 113 source files and Ruff passed every changed Python file. Diff secret scan and whitespace
+  check passed. Browser checks verified root routing, fixed camera, separate money, two gardens from a synthetic
+  45c result, all six workstation visits, return/tour, stable menu focus, WebGL fallback and no horizontal
+  overflow at 320x568, 390x844 and 1280x800. Final phone screenshot visually reviewed; displayed balances are
+  synthetic fixtures, not current account evidence. Final desktop screenshot also visually reviewed; both
+  captures had no JavaScript exceptions. Deployment status follows below.
+- Real money touched? No strategy, order execution, mode, caps, credentials or protected financial modules
+  changed. This source/UI deployment restarts the shared live bot, as the owner explicitly requested.
+- Deployment limitation: this environment has no Railway secret binding or dashboard token. Can check the
+  exact GitHub/Railway deploy status and public health, but cannot claim startup logs or authenticated live
+  balances were inspected. The earlier request for a secure Railway token / owner or Claude log check remains.
+
+- Deployment verified at 23:58 UTC: PR #15 merged as `e03ede748aeacd288bb89677539ab41da2ef07de`.
+  Railway's `nightcrawler - bot` status on that exact commit is **success**, deployment
+  `282a969e-3238-4c55-8990-22a876c4b656`. Public `/healthz` returned HTTP 200 `ok` after that success,
+  at 23:58:11 UTC. PR #6 was automatically marked merged through ancestry; there is no second UI rollout
+  awaiting an owner tap. Source deployment is complete. Startup/trading logs and the authenticated live
+  account page remain unverified without their credentials; HTTP health is not trading-health evidence.
+  This verification note is documentation-only and should not trigger another rebuild.
+
 ## 2026-10-12 23:15 UTC, Codex, branch codex/weather-lock-stopwatch
 - Owner request: build a read-only weather lock stopwatch on Railway for at least three days. Pulled
   deploy head `9f32451` before work, then incorporated Claude's `8882ece` warm-up fix, `941b261` account
@@ -571,6 +611,102 @@ Template:
   delivery is not configured because this environment has no persistent Railway secret binding.
   Leave Claude's existing 19:45 UTC Bitcoin-filter check unchanged. Real money still requires the owner's exact
   dollar amounts and positive practice after fees over 3+ days; there is no automatic promotion.
+
+## 2026-10-12 18:19 UTC, Codex, branch codex/tycoon-town-view, PR #6
+- Clarified: the owner means 12:00 a.m. Pacific by "since midnight". The town's Bot today card and the main
+  Polymarket daily figure now use America/Los_Angeles calendar days with daylight saving time. Labels say
+  "Since midnight PT" / "since midnight Pacific". The camera tour explains that its combined daily figure and
+  trading safety limits still use UTC.
+- Changed: added a read-only Pacific-day adapter over the retained closed rows. It includes recorded bot
+  settlements and cash-outs, preserves corrections on the original booking day, and excludes owner/practice/
+  unresolved rows. Before returning a total, it checks both result count and P&L against every overlapping UTC
+  day book. Truncated, malformed, mismatched or unfinished-poll records yield an unknown result; yesterday's
+  snapshot cannot establish today's zero. Source time is kept, and no UTC value is relabelled as Pacific.
+- Verified: full `python -m pytest -q`: 3,118 passed, 21 skipped; mypy passed all 88 source files; changed-file
+  Ruff passed. Tests cover two UTC dates, exact midnight, both 23/25-hour DST days, cash-out correction dates,
+  owner exclusion, missing/zero data and independent freshness. An integration test proves a Pacific +$0.23
+  display leaves a UTC -$1.27 loss-limit input unchanged and writes no state. Independent helper review found
+  no blocking issues. Browser fixture checks passed at 320x568, 390x844 and 1280x800, with no page errors or
+  overflow; incomplete Pacific data shows unknown, and the optional tour remains explicitly UTC.
+- Live log comparison: read 51 activity rows from deployment 1972f365 (50 replayed at startup plus the 18:00
+  resolution), with venue timestamps from 03:32 through 18:00 UTC. The 14 nonzero Bitcoin results on/after
+  Pacific midnight (07:00 UTC on Oct 12), through 11:00 a.m. Pacific, sum to +$1.67 in the venue's logged realized
+  amounts; the $10 deposit is excluded. This is a logged activity subtotal, not verified current cash or a full
+  account/book reconciliation. The exact meaning/current value of the owner's $14.39 remains unconfirmed.
+- Real money touched? No protected trading code, orders, caps, settings, state books or reset times changed.
+  Merged target docs through 870bb7d, preserving the owner's MARCO_REAL=0 change. Prior cash-out accounting
+  edge cases remain unresolved; this adapter validates coverage of the recorded book, not correctness or
+  completeness of all venue activity. The same 21 network/optional-dependency checks remain skipped.
+- Next: PR #6 awaits review/merge; this update is not deployed. After merge verify exact Railway SHA, LIVE
+  startup and no tracebacks, then compare the live protected page with the account and record the result.
+
+## 2026-10-12 18:08 UTC, Codex, branch codex/tycoon-town-view, PR #6
+- Asked: reconcile the owner's reported $14.39 and earnings since midnight with the actual Polymarket connection.
+  Asked whether that amount is cash or profit and which timezone defines midnight; no answer yet. Kept the
+  existing UTC booking day and made it explicit. Earlier preview images were fixtures, not live account balances.
+- Fixed: the town's account-bet card now uses the venue snapshot count and value, separately from tracked desk
+  positions, which can remain after an owner cash-out. Known zero remains zero, unknown stays unknown. Old desk
+  position details are explicitly records, not the current venue list. Cash always shows its own checked age;
+  its details distinguish spendable cash, venue balance and buying power. Main dashboard and camera tour now
+  label cash versus bot profit and expose independent source timestamps. No cash differences become profit.
+- Live evidence (read-only logs/status): Railway deployment 1972f365-f1ef-4b12-9d2b-69ad519d8dd5 is SUCCESS,
+  commit 03f526ea3426f25e388d110f5358aa556350109a. At 17:47:36 UTC it connected with cash/buying power $4.59
+  and started LIVE with 10 contracts per order. Earlier deployment aeb5bc19 connected at 17:10:07 with $14.31.
+  These are historical snapshots, neither verifies the owner's current $14.39. Venue activity logs confirm
+  +$0.20 resolutions at 15:00 and 15:15, +$0.20 at 16:15, +$0.10 at 17:00 and +$0.30 at 18:00 UTC; also a $10
+  deposit at 16:09 and an app sale at 15:56. This is not a complete daily ledger or proof of ownership of every
+  logged account trade. No traceback/balance-failure match appeared in the queried deployment logs.
+- Verified: full `python -m pytest -q`: 3,055 passed, 21 skipped; mypy passed all 87 source files; Ruff passed
+  every changed Python file. Focused tests cover stale owner records versus current venue totals, missing/zero
+  snapshots, invalid times, balance/buying-power separation and unchanged recorded bot profit. Browser fixture
+  check passed at 320x568, 390x844 and 1280x800, including money details and the optional camera tour, with no
+  page errors or horizontal overflow. Browser money was synthetic; real trading was not started locally.
+- Open reconciliation limits: the protected production `/api/page` snapshot was unavailable, and logs expose
+  only bounded account activity plus startup balances. Exact current cash and the complete since-midnight total
+  are NOT reconciled. Booking uses detection day, not venue event day. Activity polling reads only the newest
+  50 rows. Separate in-memory reproductions found two existing cash-out accounting defects: a fully sold
+  break-even position remains tracked, and a late partial-sale correction can omit profit on the remaining
+  shares' settlement (10 shares originally +$0.28; 4 sold at -$0.10; correction becomes -$0.10 instead of +$0.068).
+  These findings are not established as the cause of the live discrepancy. They need a separate accounting fix
+  and tests because those books also feed real-money loss limits; this PR does not alter them.
+- Real money touched? No protected trading files, orders, strategy, caps, variables or stored account books
+  changed. Only display/read-model code and tests/docs. Lint cleanup in the newly touched read-model file is
+  formatting and annotations for existing exception boundaries. The same 21 network/optional dependency tests
+  remain skipped. This update is on PR #6, not deployed; merge still restarts the existing live bot.
+- Next: compare an authorized current dashboard/account snapshot with the owner's stated period, then address
+  confirmed accounting discrepancies without changing owner bets or risk settings. After merge, verify the exact
+  deployment SHA, LIVE startup and logs and record the result here.
+
+## 2026-10-12 17:55 UTC, Codex, branch codex/tycoon-town-view, PR prepared
+- Changed: the owner asked for a phone-first steady town, then named Theme Park Tycoon 2 as the visual reference.
+  Kept the existing cast, buildings and navigation; added green grounds, department colors, paths on the actual
+  walk graph, cutaway rooms and six selectable workstations. The camera stays put until the viewer moves it;
+  the original camera tour remains available. Roof plants follow the cutaway and return with the original roofs.
+- Connected: available Polymarket account cash, account-wide open bets and the bot's realized result today use
+  existing `/api/page` fields. Owner bets, practice money, pending orders and bot results stay distinct. Cash
+  and account-position ages are checked separately; missing data stays unknown. Actual service alerts remain
+  visible. The role panel explains the separate Solana and Polymarket workflows without inventing handoffs.
+  Fixed two display scope errors: Rook's whole-account open cost no longer becomes a gauge against the bot-only
+  cap, and that same account total cannot create a false "full" pause in the new HUD. Trading decisions are unchanged.
+- Verified: synced the deploy branch through 03f526e; `python -m pytest -q`: 3,033 passed, 21 skipped;
+  `mypy src/nightcrawler`: passed, 87 source files; Ruff passed on all changed Python files; diff check and
+  secret-pattern scan passed. No protected trading file differs from the deploy branch. Initial test runs
+  exposed old default-mode/section-boundary assertions; those now test the new default and preserved cinema.
+- Browser: inspected local fixture screenshots at 390x844, 320x568 and 1280x800, including settled Voss/Pip views.
+  Final phone/desktop captures load the original models, with no page/console errors or horizontal overflow.
+  Functional checks exercised all six selectors, a steady camera, the two workflow explanations, 18 account
+  positions with preserved reading scroll, independent stale cash/positions, a loss, paper mode, missing values,
+  disconnection/recovery and the optional camera tour. Geometry tests verify cutaway restoration, unchanged
+  collisions/routes and no floating roof vegetation. Unit checks also cover service alerts and sign-in failures.
+- Limits/skips: preview figures are sample data, not current venue balances. Software-rendered Chromium required
+  the existing lite mode and paused frames for still captures; one earlier screenshot attempt timed out.
+  Physical-phone frame rate and the protected production dashboard were not checked. The 21 skips are the same
+  12 opt-in network tests and 9 checks/modules requiring optional pandas/numpy/scipy; real trading was not started locally.
+- Real money touched? No order/strategy/cap/settings changes. This is a larger change, so AGENTS.md rule 4 uses
+  a feature branch and pull request. Merging the watched `src/**` changes will rebuild/restart the existing live bot.
+- Next step: owner reviews/merges the PR. Then match Railway's successful deployment to that exact merge SHA,
+  check fresh `polydesk_started ... (LIVE: 10 contract(s) per order)` and no tracebacks, verify the live page,
+  and add the deployment evidence here. This tycoon change has not been deployed yet.
 
 ## 2026-10-12 17:04 UTC, Codex, crew movement cleanup
 - Changed: at the owner's request, kept the existing town, cast, camera, layout and event choreography, and

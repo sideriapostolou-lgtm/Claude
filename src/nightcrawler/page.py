@@ -291,6 +291,10 @@ _SCRIPT = r"""
     return today ? d.toLocaleTimeString([], {hour: "2-digit", minute: "2-digit"})
       : d.toLocaleString([], {month: "short", day: "numeric", hour: "2-digit", minute: "2-digit"});
   }
+  function checkedUtc(ts) {
+    const d = new Date(ts * 1000);
+    return isNum(ts) && ts > 0 && isFinite(d.getTime()) ? d.toISOString().slice(0, 16).replace("T", " ") + " UTC" : "";
+  }
   const WORD = {working: "Working", idle: "Idle", waiting: "Waiting", blocked: "Blocked", absent: "Not built yet"};
   function chip(status) { return el("span", "chip " + status, el("i"), WORD[status] || status); }
   function track(value, cls) {
@@ -720,17 +724,28 @@ _SCRIPT = r"""
     const join = (...bits) => bits.filter(Boolean).join(" · ");
     const count = (n, one, many) => (isNum(n) ? n.toLocaleString() + " " + (n === 1 ? one : many) : "");
     const won = (w, s) => (isNum(w) && isNum(s) ? w + "/" + s + " won" : "");
-    const row = (book, meta) => el("div", null,
-      el("div", "line", el("span", "coin", book.label), el("span", "big " + tone(book.since_start_usd),
+    const row = (book, meta, label = book.label) => el("div", null,
+      el("div", "line", el("span", "coin", label), el("span", "big " + tone(book.since_start_usd),
         usd(book.since_start_usd, true))),
       el("div", "meta", meta));
     const r = pm.real, p = pm.paper, rows = [];
     if (r) {
+      const pacific = r.today_pacific || {}, known = pacific.status === "ok"
+        && pacific.tz === "America/Los_Angeles" && isNum(pacific.pnl_usd);
       const venue = isNum(r.contracts) ? count(r.contracts, "contract held", "contracts held")
         + (isNum(r.cost_usd) ? ", cost " + usd(r.cost_usd) : "") + (isNum(r.value_usd) ? ", worth " + usd(r.value_usd) + " now" : "")
         : count(r.open, "open position", "open positions") + ", the venue's book not read yet";
-      rows.push(row(r, join("settled since start", isNum(r.cash_usd) ? "cash at the venue " + usd(r.cash_usd)
-        : "cash at the venue not read yet", venue, join("today " + usd(r.today_usd, true), won(r.won_today, r.settled_today)))));
+      rows.push(row(r, join("bot profit/loss since start", isNum(r.cash_usd) ? "available account cash " + usd(r.cash_usd)
+        : "account cash not read yet", venue, "bot since midnight Pacific " + usd(known ? pacific.pnl_usd : null, true)),
+        r.label + " · bot profit/loss"));
+      rows.push(el("p", "meta", "Cash and open bets include your own activity. Bot profit excludes your own bets and deposits. "
+        + "The Pacific day uses the bot’s booking time, not the venue event date. Safety limits still reset at 00:00 UTC."));
+      if (!known) rows.push(el("p", "meta", pacific.status === "incomplete"
+        ? "Pacific-day record incomplete; today’s result is not available." : "Pacific-day result not available yet."));
+      const checks = [["Cash checked", r.cash_at], ["Positions checked", r.venue_at], ["Desk report", pm.as_of],
+        ["Pacific profit checked", pacific.as_of]]
+        .map(([label, ts]) => checkedUtc(ts) ? label + " " + checkedUtc(ts) : "").filter(Boolean);
+      if (checks.length) rows.push(el("p", "meta", checks.join(" · ")));
     }
     const settled = won(p.won_total, p.settled_total);
     rows.push(row(p, join("since start", count(p.open, "open paper position", "open paper positions"),

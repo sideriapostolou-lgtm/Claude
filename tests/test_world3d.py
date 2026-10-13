@@ -212,7 +212,7 @@ def test_world_is_static_and_lists_every_member(settings: Settings) -> None:
     assert "<p id=\"honest\">Drawings acting out the bot's own records; every word is its data.</p>" in page
     honest = page[page.index('<p id="honest">'):]
     assert "ledger" not in honest[:honest.index("</p>")] and len(honest[:honest.index("</p>")]) < 90
-    assert 'href="office"' in page and 'href="./"' in page  # the ways back
+    assert 'href="office"' in page and 'href="/reports"' in page  # the ways back
     assert not re.search(r"""(?:src|href)\s*=\s*["']?(?:https?:)?//""", page)
     assert render_world_html(settings) == page  # pure
 
@@ -1218,7 +1218,7 @@ def test_the_world_bar_replaces_the_two_dense_lines(settings: Settings) -> None:
     page = render_world_html(settings)
     module = _module(page)
     head = page[page.index('<header id="bar">'):page.index("</header>")]
-    for part in ('class="back" href="./"', 'id="real"', 'id="practice"', ">Practice (pretend)</button>", 'id="help"',
+    for part in ('class="back" href="/reports"', 'id="real"', 'id="practice"', ">Practice (pretend)</button>", 'id="help"',
                  'id="headline"', 'id="status" role="status" hidden'):
         assert part in head, part
     assert 'id="town"' not in page and 'id="foot"' not in page and 'id="money"' not in page and 'id="mode"' not in page

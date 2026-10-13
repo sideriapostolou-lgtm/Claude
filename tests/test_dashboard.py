@@ -36,6 +36,7 @@ from nightcrawler.models import (
     TokenCandidate,
     Verdict,
 )
+from nightcrawler.world3d import WORLD_CSP
 
 NOW = 1_791_475_200.0  # 2026-10-08T16:00:00Z
 MIDNIGHT = NOW - NOW % 86_400
@@ -179,19 +180,25 @@ def test_routes_without_token(serve: Callable[..., Client], ledger: Ledger, sett
     assert set(state) == STATE_KEYS and state["mode"] == "PAPER"
     status, headers, body = client.request("/")
     assert status == 200 and headers["Content-Type"] == "text/html; charset=utf-8"
-    assert headers["Content-Security-Policy"] == CONTENT_SECURITY_POLICY
+    assert headers["Content-Security-Policy"] == WORLD_CSP
     assert headers["X-Frame-Options"] == "DENY" and headers["X-Content-Type-Options"] == "nosniff"
+    assert b'<canvas id="view">' in body and "Set-Cookie" not in headers
+    assert client.request("/world")[2] == body
+    status, headers, body = client.request("/reports")
+    assert status == 200 and headers["Content-Security-Policy"] == CONTENT_SECURITY_POLICY
     # the page's badge waits for the data's plain words (never a bare PAPER while real money may be on)
     assert b'<b class="mode" id="mode" hidden></b>' in body and b">PAPER<" not in body and "Set-Cookie" not in headers
     assert client.request("/nope")[0] == 404
     assert client.request("/api/state/extra")[0] == 404
+    for path in ("/reports/", "/reports/x", "/reports.html"):
+        assert client.request(path)[0] == 404
 
 
 @pytest.mark.parametrize("method", ["POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"])
 def test_everything_but_get_is_refused(serve: Callable[..., Client], ledger: Ledger, settings: Settings,
                                        method: str) -> None:
     client = serve(settings, provider_for(ledger, settings))
-    for path in ("/", "/api/state", "/healthz"):
+    for path in ("/", "/world", "/reports", "/api/state", "/healthz"):
         status, headers, _ = client.request(path, method=method)
         assert status == 405 and headers["Allow"] == "GET"
 
@@ -211,7 +218,7 @@ def test_dashboard_is_read_only(serve: Callable[..., Client], ledger: Ledger, se
             conn.close()
 
     before = snapshot()
-    for path in ("/", "/api/state", "/healthz", "/api/state?token=x"):
+    for path in ("/", "/world", "/reports", "/api/state", "/healthz", "/api/state?token=x"):
         client.request(path)
     for method in ("POST", "PUT", "DELETE"):
         client.request("/api/state", method=method)
@@ -225,7 +232,7 @@ def test_token_gate(serve: Callable[..., Client], ledger: Ledger, make_settings:
     settings = make_settings(DASHBOARD_TOKEN=TOKEN)
     client = serve(settings, provider_for(ledger, settings))
     assert client.request("/healthz")[0] == 200  # Railway's health check needs no token
-    for path in ("/", "/api/state", "/?token=wrong", "/api/state?token=" + TOKEN[:-1]):
+    for path in ("/", "/world", "/reports", "/api/state", "/?token=wrong", "/api/state?token=" + TOKEN[:-1]):
         status, headers, body = client.request(path)
         assert status == 401 and b"Locked" in body and "Set-Cookie" not in headers
     status, headers, _ = client.request("/?token=" + TOKEN)
@@ -236,6 +243,7 @@ def test_token_gate(serve: Callable[..., Client], ledger: Ledger, make_settings:
     value = cookie.split(";", 1)[0].split("=", 1)[1]
     assert client.request("/api/state", headers={"Cookie": f"{COOKIE_NAME}={value}"})[0] == 200
     assert client.request("/", headers={"Cookie": f"other=1; {COOKIE_NAME}={value}"})[0] == 200
+    assert client.request("/reports", headers={"Cookie": f"{COOKIE_NAME}={value}"})[0] == 200
     assert client.request("/api/state", headers={"Cookie": f"{COOKIE_NAME}={TOKEN}"})[0] == 200
     assert client.request("/api/state", headers={"Cookie": f"{COOKIE_NAME}=forged"})[0] == 401
     assert client.request("/api/state", headers={"Cookie": "garbage;;=\x7f"})[0] == 401
@@ -256,7 +264,8 @@ def test_no_secret_ever_appears_in_any_response(serve: Callable[..., Client], le
         ("/healthz", "GET", None), ("/", "GET", None), ("/api/state", "GET", None),
         (f"/?token={TOKEN}", "GET", None), (f"/api/state?token={TOKEN}", "GET", None),
         ("/api/state", "GET", {"Cookie": f"{COOKIE_NAME}={TOKEN}"}), ("/missing", "GET", None),
-        (f"/api/state?token={TOKEN}", "POST", None)]]
+        (f"/api/state?token={TOKEN}", "POST", None),
+        (f"/reports?token={TOKEN}", "GET", None), (f"/world?token={TOKEN}", "GET", None)]]
     state = json.loads(responses[4][2])
     assert state["mode"] == "LIVE" and state["wallet"]["address"] == WALLET
     assert "[REDACTED]" in state["engine"]["last_error"] and "[REDACTED]" in state["positions"][0]["symbol"]

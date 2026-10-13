@@ -10,15 +10,15 @@ daemon thread. Routes (GET only; anything else -> 405; unknown path -> 404):
   ``/office/art/<name>.jpg`` -> its bundled concept-art sets (whitelist, private cache).
 * ``/office3d`` -> the 3D town (:mod:`nightcrawler.office3d`), same data and auth as ``/``;
   ``/office/assets/<name>`` -> its bundled three.js module (whitelist, private cache).
-* ``/world`` -> the 3D world "Night Shift: Skyport" (:mod:`nightcrawler.world3d`), same data and auth
-  as ``/``; ``/office/assets/<name>`` also serves its whitelist (three.js addons, optional cast models).
-* ``/`` -> the ONE mobile-first page (:mod:`nightcrawler.page`, via :func:`render_html`): money,
+* ``/`` and ``/world`` -> the 3D town (:mod:`nightcrawler.world3d`), with the same auth;
+  ``/office/assets/<name>`` also serves its whitelist (three.js addons, optional cast models).
+* ``/reports`` -> the mobile-first reports (:mod:`nightcrawler.page`, via :func:`render_html`): money,
   the team at work, trades, learning, "ready for real money?", receipts and usage, in plain words.
   It refreshes every 15 s from ``/api/page`` while the tab is visible.
 * ``/api/page`` -> that page's data (:mod:`nightcrawler.pagestate`); ``/api/team`` -> the team room
   JSON (:mod:`nightcrawler.teamroom`). Both are served by :class:`~nightcrawler.teamroom.TeamRoom`
   with the same auth and scrubbing.
-* ``/team`` -> 302 to ``/`` (old team-room links keep working).
+* ``/team`` -> 302 to ``/reports`` (old team-room links keep working).
 
 Auth: if ``DASHBOARD_TOKEN`` is set, every route but ``/healthz`` requires
 ``?token=<value>`` or cookie ``nc_token=<value>`` (constant-time compare);
@@ -124,9 +124,19 @@ from nightcrawler.http import KV_USAGE, PROVIDERS, host_of, provider_of
 from nightcrawler.logging_setup import get_logger, redact_text
 from nightcrawler.models import LAMPORTS_PER_SOL, Position
 from nightcrawler.office import OFFICE_CSP, art_bytes, render_office_html
-from nightcrawler.office3d import ASSET_FILES, OFFICE3D_CSP, asset_bytes, render_office3d_html
+from nightcrawler.office3d import (
+    ASSET_FILES,
+    OFFICE3D_CSP,
+    asset_bytes,
+    render_office3d_html,
+)
 from nightcrawler.page import PAGE_CSP, REFRESH_S, render_page_html
-from nightcrawler.world3d import WORLD_ASSETS, WORLD_CSP, render_world_html, world_asset_bytes
+from nightcrawler.world3d import (
+    WORLD_ASSETS,
+    WORLD_CSP,
+    render_world_html,
+    world_asset_bytes,
+)
 
 __all__ = [
     "CONTENT_SECURITY_POLICY",
@@ -538,7 +548,7 @@ CONTENT_SECURITY_POLICY = PAGE_CSP
 
 
 def render_html(settings: Settings) -> str:
-    """The one page at ``/`` (:func:`nightcrawler.page.render_page_html`; no secrets, no external URLs). Pure."""
+    """Reports at ``/reports`` (:func:`nightcrawler.page.render_page_html`; no secrets). Pure."""
     return render_page_html(settings)
 
 
@@ -576,6 +586,7 @@ class _Handler(BaseHTTPRequestHandler):
             "/office",
             "/office3d",
             "/world",
+            "/reports",
             "/api/state",
             "/api/page",
             "/team",
@@ -597,9 +608,9 @@ class _Handler(BaseHTTPRequestHandler):
         )
         if (
             parts.path == "/team"
-        ):  # the old team room page: now part of the one page (the cookie carries auth)
+        ):  # the old team room page: now part of reports (the cookie carries auth)
             self._send(
-                302, b"", "text/plain; charset=utf-8", [*headers, ("Location", "/")]
+                302, b"", "text/plain; charset=utf-8", [*headers, ("Location", "/reports")]
             )
             return
         if parts.path in (
@@ -609,7 +620,7 @@ class _Handler(BaseHTTPRequestHandler):
         ):  # live data: nightcrawler.teamroom.TeamRoom
             self._send(*dashboard.team.response(parts.path, headers))
             return
-        if parts.path == "/":
+        if parts.path == "/reports":
             headers.append(("Content-Security-Policy", CONTENT_SECURITY_POLICY))
             self._send(200, dashboard.page, "text/html; charset=utf-8", headers)
             return
@@ -623,7 +634,7 @@ class _Handler(BaseHTTPRequestHandler):
             headers.append(("Content-Security-Policy", OFFICE3D_CSP))
             self._send(200, dashboard.office3d, "text/html; charset=utf-8", headers)
             return
-        if parts.path == "/world":  # the 3D world (nightcrawler.world3d): same data, same auth
+        if parts.path in ("/", "/world"):  # the town is home; older world links keep working
             headers.append(("Content-Security-Policy", WORLD_CSP))
             self._send(200, dashboard.world, "text/html; charset=utf-8", headers)
             return
