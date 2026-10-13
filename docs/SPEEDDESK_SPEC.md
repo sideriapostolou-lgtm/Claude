@@ -194,7 +194,7 @@ practice trial and keep an additional honest practice twin of the live companion
 
 History: $2/$4/$3/$5 at launch (2026-10-12); $5/$10/$6/$10 (owner, 2026-10-13, "2.5x"); window and open raised to
 $10/$20 (owner, 2026-10-13 15:15 UTC, "ten now double tmr if it works"), both stops unchanged; the code ceilings
-allow one step to $20/$40 and a $12 day stop "when it's winning" (owner, 16:00 UTC; rule in docs/ACCOUNTS.md). The stops count
+allow one step to $20/$40 and a $12 day stop "when it's winning" (owner, 16:00 UTC); since the owner's "Max $50,000 a window build the ladder" (2026-10-13 ~18:40 UTC) the settings above are the earned-growth ladder's rung 0 and the bot takes that step itself (9.2). The stops count
 money still at risk, so they also bound each window: an unpaired position can never put more at risk than is
 left under the day and total stops (a complete up+down pair risks nothing).
 | `SPEEDDESK_KALSHI_CLIP` | 5 contracts | Most contracts per real order, so the first buy in a window is at most 5 (owner, 2026-10-13, after two 10-contract first buys were run over); balancing and lock orders follow it |
@@ -338,6 +338,51 @@ pairs be "completely locked in" and that the bot "knows when to sell".
   locks can still read it (a lock pending at that moment would not be readable by the old release). It never
   runs with live switches off, after a failure or integrity error, in a window the owner traded, or before
   every order in the window is reconciled. Locks are kept out of the speed measurements and the twin.
+
+### 9.2 Earned-growth ladder (owner, 2026-10-13 ~18:40 UTC)
+
+After Claude proposed this rule the owner wrote: "Max $50,000 a window build the ladder". Code: `src/nightcrawler/speeddesk_live_ladder.py`; the
+risk book asks it for each window's limits (`LiveRiskBook.limits_for`, `limits_now`).
+
+- **Rungs.** Rung r >= 0: window = base + $5r, where base is `SPEEDDESK_KALSHI_WINDOW_USD` (Railway: $10, the
+  owner's floor); open = 2 x window; contract cap (so the first buy) = floor(window / 2), never below 1; day stop =
+  0.6 x window. Rung 0 is exactly the configured limits ($10/$20/$6, 5 contracts) and no rung goes below a
+  configured value. The $10 lifetime stop never scales: real money still switches off when total P&L since launch
+  (with money at risk) reaches -$10. Ceilings: $50,000 a window, or `SPEEDDESK_KALSHI_LADDER_MAX_WINDOW_USD` when
+  lower, and the code ceilings first. **This release keeps the code ceilings at $20/$40/$12** (config.py `hi` and
+  `speeddesk_live_model.HARD_*`), so from $10 the ladder has two rungs: $15/$30/$9 with 7 contracts, then
+  $20/$40/$12 with 10. Raising the ceilings toward $50,000 is a separate change (tests already check that the top
+  rung would then be exactly $50,000/$100,000/$30,000 with 25,000 contracts).
+- **Promotion**, one rung, when all five hold since the current rung began: (1) at least 96 settled windows traded
+  at this rung; (2) gain G = total P&L now - total P&L when the rung began >= 2 sigma sqrt(n), sigma = max(realized
+  SD of per-window P&L at this rung, 0.105 x window); (3) house money: total P&L + $10 >= 3 x 0.55 x the next rung's
+  window; (4) no reconciliation stop now and no stop of any kind (total, daily, reconciliation) in the last 24 h;
+  (5) available cash (cash less pending reservations and unconfirmed spending) >= the next rung's open budget, from
+  a balance read within the last minute.
+- **Demotion**, one rung and never below 0: total P&L <= its peak at this rung - 0.6 x the rung's window. At rung 0
+  a give-back changes nothing. A stop while a promotion still waits for its boundary cancels it.
+- **Never mid-window.** A decision takes effect at the next window boundary (the close of the window under way):
+  every window's limits are fixed by its start, so a window that has begun keeps the limits it started with, and
+  windows starting from the boundary use the new rung. Only one change waits at a time; counters (start time and
+  P&L, windows, per-window results, peak) restart after any change, and windows that began before the boundary are
+  not counted at the new rung.
+- **Every check uses the window's rung:** window budget, open budget, day stop, contract cap (starter, balancing
+  and lock orders), the size search in `_decide` and `_lock`, the status report and the practice twin (its window,
+  open, day stop and cap follow the rung). The total stop, cash bound, pair cap, imbalance, cutoff and lock rules are
+  unchanged. Note: the unchanged lifetime stop still caps money at risk at once below $10 (less any loss since
+  launch), so above rung 1 it binds before the day stop; a bigger rung adds paired volume, not unpaired risk.
+- **Saved and restored.** The ladder is a top-level `ladder` key in the saved state (rung, the rung windows before
+  the boundary keep, the boundary, rung start time and P&L, peak, last stop, the latest 192 per-window results and
+  the last change). On restart the count is rebuilt from the saved books (saved in the same write), so a saved list
+  can never inflate it. The previous release ignores the key and nothing inside the books or intents changed, so a
+  rollback runs at the configured limits; it then saves without the ladder and the next upgrade starts at rung 0.
+  An unreadable ladder, `SPEEDDESK_KALSHI_LADDER=false` (it also restarts at rung 0) or a lower maximum only ever
+  lowers the limits.
+- **Shown and logged.** The panel and the `speeddesk_live_status` line carry `ladder`: rung in force, limits,
+  promotion progress (n/96, G vs needed, sigma, room vs needed, cash vs needed, last stop, what blocks it), the
+  demotion line (peak, give-back vs limit) and any waiting change; `caps` are the rung's limits now (plus `clip`).
+  `/api/page` exposes it as `kalshi_live.ladder` (pagestate whitelist). Each decision logs one
+  `speeddesk_live_ladder` line with every number (`action` promote, demote or cancel), and each start logs one.
 
 ## 10. Public source-bot watcher and faster market data (owner, 2026-10-12)
 

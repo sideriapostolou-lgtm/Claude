@@ -101,7 +101,9 @@ Schema (lists capped: members 9, events <= 5, open trades <= 10, closed trades 1
                               "fill_rate_basis", "latency_definition", "venues": {"kalshi": {...},
                               "polymarket_us": {...}}},  # same metrics per venue; unknowns never inferred from totals
                               "reports": {UTC day: {... same figures and "reported_at"}} (<= 31),
-                              "kalshi_live": {... separate authenticated account; never added to town cash}}|null},
+                              "kalshi_live": {... separate authenticated account; never added to town cash,
+                                              "ladder": {earned-growth ladder: rung, limits, promotion progress,
+                                                         demotion line; see _kalshi_ladder}|null}}|null},
       "town": {"label", "cost_per_day_usd", "cost_today_usd", "cost_since_start_usd": float|null,  # see TOWN
                "income_today_usd": float|null, "income_since_start_usd": float|null,
                "covered_today": bool|null, "covered_since_start": bool|null, "line",
@@ -1623,6 +1625,54 @@ _KALSHI_RESET_STATES = frozenset({"armed", "account_unreconciled", "startup_pend
                                   "no_integrity_error"})
 
 
+# What may hold up the Kalshi ladder's next promotion (speeddesk_live_ladder.Ladder.promotion "blocked").
+_KALSHI_LADDER_BLOCKS = frozenset({"ladder_off", "at_ceiling", "change_pending", "windows", "gain", "house_money",
+                                   "stops", "cash"})
+_KALSHI_LADDER_LIMITS = ("window_usd", "open_usd", "day_stop_usd", "clip", "total_stop_usd")
+
+
+def _kalshi_ladder(raw: Any) -> dict[str, Any] | None:
+    """The Kalshi earned-growth ladder from the companion's saved report (owner, 2026-10-13: "Max $50,000 a window
+    build the ladder"): the rung and limits in force, progress to the next rung (each of its five conditions: settled
+    windows n/96, gain G against 2 sigma sqrt(n), room above the lifetime stop against 1.65 x the next window, 24 h
+    without a stop, cash against the next open budget) and the demotion line. All money in USD; unknown is null.
+    Display only: the page never changes a limit."""
+    if not isinstance(raw, Mapping):
+        return None
+
+    def limits(value: Any) -> dict[str, float | None] | None:
+        return {key: _num(value.get(key)) for key in _KALSHI_LADDER_LIMITS} if isinstance(value, Mapping) else None
+
+    promotion, demotion, change = (_xp_map(raw.get(key)) for key in ("promotion", "demotion", "last_change"))
+    blocked = promotion.get("blocked")
+    return {
+        "enabled": raw.get("enabled") is True, "rung": _count(raw.get("rung")),
+        "ladder_rung": _count(raw.get("ladder_rung")), "top_rung": _count(raw.get("top_rung")),
+        "max_window_usd": _num(raw.get("max_window_usd")),
+        "configured_max_window_usd": _num(raw.get("configured_max_window_usd")), "limits": limits(raw.get("limits")),
+        "change_pending": raw.get("change_pending") is True, "effective_from": _num(raw.get("effective_from")),
+        "pending_limits": limits(raw.get("pending_limits")),
+        "rung_started_at": _num(raw.get("rung_started_at")), "start_pnl_usd": _num(raw.get("start_pnl_usd")),
+        "promotion": {
+            "ready": promotion.get("ready") is True,
+            "blocked": ([item for item in blocked if item in _KALSHI_LADDER_BLOCKS]
+                        if isinstance(blocked, list) else None),
+            "next_rung": _count(promotion.get("next_rung")), "next_limits": limits(promotion.get("next_limits")),
+            "windows": _count(promotion.get("windows")), "windows_needed": _count(promotion.get("windows_needed")),
+            **{key: _num(promotion.get(key)) for key in (
+                "gain_usd", "gain_needed_usd", "sigma_usd", "sd_usd", "room_usd", "room_needed_usd",
+                "available_cash_usd", "cash_needed_usd", "last_stop_at", "quiet_from")}},
+        "demotion": {
+            "due": demotion.get("due") is True, "at_floor": demotion.get("at_floor") is True,
+            **{key: _num(demotion.get(key)) for key in (
+                "peak_pnl_usd", "total_pnl_usd", "giveback_usd", "giveback_limit_usd", "line_usd")}},
+        "last_change": ({"action": change["action"], "from_rung": _count(change.get("from_rung")),
+                         "to_rung": _count(change.get("to_rung")), "effective_from": _num(change.get("effective_from")),
+                         "at": _num(change.get("at"))}
+                        if change.get("action") in ("promote", "demote", "cancel") else None),
+    }
+
+
 def _kalshi_live_panel(raw: Any, settings: Settings, now: float) -> dict[str, Any] | None:
     """Whitelist the companion's saved account report; never query an account from the page.
 
@@ -1705,6 +1755,7 @@ def _kalshi_live_panel(raw: Any, settings: Settings, now: float) -> dict[str, An
         "integrity_reset": (raw["integrity_reset"] if isinstance(raw.get("integrity_reset"), str)
                             and raw["integrity_reset"] in _KALSHI_RESET_STATES else None),
         "caps": {key: _num(caps.get(key)) for key in ("window_usd", "open_usd", "day_stop_usd", "total_stop_usd")},
+        "ladder": _kalshi_ladder(raw.get("ladder")),
         "today": real_report(today, day), "reports": reports,
         "total": {key: _num(total.get(key)) for key in money_keys},
         "practice_twin": _speed_report(twin, day, with_venues=False),

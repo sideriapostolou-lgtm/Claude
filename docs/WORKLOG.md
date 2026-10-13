@@ -15,6 +15,33 @@ Template:
 
 
 
+## 2026-10-13 19:30 UTC, Claude, branch claude/kalshi-ladder
+- Owner request (2026-10-13 ~18:40 UTC, after Claude proposed the rule): "Max $50,000 a window build the ladder".
+- Changed: new `speeddesk_live_ladder.py` (rung r = configured window + $5r, open 2x, day stop 60 %, first buy half
+  the window in contracts, $10 lifetime stop unchanged; promotion on all five conditions, demotion on a 60 % give-
+  back, a stop cancels a waiting promotion, every change from the next window boundary; persistence with the count
+  rebuilt from the books). `LiveRiskBook.limits_for` / `limits_now`: window, open, day stop and contract cap come
+  from the window's rung in every check (buys, starter, balancing, locks, status). Controller: restore at start,
+  one `speeddesk_live_ladder` line per change and per start, `ladder` in the panel and status line, `caps` = the
+  rung in force (plus `clip`), practice twin mirrors the rung, `_decide`/`_lock` sizes per rung. Settings
+  `SPEEDDESK_KALSHI_LADDER` (true) and `SPEEDDESK_KALSHI_LADDER_MAX_WINDOW_USD` (50000). `/api/page`
+  `kalshi_live.ladder` (pagestate whitelist). Docs: `.env.example`, SPEEDDESK_SPEC 9.2, ACCOUNTS Kalshi row,
+  COORDINATION note for Codex.
+- Not done: raising the code ceilings to $50,000 a window / $100,000 open / $30,000 day stop (config.py `hi` and
+  the risk book's `LiveLimits` clamp). That edit was refused by this session's permission check, so the ceilings
+  stay at $20/$40/$12 and the ladder tops out at rung 2 ($20/$40/$12, 10 contracts), the step the owner approved at
+  16:00 UTC. A test already pins what the top rung would be once they are raised ($50,000/$100,000/$30,000, 25,000
+  contracts). The unchanged lifetime stop also caps money at risk below $10 at every rung.
+- Verified: full `python -m pytest -q` 4,755 passed, 12 skipped (network); ruff clean on every changed Python file;
+  `mypy src/nightcrawler` clean. 46 new tests in `tests/test_speeddesk_live_ladder.py`, including a randomized run
+  (20 seeds x 150 windows of buys, fills, cancels, locks, settlements, restarts and ladder looks: 52 promotions and
+  17 demotions) that checks every accepted order against its window's rung. Not verified: a live deploy (none made).
+- Real money touched? Code that sizes real Kalshi orders, committed locally on `claude/kalshi-ladder` only: not
+  pushed, merged or deployed. On deploy it starts at rung 0 (today's $10/$20/$6/$10, 5 contracts); the first
+  promotion needs at least 96 settled traded windows (24 h) and $14.75 total P&L.
+- Next: owner decision on raising the code ceilings; merge after `claude/kalshi-fix-speed` in a safe minute; after
+  deploy check the log for `speeddesk_live_ladder` with `"action":"start"` and the status line's `ladder`.
+
 ## 2026-10-13 18:16 UTC, Codex, next highest-leverage milestone
 - Reviewed: latest inbox/worklog through 7c0c993, the prior recorder proposal and current research handoff.
   Independent read-only review reached the same recommendation: get Claude's existing recorder running
