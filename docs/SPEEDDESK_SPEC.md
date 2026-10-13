@@ -465,6 +465,16 @@ pages, rows and bytes read, failures, and how often each consistency check faile
 `unattributed_fill_beside_unresolved_order`, `settlement_row_missing`, `reconcile_slow` over 3 s); `last` is the
 most recent reconcile with its reads.
 
+Measurement (2026-10-13; speed plan step 0; logging only, no order changes). Accepted order and cancel records
+carry `venue`: Kalshi's reply time `ts_ms` (the client already validated it), the local send and reply times and
+the clock offset they imply (Kalshi minus local, uncertain by half the round trip). Cancel records also carry
+`reduced_by` and `timing` (decision to Kalshi's reply, and the request alone). The status line adds `phases`
+(median, p90 and maximum ms of each part of `step()`: observe, cancel_unsafe, startup or reconcile, lock, decide,
+heartbeat, and the whole step), `loop` (`event_loop_lag`: the oversleep of a 10 ms timer, and the cancel
+timings) and `clock` (Coinbase Exchange `/time` once a minute while real money is on, and Kalshi from every reply;
+each source's shortest round trip since the previous line, or the last one with `fresh: false`). A failed time
+probe is only counted. Accepted orders' `stages` keep their three fields for the existing log parsers.
+
 The public US probe checks the five-minute series and validates an actual market's BTC/UP_DOWN/5m/BRTI terms
 and start/end before logging `skipwatch_us_5m_listing`. Its first verified observation stays on the page.
 The series alone is not a listing; failed requests are unknown. This bounded latest-event check does not

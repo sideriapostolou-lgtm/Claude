@@ -23,6 +23,8 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any, Literal
 
+import requests
+
 from .config import Secret, Settings
 from .ledger import Ledger
 from .speeddesk_kalshi_client import KalshiClient, KalshiClientError
@@ -67,7 +69,12 @@ ORDER_LIST_LAG_S = 30.0
 # an owner's order placed before the window opened is still caught before the bot's first order there.
 FULL_SCAN_S, RECENT_S, READ_MARGIN_S = 60.0, 900.0, 60.0
 # Timing samples kept per status line (one a minute); counts stay exact beyond it.
-SAMPLE_LIMIT = 4096
+SAMPLE_LIMIT = 8192
+# Measurement only (speed plan step 0): a 10 ms timer's oversleep is the event loop's lag, and once a minute the
+# local clock is compared with Coinbase's (its /time, the source of every Bitcoin tick's stamp). Kalshi's clock is
+# compared on every order and cancel reply (its ts_ms) at no extra request.
+LAG_PROBE_S, CLOCK_PROBE_S = 0.01, 60.0
+COINBASE_TIME = "https://api.exchange.coinbase.com/time"
 # The live loop steps on each Bitcoin tick or book change, at most every MIN_STEP_S, and at least every IDLE_STEP_S.
 MIN_STEP_S, IDLE_STEP_S = 0.02, 0.25
 # A window an hour past its close, settled and with nothing open, moves once into a write-once archive chunk
@@ -142,6 +149,51 @@ class _Interval:
         return {"ms": timings, "counts": counts}
 
 
+class _ClockOffsets:
+    """Venue clock minus local clock, from replies stamped by the venue: offset = venue stamp minus the midpoint
+    of the local send and reply times, uncertain by half the round trip. The status line shows each source's
+    sample with the shortest round trip since the previous line, and keeps the last one when none came."""
+
+    def __init__(self) -> None:
+        self.best: dict[str, dict[str, Any]] = {}
+        self.last: dict[str, dict[str, Any]] = {}
+        self.samples: dict[str, int] = {}
+
+    def observe(self, source: str, venue_s: float, sent_s: float, received_s: float) -> dict[str, float] | None:
+        if not all(math.isfinite(value) for value in (venue_s, sent_s, received_s)) or received_s < sent_s:
+            return None
+        sample = {"offset_ms": round((venue_s - (sent_s + received_s) / 2) * 1000, 1),
+                  "rtt_ms": round((received_s - sent_s) * 1000, 1), "at": received_s}
+        self.samples[source] = self.samples.get(source, 0) + 1
+        if source not in self.best or sample["rtt_ms"] < self.best[source]["rtt_ms"]:
+            self.best[source] = sample
+        self.last[source] = sample
+        return {"offset_ms": sample["offset_ms"], "rtt_ms": sample["rtt_ms"]}
+
+    def summary(self) -> dict[str, Any]:
+        out = {source: {**self.best.get(source, sample), "samples": self.samples.get(source, 0),
+                        "fresh": source in self.best}
+               for source, sample in self.last.items()}
+        self.best, self.samples = {}, {}
+        return out
+
+
+def coinbase_time() -> float:
+    """Coinbase Exchange's clock in epoch seconds (public, no key). One kept-alive connection per thread."""
+    session = getattr(_PROBE, "session", None)
+    if session is None:
+        session = _PROBE.session = requests.Session()
+    response = session.get(COINBASE_TIME, timeout=(2.0, 2.0))
+    response.raise_for_status()
+    epoch = response.json()["epoch"]
+    if isinstance(epoch, bool) or not isinstance(epoch, (int, float)) or not math.isfinite(epoch):
+        raise ValueError("Invalid Coinbase time")
+    return float(epoch)
+
+
+_PROBE = threading.local()
+
+
 def _spread(values: list[float]) -> dict[str, float | None]:
     ordered = sorted(values)
     if not ordered:
@@ -214,7 +266,8 @@ class KalshiLiveDesk:
                  clock: Callable[[], float] = time.time,
                  monotonic: Callable[[], float] = time.monotonic,
                  client_factory: Callable[[], Any] | None = None,
-                 direct_member_verified: bool = False) -> None:
+                 direct_member_verified: bool = False,
+                 time_probe: Callable[[], float] = coinbase_time) -> None:
         self.settings, self.directory, self.snapshot, self.clock = settings, directory, snapshot, clock
         self.monotonic = monotonic
         self.directory.mkdir(parents=True, exist_ok=True)
@@ -275,6 +328,11 @@ class KalshiLiveDesk:
         self.sync_stats = _Interval()
         self.last_sync_report: dict[str, Any] | None = None
         self._sync_reads: list[dict[str, Any]] = []
+        # Speed plan step 0: time in each part of step(), event-loop lag, cancel timings and venue clock offsets.
+        self.phase_stats = _Interval()
+        self.loop_stats = _Interval()
+        self.clock_offsets = _ClockOffsets()
+        self.time_probe = time_probe
         limits = LiveLimits(window_usd=settings.speeddesk_kalshi_window_usd,
                             open_usd=settings.speeddesk_kalshi_open_usd,
                             day_loss_usd=settings.speeddesk_kalshi_day_stop_usd,
@@ -741,6 +799,7 @@ class KalshiLiveDesk:
             return
         if self.clock() < self.cancel_retry_at.get(intent.client_order_id, -math.inf) and reason != "shutdown":
             return
+        decided = self.monotonic()
         self.cancel_retry_at[intent.client_order_id] = self.clock() + 2
         intent.cancel_requested = True
         self.book.request_cancel(intent.client_order_id)
@@ -751,11 +810,14 @@ class KalshiLiveDesk:
             self.book.mark_uncertain(intent.client_order_id, "cancel_needs_order_id")
             self.checkpoint()
             return
+        sending, sent_wall = self.monotonic(), self.clock()
         try:
-            await self._io(self.client.cancel, intent.order_id, ticker=intent.window)
+            reply = await self._io(self.client.cancel, intent.order_id, ticker=intent.window)
             self._record("speeddesk_live_cancel", client_order_id=intent.client_order_id,
                          order_id=intent.order_id, window=intent.window, reason=reason,
-                         state="requested; reservation retained until fills reconcile")
+                         state="requested; reservation retained until fills reconcile",
+                         reduced_by=reply.get("reduced_by") if isinstance(reply, dict) else None,
+                         timing=self._cancel_timing(decided, sending), venue=self._venue_stamp(reply, sent_wall))
         except KalshiClientError as exc:
             if exc.operation == "cancel" and exc.status == 404 and not exc.uncertain:
                 # Nothing of ours is resting under that ID (already canceled or
@@ -764,7 +826,8 @@ class KalshiLiveDesk:
                 # not an account error and must not pause trading.
                 self._record("speeddesk_live_cancel", client_order_id=intent.client_order_id,
                              order_id=intent.order_id, window=intent.window, reason=reason,
-                             state="not resting on Kalshi (404); reservation retained until reconciled")
+                             state="not resting on Kalshi (404); reservation retained until reconciled",
+                             timing=self._cancel_timing(decided, sending))
             else:
                 intent.uncertain = True
                 self.book.mark_uncertain(intent.client_order_id, "cancel_unconfirmed")
@@ -776,6 +839,25 @@ class KalshiLiveDesk:
             self._error(exc)
             self.cancel_retry_at[intent.client_order_id] = self.retry_at
         self.checkpoint()
+
+    def _cancel_timing(self, decided: float, sending: float) -> dict[str, float]:
+        """Cancel decision to Kalshi's reply, and the request alone; the decision includes any save before it."""
+        acked = self.monotonic()
+        timing = {"decision_to_ack_ms": round((acked - decided) * 1000, 1),
+                  "send_to_ack_ms": round((acked - sending) * 1000, 1)}
+        self.loop_stats.add("cancel_decision_to_ack", timing["decision_to_ack_ms"])
+        self.loop_stats.add("cancel_send_to_ack", timing["send_to_ack_ms"])
+        return timing
+
+    def _venue_stamp(self, reply: Any, sent_wall: float) -> dict[str, Any] | None:
+        """Kalshi's reply time (ts_ms) beside the local send and reply times, and the clock offset they imply."""
+        stamp = reply.get("ts_ms") if isinstance(reply, dict) else None
+        if not isinstance(stamp, int) or isinstance(stamp, bool) or stamp <= 0:
+            return None
+        acked_wall = self.clock()
+        offset = self.clock_offsets.observe("kalshi", stamp / 1000, sent_wall, acked_wall)
+        return {"ts_ms": stamp, "sent_ms": round(sent_wall * 1000, 1), "acked_ms": round(acked_wall * 1000, 1),
+                **(offset or {})}
 
     async def _cancel_all(self, reason: str) -> None:
         if self.client is None:
@@ -1093,10 +1175,12 @@ class KalshiLiveDesk:
         """Send a durable intent once and settle what its reply proves; never retries a create."""
         client_id, side, kind, price, size = intent.client_order_id, intent.side, intent.kind, intent.price, intent.size
         sent_at: list[float] = []
+        sent_wall: list[float] = []
 
         def guard() -> bool:
             permitted = self._send_guard(client_id)
             sent_at.append(self.monotonic())  # the request leaves right after this returns
+            sent_wall.append(self.clock())
             return permitted
 
         def timing(value: float | None, status: Literal["ok", "missing", "invalid", "error", "timeout"] = "ok") -> Any:
@@ -1124,7 +1208,8 @@ class KalshiLiveDesk:
                       "send_to_ack_ms": (acked - sent_at[0]) * 1000 if sent_at else None}
             self._record("speeddesk_live_order", client_order_id=client_id, order_id=intent.order_id,
                          window=window.slug, state="accepted; waiting for real fills",
-                         timing=timing((acked - decision_mono) * 1000), stages=stages)
+                         timing=timing((acked - decision_mono) * 1000), stages=stages,
+                         venue=self._venue_stamp(reply, sent_wall[0]) if sent_wall else None)
         except asyncio.CancelledError:
             self._record("speeddesk_live_timing", client_order_id=client_id, timing=timing(None, "missing"))
             raise
@@ -1350,37 +1435,58 @@ class KalshiLiveDesk:
         self.evidence.advance(observed_at, windows, fresh_window_slugs(
             windows, market.books, market.bitcoin_at, market.maker_windows, observed_at))
 
+    def _phase(self, name: str, started: float) -> float:
+        """Record the time since ``started`` under ``name``; returns now, the next phase's start."""
+        now = self.monotonic()
+        self.phase_stats.add(name, (now - started) * 1000)
+        return now
+
     async def step(self) -> None:
+        began = self.monotonic()
         self.observe_market(self.clock())
         self._twin_events(self.twin.advance(self.clock()))
+        self._phase("observe", began)
         if not await self._ensure_client():
             if self.book.integrity_reset_armed:
                 self._reset_waiting("live_off")  # no account read happens, so the reset cannot be judged
             self._heartbeat()
+            self._phase("step", began)
             return
         try:
+            mark = self.monotonic()
             await self._cancel_unsafe()
+            mark = self._phase("cancel_unsafe", mark)
             if self.clock() < self.retry_at:
                 self._heartbeat()
+                self._phase("step", began)
                 return
             if not self.startup_done:
                 await self._startup()
+                mark = self._phase("startup", mark)
             elif self.clock() - self.last_sync >= 1 or self.account_at is None:
                 await self._reconcile()
+                mark = self._phase("reconcile", mark)
             gate = self._gates()
             await self._cancel_unsafe()
+            mark = self._phase("cancel_unsafe", mark)
             if gate:
                 self.reason = "Practice; cancelling prior live bids" if self._active() else gate
             elif await self._lock():
                 self.reason = "Completing a half-filled pair before the close"
+                self._phase("lock", mark)
             else:
+                mark = self._phase("lock", mark)
                 await self._decide()
+                self._phase("decide", mark)
         except Exception as exc:  # noqa: BLE001 — failed account evidence never permits another order.
             self.account_at = None
             self._error(exc)
             if self.errors >= 3 or self.auth_failed:
                 await self._cancel_all("authentication_or_repeated_errors")
+        mark = self.monotonic()
         self._heartbeat()
+        self._phase("heartbeat", mark)
+        self._phase("step", began)
 
     def _heartbeat(self) -> None:
         if self.clock() - self.last_status >= 60:
@@ -1389,14 +1495,38 @@ class KalshiLiveDesk:
             self._record("speeddesk_live_status", **self.panel(),
                          save={"last_ms": self.save_ms, **self.save_stages, "archived_windows": len(self.archived),
                                "saved_orders": sum(intent.window not in self.archived for intent in self.intents.values())},
-                         reconcile={**self.sync_stats.summary(), "last": self.last_sync_report})
+                         reconcile={**self.sync_stats.summary(), "last": self.last_sync_report},
+                         # Speed plan step 0: time in each part of step() ("step" is the whole), event-loop lag
+                         # and cancel timings, and venue clock minus local clock (see _ClockOffsets).
+                         phases=self.phase_stats.summary()["ms"], loop=self.loop_stats.summary(),
+                         clock=self.clock_offsets.summary())
             self.last_status = self.clock()
         if self.pending or self.clock() - self.last_checkpoint >= 5:
             self.checkpoint()
 
+    async def _lag_probe(self) -> None:
+        """Oversleep of a LAG_PROBE_S timer: how long a ready callback waits for the shared event loop."""
+        while True:
+            started = time.perf_counter()
+            await asyncio.sleep(LAG_PROBE_S)
+            self.loop_stats.add("event_loop_lag", max(0.0, (time.perf_counter() - started - LAG_PROBE_S) * 1000))
+
+    async def _clock_probe(self) -> None:
+        """Local clock against Coinbase's, once every CLOCK_PROBE_S while real money is on. Never fails the desk."""
+        while True:
+            if not self._gates():
+                sent = self.clock()
+                try:
+                    venue = await asyncio.to_thread(self.time_probe)
+                    self.clock_offsets.observe("coinbase", venue, sent, self.clock())
+                except Exception as exc:  # noqa: BLE001 — a measurement only; the error type alone is kept.
+                    self.loop_stats.count(f"clock_probe_{type(exc).__name__}")
+            await asyncio.sleep(CLOCK_PROBE_S)
+
     async def run(self, stop: threading.Event) -> None:
         self.stop_event = stop
         self.wake = asyncio.Event()  # bound to this run's event loop
+        probes = [asyncio.create_task(self._lag_probe()), asyncio.create_task(self._clock_probe())]
         try:
             while not stop.is_set():
                 self.wake.clear()
@@ -1408,6 +1538,9 @@ class KalshiLiveDesk:
                     await asyncio.wait_for(self.wake.wait(), IDLE_STEP_S)
                 await asyncio.sleep(max(0.0, MIN_STEP_S - (self.monotonic() - started)))
         finally:
+            for probe in probes:
+                probe.cancel()
+            await asyncio.gather(*probes, return_exceptions=True)
             await self.shutdown()
 
     async def shutdown(self) -> None:
