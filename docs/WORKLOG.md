@@ -15,6 +15,27 @@ Template:
 
 
 
+## 2026-10-13 20:20 UTC, Claude, branch claude/kalshi-ladder-ship
+- Owner decision (2026-10-13 ~20:15 UTC, answering the open first-buy question in SPEEDDESK_SPEC 9.2): "Keep 5 at
+  every rung".
+- Changed: `speeddesk_live_ladder._numbers` returns the configured contract cap (`SPEEDDESK_KALSHI_CLIP`, 5) at every
+  rung instead of floor(window / 2) (which made 7 at $15 and 10 at $20). Window +$5 a rung, open 2x, day stop 60 %,
+  the fixed $10 total stop and the $20/$40/$12 code ceilings are unchanged; from $10 the top is still rung 2
+  ($20/$40/$12, now 5 contracts). Module docstring, config.py comment, `.env.example`, SPEEDDESK_SPEC 9.2 (rung
+  rule; "Owner decision open" is now the decision taken) and the ACCOUNTS Kalshi row say the same.
+- Tests (`tests/test_speeddesk_live_ladder.py`): the 12 that expected a scaled cap now expect the configured one
+  (the independent `expected()` rule returns `base.clip`; "clip" refusals checked at 6 with 5 accepted at rungs 0,
+  1 and 2; the demotion and waiting-promotion losses rebuilt from 5-contract buys: four $2.10 losses stay inside rung
+  1's $9 line and a fifth crosses it, a $4.10 starter at $0.80 crosses it after $5.04 given back; with the money
+  ceilings raised the top rung is $50,000/$100,000/$30,000 with 5 contracts whatever `HARD_CLIP` is). New
+  `test_the_first_buy_stays_at_the_configured_cap_at_every_rung` (rungs 0-2 clip 5, a desk at rung 1 places a
+  5-contract first buy, and a configured 3 gives 3). The updated file fails 13 tests on the old rule.
+- Verified: full `python -m pytest -q -p no:cacheprovider` 4,802 passed, 12 skipped (network); 75 in the ladder
+  file; ruff clean on the changed Python files; `mypy src/nightcrawler` clean.
+- Real money touched? Code that sizes real Kalshi orders, committed locally on `claude/kalshi-ladder-ship` only:
+  not pushed, merged or deployed. It can only make orders smaller than the previous ladder commit.
+- Next: ship the branch when the owner says so; after deploy the status line's `caps.clip` stays 5 at every rung.
+
 ## 2026-10-13 20:10 UTC, Claude, branch claude/kalshi-ladder (review fix round)
 - Owner request unchanged (2026-10-13 ~18:40 UTC): "Max $50,000 a window build the ladder". Two independent reviews
   of bbb49e5 found no accepted order above its window's rung, but holes in when the ladder moves. Fixed, each with a

@@ -495,7 +495,8 @@ class Settings:
                                                 "owner-authorized ceiling $10", lo=0, lo_open=True, hi=10)
     # Owner, 2026-10-13 ~18:40 UTC, after Claude proposed the earned-growth ladder: "Max $50,000 a window build the
     # ladder". The four settings above are its rung 0, the owner's floor; each earned rung adds $5 a window (open 2x,
-    # day stop 60 %, first buy half the window in contracts) and the $10 total stop never scales
+    # day stop 60 %); the first buy stays SPEEDDESK_KALSHI_CLIP below at every rung (owner, 2026-10-13 ~20:15 UTC:
+    # "Keep 5 at every rung") and the $10 total stop never scales
     # (speeddesk_live_ladder.py, rule in docs/SPEEDDESK_SPEC.md 9.2). The ladder never goes above the ceilings above
     # and the risk book's own (LiveLimits): $20 a window, $40 open, $12 a day, 25 contracts until they are raised.
     # A promotion is re-checked at its window boundary before it applies.

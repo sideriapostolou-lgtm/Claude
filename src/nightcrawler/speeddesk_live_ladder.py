@@ -4,11 +4,12 @@ Owner, 2026-10-13 ~18:40 UTC, after Claude proposed this rule: "Max $50,000 a wi
 
 Rung r sizes a window at the configured SPEEDDESK_KALSHI_WINDOW_USD (the owner's floor, $10 on Railway) plus $5 a
 rung, up to $50,000 (or SPEEDDESK_KALSHI_LADDER_MAX_WINDOW_USD when lower). At every rung the open budget is twice
-the window, the contract cap (so the first buy) is half the window in contracts (5 at $10, never below 1) and the
-daily stop is 60 % of the window ($6 at $10). Rung 0 is exactly the configured limits, and no rung goes below them.
-The lifetime stop never scales: real money still switches off at -$10 total since launch. No rung goes above the
-risk book's own ceilings (the LiveLimits clamp: $20 a window, $40 open, $12 a day, 25 contracts today): the top is
-the last rung the risk book keeps unchanged (rung 2 from $10 until those ceilings are raised).
+the window and the daily stop is 60 % of the window ($6 at $10); the contract cap (so the first buy) stays the
+configured SPEEDDESK_KALSHI_CLIP (5) at every rung (owner, 2026-10-13 ~20:15 UTC: "Keep 5 at every rung"). Rung 0 is
+exactly the configured limits, and no rung goes below them. The lifetime stop never scales: real money still switches
+off at -$10 total since launch. No rung goes above the risk book's own ceilings (the LiveLimits clamp: $20 a window,
+$40 open, $12 a day, 25 contracts today): the top is the last rung the risk book keeps unchanged (rung 2 from $10
+until those ceilings are raised).
 
 Promotion, one rung at a time, needs all five since the current rung began:
 1. at least 96 settled windows traded at this rung;
@@ -63,10 +64,13 @@ Action = Literal["promote", "confirm", "demote", "cancel"]
 
 
 def _numbers(base: LiveLimits, rung: int, max_window_usd: float) -> tuple[float, float, float, float]:
-    """A rung's window, open budget, daily stop and contract cap as the rule writes them, before any clamp."""
+    """A rung's window, open budget, daily stop and contract cap as the rule writes them, before any clamp.
+
+    The contract cap (so the first buy) stays the configured one at every rung: the owner chose, 2026-10-13 ~20:15 UTC,
+    "Keep 5 at every rung" over growing it with the window, after two 10-contract first buys were run over."""
     window = max(base.window_usd, min(base.window_usd + STEP_USD * rung, max_window_usd, CEILING_USD))
     return (window, max(base.open_usd, 2 * window), max(base.day_loss_usd, round(DAY_STOP_SHARE * window, 6)),
-            max(base.clip, float(max(1, math.floor(window / 2 + 1e-9)))))
+            base.clip)
 
 
 def rung_limits(base: LiveLimits, rung: int, max_window_usd: float = CEILING_USD) -> LiveLimits:

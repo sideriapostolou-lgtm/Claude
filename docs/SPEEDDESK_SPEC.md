@@ -197,7 +197,7 @@ $10/$20 (owner, 2026-10-13 15:15 UTC, "ten now double tmr if it works"), both st
 allow one step to $20/$40 and a $12 day stop "when it's winning" (owner, 16:00 UTC); since the owner's "Max $50,000 a window build the ladder" (2026-10-13 ~18:40 UTC) the settings above are the earned-growth ladder's rung 0 and the bot takes that step itself (9.2). The stops count
 money still at risk, so they also bound each window: an unpaired position can never put more at risk than is
 left under the day and total stops (a complete up+down pair risks nothing).
-| `SPEEDDESK_KALSHI_CLIP` | 5 contracts | Most contracts per real order, so the first buy in a window is at most 5 (owner, 2026-10-13, after two 10-contract first buys were run over); balancing and lock orders follow it |
+| `SPEEDDESK_KALSHI_CLIP` | 5 contracts | Most contracts per real order, so the first buy in a window is at most 5 (owner, 2026-10-13, after two 10-contract first buys were run over), at every ladder rung (9.2: "Keep 5 at every rung"); balancing and lock orders follow it |
 | `SPEEDDESK_KALSHI_CUTOFF_S` | 180 seconds | End real buying after the first 12 minutes; configured cutoff may never be below 60 seconds |
 
 Fees and resting orders count at their worst permitted cost. Kalshi cash is another limit, never permission
@@ -349,17 +349,18 @@ After Claude proposed this rule the owner wrote: "Max $50,000 a window build the
 risk book asks it for each window's limits (`LiveRiskBook.limits_for`, `limits_now`).
 
 - **Rungs.** Rung r >= 0: window = base + $5r, where base is `SPEEDDESK_KALSHI_WINDOW_USD` (Railway: $10, the
-  owner's floor); open = 2 x window; contract cap (so the first buy) = floor(window / 2), never below 1; day stop =
-  0.6 x window. Rung 0 is exactly the configured limits ($10/$20/$6, 5 contracts) and no rung goes below a
-  configured value. The $10 lifetime stop never scales: real money still switches off when total P&L since launch
-  (with money at risk) reaches -$10. Ceilings: $50,000 a window, or `SPEEDDESK_KALSHI_LADDER_MAX_WINDOW_USD` when
-  lower, and the risk book's own clamp first: the top is the last rung `LiveLimits` leaves unchanged (the ladder
-  asks the clamp; it never copies its numbers). **This release keeps the code ceilings at $20/$40/$12 and 25
-  contracts** (config.py `hi` and `speeddesk_live_model.HARD_*`, `HARD_CLIP`), so from $10 the ladder has two
-  rungs: $15/$30/$9 with 7 contracts, then $20/$40/$12 with 10. Raising the ceilings toward $50,000 is a separate
-  change that needs the owner's explicit go-ahead and must raise `HARD_CLIP` too (tests check that the top rung
-  would then be exactly $50,000/$100,000/$30,000 with 25,000 contracts, and that with the contract ceiling left at
-  25 the climb stops at the $50 window).
+  owner's floor); open = 2 x window; day stop = 0.6 x window; the contract cap (so the first buy) stays the
+  configured `SPEEDDESK_KALSHI_CLIP` (5) at every rung (owner's choice, 2026-10-13 ~20:15 UTC: "Keep 5 at every
+  rung"). Rung 0 is exactly the configured limits ($10/$20/$6, 5 contracts) and no rung goes below a configured
+  value. The $10 lifetime stop never scales: real money still switches off when total P&L since launch (with money
+  at risk) reaches -$10. Ceilings: $50,000 a window, or `SPEEDDESK_KALSHI_LADDER_MAX_WINDOW_USD` when lower, and
+  the risk book's own clamp first: the top is the last rung `LiveLimits` leaves unchanged (the ladder asks the
+  clamp; it never copies its numbers). **This release keeps the code ceilings at $20/$40/$12 and 25 contracts**
+  (config.py `hi` and `speeddesk_live_model.HARD_*`, `HARD_CLIP`), so from $10 the ladder has two rungs:
+  $15/$30/$9, then $20/$40/$12, both with 5 contracts. Raising the money ceilings toward $50,000 is a separate
+  change that needs the owner's explicit go-ahead; the contract cap no longer grows, so `HARD_CLIP` never sets the
+  top (tests check that the top rung would then be exactly $50,000/$100,000/$30,000 with 5 contracts, whatever
+  `HARD_CLIP` is).
 - **Promotion**, one rung, when all five hold since the current rung began: (1) at least 96 settled windows traded
   at this rung; (2) gain G (the settled P&L of this rung's windows) less money still at risk >= 2 sigma sqrt(n),
   sigma = max(realized SD of per-window P&L at this rung, 0.105 x window); (3) house money: the room above the
@@ -407,10 +408,11 @@ risk book asks it for each window's limits (`LiveRiskBook.limits_for`, `limits_n
   `/api/page` exposes it as `kalshi_live.ladder` (pagestate whitelist). Each decision logs one
   `speeddesk_live_ladder` line with every number (`action` promote, confirm, demote or cancel), and each start
   logs one.
-- **Owner decision open.** Rung 2 makes the first buy 10 contracts again (half its $20 window, as the ladder rule
-  says); the owner's 16:20 UTC rule held the first buy to 5 after two 10-contract first buys were run over. Until
-  the owner chooses (keep the first buy at the configured cap and scale only balancing and lock orders, or accept
-  10 at rung 2), the code follows the approved ladder rule.
+- **Owner decision taken (2026-10-13 ~20:15 UTC): "Keep 5 at every rung".** The first ladder draft grew the
+  contract cap with the window (floor(window / 2): 7 contracts at $15, 10 at $20), which would have brought back
+  the 10-contract first buy the owner's 16:20 UTC rule stopped after two were run over. Asked to choose, the owner
+  kept the configured cap: every rung's contract cap, so every first buy, balancing and lock order, is at most
+  `SPEEDDESK_KALSHI_CLIP` (5). A bigger rung adds window, open budget and day stop, not a bigger first buy.
 
 ## 10. Public source-bot watcher and faster market data (owner, 2026-10-12)
 

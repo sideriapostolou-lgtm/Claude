@@ -111,12 +111,13 @@ def ready_ladder(**kwargs: Any) -> tuple[LiveRiskBook, Ladder, float]:
 
 
 def expected(rung: int, base: LiveLimits = BASE) -> tuple[float, float, float, float]:
-    """The rule written out independently: window, open, day stop, contract cap (the $10 total stop is fixed)."""
+    """The rule written out independently: window, open, day stop, contract cap (the $10 total stop is fixed).
+    The contract cap, so the first buy, is the configured one at every rung (owner, 2026-10-13: "Keep 5 at every
+    rung")."""
     if rung == 0:
         return numbers(base)
     window = min(base.window_usd + 5 * rung, 20.0)  # today's code ceilings ($20 a window) apply first
-    return (window, max(base.open_usd, 2 * window), max(base.day_loss_usd, round(.6 * window, 6)),
-            max(base.clip, math.floor(window / 2)))
+    return (window, max(base.open_usd, 2 * window), max(base.day_loss_usd, round(.6 * window, 6)), base.clip)
 
 
 def numbers(limits: LiveLimits) -> tuple[float, float, float, float]:
@@ -141,13 +142,14 @@ def at_rung(rung: int, *, base: LiveLimits = BASE) -> tuple[LiveRiskBook, Ladder
 
 # ---- the rule's numbers ----------------------------------------------------------------------------------------
 
-def test_each_rung_adds_five_dollars_with_open_clip_and_day_stop_scaled_and_the_total_stop_fixed():
+def test_each_rung_adds_five_dollars_with_open_and_day_stop_scaled_and_the_clip_and_total_stop_fixed():
     assert rung_limits(BASE, 0) is BASE  # rung 0 is exactly the configured limits
-    assert numbers(rung_limits(BASE, 1)) == (15, 30, 9, 7)
-    assert numbers(rung_limits(BASE, 2)) == (20, 40, 12, 10)
+    assert numbers(rung_limits(BASE, 1)) == (15, 30, 9, 5)
+    assert numbers(rung_limits(BASE, 2)) == (20, 40, 12, 5)
     for rung in range(3):  # rungs 0 to 2: today's top from $10
         limits = rung_limits(BASE, rung)
         assert numbers(limits) == expected(rung)
+        assert limits.clip == BASE.clip  # the first buy stays the configured 5 contracts
         assert limits.total_loss_usd == 10  # the lifetime stop never scales
         assert (limits.lock_s, limits.lock_max_price, limits.pair_cap, limits.max_imbalance, limits.fee_precision,
                 limits.cutoff_s) == (BASE.lock_s, BASE.lock_max_price, BASE.pair_cap, BASE.max_imbalance,
@@ -155,44 +157,46 @@ def test_each_rung_adds_five_dollars_with_open_clip_and_day_stop_scaled_and_the_
     # The configured values stay the owner's floor: a rung never goes below them.
     floor = LiveLimits(window_usd=10, open_usd=35, day_loss_usd=10, total_loss_usd=4, clip=8, fee_precision=.0001)
     assert numbers(rung_limits(floor, 1)) == (15, 35, 10, 8) and rung_limits(floor, 1).total_loss_usd == 4
-    # The contract cap is never below one contract.
+    # The contract cap is the configured one at every rung, however small or large the window.
     tiny = LiveLimits(window_usd=.5, open_usd=1, day_loss_usd=1, total_loss_usd=1, clip=.5, fee_precision=.0001)
-    assert rung_limits(tiny, 1).clip == 2 and rung_limits(replace(tiny, window_usd=.4, clip=.1), 1).clip == 2
+    assert rung_limits(tiny, 1).clip == .5 and rung_limits(replace(tiny, window_usd=.4, clip=.1), 1).clip == .1
     assert rung_limits(replace(tiny, window_usd=.1, clip=.1), 0).clip == .1  # rung 0 stays as configured
+    assert rung_limits(replace(BASE, clip=3), 2).clip == 3 and rung_limits(replace(BASE, clip=25), 2).clip == 25
 
 
 def test_the_climb_stops_at_the_code_ceilings_and_at_the_configured_maximum():
     # Today's code ceilings are $20 a window, $40 open and $12 a day: from $10 the ladder has two rungs.
     assert max_rung(BASE, 50_000) == 2 and Ladder(BASE).top == 2
     ladder = Ladder(BASE)
-    assert numbers(ladder.limits_at_rung(3)) == numbers(ladder.limits_at_rung(2)) == (20, 40, 12, 10)
+    assert numbers(ladder.limits_at_rung(3)) == numbers(ladder.limits_at_rung(2)) == (20, 40, 12, 5)
     assert Ladder(BASE, max_window_usd=15).top == 1 and Ladder(BASE, max_window_usd=14.99).top == 0
     assert Ladder(BASE, max_window_usd=12).top == 0 and Ladder(BASE, enabled=False).top == 0
-    assert numbers(rung_limits(BASE, 2, max_window_usd=15)) == (15, 30, 9, 7)
+    assert numbers(rung_limits(BASE, 2, max_window_usd=15)) == (15, 30, 9, 5)
     ladder = Ladder(BASE)
     assert ladder.max_window_usd == 20 and ladder.configured_max_window_usd == 50_000
 
 
 def test_with_the_code_ceilings_raised_the_top_rung_is_exactly_fifty_thousand_dollars(monkeypatch):
-    """The owner's maximum: $50,000 a window, $100,000 open, $30,000 day stop, 25,000 contracts; never more.
+    """The owner's maximum: $50,000 a window, $100,000 open, $30,000 day stop; never more. The contract cap stays
+    the configured 5 at every rung, the top included (owner, 2026-10-13: "Keep 5 at every rung").
     (A test-only patch of the code ceilings, which stay at $20/$40/$12 in this release.)"""
     monkeypatch.setattr(speeddesk_live_model, "HARD_WINDOW_USD", 50_000.0)
     monkeypatch.setattr(speeddesk_live_model, "HARD_OPEN_USD", 100_000.0)
     monkeypatch.setattr(speeddesk_live_model, "HARD_DAY_LOSS_USD", 30_000.0)
-    # The ladder asks the risk book's clamp for its top: with the contract cap's ceiling (25) still in place the
-    # climb stops at the $50 window (25 contracts), whatever the money ceilings say.
-    assert max_rung(BASE, 50_000) == 8 and numbers(rung_limits(BASE, 8)) == (50, 100, 30, 25)
-    monkeypatch.setattr(speeddesk_live_model, "HARD_CLIP", 25_000.0)
-    assert max_rung(BASE, 50_000) == 9998 and max_rung(BASE, 60_000) == 9998 and max_rung(BASE, 12) == 0
-    top = rung_limits(BASE, 9998)
-    assert numbers(top) == (50_000, 100_000, 30_000, 25_000) and top.total_loss_usd == 10
-    assert numbers(rung_limits(BASE, 10**6)) == numbers(top)
-    assert numbers(rung_limits(BASE, 5)) == (35, 70, 21, 17)
+    # The ladder asks the risk book's clamp for its top: the contract cap no longer grows, so its ceiling (25) never
+    # binds and the money ceilings alone set the top. Raising the contract ceiling changes nothing.
+    for hard_clip in (25.0, 25_000.0):
+        monkeypatch.setattr(speeddesk_live_model, "HARD_CLIP", hard_clip)
+        assert max_rung(BASE, 50_000) == 9998 and max_rung(BASE, 60_000) == 9998 and max_rung(BASE, 12) == 0
+        top = rung_limits(BASE, 9998)
+        assert numbers(top) == (50_000, 100_000, 30_000, 5) and top.total_loss_usd == 10
+        assert numbers(rung_limits(BASE, 10**6)) == numbers(top)
+        assert numbers(rung_limits(BASE, 5)) == (35, 70, 21, 5) and numbers(rung_limits(BASE, 8)) == (50, 100, 30, 5)
     previous = numbers(BASE)
     for rung in range(1, 9999):
         current = numbers(rung_limits(BASE, rung))
         assert all(now >= before for now, before in zip(current, previous, strict=True))
-        assert current[0] == 10 + 5 * rung and current[1] == 2 * current[0]
+        assert current[0] == 10 + 5 * rung and current[1] == 2 * current[0] and current[3] == 5
         previous = current
     assert Ladder(BASE).top == 9998 and Ladder(BASE, max_window_usd=1_000).top == 198
     # The risk book's own clamp still holds above the owner's maximum, and the total stop stays $10.
@@ -236,7 +240,8 @@ def test_promotion_after_all_five_conditions_and_only_from_the_next_window():
     # Provisional until the first look at the boundary has checked everything again.
     assert numbers(book.limits_for(following.slug)) == expected(0) and ladder.state.waiting
     book.update_cash(10_000, current.start + 30)
-    assert book.can_buy(current.slug, "up", "take", .4, 6, current.start + 30) == "clip"  # still the 5-contract cap
+    assert book.can_buy(current.slug, "up", "take", .4, 6, current.start + 30) == "clip"  # the 5-contract cap
+    assert book.can_buy(current.slug, "up", "take", .4, 5, current.start + 30) == ""
     book.update_cash(10_000, following.start)
     assert ladder.due(following.start)
     confirmed = ladder.evaluate(book, following.start)
@@ -247,8 +252,10 @@ def test_promotion_after_all_five_conditions_and_only_from_the_next_window():
     assert numbers(book.limits_now(following.start)) == expected(1)
     assert numbers(book.limits_for(current.slug)) == expected(0)  # the window under way never changed
     book.update_cash(10_000, following.start + 30)
-    assert book.can_buy(following.slug, "up", "take", .4, 7, following.start + 30) == ""
-    assert book.can_buy(following.slug, "up", "take", .4, 8, following.start + 30) == "clip"
+    # Rung 1 keeps the configured 5-contract cap (owner, 2026-10-13: "Keep 5 at every rung").
+    assert book.can_buy(following.slug, "up", "take", .4, 5, following.start + 30) == ""
+    assert book.can_buy(following.slug, "up", "take", .4, 6, following.start + 30) == "clip"
+    assert book.limits_for(following.slug).clip == 5 and book.limits_for(following.slug).window_usd == 15
 
 
 def test_not_promoted_short_of_ninety_six_windows():
@@ -380,15 +387,15 @@ def test_demotion_after_giving_back_sixty_percent_of_a_window_and_never_below_ru
     assert ladder.evaluate(book, now)["to_rung"] == 1
     settle_run(book, ladder, 96, "W")  # window 96 is still rung 0
     peak = book.realized_pnl
-    # Rung 1 windows with seven contracts each: three losses (-$8.82) give back less than $9 ...
-    for index in (97, 98, 99):
-        trade(book, index, wins=False, size=7)
+    # Rung 1 windows at the configured 5-contract cap: four losses (-$8.40) give back less than $9 ...
+    for index in (97, 98, 99, 100):
+        trade(book, index, wins=False, size=5)
         assert ladder.evaluate(book, slot(index).end) is None
     assert ladder.state.peak_pnl == pytest.approx(peak)
-    assert ladder.demotion(book)["giveback_usd"] == pytest.approx(8.82)
-    # ... a fourth crosses the line: one rung down, from the next window.
-    index = 100
-    trade(book, index, wins=False, size=7)
+    assert ladder.demotion(book)["giveback_usd"] == pytest.approx(8.4)
+    # ... a fifth crosses the line: one rung down, from the next window.
+    index = 101
+    trade(book, index, wins=False, size=5)
     record = ladder.evaluate(book, slot(index).end)
     assert record["action"] == "demote" and (record["from_rung"], record["to_rung"]) == (1, 0)
     assert record["demotion"]["due"] and record["demotion"]["giveback_limit_usd"] == pytest.approx(9)
@@ -414,7 +421,7 @@ def rung_one_promoting(*, losses: int = 12) -> tuple[LiveRiskBook, Ladder]:
 
 def test_a_waiting_promotion_keeps_the_in_force_rungs_demotion_line():
     """At rung 1 the line is the rung's peak less $9 (60 % of its $15 window), not the waiting rung 2's $12. The
-    promotion was decided with $5.04 already given back; the rung-1 window under way then loses $4.32."""
+    promotion was decided with $5.04 already given back; the rung-1 window under way then loses $4.10."""
     book, ladder = rung_one_promoting()
     rung1_peak = 84 * WIN
     demotion = ladder.demotion(book)
@@ -425,7 +432,7 @@ def test_a_waiting_promotion_keeps_the_in_force_rungs_demotion_line():
     assert ladder.rung_for(current.start) == 1
     book.add_window(current)
     book.update_cash(10_000, current.start + 30)
-    fill(book, current, "up", .6, 7, current.start + 30)  # rung 1's 7-contract starter, lost: -$4.32
+    fill(book, current, "up", .8, 5, current.start + 30)  # rung 1's 5-contract starter at $0.80, lost: -$4.10
     book.settle(current.slug, False, current.end, f"settle-{current.slug}")
     book.update_cash(10_000, current.end)
     record = ladder.evaluate(book, current.end)
@@ -444,7 +451,7 @@ def test_open_risk_that_could_cross_the_line_cancels_a_waiting_promotion_at_its_
     current = slot(96)
     book.add_window(current)
     book.update_cash(10_000, current.start + 30)
-    fill(book, current, "up", .6, 7, current.start + 30)  # $4.32 at risk, unsettled at the boundary
+    fill(book, current, "up", .8, 5, current.start + 30)  # $4.10 at risk, unsettled at the boundary
     book.update_cash(10_000, current.end)
     record = ladder.evaluate(book, current.end)
     assert record["action"] == "cancel" and "giveback" in record["promotion"]["blocked"]
@@ -482,11 +489,11 @@ def test_a_waiting_demotion_is_never_doubled_before_its_boundary():
 # ---- every limit check at a rung -----------------------------------------------------------------------------
 
 def test_every_check_uses_the_windows_rung():
-    book, _, window = at_rung(2)
-    assert book.can_buy(window.slug, "up", "take", .4, 11, window.start + 10) == "clip"
-    assert book.can_buy(window.slug, "up", "take", .4, 10, window.start + 10) == ""
-    book, _, window = at_rung(0)
-    assert book.can_buy(window.slug, "up", "take", .4, 6, window.start + 10) == "clip"
+    # Contract cap: the configured 5 at every rung (owner, 2026-10-13: "Keep 5 at every rung").
+    for rung in (0, 1, 2):
+        book, _, window = at_rung(rung)
+        assert book.can_buy(window.slug, "up", "take", .4, 6, window.start + 10) == "clip"
+        assert book.can_buy(window.slug, "up", "take", .4, 5, window.start + 10) == ""
     # Window budget: a $3 floor window refuses the second half of a $4.70 pair at rung 0, not at rung 1 ($8).
     small = LiveLimits(window_usd=3, open_usd=6, day_loss_usd=6, total_loss_usd=10, clip=5, fee_precision=.0001)
     for rung, verdict in ((0, "window_budget"), (1, "")):
@@ -504,9 +511,11 @@ def test_every_check_uses_the_windows_rung():
     for rung, verdict in ((0, "open_budget"), (1, "")):
         book, _, window = at_rung(rung, base=tight)
         assert book.can_buy(window.slug, "up", "take", .7, 5, window.start + 10) == verdict
-    # A lock completes a pair in pieces no larger than the rung's contract cap.
-    for rung, clip in ((0, 5), (2, 10)):
+    # A lock completes a pair in pieces no larger than the rung's contract cap (the configured 5 at every rung).
+    for rung in (0, 1, 2):
         book, _, window = at_rung(rung)
+        clip = book.limits_for(window.slug).clip
+        assert clip == BASE.clip == 5
         fill(book, window, "up", .4, clip, window.start + 10)
         lock_at = window.end - 200
         book.update_cash(10_000, lock_at)
@@ -578,16 +587,50 @@ def test_the_desk_and_its_practice_twin_use_the_rungs_limits(tmp_path: Path):
     try:
         force_rung(desk, 1, clock.now())
         asyncio.run(desk.step())
-        # Rung 1: the first buy is 7 contracts (half the $15 window).
-        assert [creation["size"] for creation in account.creates] == [7.0]
+        # Rung 1: a $15 window, and the first buy stays the configured 5 contracts.
+        assert [creation["size"] for creation in account.creates] == [5.0]
         assert desk.panel()["caps"] == {"window_usd": 15, "open_usd": 30, "day_stop_usd": 9, "total_stop_usd": 10,
-                                        "clip": 7}
+                                        "clip": 5}
         config = desk.twin.config
-        assert (config.window_usd, config.open_usd, config.day_stop_usd, config.clip) == (15, 30, 9, 7)
+        assert (config.window_usd, config.open_usd, config.day_stop_usd, config.clip) == (15, 30, 9, 5)
         force_rung(desk, 0, clock.now())
         clock.advance(.5)
         asyncio.run(desk.step())
         assert (desk.twin.config.window_usd, desk.twin.config.clip) == (10, 5)
+    finally:
+        desk.close()
+
+
+def test_the_first_buy_stays_at_the_configured_cap_at_every_rung(tmp_path: Path):
+    """Owner, 2026-10-13 ~20:15 UTC: "Keep 5 at every rung". The contract cap per order, so the first buy in a
+    window, is the configured SPEEDDESK_KALSHI_CLIP (5) at every rung; only the window, open budget and day stop
+    grow."""
+    for rung in (0, 1, 2):
+        limits = rung_limits(BASE, rung)
+        assert limits.clip == BASE.clip == 5 and limits.window_usd == 10 + 5 * rung
+        book, _, window = at_rung(rung)
+        assert book.limits_for(window.slug).clip == 5
+        assert book.can_buy(window.slug, "up", "take", .4, 5, window.start + 10) == ""
+        assert book.can_buy(window.slug, "up", "take", .4, 6, window.start + 10) == "clip"
+    ladder = Ladder(BASE)
+    assert ladder.top == 2 and ladder.limits_at_rung(ladder.top).clip == 5  # the top rung too
+    desk, account, clock = make_desk(tmp_path, caps=LADDER_CAPS)
+    try:
+        force_rung(desk, 1, clock.now())
+        asyncio.run(desk.step())
+        assert [creation["size"] for creation in account.creates] == [5.0]  # a $15 window, a 5-contract first buy
+        panel = desk.panel()
+        assert (panel["caps"]["window_usd"], panel["caps"]["clip"], panel["ladder"]["limits"]["clip"]) == (15, 5, 5)
+        assert panel["ladder"]["promotion"]["next_limits"]["clip"] == 5 and desk.twin.config.clip == 5
+    finally:
+        desk.close()
+    # The cap is the configured one, not a fixed 5: a 3-contract setting gives a 3-contract first buy at rung 1.
+    desk, account, clock = make_desk(tmp_path / "three", caps=LADDER_CAPS, extra={"speeddesk_kalshi_clip": 3.0})
+    try:
+        force_rung(desk, 1, clock.now())
+        asyncio.run(desk.step())
+        assert [creation["size"] for creation in account.creates] == [3.0]
+        assert desk.panel()["caps"]["window_usd"] == 15 and desk.panel()["caps"]["clip"] == 3
     finally:
         desk.close()
 
@@ -705,7 +748,7 @@ def test_saved_state_stays_readable_by_the_previous_release(tmp_path: Path):
     try:
         force_rung(desk, 1, clock.now())
         asyncio.run(desk.step())
-        assert account.creates and account.creates[0]["size"] == 7.0
+        assert account.creates and account.creates[0]["size"] == 5.0 and desk.panel()["caps"]["window_usd"] == 15
         desk.checkpoint(durable=True)
         state = desk.ledger.get_kv(STATE_KEY)
     finally:
@@ -995,7 +1038,7 @@ def test_an_earlier_rungs_window_that_settles_after_the_change_is_not_counted_at
 @pytest.mark.parametrize(("floor", "saved_rung"), [(15, 1), (5, 2)])
 def test_changing_the_configured_floor_starts_the_ladder_again_at_rung_zero(floor, saved_rung):
     """Rungs earned at a $10 floor mean nothing at another: raising it to $15 would stack rung 1 to $20; lowering it
-    to $5 to cut risk would still trade $15 windows with a 7-contract first buy."""
+    to $5 to cut risk would still trade $15 windows with $30 open."""
     base = LiveLimits(window_usd=floor, open_usd=2 * floor, day_loss_usd=min(6.0, .6 * floor) if floor < 10 else 9,
                       total_loss_usd=10, clip=5, fee_precision=.0001)
     book = LiveRiskBook(base)
