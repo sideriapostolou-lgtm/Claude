@@ -23,6 +23,8 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any, Literal
 
+import requests
+
 from .config import Secret, Settings
 from .ledger import Ledger
 from .speeddesk_kalshi_client import KalshiClient, KalshiClientError
@@ -61,6 +63,22 @@ EPS = 1e-8
 # How long Kalshi's order list may trail its fills list before the mismatch stops real orders for good
 # (seen trailing by under a second on 2026-10-13; every read in between counts as not yet reconciled).
 ORDER_LIST_LAG_S = 30.0
+# Account reads cover only recent orders and fills: those since the earlier of the oldest unfinished order and one
+# window ago, less a margin (Kalshi's min_ts). The complete history (0.5 MB/s on 2026-10-13 and growing with every
+# order) is read at startup, every FULL_SCAN_S, and once after each new window opens, so an untracked bot order or
+# an owner's order placed before the window opened is still caught before the bot's first order there.
+FULL_SCAN_S, RECENT_S, READ_MARGIN_S = 60.0, 900.0, 60.0
+# A resting bid is repriced when fair moves more than REPRICE_FAIR from the fair it was priced at (the rule in
+# _decide); it is also cancelled once it sits above fresh fair minus STALE_BID_EDGE, even while account data are
+# stale (loss plan bug 2).
+REPRICE_FAIR, STALE_BID_EDGE = 0.01, 0.02
+# Timing samples kept per status line (one a minute); counts stay exact beyond it.
+SAMPLE_LIMIT = 8192
+# Measurement only (speed plan step 0): a 10 ms timer's oversleep is the event loop's lag, and once a minute the
+# local clock is compared with Coinbase's (its /time, the source of every Bitcoin tick's stamp). Kalshi's clock is
+# compared on every order and cancel reply (its ts_ms) at no extra request.
+LAG_PROBE_S, CLOCK_PROBE_S = 0.01, 60.0
+COINBASE_TIME = "https://api.exchange.coinbase.com/time"
 # The live loop steps on each Bitcoin tick or book change, at most every MIN_STEP_S, and at least every IDLE_STEP_S.
 MIN_STEP_S, IDLE_STEP_S = 0.02, 0.25
 # A window an hour past its close, settled and with nothing open, moves once into a write-once archive chunk
@@ -111,6 +129,83 @@ class _Clock:
         self.now = now
 
 
+class _Interval:
+    """Timings (ms) and counts since the last status line, summarized there and then cleared. Logging only."""
+
+    def __init__(self) -> None:
+        self.samples: dict[str, list[float]] = {}
+        self.counts: dict[str, int] = {}
+
+    def add(self, name: str, value_ms: float) -> None:
+        bucket = self.samples.setdefault(name, [])
+        if len(bucket) < SAMPLE_LIMIT:
+            bucket.append(value_ms)
+        self.count(name)
+
+    def count(self, name: str, amount: int = 1) -> None:
+        self.counts[name] = self.counts.get(name, 0) + amount
+
+    def summary(self) -> dict[str, Any]:
+        timings = {name: {"n": self.counts.get(name, len(values)), **_spread(values)}
+                   for name, values in self.samples.items()}
+        counts = {name: value for name, value in self.counts.items() if name not in self.samples}
+        self.samples, self.counts = {}, {}
+        return {"ms": timings, "counts": counts}
+
+
+class _ClockOffsets:
+    """Venue clock minus local clock, from replies stamped by the venue: offset = venue stamp minus the midpoint
+    of the local send and reply times, uncertain by half the round trip. The status line shows each source's
+    sample with the shortest round trip since the previous line, and keeps the last one when none came."""
+
+    def __init__(self) -> None:
+        self.best: dict[str, dict[str, Any]] = {}
+        self.last: dict[str, dict[str, Any]] = {}
+        self.samples: dict[str, int] = {}
+
+    def observe(self, source: str, venue_s: float, sent_s: float, received_s: float) -> dict[str, float] | None:
+        if not all(math.isfinite(value) for value in (venue_s, sent_s, received_s)) or received_s < sent_s:
+            return None
+        sample = {"offset_ms": round((venue_s - (sent_s + received_s) / 2) * 1000, 1),
+                  "rtt_ms": round((received_s - sent_s) * 1000, 1), "at": received_s}
+        self.samples[source] = self.samples.get(source, 0) + 1
+        if source not in self.best or sample["rtt_ms"] < self.best[source]["rtt_ms"]:
+            self.best[source] = sample
+        self.last[source] = sample
+        return {"offset_ms": sample["offset_ms"], "rtt_ms": sample["rtt_ms"]}
+
+    def summary(self) -> dict[str, Any]:
+        out = {source: {**self.best.get(source, sample), "samples": self.samples.get(source, 0),
+                        "fresh": source in self.best}
+               for source, sample in self.last.items()}
+        self.best, self.samples = {}, {}
+        return out
+
+
+def coinbase_time() -> float:
+    """Coinbase Exchange's clock in epoch seconds (public, no key). One kept-alive connection per thread."""
+    session = getattr(_PROBE, "session", None)
+    if session is None:
+        session = _PROBE.session = requests.Session()
+    response = session.get(COINBASE_TIME, timeout=(2.0, 2.0))
+    response.raise_for_status()
+    epoch = response.json()["epoch"]
+    if isinstance(epoch, bool) or not isinstance(epoch, (int, float)) or not math.isfinite(epoch):
+        raise ValueError("Invalid Coinbase time")
+    return float(epoch)
+
+
+_PROBE = threading.local()
+
+
+def _spread(values: list[float]) -> dict[str, float | None]:
+    ordered = sorted(values)
+    if not ordered:
+        return {"median_ms": None, "p90_ms": None, "max_ms": None}
+    return {"median_ms": round(ordered[(len(ordered) - 1) // 2], 1),
+            "p90_ms": round(ordered[math.ceil(.9 * len(ordered)) - 1], 1), "max_ms": round(ordered[-1], 1)}
+
+
 class _RecoveryClient:
     """Only account reconciliation and cancellation are available in recovery."""
 
@@ -134,6 +229,10 @@ class _RecoveryClient:
 
     def subaccount_balances(self) -> list[dict[str, Any]]:
         return self._client.subaccount_balances()  # type: ignore[no-any-return]
+
+    @property
+    def read_stats(self) -> dict[str, dict[str, int | None]]:
+        return getattr(self._client, "read_stats", {})  # type: ignore[no-any-return]
 
     def cancel(self, order_id: str, *, ticker: str) -> dict[str, Any]:
         return self._client.cancel(order_id, ticker=ticker)  # type: ignore[no-any-return]
@@ -171,7 +270,8 @@ class KalshiLiveDesk:
                  clock: Callable[[], float] = time.time,
                  monotonic: Callable[[], float] = time.monotonic,
                  client_factory: Callable[[], Any] | None = None,
-                 direct_member_verified: bool = False) -> None:
+                 direct_member_verified: bool = False,
+                 time_probe: Callable[[], float] = coinbase_time) -> None:
         self.settings, self.directory, self.snapshot, self.clock = settings, directory, snapshot, clock
         self.monotonic = monotonic
         self.directory.mkdir(parents=True, exist_ok=True)
@@ -227,6 +327,16 @@ class KalshiLiveDesk:
         self.reset_reported: set[str] = set()
         # When each order's Kalshi report was first seen trailing its booked fills (ORDER_LIST_LAG_S).
         self.order_list_lag: dict[str, float] = {}
+        # When the last complete account read started (FULL_SCAN_S); and what each reconcile cost, for the status line.
+        self.full_scan_at = -math.inf
+        self.sync_stats = _Interval()
+        self.last_sync_report: dict[str, Any] | None = None
+        self._sync_reads: list[dict[str, Any]] = []
+        # Speed plan step 0: time in each part of step(), event-loop lag, cancel timings and venue clock offsets.
+        self.phase_stats = _Interval()
+        self.loop_stats = _Interval()
+        self.clock_offsets = _ClockOffsets()
+        self.time_probe = time_probe
         limits = LiveLimits(window_usd=settings.speeddesk_kalshi_window_usd,
                             open_usd=settings.speeddesk_kalshi_open_usd,
                             day_loss_usd=settings.speeddesk_kalshi_day_stop_usd,
@@ -344,12 +454,56 @@ class KalshiLiveDesk:
         task.add_done_callback(self._workers.discard)
         return await asyncio.shield(task)
 
-    async def _read(self, callback: Callable[..., Any], *args: Any, **kwargs: Any) -> Any:
+    async def _read(self, name: str, callback: Callable[..., Any], *args: Any, **kwargs: Any) -> Any:
+        started = self.monotonic()
         result = await self._io(callback, *args, **kwargs)
+        stats = getattr(self.client, "read_stats", None)
+        pages = stats.get(name) if isinstance(stats, dict) else None
+        self._sync_reads.append({"read": name, "ms": round((self.monotonic() - started) * 1000, 1),
+                                 "rows": len(result) if isinstance(result, list) else None,
+                                 "pages": pages.get("pages") if isinstance(pages, dict) else None,
+                                 "bytes": pages.get("bytes") if isinstance(pages, dict) else None})
         # Serialize all accounting mutations, but give cancellations priority
         # between each private read instead of waiting for every account page.
         await self._cancel_unsafe()
         return result
+
+    def _full_scan_due(self, now: float) -> bool:
+        """Startup, every FULL_SCAN_S, and the first read after a window opens read the complete history; so does
+        every read while the owner's approved integrity reset waits (only a complete read can clear it, and real
+        orders are stopped then anyway)."""
+        return (not self.startup_done or now - self.full_scan_at >= FULL_SCAN_S
+                or self.book.integrity_reset_armed is not None
+                or any(self.full_scan_at < window.start <= now for window in self.book.windows.values()))
+
+    def _recent_since(self, now: float) -> int:
+        """Kalshi min_ts covering every order and fill that can still change the books (see RECENT_S).
+
+        Every unfinished, uncertain or reserved order was created after its intent's decision time, and its fills
+        after that (``_fill`` refuses earlier ones), so they are inside the bound whether Kalshi filters orders on
+        their creation or their last update. So is every order and fill of a window open now (at most RECENT_S old).
+        """
+        unfinished = [intent.at for key, intent in self.intents.items()
+                      if not intent.terminal or intent.uncertain or self.book.intents[key].reservation_active]
+        return max(0, math.floor(min([now - RECENT_S, *unfinished])) - int(READ_MARGIN_S))
+
+    def _sync_report(self, full: bool, started: float, checks: list[str], failed: bool = False) -> None:
+        total = (self.monotonic() - started) * 1000
+        self.sync_stats.add("full_ms" if full else "recent_ms", total)
+        for read in self._sync_reads:
+            self.sync_stats.add(f"{read['read']}_ms", read["ms"])
+            for key in ("pages", "rows", "bytes"):
+                if isinstance(read[key], int):
+                    self.sync_stats.count(f"{key}", read[key])
+        for check in checks:
+            self.sync_stats.count(f"check_{check}")
+        if failed:
+            self.sync_stats.count("failed")
+        tally: dict[str, int] = {}
+        for check in checks:
+            tally[check] = tally.get(check, 0) + 1  # counts, not a list: one entry per order would grow the line
+        self.last_sync_report = {"full": full, "ms": round(total, 1), "failed": failed, "checks": tally,
+                                 "reads": self._sync_reads}
 
     def _merge_archive(self, saved: dict[str, Any]) -> None:
         """Restore archived windows under the saved state, so restore and its checks see the full books."""
@@ -600,8 +754,35 @@ class KalshiLiveDesk:
                 # closing or a money stop is exactly when it must be left to finish.
                 reason = (self._risk_stop_reason()
                           or (self._feed_reason(window, snapshot, now) if window else "Window missing"))
+                if not reason and window is not None:
+                    reason = self._stale_bid_reason(intent, window, snapshot, now,
+                                                    min(STALE_BID_EDGE, self.settings.speeddesk_make_edge))
+                    if reason and intent.cancel_requested and not intent.uncertain:
+                        reason = ""  # Kalshi already acknowledged the cancel (200 or 404); the order list confirms it
+                    elif reason and not intent.cancel_requested:
+                        self.account_at = None  # once, when the cancel is first asked for: re-read before a new bid
             if reason:
                 await self._cancel(intent, reason)
+
+    @staticmethod
+    def _stale_bid_reason(intent: Intent, window: Window, snapshot: LiveSnapshot, now: float, edge: float) -> str:
+        """A resting bid priced from an old fair value (loss plan bug 2: at 9:08:39 AM PT on 2026-10-13 one stayed
+        up for 20.7 s while fair rose about 7c, because the reprice in _decide waits for fresh account data).
+
+        Cancelled whatever the account's freshness: fresh fair moved more than REPRICE_FAIR from the order's, or the
+        bid sits above fresh fair minus ``edge`` (STALE_BID_EDGE, or the make edge when that is smaller, so a fresh bid
+        is never cancelled on sight). A cancel never adds risk. Needs a fresh feed (checked first).
+        """
+        if intent.kind != "rest":
+            return ""
+        assert snapshot.bitcoin_price is not None and window.start_price is not None and snapshot.sigma is not None
+        up = fair_up(snapshot.bitcoin_price, window.start_price, snapshot.sigma, window.end - now)
+        if up is None:
+            return ""
+        fair = up if intent.side == "up" else 1 - up
+        if abs(fair - intent.fair) > REPRICE_FAIR + EPS:
+            return "reprice"
+        return "bid_above_fair" if intent.price > fair - edge + EPS else ""
 
     def _error(self, exc: Exception) -> None:
         self.errors += 1
@@ -652,6 +833,7 @@ class KalshiLiveDesk:
             return
         if self.clock() < self.cancel_retry_at.get(intent.client_order_id, -math.inf) and reason != "shutdown":
             return
+        decided = self.monotonic()
         self.cancel_retry_at[intent.client_order_id] = self.clock() + 2
         intent.cancel_requested = True
         self.book.request_cancel(intent.client_order_id)
@@ -662,11 +844,14 @@ class KalshiLiveDesk:
             self.book.mark_uncertain(intent.client_order_id, "cancel_needs_order_id")
             self.checkpoint()
             return
+        sending, sent_wall = self.monotonic(), self.clock()
         try:
-            await self._io(self.client.cancel, intent.order_id, ticker=intent.window)
+            reply = await self._io(self.client.cancel, intent.order_id, ticker=intent.window)
             self._record("speeddesk_live_cancel", client_order_id=intent.client_order_id,
                          order_id=intent.order_id, window=intent.window, reason=reason,
-                         state="requested; reservation retained until fills reconcile")
+                         state="requested; reservation retained until fills reconcile",
+                         reduced_by=reply.get("reduced_by") if isinstance(reply, dict) else None,
+                         timing=self._cancel_timing(decided, sending), venue=self._venue_stamp(reply, sent_wall))
         except KalshiClientError as exc:
             if exc.operation == "cancel" and exc.status == 404 and not exc.uncertain:
                 # Nothing of ours is resting under that ID (already canceled or
@@ -675,7 +860,8 @@ class KalshiLiveDesk:
                 # not an account error and must not pause trading.
                 self._record("speeddesk_live_cancel", client_order_id=intent.client_order_id,
                              order_id=intent.order_id, window=intent.window, reason=reason,
-                             state="not resting on Kalshi (404); reservation retained until reconciled")
+                             state="not resting on Kalshi (404); reservation retained until reconciled",
+                             timing=self._cancel_timing(decided, sending))
             else:
                 intent.uncertain = True
                 self.book.mark_uncertain(intent.client_order_id, "cancel_unconfirmed")
@@ -687,6 +873,25 @@ class KalshiLiveDesk:
             self._error(exc)
             self.cancel_retry_at[intent.client_order_id] = self.retry_at
         self.checkpoint()
+
+    def _cancel_timing(self, decided: float, sending: float) -> dict[str, float]:
+        """Cancel decision to Kalshi's reply, and the request alone; the decision includes any save before it."""
+        acked = self.monotonic()
+        timing = {"decision_to_ack_ms": round((acked - decided) * 1000, 1),
+                  "send_to_ack_ms": round((acked - sending) * 1000, 1)}
+        self.loop_stats.add("cancel_decision_to_ack", timing["decision_to_ack_ms"])
+        self.loop_stats.add("cancel_send_to_ack", timing["send_to_ack_ms"])
+        return timing
+
+    def _venue_stamp(self, reply: Any, sent_wall: float) -> dict[str, Any] | None:
+        """Kalshi's reply time (ts_ms) beside the local send and reply times, and the clock offset they imply."""
+        stamp = reply.get("ts_ms") if isinstance(reply, dict) else None
+        if not isinstance(stamp, int) or isinstance(stamp, bool) or stamp <= 0:
+            return None
+        acked_wall = self.clock()
+        offset = self.clock_offsets.observe("kalshi", stamp / 1000, sent_wall, acked_wall)
+        return {"ts_ms": stamp, "sent_ms": round(sent_wall * 1000, 1), "acked_ms": round(acked_wall * 1000, 1),
+                **(offset or {})}
 
     async def _cancel_all(self, reason: str) -> None:
         if self.client is None:
@@ -726,10 +931,29 @@ class KalshiLiveDesk:
 
     async def _reconcile(self) -> None:
         assert self.client is not None
-        sync_started = self.clock()
+        sync_started, started = self.clock(), self.monotonic()
+        full = self._full_scan_due(sync_started)
+        checks: list[str] = []
+        self._sync_reads = []
+        try:
+            await self._reconcile_reads(sync_started, full, checks)
+        except BaseException:
+            self._sync_report(full, started, checks, failed=True)
+            raise
+        if full:
+            self.full_scan_at = sync_started
+        self._sync_report(full, started, checks)
+
+    async def _reconcile_reads(self, sync_started: float, full: bool, checks: list[str]) -> None:
+        """One account reconcile; ``checks`` collects the name of each consistency check that failed."""
+        assert self.client is not None
+        # Recent reads (RECENT_S) between complete ones; see _recent_since for why nothing that can still change
+        # the books is outside the bound. Untracked bot orders and old owner orders wait for the next complete read.
+        recent_from = None if full else self._recent_since(sync_started)
+        order_filter: dict[str, Any] = {} if recent_from is None else {"min_ts": recent_from}
         # Fully paginated reads return all pages or raise. Never interpret a
         # missing/failed page as zero inventory or a canceled order.
-        orders = await self._read(self.client.list_orders)
+        orders = await self._read("list_orders", self.client.list_orders, **order_filter)
         for raw in orders:
             client_id = str(raw.get("client_order_id", ""))
             ticker = str(raw.get("ticker", ""))
@@ -752,23 +976,23 @@ class KalshiLiveDesk:
             elif raw.get("status") == "resting":
                 self.foreign_windows.add(ticker)
         self.checkpoint()
-        fills = await self._read(self.client.fills, min_ts=max(0, int(self.started_at) - 60))
+        fills = await self._read("fills", self.client.fills,
+                                 min_ts=max(0, int(self.started_at) - 60) if recent_from is None else recent_from)
         by_order = {intent.order_id: intent for intent in self.intents.values() if intent.order_id}
-        consistent = True
         for raw in fills:
             intent = by_order.get(str(raw.get("order_id", "")))
             if intent is None:
                 ticker = str(raw.get("ticker", ""))
                 if ticker.startswith("KXBTC15M-"):
                     if any(item.window == ticker and not item.order_id for item in self._active()):
-                        consistent = False
+                        checks.append("unattributed_fill_beside_unresolved_order")
                     else:
                         self.foreign_windows.add(ticker)
                 continue
             fill = self._fill(raw, intent)
             if self.book.record_fill(fill):
                 self._record("speeddesk_live_fill", **asdict(fill))
-        orders = await self._read(self.client.list_orders)
+        orders = await self._read("list_orders", self.client.list_orders, **order_filter)
         for raw in orders:
             intent = self.intents.get(str(raw.get("client_order_id", "")))
             if intent is None:
@@ -777,7 +1001,7 @@ class KalshiLiveDesk:
             if not intent.order_id:
                 intent.order_id = str(raw["order_id"])
                 self.book.mark_submitted(intent.client_order_id, intent.order_id)
-                consistent = False  # Its fills were fetched before this ID was known.
+                checks.append("order_found_after_fills")  # Its fills were fetched before this ID was known.
             status = str(raw.get("status", ""))
             if status not in {"resting", "canceled", "executed"}:
                 raise ValueError("Unknown order status")
@@ -796,9 +1020,9 @@ class KalshiLiveDesk:
                 order, fills_complete=True,
                 lag_ok=behind and self.clock() - since <= ORDER_LIST_LAG_S)
             if behind:
-                consistent = False  # no new orders until a fresh read agrees
+                checks.append("order_list_behind_fills")  # no new orders until a fresh read agrees
             elif order.filled_size > booked + EPS:
-                consistent = False
+                checks.append("fills_behind_order_list")
             elif abs(order.filled_size - self.book.intents[intent.client_order_id].filled_size) <= EPS:
                 intent.uncertain = False
             if confirmed:
@@ -807,14 +1031,15 @@ class KalshiLiveDesk:
                     intent.terminal = True
         resting = any(str(raw.get("status", "")) == "resting" and str(raw.get("ticker", "")).startswith("KXBTC15M-")
                       for raw in orders)
-        positions = await self._read(self.client.positions)
+        positions = await self._read("positions", self.client.positions)
         actual = {str(item["ticker"]): _number(item["position_fp"]) for item in positions}
         windows = {intent.window for intent in self.intents.values()}
         # Settlement rows only ever close a traded window that has ended and is not yet settled; skip the read otherwise.
         settlement_due = any(ticker not in self.book.settled and (ticker not in self.book.windows
                                                                   or self.book.windows[ticker].end <= self.clock())
                              for ticker in windows)
-        settlements = (await self._read(self.client.settlements, min_ts=max(0, int(self.started_at) - 60))
+        settlements = (await self._read("settlements", self.client.settlements,
+                                        min_ts=max(0, int(self.started_at) - 60))
                        if settlement_due else [])
         self.final_outcomes.update(self.snapshot().outcomes)
         settlement_rows = {str(raw.get("ticker", "")): raw for raw in settlements}
@@ -834,7 +1059,7 @@ class KalshiLiveDesk:
                 # flat in that market, so Kalshi writes no row; the bot settles
                 # its own contracts from the finalized outcome instead.
                 if row is None and abs(expected) > EPS and ticker not in self.foreign_windows:
-                    consistent = False
+                    checks.append("settlement_row_missing")
                     continue
                 payout = _number(row["revenue"]) / 100 if row is not None else 0.0
                 settled_at = _stamp(row["settled_time"]) if row is not None else self.clock()
@@ -856,12 +1081,12 @@ class KalshiLiveDesk:
                 # window holding a fill that is provably not ours (the owner's
                 # trade by hand) mixes the owner's contracts into the venue
                 # position; the bot leaves it alone and counts only its own fills.
-                consistent = False
+                checks.append("position_mismatch")
         for ticker, amount in actual.items():
             if ticker.startswith("KXBTC15M-") and ticker not in windows and abs(amount) > EPS:
                 self.foreign_windows.add(ticker)
         self.position_sizes = actual
-        balance = await self._read(self.client.balance)
+        balance = await self._read("balance", self.client.balance)
         cash = (_number(balance["balance_dollars"]) if "balance_dollars" in balance
                 else _number(balance["balance"]) / 100)
         if cash < 0:
@@ -869,8 +1094,11 @@ class KalshiLiveDesk:
         now = self.clock()
         self.book.update_cash(cash, now)
         self.cash_usd, self.cash_at = cash, now
-        self.account_at = now if consistent and now - sync_started <= 3 else None
-        self._integrity_reset(actual, resting)
+        if now - sync_started > 3:
+            checks.append("reconcile_slow")
+        self.account_at = now if not checks else None
+        if full:  # only a complete read can show that no resting order is left on the account
+            self._integrity_reset(actual, resting)
         self.authenticated = not self.auth_failed
         self.errors = 0
         self.retry_at = -math.inf
@@ -981,10 +1209,12 @@ class KalshiLiveDesk:
         """Send a durable intent once and settle what its reply proves; never retries a create."""
         client_id, side, kind, price, size = intent.client_order_id, intent.side, intent.kind, intent.price, intent.size
         sent_at: list[float] = []
+        sent_wall: list[float] = []
 
         def guard() -> bool:
             permitted = self._send_guard(client_id)
             sent_at.append(self.monotonic())  # the request leaves right after this returns
+            sent_wall.append(self.clock())
             return permitted
 
         def timing(value: float | None, status: Literal["ok", "missing", "invalid", "error", "timeout"] = "ok") -> Any:
@@ -1012,7 +1242,8 @@ class KalshiLiveDesk:
                       "send_to_ack_ms": (acked - sent_at[0]) * 1000 if sent_at else None}
             self._record("speeddesk_live_order", client_order_id=client_id, order_id=intent.order_id,
                          window=window.slug, state="accepted; waiting for real fills",
-                         timing=timing((acked - decision_mono) * 1000), stages=stages)
+                         timing=timing((acked - decision_mono) * 1000), stages=stages,
+                         venue=self._venue_stamp(reply, sent_wall[0]) if sent_wall else None)
         except asyncio.CancelledError:
             self._record("speeddesk_live_timing", client_order_id=client_id, timing=timing(None, "missing"))
             raise
@@ -1205,7 +1436,7 @@ class KalshiLiveDesk:
                     (fair - self.settings.speeddesk_make_edge + EPS) / window.tick_size) * window.tick_size, 4)
                 pending = [item for item in self._active() if item.window == window.slug and item.side == side]
                 for intent in pending:
-                    if (intent.kind == "rest" and (take or abs(fair - intent.fair) > 0.01 + EPS
+                    if (intent.kind == "rest" and (take or abs(fair - intent.fair) > REPRICE_FAIR + EPS
                                                    or window.slug not in snapshot.maker_windows)):
                         await self._cancel(intent, "reprice" if not take else "take_available")
                         self.account_at = None
@@ -1238,50 +1469,98 @@ class KalshiLiveDesk:
         self.evidence.advance(observed_at, windows, fresh_window_slugs(
             windows, market.books, market.bitcoin_at, market.maker_windows, observed_at))
 
+    def _phase(self, name: str, started: float) -> float:
+        """Record the time since ``started`` under ``name``; returns now, the next phase's start."""
+        now = self.monotonic()
+        self.phase_stats.add(name, (now - started) * 1000)
+        return now
+
     async def step(self) -> None:
+        began = self.monotonic()
         self.observe_market(self.clock())
         self._twin_events(self.twin.advance(self.clock()))
+        self._phase("observe", began)
         if not await self._ensure_client():
             if self.book.integrity_reset_armed:
                 self._reset_waiting("live_off")  # no account read happens, so the reset cannot be judged
             self._heartbeat()
+            self._phase("step", began)
             return
         try:
+            mark = self.monotonic()
             await self._cancel_unsafe()
+            mark = self._phase("cancel_unsafe", mark)
             if self.clock() < self.retry_at:
                 self._heartbeat()
+                self._phase("step", began)
                 return
             if not self.startup_done:
                 await self._startup()
+                mark = self._phase("startup", mark)
             elif self.clock() - self.last_sync >= 1 or self.account_at is None:
                 await self._reconcile()
+                mark = self._phase("reconcile", mark)
             gate = self._gates()
             await self._cancel_unsafe()
+            mark = self._phase("cancel_unsafe", mark)
             if gate:
                 self.reason = "Practice; cancelling prior live bids" if self._active() else gate
             elif await self._lock():
                 self.reason = "Completing a half-filled pair before the close"
+                self._phase("lock", mark)
             else:
+                mark = self._phase("lock", mark)
                 await self._decide()
+                self._phase("decide", mark)
         except Exception as exc:  # noqa: BLE001 — failed account evidence never permits another order.
             self.account_at = None
             self._error(exc)
             if self.errors >= 3 or self.auth_failed:
                 await self._cancel_all("authentication_or_repeated_errors")
+        mark = self.monotonic()
         self._heartbeat()
+        self._phase("heartbeat", mark)
+        self._phase("step", began)
 
     def _heartbeat(self) -> None:
         if self.clock() - self.last_status >= 60:
+            # Account reads since the last status line: complete and recent reconcile times, each read's time,
+            # pages, rows and bytes, and how often each consistency check failed; plus the latest reconcile.
             self._record("speeddesk_live_status", **self.panel(),
                          save={"last_ms": self.save_ms, **self.save_stages, "archived_windows": len(self.archived),
-                               "saved_orders": sum(intent.window not in self.archived for intent in self.intents.values())})
+                               "saved_orders": sum(intent.window not in self.archived for intent in self.intents.values())},
+                         reconcile={**self.sync_stats.summary(), "last": self.last_sync_report},
+                         # Speed plan step 0: time in each part of step() ("step" is the whole), event-loop lag
+                         # and cancel timings, and venue clock minus local clock (see _ClockOffsets).
+                         phases=self.phase_stats.summary()["ms"], loop=self.loop_stats.summary(),
+                         clock=self.clock_offsets.summary())
             self.last_status = self.clock()
         if self.pending or self.clock() - self.last_checkpoint >= 5:
             self.checkpoint()
 
+    async def _lag_probe(self) -> None:
+        """Oversleep of a LAG_PROBE_S timer: how long a ready callback waits for the shared event loop."""
+        while True:
+            started = time.perf_counter()
+            await asyncio.sleep(LAG_PROBE_S)
+            self.loop_stats.add("event_loop_lag", max(0.0, (time.perf_counter() - started - LAG_PROBE_S) * 1000))
+
+    async def _clock_probe(self) -> None:
+        """Local clock against Coinbase's, once every CLOCK_PROBE_S while real money is on. Never fails the desk."""
+        while True:
+            if not self._gates():
+                sent = self.clock()
+                try:
+                    venue = await asyncio.to_thread(self.time_probe)
+                    self.clock_offsets.observe("coinbase", venue, sent, self.clock())
+                except Exception as exc:  # noqa: BLE001 — a measurement only; the error type alone is kept.
+                    self.loop_stats.count(f"clock_probe_{type(exc).__name__}")
+            await asyncio.sleep(CLOCK_PROBE_S)
+
     async def run(self, stop: threading.Event) -> None:
         self.stop_event = stop
         self.wake = asyncio.Event()  # bound to this run's event loop
+        probes = [asyncio.create_task(self._lag_probe()), asyncio.create_task(self._clock_probe())]
         try:
             while not stop.is_set():
                 self.wake.clear()
@@ -1293,6 +1572,9 @@ class KalshiLiveDesk:
                     await asyncio.wait_for(self.wake.wait(), IDLE_STEP_S)
                 await asyncio.sleep(max(0.0, MIN_STEP_S - (self.monotonic() - started)))
         finally:
+            for probe in probes:
+                probe.cancel()
+            await asyncio.gather(*probes, return_exceptions=True)
             await self.shutdown()
 
     async def shutdown(self) -> None:
