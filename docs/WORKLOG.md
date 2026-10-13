@@ -46,6 +46,20 @@ Template:
 - Next step: if implementing this design, start with the isolated read-only recorder and exact entry/exit
   replay. A few days test mechanics; rare-event profitability may need months and can remain NO EDGE.
 
+## 2026-10-13 14:25 UTC, Claude, branch claude/kalshi-mirror-full
+- Changed: PR #27 is live (deployment 8a99090d, 14:06:02 UTC, commit 417cf0f): 72 windows archived, 86 orders
+  left in each save, routine saves 110-175 ms (the first, archiving save 897 ms). But `moneyconnections.py`
+  rebuilds and validates the whole real book from `speeddesk/kalshi_live/state.json`, and that file had become
+  the saved state without archived windows, so the money page's Kalshi section failed its check ("incomplete")
+  from 14:06 UTC. Fix: the file is written again with every window (archived parts kept in memory), at most
+  every 10 s and at shutdown, without its fsync; the status line splits saves into build/ledger/mirror times.
+- Verified: new test reproduces the break on the deployed code (settled window missing from the file) and passes
+  now, including `kalshi_connection` status ok with the settlement shown; full suite 4,669 passed / 12 skipped;
+  changed-file Ruff and mypy clean.
+- Not verified / skipped: the live money page itself (dashboard token not used here); the save split on Railway.
+- Real money touched? No trading change; display copy and timing fields only.
+- Next step: deploy after the 14:30 close; read the save split from the status line.
+
 ## 2026-10-13 14:00 UTC, Claude, branch claude/kalshi-small-saves
 - Changed: PR #26 is live (deployment 80e9a951, 13:34:37 UTC, commit 7ce65d8). Its new per-stage timings showed
   the real bottleneck: the pre-send save took 206 ms (median of 7 orders), because each save rewrote every order
