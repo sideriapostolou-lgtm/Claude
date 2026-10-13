@@ -1970,7 +1970,45 @@ def speed_desk(settings: Settings, now: float) -> dict[str, Any] | None:
                             "required_elapsed_s": _num(volatility.get("required_elapsed_s")),
                             "ready": volatility.get("ready") is True} if volatility else None),
             "kalshi_live": _kalshi_live_panel(raw.get("kalshi_live"), settings, now),
+            "coins": _practice_coins(settings, now),
             "btc_age_s": _num(raw.get("btc_age_s")), "book_age_s": _num(raw.get("book_age_s"))}
+
+
+def _practice_coins(settings: Settings, now: float) -> list[dict[str, Any]]:
+    """Other coins' practice desks (speeddesk_coins), whitelisted; pretend money, never in any money total."""
+    if not settings.speeddesk_coins:
+        return []
+    try:
+        from nightcrawler import speeddesk_coins
+
+        raw_panels = speeddesk_coins.panels(settings.data_dir)
+        known = {coin.key: coin for coin in speeddesk_coins.COINS.values()}
+    except (OSError, ValueError, ImportError) as exc:
+        log.warning("speeddesk_coins_panel_failed error=%s", type(exc).__name__)
+        return []
+    text = _Text(settings)
+    day = utc_day(now)
+    out = []
+    for raw in raw_panels:
+        coin = known.get(str(raw.get("coin")))
+        if coin is None:
+            continue
+        as_of = _num(raw.get("as_of"))
+        today = _xp_map(raw.get("today"))
+        if today.get("day") != day:
+            today = {}
+        total = _xp_map(raw.get("total"))
+        out.append({"coin": coin.key, "name": coin.name, "series": coin.series, "mode": "paper",
+                    "label": "PRACTICE (pretend money)",
+                    "stale": as_of is None or now - as_of > 120 or as_of > now + FUTURE_SKEW_S,
+                    "status": text.opt(raw.get("status")) or "Waiting for the first practice report",
+                    "reason": text.opt(raw.get("reason")), "price": _num(raw.get("price")),
+                    "volatility_ready": raw.get("volatility_ready") is True,
+                    "today": {key: _num(today.get(key)) for key in
+                              ("windows", "settled_windows", "fills", "locked_usd", "directional_usd", "pnl_usd")},
+                    "total": {key: _num(total.get(key)) for key in
+                              ("windows", "settled_windows", "fills", "locked_usd", "directional_usd", "pnl_usd")}})
+    return out
 
 
 def speed_line(desk: Mapping[str, Any] | None) -> str | None:

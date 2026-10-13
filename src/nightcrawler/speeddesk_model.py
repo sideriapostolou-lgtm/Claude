@@ -288,6 +288,8 @@ class PracticeDesk:
     def __init__(self, config: SpeedConfig | None = None) -> None:
         self.config = config or SpeedConfig()
         self.tape = BitcoinTape()
+        # How old the last spot print may be; None keeps config.stale_s (another coin's desk trades less often).
+        self.price_stale_s: float | None = None
         self.windows: dict[str, Window] = {}
         self.inventory: dict[str, Inventory] = {}
         self.books: dict[tuple[str, Side], Book] = {}
@@ -390,7 +392,8 @@ class PracticeDesk:
             return "cutoff"
         if self._day(now).get("pnl_usd", 0.0) <= -self.config.day_stop_usd:
             return "day_stop"
-        if self.tape.last_at is None or not 0 <= now - self.tape.last_at <= self.config.stale_s:
+        price_stale_s = self.config.stale_s if self.price_stale_s is None else self.price_stale_s
+        if self.tape.last_at is None or not 0 <= now - self.tape.last_at <= price_stale_s:
             return "bitcoin_stale"
         if window.start_price is None:
             return "opening_price_missing"

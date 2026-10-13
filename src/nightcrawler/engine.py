@@ -2720,6 +2720,15 @@ def build_app(settings: Settings, clock: Clock | None = None, *, session: Any = 
         except Exception as exc:  # noqa: BLE001 - practice data failure never stops the existing desks
             log.warning("speeddesk_not_started mode=PRACTICE error=%s", type(exc).__name__)
             speeddesk = None
+    if settings.speeddesk_enabled and settings.speeddesk_coins:
+        try:
+            # Other coins' practice desks get their own thread and event loop, never the Bitcoin desk's.
+            from nightcrawler.speeddesk_coins import run_coin_desks
+
+            threading.Thread(target=run_coin_desks, args=(settings, stop_event),
+                             name="speeddesk-coins", daemon=True).start()
+        except Exception as exc:  # noqa: BLE001 - a coin practice failure never stops the Bitcoin desk
+            log.warning("speeddesk_coins_not_started mode=PRACTICE error=%s", type(exc).__name__)
     trenddesk = None
     skipwatch = None
     if settings.skipwatch_enabled:

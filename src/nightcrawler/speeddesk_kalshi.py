@@ -33,11 +33,12 @@ API = "https://api.elections.kalshi.com/trade-api/v2"
 SERIES = "KXBTC15M"
 
 
-def valid_ticker(value: Any) -> TypeGuard[str]:
-    return isinstance(value, str) and re.fullmatch(r"KXBTC15M-[A-Z0-9]+-[0-9]{2}", value) is not None
+def valid_ticker(value: Any, series: str = SERIES) -> TypeGuard[str]:
+    return isinstance(value, str) and re.fullmatch(re.escape(series) + r"-[A-Z0-9]+-[0-9]{2}", value) is not None
 
 
-def parse_window(raw: Any, series: Any, now: float) -> Window | None:
+def parse_window(raw: Any, series: Any, now: float, *, name: str = SERIES, index: str = "brti") -> Window | None:
+    """One verified 15-minute window of the ``name`` series, settled on CF Benchmarks' ``index``."""
     if not isinstance(raw, dict) or not isinstance(series, dict):
         return None
     slug = raw.get("ticker")
@@ -45,13 +46,13 @@ def parse_window(raw: Any, series: Any, now: float) -> Window | None:
     rules = str(raw.get("rules_primary") or "").lower()
     multiplier = number(series.get("fee_multiplier"))
     fee_type = series.get("fee_type")
-    if (not valid_ticker(slug) or start is None or end is None or end - start != 900
+    if (not valid_ticker(slug, name) or start is None or end is None or end - start != 900
             or start not in (math.floor(now / 900) * 900, math.floor(now / 900) * 900 + 900)
-            or series.get("ticker") != SERIES or series.get("frequency") != "fifteen_min"
+            or series.get("ticker") != name or series.get("frequency") != "fifteen_min"
             or raw.get("market_type") != "binary" or raw.get("notional_value_dollars") != "1.0000"
             or raw.get("status") not in ("active", "initialized")
             or raw.get("strike_type") not in (None, "greater_or_equal")
-            or "cf benchmarks' brti" not in rules or "simple average of the sixty seconds" not in rules
+            or f"cf benchmarks' {index}" not in rules or "simple average of the sixty seconds" not in rules
             or "is at least" not in rules or "resolves to yes" not in rules
             or multiplier is None or not 0 <= multiplier <= 10
             or fee_type not in ("quadratic", "quadratic_with_maker_fees")):
@@ -89,9 +90,9 @@ def _levels(raw: Any) -> tuple[Level, ...] | None:
     return tuple(Level(price, size) for price, size in sorted(levels.items(), reverse=True))
 
 
-def parse_books(reply: Any, ticker: str, received_at: float) -> tuple[Book, ...]:
+def parse_books(reply: Any, ticker: str, received_at: float, *, series: str = SERIES) -> tuple[Book, ...]:
     raw = reply.get("orderbook_fp") if isinstance(reply, dict) else None
-    if not valid_ticker(ticker) or not isinstance(raw, dict):
+    if not valid_ticker(ticker, series) or not isinstance(raw, dict):
         return ()
     yes, no = _levels(raw.get("yes_dollars")), _levels(raw.get("no_dollars"))
     if yes is None or no is None:
@@ -107,8 +108,8 @@ def parse_books(reply: Any, ticker: str, received_at: float) -> tuple[Book, ...]
     )
 
 
-def parse_trades(rows: Any, ticker: str, received_at: float) -> tuple[Trade, ...]:
-    if not isinstance(rows, list) or not valid_ticker(ticker):
+def parse_trades(rows: Any, ticker: str, received_at: float, *, series: str = SERIES) -> tuple[Trade, ...]:
+    if not isinstance(rows, list) or not valid_ticker(ticker, series):
         return ()
     out: list[Trade] = []
     for raw in rows:
@@ -149,7 +150,14 @@ class KalshiFeeds:
                  on_book: Callable[[Book], None], on_trade: Callable[[Trade], None],
                  on_windows: Callable[[list[Window]], None], on_status: Callable[[dict[str, Any]], None],
                  clock: Callable[[], float] = time.time, rest_get: Callable[[str], Any] | None = None,
-                 ws_connect: Callable[..., Any] | None = None) -> None:
+                 ws_connect: Callable[..., Any] | None = None, series: str = SERIES, index: str = "brti",
+                 websocket: bool = True, book_interval_s: float = 0.5, trade_interval_s: float = 1.0,
+                 metadata_interval_s: float = 15.0) -> None:
+        # Another coin's practice feed passes its own series and index, no websocket and slower polls, so the
+        # real-money Bitcoin desk keeps the account's websocket and nearly all of Kalshi's request budget.
+        self.series, self.index = series, index
+        self.book_interval_s, self.trade_interval_s = book_interval_s, trade_interval_s
+        self.metadata_interval_s = metadata_interval_s
         self.on_book, self.on_trade = on_book, on_trade
         self.on_windows, self.on_status = on_windows, on_status
         self._clock, self._get = clock, rest_get or _public_get
@@ -162,7 +170,8 @@ class KalshiFeeds:
         self._transport: dict[str, str] = {}
         self._ws_status: dict[str, Any] = {}
         self._ws: KalshiMarketWS | None = None
-        if settings.speeddesk_kalshi_ws_enabled and settings.kalshi_key_id and settings.kalshi_private_key:
+        if (websocket and settings.speeddesk_kalshi_ws_enabled and settings.kalshi_key_id
+                and settings.kalshi_private_key):
             self._ws = KalshiMarketWS(settings, tickers=lambda: frozenset(self.windows), on_book=self._ws_book,
                                      on_trade=self.on_trade, on_status=self._ws_report, clock=clock,
                                      ws_connect=ws_connect)
@@ -210,11 +219,11 @@ class KalshiFeeds:
     async def refresh_windows(self) -> None:
         now = self._clock()
         current = int(now // 900) * 900
-        query = urlencode({"series_ticker": SERIES, "min_close_ts": current + 1,
+        query = urlencode({"series_ticker": self.series, "min_close_ts": current + 1,
                            "max_close_ts": current + 1800, "limit": 100})
         try:
             series_reply, reply = await asyncio.gather(
-                asyncio.to_thread(self._get, f"/series/{SERIES}"),
+                asyncio.to_thread(self._get, f"/series/{self.series}"),
                 asyncio.to_thread(self._get, f"/markets?{query}"))
             series = series_reply.get("series") if isinstance(series_reply, dict) else None
             rows = reply.get("markets") if isinstance(reply, dict) and not reply.get("cursor") else None
@@ -222,11 +231,11 @@ class KalshiFeeds:
                 raise TypeError("Incomplete market discovery")
             windows: dict[str, Window] = {}
             for raw in rows:
-                window = parse_window(raw, series, now)
+                window = parse_window(raw, series, now, name=self.series, index=self.index)
                 if window is None:
                     continue
                 event = raw.get("event_ticker")
-                if not isinstance(event, str) or not re.fullmatch(r"KXBTC15M-[A-Z0-9]+", event):
+                if not isinstance(event, str) or not re.fullmatch(re.escape(self.series) + r"-[A-Z0-9]+", event):
                     continue
                 # Unknown event overrides must not silently inherit a cheaper
                 # series fee. The current public series has no such overrides.
@@ -255,7 +264,7 @@ class KalshiFeeds:
         current = [window for window in self.windows.values() if window.start <= now < window.end]
         fresh = self._ws.fresh_books() if self._ws else frozenset()
         current = [window for window in current if window.slug not in fresh]
-        if now - self._last_book < 0.5 or not current:
+        if now - self._last_book < self.book_interval_s or not current:
             return False
         window = current[self._book_index % len(current)]
         self._book_index += 1
@@ -268,7 +277,7 @@ class KalshiFeeds:
 
         try:
             reply, requested_at = await asyncio.to_thread(fetch)
-            books = parse_books(reply, window.slug, self._clock())
+            books = parse_books(reply, window.slug, self._clock(), series=self.series)
             if not books:
                 raise ValueError("Invalid book")
             # An older REST request must not replace a newer WS snapshot.
@@ -285,7 +294,7 @@ class KalshiFeeds:
         now = self._clock()
         current = [window for window in self.windows.values() if window.start <= now < window.end]
         current = [window for window in current if window.slug not in self._ws_status.get("ws_maker_windows", [])]
-        if now - self._last_trades < 1 or not current:
+        if now - self._last_trades < self.trade_interval_s or not current:
             return False
         self._last_trades = now
         window = current[0]
@@ -308,7 +317,7 @@ class KalshiFeeds:
             received_at = self._clock()
             if window.slug not in self.windows:
                 return True
-            trades = parse_trades(rows, window.slug, received_at)
+            trades = parse_trades(rows, window.slug, received_at, series=self.series)
             # Missing prints cannot be reconstructed. New queue positions are
             # enabled only after a complete poll contains an actual fresh print.
             if any(received_at - 3 <= trade.at <= received_at for trade in trades):
@@ -326,7 +335,7 @@ class KalshiFeeds:
         return True
 
     async def settlement(self, slug: str) -> float | None:
-        if not valid_ticker(slug):
+        if not valid_ticker(slug, self.series):
             return None
         try:
             reply = await asyncio.to_thread(self._get, f"/markets/{slug}")
@@ -342,12 +351,13 @@ class KalshiFeeds:
         return value
 
     async def run(self, stop: threading.Event) -> None:
-        log.info("speeddesk_feed_kalshi_started mode=MARKET_DATA websocket=%s books_max_hz=2", self._ws is not None)
+        log.info("speeddesk_feed_kalshi_started mode=MARKET_DATA series=%s websocket=%s books_max_hz=%s",
+                 self.series, self._ws is not None, round(1 / self.book_interval_s, 2))
 
         async def metadata() -> None:
             while True:
                 await self.refresh_windows()
-                await asyncio.sleep(15)
+                await asyncio.sleep(self.metadata_interval_s)
 
         async def books() -> None:
             while True:

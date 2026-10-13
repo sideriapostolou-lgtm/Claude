@@ -73,6 +73,24 @@ Template:
   The separately focused UI/fallback suite passed **126 tests**. The low-disk fixture checks also pass with
   simulated 512 MiB host capacity while the explicit disk guard/recovery test remains enforced.
 
+## 2026-10-13 05:10 UTC, Claude, branch claude/kalshi-practice-coins
+- Owner request: "I wanna scale by tonight to other markets but let's perfect it first".
+- Changed: practice-only desks for Kalshi's ETH, SOL, XRP and DOGE 15-minute windows (`SPEEDDESK_COINS`,
+  spec 9.1). No account, key or order path; own thread, ledgers and budgets; slow public Kalshi polls; Kalshi's
+  strike as the opening; gap-tolerant volatility; a "More coins" section on the speed desk card. The Kalshi
+  practice feed now takes a series and index (Bitcoin's defaults unchanged).
+- Evidence for the plan (public data, 03:51 UTC): 24 h volume BTC 276,135 contracts vs ETH 7,382, SOL 3,708,
+  XRP 2,792, DOGE 4,013; the alt books are thin, so practice must show the pair edge survives there.
+- Verified: a live 70 s smoke run on public data found every coin's windows with Kalshi's strike, books and
+  Coinbase prices (rollover polls of just-closed markets failed as gaps, as on Bitcoin); 11 offline tests
+  (feed series/index, opening from the strike only, sparse volatility vs the dense estimate, paper take,
+  fill, settlement and restart, page whitelist, no order path). Full suite 4575 passed; mypy, ruff clean.
+- Correction to the 04:45 entry: the 14 learning-recorder test failures were this sandbox's disk (708 MB free;
+  the recorder refuses to record when space is low), not a clock problem; after freeing space all 100 pass.
+- Real money touched? No. Practice only; the real-money Bitcoin desk is unchanged.
+- Next: watch the coins warm up (one hour of prices) and their first practice windows; then the shared account
+  controller; real money on a coin only with the owner's numbers.
+
 ## 2026-10-13 04:56 UTC, Codex, branch codex/railway-access-check
 - Owner supplied the remaining dashboard credential. Authenticated GET `/api/page`, `/`, and the town's
   read-only browser polling succeeded using an ephemeral browser cookie scoped to the app host. No token was
@@ -126,7 +144,6 @@ Template:
   Underlying accounting/display limitations from the town entry remain. Follow up on weather capture and feed
   freshness. No application files changed; no new tests, push or deployment performed for this access check.
 - Real money touched? No. Read-only status/log checks and this local documentation entry only.
-
 ## 2026-10-13 04:45 UTC, Claude, branch claude/kalshi-order-list-lag
 - Owner request: "Turn the real money back on make sure the system is perfect".
 - Done first: PR #19 deployed (924494b). The startup log named the 02:00 UTC stop `order_terminal_regressed`.
