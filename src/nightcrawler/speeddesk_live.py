@@ -39,6 +39,7 @@ from .speeddesk_live_model import (
     OrderSnapshot,
     without_default_lock,
 )
+from .speeddesk_live_pull import PullGuard, PullRule, compare
 from .speeddesk_metrics import (
     LatencyMetrics,
     TickReceipt,
@@ -48,6 +49,7 @@ from .speeddesk_metrics import (
 from .speeddesk_model import (
     Book,
     PracticeDesk,
+    PracticeOrder,
     Side,
     SpeedConfig,
     Trade,
@@ -95,6 +97,12 @@ MIRROR_EVERY_S = 10.0
 OWNER_RECORDS = frozenset({"speeddesk_live_day_reset", "speeddesk_live_integrity_reset"})
 # The earned-growth ladder looks at the books at most this often (a change only ever starts at the next window).
 LADDER_EVERY_S = 1.0
+# Receipts kept out of the panel's latest events: the status line, and one line per finished pull (each pull's
+# cancels are events already; a busy minute of pulls would otherwise push the orders and fills out).
+QUIET_RECORDS = frozenset({"speeddesk_live_status", "speeddesk_live_pull"})
+PULL_REASON = "Bids pulled: the fair value just moved; no new bid until the hold ends"
+# How often the practice twin may try the bid a held window would get without the pull (see _twin_unpulled_bid).
+TWIN_RETRY_S = 1.0
 
 
 @dataclass(frozen=True)
@@ -395,6 +403,12 @@ class KalshiLiveDesk:
                 self.changed_windows = set(saved.get("changed_windows", []))
                 self.final_outcomes = saved.get("final_outcomes", {})
                 self.latest_events = saved.get("latest_events", [])[-20:]
+            # The bid pull (owner, 2026-10-13 ~20:15 UTC) and its live control: twin bids the old rule keeps resting
+            # while the real ones are pulled (twin order ids; twin orders never survive a restart).
+            self.pull = PullGuard(PullRule.from_settings(settings), clock(), saved.get("pull") if saved else None)
+            self.twin_kept: set[int] = set()
+            self._twin_tried: dict[tuple[str, str], float] = {}
+            self._pull_ab: tuple[tuple[Any, ...], dict[str, Any]] | None = None
             self.metrics = LatencyMetrics(clock(), saved.get("latency_metrics") if saved else None)
             self.evidence = WindowEvidence(clock(), saved.get("window_evidence") if saved else None)
             self.reports: dict[str, dict[str, Any]] = dict(saved.get("reports", {})) if saved else {}
@@ -460,7 +474,7 @@ class KalshiLiveDesk:
     def _record(self, receipt_kind: str, **payload: Any) -> None:
         item = {"at": self.clock(), "venue": "kalshi", **payload}
         self.pending.append((receipt_kind, item))
-        if receipt_kind != "speeddesk_live_status":
+        if receipt_kind not in QUIET_RECORDS:
             self.latest_events.append({"event": receipt_kind, **item})
             self.latest_events = self.latest_events[-20:]
 
@@ -598,6 +612,7 @@ class KalshiLiveDesk:
                              if value.window not in hidden},
                  "archived_windows": sorted(self.archived | cold), "archive_chunks": self.archive_chunks + bool(cold),
                  "twin": self.twin.to_state(), "fatal_reason": self.fatal_reason,
+                 "pull": self.pull.to_state(),
                  "foreign_windows": sorted(self.foreign_windows), "final_outcomes": self.final_outcomes,
                  "changed_windows": sorted(self.changed_windows),
                  "latency_metrics": self.metrics.state(),
@@ -649,6 +664,7 @@ class KalshiLiveDesk:
     def on_tick(self, price: float, event_at: float, received_at: float) -> None:
         if 0 <= received_at - event_at <= 3:
             self.twin.tick_btc(price, event_at)
+            self._pull_watch(self.snapshot(), self.clock())
             self.wake.set()
 
     def on_windows(self, windows: list[Window]) -> None:
@@ -761,6 +777,7 @@ class KalshiLiveDesk:
         if self.client is None:
             return
         snapshot, now = self.snapshot(), self.clock()
+        self._pull_watch(snapshot, now)  # the pull's trigger check never waits for account data
         for intent in self._active():
             window = self._current_window(intent.window, snapshot)
             reason = (self._gates() or self.fatal_reason
@@ -771,17 +788,23 @@ class KalshiLiveDesk:
                 reason = (self._risk_stop_reason()
                           or (self._feed_reason(window, snapshot, now) if window else "Window missing"))
                 if not reason and window is not None:
-                    reason = self._stale_bid_reason(intent, window, snapshot, now,
-                                                    min(STALE_BID_EDGE, self.settings.speeddesk_make_edge))
+                    # The stale-bid rules first: the practice twin follows those, never the pull.
+                    reason = (self._stale_bid_reason(intent, window, snapshot, now,
+                                                     min(STALE_BID_EDGE, self.settings.speeddesk_make_edge))
+                              or ("pull" if intent.kind == "rest" and self.pull.pulled_since(intent.window, intent.at)
+                                  else ""))
                     if reason and intent.cancel_requested and not intent.uncertain:
                         reason = ""  # Kalshi already acknowledged the cancel (200 or 404); the order list confirms it
                     elif reason and not intent.cancel_requested:
                         self.account_at = None  # once, when the cancel is first asked for: re-read before a new bid
+                        if reason == "pull":
+                            self.pull.note_bid(intent.window, now)
             if reason:
                 await self._cancel(intent, reason)
 
     @staticmethod
-    def _stale_bid_reason(intent: Intent, window: Window, snapshot: LiveSnapshot, now: float, edge: float) -> str:
+    def _stale_bid_reason(intent: Intent | PracticeOrder, window: Window, snapshot: LiveSnapshot, now: float,
+                          edge: float) -> str:
         """A resting bid priced from an old fair value (loss plan bug 2: at 9:08:39 AM PT on 2026-10-13 one stayed
         up for 20.7 s while fair rose about 7c, because the reprice in _decide waits for fresh account data).
 
@@ -799,6 +822,101 @@ class KalshiLiveDesk:
         if abs(fair - intent.fair) > REPRICE_FAIR + EPS:
             return "reprice"
         return "bid_above_fair" if intent.price > fair - edge + EPS else ""
+
+    # The bid pull (owner, 2026-10-13 ~20:15 UTC: "Pulling bids the instant price moves ... test with our current bot")
+    # and its live control, the practice twin, which keeps the rule without the pull (docs/SPEEDDESK_SPEC.md 9.3).
+
+    def _pull_watch(self, snapshot: LiveSnapshot, now: float) -> None:
+        """The pull's trigger check: the bot's Up fair (as _decide computes it) in each open Bitcoin window, on every
+        tick and every cancel check, so a pull never waits for account data. Logs each counted pull once it ends."""
+        if not self.pull.rule.enabled:
+            return
+        counting = not self._gates()  # a pull counts (and is logged) only while real money is switched on
+        for window in snapshot.windows:
+            if (window.slug not in self.book.windows or not window.start <= now < window.end
+                    or snapshot.bitcoin_price is None or window.start_price is None or snapshot.sigma is None):
+                continue
+            up = fair_up(snapshot.bitcoin_price, window.start_price, snapshot.sigma, window.end - now)
+            if up is not None:
+                self.pull.observe(window.slug, up, now, count=counting and now < window.end - self.book.limits.lock_s)
+        for record in self.pull.expire(now):
+            self._record("speeddesk_live_pull", **record)
+
+    def _twin_cancel(self, intent: Intent, reason: str) -> None:
+        """A real cancel cancels the twin's bids in its window, except a pull: the twin is the pull's control, so its
+        bid stays resting until the rule without the pull would cancel it (_twin_unpulled)."""
+        if reason != "pull":
+            self._twin_events(self.twin.cancel(self.clock(), intent.window, reason))
+        elif intent.twin_order_id in self.twin.orders:
+            self.twin_kept.add(intent.twin_order_id)
+
+    def _twin_unpulled(self, snapshot: LiveSnapshot, now: float) -> None:
+        """The twin's kept bids follow the rule without the pull: cancelled for what cancels a real resting bid there
+        (live switches, failures and money stops, a stale, closing or owner's window, the stale-bid and reprice rules,
+        no verified maker trades), never for a fast move alone."""
+        self.twin_kept = {order_id for order_id in self.twin_kept if order_id in self.twin.orders}
+        standing = (self._gates() or self.fatal_reason or ("Repeated account errors" if self.errors >= 3 else "")
+                    or self._risk_stop_reason()) if self.twin_kept else ""
+        for order_id in sorted(self.twin_kept):
+            order = self.twin.orders[order_id]
+            window = self._current_window(order.window, snapshot)
+            reason = standing or (self._feed_reason(window, snapshot, now) if window else "Window missing")
+            if not reason and window is not None:
+                reason = (self._stale_bid_reason(order, window, snapshot, now,
+                                                 min(STALE_BID_EDGE, self.settings.speeddesk_make_edge))
+                          or ("" if window.slug in snapshot.maker_windows else "maker_trades_unverified"))
+            if reason:
+                self.twin_kept.discard(order_id)
+                self._twin_events(self.twin.cancel_order(now, order_id, reason))
+
+    def _twin_unpulled_bid(self, window: Window, side: Side, price: float, fair: float, units: int,
+                           now: float) -> None:
+        """The resting bid a held window would get without the pull, in the practice twin only: the size the real
+        order would take (_send's search against the risk book), none if the twin already has a bid on that side.
+        Tried at most once a TWIN_RETRY_S per side, about as often as the real companion decides after an order."""
+        if any(order.window == window.slug and order.side == side for order in self.twin.orders.values()):
+            return
+        if now - self._twin_tried.get((window.slug, side), -math.inf) < TWIN_RETRY_S:
+            return
+        self._twin_tried = {key: at for key, at in self._twin_tried.items() if now - at < TWIN_RETRY_S}
+        self._twin_tried[(window.slug, side)] = now
+        try:
+            if fair - self.book.unit_reserve(window.slug, price, "rest") < self.settings.speeddesk_make_edge - EPS:
+                return
+        except LiveRejected:
+            return
+        for size in range(units, 0, -1):
+            if self.book.can_buy(window.slug, side, "rest", price, float(size), now):
+                continue
+            self._mirror_twin(self.book.limits_for(window.slug))
+            event = self.twin.place(window.slug, side, "rest", price, float(size), fair, now)
+            if event.event == "speeddesk_rest":
+                self.twin_kept.add(event.order_id)
+                self._twin_events([event])
+            return
+
+    def _pull_panel(self) -> dict[str, Any]:
+        """Pulls today and the live control: the real companion against its practice twin on settled windows that
+        started since the pull went live (P&L where both traded, maker fills per window where either traded), and the
+        same for the seven days before it, the gap between real and practice fills that the pull did not cause."""
+        now, since = self.clock(), self.pull.since
+        key = (since, len(self.book.settled), len(self.twin.closed), len(self.book.fills), len(self.evidence.fills))
+        if self._pull_ab is None or self._pull_ab[0] != key:
+            control: dict[str, Any] = {"since_pull": None, "week_before": None}
+            if since is not None:
+                starts = {slug: window.start for slug, window in self.book.windows.items()}
+                live = {slug: row.pnl_usd for slug, row in self.book.settled.items()
+                        if row.up_shares + row.down_shares > EPS}
+                twin = {row.window: row.pnl_usd for row in self.twin.closed if row.up_shares + row.down_shares > EPS}
+                live_maker = [(fill.window, fill.size) for fill in self.book.fills.values()
+                              if self.intents[fill.client_order_id].kind == "rest"]
+                twin_maker = [(str(row["window"]), float(row["size"])) for row in self.evidence.fills
+                              if row.get("is_taker") is False]
+                control = {"since_pull": compare(starts, live, twin, live_maker, twin_maker, start=since),
+                           "week_before": compare(starts, live, twin, live_maker, twin_maker,
+                                                  start=since - 7 * 86400, end=since)}
+            self._pull_ab = (key, control)
+        return {**self.pull.panel(now), **self._pull_ab[1]}
 
     def _error(self, exc: Exception) -> None:
         self.errors += 1
@@ -853,7 +971,7 @@ class KalshiLiveDesk:
         self.cancel_retry_at[intent.client_order_id] = self.clock() + 2
         intent.cancel_requested = True
         self.book.request_cancel(intent.client_order_id)
-        self._twin_events(self.twin.cancel(self.clock(), intent.window, reason))
+        self._twin_cancel(intent, reason)
         self.checkpoint()
         if not intent.order_id:
             intent.uncertain = True
@@ -1413,6 +1531,8 @@ class KalshiLiveDesk:
         up = fair_up(snapshot.bitcoin_price, current.start_price, snapshot.sigma, current.end - self.clock())
         if up is None:
             return False
+        if intent.kind == "rest" and self.pull.blocks(intent.window, up, self.clock()):
+            return False  # the fair moved since the decision: the bid is pulled before it is ever sent
         fair = up if intent.side == "up" else 1 - up
         edge = self.settings.speeddesk_take_edge if intent.kind == "take" else self.settings.speeddesk_make_edge
         if fair - self.book.unit_reserve(intent.window, intent.price, intent.kind) < edge - EPS:
@@ -1475,6 +1595,10 @@ class KalshiLiveDesk:
                 if units:
                     candidates.append((fair - price, window, side, fair, kind, price, units))
         for _, window, side, fair, kind, price, units in sorted(candidates, key=lambda item: -item[0]):
+            if kind == "rest" and self.pull.held(window.slug, now):
+                self.reason = PULL_REASON  # the practice twin rests the bid the rule without the pull would
+                self._twin_unpulled_bid(window, side, price, fair, units, now)
+                continue
             # Only whole contracts leave the process. With the owner's tiny
             # budget this bounded search generally tries fewer than five sizes.
             for size in range(units, 0, -1):
@@ -1516,6 +1640,8 @@ class KalshiLiveDesk:
         self._ladder_step()
         self.observe_market(self.clock())
         self._twin_events(self.twin.advance(self.clock()))
+        self._pull_watch(self.snapshot(), self.clock())
+        self._twin_unpulled(self.snapshot(), self.clock())
         self._phase("observe", began)
         if not await self._ensure_client():
             if self.book.integrity_reset_armed:
@@ -1645,6 +1771,8 @@ class KalshiLiveDesk:
             except Exception as exc:  # noqa: BLE001 — leave reservations durable for the next startup.
                 self._error(exc)
         self._twin_events(self.twin.cancel(self.clock(), reason="shutdown"))
+        for record in self.pull.expire(self.clock(), everything=True):
+            self._record("speeddesk_live_pull", **record)
         self.checkpoint(durable=True)
         self.shutdown_done = True
 
@@ -1685,6 +1813,7 @@ class KalshiLiveDesk:
                 "today": self._summary(utc_day(self.clock())), "total": self._summary(None),
                 "practice_twin": self._twin_summary(utc_day(self.clock())),
                 "reports": self.reports,
+                "pull": self._pull_panel(),
                 "latest_events": self.latest_events[-10:]}
 
     def _summary(self, day: str | None) -> dict[str, Any]:

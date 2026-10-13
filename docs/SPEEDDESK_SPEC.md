@@ -414,6 +414,56 @@ risk book asks it for each window's limits (`LiveRiskBook.limits_for`, `limits_n
   kept the configured cap: every rung's contract cap, so every first buy, balancing and lock order, is at most
   `SPEEDDESK_KALSHI_CLIP` (5). A bigger rung adds window, open budget and day stop, not a bigger first buy.
 
+### 9.3 Bid pull on a fast move (owner, 2026-10-13 ~20:15 UTC)
+
+The owner: "Pulling bids the instant price moves ... test with our current bot cause it's something that we will for
+sure have, just gotta make it good." So it runs on real money, measured live against the practice twin as control.
+Evidence (replay, "pull all bids for 5 s after the quoted side's fair moves >= 1c within 5 s"): +28.1c a window on
+strict fills, -8.7c on touch fills, 60 s markout +24-28c, 18% fewer fills; the best of 68 variants, **not proven**.
+Code: `speeddesk_live_pull.py` (the rule's books, no orders) and hooks in `speeddesk_live.py`.
+
+| Setting | Default | Range | Meaning |
+| --- | ---: | --- | --- |
+| `SPEEDDESK_KALSHI_PULL` | true | true/false | The rule on or off (off = the behaviour before it) |
+| `SPEEDDESK_KALSHI_PULL_MOVE` | 0.01 | 0.002-0.10 | Fair-value move, either direction, that pulls the bids |
+| `SPEEDDESK_KALSHI_PULL_LOOKBACK_S` | 5 | 0.5-30 | How far back the move is measured |
+| `SPEEDDESK_KALSHI_PULL_HOLD_S` | 5 | 0-60 | No new resting bid until this long after the last trigger |
+
+- **Trigger.** On every Bitcoin tick and every cancel check (`_cancel_unsafe`, which also runs between account
+  reads, so a pull never waits for account data) the companion samples its Up fair (the same `fair_up` as
+  `_decide`) in each open window, keeping the last lookback (bounded: an unchanged fair is one sample, at most
+  4,096). A sample at least `PULL_MOVE` from any fair in the lookback is a trigger (Up and Down move by the same
+  amount, so one check covers both sides). A step move therefore keeps triggering while the old fair is inside the
+  lookback: with the defaults a single jump holds the window about 10 s (5 s lookback, then the 5 s hold).
+- **Pull.** Every real resting bid decided at or before the last trigger is cancelled with reason `pull` through the
+  existing cancel path: one cancel per order, never re-sent once Kalshi accepted it (200 or 404; the order list
+  confirms it), the 2 s retry gate, and the account re-read before a new bid. The stale-bid rules (reprice, bid above
+  fair) are checked first; when both apply the cancel says `reprice`. A cancel never adds risk; the client's 5 writes
+  a second are unchanged.
+- **Hold.** No new resting bid in the window until `PULL_HOLD_S` after the last trigger (in `_decide`), and the last
+  check under the transport lock refuses a resting bid whose fresh fair is already a trigger against the lookback
+  (the move came between the decision and the first byte). Lock buys (immediate-or-cancel, pair completion) are
+  exempt and run during a hold; immediate-or-cancel takes are not resting bids and are unaffected (they are off,
+  `SPEEDDESK_TAKE_EDGE=1.0`).
+- **Live control: the practice twin never pulls.** The twin is a copy of the real decisions with practice fills.
+  A real cancel for `pull` leaves the twin's copy resting; such kept twin bids are cancelled only for what cancels a
+  real resting bid without the rule (live switches, failures and money stops, a stale, closing or owner's window,
+  the reprice and stale-bid rules, no verified maker trades). While a window is held, the twin rests the bid the
+  real companion would have sent without the pull (the same size search against the risk book, at most once a
+  second per side). So real and twin form a running A/B on the same windows. The comparison also carries the gap
+  between real and practice fills that existed before the rule, so the panel shows the same numbers for the seven
+  days before it went live (`week_before`): judge the change in that gap, not the gap itself. Known approximations:
+  the twin's window-wide cancels (unchanged) also reach its kept bids, and a resting bid refused by the last check
+  cancels the twin's copies in that window (the next decision rests the twin's again).
+- **Shown and logged.** The panel and the `speeddesk_live_status` line carry `pull`: the settings, the windows held
+  now (until when), `pulls_today`, `bids_pulled_today` (real bids cancelled by a pull), 31-day totals, and
+  `since_pull` / `week_before`: settled windows both traded, real (`live_*`, real money) and twin (`twin_*`,
+  practice) P&L on them and the difference, and maker fills, contracts and fills per window over settled windows
+  either traded. `since` is when the rule went live with these settings (saved; a changed setting starts the
+  comparison again; off clears it). Pulls count only while real money is switched on and the window still takes
+  bids. Each pull logs one `speeddesk_live_pull` line when its hold ends: window, largest move, started, held until,
+  real bids pulled. `/api/page` exposes the block as `kalshi_live.pull` (pagestate whitelist).
+
 ## 10. Public source-bot watcher and faster market data (owner, 2026-10-12)
 
 The owner wants real Kalshi trading as the eventual result of learning the source bot, within the owner's

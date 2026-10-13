@@ -481,6 +481,16 @@ class PracticeDesk:
                 self._count(now, f"{order.kind}_cancelled", window=order.window)
         return events
 
+    def cancel_order(self, now: float, order_id: int, reason: str = "cancelled") -> list[Decision]:
+        """Cancel one order (the live twin's bid kept by a pull, which the window's other bids do not follow)."""
+        order = self.orders.get(order_id)
+        if order is None:
+            return []
+        event = self._event("speeddesk_cancel", now, order.window, order=order, reason=reason)
+        del self.orders[order_id]
+        self._count(now, f"{order.kind}_cancelled", window=order.window)
+        return [event]
+
     def place(self, window: str, side: Side, kind: Literal["take", "rest"], price: float,
               size: float, fair: float, now: float) -> Decision:
         spec = self.windows[window]

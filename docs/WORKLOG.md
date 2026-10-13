@@ -15,6 +15,46 @@ Template:
 
 
 
+## 2026-10-13 21:00 UTC, Claude, branch claude/kalshi-pull
+- Owner request (2026-10-13 ~20:15 UTC): "Pulling bids the instant price moves ... test with our current bot cause
+  it's something that we will for sure have, just gotta make it good." Evidence going in: replay of "pull all bids
+  for 5 s after the quoted side's fair moves >= 1c within 5 s" = +28.1c/window strict, -8.7c touch, 60 s markout
+  +24-28c, 18% fewer fills; best of 68 variants, not proven. So it is measured live against the practice twin.
+- Changed: new `speeddesk_live_pull.py` (the rule's books: per-window Up-fair history over the lookback, triggers,
+  holds, pulls and bids pulled per UTC day, the saved `since`, and `compare` for the A/B). `speeddesk_live.py` hooks:
+  the trigger check on every tick (`on_tick`), every step and every `_cancel_unsafe` (also between account reads);
+  resting bids decided at or before the last trigger are cancelled with reason `pull` through the existing cancel
+  path (stale-bid rules first, one cancel per order, no re-send once Kalshi accepted it, the 2 s retry gate); no new
+  resting bid in a held window (`_decide`) and the send guard refuses a resting bid whose fresh fair is already a
+  trigger. Locks untouched. The practice twin never pulls: a pulled real bid's twin copy stays resting and follows
+  the old cancel rules (`_twin_unpulled`), and a held window gets the twin bid the old rule would send
+  (`_twin_unpulled_bid`, at most once a second per side); `PracticeDesk.cancel_order` cancels one twin order. Panel
+  and status line `pull`: settings, held windows, pulls/bids pulled today and 31 days, `since_pull` and
+  `week_before` real vs twin (P&L where both traded, maker fills per window where either traded). One
+  `speeddesk_live_pull` log line per pull when its hold ends (window, largest move, started, held until, bids).
+  `/api/page` whitelist `kalshi_live.pull` (`pagestate._kalshi_pull`). Settings `SPEEDDESK_KALSHI_PULL` (true),
+  `_PULL_MOVE` (0.01, 0.002-0.10), `_PULL_LOOKBACK_S` (5, 0.5-30), `_PULL_HOLD_S` (5, 0-60), validated in
+  config.py, in `.env.example` and SPEEDDESK_SPEC 9.3. COORDINATION note for Codex on the new page block.
+- Tests: new `tests/test_speeddesk_live_pull.py` (28): a 1.06c swing within 0.3 s cancels both resting bids (reason
+  pull) and no bid rests until 9.8 s after the dip, then they come back at the new fair; 0.8c (swing and rise) does
+  not pull; a 1.5c move cancels as reprice and still holds; the twin keeps its bids, follows the old reprice rule
+  and rests the old rule's bid in a held window; a lock fires during a hold; no re-cancel after acceptance while
+  the order list lags; 20 s of 1.2c jumps every 0.1 s give exactly two cancels and stay within 5 writes a second;
+  the send guard refuses a bid whose fair moved on its way (and sends it with the rule off); off = today's
+  behaviour; pulls count only with real money on; trigger, restart and `compare` unit tests; panel and page numbers;
+  settings validation.
+- Verified: full `python -m pytest -q -p no:cacheprovider` 4,831 passed, 12 skipped (network), rebased on 61ca112
+  (ladder merged); doc-reading and Kalshi files re-run after the doc edits (374 passed); ruff clean on the changed
+  Python files; `mypy src/nightcrawler` clean.
+- Not verified / skipped: no live run (not deployed). The A/B difference includes the existing real-vs-practice
+  fill gap (hence `week_before`). When speed part 2 (`claude/kalshi-fix-speed`) lands, `_pull_watch` must compute
+  the fair exactly as `_decide` does (that branch adds `settles_on_average` to `fair_up`).
+- Real money touched? Yes, code only, on the owner's word above: it only cancels real bids and withholds new
+  resting bids; caps, stops, locks and order sizes unchanged. Committed locally on `claude/kalshi-pull`, not pushed,
+  merged or deployed.
+- Next: merge in a safe minute when the owner says so, then watch the first `speeddesk_live_pull` lines and the
+  status line's `pull.since_pull` against `week_before`.
+
 ## 2026-10-13 20:20 UTC, Claude, branch claude/kalshi-ladder-ship
 - Owner decision (2026-10-13 ~20:15 UTC, answering the open first-buy question in SPEEDDESK_SPEC 9.2): "Keep 5 at
   every rung".

@@ -1761,6 +1761,42 @@ def _kalshi_live_panel(raw: Any, settings: Settings, now: float) -> dict[str, An
         "today": real_report(today, day), "reports": reports,
         "total": {key: _num(total.get(key)) for key in money_keys},
         "practice_twin": _speed_report(twin, day, with_venues=False),
+        "pull": _kalshi_pull(raw.get("pull"), day),
+    }
+
+
+_KALSHI_PULL_CONTROL = ("windows_both_traded", "live_pnl_usd", "twin_pnl_usd", "live_minus_twin_usd",
+                        "windows_either_traded", "live_maker_fills", "twin_maker_fills", "live_maker_contracts",
+                        "twin_maker_contracts", "live_maker_fills_per_window", "twin_maker_fills_per_window")
+
+
+def _kalshi_pull(raw: Any, day: str) -> dict[str, Any] | None:
+    """The Kalshi bid pull from the companion's saved report (owner, 2026-10-13: "Pulling bids the instant price
+    moves"): its settings, the windows held now (until when), pulls and real bids pulled today, and the live control:
+    real money against the practice twin, which never pulls, on settled windows since the pull went live
+    (``since_pull``) and in the seven days before it (``week_before``). ``live_*`` is real money, ``twin_*`` practice;
+    USD; unknown is null. Display only: never added to cash or town totals."""
+    if not isinstance(raw, Mapping):
+        return None
+
+    def control(value: Any) -> dict[str, Any] | None:
+        if not isinstance(value, Mapping):
+            return None
+        return {key: _count(value.get(key)) if key.startswith("windows") or key.endswith("_fills")
+                else _num(value.get(key)) for key in _KALSHI_PULL_CONTROL}
+
+    held = raw.get("held")
+    today = raw.get("day") == day
+    return {
+        "enabled": raw.get("enabled") is True,
+        **{key: _num(raw.get(key)) for key in ("move", "lookback_s", "hold_s", "since")},
+        "held": ({window: _num(until) for window, until in list(held.items())[:4]
+                  if isinstance(window, str) and re.fullmatch(r"KXBTC15M-[A-Z0-9]+-[0-9]{2}", window)}
+                 if isinstance(held, Mapping) else {}),
+        "pulls_today": _count(raw.get("pulls_today")) if today else None,
+        "bids_pulled_today": _count(raw.get("bids_pulled_today")) if today else None,
+        **{key: _count(raw.get(key)) for key in ("pulls_31d", "bids_pulled_31d")},
+        "since_pull": control(raw.get("since_pull")), "week_before": control(raw.get("week_before")),
     }
 
 
