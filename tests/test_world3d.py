@@ -299,7 +299,9 @@ def test_the_acting_follows_the_ledger(settings: Settings) -> None:
     module = _module(render_world_html(settings))
     # (THE GOAL section moves the cast on the goal's own real-money beats: tests/test_world_goal.py; the rest here)
     goal = module[module.index("= THE GOAL (town goal)"):module.index("= THE LIVE DIRECTOR")]
-    life = module.replace(goal, "")
+    # The town's separately tested venue receipts add one positive-settlement gesture.
+    # This section still pins the original camera-tour acting (test_world_business covers town gating).
+    life = module.replace(goal, "").replace(world3d._M_BUSINESS, "")
     # Jet carries a real closed trade's cube (the carry walk), cheers only for a win and shrugs only at a loss (a loss cut
     # at its stop, as planned, gets a nod)
     assert 'carry: won ? "gold" : "red"' in module and 'return a.carrying ? "carry"' in module

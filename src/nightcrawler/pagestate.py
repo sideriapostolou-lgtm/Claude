@@ -1,4 +1,4 @@
-"""Data for the one page at ``/`` (owner: O6): ``/api/page``, built from the ledger ONLY (no network calls).
+"""Data for the one page at ``/`` (owner: O6): ``/api/page``, from local saved records (no network calls).
 
 It combines what ``/api/state`` (:func:`nightcrawler.dashboard.build_state`) and ``/api/team``
 (:func:`nightcrawler.teamroom.build_team_state`) already know, in plain words, plus the learning card and
@@ -49,6 +49,9 @@ Schema (lists capped: members 9, events <= 5, open trades <= 10, closed trades 1
                 "sol_price_effect_usd",                                   #  shown at today's SOL price)
                 "curve": [[ts, usd], ...], "chart_ready": bool,           # chart after one hour of data
                 "as_of": ts|null,                                         # the last money check
+                "connections": {"version": 1, "polymarket_us": {...}, "kalshi": {...}},  # moneyconnections:
+                        # saved real holdings, active reservations, lifecycle events (each <= 50), source ages,
+                        # full-book Pacific results; account cash is separate and owner/practice P&L excluded
                 "polymarket": {"mode": "paper"|"live", "label", "as_of": ts|null,   # see POLYMARKET; null: desk off
                                "status": str|null,                        # the desk's own word on live (why not)
                                "paper": {"label": "Paper money (pretend)", "open", "today_usd", "since_start_usd",
@@ -422,6 +425,7 @@ from nightcrawler.deskguard import VERDICTS as GUARD_VERDICTS
 from nightcrawler.ledger import LedgerError
 from nightcrawler.logging_setup import get_logger, redact_text
 from nightcrawler.models import LAMPORTS_PER_SOL, EquityPoint
+from nightcrawler.moneyconnections import load_connections
 from nightcrawler.office3d import CAST3D
 from nightcrawler.page import LEARNING_RULE, MEMBERS, REFRESH_S
 from nightcrawler.polydesk import (
@@ -3081,6 +3085,7 @@ def build_page_state(ledger: Any, settings: Settings, now: float, engine_status:
     money["nhl"] = marco_desk(settings, now, marcodesk.NHL)  # the NHL bettor's loves (paper only), the same way
     money["arena"] = arena_town(settings, now)  # the Arena's practice town (never summed with anything)
     money["speeddesk"] = speed_desk(settings, now)  # separate practice trial, never real profit or town income
+    money["connections"] = load_connections(settings.data_dir, now, text)  # saved real books; no venue requests
     for m in members:  # Rook's risk wall: the desk's real money against its hard limits beside the panel's numbers
         if m["id"] == "risk" and isinstance(m.get("risk_wall"), dict):
             m["risk_wall"]["real_caps"] = real_caps(settings, desk)

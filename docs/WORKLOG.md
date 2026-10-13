@@ -13,6 +13,47 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-13 00:40 UTC, Codex, branch codex/town-live-connections
+- Owner request: connect every real-money business detail logically to the town, retaining the simplified app.
+  Started from deploy head `beec63d`; open draft trading fixes #14/#16 were inspected but not included.
+- Added bounded, sanitized `money.connections` projections of saved Polymarket/Kalshi real books. Exposes
+  bot/owner tracked holdings, active or uncertain orders, partial fills, reservations, estimated-vs-actual fees,
+  original event/source times, stable hashed IDs and explicit coverage issues. It performs no venue requests,
+  state writes or trading calls. Kalshi validates the entire durable fill/inventory/settlement book before
+  display truncation; PM owner migration runs on an isolated copy. Malformed/missing/oversized sources fail
+  separately, with unknown values. Current account aggregates remain independent from tracked rows.
+- Town header now shows each account's cash and separate Pacific-day recorded bot profit. Kalshi's new Pacific
+  projection leaves UTC results and trading stops unchanged. Gardens require complete, fresh same-date Pacific
+  books from both desks; losses/corrections retract growth, midnight resets it, and missing data suspends it.
+  Cash, deposits, owner bets and all practice results cannot earn gardens. Money shows source ages, fee precision,
+  order/fill/cancel distinctions, reported limits and accounting issues; menu remains Money / Team / Help.
+- Voss monitors both Bitcoin desks; Jet relays order/fill status, Rook reports safeguards, and Mote records
+  results. Only qualified real events at most 60 seconds old animate the town. First load/reconnect baselines,
+  stable IDs, bounded queues and source-age/correction checks prevent old or amended wins replaying. Positive
+  bot settlements alone deliver gold; fills are receipts, losses/rejections caution. Old generic practice
+  handoffs, repeated event chatter and UTC goal celebrations are suppressed. Ambient movement remains decorative.
+- Observatory and fallback restore trend, arena, Marco and NHL practice status alongside Bitcoin practice,
+  public-bot research and weather. Each uses its own source cadence; no invented counts or real profit. Summary
+  remains text-safe, GET-only, with separate clocks, source ages and bounded order/holding/event details.
+- Verification: final full suite **4,488 passed, 21 skipped** (opt-in network / optional scientific packages);
+  **83 focused business/scene tests passed**, mypy passed all **117 source files**, and Ruff passed all changed
+  Python files. Whitespace check passed. The 320px town/fallback check had no overflow or JS errors; fallback
+  retained zero buttons and one return link. Browser checked the actual 390px scene with synthetic fixtures: both cash
+  values and Pacific results, combined gardens, zero baseline celebrations, a fresh Kalshi fill followed by a
+  settled win, an old win ignored, tiny actual fee visible, partial fill/reservation visible, no overflow, no JS
+  exceptions, and exactly three menu choices. Phone overview and Money screenshots visually inspected. These
+  are fixtures, not live account evidence. Existing auth/CSP and API read-only behavior remain covered.
+- Known limits: underlying protected PM cash-out accounting still skips break-even sales and can misbook late
+  partial-sale corrections; recorded-book agreement is not complete venue reconciliation. Kalshi does not save
+  its successful account-reconciliation time or current position map; its displayed individual holdings are
+  gross real-fill records. Owner activity is included in account totals/labeled positions, not a full owner
+  lifecycle feed. These limits appear on the page and in `docs/TOWN_CONNECTIONS.md`.
+- Real money touched? No strategy, order execution, protected financial modules, caps, keys or variables changed.
+  This owner-authorized source deployment restarts the shared live bot. No Railway/dashboard credential is bound
+  in this environment: exact source deployment and public health can be checked, but startup/trading logs and
+  authenticated live balances remain unverified. The earlier secure-token / owner-or-Claude log-check request
+  remains pending. Deployment verification follows below.
+
 ## 2026-10-13 00:10 UTC, Codex, branch codex/town-only
 - Owner request: remove all the other confusing buttons and old app views. Started from deployed `4df5586`.
 - Town navigation now has exactly **Money, Team, Help**. Removed camera-tour switching, the Office footer,

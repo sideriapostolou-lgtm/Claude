@@ -383,7 +383,8 @@ def test_invalid_money_is_not_coerced(tmp_path: Path) -> None:
 
 
 def test_adapter_has_no_browser_or_money_side_effects() -> None:
-    for forbidden in ("document", "window", "fetch(", "Date.now", "new Date()", "performance.", "localStorage", "THREE", "simT"):
+    # A reported per-window limit is plain data; browser-global access is forbidden.
+    for forbidden in ("document", "window.", "window[", "fetch(", "Date.now", "new Date()", "performance.", "localStorage", "THREE", "simT"):
         assert forbidden not in TYCOON_DATA
     assert "// >>> tycoon data (pure)" in TYCOON_DATA and "// <<< tycoon data" in TYCOON_DATA
 
@@ -516,8 +517,10 @@ def test_research_shows_observations_only_and_never_creates_financial_growth(tmp
                          "today": {"conditional_hold_pnl_usd": 9999}}
     out = run(tmp_path, p)
     assert out["growth"] == expected_growth
-    assert [(r["scope"], r["count"]) for r in out["research"]] == [("PRACTICE", 100), ("READ ONLY", 200), ("READ ONLY", 3)]
-    assert all(r["state"] == "observing" and r["realOrders"] is False for r in out["research"])
+    assert [(r["scope"], r["count"]) for r in out["research"][:3]] == [("PRACTICE", 100), ("READ ONLY", 200), ("READ ONLY", 3)]
+    assert all(r["state"] == "observing" for r in out["research"][:3])
+    assert all(r["state"] == "unknown" and r["count"] is None for r in out["research"][3:])
+    assert all(r["realOrders"] is False for r in out["research"])
     p["weatherwatch"]["as_of"] = NOW - 121
     assert run(tmp_path, p)["research"][2]["state"] == "unknown"
     p["generated_at"] = NOW - 61
