@@ -10,6 +10,7 @@ from __future__ import annotations
 import hashlib
 import itertools
 import math
+import re
 from dataclasses import asdict, dataclass, field
 from decimal import ROUND_CEILING, Decimal
 from typing import Any, Literal
@@ -38,6 +39,8 @@ class LiveRejected(ValueError):
 LOCK_MARGIN_S = 20.0
 # Integrity reset fingerprints live beside the resume ones; the prefix keeps the two kinds from matching.
 RESET_DOMAIN = b"kalshi-integrity-reset\x00"
+DAY_RESET_DOMAIN = b"kalshi-day-reset\x00"
+DAY_KEY = re.compile(r"\d{4}-\d{2}-\d{2}")
 
 
 @dataclass(frozen=True)
@@ -178,6 +181,8 @@ class LiveRiskBook:
         self.fills: dict[str, ActualFill] = {}
         self.settled: dict[str, LiveSettlement] = {}
         self.day_pnl: dict[str, float] = {}
+        # The owner's one-time daily reset: today's loss counts from this result. Keyed by UTC day, so it lapses.
+        self.day_anchor: dict[str, float] = {}
         self.realized_pnl = 0.0
         self.stop_anchor = 0.0
         self.halted = False
@@ -257,7 +262,7 @@ class LiveRiskBook:
 
     def risk_status(self, now: float) -> dict[str, Any]:
         self._refresh_stops(now)
-        day_loss = max(0.0, -self.day_pnl.get(utc_day(now), 0.0))
+        day_loss = self.day_loss(now)
         total_loss = max(0.0, self.stop_anchor - self.realized_pnl)
         available = None if self.cash_usd is None else max(0.0, self.cash_usd - self.cash_debits - self.reserved_usd)
         return {"halted": self.halted, "halt_reason": self.halt_reason,
@@ -342,7 +347,7 @@ class LiveRiskBook:
             return "window_budget"
         if self.at_risk_usd + cost > self.limits.open_usd + EPSILON:
             return "open_budget"
-        if max(0.0, -self.day_pnl.get(utc_day(now), 0.0)) + self.at_risk_usd + cost >= self.limits.day_loss_usd - EPSILON:
+        if self.day_loss(now) + self.at_risk_usd + cost >= self.limits.day_loss_usd - EPSILON:
             return "day_stop"
         if max(0.0, self.stop_anchor - self.realized_pnl) + self.at_risk_usd + cost >= self.limits.total_loss_usd - EPSILON:
             return "total_budget"
@@ -575,6 +580,29 @@ class LiveRiskBook:
         self.halted, self.halt_reason = False, None
         return True
 
+    def day_loss(self, now: float) -> float:
+        """Today's settled loss, counted from the owner's one-time reset when one was made today."""
+        day = utc_day(now)
+        return max(0.0, self.day_anchor.get(day, 0.0) - self.day_pnl.get(day, 0.0))
+
+    def apply_day_reset(self, token: str, now: float) -> str:
+        """The owner's one-time fresh daily budget (owner, 2026-10-13: "U can reset it go ahead", "Approve
+        everything").
+
+        Today's loss counts again from the result at the moment a new value is first seen. The daily cap itself,
+        the lifetime stop and every other limit are unchanged, and the next UTC day starts from zero as always.
+        The value is spent on first sight, with its own fingerprint kind, so no restart or rollback resets twice.
+        Returns "reset", "used" or "" (no value)."""
+        if not token:
+            return ""
+        digest = hashlib.sha256(DAY_RESET_DOMAIN + token.encode()).hexdigest()
+        if digest in self.seen_resume_hashes:
+            return "used"
+        self.seen_resume_hashes.add(digest)
+        day = utc_day(now)
+        self.day_anchor = {day: self.day_pnl.get(day, 0.0)}
+        return "reset"
+
     def arm_integrity_reset(self, token: str) -> str:
         """The owner's one-time reset of a reconciliation stop (owner, 2026-10-13: "Yes, reset it").
 
@@ -636,6 +664,8 @@ class LiveRiskBook:
                 "resume_token_hash": self.resume_token_hash, "seen_resume_hashes": sorted(self.seen_resume_hashes),
                 # The previous release ignores this top-level key on a rollback, so a rollback withdraws the approval.
                 "integrity_reset_armed": self.integrity_reset_armed,
+                # Also ignored by the previous release: a rollback returns to the plain daily stop.
+                "day_anchor": self.day_anchor,
                 "bootstrap_order": self.bootstrap_order}
 
     @classmethod
@@ -658,6 +688,7 @@ class LiveRiskBook:
         if book.resume_token_hash is not None:
             book.seen_resume_hashes.add(book.resume_token_hash)
         book.integrity_reset_armed = state.get("integrity_reset_armed")
+        book.day_anchor = state.get("day_anchor", {})
         book.bootstrap_order = state["bootstrap_order"]
         # A restart cannot release uncertain orders or reuse an old balance.
         book._validate_state()
@@ -672,6 +703,11 @@ class LiveRiskBook:
         if self.integrity_reset_armed is not None and (not isinstance(self.integrity_reset_armed, str)
                                                        or not self.integrity_reset_armed.isidentifier()):
             raise ValueError("Invalid persisted integrity reset approval")
+        if not isinstance(self.day_anchor, dict) or any(
+                not isinstance(day, str) or not DAY_KEY.fullmatch(day) or isinstance(value, bool)
+                or not isinstance(value, (int, float)) or not math.isfinite(value)
+                for day, value in self.day_anchor.items()):
+            raise ValueError("Invalid persisted daily reset")
         values = [self.realized_pnl, self.stop_anchor, *self.day_pnl.values()]
         values.extend(value for inventory in self.inventory.values() for holding in (inventory.up, inventory.down)
                       for value in (holding.shares, holding.cost, holding.fees))

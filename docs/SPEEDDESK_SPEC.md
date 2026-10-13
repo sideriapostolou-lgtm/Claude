@@ -211,6 +211,13 @@ approved stop only right after a complete, fresh, matching reconcile with no ord
 every bot window settled, and no Bitcoin 15-minute position or resting order left on the Kalshi account (the
 owner's included). The panel's `integrity_reset` shows `armed` or what it is waiting for, and
 `speeddesk_live_integrity_reset` receipts record each step. A rollback drops the approval, never the spent value.
+`SPEEDDESK_KALSHI_DAY_RESET_TOKEN` is the owner's one-time fresh daily budget (owner, 2026-10-13: "U can reset it
+go ahead", "Approve everything"). The first time the companion sees a new value, today's loss counts again from
+that moment's result, until 00:00 UTC; the next day starts from zero as always. The $6 daily cap, the $10 lifetime
+stop and every other limit are unchanged, so the lifetime stop still bounds the total. The value is spent on first
+sight with its own fingerprint kind (a resume or integrity value never matches it), the reset point is saved with
+the books, and a `speeddesk_live_day_reset` receipt records it. A rollback ignores the saved point and returns to
+the plain daily stop.
 
 Other coins (owner, 2026-10-13: "scale ... to other markets but let's perfect it first"): `SPEEDDESK_COINS`
 (any of eth, sol, xrp, doge; empty by default) runs the same practice rules on Kalshi's KXETH15M, KXSOL15M,

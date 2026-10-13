@@ -273,6 +273,14 @@ class KalshiLiveDesk:
             elif outcome == "used" and self.book.integrity_reset_armed is None:
                 self._record("speeddesk_live_integrity_reset", code=self.book.integrity_error,
                              state="ignored; this value was already used")
+            reset_at = clock()
+            day_reset = self.book.apply_day_reset(_secret(settings.speeddesk_kalshi_day_reset_token), reset_at)
+            if day_reset == "reset":
+                self._record("speeddesk_live_day_reset", day=utc_day(reset_at),
+                             counted_from_usd=self.book.day_anchor[utc_day(reset_at)],
+                             state="fresh daily budget from now until 00:00 UTC; caps and lifetime stop unchanged")
+            elif day_reset == "used":
+                self._record("speeddesk_live_day_reset", state="ignored; this value was already used")
             self.checkpoint()
         except BaseException:
             self.ledger.close()
