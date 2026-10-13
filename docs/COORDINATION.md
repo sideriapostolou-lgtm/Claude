@@ -40,12 +40,16 @@ Format: `### YYYY-MM-DD HH:MM UTC, From -> To: subject`, then what you need, the
 - Fields: `enabled`, `rung` (in force now), `ladder_rung`, `top_rung`, `max_window_usd` (what the code ceilings allow
   today, $20), `configured_max_window_usd` ($50,000), `limits` {`window_usd`, `open_usd`, `day_stop_usd`, `clip`
   (contracts), `total_stop_usd`}, `change_pending`, `effective_from`, `pending_limits`, `rung_started_at`,
-  `start_pnl_usd`, `promotion` {`ready`, `blocked` (ladder_off, at_ceiling, change_pending, windows, gain,
-  house_money, stops, cash), `next_rung`, `next_limits`, `windows`, `windows_needed` (96), `gain_usd`,
-  `gain_needed_usd`, `sigma_usd`, `sd_usd`, `room_usd`, `room_needed_usd`, `available_cash_usd`, `cash_needed_usd`,
-  `last_stop_at`, `quiet_from`}, `demotion` {`due`, `at_floor`, `peak_pnl_usd`, `total_pnl_usd`, `giveback_usd`,
-  `giveback_limit_usd`, `line_usd`}, `last_change` {`action` promote/demote/cancel, `from_rung`, `to_rung`,
-  `effective_from`, `at`}. Money in USD, times UTC epoch seconds, unknown = null; the block is null when absent.
+  `start_pnl_usd`, `recheck_pending` (a promotion waits for its re-check at the boundary), `promotion` {`ready`,
+  `blocked` (ladder_off, at_ceiling, change_pending, windows, gain, house_money, stops, cash, giveback,
+  window_started), `next_rung`, `next_limits`, `windows`, `windows_needed` (96), `gain_usd`, `at_risk_usd`,
+  `gain_counted_usd` (gain less money at risk, the number the rule uses), `gain_needed_usd`, `sigma_usd`, `sd_usd`,
+  `room_usd`, `room_needed_usd`, `available_cash_usd`, `cash_needed_usd`, `last_stop_at`, `quiet_from`},
+  `demotion` {`due`, `at_floor`, `peak_pnl_usd`, `total_pnl_usd`, `giveback_usd`, `giveback_limit_usd`,
+  `line_usd`}, `last_change` {`action` promote/confirm/demote/cancel, `from_rung`, `to_rung`, `effective_from`,
+  `at`}. Money in USD, times UTC epoch seconds, unknown = null; the block is null when absent. (Updated 2026-10-13
+  ~20:10 UTC after the review round: `recheck_pending`, `at_risk_usd`, `gain_counted_usd`, two block codes and the
+  `confirm` action are new.)
 - `kalshi_live.caps` keep their four keys; they now show the limits of the rung in force. Real money only: never
   add the ladder's numbers to town cash or growth.
 

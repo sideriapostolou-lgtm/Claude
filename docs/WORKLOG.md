@@ -15,6 +15,38 @@ Template:
 
 
 
+## 2026-10-13 20:10 UTC, Claude, branch claude/kalshi-ladder (review fix round)
+- Owner request unchanged (2026-10-13 ~18:40 UTC): "Max $50,000 a window build the ladder". Two independent reviews
+  of bbb49e5 found no accepted order above its window's rung, but holes in when the ladder moves. Fixed, each with a
+  regression test in `tests/test_speeddesk_live_ladder.py`:
+  - Stops (rule 4) were invisible: the book never lets today's loss plus money at risk reach the cap, so the
+    `day_stopped` flag almost never trips. Now today's settled loss within $1 of the day stop, or a refused
+    one-contract buy (day or total stop, reported by the book at once), counts as a stop; a refusal that only trims
+    a bigger order does not.
+  - A promotion was locked in when decided. Now it is provisional: the rung in force keeps its limits, counters and
+    its own demotion line until the boundary, any stop cancels it, and at the first look at or after the boundary
+    (the desk looks at once, before any order in the new window) everything is checked again with money at risk
+    counted as lost (gain, room, cash, stops, demotion line). It applies ("confirm") only if all hold and no window
+    from the boundary on has traded; otherwise it is cancelled and the limits stay.
+  - Counters restart when a change applies, not when it is decided; a cancel keeps them; an earlier rung's window
+    that settles later is not counted at the new rung (start P&L and peak move with it). The room above the lifetime
+    stop subtracts money at risk and a resume anchor above zero.
+  - Saved ladder version 2: records the configured limits (changed limits restart at rung 0, "rebased"), rejects
+    two-rung jumps and changes beyond the next boundary, rebuilds counters from the books, restarts counters on a
+    clamped restore; the desk looks at the books before a resume or day-reset token can clear a saved stop.
+  - `LiveLimits` clamps the contract cap too (`HARD_CLIP` = 25, the config ceiling); the ladder finds its top by
+    asking the clamp instead of copying its numbers.
+- Not done: raising the code ceilings toward $50,000 (refused by the permission check in the build round; not
+  retried; needs the owner's explicit go-ahead and must raise `HARD_CLIP` too). Owner decision open: rung 2 brings
+  back a 10-contract first buy (the ladder rule) against the 16:20 UTC rule that held it to 5; the code follows the
+  approved ladder rule until the owner chooses.
+- Verified: full `python -m pytest -q` 4,783 passed, 12 skipped (network); ruff clean on every changed Python file;
+  `mypy src/nightcrawler` clean. 28 new ladder tests (74 in the file); the reviewers' adversarial file passes 9 of
+  10 unchanged (the 10th asserted the old "no record" result where the fix now returns the cancel it asked for).
+- Real money touched? Code that sizes real Kalshi orders, committed locally on `claude/kalshi-ladder` only: not
+  pushed, merged or deployed. On deploy it still starts at rung 0 (today's $10/$20/$6/$10, 5 contracts).
+- Next: owner decisions (ceilings, first-buy size at rung 2); merge after `claude/kalshi-fix-speed`.
+
 ## 2026-10-13 19:30 UTC, Claude, branch claude/kalshi-ladder
 - Owner request (2026-10-13 ~18:40 UTC, after Claude proposed the rule): "Max $50,000 a window build the ladder".
 - Changed: new `speeddesk_live_ladder.py` (rung r = configured window + $5r, open 2x, day stop 60 %, first buy half

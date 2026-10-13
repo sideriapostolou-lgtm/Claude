@@ -293,7 +293,8 @@ class KalshiLiveDesk:
             self.ladder = Ladder(limits, enabled=settings.speeddesk_kalshi_ladder,
                                  max_window_usd=settings.speeddesk_kalshi_ladder_max_window_usd)
             started = self.ladder.start(self.book, clock(), saved.get("ladder") if saved else None)
-            self.book.window_limits = self.ladder.limits_for_start
+            self.ladder.attach(self.book)
+            self.ladder.observe(self.book, clock())  # a saved stop is noted before a token below can clear it
             self.ladder_at = -math.inf
             self._mirror_twin(self.book.limits_now(clock()))
             self._record("speeddesk_live_ladder", action="start", state=started, rung=self.ladder.rung_for(clock()),
@@ -1258,7 +1259,7 @@ class KalshiLiveDesk:
     def _ladder_step(self) -> None:
         """Count settled windows and decide a promotion or demotion (it starts at the next window boundary)."""
         now = self.clock()
-        if now - self.ladder_at >= LADDER_EVERY_S:
+        if now - self.ladder_at >= LADDER_EVERY_S or self.ladder.due(now):  # a waiting promotion: re-check now
             self.ladder_at = now
             change = self.ladder.evaluate(self.book, now)
             if change is not None:

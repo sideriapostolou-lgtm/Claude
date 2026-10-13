@@ -349,40 +349,64 @@ risk book asks it for each window's limits (`LiveRiskBook.limits_for`, `limits_n
   0.6 x window. Rung 0 is exactly the configured limits ($10/$20/$6, 5 contracts) and no rung goes below a
   configured value. The $10 lifetime stop never scales: real money still switches off when total P&L since launch
   (with money at risk) reaches -$10. Ceilings: $50,000 a window, or `SPEEDDESK_KALSHI_LADDER_MAX_WINDOW_USD` when
-  lower, and the code ceilings first. **This release keeps the code ceilings at $20/$40/$12** (config.py `hi` and
-  `speeddesk_live_model.HARD_*`), so from $10 the ladder has two rungs: $15/$30/$9 with 7 contracts, then
-  $20/$40/$12 with 10. Raising the ceilings toward $50,000 is a separate change (tests already check that the top
-  rung would then be exactly $50,000/$100,000/$30,000 with 25,000 contracts).
+  lower, and the risk book's own clamp first: the top is the last rung `LiveLimits` leaves unchanged (the ladder
+  asks the clamp; it never copies its numbers). **This release keeps the code ceilings at $20/$40/$12 and 25
+  contracts** (config.py `hi` and `speeddesk_live_model.HARD_*`, `HARD_CLIP`), so from $10 the ladder has two
+  rungs: $15/$30/$9 with 7 contracts, then $20/$40/$12 with 10. Raising the ceilings toward $50,000 is a separate
+  change that needs the owner's explicit go-ahead and must raise `HARD_CLIP` too (tests check that the top rung
+  would then be exactly $50,000/$100,000/$30,000 with 25,000 contracts, and that with the contract ceiling left at
+  25 the climb stops at the $50 window).
 - **Promotion**, one rung, when all five hold since the current rung began: (1) at least 96 settled windows traded
-  at this rung; (2) gain G = total P&L now - total P&L when the rung began >= 2 sigma sqrt(n), sigma = max(realized
-  SD of per-window P&L at this rung, 0.105 x window); (3) house money: total P&L + $10 >= 3 x 0.55 x the next rung's
-  window; (4) no reconciliation stop now and no stop of any kind (total, daily, reconciliation) in the last 24 h;
-  (5) available cash (cash less pending reservations and unconfirmed spending) >= the next rung's open budget, from
-  a balance read within the last minute.
-- **Demotion**, one rung and never below 0: total P&L <= its peak at this rung - 0.6 x the rung's window. At rung 0
-  a give-back changes nothing. A stop while a promotion still waits for its boundary cancels it.
+  at this rung; (2) gain G (the settled P&L of this rung's windows) less money still at risk >= 2 sigma sqrt(n),
+  sigma = max(realized SD of per-window P&L at this rung, 0.105 x window); (3) house money: the room above the
+  lifetime stop, total P&L + $10 less money at risk (and less a resume anchor above zero), >= 3 x 0.55 x the next
+  rung's window; (4) no stop now and none in the last 24 h: a reconciliation error, the total stop, or the daily
+  stop (its flag, today's settled loss within $1 of it, or even a one-contract buy refused by the day or total
+  stop; a refusal that only trims a bigger order is not a stop); (5) available cash (cash less pending reservations
+  and unconfirmed spending) >= the next rung's open budget, from a balance read within the last minute. A promotion
+  also waits while total P&L less money at risk is at or below the demotion line (`giveback`).
+- **A promotion is provisional until its boundary.** When it is decided, the rung in force keeps its limits, its
+  counters and its own demotion line; any stop cancels it. At the first look at or after the boundary (the desk looks
+  at once then, not only once a second, before any order in the new window) every condition and the demotion line are
+  checked again with money still at risk counted as lost; it applies (`confirm`) only if all still hold and no
+  window from the boundary on has traded yet (`window_started`), otherwise it is cancelled and the limits stay as
+  they are (the rung's counters are untouched, and the next look may decide it again for the following window).
+- **Demotion**, one rung and never below 0: total P&L <= its peak at this rung - 0.6 x the rung's window (settled
+  P&L, as the rule says). At rung 0 a give-back changes nothing. While a promotion waits, the line is the rung in
+  force's, and crossing it demotes from that rung (dropping the promotion).
 - **Never mid-window.** A decision takes effect at the next window boundary (the close of the window under way):
   every window's limits are fixed by its start, so a window that has begun keeps the limits it started with, and
-  windows starting from the boundary use the new rung. Only one change waits at a time; counters (start time and
-  P&L, windows, per-window results, peak) restart after any change, and windows that began before the boundary are
-  not counted at the new rung.
+  windows starting from the boundary use the new rung. Only one change waits at a time. The counters (n, G, the
+  peak) restart when a change applies (a confirmed promotion, a demotion, a lowered maximum) and cover only windows
+  that start at or after the rung began: a window of the earlier rung that settles later moves the starting P&L and
+  the peak with it, so neither its gain nor its loss counts at the new rung.
 - **Every check uses the window's rung:** window budget, open budget, day stop, contract cap (starter, balancing
   and lock orders), the size search in `_decide` and `_lock`, the status report and the practice twin (its window,
   open, day stop and cap follow the rung). The total stop, cash bound, pair cap, imbalance, cutoff and lock rules are
   unchanged. Note: the unchanged lifetime stop still caps money at risk at once below $10 (less any loss since
   launch), so above rung 1 it binds before the day stop; a bigger rung adds paired volume, not unpaired risk.
-- **Saved and restored.** The ladder is a top-level `ladder` key in the saved state (rung, the rung windows before
-  the boundary keep, the boundary, rung start time and P&L, peak, last stop, the latest 192 per-window results and
-  the last change). On restart the count is rebuilt from the saved books (saved in the same write), so a saved list
-  can never inflate it. The previous release ignores the key and nothing inside the books or intents changed, so a
-  rollback runs at the configured limits; it then saves without the ladder and the next upgrade starts at rung 0.
-  An unreadable ladder, `SPEEDDESK_KALSHI_LADDER=false` (it also restarts at rung 0) or a lower maximum only ever
-  lowers the limits.
+- **Saved and restored.** The ladder is a top-level `ladder` key in the saved state (version 2: rung, the rung
+  windows before the boundary keep, the boundary, whether a promotion still waits for its re-check, the start of the
+  counted windows, start time and P&L, peak, last stop, the latest 192 per-window results, the last change and the
+  configured limits it was earned on). On restart the counters (count, starting P&L, peak) are rebuilt from the saved
+  books (saved in the same write), so saved numbers can never inflate them, and the ladder looks at the books once
+  before a resume or day-reset token can clear a saved stop. The previous release ignores the key and nothing inside
+  the books or intents changed, so a rollback runs at the configured limits; it then saves without the ladder and
+  the next upgrade starts at rung 0. An unreadable ladder, a schedule this code could not have written (two rungs
+  at one boundary, a change beyond the next boundary), changed configured limits (`rebased`),
+  `SPEEDDESK_KALSHI_LADDER=false` (it also restarts at rung 0) or a lower maximum (`clamped`, counters restart) only
+  ever lowers the limits.
 - **Shown and logged.** The panel and the `speeddesk_live_status` line carry `ladder`: rung in force, limits,
-  promotion progress (n/96, G vs needed, sigma, room vs needed, cash vs needed, last stop, what blocks it), the
-  demotion line (peak, give-back vs limit) and any waiting change; `caps` are the rung's limits now (plus `clip`).
+  promotion progress (n/96, G and G less money at risk vs needed, sigma, room vs needed, cash vs needed, last stop,
+  what blocks it), the demotion line of the rung in force (peak, give-back vs limit), any waiting change and
+  whether it still waits for its re-check (`recheck_pending`); `caps` are the rung's limits now (plus `clip`).
   `/api/page` exposes it as `kalshi_live.ladder` (pagestate whitelist). Each decision logs one
-  `speeddesk_live_ladder` line with every number (`action` promote, demote or cancel), and each start logs one.
+  `speeddesk_live_ladder` line with every number (`action` promote, confirm, demote or cancel), and each start
+  logs one.
+- **Owner decision open.** Rung 2 makes the first buy 10 contracts again (half its $20 window, as the ladder rule
+  says); the owner's 16:20 UTC rule held the first buy to 5 after two 10-contract first buys were run over. Until
+  the owner chooses (keep the first buy at the configured cap and scale only balancing and lock orders, or accept
+  10 at rung 2), the code follows the approved ladder rule.
 
 ## 10. Public source-bot watcher and faster market data (owner, 2026-10-12)
 

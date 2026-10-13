@@ -40,6 +40,10 @@ class LiveRejected(ValueError):
 LOCK_MARGIN_S = 20.0
 # The risk book's own ceilings (LiveLimits clamps every limit to them, the ladder's rungs included).
 HARD_WINDOW_USD, HARD_OPEN_USD, HARD_DAY_LOSS_USD, HARD_TOTAL_LOSS_USD = 20.0, 40.0, 12.0, 10.0
+# The contract cap's own ceiling (config.py SPEEDDESK_KALSHI_CLIP has the first, hi=25).
+HARD_CLIP = 25.0
+# Refusals that mean a loss stop binds (the earned-growth ladder counts one on the smallest order as a stop).
+STOP_REFUSALS = frozenset({"day_stop", "total_budget"})
 # Integrity reset fingerprints live beside the resume ones; the prefix keeps the two kinds from matching.
 RESET_DOMAIN = b"kalshi-integrity-reset\x00"
 DAY_RESET_DOMAIN = b"kalshi-day-reset\x00"
@@ -72,7 +76,8 @@ class LiveLimits:
         # 2026-10-13 15:15 UTC ("ten now double tmr if it works"), and from 16:00 UTC up to $20, $40 and a $12 day stop
         # "when it's winning"; the total stop is unchanged. The earned-growth ladder never goes above these.
         for name, hard in (("window_usd", HARD_WINDOW_USD), ("open_usd", HARD_OPEN_USD),
-                           ("day_loss_usd", HARD_DAY_LOSS_USD), ("total_loss_usd", HARD_TOTAL_LOSS_USD)):
+                           ("day_loss_usd", HARD_DAY_LOSS_USD), ("total_loss_usd", HARD_TOTAL_LOSS_USD),
+                           ("clip", HARD_CLIP)):
             object.__setattr__(self, name, min(getattr(self, name), hard))
         object.__setattr__(self, "pair_cap", min(self.pair_cap, 0.99))
         object.__setattr__(self, "max_imbalance", min(self.max_imbalance, 0.25))
@@ -189,6 +194,10 @@ class LiveRiskBook:
         # The earned-growth ladder's limits for a window, by the window's start (speeddesk_live_ladder.Ladder);
         # None uses the configured limits everywhere. Never persisted here: the controller saves the ladder.
         self.window_limits: Callable[[float], LiveLimits] | None = None
+        # When a loss stop last bound (the total stop tripped, or even a one-contract buy was refused by the day or
+        # total stop), and who to tell (the ladder: no promotion within 24 h of a stop). Not persisted here.
+        self.stop_hit_at: float | None = None
+        self.stop_listener: Callable[[float], None] | None = None
         self.windows: dict[str, Window] = {}
         self.intents: dict[str, LiveIntent] = {}
         self.inventory: dict[str, Inventory] = {}
@@ -281,10 +290,17 @@ class LiveRiskBook:
             return None, 0.0
         return ("down" if difference > 0 else "up"), abs(difference)
 
+    def _note_stop(self, now: float) -> None:
+        if math.isfinite(now):
+            self.stop_hit_at = now if self.stop_hit_at is None else max(self.stop_hit_at, now)
+            if self.stop_listener is not None:
+                self.stop_listener(now)
+
     def _refresh_stops(self, now: float) -> None:
         loss = max(0.0, self.stop_anchor - self.realized_pnl)
         if loss + self.at_risk_usd >= self.limits.total_loss_usd - EPSILON:
             self.halted, self.halt_reason = True, "total_loss"
+            self._note_stop(now)
 
     def risk_status(self, now: float) -> dict[str, Any]:
         self._refresh_stops(now)
@@ -344,6 +360,12 @@ class LiveRiskBook:
         return ""
 
     def can_buy(self, window: str, side: Side, kind: Kind, price: float, size: float, now: float) -> str:
+        reason = self._buy_verdict(window, side, kind, price, size, now)
+        if reason in STOP_REFUSALS and size <= 1 + EPSILON:
+            self._note_stop(now)  # not even the smallest order fits under the stop: it has tripped
+        return reason
+
+    def _buy_verdict(self, window: str, side: Side, kind: Kind, price: float, size: float, now: float) -> str:
         self._refresh_stops(now)
         if self.integrity_error:
             return "reconciliation_error"
