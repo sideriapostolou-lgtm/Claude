@@ -23,10 +23,9 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any, Literal
 
-import requests
-
 from .config import Secret, Settings
 from .ledger import Ledger
+from .speeddesk_feeds import thread_session
 from .speeddesk_kalshi_client import KalshiClient, KalshiClientError
 from .speeddesk_live_ladder import Ladder, limits_view
 from .speeddesk_live_model import (
@@ -188,18 +187,13 @@ class _ClockOffsets:
 
 def coinbase_time() -> float:
     """Coinbase Exchange's clock in epoch seconds (public, no key). One kept-alive connection per thread."""
-    session = getattr(_PROBE, "session", None)
-    if session is None:
-        session = _PROBE.session = requests.Session()
-    response = session.get(COINBASE_TIME, timeout=(2.0, 2.0))
+    response = thread_session().get(COINBASE_TIME, timeout=(2.0, 2.0))
     response.raise_for_status()
     epoch = response.json()["epoch"]
     if isinstance(epoch, bool) or not isinstance(epoch, (int, float)) or not math.isfinite(epoch):
         raise ValueError("Invalid Coinbase time")
     return float(epoch)
 
-
-_PROBE = threading.local()
 
 
 def _spread(values: list[float]) -> dict[str, float | None]:

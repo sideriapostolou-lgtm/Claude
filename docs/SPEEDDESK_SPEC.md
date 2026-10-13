@@ -590,6 +590,17 @@ ran 18 ms behind Coinbase; on one container 91% of Exchange ticks would have bee
 is unchanged: with no trade for 3 s the live companion still cancels its bids ("Bitcoin feed stale"), and a stamp
 further ahead than 250 ms is refused. The step-0 `clock` report compares the clocks.
 
+Hosts and connections (2026-10-13; speed plan step 8). The signed client sends to `https://external-api.kalshi.com`,
+the dedicated Trade API host Kalshi recommends for API traders (`api.elections.kalshi.com` stays supported;
+signatures cover the path only, so they are unchanged). The speed desk's public pollers (Kalshi REST books,
+trades and metadata in `speeddesk_kalshi`, the Polymarket US gateway in `speeddesk_feeds`, and the Coinbase time
+probe) keep one HTTP session per worker thread instead of a new TCP and TLS connection per request (from the
+build container, through its proxy: about 480 ms per new connection against 46 ms kept alive); the public
+poller keeps its host. Not changed: `exchange_index` stays -1 (automatic routing; an explicit shard needs that
+shard's collateral, the shard-aware cash task), and `polydesk`, `weatherwatch_markets` and `skipwatch_alerts` keep
+their own HTTP (a separate real-money desk, a separate desk with streamed, locked reads, and a probe that measures
+a fresh connection's round trip on purpose).
+
 The public US probe checks the five-minute series and validates an actual market's BTC/UP_DOWN/5m/BRTI terms
 and start/end before logging `skipwatch_us_5m_listing`. Its first verified observation stays on the page.
 The series alone is not a listing; failed requests are unknown. This bounded latest-event check does not

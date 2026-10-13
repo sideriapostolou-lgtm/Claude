@@ -215,8 +215,21 @@ def exchange_ticks(reply: Any) -> list[tuple[float, float, int | None]]:
     return [(price, at, _trade_id(reply.get("trade_id")))]
 
 
+_THREAD = threading.local()
+
+
+def thread_session() -> requests.Session:
+    """This thread's kept-alive HTTP session (speed plan step 8). asyncio's worker threads are reused, so each
+    keeps its connections instead of a new TCP and TLS handshake on every public poll; no session is shared
+    between threads."""
+    session: requests.Session | None = getattr(_THREAD, "session", None)
+    if session is None:
+        session = _THREAD.session = requests.Session()
+    return session
+
+
 def _public_get(path: str) -> Any:
-    response = requests.get(GATEWAY + path, timeout=10)
+    response = thread_session().get(GATEWAY + path, timeout=10)
     if response.status_code == 404:
         return None
     response.raise_for_status()
