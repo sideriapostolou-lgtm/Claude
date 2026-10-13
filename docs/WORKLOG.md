@@ -54,6 +54,12 @@ Template:
   authenticated live balances remain unverified. The earlier secure-token / owner-or-Claude log-check request
   remains pending. Deployment verification follows below.
 
+- Deployment verified at 00:44 UTC: PR #18 merged as `7f7515a17c0db41b72387257d9a2662f206d8acc`.
+  Railway's `nightcrawler - bot` check on that exact commit is **success**, deployment
+  `f562d262-6bf0-4354-b157-5920fc7dccd5`. Public `/healthz` returned HTTP 200 `ok` afterward at
+  00:44:27 UTC. Startup/trading logs and authenticated live balances remain unverified without credentials;
+  public health does not establish trading health. This follow-up changes documentation only.
+
 ## 2026-10-13 00:10 UTC, Codex, branch codex/town-only
 - Owner request: remove all the other confusing buttons and old app views. Started from deployed `4df5586`.
 - Town navigation now has exactly **Money, Team, Help**. Removed camera-tour switching, the Office footer,
