@@ -964,3 +964,104 @@ def test_a_stale_report_of_a_finished_order_does_not_pause_trading(tmp_path: Pat
         assert desk.book.integrity_error is None and desk.account_at is not None
     finally:
         desk.close()
+
+
+def test_one_save_before_the_send_holds_the_intent_and_its_practice_twin(tmp_path: Path) -> None:
+    desk, account, _ = make_desk(tmp_path, caps=SMALL_CAPS)
+    original_checkpoint, original_create = desk.checkpoint, account.create_order
+    saves_with_intent: list[int] = []
+
+    def counting_checkpoint() -> None:
+        original_checkpoint()
+        saves_with_intent.append(len(desk.intents))
+
+    def inspect(**kwargs: Any) -> dict[str, Any]:
+        saved = desk.ledger.get_kv("kalshi_live_state")
+        identity = kwargs["client_order_id"]
+        assert saved["book"]["intents"][identity]["reservation_active"]
+        twin_id = saved["intents"][identity]["twin_order_id"]
+        assert twin_id and twin_id == desk.intents[identity].twin_order_id
+        assert saves_with_intent.count(1) == 1  # one durable write between the decision and the send
+        return original_create(**kwargs)
+
+    desk.checkpoint = counting_checkpoint  # type: ignore[method-assign]
+    account.create_order = inspect  # type: ignore[method-assign]
+    try:
+        asyncio.run(desk.step())
+        assert len(account.creates) == 1
+    finally:
+        desk.close()
+
+
+def test_settlements_are_read_only_once_a_traded_window_has_ended_unsettled(tmp_path: Path) -> None:
+    desk, account, clock = make_desk(tmp_path, caps=SMALL_CAPS)
+    original = account.settlements
+    reads: list[float] = []
+
+    def counting(**kwargs: Any) -> list[dict[str, Any]]:
+        reads.append(clock.now())
+        return original(**kwargs)
+
+    account.settlements = counting  # type: ignore[method-assign]
+    try:
+        asyncio.run(desk.step())
+        assert len(account.creates) == 1 and not reads  # nothing traded had ended yet
+        clock.advance(1.5)
+        asyncio.run(desk.step())
+        assert not reads
+        clock.advance(900)  # the traded window is over and not yet settled
+        asyncio.run(desk.step())
+        assert reads
+    finally:
+        desk.close()
+
+
+def test_a_bitcoin_tick_wakes_the_live_loop_at_once(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    import threading
+
+    import nightcrawler.speeddesk_live as live
+
+    monkeypatch.setattr(live, "IDLE_STEP_S", 5.0)  # only a wake, never the idle timer, can step again in time
+    desk, _, clock = make_desk(tmp_path, mode="paper")
+    stepped: list[float] = []
+
+    async def scenario() -> None:
+        second = asyncio.Event()
+
+        async def fake_step() -> None:
+            stepped.append(clock.now())
+            if len(stepped) == 2:
+                second.set()
+
+        desk.step = fake_step  # type: ignore[method-assign]
+        stop = threading.Event()
+        task = asyncio.create_task(desk.run(stop))
+        while not stepped:
+            await asyncio.sleep(0)
+        await asyncio.sleep(0.05)
+        assert len(stepped) == 1  # waiting for news, not spinning
+        desk.on_tick(80001, clock.now(), clock.now())
+        await asyncio.wait_for(second.wait(), 2.0)
+        stop.set()
+        desk.on_tick(80002, clock.now(), clock.now())
+        await asyncio.wait_for(task, 2.0)
+
+    try:
+        asyncio.run(scenario())
+        assert len(stepped) >= 2
+    finally:
+        desk.close()
+
+
+def test_accepted_order_reports_where_its_time_went(tmp_path: Path) -> None:
+    desk, account, _ = make_desk(tmp_path, caps=SMALL_CAPS)
+    try:
+        asyncio.run(desk.step())
+        assert len(account.creates) == 1
+        accepted = [item for item in events(desk, "speeddesk_live_order") if item.get("order_id")]
+        stages = accepted[-1]["stages"]
+        assert set(stages) == {"save_ms", "decision_to_send_ms", "send_to_ack_ms"}
+        assert all(isinstance(value, float) and value >= 0 for value in stages.values())
+        assert stages["decision_to_send_ms"] >= stages["save_ms"]
+    finally:
+        desk.close()

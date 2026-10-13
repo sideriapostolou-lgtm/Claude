@@ -8,6 +8,7 @@ that narrow client deliberately has no order-creation method.
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import fcntl
 import json
 import logging
@@ -59,6 +60,8 @@ EPS = 1e-8
 # How long Kalshi's order list may trail its fills list before the mismatch stops real orders for good
 # (seen trailing by under a second on 2026-10-13; every read in between counts as not yet reconciled).
 ORDER_LIST_LAG_S = 30.0
+# The live loop steps on each Bitcoin tick or book change, at most every MIN_STEP_S, and at least every IDLE_STEP_S.
+MIN_STEP_S, IDLE_STEP_S = 0.02, 0.25
 
 
 @dataclass(frozen=True)
@@ -182,6 +185,8 @@ class KalshiLiveDesk:
         self.startup_done = False
         self.closed = False
         self.account_at: float | None = None
+        # Set by every accepted Bitcoin tick and Kalshi book change: the loop decides at once instead of on a timer.
+        self.wake = asyncio.Event()
         self.cash_usd: float | None = None
         self.cash_at: float | None = None
         self.last_sync = -math.inf
@@ -378,6 +383,7 @@ class KalshiLiveDesk:
     def on_tick(self, price: float, event_at: float, received_at: float) -> None:
         if 0 <= received_at - event_at <= 3:
             self.twin.tick_btc(price, event_at)
+            self.wake.set()
 
     def on_windows(self, windows: list[Window]) -> None:
         self.evidence.discover([asdict(window) for window in windows if window.venue == "kalshi"], self.clock())
@@ -394,6 +400,7 @@ class KalshiLiveDesk:
     def on_book(self, book: Book) -> None:
         if book.window in self.twin.windows and self.twin.on_book(book):
             self._twin_events(self.twin.advance(self.clock()))
+            self.wake.set()
 
     def on_trade(self, trade: Trade) -> None:
         if trade.window in self.snapshot().maker_windows:
@@ -706,14 +713,19 @@ class KalshiLiveDesk:
                       for raw in orders)
         positions = await self._read(self.client.positions)
         actual = {str(item["ticker"]): _number(item["position_fp"]) for item in positions}
-        settlements = await self._read(self.client.settlements, min_ts=max(0, int(self.started_at) - 60))
+        windows = {intent.window for intent in self.intents.values()}
+        # Settlement rows only ever close a traded window that has ended and is not yet settled; skip the read otherwise.
+        settlement_due = any(ticker not in self.book.settled and (ticker not in self.book.windows
+                                                                  or self.book.windows[ticker].end <= self.clock())
+                             for ticker in windows)
+        settlements = (await self._read(self.client.settlements, min_ts=max(0, int(self.started_at) - 60))
+                       if settlement_due else [])
         self.final_outcomes.update(self.snapshot().outcomes)
         settlement_rows = {str(raw.get("ticker", "")): raw for raw in settlements}
         for raw in settlements:
             ticker = str(raw.get("ticker", ""))
             if raw.get("market_result") in {"yes", "no"}:
                 self.final_outcomes[ticker] = raw["market_result"] == "yes"
-        windows = {intent.window for intent in self.intents.values()}
         for ticker in windows:
             expected = self.book.expected_position(ticker)
             current = actual.get(ticker, 0.0)
@@ -856,21 +868,28 @@ class KalshiLiveDesk:
         self._record("speeddesk_live_order", client_order_id=client_id, window=window.slug,
                      side=side, kind=kind, price=price, size=size, fair=fair, state="durable intent",
                      timing=self.metrics.decision("real_kalshi", now, snapshot.tick_receipt, decision_mono))
-        # The order identifier and its complete worst-case liability reach disk
-        # before the first network byte can leave this process.
-        self.checkpoint()
         twin_event = self.twin.place(window.slug, side, kind, price, size, fair, now)
         if twin_event.event in ("speeddesk_take", "speeddesk_rest"):
             self.metrics.decision("practice_twin", now, snapshot.tick_receipt, decision_mono)
         intent.twin_order_id = twin_event.order_id
         self._twin_events([twin_event])
+        # The order identifier and its complete worst-case liability reach disk
+        # before the first network byte can leave this process; one write covers the twin too.
+        saving = self.monotonic()
         self.checkpoint()
-        await self._submit(intent, window, now, decision_mono)
+        await self._submit(intent, window, now, decision_mono, save_ms=(self.monotonic() - saving) * 1000)
         return True
 
-    async def _submit(self, intent: Intent, window: Window, now: float, decision_mono: float) -> None:
+    async def _submit(self, intent: Intent, window: Window, now: float, decision_mono: float,
+                      save_ms: float | None = None) -> None:
         """Send a durable intent once and settle what its reply proves; never retries a create."""
         client_id, side, kind, price, size = intent.client_order_id, intent.side, intent.kind, intent.price, intent.size
+        sent_at: list[float] = []
+
+        def guard() -> bool:
+            permitted = self._send_guard(client_id)
+            sent_at.append(self.monotonic())  # the request leaves right after this returns
+            return permitted
 
         def timing(value: float | None, status: Literal["ok", "missing", "invalid", "error", "timeout"] = "ok") -> Any:
             # A lock is not a Bitcoin-driven decision: it stays out of the speed measurements.
@@ -883,15 +902,21 @@ class KalshiLiveDesk:
                                              expiration_ts=min(int(window.end - self.book.limits.lock_s),
                                                                int(now) + 30)
                                              if kind == "rest" else None,
-                                             before_send=lambda: self._send_guard(client_id))
+                                             before_send=guard)
             intent.order_id = str(reply["order_id"])
             if not intent.order_id:
                 raise ValueError("Create response has no order identifier")
             self.book.mark_submitted(client_id, intent.order_id)
             self.refusals = 0
+            acked = self.monotonic()
+            # Where the decision-to-acknowledgement time went: the pre-send disk write, the wait from the decision
+            # to the first request byte (disk write, worker hand-off, request budget), and Kalshi's reply.
+            stages = {"save_ms": save_ms,
+                      "decision_to_send_ms": (sent_at[0] - decision_mono) * 1000 if sent_at else None,
+                      "send_to_ack_ms": (acked - sent_at[0]) * 1000 if sent_at else None}
             self._record("speeddesk_live_order", client_order_id=client_id, order_id=intent.order_id,
                          window=window.slug, state="accepted; waiting for real fills",
-                         timing=timing((self.monotonic() - decision_mono) * 1000))
+                         timing=timing((acked - decision_mono) * 1000), stages=stages)
         except asyncio.CancelledError:
             self._record("speeddesk_live_timing", client_order_id=client_id, timing=timing(None, "missing"))
             raise
@@ -1158,10 +1183,17 @@ class KalshiLiveDesk:
 
     async def run(self, stop: threading.Event) -> None:
         self.stop_event = stop
+        self.wake = asyncio.Event()  # bound to this run's event loop
         try:
             while not stop.is_set():
+                self.wake.clear()
+                started = self.monotonic()
                 await self.step()
-                await asyncio.sleep(0.25)
+                # The next tick or book change wakes the loop at once (a fixed quarter-second sleep added 125 ms
+                # on average before each decision); a quiet market still steps every IDLE_STEP_S.
+                with contextlib.suppress(TimeoutError):
+                    await asyncio.wait_for(self.wake.wait(), IDLE_STEP_S)
+                await asyncio.sleep(max(0.0, MIN_STEP_S - (self.monotonic() - started)))
         finally:
             await self.shutdown()
 

@@ -15,6 +15,26 @@ Template:
 
 
 
+## 2026-10-13 13:20 UTC, Claude, branch claude/kalshi-speed
+- Changed (owner: "Move to Virginia!!"; the service has run in Railway us-east4 since 2026-10-12 23:50, so the
+  gain had to come from inside the bot): the private Kalshi client waited 200 ms after every call, reads and
+  orders alike, so each once-a-second reconcile (six reads) blocked decisions for over a second and the first
+  order after it waited out the last read's slot. Now reads and writes have separate rolling one-second budgets
+  (10 and 5, half of Kalshi's Basic tier), the live loop wakes on each accepted Bitcoin tick or book change
+  (20 ms floor, 250 ms idle), settlements are read only while a traded window has ended unsettled, and one
+  durable write before the send covers the intent and its practice twin (was two).
+- Verified: new tests fail on the old code and pass now (read budget, order never queued behind reads, send
+  guard after a wait, budget bounds, one save before the send, settlement-read rule, tick wake); client and
+  live suites 231 passed; changed-file Ruff and mypy clean; a live step costs 0.29 ms in the offline harness,
+  and disk writes stay tied to the once-a-second reconcile; full suite 4,664 passed / 12 skipped. Baseline from
+  the Railway logs, 12:49-13:17 UTC (real orders after the day reset): tick receipt to decision median 511 ms
+  (p90 1,181, n=56), decision to Kalshi acknowledgement median 842 ms (p90 1,370, n=49). Accepted-order records
+  now carry `stages` (save_ms, decision_to_send_ms, send_to_ack_ms) to show where the remaining time goes.
+- Not verified / skipped: Kalshi's tier for this account (GET /account/api-limits) was not read; the budgets
+  assume Basic. The gain on Railway is measured after the deploy.
+- Real money touched? Order-path timing only; no caps, edges, strategy or settings changed.
+- Next step: deploy at a safe minute, then compare the live timing medians with the baseline.
+
 ## 2026-10-13 13:09 UTC, Codex, PR #25 live verification
 - Merged the visual upgrade as `781a1ee1dae6fd4ceb0eeaaaaa116dd892084ce5`. Railway automatically built that
   exact commit in deployment `2eb88d4c-6291-4662-a62e-59d258bfea5e`, SUCCESS at 13:06:16 UTC. Polymarket

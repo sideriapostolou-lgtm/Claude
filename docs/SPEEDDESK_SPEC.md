@@ -414,6 +414,15 @@ Public `GET /exchange/status` probes report successful HTTP round-trip median/p9
 counts, WebSocket age and order latency. One region's timings do not establish that a move will help; no
 Railway region or stored data is moved. Account reconciliation still contributes to full execution latency.
 
+Live loop speed (2026-10-13; owner: "Move to Virginia!!"; the service already ran in Virginia, so the gain is
+inside the bot). The companion steps on each accepted Bitcoin tick or Kalshi book change, at most every 20 ms
+and at least every 250 ms, instead of a fixed 250 ms sleep. The private client counts reads and writes in
+separate rolling one-second budgets, 10 reads and 5 writes per second (half of Kalshi's Basic-tier 20 and 10),
+so an order never waits behind the account reads that came just before it. Before this change every call waited
+200 ms after the previous one, so a reconcile (six reads) blocked decisions for over a second. A reconcile
+reads settlements only while a traded window has ended and is not yet settled. One durable write before the
+send holds the intent, its full reservation and its practice-twin order; the post-send write follows the reply.
+
 The public US probe checks the five-minute series and validates an actual market's BTC/UP_DOWN/5m/BRTI terms
 and start/end before logging `skipwatch_us_5m_listing`. Its first verified observation stays on the page.
 The series alone is not a listing; failed requests are unknown. This bounded latest-event check does not
