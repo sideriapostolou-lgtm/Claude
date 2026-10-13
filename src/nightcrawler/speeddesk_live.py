@@ -28,6 +28,7 @@ import requests
 from .config import Secret, Settings
 from .ledger import Ledger
 from .speeddesk_kalshi_client import KalshiClient, KalshiClientError
+from .speeddesk_live_ladder import Ladder, limits_view
 from .speeddesk_live_model import (
     LOCK_MARGIN_S,
     WINDOW_PARTS,
@@ -92,6 +93,8 @@ MIRROR_EVERY_S = 10.0
 # network byte, startup and shutdown, and any that record an owner's one-time action. The others (a fsync of
 # about 57 ms each on Railway, twice a second in reconcile) hold account facts the next reconcile reads again.
 OWNER_RECORDS = frozenset({"speeddesk_live_day_reset", "speeddesk_live_integrity_reset"})
+# The earned-growth ladder looks at the books at most this often (a change only ever starts at the next window).
+LADDER_EVERY_S = 1.0
 
 
 @dataclass(frozen=True)
@@ -395,6 +398,19 @@ class KalshiLiveDesk:
             self.metrics = LatencyMetrics(clock(), saved.get("latency_metrics") if saved else None)
             self.evidence = WindowEvidence(clock(), saved.get("window_evidence") if saved else None)
             self.reports: dict[str, dict[str, Any]] = dict(saved.get("reports", {})) if saved else {}
+            # The earned-growth ladder (owner, 2026-10-13: "Max $50,000 a window build the ladder"): the risk book
+            # asks it for each window's limits. Its state is a top-level key the previous release ignores.
+            self.ladder = Ladder(limits, enabled=settings.speeddesk_kalshi_ladder,
+                                 max_window_usd=settings.speeddesk_kalshi_ladder_max_window_usd)
+            started = self.ladder.start(self.book, clock(), saved.get("ladder") if saved else None)
+            self.ladder.attach(self.book)
+            self.ladder.observe(self.book, clock())  # a saved stop is noted before a token below can clear it
+            self.ladder_at = -math.inf
+            self._mirror_twin(self.book.limits_now(clock()))
+            self._record("speeddesk_live_ladder", action="start", state=started, rung=self.ladder.rung_for(clock()),
+                         limits=limits_view(self.book.limits_now(clock())), ladder_rung=self.ladder.state.rung,
+                         effective_from=self.ladder.state.rung_from, top_rung=self.ladder.top,
+                         max_window_usd=self.ladder.max_window_usd)
             token = _secret(settings.speeddesk_kalshi_resume_token)
             if token:
                 self.book.apply_resume_token(token)
@@ -586,7 +602,7 @@ class KalshiLiveDesk:
                  "changed_windows": sorted(self.changed_windows),
                  "latency_metrics": self.metrics.state(),
                  "window_evidence": self.evidence.state(),
-                 "reports": self.reports,
+                 "reports": self.reports, "ladder": self.ladder.to_state(),
                  "latest_events": self.latest_events, "panel": self.panel()}
         building = time.perf_counter()
         self.ledger.set_synchronous(durable or any(kind in OWNER_RECORDS for kind, _ in self.pending))
@@ -1192,6 +1208,7 @@ class KalshiLiveDesk:
         self._record("speeddesk_live_order", client_order_id=client_id, window=window.slug,
                      side=side, kind=kind, price=price, size=size, fair=fair, state="durable intent",
                      timing=self.metrics.decision("real_kalshi", now, snapshot.tick_receipt, decision_mono))
+        self._mirror_twin(self.book.limits_for(window.slug))
         twin_event = self.twin.place(window.slug, side, kind, price, size, fair, now)
         if twin_event.event in ("speeddesk_take", "speeddesk_rest"):
             self.metrics.decision("practice_twin", now, snapshot.tick_receipt, decision_mono)
@@ -1313,7 +1330,7 @@ class KalshiLiveDesk:
                 self._lock_note(slug, reason or ("no_ask" if ask is None else "lock_price"), side, size)
                 continue
             assert window is not None
-            size = min(size, int(self.book.limits.clip))
+            size = min(size, int(self.book.limits_for(slug).clip))
             # Lock as many contracts as the cash allows rather than none.
             fit = next((n for n in range(size, 0, -1) if not self.book.can_lock(slug, side, limit, n, now)), 0)
             if not fit:
@@ -1446,12 +1463,13 @@ class KalshiLiveDesk:
                 if kind == "rest" and (window.slug not in snapshot.maker_windows
                                        or any(level.price <= price + EPS for level in book.asks)):
                     continue
-                units = math.floor(min(self.book.limits.clip, ask.size if ask and take else 25))
+                limits = self.book.limits_for(window.slug)  # the window's ladder rung
+                units = math.floor(min(limits.clip, ask.size if ask and take else 25))
                 inventory = self.book.inventory[window.slug]
                 if inventory.up.shares + inventory.down.shares <= EPS:
                     # Scale the starter to whole pairs at the authorized pair
                     # cap, so a cheap first side cannot consume the hedge budget.
-                    units = min(units, math.floor(self.book.limits.window_usd / self.book.limits.pair_cap))
+                    units = min(units, math.floor(limits.window_usd / limits.pair_cap))
                     if units == 0:
                         self.reason = "Window budget is too small for a whole capped pair"
                 if units:
@@ -1469,6 +1487,24 @@ class KalshiLiveDesk:
         self.evidence.advance(observed_at, windows, fresh_window_slugs(
             windows, market.books, market.bitcoin_at, market.maker_windows, observed_at))
 
+    def _ladder_step(self) -> None:
+        """Count settled windows and decide a promotion or demotion (it starts at the next window boundary)."""
+        now = self.clock()
+        if now - self.ladder_at >= LADDER_EVERY_S or self.ladder.due(now):  # a waiting promotion: re-check now
+            self.ladder_at = now
+            change = self.ladder.evaluate(self.book, now)
+            if change is not None:
+                self._record("speeddesk_live_ladder", **change)
+        self._mirror_twin(self.book.limits_now(now))
+
+    def _mirror_twin(self, limits: LiveLimits) -> None:
+        """The practice twin uses the same window, open, daily stop and contract cap as the real orders."""
+        config = self.twin.config
+        if (config.window_usd, config.open_usd, config.day_stop_usd, config.clip) != (
+                limits.window_usd, limits.open_usd, limits.day_loss_usd, limits.clip):
+            self.twin.config = replace(config, window_usd=limits.window_usd, open_usd=limits.open_usd,
+                                       day_stop_usd=limits.day_loss_usd, clip=limits.clip)
+
     def _phase(self, name: str, started: float) -> float:
         """Record the time since ``started`` under ``name``; returns now, the next phase's start."""
         now = self.monotonic()
@@ -1477,6 +1513,7 @@ class KalshiLiveDesk:
 
     async def step(self) -> None:
         began = self.monotonic()
+        self._ladder_step()
         self.observe_market(self.clock())
         self._twin_events(self.twin.advance(self.clock()))
         self._phase("observe", began)
@@ -1642,10 +1679,9 @@ class KalshiLiveDesk:
                 "integrity_error": self.book.integrity_error,
                 "integrity_reset": (self.reset_blocker or "armed") if self.book.integrity_reset_armed else None,
                 "cleanup_pending": bool(active) and bool(self._gates()),
-                # The limits the risk book enforces, not the settings asked for (they once differed silently).
-                "caps": {"window_usd": self.book.limits.window_usd, "open_usd": self.book.limits.open_usd,
-                         "day_stop_usd": self.book.limits.day_loss_usd,
-                         "total_stop_usd": self.book.limits.total_loss_usd},
+                # The limits the risk book enforces now (the ladder's rung), not the settings asked for.
+                "caps": limits_view(self.book.limits_now(self.clock())),
+                "ladder": self.ladder.panel(self.book, self.clock(), risk),
                 "today": self._summary(utc_day(self.clock())), "total": self._summary(None),
                 "practice_twin": self._twin_summary(utc_day(self.clock())),
                 "reports": self.reports,
