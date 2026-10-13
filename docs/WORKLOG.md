@@ -46,6 +46,18 @@ Template:
 - Next step: if implementing this design, start with the isolated read-only recorder and exact entry/exit
   replay. A few days test mechanics; rare-event profitability may need months and can remain NO EDGE.
 
+## 2026-10-13 14:45 UTC, Claude, branch claude/kalshi-sync-presend
+- Live state: PR #28 deployed 14:34:34 UTC (b4496e49, 4e1df4d). Saves now 72-90 ms, split build 15-35 ms and
+  ledger commit 55-61 ms (the write-ahead-log fsync); PR #29 recorded the fresh-move result (no edge at a
+  reachable speed). Real money on, no integrity error, today -$3.84 at 14:38.
+- Changed: `Ledger.set_synchronous`; the live desk syncs at commit only for the pre-send saves (orders and lock
+  buys), startup, shutdown and owner actions; reconcile, cancel and heartbeat saves use synchronous=NORMAL.
+- Verified: new ledger and live tests (pre-send save synced, reconcile saves not, owner action synced); full
+  suite 4,671 passed / 12 skipped; changed-file Ruff adds nothing (three base findings remain), mypy clean.
+- Not verified / skipped: the Railway save split after the change.
+- Real money touched? Durability of non-order saves only; the intent-before-send guarantee is unchanged.
+- Next step: deploy at a safe minute; read save.ledger_ms and order stages once orders flow.
+
 ## 2026-10-13 14:25 UTC, Claude, branch claude/kalshi-mirror-full
 - Changed: PR #27 is live (deployment 8a99090d, 14:06:02 UTC, commit 417cf0f): 72 windows archived, 86 orders
   left in each save, routine saves 110-175 ms (the first, archiving save 897 ms). But `moneyconnections.py`

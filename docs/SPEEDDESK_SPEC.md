@@ -435,6 +435,11 @@ The release before this cannot read the archive and fails closed (companion halt
 every window (archived ones from memory, newer saved copies win), at most every 10 s and at shutdown, without
 an fsync (the ledger is the durable record; the page treats data older than 60 s as stale). The status line
 splits each save into build_ms, ledger_ms and mirror_ms.
+Only saves that must survive a host or power failure sync the ledger's write-ahead log at commit: the one
+before an order's first network byte (orders and lock buys), startup, shutdown, and any that records an owner's
+one-time action. The others (about 57 ms of fsync each on Railway on 2026-10-13, twice a second in reconcile)
+commit with SQLite synchronous=NORMAL: a process crash loses nothing, a host failure can lose account facts the
+next reconcile reads again, and the next synced commit makes every earlier commit durable.
 
 The public US probe checks the five-minute series and validates an actual market's BTC/UP_DOWN/5m/BRTI terms
 and start/end before logging `skipwatch_us_5m_listing`. Its first verified observation stays on the page.

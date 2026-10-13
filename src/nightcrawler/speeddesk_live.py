@@ -70,6 +70,10 @@ ARCHIVE_KEY, ARCHIVE_AFTER_S = "kalshi_live_archive/", 3600.0
 # The money page rebuilds and checks the whole real book from state.json (FRESH_SECONDS = 60 there): it gets every
 # window, archived ones from memory, at most every MIRROR_EVERY_S. A display copy, so no fsync; the ledger is durable.
 MIRROR_EVERY_S = 10.0
+# Saves that must survive a host or power failure, not only a process crash: the one before an order's first
+# network byte, startup and shutdown, and any that record an owner's one-time action. The others (a fsync of
+# about 57 ms each on Railway, twice a second in reconcile) hold account facts the next reconcile reads again.
+OWNER_RECORDS = frozenset({"speeddesk_live_day_reset", "speeddesk_live_integrity_reset"})
 
 
 @dataclass(frozen=True)
@@ -301,7 +305,7 @@ class KalshiLiveDesk:
                              state="fresh daily budget from now until 00:00 UTC; caps and lifetime stop unchanged")
             elif day_reset == "used":
                 self._record("speeddesk_live_day_reset", state="ignored; this value was already used")
-            self.checkpoint()
+            self.checkpoint(durable=True)
         except BaseException:
             self.ledger.close()
             self._lock_stream.close()
@@ -393,7 +397,7 @@ class KalshiLiveDesk:
                 if slug not in self.archived and slug not in live and window.end <= now - ARCHIVE_AFTER_S
                 and (slug in self.book.settled or slug not in traded)}
 
-    def checkpoint(self) -> None:
+    def checkpoint(self, durable: bool = False) -> None:
         started = time.perf_counter()
         withdrawn = self.book.disarm_stale_reset()
         if withdrawn:
@@ -431,6 +435,7 @@ class KalshiLiveDesk:
                  "reports": self.reports,
                  "latest_events": self.latest_events, "panel": self.panel()}
         building = time.perf_counter()
+        self.ledger.set_synchronous(durable or any(kind in OWNER_RECORDS for kind, _ in self.pending))
         with self.ledger.transaction():
             for kind, payload in self.pending:
                 self.ledger.append_receipt(kind, payload, ts=payload["at"])
@@ -967,7 +972,7 @@ class KalshiLiveDesk:
         # The order identifier and its complete worst-case liability reach disk
         # before the first network byte can leave this process; one write covers the twin too.
         saving = self.monotonic()
-        self.checkpoint()
+        self.checkpoint(durable=True)
         await self._submit(intent, window, now, decision_mono, save_ms=(self.monotonic() - saving) * 1000)
         return True
 
@@ -1119,7 +1124,7 @@ class KalshiLiveDesk:
         self._record("speeddesk_live_order", client_order_id=client_id, window=window.slug, side=side,
                      kind="lock", price=price, size=size, state="durable intent; completing a half-filled pair")
         # Durable before the first network byte, exactly like every other order.
-        self.checkpoint()
+        self.checkpoint(durable=True)
         await self._submit(intent, window, now, decision_mono)
         return True
 
@@ -1321,7 +1326,7 @@ class KalshiLiveDesk:
             except Exception as exc:  # noqa: BLE001 — leave reservations durable for the next startup.
                 self._error(exc)
         self._twin_events(self.twin.cancel(self.clock(), reason="shutdown"))
-        self.checkpoint()
+        self.checkpoint(durable=True)
         self.shutdown_done = True
 
     def panel(self) -> dict[str, Any]:

@@ -587,3 +587,19 @@ def test_a_schema_v1_ledger_without_a_known_wallet_leaves_live_rows_unknown(db_p
     _as_schema_v1(db_path, wallet_kv=None)
     with Ledger(db_path, clock=fake_clock) as migrated:
         assert migrated.position_wallets() == {"p_live": None}
+
+
+def test_durability_can_be_relaxed_between_transactions_only(tmp_path: Path) -> None:
+    ledger = Ledger(tmp_path / "durable.db", FakeClock())
+    try:
+        level = lambda: ledger._conn.execute("PRAGMA synchronous").fetchone()[0]
+        assert level() == 2  # FULL by default: every commit is synced
+        ledger.set_synchronous(False)
+        assert level() == 1  # NORMAL: synced at checkpoints only
+        ledger.set_synchronous(True)
+        assert level() == 2
+        with ledger.transaction(), pytest.raises(LedgerError, match="inside a transaction"):
+            ledger.set_synchronous(False)
+        assert level() == 2
+    finally:
+        ledger.close()
