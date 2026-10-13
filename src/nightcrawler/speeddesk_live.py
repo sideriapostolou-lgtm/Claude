@@ -61,6 +61,13 @@ EPS = 1e-8
 # How long Kalshi's order list may trail its fills list before the mismatch stops real orders for good
 # (seen trailing by under a second on 2026-10-13; every read in between counts as not yet reconciled).
 ORDER_LIST_LAG_S = 30.0
+# Account reads cover only recent orders and fills: those since the earlier of the oldest unfinished order and one
+# window ago, less a margin (Kalshi's min_ts). The complete history (0.5 MB/s on 2026-10-13 and growing with every
+# order) is read at startup, every FULL_SCAN_S, and once after each new window opens, so an untracked bot order or
+# an owner's order placed before the window opened is still caught before the bot's first order there.
+FULL_SCAN_S, RECENT_S, READ_MARGIN_S = 60.0, 900.0, 60.0
+# Timing samples kept per status line (one a minute); counts stay exact beyond it.
+SAMPLE_LIMIT = 4096
 # The live loop steps on each Bitcoin tick or book change, at most every MIN_STEP_S, and at least every IDLE_STEP_S.
 MIN_STEP_S, IDLE_STEP_S = 0.02, 0.25
 # A window an hour past its close, settled and with nothing open, moves once into a write-once archive chunk
@@ -111,6 +118,38 @@ class _Clock:
         self.now = now
 
 
+class _Interval:
+    """Timings (ms) and counts since the last status line, summarized there and then cleared. Logging only."""
+
+    def __init__(self) -> None:
+        self.samples: dict[str, list[float]] = {}
+        self.counts: dict[str, int] = {}
+
+    def add(self, name: str, value_ms: float) -> None:
+        bucket = self.samples.setdefault(name, [])
+        if len(bucket) < SAMPLE_LIMIT:
+            bucket.append(value_ms)
+        self.count(name)
+
+    def count(self, name: str, amount: int = 1) -> None:
+        self.counts[name] = self.counts.get(name, 0) + amount
+
+    def summary(self) -> dict[str, Any]:
+        timings = {name: {"n": self.counts.get(name, len(values)), **_spread(values)}
+                   for name, values in self.samples.items()}
+        counts = {name: value for name, value in self.counts.items() if name not in self.samples}
+        self.samples, self.counts = {}, {}
+        return {"ms": timings, "counts": counts}
+
+
+def _spread(values: list[float]) -> dict[str, float | None]:
+    ordered = sorted(values)
+    if not ordered:
+        return {"median_ms": None, "p90_ms": None, "max_ms": None}
+    return {"median_ms": round(ordered[(len(ordered) - 1) // 2], 1),
+            "p90_ms": round(ordered[math.ceil(.9 * len(ordered)) - 1], 1), "max_ms": round(ordered[-1], 1)}
+
+
 class _RecoveryClient:
     """Only account reconciliation and cancellation are available in recovery."""
 
@@ -134,6 +173,10 @@ class _RecoveryClient:
 
     def subaccount_balances(self) -> list[dict[str, Any]]:
         return self._client.subaccount_balances()  # type: ignore[no-any-return]
+
+    @property
+    def read_stats(self) -> dict[str, dict[str, int | None]]:
+        return getattr(self._client, "read_stats", {})  # type: ignore[no-any-return]
 
     def cancel(self, order_id: str, *, ticker: str) -> dict[str, Any]:
         return self._client.cancel(order_id, ticker=ticker)  # type: ignore[no-any-return]
@@ -227,6 +270,11 @@ class KalshiLiveDesk:
         self.reset_reported: set[str] = set()
         # When each order's Kalshi report was first seen trailing its booked fills (ORDER_LIST_LAG_S).
         self.order_list_lag: dict[str, float] = {}
+        # When the last complete account read started (FULL_SCAN_S); and what each reconcile cost, for the status line.
+        self.full_scan_at = -math.inf
+        self.sync_stats = _Interval()
+        self.last_sync_report: dict[str, Any] | None = None
+        self._sync_reads: list[dict[str, Any]] = []
         limits = LiveLimits(window_usd=settings.speeddesk_kalshi_window_usd,
                             open_usd=settings.speeddesk_kalshi_open_usd,
                             day_loss_usd=settings.speeddesk_kalshi_day_stop_usd,
@@ -344,12 +392,53 @@ class KalshiLiveDesk:
         task.add_done_callback(self._workers.discard)
         return await asyncio.shield(task)
 
-    async def _read(self, callback: Callable[..., Any], *args: Any, **kwargs: Any) -> Any:
+    async def _read(self, name: str, callback: Callable[..., Any], *args: Any, **kwargs: Any) -> Any:
+        started = self.monotonic()
         result = await self._io(callback, *args, **kwargs)
+        stats = getattr(self.client, "read_stats", None)
+        pages = stats.get(name) if isinstance(stats, dict) else None
+        self._sync_reads.append({"read": name, "ms": round((self.monotonic() - started) * 1000, 1),
+                                 "rows": len(result) if isinstance(result, list) else None,
+                                 "pages": pages.get("pages") if isinstance(pages, dict) else None,
+                                 "bytes": pages.get("bytes") if isinstance(pages, dict) else None})
         # Serialize all accounting mutations, but give cancellations priority
         # between each private read instead of waiting for every account page.
         await self._cancel_unsafe()
         return result
+
+    def _full_scan_due(self, now: float) -> bool:
+        """Startup, every FULL_SCAN_S, and the first read after a window opens read the complete history; so does
+        every read while the owner's approved integrity reset waits (only a complete read can clear it, and real
+        orders are stopped then anyway)."""
+        return (not self.startup_done or now - self.full_scan_at >= FULL_SCAN_S
+                or self.book.integrity_reset_armed is not None
+                or any(self.full_scan_at < window.start <= now for window in self.book.windows.values()))
+
+    def _recent_since(self, now: float) -> int:
+        """Kalshi min_ts covering every order and fill that can still change the books (see RECENT_S).
+
+        Every unfinished, uncertain or reserved order was created after its intent's decision time, and its fills
+        after that (``_fill`` refuses earlier ones), so they are inside the bound whether Kalshi filters orders on
+        their creation or their last update. So is every order and fill of a window open now (at most RECENT_S old).
+        """
+        unfinished = [intent.at for key, intent in self.intents.items()
+                      if not intent.terminal or intent.uncertain or self.book.intents[key].reservation_active]
+        return max(0, math.floor(min([now - RECENT_S, *unfinished])) - int(READ_MARGIN_S))
+
+    def _sync_report(self, full: bool, started: float, checks: list[str], failed: bool = False) -> None:
+        total = (self.monotonic() - started) * 1000
+        self.sync_stats.add("full_ms" if full else "recent_ms", total)
+        for read in self._sync_reads:
+            self.sync_stats.add(f"{read['read']}_ms", read["ms"])
+            for key in ("pages", "rows", "bytes"):
+                if isinstance(read[key], int):
+                    self.sync_stats.count(f"{key}", read[key])
+        for check in checks:
+            self.sync_stats.count(f"check_{check}")
+        if failed:
+            self.sync_stats.count("failed")
+        self.last_sync_report = {"full": full, "ms": round(total, 1), "failed": failed, "checks": checks,
+                                 "reads": self._sync_reads}
 
     def _merge_archive(self, saved: dict[str, Any]) -> None:
         """Restore archived windows under the saved state, so restore and its checks see the full books."""
@@ -726,10 +815,29 @@ class KalshiLiveDesk:
 
     async def _reconcile(self) -> None:
         assert self.client is not None
-        sync_started = self.clock()
+        sync_started, started = self.clock(), self.monotonic()
+        full = self._full_scan_due(sync_started)
+        checks: list[str] = []
+        self._sync_reads = []
+        try:
+            await self._reconcile_reads(sync_started, full, checks)
+        except BaseException:
+            self._sync_report(full, started, checks, failed=True)
+            raise
+        if full:
+            self.full_scan_at = sync_started
+        self._sync_report(full, started, checks)
+
+    async def _reconcile_reads(self, sync_started: float, full: bool, checks: list[str]) -> None:
+        """One account reconcile; ``checks`` collects the name of each consistency check that failed."""
+        assert self.client is not None
+        # Recent reads (RECENT_S) between complete ones; see _recent_since for why nothing that can still change
+        # the books is outside the bound. Untracked bot orders and old owner orders wait for the next complete read.
+        recent_from = None if full else self._recent_since(sync_started)
+        order_filter: dict[str, Any] = {} if recent_from is None else {"min_ts": recent_from}
         # Fully paginated reads return all pages or raise. Never interpret a
         # missing/failed page as zero inventory or a canceled order.
-        orders = await self._read(self.client.list_orders)
+        orders = await self._read("list_orders", self.client.list_orders, **order_filter)
         for raw in orders:
             client_id = str(raw.get("client_order_id", ""))
             ticker = str(raw.get("ticker", ""))
@@ -752,23 +860,23 @@ class KalshiLiveDesk:
             elif raw.get("status") == "resting":
                 self.foreign_windows.add(ticker)
         self.checkpoint()
-        fills = await self._read(self.client.fills, min_ts=max(0, int(self.started_at) - 60))
+        fills = await self._read("fills", self.client.fills,
+                                 min_ts=max(0, int(self.started_at) - 60) if recent_from is None else recent_from)
         by_order = {intent.order_id: intent for intent in self.intents.values() if intent.order_id}
-        consistent = True
         for raw in fills:
             intent = by_order.get(str(raw.get("order_id", "")))
             if intent is None:
                 ticker = str(raw.get("ticker", ""))
                 if ticker.startswith("KXBTC15M-"):
                     if any(item.window == ticker and not item.order_id for item in self._active()):
-                        consistent = False
+                        checks.append("unattributed_fill_beside_unresolved_order")
                     else:
                         self.foreign_windows.add(ticker)
                 continue
             fill = self._fill(raw, intent)
             if self.book.record_fill(fill):
                 self._record("speeddesk_live_fill", **asdict(fill))
-        orders = await self._read(self.client.list_orders)
+        orders = await self._read("list_orders", self.client.list_orders, **order_filter)
         for raw in orders:
             intent = self.intents.get(str(raw.get("client_order_id", "")))
             if intent is None:
@@ -777,7 +885,7 @@ class KalshiLiveDesk:
             if not intent.order_id:
                 intent.order_id = str(raw["order_id"])
                 self.book.mark_submitted(intent.client_order_id, intent.order_id)
-                consistent = False  # Its fills were fetched before this ID was known.
+                checks.append("order_found_after_fills")  # Its fills were fetched before this ID was known.
             status = str(raw.get("status", ""))
             if status not in {"resting", "canceled", "executed"}:
                 raise ValueError("Unknown order status")
@@ -796,9 +904,9 @@ class KalshiLiveDesk:
                 order, fills_complete=True,
                 lag_ok=behind and self.clock() - since <= ORDER_LIST_LAG_S)
             if behind:
-                consistent = False  # no new orders until a fresh read agrees
+                checks.append("order_list_behind_fills")  # no new orders until a fresh read agrees
             elif order.filled_size > booked + EPS:
-                consistent = False
+                checks.append("fills_behind_order_list")
             elif abs(order.filled_size - self.book.intents[intent.client_order_id].filled_size) <= EPS:
                 intent.uncertain = False
             if confirmed:
@@ -807,14 +915,15 @@ class KalshiLiveDesk:
                     intent.terminal = True
         resting = any(str(raw.get("status", "")) == "resting" and str(raw.get("ticker", "")).startswith("KXBTC15M-")
                       for raw in orders)
-        positions = await self._read(self.client.positions)
+        positions = await self._read("positions", self.client.positions)
         actual = {str(item["ticker"]): _number(item["position_fp"]) for item in positions}
         windows = {intent.window for intent in self.intents.values()}
         # Settlement rows only ever close a traded window that has ended and is not yet settled; skip the read otherwise.
         settlement_due = any(ticker not in self.book.settled and (ticker not in self.book.windows
                                                                   or self.book.windows[ticker].end <= self.clock())
                              for ticker in windows)
-        settlements = (await self._read(self.client.settlements, min_ts=max(0, int(self.started_at) - 60))
+        settlements = (await self._read("settlements", self.client.settlements,
+                                        min_ts=max(0, int(self.started_at) - 60))
                        if settlement_due else [])
         self.final_outcomes.update(self.snapshot().outcomes)
         settlement_rows = {str(raw.get("ticker", "")): raw for raw in settlements}
@@ -834,7 +943,7 @@ class KalshiLiveDesk:
                 # flat in that market, so Kalshi writes no row; the bot settles
                 # its own contracts from the finalized outcome instead.
                 if row is None and abs(expected) > EPS and ticker not in self.foreign_windows:
-                    consistent = False
+                    checks.append("settlement_row_missing")
                     continue
                 payout = _number(row["revenue"]) / 100 if row is not None else 0.0
                 settled_at = _stamp(row["settled_time"]) if row is not None else self.clock()
@@ -856,12 +965,12 @@ class KalshiLiveDesk:
                 # window holding a fill that is provably not ours (the owner's
                 # trade by hand) mixes the owner's contracts into the venue
                 # position; the bot leaves it alone and counts only its own fills.
-                consistent = False
+                checks.append("position_mismatch")
         for ticker, amount in actual.items():
             if ticker.startswith("KXBTC15M-") and ticker not in windows and abs(amount) > EPS:
                 self.foreign_windows.add(ticker)
         self.position_sizes = actual
-        balance = await self._read(self.client.balance)
+        balance = await self._read("balance", self.client.balance)
         cash = (_number(balance["balance_dollars"]) if "balance_dollars" in balance
                 else _number(balance["balance"]) / 100)
         if cash < 0:
@@ -869,8 +978,11 @@ class KalshiLiveDesk:
         now = self.clock()
         self.book.update_cash(cash, now)
         self.cash_usd, self.cash_at = cash, now
-        self.account_at = now if consistent and now - sync_started <= 3 else None
-        self._integrity_reset(actual, resting)
+        if now - sync_started > 3:
+            checks.append("reconcile_slow")
+        self.account_at = now if not checks else None
+        if full:  # only a complete read can show that no resting order is left on the account
+            self._integrity_reset(actual, resting)
         self.authenticated = not self.auth_failed
         self.errors = 0
         self.retry_at = -math.inf
@@ -1272,9 +1384,12 @@ class KalshiLiveDesk:
 
     def _heartbeat(self) -> None:
         if self.clock() - self.last_status >= 60:
+            # Account reads since the last status line: complete and recent reconcile times, each read's time,
+            # pages, rows and bytes, and how often each consistency check failed; plus the latest reconcile.
             self._record("speeddesk_live_status", **self.panel(),
                          save={"last_ms": self.save_ms, **self.save_stages, "archived_windows": len(self.archived),
-                               "saved_orders": sum(intent.window not in self.archived for intent in self.intents.values())})
+                               "saved_orders": sum(intent.window not in self.archived for intent in self.intents.values())},
+                         reconcile={**self.sync_stats.summary(), "last": self.last_sync_report})
             self.last_status = self.clock()
         if self.pending or self.clock() - self.last_checkpoint >= 5:
             self.checkpoint()

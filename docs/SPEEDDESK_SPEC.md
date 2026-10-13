@@ -448,6 +448,23 @@ one-time action. The others (about 57 ms of fsync each on Railway on 2026-10-13,
 commit with SQLite synchronous=NORMAL: a process crash loses nothing, a host failure can lose account facts the
 next reconcile reads again, and the next synced commit makes every earlier commit durable.
 
+Bounded account reads (2026-10-13; loss plan bug 3, speed plan step 1). Every reconcile read the whole order
+history twice and every fill since the desk first started (about 0.5 MB/s on the live connection). Between
+complete reads, the two order reads and the fill read now pass Kalshi's `min_ts` = the earlier of the oldest
+unfinished, uncertain or reserved order's decision time and one window (900 s) ago, minus 60 s. Every order that
+can still change the books was created after its decision, and its fills after that, so it is inside the bound
+whether `min_ts` filters orders on creation or on last update (the docs do not say which); so is every order and
+fill of a window open now. The complete history (orders unfiltered, fills since start) is still read at startup,
+every 60 s, on the first read after any window opens (an owner's bid placed before the window opened is seen
+before the bot's first order there), and on every read while an owner's integrity reset waits, the only reads
+that may clear it. An untracked bot order or a late fill stamped before the bound is caught by the next complete
+read (at most 60 s). Positions and settlements are unchanged. The status line's `reconcile` block reports, since
+the previous line: complete and recent reconcile times (`full_ms`, `recent_ms`), each read's time, the total
+pages, rows and bytes read, failures, and how often each consistency check failed (`check_<name>`:
+`position_mismatch`, `order_list_behind_fills`, `fills_behind_order_list`, `order_found_after_fills`,
+`unattributed_fill_beside_unresolved_order`, `settlement_row_missing`, `reconcile_slow` over 3 s); `last` is the
+most recent reconcile with its reads.
+
 The public US probe checks the five-minute series and validates an actual market's BTC/UP_DOWN/5m/BRTI terms
 and start/end before logging `skipwatch_us_5m_listing`. Its first verified observation stays on the page.
 The series alone is not a listing; failed requests are unknown. This bounded latest-event check does not
