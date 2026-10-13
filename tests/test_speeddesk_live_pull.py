@@ -4,19 +4,27 @@ on real money, with the practice twin keeping the rule without it as the live co
 from __future__ import annotations
 
 import asyncio
+import inspect
 import math
+import random
+from dataclasses import replace
 from pathlib import Path
 from statistics import NormalDist
 from typing import Any
 
 import pytest
-from test_speeddesk_live import TICKER, FakeAccount, fill_order, make_desk
+from test_speeddesk_live import TICKER, FakeAccount, fill_order, make_desk, reopen
 
-from nightcrawler import pagestate
+from nightcrawler import pagestate, speeddesk_live
 from nightcrawler.clock import FakeClock
 from nightcrawler.config import ConfigError, Settings
-from nightcrawler.speeddesk_kalshi_client import WRITES_PER_S
-from nightcrawler.speeddesk_live import PULL_REASON, KalshiLiveDesk, LiveSnapshot
+from nightcrawler.speeddesk_kalshi_client import WRITES_PER_S, KalshiClientError
+from nightcrawler.speeddesk_live import (
+    PULL_REASON,
+    WRITE_ROOM_REASON,
+    KalshiLiveDesk,
+    LiveSnapshot,
+)
 from nightcrawler.speeddesk_live_model import LiveSettlement
 from nightcrawler.speeddesk_live_pull import PullGuard, PullRule, compare
 from nightcrawler.speeddesk_model import (
@@ -121,7 +129,7 @@ def test_a_one_cent_move_within_five_seconds_pulls_both_bids_and_holds_new_ones(
     desk, account, clock = two_bids(tmp_path)
     try:
         swing(desk, clock, .0053)  # 1.06c within 0.3 s
-        assert account.cancels == ["order-3", "order-4"]
+        assert account.cancels == ["order-4", "order-3"]  # the Up fair ended higher: the Down bid (order-4) first
         pulled = [event for event in desk.latest_events if event["event"] == "speeddesk_live_cancel"]
         assert [event["reason"] for event in pulled] == ["pull", "pull"]
         assert desk.pull.held(TICKER, clock.now())
@@ -169,7 +177,7 @@ def test_a_fast_move_past_the_reprice_rule_still_holds_the_new_bids(tmp_path: Pa
     try:
         market(desk, clock, .515)
         run(desk, clock, .3)
-        assert account.cancels == ["order-3", "order-4"]
+        assert account.cancels == ["order-4", "order-3"]
         assert [event["reason"] for event in desk.latest_events
                 if event["event"] == "speeddesk_live_cancel"] == ["reprice", "reprice"]
         run(desk, clock, 4)
@@ -178,7 +186,8 @@ def test_a_fast_move_past_the_reprice_rule_still_holds_the_new_bids(tmp_path: Pa
         assert not set(desk.twin.orders) & {3, 4} and set(desk.twin.orders) == desk.twin_kept
         assert sorted((order.side, order.price, order.size) for order in desk.twin.orders.values()) == [
             ("down", .45, 3), ("up", .48, 3)]
-        assert desk.panel()["pull"]["bids_pulled_today"] == 0
+        # Both bids were up when the fair moved: counted as pulled, whichever rule named the cancel.
+        assert desk.panel()["pull"]["bids_pulled_today"] == 2
     finally:
         desk.close()
 
@@ -188,7 +197,7 @@ def test_the_twin_does_not_pull_its_bids_stay_resting(tmp_path: Path) -> None:
     try:
         twin_bids = {order_id: (order.side, order.price) for order_id, order in desk.twin.orders.items()}
         swing(desk, clock, .0053)
-        assert account.cancels == ["order-3", "order-4"]
+        assert account.cancels == ["order-4", "order-3"]
         assert {order_id: (order.side, order.price) for order_id, order in desk.twin.orders.items()} == twin_bids
         assert desk.twin_kept == set(twin_bids)
         assert not [receipt for receipt in desk.ledger.iter_receipts() if receipt.kind == "speeddesk_twin"
@@ -304,7 +313,7 @@ def test_no_cancel_is_resent_once_kalshi_accepted_it(tmp_path: Path) -> None:
         for _ in range(6):  # moves keep coming for about 4 s, past the 2 s cancel retry
             swing(desk, clock, .0053)
             swing(desk, clock, -.0053)
-        assert account.cancels == ["order-3", "order-4"]
+        assert account.cancels == ["order-4", "order-3"]
         assert desk.panel()["pull"]["bids_pulled_today"] == 2
     finally:
         desk.close()
@@ -329,7 +338,7 @@ def test_a_burst_of_moves_never_exceeds_the_write_budget(tmp_path: Path) -> None
         for step in range(200):  # 20 s of ticks every 0.1 s, the fair jumping 0.6c either way of 0.50
             market(desk, clock, .5 + (.006 if step % 2 else -.006))
             run(desk, clock, .1, every=.1)
-        assert account.cancels == ["order-3", "order-4"]  # one cancel per bid, nothing re-sent
+        assert sorted(account.cancels) == ["order-3", "order-4"]  # one cancel per bid, nothing re-sent
         assert len(account.creates) == 4 and len(writes) == 2  # no bid while the moves keep coming
         run(desk, clock, 12)  # calm again: the bids come back once each
         assert len(account.creates) == 6 and len(set(account.cancels)) == len(account.cancels)
@@ -410,9 +419,11 @@ def test_compare_counts_pnl_where_both_traded_and_fills_where_either_did() -> No
     report = compare(starts, live, twin, [("a", 5), ("a", 2), ("b", 5), ("old", 5)], [("a", 5), ("c", 5), ("c", 5)],
                      start=5.0)
     assert report == {"windows_both_traded": 1, "live_pnl_usd": .5, "twin_pnl_usd": .25, "live_minus_twin_usd": .25,
-                      "windows_either_traded": 3, "live_maker_fills": 3, "live_maker_contracts": 12,
+                      "windows_either_traded": 3, "live_pnl_either_usd": -.5, "twin_pnl_either_usd": 2.25,
+                      "live_minus_twin_either_usd": -2.75, "live_maker_fills": 3, "live_maker_contracts": 12,
                       "live_maker_fills_per_window": 1.0, "twin_maker_fills": 3, "twin_maker_contracts": 15,
-                      "twin_maker_fills_per_window": 1.0}
+                      "twin_maker_fills_per_window": 1.0, "live_locks": 0, "live_lock_contracts": 0,
+                      "live_lock_cost_usd": 0, "live_locks_per_window": 0.0}
     before = compare(starts, live, twin, [("old", 5)], [], start=0.0, end=5.0)
     assert before["windows_both_traded"] == 1 and before["live_minus_twin_usd"] == 18.0
     assert compare({}, {}, {}, [], [], start=0.0)["live_maker_fills_per_window"] is None
@@ -451,6 +462,8 @@ def test_the_page_feed_carries_the_pull_numbers_and_nothing_else(tmp_path: Path)
         page = pagestate._kalshi_pull(raw["pull"], utc_day(clock.now()))
         assert page is not None and page["enabled"] and page["pulls_today"] == 1 and page["bids_pulled_today"] == 2
         assert list(page["held"]) == [TICKER] and page["since_pull"]["live_pnl_usd"] == 0
+        assert page["first_live"] == raw["pull"]["first_live"] and page["since_pull"]["live_locks"] == 0
+        assert page["since_pull"]["live_pnl_either_usd"] == 0 and page["week_before"]["live_lock_cost_usd"] == 0
         assert pagestate._kalshi_pull(raw["pull"], "2099-01-01")["pulls_today"] is None  # another day: unknown
         assert pagestate._kalshi_pull(None, "x") is None
     finally:
@@ -495,3 +508,455 @@ def test_fair_helper_matches_the_bots_fair() -> None:
     for up in (.3, .5, .5053, .9):
         bitcoin = 80000 * math.exp(NormalDist().inv_cdf(up) * SIGMA * math.sqrt(end - clock.now()))
         assert fair_up(bitcoin, 80000, SIGMA, end - clock.now()) == pytest.approx(up, abs=1e-9)
+
+
+# Review findings (2026-10-13 fix round), each reproduced first as the reviewers found it.
+
+def _resting(account: FakeAccount, order_id: str) -> bool:
+    return any(order["order_id"] == order_id and order["status"] == "resting" for order in account.orders)
+
+
+def _flaky_cancel(account: FakeAccount) -> list[str]:
+    """The next cancel gets a 503 (outcome unconfirmed); later ones go through. Returns the failed order ids."""
+    cancel, failed = account.cancel, []
+
+    def flaky(order_id: str, *, ticker: str) -> dict[str, Any]:
+        if not failed:
+            failed.append(order_id)
+            raise KalshiClientError("cancel", "result unconfirmed", status=503, uncertain=True)
+        return cancel(order_id, ticker=ticker)
+
+    account.cancel = flaky  # type: ignore[method-assign]
+    return failed
+
+
+def test_a_pull_cancel_that_fails_inside_a_reconcile_is_sent_again(tmp_path: Path) -> None:
+    """H1: the fair jumps while the order list is being read (the cancel check runs after every account read); the
+    first pull cancel gets a 503, and the same reconcile then matches the order's fills and clears its uncertainty.
+    Before the fix nothing was sent again: the pulled bid rested until it expired and blocked every new order."""
+    desk, account, clock = two_bids(tmp_path)
+    try:
+        market(desk, clock, .4947)
+        run(desk, clock, .3)
+        failed = _flaky_cancel(account)
+        list_orders, moved = account.list_orders, []
+
+        def moving(**kwargs: Any) -> list[dict[str, Any]]:
+            if not moved:
+                moved.append(True)
+                market(desk, clock, .5053, feed=False)
+            return list_orders(**kwargs)
+
+        account.list_orders = moving  # type: ignore[method-assign]
+        clock.advance(1.0)  # a reconcile is due
+        asyncio.run(desk.step())
+        [first] = failed
+        assert account.cancels == [({"order-3", "order-4"} - {first}).pop()]
+        intent = next(item for item in desk.intents.values() if item.order_id == first)
+        assert intent.cancel_requested and not intent.uncertain  # the case the old acknowledgement test misread
+        run(desk, clock, 3)  # past the 2 s retry gate
+        assert account.cancels.count(first) == 1 and not _resting(account, first)
+        assert desk.panel()["pull"]["bids_pulled_today"] == 2
+    finally:
+        desk.close()
+
+
+def test_a_pull_on_a_bid_whose_create_reply_was_lost_still_cancels_it(tmp_path: Path) -> None:
+    """H1: the create reached Kalshi but its reply was lost, so the order id is unknown when the pull comes. The
+    cancel goes out in the reconcile that learns the id (that reconcile waits out the create error's own backoff);
+    before the fix it was never sent."""
+    desk, account, clock = make_desk(tmp_path, caps=CAPS, extra=MAKERS)
+    try:
+        market(desk, clock, .4947)
+        create = account.create_order
+
+        def lost(**kwargs: Any) -> dict[str, Any]:
+            create(**kwargs)
+            raise KalshiClientError("create_order", "transport failure", uncertain=True, timed_out=True)
+
+        account.create_order = lost  # type: ignore[method-assign]
+        asyncio.run(desk.step())
+        assert len(account.creates) == 1 and _resting(account, "order-1")
+        account.create_order = create  # type: ignore[method-assign]
+        clock.advance(.3)
+        market(desk, clock, .5053)
+        desk.on_tick(80000, clock.now(), clock.now())
+        cancelled_at: list[float] = []
+        read_at: list[float] = []
+        cancel, list_orders = account.cancel, account.list_orders
+
+        def timed(order_id: str, *, ticker: str) -> dict[str, Any]:
+            cancelled_at.append(clock.now())
+            return cancel(order_id, ticker=ticker)
+
+        def reading(**kwargs: Any) -> list[dict[str, Any]]:
+            read_at.append(clock.now())
+            return list_orders(**kwargs)
+
+        account.cancel = timed  # type: ignore[method-assign]
+        account.list_orders = reading  # type: ignore[method-assign]
+        run(desk, clock, 3)
+        assert account.cancels == ["order-1"] and not _resting(account, "order-1")
+        assert cancelled_at == [read_at[0]]  # within the first reconcile that read the order list
+    finally:
+        desk.close()
+
+
+def test_a_failed_cancel_is_sent_again_after_its_reason_passed(tmp_path: Path) -> None:
+    """H1's root cause predates the pull (seen on 61ca112): a failed cancel was re-sent only while its reason still
+    held. Pull off: a 1.5c rise reprices both bids, the first cancel gets a 503, the fair comes back before the retry:
+    the cancel still goes out once."""
+    desk, account, clock = two_bids(tmp_path, speeddesk_kalshi_pull=False)
+    try:
+        failed = _flaky_cancel(account)
+        market(desk, clock, .515)
+        run(desk, clock, .3)
+        [first] = failed
+        market(desk, clock, .5)
+        run(desk, clock, 4)
+        assert account.cancels.count(first) == 1 and not _resting(account, first)
+    finally:
+        desk.close()
+
+
+def _write_burst(tmp_path: Path, *, counted: bool, pull: bool = True) -> tuple[int, list[str]]:
+    """Two resting bids; the fair drifts past the 1c reprice rule too slowly to pull (0.15c a second), so both are
+    repriced and the bot bids again, and then the fair jumps 1c: the pull's cancels come on top of those writes.
+    ``counted``: the account reports its rolling write count, as the real client does."""
+    desk, account, clock = two_bids(tmp_path, speeddesk_kalshi_pull=pull)
+    writes: list[tuple[str, float]] = []
+    create, cancel = account.create_order, account.cancel
+
+    def timed_create(**kwargs: Any) -> dict[str, Any]:
+        writes.append(("create", clock.now()))
+        return create(**kwargs)
+
+    def timed_cancel(order_id: str, *, ticker: str) -> dict[str, Any]:
+        writes.append(("cancel", clock.now()))
+        return cancel(order_id, ticker=ticker)
+
+    account.create_order = timed_create  # type: ignore[method-assign]
+    account.cancel = timed_cancel  # type: ignore[method-assign]
+    if counted:
+        account.writes_last_second = lambda: sum(1 for _, at in writes if at > clock.now() - 1)  # type: ignore[attr-defined]
+    try:
+        up = .5
+        while up < .5102:
+            up += .00015
+            market(desk, clock, up)
+            run(desk, clock, .1, every=.1)
+        run(desk, clock, .4, every=.1)
+        market(desk, clock, up + .0105)
+        run(desk, clock, 1.5, every=.1)
+        stamps = [at for _, at in writes]
+        return max(sum(1 for at in stamps if start <= at < start + 1) for start in stamps), [name for name, _ in writes]
+    finally:
+        desk.close()
+
+
+def test_new_bids_keep_write_room_for_the_pulls_cancels(tmp_path: Path) -> None:
+    """M2: two reprice cancels, two new bids, then the pull's two cancels made six writes in 0.8 s against the
+    client's five a second, so a pull cancel waited on the wire. A new bid now waits while the last second already
+    holds WRITES_PER_S - 2 writes."""
+    peak, names = _write_burst(tmp_path / "before", counted=False)
+    assert peak == 6 > WRITES_PER_S and names == ["cancel", "cancel", "create", "create", "cancel", "cancel"]
+    peak, names = _write_burst(tmp_path / "after", counted=True)
+    assert peak <= WRITES_PER_S - 1 and names == ["cancel", "cancel", "create", "cancel"]
+    # Pull off: today's behaviour, the client's own budget only.
+    assert _write_burst(tmp_path / "off", counted=True, pull=False)[1][:4] == ["cancel", "cancel", "create", "create"]
+
+
+def test_a_bid_held_back_for_write_room_rests_in_the_twin(tmp_path: Path) -> None:
+    desk, account, clock = make_desk(tmp_path, caps=CAPS, extra=MAKERS)
+    try:
+        busy = [WRITES_PER_S - 2]
+        account.writes_last_second = lambda: busy[0]  # type: ignore[attr-defined]
+        market(desk, clock, .5)
+        asyncio.run(desk.step())
+        assert not account.creates and desk.reason == WRITE_ROOM_REASON
+        [order] = desk.twin.orders.values()  # without the pull the bid was sent: the twin rests it
+        assert (order.side, order.price, order.size) == ("up", .47, 5) and desk.twin_kept == {order.order_id}
+        busy[0] = WRITES_PER_S - 3
+        run(desk, clock, .6)
+        assert [(c["side"], c["price"]) for c in account.creates] == [("up", .47)]
+    finally:
+        desk.close()
+
+
+def test_a_pull_leaves_the_account_read_to_the_regular_reconcile(tmp_path: Path) -> None:
+    """M3: a pull cancel no longer forces an immediate account re-read (the hold and the unconfirmed cancel already
+    keep new orders back); the old stale-bid cancel still does."""
+    desk, account, clock = two_bids(tmp_path)
+    try:
+        market(desk, clock, .4947)
+        run(desk, clock, .3)
+        market(desk, clock, .5053, feed=False)
+        desk.on_tick(80000, clock.now(), clock.now())
+        fresh = desk.account_at
+        asyncio.run(desk._cancel_unsafe())
+        assert sorted(account.cancels) == ["order-3", "order-4"] and fresh is not None and desk.account_at == fresh
+    finally:
+        desk.close()
+    desk, account, clock = two_bids(tmp_path / "off", speeddesk_kalshi_pull=False)
+    try:
+        market(desk, clock, .515, feed=False)
+        asyncio.run(desk._cancel_unsafe())
+        assert sorted(account.cancels) == ["order-3", "order-4"] and desk.account_at is None
+    finally:
+        desk.close()
+
+
+def _choppy(tmp_path: Path, *, pull: bool) -> dict[str, Any]:
+    """The Up fair flips between 0.495 and 0.505 every 10.2 s for a minute: a 1c move each time, yet the bids
+    priced at 0.50 are never 1c from their own fair, so the rule without the pull never cancels them."""
+    desk, account, clock = two_bids(tmp_path, speeddesk_kalshi_pull=pull)
+    try:
+        flip, next_flip, end = 1, clock.now(), clock.now() + 60
+        while clock.now() < end - 1e-9:
+            if clock.now() >= next_flip - 1e-9:
+                flip = -flip
+                market(desk, clock, .5 + .005 * flip)
+                next_flip += 10.2
+            run(desk, clock, .2, every=.2)
+        twin = [receipt.payload for receipt in desk.ledger.iter_receipts() if receipt.kind == "speeddesk_twin"]
+        return {"twin": sorted((order.side, order.price, order.size) for order in desk.twin.orders.values()),
+                "twin_cancels": [row for row in twin if row.get("event") == "speeddesk_cancel"],
+                "twin_rests": sum(row.get("event") == "speeddesk_rest" for row in twin),
+                "creates": len(account.creates), "cancels": len(account.cancels), "panel": desk.panel()["pull"]}
+    finally:
+        desk.close()
+
+
+def test_in_a_choppy_market_the_twin_is_the_bot_without_the_pull(tmp_path: Path) -> None:
+    """M4: every real re-bid lands at an extreme fair, so the old 1c rule names the next cancel ("reprice"), and
+    such a cancel used to cancel the twin's kept bids too: the twin copied the pulled bot (20 cancels in 2 minutes)
+    instead of keeping the no-pull bot's bids. Now it matches a genuine pull-off run, and every real cancel at a move
+    counts as pulled."""
+    on, off = _choppy(tmp_path / "on", pull=True), _choppy(tmp_path / "off", pull=False)
+    assert off["creates"] == 4 and off["cancels"] == 0 and not off["twin_cancels"]
+    assert on["creates"] > 4 and on["cancels"] > 2  # the real bot pulls and bids again after each hold
+    assert not on["twin_cancels"] and on["twin"] == off["twin"] and on["twin_rests"] == off["twin_rests"]
+    assert on["panel"]["bids_pulled_today"] == on["cancels"]
+
+
+def test_the_twin_bids_again_when_its_kept_bid_is_repriced_while_the_real_one_rests(tmp_path: Path) -> None:
+    """Correctness review 1 (HIGH): after a hold the real bot rests new bids at 0.5053 while the twin keeps its 0.50
+    ones; the fair then sits at 0.512 (0.7c from the real bids, 1.2c from the twin's). The old rule reprices the
+    twin's and bids again at once; the twin used to stay bidless until the real bids ended."""
+    desk, account, clock = two_bids(tmp_path)
+    try:
+        swing(desk, clock, .0053)
+        run(desk, clock, 12)
+        assert sorted(bids(account)) == [("down", .46), ("up", .47)] and desk.twin_kept == {3, 4}
+        market(desk, clock, .512)
+        run(desk, clock, 6)
+        assert sorted(bids(account)) == [("down", .46), ("up", .47)] and not desk.pull.held(TICKER, clock.now())
+        assert sorted((order.side, order.price, round(order.fair, 3)) for order in desk.twin.orders.values()) == [
+            ("down", .45, .488), ("up", .48, .512)]
+        assert set(desk.twin.orders) == desk.twin_kept and not desk.twin_owed
+    finally:
+        desk.close()
+
+
+def test_a_bid_the_pull_stops_at_the_send_leaves_the_twins_kept_bids_alone(tmp_path: Path) -> None:
+    """Correctness review 6: a trigger between the decision and the first byte made the send guard refuse the real
+    bid, and the refusal cancelled every twin bid in the window. Without the pull the bid was sent: the twin keeps
+    its bids."""
+    desk, _, clock = two_bids(tmp_path)
+    try:
+        swing(desk, clock, .0053)
+        run(desk, clock, 8.7)  # the hold is nearly over; the twin keeps both bids
+        before = {order_id: (order.side, order.price) for order_id, order in desk.twin.orders.items()}
+        assert set(before) == desk.twin_kept == {3, 4}
+        blocks, calls = desk.pull.blocks, []
+
+        def once(window: str, up: float, now: float) -> bool:
+            calls.append(now)
+            return len(calls) == 1 or blocks(window, up, now)
+
+        desk.pull.blocks = once  # type: ignore[method-assign]
+        run(desk, clock, 1.8)
+        assert calls and any(event.get("state") == "not sent; prices moved before send" for event in desk.latest_events)
+        assert {order_id: (order.side, order.price) for order_id, order in desk.twin.orders.items()} == before
+        assert not [receipt for receipt in desk.ledger.iter_receipts() if receipt.kind == "speeddesk_twin"
+                    and receipt.payload.get("event") == "speeddesk_cancel"]
+    finally:
+        desk.close()
+
+
+def test_twin_logic_never_touches_the_real_risk_book(tmp_path: Path) -> None:
+    """L8/review 8: the held window's twin bid was sized with the real book's can_buy, which notes a real stop (and
+    holds the ladder) when even one contract is refused. It is sized by the twin's own books now."""
+    desk, account, clock = make_desk(tmp_path, caps=CAPS, extra=MAKERS)
+    try:
+        desk.book.can_buy = lambda *args, **kwargs: pytest.fail("practice code asked the real risk book")  # type: ignore[method-assign]
+        market(desk, clock, .4947)
+        desk.on_tick(80000, clock.now(), clock.now())
+        clock.advance(.3)
+        market(desk, clock, .5053)
+        desk.on_tick(80000, clock.now(), clock.now())
+        run(desk, clock, 3)
+        assert not account.creates and desk.book.stop_hit_at is None
+        [order] = desk.twin.orders.values()
+        assert (order.side, order.price, order.size) == ("up", .47, 5)
+    finally:
+        desk.close()
+
+
+def test_a_kept_twin_bid_is_cancelled_when_a_take_is_available(tmp_path: Path) -> None:
+    """Review 10 (latent, takes are off): the old rule cancels a resting bid when the ask can be taken; a kept twin
+    bid that ignored it would refuse the twin's copy of the real take."""
+    desk, _, clock = two_bids(tmp_path)
+    try:
+        swing(desk, clock, .0053)
+        assert desk.twin_kept == {3, 4}
+        desk.settings = replace(desk.settings, speeddesk_take_edge=.01)
+        # Asks at 0.47 (0.49 with the fee reserve): Up (fair 0.5053) can take it, Down (fair 0.4947) cannot.
+        market(desk, clock, .5053, ask=.47, feed=False)
+        desk._twin_unpulled(desk.snapshot(), clock.now())
+        desk.checkpoint()
+        cancelled = [receipt.payload for receipt in desk.ledger.iter_receipts() if receipt.kind == "speeddesk_twin"
+                     and receipt.payload.get("event") == "speeddesk_cancel"]
+        assert [(row["side"], row["reason"]) for row in cancelled] == [("up", "take_available")]
+        assert [desk.twin.orders[order_id].side for order_id in desk.twin_kept] == ["down"] and not desk.twin_owed
+    finally:
+        desk.close()
+
+
+def test_the_bid_whose_fair_fell_is_cancelled_first(tmp_path: Path) -> None:
+    """L5: after a rise the Down bid is the one now priced too high (it sold to us next), and the cancels go one at a
+    time with a save and a round trip each: it goes first. After a fall, the Up bid goes first."""
+    for direction, first in ((1, "order-4"), (-1, "order-3")):
+        desk, account, clock = two_bids(tmp_path / str(direction))
+        try:
+            market(desk, clock, .5 + .0106 * direction)
+            run(desk, clock, .3)
+            assert account.cancels[0] == first and sorted(account.cancels) == ["order-3", "order-4"]
+        finally:
+            desk.close()
+
+
+def test_one_fair_value_behind_every_decision_and_trigger(tmp_path: Path) -> None:
+    """Review 5 (merge hazard): the speed branch changes fair_up's arguments at each call site; the trigger had its
+    own call and would have kept the old fair. Every check now goes through KalshiLiveDesk._fair."""
+    assert inspect.getsource(speeddesk_live).count("fair_up(") == 1
+    desk, _, clock = make_desk(tmp_path, caps=CAPS, extra=MAKERS)
+    try:
+        market(desk, clock, .5)
+        asyncio.run(desk.step())
+        [intent] = desk.intents.values()
+        assert intent.side == "up" and desk.pull.fairs[TICKER].low[-1][1] == intent.fair
+    finally:
+        desk.close()
+
+
+def test_a_hold_survives_a_restart(tmp_path: Path) -> None:
+    """L9: a redeploy right after a jump used to let the bot bid again as soon as the startup reconcile finished."""
+    desk, account, clock = two_bids(tmp_path)
+    swing(desk, clock, .0053)
+    desk.checkpoint()
+    restored = reopen(tmp_path, desk, account, clock, caps=CAPS)
+    try:
+        assert restored.pull.held(TICKER, clock.now()) and restored.pull.since == desk.pull.since
+        clock.advance(restored.pull.rule.hold_s + .1)
+        assert not restored.pull.held(TICKER, clock.now())
+    finally:
+        restored.close()
+
+
+def test_a_long_lookback_keeps_its_whole_history() -> None:
+    """L7: the history was capped at 4,096 samples (20 s at 200 a second, against an allowed 30 s lookback) and each
+    sample rescanned it. The running extremes match a full scan of the lookback on every sample."""
+    rng = random.Random(3)
+    for lookback in (.5, 5.0, 30.0):
+        guard = PullGuard(PullRule(lookback_s=lookback, move=.01), now=0.0)
+        history: list[tuple[float, float]] = []
+        up, now = .5, 0.0
+        for _ in range(8000):
+            now += .005
+            up = round(up + rng.choice((-1, 1)) * .0003, 6)  # every sample a new value: 6,000 in 30 s
+            guard.observe("w", up, now, count=True)
+            history.append((now, up))
+            if len(history) % 97 == 0:  # a full scan of the lookback, every 97th sample
+                inside = [value for at, value in history if at >= now - lookback - 1e-8]
+                low, high, _ = guard.range["w"]
+                assert (low, high) == (min(inside), max(inside))
+
+
+def test_a_clock_step_back_never_stretches_the_hold() -> None:
+    """L6: a trigger at 1000 and the wall clock stepping back to 900 held the window until 1005 (105 s)."""
+    guard = PullGuard(PullRule(), now=990.0)
+    guard.observe("w", .50, 999.0, count=True)
+    guard.observe("w", .52, 1000.0, count=True)
+    guard.observe("w", .52, 900.0, count=True)
+    assert guard.held("w", 900.0) and guard.held("w", 905.0) and not guard.held("w", 905.1)
+    assert guard.open["w"].held_until == 905.0
+
+
+def test_the_week_before_baseline_starts_from_the_first_go_live() -> None:
+    """Review 7: a changed setting restarts ``since``; the baseline must still end where the pull first went live,
+    or it covers days the pull was already on."""
+    first = PullGuard(PullRule(), now=1000.0)
+    changed = PullGuard(PullRule(move=.02), now=5000.0, saved=first.to_state())
+    assert (changed.since, changed.first_live) == (5000.0, 1000.0)
+    off = PullGuard(PullRule(enabled=False), now=6000.0, saved=changed.to_state())
+    assert (off.since, off.first_live) == (None, 1000.0)
+    again = PullGuard(PullRule(), now=7000.0, saved=off.to_state())
+    assert (again.since, again.first_live) == (7000.0, 1000.0)
+    legacy = {key: value for key, value in first.to_state().items() if key != "first_live"}
+    assert PullGuard(PullRule(move=.02), now=5000.0, saved=legacy).first_live == 1000.0
+
+
+def test_compare_shows_pnl_where_either_traded_and_the_real_lock_buys() -> None:
+    """Review 2 and 3: the pull's main effect is fewer fills, and windows only one side traded were left out of the
+    P&L; and a pull that leaves more windows half filled buys more locks, on the real side only."""
+    starts = {"a": 10.0, "b": 20.0, "c": 30.0, "old": 1.0}
+    live, twin = {"a": .5, "b": -1.0, "old": 9.0}, {"a": .25, "c": 2.0}
+    report = compare(starts, live, twin, [], [], [("b", 5, 4.1), ("a", 2, 1.9), ("old", 5, 5.0)], start=5.0)
+    assert (report["live_pnl_usd"], report["twin_pnl_usd"]) == (.5, .25)  # both traded: "a" only
+    assert (report["live_pnl_either_usd"], report["twin_pnl_either_usd"], report["live_minus_twin_either_usd"]) == (
+        -.5, 2.25, -2.75)
+    assert (report["live_locks"], report["live_lock_contracts"], report["live_lock_cost_usd"]) == (2, 7, 6.0)
+    assert report["live_locks_per_window"] == pytest.approx(2 / 3, abs=1e-4)
+
+
+def test_the_panel_counts_the_real_lock_buys(tmp_path: Path) -> None:
+    desk, account, clock = make_desk(tmp_path, caps=CAPS, extra=MAKERS)
+    try:
+        starter_bid_filled(desk, account, clock)
+        run(desk, clock, 1.5)
+        window = desk.book.windows[TICKER]
+        clock.advance(window.end - 239 - clock.now())
+        market(desk, clock, .2, ask=.25)
+        run(desk, clock, 1.5)
+        [lock] = [index for index, create in enumerate(account.creates) if create["kind"] == "take"]
+        fill_order(account, clock, lock, side="down", price=.25, size=5)
+        account.account_positions = []
+        run(desk, clock, 1.5)
+        desk.book.settled[TICKER] = LiveSettlement(TICKER, "kalshi:x", clock.now(), True, 5, 5, 3.6, 0, 5, 5, 5,
+                                                   1.4, 0, 1.4)
+        desk.pull.since = desk.pull.first_live = window.start
+        control = desk.panel()["pull"]["since_pull"]
+        assert (control["live_locks"], control["live_lock_contracts"]) == (1, 5)
+        assert control["live_lock_cost_usd"] == pytest.approx(5 * .25 + .0656, abs=1e-4)  # price and taker fee
+        assert control["windows_either_traded"] == 1 and control["live_pnl_either_usd"] == 1.4
+    finally:
+        desk.close()
+
+
+def test_a_broken_comparison_never_stops_a_save_or_a_cancel(tmp_path: Path) -> None:
+    """Review 11: the A/B is computed inside every save, including the one before each cancel; and the twin's own
+    step runs before the loop's error handling. Neither may stop a real cancel."""
+    desk, account, clock = two_bids(tmp_path)
+    try:
+        def broken(*args: Any) -> dict[str, Any]:
+            raise RuntimeError("bad row")
+
+        desk._pull_control = broken  # type: ignore[method-assign]
+        desk._twin_unpulled = broken  # type: ignore[method-assign]
+        desk._pull_ab = None
+        swing(desk, clock, .0053)
+        assert sorted(account.cancels) == ["order-3", "order-4"]
+        assert desk.panel()["pull"]["error"] == "RuntimeError" and desk.panel()["pull"]["since_pull"] is None
+    finally:
+        desk.close()

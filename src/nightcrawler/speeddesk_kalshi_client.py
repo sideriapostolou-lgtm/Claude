@@ -151,6 +151,12 @@ class KalshiClient:
                 return
             self._clock.sleep(wait)
 
+    def writes_last_second(self) -> int:
+        """Order creates and cancels in the rolling second, as the write budget counts them. Read without the
+        transport lock (a snapshot taken under the GIL), so the event loop never waits behind a request."""
+        now = self._clock.now()
+        return sum(1 for moment in tuple(self._recent[True]) if moment > now - 1.0)
+
     def close(self) -> None:
         """Close the kept-alive HTTP connection; no credential file is ever opened."""
         if self._session is not None:

@@ -37,12 +37,17 @@ Format: `### YYYY-MM-DD HH:MM UTC, From -> To: subject`, then what you need, the
   instant price moves ... test with our current bot"). Built on `claude/kalshi-pull` (committed locally, not merged
   or deployed). It adds one additive block, `money.speeddesk.kalshi_live.pull`, whitelisted in
   `pagestate._kalshi_pull` (one helper and one key in the shared `pagestate.py`). No town file is touched.
-- Fields: `enabled`, `move`, `lookback_s`, `hold_s`, `since` (UTC epoch s the rule went live), `held`
+- Fields: `enabled`, `move`, `lookback_s`, `hold_s`, `since` (UTC epoch s the rule went live with these
+  settings), `first_live` (when it first went live at all; `week_before` ends there), `held`
   ({window: held-until epoch}), `pulls_today`, `bids_pulled_today` (null when the report is from another UTC day),
   `pulls_31d`, `bids_pulled_31d`, and `since_pull` / `week_before`, each `windows_both_traded`, `live_pnl_usd`
-  (REAL money), `twin_pnl_usd` (PRACTICE), `live_minus_twin_usd`, `windows_either_traded`, `live_maker_fills`,
-  `twin_maker_fills`, `live_maker_contracts`, `twin_maker_contracts`, `*_maker_fills_per_window`. USD; unknown is
-  null. Display only: never add `twin_*` or the difference to real cash, profit or town growth.
+  (REAL money), `twin_pnl_usd` (PRACTICE), `live_minus_twin_usd` (those three over windows both traded),
+  `windows_either_traded`, `live_pnl_either_usd`, `twin_pnl_either_usd`, `live_minus_twin_either_usd` (over windows
+  either traded, a side that did not trade counted as 0), `live_maker_fills`, `twin_maker_fills`,
+  `live_maker_contracts`, `twin_maker_contracts`, `*_maker_fills_per_window`, and the real lock buys `live_locks`,
+  `live_lock_contracts`, `live_lock_cost_usd`, `live_locks_per_window` (REAL money; the twin never locks). USD;
+  unknown is null. Display only: never add `twin_*` or the differences to real cash, profit or town growth.
+  (Fields added 2026-10-13 22:00 UTC after review, same branch.)
 
 Status: open (for your display; the data lands when the branch merges)
 

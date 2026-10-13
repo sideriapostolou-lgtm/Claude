@@ -442,3 +442,23 @@ def test_paginated_reads_record_pages_and_bytes_for_the_status_line(signing_key:
     c = client(signing_key, Transport(Response({"fills": [], "cursor": ""})))
     c.fills()
     assert c.read_stats["fills"] == {"pages": 1, "bytes": None}  # a transport that reports no body size
+
+
+def test_the_write_count_covers_the_rolling_second_and_ignores_reads(signing_key: Any) -> None:
+    """The bid pull keeps write room for its cancels by this count (speeddesk_live._write_room_short)."""
+    clock = FakeClock(1000)
+    cancelled = Response({"order_id": "exchange-order-1", "reduced_by": "2.00", "ts_ms": 1000400})
+    transport = Transport(Response({}), ack(), cancelled, Response({}))
+    c = client(signing_key, transport, clock=clock)
+    assert c.writes_last_second() == 0
+    c.balance()  # a read
+    create(c)
+    clock.advance(.4)
+    c.cancel("exchange-order-1", ticker=TICKER)
+    assert c.writes_last_second() == 2
+    clock.advance(.7)  # the create is now more than a second old
+    assert c.writes_last_second() == 1
+    c.balance()
+    assert c.writes_last_second() == 1
+    clock.advance(.4)
+    assert c.writes_last_second() == 0
