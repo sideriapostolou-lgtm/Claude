@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 from dataclasses import replace
 from pathlib import Path
 from typing import Any
@@ -1153,7 +1154,7 @@ def test_saved_state_stays_small_however_many_windows_have_finished(tmp_path: Pa
     desk, _, clock = settled_window(tmp_path)
     clock.advance(3600)
     desk.checkpoint()
-    size = desk.path.stat().st_size
+    size = len(json.dumps(desk.ledger.get_kv("kalshi_live_state")))
     from dataclasses import replace as clone
     identity = next(iter(desk.intents))
     for index in range(300):  # three hundred more finished orders in the archived window
@@ -1161,5 +1162,30 @@ def test_saved_state_stays_small_however_many_windows_have_finished(tmp_path: Pa
         desk.intents[key] = clone(desk.intents[identity], client_order_id=key)
         desk.book.intents[key] = clone(desk.book.intents[identity], client_order_id=key)
     desk.checkpoint()
-    assert desk.path.stat().st_size <= size + 64
+    assert len(json.dumps(desk.ledger.get_kv("kalshi_live_state"))) <= size + 64
     desk.close()
+
+
+def test_the_money_page_still_reads_the_whole_real_book_after_archiving(tmp_path: Path) -> None:
+    from nightcrawler import moneyconnections
+
+    desk, _, clock = settled_window(tmp_path)
+    try:
+        before = desk.book.window_parts(lambda _window: True)
+        clock.advance(3600)
+        desk.checkpoint()
+        assert desk.archived == {TICKER}
+        clock.advance(11)
+        desk.checkpoint()  # the next display copy, after the window left the saved state
+        mirror = json.loads(desk.path.read_text())
+        assert TICKER not in desk.ledger.get_kv("kalshi_live_state")["book"]["windows"]
+        assert {part: mirror["book"][part] for part in before} == json.loads(json.dumps(before))
+        view = moneyconnections.kalshi_connection(mirror, clock.now(), lambda value, limit=300: str(value)[:limit])
+        assert view["status"] == "ok"
+        assert any(event["type"] == "settlement" for event in view["events"])  # the settled window is still shown
+        stamp = desk.last_mirror
+        clock.advance(2)
+        desk.checkpoint()
+        assert desk.last_mirror == stamp  # display copies are spaced out; the ledger save is not
+    finally:
+        desk.close()

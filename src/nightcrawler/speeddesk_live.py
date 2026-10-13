@@ -67,6 +67,9 @@ MIN_STEP_S, IDLE_STEP_S = 0.02, 0.25
 # (ledger key ARCHIVE_KEY + sequence). Every save rewrote every order ever made: 206 ms per save on Railway by
 # 2026-10-13 13:45 UTC, about 87 us more per stored order, several saves a second, all on the event loop.
 ARCHIVE_KEY, ARCHIVE_AFTER_S = "kalshi_live_archive/", 3600.0
+# The money page rebuilds and checks the whole real book from state.json (FRESH_SECONDS = 60 there): it gets every
+# window, archived ones from memory, at most every MIRROR_EVERY_S. A display copy, so no fsync; the ledger is durable.
+MIRROR_EVERY_S = 10.0
 
 
 @dataclass(frozen=True)
@@ -198,6 +201,7 @@ class KalshiLiveDesk:
         self.last_status = -math.inf
         self.last_checkpoint = -math.inf
         self.save_ms: float | None = None
+        self.save_stages: dict[str, float | None] = {}
         self.retry_at = -math.inf
         self.cancel_retry_at: dict[str, float] = {}
         self.errors = 0
@@ -240,6 +244,8 @@ class KalshiLiveDesk:
             saved = self.ledger.get_kv(STATE_KEY)
             self.archived: set[str] = set()
             self.archive_chunks = 0
+            self.archive_parts: dict[str, dict[str, Any]] = {part: {} for part in (*WINDOW_PARTS, "live_intents")}
+            self.last_mirror = -math.inf
             if saved is None and self.path.exists():
                 raise ValueError("Real receipt ledger missing beside existing state")
             if saved is None:
@@ -373,7 +379,7 @@ class KalshiLiveDesk:
         for part in WINDOW_PARTS:
             saved["book"][part] = {**merged[part], **saved["book"][part]}
         saved["intents"] = {**merged["live_intents"], **saved["intents"]}
-        self.archived, self.archive_chunks = set(listed), chunks
+        self.archived, self.archive_chunks, self.archive_parts = set(listed), chunks, merged
 
     def _live_windows(self) -> set[str]:
         """Windows with anything that can still change: a reservation or an unfinished or uncertain order."""
@@ -409,10 +415,10 @@ class KalshiLiveDesk:
         self.archived -= live
         cold = self._cold_windows(self.clock(), live)
         hidden = self.archived | cold
-        chunk = ({"version": 1, "windows": sorted(cold), "book": self.book.window_parts(lambda window: window in cold),
+        chunk: dict[str, Any] | None = ({"version": 1, "windows": sorted(cold), "book": self.book.window_parts(lambda window: window in cold),
                   "intents": {key: without_default_lock(asdict(value)) for key, value in self.intents.items()
                               if value.window in cold}} if cold else None)
-        state = {"version": 1, "started_at": self.started_at, "updated_at": self.clock(),
+        state: dict[str, Any] = {"version": 1, "started_at": self.started_at, "updated_at": self.clock(),
                  "book": self.book.to_state(without=hidden),
                  "intents": {key: without_default_lock(asdict(value)) for key, value in self.intents.items()
                              if value.window not in hidden},
@@ -424,26 +430,39 @@ class KalshiLiveDesk:
                  "window_evidence": self.evidence.state(),
                  "reports": self.reports,
                  "latest_events": self.latest_events, "panel": self.panel()}
+        building = time.perf_counter()
         with self.ledger.transaction():
             for kind, payload in self.pending:
                 self.ledger.append_receipt(kind, payload, ts=payload["at"])
             if chunk is not None:
                 self.ledger.set_kv(f"{ARCHIVE_KEY}{self.archive_chunks}", chunk)
             self.ledger.set_kv(STATE_KEY, state)
+        saved = time.perf_counter()
         if chunk is not None:  # only once the chunk and the state that lists it are committed together
             self.archived |= cold
             self.archive_chunks += 1
+            for part in WINDOW_PARTS:
+                self.archive_parts[part].update(chunk["book"][part])
+            self.archive_parts["live_intents"].update(chunk["intents"])
         for kind, payload in self.pending:
             log.info("%s %s", kind, json.dumps(payload, allow_nan=False, separators=(",", ":")))
         self.pending.clear()
-        temporary = self.path.with_suffix(".tmp")
-        with temporary.open("w", encoding="utf-8") as stream:
-            json.dump(state, stream, allow_nan=False, separators=(",", ":"))
-            stream.flush()
-            os.fsync(stream.fileno())
-        os.replace(temporary, self.path)
+        mirror_ms = None
+        if self.stopping or self.clock() - self.last_mirror >= MIRROR_EVERY_S:
+            mirroring = time.perf_counter()
+            full = {**state, "intents": {**self.archive_parts["live_intents"], **state["intents"]},
+                    "book": {**state["book"], **{part: {**self.archive_parts[part], **state["book"][part]}
+                                                 for part in WINDOW_PARTS}}}
+            temporary = self.path.with_suffix(".tmp")
+            with temporary.open("w", encoding="utf-8") as stream:
+                json.dump(full, stream, allow_nan=False, separators=(",", ":"))
+            os.replace(temporary, self.path)
+            self.last_mirror = self.clock()
+            mirror_ms = (time.perf_counter() - mirroring) * 1000
         self.last_checkpoint = self.clock()
         self.save_ms = (time.perf_counter() - started) * 1000
+        self.save_stages = {"build_ms": (building - started) * 1000, "ledger_ms": (saved - building) * 1000,
+                            "mirror_ms": mirror_ms}
 
     def _twin_events(self, events: list[Any]) -> None:
         for event in events:
@@ -1249,7 +1268,7 @@ class KalshiLiveDesk:
     def _heartbeat(self) -> None:
         if self.clock() - self.last_status >= 60:
             self._record("speeddesk_live_status", **self.panel(),
-                         save={"last_ms": self.save_ms, "archived_windows": len(self.archived),
+                         save={"last_ms": self.save_ms, **self.save_stages, "archived_windows": len(self.archived),
                                "saved_orders": sum(intent.window not in self.archived for intent in self.intents.values())})
             self.last_status = self.clock()
         if self.pending or self.clock() - self.last_checkpoint >= 5:

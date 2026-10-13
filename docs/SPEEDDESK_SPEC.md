@@ -431,6 +431,10 @@ lists it); saves hold only the other windows. A restart merges the chunks under 
 book is rebuilt, so every restore check sees the full books; a missing or inconsistent chunk refuses to start.
 An archived window with new activity is saved in full again and archived anew once finished (later copies win).
 The release before this cannot read the archive and fails closed (companion halted, no orders): roll forward.
+`state.json` stays the display copy the money page rebuilds and checks the whole real book from: it holds
+every window (archived ones from memory, newer saved copies win), at most every 10 s and at shutdown, without
+an fsync (the ledger is the durable record; the page treats data older than 60 s as stale). The status line
+splits each save into build_ms, ledger_ms and mirror_ms.
 
 The public US probe checks the five-minute series and validates an actual market's BTC/UP_DOWN/5m/BRTI terms
 and start/end before logging `skipwatch_us_5m_listing`. Its first verified observation stays on the page.
