@@ -180,6 +180,9 @@ def test_independent_source_ages_survive_a_fresh_heartbeat(tmp_path: Path) -> No
     assert "2 hours ago" in first["pm-times"]["text"]
     assert "current Kalshi cash balance is not available" in first["kalshi-warning"]["text"]
     assert "2 minutes ago" in first["kalshi-times"]["text"]
+    assert first["kalshi-times"]["text"].startswith("Desk report less than a minute ago; cash read 2 minutes ago")
+    assert "Account reconciliation time not reported" in first["kalshi-times"]["text"]
+    assert "Account checked" not in first["kalshi-times"]["text"]
 
 
 @needs_node
@@ -191,7 +194,8 @@ def test_missing_or_practice_only_records_never_become_real_zero_profit(tmp_path
     for key in ("pm-cash", "pm-profit", "pm-open", "pm-value", "kalshi-cash", "kalshi-profit", "kalshi-pacific-profit", "kalshi-risk"):
         assert first[key]["text"] == "Not reported"
     assert "No new bot bets" in first["pm-state"]["text"]
-    assert "complete Pacific-day bot result is not available" in first["pm-warning"]["text"]
+    assert "profit today is unverified" in first["pm-warning"]["text"]
+    assert "complete Pacific-day report is unavailable" in first["pm-warning"]["text"]
 
 
 @needs_node
@@ -269,7 +273,80 @@ def test_missing_details_and_old_sources_do_not_claim_reconciled_empty_accounts(
     first = run(tmp_path, value)["first"]
     assert first["kalshi-business-time"]["text"].startswith("Last saved source: 5 minutes ago")
     assert "awaiting a current source check" in first["activity"]["text"]
-    assert "complete, current Pacific-day result is not available" in first["kalshi-warning"]["text"]
+    assert "profit today is unverified" in first["kalshi-warning"]["text"]
+    assert "old" in first["kalshi-warning"]["text"]
+
+
+@needs_node
+def test_book_mismatch_explains_unavailable_pacific_profit_without_hiding_cash(tmp_path: Path) -> None:
+    value = connected_page()
+    value["money"]["polymarket"]["real"]["today_pacific"].update(
+        status="incomplete", reason="day_book_mismatch", pnl_usd=None,
+    )
+    first = run(tmp_path, value)["first"]
+    assert first["pm-cash"]["text"] == "$14.39"
+    assert first["pm-profit"]["text"] == "Not reported"
+    assert "profit today is unverified" in first["pm-warning"]["text"]
+    assert "do not match" in first["pm-warning"]["text"]
+
+
+@needs_node
+def test_pair_completion_is_real_cash_but_not_permission_for_new_bets(tmp_path: Path) -> None:
+    value = connected_page()
+    value["money"]["speeddesk"]["kalshi_live"].update(
+        mode="live", active=True, authenticated=True, real_orders_available=True,
+        total_halted=True, cleanup_pending=False, reserved_usd=2.5, at_risk_usd=.75,
+        reason="Total loss stop; only completing half-filled pairs before the close",
+        caps={"window_usd": 5, "open_usd": 10, "day_stop_usd": 6, "total_stop_usd": 10},
+    )
+    first = run(tmp_path, value)["first"]
+    assert first["kalshi-state"]["text"].startswith("REAL MONEY (Kalshi)")
+    assert "completing existing pairs only" in first["kalshi-state"]["text"]
+    assert "new bets are stopped" in first["kalshi-state"]["text"]
+    assert "new real orders enabled" not in first["kalshi-state"]["text"]
+    assert first["kalshi-risk"]["text"] == "$0.75"
+    assert first["kalshi-reserved"]["text"] == "$2.50"
+    assert "$5.00 per window; $10.00 open risk; $6.00 UTC-day stop; $10.00 total stop" in first["kalshi-limits"]["text"]
+    assert "pair-completion reservations do not" in first["kalshi-risk-note"]["text"]
+    assert "may exceed these budgets or loss stops" in first["kalshi-limits-note"]["text"]
+    assert "do not guarantee profit" in first["kalshi-limits-note"]["text"]
+
+
+@needs_node
+@pytest.mark.parametrize("reset", ["armed", "account_unreconciled"])
+def test_integrity_stop_and_pending_reset_never_look_like_resumed_trading(tmp_path: Path, reset: str) -> None:
+    value = recorded_page()
+    value["money"]["speeddesk"]["kalshi_live"].update(
+        mode="live", active=True, authenticated=True, real_orders_available=True,
+        integrity_error="position_mismatch", integrity_reset=reset, cleanup_pending=False,
+    )
+    first = run(tmp_path, value)["first"]
+    assert first["kalshi-state"]["text"] == "Accounting checks stopped real buys"
+    assert "real buys are blocked" in first["kalshi-warning"]["text"]
+    assert "Accounting reset: waiting" in first["kalshi-warning"]["text"]
+    assert "REAL MONEY (Kalshi)" not in first["kalshi-state"]["text"]
+
+
+@needs_node
+def test_account_reconciliation_has_its_own_age_not_the_desk_heartbeat(tmp_path: Path) -> None:
+    value = recorded_page()
+    value["money"]["speeddesk"]["kalshi_live"].update(account_at=NOW - 601)
+    first = run(tmp_path, value)["first"]
+    assert first["kalshi-times"]["text"].startswith("Desk report less than a minute ago; cash read less than a minute ago")
+    assert "Account reconciliation 10 minutes ago" in first["kalshi-times"]["text"]
+    assert "fresh desk report does not refresh it" in first["kalshi-warning"]["text"]
+
+
+@needs_node
+def test_finished_window_status_does_not_present_recorded_fills_as_current_holdings(tmp_path: Path) -> None:
+    value = connected_page()
+    value["money"]["connections"]["kalshi"]["positions"][0].update(
+        status="finalized_unreconciled", current_position_verified=False,
+        status_note="This window has finalized; settlement is not reconciled. These are recorded fills, not verified open holdings.",
+    )
+    first = run(tmp_path, value)["first"]
+    assert "This window has finalized; settlement is not reconciled" in first["kalshi-business"]["text"]
+    assert "not verified open holdings" in first["kalshi-business"]["text"]
 
 
 @needs_node

@@ -14,13 +14,28 @@ import math
 import random
 import subprocess
 import time
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, ClassVar
 
 import pytest
-
 from fakes import FakeClock, FakeHttp, load_fixture
+from world import (
+    DECIMALS,
+    GARY,
+    GARY_DEV,
+    GARY_POOL,
+    RISKY,
+    SOL_USD,
+    SWAP_COST,
+    World,
+    dip_rebound_candles,
+    iso,
+    jupiter_token,
+    make_world,
+)
+
 from nightcrawler.audit import Auditor
 from nightcrawler.broker.base import QuoteRejected, SwapUnknown
 from nightcrawler.broker.paper import PaperBroker
@@ -40,6 +55,7 @@ from nightcrawler.engine import (
 from nightcrawler.http import HttpClient
 from nightcrawler.judge import Judge
 from nightcrawler.learn import job as learn_job
+from nightcrawler.learn import recorder as rec_mod
 from nightcrawler.learn import replay as learn_replay
 from nightcrawler.learn.recorder import Recorder, RecorderThread
 from nightcrawler.learn.store import LearnStore, db_path, learn_dir
@@ -59,22 +75,15 @@ from nightcrawler.models import (
 from nightcrawler.radar import Radar
 from nightcrawler.risk import RiskManager
 from nightcrawler.sources import build_sources
-from world import (
-    DECIMALS,
-    GARY,
-    GARY_DEV,
-    GARY_POOL,
-    RISKY,
-    SOL_USD,
-    SWAP_COST,
-    World,
-    dip_rebound_candles,
-    iso,
-    jupiter_token,
-    make_world,
-)
 
 COPYCAT = "US517G5965aydkZ46HS38QLi7UQiSojurfbQfKCELFr"  # another coin with GARY's ticker
+
+
+@pytest.fixture(autouse=True)
+def healthy_recorder_disk(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Learning integration tests must not depend on the test runner's free disk space."""
+    monkeypatch.setattr(rec_mod, "_free_bytes", lambda path: 2 * rec_mod.LOW_DISK_BYTES)
+
 
 @pytest.fixture
 def world(fake_http: FakeHttp, fake_clock: FakeClock) -> World:
@@ -1281,7 +1290,7 @@ class FakeLearner:
 class BoomRecorder:
     """A recorder whose every step and every emit crashes."""
 
-    stats: dict[str, int] = {}
+    stats: ClassVar[dict[str, int]] = {}
 
     def step(self) -> None:
         raise RuntimeError("recorder bug")

@@ -44,7 +44,13 @@ def test_reconciles_both_full_utc_days_then_selects_since_pacific_midnight_witho
     got = D.pacific_booked_day(st, NOW)
     assert got == {"date": "2026-10-12", "tz": D.PACIFIC_TZ, "start": START,
                    "end": ts("2026-10-13T07:00:00Z"), "as_of": NOW, "status": "ok",
-                   "pnl_usd": pytest.approx(0.28), "settled": 4, "reason": None}
+                   "pnl_usd": pytest.approx(0.28), "settled": 4, "reason": None,
+                   "reconciliation": [
+                       {"day_utc": "2026-10-12", "book_results": 3, "retained_results": 3,
+                        "book_pnl_usd": pytest.approx(12.15), "retained_pnl_usd": pytest.approx(12.15),
+                        "matches": True},
+                       {"day_utc": "2026-10-13", "book_results": 2, "retained_results": 2,
+                        "book_pnl_usd": .13, "retained_pnl_usd": .13, "matches": True}]}
     assert st == original
 
 
@@ -85,6 +91,22 @@ def test_missing_pre_midnight_row_also_invalidates_partial_utc_day_coverage() ->
     st = book([result(START - 1, 0.1), result(START + 1, 0.2)])
     st["closed"].pop(0)
     assert D.pacific_booked_day(st, NOW)["status"] == "incomplete"
+
+
+def test_mismatch_diagnostics_show_both_books_without_promoting_partial_profit() -> None:
+    state = book([result(START + 1, .2), result(START + 2, -.1),
+                  result(ts("2026-10-13T01:00:00Z"), .3)])
+    state["closed"].pop(1)
+    original = copy.deepcopy(state)
+    got = D.pacific_booked_day(state, NOW)
+    assert got["status"] == "incomplete" and got["pnl_usd"] is None and got["settled"] is None
+    assert got["reconciliation"] == [
+        {"day_utc": "2026-10-12", "book_results": 2, "retained_results": 1,
+         "book_pnl_usd": .1, "retained_pnl_usd": .2, "matches": False},
+        {"day_utc": "2026-10-13", "book_results": 1, "retained_results": 1,
+         "book_pnl_usd": .3, "retained_pnl_usd": .3, "matches": True},
+    ]
+    assert state == original
 
 
 def test_retention_limit_itself_is_not_incompleteness_if_all_touched_books_match() -> None:

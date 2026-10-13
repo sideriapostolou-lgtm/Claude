@@ -124,7 +124,9 @@ def _kalshi_book(raw: Any, now: float) -> LiveRiskBook:
             for key in ("at", "created_at", "last_snapshot_at"):
                 if row.get(key) is not None and _timestamp(row[key], now) is None:
                     raise ValueError("invalid_time")
-    book = LiveRiskBook.from_state(raw)
+    # The execution restore retains references to a few dictionaries. Keep even
+    # those isolated: reading the town must never mutate a caller's real book.
+    book = LiveRiskBook.from_state(copy.deepcopy(raw))
     for inventory in book.inventory.values():
         for holding in (inventory.up, inventory.down):
             if any(_number(value) is None for value in (holding.shares, holding.cost, holding.fees)):
@@ -158,11 +160,11 @@ def kalshi_connection(raw_state: Any, now: float, text: Text) -> dict[str, Any]:
                cash_at=_timestamp(panel.get("cash_at"), now), cash_usd=_number(panel.get("cash_usd")),
                reported_mode=panel.get("mode") if panel.get("mode") in ("paper", "live") else None,
                source_note="Saved Kalshi real-fill book. Checkpoint age is not a successful account reconciliation.",
-               positions_basis="Gross unsettled bot fills, including both sides; not a current venue position snapshot.")
+               positions_basis="Gross bot fills awaiting a recorded settlement, including both sides; not current account bets.")
     out["issues"].append("Venue positions and successful account reconciliation time are not saved by this source.")
     try:
         book = _kalshi_book(raw_state.get("book"), now)
-    except (ValueError, KeyError, TypeError, AttributeError, OverflowError):
+    except (ValueError, KeyError, TypeError, AttributeError, OverflowError, RecursionError):
         out["status"] = "incomplete"
         out["issues"].append("The saved real book does not reconcile; individual money rows and profit are unavailable.")
         return _finish(out, text)
@@ -174,6 +176,9 @@ def kalshi_connection(raw_state: Any, now: float, text: Text) -> dict[str, Any]:
         out["today_pacific"].update(status="incomplete", pnl_usd=None, settled=None,
                                      reason="desk_reconciliation_problem")
     out.update(open_cost_usd=book.open_cost_usd, reserved_usd=book.reserved_usd, at_risk_usd=book.at_risk_usd)
+    foreign_rows = raw_state.get("foreign_windows")
+    foreign = {row for row in foreign_rows if isinstance(row, str)} if isinstance(foreign_rows, list) else set()
+    outcomes = _mapping(raw_state.get("final_outcomes"))
     settlement_evidence = {}
     latest = raw_state.get("latest_events")
     if isinstance(latest, list):
@@ -183,6 +188,21 @@ def kalshi_connection(raw_state: Any, now: float, text: Text) -> dict[str, Any]:
     for market, inventory in book.inventory.items():
         if market in book.settled:
             continue
+        window = book.windows[market]
+        ended = window.end <= now
+        outcome = outcomes.get(market)
+        finalized = ended and isinstance(outcome, bool)
+        mixed = market in foreign
+        status = "finalized_unreconciled" if finalized else "ended_unreconciled" if ended else "recorded_unsettled"
+        note = ("Window finalized; these old bot fills still await a reconciled settlement record."
+                if finalized else "Window ended; these bot fills still await settlement reconciliation."
+                if ended else "Recorded bot fills; current account holdings are not verified by this report.")
+        if mixed:
+            note += " Other account trades occurred in this window; gross bot fills are not the account position."
+        if ended and inventory.up.shares + inventory.down.shares > 0:
+            out["issues"].append("Ended windows remain in the recorded fill book until settlement reconciles; they are not proof of current account exposure.")
+        if mixed and inventory.up.shares + inventory.down.shares > 0:
+            out["issues"].append("Some recorded bot fills share a window with other account trades; this source cannot establish the remaining account position.")
         for side, holding in (("up", inventory.up), ("down", inventory.down)):
             if holding.shares <= 0:
                 continue
@@ -194,6 +214,9 @@ def kalshi_connection(raw_state: Any, now: float, text: Text) -> dict[str, Any]:
                                      "cost_usd": holding.cost, "fee_usd": holding.fees, "fee_source": "actual",
                                      "fee_basis": "actual",
                                      "opened_at": min((row.at for row in fills), default=None),
+                                     "end_at": window.end, "status": status, "status_note": text(note),
+                                     "final_outcome": ("YES" if outcome else "NO") if finalized else None,
+                                     "mixed_account_activity": mixed, "current_position_verified": False,
                                      "source": "actual Kalshi fills; gross recorded holdings"})
     for intent in book.intents.values():
         side = "YES" if intent.side == "up" else "NO"
@@ -202,6 +225,7 @@ def kalshi_connection(raw_state: Any, now: float, text: Text) -> dict[str, Any]:
                  "quantity": intent.size, "filled_quantity": intent.filled_size,
                  "remaining_quantity": intent.remaining, "reserved_usd": intent.reserved,
                  "created_at": intent.created_at, "as_of": intent.last_snapshot_at,
+                 "lock": intent.lock,
                  "cancel_requested": intent.cancel_requested, "reservation_active": intent.reservation_active}
         if intent.reservation_active:
             out["orders"].append(order)
@@ -209,11 +233,10 @@ def kalshi_connection(raw_state: Any, now: float, text: Text) -> dict[str, Any]:
                                     message=f"Kalshi {side} buy intent recorded; {intent.size:g} at ${intent.price:.2f}.",
                                     market=intent.window, side=side, quantity=intent.size, price=intent.price,
                                     source="saved real-order intent", time_source="bot intent creation time"))
-        if intent.status == "canceled" and not intent.reservation_active and intent.last_snapshot_at is not None:
-            out["events"].append(_event(out, text, "cancel", intent.client_order_id, intent.last_snapshot_at, now,
-                                        message="Kalshi remaining order canceled; confirmed fills remain real.",
-                                        market=intent.window, side=side, source="reconciled real-order snapshot",
-                                        time_source="bot observed venue order cancellation"))
+        if intent.status == "canceled" and not intent.reservation_active:
+            # last_snapshot_at advances every reconcile, even for old terminal
+            # orders. It proves the state was observed, not when it changed.
+            out["issues"].append("Confirmed order cancellations have no retained event time; repeated account reads are not new activity.")
     for fill in book.fills.values():
         side = "YES" if fill.side == "up" else "NO"
         out["events"].append(_event(out, text, "fill", fill.fill_id, fill.at, now,
@@ -257,7 +280,8 @@ def _kalshi_recent_events(out: dict[str, Any], latest: Any, book: LiveRiskBook, 
                    if kind == "cancel" else "Kalshi buy rejected or blocked; check the desk status.")
         out["events"].append(_event(out, text, kind, [identity, row.get("at"), "request"], row.get("at"), now,
                                     message=message, market=intent.window, source="saved real desk event",
-                                    time_source="bot event time"))
+                                    time_source="bot cancellation request time" if kind == "cancel" else "bot event time",
+                                    eligible=kind != "cancel"))
 
 
 def _pm_scope(row: Mapping[str, Any]) -> str:
