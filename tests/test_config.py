@@ -358,3 +358,23 @@ def test_the_towns_railway_price_is_dollars_per_month_at_least_zero(make_setting
     with pytest.raises(ConfigError, match="TOWN_RAILWAY_USD_MONTH: expected a number"):
         make_settings(TOWN_RAILWAY_USD_MONTH="five")
     assert {r["env"]: r["unit"] for r in Settings.describe()}["TOWN_RAILWAY_USD_MONTH"] == "usd"
+
+
+def test_the_kalshi_arena_settings_are_practice_numbers_with_bounds(make_settings) -> None:
+    """KALSHI_ARENA_*: the practice town's switch, population, rent and broke line (defaults = the module's)."""
+    from nightcrawler import kalshi_arena
+
+    s = make_settings()
+    assert (s.kalshi_arena_enabled, s.kalshi_arena_population, s.kalshi_arena_rent_usd, s.kalshi_arena_broke_usd) == (
+        True, kalshi_arena.POPULATION, kalshi_arena.RENT_USD, kalshi_arena.BROKE_USD)
+    assert make_settings(KALSHI_ARENA_ENABLED="false").kalshi_arena_enabled is False
+    assert make_settings(KALSHI_ARENA_POPULATION="24").kalshi_arena_population == 24
+    for name, bad in (("KALSHI_ARENA_POPULATION", "1"), ("KALSHI_ARENA_POPULATION", "25"),
+                      ("KALSHI_ARENA_RENT_USD", "-0.1"), ("KALSHI_ARENA_RENT_USD", "6"),
+                      ("KALSHI_ARENA_BROKE_USD", "50"), ("KALSHI_ARENA_POPULATION", "2.5")):
+        with pytest.raises(ConfigError, match=name):
+            make_settings(**{name: bad})
+    with pytest.raises(ConfigError, match="KALSHI_ARENA_POPULATION must be a whole number"):
+        Settings(kalshi_arena_population=12.0)  # type: ignore[arg-type]
+    with pytest.raises(ConfigError, match="KALSHI_ARENA_RENT_USD must be a finite number"):
+        Settings(kalshi_arena_rent_usd=True)  # type: ignore[arg-type]

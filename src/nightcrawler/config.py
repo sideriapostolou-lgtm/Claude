@@ -510,6 +510,17 @@ class Settings:
     speeddesk_kalshi_cutoff_s: float = _f(180.0, "seconds", "Kalshi live companion: stop buying this long before "
                                           "window close; default trades only the first 12 minutes of a 15m window",
                                           lo=60, hi=899)
+    # Owner, 2026-10-13: "Give our bots the incentive they're giving Grok bots: make money or die" (nightcrawler.
+    # kalshi_arena). PRACTICE only: these four change pretend money and never a live limit, order or key.
+    kalshi_arena_enabled: bool = _f(True, "bool", "The Kalshi arena: a PRACTICE town of Kalshi Bitcoin 15-minute "
+                                    "desks with their own genes that pay rent, are evicted when broke or losing, and "
+                                    "breed from the richest; never places a real order or changes a live setting")
+    kalshi_arena_population: int = _f(12, "count", "Kalshi arena: residents, including the control that always runs "
+                                      "the live rules", lo=2, hi=24)
+    kalshi_arena_rent_usd: float = _f(0.20, "usd", "Kalshi arena: practice rent each resident pays per UTC day (about "
+                                      "the whole Railway bill each)", lo=0, hi=5)
+    kalshi_arena_broke_usd: float = _f(10.0, "usd", "Kalshi arena: a resident whose practice money falls under this "
+                                       "is evicted (it could not fund a $10 window)", lo=0, hi=49)
     kalshi_key_id: Secret | None = _f(  # noqa: RUF009 - _f returns a dataclasses.field
         None, "secret", "Kalshi account key id, supplied by the owner in Railway; never logged", secret=True)
     kalshi_private_key: Secret | None = _f(  # noqa: RUF009 - _f returns a dataclasses.field
@@ -637,6 +648,13 @@ class Settings:
                     and (isinstance(value, bool) or not isinstance(value, (int, float)))):
                 problems.append(f"{env} must be a finite number")
                 continue
+            if f.name.startswith("kalshi_arena_") and meta.get("unit") in ("usd", "count"):
+                if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
+                    problems.append(f"{env} must be a finite number")
+                    continue
+                if meta.get("unit") == "count" and not isinstance(value, int):
+                    problems.append(f"{env} must be a whole number")
+                    continue
             if f.name == "speeddesk_coins":
                 names = {part.strip().lower() for part in str(value).split(",") if part.strip()}
                 unknown = sorted(names - {"eth", "sol", "xrp", "doge"})
