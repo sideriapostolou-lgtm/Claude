@@ -51,6 +51,53 @@ def test_town_is_ready_before_the_first_frame_and_keeps_one_shared_details_panel
 
 
 @needs_node
+def test_overview_keeps_six_colliding_station_labels_reachable_without_shrinking_tap_boxes(
+    module: str, tmp_path: Path,
+) -> None:
+    place = _js_body(module, "  function tycoonMarkerPlace(")
+    out = _node(place + """
+// Measured phone projection: Nyx is only 28px below Voss and previously vanished.
+const anchors = [[197,412],[203,356],[243,440],[145,460],[111,368],[258,530]];
+const run = function (width) {
+  const occupied = [];
+  const points = width === 320 ? [[161,301],[166,258],[197,322],[121,338],[96,267],[209,393]] : anchors;
+  for (const p of points) {
+    const row = tycoonMarkerPlace({ok:true,x:p[0],y:p[1]},72,44,width,181,width===320?488:760,occupied);
+    if (row) occupied.push(row);
+  }
+  return occupied;
+};
+console.log(JSON.stringify({phone:run(390),small:run(320),again:run(390)}));
+""", tmp_path)
+    assert out["phone"] == out["again"]
+    for key, width in (("phone", 390), ("small", 320)):
+        rows = out[key]
+        bottom = 488 if width == 320 else 760
+        assert len(rows) == 6
+        for index, row in enumerate(rows):
+            assert row["w"] >= 44 and row["h"] >= 44
+            assert 5 <= row["x"] <= width - row["w"] - 5
+            assert 181 < row["y"] < row["y"] + row["h"] < bottom
+            for other in rows[:index]:
+                assert (row["x"] >= other["x"] + other["w"] + 3
+                        or row["x"] + row["w"] + 3 <= other["x"]
+                        or row["y"] >= other["y"] + other["h"] + 3
+                        or row["y"] + row["h"] + 3 <= other["y"])
+
+
+@needs_node
+def test_marker_offsets_never_rescue_offscreen_stations_or_cover_the_hud(module: str, tmp_path: Path) -> None:
+    place = _js_body(module, "  function tycoonMarkerPlace(")
+    out = _node(place + """
+const missing = [ {ok:false,x:200,y:400}, {ok:true,x:-1,y:400}, {ok:true,x:391,y:400},
+  {ok:true,x:200,y:180}, {ok:true,x:200,y:761} ].map(p=>tycoonMarkerPlace(p,72,44,390,181,760,[]));
+const blocked=tycoonMarkerPlace({ok:true,x:200,y:400},72,44,390,181,760,[{x:0,y:181,w:390,h:579}]);
+console.log(JSON.stringify({missing,blocked}));
+""", tmp_path)
+    assert out["missing"] == [None] * 5 and out["blocked"] is None
+
+
+@needs_node
 def test_automatic_director_intro_and_arena_tour_wait_behind_town_mode(module: str, tmp_path: Path) -> None:
     # Deliberately omit director/intro dependencies: a town frame must return before touching them.
     hooks = "\n".join(_js_body(module, f"  function {name}(") for name in

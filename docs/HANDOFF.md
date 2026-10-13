@@ -154,8 +154,12 @@ and holdings include the owner's own activity; the bot's result excludes it. Cas
 count/value use the separately dated venue snapshot (`real.venue_open`, `value_usd`, `venue_at`), not tracked
 positions that can remain after an app sale. Each balance has its own age: a fresh page cannot freshen old cash.
 
-Theme Park Tycoon 2-inspired grounds connect the existing cast and navigation paths: bright lawns, wide paths,
-colorful cutaway workstations and soft daylight. Five decorative gardens unlock at $0.01 / $0.25 / $1 / $5 / $10
+Theme Park Tycoon 2-inspired grounds connect the existing cast and navigation paths: vivid lawns, wide paths,
+solid colorful cutaway shops, department emblems and block trees. Six local toy costumes follow the original
+characters and their recorded activity; no invisible legacy character/prop models download in town mode.
+The steady phone camera fits the shops and enlarged cast; the original dome and decorative airship are hidden.
+Walking remains decoration and the same real-event gates control receipts, deliveries and celebrations.
+Five decorative gardens unlock at $0.01 / $0.25 / $1 / $5 / $10
 of combined recorded Polymarket and Kalshi bot profit **today**, only when both complete books refer to the same
 Pacific date and both source reports are fresh. They reset at Pacific midnight, can recede after losses
 or corrections, and disappear when the source is unavailable. They are not purchased upgrades or lifetime wealth;

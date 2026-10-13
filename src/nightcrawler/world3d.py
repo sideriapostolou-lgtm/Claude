@@ -207,6 +207,7 @@ from nightcrawler.office import PIPELINE
 from nightcrawler.office3d import CAST3D
 from nightcrawler.page import MEMBERS, REFRESH_S
 from nightcrawler.worldtycoon import TYCOON_HTML, TYCOON_MODULE, TYCOON_STYLE
+from nightcrawler.worldtycoon_cast import TYCOON_CAST
 
 __all__ = [
     "ADDON_FILES",
@@ -1939,16 +1940,13 @@ _M_WORLD = r"""
   OB.add("brass", new THREE.RingGeometry(1.33, 1.4, 72).rotateX(-Math.PI / 2), [0.6, 0.012, -1.2], null, null, BRASS);
   [1.45, 3.2, 5.2].forEach(function (r) { OB.add("brass", new THREE.RingGeometry(r - 0.03, r + 0.03, 96).rotateX(-Math.PI / 2), [0, 0.006, 0], null, null, BRASS); });
   for (let i = 0; i < 8; i++) { const g = G.box(0.04, 0.004, 3.6); g.translate(0, 0, 3.4); OB.add("brass", g, [0, 0.007, 0], [0, i * Math.PI / 4, 0], null, BRASS_DARK); }
-  (function () {
+  const observatoryCover = tycoonShellPart("observatory", function () {
     const R = 5.55, a0 = 160 * Math.PI / 180, a1 = 380 * Math.PI / 180, n = 8, step = (a1 - a0) / n;
     for (let i = 0; i < n; i++) {
       const a = a0 + (i + 0.5) * step, chord = 2 * R * Math.sin(step / 2) + 0.06, x = Math.cos(a) * R, z = Math.sin(a) * R;
       const solid = i === 3 || i === 4;
       archWall(OB, chord, 4.0, 0.4, solid ? [] : [{ x: 0, w: 1.25, y0: 0.75, sp: 2.75 }], [x, 0, z], Math.PI / 2 - a + Math.PI, CREAM);
       const ea = a0 + i * step; column(OB, Math.cos(ea) * (R + 0.05), Math.sin(ea) * (R + 0.05), 4.0, 0.26);
-      if (solid) { const sx = Math.cos(a) * (R - 0.25), sz = Math.sin(a) * (R - 0.25), ry = Math.PI / 2 - a + Math.PI;
-        screen(OB, sx, 1.95, sz, ry, 1.5, 0.95, i === 3 ? "stars" : "rings", i === 3 ? "#8dffdc" : "#ffcf7a", 0, 1.5, true);
-        const up = V3(Math.cos(a) * (R - 0.24), 3.15, Math.sin(a) * (R - 0.24)); screen(OB, up.x, up.y, up.z, ry, 0.7, 0.5, "stars", "#ffd98f", 0, 1.35, true); }
     }
     column(OB, Math.cos(a1) * (R + 0.05), Math.sin(a1) * (R + 0.05), 4.0, 0.26);
     OB.add("stone", G.tor(R, 0.24, 8, 64, a1 - a0), [0, 4.1, 0], [Math.PI / 2, 0, a0], [1, 1, 0.8], CREAM2);
@@ -1957,7 +1955,15 @@ _M_WORLD = r"""
     for (let k = 0; k < 12; k++) OB.add("brass", G.tor(5.66, 0.045, 6, 30, Math.PI / 2), [0, 4.2, 0], [0, k * Math.PI / 6, 0], [1, 0.78, 1], BRASS);
     [0.35, 0.7].forEach(function (f) { const ang = f * Math.PI / 2; OB.add("brass", G.tor(5.66 * Math.cos(ang), 0.04, 6, 64), [0, 4.2 + 5.66 * 0.78 * Math.sin(ang), 0], [Math.PI / 2, 0, 0], null, BRASS); });
     OB.add("brass", G.tor(5.66, 0.08, 8, 96), [0, 4.2, 0], [Math.PI / 2, 0, 0], null, BRASS);
-  })();
+  });
+  observatoryCover.visible = !TY_CUTAWAY.on; TY_CUTAWAY.parts.push({ cover: observatoryCover });
+  // The read-only displays stay at their original coordinates when the tall dome/walls are cut away.
+  [3, 4].forEach(function (i) {
+    const R = 5.55, a = (160 + (i + .5) * 220 / 8) * Math.PI / 180, ry = Math.PI / 2 - a + Math.PI;
+    screen(OB, Math.cos(a) * (R - .25), 1.95, Math.sin(a) * (R - .25), ry, 1.5, .95,
+      i === 3 ? "stars" : "rings", i === 3 ? "#8dffdc" : "#ffcf7a", 0, 1.5, true);
+    screen(OB, Math.cos(a) * (R - .24), 3.15, Math.sin(a) * (R - .24), ry, .7, .5, "stars", "#ffd98f", 0, 1.35, true);
+  });
   OB.add("wood", G.rbox(2.4, 0.08, 0.8, 0.2, 16), [-2.4, 0.76, -3.6], [0, 0.55, 0], null, WALNUT);
   [[-3.1, -3.2], [-1.75, -4.1]].forEach(function (q) { OB.add("wood", G.box(0.08, 0.72, 0.7), [q[0], 0.36, q[1]], [0, 0.55, 0], null, WALNUT_DARK); });
   OB.add("brass", G.cyl(0.03, 0.05, 0.2, 10), [-2.0, 0.9, -3.95], null, null, BRASS); OB.add("plain", G.sph(0.14, 18, 12), [-2.0, 1.12, -3.95], null, null, 0x2c4c8a);
@@ -2979,6 +2985,7 @@ _M_LIFE = r"""
   function benchAt(top, zBack) { BENCH.l.copy(WS2.at(0.17, top, zBack)); BENCH.r.copy(WS2.at(-0.17, top, zBack)); BENCH.c.copy(WS2.at(0, top - 0.05, zBack + 0.12)); }
   benchAt(0.76, -0.95);
   function oneShot(a, name, maxSeconds) {
+    if (tycoonActive()) return tycoonCastOneShot(a, name, maxSeconds);
     const A = a.actor; if (!A || A.spec.kind !== "biped" || a.state === "out" || a.state === "back") return false;
     if (!A.play(name, 0.3)) return false;
     if (maxSeconds) { const shot = A.oneShot; a.beats.push({ at: simT + maxSeconds, fn: function (b) { if (b.actor && b.actor.oneShot === shot) endOneShot(b.actor); } });
@@ -3339,6 +3346,9 @@ _M_LIFE = r"""
     loading.set += 1; showLoading();
   }
   async function loadModels() {
+    // The toy town already has its local cast and props. Do not download invisible legacy GLBs;
+    // the existing procedural actors retain their movement, anchors and ledger-driven behaviour.
+    if (tycoonActive()) { loading.crewN = loading.setN = 0; showLoading(); return; }
     const castIds = MODELS.motion ? Object.keys(MODEL_CAST).filter(function (id) { return actors[id]; }) : [];
     const propIds = Object.keys(MODEL_PROPS).filter(function (id) { return PLACE[id] && PLACE[id].length; });
     if (!castIds.length && !propIds.length) return;
@@ -8671,7 +8681,7 @@ _M_BUSINESS = r"""
 _CINEMA_AT = '  resize(); BUS.emit("start", 0, 0);'
 _MODULE = (_M_SETUP + _M_WORLD + _M_CAST + _M_LIFE + _M_CHANNEL + _M_RECORDS + _M_GOAL + _M_HEARTS
            + _M_TOWN  # (THE TOWN: after the record room it films through, before the director it never edits)
-           + _M_LIVE.replace(_CINEMA_AT, _M_BUSINESS + _M_CINEMA + TYCOON_MODULE + _CINEMA_AT, 1))
+           + _M_LIVE.replace(_CINEMA_AT, _M_BUSINESS + _M_CINEMA + TYCOON_CAST + TYCOON_MODULE + _CINEMA_AT, 1))
 #: The page's one inline style: the base styles, then each added section's own block (the record room's,
 #: the goal's, the hearts', the town's, then the channel's).
 _STYLES = _STYLE + _STYLE_RECORDS + _STYLE_GOAL + _STYLE_HEARTS + _STYLE_TOWN + _STYLE_CHANNEL + _STYLE_CINEMA + TYCOON_STYLE

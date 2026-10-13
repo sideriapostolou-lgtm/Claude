@@ -6,7 +6,7 @@ from nightcrawler.worldtycoon_park import TYCOON_PARK
 
 TYCOON_HTML = """
 <section id="ty-header" aria-label="Town and real money">
-  <div class="ty-heading"><div><span class="ty-logo" aria-hidden="true">N</span><h1>Nightcrawler<span>Your business, alive.</span></h1></div>
+  <div class="ty-heading"><div><span class="ty-logo" aria-hidden="true">N</span><h1>Nightcrawler<span>YOUR BUSINESS TYCOON</span></h1></div>
     <button type="button" id="ty-more" aria-controls="panel" aria-label="Open town menu">Menu <span aria-hidden="true">☰</span></button></div>
   <div class="ty-money">
     <div><span>Polymarket cash</span><b id="ty-cash">—</b><small>PM bot profit · today PT <strong id="ty-today">—</strong></small></div>
@@ -30,23 +30,28 @@ TYCOON_HTML = """
 
 TYCOON_STYLE = r"""
 #ty-header, #ty-dock, #ty-markers, #ty-selection { display: none; }
-body.tycoon { --ty-ink: #203846; --ty-muted: #607787; --ty-edge: #cedde4; }
+body.tycoon { --ty-ink: #183c57; --ty-muted: #56768b; --ty-edge: #b4cfdf;
+  font-family: ui-rounded, "Arial Rounded MT Bold", "Trebuchet MS", system-ui, sans-serif; }
 body.tycoon #ty-header, body.tycoon #ty-dock, body.tycoon #ty-selection { display: block; position: fixed; z-index: 10; color: var(--ty-ink);
-  background: #f8fcff; border: 2px solid #fff; box-shadow: 0 3px 0 #aed0df, 0 6px 20px #22466426; border-radius: 15px; }
-body.tycoon #ty-header { top: calc(9px + env(safe-area-inset-top)); left: 10px; right: 10px; padding: 8px 12px 6px; }
+  background: #f5fbff; border: 3px solid #fff; box-shadow: 0 4px 0 #286587, 0 7px 16px #163a5830; border-radius: 11px; }
+body.tycoon #ty-header { top: calc(8px + env(safe-area-inset-top)); left: 9px; right: 9px; padding: 0 9px 7px; overflow: hidden; }
 .ty-heading, .ty-heading > div { display: flex; gap: 8px; align-items: center; }
-.ty-heading { justify-content: space-between; }
-.ty-logo { width: 31px; height: 31px; display: grid; place-items: center; background: #36a9e4; border-radius: 9px; color: #fff; font-size: 22px; font-weight: 900; box-shadow: 0 2px 0 #2281b3; }
-.ty-heading h1 { font-size: 16px; line-height: 1.1; margin: 0; font-weight: 850; letter-spacing: -.03em; }
-.ty-heading h1 span { display: block; font-size: 9px; font-weight: 500; letter-spacing: 0; margin-top: 3px; color: #657c8b; }
+.ty-heading { justify-content: space-between; background: #167cb9; margin: 0 -9px 4px; padding: 5px 8px; border-bottom: 3px solid #0d659b; }
+.ty-logo { width: 31px; height: 33px; display: grid; place-items: center; background: #ffd35d; border: 2px solid #ffeaa0;
+  border-radius: 6px; color: #7b4c13; font-size: 23px; font-weight: 900; box-shadow: 0 2px 0 #a9711f; transform: rotate(-5deg); }
+.ty-heading h1 { font-size: 18px; line-height: 1.05; margin: 0; font-weight: 900; letter-spacing: -.035em; color: #fff; text-shadow: 0 2px 0 #09517d; }
+.ty-heading h1 span { display: block; font-size: 7px; font-weight: 800; letter-spacing: .12em; margin-top: 4px; color: #d9f5ff; text-shadow: none; }
 #ty-more, #ty-home, #ty-info { min-height: 44px; cursor: pointer; font: inherit; font-size: 12px; font-weight: 750; padding: 6px 10px;
-  border: 0; border-radius: 9px; color: #fff; background: #258ec7; box-shadow: 0 2px 0 #176c9d; }
+  border: 2px solid #fff9; border-radius: 7px; color: #fff; background: #258fca; box-shadow: 0 3px 0 #0e5682; }
+#ty-more { background: #f4fbff; color: #185780; border-color: #fff; }
+#ty-more:active, #ty-home:active, #ty-info:active { transform: translateY(2px); box-shadow: 0 1px 0 #0e5682; }
 #ty-more span { margin-left: 5px; }
-.ty-money { display: grid; grid-template-columns: 1fr 1fr; margin-top: 5px; gap: 10px; }
-.ty-money > div { min-width: 0; } .ty-money > div + div { border-left: 1px solid #d9e5eb; padding-left: 14px; }
-.ty-money span { display: block; font-size: 10px; font-weight: 650; color: #506b7b; }
+.ty-money { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+.ty-money > div { min-width: 0; background: #e7f2fa; border: 1px solid #c1dcea; border-top: 3px solid #378ac1; border-radius: 6px; padding: 2px 6px 3px; }
+.ty-money > div + div { border-top-color: #8464c6; }
+.ty-money span { display: block; font-size: 10px; line-height: 1.1; font-weight: 800; color: #355d79; }
 .ty-money small { font-size: 8px; font-weight: 500; }
-.ty-money b { display: block; font-size: 25px; line-height: 1.1; letter-spacing: -.035em; font-variant-numeric: tabular-nums; }
+.ty-money b { display: block; font-size: 25px; line-height: 1; letter-spacing: -.035em; font-weight: 900; font-variant-numeric: tabular-nums; }
 .ty-money .positive { color: #238243; } .ty-money .negative { color: #b13c3c; }
 .ty-status { display: flex; gap: 5px; align-items: baseline; justify-content: space-between; margin-top: 5px; font-size: 8px; line-height: 1.25; color: #607787; }
 #ty-state { flex-shrink: 0; font-weight: 700; } #ty-state.on { color: #256c47; }
@@ -55,9 +60,9 @@ body.tycoon #ty-header { top: calc(9px + env(safe-area-inset-top)); left: 10px; 
 #ty-alert { width: 100%; min-height: 44px; margin-top: 7px; padding: 6px 9px; text-align: left; cursor: pointer;
   font: inherit; font-size: 11px; border-radius: 8px; border: 1px solid #e0b965; color: #70460b; background: #fff1c9; }
 #ty-alert[hidden], body.tycoon #ty-selection[hidden] { display: none; }
-body.tycoon #ty-dock { bottom: calc(10px + env(safe-area-inset-bottom)); left: 10px; right: 10px; padding: 9px 12px; }
+body.tycoon #ty-dock { bottom: calc(10px + env(safe-area-inset-bottom)); left: 9px; right: 9px; padding: 9px 10px; border-radius: 9px; }
 #ty-event { display: flex; align-items: center; gap: 7px; font-size: 11px; line-height: 1.35; }
-.ty-event-dot { width: 7px; height: 7px; flex-shrink: 0; border-radius: 50%; background: #48ab64; }
+.ty-event-dot { width: 9px; height: 9px; flex-shrink: 0; border-radius: 3px; background: #418ab5; border: 1px solid #23678f; }
 #ty-event-text { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; flex: 1; }
 #ty-event-age { color: #607787; font-size: 9px; }
 #ty-growth { margin: 4px 0 0 14px; color: #607787; font-size: 9px; line-height: 1.3; }
@@ -70,7 +75,8 @@ body.tycoon #ty-markers { display: block; position: fixed; inset: 0; pointer-eve
 .ty-marker { position: absolute; top: 0; left: 0; min-height: 44px; min-width: 44px; pointer-events: auto; padding: 5px 9px;
   background: transparent; color: #294356; border: 0; border-radius: 9px; box-shadow: none;
   font: inherit; font-size: 11px; font-weight: 800; cursor: pointer; }
-.ty-marker b { display: inline-block; background: #fcffffef; padding: 4px 6px; border-radius: 6px; box-shadow: 0 2px 4px #23415720; font-size: 10px; }
+.ty-marker b { display: inline-block; background: #fff; padding: 4px 7px; border: 2px solid #fff; border-bottom-color: var(--ty-department, #75aac8);
+  border-radius: 5px; box-shadow: 0 2px 0 #244b6799; font-size: 10px; }
 .ty-marker b::before { content: ""; display: inline-block; width: 5px; height: 5px; border-radius: 50%; margin-right: 4px; vertical-align: middle; background: #91a4ab; }
 .ty-marker[data-status="working"] b::before { background: #47a466; }
 .ty-marker[data-status="stuck"] b::before { background: #d08c29; }
@@ -81,7 +87,7 @@ body.tycoon #honest, body.tycoon #postcard, body.tycoon #bubbles { display: none
 body.tycoon #vignette { background: none; }
 body.world-failed #ty-header, body.world-failed #ty-dock, body.world-failed #ty-markers { display: none; }
 body.tycoon #panel { top: calc(16px + env(safe-area-inset-top)); bottom: auto; max-height: calc(100% - 40px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
-  z-index: 20; border-radius: 16px; background: #f8fcff; color: #203846; border-color: #c9dfe9; }
+  z-index: 20; border-radius: 11px; background: #f5fbff; color: #183c57; border: 3px solid #fff; box-shadow: 0 5px 0 #286587, 0 12px 40px #12395140; }
 body.tycoon #panel-close { min-height: 44px; min-width: 44px; background: #258ec7; color: #fff; border-color: #258ec7; }
 body.tycoon #panel h2, body.tycoon #panel h3 { color: #203846; }
 body.tycoon #panel .dim { color: #5e7482; } body.tycoon #panel .warn { color: #8a5010; }
@@ -100,7 +106,7 @@ body.tycoon #panel .ty-flow-card { border-color: #d1e2e9; }
 .ty-person b { font-size: 12px; } .ty-person small { font-size: 9px; color: #c0d2c5; }
 .ty-person .ty-scope { font-size: 8px; margin-top: 2px; }
 .ty-position { padding: 10px 0; border-top: 1px solid #c8dbc030; } .ty-position p { margin: 4px 0; }
-.ty-money > div > small { display: block; font-size: 8px; line-height: 1.4; color: #607787; margin-top: 3px; }
+.ty-money > div > small { display: block; font-size: 8px; line-height: 1.25; color: #607787; margin-top: 2px; }
 .ty-money strong { font-size: 10px; color: #203846; white-space: nowrap; }
 .ty-flow-card, .ty-position { overflow-wrap: anywhere; }
 .ty-position small { color: #bbc9bd; }
@@ -166,7 +172,7 @@ TYCOON_UI = r"""
       b.onclick = function () { tycoonChoose(key); }; TY_UI.people.push({ key: key, b: b, job: job, scope: scope });
       const m = document.createElement("button"), sub = document.createElement("small");
       m.type = "button"; m.className = "ty-marker"; m.dataset.key = key; const label = document.createElement("b"); label.textContent = CAST[key].name; m.appendChild(label); m.appendChild(sub); m.hidden = true;
-      m.style.borderBottomColor = colour;
+      m.style.borderBottomColor = colour; m.style.setProperty("--ty-department", colour);
       m.onclick = b.onclick; tyMarkers.appendChild(m);
       const at = LAMP_AT[CAST[key].room].clone(); at.y += 2.2;
       TY_UI.markers.push({ key: key, el: m, sub: sub, at: at, w: 0 });
@@ -474,6 +480,21 @@ TYCOON_UI = r"""
     }
     panelEl.scrollTop = scroll; return true;
   }
+  function tycoonMarkerPlace(p, width, height, viewportWidth, top, bottom, occupied) {
+    if (!p.ok || !isFinite(p.x) || !isFinite(p.y) || p.x < 0 || p.x > viewportWidth
+        || p.y <= top || p.y >= bottom || width > viewportWidth - 10) return null;
+    const step = Math.min(96, Math.max(48, width + 4));
+    const offsets = [[0,0],[48,0],[-48,0],[step,0],[-step,0],[0,48],[0,-48],[48,48],[-48,48],[48,-48],[-48,-48]];
+    for (const offset of offsets) {
+      const x = Math.max(5, Math.min(viewportWidth - width - 5, p.x - width / 2 + offset[0]));
+      const y = p.y - height + offset[1];
+      if (y <= top || y + height >= bottom) continue;
+      if (occupied.some(function (r) { return x < r.x + r.w + 3 && x + width + 3 > r.x
+          && y < r.y + r.h + 3 && y + height + 3 > r.y; })) continue;
+      return { x: x, y: y, w: width, h: height };
+    }
+    return null;
+  }
   function tycoonFrame() {
     if (!tycoonActive()) return;
     const stamp = Math.floor(Date.now() / 1000);
@@ -483,11 +504,9 @@ TYCOON_UI = r"""
       const p = toScreen(m.at); let visible = p.ok && !TYCOON.selected;
       m.el.hidden = !visible; if (!visible) continue;
       if (!m.w) m.w = m.el.offsetWidth;
-      const x = clamp(p.x - m.w / 2, 5, W - m.w - 5), y = p.y - 44;
-      visible = y > TY_UI.top && y + 44 < bottom;
-      if (visible && occupied.some(function (r) { return x < r.x + r.w + 3 && x + m.w + 3 > r.x && y < r.y + 47 && y + 47 > r.y; })) visible = false;
-      m.el.hidden = !visible;
-      if (visible) { m.el.style.transform = "translate3d(" + Math.round(x) + "px," + Math.round(y) + "px,0)"; occupied.push({ x: x, y: y, w: m.w }); }
+      const placed = tycoonMarkerPlace(p, Math.max(44, m.w), Math.max(44, m.el.offsetHeight), W, TY_UI.top, bottom, occupied);
+      m.el.hidden = !placed;
+      if (placed) { m.el.style.transform = "translate3d(" + Math.round(placed.x) + "px," + Math.round(placed.y) + "px,0)"; occupied.push(placed); }
     }
   }
   el("ty-home").onclick = function () { tycoonChoose(null); };
