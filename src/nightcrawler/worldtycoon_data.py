@@ -54,7 +54,12 @@ TYCOON_DATA = TYCOON_CONNECTIONS + TYCOON_RESEARCH + r"""
     const stale = present && (!pageCurrent || raw.stale === true || asOf === null || tycoonOld(age, 60));
     const current = present && pageCurrent && now !== null && asOf !== null && !stale;
     const integrityError = tycoonText(raw.integrity_error), integrityReset = tycoonText(raw.integrity_reset);
-    const reason = tycoonText(raw.reason), reportedLocksOnly = typeof raw.lock_only === "boolean" ? raw.lock_only
+    const reasonCode = tycoonText(raw.reason);
+    // This is a rejected candidate's cost check, not a desk-wide or latched daily halt.
+    const reason = reasonCode === "day_stop" ? (stale
+      ? "Last report: a buy was skipped because it would reach today’s loss limit."
+      : "Latest buy skipped: it would reach today’s loss limit.") : reasonCode;
+    const reportedLocksOnly = typeof raw.lock_only === "boolean" ? raw.lock_only
       : reason.endsWith("; only completing half-filled pairs before the close");
     const active = current && mode === "live" && raw.active === true && raw.authenticated === true
       && raw.real_orders_available === true && !integrityError && !integrityReset
@@ -90,7 +95,7 @@ TYCOON_DATA = TYCOON_CONNECTIONS + TYCOON_RESEARCH + r"""
         : state === "live" ? "Real-money trading is enabled" : state === "exposure" ? "Real bets remain open"
         : state === "practice" ? "Practice only; no new real orders" : state === "stale" ? "Waiting for a fresh Kalshi report"
         : "No current Kalshi report",
-      reason: reason, waiting: tycoonText(raw.waiting), tradingNow: active && raw.trading_now === true,
+      reason: reason, reasonCode: reasonCode, waiting: tycoonText(raw.waiting), tradingNow: active && raw.trading_now === true,
       asOf: asOf, age: age, stale: stale, current: current,
       locksOnly: locksOnly, reportedLocksOnly: reportedLocksOnly, newRiskAllowed: active && !locksOnly,
       integrityError: integrityError, integrityReset: integrityReset, integrityNote: integrityNote,
