@@ -456,3 +456,19 @@ def test_cancel_404_for_an_order_already_gone_does_not_pause_trading(tmp_path: P
         assert all(intent.terminal for intent in desk.intents.values())
     finally:
         desk.close()
+
+
+def test_label_stays_real_money_between_orders(tmp_path: Path) -> None:
+    """2026-10-13 00:15: after every order the desk briefly re-reads the account or waits for a cancel to
+    confirm. The town showed "PRACTICE" in those seconds and the owner thought it had stopped. Real money is
+    still on: keep the label and say what it is waiting for."""
+    desk, account, _ = make_desk(tmp_path)
+    try:
+        asyncio.run(desk.step())
+        assert len(account.creates) == 1
+        panel = desk.panel()
+        assert panel["mode"] == "live" and panel["status"] == "REAL MONEY (Kalshi)"
+        assert panel["real_orders_available"] is True
+        assert panel["trading_now"] is False and panel["waiting"] == "Kalshi account data stale"
+    finally:
+        desk.close()

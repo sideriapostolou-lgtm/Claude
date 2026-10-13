@@ -64,7 +64,11 @@ Template:
   a short lowercase identifier). Three refusals in a row still pause as before. Our own last-moment send guard
   stopping an order (nothing sent) is no longer counted as an account error. Tests: one-refusal/three-refusal and
   send-guard tests (failing first); client code-parsing test; full suite 4,260 passed, 12 skipped.
-- Next step: confirm no `speeddesk_feed_kalshi_ws_gap` after this deploys; PR #14 (cancel 404) still to go live.
+- Also (00:25 UTC): the town showed "PRACTICE (Kalshi)" for the seconds after every order (account re-read,
+  cancel confirming) and the owner thought the bot had stopped. The panel label now follows only the switches,
+  failures and money stops (`_standing_reason`); the seconds-long pauses are reported as `waiting` and
+  `trading_now`. Test `test_label_stays_real_money_between_orders` (failing first); full suite 4,437 passed.
+- Next step: confirm no `speeddesk_feed_kalshi_ws_gap` after this deploys. PR #14 (cancel 404) is folded into PR #16.
 
 ## 2026-10-12 23:56 UTC, Codex, branch codex/tycoon-overview
 - Owner request: simplify the live app into a phone-first Theme Park Tycoon 2-inspired business town, with

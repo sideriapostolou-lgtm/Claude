@@ -403,6 +403,10 @@ class KalshiLiveDesk:
         return ""
 
     def _trade_reason(self) -> str:
+        return self._standing_reason() or self._waiting_reason()
+
+    def _standing_reason(self) -> str:
+        """Why real money is off or stopped: gates, failures and financial stops."""
         if self.stopping or self.stop_event is not None and self.stop_event.is_set():
             return "Shutting down; no new orders"
         if reason := self._gates():
@@ -411,8 +415,10 @@ class KalshiLiveDesk:
             return self.fatal_reason
         if not self.authenticated:
             return "Waiting for a successful balance read this run"
-        if reason := self._risk_stop_reason():
-            return reason
+        return self._risk_stop_reason()
+
+    def _waiting_reason(self) -> str:
+        """Seconds-long pauses between orders while real money stays on."""
         if not self.startup_done:
             return "Reconciling startup orders"
         if self.account_at is None or not 0 <= self.clock() - self.account_at <= 3:
@@ -967,11 +973,15 @@ class KalshiLiveDesk:
 
     def panel(self) -> dict[str, Any]:
         risk = self.book.risk_status(self.clock())
-        allowed = not self._trade_reason()
+        # The label follows the switches and stops, not the seconds between orders: after every order
+        # the desk re-reads the account, and the town showed "PRACTICE" then (2026-10-13 00:15 UTC).
+        live = not self._standing_reason()
+        waiting = self._waiting_reason() if live else ""
         active = self._active()
         reason = self.fatal_reason or self.reason
-        return {"mode": "live" if allowed else "paper", "configured_mode": self.settings.speeddesk_kalshi_mode,
-                "status": "REAL MONEY (Kalshi)" if allowed else "PRACTICE", "reason": reason,
+        return {"mode": "live" if live else "paper", "configured_mode": self.settings.speeddesk_kalshi_mode,
+                "status": "REAL MONEY (Kalshi)" if live else "PRACTICE", "reason": reason,
+                "trading_now": live and not waiting, "waiting": waiting,
                 "as_of": self.clock(), "authenticated": self.authenticated,
                 "fee_precision_verified": self.fee_verified,
                 "fee_precision_usd": self.book.limits.fee_precision,
@@ -980,7 +990,7 @@ class KalshiLiveDesk:
                 "at_risk_usd": risk.get("at_risk_usd", 0.0), "open_orders": len(active),
                 "positions": sum(abs(value) > EPS for key, value in self.position_sizes.items()
                                  if key in {intent.window for intent in self.intents.values()}),
-                "total_halted": risk.get("halted", False), "real_orders_available": allowed,
+                "total_halted": risk.get("halted", False), "real_orders_available": live,
                 "cleanup_pending": bool(active) and bool(self._gates()),
                 "caps": {"window_usd": self.settings.speeddesk_kalshi_window_usd,
                          "open_usd": self.settings.speeddesk_kalshi_open_usd,
