@@ -13,6 +13,97 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-13 05:15 UTC, Codex, branch codex/town-truth-fixes
+- Owner request: make the connected town app accurate and clear, retaining the phone-first tycoon view and
+  simplified navigation. Started from deploy head `1f9805b`; existing trading and money-limit changes were read
+  for display semantics, not edited. Authenticated live page checks established the actual gaps below.
+- Fixed false fresh cancellation activity: `last_snapshot_at` advances on each account check, not just at
+  cancellation. Removed fabricated terminal-cancel events from that timestamp. Retained real cancel-request
+  receipts as explicit, unqualified requests; they cannot move the town or confirm funds were released.
+- Old Kalshi gross fill rows now state whether their window ended/finalized and whether other account activity
+  occurred there. They stay visible pending recorded settlement rather than being mislabeled as current account
+  positions. Full-book validation is preserved and restoration copies its input before reading it. Review found
+  and fixed one new display regression: gross cost alone must not imply that current real bets remain open.
+- Town and fallback now distinguish new bets from pair-completion-only live operation, show plain-word
+  accounting-stop/reset reasons, explain current budget exceptions, and keep reserved cash separate from
+  possible loss. Desk-report, cash-read and account-reconciliation clocks remain independent. No stop, live
+  permission or account check is inferred from another field. Rook flags fresh but incomplete money records.
+- Polymarket Pacific-day profit remained unverified live (`day_book_mismatch`). It stays unknown, with an
+  explicit reason; garden growth waits. Added bounded aggregate counts/sums for the two touched UTC books to
+  diagnose the missing evidence without replacing the source books or inventing profit. Known cash-out and
+  mixed-account settlement limitations remain; this is not a full venue audit or a correction of trading P&L.
+- Fixed test-host leakage documented as 14 intermittent failures: reproduced exactly with 512 MiB free disk,
+  not a clock change. Recorder/engine tests now provide deterministic healthy disk space; the dedicated low-disk
+  test still proves a pause and recovery at its threshold. No recorder/engine implementation change.
+- Review: independent source review found the gross-cost/exposure issue above; corrected and regression tested.
+  Focused API, event, adapter and fallback suites passed. Final full-suite/type/lint results recorded below.
+  Browser checked the actual 390px scene with a replayed live-data fixture: separate cash, unavailable profit,
+  Rook attention, no horizontal overflow, exactly Money / Team / Help, restricted pair-only and blocked/reset
+  states. The 320px fallback kept zero buttons and one return link, explained stale data, and had no JS errors.
+  One preview harness wait incorrectly expected the stale state not to say "Waiting"; corrected the assertion
+  and verified the intended stale warning. Preview fixtures are not current venue evidence.
+- Real money touched? No order logic, execution module, risk limit, key, variable or saved financial book changed.
+  The authorized source deployment will restart the shared live bot. Exact deployment/startup and authenticated
+  page checks will be recorded after it runs. Weather/public-watcher recovery is outside this display change.
+- Final validation: **4,590 passed, 21 skipped** (opt-in live network tests and unavailable optional scientific
+  packages); mypy passed all **117 source files**; Ruff passed every changed Python file. Whitespace check passed.
+  The separately focused UI/fallback suite passed **126 tests**. The low-disk fixture checks also pass with
+  simulated 512 MiB host capacity while the explicit disk guard/recovery test remains enforced.
+
+## 2026-10-13 04:56 UTC, Codex, branch codex/railway-access-check
+- Owner supplied the remaining dashboard credential. Authenticated GET `/api/page`, `/`, and the town's
+  read-only browser polling succeeded using an ephemeral browser cookie scoped to the app host. No token was
+  written to a credential file, repository file, URL, screenshot or browser storage-state export. Neither token
+  has a persistent managed-environment Secrets binding; both supplied credentials now have verified access.
+- Live 390x844 browser check: town rendered with no JavaScript exceptions or horizontal overflow. Menu contains
+  exactly Money / Team / Help. The header showed Polymarket cash $10.05 and Kalshi cash $25.22, separately from
+  their Pacific-day bot results. The API snapshot at 04:56:32 returned cash $10.048737 and $25.217 respectively.
+  Both desks reported live mode. These are dated observations, not promises that balances remain unchanged.
+- Found an actual accounting coverage gap: Polymarket `today_pacific.status=incomplete`,
+  `reason=day_book_mismatch`, profit null. The town correctly showed a dash and withheld combined garden growth.
+  Kalshi's later browser snapshot showed recorded Pacific-day profit +$0.3379; Money separately showed its
+  current UTC result about -$0.73. The first API read had an unavailable Kalshi checkpoint timestamp; subsequent
+  browser polling produced a fresh, complete Kalshi source. Do not present the first sample as a permanent outage.
+- Money details disclosed zero current account positions but retained two gross Kalshi fill rows from an earlier
+  window. The view correctly labels these as saved fills rather than current venue positions; this still needs
+  care when interpreting the town. Latest activity was dominated by cancellation receipts. Weather remained
+  PAUSED/stale and the public-bot watcher's report was stale in the API snapshot.
+- Read-only source audit identified display follow-ups after Claude's intervening lock/reset changes: town and
+  fallback omit integrity-stop/reset details; lock-only operation needs restricted-buy wording; the blanket
+  statement that all reservations count as risk is no longer accurate for lock orders; fallback's account-check
+  age is actually the report heartbeat. No trading code, limits, variables, or application files changed here.
+- Verification artifacts (local, no credentials): `nightcrawler-previews/town-live-phone-20261013.png` and
+  `nightcrawler-previews/town-live-money-20261013.png` in `/workspace`. The phone screenshot was visually checked.
+- Not verified: independent venue reconciliation, historical accounting corrections, watcher recovery, or future
+  worker health. No new tests, push or deployment performed; only this local worklog was updated.
+- Real money touched? No. Authenticated read-only inspection only. Permanent credential setup remains in the
+  owner's environment Secrets UI; there is no setter for it in the available runtime tools.
+
+## 2026-10-13 04:53 UTC, Codex, branch codex/railway-access-check
+- Owner supplied and identified a Railway production project token. Verified read-only deployment/log access
+  using a transient command environment. No credential file, repository secret, permanent environment binding,
+  Railway variable change, order, deployment or restart was created. This environment's configuration tool is
+  read-only; persistent `RAILWAY_TOKEN` setup still requires the owner's environment Secrets workflow.
+- Confirmed the town deployment `f562d262-6bf0-4354-b157-5920fc7dccd5` started Polymarket in LIVE mode with
+  10 contracts per order at 00:43:43 UTC. Its logs were not traceback-free: at 00:52:04 the dashboard request
+  thread hit `BrokenPipeError` while writing a response. The later Kalshi reconciliation pause on that deployment
+  is historical; Claude's subsequent deployments replaced it. Do not treat those old status lines as current.
+- Latest deployment at this check: `1a0deaf8-51be-4b20-8387-557a47e3229b`, SUCCESS, exact source
+  `1f9805b5309f25317b894492e9d911f294b536bd`. At 04:49:47, Polymarket connected with $10.05 cash and
+  started LIVE with 10 contracts per order. At 04:52:53, Kalshi reported REAL MONEY, authenticated, no cleanup
+  pending, $25.1918 cash, zero recorded open orders/positions/at-risk amount, and caps $5/$10/$6/$10.
+  These caps came from Claude's recorded intervening owner decision; this check changed none. Kalshi's recorded
+  settled P&L was -$0.7274 for the current UTC day and +$0.3379 total, with 13 total settled windows and 21 fills.
+  These are dated log snapshots, not Pacific-day results or independently reconciled current account balances.
+- Current-deployment error/warning query returned a stale Kalshi book delta (7.521 s age at 04:51:58) and
+  `weatherwatch_paused` at 04:52:13 because its callback queue exceeded capacity. No traceback appeared in that
+  current-deployment query. Public `/healthz` returned HTTP 200 `ok` at 04:53:49 UTC. Health and trading startup
+  do not prove watcher recovery, continuing feed health, or every displayed balance.
+- Not verified: authenticated `/api/page` and town source freshness; `DASHBOARD_TOKEN` remains unavailable.
+  Underlying accounting/display limitations from the town entry remain. Follow up on weather capture and feed
+  freshness. No application files changed; no new tests, push or deployment performed for this access check.
+- Real money touched? No. Read-only status/log checks and this local documentation entry only.
+
 ## 2026-10-13 04:45 UTC, Claude, branch claude/kalshi-order-list-lag
 - Owner request: "Turn the real money back on make sure the system is perfect".
 - Done first: PR #19 deployed (924494b). The startup log named the 02:00 UTC stop `order_terminal_regressed`.

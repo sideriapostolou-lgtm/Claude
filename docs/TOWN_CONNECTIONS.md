@@ -31,6 +31,12 @@ position query. A recent Kalshi checkpoint is not proof of a successful account
 reconciliation: that reconciliation timestamp and snapshot are not persisted by
 the current source.
 
+Ended Kalshi windows that lack a reconciled settlement stay visible as old fill
+records, with a warning if the owner also traded that window. They are not labeled
+as current account bets. Gross recorded cost alone cannot establish that real
+positions remain open. The page never hides unresolved quantities to force the
+saved rows to agree with a zero account-position count.
+
 Polymarket fees in these tracked records are estimates; Kalshi fill fees are
 actual. Small positive fees retain extra decimals instead of appearing as zero.
 The API bounds each venue list to 50 rows after validating the full source. The
@@ -49,6 +55,24 @@ count as current. That heartbeat does not refresh an account or worker timestamp
 Polymarket connection records use a 600-second display freshness limit; the desk
 normally polls every 90 seconds. Kalshi connection records use 60 seconds.
 An incomplete source cannot qualify current activity or town growth.
+
+An accounting mismatch is separate from an old report: a recently updated report
+can still have incomplete money records. Rook flags those records for review.
+The Pacific-day API includes at most two UTC-day aggregate reconciliation rows
+(record counts and sums); a mismatch still leaves profit unknown. Those sums are
+diagnostics, not an alternative profit figure. The town states the missing-profit
+reason explicitly rather than suggesting another browser poll will resolve it.
+
+Kalshi's live mode can mean new bets are enabled or only completing existing
+Up/Down pairs is allowed. The town preserves that distinction, including the
+desk's accounting-stop/reset explanation. Limits are reported as the current
+new-bet budgets and loss stops. The existing pair-completion rule may spend beyond
+those budgets to reduce an existing position's possible loss; no display change
+enables that rule or changes its checks. Reserved cash is distinct from possible
+loss: new-bet reservations count toward risk, while pair-completion reservations
+are excluded by the existing risk model. Cash time, desk-report time and account
+reconciliation time are never substituted for one another; an unrecorded account
+check remains unknown.
 
 Old figures may remain visible with their age and an explicit warning. A missing
 report, malformed amount, unknown fee or missing current-day book is shown as
@@ -80,6 +104,12 @@ recordkeeping. They are a visualization of saved work and venue receipts, not
 additional trading agents. An order submission is not a fill, and a fill is not
 profit. Recent qualified real bot events can animate work; an old, incomplete,
 owner or practice event cannot pretend to be a new bot transaction.
+
+An order's latest reconciliation timestamp is not its cancellation time. The
+current saved source does not retain an immutable terminal-cancellation time,
+so the town no longer fabricates new cancellation events from repeated account
+checks. Actual cancellation-request receipts remain labeled as requests and do
+not trigger town movement or confirm that reserved cash was released.
 
 Garden levels use both bots' combined **recorded** profit since midnight Pacific
 only when both sources are complete, fresh and refer to the same Pacific date.

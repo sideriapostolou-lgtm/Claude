@@ -251,11 +251,13 @@ TYCOON_UI = r"""
     ["polymarket_us", "kalshi"].forEach(function (key) {
       const v = s.business.venues[key]; heading(v.name + " · recorded orders and bets");
       para(parent, v.sourceNote || "Waiting for saved venue records.", "dim");
-      para(parent, v.asOf ? "Records checked " + tyAge(v.age) + (v.current ? "." : " · delayed.") : "Record time not reported.", "dim");
+      para(parent, v.asOf ? (key === "kalshi" ? "Saved checkpoint " : "Completed desk update ") + tyAge(v.age)
+        + (v.current ? "." : " · records need review or a fresh update.") : "Record time not reported.", "dim");
       v.issues.forEach(function (issue) { para(parent, issue, "dim"); });
       if (v.orders.length) {
         v.orders.forEach(function (o) {
           para(parent, o.side + " · " + o.title + " · " + o.status);
+          if (o.lock) para(parent, "Pair-completion order: uses cash to reduce the existing possible loss.", "dim");
           para(parent, amount(o.filled) + " filled / " + amount(o.quantity) + " requested · " + amount(o.remaining)
             + " remaining · reserved " + fmtUsd(o.reserved), "dim");
         });
@@ -267,6 +269,7 @@ TYCOON_UI = r"""
             + " · " + p.side + " · " + p.title);
           para(parent, amount(p.quantity) + " contracts · recorded cost " + fmtUsd(p.cost)
             + " · fee " + tyFee(p.fee) + (p.feeBasis ? " (" + p.feeBasis + ")" : ""), "dim");
+          if (p.statusNote) para(parent, p.statusNote, "warn");
         });
       } else para(parent, "No individual holdings recorded here; check the account totals above.", "dim");
       if (v.truncated.orders || v.truncated.positions || v.truncated.events) para(parent, "Showing the most recent records; this list is not the entire history.", "dim");
@@ -344,7 +347,7 @@ TYCOON_UI = r"""
         + " daily loss stop · " + fmtUsd(s.limits.total) + " total loss stop. Safety days use UTC.", "dim");
       para(panelBody, s.cashAsOf ? "Cash checked " + tyAge(s.cashAge) + "." : "Cash update time unknown.", "dim");
       para(panelBody, s.venueAsOf ? "Open bets checked " + tyAge(s.venueAge) + "." : "Open-bet update time unknown.", "dim");
-      if (s.today === null || s.todayStale) para(panelBody, "Waiting for a complete, current Pacific-day profit report.", "warn");
+      if (s.todayReason || s.today === null || s.todayStale) para(panelBody, s.todayReason || "The Pacific-day profit report is unavailable or old.", "warn");
       if (s.pending && s.pending.count) para(panelBody, s.pending.count + " bot orders still awaiting confirmation.", "warn");
       if (s.positions.length && !(s.business && s.business.available)) {
         para(panelBody, "Recorded bets · may differ from current account holdings", "dim");
@@ -355,17 +358,27 @@ TYCOON_UI = r"""
       para(panelBody, "KALSHI", "dim");
       if (k) {
         para(panelBody, (k.active ? "REAL MONEY (Kalshi)" : k.practice ? "PRACTICE (Kalshi)" : k.stateText) + " · cash " + fmtUsd(k.cash));
+        if (k.active && k.locksOnly) para(panelBody, k.stateText, "warn");
         para(panelBody, "Money at risk: " + fmtUsd(k.exposure) + " · today (UTC): " + fmtSigned(k.today));
+        if (k.riskNote) para(panelBody, k.riskNote, "dim");
         if (k.todayPacific) para(panelBody, "Bot profit today (midnight Pacific): " + fmtSigned(k.todayPacific.value));
-        if (k.limits && [k.limits.window, k.limits.open, k.limits.day, k.limits.total].some(function (n) { return n !== null; })) para(panelBody, "Reported limits: " + fmtUsd(k.limits.window) + " per window · " + fmtUsd(k.limits.open)
-          + " open · " + fmtUsd(k.limits.day) + " daily loss stop · " + fmtUsd(k.limits.total) + " total loss stop.", "dim");
-        if (k.totalHalted) para(panelBody, "Kalshi’s total-loss stop is latched. New real buys remain off until the owner explicitly resumes it.", "warn");
-        para(panelBody, "Resting-order reservations: " + fmtUsd(k.reserved == null ? null : k.reserved) + ". Included in money at risk, not added again.", "dim");
+        if (k.todayPacific && k.todayPacific.reason) para(panelBody, k.todayPacific.reason, "warn");
+        if (k.limits && [k.limits.window, k.limits.open, k.limits.day, k.limits.total].some(function (n) { return n !== null; })) para(panelBody, "New-bet limits: " + fmtUsd(k.limits.window) + " per window · " + fmtUsd(k.limits.open)
+          + " at risk · " + fmtUsd(k.limits.day) + " daily loss stop · " + fmtUsd(k.limits.total) + " total loss stop (UTC).", "dim");
+        if (k.limitsNote) para(panelBody, k.limitsNote, "dim");
+        if (k.totalHalted) para(panelBody, k.stopNote, "warn");
+        para(panelBody, "Cash reserved for orders: " + fmtUsd(k.reserved == null ? null : k.reserved) + ".", "dim");
+        if (k.reserveNote) para(panelBody, k.reserveNote, "dim");
         para(panelBody, "Fees paid today (UTC): " + tyFee(k.fees == null ? null : k.fees) + ". Settled profit already includes its fees.", "dim");
         para(panelBody, "Settled profit split (UTC): matched pairs " + fmtSigned(k.locked == null ? null : k.locked)
           + " · direction " + fmtSigned(k.directional == null ? null : k.directional), "dim");
-        para(panelBody, k.reason || "Inventory and results are reported by the Kalshi desk.", "dim");
+        if (k.reason && !k.integrityNote && !k.locksOnly) para(panelBody, k.reason, "dim");
         para(panelBody, k.cashAt ? "Kalshi cash checked " + tyAge(k.cashAge) + "." : "Kalshi cash update time is unknown.", "dim");
+        para(panelBody, k.asOf ? "Kalshi desk report " + tyAge(k.age) + "." : "Kalshi desk report time is unknown.", "dim");
+        para(panelBody, k.accountAt ? "Account reconciliation recorded " + tyAge(k.accountAge)
+          + (k.accountStale ? " · may be old." : ".") : "Account reconciliation time is not recorded; a desk report or checkpoint does not prove the account was checked.", "dim");
+        if (k.integrityNote) para(panelBody, k.integrityNote, "warn");
+        if (k.integrityResetNote) para(panelBody, k.integrityResetNote, "warn");
         if (k.cashStale) para(panelBody, "Kalshi cash may be old; waiting for a fresh balance read.", "warn");
         if (k.todayStale) para(panelBody, "Kalshi’s UTC-day result is delayed or unavailable.", "warn");
         if (k.cleanupPending) para(panelBody, "Resting-order cancellation and reconciliation are still pending.", "warn");
@@ -436,11 +449,9 @@ TYCOON_UI = r"""
       panelTitle.textContent = "Bot’s result today"; para(panelBody, fmtSigned(s.today));
       para(panelBody, "The bot’s recorded profit or loss since 12:00 a.m. Pacific, including settlements and cash-outs. Daylight saving time is handled automatically. Your own bets, deposits and practice money are excluded.");
       if (s.todayDate) para(panelBody, "Pacific date: " + s.todayDate + ".", "dim");
-      if (s.today == null) para(panelBody, s.todayStatus === "incomplete"
-        ? "A complete Pacific-day total could not be verified from the saved records."
-        : "Waiting for a complete Pacific-day report.", "warn");
+      if (s.todayReason || s.today == null) para(panelBody, s.todayReason || "The Pacific-day profit report is unavailable.", "warn");
       para(panelBody, "This uses the time the bot records the result. A result discovered late can appear on a different day from Polymarket’s history.", "dim");
-      para(panelBody, "Garden upgrades unlock at 1¢, 25¢, $1, $5 and $10 of verified net Polymarket bot profit today. They are decorations, not money spent. They can recede after a loss and reset at midnight Pacific. Practice gains and your own bets never unlock them.", "dim");
+      para(panelBody, "Garden upgrades reflect both bots’ combined recorded profit today: 1¢, 25¢, $1, $5 and $10. Both Pacific-day books must be complete and current. Gardens can recede after a loss and reset at midnight Pacific. Practice gains and your own bets never unlock them.", "dim");
       para(panelBody, "Trading safety limits keep their UTC day; this result uses your Pacific day.", "dim");
       para(panelBody, s.todayAsOf ? "Profit report checked " + tyAge(s.todayAge) + "." : "Profit report time not available.", "dim");
       para(panelBody, "Open bets can still win or lose. This number is not a forecast.", "dim");

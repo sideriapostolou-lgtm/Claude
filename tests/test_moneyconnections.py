@@ -135,6 +135,122 @@ def test_confirmed_partial_cancel_clears_only_the_order_and_retains_actual_holdi
     assert not any(order["reservation_active"] for order in got["orders"])
 
 
+def test_repeated_terminal_order_reads_do_not_become_new_cancellation_events() -> None:
+    book = partial_book()
+    intent = next(iter(book.intents.values()))
+    assert book.reconcile_order(OrderSnapshot(intent.client_order_id, "test-order", "canceled", .5, 0, NOW - 10),
+                                fills_complete=True)
+    first = C.kalshi_connection(kalshi_state(book, now=NOW - 10), NOW, text)
+    # Production assigns the observation clock on every fully paginated order
+    # read; an old cancellation can therefore have a brand-new last_snapshot_at.
+    assert book.reconcile_order(OrderSnapshot(intent.client_order_id, "test-order", "canceled", .5, 0, NOW),
+                                fills_complete=True)
+    second = C.kalshi_connection(kalshi_state(book), NOW, text)
+    assert not any(event["type"] == "cancel" for event in first["events"] + second["events"])
+    assert {(row["id"], row["ts"]) for row in first["events"]} == {
+        (row["id"], row["ts"]) for row in second["events"]}
+    assert any("no retained event time" in issue for issue in second["issues"])
+    assert second["orders"] == [] and second["positions"][0]["quantity"] == .5
+
+
+@pytest.mark.parametrize("state", ["requested; reservation retained until fills reconcile",
+                                  "not resting on Kalshi (404); reservation retained until reconciled"])
+def test_cancel_request_receipt_never_claims_or_animates_terminal_confirmation(state: str) -> None:
+    book = partial_book()
+    intent = next(iter(book.intents.values()))
+    raw = kalshi_state(book)
+    raw["latest_events"] = [{"event": "speeddesk_live_cancel", "client_order_id": intent.client_order_id,
+                             "at": NOW - 5, "state": state}]
+    before = copy.deepcopy(raw)
+    got = C.kalshi_connection(raw, NOW, text)
+    cancel, = [event for event in got["events"] if event["type"] == "cancel"]
+    assert cancel["ts"] == NOW - 5 and cancel["qualified"] is False
+    assert "requested" in cancel["text"] and "request" in cancel["time_source"]
+    assert got["orders"][0]["reservation_active"] is True
+    assert got["reserved_usd"] == pytest.approx(.63) and raw == before
+    # A later terminal snapshot can release the reserve, but cannot turn that
+    # earlier request timestamp into a terminal-event timestamp.
+    assert book.reconcile_order(OrderSnapshot(intent.client_order_id, "test-order", "canceled", .5, 0, NOW),
+                                fills_complete=True)
+    raw["book"] = book.to_state()
+    after = C.kalshi_connection(raw, NOW, text)
+    assert [event for event in after["events"] if event["type"] == "cancel"] == [cancel]
+
+
+@pytest.mark.parametrize("outcome", [True, False, None])
+def test_ended_mixed_account_window_remains_visible_without_claiming_current_exposure(outcome: bool | None) -> None:
+    book = partial_book(now=NOW - 1800)
+    intent = next(iter(book.intents.values()))
+    assert book.reconcile_order(OrderSnapshot(intent.client_order_id, "test-order", "canceled", .5, 0, NOW),
+                                fills_complete=True)
+    raw = kalshi_state(book)
+    raw.update(foreign_windows=[WINDOW], final_outcomes={WINDOW: outcome})
+    raw["panel"]["positions"] = 0  # aggregate account count is not a row-level reconciliation receipt
+    before = copy.deepcopy(raw)
+    got = C.kalshi_connection(raw, NOW, text)
+    holding, = got["positions"]
+    assert holding["quantity"] == .5 and holding["cost_usd"] == .2
+    assert holding["current_position_verified"] is False and holding["mixed_account_activity"] is True
+    assert holding["end_at"] == NOW - 1000
+    assert holding["status"] == ("finalized_unreconciled" if outcome is not None else "ended_unreconciled")
+    expected_outcome = ("YES" if outcome else "NO") if outcome is not None else None
+    assert holding["final_outcome"] == expected_outcome
+    assert "account position" in holding["status_note"]
+    assert any("Ended windows" in issue for issue in got["issues"])
+    assert got["open_cost_usd"] == pytest.approx(.207) and got["at_risk_usd"] == pytest.approx(.207)
+    assert not any(event["type"] == "settlement" for event in got["events"])
+    assert raw == before
+
+
+def test_settled_mixed_account_window_does_not_leave_gross_holdings_in_open_rows() -> None:
+    book = LiveRiskBook(LiveLimits(fee_precision=.0001))
+    add_settlement(book, 0, NOW - 1)
+    raw = kalshi_state(book)
+    slug = next(iter(book.settled))
+    raw.update(foreign_windows=[slug], final_outcomes={slug: True})
+    got = C.kalshi_connection(raw, NOW, text)
+    assert got["positions"] == [] and got["open_cost_usd"] == 0
+    assert len([event for event in got["events"] if event["type"] == "settlement"]) == 1
+
+
+def test_live_lock_orders_and_reset_approval_restore_read_only() -> None:
+    book = LiveRiskBook(LiveLimits(fee_precision=.0001))
+    book.add_window(Window(WINDOW, NOW - 700, NOW + 200, 100,
+                           taker_coefficient=.07, maker_coefficient=0, venue="kalshi"))
+    book.update_cash(25, NOW - 690)
+    first = book.reserve_intent(WINDOW, "up", "take", .4, 1, NOW - 690, "nc-speed-before-lock", .6)
+    assert book.record_fill(ActualFill("first-fill", "first-order", first.client_order_id,
+                                      WINDOW, "up", .4, 1, .0168, NOW - 689))
+    book.update_cash(25, NOW - 10)
+    book.reserve_intent(WINDOW, "down", "take", .55, 1, NOW - 10, "nc-speed-display-lock", lock=True)
+    raw = kalshi_state(book)
+    before = copy.deepcopy(raw)
+    got = C.kalshi_connection(raw, NOW, text)
+    assert got["status"] == "ok" and got["orders"][0]["lock"] is True
+    assert got["reserved_usd"] > 0 and got["at_risk_usd"] == book.open_loss_usd
+    assert raw == before
+
+    book.integrity_error = "settlement_net_payout_mismatch"
+    assert book.arm_integrity_reset("fake-owner-reset-for-projection-test") == "armed"
+    raw = kalshi_state(book)
+    before = copy.deepcopy(raw)
+    got = C.kalshi_connection(raw, NOW, text)
+    assert raw == before and raw["book"]["integrity_reset_armed"] == "settlement_net_payout_mismatch"
+    assert got["status"] == "incomplete" and got["today_pacific"]["pnl_usd"] is None
+    assert not any(event["qualified"] for event in got["events"])
+
+
+def test_display_restore_does_not_share_mutable_execution_book_dictionaries() -> None:
+    book = LiveRiskBook(LiveLimits(fee_precision=.0001))
+    add_settlement(book, 0, NOW - 1)
+    raw = book.to_state()
+    before = copy.deepcopy(raw)
+    restored = C._kalshi_book(raw, NOW)
+    restored.day_pnl.clear()
+    restored.bootstrap_order.clear()
+    assert raw == before
+
+
 @pytest.mark.parametrize("corruption", ["inventory", "filled_size", "fill_fee", "realized", "day"])
 def test_inconsistent_kalshi_book_never_emits_money_events_or_a_partial_profit(corruption: str) -> None:
     book = LiveRiskBook(LiveLimits(fee_precision=.0001))

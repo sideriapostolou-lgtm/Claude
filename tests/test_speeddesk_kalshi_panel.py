@@ -175,3 +175,44 @@ def test_page_names_the_reconciliation_check_and_its_reset(make_settings, fake_c
     monkeypatch.setattr(speeddesk, "panel_state", lambda *args: raw)
     live = pagestate.speed_desk(live_settings(make_settings), now)["kalshi_live"]
     assert (live["integrity_error"], live["integrity_reset"]) == shown
+
+
+@pytest.mark.parametrize("change,expected", [
+    ({}, True), ({"as_of": 0}, False), ({"authenticated": False}, False),
+    ({"mode": "paper"}, False), ({"integrity_error": "fill_changed"}, False),
+])
+def test_pair_completion_only_survives_projection_but_never_overrides_live_gates(
+        make_settings, fake_clock, monkeypatch, change, expected) -> None:
+    now = fake_clock.now()
+    restricted = "Total loss stop; only completing half-filled pairs before the close"
+    raw = companion(now) | {"reason": restricted, "waiting": restricted, "trading_now": False,
+                            "total_halted": True, "open_cost_usd": 4.50} | change
+    monkeypatch.setattr(speeddesk, "panel_state", lambda *args: speed_report(now, raw))
+    live = pagestate.speed_desk(live_settings(make_settings), now)["kalshi_live"]
+    assert live["lock_only"] is expected
+    assert live["active"] is expected
+    assert live["waiting"] == restricted and not live["trading_now"]
+    assert live["open_cost_usd"] == 4.50 and live["at_risk_usd"] == 1.80
+
+
+def test_normal_waiting_or_a_stop_alone_never_claims_pair_completion_permission(
+        make_settings, fake_clock, monkeypatch) -> None:
+    now = fake_clock.now()
+    raw = companion(now) | {"reason": "Window has not started", "waiting": "Reading the account",
+                            "trading_now": False, "total_halted": True}
+    monkeypatch.setattr(speeddesk, "panel_state", lambda *args: speed_report(now, raw))
+    live = pagestate.speed_desk(live_settings(make_settings), now)["kalshi_live"]
+    assert not live["lock_only"] and not live["trading_now"]
+    assert not live["active"] and not live["real_orders_available"]
+    assert live["waiting"] == "Reading the account"
+
+
+def test_gross_historical_cost_alone_does_not_establish_current_exposure(
+        make_settings, fake_clock, monkeypatch) -> None:
+    now = fake_clock.now()
+    raw = companion(now) | {"mode": "paper", "real_orders_available": False, "reserved_usd": 0,
+                            "open_risk_usd": 0, "at_risk_usd": 0, "open_orders": 0, "positions": 0,
+                            "open_cost_usd": 5.75}
+    monkeypatch.setattr(speeddesk, "panel_state", lambda *args: speed_report(now, raw))
+    live = pagestate.speed_desk(live_settings(make_settings), now)["kalshi_live"]
+    assert live["open_cost_usd"] == 5.75 and not live["has_real_exposure"]

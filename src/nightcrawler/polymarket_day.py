@@ -42,7 +42,7 @@ def pacific_booked_day(state: Any, now: float) -> dict[str, Any]:
     """
     out: dict[str, Any] = {"date": None, "tz": PACIFIC_TZ, "start": None, "end": None,
                            "as_of": None, "status": "unavailable", "pnl_usd": None,
-                           "settled": None, "reason": "missing_snapshot"}
+                           "settled": None, "reason": "missing_snapshot", "reconciliation": []}
     current = _number(now)
     if current is None or current <= 0:
         out["reason"] = "invalid_now"
@@ -110,6 +110,7 @@ def pacific_booked_day(state: Any, now: float) -> dict[str, Any]:
         if start <= at < end:
             selected.append(pnl)
 
+    mismatch = False
     for day in dates:
         out["reason"] = "invalid_day_book"
         rec = days.get(day, {"settled": 0, "pnl_usd": 0.0})
@@ -122,9 +123,16 @@ def pacific_booked_day(state: Any, now: float) -> dict[str, Any]:
             total = math.fsum(amounts[day])
         except (OverflowError, ValueError):
             return out
-        if count != len(amounts[day]) or not math.isclose(total, pnl, rel_tol=0.0, abs_tol=1e-8):
-            out["reason"] = "day_book_mismatch"
-            return out
+        matches = count == len(amounts[day]) and math.isclose(total, pnl, rel_tol=0.0, abs_tol=1e-8)
+        # Bounded aggregate diagnostics explain an unavailable figure without
+        # publishing private order identifiers or passing off a partial sum as profit.
+        out["reconciliation"].append({"day_utc": day, "book_results": int(count),
+                                      "retained_results": len(amounts[day]), "book_pnl_usd": pnl,
+                                      "retained_pnl_usd": total, "matches": matches})
+        mismatch = mismatch or not matches
+    if mismatch:
+        out["reason"] = "day_book_mismatch"
+        return out
     try:
         total = math.fsum(selected)
     except (OverflowError, ValueError):
