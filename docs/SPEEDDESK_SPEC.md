@@ -194,10 +194,10 @@ practice trial and keep an additional honest practice twin of the live companion
 
 History: $2/$4/$3/$5 at launch (2026-10-12); $5/$10/$6/$10 (owner, 2026-10-13, "2.5x"); window and open raised to
 $10/$20 (owner, 2026-10-13 15:15 UTC, "ten now double tmr if it works"), both stops unchanged; the code ceilings
-allow one step to $20/$40 and a $12 day stop "when it's winning" (owner, 16:00 UTC; rule in docs/ACCOUNTS.md). The stops count
+allow one step to $20/$40 and a $12 day stop "when it's winning" (owner, 16:00 UTC); since the owner's "Max $50,000 a window build the ladder" (2026-10-13 ~18:40 UTC) the settings above are the earned-growth ladder's rung 0 and the bot takes that step itself (9.2). The stops count
 money still at risk, so they also bound each window: an unpaired position can never put more at risk than is
 left under the day and total stops (a complete up+down pair risks nothing).
-| `SPEEDDESK_KALSHI_CLIP` | 5 contracts | Most contracts per real order, so the first buy in a window is at most 5 (owner, 2026-10-13, after two 10-contract first buys were run over); balancing and lock orders follow it |
+| `SPEEDDESK_KALSHI_CLIP` | 5 contracts | Most contracts per real order, so the first buy in a window is at most 5 (owner, 2026-10-13, after two 10-contract first buys were run over), at every ladder rung (9.2: "Keep 5 at every rung"); balancing and lock orders follow it |
 | `SPEEDDESK_KALSHI_CUTOFF_S` | 180 seconds | End real buying after the first 12 minutes; configured cutoff may never be below 60 seconds |
 
 Fees and resting orders count at their worst permitted cost. Kalshi cash is another limit, never permission
@@ -291,7 +291,11 @@ Already filled exposure remains real until it settles, and the page must say so 
 - KXBTC15M rules use the 60-second average of CF Benchmarks BRTI at each boundary; YES wins ties. Read and
   validate current rules/fees for every eligible window. Unknown terms disable that window.
 - Cancel only bot-owned resting orders at startup, cutoff, stale Bitcoin (>3 s), shutdown, repeated errors
-  and mode changes. A cancel request alone does not release exposure: reconcile terminal status and all
+  and mode changes, and a resting bid priced from an old fair value: fresh fair more than 1c from the fair it
+  was priced at, or the bid above fresh fair minus 2c. The last runs on every step and between account reads,
+  whether or not account data are fresh (loss plan bug 2: at 9:08:39 AM PT on 2026-10-13 a bid stayed up for
+  20.7 s while fair rose about 7c, because the reprice waited for a fresh account read). A cancel never adds risk;
+  new bids still wait for a fresh, matching reconcile. A cancel request alone does not release exposure: reconcile terminal status and all
   actual fills. Prevent overlapping processes from independently spending the same persisted budget.
 
 Official sources checked for this implementation:
@@ -338,6 +342,77 @@ pairs be "completely locked in" and that the bot "knows when to sell".
   locks can still read it (a lock pending at that moment would not be readable by the old release). It never
   runs with live switches off, after a failure or integrity error, in a window the owner traded, or before
   every order in the window is reconciled. Locks are kept out of the speed measurements and the twin.
+
+### 9.2 Earned-growth ladder (owner, 2026-10-13 ~18:40 UTC)
+
+After Claude proposed this rule the owner wrote: "Max $50,000 a window build the ladder". Code: `src/nightcrawler/speeddesk_live_ladder.py`; the
+risk book asks it for each window's limits (`LiveRiskBook.limits_for`, `limits_now`).
+
+- **Rungs.** Rung r >= 0: window = base + $5r, where base is `SPEEDDESK_KALSHI_WINDOW_USD` (Railway: $10, the
+  owner's floor); open = 2 x window; day stop = 0.6 x window; the contract cap (so the first buy) stays the
+  configured `SPEEDDESK_KALSHI_CLIP` (5) at every rung (owner's choice, 2026-10-13 ~20:15 UTC: "Keep 5 at every
+  rung"). Rung 0 is exactly the configured limits ($10/$20/$6, 5 contracts) and no rung goes below a configured
+  value. The $10 lifetime stop never scales: real money still switches off when total P&L since launch (with money
+  at risk) reaches -$10. Ceilings: $50,000 a window, or `SPEEDDESK_KALSHI_LADDER_MAX_WINDOW_USD` when lower, and
+  the risk book's own clamp first: the top is the last rung `LiveLimits` leaves unchanged (the ladder asks the
+  clamp; it never copies its numbers). **This release keeps the code ceilings at $20/$40/$12 and 25 contracts**
+  (config.py `hi` and `speeddesk_live_model.HARD_*`, `HARD_CLIP`), so from $10 the ladder has two rungs:
+  $15/$30/$9, then $20/$40/$12, both with 5 contracts. Raising the money ceilings toward $50,000 is a separate
+  change that needs the owner's explicit go-ahead; the contract cap no longer grows, so `HARD_CLIP` never sets the
+  top (tests check that the top rung would then be exactly $50,000/$100,000/$30,000 with 5 contracts, whatever
+  `HARD_CLIP` is).
+- **Promotion**, one rung, when all five hold since the current rung began: (1) at least 96 settled windows traded
+  at this rung; (2) gain G (the settled P&L of this rung's windows) less money still at risk >= 2 sigma sqrt(n),
+  sigma = max(realized SD of per-window P&L at this rung, 0.105 x window); (3) house money: the room above the
+  lifetime stop, total P&L + $10 less money at risk (and less a resume anchor above zero), >= 3 x 0.55 x the next
+  rung's window; (4) no stop now and none in the last 24 h: a reconciliation error, the total stop, or the daily
+  stop (its flag, today's settled loss within $1 of it, or even a one-contract buy refused by the day or total
+  stop; a refusal that only trims a bigger order is not a stop); (5) available cash (cash less pending reservations
+  and unconfirmed spending) >= the next rung's open budget, from a balance read within the last minute. A promotion
+  also waits while total P&L less money at risk is at or below the demotion line (`giveback`).
+- **A promotion is provisional until its boundary.** When it is decided, the rung in force keeps its limits, its
+  counters and its own demotion line; any stop cancels it. At the first look at or after the boundary (the desk looks
+  at once then, not only once a second, before any order in the new window) every condition and the demotion line are
+  checked again with money still at risk counted as lost; it applies (`confirm`) only if all still hold and no
+  window from the boundary on has traded yet (`window_started`), otherwise it is cancelled and the limits stay as
+  they are (the rung's counters are untouched, and the next look may decide it again for the following window).
+- **Demotion**, one rung and never below 0: total P&L <= its peak at this rung - 0.6 x the rung's window (settled
+  P&L, as the rule says). At rung 0 a give-back changes nothing. While a promotion waits, the line is the rung in
+  force's, and crossing it demotes from that rung (dropping the promotion).
+- **Never mid-window.** A decision takes effect at the next window boundary (the close of the window under way):
+  every window's limits are fixed by its start, so a window that has begun keeps the limits it started with, and
+  windows starting from the boundary use the new rung. Only one change waits at a time. The counters (n, G, the
+  peak) restart when a change applies (a confirmed promotion, a demotion, a lowered maximum) and cover only windows
+  that start at or after the rung began: a window of the earlier rung that settles later moves the starting P&L and
+  the peak with it, so neither its gain nor its loss counts at the new rung.
+- **Every check uses the window's rung:** window budget, open budget, day stop, contract cap (starter, balancing
+  and lock orders), the size search in `_decide` and `_lock`, the status report and the practice twin (its window,
+  open, day stop and cap follow the rung). The total stop, cash bound, pair cap, imbalance, cutoff and lock rules are
+  unchanged. Note: the unchanged lifetime stop still caps money at risk at once below $10 (less any loss since
+  launch), so above rung 1 it binds before the day stop; a bigger rung adds paired volume, not unpaired risk.
+- **Saved and restored.** The ladder is a top-level `ladder` key in the saved state (version 2: rung, the rung
+  windows before the boundary keep, the boundary, whether a promotion still waits for its re-check, the start of the
+  counted windows, start time and P&L, peak, last stop, the latest 192 per-window results, the last change and the
+  configured limits it was earned on). On restart the counters (count, starting P&L, peak) are rebuilt from the saved
+  books (saved in the same write), so saved numbers can never inflate them, and the ladder looks at the books once
+  before a resume or day-reset token can clear a saved stop. The previous release ignores the key and nothing inside
+  the books or intents changed, so a rollback runs at the configured limits; it then saves without the ladder and
+  the next upgrade starts at rung 0. An unreadable ladder, a schedule this code could not have written (two rungs
+  at one boundary, a change beyond the next boundary), changed configured limits (`rebased`),
+  `SPEEDDESK_KALSHI_LADDER=false` (it also restarts at rung 0) or a lower maximum (`clamped`, counters restart) only
+  ever lowers the limits.
+- **Shown and logged.** The panel and the `speeddesk_live_status` line carry `ladder`: rung in force, limits,
+  promotion progress (n/96, G and G less money at risk vs needed, sigma, room vs needed, cash vs needed, last stop,
+  what blocks it), the demotion line of the rung in force (peak, give-back vs limit), any waiting change and
+  whether it still waits for its re-check (`recheck_pending`); `caps` are the rung's limits now (plus `clip`).
+  `/api/page` exposes it as `kalshi_live.ladder` (pagestate whitelist). Each decision logs one
+  `speeddesk_live_ladder` line with every number (`action` promote, confirm, demote or cancel), and each start
+  logs one.
+- **Owner decision taken (2026-10-13 ~20:15 UTC): "Keep 5 at every rung".** The first ladder draft grew the
+  contract cap with the window (floor(window / 2): 7 contracts at $15, 10 at $20), which would have brought back
+  the 10-contract first buy the owner's 16:20 UTC rule stopped after two were run over. Asked to choose, the owner
+  kept the configured cap: every rung's contract cap, so every first buy, balancing and lock order, is at most
+  `SPEEDDESK_KALSHI_CLIP` (5). A bigger rung adds window, open budget and day stop, not a bigger first buy.
 
 ## 10. Public source-bot watcher and faster market data (owner, 2026-10-12)
 
@@ -447,6 +522,35 @@ before an order's first network byte (orders and lock buys), startup, shutdown, 
 one-time action. The others (about 57 ms of fsync each on Railway on 2026-10-13, twice a second in reconcile)
 commit with SQLite synchronous=NORMAL: a process crash loses nothing, a host failure can lose account facts the
 next reconcile reads again, and the next synced commit makes every earlier commit durable.
+
+Bounded account reads (2026-10-13; loss plan bug 3, speed plan step 1). Every reconcile read the whole order
+history twice and every fill since the desk first started (about 0.5 MB/s on the live connection). Between
+complete reads, the two order reads and the fill read now pass Kalshi's `min_ts` = the earlier of the oldest
+unfinished, uncertain or reserved order's decision time and one window (900 s) ago, minus 60 s. Every order that
+can still change the books was created after its decision, and its fills after that, so it is inside the bound
+whether `min_ts` filters orders on creation or on last update (the docs do not say which); so is every order and
+fill of a window open now. The complete history (orders unfiltered, fills since start) is still read at startup,
+every 60 s, on the first read that starts after any window opens (an owner's bid placed before the window opened
+is normally seen before the bot's first order there; a read already under way at the open can let one bot order
+through first, and the complete read about a second later then marks the window as the owner's), and on every read
+while an owner's integrity reset waits, the only reads
+that may clear it. An untracked bot order or a late fill stamped before the bound is caught by the next complete
+read (at most 60 s). Positions and settlements are unchanged. The status line's `reconcile` block reports, since
+the previous line: complete and recent reconcile times (`full_ms`, `recent_ms`), each read's time, the total
+pages, rows and bytes read, failures, and how often each consistency check failed (`check_<name>`:
+`position_mismatch`, `order_list_behind_fills`, `fills_behind_order_list`, `order_found_after_fills`,
+`unattributed_fill_beside_unresolved_order`, `settlement_row_missing`, `reconcile_slow` over 3 s); `last` is the
+most recent reconcile with its reads.
+
+Measurement (2026-10-13; speed plan step 0; logging only, no order changes). Accepted order and cancel records
+carry `venue`: Kalshi's reply time `ts_ms` (the client already validated it), the local send and reply times and
+the clock offset they imply (Kalshi minus local, uncertain by half the round trip). Cancel records also carry
+`reduced_by` and `timing` (decision to Kalshi's reply, and the request alone). The status line adds `phases`
+(median, p90 and maximum ms of each part of `step()`: observe, cancel_unsafe, startup or reconcile, lock, decide,
+heartbeat, and the whole step), `loop` (`event_loop_lag`: the oversleep of a 10 ms timer, and the cancel
+timings) and `clock` (Coinbase Exchange `/time` once a minute while real money is on, and Kalshi from every reply;
+each source's shortest round trip since the previous line, or the last one with `fresh: false`). A failed time
+probe is only counted. Accepted orders' `stages` keep their three fields for the existing log parsers.
 
 The public US probe checks the five-minute series and validates an actual market's BTC/UP_DOWN/5m/BRTI terms
 and start/end before logging `skipwatch_us_5m_listing`. Its first verified observation stays on the page.

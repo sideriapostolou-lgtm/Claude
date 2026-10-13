@@ -1,0 +1,864 @@
+{
+  "LucasMeow": {
+    "n": 500,
+    "classification_note": "Maker inferred by multiset exclusion from bounded takerOnly=true response, only where time coverage exists; timestamps are public API block time. No private order-type claim.",
+    "taker_n": 50,
+    "maker_n": 450,
+    "unknown_n": 0,
+    "by_side_outcome": {
+      "BUY No": {
+        "n": 444,
+        "median_price": 0.98,
+        "total_dollars": 1301729.152627856
+      },
+      "BUY Yes": {
+        "n": 49,
+        "median_price": 0.9100000051,
+        "total_dollars": 315693.884686
+      },
+      "SELL No": {
+        "n": 6,
+        "median_price": 0.57799998365,
+        "total_dollars": 577.9472959996369
+      },
+      "SELL Yes": {
+        "n": 1,
+        "median_price": 0.19,
+        "total_dollars": 1.9
+      }
+    },
+    "sells": {},
+    "price_stats": {
+      "BUY": {
+        "price": {
+          "p10": 0.914,
+          "p50": 0.98,
+          "p90": 0.995
+        },
+        "shares": {
+          "p10": 2.29,
+          "p50": 199.99,
+          "p90": 7211.666665
+        },
+        "fill_dollars": {
+          "p10": 2.27626,
+          "p50": 167.57999999999998,
+          "p90": 6822.236665811166
+        },
+        "count": 493,
+        "top_prices": [
+          [
+            0.993,
+            43
+          ],
+          [
+            0.98,
+            41
+          ],
+          [
+            0.971,
+            31
+          ],
+          [
+            0.982,
+            29
+          ],
+          [
+            0.992,
+            24
+          ],
+          [
+            0.998,
+            24
+          ],
+          [
+            0.994,
+            22
+          ],
+          [
+            0.92,
+            21
+          ],
+          [
+            0.94,
+            20
+          ],
+          [
+            0.997,
+            18
+          ]
+        ]
+      },
+      "SELL": {
+        "price": {
+          "p10": 0.19,
+          "p50": 0.5779999673,
+          "p90": 0.578
+        },
+        "shares": {
+          "p10": 2.0,
+          "p50": 7.612455,
+          "p90": 311.84
+        },
+        "fill_dollars": {
+          "p10": 1.156,
+          "p50": 3.47999900003466,
+          "p90": 180.24351999999996
+        },
+        "count": 7,
+        "top_prices": [
+          [
+            0.578,
+            6
+          ],
+          [
+            0.19,
+            1
+          ]
+        ]
+      }
+    },
+    "conditions": 57,
+    "conditions_both_buy_sell": 1,
+    "maker_dollars": 816739.5758188515,
+    "taker_dollars": 801263.3087910044
+  },
+  "x6916": {
+    "n": 500,
+    "classification_note": "Maker inferred by multiset exclusion from bounded takerOnly=true response, only where time coverage exists; timestamps are public API block time. No private order-type claim.",
+    "taker_n": 0,
+    "maker_n": 500,
+    "unknown_n": 0,
+    "by_side_outcome": {
+      "BUY Yes": {
+        "n": 148,
+        "median_price": 0.2,
+        "total_dollars": 13731.249244951252
+      },
+      "BUY No": {
+        "n": 106,
+        "median_price": 0.9145000003,
+        "total_dollars": 58901.72686594619
+      },
+      "SELL Yes": {
+        "n": 131,
+        "median_price": 0.37,
+        "total_dollars": 24466.229399840257
+      },
+      "SELL No": {
+        "n": 115,
+        "median_price": 0.942,
+        "total_dollars": 48000.0986598612
+      }
+    },
+    "sells": {},
+    "price_stats": {
+      "BUY": {
+        "price": {
+          "p10": 0.019,
+          "p50": 0.5400000966,
+          "p90": 0.972
+        },
+        "shares": {
+          "p10": 6.666667,
+          "p50": 84.99,
+          "p90": 999.0
+        },
+        "fill_dollars": {
+          "p10": 0.9258489989629136,
+          "p50": 19.02,
+          "p90": 677.1
+        },
+        "count": 254,
+        "top_prices": [
+          [
+            0.84,
+            10
+          ],
+          [
+            0.34,
+            10
+          ],
+          [
+            0.75,
+            9
+          ],
+          [
+            0.019,
+            9
+          ],
+          [
+            0.02,
+            7
+          ],
+          [
+            0.38,
+            7
+          ],
+          [
+            0.22,
+            6
+          ],
+          [
+            0.85,
+            5
+          ],
+          [
+            0.72,
+            4
+          ],
+          [
+            0.8,
+            4
+          ]
+        ]
+      },
+      "SELL": {
+        "price": {
+          "p10": 0.1,
+          "p50": 0.7299999908,
+          "p90": 0.9809999959
+        },
+        "shares": {
+          "p10": 4.390244,
+          "p50": 57.145046,
+          "p90": 995.0
+        },
+        "fill_dollars": {
+          "p10": 2.2,
+          "p50": 20.400000000000002,
+          "p90": 503.6322
+        },
+        "count": 246,
+        "top_prices": [
+          [
+            0.86,
+            9
+          ],
+          [
+            0.87,
+            8
+          ],
+          [
+            0.994,
+            7
+          ],
+          [
+            0.34,
+            5
+          ],
+          [
+            0.987,
+            5
+          ],
+          [
+            0.71,
+            5
+          ],
+          [
+            0.93,
+            4
+          ],
+          [
+            0.94,
+            4
+          ],
+          [
+            0.83,
+            4
+          ],
+          [
+            0.56,
+            4
+          ]
+        ]
+      }
+    },
+    "conditions": 109,
+    "conditions_both_buy_sell": 61,
+    "maker_dollars": 145099.30417059892,
+    "taker_dollars": 0
+  },
+  "amis": {
+    "n": 500,
+    "classification_note": "Maker inferred by multiset exclusion from bounded takerOnly=true response, only where time coverage exists; timestamps are public API block time. No private order-type claim.",
+    "taker_n": 143,
+    "maker_n": 357,
+    "unknown_n": 0,
+    "by_side_outcome": {
+      "BUY No": {
+        "n": 326,
+        "median_price": 0.94,
+        "total_dollars": 583353.4818413719
+      },
+      "BUY Yes": {
+        "n": 2,
+        "median_price": 0.71613144975,
+        "total_dollars": 444.71889999626
+      },
+      "SELL No": {
+        "n": 171,
+        "median_price": 0.987,
+        "total_dollars": 261045.50592006365
+      },
+      "SELL Yes": {
+        "n": 1,
+        "median_price": 0.87,
+        "total_dollars": 763.5468
+      }
+    },
+    "sells": {},
+    "price_stats": {
+      "BUY": {
+        "price": {
+          "p10": 0.852,
+          "p50": 0.94,
+          "p90": 0.9849893975
+        },
+        "shares": {
+          "p10": 10.0,
+          "p50": 312.5,
+          "p90": 6155.0
+        },
+        "fill_dollars": {
+          "p10": 8.732700000000001,
+          "p50": 307.5,
+          "p90": 5879.55639006654
+        },
+        "count": 328,
+        "top_prices": [
+          [
+            0.93,
+            45
+          ],
+          [
+            0.984,
+            23
+          ],
+          [
+            0.88,
+            20
+          ],
+          [
+            0.94,
+            18
+          ],
+          [
+            0.983,
+            17
+          ],
+          [
+            0.997,
+            14
+          ],
+          [
+            0.852,
+            11
+          ],
+          [
+            0.97,
+            11
+          ],
+          [
+            0.951,
+            10
+          ],
+          [
+            0.96,
+            9
+          ]
+        ]
+      },
+      "SELL": {
+        "price": {
+          "p10": 0.785,
+          "p50": 0.987,
+          "p90": 0.998
+        },
+        "shares": {
+          "p10": 5.5,
+          "p50": 151.98,
+          "p90": 4127.27
+        },
+        "fill_dollars": {
+          "p10": 5.4505,
+          "p50": 147.9999979978986,
+          "p90": 3403.5635399999996
+        },
+        "count": 172,
+        "top_prices": [
+          [
+            0.998,
+            33
+          ],
+          [
+            0.986,
+            22
+          ],
+          [
+            0.988,
+            14
+          ],
+          [
+            0.989,
+            13
+          ],
+          [
+            0.985,
+            13
+          ],
+          [
+            0.987,
+            9
+          ],
+          [
+            0.983,
+            9
+          ],
+          [
+            0.997,
+            8
+          ],
+          [
+            0.58,
+            7
+          ],
+          [
+            0.991,
+            7
+          ]
+        ]
+      }
+    },
+    "conditions": 73,
+    "conditions_both_buy_sell": 14,
+    "maker_dollars": 334842.2338822614,
+    "taker_dollars": 510765.01957917033
+  },
+  "HighTempTation": {
+    "n": 500,
+    "classification_note": "Maker inferred by multiset exclusion from bounded takerOnly=true response, only where time coverage exists; timestamps are public API block time. No private order-type claim.",
+    "taker_n": 473,
+    "maker_n": 27,
+    "unknown_n": 0,
+    "by_side_outcome": {
+      "BUY No": {
+        "n": 235,
+        "median_price": 0.9725,
+        "total_dollars": 38097.345374069744
+      },
+      "BUY Yes": {
+        "n": 4,
+        "median_price": 0.96940600125,
+        "total_dollars": 105.75000000150001
+      },
+      "SELL No": {
+        "n": 257,
+        "median_price": 0.99,
+        "total_dollars": 41384.648239952905
+      },
+      "SELL Yes": {
+        "n": 4,
+        "median_price": 0.99,
+        "total_dollars": 107.91000000000001
+      }
+    },
+    "sells": {},
+    "price_stats": {
+      "BUY": {
+        "price": {
+          "p10": 0.8864918789,
+          "p50": 0.9725,
+          "p90": 0.98
+        },
+        "shares": {
+          "p10": 5.0,
+          "p50": 54.67,
+          "p90": 442.06
+        },
+        "fill_dollars": {
+          "p10": 4.9,
+          "p50": 51.879900001391,
+          "p90": 382.404999984175
+        },
+        "count": 239,
+        "top_prices": [
+          [
+            0.98,
+            81
+          ],
+          [
+            0.973,
+            19
+          ],
+          [
+            0.979,
+            5
+          ],
+          [
+            0.971,
+            5
+          ],
+          [
+            0.974,
+            4
+          ],
+          [
+            0.976,
+            4
+          ],
+          [
+            0.97,
+            4
+          ],
+          [
+            0.95,
+            4
+          ],
+          [
+            0.957,
+            3
+          ],
+          [
+            0.978,
+            3
+          ]
+        ]
+      },
+      "SELL": {
+        "price": {
+          "p10": 0.99,
+          "p50": 0.99,
+          "p90": 0.995
+        },
+        "shares": {
+          "p10": 5.0,
+          "p50": 54.0,
+          "p90": 442.06
+        },
+        "fill_dollars": {
+          "p10": 4.95,
+          "p50": 53.46,
+          "p90": 437.6394
+        },
+        "count": 261,
+        "top_prices": [
+          [
+            0.99,
+            225
+          ],
+          [
+            0.998,
+            11
+          ],
+          [
+            0.996,
+            10
+          ],
+          [
+            0.995,
+            5
+          ],
+          [
+            0.991,
+            4
+          ],
+          [
+            0.994,
+            2
+          ],
+          [
+            0.993,
+            1
+          ],
+          [
+            0.999,
+            1
+          ],
+          [
+            0.997,
+            1
+          ],
+          [
+            0.992,
+            1
+          ]
+        ]
+      }
+    },
+    "conditions": 237,
+    "conditions_both_buy_sell": 236,
+    "maker_dollars": 3628.54123998316,
+    "taker_dollars": 76067.11237404098
+  },
+  "Weatherstappen": {
+    "n": 500,
+    "classification_note": "Maker inferred by multiset exclusion from bounded takerOnly=true response, only where time coverage exists; timestamps are public API block time. No private order-type claim.",
+    "taker_n": 123,
+    "maker_n": 377,
+    "unknown_n": 0,
+    "by_side_outcome": {
+      "BUY No": {
+        "n": 285,
+        "median_price": 0.99,
+        "total_dollars": 34885.46752004712
+      },
+      "SELL No": {
+        "n": 215,
+        "median_price": 0.998,
+        "total_dollars": 35704.97743005826
+      }
+    },
+    "sells": {},
+    "price_stats": {
+      "BUY": {
+        "price": {
+          "p10": 0.986521022,
+          "p50": 0.99,
+          "p90": 0.995
+        },
+        "shares": {
+          "p10": 0.05,
+          "p50": 16.67,
+          "p90": 376.26
+        },
+        "fill_dollars": {
+          "p10": 0.04975,
+          "p50": 16.503300000000003,
+          "p90": 370.052560008966
+        },
+        "count": 285,
+        "top_prices": [
+          [
+            0.99,
+            122
+          ],
+          [
+            0.995,
+            119
+          ],
+          [
+            0.993,
+            4
+          ],
+          [
+            0.992,
+            3
+          ],
+          [
+            0.989,
+            3
+          ],
+          [
+            0.978,
+            2
+          ],
+          [
+            0.98,
+            2
+          ],
+          [
+            0.984,
+            2
+          ],
+          [
+            0.994,
+            2
+          ],
+          [
+            0.96,
+            2
+          ]
+        ]
+      },
+      "SELL": {
+        "price": {
+          "p10": 0.99799951,
+          "p50": 0.998,
+          "p90": 0.999
+        },
+        "shares": {
+          "p10": 2.004009,
+          "p50": 50.0,
+          "p90": 512.79
+        },
+        "fill_dollars": {
+          "p10": 2.0000000000355898,
+          "p50": 49.9,
+          "p90": 512.27721
+        },
+        "count": 215,
+        "top_prices": [
+          [
+            0.998,
+            172
+          ],
+          [
+            0.999,
+            43
+          ]
+        ]
+      }
+    },
+    "conditions": 82,
+    "conditions_both_buy_sell": 82,
+    "maker_dollars": 33704.679970058256,
+    "taker_dollars": 36885.76498004712
+  },
+  "LowTempTation": {
+    "n": 500,
+    "classification_note": "Maker inferred by multiset exclusion from bounded takerOnly=true response, only where time coverage exists; timestamps are public API block time. No private order-type claim.",
+    "taker_n": 268,
+    "maker_n": 232,
+    "unknown_n": 0,
+    "by_side_outcome": {
+      "BUY Yes": {
+        "n": 55,
+        "median_price": 0.4646333022,
+        "total_dollars": 3936.9692599813357
+      },
+      "BUY No": {
+        "n": 103,
+        "median_price": 0.9726984127,
+        "total_dollars": 16093.76249110678
+      },
+      "SELL Yes": {
+        "n": 213,
+        "median_price": 0.99,
+        "total_dollars": 9449.780289999322
+      },
+      "SELL No": {
+        "n": 129,
+        "median_price": 0.99,
+        "total_dollars": 15604.453339998501
+      }
+    },
+    "sells": {},
+    "price_stats": {
+      "BUY": {
+        "price": {
+          "p10": 0.3803570627,
+          "p50": 0.963373494,
+          "p90": 0.98
+        },
+        "shares": {
+          "p10": 5.0,
+          "p50": 66.0,
+          "p90": 351.57
+        },
+        "fill_dollars": {
+          "p10": 4.9,
+          "p50": 50.66292000357001,
+          "p90": 303.294010015375
+        },
+        "count": 158,
+        "top_prices": [
+          [
+            0.98,
+            26
+          ],
+          [
+            0.973,
+            18
+          ],
+          [
+            0.974,
+            6
+          ],
+          [
+            0.972,
+            5
+          ],
+          [
+            0.97,
+            4
+          ],
+          [
+            0.976,
+            4
+          ],
+          [
+            0.979,
+            3
+          ],
+          [
+            0.962,
+            3
+          ],
+          [
+            0.963,
+            2
+          ],
+          [
+            0.953,
+            2
+          ]
+        ]
+      },
+      "SELL": {
+        "price": {
+          "p10": 0.9599999693,
+          "p50": 0.99,
+          "p90": 0.99
+        },
+        "shares": {
+          "p10": 2.0,
+          "p50": 24.42,
+          "p90": 195.92
+        },
+        "fill_dollars": {
+          "p10": 1.98,
+          "p50": 23.6511,
+          "p90": 183.15
+        },
+        "count": 342,
+        "top_prices": [
+          [
+            0.99,
+            256
+          ],
+          [
+            0.97,
+            20
+          ],
+          [
+            0.999,
+            13
+          ],
+          [
+            0.96,
+            12
+          ],
+          [
+            0.9,
+            10
+          ],
+          [
+            0.94,
+            7
+          ],
+          [
+            0.92,
+            5
+          ],
+          [
+            0.95,
+            3
+          ],
+          [
+            0.996,
+            2
+          ],
+          [
+            0.993,
+            1
+          ]
+        ]
+      }
+    },
+    "conditions": 159,
+    "conditions_both_buy_sell": 156,
+    "maker_dollars": 14893.537520003661,
+    "taker_dollars": 30191.427861082277
+  }
+}

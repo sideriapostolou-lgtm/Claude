@@ -1,0 +1,59 @@
+{
+  "name": "Weatherstappen",
+  "retrieved_at": "2026-10-13T18:57:37.066733+00:00",
+  "url": "https://data-api.polymarket.com/trades?user=0xb9012e0d9b60d3920286309328b935cdfa609fc4&limit=500&offset=0&takerOnly=false",
+  "status": 200,
+  "sha256": "997713daa261ccafc1e66f57c6ed8a134299e26914db244ba819a862c9b723fb",
+  "n": 500,
+  "min_timestamp": 1791294628,
+  "max_timestamp": 1791911469,
+  "buy_count": 285,
+  "sell_count": 215,
+  "price_median": 0.99,
+  "size_median": 16.67,
+  "buy_outcomes": {
+    "No": 285
+  },
+  "titles": [
+    [
+      "Will the highest temperature in Munich be 14\u00b0C on October 13?",
+      49
+    ],
+    [
+      "Will the highest temperature in Milan be 17\u00b0C on October 8?",
+      43
+    ],
+    [
+      "Will the highest temperature in Ankara be 22\u00b0C on October 8?",
+      40
+    ],
+    [
+      "Will the highest temperature in Munich be 12\u00b0C on October 10?",
+      22
+    ],
+    [
+      "Will the highest temperature in Milan be 17\u00b0C on October 7?",
+      21
+    ],
+    [
+      "Will the highest temperature in Munich be 13\u00b0C on October 12?",
+      15
+    ],
+    [
+      "Will the highest temperature in Wellington be 19\u00b0C on October 10?",
+      13
+    ],
+    [
+      "Will the highest temperature in Wellington be 14\u00b0C or below on October 10?",
+      12
+    ],
+    [
+      "Will the highest temperature in Milan be 19\u00b0C on October 12?",
+      11
+    ],
+    [
+      "Will the highest temperature in Munich be 17\u00b0C on October 8?",
+      11
+    ]
+  ]
+}

@@ -493,6 +493,23 @@ class Settings:
                                               hi=12)
     speeddesk_kalshi_total_stop_usd: float = _f(10.0, "usd", "Kalshi live companion: persistent total-loss stop; "
                                                 "owner-authorized ceiling $10", lo=0, lo_open=True, hi=10)
+    # Owner, 2026-10-13 ~18:40 UTC, after Claude proposed the earned-growth ladder: "Max $50,000 a window build the
+    # ladder". The four settings above are its rung 0, the owner's floor; each earned rung adds $5 a window (open 2x,
+    # day stop 60 %); the first buy stays SPEEDDESK_KALSHI_CLIP below at every rung (owner, 2026-10-13 ~20:15 UTC:
+    # "Keep 5 at every rung") and the $10 total stop never scales
+    # (speeddesk_live_ladder.py, rule in docs/SPEEDDESK_SPEC.md 9.2). The ladder never goes above the ceilings above
+    # and the risk book's own (LiveLimits): $20 a window, $40 open, $12 a day, 25 contracts until they are raised.
+    # A promotion is re-checked at its window boundary before it applies.
+    speeddesk_kalshi_ladder: bool = _f(True, "bool", "Kalshi live companion: the earned-growth ladder. One rung up "
+                                       "($5 more a window) only after 96 settled windows at the rung, a gain of 2 "
+                                       "sigma sqrt(n), house money, 24 h without a stop and the cash for it; one rung "
+                                       "down after giving back 60 % of a window from the rung's peak; every change "
+                                       "starts at the next window. false = always the configured limits (and the "
+                                       "ladder starts again at rung 0)")
+    speeddesk_kalshi_ladder_max_window_usd: float = _f(50_000.0, "usd", "Kalshi live companion: the ladder's highest "
+                                                       "window (the owner's maximum is $50,000; the code ceilings "
+                                                       "above apply first); lower it to stop the climb earlier",
+                                                       lo=0, lo_open=True, hi=50_000)
     # Owner, 2026-10-13 16:20 UTC, after two windows were run over at the new 10-contract size: "make sure it never
     # happens again". The first buy in a window is the bet that can be run over, so it is held to 5 contracts
     # (the size of every morning win); the $10 window budget is unchanged.

@@ -1,0 +1,170 @@
+[
+  {
+    "shares": 15,
+    "buy": 0.99,
+    "sell": 0.998,
+    "minutes": 1.3166666666666667,
+    "title": "Will the highest temperature in Milan be 19\u00b0C on October 13?"
+  },
+  {
+    "shares": 3.37,
+    "buy": 0.995,
+    "sell": 0.998,
+    "minutes": 0.16666666666666666,
+    "title": "Will the highest temperature in Ankara be 18\u00b0C on October 13?"
+  },
+  {
+    "shares": 58.82,
+    "buy": 0.9928949337,
+    "sell": 0.999,
+    "minutes": 0.18333333333333332,
+    "title": "Will the highest temperature in Karachi be 35\u00b0C on October 13?"
+  },
+  {
+    "shares": 259.63,
+    "buy": 0.99,
+    "sell": 0.999,
+    "minutes": 11.083333333333334,
+    "title": "Will the highest temperature in Istanbul be 18\u00b0C on October 13?"
+  },
+  {
+    "shares": 273.61,
+    "buy": 0.983124301,
+    "sell": 0.998,
+    "minutes": 0.15,
+    "title": "Will the highest temperature in Istanbul be 17\u00b0C or below on October 13?"
+  },
+  {
+    "shares": 20,
+    "buy": 0.992,
+    "sell": 0.998,
+    "minutes": 0.4666666666666667,
+    "title": "Will the highest temperature in Karachi be 33\u00b0C on October 12?"
+  },
+  {
+    "shares": 10,
+    "buy": 0.995,
+    "sell": 0.998,
+    "minutes": 0.05,
+    "title": "Will the highest temperature in Singapore be 31\u00b0C on October 12?"
+  },
+  {
+    "shares": 25,
+    "buy": 0.995,
+    "sell": 0.998,
+    "minutes": 0.15,
+    "title": "Will the highest temperature in Ankara be 24\u00b0C on October 11?"
+  },
+  {
+    "shares": 268.14,
+    "buy": 0.99,
+    "sell": 0.998,
+    "minutes": 0.16666666666666666,
+    "title": "Will the highest temperature in Istanbul be 25\u00b0C on October 11?"
+  },
+  {
+    "shares": 138.84,
+    "buy": 0.995,
+    "sell": 0.998,
+    "minutes": 0.35,
+    "title": "Will the highest temperature in Singapore be 29\u00b0C on October 11?"
+  },
+  {
+    "shares": 12,
+    "buy": 0.995,
+    "sell": 0.998,
+    "minutes": 0.016666666666666666,
+    "title": "Will the highest temperature in Munich be 9\u00b0C or below on October 11?"
+  },
+  {
+    "shares": 60.92,
+    "buy": 0.9893282994,
+    "sell": 0.998,
+    "minutes": 0.18333333333333332,
+    "title": "Will the highest temperature in Ankara be 23\u00b0C on October 10?"
+  },
+  {
+    "shares": 10.35,
+    "buy": 0.995,
+    "sell": 0.999,
+    "minutes": 4.55,
+    "title": "Will the highest temperature in Singapore be 31\u00b0C on October 10?"
+  },
+  {
+    "shares": 125.89,
+    "buy": 0.988901819,
+    "sell": 0.998,
+    "minutes": 0.35,
+    "title": "Will the highest temperature in Singapore be 30\u00b0C on October 10?"
+  },
+  {
+    "shares": 1150,
+    "buy": 0.9907565217,
+    "sell": 0.998,
+    "minutes": 0.4166666666666667,
+    "title": "Will the highest temperature in Singapore be 29\u00b0C on October 10?"
+  },
+  {
+    "shares": 346.47,
+    "buy": 0.9941069645,
+    "sell": 0.998,
+    "minutes": 0.16666666666666666,
+    "title": "Will the highest temperature in Ankara be 21\u00b0C on October 9?"
+  },
+  {
+    "shares": 20,
+    "buy": 0.99225,
+    "sell": 0.999,
+    "minutes": 0.3,
+    "title": "Will the highest temperature in Singapore be 31\u00b0C on October 9?"
+  },
+  {
+    "shares": 952.22,
+    "buy": 0.9932998887,
+    "sell": 0.999,
+    "minutes": 5.7,
+    "title": "Will the highest temperature in Wellington be 18\u00b0C on October 9?"
+  },
+  {
+    "shares": 6,
+    "buy": 0.995,
+    "sell": 0.998,
+    "minutes": 0.016666666666666666,
+    "title": "Will the highest temperature in Toronto be 16\u00b0C on October 8?"
+  },
+  {
+    "shares": 42.45,
+    "buy": 0.995,
+    "sell": 0.998,
+    "minutes": 0.9,
+    "title": "Will the highest temperature in Milan be 18\u00b0C on October 8?"
+  },
+  {
+    "shares": 279.54,
+    "buy": 0.99,
+    "sell": 0.999,
+    "minutes": 12.633333333333333,
+    "title": "Will the highest temperature in Toronto be 21\u00b0C on October 7?"
+  },
+  {
+    "shares": 119.2,
+    "buy": 0.9786459732,
+    "sell": 0.999,
+    "minutes": 14.05,
+    "title": "Will the highest temperature in Munich be 23\u00b0C on October 7?"
+  },
+  {
+    "shares": 147.86,
+    "buy": 0.9921341134,
+    "sell": 0.998,
+    "minutes": 0.21666666666666667,
+    "title": "Will the highest temperature in Karachi be 31\u00b0C on October 7?"
+  },
+  {
+    "shares": 10,
+    "buy": 0.995,
+    "sell": 0.998,
+    "minutes": 4.8,
+    "title": "Will the highest temperature in Milan be 16\u00b0C on October 7?"
+  }
+]

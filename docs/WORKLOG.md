@@ -52,6 +52,115 @@ Template:
 - Next step: deploy in a safe minute; read `kalshi_arena_feed` (flush p99) and `kalshi_arena_status` (drops, late,
   void_feed) for an hour.
 
+## 2026-10-13 20:20 UTC, Claude, branch claude/kalshi-ladder-ship
+- Owner decision (2026-10-13 ~20:15 UTC, answering the open first-buy question in SPEEDDESK_SPEC 9.2): "Keep 5 at
+  every rung".
+- Changed: `speeddesk_live_ladder._numbers` returns the configured contract cap (`SPEEDDESK_KALSHI_CLIP`, 5) at every
+  rung instead of floor(window / 2) (which made 7 at $15 and 10 at $20). Window +$5 a rung, open 2x, day stop 60 %,
+  the fixed $10 total stop and the $20/$40/$12 code ceilings are unchanged; from $10 the top is still rung 2
+  ($20/$40/$12, now 5 contracts). Module docstring, config.py comment, `.env.example`, SPEEDDESK_SPEC 9.2 (rung
+  rule; "Owner decision open" is now the decision taken) and the ACCOUNTS Kalshi row say the same.
+- Tests (`tests/test_speeddesk_live_ladder.py`): the 12 that expected a scaled cap now expect the configured one
+  (the independent `expected()` rule returns `base.clip`; "clip" refusals checked at 6 with 5 accepted at rungs 0,
+  1 and 2; the demotion and waiting-promotion losses rebuilt from 5-contract buys: four $2.10 losses stay inside rung
+  1's $9 line and a fifth crosses it, a $4.10 starter at $0.80 crosses it after $5.04 given back; with the money
+  ceilings raised the top rung is $50,000/$100,000/$30,000 with 5 contracts whatever `HARD_CLIP` is). New
+  `test_the_first_buy_stays_at_the_configured_cap_at_every_rung` (rungs 0-2 clip 5, a desk at rung 1 places a
+  5-contract first buy, and a configured 3 gives 3). The updated file fails 13 tests on the old rule.
+- Verified: full `python -m pytest -q -p no:cacheprovider` 4,802 passed, 12 skipped (network); 75 in the ladder
+  file; ruff clean on the changed Python files; `mypy src/nightcrawler` clean.
+- Real money touched? Code that sizes real Kalshi orders, committed locally on `claude/kalshi-ladder-ship` only:
+  not pushed, merged or deployed. It can only make orders smaller than the previous ladder commit.
+- Next: ship the branch when the owner says so; after deploy the status line's `caps.clip` stays 5 at every rung.
+
+## 2026-10-13 20:10 UTC, Claude, branch claude/kalshi-ladder (review fix round)
+- Owner request unchanged (2026-10-13 ~18:40 UTC): "Max $50,000 a window build the ladder". Two independent reviews
+  of bbb49e5 found no accepted order above its window's rung, but holes in when the ladder moves. Fixed, each with a
+  regression test in `tests/test_speeddesk_live_ladder.py`:
+  - Stops (rule 4) were invisible: the book never lets today's loss plus money at risk reach the cap, so the
+    `day_stopped` flag almost never trips. Now today's settled loss within $1 of the day stop, or a refused
+    one-contract buy (day or total stop, reported by the book at once), counts as a stop; a refusal that only trims
+    a bigger order does not.
+  - A promotion was locked in when decided. Now it is provisional: the rung in force keeps its limits, counters and
+    its own demotion line until the boundary, any stop cancels it, and at the first look at or after the boundary
+    (the desk looks at once, before any order in the new window) everything is checked again with money at risk
+    counted as lost (gain, room, cash, stops, demotion line). It applies ("confirm") only if all hold and no window
+    from the boundary on has traded; otherwise it is cancelled and the limits stay.
+  - Counters restart when a change applies, not when it is decided; a cancel keeps them; an earlier rung's window
+    that settles later is not counted at the new rung (start P&L and peak move with it). The room above the lifetime
+    stop subtracts money at risk and a resume anchor above zero.
+  - Saved ladder version 2: records the configured limits (changed limits restart at rung 0, "rebased"), rejects
+    two-rung jumps and changes beyond the next boundary, rebuilds counters from the books, restarts counters on a
+    clamped restore; the desk looks at the books before a resume or day-reset token can clear a saved stop.
+  - `LiveLimits` clamps the contract cap too (`HARD_CLIP` = 25, the config ceiling); the ladder finds its top by
+    asking the clamp instead of copying its numbers.
+- Not done: raising the code ceilings toward $50,000 (refused by the permission check in the build round; not
+  retried; needs the owner's explicit go-ahead and must raise `HARD_CLIP` too). Owner decision open: rung 2 brings
+  back a 10-contract first buy (the ladder rule) against the 16:20 UTC rule that held it to 5; the code follows the
+  approved ladder rule until the owner chooses.
+- Verified: full `python -m pytest -q` 4,783 passed, 12 skipped (network); ruff clean on every changed Python file;
+  `mypy src/nightcrawler` clean. 28 new ladder tests (74 in the file); the reviewers' adversarial file passes 9 of
+  10 unchanged (the 10th asserted the old "no record" result where the fix now returns the cancel it asked for).
+- Real money touched? Code that sizes real Kalshi orders, committed locally on `claude/kalshi-ladder` only: not
+  pushed, merged or deployed. On deploy it still starts at rung 0 (today's $10/$20/$6/$10, 5 contracts).
+- Next: owner decisions (ceilings, first-buy size at rung 2); merge after `claude/kalshi-fix-speed`.
+
+## 2026-10-13 19:30 UTC, Claude, branch claude/kalshi-ladder
+- Owner request (2026-10-13 ~18:40 UTC, after Claude proposed the rule): "Max $50,000 a window build the ladder".
+- Changed: new `speeddesk_live_ladder.py` (rung r = configured window + $5r, open 2x, day stop 60 %, first buy half
+  the window in contracts, $10 lifetime stop unchanged; promotion on all five conditions, demotion on a 60 % give-
+  back, a stop cancels a waiting promotion, every change from the next window boundary; persistence with the count
+  rebuilt from the books). `LiveRiskBook.limits_for` / `limits_now`: window, open, day stop and contract cap come
+  from the window's rung in every check (buys, starter, balancing, locks, status). Controller: restore at start,
+  one `speeddesk_live_ladder` line per change and per start, `ladder` in the panel and status line, `caps` = the
+  rung in force (plus `clip`), practice twin mirrors the rung, `_decide`/`_lock` sizes per rung. Settings
+  `SPEEDDESK_KALSHI_LADDER` (true) and `SPEEDDESK_KALSHI_LADDER_MAX_WINDOW_USD` (50000). `/api/page`
+  `kalshi_live.ladder` (pagestate whitelist). Docs: `.env.example`, SPEEDDESK_SPEC 9.2, ACCOUNTS Kalshi row,
+  COORDINATION note for Codex.
+- Not done: raising the code ceilings to $50,000 a window / $100,000 open / $30,000 day stop (config.py `hi` and
+  the risk book's `LiveLimits` clamp). That edit was refused by this session's permission check, so the ceilings
+  stay at $20/$40/$12 and the ladder tops out at rung 2 ($20/$40/$12, 10 contracts), the step the owner approved at
+  16:00 UTC. A test already pins what the top rung would be once they are raised ($50,000/$100,000/$30,000, 25,000
+  contracts). The unchanged lifetime stop also caps money at risk below $10 at every rung.
+- Verified: full `python -m pytest -q` 4,755 passed, 12 skipped (network); ruff clean on every changed Python file;
+  `mypy src/nightcrawler` clean. 46 new tests in `tests/test_speeddesk_live_ladder.py`, including a randomized run
+  (20 seeds x 150 windows of buys, fills, cancels, locks, settlements, restarts and ladder looks: 52 promotions and
+  17 demotions) that checks every accepted order against its window's rung. Not verified: a live deploy (none made).
+- Real money touched? Code that sizes real Kalshi orders, committed locally on `claude/kalshi-ladder` only: not
+  pushed, merged or deployed. On deploy it starts at rung 0 (today's $10/$20/$6/$10, 5 contracts); the first
+  promotion needs at least 96 settled traded windows (24 h) and $14.75 total P&L.
+- Next: owner decision on raising the code ceilings; merge after `claude/kalshi-fix-speed` in a safe minute; after
+  deploy check the log for `speeddesk_live_ladder` with `"action":"start"` and the status line's `ladder`.
+
+## 2026-10-13 19:17 UTC, Codex, public-wallet strategy reconstruction
+- Owner request: infer concrete rules for dangerously-skip-permissions and numerous high-profit public
+  wallets. Added `research/wallet_playbooks/` with a descriptive plan, owner report, detailed proposed
+  Skip loop/objective, eleven comparison cards, methods, 91 hashed public evidence files and a portable
+  offline audit. No existing holdout opened and no strategy profitability test claimed.
+- Fresh Skip evidence: fixed cursor walk, 65 interior traded BTC5m windows, 5,136 buys/no sells,
+  both sides in 65/65, 85.04% gross purchase dollars taker, repeated 30/60-share fills. Concrete leading
+  hypothesis: pricing/execution plus soft inventory penalties and incentives; external-price model vs
+  book-driven harvesting remains unresolved. Corrected claims about hard imbalance/pair caps and
+  distinguished prior-own-fill price changes from market momentum.
+- Source-wallet cash independently reconciled twice: gross +$1,110.753480, purchase costs $1,625.493890,
+  after-cost result -$514.740410 before unallocated later rebates. Actual redemptions agree with all
+  65 resolved winners/held quantities. Historical credits are material but lifetime net profit remains
+  unreconciled; counterfactual rebate sensitivity is explicitly not observed income.
+- Other findings: GoodFallen is the closest current execution peer; weather wallets frequently resell
+  rather than universally hold; ladder wallets differ in passive/taker dollar share, selling and funding.
+  Preserved station/source, lookahead, public-timestamp, sample-selection and chart-accounting limits.
+- Verified: independent interpretation review corrected the absolute-share-gap vs normalized imbalance
+  distinction, own-fill momentum language and a terminal-band boundary identity. Full pytest 4,706
+  passed / 14 skipped; mypy clean for 119 application source files plus the new audit; Ruff clean on
+  the changed Python file. Offline verifier checks hashes, cursor completion, wallet/cohort identity,
+  Gamma condition IDs, all redemptions and frozen totals. Scratch fakes cover wins/losses, fee-once
+  accounting, missing/wrong settlements, ties and malformed/inconsistent cohorts.
+- Not verified: private source code, causal reaction time, exact signal constants, automation/common
+  ownership of comparison wallets, current Skip rebate tier or an executable Kalshi edge. No prospective
+  observation days are claimed complete. New results describe indexed source-wallet activity.
+- Real money touched? no. Public GETs only; no credentials, orders, live setting, application file or
+  deployment trigger changed. Shared-inbox handoff retains Claude's strategy/arena ownership.
+
 ## 2026-10-13 19:05 UTC, Claude, branch claude/kalshi-arena
 - Owner's ask: "Give our bots the incentive they're giving Grok bots: make money or die."
 - Changed: a **Kalshi arena** (`nightcrawler/kalshi_arena.py`, PRACTICE money only).
@@ -87,6 +196,62 @@ Template:
   or order path changed, and `speeddesk_live*.py`, `deskguard.py` and `engine.py` are unchanged.
 - Next step: deploy in a safe merge minute, then read `kalshi_arena_status` (slice p99, duty, drops). Ask the owner
   the four questions (account size, broke line $10 or $40, the stop's meaning, a forward-check line for candidates).
+
+## 2026-10-13 18:16 UTC, Codex, next highest-leverage milestone
+- Reviewed: latest inbox/worklog through 7c0c993, the prior recorder proposal and current research handoff.
+  Independent read-only review reached the same recommendation: get Claude's existing recorder running
+  persistently, starting with a concrete hosting/resource/cost proposal, then verify 48 hours of usable data.
+- Changed: posted the milestone and acceptance checks in COORDINATION. No duplicate build; Claude retains
+  ownership of the recorder and arena. Requested exact runtime provenance, gaps, latency, usable depth,
+  conservative fills and explicit separation of feasibility from profitable-strategy evidence.
+- Verified: docs-only diff/secret scan; existing source/tests/dependencies remain unchanged from the earlier
+  4,706-pass pytest / 14 skips and clean mypy checks. Those checks were not repeated for this inbox edit;
+  changed-file Ruff is not applicable. No deployment-trigger files changed.
+- Real money touched? no. No collector was started, no hosting cost authorized, no live setting changed.
+- Pending: Claude's concrete deployment proposal and verified runtime evidence. Arena display work still
+  awaits the agreed data fixture; future 48-hour capture is not claimed complete.
+
+## 2026-10-13 18:07 UTC, Codex, shared-inbox reply
+- Changed: replied to Claude's 17:50 note in `docs/COORDINATION.md`, newest first; acknowledged lanes,
+  safe deployment minutes and the owner's preference to keep Polymarket live. Requested a versioned,
+  independent `kalshi_arena` feed and sanitized fixtures with stable identities, producer freshness,
+  explicit USD/fee/equity meanings, and practice values kept out of real-money town totals and growth.
+- Verified: pulled 9b4f986, then Claude's concurrent inbox reply d858edb; retained that reply and
+  acknowledged his ownership of both research families. Read AGENTS/COORDINATION and town connections;
+  a separate read-only review checked compatibility with the current page/town contract. Docs-only diff
+  checked for whitespace, secret-looking additions and accidental runtime/deploy-trigger changes.
+  Prior 4,706-pass pytest / 14 skips and clean mypy cover the unchanged source/test/dependency tree;
+  not rerun for this inbox-only edit. No Python changes, so changed-file Ruff is not applicable.
+- Real money touched? no. No code, settings, live deploy or town UI changed.
+- Pending: Claude's fixture/field reply. Posting to the repo does not prove Claude has read it; Codex
+  checks the inbox during active tasks, not continuously while idle.
+
+## 2026-10-13 18:04 UTC, Codex, Kalshi strategy evidence and Claude handoff
+- Owner request: investigate a profitable Kalshi strategy and supply an exact Claude Code prompt. Added
+  `research/kalshi_edge_search/REPORT.md`, `CLAUDE_PROMPT.md`, illustrative fee arithmetic, timestamped public
+  books and evidence hashes. The verdict is no proven executable winner; favorite-side passive making is
+  the strongest historical lead found, with BTC15M inventory-controlled making a separate unproved fast lane.
+- Fresh evidence: 12 snapshots across four crypto series, 16 successful public requests. All complementary
+  ask pairs cost $1.01 before fees; all 12 depth-supported pair probes lost after assumed standard fees.
+  One ETH top level supports only 0.40 contracts, explicitly distinguished from one-contract quote arithmetic.
+  Public incentive snapshot: 5,462 active programs, none on the four checked crypto 15-minute series.
+- Reviewed: official rules/fees/rounding, published favorite-maker evidence, a public failed BTC maker,
+  and existing wallet, fresh-move, monthly-touch and weather artifacts. Independent reviews corrected a
+  median/mean wording issue and clarified historical maker fees, test-bank initialization and verdicts.
+  The Claude handoff requires conservative fills, complete settlement cohorts, finite future holdouts,
+  small-bank economics and no automatic live promotion. The new coordination file was pulled and read;
+  the handoff asks Claude to audit the arena before duplicating infrastructure.
+- Verified: pytest 4,706 passed / 14 skipped (optional network/dependency/data skips), mypy clean for 119
+  source files. Checks ran on b539aed; the subsequent upstream 64f9322 changes only AGENTS/COORDINATION docs,
+  with no source/test/dependency change. No Python files changed here, so changed-file Ruff is not applicable.
+  All evidence JSON/hashes and relative document links validated; raw-book arithmetic recomputed independently.
+- Not verified: no new strategy backtest, no 48-hour/three-day collector run, no current account reconciliation,
+  no proof of profitable live execution, no exact reconstruction of private wallet rules. The new collection
+  is a seconds-long book diagnostic. Future validation remains a Claude assignment, not background work started.
+- Real money touched? no. No trading source, variables, keys, caps, orders, UI or deployment-trigger files changed.
+  This docs/public-data shipment does not restart the bot; no new runtime deployment is claimed.
+- Next step: owner can give Claude the saved prompt; first implementation deliverable is a bounded read-only
+  data/execution feasibility report, followed by preregistered research rather than another unverified live rule.
 
 ## 2026-10-13 17:15 UTC, Claude, branch claude/kalshi-starter-cap
 - Changed: the Kalshi companion's orders are capped at `SPEEDDESK_KALSHI_CLIP` contracts (default 5, was the practice
