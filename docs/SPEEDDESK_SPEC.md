@@ -289,7 +289,11 @@ Already filled exposure remains real until it settles, and the page must say so 
   Kalshi account, `fcm` for a broker/FCM account, `unknown` by default. It never grants live permission. Reservations remain conservative
   about partial fills and do not spend an expected rounding rebate.
 - KXBTC15M rules use the 60-second average of CF Benchmarks BRTI at each boundary; YES wins ties. Read and
-  validate current rules/fees for every eligible window. Unknown terms disable that window.
+  validate current rules/fees for every eligible window. Unknown terms disable that window. Fair value accounts
+  for the average (loss plan item 4, 2026-10-13): the mean of sixty one-second values varies like the index 39.5 s
+  before the close, so with 60 s or more left the live desk and the Kalshi practice windows use the time left
+  minus 39.5 s (`fair_up(..., settles_on_average=True)`); the last minute is unchanged and no buy is made then.
+  Polymarket US windows are unchanged.
 - Cancel only bot-owned resting orders at startup, cutoff, stale Bitcoin (>3 s), shutdown, repeated errors
   and mode changes, and a resting bid priced from an old fair value: fresh fair more than 1c from the fair it
   was priced at, or the bid above fresh fair minus 2c. The last runs on every step and between account reads,

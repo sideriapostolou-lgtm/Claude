@@ -796,7 +796,8 @@ class KalshiLiveDesk:
         if intent.kind != "rest":
             return ""
         assert snapshot.bitcoin_price is not None and window.start_price is not None and snapshot.sigma is not None
-        up = fair_up(snapshot.bitcoin_price, window.start_price, snapshot.sigma, window.end - now)
+        up = fair_up(snapshot.bitcoin_price, window.start_price, snapshot.sigma, window.end - now,
+                     settles_on_average=True)
         if up is None:
             return ""
         fair = up if intent.side == "up" else 1 - up
@@ -1182,7 +1183,8 @@ class KalshiLiveDesk:
             return False
         assert current is not None and current.start_price is not None
         assert snapshot.bitcoin_price is not None and snapshot.sigma is not None
-        fresh_up = fair_up(snapshot.bitcoin_price, current.start_price, snapshot.sigma, current.end - now)
+        fresh_up = fair_up(snapshot.bitcoin_price, current.start_price, snapshot.sigma, current.end - now,
+                           settles_on_average=True)
         if fresh_up is None:
             return False
         fair = fresh_up if side == "up" else 1 - fresh_up
@@ -1414,7 +1416,8 @@ class KalshiLiveDesk:
                 or self._feed_reason(current, snapshot, self.clock())):
             return False
         assert current.start_price is not None and snapshot.bitcoin_price is not None and snapshot.sigma is not None
-        up = fair_up(snapshot.bitcoin_price, current.start_price, snapshot.sigma, current.end - self.clock())
+        up = fair_up(snapshot.bitcoin_price, current.start_price, snapshot.sigma, current.end - self.clock(),
+                     settles_on_average=True)
         if up is None:
             return False
         fair = up if intent.side == "up" else 1 - up
@@ -1441,7 +1444,8 @@ class KalshiLiveDesk:
                 self.reason = reason
                 continue
             assert snapshot.bitcoin_price is not None and window.start_price is not None and snapshot.sigma is not None
-            up = fair_up(snapshot.bitcoin_price, window.start_price, snapshot.sigma, window.end - now)
+            up = fair_up(snapshot.bitcoin_price, window.start_price, snapshot.sigma, window.end - now,
+                         settles_on_average=True)
             if up is None:
                 continue
             for side in ("up", "down"):

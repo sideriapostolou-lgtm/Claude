@@ -19,6 +19,9 @@ Side = Literal["up", "down"]
 FeeRounding = Literal["half_even", "kalshi"]
 EPSILON = 1e-9
 VENUES = ("polymarket_us", "kalshi")
+# The mean of sixty one-second values of a random walk varies like the walk 60 - (61 x 121) / 360, about 39.5 s, before
+# the last of them: Kalshi's 15-minute settlement average (see fair_up).
+AVERAGE_LEAD_S = 39.5
 
 
 @dataclass(frozen=True)
@@ -97,16 +100,22 @@ class SpeedConfig:
             raise ValueError("sigma_min_samples must be between 1 and 3600")
 
 
-def fair_up(spot: float, opening: float, sigma: float, seconds_left: float) -> float | None:
+def fair_up(spot: float, opening: float, sigma: float, seconds_left: float, *,
+            settles_on_average: bool = False) -> float | None:
     """Normal-CDF proxy, including a deterministic expiry and zero-vol limit.
 
-    It is not a settlement oracle: the venue's actual outcome books results.
+    It is not a settlement oracle: the venue's actual outcome books results. ``settles_on_average``: the window
+    settles on the simple average of its last sixty one-second index values (Kalshi's rule). That average moves
+    like the index AVERAGE_LEAD_S before the close, so with a minute or more left the horizon is that much shorter
+    (loss plan item 4; inside the last minute part of the average is already fixed, and no buy is made then).
     """
     if (not all(math.isfinite(x) for x in (spot, opening, sigma, seconds_left))
             or spot <= 0 or opening <= 0 or sigma < 0 or seconds_left < 0):
         return None
     if seconds_left == 0:
         return 1.0 if spot >= opening else 0.0
+    if settles_on_average and seconds_left >= 60:
+        seconds_left -= AVERAGE_LEAD_S
     if sigma == 0:
         return 1.0 if spot > opening else 0.0 if spot < opening else 0.5
     z = (math.log(spot) - math.log(opening)) / (sigma * math.sqrt(seconds_left))
@@ -650,7 +659,8 @@ class PracticeDesk:
                 self.last_reason[window.slug] = reason or "volatility_warming"
                 continue
             assert self.tape.price is not None and window.start_price is not None
-            up = fair_up(self.tape.price, window.start_price, sigma, window.end - now)
+            up = fair_up(self.tape.price, window.start_price, sigma, window.end - now,
+                         settles_on_average=window.venue == "kalshi")
             if up is None:
                 continue
             candidates: list[tuple[Side, float, float]] = []

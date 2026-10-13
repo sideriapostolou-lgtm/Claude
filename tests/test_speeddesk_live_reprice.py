@@ -10,7 +10,7 @@ from test_speeddesk_live import TICKER, FakeAccount, make_desk, steps
 
 from nightcrawler.clock import FakeClock
 from nightcrawler.speeddesk_live import KalshiLiveDesk, LiveSnapshot
-from nightcrawler.speeddesk_model import Book, Level
+from nightcrawler.speeddesk_model import Book, Level, fair_up
 
 
 def market(desk: KalshiLiveDesk, clock: FakeClock, bitcoin: float) -> None:
@@ -72,6 +72,22 @@ def test_a_bid_above_fresh_fair_minus_two_cents_is_cancelled(tmp_path: Path) -> 
         assert account.cancels == ["order-1"]
         assert [event["reason"] for event in desk.latest_events
                 if event["event"] == "speeddesk_live_cancel"][-1] == "bid_above_fair"
+    finally:
+        desk.close()
+
+
+def test_real_bids_are_priced_from_the_settlement_averages_horizon(tmp_path: Path) -> None:
+    """Loss plan item 4: the live desk's fair uses Kalshi's 60-second settlement average, like its practice twin."""
+    desk, account, clock = make_desk(tmp_path, extra={"speeddesk_take_edge": 1.0})
+    try:
+        market(desk, clock, 80288)
+        asyncio.run(desk.step())
+        intent = next(iter(desk.intents.values()))
+        window = desk.book.windows[TICKER]
+        up = fair_up(80288, 80000, .001, window.end - intent.at, settles_on_average=True)
+        assert up is not None and intent.side == "down" and intent.fair == pytest.approx(1 - up)
+        assert intent.fair != pytest.approx(1 - (fair_up(80288, 80000, .001, window.end - intent.at) or 0), abs=1e-6)
+        assert account.creates[0]["price"] == .42
     finally:
         desk.close()
 
