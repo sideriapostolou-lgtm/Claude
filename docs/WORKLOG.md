@@ -44,13 +44,18 @@ Template:
     - The first practice save is synced.
   - ad9144d: a fill of an order Kalshi lists as the owner's marks the window as the owner's, even beside an
     unsent bot order, which then still gets released.
+  - 6855c58: the index holds the dicts it describes, so it is compared by identity, not by id.
+  - e347130: two Coinbase replay tests now replay at the recorded receipt times; their assertions are unchanged.
 - Unchanged: every cap and stop, the 5-contract clip, a reservation before every send, release only on venue
   proof, the synced journal row before every create, and which orders the strategy places. Still unchanged too:
   an unresolved order pauses all new orders until it is resolved (about 30 s after its close at worst). No new
   setting, so `.env.example` is unchanged. Town UI files, Railway, keys and the arena branch are untouched.
-- Verified: full suite, ruff on changed files and `mypy` (counts in the round's report). Every new regression test
-  fails on the tree before its fix and passes after. Long runs: kill-anywhere with 6 seeds and no cap;
-  adversarial desk with 10,000 events, 4 owner-cap seeds and 2 tight-cap seeds.
+- Verified:
+  - Full suite: 4,934 passed, 12 skipped (Python 3.13). ruff is clean on changed files and `mypy` is clean.
+  - 46 new tests. Every new regression test fails on the tree before its fix and passes after.
+  - Kill-anywhere, 6 seeds, no cap: 295 crash images, 0 bad.
+  - Adversarial desk, 10,000 events each, 4 owner-cap and 2 tight-cap cases: 0 breaches. Highest use seen: window
+    $10.00 of $10, day $5.98 of $6 (owner caps); $3.00 of $3 and $0.99 of $1 (tight caps).
 - Not verified / skipped (deferred):
   - Turning off WAL autocheckpoint (it lands on about 0.3% of pre-send rows): the fix needs care not to add fsyncs
     to the loop.
