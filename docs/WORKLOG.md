@@ -25,7 +25,7 @@ Template:
   practice/research are expandable. Menu remains Money / Team / Help. The fallback /summary also leads with
   Kalshi, retaining Polymarket owner/bot records, mode, freshness and warnings in its separate account details.
   Existing shops, six characters, paths and phone camera are preserved. Display choice does not stop any desk.
-- Verified before shipping: full pytest 4,686 passed / 14 skipped (12 opt-in network tests, optional SciPy and
+- Verified before shipping: full pytest 4,687 passed / 14 skipped (12 opt-in network tests, optional SciPy and
   missing lab cache); mypy clean for 119 source files; Ruff clean for changed Python; whitespace and staged
   secret checks. Independent review and targeted money/freshness tests cover missing data, Pacific day, paper
   with remaining real exposure, owner/practice separation and no Polymarket growth or animation fallback.
