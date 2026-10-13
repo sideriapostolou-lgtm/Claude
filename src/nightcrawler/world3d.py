@@ -2857,12 +2857,14 @@ _M_LIFE = r"""
   }
   function travelSpeed(a) { return a.key === "voss" ? (a.actor ? 1.35 : 1.8) : walkSpeedOf(a); }
   function startWalk(a, action) {
+    if (action.business && !tycoonBusinessActionCurrent(action.business)) return;
     const v = visitNodeFor(action.dest, a); if (!v) return;
     const ids = route(a.node, v.id); if (!ids) return;
     a.path = ids.map(function (id) { return NAV[id].p.clone(); }); a.path[0] = a.pos.clone(); a.seg = 0;
     a.state = "out"; a.action = action; a.destNode = v.id; a.destYaw = v.yaw; a.destRoom = action.dest; a.ambient = !!action.ambient;
     a.moveSpeed = 0;
-    a.carrying = action.carry || null; if (a.carrying) showCube(a.carrying);
+    a.carrying = action.carry || null;
+    if (a.carrying) { cube.business = action.business || null; if (action.business) cube.real = true; showCube(a.carrying); }
     if (focus && focus.actor === a) focus.until = Math.max(focus.until, simT + 2 + pathLength(a) / travelSpeed(a));
   }
   function walkBack(a) {
@@ -2940,6 +2942,7 @@ _M_LIFE = r"""
       a.yaw += angleDiff(a.yawGoal, a.yaw) * (1 - Math.exp(-dt * (a.walking ? 7 : 3)));
       a.yawS += angleDiff(a.yaw, a.yawS) * (1 - Math.exp(-dt * 1.4));
       let working = false; for (let j = 0; j < a.members.length; j++) if (members[a.members[j]] && members[a.members[j]].status === "working") working = true;
+      if (typeof tycoonBusinessStatus === "function" && tycoonActive()) working = tycoonBusinessStatus(a.key) === "working";
       const st = a.st;
       st.walking = a.walking; st.speed = a.groundSpeed; st.working = working && a.state === "home"; st.seated = a.state === "home" && (k === "nyx" || k === "rook");
       st.carrying = !!a.carrying; st.glide = a.glide;
@@ -3014,7 +3017,7 @@ _M_LIFE = r"""
       return;
     }
     if (a.state !== "home") return;
-    const status = worstStatus(a.members);
+    const status = typeof tycoonBusinessStatus === "function" && tycoonActive() ? tycoonBusinessStatus(a.key) : worstStatus(a.members);
     if (status === "blocked" || status === "waiting") {
       if (simT >= a.nextThink && !a.speaking) { a.nextThink = simT + 17 + Math.random() * 8; oneShot(a, "think", 6); }
       return;
@@ -3453,7 +3456,9 @@ _M_LIFE = r"""
   }
   function updateLamps() {
     Object.keys(lamps).forEach(function (k) {
-      const st = worstStatus(ROOMS[k].members), c = LIGHT[st] || LIGHT.idle, L = lamps[k];
+      const key = Object.keys(CAST).find(function (who) { return CAST[who].room === k; });
+      const st = typeof tycoonBusinessStatus === "function" && tycoonActive() ? tycoonBusinessStatus(key) : worstStatus(ROOMS[k].members);
+      const c = LIGHT[st] || LIGHT.idle, L = lamps[k];
       L.mat.color.setHex(c); L.mat.emissive.setHex(c); L.mat.emissiveIntensity = st === "idle" ? 0.15 : 2.6; L.halo.material.color.setHex(c); L.halo.material.opacity = st === "idle" ? 0 : 0.85;
     });
   }
@@ -3478,14 +3483,20 @@ _M_LIFE = r"""
   }
   function deliverCube(a, pnl) {
     const from = cube.mesh.position.clone(), to = VT2.at(0.9, DOOR.y, DOOR.z + 0.12), mid = VT2.at(-3.5, 1.0, -0.2);
-    cube.flight = { t: 0, from: from, mid: mid, to: to, pnl: pnl, who: a }; a.carrying = null;
+    cube.flight = { t: 0, from: from, mid: mid, to: to, pnl: pnl, who: a, business: cube.business }; a.carrying = null;
   }
   function updateCube(dt) {
     if (cube.flight) {
       const f = cube.flight; f.t += dt / 1.8; const u = Math.min(1, f.t);
       const p = u < 0.4 ? f.from.clone().lerp(f.mid, u / 0.4) : f.mid.clone().lerp(f.to, (u - 0.4) / 0.6); p.y += Math.sin(u * Math.PI) * 0.4;
       cube.mesh.position.copy(p); cube.mesh.rotation.y += dt * 3; cube.mesh.scale.setScalar(1 - Math.max(0, u - 0.85) * 5);
-      if (u >= 1) { cube.flight = null; cube.mesh.visible = false; cube.mesh.scale.setScalar(1); flashUntil = simT + 2.2; dropLabel(f.pnl, f.to, f.who); }
+      if (u >= 1) {
+        cube.flight = null; cube.mesh.visible = false; cube.mesh.scale.setScalar(1); flashUntil = simT + 2.2; dropLabel(f.pnl, f.to, f.who);
+        if (f.business && drop) {
+          drop.business = f.business;
+          dropEl.textContent = (f.business.venue === "kalshi" ? "Kalshi" : "Polymarket") + " bot profit " + fmtSigned(f.pnl);
+        }
+      }
     } else if (cube.mesh.visible) cube.mesh.rotation.y += dt * 1.5;
     vaultFlash.material.opacity = flashUntil > simT ? Math.min(1, (flashUntil - simT) / 1.2) * 0.9 : 0;
   }
@@ -3782,6 +3793,7 @@ _M_LIFE = r"""
   }
   function setOffline(text) { offline = true; statusEl.textContent = text; statusEl.hidden = false; statusEl.className = "bad"; body.classList.add("offline"); }
   function onEvent(memberId, ev) {
+    if (typeof tycoonActive === "function" && tycoonActive()) return;
     const actor = actors[actorOf[memberId]]; if (!actor) return;
     const here = roomOf[memberId] || actor.homeRoom, i = PIPELINE.indexOf(memberId);
     let dest = i >= 0 && i + 1 < PIPELINE.length ? roomOf[PIPELINE[i + 1]] : null;
@@ -3801,6 +3813,7 @@ _M_LIFE = r"""
     focusOn(actor, 3.5, walks ? 8 : 10, lesson ? "lesson" : "speak");
   }
   function onClosed(t, live) {
+    if (typeof tycoonActive === "function" && tycoonActive()) return;
     const jet = actors.jet; if (!jet) return;
     const pnl = t.pnl_usd, won = (pnl || 0) >= 0;
     // (the money's kind from the data, live: the Solana bot trades real money only while it runs live, else pretend)
@@ -3819,6 +3832,7 @@ _M_LIFE = r"""
     focusOn(jet, 2.0, 8, "carry");
   }
   function chatter() {
+    if (typeof tycoonActive === "function" && tycoonActive()) return;
     // never over a real moment: while the drone is on one, or an event's own words are still up, nobody chatters
     if (focus && simT < focus.until) return;
     for (let i = 0; i < bubbles.length; i++) if (bubbles[i].kind !== "chatter" && simT < bubbles[i].until) return;
@@ -4574,6 +4588,7 @@ _M_CHANNEL = r"""
     BUS.on("data", function (d) {  // a replay: what plain.finished newly lists (the server's own clock says when we arrived)
       const nowS = d && typeof d.generated_at === "number" && isFinite(d.generated_at) ? d.generated_at : Date.now() / 1000;
       const fresh = freshFinished(replayMemo, d && d.plain ? d.plain.finished : null, nowS, REFRESH_MS / 1000);
+      if (typeof tycoonActive === "function" && tycoonActive()) { replayQueue.length = 0; return; }
       for (let i = 0; i < fresh.length; i++) if (replayQueue.length < 3) replayQueue.push(fresh[i]);
     });
     BUS.on("data", function (d, first) {
@@ -4582,6 +4597,7 @@ _M_CHANNEL = r"""
     });
     BUS.on("data", function (d) { lastData = d; renderTicker(d); });
     BUS.on("frame", function () {  // the banner: six seconds each, one at a time, then a short gap
+      if (typeof tycoonActive === "function" && tycoonActive()) { replayQueue.length = 0; replayUntil = 0; replayEl.className = ""; hudTop = 0; return; }
       const wall = performance.now();
       if (replayUntil && wall >= replayUntil) { replayUntil = 0; replayEl.className = ""; replayGap = wall + 600; }
       // (the bubbles keep below the banner until its fade is over: the gap outlasts the 0.35 s fade)
@@ -5967,6 +5983,7 @@ _M_GOAL = r"""
     return goalScript(items.map(function (b) { return [b.who, b.who === "tower" || GOAL_BOARDS[b.who] ? 7 : 6, b.tag, b.text]; }));
   }
   function goalFree() {  // nothing else is on: no guide, panel, programme or real-money replay, and the tab is in view
+    if (typeof tycoonActive === "function" && tycoonActive()) return false;
     const sk = window.__skyport, replay = sk && sk.replay ? sk.replay.now() : null;
     return guideEl.hidden && !panelKind && !FILM.on && !replay && document.visibilityState === "visible";
   }
@@ -6206,6 +6223,7 @@ _M_HEARTS = r"""
     return false;
   }
   function heartsStep() {  // twice a second, one member in turn: the mood's body language when they are free for it
+    if (typeof tycoonActive === "function" && tycoonActive()) return;
     if (simT < HEART.tick) return;
     HEART.tick = simT + 0.5;
     if (!HEART.h || FILM.on || !ACTOR_KEYS.length) return;
@@ -8022,6 +8040,7 @@ _M_LIVE = r"""
     if (resizeNext) { resizeNext = false; resize(); }
     recFrame();  // the record room: its boards when a poll lands, the film's beats, the postcard's note
     goalFrame();  // the goal: the tower and the town when a poll lands, its strip, its beats and programmes
+    tycoonBusinessFrame();  // invalidate stale receipts before any actor can arrive or finish a money delivery
     updateActors(dt); updateCube(dt); updateProps(dt); updateFades(dtRaw); director(); updateCamera(dtRaw, simT);
     updateBubbles(); updateLabels(); updateDrop();
     BUS.emit("frame", dt, dtRaw);  // (THE CHANNEL: the sky and the weather, the replay banner, the sound)
@@ -8481,12 +8500,178 @@ _M_CINEMA = r"""
 
 """
 
+_M_BUSINESS = r"""
+  // ============================================================= REAL BUSINESS ACTIVITY (read-only scene)
+  // >>> town activity (pure)
+  const TOWN_ACTIVITY_AGE_S = 60, TOWN_ACTIVITY_BATCH = 4, TOWN_ACTIVITY_SEEN = 512;
+  const TOWN_ACTIVITY_VENUES = ["polymarket_us", "kalshi"];
+  function townActivityShape(e) {
+    return !!(e && typeof e.id === "string" && e.id && TOWN_ACTIVITY_VENUES.includes(e.venue)
+      && ["order", "fill", "cancel", "reject", "settlement"].includes(e.kind)
+      && typeof e.ts === "number" && isFinite(e.ts) && e.ts > 0 && e.real === true
+      && ["bot", "owner"].includes(e.scope) && typeof e.text === "string" && e.text.trim());
+  }
+  function townActivityCurrent(e, now) {
+    return townActivityShape(e) && e.current === true && typeof now === "number" && isFinite(now)
+      && e.ts <= now && now - e.ts <= TOWN_ACTIVITY_AGE_S
+      && (e.kind !== "settlement" || (typeof e.usd === "number" && isFinite(e.usd)));
+  }
+  function townActivityKey(e) { return e.venue + "|" + e.id; }
+  function townActivityFingerprint(e) { return JSON.stringify([e.kind, e.ts, e.scope, e.text, e.usd]); }
+  function townActivityMemo() { return { sources: {}, floor: {}, retired: {}, seen: new Map(), lastAt: null }; }
+  function townActivityFresh(memo, rows, sources, now) {
+    if (typeof now !== "number" || !isFinite(now) || now <= 0) return [];
+    const rewind = memo.lastAt !== null && now < memo.lastAt, ready = {};
+    TOWN_ACTIVITY_VENUES.forEach(function (venue) {
+      const current = !!(sources && sources[venue] === true);
+      ready[venue] = !rewind && current && memo.sources[venue] === true;
+      if (!ready[venue]) memo.floor[venue] = now;
+      memo.sources[venue] = current;
+    });
+    memo.lastAt = now;
+    const fresh = [], list = Array.isArray(rows) ? rows.slice(0, 160) : [];
+    list.sort(function (a, b) { return ((a && a.ts) || 0) - ((b && b.ts) || 0); });
+    list.forEach(function (e) {
+      if (!townActivityShape(e)) return;
+      const key = townActivityKey(e), seen = memo.seen.has(key);
+      // Record stale/unqualified rows too: a later correction or reconnect never turns a receipt into a new win.
+      if (!seen) memo.seen.set(key, { ts: e.ts, venue: e.venue });
+      if (!seen && ready[e.venue] && e.ts > memo.floor[e.venue] && e.ts > (memo.retired[e.venue] || 0)
+          && townActivityCurrent(e, now)) fresh.push(e);
+    });
+    while (memo.seen.size > TOWN_ACTIVITY_SEEN) {
+      const key = memo.seen.keys().next().value, row = memo.seen.get(key);
+      memo.retired[row.venue] = Math.max(memo.retired[row.venue] || 0, row.ts); memo.seen.delete(key);
+    }
+    // The ledger/feed keeps the full list. A phone acts out a bounded sample, never a delayed backlog of old wins.
+    return fresh.slice(-TOWN_ACTIVITY_BATCH);
+  }
+  function townActivityPlan(e) {
+    if (!townActivityShape(e)) return null;
+    if (e.scope === "owner") return { actor: "mote", dest: null, profit: null, gesture: "nod" };
+    if (e.kind === "settlement") {
+      if (typeof e.usd !== "number" || !isFinite(e.usd)) return null;
+      return e.usd > 0 ? { actor: "jet", dest: "vault", profit: e.usd, gesture: "cheer" }
+        : { actor: "mote", dest: null, profit: null, gesture: e.usd < 0 ? "worried" : "nod" };
+    }
+    return { actor: "jet", dest: e.kind === "fill" ? "archive" : null, profit: null,
+      gesture: e.kind === "reject" ? "worried" : "nod" };
+  }
+  // <<< town activity
+  const TY_BUSINESS = { memo: townActivityMemo(), latest: new Map(), sources: {}, pulses: {},
+    on: false, appliedAt: null, played: [], skipped: 0 };
+  function tycoonBusinessToken(e) {
+    return { key: townActivityKey(e), fingerprint: townActivityFingerprint(e), venue: e.venue, expires: e.ts + TOWN_ACTIVITY_AGE_S };
+  }
+  function tycoonBusinessActionCurrent(token) {
+    if (!token || offline || document.visibilityState !== "visible" || !tycoonActive()) return false;
+    const e = TY_BUSINESS.latest.get(token.key), now = Date.now() / 1000;
+    return TY_BUSINESS.sources[token.venue] === true && townActivityCurrent(e, now)
+      && townActivityFingerprint(e) === token.fingerprint && now <= token.expires;
+  }
+  function tycoonBusinessStatus(key) {
+    const pulse = TY_BUSINESS.pulses[key];
+    return pulse && Date.now() / 1000 < pulse.until && tycoonBusinessActionCurrent(pulse.token) ? "working" : "idle";
+  }
+  function tycoonBusinessSpeak(actor, e, token) {
+    const venue = e.venue === "kalshi" ? "Kalshi" : "Polymarket US";
+    const scope = e.scope === "owner" ? "YOUR OWN ACTIVITY" : "REAL BOT ACTIVITY";
+    const b = speak(actor, null, e.text, e.kind === "reject" || (e.kind === "settlement" && e.usd < 0) ? "bad" : null, 7);
+    if (b) { b.business = token; b.el.querySelector("small").textContent = actor.name.toUpperCase() + " · " + venue + " · " + scope; }
+    TY_BUSINESS.pulses[actor.key] = { token: token, until: Date.now() / 1000 + 7 };
+  }
+  function tycoonBusinessPlay(e) {
+    const plan = townActivityPlan(e), token = tycoonBusinessToken(e);
+    if (!plan || !tycoonBusinessActionCurrent(token)) return;
+    const a = actors[plan.actor]; if (!a) return;
+    // Jet relays venue acknowledgements; a fill is a receipt for Mote, never a profit or an invented decision.
+    tycoonBusinessSpeak(a, e, token);
+    if (plan.dest) {
+      if (a.queue.length >= 3) { TY_BUSINESS.skipped += 1; return; }
+      a.queue.push({ dest: plan.dest, hold: 3.2, business: token, carry: plan.profit !== null ? "gold" : null,
+        onArrive: function (actor) {
+          if (!tycoonBusinessActionCurrent(token)) return;
+          if (plan.profit !== null) {
+            TY_BUSINESS.pulses[actor.key] = { token: token, until: Date.now() / 1000 + 7 };
+            deliverCube(actor, plan.profit); oneShot(actor, "cheer", 3);
+          }
+          else if (actors.mote) { tycoonBusinessSpeak(actors.mote, e, token); oneShot(actors.mote, "nod", 3); }
+        } });
+    } else {
+      oneShot(a, plan.gesture, 3);
+      if (e.scope === "bot" && (e.kind === "reject" || (e.kind === "settlement" && e.usd < 0)) && actors.rook) {
+        TY_BUSINESS.pulses.rook = { token: token, until: Date.now() / 1000 + 7 }; oneShot(actors.rook, "worried", 3);
+      }
+    }
+    TY_BUSINESS.played.push({ id: e.id, venue: e.venue, kind: e.kind, scope: e.scope, ts: e.ts });
+    if (TY_BUSINESS.played.length > 24) TY_BUSINESS.played.shift();
+  }
+  function tycoonBusinessCancelActor(a) {
+    if (!a || !a.action || !a.action.business) return;
+    a.action.onArrive = null; a.action.business = null; a.carrying = null;
+    if (a.actor) endOneShot(a.actor);
+    if (a.state === "out" || a.state === "visit") walkBack(a);
+  }
+  function tycoonBusinessClear(initial) {
+    Object.values(actors).forEach(function (a) {
+      a.queue = a.queue.filter(function (q) { return initial ? q.ambient : !q.business; });
+      if (initial && a.action && !a.action.ambient) {
+        a.action.onArrive = null; a.carrying = null; if (a.state === "out" || a.state === "visit") walkBack(a);
+      } else tycoonBusinessCancelActor(a);
+      if (initial || TY_BUSINESS.pulses[a.key]) { if (a.actor) endOneShot(a.actor); a.heartUntil = 0; }
+      if (initial) a.beats.length = 0;
+    });
+    for (let i = bubbles.length - 1; i >= 0; i--) if (initial || bubbles[i].business) { bubbles[i].el.remove(); bubbles.splice(i, 1); }
+    if (initial || cube.business) { cube.flight = null; cube.mesh.visible = false; cube.business = null; flashUntil = 0; }
+    if (initial || (drop && drop.business)) { drop = null; dropEl.style.opacity = "0"; }
+    TY_BUSINESS.pulses = {};
+  }
+  function tycoonBusinessApply(summary) {
+    if (!tycoonActive()) { if (TY_BUSINESS.on) tycoonBusinessClear(false); TY_BUSINESS.on = false; return; }
+    if (!TY_BUSINESS.on) { tycoonBusinessClear(true); TY_BUSINESS.memo = townActivityMemo(); TY_BUSINESS.on = true; }
+    const now = Date.now() / 1000, rows = summary && Array.isArray(summary.activity) ? summary.activity : [];
+    const visible = !offline && document.visibilityState === "visible";
+    TY_BUSINESS.sources = visible && summary && summary.activitySources ? summary.activitySources : {};
+    TY_BUSINESS.latest = new Map(rows.filter(townActivityShape).map(function (e) { return [townActivityKey(e), e]; }));
+    const fresh = townActivityFresh(TY_BUSINESS.memo, rows, TY_BUSINESS.sources, now);
+    TY_BUSINESS.appliedAt = now;
+    fresh.forEach(tycoonBusinessPlay); updateLamps();
+  }
+  function tycoonBusinessFrame() {
+    if (!tycoonActive()) return;
+    if (offline || document.visibilityState !== "visible") {
+      TY_BUSINESS.sources = {}; TY_BUSINESS.memo.sources = {}; tycoonBusinessClear(false); return;
+    }
+    Object.values(actors).forEach(function (a) {
+      a.queue = a.queue.filter(function (q) { return !q.business || tycoonBusinessActionCurrent(q.business); });
+      if (a.action && a.action.business && !tycoonBusinessActionCurrent(a.action.business)) tycoonBusinessCancelActor(a);
+      const pulse = TY_BUSINESS.pulses[a.key];
+      if (pulse && (Date.now() / 1000 >= pulse.until || !tycoonBusinessActionCurrent(pulse.token))) {
+        if (a.actor) endOneShot(a.actor); delete TY_BUSINESS.pulses[a.key];
+      }
+    });
+    for (let i = bubbles.length - 1; i >= 0; i--) if (bubbles[i].business && !tycoonBusinessActionCurrent(bubbles[i].business)) {
+      bubbles[i].el.remove(); bubbles.splice(i, 1);
+    }
+    if (cube.business && !tycoonBusinessActionCurrent(cube.business)) { cube.flight = null; cube.mesh.visible = false; cube.business = null; flashUntil = 0; }
+    if (drop && drop.business && !tycoonBusinessActionCurrent(drop.business)) { drop = null; dropEl.style.opacity = "0"; }
+  }
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState !== "visible") { TY_BUSINESS.memo.sources = {}; TY_BUSINESS.sources = {}; tycoonBusinessClear(false); }
+  });
+  window.__skyport = Object.assign(window.__skyport || {}, { business: {
+    state: function () { return { sources: Object.assign({}, TY_BUSINESS.sources), appliedAt: TY_BUSINESS.appliedAt,
+      played: TY_BUSINESS.played.slice(), skipped: TY_BUSINESS.skipped,
+      queued: Object.values(actors).reduce(function (n, a) { return n + a.queue.filter(function (q) { return !!q.business; }).length; }, 0) }; },
+  } });
+"""
+
 #: Where THE CINEMA's section goes: at the end of the page's main(), after THE LOOP's frame and before the first frame
 #: (its listeners are on the bus before the first poll; every part of the world it reads is made by then).
 _CINEMA_AT = '  resize(); BUS.emit("start", 0, 0);'
 _MODULE = (_M_SETUP + _M_WORLD + _M_CAST + _M_LIFE + _M_CHANNEL + _M_RECORDS + _M_GOAL + _M_HEARTS
            + _M_TOWN  # (THE TOWN: after the record room it films through, before the director it never edits)
-           + _M_LIVE.replace(_CINEMA_AT, _M_CINEMA + TYCOON_MODULE + _CINEMA_AT, 1))
+           + _M_LIVE.replace(_CINEMA_AT, _M_BUSINESS + _M_CINEMA + TYCOON_MODULE + _CINEMA_AT, 1))
 #: The page's one inline style: the base styles, then each added section's own block (the record room's,
 #: the goal's, the hearts', the town's, then the channel's).
 _STYLES = _STYLE + _STYLE_RECORDS + _STYLE_GOAL + _STYLE_HEARTS + _STYLE_TOWN + _STYLE_CHANNEL + _STYLE_CINEMA + TYCOON_STYLE

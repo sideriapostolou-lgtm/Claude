@@ -145,7 +145,7 @@ console.log(JSON.stringify({ town: town, tour: tour, returned: returned }));
 @needs_node
 def test_account_freshness_and_service_alerts_survive_fresh_page_updates(module: str, tmp_path: Path) -> None:
     hooks = "\n".join(_js_body(module, f"  function {name}(") for name in
-                      ("tyAge", "tyText", "tycoonDraw", "tycoonPanel"))
+                      ("tyAge", "tyFee", "tyText", "tycoonDraw", "tycoonPanel"))
     out = _node("""
 const nodes = {}, el = function (id) { return nodes[id] || (nodes[id] = {
   textContent: "", className: "", setAttribute: function () {} }); };

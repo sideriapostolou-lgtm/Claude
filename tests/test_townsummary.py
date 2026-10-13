@@ -46,6 +46,41 @@ def recorded_page() -> dict[str, Any]:
     }
 
 
+def connected_page() -> dict[str, Any]:
+    value = recorded_page()
+    pacific = value["money"]["polymarket"]["real"]["today_pacific"]
+    value["money"]["connections"] = {
+        "version": 1,
+        "polymarket_us": {
+            "as_of": NOW - 10, "stale": False, "status": "ok", "source_note": "Shared account positions and bot records.",
+            "positions_basis": "Venue account holdings, including your own bets", "today_pacific": pacific,
+            "positions": [{"id": "owner-1", "title": "Your basketball bet", "scope": "owner", "side": "yes",
+                           "quantity": 3, "price": .5, "cost_usd": 1.5, "fee_usd": None}],
+            "orders": [], "events": [{"id": "owner-fill-1", "real": True, "scope": "owner", "venue": "polymarket_us",
+                                      "ts": NOW - 120, "source_at": NOW - 10, "qualified": True,
+                                      "type": "fill", "text": "Your basketball bet filled", "fee_usd": .00001,
+                                      "fee_source": "estimated"}],
+            "issues": ["Some fees were not reported by the venue."], "truncated": {},
+        },
+        "kalshi": {
+            "as_of": NOW - 2, "stale": False, "status": "ok", "source_note": "Bot fills and resting orders.",
+            "positions_basis": "Bot positions from real fills",
+            "today_pacific": {**pacific, "as_of": NOW - 2, "pnl_usd": .56},
+            "positions": [{"id": "kalshi-1", "title": "Bitcoin 15 minute", "scope": "bot", "side": "no",
+                           "quantity": 2, "price": .47, "cost_usd": .94, "fee_usd": .0033, "fee_source": "actual"}],
+            "orders": [{"id": "order-1", "title": "Bitcoin next window", "side": "yes", "status": "resting",
+                        "quantity": 3, "filled_quantity": 1, "remaining_quantity": 2, "reserved_usd": .98}],
+            "events": [{"id": "kalshi-fill-1", "real": True, "scope": "bot", "venue": "kalshi", "ts": NOW - 60,
+                        "source_at": NOW - 2, "qualified": True, "type": "fill", "text": "Bought 2 NO contracts",
+                        "fee_usd": .0033, "fee_source": "actual"},
+                       {"id": "practice-fill", "real": False, "scope": "bot", "venue": "kalshi", "ts": NOW - 1,
+                        "source_at": NOW - 2, "qualified": True, "type": "fill", "text": "Pretend fill must not appear"}],
+            "issues": [], "truncated": {},
+        },
+    }
+    return value
+
+
 def run(tmp_path: Path, value: Any, actions: str = "") -> dict[str, Any]:
     script = re.search(r"<script>(.*?)</script>", render_summary_html(), re.DOTALL)
     assert script is not None
@@ -153,7 +188,7 @@ def test_missing_or_practice_only_records_never_become_real_zero_profit(tmp_path
                                                             "paper": {"today_usd": 999}},
                                           "speeddesk": {"today": {"pnl_usd": 888}}}}
     first = run(tmp_path, value)["first"]
-    for key in ("pm-cash", "pm-profit", "pm-open", "pm-value", "kalshi-cash", "kalshi-profit", "kalshi-risk"):
+    for key in ("pm-cash", "pm-profit", "pm-open", "pm-value", "kalshi-cash", "kalshi-profit", "kalshi-pacific-profit", "kalshi-risk"):
         assert first[key]["text"] == "Not reported"
     assert "No new bot bets" in first["pm-state"]["text"]
     assert "complete Pacific-day bot result is not available" in first["pm-warning"]["text"]
@@ -203,3 +238,54 @@ def test_hidden_page_does_not_poll_and_invalid_json_is_an_offline_report(tmp_pat
     assert len(out["requests"]) == 2
     assert "Connection lost" in out["last"]["connection"]["text"]
     assert out["last"]["pm-cash"]["text"] == "$14.39"
+
+
+@needs_node
+def test_venue_positions_orders_fees_and_owner_activity_keep_their_scope(tmp_path: Path) -> None:
+    first = run(tmp_path, connected_page())["first"]
+    assert first["kalshi-pacific-profit"]["text"] == "+$0.56"
+    assert first["kalshi-profit"]["text"] == "−$0.34"  # The original UTC result is separate.
+    assert first["pm-profit"]["text"] == "+$0.23" and first["pm-cash"]["text"] == "$14.39"
+    assert "Your own bet · YES · Contracts: 3" in first["pm-business"]["text"]
+    assert "Fee: Not reported" in first["pm-business"]["text"]
+    assert "Bot bet · NO · Contracts: 2" in first["kalshi-business"]["text"]
+    assert "Fee: $0.0033 (actual)" in first["kalshi-business"]["text"]
+    assert "filled: 1; remaining: 2" in first["kalshi-business"]["text"]
+    assert "Money reserved: $0.98" in first["kalshi-business"]["text"]
+    assert "Some fees were not reported" in first["pm-business-warning"]["text"]
+    activity = first["activity"]["text"]
+    assert "Kalshi · Bot activity" in activity and "Polymarket US · Your activity" in activity
+    assert "Recorded fee: <$0.0001 (estimated)" in activity and "Recorded 1 minutes ago" in activity
+    assert "Recorded fee: $0.0033 (actual)" in activity
+    assert "Pretend fill" not in activity
+
+
+@needs_node
+def test_missing_details_and_old_sources_do_not_claim_reconciled_empty_accounts(tmp_path: Path) -> None:
+    absent = run(tmp_path, recorded_page())["first"]
+    assert "Missing records do not mean zero holdings or fees" in absent["pm-business"]["text"]
+    value = connected_page()
+    value["money"]["connections"]["kalshi"].update(as_of=NOW - 300, stale=True)
+    first = run(tmp_path, value)["first"]
+    assert first["kalshi-business-time"]["text"].startswith("Last saved source: 5 minutes ago")
+    assert "awaiting a current source check" in first["activity"]["text"]
+    assert "complete, current Pacific-day result is not available" in first["kalshi-warning"]["text"]
+
+
+@needs_node
+def test_saved_inventory_and_activity_are_bounded_and_untrusted_text_is_safe(tmp_path: Path) -> None:
+    value = connected_page()
+    kalshi = value["money"]["connections"]["kalshi"]
+    attack = "<img src=x onerror=alert(1)>"
+    kalshi["positions"] = [{**kalshi["positions"][0], "id": str(i), "title": f"{attack} position {i}"} for i in range(10)]
+    kalshi["orders"] = [{**kalshi["orders"][0], "id": str(i), "title": f"order {i}"} for i in range(10)]
+    kalshi["events"] = [{**kalshi["events"][0], "id": str(i), "text": f"{attack} event {i}", "ts": NOW - i}
+                        for i in range(15)]
+    out = run(tmp_path, value)
+    first = out["first"]
+    assert "position 7" in first["kalshi-business"]["text"] and "position 8" not in first["kalshi-business"]["text"]
+    assert "order 7" in first["kalshi-business"]["text"] and "order 8" not in first["kalshi-business"]["text"]
+    assert "event 11" in first["activity"]["text"] and "event 12" not in first["activity"]["text"]
+    assert "not the full account history" in first["kalshi-business-more"]["text"]
+    assert "not the full account history" in first["activity-more"]["text"]
+    assert attack in first["activity"]["text"] and set(out["tags"]) <= {"li", "strong", "p"}

@@ -920,18 +920,20 @@ def test_json_stays_small_on_a_busy_ledger(ledger: Ledger, settings: Settings) -
     ledger.set_kv("engine.status", status_kv(watchlist=100, watching=watching))
     state = build_page_state(ledger, settings, NOW)
     body = json.dumps(state, separators=(",", ":"))
-    # Preserve the existing page's budget; the separate speed-desk empty report has its own bounded allowance.
-    # Recorded history is bounded independently to 31 days in test_speeddesk_integration.py.
+    # Preserve the existing page's budget; separate desk/source reports have bounded allowances.
+    # History is capped in test_speeddesk_integration.py and test_moneyconnections.py.
     before_speeddesk = json.loads(body)
     speed_report = before_speeddesk["money"].pop("speeddesk")
     speed_line = before_speeddesk["plain"].pop("speeddesk_line")
     watcher_report = before_speeddesk.pop("skipwatch")
+    connections_report = before_speeddesk["money"].pop("connections")
     original_body = json.dumps(before_speeddesk, separators=(",", ":"))
     added_body = json.dumps({"speeddesk": speed_report, "speeddesk_line": speed_line}, separators=(",", ":"))
     assert len(original_body) < 45_500, len(original_body)
     assert len(added_body) < 1_500, len(added_body)
     assert len(json.dumps(watcher_report, separators=(",", ":"))) < 1_800
-    assert len(body) < 48_800, len(body)
+    assert len(json.dumps(connections_report, separators=(",", ":"))) < 2_500
+    assert len(body) < 51_300, len(body)
     assert len(state["money"]["curve"]) <= 300 and len(state["trades"]["closed"]) == 10
     assert all(len(t["coin"]) <= 24 and len(t["why"]) <= 60 for t in state["trades"]["closed"])
 

@@ -1,6 +1,9 @@
 """Pure browser adapter for the world's phone HUD; display only, with no new money sources."""
 
-TYCOON_DATA = r"""
+from nightcrawler.worldtycoon_connections import TYCOON_CONNECTIONS
+from nightcrawler.worldtycoon_research import TYCOON_RESEARCH
+
+TYCOON_DATA = TYCOON_CONNECTIONS + TYCOON_RESEARCH + r"""
   // >>> tycoon data (pure)
   // These are separate books: cash and open positions belong to the shared account;
   // today's realized result belongs to the bot. Missing data never becomes zero.
@@ -21,6 +24,12 @@ TYCOON_DATA = r"""
   }
   function tycoonGrowth(s) {
     const thresholds = [0.01, 0.25, 1, 5, 10];
+    if (s.business && s.business.available) {
+      const qualified = s.business.todayCurrent, pnl = s.business.today;
+      return { qualified: qualified, level: qualified ? thresholds.filter(function (p) { return pnl >= p - 1e-9; }).length : null,
+        pnl_usd: pnl, thresholds: thresholds, label: "Both bots’ recorded profit since midnight PT", date: s.business.date,
+        reason: qualified ? null : "Waiting for complete, fresh Pacific-day results from both desks" };
+    }
     const qualified = s.todayStatus === "ok" && s.today !== null && s.updated !== null && s.asOf !== null
       && s.on !== null && !s.pageStale && !s.deskStale && !s.todayStale;
     // These are today's decorative gardens, not account capital or purchased buildings.
@@ -43,7 +52,7 @@ TYCOON_DATA = r"""
     const hasExposure = raw.has_real_exposure === true;
     const state = !present ? "unknown" : stale ? "stale" : active ? "live" : hasExposure ? "exposure"
       : mode === "paper" ? "practice" : "unknown";
-    const today = tycoonObject(raw.today), total = tycoonObject(raw.total), date = tycoonUtcDate(now);
+    const today = tycoonObject(raw.today), total = tycoonObject(raw.total), caps = tycoonObject(raw.caps), date = tycoonUtcDate(now);
     const dayCurrent = date !== "" && today.day === date;
     const cashStale = cashAt === null || tycoonOld(cashAge, 60) || stale;
     return { name: "Kalshi", state: state, active: active, practice: state === "practice", mode: mode,
@@ -60,28 +69,10 @@ TYCOON_DATA = r"""
       hasExposure: hasExposure, exposure: tycoonCost(raw.at_risk_usd), positions: tycoonCount(raw.positions),
       orders: tycoonCount(raw.open_orders), reserved: tycoonCost(raw.reserved_usd),
       cleanupPending: raw.cleanup_pending === true,
+      totalHalted: raw.total_halted === true,
+      limits: { window: tycoonCost(caps.window_usd), open: tycoonCost(caps.open_usd),
+        day: tycoonCost(caps.day_stop_usd), total: tycoonCost(caps.total_stop_usd) },
       note: "Separate Kalshi account. Cash is not profit. Its UTC result does not count toward Pacific-day gardens." };
-  }
-  function tycoonResearch(d, now, pageCurrent) {
-    const speed = tycoonObject(tycoonObject(d.money).speeddesk);
-    const rows = [
-      { key: "speed", name: "Bitcoin lab", scope: "PRACTICE", raw: speed, limit: 60,
-        count: tycoonObject(speed.today).day === tycoonUtcDate(now) ? tycoonCount(tycoonObject(speed.today).fills) : null,
-        countLabel: "practice fills today (UTC)" },
-      { key: "watcher", name: "Bot research", scope: "READ ONLY", raw: tycoonObject(d.skipwatch), limit: 60,
-        count: tycoonCount(tycoonObject(d.skipwatch).wallet_fills), countLabel: "public fills recorded" },
-      { key: "weather", name: "Weather lab", scope: "READ ONLY", raw: tycoonObject(d.weatherwatch), limit: 120,
-        count: tycoonCount(tycoonObject(d.weatherwatch).active_watches), countLabel: "markets being watched" },
-    ];
-    return rows.map(function (r) {
-      const stamp = tycoonStamp(r.raw.as_of, now), age = tycoonAge(stamp, now);
-      const current = pageCurrent && now !== null && stamp !== null && r.raw.stale !== true && !tycoonOld(age, r.limit);
-      const problem = tycoonText(r.raw.problem);
-      return { key: r.key, name: r.name, scope: r.scope, current: current,
-        state: !current ? "unknown" : problem ? "attention" : "observing",
-        status: !current ? "Waiting for a current report" : problem || tycoonText(r.raw.status) || "Observing",
-        asOf: stamp, age: age, count: r.count, countLabel: r.countLabel, realOrders: false };
-    });
   }
   function tycoonLatest(d, now) {
     const plain = tycoonObject(d.plain), items = [], finished = Array.isArray(plain.finished) ? plain.finished : [];
@@ -167,6 +158,8 @@ TYCOON_DATA = r"""
       : on === false ? "off" : paused ? "paused" : "on";
     const members = Array.isArray(tycoonObject(d.team).members) ? d.team.members : [];
     const desk = members.find(function (m) { return m && m.id === "predict"; });
+    const risk = members.find(function (m) { return m && m.id === "risk"; });
+    const caps = tycoonObject(tycoonObject(risk && risk.risk_wall).real_caps);
     const rows = desk && Array.isArray(desk.positions) ? desk.positions : [], positions = [];
     for (let i = 0; i < rows.length; i++) {
       const row = tycoonObject(rows[i]);
@@ -199,11 +192,23 @@ TYCOON_DATA = r"""
       event: tycoonLatest(d, now), crew: tycoonCrew(d, now, now !== null && updated !== null && !pageStale,
         now !== null && asOf !== null && !deskStale), positions: positions,
       pending: { count: asOf !== null ? tycoonCount(real.pending) : null, held: asOf !== null ? tycoonCost(real.pending_usd) : null },
+      limits: { open: tycoonCost(caps.open_max_usd), day: tycoonCost(caps.day_max_usd), total: tycoonCost(caps.total_max_usd),
+        room: tycoonCost(real.stop_room_usd) },
       positionsNote: "Recorded positions, not the current venue book. App sales can leave these records behind; ownership is not supplied.",
       eventNote: "Latest recorded real event; historical settlements may later be corrected." };
     const pageCurrent = now !== null && updated !== null && !pageStale;
-    summary.growth = tycoonGrowth(summary);
     summary.accounts = { kalshi: tycoonKalshi(d, now, pageCurrent) };
+    summary.business = tycoonConnections(d, now, pageCurrent);
+    summary.activity = summary.business.activity;
+    summary.activitySources = { polymarket_us: summary.business.venues.polymarket_us.current,
+      kalshi: summary.business.venues.kalshi.current };
+    summary.accounts.kalshi.todayPacific = summary.business.venues.kalshi.day;
+    if (summary.business.available) {
+      summary.event = summary.activity.length ? summary.activity[0] : null;
+      summary.eventNote = "Latest recorded real activity, with its venue and original time. Orders and fills are not profit.";
+    }
+    summary.crew = tycoonBusinessCrew(summary);
+    summary.growth = tycoonGrowth(summary);
     summary.research = tycoonResearch(d, now, pageCurrent);
     return summary;
   }
