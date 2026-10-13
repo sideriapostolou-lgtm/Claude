@@ -233,7 +233,7 @@ class KalshiLiveDesk:
                             total_loss_usd=settings.speeddesk_kalshi_total_stop_usd,
                             pair_cap=settings.speeddesk_pair_cap,
                             max_imbalance=settings.speeddesk_max_imbalance,
-                            clip=settings.speeddesk_clip, cutoff_s=settings.speeddesk_kalshi_cutoff_s,
+                            clip=settings.speeddesk_kalshi_clip, cutoff_s=settings.speeddesk_kalshi_cutoff_s,
                             lock_s=settings.speeddesk_kalshi_lock_s,
                             lock_max_price=settings.speeddesk_kalshi_lock_max_price,
                             fee_precision=0.0001 if direct_member_verified else 0.01)
@@ -1215,7 +1215,7 @@ class KalshiLiveDesk:
                 if kind == "rest" and (window.slug not in snapshot.maker_windows
                                        or any(level.price <= price + EPS for level in book.asks)):
                     continue
-                units = math.floor(min(self.settings.speeddesk_clip, ask.size if ask and take else 25))
+                units = math.floor(min(self.book.limits.clip, ask.size if ask and take else 25))
                 inventory = self.book.inventory[window.slug]
                 if inventory.up.shares + inventory.down.shares <= EPS:
                     # Scale the starter to whole pairs at the authorized pair
