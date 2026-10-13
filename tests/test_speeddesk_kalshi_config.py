@@ -16,6 +16,7 @@ def test_kalshi_companion_ships_paper_with_exact_owner_ceiling_defaults() -> Non
     assert settings.speeddesk_kalshi_account_type == "unknown"
     assert settings.speeddesk_kalshi_live_confirm is None
     assert settings.speeddesk_kalshi_resume_token is None
+    assert settings.speeddesk_kalshi_integrity_reset_token is None
     assert settings.kalshi_key_id is None and settings.kalshi_private_key is None
     assert (settings.speeddesk_kalshi_window_usd, settings.speeddesk_kalshi_open_usd,
             settings.speeddesk_kalshi_day_stop_usd, settings.speeddesk_kalshi_total_stop_usd) == (5, 10, 6, 10)
@@ -85,6 +86,7 @@ def test_account_fee_category_requires_an_exact_supported_fact(account_type) -> 
 def test_kalshi_keys_resume_and_confirmation_are_secret_wrapped_everywhere(source) -> None:
     values = {"kalshi_key_id": "test-only-kalshi-key-id", "kalshi_private_key": "test-only-signing-material",
               "speeddesk_kalshi_resume_token": "test-only-resume-value",
+              "speeddesk_kalshi_integrity_reset_token": "test-only-reset-value",
               "speeddesk_kalshi_live_confirm": "test-only-invalid-confirm"}
     if source == "environment":
         settings = Settings.from_env({name.upper(): value for name, value in values.items()})
@@ -97,6 +99,7 @@ def test_kalshi_keys_resume_and_confirmation_are_secret_wrapped_everywhere(sourc
     public = settings.public_dict()
     assert public["kalshi_key_id_set"] and public["kalshi_private_key_set"]
     assert public["speeddesk_kalshi_resume_token_set"]
+    assert public["speeddesk_kalshi_integrity_reset_token_set"]
     assert not public["speeddesk_kalshi_live_confirmed"]
     for value in values.values():
         assert value not in repr(settings)
@@ -119,7 +122,7 @@ def test_exact_confirm_only_affects_public_confirmation_flag_never_default_mode(
 
 def test_invalid_secret_types_are_rejected_without_echoing_values() -> None:
     for name in ("kalshi_key_id", "kalshi_private_key", "speeddesk_kalshi_resume_token",
-                 "speeddesk_kalshi_live_confirm"):
+                 "speeddesk_kalshi_integrity_reset_token", "speeddesk_kalshi_live_confirm"):
         with pytest.raises(ConfigError) as error:
             Settings(**{name: b"test-only-secret-bytes"})
         assert name.upper() in str(error.value)

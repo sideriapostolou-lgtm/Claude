@@ -464,6 +464,11 @@ class Settings:
     speeddesk_kalshi_resume_token: Secret | None = _f(  # noqa: RUF009 - _f returns a dataclasses.field
         None, "secret", "Owner-controlled Kalshi total-stop reset: a new value works once; only its hash may be "
         "persisted, never its value. Does not change any cap or enable live mode", secret=True)
+    speeddesk_kalshi_integrity_reset_token: Secret | None = _f(  # noqa: RUF009 - _f returns a dataclasses.field
+        None, "secret", "Owner-controlled one-time reset of a Kalshi reconciliation stop: a new value clears the "
+        "stop present at startup, only after a clean reconcile with nothing open; a value set while no stop "
+        "exists is spent at once. Only its hash is persisted. Does not change any cap or enable live mode",
+        secret=True)
     # Owner-authorized 2026-10-13 ("2.5x"): $5 per window, $10 open, -$6 day, -$10 total.
     speeddesk_kalshi_window_usd: float = _f(5.0, "usd", "Kalshi live companion: fee-inclusive maximum spend per "
                                             "window on new buys; owner-authorized ceiling $5. A lock that only "
@@ -587,7 +592,7 @@ class Settings:
         object.__setattr__(self, "withdraw_to", str(self.withdraw_to).strip())
         object.__setattr__(self, "owner_tz", str(self.owner_tz).strip())
         for name in ("kalshi_key_id", "kalshi_private_key", "speeddesk_kalshi_resume_token",
-                     "speeddesk_kalshi_live_confirm"):
+                     "speeddesk_kalshi_integrity_reset_token", "speeddesk_kalshi_live_confirm"):
             value = getattr(self, name)
             if isinstance(value, str):
                 object.__setattr__(self, name, Secret(value) if value else None)
@@ -604,7 +609,7 @@ class Settings:
             value = getattr(self, f.name)
             env = f.name.upper()
             if f.name in ("kalshi_key_id", "kalshi_private_key", "speeddesk_kalshi_resume_token",
-                          "speeddesk_kalshi_live_confirm"):
+                          "speeddesk_kalshi_integrity_reset_token", "speeddesk_kalshi_live_confirm"):
                 if value is not None and not isinstance(value, Secret):
                     problems.append(f"{env} must be a secret string")
                 continue

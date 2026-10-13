@@ -400,6 +400,18 @@ _SCRIPT = r"""
         + "Exchange clocks may differ. An order acknowledgment is not a fill."));
   }
 
+  // What the owner's one-time reset of a reconciliation stop is waiting for (pagestate._KALSHI_RESET_STATES).
+  const KALSHI_RESET_WORDS = {
+    armed: "approved; clears at the next clean account check",
+    account_unreconciled: "waiting for a clean Kalshi account read",
+    startup_pending: "waiting for startup orders to finish",
+    live_off: "waiting; the live switches are off",
+    fatal: "blocked by a desk failure",
+    orders_open: "waiting for open orders to finish (including the owner's own)",
+    positions_open: "waiting for open contracts to settle (including the owner's own)",
+    orders_reserved: "waiting for reserved orders to reconcile",
+  };
+
   function renderKalshiLive(k) {
     const panel = $("kalshilive");
     panel.hidden = !k;
@@ -424,6 +436,8 @@ _SCRIPT = r"""
       : k.active ? "Real cash is committed to Kalshi bets." : "Real exposure remains; new real orders are off.");
     if (k.cleanup_pending) warnings.push("Order cleanup is pending. Reserved money remains at risk until confirmed.");
     if (k.total_halted) warnings.push("Total loss stop is latched. The owner must supply a new resume token to resume.");
+    if (k.integrity_error) warnings.push("Reconciliation stop: " + k.integrity_error + "."
+      + (k.integrity_reset ? " One-time reset " + (KALSHI_RESET_WORDS[k.integrity_reset] || k.integrity_reset) + "." : ""));
     $("kalshi-live-warning").textContent = warnings.join(" ");
     $("kalshi-live-warning").hidden = !warnings.length;
     $("kalshi-live-account-label").textContent = k.stale ? "Last recorded real account · current values unconfirmed"

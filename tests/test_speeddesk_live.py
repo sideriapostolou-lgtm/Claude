@@ -87,14 +87,15 @@ SMALL_CAPS = {"speeddesk_kalshi_window_usd": 2.0, "speeddesk_kalshi_open_usd": 4
 
 
 def make_desk(tmp_path: Path, *, mode: str = "live", confirm: str | None = "yes",
-              keys: bool = True, direct: bool = True,
-              caps: dict[str, float] | None = None) -> tuple[KalshiLiveDesk, FakeAccount, FakeClock]:
+              keys: bool = True, direct: bool = True, caps: dict[str, float] | None = None,
+              extra: dict[str, Any] | None = None) -> tuple[KalshiLiveDesk, FakeAccount, FakeClock]:
     clock = FakeClock()
     account = FakeAccount(clock)
     settings = Settings(data_dir=tmp_path, speeddesk_kalshi_mode=mode,
                         speeddesk_kalshi_live_confirm=Secret(confirm) if confirm else None,
                         kalshi_key_id=Secret("fake-key-id") if keys else None,
-                        kalshi_private_key=Secret("fake-private-key") if keys else None, **(caps or {}))
+                        kalshi_private_key=Secret("fake-private-key") if keys else None, **(caps or {}),
+                        **(extra or {}))
     window = Window(TICKER, clock.now() - 10, clock.now() + 890, start_price=80000,
                     venue="kalshi", taker_coefficient=.07, maker_coefficient=0,
                     min_trade_qty=.01, fee_rounding="kalshi")
@@ -662,5 +663,213 @@ def test_lock_uses_a_penny_limit_for_sub_penny_asks_and_fits_the_cash(tmp_path: 
         steps(desk, clock, 2)
         lock = account.creates[1]
         assert (lock["side"], lock["price"], lock["size"]) == ("down", .91, 3)
+    finally:
+        desk.close()
+
+
+# The owner's one-time reset of a reconciliation stop (owner, 2026-10-13: "Yes, reset it").
+
+OWNER_TICKER = "KXBTC15M-26OCT121845-45"  # a window the owner traded by hand, not the bot's
+
+
+def events(desk: KalshiLiveDesk, name: str) -> list[dict[str, Any]]:
+    return [item for item in desk.latest_events if item["event"] == name]
+
+
+def stopped_desk(tmp_path: Path, code: str) -> None:
+    """A saved desk whose books hold a reconciliation stop, as the 02:00 UTC stop on 2026-10-13 left it."""
+    desk, _, _ = make_desk(tmp_path)
+    try:
+        desk.book.integrity_error = code
+        desk.checkpoint()
+    finally:
+        desk.close()
+
+
+def test_reconciliation_stop_names_the_check_that_tripped(tmp_path: Path) -> None:
+    desk, account, clock = make_desk(tmp_path)
+    try:
+        starter_filled(desk, account, clock)
+        steps(desk, clock, 4)
+        assert desk.book.integrity_error is None
+        account.executions[0]["fee_cost"] = "0.0500"  # Kalshi now reports a different fee for a booked fill
+        steps(desk, clock, 4)
+        assert desk.book.integrity_error == "fill_changed"
+        assert [item["code"] for item in events(desk, "speeddesk_live_integrity")] == ["fill_changed"]
+        assert {item.get("code") for item in events(desk, "speeddesk_live_reject")} == {"fill_changed"}
+        panel = desk.panel()
+        assert panel["integrity_error"] == "fill_changed" and panel["mode"] == "paper"
+        assert panel["integrity_reset"] is None
+    finally:
+        desk.close()
+    restarted, _, _ = make_desk(tmp_path)
+    try:  # every restart names the stop again, once
+        assert [item["code"] for item in events(restarted, "speeddesk_live_integrity")] == ["fill_changed"] * 2
+    finally:
+        restarted.close()
+
+
+def test_owner_reset_clears_a_stop_once_after_a_clean_reconcile(tmp_path: Path) -> None:
+    stopped_desk(tmp_path, "settlement_net_payout_mismatch")
+    reset = {"speeddesk_kalshi_integrity_reset_token": Secret("owner-reset-1")}
+    desk, account, clock = make_desk(tmp_path, extra=reset)
+    try:
+        assert desk.panel()["integrity_reset"] == "armed"
+        # The owner's own contracts and bid are still on the account: the stop stays until they are gone.
+        account.account_positions = [{"ticker": OWNER_TICKER, "position_fp": "3.00"}]
+        account.orders.append({"order_id": "owner-bid", "client_order_id": "", "ticker": OWNER_TICKER,
+                               "status": "resting", "fill_count_fp": "0.00", "remaining_count_fp": "2.00"})
+        steps(desk, clock, 8)
+        assert desk.book.integrity_error == "settlement_net_payout_mismatch" and not account.creates
+        assert desk.panel()["integrity_reset"] == "orders_open" and desk.panel()["mode"] == "paper"
+        account.orders.clear()
+        steps(desk, clock, 8)
+        assert desk.panel()["integrity_reset"] == "positions_open" and not account.creates
+        account.account_positions = []
+        steps(desk, clock, 8)
+        assert desk.book.integrity_error is None
+        cleared = [item for item in events(desk, "speeddesk_live_integrity_reset") if item["state"].startswith("cleared")]
+        assert [item["code"] for item in cleared] == ["settlement_net_payout_mismatch"]
+        assert [item["reason"] for item in events(desk, "speeddesk_live_integrity_reset") if "reason" in item] == [
+            "startup_pending", "orders_open", "positions_open"]
+        panel = desk.panel()
+        assert panel["mode"] == "live" and panel["integrity_error"] is None and panel["integrity_reset"] is None
+        at_lock_time(desk, clock, up_ask=.4, down_ask=.6, before_close=desk.book.windows[TICKER].end - clock.now())
+        steps(desk, clock, 1)  # a fresh feed (the test's went stale while waiting)
+        assert account.creates  # real orders resume within the caps
+    finally:
+        desk.close()
+    # The same value never clears a later stop, even after a restart.
+    stopped_desk(tmp_path, "fill_changed")
+    again, account, clock = make_desk(tmp_path, extra=reset)
+    try:
+        steps(again, clock, 8)
+        assert again.book.integrity_error == "fill_changed" and again.panel()["integrity_reset"] is None
+    finally:
+        again.close()
+
+
+def test_owner_reset_value_set_before_a_stop_is_spent_at_once(tmp_path: Path) -> None:
+    reset = {"speeddesk_kalshi_integrity_reset_token": Secret("owner-reset-early")}
+    desk, _, _ = make_desk(tmp_path, extra=reset)
+    assert [item["state"] for item in events(desk, "speeddesk_live_integrity_reset")] == [
+        "ignored; no stop to clear, so the value is spent"]
+    desk.close()
+    stopped_desk(tmp_path, "fill_changed")
+    later, _, clock = make_desk(tmp_path, extra=reset)
+    try:
+        steps(later, clock, 8)
+        assert later.book.integrity_error == "fill_changed" and later.panel()["integrity_reset"] is None
+    finally:
+        later.close()
+
+
+def test_owner_reset_is_withdrawn_for_good_when_a_different_check_trips(tmp_path: Path) -> None:
+    """Review finding: a withdrawn approval must not come back after a restart against the newer stop."""
+    stopped_desk(tmp_path, "settlement_net_payout_mismatch")
+    reset = {"speeddesk_kalshi_integrity_reset_token": Secret("r-2")}
+    desk, account, clock = make_desk(tmp_path, extra=reset)
+    try:
+        desk.book.integrity_error = "fill_exceeded_reserved_terms"
+        steps(desk, clock, 8)
+        assert desk.book.integrity_error == "fill_exceeded_reserved_terms" and not account.creates
+        assert desk.panel()["integrity_reset"] is None
+        assert any(item["state"].startswith("disarmed") for item in events(desk, "speeddesk_live_integrity_reset"))
+    finally:
+        desk.close()
+    again, account, clock = make_desk(tmp_path, extra=reset)  # a redeploy with the value still set
+    try:
+        steps(again, clock, 8)
+        assert again.book.integrity_error == "fill_exceeded_reserved_terms" and not account.creates
+        assert again.panel()["integrity_reset"] is None
+    finally:
+        again.close()
+
+
+def test_owner_reset_approval_survives_a_restart_while_waiting(tmp_path: Path) -> None:
+    stopped_desk(tmp_path, "settlement_net_payout_mismatch")
+    reset = {"speeddesk_kalshi_integrity_reset_token": Secret("r-4")}
+    desk, account, clock = make_desk(tmp_path, extra=reset)
+    try:
+        account.account_positions = [{"ticker": OWNER_TICKER, "position_fp": "1.00"}]
+        steps(desk, clock, 8)
+        assert desk.panel()["integrity_reset"] == "positions_open"
+    finally:
+        desk.close()
+    again, account, clock = make_desk(tmp_path, extra=reset)
+    try:
+        assert again.panel()["integrity_reset"] == "armed"
+        steps(again, clock, 8)
+        assert again.book.integrity_error is None
+    finally:
+        again.close()
+
+
+def test_owner_reset_is_not_blocked_by_an_old_cancelled_order(tmp_path: Path) -> None:
+    """Review finding: a finished order keeps its cancel request on record; only open orders hold the reset."""
+    desk, account, clock = make_desk(tmp_path)
+    try:
+        asyncio.run(desk.step())  # the starter rests, then the live switch goes off and it is cancelled
+        desk.settings = desk.settings.replace(speeddesk_kalshi_mode="paper")
+        steps(desk, clock, 8)
+        assert account.cancels
+        assert all(intent.terminal and intent.cancel_requested for intent in desk.intents.values())
+        desk.book.integrity_error = "order_terminal_regressed"
+        desk.checkpoint()
+        history = (account.orders, account.creates)
+    finally:
+        desk.close()
+    again, account, clock = make_desk(tmp_path, extra={"speeddesk_kalshi_integrity_reset_token": Secret("r-3")})
+    account.orders, account.creates = history  # Kalshi still lists the cancelled order
+    try:
+        steps(again, clock, 8)
+        assert again.book.integrity_error is None
+        assert any(item["state"].startswith("cleared") for item in events(again, "speeddesk_live_integrity_reset"))
+    finally:
+        again.close()
+
+
+def test_owner_reset_shows_a_failing_account_read_as_waiting(tmp_path: Path) -> None:
+    """Review finding: when the account read keeps failing, the panel must not keep saying "armed"."""
+    stopped_desk(tmp_path, "fill_changed")
+    desk, account, clock = make_desk(tmp_path, extra={"speeddesk_kalshi_integrity_reset_token": Secret("r-5")})
+    try:
+        account.balance_error = KalshiClientError("balance", "request rejected", status=500)
+        steps(desk, clock, 8)
+        assert desk.panel()["integrity_reset"] == "account_unreconciled"
+        assert desk.book.integrity_error == "fill_changed"
+    finally:
+        desk.close()
+
+
+def test_owner_reset_shows_what_it_waits_for_when_startup_cannot_finish(tmp_path: Path) -> None:
+    """Second review: a bid Kalshi keeps listing as resting keeps startup open; the panel must say so."""
+    desk, account, clock = make_desk(tmp_path)
+    try:
+        asyncio.run(desk.step())  # the starter rests
+        desk.book.integrity_error = "fill_exceeded_reserved_terms"
+        desk.checkpoint()
+        history = (account.orders, account.creates)
+    finally:
+        desk.close()
+    again, account, clock = make_desk(tmp_path, extra={"speeddesk_kalshi_integrity_reset_token": Secret("r-6")})
+    account.orders, account.creates = history
+    account.cancel = lambda order_id, *, ticker: {}  # type: ignore[method-assign]  # accepted, still resting
+    try:
+        steps(again, clock, 8)
+        assert not again.startup_done and again.book.integrity_error == "fill_exceeded_reserved_terms"
+        assert again.panel()["integrity_reset"] == "startup_pending"
+    finally:
+        again.close()
+
+
+def test_owner_reset_shows_live_off_while_the_switches_are_off(tmp_path: Path) -> None:
+    stopped_desk(tmp_path, "fill_changed")
+    desk, account, clock = make_desk(tmp_path, mode="paper",
+                                     extra={"speeddesk_kalshi_integrity_reset_token": Secret("r-7")})
+    try:
+        steps(desk, clock, 4)
+        assert account.reads == 0 and desk.panel()["integrity_reset"] == "live_off"
+        assert desk.book.integrity_error == "fill_changed"
     finally:
         desk.close()

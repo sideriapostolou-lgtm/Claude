@@ -36,6 +36,8 @@ class LiveRejected(ValueError):
 
 # A lock buy is never sent this close to the close: the market may stop matching.
 LOCK_MARGIN_S = 20.0
+# Integrity reset fingerprints live beside the resume ones; the prefix keeps the two kinds from matching.
+RESET_DOMAIN = b"kalshi-integrity-reset\x00"
 
 
 @dataclass(frozen=True)
@@ -183,6 +185,8 @@ class LiveRiskBook:
         self.integrity_error: str | None = None
         self.resume_token_hash: str | None = None
         self.seen_resume_hashes: set[str] = set()
+        # The stop the owner's one-time reset approved, until it clears or a different check trips.
+        self.integrity_reset_armed: str | None = None
         self.bootstrap_order: dict[str, str] = {}
         self.cash_usd: float | None = None
         self.cash_at: float | None = None
@@ -565,6 +569,52 @@ class LiveRiskBook:
         self.halted, self.halt_reason = False, None
         return True
 
+    def arm_integrity_reset(self, token: str) -> str:
+        """The owner's one-time reset of a reconciliation stop (owner, 2026-10-13: "Yes, reset it").
+
+        A value is spent the moment it is first seen, whatever happens next, and its fingerprint is kept with the
+        resume fingerprints, which the previous release also keeps: no restart or rollback can let it approve a
+        second stop. It approves only the stop present now; with no stop it approves nothing. Returns "armed",
+        "no_stop", "used" or "" (no value). The stop is cleared by `reset_integrity`, once the books are clean."""
+        if not token:
+            return ""
+        digest = hashlib.sha256(RESET_DOMAIN + token.encode()).hexdigest()
+        if digest in self.seen_resume_hashes:
+            return "used"
+        self.seen_resume_hashes.add(digest)
+        if not self.integrity_error:
+            return "no_stop"
+        self.integrity_reset_armed = self.integrity_error
+        return "armed"
+
+    def disarm_stale_reset(self) -> str | None:
+        """Withdraw an approval whose stop is no longer the one present; returns the approved check's code."""
+        if self.integrity_reset_armed is not None and self.integrity_reset_armed != self.integrity_error:
+            code, self.integrity_reset_armed = self.integrity_reset_armed, None
+            return code
+        return None
+
+    def integrity_reset_blocker(self) -> str:
+        """Why the books cannot clear the approved stop yet; empty when they can."""
+        if not self.integrity_error:
+            return "no_integrity_error"
+        if self.integrity_reset_armed != self.integrity_error:
+            return "not_armed"
+        if any(intent.reservation_active for intent in self.intents.values()) or self.reserved_usd > EPSILON:
+            return "orders_reserved"
+        if any(window not in self.settled and value.up.shares + value.down.shares > EPSILON
+               for window, value in self.inventory.items()):
+            return "positions_open"
+        return ""
+
+    def reset_integrity(self) -> str:
+        """Clear the approved stop, once; returns the cleared check's code."""
+        code = self.integrity_error
+        if code is None or self.integrity_reset_blocker():
+            raise LiveRejected("integrity_reset_refused")
+        self.integrity_error = self.integrity_reset_armed = None
+        return code
+
     def to_state(self) -> dict[str, Any]:
         # Fields added for locks are written only when they carry information, so the previous release can
         # still read a state with no pending lock if a deployment is rolled back (limits come from settings).
@@ -578,6 +628,8 @@ class LiveRiskBook:
                 "day_pnl": self.day_pnl, "realized_pnl": self.realized_pnl, "stop_anchor": self.stop_anchor,
                 "halted": self.halted, "halt_reason": self.halt_reason, "integrity_error": self.integrity_error,
                 "resume_token_hash": self.resume_token_hash, "seen_resume_hashes": sorted(self.seen_resume_hashes),
+                # The previous release ignores this top-level key on a rollback, so a rollback withdraws the approval.
+                "integrity_reset_armed": self.integrity_reset_armed,
                 "bootstrap_order": self.bootstrap_order}
 
     @classmethod
@@ -599,6 +651,7 @@ class LiveRiskBook:
         book.seen_resume_hashes = set(state.get("seen_resume_hashes", []))
         if book.resume_token_hash is not None:
             book.seen_resume_hashes.add(book.resume_token_hash)
+        book.integrity_reset_armed = state.get("integrity_reset_armed")
         book.bootstrap_order = state["bootstrap_order"]
         # A restart cannot release uncertain orders or reuse an old balance.
         book._validate_state()
@@ -610,6 +663,9 @@ class LiveRiskBook:
         if any(not isinstance(value, str) or len(value) != 64 or any(char not in "0123456789abcdef" for char in value)
                for value in self.seen_resume_hashes):
             raise ValueError("Invalid persisted resume token hash")
+        if self.integrity_reset_armed is not None and (not isinstance(self.integrity_reset_armed, str)
+                                                       or not self.integrity_reset_armed.isidentifier()):
+            raise ValueError("Invalid persisted integrity reset approval")
         values = [self.realized_pnl, self.stop_anchor, *self.day_pnl.values()]
         values.extend(value for inventory in self.inventory.values() for holding in (inventory.up, inventory.down)
                       for value in (holding.shares, holding.cost, holding.fees))

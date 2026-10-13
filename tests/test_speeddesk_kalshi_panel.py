@@ -157,3 +157,21 @@ def test_new_paper_or_revoked_gate_overrides_old_saved_live_report_without_erasi
     assert live["mode"] == "paper" and live["label"] == "PRACTICE" and live["status"] == "PRACTICE"
     assert "Current settings disable" in live["reason"]
     assert live["has_real_exposure"] and live["at_risk_usd"] == 1.80 and live["open_orders"] == 1
+
+
+@pytest.mark.parametrize(("code", "reset", "shown"), [
+    ("settlement_net_payout_mismatch", "positions_open", ("settlement_net_payout_mismatch", "positions_open")),
+    ("fill_changed", "armed", ("fill_changed", "armed")),
+    ("fill_changed", "live_off", ("fill_changed", "live_off")),
+    ("fill_changed", "startup_pending", ("fill_changed", "startup_pending")),
+    (None, None, (None, None)),
+    ("<b>not a code</b>", "anything else", (None, None)),
+    (7, ["armed"], (None, None)),
+])
+def test_page_names_the_reconciliation_check_and_its_reset(make_settings, fake_clock, monkeypatch,
+                                                           code, reset, shown) -> None:
+    now = fake_clock.now()
+    raw = speed_report(now, {**companion(now), "integrity_error": code, "integrity_reset": reset})
+    monkeypatch.setattr(speeddesk, "panel_state", lambda *args: raw)
+    live = pagestate.speed_desk(live_settings(make_settings), now)["kalshi_live"]
+    assert (live["integrity_error"], live["integrity_reset"]) == shown
