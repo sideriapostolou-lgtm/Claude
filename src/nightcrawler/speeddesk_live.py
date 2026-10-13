@@ -198,6 +198,13 @@ class KalshiLiveDesk:
         self.latest_events: list[dict[str, Any]] = []
         self.pending: list[tuple[str, dict[str, Any]]] = []
         self.fatal_reason: str | None = None
+        # Which reconciliation check stopped real orders, logged once per stop (and once after each restart).
+        self.integrity_logged: str | None = None
+        # The owner's one-time reset of that stop: armed against one check's code, waiting for clean books.
+        self.reset_digest: str | None = None
+        self.reset_code: str | None = None
+        self.reset_blocker = ""
+        self.reset_reported: set[str] = set()
         limits = LiveLimits(window_usd=settings.speeddesk_kalshi_window_usd,
                             open_usd=settings.speeddesk_kalshi_open_usd,
                             day_loss_usd=settings.speeddesk_kalshi_day_stop_usd,
@@ -254,6 +261,13 @@ class KalshiLiveDesk:
             token = _secret(settings.speeddesk_kalshi_resume_token)
             if token:
                 self.book.apply_resume_token(token)
+            reset = _secret(settings.speeddesk_kalshi_integrity_reset_token)
+            if reset:
+                self.reset_digest = self.book.arm_integrity_reset(reset)
+                self.reset_code = self.book.integrity_error if self.reset_digest else None
+                if self.reset_digest:
+                    self._record("speeddesk_live_integrity_reset", code=self.reset_code,
+                                 state="armed; clears only after a clean Kalshi reconcile with nothing open")
             self.checkpoint()
         except BaseException:
             self.ledger.close()
@@ -301,6 +315,10 @@ class KalshiLiveDesk:
         return result
 
     def checkpoint(self) -> None:
+        if self.book.integrity_error and self.book.integrity_error != self.integrity_logged:
+            self.integrity_logged = self.book.integrity_error
+            self._record("speeddesk_live_integrity", code=self.book.integrity_error,
+                         state="real orders stopped until the books and Kalshi are reconciled")
         for key, intent in self.intents.items():
             if intent.terminal and self.book.intents[key].reservation_active:
                 # A contradictory venue fill reopens a frozen liability in the
@@ -477,8 +495,11 @@ class KalshiLiveDesk:
         # our fixed reason, never response bodies, headers, or key identifiers.
         # KalshiClientError's operation, reason and HTTP status are fixed strings
         # and an integer (safe by its contract) and name the call that failed.
-        detail = ({"operation": exc.operation, "detail": exc.reason, "status": exc.status, "code": exc.code}
-                  if isinstance(exc, KalshiClientError) else {})
+        detail: dict[str, Any] = ({"operation": exc.operation, "detail": exc.reason, "status": exc.status,
+                                   "code": exc.code} if isinstance(exc, KalshiClientError) else {})
+        if isinstance(exc, LiveRejected):
+            # The book's refusal codes are fixed identifiers: they name the check that refused.
+            detail = {"code": exc.reason if exc.reason.isidentifier() and len(exc.reason) <= 64 else "unknown"}
         self._record("speeddesk_live_reject", reason=self.reason, error=type(exc).__name__, **detail)
 
     async def _ensure_client(self) -> bool:
@@ -650,6 +671,8 @@ class KalshiLiveDesk:
                 intent.uncertain = False
                 if status in {"canceled", "executed"}:
                     intent.terminal = True
+        resting = any(str(raw.get("status", "")) == "resting" and str(raw.get("ticker", "")).startswith("KXBTC15M-")
+                      for raw in orders)
         positions = await self._read(self.client.positions)
         actual = {str(item["ticker"]): _number(item["position_fp"]) for item in positions}
         settlements = await self._read(self.client.settlements, min_ts=max(0, int(self.started_at) - 60))
@@ -708,11 +731,47 @@ class KalshiLiveDesk:
         self.book.update_cash(cash, now)
         self.cash_usd, self.cash_at = cash, now
         self.account_at = now if consistent and now - sync_started <= 3 else None
+        self._integrity_reset(actual, resting)
         self.authenticated = not self.auth_failed
         self.errors = 0
         self.retry_at = -math.inf
         self.last_sync = now
         self.checkpoint()
+
+    def _integrity_reset(self, positions: dict[str, float], resting: bool) -> None:
+        """The owner's one-time clear of a reconciliation stop (owner, 2026-10-13: "Yes, reset it"). Only right
+        after a complete, fresh reconcile that matched, with no order open or uncertain, every window the bot
+        traded settled, and no Bitcoin 15-minute position or resting order left on the Kalshi account."""
+        if self.reset_digest is None or self.reset_code is None:
+            return
+        if self.book.integrity_error != self.reset_code:
+            self._record("speeddesk_live_integrity_reset", code=self.book.integrity_error, previous=self.reset_code,
+                         state="disarmed; a different check tripped after the reset was set")
+            self.reset_digest = self.reset_code = None
+            return
+        if not self.startup_done:
+            return  # startup cancels and re-reads first; the next full reconcile decides
+        blocker = (("account_unreconciled" if self.account_at is None else "")
+                   or ("fatal" if self.fatal_reason else "")
+                   or ("orders_open" if resting or self._active()
+                       or any(intent.uncertain or intent.cancel_requested for intent in self.intents.values())
+                       else "")
+                   or ("positions_open" if any(ticker.startswith("KXBTC15M-") and abs(amount) > EPS
+                                               for ticker, amount in positions.items()) else "")
+                   or self.book.integrity_reset_blocker())
+        if blocker:
+            if blocker not in self.reset_reported:  # each reason once, however the account flickers
+                self.reset_reported.add(blocker)
+                self._record("speeddesk_live_integrity_reset", code=self.reset_code, reason=blocker,
+                             state="waiting for clean books")
+            self.reset_blocker = blocker
+            return
+        code = self.book.reset_integrity(self.reset_digest, self.reset_code)
+        self.reset_digest = self.reset_code = None
+        self.reset_blocker = ""
+        self.integrity_logged = None
+        self._record("speeddesk_live_integrity_reset", code=code, cash_usd=self.cash_usd,
+                     state="cleared; the books and Kalshi matched with nothing open")
 
     async def _startup(self) -> None:
         await self._reconcile()
@@ -1135,6 +1194,8 @@ class KalshiLiveDesk:
                 "positions": sum(abs(value) > EPS for key, value in self.position_sizes.items()
                                  if key in {intent.window for intent in self.intents.values()}),
                 "total_halted": risk.get("halted", False), "real_orders_available": live,
+                "integrity_error": self.book.integrity_error,
+                "integrity_reset": (self.reset_blocker or "armed") if self.reset_digest else None,
                 "cleanup_pending": bool(active) and bool(self._gates()),
                 "caps": {"window_usd": self.settings.speeddesk_kalshi_window_usd,
                          "open_usd": self.settings.speeddesk_kalshi_open_usd,

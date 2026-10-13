@@ -530,3 +530,55 @@ def test_saved_state_without_a_lock_stays_readable_by_the_previous_release():
     book.reserve_intent(WINDOW, "down", "take", .8, 1, 1700, "nc-speed-lock", lock=True)
     restored = LiveRiskBook.from_state(json.loads(json.dumps(book.to_state())))
     assert restored.intents["nc-speed-lock"].lock and not restored.intents["nc-speed-first"].lock
+
+
+# The owner's one-time reset of a reconciliation stop (owner, 2026-10-13: "Yes, reset it").
+
+def test_integrity_reset_arms_only_against_a_present_stop_and_works_once():
+    book = make_book()
+    assert book.arm_integrity_reset("set-before-any-stop") is None  # spent at once: never pre-arms
+    book.integrity_error = "settlement_net_payout_mismatch"
+    assert book.arm_integrity_reset("set-before-any-stop") is None
+    digest = book.arm_integrity_reset("owner-reset")
+    assert digest is not None and book.integrity_reset_blocker() == ""
+    with pytest.raises(LiveRejected):
+        book.reset_integrity(digest, "fill_changed")  # armed against another check
+    assert book.reset_integrity(digest, "settlement_net_payout_mismatch") == "settlement_net_payout_mismatch"
+    assert book.integrity_error is None and book.can_buy(WINDOW, "up", "take", .4, 1, 1010) == ""
+    encoded = json.dumps(book.to_state())
+    assert "owner-reset" not in encoded and "set-before-any-stop" not in encoded
+    restored = LiveRiskBook.from_state(json.loads(encoded))
+    restored.integrity_error = "fill_changed"
+    assert restored.arm_integrity_reset("owner-reset") is None  # a used value never clears a later stop
+    assert restored.arm_integrity_reset("set-before-any-stop") is None
+    with pytest.raises(LiveRejected):
+        restored.reset_integrity(digest, "fill_changed")
+    assert restored.integrity_error == "fill_changed"
+
+
+def test_integrity_reset_waits_until_nothing_is_reserved_or_open():
+    book = make_book()
+    order = reserve(book, size=2)
+    book.integrity_error = "order_terminal_regressed"
+    digest = book.arm_integrity_reset("owner-reset")
+    assert digest is not None
+    assert book.integrity_reset_blocker() == "orders_reserved"
+    actual_fill(book, order, fee=.01)
+    assert book.integrity_reset_blocker() == "positions_open"
+    with pytest.raises(LiveRejected):
+        book.reset_integrity(digest, "order_terminal_regressed")
+    assert book.integrity_error == "order_terminal_regressed"
+    book.settle(WINDOW, True, 1900, "settlement-a", net_payout_usd=2)
+    assert book.integrity_reset_blocker() == ""
+    assert book.reset_integrity(digest, "order_terminal_regressed") == "order_terminal_regressed"
+    assert book.integrity_reset_blocker() == "no_integrity_error"
+
+
+def test_corrupt_persisted_reset_hash_fails_closed():
+    book = make_book()
+    state = json.loads(json.dumps(book.to_state()))
+    state["seen_reset_hashes"] = ["unhashed-secret"]
+    with pytest.raises(ValueError, match="hash"):
+        LiveRiskBook.from_state(state)
+    state.pop("seen_reset_hashes")  # a state from before the reset existed still loads
+    assert LiveRiskBook.from_state(state).seen_reset_hashes == set()
