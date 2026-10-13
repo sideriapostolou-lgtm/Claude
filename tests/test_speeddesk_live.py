@@ -1231,10 +1231,28 @@ def test_the_owners_ten_dollar_windows_are_enforced_and_reported(tmp_path: Path)
     try:
         assert (desk.book.limits.window_usd, desk.book.limits.open_usd) == (10.0, 20.0)
         asyncio.run(desk.step())
-        assert [creation["size"] for creation in account.creates] == [10.0]  # was cut to 5 by a stale inner ceiling
+        # The $10 window budget holds, but the first buy is 5 contracts: the owner's "never again" after two
+        # 10-contract first buys were run over on 2026-10-13 (SPEEDDESK_KALSHI_CLIP).
+        assert [creation["size"] for creation in account.creates] == [5.0]
+        assert desk.book.limits.clip == 5.0
         assert desk.panel()["caps"] == {"window_usd": 10.0, "open_usd": 20.0, "day_stop_usd": 6.0, "total_stop_usd": 10.0}
     finally:
         desk.close()
+
+
+def test_the_first_buy_follows_the_kalshi_contract_cap_inside_the_window_budget(tmp_path: Path) -> None:
+    caps = {"speeddesk_kalshi_window_usd": 10.0, "speeddesk_kalshi_open_usd": 20.0}
+    for clip, expected in ((10.0, 10.0), (3.0, 3.0), (25.0, 10.0)):
+        root = tmp_path / str(clip)
+        root.mkdir()
+        desk, account, _ = make_desk(root, caps={**caps, "speeddesk_kalshi_clip": clip})
+        try:
+            asyncio.run(desk.step())
+            # A larger cap never lets one starter outgrow whole pairs at the pair cap ($10 / $0.99 -> 10).
+            assert [creation["size"] for creation in account.creates] == [expected]
+            assert desk.twin.config.clip == clip
+        finally:
+            desk.close()
 
 
 def test_the_inner_ceiling_still_holds_above_the_owners_limits() -> None:

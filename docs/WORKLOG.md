@@ -15,6 +15,18 @@ Template:
 
 
 
+## 2026-10-13 17:15 UTC, Claude, branch claude/kalshi-starter-cap
+- Changed: the Kalshi companion's orders are capped at `SPEEDDESK_KALSHI_CLIP` contracts (default 5, was the practice
+  clip of 25), so the first buy in a window is 5 contracts instead of 10 at the $10 window budget. Balancing and lock
+  orders follow the same cap (a larger missing side is locked over several steps). The practice twin mirrors it.
+- Why: the 16:00 and 16:15 UTC windows lost -$1.86 and -$2.98 the same way: the first buy filled within seconds of the
+  open, Bitcoin ran the other way, the balancing bid was above the 0.99 pair cap, and the end lock completed the pair
+  at $1.37 and $1.29. The profit review (90 replayed windows plus every real fill) found no detectable edge in the rule
+  and recommended this cap first: every real result so far used 5-contract first buys, and it halves the worst loss.
+- Verified: live desk, risk book, Kalshi config and integration tests; full suite before merge (see PR).
+- Real money touched? yes: smaller first buys on the live Kalshi companion; caps and stops unchanged ($10/$20/$6/$10).
+- Next step: test 5-contract "rounds" (a fresh starter after a pair completes) on the practice twin; speed work.
+
 ## 2026-10-13 16:54 UTC, Codex, Kalshi town interaction follow-up
 - Found during the deployed phone check: the once-per-second Money redraw could detach a disclosure while
   someone tapped it. Legacy 3D risk/ledger signs also still described Polymarket/shared records in the Kalshi town.

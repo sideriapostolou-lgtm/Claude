@@ -197,6 +197,7 @@ $10/$20 (owner, 2026-10-13 15:15 UTC, "ten now double tmr if it works"), both st
 allow one step to $20/$40 and a $12 day stop "when it's winning" (owner, 16:00 UTC; rule in docs/ACCOUNTS.md). The stops count
 money still at risk, so they also bound each window: an unpaired position can never put more at risk than is
 left under the day and total stops (a complete up+down pair risks nothing).
+| `SPEEDDESK_KALSHI_CLIP` | 5 contracts | Most contracts per real order, so the first buy in a window is at most 5 (owner, 2026-10-13, after two 10-contract first buys were run over); balancing and lock orders follow it |
 | `SPEEDDESK_KALSHI_CUTOFF_S` | 180 seconds | End real buying after the first 12 minutes; configured cutoff may never be below 60 seconds |
 
 Fees and resting orders count at their worst permitted cost. Kalshi cash is another limit, never permission

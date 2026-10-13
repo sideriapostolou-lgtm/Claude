@@ -21,6 +21,7 @@ def test_kalshi_companion_ships_paper_with_exact_owner_ceiling_defaults() -> Non
     assert (settings.speeddesk_kalshi_window_usd, settings.speeddesk_kalshi_open_usd,
             settings.speeddesk_kalshi_day_stop_usd, settings.speeddesk_kalshi_total_stop_usd) == (10, 20, 6, 10)
     assert settings.speeddesk_kalshi_cutoff_s == 180
+    assert settings.speeddesk_kalshi_clip == 5 and settings.speeddesk_clip == 25
     assert settings.speeddesk_kalshi_lock_s == 240 and settings.speeddesk_kalshi_lock_max_price == .97
     assert settings.speeddesk_mode == "paper"
     assert (settings.speeddesk_window_usd, settings.speeddesk_open_usd, settings.speeddesk_day_stop_usd) == (20, 20, 10)
@@ -41,6 +42,13 @@ def test_kalshi_limits_cannot_exceed_authorized_ceiling_or_bypass_numeric_guards
             Settings(**{name: value})
     with pytest.raises(ConfigError, match=name.upper()):
         Settings.from_env({name.upper(): str(maximum + 1)})
+
+
+@pytest.mark.parametrize("value", [0, -1, 25.000001, float("nan"), float("inf"), True, "5"])
+def test_kalshi_contract_cap_cannot_be_disabled_or_exceed_the_order_clip(value) -> None:
+    assert Settings.from_env({"SPEEDDESK_KALSHI_CLIP": "10"}).speeddesk_kalshi_clip == 10
+    with pytest.raises(ConfigError, match="SPEEDDESK_KALSHI_CLIP"):
+        Settings(speeddesk_kalshi_clip=value)
 
 
 @pytest.mark.parametrize("cutoff", [0, 59.9, 900, float("nan"), float("inf"), False, "180"])

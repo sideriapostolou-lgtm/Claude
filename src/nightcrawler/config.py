@@ -493,6 +493,12 @@ class Settings:
                                               hi=12)
     speeddesk_kalshi_total_stop_usd: float = _f(10.0, "usd", "Kalshi live companion: persistent total-loss stop; "
                                                 "owner-authorized ceiling $10", lo=0, lo_open=True, hi=10)
+    # Owner, 2026-10-13 16:20 UTC, after two windows were run over at the new 10-contract size: "make sure it never
+    # happens again". The first buy in a window is the bet that can be run over, so it is held to 5 contracts
+    # (the size of every morning win); the $10 window budget is unchanged.
+    speeddesk_kalshi_clip: float = _f(5.0, "count", "Kalshi live companion: maximum contracts per real order, so "
+                                      "also the size of the first buy in a window; balancing and lock orders "
+                                      "follow it", lo=0, lo_open=True, hi=25)
     speeddesk_kalshi_lock_s: float = _f(240.0, "seconds", "Kalshi live companion: from this long before the close, "
                                         "new buys stop and a half-filled pair is completed (locked) instead of "
                                         "riding to settlement; never shorter than the buying cutoff",
@@ -627,7 +633,7 @@ class Settings:
                 if value is not None and not isinstance(value, Secret):
                     problems.append(f"{env} must be a secret string")
                 continue
-            if (f.name.startswith("speeddesk_kalshi_") and meta.get("unit") in ("usd", "seconds")
+            if (f.name.startswith("speeddesk_kalshi_") and meta.get("unit") in ("usd", "seconds", "count")
                     and (isinstance(value, bool) or not isinstance(value, (int, float)))):
                 problems.append(f"{env} must be a finite number")
                 continue
