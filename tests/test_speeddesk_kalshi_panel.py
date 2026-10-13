@@ -7,7 +7,7 @@ import json
 
 import pytest
 
-from nightcrawler import pagestate, speeddesk
+from nightcrawler import moneyconnections, pagestate, speeddesk
 from nightcrawler.clock import utc_day
 from nightcrawler.ledger import Ledger
 from nightcrawler.page import render_page_html
@@ -141,6 +141,32 @@ def test_page_retains_separate_practice_and_real_cards(make_settings) -> None:
     assert '<section class="card" id="kalshilive" hidden><h2>Kalshi live desk' in html
     assert "Actual real-money results today (UTC)" in html and "Practice twin today · PRACTICE" in html
     assert "Cash is not profit" in html and "existing bets still settle" in html
+
+
+def test_page_accepts_checkpoint_written_during_assembly_without_redating_it(
+        make_settings, fake_clock, monkeypatch) -> None:
+    now = fake_clock.now()
+    settings = make_settings(POLYDESK_ENABLED=False, TRENDDESK_ENABLED=False)
+    elapsed = [0.0]
+    monkeypatch.setattr(pagestate.time, "monotonic", lambda: 100.0 + elapsed[0])
+
+    def read_checkpoint(path):
+        # A worker updates its snapshot after this request began, before we read it.
+        elapsed[0] = .5
+        if path.parent.name != "polydesk":
+            return None, None
+        return {"version": 1, "owner_migrated": True, "last_ok": now + .4,
+                "last_poll": now + .4, "closed": [], "live_days": {}, "positions": {},
+                "pending_orders": {}, "balance": {"cash": 14.39, "at": now + .4},
+                "exchange": {"at": now + .4, "positions": 0}}, None
+
+    monkeypatch.setattr(moneyconnections, "_read_saved", read_checkpoint)
+    with Ledger(settings.db_path) as ledger:
+        page = pagestate.build_page_state(ledger, settings, now)
+    view = page["money"]["connections"]["polymarket_us"]
+    assert view["as_of"] == now + .4 and view["cash_at"] == now + .4
+    assert view["today_pacific"]["status"] == "ok" and not view["stale"]
+    assert page["generated_at"] == now
 
 
 @pytest.mark.parametrize("change", [

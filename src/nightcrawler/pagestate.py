@@ -403,6 +403,7 @@ import json
 import math
 import re
 import sqlite3
+import time
 from collections import Counter
 from collections.abc import Callable, Mapping
 from pathlib import Path
@@ -3083,6 +3084,7 @@ def build_page_state(ledger: Any, settings: Settings, now: float, engine_status:
                      deploy: dict[str, str | None] | None = None) -> dict[str, Any]:
     """Assemble ``/api/page`` (schema in the module docstring). Same arguments as
     :func:`nightcrawler.teamroom.build_team_state`; ``memory`` also caches the learning card."""
+    started = time.monotonic()
     text = _Text(settings)
     state = build_state(ledger, settings, now, verify_cache)
     team = build_team_state(ledger, settings, now, engine_status, verify_cache=verify_cache, memory=memory,
@@ -3106,7 +3108,10 @@ def build_page_state(ledger: Any, settings: Settings, now: float, engine_status:
     money["nhl"] = marco_desk(settings, now, marcodesk.NHL)  # the NHL bettor's loves (paper only), the same way
     money["arena"] = arena_town(settings, now)  # the Arena's practice town (never summed with anything)
     money["speeddesk"] = speed_desk(settings, now)  # separate practice trial, never real profit or town income
-    money["connections"] = load_connections(settings.data_dir, now, text)  # saved real books; no venue requests
+    # A desk can checkpoint during page assembly. Validate against the completed
+    # read's time, while keeping the source's timestamp and the caller's clock.
+    money["connections"] = load_connections(
+        settings.data_dir, now, text, read_clock=lambda: now + max(0.0, time.monotonic() - started))
     for m in members:  # Rook's risk wall: the desk's real money against its hard limits beside the panel's numbers
         if m["id"] == "risk" and isinstance(m.get("risk_wall"), dict):
             m["risk_wall"]["real_caps"] = real_caps(settings, desk)

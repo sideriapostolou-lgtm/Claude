@@ -510,12 +510,98 @@ def test_loader_reads_only_saved_sources_and_never_rewrites_them(tmp_path: Path)
     assert {path: path.read_bytes() for path in original} == original
 
 
+def test_loader_observes_each_checkpoint_after_reading_during_a_page_request(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    observed = NOW
+    read_saved = C._read_saved
+    reads: list[Path] = []
+    clock_reads: list[float] = []
+
+    def checkpoint_then_read(path: Path) -> tuple[Any, str | None]:
+        nonlocal observed
+        # Another thread completes a checkpoint after the page request starts.
+        observed += 1
+        if "polydesk" in path.parts:
+            state = pm_state(now=observed)
+        else:
+            book = partial_book(now=observed)
+            intent = next(iter(book.intents.values()))
+            assert book.reconcile_order(OrderSnapshot(intent.client_order_id, "test-order", "canceled",
+                                                      .5, 0, observed), fills_complete=True)
+            state = kalshi_state(book, now=observed)
+        persist(tmp_path, str(path.relative_to(tmp_path)), state)
+        reads.append(path)
+        return read_saved(path)
+
+    def read_clock() -> float:
+        assert len(reads) == len(clock_reads) + 1
+        clock_reads.append(observed)
+        return observed
+
+    monkeypatch.setattr(C, "_read_saved", checkpoint_then_read)
+    got = C.load_connections(tmp_path, NOW, text, read_clock=read_clock)
+    assert clock_reads == [NOW + 1, NOW + 2]
+    for venue, stamp in (("polymarket_us", NOW + 1), ("kalshi", NOW + 2)):
+        assert got[venue]["status"] == "ok" and not got[venue]["stale"]
+        assert got[venue]["as_of"] == got[venue]["cash_at"] == stamp
+    assert got["kalshi"]["positions"][0]["quantity"] == .5
+
+
+def test_loader_still_rejects_source_and_order_times_beyond_the_observation(tmp_path: Path) -> None:
+    future = NOW + 2.001
+    persist(tmp_path, "polydesk/state.json", pm_state(now=future))
+    book = partial_book(now=future)
+    intent = next(iter(book.intents.values()))
+    assert book.reconcile_order(OrderSnapshot(intent.client_order_id, "test-order", "canceled", .5, 0, future),
+                                fills_complete=True)
+    persist(tmp_path, "speeddesk/kalshi_live/state.json", kalshi_state(book, now=future))
+    got = C.load_connections(tmp_path, NOW, text, read_clock=lambda: NOW + 2)
+    for venue in ("polymarket_us", "kalshi"):
+        assert got[venue]["as_of"] is None and got[venue]["stale"]
+        assert not any(event["qualified"] for event in got[venue]["events"])
+    assert got["kalshi"]["status"] == "incomplete" and got["kalshi"]["positions"] == []
+
+
+def test_loader_observation_time_ages_old_checkpoints_without_freshening_them(tmp_path: Path) -> None:
+    pm_at, kalshi_at = NOW - 590, NOW - 40
+    persist(tmp_path, "polydesk/state.json", pm_state(now=pm_at))
+    persist(tmp_path, "speeddesk/kalshi_live/state.json", kalshi_state(partial_book(now=kalshi_at), now=kalshi_at))
+    initial = C.load_connections(tmp_path, NOW, text)
+    observed = C.load_connections(tmp_path, NOW, text, read_clock=lambda: NOW + 30)
+    for venue, stamp in (("polymarket_us", pm_at), ("kalshi", kalshi_at)):
+        assert initial[venue]["stale"] is False and observed[venue]["stale"] is True
+        assert observed[venue]["as_of"] == observed[venue]["cash_at"] == stamp
+        assert not any(event["qualified"] for event in observed[venue]["events"])
+
+
+@pytest.mark.parametrize("stamp", [NOW - 1, math.nan, math.inf, -math.inf, False, None, "invalid"])
+def test_invalid_read_clock_falls_back_to_request_time_without_relabeling_sources(tmp_path: Path, stamp: Any) -> None:
+    persist(tmp_path, "polydesk/state.json", pm_state())
+    persist(tmp_path, "speeddesk/kalshi_live/state.json", kalshi_state(partial_book()))
+    assert C.load_connections(tmp_path, NOW, text, read_clock=lambda: stamp) == C.load_connections(tmp_path, NOW, text)
+
+
+def test_default_loader_does_not_advance_the_callers_clock_for_newer_checkpoints(tmp_path: Path) -> None:
+    persist(tmp_path, "polydesk/state.json", pm_state(now=NOW + 1))
+    got = C.load_connections(tmp_path, NOW, text)
+    assert got["polymarket_us"]["as_of"] is None and got["polymarket_us"]["stale"]
+
+
 def test_missing_sources_are_unknown_instead_of_empty_real_accounts(tmp_path: Path) -> None:
     got = C.load_connections(tmp_path, NOW, text)
     for venue in ("kalshi", "polymarket_us"):
         assert got[venue]["status"] == "unavailable"
         assert got[venue]["events"] == got[venue]["positions"] == []
         assert got[venue]["today_pacific"]["pnl_usd"] is None
+
+
+def test_later_read_clock_cannot_establish_an_empty_account_from_missing_sources(tmp_path: Path) -> None:
+    got = C.load_connections(tmp_path, NOW, text, read_clock=lambda: NOW + 2)
+    for venue in ("kalshi", "polymarket_us"):
+        assert got[venue]["status"] == "unavailable" and got[venue]["as_of"] is None
+        assert got[venue]["positions"] == got[venue]["events"] == []
+        assert got[venue]["cash_usd"] is None and got[venue]["today_pacific"]["pnl_usd"] is None
 
 
 def test_prior_pacific_day_snapshot_does_not_establish_a_new_day_zero() -> None:

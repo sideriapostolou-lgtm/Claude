@@ -444,13 +444,21 @@ def _read_saved(path: Path) -> tuple[Any, str | None]:
         return None, "Saved source could not be read; values are unavailable."
 
 
-def load_connections(data_dir: Path, now: float, text: Text) -> dict[str, Any]:
-    """Read local snapshots only. Never query a venue or write/migrate a file."""
+def load_connections(data_dir: Path, now: float, text: Text,
+                     *, read_clock: Callable[[], float] | None = None) -> dict[str, Any]:
+    """Read saved snapshots, optionally checking each against its observation time.
+
+    A checkpoint may be written while the page is assembled. Its timestamp must
+    precede the completed read, not necessarily the start of the page request.
+    The caller supplies elapsed request time; source timestamps remain unchanged.
+    """
     result: dict[str, Any] = {"version": 1}
     for venue, relative, builder in (("polymarket_us", "polydesk/state.json", polymarket_connection),
                                       ("kalshi", "speeddesk/kalshi_live/state.json", kalshi_connection)):
         raw, problem = _read_saved(data_dir / relative)
-        view = builder(raw, now, text)
+        observed_at = _number(read_clock()) if read_clock is not None else now
+        projection_now = observed_at if observed_at is not None and observed_at >= now else now
+        view = builder(raw, projection_now, text)
         if problem:
             view["issues"].append(text(problem))
         result[venue] = view

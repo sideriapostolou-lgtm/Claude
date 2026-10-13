@@ -13,6 +13,29 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-13 05:30 UTC, Codex, branch codex/town-truth-fixes, live verification and follow-up
+- PR #22 deployed successfully as exact merge `d78981ee96ff3dcd57fade18d656ecbbf9e9f54c`, Railway deployment
+  `597ebf82-c3da-479a-8271-2524b1257bdc`. Polymarket started LIVE with 10 contracts at 05:16:58 UTC;
+  the Kalshi companion reported authenticated REAL MONEY at 05:17, with existing $5/$10/$6/$10 caps.
+  Initial current-deployment log queries returned no tracebacks/errors/warnings; health returned 200 `ok`.
+  Authenticated `/api/page` exposed the new diagnostics and status fields. No variable or trading code changed.
+- Live verification reproduced an intermittent display race: a checkpoint saved during page assembly could
+  be newer than the request-start clock and falsely fail strict timestamp validation. The connection reader
+  now samples the caller's elapsed monotonic time after each saved-file read. Original source timestamps remain
+  unchanged; truly future timestamps, stale sources and missing records remain rejected or explicitly unknown.
+  Integration and loader regressions cover interleaved writes, future/stale/missing sources and invalid clocks.
+- Investigated Polymarket's missing history with a strictly whitelisted, read-only receipt export. The October 12
+  UTC book contains 23 results / +$3.352786376; retained detailed rows contain 15 / +$1.796224428. Eight missing
+  settlement receipts total +$1.556561948 and were appended before midnight Pacific. This supports a likely
+  retained Pacific result around +$1.80, but is not sufficient proof of complete daily accounting: receipts omit
+  original poll-start booking times, owner migrations have no lineage receipt, and some historical results lack
+  bot order provenance. Independent review rejected recovery based solely on matching totals. No recovery code,
+  invented timestamps, source-book edits or unverified profit were added. The app continues to disclose the gap.
+- Real money touched? No order logic, risk limits, mode switches, credentials or saved financial books changed.
+  The authorized follow-up source push restarts the same live desks. Before integrating the newer deploy head,
+  validation passed: **4,603 tests, 21 skipped**, mypy **117 files**, changed-file Ruff and whitespace checks.
+  Validation of the combined head and exact deployment evidence follow below.
+
 ## 2026-10-13 05:15 UTC, Codex, branch codex/town-truth-fixes
 - Owner request: make the connected town app accurate and clear, retaining the phone-first tycoon view and
   simplified navigation. Started from deploy head `1f9805b`; existing trading and money-limit changes were read

@@ -127,6 +127,35 @@ replacing an already recorded settlement incorrectly. Cash-outs and later
 corrections can retain the original result timestamp. A Pacific-day book that
 reconciles proves coverage of **recorded results**, not all venue activity.
 
+### Polymarket history check, 2026-10-13 05:20 UTC
+
+The saved list retained 200 results across practice, owner and bot activity.
+For October 12 UTC, its 15 retained bot results summed to **+$1.796224428**;
+the durable day book held 23 results totaling **+$3.352786376**. All 23
+settlement receipts matched that day-book count and sum. The eight absent rows
+had receipts between 00:30 and 06:31 UTC, totaling **+$1.556561948**, with
+matching prior bot-fill receipts and no matching owner or sale-correction
+receipts. All eight receipts preceded midnight Pacific at 07:00 UTC.
+
+This explains the retention gap, but **+$1.796224428 is a diagnostic retained
+sum, not a verified Pacific-day total**. Receipts record append time; results
+use poll-start booking time. The first missing result has no retained booking
+anchor proving its original UTC day. A buy and settlement can share a poll,
+so a fill receipt is not automatically a lower bound on booking time.
+
+The complete history also lacks original ownership evidence for some old
+results. The day books hold 129 results, while 131 settlement receipts remain.
+Applying two traceable sale corrections and excluding two apparent historical
+owner results makes the totals agree, but owner migration emitted no receipt
+identifying its removals, and the missing rows' original rule and entry time
+are unavailable. Matching arithmetic alone does not verify those exclusions.
+
+No recovery code, reconstructed booking timestamps or trading-book changes
+were made. Pacific profit stays unknown and garden growth stays blocked until
+the source coverage is verified. Future display work must not promote these
+partial sums, inferred owner exclusions or receipt timestamps into verified
+profit, new settlement events or earned town growth.
+
 Those execution issues need a separate authorized fix with accounting tests.
 This UI work changes no order rules, caps, live switches or protected financial
 execution files. To stop new real orders, set both `POLYDESK_MODE=paper` and
