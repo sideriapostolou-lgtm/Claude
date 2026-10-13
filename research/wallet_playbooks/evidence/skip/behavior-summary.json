@@ -1,0 +1,304 @@
+{
+  "description": "Descriptive public indexed fill snapshot, not P&L/causal trigger proof. Roles from exact economic multiset difference between all and taker-only cohorts. No individual role resolution for indistinguishable same-economic fills.",
+  "protocol": {
+    "end": 1791917699,
+    "interpretation": "timestamps are block inclusion, not execution; maker roles cohort complement; fills are not orders",
+    "recorded_at": 1791917810.8005161,
+    "scope": "last 72 fully elapsed 5-minute block-time intervals; descriptive only, no causal trigger fitting",
+    "start": 1791896100
+  },
+  "rows_all": 5248,
+  "rows_taker": 3724,
+  "identity_duplicates_preserved": 0,
+  "boundary_margin_windows_each_side": 1,
+  "retained_fills": 5136,
+  "observed_traded_windows": 65,
+  "scheduled_windows": 70,
+  "no_fill_scheduled_windows": 5,
+  "first_open": 1791896400,
+  "last_open": 1791917100,
+  "side_counts": {
+    "BUY": 5136
+  },
+  "outcome_counts": {
+    "Down": 2511,
+    "Up": 2625
+  },
+  "role_counts": {
+    "taker": 3643,
+    "maker": 1493
+  },
+  "role_quantities": {
+    "maker": 17407.524664,
+    "taker": 106299.57
+  },
+  "cash_spent_before_fees": 60194.921542016724,
+  "both_sides_windows": 65,
+  "fills_per_window": {
+    "n": 65,
+    "min": 12,
+    "p10": 23.8,
+    "median": 75.0,
+    "p90": 139.6,
+    "max": 166,
+    "mean": 79.01538461538462
+  },
+  "spend_per_window": {
+    "n": 65,
+    "min": 109.73175,
+    "p10": 295.0416336007692,
+    "median": 822.893458999034,
+    "p90": 1778.4964842005493,
+    "max": 2488.1646080012288,
+    "mean": 926.0757160310266
+  },
+  "fill_size": {
+    "n": 5136,
+    "min": 0.01,
+    "p10": 3.5857145,
+    "median": 20.455,
+    "p90": 60.0,
+    "max": 100.0,
+    "mean": 24.08627232554517
+  },
+  "common_fill_sizes": [
+    [
+      30.0,
+      1213
+    ],
+    [
+      60.0,
+      547
+    ],
+    [
+      5.0,
+      484
+    ],
+    [
+      10.0,
+      231
+    ],
+    [
+      15.0,
+      154
+    ],
+    [
+      20.0,
+      129
+    ],
+    [
+      50.0,
+      103
+    ],
+    [
+      25.0,
+      88
+    ],
+    [
+      100.0,
+      57
+    ],
+    [
+      0.2,
+      36
+    ],
+    [
+      40.0,
+      28
+    ],
+    [
+      35.0,
+      27
+    ],
+    [
+      11.0,
+      22
+    ],
+    [
+      6.0,
+      20
+    ],
+    [
+      45.0,
+      19
+    ]
+  ],
+  "fill_price": {
+    "n": 5136,
+    "min": 0.12,
+    "p10": 0.23,
+    "median": 0.4848633333,
+    "p90": 0.74,
+    "max": 0.9,
+    "mean": 0.48492028716450547
+  },
+  "price_30_70_fraction": 0.6839953271028038,
+  "price_90plus_fraction": 0.0003894080996884735,
+  "elapsed_blocktime": {
+    "n": 5136,
+    "min": 3,
+    "p10": 20.0,
+    "median": 110.0,
+    "p90": 215.0,
+    "max": 286,
+    "mean": 114.7297507788162
+  },
+  "elapsed_bins": {
+    "240": 111,
+    "180": 1088,
+    "120": 1185,
+    "60": 1274,
+    "0": 1478
+  },
+  "first_elapsed_blocktime": {
+    "n": 65,
+    "min": 3,
+    "p10": 4.0,
+    "median": 6.0,
+    "p90": 10.600000000000001,
+    "max": 223,
+    "mean": 15.984615384615385
+  },
+  "last_elapsed_blocktime": {
+    "n": 65,
+    "min": 35,
+    "p10": 75.4,
+    "median": 199.0,
+    "p90": 253.4,
+    "max": 286,
+    "mean": 183.2923076923077
+  },
+  "pair_cost": {
+    "n": 65,
+    "min": 0.8148888849495822,
+    "p10": 0.9423416086948251,
+    "median": 0.978824229890696,
+    "p90": 1.02879491384486,
+    "max": 1.0695317435317713,
+    "mean": 0.9796870812120906
+  },
+  "pair_under1_windows": 45,
+  "matched_share_quantity_fraction": 0.9015962633423439,
+  "gross_matched_component": 1132.2194417455503,
+  "unmatched_shares": 12173.240366,
+  "imbalance": {
+    "n": 65,
+    "min": 0.00027494123649787804,
+    "p10": 0.015463311071653761,
+    "median": 0.10348753968430989,
+    "p90": 0.25069432588529267,
+    "max": 0.8765406833424806,
+    "mean": 0.13057280384668607
+  },
+  "timestamp_group_sizes": {
+    "n": 3300,
+    "min": 1,
+    "p10": 1.0,
+    "median": 1.0,
+    "p90": 3.0,
+    "max": 7,
+    "mean": 1.5563636363636364
+  },
+  "tied_timestamp_fill_fraction": 0.5915109034267912,
+  "singleton_buys": 2050,
+  "singleton_buy_reduces_abs_inventory_fraction": 0.4853658536585366,
+  "singleton_buy_underweight_side_fraction": 0.5117073170731707,
+  "timestamp_groups_after_initial": 3226,
+  "timestamp_groups_reduce_abs_inventory_fraction": 0.46652200867947924,
+  "timestamp_groups_same_abs_inventory_fraction": 0.020148791072535647,
+  "buy_against_prior_opp_vwap_count": 4962,
+  "buy_against_prior_opp_vwap_under1_fraction": 0.541515517936316,
+  "buy_against_prior_opp_vwap_pair_cost": {
+    "n": 4962,
+    "min": 0.4384364106694778,
+    "p10": 0.7926968225411541,
+    "median": 0.9868900732792001,
+    "p90": 1.1635657244995223,
+    "max": 1.5198031689881115,
+    "mean": 0.9827498170131278
+  },
+  "maker": {
+    "size": {
+      "n": 1493,
+      "min": 0.01,
+      "p10": 1.5102716,
+      "median": 6.19,
+      "p90": 30.0,
+      "max": 100.0,
+      "mean": 11.659427102478231
+    },
+    "price": {
+      "n": 1493,
+      "min": 0.12,
+      "p10": 0.2,
+      "median": 0.49,
+      "p90": 0.77,
+      "max": 0.89,
+      "mean": 0.4828399452042867
+    },
+    "elapsed": {
+      "n": 1493,
+      "min": 3,
+      "p10": 21.0,
+      "median": 106.0,
+      "p90": 212.0,
+      "max": 274,
+      "mean": 112.38914936369726
+    }
+  },
+  "taker": {
+    "size": {
+      "n": 3643,
+      "min": 0.04,
+      "p10": 5.0,
+      "median": 30.0,
+      "p90": 60.0,
+      "max": 100.0,
+      "mean": 29.17912983804557
+    },
+    "price": {
+      "n": 3643,
+      "min": 0.12,
+      "p10": 0.24399654708000004,
+      "median": 0.48,
+      "p90": 0.73,
+      "max": 0.9,
+      "mean": 0.4857728676055174
+    },
+    "elapsed": {
+      "n": 3643,
+      "min": 4,
+      "p10": 19.0,
+      "median": 112.0,
+      "p90": 216.0,
+      "max": 286,
+      "mean": 115.68899258852593
+    }
+  },
+  "prior_opp_underweight": {
+    "n": 2540,
+    "pair_under1_fraction": 0.5893700787401575,
+    "pair_cost": {
+      "n": 2540,
+      "min": 0.46938584891451585,
+      "p10": 0.7844562852203781,
+      "median": 0.9705690785196777,
+      "p90": 1.144910589208707,
+      "max": 1.4604532323633266,
+      "mean": 0.9697909746553229
+    }
+  },
+  "prior_opp_overweight_or_equal": {
+    "n": 2422,
+    "pair_under1_fraction": 0.4913294797687861,
+    "pair_cost": {
+      "n": 2422,
+      "min": 0.4384364106694778,
+      "p10": 0.8008044422233058,
+      "median": 1.0012916552054278,
+      "p90": 1.1833277658226422,
+      "max": 1.5198031689881115,
+      "mean": 0.9963400150266802
+    }
+  }
+}

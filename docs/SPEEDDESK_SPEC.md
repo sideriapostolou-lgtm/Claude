@@ -291,7 +291,11 @@ Already filled exposure remains real until it settles, and the page must say so 
 - KXBTC15M rules use the 60-second average of CF Benchmarks BRTI at each boundary; YES wins ties. Read and
   validate current rules/fees for every eligible window. Unknown terms disable that window.
 - Cancel only bot-owned resting orders at startup, cutoff, stale Bitcoin (>3 s), shutdown, repeated errors
-  and mode changes. A cancel request alone does not release exposure: reconcile terminal status and all
+  and mode changes, and a resting bid priced from an old fair value: fresh fair more than 1c from the fair it
+  was priced at, or the bid above fresh fair minus 2c. The last runs on every step and between account reads,
+  whether or not account data are fresh (loss plan bug 2: at 9:08:39 AM PT on 2026-10-13 a bid stayed up for
+  20.7 s while fair rose about 7c, because the reprice waited for a fresh account read). A cancel never adds risk;
+  new bids still wait for a fresh, matching reconcile. A cancel request alone does not release exposure: reconcile terminal status and all
   actual fills. Prevent overlapping processes from independently spending the same persisted budget.
 
 Official sources checked for this implementation:
@@ -516,6 +520,35 @@ before an order's first network byte (orders and lock buys), startup, shutdown, 
 one-time action. The others (about 57 ms of fsync each on Railway on 2026-10-13, twice a second in reconcile)
 commit with SQLite synchronous=NORMAL: a process crash loses nothing, a host failure can lose account facts the
 next reconcile reads again, and the next synced commit makes every earlier commit durable.
+
+Bounded account reads (2026-10-13; loss plan bug 3, speed plan step 1). Every reconcile read the whole order
+history twice and every fill since the desk first started (about 0.5 MB/s on the live connection). Between
+complete reads, the two order reads and the fill read now pass Kalshi's `min_ts` = the earlier of the oldest
+unfinished, uncertain or reserved order's decision time and one window (900 s) ago, minus 60 s. Every order that
+can still change the books was created after its decision, and its fills after that, so it is inside the bound
+whether `min_ts` filters orders on creation or on last update (the docs do not say which); so is every order and
+fill of a window open now. The complete history (orders unfiltered, fills since start) is still read at startup,
+every 60 s, on the first read that starts after any window opens (an owner's bid placed before the window opened
+is normally seen before the bot's first order there; a read already under way at the open can let one bot order
+through first, and the complete read about a second later then marks the window as the owner's), and on every read
+while an owner's integrity reset waits, the only reads
+that may clear it. An untracked bot order or a late fill stamped before the bound is caught by the next complete
+read (at most 60 s). Positions and settlements are unchanged. The status line's `reconcile` block reports, since
+the previous line: complete and recent reconcile times (`full_ms`, `recent_ms`), each read's time, the total
+pages, rows and bytes read, failures, and how often each consistency check failed (`check_<name>`:
+`position_mismatch`, `order_list_behind_fills`, `fills_behind_order_list`, `order_found_after_fills`,
+`unattributed_fill_beside_unresolved_order`, `settlement_row_missing`, `reconcile_slow` over 3 s); `last` is the
+most recent reconcile with its reads.
+
+Measurement (2026-10-13; speed plan step 0; logging only, no order changes). Accepted order and cancel records
+carry `venue`: Kalshi's reply time `ts_ms` (the client already validated it), the local send and reply times and
+the clock offset they imply (Kalshi minus local, uncertain by half the round trip). Cancel records also carry
+`reduced_by` and `timing` (decision to Kalshi's reply, and the request alone). The status line adds `phases`
+(median, p90 and maximum ms of each part of `step()`: observe, cancel_unsafe, startup or reconcile, lock, decide,
+heartbeat, and the whole step), `loop` (`event_loop_lag`: the oversleep of a 10 ms timer, and the cancel
+timings) and `clock` (Coinbase Exchange `/time` once a minute while real money is on, and Kalshi from every reply;
+each source's shortest round trip since the previous line, or the last one with `fresh: false`). A failed time
+probe is only counted. Accepted orders' `stages` keep their three fields for the existing log parsers.
 
 The public US probe checks the five-minute series and validates an actual market's BTC/UP_DOWN/5m/BRTI terms
 and start/end before logging `skipwatch_us_5m_listing`. Its first verified observation stays on the page.

@@ -74,6 +74,35 @@ Template:
 - Next: owner decision on raising the code ceilings; merge after `claude/kalshi-fix-speed` in a safe minute; after
   deploy check the log for `speeddesk_live_ladder` with `"action":"start"` and the status line's `ladder`.
 
+## 2026-10-13 19:17 UTC, Codex, public-wallet strategy reconstruction
+- Owner request: infer concrete rules for dangerously-skip-permissions and numerous high-profit public
+  wallets. Added `research/wallet_playbooks/` with a descriptive plan, owner report, detailed proposed
+  Skip loop/objective, eleven comparison cards, methods, 91 hashed public evidence files and a portable
+  offline audit. No existing holdout opened and no strategy profitability test claimed.
+- Fresh Skip evidence: fixed cursor walk, 65 interior traded BTC5m windows, 5,136 buys/no sells,
+  both sides in 65/65, 85.04% gross purchase dollars taker, repeated 30/60-share fills. Concrete leading
+  hypothesis: pricing/execution plus soft inventory penalties and incentives; external-price model vs
+  book-driven harvesting remains unresolved. Corrected claims about hard imbalance/pair caps and
+  distinguished prior-own-fill price changes from market momentum.
+- Source-wallet cash independently reconciled twice: gross +$1,110.753480, purchase costs $1,625.493890,
+  after-cost result -$514.740410 before unallocated later rebates. Actual redemptions agree with all
+  65 resolved winners/held quantities. Historical credits are material but lifetime net profit remains
+  unreconciled; counterfactual rebate sensitivity is explicitly not observed income.
+- Other findings: GoodFallen is the closest current execution peer; weather wallets frequently resell
+  rather than universally hold; ladder wallets differ in passive/taker dollar share, selling and funding.
+  Preserved station/source, lookahead, public-timestamp, sample-selection and chart-accounting limits.
+- Verified: independent interpretation review corrected the absolute-share-gap vs normalized imbalance
+  distinction, own-fill momentum language and a terminal-band boundary identity. Full pytest 4,706
+  passed / 14 skipped; mypy clean for 119 application source files plus the new audit; Ruff clean on
+  the changed Python file. Offline verifier checks hashes, cursor completion, wallet/cohort identity,
+  Gamma condition IDs, all redemptions and frozen totals. Scratch fakes cover wins/losses, fee-once
+  accounting, missing/wrong settlements, ties and malformed/inconsistent cohorts.
+- Not verified: private source code, causal reaction time, exact signal constants, automation/common
+  ownership of comparison wallets, current Skip rebate tier or an executable Kalshi edge. No prospective
+  observation days are claimed complete. New results describe indexed source-wallet activity.
+- Real money touched? no. Public GETs only; no credentials, orders, live setting, application file or
+  deployment trigger changed. Shared-inbox handoff retains Claude's strategy/arena ownership.
+
 ## 2026-10-13 18:16 UTC, Codex, next highest-leverage milestone
 - Reviewed: latest inbox/worklog through 7c0c993, the prior recorder proposal and current research handoff.
   Independent read-only review reached the same recommendation: get Claude's existing recorder running
