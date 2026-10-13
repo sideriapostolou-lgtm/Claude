@@ -15,6 +15,43 @@ Template:
 
 
 
+## 2026-10-13 21:20 UTC, Claude, branch claude/kalshi-arena (review fixes)
+- Changed, after three reviews (every major finding reproduced first):
+  - **The town runs in its own process.** A town thread could stall the live loop (a spinning pass raised a 1 ms
+    loop's median lateness from 0.12 to 5.3 ms, unnoticed), capped itself near 400 books a second and raised the
+    live p99 0.6 ms at a busy rate. Now the live loop appends books and prints to a bounded list and, once a step,
+    writes one frame to a Unix socket without waiting (book ladders travel as changes). The town is a child Python
+    process with an empty environment (no key), the idle scheduling class, nice 19, a memory limit and a kernel
+    kill after a 120 s hang; it polls on its own timer, so a write never wakes it (a waiting reader cost writes a
+    p99 of 8 ms here). A dead town is noticed and never fed; it saves and exits when the socket closes.
+  - **A window whose feed was incomplete is void for everyone** (frames dropped, or events read more than 3 s late),
+    instead of booked as if the town had seen the market. Books coalesce to the latest unless a take waits.
+  - **The control runs the live risk book's rules:** the day stop and open budget count money at risk, resting bids
+    expire after 30 s, and the edge must survive the fee reserve (opt-in `SpeedConfig` fields; the golden fixture
+    and a 300-run base-against-branch fuzz show the defaults unchanged). A change of the shared limits restarts
+    every record and comparison (its own id, `kalshi_arena_regime_changed`).
+  - Minor: a resting starter stops at its no-first-buy time; parents need 20 traded windows; a restart voids one
+    window, not two; rent is charged per missed day (at most 7); any corrupt state moves aside or loses only the bad
+    row; prints de-duplicated once (resident memory 256); the day tables pruned; the day P&L survives a restart;
+    state.json fsynced; the stop has its own 0.99 cap; `config_state` precomputed; a bad `KALSHI_ARENA_*` turns the
+    arena off with a warning instead of stopping the engine; the link closes after every real-money shutdown step;
+    `close()` waits up to 1 s for the town's final save.
+- Verified: the full suite; mypy and ruff clean on the changed files; the reviewers' probes now fail (the defects are
+  gone); measured on a shared 4-core machine at load 8 to 12:
+  - a flush of 400 books a second (25-level ladders): 0.16 ms of live-thread CPU a step (median), p99 0.34 ms;
+  - towns spinning on every core: the live loop's 1 ms sleeps median 0.076 -> 0.073 ms, p90 0.125 -> 0.133 ms;
+  - the real town at about 350 books a second (opt-in wall-clock test): median 0.080 -> 0.080 ms, p90
+    0.123 -> 0.132 ms;
+  - the town's process: about 22 MB RSS at start.
+- Not verified / skipped: production's own figures until `kalshi_arena_feed` and `kalshi_arena_status` are read
+  after deploy; live-loop step lateness in the `speeddesk_status` heartbeat (a change to the live desk's own report,
+  left for the speed work); the owner's four questions (account size, broke line, the stop's meaning, a forward
+  check for candidates); not pushed.
+- Real money touched? no. `speeddesk.py` gains one flush a step and a later close; `speeddesk_live*.py`,
+  `deskguard.py` and `engine.py` are unchanged.
+- Next step: deploy in a safe minute; read `kalshi_arena_feed` (flush p99) and `kalshi_arena_status` (drops, late,
+  void_feed) for an hour.
+
 ## 2026-10-13 19:05 UTC, Claude, branch claude/kalshi-arena
 - Owner's ask: "Give our bots the incentive they're giving Grok bots: make money or die."
 - Changed: a **Kalshi arena** (`nightcrawler/kalshi_arena.py`, PRACTICE money only).
