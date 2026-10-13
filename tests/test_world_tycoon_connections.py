@@ -146,3 +146,51 @@ def test_reported_safety_limits_do_not_turn_into_profit_or_spending_permission(t
     assert out["accounts"]["kalshi"]["totalHalted"] is True
     assert out["accounts"]["kalshi"]["active"] is False
     assert out["business"]["today"] == pytest.approx(.33)
+
+
+@pytest.mark.parametrize("problem", ["integrity", "reset", "total_stop", "pm_mismatch", "both_incomplete"])
+def test_rook_reports_current_accounting_problems_and_stops(tmp_path: Path, problem: str) -> None:
+    p = connected()
+    p["plain"]["team"].append({"id": "rook", "name": "Rook"})
+    live = p["money"]["speeddesk"]["kalshi_live"]
+    if problem == "integrity":
+        live["integrity_error"] = "order_fill_count_mismatch"
+    elif problem == "reset":
+        live["integrity_reset"] = "orders_open"
+    elif problem == "total_stop":
+        live["total_halted"] = True
+    else:
+        p["money"]["polymarket"]["real"]["today_pacific"].update(status="incomplete", reason="day_book_mismatch", pnl_usd=None)
+        for key in (["polymarket_us", "kalshi"] if problem == "both_incomplete" else ["polymarket_us"]):
+            p["money"]["connections"][key]["status"] = "incomplete"
+    out = run(tmp_path, p)
+    rook = next(c for c in out["crew"] if c["key"] == "rook")
+    assert rook["status"] == "stuck"
+    assert any(words in rook["doing"] for words in ("need review", "checks are pending", "total-loss stop", "do not match"))
+    if problem == "both_incomplete":
+        assert all(v["reportFresh"] and not v["current"] for v in out["business"]["venues"].values())
+        assert out["growth"]["qualified"] is False
+
+
+def test_completed_unreconciled_holdings_preserve_their_limits_and_do_not_claim_current_positions(tmp_path: Path) -> None:
+    p = connected()
+    p["money"]["connections"]["kalshi"]["positions"] = [{
+        "scope": "bot", "side": "yes", "title": "Ended BTC window", "quantity": 1,
+        "status": "finalized_unreconciled", "status_note": "This window ended; account settlement is still unverified.",
+        "end_at": NOW - 60, "final_outcome": "YES", "mixed_account_activity": True, "current_position_verified": False,
+    }]
+    row = run(tmp_path, p)["business"]["venues"]["kalshi"]["positions"][0]
+    assert row["status"] == "finalized_unreconciled"
+    assert "still unverified" in row["statusNote"]
+    assert row["finalOutcome"] == "YES" and row["endAt"] == NOW - 60
+    assert row["mixedAccountActivity"] is True and row["currentPositionVerified"] is False
+
+
+def test_activity_does_not_repeat_its_venue_and_order_reserves_keep_pair_purpose(tmp_path: Path) -> None:
+    p = connected()
+    raw = p["money"]["connections"]["kalshi"]
+    raw["events"] = [event("kalshi", text="Kalshi remaining order cancelled")]
+    raw["orders"] = [{"side": "yes", "lock": True, "reserved_usd": .50}]
+    out = run(tmp_path, p)
+    assert out["activity"][0]["text"] == "Kalshi · remaining order cancelled"
+    assert out["business"]["venues"]["kalshi"]["orders"][0]["lock"] is True

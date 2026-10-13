@@ -74,18 +74,20 @@ _UI = r"""
   }
   function summaryBusiness(prefix, venue, available) {
     summaryText(prefix + "-business-time", available
-      ? (venue.current ? "Source checked " : "Last saved source: ") + summaryAge(venue.age) + ". " + venue.sourceNote
+      ? (venue.current ? "Saved source: " : "Last saved source: ") + summaryAge(venue.age) + ". " + venue.sourceNote
       : "Waiting for venue connection details.");
     summaryText(prefix + "-business-basis", venue.positionsBasis ? "Positions: " + venue.positionsBasis : "Position source not reported.");
     summaryWarning(prefix + "-business-warning", venue.issues);
     const rows = [], positions = venue.positions.slice(0, 8), orders = venue.orders.slice(0, 8);
     positions.forEach(function (p) {
       const scope = p.scope === "owner" ? "Your own bet" : p.scope === "bot" ? "Bot bet" : "Owner/bot not identified";
-      rows.push({ name: "Position · " + (p.title || "Market not reported"), lines: [
+      const lines = [
         scope + " · " + (p.side || "Side not reported") + " · Contracts: " + summaryQuantity(p.quantity) + ".",
         "Recorded cost: " + summaryMoney(p.cost, false) + "; price: " + summaryMoney(p.price, false) + ".",
         "Fee: " + summaryFee(p.fee) + (p.feeBasis ? " (" + p.feeBasis + ")" : " (basis not reported)") + ".",
-      ] });
+      ];
+      if (p.statusNote) lines.push(p.statusNote);
+      rows.push({ name: "Position · " + (p.title || "Market not reported"), lines: lines });
     });
     orders.forEach(function (o) {
       rows.push({ name: "Order · " + (o.title || "Market not reported"), lines: [
@@ -129,23 +131,38 @@ _UI = r"""
     if (s.cash !== null && (s.cashStale || s.cashAsOf === null)) pmWarnings.push("Cash may be old; waiting for a fresh balance read.");
     if (s.count !== null && (s.venueStale || s.venueAsOf === null)) pmWarnings.push("Holdings may be old.");
     if (s.todayStale) pmWarnings.push("Pacific-day profit may be old.");
-    if (s.todayStatus !== "ok") pmWarnings.push("A complete Pacific-day bot result is not available yet.");
+    if (s.todayStatus !== "ok") pmWarnings.push(s.todayReason || "A complete Pacific-day bot result is not available yet.");
     summaryWarning("pm-warning", pmWarnings);
-    summaryText("kalshi-state", history + (k.active ? "REAL MONEY (Kalshi) · new real orders enabled"
-      : k.practice ? "PRACTICE (Kalshi) · new real orders off" : k.stateText));
+    summaryText("kalshi-state", history + (k.active ? "REAL MONEY (Kalshi) · " + k.stateText
+      : k.practice ? "PRACTICE (Kalshi) · " + k.stateText : k.stateText));
     summaryText("kalshi-cash", summaryMoney(k.cash, false));
     summaryText("kalshi-profit", summaryMoney(k.today, true));
     summaryText("kalshi-pacific-profit", summaryMoney(k.todayPacific.value, true));
     summaryText("kalshi-risk", summaryMoney(k.exposure, false));
-    summaryText("kalshi-times", "Account checked " + summaryAge(k.age) + "; cash " + summaryAge(k.cashAge)
-      + "; Pacific profit " + summaryAge(k.todayPacific.age) + ".");
+    summaryText("kalshi-reserved", summaryMoney(k.reserved, false));
+    summaryText("kalshi-times", "Desk report " + summaryAge(k.age) + "; cash read " + summaryAge(k.cashAge)
+      + "; Pacific profit " + summaryAge(k.todayPacific.age) + ". "
+      + (k.accountAt ? "Account reconciliation " + summaryAge(k.accountAge) + "."
+        : "Account reconciliation time not reported."));
     summaryText("kalshi-reason", k.reason || "Kalshi has its own cash, positions and limits.");
+    summaryText("kalshi-limits", "Reported limits: " + summaryMoney(k.limits.window, false)
+      + " per window; " + summaryMoney(k.limits.open, false) + " open risk; "
+      + summaryMoney(k.limits.day, false) + " UTC-day stop; " + summaryMoney(k.limits.total, false) + " total stop.");
+    summaryText("kalshi-risk-note", (k.riskNote || "Money at risk and cash reserved for orders are different amounts.")
+      + (k.reserveNote ? " " + k.reserveNote : ""));
+    summaryText("kalshi-limits-note", (k.limitsNote || "These are the desk’s reported limits, not available cash or a guaranteed maximum loss.")
+      + (k.stopNote ? " " + k.stopNote : ""));
     const kalshiWarnings = [];
     if (k.stale) kalshiWarnings.push("The Kalshi desk report is delayed or missing.");
     if (k.cashStale) kalshiWarnings.push("A current Kalshi cash balance is not available.");
     if (k.todayStale) kalshiWarnings.push("The UTC-day result is delayed or unavailable.");
-    if (!k.todayPacific.current) kalshiWarnings.push("A complete, current Pacific-day result is not available yet.");
+    if (!k.todayPacific.current) kalshiWarnings.push(k.todayPacific.reason
+      || "A complete, current Pacific-day result is not available yet.");
     if (k.cleanupPending) kalshiWarnings.push("Resting-order cancellation and reconciliation are still pending.");
+    if (k.accountAt && k.accountStale) kalshiWarnings.push("Account reconciliation may be old; a fresh desk report does not refresh it.");
+    if (k.integrityError) kalshiWarnings.push(k.integrityNote || "Record check stopped new real buys: " + k.integrityError + ".");
+    if (k.integrityReset) kalshiWarnings.push(k.integrityResetNote || "Record-check reset: " + k.integrityReset
+      + ". A reset request does not mean trading has resumed.");
     summaryWarning("kalshi-warning", kalshiWarnings);
     summaryBusiness("pm", s.business.venues.polymarket_us, s.business.available);
     summaryBusiness("kalshi", s.business.venues.kalshi, s.business.available);
@@ -238,9 +255,12 @@ def render_summary_html() -> str:
         '<dl><dt>Account cash</dt><dd id="kalshi-cash">Not reported</dd>'
         '<dt>Bot profit since midnight Pacific</dt><dd id="kalshi-pacific-profit">Not reported</dd>'
         '<dt>Bot profit since midnight UTC</dt><dd id="kalshi-profit">Not reported</dd>'
-        '<dt>Bot money at risk, including resting orders</dt><dd id="kalshi-risk">Not reported</dd></dl>'
+        '<dt>Bot worst-case loss still at risk</dt><dd id="kalshi-risk">Not reported</dd>'
+        '<dt>Cash reserved for bot orders</dt><dd id="kalshi-reserved">Not reported</dd></dl>'
         '<p id="kalshi-reason" class="muted">Kalshi has its own cash, positions and limits.</p>'
         '<p class="muted">The Pacific and UTC results cover different hours. They are not added together. Cash is not profit.</p>'
+        '<p id="kalshi-risk-note" class="muted"></p><p id="kalshi-limits" class="muted"></p>'
+        '<p id="kalshi-limits-note" class="muted"></p>'
         '<p id="kalshi-times" class="times">Report times unknown.</p><p id="kalshi-warning" class="warning" hidden></p>'
         '<h3>Recorded holdings and orders</h3><p id="kalshi-business-time" class="times"></p>'
         '<p id="kalshi-business-basis" class="muted"></p><p id="kalshi-business-warning" class="warning" hidden></p>'

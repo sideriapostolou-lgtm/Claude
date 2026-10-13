@@ -28,7 +28,8 @@ TYCOON_DATA = TYCOON_CONNECTIONS + TYCOON_RESEARCH + r"""
       const qualified = s.business.todayCurrent, pnl = s.business.today;
       return { qualified: qualified, level: qualified ? thresholds.filter(function (p) { return pnl >= p - 1e-9; }).length : null,
         pnl_usd: pnl, thresholds: thresholds, label: "Both bots’ recorded profit since midnight PT", date: s.business.date,
-        reason: qualified ? null : "Waiting for complete, fresh Pacific-day results from both desks" };
+        reason: qualified ? null : [s.business.venues.polymarket_us.day.reason, s.business.venues.kalshi.day.reason]
+          .filter(Boolean).join(" ") || "The two profit reports must cover the same Pacific day." };
     }
     const qualified = s.todayStatus === "ok" && s.today !== null && s.updated !== null && s.asOf !== null
       && s.on !== null && !s.pageStale && !s.deskStale && !s.todayStale;
@@ -37,8 +38,7 @@ TYCOON_DATA = TYCOON_CONNECTIONS + TYCOON_RESEARCH + r"""
     const level = qualified ? thresholds.filter(function (p) { return s.today >= p - 1e-9; }).length : null;
     return { qualified: qualified, level: level, pnl_usd: s.today, thresholds: thresholds,
       label: "Polymarket bot profit since midnight PT", date: s.todayDate,
-      reason: qualified ? null : s.pageStale || s.deskStale || s.todayStale ? "Waiting for a fresh profit report"
-        : "Waiting for a complete Pacific-day bot profit report" };
+      reason: qualified ? null : s.todayReason || "Waiting for a fresh profit report" };
   }
   function tycoonKalshi(d, now, pageCurrent) {
     const raw = tycoonObject(tycoonObject(tycoonObject(d.money).speeddesk).kalshi_live);
@@ -47,19 +47,48 @@ TYCOON_DATA = TYCOON_CONNECTIONS + TYCOON_RESEARCH + r"""
     const present = Object.keys(raw).length > 0, mode = raw.mode === "live" || raw.mode === "paper" ? raw.mode : null;
     const stale = present && (!pageCurrent || raw.stale === true || asOf === null || tycoonOld(age, 60));
     const current = present && pageCurrent && now !== null && asOf !== null && !stale;
+    const integrityError = tycoonText(raw.integrity_error), integrityReset = tycoonText(raw.integrity_reset);
+    const reason = tycoonText(raw.reason), reportedLocksOnly = typeof raw.lock_only === "boolean" ? raw.lock_only
+      : reason.endsWith("; only completing half-filled pairs before the close");
     const active = current && mode === "live" && raw.active === true && raw.authenticated === true
-      && raw.real_orders_available === true;
+      && raw.real_orders_available === true && !integrityError && !integrityReset
+      && (raw.total_halted !== true || reportedLocksOnly);
+    const locksOnly = active && reportedLocksOnly;
     const hasExposure = raw.has_real_exposure === true;
-    const state = !present ? "unknown" : stale ? "stale" : active ? "live" : hasExposure ? "exposure"
+    const state = !present ? "unknown" : stale ? "stale" : integrityError || integrityReset ? "blocked"
+      : locksOnly ? "pairs only" : active ? "live" : hasExposure ? "exposure"
       : mode === "paper" ? "practice" : "unknown";
     const today = tycoonObject(raw.today), total = tycoonObject(raw.total), caps = tycoonObject(raw.caps), date = tycoonUtcDate(now);
     const dayCurrent = date !== "" && today.day === date;
     const cashStale = cashAt === null || tycoonOld(cashAge, 60) || stale;
+    const accountAt = tycoonStamp(raw.account_at, now), accountAge = tycoonAge(accountAt, now);
+    const resetWords = { armed: "waiting for account checks", account_unreconciled: "waiting for the account to reconcile",
+      startup_pending: "waiting for startup checks", live_off: "real-money mode is off", fatal: "a desk error remains",
+      orders_open: "orders remain open", positions_open: "positions remain open", orders_reserved: "order money is still reserved",
+      not_armed: "no reset is armed", no_integrity_error: "waiting for a new desk report" };
+    const integrityWords = {
+      order_fill_count_mismatch: "the order total lists fewer filled contracts than the trade receipts",
+      order_terminal_regressed: "an order marked finished now shows contracts still waiting to fill",
+      fill_changed: "a previously recorded trade receipt changed",
+      settlement_net_payout_mismatch: "the settlement payout does not match the recorded holdings",
+      fill_after_terminal_confirmation: "another fill arrived after its order was confirmed finished",
+      fill_exceeded_reserved_terms: "a fill exceeded its reserved size, price or fees",
+    };
+    const integrityNote = (stale && (integrityError || integrityReset) ? "Last report: " : "")
+      + (integrityError ? "Kalshi records need review" + (integrityWords[integrityError] ? ": " + integrityWords[integrityError] : "")
+        + "; real buys are blocked."
+        : integrityReset ? "Kalshi account checks are pending; real buys are blocked." : "");
     return { name: "Kalshi", state: state, active: active, practice: state === "practice", mode: mode,
-      stateText: state === "live" ? "Real-money trading is enabled" : state === "exposure" ? "Real bets remain open"
+      stateText: state === "pairs only" ? "Real money: completing existing pairs only; new bets are stopped"
+        : state === "blocked" ? "Accounting checks stopped real buys"
+        : state === "live" ? "Real-money trading is enabled" : state === "exposure" ? "Real bets remain open"
         : state === "practice" ? "Practice only; no new real orders" : state === "stale" ? "Waiting for a fresh Kalshi report"
         : "No current Kalshi report",
-      reason: tycoonText(raw.reason), asOf: asOf, age: age, stale: stale, current: current,
+      reason: reason, asOf: asOf, age: age, stale: stale, current: current,
+      locksOnly: locksOnly, reportedLocksOnly: reportedLocksOnly, newRiskAllowed: active && !locksOnly,
+      integrityError: integrityError, integrityReset: integrityReset, integrityNote: integrityNote,
+      integrityResetNote: integrityReset ? "Accounting reset: " + (resetWords[integrityReset] || "waiting for account checks") + "." : "",
+      accountAt: accountAt, accountAge: accountAge, accountStale: accountAt === null || tycoonOld(accountAge, 60) || stale,
       cash: cashAt !== null ? tycoonCost(raw.cash_usd) : null, cashAt: cashAt, cashAge: cashAge, cashStale: cashStale,
       today: dayCurrent ? tycoonNumber(today.pnl_usd) : null, todayDate: dayCurrent ? date : "",
       todayNote: "Bot profit since midnight UTC", todayStale: stale || !dayCurrent,
@@ -70,6 +99,10 @@ TYCOON_DATA = TYCOON_CONNECTIONS + TYCOON_RESEARCH + r"""
       orders: tycoonCount(raw.open_orders), reserved: tycoonCost(raw.reserved_usd),
       cleanupPending: raw.cleanup_pending === true,
       totalHalted: raw.total_halted === true,
+      stopNote: (stale ? "Last report: " : "") + "Kalshi’s total-loss stop blocks new bets until the owner resumes it. Completing existing pairs may still use real cash to reduce possible loss.",
+      limitsNote: "Budgets include fees. Near the close, pair-completion buys may exceed these budgets or loss stops only to reduce existing possible loss. They still need cash and account checks; they do not guarantee profit.",
+      reserveNote: "Reservations hold cash. New-bet reservations count as money at risk; pair-completion reservations do not, because those fills can only reduce that loss.",
+      riskNote: "At risk = possible loss on filled bets + new-bet reservations, after matched pairs. It is not total cash spent.",
       limits: { window: tycoonCost(caps.window_usd), open: tycoonCost(caps.open_usd),
         day: tycoonCost(caps.day_stop_usd), total: tycoonCost(caps.total_stop_usd) },
       note: "Separate Kalshi account. Cash is not profit. Its UTC result does not count toward Pacific-day gardens." };
@@ -174,6 +207,7 @@ TYCOON_DATA = TYCOON_CONNECTIONS + TYCOON_RESEARCH + r"""
       todayAsOf: todayAsOf, todayAge: todayAge, todayStale: todayStale,
       todayDate: dayMatches ? tycoonText(day.date) : "",
       todayStatus: todayReady ? "ok" : dayMatches && day.status === "incomplete" ? "incomplete" : "unavailable",
+      todayReason: tycoonProfitReason(day, todayReady && !todayStale && !pageStale && !deskStale, "Polymarket"),
       count: venueAsOf !== null ? tycoonCount(real.venue_open) : null,
       value: venueAsOf !== null ? tycoonCost(real.value_usd) : null,
       recorded: { count: asOf !== null ? tycoonCount(real.open) : null,

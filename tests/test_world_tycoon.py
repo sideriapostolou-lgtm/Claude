@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import re
 import shutil
 from pathlib import Path
@@ -13,6 +14,8 @@ from nightcrawler.world3d import render_world_html
 from nightcrawler.worldtycoon import TYCOON_HTML, TYCOON_STYLE
 from tests.test_world3d import _js_body, _module, _node
 from tests.test_world_records import _film
+from tests.test_world_tycoon_connections import connected
+from tests.test_world_tycoon_data import NOW
 
 needs_node = pytest.mark.skipif(shutil.which("node") is None, reason="Node is not installed")
 
@@ -253,3 +256,37 @@ console.log(JSON.stringify(reports));
     assert "The bot is stopped." in out["disconnected"]["messages"]
     assert out["cleared"]["hidden"] is True and out["cleared"]["alert"] == ""
     assert "No current alerts reported." in out["cleared"]["messages"]
+
+
+@needs_node
+def test_money_panel_explains_restricted_real_orders_and_unverified_profit(module: str, tmp_path: Path) -> None:
+    from nightcrawler.worldtycoon_data import TYCOON_DATA
+
+    value = connected()
+    value["money"]["speeddesk"]["kalshi_live"].update(lock_only=True, total_halted=True,
+        caps={"window_usd": 2, "open_usd": 4, "day_stop_usd": 3, "total_stop_usd": 5})
+    value["money"]["polymarket"]["real"]["today_pacific"].update(
+        status="incomplete", reason="day_book_mismatch", pnl_usd=None)
+    hooks = "\n".join(_js_body(module, f"  function {name}(") for name in
+                      ("tyAge", "tyFee", "tycoonBusinessDetails", "tycoonPanel"))
+    out = _node(TYCOON_DATA + "\nconst data = " + json.dumps(value) + ";\n" + f"const now = {NOW};\n" + """
+const document = { createElement: function () { return { textContent: "", appendChild: function () {} }; } };
+const TY_UI = { summary: tycoonSummary(data, now) }, offline = false;
+const panelBody = { textContent: "", appendChild: function () {} };
+const panelEl = { scrollTop: 0, className: "" }, panelTitle = { textContent: "" };
+const panelKind = "ty-accounts", paragraphs = [];
+const para = function (parent, text, cls) { paragraphs.push({ text: text, cls: cls || "" }); };
+const fmtUsd = function (n) { return n === null ? "—" : "$" + n.toFixed(2); }, fmtSigned = fmtUsd;
+""" + hooks + """
+tycoonPanel(); console.log(JSON.stringify(paragraphs));
+""", tmp_path)
+    messages = [row["text"] for row in out]
+    assert "REAL MONEY (Kalshi) · cash $25.00" in messages
+    assert "Real money: completing existing pairs only; new bets are stopped" in messages
+    assert "New-bet limits: $2.00 per window · $4.00 at risk · $3.00 daily loss stop · $5.00 total loss stop (UTC)." in messages
+    assert any("pair-completion reservations do not" in text for text in messages)
+    assert any("may exceed these budgets or loss stops" in text for text in messages)
+    assert any("saved result totals do not match the daily book" in text for text in messages)
+    assert any("Account reconciliation time is not recorded" in text for text in messages)
+    assert any(text.startswith("Saved checkpoint ") for text in messages)
+    assert not any("New real buys remain off" in text or "Included in money at risk" in text for text in messages)

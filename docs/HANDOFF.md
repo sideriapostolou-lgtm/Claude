@@ -170,6 +170,13 @@ fees are estimated; its known cash-out accounting edge cases remain in the prote
 fill-derived holdings are not a current venue-position snapshot. A checkpoint is not proof of account reconciliation.
 See [TOWN_CONNECTIONS.md](TOWN_CONNECTIONS.md) for exact sources, age limits and incomplete-data behavior.
 
+The town also distinguishes Kalshi's pair-completion-only permission from new-bet permission, explains the
+existing budget exceptions, and shows accounting-stop/reset reasons. Report age is not an account-check age.
+Ended but unreconciled gross fills stay labeled as old records. Repeated order reconciliation no longer
+creates fake fresh cancellation activity. A Polymarket day-book mismatch keeps Pacific profit unknown and
+flags Rook; bounded per-UTC-day counts/sums in `today_pacific.reconciliation` diagnose the gap without changing
+the trading books or substituting a partial profit total.
+
 Voss monitors the two Bitcoin desks, Jet shows their order receipts, Rook reports safeguards, and Mote records
 results. Pip and Nyx retain the coin workflow. New qualified real events can animate these roles; generic practice
 handoffs, repeated old chatter and the old UTC goal celebrations do not. First load/reconnect establishes a

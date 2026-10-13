@@ -10,8 +10,8 @@ import threading
 import time
 
 import pytest
-
 from fakes import FakeClock, FakeHttp, load_fixture
+
 from nightcrawler.http import HttpClient
 from nightcrawler.learn import recorder as rec_mod
 from nightcrawler.learn.recorder import (
@@ -23,8 +23,15 @@ from nightcrawler.learn.recorder import (
     start_recorder,
 )
 from nightcrawler.learn.store import LearnStore, learn_dir
-from nightcrawler.learn.tape import MANIFEST, TapeReader, TapeWriter, tape_day, verify_segments
-from nightcrawler.sources.pumpfun import CENSUS_HOST, HOST as SWAP_HOST
+from nightcrawler.learn.tape import (
+    MANIFEST,
+    TapeReader,
+    TapeWriter,
+    tape_day,
+    verify_segments,
+)
+from nightcrawler.sources.pumpfun import CENSUS_HOST
+from nightcrawler.sources.pumpfun import HOST as SWAP_HOST
 
 CENSUS_AT = 1_791_482_981.0  # 2026-10-08T18:09:41Z, when the lab captured the census fixture
 CENSUS = "frontend-api-v3.pump.fun/coins"
@@ -32,6 +39,12 @@ CANDLES = "swap-api.pump.fun/v1/coins/"
 DEXS = "api.dexscreener.com/tokens/v1/solana/"
 ROWS = load_fixture("pumpfun_census_coins")
 MINTS = sorted(r["mint"] for r in ROWS)
+
+
+@pytest.fixture(autouse=True)
+def healthy_recorder_disk(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Recorder scenarios use known free space; the low-disk test overrides it explicitly."""
+    monkeypatch.setattr(rec_mod, "_free_bytes", lambda path: 2 * rec_mod.LOW_DISK_BYTES)
 
 
 @pytest.fixture
@@ -118,6 +131,7 @@ def test_the_candle_schedule_cannot_leave_a_hole_however_busy_the_coin_is() -> N
 
 def test_a_coin_that_keeps_trading_is_covered_as_long_as_a_quiet_one() -> None:
     from learn_world import DAY0, record_coin
+
     from nightcrawler.learn.tape import TapeView
     from nightcrawler.models import Candle
 
@@ -140,7 +154,7 @@ def test_a_coin_that_keeps_trading_is_covered_as_long_as_a_quiet_one() -> None:
 
 
 def test_candle_and_snapshot_rows_reach_the_tape(world, clock) -> None:
-    recorder, http, store = world
+    recorder, http, _store = world
     run_for(recorder, clock, CANDLE_FETCH_H[1] + 1)
     recorder.tape.flush()
     reader = TapeReader(recorder.tape.root)
@@ -359,6 +373,11 @@ def test_learning_writes_pause_on_low_disk(world, clock, monkeypatch) -> None:
     monkeypatch.setattr(rec_mod, "_free_bytes", lambda path: 512 * 1024 * 1024)
     assert recorder.step() == {"skipped": "low disk"}
     assert http.calls == [] and store.coins() == []
+    assert recorder.stats["low_disk_skips"] == 1
+    monkeypatch.setattr(rec_mod, "_free_bytes", lambda path: rec_mod.LOW_DISK_BYTES)
+    assert recorder.step()["census"] == len(ROWS)
+    assert http.calls_to(CENSUS) and sorted(c["mint"] for c in store.coins()) == MINTS
+    assert recorder.stats["low_disk_skips"] == 1
 
 
 # --------------------------------------------------------------------------- the thread
@@ -398,8 +417,9 @@ def test_a_crashing_recorder_is_restarted_with_backoff_and_never_raises() -> Non
 
 
 def test_recorder_crashes_never_change_an_engine_tick(make_settings, tmp_path) -> None:
-    from nightcrawler.engine import build_app
     from world import make_world
+
+    from nightcrawler.engine import build_app
 
     before = set(threading.enumerate())
 

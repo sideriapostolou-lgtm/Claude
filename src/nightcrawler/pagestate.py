@@ -1643,14 +1643,22 @@ def _kalshi_live_panel(raw: Any, settings: Settings, now: float) -> dict[str, An
     settings_changed = mode == "live" and not configured
     if settings_changed:
         mode = "paper"  # a saved report cannot override a new deployment's disabled live gates
-    active = configured and not stale and mode == "live" and authenticated and raw.get("real_orders_available") is True
+    active = (configured and not stale and mode == "live" and authenticated
+              and raw.get("real_orders_available") is True and not raw.get("integrity_error"))
+    waiting = text.opt(raw.get("waiting"))
+    # The companion currently expresses this restriction in its saved waiting/reason
+    # text. Preserve it as a display flag; never infer order permission from a stop.
+    lock_suffix = "; only completing half-filled pairs before the close"
+    lock_only = active and any(isinstance(value, str) and value.endswith(lock_suffix)
+                              for value in (raw.get("waiting"), raw.get("reason")))
+    active = active and (raw.get("total_halted") is not True or lock_only)
     cash_fresh = not stale and cash_at is not None and -FUTURE_SKEW_S <= now - cash_at <= 60
     figures: dict[str, Any] = {}
-    for key in ("reserved_usd", "open_risk_usd", "at_risk_usd"):
+    for key in ("reserved_usd", "open_risk_usd", "open_cost_usd", "at_risk_usd"):
         value = _num(raw.get(key))
         figures[key] = value if value is not None and value >= 0 else None
     figures.update({key: _count(raw.get(key)) for key in ("open_orders", "positions")})
-    exposure = any(value is not None and value > 0 for value in figures.values())
+    exposure = any(value is not None and value > 0 for key, value in figures.items() if key != "open_cost_usd")
     today = _xp_map(raw.get("today"))
     day = utc_day(now)
     if today.get("day") != day:
@@ -1686,7 +1694,9 @@ def _kalshi_live_panel(raw: Any, settings: Settings, now: float) -> dict[str, An
         "reason": ("Current settings disable real orders; waiting for an updated companion report."
                    if settings_changed else text.opt(raw.get("reason"))), "has_real_exposure": exposure,
         "cash_usd": cash if cash_fresh and cash is not None and cash >= 0 else None, "cash_at": cash_at,
-        "real_orders_available": active, "total_halted": raw.get("total_halted") is True,
+        "real_orders_available": active, "lock_only": lock_only,
+        "trading_now": active and raw.get("trading_now") is True, "waiting": waiting,
+        "total_halted": raw.get("total_halted") is True,
         "cleanup_pending": raw.get("cleanup_pending") is True,
         # Which reconciliation check stopped real orders, and what its one-time reset is waiting for.
         "integrity_error": (raw["integrity_error"] if isinstance(raw.get("integrity_error"), str)

@@ -506,6 +506,95 @@ def test_kalshi_paper_mode_keeps_open_real_exposure_explicit(tmp_path: Path) -> 
     assert out["state"] == "unknown" and out["cash"] is None and out["today"] is None
 
 
+@pytest.mark.parametrize("change", [
+    {"lock_only": True},
+    {"reason": "Daily loss stop; only completing half-filled pairs before the close"},
+    {"total_halted": True, "lock_only": True},
+])
+def test_pair_completion_is_real_money_without_permission_for_new_bets(tmp_path: Path, change: dict[str, Any]) -> None:
+    p = page()
+    p["money"]["speeddesk"] = {"kalshi_live": {**kalshi(), **change}}
+    out = run(tmp_path, p)["accounts"]["kalshi"]
+    assert out["active"] is True and out["practice"] is False
+    assert out["locksOnly"] is True and out["newRiskAllowed"] is False
+    assert out["state"] == "pairs only"
+    assert "new bets are stopped" in out["stateText"]
+    assert "may exceed these budgets or loss stops" in out["limitsNote"]
+    assert "pair-completion reservations do not" in out["reserveNote"]
+    assert "Completing existing pairs may still use real cash" in out["stopNote"]
+
+
+@pytest.mark.parametrize("change", [
+    {"total_halted": True},
+    {"total_halted": True, "lock_only": False,
+     "reason": "Total loss stop; only completing half-filled pairs before the close"},
+    {"total_halted": True, "reason": "Previously only completing half-filled pairs before the close; now stopped"},
+])
+def test_total_stop_alone_never_invents_pair_completion_permission(tmp_path: Path, change: dict[str, Any]) -> None:
+    p = page()
+    p["money"]["speeddesk"] = {"kalshi_live": {**kalshi(), **change}}
+    out = run(tmp_path, p)["accounts"]["kalshi"]
+    assert out["reportedLocksOnly"] is False and out["locksOnly"] is False
+    assert out["active"] is False and out["newRiskAllowed"] is False
+
+
+@pytest.mark.parametrize("change", [{"integrity_error": "order_fill_count_mismatch"},
+                                    {"integrity_reset": "positions_open"}])
+def test_accounting_problem_overrides_any_active_live_claim(tmp_path: Path, change: dict[str, Any]) -> None:
+    p = page()
+    p["money"]["speeddesk"] = {"kalshi_live": {**kalshi(), "lock_only": True, **change}}
+    out = run(tmp_path, p)["accounts"]["kalshi"]
+    assert out["active"] is False and out["newRiskAllowed"] is False and out["locksOnly"] is False
+    assert out["state"] == "blocked" and out["practice"] is False
+    assert "real buys are blocked" in out["integrityNote"]
+    assert out["integrityError"] == change.get("integrity_error", "")
+    assert out["integrityReset"] == change.get("integrity_reset", "")
+    if out["integrityReset"]:
+        assert out["integrityResetNote"] == "Accounting reset: positions remain open."
+
+
+@pytest.mark.parametrize(("code", "explanation"), [
+    ("order_fill_count_mismatch", "fewer filled contracts than the trade receipts"),
+    ("order_terminal_regressed", "an order marked finished now shows contracts still waiting to fill"),
+    ("fill_changed", "a previously recorded trade receipt changed"),
+    ("settlement_net_payout_mismatch", "the settlement payout does not match the recorded holdings"),
+    ("fill_after_terminal_confirmation", "another fill arrived after its order was confirmed finished"),
+    ("fill_exceeded_reserved_terms", "a fill exceeded its reserved size, price or fees"),
+    ("future_integrity_check", "Kalshi records need review; real buys are blocked."),
+])
+def test_accounting_warning_explains_confirmed_problem_without_exposing_internal_code(
+    tmp_path: Path, code: str, explanation: str,
+) -> None:
+    p = page()
+    p["money"]["speeddesk"] = {"kalshi_live": {**kalshi(), "integrity_error": code}}
+    out = run(tmp_path, p)["accounts"]["kalshi"]
+    assert explanation in out["integrityNote"]
+    assert code not in out["integrityNote"]
+    assert out["integrityError"] == code  # preserved for programmatic diagnostics only
+    assert out["active"] is False
+
+
+def test_restricted_report_can_go_stale_without_claiming_trading_or_new_account_check(tmp_path: Path) -> None:
+    p = page()
+    p["money"]["speeddesk"] = {"kalshi_live": {**kalshi(), "as_of": NOW - 61, "lock_only": True}}
+    out = run(tmp_path, p)["accounts"]["kalshi"]
+    assert out["state"] == "stale" and out["reportedLocksOnly"] is True
+    assert out["active"] is False and out["locksOnly"] is False and out["newRiskAllowed"] is False
+    assert out["accountAt"] is None and out["accountAge"] is None and out["accountStale"] is True
+    assert out["cashAt"] == NOW - 10  # the heartbeat never replaces a cash observation
+
+
+def test_saved_profit_mismatch_explains_unknown_without_replacing_it_with_zero(tmp_path: Path) -> None:
+    p = page()
+    p["money"]["polymarket"]["real"]["today_pacific"].update(
+        status="incomplete", reason="day_book_mismatch", pnl_usd=None)
+    out = run(tmp_path, p)
+    assert out["today"] is None and out["todayStatus"] == "incomplete"
+    assert out["todayReason"] == "Polymarket profit today is unverified: saved result totals do not match the daily book."
+    assert out["growth"]["qualified"] is False and out["growth"]["reason"] == out["todayReason"]
+    assert out["cash"] == 14.22
+
+
 def test_research_shows_observations_only_and_never_creates_financial_growth(tmp_path: Path) -> None:
     p = page()
     expected_growth = run(tmp_path, p)["growth"]
