@@ -28,6 +28,7 @@ from .ledger import Ledger
 from .speeddesk_kalshi_client import KalshiClient, KalshiClientError
 from .speeddesk_live_model import (
     LOCK_MARGIN_S,
+    WINDOW_PARTS,
     ActualFill,
     LiveLimits,
     LiveRejected,
@@ -62,6 +63,10 @@ EPS = 1e-8
 ORDER_LIST_LAG_S = 30.0
 # The live loop steps on each Bitcoin tick or book change, at most every MIN_STEP_S, and at least every IDLE_STEP_S.
 MIN_STEP_S, IDLE_STEP_S = 0.02, 0.25
+# A window an hour past its close, settled and with nothing open, moves once into a write-once archive chunk
+# (ledger key ARCHIVE_KEY + sequence). Every save rewrote every order ever made: 206 ms per save on Railway by
+# 2026-10-13 13:45 UTC, about 87 us more per stored order, several saves a second, all on the event loop.
+ARCHIVE_KEY, ARCHIVE_AFTER_S = "kalshi_live_archive/", 3600.0
 
 
 @dataclass(frozen=True)
@@ -192,6 +197,7 @@ class KalshiLiveDesk:
         self.last_sync = -math.inf
         self.last_status = -math.inf
         self.last_checkpoint = -math.inf
+        self.save_ms: float | None = None
         self.retry_at = -math.inf
         self.cancel_retry_at: dict[str, float] = {}
         self.errors = 0
@@ -232,6 +238,8 @@ class KalshiLiveDesk:
             if self.ledger.verify_chain()[0] is not True:
                 raise ValueError("Real receipt ledger hash chain is invalid")
             saved = self.ledger.get_kv(STATE_KEY)
+            self.archived: set[str] = set()
+            self.archive_chunks = 0
             if saved is None and self.path.exists():
                 raise ValueError("Real receipt ledger missing beside existing state")
             if saved is None:
@@ -242,6 +250,7 @@ class KalshiLiveDesk:
             else:
                 if saved.get("version") != 1:
                     raise ValueError("Unsupported real receipt ledger version")
+                self._merge_archive(saved)
                 self.book = LiveRiskBook.from_state(saved["book"], limits)
                 self.intents = {key: Intent(**item) for key, item in saved["intents"].items()}
                 if set(self.intents) != set(self.book.intents):
@@ -332,7 +341,54 @@ class KalshiLiveDesk:
         await self._cancel_unsafe()
         return result
 
+    def _merge_archive(self, saved: dict[str, Any]) -> None:
+        """Restore archived windows under the saved state, so restore and its checks see the full books."""
+        chunks, listed = saved.get("archive_chunks", 0), saved.get("archived_windows", [])
+        if (not isinstance(chunks, int) or isinstance(chunks, bool) or chunks < 0 or not isinstance(listed, list)
+                or not all(isinstance(item, str) for item in listed)):
+            raise ValueError("Invalid real archive index")
+        archived: set[str] = set()
+        merged: dict[str, dict[str, Any]] = {part: {} for part in (*WINDOW_PARTS, "live_intents")}
+        for seq in range(chunks):
+            chunk = self.ledger.get_kv(f"{ARCHIVE_KEY}{seq}")
+            if not isinstance(chunk, dict) or chunk.get("version") != 1:
+                raise ValueError("Real archive chunk missing or unsupported")
+            windows = set(chunk["windows"])
+            book_parts, intents = chunk["book"], chunk["intents"]
+            if (set(book_parts) != set(WINDOW_PARTS)
+                    or not set(book_parts["windows"]) <= windows or not set(book_parts["inventory"]) <= windows
+                    or not set(book_parts["settled"]) <= windows
+                    or any(row["window"] not in windows for part in ("intents", "fills")
+                           for row in book_parts[part].values())
+                    or any(row["window"] not in windows for row in intents.values())):
+                raise ValueError("Real archive chunk does not match its windows")
+            archived |= windows
+            # A window archived again after activity came back is newer in the later chunk: it wins.
+            for part in WINDOW_PARTS:
+                merged[part].update(book_parts[part])
+            merged["live_intents"].update(intents)
+        # Windows the index no longer lists were reopened: the saved state holds their newer full copy.
+        if not set(listed) <= archived or not archived - set(listed) <= set(saved["book"]["windows"]):
+            raise ValueError("Real archive index does not match its chunks")
+        for part in WINDOW_PARTS:
+            saved["book"][part] = {**merged[part], **saved["book"][part]}
+        saved["intents"] = {**merged["live_intents"], **saved["intents"]}
+        self.archived, self.archive_chunks = set(listed), chunks
+
+    def _live_windows(self) -> set[str]:
+        """Windows with anything that can still change: a reservation or an unfinished or uncertain order."""
+        # A finished order keeps cancel_requested once a cancel was sent; it no longer makes its window live.
+        return ({item.window for item in self.book.intents.values() if item.reservation_active}
+                | {item.window for item in self.intents.values() if not item.terminal or item.uncertain})
+
+    def _cold_windows(self, now: float, live: set[str]) -> set[str]:
+        traded = {item.window for item in self.book.intents.values()} | {fill.window for fill in self.book.fills.values()}
+        return {slug for slug, window in self.book.windows.items()
+                if slug not in self.archived and slug not in live and window.end <= now - ARCHIVE_AFTER_S
+                and (slug in self.book.settled or slug not in traded)}
+
     def checkpoint(self) -> None:
+        started = time.perf_counter()
         withdrawn = self.book.disarm_stale_reset()
         if withdrawn:
             self._record("speeddesk_live_integrity_reset", code=self.book.integrity_error, previous=withdrawn,
@@ -348,9 +404,19 @@ class KalshiLiveDesk:
                 # accounting book; never hide it from cancellation or recovery.
                 intent.terminal, intent.uncertain, intent.cancel_requested = False, True, True
         self._daily_reports()
+        live = self._live_windows()
+        # Activity came back to an archived window: save it in full again; it is archived anew once finished.
+        self.archived -= live
+        cold = self._cold_windows(self.clock(), live)
+        hidden = self.archived | cold
+        chunk = ({"version": 1, "windows": sorted(cold), "book": self.book.window_parts(lambda window: window in cold),
+                  "intents": {key: without_default_lock(asdict(value)) for key, value in self.intents.items()
+                              if value.window in cold}} if cold else None)
         state = {"version": 1, "started_at": self.started_at, "updated_at": self.clock(),
-                 "book": self.book.to_state(),
-                 "intents": {key: without_default_lock(asdict(value)) for key, value in self.intents.items()},
+                 "book": self.book.to_state(without=hidden),
+                 "intents": {key: without_default_lock(asdict(value)) for key, value in self.intents.items()
+                             if value.window not in hidden},
+                 "archived_windows": sorted(self.archived | cold), "archive_chunks": self.archive_chunks + bool(cold),
                  "twin": self.twin.to_state(), "fatal_reason": self.fatal_reason,
                  "foreign_windows": sorted(self.foreign_windows), "final_outcomes": self.final_outcomes,
                  "changed_windows": sorted(self.changed_windows),
@@ -361,7 +427,12 @@ class KalshiLiveDesk:
         with self.ledger.transaction():
             for kind, payload in self.pending:
                 self.ledger.append_receipt(kind, payload, ts=payload["at"])
+            if chunk is not None:
+                self.ledger.set_kv(f"{ARCHIVE_KEY}{self.archive_chunks}", chunk)
             self.ledger.set_kv(STATE_KEY, state)
+        if chunk is not None:  # only once the chunk and the state that lists it are committed together
+            self.archived |= cold
+            self.archive_chunks += 1
         for kind, payload in self.pending:
             log.info("%s %s", kind, json.dumps(payload, allow_nan=False, separators=(",", ":")))
         self.pending.clear()
@@ -372,6 +443,7 @@ class KalshiLiveDesk:
             os.fsync(stream.fileno())
         os.replace(temporary, self.path)
         self.last_checkpoint = self.clock()
+        self.save_ms = (time.perf_counter() - started) * 1000
 
     def _twin_events(self, events: list[Any]) -> None:
         for event in events:
@@ -1176,7 +1248,9 @@ class KalshiLiveDesk:
 
     def _heartbeat(self) -> None:
         if self.clock() - self.last_status >= 60:
-            self._record("speeddesk_live_status", **self.panel())
+            self._record("speeddesk_live_status", **self.panel(),
+                         save={"last_ms": self.save_ms, "archived_windows": len(self.archived),
+                               "saved_orders": sum(intent.window not in self.archived for intent in self.intents.values())})
             self.last_status = self.clock()
         if self.pending or self.clock() - self.last_checkpoint >= 5:
             self.checkpoint()

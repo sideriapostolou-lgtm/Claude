@@ -423,6 +423,15 @@ so an order never waits behind the account reads that came just before it. Befor
 reads settlements only while a traded window has ended and is not yet settled. One durable write before the
 send holds the intent, its full reservation and its practice-twin order; the post-send write follows the reply.
 
+Small saves (2026-10-13). Every save rewrote every order the companion had ever made, twice (the risk book and
+the intent journal): 206 ms per save on Railway by 13:45 UTC, about 87 us more per stored order, several saves a
+second on the shared event loop. A window an hour past its close, settled and with nothing open, now moves once
+into a write-once ledger chunk (`kalshi_live_archive/<n>`, committed in the same transaction as the state that
+lists it); saves hold only the other windows. A restart merges the chunks under the saved state before the
+book is rebuilt, so every restore check sees the full books; a missing or inconsistent chunk refuses to start.
+An archived window with new activity is saved in full again and archived anew once finished (later copies win).
+The release before this cannot read the archive and fails closed (companion halted, no orders): roll forward.
+
 The public US probe checks the five-minute series and validates an actual market's BTC/UP_DOWN/5m/BRTI terms
 and start/end before logging `skipwatch_us_5m_listing`. Its first verified observation stays on the page.
 The series alone is not a listing; failed requests are unknown. This bounded latest-event check does not

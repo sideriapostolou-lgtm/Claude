@@ -11,6 +11,7 @@ import hashlib
 import itertools
 import math
 import re
+from collections.abc import Callable
 from dataclasses import asdict, dataclass, field
 from decimal import ROUND_CEILING, Decimal
 from typing import Any, Literal
@@ -75,6 +76,10 @@ class LiveLimits:
         object.__setattr__(self, "lock_max_price", min(self.lock_max_price, 0.99))
         if self.fee_precision not in (0.0001, 0.01) or self.min_fill_qty != 0.01:
             raise ValueError("Unsupported live fee precision or execution increment")
+
+
+# The parts of the book's saved state that belong to one window; a finished window's parts can be archived.
+WINDOW_PARTS = ("windows", "intents", "inventory", "fills", "settled")
 
 
 def without_default_lock(row: dict[str, Any]) -> dict[str, Any]:
@@ -649,16 +654,22 @@ class LiveRiskBook:
         self.integrity_error = self.integrity_reset_armed = None
         return code
 
-    def to_state(self) -> dict[str, Any]:
+    def window_parts(self, keep: Callable[[str], bool]) -> dict[str, dict[str, Any]]:
+        """The per-window parts of the saved state (WINDOW_PARTS) for the windows ``keep`` accepts."""
+        return {"windows": {key: asdict(value) for key, value in self.windows.items() if keep(key)},
+                "intents": {key: without_default_lock(asdict(value)) for key, value in self.intents.items()
+                            if keep(value.window)},
+                "inventory": {key: asdict(value) for key, value in self.inventory.items() if keep(key)},
+                "fills": {key: asdict(value) for key, value in self.fills.items() if keep(value.window)},
+                "settled": {key: asdict(value) for key, value in self.settled.items() if keep(key)}}
+
+    def to_state(self, without: frozenset[str] | set[str] = frozenset()) -> dict[str, Any]:
+        """The saved state; windows in ``without`` are left to the caller's write-once archive."""
         # Fields added for locks are written only when they carry information, so the previous release can
         # still read a state with no pending lock if a deployment is rolled back (limits come from settings).
         limits = {key: value for key, value in asdict(self.limits).items() if key not in ("lock_s", "lock_max_price")}
         return {"version": 1, "venue": "kalshi", "limits": limits,
-                "windows": {key: asdict(value) for key, value in self.windows.items()},
-                "intents": {key: without_default_lock(asdict(value)) for key, value in self.intents.items()},
-                "inventory": {key: asdict(value) for key, value in self.inventory.items()},
-                "fills": {key: asdict(value) for key, value in self.fills.items()},
-                "settled": {key: asdict(value) for key, value in self.settled.items()},
+                **self.window_parts(lambda window: window not in without),
                 "day_pnl": self.day_pnl, "realized_pnl": self.realized_pnl, "stop_anchor": self.stop_anchor,
                 "halted": self.halted, "halt_reason": self.halt_reason, "integrity_error": self.integrity_error,
                 "resume_token_hash": self.resume_token_hash, "seen_resume_hashes": sorted(self.seen_resume_hashes),
