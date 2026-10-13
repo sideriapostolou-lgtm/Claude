@@ -314,9 +314,15 @@ class PracticeDesk:
         if window.end <= window.start or window.tick_size <= 0 or window.min_trade_qty <= 0:
             raise ValueError("Invalid window")
         existing = self.windows.get(window.slug)
-        if existing and existing.start_price is not None:
+        if window.venue == "kalshi":
+            # Kalshi's strike is the previous window's settlement, a 60-second BRTI average before the open. A
+            # Coinbase print in the start second missed it by $19.61 on average (up to $100) on 2026-10-12/13,
+            # worth about 5 cents of fair value, so only the venue strike opens a Kalshi window, saved or not.
+            window.start_price = (existing.start_price if existing and existing.start_price is not None
+                                  else window.venue_start_price)
+        elif existing and existing.start_price is not None:
             window.start_price = existing.start_price
-        if window.start_price is None:
+        if window.start_price is None and window.venue != "kalshi":
             window.start_price = self.tape.opening(window.start)
         self.windows[window.slug] = window
         if window.venue in VENUES:
@@ -327,7 +333,7 @@ class PracticeDesk:
         if not self.tape.tick(price, at):
             return
         for window in self.windows.values():
-            if window.start_price is None and int(at) == int(window.start):
+            if window.start_price is None and window.venue != "kalshi" and int(at) == int(window.start):
                 window.start_price = price
 
     def on_book(self, book: Book) -> bool:

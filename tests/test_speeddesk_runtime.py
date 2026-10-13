@@ -263,7 +263,7 @@ def prepare_kalshi(runner: SpeedRunner, clock: FakeClock, *, end: float | None =
     now = clock.now()
     slug = "KXBTC15M-test"
     runner.on_windows([Window(slug, now, end or now + 900, 80000, taker_coefficient=.07,
-                              maker_coefficient=0, venue="kalshi", fee_rounding="kalshi")])
+                              maker_coefficient=0, venue_start_price=80000, venue="kalshi", fee_rounding="kalshi")])
     for side in ("up", "down"):
         runner.on_book(Book(slug, side, (Level(.3, 2),), (Level(.6, 10),), now, "kalshi-first", now))
     return slug
