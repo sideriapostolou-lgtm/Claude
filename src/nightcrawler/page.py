@@ -692,6 +692,20 @@ _SCRIPT = r"""
     put($("speeddesk-history-body"), ...(reports.length ? reports.map(([day, report]) =>
       detail("day-" + day, day + " UTC · practice report", ...venueCards(report, "day-" + day, day)))
       : [el("p", "empty", "No completed daily reports yet.")]));
+    const coins = Array.isArray(desk.coins) ? desk.coins : [];
+    $("speeddesk-coins-wrap").hidden = !coins.length;
+    put($("speeddesk-coins"), ...coins.map((c) => {
+      const t = c.today || {}, all = c.total || {};
+      return el("div", "box speed-venue", el("div", "line", el("h3", null, c.name + " (" + c.series + ")"),
+        el("span", "tag", "PRACTICE")),
+        el("p", "meta", (c.stale ? "Report behind: " : "") + c.status
+          + (isNum(c.price) ? " · price " + c.price : "") + (c.reason ? " · " + c.reason : "")),
+        el("div", "rows", row("Today: traded windows / fills", count(t.windows) + " / " + count(t.fills)),
+          row("Today: locked pairs / direction", usd(t.locked_usd, true) + " / " + usd(t.directional_usd, true)),
+          row("Today: net result, after fees", usd(t.pnl_usd, true)),
+          row("Since start: settled windows", count(all.settled_windows)),
+          row("Since start: net result", usd(all.pnl_usd, true))));
+    }));
     $("speeddesk-feed").textContent = "Last Bitcoin tick: "
       + (isNum(desk.btc_age_s) ? desk.btc_age_s.toFixed(1) + " seconds ago" : "not received")
       + "; last book: " + (isNum(desk.book_age_s) ? desk.book_age_s.toFixed(1) + " seconds ago" : "not received")
@@ -1381,6 +1395,10 @@ def render_page_html(settings: Settings) -> str:
         "<div class=\"rows\" id=\"speeddesk-figures\"></div></details>"
         "<details class=\"about\" id=\"speeddesk-history\"><summary>Completed daily reports by venue</summary>"
         "<div id=\"speeddesk-history-body\"></div></details>"
+        "<div id=\"speeddesk-coins-wrap\" hidden><p class=\"sub\">More coins on Kalshi (practice only)</p>"
+        "<div id=\"speeddesk-coins\"></div>"
+        "<p class=\"help\">Each coin runs the same rules on pretend money with its own budget, opening from Kalshi's "
+        "own strike. No real orders: real money on a coin needs its practice record and the owner's numbers.</p></div>"
         "<p class=\"help\">Pretend money only. Today starts at midnight UTC. Results use settled windows and include "
         "fees; open windows can still lose. Locked pairs and direction are separate parts of the same result. "
         "Fill rates count orders with any fill, not contracts. "

@@ -426,6 +426,10 @@ class Settings:
                                        "only; never in a file or the repo)", secret=True)
     # ---- Bitcoin speed desk: practice books plus a separately gated Kalshi companion ----
     speeddesk_enabled: bool = _f(True, "bool", "Run the Bitcoin speed desk's independent practice trial")
+    # Owner, 2026-10-13: "scale ... to other markets but let's perfect it first". Practice only: no key, no orders.
+    speeddesk_coins: str = _f("", "text", "Comma list of other Kalshi 15-minute coins to run as practice-only "
+                              "speed desks (eth, sol, xrp, doge), each with its own paper budget and report; "
+                              "empty runs none. Never places a real order")
     speeddesk_kalshi_enabled: bool = _f(True, "bool", "Also read Kalshi Bitcoin 15-minute market data for the "
                                           "speed desk; this switch never authorizes orders")
     speeddesk_kalshi_ws_enabled: bool = _f(True, "bool", "Use the read-only Kalshi market WebSocket when keys "
@@ -616,6 +620,12 @@ class Settings:
             if (f.name.startswith("speeddesk_kalshi_") and meta.get("unit") in ("usd", "seconds")
                     and (isinstance(value, bool) or not isinstance(value, (int, float)))):
                 problems.append(f"{env} must be a finite number")
+                continue
+            if f.name == "speeddesk_coins":
+                names = {part.strip().lower() for part in str(value).split(",") if part.strip()}
+                unknown = sorted(names - {"eth", "sol", "xrp", "doge"})
+                if not isinstance(value, str) or unknown:
+                    problems.append(f"{env} accepts only eth, sol, xrp and doge")
                 continue
             if f.name in ("skipwatch_poll_s", "skipwatch_max_storage_mb", "skipwatch_min_free_mb"):
                 if isinstance(value, bool) or not isinstance(value, (int, float)):
