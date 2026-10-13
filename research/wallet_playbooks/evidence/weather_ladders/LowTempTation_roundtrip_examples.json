@@ -1,0 +1,800 @@
+[
+  {
+    "shares": 150.55,
+    "buy": 0.3365188974,
+    "sell": 0.99,
+    "minutes": 2.283333333333333,
+    "title": "Will the highest temperature in Lucknow be 33\u00b0C on October 13?"
+  },
+  {
+    "shares": 36,
+    "buy": 0.9733333333,
+    "sell": 0.99,
+    "minutes": 0.1,
+    "title": "Will the lowest temperature in Buenos Aires be 11\u00b0C on October 12?"
+  },
+  {
+    "shares": 42,
+    "buy": 0.9728571429,
+    "sell": 0.99,
+    "minutes": 0.06666666666666667,
+    "title": "Will the lowest temperature in Cape Town be 14\u00b0C on October 12?"
+  },
+  {
+    "shares": 83,
+    "buy": 0.963373494,
+    "sell": 0.99,
+    "minutes": 0.06666666666666667,
+    "title": "Will the highest temperature in Mexico City be 24\u00b0C on October 11?"
+  },
+  {
+    "shares": 11.37,
+    "buy": 0.9794397537,
+    "sell": 0.996,
+    "minutes": 0.08333333333333333,
+    "title": "Will the highest temperature in Mexico City be 21\u00b0C on October 11?"
+  },
+  {
+    "shares": 48,
+    "buy": 0.9725,
+    "sell": 0.99,
+    "minutes": 0.06666666666666667,
+    "title": "Will the lowest temperature in Toronto be 13\u00b0C on October 11?"
+  },
+  {
+    "shares": 318.35,
+    "buy": 0.9527061725,
+    "sell": 0.9927391236,
+    "minutes": 0.1,
+    "title": "Will the highest temperature in Mexico City be 20\u00b0C on October 10?"
+  },
+  {
+    "shares": 31.95,
+    "buy": 0.9668701095,
+    "sell": 0.99,
+    "minutes": 0.08333333333333333,
+    "title": "Will the highest temperature in Mexico City be 18\u00b0C on October 9?"
+  },
+  {
+    "shares": 35.63,
+    "buy": 0.9788773505,
+    "sell": 0.997,
+    "minutes": 0.05,
+    "title": "Will the highest temperature in Buenos Aires be 14\u00b0C on October 9?"
+  },
+  {
+    "shares": 20,
+    "buy": 0.98,
+    "sell": 0.99,
+    "minutes": 0.06666666666666667,
+    "title": "Will the lowest temperature in Munich be 7\u00b0C on October 9?"
+  },
+  {
+    "shares": 6,
+    "buy": 0.98,
+    "sell": 0.99,
+    "minutes": 0.1,
+    "title": "Will the highest temperature in Sao Paulo be 31\u00b0C on October 8?"
+  },
+  {
+    "shares": 169.15,
+    "buy": 0.9557227904,
+    "sell": 0.9944339344,
+    "minutes": 0.06666666666666667,
+    "title": "Will the highest temperature in Panama City be 30\u00b0C on October 8?"
+  },
+  {
+    "shares": 176.25,
+    "buy": 0.152,
+    "sell": 0.99,
+    "minutes": 1.6333333333333333,
+    "title": "Will the lowest temperature in Los Angeles be between 70-71\u00b0F on October 7?"
+  },
+  {
+    "shares": 463.95,
+    "buy": 0.9368565578,
+    "sell": 0.978,
+    "minutes": 30.183333333333334,
+    "title": "Will the highest temperature in Madrid be 21\u00b0C on October 7?"
+  },
+  {
+    "shares": 61,
+    "buy": 0.4304918033,
+    "sell": 0.99,
+    "minutes": 5.183333333333334,
+    "title": "Will the highest temperature in Lucknow be 32\u00b0C on October 7?"
+  },
+  {
+    "shares": 5,
+    "buy": 0.98,
+    "sell": 0.99,
+    "minutes": 0.08333333333333333,
+    "title": "Will the lowest temperature in San Francisco be between 60-61\u00b0F on October 7?"
+  },
+  {
+    "shares": 48,
+    "buy": 0.5735416667,
+    "sell": 0.99,
+    "minutes": 106.33333333333333,
+    "title": "Will the highest temperature in Tokyo be 25\u00b0C on October 7?"
+  },
+  {
+    "shares": 111.26,
+    "buy": 0.98,
+    "sell": 0.996,
+    "minutes": 0.06666666666666667,
+    "title": "Will the highest temperature in Buenos Aires be 16\u00b0C on October 7?"
+  },
+  {
+    "shares": 48,
+    "buy": 0.9725,
+    "sell": 0.99,
+    "minutes": 0.06666666666666667,
+    "title": "Will the lowest temperature in Cape Town be 11\u00b0C on October 7?"
+  },
+  {
+    "shares": 5,
+    "buy": 0.98,
+    "sell": 0.99,
+    "minutes": 0.06666666666666667,
+    "title": "Will the lowest temperature in Munich be 8\u00b0C on October 7?"
+  },
+  {
+    "shares": 55,
+    "buy": 0.98,
+    "sell": 0.99,
+    "minutes": 0.08333333333333333,
+    "title": "Will the lowest temperature in Qingdao be 10\u00b0C on October 7?"
+  },
+  {
+    "shares": 5,
+    "buy": 0.98,
+    "sell": 0.99,
+    "minutes": 0.1,
+    "title": "Will the lowest temperature in Madrid be 16\u00b0C on October 6?"
+  },
+  {
+    "shares": 41,
+    "buy": 0.9726829268,
+    "sell": 0.99,
+    "minutes": 0.06666666666666667,
+    "title": "Will the lowest temperature in Buenos Aires be 12\u00b0C on October 6?"
+  },
+  {
+    "shares": 96.79,
+    "buy": 0.93934704,
+    "sell": 0.99,
+    "minutes": 0.1,
+    "title": "Will the lowest temperature in Munich be 5\u00b0C or below on October 6?"
+  },
+  {
+    "shares": 104.55,
+    "buy": 0.9038144429,
+    "sell": 0.99,
+    "minutes": 0.1,
+    "title": "Will the highest temperature in Buenos Aires be 23\u00b0C on October 5?"
+  },
+  {
+    "shares": 26,
+    "buy": 0.9746153846,
+    "sell": 0.99,
+    "minutes": 0.06666666666666667,
+    "title": "Will the lowest temperature in Taipei be 23\u00b0C on October 6?"
+  },
+  {
+    "shares": 78.92,
+    "buy": 0.481160669,
+    "sell": 0.99,
+    "minutes": 5.25,
+    "title": "Will the highest temperature in Lucknow be 34\u00b0C on October 5?"
+  },
+  {
+    "shares": 5,
+    "buy": 0.98,
+    "sell": 0.99,
+    "minutes": 0.08333333333333333,
+    "title": "Will the lowest temperature in Buenos Aires be 12\u00b0C on October 5?"
+  },
+  {
+    "shares": 48,
+    "buy": 0.9725,
+    "sell": 0.99,
+    "minutes": 0.1,
+    "title": "Will the lowest temperature in Cape Town be 16\u00b0C on October 5?"
+  },
+  {
+    "shares": 482.55,
+    "buy": 0.4646333022,
+    "sell": 0.99,
+    "minutes": 33.333333333333336,
+    "title": "Will the highest temperature in Taipei be 35\u00b0C on October 4?"
+  },
+  {
+    "shares": 47,
+    "buy": 0.9736170213,
+    "sell": 0.99,
+    "minutes": 0.16666666666666666,
+    "title": "Will the lowest temperature in Austin be between 76-77\u00b0F on October 4?"
+  },
+  {
+    "shares": 53,
+    "buy": 0.9694339623,
+    "sell": 0.99,
+    "minutes": 0.08333333333333333,
+    "title": "Will the lowest temperature in Buenos Aires be 10\u00b0C on October 4?"
+  },
+  {
+    "shares": 5,
+    "buy": 0.98,
+    "sell": 0.99,
+    "minutes": 0.05,
+    "title": "Will the lowest temperature in Buenos Aires be 12\u00b0C on October 3?"
+  },
+  {
+    "shares": 5,
+    "buy": 0.98,
+    "sell": 0.99,
+    "minutes": 0.08333333333333333,
+    "title": "Will the lowest temperature in Cape Town be 15\u00b0C on October 3?"
+  },
+  {
+    "shares": 53,
+    "buy": 0.9732075472,
+    "sell": 0.99,
+    "minutes": 0.13333333333333333,
+    "title": "Will the lowest temperature in Qingdao be 15\u00b0C on October 3?"
+  },
+  {
+    "shares": 5,
+    "buy": 0.98,
+    "sell": 0.99,
+    "minutes": 0.15,
+    "title": "Will the lowest temperature in Chicago be between 54-55\u00b0F on October 2?"
+  },
+  {
+    "shares": 5,
+    "buy": 0.98,
+    "sell": 0.99,
+    "minutes": 0.13333333333333333,
+    "title": "Will the lowest temperature in Buenos Aires be 7\u00b0C on October 1?"
+  },
+  {
+    "shares": 48,
+    "buy": 0.9725,
+    "sell": 0.99,
+    "minutes": 0.1,
+    "title": "Will the lowest temperature in Cape Town be 15\u00b0C on October 2?"
+  },
+  {
+    "shares": 81.29,
+    "buy": 0.9713544101,
+    "sell": 0.99,
+    "minutes": 0.08333333333333333,
+    "title": "Will the highest temperature in Mexico City be 23\u00b0C on October 1?"
+  },
+  {
+    "shares": 48,
+    "buy": 0.9735416667,
+    "sell": 0.99,
+    "minutes": 0.15,
+    "title": "Will the lowest temperature in Guangzhou be 27\u00b0C on October 1?"
+  },
+  {
+    "shares": 296.9,
+    "buy": 0.8894553722,
+    "sell": 0.99,
+    "minutes": 0.1,
+    "title": "Will the highest temperature in Cape Town be 25\u00b0C on October 1?"
+  },
+  {
+    "shares": 44.13,
+    "buy": 0.8889666893,
+    "sell": 0.99,
+    "minutes": 0.06666666666666667,
+    "title": "Will the lowest temperature in Munich be 5\u00b0C on September 30?"
+  },
+  {
+    "shares": 92.15,
+    "buy": 0.3051166576,
+    "sell": 0.99,
+    "minutes": 0.7333333333333333,
+    "title": "Will the highest temperature in Cape Town be 29\u00b0C on September 29?"
+  },
+  {
+    "shares": 48,
+    "buy": 0.9725,
+    "sell": 0.99,
+    "minutes": 0.05,
+    "title": "Will the lowest temperature in Cape Town be 11\u00b0C on September 29?"
+  },
+  {
+    "shares": 53,
+    "buy": 0.9732075472,
+    "sell": 0.99,
+    "minutes": 0.1,
+    "title": "Will the lowest temperature in Jinan be 19\u00b0C on September 29?"
+  },
+  {
+    "shares": 201,
+    "buy": 0.9307462687,
+    "sell": 0.998,
+    "minutes": 0.05,
+    "title": "Will the highest temperature in Ankara be 14\u00b0C on September 28?"
+  },
+  {
+    "shares": 414.25,
+    "buy": 0.9690162945,
+    "sell": 0.99,
+    "minutes": 0.08333333333333333,
+    "title": "Will the highest temperature in Madrid be 24\u00b0C on September 28?"
+  },
+  {
+    "shares": 92,
+    "buy": 0.9434782609,
+    "sell": 0.99,
+    "minutes": 0.05,
+    "title": "Will the lowest temperature in Wellington be 7\u00b0C on September 28?"
+  },
+  {
+    "shares": 9.08,
+    "buy": 0.52,
+    "sell": 0.99,
+    "minutes": 1.3833333333333333,
+    "title": "Will the highest temperature in Sao Paulo be 33\u00b0C on September 26?"
+  },
+  {
+    "shares": 42,
+    "buy": 0.3942857143,
+    "sell": 0.99,
+    "minutes": 30.633333333333333,
+    "title": "Will the highest temperature in Cape Town be 21\u00b0C on September 26?"
+  },
+  {
+    "shares": 5,
+    "buy": 0.7,
+    "sell": 0.99,
+    "minutes": 15.6,
+    "title": "Will the lowest temperature in Paris be 13\u00b0C on September 26?"
+  },
+  {
+    "shares": 5,
+    "buy": 0.98,
+    "sell": 0.99,
+    "minutes": 0.05,
+    "title": "Will the lowest temperature in Wellington be 11\u00b0C on September 26?"
+  },
+  {
+    "shares": 15,
+    "buy": 0.65,
+    "sell": 0.99,
+    "minutes": 60.2,
+    "title": "Will the highest temperature in Tel Aviv be 31\u00b0C on September 24?"
+  },
+  {
+    "shares": 48,
+    "buy": 0.9725,
+    "sell": 0.99,
+    "minutes": 0.1,
+    "title": "Will the lowest temperature in Panama City be 27\u00b0C on September 24?"
+  },
+  {
+    "shares": 66,
+    "buy": 0.9718181818,
+    "sell": 0.99,
+    "minutes": 0.1,
+    "title": "Will the lowest temperature in Madrid be 16\u00b0C or below on September 24?"
+  },
+  {
+    "shares": 53,
+    "buy": 0.9732075472,
+    "sell": 0.99,
+    "minutes": 5.1,
+    "title": "Will the lowest temperature in Wellington be 8\u00b0C on September 24?"
+  },
+  {
+    "shares": 54.61,
+    "buy": 0.98,
+    "sell": 0.99,
+    "minutes": 0.1,
+    "title": "Will the highest temperature in Lucknow be 30\u00b0C on September 23?"
+  },
+  {
+    "shares": 5,
+    "buy": 0.6,
+    "sell": 0.99,
+    "minutes": 0.08333333333333333,
+    "title": "Will the lowest temperature in Munich be 0\u00b0C on September 23?"
+  },
+  {
+    "shares": 106.89,
+    "buy": 0.9682692488,
+    "sell": 0.99,
+    "minutes": 0.13333333333333333,
+    "title": "Will the highest temperature in Wellington be 9\u00b0C on September 23?"
+  },
+  {
+    "shares": 775.45,
+    "buy": 0.8895864337,
+    "sell": 0.99,
+    "minutes": 0.08333333333333333,
+    "title": "Will the highest temperature in Istanbul be 22\u00b0C on September 22?"
+  },
+  {
+    "shares": 42.84,
+    "buy": 0.9728011204,
+    "sell": 0.99,
+    "minutes": 0.1,
+    "title": "Will the lowest temperature in Cape Town be 20\u00b0C on September 22?"
+  },
+  {
+    "shares": 83,
+    "buy": 0.9630120482,
+    "sell": 0.99,
+    "minutes": 0.1,
+    "title": "Will the lowest temperature in Cape Town be 18\u00b0C on September 22?"
+  },
+  {
+    "shares": 5,
+    "buy": 0.98,
+    "sell": 0.99,
+    "minutes": 0.05,
+    "title": "Will the lowest temperature in Jinan be 17\u00b0C on September 22?"
+  },
+  {
+    "shares": 5,
+    "buy": 0.98,
+    "sell": 0.99,
+    "minutes": 0.1,
+    "title": "Will the lowest temperature in Jinan be 18\u00b0C on September 22?"
+  },
+  {
+    "shares": 48,
+    "buy": 0.9725,
+    "sell": 0.99,
+    "minutes": 0.05,
+    "title": "Will the lowest temperature in Manila be 27\u00b0C on September 22?"
+  },
+  {
+    "shares": 8,
+    "buy": 0.98,
+    "sell": 0.99,
+    "minutes": 0.06666666666666667,
+    "title": "Will the highest temperature in Sao Paulo be 29\u00b0C on September 21?"
+  },
+  {
+    "shares": 73,
+    "buy": 0.9331506849,
+    "sell": 0.99,
+    "minutes": 0.08333333333333333,
+    "title": "Will the lowest temperature in Sao Paulo be 19\u00b0C on September 21?"
+  },
+  {
+    "shares": 96.09,
+    "buy": 0.9712488292,
+    "sell": 0.99,
+    "minutes": 0.1,
+    "title": "Will the lowest temperature in Cape Town be 17\u00b0C on September 21?"
+  },
+  {
+    "shares": 5,
+    "buy": 0.98,
+    "sell": 0.99,
+    "minutes": 0.13333333333333333,
+    "title": "Will the highest temperature in Panama City be 29\u00b0C on September 20?"
+  },
+  {
+    "shares": 55.94,
+    "buy": 0.6930782982,
+    "sell": 0.99,
+    "minutes": 14.1,
+    "title": "Will the highest temperature in Ankara be 25\u00b0C on September 20?"
+  },
+  {
+    "shares": 92,
+    "buy": 0.9723913043,
+    "sell": 0.99,
+    "minutes": 0.016666666666666666,
+    "title": "Will the lowest temperature in Singapore be 28\u00b0C on September 20?"
+  },
+  {
+    "shares": 58,
+    "buy": 0.9737931034,
+    "sell": 0.99,
+    "minutes": 0.05,
+    "title": "Will the lowest temperature in Cape Town be 15\u00b0C on September 20?"
+  },
+  {
+    "shares": 39.53,
+    "buy": 0.3403263344,
+    "sell": 0.99,
+    "minutes": 66.4,
+    "title": "Will the highest temperature in Denver be between 76-77\u00b0F on September 19?"
+  },
+  {
+    "shares": 8.23,
+    "buy": 0.49,
+    "sell": 0.99,
+    "minutes": 0.15,
+    "title": "Will the lowest temperature in Atlanta be between 70-71\u00b0F on September 19?"
+  },
+  {
+    "shares": 63,
+    "buy": 0.9726984127,
+    "sell": 0.99,
+    "minutes": 0.06666666666666667,
+    "title": "Will the lowest temperature in Wellington be 10\u00b0C on September 20?"
+  },
+  {
+    "shares": 53,
+    "buy": 0.9732075472,
+    "sell": 0.99,
+    "minutes": 0.08333333333333333,
+    "title": "Will the lowest temperature in Lucknow be 26\u00b0C on September 19?"
+  },
+  {
+    "shares": 10,
+    "buy": 0.97,
+    "sell": 0.99,
+    "minutes": 0.1,
+    "title": "Will the lowest temperature in Buenos Aires be 16\u00b0C on September 19?"
+  },
+  {
+    "shares": 107.5,
+    "buy": 0.9734883721,
+    "sell": 0.99,
+    "minutes": 0.1,
+    "title": "Will the highest temperature in Sao Paulo be 21\u00b0C on September 18?"
+  },
+  {
+    "shares": 136,
+    "buy": 0.9572058824,
+    "sell": 0.99,
+    "minutes": 0.08333333333333333,
+    "title": "Will the highest temperature in Panama City be 31\u00b0C on September 18?"
+  },
+  {
+    "shares": 216.47,
+    "buy": 0.98,
+    "sell": 0.99,
+    "minutes": 0.1,
+    "title": "Will the highest temperature in Panama City be 30\u00b0C on September 18?"
+  },
+  {
+    "shares": 43.21,
+    "buy": 0.4006364268,
+    "sell": 0.99,
+    "minutes": 61.38333333333333,
+    "title": "Will the highest temperature in Karachi be 35\u00b0C on September 18?"
+  },
+  {
+    "shares": 68.99,
+    "buy": 0.9284099145,
+    "sell": 0.99,
+    "minutes": 0.08333333333333333,
+    "title": "Will the highest temperature in Buenos Aires be 26\u00b0C or higher on September 17?"
+  },
+  {
+    "shares": 12.1,
+    "buy": 0.89,
+    "sell": 0.99,
+    "minutes": 0.13333333333333333,
+    "title": "Will the highest temperature in Toronto be 22\u00b0C on September 17?"
+  },
+  {
+    "shares": 272.87,
+    "buy": 0.9739857808,
+    "sell": 0.99,
+    "minutes": 0.06666666666666667,
+    "title": "Will the highest temperature in Denver be between 80-81\u00b0F on September 16?"
+  },
+  {
+    "shares": 37.99,
+    "buy": 0.9755277705,
+    "sell": 0.99,
+    "minutes": 0.1,
+    "title": "Will the highest temperature in Los Angeles be between 74-75\u00b0F on September 16?"
+  },
+  {
+    "shares": 58,
+    "buy": 0.9737931034,
+    "sell": 0.99,
+    "minutes": 0.1,
+    "title": "Will the lowest temperature in Taipei be 24\u00b0C on September 17?"
+  },
+  {
+    "shares": 10,
+    "buy": 0.97,
+    "sell": 0.99,
+    "minutes": 0.1,
+    "title": "Will the lowest temperature in Manila be 27\u00b0C on September 16?"
+  },
+  {
+    "shares": 68.99,
+    "buy": 0.9779721699,
+    "sell": 0.99,
+    "minutes": 0.11666666666666667,
+    "title": "Will the lowest temperature in Buenos Aires be 2\u00b0C on September 16?"
+  },
+  {
+    "shares": 58,
+    "buy": 0.9737931034,
+    "sell": 0.99,
+    "minutes": 0.06666666666666667,
+    "title": "Will the lowest temperature in Toronto be 19\u00b0C on September 16?"
+  },
+  {
+    "shares": 348.66,
+    "buy": 0.9621419148,
+    "sell": 0.99,
+    "minutes": 0.1,
+    "title": "Will the highest temperature in Lucknow be 32\u00b0C on September 16?"
+  },
+  {
+    "shares": 429.92,
+    "buy": 0.9762637235,
+    "sell": 0.99,
+    "minutes": 1.95,
+    "title": "Will the highest temperature in Taipei be 28\u00b0C on September 16?"
+  },
+  {
+    "shares": 19.14,
+    "buy": 0.96,
+    "sell": 0.99,
+    "minutes": 0.11666666666666667,
+    "title": "Will the highest temperature in Manila be 30\u00b0C on September 16?"
+  },
+  {
+    "shares": 124.66,
+    "buy": 0.9717648003,
+    "sell": 0.99,
+    "minutes": 0.08333333333333333,
+    "title": "Will the lowest temperature in Sao Paulo be 15\u00b0C on September 16?"
+  },
+  {
+    "shares": 20,
+    "buy": 0.5,
+    "sell": 0.99,
+    "minutes": 8.516666666666667,
+    "title": "Will the highest temperature in Toronto be 23\u00b0C on September 15?"
+  },
+  {
+    "shares": 76.66,
+    "buy": 0.97,
+    "sell": 0.99,
+    "minutes": 0.1,
+    "title": "Will the lowest temperature in Cape Town be 13\u00b0C on September 16?"
+  },
+  {
+    "shares": 41.29,
+    "buy": 0.98,
+    "sell": 0.99,
+    "minutes": 0.13333333333333333,
+    "title": "Will the highest temperature in Mexico City be 22\u00b0C on September 15?"
+  },
+  {
+    "shares": 48,
+    "buy": 0.9725,
+    "sell": 0.99,
+    "minutes": 0.1,
+    "title": "Will the lowest temperature in Jinan be 20\u00b0C on September 16?"
+  },
+  {
+    "shares": 111.9,
+    "buy": 0.98,
+    "sell": 0.99,
+    "minutes": 0.1,
+    "title": "Will the lowest temperature in Buenos Aires be 9\u00b0C on September 15?"
+  },
+  {
+    "shares": 94.93,
+    "buy": 0.4069425893,
+    "sell": 0.99,
+    "minutes": 0.08333333333333333,
+    "title": "Will the highest temperature in Manila be 31\u00b0C on September 15?"
+  },
+  {
+    "shares": 234.25,
+    "buy": 0.94932508,
+    "sell": 0.99,
+    "minutes": 0.1,
+    "title": "Will the highest temperature in Jeddah be 38\u00b0C on September 15?"
+  },
+  {
+    "shares": 89.07,
+    "buy": 0.97,
+    "sell": 0.99,
+    "minutes": 0.08333333333333333,
+    "title": "Will the lowest temperature in San Francisco be between 60-61\u00b0F on September 15?"
+  },
+  {
+    "shares": 54.8,
+    "buy": 0.9618248175,
+    "sell": 0.99,
+    "minutes": 0.06666666666666667,
+    "title": "Will the lowest temperature in Toronto be 16\u00b0C on September 15?"
+  },
+  {
+    "shares": 168.17,
+    "buy": 0.9260248558,
+    "sell": 0.99,
+    "minutes": 0.06666666666666667,
+    "title": "Will the lowest temperature in Helsinki be 3\u00b0C on September 15?"
+  },
+  {
+    "shares": 103,
+    "buy": 0.9667961165,
+    "sell": 0.99,
+    "minutes": 0.05,
+    "title": "Will the lowest temperature in Istanbul be 18\u00b0C on September 15?"
+  },
+  {
+    "shares": 241.66,
+    "buy": 0.9267996359,
+    "sell": 0.99,
+    "minutes": 0.1,
+    "title": "Will the highest temperature in Karachi be 38\u00b0C on September 14?"
+  },
+  {
+    "shares": 155.93,
+    "buy": 0.9644891939,
+    "sell": 0.99,
+    "minutes": 0.1,
+    "title": "Will the lowest temperature in Chicago be between 56-57\u00b0F on September 14?"
+  },
+  {
+    "shares": 51.01,
+    "buy": 0.316122329,
+    "sell": 0.99,
+    "minutes": 0.06666666666666667,
+    "title": "Will the highest temperature in Seattle be between 60-61\u00b0F on September 13?"
+  },
+  {
+    "shares": 222.65,
+    "buy": 0.3803570627,
+    "sell": 0.99,
+    "minutes": 12.183333333333334,
+    "title": "Will the highest temperature in Denver be between 94-95\u00b0F on September 13?"
+  },
+  {
+    "shares": 57,
+    "buy": 0.9761403509,
+    "sell": 0.99,
+    "minutes": 0.06666666666666667,
+    "title": "Will the lowest temperature in Qingdao be 18\u00b0C on September 14?"
+  },
+  {
+    "shares": 114.37,
+    "buy": 0.4517452129,
+    "sell": 0.9635280231,
+    "minutes": 4.6,
+    "title": "Will the highest temperature in Buenos Aires be 13\u00b0C on September 13?"
+  },
+  {
+    "shares": 351.57,
+    "buy": 0.9760016497,
+    "sell": 0.99,
+    "minutes": 0.05,
+    "title": "Will the highest temperature in Chicago be between 70-71\u00b0F on September 13?"
+  },
+  {
+    "shares": 142.97,
+    "buy": 0.9793005526,
+    "sell": 0.99,
+    "minutes": 0.1,
+    "title": "Will the highest temperature in Panama City be 29\u00b0C on September 13?"
+  },
+  {
+    "shares": 314.26,
+    "buy": 0.9682584484,
+    "sell": 0.99,
+    "minutes": 0.1,
+    "title": "Will the highest temperature in Cape Town be 22\u00b0C on September 13?"
+  },
+  {
+    "shares": 7.97,
+    "buy": 0.98,
+    "sell": 0.99,
+    "minutes": 0.15,
+    "title": "Will the lowest temperature in Buenos Aires be 0\u00b0C on September 13?"
+  }
+]

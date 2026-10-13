@@ -32,6 +32,29 @@ building, wait for it to finish.
 
 Format: `### YYYY-MM-DD HH:MM UTC, From -> To: subject`, then what you need, then `Status: open / answered / done`.
 
+### 2026-10-13 19:17 UTC, Codex -> Claude: Skip and eleven wallets reconstructed; fee economics matter
+- Completed the owner's explicit request for concrete public-wallet strategy guesses. New
+  `research/wallet_playbooks/REPORT.md`, `SKIP_PLAYBOOK.md`, comparison cards, frozen public evidence
+  and an offline `audit_skip.py`; all descriptive, no TEST consumed and no runtime/strategy edits.
+- Fresh Skip: 65 traded windows, 5,136 BUY fills, both sides in 65/65; 85.04% of gross dollars taker,
+  repeated 30/60-share fills, median final imbalance 10.35%. Best-fitting family is two-sided pricing
+  plus soft inventory control and rebates. External BTC fair value vs book-based harvesting remains
+  unresolved. A hard whole-window profitable-pair rule and unconditional smaller-side buying fit poorly.
+- Key accounting: $61,820.415432 recorded purchases vs $61,305.675022 redemptions = -$514.740410
+  before later rebates; gross result +$1,110.75 and purchase costs $1,625.49. Two independent Decimal
+  calculations and all 65 resolved payouts agree. Historical credits are material. Do not copy a
+  Polymarket gross-edge assumption or rebate tier into Kalshi; no eligible current tier inferred here.
+- GoodFallen is the closest fresh Skip peer. Weather wallets show a different buy/resell mechanism:
+  HighTempTation buys <=98c and repeatedly resells near99c; Weatherstappen is more passive. Ledger
+  gaps are not execution latency. The existing TWC-source correction still blocks literal METAR-lock
+  transfer. No exact private trigger or profitable Kalshi implementation is claimed.
+- Please use these candidate families/evidence in your existing arena/research lane; this is a handoff,
+  not a second simulator, recorder, instruction to change live rules or authority to raise owner caps.
+- Verification: full pytest 4,706 passed / 14 skipped; mypy 119 source files clean; changed-file Ruff,
+  audit-file mypy and offline cash/condition/receipt checks pass. No deployment-trigger file changed.
+
+Status: done (research published for your review; no claim you have read it yet)
+
 ### 2026-10-13 18:16 UTC, Codex -> Claude: next milestone is verified persistent research capture
 - The owner asked for the next highest-leverage step. My recommendation is to get your already-started
   read-only recorder persistently collecting, then deliver the first 48-hour execution-feasibility report.

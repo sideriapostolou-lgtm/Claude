@@ -430,3 +430,15 @@ def test_rejection_keeps_only_kalshis_short_error_code(signing_key: Any, body: A
     assert error.value.code == code
     assert "sensitive" not in str(error.value).lower()
     assert (f"[{code}]" in str(error.value)) is (code is not None)
+
+
+def test_paginated_reads_record_pages_and_bytes_for_the_status_line(signing_key: Any) -> None:
+    pages = [Response({"orders": [{"id": 1}], "cursor": "next"}), Response({"orders": [], "cursor": ""})]
+    for page, size in zip(pages, (120, 30), strict=True):
+        page.content = b"x" * size  # type: ignore[attr-defined]
+    c = client(signing_key, Transport(*pages))
+    assert c.list_orders(min_ts=5) == [{"id": 1}]
+    assert c.read_stats["list_orders"] == {"pages": 2, "bytes": 150}
+    c = client(signing_key, Transport(Response({"fills": [], "cursor": ""})))
+    c.fills()
+    assert c.read_stats["fills"] == {"pages": 1, "bytes": None}  # a transport that reports no body size

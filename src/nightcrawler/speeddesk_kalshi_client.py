@@ -134,6 +134,9 @@ class KalshiClient:
         self._lock = threading.Lock()
         self._blocked_until = 0.0
         self._rate_failures = 0
+        # Pages and response bytes of each operation's last complete paginated read, for the status line.
+        self.read_stats: dict[str, dict[str, int | None]] = {}
+        self._local = threading.local()  # the response size of this thread's last call
 
     def _wait_turn(self, mutates: bool) -> None:
         """Rolling one-second budgets, reads and writes apart; a 429 backoff holds every later call."""
@@ -201,6 +204,8 @@ class KalshiClient:
                 uncertain = mutates and (status >= 500 or status in (408, 409) or 300 <= status < 400)
                 raise KalshiClientError(operation, "request rejected" if not uncertain else "result unconfirmed",
                                         status=status, uncertain=uncertain, code=_error_code(response))
+            content = getattr(response, "content", None)
+            self._local.bytes = len(content) if isinstance(content, (bytes, bytearray)) else None
             try:
                 result = response.json()
             except (ValueError, TypeError):
@@ -214,8 +219,11 @@ class KalshiClient:
         params = {**query, "limit": self._page_size, "subaccount": 0}
         out: list[dict[str, Any]] = []
         seen: set[str] = set()
-        for _ in range(self._max_pages):
+        size: int | None = 0
+        for page in range(1, self._max_pages + 1):
             result = self._call(operation, "GET", path, query=params)
+            last = getattr(self._local, "bytes", None)
+            size = None if size is None or last is None else size + last
             rows = result.get(key)
             if not isinstance(rows, list) or any(not isinstance(row, dict) for row in rows):
                 raise KalshiClientError(operation, "invalid account page")
@@ -225,6 +233,7 @@ class KalshiClient:
                     or not isinstance(cursor, str) or cursor in seen):
                 raise KalshiClientError(operation, "invalid pagination cursor")
             if cursor == "":
+                self.read_stats[operation] = {"pages": page, "bytes": size}
                 return out
             seen.add(cursor)
             params["cursor"] = cursor

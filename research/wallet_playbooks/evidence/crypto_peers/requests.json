@@ -1,0 +1,202 @@
+[
+  {
+    "name": "ce25_all_0",
+    "url": "https://data-api.polymarket.com/trades?user=0xce25e214d5cfe4f459cf67f08df581885aae7fdc&takerOnly=false&limit=500&offset=0",
+    "at": "2026-10-13T18:57:40.503862+00:00",
+    "elapsed": 0.046395892997679766,
+    "status": 200,
+    "sha256": "355d141269edddbd73c2cea441de1a8037726a70c6e8b9f930dd2d2c5fcb0566"
+  },
+  {
+    "name": "ce25_all_500",
+    "url": "https://data-api.polymarket.com/trades?user=0xce25e214d5cfe4f459cf67f08df581885aae7fdc&takerOnly=false&limit=500&offset=500",
+    "at": "2026-10-13T18:57:41.101053+00:00",
+    "elapsed": 0.06345067099755397,
+    "status": 200,
+    "sha256": "0a49ea4918bc5f6193ddbcfa3c32e98e12cc6abeef5c8625ddaada49a938303b"
+  },
+  {
+    "name": "ce25_taker_0",
+    "url": "https://data-api.polymarket.com/trades?user=0xce25e214d5cfe4f459cf67f08df581885aae7fdc&takerOnly=true&limit=500&offset=0",
+    "at": "2026-10-13T18:57:41.715678+00:00",
+    "elapsed": 0.03688598400185583,
+    "status": 200,
+    "sha256": "3212d8a143885f0c1a4ed7ff54a9717ce5930a0ff9231ccbd8388a5dd7ffb7d3"
+  },
+  {
+    "name": "ce25_taker_500",
+    "url": "https://data-api.polymarket.com/trades?user=0xce25e214d5cfe4f459cf67f08df581885aae7fdc&takerOnly=true&limit=500&offset=500",
+    "at": "2026-10-13T18:57:42.303550+00:00",
+    "elapsed": 0.14067775599687593,
+    "status": 200,
+    "sha256": "408fad0acafd5a0ec2f5da796d59a91579aa38ae6c6ef4b0caecd0a2376e1526"
+  },
+  {
+    "name": "ce25_pnl",
+    "url": "https://user-pnl-api.polymarket.com/user-pnl?user_address=0xce25e214d5cfe4f459cf67f08df581885aae7fdc&interval=all&fidelity=1d",
+    "at": "2026-10-13T18:57:42.995306+00:00",
+    "elapsed": 0.10949038699982339,
+    "status": 200,
+    "sha256": "89bb9b8058961c76721a6dc63ebeb7fef9827227a6238b92e8e351232456b641"
+  },
+  {
+    "name": "mo-money_all_0",
+    "url": "https://data-api.polymarket.com/trades?user=0x32ed2e546b187ca15e2841edc82b22c713cf8ec3&takerOnly=false&limit=500&offset=0",
+    "at": "2026-10-13T18:57:43.655561+00:00",
+    "elapsed": 0.10565179900004296,
+    "status": 200,
+    "sha256": "17a40082428957bf39d11e1a0104f973ab894e3f2bffb9e9c2f92beb0ff42687"
+  },
+  {
+    "name": "mo-money_all_500",
+    "url": "https://data-api.polymarket.com/trades?user=0x32ed2e546b187ca15e2841edc82b22c713cf8ec3&takerOnly=false&limit=500&offset=500",
+    "at": "2026-10-13T18:57:44.311913+00:00",
+    "elapsed": 0.08366837500216207,
+    "status": 200,
+    "sha256": "87da8ebe88d59a747b5d5ef525679692c548bf53c9d212fe0bdf7a4824348c8b"
+  },
+  {
+    "name": "mo-money_taker_0",
+    "url": "https://data-api.polymarket.com/trades?user=0x32ed2e546b187ca15e2841edc82b22c713cf8ec3&takerOnly=true&limit=500&offset=0",
+    "at": "2026-10-13T18:57:44.946544+00:00",
+    "elapsed": 0.0962725639983546,
+    "status": 200,
+    "sha256": "4811d3af7e620a481fa909a19d8593e899651167659cbb73a8b6ee777fc79ebe"
+  },
+  {
+    "name": "mo-money_taker_500",
+    "url": "https://data-api.polymarket.com/trades?user=0x32ed2e546b187ca15e2841edc82b22c713cf8ec3&takerOnly=true&limit=500&offset=500",
+    "at": "2026-10-13T18:57:45.593782+00:00",
+    "elapsed": 0.12926425100158667,
+    "status": 200,
+    "sha256": "45b21ca2336db7fe0309765f3becc12b0ea39aba4a58938843e1c34955fcd40c"
+  },
+  {
+    "name": "mo-money_pnl",
+    "url": "https://user-pnl-api.polymarket.com/user-pnl?user_address=0x32ed2e546b187ca15e2841edc82b22c713cf8ec3&interval=all&fidelity=1d",
+    "at": "2026-10-13T18:57:46.274243+00:00",
+    "elapsed": 0.11326095099866507,
+    "status": 200,
+    "sha256": "6d481a49d3ade74403282c0d0ac3447998c4330ac471f42a66241bd57a45903d"
+  },
+  {
+    "name": "GoodFallen_all_0",
+    "url": "https://data-api.polymarket.com/trades?user=0x0ca4e9d27ff826a109ecbf74754fb66b93f277a6&takerOnly=false&limit=500&offset=0",
+    "at": "2026-10-13T18:57:46.938502+00:00",
+    "elapsed": 0.21581522899941774,
+    "status": 200,
+    "sha256": "27d12af5eed6c4211fcee49b4a82fc5227fdc846e028b623cbe1103bf3d389eb"
+  },
+  {
+    "name": "GoodFallen_all_500",
+    "url": "https://data-api.polymarket.com/trades?user=0x0ca4e9d27ff826a109ecbf74754fb66b93f277a6&takerOnly=false&limit=500&offset=500",
+    "at": "2026-10-13T18:57:47.705039+00:00",
+    "elapsed": 0.17511585600004764,
+    "status": 200,
+    "sha256": "c5ef2c5311f758f2134049f51f73b5d1bd9c28e936f14764caee93f6128d5548"
+  },
+  {
+    "name": "GoodFallen_taker_0",
+    "url": "https://data-api.polymarket.com/trades?user=0x0ca4e9d27ff826a109ecbf74754fb66b93f277a6&takerOnly=true&limit=500&offset=0",
+    "at": "2026-10-13T18:57:48.431250+00:00",
+    "elapsed": 0.12226753900176845,
+    "status": 200,
+    "sha256": "6180925abf66a243c36aefc17aedd22e24bf7e6e78927a32287f938e481ef12c"
+  },
+  {
+    "name": "GoodFallen_taker_500",
+    "url": "https://data-api.polymarket.com/trades?user=0x0ca4e9d27ff826a109ecbf74754fb66b93f277a6&takerOnly=true&limit=500&offset=500",
+    "at": "2026-10-13T18:57:49.104491+00:00",
+    "elapsed": 0.15241580799920484,
+    "status": 200,
+    "sha256": "a53da5b78210b381cecf0ea48862f5c2cbd2ba788b0eacbc5dafd2b1d72b9099"
+  },
+  {
+    "name": "GoodFallen_pnl",
+    "url": "https://user-pnl-api.polymarket.com/user-pnl?user_address=0x0ca4e9d27ff826a109ecbf74754fb66b93f277a6&interval=all&fidelity=1d",
+    "at": "2026-10-13T18:57:49.807963+00:00",
+    "elapsed": 0.10105763100000331,
+    "status": 200,
+    "sha256": "3f6f7bcafc8bff371529c826fa3d922346ded28dd3103ed7e49a4aee91e7a459"
+  },
+  {
+    "name": "DB5_all_0",
+    "url": "https://data-api.polymarket.com/trades?user=0xdb5ad26b68d77ae966d29e7180147272ab7a3965&takerOnly=false&limit=500&offset=0",
+    "at": "2026-10-13T18:57:50.459869+00:00",
+    "elapsed": 0.1078530979975767,
+    "status": 200,
+    "sha256": "b32ad7f1bfa1a3dc5a3bcdad02b56723d4575e8e6664b8d65f58b3f292d1a56b"
+  },
+  {
+    "name": "DB5_all_500",
+    "url": "https://data-api.polymarket.com/trades?user=0xdb5ad26b68d77ae966d29e7180147272ab7a3965&takerOnly=false&limit=500&offset=500",
+    "at": "2026-10-13T18:57:51.118590+00:00",
+    "elapsed": 0.1891049279984145,
+    "status": 200,
+    "sha256": "6b0cdee178b5991e4999553c3b0ac071145a714ba0fc7ef5f2341d550c33bd05"
+  },
+  {
+    "name": "DB5_taker_0",
+    "url": "https://data-api.polymarket.com/trades?user=0xdb5ad26b68d77ae966d29e7180147272ab7a3965&takerOnly=true&limit=500&offset=0",
+    "at": "2026-10-13T18:57:51.858835+00:00",
+    "elapsed": 0.12156368599971756,
+    "status": 200,
+    "sha256": "22cc6e4d7d9df197880882e9d74f1fa9123394e8ceb6dfb50e4b2f4ac858d1c9"
+  },
+  {
+    "name": "DB5_taker_500",
+    "url": "https://data-api.polymarket.com/trades?user=0xdb5ad26b68d77ae966d29e7180147272ab7a3965&takerOnly=true&limit=500&offset=500",
+    "at": "2026-10-13T18:57:52.531714+00:00",
+    "elapsed": 0.26658689200121444,
+    "status": 200,
+    "sha256": "8620b82ea6c7e3acdce9d230bf7e34ff1afe3c2f610aef016a98be69e69efca0"
+  },
+  {
+    "name": "DB5_pnl",
+    "url": "https://user-pnl-api.polymarket.com/user-pnl?user_address=0xdb5ad26b68d77ae966d29e7180147272ab7a3965&interval=all&fidelity=1d",
+    "at": "2026-10-13T18:57:53.349614+00:00",
+    "elapsed": 0.12642848700124887,
+    "status": 200,
+    "sha256": "2311b830c6fbb6af874ecda9df8cf85440a00dd9f8ac075baea19369abcf4c06"
+  },
+  {
+    "name": "rwo_all_0",
+    "url": "https://data-api.polymarket.com/trades?user=0xd189664c5308903476f9f079820431e4fd7d06f4&takerOnly=false&limit=500&offset=0",
+    "at": "2026-10-13T18:57:54.026958+00:00",
+    "elapsed": 0.08461036600056104,
+    "status": 200,
+    "sha256": "7e6d1f6aa94be05b767e287389a1614c2463101e9999e12deef560ef415d8b71"
+  },
+  {
+    "name": "rwo_all_500",
+    "url": "https://data-api.polymarket.com/trades?user=0xd189664c5308903476f9f079820431e4fd7d06f4&takerOnly=false&limit=500&offset=500",
+    "at": "2026-10-13T18:57:54.662626+00:00",
+    "elapsed": 0.14567982900189236,
+    "status": 200,
+    "sha256": "77e69d2f843a106aa7a1f643bcf1a83a2f47d030f6edc1bbad143c6bb856079d"
+  },
+  {
+    "name": "rwo_taker_0",
+    "url": "https://data-api.polymarket.com/trades?user=0xd189664c5308903476f9f079820431e4fd7d06f4&takerOnly=true&limit=500&offset=0",
+    "at": "2026-10-13T18:57:55.359520+00:00",
+    "elapsed": 0.09634364600060508,
+    "status": 200,
+    "sha256": "adf79ba92d8ff6f0c28b193825abeef9bab18180829c19af6535ecfe250816e9"
+  },
+  {
+    "name": "rwo_taker_500",
+    "url": "https://data-api.polymarket.com/trades?user=0xd189664c5308903476f9f079820431e4fd7d06f4&takerOnly=true&limit=500&offset=500",
+    "at": "2026-10-13T18:57:56.007183+00:00",
+    "elapsed": 0.10136008100016625,
+    "status": 200,
+    "sha256": "0c158dbbaecdadd7014588736eab244ab6ac998a4ca4cf4ef50ea81d27816709"
+  },
+  {
+    "name": "rwo_pnl",
+    "url": "https://user-pnl-api.polymarket.com/user-pnl?user_address=0xd189664c5308903476f9f079820431e4fd7d06f4&interval=all&fidelity=1d",
+    "at": "2026-10-13T18:57:56.659672+00:00",
+    "elapsed": 0.17169841500071925,
+    "status": 200,
+    "sha256": "df944f43ca68e9151f866b10060a1bdcc7e4f160f9494e80bd54cc4ce505485b"
+  }
+]
