@@ -13,6 +13,27 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-13 12:40 UTC, Claude, branch claude/kalshi-day-reset, owner's one-time fresh daily budget
+- Research since 06:34 (public data, scratchpad `edge/`, `candles_*`, `cb/`): the bot's fair-value taker rule with
+  Kalshi's true strike, pre-registered (`edge/SPEC.md`) and built twice independently (identical to 4 decimals):
+  BTC first-signal -3.3c to -4.1c per contract on 1,792 TRAIN windows (t about -3.3); ETH/XRP/DOGE flat to
+  negative; SOL e=0.06 passed TRAIN (t 2.91) and failed its one TEST (-2.8c). The market mid has the better
+  Brier score than the model on every coin. The 168-rule grid on the four other coins: four TRAIN passes, all
+  failed TEST. Polymarket "no-lose" game sets: 266 simultaneous snapshots of three live games never priced below
+  $1.04 with fees, so the logged sets were read-order artifacts.
+- Railway changes at the owner's word: `SPEEDDESK_TAKE_EDGE=1.0` at 12:17 UTC (no model-driven takes; locks stay;
+  owner chose "Resume, no grabbed asks"); `SPEEDDESK_KALSHI_MODE` paper at 12:19 (an accidental click, the owner
+  said) and back to live at 12:20. Verified 12:21: REAL MONEY (Kalshi), authenticated, nothing open, day_stop.
+- Changed: new secret `SPEEDDESK_KALSHI_DAY_RESET_TOKEN` (owner: "U can reset it go ahead", "Approve everything").
+  A new value, on first sight at startup, makes today's loss count again from that moment until 00:00 UTC. The
+  $6 cap, the $10 lifetime stop and every other limit are unchanged; spent on first sight with its own
+  fingerprint kind; the reset point is saved with the books (`day_anchor`, ignored by a rollback).
+- Verified: failing-first model tests with real settlements (fresh budget, used once across restarts, lapses at
+  midnight, never lifts the lifetime stop, separate fingerprints, validated state) and a startup wiring test;
+  full suite 4,642 passed + the config secret list fixed; ruff and mypy clean.
+- Real money touched? Yes, at the owner's word: after deploy Claude sets a fresh token value once.
+- Next step: the skip reverse-engineering workflow (wf_64915e31-b20) and a pre-registered Kalshi test of what transfers.
+
 ## 2026-10-13 06:20 UTC, Claude, branch claude/kalshi-true-strike, Kalshi windows open at Kalshi's strike
 - Owner asked for a smarter bot, "a winner, not random buys". Research first, all public data, no keys:
   - Maker pairs (rest YES and NO a few cents under the market and wait for both): with strict fills (print
