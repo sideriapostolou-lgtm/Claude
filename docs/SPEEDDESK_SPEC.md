@@ -619,15 +619,34 @@ as strict or stricter. The practice desk's ledger commits with synchronous=NORMA
 longer synced. An order journaled but never sent (a crash between the row and the send, or a create lost before
 Kalshi) used to keep its reservation for good and hold a restart in "Reconciling startup orders". It is now
 released, and never sent again, only once its market has closed and two complete order lists read after the
-close, at least 30 s apart, leave it out while the account matches. Until then it counts in every cap and stop
-and startup waits (at most the rest of its window plus two minutes): absence alone proves nothing while the
-market trades, since a request held up on the way could still arrive, and Kalshi accepts no order on a closed
-market. An order that did reach Kalshi is listed whatever its status and is adopted, canceled and released on
-Kalshi's word as before; a late copy that turns up while the market trades is adopted the same way.
+close, at least 30 s apart, leave it out while that window's own facts agree: neither order list is behind the
+fills, Kalshi lists no fill in that window under an order id the bot does not know (it could be this order's),
+and the position matches the books or Kalshi has settled the market (its settlement row, and a flat position; in
+a window the owner also traded, the lists and fills decide). A slow read or a mismatch in another window no
+longer holds it. The release runs before the settlement pass, so the window settles in the same read and its
+payout check audits the books against Kalshi's revenue. (Review blocker, 2026-10-13: Kalshi settles about 5 s
+after the close, KXBTC15M-26OCT131145 at 15:45:04.68 UTC, and a settled market leaves the unsettled positions
+list; the release used to need a read with no failed check at all, so an unsent balancing bid or lock, which
+always sits in an unpaired window, failed position_mismatch on every read and real trading stopped for good.)
+While such an order waits after the close, complete lists are read at once and then every 30 s, so it is
+released about 30 s after the close. Until then it counts in every cap and stop, and the bot places no new order
+anywhere (an unresolved order pauses all new orders, as before; a restart waits at most the rest of its window
+plus about a minute): absence alone proves nothing while the market trades, since a request held up on the way
+could still arrive, and Kalshi accepts no order on a closed market. An order that did reach Kalshi is listed
+whatever its status and is adopted, canceled and released on Kalshi's word as before; a late copy that turns up
+while the market trades is adopted the same way. A definite refusal (the send guard's last check, or a definite
+4xx) rewrites that order's journal entry at once (synchronous=NORMAL: nothing was sent, so a host failure can
+only bring back the reservation the synced row holds), so a crash in the second before the next full save no
+longer restores a never-sent order as reserved. After a restart replayed the journal, the next full save empties
+the journal on disk as well.
 `tests/test_speeddesk_live_crash.py` kills a child process (`os._exit`) after the journal row and before the
 send, and after the send before the reply; checks at every send that the journal plus the last full save equals
 the full save made at that moment; and restarts from mid-run copies of the ledger (crash and after a full save)
-to check that the stop math is identical after the restart's first reconcile.
+to check that the stop math is identical after the restart's first reconcile. `tests/test_speeddesk_live_release.py`
+kills it between the row and the send of a balancing bid and of a lock, loses a balancing create in the running
+desk, settles a minute late, and kills within a second of a refusal; `tests/test_speeddesk_live_killpoints.py`
+takes crash images at ten points of the order path and runs each restart through the close and Kalshi's
+settlement (`KILLPOINT_SEEDS=6 KILLPOINT_CAP=1000` repeats the review's 350 images).
 
 The public US probe checks the five-minute series and validates an actual market's BTC/UP_DOWN/5m/BRTI terms
 and start/end before logging `skipwatch_us_5m_listing`. Its first verified observation stays on the page.

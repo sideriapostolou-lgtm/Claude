@@ -52,8 +52,8 @@ CHILD = textwrap.dedent("""
     desk, account, clock = make_desk(root)
     journal, create = desk._journal_intent, account.create_order
 
-    def journaled(intent, window):
-        journal(intent, window)
+    def journaled(intent, window, **kwargs):
+        journal(intent, window, **kwargs)
         status = desk.book.risk_status(clock.now())
         (root / "memory.json").write_text(json.dumps({
             "client_order_id": intent.client_order_id, "at": intent.at,

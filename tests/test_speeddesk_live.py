@@ -980,8 +980,8 @@ def test_one_save_before_the_send_holds_the_intent_and_its_practice_twin(tmp_pat
         original_checkpoint(**kwargs)
         writes.append("full")
 
-    def counting_journal(*args: Any) -> None:
-        original_journal(*args)
+    def counting_journal(*args: Any, **kwargs: Any) -> None:
+        original_journal(*args, **kwargs)
         writes.append("journal")
 
     def inspect(**kwargs: Any) -> dict[str, Any]:
