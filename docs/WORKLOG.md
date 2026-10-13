@@ -15,6 +15,37 @@ Template:
 
 
 
+## 2026-10-13 14:10 UTC, Codex, extreme-payout Kalshi strategy research
+- Changed: added `research/kalshi_moonshots/` with the exploratory plan, complete candidate entry/exit rules,
+  separate implementation/state/accounting/test specification, primary-source evidence, public sample and
+  reproducible payout/risk arithmetic. This is research before a later build, not a new trading strategy.
+  Pulled PR #27 merge `417cf0f` while finishing; its runtime changes remain untouched.
+- Found: public preceding-window prints include 0.1c outcomes on BTC/ETH/SOL/XRP; no sampled settlement
+  outcomes were scored. Current early-window books had no asks <=1c. The owner's 133x/455x/909x numbers fit
+  one-contract direct-account taker fees at .7c/.2c/.1c, but the specific UI calculation remains unverified.
+  Actual $1 size changes rounding and requires executable depth. Current rules use the CF final-minute
+  average, not a Coinbase last tick; official index/5Hz feeds are documented but account access untested.
+- Proposed: one BTC stale-quote repricing policy versus a same-entry settlement comparator, exact subcent
+  money and honest two-way fills, supported conditional probability intervals, chronological held-out
+  evaluation and no automatic compounding. Current live code is buys-only/whole-cent and cannot safely
+  inherit this policy. Future live use needs one account allocator plus separate owner amounts; paper
+  defaults and a jackpot example do not grant money authority.
+- Verified: independent venue, statistics and execution reviews; fixed conditional-versus-bucket calibration,
+  NO interval complement, hindsight latency, stopped-paper-bank attribution, and explicit exit quantity/limit
+  ambiguities. Independently recalculated fee-inclusive multiples, maximum $1 quantities, losing streaks,
+  Kelly diagnostics and exact binomial critical counts/power. JSON/local report links, whitespace and staged
+  secret scan checked. No source/tests/build inputs change from `417cf0f`; Claude's entry below records
+  4,668 passed / 12 skipped plus clean mypy/changed-file Ruff. Reused recorded green results, not a new
+  Codex suite run; no Python files changed for lint.
+- Not verified / skipped: no trained edge, complete historical executable-book backtest, index entitlement,
+  new multi-day recorder, actual profitable exit or scale capacity. No new deployment/log check: only
+  unwatched research/docs paths change. The recent speed numbers are explicitly attributed to Claude's
+  existing record and do not claim PR #27's post-deploy performance.
+- Real money touched? No. Public data/documentation reads and inert local analysis only; no credentials,
+  orders, trading settings, caps, paid data or application changes.
+- Next step: if implementing this design, start with the isolated read-only recorder and exact entry/exit
+  replay. A few days test mechanics; rare-event profitability may need months and can remain NO EDGE.
+
 ## 2026-10-13 14:00 UTC, Claude, branch claude/kalshi-small-saves
 - Changed: PR #26 is live (deployment 80e9a951, 13:34:37 UTC, commit 7ce65d8). Its new per-stage timings showed
   the real bottleneck: the pre-send save took 206 ms (median of 7 orders), because each save rewrote every order
