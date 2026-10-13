@@ -873,3 +873,67 @@ def test_owner_reset_shows_live_off_while_the_switches_are_off(tmp_path: Path) -
         assert desk.book.integrity_error == "fill_changed"
     finally:
         desk.close()
+
+
+# Kalshi's order list can trail its fills list (2026-10-13 02:00:03 UTC): wait for a fresh read, never stop for good.
+
+def test_order_list_trailing_the_fills_pauses_one_read_and_never_stops_real_money(tmp_path: Path) -> None:
+    desk, account, clock = make_desk(tmp_path)
+    try:
+        asyncio.run(desk.step())
+        order = account.orders[0]
+        size = float(order["remaining_count_fp"])
+        account.executions.append({"fill_id": "fill-lag", "order_id": order["order_id"], "ticker": TICKER,
+                                   "outcome_side": "yes", "book_side": "bid", "count_fp": f"{size:.2f}",
+                                   "yes_price_dollars": ".40", "fee_cost": "0.0000", "ts": clock.now()})
+        account.account_positions = [{"ticker": TICKER, "position_fp": f"{size:.2f}"}]
+        steps(desk, clock, 4)  # the order list still shows it resting with nothing filled
+        assert desk.book.integrity_error is None and desk.account_at is None
+        assert desk.panel()["mode"] == "live" and desk.panel()["waiting"]
+        order.update(status="executed", fill_count_fp=f"{size:.2f}", remaining_count_fp="0.00")
+        steps(desk, clock, 4)
+        assert desk.book.integrity_error is None and desk.account_at is not None
+        first = next(intent for intent in desk.intents.values() if intent.order_id == order["order_id"])
+        assert first.terminal and not desk.book.intents[first.client_order_id].reservation_active
+    finally:
+        desk.close()
+
+
+def test_order_list_trailing_the_fills_for_too_long_still_stops(tmp_path: Path) -> None:
+    desk, account, clock = make_desk(tmp_path)
+    try:
+        asyncio.run(desk.step())
+        order = account.orders[0]
+        size = float(order["remaining_count_fp"])
+        account.executions.append({"fill_id": "fill-lag", "order_id": order["order_id"], "ticker": TICKER,
+                                   "outcome_side": "yes", "book_side": "bid", "count_fp": f"{size:.2f}",
+                                   "yes_price_dollars": ".40", "fee_cost": "0.0000", "ts": clock.now()})
+        account.account_positions = [{"ticker": TICKER, "position_fp": f"{size:.2f}"}]
+        for _ in range(40):
+            asyncio.run(desk.step())
+            clock.advance(1)
+        # The order still listed as open (or listed as cancelled with nothing filled) against booked fills.
+        assert desk.book.integrity_error in {"order_terminal_regressed", "order_fill_count_mismatch"}
+    finally:
+        desk.close()
+
+
+def test_a_stale_report_of_a_finished_order_does_not_pause_trading(tmp_path: Path) -> None:
+    desk, account, clock = make_desk(tmp_path)
+    try:
+        asyncio.run(desk.step())
+        order = account.orders[0]
+        size = float(order["remaining_count_fp"])
+        account.executions.append({"fill_id": "fill-done", "order_id": order["order_id"], "ticker": TICKER,
+                                   "outcome_side": "yes", "book_side": "bid", "count_fp": f"{size:.2f}",
+                                   "yes_price_dollars": ".40", "fee_cost": "0.0000", "ts": clock.now()})
+        account.account_positions = [{"ticker": TICKER, "position_fp": f"{size:.2f}"}]
+        order.update(status="executed", fill_count_fp=f"{size:.2f}", remaining_count_fp="0.00")
+        steps(desk, clock, 4)
+        first = next(intent for intent in desk.intents.values() if intent.order_id == order["order_id"])
+        assert first.terminal and desk.account_at is not None
+        order.update(fill_count_fp="0.00")  # a stale copy of the finished order
+        steps(desk, clock, 4)
+        assert desk.book.integrity_error is None and desk.account_at is not None
+    finally:
+        desk.close()
