@@ -349,7 +349,7 @@ class KalshiLiveDesk:
         # Orders journaled since the last full save (JOURNAL_KEY), unsaved changes, and the last daily-report pass.
         self.journal: dict[str, dict[str, Any]] = {}
         self.dirty = False
-        self.saved_stops: tuple[Any, ...] = (None, None, False, None)
+        self.saved_stops: tuple[Any, ...] = ()
         self.last_reports = -math.inf
         # When each journaled order with no Kalshi order id was first missing from a complete order list.
         self.unsent_absent: dict[str, float] = {}
@@ -1686,7 +1686,8 @@ class KalshiLiveDesk:
         self._phase("step", began)
 
     def _heartbeat(self) -> None:
-        if self.clock() - self.last_status >= 60:
+        status = self.clock() - self.last_status >= 60
+        if status:
             # Account reads since the last status line: complete and recent reconcile times, each read's time,
             # pages, rows and bytes, and how often each consistency check failed; plus the latest reconcile.
             self._record("speeddesk_live_status", **self.panel(),
@@ -1699,11 +1700,17 @@ class KalshiLiveDesk:
                          clock=self.clock_offsets.summary())
             self.last_status = self.clock()
         since = self.clock() - self.last_checkpoint
-        if since >= 5 or self._must_save_now() or ((self.dirty or self.pending) and since >= SAVE_EVERY_S):
+        # The once-a-minute status line goes out at once (it is logged when saved), not up to a second later.
+        if (status or since >= 5 or self._must_save_now()
+                or ((self.dirty or self.pending) and since >= SAVE_EVERY_S)):
             self.checkpoint()
 
     def _stops(self) -> tuple[Any, ...]:
-        return self.book.integrity_error, self.fatal_reason, self.book.halted, self.book.integrity_reset_armed
+        # And the minute of the ladder's last stop: a promotion waits 24 h after one, so a crash must not forget a
+        # new stop (to the minute: a stop that keeps binding is noted on every decision, and saved within a second).
+        last_stop = self.ladder.state.last_stop_at
+        return (self.book.integrity_error, self.fatal_reason, self.book.halted, self.book.integrity_reset_armed,
+                None if last_stop is None else math.floor(last_stop / 60))
 
     def _must_save_now(self) -> bool:
         """A stop that appeared or cleared, or an owner's one-time action, is saved at once, not within a second."""

@@ -1205,11 +1205,15 @@ class Run:
         cost = intent.size * intent.unit_reserve
         assert intent.size <= clip + 1e-9
         assert book.cash_usd is not None and cost + reserved + debits <= book.cash_usd + 1e-9
+        # The stops measure the worst case with the new order in it (loss plan bug 1: a balancing order adds
+        # nothing), never more than the old sum of every reservation.
+        after = book.at_risk_usd
+        assert after <= at_risk + cost + 1e-9
         if not lock:
             assert current + cost <= window_usd + 1e-9
-            assert at_risk + cost <= open_usd + 1e-9
-            assert day_loss + at_risk + cost < day_usd
-            assert total_loss + at_risk + cost < 10
+            assert after <= open_usd + 1e-9
+            assert day_loss + after < day_usd
+            assert total_loss + after < 10
         self.counts["lock" if lock else "buy"] += 1
 
     def fill_or_cancel(self, now: float) -> None:
