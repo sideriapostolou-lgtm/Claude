@@ -972,8 +972,8 @@ def test_one_save_before_the_send_holds_the_intent_and_its_practice_twin(tmp_pat
     original_checkpoint, original_create = desk.checkpoint, account.create_order
     saves_with_intent: list[int] = []
 
-    def counting_checkpoint() -> None:
-        original_checkpoint()
+    def counting_checkpoint(**kwargs: Any) -> None:
+        original_checkpoint(**kwargs)
         saves_with_intent.append(len(desk.intents))
 
     def inspect(**kwargs: Any) -> dict[str, Any]:
@@ -1187,5 +1187,35 @@ def test_the_money_page_still_reads_the_whole_real_book_after_archiving(tmp_path
         clock.advance(2)
         desk.checkpoint()
         assert desk.last_mirror == stamp  # display copies are spaced out; the ledger save is not
+    finally:
+        desk.close()
+
+
+def test_only_the_save_before_an_order_and_owner_actions_wait_for_the_disk(tmp_path: Path) -> None:
+    desk, account, clock = make_desk(tmp_path, caps=SMALL_CAPS)
+    calls: list[bool] = []
+    original_sync, original_create = desk.ledger.set_synchronous, account.create_order
+    at_send: list[bool] = []
+
+    def spy(full: bool) -> None:
+        calls.append(full)
+        original_sync(full)
+
+    def inspect(**kwargs: Any) -> dict[str, Any]:
+        at_send.append(calls[-1])  # the save that made this intent durable
+        return original_create(**kwargs)
+
+    desk.ledger.set_synchronous = spy  # type: ignore[method-assign]
+    account.create_order = inspect  # type: ignore[method-assign]
+    try:
+        asyncio.run(desk.step())
+        assert at_send == [True] and len(account.creates) == 1
+        calls.clear()
+        clock.advance(1.5)
+        asyncio.run(desk.step())  # an account reconcile with no new order
+        assert calls and not any(calls)
+        desk._record("speeddesk_live_integrity_reset", state="an owner's one-time action")
+        desk.checkpoint()
+        assert calls[-1] is True
     finally:
         desk.close()

@@ -279,6 +279,18 @@ class Ledger:
                     "ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at",
                     (key, _dumps(value), self._now()))
 
+    def set_synchronous(self, full: bool) -> None:
+        """FULL syncs the write-ahead log to disk at every commit; NORMAL syncs it at checkpoints only.
+
+        Under NORMAL a process crash loses nothing; a host or power failure can lose the latest commits. Under WAL
+        the next FULL commit also makes every earlier commit durable. Only between transactions.
+        """
+        with self._lock:
+            if self._depth:
+                raise LedgerError("cannot change durability inside a transaction")
+            with self._locked() as conn:
+                conn.execute(f"PRAGMA synchronous={'FULL' if full else 'NORMAL'}")
+
     @contextlib.contextmanager
     def transaction(self) -> Iterator[Ledger]:
         """Context manager: one atomic SQLite transaction holding the lock (re-entrant).
