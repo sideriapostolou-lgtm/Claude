@@ -2593,6 +2593,15 @@ class App:
                 self.ledger.close()
 
 
+def live_mode_names(settings: Settings) -> list[str]:
+    """The ``*_MODE`` switches these Settings run live (TRADING_MODE, POLYDESK_MODE, SPEEDDESK_KALSHI_MODE, ...).
+
+    Read from the Settings the bot actually runs with, whichever env file they came from (``--env-file``).
+    """
+    return sorted(item.name.upper() for item in dataclasses.fields(settings)
+                  if item.name.endswith("_mode") and str(getattr(settings, item.name)).strip().lower() == "live")
+
+
 def build_app(settings: Settings, clock: Clock | None = None, *, session: Any = None,
               redaction_filter: Any = None, http: Any = None) -> App:
     """Construct http, clock, sources, crawler, cocoon, radar, judge, ledger, risk, broker
@@ -2757,7 +2766,7 @@ def build_app(settings: Settings, clock: Clock | None = None, *, session: Any = 
         # KALSHI_RECORDER_ENABLED=true; the recommended home is its own service (python -m nightcrawler.kalshi_recorder).
         from nightcrawler.kalshi_recorder import start_from_engine
 
-        start_from_engine(settings.data_dir, stop_event)
+        start_from_engine(settings.data_dir, stop_event, live=live_mode_names(settings))
     except Exception as exc:  # noqa: BLE001 - research capture never stops a desk
         log.warning("kalshi_recorder_not_started mode=observation error=%s", type(exc).__name__)
     if settings.trenddesk_enabled:  # PAPER only: lab 3's 50-day trend rule on BTC, ETH and SOL, once a day

@@ -5,14 +5,23 @@ Every case runs against the scripted public venue in ``kalshi_recorder_fixtures`
 
 from __future__ import annotations
 
+import json
 import logging
+import math
 import os
+import shutil
+import signal
+import subprocess
+import sys
 import threading
+import time
+from itertools import pairwise
 from pathlib import Path
 from typing import Any
 from urllib.parse import quote
 
 import pytest
+import requests
 from kalshi_recorder_fixtures import (
     NOW,
     Clock,
@@ -20,6 +29,8 @@ from kalshi_recorder_fixtures import (
     FakeResponse,
     event_row,
     iso,
+    market_row,
+    orderbook,
 )
 from test_kalshi_recorder import CANDIDATE, recorder, records, run, venue
 
@@ -30,12 +41,14 @@ from nightcrawler.kalshi_recorder import (
     SWEEP_QUERY_BYTES,
     TICKERS_PER_SWEEP,
     RecorderSettings,
+    Request,
+    TradeJob,
     Watched,
     main,
     run_recorder,
     start_from_engine,
 )
-from nightcrawler.kalshi_recorder_store import iter_records
+from nightcrawler.kalshi_recorder_store import RecorderStore, iter_records
 
 
 def gaps(tmp_path: Path) -> list[dict[str, Any]]:
@@ -153,10 +166,13 @@ def test_a_414_halves_the_sweep_chunk_until_kalshi_takes_it(tmp_path: Path) -> N
     box.next_sweep_at = clock.at
     run(box, clock, 300)
     box.close()
-    assert box.chunk_size <= 10 and not box.sweep_queue
+    assert not box.sweep_queue
     halved = [record for record in records(tmp_path, "telemetry") if record["kind"] == "chunk_halved"]
-    assert halved and all(record["status"] == 414 for record in halved)
+    assert halved and all(record["status"] == 414 for record in halved) and min(r["chunk_size"] for r in halved) <= 10
     assert any(record["kind"] == "sweep" for record in records(tmp_path, "markets"))
+    taken = {ticker for call in fake.calls if call["path"] == "/markets" and "tickers" in call["query"]
+             for ticker in call["query"]["tickers"][0].split(",") if len(call["query"]["tickers"][0].split(",")) <= 10}
+    assert len(taken) == 40  # every ticker went out in a chunk Kalshi took
 
 
 def test_a_settlement_call_that_keeps_failing_is_dropped_with_a_gap(tmp_path: Path) -> None:
@@ -323,3 +339,319 @@ def test_a_backlog_is_still_backfilled_when_its_only_ticker_was_unwatched(tmp_pa
     assert len(box.backfill_jobs) == 1
     box.close()
 
+
+
+# --------------------------------------------------------------------------- preflight 2026-10-13 (F2, P1/F3, P5-P7, M1)
+def crash_copy(tmp_path: Path, name: str = "crash") -> Path:
+    """What a SIGKILL right now would leave: the files as the OS holds them (Python's buffers die with the process),
+    then recovered the way a restart recovers them."""
+    copy = tmp_path / name
+    shutil.copytree(tmp_path / "kalshi_recorder", copy / "kalshi_recorder")
+    RecorderStore(copy / "kalshi_recorder", max_bytes=256 * 1024 * 1024, min_free_bytes=0).close()
+    return copy
+
+
+def fetched(lane: str, path: str, at: float, body: dict[str, Any]) -> Fetched:
+    return Fetched(lane, path, (), 200, None, at - 0.1, at, 100.0, 10, "0" * 64, body, None)
+
+
+def test_f2_the_main_loop_flushes_a_quiet_lane_so_a_kill_keeps_its_rows(tmp_path: Path) -> None:
+    """F2: a lane was flushed only by a later append on it >= 5 s on; a quiet lane's rows sat in memory for an hour."""
+    clock, fake = Clock(NOW), venue()
+    box = recorder(tmp_path, fake, clock, btc15m=False)
+    box.emit("telemetry", "probe", {"n": 1})
+    run(box, clock, 4)
+    box.emit("telemetry", "probe", {"n": 2})  # nothing else writes this lane for the rest of the hour
+    written = clock.at
+    while clock.at < written + 5.5:
+        if not box.step():
+            clock.sleep(0.25)
+    copy = crash_copy(tmp_path)
+    assert [record["n"] for record in records(copy, "telemetry") if record["kind"] == "probe"] == [1, 2]
+    assert any(record["kind"] == "session_started" for record in records(copy, "gaps"))
+    box.close()
+
+
+CHILD = r"""
+import sys
+sys.path[:0] = sys.argv[2:]
+from kalshi_recorder_fixtures import FakeKalshi, event_row, market_row, orderbook, series_row
+from nightcrawler import kalshi_recorder
+from nightcrawler.kalshi_public import PublicKalshi
+
+fake = FakeKalshi()
+fake.series = {"KXHIGHNY": series_row()}
+fake.events = [event_row()]
+fake.markets = {"KXHIGHNY-26OCT15-T76": market_row()}
+fake.books = {"KXHIGHNY-26OCT15-T76": orderbook([("0.30", "12.00")], [("0.67", "40.00")])}
+
+
+class Session:
+    def get(self, url, params=None, headers=None, **kwargs):
+        return fake("GET", url, params=params, headers=headers, **kwargs)
+
+
+kalshi_recorder.PublicKalshi = lambda limiter, wall: PublicKalshi(limiter, session=Session(), wall=wall)
+raise SystemExit(kalshi_recorder.main(["run", "--data-dir", sys.argv[1]]))
+"""
+
+
+@pytest.mark.parametrize("number", [signal.SIGTERM, signal.SIGINT])
+def test_f2_sigterm_or_sigint_flushes_and_seals_every_lane_before_exit(tmp_path: Path, number: int) -> None:
+    """Railway stops a service with SIGTERM (then SIGKILL after drainingSeconds): every lane is sealed first."""
+    source = Path(__file__).resolve().parents[1]
+    child = subprocess.Popen([sys.executable, "-c", CHILD, str(tmp_path / "data"), str(source / "src"),
+                              str(source / "tests")], cwd=tmp_path, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                             text=True, env={"PATH": os.environ.get("PATH", ""), "HOME": str(tmp_path)})
+    assert child.stdout is not None
+    for line in child.stdout:
+        if "kalshi_recorder_started" in line:
+            break
+    time.sleep(1.5)  # a few public GETs (to the scripted venue) land in several lanes
+    child.send_signal(number)
+    output = child.communicate(timeout=60)[0]
+    assert child.returncode == 0, output
+    assert "kalshi_recorder_stopped" in output
+    root = tmp_path / "data" / "kalshi_recorder"
+    assert not list(root.rglob("*.part"))  # sealed, nothing left for a recovery
+    assert kalshi_recorder.verify(root)["ok"]
+    lanes = {record["lane"] for record in iter_records(root, frozenset({"gaps", "requests", "fees", "admissions"}))}
+    assert {"gaps", "requests"} <= lanes
+
+
+@pytest.mark.parametrize("failure", ["500", "connect_timeout"])
+def test_p1_one_discovery_item_that_always_fails_is_skipped_and_the_pass_still_admits(tmp_path: Path,
+                                                                                     failure: str) -> None:
+    """P1: a transient failure was never struck per item, so one bad series abandoned every pass at the same place."""
+    clock, fake = Clock(NOW), venue()
+    fake.series["KXBAD"] = {**fake.series["KXHIGHNY"], "ticker": "KXBAD"}
+    fake.events = [*fake.events, event_row("KXBAD-26OCT15", "KXBAD")]
+    original = fake.route
+
+    def route(path: str, query: dict[str, list[str]]) -> FakeResponse:
+        if path == "/markets" and query.get("series_ticker") == ["KXBAD"]:  # sorts before KXHIGHNY
+            if failure == "connect_timeout":
+                raise requests.exceptions.ConnectTimeout("scripted")
+            return FakeResponse(500, {"error": "scripted"})
+        return original(path, query)
+
+    fake.route = route  # type: ignore[method-assign]
+    box = recorder(tmp_path, fake, clock, btc15m=False)
+    run(box, clock, 1500)
+    box.close()
+    assert CANDIDATE in box.watched  # was never admitted: 15 abandoned passes in 1.3 h
+    assert any(record["kind"] == "discovery_summary" for record in records(tmp_path, "admissions"))
+    skipped = [record for record in gaps(tmp_path) if record["cause"].startswith("discovery_markets_failed_")]
+    assert skipped and skipped[0]["item"] == "KXBAD"
+    assert sum(1 for call in fake.calls if call["query"].get("series_ticker") == ["KXBAD"]) == PAGE_ATTEMPTS
+    assert not any(record["cause"].startswith("discovery_abandoned") for record in gaps(tmp_path))
+
+
+def test_f3_after_an_abandoned_discovery_pass_the_next_pass_gets_its_own_attempts(tmp_path: Path) -> None:
+    """F3: in_a_row was reset only by a success, so every pass after the first was abandoned on its first 429."""
+    clock, fake = Clock(NOW), venue()
+    fake.routes["/series"] = lambda query: FakeResponse(429, {"error": "slow down"})
+    box = recorder(tmp_path, fake, clock, btc15m=False)
+    run(box, clock, 3000)
+    box.close()
+    ends = sorted(record["to"] for record in gaps(tmp_path) if record["cause"] == "discovery_abandoned_429")
+    assert len(ends) >= 2
+    asked = [record["received_at"] for record in records(tmp_path, "requests") if record["request_lane"] == "discovery"]
+    per_pass = [sum(1 for at in asked if low < at <= high) for low, high in pairwise([-math.inf, *ends])]
+    assert all(count > PAGE_ATTEMPTS for count in per_pass), per_pass  # one item struck out, then a second failed
+
+
+def test_f3_after_btc15m_metadata_is_given_up_the_retry_gets_its_own_attempts(tmp_path: Path) -> None:
+    clock, fake = Clock(NOW), venue()
+    fake.routes["/series/KXBTC15M"] = lambda query: FakeResponse(500, {"error": "scripted"})
+    box = recorder(tmp_path, fake, clock)
+    run(box, clock, 2000)
+    box.close()
+    rounds = sum(1 for record in gaps(tmp_path) if record["cause"] == "btc15m_metadata_unavailable")
+    calls = sum(1 for call in fake.calls if call["path"] == "/series/KXBTC15M")
+    assert rounds >= 2 and calls >= PAGE_ATTEMPTS * rounds  # was 5 + 1 per later round
+
+
+def test_p5_the_sweep_chunk_grows_back_after_a_burst_of_4xx(tmp_path: Path) -> None:
+    """P5: after 12 x 403 every later sweep sent one ticker per call (301 calls and 186 s for 300 candidates)."""
+    clock, fake = Clock(NOW), venue()
+    tickers = [f"KXHIGHNY-26OCT15-T{index:02d}" for index in range(60)]
+    for ticker in tickers:
+        fake.markets[ticker] = {**fake.markets[CANDIDATE], "ticker": ticker}
+    box = recorder(tmp_path, fake, clock, btc15m=False)
+    for ticker in tickers:
+        box._watch(candidate(ticker))
+    original = fake.route
+    burst = {"left": 12}
+
+    def route(path: str, query: dict[str, list[str]]) -> FakeResponse:
+        if path == "/markets" and "tickers" in query and burst["left"] > 0:
+            burst["left"] -= 1
+            return FakeResponse(403, {"error": "challenge"})
+        return original(path, query)
+
+    fake.route = route  # type: ignore[method-assign]
+    box.next_sweep_at = clock.at
+    run(box, clock, 1500)
+    assert not burst["left"] and not box.sweep_queue
+    before = len(fake.calls)
+    box.next_sweep_at = clock.at  # a later pass, after the burst
+    run(box, clock, 200)
+    box.close()
+    later = [len(call["query"]["tickers"][0].split(",")) for call in fake.calls[before:]
+             if call["path"] == "/markets" and "tickers" in call["query"]]
+    candidates = sum(1 for item in box.watched.values() if item.kind == "candidate")
+    assert later == [candidates] and box.chunk_size >= candidates  # one call, not 61
+
+
+BAD_BOOKS = {
+    "json_number": '{"yes_dollars":[["0.6200","5.00"]],"no_dollars":[["0.3500","10.00"]],"depth":1e400}',
+    "decimal_string": '{"yes_dollars":[["1E+1000000","5.00"]],"no_dollars":[["0.3500","10.00"]]}',
+}
+
+
+@pytest.mark.parametrize("kind", sorted(BAD_BOOKS))
+def test_p6_one_book_that_overflows_is_a_failed_read_for_that_ticker_alone(tmp_path: Path, kind: str) -> None:
+    """P6: 1e400 parsed as inf, the store refused it mid-call, and every ticker sorted after it was never recorded."""
+    clock, fake = Clock(NOW), venue()
+    good = [f"KXHIGHNY-26OCT15-T{index:02d}" for index in range(10)]
+    bad = "KXHIGHNY-26OCT15-T05X"  # sorts among the good ones
+    book = json.dumps(orderbook([("0.62", "5.00")], [("0.35", "10.00")]))
+
+    def books(query: dict[str, list[str]]) -> FakeResponse:
+        parts = [f'{{"ticker":"{ticker}","orderbook_fp":{BAD_BOOKS[kind] if ticker == bad else book}}}'
+                 for ticker in query.get("tickers", []) if ticker in good or ticker == bad]
+        return FakeResponse(200, ('{"orderbooks":[' + ",".join(parts) + "]}").encode())
+
+    fake.routes["/markets/orderbooks"] = books
+    box = recorder(tmp_path, fake, clock, btc15m=False)
+    for ticker in [*good, bad]:
+        box._watch(candidate(ticker))
+    start = clock.at
+    run(box, clock, 2000)
+    box.close()
+    recorded = {record["ticker"] for record in records(tmp_path, "books") if record["kind"] == "book"}
+    assert set(good) <= recorded and bad not in recorded
+    assert not [record for record in records(tmp_path, "gaps") if record["kind"] == "handler_error"
+                and record["handler_lane"] == "books"]
+    unreadable = [record for record in gaps(tmp_path) if record["cause"] == "book_unreadable"]
+    assert unreadable and {record["ticker"] for record in unreadable} == {bad}
+    asked = sum(1 for call in fake.calls if call["path"] == "/markets/orderbooks" and bad in call["query"]["tickers"])
+    assert asked <= (clock.at - start) / kalshi_recorder.SLOW_BOOK_S + 2  # the slow cadence, not every call
+
+
+def test_p6_an_overflowing_number_in_a_sweep_reply_fails_only_the_ticker_that_carries_it(tmp_path: Path) -> None:
+    clock, fake = Clock(NOW), venue()
+    good = [f"KXHIGHNY-26OCT15-T{index:02d}" for index in range(20)]
+    bad = "KXHIGHNY-26OCT15-T07X"
+    for ticker in [*good, bad]:
+        fake.markets[ticker] = {**fake.markets[CANDIDATE], "ticker": ticker}
+    fake.markets[bad]["volume_fp"] = "__OVERFLOW__"
+    original = fake.route
+
+    def route(path: str, query: dict[str, list[str]]) -> FakeResponse:
+        response = original(path, query)
+        if path == "/markets" and "tickers" in query:
+            response._raw = response._raw.replace(b'"__OVERFLOW__"', b"1e400")
+        return response
+
+    fake.route = route  # type: ignore[method-assign]
+    box = recorder(tmp_path, fake, clock, btc15m=False)
+    for ticker in [*good, bad]:
+        box._watch(candidate(ticker))
+    box.next_sweep_at = clock.at
+    run(box, clock, 1500)
+    box.close()
+    swept = {row["ticker"] for record in records(tmp_path, "markets") if record["kind"] == "sweep"
+             for row in record["rows"]}
+    assert set(good) <= swept and bad not in swept
+    assert any(record["error"] == "non_finite_number" for record in records(tmp_path, "requests"))
+    assert not [record for record in records(tmp_path, "gaps") if record["kind"] == "handler_error"]
+
+
+def test_p6_a_market_row_whose_decimal_overflows_is_refused_alone_and_discovery_admits_the_rest(tmp_path: Path) -> None:
+    """An overflowing decimal string raised inside admission, and the next plan of the open pass raised IndexError."""
+    clock, fake = Clock(NOW), venue()
+    bad = "KXHIGHNY-26OCT15-T80"
+    fake.markets[bad] = market_row(bad, price_ranges=[{"start": "0.0000", "end": "1E+1000000", "step": "0.0100"}])
+    box = recorder(tmp_path, fake, clock, btc15m=False)
+    run(box, clock, 600)
+    box.close()
+    assert CANDIDATE in box.watched and bad not in box.watched
+    changed = [row for record in records(tmp_path, "admissions") if record["kind"] == "admissions"
+               for row in record["changed"]]
+    assert any(row["ticker"] == bad and row["reason"] == "row_unreadable" for row in changed)
+
+
+def trade_row(trade_id: str, at: float) -> dict[str, Any]:
+    return {"trade_id": trade_id, "ticker": CANDIDATE, "created_time": iso(at), "yes_price_dollars": "0.6200",
+            "no_price_dollars": "0.3800", "count_fp": "1.00", "taker_outcome_side": "no", "taker_book_side": "ask",
+            "is_block_trade": False}
+
+
+def test_p7_a_crash_never_keeps_trade_coverage_for_prints_it_lost(tmp_path: Path) -> None:
+    """P7: three live polls 4.9 s apart, then a SIGKILL: coverage for 3 windows survived and 0 of their prints."""
+    clock = Clock(NOW)
+    box = recorder(tmp_path, FakeKalshi(), clock, btc15m=False)
+    box._watch(candidate(CANDIDATE))
+    for number, at in enumerate((NOW, NOW + 4.9, NOW + 9.8)):
+        clock.at = at
+        job = box.trade_job = TradeJob(int(at) - 10, int(at), None, False)
+        rows = [trade_row(f"p{number}", at - 1)] if number else []
+        box._done_trades(Request("trades", "/markets/trades", [], {"job": job}),
+                         fetched("trades", "/markets/trades", at, {"trades": rows, "cursor": ""}))
+    copy = crash_copy(tmp_path)  # killed right after the third coverage row
+    covered = [(record["from"], record["to"]) for record in records(copy, "trade_coverage")]
+    kept = {row["trade_id"] for record in records(copy, "trades") for row in record["rows"]}
+    assert covered
+    for number, at in ((1, NOW + 4.9), (2, NOW + 9.8)):
+        created = int(at - 1)
+        if any(low <= created <= high for low, high in covered):
+            assert f"p{number}" in kept, (covered, kept)
+    box.close()
+
+
+def test_p7_a_crash_never_keeps_a_book_call_whose_changed_book_it_lost(tmp_path: Path) -> None:
+    """The replay re-dates the last written book for every "unchanged" ticker; that book must survive with the row."""
+    clock = Clock(NOW)
+    box = recorder(tmp_path, FakeKalshi(), clock, btc15m=False)
+    box._watch(candidate(CANDIDATE))
+    first, second = orderbook([("0.62", "5.00")], [("0.35", "10.00")]), orderbook([("0.63", "5.00")], [("0.35", "10.00")])
+    for at, book in ((NOW, first), (NOW + 1, second), (NOW + 5.5, second)):
+        clock.at = at
+        box._done_books(Request("books", "/markets/orderbooks", [("tickers", CANDIDATE)], {"tickers": [CANDIDATE]}),
+                        fetched("books", "/markets/orderbooks", at,
+                                {"orderbooks": [{"ticker": CANDIDATE, "orderbook_fp": book}]}))
+    copy = crash_copy(tmp_path)
+    written = {record["received_at"] for record in records(copy, "books") if record["kind"] == "book"}
+    calls = records(copy, "book_calls")
+    assert calls and all(call["received_at"] in written for call in calls if call["changed"]), (calls, written)
+    box.close()
+
+
+def test_m1_the_engine_hook_sees_live_switches_from_the_env_file_the_bot_read(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture, fake_clock: Any,
+        http_client: Any) -> None:
+    """M1: `nightcrawler --env-file bot.env run` with POLYDESK_MODE=live in bot.env started the recorder in a live bot."""
+    from nightcrawler import engine
+    from nightcrawler.config import LIVE_CONFIRM_PHRASE, load_settings
+
+    monkeypatch.chdir(tmp_path)  # no ./.env: the bot read bot.env
+    monkeypatch.setattr(os, "environ", {"KALSHI_RECORDER_ENABLED": "true"})
+    started: list[RecorderSettings] = []
+    monkeypatch.setattr(kalshi_recorder, "run_recorder", lambda settings, stop: started.append(settings))
+    (tmp_path / "bot.env").write_text(
+        f"DATA_DIR={tmp_path / 'data'}\nPOLYDESK_MODE=live\nPOLYDESK_LIVE_CONFIRM={LIVE_CONFIRM_PHRASE}\n"
+        "POLYMARKET_US_KEY_ID=FAKE-not-read\nPOLYMARKET_US_SECRET_KEY=FAKE-not-read\nPOLYDESK_ENABLED=false\n"
+        "TRENDDESK_ENABLED=false\nSPEEDDESK_ENABLED=false\nSKIPWATCH_ENABLED=false\nWEATHERWATCH_ENABLED=false\n")
+    settings = load_settings(dotenv_path=tmp_path / "bot.env")
+    assert settings.polydesk_mode == "live"
+    with caplog.at_level(logging.WARNING, logger="nightcrawler.kalshi_recorder"):
+        app = engine.build_app(settings, fake_clock, http=http_client)
+        app.close()
+    assert not started and not (tmp_path / "data" / "kalshi_recorder").exists()
+    assert "live_trading_in_this_process" in caplog.text and "POLYDESK_MODE" in caplog.text
+    assert "FAKE-not-read" not in caplog.text
+    assert engine.live_mode_names(settings) == ["POLYDESK_MODE"]
+    assert start_from_engine(tmp_path, threading.Event(), env={"KALSHI_RECORDER_ENABLED": "true"},
+                             live=["TRADING_MODE"]) is None  # either source saying live is enough

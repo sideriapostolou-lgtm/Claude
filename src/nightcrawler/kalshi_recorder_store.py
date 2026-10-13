@@ -32,12 +32,13 @@ import fcntl
 import gzip
 import hashlib
 import json
+import math
 import os
 import shutil
 import threading
 import time
 import zlib
-from collections.abc import Callable, Iterator
+from collections.abc import Callable, Iterable, Iterator
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
@@ -94,11 +95,17 @@ def file_sha256(path: Path) -> str:
 
 @dataclass
 class Salvage:
-    """What a streamed pass over a possibly torn gzip JSONL file found (complete lines only)."""
+    """What a streamed pass over a possibly torn gzip JSONL file found (complete lines only).
+
+    ``dropped_bytes`` counts decompressed bytes that were not kept (a torn or unreadable line and everything
+    after it); ``undecoded_bytes`` counts the compressed bytes from the first one zlib refused to the end of the
+    file (garbage or zeros after a host crash), which never decompress at all.
+    """
 
     records: int = 0
     raw_bytes: int = 0
     dropped_bytes: int = 0
+    undecoded_bytes: int = 0
     first_seq: int | None = None
     last_seq: int | None = None
     first_at: float | None = None
@@ -124,7 +131,9 @@ def salvage(path: Path, sink: Callable[[bytes], Any] | None = None) -> Salvage:
     """Stream the complete JSON lines of a possibly torn gzip file, optionally passing each one to ``sink``.
 
     Memory stays at one chunk plus one line: the file is decompressed incrementally and nothing is kept.
-    The first torn or unreadable line ends the salvage; it and everything after it count as dropped bytes.
+    The first torn or unreadable line ends the salvage; it and everything after it count as dropped bytes. Corrupt
+    compressed data (zeros or garbage after a host crash) ends it at the first byte zlib refuses: every line
+    decoded before that byte is kept, and the refused rest of the file is counted as ``undecoded_bytes``.
     """
     out = Salvage()
     decompressor = zlib.decompressobj(16 + zlib.MAX_WBITS)
@@ -147,25 +156,41 @@ def salvage(path: Path, sink: Callable[[bytes], Any] | None = None) -> Salvage:
             start = end + 1
         pending = pending[start:]
 
+    def take(data: bytes) -> None:
+        nonlocal total
+        total += len(data)  # counted even after a bad line, so the dropped tail is exact
+        if not stopped:
+            feed(data)
+
     torn = False
+    consumed = 0  # compressed bytes zlib accepted
     with path.open("rb") as stream:
         while not torn and not decompressor.eof and (chunk := stream.read(64 * 1024)):
             while chunk and not decompressor.eof:
+                before = decompressor.copy()
                 try:  # at most 1 MiB out per call: book segments compress about 100 to 1
                     data = decompressor.decompress(chunk, SALVAGE_OUT_BYTES)
                 except zlib.error:
-                    torn = True
+                    # zlib throws away everything this call had decoded: replay the chunk a byte at a time from
+                    # the state before it, so every complete line up to the corruption is kept.
+                    decompressor = before
+                    for index in range(len(chunk)):
+                        try:
+                            take(decompressor.decompress(chunk[index:index + 1]))
+                        except zlib.error:
+                            torn = True
+                            break
+                        consumed += 1
+                        if decompressor.eof:
+                            break
                     break
+                consumed += len(chunk) - len(decompressor.unconsumed_tail)
                 chunk = decompressor.unconsumed_tail
-                total += len(data)  # counted even after a bad line, so the dropped tail is exact
-                if not stopped:
-                    feed(data)
+                take(data)
     with contextlib.suppress(zlib.error):
-        tail = decompressor.flush()
-        total += len(tail)
-        if not stopped:
-            feed(tail)
+        take(decompressor.flush())
     out.dropped_bytes = total - out.raw_bytes
+    out.undecoded_bytes = max(0, path.stat().st_size - consumed + len(decompressor.unused_data))
     return out
 
 
@@ -191,7 +216,8 @@ class _Open:
     last_seq: int = 0
     records: int = 0
     raw_bytes: int = 0
-    flushed_at: float = 0.0
+    flushed_at: float = -math.inf  # so the first record of a segment is flushed at once
+    dirty: bool = False  # records written since the last flush
 
 
 @dataclass
@@ -327,7 +353,8 @@ class RecorderStore:
             found = self._reseal(source, destination)
         if not found.records:
             source.unlink(missing_ok=True)
-            self.recovered.append({"lane": lane, "path": relative, "records": 0, "dropped_bytes": found.dropped_bytes})
+            self.recovered.append({"lane": lane, "path": relative, "records": 0, "dropped_bytes": found.dropped_bytes,
+                                   "undecoded_bytes": found.undecoded_bytes})
             return
         if source != destination:
             source.unlink(missing_ok=True)
@@ -343,12 +370,24 @@ class RecorderStore:
         self.chain[lane] = segment.sha256
         self.next_seq = max(self.next_seq, segment.last_seq + 1)
         self.recovered.append({"lane": lane, "path": segment.path, "records": segment.records,
-                               "dropped_bytes": found.dropped_bytes, "last_at": segment.last_at})
+                               "dropped_bytes": found.dropped_bytes, "undecoded_bytes": found.undecoded_bytes,
+                               "last_at": segment.last_at})
 
     def _recover_parts(self) -> None:
         for leftover in self.segments_dir.rglob("*.jsonl.gz.tmp"):  # a crash during an earlier recovery
             leftover.unlink(missing_ok=True)
         for part in sorted(self.segments_dir.rglob("*.jsonl.gz.part")):
+            sealed = self.segments.get(str(part.with_name(part.name[:-len(".part")]).relative_to(self.root)))
+            if sealed is not None:
+                # A crash after an earlier recovery re-sealed this .part but before it unlinked it: the sealed copy
+                # (indexed, or adopted just now as an orphan) holds its complete lines. Indexing it again would chain
+                # the segment to itself; a .part that holds anything else is kept under its own name.
+                found = salvage(part)
+                if (found.records, found.first_seq, found.last_seq) == (sealed.records, sealed.first_seq,
+                                                                         sealed.last_seq):
+                    part.unlink()
+                    continue
+                part = part.rename(part.with_name(part.name.removesuffix(".jsonl.gz.part") + "-again.jsonl.gz.part"))
             self._adopt(part, part.parent.parent.name, keep=False)
         self._save_state()
 
@@ -385,11 +424,10 @@ class RecorderStore:
             handle.records += 1
             handle.raw_bytes += len(line)
             handle.last_seq, handle.last_at = seq, max(handle.last_at, when)
+            handle.dirty = True
             self.next_seq = seq + 1
             if when - handle.flushed_at >= FLUSH_EVERY_S:
-                handle.gz.flush(zlib.Z_SYNC_FLUSH)
-                handle.raw.flush()
-                handle.flushed_at = when
+                self._flush_handle(handle, when)
             if handle.raw_bytes >= SEGMENT_RAW_BYTES:
                 self._seal(lane)
             return seq
@@ -407,7 +445,7 @@ class RecorderStore:
             path = directory / f"{lane}-{stamp.strftime('%Y%m%dT%H%M%SZ')}-{seq:012d}.jsonl.gz.part"
             raw = path.open("xb")
             gz = gzip.GzipFile(filename="", fileobj=raw, mode="wb", compresslevel=6, mtime=0)
-            handle = _Open(lane, path, raw, gz, hour, seq, at, at, flushed_at=at)
+            handle = _Open(lane, path, raw, gz, hour, seq, at, at)
             self.open[lane] = handle
         return handle
 
@@ -442,11 +480,37 @@ class RecorderStore:
             sealed = [self._seal(lane) for lane, handle in list(self.open.items()) if handle.hour != hour]
             return [segment for segment in sealed if segment is not None]
 
+    @staticmethod
+    def _flush_handle(handle: _Open, at: float) -> None:
+        """Hand an open segment's complete lines to the OS (they then survive a SIGKILL or an OOM kill)."""
+        handle.gz.flush(zlib.Z_SYNC_FLUSH)
+        handle.raw.flush()
+        handle.flushed_at, handle.dirty = at, False
+
+    def flush_due(self, now: float) -> int:
+        """Flush every open segment holding records older than ``FLUSH_EVERY_S`` (the recorder calls it each step).
+
+        A lane that went quiet is flushed here, not only by its next append; returns how many were flushed.
+        """
+        with self._mutex:
+            due = [handle for handle in self.open.values()
+                   if handle.dirty and now - handle.flushed_at >= FLUSH_EVERY_S]
+            for handle in due:
+                self._flush_handle(handle, now)
+            return len(due)
+
+    def flush_lanes(self, lanes: Iterable[str], now: float) -> None:
+        """Flush these lanes now: a record that vouches for them (coverage, an unchanged book) is written after."""
+        with self._mutex:
+            for lane in lanes:
+                handle = self.open.get(lane)
+                if handle is not None and handle.dirty:
+                    self._flush_handle(handle, now)
+
     def flush(self) -> None:
         with self._mutex:
             for handle in self.open.values():
-                handle.gz.flush(zlib.Z_SYNC_FLUSH)
-                handle.raw.flush()
+                self._flush_handle(handle, self.clock())
                 os.fsync(handle.raw.fileno())
             self._save_state()
 

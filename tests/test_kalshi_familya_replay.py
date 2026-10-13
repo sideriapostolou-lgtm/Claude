@@ -8,7 +8,9 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import shutil
+import subprocess
 from datetime import UTC, date, datetime
 from decimal import Decimal
 from itertools import pairwise
@@ -353,8 +355,17 @@ def test_rotation_cancels_after_six_hours_without_a_fill_and_rests_six_hours() -
 
 
 # --------------------------------------------------------------------------- the freeze gate (sections 11 and 18)
+def git(repo: Path, *args: str, when: str | None = None) -> None:
+    """Git in a throwaway repository, isolated from the user's git config (no signing, no hooks)."""
+    env = {**os.environ, "GIT_CONFIG_GLOBAL": os.devnull, "GIT_CONFIG_NOSYSTEM": "1"}
+    if when is not None:
+        env.update(GIT_AUTHOR_DATE=when, GIT_COMMITTER_DATE=when)
+    subprocess.run(["git", "-C", str(repo), "-c", "user.name=Family A test", "-c", "user.email=test@example.invalid",
+                    *args], check=True, capture_output=True, env=env)
+
+
 def research_copy(tmp_path: Path) -> Path:
-    """A repository-shaped copy: <repo>/research/kalshi_edge_search (the protocol) and <repo>/docs/WORKLOG.md."""
+    """A repository-shaped git copy: <repo>/research/kalshi_edge_search (the protocol) and <repo>/docs/WORKLOG.md."""
     repo = tmp_path / "repo"
     target = repo / "research" / "kalshi_edge_search"
     target.mkdir(parents=True)
@@ -362,11 +373,15 @@ def research_copy(tmp_path: Path) -> Path:
         shutil.copy(RESEARCH / name, target / name)
     (repo / "docs").mkdir()
     (repo / "docs" / "WORKLOG.md").write_text("# Work log\n")
+    git(repo, "init", "-q")
     return target
 
 
-def freeze(research: Path, *, log_hash: bool = True, **values: Any) -> str:
-    """Write a FREEZE.json (A1, E1 2026-12-01, 28 days, frozen a day early) and publish its hash."""
+def freeze(research: Path, *, log_hash: bool = True, committed_at: str | None = None, **values: Any) -> str:
+    """Write a FREEZE.json (A1, E1 2026-12-01, 28 days, frozen a day early), publish its hash and commit it.
+
+    The commit is dated ``committed_at`` (default: the file's own ``frozen_at``): git's record of the freeze.
+    """
     published = (research / "PROTOCOL.sha256").read_text().split()[0]
     body = {"protocol_sha256": published, "variant": "A1", "E1": "2026-12-01", "test_days": 28,
             "parameters": ReplayConfig("A1", "TEST", date(2026, 12, 1), 28).parameters(),
@@ -379,6 +394,9 @@ def freeze(research: Path, *, log_hash: bool = True, **values: Any) -> str:
     if log_hash:
         worklog = research.parents[1] / "docs" / "WORKLOG.md"
         worklog.write_text(worklog.read_text() + f"- Family A FREEZE.json SHA-256 {digest}\n")
+    repo = research.parents[1]
+    git(repo, "add", "-A")
+    git(repo, "commit", "-q", "--allow-empty", "-m", "Family A freeze", when=committed_at or body["frozen_at"])
     return digest
 
 
@@ -445,6 +463,8 @@ def test_a_replay_reads_the_recorders_own_files(tmp_path: Path) -> None:
                "settlement_ts": iso(START + 41 * 3600)}
     clock["at"] = START + 42 * 3600
     store.append("settlement", "settlement", {"rows": [settled]}, START + 42 * 3600)
+    clock["at"] = START + 7 * 86400 + 60  # the recorder ran through the last entry day (the tape is not short)
+    store.append("markets", "sweep", {"rows": [{"ticker": TICKER, "dyn": {"volume_24h_fp": "0.00"}}]}, clock["at"])
     store.close()
     result = run_replay(root, ReplayConfig("A1", "TRAIN", DAY, 7), RESEARCH)
     assert result["counts"]["quotes_sent"] >= 1 and result["counts"]["fills"] == 1
@@ -765,3 +785,128 @@ def test_a_replacement_is_not_re_checked_against_books_that_arrive_during_its_ca
     book(replay, START + 60.7, [("0.63", "5.00")], [("0.25", "10.00")])  # a 12-cent spread before the ack
     replay.on_book_unchanged(TICKER, START + 61.5)
     assert replay.counts["replacement_orders"] == 1 and replay.counts.get("replacement_skipped", 0) == 0
+
+
+# --------------------------------------------------------------------------- preflight 2026-10-13 (P2, P3, P4, P9)
+E1 = date(2026, 12, 1)
+E1_START = datetime(2026, 12, 1, tzinfo=UTC).timestamp()
+
+
+def test_p2_two_reprices_at_one_decision_both_send_their_replacement() -> None:
+    """P2: the second replacement was blocked by the first replaced order's reservation, released at its ack (6)."""
+    tickers = (TICKER, "KXHIGHNY-26OCT21-T78", *(f"KX{city}-26OCT21-T1" for city in CITIES))
+    replay = simulated("A1", tickers=tickers)
+    for ticker in tickers:
+        book(replay, START - 10, [("0.62", "5.00")], [("0.35", "10.00")], ticker=ticker)
+    replay.on_book_unchanged(TICKER, START + 0.5)
+    quoted = sorted(order.ticker for order in replay.orders.values())
+    assert len(quoted) == 4 and replay.account.at_risk() == D("2.52")
+    for ticker in [ticker for ticker in quoted if ticker != TICKER][:2]:
+        book(replay, START + 30, [("0.63", "5.00")], [("0.35", "10.00")], ticker=ticker)
+    for ticker in tickers:
+        replay.on_market_row({"ticker": ticker, "volume_24h_fp": "100.00"}, START + 30, full=False, sweep=True)
+    replay.on_book_unchanged(TICKER, START + 60.5)  # the 00:01 decision reprices both
+    assert replay.counts["replacements"] == 2
+    replay.on_book_unchanged(TICKER, START + 62)  # both cancels acknowledged at 00:01:01
+    # 2 x 0.64 + 2 x 0.63 = 2.54 < 3.00: was 3.17 (the first old order still counted) and refused as day_3.
+    assert replay.counts["replacement_orders"] == 2, dict(replay.blocks)
+    assert replay.account.at_risk() == D("2.54") and not replay.account.released
+    replay.reconcile()
+
+
+def test_p3_a_quote_still_resting_when_a_short_tape_ends_is_unidentifiable_and_the_run_incomplete() -> None:
+    """P3: a 1-hour tape for a 7-day phase was resolution_complete, central basis, the resting quote unaccounted."""
+    replay = simulated("A1", days=7)
+    book(replay, START - 10, [("0.62", "5.00")], [("0.35", "10.00")])
+    book(replay, START + 2, [("0.62", "5.00")], [("0.35", "10.00")])
+    for minute in range(1, 60):
+        replay.on_book_unchanged(TICKER, START + minute * 60 - 1)
+        replay.on_market_row({"ticker": TICKER, "volume_24h_fp": "100.00"}, START + minute * 60 - 1, full=False,
+                             sweep=True)
+    assert order_of(replay).state == "resting"
+    result = replay.finish(START + 3600)
+    assert result["resolution_complete"] is False and result["status"].startswith("INCOMPLETE_DATA")
+    assert "last entry day" in result["status"]
+    assert result["unidentifiable_quotes"] == 1 and result["verdict_basis"] == "lower_bound_7_7"
+    assert D(result["lower_bound_net_usd_unidentifiable"]) == D("-0.63")  # never resolved: counts as a loss
+
+
+def test_p3_a_tape_that_stops_before_the_last_entry_day_is_never_complete() -> None:
+    replay = simulated("A1", days=7)  # no book, no quote: nothing is open when the tape stops
+    result = replay.finish(START + 2 * 86400)
+    assert result["resolution_complete"] is False and "last entry day" in result["status"]
+    assert result["unidentifiable_quotes"] == 0
+
+
+def test_p4_a_copied_or_hand_built_permit_never_builds_a_test_account(tmp_path: Path) -> None:
+    """P4: dataclasses.replace(permit, config=TEST) or Permit(test, None, seal) built a TEST account, no freeze."""
+    import dataclasses
+
+    from nightcrawler.kalshi_familya import Permit
+
+    research = research_copy(tmp_path)  # no family_a/FREEZE.json
+    permit = check_scoring_allowed(ReplayConfig("A1", "TRAIN", DAY, 7), research)
+    test = ReplayConfig("A1", "TEST", E1, 28)
+    with pytest.raises(FreezeError):
+        FamilyAReplay(test, Coverage(), permit=dataclasses.replace(permit, config=test))
+    with pytest.raises(FreezeError):
+        FamilyAReplay(test, Coverage(), permit=Permit(test, None, research))
+    fake = {"E1": "2026-12-01", "variant": "A1"}
+    with pytest.raises(FreezeError):
+        FamilyAReplay(test, Coverage(), permit=Permit(test, fake, research))
+    freeze(research)
+    real = check_scoring_allowed(test, research)
+    assert FamilyAReplay(test, Coverage(), permit=real).test_permitted
+    (research / "family_a" / "FREEZE.json").write_text("{}")  # the freeze changed after the permit was issued
+    with pytest.raises(FreezeError):
+        FamilyAReplay(test, Coverage(), permit=real)
+
+
+def test_p4_no_label_or_length_scores_the_frozen_test_days_without_a_test_permit(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """P4: ReplayConfig('A1', 'TRAIN', E1, 28) plus tape()/feed() scored exactly the TEST days with no check."""
+    from nightcrawler import kalshi_familya
+    from nightcrawler.kalshi_familya import TapeItem, feed, tape
+
+    research = research_copy(tmp_path)
+    freeze(research)  # E1 2026-12-01
+    monkeypatch.setattr(kalshi_familya, "RESEARCH_DIR", research, raising=False)  # this checkout carries the freeze
+    for phase in ("TRAIN", "VAL"):
+        with pytest.raises(FreezeError, match="frozen TEST period"):
+            FamilyAReplay(ReplayConfig("A1", phase, E1, 28), Coverage())
+    scratch = tmp_path / "scratch"
+    scratch.mkdir()
+    with pytest.raises(FreezeError, match="TEST permit"):
+        list(tape(tmp_path / "no-data", E1_START, E1_START + 86400, scratch))
+    early = FamilyAReplay(ReplayConfig("A1", "TRAIN", DAY, 7), Coverage())  # TRAIN before E1 is fine
+    book_row = {"ticker": TICKER, "orderbook_fp": orderbook([("0.62", "1.00")], [("0.35", "9")])}
+    with pytest.raises(FreezeError, match="TEST permit"):
+        feed(early, [TapeItem(E1_START + 10, 1, 1, "book", book_row)])
+    permit = check_scoring_allowed(ReplayConfig("A1", "TEST", E1, 28), research)
+    allowed = FamilyAReplay(permit.config, Coverage(), permit=permit)
+    assert feed(allowed, [TapeItem(E1_START + 10, 1, 1, "book", book_row)]) == E1_START + 10
+    assert list(tape(tmp_path / "no-data", E1_START, E1_START + 86400, scratch, permit=permit)) == []
+
+
+def test_p9_the_freeze_time_is_git_s_commit_time_not_the_self_declared_frozen_at(tmp_path: Path) -> None:
+    """P9: a FREEZE.json written after E1 with a backdated frozen_at passed the 1 h rule."""
+    research = research_copy(tmp_path)
+    test = ReplayConfig("A1", "TEST", date(2026, 10, 1), 28)
+    freeze(research, E1="2026-10-01", frozen_at="2026-09-30T00:00:00+00:00", parameters=test.parameters(),
+           committed_at="2026-10-13T21:00:00+00:00")  # written today, after the first TEST days were recorded
+    with pytest.raises(FreezeError, match="committed less than 1 h before E1"):
+        check_scoring_allowed(test, research)
+    freeze(research)  # committed 2026-11-30 09:00 for E1 2026-12-01: allowed
+    december = ReplayConfig("A1", "TEST", E1, 28)
+    assert check_scoring_allowed(december, research).freeze
+    path = research / "family_a" / "FREEZE.json"
+    path.write_text(path.read_text())  # same bytes: still the committed file
+    assert check_scoring_allowed(december, research).freeze
+    body = json.loads(path.read_text())
+    path.write_text(json.dumps({**body, "note": "edited after the commit"}))
+    digest = hashlib.sha256(path.read_bytes()).hexdigest()
+    (research / "family_a" / "FREEZE.sha256").write_text(f"{digest}  FREEZE.json\n")
+    worklog = research.parents[1] / "docs" / "WORKLOG.md"
+    worklog.write_text(worklog.read_text() + f"- {digest}\n")
+    with pytest.raises(FreezeError, match="committed to git exactly as it is on disk"):
+        check_scoring_allowed(december, research)

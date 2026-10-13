@@ -12,11 +12,13 @@ cluster, $4 outstanding, $3 day loss/risk, $5 lifetime) and never the live accou
 
 TEST rows are refused until ``family_a/FREEZE.json`` and its published hash exist and match this
 run (variant or its matched baseline, E1, 28 days, every frozen parameter including L, the replay
-code's SHA-256, a freeze at least 1 h before E1, and the hash written in ``docs/WORKLOG.md``); a TEST
-account can only be built from the permit that check returns. TRAIN and VAL are 7 days each and may
-not read past a frozen TEST start. Every run is labelled with its kind (primary, pessimistic, latency
-stress, live-style day stop, UNFUNDED diagnostic). Nothing here sends, cancels or amends an order:
-every order below is a simulated object in memory.
+code's SHA-256, a freeze at least 1 h before E1 by its own ``frozen_at`` and by git's commit time,
+and the hash written in ``docs/WORKLOG.md``); a TEST account is built only from the permit that check
+returns, and every use of a permit runs the check again on its files. TRAIN and VAL are 7 days each;
+no run without a TEST permit, whatever its label or length, may have entry days at or after a frozen
+E1, and ``tape``/``feed`` keep the TEST days' books and prints from it. Every run is labelled with
+its kind (primary, pessimistic, latency stress, live-style day stop, UNFUNDED diagnostic). Nothing
+here sends, cancels or amends an order: every order below is a simulated object in memory.
 
     python -m nightcrawler.kalshi_familya replay --data-dir DATA_DIR --phase TRAIN \\
         --first-day 2026-10-20 --days 7 --variant A1 [--model pessimistic] [--latency-ms 1000]
@@ -32,6 +34,8 @@ import heapq
 import itertools
 import json
 import math
+import os
+import subprocess
 import sys
 import tempfile
 from collections import Counter, defaultdict, deque
@@ -79,6 +83,8 @@ UNKNOWN_QUEUE = Decimal("Infinity")  # q outside the 10 best bids at arrival: no
 PHASE_DAYS = {"TRAIN": 7, "VAL": 7, "TEST": 28}
 MATCHED_BASELINE = {"A1": "MB-J", "A3": "MB-J", "A2": "MB-I", "A4": "MB-I"}
 FROZEN_KEYS = ("protocol", "variant", "first_day", "days", "latency_ms", "epsilon_ms")
+# This checkout's research/kalshi_edge_search: where a run without a permit looks for the frozen TEST days.
+RESEARCH_DIR = Path(__file__).resolve().parents[2] / "research" / "kalshi_edge_search"
 # The code a TEST verdict depends on; FREEZE.json pins these files' SHA-256 (section 11).
 FAMILYA_CODE = ("kalshi_familya.py", "kalshi_familya_universe.py", "kalshi_recorder_store.py")
 RUN_LABELS = {
@@ -460,8 +466,9 @@ class Account:
 
     ``earmarks`` hold, from a reprice decision until its cancel is acknowledged, the extra budget its
     replacement needs (section 5.9: resting quotes are reviewed first, so new quotes at the same
-    decision cannot take it). ``exclude`` leaves an order's reservation out of a check: the order a
-    replacement replaces is released when its cancel is acknowledged (section 6).
+    decision cannot take it). ``released`` lists the orders whose cancel is acknowledged: section 6 holds a
+    reservation only until then, so no limit or cash check counts them any more, although their reservation
+    stays in ``reserved`` for a fill in the clock margin until they die. ``exclude`` leaves more orders out.
     """
 
     cash: Decimal = START_CASH
@@ -469,6 +476,7 @@ class Account:
     order_cluster: dict[int, str] = field(default_factory=dict)
     order_day: dict[int, str] = field(default_factory=dict)
     earmarks: dict[int, tuple[str, str, Decimal]] = field(default_factory=dict)  # old oid -> (cluster, day, extra)
+    released: set[int] = field(default_factory=set)  # cancel acknowledged: out of every limit check (section 6)
     positions: dict[str, Position] = field(default_factory=dict)
     realized: list[dict[str, Any]] = field(default_factory=list)
     day_pnl: dict[str, Decimal] = field(default_factory=lambda: defaultdict(lambda: ZERO))
@@ -480,7 +488,7 @@ class Account:
 
     def _reservations(self, exclude: frozenset[int]) -> Iterator[tuple[str, str, Decimal]]:
         for oid, amount in self.reserved.items():
-            if oid not in exclude:
+            if oid not in exclude and oid not in self.released:
                 yield self.order_cluster[oid], self.order_day[oid], amount
         for oid, (cluster, day, amount) in self.earmarks.items():
             if oid not in exclude:
@@ -605,19 +613,72 @@ class FreezeError(RuntimeError):
     pass
 
 
-_PERMIT_SEAL = object()
-
-
 @dataclass(frozen=True)
 class Permit:
-    """What ``check_scoring_allowed`` returns: the checked config and the freeze (None before one exists)."""
+    """What ``check_scoring_allowed`` returns: the checked config, the freeze it saw (None before one exists) and
+    the files it read. A permit proves nothing by itself: every use re-runs the gate on those files (``verify``),
+    so a copied, edited or hand-built permit is worth exactly what the freeze on disk and its hashes allow.
+    """
 
     config: ReplayConfig
     freeze: dict[str, Any] | None
-    seal: object = field(default=None, repr=False, compare=False)
+    research_dir: Path
+    worklog: Path | None = None
 
-    def valid_for(self, config: ReplayConfig) -> bool:
-        return self.seal is _PERMIT_SEAL and self.config == config
+    def verify(self, config: ReplayConfig) -> None:
+        """Raise FreezeError unless this permit is for ``config`` and the gate still allows it on the files now."""
+        if config != self.config:
+            raise FreezeError("A permit is for one config; this run is another")
+        again = check_scoring_allowed(config, self.research_dir, worklog=self.worklog)
+        if again.freeze != self.freeze:
+            raise FreezeError("family_a/FREEZE.json is not the one this permit was issued for")
+
+    def test_window(self) -> tuple[float, float] | None:
+        """The frozen TEST entry days [E1 00:00, E28 end] (UTC seconds), from this permit's freeze or this checkout's."""
+        return _test_window(self.freeze) if self.freeze is not None else frozen_test_window(RESEARCH_DIR)
+
+
+def _test_window(freeze: Mapping[str, Any] | None) -> tuple[float, float] | None:
+    first = freeze.get("E1") if isinstance(freeze, Mapping) else None
+    try:
+        start = datetime.combine(date.fromisoformat(first), datetime.min.time(), UTC).timestamp() \
+            if isinstance(first, str) else None
+    except ValueError:
+        start = None
+    return None if start is None else (start, start + PHASE_DAYS["TEST"] * 86400 - 1)
+
+
+def frozen_test_window(research_dir: Path) -> tuple[float, float] | None:
+    """The TEST entry days named by ``research_dir``'s family_a/FREEZE.json; None when no freeze exists yet."""
+    path = research_dir / "family_a" / "FREEZE.json"
+    if not path.exists():
+        return None
+    try:
+        loaded = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        raise FreezeError("family_a/FREEZE.json is unreadable, so the frozen TEST days are unknown") from exc
+    window = _test_window(loaded)
+    if window is None:
+        raise FreezeError("family_a/FREEZE.json names no readable E1, so the frozen TEST days are unknown")
+    return window
+
+
+def _committed_at(path: Path) -> datetime | None:
+    """When ``path`` got its current content in git (the last commit that changed it; the later of its author and
+    committer times), or None when it is not committed exactly as it is on disk. Git records this time; the file
+    cannot declare it."""
+    def git(*args: str) -> bytes:
+        return subprocess.run(["git", "-C", str(path.parent), *args], capture_output=True, check=True, timeout=60,
+                              env={**os.environ, "GIT_OPTIONAL_LOCKS": "0"}).stdout
+
+    try:
+        if git("show", f"HEAD:./{path.name}") != path.read_bytes():
+            return None
+        stamps = git("log", "-1", "--format=%aI %cI", "HEAD", "--", path.name).decode().split()
+    except (OSError, subprocess.SubprocessError, UnicodeDecodeError):
+        return None
+    times = [moment for moment in (_utc_time(stamp) for stamp in stamps) if moment is not None]
+    return max(times) if len(times) == 2 else None
 
 
 def _sha256_file(path: Path) -> str:
@@ -675,6 +736,12 @@ def _check_test(config: ReplayConfig, freeze: dict[str, Any], freeze_hash: str, 
     test_start = datetime.combine(config.first_day, datetime.min.time(), UTC)
     if frozen_at is None or frozen_at > test_start - timedelta(hours=1):
         raise FreezeError("FREEZE.json must say when it was frozen (frozen_at), at least 1 h before E1")
+    # frozen_at is written inside the file, so it is checked against git's own record of the freeze commit.
+    committed = _committed_at(research_dir / "family_a" / "FREEZE.json")
+    if committed is None:
+        raise FreezeError("FREEZE.json must be committed to git exactly as it is on disk (its commit dates the freeze)")
+    if committed > test_start - timedelta(hours=1):
+        raise FreezeError("FREEZE.json was committed less than 1 h before E1 (git's commit time, not frozen_at)")
     if not worklog.exists() or freeze_hash not in worklog.read_text(encoding="utf-8"):
         raise FreezeError("The FREEZE.json SHA-256 is not written in docs/WORKLOG.md")
 
@@ -712,7 +779,7 @@ def check_scoring_allowed(config: ReplayConfig, research_dir: Path, *, worklog: 
         test_start = datetime.combine(date.fromisoformat(freeze["E1"]), datetime.min.time(), UTC).timestamp()
         if config.entry_end >= test_start:
             raise FreezeError("TRAIN/VAL entry days may not reach the frozen TEST period")
-    return Permit(config, freeze, _PERMIT_SEAL)
+    return Permit(config, freeze, research_dir, worklog)
 
 
 # =========================================================================== market state
@@ -760,8 +827,18 @@ class FamilyAReplay:
 
     def __init__(self, config: ReplayConfig, coverage: Coverage | None = None, *, grid: Decimal = DIRECT_GRID,
                  permit: Permit | None = None) -> None:
-        if config.phase == "TEST" and (permit is None or not permit.valid_for(config)):
+        if permit is not None:
+            permit.verify(config)  # the gate runs again on the files: a permit cannot be copied or built by hand
+            window = permit.test_window()
+        elif config.phase == "TEST":
             raise FreezeError("A TEST account is built only from check_scoring_allowed's permit for this config")
+        else:
+            window = frozen_test_window(RESEARCH_DIR)
+        if config.phase != "TEST" and window is not None and config.entry_end >= window[0]:
+            # Any label, any length: entry days that reach the frozen TEST days are TEST rows.
+            raise FreezeError("TRAIN/VAL entry days may not reach the frozen TEST period")
+        self.test_window = window  # books and prints inside it reach only a TEST account (feed)
+        self.test_permitted = permit is not None and config.phase == "TEST"
         self.config = config
         self.variant = VARIANTS[config.variant]
         self.coverage = coverage or Coverage()
@@ -897,11 +974,20 @@ class FamilyAReplay:
                 self._apply_print(order, item)
 
     def finish(self, data_end: float) -> dict[str, Any]:
-        """Run every scheduled event up to the earlier of the data end and the resolution end; then summarize."""
+        """Run every scheduled event up to the earlier of the data end and the resolution end; then summarize.
+
+        A tape that ends before the last entry day ends is never complete, and a quote still live when the tape
+        ends rested past its end: section 7.7 counts it as unidentifiable (its fills are unknown).
+        """
         end = min(data_end, self.config.resolution_end)
         self._advance(end, inclusive=True)
         self._tick_area(end)
-        complete = data_end >= self.config.resolution_end or not self.account.positions
+        live = [order for order in self.orders.values() if order.live]
+        for order in live:
+            if order.oid not in self.unidentifiable:
+                self.unidentifiable.append(order.oid)
+        short = data_end < self.config.entry_end
+        complete = not short and not live and (data_end >= self.config.resolution_end or not self.account.positions)
         unresolved = []
         for position in list(self.account.positions.values()):
             # Section 11: positions unresolved at the limit count at $0 and are listed.
@@ -910,7 +996,9 @@ class FamilyAReplay:
             self._realize(position, ZERO, end, unresolved=True)
         result = self.summary(end, unresolved)
         result["resolution_complete"] = complete
-        if not complete:
+        if short:
+            result["status"] = "INCOMPLETE_DATA: the tape ends before the last entry day"
+        elif not complete:
             result["status"] = "INCOMPLETE_DATA: the tape ends before the resolution limit"
         return result
 
@@ -1036,6 +1124,7 @@ class FamilyAReplay:
         rested = order.state != "pending"
         order.state, order.died_at = "dead", at
         self.account.reserved.pop(order.oid, None)
+        self.account.released.discard(order.oid)
         if order.oid in self.market_orders.get(order.ticker, []):
             self.market_orders[order.ticker].remove(order.oid)
         if rested and not self.coverage.tape(order.ticker, order.arrives_at, at):
@@ -1047,6 +1136,7 @@ class FamilyAReplay:
         order.state, order.died_at = "rejected", at
         order.buffered = []
         self.account.reserved.pop(order.oid, None)
+        self.account.released.discard(order.oid)
         if order.oid in self.market_orders.get(order.ticker, []):
             self.market_orders[order.ticker].remove(order.oid)
         self.counts["post_only_rejections" if reason.startswith("post_only") else f"rejected_{reason}"] += 1
@@ -1103,6 +1193,8 @@ class FamilyAReplay:
     def _on_cancel_ack(self, item: _Internal) -> None:
         order = self.orders[item.oid]
         self.account.earmarks.pop(order.oid, None)
+        if order.live:
+            self.account.released.add(order.oid)  # section 6: at risk only until its cancel is acknowledged
         if isinstance(item.data, Target):
             self._send(self.markets[order.ticker], item.data, item.at, replacement=True, replaces=order)
 
@@ -1349,8 +1441,9 @@ class FamilyAReplay:
         exclude: frozenset[int] = frozenset()
         check = amount
         if replaces is not None:
-            # Its cancel is acknowledged, so its reservation is released (section 6); it may still fill in the
-            # clock margin at its own price, and that fill trims this order, so check the dearer of the two.
+            # Its cancel is acknowledged, so its reservation is released (section 6), like every other order's
+            # whose cancel is (Account.released); it may still fill in the clock margin at its own price, and that
+            # fill trims this order, so check the dearer of the two.
             exclude = frozenset({replaces.oid})
             check = size * max(per_contract, replaces.per_contract)
         blocked = self.account.blocked_by(cluster, day, check, day_stop=self.config.day_stop,
@@ -1654,15 +1747,22 @@ def seed_books(root: Path, before: float, tickers: Iterable[str] | None = None,
 
 
 def tape(root: Path, start: float, end: float, scratch: Path, *, quotes_end: float | None = None,
-         seed_tickers: Iterable[str] | None = None) -> Iterator[TapeItem]:
+         seed_tickers: Iterable[str] | None = None, permit: Permit | None = None) -> Iterator[TapeItem]:
     """Every replay input in time order: metadata and books by receive time, prints by created time.
 
     Metadata is read from 9 days before ``start`` (a market's full row may date from its first sight, up to
     8 days before its close) to ``end`` (settlements); books and prints only until ``quotes_end`` (no quote
     rests after the last entry day ends). Books are read from 10 minutes before ``start``, after each
     ticker's newest earlier book (``seed_books``), so "unchanged" calls always have a book to re-date.
+    Books and prints of the frozen TEST days are read only with a TEST permit (checked again here).
     """
     quotes_end = end if quotes_end is None else min(end, quotes_end)
+    if permit is not None:
+        permit.verify(permit.config)
+    window = permit.test_window() if permit is not None else frozen_test_window(RESEARCH_DIR)
+    if (window is not None and (permit is None or permit.config.phase != "TEST")
+            and start - 600 <= window[1] and quotes_end >= window[0]):
+        raise FreezeError("Books and prints of the frozen TEST days are read only with a TEST permit")
     streams: list[Iterator[dict[str, Any]]] = [iter(seed_books(root, start - 600, seed_tickers))]
     streams += [iter_records(root, frozenset({lane}), start=start - 600, end=quotes_end) for lane in BOOK_LANES]
     streams += [iter_records(root, frozenset({lane}), start=start - META_LOOKBACK_S, end=end) for lane in META_LANES]
@@ -1677,9 +1777,16 @@ def tape(root: Path, start: float, end: float, scratch: Path, *, quotes_end: flo
 
 
 def feed(replay: FamilyAReplay, items: Iterable[TapeItem]) -> float:
-    """Drive ``replay`` from tape items; returns the last item time."""
+    """Drive ``replay`` from tape items; returns the last item time.
+
+    A book or print from the frozen TEST days reaches only an account built from a TEST permit.
+    """
     last = replay.config.entry_start
+    window = None if replay.test_permitted else replay.test_window
     for item in items:
+        if (window is not None and item.kind in ("book", "book_unchanged", "print")
+                and window[0] <= item.at <= window[1]):
+            raise FreezeError("A book or print from the frozen TEST days reached a run without a TEST permit")
         last = max(last, item.at)
         if item.kind == "book":
             book = item.data.get("orderbook_fp") or {}
@@ -1717,9 +1824,12 @@ def run_replay(root: Path, config: ReplayConfig, research_dir: Path, *, worklog:
     replay = FamilyAReplay(config, coverage, permit=permit)
     books_from = config.entry_start - 600
     seeds = [ticker for ticker, spans in coverage.watched.items() if spans.covers(books_from, books_from)]
+    quotes_end = config.entry_end + 3600
+    if not replay.test_permitted and replay.test_window is not None:
+        quotes_end = min(quotes_end, replay.test_window[0] - 1)  # a VAL tail never reads E1's books
     with tempfile.TemporaryDirectory(prefix="familya-trades-") as scratch:
-        last = feed(replay, tape(root, config.entry_start, end, Path(scratch), quotes_end=config.entry_end + 3600,
-                                 seed_tickers=seeds))
+        last = feed(replay, tape(root, config.entry_start, end, Path(scratch), quotes_end=quotes_end,
+                                 seed_tickers=seeds, permit=permit))
     return replay.finish(last)
 
 

@@ -62,6 +62,7 @@ from .config import ConfigError, parse_dotenv
 from .kalshi_familya_universe import (
     OPEN_CATEGORIES,
     RECORDER_WINDOW,
+    Admission,
     admit,
     dec,
     ts,
@@ -288,7 +289,23 @@ def _transient(fetched: Fetched) -> bool:
 
 # =========================================================================== small helpers
 def canonical_sha(value: Any) -> str:
-    return hashlib.sha256(json.dumps(value, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+    """SHA-256 of canonical JSON; raises ValueError for an infinite or NaN number (it could not be stored)."""
+    return hashlib.sha256(json.dumps(value, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()).hexdigest()
+
+
+def finite(value: Any) -> bool:
+    """False when a parsed reply holds an infinite or NaN number anywhere (``1e400`` parses as infinity)."""
+    stack = [value]
+    while stack:
+        item = stack.pop()
+        if isinstance(item, float):
+            if not math.isfinite(item):
+                return False
+        elif isinstance(item, dict):
+            stack.extend(item.values())
+        elif isinstance(item, list):
+            stack.extend(item)
+    return True
 
 
 def best_bid(levels: Any) -> Decimal | None:
@@ -357,12 +374,13 @@ class Watched:
     book_sha: str | None = None
     fav: Decimal | None = None
     settled: bool = False
+    book_retry_at: float = -math.inf  # after an unreadable book: asked again at the slow cadence, not every call
 
     def book_due(self) -> float:
         if self.fav is None:
-            return self.last_book_at
+            return max(self.last_book_at, self.book_retry_at)
         fast = FAVOURITE_BAND[0] <= self.fav <= FAVOURITE_BAND[1]
-        return self.last_book_at + (FAST_BOOK_S if fast else SLOW_BOOK_S)
+        return max(self.last_book_at + (FAST_BOOK_S if fast else SLOW_BOOK_S), self.book_retry_at)
 
 
 @dataclass
@@ -492,7 +510,8 @@ class Recorder:
                                                "commit": os.environ.get("RAILWAY_GIT_COMMIT_SHA")})
         for item in self.store.recovered:
             self.gap(item["lane"], item.get("last_at"), now, "restart_partial_segment_recovered",
-                     records=item["records"], dropped_bytes=item["dropped_bytes"])
+                     records=item["records"], dropped_bytes=item["dropped_bytes"],
+                     undecoded_bytes=item.get("undecoded_bytes", 0))
         if saved.get("last_alive_at"):
             self.gap("all", float(saved["last_alive_at"]), now, "recorder_not_running")
         for row in saved.get("watched") or []:
@@ -553,6 +572,9 @@ class Recorder:
             return True
         if fetched.error == "stopped":
             return False
+        if fetched.ok and request.lane != "books" and not finite(fetched.body):
+            # An overflowing number (1e400) anywhere is a failed request for this item; books are checked one by one.
+            fetched = replace(fetched, error="non_finite_number", body=None)
         self._account(lane, fetched)
         handler = getattr(self, f"_done_{request.lane}")
         try:
@@ -669,6 +691,9 @@ class Recorder:
         if now < self.last_wall - 1.0:
             self.gap("all", now, self.last_wall, "clock_moved_backwards")
         self.last_wall = max(self.last_wall, now)
+        # Every lane's open segment reaches the OS within FLUSH_EVERY_S of its records, appends or not: a quiet
+        # lane's rows (gaps, fees, admissions, a burst's tail) then survive a SIGKILL or an OOM kill.
+        self.store.flush_due(now)
         minute = int(now // 60)
         if minute == self.last_minute:
             return
@@ -822,33 +847,47 @@ class Recorder:
             return
         by_ticker = {item["ticker"]: item for item in items
                      if isinstance(item, dict) and isinstance(item.get("ticker"), str)}
-        changed, unchanged, missing = [], [], []
+        changed, unchanged, missing, unreadable = [], [], [], []
         for ticker in tickers:
             item, watched = by_ticker.get(ticker), self.watched.get(ticker)
             book = item.get("orderbook_fp") if isinstance(item, dict) else None
             if watched is None or not isinstance(book, dict):
                 missing.append(ticker)
                 continue
-            digest = canonical_sha(book)
-            lane = "books_btc15m" if watched.kind == "btc15m" else "books"
-            if digest != watched.book_sha:
-                seq = self.emit(lane, "book", {"ticker": ticker, "requested_at": fetched.requested_at,
-                                               "received_at": fetched.received_at, "sha256": digest,
-                                               "orderbook_fp": book}, fetched.received_at)
-                if seq is None:
-                    missing.append(ticker)
-                    continue
-                watched.book_sha = digest
-                changed.append(ticker)
-            else:
-                unchanged.append(ticker)
+            try:
+                fav = favourite_mid(book)  # first: a book it cannot read is never written
+                digest = canonical_sha(book)
+                lane = "books_btc15m" if watched.kind == "btc15m" else "books"
+                if digest != watched.book_sha:
+                    seq = self.emit(lane, "book", {"ticker": ticker, "requested_at": fetched.requested_at,
+                                                   "received_at": fetched.received_at, "sha256": digest,
+                                                   "orderbook_fp": book}, fetched.received_at)
+                    if seq is None:
+                        missing.append(ticker)
+                        continue
+                    watched.book_sha = digest
+                    changed.append(ticker)
+                else:
+                    unchanged.append(ticker)
+            except (ArithmeticError, ValueError, TypeError, RecursionError) as exc:
+                # One book that cannot be read or stored (an overflowing number, say) is a failed request for that
+                # ticker alone: the rest of the call is recorded, and it is asked again at the slow cadence.
+                missing.append(ticker)
+                unreadable.append(ticker)
+                watched.book_retry_at = fetched.received_at + SLOW_BOOK_S
+                self.gap("books", fetched.received_at, fetched.received_at, "book_unreadable", ticker=ticker,
+                         error=type(exc).__name__, detail=_detail(exc))
+                continue
             watched.last_book_at = fetched.received_at
-            watched.fav = favourite_mid(book)
+            watched.fav = fav
+        # The books this call wrote reach the OS before the row that lists them, so no surviving "unchanged" row
+        # can point at a changed book a crash lost.
+        self.store.flush_lanes(("books", "books_btc15m"), fetched.received_at)
         self.emit("book_calls", "book_call", {"requested_at": fetched.requested_at, "received_at": fetched.received_at,
                                               "status": fetched.status, "body_sha256": fetched.sha256,
                                               "rtt_ms": round(fetched.rtt_ms, 3), "tickers": tickers,
-                                              "changed": changed, "unchanged": unchanged, "missing": missing},
-                  fetched.received_at)
+                                              "changed": changed, "unchanged": unchanged, "missing": missing,
+                                              "unreadable": unreadable}, fetched.received_at)
 
     # ------------------------------------------------------------------ trades
     def _plan_trades(self, now: float) -> Request | None:
@@ -952,7 +991,12 @@ class Recorder:
         self._finish(job, backfill)
 
     def _record_coverage(self, job: TradeJob, low: int, backfill: bool, fetched: Fetched) -> None:
-        """Every trade of every watched ticker in [low, max_ts] was received (newest-first pages, empty cursor)."""
+        """Every trade of every watched ticker in [low, max_ts] was received (newest-first pages, empty cursor).
+
+        The prints it vouches for (and the watch rows that say whose prints) are handed to the OS first: a crash can
+        lose a coverage row, never keep one whose prints it lost.
+        """
+        self.store.flush_lanes(("trades", "trades_btc15m", "admissions"), fetched.received_at)
         self.emit("trade_coverage", "trade_coverage", {"from": low, "to": job.max_ts, "scope": job.ticker or "exchange",
                                                        "backfill": backfill, "pages": job.pages, "rows": job.rows,
                                                        "received_at": fetched.received_at}, fetched.received_at)
@@ -1037,6 +1081,7 @@ class Recorder:
         if not fetched.ok:
             if self.lanes["btc15m_meta"].in_a_row >= PAGE_ATTEMPTS:
                 self.btc_queue.clear()
+                self.lanes["btc15m_meta"].in_a_row = 0  # the retry gets its own PAGE_ATTEMPTS
                 self.next_btc_meta_at = fetched.received_at + 30
                 self.gap("btc15m_meta", fetched.requested_at, fetched.received_at, "btc15m_metadata_unavailable")
             return
@@ -1076,6 +1121,7 @@ class Recorder:
                                       "series_todo": [], "detail_todo": [], "markets": [], "market_cursor": "",
                                       "seen": set()}
             self.next_discovery_at = now + self.settings.discovery_interval_s
+            self._reset_discovery_failures()  # a new pass gets its own PAGE_ATTEMPTS
             if all(now - self.series_at.get("category:" + name, -math.inf) < 86400 for name in OPEN_CATEGORIES):
                 state["stage"] = "events"
         stage = state["stage"]
@@ -1103,15 +1149,15 @@ class Recorder:
             return
         stage = request.context["stage"]
         if not fetched.ok:
-            if _transient(fetched):
-                # No reply, 429s or server errors: the venue is struggling, so the whole pass waits.
-                if self.lanes["discovery"].in_a_row >= PAGE_ATTEMPTS:
-                    self.gap("discovery", state["started_at"], fetched.received_at,
-                             f"discovery_abandoned_{_why(fetched)}")
-                    self.discovery = None
-                    self.next_discovery_at = fetched.received_at + 300
-            elif self._strike(request):  # this one item is refused (4xx) or unreadable: skip it, keep the pass
+            if self._strike(request):  # this one item keeps failing (any error, 5xx and timeouts too): skip it
                 self._give_up(request, fetched.received_at, f"discovery_{stage}_failed_{_why(fetched)}")
+            elif _transient(fetched) and self.lanes["discovery"].in_a_row >= PAGE_ATTEMPTS:
+                # No reply, 429s or server errors on different items in a row: the venue is struggling, so the
+                # whole pass waits.
+                self.gap("discovery", state["started_at"], fetched.received_at, f"discovery_abandoned_{_why(fetched)}")
+                self.discovery = None
+                self.next_discovery_at = fetched.received_at + 300
+                self._reset_discovery_failures()
             return
         body = fetched.body
         meta = {"requested_at": fetched.requested_at, "received_at": fetched.received_at, "body_sha256": fetched.sha256}
@@ -1179,10 +1225,14 @@ class Recorder:
         state["detail_todo"] = [name for name in state["series_todo"] if name not in self.series_rows]
         state["stage"] = "detail" if state["detail_todo"] else "markets"
 
+    def _reset_discovery_failures(self) -> None:
+        self.lanes["discovery"].in_a_row = 0
+        self.strikes.pop("discovery", None)
+
     def _discovery_maybe_done(self, state: dict[str, Any], now: float) -> None:
         if state["stage"] == "markets" and not state["series_todo"] and self.discovery is state:
+            self.discovery = None  # first: a failure while admitting never leaves a finished pass open
             self._admit_all(state, now)
-            self.discovery = None
 
     def _skip_discovery(self, request: Request, at: float, cause: str) -> None:
         """Drop the one discovery item that keeps failing (with a gap) and carry on with the rest of the pass."""
@@ -1233,7 +1283,14 @@ class Recorder:
             event = state["events"].get(market.get("event_ticker"))
             series_name = event.get("series_ticker") if isinstance(event, dict) else None
             series = self.series_rows.get(series_name) if isinstance(series_name, str) else None
-            decision = admit(market, event, series, now, window=RECORDER_WINDOW, check_fees=False)
+            try:
+                decision = admit(market, event, series, now, window=RECORDER_WINDOW, check_fees=False)
+            except (ArithmeticError, ValueError, TypeError) as exc:
+                # A row the rules cannot read (an overflowing decimal, say) is refused alone; the pass goes on.
+                category = event.get("category") if isinstance(event, dict) else None
+                decision = Admission(ticker, False, "unreadable", "row_unreadable",
+                                     category if isinstance(category, str) else None)
+                log.warning("kalshi_recorder_admission_unreadable ticker=%s error=%s", ticker[:100], type(exc).__name__)
             admitted, reason = decision.admitted, decision.reason
             if admitted and ticker not in self.watched and candidates >= self.settings.max_candidates:
                 admitted, reason = False, "recorder_capacity"
@@ -1289,7 +1346,9 @@ class Recorder:
         if not queue or queue[0] != tickers:
             return
         status = fetched.status
-        if status is not None and 400 <= status < 500 and status != 429 and len(tickers) > 1:
+        refused = status is not None and 400 <= status < 500 and status != 429
+        unreadable = status == 200 and fetched.error is not None  # one bad row spoils the reply: find it by halves
+        if (refused or unreadable) and len(tickers) > 1:
             half = len(tickers) // 2
             queue.popleft()
             queue.extendleft([tickers[half:], tickers[:half]])
@@ -1300,6 +1359,10 @@ class Recorder:
             return
         if self._strike(request):
             self._give_up(request, fetched.received_at, f"{request.lane}_page_failed_{_why(fetched)}")
+
+    def _chunk_ok(self) -> None:
+        """A sweep/settlement call succeeded: the chunk grows back (doubling, up to TICKERS_PER_SWEEP) after a burst."""
+        self.chunk_size = min(TICKERS_PER_SWEEP, self.chunk_size * 2)
 
     def _plan_sweep(self, now: float) -> Request | None:
         queue = self.sweep_queue
@@ -1320,6 +1383,7 @@ class Recorder:
         if self.sweep_queue and self.sweep_queue[0] == request.context["tickers"]:
             self.sweep_queue.popleft()
         self._accepted(request)
+        self._chunk_ok()
         self._market_rows("sweep", rows, {"requested_at": fetched.requested_at, "received_at": fetched.received_at,
                                           "body_sha256": fetched.sha256}, None)
         for row in rows:
@@ -1351,6 +1415,7 @@ class Recorder:
         if self.settle_queue and self.settle_queue[0] == request.context["tickers"]:
             self.settle_queue.popleft()
         self._accepted(request)
+        self._chunk_ok()
         meta = {"requested_at": fetched.requested_at, "received_at": fetched.received_at, "body_sha256": fetched.sha256}
         for kind in ("btc15m", "candidate"):
             chosen = [rows[ticker] for ticker in request.context["tickers"]
@@ -1426,6 +1491,7 @@ class Recorder:
         if not fetched.ok:
             if self.lanes["other"].in_a_row >= PAGE_ATTEMPTS:
                 self.other_queue.clear()
+                self.lanes["other"].in_a_row = 0  # tomorrow's rows get their own PAGE_ATTEMPTS
             return
         if self.other_queue and self.other_queue[0] is request:
             self.other_queue.popleft()
@@ -1570,13 +1636,15 @@ def run_recorder(settings: RecorderSettings, stop: threading.Event, *, max_runti
         log.error("kalshi_recorder_halted error=%s detail=%s", type(exc).__name__, _detail(exc))
 
 
-def start_from_engine(data_dir: Path, stop: threading.Event,
-                      env: Mapping[str, str] | None = None) -> threading.Thread | None:
+def start_from_engine(data_dir: Path, stop: threading.Event, env: Mapping[str, str] | None = None, *,
+                      live: Iterable[str] = ()) -> threading.Thread | None:
     """The bot's hook: does nothing unless ``KALSHI_RECORDER_ENABLED=true`` (OFF by default).
 
     Reads ``.env`` overlaid by the real environment, as the bot's config does (``env`` replaces both, for
     tests). It refuses to start while any desk in this process trades live (a recorder 429 could hold the
     live client, cancels included), and otherwise runs the reduced in-bot profile (``RecorderSettings.in_bot``).
+    ``live`` names the ``*_MODE`` switches the bot's own Settings run live (``engine`` passes them): the bot may have
+    read another env file (``nightcrawler --env-file other.env run``), so it refuses when either source says live.
     """
     values, _ = process_env(env, dotenv=None if env is not None else ".env")
     try:
@@ -1586,7 +1654,7 @@ def start_from_engine(data_dir: Path, stop: threading.Event,
         return None
     if not enabled:
         return None
-    live = live_modes(values)
+    live = sorted(set(live_modes(values)) | {str(name) for name in live})
     if live:
         log.warning("kalshi_recorder_not_started reason=live_trading_in_this_process modes=%s "
                     "(run it as its own service: python -m nightcrawler.kalshi_recorder run)", ",".join(live))

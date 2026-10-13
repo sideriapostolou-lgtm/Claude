@@ -6,6 +6,8 @@ import base64
 import gzip
 import json
 import os
+import random
+import zlib
 from pathlib import Path
 
 import pytest
@@ -18,6 +20,7 @@ from nightcrawler.kalshi_recorder_store import (
     file_sha256,
     iter_records,
     load_index,
+    salvage,
 )
 
 MB = 1024 * 1024
@@ -234,3 +237,82 @@ def test_the_cap_counts_every_file_under_the_root_and_rotate_prunes_old_manifest
     assert "manifest_older_than_retained_segments" in status.reasons
     assert sorted(path.name for path in manifests.iterdir()) == ["coverage-2026-10-13T15.json"]
     box.close()
+
+
+# --------------------------------------------------------------------------- preflight 2026-10-13 (F2, P8, P10)
+def _crash(box: RecorderStore) -> None:
+    box._lock_file.close()  # the process dies: no seal, Python's buffers are lost, the OS keeps what it was handed
+
+
+def test_f2_flush_due_hands_a_quiet_lane_to_the_os_within_five_seconds(tmp_path: Path) -> None:
+    clock = Clock()
+    box = store(tmp_path, clock)
+    box.append("gaps", "gap", {"n": 1}, T0)  # the first record of a segment is flushed at once
+    box.append("gaps", "gap", {"n": 2}, T0 + 1)  # within 5 s of that flush: buffered
+    clock.at = T0 + 4
+    assert box.flush_due(clock.at) == 0
+    clock.at = T0 + 5.5
+    assert box.flush_due(clock.at) == 1 and box.flush_due(clock.at) == 0  # nothing new: no second flush
+    _crash(box)
+    again = store(tmp_path, clock)
+    assert [row["n"] for row in iter_records(tmp_path, frozenset({"gaps"}))] == [1, 2]
+    again.close()
+
+
+def _torn_part(path: Path, lines: int) -> int:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("wb") as raw:
+        gz = gzip.GzipFile(filename="", fileobj=raw, mode="wb", compresslevel=6, mtime=0)
+        for seq in range(1, lines + 1):
+            gz.write((json.dumps({"seq": seq, "lane": "books", "kind": "book", "at": T0 + seq,
+                                  "pad": random.Random(seq).randbytes(40).hex()}) + "\n").encode())
+        gz.flush(zlib.Z_SYNC_FLUSH)  # what the store hands the OS
+        raw.flush()
+        size = raw.tell()
+        gz.fileobj = None  # never closed: the process died
+    return size
+
+
+@pytest.mark.parametrize("tail", ["zeros", "garbage"])
+def test_p8_a_corrupt_tail_after_a_host_crash_keeps_every_complete_line_before_it(tmp_path: Path, tail: str) -> None:
+    """P8: zlib dropped everything its failing call had decoded (648 of 3000 lines lost, dropped_bytes 101)."""
+    part = tmp_path / "segments" / "books" / "2026-10-13" / "books-20261013T140001Z-000000000001.jsonl.gz.part"
+    good = _torn_part(part, 3000)
+    junk = b"\x00" * 4096 if tail == "zeros" else random.Random(7).randbytes(4096)
+    with part.open("ab") as raw:
+        raw.write(junk)
+    found = salvage(part)
+    assert found.records == 3000 and found.last_seq == 3000
+    assert 4000 <= found.undecoded_bytes <= len(junk)  # the refused compressed tail, counted apart
+    assert found.undecoded_bytes + good >= part.stat().st_size - 8
+    box = store(tmp_path, Clock())
+    assert box.recovered[0]["records"] == 3000 and box.recovered[0]["undecoded_bytes"] == found.undecoded_bytes
+    box.close()
+    assert sum(1 for _ in iter_records(tmp_path, frozenset({"books"}))) == 3000
+
+
+def test_p8_a_clean_or_truncated_file_has_no_undecoded_bytes(tmp_path: Path) -> None:
+    part = tmp_path / "x.jsonl.gz.part"
+    size = _torn_part(part, 50)
+    assert salvage(part).undecoded_bytes == 0 and salvage(part).records == 50
+    part.write_bytes(part.read_bytes()[:size - 7])  # a SIGKILL mid-write: a prefix, which zlib accepts
+    assert salvage(part).undecoded_bytes == 0
+
+
+def test_p10_a_crash_after_a_reseal_before_its_unlink_indexes_the_segment_once(tmp_path: Path) -> None:
+    """P10: both X.jsonl.gz and X.jsonl.gz.part survived; X was indexed twice with prev_sha256 pointing at itself."""
+    clock = Clock()
+    box = store(tmp_path, clock)
+    for index in range(50):
+        box.append("books", "book", {"n": index}, T0 + index)
+    box.flush()
+    part = next(tmp_path.rglob("*.jsonl.gz.part"))
+    _crash(box)
+    RecorderStore._reseal(part, part.with_name(part.name[:-len(".part")]))  # recovery got this far, then died
+    again = store(tmp_path, clock)
+    again.close()
+    rows = [json.loads(line) for line in (tmp_path / "index.jsonl").read_text().splitlines()]
+    segments = [row for row in rows if row["kind"] == "segment"]
+    assert len(segments) == 1 and segments[0]["records"] == 50 and segments[0]["prev_sha256"] != segments[0]["sha256"]
+    assert len(again.recovered) == 1 and not list(tmp_path.rglob("*.part"))
+    assert [row["n"] for row in iter_records(tmp_path, frozenset({"books"}))] == list(range(50))

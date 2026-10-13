@@ -15,6 +15,54 @@ Template:
 
 
 
+## 2026-10-13 22:40 UTC, Claude, branch claude/kalshi-recorder, no PR (local commit only)
+- Changed: fixed every finding of the recorder preflight (wf_15151869-2f0). Recorder: the main loop now flushes
+  every lane's open segment within 5 s of its records, quiet lanes included, and a new segment's first record at
+  once (F2: a lone gap, fee or admission row sat in memory for up to an hour and a SIGKILL lost it); SIGTERM and
+  SIGINT still seal every lane before exit. A discovery item that keeps failing with a 5xx or a timeout is skipped
+  after 5 tries like a 4xx, the pass is abandoned only when failures hit different items, and each new pass (and
+  each KXBTC15M-metadata and daily-rows retry) gets its own 5 attempts (P1, F3: one bad series stopped every pass
+  from admitting anything, and after one abandonment every pass died on its first 429). The sweep/settlement
+  chunk doubles back after each success (P5). An overflowing number (`1e400`) anywhere in a reply is a failed
+  request; in a book reply only that ticker fails (`book_unreadable`, asked again at 60 s) and the rest of the
+  call is recorded; an unreadable sweep/settlement reply is halved to find the bad ticker; a market row whose
+  decimal overflows is refused alone (`row_unreadable`) instead of halting discovery (P6). Prints and watch rows
+  are flushed before the `trade_coverage` row that vouches for them, changed books before their `book_call` row
+  (P7). Torn-tail salvage replays the failing chunk byte by byte from a copy of the decompressor, so zeros or
+  garbage after a host crash keep every complete line before them, and the refused tail is `undecoded_bytes`
+  (P8). A `.part` whose sealed copy is already indexed is removed, not indexed twice (P10). `engine.py`: one
+  argument at the recorder hook (`live=live_mode_names(settings)`, every `*_MODE` the bot's Settings run live)
+  plus that pure helper; the hook refuses when either the Settings or `.env`/environment say live (M1). Replay:
+  every acknowledged cancel leaves the limit checks (`Account.released`, PROTOCOL.md section 6), so two reprices
+  at one decision both go out (P2); a tape that ends before the last entry day is `INCOMPLETE_DATA` and a quote
+  live at the tape's end is unidentifiable, so the verdict uses the 7.7 lower bound (P3); a `Permit` has no seal
+  any more: `FamilyAReplay` and `tape()` run `check_scoring_allowed` again on the permit's files, so a copied or
+  hand-built permit is refused; without a TEST permit no run of any label or length may have entry days at or
+  after a frozen E1 (read from this checkout), `tape()` refuses TEST-day books and prints and `feed()` refuses
+  them (P4); FREEZE.json must be committed as it is on disk and git's commit time must be at least 1 h before E1,
+  not only its own `frozen_at` (P9). `docs/KALSHI_RECORDER.md` section 2 (hosting) rewritten: Railway's Config as
+  Code is deprecated and a new service cannot use `railway.json`, so every setting goes on the service itself:
+  `RAILWAY_RUN_UID=0` (Railway mounts the volume as root; the image runs as `bot`, uid 10001), draining time 30 s
+  set explicitly (Railway's default is 0), restart ON_FAILURE, no healthcheck path, and the service may track
+  `claude/kalshi-recorder` until the recorder is merged, then the deploy branch. Sections 1, 2 (in-bot), 3, 5 and 7
+  say the same as the code.
+- Verified: 26 new tests; 24 fail on a copy of 4ddfba8 and pass now; the other 2 (SIGTERM and SIGINT seal every
+  lane, in a real child process against the scripted venue) already held on 4ddfba8 and stay as guards. Two
+  existing tests changed on purpose: the 414 test no longer expects the chunk to stay small (it grows back), and the
+  end-to-end replay test writes one row after the last entry day (a 1.75-day tape for a 7-day TRAIN is now
+  correctly incomplete). The freeze test helper commits FREEZE.json in a throwaway git repository. Full suite
+  (`python -m pytest -q`): 5,020 passed, 12 skipped (live-network opt-ins), run with pytest's temp dirs on
+  /dev/shm because the shared root disk was full (the first run on it failed 43 and errored 139 tests, every one
+  on `OSError`/`database or disk is full` or the recorder's 256 MiB free-disk pause). `mypy src/nightcrawler`:
+  clean on 125 files. Ruff clean on every changed file.
+- Not verified / skipped: no live or Railway run (no network, no deploy). A worktree or branch made before the freeze
+  commit still has no freeze to read (the check can only read the checkout it runs in). In-bot, the engine does not
+  keep the recorder thread, so a bot shutdown can still cut its final seal short (only the last few seconds of rows;
+  the restart re-seals the `.part`). The reserved cash still counts a cancelled order until ack + epsilon in the
+  capital-days figure (limits no longer do).
+- Real money touched? no. No order code, no live setting, no deploy, no push, no Railway change.
+- Next step: the owner creates the recorder service by docs/KALSHI_RECORDER.md section 2, then Phase 0 (48 h).
+
 ## 2026-10-13 20:55 UTC, Claude, branch claude/kalshi-recorder, no PR (local commits only)
 - Changed: fixed the two reviews of the recorder and Family A replay (commit 3d3846f). Recorder: a malformed
   reply can no longer halt it (the `handler_error` record used the reserved key `lane`; NaN/Infinity JSON is now a
