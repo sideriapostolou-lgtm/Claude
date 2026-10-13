@@ -83,6 +83,8 @@ def panel_state(settings: Settings, now: float) -> dict[str, Any]:
 class SpeedRunner:
     """Owns one event loop, independent caps, durable receipts and daily reports."""
 
+    arena: Any = None  # the Kalshi arena (practice town) when it runs
+
     def __init__(self, settings: Settings, stop: threading.Event, *, clock: Clock | None = None,
                  monotonic: Callable[[], float] = time.monotonic,
                  feed_factory: Callable[..., Any] = MarketFeeds,
@@ -178,6 +180,16 @@ class SpeedRunner:
                     except Exception:  # noqa: BLE001 — a companion cleanup fault must not stop public feeds.
                         log.error("speeddesk_live_status mode=paper reason=initialization_cleanup_failed")
                 self.live = None
+            # The Kalshi arena (practice town, nightcrawler.kalshi_arena): its own thread reads this runner's
+            # snapshot, and the event loop only appends Kalshi books and prints to its bounded queue.
+            if settings.kalshi_arena_enabled and settings.speeddesk_kalshi_enabled:
+                try:
+                    from .kalshi_arena import KalshiArena, arena_config
+
+                    self.arena = KalshiArena(arena_config(settings), self.live_snapshot, clock=self.clock.now)
+                except Exception as exc:  # noqa: BLE001 — a practice town never stops the speed desk.
+                    log.warning("kalshi_arena_not_started error=%s", type(exc).__name__)
+                    self.arena = None
         except BaseException:
             self.ledger.close()
             raise
@@ -238,6 +250,8 @@ class SpeedRunner:
         if self.desk.on_book(book):
             self._refresh_live_snapshot()
             self._live_call("on_book", book)
+            if self.arena is not None and book.window in self._live_slugs:
+                self.arena.feed_book(book)  # one bounded append (practice town)
             # Resolve the first eligible post-delay snapshot immediately. A
             # later favorable update may never replace a failed recheck.
             self.decisions(self.desk.advance(self.clock.now()))
@@ -247,6 +261,8 @@ class SpeedRunner:
         if self.feed_status.get("trade_stream") and allowed:
             self.decisions(self.desk.on_trade(trade, self.clock.now()))
             self._live_call("on_trade", trade)
+            if self.arena is not None and trade.window in self._live_slugs:
+                self.arena.feed_trade(trade)  # one bounded append (practice town)
 
     def on_windows(self, windows: list[Window]) -> None:
         self.evidence.discover([asdict(window) for window in windows], self.clock.now())
@@ -283,6 +299,9 @@ class SpeedRunner:
                 self.desk.books = {key: book for key, book in self.desk.books.items() if key[0] != slug}
         self._refresh_live_snapshot()
         self._live_call("on_status", status)
+        if self.arena is not None:  # rare; the practice town applies the same gap rule in its own thread
+            self.arena.feed_gap(tuple(status.get("gap_windows", ())), bool(status.get("trade_stream")),
+                                status.get("coinbase") == "connected")
 
     def summary(self, day: str, venue: str | None = None) -> dict[str, Any]:
         report = self.desk.daily_summary(day, venue=venue)
@@ -599,6 +618,12 @@ class SpeedRunner:
         self.record("speeddesk_started", {"at": self.clock.now(), "real_orders": False,
                                           "trial_started_at": self.started_at, "config": asdict(self.desk.config)})
         self.checkpoint(self.clock.now())
+        if self.arena is not None:
+            try:
+                self.arena.start(self.stop)  # a daemon thread; the shared stop event ends it
+            except Exception as exc:  # noqa: BLE001 — a practice town never stops the speed desk.
+                log.warning("kalshi_arena_not_started error=%s", type(exc).__name__)
+                self.arena = None
         tasks = [asyncio.create_task(self.feeds.run(self.stop)), asyncio.create_task(self._settlements())]
         self.live_task = asyncio.create_task(self._run_live()) if self.live is not None else None
         try:
@@ -618,11 +643,15 @@ class SpeedRunner:
                 if not self.stop.is_set() and not self.live_task.done():
                     self.live_task.cancel()
                 await asyncio.gather(self.live_task, return_exceptions=True)
+            if self.arena is not None:
+                self.arena.stop()  # sets an event; never waits for the practice town
             self.decisions(self.desk.cancel(self.clock.now(), reason="shutdown"))
             self.checkpoint(self.clock.now())
 
     def close(self) -> None:
         try:
+            if self.arena is not None:
+                self.arena.stop()
             if self.live is not None:
                 self.live.close()
         finally:

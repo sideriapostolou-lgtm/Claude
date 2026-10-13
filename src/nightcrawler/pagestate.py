@@ -91,6 +91,9 @@ Schema (lists capped: members 9, events <= 5, open trades <= 10, closed trades 1
                 "nhl": {... the same as "marco", plus "who"}|null,    # the NHL bettor's loves (MARCO)
                 "arena": {"label", "population", "rent_usd", "town", "today", "leaders", "candidates", "events",
                           "grave", ...}|null,                          # the Arena: nightcrawler.arena.panel_state
+                "kalshi_arena": {"label", "as_of", "stale", "problem", "population", "rent_usd", "broke_usd",
+                                 "start_cash", "note", "control", "residents", "candidates", "grave", "events",
+                                 "town", "feed"}|null,                 # Kalshi practice town: kalshi_arena_town
                 "speeddesk": {"mode": "paper", "label": "PRACTICE (pretend money)", "as_of", "stale", "status",
                               "problem", "btc_age_s", "book_age_s", "today": {"day", "windows", "settled_windows",
                               "fills", "locked_usd", "directional_usd", "pnl_usd", "won", "lost", "worst_usd",
@@ -1525,6 +1528,95 @@ def arena_town(settings: Settings, now: float) -> dict[str, Any] | None:
                "usd": _num(e.get("usd"))}
               for e in _xp_list(raw.get("events")) if isinstance(e, Mapping)]
     return {**raw, "label": PRETEND_LABEL, "events": events}
+
+
+#: The Kalshi arena writes its panel at least every minute; older than this, the page says it is stale.
+KALSHI_ARENA_STALE_S = 180.0
+_ARENA_VERDICTS = ("learning", "losing", "winning", "unclear")
+_ARENA_KINDS = ("born", "evicted", "candidate", "rent", "control", "void")
+
+
+def kalshi_arena_town(settings: Settings, now: float) -> dict[str, Any] | None:
+    """The Kalshi arena (:mod:`nightcrawler.kalshi_arena`) for the page: a practice town with its own figures, never
+    added to anything; fields whitelisted, every text redacted then clipped. None when the arena is off or its small
+    ``panel.json`` cannot be read (the larger state file is never parsed here)."""
+    if not (settings.speeddesk_enabled and settings.speeddesk_kalshi_enabled and settings.kalshi_arena_enabled):
+        return None
+    try:
+        from nightcrawler import kalshi_arena
+
+        raw = kalshi_arena.panel_state(settings.data_dir, now)
+    except FileNotFoundError:
+        return None  # the town has not saved yet
+    except (KeyError, TypeError, ValueError, AttributeError, OSError, ImportError) as exc:
+        log.warning("kalshi_arena_panel_failed error=%s", type(exc).__name__)
+        return None
+    text = _Text(settings)
+
+    def paired(value: Any) -> dict[str, Any] | None:
+        if not isinstance(value, Mapping):
+            return None
+        return {"n": _count(value.get("n")), "mean_usd": _num(value.get("mean_usd")), "t": _num(value.get("t"))}
+
+    def verdict(value: Any) -> str | None:
+        return value if value in _ARENA_VERDICTS else None
+
+    def resident(row: Mapping[str, Any]) -> dict[str, Any]:
+        return {"id": text.opt(row.get("id"), 8), "name": text.opt(row.get("name"), 24),
+                "control": row.get("control") is True, "gen": _count(row.get("gen")),
+                "parent": text.opt(row.get("parent"), 8), "days": _num(row.get("days")),
+                **{key: _num(row.get(key)) for key in ("equity_usd", "profit_usd")},
+                **{key: _count(row.get(key)) for key in ("windows", "traded", "wins", "losses")},
+                "verdict": verdict(row.get("verdict")), "phrase": text.opt(row.get("phrase"), 40),
+                "style": text.opt(row.get("style")), "vs_control": paired(row.get("vs_control")),
+                "candidate": row.get("candidate") is True, "candidate_now": row.get("candidate_now") is True}
+
+    def candidate(row: Mapping[str, Any]) -> dict[str, Any]:
+        adopt = _xp_map(row.get("adopt"))
+        settings_map = _xp_map(adopt.get("settings"))
+        return {"name": text.opt(row.get("name"), 24), "at": _num(row.get("at")), "n": _count(row.get("n")),
+                "t": _num(row.get("t")), "mean_usd": _num(row.get("mean_usd")),
+                "since_flag": paired(row.get("since_flag")), "candidate_now": row.get("candidate_now") is True,
+                "adopt": {"settings": {key: _num(value) for key, value in settings_map.items()
+                                       if isinstance(key, str) and key.replace("_", "").isalpha() and key.isupper()},
+                          "needs_code": [text(line) for line in _xp_list(adopt.get("needs_code"))[:8]]},
+                "note": text.opt(row.get("note"), 200)}
+
+    def grave(row: Mapping[str, Any]) -> dict[str, Any]:
+        return {"name": text.opt(row.get("name"), 24), "gen": _count(row.get("gen")), "why": text.opt(row.get("why")),
+                "died": _num(row.get("died")), "days": _num(row.get("days")),
+                **{key: _count(row.get(key)) for key in ("windows", "traded")},
+                **{key: _num(row.get(key)) for key in ("pnl_usd", "equity_usd", "rent_paid")},
+                "verdict": verdict(row.get("verdict")), "style": text.opt(row.get("style")),
+                "vs_control": paired(row.get("vs_control"))}
+
+    control = _xp_map(raw.get("control"))
+    town = _xp_map(raw.get("town"))
+    feed = _xp_map(raw.get("feed"))
+    as_of = _num(raw.get("as_of"))
+    return {
+        "label": PRETEND_LABEL, "as_of": as_of, "stale": as_of is None or now - as_of > KALSHI_ARENA_STALE_S,
+        "problem": text.opt(raw.get("problem")), "population": _count(raw.get("population")),
+        **{key: _num(raw.get(key)) for key in ("rent_usd", "broke_usd", "start_cash")},
+        "note": text.opt(raw.get("note"), 400),
+        "control": {"name": text.opt(control.get("name"), 24), "equity_usd": _num(control.get("equity_usd")),
+                    "windows": _count(control.get("windows")), "traded": _count(control.get("traded")),
+                    "pnl_usd": _num(control.get("pnl_usd")), "verdict": verdict(control.get("verdict")),
+                    "phrase": text.opt(control.get("phrase"), 40), "reason": text.opt(control.get("reason"), 300),
+                    "genes_line": text.opt(control.get("genes_line"))} if control else None,
+        "residents": [resident(row) for row in _xp_list(raw.get("residents"))[:24] if isinstance(row, Mapping)],
+        "candidates": [candidate(row) for row in _xp_list(raw.get("candidates"))[:5] if isinstance(row, Mapping)],
+        "grave": [grave(row) for row in _xp_list(raw.get("grave"))[:5] if isinstance(row, Mapping)],
+        "events": [{"ts": _num(row.get("ts")), "who": text.opt(row.get("who"), 24), "text": text.opt(row.get("text")),
+                    "tone": row.get("tone") if row.get("tone") in ("good", "bad", "neutral") else "neutral",
+                    "kind": row.get("kind") if row.get("kind") in _ARENA_KINDS else ""}
+                   for row in _xp_list(raw.get("events"))[:24] if isinstance(row, Mapping)],
+        "town": {**{key: _count(town.get(key)) for key in ("born", "evicted", "windows", "void_windows", "candidates",
+                                                            "rent_days")}, "rent_paid": _num(town.get("rent_paid"))},
+        "feed": {**{key: _count(feed.get(key)) for key in ("queue", "put", "dropped", "late", "errors")},
+                 **{key: _num(feed.get(key)) for key in ("slice_p50_ms", "slice_p99_ms", "slice_max_ms", "duty_pct",
+                                                          "lag_s")}},
+    }
 
 
 def _speed_scorecard(raw: Any) -> dict[str, Any] | None:
@@ -3146,6 +3238,7 @@ def build_page_state(ledger: Any, settings: Settings, now: float, engine_status:
     money["nhl"] = marco_desk(settings, now, marcodesk.NHL)  # the NHL bettor's loves (paper only), the same way
     money["arena"] = arena_town(settings, now)  # the Arena's practice town (never summed with anything)
     money["speeddesk"] = speed_desk(settings, now)  # separate practice trial, never real profit or town income
+    money["kalshi_arena"] = kalshi_arena_town(settings, now)  # the Kalshi practice town (never summed)
     # A desk can checkpoint during page assembly. Validate against the completed
     # read's time, while keeping the source's timestamp and the caller's clock.
     money["connections"] = load_connections(
