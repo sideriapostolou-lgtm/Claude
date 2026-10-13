@@ -383,3 +383,19 @@ def test_default_transport_keeps_one_connection_alive(signing_key: Any, monkeypa
     live.balance()
     assert len(sessions) == 2 and sessions[0] is sessions[1]
     live.close()
+
+
+@pytest.mark.parametrize("body,code", [
+    ({"error": {"code": "post_only_cross", "message": "sensitive-venue-response"}}, "post_only_cross"),
+    ({"code": "insufficient_balance", "message": "sensitive-venue-response"}, "insufficient_balance"),
+    ({"error": {"code": "Sensitive Free Text: sensitive-venue-response"}}, None),
+    ({"error": {"code": "x" * 65}}, None),
+    (ValueError("not json"), None),
+])
+def test_rejection_keeps_only_kalshis_short_error_code(signing_key: Any, body: Any, code: str | None) -> None:
+    transport = Transport(Response(body, 400))
+    with pytest.raises(KalshiClientError) as error:
+        create(client(signing_key, transport))
+    assert error.value.code == code
+    assert "sensitive" not in str(error.value).lower()
+    assert (f"[{code}]" in str(error.value)) is (code is not None)

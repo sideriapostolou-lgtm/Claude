@@ -34,16 +34,25 @@ class LiveRejected(ValueError):
         super().__init__(reason)
 
 
+# A lock buy is never sent this close to the close: the market may stop matching.
+LOCK_MARGIN_S = 20.0
+
+
 @dataclass(frozen=True)
 class LiveLimits:
-    window_usd: float = 2.0
-    open_usd: float = 4.0
-    day_loss_usd: float = 3.0
-    total_loss_usd: float = 5.0
+    # The owner's 2026-10-13 choice: $5 per window, $10 open, -$6 day stop, -$10 total stop.
+    window_usd: float = 5.0
+    open_usd: float = 10.0
+    day_loss_usd: float = 6.0
+    total_loss_usd: float = 10.0
     pair_cap: float = 0.99
     max_imbalance: float = 0.25
     clip: float = 25.0
     cutoff_s: float = 180.0
+    # From this long before the close, new buys stop and a half-filled pair is completed
+    # ("locked") at up to lock_max_price per contract instead of riding to settlement.
+    lock_s: float = 240.0
+    lock_max_price: float = 0.97
     cash_max_age_s: float = 5.0
     fee_precision: float = 0.01
     min_fill_qty: float = 0.01
@@ -51,14 +60,21 @@ class LiveLimits:
     def __post_init__(self) -> None:
         if any(not math.isfinite(value) or value < 0 for value in asdict(self).values()):
             raise ValueError("Invalid live limits")
-        for name, hard in (("window_usd", 2.0), ("open_usd", 4.0),
-                           ("day_loss_usd", 3.0), ("total_loss_usd", 5.0)):
+        for name, hard in (("window_usd", 5.0), ("open_usd", 10.0),
+                           ("day_loss_usd", 6.0), ("total_loss_usd", 10.0)):
             object.__setattr__(self, name, min(getattr(self, name), hard))
         object.__setattr__(self, "pair_cap", min(self.pair_cap, 0.99))
         object.__setattr__(self, "max_imbalance", min(self.max_imbalance, 0.25))
         object.__setattr__(self, "cutoff_s", max(60.0, self.cutoff_s))
+        object.__setattr__(self, "lock_s", min(899.0, max(self.lock_s, self.cutoff_s, LOCK_MARGIN_S + 30)))
+        object.__setattr__(self, "lock_max_price", min(self.lock_max_price, 0.99))
         if self.fee_precision not in (0.0001, 0.01) or self.min_fill_qty != 0.01:
             raise ValueError("Unsupported live fee precision or execution increment")
+
+
+def without_default_lock(row: dict[str, Any]) -> dict[str, Any]:
+    """Saved intent without the lock flag when it is False (readable by the release before locks)."""
+    return {key: value for key, value in row.items() if not (key == "lock" and value is False)}
 
 
 def reserve_unit_cost(price: float, coefficient: float, precision: float = 0.01) -> float:
@@ -96,6 +112,8 @@ class LiveIntent:
     cancel_requested: bool = False
     last_snapshot_at: float | None = None
     uncertainty: str | None = None
+    # Completes already-bought contracts into $1 pairs: it can only lower the possible loss.
+    lock: bool = False
 
     @property
     def remaining(self) -> float:
@@ -199,13 +217,34 @@ class LiveRiskBook:
 
     @property
     def open_cost_usd(self) -> float:
-        # Keep gross acquisition cost at risk until venue settlement, even
-        # though opposite-side buys have already netted at the exchange.
+        """Gross cost of unsettled windows (both halves of every pair), for display."""
         return sum(value.spent for window, value in self.inventory.items() if window not in self.settled)
 
     @property
+    def open_loss_usd(self) -> float:
+        """What unsettled windows can still lose: each window's cost minus the $1 its weaker side pays.
+
+        Up and down pay $1 together whatever happens (Kalshi nets them at once), so a complete pair
+        risks nothing and only the unpaired contracts' cost is at risk. Fees are in the cost.
+        """
+        return sum(max(0.0, value.spent - min(value.up.shares, value.down.shares))
+                   for window, value in self.inventory.items() if window not in self.settled)
+
+    @property
     def at_risk_usd(self) -> float:
-        return self.open_cost_usd + self.reserved_usd
+        # A pending lock buy completes pairs, so if it fills the possible loss only falls: it
+        # needs cash (reserved_usd) but is not added to the loss the stops measure.
+        return self.open_loss_usd + sum(intent.reserved for intent in self.intents.values() if not intent.lock)
+
+    def lock_side(self, window: str) -> tuple[Side | None, float]:
+        """The side that completes this window's unpaired contracts, and how many are unpaired."""
+        value = self.inventory.get(window)
+        if value is None or window in self.settled:
+            return None, 0.0
+        difference = value.up.shares - value.down.shares
+        if abs(difference) <= EPSILON:
+            return None, 0.0
+        return ("down" if difference > 0 else "up"), abs(difference)
 
     def _refresh_stops(self, now: float) -> None:
         loss = max(0.0, self.stop_anchor - self.realized_pnl)
@@ -219,7 +258,8 @@ class LiveRiskBook:
         available = None if self.cash_usd is None else max(0.0, self.cash_usd - self.cash_debits - self.reserved_usd)
         return {"halted": self.halted, "halt_reason": self.halt_reason,
                 "integrity_error": self.integrity_error, "reserved_usd": self.reserved_usd,
-                "open_cost_usd": self.open_cost_usd, "at_risk_usd": self.at_risk_usd,
+                "open_cost_usd": self.open_cost_usd, "open_loss_usd": self.open_loss_usd,
+                "at_risk_usd": self.at_risk_usd,
                 "day_pnl_usd": self.day_pnl.get(utc_day(now), 0.0), "day_loss_usd": day_loss,
                 "day_at_risk_usd": day_loss + self.at_risk_usd,
                 "day_stopped": day_loss + self.at_risk_usd >= self.limits.day_loss_usd - EPSILON,
@@ -276,7 +316,7 @@ class LiveRiskBook:
         if window not in self.windows or window in self.settled:
             return "window_unknown_or_settled"
         spec = self.windows[window]
-        if now < spec.start or now >= spec.end - self.limits.cutoff_s:
+        if now < spec.start or now >= spec.end - self.limits.lock_s:
             return "cutoff"
         if not (math.isfinite(price) and 0 < price < 1 and abs(price * 100 - round(price * 100)) < EPSILON
                 and math.isfinite(size) and size >= 1 and abs(size - round(size)) < EPSILON
@@ -306,16 +346,59 @@ class LiveRiskBook:
             return "cash_budget"
         return self._inventory_guard(window, side, size, unit)
 
+    def can_lock(self, window: str, side: Side, price: float, size: float, now: float) -> str:
+        """An immediate buy that only completes this window's bought contracts into $1 pairs.
+
+        At any price below $1 including fees it lowers the window's worst-case loss, so the spend
+        budgets, pair cap, edge and loss stops (which exist to bound loss) do not apply; it still
+        needs reconciled orders, fresh cash and an exact fit to the unpaired contracts.
+        """
+        if self.integrity_error:
+            return "reconciliation_error"
+        if window not in self.windows or window in self.settled:
+            return "window_unknown_or_settled"
+        spec = self.windows[window]
+        if now < spec.end - self.limits.lock_s or now >= spec.end - LOCK_MARGIN_S:
+            return "not_lock_time"
+        if not (math.isfinite(price) and 0 < price < 1 and abs(price * 100 - round(price * 100)) < EPSILON
+                and math.isfinite(size) and size >= 1 and abs(size - round(size)) < EPSILON
+                and side in ("up", "down")):
+            return "invalid_order"
+        if price > self.limits.lock_max_price + EPSILON:
+            return "lock_price"
+        if size > self.limits.clip + EPSILON:
+            return "clip"
+        if self.cash_at is None or self.cash_usd is None or not 0 <= now - self.cash_at <= self.limits.cash_max_age_s:
+            return "cash_stale"
+        if any(item.window == window and item.reservation_active for item in self.intents.values()):
+            return "order_pending"  # every order in the window is reconciled before the count is trusted
+        light, unpaired = self.lock_side(window)
+        if light != side or size > unpaired + EPSILON:
+            return "lock_size"
+        try:
+            unit = self.unit_reserve(window, price, "take")
+        except LiveRejected as exc:
+            return exc.reason
+        if unit >= 1 - EPSILON:
+            return "lock_price"
+        if size * unit + self.reserved_usd + self.cash_debits > self.cash_usd + EPSILON:
+            return "cash_budget"
+        return ""
+
     def reserve_intent(self, window: str, side: Side, kind: Kind, price: float, size: float,
-                       now: float, client_order_id: str, fair: float | None = None) -> LiveIntent:
+                       now: float, client_order_id: str, fair: float | None = None,
+                       *, lock: bool = False) -> LiveIntent:
         if (not client_order_id.startswith(CLIENT_PREFIX) or len(client_order_id) <= len(CLIENT_PREFIX)
                 or client_order_id in self.intents):
             raise LiveRejected("client_order_id")
-        reason = self.can_buy(window, side, kind, price, size, now)
+        if lock and kind != "take":
+            raise LiveRejected("invalid_order")
+        reason = (self.can_lock(window, side, price, size, now) if lock
+                  else self.can_buy(window, side, kind, price, size, now))
         if reason:
             raise LiveRejected(reason)
         intent = LiveIntent(client_order_id, window, side, kind, price, size, now,
-                            self.unit_reserve(window, price, kind), fair)
+                            self.unit_reserve(window, price, kind), fair, lock=lock)
         self.intents[client_order_id] = intent
         if self.inventory[window].up.shares + self.inventory[window].down.shares <= EPSILON:
             self.bootstrap_order[window] = client_order_id
@@ -483,9 +566,12 @@ class LiveRiskBook:
         return True
 
     def to_state(self) -> dict[str, Any]:
-        return {"version": 1, "venue": "kalshi", "limits": asdict(self.limits),
+        # Fields added for locks are written only when they carry information, so the previous release can
+        # still read a state with no pending lock if a deployment is rolled back (limits come from settings).
+        limits = {key: value for key, value in asdict(self.limits).items() if key not in ("lock_s", "lock_max_price")}
+        return {"version": 1, "venue": "kalshi", "limits": limits,
                 "windows": {key: asdict(value) for key, value in self.windows.items()},
-                "intents": {key: asdict(value) for key, value in self.intents.items()},
+                "intents": {key: without_default_lock(asdict(value)) for key, value in self.intents.items()},
                 "inventory": {key: asdict(value) for key, value in self.inventory.items()},
                 "fills": {key: asdict(value) for key, value in self.fills.items()},
                 "settled": {key: asdict(value) for key, value in self.settled.items()},
@@ -544,7 +630,8 @@ class LiveRiskBook:
                     or abs(intent.price * 100 - round(intent.price * 100)) > EPSILON
                     or intent.unit_reserve < intent.price - EPSILON
                     or not isinstance(intent.reservation_active, bool)
-                    or not isinstance(intent.cancel_requested, bool)):
+                    or not isinstance(intent.cancel_requested, bool)
+                    or not isinstance(intent.lock, bool) or (intent.lock and intent.kind != "take")):
                 raise ValueError("Invalid persisted live intent")
             for value in (intent.last_snapshot_at, intent.venue_remaining_size, intent.fair):
                 if value is not None and (not math.isfinite(value) or value < 0):

@@ -248,7 +248,8 @@ session scratchpad that you will not have.
    is still pending, with the first conservative review no earlier than 2026-10-15 19:09 UTC. See `docs/WORKLOG.md`.
    Partial days and missing/stale feeds are reported honestly. **Later owner decision, 2026-10-12:** the owner
    waived the three-day prerequisite for a separate Kalshi-only companion, with exact $2/window, $4 open,
-   $3 UTC day stop and $5 total stop limits. See spec section 9. This companion ships **paper by default**,
+   $3 UTC day stop and $5 total stop limits (raised by the owner on 2026-10-13 to $5/$10/$6/$10 with the
+   locked-in pairs rule, spec 9.1). See spec section 9. This companion ships **paper by default**,
    uses actual account fills/fees/positions and a separate honest practice twin, and never promotes itself.
    The owner activates `SPEEDDESK_KALSHI_MODE=live` and `SPEEDDESK_KALSHI_LIVE_CONFIRM=yes` only after the
    deployment check. Until Direct-account fee precision is established, conservative rounding excludes all
@@ -265,7 +266,7 @@ session scratchpad that you will not have.
    and `MARCO_REAL=0`.
 
    **Source-bot watcher and faster feed (2026-10-12 owner update):** the owner wants an evidence-backed
-   real Kalshi strategy as the eventual result, within the same $2/$4/$3/$5 caps. `skipwatch.py` is an
+   real Kalshi strategy as the eventual result, within the owner's caps ($5/$10/$6/$10 since 2026-10-13). `skipwatch.py` is an
    independent, public-only observation worker; it never sends orders or enables a strategy. See spec
    section 10 and `research/lab8/skip/PLAN.md`. It records the source wallet, international BTC five-minute
    books/trades and Coinbase ticks under `/data/skipwatch/`, and exposes a separate public-watcher panel.
@@ -289,7 +290,7 @@ session scratchpad that you will not have.
    opening balance in this observed wallet, not the claimed $100. Public block timestamps do not establish
    execution timing; proxy scores cannot silently pass the strict target. Three complete consecutive UTC
    days each positive after fees plus the verified rule-match target are evidence for **asking** the owner
-   about higher caps, never automatic permission. Existing $2/$4/$3/$5 limits remain unchanged.
+   about higher caps, never automatic permission. The caps changed only at the owner's word ($5/$10/$6/$10, 2026-10-13).
 
    **Latest shipment:** PR #11, `eb44e03`, Railway reports SUCCESS at 2026-10-12 22:15:53 UTC and public
    health returns `ok`. Read-only Railway token process ended during continuation; the owner was asked to

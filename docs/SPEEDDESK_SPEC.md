@@ -274,10 +274,33 @@ and the existing town figures. Verify the exact deployed commit and a paper `spe
 giving the owner the activation settings. After the owner activates, inspect the first windows and record
 orders, fills, fees, locked/directional P&L, gaps and anomalies in `docs/WORKLOG.md`.
 
+### 9.1 Raised caps and locked-in pairs (owner, 2026-10-13)
+
+The owner chose "2.5x": $5 per window, $10 open, $6 UTC daily loss stop, $10 total loss stop, and asked that
+pairs be "completely locked in" and that the bot "knows when to sell".
+
+- **Money at risk** is what can still be lost: per unsettled window, its cost (fees included) minus $1 for
+  each complete up+down pair (Kalshi nets the pair to $1 at once), plus pending non-lock reservations. The
+  open budget and both loss stops use it. Gross cost is still reported as `open_cost_usd`.
+- **New buys stop** `SPEEDDESK_KALSHI_LOCK_S` (240) seconds before the close, never later than the cutoff.
+- **Lock:** from then until 20 s before the close, a window holding more of one side buys the other side at
+  the ask (immediate-or-cancel) for exactly the unpaired whole contracts, at up to
+  `SPEEDDESK_KALSHI_LOCK_MAX_PRICE` (0.97). Buying the other side is the same as selling the extra side back:
+  every contract ends in a $1 pair and the window's result is known. Above that price the window is already
+  decided and is left as it is.
+- At any price below $1 including fees a lock lowers the worst-case loss, so window budget, pair cap, edge
+  and the loss stops do not block it; a pending lock holds cash but is not added to money at risk. So the $5
+  per window bounds new buys, and a window's gross spend can exceed it only by a lock (its possible loss
+  cannot). During a money stop the panel says new buys are stopped and that locks still complete pairs.
+- Saved state leaves out the lock fields while they hold defaults, so a rollback to the release before
+  locks can still read it (a lock pending at that moment would not be readable by the old release). It never
+  runs with live switches off, after a failure or integrity error, in a window the owner traded, or before
+  every order in the window is reconciled. Locks are kept out of the speed measurements and the twin.
+
 ## 10. Public source-bot watcher and faster market data (owner, 2026-10-12)
 
-The owner wants real Kalshi trading as the eventual result of learning the source bot, within the existing
-$2/window, $4 open, $3 UTC daily stop and $5 total stop. Observation and statistical fitting do not themselves
+The owner wants real Kalshi trading as the eventual result of learning the source bot, within the owner's
+caps (2026-10-12: $2/window, $4 open, $3 UTC daily stop, $5 total stop; raised 2026-10-13, see 9.1). Observation and statistical fitting do not themselves
 authorize an automatic strategy change. The existing live companion remains separately gated; the watcher
 never places an order, trades on Polymarket international, changes money settings or moves the Railway region.
 

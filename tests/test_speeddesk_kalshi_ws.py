@@ -534,3 +534,16 @@ def test_inflight_rest_cannot_restore_book_after_metadata_invalidation() -> None
     feed.windows[TICKER] = window
     assert asyncio.run(feed.poll_book())
     assert received == []
+
+
+def test_a_few_milliseconds_of_clock_difference_neither_drops_the_book_nor_dates_it_in_the_future() -> None:
+    # From Virginia, Kalshi is about a millisecond away, so its send and engine
+    # times often read 0-7 ms ahead of our clock (seen 2026-10-12 23:50 UTC).
+    reader = state()
+    ahead = START + 1.1 + .007
+    books, _ = reader.apply(delta(seq=3, at=ahead), START + 1.1)
+    assert books and all(book.exchange_at == START + 1.1 for book in books)
+    _, prints = reader.apply(print_frame(at=START + 1.2 + .005), START + 1.2)
+    assert prints and all(print_.at == START + 1.2 for print_ in prints)
+    with pytest.raises(MarketDataGap):
+        reader.apply(delta(seq=4, at=START + 1.3 + .5), START + 1.3)

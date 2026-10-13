@@ -13,6 +13,41 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-13 00:55 UTC, Claude, branch claude/virginia-kalshi-clock-fix, PR #16
+- Owner request: "Raise the money but make sure it's completely locked in and perfect and knows when to sell".
+  Asked for numbers; the owner chose "2.5x": $5 per window, $10 open, $6 UTC day stop, $10 total stop.
+- Changed: caps raised in config defaults/ceilings and `LiveLimits` hard ceilings. Money at risk is now what
+  can still be lost (each unsettled window's cost minus $1 per complete up+down pair; gross cost stays as
+  `open_cost_usd`), so a complete pair no longer counts as risk and a lock cannot trip a false total-stop halt.
+  New locked-in rule (spec 9.1): from `SPEEDDESK_KALSHI_LOCK_S`=240 s before the close new buys stop; until 20 s
+  before the close a window with more of one side buys the other side immediate-or-cancel for exactly the
+  unpaired contracts at up to `SPEEDDESK_KALSHI_LOCK_MAX_PRICE`=0.97. A lock bypasses edge, pair cap, window
+  budget and loss stops (it can only lower the loss), but never runs with live off, after a failure, in an
+  owner-traded window or before the window's orders reconcile. From the PR #16 review (no confirmed defects):
+  the pausing third refusal now keeps Kalshi's code, and the panel shows an error pause as `waiting`.
+- Verified: failing-first lock tests (losing move locks a $1.14 loss instead of up to $2.08; winning move locks
+  profit; 98c left alone; final 20 s left alone; runs in a day stop, never with live off; guard refuses once the
+  pair is complete) and risk-book tests; they fail on the PR #16 code. Full suite and mypy below in the PR.
+- Not verified: live behaviour of a lock (first one will show `speeddesk_live_order` kind `lock`). If Railway
+  sets the four cap variables explicitly, the panel will still report $2/$4/$3/$5 after deploy and they must be
+  set to $5/$10/$6/$10 (owner already chose these numbers).
+- Real money touched? Yes once merged: caps 2.5x and the lock rule, by the owner's explicit choice.
+- Also (01:20 UTC): the owner confirmed the 00:51 and ~01:13 UTC account changes were their own trades by hand in
+  the bot's window ("It was me ... please fix"). In a window holding a fill that is provably not the bot's (already
+  marked `foreign_windows`, which the bot leaves alone), the venue position and settlement revenue include the
+  owner's contracts: the position match and the settlement payout check now skip that window, and the bot settles
+  from its own reconciled fills. Any unexplained mismatch elsewhere still blocks new orders (tested both ways).
+- Second review (15 agents incl. a whole-window simulator: 1,552 windows, 1.34M steps, 1,026 locks, 0 money
+  invariant violations): 10 confirmed findings, all fixed with failing-first tests. Medium: a sub-penny tail ask
+  (e.g. 90.5c) made the lock refuse (now a whole-cent IOC limit just above); the owner closing out the bot's
+  position by hand froze the desk after the close (d448ba4, settles from the outcome). Low: panel said PRACTICE /
+  "no new buys" while a lock ran in a money stop (now REAL MONEY, "only completing half-filled pairs", only while a
+  lock is possible); lock guard ignored the emergency stop; misleading reason after a lock; locks counted as takes;
+  page "Open position risk" showed gross cost (now what can be lost; gross as open_cost_usd); window cap wording
+  (new buys only); saved state now readable by the previous release when no lock is pending; a lock now fits the
+  cash instead of all-or-nothing. Total-stop reason no longer says "Practice only".
+- Next step: Claude merges PR #16 (owner: "u tap merge"), then confirms caps $5/$10/$6/$10 and the first lock.
+
 ## 2026-10-13 00:40 UTC, Codex, branch codex/town-live-connections
 - Owner request: connect every real-money business detail logically to the town, retaining the simplified app.
   Started from deploy head `beec63d`; open draft trading fixes #14/#16 were inspected but not included.
@@ -93,6 +128,30 @@ Template:
   00:14:30 UTC. Startup/trading logs and authenticated live balances remain unverified without their
   credentials; health is not evidence of trading health. This follow-up is documentation only.
 
+## 2026-10-12 23:58 UTC, Claude, branch claude/nightcrawler-memecoin-bot-Gwnb1S
+- Changed: moved the bot to Virginia (Railway region us-east4-eqdc4a, volume moved with it; deployment 985c3880,
+  live 23:50:52 UTC). Then fixed what the move broke: Kalshi's market feed rejected any message stamped even
+  0-7 ms ahead of our clock, so from Virginia (about 1 ms from Kalshi) the book connection dropped every 2-4 s.
+  `speeddesk_kalshi_ws._fresh_ms` now accepts up to 250 ms ahead (CLOCK_SKEW_S) and clamps such a time to receipt,
+  so every later `0 <= now - exchange_at` check still holds. More than 250 ms ahead still drops the connection.
+- Verified: failing-first test `test_a_few_milliseconds_of_clock_difference_...`; full suite 4,253 passed, 12 skipped;
+  ruff and mypy clean on the changed files (repo-wide ruff has 392 pre-existing findings, unchanged). After the
+  move: polydesk_started LIVE, Kalshi "REAL MONEY" authenticated, cash $25.01; first acks 214-353 ms (California
+  median was 422-615 ms).
+- Not verified / skipped: whether Coinbase or Polymarket US times also read slightly ahead from Virginia (their
+  checks have the same zero tolerance); checked next from the latency metrics.
+- Real money touched? No setting or cap changed (Kalshi still $2 window, $4 open, $3 day, $5 total).
+- Also (task #75, second commit): one definite Kalshi refusal of one order (4xx other than 401/403/429) no longer
+  pauses new orders; it is logged as `speeddesk_live_reject` with Kalshi's error code (`code`, kept only when it is
+  a short lowercase identifier). Three refusals in a row still pause as before. Our own last-moment send guard
+  stopping an order (nothing sent) is no longer counted as an account error. Tests: one-refusal/three-refusal and
+  send-guard tests (failing first); client code-parsing test; full suite 4,260 passed, 12 skipped.
+- Also (00:25 UTC): the town showed "PRACTICE (Kalshi)" for the seconds after every order (account re-read,
+  cancel confirming) and the owner thought the bot had stopped. The panel label now follows only the switches,
+  failures and money stops (`_standing_reason`); the seconds-long pauses are reported as `waiting` and
+  `trading_now`. Test `test_label_stays_real_money_between_orders` (failing first); full suite 4,437 passed.
+- Next step: confirm no `speeddesk_feed_kalshi_ws_gap` after this deploys. PR #14 (cancel 404) is folded into PR #16.
+
 ## 2026-10-12 23:56 UTC, Codex, branch codex/tycoon-overview
 - Owner request: simplify the live app into a phone-first Theme Park Tycoon 2-inspired business town, with
   fewer buttons and real business connections. Pulled deploy head `b91b7d6` unchanged; recovered the previously
@@ -132,6 +191,22 @@ Template:
   awaiting an owner tap. Source deployment is complete. Startup/trading logs and the authenticated live
   account page remain unverified without their credentials; HTTP health is not trading-health evidence.
   This verification note is documentation-only and should not trigger another rebuild.
+
+## 2026-10-12 23:45 UTC, Claude, branch claude/nightcrawler-memecoin-bot-Gwnb1S
+- Owner request: make the real-money Kalshi speed desk actually trade, and "get fast".
+- Kalshi exchange sharding: crypto markets live on shard 2 and the owner's $25 was on shard 0, so every
+  create returned 404 `insufficient_shard_balance` ("Exchange user not found"). Claude moved $25.00 0 -> 2
+  with `POST /portfolio/intra_exchange_instance_transfer` (owner approved). The next orders were accepted.
+- First real fill: 23:30:20 UTC, 2 NO (Down) at $0.45 as taker on KXBTC15M-26OCT121945-45, fee $0.0347.
+- Bugs fixed: 853109d logs the failing Kalshi call in `speeddesk_live_reject`. 0bdc67a: a repeat cancel of an
+  order Kalshi had already canceled returned 404, and the desk paused new orders from 23:31 to the 23:38
+  restart; a 404 on cancel is now "already gone" and the order list confirms it (test fails without the fix).
+- Speed: b91b7d6 reuses one kept-alive HTTP session for Kalshi (decision-to-ack was 641 ms; median 422 ms
+  over the first 9 acks, mostly before the change).
+- Verified: full pytest 4,253 passed / 12 skipped; mypy clean; ruff clean on changed files. Read-only checks:
+  `GET /portfolio/orders` lists V2 orders with status canceled/executed/resting as the code expects.
+- Real money touched? yes, on the owner's word: Kalshi live (caps $2/$4/$3/$5) and the shard transfer.
+- Next step: confirm fills and settlements over the next windows; ChatGPT does the loop-stall and region work.
 
 ## 2026-10-12 23:15 UTC, Codex, branch codex/weather-lock-stopwatch
 - Owner request: build a read-only weather lock stopwatch on Railway for at least three days. Pulled

@@ -30,6 +30,10 @@ from .speeddesk_model import Book, Level, Trade
 URL = "wss://external-api-ws.kalshi.com/trade-api/ws/v2"
 PATH = "/trade-api/ws/v2"
 STALE_S = 3.0
+# From Virginia, Kalshi is about a millisecond away, so its clock routinely reads
+# 0-7 ms ahead of ours (2026-10-12). Up to this much "future" is clock difference,
+# not bad data; such a time is clamped to receipt so nothing downstream sees it.
+CLOCK_SKEW_S = 0.25
 log = logging.getLogger("nightcrawler.speeddesk_kalshi_ws")
 # The websocket library's DEBUG handshake log includes authentication headers.
 # Keep its transport logger disabled even when application diagnostics are on.
@@ -64,11 +68,11 @@ def _fresh_ms(value: Any, now: float, domain: str) -> float:
     if not _integer(value):
         raise MarketDataGap(f"timestamp_missing_or_stale:{domain}:missing_or_invalid")
     age = now - value / 1000
-    if not 0 <= age <= STALE_S:
+    if not -CLOCK_SKEW_S <= age <= STALE_S:
         # Only a fixed timestamp domain and numeric age: never frame contents,
         # credentials, headers or arbitrary server exception text.
         raise MarketDataGap(f"timestamp_missing_or_stale:{domain}:age_s={age:.3f}")
-    return float(value / 1000)
+    return float(min(value / 1000, now))
 
 
 class MarketHandshake:

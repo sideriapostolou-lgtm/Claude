@@ -19,7 +19,7 @@ def test_observation_defaults_leave_every_money_gate_unchanged() -> None:
     assert settings.speeddesk_kalshi_live_confirm is None
     assert settings.speeddesk_kalshi_account_type == "unknown"
     assert (settings.speeddesk_kalshi_window_usd, settings.speeddesk_kalshi_open_usd,
-            settings.speeddesk_kalshi_day_stop_usd, settings.speeddesk_kalshi_total_stop_usd) == (2, 4, 3, 5)
+            settings.speeddesk_kalshi_day_stop_usd, settings.speeddesk_kalshi_total_stop_usd) == (5, 10, 6, 10)
 
 
 def test_market_stream_keys_do_not_enable_real_orders() -> None:

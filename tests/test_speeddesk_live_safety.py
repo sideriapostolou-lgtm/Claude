@@ -209,7 +209,7 @@ def test_unknown_create_is_durable_and_paper_restart_never_submits_again(tmp_pat
 
 
 def test_partial_fill_and_failed_cancel_keep_cash_and_loss_risk_reserved(tmp_path: Path) -> None:
-    desk, account, clock, window = companion(tmp_path)
+    desk, account, clock, window = companion(tmp_path, settings=configured(speeddesk_kalshi_window_usd=2, speeddesk_kalshi_open_usd=4, speeddesk_kalshi_day_stop_usd=3, speeddesk_kalshi_total_stop_usd=5))
     arm_fake(desk, account, clock)
     try:
         assert asyncio.run(desk._send(window, "up", "take", .4, 2, .6))
@@ -325,4 +325,90 @@ def test_cancelled_caller_cannot_release_lock_or_leave_late_created_order_restin
         asyncio.run(scenario())
     finally:
         account.release.set()
+        desk.close()
+
+
+def test_owner_trade_in_the_bots_window_neither_freezes_the_desk_nor_breaks_its_settlement(tmp_path: Path) -> None:
+    """2026-10-13 00:51 and 01:13 UTC: the owner traded by hand in the window the bot was working. The venue
+    position then includes the owner's contracts, every reconcile came back inconsistent, and every window froze
+    until the close. The bot already leaves that window alone; it keeps its own books from its own fills, keeps
+    trading the other windows, and settles from its own contracts (the venue revenue includes the owner's)."""
+    desk, account, clock, window = companion(tmp_path)
+    arm_fake(desk, account, clock)
+    try:
+        assert asyncio.run(desk._send(window, "up", "take", .4, 2, .6))
+        intent = next(iter(desk.intents.values()))
+        account.rows[0].update(status="executed", fill_count_fp="2.00", remaining_count_fp="0.00")
+        bot_fill = {"fill_id": "bot-two", "order_id": intent.order_id, "ticker": window.slug,
+                    "outcome_side": "yes", "book_side": "bid", "yes_price_dollars": "0.4000",
+                    "count_fp": "2.00", "fee_cost": "0.0336", "ts": clock.now() + .25}
+        owner_fill = {"fill_id": "owner-by-hand", "order_id": "owner-order", "ticker": window.slug,
+                      "outcome_side": "no", "book_side": "ask", "no_price_dollars": "0.6000",
+                      "count_fp": "3.00", "fee_cost": "0.0504", "ts": clock.now() + .5}
+        account.prints = [bot_fill, owner_fill]
+        account.holdings = [{"ticker": window.slug, "position_fp": "-1.00"}]  # bot +2 up, owner 3 down
+        clock.advance(1)
+        asyncio.run(desk._reconcile())
+        assert window.slug in desk.foreign_windows
+        assert desk.account_at is not None  # consistent: the other windows keep trading
+        assert desk.book.inventory[window.slug].up.shares == 2 and desk.book.inventory[window.slug].down.shares == 0
+        settled_at = window.end + 5
+        account.holdings = []
+        # Down won: the owner's 3 contracts pay $3 into the same market's settlement; the bot's 2 up lose.
+        account.settled = [{"ticker": window.slug, "market_result": "no", "revenue": 300,
+                            "yes_count_fp": "2.00", "no_count_fp": "3.00",
+                            "yes_total_cost_dollars": "0.8000", "no_total_cost_dollars": "1.8000",
+                            "fee_cost": "0.0840", "settled_time": datetime.fromtimestamp(settled_at, UTC).isoformat()}]
+        clock.set(settled_at + 1)
+        asyncio.run(desk._reconcile())
+        assert desk.book.integrity_error is None and not desk.fatal_reason
+        assert desk.book.settled[window.slug].pnl_usd == pytest.approx(-.8336)  # the bot's own result only
+    finally:
+        desk.close()
+
+
+def test_an_unexplained_position_in_a_bot_window_still_stops_new_orders(tmp_path: Path) -> None:
+    """The relaxation covers only windows with a fill that is provably not the bot's. A position change with no
+    such fill (a fill not yet visible, or anything unexplained) still blocks every new order until it reconciles."""
+    desk, account, clock, window = companion(tmp_path)
+    arm_fake(desk, account, clock)
+    try:
+        assert asyncio.run(desk._send(window, "up", "take", .4, 2, .6))
+        account.holdings = [{"ticker": window.slug, "position_fp": "2.00"}]  # position seen, fill not yet visible
+        clock.advance(1)
+        asyncio.run(desk._reconcile())
+        assert window.slug not in desk.foreign_windows
+        assert desk.account_at is None
+    finally:
+        desk.close()
+
+
+def test_owner_closing_out_the_bots_position_by_hand_settles_instead_of_freezing(tmp_path: Path) -> None:
+    """Review of the owner-window fix: if the owner sells the bot's contracts by hand, Kalshi nets them and the
+    account is flat in that market, so the venue writes no settlement row. The bot must settle its own contracts
+    from the final outcome instead of waiting forever for a receipt that will never come."""
+    desk, account, clock, window = companion(tmp_path)
+    arm_fake(desk, account, clock)
+    try:
+        assert asyncio.run(desk._send(window, "up", "take", .4, 2, .6))
+        intent = next(iter(desk.intents.values()))
+        account.rows[0].update(status="executed", fill_count_fp="2.00", remaining_count_fp="0.00")
+        account.prints = [{"fill_id": "bot-two", "order_id": intent.order_id, "ticker": window.slug,
+                           "outcome_side": "yes", "book_side": "bid", "yes_price_dollars": "0.4000",
+                           "count_fp": "2.00", "fee_cost": "0.0336", "ts": clock.now() + .25},
+                          {"fill_id": "owner-sells-them", "order_id": "owner-order", "ticker": window.slug,
+                           "outcome_side": "no", "book_side": "ask", "no_price_dollars": "0.5500",
+                           "count_fp": "2.00", "fee_cost": "0.0346", "ts": clock.now() + .5}]
+        account.holdings = []  # the owner's 2 down net the bot's 2 up: the account is flat here
+        clock.advance(1)
+        asyncio.run(desk._reconcile())
+        assert window.slug in desk.foreign_windows and desk.account_at is not None
+        desk.final_outcomes[window.slug] = True  # the market finalized: up won
+        account.settled = []  # flat accounts get no settlement row
+        clock.set(window.end + 30)
+        asyncio.run(desk._reconcile())
+        assert desk.account_at is not None  # not frozen
+        assert desk.book.settled[window.slug].pnl_usd == pytest.approx(2 - .8336)  # the bot's 2 up won
+        assert desk.book.integrity_error is None and not desk.fatal_reason
+    finally:
         desk.close()
