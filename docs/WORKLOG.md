@@ -15,6 +15,23 @@ Template:
 
 
 
+## 2026-10-13 15:15 UTC, Codex, highest-value next-step review
+- Changed: pulled through `2681ff6`, read PR #29's fresh-move result/code and PR #30's timing changes, and
+  saved `research/kalshi_moonshots/NEXT_STEP.md`: a narrow 48-hour BTC quote-survival/index recorder is the
+  recommended next build. No collector, model or strategy was implemented or deployed in this session.
+- Verified: independent source/statistics reviews confirm no existing recorder combines raw crypto Kalshi
+  books with CF index/receipt timing. The fresh-move result warns about latency but does not test subcent
+  late-window entries or executable exits; its mean/t-statistic weighting differs. Do not generalize it
+  into proof all moonshots fail or use its optimistic overlapping signal buckets as tradable returns.
+- Checks: only unwatched Markdown changes; source/tests/build inputs match `2681ff6`. Claude records
+  4,671 passed / 12 skipped and clean mypy for that code, with three pre-existing changed-file Ruff findings
+  noted in his entry. No Python changes or new suite run here. Local links, diff whitespace and staged
+  secret scan checked before saving. No Railway status/latency was independently remeasured this session.
+- Real money touched? No keys, orders, variable changes or new money authority. Suggested observation
+  uses public/read-only feeds and existing authorized order receipts, never new real test orders.
+- Next step: implement the small observer, verify index access and actual post-PR #30 latency, and report
+  quote survival/exit depth with both fees. Forty-eight hours tests feasibility, not profitability.
+
 ## 2026-10-13 14:10 UTC, Codex, extreme-payout Kalshi strategy research
 - Changed: added `research/kalshi_moonshots/` with the exploratory plan, complete candidate entry/exit rules,
   separate implementation/state/accounting/test specification, primary-source evidence, public sample and
