@@ -683,15 +683,111 @@ def test_the_town_serves_frames_and_halts_itself_after_repeated_errors(tmp_path:
 
 
 def test_the_town_hardens_itself(tmp_path: Path) -> None:
-    code = ("from nightcrawler.kalshi_arena import _harden\n_harden()\nimport os, resource\n"
+    """The town's own steps, and what it reports back: the idle class at nice 19, first for the OOM killer, a memory
+    limit, and no core dump (its working directory is DATA_DIR, the live desk's volume) even when the soft limit it
+    inherits allows one."""
+    code = ("import resource\nhard = resource.getrlimit(resource.RLIMIT_CORE)[1]\n"
+            "resource.setrlimit(resource.RLIMIT_CORE, (hard, hard))\n"
+            "from nightcrawler.kalshi_arena import _harden, report_hardening\n_harden()\nimport json, os\n"
             "print(os.getpriority(os.PRIO_PROCESS, 0), os.sched_getscheduler(0) == getattr(os, 'SCHED_IDLE', -1), "
-            "resource.getrlimit(resource.RLIMIT_AS)[0], open('/proc/self/oom_score_adj').read().strip())")
+            "resource.getrlimit(resource.RLIMIT_AS)[0], open('/proc/self/oom_score_adj').read().strip(), "
+            "*resource.getrlimit(resource.RLIMIT_CORE))\nprint(json.dumps(report_hardening()))")
     import subprocess
 
     result = subprocess.run(stand_in(code), capture_output=True, text=True, timeout=30, check=True, env={})
-    nice, idle, memory, oom = result.stdout.split()
+    first, second = result.stdout.splitlines()
+    nice, idle, memory, oom, core_soft, core_hard = first.split()
     assert int(nice) == 19 and memory == str(kalshi_arena.MEMORY_BYTES) and oom == "1000"
     assert idle == "True" or not hasattr(os, "SCHED_IDLE")
+    assert (core_soft, core_hard) == ("0", "0")
+    assert json.loads(second) == {"nice": 19, "sched": "idle", "as_limit_bytes": kalshi_arena.MEMORY_BYTES,
+                                  "oom_score_adj": 1000, "applied": True}
+    assert "kalshi_arena_hardened" not in result.stderr  # applied: an INFO line (no WARNING), here unconfigured
+
+
+def test_the_town_reports_the_isolation_it_actually_got(tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+                                                        caplog: Any) -> None:
+    """A runtime that refuses _harden's steps (a seccomp or gVisor profile, a read-only /proc) is no longer silent:
+    what took effect is read back, logged once (a WARNING when the town competes for the CPU at normal priority)
+    and carried in the panel's feed for the page."""
+    import socket
+
+    caplog.set_level(logging.INFO, "nightcrawler.kalshi_arena")
+    monkeypatch.setattr(kalshi_arena.os, "getpriority", lambda *_args: 0)
+    monkeypatch.setattr(kalshi_arena.os, "sched_getscheduler", lambda _pid: 0)  # SCHED_OTHER
+    report = kalshi_arena.report_hardening()
+    monkeypatch.undo()
+    assert (report["nice"], report["sched"], report["applied"]) == (0, "other", False)
+    warned = [record.getMessage() for record in caplog.records
+              if record.levelno == logging.WARNING and "kalshi_arena_hardened" in record.getMessage()]
+    assert len(warned) == 1 and "nice=0 sched=other" in warned[0] and "applied=False" in warned[0]
+    ours, theirs = socket.socketpair()
+    ours.sendall(frame(("config", kalshi_arena.config_wire(ArenaConfig(data_dir=tmp_path)))))
+    ours.close()
+    assert kalshi_arena.serve(theirs.fileno(), sleep=lambda _s: None, alarm=lambda _s: None, hardening=report) == 0
+    theirs.close()
+    assert kalshi_arena.panel_state(tmp_path, time.time())["feed"]["hardening"] == report
+
+
+def test_frames_that_arrive_with_the_configuration_are_read_not_dropped(tmp_path: Path) -> None:
+    """The link's first flush lands 50 ms after start, while the town is still importing, so it reaches the town in
+    the same read as the configuration. It carries the window list and whole ladders: it is read before the first
+    pass (a dropped one left the town without its windows, and every later ladder change unreadable)."""
+    import socket
+
+    from nightcrawler.kalshi_arena import window_wire
+
+    now = time.time()
+    window = Window("KXBTC15M-early", now + 60, now + 960, None, taker_coefficient=0.07, maker_coefficient=0.0,
+                    venue_start_price=80_000, venue="kalshi", fee_rounding="kalshi")
+    ladders = Ladders(window.slug)
+    first, second = ladders.delta(now), ladders.delta(now + 0.05)
+    sent: dict[tuple[str, str], Any] = {}
+    records = []
+    for item in (*first, *second):
+        records.append(book_wire(item, sent.get((item.window, item.side))))
+        sent[(item.window, item.side)] = (item.bids, item.asks)
+    ours, theirs = socket.socketpair()
+    ours.sendall(frame(("config", kalshi_arena.config_wire(ArenaConfig(data_dir=tmp_path)))))
+    ours.sendall(frame(("batch", 1, now, 0, 40, [("w", (window_wire(window),)), *records[:2]])))
+    ours.sendall(frame(("batch", 2, now, 0, 40, records[2:])))  # changes to the ladders frame 1 sent whole
+    ours.close()
+    # frame 2 holds changes to the ladders frame 1 sent whole (readable only with frame 1)
+    assert any(change is not None and change[1] is not None for record in records[2:] for change in record[3:5])
+    assert kalshi_arena.serve(theirs.fileno(), sleep=lambda _s: None, alarm=lambda _s: None) == 0
+    theirs.close()
+    state = json.loads((tmp_path / "kalshi_arena" / "state.json").read_text(encoding="utf-8"))
+    assert state["active_windows"] == [[window.slug, window.start]]  # the town knows the window from frame 1
+    assert state["feed"]["received"] == 4 and state["feed"]["errors"] == 0
+    panel = kalshi_arena.panel_state(tmp_path, time.time())
+    assert panel["feed"]["open_incomplete"] == 0 and panel["feed"]["last_frame_at"] is not None
+
+
+@pytest.mark.skipif(not hasattr(signal, "SIGVTALRM"), reason="the CPU-time timer is POSIX only")
+def test_a_spinning_pass_dies_on_its_cpu_budget(tmp_path: Path) -> None:
+    """A pass that spins is ended by its CPU budget (SIGVTALRM after PASS_CPU_S of the process's CPU), not after two
+    minutes of a core by the wall-clock alarm; the budget is re-armed every pass and cleared with the alarm."""
+    import subprocess
+
+    code = ("from nightcrawler import kalshi_arena as k\nk.PASS_CPU_S = 0.3\n"
+            "def spin(self, now):\n    while True:\n        pass\n"
+            "k.KalshiArena.step = spin\nraise SystemExit(k.serve(int(sys.argv[-1])))")
+    link = ArenaLink(ArenaConfig(data_dir=tmp_path), command=stand_in(code))
+    began = time.monotonic()
+    link.start()
+    try:
+        assert link.proc is not None
+        returncode = link.proc.wait(timeout=60)
+    finally:
+        if link.proc is not None and link.proc.poll() is None:
+            link.proc.kill()
+        link.close()
+    assert returncode == -signal.SIGVTALRM and time.monotonic() - began < 30
+    clear = ("from nightcrawler import kalshi_arena as k\nimport time\nk.PASS_CPU_S = 0.2\nk._alarm(120)\n"
+             "k._alarm(0)\nend = time.process_time() + 0.5\nwhile time.process_time() < end:\n    pass\n"
+             "print('alive')")
+    result = subprocess.run(stand_in(clear), capture_output=True, text=True, timeout=30, env={}, check=False)
+    assert result.returncode == 0 and result.stdout.strip() == "alive"
 
 
 @pytest.mark.skipif(os.environ.get("NIGHTCRAWLER_PERF_TESTS") != "1",
@@ -745,6 +841,30 @@ NO_ORDER_PATH = ("nightcrawler.speeddesk_live", "nightcrawler.speeddesk_kalshi",
                  "_ssl", "http.client", "urllib.request", "asyncio")
 
 
+def held_files(fds: Path, town_dir: Path) -> dict[str, str]:
+    """The files a running town holds, read while it may be saving: a descriptor that closes mid-read is skipped,
+    and a save's temporary file under DATA_DIR/kalshi_arena (open for a moment, then renamed) is not one it keeps."""
+    held: dict[str, str] = {}
+    for item in fds.iterdir():
+        try:
+            target = os.readlink(item)
+        except FileNotFoundError:
+            continue
+        if not (target.startswith(str(town_dir)) and target.endswith(".tmp")):
+            held[item.name] = target
+    return held
+
+
+@pytest.mark.skipif(not Path("/proc/self/fd").exists(), reason="reads /proc")
+def test_held_files_skip_a_save_in_flight(tmp_path: Path) -> None:
+    town_dir = tmp_path / "kalshi_arena"
+    town_dir.mkdir()
+    with (town_dir / "panel.json.tmp").open("w") as saving, (town_dir / "town.lock").open("a") as lock:
+        held = held_files(Path("/proc/self/fd"), town_dir)
+        assert str(town_dir / "town.lock") in held.values() and not any(path.endswith(".tmp") for path in held.values())
+        assert saving.fileno() >= 0 and lock.fileno() >= 0
+
+
 def test_the_real_town_imports_no_order_path_and_inherits_no_live_file(tmp_path: Path, capfd: Any) -> None:
     """The exact worker command (plus -X importtime, which only reports) started by a SpeedRunner holding the REAL
     Kalshi companion's controller lock and ledgers: the town's process holds none of them (a town outliving its bot
@@ -763,7 +883,7 @@ def test_the_real_town_imports_no_order_path_and_inherits_no_live_file(tmp_path:
         assert link.proc is not None and wait_for(lambda: (tmp_path / "kalshi_arena" / "state.json").exists())
         fds = Path(f"/proc/{link.proc.pid}/fd")
         if fds.exists():
-            held = {item.name: os.readlink(item) for item in fds.iterdir()}
+            held = held_files(fds, tmp_path / "kalshi_arena")
             own = str(tmp_path / "kalshi_arena" / "town.lock")
             assert any(path.endswith("controller.lock") for path in live_files)  # the parent holds the live lock
             assert not [path for path in held.values()

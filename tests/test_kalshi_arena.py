@@ -403,7 +403,9 @@ def test_thirty_days_of_churn_keep_both_files_small(tmp_path: Path, monkeypatch:
     arena._save(T0 + 30 * DAY)
     state = (tmp_path / "kalshi_arena" / "state.json").stat().st_size
     panel = (tmp_path / "kalshi_arena" / "panel.json").stat().st_size
-    assert state <= 192_000 and panel <= 16_000, (state, panel)
+    # The panel carries each resident's genes and money lines for the town's contract (about 27 KB at worst); the
+    # page refuses one over kalshi_arena.PANEL_MAX_BYTES unread.
+    assert state <= 192_000 and panel <= 32_000, (state, panel)
     assert all(len(res.row["pnl"]) <= kalshi_arena.RECORD_KEEP for res in arena.residents.values())
 
 
@@ -731,13 +733,88 @@ def test_the_day_stop_survives_a_restart(tmp_path: Path) -> None:
     assert "2026-10-08" not in tomorrow.residents[live.id].desk.days  # a new day starts from zero, as live
 
 
-def test_the_state_file_is_fsynced(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_the_state_file_is_fsynced_only_after_a_change_that_matters(tmp_path: Path,
+                                                                     monkeypatch: pytest.MonkeyPatch) -> None:
+    """The minute's heartbeat save (nothing changed) is a plain atomic rename: the town's fsyncs share the live
+    desk's volume and journal, so it fsyncs only after a settlement, birth, eviction, void, flag or halt."""
     arena, clock = town(tmp_path)
     synced: list[int] = []
     real = os.fsync
     monkeypatch.setattr(kalshi_arena.os, "fsync", lambda fd: synced.append(fd) or real(fd))
     arena._save(clock.now())
     assert len(synced) == 1  # state.json (the town's only record); the panel is a display copy
+    for _ in range(3):  # three heartbeats with nothing to record
+        clock.advance(kalshi_arena.SAVE_EVERY_S)
+        arena.step(clock.now())
+        assert arena.saved_at == clock.now()
+    assert len(synced) == 1
+    settle(arena, T0, everyone(arena, 0.25))  # a settlement: the next save is durable
+    clock.advance(kalshi_arena.SAVE_SOON_S)
+    arena.step(clock.now())
+    assert len(synced) == 2 and arena.saved_at == clock.now()
+    arena._halt(RuntimeError("synthetic"))
+    assert len(synced) == 3
+
+
+def test_a_halt_on_a_full_disk_still_reaches_the_page(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """On a full disk (the volume the live desk shares) the larger state file fails first; the halt still reaches
+    the panel, written on its own, in its brief form when the whole panel does not fit either."""
+    import errno
+
+    arena, clock = town(tmp_path)
+    arena._save(clock.now())
+    real = kalshi_arena._write
+    room = {"bytes": 10**9}
+
+    def full(path: Path, text: str, *, durable: bool = False) -> None:
+        if path.name == "state.json" or len(text) > room["bytes"]:
+            raise OSError(errno.ENOSPC, "No space left on device")
+        real(path, text, durable=durable)
+
+    monkeypatch.setattr(kalshi_arena, "_write", full)
+    clock.advance(5)
+    arena._halt(OSError(errno.ENOSPC, "No space left on device"))
+    panel = kalshi_arena.panel_state(tmp_path, clock.now())
+    assert "live desk is unaffected" in panel["problem"] and panel["as_of"] == clock.now()
+    assert len(panel["residents"]) == 12  # the whole panel still fit
+    room["bytes"] = 1_000  # only a small file fits now
+    clock.advance(5)
+    arena._halt(OSError(errno.ENOSPC, "No space left on device"))
+    brief = kalshi_arena.panel_state(tmp_path, clock.now())
+    assert "live desk is unaffected" in brief["problem"] and brief["as_of"] == clock.now()
+    assert "residents" not in brief and brief["town_id"] == arena.town_id
+    assert sorted(path.name for path in (tmp_path / "kalshi_arena").iterdir()) == ["panel.json", "state.json"]
+
+
+def test_the_share_of_a_core_counts_the_whole_process(tmp_path: Path) -> None:
+    """duty_pct is the process's CPU over wall time: reading and decoding frames happen outside step() (about half
+    the town's CPU at 400 books a second), and the status line must not report only the half inside it."""
+    clock = FakeClock(T0)
+    used = {"cpu": 0.0}
+    arena = KalshiArena(ArenaConfig(data_dir=tmp_path), LiveSnapshot, clock=clock.now, cpu=lambda: used["cpu"])
+    for _ in range(10):
+        used["cpu"] += 0.03  # the frames of the last 0.1 s, read and decoded before the pass
+        clock.advance(0.1)
+        arena.step(clock.now())
+    assert arena.telemetry(clock.now())["duty_pct"] == pytest.approx(30.0, abs=0.5)
+    arena._status(clock.now())  # each status line starts a new period
+    clock.advance(1.0)
+    assert arena.telemetry(clock.now())["duty_pct"] == 0.0
+
+
+def test_an_eviction_line_cuts_its_reason_after_a_whole_word(tmp_path: Path) -> None:
+    arena, clock = town(tmp_path)
+    victim = challenger(arena)
+    why = ("losing: 26 settled, 17 lost, -$9.88 in all; even at best -$0.05 a settlement (99 % sure, early stop) and "
+           "a few more words of a long reason")
+    arena._evict(victim, why, clock.now())
+    line = arena.events[0]
+    assert line["kind"] == "evicted" and line["resident_id"] == victim.id
+    assert len(line["text"]) <= kalshi_arena.EVENT_TEXT and line["text"].endswith(" windows traded, +0.00 $).")
+    reason = line["text"].split(" was evicted: ", 1)[1].rsplit(" after ", 1)[0]
+    kept = reason.removesuffix("…")
+    assert reason.endswith("…") and why.startswith(kept) and why[len(kept)] in " ,;:("
+    assert arena.grave[0]["why"] == why[:160]  # the grave keeps the reason whole
 
 
 def test_a_failed_write_leaves_no_temporary_file(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

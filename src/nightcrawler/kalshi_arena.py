@@ -37,8 +37,9 @@ step (every 50 ms) :meth:`ArenaLink.flush` encodes what arrived plus the market 
 sigma, maker windows, outcomes) into ONE frame and hands it to a non-blocking pipe (``os.write``; a full pipe drops
 the frame and counts it, never waits). The town (:class:`KalshiArena`) runs in a child Python process started with
 an empty environment (no ``KALSHI_*`` key ever reaches it), at the lowest CPU priority, first in line for the
-out-of-memory killer, under a memory limit, and killed by the kernel if one pass hangs for :data:`HANG_S`. It reads
-the frames, and a window whose feed was incomplete (frames dropped, or events older than the desks' 3 s freshness
+out-of-memory killer, under a memory limit, without core dumps, and killed by the kernel if one pass hangs for
+:data:`HANG_S` or spends :data:`PASS_CPU_S` of CPU (it logs what of this took effect: :func:`report_hardening`). It
+reads the frames, and a window whose feed was incomplete (frames dropped, or events older than the desks' 3 s freshness
 when read) is void for every resident. The child exits when the pipe closes (the live desk stopped or died), after a
 final save. A child that dies is logged (``kalshi_arena_exited``); the live desk never notices.
 """
@@ -98,6 +99,7 @@ POPULATION = 12  # the control is one of them
 RECORD_KEEP = 960  # windows of record per resident (10 days); the verdict reads them
 GRAVE_KEEP = 40
 EVENTS_KEEP = 60
+EVENT_TEXT = 160  # characters in one line of the town's story
 CANDIDATE_WINDOWS = 100  # paired windows against the control before a challenger can be a candidate
 CANDIDATE_T = 2.0
 MUTATE = 0.12  # a child's number moves by up to this share of its range
@@ -119,12 +121,23 @@ STATUS_EVERY_S = 300.0
 STATUS_TROUBLE_S = 60.0  # ... every minute while the feed lags or drops
 HALT_AFTER = 5  # failed passes in a row before the town halts itself (the process exits)
 HANG_S = 120  # a pass (or a read) that takes longer than this is killed by the kernel (SIGALRM, no handler)
+# ... and one that spends this much CPU (user time, ITIMER_VIRTUAL: SIGVTALRM, no handler): a spinning pass dies after
+# 5 s of CPU, never two minutes of a core; a town merely starved of CPU (its idle class) spends none and lives on.
+PASS_CPU_S = 5.0
 MEMORY_BYTES = 1 << 30  # the town's address-space limit: a runaway town fails alone
 SETTLED_KEEP = 200  # settled windows remembered, so none is ever added again
 FRAME_MAX = 64 << 20  # a frame larger than this is a broken stream
 EXIT_HALTED = 3
 EXIT_BUSY = 4  # another town already holds DATA_DIR/kalshi_arena/town.lock
 LOCK_WAIT_S = 5.0  # ... after waiting this long for it (an old town's final save)
+# The panel (panel.json; pagestate.kalshi_arena_block whitelists it into the page's top-level ``kalshi_arena``).
+PANEL_SCHEMA = 1  # bumped on a change an old reader would misread
+PANEL_RESIDENTS = 24  # every resident (a town holds at most 24)
+PANEL_GRAVE = 5  # of the GRAVE_KEEP kept; ``counts.grave`` is every eviction
+PANEL_CANDIDATES = 5
+PANEL_EVENTS = 24  # of the EVENTS_KEEP kept; ``counts.events`` is every event this town recorded
+PANEL_MAX_BYTES = 256 << 10  # a panel is about 20-30 KiB; the page refuses a larger file before reading it
+FILL = "speeddesk_fill"  # the practice desk's fill decision
 # The live loop's side (ArenaLink).
 PENDING_MAX = 1024  # books and prints held between two flushes (about 2.5 s of a busy market); beyond, dropped
 FLUSH_MAX = 256  # events encoded per flush: a flush after a stall costs at most about 1 ms
@@ -824,6 +837,16 @@ def _day(now: float) -> str:
     return datetime.fromtimestamp(now, UTC).date().isoformat()
 
 
+def _words(text: str, limit: int) -> str:
+    """``text`` in at most ``limit`` characters, cut after a whole word (an ellipsis marks the cut)."""
+    if len(text) <= limit:
+        return text
+    cut = text[:max(0, limit - 1)]
+    if " " in cut:
+        cut = cut[:cut.rindex(" ")]
+    return cut.rstrip(" ,;:(") + "…"
+
+
 def _paired(stats: Mapping[str, Any] | None) -> dict[str, Any]:
     """Running paired statistics as the page shows them: windows, mean $ a window against the control, and t."""
     if not isinstance(stats, Mapping):
@@ -849,6 +872,11 @@ def _number(value: Any) -> float:
     if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
         raise TypeError("not a finite number")
     return float(value)
+
+
+def _maybe(value: Any) -> float | None:
+    """A saved figure an older record may not carry: None (never counted) stays None."""
+    return None if value is None else _number(value)
 
 
 def _clean_genes(raw: Any) -> dict[str, Any]:
@@ -904,6 +932,11 @@ def _clean_row(raw: Any) -> dict[str, Any]:
         "windows": int(_number(raw.get("windows", 0))), "traded": int(_number(raw.get("traded", 0))),
         "wins": int(_number(raw.get("wins", 0))), "losses": int(_number(raw.get("losses", 0))),
         "pnl_usd": _number(raw.get("pnl_usd", 0.0)),
+        # Counted since the field existed (None: a record from before that never counted it, shown as null).
+        "fees_usd": _maybe(raw.get("fees_usd")), "contracts": _maybe(raw.get("contracts")),
+        "fills": None if raw.get("fills") is None else int(_number(raw["fills"])),
+        "funded_usd": _number(raw.get("funded_usd", START_CASH)),
+        "record_from": _number(raw["record_from"]) if raw.get("record_from") is not None else _number(raw["born"]),
         "paired": {key: _number(value) for key, value in dict(raw.get("paired") or {}).items()
                    if key in ("n", "sum", "sumsq")},
         "verdict": {key: str(value)[:300] for key, value in dict(raw.get("verdict") or {}).items()
@@ -971,6 +1004,12 @@ class KalshiArena:
                                      "rent_paid": 0.0, "candidates": 0, "rent_days": 0}
         self.next_id = 1
         self.seq = 0
+        # This town's identity, drawn afresh with every fresh state file: resident and event ids are unique within it.
+        self.town_id = os.urandom(6).hex()
+        self.next_event = 1
+        self.window_fills: dict[tuple[str, str], int] = {}  # (resident id, window): fills not settled yet
+        self.last_frame_at: float | None = None  # the town's clock when the last frame from the live loop arrived
+        self.hardening: dict[str, Any] | None = None  # what the town's process runs with (report_hardening)
         self.rent_day: str | None = None
         self.problem: str | None = None
         self.received = 0
@@ -982,7 +1021,8 @@ class KalshiArena:
         self.link_dropped = 0
         self.live_flush_us: deque[int] = deque(maxlen=PASSES_KEEP)
         self.passes: deque[float] = deque(maxlen=PASSES_KEEP)
-        self.cpu_s = 0.0
+        # The share of a core: the process's whole CPU time (reading and decoding frames too, not only step()).
+        self.cpu_base = cpu()
         self.cpu_since = clock()
         self.started_at = clock()
         self.saved_at = -math.inf
@@ -1016,6 +1056,7 @@ class KalshiArena:
             raise ValueError("unexpected Kalshi arena frame")
         _, seq, _sent_at, dropped, flush_us, items = message
         now = self.clock()
+        self.last_frame_at = now
         if (self.link_seq is not None and seq != self.link_seq + 1) or dropped > self.link_dropped:
             self._degrade_open(now, "feed_dropped")
         self.link_seq, self.link_dropped = int(seq), max(self.link_dropped, int(dropped))
@@ -1073,9 +1114,7 @@ class KalshiArena:
         trouble = self.lag_s > 1.0 or bool(self.degraded)
         if now - self.status_at >= (STATUS_TROUBLE_S if trouble else STATUS_EVERY_S):
             self._status(now)
-        spent = max(0.0, self.cpu() - started)
-        self.passes.append(spent)
-        self.cpu_s += spent
+        self.passes.append(max(0.0, self.cpu() - started))
 
     def _holders(self, slug: str) -> list[Resident]:
         return [self.residents[rid] for rid in self.members.get(slug, ()) if rid in self.residents]
@@ -1147,7 +1186,7 @@ class KalshiArena:
                     continue
                 for res in self._holders(book.window):
                     if res.desk.on_book(book):
-                        res.desk.advance(now)
+                        self._fills(res, res.desk.advance(now))
             elif kind == "trade":
                 trade: Trade = item[1]
                 behind = now - (trade.received_at if trade.received_at is not None else trade.at)
@@ -1163,7 +1202,7 @@ class KalshiArena:
                 while len(self.print_order) > SEEN_PRINTS:
                     self.seen_prints.discard(self.print_order.popleft())
                 for res in self._holders(trade.window):
-                    res.desk.on_trade(trade, now)
+                    self._fills(res, res.desk.on_trade(trade, now))
             elif kind == "gap":
                 self._gap(item[1], bool(item[2]), bool(item[3]), now)
         self.lag_s = max(0.0, lag)
@@ -1194,13 +1233,21 @@ class KalshiArena:
                      key=lambda res: res.last_eval)
         for res in due[:share]:
             res.last_eval = now
-            res.desk.evaluate(now, makers_enabled=bool(makers), maker_windows=makers)
+            self._fills(res, res.desk.evaluate(now, makers_enabled=bool(makers), maker_windows=makers))
+
+    def _fills(self, res: Resident, decisions: Sequence[Any]) -> None:
+        """Count a resident's fills per window; a window's count is booked at its settlement (a void drops it)."""
+        for decision in decisions:
+            if decision.event == FILL:
+                key = (res.id, decision.window)
+                self.window_fills[key] = self.window_fills.get(key, 0) + 1
 
     def _forget_window(self, slug: str) -> None:
         self.windows.pop(slug, None)
         self.members.pop(slug, None)
         self.degraded.pop(slug, None)
         self.settled.append(slug)
+        self.window_fills = {key: value for key, value in self.window_fills.items() if key[1] != slug}
 
     def _void(self, slug: str, now: float, why: str, text: str) -> None:
         """No record and no money for anyone: equal for all."""
@@ -1233,6 +1280,7 @@ class KalshiArena:
                 continue
             up_wins = bool(snap.outcomes[slug])
             results: dict[str, float | None] = {}
+            books: dict[str, tuple[float, float, int]] = {}
             for res in self._holders(slug):
                 if slug not in res.desk.windows:
                     continue  # never expected; one resident's gap must not stop the town's settlement
@@ -1240,13 +1288,16 @@ class KalshiArena:
                 result = res.desk.settle(slug, up_wins, now)
                 res.desk.forget(slug)
                 if result is not None:
-                    traded = result.up_shares + result.down_shares > 0
-                    results[res.id] = round(result.pnl_usd, 4) if traded else None
+                    contracts = result.up_shares + result.down_shares
+                    results[res.id] = round(result.pnl_usd, 4) if contracts > 0 else None
+                    books[res.id] = (result.fee_usd, contracts, self.window_fills.get((res.id, slug), 0))
             self._forget_window(slug)
-            self._after_window(window, results, now)
+            self._after_window(window, results, now, books)
 
-    def _after_window(self, window: Window, results: Mapping[str, float | None], now: float) -> None:
-        """Book one settled window for every resident that held it, then rent, evictions, births and flags."""
+    def _after_window(self, window: Window, results: Mapping[str, float | None], now: float,
+                      books: Mapping[str, tuple[float, float, int]] | None = None) -> None:
+        """Book one settled window for every resident that held it (``books``: its fees, contracts and fills there;
+        the fees are already inside its P&L), then rent, evictions, births and flags."""
         self.town["windows"] += 1
         self.seq += 1
         control = self._control()
@@ -1262,6 +1313,15 @@ class KalshiArena:
             row["pnl"].append(pnl)
             del row["pnl"][:-RECORD_KEEP]
             row["windows"] += 1
+            book = (books or {}).get(rid)
+            if book is not None:
+                fee, contracts, fills = book
+                if row.get("fees_usd") is not None:
+                    row["fees_usd"] = round(float(row["fees_usd"]) + fee, 6)
+                if row.get("contracts") is not None:
+                    row["contracts"] = round(float(row["contracts"]) + contracts, 6)
+                if row.get("fills") is not None:
+                    row["fills"] = int(row["fills"]) + int(fills)
             if pnl is not None:
                 row["traded"] += 1
                 row["wins"] += int(pnl > 0)
@@ -1338,7 +1398,7 @@ class KalshiArena:
                 words = ("The live rules lose in practice" if verdict.verdict == LOSING
                          else f"The live rules are now {PHRASES[verdict.verdict]} in practice")
                 self._event(now, res.row["name"], f"{words}: {reason[:110]} (live unchanged).",
-                            "bad" if verdict.verdict == LOSING else "neutral", "control")
+                            "bad" if verdict.verdict == LOSING else "neutral", "control", res.id)
             self.control_verdict = verdict.verdict
 
     def _candidate(self, res: Resident, now: float) -> None:
@@ -1360,7 +1420,7 @@ class KalshiArena:
                  paired["mean_usd"] or 0.0)
         self._event(now, row["name"], f"{row['name']} is a CANDIDATE: winning on {row['traded']} windows and "
                     f"{paired['mean_usd'] or 0:+.3f} $ a window ahead of the live rules (t {t:.2f}). A lead for a "
-                    "pre-registered test, not proof.", "good", "candidate")
+                    "pre-registered test, not proof.", "good", "candidate", res.id)
 
     def _evict(self, res: Resident, why: str, now: float) -> None:
         row = res.row
@@ -1369,20 +1429,30 @@ class KalshiArena:
             members.discard(res.id)
         days = max(0.0, (now - float(row["born"])) / 86_400.0)
         verdict = row.get("verdict") or {}
+        self.window_fills = {key: value for key, value in self.window_fills.items() if key[0] != res.id}
+        # The retired resident keeps its id (never given again in this town), lineage, genes and whole record.
         self.grave.insert(0, {
             "id": row["id"], "name": row["name"], "gen": row["gen"], "parent": row["parent"], "born": row["born"],
             "died": now, "days": round(days, 2), "windows": row["windows"], "traded": row["traded"],
+            "wins": row["wins"], "losses": row["losses"], "fills": row.get("fills"),
+            "contracts": None if row.get("contracts") is None else round(float(row["contracts"]), 4),
+            "funded_usd": round(float(row["funded_usd"]), 4),
             "pnl_usd": round(float(row["pnl_usd"]), 4), "equity_usd": round(float(row["equity_usd"]), 4),
+            "fees_usd": None if row.get("fees_usd") is None else round(float(row["fees_usd"]), 4),
             "rent_paid": round(float(row["rent_paid"]), 4), "why": why[:160], "verdict": verdict.get("word"),
-            "genes": row["genes"], "style": style(row["genes"]), "vs_control": _paired(row["paired"])})
+            "genes": row["genes"], "rule_id": rule_id(row["genes"]), "style": style(row["genes"]),
+            "vs_control": _paired(row["paired"]), "was_candidate": row.get("candidate") is not None})
         del self.grave[GRAVE_KEEP:]
         self.town["evicted"] += 1
         self.dirty = True
         log.info("kalshi_arena_evicted resident=%s why=%s windows=%d pnl_usd=%.2f equity_usd=%.2f days=%.1f",
                  row["name"], why.split(":")[0].replace(" ", "_"), row["traded"], float(row["pnl_usd"]),
                  float(row["equity_usd"]), days)
-        self._event(now, row["name"], f"{row['name']} was evicted: {why[:90]} after {days:.1f} days "
-                    f"({row['traded']} windows traded, {float(row['pnl_usd']):+.2f} $).", "bad", "evicted")
+        head = f"{row['name']} was evicted: "
+        tail = f" after {days:.1f} days ({row['traded']} windows traded, {float(row['pnl_usd']):+.2f} $)."
+        # The reason fills what the line has room for, cut at a word (the grave row keeps it whole).
+        self._event(now, row["name"], head + _words(why, EVENT_TEXT - len(head) - len(tail)) + tail, "bad",
+                    "evicted", res.id)
 
     def _control(self) -> Resident | None:
         return next((res for res in self.residents.values() if res.control), None)
@@ -1420,7 +1490,10 @@ class KalshiArena:
         row = {"id": str(rid), "name": name, "control": control, "gen": int(parent.row["gen"]) + 1 if parent else 1,
                "parent": parent.id if parent else None, "born": now, "genes": genes,
                "equity_usd": float(self.config.start_cash), "rent_paid": 0.0, "pnl": [], "windows": 0, "traded": 0,
-               "wins": 0, "losses": 0, "pnl_usd": 0.0, "paired": {"n": 0, "sum": 0.0, "sumsq": 0.0},
+               "wins": 0, "losses": 0, "pnl_usd": 0.0, "fees_usd": 0.0, "contracts": 0.0, "fills": 0,
+               # One funding at birth, never topped up (a child inherits no money); the record runs from here.
+               "funded_usd": float(self.config.start_cash), "record_from": now,
+               "paired": {"n": 0, "sum": 0.0, "sumsq": 0.0},
                "verdict": {"word": "learning", "phrase": PHRASES["learning"], "reason": ""}, "candidate": None,
                "candidate_now": False, "since_flag": None, "day": {}}
         res = Resident(row, self._desk(genes))
@@ -1436,7 +1509,7 @@ class KalshiArena:
                                                                   " a newcomer")
         log.info('kalshi_arena_born resident=%s parent=%s gen=%d style="%s"', name,
                  parent.row["name"] if parent else "-", row["gen"], style(genes))
-        self._event(now, name, f"{name} moved in,{who}: {style(genes)}.", "good", "born")
+        self._event(now, name, f"{name} moved in,{who}: {style(genes)}.", "good", "born", res.id)
         return res
 
     def _populate(self, now: float) -> None:
@@ -1468,13 +1541,21 @@ class KalshiArena:
             self._new_resident(child_genes(parent.row["genes"], self.rng), now, parent=parent)
 
     # ------------------------------------------------------------------ the story, the panel and the files
-    def _event(self, now: float, who: str, text: str, tone: str, kind: str) -> None:
-        self.events.insert(0, {"ts": now, "who": who[:24], "text": text[:160], "tone": tone, "kind": kind})
+    def _event(self, now: float, who: str, text: str, tone: str, kind: str, resident_id: str | None = None) -> None:
+        """One line of the town's story, with an id never used again in this town (``town_id``) and the resident it
+        is about (None: the town itself)."""
+        self.events.insert(0, {"id": self.next_event, "ts": now, "who": who[:24], "resident_id": resident_id,
+                               "text": text[:EVENT_TEXT], "tone": tone, "kind": kind})
+        self.next_event += 1
         del self.events[EVENTS_KEEP:]
 
     def telemetry(self, now: float) -> dict[str, Any]:
         """The feed and the town's own work since the last status line: what arrived, what the live loop dropped,
-        late events, CPU per pass and share, lag, and the live loop's own flush times (it sends them)."""
+        late events, CPU per pass, the process's share of a core (everything it ran, reading and decoding frames
+        too), lag, the live loop's own flush times (it sends them), when the last frame arrived (the town's clock),
+        open windows already incomplete (void for everyone at their settlement), and what isolation the process
+        actually got (:func:`report_hardening`; None outside the town's own process). Counters run from the start
+        of the town's process (they are not restored from the state file)."""
         passes = sorted(self.passes)
         flushes = sorted(self.live_flush_us)
         elapsed = max(1e-9, now - self.cpu_since)
@@ -1486,58 +1567,96 @@ class KalshiArena:
             value = pick(passes, q)
             return None if value is None else round(value * 1000, 3)
 
+        duty = round(100 * max(0.0, self.cpu() - self.cpu_base) / elapsed, 2)
         return {"queue": len(self.inbox), "received": self.received, "dropped": self.link_dropped,
                 "late": self.late, "coalesced": self.coalesced, "pass_p50_ms": ms(0.5), "pass_p99_ms": ms(0.99),
-                "pass_max_ms": ms(1.0), "duty_pct": round(100 * self.cpu_s / elapsed, 2), "lag_s": round(self.lag_s, 3),
+                "pass_max_ms": ms(1.0), "duty_pct": duty, "lag_s": round(self.lag_s, 3),
                 "errors": self.errors, "live_flush_us_p50": pick(flushes, 0.5), "live_flush_us_p99": pick(flushes, 0.99),
-                "live_flush_us_max": pick(flushes, 1.0)}
+                "live_flush_us_max": pick(flushes, 1.0), "last_frame_at": self.last_frame_at,
+                "open_incomplete": len(self.degraded),
+                "hardening": None if self.hardening is None else dict(self.hardening)}
 
     def _resident_row(self, res: Resident, now: float) -> dict[str, Any]:
-        row = res.row
+        """One resident as the page shows it. PRACTICE money in USD, fees included; equity carries the open
+        contracts AT COST (``equity_basis`` "cost": they are not marked to the market, so ``open_mark_usd`` is
+        null); rent is apart from the trading P&L (equity = funded + P&L - rent). ``cash_usd`` (equity less the open
+        contracts' cost; it includes ``reserved_usd``) can briefly go below zero: every desk trades the live $10
+        window and $20 open budgets whatever its own money."""
+        row, desk = res.row, res.desk
+        open_cost = sum(inventory.spent for inventory in desk.inventory.values())
+        held = sum(inventory.up.shares + inventory.down.shares for inventory in desk.inventory.values())
+        reserved = sum(order.reserved for order in desk.orders.values())
+        activity = ("holding" if held > 0 else "bidding" if desk.orders else
+                    "newborn" if row["windows"] == 0 else "idle")
+        equity = float(row["equity_usd"])
+        record = [value for value in row["pnl"] if value is not None]
         return {"id": row["id"], "name": row["name"], "control": res.control, "gen": row["gen"],
-                "parent": row["parent"], "days": round(max(0.0, now - float(row["born"])) / 86_400.0, 2),
-                "equity_usd": round(float(row["equity_usd"]), 2),
-                "profit_usd": round(float(row["equity_usd"]) - float(self.config.start_cash), 2),
+                "parent": row["parent"], "born": row["born"],
+                "days": round(max(0.0, now - float(row["born"])) / 86_400.0, 2),
+                "status": "active", "activity": activity, "genes": dict(row["genes"]), "rule_id": rule_id(row["genes"]),
+                "style": style(row["genes"]), "funded_usd": round(float(row["funded_usd"]), 2),
+                "equity_usd": round(equity, 2), "cash_usd": round(equity - open_cost, 2),
+                "open_cost_usd": round(open_cost, 2), "open_contracts": round(held, 4), "open_mark_usd": None,
+                "reserved_usd": round(reserved, 2), "open_orders": len(desk.orders),
+                "pnl_usd": round(float(row["pnl_usd"]), 2),
+                "fees_usd": None if row.get("fees_usd") is None else round(float(row["fees_usd"]), 4),
+                "rent_paid": round(float(row["rent_paid"]), 2),
+                "profit_usd": round(equity - float(row["funded_usd"]), 2),
                 "windows": row["windows"], "traded": row["traded"], "wins": row["wins"], "losses": row["losses"],
+                "fills": row.get("fills"),
+                "contracts": None if row.get("contracts") is None else round(float(row["contracts"]), 4),
                 "verdict": row["verdict"].get("word"), "phrase": row["verdict"].get("phrase"),
-                "style": style(row["genes"]), "vs_control": None if res.control else _paired(row["paired"]),
+                "reason": row["verdict"].get("reason") or None,
+                "record": {"from": row["record_from"], "windows": len(row["pnl"]), "traded": len(record),
+                           "keep": RECORD_KEEP},
+                "vs_control": None if res.control else _paired(row["paired"]),
                 "candidate": row["candidate"] is not None, "candidate_now": bool(row["candidate_now"])}
 
     def panel(self, now: float) -> dict[str, Any]:
-        """The page's compact view (``money.kalshi_arena``)."""
+        """The page's compact view (``panel.json``; pagestate.kalshi_arena_block whitelists it into the page's
+        top-level ``kalshi_arena``). Every list is bounded; ``counts`` are the full totals (``grave``: every eviction
+        in this town; ``events``: every event recorded) and ``truncated`` says which list shows fewer."""
         rows = sorted((self._resident_row(res, now) for res in self.residents.values()),
-                      key=lambda row: -row["equity_usd"])
+                      key=lambda row: (-row["equity_usd"], row["id"]))
         control = self._control()
         candidates = []
         for res in self.residents.values():
             flag = res.row["candidate"]
             if flag is not None:
-                candidates.append({"name": res.row["name"], "at": flag.get("at"), "n": flag.get("n"),
+                candidates.append({"id": res.id, "name": res.row["name"], "at": flag.get("at"), "n": flag.get("n"),
                                    "t": flag.get("t"), "mean_usd": flag.get("mean_usd"),
                                    "since_flag": _paired(res.row["since_flag"]), "adopt": flag.get("adopt"),
                                    "candidate_now": bool(res.row["candidate_now"]),
                                    "note": "A lead for a pre-registered test, not proof."})
-        candidates.sort(key=lambda row: -(row["t"] or 0))
-        return {"label": LABEL, "as_of": now, "problem": self.problem, "population": len(self.residents),
-                "rent_usd": self.config.rent_usd, "broke_usd": self.config.broke_usd,
-                "start_cash": self.config.start_cash, "note": NOTE,
+        candidates.sort(key=lambda row: (-(row["t"] or 0), row["id"]))
+        # The one current candidate: the highest t among those whose flag holds now.
+        leading = next((row["id"] for row in candidates if row["candidate_now"]), None)
+        shown = {"residents": rows[:PANEL_RESIDENTS], "grave": self.grave[:PANEL_GRAVE],
+                 "candidates": candidates[:PANEL_CANDIDATES], "events": self.events[:PANEL_EVENTS]}
+        counts = {"residents": len(rows), "grave": int(self.town["evicted"]), "candidates": len(candidates),
+                  "events": self.next_event - 1}
+        return {"schema_version": PANEL_SCHEMA, "mode": "paper", "label": LABEL, "as_of": now,
+                "town_id": self.town_id, "heartbeat_s": SAVE_EVERY_S, "problem": self.problem,
+                "population": len(self.residents), "rent_usd": self.config.rent_usd,
+                "broke_usd": self.config.broke_usd, "start_cash": self.config.start_cash, "note": NOTE,
+                "control_id": None if control is None else control.id, "candidate_id": leading,
                 "control": None if control is None else {
-                    "name": control.row["name"], "equity_usd": round(float(control.row["equity_usd"]), 2),
+                    "id": control.id, "name": control.row["name"],
+                    "equity_usd": round(float(control.row["equity_usd"]), 2),
                     "windows": control.row["windows"], "traded": control.row["traded"],
                     "pnl_usd": round(float(control.row["pnl_usd"]), 2), "verdict": control.row["verdict"].get("word"),
                     "phrase": control.row["verdict"].get("phrase"),
                     "reason": control.row["verdict"].get("reason", ""), "genes_line": style(control.row["genes"])},
-                "residents": rows[:24], "candidates": candidates[:5],
-                "grave": [{key: value for key, value in row.items() if key not in ("genes", "id", "parent", "born")}
-                          for row in self.grave[:5]],  # what the page reads (pagestate.kalshi_arena_town)
-                "events": self.events[:24], "town": dict(self.town), "feed": self.telemetry(now)}
+                **shown, "counts": counts,
+                "truncated": {key: len(shown[key]) < counts[key] for key in counts},
+                "town": dict(self.town), "feed": self.telemetry(now)}
 
     def state(self, now: float) -> dict[str, Any]:
         return {"version": STATE_VERSION, "label": LABEL, "saved_at": now, "started_at": self.started_at,
                 "settings": {"population": self.config.population, "rent_usd": self.config.rent_usd,
                              "broke_usd": self.config.broke_usd, "start_cash": self.config.start_cash},
                 "control_rule": self.control_rule, "regime": self.regime, "next_id": self.next_id, "seq": self.seq,
-                "rent_day": self.rent_day,
+                "town_id": self.town_id, "next_event": self.next_event, "rent_day": self.rent_day,
                 "active_windows": [[slug, window.start] for slug, window in sorted(self.windows.items())],
                 "residents": [res.row for res in self.residents.values()], "grave": self.grave,
                 "events": self.events, "town": self.town,
@@ -1545,9 +1664,12 @@ class KalshiArena:
                          "errors": self.errors}, "problem": self.problem}
 
     def _save(self, now: float) -> None:
-        """state.json (fsynced: the town's only record), then panel.json."""
+        """state.json, then panel.json. The state is fsynced (the town's only record) only after a change that
+        matters (``dirty``: a settlement, birth, eviction, void, flag or halt, and the first save); the minute's
+        heartbeat save, which only keeps the panel and its counters current, is a plain atomic rename. So the town
+        fsyncs a few times an hour, not every minute, on the volume and journal the live desk's own fsyncs use."""
         self.directory.mkdir(parents=True, exist_ok=True)
-        _write(self.path, json.dumps(self.state(now), allow_nan=False, separators=(",", ":")), durable=True)
+        _write(self.path, json.dumps(self.state(now), allow_nan=False, separators=(",", ":")), durable=self.dirty)
         _write(self.panel_path, json.dumps(self.panel(now), allow_nan=False, separators=(",", ":")))
         self.saved_at = now
         self.dirty = False
@@ -1563,13 +1685,30 @@ class KalshiArena:
                  feed["errors"], feed["live_flush_us_p99"], feed["live_flush_us_max"])
         self.passes.clear()
         self.live_flush_us.clear()
-        self.cpu_s, self.cpu_since = 0.0, now
+        self.cpu_base, self.cpu_since = self.cpu(), now
+
+    def _brief_panel(self, now: float) -> dict[str, Any]:
+        """The panel without its figures (the page shows them as unknown): what still fits on a full disk."""
+        return {"schema_version": PANEL_SCHEMA, "mode": "paper", "label": LABEL, "as_of": now,
+                "town_id": self.town_id, "heartbeat_s": SAVE_EVERY_S, "problem": self.problem}
 
     def _halt(self, exc: BaseException) -> None:
+        """The town stops itself. The page hears it first: panel.json (small, not fsynced) is written on its own,
+        before the state file, because on a full disk (the volume the live desk shares) the larger state file fails
+        first and would take the panel with it; when even the panel does not fit, its brief form does."""
         self.problem = "Practice town halted after repeated errors; the live desk is unaffected"
+        self.dirty = True
         log.error("kalshi_arena_halted error=%s", type(exc).__name__)
+        now = self.clock()
+        for build in (self.panel, self._brief_panel):
+            try:
+                self.directory.mkdir(parents=True, exist_ok=True)
+                _write(self.panel_path, json.dumps(build(now), allow_nan=False, separators=(",", ":")))
+                break
+            except Exception:  # noqa: BLE001, S112 - the halt is already logged; try the smaller form
+                continue
         with contextlib.suppress(Exception):  # the halt is already logged
-            self._save(self.clock())
+            self._save(now)
 
     def _load(self, now: float) -> None:
         try:
@@ -1584,6 +1723,8 @@ class KalshiArena:
         except Exception as exc:  # noqa: BLE001 - any bad content moves aside; the town starts fresh
             self.residents.clear()
             self.grave, self.events, self.next_id, self.seq, self.rent_day = [], [], 1, 0, None
+            # A new town for every reader: its ids restart, so it gets an identity of its own.
+            self.town_id, self.next_event = os.urandom(6).hex(), 1
             self.skipped.clear()
             self.town = {key: 0.0 if key == "rent_paid" else 0 for key in self.town}
             self._reset(exc)
@@ -1613,20 +1754,31 @@ class KalshiArena:
                 self.town[key] = _number(town[key]) if key == "rent_paid" else int(_number(town[key]))
         self.grave = [row for row in map(_plain, raw.get("grave") or []) if row is not None][:GRAVE_KEEP]
         self.events = [row for row in map(_plain, raw.get("events") or []) if row is not None][:EVENTS_KEEP]
+        # Before any event below: a new event's id follows every saved one. A state saved before town_id existed
+        # keeps the identity drawn at the start (its resident ids are unchanged, so nothing is renumbered).
+        ids = [row["id"] for row in self.events if isinstance(row.get("id"), int) and not isinstance(row["id"], bool)]
+        self.next_event = max([int(_number(raw.get("next_event", 1))), 1] + [value + 1 for value in ids])
+        saved_town = raw.get("town_id")
+        if isinstance(saved_town, str) and len(saved_town) == 12 and set(saved_town) <= set("0123456789abcdef"):
+            self.town_id = saved_town
         saved_rule = raw.get("control_rule")
         for row in rows:
             if row["control"] and saved_rule != self.control_rule:
                 # The live rules changed: the benchmark's record and every comparison with it start again.
                 log.info("kalshi_arena_control_changed old=%s new=%s", saved_rule, self.control_rule)
+                # A new benchmark, funded afresh under the same id: ``born`` (the page's funding time) moves to now,
+                # so a reader never takes the reset money for a trading result (a "control" event marks it).
                 row.update(genes=dict(self.config.control), pnl=[], windows=0, traded=0, wins=0, losses=0,
                            pnl_usd=0.0, equity_usd=float(self.config.start_cash), rent_paid=0.0, born=now,
+                           fees_usd=0.0, contracts=0.0, fills=0, funded_usd=float(self.config.start_cash),
+                           record_from=now,
                            verdict={"word": "learning", "phrase": PHRASES["learning"], "reason": ""}, day={})
                 for other in rows:
                     other["paired"] = {"n": 0, "sum": 0.0, "sumsq": 0.0}
                     if other["since_flag"] is not None:
                         other["since_flag"] = {"n": 0, "sum": 0.0, "sumsq": 0.0}
                 self._event(now, row["name"], f"The live rules changed ({saved_rule} -> {self.control_rule}): the "
-                            "control's record and every comparison start again.", "neutral", "control")
+                            "control's record and every comparison start again.", "neutral", "control", row["id"])
             elif row["control"]:
                 row["genes"] = dict(self.config.control)
         saved_regime = raw.get("regime")
@@ -1637,7 +1789,7 @@ class KalshiArena:
             log.info("kalshi_arena_regime_changed old=%s new=%s", saved_regime, self.regime)
             for row in rows:
                 row.update(pnl=[], verdict={"word": "learning", "phrase": PHRASES["learning"], "reason": ""},
-                           paired={"n": 0, "sum": 0.0, "sumsq": 0.0}, candidate_now=False)
+                           paired={"n": 0, "sum": 0.0, "sumsq": 0.0}, candidate_now=False, record_from=now)
                 if row["since_flag"] is not None:
                     row["since_flag"] = {"n": 0, "sum": 0.0, "sumsq": 0.0}
             self._event(now, "Town", f"The shared live limits changed ({saved_regime} -> {self.regime}): every "
@@ -1664,8 +1816,10 @@ class KalshiArena:
 # ---------------------------------------------------------------------- the town's process
 def _harden() -> None:
     """Best effort, before any work: the idle scheduling class (it never takes a CPU from a normal process, the live
-    desk's; plus the lowest nice value), first in line for the out-of-memory killer, a memory limit, and Ctrl-C
-    ignored (the town follows its socket, not a terminal)."""
+    desk's; plus the lowest nice value), first in line for the out-of-memory killer, a memory limit, no core dump
+    (its working directory is DATA_DIR, the live desk's volume, and a dump could be up to the memory limit), and
+    Ctrl-C ignored (the town follows its socket, not a terminal). Each step fails silently here; what took effect is
+    read back and logged once by :func:`report_hardening`."""
     with contextlib.suppress(Exception):
         os.nice(19)
     with contextlib.suppress(Exception):
@@ -1679,24 +1833,75 @@ def _harden() -> None:
         if hard == resource.RLIM_INFINITY or hard > MEMORY_BYTES:
             resource.setrlimit(resource.RLIMIT_AS, (MEMORY_BYTES, hard))
     with contextlib.suppress(Exception):
+        import resource
+
+        resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
+    with contextlib.suppress(Exception):
         signal.signal(signal.SIGINT, signal.SIG_IGN)
 
 
+def report_hardening() -> dict[str, Any]:
+    """What the town's process actually runs with, read back after :func:`_harden` (a runtime may refuse any step,
+    and _harden cannot say so): ``nice``, ``sched`` ("idle" or "other"), ``as_limit_bytes`` (its address-space
+    limit; None without one) and ``oom_score_adj``, each None when it cannot be read, and ``applied`` (all four as
+    _harden asks). Logged once (``kalshi_arena_hardened``; WARNING when the town competes for the CPU at normal
+    priority) and carried in the panel's ``feed.hardening``."""
+    def read(get: Callable[[], Any]) -> Any:
+        try:
+            return get()
+        except Exception:  # noqa: BLE001 - unknown, shown as such
+            return None
+
+    import resource
+
+    nice = read(lambda: int(os.getpriority(os.PRIO_PROCESS, 0)))
+    policy = read(lambda: os.sched_getscheduler(0))
+    idle = getattr(os, "SCHED_IDLE", None)
+    sched = None if policy is None else "idle" if idle is not None and policy == idle else "other"
+    soft = read(lambda: resource.getrlimit(resource.RLIMIT_AS)[0])
+    limit = None if soft is None or soft == resource.RLIM_INFINITY else int(soft)
+    oom = read(lambda: int(Path("/proc/self/oom_score_adj").read_text(encoding="ascii").strip()))
+    report = {"nice": nice, "sched": sched, "as_limit_bytes": limit, "oom_score_adj": oom,
+              "applied": (nice is not None and nice >= 19 and sched == "idle" and limit is not None
+                          and limit <= MEMORY_BYTES and oom == 1000)}
+    cpu_ok = nice is not None and nice >= 19 and sched == "idle"
+    log.log(logging.INFO if cpu_ok else logging.WARNING,
+            "kalshi_arena_hardened nice=%s sched=%s as_limit=%s oom_score_adj=%s applied=%s%s", nice, sched,
+            "unlimited" if limit is None and soft is not None else limit, oom, report["applied"],
+            "" if cpu_ok else " (the town competes for the CPU at normal priority; the live desk may feel it)")
+    return report
+
+
+def _alarm(seconds: int) -> None:
+    """The town's two watchdogs, re-armed before every pass (``0`` clears both). Neither has a handler, so the
+    kernel ends the process: the wall-clock alarm (SIGALRM) after ``seconds``, and a CPU budget (ITIMER_VIRTUAL,
+    SIGVTALRM) after :data:`PASS_CPU_S` of the process's own CPU time. A spinning pass dies after 5 s of a core, not
+    two minutes of it (SCHED_IDLE does not exempt CPU from a container's quota, which throttles the live loop too);
+    a town that is only starved of CPU spends none and is ended by neither before :data:`HANG_S`."""
+    signal.alarm(seconds)
+    signal.setitimer(signal.ITIMER_VIRTUAL, PASS_CPU_S if seconds else 0.0)
+
+
 def serve(fd: int, *, clock: Callable[[], float] = time.time, sleep: Callable[[float], None] = time.sleep,
-          alarm: Callable[[int], Any] = signal.alarm) -> int:
+          alarm: Callable[[int], Any] = _alarm, hardening: Mapping[str, Any] | None = None) -> int:
     """Run the town on the frames read from ``fd`` until the link closes it: 0 after the final save,
     :data:`EXIT_HALTED` after :data:`HALT_AFTER` failed passes in a row, 2 without a configuration,
     :data:`EXIT_BUSY` when another town already runs on the same DATA_DIR (:func:`_town_lock`). Each pass
-    sleeps on its own timer, takes what arrived, then runs; a pass (or anything else) that hangs for :data:`HANG_S`
-    is killed by the kernel (SIGALRM has no handler here)."""
+    sleeps on its own timer, takes what arrived, then runs; a pass (or anything else) that hangs for :data:`HANG_S`,
+    or spends :data:`PASS_CPU_S` of CPU, is killed by the kernel (:func:`_alarm`). Frames that arrive with the
+    configuration (the link's first flush lands while the town is still importing; it carries the window list and
+    whole ladders) are kept and read before the first pass, never dropped."""
     reader = FrameReader(fd)
     deadline = clock() + 60.0
     config: ArenaConfig | None = None
+    early: list[Any] = []
     while config is None:
         alarm(HANG_S)
         for message in reader.drain():
-            if isinstance(message, tuple) and len(message) == 2 and message[0] == "config":
+            if config is None and isinstance(message, tuple) and len(message) == 2 and message[0] == "config":
                 config = config_from_wire(message[1])
+            else:
+                early.append(message)
         if config is None:
             if reader.eof or clock() > deadline:
                 log.warning("kalshi_arena_no_config")
@@ -1706,7 +1911,7 @@ def serve(fd: int, *, clock: Callable[[], float] = time.time, sleep: Callable[[f
     if isinstance(lock, int):
         return lock
     with lock:
-        return _serve(reader, config, clock=clock, sleep=sleep, alarm=alarm)
+        return _serve(reader, config, clock=clock, sleep=sleep, alarm=alarm, early=early, hardening=hardening)
 
 
 def _town_lock(directory: Path, *, clock: Callable[[], float], sleep: Callable[[float], None]) -> Any:
@@ -1734,22 +1939,25 @@ def _town_lock(directory: Path, *, clock: Callable[[], float], sleep: Callable[[
 
 
 def _serve(reader: FrameReader, config: ArenaConfig, *, clock: Callable[[], float], sleep: Callable[[float], None],
-           alarm: Callable[[int], Any]) -> int:
+           alarm: Callable[[int], Any], early: Sequence[Any] = (), hardening: Mapping[str, Any] | None = None) -> int:
     view = WireView()
     arena = KalshiArena(config, lambda: view, clock=clock)
+    arena.hardening = None if hardening is None else dict(hardening)
     log.info("kalshi_arena_town pid=%d residents=%d control_rule=%s regime=%s (practice only)", os.getpid(),
              len(arena.residents), arena.control_rule, arena.regime)
     failures = 0
     last = clock()
-    while not reader.eof:
+    backlog = list(early)  # frames that came with the configuration: read first, in order
+    while not reader.eof or backlog:
         alarm(HANG_S)
         sleep(max(0.0, POLL_S - (clock() - last)))
         last = clock()
         failed: Exception | None = None
+        messages, backlog = backlog, []
         try:
-            messages = reader.drain()
+            messages += reader.drain()
         except Exception as exc:  # noqa: BLE001 - a broken stream fails the pass (and the next, and halts)
-            messages, failed = [], exc
+            failed = exc
         for message in messages:
             try:
                 arena.receive(message, view)
@@ -1784,13 +1992,17 @@ def worker_main() -> int:
     from .logging_setup import setup_logging
 
     setup_logging("INFO")
-    return serve(int(sys.argv[-1]))
+    return serve(int(sys.argv[-1]), hardening=report_hardening())
 
 
 # ---------------------------------------------------------------------- the panel
 def panel_state(data_dir: Path | str, now: float) -> dict[str, Any]:
-    """What the page shows (``money.kalshi_arena``), from ``panel.json`` only (never the larger state file)."""
-    raw = json.loads((Path(data_dir) / "kalshi_arena" / "panel.json").read_text(encoding="utf-8"))
+    """What the page shows (its top-level ``kalshi_arena``), from ``panel.json`` only (never the larger state file).
+    The page builder runs in the live desk's process, so a file over :data:`PANEL_MAX_BYTES` is refused unread."""
+    path = Path(data_dir) / "kalshi_arena" / "panel.json"
+    if path.stat().st_size > PANEL_MAX_BYTES:
+        raise ValueError("Kalshi arena panel too large")
+    raw = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(raw, dict) or raw.get("label") != LABEL:
         raise ValueError("Invalid Kalshi arena panel")
     return raw

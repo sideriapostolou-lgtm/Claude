@@ -15,6 +15,34 @@ Template:
 
 
 
+## 2026-10-13 23:05 UTC, Claude, branch claude/kalshi-arena (preflight fixes and the town's kalshi_arena contract)
+- Changed (practice code only; `speeddesk.py`, `speeddesk_live*.py`, `config.py` untouched):
+  - the town's process logs what isolation it actually got (`kalshi_arena_hardened`, a WARNING at normal CPU
+    priority) and shows it in `feed.hardening`; no core dump (RLIMIT_CORE 0: its working directory is DATA_DIR);
+    a 5 s CPU budget per pass (SIGVTALRM) beside the 120 s wall alarm, so a spin dies after 5 s of a core;
+  - frames that arrive with the configuration are read, not dropped (the boot frame carried the window list and the
+    whole ladders, and every start lost it);
+  - a halt writes the panel first and on its own (a brief form when the disk is too full), so the page says halted;
+  - state.json is fsynced only after a change that matters, not on every 60 s heartbeat (about 60 fsyncs an hour on
+    the live desk's volume and journal down to a few);
+  - `duty_pct` is the process's whole CPU, not only step(); eviction lines cut their reason at a word;
+  - the page block moved to the top-level `kalshi_arena` (`pagestate.kalshi_arena_block`, `money.kalshi_arena`
+    removed; never deployed): schema_version, mode paper, real_orders_enabled false, status and reason, heartbeat
+    and staleness, town_id, stable ids for residents, the grave and events, candidate_id and control_id, born,
+    genes, rule_id, activity, funded, cash, open cost, reserved, fees, rent apart, fills, contracts, the evidence
+    period, full counts and truncation flags; a panel over 256 KiB is refused unread; a malformed panel shows
+    missing/unreadable and never takes the page down;
+  - the sanitized fixture `tests/fixtures/kalshi_arena_page.json` and the contract in COORDINATION.md (23:01 UTC);
+  - test fix: the fd snapshot of the real town no longer races its save (a `.tmp` open, a vanished fd).
+- Verified: each fix has a regression test that fails on bfcb26e (8 tests, plus the page suite, which cannot import
+  there); the fixture round-trips through the page exactly; the whole page is otherwise identical with the arena on
+  or off; full suite 4,940 passed, 13 skipped (Python 3.13); mypy src/nightcrawler clean (121 files); ruff clean
+  on the changed files.
+- Not verified / skipped: Railway itself (production's nice/sched values will show in `kalshi_arena_hardened` after
+  the merge); not pushed, not merged.
+- Real money touched? no.
+- Next step: merge at a safe minute; Codex maps the contract into the town.
+
 ## 2026-10-13 22:30 UTC, Claude, branch claude/kalshi-arena (preflight: real-money isolation and the live loop)
 - Changed (practice code only; `speeddesk.py`, `speeddesk_live*.py`, `config.py` untouched):
   - the control runs the configured limits, the live ladder's rung 0, and never follows a promotion (live's rung 1

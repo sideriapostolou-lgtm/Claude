@@ -772,7 +772,13 @@ objects lengthened every garbage collection. A process boundary removes all of i
 - **The town's side (`worker_main`):** the same interpreter, started isolated (`-I`) with an environment of `PATH`,
   `LANG` and `TZ` only (no `KALSHI_*` key or any other secret reaches it), in the idle scheduling class at nice 19
   (it never takes a CPU from the live desk), first in line for the out-of-memory killer, under a 1 GiB address-space
-  limit, and killed by the kernel if a pass hangs for 120 s (SIGALRM without a handler). It sleeps on its own timer,
+  limit, with no core dump (its working directory is DATA_DIR, the live desk's volume), and killed by the kernel if
+  a pass hangs for 120 s (SIGALRM) or spends 5 s of CPU (SIGVTALRM, re-armed every pass; neither has a handler: a
+  spin dies after 5 s of a core, not 2 minutes, and a town merely starved of CPU spends none). What took effect is
+  read back after these steps and logged once (`kalshi_arena_hardened nice= sched= as_limit= oom_score_adj=
+  applied=`, a WARNING when the town would compete for the CPU at normal priority) and shown in the panel's
+  `feed.hardening`: a runtime that refuses a step (a seccomp or gVisor profile, a read-only /proc) is visible. It
+  sleeps on its own timer,
   takes what arrived, then runs a pass, so a write never wakes a process: with a waiting reader a write's p99 was
   8 ms, without one 0.1 ms. A book is applied to the residents only if it is the latest for its window and side in
   the pass, or a resident waits on a take or lock there (a take is checked against the first book after its
@@ -789,7 +795,11 @@ objects lengthened every garbage collection. A process boundary removes all of i
     (`test_the_real_town_imports_no_order_path_and_inherits_no_live_file`). Its empty environment is not an OS
     boundary: a process of the same user (root on Railway) can read its parent's `/proc/<pid>/environ`; the town's
     code never does, and nothing else in it reaches a key.
-  - A write that fails (a full disk) removes its temporary file, since DATA_DIR is the live desk's volume too.
+  - A write that fails (a full disk) removes its temporary file, since DATA_DIR is the live desk's volume too. A
+    halt writes the panel first and on its own (its brief form when the whole panel does not fit), so the page says
+    "halted" even when the larger state file cannot be written.
+  - Frames that arrive with the configuration (the link's first flush, 50 ms after start, lands while the town is
+    still importing; it carries the window list and whole ladders) are read before the first pass, never dropped.
 - **Isolation, proven by tests (`tests/test_kalshi_arena_feed.py`):**
   - a stand-in hardened like the town spinning on every core: the live loop's 1 ms sleeps wake as on time as with
     no town (median 0.076 -> 0.073 ms, p90 0.125 -> 0.133 ms);
@@ -806,22 +816,31 @@ objects lengthened every garbage collection. A process boundary removes all of i
 - **Production's own figure:** `kalshi_arena_feed` (the live side, every 5 minutes: put, dropped, frames, flush p50,
   p99 and max in us) and `kalshi_arena_status` (the town: received, dropped, late, coalesced, pass CPU p99 and max,
   duty, lag, and the live loop's flush p99 and max, which the link sends; every minute while the feed lags or drops).
+  `duty_pct` is the town process's whole CPU over wall time (reading and decoding frames too, about half of it at
+  400 books a second, not only the pass).
   The town's process costs memory of its own (about 22 MB at start).
 
 ### Files, page and logs
 
-- `DATA_DIR/kalshi_arena/state.json` is written atomically and fsynced (a `.tmp` sibling, then a rename; it is the
-  town's only record, and the town's process is not the live desk's) and stays at about 100 KB after 30 days.
-  `panel.json` stays under 16 KB.
+- `DATA_DIR/kalshi_arena/state.json` is written atomically (a `.tmp` sibling, then a rename) and stays at about
+  100 KB after 30 days. It is fsynced (it is the town's only record) only after a change that matters (a settlement,
+  birth, eviction, void, flag or halt): the minute's heartbeat save, which only keeps the panel and its counters
+  current, is a plain rename, so the town fsyncs a few times an hour on the volume and journal the live desk's own
+  pre-send fsync uses, not every minute. `panel.json` stays under 32 KB (each resident's genes and money lines).
 - Desks are never saved (each would be about 240 KB with its tape); they are rebuilt from their genes at start. A bad
   state file (unreadable, too deep, genes no desk accepts, a broken day) is renamed `state.json.bad-<epoch>` and the
   town starts fresh; a single display row that is not plain finite JSON (a grave, an event, a candidate flag) is
   dropped instead, so every later save works. Each resident's settled P&L today is saved, so the day stop survives
   a restart as live's does.
-- The page: `money.kalshi_arena` (`pagestate.kalshi_arena_town`) reads `panel.json` only. It whitelists every field,
-  labels it "Practice (pretend money)" and marks it `stale` after 180 s. It is never summed into any money total or
-  the town ledger.
-- Logs: `kalshi_arena_started` and `_town` (the process), `_born`, `_evicted`, `_candidate`, `_control`,
+- The page: the top-level `kalshi_arena` block (`pagestate.kalshi_arena_block`; the contract with the town and its
+  fixture `tests/fixtures/kalshi_arena_page.json` are in docs/COORDINATION.md, "kalshi_arena contract and fixture")
+  reads `panel.json` only, and refuses one over 256 KiB unread (the page builder runs in the live desk's process).
+  It is always a block: schema_version 1, mode "paper" and real_orders_enabled false (page constants), a status
+  (fresh, degraded, stale, halted, missing, off) with a reason, and every figure null when nothing is known. It
+  whitelists every field, labels it "Practice (pretend money)", and is stale after 180 s (three heartbeats). It is
+  never summed into any money total, the town ledger, the goal, the hearts or the plain words; a test checks the
+  whole page is otherwise the same with the arena on or off.
+- Logs: `kalshi_arena_started`, `_town` and `_hardened` (the process), `_born`, `_evicted`, `_candidate`, `_control`,
   `_control_changed`, `_regime_changed`, `_void`, `_status`, `_feed` (the live side), `_state_reset`, `_step_failed`,
   `_halted`, `_busy`, `_exited`, `_stopped`, `_not_started` and `_close_failed`, with no exception text.
 - A bad `KALSHI_ARENA_*` value turns the arena off with `config_kalshi_arena_off bad=<NAME>` (never the value); it
