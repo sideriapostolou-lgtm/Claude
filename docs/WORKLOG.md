@@ -15,6 +15,35 @@ Template:
 
 
 
+## 2026-10-13 13:40 UTC, Codex, public Kalshi bot research
+- Changed: added `research/kalshi_public_bots/` with an exploratory plan, sourced report, eight revision-pinned
+  code audits, public fill CSV/window aggregates, evidence limitations and publisher-ledger arithmetic. No
+  application, collector or trading implementation changed. Pulled through PR #26 merge `7ce65d8` before saving.
+- Found: 10 of 12 sampled leaderboard histories hidden; two visible. For szg.szg, 300 unique public fills in
+  eight BTC 15-minute windows, 229 maker/71 taker (76.3% by fill count; 59.3% by contracts). Independently
+  rejoined 220 fills to the documented tape with matching ticker/time/quantity/YES price. Those 220 take one
+  exposure direction per window at 99.5-99.9c; all eight final outcomes agree. The 80 unmatched rows are
+  price/time-selected out, so the joined range does not characterize the entire sample. Opening/closing,
+  actual account profit, private fees, exact triggers and bot identity remain unknown. No backtest claim.
+- Other evidence: visible csniper activity did not corroborate the vendor's profit/deposit claims. The 3rd Eyes
+  publisher ledger sums to +$201.16 over 317 rows but -$62.25 on its last 50. Public code findings include a
+  normal-CDF-at-zero error, fee omissions, cancellation tracking risk, paper wins credited before settlement
+  and hypothetical recommendation scoring presented as trades. No inspected candidate earned a live-copy
+  recommendation. Current direct-member fee precision and KXHIGHNY's TWC source were checked against primary
+  venue sources; no runtime fee/source behavior changed in this research session.
+- Verified: two independent reviewers checked the exact public trade joins and source/fee/weather claims;
+  exported CSV/JSON totals reconcile. Documentation links, data integrity, diff whitespace and secret scan
+  checked before push. Source/tests/build inputs are unchanged from `7ce65d8`; its preceding Claude entry
+  records 4,664 passed / 12 skipped plus clean mypy and changed-file Ruff. These are reused recorded results,
+  not a fresh Codex test run. This change has no Python files to lint and no watched deployment paths.
+- Not verified / skipped: no full lifetime account reconstruction, held-out trigger fit, executable-profit
+  proof, new three-day observation run or deployment/log check. Only unwatched research/docs files change.
+- Real money touched? No. Public unauthenticated reads and inert source inspection only; no keys, orders,
+  account settings, caps, paid packages or strategy changes.
+- Next step: freeze a fresh public-observation protocol for szg.szg and the taker-heavy csniper lead; compare
+  candidate triggers with actual books/settlement references, latency, fills and all fees on held-out data.
+  Existing weather observation measurement remains unproven; do not adopt public bots' certainty claims.
+
 ## 2026-10-13 13:20 UTC, Claude, branch claude/kalshi-speed
 - Changed (owner: "Move to Virginia!!"; the service has run in Railway us-east4 since 2026-10-12 23:50, so the
   gain had to come from inside the bot): the private Kalshi client waited 200 ms after every call, reads and
