@@ -750,8 +750,11 @@ class KalshiLiveDesk:
         after a complete, fresh reconcile that matched, with no order open or uncertain, every window the bot
         traded settled, and no Bitcoin 15-minute position or resting order left on the Kalshi account."""
         armed = self.book.integrity_reset_armed
-        if armed is None or armed != self.book.integrity_error or not self.startup_done:
-            return  # startup cancels and re-reads first; the next full reconcile decides
+        if armed is None or armed != self.book.integrity_error:
+            return
+        if not self.startup_done:  # startup cancels and re-reads first; a later full reconcile decides
+            self._reset_waiting("startup_pending")
+            return
         active = self._active()
         blocker = (("account_unreconciled" if self.account_at is None else "")
                    or ("fatal" if self.fatal_reason else "")
@@ -1094,6 +1097,8 @@ class KalshiLiveDesk:
         self.observe_market(self.clock())
         self._twin_events(self.twin.advance(self.clock()))
         if not await self._ensure_client():
+            if self.book.integrity_reset_armed:
+                self._reset_waiting("live_off")  # no account read happens, so the reset cannot be judged
             self._heartbeat()
             return
         try:

@@ -1617,8 +1617,9 @@ def _speed_report(today: Mapping[str, Any], day: str, *, with_venues: bool = Tru
 
 
 # What the owner's one-time reset of a Kalshi reconciliation stop may report (speeddesk_live._integrity_reset).
-_KALSHI_RESET_STATES = frozenset({"armed", "account_unreconciled", "fatal", "orders_open", "positions_open",
-                                  "orders_reserved", "not_armed", "no_integrity_error"})
+_KALSHI_RESET_STATES = frozenset({"armed", "account_unreconciled", "startup_pending", "live_off", "fatal",
+                                  "orders_open", "positions_open", "orders_reserved", "not_armed",
+                                  "no_integrity_error"})
 
 
 def _kalshi_live_panel(raw: Any, settings: Settings, now: float) -> dict[str, Any] | None:

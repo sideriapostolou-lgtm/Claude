@@ -162,6 +162,8 @@ def test_new_paper_or_revoked_gate_overrides_old_saved_live_report_without_erasi
 @pytest.mark.parametrize(("code", "reset", "shown"), [
     ("settlement_net_payout_mismatch", "positions_open", ("settlement_net_payout_mismatch", "positions_open")),
     ("fill_changed", "armed", ("fill_changed", "armed")),
+    ("fill_changed", "live_off", ("fill_changed", "live_off")),
+    ("fill_changed", "startup_pending", ("fill_changed", "startup_pending")),
     (None, None, (None, None)),
     ("<b>not a code</b>", "anything else", (None, None)),
     (7, ["armed"], (None, None)),

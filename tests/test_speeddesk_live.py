@@ -731,7 +731,7 @@ def test_owner_reset_clears_a_stop_once_after_a_clean_reconcile(tmp_path: Path) 
         cleared = [item for item in events(desk, "speeddesk_live_integrity_reset") if item["state"].startswith("cleared")]
         assert [item["code"] for item in cleared] == ["settlement_net_payout_mismatch"]
         assert [item["reason"] for item in events(desk, "speeddesk_live_integrity_reset") if "reason" in item] == [
-            "orders_open", "positions_open"]
+            "startup_pending", "orders_open", "positions_open"]
         panel = desk.panel()
         assert panel["mode"] == "live" and panel["integrity_error"] is None and panel["integrity_reset"] is None
         at_lock_time(desk, clock, up_ask=.4, down_ask=.6, before_close=desk.book.windows[TICKER].end - clock.now())
@@ -837,6 +837,39 @@ def test_owner_reset_shows_a_failing_account_read_as_waiting(tmp_path: Path) -> 
         account.balance_error = KalshiClientError("balance", "request rejected", status=500)
         steps(desk, clock, 8)
         assert desk.panel()["integrity_reset"] == "account_unreconciled"
+        assert desk.book.integrity_error == "fill_changed"
+    finally:
+        desk.close()
+
+
+def test_owner_reset_shows_what_it_waits_for_when_startup_cannot_finish(tmp_path: Path) -> None:
+    """Second review: a bid Kalshi keeps listing as resting keeps startup open; the panel must say so."""
+    desk, account, clock = make_desk(tmp_path)
+    try:
+        asyncio.run(desk.step())  # the starter rests
+        desk.book.integrity_error = "fill_exceeded_reserved_terms"
+        desk.checkpoint()
+        history = (account.orders, account.creates)
+    finally:
+        desk.close()
+    again, account, clock = make_desk(tmp_path, extra={"speeddesk_kalshi_integrity_reset_token": Secret("r-6")})
+    account.orders, account.creates = history
+    account.cancel = lambda order_id, *, ticker: {}  # type: ignore[method-assign]  # accepted, still resting
+    try:
+        steps(again, clock, 8)
+        assert not again.startup_done and again.book.integrity_error == "fill_exceeded_reserved_terms"
+        assert again.panel()["integrity_reset"] == "startup_pending"
+    finally:
+        again.close()
+
+
+def test_owner_reset_shows_live_off_while_the_switches_are_off(tmp_path: Path) -> None:
+    stopped_desk(tmp_path, "fill_changed")
+    desk, account, clock = make_desk(tmp_path, mode="paper",
+                                     extra={"speeddesk_kalshi_integrity_reset_token": Secret("r-7")})
+    try:
+        steps(desk, clock, 4)
+        assert account.reads == 0 and desk.panel()["integrity_reset"] == "live_off"
         assert desk.book.integrity_error == "fill_changed"
     finally:
         desk.close()

@@ -31,7 +31,12 @@ Template:
 - Verified: failing-first tests (fail on c52afcd, pass here): the stop is named; the reset waits for the owner's
   resting bid and position, then clears once and real orders resume; a value set before a stop is spent; a used
   value never clears a later stop; a different check withdraws it for good; the approval survives a restart; an
-  old cancelled order does not block it; the page shows both fields. Full suite, mypy and ruff in the PR.
+  old cancelled order does not block it; the page shows both fields. Second review (8 agents): no unsafe clear;
+  the live account's 02:00 stop clears at the first reconcile after startup; 3 display findings fixed (the panel
+  said "armed" while startup could not finish or the live switch was off, now `startup_pending` / `live_off`;
+  the page card now shows the check and what the reset waits for, seen in a headless render).
+- Not this PR's: tests/test_engine.py::test_learning_on_or_off_the_bot_trades_exactly_the_same fails from about
+  04:30 UTC on the deployed code too (passed at ~03:05 UTC); to look at next.
 - Not verified: which check fired at 02:00 UTC (the deploy will log it). Plan: read the code first; set the token
   only if the check is explained (e.g. the owner's hand trades in a bot window under the old code).
 - Real money touched? Not by this change; real orders resume only once the token is set and the books are clean.
