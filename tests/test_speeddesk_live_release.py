@@ -364,3 +364,30 @@ def test_the_first_full_save_after_a_restart_empties_the_journal_on_disk(tmp_pat
         assert desk.ledger.get_kv(JOURNAL_KEY)["intents"] == {}
     finally:
         desk.close()
+
+
+def test_a_lost_order_beside_the_owners_listed_fill_is_released_after_the_close(tmp_path: Path) -> None:
+    """The owner traded the same window by hand: Kalshi lists the owner's order (no bot client id) and its fill.
+    That fill cannot be the lost order's, so the window is the owner's and the order is still proven away (it used
+    to count as unattributed and hold the order, and real trading, for good)."""
+    desk, account, clock = first_leg_filled(tmp_path)
+    try:
+        identity = lose_the_balancing_create(desk, account, clock)
+        account.orders.append({"order_id": "owner-7", "client_order_id": "", "ticker": TICKER, "status": "executed",
+                               "fill_count_fp": "2.00", "remaining_count_fp": "0.00", "initial_count_fp": "2.00",
+                               "outcome_side": "no", "book_side": "ask", "yes_price_dollars": "0.55",
+                               "no_price_dollars": "0.45"})
+        account.executions.append({"fill_id": "fill-owner", "order_id": "owner-7", "ticker": TICKER,
+                                   "outcome_side": "no", "book_side": "ask", "count_fp": "2.00",
+                                   "no_price_dollars": "0.45", "fee_cost": "0.0000", "ts": clock.now()})
+        account.account_positions = [{"ticker": TICKER, "position_fp": "3.00"}]
+        timeline = run_past_close(desk, account, clock, until_s=600)
+        assert TICKER in desk.foreign_windows
+        intent = desk.book.intents[identity]
+        assert not intent.reservation_active and intent.uncertainty == "never_reached_venue", timeline
+        assert timeline["released_at"] >= timeline["close"] + ORDER_LIST_LAG_S
+        result = desk.book.settled.get(TICKER)
+        assert result is not None and result.up_shares == 5 and result.down_shares == 0  # its own contracts only
+        assert not desk.book.integrity_error and desk.fatal_reason is None
+    finally:
+        desk.close()

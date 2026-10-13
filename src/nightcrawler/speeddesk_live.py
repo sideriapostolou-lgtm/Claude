@@ -1100,11 +1100,14 @@ class KalshiLiveDesk:
         # Fully paginated reads return all pages or raise. Never interpret a
         # missing/failed page as zero inventory or a canceled order.
         orders = await self._read("list_orders", self.client.list_orders, **order_filter)
+        owner_orders: set[str] = set()  # listed orders without the bot's client-id prefix: provably the owner's
         for raw in orders:
             client_id = str(raw.get("client_order_id", ""))
             ticker = str(raw.get("ticker", ""))
             if not ticker.startswith("KXBTC15M-"):
                 continue
+            if not client_id.startswith(PREFIX) and raw.get("order_id"):
+                owner_orders.add(str(raw["order_id"]))
             intent = self.intents.get(client_id)
             if client_id.startswith(PREFIX) and intent is None:
                 self.fatal_reason = "Untracked prior bot order; manual reconciliation required"
@@ -1132,7 +1135,11 @@ class KalshiLiveDesk:
             if intent is None:
                 ticker = str(raw.get("ticker", ""))
                 if ticker.startswith("KXBTC15M-"):
-                    if any(item.window == ticker and not item.order_id for item in self._active()):
+                    if str(raw.get("order_id", "")) in owner_orders:
+                        # A fill of an order Kalshi lists as the owner's cannot be an unsent bot order's: the
+                        # window is the owner's (and an unsent order there can still be proven away).
+                        self.foreign_windows.add(ticker)
+                    elif any(item.window == ticker and not item.order_id for item in self._active()):
                         checks.append("unattributed_fill_beside_unresolved_order")
                         unattributed.add(ticker)
                     else:

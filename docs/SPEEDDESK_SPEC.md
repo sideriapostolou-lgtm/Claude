@@ -649,7 +649,9 @@ from starting). An order journaled but never sent (a crash between the row and t
 Kalshi) used to keep its reservation for good and hold a restart in "Reconciling startup orders". It is now
 released, and never sent again, only once its market has closed and two complete order lists read after the
 close, at least 30 s apart, leave it out while that window's own facts agree: neither order list is behind the
-fills, Kalshi lists no fill in that window under an order id the bot does not know (it could be this order's),
+fills, Kalshi lists no fill in that window under an order id the bot does not know (it could be this order's; a
+fill of an order Kalshi lists as the owner's, without the bot's client-id prefix, is the owner's and marks the
+window as the owner's instead),
 and the position matches the books or Kalshi has settled the market (its settlement row, and a flat position; in
 a window the owner also traded, the lists and fills decide). A slow read or a mismatch in another window no
 longer holds it. The release runs before the settlement pass, so the window settles in the same read and its
