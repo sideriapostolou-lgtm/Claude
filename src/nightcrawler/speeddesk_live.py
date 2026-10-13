@@ -512,7 +512,14 @@ class KalshiLiveDesk:
         return ""
 
     def _active(self) -> list[Intent]:
-        return [intent for intent in self.intents.values() if not intent.terminal]
+        """Unfinished orders, oldest first. Only an open window's orders can be unfinished (a window settles once
+        none is, and only an integrity error reopens one), so the risk book's index of open windows is enough; the
+        full scan stays for an integrity error or books that are not the same orders (latency review, 2026-10-13:
+        this ran over every order ever made, many times a step)."""
+        if self.book.integrity_error or len(self.intents) != len(self.book.intents):
+            return [intent for intent in self.intents.values() if not intent.terminal]
+        return [intent for key in self.book.open_intent_ids()
+                if (intent := self.intents.get(key)) is not None and not intent.terminal]
 
     def _record(self, receipt_kind: str, **payload: Any) -> None:
         item = {"at": self.clock(), "venue": "kalshi", **payload}
@@ -556,10 +563,10 @@ class KalshiLiveDesk:
     def _awaiting_release(self, now: float) -> list[str]:
         """Orders that may never have reached Kalshi (no order id, nothing filled, still reserved) in a market that
         has closed: the ones _release_unsent decides."""
-        return [key for key, intent in self.intents.items()
-                if not intent.terminal and not intent.order_id
-                and (reserved := self.book.intents[key]).order_id is None and reserved.reservation_active
-                and reserved.filled_size <= EPS and now >= self.book.windows[intent.window].end]
+        return [intent.client_order_id for intent in self._active()
+                if not intent.order_id and (reserved := self.book.intents[intent.client_order_id]).order_id is None
+                and reserved.reservation_active and reserved.filled_size <= EPS
+                and now >= self.book.windows[intent.window].end]
 
     def _recent_since(self, now: float) -> int:
         """Kalshi min_ts covering every order and fill that can still change the books (see RECENT_S).
@@ -568,7 +575,9 @@ class KalshiLiveDesk:
         after that (``_fill`` refuses earlier ones), so they are inside the bound whether Kalshi filters orders on
         their creation or their last update. So is every order and fill of a window open now (at most RECENT_S old).
         """
-        unfinished = [intent.at for key, intent in self.intents.items()
+        candidates = (self.intents.items() if self.book.integrity_error or len(self.intents) != len(self.book.intents)
+                      else ((key, self.intents[key]) for key in self.book.open_intent_ids() if key in self.intents))
+        unfinished = [intent.at for key, intent in candidates
                       if not intent.terminal or intent.uncertain or self.book.intents[key].reservation_active]
         return max(0, math.floor(min([now - RECENT_S, *unfinished])) - int(READ_MARGIN_S))
 
@@ -859,14 +868,17 @@ class KalshiLiveDesk:
         if self.client is None:
             return
         snapshot, now = self.snapshot(), self.clock()
-        for intent in self._active():
+        active = self._active()
+        # Once per pass, not once per order (latency review); a cancel never changes the money at risk.
+        stop = self._risk_stop_reason() if any(not intent.lock for intent in active) else ""
+        for intent in active:
             window = self._current_window(intent.window, snapshot)
             reason = (self._gates() or self.fatal_reason
                       or ("Repeated account errors" if self.errors >= 3 else ""))
             if not reason and not intent.lock:
                 # A lock buy is immediate-or-cancel and only completes pairs: the window
                 # closing or a money stop is exactly when it must be left to finish.
-                reason = self._risk_stop_reason()
+                reason = stop
                 if reason and not self.book.integrity_error and self.book.lowers_risk(intent.client_order_id):
                     # A balancing bid can only shrink its window's loss: a money stop leaves it resting (loss plan
                     # bug 1); a stale feed, an old price or the cutoff below still cancel it.

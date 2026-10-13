@@ -530,6 +530,18 @@ The release before this cannot read the archive and fails closed (companion halt
 every window (archived ones from memory, newer saved copies win), at most every 10 s and at shutdown, without
 an fsync (the ledger is the durable record; the page treats data older than 60 s as stale). The status line
 splits each save into build_ms, ledger_ms and mirror_ms.
+Money math over open windows only (2026-10-13; latency review). The archive keeps saves small, but a restart
+merges every archived window back into memory, and the risk book summed money at risk over every order and window
+ever made, five times per status and once per open order in each cancel pass: a step took 0.6 ms on a fresh book
+and 57 ms with a week of finished history (build machine), and a complete reconcile checked each listed order's id
+against every order ever made (1.7 s with three days). The book now keeps an index (each window's orders in
+creation order, the windows that can still lose money, the owner of each Kalshi order id), updated by the methods
+that add orders, settle windows and record order ids, and rebuilt whenever its dicts changed any other way; the
+sums over it are exactly the full sums (the randomized book test checks them after every event). Unfinished
+orders come from the open windows too, with the full scan kept for an integrity error, the one state in which a
+settled window can hold a reservation again. Money at risk is worked out once per status and the money stop once
+per cancel pass. With a week of history a step now takes 0.6 ms and a complete reconcile with every old order
+listed 135 ms of local work (linear in the orders Kalshi lists).
 Only saves that must survive a host or power failure sync the ledger's write-ahead log at commit: the one
 before an order's first network byte (orders and lock buys; since step 2 the pre-send journal row), startup,
 shutdown, and any that records an owner's one-time action. The others (about 57 ms of fsync each on Railway on 2026-10-13, twice a second in reconcile)
