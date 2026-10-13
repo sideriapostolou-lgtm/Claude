@@ -37,7 +37,15 @@ from .ledger import Ledger
 from .speeddesk import _atomic_json, practice_config
 from .speeddesk_feeds import COINBASE_WS, number, timestamp
 from .speeddesk_kalshi import KalshiFeeds
-from .speeddesk_model import BitcoinTape, Book, Decision, PracticeDesk, Trade, Window
+from .speeddesk_model import (
+    BitcoinTape,
+    Book,
+    Decision,
+    PracticeDesk,
+    Trade,
+    Window,
+    config_state,
+)
 
 log = logging.getLogger("nightcrawler.speeddesk_coins")
 STATE_KEY = "speeddesk_coin_state"
@@ -320,7 +328,7 @@ async def run_coins(runners: list[CoinRunner], stop: threading.Event, *,
     feed = coinbase or CoinbaseTrades(frozenset(by_product), on_tick, clock=clock)
     for runner in runners:
         runner.record("speeddesk_coin_started", {"at": clock(), "real_orders": False, "series": runner.coin.series,
-                                                 "config": asdict(runner.desk.config)})
+                                                 "config": config_state(runner.desk.config)})
         runner.checkpoint(clock())
 
     async def settlements() -> None:

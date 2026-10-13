@@ -358,3 +358,34 @@ def test_the_towns_railway_price_is_dollars_per_month_at_least_zero(make_setting
     with pytest.raises(ConfigError, match="TOWN_RAILWAY_USD_MONTH: expected a number"):
         make_settings(TOWN_RAILWAY_USD_MONTH="five")
     assert {r["env"]: r["unit"] for r in Settings.describe()}["TOWN_RAILWAY_USD_MONTH"] == "usd"
+
+
+def test_the_kalshi_arena_settings_are_practice_numbers_with_bounds(make_settings, caplog) -> None:
+    """KALSHI_ARENA_*: the practice town's switch, population, rent and broke line (defaults = the module's). They
+    change pretend money only, so a bad value switches the arena off with a warning; it never stops the engine (and
+    with it the real-money Kalshi companion)."""
+    from nightcrawler import kalshi_arena
+
+    s = make_settings()
+    assert (s.kalshi_arena_enabled, s.kalshi_arena_population, s.kalshi_arena_rent_usd, s.kalshi_arena_broke_usd) == (
+        True, kalshi_arena.POPULATION, kalshi_arena.RENT_USD, kalshi_arena.BROKE_USD)
+    assert make_settings(KALSHI_ARENA_ENABLED="false").kalshi_arena_enabled is False
+    assert make_settings(KALSHI_ARENA_POPULATION="24").kalshi_arena_population == 24
+    caplog.set_level("WARNING", "nightcrawler.config")
+    for name, bad in (("KALSHI_ARENA_POPULATION", "1"), ("KALSHI_ARENA_POPULATION", "25"),
+                      ("KALSHI_ARENA_POPULATION", "30"), ("KALSHI_ARENA_RENT_USD", "-0.1"),
+                      ("KALSHI_ARENA_RENT_USD", "6"), ("KALSHI_ARENA_RENT_USD", "0.2usd"),
+                      ("KALSHI_ARENA_BROKE_USD", "50"), ("KALSHI_ARENA_POPULATION", "2.5"),
+                      ("KALSHI_ARENA_ENABLED", "on?")):
+        caplog.clear()
+        settled = make_settings(**{name: bad}, SPEEDDESK_KALSHI_CLIP="5")
+        assert settled.kalshi_arena_enabled is False and settled.speeddesk_kalshi_clip == 5, (name, bad)
+        assert (settled.kalshi_arena_population, settled.kalshi_arena_rent_usd, settled.kalshi_arena_broke_usd) == (
+            kalshi_arena.POPULATION, kalshi_arena.RENT_USD, kalshi_arena.BROKE_USD)
+        message = " ".join(record.getMessage() for record in caplog.records)
+        assert f"config_kalshi_arena_off bad={name}" in message and bad not in message  # never the value itself
+    for direct in ({"kalshi_arena_population": 12.0}, {"kalshi_arena_rent_usd": True},
+                   {"kalshi_arena_broke_usd": float("nan")}, {"kalshi_arena_enabled": "yes"}):
+        assert Settings(**direct).kalshi_arena_enabled is False, direct  # type: ignore[arg-type]
+    with pytest.raises(ConfigError, match="SPEEDDESK_KALSHI_CLIP"):  # every other setting still refuses to start
+        make_settings(KALSHI_ARENA_RENT_USD="0.2usd", SPEEDDESK_KALSHI_CLIP="five")

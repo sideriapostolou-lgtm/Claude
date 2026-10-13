@@ -622,3 +622,254 @@ qualified held-out rule-match target. Unknown evidence fails the gate. Only the 
 Ship the companion in paper, verify the exact deployment and existing polydesk, then provide activation
 settings. After the owner activates, record actual orders, fills, fees and settlement results. Future
 three-day observations and first live fills cannot be claimed during the implementation session.
+
+## 12. Kalshi arena (practice; owner, 2026-10-13)
+
+The owner: "Give our bots the incentive they're giving Grok bots: make money or die." `nightcrawler/kalshi_arena.py`
+runs a town of practice Kalshi Bitcoin 15-minute desks that must earn their rent or be evicted. **Practice money
+only.** Nothing in it holds a client, a key or a Settings object after start-up, places an order or changes a live
+setting. A candidate is shown to the owner; real money stays with the live companion and its own rules.
+
+### The town
+
+- **Residents:** `KALSHI_ARENA_POPULATION` (12) practice desks (`PracticeDesk`), each with its own genes, trading the
+  same live `KXBTC15M` books and prints the live desk sees. Each fills on its own; no resident competes with another
+  or with the real desk.
+- **Control:** one resident (`Live`) always runs the live rules. Its genes come from the deployed settings through
+  `LiveLimits`' own clamps (`live_genes`). It is never evicted, and every comparison is against it.
+  **It runs the configured limits, which are the earned-growth ladder's rung 0 (9.2):** the town reads Settings once
+  at start and never the ladder, so after a live promotion (rung 1: $15/$30/$9) live trades a bigger window than
+  every resident, the control included. The panel's note says so; nothing here reads or writes the ladder's state.
+- **Start cash:** $50 of pretend money each (`START_CASH`, the account size the owner gave; `docs/ACCOUNTS.md`
+  records $25.00 at the first balance read on 2026-10-12, to be confirmed).
+- **Rent:** the first window settled on a new UTC day charges every resident, the control included,
+  `KALSHI_ARENA_RENT_USD` ($0.20) for each day since the last rent (a town that was down pays the missed days, at
+  most 7 at once). There is no rent on the town's first day. Railway is about $5 a month, or $0.17 a
+  day for the whole service, so $0.20 each means every resident must earn the whole bill plus 20 % by itself: the
+  town pays twelve times the real bill. That is the "make money or die" bar, chosen on purpose.
+- **Eviction (never the control), checked after each settled window, in this order:**
+  1. it cannot pay the rent ("could not pay the rent");
+  2. its money falls under `KALSHI_ARENA_BROKE_USD` ($10: it could not fund one $10 window; "went broke");
+  3. `deskguard.judge` on its traded windows says `losing` (the 95 % upper bound below zero from 30 windows, or the
+     99 % early stop from 10).
+
+  The graveyard keeps the newest 40 rows: who, the record, why, the verdict, the genes and the paired comparison.
+- **Births:** every empty home goes at once to a child of a parent drawn from the richest half of the residents
+  with a record: at least 20 traded windows, the control always counts (the richer more often, `random() ** 2`). A
+  newborn's untouched $50 is not a record; in a losing town it used to outrank everyone who had traded. Each number gene moves by up to 12 % of its range and is redrawn one time
+  in ten; each switch flips one time in ten. The first town is the control, five children of the control and six
+  newcomers with random genes. A newborn joins the next window. A population setting that falls on restart sends the
+  poorest challengers away.
+- **Equity** is $50 plus settled window P&L minus rent. An open window is not counted.
+- **Paired statistics:** for every challenger, over every window both it and the control held,
+  `d = (its P&L or 0) - (the control's or 0)`. A window it skipped while the control lost is part of an edge.
+- **Candidate (shown only):** `judge` says `winning` (100 or more traded windows, at least 3 losses, the 99 % bound
+  and the stress test) AND paired `n >= 100` AND `t >= 2`. The flag is set once. It records `n`, `t`, the mean dollars
+  a window ahead of the control, the verdict, and how the genes could be adopted. From then on a `since_flag` record
+  gives a free out-of-sample check, and `candidate_now` follows the condition. **A candidate is a lead for a
+  pre-registered test, not proof.** False candidates will appear: about 11 challengers plus births are checked after
+  every window (optional stopping), their genes sit close to the control's, and eviction selects survivors (winner's
+  curse).
+- **Control rule change:** at start the control's rule id (`rule_id(live_genes)`) is compared with the saved one. On
+  a change, the control's record and every paired and `since_flag` statistic restart (`kalshi_arena_control_changed`).
+  Challengers keep their own records.
+- **Shared limits change (the regime):** the limits every resident shares (`fixed_config`: budgets, clip, the live
+  risk book's rules) have their own id. When they change (the owner's "double tomorrow", say), every resident's
+  record, verdict and comparison restart, because each was earned under other rules and `deskguard` judges the
+  current rule only; money, rent and lifetime counts stay (`kalshi_arena_regime_changed`).
+- **Void:** these windows count for nobody, equal for all (`town.void_windows`):
+  - one that had started at a restart (every desk is rebuilt fresh); one listed but not started yet is joined;
+  - one still without an outcome two hours after its close;
+  - one whose feed was incomplete for the town (`town.void_feed`, logged `kalshi_arena_void ... why=`): the live
+    loop dropped events while it was open (`feed_dropped`), or the town read an event more than 3 s after it
+    arrived, the desks' freshness (`feed_late`). Otherwise a town that fell behind would book windows it could not
+    trade as if it had seen the market.
+
+### Genes
+
+| Gene | Range (grid) | Control (live) | Practice behaviour (`SpeedConfig`) |
+|---|---|---|---|
+| `make_edge` | 0.020-0.060 (0.005) | `SPEEDDESK_MAKE_EDGE` | resting bid at `floor(fair - make_edge)` |
+| `starter` | 2-10 contracts | the live clip (5) | a window's first buy, and each round's, held to whole pairs at the pair cap (`starter_clip`) |
+| `pair_cap` | 0.95-0.99 (0.005) | `LiveLimits.pair_cap` | matched pair cost limit, fees included |
+| `max_imbalance` | 0.10-0.25 (0.01) | `LiveLimits.max_imbalance` | imbalance limit once balanced |
+| `starter_delay_s` | 0-180 s (5) | 0 | no starter in a window's first N s (`starter_delay_s`) |
+| `starter_stop_s` | 0-600 s (10) | 0 | no starter in a window's last N s (`starter_stop_s`) |
+| `close_s` | 120-300 s (5) | `LiveLimits.lock_s` (240) | buying stops and the lock starts here (`cutoff_s`, `lock_s`), as live couples them |
+| `lock` | on/off | on | complete the unpaired side at the ask from `close_s` until 20 s before the close |
+| `lock_max` | 0.90-0.99 (0.01) | `LiveLimits.lock_max_price` (0.97) | most a lock pays a contract (the stop has its own cap, 0.99) |
+| `stop` | on/off | off | the protective stop (`stop_s`, `stop_pair_cost`) |
+| `stop_s` (X) | 300-840 s (10) | n/a | the stop watches from X s before the close |
+| `stop_cost` (T) | 1.05-1.25 (0.01) | n/a | it completes the pair at the ask once completing would cost at least T a pair |
+| `rounds` | on/off | off | after a complete pair (nothing pending), one fresh first-size buy, then balancing only |
+| `filters` | registered names | none | a starter gate (`FILTERS` ships empty; a filter is one entry plus its own lab test) |
+
+Every resident shares these with the live desk (`fixed_config`):
+- takes (`SPEEDDESK_TAKE_EDGE`, 1.0 in production, so maker only);
+- the 5-contract clip for every order after the first;
+- the $10 window, $20 open and $6 day budgets, applied the way the live risk book applies them
+  (`LiveRiskBook.can_buy`): the day stop refuses a buy once today's settled loss plus the money still at risk plus
+  its cost reaches $6, and the open budget counts money at risk (a complete pair risks nothing), not gross spend;
+- a resting bid expires 30 s after the whole second it was sent (live's `expiration_ts = int(now) + 30`), and its
+  replacement queues behind the book again;
+- the edge must survive live's fee reserve rounded to the account's grid ($0.0001 for the attested direct account;
+  an unattested account reserves a whole cent per 0.01-contract fill, so live, and with it the whole town, sends
+  nothing);
+- the latency and whole contracts;
+- the speed desk's own sigma.
+
+Live's lifetime total stop ($10) is not copied: it halts the account until the owner resumes it, so a control that
+copied it would freeze and every comparison would be against a flat line. Challengers have the broke line instead.
+
+**The stop's meaning (a choice to confirm):** "complete the pair at the ask when pair cost would reach T" is read as
+a stop-loss. It fires when the cost to complete *rises to* T, which caps a run-over window at about T (compare the
+16:00 and 16:15 UTC locks at $1.37 and $1.29). If the owner meant "accept a completion cost up to T", it is the same
+code with the comparison flipped.
+
+### Practice model fields (opt-in; the defaults are today's desk)
+
+`SpeedConfig` gains thirteen fields: `starter_clip`, `starter_delay_s`, `starter_stop_s`, `rounds`,
+`whole_contracts`, `lock_s`, `lock_max_price`, `stop_s`, `stop_pair_cost`, and the live risk book's rules
+`day_stop_counts_risk`, `hedged_open_budget`, `rest_ttl_s` and `edge_fee_precision`. `PracticeDesk` gains a
+`starter_gate` slot, a `trade_memory` (prints remembered for de-duplication; 10,000 by default, 256 for a resident,
+since the town de-duplicates once for all of them) and `forget()`, which drops a settled window and keeps only today
+and yesterday in the day tables. The arena keeps its own record and never adds a settled window again, so
+`advance()` and `evaluate()` stay short. A starter still resting when its no-first-buy period (or a filter) begins
+is cancelled there. The protective stop pays up to 0.99 a contract (completing a pair below $1 always lowers the
+loss); the lock keeps `lock_max_price`.
+
+The lock mirrors live:
+- it needs both books fresh, no take pending in the window and at least one whole unpaired contract;
+- it buys at the best ask, as a whole-cent limit of at most `lock_max_price`, `min(unpaired, clip, depth)` contracts;
+- it fills like a take: the first book after the latency, the top level, immediate-or-cancel;
+- no budget, pair cap, edge, cutoff or day stop applies;
+- it survives `advance()` in the cutoff and the day stop, and counts as `lock_*`, never as a take.
+
+With the defaults no lock exists. `tests/fixtures/speeddesk_model_golden.json` was generated from the model before
+these fields, and it replays exactly (`tests/test_speeddesk_model_genes.py`). Saved configs leave out fields at their
+defaults, so a rollback still reads them. The live twin and the main practice desk run on the defaults.
+
+### Speed: the town runs in its own process
+
+The review of 2026-10-13 showed that a town in a thread of the live process can stall the live loop: a pass that
+spins or hangs holds Python's lock (a 1 ms loop's median lateness went from 0.12 to 5.3 ms, and nothing noticed), a
+busy market capped the town near 400 books a second and its lock contention raised the live p99 by 0.6 ms, and its
+objects lengthened every garbage collection. A process boundary removes all of it.
+
+- **The live loop's side (`ArenaLink`):** `on_book` and `on_trade` append the Kalshi book or print to a list
+  (bounded at 1,024; beyond it they are dropped and counted), and `on_status` appends the gap facts. `on_tick` and
+  `on_windows` have no arena code. Once per runner step (every 50 ms) `flush` encodes at most 256 events plus the
+  market facts that changed (windows, price, sigma, maker windows, outcomes) into one frame and writes it to a Unix
+  stream socket without waiting: a full socket drops the whole frame (counted; the next frame carries every fact and
+  whole ladders again), and a dead town is noticed (`kalshi_arena_exited`) and never fed again. Nothing in it raises.
+  - A book's ladders travel as changes to the ladder last sent: the Kalshi socket rebuilds a ladder around the one
+    level a delta changes, so a frame carries about one level a book, found by a C-level identity scan.
+  - Not a pipe: a pipe's reader holds a lock its writer needs while it copies, so a descheduled town would make the
+    live loop wait. A socket's sender only takes spinlocks.
+  - Measured on 2026-10-13 (Python 3.13, a shared 4-core machine at load average 8 to 12): 400 books a second of
+    25-level ladders cost **0.16 ms of the live thread's CPU a flush (median), p99 0.34 ms, max 0.54 ms**, about 2.4
+    us a book; a put is about 0.15 us.
+- **The town's side (`worker_main`):** the same interpreter, started isolated (`-I`) with an environment of `PATH`,
+  `LANG` and `TZ` only (no `KALSHI_*` key or any other secret reaches it), in the idle scheduling class at nice 19
+  (it never takes a CPU from the live desk), first in line for the out-of-memory killer, under a 1 GiB address-space
+  limit, with no core dump (its working directory is DATA_DIR, the live desk's volume), and killed by the kernel if
+  a pass hangs for 120 s (SIGALRM) or spends 5 s of CPU (SIGVTALRM, re-armed every pass; neither has a handler: a
+  spin dies after 5 s of a core, not 2 minutes, and a town merely starved of CPU spends none). What took effect is
+  read back after these steps and logged once (`kalshi_arena_hardened nice= sched= as_limit= oom_score_adj=
+  applied=`, a WARNING when the town would compete for the CPU at normal priority) and shown in the panel's
+  `feed.hardening`: a runtime that refuses a step (a seccomp or gVisor profile, a read-only /proc) is visible. It
+  sleeps on its own timer,
+  takes what arrived, then runs a pass, so a write never wakes a process: with a waiting reader a write's p99 was
+  8 ms, without one 0.1 ms. A book is applied to the residents only if it is the latest for its window and side in
+  the pass, or a resident waits on a take or lock there (a take is checked against the first book after its
+  latency); prints are de-duplicated once for all residents.
+  - Its boot takes the idle class and nice 19 BEFORE it imports this package (the imports are most of a start's
+    CPU, about 70 ms; at a restart they would otherwise compete at normal priority with the live desk's own start).
+  - One town per DATA_DIR: it holds `DATA_DIR/kalshi_arena/town.lock` (an exclusive `flock`) for its life; a second
+    town (a wedged one outliving its bot outside a container, or a second bot on the same volume, whose live desk the
+    controller lock refuses but whose arena would otherwise start) waits 5 s for it (an old town's final save after
+    a quick restart), then exits without writing (`kalshi_arena_busy`, exit 4).
+  - It imports no `speeddesk_live*` module (`LiveLimits` is imported only where the live process builds the
+    configuration), nothing of an order path and nothing that speaks HTTP or TLS, and it inherits no file of the
+    live desk (`close_fds`: not the companion's `controller.lock`, not a ledger). Shown on the real process
+    (`test_the_real_town_imports_no_order_path_and_inherits_no_live_file`). Its empty environment is not an OS
+    boundary: a process of the same user (root on Railway) can read its parent's `/proc/<pid>/environ`; the town's
+    code never does, and nothing else in it reaches a key.
+  - A write that fails (a full disk) removes its temporary file, since DATA_DIR is the live desk's volume too. A
+    halt writes the panel first and on its own (its brief form when the whole panel does not fit), so the page says
+    "halted" even when the larger state file cannot be written.
+  - Frames that arrive with the configuration (the link's first flush, 50 ms after start, lands while the town is
+    still importing; it carries the window list and whole ladders) are read before the first pass, never dropped.
+- **Isolation, proven by tests (`tests/test_kalshi_arena_feed.py`):**
+  - a stand-in hardened like the town spinning on every core: the live loop's 1 ms sleeps wake as on time as with
+    no town (median 0.076 -> 0.073 ms, p90 0.125 -> 0.133 ms);
+  - a town that never reads: every flush returns at once (CPU p99 under 1.5 ms with 80 books a flush), whole frames
+    are dropped and counted;
+  - a town that dies: noticed, logged, never fed again, never an error;
+  - the town halts itself after 5 failed passes in a row (`kalshi_arena_halted`, saved for the page) and exits;
+  - the opt-in wall-clock test (`NIGHTCRAWLER_PERF_TESTS=1`): with the real town at about 350 books a second, a 1 ms
+    loop's lateness p50 0.080 -> 0.080 ms and p90 0.123 -> 0.132 ms against the same loop without it (the shared
+    machine's own p99 is about 3 ms either way).
+- **Shutdown:** the runner closes the link after every real-money shutdown step (the live companion's shutdown, the
+  practice cancel and checkpoint), and `close()` gives the town up to 1 s for its final save after the live companion
+  closed (the bot is the container's first process, whose exit ends every other).
+- **Production's own figure:** `kalshi_arena_feed` (the live side, every 5 minutes: put, dropped, frames, flush p50,
+  p99 and max in us) and `kalshi_arena_status` (the town: received, dropped, late, coalesced, pass CPU p99 and max,
+  duty, lag, and the live loop's flush p99 and max, which the link sends; every minute while the feed lags or drops).
+  `duty_pct` is the town process's whole CPU over wall time (reading and decoding frames too, about half of it at
+  400 books a second, not only the pass).
+  The town's process costs memory of its own (about 22 MB at start).
+
+### Files, page and logs
+
+- `DATA_DIR/kalshi_arena/state.json` is written atomically (a `.tmp` sibling, then a rename) and stays at about
+  100 KB after 30 days. It is fsynced (it is the town's only record) only after a change that matters (a settlement,
+  birth, eviction, void, flag or halt): the minute's heartbeat save, which only keeps the panel and its counters
+  current, is a plain rename, so the town fsyncs a few times an hour on the volume and journal the live desk's own
+  pre-send fsync uses, not every minute. `panel.json` stays under 32 KB (each resident's genes and money lines).
+- Desks are never saved (each would be about 240 KB with its tape); they are rebuilt from their genes at start. A bad
+  state file (unreadable, too deep, genes no desk accepts, a broken day) is renamed `state.json.bad-<epoch>` and the
+  town starts fresh; a single display row that is not plain finite JSON (a grave, an event, a candidate flag) is
+  dropped instead, so every later save works. Each resident's settled P&L today is saved, so the day stop survives
+  a restart as live's does.
+- The page: the top-level `kalshi_arena` block (`pagestate.kalshi_arena_block`; the contract with the town and its
+  fixture `tests/fixtures/kalshi_arena_page.json` are in docs/COORDINATION.md, "kalshi_arena contract and fixture")
+  reads `panel.json` only, and refuses one over 256 KiB unread (the page builder runs in the live desk's process).
+  It is always a block: schema_version 1, mode "paper" and real_orders_enabled false (page constants), a status
+  (fresh, degraded, stale, halted, missing, off) with a reason, and every figure null when nothing is known. It
+  whitelists every field, labels it "Practice (pretend money)", and is stale after 180 s (three heartbeats). It is
+  never summed into any money total, the town ledger, the goal, the hearts or the plain words; a test checks the
+  whole page is otherwise the same with the arena on or off.
+- Logs: `kalshi_arena_started`, `_town` and `_hardened` (the process), `_born`, `_evicted`, `_candidate`, `_control`,
+  `_control_changed`, `_regime_changed`, `_void`, `_status`, `_feed` (the live side), `_state_reset`, `_step_failed`,
+  `_halted`, `_busy`, `_exited`, `_stopped`, `_not_started` and `_close_failed`, with no exception text.
+- A bad `KALSHI_ARENA_*` value turns the arena off with `config_kalshi_arena_off bad=<NAME>` (never the value); it
+  never stops the engine, and with it the real-money Kalshi companion.
+
+### What the control can and cannot copy (plan corrections, 2026-10-13)
+
+1. **"The control runs the exact live genes"** means the live rules as the practice model simulates them. The
+   differences, largely shared by every resident (so paired differences mean more than arena dollars):
+   - fills are simulated (maker prints against the displayed queue; a take or lock is rechecked after the latency);
+   - live sends one order per account read;
+   - a live lock IOC can sweep several levels; practice fills the top level;
+   - live's lifetime total stop halts the account; the control never halts (see above);
+   - live leaves owner-traded windows alone.
+
+   The day stop, the open budget, the 30 s order expiry and the fee-reserve edge check are copied (review of
+   2026-10-13; `tests/test_speeddesk_model_genes.py` compares the budgets with `LiveRiskBook.can_buy` on 400 random
+   states).
+2. **Gene ranges stop at the live ceilings:** `LiveLimits` clamps `pair_cap` to 0.99 and `max_imbalance` to 0.25.
+3. **Lock start and cutoff are one gene (`close_s`, 120-300 s).** Live raises its lock start to at least its cutoff
+   (180 s by default) and stops buying when the lock starts. A candidate's `close_s` is therefore expressed by setting
+   both `SPEEDDESK_KALSHI_CUTOFF_S` and `SPEEDDESK_KALSHI_LOCK_S` to it.
+4. **Some genes need code (and the owner's word) to adopt:** lock off (live cannot switch its lock off), the stop,
+   rounds, starter timing, filters, and a first buy different from the clip (live's clip caps every order). The
+   candidate card lists "settings that express it" apart from "needs code".
+5. **Python 3.12 in production:** nothing 3.13-only is used.
+6. **Real-money files:**
+   - the hook lives in `speeddesk.py` (three bounded appends, one flush a step, start, and a close after every
+     real-money shutdown step);
+   - `speeddesk_live*.py`, `deskguard.py` and `engine.py` are unchanged;
+   - `config.py` gains only the four practice settings, and a bad one turns the arena off instead of stopping the
+     engine.

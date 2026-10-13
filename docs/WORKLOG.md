@@ -15,6 +15,94 @@ Template:
 
 
 
+## 2026-10-13 23:05 UTC, Claude, branch claude/kalshi-arena (preflight fixes and the town's kalshi_arena contract)
+- Changed (practice code only; `speeddesk.py`, `speeddesk_live*.py`, `config.py` untouched):
+  - the town's process logs what isolation it actually got (`kalshi_arena_hardened`, a WARNING at normal CPU
+    priority) and shows it in `feed.hardening`; no core dump (RLIMIT_CORE 0: its working directory is DATA_DIR);
+    a 5 s CPU budget per pass (SIGVTALRM) beside the 120 s wall alarm, so a spin dies after 5 s of a core;
+  - frames that arrive with the configuration are read, not dropped (the boot frame carried the window list and the
+    whole ladders, and every start lost it);
+  - a halt writes the panel first and on its own (a brief form when the disk is too full), so the page says halted;
+  - state.json is fsynced only after a change that matters, not on every 60 s heartbeat (about 60 fsyncs an hour on
+    the live desk's volume and journal down to a few);
+  - `duty_pct` is the process's whole CPU, not only step(); eviction lines cut their reason at a word;
+  - the page block moved to the top-level `kalshi_arena` (`pagestate.kalshi_arena_block`, `money.kalshi_arena`
+    removed; never deployed): schema_version, mode paper, real_orders_enabled false, status and reason, heartbeat
+    and staleness, town_id, stable ids for residents, the grave and events, candidate_id and control_id, born,
+    genes, rule_id, activity, funded, cash, open cost, reserved, fees, rent apart, fills, contracts, the evidence
+    period, full counts and truncation flags; a panel over 256 KiB is refused unread; a malformed panel shows
+    missing/unreadable and never takes the page down;
+  - the sanitized fixture `tests/fixtures/kalshi_arena_page.json` and the contract in COORDINATION.md (23:01 UTC);
+  - test fix: the fd snapshot of the real town no longer races its save (a `.tmp` open, a vanished fd).
+- Verified: each fix has a regression test that fails on bfcb26e (8 tests, plus the page suite, which cannot import
+  there); the fixture round-trips through the page exactly; the whole page is otherwise identical with the arena on
+  or off; full suite 4,940 passed, 13 skipped (Python 3.13); mypy src/nightcrawler clean (121 files); ruff clean
+  on the changed files.
+- Not verified / skipped: Railway itself (production's nice/sched values will show in `kalshi_arena_hardened` after
+  the merge); not pushed, not merged.
+- Real money touched? no.
+- Next step: merge at a safe minute; Codex maps the contract into the town.
+
+## 2026-10-13 22:30 UTC, Claude, branch claude/kalshi-arena (preflight: real-money isolation and the live loop)
+- Changed (practice code only; `speeddesk.py`, `speeddesk_live*.py`, `config.py` untouched):
+  - the control runs the configured limits, the live ladder's rung 0, and never follows a promotion (live's rung 1
+    is $15/$30/$9 while every resident stays at $10/$20/$6): now said in the panel note and the spec;
+  - one town per DATA_DIR (`town.lock`, waits 5 s, then `kalshi_arena_busy`, exit 4): two bots on one volume ran
+    two towns writing one state.json;
+  - the town's process no longer imports `speeddesk_live_model` (only the live process builds the config);
+  - the town takes the idle class and nice 19 before its imports (about 70-90 ms of CPU ran at normal priority);
+  - a failed write (full disk) removes its temporary file on the shared volume.
+- Verified: on the real SpeedRunner loop at 400 books a second with each town failure (cannot spawn, dies at start,
+  dies later, killed, stopped, never reads, its directory a file, ENOSPC on a full tmpfs): no error escaped, every
+  book and print reached the live companion, steps stayed at 50 ms (p99 57-65 ms, as with the arena off); 10 minutes
+  with a town that never reads: 239,990 books delivered, the link's list and partial frame bounded, no Python heap
+  growth from kalshi_arena.py. SIGTERM (plain and as PID 1): the live shutdown and checkpoint first, the town reaped
+  within 0.3 s (1.0 s cap when wedged), no orphan, no zombie. The deploy-branch model and this one: the golden fixture
+  byte for byte, and 797,000 fuzz steps (twin place() and evaluate()) byte-identical. The arena costs the live
+  thread about 0.2-0.3 ms of CPU a 50 ms step at 400 books a second, healthy or stuck; RSS grows the same with it
+  off. Full suite 4,912 passed, 13 skipped (3.13); arena and genes suites also on 3.12; ruff and mypy clean.
+- Not verified / skipped: Railway itself (PID 1 there assumed from the exec-form start); the town can still read its
+  parent's /proc environ as the same user (root on Railway): its code never does, not an OS boundary; not pushed.
+- Real money touched? no.
+- Next step: merge at a safe minute with the other preflight lenses.
+
+## 2026-10-13 21:20 UTC, Claude, branch claude/kalshi-arena (review fixes)
+- Changed, after three reviews (every major finding reproduced first):
+  - **The town runs in its own process.** A town thread could stall the live loop (a spinning pass raised a 1 ms
+    loop's median lateness from 0.12 to 5.3 ms, unnoticed), capped itself near 400 books a second and raised the
+    live p99 0.6 ms at a busy rate. Now the live loop appends books and prints to a bounded list and, once a step,
+    writes one frame to a Unix socket without waiting (book ladders travel as changes). The town is a child Python
+    process with an empty environment (no key), the idle scheduling class, nice 19, a memory limit and a kernel
+    kill after a 120 s hang; it polls on its own timer, so a write never wakes it (a waiting reader cost writes a
+    p99 of 8 ms here). A dead town is noticed and never fed; it saves and exits when the socket closes.
+  - **A window whose feed was incomplete is void for everyone** (frames dropped, or events read more than 3 s late),
+    instead of booked as if the town had seen the market. Books coalesce to the latest unless a take waits.
+  - **The control runs the live risk book's rules:** the day stop and open budget count money at risk, resting bids
+    expire after 30 s, and the edge must survive the fee reserve (opt-in `SpeedConfig` fields; the golden fixture
+    and a 300-run base-against-branch fuzz show the defaults unchanged). A change of the shared limits restarts
+    every record and comparison (its own id, `kalshi_arena_regime_changed`).
+  - Minor: a resting starter stops at its no-first-buy time; parents need 20 traded windows; a restart voids one
+    window, not two; rent is charged per missed day (at most 7); any corrupt state moves aside or loses only the bad
+    row; prints de-duplicated once (resident memory 256); the day tables pruned; the day P&L survives a restart;
+    state.json fsynced; the stop has its own 0.99 cap; `config_state` precomputed; a bad `KALSHI_ARENA_*` turns the
+    arena off with a warning instead of stopping the engine; the link closes after every real-money shutdown step;
+    `close()` waits up to 1 s for the town's final save.
+- Verified: the full suite; mypy and ruff clean on the changed files; the reviewers' probes now fail (the defects are
+  gone); measured on a shared 4-core machine at load 8 to 12:
+  - a flush of 400 books a second (25-level ladders): 0.16 ms of live-thread CPU a step (median), p99 0.34 ms;
+  - towns spinning on every core: the live loop's 1 ms sleeps median 0.076 -> 0.073 ms, p90 0.125 -> 0.133 ms;
+  - the real town at about 350 books a second (opt-in wall-clock test): median 0.080 -> 0.080 ms, p90
+    0.123 -> 0.132 ms;
+  - the town's process: about 22 MB RSS at start.
+- Not verified / skipped: production's own figures until `kalshi_arena_feed` and `kalshi_arena_status` are read
+  after deploy; live-loop step lateness in the `speeddesk_status` heartbeat (a change to the live desk's own report,
+  left for the speed work); the owner's four questions (account size, broke line, the stop's meaning, a forward
+  check for candidates); not pushed.
+- Real money touched? no. `speeddesk.py` gains one flush a step and a later close; `speeddesk_live*.py`,
+  `deskguard.py` and `engine.py` are unchanged.
+- Next step: deploy in a safe minute; read `kalshi_arena_feed` (flush p99) and `kalshi_arena_status` (drops, late,
+  void_feed) for an hour.
+
 ## 2026-10-13 20:20 UTC, Claude, branch claude/kalshi-ladder-ship
 - Owner decision (2026-10-13 ~20:15 UTC, answering the open first-buy question in SPEEDDESK_SPEC 9.2): "Keep 5 at
   every rung".
@@ -123,6 +211,42 @@ Template:
   observation days are claimed complete. New results describe indexed source-wallet activity.
 - Real money touched? no. Public GETs only; no credentials, orders, live setting, application file or
   deployment trigger changed. Shared-inbox handoff retains Claude's strategy/arena ownership.
+
+## 2026-10-13 19:05 UTC, Claude, branch claude/kalshi-arena
+- Owner's ask: "Give our bots the incentive they're giving Grok bots: make money or die."
+- Changed: a **Kalshi arena** (`nightcrawler/kalshi_arena.py`, PRACTICE money only).
+  - Twelve practice Kalshi Bitcoin 15-minute desks with their own genes trade the live windows. One control
+    (`Live`) always runs the live rules and is the benchmark.
+  - Each resident gets $50 of pretend money and pays $0.20 rent a UTC day. It is evicted when it cannot pay, falls
+    under $10, or `deskguard.judge` calls it losing; children of the richest fill every empty home.
+  - A candidate (winning on 100+ windows and a paired t >= 2 against the control) is shown only.
+  - Opt-in `SpeedConfig` fields for the genes: starter size and timing, rounds, whole contracts, the live lock and a
+    protective stop. A golden fixture generated BEFORE them proves the defaults unchanged.
+  - The speed desk's loop gains three bounded appends (books, prints, status); `on_tick` is untouched.
+  - The page gets `money.kalshi_arena` from a small `panel.json`. Four practice settings (`KALSHI_ARENA_*`), and
+    `docs/SPEEDDESK_SPEC.md` section 12.
+- Verified:
+  - the full suite (`python -m pytest -q`): 4,779 passed, 13 skipped (12 network skips plus the opt-in timing test;
+    the base branch had 4,708 passed, 12 skipped); mypy on `src/` clean; ruff clean on every changed Python file;
+  - the live loop's extra cost: 0.13 us a put; a book plus a print through the runner takes about 21 us with or
+    without the arena (difference -0.3 us mean, +3 us p99, noise);
+  - arena work slices in CPU time: median 0.21 ms, p99 0.30 ms, p99.9 0.49 ms, about 0.5 % of a core at 60 books a
+    second;
+  - the opt-in wall-clock test (`NIGHTCRAWLER_PERF_TESTS=1`, arena running and parked in alternate blocks, machine
+    at load average about 9 on 4 cores): p99 lateness of a 1 ms loop rose +0.07, -0.04 and +0.20 ms (bound 0.5 ms);
+  - a parked arena drops exactly the overflow; a crashing arena halts itself after 5 errors and the live desk trades
+    on.
+- Not verified / skipped:
+  - production's own lateness, until the `kalshi_arena_status` lines are read after deploy;
+  - the Kalshi account size: $50 as asked, `docs/ACCOUNTS.md` says $25.00 at the first read (not re-read: no key
+    here);
+  - the stop's meaning (read as a stop-loss: complete once the completion cost rises to T);
+  - the UI shows nothing yet (Codex's files; key described in `docs/COORDINATION.md`);
+  - not pushed (local commits only).
+- Real money touched? no: a practice town. The speed desk's loop gains three bounded appends; no live setting, limit
+  or order path changed, and `speeddesk_live*.py`, `deskguard.py` and `engine.py` are unchanged.
+- Next step: deploy in a safe merge minute, then read `kalshi_arena_status` (slice p99, duty, drops). Ask the owner
+  the four questions (account size, broke line $10 or $40, the stop's meaning, a forward-check line for candidates).
 
 ## 2026-10-13 18:16 UTC, Codex, next highest-leverage milestone
 - Reviewed: latest inbox/worklog through 7c0c993, the prior recorder proposal and current research handoff.

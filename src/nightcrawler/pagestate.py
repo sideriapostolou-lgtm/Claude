@@ -104,6 +104,12 @@ Schema (lists capped: members 9, events <= 5, open trades <= 10, closed trades 1
                               "kalshi_live": {... separate authenticated account; never added to town cash,
                                               "ladder": {earned-growth ladder: rung, limits, promotion progress,
                                                          demotion line; see _kalshi_ladder}|null}}|null},
+      "kalshi_arena": {"schema_version": 1, "mode": "paper", "real_orders_enabled": false, "label",  # always a block
+                       "status": "fresh"|"degraded"|"stale"|"halted"|"missing"|"off", "reason", "stale", "as_of",
+                       "heartbeat_s", "stale_after_s", "town_id", "fees_included": true, "equity_basis": "cost",
+                       "problem", "population", "rent_usd", "broke_usd", "start_cash", "note", "control_id",
+                       "candidate_id", "control", "residents" (<= 24), "grave" (<= 5), "candidates" (<= 5),
+                       "events" (<= 24), "counts", "truncated", "town", "feed"},  # PRACTICE only: kalshi_arena_block
       "town": {"label", "cost_per_day_usd", "cost_today_usd", "cost_since_start_usd": float|null,  # see TOWN
                "income_today_usd": float|null, "income_since_start_usd": float|null,
                "covered_today": bool|null, "covered_since_start": bool|null, "line",
@@ -1527,6 +1533,207 @@ def arena_town(settings: Settings, now: float) -> dict[str, Any] | None:
                "usd": _num(e.get("usd"))}
               for e in _xp_list(raw.get("events")) if isinstance(e, Mapping)]
     return {**raw, "label": PRETEND_LABEL, "events": events}
+
+
+#: The Kalshi arena saves its panel at least every :data:`kalshi_arena.SAVE_EVERY_S` (60 s, the heartbeat) while it
+#: runs (sooner, at most every 10 s, after a settlement, birth, eviction or flag), and a pass that hangs is killed
+#: after 120 s: older than three heartbeats, the town is not running (or is starved of CPU) and the page says stale.
+KALSHI_ARENA_STALE_S = 180.0
+KALSHI_ARENA_QUIET_S = 120.0  # a running town that heard no market frame this long (its own clock): degraded
+KALSHI_ARENA_SCHEMA = 1  # the block's own version (top-level ``kalshi_arena``); bumped on a change old readers misread
+_ARENA_VERDICTS = ("learning", "losing", "winning", "unclear")
+_ARENA_KINDS = ("born", "evicted", "candidate", "rent", "control", "void")
+_ARENA_ACTIVITY = ("holding", "bidding", "idle", "newborn")
+_ARENA_HEX = re.compile(r"[0-9a-f]{12}")
+
+
+def _kalshi_arena_envelope(status: str, reason: str | None) -> dict[str, Any]:
+    """The block with nothing known: every figure null, never a zero or an empty list that would look like a fresh,
+    empty town. ``mode`` and ``real_orders_enabled`` are constants of this page, never read from a file (the arena
+    module has no client, no key and no order path)."""
+    return {"schema_version": KALSHI_ARENA_SCHEMA, "mode": "paper", "real_orders_enabled": False,
+            "label": PRETEND_LABEL, "status": status, "reason": reason, "stale": None, "as_of": None,
+            "heartbeat_s": None, "stale_after_s": KALSHI_ARENA_STALE_S, "town_id": None, "fees_included": True,
+            "equity_basis": "cost", "problem": None, "population": None, "rent_usd": None, "broke_usd": None,
+            "start_cash": None, "note": None, "control_id": None, "candidate_id": None, "control": None,
+            "residents": None, "grave": None, "candidates": None, "events": None, "counts": None, "truncated": None,
+            "town": None, "feed": None}
+
+
+def kalshi_arena_block(settings: Settings, now: float) -> dict[str, Any]:
+    """The page's top-level ``kalshi_arena`` (:mod:`nightcrawler.kalshi_arena`; the contract is in
+    docs/COORDINATION.md, "kalshi_arena contract and fixture"): a PRACTICE town with its own figures. Nothing else on
+    the page reads it (no money, town, goal, hearts, plain words or recap), and it is never added to anything. Fields
+    whitelisted, every text redacted then clipped. Always a block: ``status`` says off, missing (not saved yet, or
+    unreadable), halted, stale, degraded or fresh (the rule below, on this page's clock), and with nothing known
+    every figure is null. ``as_of`` is the town's own save time, never this page's; only the small ``panel.json`` is
+    read (the larger state file never is, and an oversized panel is refused unread: this runs in the live desk's
+    process)."""
+    if not (settings.speeddesk_enabled and settings.speeddesk_kalshi_enabled and settings.kalshi_arena_enabled):
+        return _kalshi_arena_envelope("off", "disabled")
+    try:
+        from nightcrawler import kalshi_arena
+
+        raw = kalshi_arena.panel_state(settings.data_dir, now)
+    except FileNotFoundError:
+        return _kalshi_arena_envelope("missing", "not_saved_yet")
+    except (KeyError, TypeError, ValueError, AttributeError, OSError, ImportError) as exc:
+        log.warning("kalshi_arena_panel_failed error=%s", type(exc).__name__)
+        return _kalshi_arena_envelope("missing", "unreadable")
+    try:
+        return _kalshi_arena_view(kalshi_arena, raw, settings, now)
+    except Exception as exc:  # noqa: BLE001 - a malformed practice panel never takes the page down
+        log.warning("kalshi_arena_panel_failed error=%s", type(exc).__name__)
+        return _kalshi_arena_envelope("missing", "unreadable")
+
+
+def _kalshi_arena_view(kalshi_arena: Any, raw: Mapping[str, Any], settings: Settings, now: float) -> dict[str, Any]:
+    """:func:`kalshi_arena_block` for a panel that was read: every field whitelisted, the status on ``now``."""
+    text = _Text(settings)
+    bounds = {"residents": kalshi_arena.PANEL_RESIDENTS, "grave": kalshi_arena.PANEL_GRAVE,
+              "candidates": kalshi_arena.PANEL_CANDIDATES, "events": kalshi_arena.PANEL_EVENTS}
+
+    def paired(value: Any) -> dict[str, Any] | None:
+        if not isinstance(value, Mapping):
+            return None
+        return {"n": _count(value.get("n")), "mean_usd": _num(value.get("mean_usd")), "t": _num(value.get("t"))}
+
+    def verdict(value: Any) -> str | None:
+        return value if value in _ARENA_VERDICTS else None
+
+    def hexid(value: Any) -> str | None:
+        return value if isinstance(value, str) and _ARENA_HEX.fullmatch(value) else None
+
+    def genes(value: Any) -> dict[str, Any] | None:
+        if not isinstance(value, Mapping):
+            return None
+        return {**{key: _num(value.get(key)) for key in kalshi_arena.NUMBERS},
+                **{key: value.get(key) if isinstance(value.get(key), bool) else None for key in kalshi_arena.SWITCHES},
+                "filters": [text(name, 40) for name in _xp_list(value.get("filters"))[:8] if isinstance(name, str)]}
+
+    def lifetime(row: Mapping[str, Any]) -> dict[str, Any]:
+        """What a resident and a grave row share: who it is and what it did (USD; fees inside pnl_usd)."""
+        return {"id": text.opt(row.get("id"), 12), "name": text.opt(row.get("name"), 24),
+                "gen": _count(row.get("gen")), "parent": text.opt(row.get("parent"), 12), "born": _num(row.get("born")),
+                "days": _num(row.get("days")), "genes": genes(row.get("genes")), "rule_id": hexid(row.get("rule_id")),
+                "style": text.opt(row.get("style")),
+                **{key: _num(row.get(key)) for key in ("funded_usd", "equity_usd", "pnl_usd", "fees_usd", "rent_paid",
+                                                       "contracts")},
+                **{key: _count(row.get(key)) for key in ("windows", "traded", "wins", "losses", "fills")},
+                "verdict": verdict(row.get("verdict")), "vs_control": paired(row.get("vs_control"))}
+
+    def resident(row: Mapping[str, Any]) -> dict[str, Any]:
+        record = _xp_map(row.get("record"))
+        activity = row.get("activity")
+        return {**lifetime(row), "control": row.get("control") is True, "status": "active",
+                "activity": activity if activity in _ARENA_ACTIVITY else None,
+                **{key: _num(row.get(key)) for key in ("cash_usd", "open_cost_usd", "open_contracts", "reserved_usd",
+                                                       "profit_usd")},
+                "open_mark_usd": None,  # open contracts are carried at cost (equity_basis "cost"), never marked here
+                "open_orders": _count(row.get("open_orders")),
+                "phrase": text.opt(row.get("phrase"), 40), "reason": text.opt(row.get("reason"), 300),
+                "record": {"from": _num(record.get("from")), "windows": _count(record.get("windows")),
+                           "traded": _count(record.get("traded")), "keep": _count(record.get("keep"))},
+                "candidate": row.get("candidate") is True, "candidate_now": row.get("candidate_now") is True}
+
+    def candidate(row: Mapping[str, Any]) -> dict[str, Any]:
+        adopt = _xp_map(row.get("adopt"))
+        settings_map = _xp_map(adopt.get("settings"))
+        return {"id": text.opt(row.get("id"), 12), "name": text.opt(row.get("name"), 24), "at": _num(row.get("at")),
+                "n": _count(row.get("n")), "t": _num(row.get("t")), "mean_usd": _num(row.get("mean_usd")),
+                "since_flag": paired(row.get("since_flag")), "candidate_now": row.get("candidate_now") is True,
+                "adopt": {"settings": {key: _num(value) for key, value in settings_map.items()
+                                       if isinstance(key, str) and key.replace("_", "").isalpha() and key.isupper()},
+                          "needs_code": [text(line) for line in _xp_list(adopt.get("needs_code"))[:8]]},
+                "note": text.opt(row.get("note"), 200)}
+
+    def grave(row: Mapping[str, Any]) -> dict[str, Any]:
+        return {**lifetime(row), "control": False, "status": "evicted", "why": text.opt(row.get("why")),
+                "died": _num(row.get("died")), "was_candidate": row.get("was_candidate") is True}
+
+    def event(row: Mapping[str, Any]) -> dict[str, Any]:
+        return {"id": _count(row.get("id")), "ts": _num(row.get("ts")), "who": text.opt(row.get("who"), 24),
+                "resident_id": text.opt(row.get("resident_id"), 12), "text": text.opt(row.get("text")),
+                "tone": row.get("tone") if row.get("tone") in ("good", "bad", "neutral") else "neutral",
+                "kind": row.get("kind") if row.get("kind") in _ARENA_KINDS else ""}
+
+    def hardening(value: Any) -> dict[str, Any] | None:
+        if not isinstance(value, Mapping):
+            return None
+        def whole(item: Any, low: int, high: int) -> int | None:
+            return item if isinstance(item, int) and not isinstance(item, bool) and low <= item <= high else None
+
+        sched = value.get("sched")
+        return {"nice": whole(value.get("nice"), -20, 19), "sched": sched if sched in ("idle", "other") else None,
+                "as_limit_bytes": whole(value.get("as_limit_bytes"), 1, 1 << 62),
+                "oom_score_adj": whole(value.get("oom_score_adj"), -1000, 1000),
+                "applied": value.get("applied") is True}
+
+    builders = {"residents": resident, "grave": grave, "candidates": candidate, "events": event}
+    lists: dict[str, list[dict[str, Any]] | None] = {}
+    for key, build in builders.items():
+        rows = raw.get(key)  # absent from a brief panel (a halt on a full disk): unknown, never an empty town
+        lists[key] = (None if not isinstance(rows, list) else
+                      [build(row) for row in rows[:bounds[key]] if isinstance(row, Mapping)])
+    saved_counts = _xp_map(raw.get("counts"))
+    counts: dict[str, int | None] = {}
+    truncated: dict[str, bool | None] = {}
+    for key, shown in lists.items():
+        total = None if shown is None else _count(saved_counts.get(key))
+        counts[key] = total
+        # From what THIS page shows (a malformed row it dropped counts as not shown); an unknown total: null.
+        truncated[key] = None if total is None or shown is None else len(shown) < total
+    control = raw.get("control")
+    town = raw.get("town")
+    feed = raw.get("feed")
+    feed_block: dict[str, Any] | None = None if not isinstance(feed, Mapping) else {
+        **{key: _count(feed.get(key)) for key in ("queue", "received", "dropped", "late", "coalesced", "errors",
+                                                  "open_incomplete")},
+        **{key: _num(feed.get(key)) for key in ("pass_p50_ms", "pass_p99_ms", "pass_max_ms", "duty_pct", "lag_s",
+                                                 "live_flush_us_p50", "live_flush_us_p99", "live_flush_us_max",
+                                                 "last_frame_at")},
+        "hardening": hardening(feed.get("hardening"))}
+    as_of = _num(raw.get("as_of"))
+    problem = text.opt(raw.get("problem"))
+    heard: float | None = None if feed_block is None else feed_block["last_frame_at"]
+    if problem is not None:
+        status, reason = "halted", "halted"
+    elif as_of is None:
+        status, reason = "stale", "as_of_unknown"
+    elif now - as_of > KALSHI_ARENA_STALE_S:
+        status, reason = "stale", "heartbeat_late"
+    elif as_of > now + FUTURE_SKEW_S:  # the page's own rule for a producer time from the future
+        status, reason = "stale", "as_of_future"
+    elif heard is None or as_of - heard > KALSHI_ARENA_QUIET_S:
+        status, reason = "degraded", "feed_quiet"  # the town runs but hears no market (both times are its own)
+    elif feed_block is not None and feed_block["open_incomplete"]:
+        status, reason = "degraded", "feed_incomplete"  # open windows that will be void for everyone
+    else:
+        status, reason = "fresh", None
+    ids = {row["id"] for row in lists["residents"] or []}
+    control_id, candidate_id = text.opt(raw.get("control_id"), 12), text.opt(raw.get("candidate_id"), 12)
+    return {
+        **_kalshi_arena_envelope(status, reason),
+        "stale": status in ("stale", "halted"), "as_of": as_of, "heartbeat_s": _num(raw.get("heartbeat_s")),
+        "town_id": hexid(raw.get("town_id")), "problem": problem, "population": _count(raw.get("population")),
+        **{key: _num(raw.get(key)) for key in ("rent_usd", "broke_usd", "start_cash")},
+        "note": text.opt(raw.get("note"), 400),
+        "control_id": control_id if control_id in ids else None,
+        "candidate_id": candidate_id if candidate_id in ids else None,
+        "control": {"id": text.opt(control.get("id"), 12), "name": text.opt(control.get("name"), 24),
+                    "equity_usd": _num(control.get("equity_usd")),
+                    "windows": _count(control.get("windows")), "traded": _count(control.get("traded")),
+                    "pnl_usd": _num(control.get("pnl_usd")), "verdict": verdict(control.get("verdict")),
+                    "phrase": text.opt(control.get("phrase"), 40), "reason": text.opt(control.get("reason"), 300),
+                    "genes_line": text.opt(control.get("genes_line"))} if isinstance(control, Mapping) else None,
+        **lists, "counts": counts if any(lists[key] is not None for key in lists) else None,
+        "truncated": truncated if any(lists[key] is not None for key in lists) else None,
+        "town": {**{key: _count(town.get(key)) for key in ("born", "evicted", "windows", "void_windows", "void_feed",
+                                                            "candidates", "rent_days")},
+                 "rent_paid": _num(town.get("rent_paid"))} if isinstance(town, Mapping) else None,
+        # The town runs in its own process; live_flush_us_* is the live loop's own cost of handing it the market.
+        "feed": feed_block,
+    }
 
 
 def _speed_scorecard(raw: Any) -> dict[str, Any] | None:
@@ -3221,6 +3428,8 @@ def build_page_state(ledger: Any, settings: Settings, now: float, engine_status:
         "plain": plain_words(settings, money, members, now, passed=card["champion_passed_locked_test"],
                              closed=trades["closed"]),
         "money": money,
+        # the Kalshi practice town: PRACTICE money, outside the money card on purpose; nothing else here reads it
+        "kalshi_arena": kalshi_arena_block(settings, now),
         # the town: what running the bot costs against what the desks made (same clock as the judge's total)
         "town": town_ledger(settings, money, state.get("judge"), now, _run_started(ledger, state)),
         "team": {"counts": counts, "members": members},
