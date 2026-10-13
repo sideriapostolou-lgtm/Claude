@@ -23,7 +23,7 @@ from typing import Any
 import requests
 
 from .config import Secret, Settings
-from .speeddesk_model import Book, Level, Trade, Window
+from .speeddesk_model import FUTURE_SKEW_S, Book, Level, Trade, Window
 
 log = logging.getLogger("nightcrawler.speeddesk_feeds")
 GATEWAY = "https://gateway.polymarket.us"
@@ -36,6 +36,8 @@ COINBASE_EXCHANGE_WS = "wss://ws-feed.exchange.coinbase.com"
 COINBASE_FEEDS = (("exchange_a", COINBASE_EXCHANGE_WS), ("exchange_b", COINBASE_EXCHANGE_WS),
                   ("advanced_trade", COINBASE_WS))
 SEEN_TRADE_IDS = 20000
+# Future-stamped Coinbase trades (refused) are counted per connection and reported this often at most.
+SKEW_REPORT_S = 10.0
 # https://docs.polymarket.us/fees, verified 2026-10-12: standard, non-combo
 # maker theta is -0.0125; rounded per fill to cents with half-even rounding.
 DOCUMENTED_MAKER_COEFFICIENT = -0.0125
@@ -263,6 +265,10 @@ class LiveFeeds:
         self._coinbase_up: dict[str, bool] = {name: False for name, _url in COINBASE_FEEDS}
         self._seen_trades: set[int] = set()
         self._seen_order: deque[int] = deque()
+        # Trades each connection brought stamped further ahead of the local clock than FUTURE_SKEW_S (the desks
+        # refuse them), reported in the status at most every SKEW_REPORT_S.
+        self._future_stamped: dict[str, int] = {name: 0 for name, _url in COINBASE_FEEDS}
+        self._future_reported_at = -math.inf
         self._status: dict[str, Any] = {"coinbase": "connecting", "markets": "connecting", "trade_stream": False}
 
     def _report(self, **changes: Any) -> None:
@@ -364,6 +370,12 @@ class LiveFeeds:
             self._seen_trades.discard(self._seen_order.popleft())
         return True
 
+    def _future_stamp(self, name: str, now: float) -> None:
+        self._future_stamped[name] = self._future_stamped.get(name, 0) + 1
+        if now - self._future_reported_at >= SKEW_REPORT_S:
+            self._future_reported_at = now
+            self._report(coinbase_future_stamped=dict(self._future_stamped))
+
     def _coinbase_state(self, name: str, up: bool) -> None:
         """Bitcoin data counts as connected while any one connection is up; each one's state is reported too."""
         if self._coinbase_up.get(name) == up and self._status.get("coinbase") != "connecting":
@@ -398,6 +410,11 @@ class LiveFeeds:
                         received_at = self._clock()
                         reply = json.loads(message)
                         for price, at, trade_id in parse(reply):
+                            if received_at - at < -FUTURE_SKEW_S:
+                                # Refused by every desk, so it must not use up the trade id (latency review,
+                                # 2026-10-13): another connection's later copy may be inside the bound.
+                                self._future_stamp(name, received_at)
+                                continue
                             if self._first_delivery(trade_id):
                                 self.on_tick(price, at, received_at)
             except Exception as exc:  # noqa: BLE001 — reconnect on transport/protocol failure.

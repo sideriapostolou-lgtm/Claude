@@ -803,13 +803,27 @@ class KalshiLiveDesk:
             return "Window has not started"
         if now >= window.end - self.book.limits.lock_s:
             return "Window cutoff"
-        if snapshot.bitcoin_at is None or not -FUTURE_SKEW_S <= now - snapshot.bitcoin_at <= 3:
+        if snapshot.bitcoin_at is None or not -FUTURE_SKEW_S <= now - self._bitcoin_fresh_at(snapshot) <= 3:
             return "Bitcoin feed stale"
         if snapshot.bitcoin_price is None or window.start_price is None:
             return "Bitcoin opening price missing"
         if snapshot.sigma is None:
             return "Warming up Bitcoin volatility"
         return self._book_reason(window, snapshot, now)
+
+    @staticmethod
+    def _bitcoin_fresh_at(snapshot: LiveSnapshot) -> float:
+        """When the newest Bitcoin tick counts from: its exchange stamp, or its local receipt when that came first.
+
+        A tick may be stamped up to FUTURE_SKEW_S after the local clock (clock skew). Judged on the stamp alone, the
+        feed then stayed "fresh" up to 250 ms past 3 s of silence and the stale-feed cancel fired that much late
+        (latency review, 2026-10-13); the receipt is when the bot really last heard from Coinbase.
+        """
+        assert snapshot.bitcoin_at is not None
+        receipt = snapshot.tick_receipt
+        if receipt is not None and receipt.exchange_at == snapshot.bitcoin_at:
+            return min(snapshot.bitcoin_at, receipt.received_at)
+        return snapshot.bitcoin_at
 
     def _book_reason(self, window: Window, snapshot: LiveSnapshot, now: float) -> str:
         """Both books fresh and the window ours alone: all a lock needs (it uses no fair value)."""
@@ -1078,6 +1092,7 @@ class KalshiLiveDesk:
     async def _reconcile_reads(self, sync_started: float, full: bool, checks: list[str]) -> None:
         """One account reconcile; ``checks`` collects the name of each consistency check that failed."""
         assert self.client is not None
+        facts = self._account_facts()
         # Recent reads (RECENT_S) between complete ones; see _recent_since for why nothing that can still change
         # the books is outside the bound. Untracked bot orders and old owner orders wait for the next complete read.
         recent_from = None if full else self._recent_since(sync_started)
@@ -1245,11 +1260,27 @@ class KalshiLiveDesk:
         self.errors = 0
         self.retry_at = -math.inf
         self.last_sync = now
-        # A fill, settlement, stop, release or owner action is saved at once; the rest at most SAVE_EVERY_S later.
+        # A fill, settlement, stop, release or owner action is saved at once; another change of record at most
+        # SAVE_EVERY_S later; a read that changed nothing of record waits for the five-second save (latency
+        # review: every reconcile marked the state dirty, so a quiet desk rewrote it every second).
         if money_changed or self._must_save_now():
             self.checkpoint()
-        else:
+        elif self._account_facts() != facts:
             self._save_soon()
+
+    def _account_facts(self) -> tuple[Any, ...]:
+        """What a reconcile can change that the full state holds, apart from fills, settlements and stops (saved
+        at once): each unfinished order's record (not the time of its last report, which the next read sets
+        again), and the windows marked as the owner's, with a final outcome, or with changed terms."""
+        orders = []
+        for intent in self._active():
+            reserved = self.book.intents[intent.client_order_id]
+            orders.append((intent.client_order_id, intent.order_id, intent.terminal, intent.uncertain,
+                           intent.cancel_requested, reserved.status, reserved.order_id, reserved.reservation_active,
+                           reserved.filled_size, reserved.reported_filled_size, reserved.venue_remaining_size,
+                           reserved.uncertainty))
+        return (tuple(orders), len(self.foreign_windows), len(self.final_outcomes), len(self.changed_windows),
+                self.fatal_reason)
 
     def _release_proof(self, checks: list[str], unattributed: set[str], positions: dict[str, float],
                        settlement_rows: dict[str, Any]) -> Callable[[str], bool]:

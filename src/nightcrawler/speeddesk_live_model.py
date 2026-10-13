@@ -366,10 +366,21 @@ class LiveRiskBook:
         return self._worst(inventory, self._legs(window, without=without) + ([extra] if extra else []))
 
     def lowers_risk(self, client_order_id: str) -> bool:
-        """A pending order whose fill cannot raise its window's worst case: a balancing bid or a lock."""
+        """A pending order that only completes pairs: on the light side of its window, and its worst case on its own
+        no worse than with no pending order at all (a balancing bid, or a lock).
+
+        Judged against having no orders, not against the other pending ones (caps review, 2026-10-13): with 5 Up
+        and 5 Down held, a 3-contract bid on each side passed the old test, each because the other kept the worst
+        case where it was, though together they added $1.40. At most one order per side is pending in a window,
+        so at most one passes, and a money stop that leaves every such order resting adds nothing.
+        """
         intent = self.intents[client_order_id]
-        return (intent.reserved > EPSILON
-                and self.worst_loss(intent.window) <= self.worst_loss(intent.window, without=client_order_id) + EPSILON)
+        inventory = self.inventory.get(intent.window)
+        if intent.reserved <= EPSILON or inventory is None or intent.window in self.settled:
+            return False
+        light, _unpaired = self.lock_side(intent.window)
+        return (intent.side == light and self._worst(inventory, [(intent.side, intent.remaining, intent.reserved)])
+                <= self._worst(inventory, []) + EPSILON)
 
     @property
     def at_risk_usd(self) -> float:

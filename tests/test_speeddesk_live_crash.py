@@ -352,6 +352,7 @@ def test_journal_replay_equals_the_full_save_at_every_send(tmp_path: Path, seed:
     rng = random.Random(seed)
     desk, account, clock = make_desk(tmp_path / "run", caps=OWNERS_CAPS)
     desk._save_soon = desk.checkpoint  # type: ignore[method-assign]
+    desk._account_facts = object  # type: ignore[method-assign,assignment]  # every reconcile counts as a change
     create, checked = account.create_order, []
 
     def at_the_send(**kwargs: Any) -> dict[str, Any]:

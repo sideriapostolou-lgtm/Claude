@@ -154,3 +154,27 @@ def test_the_live_loop_sends_the_whole_balancing_bid_and_a_money_stop_leaves_it_
         assert len(account.creates) == 2  # and no new order goes out during the stop
     finally:
         desk.close()
+
+
+def test_a_money_stop_keeps_no_pair_of_bids_that_together_add_risk() -> None:
+    """Caps review minor: with 5 Up and 5 Down held at $0.49, resting bids of 3 Up and 3 Down at $0.50 each passed
+    the per-order test (the other kept the worst case where it was) though together they add $1.40. Neither is on
+    a light side, so a money stop cancels both; a lone balancing bid on the light side still rests."""
+    book = LiveRiskBook(OWNERS_CAPS)
+    book.add_window(Window(WINDOW, 1000, 1900, 100, taker_coefficient=.07, maker_coefficient=0, venue="kalshi"))
+    book.update_cash(100, 1010)
+    for side in ("up", "down"):
+        intent = book.reserve_intent(WINDOW, side, "rest", .49, 5, 1010, f"nc-speed-{side}-pair", .5)
+        book.mark_submitted(intent.client_order_id, f"venue-{side}-pair")
+        book.record_fill(ActualFill(f"fill-{side}-pair", f"venue-{side}-pair", intent.client_order_id, WINDOW, side,
+                                    .49, 5, 0.0, 1011))
+    up = book.reserve_intent(WINDOW, "up", "rest", .50, 3, 1012, "nc-speed-up-more", .52)
+    down = book.reserve_intent(WINDOW, "down", "rest", .50, 3, 1012, "nc-speed-down-more", .52)
+    assert book.worst_loss(WINDOW) == pytest.approx(book.worst_loss(WINDOW, without=up.client_order_id))
+    assert book.worst_loss(WINDOW) - book._worst(book.inventory[WINDOW], []) == pytest.approx(1.40)
+    assert not book.lowers_risk(up.client_order_id) and not book.lowers_risk(down.client_order_id)
+    # A light side again: 5 Up more filled, so a Down bid completes pairs and is kept; the Up one is not.
+    book.mark_submitted(up.client_order_id, "venue-up-more")
+    book.record_fill(ActualFill("fill-up-more", "venue-up-more", up.client_order_id, WINDOW, "up", .50, 3, 0.0,
+                                1013))
+    assert book.lowers_risk(down.client_order_id)

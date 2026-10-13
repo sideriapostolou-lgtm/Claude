@@ -99,9 +99,13 @@ class SpeedRunner:
         self.directory.mkdir(parents=True, exist_ok=True)
         self.path = self.directory / "state.json"
         self.ledger = Ledger(self.directory / "receipts.db", self.clock)
-        # Practice only, on the real-money desk's event loop (speed plan step 2): its saves are never synced to disk.
-        # A process crash loses nothing; a host or power failure can lose the last practice receipts.
+        # Practice only, on the real-money desk's event loop (speed plan step 2): its saves are not synced to disk.
+        # A process crash loses nothing; a host or power failure can lose the last practice receipts. The first
+        # save on a fresh ledger is synced (crash review, 2026-10-13): otherwise a host failure could leave the
+        # display copy without its ledger state, and the "missing beside existing report" check below would stop
+        # SpeedRunner, which also builds the real-money companion, from starting (or cancelling) at all.
         self.ledger.set_synchronous(False)
+        self._first_save_synced = False
         self.pending: list[tuple[str, dict[str, Any]]] = []
         self.last_checkpoint = -math.inf
         self.last_heartbeat = -math.inf
@@ -118,7 +122,7 @@ class SpeedRunner:
         self.last_live_panel: dict[str, Any] = {}
         self._live_market_snapshot = LiveSnapshot()
         self._bitcoin_revision = 0
-        self._sigma_key: tuple[int | None, int, int, float, float | None, bool] | None = None
+        self._sigma_key: tuple[int | tuple[str, int, int] | None, int, int, float, float | None, bool] | None = None
         self._sigma_tape: BitcoinTape | None = None
         self._sigma_prices: dict[int, float] | None = None
         self._sigma_value: float | None = None
@@ -137,6 +141,7 @@ class SpeedRunner:
             if saved is None and self.path.exists():
                 # Never silently reset a trial whose durable ledger disappeared.
                 raise ValueError("Practice receipt ledger missing beside existing report")
+            self._first_save_synced = saved is not None
             if saved is not None:
                 if saved.get("version") != 1 or saved.get("mode") != "practice":
                     raise ValueError("Unsupported persisted practice trial")
@@ -500,10 +505,16 @@ class SpeedRunner:
                  "venue_reporting_started_at": self.venue_reporting_started_at,
                  "venue_coverage": self.venue_coverage,
                  "panel": self.panel(now)}
+        first = not self._first_save_synced
+        if first:
+            self.ledger.set_synchronous(True)  # the ledger state is on disk before the display copy can be
         with self.ledger.transaction():
             for kind, payload in self.pending:
                 self.ledger.append_receipt(kind, payload, ts=payload.get("at", now))
             self.ledger.set_kv(STATE_KEY, state)
+        if first:
+            self.ledger.set_synchronous(False)
+            self._first_save_synced = True
         for kind, payload in self.pending:
             log.info("%s %s", kind, json.dumps(payload, allow_nan=False, separators=(",", ":")))
         self.pending.clear()

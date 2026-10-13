@@ -209,17 +209,24 @@ class BitcoinTape:
             self.first_prices.pop(stale, None)
         return True
 
-    def completed_revision(self, now: float) -> int | None:
+    def completed_revision(self, now: float) -> int | tuple[str, int, int] | None:
         """Accepted ticks in the seconds that ``sigma(now)`` reads (those before ``int(now)``), as a cache key.
 
-        None when ``now`` is more than a second before the newest tick (no cache: recompute).
+        A newest tick stamped in a later second than ``now`` (the bounded clock skew, FUTURE_SKEW_S) keys on the
+        ticks before that second and the second itself: later ticks land in it or after, and eviction depends on
+        it alone, so the completed seconds are fixed until it changes (latency review, 2026-10-13: this returned
+        None, a recompute of the hour on every snapshot). None only when ``now`` is not finite.
         """
         if self.last_at is None:
             return self.revision
+        if not math.isfinite(now):
+            return None
         latest, last_complete = int(self.last_at), int(now) - 1
         if latest <= last_complete:
             return self.revision
-        return self.revision_before_second if latest == last_complete + 1 else None
+        if latest == last_complete + 1:
+            return self.revision_before_second
+        return ("ahead", self.revision_before_second, latest)
 
     def opening(self, start: float) -> float | None:
         return self.first_prices.get(int(start))

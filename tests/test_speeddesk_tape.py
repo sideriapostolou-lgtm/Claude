@@ -150,3 +150,36 @@ def test_a_late_tick_in_a_completed_second_changes_the_cached_sigma(tmp_path: Pa
         assert desk._live_sigma(now) == after
     finally:
         desk.close()
+
+
+def test_a_tick_stamped_ahead_of_the_local_clock_keeps_the_cache(tmp_path: Path, monkeypatch) -> None:
+    """Latency review minor: when the newest tick is stamped in a later second than the local clock (allowed up to
+    FUTURE_SKEW_S), every snapshot refresh recomputed the hour (7.2 a second at -240 ms skew). The cache now keys on
+    that second: unchanged until it changes or a tick lands in a completed second, and always equal to a fresh
+    computation."""
+    clock = FakeClock(10_000.0)
+    desk = runner(tmp_path, clock)
+    try:
+        for second in range(5000, 8700):
+            desk.desk.tick_btc(80000 * math.exp((second % 13) * 1e-5), second + .2)
+        desk.desk.tick_btc(80100, 8700.1)  # stamped 0.24 s after the local clock below
+        tape = desk.desk.tape
+        computed = [0]
+        original = tape.sigma
+
+        def counted(*args, **kwargs):  # type: ignore[no-untyped-def]
+            computed[0] += 1
+            return original(*args, **kwargs)
+
+        monkeypatch.setattr(tape, "sigma", counted)
+        now = 8699.86
+        first = desk._live_sigma(now)
+        for _ in range(5):  # book updates within the same tick
+            assert desk._live_sigma(now) == first
+        assert computed[0] == 1
+        desk.desk.tick_btc(80200, 8700.12)  # the same later second: still cached
+        assert desk._live_sigma(now) == first and computed[0] == 1
+        desk.desk.tick_btc(80300, 8701.0)  # a newer second can evict an old one: recomputed
+        assert desk._live_sigma(now) == original(now, 1500, 3600) and computed[0] == 2
+    finally:
+        desk.close()

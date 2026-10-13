@@ -337,9 +337,13 @@ pairs be "completely locked in" and that the bot "knows when to sell".
   cost for a first buy, nothing for a balancing bid that only completes pairs. Until 2026-10-13 every pending
   non-lock reservation was added in full, so a balancing bid counted as new risk and the stops cut it to 3
   contracts instead of 10 (loss plan bug 1); a money stop also cancelled balancing bids. A money stop (day or
-  total) now leaves a resting bid that can only lower its window's worst case; it still stops new orders, and a
-  reconciliation stop, stale feed, old price or the cutoff still cancel it. The window budget still counts every
-  dollar spent and reserved. Gross cost is still reported as `open_cost_usd`.
+  total) now leaves a resting bid that only completes pairs: on its window's light side, and no worse on its own
+  than no pending order at all (judged against no orders, not the other pending one: a pair of bids on both
+  sides of a balanced window each passed against the other though together they added risk; caps review,
+  2026-10-13). It still stops new orders, and a reconciliation stop, stale feed, old price or the cutoff still
+  cancel it. The window budget still counts every dollar spent and reserved. Gross cost is still reported as
+  `open_cost_usd`. With the earned-growth ladder (9.2) the open and daily checks use the window's rung and the
+  lifetime check the configured $10 stop, as before.
 - **New buys stop** `SPEEDDESK_KALSHI_LOCK_S` (240) seconds before the close, never later than the cutoff.
 - **Lock:** from then until 20 s before the close, a window holding more of one side buys the other side at
   the ask (immediate-or-cancel) for exactly the unpaired whole contracts, at up to
@@ -584,8 +588,10 @@ updates in place and drops seconds older than an hour and a second oldest first 
 0.37 ms on the build machine), and counts accepted ticks (`revision`). The cache key holds the number of accepted
 ticks in completed seconds instead: a trade in the current second cannot change volatility, a late one stamped
 in a completed second does and recomputes it; a query more than a second before the newest tick is never
-cached. Volatility is therefore computed about once a second (0.7 ms) instead of on every trade. Results are
-identical: `tests/test_speeddesk_tape.py` replays 3,000 recorded Coinbase trades six times, with late revisions
+cached. Volatility is therefore computed about once a second (0.7 ms) instead of on every trade. When the newest
+tick is stamped in a later second than the local clock (the bounded skew below), the key is that second and the
+ticks before it, so it is still cached (latency review: it recomputed on every snapshot refresh, 7.2 times a second
+at -240 ms skew). Results are identical: `tests/test_speeddesk_tape.py` replays 3,000 recorded Coinbase trades six times, with late revisions
 of the current and the just-completed second, against the previous code.
 
 Bitcoin feed (2026-10-13; speed plan step 4). Coinbase Exchange's `matches` channel
@@ -601,7 +607,13 @@ desk, the live companion, the practice model's staleness check and the timing re
 old), because the Exchange feed has no batching delay to hide the clocks' difference (the 2026-10-13 recording
 ran 18 ms behind Coinbase; on one container 91% of Exchange ticks would have been dropped). Every staleness limit
 is unchanged: with no trade for 3 s the live companion still cancels its bids ("Bitcoin feed stale"), and a stamp
-further ahead than 250 ms is refused. The step-0 `clock` report compares the clocks.
+further ahead than 250 ms is refused, before its trade id is marked as delivered, so a later copy of the same trade
+from another connection that is inside the bound still arrives (latency review: with the local clock about 0.3 s
+behind Coinbase every Exchange copy was refused and used up the id the Advanced Trade copy needed, while the status
+read "connected"); the refusals are counted per connection in the status (`coinbase_future_stamped`, at most every
+10 s). The live companion's stale-feed check counts from the earlier of the newest tick's stamp and its local
+receipt, so a tick stamped ahead no longer keeps the feed "fresh" up to 250 ms past 3 s of silence. The step-0
+`clock` report compares the clocks.
 
 Hosts and connections (2026-10-13; speed plan step 8). The signed client sends to `https://external-api.kalshi.com`,
 the dedicated Trade API host Kalshi recommends for API traders (`api.elections.kalshi.com` stays supported;
@@ -627,8 +639,13 @@ reservation is kept until Kalshi's list confirms it, and a restart cancels every
 reads the last full save plus the journal (`replay_journal`; `durable_state` in tests) and records "restored from
 the pre-send journal" for each order it adds; what a crash can lose is only what the next reconcile proves again
 (an order id from Kalshi's reply, a release the order list confirms, cash), so until then the restored stops are
-as strict or stricter. The practice desk's ledger commits with synchronous=NORMAL and its display copy is no
-longer synced. An order journaled but never sent (a crash between the row and the send, or a create lost before
+as strict or stricter. A reconcile that changes nothing of record (no order's status, id, fill count or
+reservation, no window newly marked as the owner's, settled by outcome or with changed terms) no longer marks the
+state for the next second's save; it waits for the five-second save (a quiet desk saved every second). The
+practice desk's ledger commits with synchronous=NORMAL and its display copy is no longer synced, except the first
+save on a fresh ledger, which is synced so a host failure cannot leave the display copy without its ledger state
+(the "missing beside existing report" check would then keep the whole speed desk, real-money companion included,
+from starting). An order journaled but never sent (a crash between the row and the send, or a create lost before
 Kalshi) used to keep its reservation for good and hold a restart in "Reconciling startup orders". It is now
 released, and never sent again, only once its market has closed and two complete order lists read after the
 close, at least 30 s apart, leave it out while that window's own facts agree: neither order list is behind the
