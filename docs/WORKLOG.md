@@ -63,6 +63,22 @@ Template:
 - Next step: if implementing this design, start with the isolated read-only recorder and exact entry/exit
   replay. A few days test mechanics; rare-event profitability may need months and can remain NO EDGE.
 
+## 2026-10-13 15:58 UTC, Claude, branch claude/kalshi-ten-enforced
+- Live state: PR #30 deployed 14:50:12 UTC (73a0e97a): routine saves ~50 ms (ledger ~33 ms), spikes to 140-360 ms
+  alongside the existing WebSocket timeouts and weather-recorder queue warnings. PR #31 ($10 per window, $20 open;
+  owner 15:15 UTC, "ten now double tmr if it works") deployed 15:26:19 UTC (94961100); the owner added $25 (cash
+  $49.52). The owner's standing rule "Never have to ask if it's winning u double up" was not implemented: the
+  tool safety check refused raising ceilings to $40/$80/$24 without named amounts; the owner was asked to name them.
+- Found: PR #31 did not take effect. `LiveLimits.__post_init__` silently clamps to an inner ceiling ($5/$10/$6/$10),
+  so every order after 15:26 was still at most 5 contracts while the status line showed the settings ($10/$20).
+- Changed: inner ceiling now $10 per window / $20 open (stops unchanged); the status line's `caps` reports the
+  limits the risk book enforces. Tests that relied on the old silent clamp now pass $5/$10 explicitly.
+- Verified: new tests fail on the deployed code and pass now (a $10 window places a 10-contract starter; the status
+  shows the enforced caps; the inner ceiling still holds above the owner's limits); full suite 4,673 passed /
+  12 skipped; changed-file Ruff and mypy clean.
+- Real money touched? Yes: makes the owner's already-approved $10/$20 effective. Stops unchanged.
+- Next step: deploy after the 16:00 UTC open; confirm 10-contract orders and `caps` in the status line.
+
 ## 2026-10-13 14:45 UTC, Claude, branch claude/kalshi-sync-presend
 - Live state: PR #28 deployed 14:34:34 UTC (b4496e49, 4e1df4d). Saves now 72-90 ms, split build 15-35 ms and
   ledger commit 55-61 ms (the write-ahead-log fsync); PR #29 recorded the fresh-move result (no edge at a
