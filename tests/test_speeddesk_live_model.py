@@ -656,3 +656,62 @@ def test_a_true_regression_still_stops_even_while_lag_is_tolerated():
     with pytest.raises(LiveRejected, match="order_terminal_regressed"):
         book.reconcile_order(snapshot(intent, status="resting", remaining=4, at=1013), fills_complete=True,
                              lag_ok=True)
+
+
+def open_window(book: LiveRiskBook, at: float) -> str:
+    """A window open at `at`, with a fresh balance read then."""
+    slug = f"KXBTC15M-OPEN-{int(at)}"
+    book.add_window(Window(slug, at - 50, at + 850, 100, taker_coefficient=.07, maker_coefficient=0, venue="kalshi"))
+    book.update_cash(100, at)
+    return slug
+
+
+def test_day_reset_gives_a_fresh_daily_budget_once_and_lapses_at_midnight():
+    book = make_book(limits=SMALL)  # day stop $3, total stop $5; 4 @ 0.40 reserves $1.67 with the taker fee
+    losing_window(book, 1, 2000)  # -$1.60 today
+    later = open_window(book, 2950)
+    assert book.can_buy(later, "up", "take", .4, 4, 2950) == "day_stop"  # $1.60 lost + $1.67 >= $3
+    assert book.apply_day_reset("", 2950) == ""
+    assert book.apply_day_reset("owner-day-reset", 2950) == "reset"
+    assert book.risk_status(2950)["day_loss_usd"] == 0 and book.day_pnl[utc_day(2950)] == pytest.approx(-1.6)
+    assert book.can_buy(later, "up", "take", .4, 4, 2950) == ""
+    assert book.risk_status(2950)["total_loss_usd"] == pytest.approx(1.6)  # the lifetime stop counts everything
+    encoded = json.dumps(book.to_state())
+    assert "owner-day-reset" not in encoded
+    restored = LiveRiskBook.from_state(json.loads(encoded))
+    assert restored.apply_day_reset("owner-day-reset", 2950) == "used"  # a restart never resets twice
+    assert restored.risk_status(2950)["day_loss_usd"] == 0
+    losing_window(restored, 2, 3000)  # another -$1.60 after the reset
+    assert restored.risk_status(3950)["day_loss_usd"] == pytest.approx(1.6)
+    assert restored.can_buy(open_window(restored, 3950), "up", "take", .4, 4, 3950) == "day_stop"
+    next_day = (2000 // 86400 + 1) * 86400 + 100  # the next UTC day starts from zero as always
+    assert restored.risk_status(next_day)["day_loss_usd"] == 0
+    old = json.loads(encoded)  # a release without day resets (or a rollback) has no anchor
+    del old["day_anchor"]
+    assert LiveRiskBook.from_state(old).risk_status(2950)["day_loss_usd"] == pytest.approx(1.6)
+
+
+def test_day_reset_never_lifts_the_lifetime_stop():
+    book = make_book(limits=SMALL)
+    losing_window(book, 1, 2000)
+    assert book.apply_day_reset("owner-day-reset", 2950) == "reset"
+    losing_window(book, 2, 3000)
+    assert book.apply_day_reset("owner-day-reset-2", 3950) == "reset"
+    losing_window(book, 3, 4000)  # -$4.80 of the $5 lifetime stop
+    assert book.risk_status(4950)["day_loss_usd"] == pytest.approx(1.6)
+    assert book.can_buy(open_window(book, 4950), "up", "take", .4, 1, 4950) == "total_budget"  # $4.80 + $0.42 >= $5
+
+
+def test_day_reset_value_cannot_reuse_another_approval():
+    book = make_book()
+    assert book.arm_integrity_reset("same-text") == "no_stop"
+    assert book.apply_day_reset("same-text", 1010) == "reset"  # separate fingerprints for each kind
+
+
+def test_persisted_day_anchor_is_validated():
+    state = make_book().to_state()
+    for bad in ({"2026-10-13": float("nan")}, {"not-a-day": -1.0}, ["2026-10-13"], {"2026-10-13": "x"}):
+        broken = json.loads(json.dumps(state))
+        broken["day_anchor"] = bad
+        with pytest.raises((ValueError, TypeError)):
+            LiveRiskBook.from_state(broken)

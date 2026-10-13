@@ -676,6 +676,33 @@ def events(desk: KalshiLiveDesk, name: str) -> list[dict[str, Any]]:
     return [item for item in desk.latest_events if item["event"] == name]
 
 
+def test_owner_day_reset_is_applied_at_startup_once_and_saved(tmp_path: Path) -> None:
+    # The arithmetic with real settlements, restarts, the midnight lapse and the lifetime stop is covered in
+    # test_speeddesk_live_model.py; this checks the setting reaches startup, is recorded and is spent.
+    reset = {"speeddesk_kalshi_day_reset_token": Secret("owner-day-reset-1")}
+    desk, _, clock = make_desk(tmp_path, extra=reset)
+    try:
+        today = utc_day(clock.now())
+        assert [(item["state"], item["day"]) for item in events(desk, "speeddesk_live_day_reset")] == [
+            ("fresh daily budget from now until 00:00 UTC; caps and lifetime stop unchanged", today)]
+        assert desk.book.day_anchor == {today: 0.0}
+        desk.book.day_pnl[today] = -2.5  # a loss after the reset counts against today's budget
+        assert desk.book.day_loss(clock.now()) == 2.5
+    finally:
+        desk.close()
+    again, _, clock = make_desk(tmp_path, extra=reset)
+    try:
+        assert events(again, "speeddesk_live_day_reset")[-1]["state"] == "ignored; this value was already used"
+        assert again.book.day_anchor == {utc_day(clock.now()): 0.0}  # saved, never moved by a restart
+    finally:
+        again.close()
+    plain, _, _ = make_desk(tmp_path / "plain")
+    try:
+        assert not events(plain, "speeddesk_live_day_reset") and plain.book.day_anchor == {}
+    finally:
+        plain.close()
+
+
 def stopped_desk(tmp_path: Path, code: str) -> None:
     """A saved desk whose books hold a reconciliation stop, as the 02:00 UTC stop on 2026-10-13 left it."""
     desk, _, _ = make_desk(tmp_path)
