@@ -34,19 +34,39 @@ API_PATH = "/trade-api/v2"
 TIMEOUT = (3.05, 10.0)
 
 
+_ERROR_CODE = re.compile(r"[a-z0-9_]{1,64}")
+
+
 class KalshiClientError(RuntimeError):
-    """Safe to log: never includes a key, signature, URL, request or response body."""
+    """Safe to log: never includes a key, signature, URL, request or response body.
+
+    ``code`` is Kalshi's machine error code (e.g. ``post_only_cross``) and is kept only
+    when it is a short lowercase identifier, never free text from the response.
+    """
 
     def __init__(self, operation: str, reason: str, *, status: int | None = None,
-                 uncertain: bool = False, timed_out: bool = False) -> None:
+                 uncertain: bool = False, timed_out: bool = False, code: str | None = None) -> None:
         self.operation, self.reason = operation, reason
         self.status, self.uncertain = status, uncertain
         self.timed_out = timed_out
-        super().__init__(f"Kalshi {operation}: {reason}" + (f" (HTTP {status})" if status is not None else ""))
+        self.code = code if isinstance(code, str) and _ERROR_CODE.fullmatch(code) else None
+        super().__init__(f"Kalshi {operation}: {reason}" + (f" (HTTP {status})" if status is not None else "")
+                         + (f" [{self.code}]" if self.code else ""))
 
     @property
     def auth(self) -> bool:
         return self.status in (401, 403)
+
+
+def _error_code(response: Any) -> str | None:
+    """Kalshi's ``{"error": {"code": ...}}`` identifier; anything else is dropped."""
+    try:
+        body = response.json()
+    except Exception:  # noqa: BLE001 - an unreadable error body only loses the code
+        return None
+    error = body.get("error") if isinstance(body, dict) else None
+    code = error.get("code") if isinstance(error, dict) else body.get("code") if isinstance(body, dict) else None
+    return code if isinstance(code, str) and _ERROR_CODE.fullmatch(code) else None
 
 
 def _plain(value: str | Secret) -> str:
@@ -161,7 +181,7 @@ class KalshiClient:
             if not 200 <= status < 300:
                 uncertain = mutates and (status >= 500 or status in (408, 409) or 300 <= status < 400)
                 raise KalshiClientError(operation, "request rejected" if not uncertain else "result unconfirmed",
-                                        status=status, uncertain=uncertain)
+                                        status=status, uncertain=uncertain, code=_error_code(response))
             try:
                 result = response.json()
             except (ValueError, TypeError):

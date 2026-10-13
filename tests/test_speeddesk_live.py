@@ -390,3 +390,41 @@ def test_starter_leaves_budget_for_a_balancing_whole_pair(tmp_path: Path) -> Non
         assert desk.book.at_risk_usd <= 2
     finally:
         desk.close()
+
+
+def test_one_refused_order_keeps_trading_but_three_refusals_in_a_row_pause(tmp_path: Path) -> None:
+    """2026-10-12 23:39: one create_order 400 paused new orders as an "account reconciliation" failure.
+    A single definite refusal is about that one order: record Kalshi's code and keep trading. Three in a
+    row still pause, so a real account problem (no cash on the shard) cannot spam orders."""
+    desk, account, clock = make_desk(tmp_path)
+    account.create_error = KalshiClientError("create_order", "request rejected", status=400,
+                                             code="post_only_cross")
+    try:
+        asyncio.run(desk.step())
+        assert len(account.creates) == 1
+        assert desk.errors == 0 and desk.clock() >= desk.retry_at
+        refused = [event for event in desk.latest_events if event["event"] == "speeddesk_live_reject"]
+        assert refused and refused[-1]["code"] == "post_only_cross" and refused[-1]["status"] == 400
+        assert desk.book.reserved_usd == 0
+        for _ in range(2):
+            clock.advance(1.1)
+            asyncio.run(desk.step())
+        assert len(account.creates) == 3
+        assert desk.errors == 1 and desk.clock() < desk.retry_at
+    finally:
+        desk.close()
+
+
+def test_send_guard_stop_is_not_an_account_error(tmp_path: Path) -> None:
+    desk, account, clock = make_desk(tmp_path)
+    account.create_order = lambda **_kwargs: (_ for _ in ()).throw(  # type: ignore[method-assign]
+        KalshiClientError("create_order", "send_guard_rejected"))
+    try:
+        for _ in range(4):
+            asyncio.run(desk.step())
+            clock.advance(1.1)
+        assert desk.errors == 0 and desk.clock() >= desk.retry_at
+        assert not any(event["event"] == "speeddesk_live_reject" for event in desk.latest_events)
+        assert desk.book.reserved_usd == 0
+    finally:
+        desk.close()

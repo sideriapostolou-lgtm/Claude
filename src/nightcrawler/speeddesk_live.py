@@ -184,6 +184,8 @@ class KalshiLiveDesk:
         self.retry_at = -math.inf
         self.cancel_retry_at: dict[str, float] = {}
         self.errors = 0
+        # Definite single-order refusals since the last accepted create; three in a row pause.
+        self.refusals = 0
         self.reason: str | None = "Practice only; live switches are off"
         self.foreign_windows: set[str] = set()
         self.changed_windows: set[str] = set()
@@ -740,6 +742,7 @@ class KalshiLiveDesk:
             if not intent.order_id:
                 raise ValueError("Create response has no order identifier")
             self.book.mark_submitted(client_id, intent.order_id)
+            self.refusals = 0
             self._record("speeddesk_live_order", client_order_id=client_id, order_id=intent.order_id,
                          window=window.slug, state="accepted; waiting for real fills",
                          timing=self.metrics.observe("real_kalshi", "decision_to_ack", now,
@@ -760,12 +763,30 @@ class KalshiLiveDesk:
             else:
                 intent.uncertain = True
                 self.book.mark_uncertain(client_id, "create_unconfirmed")
-            self._error(exc)
+            if isinstance(exc, KalshiClientError) and not exc.uncertain and exc.reason == "send_guard_rejected":
+                # Our own last check stopped it before any byte left: the market moved, nothing failed.
+                self._record("speeddesk_live_order", client_order_id=client_id, window=window.slug,
+                             state="not sent; prices moved before send")
+            elif self._single_order_refusal(exc) and self.refusals < 2:
+                assert isinstance(exc, KalshiClientError)
+                self.refusals += 1
+                self._record("speeddesk_live_reject", client_order_id=client_id, window=window.slug,
+                             reason="Kalshi refused this one order; still trading", error=type(exc).__name__,
+                             operation=exc.operation, detail=exc.reason, status=exc.status, code=exc.code)
+            else:
+                self.refusals = 0
+                self._error(exc)
         self.checkpoint()
         # Any create, including an IOC, changes available cash and inventory.
         # No second create is possible until a new complete account snapshot.
         self.account_at = None
         return True
+
+    @staticmethod
+    def _single_order_refusal(exc: Exception) -> bool:
+        """A definite 4xx about one order; authentication and rate limits stay account errors."""
+        return (isinstance(exc, KalshiClientError) and not exc.uncertain and exc.status is not None
+                and 400 <= exc.status < 500 and exc.status not in (401, 403, 429))
 
     def _send_guard(self, client_id: str) -> bool:
         """Called under the client's transport lock, after any rate-limit wait."""

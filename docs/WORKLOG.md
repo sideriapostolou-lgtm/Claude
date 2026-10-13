@@ -26,6 +26,11 @@ Template:
 - Not verified / skipped: whether Coinbase or Polymarket US times also read slightly ahead from Virginia (their
   checks have the same zero tolerance); checked next from the latency metrics.
 - Real money touched? No setting or cap changed (Kalshi still $2 window, $4 open, $3 day, $5 total).
+- Also (task #75, second commit): one definite Kalshi refusal of one order (4xx other than 401/403/429) no longer
+  pauses new orders; it is logged as `speeddesk_live_reject` with Kalshi's error code (`code`, kept only when it is
+  a short lowercase identifier). Three refusals in a row still pause as before. Our own last-moment send guard
+  stopping an order (nothing sent) is no longer counted as an account error. Tests: one-refusal/three-refusal and
+  send-guard tests (failing first); client code-parsing test; full suite 4,260 passed, 12 skipped.
 - Next step: confirm no `speeddesk_feed_kalshi_ws_gap` after this deploys; PR #14 (cancel 404) still to go live.
 
 ## 2026-10-12 23:15 UTC, Codex, branch codex/weather-lock-stopwatch
