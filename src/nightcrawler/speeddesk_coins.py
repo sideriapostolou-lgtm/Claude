@@ -98,13 +98,6 @@ class CoinDesk(PracticeDesk):
         super().__init__(*args, **kwargs)
         self.tape = SparseTape()
 
-    def add_window(self, window: Window) -> None:
-        existing = self.windows.get(window.slug)
-        if window.start_price is None:
-            window.start_price = (existing.start_price if existing and existing.start_price is not None
-                                  else window.venue_start_price)
-        super().add_window(window)
-
     def tick_btc(self, price: float, at: float) -> None:
         self.tape.tick(price, at)  # never an opening: a Coinbase print is not the settlement index
 

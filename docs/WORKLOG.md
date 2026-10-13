@@ -13,6 +13,31 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-13 06:20 UTC, Claude, branch claude/kalshi-true-strike, Kalshi windows open at Kalshi's strike
+- Owner asked for a smarter bot, "a winner, not random buys". Research first, all public data, no keys:
+  - Maker pairs (rest YES and NO a few cents under the market and wait for both): with strict fills (print
+    through our price, printed size only, 0.5 s latency) on 22 windows of trades it is a coin flip; starting
+    at 60 s it loses at every discount. Not shipped.
+  - 2,848 settled KXBTC15M windows (2026-09-13..10-13) of 1-minute candles, rules fixed before looking:
+    168 taker cells (favorite/longshot by price band and minute, momentum/reversal) on the first two thirds.
+    None passes (n >= 100, t >= 2.5); the best is t = 2.37, what 168 tries give by chance. Pooled momentum
+    is flat. The market's price matches outcome frequency within noise; the test third was not opened.
+  - Real fills since 23:30: takes -$6.04 on 46 contracts (-$5.12 from eight takes in the first 25 seconds),
+    resting bids +$2.90 on 36. Small samples.
+- Cause found: Kalshi's strike is the previous window's settlement, a 60-second BRTI average before the open
+  (all 2,843 consecutive pairs). The desk opened Kalshi windows at a Coinbase print in the start second, which
+  missed the strike by $19.61 on average and up to $100 over 41 logged windows, about 5 cents of fair value,
+  more than the 2-cent take edge. Coinbase's own bias against the index is only about -$2.6 (sd $8), so no
+  basis correction.
+- Changed: a Kalshi window's opening is only `floor_strike` (also on restore); a Coinbase print never opens
+  one, and it waits ("opening_price_missing") until the strike arrives. Other venues are unchanged. The coin
+  desks' copy of the rule moved into the shared model. The opening receipt now logs the opening used, its
+  source and the Coinbase print.
+- Verified: failing-first tests (strike only, restore drops a saved Coinbase opening); Kalshi fixtures now carry
+  the strike they always have live; full suite 4,638 passed, 12 skipped; ruff and mypy clean.
+- Real money touched? No settings or caps changed. The live Kalshi desk prices from the true strike after deploy.
+- Next step: compare takes and pairs after the change; the taker leg still has no proven edge.
+
 ## 2026-10-13 05:30 UTC, Codex, branch codex/town-truth-fixes, live verification and follow-up
 - PR #22 deployed successfully as exact merge `d78981ee96ff3dcd57fade18d656ecbbf9e9f54c`, Railway deployment
   `597ebf82-c3da-479a-8271-2524b1257bdc`. Polymarket started LIVE with 10 contracts at 05:16:58 UTC;

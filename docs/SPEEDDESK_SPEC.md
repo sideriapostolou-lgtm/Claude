@@ -74,8 +74,12 @@ or stops with `polydesk.py`.
 3. **Orders:** the SDK `orders` resource. Use IOC limit orders for takes, and GTC limit orders for resting bids
    (cancel and replace on reprice). In practice mode **no order is ever sent**; fills are simulated (section 5).
 4. **Fair value:** `P(Up) = Phi( ln(S/S0) / (sigma * sqrt(t_left)) )`. S is the live Bitcoin price, S0 the
-   window's start price (BRTI proxy: Coinbase price at the start second; log both), sigma per sqrt(second) from
-   the rolling window, t_left in seconds. Down = 1 - Up.
+   window's start price, sigma per sqrt(second) from the rolling window, t_left in seconds. Down = 1 - Up. On
+   Kalshi, S0 is the market's own strike (`floor_strike`), which equals the previous window's settlement, a
+   60-second BRTI average before the open (all 2,843 consecutive pairs in 2026-09-13..10-13). A Coinbase print in
+   the start second missed it by $19.61 on average and up to $100 (41 windows, 2026-10-12/13), about 5 cents of
+   fair value at the open, so a Kalshi window never opens from Coinbase and waits for the strike. Other venues
+   keep the Coinbase start-second proxy; the opening receipt logs both.
 
 ## 4. Strategy rules (all numbers are settings with these defaults)
 
@@ -214,7 +218,7 @@ KXXRP15M and KXDOGE15M windows (src/nightcrawler/speeddesk_coins.py). Practice o
 order path. Each coin has its own ledger, budget and report under `speeddesk/coins/<coin>`, all on one thread
 and event loop separate from the Bitcoin desk's, reading public Kalshi REST data slowly (books every 2 s,
 trades every 4 s, no websocket) and one public Coinbase trade feed. Because these coins print far less often
-on Coinbase, the opening is Kalshi's own strike (the 60-second index average), volatility is the realized
+on Coinbase, the opening is Kalshi's own strike (the 60-second index average, as on Bitcoin), volatility is the realized
 variance of consecutive prints per elapsed second over the trailing hour (at least 120 pairs), and the last
 print may be 15 s old (30 s for DOGE). Real money on a coin needs its practice record, one account controller
 shared by every coin (one cash view, one set of caps, one read budget) and the owner's numbers.

@@ -76,7 +76,7 @@ def test_runner_preserves_accepted_tick_provenance_and_records_practice_intent_o
     runner.monotonic = lambda: mono[0]
     try:
         runner.desk.config = replace(runner.desk.config, sigma_min_samples=1, sigma_warmup_s=0)
-        window = Window("KXBTC15M-cache", AT + 100, AT + 1000, 80000, venue="kalshi", maker_coefficient=0)
+        window = Window("KXBTC15M-cache", AT + 100, AT + 1000, 80000, venue_start_price=80000, venue="kalshi", maker_coefficient=0)
         runner.on_windows([window])
         runner.on_tick(79990, AT + 100, clock.now())
         runner.on_tick(80000, AT + 101, clock.now())

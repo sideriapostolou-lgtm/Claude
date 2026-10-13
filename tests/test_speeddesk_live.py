@@ -97,7 +97,7 @@ def make_desk(tmp_path: Path, *, mode: str = "live", confirm: str | None = "yes"
                         kalshi_private_key=Secret("fake-private-key") if keys else None, **(caps or {}),
                         **(extra or {}))
     window = Window(TICKER, clock.now() - 10, clock.now() + 890, start_price=80000,
-                    venue="kalshi", taker_coefficient=.07, maker_coefficient=0,
+                    venue_start_price=80000, venue="kalshi", taker_coefficient=.07, maker_coefficient=0,
                     min_trade_qty=.01, fee_rounding="kalshi")
     books = {(TICKER, side): Book(TICKER, side, (Level(.3, 2),),
                                  (Level(.4 if side == "up" else .6, 10),), clock.now(), "book",

@@ -52,7 +52,7 @@ def test_book_burst_reuses_sigma_and_copied_metadata_but_publishes_every_book_an
     try:
         for second in range(399, 4001):
             runner.desk.tape.tick(80000 * math.exp((second % 7) * .00001), float(second))
-        runner.on_windows([Window("KXBTC15M-cache", 3900, 4800, 80000, venue="kalshi")])
+        runner.on_windows([Window("KXBTC15M-cache", 3900, 4800, 80000, venue_start_price=80000, venue="kalshi")])
         expected = runner.desk.tape.sigma(clock.now())
         assert expected is not None
         sigma_calls, advances = [], []
@@ -160,10 +160,12 @@ def test_opening_metadata_and_settlement_updates_leave_prior_worker_snapshots_un
         unopened = runner.live_snapshot()
         assert unopened.windows[0].start_price is None
         runner.on_tick(80000, 100.2, clock.now())
+        assert runner.live_snapshot().windows[0].start_price is None  # a Coinbase print never opens Kalshi
+        runner.on_windows([replace(window, venue_start_price=80000)])  # Kalshi publishes its strike
         opened = runner.live_snapshot()
         assert opened.windows[0].start_price == 80000 and unopened.windows[0].start_price is None
         assert opened.windows[0] is not runner.desk.windows[window.slug]
-        runner.on_windows([replace(window, taker_coefficient=.08)])
+        runner.on_windows([replace(window, venue_start_price=80000, taker_coefficient=.08)])
         changed = runner.live_snapshot()
         assert changed.windows[0].taker_coefficient == .08 and opened.windows[0].taker_coefficient == .0695
         clock.advance(900)

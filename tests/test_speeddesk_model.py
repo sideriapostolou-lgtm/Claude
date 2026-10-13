@@ -104,6 +104,36 @@ def test_delayed_metadata_uses_observed_start_second_without_inventing_missing_o
     assert restored.windows["another_known"].start_price == 100
 
 
+def test_kalshi_windows_open_at_kalshis_strike_never_a_coinbase_print():
+    # Kalshi's strike is the previous window's settlement (a 60-second BRTI average before the open); a Coinbase
+    # print in the start second missed it by $19.61 on average on 2026-10-12/13, worth about 5 cents of fair value.
+    model = PracticeDesk()
+    model.tick_btc(83351.49, 1000.2)
+    model.add_window(Window("KXBTC15M-a", 1000, 1900, venue="kalshi"))  # strike not published yet
+    model.add_window(Window("cpc-a", 1000, 1900, venue="polymarket_us"))
+    assert model.windows["KXBTC15M-a"].start_price is None
+    assert model.blocked(model.windows["KXBTC15M-a"], 1000.5) == "opening_price_missing"
+    assert model.windows["cpc-a"].start_price == 83351.49  # other venues keep the observed opening
+    model.add_window(Window("KXBTC15M-b", 1900, 2800, venue="kalshi"))
+    model.tick_btc(83400.0, 1900.1)
+    assert model.windows["KXBTC15M-b"].start_price is None
+    model.add_window(Window("KXBTC15M-a", 1000, 1900, venue_start_price=83354.84, venue="kalshi"))
+    assert model.windows["KXBTC15M-a"].start_price == 83354.84
+    model.add_window(Window("KXBTC15M-a", 1000, 1900, venue_start_price=1.0, venue="kalshi"))
+    assert model.windows["KXBTC15M-a"].start_price == 83354.84  # a strike never changes once known
+
+
+def test_restored_kalshi_window_drops_a_saved_coinbase_opening():
+    model = PracticeDesk()
+    model.add_window(Window("KXBTC15M-a", 1000, 1900, venue="kalshi"))
+    state = json.loads(json.dumps(model.to_state()))
+    state["windows"]["KXBTC15M-a"]["start_price"] = 83351.49  # saved by a build that used Coinbase
+    restored = PracticeDesk.from_state(state)
+    assert restored.windows["KXBTC15M-a"].start_price is None
+    state["windows"]["KXBTC15M-a"]["venue_start_price"] = 83354.84
+    assert PracticeDesk.from_state(state).windows["KXBTC15M-a"].start_price == 83354.84
+
+
 def test_fee_rounding_and_rebate_from_documented_schedule():
     assert fill_fee(.5, 25, .0695) == .43
     assert fill_fee(.5, 25, -.0125) == -.08
@@ -606,7 +636,7 @@ def test_multiday_history_is_preserved_without_reconsidering_every_closed_window
 def both_venues() -> PracticeDesk:
     model = desk()
     model.add_window(Window("kalshi15m", 1000, 1900, 100, taker_coefficient=0,
-                            maker_coefficient=0, venue="kalshi"))
+                            maker_coefficient=0, venue_start_price=100, venue="kalshi"))
     refresh_both(model, 1010)
     return model
 
@@ -693,7 +723,7 @@ def test_venue_reports_survive_restart_without_reclassifying_window_metadata():
 
 def test_midnight_fill_rates_follow_placement_cohort_while_fills_follow_execution_day():
     model = PracticeDesk(SpeedConfig(window_usd=100, open_usd=100))
-    model.add_window(Window("cross-midnight", 86380, 87280, 100, maker_coefficient=0, venue="kalshi"))
+    model.add_window(Window("cross-midnight", 86380, 87280, 100, maker_coefficient=0, venue_start_price=100, venue="kalshi"))
 
     def fresh(now):
         model.tick_btc(100, now)

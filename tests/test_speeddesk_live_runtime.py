@@ -74,7 +74,7 @@ def test_market_snapshot_cannot_borrow_practice_inventory_or_us_books(tmp_path: 
     runner = SpeedRunner(Settings(data_dir=tmp_path), threading.Event(), clock=clock, feed_factory=PublicFeeds)
     try:
         now = clock.now()
-        runner.on_windows([Window("KXBTC15M-test", now, now + 900, 80_000, venue="kalshi"),
+        runner.on_windows([Window("KXBTC15M-test", now, now + 900, 80_000, venue_start_price=80_000, venue="kalshi"),
                            Window("us-test", now, now + 900, 80_000)])
         runner.on_tick(80_000, now, now)
         for slug in ("KXBTC15M-test", "us-test"):
@@ -213,7 +213,7 @@ def test_known_gap_invalidates_send_snapshot_before_disk_checkpoint(
     clock = FakeClock()
     runner = SpeedRunner(Settings(data_dir=tmp_path), threading.Event(), clock=clock, feed_factory=PublicFeeds)
     try:
-        window = Window("KXBTC15M-test", clock.now(), clock.now() + 900, 80_000, venue="kalshi")
+        window = Window("KXBTC15M-test", clock.now(), clock.now() + 900, 80_000, venue_start_price=80_000, venue="kalshi")
         runner.on_windows([window])
         runner.on_status({"coinbase": "connected", "trade_stream": True})
         runner.on_book(Book(window.slug, "up", (), (Level(.4, 3),), clock.now(), "1"))

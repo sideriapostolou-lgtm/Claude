@@ -227,7 +227,10 @@ class SpeedRunner:
             if window.start_price is not None and window.slug not in self.opening_logged:
                 self.opening_logged.add(window.slug)
                 self.record("speeddesk_opening", {"window": window.slug, "at": received_at,
-                                                 "coinbase_start_price": window.start_price,
+                                                 "start_price": window.start_price,
+                                                 "opening_source": ("venue strike" if window.venue == "kalshi"
+                                                                    else "coinbase"),
+                                                 "coinbase_start_price": self.desk.tape.opening(window.start),
                                                  "venue_start_price": window.venue_start_price,
                                                  "settlement_source": "venue BRTI outcome"})
 
