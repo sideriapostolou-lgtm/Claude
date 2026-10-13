@@ -289,7 +289,11 @@ pairs be "completely locked in" and that the bot "knows when to sell".
   every contract ends in a $1 pair and the window's result is known. Above that price the window is already
   decided and is left as it is.
 - At any price below $1 including fees a lock lowers the worst-case loss, so window budget, pair cap, edge
-  and the loss stops do not block it; a pending lock holds cash but is not added to money at risk. It never
+  and the loss stops do not block it; a pending lock holds cash but is not added to money at risk. So the $5
+  per window bounds new buys, and a window's gross spend can exceed it only by a lock (its possible loss
+  cannot). During a money stop the panel says new buys are stopped and that locks still complete pairs.
+- Saved state leaves out the lock fields while they hold defaults, so a rollback to the release before
+  locks can still read it (a lock pending at that moment would not be readable by the old release). It never
   runs with live switches off, after a failure or integrity error, in a window the owner traded, or before
   every order in the window is reconciled. Locks are kept out of the speed measurements and the twin.
 

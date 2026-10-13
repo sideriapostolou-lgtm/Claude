@@ -72,6 +72,11 @@ class LiveLimits:
             raise ValueError("Unsupported live fee precision or execution increment")
 
 
+def without_default_lock(row: dict[str, Any]) -> dict[str, Any]:
+    """Saved intent without the lock flag when it is False (readable by the release before locks)."""
+    return {key: value for key, value in row.items() if not (key == "lock" and value is False)}
+
+
 def reserve_unit_cost(price: float, coefficient: float, precision: float = 0.01) -> float:
     """Upper cost bound for every partition into actual .01-contract fills.
 
@@ -561,9 +566,12 @@ class LiveRiskBook:
         return True
 
     def to_state(self) -> dict[str, Any]:
-        return {"version": 1, "venue": "kalshi", "limits": asdict(self.limits),
+        # Fields added for locks are written only when they carry information, so the previous release can
+        # still read a state with no pending lock if a deployment is rolled back (limits come from settings).
+        limits = {key: value for key, value in asdict(self.limits).items() if key not in ("lock_s", "lock_max_price")}
+        return {"version": 1, "venue": "kalshi", "limits": limits,
                 "windows": {key: asdict(value) for key, value in self.windows.items()},
-                "intents": {key: asdict(value) for key, value in self.intents.items()},
+                "intents": {key: without_default_lock(asdict(value)) for key, value in self.intents.items()},
                 "inventory": {key: asdict(value) for key, value in self.inventory.items()},
                 "fills": {key: asdict(value) for key, value in self.fills.items()},
                 "settled": {key: asdict(value) for key, value in self.settled.items()},

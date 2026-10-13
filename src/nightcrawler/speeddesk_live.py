@@ -32,6 +32,7 @@ from .speeddesk_live_model import (
     LiveRejected,
     LiveRiskBook,
     OrderSnapshot,
+    without_default_lock,
 )
 from .speeddesk_metrics import (
     LatencyMetrics,
@@ -307,7 +308,8 @@ class KalshiLiveDesk:
                 intent.terminal, intent.uncertain, intent.cancel_requested = False, True, True
         self._daily_reports()
         state = {"version": 1, "started_at": self.started_at, "updated_at": self.clock(),
-                 "book": self.book.to_state(), "intents": {key: asdict(value) for key, value in self.intents.items()},
+                 "book": self.book.to_state(),
+                 "intents": {key: without_default_lock(asdict(value)) for key, value in self.intents.items()},
                  "twin": self.twin.to_state(), "fatal_reason": self.fatal_reason,
                  "foreign_windows": sorted(self.foreign_windows), "final_outcomes": self.final_outcomes,
                  "changed_windows": sorted(self.changed_windows),
@@ -439,7 +441,7 @@ class KalshiLiveDesk:
     def _risk_stop_reason(self) -> str:
         risk = self.book.risk_status(self.clock())
         if risk["halted"]:
-            return "Practice only; total loss stop requires a new resume token"
+            return "Total loss stop; no new bets until a new resume token"
         if risk["integrity_error"]:
             return "Practice only; real account reconciliation needs review"
         if risk["day_stopped"]:
@@ -862,11 +864,32 @@ class KalshiLiveDesk:
             reason = self._book_reason(window, snapshot, now) if window else "Window missing"
             book = snapshot.books.get((slug, side))
             ask = min(book.asks, key=lambda level: level.price, default=None) if book and not reason else None
-            if ask is None or ask.price > self.book.limits.lock_max_price + EPS:
+            # Near 0 and 1 Kalshi quotes sub-penny ticks; orders are whole cents. An immediate-or-cancel
+            # limit one tick above still fills at the better price, never worse than the limit.
+            limit = math.ceil(round(ask.price * 100, 6)) / 100 if ask is not None else None
+            if limit is None or limit > self.book.limits.lock_max_price + EPS:
                 self._lock_note(slug, reason or ("no_ask" if ask is None else "lock_price"), side, size)
                 continue
             assert window is not None
-            if await self._send_lock(window, side, ask.price, float(min(size, int(self.book.limits.clip)))):
+            size = min(size, int(self.book.limits.clip))
+            # Lock as many contracts as the cash allows rather than none.
+            fit = next((n for n in range(size, 0, -1) if not self.book.can_lock(slug, side, limit, n, now)), 0)
+            if not fit:
+                self._lock_note(slug, self.book.can_lock(slug, side, limit, size, now) or "lock_refused", side, size)
+                continue
+            if await self._send_lock(window, side, limit, float(fit)):
+                return True
+        return False
+
+    def _lock_possible(self) -> bool:
+        """A lock is pending, or some window in its lock period still holds unpaired whole contracts."""
+        if any(intent.lock for intent in self._active()):
+            return True
+        now = self.clock()
+        for slug, spec in self.book.windows.items():
+            if (slug not in self.book.settled and slug not in self.foreign_windows
+                    and spec.end - self.book.limits.lock_s <= now < spec.end - LOCK_MARGIN_S
+                    and self.book.lock_side(slug)[1] >= 1 - EPS):
                 return True
         return False
 
@@ -899,7 +922,9 @@ class KalshiLiveDesk:
         snapshot, now = self.snapshot(), self.clock()
         window = self._current_window(intent.window, snapshot)
         spec = self.book.windows.get(intent.window)
-        if (window is None or spec is None or self._gates() or self.fatal_reason or self.book.integrity_error
+        if (window is None or spec is None or self.stopping
+                or (self.stop_event is not None and self.stop_event.is_set())
+                or self._gates() or self.fatal_reason or self.book.integrity_error
                 or not spec.end - self.book.limits.lock_s <= now < spec.end - LOCK_MARGIN_S
                 or self._book_reason(window, snapshot, now)):
             return False
@@ -1019,10 +1044,12 @@ class KalshiLiveDesk:
                 await self._reconcile()
             gate = self._gates()
             await self._cancel_unsafe()
-            if not gate and not await self._lock():
-                await self._decide()
-            else:
+            if gate:
                 self.reason = "Practice; cancelling prior live bids" if self._active() else gate
+            elif await self._lock():
+                self.reason = "Completing a half-filled pair before the close"
+            else:
+                await self._decide()
         except Exception as exc:  # noqa: BLE001 — failed account evidence never permits another order.
             self.account_at = None
             self._error(exc)
@@ -1084,11 +1111,17 @@ class KalshiLiveDesk:
         risk = self.book.risk_status(self.clock())
         # The label follows the switches and stops, not the seconds between orders: after every order
         # the desk re-reads the account, and the town showed "PRACTICE" then (2026-10-13 00:15 UTC).
-        live = not self._standing_reason()
+        standing, stop = self._standing_reason(), self._risk_stop_reason()
+        # A money stop blocks new bets, but a lock can only lower the loss and still runs before the close:
+        # while one is possible, real money is on for completing pairs only (review, 2026-10-13).
+        lock_only = bool(standing) and standing == stop and not self.book.integrity_error and self._lock_possible()
+        live = not standing or lock_only
         waiting = ((("Paused after a Kalshi error; retrying shortly" if self.clock() < self.retry_at else "")
-                    or self._waiting_reason()) if live else "")
+                    or self._waiting_reason()) if live and not lock_only else "")
+        if lock_only:
+            waiting = stop + "; only completing half-filled pairs before the close"
         active = self._active()
-        reason = self.fatal_reason or self.reason
+        reason = self.fatal_reason or (waiting if lock_only else self.reason)
         return {"mode": "live" if live else "paper", "configured_mode": self.settings.speeddesk_kalshi_mode,
                 "status": "REAL MONEY (Kalshi)" if live else "PRACTICE", "reason": reason,
                 "trading_now": live and not waiting, "waiting": waiting,
@@ -1096,7 +1129,8 @@ class KalshiLiveDesk:
                 "fee_precision_verified": self.fee_verified,
                 "fee_precision_usd": self.book.limits.fee_precision,
                 "cash_usd": self.cash_usd, "cash_at": self.cash_at,
-                "reserved_usd": risk.get("reserved_usd", 0.0), "open_risk_usd": risk.get("open_cost_usd", 0.0),
+                "reserved_usd": risk.get("reserved_usd", 0.0), "open_risk_usd": risk.get("open_loss_usd", 0.0),
+                "open_cost_usd": risk.get("open_cost_usd", 0.0),
                 "at_risk_usd": risk.get("at_risk_usd", 0.0), "open_orders": len(active),
                 "positions": sum(abs(value) > EPS for key, value in self.position_sizes.items()
                                  if key in {intent.window for intent in self.intents.values()}),
@@ -1116,11 +1150,13 @@ class KalshiLiveDesk:
         settlements = [item for item in self.book.settled.values() if day is None or utc_day(item.at) == day]
         orders = [item for item in self.intents.values() if day is None or utc_day(item.at) == day]
         filled_ids = {fill.client_order_id for fill in self.book.fills.values()}
-        takes = [item for item in orders if item.kind == "take"]
+        locks = [item for item in orders if item.lock]
+        takes = [item for item in orders if item.kind == "take" and not item.lock]
         makers = [item for item in orders if item.kind == "rest"]
         take_fills = sum(item.client_order_id in filled_ids for item in takes)
         maker_fills = sum(item.client_order_id in filled_ids for item in makers)
-        latency = [max(0.0, fill.at - self.intents[fill.client_order_id].at) * 1000 for fill in fills]
+        latency = [max(0.0, fill.at - self.intents[fill.client_order_id].at) * 1000 for fill in fills
+                   if not self.intents[fill.client_order_id].lock]
         return {"day": day, "windows": len({fill.window for fill in fills}), "fills": len(fills),
                 "latency": self.metrics.report(day, "real_kalshi", real=True) if day is not None else None,
                 "scorecard": self.scorecard(day) if day is not None else None,
@@ -1132,6 +1168,7 @@ class KalshiLiveDesk:
                 "worst_usd": min((item.pnl_usd for item in settlements), default=None),
                 "take_attempts": len(takes), "take_fills": take_fills,
                 "maker_orders": len(makers), "maker_fills": maker_fills,
+                "locks": len(locks), "lock_fills": sum(item.client_order_id in filled_ids for item in locks),
                 "take_fill_rate": take_fills / len(takes) if takes else None,
                 "maker_fill_rate": maker_fills / len(makers) if makers else None,
                 "avg_latency_ms": sum(latency) / len(latency) if latency else None,

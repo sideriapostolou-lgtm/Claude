@@ -512,5 +512,21 @@ def test_state_saved_before_locks_existed_still_loads():
     reserve(book)
     state = json.loads(json.dumps(book.to_state()))
     for value in state["intents"].values():
-        del value["lock"]
+        value.pop("lock", None)  # a state from before locks has no such key
     assert not next(iter(LiveRiskBook.from_state(state).intents.values())).lock
+
+
+def test_saved_state_without_a_lock_stays_readable_by_the_previous_release():
+    """Review finding: new keys in the saved book would crash the previous release on a rollback. Keys that
+    carry only defaults are left out, so a rollback reads the state as before (a pending lock keeps its flag)."""
+    book = make_book()
+    reserve(book)
+    state = book.to_state()
+    assert "lock" not in next(iter(state["intents"].values()))
+    assert not {"lock_s", "lock_max_price"} & set(state["limits"])
+    assert LiveRiskBook.from_state(json.loads(json.dumps(state))).limits.lock_s == 240
+    actual_fill(book, book.intents["nc-speed-first"], fee=.01)
+    book.update_cash(100, 1700)
+    book.reserve_intent(WINDOW, "down", "take", .8, 1, 1700, "nc-speed-lock", lock=True)
+    restored = LiveRiskBook.from_state(json.loads(json.dumps(book.to_state())))
+    assert restored.intents["nc-speed-lock"].lock and not restored.intents["nc-speed-first"].lock

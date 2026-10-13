@@ -37,7 +37,16 @@ Template:
   marked `foreign_windows`, which the bot leaves alone), the venue position and settlement revenue include the
   owner's contracts: the position match and the settlement payout check now skip that window, and the bot settles
   from its own reconciled fills. Any unexplained mismatch elsewhere still blocks new orders (tested both ways).
-- Next step: second review of this change, owner merges PR #16, confirm caps and the first lock in the logs.
+- Second review (15 agents incl. a whole-window simulator: 1,552 windows, 1.34M steps, 1,026 locks, 0 money
+  invariant violations): 10 confirmed findings, all fixed with failing-first tests. Medium: a sub-penny tail ask
+  (e.g. 90.5c) made the lock refuse (now a whole-cent IOC limit just above); the owner closing out the bot's
+  position by hand froze the desk after the close (d448ba4, settles from the outcome). Low: panel said PRACTICE /
+  "no new buys" while a lock ran in a money stop (now REAL MONEY, "only completing half-filled pairs", only while a
+  lock is possible); lock guard ignored the emergency stop; misleading reason after a lock; locks counted as takes;
+  page "Open position risk" showed gross cost (now what can be lost; gross as open_cost_usd); window cap wording
+  (new buys only); saved state now readable by the previous release when no lock is pending; a lock now fits the
+  cash instead of all-or-nothing. Total-stop reason no longer says "Practice only".
+- Next step: Claude merges PR #16 (owner: "u tap merge"), then confirms caps $5/$10/$6/$10 and the first lock.
 
 ## 2026-10-13 00:40 UTC, Codex, branch codex/town-live-connections
 - Owner request: connect every real-money business detail logically to the town, retaining the simplified app.

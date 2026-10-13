@@ -618,3 +618,49 @@ def test_lock_guard_refuses_once_the_pair_is_already_complete(tmp_path: Path) ->
         assert len(account.creates) == 1
     finally:
         desk.close()
+
+
+def test_lock_reporting_is_truthful(tmp_path: Path) -> None:
+    """Review findings: after a lock the panel said "Practice; cancelling prior live bids", locks were counted as
+    instant-order attempts, during a money stop the panel said "no new buys" while a lock could still run, the
+    page's "Open position risk" showed gross cost, and an emergency stop did not stop a lock about to be sent."""
+    desk, account, clock = make_desk(tmp_path)
+    try:
+        starter_filled(desk, account, clock)
+        at_lock_time(desk, clock, up_ask=.3, down_ask=.7)
+        desk.book.day_pnl[utc_day(clock.now())] = -6  # a money stop with a half pair in its lock period
+        steps(desk, clock, 2)
+        assert [(c["side"], c["price"]) for c in account.creates[1:]] == [("down", .7)]
+        panel = desk.panel()
+        assert panel["status"] == "REAL MONEY (Kalshi)" and panel["real_orders_available"] is True
+        assert panel["trading_now"] is False and "only completing half-filled pairs" in panel["waiting"]
+        assert "cancelling prior live bids" not in (desk.reason or "")
+        today = panel["today"]
+        assert today["take_attempts"] == 1 and today["locks"] == 1  # the starter take, then one lock
+        fill_order(account, clock, 1, side="down", price=.7, size=5)
+        account.account_positions = []
+        steps(desk, clock, 4)  # past the 1 s account read
+        assert desk.book.lock_side(TICKER) == (None, 0.0)
+        assert desk.panel()["open_risk_usd"] == pytest.approx(desk.book.open_loss_usd)
+        assert desk.panel()["status"] == "PRACTICE"  # pair complete: the stop shows as a stop again
+        desk.stopping = True
+        intent = next(item for item in desk.intents.values() if item.lock)
+        assert not desk._lock_guard(intent)
+    finally:
+        desk.close()
+
+
+def test_lock_uses_a_penny_limit_for_sub_penny_asks_and_fits_the_cash(tmp_path: Path) -> None:
+    """Simulator findings: a 90.5c ask was refused as an invalid price, and slightly too little cash locked
+    nothing at all. A whole-cent IOC limit just above still fills at the better price; the lock takes as many
+    contracts as the cash allows."""
+    desk, account, clock = make_desk(tmp_path)
+    try:
+        starter_filled(desk, account, clock)
+        at_lock_time(desk, clock, up_ask=.05, down_ask=.905)
+        account.cash = 3.0  # enough for 3 of the 5 unpaired contracts at 91c plus fees
+        steps(desk, clock, 2)
+        lock = account.creates[1]
+        assert (lock["side"], lock["price"], lock["size"]) == ("down", .91, 3)
+    finally:
+        desk.close()

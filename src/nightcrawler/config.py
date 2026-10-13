@@ -466,7 +466,9 @@ class Settings:
         "persisted, never its value. Does not change any cap or enable live mode", secret=True)
     # Owner-authorized 2026-10-13 ("2.5x"): $5 per window, $10 open, -$6 day, -$10 total.
     speeddesk_kalshi_window_usd: float = _f(5.0, "usd", "Kalshi live companion: fee-inclusive maximum spend per "
-                                            "window; owner-authorized ceiling $5", lo=0, lo_open=True, hi=5)
+                                            "window on new buys; owner-authorized ceiling $5. A lock that only "
+                                            "completes pairs may add to it, because it can only lower the loss",
+                                            lo=0, lo_open=True, hi=5)
     speeddesk_kalshi_open_usd: float = _f(10.0, "usd", "Kalshi live companion: fee-inclusive maximum money that "
                                           "open windows and pending orders can still lose; owner-authorized "
                                           "ceiling $10", lo=0, lo_open=True, hi=10)
