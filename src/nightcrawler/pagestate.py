@@ -1616,6 +1616,11 @@ def _speed_report(today: Mapping[str, Any], day: str, *, with_venues: bool = Tru
     return figures
 
 
+# What the owner's one-time reset of a Kalshi reconciliation stop may report (speeddesk_live._integrity_reset).
+_KALSHI_RESET_STATES = frozenset({"armed", "account_unreconciled", "fatal", "orders_open", "positions_open",
+                                  "orders_reserved", "not_armed", "no_integrity_error"})
+
+
 def _kalshi_live_panel(raw: Any, settings: Settings, now: float) -> dict[str, Any] | None:
     """Whitelist the companion's saved account report; never query an account from the page.
 
@@ -1682,6 +1687,11 @@ def _kalshi_live_panel(raw: Any, settings: Settings, now: float) -> dict[str, An
         "cash_usd": cash if cash_fresh and cash is not None and cash >= 0 else None, "cash_at": cash_at,
         "real_orders_available": active, "total_halted": raw.get("total_halted") is True,
         "cleanup_pending": raw.get("cleanup_pending") is True,
+        # Which reconciliation check stopped real orders, and what its one-time reset is waiting for.
+        "integrity_error": (raw["integrity_error"] if isinstance(raw.get("integrity_error"), str)
+                            and re.fullmatch(r"[a-z0-9_]{1,64}", raw["integrity_error"]) else None),
+        "integrity_reset": (raw["integrity_reset"] if isinstance(raw.get("integrity_reset"), str)
+                            and raw["integrity_reset"] in _KALSHI_RESET_STATES else None),
         "caps": {key: _num(caps.get(key)) for key in ("window_usd", "open_usd", "day_stop_usd", "total_stop_usd")},
         "today": real_report(today, day), "reports": reports,
         "total": {key: _num(total.get(key)) for key in money_keys},

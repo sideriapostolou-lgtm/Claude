@@ -195,6 +195,19 @@ nonempty `SPEEDDESK_KALSHI_RESUME_TOKEN` acknowledges a fresh $5 stop budget; it
 fills, fees, existing exposure and the current day's stop. Store only a fingerprint, never the token value.
 Reusing an old/pre-halt token or changing ordinary settings cannot silently clear the halt or corrupt state.
 
+A reconciliation stop (the book's `integrity_error`: venue data contradicted the bot's accounting) also returns
+the companion to paper and persists. The panel's `integrity_error` (shown on the page too) and a
+`speeddesk_live_integrity` receipt (once per stop and after each restart) name the check that tripped.
+`SPEEDDESK_KALSHI_INTEGRITY_RESET_TOKEN` is the owner's one-time reset (owner, 2026-10-13: "Yes, reset it"). A
+value is spent the moment the companion first sees it; its fingerprint is kept with the resume fingerprints,
+which the previous release also keeps, so no restart or rollback can let it approve a second stop. It approves
+only the stop present at that startup (set while no stop exists, it approves nothing). The approval is saved
+with the books, so it survives a restart, and is withdrawn for good if a different check trips. It clears the
+approved stop only right after a complete, fresh, matching reconcile with no order open, uncertain or reserved,
+every bot window settled, and no Bitcoin 15-minute position or resting order left on the Kalshi account (the
+owner's included). The panel's `integrity_reset` shows `armed` or what it is waiting for, and
+`speeddesk_live_integrity_reset` receipts record each step. A rollback drops the approval, never the spent value.
+
 These are risk controls for a paid experiment, not a profit promise or an absolute guarantee against an
 exchange failure. We copy the observed rules, not the original bot's speed, 5-minute venue, liquidity or size.
 

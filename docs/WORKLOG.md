@@ -13,6 +13,29 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-13 03:10 UTC, Claude, branch claude/kalshi-integrity-reset
+- Owner request: Kalshi went to PRACTICE at 02:00:03 UTC with "real account reconciliation needs review" (a
+  persisted reconciliation stop set by the pre-#16 code; nothing ever cleared it). Asked; the owner chose "Yes,
+  reset it": clear it only when the bot's books and Kalshi match exactly with nothing open, and log which check
+  tripped. Account at 02:53 UTC: cash $25.98, 0 orders, 0 positions, $0 reserved, 12 windows settled, +$1.24.
+- Changed: the panel (`integrity_error`) and a `speeddesk_live_integrity` receipt name the check; book refusals in
+  `speeddesk_live_reject` carry their code. New secret `SPEEDDESK_KALSHI_INTEGRITY_RESET_TOKEN`: one-time, armed
+  only against the stop present at startup, clears it only after a complete matching reconcile with nothing open
+  on the bot's side or on the account (spec 9.1). A value is spent when first seen (its fingerprint sits with the
+  resume fingerprints, which the previous release keeps too); the approval is saved with the books.
+- Review (17 agents, every finding verified by a skeptic): 5 distinct confirmed findings, all fixed with tests
+  that fail on the first version: a withdrawn or pending approval re-armed after a restart against a different
+  stop (high); a rollback forgot spent values (medium); a finished order's leftover cancel flag would have
+  blocked the reset forever on the live account (high, also found by Claude); a failing account read showed
+  "armed" instead of waiting (low); the page dropped the two new fields (low).
+- Verified: failing-first tests (fail on c52afcd, pass here): the stop is named; the reset waits for the owner's
+  resting bid and position, then clears once and real orders resume; a value set before a stop is spent; a used
+  value never clears a later stop; a different check withdraws it for good; the approval survives a restart; an
+  old cancelled order does not block it; the page shows both fields. Full suite, mypy and ruff in the PR.
+- Not verified: which check fired at 02:00 UTC (the deploy will log it). Plan: read the code first; set the token
+  only if the check is explained (e.g. the owner's hand trades in a bot window under the old code).
+- Real money touched? Not by this change; real orders resume only once the token is set and the books are clean.
+
 ## 2026-10-13 00:55 UTC, Claude, branch claude/virginia-kalshi-clock-fix, PR #16
 - Owner request: "Raise the money but make sure it's completely locked in and perfect and knows when to sell".
   Asked for numbers; the owner chose "2.5x": $5 per window, $10 open, $6 UTC day stop, $10 total stop.
