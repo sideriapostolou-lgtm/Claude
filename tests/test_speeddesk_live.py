@@ -13,7 +13,7 @@ import pytest
 from nightcrawler.clock import FakeClock
 from nightcrawler.config import Secret, Settings
 from nightcrawler.speeddesk_kalshi_client import KalshiClientError
-from nightcrawler.speeddesk_live import KalshiLiveDesk, LiveSnapshot
+from nightcrawler.speeddesk_live import KalshiLiveDesk, LiveSnapshot, durable_state
 from nightcrawler.speeddesk_model import Book, Level, Window, utc_day
 
 TICKER = "KXBTC15M-26OCT121900-00"
@@ -161,7 +161,8 @@ def test_intent_is_durable_before_real_order_and_twin_has_no_authority(tmp_path:
     original = account.create_order
 
     def inspect(**kwargs: Any) -> dict[str, Any]:
-        saved = desk.ledger.get_kv("kalshi_live_state")
+        saved = durable_state(desk.ledger)  # what a restart reads: the last full save plus the pre-send journal
+        assert saved is not None
         identity = kwargs["client_order_id"]
         assert identity in saved["book"]["intents"]
         assert saved["book"]["intents"][identity]["reservation_active"]
@@ -972,23 +973,30 @@ def test_a_stale_report_of_a_finished_order_does_not_pause_trading(tmp_path: Pat
 
 def test_one_save_before_the_send_holds_the_intent_and_its_practice_twin(tmp_path: Path) -> None:
     desk, account, _ = make_desk(tmp_path, caps=SMALL_CAPS)
-    original_checkpoint, original_create = desk.checkpoint, account.create_order
-    saves_with_intent: list[int] = []
+    original_checkpoint, original_journal, original_create = desk.checkpoint, desk._journal_intent, account.create_order
+    writes: list[str] = []
 
     def counting_checkpoint(**kwargs: Any) -> None:
         original_checkpoint(**kwargs)
-        saves_with_intent.append(len(desk.intents))
+        writes.append("full")
+
+    def counting_journal(*args: Any) -> None:
+        original_journal(*args)
+        writes.append("journal")
 
     def inspect(**kwargs: Any) -> dict[str, Any]:
-        saved = desk.ledger.get_kv("kalshi_live_state")
+        saved = durable_state(desk.ledger)
+        assert saved is not None
         identity = kwargs["client_order_id"]
         assert saved["book"]["intents"][identity]["reservation_active"]
         twin_id = saved["intents"][identity]["twin_order_id"]
         assert twin_id and twin_id == desk.intents[identity].twin_order_id
-        assert saves_with_intent.count(1) == 1  # one durable write between the decision and the send
+        # One durable write between the decision and the send: the journal row, never the full state.
+        assert writes == ["journal"]
         return original_create(**kwargs)
 
     desk.checkpoint = counting_checkpoint  # type: ignore[method-assign]
+    desk._journal_intent = counting_journal  # type: ignore[method-assign,assignment]
     account.create_order = inspect  # type: ignore[method-assign]
     try:
         asyncio.run(desk.step())

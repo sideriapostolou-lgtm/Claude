@@ -555,6 +555,16 @@ class LiveRiskBook:
         intent.uncertainty = reason if reason.isidentifier() and len(reason) <= 64 else "create_rejected"
         return True
 
+    def release_unsent(self, client_order_id: str) -> None:
+        """Release a reservation whose create never reached the venue: no venue order id and nothing filled, and
+        the caller's proof (absent from complete order lists long after the decision; KalshiLiveDesk)."""
+        intent = self.intents[client_order_id]
+        if (intent.order_id is not None or intent.filled_size > EPSILON or not intent.reservation_active
+                or intent.status not in ("intent", "uncertain")):
+            raise LiveRejected("release_unproven")
+        intent.reservation_active = False
+        intent.status, intent.uncertainty = "rejected", "never_reached_venue"
+
     def request_cancel(self, client_order_id: str) -> None:
         self.intents[client_order_id].cancel_requested = True
 

@@ -515,7 +515,8 @@ separate rolling one-second budgets, 10 reads and 5 writes per second (half of K
 so an order never waits behind the account reads that came just before it. Before this change every call waited
 200 ms after the previous one, so a reconcile (six reads) blocked decisions for over a second. A reconcile
 reads settlements only while a traded window has ended and is not yet settled. One durable write before the
-send holds the intent, its full reservation and its practice-twin order; the post-send write follows the reply.
+send holds the intent, its full reservation and its practice-twin order id (since step 2 below, a journal row
+rather than the whole state); the reply's facts follow in the next full save.
 
 Small saves (2026-10-13). Every save rewrote every order the companion had ever made, twice (the risk book and
 the intent journal): 206 ms per save on Railway by 13:45 UTC, about 87 us more per stored order, several saves a
@@ -530,8 +531,8 @@ every window (archived ones from memory, newer saved copies win), at most every 
 an fsync (the ledger is the durable record; the page treats data older than 60 s as stale). The status line
 splits each save into build_ms, ledger_ms and mirror_ms.
 Only saves that must survive a host or power failure sync the ledger's write-ahead log at commit: the one
-before an order's first network byte (orders and lock buys), startup, shutdown, and any that records an owner's
-one-time action. The others (about 57 ms of fsync each on Railway on 2026-10-13, twice a second in reconcile)
+before an order's first network byte (orders and lock buys; since step 2 the pre-send journal row), startup,
+shutdown, and any that records an owner's one-time action. The others (about 57 ms of fsync each on Railway on 2026-10-13, twice a second in reconcile)
 commit with SQLite synchronous=NORMAL: a process crash loses nothing, a host failure can lose account facts the
 next reconcile reads again, and the next synced commit makes every earlier commit durable.
 
@@ -600,6 +601,33 @@ poller keeps its host. Not changed: `exchange_index` stays -1 (automatic routing
 shard's collateral, the shard-aware cash task), and `polydesk`, `weatherwatch_markets` and `skipwatch_alerts` keep
 their own HTTP (a separate real-money desk, a separate desk with streamed, locked reads, and a probe that measures
 a fresh connection's round trip on purpose).
+
+Pre-send journal (2026-10-13; speed plan step 2). The write before an order's first network byte was a full
+save of the whole state, synced (1.65 ms median on the build machine with 12 orders, 24.7 KB, against 0.54 ms for
+the row that replaces it, each with one `fdatasync`; on Railway the fsync itself, about 57 ms, stays in both). It
+is now one row, `kalshi_live_journal`, committed with synchronous=FULL: for each order sent since the last full
+save, its complete reservation, its intent, its window's terms when new and whether it is the window's first
+buy, exactly the rows a full save would hold for it. The fsync before every create stays, and so does every
+reservation before every send. The full state is saved at most once a second (heartbeat), at once after a fill,
+settlement, stop, release or owner action, and at startup and shutdown; each full save empties the journal in
+the same transaction. A cancel writes nothing before or after its request (it only lowers exposure, the
+reservation is kept until Kalshi's list confirms it, and a restart cancels every open order again). A restart
+reads the last full save plus the journal (`replay_journal`; `durable_state` in tests) and records "restored from
+the pre-send journal" for each order it adds; what a crash can lose is only what the next reconcile proves again
+(an order id from Kalshi's reply, a release the order list confirms, cash), so until then the restored stops are
+as strict or stricter. The practice desk's ledger commits with synchronous=NORMAL and its display copy is no
+longer synced. An order journaled but never sent (a crash between the row and the send, or a create lost before
+Kalshi) used to keep its reservation for good and hold a restart in "Reconciling startup orders". It is now
+released, and never sent again, only once its market has closed and two complete order lists read after the
+close, at least 30 s apart, leave it out while the account matches. Until then it counts in every cap and stop
+and startup waits (at most the rest of its window plus two minutes): absence alone proves nothing while the
+market trades, since a request held up on the way could still arrive, and Kalshi accepts no order on a closed
+market. An order that did reach Kalshi is listed whatever its status and is adopted, canceled and released on
+Kalshi's word as before; a late copy that turns up while the market trades is adopted the same way.
+`tests/test_speeddesk_live_crash.py` kills a child process (`os._exit`) after the journal row and before the
+send, and after the send before the reply; checks at every send that the journal plus the last full save equals
+the full save made at that moment; and restarts from mid-run copies of the ledger (crash and after a full save)
+to check that the stop math is identical after the restart's first reconcile.
 
 The public US probe checks the five-minute series and validates an actual market's BTC/UP_DOWN/5m/BRTI terms
 and start/end before logging `skipwatch_us_5m_listing`. Its first verified observation stays on the page.

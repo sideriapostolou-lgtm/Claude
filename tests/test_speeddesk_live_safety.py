@@ -15,7 +15,7 @@ from fakes import FakeClock
 
 from nightcrawler.config import Settings
 from nightcrawler.speeddesk_kalshi_client import KalshiClientError
-from nightcrawler.speeddesk_live import STATE_KEY, KalshiLiveDesk, LiveSnapshot
+from nightcrawler.speeddesk_live import KalshiLiveDesk, LiveSnapshot, durable_state
 from nightcrawler.speeddesk_model import Book, Level, Window
 
 
@@ -41,7 +41,8 @@ class Account:
     def create_order(self, **request: Any) -> dict[str, Any]:
         assert request["before_send"]()
         assert self.controller is not None
-        saved = self.controller.ledger.get_kv(STATE_KEY)
+        saved = durable_state(self.controller.ledger)  # what a restart would read: last save plus journal
+        assert saved is not None
         client_id = request["client_order_id"]
         # The network boundary must already have a durable owned reservation.
         assert saved["intents"][client_id]["order_id"] == ""

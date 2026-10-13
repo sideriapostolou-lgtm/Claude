@@ -61,12 +61,13 @@ def practice_config(settings: Settings) -> SpeedConfig:
                        latency_ms=settings.speeddesk_latency_ms)
 
 
-def _atomic_json(path: Path, value: dict[str, Any]) -> None:
+def _atomic_json(path: Path, value: dict[str, Any], *, durable: bool = True) -> None:
     temporary = path.with_suffix(".tmp")
     with temporary.open("w", encoding="utf-8") as stream:
         json.dump(value, stream, allow_nan=False, separators=(",", ":"))
-        stream.flush()
-        os.fsync(stream.fileno())
+        if durable:
+            stream.flush()
+            os.fsync(stream.fileno())
     os.replace(temporary, path)
 
 
@@ -98,6 +99,9 @@ class SpeedRunner:
         self.directory.mkdir(parents=True, exist_ok=True)
         self.path = self.directory / "state.json"
         self.ledger = Ledger(self.directory / "receipts.db", self.clock)
+        # Practice only, on the real-money desk's event loop (speed plan step 2): its saves are never synced to disk.
+        # A process crash loses nothing; a host or power failure can lose the last practice receipts.
+        self.ledger.set_synchronous(False)
         self.pending: list[tuple[str, dict[str, Any]]] = []
         self.last_checkpoint = -math.inf
         self.last_heartbeat = -math.inf
@@ -503,8 +507,8 @@ class SpeedRunner:
         for kind, payload in self.pending:
             log.info("%s %s", kind, json.dumps(payload, allow_nan=False, separators=(",", ":")))
         self.pending.clear()
-        # A mirror failure halts practice, but the committed ledger survives it.
-        _atomic_json(self.path, state)
+        # A mirror failure halts practice, but the committed ledger survives it. A display copy: not synced.
+        _atomic_json(self.path, state, durable=False)
         self.last_checkpoint = now
 
     def step(self, now: float) -> None:
