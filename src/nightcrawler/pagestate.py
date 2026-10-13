@@ -1611,11 +1611,15 @@ def kalshi_arena_town(settings: Settings, now: float) -> dict[str, Any] | None:
                     "tone": row.get("tone") if row.get("tone") in ("good", "bad", "neutral") else "neutral",
                     "kind": row.get("kind") if row.get("kind") in _ARENA_KINDS else ""}
                    for row in _xp_list(raw.get("events"))[:24] if isinstance(row, Mapping)],
-        "town": {**{key: _count(town.get(key)) for key in ("born", "evicted", "windows", "void_windows", "candidates",
-                                                            "rent_days")}, "rent_paid": _num(town.get("rent_paid"))},
-        "feed": {**{key: _count(feed.get(key)) for key in ("queue", "put", "dropped", "late", "errors")},
-                 **{key: _num(feed.get(key)) for key in ("slice_p50_ms", "slice_p99_ms", "slice_max_ms", "duty_pct",
-                                                          "lag_s")}},
+        "town": {**{key: _count(town.get(key)) for key in ("born", "evicted", "windows", "void_windows", "void_feed",
+                                                            "candidates", "rent_days")},
+                 "rent_paid": _num(town.get("rent_paid"))},
+        # The town runs in its own process; live_flush_us_* is the live loop's own cost of handing it the market.
+        "feed": {**{key: _count(feed.get(key)) for key in ("queue", "received", "dropped", "late", "coalesced",
+                                                            "errors")},
+                 **{key: _num(feed.get(key)) for key in ("pass_p50_ms", "pass_p99_ms", "pass_max_ms", "duty_pct",
+                                                          "lag_s", "live_flush_us_p50", "live_flush_us_p99",
+                                                          "live_flush_us_max")}},
     }
 
 

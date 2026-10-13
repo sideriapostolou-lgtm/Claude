@@ -8,13 +8,15 @@ import logging
 import math
 import os
 import random
+import time
+from collections import Counter
 from dataclasses import fields
 from pathlib import Path
 from typing import Any
 
 import pytest
 from fakes import FakeClock
-from kalshi_arena_world import T0, Market, kalshi_window, no_sleep
+from kalshi_arena_world import T0, Market, kalshi_window
 
 from nightcrawler import kalshi_arena
 from nightcrawler.config import Secret, Settings
@@ -36,7 +38,7 @@ from nightcrawler.kalshi_arena import (
     speed_config,
 )
 from nightcrawler.speeddesk_live import LiveSnapshot
-from nightcrawler.speeddesk_model import SpeedConfig
+from nightcrawler.speeddesk_model import Book, Level, SpeedConfig, Trade
 
 DAY = 86_400.0
 
@@ -45,7 +47,7 @@ def town(path: Path, *, population: int = 12, start: float = T0, **changes: Any)
     clock = FakeClock(start)
     snap = LiveSnapshot()
     arena = KalshiArena(ArenaConfig(data_dir=path, population=population, **changes), lambda: snap,
-                        clock=clock.now, sleep=no_sleep)
+                        clock=clock.now)
     return arena, clock
 
 
@@ -86,7 +88,7 @@ def test_first_town_is_the_control_its_children_and_newcomers(tmp_path: Path) ->
     assert desk.stop_s == 0 and not desk.rounds and desk.window_usd == 10 and desk.day_stop_usd == 6
     raised = live_genes(Settings(data_dir=tmp_path, speeddesk_kalshi_lock_s=60))
     assert raised["close_s"] == 180  # live never stops buying after its cutoff starts
-    arena = KalshiArena(config, LiveSnapshot, clock=FakeClock().now, sleep=no_sleep)
+    arena = KalshiArena(config, LiveSnapshot, clock=FakeClock().now)
     residents = list(arena.residents.values())
     assert len(residents) == 12 and sum(res.control for res in residents) == 1
     assert control(arena).row["genes"] == genes and control(arena).row["name"] == "Live"
@@ -345,7 +347,7 @@ def test_restart_restores_the_town_and_voids_the_open_window(tmp_path: Path) -> 
     arena._save(market.clock.now())
     before = {rid: (res.row["name"], res.row["genes"], res.row["equity_usd"], res.row["pnl"])
               for rid, res in arena.residents.items()}
-    restored = KalshiArena(market.config, lambda: market.snap, clock=market.clock.now, sleep=no_sleep)
+    restored = KalshiArena(market.config, lambda: market.snap, clock=market.clock.now)
     assert {rid: (res.row["name"], res.row["genes"], res.row["equity_usd"], res.row["pnl"])
             for rid, res in restored.residents.items()} == before
     assert restored.town["windows"] == 1 and restored.next_id == arena.next_id
@@ -433,14 +435,20 @@ def test_the_module_cannot_reach_a_real_order() -> None:
         elif isinstance(node, ast.ImportFrom):
             imported.add(node.module or "")
     forbidden = {"speeddesk_kalshi_client", "speeddesk_live", "speeddesk_kalshi_ws", "requests", "websockets",
-                 "polymarket_us", "urllib", "http", "socket"}
+                 "polymarket_us", "urllib", "http", "asyncio"}
     assert not {name.split(".")[-1] for name in imported} & forbidden, imported
     assert "create_order" not in source and "KalshiClient" not in source
+    # Its one socket is the local pair to its own process (Unix, no address): nothing can reach a network.
+    import re
+
+    assert set(re.findall(r"socket\.(\w+)", source)) <= {"socketpair", "AF_UNIX", "SOCK_STREAM", "SOL_SOCKET",
+                                                          "SO_SNDBUF", "socket"}
+    assert "connect(" not in source and "bind(" not in source and "AF_INET" not in source
 
 
 def test_a_running_town_holds_no_settings_or_secret(tmp_path: Path) -> None:
     settings = Settings(data_dir=tmp_path, kalshi_key_id="key-id", kalshi_private_key="private")
-    arena = KalshiArena(arena_config(settings), LiveSnapshot, clock=FakeClock().now, sleep=no_sleep)
+    arena = KalshiArena(arena_config(settings), LiveSnapshot, clock=FakeClock().now)
 
     def walk(value: Any, depth: int) -> None:
         assert not isinstance(value, (Settings, Secret)), type(value)
@@ -470,7 +478,263 @@ def test_panel_is_compact_and_labelled_practice(tmp_path: Path) -> None:
     panel = kalshi_arena.panel_state(tmp_path, clock.now())
     assert panel["label"] == "Practice (pretend money)" and panel["population"] == 12
     assert panel["control"]["name"] == "Live" and len(panel["residents"]) == 12
-    assert set(panel["feed"]) >= {"queue", "dropped", "late", "slice_p99_ms", "duty_pct", "lag_s", "errors"}
+    assert set(panel["feed"]) >= {"queue", "received", "dropped", "late", "coalesced", "pass_p99_ms", "duty_pct",
+                                  "lag_s", "errors", "live_flush_us_p99"}
     assert math.isclose(panel["start_cash"], 50.0) and panel["rent_usd"] == 0.2
     with pytest.raises(FileNotFoundError):
         kalshi_arena.panel_state(tmp_path / "missing", clock.now())
+
+
+# ---------------------------------------------------------------------- the review of 2026-10-13
+def test_the_control_runs_the_live_risk_books_rules(tmp_path: Path) -> None:
+    settings = Settings(data_dir=tmp_path, speeddesk_kalshi_account_type="direct")
+    fixed = fixed_config(settings)
+    assert (fixed["day_stop_counts_risk"], fixed["hedged_open_budget"], fixed["rest_ttl_s"],
+            fixed["edge_fee_precision"]) == (True, True, 30.0, 0.0001)
+    assert fixed_config(Settings(data_dir=tmp_path))["edge_fee_precision"] == 0.01  # unattested: live's own bound
+    desk = speed_config(live_genes(settings), fixed)
+    assert desk.day_stop_counts_risk and desk.hedged_open_budget and desk.rest_ttl_s == 30
+    assert kalshi_arena.DEFAULT_FIXED == {**fixed_config(Settings(
+        data_dir=tmp_path, speeddesk_kalshi_account_type="direct", speeddesk_kalshi_clip=5,
+        speeddesk_kalshi_window_usd=10, speeddesk_kalshi_open_usd=20, speeddesk_kalshi_day_stop_usd=6,
+        speeddesk_take_edge=1.0)), "latency_ms": kalshi_arena.DEFAULT_FIXED["latency_ms"]}
+
+
+def test_a_change_of_the_shared_live_limits_restarts_every_record(tmp_path: Path, caplog: Any) -> None:
+    arena, clock = town(tmp_path)
+    star = challenger(arena)
+    _winning_run(arena, star, 12, 0.4)
+    star.row["candidate_now"] = True
+    money = {rid: res.row["equity_usd"] for rid, res in arena.residents.items()}
+    arena._save(clock.now())
+    caplog.set_level(logging.INFO, "nightcrawler.kalshi_arena")
+    doubled = {**kalshi_arena.DEFAULT_FIXED, "window_usd": 20.0, "open_usd": 40.0, "day_stop_usd": 12.0}
+    after, _ = town(tmp_path, fixed=doubled)  # the owner's "double tomorrow": the control's genes are the same
+    assert after.control_rule == arena.control_rule and after.regime != arena.regime
+    assert "kalshi_arena_regime_changed old=" in caplog.text
+    for rid, res in after.residents.items():
+        assert res.row["pnl"] == [] and res.row["paired"]["n"] == 0 and res.row["verdict"]["word"] == "learning"
+        assert res.row["equity_usd"] == money[rid] and not res.row["candidate_now"]  # money stays
+    assert after.residents[star.id].row["windows"] == 12  # lifetime counts stay
+    after._save(clock.now())
+    again, _ = town(tmp_path, fixed=doubled)
+    assert again.residents[star.id].row["pnl"] == [] and "regime" in json.loads(after.path.read_text())
+
+
+def _open(market: Market) -> str:
+    market.run(30, step_s=0.25)  # the first window is open and every resident holds it
+    slug = kalshi_window(T0).slug
+    assert slug in market.arena.windows
+    return slug
+
+
+def test_a_window_whose_feed_dropped_is_void_for_everyone(tmp_path: Path, caplog: Any) -> None:
+    caplog.set_level(logging.INFO, "nightcrawler.kalshi_arena")
+    market = Market(tmp_path, seed=5, length=300)
+    arena = market.start()
+    slug = _open(market)
+    view = kalshi_arena.WireView()
+    arena.receive(("batch", 1, T0, 0, 40, []), view)
+    assert slug not in arena.degraded
+    arena.receive(("batch", 2, T0, 7, 40, []), view)  # the live loop dropped 7 events
+    assert arena.degraded == {slug: "feed_dropped"}
+    before = {rid: res.row["windows"] for rid, res in arena.residents.items()}
+    market.run(300, step_s=0.5)  # to the outcome
+    assert slug not in arena.windows and arena.town["windows"] == 0 and arena.town["void_feed"] == 1
+    assert {rid: res.row["windows"] for rid, res in arena.residents.items()} == before  # no record, no money
+    assert f"kalshi_arena_void window={slug} why=feed_dropped" in caplog.text
+    gap, _ = town(tmp_path / "gap")
+    gap.windows[slug] = kalshi_window(T0)
+    gap.clock = lambda: T0 + 10  # type: ignore[method-assign]
+    gap.receive(("batch", 1, T0, 0, 40, []), view)
+    gap.receive(("batch", 3, T0, 0, 40, []), view)  # a frame missing in the sequence
+    assert gap.degraded == {slug: "feed_dropped"}
+
+
+def test_a_window_read_too_late_is_void_for_everyone(tmp_path: Path) -> None:
+    """The review's backlog: the town reads every event 4 s after it arrived (beyond the desks' 3 s freshness), so
+    no resident can trade, and the window must not count as if the town had seen the market."""
+    market = Market(tmp_path, population=12, seed=5)
+    arena = market.start()
+    slug = _open(market)
+    lag = 4.0
+    arena.clock = lambda: market.clock.now() + lag  # type: ignore[method-assign]
+    real_step = arena.step
+    arena.step = lambda now: real_step(now + lag)  # type: ignore[method-assign]
+    before = {rid: res.row["paired"].get("n", 0) for rid, res in arena.residents.items()}
+    market.run(900, step_s=0.25)
+    assert arena.late > 0 and arena.town["void_feed"] >= 1
+    assert not [rid for rid, res in arena.residents.items() if res.row["paired"]["n"] > before[rid]]
+    assert slug not in arena.windows
+
+
+def test_a_backlog_drains_fast_and_only_takes_keep_every_book(tmp_path: Path) -> None:
+    """The review's ceiling was about 400 books a second whatever CPU was free (a 2 ms rest after each book). The
+    town now has its own process and no rests: a backlog of 25-level books coalesces to the latest per window
+    and side, except where a resident waits on a take or lock."""
+    market = Market(tmp_path, population=12, seed=5)
+    arena = market.start()
+    slug = _open(market)
+    now = market.clock.now()
+    bids = tuple(Level(round(.45 - k / 100, 2), 10 + k) for k in range(25))
+    asks = tuple(Level(round(.50 + k / 100, 2), 10 + k) for k in range(25))
+    for n in range(5000):
+        arena.feed_book(Book(slug, "up" if n % 2 else "down", bids, asks, now, f"x{n}", now))  # type: ignore[arg-type]
+    started = time.thread_time()
+    arena._drain(now)
+    cpu = time.thread_time() - started
+    assert arena.coalesced == 4998 and cpu < 0.5, (arena.coalesced, cpu)  # 5,000 books in well under a second
+    seen: list[str] = []
+    taker = challenger(arena)
+    real = taker.desk.on_book
+    taker.desk.on_book = lambda book: seen.append(book.sequence) or real(book)  # type: ignore[method-assign]
+    taker.desk.orders[999] = _take(slug, now)
+    arena.coalesced = 0
+    for n in range(10):
+        arena.feed_book(Book(slug, "up", bids, asks, now + 0.01 * n, f"t{n}", now))  # type: ignore[arg-type]
+    arena._drain(now + 0.2)
+    assert seen == [f"t{n}" for n in range(10)] and arena.coalesced == 0  # a pending take sees every book
+
+
+def _take(slug: str, now: float) -> Any:
+    from nightcrawler.speeddesk_model import PracticeOrder
+
+    return PracticeOrder(999, slug, "down", "take", 0.5, 1.0, 1.0, now, now + 0.25, 0.5, 0.07, lock=True)
+
+
+def test_prints_are_deduplicated_once_and_resident_memories_stay_small(tmp_path: Path) -> None:
+    market = Market(tmp_path, population=12, seed=5)
+    arena = market.start()
+    slug = _open(market)
+    assert all(res.desk.trade_memory == kalshi_arena.RESIDENT_TRADE_MEMORY for res in arena.residents.values())
+    calls = Counter()
+    for res in arena.residents.values():
+        real = res.desk.on_trade
+        res.desk.on_trade = lambda trade, now, real=real: calls.update([trade.trade_id]) or real(trade, now)  # type: ignore[method-assign]
+    now = market.clock.now()
+    for _ in range(3):  # the same print three times
+        arena.feed_trade(Trade(slug, "up", .30, 1, now, "same", "sell", now))  # type: ignore[arg-type]
+    arena._drain(now)
+    assert calls["same"] == 12  # once per resident, not three times
+    for n in range(kalshi_arena.SEEN_PRINTS + 100):
+        arena.feed_trade(Trade(slug, "up", .30, 1, now, f"p{n}", "sell", now))  # type: ignore[arg-type]
+    arena._drain(now)
+    assert len(arena.seen_prints) == len(arena.print_order) == kalshi_arena.SEEN_PRINTS
+    assert all(len(res.desk.seen_trades) <= kalshi_arena.RESIDENT_TRADE_MEMORY for res in arena.residents.values())
+
+
+def test_births_prefer_parents_with_a_record(tmp_path: Path) -> None:
+    """The review's probe: in a losing town a never-traded newborn's $50 outranked everyone who had traded."""
+    arena, clock = town(tmp_path)
+    for res in arena.residents.values():
+        res.row.update(equity_usd=49.0, traded=50, windows=60)
+    victim = challenger(arena)
+    arena._evict(victim, "test", clock.now())
+    arena._births(clock.now())
+    newborn = max(arena.residents.values(), key=lambda res: int(res.id))
+    assert newborn.row["traded"] == 0 and newborn.row["equity_usd"] == 50.0
+    parents = []
+    for _ in range(30):
+        poorest = min((res for res in arena.residents.values() if not res.control and res is not newborn),
+                      key=lambda res: res.row["equity_usd"])
+        arena._evict(poorest, "test", clock.now())
+        arena._births(clock.now())
+        child = max(arena.residents.values(), key=lambda res: int(res.id))
+        child.row.update(equity_usd=49.0, traded=0)
+        parents.append(child.row["parent"])
+    assert newborn.id not in parents  # 0 of 30 (the review drew it 12 times in 30)
+    young, _ = town(tmp_path / "young")
+    poorest = challenger(young)
+    young._evict(poorest, "test", clock.now())
+    young._births(clock.now())
+    assert max(young.residents.values(), key=lambda res: int(res.id)).row["parent"] == control(young).id
+
+
+def test_a_restart_voids_only_the_window_that_had_started(tmp_path: Path) -> None:
+    clock = FakeClock(T0 - 10)
+    upcoming = kalshi_window(T0 + 900)  # Kalshi lists the next window too
+    snap = LiveSnapshot(windows=(kalshi_window(T0), upcoming), bitcoin_price=80_000.0, bitcoin_at=T0 + 100,
+                        sigma=0.0003)
+    config = ArenaConfig(data_dir=tmp_path)
+    arena = KalshiArena(config, lambda: snap, clock=clock.now)
+    clock.set(T0 + 100)
+    arena.step(clock.now())
+    assert {kalshi_window(T0).slug, upcoming.slug} <= set(arena.windows)
+    arena._save(clock.now())
+    clock.advance(60)  # a quick redeploy, long before the upcoming window opens
+    again = KalshiArena(config, lambda: snap, clock=clock.now)
+    again.step(clock.now())
+    assert upcoming.slug in again.windows and kalshi_window(T0).slug not in again.windows
+    assert again.town["void_windows"] == arena.town["void_windows"] + 1  # one deploy, one window (the review: 2)
+
+
+def test_rent_is_charged_for_each_missed_day_up_to_a_week(tmp_path: Path) -> None:
+    arena, _clock = town(tmp_path)
+    settle(arena, T0, everyone(arena, None))
+    settle(arena, T0 + 4 * DAY, everyone(arena, None))  # the town was down for three days
+    assert control(arena).row["rent_paid"] == pytest.approx(0.8) and arena.town["rent_days"] == 4
+    assert any("for 4 days" in event["text"] for event in arena.events)
+    settle(arena, T0 + 40 * DAY, everyone(arena, None))
+    assert control(arena).row["rent_paid"] == pytest.approx(0.8 + 0.2 * kalshi_arena.RENT_CATCHUP_DAYS)
+
+
+@pytest.mark.parametrize("damage", ["deep", "pair_cap_zero", "pair_cap_tiny", "nan_grave", "nan_candidate",
+                                    "bad_active", "bad_rent_day"])
+def test_any_corrupt_state_moves_aside_or_is_cleaned_and_the_town_still_saves(tmp_path: Path, damage: str,
+                                                                              caplog: Any) -> None:
+    arena, clock = town(tmp_path)
+    arena._evict(challenger(arena), "test", clock.now())
+    arena._save(clock.now())
+    path = tmp_path / "kalshi_arena" / "state.json"
+    if damage == "deep":
+        path.write_text("[" * 100_000 + "]" * 100_000, encoding="utf-8")
+    else:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+        target = next(row for row in raw["residents"] if not row["control"])
+        if damage == "pair_cap_zero":
+            target["genes"]["pair_cap"] = 0
+        elif damage == "pair_cap_tiny":
+            target["genes"]["pair_cap"] = 1e-320
+        elif damage == "nan_grave":
+            raw["grave"][0]["pnl_usd"] = float("nan")
+        elif damage == "nan_candidate":
+            target["candidate"] = {"t": float("inf"), "n": 120}
+        elif damage == "bad_active":
+            raw["active_windows"] = [["x", "not a time"]]
+        elif damage == "bad_rent_day":
+            raw["rent_day"] = "2026-99-99"
+        path.write_text(json.dumps(raw), encoding="utf-8")  # json writes NaN and Infinity
+    caplog.set_level(logging.WARNING, "nightcrawler.kalshi_arena")
+    restored, _ = town(tmp_path)
+    assert len(restored.residents) == 12
+    restored._save(clock.now())  # every later save works (the review: 6 of 6 passes failed and the town halted)
+    json.loads(path.read_text(encoding="utf-8"), parse_constant=lambda name: pytest.fail(name))
+    if damage in ("nan_grave", "nan_candidate"):  # one bad display row is dropped; the town is kept
+        assert "kalshi_arena_state_reset" not in caplog.text
+        assert set(arena.residents) <= set(restored.residents) and restored.grave == (
+            [] if damage == "nan_grave" else arena.grave)
+        assert all(res.row["candidate"] is None for res in restored.residents.values())
+    else:
+        assert "kalshi_arena_state_reset" in caplog.text
+        assert any(item.name.startswith("state.json.bad-") for item in path.parent.iterdir())
+
+
+def test_the_day_stop_survives_a_restart(tmp_path: Path) -> None:
+    arena, clock = town(tmp_path, start=T0 + 3600)
+    live = control(arena)
+    settle(arena, T0, {live.id: -4.0}, now=T0 + 3600)
+    assert live.row["day"] == {"day": "2026-10-08", "pnl_usd": -4.0}
+    arena._save(clock.now())
+    again, _ = town(tmp_path, start=T0 + 3700)
+    assert again.residents[live.id].desk.days["2026-10-08"]["pnl_usd"] == -4.0
+    tomorrow, _ = town(tmp_path, start=T0 + 2 * DAY)
+    assert "2026-10-08" not in tomorrow.residents[live.id].desk.days  # a new day starts from zero, as live
+
+
+def test_the_state_file_is_fsynced(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    arena, clock = town(tmp_path)
+    synced: list[int] = []
+    real = os.fsync
+    monkeypatch.setattr(kalshi_arena.os, "fsync", lambda fd: synced.append(fd) or real(fd))
+    arena._save(clock.now())
+    assert len(synced) == 1  # state.json (the town's only record); the panel is a display copy

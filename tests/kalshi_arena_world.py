@@ -1,5 +1,6 @@
 """A synthetic Kalshi Bitcoin 15-minute market for the arena's tests: windows, books, sell prints and outcomes,
-published the way the speed desk publishes them (``LiveSnapshot``) and fed through the arena's own queue."""
+published the way the speed desk publishes them (``LiveSnapshot``) and fed through the town's own inbox, in the test's
+process (the link and the town's process have their own tests: tests/test_kalshi_arena_feed.py)."""
 
 from __future__ import annotations
 
@@ -22,10 +23,6 @@ SIGMA = 0.0003
 def kalshi_window(start: float, strike: float | None = 80_000.0, length: float = 900.0) -> Window:
     return Window(f"KXBTC15M-{int(start)}", start, start + length, None, taker_coefficient=0.07, maker_coefficient=0.0,
                   venue_start_price=strike, venue="kalshi", fee_rounding="kalshi")
-
-
-def no_sleep(_seconds: float) -> None:
-    pass
 
 
 @dataclass
@@ -51,7 +48,6 @@ class Market:
 
     def start(self, **kwargs: Any) -> KalshiArena:
         self.publish()
-        kwargs.setdefault("sleep", no_sleep)
         self.arena = KalshiArena(self.config, lambda: self.snap, clock=self.clock.now, **kwargs)
         return self.arena
 

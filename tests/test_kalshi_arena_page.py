@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from kalshi_arena_world import T0, kalshi_window, no_sleep
+from kalshi_arena_world import T0, kalshi_window
 
 from nightcrawler import pagestate
 from nightcrawler.kalshi_arena import ArenaConfig, KalshiArena, adoptable
@@ -18,7 +18,7 @@ from nightcrawler.speeddesk_live import LiveSnapshot
 
 def saved_town(path: Path, now: float) -> KalshiArena:
     """A town with a record, a grave and a flagged candidate, saved to ``path``."""
-    arena = KalshiArena(ArenaConfig(data_dir=path), LiveSnapshot, clock=lambda: now, sleep=no_sleep)
+    arena = KalshiArena(ArenaConfig(data_dir=path), LiveSnapshot, clock=lambda: now)
     rng = random.Random(4)
     for index in range(40):
         arena._after_window(kalshi_window(T0 + index * 900),
@@ -44,7 +44,9 @@ def test_the_page_shows_the_town_labelled_practice(make_settings: Any, fake_cloc
     assert town["candidates"][0]["n"] == 120 and "not proof" in town["candidates"][0]["note"]
     assert set(town["candidates"][0]["adopt"]["settings"]) >= {"SPEEDDESK_MAKE_EDGE", "SPEEDDESK_KALSHI_LOCK_S"}
     assert "a" * 40 not in json.dumps(town)
-    assert set(town["feed"]) >= {"queue", "dropped", "slice_p99_ms", "duty_pct"}
+    assert set(town["feed"]) >= {"queue", "received", "dropped", "coalesced", "pass_p99_ms", "duty_pct",
+                                 "live_flush_us_p99"}
+    assert town["town"]["void_feed"] == 0
     assert all(event["kind"] in ("born", "evicted", "candidate", "rent", "control", "void", "")
                for event in town["events"])
     later = pagestate.kalshi_arena_town(settings, now + 600)
