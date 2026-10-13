@@ -1,0 +1,60 @@
+{
+  "name": "HighTempTation",
+  "retrieved_at": "2026-10-13T18:57:35.905446+00:00",
+  "url": "https://data-api.polymarket.com/trades?user=0x6011655c4afb76f36dd1b08a137a1ba73466b31e&limit=500&offset=0&takerOnly=false",
+  "status": 200,
+  "sha256": "a3f163c0cc20f4075d40148658c1cea9bfe382da3703b8c68b43cb8ca2349fff",
+  "n": 500,
+  "min_timestamp": 1791079325,
+  "max_timestamp": 1791896200,
+  "buy_count": 239,
+  "sell_count": 261,
+  "price_median": 0.9725,
+  "size_median": 54.67,
+  "buy_outcomes": {
+    "No": 235,
+    "Yes": 4
+  },
+  "titles": [
+    [
+      "Will the highest temperature in Jeddah be 35\u00b0C on October 8?",
+      15
+    ],
+    [
+      "Will the highest temperature in Lucknow be 32\u00b0C on October 13?",
+      5
+    ],
+    [
+      "Will the highest temperature in Wellington be 18\u00b0C on October 12?",
+      4
+    ],
+    [
+      "Will the highest temperature in Wellington be 19\u00b0C on October 10?",
+      4
+    ],
+    [
+      "Will the highest temperature in Madrid be 21\u00b0C on October 7?",
+      4
+    ],
+    [
+      "Will the highest temperature in Busan be 25\u00b0C on October 13?",
+      3
+    ],
+    [
+      "Will the highest temperature in Wellington be 17\u00b0C on October 10?",
+      3
+    ],
+    [
+      "Will the highest temperature in Buenos Aires be 16\u00b0C on October 8?",
+      3
+    ],
+    [
+      "Will the highest temperature in Tokyo be 24\u00b0C on October 7?",
+      3
+    ],
+    [
+      "Will the highest temperature in Panama City be 28\u00b0C on October 6?",
+      3
+    ]
+  ]
+}
