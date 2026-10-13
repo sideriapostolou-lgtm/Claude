@@ -208,6 +208,17 @@ every bot window settled, and no Bitcoin 15-minute position or resting order lef
 owner's included). The panel's `integrity_reset` shows `armed` or what it is waiting for, and
 `speeddesk_live_integrity_reset` receipts record each step. A rollback drops the approval, never the spent value.
 
+Other coins (owner, 2026-10-13: "scale ... to other markets but let's perfect it first"): `SPEEDDESK_COINS`
+(any of eth, sol, xrp, doge; empty by default) runs the same practice rules on Kalshi's KXETH15M, KXSOL15M,
+KXXRP15M and KXDOGE15M windows (src/nightcrawler/speeddesk_coins.py). Practice only: no account client, key or
+order path. Each coin has its own ledger, budget and report under `speeddesk/coins/<coin>`, all on one thread
+and event loop separate from the Bitcoin desk's, reading public Kalshi REST data slowly (books every 2 s,
+trades every 4 s, no websocket) and one public Coinbase trade feed. Because these coins print far less often
+on Coinbase, the opening is Kalshi's own strike (the 60-second index average), volatility is the realized
+variance of consecutive prints per elapsed second over the trailing hour (at least 120 pairs), and the last
+print may be 15 s old (30 s for DOGE). Real money on a coin needs its practice record, one account controller
+shared by every coin (one cash view, one set of caps, one read budget) and the owner's numbers.
+
 These are risk controls for a paid experiment, not a profit promise or an absolute guarantee against an
 exchange failure. We copy the observed rules, not the original bot's speed, 5-minute venue, liquidity or size.
 
