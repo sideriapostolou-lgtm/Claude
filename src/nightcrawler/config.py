@@ -511,7 +511,8 @@ class Settings:
                                           "window close; default trades only the first 12 minutes of a 15m window",
                                           lo=60, hi=899)
     # Owner, 2026-10-13: "Give our bots the incentive they're giving Grok bots: make money or die" (nightcrawler.
-    # kalshi_arena). PRACTICE only: these four change pretend money and never a live limit, order or key.
+    # kalshi_arena). PRACTICE only: these four change pretend money and never a live limit, order or key. A bad value
+    # turns the arena off with a warning instead of stopping the engine (Settings._lenient_arena).
     kalshi_arena_enabled: bool = _f(True, "bool", "The Kalshi arena: a PRACTICE town of Kalshi Bitcoin 15-minute "
                                     "desks with their own genes that pay rent, are evicted when broke or losing, and "
                                     "breed from the richest; never places a real order or changes a live setting")
@@ -628,9 +629,34 @@ class Settings:
                 object.__setattr__(self, name, Secret(value) if value else None)
         if _zone_unknown(self.owner_tz):  # a cosmetic setting (the recap film): warn, never refuse to start
             logging.getLogger(__name__).warning("config_owner_tz_unknown value=%r using=UTC", self.owner_tz[:60])
+        self._lenient_arena()
         problems = self._validate()
         if problems:
             raise ConfigError(problems)
+
+    def _lenient_arena(self, bad: Iterable[str] = ()) -> None:
+        """The Kalshi arena's settings change practice money only, so a bad one must never stop the engine (and with
+        it the real-money Kalshi companion): it takes its default, the arena is switched off, and a warning names
+        it. ``bad`` names values that could not even be read (Settings.from_env)."""
+        problems = [name.upper() for name in bad]
+        for f in dataclasses.fields(self):
+            if not f.name.startswith("kalshi_arena_"):
+                continue
+            value, meta = getattr(self, f.name), f.metadata
+            if meta.get("unit") == "bool":
+                ok = isinstance(value, bool)
+            else:
+                lo, hi = meta.get("lo"), meta.get("hi")
+                ok = (not isinstance(value, bool) and isinstance(value, (int, float)) and math.isfinite(value)
+                      and (meta.get("unit") != "count" or isinstance(value, int))
+                      and (lo is None or value >= lo) and (hi is None or value <= hi))
+            if not ok:
+                problems.append(f.name.upper())
+                object.__setattr__(self, f.name, f.default)
+        if problems:
+            object.__setattr__(self, "kalshi_arena_enabled", False)
+            logging.getLogger(__name__).warning("config_kalshi_arena_off bad=%s (practice town off; everything else "
+                                                "runs)", ",".join(sorted(set(problems))))
 
     def _validate(self) -> list[str]:
         problems: list[str] = []
@@ -648,13 +674,6 @@ class Settings:
                     and (isinstance(value, bool) or not isinstance(value, (int, float)))):
                 problems.append(f"{env} must be a finite number")
                 continue
-            if f.name.startswith("kalshi_arena_") and meta.get("unit") in ("usd", "count"):
-                if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
-                    problems.append(f"{env} must be a finite number")
-                    continue
-                if meta.get("unit") == "count" and not isinstance(value, int):
-                    problems.append(f"{env} must be a whole number")
-                    continue
             if f.name == "speeddesk_coins":
                 names = {part.strip().lower() for part in str(value).split(",") if part.strip()}
                 unknown = sorted(names - {"eth", "sol", "xrp", "doge"})
@@ -743,6 +762,7 @@ class Settings:
         env = os.environ if env is None else env
         kwargs: dict[str, Any] = {}
         problems: list[str] = []
+        unreadable: list[str] = []
         for f in dataclasses.fields(cls):
             raw = env.get(f.name.upper())
             if raw is None or str(raw).strip() == "":
@@ -751,9 +771,17 @@ class Settings:
             try:
                 kwargs[f.name] = _coerce(f, raw)
             except ValueError as exc:
+                if f.name.startswith("kalshi_arena_"):
+                    unreadable.append(f.name)  # practice only: the arena goes off instead (_lenient_arena)
+                    continue
                 problems.append(f"{f.name.upper()}: {exc}")
         if problems:
             raise ConfigError(problems)
+        if unreadable:
+            kwargs["kalshi_arena_enabled"] = False
+            settings = cls(**kwargs)
+            settings._lenient_arena(unreadable)
+            return settings
         return cls(**kwargs)
 
     def replace(self, **changes: Any) -> Settings:
