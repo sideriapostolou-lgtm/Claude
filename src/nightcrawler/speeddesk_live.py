@@ -673,16 +673,22 @@ class KalshiLiveDesk:
                 settled_at = _stamp(row["settled_time"]) if row is not None else self.clock()
                 if not self.book.windows[ticker].end <= settled_at <= self.clock():
                     raise ValueError("Invalid venue settlement timestamp")
+                # In a window the owner also traded, the venue's revenue includes the owner's contracts
+                # (owner, 2026-10-13): the bot's result comes from its own reconciled fills and the outcome.
                 result = self.book.settle(ticker, self.final_outcomes[ticker], settled_at,
-                                          settlement_id=f"kalshi:{ticker}", net_payout_usd=payout)
+                                          settlement_id=f"kalshi:{ticker}",
+                                          net_payout_usd=None if ticker in self.foreign_windows else payout)
                 if result is not None:
                     self._record("speeddesk_live_settlement", **asdict(result), observed_at=self.clock(),
                                  time_source="venue settled_time" if row is not None else
                                  "public final outcome observed; paired position has no cash settlement")
                 continue
-            if abs(expected - current) > EPS:
+            if abs(expected - current) > EPS and ticker not in self.foreign_windows:
                 # A fill may arrive between paginated account reads. Pause and
-                # reconcile again; never assign a mismatched position to us.
+                # reconcile again; never assign a mismatched position to us. A
+                # window holding a fill that is provably not ours (the owner's
+                # trade by hand) mixes the owner's contracts into the venue
+                # position; the bot leaves it alone and counts only its own fills.
                 consistent = False
         for ticker, amount in actual.items():
             if ticker.startswith("KXBTC15M-") and ticker not in windows and abs(amount) > EPS:

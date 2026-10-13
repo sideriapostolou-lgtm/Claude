@@ -32,6 +32,11 @@ Template:
   sets the four cap variables explicitly, the panel will still report $2/$4/$3/$5 after deploy and they must be
   set to $5/$10/$6/$10 (owner already chose these numbers).
 - Real money touched? Yes once merged: caps 2.5x and the lock rule, by the owner's explicit choice.
+- Also (01:20 UTC): the owner confirmed the 00:51 and ~01:13 UTC account changes were their own trades by hand in
+  the bot's window ("It was me ... please fix"). In a window holding a fill that is provably not the bot's (already
+  marked `foreign_windows`, which the bot leaves alone), the venue position and settlement revenue include the
+  owner's contracts: the position match and the settlement payout check now skip that window, and the bot settles
+  from its own reconciled fills. Any unexplained mismatch elsewhere still blocks new orders (tested both ways).
 - Next step: second review of this change, owner merges PR #16, confirm caps and the first lock in the logs.
 
 ## 2026-10-13 00:40 UTC, Codex, branch codex/town-live-connections
