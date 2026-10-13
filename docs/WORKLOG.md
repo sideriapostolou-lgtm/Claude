@@ -25,7 +25,17 @@ Template:
 - Verified: full pytest 4,698 passed / 14 skipped (same optional/network skips), mypy clean for 119 source
   files and Ruff clean on both changed Python files. Regression cases retain active/live, pair-only, stale,
   accounting-blocked and practice states; missing or other reason codes are not reinterpreted.
-- Deployment: pending this small display correction. Polymarket stays live.
+- Deployment: `5b9c48cac21c7c51d78e41b801e57439ac272d65` succeeded as Railway deployment
+  `cc6ef3b0-e03d-42fc-91b8-ec6099403849`. Startup at 17:14 UTC confirmed Polymarket LIVE
+  (10 contracts/order), Kalshi REAL MONEY, unchanged $10/$20/$6/$10 caps and no integrity error.
+  Health returned 200 and the bounded startup log check found no tracebacks. The authenticated final
+  browser check confirmed the new wording in the served bundle, Kalshi focus/live state, Polymarket LIVE,
+  normal Money disclosure taps, no overflow and no JS errors. The current reason had changed to
+  "Window cutoff"; exact `day_stop` rendering is covered by the regression cases above.
+- Scope: source diff from `8681f62` contains only town/summary display modules and corresponding tests;
+  no trading code, variables or limits changed. All three deployment results are recorded here. No
+  further action is needed for this app simplification; upstream account-reconciliation time remains
+  unavailable and explicitly labeled unknown.
 
 ## 2026-10-13 16:54 UTC, Codex, Kalshi town interaction follow-up
 - Found during the deployed phone check: the once-per-second Money redraw could detach a disclosure while
