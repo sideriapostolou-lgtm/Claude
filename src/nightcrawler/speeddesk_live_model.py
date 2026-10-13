@@ -38,6 +38,12 @@ class LiveRejected(ValueError):
 
 # A lock buy is never sent this close to the close: the market may stop matching.
 LOCK_MARGIN_S = 20.0
+# The risk book's own ceilings (LiveLimits clamps every limit to them, the ladder's rungs included).
+HARD_WINDOW_USD, HARD_OPEN_USD, HARD_DAY_LOSS_USD, HARD_TOTAL_LOSS_USD = 20.0, 40.0, 12.0, 10.0
+# The contract cap's own ceiling (config.py SPEEDDESK_KALSHI_CLIP has the first, hi=25).
+HARD_CLIP = 25.0
+# Refusals that mean a loss stop binds (the earned-growth ladder counts one on the smallest order as a stop).
+STOP_REFUSALS = frozenset({"day_stop", "total_budget"})
 # Integrity reset fingerprints live beside the resume ones; the prefix keeps the two kinds from matching.
 RESET_DOMAIN = b"kalshi-integrity-reset\x00"
 DAY_RESET_DOMAIN = b"kalshi-day-reset\x00"
@@ -68,9 +74,10 @@ class LiveLimits:
             raise ValueError("Invalid live limits")
         # Second, independent guard on the owner's ceilings (config.py has the first): $10 per window and $20 open since
         # 2026-10-13 15:15 UTC ("ten now double tmr if it works"), and from 16:00 UTC up to $20, $40 and a $12 day stop
-        # "when it's winning"; the total stop is unchanged.
-        for name, hard in (("window_usd", 20.0), ("open_usd", 40.0),
-                           ("day_loss_usd", 12.0), ("total_loss_usd", 10.0)):
+        # "when it's winning"; the total stop is unchanged. The earned-growth ladder never goes above these.
+        for name, hard in (("window_usd", HARD_WINDOW_USD), ("open_usd", HARD_OPEN_USD),
+                           ("day_loss_usd", HARD_DAY_LOSS_USD), ("total_loss_usd", HARD_TOTAL_LOSS_USD),
+                           ("clip", HARD_CLIP)):
             object.__setattr__(self, name, min(getattr(self, name), hard))
         object.__setattr__(self, "pair_cap", min(self.pair_cap, 0.99))
         object.__setattr__(self, "max_imbalance", min(self.max_imbalance, 0.25))
@@ -182,7 +189,15 @@ class LiveSettlement:
 
 class LiveRiskBook:
     def __init__(self, limits: LiveLimits | None = None) -> None:
+        # The configured limits: the owner's floor, and every limit the ladder does not scale.
         self.limits = limits or LiveLimits()
+        # The earned-growth ladder's limits for a window, by the window's start (speeddesk_live_ladder.Ladder);
+        # None uses the configured limits everywhere. Never persisted here: the controller saves the ladder.
+        self.window_limits: Callable[[float], LiveLimits] | None = None
+        # When a loss stop last bound (the total stop tripped, or even a one-contract buy was refused by the day or
+        # total stop), and who to tell (the ladder: no promotion within 24 h of a stop). Not persisted here.
+        self.stop_hit_at: float | None = None
+        self.stop_listener: Callable[[float], None] | None = None
         self.windows: dict[str, Window] = {}
         self.intents: dict[str, LiveIntent] = {}
         self.inventory: dict[str, Inventory] = {}
@@ -213,6 +228,18 @@ class LiveRiskBook:
         if window.slug not in self.windows:
             self.windows[window.slug] = window
         self.inventory.setdefault(window.slug, Inventory())
+
+    def limits_for(self, window: str) -> LiveLimits:
+        """The limits for buys and locks in one window: fixed by the window's start, so a ladder change never
+        reaches a window that has begun."""
+        spec = self.windows.get(window)
+        if self.window_limits is None or spec is None:
+            return self.limits
+        return self.window_limits(spec.start)
+
+    def limits_now(self, now: float) -> LiveLimits:
+        """The limits of the window under way at `now` (the stops and the status report use them)."""
+        return self.limits if self.window_limits is None else self.window_limits(now)
 
     def update_cash(self, cash_usd: float, now: float) -> None:
         if not math.isfinite(cash_usd) or cash_usd < 0 or not math.isfinite(now):
@@ -263,13 +290,21 @@ class LiveRiskBook:
             return None, 0.0
         return ("down" if difference > 0 else "up"), abs(difference)
 
+    def _note_stop(self, now: float) -> None:
+        if math.isfinite(now):
+            self.stop_hit_at = now if self.stop_hit_at is None else max(self.stop_hit_at, now)
+            if self.stop_listener is not None:
+                self.stop_listener(now)
+
     def _refresh_stops(self, now: float) -> None:
         loss = max(0.0, self.stop_anchor - self.realized_pnl)
         if loss + self.at_risk_usd >= self.limits.total_loss_usd - EPSILON:
             self.halted, self.halt_reason = True, "total_loss"
+            self._note_stop(now)
 
     def risk_status(self, now: float) -> dict[str, Any]:
         self._refresh_stops(now)
+        limits = self.limits_now(now)
         day_loss = self.day_loss(now)
         total_loss = max(0.0, self.stop_anchor - self.realized_pnl)
         available = None if self.cash_usd is None else max(0.0, self.cash_usd - self.cash_debits - self.reserved_usd)
@@ -279,28 +314,28 @@ class LiveRiskBook:
                 "at_risk_usd": self.at_risk_usd,
                 "day_pnl_usd": self.day_pnl.get(utc_day(now), 0.0), "day_loss_usd": day_loss,
                 "day_at_risk_usd": day_loss + self.at_risk_usd,
-                "day_stopped": day_loss + self.at_risk_usd >= self.limits.day_loss_usd - EPSILON,
+                "day_stopped": day_loss + self.at_risk_usd >= limits.day_loss_usd - EPSILON,
                 "total_pnl_usd": self.realized_pnl, "total_loss_usd": total_loss,
                 "total_at_risk_usd": total_loss + self.at_risk_usd,
                 "available_cash_usd": available, "cash_at": self.cash_at,
-                "limits": asdict(self.limits)}
+                "limits": asdict(limits)}
 
     def _reject(self, reason: str) -> None:
         raise LiveRejected(reason)
 
-    def _inventory_guard(self, window: str, side: Side, size: float, unit: float) -> str:
+    def _inventory_guard(self, window: str, side: Side, size: float, unit: float, limits: LiveLimits) -> str:
         inventory = self.inventory[window]
         pending = [intent for intent in self.intents.values() if intent.window == window and intent.reserved > EPSILON]
         total = inventory.up.shares + inventory.down.shares
         difference = inventory.up.shares - inventory.down.shares
         starter_id = self.bootstrap_order.get(window)
         starter = self.intents.get(starter_id or "")
-        bootstrap = (abs(difference) > self.limits.max_imbalance * total + EPSILON
+        bootstrap = (abs(difference) > limits.max_imbalance * total + EPSILON
                      or bool(starter and starter.reservation_active))
         if total <= EPSILON:
             if pending:
                 return "starter_pending"
-            if size > self.limits.clip + EPSILON:
+            if size > limits.clip + EPSILON:
                 return "starter_clip"
         elif bootstrap:
             light: Side = "down" if difference > 0 else "up"
@@ -318,13 +353,19 @@ class LiveRiskBook:
             shares[side] += size
             paid[side] += size * unit
             if (total > EPSILON and not bootstrap and abs(shares["up"] - shares["down"])
-                    > self.limits.max_imbalance * sum(shares.values()) + EPSILON):
+                    > limits.max_imbalance * sum(shares.values()) + EPSILON):
                 return "imbalance"
-            if min(shares.values()) > EPSILON and sum(paid[key] / shares[key] for key in shares) > self.limits.pair_cap + EPSILON:
+            if min(shares.values()) > EPSILON and sum(paid[key] / shares[key] for key in shares) > limits.pair_cap + EPSILON:
                 return "pair_cap"
         return ""
 
     def can_buy(self, window: str, side: Side, kind: Kind, price: float, size: float, now: float) -> str:
+        reason = self._buy_verdict(window, side, kind, price, size, now)
+        if reason in STOP_REFUSALS and size <= 1 + EPSILON:
+            self._note_stop(now)  # not even the smallest order fits under the stop: it has tripped
+        return reason
+
+    def _buy_verdict(self, window: str, side: Side, kind: Kind, price: float, size: float, now: float) -> str:
         self._refresh_stops(now)
         if self.integrity_error:
             return "reconciliation_error"
@@ -333,15 +374,16 @@ class LiveRiskBook:
         if window not in self.windows or window in self.settled:
             return "window_unknown_or_settled"
         spec = self.windows[window]
-        if now < spec.start or now >= spec.end - self.limits.lock_s:
+        limits = self.limits_for(window)  # the window's ladder rung: every check below uses the same limits
+        if now < spec.start or now >= spec.end - limits.lock_s:
             return "cutoff"
         if not (math.isfinite(price) and 0 < price < 1 and abs(price * 100 - round(price * 100)) < EPSILON
                 and math.isfinite(size) and size >= 1 and abs(size - round(size)) < EPSILON
                 and side in ("up", "down") and kind in ("take", "rest")):
             return "invalid_order"
-        if size > self.limits.clip + EPSILON:
+        if size > limits.clip + EPSILON:
             return "clip"
-        if self.cash_at is None or self.cash_usd is None or not 0 <= now - self.cash_at <= self.limits.cash_max_age_s:
+        if self.cash_at is None or self.cash_usd is None or not 0 <= now - self.cash_at <= limits.cash_max_age_s:
             return "cash_stale"
         if any(item.window == window and item.side == side and item.reservation_active for item in self.intents.values()):
             return "order_pending"
@@ -351,17 +393,18 @@ class LiveRiskBook:
             return exc.reason
         cost = size * unit
         current = self.inventory[window].spent + sum(item.reserved for item in self.intents.values() if item.window == window)
-        if current + cost > self.limits.window_usd + EPSILON:
+        if current + cost > limits.window_usd + EPSILON:
             return "window_budget"
-        if self.at_risk_usd + cost > self.limits.open_usd + EPSILON:
+        if self.at_risk_usd + cost > limits.open_usd + EPSILON:
             return "open_budget"
-        if self.day_loss(now) + self.at_risk_usd + cost >= self.limits.day_loss_usd - EPSILON:
+        if self.day_loss(now) + self.at_risk_usd + cost >= limits.day_loss_usd - EPSILON:
             return "day_stop"
+        # The lifetime stop never scales: it is the configured one at every rung.
         if max(0.0, self.stop_anchor - self.realized_pnl) + self.at_risk_usd + cost >= self.limits.total_loss_usd - EPSILON:
             return "total_budget"
         if cost + self.reserved_usd + self.cash_debits > self.cash_usd + EPSILON:
             return "cash_budget"
-        return self._inventory_guard(window, side, size, unit)
+        return self._inventory_guard(window, side, size, unit, limits)
 
     def can_lock(self, window: str, side: Side, price: float, size: float, now: float) -> str:
         """An immediate buy that only completes this window's bought contracts into $1 pairs.
@@ -375,17 +418,18 @@ class LiveRiskBook:
         if window not in self.windows or window in self.settled:
             return "window_unknown_or_settled"
         spec = self.windows[window]
-        if now < spec.end - self.limits.lock_s or now >= spec.end - LOCK_MARGIN_S:
+        limits = self.limits_for(window)
+        if now < spec.end - limits.lock_s or now >= spec.end - LOCK_MARGIN_S:
             return "not_lock_time"
         if not (math.isfinite(price) and 0 < price < 1 and abs(price * 100 - round(price * 100)) < EPSILON
                 and math.isfinite(size) and size >= 1 and abs(size - round(size)) < EPSILON
                 and side in ("up", "down")):
             return "invalid_order"
-        if price > self.limits.lock_max_price + EPSILON:
+        if price > limits.lock_max_price + EPSILON:
             return "lock_price"
-        if size > self.limits.clip + EPSILON:
+        if size > limits.clip + EPSILON:
             return "clip"
-        if self.cash_at is None or self.cash_usd is None or not 0 <= now - self.cash_at <= self.limits.cash_max_age_s:
+        if self.cash_at is None or self.cash_usd is None or not 0 <= now - self.cash_at <= limits.cash_max_age_s:
             return "cash_stale"
         if any(item.window == window and item.reservation_active for item in self.intents.values()):
             return "order_pending"  # every order in the window is reconciled before the count is trusted

@@ -1235,7 +1235,9 @@ def test_the_owners_ten_dollar_windows_are_enforced_and_reported(tmp_path: Path)
         # 10-contract first buys were run over on 2026-10-13 (SPEEDDESK_KALSHI_CLIP).
         assert [creation["size"] for creation in account.creates] == [5.0]
         assert desk.book.limits.clip == 5.0
-        assert desk.panel()["caps"] == {"window_usd": 10.0, "open_usd": 20.0, "day_stop_usd": 6.0, "total_stop_usd": 10.0}
+        assert desk.panel()["caps"] == {"window_usd": 10.0, "open_usd": 20.0, "day_stop_usd": 6.0,
+                                        "total_stop_usd": 10.0, "clip": 5.0}
+        assert desk.panel()["ladder"]["rung"] == 0  # the ladder starts at the owner's floor
     finally:
         desk.close()
 
