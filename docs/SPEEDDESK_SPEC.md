@@ -291,7 +291,11 @@ Already filled exposure remains real until it settles, and the page must say so 
 - KXBTC15M rules use the 60-second average of CF Benchmarks BRTI at each boundary; YES wins ties. Read and
   validate current rules/fees for every eligible window. Unknown terms disable that window.
 - Cancel only bot-owned resting orders at startup, cutoff, stale Bitcoin (>3 s), shutdown, repeated errors
-  and mode changes. A cancel request alone does not release exposure: reconcile terminal status and all
+  and mode changes, and a resting bid priced from an old fair value: fresh fair more than 1c from the fair it
+  was priced at, or the bid above fresh fair minus 2c. The last runs on every step and between account reads,
+  whether or not account data are fresh (loss plan bug 2: at 9:08:39 AM PT on 2026-10-13 a bid stayed up for
+  20.7 s while fair rose about 7c, because the reprice waited for a fresh account read). A cancel never adds risk;
+  new bids still wait for a fresh, matching reconcile. A cancel request alone does not release exposure: reconcile terminal status and all
   actual fills. Prevent overlapping processes from independently spending the same persisted budget.
 
 Official sources checked for this implementation:

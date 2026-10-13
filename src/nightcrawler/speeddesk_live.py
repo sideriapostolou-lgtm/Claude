@@ -68,6 +68,10 @@ ORDER_LIST_LAG_S = 30.0
 # order) is read at startup, every FULL_SCAN_S, and once after each new window opens, so an untracked bot order or
 # an owner's order placed before the window opened is still caught before the bot's first order there.
 FULL_SCAN_S, RECENT_S, READ_MARGIN_S = 60.0, 900.0, 60.0
+# A resting bid is repriced when fair moves more than REPRICE_FAIR from the fair it was priced at (the rule in
+# _decide); it is also cancelled once it sits above fresh fair minus STALE_BID_EDGE, even while account data are
+# stale (loss plan bug 2).
+REPRICE_FAIR, STALE_BID_EDGE = 0.01, 0.02
 # Timing samples kept per status line (one a minute); counts stay exact beyond it.
 SAMPLE_LIMIT = 8192
 # Measurement only (speed plan step 0): a 10 ms timer's oversleep is the event loop's lag, and once a minute the
@@ -747,8 +751,31 @@ class KalshiLiveDesk:
                 # closing or a money stop is exactly when it must be left to finish.
                 reason = (self._risk_stop_reason()
                           or (self._feed_reason(window, snapshot, now) if window else "Window missing"))
+                if not reason and window is not None:
+                    reason = self._stale_bid_reason(intent, window, snapshot, now)
+                    if reason:
+                        self.account_at = None  # as _decide's reprice: re-read the account before a new bid
             if reason:
                 await self._cancel(intent, reason)
+
+    @staticmethod
+    def _stale_bid_reason(intent: Intent, window: Window, snapshot: LiveSnapshot, now: float) -> str:
+        """A resting bid priced from an old fair value (loss plan bug 2: at 9:08:39 AM PT on 2026-10-13 one stayed
+        up for 20.7 s while fair rose about 7c, because the reprice in _decide waits for fresh account data).
+
+        Cancelled whatever the account's freshness: fresh fair moved more than REPRICE_FAIR from the order's, or the
+        bid sits above fresh fair minus STALE_BID_EDGE. A cancel never adds risk. Needs a fresh feed (checked first).
+        """
+        if intent.kind != "rest":
+            return ""
+        assert snapshot.bitcoin_price is not None and window.start_price is not None and snapshot.sigma is not None
+        up = fair_up(snapshot.bitcoin_price, window.start_price, snapshot.sigma, window.end - now)
+        if up is None:
+            return ""
+        fair = up if intent.side == "up" else 1 - up
+        if abs(fair - intent.fair) > REPRICE_FAIR + EPS:
+            return "reprice"
+        return "bid_above_fair" if intent.price > fair - STALE_BID_EDGE + EPS else ""
 
     def _error(self, exc: Exception) -> None:
         self.errors += 1
@@ -1402,7 +1429,7 @@ class KalshiLiveDesk:
                     (fair - self.settings.speeddesk_make_edge + EPS) / window.tick_size) * window.tick_size, 4)
                 pending = [item for item in self._active() if item.window == window.slug and item.side == side]
                 for intent in pending:
-                    if (intent.kind == "rest" and (take or abs(fair - intent.fair) > 0.01 + EPS
+                    if (intent.kind == "rest" and (take or abs(fair - intent.fair) > REPRICE_FAIR + EPS
                                                    or window.slug not in snapshot.maker_windows)):
                         await self._cancel(intent, "reprice" if not take else "take_available")
                         self.account_at = None
