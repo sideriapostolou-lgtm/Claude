@@ -1241,4 +1241,4 @@ def test_the_inner_ceiling_still_holds_above_the_owners_limits() -> None:
     from nightcrawler.speeddesk_live_model import LiveLimits
 
     limits = LiveLimits(window_usd=50, open_usd=99, day_loss_usd=60, total_loss_usd=99)
-    assert (limits.window_usd, limits.open_usd, limits.day_loss_usd, limits.total_loss_usd) == (10, 20, 6, 10)
+    assert (limits.window_usd, limits.open_usd, limits.day_loss_usd, limits.total_loss_usd) == (20, 40, 12, 10)

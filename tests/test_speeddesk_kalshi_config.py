@@ -30,8 +30,8 @@ def test_kalshi_companion_ships_paper_with_exact_owner_ceiling_defaults() -> Non
 
 
 @pytest.mark.parametrize("name,maximum", [
-    ("speeddesk_kalshi_window_usd", 10), ("speeddesk_kalshi_open_usd", 20),
-    ("speeddesk_kalshi_day_stop_usd", 6), ("speeddesk_kalshi_total_stop_usd", 10),
+    ("speeddesk_kalshi_window_usd", 20), ("speeddesk_kalshi_open_usd", 40),
+    ("speeddesk_kalshi_day_stop_usd", 12), ("speeddesk_kalshi_total_stop_usd", 10),
 ])
 def test_kalshi_limits_cannot_exceed_authorized_ceiling_or_bypass_numeric_guards(name, maximum) -> None:
     assert getattr(Settings(**{name: maximum / 2}), name) == maximum / 2
