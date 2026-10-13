@@ -63,7 +63,7 @@ def losing_window(book: LiveRiskBook, index: int, start: float, *, size=4, price
 def test_hard_limits_can_only_be_reduced_and_cutoff_never_below_one_minute():
     limits = LiveLimits(window_usd=200, open_usd=400, day_loss_usd=300, total_loss_usd=500,
                         pair_cap=1, max_imbalance=1, cutoff_s=0)
-    assert (limits.window_usd, limits.open_usd, limits.day_loss_usd, limits.total_loss_usd) == (10, 20, 6, 10)
+    assert (limits.window_usd, limits.open_usd, limits.day_loss_usd, limits.total_loss_usd) == (20, 40, 12, 10)
     assert limits.pair_cap == .99 and limits.max_imbalance == .25 and limits.cutoff_s == 60
     # New buys never outlast the lock period, and a lock never pays a dollar.
     assert LiveLimits(cutoff_s=300, lock_s=100).lock_s == 300 and LiveLimits(lock_max_price=1).lock_max_price == .99

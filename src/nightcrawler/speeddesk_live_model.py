@@ -67,9 +67,10 @@ class LiveLimits:
         if any(not math.isfinite(value) or value < 0 for value in asdict(self).values()):
             raise ValueError("Invalid live limits")
         # Second, independent guard on the owner's ceilings (config.py has the first): $10 per window and $20 open since
-        # 2026-10-13 15:15 UTC ("ten now double tmr if it works"); the day and total stops are unchanged.
-        for name, hard in (("window_usd", 10.0), ("open_usd", 20.0),
-                           ("day_loss_usd", 6.0), ("total_loss_usd", 10.0)):
+        # 2026-10-13 15:15 UTC ("ten now double tmr if it works"), and from 16:00 UTC up to $20, $40 and a $12 day stop
+        # "when it's winning"; the total stop is unchanged.
+        for name, hard in (("window_usd", 20.0), ("open_usd", 40.0),
+                           ("day_loss_usd", 12.0), ("total_loss_usd", 10.0)):
             object.__setattr__(self, name, min(getattr(self, name), hard))
         object.__setattr__(self, "pair_cap", min(self.pair_cap, 0.99))
         object.__setattr__(self, "max_imbalance", min(self.max_imbalance, 0.25))

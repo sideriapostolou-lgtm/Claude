@@ -193,7 +193,8 @@ practice trial and keep an additional honest practice twin of the live companion
 | `SPEEDDESK_KALSHI_TOTAL_STOP_USD` | $10 | Settled drawdown since the last authorized resume plus money still at risk |
 
 History: $2/$4/$3/$5 at launch (2026-10-12); $5/$10/$6/$10 (owner, 2026-10-13, "2.5x"); window and open raised to
-$10/$20 (owner, 2026-10-13 15:15 UTC, "ten now double tmr if it works"), both stops unchanged. The stops count
+$10/$20 (owner, 2026-10-13 15:15 UTC, "ten now double tmr if it works"), both stops unchanged; the code ceilings
+allow one step to $20/$40 and a $12 day stop "when it's winning" (owner, 16:00 UTC; rule in docs/ACCOUNTS.md). The stops count
 money still at risk, so they also bound each window: an unpaired position can never put more at risk than is
 left under the day and total stops (a complete up+down pair risks nothing).
 | `SPEEDDESK_KALSHI_CUTOFF_S` | 180 seconds | End real buying after the first 12 minutes; configured cutoff may never be below 60 seconds |
