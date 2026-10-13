@@ -22,11 +22,9 @@ from nightcrawler import __version__
 from nightcrawler.botwallet import KV_BOT_WALLET
 from nightcrawler.config import LIVE_CONFIRM_PHRASE, Settings
 from nightcrawler.dashboard import (
-    CONTENT_SECURITY_POLICY,
     COOKIE_NAME,
     DashboardServer,
     build_state,
-    render_html,
 )
 from nightcrawler.ledger import Ledger
 from nightcrawler.models import (
@@ -49,6 +47,7 @@ from nightcrawler.pagestate import (
 )
 from nightcrawler.readiness import CHECK_IDS, readiness
 from nightcrawler.teamroom import ENGINE_STALE_S, TeamRoom, derive_status
+from nightcrawler.townsummary import SUMMARY_CSP, render_summary_html
 
 NOW = 1_791_475_200.0  # 2026-10-08T16:00:00Z (the fake clock's start)
 MIDNIGHT = NOW - NOW % 86_400
@@ -835,11 +834,11 @@ def test_keys_item_needs_a_real_date_that_is_not_in_the_future(make_settings: Ca
 def test_page_route_and_combined_endpoint(serve: Callable[..., Client], ledger: Ledger, settings: Settings) -> None:
     seed(ledger)
     client = serve(settings, ledger)
-    status, headers, body = client.request("/reports")
+    status, headers, body = client.request("/summary")
     assert status == 200 and headers["Content-Type"] == "text/html; charset=utf-8"
-    assert headers["Content-Security-Policy"] == PAGE_CSP == CONTENT_SECURITY_POLICY
+    assert headers["Content-Security-Policy"] == SUMMARY_CSP
     assert headers["X-Frame-Options"] == "DENY" and headers["Cache-Control"] == "no-store"
-    assert body.decode() == render_html(settings) == render_page_html(settings)
+    assert body.decode() == render_summary_html()
     status, headers, body = client.request("/api/page")
     assert status == 200 and headers["Content-Type"] == "application/json"
     assert headers["Cache-Control"] == "no-store" and headers["X-Content-Type-Options"] == "nosniff"
@@ -852,13 +851,13 @@ def test_old_team_links_redirect_to_the_one_page(serve: Callable[..., Client], l
                                                  make_settings: Callable[..., Settings]) -> None:
     client = serve(make_settings(), ledger)
     status, headers, body = client.request("/team")
-    assert (status, headers["Location"], body) == (302, "/reports", b"")
+    assert (status, headers["Location"], body) == (302, "/", b"")
     locked = serve(make_settings(DASHBOARD_TOKEN=TOKEN), ledger)
     assert locked.request("/team")[0] == 401
     status, headers, _ = locked.request(f"/team?token={TOKEN}")
-    assert status == 302 and headers["Location"] == "/reports"  # never echo the token back
+    assert status == 302 and headers["Location"] == "/"  # never echo the token back
     cookie = headers["Set-Cookie"].split(";", 1)[0]
-    assert TOKEN not in cookie and locked.request("/reports", headers={"Cookie": cookie})[0] == 200
+    assert TOKEN not in cookie and locked.request("/", headers={"Cookie": cookie})[0] == 200
 
 
 def test_token_gate_on_every_route(serve: Callable[..., Client], ledger: Ledger,
@@ -866,13 +865,16 @@ def test_token_gate_on_every_route(serve: Callable[..., Client], ledger: Ledger,
     seed(ledger)
     client = serve(make_settings(DASHBOARD_TOKEN=TOKEN), ledger)
     assert client.request("/healthz")[0] == 200
-    routes = ("/", "/world", "/reports", "/api/page", "/api/state", "/api/team", "/team")
+    redirects = ("/reports", "/office", "/office3d", "/team")
+    routes = ("/", "/world", "/summary", "/api/page", "/api/state", "/api/team", *redirects)
     for path in routes:
         for query in ("", "?token=wrong", "?token=" + TOKEN[:-1]):
             status, headers, body = client.request(path + query)
             assert status == 401 and b"Locked" in body and "Set-Cookie" not in headers, path + query
         status, headers, _ = client.request(f"{path}?token={TOKEN}")
-        assert status == (302 if path == "/team" else 200) and "Set-Cookie" in headers, path
+        assert status == (302 if path in redirects else 200) and "Set-Cookie" in headers, path
+        if path in redirects:
+            assert headers["Location"] == "/" and TOKEN not in headers["Location"]
         cookie = headers["Set-Cookie"].split(";", 1)[0]
         assert client.request(path, headers={"Cookie": cookie})[0] in (200, 302)
         assert client.request(path, headers={"Cookie": f"{COOKIE_NAME}=forged"})[0] == 401
@@ -891,7 +893,7 @@ def test_no_secret_in_any_response(serve: Callable[..., Client], ledger: Ledger,
     client = serve(settings, ledger)
     responses = [client.request(path) for path in (
         "/", f"/?token={TOKEN}", "/api/page", f"/api/page?token={TOKEN}", f"/team?token={TOKEN}",
-        f"/api/team?token={TOKEN}", f"/api/state?token={TOKEN}", f"/reports?token={TOKEN}")]
+        f"/api/team?token={TOKEN}", f"/api/state?token={TOKEN}", f"/reports?token={TOKEN}", f"/summary?token={TOKEN}")]
     state = json.loads(responses[3][2])
     assert state["mode"] == "LIVE" and state["learning"]["source"] == "card"
     assert "[REDACTED]" in state["learning"]["headline"] and "[REDACTED]" in state["trades"]["closed"][0]["coin"]
@@ -939,7 +941,7 @@ def test_ledger_text_never_becomes_markup(serve: Callable[..., Client], ledger: 
     served as JSON (nosniff) with ``<`` escaped, so even a browser that guessed would see no tag."""
     seed(ledger, symbol=XSS)
     client = serve(settings, ledger)
-    _, _, html = client.request("/reports")
+    _, _, html = client.request("/summary")
     assert XSS.encode() not in html and b"onerror" not in html
     _, headers, body = client.request("/api/page")
     assert headers["Content-Type"] == "application/json" and headers["X-Content-Type-Options"] == "nosniff"

@@ -27,13 +27,13 @@ from nightcrawler.office import (
 )
 from nightcrawler.page import MEMBERS
 from nightcrawler.teamroom import TeamRoom
-from tests.test_page import (  # noqa: F401 (fixture)
+from tests.test_page import (
     NOW,
     TOKEN,
     FakeClock,
-    ledger,
     live_settings,
 )
+from tests.test_page import ledger as ledger  # noqa: PLC0414 - explicitly re-export the pytest fixture
 
 MEMBER_IDS = [mid for mid, _, _ in MEMBERS]
 
@@ -167,13 +167,11 @@ def test_office_route_auth_headers_and_methods(
     status, _, body = client.request("/office")
     assert status == 401 and b"Locked" in body
     status, headers, body = client.request(f"/office?token={TOKEN}")
-    assert status == 200 and headers["Content-Type"].startswith("text/html")
-    assert (
-        headers["Content-Security-Policy"] == OFFICE_CSP and b'<div id="stage">' in body
-    )
+    assert (status, headers["Location"], body) == (302, "/", b"")
+    assert TOKEN not in headers["Location"]
     cookie = headers["Set-Cookie"].split(";")[0]
     status, headers, _ = client.request("/office", headers={"Cookie": cookie})
-    assert status == 200 and "Set-Cookie" not in headers
+    assert status == 302 and headers["Location"] == "/" and "Set-Cookie" not in headers
     status, headers, _ = client.request(
         "/office", method="POST", headers={"Cookie": cookie}
     )
@@ -221,11 +219,7 @@ def test_office_without_token_is_open_like_the_page(
 ) -> None:
     client = serve(settings, ledger)
     status, headers, body = client.request("/office")
-    assert (
-        status == 200
-        and b"THE SAFE" in body
-        and headers["Content-Security-Policy"] == OFFICE_CSP
-    )
+    assert (status, headers["Location"], body) == (302, "/", b"")
 
 
 def test_the_page_links_to_the_office(settings: Settings) -> None:

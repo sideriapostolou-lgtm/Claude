@@ -203,12 +203,12 @@ def test_office3d_route_auth_headers_and_methods(serve: Callable[..., Client], l
     status, _, body = client.request("/office3d")
     assert status == 401 and b"Locked" in body
     status, headers, body = client.request(f"/office3d?token={TOKEN}")
-    assert status == 200 and headers["Content-Type"].startswith("text/html")
-    assert headers["Content-Security-Policy"] == OFFICE3D_CSP and b'<canvas id="view">' in body
+    assert (status, headers["Location"], body) == (302, "/", b"")
+    assert TOKEN not in headers["Location"]
     assert headers["X-Frame-Options"] == "DENY" and headers["Cache-Control"] == "no-store"
     cookie = headers["Set-Cookie"].split(";")[0]
     status, headers, _ = client.request("/office3d", headers={"Cookie": cookie})
-    assert status == 200 and "Set-Cookie" not in headers
+    assert status == 302 and headers["Location"] == "/" and "Set-Cookie" not in headers
     status, headers, _ = client.request("/office3d", method="POST", headers={"Cookie": cookie})
     assert status == 405 and headers["Allow"] == "GET"
     for bad in ("/office3d.html", "/office3d/", "/office3d/x"):
@@ -241,8 +241,7 @@ def test_office3d_without_token_is_open_like_the_page(serve: Callable[..., Clien
                                                       settings: Settings) -> None:
     client = serve(settings, ledger)
     status, headers, body = client.request("/office3d")
-    assert status == 200 and b"the town and its cast are drawings" in body
-    assert headers["Content-Security-Policy"] == OFFICE3D_CSP
+    assert (status, headers["Location"], body) == (302, "/", b"")
     status, headers, _ = client.request(ASSET)
     assert status == 200 and headers["Content-Type"].startswith("application/javascript")
 
@@ -256,5 +255,5 @@ def test_the_page_links_the_3d_world_and_the_town_stays_reachable(
     assert 'href="office3d"' not in page
     assert 'href="office"' in render_office3d_html(settings)  # and the way back from the town
     client = serve(settings, ledger)
-    status, _, body = client.request("/office3d")  # the town is still served at its own address
-    assert status == 200 and b"the town and its cast are drawings" in body
+    status, headers, body = client.request("/office3d")  # older bookmarks open the current town
+    assert (status, headers["Location"], body) == (302, "/", b"")

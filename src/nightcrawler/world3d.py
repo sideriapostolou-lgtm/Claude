@@ -885,7 +885,7 @@ function isNum(v) { return typeof v === "number" && isFinite(v); }
 function fail(text) {
   boot.hidden = false; boot.textContent = text + " "; boot.className = "bad"; canvas.hidden = true;
   body.classList.add("world-failed");
-  const reports = document.createElement("a"); reports.href = "/reports"; reports.textContent = "Open detailed reports"; boot.appendChild(reports);
+  const reports = document.createElement("a"); reports.href = "/summary"; reports.textContent = "View your money and team"; boot.appendChild(reports);
 }
 // the page's bus: a section that adds to the world listens here instead of editing the others (THE CHANNEL below;
 // whatever comes next): "start" once before the first frame, "data" after each poll (d, first), "frame" after each
@@ -900,9 +900,9 @@ let renderer = null;
 try { renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: LITE, powerPreference: "high-performance" }); }
 catch (e) { renderer = null; }
 if (!renderer || !renderer.getContext()) {
-  fail("This browser cannot draw the 3D world (no WebGL). The Office page shows the same team as pictures.");
+  fail("This browser cannot draw the 3D world (no WebGL). Your money and team are available in the simple view.");
 } else {
-  try { main(); } catch (e) { console.error(e); fail("The 3D world could not start in this browser. The Office page shows the same team as pictures."); }
+  try { main(); } catch (e) { console.error(e); fail("The 3D world could not start in this browser. Your money and team are available in the simple view."); }
 }
 
 function main() {
@@ -3935,8 +3935,7 @@ _M_LIFE = r"""
     realBtn.className = "pill real" + (w.red ? " on" : "") + (r.paused && r.paused_kind !== "full" ? " paused" : "");
     realBtn.setAttribute("aria-label", r.label + ": " + w.title + ": tap for the details");
     // the tab's title too: real money only where the data says it (the page's own title claims nothing)
-    document.title = "Night Shift: Skyport · " + (r.on ? "real money on" : r.open_bets > 0 ? "real bets still open"
-      : r.reported === false ? "real money: no report yet" : "pretend money");
+    document.title = "Nightcrawler · Your town";
     if (panelKind) renderPanel();
     if (!guideEl.hidden) renderGuide();
   }
@@ -5055,8 +5054,8 @@ _M_RECORDS = r"""
   const recBtn = document.createElement("button"); recBtn.type = "button"; recBtn.id = "postcard";
   recBtn.title = "Postcard: save this view as a picture with the real-money line on it"; recBtn.setAttribute("aria-label", recBtn.title);
   // (before the speech bubbles in the page, with no z-index of its own: a bubble passes over the button)
-  recBtn.appendChild(document.createElement("i")); body.insertBefore(recBtn, bubblesEl);
-  const recToast = document.createElement("div"); recToast.id = "rec-toast"; recToast.setAttribute("role", "status"); recToast.hidden = true; body.insertBefore(recToast, bubblesEl);
+  recBtn.appendChild(document.createElement("i")); bubblesEl.parentNode.insertBefore(recBtn, bubblesEl);
+  const recToast = document.createElement("div"); recToast.id = "rec-toast"; recToast.setAttribute("role", "status"); recToast.hidden = true; bubblesEl.parentNode.insertBefore(recToast, bubblesEl);
   const REC_FOOT = "nightcrawler · a visualisation of the bot's own ledger";
   function recRealLine(r) {  // "Real money: down $2.52 since start · $4.82 in bets" (plain.real's own figures, "real money" said once)
     if (!r) return "Real money: not in this version";
@@ -5173,7 +5172,7 @@ _M_RECORDS = r"""
   filmText.className = "ftext"; filmReal.className = "freal"; filmPretend.className = "fpretend"; filmNote.className = "fnote";
   filmRow.appendChild(filmTag); filmRow.appendChild(filmProg); filmRow.appendChild(filmClose);
   [filmRow, filmWho, filmText, filmReal, filmPretend, filmNote].forEach(function (n) { filmEl.appendChild(n); });
-  body.appendChild(filmEl);
+  bubblesEl.parentNode.appendChild(filmEl);
   filmClose.onclick = function () { filmStop(true); };
   function filmWhen(ts, tz, opts) {  // a time or a date in the recap's own zone (the owner's), else the viewer's
     try { return new Date(ts * 1000).toLocaleString([], Object.assign({ timeZone: tz }, opts)); }
@@ -8466,7 +8465,7 @@ _M_CINEMA = r"""
   BUS.on("data", cineOnData);
   BUS.on("frame", cineFrame);
   window.addEventListener("resize", cineMeasure);
-  cineSet(!cineStored(), false);
+  cineSet(true, false);
   window.__skyport = Object.assign(window.__skyport || {}, { cinema: {
     // (for a test or a screenshot: the mode, the HUD's and the caption's words, the tags on screen, the director's holds)
     on: function () { return CINE.on; }, set: function (on) { cineSet(on, true); },
@@ -8516,9 +8515,8 @@ def _json_block(value: object) -> str:
 
 def render_world_html(settings: Settings) -> str:
     """The complete world page (static; the module loads live data, three.js and any real models). No ledger data."""
-    # the tab's title claims real money before the first answer only when the bot itself runs live (real money is then
-    # on whatever the desks say); otherwise the module says it from the data (plain.real) and the page claims nothing
-    title = "Night Shift: Skyport · real money on" if settings.is_live else "Night Shift: Skyport"
+    # Venue-specific money modes come from current reports in the town header, never a global tab claim.
+    title = "Nightcrawler · Your town"
     members = "".join(
         f'<span data-id="{html.escape(mid)}" data-name="{html.escape(name)}" data-role="{html.escape(role)}"></span>'
         for mid, name, role in MEMBERS
@@ -8535,8 +8533,8 @@ def render_world_html(settings: Settings) -> str:
         # The tycoon overview uses cinema's real-money visibility rules, with its own controls.
         f'<body data-refresh="{REFRESH_S}" data-pipeline="{",".join(PIPELINE)}" class="cinema tycoon">\n'
         '<canvas id="view"></canvas><div id="vignette"></div>\n'
-        '<header id="bar"><div class="row1">'
-        '<a class="back" href="/reports" title="Detailed reports" aria-label="Detailed reports">←</a>'
+        '<div class="legacy-world-ui" hidden inert aria-hidden="true"><header id="bar"><div class="row1">'
+        '<span class="back" aria-hidden="true">←</span>'
         '<button type="button" class="pill real" id="real" aria-controls="panel" aria-expanded="false">'
         '<b id="real-label">Money</b><small id="real-sub">loading…</small><small id="real-result"></small></button>'
         '<button type="button" class="pill practice" id="practice" aria-controls="panel" aria-expanded="false">'
@@ -8553,12 +8551,12 @@ def render_world_html(settings: Settings) -> str:
         '<button type="button" id="goal" aria-controls="panel" hidden><span class="glabel" id="goal-label"></span>'
         '<span class="gpips" id="goal-pips" aria-hidden="true"></span><span class="gbeat" id="goal-beat"></span>'
         '<b class="gfig" id="goal-fig"></b></button>'
-        '<p id="status" role="status" hidden></p></header>\n'
+        '<p id="status" role="status" hidden></p></header></div>\n'
         '<div id="panel" role="dialog" aria-labelledby="panel-title" hidden>'
         '<button type="button" class="close" id="panel-close" aria-label="Close">×</button>'
         '<h2 id="panel-title"></h2><div id="panel-body"></div>'
-        '<p class="dim"><span id="clock"></span> · <a href="office">the office</a></p></div>\n'
-        '<div id="guide" role="dialog" aria-labelledby="guide-title" hidden>'
+        '<span id="clock" hidden></span></div>\n'
+        '<div class="legacy-world-ui" hidden inert aria-hidden="true"><div id="guide" role="dialog" aria-labelledby="guide-title" hidden>'
         '<button type="button" class="close" id="guide-close" aria-label="Close the guide">×</button>'
         '<div class="cards" id="guide-cards">'
         '<section class="gcard"><h2 id="guide-title">What you are looking at</h2><div id="guide-team"></div></section>'
@@ -8567,13 +8565,13 @@ def render_world_html(settings: Settings) -> str:
         '<section class="gcard"><h2>The team\'s hearts</h2><div id="guide-hearts"></div></section>'
         '<section class="gcard"><h2>The camera follows what is happening</h2><div id="guide-camera"></div></section>'
         '</div><div class="gnav"><span class="dots" id="guide-dots"><i class="on"></i><i></i><i></i><i></i><i></i></span>'
-        '<button type="button" id="guide-next">Next</button></div></div>\n'
+        '<button type="button" id="guide-next">Next</button></div></div></div>\n'
         f'<div id="members" hidden>{members}</div>\n'
         f'<script id="cast" type="application/json">{_json_block(WORLD_CAST)}</script>\n'
         f'<script id="rooms" type="application/json">{_json_block(WORLD_ROOMS)}</script>\n'
         f'<script id="models" type="application/json">{_json_block(models_on_disk())}</script>\n'
         # (THE CINEMA's "details" button; in the full view it stays over the bubbles: the way back is always in reach)
-        '<button type="button" id="details" aria-pressed="false">details</button>\n'
+        '<div class="legacy-world-ui" hidden inert aria-hidden="true"><button type="button" id="details" aria-pressed="false">details</button>\n'
         '<div id="labels"></div>\n<div id="bubbles"></div>\n<div id="drop"></div>\n'
         '<div id="card"><div class="room"><b id="live">LIVE CAM</b><span class="name">NIGHT SHIFT: SKYPORT</span></div>'
         '<div class="who">Loading…</div>'
@@ -8583,18 +8581,18 @@ def render_world_html(settings: Settings) -> str:
         '<div id="replay" role="status"><b>JUST FINISHED</b><span class="sep">·</span><span id="replay-what"></span>'
         '<span class="sep">·</span><span id="replay-outcome"></span><span class="sep">·</span>'
         '<span id="replay-money" class="money"></span></div>\n'
-        '<div id="ticker" aria-label="The latest events" hidden><div id="ticker-track"></div></div>\n'
+        '<div id="ticker" aria-label="The latest events" hidden><div id="ticker-track"></div></div></div>\n'
         '<p id="boot">Loading the 3D world… It needs a browser with JavaScript modules and WebGL; '
-        'the <a href="office">Office</a> page shows the same team as pictures.</p>\n'
+        'your <a href="/summary">money and team</a> are also available in a simple view.</p>\n'
         "<p id=\"honest\">Drawings acting out the bot's own records; every word is its data.</p>\n"
         # THE CINEMA: the name tags, the letterbox bars (the real-money HUD, the caption) and the first-visit card (the
         # module fills them as text only)
-        '<div id="tags" aria-hidden="true"></div>\n'
+        '<div class="legacy-world-ui" hidden inert aria-hidden="true"><div id="tags" aria-hidden="true"></div>\n'
         '<div id="cine"><div id="lb-top"><button type="button" id="hud" aria-controls="panel">'
         '<span class="htag" id="hud-tag">ACCOUNT CASH</span><b id="hud-cash">—</b><span id="hud-rest"></span></button></div>'
         '<div id="lb-bot"><div id="cap" aria-live="off"><p id="cap-1"><b>NIGHT SHIFT: SKYPORT</b></p><p id="cap-2" hidden></p>'
         "</div></div></div>\n"
         '<div id="intro" role="dialog" aria-labelledby="intro-title" hidden><h2 id="intro-title">Skyport, live</h2>'
-        '<div id="intro-body"></div><button type="button" id="intro-go">Watch</button></div>\n'
+        '<div id="intro-body"></div><button type="button" id="intro-go">Watch</button></div></div>\n'
         f'{TYCOON_HTML}<script type="module">{_MODULE}</script>\n</body>\n</html>\n'
     )

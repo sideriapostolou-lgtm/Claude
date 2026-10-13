@@ -81,18 +81,18 @@ def _first(s: str) -> str:  # a long line's first sentence (cineSplit)
 # --------------------------------------------------------------------------- the optional camera tour
 
 
-def test_cinema_remains_available_under_the_default_town_view(page: str, module: str, section: str) -> None:
+def test_legacy_scene_helpers_keep_money_filters_but_cannot_restore_old_controls(page: str, module: str, section: str) -> None:
     assert re.search(r'<body [^>]*class="cinema tycoon">', page)  # cinema's money filters also protect the overview
     assert '<button type="button" id="details" aria-pressed="false">details</button>' in page
     for part in ('<div id="lb-top"><button type="button" id="hud" aria-controls="panel">', '<b id="hud-cash">—</b>',
                  '<div id="lb-bot"><div id="cap" aria-live="off">', '<div id="tags" aria-hidden="true"></div>',
                  '<div id="intro" role="dialog" aria-labelledby="intro-title" hidden>'):
         assert part in page, part
-    # The optional cinema retains its settings; the new town view takes priority before the first frame.
-    assert "cineSet(!cineStored(), false);" in section
+    # Old display preferences cannot bring back the retired controls.
+    assert "cineSet(true, false);" in section
     assert 'const CINE_KEY = "nightcrawler.world.details"' in section
-    assert module.index("cineSet(!cineStored(), false);") < module.index("tycoonBuildCrew(); tycoonView(true);")
-    assert module.index("tycoonBuildCrew(); tycoonView(true);") < module.index(_END)
+    assert module.index("cineSet(true, false);") < module.index("tycoonBuildCrew(); tycoonView();")
+    assert module.index("tycoonBuildCrew(); tycoonView();") < module.index(_END)
     assert module.index(_HEADER) > module.index("= THE LOOP (paused") and module.index(_HEADER) < module.index(_END)
     # the guide waits behind "details": a first visit in cinema mode gets the three-line card instead
     assert _js_body(module, "  function openGuide() {").split("\n")[1].strip().startswith(

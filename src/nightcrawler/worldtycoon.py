@@ -26,11 +26,10 @@ TYCOON_HTML = """
   <div id="ty-event"><span class="ty-event-dot" aria-hidden="true"></span><span id="ty-event-text">Waiting for the bot’s report…</span><span id="ty-event-age"></span></div>
   <p id="ty-growth">Tap a building to visit your team</p>
 </section>
-<button type="button" id="ty-mode">Town view</button>
 """
 
 TYCOON_STYLE = r"""
-#ty-header, #ty-dock, #ty-markers, #ty-selection, #ty-mode { display: none; }
+#ty-header, #ty-dock, #ty-markers, #ty-selection { display: none; }
 body.tycoon { --ty-ink: #203846; --ty-muted: #607787; --ty-edge: #cedde4; }
 body.tycoon #ty-header, body.tycoon #ty-dock, body.tycoon #ty-selection { display: block; position: fixed; z-index: 10; color: var(--ty-ink);
   background: #f8fcff; border: 2px solid #fff; box-shadow: 0 3px 0 #aed0df, 0 6px 20px #22466426; border-radius: 15px; }
@@ -82,8 +81,15 @@ body.tycoon #honest, body.tycoon #postcard, body.tycoon #bubbles { display: none
 body.tycoon #vignette { background: none; }
 body.world-failed #ty-header, body.world-failed #ty-dock, body.world-failed #ty-markers { display: none; }
 body.tycoon #panel { top: calc(16px + env(safe-area-inset-top)); bottom: auto; max-height: calc(100% - 40px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
-  z-index: 20; border-radius: 16px; background: #16262a; }
-body.tycoon #panel-close { min-height: 44px; min-width: 44px; }
+  z-index: 20; border-radius: 16px; background: #f8fcff; color: #203846; border-color: #c9dfe9; }
+body.tycoon #panel-close { min-height: 44px; min-width: 44px; background: #258ec7; color: #fff; border-color: #258ec7; }
+body.tycoon #panel h2, body.tycoon #panel h3 { color: #203846; }
+body.tycoon #panel .dim { color: #5e7482; } body.tycoon #panel .warn { color: #8a5010; }
+body.tycoon #panel .ty-menu-row { color: #27495f; border-color: #d6e4eb; font-weight: 700; }
+body.tycoon #panel .ty-person { color: #27495f; background: #edf5f8; border-color: #d4e3eb; border-left-color: var(--ty-department); }
+body.tycoon #panel .ty-person small { color: #5e7482; }
+body.tycoon #panel .ty-flow-card { border-color: #d1e2e9; }
+.legacy-world-ui { display: none !important; }
 #ty-header button:focus-visible, #ty-selection button:focus-visible, .ty-marker:focus-visible, .ty-menu-row:focus-visible, .ty-person:focus-visible { outline: 3px solid #ffb72e; outline-offset: 3px; }
 .ty-menu-row { display: flex; align-items: center; justify-content: space-between; width: 100%; min-height: 48px; padding: 10px 0; border: 0; border-bottom: 1px solid #ffffff20;
   color: #f4f6ed; background: none; font: inherit; font-size: 15px; text-decoration: none; text-align: left; cursor: pointer; }
@@ -97,8 +103,6 @@ body.tycoon #panel-close { min-height: 44px; min-width: 44px; }
 .ty-position small { color: #bbc9bd; }
 .ty-flow-card { padding: 12px; margin-top: 12px; border: 1px solid #c8dbc033; border-left: 4px solid #9acbae; border-radius: 10px; }
 .ty-flow-card h3 { margin: 0 0 8px; font-size: 16px; } .ty-flow-card p { margin: 8px 0; } .ty-flow-card.practice { border-left-color: #bdabdf; }
-body:not(.tycoon) #ty-mode { display: block; position: fixed; top: calc(65px + env(safe-area-inset-top)); right: 10px; z-index: 10;
-  min-height: 44px; padding: 8px 12px; border: 1px solid #a3d8dd; border-radius: 9px; background: #163038; color: #fff; font: inherit; cursor: pointer; }
 @media (min-width: 760px) {
   body.tycoon #ty-header { left: 20px; right: auto; width: 365px; }
   body.tycoon #ty-dock { left: 50%; right: auto; transform: translateX(-50%); width: 430px; }
@@ -129,20 +133,16 @@ TYCOON_UI = r"""
   }
   function tycoonChoose(key) {
     if (key === "observatory") { openPanel("ty-research"); return; }
-    if (!TYCOON.on) tycoonView(true);
+    if (!TYCOON.on) tycoonView();
     closePanel(); tycoonSelect(key); tycoonDraw();
     for (const p of TY_UI.people) p.b.setAttribute("aria-pressed", String(TYCOON.selected === p.key));
   }
-  function tycoonView(on) {
+  function tycoonView() {
+    // One app, one view. Keep the old scene helpers only for the cast's animation machinery.
     filmStop(true); closePanel(); closeGuide(); cineIntroClose(false);
-    tycoonEnable(on); cineSet(true, false);
-    tycoonCutaway(on);
-    tycoonPark(on);
-    // Arena animation is practice. Its floating dollar labels must not sit under the real-money HUD.
-    if (TP.labels) TP.labels.visible = !on;
-    if (TP.plates) TP.plates.visible = !on;
-    el("ty-mode").textContent = on ? "Camera tour" : "Town view";
-    if (!on) goLive();
+    tycoonEnable(true); cineSet(true, false); tycoonCutaway(true); tycoonPark(true);
+    if (TP.labels) TP.labels.visible = false;
+    if (TP.plates) TP.plates.visible = false;
     tycoonMeasure(); tycoonDraw();
   }
   function tycoonBuildCrew() {
@@ -230,7 +230,9 @@ TYCOON_UI = r"""
   function tycoonPanel() {
     if (!panelKind || panelKind.indexOf("ty-") !== 0) return false;
     // Data polls must not replace focused navigation while someone is choosing a destination.
-    if (panelKind === "ty-menu" && panelTitle.textContent === "Your town" && panelBody.querySelector(".ty-menu-crew")) return true;
+    if (panelKind === "ty-menu" && panelTitle.textContent === "Your town" && panelBody.querySelector(".ty-menu-row")) return true;
+    if (panelKind === "ty-team" && panelTitle.textContent === "Your team" && panelBody.querySelector(".ty-menu-crew")) return true;
+    if (panelKind === "ty-help" && panelTitle.textContent === "Help" && panelBody.querySelector("h3")) return true;
     const focusedRow = typeof document !== "undefined" && document.activeElement
       && document.activeElement.classList.contains("ty-menu-row") && panelBody.contains(document.activeElement)
       ? document.activeElement.textContent : null;
@@ -245,14 +247,22 @@ TYCOON_UI = r"""
     };
     if (panelKind === "ty-menu") {
       panelTitle.textContent = "Your town";
-      row("Accounts & open bets", "ty-accounts"); row("Today’s result & garden", "ty-today");
-      row("Research desks", "ty-research"); row("Detailed reports ↗", "/reports");
-      para(panelBody, "VISIT YOUR TEAM", "dim");
+      row("Money", "ty-accounts"); row("Team", "ty-team"); row("Help", "ty-help");
+    } else if (panelKind === "ty-team") {
+      panelTitle.textContent = "Your team";
+      para(panelBody, "Tap a teammate or their building to visit their workstation.", "dim");
       const crew = document.createElement("div"); crew.className = "ty-menu-crew";
       TY_UI.people.forEach(function (p) { crew.appendChild(p.b); }); panelBody.appendChild(crew);
-      row("Camera tour", null, function () { tycoonView(false); });
-      row("How the town works", "ty-flow");
-      row("Stop new real orders · instructions", "ty-stop");
+      para(panelBody, "The observatory shows the Bitcoin and weather research desks. Research is separate from real money.", "dim");
+    } else if (panelKind === "ty-help") {
+      panelTitle.textContent = "Help";
+      para(panelBody, "Tap a building to see who works there. Drag to look around; pinch to zoom. Town returns to the full view.");
+      para(panelBody, "Walking and chatting are decoration. Work descriptions and money come from the bot’s recorded reports.");
+      para(panelBody, "Garden upgrades reflect today’s recorded Polymarket bot profit: 1¢, 25¢, $1, $5 and $10. Losses can remove them; they reset at midnight Pacific. Practice money and your own bets do not count.", "dim");
+      const title = document.createElement("h3"); title.textContent = "Stop new real orders"; panelBody.appendChild(title);
+      para(panelBody, "On Railway’s bot service, set both POLYDESK_MODE = paper and SPEEDDESK_KALSHI_MODE = paper.");
+      para(panelBody, "After the restart, verify both desks are in practice and Kalshi’s resting bids were cancelled and remaining exposure reconciled.");
+      para(panelBody, "Already filled bets still win or lose at settlement. This page gives instructions; it does not change trading settings.", "warn");
     } else if (panelKind === "ty-research") {
       panelTitle.textContent = "Research desks";
       (s.research || []).forEach(function (r) {
@@ -262,7 +272,6 @@ TYCOON_UI = r"""
         para(panelBody, r.asOf ? "Reported " + tyAge(r.age) : "No current report", "dim");
       });
       para(panelBody, "Research and practice results never count as real profit or unlock gardens.", "dim");
-      row("Open detailed reports ↗", "/reports");
     } else if (panelKind === "ty-stop") {
       panelTitle.textContent = "Stop new real orders";
       para(panelBody, "On Railway’s bot service, set both:");
@@ -270,12 +279,22 @@ TYCOON_UI = r"""
       para(panelBody, "Wait for the restart and verify that both desks report practice. Check that Kalshi’s resting bids were cancelled and its remaining exposure was reconciled.");
       para(panelBody, "Already filled bets stay open and still win or lose at settlement. This page shows instructions; it does not change trading settings.", "warn");
     } else if (panelKind === "ty-accounts") {
-      panelTitle.textContent = "Your accounts";
+      panelTitle.textContent = "Your money";
       para(panelBody, "POLYMARKET US", "dim");
       para(panelBody, "Available cash: " + fmtUsd(s.cash));
       para(panelBody, "Open markets: " + (s.count == null ? "not reported" : s.count) + " · value " + fmtUsd(s.value));
       para(panelBody, "Shared with your own bets. Cash is not profit. " + (s.stateText || "Money mode not reported."), "dim");
-      row("Polymarket cash details", "ty-cash"); row("Polymarket open bets", "ty-bets");
+      para(panelBody, "Bot profit today (midnight Pacific): " + fmtSigned(s.today));
+      para(panelBody, "Profit excludes your own bets, deposits and practice. It uses the bot’s recorded booking time; late discoveries can differ from venue history.", "dim");
+      para(panelBody, s.cashAsOf ? "Cash checked " + tyAge(s.cashAge) + "." : "Cash update time unknown.", "dim");
+      para(panelBody, s.venueAsOf ? "Open bets checked " + tyAge(s.venueAge) + "." : "Open-bet update time unknown.", "dim");
+      if (s.today === null || s.todayStale) para(panelBody, "Waiting for a complete, current Pacific-day profit report.", "warn");
+      if (s.pending && s.pending.count) para(panelBody, s.pending.count + " bot orders still awaiting confirmation.", "warn");
+      if (s.positions.length) {
+        para(panelBody, "Recorded bets · may differ from current account holdings", "dim");
+        s.positions.forEach(function (p) { para(panelBody, p.side + " · " + p.question); });
+        para(panelBody, s.positionsNote, "dim");
+      }
       const k = s.accounts && s.accounts.kalshi;
       para(panelBody, "KALSHI", "dim");
       if (k) {
@@ -314,7 +333,7 @@ TYCOON_UI = r"""
         "The money at the top comes from this account. Cash and open bets include your own activity; Bot today counts only the bot’s realized real-money result."], false);
       const kalshi = s.accounts && s.accounts.kalshi;
       lane("Bitcoin speed desk · Kalshi", [kalshi ? kalshi.stateText : "Waiting for a Kalshi report.",
-        "Kalshi has its own cash, positions and limits. See Accounts in the menu. Its UTC-day result stays separate from the Pacific-day number above."], kalshi && kalshi.practice);
+        "Kalshi has its own cash, positions and limits. See Money in the menu. Its UTC-day result stays separate from the Pacific-day number above."], kalshi && kalshi.practice);
       const coinCrew = s.crew.filter(function (c) { return ["pip", "nyx", "rook", "jet"].includes(c.key); });
       const practice = coinCrew.length === 4 && coinCrew.every(function (c) { return c.practice === true; });
       const realCoins = coinCrew.some(function (c) { return c.practice === false; });
@@ -351,7 +370,7 @@ TYCOON_UI = r"""
         : "Waiting for a complete Pacific-day report.", "warn");
       para(panelBody, "This uses the time the bot records the result. A result discovered late can appear on a different day from Polymarket’s history.", "dim");
       para(panelBody, "Garden upgrades unlock at 1¢, 25¢, $1, $5 and $10 of verified net Polymarket bot profit today. They are decorations, not money spent. They can recede after a loss and reset at midnight Pacific. Practice gains and your own bets never unlock them.", "dim");
-      para(panelBody, "Trading safety limits and the camera tour keep their UTC day; this card uses your Pacific day.", "dim");
+      para(panelBody, "Trading safety limits keep their UTC day; this result uses your Pacific day.", "dim");
       para(panelBody, s.todayAsOf ? "Profit report checked " + tyAge(s.todayAge) + "." : "Profit report time not available.", "dim");
       para(panelBody, "Open bets can still win or lose. This number is not a forecast.", "dim");
     } else {
@@ -389,16 +408,15 @@ TYCOON_UI = r"""
       if (visible) { m.el.style.transform = "translate3d(" + Math.round(x) + "px," + Math.round(y) + "px,0)"; occupied.push({ x: x, y: y, w: m.w }); }
     }
   }
-  el("ty-mode").onclick = function () { tycoonView(!tycoonActive()); };
   el("ty-home").onclick = function () { tycoonChoose(null); };
   el("ty-more").onclick = function () { openPanel("ty-menu"); };
   el("ty-info").onclick = function () { openPanel("ty-flow"); };
   el("ty-alert").onclick = function () { openPanel("ty-alerts"); };
   BUS.on("data", function () { tycoonDraw(); }); BUS.on("frame", tycoonFrame);
   window.addEventListener("resize", tycoonMeasure);
-  tycoonBuildCrew(); tycoonView(true);
+  tycoonBuildCrew(); tycoonView();
   window.__skyport = Object.assign(window.__skyport || {}, { tycoon: {
-    on: tycoonActive, select: tycoonChoose, set: tycoonView, camera: tycoonCameraState,
+    on: tycoonActive, select: tycoonChoose, camera: tycoonCameraState,
     summary: function () { return tycoonSummary(data, Date.now() / 1000); },
     bounds: function () { return { top: TY_UI.top, bottom: TY_UI.bottom }; }, park: tycoonParkState,
   } });
