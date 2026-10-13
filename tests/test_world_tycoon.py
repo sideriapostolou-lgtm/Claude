@@ -39,9 +39,9 @@ def test_town_is_ready_before_the_first_frame_and_keeps_one_shared_details_panel
     assert 'id="ty-selection" aria-label="Selected workstation" hidden' in TYCOON_HTML
     assert 'id="ty-alert" aria-controls="panel" hidden' in TYCOON_HTML
     assert 'el("ty-alert").onclick = function () { openPanel("ty-alerts"); };' in module
-    assert module.index("tycoonBuildCrew(); tycoonView(true);") < module.index('resize(); BUS.emit("start", 0, 0);')
+    assert module.index("tycoonBuildCrew(); tycoonView();") < module.index('resize(); BUS.emit("start", 0, 0);')
     # Returning viewers must not regain the old automatic tour merely because they saved a details preference.
-    assert module.index("cineSet(!cineStored(), false);") < module.index("tycoonBuildCrew(); tycoonView(true);")
+    assert module.index("cineSet(true, false);") < module.index("tycoonBuildCrew(); tycoonView();")
     for hidden in ("#cine", "#tags", "#intro", "#details", "#bar"):
         assert f"body.tycoon {hidden}" in TYCOON_STYLE
     assert "min-height: 44px" in TYCOON_STYLE
@@ -102,7 +102,7 @@ console.log(JSON.stringify({ gathered: gathered, pending: GOAL.pending, words: w
 
 
 @needs_node
-def test_switching_camera_modes_hides_practice_labels_without_exposing_practice_money(
+def test_town_cannot_switch_back_to_legacy_ui_or_expose_practice_money(
     module: str, tmp_path: Path,
 ) -> None:
     hooks = "\n".join(_js_body(module, f"  function {name}(") for name in
@@ -137,10 +137,9 @@ tycoonView(true); const returned = snapshot();
 console.log(JSON.stringify({ town: town, tour: tour, returned: returned }));
 """, tmp_path)
     assert out["town"] == {"town": True, "cinema": True, "labels": False, "plates": False,
-                           "practiceLayer": False, "realOnly": True, "button": "Camera tour", "wentLive": 0}
-    assert out["tour"] == {"town": False, "cinema": True, "labels": True, "plates": True,
-                           "practiceLayer": False, "realOnly": True, "button": "Town view", "wentLive": 1}
-    assert out["returned"] == {**out["town"], "wentLive": 1}
+                           "practiceLayer": False, "realOnly": True, "button": "", "wentLive": 0}
+    assert out["tour"] == out["town"]
+    assert out["returned"] == out["town"]
 
 
 @needs_node

@@ -98,7 +98,7 @@ def test_the_record_room_is_its_own_section_called_once_a_frame(settings: Settin
     # a speech bubble passes over the postcard button: the button comes before the bubbles, with no z-index
     postcard_css = re.search(r"#postcard \{[^}]*\}", page)
     assert postcard_css is not None and "z-index" not in postcard_css.group(0)
-    assert "body.insertBefore(recBtn, bubblesEl)" in _section(module)
+    assert "bubblesEl.parentNode.insertBefore(recBtn, bubblesEl)" in _section(module)
     assert "style-src 'sha256-" in WORLD_CSP
     sec = _section(module)
     assert "window.__skyport = Object.assign(window.__skyport || {}, { records: {" in sec
@@ -560,6 +560,7 @@ const el = function (tag) { return { tag: tag, hidden: false, className: "", tex
   appendChild: function (c) { this.children.push(c); }, setAttribute: function (k, v) { this.attrs[k] = v; } }; };
 const document = { createElement: el };
 const bodyCls = new Set(), body = { appendChild: function () {}, classList: { add: function (c) { bodyCls.add(c); }, remove: function (c) { bodyCls.delete(c); } } };
+const bubblesEl = { parentNode: body };
 const card = { getBoundingClientRect: function () { return { bottom: 700 }; } }, window = { innerHeight: 800 };
 const guideEl = { hidden: true }; let panelKind = null, simT = 0, pinned = null, wentLive = 0, data = null;
 let panelCloses = 0, guideCloses = 0;

@@ -575,8 +575,8 @@ def test_setup_proximity_is_parsed_from_the_strategy_reason(signal: str | None, 
 def test_routes_without_a_token(serve: Callable[..., Client], ledger: Ledger, settings: Settings) -> None:
     seed(ledger)
     client = serve(settings, ledger)
-    status, headers, body = client.request("/team")  # the old team page is part of reports now
-    assert (status, headers["Location"], body) == (302, "/reports", b"")
+    status, headers, body = client.request("/team")  # old team links open the town
+    assert (status, headers["Location"], body) == (302, "/", b"")
     assert headers["Cache-Control"] == "no-store" and headers["X-Frame-Options"] == "DENY"
     status, headers, body = client.request("/api/team")
     assert status == 200 and headers["Content-Type"] == "application/json"
@@ -594,7 +594,7 @@ def test_token_gate_on_both_routes(serve: Callable[..., Client], ledger: Ledger,
         status, headers, body = client.request(path)
         assert status == 401 and b"Locked" in body and "Set-Cookie" not in headers
     status, headers, _ = client.request("/team?token=" + TOKEN)
-    assert status == 302 and headers["Location"] == "/reports"
+    assert status == 302 and headers["Location"] == "/"
     cookie = headers["Set-Cookie"].split(";", 1)[0]
     assert TOKEN not in cookie
     assert client.request("/api/team", headers={"Cookie": cookie})[0] == 200

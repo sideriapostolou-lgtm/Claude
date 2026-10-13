@@ -13,6 +13,39 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-13 00:10 UTC, Codex, branch codex/town-only
+- Owner request: remove all the other confusing buttons and old app views. Started from deployed `4df5586`.
+- Town navigation now has exactly **Money, Team, Help**. Removed camera-tour switching, the Office footer,
+  reports links, separate money drilldown shortcuts and the always-expanded menu crew grid. Money consolidates
+  account cash, Polymarket recorded Pacific-day bot profit, dated account holdings and separate Kalshi UTC
+  results/exposure. Team provides the accessible workstation list; Help retains both real-desk stop instructions.
+  Panels use the town's light palette. The tab is consistently Nightcrawler / Your town.
+- Authenticated `/reports`, `/office`, `/office3d` and `/team` bookmarks redirect to `/`; world assets/art and
+  JSON APIs keep their original allowlists and auth. Saved display preferences cannot reopen the old controls.
+  Legacy DOM retained by shared animation helpers is permanently hidden and inert, including dynamically added
+  postcard/replay controls; character animation and underlying reports still work.
+- Added independent `/summary` fallback for unavailable WebGL: one Back to town link, no buttons, same pure
+  money adapter and GET-only `/api/page` fetch, separate source ages/UTC-vs-Pacific results, service alerts and
+  explicit stale/offline/auth-expired states. Expired authentication clears displayed account data. Hashed CSP,
+  text-only rendering and no order/configuration path. This replaces the old screens as the fallback.
+- Verification: final full suite **4,406 passed, 21 skipped** (opt-in network / optional science packages);
+  **294 focused world/fallback tests passed** after correcting legacy widget parent insertion. Mypy passed all 114 source files; Ruff passed changed Python files; whitespace clean.
+  Real-browser check exercised the saved old-details setting, only Menu + building labels on the home screen,
+  exactly three menu entries, stable keyboard focus, Money with no drilldown buttons/old footer links, six Team
+  entries, both stop instructions, all four retired redirects, and a 320px WebGL-failure fallback with scoped
+  synthetic money, one return link, zero buttons and no overflow. No JavaScript errors; phone menu screenshot
+  visually reviewed. Fixture balances are not live-account evidence.
+- Real money touched? No strategy, trading execution, mode, caps, keys or protected financial modules changed.
+  This authorized UI deployment restarts the shared bot. No Railway/dashboard credential is bound here:
+  deployment can be checked by exact Railway/GitHub commit status and public health; startup/trading logs and
+  authenticated live balances remain unavailable. Deployment verification follows below.
+
+- Deployment verified at 00:14 UTC: PR #17 merged as `569f8b9d8dc07e851179ebe867d1edc7e6e78da0`.
+  Railway's `nightcrawler - bot` check on that exact commit is **success**, deployment
+  `59962b28-2182-4782-bcc8-ef579e46f312`. Public `/healthz` returned HTTP 200 `ok` afterward at
+  00:14:30 UTC. Startup/trading logs and authenticated live balances remain unverified without their
+  credentials; health is not evidence of trading health. This follow-up is documentation only.
+
 ## 2026-10-12 23:58 UTC, Claude, branch claude/nightcrawler-memecoin-bot-Gwnb1S
 - Changed: moved the bot to Virginia (Railway region us-east4-eqdc4a, volume moved with it; deployment 985c3880,
   live 23:50:52 UTC). Then fixed what the move broke: Kalshi's market feed rejected any message stamped even
