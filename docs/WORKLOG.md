@@ -27,6 +27,18 @@ Template:
 - Real money touched? yes: smaller first buys on the live Kalshi companion; caps and stops unchanged ($10/$20/$6/$10).
 - Next step: test 5-contract "rounds" (a fresh starter after a pair completes) on the practice twin; speed work.
 
+## 2026-10-13 17:06 UTC, Codex, plain daily-limit reason
+- Found in the authenticated live check: Kalshi reported `day_stop` while its mode remained live. Read-only
+  review of `LiveRiskBook.can_buy` shows this is a candidate rejection: existing loss/risk plus this proposed
+  buy would reach the daily cap. It does not prove a global halt until midnight. Risk can fall, and permitted
+  pair-completion orders have separate checks. No trading rule was changed.
+- Display correction: translate that exact reason as "Latest buy skipped: it would reach today’s loss limit."
+  Preserve the raw code, existing mode/activity logic, pair-only priority and stale-report qualifiers.
+- Verified: full pytest 4,698 passed / 14 skipped (same optional/network skips), mypy clean for 119 source
+  files and Ruff clean on both changed Python files. Regression cases retain active/live, pair-only, stale,
+  accounting-blocked and practice states; missing or other reason codes are not reinterpreted.
+- Deployment: pending this small display correction. Polymarket stays live.
+
 ## 2026-10-13 16:54 UTC, Codex, Kalshi town interaction follow-up
 - Found during the deployed phone check: the once-per-second Money redraw could detach a disclosure while
   someone tapped it. Legacy 3D risk/ledger signs also still described Polymarket/shared records in the Kalshi town.
@@ -40,7 +52,13 @@ Template:
   Independent review found no blockers. Normal browser taps on the replay now open Polymarket details and
   keep them open; 390x844/320x568 layouts and the fallback summary have no overflow or JS errors.
   A separate normal Team-to-Voss tap across an API refresh also passed with focus preserved and no JS errors.
-- Deployment: pending the tested corrective push and authenticated live phone check.
+- Deployment: `70602970d91331c1642b86850bb194e415d85741` succeeded as Railway deployment
+  `fa8f7860-e7a9-46cd-aa16-054ce1310eac`. At 17:01 UTC, startup logs showed Polymarket LIVE
+  (10 contracts/order) and Kalshi REAL MONEY with unchanged $10/$20/$6/$10 caps and no integrity error.
+  Health returned 200; the bounded startup check found no tracebacks. The authenticated live phone run
+  passed normal Money disclosure taps, 390x844/320x568 layouts and the Kalshi-first summary with no JS
+  errors or overflow; Polymarket details stayed open and showed REAL MONEY. The account reconciliation
+  timestamp is still absent upstream and shown as unknown. Raw `day_stop` wording prompted the entry above.
 - Real money touched? No trading code, settings, caps or orders changed. Polymarket stays live on the owner's
   explicit choice; the town's foreground remains Kalshi.
 

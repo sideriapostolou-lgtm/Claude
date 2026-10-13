@@ -486,6 +486,34 @@ def test_kalshi_live_claim_requires_its_current_sanitized_report(tmp_path: Path,
     assert account["active"] is False and account["state"] != "live"
 
 
+@pytest.mark.parametrize("change", [{}, {"lock_only": True}, {"as_of": NOW - 61},
+                                    {"integrity_error": "order_fill_count_mismatch"},
+                                    {"mode": "paper", "active": False, "real_orders_available": False}])
+def test_candidate_day_limit_is_plain_words_without_changing_order_permission(
+    tmp_path: Path, change: dict[str, Any],
+) -> None:
+    p = page()
+    p["money"]["speeddesk"] = {"kalshi_live": {**kalshi(), **change}}
+    previous = run(tmp_path, p)["accounts"]["kalshi"]
+    p["money"]["speeddesk"]["kalshi_live"]["reason"] = "day_stop"
+    out = run(tmp_path, p)["accounts"]["kalshi"]
+    assert out["reasonCode"] == "day_stop"
+    assert out["reason"] == ("Last report: a buy was skipped because it would reach today’s loss limit."
+                             if out["stale"] else "Latest buy skipped: it would reach today’s loss limit.")
+    for key in ("state", "stateText", "active", "practice", "mode", "locksOnly", "newRiskAllowed"):
+        assert out[key] == previous[key]
+    assert "00:00" not in out["reason"] and "until" not in out["reason"]
+
+
+@pytest.mark.parametrize("reason", [None, "", "cash_budget", "day_stop_other"])
+def test_only_exact_candidate_day_limit_code_is_translated(tmp_path: Path, reason: str | None) -> None:
+    p = page()
+    p["money"]["speeddesk"] = {"kalshi_live": {**kalshi(), "reason": reason}}
+    out = run(tmp_path, p)["accounts"]["kalshi"]
+    assert out["reason"] == out["reasonCode"] == (reason or "")
+    assert out["state"] == "live" and out["newRiskAllowed"] is True
+
+
 def test_kalshi_stale_cash_and_utc_midnight_stay_visible_as_unknown_age_or_date(tmp_path: Path) -> None:
     p = page()
     account = kalshi()
