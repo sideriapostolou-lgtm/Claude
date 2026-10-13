@@ -6,7 +6,7 @@ TYCOON_CAMERA = r"""
     ready: false, elapsed: 0.7, width: 0, height: 0, restoreFov: null,
     calm: !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) };
   const TYCOON_FOV = 42, TYCOON_EASE = 0.7;
-  const _tycoonOut = new THREE.Vector3(0.8, 1.45, 1.1).normalize();
+  const _tycoonOut = new THREE.Vector3(1.45, 1.3, 0.39).normalize();
   const _tycoonRight = new THREE.Vector3().crossVectors(new THREE.Vector3(0, 1, 0), _tycoonOut).normalize();
   const _tycoonUp = new THREE.Vector3().crossVectors(_tycoonOut, _tycoonRight).normalize();
   const _tycoonAim = { pos: new THREE.Vector3(), look: new THREE.Vector3(), distance: 1 };
@@ -57,7 +57,7 @@ TYCOON_CAMERA = r"""
     if (selectedSpot) {
       const yaw = selectedSpot.homeYaw + 0.55;
       _tycoonOut.set(Math.sin(yaw), 0.75, Math.cos(yaw)).normalize();
-    } else _tycoonOut.set(0.8, 1.45, 1.1).normalize();
+    } else _tycoonOut.set(1.45, 1.3, 0.39).normalize();
     _tycoonRight.crossVectors(new THREE.Vector3(0, 1, 0), _tycoonOut).normalize();
     _tycoonUp.crossVectors(_tycoonOut, _tycoonRight).normalize();
     // The town fits room envelopes and doorway labels; a selected station fits its fixed desk and resident.
@@ -65,16 +65,39 @@ TYCOON_CAMERA = r"""
     rooms.forEach(function (key) {
       const spot = SPOTS[key], home = spot && NAV[spot.home], frame = RF[key], lamp = LAMP_AT[key];
       if (TYCOON.room && home) {
-        const resident = actors[TYCOON.selected] || Object.values(actors).find(function (a) { return a.homeRoom === key; });
-        const top = Math.max(0.8, resident && Number(resident.height) || 1.8) + 0.45;
+        const residentKey = actors[TYCOON.selected] ? TYCOON.selected : Object.keys(actors).find(function (id) { return actors[id].homeRoom === key; });
+        const resident = actors[residentKey], visual = residentKey && typeof tycoonCastHeight === "function"
+          ? tycoonCastHeight(residentKey) : resident && resident.tycoonVisualHeight;
+        const height = typeof visual === "number" && isFinite(visual) && visual > 0 ? visual
+          : resident && Number(resident.height) || 1.8;
+        const top = Math.max(0.8, height) + 0.45;
         for (const x of [-1.35, 1.35]) for (const y of [0, top]) for (const z of [-1.35, 1.35]) {
           points.push(new THREE.Vector3(home.p.x + x, home.p.y + y, home.p.z + z));
         }
         return;
       }
-      const centre = frame ? frame.origin : home ? home.p : lamp;
-      if (centre) for (const x of [-2.8, 2.8]) for (const y of [-0.4, 4.7]) for (const z of [-2.8, 2.8]) {
-        points.push(new THREE.Vector3(centre.x + x, centre.y + y, centre.z + z));
+      // Fit the real toy pavilions, including front awnings and their rear roof
+      // edges. Fitting just workers or tiny room boxes clipped outer stations.
+      const pavilion = { workshop: [4.4, -4.25, 5.15], den: [4.4, -4.25, 5.15],
+        archive: [4.15, -3.95, 4.85], vault: [4.15, -3.95, 4.85] }[key];
+      if (frame && pavilion) {
+        for (const x of [-pavilion[0], pavilion[0]]) for (const y of [-.05, 4.2]) for (const z of [pavilion[1], pavilion[2]]) {
+          points.push(frame.at(x, y, z));
+        }
+      } else if (key === "observatory" && frame) {
+        for (let i = 0; i < 32; i++) for (const y of [-.05, 4.2]) {
+          points.push(frame.at(Math.cos(i * Math.PI / 16) * 5.8, y, Math.sin(i * Math.PI / 16) * 5.8));
+        }
+      } else if (key === "dock") {
+        for (const x of [20.05, 26.4]) for (const y of [-.05, 4.2]) for (const z of [-3.65, .65]) {
+          points.push(new THREE.Vector3(x, y, z));
+        }
+      } else {
+        const centre = frame ? frame.origin : new THREE.Vector3();
+        for (let i = 0; i < 32; i++) for (const y of [-.05, 3.2]) {
+          points.push(new THREE.Vector3(centre.x + Math.cos(i * Math.PI / 16) * 6.3, centre.y + y,
+            centre.z + Math.sin(i * Math.PI / 16) * 6.3));
+        }
       }
       if (home) points.push(home.p.clone().add(new THREE.Vector3(0, 2.8, 0)));
       if (lamp) points.push(lamp.clone().add(new THREE.Vector3(0, 2.2, 0)));
@@ -88,7 +111,8 @@ TYCOON_CAMERA = r"""
     _tycoonAim.look.copy(_tycoonRight).multiplyScalar((lx + hx) / 2)
       .addScaledVector(_tycoonUp, (ly + hy) / 2).addScaledVector(_tycoonOut, (lz + hz) / 2);
     const h = TYCOON.height, w = TYCOON.width, tanY = Math.tan(TYCOON_FOV * Math.PI / 360);
-    const safeX = Math.max(0.1, (w - 64) / w), safeY = Math.max(0.1, (h - TYCOON.top - TYCOON.bottom - 48) / h);
+    const marginX = Math.min(64, Math.max(40, w * .05));
+    const safeX = Math.max(0.1, (w - marginX) / w), safeY = Math.max(0.1, (h - TYCOON.top - TYCOON.bottom - 40) / h);
     let distance = 9;
     points.forEach(function (p) {
       _tycoonRelative.copy(p).sub(_tycoonAim.look);
@@ -96,6 +120,19 @@ TYCOON_CAMERA = r"""
       distance = Math.max(distance, z + x / (tanY * (w / h) * safeX), z + y / (tanY * safeY));
     });
     _tycoonAim.distance = distance + 0.5;
+    if (!TYCOON.room && w < h) {
+      // Portrait's width usually limits the fit. Spend some unused space above
+      // the town without letting any department enter the measured HUD band.
+      const wantedPixels = Math.min(40, Math.max(0, h - TYCOON.top - TYCOON.bottom) * .07);
+      let shift = wantedPixels * 2 * tanY * _tycoonAim.distance / h;
+      const headroom = (h - TYCOON.top - TYCOON.bottom) / 2 - 20;
+      points.forEach(function (p) {
+        _tycoonRelative.copy(p).sub(_tycoonAim.look);
+        const y = _tycoonRelative.dot(_tycoonUp), depth = _tycoonAim.distance - _tycoonRelative.dot(_tycoonOut);
+        shift = Math.min(shift, headroom * 2 * tanY * depth / h - y);
+      });
+      _tycoonAim.look.addScaledVector(_tycoonUp, -Math.max(0, shift));
+    }
     _tycoonAim.pos.copy(_tycoonAim.look).addScaledVector(_tycoonOut, _tycoonAim.distance);
     TYCOON.dirty = false;
   }

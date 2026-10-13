@@ -43,7 +43,7 @@ def module(page: str) -> str:
 
 @pytest.fixture(scope="module")
 def section(module: str) -> str:
-    return module[module.index(_HEADER):module.index("// >>> tycoon data (pure)")]
+    return module[module.index(_HEADER):module.index("// >>> tycoon cast (display only)")]
 
 
 @pytest.fixture(scope="module")

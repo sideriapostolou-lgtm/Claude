@@ -13,6 +13,36 @@ Template:
 - Next step: ...
 ```
 
+
+## 2026-10-13 12:57 UTC, Codex, branch codex/tycoon-visual-upgrade
+- Changed: at the owner's request, rebuilt the town's presentation around bright, solid toy shops, striped
+  canopies, department emblems, wider graph-following paths, block trees and six original block-style crew
+  costumes. Kept the familiar species and colors. The tall observatory shell and decorative airship are hidden;
+  the research displays, worker coordinates, routes and business actions remain in place. The phone camera
+  fits the real building footprints and enlarged characters, with a compact blue/white/gold HUD and the same
+  Money / Team / Help menu. No Roblox assets were imported.
+- Integrity: costumes attach to the original actors and consume their existing animation state. Existing
+  carried cubes align with the new hands; cube ownership, flight and real-event validity stay with the original
+  business handler. Profit/growth, cash, practice labels, source ages and trading behavior are unchanged.
+  Town mode skips invisible legacy GLB downloads. This is a presentation change, not another activity simulator.
+- Integration: pulled Claude's PR #24 through e00181d before shipping; this preserves his independently
+  deployed daily-budget reset implementation. This session does not set a token, mode, cap or trading variable.
+- Verified: full `pytest -q` 4,633 passed, 21 skipped; `mypy src/nightcrawler` passed (119 files); Ruff on
+  every changed Python file and `git diff --check` passed. Two legacy source-boundary tests now explicitly
+  exclude the separately tested costume module, retaining all their money-safety assertions. The first suite
+  exposed the old boundary; an intermediate run was stopped after the remaining fixture edit and the final
+  full run above passed. No trading tests were relaxed.
+- Browser checks: Chromium at 390x844, 320x568 with reduced motion, and 1280x800; no page errors or overflow,
+  six costumes attached to the original actors, exactly Money / Team / Help and zero legacy GLB requests.
+  All six labels have nonoverlapping 44px targets on both phone sizes. Nyx's rear roof has a central cutaway.
+  Independent review caught missing outcome gestures; the final adapter reuses current real-business pulses
+  and rejects stale/corrected/expired events, owner-profit cheers and reduced motion. Reviewed again clean.
+- Limits: 12 opt-in network tests and 9 optional pandas/numpy/scipy checks skip in this environment. Software
+  WebGL screenshots verify appearance/function, not physical-phone frame rate. No three-day trading result is
+  claimed by this graphics task. Railway deployment and live-page verification follow the merge.
+- Real money touched? No order, account, strategy or cap changes. Publishing this visual update restarts the
+  existing live bot under the owner's authorized deploy workflow.
+
 ## 2026-10-13 12:40 UTC, Claude, branch claude/kalshi-day-reset, owner's one-time fresh daily budget
 - Research since 06:34 (public data, scratchpad `edge/`, `candles_*`, `cb/`): the bot's fair-value taker rule with
   Kalshi's true strike, pre-registered (`edge/SPEC.md`) and built twice independently (identical to 4 decimals):
