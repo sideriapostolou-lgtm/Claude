@@ -227,19 +227,25 @@ class LiveRiskBook:
         # (unsettled, with an order or anything bought) and who owns each Kalshi order id. It only grows with the
         # dicts it describes, is kept up to date by the methods that add to them, and is rebuilt from scratch
         # whenever they changed in any other way (a restore, a test), so the sums it feeds are exactly the full ones.
+        self._indexed: tuple[Any, ...] = ()  # the dicts it describes (held, so their identity cannot be reused)
         self._index_key: tuple[int, ...] | None = None
         self._by_window: dict[str, list[str]] = {}
         self._seq: dict[str, int] = {}
         self._open: set[str] = set()
         self._order_owner: dict[str, str] = {}
 
-    def _signature(self) -> tuple[int, ...]:
-        return (id(self.intents), len(self.intents), id(self.inventory), len(self.inventory),
-                id(self.settled), len(self.settled))
+    def _index_current(self) -> bool:
+        held = self._indexed
+        return (bool(held) and held[0] is self.intents and held[1] is self.inventory and held[2] is self.settled
+                and self._index_key == (len(self.intents), len(self.inventory), len(self.settled)))
+
+    def _mark_indexed(self) -> None:
+        self._indexed = (self.intents, self.inventory, self.settled)
+        self._index_key = (len(self.intents), len(self.inventory), len(self.settled))
 
     def _index(self) -> None:
         """Rebuild the index when the dicts changed behind its back (see __init__)."""
-        if self._index_key == self._signature():
+        if self._index_current():
             return
         self._by_window, self._seq, self._order_owner = {}, {}, {}
         for position, (key, intent) in enumerate(self.intents.items()):
@@ -250,7 +256,7 @@ class LiveRiskBook:
         self._open = {window for window in self._by_window if window not in self.settled}
         self._open |= {window for window, value in self.inventory.items() if window not in self.settled
                        and (value.up.shares or value.down.shares or value.spent)}
-        self._index_key = self._signature()
+        self._mark_indexed()
 
     def _window_intents(self, window: str) -> list[LiveIntent]:
         """The window's orders, oldest first."""
@@ -274,12 +280,12 @@ class LiveRiskBook:
                 or not all(math.isfinite(value) for value in (window.start, window.end))
                 or abs(window.end - window.start - 900) > EPSILON):
             raise LiveRejected("kalshi_15m_only")
-        current = self._index_key == self._signature()
+        current = self._index_current()
         if window.slug not in self.windows:
             self.windows[window.slug] = window
         self.inventory.setdefault(window.slug, Inventory())
         if current:  # a new window holds nothing yet: the index stays exact
-            self._index_key = self._signature()
+            self._mark_indexed()
 
     def limits_for(self, window: str) -> LiveLimits:
         """The limits for buys and locks in one window: fixed by the window's start, so a ladder change never
@@ -585,7 +591,7 @@ class LiveRiskBook:
         self._by_window.setdefault(window, []).append(client_order_id)
         self._seq[client_order_id] = len(self._seq)
         self._open.add(window)
-        self._index_key = self._signature()
+        self._mark_indexed()
         if self.inventory[window].up.shares + self.inventory[window].down.shares <= EPSILON:
             self.bootstrap_order[window] = client_order_id
         return intent
@@ -749,11 +755,11 @@ class LiveRiskBook:
         result = LiveSettlement(window, settlement_id, now, up_wins, gross.up_shares, gross.down_shares,
                                 gross.cost_usd, gross.fee_usd, pairs, expected_net, gross.payout_usd,
                                 gross.locked_usd, gross.direction_usd, gross.pnl_usd)
-        current = self._index_key == self._signature()
+        current = self._index_current()
         self.settled[window] = result
         if current:
             self._open.discard(window)
-            self._index_key = self._signature()
+            self._mark_indexed()
         self.realized_pnl += result.pnl_usd
         self.day_pnl[utc_day(now)] = self.day_pnl.get(utc_day(now), 0.0) + result.pnl_usd
         self._refresh_stops(now)
