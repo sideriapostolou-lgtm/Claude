@@ -459,8 +459,10 @@ unfinished, uncertain or reserved order's decision time and one window (900 s) a
 can still change the books was created after its decision, and its fills after that, so it is inside the bound
 whether `min_ts` filters orders on creation or on last update (the docs do not say which); so is every order and
 fill of a window open now. The complete history (orders unfiltered, fills since start) is still read at startup,
-every 60 s, on the first read after any window opens (an owner's bid placed before the window opened is seen
-before the bot's first order there), and on every read while an owner's integrity reset waits, the only reads
+every 60 s, on the first read that starts after any window opens (an owner's bid placed before the window opened
+is normally seen before the bot's first order there; a read already under way at the open can let one bot order
+through first, and the complete read about a second later then marks the window as the owner's), and on every read
+while an owner's integrity reset waits, the only reads
 that may clear it. An untracked bot order or a late fill stamped before the bound is caught by the next complete
 read (at most 60 s). Positions and settlements are unchanged. The status line's `reconcile` block reports, since
 the previous line: complete and recent reconcile times (`full_ms`, `recent_ms`), each read's time, the total

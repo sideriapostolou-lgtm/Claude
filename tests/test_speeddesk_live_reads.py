@@ -170,7 +170,7 @@ def test_status_line_reports_reconcile_time_pages_and_the_failed_check(tmp_path:
         clock.advance(1.1)
         asyncio.run(desk.step())
         assert desk.account_at is None
-        assert desk.last_sync_report is not None and desk.last_sync_report["checks"] == ["position_mismatch"]
+        assert desk.last_sync_report is not None and desk.last_sync_report["checks"] == {"position_mismatch": 1}
         clock.advance(60)
         asyncio.run(desk.step())
         line = status_lines(desk)[-1]

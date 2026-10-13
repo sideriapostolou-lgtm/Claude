@@ -499,7 +499,10 @@ class KalshiLiveDesk:
             self.sync_stats.count(f"check_{check}")
         if failed:
             self.sync_stats.count("failed")
-        self.last_sync_report = {"full": full, "ms": round(total, 1), "failed": failed, "checks": checks,
+        tally: dict[str, int] = {}
+        for check in checks:
+            tally[check] = tally.get(check, 0) + 1  # counts, not a list: one entry per order would grow the line
+        self.last_sync_report = {"full": full, "ms": round(total, 1), "failed": failed, "checks": tally,
                                  "reads": self._sync_reads}
 
     def _merge_archive(self, saved: dict[str, Any]) -> None:
@@ -752,19 +755,23 @@ class KalshiLiveDesk:
                 reason = (self._risk_stop_reason()
                           or (self._feed_reason(window, snapshot, now) if window else "Window missing"))
                 if not reason and window is not None:
-                    reason = self._stale_bid_reason(intent, window, snapshot, now)
-                    if reason:
-                        self.account_at = None  # as _decide's reprice: re-read the account before a new bid
+                    reason = self._stale_bid_reason(intent, window, snapshot, now,
+                                                    min(STALE_BID_EDGE, self.settings.speeddesk_make_edge))
+                    if reason and intent.cancel_requested and not intent.uncertain:
+                        reason = ""  # Kalshi already acknowledged the cancel (200 or 404); the order list confirms it
+                    elif reason and not intent.cancel_requested:
+                        self.account_at = None  # once, when the cancel is first asked for: re-read before a new bid
             if reason:
                 await self._cancel(intent, reason)
 
     @staticmethod
-    def _stale_bid_reason(intent: Intent, window: Window, snapshot: LiveSnapshot, now: float) -> str:
+    def _stale_bid_reason(intent: Intent, window: Window, snapshot: LiveSnapshot, now: float, edge: float) -> str:
         """A resting bid priced from an old fair value (loss plan bug 2: at 9:08:39 AM PT on 2026-10-13 one stayed
         up for 20.7 s while fair rose about 7c, because the reprice in _decide waits for fresh account data).
 
         Cancelled whatever the account's freshness: fresh fair moved more than REPRICE_FAIR from the order's, or the
-        bid sits above fresh fair minus STALE_BID_EDGE. A cancel never adds risk. Needs a fresh feed (checked first).
+        bid sits above fresh fair minus ``edge`` (STALE_BID_EDGE, or the make edge when that is smaller, so a fresh bid
+        is never cancelled on sight). A cancel never adds risk. Needs a fresh feed (checked first).
         """
         if intent.kind != "rest":
             return ""
@@ -775,7 +782,7 @@ class KalshiLiveDesk:
         fair = up if intent.side == "up" else 1 - up
         if abs(fair - intent.fair) > REPRICE_FAIR + EPS:
             return "reprice"
-        return "bid_above_fair" if intent.price > fair - STALE_BID_EDGE + EPS else ""
+        return "bid_above_fair" if intent.price > fair - edge + EPS else ""
 
     def _error(self, exc: Exception) -> None:
         self.errors += 1

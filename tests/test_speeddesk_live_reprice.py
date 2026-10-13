@@ -89,3 +89,32 @@ def test_the_rule_matches_the_reprice_when_account_data_are_fresh(tmp_path: Path
         assert account.cancels == ["order-1"]
     finally:
         desk.close()
+
+
+def test_an_acknowledged_cancel_is_not_resent_while_the_order_list_lags(tmp_path: Path) -> None:
+    """Review of part 1: once Kalshi accepted the cancel, a lagging order list must not cause a re-cancel (a 404)
+    every 2 s, nor a full account read on every step."""
+    desk, account, clock = resting_bid_with_stale_account(tmp_path)
+    try:
+        def lagging_cancel(order_id: str, *, ticker: str) -> dict[str, object]:
+            account.cancels.append(order_id)  # accepted, but the order list keeps showing it resting
+            return {}
+
+        account.cancel = lagging_cancel  # type: ignore[method-assign]
+        market(desk, clock, 80120)
+        steps(desk, clock, 12)  # 3.6 s: past the 2 s cancel retry
+        assert account.cancels == ["order-1"]
+    finally:
+        desk.close()
+
+
+def test_a_small_make_edge_never_cancels_a_fresh_bid_on_sight(tmp_path: Path) -> None:
+    """Review of part 1: with SPEEDDESK_MAKE_EDGE below the stale-bid edge, a new bid already sits above fresh fair
+    minus 2c; the rule uses the smaller edge so a flat market leaves one bid resting instead of churning."""
+    desk, account, clock = make_desk(tmp_path, extra={"speeddesk_take_edge": 1.0, "speeddesk_make_edge": 0.01})
+    try:
+        market(desk, clock, 80000)
+        steps(desk, clock, 10)
+        assert len(account.creates) == 1 and not account.cancels
+    finally:
+        desk.close()
