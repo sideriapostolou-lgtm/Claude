@@ -39,6 +39,7 @@ from .speeddesk_model import (
     SpeedConfig,
     Trade,
     Window,
+    config_state,
     utc_day,
 )
 from .speeddesk_scorecard import window_scorecard
@@ -616,7 +617,8 @@ class SpeedRunner:
 
     async def run(self) -> None:
         self.record("speeddesk_started", {"at": self.clock.now(), "real_orders": False,
-                                          "trial_started_at": self.started_at, "config": asdict(self.desk.config)})
+                                          "trial_started_at": self.started_at,
+                                          "config": config_state(self.desk.config)})
         self.checkpoint(self.clock.now())
         if self.arena is not None:
             try:

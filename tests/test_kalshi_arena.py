@@ -256,6 +256,7 @@ def test_births_come_from_the_richest_half_control_included(tmp_path: Path, capl
         res.row["equity_usd"] = 100.0 - index  # the control (id 1) is the richest
     top = {res.id for res in ranked[:6]}
     caplog.set_level(logging.INFO, "nightcrawler.kalshi_arena")
+    caplog.clear()  # the first town's births may already be captured, depending on earlier tests
     parents = []
     for _ in range(40):
         poorest = min((res for res in arena.residents.values() if not res.control),
