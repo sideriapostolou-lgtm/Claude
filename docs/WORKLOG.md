@@ -36,7 +36,16 @@ Template:
   validation passed: **4,603 tests, 21 skipped**, mypy **117 files**, changed-file Ruff and whitespace checks.
   Integrated deploy head `11cef3f` (Claude's separate practice-coin change) without conflicts. Combined build:
   **4,615 passed, 21 skipped**; mypy passed **118 files**; changed-file Ruff and whitespace checks passed.
-  Independent final review found no blocker. Exact follow-up deployment evidence follows below.
+  Independent final review found no blocker. Follow-up `6a646da690e2ad2bdddf25affb1bd96134953507` deployed
+  SUCCESS as `936539f4-0a8f-4f4a-98f2-29f7cd058184`: Polymarket LIVE 10 at 05:34:26 UTC and Kalshi
+  authenticated REAL MONEY at 05:34:30, same existing caps, no integrity error or cleanup pending. Initial
+  traceback/error/warning queries were empty.
+- Final browser inspection also caught one misleading cancellation-request sentence: reserved cash is not
+  necessarily the risk amount for a pair-completion bid. Corrected it to say that the receipt does not confirm
+  release of reserved cash. It remains an unqualified historical request, not a fill or terminal cancellation.
+  After that wording fix: **4,615 passed, 21 skipped**; mypy **118 files** and changed-file Ruff passed.
+  Four authenticated post-deploy API samples confirmed valid Kalshi checkpoints arriving after request start
+  stay available, with their original timestamps and zero qualified cancellation-request events.
 
 ## 2026-10-13 05:15 UTC, Codex, branch codex/town-truth-fixes
 - Owner request: make the connected town app accurate and clear, retaining the phone-first tycoon view and

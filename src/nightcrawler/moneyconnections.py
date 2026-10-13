@@ -276,7 +276,7 @@ def _kalshi_recent_events(out: dict[str, Any], latest: Any, book: LiveRiskBook, 
         intent = book.intents[identity]
         kind = "cancel" if event == "speeddesk_live_cancel" else "reject"
         # Cancellation requests are not terminal evidence and cannot release a reserve.
-        message = ("Kalshi cancellation requested; unconfirmed reservations remain at risk."
+        message = ("Kalshi cancellation requested; this receipt does not confirm reserved cash was released."
                    if kind == "cancel" else "Kalshi buy rejected or blocked; check the desk status.")
         out["events"].append(_event(out, text, kind, [identity, row.get("at"), "request"], row.get("at"), now,
                                     message=message, market=intent.window, source="saved real desk event",
