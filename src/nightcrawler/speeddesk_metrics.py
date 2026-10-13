@@ -7,6 +7,8 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any, Literal
 
+from .speeddesk_model import FUTURE_SKEW_S
+
 MAX_SAMPLES = 4096
 MAX_DAYS = 31
 METRICS = ("btc_exchange_to_decision", "btc_receipt_to_decision", "decision_to_ack")
@@ -32,7 +34,9 @@ def tick_timings(tick: TickReceipt | None, decision_mono: float) -> dict[str, tu
     if elapsed < 0:
         return {name: (None, "invalid") for name in names}
     wire_age = tick.received_at - tick.exchange_at
-    return {names[0]: ((wire_age + elapsed) * 1000, "ok") if wire_age >= 0 else (None, "invalid"),
+    # A tick stamped slightly after local receipt is clock skew (FUTURE_SKEW_S), not negative age: it counts as 0.
+    return {names[0]: (max(0.0, wire_age + elapsed) * 1000, "ok") if wire_age >= -FUTURE_SKEW_S
+            else (None, "invalid"),
             names[1]: (elapsed * 1000, "ok")}
 
 
@@ -56,7 +60,7 @@ class LatencyMetrics:
                 if not isinstance(days, dict) or len(days) > MAX_DAYS:
                     raise ValueError("Invalid timing days")
                 for day, scopes in days.items():
-                    datetime.strptime(day, "%Y-%m-%d")
+                    datetime.strptime(day, "%Y-%m-%d").replace(tzinfo=UTC)  # a valid day name
                     for metrics in scopes.values():
                         for name, bucket in metrics.items():
                             if name not in METRICS or len(bucket["values"]) > MAX_SAMPLES:
@@ -263,7 +267,7 @@ class WindowEvidence:
 def fresh_window_slugs(windows: list[dict[str, Any]], books: dict[Any, Any], bitcoin_at: float | None,
                        makers: set[str] | frozenset[str], now: float) -> set[str]:
     """Report-only full data availability; no strategy or risk permission is implied."""
-    if bitcoin_at is None or not 0 <= now - bitcoin_at <= 3:
+    if bitcoin_at is None or not -FUTURE_SKEW_S <= now - bitcoin_at <= 3:
         return set()
     fresh = set()
     for window in windows:

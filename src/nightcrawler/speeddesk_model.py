@@ -19,6 +19,11 @@ Side = Literal["up", "down"]
 FeeRounding = Literal["half_even", "kalshi"]
 EPSILON = 1e-9
 VENUES = ("polymarket_us", "kalshi")
+# How far after the local clock a Coinbase trade may be stamped and still count (speed plan step 4). Coinbase's
+# clock and ours differ by tens of ms, and the Exchange feed has no batching delay to hide it: its trades often
+# arrive "before" their own stamps (the 2026-10-13 recording ran 18 ms behind; on one container 91% of Exchange
+# ticks would have been dropped). Staleness limits are unchanged; a stamp further ahead than this is refused.
+FUTURE_SKEW_S = 0.25
 # The mean of sixty one-second values of a random walk varies like the walk 60 - (61 x 121) / 360, about 39.5 s, before
 # the last of them: Kalshi's 15-minute settlement average (see fair_up).
 AVERAGE_LEAD_S = 39.5
@@ -447,7 +452,7 @@ class PracticeDesk:
         if self._day(now).get("pnl_usd", 0.0) <= -self.config.day_stop_usd:
             return "day_stop"
         price_stale_s = self.config.stale_s if self.price_stale_s is None else self.price_stale_s
-        if self.tape.last_at is None or not 0 <= now - self.tape.last_at <= price_stale_s:
+        if self.tape.last_at is None or not -FUTURE_SKEW_S <= now - self.tape.last_at <= price_stale_s:
             return "bitcoin_stale"
         if window.start_price is None:
             return "opening_price_missing"

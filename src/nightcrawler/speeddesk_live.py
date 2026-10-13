@@ -46,6 +46,7 @@ from .speeddesk_metrics import (
     fresh_window_slugs,
 )
 from .speeddesk_model import (
+    FUTURE_SKEW_S,
     Book,
     PracticeDesk,
     Side,
@@ -647,7 +648,7 @@ class KalshiLiveDesk:
                     self.evidence.fill({**asdict(event), "is_taker": event.kind == "take"})
 
     def on_tick(self, price: float, event_at: float, received_at: float) -> None:
-        if 0 <= received_at - event_at <= 3:
+        if -FUTURE_SKEW_S <= received_at - event_at <= 3:
             self.twin.tick_btc(price, event_at)
             self.wake.set()
 
@@ -696,7 +697,7 @@ class KalshiLiveDesk:
             return "Window has not started"
         if now >= window.end - self.book.limits.lock_s:
             return "Window cutoff"
-        if snapshot.bitcoin_at is None or not 0 <= now - snapshot.bitcoin_at <= 3:
+        if snapshot.bitcoin_at is None or not -FUTURE_SKEW_S <= now - snapshot.bitcoin_at <= 3:
             return "Bitcoin feed stale"
         if snapshot.bitcoin_price is None or window.start_price is None:
             return "Bitcoin opening price missing"

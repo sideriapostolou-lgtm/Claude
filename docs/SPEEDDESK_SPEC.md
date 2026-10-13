@@ -575,6 +575,21 @@ cached. Volatility is therefore computed about once a second (0.7 ms) instead of
 identical: `tests/test_speeddesk_tape.py` replays 3,000 recorded Coinbase trades six times, with late revisions
 of the current and the just-completed second, against the previous code.
 
+Bitcoin feed (2026-10-13; speed plan step 4). Coinbase Exchange's `matches` channel
+(`wss://ws-feed.exchange.coinbase.com`, with `heartbeat`) delivers each trade on its own, 50 to 61 ms (median)
+before Advanced Trade's batches. Two Exchange connections are the primary source and Advanced Trade
+(`market_trades`) stays as the backup; the three share one trade-id space (no price mismatch in 4,280 shared
+trades), so each trade id is delivered once, by whichever connection brings it first (the last 20,000 ids are
+remembered). Exchange `last_match` and Advanced Trade `snapshot` events, both replays of past trades on every
+(re)connect, are not ticks. Bitcoin data reads `connected` while any connection is up; the status also lists each
+connection (`coinbase_feeds`), and every gate that cancels on a feed gap is unchanged. Freshness allows a bounded
+clock skew: a trade stamped up to 250 ms after the local clock (`FUTURE_SKEW_S`) is accepted by the practice
+desk, the live companion, the practice model's staleness check and the timing reports (which count it as 0 ms
+old), because the Exchange feed has no batching delay to hide the clocks' difference (the 2026-10-13 recording
+ran 18 ms behind Coinbase; on one container 91% of Exchange ticks would have been dropped). Every staleness limit
+is unchanged: with no trade for 3 s the live companion still cancels its bids ("Bitcoin feed stale"), and a stamp
+further ahead than 250 ms is refused. The step-0 `clock` report compares the clocks.
+
 The public US probe checks the five-minute series and validates an actual market's BTC/UP_DOWN/5m/BRTI terms
 and start/end before logging `skipwatch_us_5m_listing`. Its first verified observation stays on the page.
 The series alone is not a listing; failed requests are unknown. This bounded latest-event check does not

@@ -32,6 +32,7 @@ from .speeddesk_metrics import (
     fresh_window_slugs,
 )
 from .speeddesk_model import (
+    FUTURE_SKEW_S,
     VENUES,
     BitcoinTape,
     Book,
@@ -208,7 +209,7 @@ class SpeedRunner:
 
     def on_tick(self, price: float, event_at: float, received_at: float) -> None:
         received_mono = self.monotonic()
-        if not 0 <= received_at - event_at <= self.desk.config.stale_s:
+        if not -FUTURE_SKEW_S <= received_at - event_at <= self.desk.config.stale_s:
             return
         previous = self.desk.tape.revision
         self.desk.tick_btc(price, event_at)
@@ -364,7 +365,7 @@ class SpeedRunner:
         status = "Warming up Bitcoin volatility" if warm else "Practice feeds running"
         if warm:
             status += f" ({samples:,}/{self.desk.config.sigma_min_samples:,} observed one-second returns)"
-        if btc_at is None or not 0 <= now - btc_at <= self.desk.config.stale_s:
+        if btc_at is None or not -FUTURE_SKEW_S <= now - btc_at <= self.desk.config.stale_s:
             status = "Practice paused: Bitcoin feed stale"
         elif not books or now - max(books) > self.desk.config.stale_s:
             status = "Practice paused: waiting for fresh books"
@@ -558,7 +559,7 @@ class SpeedRunner:
         fresh: set[str] = set()
         maker: set[str] = set()
         btc_at = self.desk.tape.last_at
-        if btc_at is None or not 0 <= now - btc_at <= self.desk.config.stale_s:
+        if btc_at is None or not -FUTURE_SKEW_S <= now - btc_at <= self.desk.config.stale_s:
             return fresh, maker
         for window in self.desk.windows.values():
             if window.venue not in self.enabled_venues or not window.start <= now < window.end:
