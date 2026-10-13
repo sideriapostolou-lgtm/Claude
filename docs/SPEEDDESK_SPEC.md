@@ -564,6 +564,17 @@ timings) and `clock` (Coinbase Exchange `/time` once a minute while real money i
 each source's shortest round trip since the previous line, or the last one with `fresh: false`). A failed time
 probe is only counted. Accepted orders' `stages` keep their three fields for the existing log parsers.
 
+Bitcoin tape (2026-10-13; speed plan step 3). The one-second tape rebuilt both of its dictionaries on every
+accepted trade (1.6 to 1.7 ms on Railway, twice per trade: practice desk and live twin), and the live snapshot's
+volatility cache was keyed on every accepted tick, so each trade recomputed the hour of returns. The tape now
+updates in place and drops seconds older than an hour and a second oldest first (0.0007 ms a trade against
+0.37 ms on the build machine), and counts accepted ticks (`revision`). The cache key holds the number of accepted
+ticks in completed seconds instead: a trade in the current second cannot change volatility, a late one stamped
+in a completed second does and recomputes it; a query more than a second before the newest tick is never
+cached. Volatility is therefore computed about once a second (0.7 ms) instead of on every trade. Results are
+identical: `tests/test_speeddesk_tape.py` replays 3,000 recorded Coinbase trades six times, with late revisions
+of the current and the just-completed second, against the previous code.
+
 The public US probe checks the five-minute series and validates an actual market's BTC/UP_DOWN/5m/BRTI terms
 and start/end before logging `skipwatch_us_5m_listing`. Its first verified observation stays on the page.
 The series alone is not a listing; failed requests are unknown. This bounded latest-event check does not

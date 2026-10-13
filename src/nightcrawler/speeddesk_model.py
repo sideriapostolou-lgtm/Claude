@@ -153,7 +153,12 @@ def reserved_per_share(price: float, coefficient: float, rounding: FeeRounding =
 
 
 class BitcoinTape:
-    """One observed close per second; gaps are never invented as zero returns."""
+    """One observed close per second; gaps are never invented as zero returns.
+
+    Seconds more than an hour and a second before the newest are dropped oldest first, a constant amount of work
+    per tick (speed plan step 3: rebuilding both dictionaries on every trade took 1.6 to 1.7 ms, twice per trade,
+    practice desk and live twin). The dictionaries are updated in place; ``revision`` counts accepted ticks.
+    """
 
     def __init__(self) -> None:
         self.prices: dict[int, float] = {}
@@ -161,6 +166,22 @@ class BitcoinTape:
         self.started_at: float | None = None
         self.last_at: float | None = None
         self.price: float | None = None
+        self.revision = 0
+        # Accepted ticks before the newest observed second began: what sigma in that second can depend on.
+        self.revision_before_second = 0
+        self._seconds: deque[int] = deque()  # every stored second, oldest first
+        self._tracked: tuple[dict[int, float], dict[int, float]] | None = None
+
+    def _index(self, second: int) -> None:
+        """Keep the eviction queue in step with the dictionaries, including ones restored or replaced outside."""
+        tracked = self._tracked
+        if tracked is None or tracked[0] is not self.prices or tracked[1] is not self.first_prices:
+            self._seconds = deque(sorted({*self.prices, *self.first_prices}))
+            self._tracked = (self.prices, self.first_prices)
+        if not self._seconds or second > self._seconds[-1]:
+            self._seconds.append(second)
+        elif second != self._seconds[-1] and second not in self.prices and second not in self.first_prices:
+            self._seconds = deque(sorted({*self._seconds, second}))  # only after an outside edit
 
     def tick(self, price: float, at: float) -> bool:
         if not math.isfinite(price) or price <= 0 or not math.isfinite(at):
@@ -169,13 +190,31 @@ class BitcoinTape:
             return False
         if self.started_at is None:
             self.started_at = at
-        self.last_at, self.price = at, price
         second = int(at)
+        if self.last_at is None or second != int(self.last_at):
+            self.revision_before_second = self.revision
+        self.revision += 1
+        self.last_at, self.price = at, price
+        self._index(second)
         self.prices[second] = price
         self.first_prices.setdefault(second, price)
-        self.prices = {stamp: value for stamp, value in self.prices.items() if stamp >= second - 3601}
-        self.first_prices = {stamp: value for stamp, value in self.first_prices.items() if stamp >= second - 3601}
+        while self._seconds and self._seconds[0] < second - 3601:
+            stale = self._seconds.popleft()
+            self.prices.pop(stale, None)
+            self.first_prices.pop(stale, None)
         return True
+
+    def completed_revision(self, now: float) -> int | None:
+        """Accepted ticks in the seconds that ``sigma(now)`` reads (those before ``int(now)``), as a cache key.
+
+        None when ``now`` is more than a second before the newest tick (no cache: recompute).
+        """
+        if self.last_at is None:
+            return self.revision
+        latest, last_complete = int(self.last_at), int(now) - 1
+        if latest <= last_complete:
+            return self.revision
+        return self.revision_before_second if latest == last_complete + 1 else None
 
     def opening(self, start: float) -> float | None:
         return self.first_prices.get(int(start))
