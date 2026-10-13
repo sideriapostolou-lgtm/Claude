@@ -15,6 +15,54 @@ Template:
 
 
 
+## 2026-10-13 22:20 UTC, Claude, branch claude/kalshi-fix-speed, no PR (review fix round; local commits, not pushed)
+- Changed:
+  - Rebased onto the deploy branch (61ca112, with the ladder and bba948a). The three commits already live as PR #39
+    dropped out by patch id. New shas: bug 1 ad556cd, fair value 7566168, step 3 08bb8bd, step 4 1e7019c,
+    step 8 012915a, step 2 798fd5e, first work log 71037aa. The build's 1eb350e is kept as
+    backup/kalshi-fix-speed-1eb350e. Bug 1's stop math now sits in the ladder's _buy_verdict: open and daily checks
+    at the window's rung, the lifetime check at the configured $10.
+  - cd007c4: the speed steps on the ladder. The status line is saved at once; a new ladder stop is saved at once
+    (to the minute); rung 0 is pinned to the owner's $10/$20/$6/$10, 5 contracts ("Go back to 10 that will be
+    our low minimum resting number"). No limit or setting changed.
+  - cb862e5 (blocker): an unsent order in an unpaired window froze real trading for good. Kalshi settles about
+    5 s after the close and the position leaves the list, so every read failed position_mismatch. The release is
+    now decided per window: two complete lists after the close, 30 s apart; no unknown fill there; the position
+    matches or Kalshi has settled. It runs before settlement, and complete lists are read every 30 s while an
+    order waits. A definite refusal rewrites its journal entry at once. The journal on disk is emptied after a
+    replay.
+  - ade4ba6 (major): the money math sums over open windows only, through an index kept exact. Step time with a
+    week of history went from 57 ms to 0.6 ms. A complete reconcile with three days of listed orders went from
+    1.7 s to 79 ms (it was quadratic).
+  - 789ed1c: the reviewers' adversarial-venue, complete-scan and stale-bid tests are in the suite.
+  - 189eb90 (cheap minors):
+    - A money stop keeps only a light-side bid.
+    - A future-stamped Coinbase copy no longer uses up the trade id; refusals are counted per connection.
+    - The stale-feed check counts from the earlier of stamp and receipt.
+    - The sigma cache key holds when the newest tick is stamped ahead of the local clock.
+    - A reconcile that changes nothing of record waits for the 5 s save: 13 saves a quiet minute, was 60.
+    - The first practice save is synced.
+  - ad9144d: a fill of an order Kalshi lists as the owner's marks the window as the owner's, even beside an
+    unsent bot order, which then still gets released.
+- Unchanged: every cap and stop, the 5-contract clip, a reservation before every send, release only on venue
+  proof, the synced journal row before every create, and which orders the strategy places. Still unchanged too:
+  an unresolved order pauses all new orders until it is resolved (about 30 s after its close at worst). No new
+  setting, so `.env.example` is unchanged. Town UI files, Railway, keys and the arena branch are untouched.
+- Verified: full suite, ruff on changed files and `mypy` (counts in the round's report). Every new regression test
+  fails on the tree before its fix and passes after. Long runs: kill-anywhere with 6 seeds and no cap;
+  adversarial desk with 10,000 events, 4 owner-cap seeds and 2 tight-cap seeds.
+- Not verified / skipped (deferred):
+  - Turning off WAL autocheckpoint (it lands on about 0.3% of pre-send rows): the fix needs care not to add fsyncs
+    to the loop.
+  - A per-ticker read instead of a complete scan when a window opens: needs Kalshi's ticker filter checked.
+  - Releasing a resting order at its expiration: needs a Kalshi demo test.
+  - Moving the fill-triggered save to the end of the step, and saving metrics under their own keys: design changes.
+  - The lag probe stays at 10 ms (measurement fidelity).
+  - Nothing deployed or pushed.
+- Real money touched? no.
+- Next step: push and deploy at a safe minute after the owner's go, then read the `reconcile`, `phases`, `loop`
+  and `clock` status blocks on Railway.
+
 ## 2026-10-13 20:05 UTC, Claude, branch claude/kalshi-fix-speed, no PR (local commits, not pushed)
 - Changed (one commit each, on top of claude/nightcrawler-memecoin-bot-Gwnb1S at c3ab6f8):
   a3f068b loss plan bug 3 + speed step 1: between complete scans the order and fill reads pass `min_ts`
