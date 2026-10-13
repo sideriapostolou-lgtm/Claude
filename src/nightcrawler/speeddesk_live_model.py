@@ -44,6 +44,8 @@ HARD_WINDOW_USD, HARD_OPEN_USD, HARD_DAY_LOSS_USD, HARD_TOTAL_LOSS_USD = 20.0, 4
 HARD_CLIP = 25.0
 # Refusals that mean a loss stop binds (the earned-growth ladder counts one on the smallest order as a stop).
 STOP_REFUSALS = frozenset({"day_stop", "total_budget"})
+# Pending orders per window whose fill combinations the worst case enumerates (one per side in practice).
+MAX_LEGS = 10
 # Integrity reset fingerprints live beside the resume ones; the prefix keeps the two kinds from matching.
 RESET_DOMAIN = b"kalshi-integrity-reset\x00"
 DAY_RESET_DOMAIN = b"kalshi-day-reset\x00"
@@ -274,11 +276,61 @@ class LiveRiskBook:
         return sum(max(0.0, value.spent - min(value.up.shares, value.down.shares))
                    for window, value in self.inventory.items() if window not in self.settled)
 
+    @staticmethod
+    def _worst(inventory: Inventory, legs: list[tuple[Side, float, float]]) -> float:
+        """Largest loss the window can still take: its cost (fees included) minus the $1 its weaker side pays,
+        over every combination of its pending orders ``legs`` (side, contracts, reserved cost) filling or not.
+
+        The loss is convex in each order's filled amount, so the extremes (none or all of each) bound every
+        partial fill. A balancing order that completes pairs adds nothing: its worst case is not filling.
+        Beyond MAX_LEGS orders it falls back to the conservative sum of every reservation.
+        """
+        if len(legs) > MAX_LEGS:
+            return max(0.0, inventory.spent - min(inventory.up.shares, inventory.down.shares)) + sum(
+                cost for _side, _size, cost in legs)
+        worst = 0.0
+        for flags in itertools.product((False, True), repeat=len(legs)):
+            shares = {"up": inventory.up.shares, "down": inventory.down.shares}
+            paid = inventory.spent
+            for include, (side, size, cost) in zip(flags, legs, strict=True):
+                if include:
+                    shares[side] += size
+                    paid += cost
+            worst = max(worst, paid - min(shares.values()))
+        return worst
+
+    def _legs(self, window: str, *, without: str | None = None) -> list[tuple[Side, float, float]]:
+        return [(intent.side, intent.remaining, intent.reserved) for intent in self.intents.values()
+                if intent.window == window and intent.reserved > EPSILON and intent.client_order_id != without]
+
+    def worst_loss(self, window: str, extra: tuple[Side, float, float] | None = None,
+                   *, without: str | None = None) -> float:
+        """The window's worst case (see ``_worst``), optionally with a new order ``extra`` or without one."""
+        inventory = self.inventory.get(window)
+        if inventory is None or window in self.settled:
+            return 0.0
+        return self._worst(inventory, self._legs(window, without=without) + ([extra] if extra else []))
+
+    def lowers_risk(self, client_order_id: str) -> bool:
+        """A pending order whose fill cannot raise its window's worst case: a balancing bid or a lock."""
+        intent = self.intents[client_order_id]
+        return (intent.reserved > EPSILON
+                and self.worst_loss(intent.window) <= self.worst_loss(intent.window, without=client_order_id) + EPSILON)
+
     @property
     def at_risk_usd(self) -> float:
-        # A pending lock buy completes pairs, so if it fills the possible loss only falls: it
-        # needs cash (reserved_usd) but is not added to the loss the stops measure.
-        return self.open_loss_usd + sum(intent.reserved for intent in self.intents.values() if not intent.lock)
+        """What can still be lost: each unsettled window's worst case over its pending orders' combinations.
+
+        Loss plan bug 1 (2026-10-13): this added every pending reservation in full, so a balancing bid, which can
+        only shrink a loss, counted as new risk and the stops cut it to 3 contracts instead of 10. A pending lock
+        buy completes pairs too: it needs cash (reserved_usd) but never raises the loss the stops measure.
+        """
+        legs: dict[str, list[tuple[Side, float, float]]] = {}
+        for intent in self.intents.values():
+            if intent.reserved > EPSILON:
+                legs.setdefault(intent.window, []).append((intent.side, intent.remaining, intent.reserved))
+        return sum(self._worst(value, legs.get(window, []))
+                   for window, value in self.inventory.items() if window not in self.settled)
 
     def lock_side(self, window: str) -> tuple[Side | None, float]:
         """The side that completes this window's unpaired contracts, and how many are unpaired."""
@@ -395,12 +447,16 @@ class LiveRiskBook:
         current = self.inventory[window].spent + sum(item.reserved for item in self.intents.values() if item.window == window)
         if current + cost > limits.window_usd + EPSILON:
             return "window_budget"
-        if self.at_risk_usd + cost > limits.open_usd + EPSILON:
+        # The stops count what this order adds to its window's worst case, never less than nothing: all of it for
+        # a first buy, nothing for a bid that only completes pairs (loss plan bug 1). Spending stays capped above.
+        added = max(0.0, self.worst_loss(window, (side, size, cost)) - self.worst_loss(window))
+        at_risk = self.at_risk_usd
+        if at_risk + added > limits.open_usd + EPSILON:
             return "open_budget"
-        if self.day_loss(now) + self.at_risk_usd + cost >= limits.day_loss_usd - EPSILON:
+        if self.day_loss(now) + at_risk + added >= limits.day_loss_usd - EPSILON:
             return "day_stop"
         # The lifetime stop never scales: it is the configured one at every rung.
-        if max(0.0, self.stop_anchor - self.realized_pnl) + self.at_risk_usd + cost >= self.limits.total_loss_usd - EPSILON:
+        if max(0.0, self.stop_anchor - self.realized_pnl) + at_risk + added >= self.limits.total_loss_usd - EPSILON:
             return "total_budget"
         if cost + self.reserved_usd + self.cash_debits > self.cash_usd + EPSILON:
             return "cash_budget"

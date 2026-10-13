@@ -325,9 +325,17 @@ orders, fills, fees, locked/directional P&L, gaps and anomalies in `docs/WORKLOG
 The owner chose "2.5x": $5 per window, $10 open, $6 UTC daily loss stop, $10 total loss stop, and asked that
 pairs be "completely locked in" and that the bot "knows when to sell".
 
-- **Money at risk** is what can still be lost: per unsettled window, its cost (fees included) minus $1 for
-  each complete up+down pair (Kalshi nets the pair to $1 at once), plus pending non-lock reservations. The
-  open budget and both loss stops use it. Gross cost is still reported as `open_cost_usd`.
+- **Money at risk** is what can still be lost: per unsettled window, the largest value, over every
+  combination of its pending orders filling or not, of its cost (fees included, pending orders at their full
+  reserved cost) minus $1 for each complete up+down pair (Kalshi nets the pair to $1 at once). The loss is
+  convex in each order's filled amount, so these extremes bound every partial fill. The open budget and both
+  loss stops use it, and each new order is checked against what it adds to its window's worst case: all of its
+  cost for a first buy, nothing for a balancing bid that only completes pairs. Until 2026-10-13 every pending
+  non-lock reservation was added in full, so a balancing bid counted as new risk and the stops cut it to 3
+  contracts instead of 10 (loss plan bug 1); a money stop also cancelled balancing bids. A money stop (day or
+  total) now leaves a resting bid that can only lower its window's worst case; it still stops new orders, and a
+  reconciliation stop, stale feed, old price or the cutoff still cancel it. The window budget still counts every
+  dollar spent and reserved. Gross cost is still reported as `open_cost_usd`.
 - **New buys stop** `SPEEDDESK_KALSHI_LOCK_S` (240) seconds before the close, never later than the cutoff.
 - **Lock:** from then until 20 s before the close, a window holding more of one side buys the other side at
   the ask (immediate-or-cancel) for exactly the unpaired whole contracts, at up to

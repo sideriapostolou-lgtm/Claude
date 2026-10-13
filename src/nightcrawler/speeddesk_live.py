@@ -768,8 +768,12 @@ class KalshiLiveDesk:
             if not reason and not intent.lock:
                 # A lock buy is immediate-or-cancel and only completes pairs: the window
                 # closing or a money stop is exactly when it must be left to finish.
-                reason = (self._risk_stop_reason()
-                          or (self._feed_reason(window, snapshot, now) if window else "Window missing"))
+                reason = self._risk_stop_reason()
+                if reason and not self.book.integrity_error and self.book.lowers_risk(intent.client_order_id):
+                    # A balancing bid can only shrink its window's loss: a money stop leaves it resting (loss plan
+                    # bug 1); a stale feed, an old price or the cutoff below still cancel it.
+                    reason = ""
+                reason = reason or (self._feed_reason(window, snapshot, now) if window else "Window missing")
                 if not reason and window is not None:
                     reason = self._stale_bid_reason(intent, window, snapshot, now,
                                                     min(STALE_BID_EDGE, self.settings.speeddesk_make_edge))
