@@ -18,7 +18,7 @@ first; its hard rules win over anything here. Older history: `git log` (320+ com
 | Memecoin engine (`engine.py`, `crawler.py` ...) | The original Solana memecoin bot | paper |
 
 The owner watches it all through a token-protected website (`dashboard.py`): a one-page money view at `/` and a 3D
-town at `/` (also `/world`), with detailed reports at `/reports`.
+town at `/` (also `/world`), with a plain fallback at `/summary`.
 
 **Today's state (2026-10-12 ~15:40 UTC):** real money is ON. The crypto rule is 48 bets, 48 wins, about +$3.40.
 The owner wants to scale it, and lab 8 is testing his idea for a smarter version before any size goes up.
@@ -135,12 +135,15 @@ needs none of them to write code or run tests.
 
 ## 6. The owner's pages
 
-`/` and `/world` open the steady, phone-first tycoon town. `/reports` retains the detailed money,
-team, trades, learning and receipts page; `/team` redirects there. Authentication and read-only APIs are unchanged.
+`/` and `/world` open the steady, phone-first tycoon town. The retired `/reports`, `/office`, `/office3d`
+and `/team` pages redirect to `/` after authentication. `/summary` is the independent, non-WebGL fallback: a
+plain account/team report with one return link and no buttons. Authentication and read-only APIs are unchanged.
 The town has a compact Polymarket cash / Bot today header, one Menu, six tappable workstations and a passive
-recent-result line. Tap a building or its name to visit; Back to town restores the overview. The menu holds
-accounts/open bets, research desks, the accessible crew list, detailed reports, help, the optional camera tour
-and instructions for stopping both real-money desks. No trading switches are exposed by the town.
+recent-result line. Tap a building or its name to visit; Back to town restores the overview. The menu has exactly **Money, Team, Help**. Money keeps both accounts, open bets and source ages together;
+Team holds the accessible crew list. The observatory opens research. Help explains the town and stopping both
+real-money desks. The camera-tour switch, old report links, Office footer and extra menu shortcuts are removed.
+Legacy animation helpers retain inert hidden DOM for compatibility; saved display settings cannot restore the
+old controls. No trading switches are exposed by the town.
 
 The owner confirmed on 2026-10-12 that "today" means **since 12:00 a.m. Pacific**. The town's Bot today card and
 Polymarket daily display use `real.today_pacific` (America/Los_Angeles, including daylight saving).
@@ -156,12 +159,13 @@ colorful cutaway workstations and soft daylight. Five decorative gardens unlock 
 of fresh, reconciled Polymarket bot net profit **today**. They reset at Pacific midnight, can recede after losses
 or corrections, and disappear when the source is unavailable. They are not purchased upgrades or lifetime wealth;
 deposits, owner bets, practice gains and elapsed viewing time never unlock them. Original UTC goal props and the
-practice arena are hidden in town mode. The optional camera tour retains its existing UTC visuals.
+practice arena are hidden. The retired camera modes are not available through the app.
 
-Kalshi stays separate in Menu → Accounts: its own cash, real exposure, UTC-day result, mode, freshness and any
+Kalshi stays separate in Menu → Money: its own cash, real exposure, UTC-day result, mode, freshness and any
 pending cancellation. The header labels each venue independently. Research desks show observed counts and scope,
 never real profit. Character movement is decorative; workstation descriptions and recent results use saved bot
-reports. `/api/page` remains the common data source. The reports page is also the WebGL-failure fallback.
+reports. `/api/page` remains the common data source. If 3D fails, a direct link opens `/summary`, which fetches
+that same API independently, ages saved reports, clears money on expired authentication and has no order path.
 
 Every page requires `?token=` (`DASHBOARD_TOKEN`) or its authenticated cookie. Preview locally in paper mode and
 screenshot the actual WebGL scene at phone and desktop widths. Preview fixtures are synthetic, never evidence

@@ -195,7 +195,7 @@ def _module(page: str) -> str:
 def test_world_is_static_and_lists_every_member(settings: Settings) -> None:
     page = render_world_html(settings)
     assert page.startswith("<!doctype html>") and '<canvas id="view">' in page
-    assert "<title>Night Shift: Skyport</title>" in page and "· paper" not in page  # the data says which money
+    assert "<title>Nightcrawler · Your town</title>" in page and "· paper" not in page  # the data says which money
     for mid, name, role in MEMBERS:
         assert f'data-id="{mid}"' in page and f'data-name="{name}"' in page and f'data-role="{role}"' in page
     assert f'data-pipeline="{",".join(PIPELINE)}"' in page
@@ -212,7 +212,8 @@ def test_world_is_static_and_lists_every_member(settings: Settings) -> None:
     assert "<p id=\"honest\">Drawings acting out the bot's own records; every word is its data.</p>" in page
     honest = page[page.index('<p id="honest">'):]
     assert "ledger" not in honest[:honest.index("</p>")] and len(honest[:honest.index("</p>")]) < 90
-    assert 'href="office"' in page and 'href="/reports"' in page  # the ways back
+    assert 'href="/summary"' in page  # independent fallback, without resurrecting old screens
+    assert 'href="office"' not in page and 'href="/reports"' not in page
     assert not re.search(r"""(?:src|href)\s*=\s*["']?(?:https?:)?//""", page)
     assert render_world_html(settings) == page  # pure
 
@@ -221,7 +222,7 @@ def test_world_live_mode_is_marked(make_settings: Callable[..., Settings]) -> No
     """The bot itself live: the title says real money is on before the first answer (whatever the desks say); the
     real-money button turns red only from the data (plain.real), never from the static page."""
     page = render_world_html(live_settings(make_settings))
-    assert "<title>Night Shift: Skyport · real money on</title>" in page
+    assert "<title>Nightcrawler · Your town</title>" in page
     assert '<button type="button" class="pill real" id="real"' in page and "pill real on" not in page
     assert '<b id="real-label">Money</b><small id="real-sub">loading…</small><small id="real-result"></small>' in page
 
@@ -1218,13 +1219,13 @@ def test_the_world_bar_replaces_the_two_dense_lines(settings: Settings) -> None:
     page = render_world_html(settings)
     module = _module(page)
     head = page[page.index('<header id="bar">'):page.index("</header>")]
-    for part in ('class="back" href="/reports"', 'id="real"', 'id="practice"', ">Practice (pretend)</button>", 'id="help"',
+    for part in ('class="back" aria-hidden="true"', 'id="real"', 'id="practice"', ">Practice (pretend)</button>", 'id="help"',
                  'id="headline"', 'id="status" role="status" hidden'):
         assert part in head, part
     assert 'id="town"' not in page and 'id="foot"' not in page and 'id="money"' not in page and 'id="mode"' not in page
     # the buttons keep to one row on a phone: a longer real-money line (the $10 stop's) narrows the practice button,
     # whose words wrap, instead of pushing "?" down a row; on a wide screen the row joins the headline's line
-    assert head.startswith('<header id="bar"><div class="row1"><a class="back"') and "?</button></div>" in head
+    assert head.startswith('<header id="bar"><div class="row1"><span class="back"') and "?</button></div>" in head
     (style,) = re.findall(r"<style>(.*?)</style>", page, flags=re.DOTALL)
     assert "#bar .row1 > .pill.practice { flex: 0 1 auto; min-width: 0; white-space: normal;" in style
     assert "@media (min-width: 760px) { #bar .row1 { display: contents; }" in style
@@ -1331,17 +1332,17 @@ for (const k of Object.keys(cases)) {{
 }}
 console.log(JSON.stringify(o));
 """, tmp_path)
-    assert out["on"] == ["$0.95 at risk now", "down $1.78 since start", "pill real on", "Night Shift: Skyport · real money on"]
+    assert out["on"] == ["$0.95 at risk now", "down $1.78 since start", "pill real on", "Nightcrawler · Your town"]
     assert out["risk"][0] == "paused: no new bets" and out["risk"][2] == "pill real on paused"
     assert out["day"][0] == "stopped for today" and out["day"][2] == "pill real on paused"
     assert out["full"][0] == "$9.70 at risk (its limit)" and out["full"][2] == "pill real on"  # waiting, not paused
     # the $10 stop fired with a bet still open: red, the money still in it, and the result
     assert out["halted"] == ["$0.95 still in bets", "down $10.20 since start", "pill real on",
-                             "Night Shift: Skyport · real bets still open"]
-    assert out["off"] == ["off", "", "pill real", "Night Shift: Skyport · pretend money"]
-    assert out["silent"] == ["no report yet", "", "pill real", "Night Shift: Skyport · real money: no report yet"]
+                             "Nightcrawler · Your town"]
+    assert out["off"] == ["off", "", "pill real", "Nightcrawler · Your town"]
+    assert out["silent"] == ["no report yet", "", "pill real", "Nightcrawler · Your town"]
     # the bot itself live beside a desk that has not reported: real money is on, never a grey "no report"
-    assert out["solana"] == ["on", "", "pill real on", "Night Shift: Skyport · real money on"]
+    assert out["solana"] == ["on", "", "pill real on", "Nightcrawler · Your town"]
     # a gain under the REAL MONEY label: "real money" said once (its "(real money)" pushed the bar off a phone)
     assert out["gain"][1] == "up $98.62 since start" and out["gain"][2] == "pill real on"
     assert not [k for k, v in out.items() if "paper" in v[3]]

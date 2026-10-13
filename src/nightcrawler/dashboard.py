@@ -6,19 +6,14 @@ daemon thread. Routes (GET only; anything else -> 405; unknown path -> 404):
 
 * ``/healthz`` -> 200 ``text/plain`` ``ok`` (no auth; Railway health check).
 * ``/api/state`` -> 200 JSON from :func:`build_state` (``Cache-Control: no-store``).
-* ``/office`` -> the animated office (:mod:`nightcrawler.office`), same data and auth as ``/``;
-  ``/office/art/<name>.jpg`` -> its bundled concept-art sets (whitelist, private cache).
-* ``/office3d`` -> the 3D town (:mod:`nightcrawler.office3d`), same data and auth as ``/``;
-  ``/office/assets/<name>`` -> its bundled three.js module (whitelist, private cache).
 * ``/`` and ``/world`` -> the 3D town (:mod:`nightcrawler.world3d`), with the same auth;
-  ``/office/assets/<name>`` also serves its whitelist (three.js addons, optional cast models).
-* ``/reports`` -> the mobile-first reports (:mod:`nightcrawler.page`, via :func:`render_html`): money,
-  the team at work, trades, learning, "ready for real money?", receipts and usage, in plain words.
-  It refreshes every 15 s from ``/api/page`` while the tab is visible.
+  ``/office/assets/<name>`` serves its whitelist (three.js addons, optional cast models), and
+  ``/office/art/<name>.jpg`` serves bundled concept art (whitelist, private cache).
+* ``/summary`` -> the simple money view (:mod:`nightcrawler.townsummary`), usable without WebGL.
+* ``/reports``, ``/office``, ``/office3d`` and ``/team`` -> 302 to ``/`` after auth; old links open the town.
 * ``/api/page`` -> that page's data (:mod:`nightcrawler.pagestate`); ``/api/team`` -> the team room
   JSON (:mod:`nightcrawler.teamroom`). Both are served by :class:`~nightcrawler.teamroom.TeamRoom`
   with the same auth and scrubbing.
-* ``/team`` -> 302 to ``/reports`` (old team-room links keep working).
 
 Auth: if ``DASHBOARD_TOKEN`` is set, every route but ``/healthz`` requires
 ``?token=<value>`` or cookie ``nc_token=<value>`` (constant-time compare);
@@ -123,14 +118,10 @@ from nightcrawler.config import Settings
 from nightcrawler.http import KV_USAGE, PROVIDERS, host_of, provider_of
 from nightcrawler.logging_setup import get_logger, redact_text
 from nightcrawler.models import LAMPORTS_PER_SOL, Position
-from nightcrawler.office import OFFICE_CSP, art_bytes, render_office_html
-from nightcrawler.office3d import (
-    ASSET_FILES,
-    OFFICE3D_CSP,
-    asset_bytes,
-    render_office3d_html,
-)
+from nightcrawler.office import art_bytes
+from nightcrawler.office3d import ASSET_FILES, asset_bytes
 from nightcrawler.page import PAGE_CSP, REFRESH_S, render_page_html
+from nightcrawler.townsummary import SUMMARY_CSP, render_summary_html
 from nightcrawler.world3d import (
     WORLD_ASSETS,
     WORLD_CSP,
@@ -548,7 +539,7 @@ CONTENT_SECURITY_POLICY = PAGE_CSP
 
 
 def render_html(settings: Settings) -> str:
-    """Reports at ``/reports`` (:func:`nightcrawler.page.render_page_html`; no secrets). Pure."""
+    """Legacy report renderer retained for callers; no longer served as a page. Pure."""
     return render_page_html(settings)
 
 
@@ -587,6 +578,7 @@ class _Handler(BaseHTTPRequestHandler):
             "/office3d",
             "/world",
             "/reports",
+            "/summary",
             "/api/state",
             "/api/page",
             "/team",
@@ -606,11 +598,10 @@ class _Handler(BaseHTTPRequestHandler):
             if set_cookie
             else []
         )
-        if (
-            parts.path == "/team"
-        ):  # the old team room page: now part of reports (the cookie carries auth)
+        if parts.path in ("/reports", "/office", "/office3d", "/team"):
+            # Exact old page paths only: the town still needs the protected asset/art routes.
             self._send(
-                302, b"", "text/plain; charset=utf-8", [*headers, ("Location", "/reports")]
+                302, b"", "text/plain; charset=utf-8", [*headers, ("Location", "/")]
             )
             return
         if parts.path in (
@@ -620,19 +611,9 @@ class _Handler(BaseHTTPRequestHandler):
         ):  # live data: nightcrawler.teamroom.TeamRoom
             self._send(*dashboard.team.response(parts.path, headers))
             return
-        if parts.path == "/reports":
-            headers.append(("Content-Security-Policy", CONTENT_SECURITY_POLICY))
-            self._send(200, dashboard.page, "text/html; charset=utf-8", headers)
-            return
-        if (
-            parts.path == "/office"
-        ):  # the animated office (nightcrawler.office): same data, same auth
-            headers.append(("Content-Security-Policy", OFFICE_CSP))
-            self._send(200, dashboard.office, "text/html; charset=utf-8", headers)
-            return
-        if parts.path == "/office3d":  # the 3D town (nightcrawler.office3d): same data, same auth
-            headers.append(("Content-Security-Policy", OFFICE3D_CSP))
-            self._send(200, dashboard.office3d, "text/html; charset=utf-8", headers)
+        if parts.path == "/summary":
+            headers.append(("Content-Security-Policy", SUMMARY_CSP))
+            self._send(200, dashboard.summary, "text/html; charset=utf-8", headers)
             return
         if parts.path in ("/", "/world"):  # the town is home; older world links keep working
             headers.append(("Content-Security-Policy", WORLD_CSP))
@@ -775,9 +756,7 @@ class DashboardServer:
         self.port = port if port is not None else settings.port
         self._thread: threading.Thread | None = None
         self._server: Any = None
-        self.page = render_html(settings).encode("utf-8")
-        self.office = render_office_html(settings).encode("utf-8")
-        self.office3d = render_office3d_html(settings).encode("utf-8")
+        self.summary = render_summary_html().encode("utf-8")
         self.world = render_world_html(settings).encode("utf-8")
         self._secrets = settings.secret_values()
         token = settings.dashboard_token.reveal() if settings.dashboard_token else None
