@@ -82,6 +82,9 @@ class FakeAccount:
         pass
 
 
+# The $5 per window / $10 open caps that were in force (the risk book's inner ceiling) until 2026-10-13 15:15 UTC;
+# tests written against them keep them as their default, and the owner's $10 / $20 is tested on its own.
+FIVE_DOLLAR_CAPS = {"speeddesk_kalshi_window_usd": 5.0, "speeddesk_kalshi_open_usd": 10.0}
 # The caps before the owner's 2026-10-13 raise; mechanism tests that count contracts keep them.
 SMALL_CAPS = {"speeddesk_kalshi_window_usd": 2.0, "speeddesk_kalshi_open_usd": 4.0,
               "speeddesk_kalshi_day_stop_usd": 3.0, "speeddesk_kalshi_total_stop_usd": 5.0}
@@ -95,7 +98,7 @@ def make_desk(tmp_path: Path, *, mode: str = "live", confirm: str | None = "yes"
     settings = Settings(data_dir=tmp_path, speeddesk_kalshi_mode=mode,
                         speeddesk_kalshi_live_confirm=Secret(confirm) if confirm else None,
                         kalshi_key_id=Secret("fake-key-id") if keys else None,
-                        kalshi_private_key=Secret("fake-private-key") if keys else None, **(caps or {}),
+                        kalshi_private_key=Secret("fake-private-key") if keys else None, **(FIVE_DOLLAR_CAPS if caps is None else caps),
                         **(extra or {}))
     window = Window(TICKER, clock.now() - 10, clock.now() + 890, start_price=80000,
                     venue_start_price=80000, venue="kalshi", taker_coefficient=.07, maker_coefficient=0,
@@ -1074,7 +1077,7 @@ def reopen(tmp_path: Path, desk: KalshiLiveDesk, account: FakeAccount, clock: Fa
     desk.close()
     settings = Settings(data_dir=tmp_path, speeddesk_kalshi_mode="live", speeddesk_kalshi_live_confirm=Secret("yes"),
                         kalshi_key_id=Secret("fake-key-id"), kalshi_private_key=Secret("fake-private-key"),
-                        **(caps or {}))
+                        **(FIVE_DOLLAR_CAPS if caps is None else caps))
     return KalshiLiveDesk(settings, tmp_path / "live", desk.snapshot, clock=clock.now,
                           client_factory=lambda: account, direct_member_verified=True)
 
@@ -1219,3 +1222,23 @@ def test_only_the_save_before_an_order_and_owner_actions_wait_for_the_disk(tmp_p
         assert calls[-1] is True
     finally:
         desk.close()
+
+
+def test_the_owners_ten_dollar_windows_are_enforced_and_reported(tmp_path: Path) -> None:
+    caps = {"speeddesk_kalshi_window_usd": 10.0, "speeddesk_kalshi_open_usd": 20.0,
+            "speeddesk_kalshi_day_stop_usd": 6.0, "speeddesk_kalshi_total_stop_usd": 10.0}
+    desk, account, _ = make_desk(tmp_path, caps=caps)
+    try:
+        assert (desk.book.limits.window_usd, desk.book.limits.open_usd) == (10.0, 20.0)
+        asyncio.run(desk.step())
+        assert [creation["size"] for creation in account.creates] == [10.0]  # was cut to 5 by a stale inner ceiling
+        assert desk.panel()["caps"] == {"window_usd": 10.0, "open_usd": 20.0, "day_stop_usd": 6.0, "total_stop_usd": 10.0}
+    finally:
+        desk.close()
+
+
+def test_the_inner_ceiling_still_holds_above_the_owners_limits() -> None:
+    from nightcrawler.speeddesk_live_model import LiveLimits
+
+    limits = LiveLimits(window_usd=50, open_usd=99, day_loss_usd=60, total_loss_usd=99)
+    assert (limits.window_usd, limits.open_usd, limits.day_loss_usd, limits.total_loss_usd) == (10, 20, 6, 10)
