@@ -15,6 +15,21 @@ Template:
 
 
 
+## 2026-10-13 14:00 UTC, Claude, branch claude/kalshi-small-saves
+- Changed: PR #26 is live (deployment 80e9a951, 13:34:37 UTC, commit 7ce65d8). Its new per-stage timings showed
+  the real bottleneck: the pre-send save took 206 ms (median of 7 orders), because each save rewrote every order
+  ever made. Finished windows (an hour past the close, settled, nothing open) now move once into write-once ledger
+  chunks; saves hold only the rest. Restore merges the chunks first, so all restore checks still see full books.
+- Verified: new tests (archive once, whole restore, missing chunk refuses, reopened window saved in full again,
+  save size flat with 300 more finished orders); full suite 4,668 passed / 12 skipped; changed-file Ruff and mypy
+  clean. Post-deploy sample of PR #26 (13:34-13:45, n=7-8): tick receipt to decision median 509 ms, decision to
+  ack 1,173 ms, of which save 206, decision to send 229, send to ack 897 (the last includes event-loop stalls
+  from the same slow saves inside each once-a-second reconcile).
+- Not verified / skipped: the Railway save time after this change (the status line now carries `save.last_ms`).
+  Rolling back past this release makes the companion refuse to start (fails closed); roll forward instead.
+- Real money touched? Storage of the companion's books only; no caps, edges, strategy or settings changed.
+- Next step: deploy at a safe minute; compare `save.last_ms` and the order stages with the numbers above.
+
 ## 2026-10-13 13:20 UTC, Claude, branch claude/kalshi-speed
 - Changed (owner: "Move to Virginia!!"; the service has run in Railway us-east4 since 2026-10-12 23:50, so the
   gain had to come from inside the bot): the private Kalshi client waited 200 ms after every call, reads and

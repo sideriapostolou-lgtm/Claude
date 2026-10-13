@@ -1065,3 +1065,101 @@ def test_accepted_order_reports_where_its_time_went(tmp_path: Path) -> None:
         assert stages["decision_to_send_ms"] >= stages["save_ms"]
     finally:
         desk.close()
+
+
+def reopen(tmp_path: Path, desk: KalshiLiveDesk, account: FakeAccount, clock: FakeClock,
+           caps: dict[str, float] | None = None) -> KalshiLiveDesk:
+    """The same saved desk started again on the same clock, as a redeploy does."""
+    desk.close()
+    settings = Settings(data_dir=tmp_path, speeddesk_kalshi_mode="live", speeddesk_kalshi_live_confirm=Secret("yes"),
+                        kalshi_key_id=Secret("fake-key-id"), kalshi_private_key=Secret("fake-private-key"),
+                        **(caps or {}))
+    return KalshiLiveDesk(settings, tmp_path / "live", desk.snapshot, clock=clock.now,
+                          client_factory=lambda: account, direct_member_verified=True)
+
+
+def settled_window(tmp_path: Path) -> tuple[KalshiLiveDesk, FakeAccount, FakeClock]:
+    """One traded window that closed, settled at Kalshi and was booked; nothing is open."""
+    desk, account, clock = make_desk(tmp_path)
+    starter_filled(desk, account, clock)
+    steps(desk, clock, 4)
+    clock.advance(900)
+    account.account_positions = []
+    account.resolutions = [{"ticker": TICKER, "market_result": "yes", "revenue": 500, "settled_time": clock.now() - 5}]
+    steps(desk, clock, 4)
+    assert TICKER in desk.book.settled and not desk._active()
+    return desk, account, clock
+
+
+def full_state(desk: KalshiLiveDesk) -> tuple[dict[str, Any], dict[str, Any]]:
+    from dataclasses import asdict
+    return desk.book.window_parts(lambda _window: True), {key: asdict(value) for key, value in desk.intents.items()}
+
+
+def test_a_finished_window_is_archived_once_and_restored_whole(tmp_path: Path) -> None:
+    desk, account, clock = settled_window(tmp_path)
+    desk.checkpoint()
+    assert not desk.archived  # kept in every save until an hour after the close
+    clock.advance(3600)
+    desk.checkpoint()
+    saved = desk.ledger.get_kv("kalshi_live_state")
+    assert desk.archived == {TICKER} and saved["archived_windows"] == [TICKER] and saved["archive_chunks"] == 1
+    assert TICKER not in saved["book"]["windows"] and not saved["book"]["intents"] and not saved["intents"]
+    chunk = desk.ledger.get_kv("kalshi_live_archive/0")
+    assert chunk["windows"] == [TICKER] and len(chunk["intents"]) == len(desk.intents) >= 1
+    desk.checkpoint()
+    assert desk.archive_chunks == 1  # write-once: later saves do not rewrite it
+    before = full_state(desk)
+    restarted = reopen(tmp_path, desk, account, clock)
+    try:
+        assert full_state(restarted) == before
+        assert restarted.archived == {TICKER} and restarted.archive_chunks == 1
+        assert restarted.book.realized_pnl == pytest.approx(5 - 2 - restarted.book.fills[next(iter(restarted.book.fills))].fee_usd)
+    finally:
+        restarted.close()
+
+
+def test_a_missing_archive_chunk_stops_the_restart(tmp_path: Path) -> None:
+    desk, account, clock = settled_window(tmp_path)
+    clock.advance(3600)
+    desk.checkpoint()
+    desk.ledger.set_kv("kalshi_live_archive/0", None)
+    with pytest.raises(ValueError, match="archive chunk missing"):
+        reopen(tmp_path, desk, account, clock)
+
+
+def test_an_archived_window_with_new_activity_is_saved_in_full_again(tmp_path: Path) -> None:
+    desk, account, clock = settled_window(tmp_path)
+    clock.advance(3600)
+    desk.checkpoint()
+    identity = next(iter(desk.intents))
+    desk.intents[identity].uncertain = True  # activity came back: it must never hide in the archive
+    desk.checkpoint()
+    saved = desk.ledger.get_kv("kalshi_live_state")
+    assert TICKER in saved["book"]["windows"] and saved["intents"][identity]["uncertain"] is True
+    assert saved["archived_windows"] == [] and not desk.archived
+    desk.intents[identity].uncertain = False
+    desk.checkpoint()
+    assert desk.archived == {TICKER} and desk.archive_chunks == 2
+    before = full_state(desk)
+    restarted = reopen(tmp_path, desk, account, clock)
+    try:
+        assert full_state(restarted) == before
+    finally:
+        restarted.close()
+
+
+def test_saved_state_stays_small_however_many_windows_have_finished(tmp_path: Path) -> None:
+    desk, _, clock = settled_window(tmp_path)
+    clock.advance(3600)
+    desk.checkpoint()
+    size = desk.path.stat().st_size
+    from dataclasses import replace as clone
+    identity = next(iter(desk.intents))
+    for index in range(300):  # three hundred more finished orders in the archived window
+        key = f"nc-speed-{index:032x}"
+        desk.intents[key] = clone(desk.intents[identity], client_order_id=key)
+        desk.book.intents[key] = clone(desk.book.intents[identity], client_order_id=key)
+    desk.checkpoint()
+    assert desk.path.stat().st_size <= size + 64
+    desk.close()
