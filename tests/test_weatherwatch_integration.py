@@ -27,7 +27,7 @@ def test_weather_settings_only_add_observation_and_preserve_financial_defaults()
     assert settings.trading_mode == settings.polydesk_mode == settings.speeddesk_kalshi_mode == "paper"
     assert settings.speeddesk_kalshi_live_confirm is None
     assert (settings.speeddesk_kalshi_window_usd, settings.speeddesk_kalshi_open_usd,
-            settings.speeddesk_kalshi_day_stop_usd, settings.speeddesk_kalshi_total_stop_usd) == (5, 10, 6, 10)
+            settings.speeddesk_kalshi_day_stop_usd, settings.speeddesk_kalshi_total_stop_usd) == (10, 20, 6, 10)
 
 
 def test_weather_settings_and_read_only_stream_credentials_do_not_enable_orders() -> None:
