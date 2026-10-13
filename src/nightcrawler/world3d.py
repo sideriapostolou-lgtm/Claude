@@ -8323,6 +8323,12 @@ _M_CINEMA = r"""
   progKeep = function (b) { return !CINE.on || cineBeat(b); };
   function cineVaultDraw() {
     if (!data) return;
+    if (tycoonActive()) {
+      const k = tycoonSummary(data, Date.now() / 1000).accounts.kalshi;
+      const label = k.cash === null ? "KALSHI CASH · awaiting balance"
+        : offline || k.cashStale ? "LAST RECORDED KALSHI CASH" : "KALSHI ACCOUNT CASH";
+      drawVaultSign(fmtUsd(k.cash), label, null); return;
+    }
     if (CINE.on) { const v = cineVault(data); drawVaultSign(v.usd, v.label, v.accent); return; }
     // (the details view: the sign as the page draws it, money.usd and exactly money.label)
     const money = data.money || {}, since = (money.since_start || {}).usd;

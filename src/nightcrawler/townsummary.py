@@ -21,8 +21,11 @@ a:focus-visible { outline: 3px solid #d99716; outline-offset: 4px; }
 h1 { font-size: 27px; letter-spacing: -.03em; margin: 10px 0 6px; } h2 { font-size: 19px; margin: 0 0 10px; }
 h3 { font-size: 15px; margin: 18px 0 10px; }
 p { font-size: 14px; line-height: 1.5; margin: 8px 0; } .muted { color: #506b7b; }
-section { margin-top: 16px; padding: 18px; background: #fff; border: 1px solid #d8e7ee; border-radius: 14px; }
-.status { font-weight: 700; } .warning { color: #754708; background: #fff2d4; border-radius: 8px; padding: 9px 11px; }
+section, main > details { margin-top: 16px; padding: 18px; background: #fff; border: 1px solid #d8e7ee; border-radius: 14px; }
+summary { cursor: pointer; font-weight: 700; padding: 2px 0; min-height: 44px; }
+summary:focus-visible { outline: 3px solid #d99716; outline-offset: 4px; }
+summary .muted { display: block; padding-top: 6px; font-size: 12px; font-weight: 400; }
+.details-body { padding-top: 10px; } .status { font-weight: 700; } .warning { color: #754708; background: #fff2d4; border-radius: 8px; padding: 9px 11px; }
 [hidden] { display: none; } dl { margin: 14px 0 10px; display: grid; grid-template-columns: 1fr auto; gap: 12px 14px; }
 dt { font-size: 13px; line-height: 1.4; align-self: center; } dd { margin: 0; text-align: right; font-size: 21px; font-weight: 750; font-variant-numeric: tabular-nums; }
 .times { font-size: 12px; color: #506b7b; } ul { list-style: none; padding: 0; margin: 0; }
@@ -104,6 +107,15 @@ _UI = r"""
       || venue.truncated.positions === true || venue.truncated.orders === true;
     summaryText(prefix + "-business-more", clipped ? "Only the first saved positions and orders are shown; this is not the full account history." : "");
   }
+  function summaryActivity(id, events, venueName) {
+    summaryList(id, events.length ? events.slice(0, 12).map(function (e) {
+      const lines = [e.text, "Recorded " + summaryAge(e.age) + (e.current ? "." : "; awaiting a current source check.")];
+      if (e.fee !== null) lines.push("Recorded fee: " + summaryFee(e.fee)
+        + (e.feeBasis ? " (" + e.feeBasis + ")" : " (basis not reported)") + ".");
+      return { name: venueName + (e.scope === "owner" ? " · Your activity" : " · Bot activity"), lines: lines };
+    }) : [{ name: "No recorded " + venueName + " activity available",
+      lines: ["Waiting for real order, fill or settlement records. Missing records are not proof of an empty account."] }]);
+  }
   function summaryRender() {
     const s = tycoonSummary(summaryData, Date.now() / 1000), k = s.accounts.kalshi;
     const disconnected = summaryConnection === "offline", locked = summaryConnection === "locked";
@@ -112,13 +124,19 @@ _UI = r"""
       : summaryConnection === "loading" ? "Connecting to your town…"
       : s.pageStale ? "The saved page report is delayed. Check each account’s time below."
       : s.updated === null ? "Waiting for a valid town report. Missing numbers are not zero."
-      : "Read-only town summary. Cash and bot profit are separate.";
+      : "Kalshi town summary. Cash and bot profit are separate.";
     summaryText("connection", message);
     const alerts = summaryData && Array.isArray(summaryData.alerts) ? summaryData.alerts : [];
-    summaryWarning("service-warning", alerts.slice(0, 3).map(function (a) {
+    const serviceMessages = alerts.slice(0, 3).map(function (a) {
       return a && typeof a.text === "string" ? a.text : "";
-    }).filter(Boolean));
+    }).filter(Boolean);
+    summaryWarning("service-warning", serviceMessages);
+    summaryText("background-status", serviceMessages.length
+      ? serviceMessages.length + " service notice(s) to review. Practice results never grow the town."
+      : "Practice and public observations run separately; their results never grow the town.");
     const history = disconnected ? "Last report: " : "";
+    summaryText("pm-mode", "Polymarket US · " + (s.on === true ? "LIVE setting"
+      : s.on === false ? "PRACTICE setting" : "mode not reported"));
     summaryText("pm-state", history + s.stateText);
     summaryText("pm-cash", summaryMoney(s.cash, false));
     summaryText("pm-profit", summaryMoney(s.today, true));
@@ -133,6 +151,10 @@ _UI = r"""
     if (s.todayStale) pmWarnings.push("Pacific-day profit may be old.");
     if (s.todayStatus !== "ok") pmWarnings.push(s.todayReason || "A complete Pacific-day bot result is not available yet.");
     summaryWarning("pm-warning", pmWarnings);
+    const pmIssues = s.business.venues.polymarket_us.issues;
+    summaryText("pm-overview", history + s.stateText + ". "
+      + (pmWarnings.length ? pmWarnings[0] : pmIssues.length ? pmIssues[0] : "This account is separate from the Kalshi town.")
+      + (s.on === false ? " Existing real bets can still settle." : ""));
     summaryText("kalshi-state", history + (k.active ? "REAL MONEY (Kalshi) · " + k.stateText
       : k.practice ? "PRACTICE (Kalshi) · " + k.stateText : k.stateText));
     summaryText("kalshi-cash", summaryMoney(k.cash, false));
@@ -166,15 +188,14 @@ _UI = r"""
     summaryWarning("kalshi-warning", kalshiWarnings);
     summaryBusiness("pm", s.business.venues.polymarket_us, s.business.available);
     summaryBusiness("kalshi", s.business.venues.kalshi, s.business.available);
-    summaryList("activity", s.activity.length ? s.activity.slice(0, 12).map(function (e) {
-      const lines = [e.text, "Recorded " + summaryAge(e.age) + (e.current ? "." : "; awaiting a current source check.")];
-      if (e.fee !== null) lines.push("Recorded fee: " + summaryFee(e.fee)
-        + (e.feeBasis ? " (" + e.feeBasis + ")" : " (basis not reported)") + ".");
-      return { name: (e.venue === "kalshi" ? "Kalshi" : "Polymarket US")
-        + (e.scope === "owner" ? " · Your activity" : " · Bot activity"), lines: lines };
-    }) : [{ name: "No recorded real activity available", lines: ["Waiting for venue order, fill or settlement records. Practice activity is separate."] }]);
-    summaryText("activity-more", s.activity.length > 12 || s.business.venues.polymarket_us.truncated.events === true
-      || s.business.venues.kalshi.truncated.events === true ? "Recent saved events only; this is not the full account history." : "");
+    const kalshiActivity = s.activity.filter(function (e) { return e.venue === "kalshi"; });
+    const pmActivity = s.business.activity.filter(function (e) { return e.venue === "polymarket_us"; });
+    summaryActivity("activity", kalshiActivity, "Kalshi");
+    summaryActivity("pm-activity", pmActivity, "Polymarket US");
+    summaryText("activity-more", kalshiActivity.length > 12 || s.business.venues.kalshi.truncated.events === true
+      ? "Recent saved Kalshi events only; this is not the full account history." : "");
+    summaryText("pm-activity-more", pmActivity.length > 12 || s.business.venues.polymarket_us.truncated.events === true
+      ? "Recent saved Polymarket events only; this is not the full account history." : "");
     const work = { working: "Recently active", waiting: "Waiting", idle: "Idle", stuck: "Needs attention", unknown: "No current report" };
     summaryList("crew", s.crew.length ? s.crew.map(function (c) {
       return { name: c.name + " · " + c.job,
@@ -232,55 +253,60 @@ def render_summary_html() -> str:
     return (
         '<!doctype html>\n<html lang="en"><head><meta charset="utf-8">'
         '<meta name="viewport" content="width=device-width, initial-scale=1">'
-        '<meta name="referrer" content="no-referrer"><title>Your town · Summary</title>'
+        '<meta name="referrer" content="no-referrer"><title>Your Kalshi town · Summary</title>'
         f"<style>{_STYLE}</style></head><body><main>"
-        '<header><a href="/">← Back to town</a><h1>Your town, simply</h1>'
-        '<p class="muted">The same account reports, without the 3D view.</p>'
-        '<p id="connection" role="status" aria-live="polite">Connecting to your town…</p>'
-        '<p id="service-warning" class="warning" hidden></p></header>'
+        '<header><a href="/">← Back to town</a><h1>Your Kalshi town</h1>'
+        '<p class="muted">Kalshi’s real account, orders and results. The other desks are below.</p>'
+        '<p id="connection" role="status" aria-live="polite">Connecting to your town…</p></header>'
         '<noscript><p class="warning">JavaScript is needed to read current reports. No account figures have been loaded.</p></noscript>'
-        '<section aria-labelledby="pm-title"><h2 id="pm-title">Polymarket US</h2>'
-        '<p id="pm-state" class="status">No current desk report</p>'
-        '<dl><dt>Available account cash</dt><dd id="pm-cash">Not reported</dd>'
-        '<dt>Bot profit since midnight Pacific</dt><dd id="pm-profit">Not reported</dd>'
-        '<dt>Account’s open markets</dt><dd id="pm-open">Not reported</dd>'
-        '<dt>Reported value of those holdings</dt><dd id="pm-value">Not reported</dd></dl>'
-        '<p class="muted">Cash and holdings include your own bets. Bot profit excludes your own bets, deposits and practice results.</p>'
-        '<p id="pm-times" class="times">Report times unknown.</p><p id="pm-warning" class="warning" hidden></p>'
-        '<h3>Recorded holdings and orders</h3><p id="pm-business-time" class="times"></p>'
-        '<p id="pm-business-basis" class="muted"></p><p id="pm-business-warning" class="warning" hidden></p>'
-        '<ul id="pm-business"><li>Waiting for venue details.</li></ul><p id="pm-business-more" class="muted"></p></section>'
         '<section aria-labelledby="kalshi-title"><h2 id="kalshi-title">Kalshi</h2>'
         '<p id="kalshi-state" class="status">No current Kalshi report</p>'
         '<dl><dt>Account cash</dt><dd id="kalshi-cash">Not reported</dd>'
         '<dt>Bot profit since midnight Pacific</dt><dd id="kalshi-pacific-profit">Not reported</dd>'
-        '<dt>Bot profit since midnight UTC</dt><dd id="kalshi-profit">Not reported</dd>'
         '<dt>Bot worst-case loss still at risk</dt><dd id="kalshi-risk">Not reported</dd>'
         '<dt>Cash reserved for bot orders</dt><dd id="kalshi-reserved">Not reported</dd></dl>'
         '<p id="kalshi-reason" class="muted">Kalshi has its own cash, positions and limits.</p>'
-        '<p class="muted">The Pacific and UTC results cover different hours. They are not added together. Cash is not profit.</p>'
-        '<p id="kalshi-risk-note" class="muted"></p><p id="kalshi-limits" class="muted"></p>'
-        '<p id="kalshi-limits-note" class="muted"></p>'
         '<p id="kalshi-times" class="times">Report times unknown.</p><p id="kalshi-warning" class="warning" hidden></p>'
         '<h3>Recorded holdings and orders</h3><p id="kalshi-business-time" class="times"></p>'
         '<p id="kalshi-business-basis" class="muted"></p><p id="kalshi-business-warning" class="warning" hidden></p>'
-        '<ul id="kalshi-business"><li>Waiting for venue details.</li></ul><p id="kalshi-business-more" class="muted"></p></section>'
-        '<section aria-labelledby="activity-title"><h2 id="activity-title">Recent real activity</h2>'
-        '<p class="muted">Orders, fills and settlements from each venue. Your own activity stays separate from bot profit.</p>'
-        '<ul id="activity"><li>Waiting for venue records.</li></ul><p id="activity-more" class="muted"></p></section>'
-        '<section aria-labelledby="crew-title"><h2 id="crew-title">Your team</h2>'
-        '<ul id="crew"><li>Waiting for a crew report.</li></ul></section>'
-        '<section aria-labelledby="research-title"><h2 id="research-title">Research</h2>'
-        '<p class="muted">Practice and public observations do not count as real profit.</p>'
-        '<ul id="research"><li>Waiting for observation reports.</li></ul></section>'
-        '<section aria-labelledby="growth-title"><h2 id="growth-title">How the town grows</h2>'
-        '<p>Garden upgrades use both bots’ recorded profit since midnight Pacific, only when both books are complete and current. '
-        'Losses can remove gardens, and midnight resets them. Deposits, your own bets and practice results do not count.</p></section>'
-        '<section aria-labelledby="stop-title"><h2 id="stop-title">Stop new real orders</h2>'
+        '<ul id="kalshi-business"><li>Waiting for venue details.</li></ul><p id="kalshi-business-more" class="muted"></p>'
+        '<details><summary>Limits and the UTC stop clock</summary><div class="details-body">'
+        '<dl><dt>Bot profit since midnight UTC</dt><dd id="kalshi-profit">Not reported</dd></dl>'
+        '<p class="muted">The Pacific and UTC results cover different hours. They are not added together. Cash is not profit.</p>'
+        '<p id="kalshi-risk-note" class="muted"></p><p id="kalshi-limits" class="muted"></p>'
+        '<p id="kalshi-limits-note" class="muted"></p></div></details></section>'
+        '<section aria-labelledby="activity-title"><h2 id="activity-title">Kalshi activity</h2>'
+        '<p class="muted">Real order receipts, fills and settlements. Orders and fills are not profit.</p>'
+        '<ul id="activity"><li>Waiting for Kalshi records.</li></ul><p id="activity-more" class="muted"></p>'
+        '<p class="muted">The town grows from Kalshi bot profit since midnight Pacific, only when its book is complete and current. '
+        'Losses can remove gardens, and midnight resets them. Deposits, your own bets, Polymarket results and practice results do not count.</p></section>'
+        '<details id="other-account"><summary>Other live account<span id="pm-mode" class="muted">Polymarket US · mode not reported</span>'
+        '<span id="pm-overview" class="muted">Waiting for this account’s status.</span></summary><div class="details-body">'
+        '<h2 id="pm-title">Polymarket US</h2><p id="pm-state" class="status">No current desk report</p>'
+        '<dl><dt>Available account cash</dt><dd id="pm-cash">Not reported</dd>'
+        '<dt>Bot profit since midnight Pacific</dt><dd id="pm-profit">Not reported</dd>'
+        '<dt>Account’s open markets</dt><dd id="pm-open">Not reported</dd>'
+        '<dt>Reported value of those holdings</dt><dd id="pm-value">Not reported</dd></dl>'
+        '<p class="muted">Cash and holdings include your own bets. Bot profit excludes your own bets, deposits and practice results. '
+        'This account’s trading mode has not changed with the town view.</p>'
+        '<p id="pm-times" class="times">Report times unknown.</p><p id="pm-warning" class="warning" hidden></p>'
+        '<h3>Recorded holdings and orders</h3><p id="pm-business-time" class="times"></p>'
+        '<p id="pm-business-basis" class="muted"></p><p id="pm-business-warning" class="warning" hidden></p>'
+        '<ul id="pm-business"><li>Waiting for venue details.</li></ul><p id="pm-business-more" class="muted"></p>'
+        '<h3>Polymarket activity</h3><ul id="pm-activity"><li>Waiting for Polymarket records.</li></ul>'
+        '<p id="pm-activity-more" class="muted"></p></div></details>'
+        '<details id="background"><summary>Team and background research<span id="background-status" class="muted">'
+        'Practice and public observations are separate from real money.</span></summary><div class="details-body">'
+        '<h2 id="crew-title">Your team</h2><ul id="crew"><li>Waiting for a crew report.</li></ul>'
+        '<h3 id="research-title">Practice and observation reports</h3>'
+        '<ul id="research"><li>Waiting for observation reports.</li></ul>'
+        '<h3>Background service notices</h3><p class="muted">These messages cover the wider service; they do not establish Kalshi’s trading mode.</p>'
+        '<p id="service-warning" class="warning" hidden></p></div></details>'
+        '<details id="stop-help"><summary>How to stop real orders</summary><div class="details-body">'
         '<p>On Railway’s bot service, set both <code>POLYDESK_MODE=paper</code> and '
         '<code>SPEEDDESK_KALSHI_MODE=paper</code>.</p>'
         '<p>After the restart, verify that both desks have stopped new real buys. Confirm that Kalshi’s resting bids were cancelled and remaining exposure was reconciled.</p>'
-        '<p>Already filled bets stay open and can still win or lose. This summary cannot change trading settings or place orders.</p></section>'
+        '<p>Already filled bets stay open and can still win or lose. This summary cannot change trading settings or place orders.</p></div></details>'
         '<footer>Read only · checks for reports every 15 seconds while this page is visible.</footer>'
         f"</main><script>{_SCRIPT}</script></body></html>\n"
     )

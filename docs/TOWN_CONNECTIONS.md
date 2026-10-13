@@ -5,6 +5,12 @@ town; `/summary` shows the same projection without 3D. The only menu choices are
 Money, Team and Help. Both pages read the authenticated `GET /api/page`; neither
 places orders, changes settings or requests a venue account directly.
 
+The foreground is Kalshi: cash, Pacific-day bot profit, real activity, safeguards
+and daily garden growth. Polymarket remains live at the owner’s explicit request;
+its account stays separate in secondary Money details. Practice and observation
+services continue behind the scenes and remain available in their detail panels.
+This focus is a display choice, never a trading-mode switch.
+
 ## Real money
 
 | Shown in the town | Saved source and meaning | Time and limits |
@@ -57,7 +63,8 @@ normally polls every 90 seconds. Kalshi connection records use 60 seconds.
 An incomplete source cannot qualify current activity or town growth.
 
 An accounting mismatch is separate from an old report: a recently updated report
-can still have incomplete money records. Rook flags those records for review.
+can still have incomplete money records. Rook flags Kalshi records for review;
+Polymarket warnings stay with its secondary account details.
 The Pacific-day API includes at most two UTC-day aggregate reconciliation rows
 (record counts and sums); a mismatch still leaves profit unknown. Those sums are
 diagnostics, not an alternative profit figure. The town states the missing-profit
@@ -102,8 +109,8 @@ keep those records separate.
 Characters represent roles such as monitoring, risk checks, order status and
 recordkeeping. They are a visualization of saved work and venue receipts, not
 additional trading agents. An order submission is not a fill, and a fill is not
-profit. Recent qualified real bot events can animate work; an old, incomplete,
-owner or practice event cannot pretend to be a new bot transaction.
+profit. Recent qualified real Kalshi bot events can animate work; an old, incomplete,
+Polymarket, owner or practice event cannot pretend to be a new bot transaction.
 
 An order's latest reconciliation timestamp is not its cancellation time. The
 current saved source does not retain an immutable terminal-cancellation time,
@@ -111,12 +118,13 @@ so the town no longer fabricates new cancellation events from repeated account
 checks. Actual cancellation-request receipts remain labeled as requests and do
 not trigger town movement or confirm that reserved cash was released.
 
-Garden levels use both bots' combined **recorded** profit since midnight Pacific
-only when both sources are complete, fresh and refer to the same Pacific date.
+Garden levels use Kalshi’s **recorded** bot profit since midnight Pacific
+only when its source is complete, fresh and covers the current Pacific date.
 Thresholds are $0.01, $0.25, $1, $5 and $10. Losses or corrections can remove a
 garden, and Pacific midnight resets the daily calculation. These are decorations,
 not purchased assets or account equity. Deposits and owner/practice results do
-not unlock them. If either book is unavailable, growth waits.
+not unlock them. If the Kalshi book is unavailable, growth waits; Polymarket
+never substitutes for it, and an unrelated Polymarket gap cannot stop Kalshi growth.
 
 ## Current accounting limits
 
@@ -151,8 +159,8 @@ identifying its removals, and the missing rows' original rule and entry time
 are unavailable. Matching arithmetic alone does not verify those exclusions.
 
 No recovery code, reconstructed booking timestamps or trading-book changes
-were made. Pacific profit stays unknown and garden growth stays blocked until
-the source coverage is verified. Future display work must not promote these
+were made. Polymarket Pacific profit stays unknown until its source coverage
+is verified. The current Kalshi-only gardens do not depend on this Polymarket book. Future display work must not promote these
 partial sums, inferred owner exclusions or receipt timestamps into verified
 profit, new settlement events or earned town growth.
 

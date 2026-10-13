@@ -29,7 +29,7 @@ def event(venue: str, kind: str = "fill", **kwargs: Any) -> dict[str, Any]:
             "pnl_usd": 999, "fee_usd": .0034, **kwargs}
 
 
-def test_both_cash_accounts_stay_separate_and_growth_uses_only_same_pacific_day(tmp_path: Path) -> None:
+def test_both_cash_accounts_stay_separate_and_growth_uses_only_kalshi_pacific_day(tmp_path: Path) -> None:
     p = connected()
     p["money"]["today"] = {"usd": 100000}
     p["money"]["connections"]["kalshi"]["orders"] = [{"reserved_usd": 500}]
@@ -39,7 +39,9 @@ def test_both_cash_accounts_stay_separate_and_growth_uses_only_same_pacific_day(
     assert out["accounts"]["kalshi"]["today"] == -.34  # existing UTC stop day
     assert out["accounts"]["kalshi"]["todayPacific"]["value"] == .10
     assert out["business"]["today"] == pytest.approx(.33)
-    assert out["growth"]["level"] == 2
+    assert out["growth"]["level"] == 1
+    assert out["growth"]["pnl_usd"] == .10
+    assert out["focus"]["cash"] == 25 and out["focus"]["today"] == .10
     p["money"]["connections"]["kalshi"]["today_pacific"]["pnl_usd"] = -1
     assert run(tmp_path, p)["growth"]["level"] == 0
 
@@ -48,7 +50,7 @@ def test_both_cash_accounts_stay_separate_and_growth_uses_only_same_pacific_day(
     {"stale": True}, {"as_of": NOW - 61}, {"as_of": None}, {"status": "incomplete"},
     {"today_pacific": {"status": "incomplete", "pnl_usd": 100}},
 ])
-def test_missing_or_stale_second_book_cannot_unlock_combined_gardens(tmp_path: Path, change: dict[str, Any]) -> None:
+def test_missing_or_stale_kalshi_book_cannot_unlock_gardens(tmp_path: Path, change: dict[str, Any]) -> None:
     p = connected()
     p["money"]["connections"]["kalshi"].update(change)
     out = run(tmp_path, p)
@@ -65,7 +67,7 @@ def test_distinct_dates_and_pacific_midnight_invalidate_combined_profit(tmp_path
     assert out["business"]["today"] is None
 
 
-def test_real_order_fill_and_settlement_remain_different_and_each_venue_is_visible(tmp_path: Path) -> None:
+def test_main_activity_is_kalshi_only_and_other_venue_remains_in_secondary_money(tmp_path: Path) -> None:
     p = connected()
     p["money"]["connections"]["polymarket_us"]["events"] = [event("polymarket_us", "settlement", pnl_usd=.23)]
     p["money"]["connections"]["kalshi"]["events"] = [
@@ -74,12 +76,13 @@ def test_real_order_fill_and_settlement_remain_different_and_each_venue_is_visib
         event("kalshi", "settlement", id="practice", real=False),
     ]
     out = run(tmp_path, p)
-    assert [e["kind"] for e in out["activity"]] == ["fill", "order", "settlement"]
-    assert [e["usd"] for e in out["activity"]] == [None, None, .23]
+    assert [e["kind"] for e in out["activity"]] == ["fill", "order"]
+    assert [e["usd"] for e in out["activity"]] == [None, None]
+    assert [e["kind"] for e in out["business"]["activity"]] == ["fill", "order", "settlement"]
     assert out["event"]["text"] == "Kalshi · Filled 1 YES contract"
     assert out["event"]["fee"] == .0034  # fee never rounded to a false zero in the read model
     assert all(e["current"] for e in out["activity"])
-    assert out["activitySources"] == {"polymarket_us": True, "kalshi": True}
+    assert out["activitySources"] == {"polymarket_us": False, "kalshi": True}
 
 
 def test_wrong_venue_unqualified_future_and_owner_records_are_never_misattributed(tmp_path: Path) -> None:
@@ -116,17 +119,18 @@ def test_recorded_inventory_keeps_ownership_and_partial_order_reservations(tmp_p
     assert out["business"]["today"] == pytest.approx(.33)
 
 
-def test_cast_reports_both_desks_but_does_not_invent_an_execution_pipeline(tmp_path: Path) -> None:
+def test_cast_follows_kalshi_with_practice_behind_the_scenes_without_an_invented_pipeline(tmp_path: Path) -> None:
     p = connected()
     p["plain"]["team"].extend([{"id": "jet", "name": "Jet"}, {"id": "rook", "name": "Rook"}])
     p["money"]["connections"]["kalshi"]["events"] = [event("kalshi")]
     out = run(tmp_path, p)
     crew = {c["key"]: c for c in out["crew"]}
-    assert "Polymarket" in crew["voss"]["doing"] and "Kalshi" in crew["voss"]["doing"]
-    assert crew["jet"]["job"] == "Order status"
-    assert "Each trading desk places its own orders" in crew["jet"]["jobDetail"]
+    assert "Polymarket" not in crew["voss"]["doing"] and "Kalshi" in crew["voss"]["doing"]
+    assert crew["jet"]["job"] == "Kalshi orders"
+    assert "The trading desk places its own orders" in crew["jet"]["jobDetail"]
     assert "Kalshi" in crew["mote"]["doing"]
-    assert crew["pip"]["practice"] is True
+    assert crew["pip"]["practice"] is True and crew["pip"]["background"] is True
+    assert crew["pip"]["job"] == "Practice scouting"
     before = copy.deepcopy(p)
     run(tmp_path, p)
     assert p == before
@@ -148,7 +152,7 @@ def test_reported_safety_limits_do_not_turn_into_profit_or_spending_permission(t
     assert out["business"]["today"] == pytest.approx(.33)
 
 
-@pytest.mark.parametrize("problem", ["integrity", "reset", "total_stop", "pm_mismatch", "both_incomplete"])
+@pytest.mark.parametrize("problem", ["integrity", "reset", "total_stop", "both_incomplete"])
 def test_rook_reports_current_accounting_problems_and_stops(tmp_path: Path, problem: str) -> None:
     p = connected()
     p["plain"]["team"].append({"id": "rook", "name": "Rook"})
@@ -194,3 +198,70 @@ def test_activity_does_not_repeat_its_venue_and_order_reserves_keep_pair_purpose
     out = run(tmp_path, p)
     assert out["activity"][0]["text"] == "Kalshi · remaining order cancelled"
     assert out["business"]["venues"]["kalshi"]["orders"][0]["lock"] is True
+
+
+def test_polymarket_profit_and_outage_cannot_grow_or_pause_kalshi_town(tmp_path: Path) -> None:
+    p = connected()
+    expected = run(tmp_path, p)
+    p["money"]["connections"]["polymarket_us"].update(
+        status="incomplete", stale=True, as_of=NOW - 3600)
+    p["money"]["connections"]["polymarket_us"]["today_pacific"]["pnl_usd"] = 99999
+    p["money"]["polymarket"]["guard"] = {"paused": True}
+    p["money"]["polymarket"]["real"]["today_pacific"].update(status="incomplete", pnl_usd=None)
+    out = run(tmp_path, p)
+    assert out["growth"] == expected["growth"]
+    assert out["focus"] == expected["focus"]
+    assert out["crew"] == expected["crew"]
+    assert out["business"]["venues"]["polymarket_us"]["current"] is False
+
+
+def test_focus_never_borrows_cash_risk_or_profit_from_other_sources(tmp_path: Path) -> None:
+    p = connected()
+    p["money"]["connections"].pop("kalshi")
+    p["money"]["speeddesk"].pop("kalshi_live")
+    out = run(tmp_path, p)
+    assert out["cash"] == 14.22 and out["today"] == .23
+    assert out["focus"]["venue"] == "kalshi" and out["focus"]["state"] == "unknown"
+    assert all(out["focus"][key] is None for key in ("cash", "today", "exposure", "positions", "orders", "reserved"))
+    assert out["growth"]["qualified"] is False
+    assert all(c["status"] == "unknown" for c in out["crew"] if not c["background"])
+
+
+def test_focus_cash_day_and_risk_have_independent_freshness(tmp_path: Path) -> None:
+    p = connected()
+    live = p["money"]["speeddesk"]["kalshi_live"]
+    live["cash_at"] = NOW - 90
+    out = run(tmp_path, p)
+    assert out["focus"]["cash"] is None and out["focus"]["cashAge"] == 90
+    assert out["focus"]["today"] == .10 and out["focus"]["exposure"] == 1.98
+    assert out["growth"]["qualified"] is True
+    live["as_of"] = NOW - 90
+    out = run(tmp_path, p)
+    assert out["focus"]["state"] == "stale" and out["focus"]["exposure"] is None
+    assert out["focus"]["orders"] is None and out["accounts"]["kalshi"]["orders"] == 2
+    p["money"]["connections"]["kalshi"]["as_of"] = NOW - 61
+    out = run(tmp_path, p)
+    assert out["focus"]["today"] is None and out["growth"]["qualified"] is False
+
+
+def test_only_kalshi_receipts_can_mark_foreground_crew_working(tmp_path: Path) -> None:
+    p = connected()
+    p["plain"]["team"].append({"id": "jet", "name": "Jet"})
+    p["money"]["connections"]["polymarket_us"]["events"] = [event("polymarket_us", ts=NOW - 1)]
+    out = run(tmp_path, p)
+    assert all(c["status"] == "waiting" for c in out["crew"] if not c["background"])
+    assert out["event"] is None
+    p["money"]["connections"]["kalshi"]["events"] = [event("kalshi", ts=NOW - 2)]
+    out = run(tmp_path, p)
+    assert all(c["status"] == "working" for c in out["crew"] if not c["background"])
+    assert out["event"]["venue"] == "kalshi"
+
+
+def test_busy_secondary_desk_cannot_crowd_kalshi_out_of_main_activity(tmp_path: Path) -> None:
+    p = connected()
+    for key, age in (("polymarket_us", 1), ("kalshi", 2)):
+        p["money"]["connections"][key]["events"] = [event(key, id=f"{key}-{i}", ts=NOW - age) for i in range(50)]
+    out = run(tmp_path, p)
+    assert len(out["business"]["activity"]) == 60
+    assert len(out["activity"]) == 50
+    assert all(e["venue"] == "kalshi" for e in out["activity"])

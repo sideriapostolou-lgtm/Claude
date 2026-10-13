@@ -6,12 +6,14 @@ import json
 import re
 import shutil
 from pathlib import Path
+from typing import Any
 
 import pytest
 
 from nightcrawler.config import Settings
 from nightcrawler.world3d import render_world_html
 from nightcrawler.worldtycoon import TYCOON_HTML, TYCOON_STYLE
+from nightcrawler.worldtycoon_data import TYCOON_DATA
 from tests.test_world3d import _js_body, _module, _node
 from tests.test_world_records import _film
 from tests.test_world_tycoon_connections import connected
@@ -35,8 +37,9 @@ def test_town_is_ready_before_the_first_frame_and_keeps_one_shared_details_panel
     assert page.count('id="panel"') == 1
     assert page.count('id="ty-header"') == 1
     assert page.count('id="ty-dock"') == 1
-    assert "Polymarket cash" in TYCOON_HTML and "PM bot profit" in TYCOON_HTML
-    assert "today PT" in TYCOON_HTML
+    assert "Kalshi cash" in TYCOON_HTML and "Kalshi bot profit" in TYCOON_HTML
+    assert "Polymarket" not in TYCOON_HTML
+    assert "Since midnight Pacific" in TYCOON_HTML
     assert 'id="ty-more"' in TYCOON_HTML
     assert 'id="ty-crew"' not in TYCOON_HTML
     assert 'id="ty-selection" aria-label="Selected workstation" hidden' in TYCOON_HTML
@@ -192,142 +195,167 @@ console.log(JSON.stringify({ town: town, tour: tour, returned: returned }));
     assert out["returned"] == out["town"]
 
 
+_UI_STUB = r"""
+class Node {
+  constructor(tag="div") { this.tagName=tag.toUpperCase(); this.children=[]; this.own=""; this.className="";
+    this.dataset={}; this.attributes={}; this.hidden=false; this.open=false; this.scrollTop=140; }
+  set textContent(text) { this.own=String(text); this.children=[]; }
+  get textContent() { return this.own+this.children.map(n=>n.textContent).join(""); }
+  appendChild(child) { child.parentElement=this; this.children.push(child); return child; }
+  setAttribute(key,value) { this.attributes[key]=value; }
+  contains(node) { return this===node || this.children.some(c=>c.contains(node)); }
+  querySelectorAll(selector) { const all=this.children.flatMap(c=>[c,...c.querySelectorAll("*")]);
+    return all.filter(c=>selector==="*" || (selector[0]==="." ? c.className.split(" ").includes(selector.slice(1))
+      : c.tagName.toLowerCase()===selector)); }
+  querySelector(selector) { return this.querySelectorAll(selector)[0] || null; }
+  focus() { document.activeElement=this; }
+  get classList() { return { contains: value=>this.className.split(" ").includes(value) }; }
+}
+const document={activeElement:null,createElement:tag=>new Node(tag)}, nodes={};
+const el=id=>nodes[id] || (nodes[id]=new Node());
+const TY_UI={summary:null,people:[],markers:[],openDetails:{}}, TYCOON={selected:null}, CAST={};
+let offline=false, panelKind=null, paragraphs=[];
+const statusEl={textContent:"Sign in again to reconnect to the dashboard."};
+const fmtUsd=n=>n==null?"—":"$"+n.toFixed(2), fmtSigned=fmtUsd;
+const tycoonMeasure=()=>{},tycoonParkApply=()=>{};
+const panelBody=new Node(),panelEl=new Node(),panelTitle=new Node();
+const para=(parent,text,cls)=>{ const n=new Node("p");n.textContent=text;n.className=cls||"";parent.appendChild(n);
+  paragraphs.push({text,cls:cls||""}); };
+const openPanel=kind=>{panelKind=kind;tycoonPanel();};
+Date.now=()=>now*1000;
+function draw(kind="ty-accounts") {
+  panelKind=null;tycoonDraw();panelKind=kind;paragraphs=[];tycoonPanel();
+  return {cash:el("ty-cash").textContent,today:el("ty-today").textContent,state:el("ty-state").textContent,
+    fresh:el("ty-fresh").textContent,exposure:el("ty-exposure").textContent,alert:el("ty-alert").textContent,
+    alertHidden:el("ty-alert").hidden,growth:el("ty-growth").textContent,scroll:panelEl.scrollTop,
+    messages:paragraphs.map(p=>p.text),warnings:paragraphs.filter(p=>p.cls==="warn").map(p=>p.text),
+    details:panelBody.querySelectorAll("details").map(d=>({title:d.querySelector("summary").textContent,
+      open:d.open,text:d.textContent})),direct:panelBody.children.filter(n=>n.tagName!=="DETAILS").map(n=>n.textContent),
+    menu:panelBody.querySelectorAll(".ty-menu-row").map(n=>n.textContent)};
+}
+"""
+
+
+def run_ui(module: str, tmp_path: Path, code: str, value: dict[str, Any] | None = None) -> Any:
+    hooks = "\n".join(_js_body(module, f"  function {name}(") for name in (
+        "tyAge", "tyFee", "tyText", "tycoonDraw", "tycoonFocusWarning", "tycoonDetails", "tycoonBusinessDetails",
+        "tycoonResearchDetails", "tycoonOtherAlerts", "tycoonPanel",
+    ))
+    return _node(TYCOON_DATA + "\nconst data=" + json.dumps(value if value is not None else connected())
+                 + f";const now={NOW};\n" + _UI_STUB + hooks + code, tmp_path)
+
+
 @needs_node
-def test_account_freshness_and_service_alerts_survive_fresh_page_updates(module: str, tmp_path: Path) -> None:
-    hooks = "\n".join(_js_body(module, f"  function {name}(") for name in
-                      ("tyAge", "tyFee", "tyText", "tycoonDraw", "tycoonPanel"))
-    out = _node("""
-const nodes = {}, el = function (id) { return nodes[id] || (nodes[id] = {
-  textContent: "", className: "", setAttribute: function () {} }); };
-const document = { createElement: function (tag) { return { tagName: tag.toUpperCase(), textContent: "",
-  appendChild: function () {}, setAttribute: function () {} }; } };
-const TY_UI = { summary: null, people: [], markers: [] }, TYCOON = { selected: null }, CAST = {};
-let data = {}, offline = false;
-const statusEl = { textContent: "" };
-const fmtUsd = function (n) { return n === null ? "—" : "$" + n.toFixed(2); };
-const fmtSigned = fmtUsd, tycoonMeasure = function () {}, tycoonParkApply = function () {};
-let panelKind = null, paragraphs = [];
-const panelBody = { textContent: "", appendChild: function () {} };
-const panelEl = { scrollTop: 140, className: "" }, panelTitle = { textContent: "" };
-const para = function (parent, text, cls) { paragraphs.push({ text: text, cls: cls || "" }); };
-const current = { state: "on", cash: 12, today: 0.25, count: 2, value: 3, crew: [], positions: [], pending: null,
-  event: null, stale: false, updated: 1000000, pageAge: 1, deskAge: 2,
-  cashAsOf: 999999, cashAge: 1, cashStale: false, venueAsOf: 999999, venueAge: 1, venueStale: false };
-let sample = current;
-const tycoonSummary = function () { return sample; };
-""" + hooks + """
-const show = function (change, kind) {
-  sample = Object.assign({}, current, change); panelKind = null; tycoonDraw();
-  const fresh = el("ty-fresh").textContent;
-  panelKind = kind; paragraphs = []; tycoonPanel();
-  return { fresh: fresh, warnings: paragraphs.filter(function (p) { return p.cls === "warn"; }).length,
-    warningMessages: paragraphs.filter(function (p) { return p.cls === "warn"; }).map(function (p) { return p.text; }),
-    scroll: panelEl.scrollTop, cash: el("ty-cash").textContent,
-    state: el("ty-state").textContent, alert: el("ty-alert").textContent, hidden: el("ty-alert").hidden,
-    messages: paragraphs.map(function (p) { return p.text; }) };
-};
-const reports = { fresh: show({}, "ty-bets"),
-  venue: show({ venueAge: 900, venueStale: true }, "ty-bets"),
-  cash: show({ cashAge: 7200, cashStale: true }, "ty-cash"),
-  unknownVenue: show({ venueAsOf: null }, "ty-bets"), unknownCash: show({ cashAsOf: null }, "ty-cash") };
-reports.accountCashOld = show({ cashAge: 7200, cashStale: true }, "ty-accounts");
-reports.accountVenueOld = show({ venueAge: 900, venueStale: true }, "ty-accounts");
-reports.accountCashUnknown = show({ cashAsOf: null }, "ty-accounts");
-const kalshi = { state: "live", stateText: "Real-money trading is enabled", active: true, practice: false,
-  cash: 25, exposure: 1.98, today: -0.34, reason: "", stale: false, cashAt: 999998, cashAge: 2,
-  cashStale: false, todayStale: false, cleanupPending: false };
-const account = function (change) {
-  return show({ accounts: { kalshi: Object.assign({}, kalshi, change) } }, "ty-accounts");
-};
-reports.kalshiFresh = account({});
-reports.kalshiCashOld = account({ cashAge: 120, cashStale: true });
-reports.kalshiTodayUnknown = account({ today: null, todayStale: true });
-reports.kalshiCashUnknown = account({ cash: null, cashAt: null, cashAge: null, cashStale: true });
-reports.kalshiCleanup = account({ state: "exposure", active: false, practice: false,
-  stateText: "Real bets remain open", cleanupPending: true });
-reports.kalshiPractice = account({ state: "practice", active: false, practice: true, exposure: 0 });
-reports.kalshiStale = account({ state: "stale", active: false, practice: false, stale: true,
-  stateText: "Waiting for a fresh Kalshi report" });
-reports.pmBuysOff = show({ state: "off" }, "ty-bets");
-data = { alerts: [{ text: "The bot is stopped." }, { text: "Polymarket orders need attention." }] };
-reports.alerted = show({}, "ty-alerts");
-reports.refreshed = show({ updated: 1001000, pageAge: 0, deskAge: 0 }, "ty-alerts");
-offline = true; statusEl.textContent = "Sign in again to reconnect to the dashboard.";
-reports.disconnected = show({}, "ty-alerts");
-offline = false; data = { alerts: [] };
-reports.cleared = show({}, "ty-alerts");
+def test_kalshi_hud_is_independent_of_polymarket_cash_profit_and_alerts(module: str, tmp_path: Path) -> None:
+    out = run_ui(module, tmp_path, r"""
+const reports={fresh:draw()};
+data.money.polymarket.mode="paper";
+data.money.polymarket.real.cash_usd=123456;
+data.money.polymarket.real.today_pacific.pnl_usd=999;
+data.money.connections.polymarket_us.stale=true;
+data.alerts=[{text:"Polymarket orders need attention."},{text:"Coin practice stopped."}];
+reports.otherDeskChanged=draw();
+data.money.speeddesk.kalshi_live.cash_at=now-120;
+reports.cashOld=draw();
+data.money.speeddesk.kalshi_live.as_of=now-120;
+reports.kalshiOld=draw();
+offline=true;reports.offline=draw("ty-alerts");
 console.log(JSON.stringify(reports));
-""", tmp_path)
-    assert out["fresh"]["warnings"] == 0 and "Cash checked <1m ago" in out["fresh"]["fresh"]
-    assert "Account bets checked 15m ago" in out["venue"]["fresh"]
-    assert "Cash checked 2h ago" in out["cash"]["fresh"]
-    assert "Account bets update time unknown" in out["unknownVenue"]["fresh"]
-    assert "Cash update time unknown" in out["unknownCash"]["fresh"]
-    for name in ("venue", "cash", "unknownVenue", "unknownCash"):
-        assert out[name]["warnings"] == 1
-        assert out[name]["scroll"] == 140
-        assert out[name]["cash"] == "$12.00"
-    for name in ("accountCashOld", "accountVenueOld", "accountCashUnknown"):
-        assert out[name]["warnings"] == 1
-        assert "Wait for a fresh update" in out[name]["warningMessages"][0]
-    assert out["kalshiFresh"]["warnings"] == 0
-    assert "Available cash: $12.00" in out["kalshiFresh"]["messages"]
-    assert "REAL MONEY (Kalshi) · cash $25.00" in out["kalshiFresh"]["messages"]
-    assert "Money at risk: $1.98 · today (UTC): $-0.34" in out["kalshiFresh"]["messages"]
-    assert "Accounts stay separate. Kalshi’s UTC day is not added to Polymarket’s Pacific day." in out["kalshiFresh"]["messages"]
-    assert out["kalshiCashOld"]["warnings"] == 1
-    assert "Kalshi cash checked 2m ago." in out["kalshiCashOld"]["messages"]
-    assert out["kalshiCashOld"]["warningMessages"] == ["Kalshi cash may be old; waiting for a fresh balance read."]
-    assert out["kalshiTodayUnknown"]["warningMessages"] == ["Kalshi’s UTC-day result is delayed or unavailable."]
-    assert "Money at risk: $1.98 · today (UTC): —" in out["kalshiTodayUnknown"]["messages"]
-    assert "Kalshi cash update time is unknown." in out["kalshiCashUnknown"]["messages"]
-    assert "REAL MONEY (Kalshi) · cash —" in out["kalshiCashUnknown"]["messages"]
-    assert out["kalshiCleanup"]["warningMessages"] == ["Resting-order cancellation and reconciliation are still pending."]
-    assert "Real bets remain open · cash $25.00" in out["kalshiCleanup"]["messages"]
-    assert not any("PRACTICE (Kalshi)" in text for text in out["kalshiCleanup"]["messages"])
-    assert "PRACTICE (Kalshi) · cash $25.00" in out["kalshiPractice"]["messages"]
-    assert out["kalshiStale"]["warningMessages"] == ["Kalshi’s report is delayed or missing. These figures may be old."]
-    assert not any("REAL MONEY (Kalshi)" in text for text in out["kalshiStale"]["messages"])
-    assert out["pmBuysOff"]["state"] == "PM buys off"
-    for name in ("alerted", "refreshed"):
-        assert out[name]["state"] == "PM live"
-        assert out[name]["hidden"] is False and out[name]["alert"] == "The bot is stopped."
-        assert "Cash checked <1m ago" in out[name]["fresh"]
-        assert "The bot is stopped." in out[name]["messages"]
-        assert "Polymarket orders need attention." in out[name]["messages"]
-        assert any("reports the Polymarket money setting" in text for text in out[name]["messages"])
-    assert out["disconnected"]["state"] == "Reconnecting"
-    assert out["disconnected"]["hidden"] is False
-    assert out["disconnected"]["alert"] == "Sign in again to reconnect to the dashboard."
-    assert out["disconnected"]["alert"] in out["disconnected"]["messages"]
-    assert "The bot is stopped." in out["disconnected"]["messages"]
-    assert out["cleared"]["hidden"] is True and out["cleared"]["alert"] == ""
-    assert "No current alerts reported." in out["cleared"]["messages"]
+""")
+    assert out["fresh"]["cash"] == "$25.00" and out["fresh"]["today"] == "$0.10"
+    assert out["fresh"]["state"] == "REAL MONEY · Kalshi"
+    assert out["fresh"]["alertHidden"] is True
+    assert "Kalshi" in out["fresh"]["growth"]
+    assert out["otherDeskChanged"]["cash"] == "$25.00" and out["otherDeskChanged"]["today"] == "$0.10"
+    assert out["otherDeskChanged"]["state"] == out["fresh"]["state"]
+    assert out["otherDeskChanged"]["alertHidden"] is True
+    assert "Polymarket orders need attention." in out["otherDeskChanged"]["messages"]
+    assert any(d["title"] == "Other service notices (2)" and not d["open"]
+               for d in out["otherDeskChanged"]["details"])
+    assert "Cash checked 2m ago" in out["cashOld"]["fresh"]
+    assert out["cashOld"]["alert"] == "Kalshi cash needs a fresh balance read."
+    assert out["kalshiOld"]["state"] == "Kalshi · data delayed"
+    assert "fresh Kalshi" in out["kalshiOld"]["alert"]
+    assert out["offline"]["state"] == "Reconnecting"
+    assert out["offline"]["alert"] == "Sign in again to reconnect to the dashboard."
+    assert "Kalshi account" in out["offline"]["messages"][1] or "Kalshi" in out["offline"]["messages"][1]
+    assert all(row["scroll"] == 140 for row in out.values())
+
+
+@needs_node
+def test_money_details_keep_polymarket_real_and_background_practice_separate(module: str, tmp_path: Path) -> None:
+    out = run_ui(module, tmp_path, r"""
+const money=draw();
+const menu=draw("ty-menu");
+console.log(JSON.stringify({money,menu}));
+""")
+    money = out["money"]
+    assert money["direct"][0] == "REAL MONEY (Kalshi) · cash $25.00"
+    assert all("Polymarket" not in text and "$14.22" not in text for text in money["direct"])
+    pm = next(d for d in money["details"] if d["title"].startswith("Polymarket ·"))
+    assert pm["title"] == "Polymarket · REAL MONEY · separate account"
+    assert pm["open"] is False and "Available cash: $14.22" in pm["text"]
+    assert "not practice when real money is on" in pm["text"]
+    labs = next(d for d in money["details"] if d["title"] == "Background practice and research")
+    assert labs["open"] is False and "PRACTICE" in labs["text"]
+    assert out["menu"]["menu"] == ["Money", "Team", "Help"]
+
+
+@needs_node
+def test_missing_kalshi_never_falls_back_to_other_account_or_practice_cash(module: str, tmp_path: Path) -> None:
+    value = connected()
+    value["money"].pop("speeddesk")
+    value["money"]["connections"].pop("kalshi")
+    out = run_ui(module, tmp_path, "console.log(JSON.stringify(draw()));", value)
+    assert out["cash"] == "—" and out["today"] == "—"
+    assert out["state"] == "Kalshi · waiting for report"
+    assert "Waiting for a fresh Kalshi" in out["alert"]
+    assert "wait for verified profit" in out["growth"]
+    assert not any("REAL MONEY (Kalshi)" in text for text in out["direct"])
+
+
+@needs_node
+def test_kalshi_paper_with_real_positions_is_not_labelled_as_zero_exposure(module: str, tmp_path: Path) -> None:
+    out = run_ui(module, tmp_path, r"""
+Object.assign(data.money.speeddesk.kalshi_live,{mode:"paper",active:false,real_orders_available:false,
+  has_real_exposure:true,positions:2,at_risk_usd:1.98});
+const exposed=draw();
+Object.assign(data.money.speeddesk.kalshi_live,{has_real_exposure:false,positions:0,at_risk_usd:0});
+const paper=draw();
+console.log(JSON.stringify({exposed,paper}));
+""")
+    assert out["exposed"]["state"] == "Kalshi · real bets remain"
+    assert "2 positions" in out["exposed"]["exposure"] and "$1.98 at risk" in out["exposed"]["exposure"]
+    assert out["paper"]["state"] == "PRACTICE · Kalshi"
+    assert "0 positions" in out["paper"]["exposure"]
+
+
+@needs_node
+def test_expanded_receipts_stay_open_across_live_refreshes(module: str, tmp_path: Path) -> None:
+    out = run_ui(module, tmp_path, r"""
+draw();
+const receipts=panelBody.querySelectorAll("details")[0];
+receipts.open=true;receipts.ontoggle();receipts.querySelector("summary").focus();
+const before=TY_UI.openDetails["kalshi-receipts"];
+const after=draw();
+console.log(JSON.stringify({before,after,focus:document.activeElement.parentElement.dataset.detailKey}));
+""")
+    assert out["before"] is True
+    assert out["focus"] == "kalshi-receipts"
+    receipts = next(d for d in out["after"]["details"] if d["title"] == "Kalshi orders, positions and receipts")
+    assert receipts["open"] is True
+    assert next(d for d in out["after"]["details"] if d["title"].startswith("Polymarket ·"))["open"] is False
 
 
 @needs_node
 def test_money_panel_explains_restricted_real_orders_and_unverified_profit(module: str, tmp_path: Path) -> None:
-    from nightcrawler.worldtycoon_data import TYCOON_DATA
-
     value = connected()
     value["money"]["speeddesk"]["kalshi_live"].update(lock_only=True, total_halted=True,
         caps={"window_usd": 2, "open_usd": 4, "day_stop_usd": 3, "total_stop_usd": 5})
     value["money"]["polymarket"]["real"]["today_pacific"].update(
         status="incomplete", reason="day_book_mismatch", pnl_usd=None)
-    hooks = "\n".join(_js_body(module, f"  function {name}(") for name in
-                      ("tyAge", "tyFee", "tycoonBusinessDetails", "tycoonPanel"))
-    out = _node(TYCOON_DATA + "\nconst data = " + json.dumps(value) + ";\n" + f"const now = {NOW};\n" + """
-const document = { createElement: function () { return { textContent: "", appendChild: function () {} }; } };
-const TY_UI = { summary: tycoonSummary(data, now) }, offline = false;
-const panelBody = { textContent: "", appendChild: function () {} };
-const panelEl = { scrollTop: 0, className: "" }, panelTitle = { textContent: "" };
-const panelKind = "ty-accounts", paragraphs = [];
-const para = function (parent, text, cls) { paragraphs.push({ text: text, cls: cls || "" }); };
-const fmtUsd = function (n) { return n === null ? "—" : "$" + n.toFixed(2); }, fmtSigned = fmtUsd;
-""" + hooks + """
-tycoonPanel(); console.log(JSON.stringify(paragraphs));
-""", tmp_path)
-    messages = [row["text"] for row in out]
+    out = run_ui(module, tmp_path, "console.log(JSON.stringify(draw()));", value)
+    messages = out["messages"]
     assert "REAL MONEY (Kalshi) · cash $25.00" in messages
     assert "Real money: completing existing pairs only; new bets are stopped" in messages
     assert "New-bet limits: $2.00 per window · $4.00 at risk · $3.00 daily loss stop · $5.00 total loss stop (UTC)." in messages
@@ -336,4 +364,33 @@ tycoonPanel(); console.log(JSON.stringify(paragraphs));
     assert any("saved result totals do not match the daily book" in text for text in messages)
     assert any("Account reconciliation time is not recorded" in text for text in messages)
     assert any(text.startswith("Saved checkpoint ") for text in messages)
+    assert out["state"] == "REAL MONEY · completing pairs"
     assert not any("New real buys remain off" in text or "Included in money at risk" in text for text in messages)
+
+
+@needs_node
+def test_background_markers_are_quiet_without_changing_reported_work_or_money_mode(
+    module: str, tmp_path: Path,
+) -> None:
+    out = run_ui(module, tmp_path, r"""
+const original=tycoonSummary;
+const crew=["voss","pip","nyx","rook","mote","jet"].map(key=>({key,name:key[0].toUpperCase()+key.slice(1),
+  job:"Workstation",status:"working",background:["pip","nyx"].includes(key),practice:key==="pip"?true:null}));
+tycoonSummary=(value,time)=>Object.assign(original(value,time),{crew});
+TY_UI.markers=crew.map(c=>({key:c.key,el:new Node("button"),label:new Node("b"),sub:new Node("small"),w:80}));
+draw();
+const read=()=>TY_UI.markers.map(m=>({key:m.key,label:m.label.textContent,status:m.el.dataset.status,
+  background:m.el.dataset.background,width:m.w}));
+const first=read();crew.find(c=>c.key==="pip").practice=false;draw();
+console.log(JSON.stringify({first,second:read()}));
+""")
+    first = {row["key"]: row for row in out["first"]}
+    assert len(first) == 6
+    assert first["pip"]["label"] == "Pip · practice"
+    assert first["nyx"]["label"] == "Nyx · background"
+    assert first["voss"]["label"] == "Voss"
+    assert first["pip"]["background"] == first["nyx"]["background"] == "true"
+    assert first["voss"]["background"] == "false"
+    assert all(row["status"] == "working" for row in out["first"])
+    assert next(row for row in out["second"] if row["key"] == "pip")["label"] == "Pip · background"
+    assert '.ty-marker[data-background="true"] b::before { background: #91a4ab; }' in TYCOON_STYLE

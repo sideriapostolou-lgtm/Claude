@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import copy
 import json
 import shutil
 import subprocess
@@ -23,12 +22,14 @@ pytestmark = pytest.mark.skipif(shutil.which("node") is None, reason="Node is no
 NOW = 1_800_000_000
 
 
-def run(tmp_path: Path, value: Any, now: float = NOW) -> dict[str, Any]:
+def run(tmp_path: Path, value: Any, now: float = NOW, *, raw_crew: bool = False) -> dict[str, Any]:
     script = tmp_path / "tycoon-data.mjs"
     script.write_text(TYCOON_DATA + "\nconst input = " + json.dumps(value) + ";\n"
                       + "const before = JSON.stringify(input);\n"
                       + f"const output = tycoonSummary(input, {now});\n"
                       + "if (JSON.stringify(input) !== before) throw new Error('mutated input');\n"
+                      + (f"output.crew = tycoonCrew(input, {now}, output.updated !== null && !output.pageStale, "
+                         "output.asOf !== null && !output.deskStale);\n" if raw_crew else "")
                       + "console.log(JSON.stringify(output));\n")
     result = subprocess.run(["node", str(script)], capture_output=True, text=True, timeout=20, check=True)
     out: dict[str, Any] = json.loads(result.stdout)
@@ -211,7 +212,7 @@ def test_fresh_page_does_not_make_an_old_desk_or_cash_fresh(tmp_path: Path) -> N
     out = run(tmp_path, p)
     assert out["state"] == "stale" and out["deskStale"] and not out["pageStale"]
     assert out["crew"][0]["status"] == "unknown"
-    assert out["crew"][0]["doing"].startswith("Last report: ")
+    assert "Kalshi" in out["crew"][0]["doing"]
     assert out["crew"][1]["status"] == "idle"
     p["money"]["polymarket"]["as_of"] = NOW - 90
     p["money"]["polymarket"]["real"].update(cash_at=NOW - 7200, venue_at=NOW - 900)
@@ -295,22 +296,19 @@ def test_explicit_daily_stop_is_preserved(tmp_path: Path) -> None:
     assert run(tmp_path, p)["stateText"] == p["money"]["polymarket"]["status"]
 
 
-def test_only_explicit_real_results_enter_the_timestamped_feed(tmp_path: Path) -> None:
+def test_polymarket_history_and_practice_cannot_fill_the_kalshi_activity_feed(tmp_path: Path) -> None:
     p = page()
     out = run(tmp_path, p)
-    assert out["event"]["id"] == "real-1" and out["event"]["age"] == 300
-    assert out["event"]["text"].startswith("Won $0.23")
-    assert run(tmp_path, p)["event"] == out["event"]  # no poll creates a fresh event or timestamp
-    bad = copy.deepcopy(p["plain"]["finished"][0])
-    bad.update(id="ambiguous", ts=NOW - 1, real=True, money="pretend")
-    future = copy.deepcopy(bad)
-    future.update(id="future", ts=NOW + 61, money="real money")
-    p["plain"]["finished"] = [bad, future]
+    assert out["event"] is None and out["activity"] == []
+    assert out["activitySources"] == {"polymarket_us": False, "kalshi": False}
+    assert out["today"] == .23  # Polymarket remains available in secondary Money.
+    assert out["focus"]["today"] is None and out["focus"]["cash"] is None
+    p["plain"]["finished"] *= 20
     assert run(tmp_path, p)["event"] is None
 
 
 def test_crew_status_is_the_reported_work_not_a_replayed_old_win(tmp_path: Path) -> None:
-    crew = run(tmp_path, page())["crew"]
+    crew = run(tmp_path, page(), raw_crew=True)["crew"]
     assert crew[0]["job"] == "Trading" and crew[0]["practice"] is False
     assert crew[0]["doing"] == "Watching the venue's markets." and crew[0]["age"] == 90
     assert "old bet won" not in crew[0]["doing"]
@@ -330,7 +328,7 @@ def test_crew_status_description_and_age_follow_the_same_member(tmp_path: Path) 
         {"id": "cocoon", "status": "working", "doing": "Checking coins.", "last_activity": NOW - 2},
         {"id": "radar", "status": "blocked", "why": "Danger check unavailable.", "last_activity": NOW - 30},
     ])
-    crew = {c["key"]: c for c in run(tmp_path, p)["crew"]}
+    crew = {c["key"]: c for c in run(tmp_path, p, raw_crew=True)["crew"]}
     assert crew["voss"]["status"] == "working" and crew["voss"]["age"] == 90
     assert crew["voss"]["doing"] == "Watching the venue's markets."
     assert crew["nyx"]["job"] == "Coin checks" and crew["nyx"]["practice"] is True
@@ -342,12 +340,12 @@ def test_voss_recorded_work_preserves_both_real_and_practice_labels(tmp_path: Pa
     p = page()
     work = "Watching 240 markets; real money today +0.23 $. Paper (pretend): 2 open; -20.03 $."
     p["team"]["members"][0].update(why="A round finished recently.", doing=work)
-    voss = run(tmp_path, p)["crew"][0]
+    voss = run(tmp_path, p, raw_crew=True)["crew"][0]
     assert voss["recordedWork"] == work
     assert voss["statusReason"] == voss["doing"] == "A round finished recently."
     assert voss["jobDetail"] == p["plain"]["team"][0]["job"]
     p["generated_at"] = NOW - 61
-    voss = run(tmp_path, p)["crew"][0]
+    voss = run(tmp_path, p, raw_crew=True)["crew"][0]
     assert voss["status"] == "unknown" and voss["doing"].startswith("Last report: ")
     assert voss["recordedWork"] == work and voss["statusReason"] == "A round finished recently."
 
@@ -360,13 +358,13 @@ def test_mote_recorded_work_and_status_reason_follow_the_selected_role(tmp_path:
         {"id": "coach", "status": "blocked", "why": "The learning system failed.",
          "doing": "Practice learning unavailable.", "last_activity": NOW - 80},
     ])
-    mote = next(c for c in run(tmp_path, p)["crew"] if c["key"] == "mote")
+    mote = next(c for c in run(tmp_path, p, raw_crew=True)["crew"] if c["key"] == "mote")
     assert mote["status"] == "stuck" and mote["age"] == 80
     assert mote["recordedWork"] == "Practice learning unavailable."
     assert mote["statusReason"] == mote["doing"] == "The learning system failed."
     assert mote["practice"] is None  # records are shared; the selected learning report labels its own scope
     p["team"]["members"][-1]["status"] = "idle"
-    mote = next(c for c in run(tmp_path, p)["crew"] if c["key"] == "mote")
+    mote = next(c for c in run(tmp_path, p, raw_crew=True)["crew"] if c["key"] == "mote")
     assert mote["status"] == "working" and mote["age"] == 2
     assert mote["recordedWork"] == "100 entries sealed; checked: nothing was edited."
     assert mote["statusReason"] == mote["doing"] == "A new record arrived."
@@ -392,17 +390,17 @@ def test_adapter_has_no_browser_or_money_side_effects() -> None:
 @pytest.mark.parametrize(("profit", "level"), [(-5, 0), (0, 0), (.009, 0), (.01, 1), (.24, 1),
                                                (.25, 2), (1, 3), (5, 4), (10, 5), (9999, 5)])
 def test_daily_gardens_follow_actual_net_profit_milestones(tmp_path: Path, profit: float, level: int) -> None:
-    p = page()
-    p["money"]["polymarket"]["real"]["today_pacific"]["pnl_usd"] = profit
+    p = kalshi_page()
+    p["money"]["connections"]["kalshi"]["today_pacific"]["pnl_usd"] = profit
     out = run(tmp_path, p)
     assert out["growth"] == {
         "qualified": True, "level": level, "pnl_usd": profit, "thresholds": [.01, .25, 1, 5, 10],
-        "label": "Polymarket bot profit since midnight PT", "date": "2027-01-15", "reason": None,
+        "label": "Kalshi bot profit since midnight PT", "date": "2027-01-15", "reason": None,
     }
 
 
 def test_cash_practice_utc_profit_and_event_replays_do_not_grow_gardens(tmp_path: Path) -> None:
-    p = page()
+    p = kalshi_page()
     expected = run(tmp_path, p)["growth"]
     p["money"]["polymarket"]["real"].update(cash_usd=50000, today_usd=80000, since_start_usd=90000)
     p["money"]["polymarket"]["paper"]["today_usd"] = 100000
@@ -412,33 +410,33 @@ def test_cash_practice_utc_profit_and_event_replays_do_not_grow_gardens(tmp_path
     assert run(tmp_path, p)["growth"] == expected
 
 
-@pytest.mark.parametrize("source", ["page", "desk", "profit", "unknown_mode", "incomplete", "midnight"])
+@pytest.mark.parametrize("source", ["page", "desk", "profit", "missing_book", "incomplete", "midnight"])
 def test_unconfirmed_or_stale_profit_cannot_claim_daily_upgrades(tmp_path: Path, source: str) -> None:
-    p = page()
-    pm = p["money"]["polymarket"]
+    p = kalshi_page()
+    book = p["money"]["connections"]["kalshi"]
     if source == "page":
         p["generated_at"] = NOW - 61
     elif source == "desk":
-        pm["as_of"] = NOW - 601
+        book["as_of"] = NOW - 61
     elif source == "profit":
-        pm["real"]["today_pacific"]["as_of"] = NOW - 601
-    elif source == "unknown_mode":
-        pm["mode"] = None
+        book["today_pacific"]["as_of"] = NOW - 61
+    elif source == "missing_book":
+        p["money"]["connections"].pop("kalshi")
     elif source == "incomplete":
-        pm["real"]["today_pacific"]["status"] = "incomplete"
+        book["today_pacific"]["status"] = "incomplete"
     else:
-        pm["real"]["today_pacific"]["end"] = NOW
+        book["today_pacific"]["end"] = NOW
     growth = run(tmp_path, p)["growth"]
     assert growth["qualified"] is False and growth["level"] is None
     assert growth["reason"]
 
 
 def test_losses_remove_daily_decorations_and_paper_mode_keeps_real_results(tmp_path: Path) -> None:
-    p = page()
-    p["money"]["polymarket"]["real"]["today_pacific"]["pnl_usd"] = 5
+    p = kalshi_page()
+    p["money"]["connections"]["kalshi"]["today_pacific"]["pnl_usd"] = 5
     assert run(tmp_path, p)["growth"]["level"] == 4
-    p["money"]["polymarket"]["mode"] = "paper"
-    p["money"]["polymarket"]["real"]["today_pacific"]["pnl_usd"] = .20
+    p["money"]["speeddesk"]["kalshi_live"].update(mode="paper", active=False, real_orders_available=False)
+    p["money"]["connections"]["kalshi"]["today_pacific"]["pnl_usd"] = .20
     assert run(tmp_path, p)["growth"]["level"] == 1
     assert run(tmp_path, {})["growth"]["level"] is None
 
@@ -453,6 +451,16 @@ def kalshi() -> dict[str, Any]:
         "total": {"pnl_usd": .87},
         "practice_twin": {"pnl_usd": 10000},
     }
+
+
+def kalshi_page() -> dict[str, Any]:
+    p = page()
+    p["money"]["speeddesk"] = {"kalshi_live": kalshi()}
+    p["money"]["connections"] = {"version": 1, "kalshi": {
+        "as_of": NOW - 5, "status": "ok", "stale": False,
+        "today_pacific": {**p["money"]["polymarket"]["real"]["today_pacific"], "as_of": NOW - 5},
+    }}
+    return p
 
 
 def test_kalshi_is_a_separate_real_account_with_its_own_utc_day(tmp_path: Path) -> None:
@@ -591,7 +599,7 @@ def test_saved_profit_mismatch_explains_unknown_without_replacing_it_with_zero(t
     out = run(tmp_path, p)
     assert out["today"] is None and out["todayStatus"] == "incomplete"
     assert out["todayReason"] == "Polymarket profit today is unverified: saved result totals do not match the daily book."
-    assert out["growth"]["qualified"] is False and out["growth"]["reason"] == out["todayReason"]
+    assert out["growth"]["qualified"] is False and "Kalshi" in out["growth"]["reason"]
     assert out["cash"] == 14.22
 
 

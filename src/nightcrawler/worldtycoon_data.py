@@ -24,21 +24,27 @@ TYCOON_DATA = TYCOON_CONNECTIONS + TYCOON_RESEARCH + r"""
   }
   function tycoonGrowth(s) {
     const thresholds = [0.01, 0.25, 1, 5, 10];
-    if (s.business && s.business.available) {
-      const qualified = s.business.todayCurrent, pnl = s.business.today;
-      return { qualified: qualified, level: qualified ? thresholds.filter(function (p) { return pnl >= p - 1e-9; }).length : null,
-        pnl_usd: pnl, thresholds: thresholds, label: "Both bots’ recorded profit since midnight PT", date: s.business.date,
-        reason: qualified ? null : [s.business.venues.polymarket_us.day.reason, s.business.venues.kalshi.day.reason]
-          .filter(Boolean).join(" ") || "The two profit reports must cover the same Pacific day." };
-    }
-    const qualified = s.todayStatus === "ok" && s.today !== null && s.updated !== null && s.asOf !== null
-      && s.on !== null && !s.pageStale && !s.deskStale && !s.todayStale;
+    const day = s.business.venues.kalshi.day, qualified = day.current, pnl = qualified ? day.value : null;
     // These are today's decorative gardens, not account capital or purchased buildings.
     // A loss, a correction or Pacific midnight can remove an earned decoration.
-    const level = qualified ? thresholds.filter(function (p) { return s.today >= p - 1e-9; }).length : null;
-    return { qualified: qualified, level: level, pnl_usd: s.today, thresholds: thresholds,
-      label: "Polymarket bot profit since midnight PT", date: s.todayDate,
-      reason: qualified ? null : s.todayReason || "Waiting for a fresh profit report" };
+    // Kalshi is the town's only growth source. Other live or practice books never fill a gap.
+    const level = qualified ? thresholds.filter(function (p) { return pnl >= p - 1e-9; }).length : null;
+    return { qualified: qualified, level: level, pnl_usd: pnl, thresholds: thresholds,
+      label: "Kalshi bot profit since midnight PT", date: day.date,
+      reason: qualified ? null : day.reason || "Waiting for a fresh Kalshi profit report" };
+  }
+  function tycoonFocus(s) {
+    const account = s.accounts.kalshi, book = s.business.venues.kalshi, day = book.day;
+    return { venue: "kalshi", name: "Kalshi", account: account, book: book,
+      cash: account.current && !account.cashStale ? account.cash : null,
+      cashAt: account.cashAt, cashAge: account.cashAge, cashStale: account.cashStale,
+      today: day.current ? day.value : null, todayDate: day.date, todayCurrent: day.current,
+      todayReason: day.reason, todayAsOf: day.asOf, todayAge: day.age,
+      state: account.state, stateText: account.stateText, statusText: account.stateText,
+      current: account.current, stale: !account.current,
+      exposure: account.current ? account.exposure : null,
+      positions: account.current ? account.positions : null, orders: account.current ? account.orders : null,
+      reserved: account.current ? account.reserved : null };
   }
   function tycoonKalshi(d, now, pageCurrent) {
     const raw = tycoonObject(tycoonObject(tycoonObject(d.money).speeddesk).kalshi_live);
@@ -84,7 +90,8 @@ TYCOON_DATA = TYCOON_CONNECTIONS + TYCOON_RESEARCH + r"""
         : state === "live" ? "Real-money trading is enabled" : state === "exposure" ? "Real bets remain open"
         : state === "practice" ? "Practice only; no new real orders" : state === "stale" ? "Waiting for a fresh Kalshi report"
         : "No current Kalshi report",
-      reason: reason, asOf: asOf, age: age, stale: stale, current: current,
+      reason: reason, waiting: tycoonText(raw.waiting), tradingNow: active && raw.trading_now === true,
+      asOf: asOf, age: age, stale: stale, current: current,
       locksOnly: locksOnly, reportedLocksOnly: reportedLocksOnly, newRiskAllowed: active && !locksOnly,
       integrityError: integrityError, integrityReset: integrityReset, integrityNote: integrityNote,
       integrityResetNote: integrityReset ? "Accounting reset: " + (resetWords[integrityReset] || "waiting for account checks") + "." : "",
@@ -105,7 +112,7 @@ TYCOON_DATA = TYCOON_CONNECTIONS + TYCOON_RESEARCH + r"""
       riskNote: "At risk = possible loss on filled bets + new-bet reservations, after matched pairs. It is not total cash spent.",
       limits: { window: tycoonCost(caps.window_usd), open: tycoonCost(caps.open_usd),
         day: tycoonCost(caps.day_stop_usd), total: tycoonCost(caps.total_stop_usd) },
-      note: "Separate Kalshi account. Cash is not profit. Its UTC result does not count toward Pacific-day gardens." };
+      note: "Kalshi account cash is not profit. The town grows only from its separately checked Pacific-day bot profit." };
   }
   function tycoonLatest(d, now) {
     const plain = tycoonObject(d.plain), items = [], finished = Array.isArray(plain.finished) ? plain.finished : [];
@@ -233,14 +240,12 @@ TYCOON_DATA = TYCOON_CONNECTIONS + TYCOON_RESEARCH + r"""
     const pageCurrent = now !== null && updated !== null && !pageStale;
     summary.accounts = { kalshi: tycoonKalshi(d, now, pageCurrent) };
     summary.business = tycoonConnections(d, now, pageCurrent);
-    summary.activity = summary.business.activity;
-    summary.activitySources = { polymarket_us: summary.business.venues.polymarket_us.current,
-      kalshi: summary.business.venues.kalshi.current };
+    summary.activity = summary.business.kalshiActivity;
+    summary.activitySources = { polymarket_us: false, kalshi: summary.business.venues.kalshi.current };
     summary.accounts.kalshi.todayPacific = summary.business.venues.kalshi.day;
-    if (summary.business.available) {
-      summary.event = summary.activity.length ? summary.activity[0] : null;
-      summary.eventNote = "Latest recorded real activity, with its venue and original time. Orders and fills are not profit.";
-    }
+    summary.focus = tycoonFocus(summary);
+    summary.event = summary.activity.length ? summary.activity[0] : null;
+    summary.eventNote = "Latest recorded Kalshi activity, with its original time. Orders and fills are not profit.";
     summary.crew = tycoonBusinessCrew(summary);
     summary.growth = tycoonGrowth(summary);
     summary.research = tycoonResearch(d, now, pageCurrent);

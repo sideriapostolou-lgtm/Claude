@@ -15,6 +15,30 @@ Template:
 
 
 
+## 2026-10-13 16:35 UTC, Codex, branch codex/kalshi-town-focus
+- Owner scope: focus the town on Kalshi. When asked about the separate real desk, the owner explicitly chose
+  "Keep Polymarket live; only simplify the app." No trading-mode variables, strategy, limits or order code changed.
+- Changed: the town header, cash sign, foreground crew, activity and daily gardens now use Kalshi only. Cash
+  stays separate from verified bot profit since midnight Pacific. Missing/stale Kalshi data never falls back to
+  Polymarket or practice. Kalshi events retain their original timestamps and real-only animation gates.
+- Simplified: Money opens on Kalshi; its receipts/checks, the separate live Polymarket account and background
+  practice/research are expandable. Menu remains Money / Team / Help. The fallback /summary also leads with
+  Kalshi, retaining Polymarket owner/bot records, mode, freshness and warnings in its separate account details.
+  Existing shops, six characters, paths and phone camera are preserved. Display choice does not stop any desk.
+- Verified before shipping: full pytest 4,686 passed / 14 skipped (12 opt-in network tests, optional SciPy and
+  missing lab cache); mypy clean for 119 source files; Ruff clean for changed Python; whitespace and staged
+  secret checks. Independent review and targeted money/freshness tests cover missing data, Pacific day, paper
+  with remaining real exposure, owner/practice separation and no Polymarket growth or animation fallback.
+  Review fixes refresh the 3D cash sign during connection failures and retain honest background-role labels.
+- Browser: local replay of a dated, authenticated API snapshot at 390x844 and 320x568; no JS errors or horizontal
+  overflow, exact three-menu choices, Kalshi-only main figures/growth, secondary Polymarket marked REAL MONEY,
+  collapsed receipts/practice sections, and Kalshi-first /summary. Local replay is a UI fixture, not fresh money.
+- Live baseline: read-only app API returned both desk modes live and a validated Kalshi Pacific-day book.
+  Current sources do not provide an account-reconciliation timestamp; the UI still says it is unknown. Saved
+  fill-derived holdings are not presented as an independently verified current itemized account snapshot.
+- Deployment verification: pending this UI shipment; append the exact commit, Railway result and post-deploy
+  browser/mode check after it finishes. No profit claim or new trading authority is part of this change.
+
 ## 2026-10-13 15:15 UTC, Codex, highest-value next-step review
 - Changed: pulled through `2681ff6`, read PR #29's fresh-move result/code and PR #30's timing changes, and
   saved `research/kalshi_moonshots/NEXT_STEP.md`: a narrow 48-hour BTC quote-survival/index recorder is the

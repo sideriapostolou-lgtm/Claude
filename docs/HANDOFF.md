@@ -138,15 +138,15 @@ needs none of them to write code or run tests.
 `/` and `/world` open the steady, phone-first tycoon town. The retired `/reports`, `/office`, `/office3d`
 and `/team` pages redirect to `/` after authentication. `/summary` is the independent, non-WebGL fallback: a
 plain account/team report with one return link and no buttons. Authentication and read-only APIs are unchanged.
-The town has separate Polymarket and Kalshi cash / Pacific-day bot profit columns, one Menu, six tappable
-workstations and a dated real-activity line for both venues. Tap a building or its name to visit; Back to town restores the overview. The menu has exactly **Money, Team, Help**. Money keeps both accounts, open bets and source ages together;
+The town foregrounds Kalshi account cash and Kalshi bot profit since midnight Pacific, one Menu, six tappable
+workstations and a dated Kalshi real-activity line. Polymarket stays live, as the owner confirmed; its separate
+account and activity are available in secondary Money details rather than mislabeled as practice. Tap a building or its name to visit; Back to town restores the overview. The menu has exactly **Money, Team, Help**. Money keeps both accounts, open bets and source ages together;
 Team holds the accessible crew list. The observatory opens research. Help explains the town and stopping both
 real-money desks. The camera-tour switch, old report links, Office footer and extra menu shortcuts are removed.
 Legacy animation helpers retain inert hidden DOM for compatibility; saved display settings cannot restore the
 old controls. No trading switches are exposed by the town.
 
-The owner confirmed on 2026-10-12 that "today" means **since 12:00 a.m. Pacific**. The town's Bot today card and
-Polymarket daily display use `real.today_pacific` (America/Los_Angeles, including daylight saving).
+The owner confirmed on 2026-10-12 that "today" means **since 12:00 a.m. Pacific**. The Polymarket daily display uses `real.today_pacific` (America/Los_Angeles, including daylight saving).
 It sums recorded bot results only when the retained closed rows' count and profit match every overlapping UTC
 day book; incomplete records show an unknown total. This checks the saved book, not complete venue reconciliation.
 Cash-outs and corrections keep their recorded booking day, which may differ from venue event time. Account cash
@@ -160,15 +160,16 @@ characters and their recorded activity; no invisible legacy character/prop model
 The steady phone camera fits the shops and enlarged cast; the original dome and decorative airship are hidden.
 Walking remains decoration and the same real-event gates control receipts, deliveries and celebrations.
 Five decorative gardens unlock at $0.01 / $0.25 / $1 / $5 / $10
-of combined recorded Polymarket and Kalshi bot profit **today**, only when both complete books refer to the same
-Pacific date and both source reports are fresh. They reset at Pacific midnight, can recede after losses
+of recorded Kalshi bot profit **today**, only when the complete Kalshi book covers the current
+Pacific date and its source report is fresh. A missing Kalshi book never falls back to Polymarket.
+They reset at Pacific midnight, can recede after losses
 or corrections, and disappear when the source is unavailable. They are not purchased upgrades or lifetime wealth;
 deposits, owner bets, practice gains and elapsed viewing time never unlock them. Original UTC goal props and the
 practice arena are hidden. The retired camera modes are not available through the app.
 
 Both accounts remain separate in Menu → Money, including cash, recorded holdings, partial orders, reservations,
 fees and source ages. Kalshi's existing UTC result/stops stay unchanged; a separate validated full-book Pacific
-result supplies its header and the combined gardens. The new `money.connections` projection reads only saved
+result supplies its header and the Kalshi-only gardens. The new `money.connections` projection reads only saved
 state, performs no network/trading calls and exposes bounded records with fee/ownership provenance. Polymarket
 fees are estimated; its known cash-out accounting edge cases remain in the protected trading code. Kalshi gross
 fill-derived holdings are not a current venue-position snapshot. A checkpoint is not proof of account reconciliation.
@@ -178,11 +179,12 @@ The town also distinguishes Kalshi's pair-completion-only permission from new-be
 existing budget exceptions, and shows accounting-stop/reset reasons. Report age is not an account-check age.
 Ended but unreconciled gross fills stay labeled as old records. Repeated order reconciliation no longer
 creates fake fresh cancellation activity. A Polymarket day-book mismatch keeps Pacific profit unknown and
-flags Rook; bounded per-UTC-day counts/sums in `today_pacific.reconciliation` diagnose the gap without changing
+flags its secondary account details; bounded per-UTC-day counts/sums in `today_pacific.reconciliation`
+diagnose the gap without changing
 the trading books or substituting a partial profit total.
 
-Voss monitors the two Bitcoin desks, Jet shows their order receipts, Rook reports safeguards, and Mote records
-results. Pip and Nyx retain the coin workflow. New qualified real events can animate these roles; generic practice
+Voss monitors the Kalshi Bitcoin desk, Jet shows its order receipts, Rook reports its safeguards, and Mote records
+its results. Pip and Nyx retain quiet background practice roles. New qualified Kalshi real events can animate these roles; generic practice
 handoffs, repeated old chatter and the old UTC goal celebrations do not. First load/reconnect establishes a
 baseline, so historical results never replay as new wins. Only positive bot settlements can trigger gold; fills
 are receipts, and losses/rejects get caution. Effects expire after 60 seconds and cancel on stale/corrected data.
@@ -190,7 +192,7 @@ Ambient walking is decoration. The observatory also restores access to trend, ar
 reports alongside Bitcoin practice, public-bot research and weather observation; none earns real-money growth.
 
 `/api/page` remains the common data source. If 3D fails, a direct link opens `/summary`, which fetches that same
-API independently, ages saved reports, shows the two clocks and bounded record details, clears money on expired
+API independently, ages saved reports, puts Kalshi first, keeps other account/practice details collapsed, shows both clocks and bounded record details, clears money on expired
 authentication and has no order path.
 
 Every page requires `?token=` (`DASHBOARD_TOKEN`) or its authenticated cookie. Preview locally in paper mode and
@@ -268,7 +270,8 @@ session scratchpad that you will not have.
    `SPEEDDESK_KALSHI_ACCOUNT_TYPE=direct` before activation; this session did not change Railway variables.
    Portable defaults remain `unknown`; `fcm` is for broker/FCM accounts. This account fact does not authorize orders. Total stop requires a never-before-used resume token. Companion
    receipts live in `/data/speeddesk/kalshi_live/`; the page exposes `money.speeddesk.kalshi_live`, separately
-   from Polymarket cash and town totals. Polymarket US speed trading remains practice permanently.
+   from Polymarket cash. Its real Kalshi records now supply the town foreground (section 6);
+   Polymarket US speed trading remains practice permanently.
    **Companion deployment verified 2026-10-12 20:14 UTC:** PR #9, commit `38d8a42`, Railway SUCCESS,
    `speeddesk_live_status` PRACTICE/real_orders_available=false; existing polydesk still LIVE at 10 contracts.
    New logs: `speeddesk_live_order`, `_fill`, `_cancel`, `_reject`, `_status`. Resting bids have a 30-second
