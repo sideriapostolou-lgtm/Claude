@@ -14,6 +14,28 @@ Template:
 ```
 
 
+
+## 2026-10-13 13:09 UTC, Codex, PR #25 live verification
+- Merged the visual upgrade as `781a1ee1dae6fd4ceb0eeaaaaa116dd892084ce5`. Railway automatically built that
+  exact commit in deployment `2eb88d4c-6291-4662-a62e-59d258bfea5e`, SUCCESS at 13:06:16 UTC. Polymarket
+  logged `polydesk_started ... (LIVE: 10 contract(s) per order)` at 13:06:12. The speed-desk simulator remains
+  practice; its separate Kalshi companion reported authenticated REAL MONEY at 13:06:19 and through 13:09:21,
+  no integrity error, with the pre-existing $5/window, $10/open, $6/day and $10/total caps. No variables changed.
+- Live browser: authenticated `/` and `/api/page` returned 200; fresh API generated at 13:07:08 UTC. At 390x844,
+  all six toy costumes followed the original actors, all six labels were visible, the camera settled, and the
+  menu was exactly Money / Team / Help. No browser errors, overflow or legacy GLB requests. Inspected the live
+  screenshot. `/healthz` returned 200 `ok` before and after the browser check.
+- Runtime caveats: startup initially had no warnings/errors/tracebacks. At 13:07:40, closing the headless
+  browser caused one HTTP request's existing `dashboard._send` to log BrokenPipeError (client disconnected),
+  not a bot/process crash. At 13:08:24 Kalshi WebSocket timed out; by 13:08:25 its existing public-REST fallback
+  was active (`missing_book_source_timestamp`). At 13:08:32 the read-only weather recorder paused for callback
+  queue capacity, explicitly marking a capture gap. These server/recorder paths are unchanged by PR #25. Do not
+  describe the complete runtime log as error-free or claim continuous weather capture; investigate that
+  recorder separately. The Kalshi live status continued to report its existing `window_budget` safeguard.
+- Checks: final source and tests match the green feature tree (4,633 passed / 21 skipped, mypy and changed-file
+  Ruff clean). This follow-up edits only the unwatched worklog and does not request another runtime deploy.
+- Real money touched? No orders, strategies, settings, limits or account connections changed by this work.
+
 ## 2026-10-13 12:57 UTC, Codex, branch codex/tycoon-visual-upgrade
 - Changed: at the owner's request, rebuilt the town's presentation around bright, solid toy shops, striped
   canopies, department emblems, wider graph-following paths, block trees and six original block-style crew
