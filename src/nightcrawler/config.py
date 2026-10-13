@@ -477,14 +477,15 @@ class Settings:
         None, "secret", "Owner-controlled one-time fresh daily budget for the Kalshi companion: a new value makes "
         "today's loss count again from the moment it is first seen, for the rest of that UTC day only. The daily "
         "cap, the lifetime stop and every other limit are unchanged. Only its hash is persisted", secret=True)
-    # Owner-authorized 2026-10-13 ("2.5x"): $5 per window, $10 open, -$6 day, -$10 total.
-    speeddesk_kalshi_window_usd: float = _f(5.0, "usd", "Kalshi live companion: fee-inclusive maximum spend per "
-                                            "window on new buys; owner-authorized ceiling $5. A lock that only "
+    # Owner-authorized 2026-10-13 ("2.5x"): $5 per window, $10 open, -$6 day, -$10 total. Raised 2026-10-13 15:15 UTC
+    # ("ten now double tmr if it works"): $10 per window, $20 open; both stops unchanged.
+    speeddesk_kalshi_window_usd: float = _f(10.0, "usd", "Kalshi live companion: fee-inclusive maximum spend per "
+                                            "window on new buys; owner-authorized ceiling $10. A lock that only "
                                             "completes pairs may add to it, because it can only lower the loss",
-                                            lo=0, lo_open=True, hi=5)
-    speeddesk_kalshi_open_usd: float = _f(10.0, "usd", "Kalshi live companion: fee-inclusive maximum money that "
+                                            lo=0, lo_open=True, hi=10)
+    speeddesk_kalshi_open_usd: float = _f(20.0, "usd", "Kalshi live companion: fee-inclusive maximum money that "
                                           "open windows and pending orders can still lose; owner-authorized "
-                                          "ceiling $10", lo=0, lo_open=True, hi=10)
+                                          "ceiling $20", lo=0, lo_open=True, hi=20)
     speeddesk_kalshi_day_stop_usd: float = _f(6.0, "usd", "Kalshi live companion: daily loss stop; "
                                               "owner-authorized ceiling $6", lo=0, lo_open=True, hi=6)
     speeddesk_kalshi_total_stop_usd: float = _f(10.0, "usd", "Kalshi live companion: persistent total-loss stop; "

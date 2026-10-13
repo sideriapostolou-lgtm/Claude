@@ -187,10 +187,15 @@ practice trial and keep an additional honest practice twin of the live companion
 
 | Setting | Default and maximum | Includes |
 | --- | ---: | --- |
-| `SPEEDDESK_KALSHI_WINDOW_USD` | $2 | Actual buys, fees, unfilled reservations and uncertain requests in one KXBTC15M window |
-| `SPEEDDESK_KALSHI_OPEN_USD` | $4 | All unsettled windows and pending orders |
-| `SPEEDDESK_KALSHI_DAY_STOP_USD` | $3 | UTC-day settled drawdown plus money still at risk; resets at 00:00 UTC without dropping carried exposure |
-| `SPEEDDESK_KALSHI_TOTAL_STOP_USD` | $5 | Settled drawdown since the last authorized resume plus money still at risk |
+| `SPEEDDESK_KALSHI_WINDOW_USD` | $10 | Actual buys, fees, unfilled reservations and uncertain requests in one KXBTC15M window |
+| `SPEEDDESK_KALSHI_OPEN_USD` | $20 | All unsettled windows and pending orders |
+| `SPEEDDESK_KALSHI_DAY_STOP_USD` | $6 | UTC-day settled drawdown plus money still at risk; resets at 00:00 UTC without dropping carried exposure |
+| `SPEEDDESK_KALSHI_TOTAL_STOP_USD` | $10 | Settled drawdown since the last authorized resume plus money still at risk |
+
+History: $2/$4/$3/$5 at launch (2026-10-12); $5/$10/$6/$10 (owner, 2026-10-13, "2.5x"); window and open raised to
+$10/$20 (owner, 2026-10-13 15:15 UTC, "ten now double tmr if it works"), both stops unchanged. The stops count
+money still at risk, so they also bound each window: an unpaired position can never put more at risk than is
+left under the day and total stops (a complete up+down pair risks nothing).
 | `SPEEDDESK_KALSHI_CUTOFF_S` | 180 seconds | End real buying after the first 12 minutes; configured cutoff may never be below 60 seconds |
 
 Fees and resting orders count at their worst permitted cost. Kalshi cash is another limit, never permission
