@@ -15,6 +15,40 @@ Template:
 
 
 
+## 2026-10-13 19:55 UTC, Claude, branch claude/kalshi-recorder, no PR (local commits only)
+- Changed: built Family A's shared public recorder and its queue-aware replay (PROTOCOL.md `kalshi-familyA-v1`).
+  New `kalshi_public.py` (GET-only allowlisted transport; one budget of 1.5/s, hard 2/s rolling ceiling, 25% cut
+  for 10 min after a 429, Retry-After, 2^n lane backoff), `kalshi_recorder_store.py` (hourly gzip segments,
+  SHA-256 index with a per-lane chain, crash recovery that keeps complete lines and reports the torn tail, 2 GiB
+  cap that never deletes unscored Family A evidence: old KXBTC15M first, then shed, then pause; `rotate` and an
+  owner release date as options), `kalshi_familya_universe.py` (U1-U11 with reasons, tick grids, risk clusters,
+  New York settlement days), `kalshi_recorder.py` (lanes for books incl. the current/next KXBTC15M, the
+  exchange-wide trade tape with 5 s overlap and backfill, discovery and admission logging, quote sweeps,
+  settlement, fees, incentives; gap records for failures, stale lanes, restarts, clock steps and the cap; hourly
+  coverage manifests; optional Coinbase/Kraken BTC trades, off) and `kalshi_familya.py` (the replay: exact
+  decimals, latency, post-only at arrival and on the next book, queue behind displayed size, partial fills,
+  cancel races, crossing books, reservations held until the cancel takes effect, Kalshi direct-account fee
+  rounding with accumulator/rebates and scheduled fee changes, the simulated $2/$4/$3/$5/cash limits, rotation,
+  cutoff, settlement, capital-days, exact reconciliation, pessimistic model, baselines; TEST refused until a
+  hashed FREEZE.json matches). Engine hook `KALSHI_RECORDER_ENABLED` (default false) in `engine.py`;
+  `.env.example`, new `docs/KALSHI_RECORDER.md`, a line in `docs/ACCOUNTS.md`, inbox note to Codex.
+- Verified: 146 new tests (no-order guard incl. a full recorder pass through the real requests stack, rate limiter,
+  store cap/rotation/recovery, admission rules, Kalshi's published fee examples on both grids, queue/fill/cancel
+  race/post-only/limits/settlement/freeze cases, real saved `book_sample` books, an end-to-end replay of
+  recorder-format files). Full suite 4,877 passed / 12 skipped (after merging the deploy branch at 3b3c5fc), mypy
+  clean on 124 source files, Ruff clean on every changed Python file. Two 5-minute live public
+  smoke runs from the workspace (19:35 and 19:41 UTC, 1.0/s): the first showed the trade window growing under
+  57/280 429s, fixed by a 60 s live window with the backlog merged into backfill; the second had 2/290 429s,
+  contiguous trade coverage, 140 KXBTC15M books, at most one request start per second, all segment hashes good.
+- Not verified / skipped: nothing is collecting persistently; no Railway run (its 429 limit is unmeasured); the
+  first full discovery pass did not finish inside 5 minutes, so no Family A candidate was recorded; no quote has
+  been scored on real data. The section 13 statistics, phase reports and Phase 0 report are not built.
+  `config.py` was deliberately not touched (real-money file); the recorder validates its own variables.
+- Real money touched? no. No order/cancel/amend code, no keys read, no live setting or cap changed, nothing
+  pushed or deployed. The engine hook is off by default.
+- Next step: the owner's hosting choice (separate small Railway service with a 5 GB volume recommended, cost to be
+  measured), then Phase 0: 48 h of real capture and its report; the disk decision before T1.
+
 ## 2026-10-13 19:17 UTC, Codex, public-wallet strategy reconstruction
 - Owner request: infer concrete rules for dangerously-skip-permissions and numerous high-profit public
   wallets. Added `research/wallet_playbooks/` with a descriptive plan, owner report, detailed proposed

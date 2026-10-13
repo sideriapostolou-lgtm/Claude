@@ -2752,6 +2752,14 @@ def build_app(settings: Settings, clock: Clock | None = None, *, session: Any = 
         except Exception as exc:  # noqa: BLE001 - read-only observations cannot stop existing desks.
             log.warning("weatherwatch_not_started mode=observation error=%s", type(exc).__name__)
             weatherwatch = None
+    try:
+        # Public, read-only Kalshi recorder (Family A + the KXBTC15M arena tape). OFF unless
+        # KALSHI_RECORDER_ENABLED=true; the recommended home is its own service (python -m nightcrawler.kalshi_recorder).
+        from nightcrawler.kalshi_recorder import start_from_engine
+
+        start_from_engine(settings.data_dir, stop_event)
+    except Exception as exc:  # noqa: BLE001 - research capture never stops a desk
+        log.warning("kalshi_recorder_not_started mode=observation error=%s", type(exc).__name__)
     if settings.trenddesk_enabled:  # PAPER only: lab 3's 50-day trend rule on BTC, ETH and SOL, once a day
         try:
             from nightcrawler.trenddesk import TrendDesk
