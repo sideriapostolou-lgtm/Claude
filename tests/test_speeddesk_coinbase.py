@@ -108,10 +108,28 @@ class Replay:
         raise AssertionError("unreachable")
 
 
-def run_coinbase(connect: Any, rounds: int = 400) -> tuple[list[tuple[float, float, float]], list[dict[str, Any]]]:
+class Received(Replay):
+    """Replays recorded rows, moving the shared clock to each row's recorded local receipt time first (the feed
+    refuses a trade stamped more than FUTURE_SKEW_S after its receipt, as every desk does)."""
+
+    def __init__(self, rows: list[dict[str, Any]], clock: FakeClock, then: str = "open") -> None:
+        super().__init__([row["message"] for row in rows], then)
+        self.times = [row["received_at"] for row in rows]
+        self.clock = clock
+
+    async def recv(self) -> str:
+        if self.rows and self.times:
+            at = self.times.pop(0)
+            if at > self.clock.now():
+                self.clock.set(at)
+        return await super().recv()
+
+
+def run_coinbase(connect: Any, rounds: int = 400, clock: FakeClock | None = None
+                 ) -> tuple[list[tuple[float, float, float]], list[dict[str, Any]]]:
     ticks: list[tuple[float, float, float]] = []
     statuses: list[dict[str, Any]] = []
-    clock = FakeClock(1_791_917_623.0)
+    clock = clock or FakeClock(1_791_917_623.0)
     feed = LiveFeeds(Settings(), on_tick=lambda *args: ticks.append(args), on_book=lambda _: None,
                      on_trade=lambda _: None, on_windows=lambda _: None, on_status=statuses.append,
                      clock=clock.now, coinbase_connect=connect)
@@ -128,11 +146,12 @@ def run_coinbase(connect: Any, rounds: int = 400) -> tuple[list[tuple[float, flo
 
 
 def test_each_recorded_trade_reaches_the_desk_once_from_whichever_feed_brings_it_first() -> None:
-    exchange_rows = [row["message"] for row in recorded("exchange_matches")]
-    advanced_rows = [row["message"] for row in recorded("advanced_trades")]
-    sockets: dict[str, list[Replay]] = {COINBASE_EXCHANGE_WS: [Replay(exchange_rows), Replay(exchange_rows)],
-                                        COINBASE_WS: [Replay(advanced_rows)]}
-    ticks, statuses = run_coinbase(lambda url, **_kwargs: sockets[url].pop(0))
+    clock = FakeClock(1_791_917_623.0)
+    exchange_rows, advanced_rows = recorded("exchange_matches"), recorded("advanced_trades")
+    sockets: dict[str, list[Replay]] = {COINBASE_EXCHANGE_WS: [Received(exchange_rows, clock),
+                                                               Received(exchange_rows, clock)],
+                                        COINBASE_WS: [Received(advanced_rows, clock)]}
+    ticks, statuses = run_coinbase(lambda url, **_kwargs: sockets[url].pop(0), clock=clock)
     expected = ({tick[2] for row in messages("exchange_matches") for tick in exchange_ticks(row)}
                 | {tick[2] for row in messages("advanced_trades") for tick in advanced_trade_ticks(row)})
     assert len(ticks) == len(expected)  # two Exchange copies and Advanced Trade's: one delivery per trade id
@@ -141,14 +160,15 @@ def test_each_recorded_trade_reaches_the_desk_once_from_whichever_feed_brings_it
 
 
 def test_the_backup_keeps_ticks_flowing_when_both_exchange_connections_fail() -> None:
-    advanced_rows = [row["message"] for row in recorded("advanced_trades")]
+    clock = FakeClock(1_791_917_623.0)
+    advanced_rows = recorded("advanced_trades")
 
     def connect(url: str, **_kwargs: Any) -> Replay:
         if url == COINBASE_EXCHANGE_WS:
             raise OSError("exchange feed unreachable")
-        return Replay(advanced_rows)
+        return Received(advanced_rows, clock)
 
-    ticks, statuses = run_coinbase(connect)
+    ticks, statuses = run_coinbase(connect, clock=clock)
     assert len(ticks) == len({tick[2] for row in messages("advanced_trades") for tick in advanced_trade_ticks(row)})
     assert statuses[-1]["coinbase"] == "connected"
     assert statuses[-1]["coinbase_feeds"] == {"exchange_a": "disconnected", "exchange_b": "disconnected",
