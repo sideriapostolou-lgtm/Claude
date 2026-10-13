@@ -11,7 +11,13 @@ from typing import Any
 import pytest
 from kalshi_recorder_fixtures import Clock, FakeResponse
 
-from nightcrawler.kalshi_public import PublicKalshi, RateLimiter, retry_after_seconds
+from nightcrawler.kalshi_public import (
+    MAX_RETRY_AFTER_S,
+    PublicKalshi,
+    RateLimiter,
+    public_ticker,
+    retry_after_seconds,
+)
 
 
 def starts(limiter: RateLimiter, clock: Clock, count: int) -> list[float]:
@@ -120,3 +126,28 @@ def test_redirects_oversize_bodies_and_bad_json_are_failures_not_data() -> None:
     transport, _, _ = client(FakeResponse(200, b"[1, 2]"))
     fetched = transport.get("x", "/events")
     assert fetched.error == "not_an_object" and fetched.body is None
+
+
+def test_json_with_nan_infinity_or_absurd_nesting_is_a_failed_request_never_a_record() -> None:
+    """Review F1: a NaN in a reply used to reach the store (allow_nan=False) and halt the recorder."""
+    for raw in (b'{"trades":[{"count_fp":NaN}]}', b'{"a":Infinity}', b'{"a":-Infinity}', b"[" * 100_000 + b"]" * 100_000):
+        transport, _, _ = client(FakeResponse(200, raw))
+        fetched = transport.get("x", "/markets/trades")
+        assert fetched.error == "invalid_json" and fetched.body is None and not fetched.ok
+
+
+def test_a_huge_retry_after_is_clamped_to_fifteen_minutes() -> None:
+    """Review F8: a one-year Retry-After froze every lane with no gap."""
+    now = datetime(2026, 10, 13, 18, 0, tzinfo=UTC).timestamp()
+    assert retry_after_seconds("31536000", now) == MAX_RETRY_AFTER_S == 900.0
+    clock = Clock(0.0)
+    limiter = RateLimiter(1.5, clock=clock.mono, sleep=clock.sleep)
+    limiter.penalize(retry_after_s=31_536_000.0)
+    limiter.wait()
+    assert clock.at == pytest.approx(900.0)
+
+
+def test_public_tickers_are_the_ones_a_public_path_may_carry() -> None:
+    assert public_ticker("KXHIGHNY") and public_ticker("KXBTCD-26OCT1617-T112499.99")
+    assert not public_ticker("kxweird") and not public_ticker("") and not public_ticker(1.5)
+    assert not public_ticker("KX/../portfolio")

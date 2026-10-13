@@ -32,6 +32,7 @@ from nightcrawler.kalshi_familya import (
     ReplayConfig,
     baseline_side,
     check_scoring_allowed,
+    code_hashes,
     run_replay,
 )
 from nightcrawler.kalshi_recorder_store import RecorderStore
@@ -353,22 +354,32 @@ def test_rotation_cancels_after_six_hours_without_a_fill_and_rests_six_hours() -
 
 # --------------------------------------------------------------------------- the freeze gate (sections 11 and 18)
 def research_copy(tmp_path: Path) -> Path:
-    target = tmp_path / "research"
-    target.mkdir()
+    """A repository-shaped copy: <repo>/research/kalshi_edge_search (the protocol) and <repo>/docs/WORKLOG.md."""
+    repo = tmp_path / "repo"
+    target = repo / "research" / "kalshi_edge_search"
+    target.mkdir(parents=True)
     for name in ("PROTOCOL.md", "PROTOCOL.sha256"):
         shutil.copy(RESEARCH / name, target / name)
+    (repo / "docs").mkdir()
+    (repo / "docs" / "WORKLOG.md").write_text("# Work log\n")
     return target
 
 
-def freeze(research: Path, **values: Any) -> None:
+def freeze(research: Path, *, log_hash: bool = True, **values: Any) -> str:
+    """Write a FREEZE.json (A1, E1 2026-12-01, 28 days, frozen a day early) and publish its hash."""
     published = (research / "PROTOCOL.sha256").read_text().split()[0]
     body = {"protocol_sha256": published, "variant": "A1", "E1": "2026-12-01", "test_days": 28,
-            "parameters": ReplayConfig("A1", "TEST", date(2026, 12, 1), 28).parameters(), **values}
+            "parameters": ReplayConfig("A1", "TEST", date(2026, 12, 1), 28).parameters(),
+            "code_sha256": code_hashes(), "frozen_at": "2026-11-30T09:00:00+00:00", **values}
     directory = research / "family_a"
     directory.mkdir(exist_ok=True)
     (directory / "FREEZE.json").write_text(json.dumps(body))
     digest = hashlib.sha256((directory / "FREEZE.json").read_bytes()).hexdigest()
     (directory / "FREEZE.sha256").write_text(f"{digest}  FREEZE.json\n")
+    if log_hash:
+        worklog = research.parents[1] / "docs" / "WORKLOG.md"
+        worklog.write_text(worklog.read_text() + f"- Family A FREEZE.json SHA-256 {digest}\n")
+    return digest
 
 
 def test_test_rows_are_refused_until_a_frozen_hashed_config_exists(tmp_path: Path) -> None:
@@ -379,8 +390,8 @@ def test_test_rows_are_refused_until_a_frozen_hashed_config_exists(tmp_path: Pat
     with pytest.raises(FreezeError, match="TEST rows cannot be scored"):
         run_replay(tmp_path / "no-data-read", test, research)  # refused before any row is read
     freeze(research)
-    assert check_scoring_allowed(test, research) is not None
-    with pytest.raises(FreezeError, match="does not match"):
+    assert check_scoring_allowed(test, research).freeze is not None
+    with pytest.raises(FreezeError, match="neither the frozen variant"):
         check_scoring_allowed(ReplayConfig("A2", "TEST", date(2026, 12, 1), 28), research)
     assert check_scoring_allowed(ReplayConfig("A1", "TEST", date(2026, 12, 1), 28, model="pessimistic"), research)
     with pytest.raises(FreezeError, match="frozen TEST period"):
@@ -400,7 +411,7 @@ def test_an_unhashed_freeze_or_an_edited_protocol_blocks_every_phase(tmp_path: P
 
 
 def test_the_real_protocol_hash_matches_and_train_is_allowed_without_a_freeze() -> None:
-    assert check_scoring_allowed(ReplayConfig("A1", "TRAIN", DAY, 7), RESEARCH) is None
+    assert check_scoring_allowed(ReplayConfig("A1", "TRAIN", DAY, 7), RESEARCH).freeze is None
 
 
 # --------------------------------------------------------------------------- end to end on the recorder's format
@@ -435,7 +446,7 @@ def test_a_replay_reads_the_recorders_own_files(tmp_path: Path) -> None:
     clock["at"] = START + 42 * 3600
     store.append("settlement", "settlement", {"rows": [settled]}, START + 42 * 3600)
     store.close()
-    result = run_replay(root, ReplayConfig("A1", "TRAIN", DAY, 1), RESEARCH)
+    result = run_replay(root, ReplayConfig("A1", "TRAIN", DAY, 7), RESEARCH)
     assert result["counts"]["quotes_sent"] >= 1 and result["counts"]["fills"] == 1
     assert D(result["net_usd"]) == D("0.38") and result["accounting"]["reconciled"] is True
     assert result["resolution_complete"] is True and result["unidentifiable_quotes"] == 0
@@ -458,3 +469,299 @@ def test_every_saved_public_book_parses_into_an_uncrossed_top_ten_book() -> None
         assert all(earlier[0] > later[0] for earlier, later in pairwise(yes))
         mid = favourite_mid(raw)
         assert mid is not None and D("0.5") <= mid < 1
+
+
+# --------------------------------------------------------------------------- review regressions (2026-10-13)
+def test_r1_the_lower_bound_fills_an_unfilled_unidentifiable_quote_whose_side_lost() -> None:
+    """7.7: an unidentifiable quote counts as filled at q for its remaining size if that side lost."""
+    coverage = Coverage()
+    coverage.exchange.add(int(START - 86400), int(START + 10))  # a tape gap from START+10 ...
+    coverage.exchange.add(int(START + 400), int(START + 40 * 86400))  # ... to START+400
+    coverage.watched[TICKER].add(START - 86400, START + 40 * 86400)
+    replay = FamilyAReplay(ReplayConfig("A1", "TRAIN", DAY, 1), coverage)
+    replay.on_series_fee_changes([], START - 600)
+    market(replay)
+    book(replay, START - 10, [("0.62", "5.00")], [("0.35", "10.00")])
+    book(replay, START + 2, [("0.62", "5.00")], [("0.35", "10.00")])  # resting, never filled
+    settle(replay, START + 40 * 3600 + 600, "no")  # the YES side we bid lost
+    result = replay.finish(START + 40 * 3600 + 700)
+    assert result["unidentifiable_quotes"] == 1 and D(result["net_usd"]) == 0
+    assert D(result["lower_bound_net_usd_unidentifiable"]) == D("-0.63")  # q + fee + the rounding pad (was 0)
+    assert result["verdict_basis"] == "lower_bound_7_7" and D(result["verdict_net_usd"]) == D("-0.63")
+    assert D(result["verdict_net_per_day_usd_before_opex"]) < 0
+
+
+def test_r1_the_lower_bound_ignores_a_quote_whose_side_won() -> None:
+    coverage = Coverage()
+    coverage.exchange.add(int(START - 86400), int(START + 10))
+    coverage.exchange.add(int(START + 400), int(START + 40 * 86400))
+    coverage.watched[TICKER].add(START - 86400, START + 40 * 86400)
+    replay = FamilyAReplay(ReplayConfig("A1", "TRAIN", DAY, 1), coverage)
+    replay.on_series_fee_changes([], START - 600)
+    market(replay)
+    book(replay, START - 10, [("0.62", "5.00")], [("0.35", "10.00")])
+    book(replay, START + 2, [("0.62", "5.00")], [("0.35", "10.00")])
+    settle(replay, START + 40 * 3600 + 600, "yes")  # our side won: an unfilled quote costs nothing
+    won = replay.finish(START + 40 * 3600 + 700)
+    assert won["unidentifiable_quotes"] == 1 and D(won["lower_bound_net_usd_unidentifiable"]) == 0
+    assert won["verdict_basis"] == "lower_bound_7_7"
+
+
+def test_r1_the_lower_bound_counts_at_most_one_contract_per_market() -> None:
+    from nightcrawler.kalshi_familya import Order
+
+    replay = simulated("A1")
+    replay.markets[TICKER].yes_value = D(0)  # NO won; both quotes bid YES
+    for oid, price in ((901, D("0.62")), (902, D("0.63"))):  # a quote and its replacement, both in a gap
+        replay.orders[oid] = Order(oid, TICKER, "yes", price, D(1), "TEMP_NYC|26OCT21", START, START + 1,
+                                   "2026-10-20", price + D("0.01"), oid == 902, remaining=D(1))
+        replay.unidentifiable.append(oid)
+    assert replay._lower_bound(D(0)) == D("-0.64")  # one contract, at the dearer of the two (not -1.27)
+    replay.markets[TICKER].yes_value = None  # never resolved: counts at $0 (section 11), so still a loss
+    assert replay._lower_bound(D(0)) == D("-0.64")
+
+
+def test_r2_a_replacement_is_not_blocked_by_the_reservation_it_replaces() -> None:
+    """6: a reservation is held until its cancel is acknowledged; 5.5: the replacement is sent at that ack."""
+    tickers = (TICKER, "KXHIGHNY-26OCT21-T78", *(f"KX{city}-26OCT21-T1" for city in CITIES))
+    replay = simulated("A1", tickers=tickers)
+    for ticker in tickers:
+        book(replay, START - 10, [("0.62", "5.00")], [("0.35", "10.00")], ticker=ticker)
+    replay.on_book_unchanged(TICKER, START + 0.5)  # decision at 00:00: four quotes, $2.52 of today's risk
+    assert replay.counts["quotes_sent"] == 4
+    first = "KXHIGHAUS-26OCT21-T1"
+    book(replay, START + 30, [("0.63", "5.00")], [("0.35", "10.00")], ticker=first)  # the best bid moved up
+    for ticker in tickers:  # keep every quote sweep fresh so nothing else is cancelled
+        replay.on_market_row({"ticker": ticker, "volume_24h_fp": "100.00"}, START + 30, full=False, sweep=True)
+    replay.on_book_unchanged(TICKER, START + 60.5)  # after the 00:01 decision, before its ack at 00:01:01
+    assert replay.counts["replacements"] == 1
+    # 5.9: the replacement's extra $0.01 is held back from new quotes at that decision.
+    old = next(order for order in replay.orders.values() if order.ticker == first)
+    assert replay.account.earmarks[old.oid][2] == D("0.01")
+    assert replay.account.blocked_by("OIL|26OCT21", "2026-10-20", D("0.475")) == "day_3"
+    earmark = replay.account.earmarks.pop(old.oid)
+    assert replay.account.blocked_by("OIL|26OCT21", "2026-10-20", D("0.475")) is None
+    replay.account.earmarks[old.oid] = earmark
+    replay.on_book_unchanged(TICKER, START + 62)
+    # 3 x 0.63 + 0.64 = 2.53 < 3.00: sent. The old reservation was counted until ack + epsilon before (3.16).
+    assert replay.counts["replacement_orders"] == 1, dict(replay.blocks)
+    assert not replay.account.earmarks and replay.account.at_risk() == D("2.53")
+
+
+def test_r3_a_clock_margin_fill_of_the_old_order_trims_the_replacement_to_the_rest() -> None:
+    replay = simulated("A1")
+    book(replay, START - 10, [("0.62", "5.00")], [("0.35", "10.00")])
+    book(replay, START + 30, [("0.63", "5.00")], [("0.35", "10.00")])  # confirms (Q = max(5, 0) = 5)
+    book(replay, START + 40, [("0.63", "5.00")], [("0.35", "10.00")])  # nobody left at 0.62: Q -> 0
+    replay.on_market_row({"ticker": TICKER, "volume_24h_fp": "100.00"}, START + 40, full=False, sweep=True)
+    old = order_of(replay)
+    assert old.state == "resting" and old.queue == 0
+    replay.on_print(sell_yes(TICKER, START + 61.1, "0.30", price="0.62"))  # after the ack, inside epsilon
+    new = order_of(replay)
+    assert new.oid != old.oid and old.remaining == D("0.70")
+    assert replay.account.positions[TICKER].count == D("0.30")
+    assert new.state == "pending" and new.remaining == D("0.70")  # was trimmed to 0 and killed
+    assert replay.account.reserved[new.oid] == D("0.70") * new.per_contract
+
+
+def test_r4_the_matched_baseline_of_the_frozen_variant_may_be_scored_in_test(tmp_path: Path) -> None:
+    """10: 'In TEST, only the baseline matching the frozen variant runs' (MB-J for a join variant)."""
+    research = research_copy(tmp_path)
+    freeze(research)  # A1 frozen, E1 2026-12-01, 28 days
+    assert check_scoring_allowed(ReplayConfig("MB-J", "TEST", date(2026, 12, 1), 28), research).freeze
+    with pytest.raises(FreezeError, match="matched baseline"):
+        check_scoring_allowed(ReplayConfig("MB-I", "TEST", date(2026, 12, 1), 28), research)
+
+
+def test_r5_a_freeze_without_every_parameter_is_refused(tmp_path: Path) -> None:
+    research = research_copy(tmp_path)
+    freeze(research, parameters={})
+    with pytest.raises(FreezeError, match="every frozen parameter"):
+        check_scoring_allowed(ReplayConfig("A1", "TEST", date(2026, 12, 1), 28, epsilon_ms=0), research)
+    freeze(research)
+    with pytest.raises(FreezeError, match="epsilon_ms"):
+        check_scoring_allowed(ReplayConfig("A1", "TEST", date(2026, 12, 1), 28, epsilon_ms=0), research)
+
+
+def test_r5_primary_and_pessimistic_test_runs_use_the_frozen_latency_and_stresses_are_labelled(tmp_path: Path) -> None:
+    research = research_copy(tmp_path)
+    freeze(research)  # parameters carry latency_ms=1000
+    for config in (ReplayConfig("A1", "TEST", date(2026, 12, 1), 28, latency_ms=100),
+                   ReplayConfig("A1", "TEST", date(2026, 12, 1), 28, latency_ms=500, model="pessimistic")):
+        with pytest.raises(FreezeError, match="latency_ms"):
+            check_scoring_allowed(config, research)
+    stress = ReplayConfig("A1", "TEST", date(2026, 12, 1), 28, latency_ms=100, latency_stress=True)
+    assert check_scoring_allowed(stress, research).freeze
+    assert stress.kind == "latency_stress" and "LATENCY STRESS" in stress.label() and "L=100 ms" in stress.label()
+    assert stress.parameters()["kind"] == "latency_stress"
+    with pytest.raises(ValueError, match="one kind"):
+        ReplayConfig("A1", "TEST", date(2026, 12, 1), 28, model="pessimistic", unfunded=True)
+
+
+def test_r5_the_freeze_pins_the_replay_code_its_time_and_its_published_hash(tmp_path: Path) -> None:
+    research = research_copy(tmp_path)
+    test = ReplayConfig("A1", "TEST", date(2026, 12, 1), 28)
+    freeze(research, code_sha256={**code_hashes(), "kalshi_familya.py": "0" * 64})
+    with pytest.raises(FreezeError, match="code_sha256"):
+        check_scoring_allowed(test, research)
+    freeze(research, frozen_at="2026-11-30T23:30:00+00:00")  # only 30 minutes before E1
+    with pytest.raises(FreezeError, match="frozen_at"):
+        check_scoring_allowed(test, research)
+    freeze(research, log_hash=False)  # FREEZE.sha256 regenerated, but the hash is not in the work log
+    with pytest.raises(FreezeError, match="WORKLOG"):
+        check_scoring_allowed(test, research)
+    freeze(research)
+    permit = check_scoring_allowed(test, research)
+    with pytest.raises(FreezeError, match="permit"):
+        FamilyAReplay(test, Coverage())  # no TEST account without the gate
+    with pytest.raises(FreezeError, match="permit"):
+        FamilyAReplay(ReplayConfig("A1", "TEST", date(2026, 12, 1), 28, model="pessimistic"), Coverage(),
+                      permit=permit)  # a permit is for one config
+    assert FamilyAReplay(test, Coverage(), permit=permit).config == test
+
+
+def test_train_and_val_are_seven_days_and_test_twenty_eight() -> None:
+    with pytest.raises(FreezeError, match="exactly 7"):
+        check_scoring_allowed(ReplayConfig("A1", "TRAIN", DAY, 3), RESEARCH)
+    with pytest.raises(FreezeError, match="exactly 28"):
+        check_scoring_allowed(ReplayConfig("A1", "TEST", date(2026, 12, 1), 7), RESEARCH)
+
+
+def test_r6_the_unfunded_diagnostic_runs_past_twenty_five_dollars_and_says_so() -> None:
+    tickers = tuple(f"KXT{index:02d}-26OCT21-T1" for index in range(45))
+    coverage = Coverage()
+    coverage.exchange.add(int(START - 86400), int(START + 40 * 86400))
+    for ticker in tickers:
+        coverage.watched[ticker].add(START - 86400, START + 40 * 86400)
+    replay = FamilyAReplay(ReplayConfig("A1", "TRAIN", DAY, 1, unfunded=True), coverage)
+    replay.on_series_fee_changes([], START - 600)
+    for ticker in tickers:
+        series = ticker.split("-")[0]
+        market(replay, ticker, f"{series}-26OCT21", series)
+        book(replay, START - 10, [("0.62", "5.00")], [("0.35", "10.00")], ticker=ticker)
+    replay.on_book_unchanged(tickers[0], START + 0.5)
+    assert replay.counts["quotes_sent"] == 45
+    for ticker in tickers:
+        book(replay, START + 2, [("0.62", "5.00")], [("0.35", "10.00")], ticker=ticker)
+    for ticker in tickers:  # 45 x $0.62 = $27.90 > $25: raised LimitBreach('Simulated cash went negative')
+        replay.on_print(sell_yes(ticker, START + 3, "10", trade_id=f"x-{ticker}"))
+    assert replay.counts["fills"] == 45 and replay.account.cash < 0
+    for ticker in tickers:
+        settle(replay, START + 40 * 3600 + 600, "yes", ticker=ticker)
+    result = replay.finish(START + 40 * 3600 + 700)
+    assert "UNFUNDED diagnostic" in result["label"] and result["run_kind"] == "unfunded"
+    assert result["accounting"]["reconciled"] is True
+
+
+def test_r7_a_cluster_belongs_to_one_block_the_date_of_its_last_settlement() -> None:
+    other = "KXHIGHNY-26OCT21-T78"  # the same TEMP_NYC|26OCT21 cluster as TICKER
+    replay = simulated("A1", tickers=(TICKER, other))
+    for ticker in (TICKER, other):
+        book(replay, START - 10, [("0.62", "1.00")], [("0.35", "10.00")], ticker=ticker)
+    book(replay, START + 2, [("0.62", "1.00")], [("0.35", "10.00")])
+    replay.on_print(sell_yes(TICKER, START + 3, "5", trade_id="a"))
+    book(replay, START + 50, [("0.62", "1.00")], [("0.35", "10.00")], ticker=other)
+    replay.on_market_row({"ticker": other, "volume_24h_fp": "100.00"}, START + 50, full=False, sweep=True)
+    book(replay, START + 62, [("0.62", "1.00")], [("0.35", "10.00")], ticker=other)
+    replay.on_print(sell_yes(other, START + 63, "5", trade_id="b"))
+    assert replay.account.positions[TICKER].count == 1 and replay.account.positions[other].count == 1
+    settle(replay, START + 40 * 3600 + 300, "yes")  # New York 2026-10-21
+    settle(replay, START + 2 * 86400 + 6 * 3600 + 300, "yes", ticker=other)  # New York 2026-10-22
+    result = replay.finish(START + 3 * 86400)
+    assert result["settlement_blocks"] == 1 and list(result["by_block"]) == ["2026-10-22"]  # was 2 blocks
+    assert D(result["by_block"]["2026-10-22"]) == D("0.76")
+
+
+def test_r7_unresolved_positions_stay_out_of_the_blocks_and_extend_the_days_to_the_limit() -> None:
+    replay = simulated("A1")
+    book(replay, START - 10, [("0.62", "1.00")], [("0.35", "10.00")])
+    book(replay, START + 2, [("0.62", "1.00")], [("0.35", "10.00")])
+    replay.on_print(sell_yes(TICKER, START + 3, "5"))
+    result = replay.finish(START + 20 * 86400)  # the tape outlives the 14-day resolution limit
+    assert result["settlement_blocks"] == 0 and result["by_block"] == {}
+    assert D(result["unresolved_pnl_usd_outside_blocks"]) == D("-0.62")
+    assert D(result["days"]) == 15  # 13: D runs to the follow-up end when a position never settled (was 1)
+
+
+def test_r8_a_quiet_book_written_before_the_lookback_still_counts_when_calls_say_unchanged(tmp_path: Path) -> None:
+    """4/12: the latest book received by t; the recorder writes a book only when it changes."""
+    root = tmp_path / "kalshi_recorder"
+    clock = {"at": START - 3600}
+    store = RecorderStore(root, max_bytes=256 * 1024 * 1024, min_free_bytes=0, clock=lambda: clock["at"],
+                          disk_free=lambda path: 10 ** 12, headroom_bytes=1024)
+    at = START - 3600
+    store.append("discovery", "series_list", {"category": "Climate and Weather", "rows": [series_row()]}, at)
+    store.append("discovery", "events_page", {"rows": [event_row(EVENT)], "page": 1}, at + 1)
+    store.append("fees", "series_fee_changes", {"body": {"series_fee_change_arr": []}}, at + 2)
+    store.append("fees", "event_fee_changes", {"event_ticker": EVENT, "body": {"event_fee_changes": []}}, at + 3)
+    full = market_row(TICKER, EVENT, now=START, open_offset=-30 * 3600, close_offset=40 * 3600)
+    store.append("markets", "discovery_markets", {"rows": [{"ticker": TICKER, "full": full}]}, at + 4)
+    store.append("admissions", "watch", {"action": "start", "tickers": [TICKER], "at_watch": at + 5}, at + 5)
+    store.append("trade_coverage", "trade_coverage", {"from": int(at), "to": int(START + 2 * 86400),
+                                                      "scope": "exchange", "backfill": False}, at + 6)
+    book_at = START - 1200  # the last CHANGE was 20 minutes before 00:00 UTC
+    clock["at"] = book_at
+    store.append("books", "book", {"ticker": TICKER, "orderbook_fp": orderbook([("0.62", "1.00")], [("0.35", "9")])},
+                 book_at)
+    for second in range(int(book_at) + 60, int(START + 3600), 60):
+        clock["at"] = second
+        store.append("book_calls", "book_call", {"unchanged": [TICKER], "changed": [], "missing": []}, second - 5)
+        if (second - int(book_at)) % 300 == 0:
+            store.append("markets", "sweep", {"rows": [{"ticker": TICKER, "dyn": {"volume_24h_fp": "80.00"}}]},
+                         second - 10)
+    clock["at"] = START + 2 * 86400
+    store.close()
+    result = run_replay(root, ReplayConfig("A1", "TRAIN", DAY, 7), RESEARCH)
+    assert result["counts"].get("quotes_sent", 0) >= 1  # was 0: no book was ever loaded
+
+
+def test_r10_reconciliation_catches_a_position_ledger_that_disagrees_with_cash() -> None:
+    from nightcrawler.kalshi_familya import LimitBreach
+
+    replay = simulated("A1")
+    book(replay, START - 10, [("0.62", "1.00")], [("0.35", "10.00")])
+    book(replay, START + 2, [("0.62", "1.00")], [("0.35", "10.00")])
+    replay.on_print(sell_yes(TICKER, START + 3, "5"))
+    assert D(replay.reconcile()["open_exposure"]) == D("0.62")
+    replay.account.positions[TICKER].lots[0].cost += D("0.0100")  # an injected ledger defect
+    with pytest.raises(LimitBreach, match="inventory"):
+        replay.reconcile()  # only cash = 25 + fill cash + payouts was checked
+    replay.account.positions[TICKER].lots[0].cost -= D("0.0100")
+    replay.account.fees += D("0.0100")  # a fee total that no fill produced
+    with pytest.raises(LimitBreach, match="fees"):
+        replay.reconcile()
+
+
+def test_block_prints_count_toward_the_twenty_four_hour_volume_fallback() -> None:
+    replay = simulated("A1")
+    state = replay.markets[TICKER]
+    state.sweep_at = START - 3600  # the sweep is too old: the fallback sums recorded trades
+    replay.on_print(sell_yes(TICKER, START - 120, "30", block=True))
+    assert state.volume_24h(START) == D("30")
+
+
+def test_a_quote_outside_the_ten_best_bids_at_arrival_assumes_the_queue_unknown() -> None:
+    replay = simulated("A1")
+    book(replay, START - 10, [("0.62", "5.00")], [("0.35", "10.00")])  # the decision joins at 0.62
+    above = [(f"0.{63 + index}", "1.00") for index in range(10)]
+    book(replay, START + 0.5, above + [("0.62", "5.00")], [("0.25", "10.00")])  # 0.62 is now 11th
+    book(replay, START + 2, above + [("0.62", "5.00")], [("0.25", "10.00")])  # confirms, still outside
+    order = order_of(replay)
+    assert order.state == "resting" and order.queue.is_infinite()
+    replay.on_print(sell_yes(TICKER, START + 3, "5"))
+    assert order.remaining == 1  # was filled with Q = 0
+    book(replay, START + 4, [("0.63", "1.00"), ("0.62", "2.00")], [("0.25", "10.00")])  # q is visible again
+    assert order.queue == 2
+    replay.on_print(sell_yes(TICKER, START + 5, "2.5"))
+    assert order.remaining == D("0.50")
+
+
+def test_a_replacement_is_not_re_checked_against_books_that_arrive_during_its_cancel() -> None:
+    replay = simulated("A1")
+    book(replay, START - 10, [("0.62", "5.00")], [("0.35", "10.00")])
+    book(replay, START + 30, [("0.63", "5.00")], [("0.35", "10.00")])
+    replay.on_market_row({"ticker": TICKER, "volume_24h_fp": "100.00"}, START + 40, full=False, sweep=True)
+    replay.on_book_unchanged(TICKER, START + 60.5)  # the 00:01 decision reprices to 0.63
+    book(replay, START + 60.7, [("0.63", "5.00")], [("0.25", "10.00")])  # a 12-cent spread before the ack
+    replay.on_book_unchanged(TICKER, START + 61.5)
+    assert replay.counts["replacement_orders"] == 1 and replay.counts.get("replacement_skipped", 0) == 0

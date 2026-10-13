@@ -33,6 +33,7 @@ from nightcrawler.kalshi_public import API, PublicKalshi, RateLimiter, public_pa
 from nightcrawler.kalshi_recorder import Recorder, RecorderSettings
 
 SOURCE = Path(__file__).resolve().parents[1] / "src" / "nightcrawler"
+_REAL_SESSION_REQUEST = requests.Session.request  # captured at import, before conftest blocks the network
 MODULES = ("kalshi_public.py", "kalshi_recorder.py", "kalshi_recorder_store.py", "kalshi_familya.py",
            "kalshi_familya_universe.py")
 FORBIDDEN_MODULES = ("speeddesk_kalshi_client", "speeddesk_live", "speeddesk_live_model", "speeddesk_kalshi_ws",
@@ -169,3 +170,55 @@ def _response(body: Any) -> Any:
     from kalshi_recorder_fixtures import FakeResponse
 
     return FakeResponse(200, body)
+
+
+def test_what_is_actually_sent_carries_no_credentials_even_with_a_netrc_and_a_cookie(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Review F9: intercept the PreparedRequest at the adapter, after requests' netrc/cookie/proxy handling."""
+    import io
+
+    from requests.adapters import HTTPAdapter
+    from requests.structures import CaseInsensitiveDict
+
+    netrc = tmp_path / "netrc"
+    netrc.write_text("machine api.elections.kalshi.com login someone password hunter2\n")
+    netrc.chmod(0o600)
+    monkeypatch.setenv("NETRC", str(netrc))
+    fake = FakeKalshi()
+    fake.series = {"KXHIGHNY": series_row()}
+    fake.events = [event_row()]
+    fake.markets = {"KXHIGHNY-26OCT15-T76": market_row()}
+    fake.books = {"KXHIGHNY-26OCT15-T76": orderbook([("0.30", "12.00")], [("0.67", "40.00")])}
+    sent: list[requests.PreparedRequest] = []
+
+    def send(self: HTTPAdapter, request: requests.PreparedRequest, **kwargs: Any) -> requests.Response:
+        sent.append(request)
+        reply = fake(str(request.method), str(request.url), headers=dict(request.headers))
+        response = requests.Response()
+        response.status_code = reply.status_code
+        response.headers = CaseInsensitiveDict({"Set-Cookie": "session=abc; Path=/", **reply.headers})
+        response.raw = io.BytesIO(reply._raw)
+        response.url, response.request = str(request.url), request
+        return response
+
+    monkeypatch.setattr(HTTPAdapter, "send", send)  # nothing can leave the process: the adapter is the fake venue
+    monkeypatch.setattr(requests.Session, "request", _REAL_SESSION_REQUEST)  # the real netrc/cookie/proxy handling
+    # The probe would catch a regression: a plain session does attach the netrc login.
+    plain = requests.Session()
+    plain.get(API + "/events")
+    assert "Authorization" in sent.pop().headers
+    clock = Clock(NOW)
+    client = PublicKalshi(RateLimiter(2.0, clock=clock.mono, sleep=clock.sleep), wall=clock.wall, mono=clock.mono)
+    client._session.cookies.set("session", "abc", domain="api.elections.kalshi.com", path="/")
+    recorder = Recorder(RecorderSettings(data_dir=tmp_path, btc15m=False), client=client, wall=clock.wall)
+    for _ in range(150):
+        if not recorder.step():
+            clock.sleep(0.5)
+    recorder.close()
+    assert len(sent) > 20 and {request.method for request in sent} == {"GET"}
+    for request in sent:
+        assert str(request.url).startswith(API + "/")
+        names = {name.lower() for name in request.headers}
+        assert not names & {"authorization", "cookie", "proxy-authorization"}, request.headers
+        assert not any(name.startswith("kalshi-access") for name in names)
+        assert request.body is None

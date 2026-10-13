@@ -7,7 +7,11 @@ Run it as its own process or service::
     python -m nightcrawler.kalshi_recorder verify         # re-hash every sealed segment
 
 or inside the bot with ``KALSHI_RECORDER_ENABLED=true`` (OFF by default; the bot's IP and volume are
-already busy, so a separate service is recommended). It sends only public, unauthenticated GETs from
+already busy, so a separate service is recommended). Inside the bot it refuses to start while any desk runs
+live (``*_MODE=live``) and runs a reduced profile (0.25 request/s, no KXBTC15M lane, 1 GiB free-disk floor).
+As its own service, ``run`` refuses to start when trading keys or live switches are present in its
+environment (names are checked, values never read), so a copy of the bot's service cannot become a second
+bot by accident. It sends only public, unauthenticated GETs from
 the allowlist in ``kalshi_public`` (no key, no signer, no websocket to Kalshi), keeps every lane inside
 one shared budget of at most 2 request starts per rolling second (1.5/s target), and records:
 
@@ -25,6 +29,8 @@ one shared budget of at most 2 request starts per rolling second (1.5/s target),
 
 Missing data stays missing: failures, 429s, restarts, stale lanes and clock steps are written as gap
 records, and an hourly coverage manifest lists coverage, request latency, 429s and segment hashes.
+A malformed reply or a request the transport refuses is retried at most ``PAGE_ATTEMPTS`` times and then
+dropped with a gap; no single reply can stop the recorder or wedge a lane.
 There is no order, cancel, amend, portfolio or account call anywhere in this module.
 """
 
@@ -44,14 +50,15 @@ import time
 import uuid
 from collections import Counter, OrderedDict, deque
 from collections.abc import Callable, Iterable, Mapping
-from dataclasses import dataclass, field, fields
+from dataclasses import dataclass, field, fields, replace
 from datetime import UTC, date, datetime
 from decimal import Decimal
 from pathlib import Path
 from typing import Any
+from urllib.parse import quote
 
 from . import __version__
-from .config import ConfigError
+from .config import ConfigError, parse_dotenv
 from .kalshi_familya_universe import (
     OPEN_CATEGORIES,
     RECORDER_WINDOW,
@@ -59,7 +66,7 @@ from .kalshi_familya_universe import (
     dec,
     ts,
 )
-from .kalshi_public import Fetched, PublicKalshi, RateLimiter
+from .kalshi_public import Fetched, PublicKalshi, RateLimiter, public_ticker
 from .kalshi_recorder_store import (
     LEVEL_PAUSED,
     RecorderStore,
@@ -72,6 +79,9 @@ log = logging.getLogger("nightcrawler.kalshi_recorder")
 BTC15M = "KXBTC15M"
 BOOKS_PER_CALL = 100
 TICKERS_PER_SWEEP = 300
+# Kalshi answered 414 for a 10.2 KB /markets?tickers= URL and 200 for 6.6 KB (2026-10-13); the encoded
+# tickers value of one sweep or settlement call stays under this, and a 4xx halves the chunk.
+SWEEP_QUERY_BYTES = 5000
 FAVOURITE_BAND = (Decimal("0.45"), Decimal("0.97"))
 FAST_BOOK_S, SLOW_BOOK_S = 20.0, 60.0
 TRADE_OVERLAP_S = 5
@@ -81,6 +91,13 @@ BACKFILL_PAGES = 3000
 PAGE_ATTEMPTS = 5
 DEDUP_MEMORY = 50_000
 SETTLEMENT_GIVE_UP_S = 45 * 86400.0
+UNWATCHED_MEMORY_S = 4 * 86400.0  # a ticker's prints are kept for windows that began before its watch stopped
+RETRY_AFTER_GAP_S = 60.0
+IN_BOT_RATE_PER_S = 0.25
+IN_BOT_MIN_FREE_MB = 1024
+# A copy of the bot's service carries these; the standalone recorder refuses to start next to them.
+TRADING_SECRET_NAMES = frozenset({"KALSHI_KEY_ID", "KALSHI_PRIVATE_KEY", "BOT_WALLET_SECRET"})
+TRADING_SECRET_PREFIXES = ("POLYMARKET_US_",)
 DYNAMIC_FIELDS = frozenset({
     "yes_bid_dollars", "yes_ask_dollars", "no_bid_dollars", "no_ask_dollars", "yes_bid_size_fp",
     "yes_ask_size_fp", "last_price_dollars", "previous_price_dollars", "previous_yes_bid_dollars",
@@ -182,6 +199,11 @@ class RecorderSettings:
     def root(self) -> Path:
         return self.data_dir / "kalshi_recorder"
 
+    def in_bot(self) -> RecorderSettings:
+        """The reduced profile inside the bot's process: it shares the bot's IP, CPU and volume."""
+        return replace(self, rate_per_s=min(self.rate_per_s, IN_BOT_RATE_PER_S), btc15m=False,
+                       min_free_mb=max(self.min_free_mb, IN_BOT_MIN_FREE_MB))
+
     def host(self, env: Mapping[str, str] | None = None) -> str:
         if self.host_label != "auto":
             return self.host_label
@@ -194,6 +216,74 @@ def _release_ts(value: str) -> float | None:
         return datetime.combine(date.fromisoformat(value), datetime.min.time(), UTC).timestamp()
     except ValueError:
         return None
+
+
+def _wanted(name: str) -> bool:
+    return name == "DATA_DIR" or name.startswith("KALSHI_RECORDER_") or name.endswith("_MODE")
+
+
+def process_env(env: Mapping[str, str] | None = None, dotenv: str | None = ".env") -> tuple[dict[str, str], frozenset[str]]:
+    """``.env`` overlaid by the real environment (as the bot's config loads them), reduced to what the recorder uses.
+
+    Returns the values of ``DATA_DIR``, ``KALSHI_RECORDER_*`` and every ``*_MODE`` switch, and the set of every
+    variable NAME present. No other value is kept.
+    """
+    real = os.environ if env is None else env
+    file = parse_dotenv(dotenv) if dotenv else {}
+    values = {name: value for name, value in file.items() if _wanted(name)}
+    values.update({name: str(value) for name, value in real.items() if _wanted(name)})
+    return values, frozenset(file) | frozenset(real)
+
+
+def live_modes(values: Mapping[str, str]) -> list[str]:
+    """The ``*_MODE`` switches set to live (any desk trading real money in this process)."""
+    return sorted(name for name, value in values.items()
+                  if name.endswith("_MODE") and str(value).strip().lower() == "live")
+
+
+def trading_names(names: Iterable[str]) -> list[str]:
+    """Names of trading keys present (values are never read)."""
+    return sorted(name for name in names if name in TRADING_SECRET_NAMES or name.startswith(TRADING_SECRET_PREFIXES))
+
+
+def _detail(exc: BaseException) -> str:
+    """A short, single-line description of an exception for the logs and gap rows."""
+    return " ".join(str(exc).split())[:200]
+
+
+class Malformed(ValueError):
+    """A 200 reply whose shape is not what the public API documents."""
+
+
+def _rows(body: Mapping[str, Any], key: str) -> list[dict[str, Any]]:
+    """The object rows of a list field (a missing or null field is empty; anything else is malformed)."""
+    value = body.get(key)
+    if value is None:
+        return []
+    if not isinstance(value, list):
+        raise Malformed(f"{key} is not a list")
+    return [row for row in value if isinstance(row, dict)]
+
+
+def _cursor(body: Mapping[str, Any], key: str = "cursor") -> str:
+    value = body.get(key)
+    if value is None:
+        return ""
+    if not isinstance(value, str):
+        raise Malformed(f"{key} is not a string")
+    return value
+
+
+def _why(fetched: Fetched) -> str:
+    """The HTTP status of a failed reply, or the transport's error when there was no failing status."""
+    if fetched.status is not None and fetched.status != 200:
+        return str(fetched.status)
+    return fetched.error or "unknown"
+
+
+def _transient(fetched: Fetched) -> bool:
+    """A failure that says nothing about this request: no reply, a 429 or a server error."""
+    return fetched.status is None or fetched.status == 429 or fetched.status >= 500
 
 
 # =========================================================================== small helpers
@@ -361,6 +451,13 @@ class Recorder:
         self.other_queue: deque[Request] = deque()
         self.sweep_queue: deque[list[str]] = deque()
         self.settle_queue: deque[list[str]] = deque()
+        self.chunk_size = TICKERS_PER_SWEEP  # halved by a 4xx (a URL Kalshi will not take)
+        # Failed attempts at each lane's current request: (request key, count). One entry per lane.
+        self.strikes: dict[str, tuple[tuple[Any, ...], int]] = {}
+        # Recently unwatched tickers -> (kind, stop time): a later backfill of a window from before the stop
+        # still keeps their prints, because trade_coverage promises every print of every ticker watched then.
+        self.unwatched: dict[str, tuple[str, float]] = {}
+        self.fee_retry: dict[str, float] = {}
         self.paused_since: float | None = None
         self.last_minute = -1
         self.hour_started = math.floor(self.started_at / 3600) * 3600
@@ -402,6 +499,8 @@ class Recorder:
             restored = Watched(**row)
             self.watched[restored.ticker] = restored
         self.fee_events = {str(key): float(value) for key, value in (saved.get("fee_events") or {}).items()}
+        self.unwatched = {str(ticker): (str(kind), float(at)) for ticker, (kind, at) in
+                          (saved.get("unwatched") or {}).items() if now - float(at) <= UNWATCHED_MEMORY_S}
         if self.watched:
             self.emit("admissions", "watch", {"action": "resumed", "tickers": sorted(self.watched)})
         covered = saved.get("trade_covered_to")
@@ -418,7 +517,8 @@ class Recorder:
                     "status": item.status, "added_at": item.added_at} for item in self.watched.values()]
         atomic_json(self._state_path(), {"version": 1, "session": self.session, "last_alive_at": now,
                                          "trade_covered_to": self.trade_covered_to, "started_at": self.started_at,
-                                         "watched": watched, "fee_events": self.fee_events})
+                                         "watched": watched, "fee_events": self.fee_events,
+                                         "unwatched": {ticker: list(item) for ticker, item in self.unwatched.items()}})
 
     # ------------------------------------------------------------------ scheduling
     def _planners(self) -> dict[str, Callable[[float], Request | None]]:
@@ -446,7 +546,11 @@ class Recorder:
         lane, request = min(ready, key=lambda pair: (pair[0].pass_value, -pair[0].weight))
         self.virtual = lane.pass_value
         lane.pass_value += 1.0 / lane.weight
-        fetched = self.client.get(request.lane, request.path, request.params, stop)
+        try:
+            fetched = self.client.get(request.lane, request.path, request.params, stop)
+        except (ValueError, TypeError) as exc:  # the transport refused it (path or parameter): never sent
+            self._refused(request, now, exc)
+            return True
         if fetched.error == "stopped":
             return False
         self._account(lane, fetched)
@@ -454,10 +558,84 @@ class Recorder:
         try:
             handler(request, fetched)
         except Exception as exc:  # noqa: BLE001 - a malformed reply becomes a recorded failure, never a crash
-            self.emit("gaps", "handler_error", {"lane": request.lane, "error": type(exc).__name__,
-                                                "path": request.path})
-            log.warning("kalshi_recorder_handler_error lane=%s error=%s", request.lane, type(exc).__name__)
+            self._handler_failed(request, fetched, exc)
         return True
+
+    # ------------------------------------------------------------------ failures that are not HTTP errors
+    @staticmethod
+    def _key(request: Request) -> tuple[Any, ...]:
+        return (request.path, tuple((name, str(value)) for name, value in request.params))
+
+    def _strike(self, request: Request) -> bool:
+        """Count one failed attempt at this lane's current request; True once it failed ``PAGE_ATTEMPTS`` times."""
+        key = self._key(request)
+        last, count = self.strikes.get(request.lane, ((), 0))
+        count = count + 1 if last == key else 1
+        if count >= PAGE_ATTEMPTS:
+            self.strikes.pop(request.lane, None)
+            return True
+        self.strikes[request.lane] = (key, count)
+        return False
+
+    def _accepted(self, request: Request) -> None:
+        self.strikes.pop(request.lane, None)
+
+    def _handler_failed(self, request: Request, fetched: Fetched, exc: Exception) -> None:
+        """A reply that could not be processed: recorded, retried at most PAGE_ATTEMPTS times, then dropped."""
+        cause = "malformed_reply" if isinstance(exc, Malformed) else f"handler_error_{type(exc).__name__}"
+        with_detail = {"handler_lane": request.lane, "error": type(exc).__name__, "detail": _detail(exc),
+                       "path": request.path, "received_at": fetched.received_at}
+        try:
+            self.emit("gaps", "handler_error", with_detail)
+        except Exception as again:  # noqa: BLE001 - the record itself must never be the next crash
+            log.warning("kalshi_recorder_handler_error_unrecorded error=%s", type(again).__name__)
+        log.warning("kalshi_recorder_handler_error lane=%s error=%s detail=%s", request.lane, type(exc).__name__,
+                    _detail(exc))
+        if request.lane in ("trades", "backfill"):
+            job: TradeJob = request.context["job"]
+            job.attempts += 1
+            if job.attempts >= PAGE_ATTEMPTS:
+                self._abandon(job, request.lane == "backfill", cause)
+        elif self._strike(request):
+            self._give_up(request, fetched.received_at, cause)
+
+    def _refused(self, request: Request, now: float, exc: Exception) -> None:
+        """The transport refused to send a request (not a public path or parameter): drop it with a gap at once."""
+        self.emit("gaps", "request_refused", {"handler_lane": request.lane, "error": type(exc).__name__,
+                                              "detail": _detail(exc), "path": request.path})
+        log.warning("kalshi_recorder_request_refused lane=%s error=%s detail=%s", request.lane,
+                    type(exc).__name__, _detail(exc))
+        self._give_up(request, now, f"request_refused_{type(exc).__name__}")
+
+    def _give_up(self, request: Request, at: float, cause: str) -> None:
+        """Drop this lane's current request with a gap, so the lane moves on (never retried forever)."""
+        lane = request.lane
+        self.strikes.pop(lane, None)
+        if lane in ("trades", "backfill"):
+            self._abandon(request.context["job"], lane == "backfill", cause)
+        elif lane == "discovery":
+            self._skip_discovery(request, at, cause)
+        elif lane in ("sweep", "settlement"):
+            chunks = self.sweep_queue if lane == "sweep" else self.settle_queue
+            if chunks and chunks[0] == request.context["tickers"]:
+                chunks.popleft()
+            self.gap(lane, at, at, cause, tickers=len(request.context["tickers"]))
+        elif lane == "fees":
+            event = request.context.get("event")
+            if request.context["step"] == "series":
+                self.next_series_fees_at = at + 3600  # try the series list again in an hour
+            elif isinstance(event, str):
+                if self.fee_queue and self.fee_queue[0] == event:
+                    self.fee_queue.popleft()
+                self.fee_retry[event] = at + 3600
+            self.gap("fees", at, at, cause, step=request.context["step"], event=event)
+        elif lane in ("btc15m_meta", "other"):
+            queue = self.btc_queue if lane == "btc15m_meta" else self.other_queue
+            if queue and queue[0] is request:
+                queue.popleft()
+            self.gap(lane, at, at, cause, path=request.path)
+        else:  # books: the next call is already scheduled
+            self.gap(lane, at, at, cause, path=request.path)
 
     def _account(self, lane: Lane, fetched: Fetched) -> None:
         self.emit("requests", "request", fetched.log_row(), fetched.received_at)
@@ -479,7 +657,11 @@ class Recorder:
             lane.hour["errors"] += 1
         wait = min(30.0, 2.0 ** lane.in_a_row)
         if fetched.retry_after_s is not None:
-            wait = max(wait, fetched.retry_after_s)
+            wait = max(wait, fetched.retry_after_s)  # clamped to 15 minutes by the transport
+            if fetched.retry_after_s >= RETRY_AFTER_GAP_S:
+                # A long Retry-After holds every lane: that is missing data, so it is a gap, never silent.
+                self.gap("all", fetched.received_at, fetched.received_at + fetched.retry_after_s,
+                         "retry_after_hold", seconds=fetched.retry_after_s, request_lane=lane.name)
         lane.backoff_until = fetched.received_at + wait
 
     # ------------------------------------------------------------------ housekeeping
@@ -514,7 +696,16 @@ class Recorder:
         for event, at in self.fee_events.items():
             if now - at >= 86400 and event in live_events and event not in self.fee_queue:
                 self.fee_queue.append(event)
+        for event, at in list(self.fee_retry.items()):
+            if event not in live_events:
+                self.fee_retry.pop(event)
+            elif now >= at:
+                self.fee_retry.pop(event)
+                if event not in self.fee_queue:
+                    self.fee_queue.append(event)
         self.fee_events = {event: at for event, at in self.fee_events.items() if event in live_events}
+        self.unwatched = {ticker: item for ticker, item in self.unwatched.items()
+                          if now - item[1] <= UNWATCHED_MEMORY_S}
         for lane in self.lanes.values():
             if (lane.last_success_at is not None and lane.gap_since is None
                     and now - lane.last_success_at > max(2 * lane.cadence_s, 30)
@@ -695,7 +886,8 @@ class Recorder:
         A window that touches the last queued, not yet started exchange-wide window extends it, so a lane
         that keeps falling behind under 429s queues one growing job instead of thousands of small ones.
         """
-        if not self.watched:
+        tickers = self._tape_tickers(low)
+        if not tickers:
             return  # prints are kept only for watched tickers: with none, nothing in this window is missing
         last = self.backfill_jobs[-1] if self.backfill_jobs else None
         if (last is not None and last.ticker is None and not last.pages and not last.cursor
@@ -704,11 +896,21 @@ class Recorder:
             return
         self.gap("trades", low, high, cause, backfill="queued")
         pages = self.trade_rate * max(1, high - low) / 1000.0
-        tickers = sorted(self.watched)
         if pages <= max(1, len(tickers)):
             self.backfill_jobs.append(TradeJob(low, high, None, True))
         else:
             self.backfill_jobs.extend(TradeJob(low, high, ticker, True) for ticker in tickers)
+
+    def _tape_tickers(self, since: float) -> list[str]:
+        """Tickers whose prints a trade window starting at ``since`` must keep: watched now, or unwatched after it."""
+        return sorted(set(self.watched) | {ticker for ticker, (_, stopped) in self.unwatched.items() if stopped >= since})
+
+    def _tape_kind(self, ticker: str, since: float) -> str | None:
+        watched = self.watched.get(ticker)
+        if watched is not None:
+            return watched.kind
+        gone = self.unwatched.get(ticker)
+        return gone[0] if gone is not None and gone[1] >= since else None
 
     def _done_trades(self, request: Request, fetched: Fetched) -> None:
         self._trade_page(request, fetched, backfill=False)
@@ -723,11 +925,11 @@ class Recorder:
         if not isinstance(rows, list) or not isinstance(cursor, (str, type(None))):
             job.attempts += 1
             if job.attempts >= PAGE_ATTEMPTS:
-                self._abandon(job, backfill, f"trade_page_failed_{fetched.status or fetched.error}")
+                self._abandon(job, backfill, f"trade_page_failed_{_why(fetched) if not fetched.ok else 'malformed'}")
             return
+        self._keep_trades(rows, job, fetched)  # may raise: the attempt then counts (step's guard)
         job.attempts = 0
         job.pages += 1
-        self._keep_trades(rows, job, fetched)
         cursor = cursor or ""
         if cursor and cursor in job.seen_cursors:
             self._abandon(job, backfill, "trade_cursor_repeated")
@@ -774,20 +976,23 @@ class Recorder:
         self._finish(job, backfill)
 
     def _keep_trades(self, rows: list[Any], job: TradeJob, fetched: Fetched) -> None:
+        """Keep the prints of tickers watched during this window; a trade id is remembered only once it is stored."""
         kept: dict[str, list[dict[str, Any]]] = {"trades": [], "trades_btc15m": []}
-        job.rows += len(rows)
+        fresh: dict[str, dict[str, str]] = {"trades": {}, "trades_btc15m": {}}
+        oldest = job.oldest
         for row in rows:
             if not isinstance(row, dict):
                 continue
             created = ts(row.get("created_time"))
             if created is not None:
-                job.oldest = created if job.oldest is None else min(job.oldest, created)
+                oldest = created if oldest is None else min(oldest, created)
             ticker, trade_id = row.get("ticker"), row.get("trade_id")
-            watched = self.watched.get(ticker) if isinstance(ticker, str) else None
-            if watched is None or not isinstance(trade_id, str) or not trade_id:
+            kind = self._tape_kind(ticker, job.min_ts) if isinstance(ticker, str) else None
+            if kind is None or not isinstance(trade_id, str) or not trade_id:
                 continue
+            lane = "trades_btc15m" if kind == "btc15m" else "trades"
             digest = canonical_sha(row)[:16]
-            previous = self.dedup.get(trade_id)
+            previous = self.dedup.get(trade_id) or fresh["trades"].get(trade_id) or fresh["trades_btc15m"].get(trade_id)
             if previous == digest:
                 continue
             if previous is not None:
@@ -795,18 +1000,25 @@ class Recorder:
                 self.emit("gaps", "trade_conflict", {"trade_id": trade_id, "ticker": ticker, "row": row,
                                                      "received_at": fetched.received_at})
                 continue
-            self.dedup[trade_id] = digest
-            if len(self.dedup) > DEDUP_MEMORY:
-                self.dedup.popitem(last=False)
-            if created is not None:
-                self.lags.append(fetched.received_at - created)
-            kept["trades_btc15m" if watched.kind == "btc15m" else "trades"].append(row)
+            fresh[lane][trade_id] = digest
+            kept[lane].append(row)
         for lane, values in kept.items():
-            if values:
-                self.emit(lane, "trades", {"requested_at": fetched.requested_at, "received_at": fetched.received_at,
-                                           "window": [job.min_ts, job.max_ts], "scope": job.ticker or "exchange",
-                                           "page": job.pages, "body_sha256": fetched.sha256, "rows_in_page": len(rows),
-                                           "rows": values}, fetched.received_at)
+            if not values:
+                continue
+            seq = self.emit(lane, "trades", {"requested_at": fetched.requested_at, "received_at": fetched.received_at,
+                                             "window": [job.min_ts, job.max_ts], "scope": job.ticker or "exchange",
+                                             "page": job.pages + 1, "body_sha256": fetched.sha256,
+                                             "rows_in_page": len(rows), "rows": values}, fetched.received_at)
+            if seq is None:
+                continue  # shed by the storage cap (a recorded gap): these ids are not remembered as stored
+            for trade_id, digest in fresh[lane].items():
+                self.dedup[trade_id] = digest
+            while len(self.dedup) > DEDUP_MEMORY:
+                self.dedup.popitem(last=False)
+            self.lags.extend(fetched.received_at - created for created in
+                             (ts(row.get("created_time")) for row in values) if created is not None)
+        job.rows += len(rows)
+        job.oldest = oldest
 
     # ------------------------------------------------------------------ KXBTC15M metadata (Family B tape)
     def _plan_btc_meta(self, now: float) -> Request | None:
@@ -828,14 +1040,16 @@ class Recorder:
                 self.next_btc_meta_at = fetched.received_at + 30
                 self.gap("btc15m_meta", fetched.requested_at, fetched.received_at, "btc15m_metadata_unavailable")
             return
-        self.btc_queue.popleft()
         step = request.context["step"]
         body = fetched.body
+        rows = _rows(body, "markets") if step == "markets" else []  # a malformed page raises before it is popped
+        if self.btc_queue and self.btc_queue[0] is request:
+            self.btc_queue.popleft()
+        self._accepted(request)
         meta = {"requested_at": fetched.requested_at, "received_at": fetched.received_at, "body_sha256": fetched.sha256}
         if step == "series":
             self.emit("btc15m_meta", "series", {**meta, "series": body.get("series")}, fetched.received_at)
         elif step == "markets":
-            rows = [row for row in body.get("markets") or [] if isinstance(row, dict)]
             self.emit("btc15m_meta", "markets", {**meta, "cursor": body.get("cursor"), "rows": rows}, fetched.received_at)
             for row in rows:
                 ticker, event = row.get("ticker"), row.get("event_ticker")
@@ -887,19 +1101,23 @@ class Recorder:
         state = self.discovery
         if state is None:
             return
+        stage = request.context["stage"]
         if not fetched.ok:
-            if self.lanes["discovery"].in_a_row >= PAGE_ATTEMPTS:
-                self.gap("discovery", state["started_at"], fetched.received_at,
-                         f"discovery_abandoned_{fetched.status or fetched.error}")
-                self.discovery = None
-                self.next_discovery_at = fetched.received_at + 300
+            if _transient(fetched):
+                # No reply, 429s or server errors: the venue is struggling, so the whole pass waits.
+                if self.lanes["discovery"].in_a_row >= PAGE_ATTEMPTS:
+                    self.gap("discovery", state["started_at"], fetched.received_at,
+                             f"discovery_abandoned_{_why(fetched)}")
+                    self.discovery = None
+                    self.next_discovery_at = fetched.received_at + 300
+            elif self._strike(request):  # this one item is refused (4xx) or unreadable: skip it, keep the pass
+                self._give_up(request, fetched.received_at, f"discovery_{stage}_failed_{_why(fetched)}")
             return
         body = fetched.body
         meta = {"requested_at": fetched.requested_at, "received_at": fetched.received_at, "body_sha256": fetched.sha256}
-        stage = request.context["stage"]
         if stage == "series":
+            rows = _rows(body, "series")
             category = state["categories"].pop(0)
-            rows = [row for row in body.get("series") or [] if isinstance(row, dict)]
             self.emit("discovery", "series_list", {**meta, "category": category, "rows": rows}, fetched.received_at)
             for row in rows:
                 if isinstance(row.get("ticker"), str):
@@ -908,7 +1126,7 @@ class Recorder:
             if not state["categories"]:
                 state["stage"] = "events"
         elif stage == "events":
-            rows = [row for row in body.get("events") or [] if isinstance(row, dict)]
+            rows, cursor = _rows(body, "events"), _cursor(body)
             kept = [row for row in rows if row.get("category") in OPEN_CATEGORIES]
             others = Counter(str(row.get("category")) for row in rows if row.get("category") not in OPEN_CATEGORIES)
             state["other_categories"].update(others)
@@ -919,42 +1137,76 @@ class Recorder:
                 if isinstance(row.get("event_ticker"), str):
                     state["events"][row["event_ticker"]] = row
             state["pages"] += 1
-            cursor = body.get("cursor") or ""
             if cursor and cursor not in state["seen"] and state["pages"] < 500:
                 state["seen"].add(cursor)
                 state["cursor"] = cursor
             else:
                 if cursor:
                     self.gap("discovery", state["started_at"], fetched.received_at, "events_pagination_incomplete")
-                series = {row.get("series_ticker") for row in state["events"].values()
-                          if isinstance(row.get("series_ticker"), str)
-                          and _event_date_ok(str(row.get("event_ticker")), str(row.get("series_ticker")),
-                                             state["started_at"])}
-                state["series_todo"] = sorted(str(name) for name in series)
-                state["detail_todo"] = [name for name in state["series_todo"] if name not in self.series_rows]
-                state["stage"] = "detail" if state["detail_todo"] else "markets"
+                self._events_done(state, fetched.received_at)
         elif stage == "detail":
-            name = state["detail_todo"].pop(0)
             row = body.get("series")
+            if row is not None and not isinstance(row, dict):
+                raise Malformed("series is not an object")
+            name = state["detail_todo"].pop(0)
             self.emit("discovery", "series", {**meta, "series_ticker": name, "series": row}, fetched.received_at)
             if isinstance(row, dict):
                 self.series_rows[name] = row
             if not state["detail_todo"]:
                 state["stage"] = "markets"
         elif stage == "markets":
-            rows = [row for row in body.get("markets") or [] if isinstance(row, dict)]
+            rows, cursor = _rows(body, "markets"), _cursor(body)
             self._market_rows("discovery_markets", rows, meta, request.context["series"])
             state["markets"].extend(rows)
-            cursor = body.get("cursor") or ""
             if cursor and cursor not in state["seen"]:
                 state["seen"].add(cursor)
                 state["market_cursor"] = cursor
             else:
                 state["market_cursor"] = ""
                 state["series_todo"].pop(0)
-        if state["stage"] == "markets" and not state["series_todo"]:
-            self._admit_all(state, fetched.received_at)
+        self._accepted(request)
+        self._discovery_maybe_done(state, fetched.received_at)
+
+    def _events_done(self, state: dict[str, Any], now: float) -> None:
+        """The event list is complete (or cut short): list the series to read, skipping unusable names."""
+        names = {row.get("series_ticker") for row in state["events"].values()
+                 if isinstance(row.get("series_ticker"), str)
+                 and _event_date_ok(str(row.get("event_ticker")), str(row.get("series_ticker")), state["started_at"])}
+        bad = sorted(str(name) for name in names if not public_ticker(name))
+        if bad:  # a name no public path may carry (lowercase, empty, odd bytes): recorded, never requested
+            self.gap("discovery", now, now, "series_ticker_unusable", series=bad[:50], count=len(bad))
+        state["series_todo"] = sorted(str(name) for name in names if public_ticker(name))
+        state["detail_todo"] = [name for name in state["series_todo"] if name not in self.series_rows]
+        state["stage"] = "detail" if state["detail_todo"] else "markets"
+
+    def _discovery_maybe_done(self, state: dict[str, Any], now: float) -> None:
+        if state["stage"] == "markets" and not state["series_todo"] and self.discovery is state:
+            self._admit_all(state, now)
             self.discovery = None
+
+    def _skip_discovery(self, request: Request, at: float, cause: str) -> None:
+        """Drop the one discovery item that keeps failing (with a gap) and carry on with the rest of the pass."""
+        state = self.discovery
+        if state is None:
+            return
+        stage = request.context["stage"]
+        item: Any = None
+        if stage == "series" and state["categories"]:
+            item = state["categories"].pop(0)
+            if not state["categories"]:
+                state["stage"] = "events"
+        elif stage == "events":
+            self.gap("discovery", state["started_at"], at, "events_pagination_incomplete")
+            self._events_done(state, at)
+        elif stage == "detail" and state["detail_todo"]:
+            item = state["detail_todo"].pop(0)
+            if not state["detail_todo"]:
+                state["stage"] = "markets"
+        elif stage == "markets" and state["series_todo"]:
+            item = state["series_todo"].pop(0)
+            state["market_cursor"] = ""
+        self.gap("discovery", at, at, cause, stage=stage, item=item)
+        self._discovery_maybe_done(state, at)
 
     def _market_rows(self, kind: str, rows: list[dict[str, Any]], meta: dict[str, Any], scope: str | None) -> None:
         """Full rows when a ticker's rules/terms changed; otherwise only the moving fields (lossless)."""
@@ -1015,7 +1267,39 @@ class Recorder:
 
     # ------------------------------------------------------------------ sweep and settlement
     def _chunks(self, tickers: list[str]) -> list[list[str]]:
-        return [tickers[index:index + TICKERS_PER_SWEEP] for index in range(0, len(tickers), TICKERS_PER_SWEEP)]
+        """Ticker lists for ``/markets?tickers=``: at most ``chunk_size`` each, and a URL Kalshi accepts."""
+        out: list[list[str]] = []
+        chunk: list[str] = []
+        size = 0
+        for ticker in tickers:
+            cost = len(quote(ticker, safe="")) + 3  # the encoded comma
+            if chunk and (len(chunk) >= self.chunk_size or size + cost > SWEEP_QUERY_BYTES):
+                out.append(chunk)
+                chunk, size = [], 0
+            chunk.append(ticker)
+            size += cost
+        if chunk:
+            out.append(chunk)
+        return out
+
+    def _chunk_failed(self, request: Request, fetched: Fetched) -> None:
+        """A failed sweep/settlement call: a 4xx halves its chunk; otherwise it is dropped after PAGE_ATTEMPTS."""
+        queue = self.sweep_queue if request.lane == "sweep" else self.settle_queue
+        tickers: list[str] = request.context["tickers"]
+        if not queue or queue[0] != tickers:
+            return
+        status = fetched.status
+        if status is not None and 400 <= status < 500 and status != 429 and len(tickers) > 1:
+            half = len(tickers) // 2
+            queue.popleft()
+            queue.extendleft([tickers[half:], tickers[:half]])
+            self.chunk_size = max(1, min(self.chunk_size, half))
+            self.strikes.pop(request.lane, None)
+            self.emit("telemetry", "chunk_halved", {"request_lane": request.lane, "status": status,
+                                                    "tickers": len(tickers), "chunk_size": self.chunk_size})
+            return
+        if self._strike(request):
+            self._give_up(request, fetched.received_at, f"{request.lane}_page_failed_{_why(fetched)}")
 
     def _plan_sweep(self, now: float) -> Request | None:
         queue = self.sweep_queue
@@ -1030,9 +1314,12 @@ class Recorder:
 
     def _done_sweep(self, request: Request, fetched: Fetched) -> None:
         if not fetched.ok:
+            self._chunk_failed(request, fetched)
             return
-        self.sweep_queue.popleft()
-        rows = [row for row in fetched.body.get("markets") or [] if isinstance(row, dict)]
+        rows = _rows(fetched.body, "markets")
+        if self.sweep_queue and self.sweep_queue[0] == request.context["tickers"]:
+            self.sweep_queue.popleft()
+        self._accepted(request)
         self._market_rows("sweep", rows, {"requested_at": fetched.requested_at, "received_at": fetched.received_at,
                                           "body_sha256": fetched.sha256}, None)
         for row in rows:
@@ -1058,9 +1345,12 @@ class Recorder:
 
     def _done_settlement(self, request: Request, fetched: Fetched) -> None:
         if not fetched.ok:
+            self._chunk_failed(request, fetched)
             return
-        self.settle_queue.popleft()
-        rows = {row.get("ticker"): row for row in fetched.body.get("markets") or [] if isinstance(row, dict)}
+        rows = {row.get("ticker"): row for row in _rows(fetched.body, "markets")}
+        if self.settle_queue and self.settle_queue[0] == request.context["tickers"]:
+            self.settle_queue.popleft()
+        self._accepted(request)
         meta = {"requested_at": fetched.requested_at, "received_at": fetched.received_at, "body_sha256": fetched.sha256}
         for kind in ("btc15m", "candidate"):
             chosen = [rows[ticker] for ticker in request.context["tickers"]
@@ -1086,11 +1376,14 @@ class Recorder:
     def _watch(self, item: Watched) -> None:
         """The tape is complete for a ticker only from here: trades are kept only while it is watched."""
         self.watched[item.ticker] = item
+        self.unwatched.pop(item.ticker, None)
         self.emit("admissions", "watch", {"action": "start", "tickers": [item.ticker], "watch_kind": item.kind,
                                           "at_watch": item.added_at}, item.added_at)
 
     def _unwatch(self, ticker: str, now: float, reason: str) -> None:
-        if self.watched.pop(ticker, None) is not None:
+        item = self.watched.pop(ticker, None)
+        if item is not None:
+            self.unwatched[ticker] = (item.kind, now)  # a later backfill of an earlier window still keeps its prints
             self.emit("admissions", "watch", {"action": "stop", "tickers": [ticker], "reason": reason}, now)
 
     # ------------------------------------------------------------------ fees and other daily rows
@@ -1104,7 +1397,11 @@ class Recorder:
 
     def _done_fees(self, request: Request, fetched: Fetched) -> None:
         if not fetched.ok:
+            # Any failure counts: one event the venue keeps refusing must not hold every later lookup back.
+            if self._strike(request):
+                self._give_up(request, fetched.received_at, f"fee_lookup_failed_{_why(fetched)}")
             return
+        self._accepted(request)
         meta = {"requested_at": fetched.requested_at, "received_at": fetched.received_at, "body_sha256": fetched.sha256}
         if request.context["step"] == "series":
             self.next_series_fees_at = fetched.received_at + 86400
@@ -1130,7 +1427,9 @@ class Recorder:
             if self.lanes["other"].in_a_row >= PAGE_ATTEMPTS:
                 self.other_queue.clear()
             return
-        self.other_queue.popleft()
+        if self.other_queue and self.other_queue[0] is request:
+            self.other_queue.popleft()
+        self._accepted(request)
         meta = {"requested_at": fetched.requested_at, "received_at": fetched.received_at, "body_sha256": fetched.sha256}
         self.emit("other", request.context["step"], {**meta, "page": request.context.get("page"), "body": fetched.body},
                   fetched.received_at)
@@ -1268,21 +1567,37 @@ def run_recorder(settings: RecorderSettings, stop: threading.Event, *, max_runti
         recorder = Recorder(settings)
         recorder.run(stop, max_runtime_s=max_runtime_s)
     except Exception as exc:  # noqa: BLE001 - research capture never stops anything else
-        log.error("kalshi_recorder_halted error=%s", type(exc).__name__)
+        log.error("kalshi_recorder_halted error=%s detail=%s", type(exc).__name__, _detail(exc))
 
 
 def start_from_engine(data_dir: Path, stop: threading.Event,
                       env: Mapping[str, str] | None = None) -> threading.Thread | None:
-    """The bot's hook: does nothing unless ``KALSHI_RECORDER_ENABLED=true`` (OFF by default)."""
-    env = os.environ if env is None else env
+    """The bot's hook: does nothing unless ``KALSHI_RECORDER_ENABLED=true`` (OFF by default).
+
+    Reads ``.env`` overlaid by the real environment, as the bot's config does (``env`` replaces both, for
+    tests). It refuses to start while any desk in this process trades live (a recorder 429 could hold the
+    live client, cancels included), and otherwise runs the reduced in-bot profile (``RecorderSettings.in_bot``).
+    """
+    values, _ = process_env(env, dotenv=None if env is not None else ".env")
     try:
-        enabled = _bool(str(env.get("KALSHI_RECORDER_ENABLED") or "false"))
+        enabled = _bool(str(values.get("KALSHI_RECORDER_ENABLED") or "false"))
     except ValueError:
         log.warning("kalshi_recorder_not_started reason=KALSHI_RECORDER_ENABLED_unreadable")
         return None
     if not enabled:
         return None
-    settings = RecorderSettings.from_env({**env, "DATA_DIR": str(data_dir)})
+    live = live_modes(values)
+    if live:
+        log.warning("kalshi_recorder_not_started reason=live_trading_in_this_process modes=%s "
+                    "(run it as its own service: python -m nightcrawler.kalshi_recorder run)", ",".join(live))
+        return None
+    try:
+        settings = RecorderSettings.from_env({**values, "DATA_DIR": str(data_dir)}).in_bot()
+    except ConfigError as exc:
+        log.warning("kalshi_recorder_not_started reason=invalid_settings detail=%s", _detail(exc))
+        return None
+    log.info("kalshi_recorder_in_bot rate_per_s=%s btc15m=off min_free_mb=%s (the bot's own Kalshi readers "
+             "are not counted in this budget)", settings.rate_per_s, settings.min_free_mb)
     thread = threading.Thread(target=run_recorder, args=(settings, stop), name="kalshi-recorder", daemon=True)
     thread.start()
     return thread
@@ -1311,14 +1626,23 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--max-runtime-s", type=float, help="Stop after this many seconds (smoke runs)")
     args = parser.parse_args(argv)
     logging.basicConfig(level=logging.INFO, stream=sys.stdout, format="%(asctime)s %(levelname)s %(name)s %(message)s")
-    env = dict(os.environ)
+    values, names = process_env()
     if args.data_dir is not None:
-        env["DATA_DIR"] = str(args.data_dir)
+        values["DATA_DIR"] = str(args.data_dir)
     try:
-        settings = RecorderSettings.from_env(env)
+        settings = RecorderSettings.from_env(values)
     except ConfigError as exc:
         print(f"kalshi_recorder: invalid settings: {exc}", file=sys.stderr)
         return 2
+    if args.command == "run":
+        # A service copied from the bot carries its keys and live switches; this recorder needs neither, and
+        # a copy whose start command is wrong would be a second live bot. Names only; no value is read.
+        unsafe = trading_names(names) + [f"{name}=live" for name in live_modes(values)]
+        if unsafe:
+            print("kalshi_recorder: refusing to run next to trading keys or live switches: " + ", ".join(unsafe)
+                  + ". Run it as a new, empty service with no keys (docs/KALSHI_RECORDER.md section 2).",
+                  file=sys.stderr)
+            return 3
     if args.command == "status":
         print(json.dumps(storage_summary(settings.root), indent=2, sort_keys=True))
         return 0

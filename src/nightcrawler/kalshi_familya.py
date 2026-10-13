@@ -11,8 +11,12 @@ accumulator and capped rebates). The account's limits are the protocol's simulat
 cluster, $4 outstanding, $3 day loss/risk, $5 lifetime) and never the live account's.
 
 TEST rows are refused until ``family_a/FREEZE.json`` and its published hash exist and match this
-run; TRAIN and VAL may not read past a frozen TEST start. Nothing here sends, cancels or amends an
-order: every order below is a simulated object in memory.
+run (variant or its matched baseline, E1, 28 days, every frozen parameter including L, the replay
+code's SHA-256, a freeze at least 1 h before E1, and the hash written in ``docs/WORKLOG.md``); a TEST
+account can only be built from the permit that check returns. TRAIN and VAL are 7 days each and may
+not read past a frozen TEST start. Every run is labelled with its kind (primary, pessimistic, latency
+stress, live-style day stop, UNFUNDED diagnostic). Nothing here sends, cancels or amends an order:
+every order below is a simulated object in memory.
 
     python -m nightcrawler.kalshi_familya replay --data-dir DATA_DIR --phase TRAIN \\
         --first-day 2026-10-20 --days 7 --variant A1 [--model pessimistic] [--latency-ms 1000]
@@ -33,7 +37,7 @@ import tempfile
 from collections import Counter, defaultdict, deque
 from collections.abc import Iterable, Iterator, Mapping
 from dataclasses import dataclass, field
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from decimal import ROUND_CEILING, ROUND_FLOOR, Decimal
 from pathlib import Path
 from typing import Any
@@ -49,7 +53,7 @@ from .kalshi_familya_universe import (
     settlement_block,
     ts,
 )
-from .kalshi_recorder_store import iter_records
+from .kalshi_recorder_store import file_sha256, iter_records, iter_segment, load_index
 
 PROTOCOL_VERSION = "kalshi-familyA-v1"
 ZERO, ONE = Decimal(0), Decimal(1)
@@ -71,6 +75,19 @@ ROTATION_S = 6 * 3600.0
 TOP_LEVELS = 10
 MAKER_RATE, TAKER_RATE = Decimal("0.0175"), Decimal("0.07")
 YES, NO = "yes", "no"
+UNKNOWN_QUEUE = Decimal("Infinity")  # q outside the 10 best bids at arrival: no print reaches us until a book shows q
+PHASE_DAYS = {"TRAIN": 7, "VAL": 7, "TEST": 28}
+MATCHED_BASELINE = {"A1": "MB-J", "A3": "MB-J", "A2": "MB-I", "A4": "MB-I"}
+FROZEN_KEYS = ("protocol", "variant", "first_day", "days", "latency_ms", "epsilon_ms")
+# The code a TEST verdict depends on; FREEZE.json pins these files' SHA-256 (section 11).
+FAMILYA_CODE = ("kalshi_familya.py", "kalshi_familya_universe.py", "kalshi_recorder_store.py")
+RUN_LABELS = {
+    "primary": "PRIMARY",
+    "pessimistic": "PESSIMISTIC model (section 8)",
+    "latency_stress": "LATENCY STRESS (section 8): reported only, never used to choose or to judge",
+    "live_style": "LIVE-STYLE DAY STOP sensitivity (section 10): reported only",
+    "unfunded": "UNFUNDED diagnostic (section 10): only the $2 cluster limit; never a funded trial or a verdict",
+}
 
 
 # =========================================================================== exact arithmetic
@@ -439,12 +456,19 @@ class LimitBreach(AssertionError):
 
 @dataclass
 class Account:
-    """One independent SIMULATED $25.0000 account. Never reset, topped up or shared."""
+    """One independent SIMULATED $25.0000 account. Never reset, topped up or shared.
+
+    ``earmarks`` hold, from a reprice decision until its cancel is acknowledged, the extra budget its
+    replacement needs (section 5.9: resting quotes are reviewed first, so new quotes at the same
+    decision cannot take it). ``exclude`` leaves an order's reservation out of a check: the order a
+    replacement replaces is released when its cancel is acknowledged (section 6).
+    """
 
     cash: Decimal = START_CASH
     reserved: dict[int, Decimal] = field(default_factory=dict)
     order_cluster: dict[int, str] = field(default_factory=dict)
     order_day: dict[int, str] = field(default_factory=dict)
+    earmarks: dict[int, tuple[str, str, Decimal]] = field(default_factory=dict)  # old oid -> (cluster, day, extra)
     positions: dict[str, Position] = field(default_factory=dict)
     realized: list[dict[str, Any]] = field(default_factory=list)
     day_pnl: dict[str, Decimal] = field(default_factory=lambda: defaultdict(lambda: ZERO))
@@ -454,15 +478,28 @@ class Account:
     rounding: Decimal = ZERO
     rebates: Decimal = ZERO
 
-    def at_risk(self) -> Decimal:
+    def _reservations(self, exclude: frozenset[int]) -> Iterator[tuple[str, str, Decimal]]:
+        for oid, amount in self.reserved.items():
+            if oid not in exclude:
+                yield self.order_cluster[oid], self.order_day[oid], amount
+        for oid, (cluster, day, amount) in self.earmarks.items():
+            if oid not in exclude:
+                yield cluster, day, amount
+
+    def capital(self) -> Decimal:
+        """Cash tied up now: reservations of sent orders and the cost of unsettled positions (no earmarks)."""
         return sum(self.reserved.values(), ZERO) + sum((position.cost for position in self.positions.values()), ZERO)
 
-    def cluster_risk(self, cluster: str) -> Decimal:
-        return (sum((amount for oid, amount in self.reserved.items() if self.order_cluster[oid] == cluster), ZERO)
+    def at_risk(self, exclude: frozenset[int] = frozenset()) -> Decimal:
+        return (sum((amount for _, _, amount in self._reservations(exclude)), ZERO)
+                + sum((position.cost for position in self.positions.values()), ZERO))
+
+    def cluster_risk(self, cluster: str, exclude: frozenset[int] = frozenset()) -> Decimal:
+        return (sum((amount for owner, _, amount in self._reservations(exclude) if owner == cluster), ZERO)
                 + sum((position.cost for position in self.positions.values() if position.cluster == cluster), ZERO))
 
-    def day_new_risk(self, day: str) -> Decimal:
-        return (sum((amount for oid, amount in self.reserved.items() if self.order_day[oid] == day), ZERO)
+    def day_new_risk(self, day: str, exclude: frozenset[int] = frozenset()) -> Decimal:
+        return (sum((amount for _, sent, amount in self._reservations(exclude) if sent == day), ZERO)
                 + sum((lot.cost for position in self.positions.values() for lot in position.lots
                        if lot.sent_day == day), ZERO))
 
@@ -472,24 +509,25 @@ class Account:
     def lifetime_loss(self) -> Decimal:
         return max(ZERO, -sum((row["pnl"] for row in self.realized), ZERO))
 
-    def free_cash(self) -> Decimal:
-        return self.cash - sum(self.reserved.values(), ZERO)
+    def free_cash(self, exclude: frozenset[int] = frozenset()) -> Decimal:
+        return self.cash - sum((amount for _, _, amount in self._reservations(exclude)), ZERO)
 
     def blocked_by(self, cluster: str, day: str, amount: Decimal, *, day_stop: str = "protocol",
-                   unfunded: bool = False) -> str | None:
+                   unfunded: bool = False, exclude: frozenset[int] = frozenset()) -> str | None:
         """Section 6: the first limit a new order of reservation ``amount`` would break, else None."""
-        if self.cluster_risk(cluster) + amount > CLUSTER_LIMIT:
+        if self.cluster_risk(cluster, exclude) + amount > CLUSTER_LIMIT:
             return "cluster_2"
         if unfunded:
             return None
-        if self.at_risk() + amount > OUTSTANDING_LIMIT:
+        at_risk = self.at_risk(exclude)
+        if at_risk + amount > OUTSTANDING_LIMIT:
             return "outstanding_4"
-        new_risk = self.at_risk() if day_stop == "live_style" else self.day_new_risk(day)
+        new_risk = at_risk if day_stop == "live_style" else self.day_new_risk(day, exclude)
         if self.day_loss(day) + new_risk + amount >= DAY_LIMIT:
             return "day_3"
-        if self.lifetime_loss() + self.at_risk() + amount >= LIFETIME_LIMIT:
+        if self.lifetime_loss() + at_risk + amount >= LIFETIME_LIMIT:
             return "lifetime_5"
-        if self.free_cash() < amount:
+        if self.free_cash(exclude) < amount:
             return "cash"
         return None
 
@@ -506,6 +544,7 @@ class ReplayConfig:
     model: str = "primary"
     day_stop: str = "protocol"
     unfunded: bool = False
+    latency_stress: bool = False
 
     def __post_init__(self) -> None:
         if self.variant not in VARIANTS:
@@ -518,6 +557,20 @@ class ReplayConfig:
             raise ValueError("Day stop must be protocol or live_style")
         if not 1 <= self.days <= 60 or not 0 < self.latency_ms <= 60_000 or not 0 <= self.epsilon_ms <= 5000:
             raise ValueError("Days, latency or epsilon outside the protocol's range")
+        options = [self.model == "pessimistic", self.day_stop == "live_style", self.unfunded, self.latency_stress]
+        if sum(options) > 1:
+            raise ValueError("A run is one kind: primary, pessimistic, latency stress, live-style or unfunded")
+
+    @property
+    def kind(self) -> str:
+        """Section 8/10: which preregistered run this is; only primary and pessimistic enter a verdict."""
+        if self.unfunded:
+            return "unfunded"
+        if self.day_stop == "live_style":
+            return "live_style"
+        if self.latency_stress:
+            return "latency_stress"
+        return "pessimistic" if self.model == "pessimistic" else "primary"
 
     @property
     def entry_start(self) -> float:
@@ -537,18 +590,44 @@ class ReplayConfig:
         base = self.latency_ms / 1000.0
         return max(base, 2.0) if self.model == "pessimistic" else base
 
+    def label(self) -> str:
+        stress = f" (L={self.latency_ms} ms)" if self.kind == "latency_stress" else ""
+        return f"SIMULATED research account; not real money; run: {RUN_LABELS[self.kind]}{stress}"
+
     def parameters(self) -> dict[str, Any]:
         return {"protocol": PROTOCOL_VERSION, "variant": self.variant, "first_day": self.first_day.isoformat(),
                 "days": self.days, "latency_ms": self.latency_ms, "epsilon_ms": self.epsilon_ms, "model": self.model,
-                "day_stop": self.day_stop, "unfunded": self.unfunded}
+                "day_stop": self.day_stop, "unfunded": self.unfunded, "latency_stress": self.latency_stress,
+                "kind": self.kind}
 
 
 class FreezeError(RuntimeError):
     pass
 
 
+_PERMIT_SEAL = object()
+
+
+@dataclass(frozen=True)
+class Permit:
+    """What ``check_scoring_allowed`` returns: the checked config and the freeze (None before one exists)."""
+
+    config: ReplayConfig
+    freeze: dict[str, Any] | None
+    seal: object = field(default=None, repr=False, compare=False)
+
+    def valid_for(self, config: ReplayConfig) -> bool:
+        return self.seal is _PERMIT_SEAL and self.config == config
+
+
 def _sha256_file(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def code_hashes() -> dict[str, str]:
+    """SHA-256 of the replay code a TEST result depends on; FREEZE.json must record exactly these."""
+    here = Path(__file__).resolve().parent
+    return {name: file_sha256(here / name) for name in FAMILYA_CODE}
 
 
 def _published_hash(path: Path, name: str) -> str | None:
@@ -561,15 +640,58 @@ def _published_hash(path: Path, name: str) -> str | None:
     return None
 
 
-def check_scoring_allowed(config: ReplayConfig, research_dir: Path) -> dict[str, Any] | None:
+def _utc_time(value: Any) -> datetime | None:
+    if not isinstance(value, str):
+        return None
+    try:
+        parsed = datetime.fromisoformat(value)
+    except ValueError:
+        return None
+    return parsed if parsed.tzinfo is not None else None
+
+
+def _check_test(config: ReplayConfig, freeze: dict[str, Any], freeze_hash: str, research_dir: Path,
+                worklog: Path) -> None:
+    """Section 11's freeze, enforced: everything that could change a TEST decision must match it."""
+    frozen = freeze.get("variant")
+    if config.variant not in (frozen, MATCHED_BASELINE.get(str(frozen))):
+        raise FreezeError("This TEST run is neither the frozen variant nor its matched baseline")
+    if (freeze.get("E1") != config.first_day.isoformat() or freeze.get("test_days") != config.days
+            or config.days != PHASE_DAYS["TEST"]):
+        raise FreezeError("This TEST run does not match the frozen E1 or its 28 entry days")
+    expected = freeze.get("parameters")
+    if not isinstance(expected, dict) or any(key not in expected for key in FROZEN_KEYS):
+        raise FreezeError(f"FREEZE.json must record every frozen parameter: {', '.join(FROZEN_KEYS)}")
+    actual = config.parameters()
+    mismatched = sorted(key for key in FROZEN_KEYS if key != "variant" and actual[key] != expected[key]
+                        and not (key == "latency_ms" and config.kind == "latency_stress"))
+    if expected.get("variant") != frozen:
+        mismatched.append("variant")
+    if mismatched:
+        raise FreezeError(f"Frozen parameters differ: {', '.join(mismatched)}")
+    if freeze.get("code_sha256") != code_hashes():
+        raise FreezeError("The replay code differs from the code FREEZE.json pins (code_sha256)")
+    frozen_at = _utc_time(freeze.get("frozen_at"))
+    test_start = datetime.combine(config.first_day, datetime.min.time(), UTC)
+    if frozen_at is None or frozen_at > test_start - timedelta(hours=1):
+        raise FreezeError("FREEZE.json must say when it was frozen (frozen_at), at least 1 h before E1")
+    if not worklog.exists() or freeze_hash not in worklog.read_text(encoding="utf-8"):
+        raise FreezeError("The FREEZE.json SHA-256 is not written in docs/WORKLOG.md")
+
+
+def check_scoring_allowed(config: ReplayConfig, research_dir: Path, *, worklog: Path | None = None) -> Permit:
     """Refuse TEST rows until a frozen, hash-published configuration matches; keep TRAIN/VAL before TEST.
 
-    ``research_dir`` is ``research/kalshi_edge_search``. Returns the freeze (or None when none exists).
+    ``research_dir`` is ``research/kalshi_edge_search``; ``worklog`` defaults to the repository's
+    ``docs/WORKLOG.md`` next to it. Returns the permit a TEST account needs (its ``freeze`` is None when
+    none exists yet).
     """
     protocol = research_dir / "PROTOCOL.md"
     published = _published_hash(research_dir / "PROTOCOL.sha256", "PROTOCOL.md")
     if published is None or not protocol.exists() or _sha256_file(protocol) != published:
         raise FreezeError("PROTOCOL.md does not match its published SHA-256; no phase can be scored")
+    if config.days != PHASE_DAYS[config.phase]:
+        raise FreezeError(f"{config.phase} has exactly {PHASE_DAYS[config.phase]} entry days (section 11)")
     freeze_path = research_dir / "family_a" / "FREEZE.json"
     freeze_hash = _published_hash(research_dir / "family_a" / "FREEZE.sha256", "FREEZE.json")
     freeze: dict[str, Any] | None = None
@@ -581,22 +703,16 @@ def check_scoring_allowed(config: ReplayConfig, research_dir: Path) -> dict[str,
             raise FreezeError("FREEZE.json does not name this protocol's SHA-256")
         freeze = loaded
     if config.phase == "TEST":
-        if freeze is None:
+        if freeze is None or freeze_hash is None:
             raise FreezeError("TEST rows cannot be scored before family_a/FREEZE.json and its hash exist")
-        expected = freeze.get("parameters")
-        if (freeze.get("variant") != config.variant or freeze.get("E1") != config.first_day.isoformat()
-                or freeze.get("test_days") != config.days or not isinstance(expected, dict)):
-            raise FreezeError("This TEST run does not match the frozen variant, E1 or entry days")
-        mismatched = sorted(key for key, value in expected.items()
-                            if key in config.parameters() and config.parameters()[key] != value
-                            and key not in ("model", "latency_ms", "day_stop", "unfunded"))
-        if mismatched:
-            raise FreezeError(f"Frozen parameters differ: {', '.join(mismatched)}")
+        parents = research_dir.resolve().parents  # <repo>/research/kalshi_edge_search -> <repo>
+        _check_test(config, freeze, freeze_hash, research_dir,
+                    worklog or parents[min(1, len(parents) - 1)] / "docs" / "WORKLOG.md")
     elif freeze is not None and isinstance(freeze.get("E1"), str):
         test_start = datetime.combine(date.fromisoformat(freeze["E1"]), datetime.min.time(), UTC).timestamp()
         if config.entry_end >= test_start:
             raise FreezeError("TRAIN/VAL entry days may not reach the frozen TEST period")
-    return freeze
+    return Permit(config, freeze, _PERMIT_SEAL)
 
 
 # =========================================================================== market state
@@ -610,6 +726,7 @@ class MarketState:
     volume: deque[tuple[float, float, Decimal]] = field(default_factory=deque)  # (created, received, count)
     grid: TickGrid | None = None
     settled: bool = False
+    yes_value: Decimal | None = None  # what one YES contract paid at settlement (section 7.6)
 
     def volume_24h(self, at: float) -> Decimal:
         """Section 4.2: the quote sweep's volume_24h_fp when <= 10 min old, else recorded prints received by t."""
@@ -641,7 +758,10 @@ class _Internal:
 class FamilyAReplay:
     """One variant, one phase, one SIMULATED account. Feed it time-ordered events, then ``finish``."""
 
-    def __init__(self, config: ReplayConfig, coverage: Coverage | None = None, *, grid: Decimal = DIRECT_GRID) -> None:
+    def __init__(self, config: ReplayConfig, coverage: Coverage | None = None, *, grid: Decimal = DIRECT_GRID,
+                 permit: Permit | None = None) -> None:
+        if config.phase == "TEST" and (permit is None or not permit.valid_for(config)):
+            raise FreezeError("A TEST account is built only from check_scoring_allowed's permit for this config")
         self.config = config
         self.variant = VARIANTS[config.variant]
         self.coverage = coverage or Coverage()
@@ -682,7 +802,7 @@ class FamilyAReplay:
 
     def _tick_area(self, at: float) -> None:
         if at > self._area_at:
-            self.capital_area += self.account.at_risk() * Decimal(str(at - self._area_at)) / Decimal(86400)
+            self.capital_area += self.account.capital() * Decimal(str(at - self._area_at)) / Decimal(86400)
             self._area_at = at
 
     def _advance(self, until: float, *, inclusive: bool = False) -> None:
@@ -765,9 +885,9 @@ class FamilyAReplay:
 
     def on_print(self, item: Print) -> None:
         self._advance(item.created)
+        self.market(item.ticker).volume.append((item.created, item.received, item.count))  # 4.2: every recorded trade
         if item.is_block is not False:
             return  # block trades never touch the book (section 7.4)
-        self.market(item.ticker).volume.append((item.created, item.received, item.count))
         for order in self._live(item.ticker):
             if order.state == "pending" or item.created < order.arrives_at + self.epsilon:
                 continue
@@ -884,15 +1004,20 @@ class FamilyAReplay:
         self._log("fill", at, oid=order.oid, ticker=order.ticker, side=order.side, price=order.price, count=count,
                   trade_id=trade_id, cash_change=cash.cash_change, trade_fee=cash.trade_fee,
                   rounding_fee=cash.rounding_fee, rebate=cash.rebate)
-        if account.cash < 0:
+        if account.cash < 0 and not self.config.unfunded:  # the UNFUNDED diagnostic has no cash limit (section 10)
             raise LimitBreach("Simulated cash went negative")
         if order.remaining <= 0:
             self._dead(order, at, "filled")
         self._trim(order.ticker, at)
 
     def _trim(self, ticker: str, at: float) -> None:
-        """At most 1.00 contract per market, filled and resting together: a cancel-race fill trims the newest."""
-        live = sorted(self._live(ticker), key=lambda order: order.oid, reverse=True)
+        """At most 1.00 contract per market, filled and resting together: a cancel-race fill trims the newest.
+
+        An order whose cancel is already acknowledged (it can still fill in the clock margin) holds nothing
+        open, so it is left out: its late fill trims the replacement to the rest, never kills it.
+        """
+        live = sorted((order for order in self._live(ticker) if order.cancel_at is None or order.cancel_at > at),
+                      key=lambda order: order.oid, reverse=True)
         excess = self._held(ticker) + sum((order.remaining for order in live), ZERO) - ONE
         for order in live:
             if excess <= 0:
@@ -960,7 +1085,7 @@ class FamilyAReplay:
             self._reject(order, item.at, "post_only_at_arrival")
             return
         displayed = book.size_at(order.side, order.price)
-        order.queue = displayed if displayed is not None else ZERO
+        order.queue = displayed if displayed is not None else UNKNOWN_QUEUE  # 7.3: never assume nobody is ahead
         order.state = "confirming"
         self._schedule(item.at + BOOK_MAX_AGE_S, "confirm_timeout", order.oid)
         closes = ts(state.row.get("close_time"))
@@ -977,8 +1102,9 @@ class FamilyAReplay:
 
     def _on_cancel_ack(self, item: _Internal) -> None:
         order = self.orders[item.oid]
+        self.account.earmarks.pop(order.oid, None)
         if isinstance(item.data, Target):
-            self._send(self.markets[order.ticker], item.data, item.at, replacement=True)
+            self._send(self.markets[order.ticker], item.data, item.at, replacement=True, replaces=order)
 
     def _on_cutoff(self, item: _Internal) -> None:
         order = self.orders[item.oid]
@@ -1006,14 +1132,15 @@ class FamilyAReplay:
     # ------------------------------------------------------------------ settlement (section 7.6)
     def _settle(self, state: MarketState, received: float) -> None:
         state.settled = True
+        value = dec(state.row.get("settlement_value_dollars"))
+        if value is None:
+            value = ONE if state.row.get("result") == YES else ZERO
+        state.yes_value = value  # kept for every market: section 7.7's lower bound needs unfilled quotes' outcomes
         for order in self._live(state.ticker):
             self._kill(order, received, "settled")
         position = self.account.positions.get(state.ticker)
         if position is None:
             return
-        value = dec(state.row.get("settlement_value_dollars"))
-        if value is None:
-            value = ONE if state.row.get("result") == YES else ZERO
         payout_each = value if position.side == YES else ONE - value
         settled_at = ts(state.row.get("settlement_ts")) or received
         self._realize(position, payout_each, settled_at, unresolved=False)
@@ -1152,6 +1279,7 @@ class FamilyAReplay:
                 if target is not None and target.side == order.side:
                     self.counts["replacements"] += 1
                     self._cancel(order, at, "reprice", replacement=target)
+                    self._earmark(order, state, target, at)
                 else:
                     self._cancel(order, at, "no_target")
         live_clusters = {order.cluster for order in self.orders.values() if order.live}
@@ -1177,26 +1305,56 @@ class FamilyAReplay:
             if self._send(state, target, at, replacement=False, cluster=cluster, day=day):
                 live_clusters.add(cluster)
 
+    def _order_terms(self, state: MarketState, target: Target, at: float) -> tuple[Decimal, Decimal] | None:
+        """(size, reservation per contract) of an order sent now at ``target``; None when it cannot be priced."""
+        size = ONE - self._held(state.ticker)
+        terms = self.fees.terms_at(self._series_of(state) or "", str(state.row.get("event_ticker") or ""), at)
+        if size <= 0 or terms is None:
+            return None
+        return size, target.price + ceil_to(terms.maker_model_fee(ONE, target.price), FEE_GRID) + RESERVE_PAD
+
+    def _earmark(self, order: Order, state: MarketState, target: Target, at: float) -> None:
+        """Section 5.9: hold the extra budget a reprice's replacement will need, ahead of this decision's new quotes."""
+        ack = at + self.latency
+        planned = self._order_terms(state, target, at)
+        if planned is None or ack > self.config.entry_end:
+            return
+        size, per_contract = planned
+        worst = size * max(per_contract, order.per_contract)
+        day = datetime.fromtimestamp(ack, UTC).date().isoformat()
+        if self.account.blocked_by(order.cluster, day, worst, day_stop=self.config.day_stop,
+                                   unfunded=self.config.unfunded, exclude=frozenset({order.oid})) is not None:
+            return  # the replacement would be refused anyway: hold nothing back from new quotes
+        extra = worst - self.account.reserved.get(order.oid, ZERO)
+        if extra > 0:
+            self.account.earmarks[order.oid] = (order.cluster, day, extra)
+
     def _send(self, state: MarketState, target: Target, at: float, *, replacement: bool,
-              cluster: str | None = None, day: str | None = None) -> bool:
+              cluster: str | None = None, day: str | None = None, replaces: Order | None = None) -> bool:
         cluster = cluster or self._cluster(state)
         day = day or datetime.fromtimestamp(at, UTC).date().isoformat()
-        if replacement and (at > self.config.entry_end or self._checks(state, at, target.side, target.price)):
+        if replacement and at > self.config.entry_end:
+            # The target was checked at the decision (section 5.5); only the phase end can still stop it.
             self.counts["replacement_skipped"] += 1
             return False
         if any(order.cancel_at is None for order in self._live(state.ticker)):
             return False
-        size = ONE - self._held(state.ticker)
-        if size <= 0:
+        planned = self._order_terms(state, target, at)
+        if planned is None:
+            if ONE - self._held(state.ticker) > 0:
+                self.blocks["fee_terms_unknown"] += 1
             return False
-        terms = self.fees.terms_at(self._series_of(state) or "", str(state.row.get("event_ticker") or ""), at)
-        if terms is None:
-            self.blocks["fee_terms_unknown"] += 1
-            return False
-        per_contract = target.price + ceil_to(terms.maker_model_fee(ONE, target.price), FEE_GRID) + RESERVE_PAD
+        size, per_contract = planned
         amount = size * per_contract
-        blocked = self.account.blocked_by(cluster, day, amount, day_stop=self.config.day_stop,
-                                          unfunded=self.config.unfunded)
+        exclude: frozenset[int] = frozenset()
+        check = amount
+        if replaces is not None:
+            # Its cancel is acknowledged, so its reservation is released (section 6); it may still fill in the
+            # clock margin at its own price, and that fill trims this order, so check the dearer of the two.
+            exclude = frozenset({replaces.oid})
+            check = size * max(per_contract, replaces.per_contract)
+        blocked = self.account.blocked_by(cluster, day, check, day_stop=self.config.day_stop,
+                                          unfunded=self.config.unfunded, exclude=exclude)
         if blocked is not None:
             self.blocks[blocked] += 1
             return False
@@ -1220,44 +1378,140 @@ class FamilyAReplay:
 
     # ------------------------------------------------------------------ results (sections 9, 13 and 15)
     def reconcile(self) -> dict[str, Any]:
-        """Section 9: cash = $25 + fill cash changes + payouts, exactly; free cash = cash - reservations."""
+        """Section 9: rebuild the books from the fill and settlement ledger and require exact agreement.
+
+        Cash = $25 + fill cash changes + payouts; each fill's cash change = -(q x c) - trade fee - rounding +
+        rebate; fee, rounding and rebate totals; inventory and cost by market and side; settled P&L by row and in
+        total; open exposure; day P&L. Every figure comes from the ledger, so a counter that drifted from the
+        ledger is caught. Any mismatch is a defect (section 18) and raises.
+        """
         account = self.account
-        expected = START_CASH + account.fill_cash + account.payouts
-        if account.cash != expected:
-            raise LimitBreach(f"Cash {account.cash} does not reconcile to {expected}")
+        problems: list[str] = []
+
+        def same(name: str, ours: Decimal, ledger: Decimal) -> None:
+            if ours != ledger:
+                problems.append(f"{name} {ours} != ledger {ledger}")
+
+        fill_cash = fees = rounding = rebates = payouts = settled_pnl = settled_cost = ZERO
+        bought: dict[tuple[str, str], Decimal] = defaultdict(lambda: ZERO)
+        paid: dict[tuple[str, str], Decimal] = defaultdict(lambda: ZERO)
+        settled_rows = 0
+        for row in self.ledger:
+            if row["kind"] == "fill":
+                count, price = Decimal(row["count"]), Decimal(row["price"])
+                cash, fee, rounded, rebate = (Decimal(row[key]) for key in
+                                              ("cash_change", "trade_fee", "rounding_fee", "rebate"))
+                if cash != -(price * count) - fee - rounded + rebate:
+                    problems.append(f"fill {row['trade_id']} cash {cash} does not follow its fees")
+                fill_cash, fees, rounding, rebates = fill_cash + cash, fees + fee, rounding + rounded, rebates + rebate
+                bought[(row["ticker"], row["side"])] += count
+                paid[(row["ticker"], row["side"])] -= cash
+            elif row["kind"] == "settled":
+                count, cost, payout, pnl = (Decimal(row[key]) for key in ("count", "cost", "payout", "pnl"))
+                if pnl != payout - cost:
+                    problems.append(f"settlement of {row['ticker']} P&L {pnl} != payout - cost")
+                key = (row["ticker"], row["side"])
+                bought[key] -= count
+                paid[key] -= cost
+                payouts, settled_pnl, settled_cost = payouts + payout, settled_pnl + pnl, settled_cost + cost
+                settled_rows += 1
+        same("fill cash", account.fill_cash, fill_cash)
+        same("fees", account.fees, fees)
+        same("rounding", account.rounding, rounding)
+        same("rebates", account.rebates, rebates)
+        same("payouts", account.payouts, payouts)
+        same("cash", account.cash, START_CASH + fill_cash + payouts)
+        same("settled P&L", sum((row["pnl"] for row in account.realized), ZERO), settled_pnl)
+        same("day P&L", sum(account.day_pnl.values(), ZERO), settled_pnl)
+        if len(account.realized) != settled_rows:
+            problems.append(f"{len(account.realized)} realized rows != {settled_rows} ledger settlements")
+        open_cost = ZERO
+        for key in sorted(set(bought) | {(position.ticker, position.side) for position in account.positions.values()}):
+            position = account.positions.get(key[0])
+            held = position.count if position is not None and position.side == key[1] else ZERO
+            cost = position.cost if position is not None and position.side == key[1] else ZERO
+            if held != bought[key] or cost != paid[key]:
+                problems.append(f"inventory {key[0]} {key[1]}: {held} for {cost} != ledger {bought[key]} for {paid[key]}")
+            open_cost += cost
+        same("open exposure", open_cost, -fill_cash - settled_cost)
         reserved = sum(account.reserved.values(), ZERO)
-        return {"cash": str(account.cash), "expected_cash": str(expected), "reserved": str(reserved),
-                "free_cash": str(account.cash - reserved), "fees": str(account.fees),
-                "rounding": str(account.rounding), "rebates": str(account.rebates), "reconciled": True}
+        if any(amount < 0 for amount in account.reserved.values()):
+            problems.append("a negative reservation")
+        if problems:
+            raise LimitBreach("Accounting does not reconcile: " + "; ".join(problems[:5]))
+        return {"cash": str(account.cash), "expected_cash": str(START_CASH + fill_cash + payouts),
+                "reserved": str(reserved), "free_cash": str(account.cash - reserved), "fees": str(fees),
+                "rounding": str(rounding), "rebates": str(rebates), "payouts": str(payouts),
+                "settled_pnl": str(settled_pnl), "open_exposure": str(open_cost), "reconciled": True}
+
+    def _lower_bound(self, net: Decimal) -> Decimal:
+        """Section 7.7: every unidentifiable quote counts as filled at its price for its remaining size if its side
+        lost (or never resolved), capped at 1.00 contract per market; as unfilled if it won."""
+        by_ticker: dict[str, list[Order]] = defaultdict(list)
+        for oid in self.unidentifiable:
+            order = self.orders[oid]
+            if order.remaining > 0:
+                by_ticker[order.ticker].append(order)
+        lower = net
+        for ticker, orders in sorted(by_ticker.items()):
+            filled = sum((count for order in self.orders.values() if order.ticker == ticker
+                          for _, count in order.fills), ZERO)
+            room = max(ZERO, ONE - filled)
+            state = self.markets.get(ticker)
+            value = state.yes_value if state is not None else None
+            for order in sorted(orders, key=lambda item: item.per_contract, reverse=True):
+                payout = ZERO if value is None else (value if order.side == YES else ONE - value)
+                loss_each = order.per_contract - payout  # price + maker fee + the balance-rounding pad
+                size = min(order.remaining, room)
+                if loss_each > 0 and size > 0:
+                    lower -= size * loss_each
+                    room -= size
+        return lower
 
     def summary(self, end: float, unresolved: list[dict[str, Any]]) -> dict[str, Any]:
         account = self.account
         last = max(self.config.entry_end + 1, self.last_settlement_at or 0.0)
+        if unresolved:
+            last = self.config.resolution_end  # 13: D runs to the last settlement, capped at the follow-up end
         days = Decimal(str(min(last, end) - self.config.entry_start)) / Decimal(86400)
         net = account.cash - START_CASH
         clusters: dict[str, Decimal] = defaultdict(lambda: ZERO)
-        blocks: dict[str, Decimal] = defaultdict(lambda: ZERO)
+        resolved: dict[str, Decimal] = defaultdict(lambda: ZERO)
+        last_settled: dict[str, float] = {}
+        unresolved_pnl = ZERO
         for row in account.realized:
             clusters[row["cluster"]] += row["pnl"]
-            blocks[row["block"]] += row["pnl"]
+            if row["unresolved"]:
+                unresolved_pnl += row["pnl"]
+                continue
+            resolved[row["cluster"]] += row["pnl"]
+            last_settled[row["cluster"]] = max(last_settled.get(row["cluster"], row["at"]), row["at"])
+        blocks: dict[str, Decimal] = defaultdict(lambda: ZERO)
+        for cluster, at in last_settled.items():  # 4.4: a cluster's block is its LAST settlement's New York date
+            blocks[settlement_block(at)] += resolved[cluster]
         traded = {row["cluster"] for row in account.realized if row["count"] >= SIZE_STEP and not row["unresolved"]}
-        lower = net
-        for oid in self.unidentifiable:
-            order = self.orders[oid]
-            lost = any(row["ticker"] == order.ticker and row["pnl"] < 0 for row in account.realized)
-            if lost and order.remaining > 0:
-                lower -= order.remaining * order.price  # section 7.7: filled if that side lost
+        lower = self._lower_bound(net)
+        per_day = (net / days).quantize(Decimal("0.000001")) if days > 0 else None
+        lower_per_day = (lower / days).quantize(Decimal("0.000001")) if days > 0 else None
+        uses_lower = bool(self.unidentifiable)
         return {
-            "label": "SIMULATED research account; not real money",
+            "label": self.config.label(), "run_kind": self.config.kind,
             "protocol": PROTOCOL_VERSION, "config": self.config.parameters(), "phase": self.config.phase,
             "net_usd": str(net), "days": str(days.quantize(Decimal("0.000001"))),
-            "net_per_day_usd_before_opex": str((net / days).quantize(Decimal("0.000001"))) if days > 0 else None,
+            "net_per_day_usd_before_opex": str(per_day) if per_day is not None else None,
             "lower_bound_net_usd_unidentifiable": str(lower), "unidentifiable_quotes": len(self.unidentifiable),
+            "lower_bound_net_per_day_usd_before_opex": str(lower_per_day) if lower_per_day is not None else None,
+            # 7.7: whenever any quote is unidentifiable, every verdict uses the lower bound.
+            "verdict_basis": "lower_bound_7_7" if uses_lower else "central",
+            "verdict_net_usd": str(lower if uses_lower else net),
+            "verdict_net_per_day_usd_before_opex": str(lower_per_day if uses_lower else per_day)
+            if per_day is not None else None,
             "capital_days_usd": str(self.capital_area.quantize(Decimal("0.000001"))),
             "counts": dict(self.counts), "limit_blocks": dict(self.blocks),
             "traded_resolved_clusters": len(traded), "settlement_blocks": len(blocks),
             "by_cluster": {key: str(value) for key, value in sorted(clusters.items())},
             "by_block": {key: str(value) for key, value in sorted(blocks.items())},
+            "unresolved_pnl_usd_outside_blocks": str(unresolved_pnl),
             "unresolved": unresolved, "accounting": self.reconcile(),
         }
 
@@ -1370,15 +1624,47 @@ def prints_from(paths: list[Path]) -> Iterator[TapeItem]:
                 yield TapeItem(created, _RANK["print"], 0, "print", parsed)
 
 
-def tape(root: Path, start: float, end: float, scratch: Path, *, quotes_end: float | None = None) -> Iterator[TapeItem]:
+def seed_books(root: Path, before: float, tickers: Iterable[str] | None = None,
+               lookback: float = META_LOOKBACK_S) -> list[dict[str, Any]]:
+    """The newest book record of each ticker received before ``before`` (within ``lookback``).
+
+    The recorder writes a book only when it changes and lists it as "unchanged" after that, so a quiet
+    market's current book can be hours or days old when a phase starts. Segments are read newest first and the
+    scan stops once every wanted ticker has one; each segment's hash is checked before it is read.
+    """
+    wanted = None if tickers is None else set(tickers)
+    found: dict[str, dict[str, Any]] = {}
+    segments = sorted((segment for segment in load_index(root) if segment.lane == "books"
+                       and segment.first_at < before and segment.last_at >= before - lookback),
+                      key=lambda segment: (segment.last_at, segment.last_seq), reverse=True)
+    for segment in segments:
+        if wanted is not None and wanted <= found.keys():
+            break
+        path = root / segment.path
+        if file_sha256(path) != segment.sha256:
+            raise ValueError(f"Recorder segment {segment.path} does not match its index hash")
+        newest: dict[str, dict[str, Any]] = {}
+        for record in iter_segment(path):
+            ticker = record.get("ticker")
+            if (record.get("kind") == "book" and isinstance(ticker, str) and ticker not in found
+                    and (wanted is None or ticker in wanted) and before - lookback <= float(record["at"]) < before):
+                newest[ticker] = record  # later lines are newer
+        found.update(newest)
+    return sorted(found.values(), key=lambda record: (float(record["at"]), int(record["seq"])))
+
+
+def tape(root: Path, start: float, end: float, scratch: Path, *, quotes_end: float | None = None,
+         seed_tickers: Iterable[str] | None = None) -> Iterator[TapeItem]:
     """Every replay input in time order: metadata and books by receive time, prints by created time.
 
     Metadata is read from 9 days before ``start`` (a market's full row may date from its first sight, up to
     8 days before its close) to ``end`` (settlements); books and prints only until ``quotes_end`` (no quote
-    rests after the last entry day ends).
+    rests after the last entry day ends). Books are read from 10 minutes before ``start``, after each
+    ticker's newest earlier book (``seed_books``), so "unchanged" calls always have a book to re-date.
     """
     quotes_end = end if quotes_end is None else min(end, quotes_end)
-    streams = [iter_records(root, frozenset({lane}), start=start - 600, end=quotes_end) for lane in BOOK_LANES]
+    streams: list[Iterator[dict[str, Any]]] = [iter(seed_books(root, start - 600, seed_tickers))]
+    streams += [iter_records(root, frozenset({lane}), start=start - 600, end=quotes_end) for lane in BOOK_LANES]
     streams += [iter_records(root, frozenset({lane}), start=start - META_LOOKBACK_S, end=end) for lane in META_LANES]
     records = heapq.merge(*streams, key=lambda record: (float(record["at"]), int(record["seq"])))
 
@@ -1423,14 +1709,17 @@ def feed(replay: FamilyAReplay, items: Iterable[TapeItem]) -> float:
     return last
 
 
-def run_replay(root: Path, config: ReplayConfig, research_dir: Path) -> dict[str, Any]:
+def run_replay(root: Path, config: ReplayConfig, research_dir: Path, *, worklog: Path | None = None) -> dict[str, Any]:
     """Refuse first (protocol and freeze hashes), then score one SIMULATED account on the recorded tape."""
-    check_scoring_allowed(config, research_dir)
+    permit = check_scoring_allowed(config, research_dir, worklog=worklog)
     end = config.resolution_end
     coverage = load_coverage(root, config.entry_start, end)
-    replay = FamilyAReplay(config, coverage)
+    replay = FamilyAReplay(config, coverage, permit=permit)
+    books_from = config.entry_start - 600
+    seeds = [ticker for ticker, spans in coverage.watched.items() if spans.covers(books_from, books_from)]
     with tempfile.TemporaryDirectory(prefix="familya-trades-") as scratch:
-        last = feed(replay, tape(root, config.entry_start, end, Path(scratch), quotes_end=config.entry_end + 3600))
+        last = feed(replay, tape(root, config.entry_start, end, Path(scratch), quotes_end=config.entry_end + 3600,
+                                 seed_tickers=seeds))
     return replay.finish(last)
 
 
@@ -1447,6 +1736,8 @@ def main(argv: list[str] | None = None) -> int:
     replay.add_argument("--latency-ms", type=int, default=1000)
     replay.add_argument("--day-stop", choices=("protocol", "live_style"), default="protocol")
     replay.add_argument("--unfunded", action="store_true", help="Diagnostic only: just the $2 cluster limit")
+    replay.add_argument("--latency-stress", action="store_true",
+                        help="A labelled latency stress (section 8): --latency-ms may then differ from the frozen L")
     replay.add_argument("--research-dir", type=Path, default=Path("research/kalshi_edge_search"))
     replay.add_argument("--out", type=Path)
     check = sub.add_parser("check", help="Say whether a phase may be scored (protocol and freeze hashes)")
@@ -1455,7 +1746,11 @@ def main(argv: list[str] | None = None) -> int:
     check.add_argument("--days", type=int, default=7)
     check.add_argument("--variant", choices=sorted(VARIANTS), default="A1")
     check.add_argument("--research-dir", type=Path, default=Path("research/kalshi_edge_search"))
+    sub.add_parser("hashes", help="Print the replay code's SHA-256 (FREEZE.json's code_sha256)")
     args = parser.parse_args(argv)
+    if args.command == "hashes":
+        print(json.dumps(code_hashes(), indent=2, sort_keys=True))
+        return 0
     if args.command == "check":
         try:
             check_scoring_allowed(ReplayConfig(args.variant, args.phase, args.first_day, args.days), args.research_dir)
@@ -1464,8 +1759,13 @@ def main(argv: list[str] | None = None) -> int:
             return 1
         print("allowed")
         return 0
-    config = ReplayConfig(args.variant, args.phase, args.first_day, args.days, latency_ms=args.latency_ms,
-                          model=args.model, day_stop=args.day_stop, unfunded=args.unfunded)
+    try:
+        config = ReplayConfig(args.variant, args.phase, args.first_day, args.days, latency_ms=args.latency_ms,
+                              model=args.model, day_stop=args.day_stop, unfunded=args.unfunded,
+                              latency_stress=args.latency_stress)
+    except ValueError as exc:
+        print(f"refused: {exc}", file=sys.stderr)
+        return 2
     try:
         result = run_replay(args.data_dir / "kalshi_recorder", config, args.research_dir)
     except FreezeError as exc:

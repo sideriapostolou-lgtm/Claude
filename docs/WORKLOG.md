@@ -15,6 +15,40 @@ Template:
 
 
 
+## 2026-10-13 20:55 UTC, Claude, branch claude/kalshi-recorder, no PR (local commits only)
+- Changed: fixed the two reviews of the recorder and Family A replay (commit 3d3846f). Recorder: a malformed
+  reply can no longer halt it (the `handler_error` record used the reserved key `lane`; NaN/Infinity JSON is now a
+  failed request; list fields and cursors are type-checked; a request the transport refuses is a gap); every lane
+  drops a request after 5 failed attempts with a gap instead of retrying forever (trade pages, discovery items,
+  sweep/settlement chunks, fee lookups); a 4xx on `/markets?tickers=` halves the chunk and chunks stay under a
+  5,000-byte ticker list (measured: Kalshi 414 at 10.2 KB, 200 at 6.6 KB, 4 public GETs); Retry-After clamped to
+  15 min and recorded as a gap; crash recovery streams the `.part` (63 MiB part: peak RSS 686 -> 22 MiB, 4.9 ->
+  0.6 s) and segments rotate at 8 MiB; the cap counts every file and `rotate` prunes old manifests; a backfill keeps
+  the prints of tickers unwatched after its window began (coverage claimed prints it had dropped); the session
+  never reads `~/.netrc` and keeps no cookies. The engine hook reads `.env` like the bot, refuses to start while any
+  `*_MODE=live`, and otherwise runs 0.25/s without KXBTC15M and with a 1 GiB free-disk floor; `run` refuses (exit 3)
+  next to trading keys or live switches (names only). Replay: the 7.7 lower bound counts unfilled unidentifiable
+  quotes whose side lost (capped at 1 contract per market) and becomes the verdict basis; a replacement is no
+  longer blocked by the reservation it replaces, its budget is held from the decision (5.9), it is not re-checked
+  against books during its cancel, and a clock-margin fill trims it instead of killing it; the matched baseline
+  runs in TEST; the TEST lock now needs every frozen parameter (L included unless a labelled latency stress), the
+  replay code's SHA-256, `frozen_at` at least 1 h before E1 and the hash in this log, and a TEST account needs its
+  permit; run kinds are labelled; UNFUNDED no longer crashes; settlement-day blocks are per cluster; quiet books are
+  seeded from before the phase; reconciliation is rebuilt from the ledger; block prints count toward the volume
+  fallback; an unknown queue at arrival stays unknown; D runs to the follow-up end for unresolved positions; TRAIN
+  and VAL are 7 days, TEST 28. `docs/KALSHI_RECORDER.md` (safety, the new-empty-service hosting steps, 512 MB),
+  `.env.example`, `docs/ACCOUNTS.md` (one sentence) and a COORDINATION note updated. `engine.py` and `config.py`
+  untouched in this round.
+- Verified: 41 new tests, 187 in the recorder and replay files; 40 of the new ones fail on a copy of 3d3846f (the
+  41st pins a new helper); the reviewers' 11 replay tests and 6 recorder probes now pass (R8's TRAIN run needed days=7 under
+  the new rule). Full suite: run on the merge of the deploy branch that follows this commit (see below); mypy
+  clean on 124 source files; Ruff clean on every changed file.
+- Not verified / skipped: no live run of the recorder in this round (only 4 public GETs to measure the URL limit);
+  the hook still does not share one limiter with the bot's own Kalshi readers (documented; in-bot use stays
+  discouraged). Not built: section 13 statistics, reports, OPEX_A, latency telemetry.
+- Real money touched? no. No order code, no live setting, no deploy, no push.
+- Next step: the owner's hosting choice (new empty Railway service, 5 GB volume, 512 MB), then Phase 0 (48 h).
+
 ## 2026-10-13 19:55 UTC, Claude, branch claude/kalshi-recorder, no PR (local commits only)
 - Changed: built Family A's shared public recorder and its queue-aware replay (PROTOCOL.md `kalshi-familyA-v1`).
   New `kalshi_public.py` (GET-only allowlisted transport; one budget of 1.5/s, hard 2/s rolling ceiling, 25% cut

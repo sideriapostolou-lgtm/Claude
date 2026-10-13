@@ -5,13 +5,16 @@ the public market-data allowlist of ``research/kalshi_edge_search/PROTOCOL.md`` 
 It sends no key or signature header, follows no redirect, caps the response size and shares
 one request budget across every recorder lane: at most 2 request starts in any rolling second,
 spaced at the configured target rate (1.5/s by default). After a 429 the whole recorder slows
-by 25% for ten minutes and honours any Retry-After; the calling lane also backs off 2^n
-seconds (n = 429s in a row, at most 30 s). No order, portfolio or account client is imported.
+by 25% for ten minutes and honours any Retry-After (clamped to 15 minutes); the calling lane also
+backs off 2^n seconds (n = 429s in a row, at most 30 s). A reply that is not strict JSON (``NaN`` or
+``Infinity`` included) is a failed request, never a record. The session it builds never consults
+``~/.netrc`` and keeps no cookies. No order, portfolio or account client is imported.
 """
 
 from __future__ import annotations
 
 import hashlib
+import http.cookiejar
 import json
 import math
 import re
@@ -31,6 +34,7 @@ RATE_CEILING_PER_S = 2.0
 MAX_BODY_BYTES = 16 * 1024 * 1024
 RATE_CUT = 0.75
 RATE_CUT_S = 600.0
+MAX_RETRY_AFTER_S = 900.0  # a longer Retry-After is clamped (and recorded as a gap by the recorder)
 _TICKER = r"[A-Z0-9][A-Z0-9._-]{0,99}"
 # PROTOCOL.md section 2.1: the only paths this recorder may request.
 PUBLIC_PATHS = tuple(re.compile(pattern) for pattern in (
@@ -54,6 +58,41 @@ def public_path(path: str) -> bool:
             and any(pattern.fullmatch(path) for pattern in PUBLIC_PATHS))
 
 
+def public_ticker(value: Any) -> bool:
+    """True for a ticker that may appear in a public path (``/series/{t}``, ``/markets/{t}``)."""
+    return isinstance(value, str) and re.fullmatch(_TICKER, value) is not None
+
+
+def _strict_constant(name: str) -> Any:
+    raise ValueError(f"Non-standard JSON constant {name}")
+
+
+def strict_json(raw: bytes) -> Any:
+    """``json.loads`` that refuses ``NaN``, ``Infinity`` and ``-Infinity`` (they cannot be stored or replayed)."""
+    return json.loads(raw, parse_constant=_strict_constant)
+
+
+def _no_auth(request: Any) -> Any:
+    """A session-level auth hook that adds nothing; its presence stops requests from reading ``~/.netrc``."""
+    return request
+
+
+class _NoCookies(requests.cookies.RequestsCookieJar):
+    """A jar that never keeps a cookie (requests copies the session jar into each request, so a cookie policy
+    alone would not stop one being sent)."""
+
+    def set_cookie(self, cookie: http.cookiejar.Cookie, *args: Any, **kwargs: Any) -> None:
+        return None
+
+
+def public_session() -> requests.Session:
+    """A requests session that sends no credentials: no netrc lookup and no cookies (proxies still apply)."""
+    session = requests.Session()
+    session.auth = _no_auth
+    session.cookies = _NoCookies()
+    return session
+
+
 def _query(params: Mapping[str, Any] | Sequence[tuple[str, Any]] | None) -> list[tuple[str, str]]:
     rows = list(params.items()) if isinstance(params, Mapping) else list(params or [])
     out: list[tuple[str, str]] = []
@@ -69,7 +108,7 @@ def _query(params: Mapping[str, Any] | Sequence[tuple[str, Any]] | None) -> list
 
 
 def retry_after_seconds(header: str | None, now: float) -> float | None:
-    """Kalshi may send seconds or an HTTP date; an unreadable value is ignored, never shortened."""
+    """Kalshi may send seconds or an HTTP date; an unreadable value is ignored, a huge one clamped to 15 min."""
     if not header:
         return None
     try:
@@ -79,7 +118,7 @@ def retry_after_seconds(header: str | None, now: float) -> float | None:
             seconds = parsedate_to_datetime(header).timestamp() - now
         except (TypeError, ValueError, OverflowError):
             return None
-    return max(0.0, seconds) if math.isfinite(seconds) else None
+    return min(MAX_RETRY_AFTER_S, max(0.0, seconds)) if math.isfinite(seconds) else None
 
 
 class RateLimiter:
@@ -132,7 +171,7 @@ class RateLimiter:
             now = self._clock()
             self._cut_until = now + RATE_CUT_S
             if retry_after_s is not None and retry_after_s > 0:
-                self._hold_until = max(self._hold_until, now + retry_after_s)
+                self._hold_until = max(self._hold_until, now + min(retry_after_s, MAX_RETRY_AFTER_S))
 
 
 @dataclass(frozen=True)
@@ -174,7 +213,7 @@ class PublicKalshi:
                  wall: Callable[[], float] = time.time, mono: Callable[[], float] = time.monotonic,
                  timeout_s: float = 20.0, max_bytes: int = MAX_BODY_BYTES) -> None:
         self.limiter = limiter
-        self._session = session if session is not None else requests.Session()
+        self._session = session if session is not None else public_session()
         self._wall, self._mono = wall, mono
         self.timeout_s, self.max_bytes = timeout_s, max_bytes
         self.headers = {"Accept": "application/json", "User-Agent": "nightcrawler-kalshi-recorder/1 (public, read-only)"}
@@ -212,8 +251,8 @@ class PublicKalshi:
             digest = hashlib.sha256(raw).hexdigest()
             if status == 200:
                 try:
-                    body = json.loads(raw)
-                except ValueError:
+                    body = strict_json(raw)
+                except (ValueError, RecursionError):  # includes NaN/Infinity, which no record may hold
                     error = "invalid_json"
                 if error is None and not isinstance(body, dict):
                     error, body = "not_an_object", None

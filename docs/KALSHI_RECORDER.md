@@ -14,11 +14,18 @@ Every dollar in the replay belongs to a SIMULATED $25 research account.
 
 - Public, unauthenticated GETs only, to the allowlist of PROTOCOL.md section 2.1 (`kalshi_public.PUBLIC_PATHS`).
   No key, no signer, no Kalshi websocket, no redirect, a 16 MiB response cap, no query parameter off the
-  allowlist. The transport class has exactly one public method, `get`.
+  allowlist. The transport class has exactly one public method, `get`. Its session never reads `~/.netrc` and
+  never keeps or sends a cookie (proxies from the environment still apply). A reply that is not strict JSON
+  (`NaN`, `Infinity`, absurd nesting) is a failed request, never a record.
 - No order, cancel, amend, portfolio or account call exists in these five modules, and none of them imports an
   order or trading client. `tests/test_kalshi_recorder_no_orders.py` fails if any such import, name, non-GET call
-  or `/portfolio` path appears, and it runs a full recorder pass through the real `requests` stack (only
-  `Session.request` faked) to prove that every request it can reach is a keyless public GET.
+  or `/portfolio` path appears, and it runs full recorder passes through the real `requests` stack to prove that
+  every request it can reach is a keyless public GET: once with `Session.request` faked, and once with only the
+  transport adapter faked, asserting on the prepared request itself with a `~/.netrc` login for Kalshi's host and
+  a cookie planted in the session (no `Authorization`, `Cookie` or `KALSHI-ACCESS-*` header is ever sent).
+- `python -m nightcrawler.kalshi_recorder run` refuses to start (exit 3) when its environment or `.env` holds
+  trading keys (`KALSHI_KEY_ID`, `KALSHI_PRIVATE_KEY`, `BOT_WALLET_SECRET`, `POLYMARKET_US_*`) or any
+  `*_MODE=live` switch. Only the names are checked; no key value is read, logged or printed.
 - No live setting, cap, key or trading code is read or changed. `config.py` (real-money code) is untouched: the
   recorder reads its own `KALSHI_RECORDER_*` variables (validated by `RecorderSettings`).
 
@@ -33,27 +40,56 @@ python -m nightcrawler.kalshi_recorder verify     # re-hash every sealed segment
 python -m nightcrawler.kalshi_recorder run --data-dir /tmp/rec --max-runtime-s 300   # a smoke run
 ```
 
-Inside the bot: set `KALSHI_RECORDER_ENABLED=true` (it is **OFF by default**). `engine.build_app` then starts it
-in a daemon thread (`kalshi-recorder`), guarded so a fault can never stop a desk. This is not recommended: the
-bot already polls Kalshi's public API from the same IP (the BTC desk's fallback feed, coin desks, weatherwatch),
-so the recorder's 1.5/s would push the IP past 2/s, and the bot's volume already holds skipwatch, weatherwatch and
-the learner.
+Inside the bot: set `KALSHI_RECORDER_ENABLED=true` (it is **OFF by default**; it is read from `.env` overlaid by
+the real environment, as the bot's config is). `engine.build_app` then starts it in a daemon thread
+(`kalshi-recorder`), guarded so a fault can never stop a desk. This is not recommended, and it is restricted:
 
-**Proposal (owner decision, not done):** a separate small Railway service in the same project, built from the same
-image, start command `python -m nightcrawler.kalshi_recorder run`, its own volume mounted at `/data`
-(`DATA_DIR=/data`), `KALSHI_RECORDER_MAX_STORAGE_MB=4608` on a 5 GB volume (Family A's TEST evidence needs about
-4.5 GB, PROTOCOL.md section 12), no Kalshi keys in its variables, 0.25 vCPU / 256 MB is ample (one thread, about
-1.5 requests a second, gzip). Its incremental cost is unmeasured; read it from the Railway usage page after a day
-and record it, because Family A's verdict is judged after half of it (OPEX_A, PROTOCOL.md section 13). The
-protocol's fallback is $5 per month.
+- it **refuses to start while any desk in the process trades live** (any `*_MODE=live`, for example
+  `SPEEDDESK_KALSHI_MODE` or `POLYDESK_MODE`): its 429s would come back to the live Kalshi client, which then holds
+  every call, cancels included, for up to 30 s;
+- otherwise it runs a reduced profile: at most 0.25 request/s, no KXBTC15M lane, and at least 1 GiB of the bot's
+  volume left free. The bot's own public Kalshi readers (the BTC desk's REST fallback, weatherwatch, skipwatch) do
+  not share its limiter, so inside the bot the 2/s total is not enforced by this code.
+
+**Proposal (owner decision, not done): a separate small Railway service.** The steps matter, because the bot's
+service holds real-money keys and switches:
+
+1. In the same project, **create a new, empty service from the repository. Never use "Duplicate" on `bot`**: a
+   copy carries `KALSHI_KEY_ID`, `KALSHI_PRIVATE_KEY`, the Polymarket keys and `*_MODE=live`, and the image's default
+   command (`Dockerfile`, and `railway.json` for the existing service) is `nightcrawler run`, the live bot. Railway
+   does not apply `railway.json` to a new service, so a copy with a missing start command would be a second live
+   bot on an empty volume with no record of open orders.
+2. **Set the start command by hand** to `python -m nightcrawler.kalshi_recorder run`. Left empty, the image's
+   default `nightcrawler run` starts the bot itself (without keys only a paper bot, but still the wrong service);
+   check the first log line says `kalshi_recorder_started mode=READ_ONLY_PUBLIC`.
+3. **Add no keys.** Variables: `DATA_DIR=/data` and `KALSHI_RECORDER_MAX_STORAGE_MB=4608`, nothing else needed.
+   If a key or a live switch is present anyway, the recorder exits with code 3 and names it (names only).
+4. Attach its own 5 GB volume at `/data` (Family A's TEST evidence needs about 4.5 GB, PROTOCOL.md section 12).
+5. Size: 0.25 vCPU and **512 MB** of memory (one thread at about 1.5 requests a second; crash recovery is
+   streamed: recovering a 63 MiB segment peaked at 22 MiB of process memory, down from 686 MiB, and segments now
+   rotate at 8 MiB anyway).
+
+Its incremental cost is unmeasured; read it from the Railway usage page after a day and record it, because Family
+A's verdict is judged after half of it (OPEX_A, PROTOCOL.md section 13). The protocol's fallback is $5 per month.
 
 ## 3. Request budget (one shared limiter)
 
 At most 2 request starts in any rolling second, spaced at `KALSHI_RECORDER_RATE_PER_S` (1.5 by default; the
 ceiling cannot be raised). After a 429 the whole recorder runs 25% slower for ten minutes and every lane honours a
-Retry-After; the lane that saw it also waits 2^n seconds (n = 429s in a row, at most 30 s). Lanes share the budget
-by weighted fair queueing (books 8, trades 4, backfill 2, KXBTC15M metadata 2, discovery 2, sweep 1,
-settlement 1, fees 1, other 0.5), so no lane starves.
+Retry-After (clamped to 15 minutes; a hold of a minute or more is a `retry_after_hold` gap); the lane that saw it
+also waits 2^n seconds (n = 429s in a row, at most 30 s). Lanes share the budget by weighted fair queueing
+(books 8, trades 4, backfill 2, KXBTC15M metadata 2, discovery 2, sweep 1, settlement 1, fees 1, other 0.5), so
+no lane starves.
+
+**No reply can stop the recorder or wedge a lane.** A malformed reply (a list field that is not a list, a cursor
+that is not a string, a handler error) is a `handler_error` record and counts as a failed attempt; a request the
+transport refuses (a path or parameter off the allowlist, such as a lowercase series ticker) is a
+`request_refused` record and is dropped at once. After `PAGE_ATTEMPTS` (5) failed attempts at the same request the
+lane drops it with a gap and moves on: a trade window goes to backfill and then becomes a gap; a discovery item
+(one category, the event list, one series) is skipped and the pass continues (the whole pass waits only on 429s,
+5xx and network errors); a sweep or settlement chunk is dropped until the next round; a fee lookup is retried an
+hour later. A 4xx on `/markets?tickers=` halves the chunk: Kalshi answered 414 for a 10.2 KB URL and 200 for 6.6 KB
+(2026-10-13), so each chunk's encoded ticker list also stays under 5,000 bytes.
 
 | Lane | Request | Cadence |
 |---|---|---|
@@ -98,10 +134,10 @@ and reason and the count of events in other categories. A watched ticker gets `w
 
 | Path | What |
 |---|---|
-| `segments/<lane>/<YYYY-MM-DD>/<lane>-<UTC start>-<first seq>.jsonl.gz` | sealed gzip JSONL, one per lane per UTC hour (or 64 MiB) |
-| `segments/.../*.jsonl.gz.part` | the open hour; flushed every 5 s; after a crash its complete lines are re-sealed and the torn tail is counted as a gap |
+| `segments/<lane>/<YYYY-MM-DD>/<lane>-<UTC start>-<first seq>.jsonl.gz` | sealed gzip JSONL, one per lane per UTC hour (or 8 MiB uncompressed) |
+| `segments/.../*.jsonl.gz.part` | the open segment; flushed every 5 s; after a crash its complete lines are re-sealed (streamed, in bounded memory) and the torn tail is counted as a gap |
 | `index.jsonl` | append-only: every sealed segment (`sha256`, `prev_sha256` per lane, records, first/last seq and time, bytes) and every deletion with its reason |
-| `state.json`, `recorder_state.json` | next sequence number and storage level; the watch list, fee lookups, trade coverage end and last-alive time (for restart gaps and backfill) |
+| `state.json`, `recorder_state.json` | next sequence number and storage level; the watch list, recently unwatched tickers (4 days), fee lookups, trade coverage end and last-alive time (for restart gaps and backfill) |
 | `status.json` | heartbeat each minute: lanes, storage, candidates, KXBTC15M windows |
 | `manifests/coverage-<YYYY-MM-DDTHH>.json` | the hourly coverage manifest (below); a session that stops mid-hour writes `coverage-<hour>-<session>-partial.json` |
 
@@ -121,13 +157,15 @@ Every record: `seq` (local, monotonic across restarts), `lane`, `kind`, `at` (re
 | `fees` / `series_fee_changes`, `event_fee_changes` | raw bodies |
 | `other` / `cutoff`, `incentives` | raw bodies |
 | `requests` / `request` | every GET: `request_lane`, path, query, status, error, request/receive time, `rtt_ms`, bytes, `sha256`, `retry_after_s` (the 429 log) |
-| `gaps` / `gap`, `trade_conflict`, `handler_error`, `session_started` | `gap_lane`, `from`, `to`, `cause` (`lane_stale`, `trade_page_failed_429`, `recorder_not_running`, `clock_moved_backwards`, `storage_cap_paused`, ...) |
-| `telemetry` / `coverage_manifest` | the hash of each hourly manifest |
+| `gaps` / `gap`, `trade_conflict`, `handler_error`, `request_refused`, `session_started` | `gap_lane`, `from`, `to`, `cause` (`lane_stale`, `trade_page_failed_429`, `recorder_not_running`, `clock_moved_backwards`, `storage_cap_paused`, `retry_after_hold`, `malformed_reply`, `series_ticker_unusable`, ...); `handler_error` and `request_refused` carry `handler_lane`, `error` and a one-line `detail` |
+| `telemetry` / `coverage_manifest`, `chunk_halved` | the hash of each hourly manifest; a sweep or settlement chunk halved after a 4xx |
 | `spot` / `spot_trades` | optional raw Coinbase/Kraken trades with `received_at` |
 
 Nothing is fabricated: a failed request is a request row and, when a lane goes stale for more than
 max(2 x cadence, 30 s), a gap; a failed trade window is backfilled from the public tape or stays a gap; a book gap
-is permanent (Kalshi has no public book history).
+is permanent (Kalshi has no public book history). A `trade_coverage` row means every print of every ticker watched
+during its span was received: a backfill keeps the prints of tickers unwatched after the window began (a market
+finalized before its backfill ran used to lose them while the coverage row still claimed the span).
 
 **Coverage manifest** (hourly, atomic): host label (`workspace`/`railway`), session, version and commit,
 `read_only: true`, per-lane requests / ok / 429 / errors and request round-trip p50/p95/p99, receive-minus-
@@ -137,7 +175,10 @@ with their hashes.
 
 ## 6. Disk
 
-Default cap 2 GiB (`KALSHI_RECORDER_MAX_STORAGE_MB=2048`), plus a free-disk reserve. The audit estimated
+Default cap 2 GiB (`KALSHI_RECORDER_MAX_STORAGE_MB=2048`), plus a free-disk reserve. The cap counts every file under
+`kalshi_recorder/` (segments, index, state, status and manifests). Manifests follow the segments they describe:
+under `rotate` those older than every retained segment are deleted, under `protect` only those before the owner's
+release date (each manifest's hash stays in the `telemetry` lane). The audit estimated
 150-230 MB a day for every lane, so 2 GiB holds about 9-13 days; Family A's 28-day TEST needs about 4.5 GB.
 **Before TRAIN starts the owner must choose** a dedicated volume with a cap of at least 4.5 GB, or a nightly
 lossless compaction (PROTOCOL.md section 12). At the cap, under the default `protect` policy, the recorder:
@@ -154,37 +195,62 @@ lossless compaction (PROTOCOL.md section 12). At the cap, under the default `pro
 ```bash
 python -m nightcrawler.kalshi_familya check  --phase TRAIN --first-day 2026-10-20 --days 7
 python -m nightcrawler.kalshi_familya replay --data-dir DATA_DIR --phase TRAIN --first-day 2026-10-20 --days 7 \
-    --variant A1 [--model pessimistic] [--latency-ms 1000] [--day-stop live_style] [--unfunded] [--out a1.json]
+    --variant A1 [--model pessimistic | --latency-stress --latency-ms 250 | --day-stop live_style | --unfunded] [--out a1.json]
+python -m nightcrawler.kalshi_familya hashes   # the code SHA-256 a FREEZE.json must record
 ```
 
-Variants `A1`-`A4` and the matched baselines `MB-J`/`MB-I` (section 10). It refuses to score unless
-`PROTOCOL.md` matches its published hash; it refuses **TEST** until `research/kalshi_edge_search/family_a/FREEZE.json`
-and `FREEZE.sha256` exist, match, name the protocol hash, and match the run's variant, E1 and entry days; and it
-refuses TRAIN/VAL entry days that reach a frozen E1.
+Variants `A1`-`A4` and the matched baselines `MB-J`/`MB-I` (section 10). Every run has a kind, printed in its label
+and `run_kind`: primary, `--model pessimistic`, `--latency-stress` (with `--latency-ms`), `--day-stop live_style` or
+`--unfunded` (one at a time; only primary and pessimistic can enter a verdict). TRAIN and VAL are exactly 7 entry
+days and TEST exactly 28. It refuses to score unless `PROTOCOL.md` matches its published hash, and it refuses
+TRAIN/VAL entry days that reach a frozen E1. It refuses **TEST** until `research/kalshi_edge_search/family_a/FREEZE.json`
+and `FREEZE.sha256` exist, match, name the protocol hash, and:
+
+- the run's variant is the frozen one or its matched baseline (MB-J for A1/A3, MB-I for A2/A4);
+- E1 and the 28 entry days match, and `parameters` records `protocol`, `variant`, `first_day`, `days`,
+  `latency_ms` (L) and `epsilon_ms`, all equal to the run's (only a latency stress may use another L);
+- `code_sha256` equals the SHA-256 of `kalshi_familya.py`, `kalshi_familya_universe.py` and
+  `kalshi_recorder_store.py` now (`python -m nightcrawler.kalshi_familya hashes` prints them);
+- `frozen_at` (UTC) is at least 1 hour before E1, and the FREEZE.json SHA-256 is written in `docs/WORKLOG.md`.
+
+A TEST account (`FamilyAReplay`) can only be built from the permit that check returns.
 
 What it models (with the tests that pin it, `tests/test_kalshi_familya_replay.py`): exact decimals on the market's
 `price_ranges` grid; decisions every whole UTC minute from what was received by then; post-only at arrival and on
 the first later book; the queue ahead = the larger displayed size, reduced only by prints and by displayed size
-falling below it (top 10 levels); fills only from non-block prints selling into our side, after the queue, in
-0.01 steps; inconsistent prints shrink the queue but never fill; a book offering at or below our bid counts once as
-a print; cancels and replacements take effect after L (1 s primary), fills inside the cancel race and the
-250 ms clock margin count, and the reservation is held until then; Kalshi's direct-account fee rounding (trade fee
-up to $0.000001, balance down to $0.0001, per-order accumulator, capped rebates) with the series fee type and
-scheduled series/event fee changes in force at each fill; the simulated $2 cluster / $4 outstanding / $3 day /
-$5 lifetime / cash limits, one quote per cluster, one contract per market; rotation after 6 h without a fill;
-the 6 h entry cutoff; settlement at the official result, cash at `settlement_ts`; capital-days; unresolved
-positions at $0; exact cash reconciliation (a mismatch raises, it is a defect, not a result); the pessimistic
-model (L >= 2 s, no queue gains from cancellations, trade-throughs fill first, no rebates).
+falling below it (top 10 levels; a price outside the 10 best at arrival leaves the queue unknown, so no print
+reaches us until a book shows our price); fills only from non-block prints selling into our side, after the queue,
+in 0.01 steps; inconsistent prints shrink the queue but never fill; a book offering at or below our bid counts once
+as a print; cancels and replacements take effect after L (1 s primary), fills inside the cancel race and the
+250 ms clock margin count, and the reservation is held until the cancel is acknowledged; Kalshi's direct-account
+fee rounding (trade fee up to $0.000001, balance down to $0.0001, per-order accumulator, capped rebates) with the
+series fee type and scheduled series/event fee changes in force at each fill; the simulated $2 cluster / $4
+outstanding / $3 day / $5 lifetime / cash limits, one quote per cluster, one contract per market; rotation after
+6 h without a fill; the 6 h entry cutoff; settlement at the official result, cash at `settlement_ts`;
+capital-days; unresolved positions at $0; the 24 h volume fallback sums every recorded print, block trades
+included; settlement-day blocks per cluster (the New York date of its last settlement; unresolved positions are
+reported outside the blocks, and D then runs to the follow-up end); reconciliation rebuilt from the fill and
+settlement ledger (cash, each fill's cash against its fees, fee/rounding/rebate totals, inventory and cost by
+market and side, settled P&L, open exposure, day P&L), where any mismatch raises, as a defect, never a result; the
+pessimistic model (L >= 2 s, no queue gains from cancellations, trade-throughs fill first, no rebates). Books are
+read from 10 minutes before the phase, after each watched ticker's newest earlier book, because the recorder
+writes a book only when it changes.
 
 Choices the protocol left open, fixed here before any data exists:
 
 - A market with a partial position gets a quote for the rest (1.00 minus what is held), never the other side.
-- A replacement is sent when the cancel is acknowledged (decision + L); a late fill of the old order in the
-  clock margin trims the new order so the market never exceeds 1.00 contract.
+- A replacement is decided at the minute and sent when the cancel is acknowledged (decision + L), without
+  re-checking books that arrived in between (the target was checked at the decision). From the decision to the
+  acknowledgement the extra budget it needs is held back from that decision's new quotes (section 5.9: resting
+  quotes first). At the acknowledgement the old reservation is released; the limit check uses the dearer of the
+  old and new price per contract, because the old order can still fill in the clock margin, and such a late fill
+  trims the new order to the rest so the market never exceeds 1.00 contract.
 - A settlement is processed when its row is received; its cash and P&L are dated `settlement_ts`.
 - Trade-tape coverage for a ticker is exchange-wide coverage while the ticker is watched, or per-ticker backfill.
-- The section 7.7 lower bound is the central net minus the remaining size times the price of every
-  unidentifiable quote whose side lost (limits are not re-run for it).
+- The section 7.7 lower bound is the central net minus, for every unidentifiable quote whose side lost or never
+  resolved, its remaining size (at most 1.00 contract per market, less what filled) times its price plus maker fee
+  plus the $0.0100 rounding pad (limits are not re-run for it). When any quote is unidentifiable, `verdict_net_usd`
+  and `verdict_net_per_day_usd_before_opex` are this bound (`verdict_basis: lower_bound_7_7`).
 
 Not built yet: the section 13 statistics (block bootstrap and t bound), the phase reports and scorecard, the
 Phase 0 report, OPEX_A, and the live companion's acknowledgement latency (L stays 1,000 ms until measured).

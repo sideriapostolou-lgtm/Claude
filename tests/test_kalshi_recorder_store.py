@@ -179,3 +179,58 @@ def test_unknown_lanes_are_refused(tmp_path: Path) -> None:
     with pytest.raises(ValueError, match="Unknown recorder lane"):
         box.append("orders", "x", {})
     box.close()
+
+
+def test_recovering_a_large_part_streams_it_in_bounded_memory(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Review F4: recovery decompressed a whole hour and copied it twice (687 MiB peak for a 63 MiB part)."""
+    import tracemalloc
+
+    from nightcrawler import kalshi_recorder_store
+
+    monkeypatch.setattr(kalshi_recorder_store, "SEGMENT_RAW_BYTES", 1 << 31)  # one big part, as 64 MiB rotation allowed
+    clock = Clock()
+    box = store(tmp_path, clock, max_bytes=1 << 33)
+    levels = [[f"0.{index:02d}00", f"{index * 7}.00"] for index in range(1, 99)]
+    written = 0
+    while box.open.get("books_btc15m") is None or box.open["books_btc15m"].raw_bytes < 12 * MB:
+        box.append("books_btc15m", "book", {"ticker": "KXBTC15M-X", "orderbook_fp": {"yes_dollars": levels,
+                                                                                     "no_dollars": levels}},
+                   T0 + written * 0.001)
+        written += 1
+    box.flush()
+    box._lock_file.close()  # the process died without sealing
+    tracemalloc.start()
+    try:
+        again = store(tmp_path, clock, max_bytes=1 << 33)
+        _, peak = tracemalloc.get_traced_memory()
+    finally:
+        tracemalloc.stop()
+    assert again.recovered[0]["records"] == written and again.recovered[0]["dropped_bytes"] == 0
+    assert peak < 6 * MB, f"recovery peaked at {peak / MB:.1f} MiB for a 12 MiB part"
+    assert sum(1 for _ in iter_records(tmp_path, frozenset({"books_btc15m"}))) == written
+    again.close()
+
+
+def test_segments_rotate_at_eight_mib_so_one_crash_loses_little() -> None:
+    from nightcrawler.kalshi_recorder_store import SEGMENT_RAW_BYTES
+
+    assert SEGMENT_RAW_BYTES == 8 * MB
+
+
+def test_the_cap_counts_every_file_under_the_root_and_rotate_prunes_old_manifests(tmp_path: Path) -> None:
+    """Review F7: manifests, state and status files were outside the cap."""
+    clock = Clock()
+    box = store(tmp_path, clock, policy="rotate", max_bytes=40 * MB)
+    before = box.used_bytes()
+    manifests = tmp_path / "manifests"
+    manifests.mkdir()
+    (manifests / "coverage-2026-10-13T12.json").write_bytes(b"x" * MB)  # an hour before any segment
+    (manifests / "coverage-2026-10-13T15.json").write_bytes(b"y" * 1024)
+    assert box.used_bytes() >= before + MB
+    _fill(box, "books", 3, T0)
+    clock.at = T0 + 4 * 3600
+    box.seal_hour(clock.at)
+    status = box.enforce()
+    assert "manifest_older_than_retained_segments" in status.reasons
+    assert sorted(path.name for path in manifests.iterdir()) == ["coverage-2026-10-13T15.json"]
+    box.close()

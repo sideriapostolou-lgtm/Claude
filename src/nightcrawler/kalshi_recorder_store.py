@@ -8,10 +8,14 @@ Layout under ``DATA_DIR/kalshi_recorder/``::
     state.json           the next local sequence number and the storage level, written atomically
 
 Every record is one JSON line with a local sequence number. Segments rotate every UTC hour (or at
-64 MiB uncompressed) and are sealed with gzip; the index keeps a per-lane hash chain
+8 MiB uncompressed) and are sealed with gzip; the index keeps a per-lane hash chain
 (``prev_sha256``) that may start at any retained segment, so old segments can be deleted without
 breaking verification of the rest. A crash leaves a ``.part`` file; on restart its complete lines
-are kept, the torn tail is dropped and counted, and a gap is reported. Nothing is fabricated.
+are kept (streamed, so recovery needs memory for one line, not one hour), the torn tail is dropped
+and counted, and a gap is reported. Nothing is fabricated.
+
+The cap counts every file under the root (segments, index, state, status, manifests), not only
+the segments.
 
 The cap (default 2 GiB) is enforced in the order of PROTOCOL.md section 12. Under the default
 ``protect`` policy the recorder never deletes unscored Family A evidence: it first deletes
@@ -51,7 +55,8 @@ LANE_CLASS = {
 }
 SHEDDABLE = frozenset({"btc15m", "spot"})
 RESERVED = frozenset({"seq", "lane", "kind", "at"})
-SEGMENT_RAW_BYTES = 64 * 1024 * 1024
+SEGMENT_RAW_BYTES = 8 * 1024 * 1024  # small segments keep crash recovery and replay reads cheap
+SALVAGE_OUT_BYTES = 1024 * 1024
 FLUSH_EVERY_S = 5.0
 HEADROOM_BYTES = 16 * 1024 * 1024
 SOFT_CAP = 0.95
@@ -87,30 +92,90 @@ def file_sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
-def read_complete_lines(path: Path) -> tuple[list[bytes], int]:
-    """Lines of a possibly torn gzip file; returns the complete JSON lines and the dropped byte count."""
-    decompressor = zlib.decompressobj(16 + zlib.MAX_WBITS)
-    data = bytearray()
-    with path.open("rb") as stream:
-        while chunk := stream.read(256 * 1024):
-            try:
-                data.extend(decompressor.decompress(chunk))
-            except zlib.error:
-                break
-    with contextlib.suppress(zlib.error):
-        data.extend(decompressor.flush())
-    lines: list[bytes] = []
-    consumed = 0
-    for line in bytes(data).splitlines(keepends=True):
-        if not line.endswith(b"\n"):
-            break
+@dataclass
+class Salvage:
+    """What a streamed pass over a possibly torn gzip JSONL file found (complete lines only)."""
+
+    records: int = 0
+    raw_bytes: int = 0
+    dropped_bytes: int = 0
+    first_seq: int | None = None
+    last_seq: int | None = None
+    first_at: float | None = None
+    last_at: float | None = None
+
+    def take(self, line: bytes) -> bool:
+        """Count one line; False when it is not a complete recorder record (everything after it is dropped)."""
         try:
-            json.loads(line)
-        except ValueError:
-            break
-        lines.append(line)
-        consumed += len(line)
-    return lines, len(data) - consumed
+            record = json.loads(line)
+            seq, at = int(record["seq"]), float(record["at"])
+        except (ValueError, TypeError, KeyError, RecursionError):
+            return False
+        self.records += 1
+        self.raw_bytes += len(line)
+        self.first_seq = seq if self.first_seq is None else min(self.first_seq, seq)
+        self.last_seq = seq if self.last_seq is None else max(self.last_seq, seq)
+        self.first_at = at if self.first_at is None else min(self.first_at, at)
+        self.last_at = at if self.last_at is None else max(self.last_at, at)
+        return True
+
+
+def salvage(path: Path, sink: Callable[[bytes], Any] | None = None) -> Salvage:
+    """Stream the complete JSON lines of a possibly torn gzip file, optionally passing each one to ``sink``.
+
+    Memory stays at one chunk plus one line: the file is decompressed incrementally and nothing is kept.
+    The first torn or unreadable line ends the salvage; it and everything after it count as dropped bytes.
+    """
+    out = Salvage()
+    decompressor = zlib.decompressobj(16 + zlib.MAX_WBITS)
+    pending = b""
+    total = 0
+    stopped = False
+
+    def feed(data: bytes) -> None:
+        nonlocal pending, stopped
+        pending += data
+        start = 0
+        while (end := pending.find(b"\n", start)) >= 0:
+            line = pending[start:end + 1]
+            if not out.take(line):
+                stopped = True
+                pending = b""
+                return
+            if sink is not None:
+                sink(line)
+            start = end + 1
+        pending = pending[start:]
+
+    torn = False
+    with path.open("rb") as stream:
+        while not torn and not decompressor.eof and (chunk := stream.read(64 * 1024)):
+            while chunk and not decompressor.eof:
+                try:  # at most 1 MiB out per call: book segments compress about 100 to 1
+                    data = decompressor.decompress(chunk, SALVAGE_OUT_BYTES)
+                except zlib.error:
+                    torn = True
+                    break
+                chunk = decompressor.unconsumed_tail
+                total += len(data)  # counted even after a bad line, so the dropped tail is exact
+                if not stopped:
+                    feed(data)
+    with contextlib.suppress(zlib.error):
+        tail = decompressor.flush()
+        total += len(tail)
+        if not stopped:
+            feed(tail)
+    out.dropped_bytes = total - out.raw_bytes
+    return out
+
+
+def read_complete_lines(path: Path) -> tuple[list[bytes], int]:
+    """Lines of a possibly torn gzip file and the dropped byte count (small files and tests only)."""
+    import io
+
+    buffer = io.BytesIO()
+    found = salvage(path, buffer.write)
+    return buffer.getvalue().splitlines(keepends=True), found.dropped_bytes
 
 
 @dataclass
@@ -233,43 +298,58 @@ class RecorderStore:
         for orphan in sorted(self.segments_dir.rglob("*.jsonl.gz")):
             relative = str(orphan.relative_to(self.root))
             if relative not in self.segments:  # sealed, but the crash came before its index row
-                self._adopt(orphan, orphan.parent.parent.name, *read_complete_lines(orphan), keep=True)
+                self._adopt(orphan, orphan.parent.parent.name, keep=True)
 
-    def _adopt(self, source: Path, lane: str, lines: list[bytes], dropped: int, *, keep: bool) -> None:
+    @staticmethod
+    def _reseal(source: Path, destination: Path) -> Salvage:
+        """Copy the complete lines of ``source`` into a fresh sealed gzip at ``destination`` (streamed)."""
+        temporary = destination.with_name(destination.name + ".tmp")
+        with temporary.open("wb") as raw:
+            with gzip.GzipFile(filename="", fileobj=raw, mode="wb", compresslevel=6, mtime=0) as gz:
+                found = salvage(source, gz.write)
+            raw.flush()
+            os.fsync(raw.fileno())
+        if found.records:
+            os.replace(temporary, destination)
+        else:
+            temporary.unlink()
+        return found
+
+    def _adopt(self, source: Path, lane: str, *, keep: bool) -> None:
         """Index the complete lines of a ``.part`` file (re-sealed) or an unindexed sealed segment."""
         relative = str(source.relative_to(self.root))
-        if not lines:
-            source.unlink()
-            self.recovered.append({"lane": lane, "path": relative, "records": 0, "dropped_bytes": dropped})
+        destination = source.with_name(source.name.removesuffix(".part").removesuffix(".jsonl.gz") + ".jsonl.gz")
+        if keep:
+            found = salvage(source)  # an intact sealed orphan is indexed as it is
+            if found.records and found.dropped_bytes:
+                found = self._reseal(source, destination)
+        else:
+            found = self._reseal(source, destination)
+        if not found.records:
+            source.unlink(missing_ok=True)
+            self.recovered.append({"lane": lane, "path": relative, "records": 0, "dropped_bytes": found.dropped_bytes})
             return
-        destination = source if keep and dropped == 0 else source.with_name(
-            source.name.removesuffix(".part").removesuffix(".jsonl.gz") + ".jsonl.gz")
-        if destination != source or dropped:
-            temporary = destination.with_name(destination.name + ".tmp")
-            with temporary.open("wb") as raw, gzip.GzipFile(filename="", fileobj=raw, mode="wb",
-                                                            compresslevel=6, mtime=0) as gz:
-                for line in lines:
-                    gz.write(line)
-            os.replace(temporary, destination)
-            if source != destination:
-                source.unlink()
-            _fsync_dir(destination.parent)
-        records = [json.loads(line) for line in lines]
-        seqs = [int(record["seq"]) for record in records]
-        ats = [float(record["at"]) for record in records]
+        if source != destination:
+            source.unlink(missing_ok=True)
+        _fsync_dir(destination.parent)
+        assert found.first_seq is not None and found.last_seq is not None
+        assert found.first_at is not None and found.last_at is not None
         segment = Segment(str(destination.relative_to(self.root)), lane, LANE_CLASS.get(lane, "familya"),
-                          min(seqs), max(seqs), min(ats), max(ats), len(records), sum(len(line) for line in lines),
-                          destination.stat().st_size, file_sha256(destination), self.chain.get(lane), True, dropped)
+                          found.first_seq, found.last_seq, found.first_at, found.last_at, found.records,
+                          found.raw_bytes, destination.stat().st_size, file_sha256(destination), self.chain.get(lane),
+                          True, found.dropped_bytes)
         self._index(segment.row())
         self.segments[segment.path] = segment
         self.chain[lane] = segment.sha256
         self.next_seq = max(self.next_seq, segment.last_seq + 1)
         self.recovered.append({"lane": lane, "path": segment.path, "records": segment.records,
-                               "dropped_bytes": dropped, "last_at": segment.last_at})
+                               "dropped_bytes": found.dropped_bytes, "last_at": segment.last_at})
 
     def _recover_parts(self) -> None:
+        for leftover in self.segments_dir.rglob("*.jsonl.gz.tmp"):  # a crash during an earlier recovery
+            leftover.unlink(missing_ok=True)
         for part in sorted(self.segments_dir.rglob("*.jsonl.gz.part")):
-            self._adopt(part, part.parent.parent.name, *read_complete_lines(part), keep=False)
+            self._adopt(part, part.parent.parent.name, keep=False)
         self._save_state()
 
     # ------------------------------------------------------------------ writing
@@ -380,11 +460,39 @@ class RecorderStore:
                 self._lock_file.close()
 
     # ------------------------------------------------------------------ the cap
-    def used_bytes(self) -> int:
+    def _other_bytes(self) -> int:
+        """Every file under the root outside ``segments/``: index, state, status, manifests and leftovers."""
+        total = 0
+        stack = [self.root]
+        while stack:
+            with contextlib.suppress(OSError), os.scandir(stack.pop()) as entries:
+                for entry in entries:
+                    with contextlib.suppress(OSError):
+                        if entry.is_dir(follow_symlinks=False):
+                            if Path(entry.path) != self.segments_dir:
+                                stack.append(Path(entry.path))
+                        elif entry.is_file(follow_symlinks=False):
+                            total += entry.stat(follow_symlinks=False).st_size
+        return total
+
+    def used_bytes(self, other: int | None = None) -> int:
+        """Bytes this store occupies: sealed and open segments plus every other file under the root."""
         with self._mutex:
             open_bytes = sum(handle.raw.tell() for handle in self.open.values())
-            index = self.index_path.stat().st_size if self.index_path.exists() else 0
-            return self.sealed_bytes + open_bytes + index
+            return self.sealed_bytes + open_bytes + (self._other_bytes() if other is None else other)
+
+    def _prune_manifests(self, before: float, reason: str) -> list[str]:
+        """Delete hourly manifests for hours ending before ``before`` (their hashes stay in the telemetry lane)."""
+        removed: list[str] = []
+        for path in sorted((self.root / "manifests").glob("coverage-*.json")):
+            try:
+                hour = datetime.strptime(path.name[len("coverage-"):len("coverage-") + 13] + "+0000", "%Y-%m-%dT%H%z")
+            except ValueError:
+                continue
+            if hour.timestamp() + 3600 <= before:
+                path.unlink(missing_ok=True)
+                removed.append(reason)
+        return removed
 
     def _delete(self, segment: Segment, reason: str) -> None:
         path = self.root / segment.path
@@ -418,11 +526,19 @@ class RecorderStore:
             now = self.clock()
             reasons: list[str] = []
             soft = int(self.max_bytes * SOFT_CAP)
+            other = self._other_bytes()
             for segment, reason in self._deletable(now):
-                if self.used_bytes() < soft and self._disk_free(self.root) > self.min_free_bytes + self.headroom:
+                if self.used_bytes(other) < soft and self._disk_free(self.root) > self.min_free_bytes + self.headroom:
                     break
                 self._delete(segment, reason)
                 reasons.append(reason)
+            # Manifests follow the segments they describe: under rotate, those older than every retained
+            # segment go; under protect, only those before the owner's release date.
+            if self.policy == "rotate" and self.segments:
+                reasons += self._prune_manifests(min(segment.first_at for segment in self.segments.values()),
+                                                 "manifest_older_than_retained_segments")
+            elif self.release_before is not None:
+                reasons += self._prune_manifests(self.release_before, "manifest_released_by_owner")
             used, free = self.used_bytes(), self._disk_free(self.root)
             if used + self.headroom >= self.max_bytes or free <= self.min_free_bytes:
                 level = LEVEL_PAUSED
