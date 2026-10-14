@@ -13,6 +13,35 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-14 23:34 UTC, Codex, closed window audit and bounded TJR follow-up (4:34 PM PDT)
+- Closed full4:15–4:30 PM targetKXBTC15M-26OCT141930-30:7durable/7accepted IDs,
+  2actual fills (Down47¢/Up51¢),cost$0.98,fees0,$1payout,+$0.02locked/$0directional.
+  Independent anchored-prefix audit reparsed79original messages, checked IDs/chronology and Decimal
+  arithmetic. Seven cancel rows are5requests+2venue404, reservations retained until reconciliation;
+  no false fills-versus-cancels subtraction. Original2,362,959byte receiptb58a299 retained exactly.
+- Four selected cycles/20reads retain5,131.435ms maxresumption,84omitted work details,no read/bin
+  retention loss.15statuses/14fullycontained intervals,no8192caps; maxima fillsresume2,762.8ms,
+  ordersresume2,188.7ms,lag2,054ms. First straddling interval excluded,quantiles not pooled.
+  At4:30:55cash$35.2843,cumulative settledP&L−$14.4571,zero grossfilledcost/risk and$0.21
+  reserved in one next-window order; this reservation is outside target. Stopsfalse/integrityclear.
+  Four bounded error queries through4:31returnzero; no raw-feed/late-event completeness claim.
+- Collector closed4:31:55,later than requested4:31:30; sourcequeryend4:31,all jobs stopped.
+  Minimal Kalshi/Coinbase message-boundary candidate is being tested locally under the existing
+  execution task; no source release yet. Independent review and full checks remain required.
+- Reminder: reread current remoteAGENTS/COORDINATION/newestWORKLOG/HISTORICAL_STATUS and PR47
+  release evidence. PR47 is verified complete; current execution-first work is still open despite
+  partial fixes. Prior offline TJR reprioritization persists; no authentic MNQ development bars/cost
+  evidence recorded. Both current Page change feeds unchanged,main2/prototype1,no resync/truncation.
+  Reused all saved source/tests; no duplicate synthetic test,data probe,holdout or backtest.
+- TJR historicaltrades0/P&Lnull,papernotstarted/livefalse. Saved4:34follow-up receipt and updated
+  existing queue; unfinished/automation unchanged,unchanged owner alert suppressed. Next input remains
+  authorized actual MNQZ2025 Sep19–Oct31 mapping/license/timestamps/bars and real account costs.
+- This docs/evidence publication introduces no order, variable, budget, resume, stop, strategy or
+  production action. It does not cancel or authorize the separate ongoing execution correction.
+  Docs/archive checks only; source checks are separate and pending. First task open, comparison
+  unstarted; recorder coverage/storage obligations remain.
+
+
 ## 2026-10-14 23:29 UTC, Codex, buffered-feed fairness mechanism reproduced (4:29 PM PDT)
 - PR #55 is still running on4b0ea40. First five minutes of the full4:15–4:30 PM
   capture include a5,131.435ms selected account resumption gap. Bins cover at least

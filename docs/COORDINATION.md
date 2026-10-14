@@ -39,6 +39,14 @@ Check this queue at task start and before declaring current work complete. Keep 
 move an item to done only with linked evidence. Blocked or waiting-for-approval is not complete.
 
 ### EXEC-DELAY-001 — first task active; production attribution and verified fix pending
+- **2026-10-14 4:34 PM PDT:** PR #55 full4:15–4:30 PM window is closed and independently
+  audited:7 accepted IDs,2 actual fills costing$0.98,zero fees,$1 payout,+$0.02 locked.
+  Selected5,131.435ms resumption delay remains;14 contained status intervals retain
+  tails and coverage limits. Cumulative loss−$14.4571 at4:30:55 PM. Candidate complete-message
+  yields are now in the two owned feed loops locally, not released; tests/review pending.
+  [Original receipt](../research/kalshi_profitability_2026-10-14/POST_GROUPING_FULL_WINDOW_1630_PDT.json)
+  and [mechanism/limits](../research/kalshi_profitability_2026-10-14/BUFFERED_FEED_FAIRNESS.md).
+  First task remains open; comparison unstarted. No financial settings or history change.
 - **2026-10-14 4:13 PM PDT:** scorecard correction PR #55 is deployed on exact `4b0ea40`,
   Railway `f2477918-6a76-4cc5-946b-a2e2e320e236`, SUCCESS 4:10:22 PM. All 5,502 tests/14 skips,
   captured pytest exit zero, mypy 126 and Ruff pass; independent review accepted the exact bundle.
@@ -76,6 +84,13 @@ move an item to done only with linked evidence. Blocked or waiting-for-approval 
   while the first remains open. TJR's separate authentic-data blocker and recorder duties persist.
 
 ### TJR-MNQ-001 — validation tooling complete; historical run blocked on data; paper/live disabled
+- Follow-up checked **2026-10-14 4:34 PM PDT** (23:34 UTC), current head65985fe through
+  connected GitHub. PR #47's exact release/restart verification is recorded complete; PR #55's
+  closed window is audited but5.13-second execution tails leave EXEC-DELAY-001 open. Earlier
+  explicit offline reprioritization persists, but authentic MNQ development data/costs remain absent.
+  Both Page deltas unchanged (main2/prototype1; no truncation/resync); saved implementation reused.
+  Historical trades0/P&Lnull, paper not started/live disabled. Keep unfinished/automation unchanged;
+  no routine notification or production authority inferred. [Receipt and next input](../research/tjr_validation_2026-10-14/FOLLOWUP_2026-10-14_1634_PDT.json).
 - Follow-up checked **2026-10-14 3:44 PM PDT** (22:44 UTC), current head `89b7b6d` through
   connected GitHub. PR #47's exact release/restart evidence is recorded complete; later diagnostic
   merges do not complete the active execution-first task. Prior offline reprioritization persists,

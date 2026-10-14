@@ -97,3 +97,42 @@ did not reproduce the203ms cold production panel maximum. It identifies ordinary
 serialization costs, not a proven explanation or an additional code fix. No
 strategy comparison, TJR campaign, risk increase or profitable edge follows from
 these observations. All real losses remain recorded.
+
+## Closed post-scorecard window, 4:32 PM Pacific
+
+[Original closed receipt](POST_GROUPING_FULL_WINDOW_1630_PDT.json), SHA256
+`b58a299363dba8f2f3ce542485b06be59ca84f44d80f905eea4534e3ce4b994a`,
+retains exact messages, query bounds, financial chronology and timing samples for
+4:15–4:30 PM PDT (`KXBTC15M-26OCT141930-30`). Seven durable intents and seven
+accepted order IDs produced two actual one-contract fills: Down47¢ and Up51¢,
+zero fees. Venue settlement4:30:04.143958 PM paid$1: **+$0.02 locked/$0 directional**.
+Seven cancellation records include five requested and two venue404 responses;
+reservations remained until reconciliation. Cancellation records are not subtracted
+from fills. Event/venue timestamps and delayed log observation remain separate.
+
+Four selected cycles contain20 reads, two new-fill cycles and the5,131.435ms
+resumption gap above.84 work details were omitted, without observed read/bin
+retention loss. Fifteen status samples define14 fully contained intervals; none
+hit the8192-sample cap. Maxima over those intervals are fills resume2,762.8ms,
+orders resume2,188.7ms and loop lag2,054ms. The first straddling interval is
+excluded, explaining why those maxima omit the larger selected first-minute gap.
+These are different populations; minute medians/p90 are not pooled and trace
+maxima are not presented as full-population quantiles.
+
+At4:30:55 PM, the next-window status reports cash$35.2843, cumulative settled
+P&L−$14.4571, zero gross filled cost/risk and$0.21 reserved in one new-window
+order. That reservation is outside the measured window. Stops are false and
+integrity clear. This is the existing strategy operating, not a new order by the
+observer. Four bounded traceback/live-error queries through4:31 PM returned zero;
+health/deployment remained unchanged. No complete raw-feed or late-event coverage
+certification follows. The collector closed4:31:55 PM, later than its requested
+4:31:30 deadline; queried source end remained4:31 PM and all jobs stopped.
+
+This window does not prove profitability or establish a causal timing change.
+The next candidate is now assigned for implementation and independent review;
+source release still requires full checks and subsequent production verification.
+
+The [independent audit](post_grouping_independent_audit.zip) reparsed all79 exact
+original event-prefix messages and checked financial IDs, Decimal arithmetic,
+selected timing spans and status populations. Its result hash is
+`9ee859712d77a0b28a995b20138fa12ba374deec61f97a70419dd56d1acd7f52`.
