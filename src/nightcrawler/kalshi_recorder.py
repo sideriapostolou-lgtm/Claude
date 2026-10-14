@@ -69,6 +69,7 @@ from .kalshi_familya_universe import (
     ts,
 )
 from .kalshi_public import Fetched, PublicKalshi, RateLimiter, public_ticker
+from .kalshi_recorder_evidence import report_manifest, report_previous_hour
 from .kalshi_recorder_store import (
     LEVEL_PAUSED,
     RecorderStore,
@@ -856,6 +857,8 @@ class Recorder:
         atomic_json(path, manifest)
         self.emit("telemetry", "coverage_manifest", {"hour": hour, "path": str(path.relative_to(self.root)),
                                                     "sha256": file_sha256(path)})
+        report_manifest(self.root, name, now=self.wall(),
+                        source="saved_partial_manifest" if partial else "saved_hourly_manifest")
         for lane in self.lanes.values():
             lane.hour.clear()
             lane.rtts.clear()
@@ -1644,6 +1647,7 @@ class Recorder:
         log.info("kalshi_recorder_started mode=READ_ONLY_PUBLIC host=%s rate_per_s=%s btc15m=%s spot=%s cap_mb=%s",
                  self.host, self.settings.rate_per_s, self.settings.btc15m, self.settings.spot_ticks,
                  self.settings.max_storage_mb)
+        report_previous_hour(self.root, self.wall())
         deadline = None if max_runtime_s is None else self.started_at + max_runtime_s
         done = threading.Event()
         flusher = self.start_flusher(done)

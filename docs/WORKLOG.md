@@ -15,6 +15,30 @@ Template:
 
 
 
+## 2026-10-14 16:35 UTC, Codex, branch codex/kalshi-recorder-evidence, no PR (local commit)
+- Changed: recorder-only saved-manifest diagnostics based on `0713e412b8077a32bced8794b2f26bbb46c59097`.
+  Fixed previous-hour startup readback and existing manifest-save hooks emit `kalshi_recorder_evidence` to
+  Railway logs: allowlisted counts, coverage/latency/gap/storage metadata, session start and the SHA-256 of
+  the saved manifest bytes. Refuses symlinks/nonregular files, caps reads at 512 KiB and output at 8 KiB,
+  and isolates missing/malformed/oversize/unreadable metadata and log-sink failures from collection.
+- Verified: 76 targeted tests passed; full `PYTHONPATH=src:tests python -m pytest -q`: 5,077 passed,
+  13 skipped in 188.58 s. `mypy src/nightcrawler`: clean on 126 modules. Ruff clean on all four changed
+  Python files. Independent reviewer found no blocking issue, reran 57 evidence/no-order tests and checked
+  that `kalshi_familya.py`, `kalshi_familya_universe.py`, `kalshi_recorder_store.py` and the protocol hash
+  remain unchanged. New helper is covered by no-order/no-network source guards.
+- Not verified / skipped: no runtime-file access or Railway deployment in this commit. This is saved
+  manifest/index metadata, not independent gzip verification: spot envelopes are not tick counts and do not
+  establish per-venue coverage; fresh-minute counters do not certify whole windows; partial manifests
+  exclude the still-open tail. No raw rows or sealed TEST outcomes read. Existing freeze/TEST restrictions,
+  prior evidence and its eligibility are unchanged; any deployment restart gap must remain visible.
+- Real money touched? no. No order/client path, bot source, strategy, key, account setting, Railway variable,
+  watch configuration or paid resource changed. The four source integration lines run only bounded local
+  diagnostics, with no new timer or per-tick work.
+- Next step: parent release worker reviews and publishes the recorder PR, merges during a safe minute,
+  verifies the exact deployment and its startup receipt, then checks the next hourly saved-manifest receipt.
+  Future helper-only changes need a watched integration-file change or explicit deployment; this patch
+  includes `kalshi_recorder.py`, which is already watched.
+
 ## 2026-10-14 00:20 UTC, Claude, branch claude/kalshi-recorder, no PR (local commit only)
 - Changed: fixed the eight findings the skeptics re-broke after 7e5f40c (rebreak wf_a13c42a7-85b). Recorder:
   a GET that must wait (a Retry-After hold) flushes every lane first, and `run()` starts a flusher thread that
