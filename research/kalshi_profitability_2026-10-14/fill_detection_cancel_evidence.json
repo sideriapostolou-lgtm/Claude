@@ -1,0 +1,156 @@
+{
+  "retrieved_at_utc": "2026-10-14 18:53:23 UTC",
+  "source": "Railway deployment logs",
+  "deployment_id": "c049df06-b245-465b-969d-2c2b7317b5ed",
+  "query_start_utc": "2026-10-14T18:08:50Z",
+  "query_end_utc": "2026-10-14T18:09:18Z",
+  "query_limit": 500,
+  "returned_count": 17,
+  "selected_events": [
+    {
+      "railway_logged_at": "2026-10-14T18:09:11.517095760Z",
+      "event": "speeddesk_live_order",
+      "payload": {
+        "at": 1792001340.899942,
+        "venue": "kalshi",
+        "client_order_id": "nc-speed-2763beec79164a4ca11ba46d67eb4031",
+        "window": "KXBTC15M-26OCT141415-15",
+        "side": "up",
+        "kind": "rest",
+        "price": 0.43,
+        "size": 5,
+        "fair": 0.4679425180528005,
+        "state": "durable intent",
+        "timing": [
+          {
+            "metric": "btc_exchange_to_decision",
+            "scope": "real_kalshi",
+            "at": 1792001340.899725,
+            "value_ms": 229.07127812504768,
+            "status": "ok"
+          },
+          {
+            "metric": "btc_receipt_to_decision",
+            "scope": "real_kalshi",
+            "at": 1792001340.899725,
+            "value_ms": 23.415464907884598,
+            "status": "ok"
+          }
+        ]
+      }
+    },
+    {
+      "railway_logged_at": "2026-10-14T18:09:11.517115100Z",
+      "event": "speeddesk_live_order",
+      "payload": {
+        "at": 1792001343.2525191,
+        "venue": {
+          "ts_ms": 1792001341131,
+          "sent_ms": 1792001340997.6,
+          "acked_ms": 1792001343252.5,
+          "offset_ms": -994,
+          "rtt_ms": 2254.9
+        },
+        "client_order_id": "nc-speed-2763beec79164a4ca11ba46d67eb4031",
+        "order_id": "01a13b9a-7648-70cc-8c93-43fcc64a6715",
+        "window": "KXBTC15M-26OCT141415-15",
+        "state": "accepted; waiting for real fills",
+        "timing": {
+          "metric": "decision_to_ack",
+          "scope": "real_kalshi",
+          "at": 1792001340.899725,
+          "value_ms": 2352.6570382528007,
+          "status": "ok"
+        },
+        "stages": {
+          "save_ms": 23.49763410165906,
+          "decision_to_send_ms": 97.74991730228066,
+          "send_to_ack_ms": 2254.90712095052
+        }
+      }
+    },
+    {
+      "railway_logged_at": "2026-10-14T18:09:14.669098169Z",
+      "event": "speeddesk_live_cancel",
+      "payload": {
+        "at": 1792001351.580667,
+        "venue": "kalshi",
+        "client_order_id": "nc-speed-2763beec79164a4ca11ba46d67eb4031",
+        "order_id": "01a13b9a-7648-70cc-8c93-43fcc64a6715",
+        "window": "KXBTC15M-26OCT141415-15",
+        "reason": "reprice",
+        "state": "not resting on Kalshi (404); reservation retained until reconciled",
+        "timing": {
+          "decision_to_ack_ms": 6667.3,
+          "send_to_ack_ms": 6667.3
+        }
+      }
+    },
+    {
+      "railway_logged_at": "2026-10-14T18:09:14.669102289Z",
+      "event": "speeddesk_live_fill",
+      "payload": {
+        "at": 1792001342.225172,
+        "venue": "kalshi",
+        "fill_id": "0725d5f3-9e89-8182-d950-bc3cf226435d",
+        "order_id": "01a13b9a-7648-70cc-8c93-43fcc64a6715",
+        "client_order_id": "nc-speed-2763beec79164a4ca11ba46d67eb4031",
+        "window": "KXBTC15M-26OCT141415-15",
+        "side": "up",
+        "price": 0.43,
+        "size": 5,
+        "fee_usd": 0,
+        "is_taker": false
+      }
+    },
+    {
+      "railway_logged_at": "2026-10-14T18:09:14.669106058Z",
+      "event": "speeddesk_fill_observed",
+      "payload": {
+        "at": 1792001354.0190945,
+        "venue": "kalshi",
+        "mode": "diagnostic",
+        "fill_source": "real",
+        "session_id": "21e981ced492a70a593a",
+        "fill_id": "0725d5f3-9e89-8182-d950-bc3cf226435d",
+        "order_id": "01a13b9a-7648-70cc-8c93-43fcc64a6715",
+        "window": "KXBTC15M-26OCT141415-15",
+        "side": "up",
+        "entry_price": 0.43,
+        "entry_size": 5,
+        "entry_fee_usd": 0,
+        "actual_fill_at": 1792001342.225172,
+        "fills_batch_returned_at": 1792001354.0190945,
+        "detection_delay_s": 11.793922424316406,
+        "detection_delay_kind": "venue_fill_to_complete_paginated_batch_return",
+        "horizon_basis": "fills_batch_return",
+        "window_end": 1792001700,
+        "fee_coefficient": 0.07,
+        "fee_precision": 0.0001,
+        "fee_verified": true,
+        "is_taker": false,
+        "horizons_s": [
+          1,
+          5,
+          30
+        ],
+        "session_only": true
+      }
+    }
+  ],
+  "interpretation": {
+    "venue_to_wrapper_return_s": 11.793922424316406,
+    "cancel_decision_to_ack_ms": 6667.3,
+    "cancel_order_matches_fill": true,
+    "cancel_reason": "reprice",
+    "cancel_result": "definitive 404; reservation retained",
+    "inferred_cancel_started_utc": "2026-10-14T18:09:04.913Z",
+    "cancel_receipt_at_utc": "2026-10-14T18:09:11.581Z",
+    "limitations": [
+      "Cancellation overlapped the interval before the fill was registered; old records do not identify which read or cancellation wait contains the delay.",
+      "Do not treat cancellation duration as network RTT: it includes queueing, callback time, and coroutine resumption.",
+      "Venue wall-clock uncertainty and receipt logging lag remain distinct.",
+      "No order, risk, accounting or money setting changed."
+    ]
+  }
+}
