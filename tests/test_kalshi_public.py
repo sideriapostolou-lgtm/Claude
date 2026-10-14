@@ -151,3 +151,32 @@ def test_public_tickers_are_the_ones_a_public_path_may_carry() -> None:
     assert public_ticker("KXHIGHNY") and public_ticker("KXBTCD-26OCT1617-T112499.99")
     assert not public_ticker("kxweird") and not public_ticker("") and not public_ticker(1.5)
     assert not public_ticker("KX/../portfolio")
+
+
+def test_a_burst_of_two_keeps_the_average_and_the_ceiling_but_allows_half_second_gaps() -> None:
+    """The LIP lane's budget: two tokens, so a 1 s call and the other lanes can interleave at 0.5 s."""
+    clock = Clock(0.0)
+    limiter = RateLimiter(1.5, burst=2.0, clock=clock.mono, sleep=clock.sleep)
+    times = starts(limiter, clock, 301)
+    gaps = [later - earlier for earlier, later in pairwise(times)]
+    assert min(gaps) >= 0.5 - 1e-9 and gaps[0] == pytest.approx(0.5)  # the burst: never closer than 1/ceiling
+    assert all(sum(1 for other in times if at - 1.0 < other <= at) <= 2 for at in times)
+    assert (len(times) - 2) / (times[-1] - times[0]) == pytest.approx(1.5, rel=0.01)  # the average is the target
+    with pytest.raises(ValueError):
+        RateLimiter(1.5, burst=0.5)
+    with pytest.raises(ValueError):
+        RateLimiter(1.5, burst=3.0)
+
+
+def test_delays_says_when_the_next_two_requests_may_start() -> None:
+    clock = Clock(100.0)
+    limiter = RateLimiter(1.5, burst=2.0, clock=clock.mono, sleep=clock.sleep)
+    assert limiter.delays() == (0.0, pytest.approx(0.5))  # a full bucket: now, then 0.5 s later
+    limiter.wait()
+    limiter.wait()  # two starts 0.5 s apart (at 100.0 and 100.5); 0.75 of a token is left
+    first, second = limiter.delays()
+    assert first == pytest.approx(0.5)  # 101.0: the rolling second and the spacing allow it, and tokens suffice
+    assert second == pytest.approx(1.0)  # 101.5: the rolling second binds (the bucket would allow 101.33)
+    single = RateLimiter(1.5, clock=clock.mono, sleep=clock.sleep)
+    single.wait()
+    assert single.delays() == (pytest.approx(1 / 1.5), pytest.approx(2 / 1.5))  # burst 1: plain target spacing

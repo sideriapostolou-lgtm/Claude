@@ -12,21 +12,25 @@ Every dollar in the replay belongs to a SIMULATED $25 research account.
 
 ## 1. Safety
 
-- Public, unauthenticated GETs only, to the allowlist of PROTOCOL.md section 2.1 (`kalshi_public.PUBLIC_PATHS`).
+- Public, unauthenticated GETs only, to the allowlist of PROTOCOL.md section 2.1 (`kalshi_public.PUBLIC_PATHS`),
+  plus one public path outside it that only the rewards (LIP) lane reads: `/live_data/events/{event}` (section 9).
   No key, no signer, no Kalshi websocket, no redirect, a 16 MiB response cap, no query parameter off the
   allowlist. The transport class has exactly one public method, `get`. Its session never reads `~/.netrc` and
   never keeps or sends a cookie (proxies from the environment still apply). A reply that is not strict JSON
   (`NaN`, `Infinity`, absurd nesting) is a failed request, never a record, and so is a number that overflows
   (`1e400`) in anything the recorder keeps (a row it drops, such as another ticker's print, fails nothing).
-- No order, cancel, amend, portfolio or account call exists in these five modules, and none of them imports an
-  order or trading client. `tests/test_kalshi_recorder_no_orders.py` fails if any such import, name, non-GET call
+- No order, cancel, amend, portfolio or account call exists in these six modules (with `kalshi_recorder_pyth.py`),
+  and none of them imports an order or trading client. `tests/test_kalshi_recorder_no_orders.py` fails if any such import, name, non-GET call
   or `/portfolio` path appears, and it runs full recorder passes through the real `requests` stack to prove that
   every request it can reach is a keyless public GET: once with `Session.request` faked, and once with only the
   transport adapter faked, asserting on the prepared request itself with a `~/.netrc` login for Kalshi's host and
   a cookie planted in the session (no `Authorization`, `Cookie` or `KALSHI-ACCESS-*` header is ever sent).
 - `python -m nightcrawler.kalshi_recorder run` refuses to start (exit 3) when its environment or `.env` holds
   trading keys (`KALSHI_KEY_ID`, `KALSHI_PRIVATE_KEY`, `BOT_WALLET_SECRET`, `POLYMARKET_US_*`) or any
-  `*_MODE=live` switch. Only the names are checked; no key value is read, logged or printed.
+  `*_MODE=live` switch. Only the names are checked; no key value is read, logged or printed. `PYTH_API_KEY` is a
+  read-only price key, not a trading key (`READ_ONLY_KEYS`): it never stops the recorder, and it is used only by
+  the Pyth lane (`kalshi_recorder_pyth.py`, section 9), which sends it only to an allowlisted Pyth host and never
+  writes or logs it.
 - No live setting, cap, key or trading code is read or changed. `config.py` (real-money code) is untouched: the
   recorder reads its own `KALSHI_RECORDER_*` variables (validated by `RecorderSettings`).
 
@@ -94,12 +98,16 @@ A's verdict is judged after half of it (OPEX_A, PROTOCOL.md section 13). The pro
 
 ## 3. Request budget (one shared limiter)
 
-At most 2 request starts in any rolling second, spaced at `KALSHI_RECORDER_RATE_PER_S` (1.5 by default; the
-ceiling cannot be raised). After a 429 the whole recorder runs 25% slower for ten minutes and every lane honours a
+At most 2 request starts in any rolling second, never two starts closer than 0.5 s, and an average of
+`KALSHI_RECORDER_RATE_PER_S` (1.5 by default; the ceiling cannot be raised). The average is a token bucket: with the
+LIP lane on it holds 2 tokens, so a 1 s book call and the other lanes interleave at 0.5 s gaps; with it off (and in
+the bot) it holds 1, which is plain spacing at the target rate, as before. After a 429 the whole recorder runs 25% slower for ten minutes and every lane honours a
 Retry-After (clamped to 15 minutes; a hold of a minute or more is a `retry_after_hold` gap); the lane that saw it
 also waits 2^n seconds (n = 429s in a row, at most 30 s). Lanes share the budget by weighted fair queueing
-(books 8, trades 4, backfill 2, KXBTC15M metadata 2, discovery 2, sweep 1, settlement 1, fees 1, other 0.5), so
-no lane starves.
+(books 8, trades 4, backfill 2, KXBTC15M metadata 2, discovery 2, LIP 2, sweep 1, settlement 1, fees 1, other
+0.5), so no lane starves. While LIP books are pinned (section 9) a due book call goes first, and a lane whose start
+would push the next one more than 0.1 s late waits; both are counted per lane (`preempted_by_lip_books`,
+`held_for_lip_books` in the manifest) and written once a minute (`telemetry`/`degraded`).
 
 **No reply can stop the recorder or wedge a lane.** A malformed reply (a list field that is not a list, a cursor
 that is not a string, a handler error) is a `handler_error` record and counts as a failed attempt; a request the
@@ -135,6 +143,7 @@ overflowing decimal string, `row_unreadable`), is refused alone and the pass adm
 | settlement | `/markets?tickers=` for markets past close until `finalized` with a result | 15 min |
 | fees | `/series/fee_changes?show_historical=true`; `/events/fee_changes?event_ticker=` per candidate event | daily, and at once for a new event |
 | other | `/historical/cutoff`, `/incentive_programs` (recorded, never credited) | daily |
+| lip | `/incentive_programs?status=active|upcoming|closed&type=liquidity&limit=10000`, `/live_data/events/{event}` (section 9) | active every 15 min (5 s after each boundary), upcoming hourly, closed every 3 h; the series every 10 min |
 
 **Measured from the workspace, 2026-10-13 (not Railway; this sandbox shares its outgoing IP):** two 5-minute
 runs at 1.0 request/s. Run 1 (19:35-19:40 UTC): 280 GETs, 57 of them 429s (33 on the trade lane), and the live trade
@@ -171,7 +180,7 @@ and reason and the count of events in other categories. A watched ticker gets `w
 | `segments/.../*.jsonl.gz.part` | the open segment; every lane's new lines reach the OS within 5 s, quiet lanes included: the main loop flushes between GETs, a flusher thread flushes every second while a GET blocks (a read timeout), every lane is flushed before a GET that must wait (a Retry-After hold), and a wall clock that steps back flushes at once instead of waiting for the old time; so a SIGKILL or OOM kill loses only the last few seconds; prints are flushed before the `trade_coverage` row that vouches for them, and changed books before their `book_call` row; after a crash its complete lines are re-sealed (streamed, in bounded memory) and the torn tail is counted as a gap. Each line ends with its own CRC-32 (`crc`), and a salvaged line must match it and carry a higher `seq` than the line before: zeros or garbage after a host crash that zlib still decodes (copies of earlier bytes, valid-looking JSON) end the salvage as dropped bytes, never become records, and what zlib refuses is `undecoded_bytes`; a crash during that recovery never indexes a record twice (a leftover `.part` that is a prefix of its re-sealed copy is removed) |
 | `index.jsonl` | append-only: every sealed segment (`sha256`, `prev_sha256` per lane, records, first/last seq and time, bytes) and every deletion with its reason |
 | `state.json`, `recorder_state.json` | next sequence number and storage level; the watch list (saved before a new ticker's `start` row is written, so a restart resumes every ticker the tape says is watched), recently unwatched tickers (4 days), fee lookups, trade coverage end and last-alive time (for restart gaps and backfill) |
-| `status.json` | heartbeat each minute: lanes, storage, candidates, KXBTC15M windows |
+| `status.json` | heartbeat each minute: lanes, storage, candidates, KXBTC15M windows, the LIP pins and the Pyth streams, and `lane_bytes`: per lane the bytes on disk (and uncompressed), the bytes and records written this session, and `est_stored_bytes_per_day` at this session's rate |
 | `manifests/coverage-<YYYY-MM-DDTHH>.json` | the hourly coverage manifest (below); a session that stops mid-hour writes `coverage-<hour>-<session>-partial.json` |
 
 Every record: `seq` (local, monotonic across restarts), `lane`, `kind`, `at` (receive time, host UTC clock),
@@ -194,6 +203,9 @@ existed carry none). Prices and sizes stay Kalshi's decimal strings.
 | `gaps` / `gap`, `trade_conflict`, `handler_error`, `request_refused`, `session_started` | `gap_lane`, `from`, `to`, `cause` (`lane_stale`, `trade_page_failed_429`, `recorder_not_running`, `clock_moved_backwards` (once per step back, with `seconds`; every schedule moves back with the clock), `storage_cap_paused`, `retry_after_hold`, `malformed_reply`, `series_ticker_unusable`, ...); `handler_error` and `request_refused` carry `handler_lane`, `error` and a one-line `detail`; `session_started` carries `keeps_prints_from`, the earliest print the new session vouches for: the replay closes, there, the watch of every ticker the tape had open that the session did not resume |
 | `telemetry` / `coverage_manifest`, `chunk_halved`, `freeze_witness` | the hash of each hourly manifest; a sweep or settlement chunk halved after a 4xx; at each session start, Family A's FREEZE.json SHA-256 when `KALSHI_RECORDER_FREEZE_SHA256` is set (the TEST gate's clock, section 7) |
 | `spot` / `spot_trades` | optional raw Coinbase/Kraken trades with `received_at` |
+| `books_lip` / `book`, `trades_lip` / `trades` | the LIP markets' books (as `books`) and prints (as `trades`); never in a Family A lane |
+| `lip` / `programs`, `book_call`, `watch`, `settlement`, `series`, `series_unavailable` | section 9 |
+| `pyth` / `updates`, `connection`, `channel_downgraded`, `first_update` | section 9 |
 
 Nothing is fabricated: a failed request is a request row and, when a lane goes stale for more than
 max(2 x cadence, 30 s), a gap; a failed trade window is backfilled from the public tape or stays a gap; a book gap
@@ -217,8 +229,10 @@ release date (each manifest's hash stays in the `telemetry` lane). The audit est
 **Before TRAIN starts the owner must choose** a dedicated volume with a cap of at least 4.5 GB, or a nightly
 lossless compaction (PROTOCOL.md section 12). At the cap, under the default `protect` policy, the recorder:
 
-1. deletes KXBTC15M (and spot) segments older than `KALSHI_RECORDER_BTC15M_RETENTION_H` (72 h);
-2. above 95% of the cap, stops KXBTC15M/spot capture (a gap);
+1. deletes KXBTC15M (and spot) segments older than `KALSHI_RECORDER_BTC15M_RETENTION_H` (72 h), and LIP and Pyth
+   segments older than `KALSHI_RECORDER_LIP_RETENTION_H` (336 h, two weeks), and only while it needs the room;
+2. above 95% of the cap, stops KXBTC15M/spot, LIP and Pyth capture (gaps): none of them is a Family A candidate
+   (PROTOCOL.md section 12, step 2);
 3. at the cap, pauses (a gap). It never deletes unscored Family A evidence. An owner-set
    `KALSHI_RECORDER_RELEASE_BEFORE` date allows Family A segments older than it to go (after a verdict).
 
@@ -333,3 +347,81 @@ rows; `parse_trades`), and `btc15m_meta` (`/series/KXBTC15M`, each window's mark
 settlement row; `parse_window`). These are deleted after 72 h by default; set the arena's retention with
 `KALSHI_RECORDER_BTC15M_RETENTION_H`. REST snapshots carry no exchange sequence, so they are lower fidelity than
 the arena's live websocket feed.
+
+## 9. The rewards (LIP) and Pyth lanes (outside protocol v1)
+
+Research: `research/kalshi_rewards/PLAYBOOK.md` and the FX rewards note of 2026-10-13 (settlement source, Pyth
+access, request budget). Nothing here trades or scores; it records what a later analysis needs to answer one
+question: does Pyth's price move before Kalshi's FX, metals and natural-gas 15-minute books reprice, and how often?
+Family A never reads these lanes, and they never write into a Family A lane.
+
+**Switches.** `KALSHI_RECORDER_LIP` (true; the in-bot profile turns it off), `KALSHI_RECORDER_LIP_MAX_PERIOD_S` (900:
+a program whose period is at most this is "fast"), `KALSHI_RECORDER_LIP_MAX_PINNED` (40), `..._LIP_PROGRAMS_INTERVAL_S`
+(900), `..._LIP_UPCOMING_INTERVAL_S` (3600), `..._LIP_CLOSED_INTERVAL_S` (10800), `..._LIP_SERIES_INTERVAL_S` (600),
+`..._LIP_RETENTION_H` (336); `KALSHI_RECORDER_PYTH_BASE` (`https://pyth.dourolabs.app/hermes`, or
+`https://hermes.pyth.network`; nothing else is accepted) and `KALSHI_RECORDER_PYTH_CHANNEL` (`real_time`).
+
+**What the LIP lane records.**
+
+- **Programs** (`lip`/`programs`): every liquidity program from `/incentive_programs` (all ~5,600, not only the
+  15-minute ones): active every 15 minutes, 5 s after each boundary; upcoming hourly; closed every 3 hours (a program
+  leaving the closed list was paid, so the pay lag can be measured). The first snapshot of each status in a session
+  and on each UTC day is `full` (every row, raw); the others list only `added`, `changed` and `removed` against the
+  snapshot before (lossless: replaying them rebuilds every list exactly), with each page's `body_sha256`.
+- **Books** (`books_lip`, and `lip`/`book_call`): the markets of the fast programs, found from that list (today the
+  5 FX, copper, platinum, palladium, natural gas and the 5 Coin Race markets: 14), ride in the existing
+  `/markets/orderbooks` call from 5 s before their period starts to 2 s after it ends, at most 40, current windows
+  first (the overflow is counted, `lip_pins_dropped`). The call then runs on a fixed 1 s grid (Kalshi scores once a
+  second), costing no extra request; raw `orderbook_fp`, request and receive time, written when changed and listed
+  as unchanged otherwise. The Family A `book_call` row lists only Family A and KXBTC15M tickers (and `lip_tickers`, a
+  count); the LIP part of the same call is its own row in `lip`. Family A books displaced from a call by the pins are
+  counted (`familya_books_displaced`), and a spare slot refreshes a candidate only when its book is at least 5 s old
+  (a short candidate list would otherwise be asked every second).
+- **Prints** (`trades_lip`): the exchange-wide tape keeps the LIP markets' prints while they are watched (from the
+  pin to `finalized`); `trade_coverage` vouches for them as for every watched ticker.
+- **Settlement** (`lip`/`settlement`): the settlement lane's raw rows for those markets (floor strike, expiration
+  value, result, `settlement_ts`); watch `start`/`stop` rows are in `lip`, never in `admissions`.
+- **The free 1 s settlement series** (`lip`/`series`): `/live_data/events/{event}` for each Pyth-settled series every
+  10 minutes. Each reply holds the trailing hour at 1 s, rounded to the settlement digits, and its value at
+  `close - 1 s` equalled `expiration_value` in 36 of 36 windows checked; only points newer than the last stored one
+  are kept (`new`), an overlapping point whose value changed is listed (`revised`), and a hole (the recorder was down
+  over an hour) is a `lip_series_hole` gap. A series with no public live data (Coin Race: 404) is a
+  `series_unavailable` row and is asked again a day later.
+
+**The Pyth lane** (`pyth`, `kalshi_recorder_pyth.py`). Only when `PYTH_API_KEY` is in the service's environment
+(set by the owner as a Railway variable on `kalshi-recorder`); without it there is no thread, no request and no record,
+and one info line says so. Hermes' SSE stream (`/v2/updates/price/stream`, `Authorization: Bearer`) for the nine feeds
+Kalshi settles on (EUR/USD, GBP/USD, USD/JPY, AUD/USD, USD/CAD, copper and natural-gas 24/7 indices, platinum,
+palladium), grouped by the fastest channel each feed allows (real_time for EUR, JPY, AUD; 50 ms for the two indices;
+200 ms for the rest). Every parsed update is recorded as `[id, price, conf, expo, publish_time, prev_publish_time,
+received_at]` (Pyth's integer strings; real price = price x 10^expo; `publish_time` is whole seconds, so a lead under a
+second is timed by `received_at`), batched about once a second per stream. A dropped stream reconnects with backoff
+(2^n s, at most 60 s, 5 minutes once silent for 10 minutes, straight back after the server's 24-hour close); the
+silence from the last update to the next is one `gap` row with the failure that began it. A 401 (key refused) waits
+15 minutes and logs an error naming only the status; a 400 or 403 steps the stream down to the next slower channel
+(`channel_downgraded`), and a 403 on the slowest waits 30 minutes (the plan lacks those feeds). The key is held in a
+`PythKey` that prints as `<redacted>`, is sent only in that header to an allowlisted https Pyth host with redirects
+refused, and never appears in a segment, status, manifest or log line: errors are recorded as an exception's type or
+an HTTP status, and an error body's 120-character excerpt is redacted first (tested with a server that echoes it).
+
+**Measured from the workspace, 2026-10-14 00:52-00:58 UTC (FX, metals and Coin Race open; no Pyth key):** 528 GETs in
+359 s (1.47/s), at most 2 starts in any rolling second, 1 429. The LIP book call carried all 14 markets every time:
+358 calls, interval p50 1.000 s, p95 1.003 s, max 1.15 s, none missing. 89% of LIP book reads were a changed book
+(4,471 written). Before the token bucket and the hold, target-rate spacing plus round trips gave the same call
+every 2.67 s (p50, 129 calls in 331 s, 00:39-00:45 UTC), so "1 s" books were not 1 s. The other lanes still ran (trades 0.27/s,
+discovery 0.14/s, LIP lane 0.033/s).
+
+**Storage estimates (gzip on disk).**
+
+| Lane | Estimate | Basis |
+|---|---|---|
+| `books_lip` | about 140 MB a day on a full weekday, about 110 MB a day averaged over a week | measured: 129 B per changed book, 89% of 14 books a second; FX, metals and gas close part of the week |
+| `trades_lip` | about 15-25 MB a day | measured 17.6 MB a day at that hour's FX and Coin Race volume |
+| `lip` | about 10 MB a day | book-call rows (~5), program snapshots (one full list of each status a day plus diffs, ~2), the 1 s series of 9 feeds (~3) |
+| `pyth` | about 7 MB a day at 1 update/s per feed, 30 at 5/s, 110 at 20/s (all 9 feeds streaming all day) | the real store path on synthetic updates: 7-9 B per update |
+| side effect | KXBTC15M books (`books_btc15m`) about 2.7 times as often as before | the book call now really runs every second |
+
+So the LIP lanes add about 150-200 MB a day before Pyth, about 2-3 GB over their two-week retention. They are
+sheddable (stopped above 95% of the cap, deleted past their retention only when room is needed), so they can never
+make Family A pause sooner; but on a 5 GB volume already holding about 1 GB a day the owner must choose a larger
+volume or cap, a shorter `KALSHI_RECORDER_LIP_RETENTION_H`, or `KALSHI_RECORDER_LIP=false`.

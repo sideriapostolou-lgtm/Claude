@@ -35,7 +35,7 @@ from nightcrawler.kalshi_recorder import Recorder, RecorderSettings
 SOURCE = Path(__file__).resolve().parents[1] / "src" / "nightcrawler"
 _REAL_SESSION_REQUEST = requests.Session.request  # captured at import, before conftest blocks the network
 MODULES = ("kalshi_public.py", "kalshi_recorder.py", "kalshi_recorder_store.py", "kalshi_familya.py",
-           "kalshi_familya_universe.py")
+           "kalshi_familya_universe.py", "kalshi_recorder_pyth.py")
 FORBIDDEN_MODULES = ("speeddesk_kalshi_client", "speeddesk_live", "speeddesk_live_model", "speeddesk_kalshi_ws",
                      "speeddesk_kalshi", "polymarket_us", "broker", "polydesk", "marcodesk", "deskguard", "withdraw",
                      "risk", "botwallet", "engine")
@@ -78,14 +78,16 @@ def test_importing_the_recorder_and_replay_loads_no_trading_module() -> None:
     loaded = set(json.loads(out.stdout))
     assert loaded <= {"nightcrawler", "nightcrawler.config", "nightcrawler.kalshi_familya",
                       "nightcrawler.kalshi_familya_universe", "nightcrawler.kalshi_public",
-                      "nightcrawler.kalshi_recorder", "nightcrawler.kalshi_recorder_store"}, loaded
+                      "nightcrawler.kalshi_recorder", "nightcrawler.kalshi_recorder_store",
+                      "nightcrawler.kalshi_recorder_pyth"}, loaded
 
 
 @pytest.mark.parametrize("path", ["/events", "/series", "/series/KXHIGHNY", "/series/fee_changes",
                                   "/events/fee_changes", "/markets", "/markets/KXBTCD-26OCT1617-T112499.99",
                                   "/markets/orderbooks", "/markets/KXBTC15M-26OCT131400-00/orderbook",
                                   "/markets/trades", "/historical/cutoff", "/historical/markets",
-                                  "/historical/trades", "/incentive_programs"])
+                                  "/historical/trades", "/incentive_programs",
+                                  "/live_data/events/KXEURUSD15M-26OCT132000"])
 def test_protocol_allowlist_is_public(path: str) -> None:
     assert public_path(path)
 
@@ -94,7 +96,9 @@ def test_protocol_allowlist_is_public(path: str) -> None:
                                   "/portfolio/fills", "/portfolio/orders/batched", "/portfolio/orders/abc/amend",
                                   "/portfolio/orders/abc/decrease", "/orders", "/communications/rfqs",
                                   "/communications/quotes", "/api_keys", "/login", "/markets/X/orderbook/../../orders",
-                                  "/portfolio/settlements", "/exchange/status", "markets", "/markets/x", ""])
+                                  "/portfolio/settlements", "/exchange/status", "markets", "/markets/x", "",
+                                  "/live_data/events/x", "/live_data/milestones/KXEURUSD15M",
+                                  "/live_data/events/KXEURUSD15M/../../portfolio/orders"])
 def test_every_account_order_or_unknown_path_is_refused(path: str) -> None:
     assert not public_path(path)
 

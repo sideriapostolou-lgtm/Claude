@@ -36,12 +36,14 @@ RATE_CUT = 0.75
 RATE_CUT_S = 600.0
 MAX_RETRY_AFTER_S = 900.0  # a longer Retry-After is clamped (and recorded as a gap by the recorder)
 _TICKER = r"[A-Z0-9][A-Z0-9._-]{0,99}"
-# PROTOCOL.md section 2.1: the only paths this recorder may request.
+# PROTOCOL.md section 2.1: the only paths this recorder may request, plus one public path outside that list:
+# /live_data/events/{event_ticker} (``security: []`` in Kalshi's API, no key) is read only by the rewards (LIP)
+# research lane, for the free 1 s settlement series of the Pyth-settled 15-minute markets; Family A never reads it.
 PUBLIC_PATHS = tuple(re.compile(pattern) for pattern in (
     r"/events", r"/series", rf"/series/{_TICKER}", r"/series/fee_changes", r"/events/fee_changes",
     r"/markets", rf"/markets/{_TICKER}", r"/markets/orderbooks", rf"/markets/{_TICKER}/orderbook",
     r"/markets/trades", r"/historical/cutoff", r"/historical/markets", r"/historical/trades",
-    r"/incentive_programs",
+    r"/incentive_programs", rf"/live_data/events/{_TICKER}",
 ))
 PUBLIC_PARAMS = frozenset({
     "limit", "cursor", "status", "series_ticker", "event_ticker", "ticker", "tickers", "min_ts", "max_ts",
@@ -122,17 +124,28 @@ def retry_after_seconds(header: str | None, now: float) -> float | None:
 
 
 class RateLimiter:
-    """One shared budget: <= 2 starts in any rolling second and target-rate spacing between starts."""
+    """One shared budget: <= 2 starts in any rolling second, never two starts closer than 1/ceiling (0.5 s), and
+    an average at the target rate.
 
-    def __init__(self, target_per_s: float = 1.5, *, ceiling_per_s: float = RATE_CEILING_PER_S,
+    The average is a token bucket that refills at the target rate and holds at most ``burst`` tokens; every start
+    takes one. With ``burst=1`` (the default) that is plain target-rate spacing between starts. With ``burst=2`` a
+    lane that must start on time (the rewards lane's 1 s book call) can, while the others fill the gaps between its
+    calls, the average still at the target and the rolling-second ceiling unchanged.
+    """
+
+    def __init__(self, target_per_s: float = 1.5, *, ceiling_per_s: float = RATE_CEILING_PER_S, burst: float = 1.0,
                  clock: Callable[[], float] = time.monotonic, sleep: Callable[[float], None] = time.sleep) -> None:
         if not (math.isfinite(ceiling_per_s) and 0 < ceiling_per_s <= RATE_CEILING_PER_S):
             raise ValueError("The public request ceiling is at most 2 per second")
         if not (math.isfinite(target_per_s) and 0 < target_per_s <= ceiling_per_s):
             raise ValueError("The target request rate must be positive and at most the ceiling")
-        self.target_per_s, self.ceiling_per_s = target_per_s, ceiling_per_s
+        if not (math.isfinite(burst) and 1.0 <= burst <= ceiling_per_s):
+            raise ValueError("The burst must be at least 1 and at most the ceiling")
+        self.target_per_s, self.ceiling_per_s, self.burst = target_per_s, ceiling_per_s, burst
         self._clock, self._sleep = clock, sleep
         self._starts: deque[float] = deque()
+        self._tokens = burst
+        self._tokens_at: float | None = None
         self._cut_until = -math.inf
         self._hold_until = -math.inf
         self._lock = threading.Lock()
@@ -141,21 +154,41 @@ class RateLimiter:
         now = self._clock() if now is None else now
         return self.target_per_s * (RATE_CUT if now < self._cut_until else 1.0)
 
+    def _tokens_now(self, now: float) -> float:
+        if self._tokens_at is None:
+            return self._tokens
+        return min(self.burst, self._tokens + max(0.0, now - self._tokens_at) * self.rate(now))
+
+    def _earliest(self, now: float, starts: Sequence[float], tokens: float) -> float:
+        earliest = self._hold_until
+        if tokens < 1.0 - 1e-9:
+            earliest = max(earliest, now + (1.0 - tokens) / self.rate(now))
+        if starts:
+            earliest = max(earliest, starts[-1] + 1.0 / self.ceiling_per_s)
+            if len(starts) >= math.floor(self.ceiling_per_s):
+                earliest = max(earliest, starts[-math.floor(self.ceiling_per_s)] + 1.0)
+        return earliest
+
     def next_start(self, now: float) -> float:
         while self._starts and self._starts[0] <= now - 1.0:
             self._starts.popleft()
-        earliest = self._hold_until
-        if self._starts:
-            earliest = max(earliest, self._starts[-1] + 1.0 / self.rate(now))
-            if len(self._starts) >= math.floor(self.ceiling_per_s):
-                earliest = max(earliest, self._starts[-math.floor(self.ceiling_per_s)] + 1.0)
-        return earliest
+        return self._earliest(now, self._starts, self._tokens_now(now))
 
     def delay(self) -> float:
         """Seconds until the next request may start (0 when it may start now)."""
         with self._lock:
             now = self._clock()
             return max(0.0, self.next_start(now) - now)
+
+    def delays(self) -> tuple[float, float]:
+        """Seconds until the next request may start, and until the one after it may (if the next one starts as
+        early as it can): a scheduler holds a lane back when its start would push a due-soon request too late."""
+        with self._lock:
+            now = self._clock()
+            first = max(now, self.next_start(now))
+            starts = [at for at in self._starts if at > first - 1.0] + [first]
+            second = self._earliest(first, starts, self._tokens_now(first) - 1.0)
+            return first - now, max(first, second) - now
 
     def wait(self, stop: threading.Event | None = None) -> bool:
         """Block until a request may start; False when ``stop`` was set while waiting."""
@@ -164,6 +197,7 @@ class RateLimiter:
                 now = self._clock()
                 earliest = self.next_start(now)
                 if now >= earliest:
+                    self._tokens, self._tokens_at = self._tokens_now(now) - 1.0, now
                     self._starts.append(now)
                     return True
                 delay = earliest - now

@@ -26,7 +26,15 @@ one shared budget of at most 2 request starts per rolling second (1.5/s target),
 * market rules, fee terms and fee changes, quote sweeps every 5 minutes, settlement rows until each
   market is finalized, the historical cutoff and incentive programs (recorded, never credited);
 * optionally (``KALSHI_RECORDER_SPOT_TICKS=true``, off by default) Coinbase and Kraken BTC trades from
-  their public websockets; these are exchange spot prices, not the CF Benchmarks settlement index.
+  their public websockets; these are exchange spot prices, not the CF Benchmarks settlement index;
+* the rewards (LIP) research lanes, outside the Family A protocol (``KALSHI_RECORDER_LIP``, on in the standalone
+  service): every liquidity program from ``/incentive_programs`` (snapshots every 15 minutes, lossless diffs), the
+  books of the short-period programs' markets (the FX, metals, natural-gas and Coin Race 15-minute markets, found
+  from the program list, never hard-coded) pinned into the existing 1 s book call, their prints and settlement
+  rows, and Kalshi's free 1 s settlement series (``/live_data/events/{event}``); when LIP books are due they go
+  before every other lane, which is slowed instead (recorded);
+* with ``PYTH_API_KEY`` set (a read-only price key, not a trading key), Pyth's own updates for the nine feeds those
+  markets settle on, from Hermes' stream (``kalshi_recorder_pyth``); without it that lane is off and silent.
 
 Missing data stays missing: failures, 429s, restarts, stale lanes and clock steps are written as gap
 records, and an hourly coverage manifest lists coverage, request latency, 429s and segment hashes.
@@ -39,6 +47,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import bisect
 import hashlib
 import json
 import logging
@@ -68,7 +77,16 @@ from .kalshi_familya_universe import (
     dec,
     ts,
 )
-from .kalshi_public import Fetched, PublicKalshi, RateLimiter, public_ticker
+from .kalshi_public import (
+    Fetched,
+    PublicKalshi,
+    RateLimiter,
+    public_session,
+    public_ticker,
+)
+from .kalshi_recorder_pyth import CHANNELS as PYTH_CHANNELS
+from .kalshi_recorder_pyth import KEY_NAME as PYTH_KEY_NAME
+from .kalshi_recorder_pyth import PYTH_BASES, PythKey, PythLane
 from .kalshi_recorder_store import (
     LEVEL_PAUSED,
     RecorderStore,
@@ -86,6 +104,9 @@ TICKERS_PER_SWEEP = 300
 SWEEP_QUERY_BYTES = 5000
 FAVOURITE_BAND = (Decimal("0.45"), Decimal("0.97"))
 FAST_BOOK_S, SLOW_BOOK_S = 20.0, 60.0
+# A spare slot refreshes a candidate's book only when it is at least this old: with book calls every second (the LIP
+# lane), a short candidate list would otherwise be asked every second, which writes and lists far more than needed.
+SPARE_BOOK_MIN_AGE_S = 5.0
 TRADE_OVERLAP_S = 5
 LIVE_TRADE_SPAN_S = 60  # an older backlog goes to the backfill lane, so live polls stay small
 LIVE_TRADE_PAGES = 20
@@ -106,6 +127,18 @@ IN_BOT_MIN_FREE_MB = 1024
 KALSHI_ACCOUNT_NAMES = frozenset({"KALSHI_KEY_ID", "KALSHI_PRIVATE_KEY"})
 TRADING_SECRET_NAMES = KALSHI_ACCOUNT_NAMES | {"BOT_WALLET_SECRET"}
 TRADING_SECRET_PREFIXES = ("POLYMARKET_US_",)
+# Keys that read data and can do nothing else: never a reason to refuse to start, whatever a prefix rule says.
+READ_ONLY_KEYS = frozenset({PYTH_KEY_NAME})
+# The rewards (LIP) lane. A program whose period is at most lip_max_period_s is "fast": its market's book rides in
+# every book call from LIP_LEAD_S before the period starts to LIP_TAIL_S after it ends (the next window's book is
+# there from its first scored second). LIP books older than LIP_FRESH_S count as stale in the coverage sample.
+LIP_LEAD_S, LIP_TAIL_S, LIP_FRESH_S = 5.0, 2.0, 2.0
+LIP_BOOK_SLACK_S = 0.1  # another lane waits when its start would push the next LIP book call later than this
+LIP_PAGE_LIMIT = 10000
+LIP_MAX_PAGES = 20
+LIP_SERIES_SKIP_S = 86400.0  # a series without a public live-data series (Coin Race: 404) is asked again a day later
+LIP_SERIES_MEMORY_MS = 3_700_000  # points kept per series to spot a revised value inside the overlap
+LIP_STATUSES = ("active", "upcoming", "closed")
 DYNAMIC_FIELDS = frozenset({
     "yes_bid_dollars", "yes_ask_dollars", "no_bid_dollars", "no_ask_dollars", "yes_bid_size_fp",
     "yes_ask_size_fp", "last_price_dollars", "previous_price_dollars", "previous_yes_bid_dollars",
@@ -150,6 +183,18 @@ class RecorderSettings:
     # Family A's FREEZE.json SHA-256 (PROTOCOL.md section 11): each session start writes it into the tape with this
     # host's clock (telemetry/freeze_witness), which the replay's TEST gate requires at least 1 h before E1.
     freeze_sha256: str = ""
+    # The rewards (LIP) research lanes (outside protocol v1; the in-bot profile turns them off).
+    lip: bool = True
+    lip_max_period_s: float = 900.0
+    lip_max_pinned: int = 40
+    lip_programs_interval_s: float = 900.0
+    lip_upcoming_interval_s: float = 3600.0
+    lip_closed_interval_s: float = 10800.0
+    lip_series_interval_s: float = 600.0
+    lip_retention_h: float = 336.0
+    # Pyth Hermes (only with PYTH_API_KEY in the environment).
+    pyth_base: str = PYTH_BASES[0]
+    pyth_channel: str = "real_time"
 
     def problems(self) -> list[str]:
         out: list[str] = []
@@ -158,6 +203,9 @@ class RecorderSettings:
             "book_interval_s": (0.5, 600), "trade_interval_s": (1, 60), "sweep_interval_s": (60, 3600),
             "discovery_interval_s": (600, 86400), "settlement_interval_s": (60, 3600),
             "btc15m_retention_h": (1, 24 * 365), "max_candidates": (1, 20_000),
+            "lip_max_period_s": (60, 86400), "lip_max_pinned": (0, 60), "lip_programs_interval_s": (300, 3600),
+            "lip_upcoming_interval_s": (900, 86400), "lip_closed_interval_s": (900, 86400),
+            "lip_series_interval_s": (60, 3000), "lip_retention_h": (1, 24 * 365),
         }
         for name, (lo, hi) in limits.items():
             value = getattr(self, name)
@@ -172,6 +220,10 @@ class RecorderSettings:
         if self.host_label not in ("auto", "workspace", "railway") and not re.fullmatch(r"[a-z0-9_-]{1,32}",
                                                                                          self.host_label):
             out.append("KALSHI_RECORDER_HOST_LABEL must be auto, workspace, railway or a short lowercase label")
+        if self.pyth_base not in PYTH_BASES:
+            out.append("KALSHI_RECORDER_PYTH_BASE must be one of " + ", ".join(PYTH_BASES))
+        if self.pyth_channel not in PYTH_CHANNELS:
+            out.append("KALSHI_RECORDER_PYTH_CHANNEL must be one of " + ", ".join(PYTH_CHANNELS))
         if self.freeze_sha256 and not re.fullmatch(r"[0-9a-f]{64}", self.freeze_sha256):
             out.append("KALSHI_RECORDER_FREEZE_SHA256 must be a SHA-256 in lowercase hex (or empty)")
         return out
@@ -214,7 +266,7 @@ class RecorderSettings:
 
     def in_bot(self) -> RecorderSettings:
         """The reduced profile inside the bot's process: it shares the bot's IP, CPU and volume."""
-        return replace(self, rate_per_s=min(self.rate_per_s, IN_BOT_RATE_PER_S), btc15m=False,
+        return replace(self, rate_per_s=min(self.rate_per_s, IN_BOT_RATE_PER_S), btc15m=False, lip=False,
                        min_free_mb=max(self.min_free_mb, IN_BOT_MIN_FREE_MB))
 
     def host(self, env: Mapping[str, str] | None = None) -> str:
@@ -255,8 +307,9 @@ def live_modes(values: Mapping[str, str]) -> list[str]:
 
 
 def trading_names(names: Iterable[str]) -> list[str]:
-    """Names of trading keys present (values are never read)."""
-    return sorted(name for name in names if name in TRADING_SECRET_NAMES or name.startswith(TRADING_SECRET_PREFIXES))
+    """Names of trading keys present (values are never read). A read-only data key (``PYTH_API_KEY``) is not one."""
+    return sorted(name for name in names if name not in READ_ONLY_KEYS
+                  and (name in TRADING_SECRET_NAMES or name.startswith(TRADING_SECRET_PREFIXES)))
 
 
 def _detail(exc: BaseException) -> str:
@@ -409,6 +462,21 @@ class Lane:
     rtts: list[float] = field(default_factory=list)
 
 
+@dataclass(frozen=True)
+class LipWindow:
+    """One liquidity program's market and period (from ``/incentive_programs``)."""
+
+    program_id: str
+    ticker: str
+    start: float
+    end: float
+    status: str
+
+    @property
+    def period_s(self) -> float:
+        return self.end - self.start
+
+
 @dataclass
 class TradeJob:
     min_ts: int
@@ -435,15 +503,21 @@ class Request:
 class Recorder:
     def __init__(self, settings: RecorderSettings, *, client: PublicKalshi | None = None,
                  store: RecorderStore | None = None, wall: Callable[[], float] = time.time,
-                 sleep: Callable[[float], None] = time.sleep, env: Mapping[str, str] | None = None) -> None:
+                 sleep: Callable[[float], None] = time.sleep, env: Mapping[str, str] | None = None,
+                 pyth_key: PythKey | None = None, pyth_session: Callable[[], Any] | None = None) -> None:
         self.settings, self.wall, self.sleep = settings, wall, sleep
         self.root = settings.root
         self.root.mkdir(parents=True, exist_ok=True)
+        lip_retention_s = settings.lip_retention_h * 3600.0
         self.store = store or RecorderStore(
             self.root, max_bytes=settings.max_storage_mb * 1024 * 1024, min_free_bytes=settings.min_free_mb * 1024 * 1024,
             policy=settings.storage_policy, btc15m_retention_s=settings.btc15m_retention_h * 3600.0,
-            release_before=_release_ts(settings.release_before) if settings.release_before else None, clock=wall)
-        self.client = client or PublicKalshi(RateLimiter(settings.rate_per_s), wall=wall)
+            release_before=_release_ts(settings.release_before) if settings.release_before else None, clock=wall,
+            retention_s={"lip": lip_retention_s, "pyth": lip_retention_s})
+        # With the LIP lane on, the shared budget may start two requests 0.5 s apart (a burst of 2 tokens, the average
+        # still rate_per_s and the rolling-second ceiling still 2): a 1 s book call then fits between the others.
+        self.client = client or PublicKalshi(RateLimiter(settings.rate_per_s, burst=2.0 if settings.lip else 1.0),
+                                             wall=wall)
         self.host = settings.host(env)
         self.session = uuid.uuid4().hex
         self.started_at = wall()
@@ -451,7 +525,7 @@ class Recorder:
             Lane("books", 8, settings.book_interval_s), Lane("trades", 4, settings.trade_interval_s),
             Lane("backfill", 2, 3600), Lane("btc15m_meta", 2, 900), Lane("discovery", 2, settings.discovery_interval_s),
             Lane("sweep", 1, settings.sweep_interval_s), Lane("settlement", 1, settings.settlement_interval_s),
-            Lane("fees", 1, 86400), Lane("other", 0.5, 86400))}
+            Lane("fees", 1, 86400), Lane("other", 0.5, 86400), Lane("lip", 2, settings.lip_programs_interval_s))}
         self.virtual = 0.0
         self.watched: dict[str, Watched] = {}
         self.series_rows: dict[str, dict[str, Any]] = {}
@@ -498,11 +572,45 @@ class Recorder:
         self.minutes: Counter[str] = Counter()
         self.gaps_this_hour: list[dict[str, Any]] = []
         self.last_wall = self.started_at
+        # The rewards (LIP) lane: programs by id (ticker, period, terms) from the active and upcoming lists, the last
+        # snapshot of each status (id -> row hash, for lossless diffs), and the free 1 s settlement series.
+        self.lip_windows: dict[str, LipWindow] = {}
+        self.lip_snapshots: dict[str, dict[str, str]] = {}
+        self.lip_snapshot_day: dict[str, str] = {}
+        self.lip_pending: dict[str, dict[str, Any]] = {}
+        self.lip_queue: deque[Request] = deque()
+        self.next_lip_at: dict[str, float] = {"active": -math.inf, "upcoming": -math.inf,
+                                              "closed": self.started_at + 600, "series": -math.inf}
+        self.lip_series_last: dict[str, int] = {}
+        self.lip_series_points: dict[str, dict[int, Any]] = {}
+        self.lip_series_skip: dict[str, float] = {}
+        self.lip_pins_cache: tuple[tuple[int, int], list[str], int, dict[str, LipWindow]] | None = None
+        self.lip_fast: tuple[int, list[LipWindow], list[float]] = (-1, [], [])
+        self.lip_version = 0
+        self.lip_last_call_at: float | None = None
+        self.lip_intervals: list[float] = []
+        # Degradation bookkeeping, written once a minute when anything was slowed or dropped (telemetry/degraded).
+        self.degraded: Counter[str] = Counter()
+        self.held_for: float | None = None  # the due time of the LIP book call another lane is waiting for
+        self.wake_at: float | None = None  # when the idle run loop must step again (the next LIP book call)
+        # The Pyth stream (only with a key; without one it never exists and nothing about it is written).
+        self.pyth: PythLane | None = None
+        self.pyth_open = False
+        if pyth_key is not None:
+            self.pyth = PythLane(pyth_key, base=settings.pyth_base, channel=settings.pyth_channel,
+                                 emit=self._pyth_emit, gap=self.gap, allowed=lambda: self.store.lane_allowed("pyth"),
+                                 session_factory=pyth_session or public_session, wall=wall)
         self._restore()
 
     # ------------------------------------------------------------------ records
     def emit(self, lane: str, kind: str, payload: dict[str, Any], at: float | None = None) -> int | None:
         return self.store.append(lane, kind, {"session": self.session, **payload}, at)
+
+    def _pyth_emit(self, lane: str, kind: str, payload: dict[str, Any], at: float | None = None) -> int | None:
+        """The Pyth threads' writer: nothing is written once the recorder has begun to close."""
+        if not self.pyth_open:
+            return None
+        return self.emit(lane, kind, payload, at)
 
     def gap(self, lane: str, start: float | None, end: float | None, cause: str, **extra: Any) -> None:
         row = {"gap_lane": lane, "from": start, "to": end, "cause": cause, **extra}
@@ -545,10 +653,16 @@ class Recorder:
             restored = Watched(**row)
             self.watched[restored.ticker] = restored
         self.fee_events = {str(key): float(value) for key, value in (saved.get("fee_events") or {}).items()}
+        self.lip_series_last = {str(key): int(value) for key, value in (saved.get("lip_series_last") or {}).items()
+                                if isinstance(value, int) and not isinstance(value, bool)}
         self.unwatched = {str(ticker): (str(kind), float(at)) for ticker, (kind, at) in
                           (saved.get("unwatched") or {}).items() if now - float(at) <= UNWATCHED_MEMORY_S}
-        if self.watched:
-            self.emit("admissions", "watch", {"action": "resumed", "tickers": sorted(self.watched)})
+        family = sorted(ticker for ticker, item in self.watched.items() if item.kind != "lip")
+        if family:
+            self.emit("admissions", "watch", {"action": "resumed", "tickers": family})
+        lip = sorted(ticker for ticker, item in self.watched.items() if item.kind == "lip")
+        if lip:  # LIP watches live in the lip lane, so Family A's admissions lane never lists them
+            self.emit("lip", "watch", {"action": "resumed", "tickers": lip})
         if resumable:
             # The public tape keeps history: queue the downtime for backfill instead of calling it lost.
             self.trade_covered_to = covered
@@ -563,13 +677,15 @@ class Recorder:
         atomic_json(self._state_path(), {"version": 1, "session": self.session, "last_alive_at": now,
                                          "trade_covered_to": self.trade_covered_to, "started_at": self.started_at,
                                          "watched": watched, "fee_events": self.fee_events,
+                                         "lip_series_last": self.lip_series_last,
                                          "unwatched": {ticker: list(item) for ticker, item in self.unwatched.items()}})
 
     # ------------------------------------------------------------------ scheduling
     def _planners(self) -> dict[str, Callable[[float], Request | None]]:
         return {"books": self._plan_books, "trades": self._plan_trades, "backfill": self._plan_backfill,
                 "btc15m_meta": self._plan_btc_meta, "discovery": self._plan_discovery, "sweep": self._plan_sweep,
-                "settlement": self._plan_settlement, "fees": self._plan_fees, "other": self._plan_other}
+                "settlement": self._plan_settlement, "fees": self._plan_fees, "other": self._plan_other,
+                "lip": self._plan_lip}
 
     def step(self, stop: threading.Event | None = None) -> bool:
         """Housekeeping, then at most one public GET; False when nothing was due."""
@@ -587,10 +703,28 @@ class Recorder:
                 lane.pass_value = max(lane.pass_value, self.virtual)
                 ready.append((lane, request))
         if not ready:
+            self.wake_at = self._lip_books_due(now)
             return False
         lane, request = min(ready, key=lambda pair: (pair[0].pass_value, -pair[0].weight))
-        self.virtual = lane.pass_value
-        lane.pass_value += 1.0 / lane.weight
+        priority = next((pair for pair in ready if pair[0].name == "books" and pair[1].context.get("lip")), None)
+        if priority is not None and priority[0] is not lane:
+            # LIP books are scored every second: a due book call that carries them goes first, outside the fair
+            # queue's accounting, and the lane that would have gone is the one slowed (counted, written each minute).
+            # The shared limiter still spaces every start, so the 2/s ceiling never moves.
+            self.degraded[f"preempted:{lane.name}"] += 1
+            lane.hour["preempted_by_lip_books"] += 1
+            lane, request = priority
+        elif priority is None and (due := self._lip_books_held_for(now, lane)) is not None:
+            # Starting this lane now would make the next LIP book call late: it waits (once counted per wait).
+            if self.held_for != due:
+                self.degraded[f"held:{lane.name}"] += 1
+                lane.hour["held_for_lip_books"] += 1
+            self.held_for = self.wake_at = due
+            return False
+        else:
+            self.virtual = lane.pass_value
+            lane.pass_value += 1.0 / lane.weight
+        self.held_for = self.wake_at = None
         limiter = getattr(self.client, "limiter", None)
         if isinstance(limiter, RateLimiter) and limiter.delay() > HOLD_FLUSH_S:
             # This GET waits (a Retry-After hold, the 429 rate cut): hand every lane's lines to the OS first, the
@@ -615,6 +749,25 @@ class Recorder:
         except Exception as exc:  # noqa: BLE001 - a malformed reply becomes a recorded failure, never a crash
             self._handler_failed(request, fetched, exc)
         return True
+
+    def _lip_books_due(self, now: float) -> float | None:
+        """When the next book call carrying LIP books is due, if that is later than ``now`` (else None)."""
+        if not self.settings.lip or not self.store.lane_allowed("books_lip"):
+            return None
+        due = max(self.next_books_at, self.lanes["books"].backoff_until)
+        if due <= now or not math.isfinite(due) or not self._lip_pins(due, register=False):
+            return None
+        return due
+
+    def _lip_books_held_for(self, now: float, lane: Lane) -> float | None:
+        """When the next LIP book call is due before the request after ``lane``'s could start, its due time: the
+        other lane then waits. None when nothing needs holding (no LIP pins, books already due, or no limiter)."""
+        limiter = getattr(self.client, "limiter", None)
+        due = None if lane.name == "books" else self._lip_books_due(now)
+        if due is None or not isinstance(limiter, RateLimiter):
+            return None
+        _, after = limiter.delays()
+        return due if now + after > due + LIP_BOOK_SLACK_S else None
 
     @staticmethod
     def _keeps_whole_body(request: Request) -> bool:
@@ -696,6 +849,14 @@ class Recorder:
             if queue and queue[0] is request:
                 queue.popleft()
             self.gap(lane, at, at, cause, path=request.path)
+        elif lane == "lip":
+            if self.lip_queue and self.lip_queue[0] is request:
+                self.lip_queue.popleft()
+            status = request.context.get("status")
+            if request.context["step"] == "programs" and isinstance(status, str):
+                self.lip_pending.pop(status, None)  # this snapshot is lost (a gap); the next one is due on schedule
+            self.gap("lip", at, at, cause, path=request.path, step=request.context["step"], status=status,
+                     series=request.context.get("series"))
         else:  # books: the next call is already scheduled
             self.gap(lane, at, at, cause, path=request.path)
 
@@ -740,10 +901,13 @@ class Recorder:
         # lane's rows (gaps, fees, admissions, a burst's tail) then survive a SIGKILL or an OOM kill. While a GET
         # blocks (a hold, a read timeout), run()'s flusher thread does the same every second.
         self.store.flush_due(now)
+        if self.pyth is not None:
+            self.pyth.flush_due(now)  # a quiet stream's last updates are written within about a second
         minute = int(now // 60)
         if minute == self.last_minute:
             return
         self.last_minute = minute
+        self._write_degraded(now)
         self.store.seal_hour(now)  # first, so the finished hour's segments (and hashes) are in its manifest
         if now >= self.hour_started + 3600:
             self.write_manifest(self.hour_started, self.hour_started + 3600)
@@ -763,6 +927,10 @@ class Recorder:
                 cause = "storage_soft_cap_shed_btc15m_and_spot" if status.level else "storage_ok"
                 self.gap("btc15m", now if status.level else None, None if status.level else now, cause,
                          used_bytes=status.used_bytes, deleted=status.reasons)
+                if self.settings.lip or self.pyth is not None:  # the rewards lanes are shed with them
+                    self.gap("lip", now if status.level else None, None if status.level else now,
+                             "storage_soft_cap_shed_lip_and_pyth" if status.level else "storage_ok",
+                             used_bytes=status.used_bytes)
         live_events = {item.event for item in self.watched.values() if item.kind == "candidate"}
         for event, at in self.fee_events.items():
             if now - at >= 86400 and event in live_events and event not in self.fee_queue:
@@ -777,6 +945,10 @@ class Recorder:
         self.fee_events = {event: at for event, at in self.fee_events.items() if event in live_events}
         self.unwatched = {ticker: item for ticker, item in self.unwatched.items()
                           if now - item[1] <= UNWATCHED_MEMORY_S}
+        stale = [key for key, window in self.lip_windows.items() if window.end < now - 3600]
+        for key in stale:
+            self.lip_windows.pop(key)
+        self.lip_version += bool(stale)
         for lane in self.lanes.values():
             if (lane.last_success_at is not None and lane.gap_since is None
                     and now - lane.last_success_at > max(2 * lane.cadence_s, 30)
@@ -792,6 +964,10 @@ class Recorder:
         for name in ("next_books_at", "next_trades_at", "next_sweep_at", "next_settlement_at", "next_btc_meta_at",
                      "next_discovery_at", "next_series_fees_at", "next_other_at"):
             setattr(self, name, getattr(self, name) - stepped)
+        self.next_lip_at = {name: at - stepped for name, at in self.next_lip_at.items()}
+        self.lip_series_skip = {series: at - stepped for series, at in self.lip_series_skip.items()}
+        if self.lip_last_call_at is not None:
+            self.lip_last_call_at -= stepped
         for lane in self.lanes.values():
             lane.backoff_until -= stepped
             if lane.last_success_at is not None:
@@ -816,6 +992,18 @@ class Recorder:
         btc = [item for item in self.watched.values() if item.kind == "btc15m" and item.open_time <= now < item.close_time]
         self.minutes["btc15m_minutes"] += int(bool(btc))
         self.minutes["btc15m_fresh_minutes"] += int(bool(btc) and all(now - item.last_book_at <= 5 for item in btc))
+        pinned = [self.watched[ticker] for ticker in self._lip_pins(now, register=False) if ticker in self.watched]
+        scored = [item for item in pinned if item.open_time <= now < item.close_time]
+        self.minutes["lip_minutes"] += int(bool(scored))
+        self.minutes["lip_market_minutes"] += len(scored)
+        self.minutes["lip_fresh_market_minutes"] += sum(1 for item in scored if now - item.last_book_at <= LIP_FRESH_S)
+
+    def _write_degraded(self, now: float) -> None:
+        """Once a minute, when anything was slowed or dropped to keep LIP books at 1 s: one telemetry row."""
+        if not self.degraded:
+            return
+        self.emit("telemetry", "degraded", {"minute_end": now, "counts": dict(sorted(self.degraded.items()))}, now)
+        self.degraded.clear()
 
     def write_manifest(self, start: float, end: float, *, partial: bool = False) -> Path:
         """The hourly coverage manifest: coverage, latency, 429s, gaps and the segments sealed this hour."""
@@ -840,6 +1028,11 @@ class Recorder:
                 "btc15m_fresh_minutes": minutes.get("btc15m_fresh_minutes", 0),
                 "candidates_now": sum(1 for item in self.watched.values() if item.kind == "candidate"),
                 "trade_covered_to": self.trade_covered_to, "backfill_jobs_pending": len(self.backfill_jobs),
+                "lip_minutes": minutes.get("lip_minutes", 0),
+                "lip_book_fresh_share": round(minutes.get("lip_fresh_market_minutes", 0)
+                                              / minutes["lip_market_minutes"], 4)
+                if minutes.get("lip_market_minutes") else None,
+                "lip_book_call_interval_s": percentiles(self.lip_intervals),
             },
             "lanes": {name: {**dict(lane.hour), "rtt_ms": percentiles(lane.rtts)} for name, lane in self.lanes.items()},
             "trade_receive_lag_s": percentiles(self.lags),
@@ -860,6 +1053,7 @@ class Recorder:
             lane.hour.clear()
             lane.rtts.clear()
         self.lags.clear()
+        self.lip_intervals.clear()
         self.minutes.clear()
         self.gaps_this_hour = []
         return path
@@ -875,7 +1069,31 @@ class Recorder:
             "lanes": {name: {"last_success_at": lane.last_success_at, "backoff_until": lane.backoff_until
                              if math.isfinite(lane.backoff_until) else None, "stale_since": lane.gap_since}
                       for name, lane in self.lanes.items()},
+            "lane_bytes": self._lane_bytes(now),
+            "lip": self._lip_status(now),
+            "pyth": self.pyth.status() if self.pyth is not None else {"state": "off", "reason": "no PYTH_API_KEY"},
         })
+
+    def _lane_bytes(self, now: float) -> dict[str, dict[str, Any]]:
+        """Per store lane: bytes on disk, bytes written this session, and the stored bytes a day at this session's
+        rate (uncompressed rate times the lane's compression ratio on disk; None in a session's first minute)."""
+        elapsed = now - self.started_at
+        out: dict[str, dict[str, Any]] = {}
+        for lane, row in self.store.lane_bytes().items():
+            ratio = row["stored_bytes"] / row["stored_raw_bytes"] if row["stored_raw_bytes"] else None
+            per_day = (row["session_raw_bytes"] / elapsed * 86400 * ratio) if ratio and elapsed >= 60 else None
+            out[lane] = {**row, "est_stored_bytes_per_day": round(per_day) if per_day is not None else None}
+        return out
+
+    def _lip_status(self, now: float) -> dict[str, Any]:
+        if not self.settings.lip:
+            return {"state": "off"}
+        fast = [window for window in self.lip_windows.values() if window.period_s <= self.settings.lip_max_period_s]
+        return {"state": "on", "programs_known": len(self.lip_windows), "fast_programs": len(fast),
+                "pinned": self._lip_pins(now, register=False),
+                "snapshots": {status: len(rows) for status, rows in self.lip_snapshots.items()},
+                "series": {series: last for series, last in sorted(self.lip_series_last.items())},
+                "series_skipped": sorted(series for series, at in self.lip_series_skip.items() if at > now)}
 
     # ------------------------------------------------------------------ books
     def _plan_books(self, now: float) -> Request | None:
@@ -886,30 +1104,52 @@ class Recorder:
             btc = sorted((item for item in self.watched.values()
                           if item.kind == "btc15m" and item.close_time > now and item.open_time <= now + 900),
                          key=lambda item: item.open_time)[:2]
+        # LIP books ride in every call while their program is scored (an unreadable one waits for its slow retry).
+        lip: list[str] = []
+        if self.settings.lip and self.store.lane_allowed("books_lip"):
+            taken = {item.ticker for item in btc}
+            lip = [ticker for ticker in self._lip_pins(now) if ticker not in taken
+                   and (ticker not in self.watched or self.watched[ticker].book_retry_at <= now)]
+        pinned = set(lip)
         pool = sorted((item for item in self.watched.values()
-                       if item.kind == "candidate" and item.close_time > now and item.status == "active"),
+                       if item.kind == "candidate" and item.close_time > now and item.status == "active"
+                       and item.ticker not in pinned),
                       key=lambda item: (item.book_due(), item.ticker))
-        room = BOOKS_PER_CALL - len(btc)
-        due = [item for item in pool if item.book_due() <= now][:room]
-        if not btc and not due:
+        room = BOOKS_PER_CALL - len(btc) - len(lip)
+        due_all = [item for item in pool if item.book_due() <= now]
+        due = due_all[:room]
+        # Family A books that were due and would have fitted without the LIP pins wait for a later call (recorded).
+        displaced = max(0, min(len(due_all), BOOKS_PER_CALL - len(btc)) - len(due))
+        if not btc and not due and not lip:
             return None
-        if btc:  # the call happens anyway: spare slots refresh the soonest-due books for free
+        if btc or lip:  # the call happens anyway: spare slots refresh the soonest-due books for free
             chosen = {item.ticker for item in due}
-            # ... but never a book that could not be read: it waits for its slow-cadence retry like any other call.
-            due += [item for item in pool if item.ticker not in chosen and item.book_retry_at <= now][:room - len(due)]
-        tickers = [item.ticker for item in btc + due]
+            # ... but never a book that could not be read (it waits for its slow-cadence retry like any other call),
+            # nor one read in the last SPARE_BOOK_MIN_AGE_S.
+            due += [item for item in pool if item.ticker not in chosen and item.book_retry_at <= now
+                    and now - item.last_book_at >= SPARE_BOOK_MIN_AGE_S][:room - len(due)]
+        tickers = [item.ticker for item in btc] + lip + [item.ticker for item in due]
         return Request("books", "/markets/orderbooks", [("tickers", ticker) for ticker in tickers],
-                       {"tickers": tickers})
+                       {"tickers": tickers, "lip": lip, "displaced": displaced,
+                        "lip_dropped": self.lip_pins_cache[2] if lip and self.lip_pins_cache else 0})
 
     def _done_books(self, request: Request, fetched: Fetched) -> None:
         tickers: list[str] = request.context["tickers"]
-        # Scheduled from the call actually made: a planned call that lost its turn keeps its place.
-        self.next_books_at = fetched.requested_at + self.settings.book_interval_s
+        # Scheduled from the call actually made: a planned call that lost its turn keeps its place. A call carrying
+        # LIP books keeps a fixed 1 s grid instead, so a start a little late is not carried into every later second.
+        due, interval = self.next_books_at, self.settings.book_interval_s
+        if request.context.get("lip") and math.isfinite(due) and 0 <= fetched.requested_at - due < interval:
+            self.next_books_at = due + interval
+        else:
+            self.next_books_at = fetched.requested_at + interval
+        self._lip_call_done(request, fetched)
+        lip = {ticker for ticker in tickers if ticker in self.watched and self.watched[ticker].kind == "lip"}
         items = fetched.body.get("orderbooks") if fetched.ok else None
         if not isinstance(items, list):
-            self.emit("book_calls", "book_call", {"requested_at": fetched.requested_at, "received_at": fetched.received_at,
-                                                  "status": fetched.status, "error": fetched.error or "no_orderbooks",
-                                                  "tickers": tickers, "changed": [], "unchanged": [], "missing": tickers})
+            failed: dict[str, Any] = {
+                "requested_at": fetched.requested_at, "received_at": fetched.received_at, "status": fetched.status,
+                "error": fetched.error or "no_orderbooks", "changed": [], "unchanged": [], "missing": tickers}
+            self._book_call_rows(tickers, lip, failed, fetched.received_at)
             return
         by_ticker = {item["ticker"]: item for item in items
                      if isinstance(item, dict) and isinstance(item.get("ticker"), str)}
@@ -923,7 +1163,7 @@ class Recorder:
             try:
                 fav = favourite_mid(book)  # first: a book it cannot read is never written
                 digest = canonical_sha(book)
-                lane = "books_btc15m" if watched.kind == "btc15m" else "books"
+                lane = {"btc15m": "books_btc15m", "lip": "books_lip"}.get(watched.kind, "books")
                 if digest != watched.book_sha:
                     seq = self.emit(lane, "book", {"ticker": ticker, "requested_at": fetched.requested_at,
                                                    "received_at": fetched.received_at, "sha256": digest,
@@ -941,19 +1181,49 @@ class Recorder:
                 missing.append(ticker)
                 unreadable.append(ticker)
                 watched.book_retry_at = fetched.received_at + SLOW_BOOK_S
-                self.gap("books", fetched.received_at, fetched.received_at, "book_unreadable", ticker=ticker,
-                         error=type(exc).__name__, detail=_detail(exc))
+                self.gap("lip" if watched.kind == "lip" else "books", fetched.received_at, fetched.received_at,
+                         "book_unreadable", ticker=ticker, error=type(exc).__name__, detail=_detail(exc))
                 continue
             watched.last_book_at = fetched.received_at
             watched.fav = fav
         # The books this call wrote reach the OS before the row that lists them, so no surviving "unchanged" row
         # can point at a changed book a crash lost.
-        self.store.flush_lanes(("books", "books_btc15m"), fetched.received_at)
-        self.emit("book_calls", "book_call", {"requested_at": fetched.requested_at, "received_at": fetched.received_at,
-                                              "status": fetched.status, "body_sha256": fetched.sha256,
-                                              "rtt_ms": round(fetched.rtt_ms, 3), "tickers": tickers,
-                                              "changed": changed, "unchanged": unchanged, "missing": missing,
-                                              "unreadable": unreadable}, fetched.received_at)
+        self.store.flush_lanes(("books", "books_btc15m", "books_lip"), fetched.received_at)
+        self._book_call_rows(tickers, lip, {
+            "requested_at": fetched.requested_at, "received_at": fetched.received_at, "status": fetched.status,
+            "body_sha256": fetched.sha256, "rtt_ms": round(fetched.rtt_ms, 3), "changed": changed,
+            "unchanged": unchanged, "missing": missing, "unreadable": unreadable}, fetched.received_at)
+
+    def _book_call_rows(self, tickers: list[str], lip: set[str], row: dict[str, Any], at: float) -> None:
+        """One book call's row for Family A and KXBTC15M (``book_calls``) and one for the LIP markets (``lip``).
+
+        The Family A replay reads every "unchanged" ticker of ``book_calls``; LIP markets never appear there.
+        """
+        lists = ("tickers", "changed", "unchanged", "missing", "unreadable")
+        full = {**row, "tickers": tickers}
+        family = {key: ([ticker for ticker in value if ticker not in lip] if key in lists else value)
+                  for key, value in full.items()}
+        if family["tickers"]:
+            self.emit("book_calls", "book_call", {**family, "lip_tickers": len(lip)}, at)
+        if lip:
+            self.emit("lip", "book_call", {key: ([ticker for ticker in value if ticker in lip] if key in lists
+                                                 else value) for key, value in full.items()}, at)
+
+    def _lip_call_done(self, request: Request, fetched: Fetched) -> None:
+        """The achieved LIP book cadence, and what keeping it cost the other lanes (telemetry/degraded)."""
+        if not request.context.get("lip"):
+            self.lip_last_call_at = None  # the next LIP call starts a new run of intervals
+            return
+        if self.lip_last_call_at is not None:
+            interval = fetched.requested_at - self.lip_last_call_at
+            self.lip_intervals.append(interval)
+            if interval > 1.5 * self.settings.book_interval_s:
+                self.degraded["lip_book_call_late"] += 1
+        self.lip_last_call_at = fetched.requested_at
+        if request.context.get("displaced"):
+            self.degraded["familya_books_displaced"] += int(request.context["displaced"])
+        if request.context.get("lip_dropped"):
+            self.degraded["lip_pins_dropped"] += int(request.context["lip_dropped"])
 
     # ------------------------------------------------------------------ trades
     def _plan_trades(self, now: float) -> Request | None:
@@ -1062,7 +1332,7 @@ class Recorder:
         The prints it vouches for (and the watch rows that say whose prints) are handed to the OS first: a crash can
         lose a coverage row, never keep one whose prints it lost.
         """
-        self.store.flush_lanes(("trades", "trades_btc15m", "admissions"), fetched.received_at)
+        self.store.flush_lanes(("trades", "trades_btc15m", "trades_lip", "admissions", "lip"), fetched.received_at)
         self.emit("trade_coverage", "trade_coverage", {"from": low, "to": job.max_ts, "scope": job.ticker or "exchange",
                                                        "backfill": backfill, "pages": job.pages, "rows": job.rows,
                                                        "received_at": fetched.received_at}, fetched.received_at)
@@ -1087,8 +1357,8 @@ class Recorder:
 
     def _keep_trades(self, rows: list[Any], job: TradeJob, fetched: Fetched) -> None:
         """Keep the prints of tickers watched during this window; a trade id is remembered only once it is stored."""
-        kept: dict[str, list[dict[str, Any]]] = {"trades": [], "trades_btc15m": []}
-        fresh: dict[str, dict[str, str]] = {"trades": {}, "trades_btc15m": {}}
+        kept: dict[str, list[dict[str, Any]]] = {"trades": [], "trades_btc15m": [], "trades_lip": []}
+        fresh: dict[str, dict[str, str]] = {"trades": {}, "trades_btc15m": {}, "trades_lip": {}}
         oldest = job.oldest
         for row in rows:
             if not isinstance(row, dict):
@@ -1100,11 +1370,12 @@ class Recorder:
             kind = self._tape_kind(ticker, job.min_ts) if isinstance(ticker, str) else None
             if kind is None or not isinstance(trade_id, str) or not trade_id:
                 continue
-            lane = "trades_btc15m" if kind == "btc15m" else "trades"
+            lane = {"btc15m": "trades_btc15m", "lip": "trades_lip"}.get(kind, "trades")
             if not finite(row):  # a kept print the store cannot hold fails the page; another ticker's never does
                 raise Malformed(f"a print of {str(ticker)[:100]} carries a non-finite number")
             digest = canonical_sha(row)[:16]
-            previous = self.dedup.get(trade_id) or fresh["trades"].get(trade_id) or fresh["trades_btc15m"].get(trade_id)
+            previous = self.dedup.get(trade_id) or next(
+                (seen[trade_id] for seen in fresh.values() if trade_id in seen), None)
             if previous == digest:
                 continue
             if previous is not None:
@@ -1538,18 +1809,20 @@ class Recorder:
         self._accepted(request)
         self._chunk_ok(request)
         meta = {"requested_at": fetched.requested_at, "received_at": fetched.received_at, "body_sha256": fetched.sha256}
-        for kind in ("btc15m", "candidate"):
+        for kind, lane in (("btc15m", "btc15m_meta"), ("candidate", "settlement"), ("lip", "lip")):
             chosen = [rows[ticker] for ticker in request.context["tickers"]
                       if ticker in rows and self.watched.get(ticker) is not None and self.watched[ticker].kind == kind]
             if chosen:
-                self.emit("btc15m_meta" if kind == "btc15m" else "settlement", "settlement", {**meta, "rows": chosen},
-                          fetched.received_at)
+                self.emit(lane, "settlement", {**meta, "rows": chosen}, fetched.received_at)
         for ticker in request.context["tickers"]:
             watched, row = self.watched.get(ticker), rows.get(ticker)
             if watched is None:
                 continue
             if row is not None:
                 watched.status = str(row.get("status"))
+                closes = ts(row.get("close_time"))
+                if watched.kind == "lip" and closes is not None:
+                    watched.close_time = closes  # a market can outlive its program's period
                 if row.get("status") in ("finalized", "settled") and row.get("result") in ("yes", "no"):
                     watched.settled = True
                     self._unwatch(ticker, fetched.received_at, "finalized")
@@ -1572,15 +1845,17 @@ class Recorder:
             self.watched[item.ticker] = item
             self.unwatched.pop(item.ticker, None)
         self._save_state(self.wall())
-        for item in items:
-            self.emit("admissions", "watch", {"action": "start", "tickers": [item.ticker], "watch_kind": item.kind,
-                                              "at_watch": item.added_at}, item.added_at)
+        for item in items:  # LIP watches go to the lip lane: Family A's admissions lane never lists them
+            self.emit("lip" if item.kind == "lip" else "admissions", "watch",
+                      {"action": "start", "tickers": [item.ticker], "watch_kind": item.kind, "at_watch": item.added_at},
+                      item.added_at)
 
     def _unwatch(self, ticker: str, now: float, reason: str) -> None:
         item = self.watched.pop(ticker, None)
         if item is not None:
             self.unwatched[ticker] = (item.kind, now)  # a later backfill of an earlier window still keeps its prints
-            self.emit("admissions", "watch", {"action": "stop", "tickers": [ticker], "reason": reason}, now)
+            self.emit("lip" if item.kind == "lip" else "admissions", "watch",
+                      {"action": "stop", "tickers": [ticker], "reason": reason}, now)
 
     # ------------------------------------------------------------------ fees and other daily rows
     def _plan_fees(self, now: float) -> Request | None:
@@ -1636,21 +1911,248 @@ class Recorder:
                                                 [("status", "active"), ("limit", 1000), ("cursor", cursor)],
                                                 {"step": "incentives", "page": request.context["page"] + 1}))
 
+    # ------------------------------------------------------------------ the rewards (LIP) lane
+    def _lip_pins(self, now: float, *, register: bool = True) -> list[str]:
+        """Markets of the short-period liquidity programs scored now (or starting within ``LIP_LEAD_S``), at most
+        ``lip_max_pinned``, current windows first. New ones are watched (prints and settlement) as kind "lip"."""
+        if not self.settings.lip:
+            return []
+        key = (math.floor(now * 4), self.lip_version)
+        if self.lip_pins_cache is None or self.lip_pins_cache[0] != key:
+            if self.lip_fast[0] != self.lip_version:  # the fast programs by start, rebuilt when the list changes
+                fast = sorted((window for window in self.lip_windows.values()
+                               if window.period_s <= self.settings.lip_max_period_s),
+                              key=lambda window: (window.start, window.ticker))
+                self.lip_fast = (self.lip_version, fast, [window.start for window in fast])
+            _, fast, starts = self.lip_fast
+            # Only windows that started at most one period (plus the tail) ago can still be scored.
+            low = bisect.bisect_left(starts, now - self.settings.lip_max_period_s - LIP_TAIL_S)
+            high = bisect.bisect_right(starts, now + LIP_LEAD_S)
+            live = [window for window in fast[low:high] if now < window.end + LIP_TAIL_S]
+            first: dict[str, LipWindow] = {}
+            for window in live:
+                first.setdefault(window.ticker, window)
+            tickers = list(first)
+            dropped = max(0, len(tickers) - self.settings.lip_max_pinned)
+            self.lip_pins_cache = (key, tickers[:self.settings.lip_max_pinned], dropped, first)
+        _, pins, _, windows = self.lip_pins_cache
+        if register:
+            self._watch(*(Watched(ticker, ticker.rsplit("-", 1)[0], ticker.split("-", 1)[0], "lip", "lip",
+                                  windows[ticker].start, windows[ticker].end, "active", now)
+                          for ticker in pins if ticker not in self.watched))
+        return list(pins)
+
+    def _lip_next(self, status: str, now: float) -> float:
+        if status == "active":  # 5 s after each period boundary, when the new windows' programs are listed
+            interval = self.settings.lip_programs_interval_s
+            return (math.floor(now / interval) + 1) * interval + 5.0
+        return now + (self.settings.lip_upcoming_interval_s if status == "upcoming"
+                      else self.settings.lip_closed_interval_s)
+
+    @staticmethod
+    def _lip_programs_request(status: str, cursor: str | None, page: int) -> Request:
+        params: list[tuple[str, Any]] = [("status", status), ("type", "liquidity"), ("limit", LIP_PAGE_LIMIT)]
+        if cursor:
+            params.append(("cursor", cursor))
+        return Request("lip", "/incentive_programs", params, {"step": "programs", "status": status, "page": page})
+
+    def _lip_series_events(self, now: float) -> list[tuple[str, str]]:
+        """(series, event) per series with a short-period program now or within 15 minutes: the event whose free
+        1 s settlement series is read (any event of the series returns the same trailing hour)."""
+        best: dict[str, LipWindow] = {}
+
+        def rank(window: LipWindow) -> tuple[int, float]:
+            return (0 if window.start <= now < window.end else 1, abs(window.start - now))
+
+        for window in self.lip_windows.values():
+            if (window.period_s > self.settings.lip_max_period_s or window.end <= now - 60
+                    or window.start > now + 900):
+                continue
+            series = window.ticker.split("-", 1)[0]
+            if self.lip_series_skip.get(series, -math.inf) > now:
+                continue
+            if series not in best or rank(window) < rank(best[series]):
+                best[series] = window
+        events = [(series, window.ticker.rsplit("-", 1)[0]) for series, window in sorted(best.items())]
+        return [(series, event) for series, event in events if public_ticker(event)]
+
+    def _plan_lip(self, now: float) -> Request | None:
+        if not self.settings.lip or not self.store.lane_allowed("lip"):
+            return None
+        if not self.lip_queue:
+            self.lip_pending.clear()  # nothing half-read survives an emptied queue
+            for status in LIP_STATUSES:
+                if now >= self.next_lip_at[status]:
+                    self.lip_queue.append(self._lip_programs_request(status, None, 1))
+                    self.next_lip_at[status] = self._lip_next(status, now)
+            if now >= self.next_lip_at["series"]:
+                events = self._lip_series_events(now)
+                self.lip_queue.extend(Request("lip", f"/live_data/events/{event}", [],
+                                              {"step": "series", "series": series, "event": event})
+                                      for series, event in events)
+                # Every reply holds the trailing hour, so a 10-minute cadence overlaps each point six times.
+                self.next_lip_at["series"] = now + (self.settings.lip_series_interval_s if events else 30.0)
+        return self.lip_queue[0] if self.lip_queue else None
+
+    def _done_lip(self, request: Request, fetched: Fetched) -> None:
+        step = request.context["step"]
+        if not fetched.ok:
+            if step == "series" and fetched.status == 404:
+                # No public series for this event (Coin Race settles on CF Benchmarks): asked again a day later.
+                series = str(request.context["series"])
+                self.lip_series_skip[series] = fetched.received_at + LIP_SERIES_SKIP_S
+                if self.lip_queue and self.lip_queue[0] is request:
+                    self.lip_queue.popleft()
+                self._accepted(request)
+                self.emit("lip", "series_unavailable", {"series": series, "event_ticker": request.context["event"],
+                                                        "status": 404, "retry_at": self.lip_series_skip[series]},
+                          fetched.received_at)
+                return
+            if self._strike(request):
+                self._give_up(request, fetched.received_at, f"lip_{step}_failed_{_why(fetched)}")
+            return
+        if step == "programs":
+            self._lip_programs_page(request, fetched)
+        else:
+            self._lip_series(request, fetched)
+
+    def _lip_programs_page(self, request: Request, fetched: Fetched) -> None:
+        status = str(request.context["status"])
+        rows, cursor = _rows(fetched.body, "incentive_programs"), _cursor(fetched.body, "next_cursor")
+        if self.lip_queue and self.lip_queue[0] is request:
+            self.lip_queue.popleft()
+        self._accepted(request)
+        pending = self.lip_pending.setdefault(status, {"rows": [], "pages": [], "cursors": set(),
+                                                       "requested_at": fetched.requested_at})
+        pending["rows"].extend(rows)
+        pending["pages"].append({"page": request.context["page"], "rows": len(rows), "body_sha256": fetched.sha256,
+                                 "received_at": fetched.received_at})
+        if cursor and cursor not in pending["cursors"] and request.context["page"] < LIP_MAX_PAGES:
+            pending["cursors"].add(cursor)
+            self.lip_queue.appendleft(self._lip_programs_request(status, cursor, request.context["page"] + 1))
+            return
+        if cursor:
+            self.gap("lip", pending["requested_at"], fetched.received_at, "lip_programs_pagination_incomplete",
+                     status=status, pages=len(pending["pages"]))
+        self.lip_pending.pop(status, None)
+        self._lip_snapshot(status, pending, fetched.received_at)
+
+    def _lip_snapshot(self, status: str, pending: dict[str, Any], now: float) -> None:
+        """One snapshot of a program list: every row on the first snapshot of a session and of each UTC day, then
+        only what was added, changed or removed since the snapshot before it (lossless, and far smaller)."""
+        by_id: dict[str, dict[str, Any]] = {}
+        for row in pending["rows"]:
+            program = row.get("id")
+            if isinstance(program, str) and program:
+                by_id[program] = row
+        digests = {program: canonical_sha(row)[:16] for program, row in by_id.items()}
+        previous = self.lip_snapshots.get(status)
+        day = datetime.fromtimestamp(now, UTC).date().isoformat()
+        full = previous is None or self.lip_snapshot_day.get(status) != day
+        payload: dict[str, Any] = {"status": status, "requested_at": pending["requested_at"], "received_at": now,
+                                   "pages": pending["pages"], "count": len(by_id), "full": full}
+        if full or previous is None:
+            payload["rows"] = list(by_id.values())
+        else:
+            payload["added"] = [row for program, row in by_id.items() if program not in previous]
+            payload["changed"] = [row for program, row in by_id.items()
+                                  if program in previous and previous[program] != digests[program]]
+            payload["removed"] = sorted(set(previous) - set(by_id))
+        if self.emit("lip", "programs", payload, now) is None:
+            return  # shed: the next diff stays against the last snapshot actually stored
+        self.lip_snapshots[status], self.lip_snapshot_day[status] = digests, day
+        if status in ("active", "upcoming"):
+            self._lip_learn(by_id, status, now)
+
+    def _lip_learn(self, rows: dict[str, dict[str, Any]], status: str, now: float) -> None:
+        """Program periods and markets, for the book pins and the series reads."""
+        changed = False
+        for program, row in rows.items():
+            ticker, start, end = row.get("market_ticker"), ts(row.get("start_date")), ts(row.get("end_date"))
+            if (not public_ticker(ticker) or start is None or end is None or end <= start
+                    or row.get("incentive_type") not in (None, "liquidity")):
+                continue
+            window = LipWindow(program, str(ticker), start, end, status)
+            if self.lip_windows.get(program) != window:
+                self.lip_windows[program] = window
+                changed = True
+        if status == "active":
+            # A program that should be running but is no longer listed as active ended early: stop pinning it.
+            for program, window in list(self.lip_windows.items()):
+                if program not in rows and window.start <= now - 60 and window.end > now:
+                    self.lip_windows.pop(program)
+                    changed = True
+        self.lip_version += changed
+
+    def _lip_series(self, request: Request, fetched: Fetched) -> None:
+        """Kalshi's free 1 s series of the settlement price: only points newer than the last stored one are kept
+        (each reply repeats the trailing hour), and an overlapping point whose value changed is listed as revised."""
+        series, event = str(request.context["series"]), str(request.context["event"])
+        data = fetched.body.get("live_data")
+        details = data.get("details") if isinstance(data, dict) else None
+        if not isinstance(details, dict) or not isinstance(details.get("timeseries"), list):
+            raise Malformed("live_data has no timeseries list")
+        if self.lip_queue and self.lip_queue[0] is request:
+            self.lip_queue.popleft()
+        self._accepted(request)
+        last = self.lip_series_last.get(series)
+        memory = self.lip_series_points.get(series, {})
+        fresh: dict[int, Any] = {}
+        revised: list[list[Any]] = []
+        for point in details["timeseries"]:
+            when, value = (point.get("t"), point.get("v")) if isinstance(point, dict) else (None, None)
+            if (not isinstance(when, int) or isinstance(when, bool) or isinstance(value, bool)
+                    or not isinstance(value, (int, float))):
+                continue
+            if last is not None and when <= last:
+                if when in memory and memory[when] != value:
+                    revised.append([when, memory[when], value])
+                continue
+            fresh[when] = value
+        new = sorted(fresh.items())
+        meta = {key: details.get(key) for key in ("asset", "cadence", "interval", "start_ms", "end_ms")}
+        seq = self.emit("lip", "series", {"series": series, "event_ticker": event, **meta,
+                                          "requested_at": fetched.requested_at, "received_at": fetched.received_at,
+                                          "body_sha256": fetched.sha256, "points_in_reply": len(details["timeseries"]),
+                                          "new": [list(point) for point in new], "revised": revised},
+                        fetched.received_at)
+        if seq is None:
+            return  # shed: these points are asked again next time
+        if last is not None and new and new[0][0] > last + 1000:
+            self.gap("lip", last / 1000.0, new[0][0] / 1000.0, "lip_series_hole", series=series)
+        memory = {**memory, **fresh}
+        for when, _, value in revised:
+            memory[when] = value
+        if memory:
+            newest = max(memory)
+            memory = {when: value for when, value in memory.items() if when >= newest - LIP_SERIES_MEMORY_MS}
+        self.lip_series_points[series] = memory
+        if new:
+            self.lip_series_last[series] = new[-1][0]
+
     # ------------------------------------------------------------------ running
     def run(self, stop: threading.Event, *, max_runtime_s: float | None = None) -> None:
         spot = SpotTicks(self) if self.settings.spot_ticks else None
         if spot is not None:
             spot.start(stop)
-        log.info("kalshi_recorder_started mode=READ_ONLY_PUBLIC host=%s rate_per_s=%s btc15m=%s spot=%s cap_mb=%s",
-                 self.host, self.settings.rate_per_s, self.settings.btc15m, self.settings.spot_ticks,
-                 self.settings.max_storage_mb)
+        log.info("kalshi_recorder_started mode=READ_ONLY_PUBLIC host=%s rate_per_s=%s btc15m=%s spot=%s cap_mb=%s "
+                 "lip=%s pyth=%s", self.host, self.settings.rate_per_s, self.settings.btc15m, self.settings.spot_ticks,
+                 self.settings.max_storage_mb, self.settings.lip, "on" if self.pyth is not None else "off")
+        if self.pyth is not None:
+            self.pyth_open = True
+            self.pyth.start()
+        else:
+            log.info("kalshi_recorder_pyth_off reason=no_%s (the Pyth lane needs a key; nothing about it is recorded)",
+                     PYTH_KEY_NAME)
         deadline = None if max_runtime_s is None else self.started_at + max_runtime_s
         done = threading.Event()
         flusher = self.start_flusher(done)
         try:
             while not stop.is_set() and (deadline is None or self.wall() < deadline):
                 if not self.step(stop):
-                    stop.wait(0.2)
+                    # Nothing was due (or a lane waits for a LIP book call): wake when that call is due, at the latest.
+                    wake = self.wake_at
+                    stop.wait(0.2 if wake is None else min(0.2, max(0.001, wake - self.wall())))
         finally:
             done.set()
             flusher.join(5)
@@ -1676,6 +2178,11 @@ class Recorder:
         return thread
 
     def close(self) -> None:
+        if self.pyth is not None:
+            try:
+                self.pyth.stop()  # the streams' last batches are written before the store closes
+            finally:
+                self.pyth_open = False
         now = self.wall()
         try:
             self.write_manifest(self.hour_started, now, partial=True)
@@ -1889,7 +2396,12 @@ def main(argv: list[str] | None = None) -> int:
             signal.signal(number, lambda *_: stop.set())
     except ValueError:
         pass
-    recorder = Recorder(settings)
+    try:  # a read-only price key; its value is never printed, logged or stored
+        pyth_key = PythKey.from_env(os.environ)
+    except ValueError:
+        log.warning("kalshi_recorder_pyth_off reason=%s_unusable (the value is never printed)", PYTH_KEY_NAME)
+        pyth_key = None
+    recorder = Recorder(settings, pyth_key=pyth_key)
     recorder.run(stop, max_runtime_s=args.max_runtime_s)
     return 0
 

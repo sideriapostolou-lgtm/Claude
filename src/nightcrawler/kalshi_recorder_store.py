@@ -21,10 +21,10 @@ the segments.
 
 The cap (default 2 GiB) is enforced in the order of PROTOCOL.md section 12. Under the default
 ``protect`` policy the recorder never deletes unscored Family A evidence: it first deletes
-KXBTC15M (and optional spot) segments older than their retention, then sheds those lanes, then
-pauses. ``rotate`` (a plain ring buffer, for use outside the protocol) deletes the oldest
-segments of any class. Family A segments older than an owner-set ``release_before`` date may
-be deleted under either policy.
+KXBTC15M (and optional spot), LIP and Pyth segments older than their retention, then sheds those
+lanes (they are not Family A candidates), then pauses. ``rotate`` (a plain ring buffer, for use
+outside the protocol) deletes the oldest segments of any class. Family A segments older than an
+owner-set ``release_before`` date may be deleted under either policy.
 """
 
 from __future__ import annotations
@@ -40,23 +40,27 @@ import shutil
 import threading
 import time
 import zlib
-from collections.abc import Callable, Iterable, Iterator
+from collections import Counter
+from collections.abc import Callable, Iterable, Iterator, Mapping
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, BinaryIO
 
 # Which retention class every lane belongs to. Family A evidence is "familya"; operations logs that
-# coverage depends on are "ops" and are protected like Family A.
+# coverage depends on are "ops" and are protected like Family A. The rewards (LIP) research lanes are "lip" and the
+# Pyth price stream is "pyth": like KXBTC15M they are not Family A candidates, so they are shed before Family A pauses.
 LANE_CLASS = {
     "books": "familya", "book_calls": "familya", "trades": "familya", "trade_coverage": "familya",
     "discovery": "familya", "admissions": "familya", "markets": "familya", "fees": "familya",
     "settlement": "familya", "other": "familya",
     "books_btc15m": "btc15m", "trades_btc15m": "btc15m", "btc15m_meta": "btc15m",
     "spot": "spot",
+    "books_lip": "lip", "trades_lip": "lip", "lip": "lip",
+    "pyth": "pyth",
     "requests": "ops", "gaps": "ops", "telemetry": "ops",
 }
-SHEDDABLE = frozenset({"btc15m", "spot"})
+SHEDDABLE = frozenset({"btc15m", "spot", "lip", "pyth"})
 RESERVED = frozenset({"seq", "lane", "kind", "at", "crc"})
 _CRC_KEY = b',"crc":"'  # every line ends with ,"crc":"<8 hex digits>"}\n
 _CRC_TAIL = len(_CRC_KEY) + 8 + 3
@@ -306,6 +310,7 @@ class RecorderStore:
 
     def __init__(self, root: Path, *, max_bytes: int, min_free_bytes: int, policy: str = "protect",
                  btc15m_retention_s: float = 72 * 3600.0, release_before: float | None = None,
+                 retention_s: Mapping[str, float] | None = None,
                  clock: Callable[[], float] = time.time,
                  disk_free: Callable[[Path], int] | None = None, headroom_bytes: int = HEADROOM_BYTES) -> None:
         if policy not in ("protect", "rotate"):
@@ -318,6 +323,8 @@ class RecorderStore:
         self.segments_dir.mkdir(parents=True, exist_ok=True)
         self.max_bytes, self.min_free_bytes, self.policy = max_bytes, min_free_bytes, policy
         self.btc15m_retention_s, self.release_before = btc15m_retention_s, release_before
+        # A sheddable class's own retention (LIP and Pyth keep weeks); a class not listed keeps btc15m_retention_s.
+        self.retention_s = dict(retention_s or {})
         self.clock = clock
         self._disk_free = disk_free or (lambda path: shutil.disk_usage(path).free)
         self._mutex = threading.RLock()
@@ -336,6 +343,9 @@ class RecorderStore:
         self.deleted_segments = self.deleted_bytes = 0
         self.recovered: list[dict[str, Any]] = []
         self.next_seq = 1
+        # Per lane, this session: uncompressed bytes and records appended (status.json's per-lane counters).
+        self.session_raw: Counter[str] = Counter()
+        self.session_records: Counter[str] = Counter()
         self._load()
         self._recover_parts()
         self.sealed_bytes = sum(segment.gz_bytes for segment in self.segments.values())
@@ -472,6 +482,8 @@ class RecorderStore:
             line = encode_record({"seq": seq, "lane": lane, "kind": kind, "at": when, **payload})
             handle = self._handle(lane, when, seq)
             handle.gz.write(line)
+            self.session_raw[lane] += len(line)
+            self.session_records[lane] += 1
             handle.records += 1
             handle.raw_bytes += len(line)
             handle.last_seq, handle.last_at = seq, max(handle.last_at, when)
@@ -598,6 +610,27 @@ class RecorderStore:
                             total += entry.stat(follow_symlinks=False).st_size
         return total
 
+    def retention(self, klass: str) -> float:
+        """Seconds a sheddable class is kept before the cap may delete it (only ever deleted to make room)."""
+        return self.retention_s.get(klass, self.btc15m_retention_s)
+
+    def lane_bytes(self) -> dict[str, dict[str, int]]:
+        """Per lane: bytes on disk now (sealed and retained, plus the open segment so far) with their uncompressed
+        size, and the uncompressed bytes and records appended this session."""
+        with self._mutex:
+            stored: Counter[str] = Counter()
+            raw: Counter[str] = Counter()
+            for segment in self.segments.values():
+                stored[segment.lane] += segment.gz_bytes
+                raw[segment.lane] += segment.raw_bytes
+            for lane, handle in self.open.items():
+                stored[lane] += handle.raw.tell()
+                raw[lane] += handle.raw_bytes
+            lanes = sorted(set(stored) | set(self.session_raw))
+            return {lane: {"stored_bytes": stored[lane], "stored_raw_bytes": raw[lane],
+                           "session_raw_bytes": self.session_raw[lane],
+                           "session_records": self.session_records[lane]} for lane in lanes}
+
     def used_bytes(self, other: int | None = None) -> int:
         """Bytes this store occupies: sealed and open segments plus every other file under the root."""
         with self._mutex:
@@ -633,7 +666,7 @@ class RecorderStore:
         ordered = sorted(self.segments.values(), key=lambda segment: (segment.last_at, segment.path))
         out: list[tuple[Segment, str]] = []
         for segment in ordered:
-            if segment.klass in SHEDDABLE and segment.last_at < now - self.btc15m_retention_s:
+            if segment.klass in SHEDDABLE and segment.last_at < now - self.retention(segment.klass):
                 out.append((segment, f"{segment.klass}_older_than_retention"))
             elif (self.release_before is not None and segment.klass not in SHEDDABLE
                   and segment.last_at < self.release_before):

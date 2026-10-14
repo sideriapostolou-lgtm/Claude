@@ -900,11 +900,14 @@ def sweep_passes(tmp_path: Path, tickers: list[str], bad: str | None, passes: in
         if burst is not None:
             burst["on"] = number == 0  # a 403 burst that outlasts the first pass, then is over
         before = len(fake.calls)
-        box.next_sweep_at = clock.at
+        box.next_sweep_at = planned = clock.at
         box.next_settlement_at = clock.at + 10 ** 9
+        started = False
         for _ in range(400):
             run(box, clock, 100)
-            if not box.sweep_queue:
+            # The pass starts once the sweep lane's backoff from the last pass is over, then runs until it drains.
+            started = started or bool(box.sweep_queue) or box.next_sweep_at > planned
+            if started and not box.sweep_queue:
                 break
         assert not box.sweep_queue
         out.append([len(call["query"]["tickers"][0].split(",")) for call in fake.calls[before:]
