@@ -151,6 +151,12 @@ class RateLimiter:
                 earliest = max(earliest, self._starts[-math.floor(self.ceiling_per_s)] + 1.0)
         return earliest
 
+    def delay(self) -> float:
+        """Seconds until the next request may start (0 when it may start now)."""
+        with self._lock:
+            now = self._clock()
+            return max(0.0, self.next_start(now) - now)
+
     def wait(self, stop: threading.Event | None = None) -> bool:
         """Block until a request may start; False when ``stop`` was set while waiting."""
         while True:

@@ -8,7 +8,8 @@ Run it as its own process or service::
 
 or inside the bot with ``KALSHI_RECORDER_ENABLED=true`` (OFF by default; the bot's IP and volume are
 already busy, so a separate service is recommended). Inside the bot it refuses to start while any desk runs
-live (``*_MODE=live``) and runs a reduced profile (0.25 request/s, no KXBTC15M lane, 1 GiB free-disk floor).
+live (``*_MODE=live``) or the bot holds Kalshi account keys, and runs a reduced profile (0.25 request/s, no
+KXBTC15M lane, 1 GiB free-disk floor).
 As its own service, ``run`` refuses to start when trading keys or live switches are present in its
 environment (names are checked, values never read), so a copy of the bot's service cannot become a second
 bot by accident. It sends only public, unauthenticated GETs from
@@ -90,14 +91,20 @@ LIVE_TRADE_SPAN_S = 60  # an older backlog goes to the backfill lane, so live po
 LIVE_TRADE_PAGES = 20
 BACKFILL_PAGES = 3000
 PAGE_ATTEMPTS = 5
+# A discovery pass waits only when this many different items, none of them already bad in the last pass, struck out
+# on 429s, server errors or no reply with no reply in between: the venue is struggling, not one item.
+DISCOVERY_ABANDON_ITEMS = 3
 DEDUP_MEMORY = 50_000
 SETTLEMENT_GIVE_UP_S = 45 * 86400.0
 UNWATCHED_MEMORY_S = 4 * 86400.0  # a ticker's prints are kept for windows that began before its watch stopped
 RETRY_AFTER_GAP_S = 60.0
+HOLD_FLUSH_S = 1.0  # a GET whose start is further away than this flushes every lane first
+FLUSH_POLL_S = 1.0  # the flusher thread's cadence while run() is running
 IN_BOT_RATE_PER_S = 0.25
 IN_BOT_MIN_FREE_MB = 1024
 # A copy of the bot's service carries these; the standalone recorder refuses to start next to them.
-TRADING_SECRET_NAMES = frozenset({"KALSHI_KEY_ID", "KALSHI_PRIVATE_KEY", "BOT_WALLET_SECRET"})
+KALSHI_ACCOUNT_NAMES = frozenset({"KALSHI_KEY_ID", "KALSHI_PRIVATE_KEY"})
+TRADING_SECRET_NAMES = KALSHI_ACCOUNT_NAMES | {"BOT_WALLET_SECRET"}
 TRADING_SECRET_PREFIXES = ("POLYMARKET_US_",)
 DYNAMIC_FIELDS = frozenset({
     "yes_bid_dollars", "yes_ask_dollars", "no_bid_dollars", "no_ask_dollars", "yes_bid_size_fp",
@@ -140,6 +147,9 @@ class RecorderSettings:
     spot_ticks: bool = False
     max_candidates: int = 4000
     host_label: str = "auto"
+    # Family A's FREEZE.json SHA-256 (PROTOCOL.md section 11): each session start writes it into the tape with this
+    # host's clock (telemetry/freeze_witness), which the replay's TEST gate requires at least 1 h before E1.
+    freeze_sha256: str = ""
 
     def problems(self) -> list[str]:
         out: list[str] = []
@@ -162,6 +172,8 @@ class RecorderSettings:
         if self.host_label not in ("auto", "workspace", "railway") and not re.fullmatch(r"[a-z0-9_-]{1,32}",
                                                                                          self.host_label):
             out.append("KALSHI_RECORDER_HOST_LABEL must be auto, workspace, railway or a short lowercase label")
+        if self.freeze_sha256 and not re.fullmatch(r"[0-9a-f]{64}", self.freeze_sha256):
+            out.append("KALSHI_RECORDER_FREEZE_SHA256 must be a SHA-256 in lowercase hex (or empty)")
         return out
 
     @classmethod
@@ -463,13 +475,17 @@ class Recorder:
         self.trade_covered_to: int | None = None
         self.trade_rate = 150.0
         self.discovery: dict[str, Any] | None = None
+        self.discovery_bad: set[str] = set()  # items skipped in the last pass: their failures abandon no pass
         self.btc_queue: deque[Request] = deque()
         self.fee_events: dict[str, float] = {}
         self.fee_queue: deque[str] = deque()
         self.other_queue: deque[Request] = deque()
         self.sweep_queue: deque[list[str]] = deque()
         self.settle_queue: deque[list[str]] = deque()
-        self.chunk_size = TICKERS_PER_SWEEP  # halved by a 4xx (a URL Kalshi will not take)
+        self.chunk_size = TICKERS_PER_SWEEP  # this pass's smallest chunk (telemetry); every pass starts at full size
+        # Tickers whose sweep/settlement row failed alone: each new pass asks them in their own one-ticker chunk, so
+        # one bad row never spoils a full chunk again (cleared when that ticker's call succeeds).
+        self.bad_rows: dict[str, set[str]] = {"sweep": set(), "settlement": set()}
         # Failed attempts at each lane's current request: (request key, count). One entry per lane.
         self.strikes: dict[str, tuple[tuple[Any, ...], int]] = {}
         # Recently unwatched tickers -> (kind, stop time): a later backfill of a window from before the stop
@@ -505,9 +521,20 @@ class Recorder:
             if not isinstance(saved, dict) or saved.get("version") != 1:
                 raise ValueError("Unreadable recorder_state.json; inspect it before recording again")
         now = self.started_at
+        covered = saved.get("trade_covered_to")
+        resumable = isinstance(covered, int) and not isinstance(covered, bool) and now - covered <= 3 * 86400
+        # The earliest print this session's trade lanes can vouch for: the restored tape end (backfilled), else its
+        # first live window. Only the tickers it resumes (the "resumed" row) are kept from here; a ticker the tape
+        # still had open but the saved state did not list (admitted after the last save) is not, so the replay
+        # closes its watch at this time (load_coverage), and no coverage row vouches for its prints after it.
+        tape_from = covered if isinstance(covered, int) and resumable else int(now - self.settings.trade_interval_s)
+        keeps_from = tape_from - TRADE_OVERLAP_S - 1
         self.emit("gaps", "session_started", {"version": __version__, "host": self.host, "read_only": True,
                                                "order_capability": False, "previous": saved.get("session"),
-                                               "commit": os.environ.get("RAILWAY_GIT_COMMIT_SHA")})
+                                               "commit": os.environ.get("RAILWAY_GIT_COMMIT_SHA"),
+                                               "keeps_prints_from": keeps_from})
+        if self.settings.freeze_sha256:
+            self.emit("telemetry", "freeze_witness", {"sha256": self.settings.freeze_sha256}, now)
         for item in self.store.recovered:
             self.gap(item["lane"], item.get("last_at"), now, "restart_partial_segment_recovered",
                      records=item["records"], dropped_bytes=item["dropped_bytes"],
@@ -522,8 +549,7 @@ class Recorder:
                           (saved.get("unwatched") or {}).items() if now - float(at) <= UNWATCHED_MEMORY_S}
         if self.watched:
             self.emit("admissions", "watch", {"action": "resumed", "tickers": sorted(self.watched)})
-        covered = saved.get("trade_covered_to")
-        if isinstance(covered, int) and now - covered <= 3 * 86400:
+        if resumable:
             # The public tape keeps history: queue the downtime for backfill instead of calling it lost.
             self.trade_covered_to = covered
         elif isinstance(covered, int):
@@ -565,6 +591,11 @@ class Recorder:
         lane, request = min(ready, key=lambda pair: (pair[0].pass_value, -pair[0].weight))
         self.virtual = lane.pass_value
         lane.pass_value += 1.0 / lane.weight
+        limiter = getattr(self.client, "limiter", None)
+        if isinstance(limiter, RateLimiter) and limiter.delay() > HOLD_FLUSH_S:
+            # This GET waits (a Retry-After hold, the 429 rate cut): hand every lane's lines to the OS first, the
+            # 429's own request and gap rows included, so a kill during the wait loses none of them.
+            self.store.flush_all(now)
         try:
             fetched = self.client.get(request.lane, request.path, request.params, stop)
         except (ValueError, TypeError) as exc:  # the transport refused it (path or parameter): never sent
@@ -572,8 +603,10 @@ class Recorder:
             return True
         if fetched.error == "stopped":
             return False
-        if fetched.ok and request.lane != "books" and not finite(fetched.body):
-            # An overflowing number (1e400) anywhere is a failed request for this item; books are checked one by one.
+        if fetched.ok and self._keeps_whole_body(request) and not finite(fetched.body):
+            # An overflowing number (1e400) in a reply that is stored whole is a failed request for this item. Books
+            # are checked one by one; prints and events only where a kept row carries it (rows the recorder drops,
+            # such as another ticker's print or a Sports event, never fail a page).
             fetched = replace(fetched, error="non_finite_number", body=None)
         self._account(lane, fetched)
         handler = getattr(self, f"_done_{request.lane}")
@@ -582,6 +615,13 @@ class Recorder:
         except Exception as exc:  # noqa: BLE001 - a malformed reply becomes a recorded failure, never a crash
             self._handler_failed(request, fetched, exc)
         return True
+
+    @staticmethod
+    def _keeps_whole_body(request: Request) -> bool:
+        """Lanes whose handler stores every row (or the body) of a reply; the others keep only some rows."""
+        if request.lane in ("books", "trades", "backfill"):
+            return False
+        return not (request.lane == "discovery" and request.context.get("stage") in ("events", "markets"))
 
     # ------------------------------------------------------------------ failures that are not HTTP errors
     @staticmethod
@@ -689,10 +729,16 @@ class Recorder:
     # ------------------------------------------------------------------ housekeeping
     def _housekeeping(self, now: float) -> None:
         if now < self.last_wall - 1.0:
-            self.gap("all", now, self.last_wall, "clock_moved_backwards")
+            # One gap per step back; every wall-clock schedule moves back with the clock, so no lane stalls until the
+            # clock catches up.
+            stepped = self.last_wall - now
+            self.gap("all", now, self.last_wall, "clock_moved_backwards", seconds=round(stepped, 3))
+            self._shift_schedules(stepped)
+            self.last_wall = now
         self.last_wall = max(self.last_wall, now)
         # Every lane's open segment reaches the OS within FLUSH_EVERY_S of its records, appends or not: a quiet
-        # lane's rows (gaps, fees, admissions, a burst's tail) then survive a SIGKILL or an OOM kill.
+        # lane's rows (gaps, fees, admissions, a burst's tail) then survive a SIGKILL or an OOM kill. While a GET
+        # blocks (a hold, a read timeout), run()'s flusher thread does the same every second.
         self.store.flush_due(now)
         minute = int(now // 60)
         if minute == self.last_minute:
@@ -740,6 +786,25 @@ class Recorder:
         self._sample_coverage(now)
         self._save_state(now)
         self._write_status(now, status.used_bytes)
+
+    def _shift_schedules(self, stepped: float) -> None:
+        """The wall clock stepped back ``stepped`` seconds: move every time the old clock scheduled back with it."""
+        for name in ("next_books_at", "next_trades_at", "next_sweep_at", "next_settlement_at", "next_btc_meta_at",
+                     "next_discovery_at", "next_series_fees_at", "next_other_at"):
+            setattr(self, name, getattr(self, name) - stepped)
+        for lane in self.lanes.values():
+            lane.backoff_until -= stepped
+            if lane.last_success_at is not None:
+                lane.last_success_at -= stepped
+            if lane.gap_since is not None:
+                lane.gap_since -= stepped
+        for item in self.watched.values():
+            item.last_book_at -= stepped
+            item.book_retry_at -= stepped
+        self.fee_events = {event: at - stepped for event, at in self.fee_events.items()}
+        self.fee_retry = {event: at - stepped for event, at in self.fee_retry.items()}
+        if self.trade_covered_to is not None:  # asked again from the new clock's view (prints are deduplicated)
+            self.trade_covered_to = math.floor(self.trade_covered_to - stepped)
 
     def _sample_coverage(self, now: float) -> None:
         candidates = [item for item in self.watched.values() if item.kind == "candidate" and item.close_time > now]
@@ -830,7 +895,8 @@ class Recorder:
             return None
         if btc:  # the call happens anyway: spare slots refresh the soonest-due books for free
             chosen = {item.ticker for item in due}
-            due += [item for item in pool if item.ticker not in chosen][:room - len(due)]
+            # ... but never a book that could not be read: it waits for its slow-cadence retry like any other call.
+            due += [item for item in pool if item.ticker not in chosen and item.book_retry_at <= now][:room - len(due)]
         tickers = [item.ticker for item in btc + due]
         return Request("books", "/markets/orderbooks", [("tickers", ticker) for ticker in tickers],
                        {"tickers": tickers})
@@ -1035,6 +1101,8 @@ class Recorder:
             if kind is None or not isinstance(trade_id, str) or not trade_id:
                 continue
             lane = "trades_btc15m" if kind == "btc15m" else "trades"
+            if not finite(row):  # a kept print the store cannot hold fails the page; another ticker's never does
+                raise Malformed(f"a print of {str(ticker)[:100]} carries a non-finite number")
             digest = canonical_sha(row)[:16]
             previous = self.dedup.get(trade_id) or fresh["trades"].get(trade_id) or fresh["trades_btc15m"].get(trade_id)
             if previous == digest:
@@ -1096,16 +1164,18 @@ class Recorder:
             self.emit("btc15m_meta", "series", {**meta, "series": body.get("series")}, fetched.received_at)
         elif step == "markets":
             self.emit("btc15m_meta", "markets", {**meta, "cursor": body.get("cursor"), "rows": rows}, fetched.received_at)
+            windows: dict[str, Watched] = {}
             for row in rows:
                 ticker, event = row.get("ticker"), row.get("event_ticker")
                 opened, closes = ts(row.get("open_time")), ts(row.get("close_time"))
                 if not isinstance(ticker, str) or not isinstance(event, str) or opened is None or closes is None:
                     continue
-                if ticker not in self.watched:
-                    self._watch(Watched(ticker, event, BTC15M, "Crypto", "btc15m", opened, closes,
-                                        str(row.get("status")), fetched.received_at))
+                if ticker not in self.watched and ticker not in windows:
+                    windows[ticker] = Watched(ticker, event, BTC15M, "Crypto", "btc15m", opened, closes,
+                                              str(row.get("status")), fetched.received_at)
                     self.btc_queue.append(Request("btc15m_meta", "/events/fee_changes", [("event_ticker", event)],
                                                   {"step": "event_fees", "event": event}))
+            self._watch(*windows.values())
         elif step == "event_fees":
             self.emit("btc15m_meta", "event_fee_changes", {**meta, "event_ticker": request.context["event"],
                                                            "body": body}, fetched.received_at)
@@ -1119,7 +1189,7 @@ class Recorder:
             state = self.discovery = {"started_at": now, "stage": "series", "categories": list(OPEN_CATEGORIES),
                                       "cursor": "", "pages": 0, "events": {}, "other_categories": Counter(),
                                       "series_todo": [], "detail_todo": [], "markets": [], "market_cursor": "",
-                                      "seen": set()}
+                                      "seen": set(), "skipped": set(), "struck": set()}
             self.next_discovery_at = now + self.settings.discovery_interval_s
             self._reset_discovery_failures()  # a new pass gets its own PAGE_ATTEMPTS
             if all(now - self.series_at.get("category:" + name, -math.inf) < 86400 for name in OPEN_CATEGORIES):
@@ -1150,15 +1220,16 @@ class Recorder:
         stage = request.context["stage"]
         if not fetched.ok:
             if self._strike(request):  # this one item keeps failing (any error, 5xx and timeouts too): skip it
+                item = self._discovery_item(request)
                 self._give_up(request, fetched.received_at, f"discovery_{stage}_failed_{_why(fetched)}")
-            elif _transient(fetched) and self.lanes["discovery"].in_a_row >= PAGE_ATTEMPTS:
-                # No reply, 429s or server errors on different items in a row: the venue is struggling, so the
-                # whole pass waits.
-                self.gap("discovery", state["started_at"], fetched.received_at, f"discovery_abandoned_{_why(fetched)}")
-                self.discovery = None
-                self.next_discovery_at = fetched.received_at + 300
-                self._reset_discovery_failures()
+                if _transient(fetched) and self.discovery is state and item not in self.discovery_bad:
+                    state["struck"].add(item)
+                    if len(state["struck"]) >= DISCOVERY_ABANDON_ITEMS:
+                        # Different items keep striking out on no reply, 429s or server errors: the venue is
+                        # struggling, so the whole pass waits. An item already bad last pass is one bad item.
+                        self._abandon_discovery(state, fetched)
             return
+        state["struck"].clear()  # the venue answers: only failures on item after item with no reply between count
         body = fetched.body
         meta = {"requested_at": fetched.requested_at, "received_at": fetched.received_at, "body_sha256": fetched.sha256}
         if stage == "series":
@@ -1174,6 +1245,8 @@ class Recorder:
         elif stage == "events":
             rows, cursor = _rows(body, "events"), _cursor(body)
             kept = [row for row in rows if row.get("category") in OPEN_CATEGORIES]
+            if not finite(kept):
+                raise Malformed("an open-category event carries a non-finite number")
             others = Counter(str(row.get("category")) for row in rows if row.get("category") not in OPEN_CATEGORIES)
             state["other_categories"].update(others)
             self.emit("discovery", "events_page", {**meta, "page": state["pages"] + 1, "rows": kept,
@@ -1202,6 +1275,11 @@ class Recorder:
                 state["stage"] = "markets"
         elif stage == "markets":
             rows, cursor = _rows(body, "markets"), _cursor(body)
+            unreadable = [str(row.get("ticker"))[:100] for row in rows if not finite(row)]
+            if unreadable:  # a row the store cannot hold (1e400) is refused alone; the series' other markets go on
+                rows = [row for row in rows if finite(row)]
+                self.gap("discovery", fetched.received_at, fetched.received_at, "market_row_unreadable",
+                         series=request.context["series"], tickers=unreadable[:50], count=len(unreadable))
             self._market_rows("discovery_markets", rows, meta, request.context["series"])
             state["markets"].extend(rows)
             if cursor and cursor not in state["seen"]:
@@ -1229,16 +1307,42 @@ class Recorder:
         self.lanes["discovery"].in_a_row = 0
         self.strikes.pop("discovery", None)
 
+    @staticmethod
+    def _discovery_item(request: Request) -> str:
+        """One name per discovery item: a category, the event list, or a series (its detail and markets together)."""
+        stage = request.context["stage"]
+        if stage == "markets":
+            return str(request.context["series"])
+        if stage == "detail":
+            return request.path.rsplit("/", 1)[-1]
+        if stage == "series":
+            return "category:" + str(dict(request.params).get("category"))
+        return stage
+
+    def _abandon_discovery(self, state: dict[str, Any], fetched: Fetched) -> None:
+        self.gap("discovery", state["started_at"], fetched.received_at, f"discovery_abandoned_{_why(fetched)}",
+                 items=sorted(state["struck"]))
+        self.discovery_bad |= state["skipped"]  # the next pass skips these again, but they abandon nothing
+        self.discovery = None
+        self.next_discovery_at = fetched.received_at + 300
+        self._reset_discovery_failures()
+
     def _discovery_maybe_done(self, state: dict[str, Any], now: float) -> None:
         if state["stage"] == "markets" and not state["series_todo"] and self.discovery is state:
             self.discovery = None  # first: a failure while admitting never leaves a finished pass open
+            self.discovery_bad = set(state["skipped"])
             self._admit_all(state, now)
 
     def _skip_discovery(self, request: Request, at: float, cause: str) -> None:
-        """Drop the one discovery item that keeps failing (with a gap) and carry on with the rest of the pass."""
+        """Drop the one discovery item that keeps failing (with a gap) and carry on with the rest of the pass.
+
+        The next item gets its own ``PAGE_ATTEMPTS`` (and backoff): the lane's failures in a row start again.
+        """
         state = self.discovery
         if state is None:
             return
+        self.lanes["discovery"].in_a_row = 0
+        state["skipped"].add(self._discovery_item(request))
         stage = request.context["stage"]
         item: Any = None
         if stage == "series" and state["categories"]:
@@ -1278,6 +1382,7 @@ class Recorder:
         rows: list[dict[str, Any]] = []
         decisions: dict[str, tuple[bool, str | None]] = {}
         candidates = sum(1 for item in self.watched.values() if item.kind == "candidate")
+        fresh: dict[str, Watched] = {}
         for market in state["markets"]:
             ticker = str(market.get("ticker") or "")
             event = state["events"].get(market.get("event_ticker"))
@@ -1301,16 +1406,18 @@ class Recorder:
                              "rule": decision.rule if reason != "recorder_capacity" else "capacity",
                              "event_ticker": market.get("event_ticker"), "series_ticker": series_name,
                              "event_listed": isinstance(event, dict)})
-            if admitted and ticker not in self.watched and isinstance(event, dict) and isinstance(series_name, str):
+            if (admitted and ticker not in self.watched and ticker not in fresh and isinstance(event, dict)
+                    and isinstance(series_name, str)):
                 opened, closes = ts(market.get("open_time")), ts(market.get("close_time"))
                 if opened is not None and closes is not None:
-                    self._watch(Watched(ticker, str(market.get("event_ticker")), series_name,
-                                        str(event.get("category")), "candidate", opened, closes,
-                                        str(market.get("status")), now))
+                    fresh[ticker] = Watched(ticker, str(market.get("event_ticker")), series_name,
+                                            str(event.get("category")), "candidate", opened, closes,
+                                            str(market.get("status")), now)
                     candidates += 1
                     event_ticker = str(market.get("event_ticker"))
                     if event_ticker not in self.fee_events and event_ticker not in self.fee_queue:
                         self.fee_queue.append(event_ticker)
+        self._watch(*fresh.values())
         self.decisions = decisions
         self.static_sha = {ticker: digest for ticker, digest in self.static_sha.items()
                            if ticker in decisions or ticker in self.watched}
@@ -1323,21 +1430,29 @@ class Recorder:
             "candidates": sum(1 for item in self.watched.values() if item.kind == "candidate")}, now)
 
     # ------------------------------------------------------------------ sweep and settlement
-    def _chunks(self, tickers: list[str]) -> list[list[str]]:
-        """Ticker lists for ``/markets?tickers=``: at most ``chunk_size`` each, and a URL Kalshi accepts."""
+    @staticmethod
+    def _chunks(tickers: list[str], alone: Iterable[str] = ()) -> list[list[str]]:
+        """Ticker lists for ``/markets?tickers=``: at most ``TICKERS_PER_SWEEP`` each, and a URL Kalshi accepts.
+
+        Every pass starts at full size (a 4xx burst or a bad row halves chunks within one pass only); tickers in
+        ``alone`` (their row failed alone last time) go last, one per call, so they never spoil a full chunk.
+        """
+        solo = set(alone)
         out: list[list[str]] = []
         chunk: list[str] = []
         size = 0
         for ticker in tickers:
+            if ticker in solo:
+                continue
             cost = len(quote(ticker, safe="")) + 3  # the encoded comma
-            if chunk and (len(chunk) >= self.chunk_size or size + cost > SWEEP_QUERY_BYTES):
+            if chunk and (len(chunk) >= TICKERS_PER_SWEEP or size + cost > SWEEP_QUERY_BYTES):
                 out.append(chunk)
                 chunk, size = [], 0
             chunk.append(ticker)
             size += cost
         if chunk:
             out.append(chunk)
-        return out
+        return out + [[ticker] for ticker in tickers if ticker in solo]
 
     def _chunk_failed(self, request: Request, fetched: Fetched) -> None:
         """A failed sweep/settlement call: a 4xx halves its chunk; otherwise it is dropped after PAGE_ATTEMPTS."""
@@ -1358,18 +1473,22 @@ class Recorder:
                                                     "tickers": len(tickers), "chunk_size": self.chunk_size})
             return
         if self._strike(request):
+            if unreadable or (refused and status != 403):  # this ticker's own row, not a challenge burst
+                self.bad_rows[request.lane].update(tickers)
             self._give_up(request, fetched.received_at, f"{request.lane}_page_failed_{_why(fetched)}")
 
-    def _chunk_ok(self) -> None:
-        """A sweep/settlement call succeeded: the chunk grows back (doubling, up to TICKERS_PER_SWEEP) after a burst."""
-        self.chunk_size = min(TICKERS_PER_SWEEP, self.chunk_size * 2)
+    def _chunk_ok(self, request: Request) -> None:
+        """A sweep/settlement call succeeded: its tickers' rows are readable again."""
+        self.bad_rows[request.lane].difference_update(request.context["tickers"])
 
     def _plan_sweep(self, now: float) -> Request | None:
         queue = self.sweep_queue
         if not queue and now >= self.next_sweep_at:
             tickers = sorted(item.ticker for item in self.watched.values()
                              if item.kind == "candidate" and item.close_time > now and not item.settled)
-            queue.extend(self._chunks(tickers))
+            self.bad_rows["sweep"].intersection_update(tickers)
+            queue.extend(self._chunks(tickers, self.bad_rows["sweep"]))
+            self.chunk_size = TICKERS_PER_SWEEP
             self.next_sweep_at = now + self.settings.sweep_interval_s
         if not queue:
             return None
@@ -1383,7 +1502,7 @@ class Recorder:
         if self.sweep_queue and self.sweep_queue[0] == request.context["tickers"]:
             self.sweep_queue.popleft()
         self._accepted(request)
-        self._chunk_ok()
+        self._chunk_ok(request)
         self._market_rows("sweep", rows, {"requested_at": fetched.requested_at, "received_at": fetched.received_at,
                                           "body_sha256": fetched.sha256}, None)
         for row in rows:
@@ -1400,7 +1519,9 @@ class Recorder:
         if not queue and now >= self.next_settlement_at:
             due = sorted(item.ticker for item in self.watched.values()
                          if not item.settled and (item.close_time <= now or item.status not in ("active", "initialized")))
-            queue.extend(self._chunks(due))
+            self.bad_rows["settlement"].intersection_update(due)
+            queue.extend(self._chunks(due, self.bad_rows["settlement"]))
+            self.chunk_size = TICKERS_PER_SWEEP
             self.next_settlement_at = now + self.settings.settlement_interval_s
         if not queue:
             return None
@@ -1415,7 +1536,7 @@ class Recorder:
         if self.settle_queue and self.settle_queue[0] == request.context["tickers"]:
             self.settle_queue.popleft()
         self._accepted(request)
-        self._chunk_ok()
+        self._chunk_ok(request)
         meta = {"requested_at": fetched.requested_at, "received_at": fetched.received_at, "body_sha256": fetched.sha256}
         for kind in ("btc15m", "candidate"):
             chosen = [rows[ticker] for ticker in request.context["tickers"]
@@ -1438,12 +1559,22 @@ class Recorder:
                          ticker=ticker)
                 self._unwatch(ticker, fetched.received_at, "settlement_timeout")
 
-    def _watch(self, item: Watched) -> None:
-        """The tape is complete for a ticker only from here: trades are kept only while it is watched."""
-        self.watched[item.ticker] = item
-        self.unwatched.pop(item.ticker, None)
-        self.emit("admissions", "watch", {"action": "start", "tickers": [item.ticker], "watch_kind": item.kind,
-                                          "at_watch": item.added_at}, item.added_at)
+    def _watch(self, *items: Watched) -> None:
+        """The tape is complete for a ticker only from here: trades are kept only while it is watched.
+
+        The saved state lists the new tickers before their "start" rows are written, so a restart after a kill
+        resumes every ticker the tape says is watched (a "start" row with no saved state behind it would leave the
+        ticker unrecorded while the replay still counted it as watched).
+        """
+        if not items:
+            return
+        for item in items:
+            self.watched[item.ticker] = item
+            self.unwatched.pop(item.ticker, None)
+        self._save_state(self.wall())
+        for item in items:
+            self.emit("admissions", "watch", {"action": "start", "tickers": [item.ticker], "watch_kind": item.kind,
+                                              "at_watch": item.added_at}, item.added_at)
 
     def _unwatch(self, ticker: str, now: float, reason: str) -> None:
         item = self.watched.pop(ticker, None)
@@ -1514,12 +1645,35 @@ class Recorder:
                  self.host, self.settings.rate_per_s, self.settings.btc15m, self.settings.spot_ticks,
                  self.settings.max_storage_mb)
         deadline = None if max_runtime_s is None else self.started_at + max_runtime_s
+        done = threading.Event()
+        flusher = self.start_flusher(done)
         try:
             while not stop.is_set() and (deadline is None or self.wall() < deadline):
                 if not self.step(stop):
                     stop.wait(0.2)
         finally:
+            done.set()
+            flusher.join(5)
             self.close()
+
+    def start_flusher(self, done: threading.Event) -> threading.Thread:
+        """A thread that flushes due lanes every ``FLUSH_POLL_S`` until ``done``: the main loop flushes only between
+        GETs, and one GET can block for a read timeout (20 s) or a Retry-After hold (up to 15 minutes)."""
+        def loop() -> None:
+            failing = False
+            while not done.wait(FLUSH_POLL_S):
+                try:
+                    self.store.flush_due(self.wall())
+                    failing = False
+                except Exception as exc:  # noqa: BLE001 - the main loop's own flush and close still run
+                    if not failing:
+                        log.warning("kalshi_recorder_flush_failed error=%s detail=%s", type(exc).__name__,
+                                    _detail(exc))
+                    failing = True
+
+        thread = threading.Thread(target=loop, name="kalshi-recorder-flush", daemon=True)
+        thread.start()
+        return thread
 
     def close(self) -> None:
         now = self.wall()
@@ -1637,16 +1791,20 @@ def run_recorder(settings: RecorderSettings, stop: threading.Event, *, max_runti
 
 
 def start_from_engine(data_dir: Path, stop: threading.Event, env: Mapping[str, str] | None = None, *,
-                      live: Iterable[str] = ()) -> threading.Thread | None:
+                      live: Iterable[str] = (), account: Iterable[str] = ()) -> threading.Thread | None:
     """The bot's hook: does nothing unless ``KALSHI_RECORDER_ENABLED=true`` (OFF by default).
 
     Reads ``.env`` overlaid by the real environment, as the bot's config does (``env`` replaces both, for
-    tests). It refuses to start while any desk in this process trades live (a recorder 429 could hold the
-    live client, cancels included), and otherwise runs the reduced in-bot profile (``RecorderSettings.in_bot``).
-    ``live`` names the ``*_MODE`` switches the bot's own Settings run live (``engine`` passes them): the bot may have
-    read another env file (``nightcrawler --env-file other.env run``), so it refuses when either source says live.
+    tests). It refuses to start while any desk in this process trades live, or while this process holds Kalshi
+    account keys at all: a recorder 429 would hold the bot's own Kalshi client, cancels included, and a paper desk
+    with keys still opens a real account client to cancel and read what an earlier live run left (the speed desk's
+    companion recovers live orders in paper mode). Otherwise it runs the reduced in-bot profile
+    (``RecorderSettings.in_bot``). ``live`` names the ``*_MODE`` switches the bot's own Settings run live and
+    ``account`` the Kalshi key settings they carry (``engine`` passes both): the bot may have read another env file
+    (``nightcrawler --env-file other.env run``), so it refuses when either source says so. Names only; no value of
+    a key is read.
     """
-    values, _ = process_env(env, dotenv=None if env is not None else ".env")
+    values, names = process_env(env, dotenv=None if env is not None else ".env")
     try:
         enabled = _bool(str(values.get("KALSHI_RECORDER_ENABLED") or "false"))
     except ValueError:
@@ -1658,6 +1816,11 @@ def start_from_engine(data_dir: Path, stop: threading.Event, env: Mapping[str, s
     if live:
         log.warning("kalshi_recorder_not_started reason=live_trading_in_this_process modes=%s "
                     "(run it as its own service: python -m nightcrawler.kalshi_recorder run)", ",".join(live))
+        return None
+    keys = sorted((KALSHI_ACCOUNT_NAMES & names) | {str(name) for name in account})
+    if keys:
+        log.warning("kalshi_recorder_not_started reason=kalshi_account_keys_in_this_process keys=%s "
+                    "(run it as its own service: python -m nightcrawler.kalshi_recorder run)", ",".join(keys))
         return None
     try:
         settings = RecorderSettings.from_env({**values, "DATA_DIR": str(data_dir)}).in_bot()

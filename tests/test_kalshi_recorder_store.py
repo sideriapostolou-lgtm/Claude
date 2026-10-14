@@ -316,3 +316,94 @@ def test_p10_a_crash_after_a_reseal_before_its_unlink_indexes_the_segment_once(t
     assert len(segments) == 1 and segments[0]["records"] == 50 and segments[0]["prev_sha256"] != segments[0]["sha256"]
     assert len(again.recovered) == 1 and not list(tmp_path.rglob("*.part"))
     assert [row["n"] for row in iter_records(tmp_path, frozenset({"books"}))] == list(range(50))
+
+
+# --------------------------------------------------------------------------- rebreak 2026-10-13 (round 3: P8, P10)
+SAMPLE = Path(__file__).resolve().parents[1] / "research" / "kalshi_edge_search" / "book_sample"
+
+
+def _books_part(root: Path, calls: int, seed: int) -> Path:
+    """Book records written the way the recorder writes them (real orderbook_fp samples, a call every 2 s, the
+    store's own flush cadence), then a SIGKILL: what is left is the .part as the OS holds it."""
+    rng = random.Random(seed)
+    base = [json.loads(path.read_text())["data"]["orderbook_fp"] for path in sorted(SAMPLE.glob("*-round*.json"))]
+    clock = Clock()
+    box = store(root, clock, max_bytes=1 << 34)
+    for call in range(calls):
+        clock.at = T0 + call * 2.0
+        for index, book in enumerate(base):
+            if rng.random() < 0.5:
+                continue  # unchanged: not written
+            for side in ("yes_dollars", "no_dollars"):
+                for level in rng.sample(book[side], min(3, len(book[side]))):
+                    level[1] = f"{float(level[1]) + rng.randint(-50, 50):.2f}"
+            box.append("books", "book", {"ticker": f"KXHIGHNY-26OCT15-T{70 + index}", "received_at": clock.at,
+                                         "sha256": rng.randbytes(32).hex(), "orderbook_fp": book}, clock.at)
+    _crash(box)
+    return next(root.rglob("books-*.jsonl.gz.part"))
+
+
+@pytest.mark.parametrize(("calls", "seed", "lost_pages"), [(34, 1, 1), (34, 1, 2), (55, 2, 1), (55, 0, 2)])
+def test_p8_zeros_inside_a_deflate_block_never_become_records(tmp_path: Path, calls: int, seed: int,
+                                                              lost_pages: int) -> None:
+    """Rebreak: a host crash zero-fills the last 4 KiB pages of a .part. Inside a compressed block zlib accepts the
+    zeros (a back-reference) and repeats earlier bytes: the torn record's start glued to the record before it is
+    valid JSON with the torn seq and the earlier record's levels. 11 of 40 such crashes indexed made-up books."""
+    part = _books_part(tmp_path / "live", calls, seed)
+    lines: list[bytes] = []
+    salvage(part, lines.append)
+    truth = {json.loads(line)["seq"]: json.loads(line) for line in lines}
+    data = part.read_bytes()
+    keep = max(4096, ((len(data) - 1) // 4096 - (lost_pages - 1)) * 4096)
+    part.write_bytes(data[:keep] + b"\x00" * (len(data) - keep))
+    found = salvage(part)
+    assert found.undecoded_bytes == 0 and found.dropped_bytes > 0  # zlib took every zero; the lines did not pass
+    box = store(tmp_path / "live", Clock(), max_bytes=1 << 34)
+    box.close()
+    got = list(iter_records(tmp_path / "live", frozenset({"books"})))
+    assert [record["seq"] for record in got] == sorted(truth)[:len(got)] and len(got) == found.records
+    assert all(record == {key: value for key, value in truth[record["seq"]].items() if key != "crc"} for record in got)
+
+
+def test_p8_every_line_carries_a_crc_and_a_line_whose_crc_fails_ends_the_salvage(tmp_path: Path) -> None:
+    from nightcrawler.kalshi_recorder_store import encode_record
+
+    line = encode_record({"seq": 1, "lane": "books", "kind": "book", "at": T0, "n": 1})
+    assert line.endswith(b'"}\n') and json.loads(line)["crc"] == f"{zlib.crc32(line[:-19] + b'}'):08x}"
+    part = tmp_path / "segments" / "books" / "2026-10-13" / "books-20261013T140000Z-000000000001.jsonl.gz.part"
+    part.parent.mkdir(parents=True)
+    forged = encode_record({"seq": 3, "lane": "books", "kind": "book", "at": T0 + 2, "n": 3}).replace(b'"n":3', b'"n":4')
+    with gzip.open(part, "wb") as stream:
+        stream.write(line + encode_record({"seq": 2, "lane": "books", "kind": "book", "at": T0 + 1, "n": 2}) + forged
+                     + encode_record({"seq": 4, "lane": "books", "kind": "book", "at": T0 + 3, "n": 5}))
+    found = salvage(part)
+    assert (found.records, found.last_seq) == (2, 2) and found.dropped_bytes > 0
+    repeated = tmp_path / "repeated.jsonl.gz"
+    with gzip.open(repeated, "wb") as stream:
+        stream.write(line + line)  # a copy of an earlier line: its seq does not rise
+    assert salvage(repeated).records == 1
+    legacy = tmp_path / "legacy.jsonl.gz"
+    with gzip.open(legacy, "wb") as stream:  # segments written before the crc existed still salvage
+        stream.write(b'{"seq":1,"lane":"books","kind":"book","at":1.0}\n{"seq":2,"lane":"books","kind":"book","at":2.0}\n')
+    assert salvage(legacy).records == 2
+
+
+def test_p10_a_leftover_part_whose_durable_prefix_is_shorter_is_never_indexed_twice(tmp_path: Path) -> None:
+    """Rebreak: recovery re-sealed 200 records read from the page cache; a host crash then lost the .part's unlink and
+    its written-back tail, and the restart adopted the shorter .part as a second segment (records duplicated)."""
+    clock = Clock()
+    box = store(tmp_path, clock)
+    for index in range(200):
+        clock.at = T0 + index
+        box.append("books", "book", {"n": index, "pad": "x" * 300}, clock.at)
+    box.flush()
+    part = next(tmp_path.rglob("*.jsonl.gz.part"))
+    _crash(box)
+    RecorderStore._reseal(part, part.with_name(part.name[:-len(".part")]))
+    data = part.read_bytes()
+    part.write_bytes(data[:len(data) * 6 // 10])
+    again = store(tmp_path, clock)
+    again.close()
+    segments = [json.loads(line) for line in (tmp_path / "index.jsonl").read_text().splitlines()]
+    assert len([row for row in segments if row["kind"] == "segment"]) == 1 and not list(tmp_path.rglob("*.part"))
+    assert [row["n"] for row in iter_records(tmp_path, frozenset({"books"}))] == list(range(200))

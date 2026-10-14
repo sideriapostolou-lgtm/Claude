@@ -12,11 +12,14 @@ cluster, $4 outstanding, $3 day loss/risk, $5 lifetime) and never the live accou
 
 TEST rows are refused until ``family_a/FREEZE.json`` and its published hash exist and match this
 run (variant or its matched baseline, E1, 28 days, every frozen parameter including L, the replay
-code's SHA-256, a freeze at least 1 h before E1 by its own ``frozen_at`` and by git's commit time,
-and the hash written in ``docs/WORKLOG.md``); a TEST account is built only from the permit that check
-returns, and every use of a permit runs the check again on its files. TRAIN and VAL are 7 days each;
-no run without a TEST permit, whatever its label or length, may have entry days at or after a frozen
-E1, and ``tape``/``feed`` keep the TEST days' books and prints from it. Every run is labelled with
+code's SHA-256, a freeze at least 1 h before E1 by its own ``frozen_at``, by git's commit time and by
+the recorder's own clock (a ``freeze_witness`` row naming its hash), and the hash written in
+``docs/WORKLOG.md``); a TEST account is built only from the permit that check returns, and every use
+of a permit runs the check again on its files. TRAIN and VAL are 7 days each; no run without a TEST
+permit, whatever its label or length, may have entry days at or after a frozen E1 (an installed copy
+with no research directory beside it refuses without a permit), and ``tape``/``feed`` keep the TEST
+days' books and prints from it. Each entry day's decision coverage is counted (section 12); below
+the section 11/12 floor the run says INCOMPLETE_DATA or INCONCLUSIVE. Every run is labelled with
 its kind (primary, pessimistic, latency stress, live-style day stop, UNFUNDED diagnostic). Nothing
 here sends, cancels or amends an order: every order below is a simulated object in memory.
 
@@ -81,6 +84,10 @@ MAKER_RATE, TAKER_RATE = Decimal("0.0175"), Decimal("0.07")
 YES, NO = "yes", "no"
 UNKNOWN_QUEUE = Decimal("Infinity")  # q outside the 10 best bids at arrival: no print reaches us until a book shows q
 PHASE_DAYS = {"TRAIN": 7, "VAL": 7, "TEST": 28}
+# Section 11: a TRAIN or VAL phase with fewer than 5 of 7 covered entry days restarts; section 12: TEST needs 26 of
+# 28 covered entry days and 90% of all its decisions covered, otherwise it is INCONCLUSIVE.
+COVERED_DAYS_NEEDED = {"TRAIN": 5, "VAL": 5, "TEST": 26}
+COVERED_SHARE = Decimal("0.90")
 MATCHED_BASELINE = {"A1": "MB-J", "A3": "MB-J", "A2": "MB-I", "A4": "MB-I"}
 FROZEN_KEYS = ("protocol", "variant", "first_day", "days", "latency_ms", "epsilon_ms")
 # This checkout's research/kalshi_edge_search: where a run without a permit looks for the frozen TEST days.
@@ -466,9 +473,12 @@ class Account:
 
     ``earmarks`` hold, from a reprice decision until its cancel is acknowledged, the extra budget its
     replacement needs (section 5.9: resting quotes are reviewed first, so new quotes at the same
-    decision cannot take it). ``released`` lists the orders whose cancel is acknowledged: section 6 holds a
-    reservation only until then, so no limit or cash check counts them any more, although their reservation
-    stays in ``reserved`` for a fill in the clock margin until they die. ``exclude`` leaves more orders out.
+    decision cannot take it). ``released`` lists the orders whose cancel is acknowledged. Such an order can still
+    fill in the clock margin (section 7.4, until the cancel takes effect + epsilon), and section 6 reserves every
+    possible loss in advance, so it stays in every limit and cash check until it dies, net of its own live
+    replacement (``replaced_by``): a margin fill of the old order trims the replacement (one contract per market),
+    so the pair can cost at most the dearer of the two, and the old order counts only its excess over the new one
+    (nothing when the replacement is dearer, as when a quote is repriced up). ``exclude`` leaves orders out.
     """
 
     cash: Decimal = START_CASH
@@ -476,7 +486,8 @@ class Account:
     order_cluster: dict[int, str] = field(default_factory=dict)
     order_day: dict[int, str] = field(default_factory=dict)
     earmarks: dict[int, tuple[str, str, Decimal]] = field(default_factory=dict)  # old oid -> (cluster, day, extra)
-    released: set[int] = field(default_factory=set)  # cancel acknowledged: out of every limit check (section 6)
+    released: set[int] = field(default_factory=set)  # cancel acknowledged; counted until it dies (see above)
+    replaced_by: dict[int, int] = field(default_factory=dict)  # released order -> its replacement
     positions: dict[str, Position] = field(default_factory=dict)
     realized: list[dict[str, Any]] = field(default_factory=list)
     day_pnl: dict[str, Decimal] = field(default_factory=lambda: defaultdict(lambda: ZERO))
@@ -488,8 +499,13 @@ class Account:
 
     def _reservations(self, exclude: frozenset[int]) -> Iterator[tuple[str, str, Decimal]]:
         for oid, amount in self.reserved.items():
-            if oid not in exclude and oid not in self.released:
-                yield self.order_cluster[oid], self.order_day[oid], amount
+            if oid in exclude:
+                continue
+            if oid in self.released:
+                new = self.replaced_by.get(oid)
+                if new is not None and new not in exclude and new in self.reserved:
+                    amount = max(ZERO, amount - self.reserved[new])  # the pair costs at most the dearer of the two
+            yield self.order_cluster[oid], self.order_day[oid], amount
         for oid, (cluster, day, amount) in self.earmarks.items():
             if oid not in exclude:
                 yield cluster, day, amount
@@ -624,18 +640,22 @@ class Permit:
     freeze: dict[str, Any] | None
     research_dir: Path
     worklog: Path | None = None
+    recorder_root: Path | None = None
 
     def verify(self, config: ReplayConfig) -> None:
         """Raise FreezeError unless this permit is for ``config`` and the gate still allows it on the files now."""
         if config != self.config:
             raise FreezeError("A permit is for one config; this run is another")
-        again = check_scoring_allowed(config, self.research_dir, worklog=self.worklog)
+        again = check_scoring_allowed(config, self.research_dir, worklog=self.worklog, recorder_root=self.recorder_root)
         if again.freeze != self.freeze:
             raise FreezeError("family_a/FREEZE.json is not the one this permit was issued for")
 
     def test_window(self) -> tuple[float, float] | None:
-        """The frozen TEST entry days [E1 00:00, E28 end] (UTC seconds), from this permit's freeze or this checkout's."""
-        return _test_window(self.freeze) if self.freeze is not None else frozen_test_window(RESEARCH_DIR)
+        """The frozen TEST entry days [E1 00:00, E28 end] (UTC seconds), from this permit's freeze or this checkout's
+        (when this code sits in a checkout; the permit's own research directory had no freeze)."""
+        if self.freeze is not None:
+            return _test_window(self.freeze)
+        return frozen_test_window(RESEARCH_DIR) if (RESEARCH_DIR / "PROTOCOL.md").exists() else None
 
 
 def _test_window(freeze: Mapping[str, Any] | None) -> tuple[float, float] | None:
@@ -661,6 +681,36 @@ def frozen_test_window(research_dir: Path) -> tuple[float, float] | None:
     if window is None:
         raise FreezeError("family_a/FREEZE.json names no readable E1, so the frozen TEST days are unknown")
     return window
+
+
+def checkout_test_window() -> tuple[float, float] | None:
+    """The frozen TEST days for a run without a permit, from the checkout this code sits in.
+
+    An installed copy (``pip install .``, the Docker image) has no research directory next to it, so it cannot know
+    whether a freeze exists: it refuses rather than assume none does (a permit names the research directory).
+    """
+    if not (RESEARCH_DIR / "PROTOCOL.md").exists():
+        raise FreezeError(f"No research/kalshi_edge_search next to this code ({RESEARCH_DIR}), so the frozen TEST days "
+                          "are unknown: build the replay from check_scoring_allowed's permit for the research directory")
+    return frozen_test_window(RESEARCH_DIR)
+
+
+WITNESS_KIND = "freeze_witness"
+
+
+def witnessed_freeze(recorder_root: Path, before: float) -> str | None:
+    """The FREEZE.json SHA-256 the recorder last wrote, by its own clock, at or before ``before`` (None if none).
+
+    The recorder writes a ``freeze_witness`` row (telemetry lane) when it starts with KALSHI_RECORDER_FREEZE_SHA256
+    set. Its time comes from the recording host, not from anything the freeze's author writes (``frozen_at``) or
+    sets (git's author and committer dates), and its segment hashes are checked as it is read.
+    """
+    latest: tuple[float, int, Any] | None = None
+    for record in iter_records(recorder_root, frozenset({"telemetry"}), end=before):
+        if record.get("kind") == WITNESS_KIND:
+            key = (float(record["at"]), int(record["seq"]), record.get("sha256"))
+            latest = key if latest is None or key[:2] > latest[:2] else latest
+    return latest[2] if latest is not None and isinstance(latest[2], str) else None
 
 
 def _committed_at(path: Path) -> datetime | None:
@@ -712,7 +762,7 @@ def _utc_time(value: Any) -> datetime | None:
 
 
 def _check_test(config: ReplayConfig, freeze: dict[str, Any], freeze_hash: str, research_dir: Path,
-                worklog: Path) -> None:
+                worklog: Path, recorder_root: Path | None) -> None:
     """Section 11's freeze, enforced: everything that could change a TEST decision must match it."""
     frozen = freeze.get("variant")
     if config.variant not in (frozen, MATCHED_BASELINE.get(str(frozen))):
@@ -744,14 +794,25 @@ def _check_test(config: ReplayConfig, freeze: dict[str, Any], freeze_hash: str, 
         raise FreezeError("FREEZE.json was committed less than 1 h before E1 (git's commit time, not frozen_at)")
     if not worklog.exists() or freeze_hash not in worklog.read_text(encoding="utf-8"):
         raise FreezeError("The FREEZE.json SHA-256 is not written in docs/WORKLOG.md")
+    # frozen_at and git's dates are both set by whoever writes the freeze (GIT_COMMITTER_DATE backdates a commit):
+    # the recorder's own clock must have seen this hash at least 1 h before E1.
+    if recorder_root is None:
+        raise FreezeError("TEST needs the recorder's witness of the freeze: pass the recorder data "
+                          "(run_replay does; `check --phase TEST` takes --data-dir)")
+    witnessed = witnessed_freeze(recorder_root, (test_start - timedelta(hours=1)).timestamp())
+    if witnessed != freeze_hash:
+        raise FreezeError("The recorder's last freeze_witness at least 1 h before E1 does not name this FREEZE.json's "
+                          "SHA-256 (set KALSHI_RECORDER_FREEZE_SHA256 on the recorder before E1 - 1 h)")
 
 
-def check_scoring_allowed(config: ReplayConfig, research_dir: Path, *, worklog: Path | None = None) -> Permit:
+def check_scoring_allowed(config: ReplayConfig, research_dir: Path, *, worklog: Path | None = None,
+                          recorder_root: Path | None = None) -> Permit:
     """Refuse TEST rows until a frozen, hash-published configuration matches; keep TRAIN/VAL before TEST.
 
     ``research_dir`` is ``research/kalshi_edge_search``; ``worklog`` defaults to the repository's
-    ``docs/WORKLOG.md`` next to it. Returns the permit a TEST account needs (its ``freeze`` is None when
-    none exists yet).
+    ``docs/WORKLOG.md`` next to it; ``recorder_root`` (``DATA_DIR/kalshi_recorder``) holds the recorder's witness of
+    the freeze, which TEST requires. Returns the permit a TEST account needs (its ``freeze`` is None when none
+    exists yet).
     """
     protocol = research_dir / "PROTOCOL.md"
     published = _published_hash(research_dir / "PROTOCOL.sha256", "PROTOCOL.md")
@@ -774,12 +835,12 @@ def check_scoring_allowed(config: ReplayConfig, research_dir: Path, *, worklog: 
             raise FreezeError("TEST rows cannot be scored before family_a/FREEZE.json and its hash exist")
         parents = research_dir.resolve().parents  # <repo>/research/kalshi_edge_search -> <repo>
         _check_test(config, freeze, freeze_hash, research_dir,
-                    worklog or parents[min(1, len(parents) - 1)] / "docs" / "WORKLOG.md")
+                    worklog or parents[min(1, len(parents) - 1)] / "docs" / "WORKLOG.md", recorder_root)
     elif freeze is not None and isinstance(freeze.get("E1"), str):
         test_start = datetime.combine(date.fromisoformat(freeze["E1"]), datetime.min.time(), UTC).timestamp()
         if config.entry_end >= test_start:
             raise FreezeError("TRAIN/VAL entry days may not reach the frozen TEST period")
-    return Permit(config, freeze, research_dir, worklog)
+    return Permit(config, freeze, research_dir, worklog, recorder_root)
 
 
 # =========================================================================== market state
@@ -833,7 +894,7 @@ class FamilyAReplay:
         elif config.phase == "TEST":
             raise FreezeError("A TEST account is built only from check_scoring_allowed's permit for this config")
         else:
-            window = frozen_test_window(RESEARCH_DIR)
+            window = checkout_test_window()
         if config.phase != "TEST" and window is not None and config.entry_end >= window[0]:
             # Any label, any length: entry days that reach the frozen TEST days are TEST rows.
             raise FreezeError("TRAIN/VAL entry days may not reach the frozen TEST period")
@@ -863,6 +924,11 @@ class FamilyAReplay:
         self.counts: Counter[str] = Counter()
         self.blocks: Counter[str] = Counter()
         self.unidentifiable: list[int] = []
+        # Section 12, per UTC entry day: decisions over markets passing section 4.1, how many were covered, and
+        # whether a market with a resting quote had an unrecovered trade gap.
+        self.day_decisions: Counter[str] = Counter()
+        self.day_covered: Counter[str] = Counter()
+        self.day_quote_gaps: set[str] = set()
         self.capital_area = ZERO
         self._area_at = config.entry_start
         self.last_settlement_at: float | None = None
@@ -996,10 +1062,25 @@ class FamilyAReplay:
             self._realize(position, ZERO, end, unresolved=True)
         result = self.summary(end, unresolved)
         result["resolution_complete"] = complete
+        coverage = self.entry_day_coverage()
+        result.update(coverage)
+        problems = []
         if short:
-            result["status"] = "INCOMPLETE_DATA: the tape ends before the last entry day"
+            problems.append("INCOMPLETE_DATA: the tape ends before the last entry day")
         elif not complete:
-            result["status"] = "INCOMPLETE_DATA: the tape ends before the resolution limit"
+            problems.append("INCOMPLETE_DATA: the tape ends before the resolution limit")
+        if not coverage["coverage_floor_met"]:
+            # Whatever the time of the last tape item: one late row never makes a gap-ridden phase complete.
+            counted = (f"{coverage['covered_entry_days']} of {self.config.days} entry days covered, "
+                       f"{coverage['decision_coverage'] or 'no'} of decisions")
+            if self.config.phase == "TEST":
+                problems.append(f"INCONCLUSIVE: {counted} (section 12 needs {coverage['covered_entry_days_needed']} "
+                                f"days and {COVERED_SHARE} of decisions)")
+            else:
+                problems.append(f"INCOMPLETE_DATA: {counted} (section 11 needs "
+                                f"{coverage['covered_entry_days_needed']}): the phase restarts on new days")
+        if problems:
+            result["status"] = "; ".join(problems)
         return result
 
     # ------------------------------------------------------------------ books, queue and fills (section 7)
@@ -1125,10 +1206,12 @@ class FamilyAReplay:
         order.state, order.died_at = "dead", at
         self.account.reserved.pop(order.oid, None)
         self.account.released.discard(order.oid)
+        self.account.replaced_by.pop(order.oid, None)
         if order.oid in self.market_orders.get(order.ticker, []):
             self.market_orders[order.ticker].remove(order.oid)
         if rested and not self.coverage.tape(order.ticker, order.arrives_at, at):
             self.unidentifiable.append(order.oid)  # section 7.7: a tape gap overlapped this resting quote
+            self.day_quote_gaps.update(self._entry_days(order.arrives_at, at))  # section 12: those days uncovered
         self._log("dead", at, oid=order.oid, ticker=order.ticker, reason=reason, remaining=order.remaining)
 
     def _reject(self, order: Order, at: float, reason: str) -> None:
@@ -1137,6 +1220,7 @@ class FamilyAReplay:
         order.buffered = []
         self.account.reserved.pop(order.oid, None)
         self.account.released.discard(order.oid)
+        self.account.replaced_by.pop(order.oid, None)
         if order.oid in self.market_orders.get(order.ticker, []):
             self.market_orders[order.ticker].remove(order.oid)
         self.counts["post_only_rejections" if reason.startswith("post_only") else f"rejected_{reason}"] += 1
@@ -1194,7 +1278,7 @@ class FamilyAReplay:
         order = self.orders[item.oid]
         self.account.earmarks.pop(order.oid, None)
         if order.live:
-            self.account.released.add(order.oid)  # section 6: at risk only until its cancel is acknowledged
+            self.account.released.add(order.oid)  # acknowledged; still fillable (and counted) until ack + epsilon
         if isinstance(item.data, Target):
             self._send(self.markets[order.ticker], item.data, item.at, replacement=True, replaces=order)
 
@@ -1357,8 +1441,64 @@ class FamilyAReplay:
             return "rotation_6h"
         return None
 
+    def _entry_days(self, start: float, end: float) -> list[str]:
+        low, high = max(start, self.config.entry_start), min(end, self.config.entry_end)
+        if high < low:
+            return []
+        first, last = datetime.fromtimestamp(low, UTC).date(), datetime.fromtimestamp(high, UTC).date()
+        return [(first + timedelta(days=offset)).isoformat() for offset in range((last - first).days + 1)]
+
+    def _count_coverage(self, at: float, day: str) -> None:
+        """Section 12: this decision's markets passing section 4.1, how many are covered, and resting-quote gaps.
+
+        The denominator treats the fee lookups as fresh (U10's 26 h rule is about the data being there, which is
+        what coverage measures): a recorder outage makes decisions uncovered instead of making markets vanish.
+        """
+        assumed = FeeStatus(at, at)
+        for state in self.markets.values():
+            if state.settled or state.row.get("status") != "active":
+                continue  # fails U3, so no decision over an admitted market
+            event_ticker = str(state.row.get("event_ticker"))
+            static = admit(state.row, self.events.get(event_ticker), self.series.get(self._series_of(state) or ""),
+                           at, window=PROTOCOL_WINDOW, fees=assumed, check_fees=True)
+            if not static.admitted:
+                continue
+            self.day_decisions[day] += 1
+            if self._covered(state, at) and self._admitted(state, at):
+                self.day_covered[day] += 1
+        for order in self.orders.values():
+            if (order.state in ("confirming", "resting", "cancelling")
+                    and not self.coverage.tape(order.ticker, max(at - COVERAGE_S, order.arrives_at), at)):
+                self.day_quote_gaps.add(day)
+
+    def entry_day_coverage(self) -> dict[str, Any]:
+        """Per entry day: decisions, covered decisions and the section 12 verdict on the day; then the phase floor.
+
+        A day with no decision over an admitted market is not covered: the replay cannot tell an empty universe
+        from a recorder that was not running, and a covered day must be shown, never assumed.
+        """
+        days: list[dict[str, Any]] = []
+        for offset in range(self.config.days):
+            day = (self.config.first_day + timedelta(days=offset)).isoformat()
+            decisions, covered = self.day_decisions[day], self.day_covered[day]
+            share = Decimal(covered) / Decimal(decisions) if decisions else None
+            days.append({"day": day, "decisions": decisions, "covered": covered,
+                         "covered_share": str(share.quantize(Decimal("0.0001"))) if share is not None else None,
+                         "resting_quote_trade_gap": day in self.day_quote_gaps,
+                         "covered_day": share is not None and share >= COVERED_SHARE and day not in self.day_quote_gaps})
+        decisions = sum(self.day_decisions[row["day"]] for row in days)
+        covered = sum(self.day_covered[row["day"]] for row in days)
+        share = Decimal(covered) / Decimal(decisions) if decisions else None
+        needed = math.ceil(self.config.days * COVERED_DAYS_NEEDED[self.config.phase] / PHASE_DAYS[self.config.phase])
+        covered_days = sum(1 for row in days if row["covered_day"])
+        met = covered_days >= needed and (self.config.phase != "TEST" or (share is not None and share >= COVERED_SHARE))
+        return {"entry_days": days, "covered_entry_days": covered_days, "covered_entry_days_needed": needed,
+                "decision_coverage": str(share.quantize(Decimal("0.0001"))) if share is not None else None,
+                "coverage_floor_met": met}
+
     def _decide(self, at: float) -> None:
         day = datetime.fromtimestamp(at, UTC).date().isoformat()
+        self._count_coverage(at, day)
         for order in sorted((order for order in self.orders.values()
                              if order.state in ("confirming", "resting") and order.cancel_at is None),
                             key=lambda order: order.oid):
@@ -1441,9 +1581,8 @@ class FamilyAReplay:
         exclude: frozenset[int] = frozenset()
         check = amount
         if replaces is not None:
-            # Its cancel is acknowledged, so its reservation is released (section 6), like every other order's
-            # whose cancel is (Account.released); it may still fill in the clock margin at its own price, and that
-            # fill trims this order, so check the dearer of the two.
+            # The old order may still fill in the clock margin at its own price, and that fill trims this order, so
+            # the pair is checked as the dearer of the two (once sent, the old one counts only its excess over it).
             exclude = frozenset({replaces.oid})
             check = size * max(per_contract, replaces.per_contract)
         blocked = self.account.blocked_by(cluster, day, check, day_stop=self.config.day_stop,
@@ -1461,6 +1600,8 @@ class FamilyAReplay:
         self.account.reserved[oid] = amount
         self.account.order_cluster[oid] = cluster
         self.account.order_day[oid] = day
+        if replaces is not None and replaces.live:
+            self.account.replaced_by[replaces.oid] = oid
         if not replacement:
             self.chain_clock[state.ticker] = at
         self.counts["replacement_orders" if replacement else "quotes_sent"] += 1
@@ -1625,8 +1766,17 @@ class TapeItem:
     data: Any
 
 
+RESTART_LOOKBACK_S = 3 * 86400 + 60  # a recorder restart backfills at most 3 days (older session_started rows)
+
+
 def load_coverage(root: Path, start: float, end: float) -> Coverage:
-    """Trade-tape coverage and watch intervals (the tape is complete for a ticker only while it is watched)."""
+    """Trade-tape coverage and watch intervals (the tape is complete for a ticker only while it is watched).
+
+    A recorder restart keeps prints only of the tickers its "resumed" row lists. Every other ticker the tape still
+    had open (admitted after the recorder last saved its state, say) is closed at the restart's
+    ``keeps_prints_from`` (the earliest print the new session can vouch for; older rows without it: 3 days before
+    the restart), so no later coverage row vouches for prints nobody kept.
+    """
     coverage = Coverage()
     for record in iter_records(root, frozenset({"trade_coverage"}), start=start - 3 * 86400, end=end + 86400):
         low, high = record.get("from"), record.get("to")
@@ -1634,14 +1784,37 @@ def load_coverage(root: Path, start: float, end: float) -> Coverage:
             scope = record.get("scope")
             (coverage.exchange if scope == "exchange" else coverage.by_ticker[str(scope)]).add(low, high)
     opened: dict[str, float] = {}
-    for record in iter_records(root, frozenset({"admissions"}), end=end):
-        if record.get("kind") != "watch":
+    restart: tuple[Any, float] | None = None  # (session, cut) until that session's first watch row
+
+    def close_stale(keep: Iterable[str]) -> None:
+        assert restart is not None
+        kept = set(keep)
+        for ticker in [ticker for ticker in opened if ticker not in kept]:
+            coverage.watched[ticker].add(opened.pop(ticker), restart[1])  # empty when the cut is before the start
+
+    starts = (record for record in iter_records(root, frozenset({"gaps"}), end=end)
+              if record.get("kind") == "session_started")
+    watches = (record for record in iter_records(root, frozenset({"admissions"}), end=end)
+               if record.get("kind") == "watch")
+    for record in heapq.merge(starts, watches, key=lambda record: (float(record["at"]), int(record["seq"]))):
+        if record["kind"] == "session_started":
+            if restart is not None:
+                close_stale(())  # the previous session started and resumed nothing
+            cut = record.get("keeps_prints_from")
+            restart = (record.get("session"), float(cut) if isinstance(cut, (int, float)) and not isinstance(cut, bool)
+                       else float(record["at"]) - RESTART_LOOKBACK_S)
             continue
+        if restart is not None and record.get("session") == restart[0]:
+            # The new session's first watch row: its "resumed" list, if it is one, is what it keeps recording.
+            close_stale((record.get("tickers") or []) if record.get("action") == "resumed" else ())
+            restart = None
         for ticker in record.get("tickers") or []:
             if record.get("action") in ("start", "resumed"):
                 opened.setdefault(ticker, float(record.get("at_watch") or record["at"]))
             elif record.get("action") == "stop" and ticker in opened:
                 coverage.watched[ticker].add(opened.pop(ticker), float(record["at"]))
+    if restart is not None:
+        close_stale(())
     for ticker, since in opened.items():
         coverage.watched[ticker].add(since, end)
     return coverage
@@ -1754,14 +1927,16 @@ def tape(root: Path, start: float, end: float, scratch: Path, *, quotes_end: flo
     8 days before its close) to ``end`` (settlements); books and prints only until ``quotes_end`` (no quote
     rests after the last entry day ends). Books are read from 10 minutes before ``start``, after each
     ticker's newest earlier book (``seed_books``), so "unchanged" calls always have a book to re-date.
-    Books and prints of the frozen TEST days are read only with a TEST permit (checked again here).
+    Books and prints of the frozen TEST days are read only with a TEST permit (checked again here): a range that
+    reaches them is refused, and the look-backs (the seed books up to 9 days back, a day of earlier prints) never
+    hand one out either.
     """
     quotes_end = end if quotes_end is None else min(end, quotes_end)
     if permit is not None:
         permit.verify(permit.config)
-    window = permit.test_window() if permit is not None else frozen_test_window(RESEARCH_DIR)
-    if (window is not None and (permit is None or permit.config.phase != "TEST")
-            and start - 600 <= window[1] and quotes_end >= window[0]):
+    window = permit.test_window() if permit is not None else checkout_test_window()
+    hidden = window if window is not None and (permit is None or permit.config.phase != "TEST") else None
+    if hidden is not None and start - 600 <= hidden[1] and quotes_end >= hidden[0]:
         raise FreezeError("Books and prints of the frozen TEST days are read only with a TEST permit")
     streams: list[Iterator[dict[str, Any]]] = [iter(seed_books(root, start - 600, seed_tickers))]
     streams += [iter_records(root, frozenset({lane}), start=start - 600, end=quotes_end) for lane in BOOK_LANES]
@@ -1773,7 +1948,11 @@ def tape(root: Path, start: float, end: float, scratch: Path, *, quotes_end: flo
             yield from record_items(record)
 
     prints = prints_from(trade_buckets(root, start, quotes_end, scratch))
-    yield from heapq.merge(items(), prints, key=lambda item: (item.at, item.rank))
+    for item in heapq.merge(items(), prints, key=lambda item: (item.at, item.rank)):
+        if (hidden is not None and item.kind in ("book", "book_unchanged", "print")
+                and hidden[0] <= item.at <= hidden[1]):
+            continue  # a TEST day's book or print, reached through a look-back: never handed out without a permit
+        yield item
 
 
 def feed(replay: FamilyAReplay, items: Iterable[TapeItem]) -> float:
@@ -1818,7 +1997,7 @@ def feed(replay: FamilyAReplay, items: Iterable[TapeItem]) -> float:
 
 def run_replay(root: Path, config: ReplayConfig, research_dir: Path, *, worklog: Path | None = None) -> dict[str, Any]:
     """Refuse first (protocol and freeze hashes), then score one SIMULATED account on the recorded tape."""
-    permit = check_scoring_allowed(config, research_dir, worklog=worklog)
+    permit = check_scoring_allowed(config, research_dir, worklog=worklog, recorder_root=root)
     end = config.resolution_end
     coverage = load_coverage(root, config.entry_start, end)
     replay = FamilyAReplay(config, coverage, permit=permit)
@@ -1856,6 +2035,7 @@ def main(argv: list[str] | None = None) -> int:
     check.add_argument("--days", type=int, default=7)
     check.add_argument("--variant", choices=sorted(VARIANTS), default="A1")
     check.add_argument("--research-dir", type=Path, default=Path("research/kalshi_edge_search"))
+    check.add_argument("--data-dir", type=Path, help="DATA_DIR: TEST needs the recorder's witness of the freeze")
     sub.add_parser("hashes", help="Print the replay code's SHA-256 (FREEZE.json's code_sha256)")
     args = parser.parse_args(argv)
     if args.command == "hashes":
@@ -1863,7 +2043,8 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.command == "check":
         try:
-            check_scoring_allowed(ReplayConfig(args.variant, args.phase, args.first_day, args.days), args.research_dir)
+            check_scoring_allowed(ReplayConfig(args.variant, args.phase, args.first_day, args.days), args.research_dir,
+                                  recorder_root=args.data_dir / "kalshi_recorder" if args.data_dir else None)
         except FreezeError as exc:
             print(f"refused: {exc}")
             return 1

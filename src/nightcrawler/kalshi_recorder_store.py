@@ -7,12 +7,14 @@ Layout under ``DATA_DIR/kalshi_recorder/``::
     index.jsonl          append-only: every sealed segment (sha256, records, times) and every deletion
     state.json           the next local sequence number and the storage level, written atomically
 
-Every record is one JSON line with a local sequence number. Segments rotate every UTC hour (or at
-8 MiB uncompressed) and are sealed with gzip; the index keeps a per-lane hash chain
-(``prev_sha256``) that may start at any retained segment, so old segments can be deleted without
-breaking verification of the rest. A crash leaves a ``.part`` file; on restart its complete lines
-are kept (streamed, so recovery needs memory for one line, not one hour), the torn tail is dropped
-and counted, and a gap is reported. Nothing is fabricated.
+Every record is one JSON line with a local sequence number and, as its last key, ``crc``: the CRC-32 of the
+line without it. Segments rotate every UTC hour (or at 8 MiB uncompressed) and are sealed with gzip; the index
+keeps a per-lane hash chain (``prev_sha256``) that may start at any retained segment, so old segments can be
+deleted without breaking verification of the rest. A crash leaves a ``.part`` file; on restart its complete lines
+are kept (streamed, so recovery needs memory for one line, not one hour), the torn tail is dropped and counted,
+and a gap is reported. Nothing is fabricated: zeros or garbage inside a compressed block can decode into lines
+that parse (copies of earlier bytes), so a salvaged line must carry a matching ``crc`` and a sequence number above
+the line before it, and salvage stops at the first line that does not.
 
 The cap counts every file under the root (segments, index, state, status, manifests), not only
 the segments.
@@ -55,7 +57,9 @@ LANE_CLASS = {
     "requests": "ops", "gaps": "ops", "telemetry": "ops",
 }
 SHEDDABLE = frozenset({"btc15m", "spot"})
-RESERVED = frozenset({"seq", "lane", "kind", "at"})
+RESERVED = frozenset({"seq", "lane", "kind", "at", "crc"})
+_CRC_KEY = b',"crc":"'  # every line ends with ,"crc":"<8 hex digits>"}\n
+_CRC_TAIL = len(_CRC_KEY) + 8 + 3
 SEGMENT_RAW_BYTES = 8 * 1024 * 1024  # small segments keep crash recovery and replay reads cheap
 SALVAGE_OUT_BYTES = 1024 * 1024
 FLUSH_EVERY_S = 5.0
@@ -110,14 +114,32 @@ class Salvage:
     last_seq: int | None = None
     first_at: float | None = None
     last_at: float | None = None
+    checked: bool = False  # a line with a crc was seen: every later line must carry a matching one
+    after_seq: int | None = None  # lines at or below this seq are already in a sealed copy: skipped, not dropped
+    skipped_bytes: int = 0
+    previous_seq: int | None = None
 
     def take(self, line: bytes) -> bool:
-        """Count one line; False when it is not a complete recorder record (everything after it is dropped)."""
+        """Count one line; False when it is not a complete recorder record (everything after it is dropped).
+
+        A complete record parses, carries a crc that matches its bytes (lines written before the crc existed carry
+        none; once one line has it, every later line must) and a sequence number above the previous line's.
+        """
+        crc = _line_crc(line)
+        if crc is False or (crc is None and self.checked):
+            return False
         try:
             record = json.loads(line)
             seq, at = int(record["seq"]), float(record["at"])
         except (ValueError, TypeError, KeyError, RecursionError):
             return False
+        if self.previous_seq is not None and seq <= self.previous_seq:
+            return False  # a repeated or older line: decoded from a corrupt block, never written here
+        self.checked = self.checked or crc is True
+        self.previous_seq = seq
+        if self.after_seq is not None and seq <= self.after_seq:
+            self.skipped_bytes += len(line)
+            return True
         self.records += 1
         self.raw_bytes += len(line)
         self.first_seq = seq if self.first_seq is None else min(self.first_seq, seq)
@@ -127,15 +149,35 @@ class Salvage:
         return True
 
 
-def salvage(path: Path, sink: Callable[[bytes], Any] | None = None) -> Salvage:
+def _line_crc(line: bytes) -> bool | None:
+    """True when the line's crc matches its bytes, False when it does not, None when the line carries no crc."""
+    if len(line) < _CRC_TAIL or not line.endswith(b'"}\n') or line[-_CRC_TAIL:-11] != _CRC_KEY:
+        return None
+    try:
+        expected = int(line[-11:-3], 16)
+    except ValueError:
+        return False
+    return zlib.crc32(line[:-_CRC_TAIL] + b"}") == expected
+
+
+def encode_record(record: dict[str, Any]) -> bytes:
+    """One JSON line ending with its own crc (the CRC-32 of the line without it), as the store writes it."""
+    body = json.dumps(record, separators=(",", ":"), allow_nan=False)
+    return (body[:-1] + f',"crc":"{zlib.crc32(body.encode()):08x}"}}\n').encode()
+
+
+def salvage(path: Path, sink: Callable[[bytes], Any] | None = None, *, after_seq: int | None = None) -> Salvage:
     """Stream the complete JSON lines of a possibly torn gzip file, optionally passing each one to ``sink``.
 
     Memory stays at one chunk plus one line: the file is decompressed incrementally and nothing is kept.
     The first torn or unreadable line ends the salvage; it and everything after it count as dropped bytes. Corrupt
     compressed data (zeros or garbage after a host crash) ends it at the first byte zlib refuses: every line
-    decoded before that byte is kept, and the refused rest of the file is counted as ``undecoded_bytes``.
+    decoded before that byte is kept, and the refused rest of the file is counted as ``undecoded_bytes``. Corrupt
+    bytes zlib does accept decode into copies of earlier output: those lines fail their crc or repeat a sequence
+    number, so they end the salvage the same way and count as dropped bytes. Lines at or below ``after_seq`` are
+    passed over (neither kept nor dropped): a sealed copy already holds them.
     """
-    out = Salvage()
+    out = Salvage(after_seq=after_seq)
     decompressor = zlib.decompressobj(16 + zlib.MAX_WBITS)
     pending = b""
     total = 0
@@ -147,11 +189,12 @@ def salvage(path: Path, sink: Callable[[bytes], Any] | None = None) -> Salvage:
         start = 0
         while (end := pending.find(b"\n", start)) >= 0:
             line = pending[start:end + 1]
+            skipped = out.skipped_bytes
             if not out.take(line):
                 stopped = True
                 pending = b""
                 return
-            if sink is not None:
+            if sink is not None and out.skipped_bytes == skipped:
                 sink(line)
             start = end + 1
         pending = pending[start:]
@@ -189,9 +232,15 @@ def salvage(path: Path, sink: Callable[[bytes], Any] | None = None) -> Salvage:
                 take(data)
     with contextlib.suppress(zlib.error):
         take(decompressor.flush())
-    out.dropped_bytes = total - out.raw_bytes
+    out.dropped_bytes = total - out.raw_bytes - out.skipped_bytes
     out.undecoded_bytes = max(0, path.stat().st_size - consumed + len(decompressor.unused_data))
     return out
+
+
+def _flush_due(handle: _Open, now: float) -> bool:
+    """Records older than ``FLUSH_EVERY_S``, or a wall clock that stepped back more than 1 s since the last flush (the
+    old flush time would otherwise hold every record back until the clock caught up)."""
+    return now - handle.flushed_at >= FLUSH_EVERY_S or now < handle.flushed_at - 1.0
 
 
 def read_complete_lines(path: Path) -> tuple[list[bytes], int]:
@@ -327,12 +376,12 @@ class RecorderStore:
                 self._adopt(orphan, orphan.parent.parent.name, keep=True)
 
     @staticmethod
-    def _reseal(source: Path, destination: Path) -> Salvage:
-        """Copy the complete lines of ``source`` into a fresh sealed gzip at ``destination`` (streamed)."""
+    def _reseal(source: Path, destination: Path, *, after_seq: int | None = None) -> Salvage:
+        """Copy the complete lines of ``source`` (above ``after_seq``) into a fresh sealed gzip at ``destination``."""
         temporary = destination.with_name(destination.name + ".tmp")
         with temporary.open("wb") as raw:
             with gzip.GzipFile(filename="", fileobj=raw, mode="wb", compresslevel=6, mtime=0) as gz:
-                found = salvage(source, gz.write)
+                found = salvage(source, gz.write, after_seq=after_seq)
             raw.flush()
             os.fsync(raw.fileno())
         if found.records:
@@ -341,7 +390,7 @@ class RecorderStore:
             temporary.unlink()
         return found
 
-    def _adopt(self, source: Path, lane: str, *, keep: bool) -> None:
+    def _adopt(self, source: Path, lane: str, *, keep: bool, after_seq: int | None = None) -> None:
         """Index the complete lines of a ``.part`` file (re-sealed) or an unindexed sealed segment."""
         relative = str(source.relative_to(self.root))
         destination = source.with_name(source.name.removesuffix(".part").removesuffix(".jsonl.gz") + ".jsonl.gz")
@@ -350,7 +399,7 @@ class RecorderStore:
             if found.records and found.dropped_bytes:
                 found = self._reseal(source, destination)
         else:
-            found = self._reseal(source, destination)
+            found = self._reseal(source, destination, after_seq=after_seq)
         if not found.records:
             source.unlink(missing_ok=True)
             self.recovered.append({"lane": lane, "path": relative, "records": 0, "dropped_bytes": found.dropped_bytes,
@@ -378,17 +427,20 @@ class RecorderStore:
             leftover.unlink(missing_ok=True)
         for part in sorted(self.segments_dir.rglob("*.jsonl.gz.part")):
             sealed = self.segments.get(str(part.with_name(part.name[:-len(".part")]).relative_to(self.root)))
+            after_seq = None
             if sealed is not None:
                 # A crash after an earlier recovery re-sealed this .part but before it unlinked it: the sealed copy
-                # (indexed, or adopted just now as an orphan) holds its complete lines. Indexing it again would chain
-                # the segment to itself; a .part that holds anything else is kept under its own name.
+                # (indexed, or adopted just now as an orphan) holds its complete lines. After a host crash the .part
+                # may hold only a prefix of them (its tail never reached the disk). Indexing it again would chain
+                # the segment to itself and duplicate its records; lines beyond the sealed copy (never seen so far)
+                # are kept under the .part's own name, and nothing the sealed copy holds is indexed twice.
                 found = salvage(part)
-                if (found.records, found.first_seq, found.last_seq) == (sealed.records, sealed.first_seq,
-                                                                         sealed.last_seq):
+                if found.last_seq is None or found.last_seq <= sealed.last_seq:
                     part.unlink()
                     continue
+                after_seq = sealed.last_seq
                 part = part.rename(part.with_name(part.name.removesuffix(".jsonl.gz.part") + "-again.jsonl.gz.part"))
-            self._adopt(part, part.parent.parent.name, keep=False)
+            self._adopt(part, part.parent.parent.name, keep=False, after_seq=after_seq)
         self._save_state()
 
     # ------------------------------------------------------------------ writing
@@ -417,8 +469,7 @@ class RecorderStore:
                 return None
             when = self.clock() if at is None else at
             seq = self.next_seq
-            record = {"seq": seq, "lane": lane, "kind": kind, "at": when, **payload}
-            line = (json.dumps(record, separators=(",", ":"), allow_nan=False) + "\n").encode()
+            line = encode_record({"seq": seq, "lane": lane, "kind": kind, "at": when, **payload})
             handle = self._handle(lane, when, seq)
             handle.gz.write(line)
             handle.records += 1
@@ -426,7 +477,7 @@ class RecorderStore:
             handle.last_seq, handle.last_at = seq, max(handle.last_at, when)
             handle.dirty = True
             self.next_seq = seq + 1
-            if when - handle.flushed_at >= FLUSH_EVERY_S:
+            if _flush_due(handle, when):
                 self._flush_handle(handle, when)
             if handle.raw_bytes >= SEGMENT_RAW_BYTES:
                 self._seal(lane)
@@ -488,13 +539,21 @@ class RecorderStore:
         handle.flushed_at, handle.dirty = at, False
 
     def flush_due(self, now: float) -> int:
-        """Flush every open segment holding records older than ``FLUSH_EVERY_S`` (the recorder calls it each step).
-
-        A lane that went quiet is flushed here, not only by its next append; returns how many were flushed.
+        """Flush every open segment holding records older than ``FLUSH_EVERY_S`` (the recorder's main loop calls it
+        each step, and its flusher thread every second, so a GET that blocks for a Retry-After hold or a read timeout
+        holds nothing back). A lane that went quiet is flushed here, not only by its next append, and so is every lane
+        after the wall clock steps back. Returns how many were flushed.
         """
         with self._mutex:
-            due = [handle for handle in self.open.values()
-                   if handle.dirty and now - handle.flushed_at >= FLUSH_EVERY_S]
+            due = [handle for handle in self.open.values() if handle.dirty and _flush_due(handle, now)]
+            for handle in due:
+                self._flush_handle(handle, now)
+            return len(due)
+
+    def flush_all(self, now: float) -> int:
+        """Flush every open segment with unflushed records now (before the recorder waits, say, for a Retry-After)."""
+        with self._mutex:
+            due = [handle for handle in self.open.values() if handle.dirty]
             for handle in due:
                 self._flush_handle(handle, now)
             return len(due)
@@ -618,9 +677,12 @@ class RecorderStore:
 
 
 def iter_segment(path: Path) -> Iterator[dict[str, Any]]:
+    """The records of one sealed segment (its sha256 is checked by the caller); each line's crc is dropped."""
     with gzip.open(path, "rb") as stream:
         for line in stream:
-            yield json.loads(line)
+            record = json.loads(line)
+            record.pop("crc", None)
+            yield record
 
 
 def load_index(root: Path) -> list[Segment]:

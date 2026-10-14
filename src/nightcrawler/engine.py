@@ -2602,6 +2602,11 @@ def live_mode_names(settings: Settings) -> list[str]:
                   if item.name.endswith("_mode") and str(getattr(settings, item.name)).strip().lower() == "live")
 
 
+def kalshi_account_names(settings: Settings) -> list[str]:
+    """The Kalshi account key settings these Settings carry (names only; a value is never read or returned)."""
+    return [name.upper() for name in ("kalshi_key_id", "kalshi_private_key") if getattr(settings, name, None)]
+
+
 def build_app(settings: Settings, clock: Clock | None = None, *, session: Any = None,
               redaction_filter: Any = None, http: Any = None) -> App:
     """Construct http, clock, sources, crawler, cocoon, radar, judge, ledger, risk, broker
@@ -2766,7 +2771,8 @@ def build_app(settings: Settings, clock: Clock | None = None, *, session: Any = 
         # KALSHI_RECORDER_ENABLED=true; the recommended home is its own service (python -m nightcrawler.kalshi_recorder).
         from nightcrawler.kalshi_recorder import start_from_engine
 
-        start_from_engine(settings.data_dir, stop_event, live=live_mode_names(settings))
+        start_from_engine(settings.data_dir, stop_event, live=live_mode_names(settings),
+                          account=kalshi_account_names(settings))
     except Exception as exc:  # noqa: BLE001 - research capture never stops a desk
         log.warning("kalshi_recorder_not_started mode=observation error=%s", type(exc).__name__)
     if settings.trenddesk_enabled:  # PAPER only: lab 3's 50-day trend rule on BTC, ETH and SOL, once a day

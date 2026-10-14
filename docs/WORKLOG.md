@@ -15,6 +15,54 @@ Template:
 
 
 
+## 2026-10-14 00:20 UTC, Claude, branch claude/kalshi-recorder, no PR (local commit only)
+- Changed: fixed the eight findings the skeptics re-broke after 7e5f40c (rebreak wf_a13c42a7-85b). Recorder:
+  a GET that must wait (a Retry-After hold) flushes every lane first, and `run()` starts a flusher thread that
+  flushes due lanes every second while a GET blocks (a 20 s read timeout); a wall clock that steps back flushes at
+  once, writes one `clock_moved_backwards` gap (was one per step, about 4 a second) and moves every schedule back
+  with it (lanes no longer stall until the clock catches up) (F2). A skipped discovery item resets the lane's
+  failures in a row, so the next item gets its own 5 attempts; a pass waits only when 3 different items strike out
+  on 429s/5xx/no reply with no reply between, and items skipped in the last pass never abandon the next one (one
+  bad series wedged every pass: 60 of 60 abandoned in 6 h). A non-finite number fails a page only where the
+  recorder keeps it (a watched print, an open-category event, a body stored whole); an unwatched print or a Sports
+  event no longer fails exchange-wide pages or backfills (a regression of 7e5f40c), and a discovery market row the
+  store cannot hold is refused alone. Every sweep/settlement pass starts at full size; a ticker whose own row
+  failed alone is asked alone, last; an unreadable book waits for its 60 s retry with the KXBTC15M lane on too
+  (P5/P6). Each record line ends with its CRC-32 and salvage requires it and a rising seq, so zeros inside a
+  deflate block after a host crash (which zlib accepts) never become records; a leftover `.part` that is a prefix of
+  its re-sealed copy is removed (P8/P10). The saved state lists a new ticker before its `start` row is written, and
+  `session_started` carries `keeps_prints_from`, where the replay closes the watch of every ticker the restart did
+  not resume (P7). The in-bot hook also refuses while the bot holds Kalshi account keys (`engine` passes their
+  names; a paper bot with keys still cancels a live run's leftovers with a real client) (M1). New optional variable
+  `KALSHI_RECORDER_FREEZE_SHA256`: each session start writes a `freeze_witness` row. Replay: an acknowledged
+  cancel stays in every limit and cash check until it dies (ack + epsilon), net of its own live replacement, so
+  two quotes repriced up still both go out but no other quote takes budget the old order can still fill (P2: the
+  day stop read 3.03, and 5.68 lifetime loss with L = 59.9 s). Every run reports decisions and covered decisions
+  per entry day, resting-quote trade gaps, `covered_entry_days`, `decision_coverage` and `coverage_floor_met`;
+  below 5 of 7 (TRAIN/VAL) or 26 of 28 and 90% (TEST) the status says INCOMPLETE_DATA/INCONCLUSIVE whatever the
+  last tape item's time (P3). Without a permit, an installed copy with no research directory refuses rather than
+  assume no freeze; `tape()` never hands out a TEST-day book or print through its look-backs; TEST also needs the
+  recorder's `freeze_witness` naming the FREEZE.json hash at or before E1 - 1 h (`run_replay` passes its data dir,
+  `check` takes `--data-dir`), because git's dates are set by whoever commits (P4/P9). Docs: KALSHI_RECORDER.md
+  sections 1, 2, 3 and 5-7.
+- Verified: 39 new tests and 8 changed ones (the TEST-permit tests now pass the recorder's witness; F3's
+  abandon count) pass; on 7e5f40c (with an import shim for two new constants) 46 of those 47 fail, the 47th being
+  one zero-page case that happens not to fabricate there. Every skeptic script was re-run: discovery wedge 6/6, P5/P6 7/7, F2 fake-clock holds and clock step 3/3 (the
+  `kth` sweep drives `step()` without `run()`'s flusher thread, so it still reports a hang's tail by construction;
+  the same case with the flusher thread and a real-process SIGKILL test pass), `kill_during_hold.py` 0 of 32 lost
+  (was 1), P8 zero-page 0 of 40 crashes with fabricated or duplicated records (was 11; the script's comparison
+  must drop the new `crc` key), P7 stale-state and kill fuzz 57 passed, M1 6 passed, P2 both scripts "no breach",
+  P3 now reports 1 of 7 and 2 of 7 covered days, P4/P9 scenarios A (installed), B and C refused. The flusher-
+  thread tests fail with the thread disabled. Full suite (`python -m pytest -q`, temp dirs on /dev/shm): 5,059
+  passed, 12 skipped (was 5,020 + 39 new). `mypy`: clean on 125 files. Ruff clean on every changed file.
+- Not verified / skipped: no live or Railway run. The recorder now on Railway (7e5f40c) writes lines without a
+  crc; they stay readable (legacy lines salvage as before). A forged recorder segment could still fake a witness.
+  PROTOCOL.md section 6 ("held until its cancel is acknowledged") and 7.4 (fills until ack + epsilon) pull apart;
+  the replay reads them conservatively and the owner may want the text to say so (the published hash is unchanged).
+- Real money touched? no. No order code, no live setting, no deploy, no push, no Railway change.
+- Next step: redeploy the recorder service from this commit when the owner chooses; set
+  `KALSHI_RECORDER_FREEZE_SHA256` at the freeze, at least 1 h before E1.
+
 ## 2026-10-13 22:40 UTC, Claude, branch claude/kalshi-recorder, no PR (local commit only)
 - Changed: fixed every finding of the recorder preflight (wf_15151869-2f0). Recorder: the main loop now flushes
   every lane's open segment within 5 s of its records, quiet lanes included, and a new segment's first record at
