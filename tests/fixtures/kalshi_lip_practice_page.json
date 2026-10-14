@@ -1,0 +1,1513 @@
+{
+ "about": "The page's top-level kalshi_lip_practice block (pagestate.kalshi_lip_practice_block), exactly as the page emits it, for the town to map. PRACTICE money; synthetic recorder data (one EUR/USD window on 2026-10-13); see docs/COORDINATION.md 'kalshi_lip_practice contract'.",
+ "cases": {
+  "fresh": {
+   "generated_at": 1791920015.0,
+   "kalshi_lip_practice": {
+    "schema_version": 1,
+    "mode": "paper",
+    "real_orders_enabled": false,
+    "label": "Practice (pretend money)",
+    "status": "fresh",
+    "reason": null,
+    "stale": false,
+    "as_of": 1791920010.0,
+    "heartbeat_s": 60.0,
+    "stale_after_s": 180.0,
+    "problem": null,
+    "note": "Practice LIP desk: pretend money quoting Kalshi's reward markets on the recorder's public books, scored with the exact reward formula and the review's fill model. It has no order path; real money on LIP needs the playbook's go/no-go bar and the owner's word.",
+    "primary_family": "FX",
+    "policies": [
+     {
+      "name": "ref_stop5",
+      "place": "ref",
+      "size": 10.0,
+      "stop_s": 300.0,
+      "pyth_pull": false
+     },
+     {
+      "name": "ref_close",
+      "place": "ref",
+      "size": 10.0,
+      "stop_s": 0.0,
+      "pyth_pull": false
+     },
+     {
+      "name": "best_stop5",
+      "place": "best",
+      "size": 10.0,
+      "stop_s": 300.0,
+      "pyth_pull": false
+     },
+     {
+      "name": "ref_pyth_pull",
+      "place": "ref",
+      "size": 10.0,
+      "stop_s": 300.0,
+      "pyth_pull": true
+     }
+    ],
+    "fill_models": [
+     "timed",
+     "fee_timed"
+    ],
+    "scorecard": [
+     {
+      "day": "2026-10-13",
+      "policy": "ref_stop5",
+      "model": "fee_timed",
+      "family": "FX",
+      "periods": 1,
+      "inactive_periods": 0,
+      "void_periods_day": 0,
+      "reward_usd": 0.0,
+      "contracts": 7.0,
+      "cross_share": 0.0,
+      "fill_m60_usd": 0.14,
+      "fill_settle_usd": -2.8,
+      "net_m60_usd": 0.14,
+      "net_settle_usd": -2.8,
+      "mean_net_settle_usd": -2.8,
+      "mean_net_m60_usd": 0.14,
+      "per_day_settle_usd": -188.44,
+      "range95_settle_usd": [
+       null,
+       null
+      ],
+      "range95_m60_usd": [
+       null,
+       null
+      ],
+      "per_day_range95_usd": [
+       null,
+       null
+      ]
+     },
+     {
+      "day": "2026-10-13",
+      "policy": "ref_stop5",
+      "model": "timed",
+      "family": "FX",
+      "periods": 1,
+      "inactive_periods": 0,
+      "void_periods_day": 0,
+      "reward_usd": 0.0,
+      "contracts": 7.0,
+      "cross_share": 0.0,
+      "fill_m60_usd": 0.14,
+      "fill_settle_usd": -2.8,
+      "net_m60_usd": 0.14,
+      "net_settle_usd": -2.8,
+      "mean_net_settle_usd": -2.8,
+      "mean_net_m60_usd": 0.14,
+      "per_day_settle_usd": -188.44,
+      "range95_settle_usd": [
+       null,
+       null
+      ],
+      "range95_m60_usd": [
+       null,
+       null
+      ],
+      "per_day_range95_usd": [
+       null,
+       null
+      ]
+     },
+     {
+      "day": "2026-10-13",
+      "policy": "ref_close",
+      "model": "fee_timed",
+      "family": "FX",
+      "periods": 1,
+      "inactive_periods": 0,
+      "void_periods_day": 0,
+      "reward_usd": 1.12,
+      "contracts": 7.0,
+      "cross_share": 0.0,
+      "fill_m60_usd": 0.14,
+      "fill_settle_usd": -2.8,
+      "net_m60_usd": 1.26,
+      "net_settle_usd": -1.68,
+      "mean_net_settle_usd": -1.68,
+      "mean_net_m60_usd": 1.26,
+      "per_day_settle_usd": -113.064,
+      "range95_settle_usd": [
+       null,
+       null
+      ],
+      "range95_m60_usd": [
+       null,
+       null
+      ],
+      "per_day_range95_usd": [
+       null,
+       null
+      ]
+     },
+     {
+      "day": "2026-10-13",
+      "policy": "ref_close",
+      "model": "timed",
+      "family": "FX",
+      "periods": 1,
+      "inactive_periods": 0,
+      "void_periods_day": 0,
+      "reward_usd": 1.12,
+      "contracts": 7.0,
+      "cross_share": 0.0,
+      "fill_m60_usd": 0.14,
+      "fill_settle_usd": -2.8,
+      "net_m60_usd": 1.26,
+      "net_settle_usd": -1.68,
+      "mean_net_settle_usd": -1.68,
+      "mean_net_m60_usd": 1.26,
+      "per_day_settle_usd": -113.064,
+      "range95_settle_usd": [
+       null,
+       null
+      ],
+      "range95_m60_usd": [
+       null,
+       null
+      ],
+      "per_day_range95_usd": [
+       null,
+       null
+      ]
+     },
+     {
+      "day": "2026-10-13",
+      "policy": "best_stop5",
+      "model": "fee_timed",
+      "family": "FX",
+      "periods": 1,
+      "inactive_periods": 0,
+      "void_periods_day": 0,
+      "reward_usd": 0.0,
+      "contracts": 7.0,
+      "cross_share": 0.0,
+      "fill_m60_usd": 0.07,
+      "fill_settle_usd": -2.87,
+      "net_m60_usd": 0.07,
+      "net_settle_usd": -2.87,
+      "mean_net_settle_usd": -2.87,
+      "mean_net_m60_usd": 0.07,
+      "per_day_settle_usd": -193.151,
+      "range95_settle_usd": [
+       null,
+       null
+      ],
+      "range95_m60_usd": [
+       null,
+       null
+      ],
+      "per_day_range95_usd": [
+       null,
+       null
+      ]
+     },
+     {
+      "day": "2026-10-13",
+      "policy": "best_stop5",
+      "model": "timed",
+      "family": "FX",
+      "periods": 1,
+      "inactive_periods": 0,
+      "void_periods_day": 0,
+      "reward_usd": 0.0,
+      "contracts": 7.0,
+      "cross_share": 0.0,
+      "fill_m60_usd": 0.07,
+      "fill_settle_usd": -2.87,
+      "net_m60_usd": 0.07,
+      "net_settle_usd": -2.87,
+      "mean_net_settle_usd": -2.87,
+      "mean_net_m60_usd": 0.07,
+      "per_day_settle_usd": -193.151,
+      "range95_settle_usd": [
+       null,
+       null
+      ],
+      "range95_m60_usd": [
+       null,
+       null
+      ],
+      "per_day_range95_usd": [
+       null,
+       null
+      ]
+     },
+     {
+      "day": "2026-10-13",
+      "policy": "ref_pyth_pull",
+      "model": "fee_timed",
+      "family": "FX",
+      "periods": 0,
+      "inactive_periods": 1,
+      "void_periods_day": 0,
+      "reward_usd": 0.0,
+      "contracts": 0.0,
+      "cross_share": null,
+      "fill_m60_usd": 0.0,
+      "fill_settle_usd": 0.0,
+      "net_m60_usd": 0.0,
+      "net_settle_usd": 0.0,
+      "mean_net_settle_usd": null,
+      "mean_net_m60_usd": null,
+      "per_day_settle_usd": null,
+      "range95_settle_usd": [
+       null,
+       null
+      ],
+      "range95_m60_usd": [
+       null,
+       null
+      ],
+      "per_day_range95_usd": [
+       null,
+       null
+      ]
+     },
+     {
+      "day": "2026-10-13",
+      "policy": "ref_pyth_pull",
+      "model": "timed",
+      "family": "FX",
+      "periods": 0,
+      "inactive_periods": 1,
+      "void_periods_day": 0,
+      "reward_usd": 0.0,
+      "contracts": 0.0,
+      "cross_share": null,
+      "fill_m60_usd": 0.0,
+      "fill_settle_usd": 0.0,
+      "net_m60_usd": 0.0,
+      "net_settle_usd": 0.0,
+      "mean_net_settle_usd": null,
+      "mean_net_m60_usd": null,
+      "per_day_settle_usd": null,
+      "range95_settle_usd": [
+       null,
+       null
+      ],
+      "range95_m60_usd": [
+       null,
+       null
+      ],
+      "per_day_range95_usd": [
+       null,
+       null
+      ]
+     },
+     {
+      "day": "2026-10-13",
+      "policy": "ref_stop5",
+      "model": "fee_timed",
+      "family": "all",
+      "periods": 1,
+      "inactive_periods": 0,
+      "void_periods_day": 0,
+      "reward_usd": 0.0,
+      "contracts": 7.0,
+      "cross_share": 0.0,
+      "fill_m60_usd": 0.14,
+      "fill_settle_usd": -2.8,
+      "net_m60_usd": 0.14,
+      "net_settle_usd": -2.8,
+      "mean_net_settle_usd": -2.8,
+      "mean_net_m60_usd": 0.14,
+      "per_day_settle_usd": null,
+      "range95_settle_usd": [
+       null,
+       null
+      ],
+      "range95_m60_usd": [
+       null,
+       null
+      ],
+      "per_day_range95_usd": [
+       null,
+       null
+      ]
+     },
+     {
+      "day": "2026-10-13",
+      "policy": "ref_stop5",
+      "model": "timed",
+      "family": "all",
+      "periods": 1,
+      "inactive_periods": 0,
+      "void_periods_day": 0,
+      "reward_usd": 0.0,
+      "contracts": 7.0,
+      "cross_share": 0.0,
+      "fill_m60_usd": 0.14,
+      "fill_settle_usd": -2.8,
+      "net_m60_usd": 0.14,
+      "net_settle_usd": -2.8,
+      "mean_net_settle_usd": -2.8,
+      "mean_net_m60_usd": 0.14,
+      "per_day_settle_usd": null,
+      "range95_settle_usd": [
+       null,
+       null
+      ],
+      "range95_m60_usd": [
+       null,
+       null
+      ],
+      "per_day_range95_usd": [
+       null,
+       null
+      ]
+     },
+     {
+      "day": "2026-10-13",
+      "policy": "ref_close",
+      "model": "fee_timed",
+      "family": "all",
+      "periods": 1,
+      "inactive_periods": 0,
+      "void_periods_day": 0,
+      "reward_usd": 1.12,
+      "contracts": 7.0,
+      "cross_share": 0.0,
+      "fill_m60_usd": 0.14,
+      "fill_settle_usd": -2.8,
+      "net_m60_usd": 1.26,
+      "net_settle_usd": -1.68,
+      "mean_net_settle_usd": -1.68,
+      "mean_net_m60_usd": 1.26,
+      "per_day_settle_usd": null,
+      "range95_settle_usd": [
+       null,
+       null
+      ],
+      "range95_m60_usd": [
+       null,
+       null
+      ],
+      "per_day_range95_usd": [
+       null,
+       null
+      ]
+     },
+     {
+      "day": "2026-10-13",
+      "policy": "ref_close",
+      "model": "timed",
+      "family": "all",
+      "periods": 1,
+      "inactive_periods": 0,
+      "void_periods_day": 0,
+      "reward_usd": 1.12,
+      "contracts": 7.0,
+      "cross_share": 0.0,
+      "fill_m60_usd": 0.14,
+      "fill_settle_usd": -2.8,
+      "net_m60_usd": 1.26,
+      "net_settle_usd": -1.68,
+      "mean_net_settle_usd": -1.68,
+      "mean_net_m60_usd": 1.26,
+      "per_day_settle_usd": null,
+      "range95_settle_usd": [
+       null,
+       null
+      ],
+      "range95_m60_usd": [
+       null,
+       null
+      ],
+      "per_day_range95_usd": [
+       null,
+       null
+      ]
+     },
+     {
+      "day": "2026-10-13",
+      "policy": "best_stop5",
+      "model": "fee_timed",
+      "family": "all",
+      "periods": 1,
+      "inactive_periods": 0,
+      "void_periods_day": 0,
+      "reward_usd": 0.0,
+      "contracts": 7.0,
+      "cross_share": 0.0,
+      "fill_m60_usd": 0.07,
+      "fill_settle_usd": -2.87,
+      "net_m60_usd": 0.07,
+      "net_settle_usd": -2.87,
+      "mean_net_settle_usd": -2.87,
+      "mean_net_m60_usd": 0.07,
+      "per_day_settle_usd": null,
+      "range95_settle_usd": [
+       null,
+       null
+      ],
+      "range95_m60_usd": [
+       null,
+       null
+      ],
+      "per_day_range95_usd": [
+       null,
+       null
+      ]
+     },
+     {
+      "day": "2026-10-13",
+      "policy": "best_stop5",
+      "model": "timed",
+      "family": "all",
+      "periods": 1,
+      "inactive_periods": 0,
+      "void_periods_day": 0,
+      "reward_usd": 0.0,
+      "contracts": 7.0,
+      "cross_share": 0.0,
+      "fill_m60_usd": 0.07,
+      "fill_settle_usd": -2.87,
+      "net_m60_usd": 0.07,
+      "net_settle_usd": -2.87,
+      "mean_net_settle_usd": -2.87,
+      "mean_net_m60_usd": 0.07,
+      "per_day_settle_usd": null,
+      "range95_settle_usd": [
+       null,
+       null
+      ],
+      "range95_m60_usd": [
+       null,
+       null
+      ],
+      "per_day_range95_usd": [
+       null,
+       null
+      ]
+     },
+     {
+      "day": "2026-10-13",
+      "policy": "ref_pyth_pull",
+      "model": "fee_timed",
+      "family": "all",
+      "periods": 0,
+      "inactive_periods": 1,
+      "void_periods_day": 0,
+      "reward_usd": 0.0,
+      "contracts": 0.0,
+      "cross_share": null,
+      "fill_m60_usd": 0.0,
+      "fill_settle_usd": 0.0,
+      "net_m60_usd": 0.0,
+      "net_settle_usd": 0.0,
+      "mean_net_settle_usd": null,
+      "mean_net_m60_usd": null,
+      "per_day_settle_usd": null,
+      "range95_settle_usd": [
+       null,
+       null
+      ],
+      "range95_m60_usd": [
+       null,
+       null
+      ],
+      "per_day_range95_usd": [
+       null,
+       null
+      ]
+     },
+     {
+      "day": "2026-10-13",
+      "policy": "ref_pyth_pull",
+      "model": "timed",
+      "family": "all",
+      "periods": 0,
+      "inactive_periods": 1,
+      "void_periods_day": 0,
+      "reward_usd": 0.0,
+      "contracts": 0.0,
+      "cross_share": null,
+      "fill_m60_usd": 0.0,
+      "fill_settle_usd": 0.0,
+      "net_m60_usd": 0.0,
+      "net_settle_usd": 0.0,
+      "mean_net_settle_usd": null,
+      "mean_net_m60_usd": null,
+      "per_day_settle_usd": null,
+      "range95_settle_usd": [
+       null,
+       null
+      ],
+      "range95_m60_usd": [
+       null,
+       null
+      ],
+      "per_day_range95_usd": [
+       null,
+       null
+      ]
+     }
+    ],
+    "accounts": [
+     {
+      "account": "A45:ref_stop5",
+      "plan": "A45",
+      "policy": "ref_stop5",
+      "model": "timed",
+      "series": [
+       "KXEURUSD15M"
+      ],
+      "start_usd": 45.0,
+      "equity_usd": 42.2,
+      "low_usd": 42.2,
+      "low_share": 0.9378,
+      "reward_usd": 0.0,
+      "contracts": 7.0,
+      "periods": 1,
+      "open_windows": 0
+     },
+     {
+      "account": "A45:ref_close",
+      "plan": "A45",
+      "policy": "ref_close",
+      "model": "timed",
+      "series": [
+       "KXEURUSD15M"
+      ],
+      "start_usd": 45.0,
+      "equity_usd": 43.32,
+      "low_usd": 43.32,
+      "low_share": 0.9627,
+      "reward_usd": 1.12,
+      "contracts": 7.0,
+      "periods": 1,
+      "open_windows": 0
+     },
+     {
+      "account": "A45:best_stop5",
+      "plan": "A45",
+      "policy": "best_stop5",
+      "model": "timed",
+      "series": [
+       "KXEURUSD15M"
+      ],
+      "start_usd": 45.0,
+      "equity_usd": 42.13,
+      "low_usd": 42.13,
+      "low_share": 0.9362,
+      "reward_usd": 0.0,
+      "contracts": 7.0,
+      "periods": 1,
+      "open_windows": 0
+     },
+     {
+      "account": "A45:ref_pyth_pull",
+      "plan": "A45",
+      "policy": "ref_pyth_pull",
+      "model": "timed",
+      "series": [
+       "KXEURUSD15M"
+      ],
+      "start_usd": 45.0,
+      "equity_usd": 45.0,
+      "low_usd": 45.0,
+      "low_share": 1.0,
+      "reward_usd": 0.0,
+      "contracts": 0.0,
+      "periods": 1,
+      "open_windows": 0
+     },
+     {
+      "account": "A250:ref_stop5",
+      "plan": "A250",
+      "policy": "ref_stop5",
+      "model": "timed",
+      "series": [
+       "KXEURUSD15M",
+       "KXGBPUSD15M",
+       "KXUSDJPY15M",
+       "KXAUDUSD15M",
+       "KXUSDCAD15M"
+      ],
+      "start_usd": 250.0,
+      "equity_usd": 247.2,
+      "low_usd": 247.2,
+      "low_share": 0.9888,
+      "reward_usd": 0.0,
+      "contracts": 7.0,
+      "periods": 1,
+      "open_windows": 0
+     },
+     {
+      "account": "A250:ref_close",
+      "plan": "A250",
+      "policy": "ref_close",
+      "model": "timed",
+      "series": [
+       "KXEURUSD15M",
+       "KXGBPUSD15M",
+       "KXUSDJPY15M",
+       "KXAUDUSD15M",
+       "KXUSDCAD15M"
+      ],
+      "start_usd": 250.0,
+      "equity_usd": 248.32,
+      "low_usd": 248.32,
+      "low_share": 0.9933,
+      "reward_usd": 1.12,
+      "contracts": 7.0,
+      "periods": 1,
+      "open_windows": 0
+     },
+     {
+      "account": "A250:best_stop5",
+      "plan": "A250",
+      "policy": "best_stop5",
+      "model": "timed",
+      "series": [
+       "KXEURUSD15M",
+       "KXGBPUSD15M",
+       "KXUSDJPY15M",
+       "KXAUDUSD15M",
+       "KXUSDCAD15M"
+      ],
+      "start_usd": 250.0,
+      "equity_usd": 247.13,
+      "low_usd": 247.13,
+      "low_share": 0.9885,
+      "reward_usd": 0.0,
+      "contracts": 7.0,
+      "periods": 1,
+      "open_windows": 0
+     },
+     {
+      "account": "A250:ref_pyth_pull",
+      "plan": "A250",
+      "policy": "ref_pyth_pull",
+      "model": "timed",
+      "series": [
+       "KXEURUSD15M",
+       "KXGBPUSD15M",
+       "KXUSDJPY15M",
+       "KXAUDUSD15M",
+       "KXUSDCAD15M"
+      ],
+      "start_usd": 250.0,
+      "equity_usd": 250.0,
+      "low_usd": 250.0,
+      "low_share": 1.0,
+      "reward_usd": 0.0,
+      "contracts": 0.0,
+      "periods": 1,
+      "open_windows": 0
+     }
+    ],
+    "windows": {
+     "open": 0,
+     "settled": 1,
+     "void": 0,
+     "void_recent": {}
+    },
+    "feed": {
+     "recorder_dir_found": true,
+     "last_record_at": 1791920101.0,
+     "last_new_at": 1791920008.0,
+     "watermark": 1791919965.0,
+     "coverage_to": 1791920100.0,
+     "records": 930,
+     "polls": 900,
+     "prints": 1,
+     "pyth": 0,
+     "late": 0,
+     "errors": 0,
+     "lanes": [
+      "books_lip",
+      "lip",
+      "trade_coverage",
+      "trades_lip"
+     ],
+     "pyth_live_series": []
+    }
+   }
+  },
+  "stale": {
+   "generated_at": 1791920210.0,
+   "kalshi_lip_practice": {
+    "schema_version": 1,
+    "mode": "paper",
+    "real_orders_enabled": false,
+    "label": "Practice (pretend money)",
+    "status": "stale",
+    "reason": "heartbeat_late",
+    "stale": true,
+    "as_of": 1791920010.0,
+    "heartbeat_s": 60.0,
+    "stale_after_s": 180.0,
+    "problem": null,
+    "note": "Practice LIP desk: pretend money quoting Kalshi's reward markets on the recorder's public books, scored with the exact reward formula and the review's fill model. It has no order path; real money on LIP needs the playbook's go/no-go bar and the owner's word.",
+    "primary_family": "FX",
+    "policies": [
+     {
+      "name": "ref_stop5",
+      "place": "ref",
+      "size": 10.0,
+      "stop_s": 300.0,
+      "pyth_pull": false
+     },
+     {
+      "name": "ref_close",
+      "place": "ref",
+      "size": 10.0,
+      "stop_s": 0.0,
+      "pyth_pull": false
+     },
+     {
+      "name": "best_stop5",
+      "place": "best",
+      "size": 10.0,
+      "stop_s": 300.0,
+      "pyth_pull": false
+     },
+     {
+      "name": "ref_pyth_pull",
+      "place": "ref",
+      "size": 10.0,
+      "stop_s": 300.0,
+      "pyth_pull": true
+     }
+    ],
+    "fill_models": [
+     "timed",
+     "fee_timed"
+    ],
+    "scorecard": [
+     {
+      "day": "2026-10-13",
+      "policy": "ref_stop5",
+      "model": "fee_timed",
+      "family": "FX",
+      "periods": 1,
+      "inactive_periods": 0,
+      "void_periods_day": 0,
+      "reward_usd": 0.0,
+      "contracts": 7.0,
+      "cross_share": 0.0,
+      "fill_m60_usd": 0.14,
+      "fill_settle_usd": -2.8,
+      "net_m60_usd": 0.14,
+      "net_settle_usd": -2.8,
+      "mean_net_settle_usd": -2.8,
+      "mean_net_m60_usd": 0.14,
+      "per_day_settle_usd": -188.44,
+      "range95_settle_usd": [
+       null,
+       null
+      ],
+      "range95_m60_usd": [
+       null,
+       null
+      ],
+      "per_day_range95_usd": [
+       null,
+       null
+      ]
+     },
+     {
+      "day": "2026-10-13",
+      "policy": "ref_stop5",
+      "model": "timed",
+      "family": "FX",
+      "periods": 1,
+      "inactive_periods": 0,
+      "void_periods_day": 0,
+      "reward_usd": 0.0,
+      "contracts": 7.0,
+      "cross_share": 0.0,
+      "fill_m60_usd": 0.14,
+      "fill_settle_usd": -2.8,
+      "net_m60_usd": 0.14,
+      "net_settle_usd": -2.8,
+      "mean_net_settle_usd": -2.8,
+      "mean_net_m60_usd": 0.14,
+      "per_day_settle_usd": -188.44,
+      "range95_settle_usd": [
+       null,
+       null
+      ],
+      "range95_m60_usd": [
+       null,
+       null
+      ],
+      "per_day_range95_usd": [
+       null,
+       null
+      ]
+     },
+     {
+      "day": "2026-10-13",
+      "policy": "ref_close",
+      "model": "fee_timed",
+      "family": "FX",
+      "periods": 1,
+      "inactive_periods": 0,
+      "void_periods_day": 0,
+      "reward_usd": 1.12,
+      "contracts": 7.0,
+      "cross_share": 0.0,
+      "fill_m60_usd": 0.14,
+      "fill_settle_usd": -2.8,
+      "net_m60_usd": 1.26,
+      "net_settle_usd": -1.68,
+      "mean_net_settle_usd": -1.68,
+      "mean_net_m60_usd": 1.26,
+      "per_day_settle_usd": -113.064,
+      "range95_settle_usd": [
+       null,
+       null
+      ],
+      "range95_m60_usd": [
+       null,
+       null
+      ],
+      "per_day_range95_usd": [
+       null,
+       null
+      ]
+     },
+     {
+      "day": "2026-10-13",
+      "policy": "ref_close",
+      "model": "timed",
+      "family": "FX",
+      "periods": 1,
+      "inactive_periods": 0,
+      "void_periods_day": 0,
+      "reward_usd": 1.12,
+      "contracts": 7.0,
+      "cross_share": 0.0,
+      "fill_m60_usd": 0.14,
+      "fill_settle_usd": -2.8,
+      "net_m60_usd": 1.26,
+      "net_settle_usd": -1.68,
+      "mean_net_settle_usd": -1.68,
+      "mean_net_m60_usd": 1.26,
+      "per_day_settle_usd": -113.064,
+      "range95_settle_usd": [
+       null,
+       null
+      ],
+      "range95_m60_usd": [
+       null,
+       null
+      ],
+      "per_day_range95_usd": [
+       null,
+       null
+      ]
+     },
+     {
+      "day": "2026-10-13",
+      "policy": "best_stop5",
+      "model": "fee_timed",
+      "family": "FX",
+      "periods": 1,
+      "inactive_periods": 0,
+      "void_periods_day": 0,
+      "reward_usd": 0.0,
+      "contracts": 7.0,
+      "cross_share": 0.0,
+      "fill_m60_usd": 0.07,
+      "fill_settle_usd": -2.87,
+      "net_m60_usd": 0.07,
+      "net_settle_usd": -2.87,
+      "mean_net_settle_usd": -2.87,
+      "mean_net_m60_usd": 0.07,
+      "per_day_settle_usd": -193.151,
+      "range95_settle_usd": [
+       null,
+       null
+      ],
+      "range95_m60_usd": [
+       null,
+       null
+      ],
+      "per_day_range95_usd": [
+       null,
+       null
+      ]
+     },
+     {
+      "day": "2026-10-13",
+      "policy": "best_stop5",
+      "model": "timed",
+      "family": "FX",
+      "periods": 1,
+      "inactive_periods": 0,
+      "void_periods_day": 0,
+      "reward_usd": 0.0,
+      "contracts": 7.0,
+      "cross_share": 0.0,
+      "fill_m60_usd": 0.07,
+      "fill_settle_usd": -2.87,
+      "net_m60_usd": 0.07,
+      "net_settle_usd": -2.87,
+      "mean_net_settle_usd": -2.87,
+      "mean_net_m60_usd": 0.07,
+      "per_day_settle_usd": -193.151,
+      "range95_settle_usd": [
+       null,
+       null
+      ],
+      "range95_m60_usd": [
+       null,
+       null
+      ],
+      "per_day_range95_usd": [
+       null,
+       null
+      ]
+     },
+     {
+      "day": "2026-10-13",
+      "policy": "ref_pyth_pull",
+      "model": "fee_timed",
+      "family": "FX",
+      "periods": 0,
+      "inactive_periods": 1,
+      "void_periods_day": 0,
+      "reward_usd": 0.0,
+      "contracts": 0.0,
+      "cross_share": null,
+      "fill_m60_usd": 0.0,
+      "fill_settle_usd": 0.0,
+      "net_m60_usd": 0.0,
+      "net_settle_usd": 0.0,
+      "mean_net_settle_usd": null,
+      "mean_net_m60_usd": null,
+      "per_day_settle_usd": null,
+      "range95_settle_usd": [
+       null,
+       null
+      ],
+      "range95_m60_usd": [
+       null,
+       null
+      ],
+      "per_day_range95_usd": [
+       null,
+       null
+      ]
+     },
+     {
+      "day": "2026-10-13",
+      "policy": "ref_pyth_pull",
+      "model": "timed",
+      "family": "FX",
+      "periods": 0,
+      "inactive_periods": 1,
+      "void_periods_day": 0,
+      "reward_usd": 0.0,
+      "contracts": 0.0,
+      "cross_share": null,
+      "fill_m60_usd": 0.0,
+      "fill_settle_usd": 0.0,
+      "net_m60_usd": 0.0,
+      "net_settle_usd": 0.0,
+      "mean_net_settle_usd": null,
+      "mean_net_m60_usd": null,
+      "per_day_settle_usd": null,
+      "range95_settle_usd": [
+       null,
+       null
+      ],
+      "range95_m60_usd": [
+       null,
+       null
+      ],
+      "per_day_range95_usd": [
+       null,
+       null
+      ]
+     },
+     {
+      "day": "2026-10-13",
+      "policy": "ref_stop5",
+      "model": "fee_timed",
+      "family": "all",
+      "periods": 1,
+      "inactive_periods": 0,
+      "void_periods_day": 0,
+      "reward_usd": 0.0,
+      "contracts": 7.0,
+      "cross_share": 0.0,
+      "fill_m60_usd": 0.14,
+      "fill_settle_usd": -2.8,
+      "net_m60_usd": 0.14,
+      "net_settle_usd": -2.8,
+      "mean_net_settle_usd": -2.8,
+      "mean_net_m60_usd": 0.14,
+      "per_day_settle_usd": null,
+      "range95_settle_usd": [
+       null,
+       null
+      ],
+      "range95_m60_usd": [
+       null,
+       null
+      ],
+      "per_day_range95_usd": [
+       null,
+       null
+      ]
+     },
+     {
+      "day": "2026-10-13",
+      "policy": "ref_stop5",
+      "model": "timed",
+      "family": "all",
+      "periods": 1,
+      "inactive_periods": 0,
+      "void_periods_day": 0,
+      "reward_usd": 0.0,
+      "contracts": 7.0,
+      "cross_share": 0.0,
+      "fill_m60_usd": 0.14,
+      "fill_settle_usd": -2.8,
+      "net_m60_usd": 0.14,
+      "net_settle_usd": -2.8,
+      "mean_net_settle_usd": -2.8,
+      "mean_net_m60_usd": 0.14,
+      "per_day_settle_usd": null,
+      "range95_settle_usd": [
+       null,
+       null
+      ],
+      "range95_m60_usd": [
+       null,
+       null
+      ],
+      "per_day_range95_usd": [
+       null,
+       null
+      ]
+     },
+     {
+      "day": "2026-10-13",
+      "policy": "ref_close",
+      "model": "fee_timed",
+      "family": "all",
+      "periods": 1,
+      "inactive_periods": 0,
+      "void_periods_day": 0,
+      "reward_usd": 1.12,
+      "contracts": 7.0,
+      "cross_share": 0.0,
+      "fill_m60_usd": 0.14,
+      "fill_settle_usd": -2.8,
+      "net_m60_usd": 1.26,
+      "net_settle_usd": -1.68,
+      "mean_net_settle_usd": -1.68,
+      "mean_net_m60_usd": 1.26,
+      "per_day_settle_usd": null,
+      "range95_settle_usd": [
+       null,
+       null
+      ],
+      "range95_m60_usd": [
+       null,
+       null
+      ],
+      "per_day_range95_usd": [
+       null,
+       null
+      ]
+     },
+     {
+      "day": "2026-10-13",
+      "policy": "ref_close",
+      "model": "timed",
+      "family": "all",
+      "periods": 1,
+      "inactive_periods": 0,
+      "void_periods_day": 0,
+      "reward_usd": 1.12,
+      "contracts": 7.0,
+      "cross_share": 0.0,
+      "fill_m60_usd": 0.14,
+      "fill_settle_usd": -2.8,
+      "net_m60_usd": 1.26,
+      "net_settle_usd": -1.68,
+      "mean_net_settle_usd": -1.68,
+      "mean_net_m60_usd": 1.26,
+      "per_day_settle_usd": null,
+      "range95_settle_usd": [
+       null,
+       null
+      ],
+      "range95_m60_usd": [
+       null,
+       null
+      ],
+      "per_day_range95_usd": [
+       null,
+       null
+      ]
+     },
+     {
+      "day": "2026-10-13",
+      "policy": "best_stop5",
+      "model": "fee_timed",
+      "family": "all",
+      "periods": 1,
+      "inactive_periods": 0,
+      "void_periods_day": 0,
+      "reward_usd": 0.0,
+      "contracts": 7.0,
+      "cross_share": 0.0,
+      "fill_m60_usd": 0.07,
+      "fill_settle_usd": -2.87,
+      "net_m60_usd": 0.07,
+      "net_settle_usd": -2.87,
+      "mean_net_settle_usd": -2.87,
+      "mean_net_m60_usd": 0.07,
+      "per_day_settle_usd": null,
+      "range95_settle_usd": [
+       null,
+       null
+      ],
+      "range95_m60_usd": [
+       null,
+       null
+      ],
+      "per_day_range95_usd": [
+       null,
+       null
+      ]
+     },
+     {
+      "day": "2026-10-13",
+      "policy": "best_stop5",
+      "model": "timed",
+      "family": "all",
+      "periods": 1,
+      "inactive_periods": 0,
+      "void_periods_day": 0,
+      "reward_usd": 0.0,
+      "contracts": 7.0,
+      "cross_share": 0.0,
+      "fill_m60_usd": 0.07,
+      "fill_settle_usd": -2.87,
+      "net_m60_usd": 0.07,
+      "net_settle_usd": -2.87,
+      "mean_net_settle_usd": -2.87,
+      "mean_net_m60_usd": 0.07,
+      "per_day_settle_usd": null,
+      "range95_settle_usd": [
+       null,
+       null
+      ],
+      "range95_m60_usd": [
+       null,
+       null
+      ],
+      "per_day_range95_usd": [
+       null,
+       null
+      ]
+     },
+     {
+      "day": "2026-10-13",
+      "policy": "ref_pyth_pull",
+      "model": "fee_timed",
+      "family": "all",
+      "periods": 0,
+      "inactive_periods": 1,
+      "void_periods_day": 0,
+      "reward_usd": 0.0,
+      "contracts": 0.0,
+      "cross_share": null,
+      "fill_m60_usd": 0.0,
+      "fill_settle_usd": 0.0,
+      "net_m60_usd": 0.0,
+      "net_settle_usd": 0.0,
+      "mean_net_settle_usd": null,
+      "mean_net_m60_usd": null,
+      "per_day_settle_usd": null,
+      "range95_settle_usd": [
+       null,
+       null
+      ],
+      "range95_m60_usd": [
+       null,
+       null
+      ],
+      "per_day_range95_usd": [
+       null,
+       null
+      ]
+     },
+     {
+      "day": "2026-10-13",
+      "policy": "ref_pyth_pull",
+      "model": "timed",
+      "family": "all",
+      "periods": 0,
+      "inactive_periods": 1,
+      "void_periods_day": 0,
+      "reward_usd": 0.0,
+      "contracts": 0.0,
+      "cross_share": null,
+      "fill_m60_usd": 0.0,
+      "fill_settle_usd": 0.0,
+      "net_m60_usd": 0.0,
+      "net_settle_usd": 0.0,
+      "mean_net_settle_usd": null,
+      "mean_net_m60_usd": null,
+      "per_day_settle_usd": null,
+      "range95_settle_usd": [
+       null,
+       null
+      ],
+      "range95_m60_usd": [
+       null,
+       null
+      ],
+      "per_day_range95_usd": [
+       null,
+       null
+      ]
+     }
+    ],
+    "accounts": [
+     {
+      "account": "A45:ref_stop5",
+      "plan": "A45",
+      "policy": "ref_stop5",
+      "model": "timed",
+      "series": [
+       "KXEURUSD15M"
+      ],
+      "start_usd": 45.0,
+      "equity_usd": 42.2,
+      "low_usd": 42.2,
+      "low_share": 0.9378,
+      "reward_usd": 0.0,
+      "contracts": 7.0,
+      "periods": 1,
+      "open_windows": 0
+     },
+     {
+      "account": "A45:ref_close",
+      "plan": "A45",
+      "policy": "ref_close",
+      "model": "timed",
+      "series": [
+       "KXEURUSD15M"
+      ],
+      "start_usd": 45.0,
+      "equity_usd": 43.32,
+      "low_usd": 43.32,
+      "low_share": 0.9627,
+      "reward_usd": 1.12,
+      "contracts": 7.0,
+      "periods": 1,
+      "open_windows": 0
+     },
+     {
+      "account": "A45:best_stop5",
+      "plan": "A45",
+      "policy": "best_stop5",
+      "model": "timed",
+      "series": [
+       "KXEURUSD15M"
+      ],
+      "start_usd": 45.0,
+      "equity_usd": 42.13,
+      "low_usd": 42.13,
+      "low_share": 0.9362,
+      "reward_usd": 0.0,
+      "contracts": 7.0,
+      "periods": 1,
+      "open_windows": 0
+     },
+     {
+      "account": "A45:ref_pyth_pull",
+      "plan": "A45",
+      "policy": "ref_pyth_pull",
+      "model": "timed",
+      "series": [
+       "KXEURUSD15M"
+      ],
+      "start_usd": 45.0,
+      "equity_usd": 45.0,
+      "low_usd": 45.0,
+      "low_share": 1.0,
+      "reward_usd": 0.0,
+      "contracts": 0.0,
+      "periods": 1,
+      "open_windows": 0
+     },
+     {
+      "account": "A250:ref_stop5",
+      "plan": "A250",
+      "policy": "ref_stop5",
+      "model": "timed",
+      "series": [
+       "KXEURUSD15M",
+       "KXGBPUSD15M",
+       "KXUSDJPY15M",
+       "KXAUDUSD15M",
+       "KXUSDCAD15M"
+      ],
+      "start_usd": 250.0,
+      "equity_usd": 247.2,
+      "low_usd": 247.2,
+      "low_share": 0.9888,
+      "reward_usd": 0.0,
+      "contracts": 7.0,
+      "periods": 1,
+      "open_windows": 0
+     },
+     {
+      "account": "A250:ref_close",
+      "plan": "A250",
+      "policy": "ref_close",
+      "model": "timed",
+      "series": [
+       "KXEURUSD15M",
+       "KXGBPUSD15M",
+       "KXUSDJPY15M",
+       "KXAUDUSD15M",
+       "KXUSDCAD15M"
+      ],
+      "start_usd": 250.0,
+      "equity_usd": 248.32,
+      "low_usd": 248.32,
+      "low_share": 0.9933,
+      "reward_usd": 1.12,
+      "contracts": 7.0,
+      "periods": 1,
+      "open_windows": 0
+     },
+     {
+      "account": "A250:best_stop5",
+      "plan": "A250",
+      "policy": "best_stop5",
+      "model": "timed",
+      "series": [
+       "KXEURUSD15M",
+       "KXGBPUSD15M",
+       "KXUSDJPY15M",
+       "KXAUDUSD15M",
+       "KXUSDCAD15M"
+      ],
+      "start_usd": 250.0,
+      "equity_usd": 247.13,
+      "low_usd": 247.13,
+      "low_share": 0.9885,
+      "reward_usd": 0.0,
+      "contracts": 7.0,
+      "periods": 1,
+      "open_windows": 0
+     },
+     {
+      "account": "A250:ref_pyth_pull",
+      "plan": "A250",
+      "policy": "ref_pyth_pull",
+      "model": "timed",
+      "series": [
+       "KXEURUSD15M",
+       "KXGBPUSD15M",
+       "KXUSDJPY15M",
+       "KXAUDUSD15M",
+       "KXUSDCAD15M"
+      ],
+      "start_usd": 250.0,
+      "equity_usd": 250.0,
+      "low_usd": 250.0,
+      "low_share": 1.0,
+      "reward_usd": 0.0,
+      "contracts": 0.0,
+      "periods": 1,
+      "open_windows": 0
+     }
+    ],
+    "windows": {
+     "open": 0,
+     "settled": 1,
+     "void": 0,
+     "void_recent": {}
+    },
+    "feed": {
+     "recorder_dir_found": true,
+     "last_record_at": 1791920101.0,
+     "last_new_at": 1791920008.0,
+     "watermark": 1791919965.0,
+     "coverage_to": 1791920100.0,
+     "records": 930,
+     "polls": 900,
+     "prints": 1,
+     "pyth": 0,
+     "late": 0,
+     "errors": 0,
+     "lanes": [
+      "books_lip",
+      "lip",
+      "trade_coverage",
+      "trades_lip"
+     ],
+     "pyth_live_series": []
+    }
+   }
+  },
+  "missing_no_file": {
+   "generated_at": 1791920010.0,
+   "kalshi_lip_practice": {
+    "schema_version": 1,
+    "mode": "paper",
+    "real_orders_enabled": false,
+    "label": "Practice (pretend money)",
+    "status": "missing",
+    "reason": "not_saved_yet",
+    "stale": null,
+    "as_of": null,
+    "heartbeat_s": null,
+    "stale_after_s": 180.0,
+    "problem": null,
+    "note": null,
+    "primary_family": null,
+    "policies": null,
+    "fill_models": null,
+    "scorecard": null,
+    "accounts": null,
+    "windows": null,
+    "feed": null
+   }
+  },
+  "off": {
+   "generated_at": 1791920010.0,
+   "kalshi_lip_practice": {
+    "schema_version": 1,
+    "mode": "paper",
+    "real_orders_enabled": false,
+    "label": "Practice (pretend money)",
+    "status": "off",
+    "reason": "disabled",
+    "stale": null,
+    "as_of": null,
+    "heartbeat_s": null,
+    "stale_after_s": 180.0,
+    "problem": null,
+    "note": null,
+    "primary_family": null,
+    "policies": null,
+    "fill_models": null,
+    "scorecard": null,
+    "accounts": null,
+    "windows": null,
+    "feed": null
+   }
+  }
+ }
+}

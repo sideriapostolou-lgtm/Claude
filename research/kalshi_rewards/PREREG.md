@@ -175,4 +175,12 @@ The practice LIP desk (`nightcrawler.lip_desk`, pretend money, no order path) ru
 
 ---
 
-Addenda (dated, newest last): none.
+Addenda (dated, newest last):
+
+1. **2026-10-14, before any practice result existed (the desk had run only on synthetic test data and on the
+   rewards research's already-published windows, which have no Pyth prices), section 8, `ref_pyth_pull`.** "Re-place
+   only on a later Kalshi book" is replaced by: **re-place the pulled side only on a later Kalshi book whose mid has
+   moved the Pyth move's way since the pull (up for a pulled NO bid, down for a pulled YES bid), or on the first
+   book 5 s or more after the pull.** Reason: with books polled about once a second, the next poll usually still
+   shows the stale book, so the original wording re-placed the order into the very price the pull was meant to
+   avoid. Nothing else in section 8, and nothing in sections 1 to 7, changes.

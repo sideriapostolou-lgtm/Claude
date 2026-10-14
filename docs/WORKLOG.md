@@ -15,6 +15,32 @@ Template:
 
 
 
+## 2026-10-14 01:00 UTC, Claude, branch claude/kalshi-lip-practice (FX rewards: lead-lag analyzer and practice LIP desk)
+- Changed (practice and research only; no live module, no `config.py`, no Railway setting, nothing pushed):
+  - `research/kalshi_rewards/PREREG.md` (+ `PREREG.sha256`), committed alone first, before any Pyth price was read:
+    the Pyth lead-lag question, definitions (events, interval-censored warning, exclusions), the split by FX days
+    (TRAIN 2, VAL 2, TEST 4, one look with a freeze file) and the bar: CONTINUE if the 95 % lower bound of the share
+    of Kalshi reprices with >= 0.5 s warning is >= 0.50; STOP if its upper bound is < 0.25 on a sub-250 ms source;
+    else MARGINAL. Addendum 1 (before any practice result): the Pyth policy's re-place rule.
+  - `research/kalshi_rewards/leadlag.py`: the analyzer of PREREG.md (sources: the recorder's Pyth lane, Kalshi's
+    `pyth_value`, Pyth Pro, and the free 1 s series as a descriptive quick look).
+  - `nightcrawler/lip_score.py` (the exact LIP formula, ported; its one rounding bug fixed), `lip_feed.py` (the
+    recorder's files, every record shape incl. the LIP lanes in progress on `claude/kalshi-recorder-fx`),
+    `lip_desk.py` (the practice desk: 4 pre-registered policies x 2 fill models, A45/A250 cash accounts, daily
+    scorecard) and `lip_practice.py` (its own isolated process, off by default; `run`, `replay`, `status`).
+  - The page's additive top-level `kalshi_lip_practice` block, its fixture and the contract in COORDINATION.md.
+- Verified: the desk reproduces the rewards review's simulator exactly on all 109 recorded windows x 3 policies x 2
+  fill models (654 cases; FX `ref_close`/timed -$6.785 a period = the playbook's -$6.79, `ref_stop5` -$3.20); a
+  trimmed real window and those results are a test fixture; the playbook's worked example pays $1.90; the real child
+  process runs with only PATH, LANG and TZ in its environment; 108 new tests; full suite 5,052 passed, 13 skipped
+  (Python 3.13); mypy src clean (125 files); ruff clean on every changed Python file. `tests/test_page.py`'s page
+  budget now carves out the new block like the other desk reports (its off form is under 500 bytes).
+- Not verified / skipped: no Pyth data exists yet (no key), so the analyzer and the Pyth policy ran only on synthetic
+  data; the LIP lanes' record shapes follow the in-progress recorder branch and must be re-checked at its merge.
+- Real money touched? no.
+- Next step: merge the recorder's LIP/Pyth lanes; the owner decides where the practice desk runs and on the Pyth
+  key; TRAIN starts on the first two FX days of an eligible Pyth source.
+
 ## 2026-10-13 23:05 UTC, Claude, branch claude/kalshi-arena (preflight fixes and the town's kalshi_arena contract)
 - Changed (practice code only; `speeddesk.py`, `speeddesk_live*.py`, `config.py` untouched):
   - the town's process logs what isolation it actually got (`kalshi_arena_hardened`, a WARNING at normal CPU

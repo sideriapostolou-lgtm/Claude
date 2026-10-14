@@ -927,13 +927,15 @@ def test_json_stays_small_on_a_busy_ledger(ledger: Ledger, settings: Settings) -
     speed_line = before_speeddesk["plain"].pop("speeddesk_line")
     watcher_report = before_speeddesk.pop("skipwatch")
     connections_report = before_speeddesk["money"].pop("connections")
+    lip_practice = before_speeddesk.pop("kalshi_lip_practice")  # the practice LIP desk's block (off by default)
     original_body = json.dumps(before_speeddesk, separators=(",", ":"))
     added_body = json.dumps({"speeddesk": speed_report, "speeddesk_line": speed_line}, separators=(",", ":"))
     assert len(original_body) < 45_500, len(original_body)
     assert len(added_body) < 1_500, len(added_body)
     assert len(json.dumps(watcher_report, separators=(",", ":"))) < 1_800
     assert len(json.dumps(connections_report, separators=(",", ":"))) < 2_500
-    assert len(body) < 51_300, len(body)
+    assert lip_practice["status"] == "off" and len(json.dumps(lip_practice, separators=(",", ":"))) < 500
+    assert len(body) < 51_800, len(body)
     assert len(state["money"]["curve"]) <= 300 and len(state["trades"]["closed"]) == 10
     assert all(len(t["coin"]) <= 24 and len(t["why"]) <= 60 for t in state["trades"]["closed"])
 

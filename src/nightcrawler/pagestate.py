@@ -110,6 +110,11 @@ Schema (lists capped: members 9, events <= 5, open trades <= 10, closed trades 1
                        "problem", "population", "rent_usd", "broke_usd", "start_cash", "note", "control_id",
                        "candidate_id", "control", "residents" (<= 24), "grave" (<= 5), "candidates" (<= 5),
                        "events" (<= 24), "counts", "truncated", "town", "feed"},  # PRACTICE only: kalshi_arena_block
+      "kalshi_lip_practice": {"schema_version": 1, "mode": "paper", "real_orders_enabled": false, "label",  # a block
+                              "status": "fresh"|"degraded"|"stale"|"halted"|"missing"|"off", "reason", "stale",
+                              "as_of", "heartbeat_s", "stale_after_s", "problem", "note", "primary_family",
+                              "policies" (<= 8), "fill_models" (<= 4), "scorecard" (<= 32), "accounts" (<= 16),
+                              "windows", "feed"},  # PRACTICE only: kalshi_lip_practice_block (docs/COORDINATION.md)
       "town": {"label", "cost_per_day_usd", "cost_today_usd", "cost_since_start_usd": float|null,  # see TOWN
                "income_today_usd": float|null, "income_since_start_usd": float|null,
                "covered_today": bool|null, "covered_since_start": bool|null, "line",
@@ -409,6 +414,7 @@ import functools
 import itertools
 import json
 import math
+import os
 import re
 import sqlite3
 import time
@@ -1734,6 +1740,138 @@ def _kalshi_arena_view(kalshi_arena: Any, raw: Mapping[str, Any], settings: Sett
         # The town runs in its own process; live_flush_us_* is the live loop's own cost of handing it the market.
         "feed": feed_block,
     }
+
+
+#: The practice LIP desk (:mod:`nightcrawler.lip_practice`) saves its panel every 60 s while it runs; older than three
+#: heartbeats it is not running (or is starved of CPU) and the page says stale. Contract: docs/COORDINATION.md,
+#: "kalshi_lip_practice contract".
+KALSHI_LIP_STALE_S = 180.0
+KALSHI_LIP_QUIET_S = 120.0  # no new recorder line for this long (the desk's own clock): degraded
+KALSHI_LIP_SCHEMA = 1
+_LIP_LISTS = {"policies": 8, "fill_models": 4, "scorecard": 32, "accounts": 16}
+_LIP_PLACES = ("ref", "best")
+_LIP_MODELS = ("timed", "fee_timed")
+_LIP_FAMILIES = ("FX", "METAL_GAS", "COINRACE", "all")
+_LIP_NAME = re.compile(r"[A-Za-z0-9_:.\-]{1,40}")
+_LIP_DAY = re.compile(r"\d{4}-\d{2}-\d{2}")
+
+
+def _kalshi_lip_envelope(status: str, reason: str | None) -> dict[str, Any]:
+    """The block with nothing known: every figure null (never a zero that would look like a fresh, empty desk).
+    ``mode`` and ``real_orders_enabled`` are page constants: the desk has no client, key or order path."""
+    return {"schema_version": KALSHI_LIP_SCHEMA, "mode": "paper", "real_orders_enabled": False,
+            "label": PRETEND_LABEL, "status": status, "reason": reason, "stale": None, "as_of": None,
+            "heartbeat_s": None, "stale_after_s": KALSHI_LIP_STALE_S, "problem": None, "note": None,
+            "primary_family": None, "policies": None, "fill_models": None, "scorecard": None, "accounts": None,
+            "windows": None, "feed": None}
+
+
+def kalshi_lip_practice_block(settings: Settings, now: float, env: Mapping[str, str] | None = None) -> dict[str, Any]:
+    """The page's top-level ``kalshi_lip_practice``: the practice LIP desk's scorecard (PRACTICE money; nothing else on
+    the page reads it, and it is never added to anything). Off unless ``KALSHI_LIP_PRACTICE_ENABLED`` is true; then
+    only the desk's small ``panel.json`` under this page's DATA_DIR is read (an oversized one is refused unread),
+    every field whitelisted and every text redacted then clipped."""
+    from nightcrawler import lip_practice
+
+    if not lip_practice.LipPracticeSettings.from_env(os.environ if env is None else env).enabled:
+        return _kalshi_lip_envelope("off", "disabled")
+    try:
+        raw = lip_practice.panel_state(settings.data_dir)
+    except FileNotFoundError:
+        return _kalshi_lip_envelope("missing", "not_saved_yet")
+    except (KeyError, TypeError, ValueError, AttributeError, OSError) as exc:
+        log.warning("kalshi_lip_practice_panel_failed error=%s", type(exc).__name__)
+        return _kalshi_lip_envelope("missing", "unreadable")
+    try:
+        return _kalshi_lip_view(raw, settings, now)
+    except Exception as exc:  # noqa: BLE001 - a malformed practice panel never takes the page down
+        log.warning("kalshi_lip_practice_panel_failed error=%s", type(exc).__name__)
+        return _kalshi_lip_envelope("missing", "unreadable")
+
+
+def _kalshi_lip_view(raw: Mapping[str, Any], settings: Settings, now: float) -> dict[str, Any]:
+    text = _Text(settings)
+
+    def name(value: Any) -> str | None:
+        return value if isinstance(value, str) and _LIP_NAME.fullmatch(value) else None
+
+    def pair(value: Any) -> list[float | None]:
+        items = _xp_list(value)
+        return [_num(items[0]) if len(items) > 0 else None, _num(items[1]) if len(items) > 1 else None]
+
+    def policy(row: Mapping[str, Any]) -> dict[str, Any]:
+        return {"name": name(row.get("name")),
+                "place": row.get("place") if row.get("place") in _LIP_PLACES else None,
+                "size": _num(row.get("size")), "stop_s": _num(row.get("stop_s")),
+                "pyth_pull": row.get("pyth_pull") is True}
+
+    def card(row: Mapping[str, Any]) -> dict[str, Any]:
+        day = row.get("day")
+        return {"day": day if isinstance(day, str) and _LIP_DAY.fullmatch(day) else None,
+                "policy": name(row.get("policy")),
+                "model": row.get("model") if row.get("model") in _LIP_MODELS else None,
+                "family": row.get("family") if row.get("family") in _LIP_FAMILIES else None,
+                **{key: _count(row.get(key)) for key in ("periods", "inactive_periods", "void_periods_day")},
+                **{key: _num(row.get(key)) for key in ("reward_usd", "contracts", "cross_share", "fill_m60_usd",
+                                                       "fill_settle_usd", "net_m60_usd", "net_settle_usd",
+                                                       "mean_net_settle_usd", "mean_net_m60_usd",
+                                                       "per_day_settle_usd")},
+                "range95_settle_usd": pair(row.get("range95_settle_usd")),
+                "range95_m60_usd": pair(row.get("range95_m60_usd")),
+                "per_day_range95_usd": pair(row.get("per_day_range95_usd"))}
+
+    def account(row: Mapping[str, Any]) -> dict[str, Any]:
+        return {"account": name(row.get("account")), "plan": name(row.get("plan")), "policy": name(row.get("policy")),
+                "model": row.get("model") if row.get("model") in _LIP_MODELS else None,
+                "series": [item for item in _xp_list(row.get("series"))[:10] if name(item)],
+                **{key: _num(row.get(key)) for key in ("start_usd", "equity_usd", "low_usd", "low_share", "reward_usd",
+                                                       "contracts")},
+                **{key: _count(row.get(key)) for key in ("periods", "open_windows")}}
+
+    builders = {"policies": policy, "scorecard": card, "accounts": account}
+    lists: dict[str, Any] = {}
+    for key, limit in _LIP_LISTS.items():
+        rows = raw.get(key)
+        if not isinstance(rows, list):
+            lists[key] = None
+        elif key == "fill_models":
+            lists[key] = [row for row in rows[:limit] if row in _LIP_MODELS]
+        else:
+            lists[key] = [builders[key](row) for row in rows[:limit] if isinstance(row, Mapping)]
+    windows = raw.get("windows")
+    windows_block = None if not isinstance(windows, Mapping) else {
+        **{key: _count(windows.get(key)) for key in ("open", "settled", "void")},
+        "void_recent": {key: _count(value) for key, value in list(_xp_map(windows.get("void_recent")).items())[:12]
+                        if name(key)}}
+    feed = raw.get("feed")
+    feed_block = None if not isinstance(feed, Mapping) else {
+        "recorder_dir_found": feed.get("recorder_dir_found") is True,
+        **{key: _num(feed.get(key)) for key in ("last_record_at", "last_new_at", "watermark", "coverage_to")},
+        **{key: _count(feed.get(key)) for key in ("records", "polls", "prints", "pyth", "late", "errors")},
+        "lanes": [item for item in _xp_list(feed.get("lanes"))[:24] if name(item)],
+        "pyth_live_series": [item for item in _xp_list(feed.get("pyth_live_series"))[:12] if name(item)]}
+    as_of = _num(raw.get("as_of"))
+    problem = text.opt(raw.get("problem"))
+    heard = None if feed_block is None else _num(feed_block["last_new_at"])
+    if problem is not None:
+        status, reason = "halted", "halted"
+    elif as_of is None:
+        status, reason = "stale", "as_of_unknown"
+    elif now - as_of > KALSHI_LIP_STALE_S:
+        status, reason = "stale", "heartbeat_late"
+    elif as_of > now + FUTURE_SKEW_S:
+        status, reason = "stale", "as_of_future"
+    elif feed_block is not None and not feed_block["recorder_dir_found"]:
+        status, reason = "degraded", "no_recorder"
+    elif heard is None or as_of - heard > KALSHI_LIP_QUIET_S:
+        status, reason = "degraded", "feed_quiet"
+    else:
+        status, reason = "fresh", None
+    family = raw.get("primary_family")
+    return {**_kalshi_lip_envelope(status, reason), "stale": status in ("stale", "halted"), "as_of": as_of,
+            "heartbeat_s": _num(raw.get("heartbeat_s")), "problem": problem, "note": text.opt(raw.get("note"), 400),
+            "primary_family": family if family in _LIP_FAMILIES else None, **lists, "windows": windows_block,
+            "feed": feed_block}
 
 
 def _speed_scorecard(raw: Any) -> dict[str, Any] | None:
@@ -3430,6 +3568,8 @@ def build_page_state(ledger: Any, settings: Settings, now: float, engine_status:
         "money": money,
         # the Kalshi practice town: PRACTICE money, outside the money card on purpose; nothing else here reads it
         "kalshi_arena": kalshi_arena_block(settings, now),
+        # the practice LIP desk's scorecard: PRACTICE money, outside the money card; nothing else here reads it
+        "kalshi_lip_practice": kalshi_lip_practice_block(settings, now),
         # the town: what running the bot costs against what the desks made (same clock as the judge's total)
         "town": town_ledger(settings, money, state.get("judge"), now, _run_started(ledger, state)),
         "team": {"counts": counts, "members": members},
