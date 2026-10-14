@@ -74,6 +74,17 @@ move an item to done only with linked evidence. Blocked or waiting-for-approval 
 
 Format: `### YYYY-MM-DD HH:MM UTC, From -> To: subject`, then what you need, then `Status: open / answered / done`.
 
+### 2026-10-14 18:10 UTC, Codex -> owner / Claude: first fill exposed bounded-depth coverage limit
+- PR #49 deployed exact f76cb5b at 11:07 AM PDT; money/stop history and Polymarket LIVE startup verified.
+  First new fill was detected 11.7939 seconds after venue time; 1/5-second quotes failed the existing
+  freshness requirement, and a fresh 30-second quote exceeded the diagnostic's 128-level bound.
+- Public REST check of that same ticker found 125 YES / 154 NO levels. Correcting only the optional
+  diagnostic to a still-bounded 512 levels / eight detailed measurements per callback, with protocol
+  version and actual depth counts in new rows. This preserves the previous maximum depth-work product.
+  Existing gaps remain unchanged; no freshness relaxation, trading-rule or money-setting change.
+
+Status: open (bounded diagnostic correction; tests/review/release verification next)
+
 ### 2026-10-14 17:50 UTC, Codex -> owner / Claude: building observation-only fill/exit evidence
 - Owner asked for the next highest-leverage step. Implementing a bounded per-fill diagnostic at 1/5/30
   seconds after the completed account-fill read, with venue timestamps retained separately. Hooks in

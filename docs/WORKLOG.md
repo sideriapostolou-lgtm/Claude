@@ -13,6 +13,34 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-14 18:13 UTC, Codex, fill diagnostic live; correcting deep-book coverage (11:13 AM PDT)
+- PR #49 merged 18:06:07 UTC within an allowed merge minute. Railway deployment
+  c049df06-b245-465b-969d-2c2b7317b5ed built exact f76cb5ba29ee6c4bee7caab087e0719fa270fa88,
+  SUCCESS 18:07:32.753 UTC / 11:07:32 AM PDT. Polymarket LIVE startup logged 18:07:28 UTC;
+  both services online 1/1, zero health issues/failures. Recorder deployment unchanged.
+- Compared pre-restart 18:04:53.978 and post-restart 18:07:52.759 UTC receipts: cash $37.4839,
+  open cost/risk $2.80, reserved $0, caps $10/window/$20 open/$6 day/$10 total/clip 5, stop states,
+  409 historical fills, fees $1.9606, lifetime settled -$9.4575 and UTC-day +$0.4846 all retained.
+  Resume was explicitly ignored as already used; no money limit, stop reset or variable change.
+- First eight newly observed fills produced all 24 terminal records, but zero usable quotes: 20
+  depth_work_bound, three book_stale, one observation_late. Detection median 1.102 s, minimum 0.466 s,
+  maximum 11.794 s (n=8, venue timestamp to full fills-read return; not HTTP latency). The first
+  fill was five UP contracts at $0.43. No exit profitability conclusion; all gaps remain recorded.
+- Public read-only REST check of that ticker showed 125 YES/154 NO levels, including fractional prices.
+  Initial 128-level diagnostic bound was too low. Version 2 allows 512 levels but reduces detailed
+  measurements from 32 to eight/callback, preserving the maximum depth-work product. New rows include
+  protocol version and actual bid/ask/own level counts. No change to freshness, first-quote rule,
+  accounting, order authority or trading decisions. Version-1 observations are never recomputed.
+- Verified: 79 targeted fake-only tests, mypy 123 files and changed-file Ruff pass. Independent final
+  review approved version 2. Full suite: 5,381 passed / 14 existing skips in 300.11 seconds. Local adverse CPU at 512 thin levels:
+  eight measured fills 14.902 ms median/15.892 ms max; 1,024 pending 24.914/29.575 ms with eight
+  measurements and 1,016 explicit gaps. Excludes persistence/logging; not Railway performance.
+- Exact first-release receipts and scalar restart comparison saved in
+  research/kalshi_profitability_2026-10-14/fill_markouts_v1_release.json; sampling/version limits in
+  FILL_MARKOUTS.md. No held-out research opened. TJR historical/paper remains queued.
+- Next: finish full checks, release the bounded depth correction in an allowed minute, verify exact
+  commit and actual version-2 horizon records, then collect complete windows before entry/exit tests.
+
 ## 2026-10-14 18:00 UTC, Codex, prospective Kalshi fill/exit evidence (11:00 AM PDT)
 - Owner asked for the next highest-leverage step. Built a bounded observation-only diagnostic that records
   visible selling bids 1/5/30 seconds after the complete account-fill batch returns. Actual venue fill time

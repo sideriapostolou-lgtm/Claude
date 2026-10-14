@@ -20,8 +20,9 @@ from .speeddesk_model import Book, Side, Window
 
 HORIZONS = (1, 5, 30)
 MAX_AGE_S = 0.5
-MAX_LEVELS = 128
-MAX_MEASUREMENTS_PER_BOOK = 32
+MAX_LEVELS = 512
+PROTOCOL_VERSION = 2
+MAX_MEASUREMENTS_PER_BOOK = 8
 QUANTITY_GRID = Decimal("0.01")
 SAMPLING_METHOD = "first_post_horizon_websocket_update"
 FEE_MODEL = "sell_formula_plus_per_0.01_contract_rounding_upper_bound"
@@ -83,6 +84,7 @@ class FillMarkouts:
         fill = pending.fill
         return {
             "at": _number(at), "event": "speeddesk_fill_observed",
+            "protocol_version": PROTOCOL_VERSION, "max_levels_per_side": MAX_LEVELS,
             "mode": "diagnostic", "fill_source": "real", "session_id": self.session_id,
             "fill_id": fill.fill_id, "order_id": fill.order_id, "window": fill.window,
             "side": fill.side, "entry_price": _number(fill.price), "entry_size": _number(fill.size),
@@ -279,6 +281,8 @@ class FillMarkouts:
                     row = self._measure(pending, horizon, book, own_bids, now, mono)
                     measured += 1
                 row.update(book_received_at=_number(book.at),
+                           book_bid_levels=len(book.bids), book_ask_levels=len(book.asks),
+                           own_bid_levels=len(own_bids),
                            book_exchange_at=_number(book.exchange_at) if book.exchange_at is not None else None,
                            book_source=book.source, book_receive_age_s=_number(now - book.at),
                            book_source_age_s=_number(now - book.exchange_at) if book.exchange_at is not None else None)
@@ -358,6 +362,7 @@ class FillMarkouts:
         """No financial total: these samples are not trades or an exit strategy."""
         return {
             "enabled": True, "mode": "diagnostic", "fill_source": "real", "session_id": self.session_id,
+            "protocol_version": PROTOCOL_VERSION,
             "basis": "fills_batch_return", "liquidity_scope": "isolated_fill_not_joint_inventory_liquidation",
             "session_only": True, "earlier_pending_unknown": True, "restored_pending": False,
             "started_at": self.started_at, "horizons_s": list(HORIZONS),
