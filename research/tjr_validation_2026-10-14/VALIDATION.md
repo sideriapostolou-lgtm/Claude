@@ -4,6 +4,11 @@ October 14, 2026. This follows the owner's explicit instruction to backtest the 
 
 **Recommendation now: do not put money into this strategy on the present evidence.** The saved implementation is worth a bounded historical test, but we have not established that it is profitable or unprofitable. A paper-trial recommendation remains conditional on completing the actual-contract test and securing an authorized current-contract feed. The original December 2025 contract is expired.
 
+[The profit-evidence protocol](PROFIT_EVIDENCE_PROTOCOL.md) fixes the decision criteria before returns,
+including independently selected costs, untouched holdout, losses, operating costs and uncertainty.
+Its exact-cost/statistical extensions are planned, not implemented by the current nine-scenario runner.
+A possible later live pilot would measure execution and needs separate concrete account/budget approval.
+
 ## What is complete
 
 - Current Pages match the preserved source; see `CURRENT_SOURCE_CHECK.json`. The original code and tests remain unchanged in `../tjr_mnq_2026-10-14/`.

@@ -13,6 +13,31 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-14 19:17 UTC, Codex, TJR profit-evidence criteria before historical returns (12:17 PM PDT)
+- Owner asked for a test that establishes profit/loss evidence and is willing to consider a small
+  live trial if needed. Prepared PROFIT_EVIDENCE_PROTOCOL.md with preserved source/periods, independent
+  cost selection, all nine scenarios, no-trade days, known losses, unresolved-data handling, operating
+  costs, one controlled holdout, predeclared uncertainty/stress checks and honest outcome categories.
+- A later live pilot would calibrate fills/slippage/fees/reconciliation, not replace historical or
+  prospective evidence. The saved strategy trades MNQ futures; Kalshi access cannot execute it. No
+  futures broker, funding or per-trade/day/total trial amounts were supplied. Asked about existing
+  futures broker/data access; no new account, paid data purchase or live activation was performed.
+- Historical trades tested remain zero; P&L unknown, paper not started, TJR live disabled. This is
+  a decision protocol, not new financial evidence. The exact-cost/statistical extensions described
+  are future work; the current runner only replays its original nine cost assumptions. Existing
+  synthetic checks and documented data-access failures were not rerun or presented as profit evidence.
+- Read current coordination/AGENTS/worklog and fetched deploy head 0e107c8 before updating. Checked
+  CME's official MNQ specification: $2/point and $0.50/tick. Contract size is not a safe dollar budget;
+  futures stops can slip/gap. Existing Kalshi limits, losses, orders and account state were untouched.
+- Changed only research/docs. No application code or executable test changed, so the prior source
+  test receipts remain the relevant checks. Independent protocol review corrected cost-grid trade
+  selection, fixed-cost retention in the best-day stress, friction decomposition and bootstrap RNG
+  reproducibility. No strategy outcomes were accessed. Queue retains earlier entries; not done,
+  and its follow-up automation remains enabled. No new production inspection is claimed this session.
+- Next: obtain authorized actual MNQ December 2025 minute bars for September 19–October 31 plus
+  contract/license/timestamp evidence and intended-account costs; verify normalization and costs,
+  then run development before the holdout. Profitability remains untested, not disproven.
+
 ## 2026-10-14 19:07 UTC, Codex, PR #51 deployed and local delay measured (12:07 PM PDT)
 - PR #51 merged in allowed minute 12:02 PM PDT. Railway deployment
   4f84d690-5ecb-4357-8284-b0244bddd80b built exact 567ba32d53d434d23d10fbec4627330ff83a5bbd;

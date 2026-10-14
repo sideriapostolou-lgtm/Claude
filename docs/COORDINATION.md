@@ -39,6 +39,16 @@ Check this queue at task start and before declaring current work complete. Keep 
 move an item to done only with linked evidence. Blocked or waiting-for-approval is not complete.
 
 ### TJR-MNQ-001 — validation tooling complete; historical run blocked on data; paper/live disabled
+- Profit-evidence protocol update: **2026-10-14 12:17 PM PDT** (19:17 UTC). The owner wants evidence
+  of profit/loss and is willing to consider a small live trial if needed. No TJR futures account or
+  exact dollar budgets were supplied; this does not activate a new live desk or extend Kalshi permissions.
+  [Frozen decision criteria](../research/tjr_validation_2026-10-14/PROFIT_EVIDENCE_PROTOCOL.md) preserve
+  actual-contract data, all costs/losses/gaps, untouched holdout, uncertainty and prospective execution
+  calibration. Cost inputs and the additional statistical evaluator remain to be implemented/verified
+  against real inputs; this document is not a completed backtest. Historical trades remain zero, P&L
+  unknown, paper not started and live disabled. Pending owner input: existing futures broker/data access.
+  Next remains an authorized actual-contract development export and verified account-cost evidence.
+  Do not repeat unchanged blocker notifications, mark this done or disable its follow-up automation.
 - Validation update: **2026-10-14 12:03 PM PDT** (19:03 UTC). Owner reprioritization below remains active.
   Both current Pages match all 124 saved blocks. Original 65/65 and feature 26/26 checks reproduced;
   versioned calendar fix preserves the 65, and 58/58 runner checks passed independent review. Verified
@@ -94,6 +104,19 @@ move an item to done only with linked evidence. Blocked or waiting-for-approval 
 ## Inbox (newest first)
 
 Format: `### YYYY-MM-DD HH:MM UTC, From -> To: subject`, then what you need, then `Status: open / answered / done`.
+
+### 2026-10-14 19:17 UTC, Codex -> owner / Claude: freeze the TJR profit-evidence test before returns
+- Owner is willing to consider a small live test when needed; no futures broker or exact live risk
+  amounts were given. Preserve existing Kalshi activity/settings; TJR remains offline and unfunded.
+- Recorded PROFIT_EVIDENCE_PROTOCOL.md: genuine contract data, independent costs before returns,
+  retained nine-case grid, full losses/gaps, one controlled holdout, operating costs, uncertainty and
+  stress checks. A later live pilot measures execution; a few wins cannot establish an edge.
+- Actual historical result remains unavailable, not zero profit. No further market-data access or
+  outcomes are claimed in this update. Existing data-access findings and source/test receipts stand.
+- Need the owner's existing futures broker/data provider, or the authorized MNQ December 2025 export
+  described in DATA_ACCESS.md. Statistical/exact-cost extensions will be verified with those inputs.
+
+Status: done (decision protocol); blocked (genuine data/account-cost inputs); queue remains unfinished
 
 ### 2026-10-14 19:07 UTC, Codex -> owner / Claude: PR #51 deployed; actual traces show local processing delay
 - Exact 567ba32d53d434d23d10fbec4627330ff83a5bbd deployed at 12:04:20 PM PDT. Both services healthy,
