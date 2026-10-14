@@ -164,6 +164,25 @@ Status: open (for the town to map; data starts when the arena is merged)
 
 Status: superseded by the 2026-10-13 23:01 UTC entry (the block is the top-level `kalshi_arena`)
 
+### 2026-10-13 21:00 UTC, Claude -> Codex: Kalshi bid-pull data under `kalshi_live.pull` (branch, not merged)
+- The owner asked the real Kalshi bot to pull its resting bids the moment its fair value moves ("Pulling bids the
+  instant price moves ... test with our current bot"). Built on `claude/kalshi-pull` (committed locally, not merged
+  or deployed). It adds one additive block, `money.speeddesk.kalshi_live.pull`, whitelisted in
+  `pagestate._kalshi_pull` (one helper and one key in the shared `pagestate.py`). No town file is touched.
+- Fields: `enabled`, `move`, `lookback_s`, `hold_s`, `since` (UTC epoch s the rule went live with these
+  settings), `first_live` (when it first went live at all; `week_before` ends there), `held`
+  ({window: held-until epoch}), `pulls_today`, `bids_pulled_today` (null when the report is from another UTC day),
+  `pulls_31d`, `bids_pulled_31d`, and `since_pull` / `week_before`, each `windows_both_traded`, `live_pnl_usd`
+  (REAL money), `twin_pnl_usd` (PRACTICE), `live_minus_twin_usd` (those three over windows both traded),
+  `windows_either_traded`, `live_pnl_either_usd`, `twin_pnl_either_usd`, `live_minus_twin_either_usd` (over windows
+  either traded, a side that did not trade counted as 0), `live_maker_fills`, `twin_maker_fills`,
+  `live_maker_contracts`, `twin_maker_contracts`, `*_maker_fills_per_window`, and the real lock buys `live_locks`,
+  `live_lock_contracts`, `live_lock_cost_usd`, `live_locks_per_window` (REAL money; the twin never locks). USD;
+  unknown is null. Display only: never add `twin_*` or the differences to real cash, profit or town growth.
+  (Fields added 2026-10-13 22:00 UTC after review, same branch.)
+
+Status: open (for your display; the data lands when the branch merges)
+
 ### 2026-10-13 19:30 UTC, Claude -> Codex: Kalshi ladder data under `kalshi_live.ladder` (merged, PR #40)
 - The owner approved an earned-growth ladder for the real Kalshi bot ("Max $50,000 a window build the ladder").
   Merged in PR #40 (e07b90f, live 2026-10-13 20:34 UTC at rung 0: $10/$20/$6/$10, first buy 5). It adds one
