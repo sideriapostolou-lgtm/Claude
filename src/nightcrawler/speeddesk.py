@@ -262,6 +262,13 @@ class SpeedRunner:
                                                  "settlement_source": "venue BRTI outcome"})
 
     def on_book(self, book: Book) -> None:
+        # Optional measurement sees rejected quotes too; it never changes the accepted trading snapshot.
+        try:
+            observer = getattr(self.live, "observe_book", None)
+            if observer is not None:
+                observer(book)
+        except Exception:  # noqa: BLE001 - a diagnostic must never interrupt the production feed.
+            log.warning("speeddesk_fill_markout_callback_failed")
         if self.desk.on_book(book):
             self._refresh_live_snapshot()
             self._live_call("on_book", book)
