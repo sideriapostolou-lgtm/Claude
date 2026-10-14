@@ -47,6 +47,8 @@ HARD_CLIP = 25.0
 STOP_REFUSALS = frozenset({"day_stop", "total_budget"})
 # What a resume value did when the companion saw it (speeddesk_live records one receipt per start).
 ResumeOutcome = Literal["applied", "used", "not_halted", "integrity", ""]
+# Diagnostic worst-case enumeration only; admission keeps the conservative deployed budget policy.
+MAX_LEGS = 10
 # Integrity reset fingerprints live beside the resume ones; the prefix keeps the two kinds from matching.
 RESET_DOMAIN = b"kalshi-integrity-reset\x00"
 DAY_RESET_DOMAIN = b"kalshi-day-reset\x00"
@@ -228,15 +230,71 @@ class LiveRiskBook:
         self.cash_usd: float | None = None
         self.cash_at: float | None = None
         self.cash_debits = 0.0
+        # Latency review (2026-10-13): the money math summed every order and window ever made (a restart merges
+        # the archive back into memory), dozens of times a step: 0.6 ms a step on a fresh book, 57 ms after a week.
+        # This index holds each window's orders in creation order, the windows that can still lose money
+        # (unsettled, with an order or anything bought) and who owns each Kalshi order id. It only grows with the
+        # dicts it describes, is kept up to date by the methods that add to them, and is rebuilt from scratch
+        # whenever they changed in any other way (a restore, a test), so the sums it feeds are exactly the full ones.
+        self._indexed: tuple[Any, ...] = ()  # the dicts it describes (held, so their identity cannot be reused)
+        self._index_key: tuple[int, ...] | None = None
+        self._by_window: dict[str, list[str]] = {}
+        self._seq: dict[str, int] = {}
+        self._open: set[str] = set()
+        self._order_owner: dict[str, str] = {}
+
+    def _index_current(self) -> bool:
+        held = self._indexed
+        return (bool(held) and held[0] is self.intents and held[1] is self.inventory and held[2] is self.settled
+                and self._index_key == (len(self.intents), len(self.inventory), len(self.settled)))
+
+    def _mark_indexed(self) -> None:
+        self._indexed = (self.intents, self.inventory, self.settled)
+        self._index_key = (len(self.intents), len(self.inventory), len(self.settled))
+
+    def _index(self) -> None:
+        """Rebuild the index when the dicts changed behind its back (see __init__)."""
+        if self._index_current():
+            return
+        self._by_window, self._seq, self._order_owner = {}, {}, {}
+        for position, (key, intent) in enumerate(self.intents.items()):
+            self._by_window.setdefault(intent.window, []).append(key)
+            self._seq[key] = position
+            if intent.order_id is not None:
+                self._order_owner.setdefault(intent.order_id, key)
+        self._open = {window for window in self._by_window if window not in self.settled}
+        self._open |= {window for window, value in self.inventory.items() if window not in self.settled
+                       and (value.up.shares or value.down.shares or value.spent)}
+        self._mark_indexed()
+
+    def _window_intents(self, window: str) -> list[LiveIntent]:
+        """The window's orders, oldest first."""
+        self._index()
+        return [self.intents[key] for key in self._by_window.get(window, ())]
+
+    def open_windows(self) -> set[str]:
+        """Windows that can still lose money: unsettled, with an order or anything bought (a copy)."""
+        self._index()
+        return set(self._open)
+
+    def open_intent_ids(self) -> list[str]:
+        """Every order in an open window, oldest first. Any order still reserved is among them unless an integrity
+        error is set (a reservation can only come back in a settled window together with an integrity error)."""
+        self._index()
+        keys = [key for window in self._open for key in self._by_window.get(window, ())]
+        return sorted(keys, key=self._seq.__getitem__)
 
     def add_window(self, window: Window) -> None:
         if (window.venue != "kalshi" or not window.slug.startswith("KXBTC15M-")
                 or not all(math.isfinite(value) for value in (window.start, window.end))
                 or abs(window.end - window.start - 900) > EPSILON):
             raise LiveRejected("kalshi_15m_only")
+        current = self._index_current()
         if window.slug not in self.windows:
             self.windows[window.slug] = window
         self.inventory.setdefault(window.slug, Inventory())
+        if current:  # a new window holds nothing yet: the index stays exact
+            self._mark_indexed()
 
     def limits_for(self, window: str) -> LiveLimits:
         """The limits for buys and locks in one window: fixed by the window's start, so a ladder change never
@@ -266,12 +324,15 @@ class LiveRiskBook:
 
     @property
     def reserved_usd(self) -> float:
-        return sum(intent.reserved for intent in self.intents.values())
+        if self.integrity_error:  # the one state where a settled window may hold a reservation again
+            return sum(intent.reserved for intent in self.intents.values())
+        return sum(self.intents[key].reserved for key in self.open_intent_ids())
 
     @property
     def open_cost_usd(self) -> float:
         """Gross cost of unsettled windows (both halves of every pair), for display."""
-        return sum(value.spent for window, value in self.inventory.items() if window not in self.settled)
+        self._index()
+        return sum(self.inventory[window].spent for window in self._open)
 
     @property
     def open_loss_usd(self) -> float:
@@ -280,8 +341,48 @@ class LiveRiskBook:
         Up and down pay $1 together whatever happens (Kalshi nets them at once), so a complete pair
         risks nothing and only the unpaired contracts' cost is at risk. Fees are in the cost.
         """
+        self._index()
         return sum(max(0.0, value.spent - min(value.up.shares, value.down.shares))
-                   for window, value in self.inventory.items() if window not in self.settled)
+                   for value in (self.inventory[window] for window in self._open))
+
+    @staticmethod
+    def _worst(inventory: Inventory, legs: list[tuple[Side, float, float]]) -> float:
+        """Largest loss the window can still take: its cost (fees included) minus the $1 its weaker side pays,
+        over every combination of its pending orders ``legs`` (side, contracts, reserved cost) filling or not.
+
+        The loss is convex in each order's filled amount, so the extremes (none or all of each) bound every
+        partial fill. A balancing order that completes pairs adds nothing: its worst case is not filling.
+        Beyond MAX_LEGS orders it falls back to the conservative sum of every reservation.
+        """
+        if len(legs) > MAX_LEGS:
+            return max(0.0, inventory.spent - min(inventory.up.shares, inventory.down.shares)) + sum(
+                cost for _side, _size, cost in legs)
+        worst = 0.0
+        for flags in itertools.product((False, True), repeat=len(legs)):
+            shares = {"up": inventory.up.shares, "down": inventory.down.shares}
+            paid = inventory.spent
+            for include, (side, size, cost) in zip(flags, legs, strict=True):
+                if include:
+                    shares[side] += size
+                    paid += cost
+            worst = max(worst, paid - min(shares.values()))
+        return worst
+
+    def _legs(self, window: str, *, without: str | None = None) -> list[tuple[Side, float, float]]:
+        return [(intent.side, intent.remaining, intent.reserved) for intent in self._window_intents(window)
+                if intent.reserved > EPSILON and intent.client_order_id != without]
+
+    def worst_loss(self, window: str, extra: tuple[Side, float, float] | None = None,
+                   *, without: str | None = None) -> float:
+        """The window's worst case (see ``_worst``), optionally with a new order ``extra`` or without one."""
+        inventory = self.inventory.get(window)
+        if inventory is None or window in self.settled:
+            return 0.0
+        return self._worst(inventory, self._legs(window, without=without) + ([extra] if extra else []))
+
+    def lowers_risk(self, client_order_id: str) -> bool:
+        """Compatibility name for the strict aggregate-reservation hedge check, never a broader exception."""
+        return self.strictly_balancing_intent(client_order_id)
 
     @property
     def at_risk_usd(self) -> float:
@@ -298,7 +399,9 @@ class LiveRiskBook:
     def pending_risk_usd(self) -> float:
         """The reserved cost of pending buys that could raise a window's worst-case loss if they fill."""
         total, spare = 0.0, {}  # type: float, dict[str, float]
-        for intent in self.intents.values():
+        pending = (self.intents.values() if self.integrity_error
+                   else (self.intents[key] for key in self.open_intent_ids()))
+        for intent in pending:
             if intent.lock or intent.reserved <= EPSILON:
                 continue
             balancing = self.balancing_contracts(intent.window, intent.side, intent.remaining, intent.unit_reserve,
@@ -351,8 +454,8 @@ class LiveRiskBook:
         light, unpaired = self.lock_side(intent.window)
         if light != intent.side:
             return False
-        claimed = sum(item.remaining for item in self.intents.values()
-                      if item.window == intent.window and item.side == light and item.reservation_active)
+        claimed = sum(item.remaining for item in self._window_intents(intent.window)
+                      if item.side == light and item.reservation_active)
         return claimed <= unpaired + EPSILON
 
     def hedge_unit(self, window: str, price: float, limits: LiveLimits) -> float:
@@ -419,22 +522,24 @@ class LiveRiskBook:
         return latched
 
     def risk_status(self, now: float) -> dict[str, Any]:
+        at_risk = self.at_risk_usd  # once per status (latency review: it was worked out five times)
         self._refresh_stops(now)
         limits = self.limits_now(now)
         day_loss = self.day_loss(now)
         total_loss = max(0.0, self.stop_anchor - self.realized_pnl)
-        available = None if self.cash_usd is None else max(0.0, self.cash_usd - self.cash_debits - self.reserved_usd)
+        reserved = self.reserved_usd
+        available = None if self.cash_usd is None else max(0.0, self.cash_usd - self.cash_debits - reserved)
         day_latched = self.day_latched(now)
         return {"halted": self.halted, "halt_reason": self.halt_reason,
-                "integrity_error": self.integrity_error, "reserved_usd": self.reserved_usd,
+                "integrity_error": self.integrity_error, "reserved_usd": reserved,
                 "open_cost_usd": self.open_cost_usd, "open_loss_usd": self.open_loss_usd,
-                "at_risk_usd": self.at_risk_usd,
+                "at_risk_usd": at_risk,
                 "day_pnl_usd": self.day_pnl.get(utc_day(now), 0.0), "day_loss_usd": day_loss,
-                "day_at_risk_usd": day_loss + self.at_risk_usd,
-                "day_stopped": day_latched or day_loss + self.at_risk_usd >= limits.day_loss_usd - EPSILON,
+                "day_at_risk_usd": day_loss + at_risk,
+                "day_stopped": day_latched or day_loss + at_risk >= limits.day_loss_usd - EPSILON,
                 "day_stop_latched": day_latched,
                 "total_pnl_usd": self.realized_pnl, "total_loss_usd": total_loss,
-                "total_at_risk_usd": total_loss + self.at_risk_usd,
+                "total_at_risk_usd": total_loss + at_risk,
                 "available_cash_usd": available, "cash_at": self.cash_at,
                 "limits": asdict(limits)}
 
@@ -443,7 +548,7 @@ class LiveRiskBook:
 
     def _inventory_guard(self, window: str, side: Side, size: float, unit: float, limits: LiveLimits) -> str:
         inventory = self.inventory[window]
-        pending = [intent for intent in self.intents.values() if intent.window == window and intent.reserved > EPSILON]
+        pending = [intent for intent in self._window_intents(window) if intent.reserved > EPSILON]
         total = inventory.up.shares + inventory.down.shares
         difference = inventory.up.shares - inventory.down.shares
         starter_id = self.bootstrap_order.get(window)
@@ -535,7 +640,8 @@ class LiveRiskBook:
             return "clip"
         if self.cash_at is None or self.cash_usd is None or not 0 <= now - self.cash_at <= limits.cash_max_age_s:
             return "cash_stale"
-        if any(item.window == window and item.side == side and item.reservation_active for item in self.intents.values()):
+        mine = self._window_intents(window)
+        if any(item.side == side and item.reservation_active for item in mine):
             return "order_pending"
         try:
             unit = self.unit_reserve(window, price, kind)
@@ -545,18 +651,20 @@ class LiveRiskBook:
         # A strictly balancing buy only lowers the worst-case loss: like a lock, it is exempt from both loss stops
         # (never from the window budget, the open budget or the cash). The rest of the buy is new risk.
         risk = cost - self.balancing_contracts(window, side, size, unit) * unit
-        current = self.inventory[window].spent + sum(item.reserved for item in self.intents.values() if item.window == window)
+        current = self.inventory[window].spent + sum(item.reserved for item in mine)
         if current + cost > limits.window_usd + EPSILON:
             return "window_budget"
-        if self.at_risk_usd + cost > limits.open_usd + EPSILON:
+        # Preserve the deployed open-budget policy: even a hedge must fit its entire proposed cost.
+        at_risk = self.at_risk_usd
+        if at_risk + cost > limits.open_usd + EPSILON:
             return "open_budget"
         if risk > EPSILON:
             if self.halted:
                 return self.halt_reason or "halted"
-            if self.day_loss(now) + self.at_risk_usd + risk >= limits.day_loss_usd - EPSILON:
+            if self.day_loss(now) + at_risk + risk >= limits.day_loss_usd - EPSILON:
                 return "day_stop"
             # The lifetime stop never scales: it is the configured one at every rung.
-            if (max(0.0, self.stop_anchor - self.realized_pnl) + self.at_risk_usd + risk
+            if (max(0.0, self.stop_anchor - self.realized_pnl) + at_risk + risk
                     >= self.limits.total_loss_usd - EPSILON):
                 return "total_budget"
             if self.day_latched(now):
@@ -590,7 +698,7 @@ class LiveRiskBook:
             return "clip"
         if self.cash_at is None or self.cash_usd is None or not 0 <= now - self.cash_at <= limits.cash_max_age_s:
             return "cash_stale"
-        if any(item.window == window and item.reservation_active for item in self.intents.values()):
+        if any(item.reservation_active for item in self._window_intents(window)):
             return "order_pending"  # every order in the window is reconciled before the count is trusted
         light, unpaired = self.lock_side(window)
         if light != side or size > unpaired + EPSILON:
@@ -619,7 +727,12 @@ class LiveRiskBook:
             raise LiveRejected(reason)
         intent = LiveIntent(client_order_id, window, side, kind, price, size, now,
                             self.unit_reserve(window, price, kind), fair, lock=lock)
+        self._index()
         self.intents[client_order_id] = intent
+        self._by_window.setdefault(window, []).append(client_order_id)
+        self._seq[client_order_id] = len(self._seq)
+        self._open.add(window)
+        self._mark_indexed()
         if self.inventory[window].up.shares + self.inventory[window].down.shares <= EPSILON:
             self.bootstrap_order[window] = client_order_id
         return intent
@@ -629,12 +742,14 @@ class LiveRiskBook:
         if not order_id or (intent.order_id is not None and intent.order_id != order_id):
             self.integrity_error = "order_identity_changed"
             raise LiveRejected(self.integrity_error)
-        if any(item.order_id == order_id and item.client_order_id != client_order_id for item in self.intents.values()):
+        self._index()  # its order-id owners: this ran over every order ever made, for every order listed
+        if self._order_owner.get(order_id, client_order_id) != client_order_id:
             self.integrity_error = "order_identity_duplicate"
             raise LiveRejected(self.integrity_error)
         if intent.order_id == order_id:
             return  # repeated discovery cannot erase terminal reconciliation evidence
         intent.order_id, intent.status, intent.uncertainty = order_id, "submitted", None
+        self._order_owner[order_id] = client_order_id
 
     def mark_uncertain(self, client_order_id: str, reason: str) -> None:
         intent = self.intents[client_order_id]
@@ -657,6 +772,16 @@ class LiveRiskBook:
         intent.status = "rejected"
         intent.uncertainty = reason if reason.isidentifier() and len(reason) <= 64 else "create_rejected"
         return True
+
+    def release_unsent(self, client_order_id: str) -> None:
+        """Release a reservation whose create never reached the venue: no venue order id and nothing filled, and
+        the caller's proof (absent from complete order lists long after the decision; KalshiLiveDesk)."""
+        intent = self.intents[client_order_id]
+        if (intent.order_id is not None or intent.filled_size > EPSILON or not intent.reservation_active
+                or intent.status not in ("intent", "uncertain")):
+            raise LiveRejected("release_unproven")
+        intent.reservation_active = False
+        intent.status, intent.uncertainty = "rejected", "never_reached_venue"
 
     def request_cancel(self, client_order_id: str) -> None:
         self.intents[client_order_id].cancel_requested = True
@@ -757,7 +882,7 @@ class LiveRiskBook:
         if (not settlement_id or window not in self.windows or not isinstance(up_wins, bool)
                 or not math.isfinite(now) or now < self.windows[window].end):
             raise LiveRejected("settlement_invalid")
-        if any(item.window == window and item.reservation_active for item in self.intents.values()):
+        if any(item.reservation_active for item in self._window_intents(window)):
             raise LiveRejected("settlement_orders_unreconciled")
         inventory = self.inventory[window]
         gross = settlement(window, inventory, up_wins, now)
@@ -771,7 +896,11 @@ class LiveRiskBook:
         result = LiveSettlement(window, settlement_id, now, up_wins, gross.up_shares, gross.down_shares,
                                 gross.cost_usd, gross.fee_usd, pairs, expected_net, gross.payout_usd,
                                 gross.locked_usd, gross.direction_usd, gross.pnl_usd)
+        current = self._index_current()
         self.settled[window] = result
+        if current:
+            self._open.discard(window)
+            self._mark_indexed()
         self.realized_pnl += result.pnl_usd
         self.day_pnl[utc_day(now)] = self.day_pnl.get(utc_day(now), 0.0) + result.pnl_usd
         self._refresh_stops(now)

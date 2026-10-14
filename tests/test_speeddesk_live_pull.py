@@ -29,10 +29,12 @@ from nightcrawler.speeddesk_live import (
 from nightcrawler.speeddesk_live_model import LiveSettlement
 from nightcrawler.speeddesk_live_pull import PullGuard, PullRule, compare
 from nightcrawler.speeddesk_model import (
+    AVERAGE_LEAD_S,
     Book,
     Level,
     Settlement,
     Trade,
+    Window,
     fair_up,
     utc_day,
 )
@@ -43,11 +45,17 @@ MAKERS = {"speeddesk_take_edge": 1.0}
 SIGMA = .001
 
 
+def horizon(seconds_left: float) -> float:
+    """The horizon the bot's fair uses (KalshiLiveDesk._fair, fair_up with settles_on_average): Kalshi settles on
+    the 60 s average, which moves like the index AVERAGE_LEAD_S before the close."""
+    return seconds_left - AVERAGE_LEAD_S if seconds_left >= 60 else seconds_left
+
+
 def market(desk: KalshiLiveDesk, clock: FakeClock, up: float, *, ask: float = .55, feed: bool = True) -> None:
     """Fresh books (asks above both bids) and a Bitcoin print that puts the Up fair at ``up`` right now; ``feed``
     also hands the books to the desk, as the feeds do."""
     window = desk.book.windows[TICKER]
-    bitcoin = 80000 * math.exp(NormalDist().inv_cdf(up) * SIGMA * math.sqrt(window.end - clock.now()))
+    bitcoin = 80000 * math.exp(NormalDist().inv_cdf(up) * SIGMA * math.sqrt(horizon(window.end - clock.now())))
 
     def view() -> LiveSnapshot:
         books = {(TICKER, side): Book(TICKER, side, (Level(.3, 2),), (Level(ask, 10),), clock.now(), "book",
@@ -201,6 +209,7 @@ def test_the_twin_does_not_pull_its_bids_stay_resting(tmp_path: Path) -> None:
         assert account.cancels == ["order-4", "order-3"]
         assert {order_id: (order.side, order.price) for order_id, order in desk.twin.orders.items()} == twin_bids
         assert desk.twin_kept == set(twin_bids)
+        desk.checkpoint()  # receipts reach the ledger with the next save (within a second), not at the cancel
         assert not [receipt for receipt in desk.ledger.iter_receipts() if receipt.kind == "speeddesk_twin"
                     and receipt.payload.get("event") == "speeddesk_cancel"]
         run(desk, clock, 12)  # the hold ends and the bot bids again; the twin keeps its own (0.50-fair) bids
@@ -216,6 +225,7 @@ def test_the_twins_kept_bid_follows_the_old_reprice_rule(tmp_path: Path) -> None
         assert desk.twin_kept == {3, 4}
         market(desk, clock, .512)  # 1.2c from the bids' own fair: the old rule reprices them
         run(desk, clock, .6)
+        desk.checkpoint()  # receipts reach the ledger with the next save (within a second), not at the cancel
         cancelled = [receipt.payload for receipt in desk.ledger.iter_receipts() if receipt.kind == "speeddesk_twin"
                      and receipt.payload.get("event") == "speeddesk_cancel"]
         assert [(row["order_id"], row["reason"]) for row in cancelled] == [(3, "reprice"), (4, "reprice")]
@@ -509,8 +519,11 @@ def test_fair_helper_matches_the_bots_fair() -> None:
     clock = FakeClock()
     end = clock.now() + 890
     for up in (.3, .5, .5053, .9):
-        bitcoin = 80000 * math.exp(NormalDist().inv_cdf(up) * SIGMA * math.sqrt(end - clock.now()))
-        assert fair_up(bitcoin, 80000, SIGMA, end - clock.now()) == pytest.approx(up, abs=1e-9)
+        bitcoin = 80000 * math.exp(NormalDist().inv_cdf(up) * SIGMA * math.sqrt(horizon(end - clock.now())))
+        assert fair_up(bitcoin, 80000, SIGMA, end - clock.now(), settles_on_average=True) == pytest.approx(up, abs=1e-9)
+        window = Window(TICKER, end - 900, end, start_price=80000, venue="kalshi")
+        snapshot = LiveSnapshot((window,), {}, bitcoin, clock.now(), SIGMA, frozenset({TICKER}))
+        assert KalshiLiveDesk._fair(window, snapshot, clock.now()) == pytest.approx(up, abs=1e-9)
 
 
 # Review findings (2026-10-13 fix round), each reproduced first as the reviewers found it.
@@ -721,6 +734,7 @@ def _choppy(tmp_path: Path, *, pull: bool) -> dict[str, Any]:
                 market(desk, clock, .5 + .005 * flip)
                 next_flip += 10.2
             run(desk, clock, .2, every=.2)
+        desk.checkpoint()  # receipts reach the ledger with the next save (within a second), not at the cancel
         twin = [receipt.payload for receipt in desk.ledger.iter_receipts() if receipt.kind == "speeddesk_twin"]
         return {"twin": sorted((order.side, order.price, order.size) for order in desk.twin.orders.values()),
                 "twin_cancels": [row for row in twin if row.get("event") == "speeddesk_cancel"],
@@ -781,6 +795,7 @@ def test_a_bid_the_pull_stops_at_the_send_leaves_the_twins_kept_bids_alone(tmp_p
         run(desk, clock, 1.8)
         assert calls and any(event.get("state") == "not sent; prices moved before send" for event in desk.latest_events)
         assert {order_id: (order.side, order.price) for order_id, order in desk.twin.orders.items()} == before
+        desk.checkpoint()  # receipts reach the ledger with the next save (within a second), not at the cancel
         assert not [receipt for receipt in desk.ledger.iter_receipts() if receipt.kind == "speeddesk_twin"
                     and receipt.payload.get("event") == "speeddesk_cancel"]
     finally:

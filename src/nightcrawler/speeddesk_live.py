@@ -23,10 +23,9 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any, Literal
 
-import requests
-
 from .config import Secret, Settings
 from .ledger import Ledger
+from .speeddesk_feeds import thread_session
 from .speeddesk_kalshi_client import WRITES_PER_S, KalshiClient, KalshiClientError
 from .speeddesk_live_ladder import Ladder, limits_view
 from .speeddesk_live_model import (
@@ -47,7 +46,9 @@ from .speeddesk_metrics import (
     fresh_window_slugs,
 )
 from .speeddesk_model import (
+    FUTURE_SKEW_S,
     Book,
+    Inventory,
     PracticeDesk,
     PracticeOrder,
     Side,
@@ -106,6 +107,16 @@ RESUME_STATES = {
 }
 # The earned-growth ladder looks at the books at most this often (a change only ever starts at the next window).
 LADDER_EVERY_S = 1.0
+# Speed plan step 2. The write before an order's first network byte is one small row, synced to disk: the order's
+# identity and complete reservation, in the pre-send journal (ledger key JOURNAL_KEY). The full state is saved at
+# most every SAVE_EVERY_S, at once after a fill, settlement, stop, release or owner action, and at startup and shutdown;
+# each full save empties the journal in the same transaction. A restart reads the last full save plus the journal.
+JOURNAL_KEY, SAVE_EVERY_S = "kalshi_live_journal", 1.0
+# A journaled order with no Kalshi order id and no fill (a crash between the journal row and the send, or a create
+# lost on the way) is released only once its market has closed, so no copy of the request can still execute, and
+# two complete order lists read after the close, at least ORDER_LIST_LAG_S apart, leave it out while its window's
+# account facts agree (see _release_proof). Absence alone proves nothing while the market trades: a request held in
+# a network buffer can arrive late. While one waits, complete lists are read every ORDER_LIST_LAG_S.
 # Receipts kept out of the panel's latest events: the status line, and one line per finished pull (each pull's
 # cancels are events already; a busy minute of pulls would otherwise push the orders and fills out).
 QUIET_RECORDS = frozenset({"speeddesk_live_status", "speeddesk_live_pull"})
@@ -208,18 +219,13 @@ class _ClockOffsets:
 
 def coinbase_time() -> float:
     """Coinbase Exchange's clock in epoch seconds (public, no key). One kept-alive connection per thread."""
-    session = getattr(_PROBE, "session", None)
-    if session is None:
-        session = _PROBE.session = requests.Session()
-    response = session.get(COINBASE_TIME, timeout=(2.0, 2.0))
+    response = thread_session().get(COINBASE_TIME, timeout=(2.0, 2.0))
     response.raise_for_status()
     epoch = response.json()["epoch"]
     if isinstance(epoch, bool) or not isinstance(epoch, (int, float)) or not math.isfinite(epoch):
         raise ValueError("Invalid Coinbase time")
     return float(epoch)
 
-
-_PROBE = threading.local()
 
 
 def _spread(values: list[float]) -> dict[str, float | None]:
@@ -274,6 +280,20 @@ def _number(value: Any) -> float:
     return number
 
 
+def _same_terms(raw: dict[str, Any], intent: Intent) -> bool:
+    """Whether a listed order has the terms ``intent`` was sent with (market, side, size, limit price), whatever its
+    client id: the bot's own order would, as _validate_order requires of every listed bot order. Unreadable terms
+    prove nothing, so they count as the same."""
+    outcome = "yes" if intent.side == "up" else "no"
+    try:
+        return (raw.get("ticker") == intent.window and raw.get("outcome_side") == outcome
+                and raw.get("book_side") == ("bid" if intent.side == "up" else "ask")
+                and abs(_number(raw["initial_count_fp"]) - intent.size) <= EPS
+                and abs(_number(raw[f"{outcome}_price_dollars"]) - intent.price) <= EPS)
+    except (KeyError, TypeError, ValueError):
+        return True
+
+
 def _stamp(value: Any) -> float:
     if isinstance(value, str) and not value.replace(".", "", 1).isdigit():
         moment = datetime.fromisoformat(value)
@@ -285,6 +305,40 @@ def _stamp(value: Any) -> float:
 
 def _secret(value: Secret | str | None) -> str:
     return value.reveal() if isinstance(value, Secret) else value or ""
+
+
+def replay_journal(saved: dict[str, Any], journal: Any) -> list[str]:
+    """Add the orders journaled before their send since ``saved`` was written; returns their client ids.
+
+    Each entry holds exactly what the full save would have held for that order (its reservation, its intent,
+    the window when new, and whether it opened the window), so the merged state is the save made at that moment.
+    """
+    if journal is None:
+        return []
+    if not isinstance(journal, dict) or journal.get("version") != 1 or not isinstance(journal.get("intents"), dict):
+        raise ValueError("Invalid real pre-send journal")
+    replayed = []
+    for key, entry in journal["intents"].items():
+        if key in saved["intents"]:
+            continue  # a later full save already holds it
+        window = entry["intent"]["window"]
+        if window not in saved["book"]["windows"]:
+            saved["book"]["windows"][window] = entry["window"]
+            saved["book"]["inventory"][window] = asdict(Inventory())
+        saved["book"]["intents"][key] = entry["book"]
+        saved["intents"][key] = entry["intent"]
+        if entry["bootstrap"]:
+            saved["book"]["bootstrap_order"][window] = key
+        replayed.append(key)
+    return replayed
+
+
+def durable_state(ledger: Ledger) -> dict[str, Any] | None:
+    """What a restart reads, before archived windows are merged: the last full save plus the pre-send journal."""
+    saved = ledger.get_kv(STATE_KEY)
+    if saved is not None:
+        replay_journal(saved, ledger.get_kv(JOURNAL_KEY))
+    return saved
 
 
 class KalshiLiveDesk:
@@ -328,6 +382,15 @@ class KalshiLiveDesk:
         self.last_sync = -math.inf
         self.last_status = -math.inf
         self.last_checkpoint = -math.inf
+        # Orders journaled since the last full save (JOURNAL_KEY), unsaved changes, and the last daily-report pass.
+        self.journal: dict[str, dict[str, Any]] = {}
+        self.dirty = False
+        self.saved_stops: tuple[Any, ...] = ()
+        self.last_reports = -math.inf
+        # When each journaled order with no Kalshi order id was first missing from a complete order list.
+        self.unsent_absent: dict[str, float] = {}
+        # The journal on disk holds entries the next full save must clear (set after a restart replayed them).
+        self.journal_on_disk = False
         self.save_ms: float | None = None
         self.save_stages: dict[str, float | None] = {}
         self.retry_at = -math.inf
@@ -401,6 +464,8 @@ class KalshiLiveDesk:
             self.last_mirror = -math.inf
             if saved is None and self.path.exists():
                 raise ValueError("Real receipt ledger missing beside existing state")
+            if saved is None and self.ledger.get_kv(JOURNAL_KEY) is not None:
+                raise ValueError("Real pre-send journal without a saved state")
             if saved is None:
                 self.book = LiveRiskBook(limits)
                 self.intents: dict[str, Intent] = {}
@@ -410,6 +475,9 @@ class KalshiLiveDesk:
                 if saved.get("version") != 1:
                     raise ValueError("Unsupported real receipt ledger version")
                 self._merge_archive(saved)
+                journal = self.ledger.get_kv(JOURNAL_KEY)
+                replayed = replay_journal(saved, journal)
+                self.journal_on_disk = bool(journal and journal.get("intents"))
                 self.book = LiveRiskBook.from_state(saved["book"], limits)
                 self.intents = {key: Intent(**item) for key, item in saved["intents"].items()}
                 if set(self.intents) != set(self.book.intents):
@@ -431,6 +499,9 @@ class KalshiLiveDesk:
                 self.changed_windows = set(saved.get("changed_windows", []))
                 self.final_outcomes = saved.get("final_outcomes", {})
                 self.latest_events = saved.get("latest_events", [])[-20:]
+                for key in replayed:  # saved in full by the startup save below, which empties the journal
+                    self._record("speeddesk_live_order", client_order_id=key, window=self.intents[key].window,
+                                 state="restored from the pre-send journal; reconciling with Kalshi")
             # The bid pull (owner, 2026-10-13 ~20:15 UTC) and its live control: twin bids the old rule keeps resting
             # while the real ones are pulled (twin order ids; twin orders never survive a restart).
             self.pull = PullGuard(PullRule.from_settings(settings), clock(), saved.get("pull") if saved else None)
@@ -516,7 +587,14 @@ class KalshiLiveDesk:
         return ""
 
     def _active(self) -> list[Intent]:
-        return [intent for intent in self.intents.values() if not intent.terminal]
+        """Unfinished orders, oldest first. Only an open window's orders can be unfinished (a window settles once
+        none is, and only an integrity error reopens one), so the risk book's index of open windows is enough; the
+        full scan stays for an integrity error or books that are not the same orders (latency review, 2026-10-13:
+        this ran over every order ever made, many times a step)."""
+        if self.book.integrity_error or len(self.intents) != len(self.book.intents):
+            return [intent for intent in self.intents.values() if not intent.terminal]
+        return [intent for key in self.book.open_intent_ids()
+                if (intent := self.intents.get(key)) is not None and not intent.terminal]
 
     def _record(self, receipt_kind: str, **payload: Any) -> None:
         item = {"at": self.clock(), "venue": "kalshi", **payload}
@@ -548,10 +626,22 @@ class KalshiLiveDesk:
     def _full_scan_due(self, now: float) -> bool:
         """Startup, every FULL_SCAN_S, and the first read after a window opens read the complete history; so does
         every read while the owner's approved integrity reset waits (only a complete read can clear it, and real
-        orders are stopped then anyway)."""
+        orders are stopped then anyway). An unsent order waiting for its release after the close gets a complete
+        read at once and then every ORDER_LIST_LAG_S, so it is proven 30 s after the close, not 60 to 120."""
+        waiting = self._awaiting_release(now)
         return (not self.startup_done or now - self.full_scan_at >= FULL_SCAN_S
                 or self.book.integrity_reset_armed is not None
-                or any(self.full_scan_at < window.start <= now for window in self.book.windows.values()))
+                or any(self.full_scan_at < window.start <= now for window in self.book.windows.values())
+                or any(key not in self.unsent_absent for key in waiting)
+                or (bool(waiting) and now - self.full_scan_at >= ORDER_LIST_LAG_S))
+
+    def _awaiting_release(self, now: float) -> list[str]:
+        """Orders that may never have reached Kalshi (no order id, nothing filled, still reserved) in a market that
+        has closed: the ones _release_unsent decides."""
+        return [intent.client_order_id for intent in self._active()
+                if not intent.order_id and (reserved := self.book.intents[intent.client_order_id]).order_id is None
+                and reserved.reservation_active and reserved.filled_size <= EPS
+                and now >= self.book.windows[intent.window].end]
 
     def _recent_since(self, now: float) -> int:
         """Kalshi min_ts covering every order and fill that can still change the books (see RECENT_S).
@@ -560,7 +650,9 @@ class KalshiLiveDesk:
         after that (``_fill`` refuses earlier ones), so they are inside the bound whether Kalshi filters orders on
         their creation or their last update. So is every order and fill of a window open now (at most RECENT_S old).
         """
-        unfinished = [intent.at for key, intent in self.intents.items()
+        candidates = (self.intents.items() if self.book.integrity_error or len(self.intents) != len(self.book.intents)
+                      else ((key, self.intents[key]) for key in self.book.open_intent_ids() if key in self.intents))
+        unfinished = [intent.at for key, intent in candidates
                       if not intent.terminal or intent.uncertain or self.book.intents[key].reservation_active]
         return max(0, math.floor(min([now - RECENT_S, *unfinished])) - int(READ_MARGIN_S))
 
@@ -630,6 +722,9 @@ class KalshiLiveDesk:
 
     def checkpoint(self, durable: bool = False) -> None:
         started = time.perf_counter()
+        # Reconciliation can save a new settlement before the next heartbeat. Never save a latched stop
+        # without its receipt: a crash would otherwise restore it as old and suppress the only receipt.
+        self._watch_stops()
         withdrawn = self.book.disarm_stale_reset()
         if withdrawn:
             self._record("speeddesk_live_integrity_reset", code=self.book.integrity_error, previous=withdrawn,
@@ -646,7 +741,9 @@ class KalshiLiveDesk:
                 intent.terminal, intent.uncertain, intent.cancel_requested = False, True, True
                 self.cancel_acked.discard(key)
                 self.cancel_reasons.setdefault(key, "reopened")
-        self._daily_reports()
+        if durable or self.clock() - self.last_reports >= 60:  # completed days change rarely: not on every save
+            self._daily_reports()
+            self.last_reports = self.clock()
         live = self._live_windows()
         # Activity came back to an archived window: save it in full again; it is archived anew once finished.
         self.archived -= live
@@ -667,7 +764,7 @@ class KalshiLiveDesk:
                  "latency_metrics": self.metrics.state(),
                  "window_evidence": self.evidence.state(),
                  "reports": self.reports, "ladder": self.ladder.to_state(),
-                 "latest_events": self.latest_events, "panel": self.panel()}
+                 "latest_events": self.latest_events}
         building = time.perf_counter()
         self.ledger.set_synchronous(durable or any(kind in OWNER_RECORDS for kind, _ in self.pending))
         with self.ledger.transaction():
@@ -676,7 +773,12 @@ class KalshiLiveDesk:
             if chunk is not None:
                 self.ledger.set_kv(f"{ARCHIVE_KEY}{self.archive_chunks}", chunk)
             self.ledger.set_kv(STATE_KEY, state)
+            if self.journal or self.journal_on_disk:  # the full state now holds every journaled order
+                self.ledger.set_kv(JOURNAL_KEY, {"version": 1, "intents": {}})
         saved = time.perf_counter()
+        self.journal.clear()
+        self.journal_on_disk = False
+        self.dirty, self.saved_stops = False, self._stops()
         if chunk is not None:  # only once the chunk and the state that lists it are committed together
             self.archived |= cold
             self.archive_chunks += 1
@@ -689,9 +791,10 @@ class KalshiLiveDesk:
         mirror_ms = None
         if self.stopping or self.clock() - self.last_mirror >= MIRROR_EVERY_S:
             mirroring = time.perf_counter()
+            # The money page reads the panel from this display copy only; the ledger state never needed it.
             full = {**state, "intents": {**self.archive_parts["live_intents"], **state["intents"]},
                     "book": {**state["book"], **{part: {**self.archive_parts[part], **state["book"][part]}
-                                                 for part in WINDOW_PARTS}}}
+                                                 for part in WINDOW_PARTS}}, "panel": self.panel()}
             temporary = self.path.with_suffix(".tmp")
             with temporary.open("w", encoding="utf-8") as stream:
                 json.dump(full, stream, allow_nan=False, separators=(",", ":"))
@@ -703,6 +806,27 @@ class KalshiLiveDesk:
         self.save_stages = {"build_ms": (building - started) * 1000, "ledger_ms": (saved - building) * 1000,
                             "mirror_ms": mirror_ms}
 
+    def _journal_intent(self, intent: Intent, window: Window, *, durable: bool = True) -> None:
+        """The one write before an order's first network byte: its identity and complete reservation, synced.
+
+        It holds exactly what a full save would add for this order (``replay_journal``), so a crash right after it
+        restores the same books; every other change since the last full save is one the next reconcile proves.
+        ``durable=False`` rewrites an entry after a definite refusal (nothing was sent: a lost write only brings
+        back the reservation the synced row holds, which the release path then proves away).
+        """
+        reserved = self.book.intents[intent.client_order_id]
+        spec = self.book.windows[window.slug]
+        self.journal[intent.client_order_id] = {
+            "book": without_default_lock(asdict(reserved)), "intent": without_default_lock(asdict(intent)),
+            "window": asdict(spec), "bootstrap": self.book.bootstrap_order.get(window.slug) == intent.client_order_id}
+        self.ledger.set_synchronous(durable)
+        with self.ledger.transaction():
+            self.ledger.set_kv(JOURNAL_KEY, {"version": 1, "intents": self.journal})
+
+    def _save_soon(self) -> None:
+        """A change the next full save holds (at most SAVE_EVERY_S later); Kalshi can prove it again after a crash."""
+        self.dirty = True
+
     def _twin_events(self, events: list[Any]) -> None:
         for event in events:
             if event.event != "speeddesk_skip":
@@ -711,7 +835,7 @@ class KalshiLiveDesk:
                     self.evidence.fill({**asdict(event), "is_taker": event.kind == "take"})
 
     def on_tick(self, price: float, event_at: float, received_at: float) -> None:
-        if 0 <= received_at - event_at <= 3:
+        if -FUTURE_SKEW_S <= received_at - event_at <= 3:
             self.twin.tick_btc(price, event_at)
             self._pull_watch(self.snapshot(), self.clock())
             self.wake.set()
@@ -761,13 +885,27 @@ class KalshiLiveDesk:
             return "Window has not started"
         if now >= window.end - self.book.limits.lock_s:
             return "Window cutoff"
-        if snapshot.bitcoin_at is None or not 0 <= now - snapshot.bitcoin_at <= 3:
+        if snapshot.bitcoin_at is None or not -FUTURE_SKEW_S <= now - self._bitcoin_fresh_at(snapshot) <= 3:
             return "Bitcoin feed stale"
         if snapshot.bitcoin_price is None or window.start_price is None:
             return "Bitcoin opening price missing"
         if snapshot.sigma is None:
             return "Warming up Bitcoin volatility"
         return self._book_reason(window, snapshot, now)
+
+    @staticmethod
+    def _bitcoin_fresh_at(snapshot: LiveSnapshot) -> float:
+        """When the newest Bitcoin tick counts from: its exchange stamp, or its local receipt when that came first.
+
+        A tick may be stamped up to FUTURE_SKEW_S after the local clock (clock skew). Judged on the stamp alone, the
+        feed then stayed "fresh" up to 250 ms past 3 s of silence and the stale-feed cancel fired that much late
+        (latency review, 2026-10-13); the receipt is when the bot really last heard from Coinbase.
+        """
+        assert snapshot.bitcoin_at is not None
+        receipt = snapshot.tick_receipt
+        if receipt is not None and receipt.exchange_at == snapshot.bitcoin_at:
+            return min(snapshot.bitcoin_at, receipt.received_at)
+        return snapshot.bitcoin_at
 
     def _book_reason(self, window: Window, snapshot: LiveSnapshot, now: float) -> str:
         """Both books fresh and the window ours alone: all a lock needs (it uses no fair value)."""
@@ -876,10 +1014,16 @@ class KalshiLiveDesk:
     @staticmethod
     def _fair(window: Window, snapshot: LiveSnapshot, now: float) -> float | None:
         """The bot's Up fair value in ``window`` now: the one computation behind every decision, send check, stale-bid
-        check and pull trigger, so they can never disagree (a change to fair_up's arguments goes here, once)."""
+        check and pull trigger, so they can never disagree (a change to fair_up's arguments goes here, once).
+
+        Kalshi settles the window on the simple average of its last sixty one-second index values, which moves like
+        the index AVERAGE_LEAD_S (39.5 s) before the close, so the horizon is that much shorter with a minute or more
+        left (loss plan item 4, speed part 2; ``settles_on_average`` in speeddesk_model.fair_up).
+        """
         if snapshot.bitcoin_price is None or window.start_price is None or snapshot.sigma is None:
             return None
-        return fair_up(snapshot.bitcoin_price, window.start_price, snapshot.sigma, window.end - now)
+        return fair_up(snapshot.bitcoin_price, window.start_price, snapshot.sigma, window.end - now,
+                       settles_on_average=True)
 
     @staticmethod
     def _stale_bid_reason(intent: Intent | PracticeOrder, window: Window, snapshot: LiveSnapshot, now: float,
@@ -917,6 +1061,10 @@ class KalshiLiveDesk:
             up = self._fair(window, snapshot, now)
             if up is not None:
                 self.pull.observe(window.slug, up, now, count=counting and now < window.end - self.book.limits.lock_s)
+        if self.pull.active:
+            # A trigger just now: a hold survives a restart only once saved, and a cancel no longer saves (speed
+            # plan step 2), so the next full save (within SAVE_EVERY_S) holds it.
+            self._save_soon()
         for record in self.pull.expire(now):
             self._record("speeddesk_live_pull", **record)
 
@@ -1117,20 +1265,21 @@ class KalshiLiveDesk:
         if self.clock() < self.cancel_retry_at.get(key, -math.inf) and reason != "shutdown":
             return
         decided = self.monotonic()
-        self.cancel_retry_at[key] = self.clock() + 2
         self.cancel_reasons.setdefault(key, reason)
         intent.cancel_requested = True
         self.book.request_cancel(key)
         if twin:
             self._practice("twin_cancel", self._twin_cancel, intent, reason)
-        self.checkpoint()
+        # No save before or after a cancel (speed plan step 2): it only lowers exposure, the reservation is kept
+        # until Kalshi confirms, and a restart cancels every open order again (the pull's hold is saved with it).
+        self._save_soon()
         if not intent.order_id:
             intent.uncertain = True
             self.book.mark_uncertain(key, "cancel_needs_order_id")
             self.cancel_acked.discard(key)
-            self.cancel_retry_at.pop(key, None)  # sent as soon as a reconcile learns the order id
-            self.checkpoint()
-            return
+            self.cancel_retry_at.pop(key, None)  # no retry gate: sent as soon as a reconcile learns the order id
+            return  # nothing was sent: the next read can find the id and the cancel go out at once
+        self.cancel_retry_at[key] = self.clock() + 2
         sending, sent_wall = self.monotonic(), self.clock()
         try:
             reply = await self._io(self.client.cancel, intent.order_id, ticker=intent.window)
@@ -1167,7 +1316,6 @@ class KalshiLiveDesk:
             self.book.mark_uncertain(intent.client_order_id, "cancel_unconfirmed")
             self._error(exc)
             self.cancel_retry_at[intent.client_order_id] = self.retry_at
-        self.checkpoint()
 
     def _cancel_timing(self, decided: float, sending: float) -> dict[str, float]:
         """Cancel decision to Kalshi's reply, and the request alone; the decision includes any save before it."""
@@ -1242,6 +1390,7 @@ class KalshiLiveDesk:
     async def _reconcile_reads(self, sync_started: float, full: bool, checks: list[str]) -> None:
         """One account reconcile; ``checks`` collects the name of each consistency check that failed."""
         assert self.client is not None
+        facts = self._account_facts()
         # Recent reads (RECENT_S) between complete ones; see _recent_since for why nothing that can still change
         # the books is outside the bound. Untracked bot orders and old owner orders wait for the next complete read.
         recent_from = None if full else self._recent_since(sync_started)
@@ -1249,11 +1398,14 @@ class KalshiLiveDesk:
         # Fully paginated reads return all pages or raise. Never interpret a
         # missing/failed page as zero inventory or a canceled order.
         orders = await self._read("list_orders", self.client.list_orders, **order_filter)
+        owner_orders: dict[str, dict[str, Any]] = {}  # listed orders without the bot's client-id prefix, by id
         for raw in orders:
             client_id = str(raw.get("client_order_id", ""))
             ticker = str(raw.get("ticker", ""))
             if not ticker.startswith("KXBTC15M-"):
                 continue
+            if not client_id.startswith(PREFIX) and raw.get("order_id"):
+                owner_orders[str(raw["order_id"])] = raw
             intent = self.intents.get(client_id)
             if client_id.startswith(PREFIX) and intent is None:
                 self.fatal_reason = "Untracked prior bot order; manual reconciliation required"
@@ -1270,7 +1422,9 @@ class KalshiLiveDesk:
                 self.book.mark_submitted(client_id, order_id)
             elif raw.get("status") == "resting":
                 self.foreign_windows.add(ticker)
-        self.checkpoint()
+        listed = {str(raw.get("client_order_id", "")) for raw in orders}
+        money_changed = False
+        unattributed: set[str] = set()  # windows with a fill Kalshi lists under an order id the bot does not know
         fills = await self._read("fills", self.client.fills,
                                  min_ts=max(0, int(self.started_at) - 60) if recent_from is None else recent_from)
         by_order = {intent.order_id: intent for intent in self.intents.values() if intent.order_id}
@@ -1279,17 +1433,29 @@ class KalshiLiveDesk:
             if intent is None:
                 ticker = str(raw.get("ticker", ""))
                 if ticker.startswith("KXBTC15M-"):
-                    if any(item.window == ticker and not item.order_id for item in self._active()):
+                    unresolved = [item for item in self._active() if item.window == ticker and not item.order_id]
+                    listed_as = owner_orders.get(str(raw.get("order_id", "")))
+                    if listed_as is not None and not any(_same_terms(listed_as, item) for item in unresolved):
+                        # A fill of an order Kalshi lists without the bot's client id, on terms no unsent bot order
+                        # there has, is the owner's: the window is the owner's (and an unsent order there can still
+                        # be proven away). On an unsent order's exact terms it could be that order's own, listed
+                        # without its client id (rebreak, 2026-10-14: it was counted as the owner's and the order
+                        # released, so the bot's own fill vanished), so it holds the order, as on the base.
+                        self.foreign_windows.add(ticker)
+                    elif unresolved:
                         checks.append("unattributed_fill_beside_unresolved_order")
+                        unattributed.add(ticker)
                     else:
                         self.foreign_windows.add(ticker)
                 continue
             fill = self._fill(raw, intent)
             if self.book.record_fill(fill):
                 self._record("speeddesk_live_fill", **asdict(fill))
+                money_changed = True
         self.order_reads += 1
         reading = self.order_reads  # a cancel that fails from here on was not seen by this read (cancel_failed)
         orders = await self._read("list_orders", self.client.list_orders, **order_filter)
+        listed |= {str(raw.get("client_order_id", "")) for raw in orders}
         for raw in orders:
             intent = self.intents.get(str(raw.get("client_order_id", "")))
             if intent is None:
@@ -1345,6 +1511,11 @@ class KalshiLiveDesk:
             ticker = str(raw.get("ticker", ""))
             if raw.get("market_result") in {"yes", "no"}:
                 self.final_outcomes[ticker] = raw["market_result"] == "yes"
+        if full:  # only complete order lists can prove that an order never reached Kalshi
+            # Before the settlement pass, so a released window settles in this same read (its payout check
+            # audits the books against Kalshi's revenue).
+            money_changed |= self._release_unsent(sync_started, listed, self._release_proof(
+                checks, unattributed, actual, settlement_rows))
         for ticker in windows:
             expected = self.book.expected_position(ticker)
             current = actual.get(ticker, 0.0)
@@ -1372,6 +1543,7 @@ class KalshiLiveDesk:
                     self._record("speeddesk_live_settlement", **asdict(result), observed_at=self.clock(),
                                  time_source="venue settled_time" if row is not None else
                                  "public final outcome observed; paired position has no cash settlement")
+                    money_changed = True
                 continue
             if abs(expected - current) > EPS and ticker not in self.foreign_windows:
                 # A fill may arrive between paginated account reads. Pause and
@@ -1401,7 +1573,84 @@ class KalshiLiveDesk:
         self.errors = 0
         self.retry_at = -math.inf
         self.last_sync = now
-        self.checkpoint()
+        # A fill, settlement, stop, release or owner action is saved at once; another change of record at most
+        # SAVE_EVERY_S later; a read that changed nothing of record waits for the five-second save (latency
+        # review: every reconcile marked the state dirty, so a quiet desk rewrote it every second).
+        if money_changed or self._must_save_now():
+            self.checkpoint()
+        elif self._account_facts() != facts:
+            self._save_soon()
+
+    def _account_facts(self) -> tuple[Any, ...]:
+        """What a reconcile can change that the full state holds, apart from fills, settlements and stops (saved
+        at once): each unfinished order's record (not the time of its last report, which the next read sets
+        again), and the windows marked as the owner's, with a final outcome, or with changed terms."""
+        orders = []
+        for intent in self._active():
+            reserved = self.book.intents[intent.client_order_id]
+            orders.append((intent.client_order_id, intent.order_id, intent.terminal, intent.uncertain,
+                           intent.cancel_requested, reserved.status, reserved.order_id, reserved.reservation_active,
+                           reserved.filled_size, reserved.reported_filled_size, reserved.venue_remaining_size,
+                           reserved.uncertainty))
+        return (tuple(orders), len(self.foreign_windows), len(self.final_outcomes), len(self.changed_windows),
+                self.fatal_reason)
+
+    def _release_proof(self, checks: list[str], unattributed: set[str], positions: dict[str, float],
+                       settlement_rows: dict[str, Any]) -> Callable[[str], bool]:
+        """Whether this complete read's facts about one window agree with an order there never reaching Kalshi.
+
+        Review blocker (2026-10-13): the release used to need a read with no failed check at all. Kalshi settles
+        a market about 5 s after the close (KXBTC15M-26OCT131145: settled_time 15:45:04.68 UTC) and a settled
+        market leaves the unsettled positions list, so a window still held open by the unsent order failed
+        position_mismatch on every read from then on, and the order, a balancing bid or a lock in an unpaired
+        window, was never released: real trading stopped for good. A slow read, or a mismatch in another window,
+        said nothing about this order either. Now, per window: both order lists agree with the fills (neither
+        behind the other), no fill there under an order id the bot does not know (it could be this order's own),
+        and the position matches the books or Kalshi has settled the market (its row, and a flat position); in a
+        window the owner also trades the position cannot be told apart, so the lists and fills decide.
+        """
+        lists_agree = not {"order_list_behind_fills", "fills_behind_order_list"} & set(checks)
+
+        def agrees(ticker: str) -> bool:
+            current = positions.get(ticker, 0.0)
+            return (lists_agree and ticker not in unattributed
+                    and (ticker in self.foreign_windows
+                         or abs(self.book.expected_position(ticker) - current) <= EPS
+                         or (ticker in settlement_rows and abs(current) <= EPS)))
+        return agrees
+
+    def _release_unsent(self, started: float, listed: set[str], consistent: Callable[[str], bool]) -> bool:
+        """Release journaled orders that never reached Kalshi (see JOURNAL_KEY). Complete reads after the close only.
+
+        Such an order (a crash between its journal row and the send, or a create lost before Kalshi) kept its
+        reservation for good and held a restart in "Reconciling startup orders"; until the release it still counts
+        in every cap and stop. An order that did reach Kalshi is listed whatever its status, and Kalshi accepts no
+        order on a closed market, so after the close two complete lists without it, ORDER_LIST_LAG_S apart, prove
+        it never existed, while its window's facts agree (``consistent``, from _release_proof).
+        """
+        released = False
+        for key, intent in self.intents.items():
+            reserved = self.book.intents[key]
+            if (intent.terminal or intent.order_id or reserved.order_id is not None or key in listed
+                    or reserved.filled_size > EPS or not reserved.reservation_active):
+                self.unsent_absent.pop(key, None)
+                continue
+            if started < self.book.windows[intent.window].end:
+                continue  # while the market trades a delayed copy of the request could still arrive
+            first = self.unsent_absent.setdefault(key, started)
+            if not consistent(intent.window) or started - first < ORDER_LIST_LAG_S:
+                continue
+            self.book.release_unsent(key)
+            intent.terminal, intent.uncertain = True, False
+            self.unsent_absent.pop(key, None)
+            if not intent.lock:
+                # As a refusal reaches the twin: the window's other bids, never a bid a pull kept (practice only).
+                self._practice("twin_released", self._twin_cancel_window, intent.window, "real_order_never_sent")
+            self._record("speeddesk_live_order", client_order_id=key, window=intent.window,
+                         state="released; never reached Kalshi (market closed, missing from two complete "
+                               "order lists)")
+            released = True
+        return released
 
     def _integrity_reset(self, positions: dict[str, float], resting: bool) -> None:
         """The owner's one-time clear of a reconciliation stop (owner, 2026-10-13: "Yes, reset it"). Only right
@@ -1503,10 +1752,11 @@ class KalshiLiveDesk:
             self._twin_events([twin_event])
 
         self._practice("twin_place", twin_copy)  # a twin error never leaves a real intent unsent and unsaved
-        # The order identifier and its complete worst-case liability reach disk
-        # before the first network byte can leave this process; one write covers the twin too.
+        # The order identifier and its complete worst-case liability reach disk, synced, before the first
+        # network byte can leave this process: one small journal row (the full state, the twin's copy among it,
+        # follows within a second).
         saving = self.monotonic()
-        self.checkpoint(durable=True)
+        self._journal_intent(intent, window)
         await self._submit(intent, window, now, decision_mono, save_ms=(self.monotonic() - saving) * 1000)
         return True
 
@@ -1560,6 +1810,13 @@ class KalshiLiveDesk:
             if isinstance(exc, KalshiClientError) and not exc.uncertain:
                 self.book.reject_intent(client_id, "definite_create_rejection", confirmed=True)
                 intent.terminal = True
+                # Review fix: what a restart reads holds the refusal at once, not after the next full save; a
+                # crash in that second restored the never-sent order as reserved (and, in an unpaired window,
+                # held real trading until the release after the close).
+                if client_id in self.journal:
+                    self._journal_intent(intent, window, durable=False)
+                else:
+                    self.checkpoint()
                 if client_id in self._pull_refused:
                     # Only the pull stopped it (every other check passed): without the pull it was sent, so the
                     # twin's copy keeps resting under the rule without the pull.
@@ -1584,7 +1841,7 @@ class KalshiLiveDesk:
             else:
                 self.refusals = 0
                 self._error(exc)
-        self.checkpoint()
+        self._save_soon()  # the reply's facts; a restart re-reads the order from Kalshi by its client id
         # Any create, including an IOC, changes available cash and inventory.
         # No second create is possible until a new complete account snapshot.
         self.account_at = None
@@ -1710,7 +1967,7 @@ class KalshiLiveDesk:
         self._record("speeddesk_live_order", client_order_id=client_id, window=window.slug, side=side,
                      kind="lock", price=price, size=size, state="durable intent; completing a half-filled pair")
         # Durable before the first network byte, exactly like every other order.
-        self.checkpoint(durable=True)
+        self._journal_intent(intent, window)
         await self._submit(intent, window, now, decision_mono)
         return True
 
@@ -1944,7 +2201,8 @@ class KalshiLiveDesk:
         # Every step exit passes here, including mode-off and backoff. Persist the latch and its receipt
         # together before checkpointing, after any cancellation work that this step could perform.
         self._watch_stops()
-        if self.clock() - self.last_status >= 60:
+        status = self.clock() - self.last_status >= 60
+        if status:
             # Account reads since the last status line: complete and recent reconcile times, each read's time,
             # pages, rows and bytes, and how often each consistency check failed; plus the latest reconcile.
             self._record("speeddesk_live_status", **self.panel(),
@@ -1956,8 +2214,22 @@ class KalshiLiveDesk:
                          phases=self.phase_stats.summary()["ms"], loop=self.loop_stats.summary(),
                          clock=self.clock_offsets.summary())
             self.last_status = self.clock()
-        if self.pending or self.clock() - self.last_checkpoint >= 5:
+        since = self.clock() - self.last_checkpoint
+        # The once-a-minute status line goes out at once (it is logged when saved), not up to a second later.
+        if (status or since >= 5 or self._must_save_now()
+                or ((self.dirty or self.pending) and since >= SAVE_EVERY_S)):
             self.checkpoint()
+
+    def _stops(self) -> tuple[Any, ...]:
+        # And the minute of the ladder's last stop: a promotion waits 24 h after one, so a crash must not forget a
+        # new stop (to the minute: a stop that keeps binding is noted on every decision, and saved within a second).
+        last_stop = self.ladder.state.last_stop_at
+        return (self.book.integrity_error, self.fatal_reason, self.book.halted, self.book.day_stop_latched,
+                self.book.integrity_reset_armed, None if last_stop is None else math.floor(last_stop / 60))
+
+    def _must_save_now(self) -> bool:
+        """A stop that appeared or cleared, or an owner's one-time action, is saved at once, not within a second."""
+        return self._stops() != self.saved_stops or any(kind in OWNER_RECORDS for kind, _ in self.pending)
 
     async def _lag_probe(self) -> None:
         """Oversleep of a LAG_PROBE_S timer: how long a ready callback waits for the shared event loop."""

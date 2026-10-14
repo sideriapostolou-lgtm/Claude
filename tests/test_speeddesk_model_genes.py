@@ -137,6 +137,26 @@ def test_lock_margin_is_the_live_companions() -> None:
     assert LOCK_MARGIN_S == speeddesk_live_model.LOCK_MARGIN_S
 
 
+def test_the_worst_case_over_pending_legs_is_the_live_risk_books() -> None:
+    """Diagnostic worst-case helpers agree, leg for leg, with the same legs cap.
+
+    Conservative admission uses separate pending-risk accounting.
+    """
+    assert speeddesk_model.MAX_LEGS == speeddesk_live_model.MAX_LEGS
+    rng = random.Random(20261014)
+    for _ in range(2000):
+        inventory = Inventory(Holding(rng.choice((0, 2, 5, 8)), round(rng.uniform(0, 4), 2)),
+                              Holding(rng.choice((0, 2, 5, 8)), round(rng.uniform(0, 4), 2)))
+        legs = [(rng.choice(("up", "down")), rng.choice((1, 3, 5)), round(rng.uniform(0.3, 3.0), 4))
+                for _ in range(rng.randint(0, 3))]
+        assert (PracticeDesk._worst(inventory, legs)  # type: ignore[arg-type]
+                == speeddesk_live_model.LiveRiskBook._worst(inventory, legs))  # type: ignore[arg-type]
+    legs = [("up", 1.0, 0.5)] * (speeddesk_model.MAX_LEGS + 1)
+    inventory = Inventory(Holding(5, 2.0), Holding(0, 0.0))
+    assert (PracticeDesk._worst(inventory, legs)  # type: ignore[arg-type]
+            == speeddesk_live_model.LiveRiskBook._worst(inventory, legs) == 2.0 + 5.5)  # type: ignore[arg-type]
+
+
 # ---------------------------------------------------------------------- the starter
 def test_starter_clip_sizes_the_first_buy_and_balancing_uses_the_clip() -> None:
     desk = kdesk(starter_clip=8)

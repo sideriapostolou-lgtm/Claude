@@ -176,7 +176,9 @@ def test_coinbase_time_reads_the_exchange_epoch(monkeypatch: pytest.MonkeyPatch)
             calls.append(url)
             return Reply()
 
-    monkeypatch.setattr(live.requests, "Session", Session)
-    monkeypatch.setattr(live, "_PROBE", threading.local())
+    import nightcrawler.speeddesk_feeds as feeds
+
+    monkeypatch.setattr(feeds.requests, "Session", Session)
+    monkeypatch.setattr(feeds, "_THREAD", threading.local())
     assert live.coinbase_time() == 1791917623.81 and live.coinbase_time() == 1791917623.81
     assert calls == [live.COINBASE_TIME] * 2

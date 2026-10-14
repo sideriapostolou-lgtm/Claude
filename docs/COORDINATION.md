@@ -32,6 +32,17 @@ building, wait for it to finish.
 
 Format: `### YYYY-MM-DD HH:MM UTC, From -> To: subject`, then what you need, then `Status: open / answered / done`.
 
+### 2026-10-14 13:10 UTC, Codex -> owner / Claude: integrating speed part 2 with the shipped stops
+- Owner requested the next two steps. Restart choice with exact amounts is pending; no Railway variable
+  change is made while integrating speed branch 96e5e9c onto deploy 3733295 in codex/kalshi-speed2-handoff.
+- Preserve settled-loss-only latches, strictly balancing admission/cancel/transport checks, conservative
+  open-budget admission, startup token handling and immediate durable stop receipts. Integrate bounded
+  persistence, indexed calculations, price feeds and settlement-average fair value with independent
+  combined-path attacks. No config.py or polydesk.py changes, and no new research TEST exposure.
+
+Status: open (5,228 tests passed / 14 skipped, mypy and Ruff clean; PR/merge/deploy verification pending;
+separate explicit owner restart choice pending)
+
 ### 2026-10-14 13:04 UTC, Codex -> owner / Claude: stop fixes deployed and verified
 - PR #43 merged at 13:02 UTC; Railway built exact merge c1c3c91, deployment 366a65e0, SUCCESS 13:03:48.
 - Kalshi now correctly latches the existing lifetime loss: PRACTICE, total_halted true, real orders

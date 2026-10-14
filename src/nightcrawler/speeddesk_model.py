@@ -20,6 +20,14 @@ Side = Literal["up", "down"]
 FeeRounding = Literal["half_even", "kalshi"]
 EPSILON = 1e-9
 VENUES = ("polymarket_us", "kalshi")
+# How far after the local clock a Coinbase trade may be stamped and still count (speed plan step 4). Coinbase's
+# clock and ours differ by tens of ms, and the Exchange feed has no batching delay to hide it: its trades often
+# arrive "before" their own stamps (the 2026-10-13 recording ran 18 ms behind; on one container 91% of Exchange
+# ticks would have been dropped). Staleness limits are unchanged; a stamp further ahead than this is refused.
+FUTURE_SKEW_S = 0.25
+# The mean of sixty one-second values of a random walk varies like the walk 60 - (61 x 121) / 360, about 39.5 s, before
+# the last of them: Kalshi's 15-minute settlement average (see fair_up).
+AVERAGE_LEAD_S = 39.5
 # A lock buy is never placed this close to the close; the live companion's own constant
 # (speeddesk_live_model.LOCK_MARGIN_S, kept equal by a test): the market may stop matching.
 LOCK_MARGIN_S = 20.0
@@ -31,6 +39,9 @@ OPT_IN_FIELDS = ("starter_clip", "starter_delay_s", "starter_stop_s", "rounds", 
 # The most a protective stop pays a contract: completing a pair below $1 a pair always lowers the window's loss, so
 # the stop has no cap of its own beyond Kalshi's dearest whole-cent ask (the lock keeps lock_max_price).
 STOP_MAX_PRICE = 0.99
+# Pending orders per window whose fill combinations the worst case enumerates: the live risk book's own constant
+# (speeddesk_live_model.MAX_LEGS, kept equal by a test). In practice at most one order per side is pending.
+MAX_LEGS = 10
 
 
 @dataclass(frozen=True)
@@ -172,16 +183,22 @@ def unit_reserve(price: float, coefficient: float, precision: float) -> float:
     return float((cost / grid).to_integral_value(rounding=ROUND_CEILING) * grid / increment)
 
 
-def fair_up(spot: float, opening: float, sigma: float, seconds_left: float) -> float | None:
+def fair_up(spot: float, opening: float, sigma: float, seconds_left: float, *,
+            settles_on_average: bool = False) -> float | None:
     """Normal-CDF proxy, including a deterministic expiry and zero-vol limit.
 
-    It is not a settlement oracle: the venue's actual outcome books results.
+    It is not a settlement oracle: the venue's actual outcome books results. ``settles_on_average``: the window
+    settles on the simple average of its last sixty one-second index values (Kalshi's rule). That average moves
+    like the index AVERAGE_LEAD_S before the close, so with a minute or more left the horizon is that much shorter
+    (loss plan item 4; inside the last minute part of the average is already fixed, and no buy is made then).
     """
     if (not all(math.isfinite(x) for x in (spot, opening, sigma, seconds_left))
             or spot <= 0 or opening <= 0 or sigma < 0 or seconds_left < 0):
         return None
     if seconds_left == 0:
         return 1.0 if spot >= opening else 0.0
+    if settles_on_average and seconds_left >= 60:
+        seconds_left -= AVERAGE_LEAD_S
     if sigma == 0:
         return 1.0 if spot > opening else 0.0 if spot < opening else 0.5
     z = (math.log(spot) - math.log(opening)) / (sigma * math.sqrt(seconds_left))
@@ -219,7 +236,12 @@ def reserved_per_share(price: float, coefficient: float, rounding: FeeRounding =
 
 
 class BitcoinTape:
-    """One observed close per second; gaps are never invented as zero returns."""
+    """One observed close per second; gaps are never invented as zero returns.
+
+    Seconds more than an hour and a second before the newest are dropped oldest first, a constant amount of work
+    per tick (speed plan step 3: rebuilding both dictionaries on every trade took 1.6 to 1.7 ms, twice per trade,
+    practice desk and live twin). The dictionaries are updated in place; ``revision`` counts accepted ticks.
+    """
 
     def __init__(self) -> None:
         self.prices: dict[int, float] = {}
@@ -227,6 +249,22 @@ class BitcoinTape:
         self.started_at: float | None = None
         self.last_at: float | None = None
         self.price: float | None = None
+        self.revision = 0
+        # Accepted ticks before the newest observed second began: what sigma in that second can depend on.
+        self.revision_before_second = 0
+        self._seconds: deque[int] = deque()  # every stored second, oldest first
+        self._tracked: tuple[dict[int, float], dict[int, float]] | None = None
+
+    def _index(self, second: int) -> None:
+        """Keep the eviction queue in step with the dictionaries, including ones restored or replaced outside."""
+        tracked = self._tracked
+        if tracked is None or tracked[0] is not self.prices or tracked[1] is not self.first_prices:
+            self._seconds = deque(sorted({*self.prices, *self.first_prices}))
+            self._tracked = (self.prices, self.first_prices)
+        if not self._seconds or second > self._seconds[-1]:
+            self._seconds.append(second)
+        elif second != self._seconds[-1] and second not in self.prices and second not in self.first_prices:
+            self._seconds = deque(sorted({*self._seconds, second}))  # only after an outside edit
 
     def tick(self, price: float, at: float) -> bool:
         if not math.isfinite(price) or price <= 0 or not math.isfinite(at):
@@ -235,13 +273,38 @@ class BitcoinTape:
             return False
         if self.started_at is None:
             self.started_at = at
-        self.last_at, self.price = at, price
         second = int(at)
+        if self.last_at is None or second != int(self.last_at):
+            self.revision_before_second = self.revision
+        self.revision += 1
+        self.last_at, self.price = at, price
+        self._index(second)
         self.prices[second] = price
         self.first_prices.setdefault(second, price)
-        self.prices = {stamp: value for stamp, value in self.prices.items() if stamp >= second - 3601}
-        self.first_prices = {stamp: value for stamp, value in self.first_prices.items() if stamp >= second - 3601}
+        while self._seconds and self._seconds[0] < second - 3601:
+            stale = self._seconds.popleft()
+            self.prices.pop(stale, None)
+            self.first_prices.pop(stale, None)
         return True
+
+    def completed_revision(self, now: float) -> int | tuple[str, int, int] | None:
+        """Accepted ticks in the seconds that ``sigma(now)`` reads (those before ``int(now)``), as a cache key.
+
+        A newest tick stamped in a later second than ``now`` (the bounded clock skew, FUTURE_SKEW_S) keys on the
+        ticks before that second and the second itself: later ticks land in it or after, and eviction depends on
+        it alone, so the completed seconds are fixed until it changes (latency review, 2026-10-13: this returned
+        None, a recompute of the hour on every snapshot). None only when ``now`` is not finite.
+        """
+        if self.last_at is None:
+            return self.revision
+        if not math.isfinite(now):
+            return None
+        latest, last_complete = int(self.last_at), int(now) - 1
+        if latest <= last_complete:
+            return self.revision
+        if latest == last_complete + 1:
+            return self.revision_before_second
+        return ("ahead", self.revision_before_second, latest)
 
     def opening(self, start: float) -> float | None:
         return self.first_prices.get(int(start))
@@ -510,7 +573,7 @@ class PracticeDesk:
         if self.day_loss(now) >= self.config.day_stop_usd:
             return "day_stop"
         price_stale_s = self.config.stale_s if self.price_stale_s is None else self.price_stale_s
-        if self.tape.last_at is None or not 0 <= now - self.tape.last_at <= price_stale_s:
+        if self.tape.last_at is None or not -FUTURE_SKEW_S <= now - self.tape.last_at <= price_stale_s:
             return "bitcoin_stale"
         if window.start_price is None:
             return "opening_price_missing"
@@ -550,6 +613,30 @@ class PracticeDesk:
         if self.config.starter_stop_s and now >= window.end - self.config.starter_stop_s:
             return "starter_late"
         return self.starter_gate(window, now) if self.starter_gate is not None else ""
+
+    @staticmethod
+    def _worst(inventory: Inventory, legs: list[tuple[Side, float, float]]) -> float:
+        """Diagnostic exhaustive bound, not the admission policy: its cost (fees included) minus the $1 its weaker side pays, over
+        every combination of its pending orders ``legs`` (side, contracts, reserved cost) filling or not. The live
+        risk book's ``LiveRiskBook._worst`` (speed part 2, loss plan bug 1), kept equal by a test.
+
+        The loss is convex in each order's filled amount, so the extremes (none or all of each) bound every
+        partial fill. A balancing order that completes pairs adds nothing: its worst case is not filling.
+        Beyond MAX_LEGS orders it falls back to the conservative sum of every reservation.
+        """
+        if len(legs) > MAX_LEGS:
+            return max(0.0, inventory.spent - min(inventory.up.shares, inventory.down.shares)) + sum(
+                cost for _side, _size, cost in legs)
+        worst = 0.0
+        for flags in itertools.product((False, True), repeat=len(legs)):
+            shares = {"up": inventory.up.shares, "down": inventory.down.shares}
+            paid = inventory.spent
+            for include, (side, size, cost) in zip(flags, legs, strict=True):
+                if include:
+                    shares[side] += size
+                    paid += cost
+            worst = max(worst, paid - min(shares.values()))
+        return worst
 
     def _light_side(self, window: str) -> tuple[Side | None, float]:
         """The side that completes this window's unpaired contracts, and how many are unpaired (live's `lock_side`)."""
@@ -863,7 +950,8 @@ class PracticeDesk:
                 self.last_reason[window.slug] = reason or "volatility_warming"
                 continue
             assert self.tape.price is not None and window.start_price is not None
-            up = fair_up(self.tape.price, window.start_price, sigma, window.end - now)
+            up = fair_up(self.tape.price, window.start_price, sigma, window.end - now,
+                         settles_on_average=window.venue == "kalshi")
             if up is None:
                 continue
             candidates: list[tuple[Side, float, float]] = []

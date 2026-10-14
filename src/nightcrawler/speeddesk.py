@@ -32,7 +32,9 @@ from .speeddesk_metrics import (
     fresh_window_slugs,
 )
 from .speeddesk_model import (
+    FUTURE_SKEW_S,
     VENUES,
+    BitcoinTape,
     Book,
     Decision,
     PracticeDesk,
@@ -61,12 +63,13 @@ def practice_config(settings: Settings) -> SpeedConfig:
                        latency_ms=settings.speeddesk_latency_ms)
 
 
-def _atomic_json(path: Path, value: dict[str, Any]) -> None:
+def _atomic_json(path: Path, value: dict[str, Any], *, durable: bool = True) -> None:
     temporary = path.with_suffix(".tmp")
     with temporary.open("w", encoding="utf-8") as stream:
         json.dump(value, stream, allow_nan=False, separators=(",", ":"))
-        stream.flush()
-        os.fsync(stream.fileno())
+        if durable:
+            stream.flush()
+            os.fsync(stream.fileno())
     os.replace(temporary, path)
 
 
@@ -100,6 +103,13 @@ class SpeedRunner:
         self.directory.mkdir(parents=True, exist_ok=True)
         self.path = self.directory / "state.json"
         self.ledger = Ledger(self.directory / "receipts.db", self.clock)
+        # Practice only, on the real-money desk's event loop (speed plan step 2): its saves are not synced to disk.
+        # A process crash loses nothing; a host or power failure can lose the last practice receipts. The first
+        # save on a fresh ledger is synced (crash review, 2026-10-13): otherwise a host failure could leave the
+        # display copy without its ledger state, and the "missing beside existing report" check below would stop
+        # SpeedRunner, which also builds the real-money companion, from starting (or cancelling) at all.
+        self.ledger.set_synchronous(False)
+        self._first_save_synced = False
         self.pending: list[tuple[str, dict[str, Any]]] = []
         self.last_checkpoint = -math.inf
         self.last_heartbeat = -math.inf
@@ -116,7 +126,8 @@ class SpeedRunner:
         self.last_live_panel: dict[str, Any] = {}
         self._live_market_snapshot = LiveSnapshot()
         self._bitcoin_revision = 0
-        self._sigma_key: tuple[int, int, int, float, float | None, bool] | None = None
+        self._sigma_key: tuple[int | tuple[str, int, int] | None, int, int, float, float | None, bool] | None = None
+        self._sigma_tape: BitcoinTape | None = None
         self._sigma_prices: dict[int, float] | None = None
         self._sigma_value: float | None = None
         self._live_windows_dirty = True
@@ -134,6 +145,7 @@ class SpeedRunner:
             if saved is None and self.path.exists():
                 # Never silently reset a trial whose durable ledger disappeared.
                 raise ValueError("Practice receipt ledger missing beside existing report")
+            self._first_save_synced = saved is not None
             if saved is not None:
                 if saved.get("version") != 1 or saved.get("mode") != "practice":
                     raise ValueError("Unsupported persisted practice trial")
@@ -220,14 +232,14 @@ class SpeedRunner:
 
     def on_tick(self, price: float, event_at: float, received_at: float) -> None:
         received_mono = self.monotonic()
-        if not 0 <= received_at - event_at <= self.desk.config.stale_s:
+        if not -FUTURE_SKEW_S <= received_at - event_at <= self.desk.config.stale_s:
             return
-        previous_prices = self.desk.tape.prices
+        previous = self.desk.tape.revision
         self.desk.tick_btc(price, event_at)
-        # BitcoinTape replaces its observed-price dictionary only on accepted
-        # ticks, including same-second revisions. Rejected ticks do not dirty
-        # the sigma cache or publish an opening that the model never accepted.
-        if self.desk.tape.prices is not previous_prices:
+        # BitcoinTape counts accepted ticks, including same-second revisions.
+        # Rejected ticks do not dirty the sigma cache or publish an opening
+        # that the model never accepted.
+        if self.desk.tape.revision != previous:
             self.tick_receipt = TickReceipt(event_at, received_at, received_mono)
             self._bitcoin_revision += 1
             if int(event_at) in self._live_opening_seconds:
@@ -383,7 +395,7 @@ class SpeedRunner:
         status = "Warming up Bitcoin volatility" if warm else "Practice feeds running"
         if warm:
             status += f" ({samples:,}/{self.desk.config.sigma_min_samples:,} observed one-second returns)"
-        if btc_at is None or not 0 <= now - btc_at <= self.desk.config.stale_s:
+        if btc_at is None or not -FUTURE_SKEW_S <= now - btc_at <= self.desk.config.stale_s:
             status = "Practice paused: Bitcoin feed stale"
         elif not books or now - max(books) > self.desk.config.stale_s:
             status = "Practice paused: waiting for fresh books"
@@ -411,17 +423,22 @@ class SpeedRunner:
 
         ``sigma`` uses completed seconds but its elapsed warm-up can cross in
         the middle of one second. The predicate is therefore part of the key,
-        alongside accepted-tick revision, completed second and both settings.
-        Keep a single dictionary reference too, so a restored/replaced tape
-        cannot reuse a result from an earlier set of observations.
+        alongside the completed second, both settings and the number of
+        accepted ticks in completed seconds (speed plan step 3: the key held
+        every accepted tick, so each Bitcoin trade recomputed the hour; a tick
+        in the current second cannot change it, a late one stamped in a
+        completed second does). The tape and its dictionaries are compared by
+        identity too, so a restored/replaced tape never reuses a result.
         """
         tape, config = self.desk.tape, self.desk.config
         warmed = tape.started_at is not None and now - tape.started_at >= config.sigma_warmup_s
-        key = (self._bitcoin_revision, int(now) - 1, config.sigma_min_samples, config.sigma_warmup_s,
-               tape.started_at, warmed)
-        if key != self._sigma_key or tape.prices is not self._sigma_prices:
+        completed = tape.completed_revision(now)
+        key = (completed, int(now) - 1, config.sigma_min_samples, config.sigma_warmup_s, tape.started_at, warmed)
+        if (completed is None or key != self._sigma_key or tape is not self._sigma_tape
+                or tape.prices is not self._sigma_prices):
             value = tape.sigma(now, config.sigma_min_samples, config.sigma_warmup_s)
-            self._sigma_key, self._sigma_prices, self._sigma_value = key, tape.prices, value
+            self._sigma_key, self._sigma_tape, self._sigma_prices = key, tape, tape.prices
+            self._sigma_value = value
         return self._sigma_value
 
     def _refresh_live_windows(self) -> None:
@@ -509,15 +526,21 @@ class SpeedRunner:
                  "venue_reporting_started_at": self.venue_reporting_started_at,
                  "venue_coverage": self.venue_coverage,
                  "panel": self.panel(now)}
+        first = not self._first_save_synced
+        if first:
+            self.ledger.set_synchronous(True)  # the ledger state is on disk before the display copy can be
         with self.ledger.transaction():
             for kind, payload in self.pending:
                 self.ledger.append_receipt(kind, payload, ts=payload.get("at", now))
             self.ledger.set_kv(STATE_KEY, state)
+        if first:
+            self.ledger.set_synchronous(False)
+            self._first_save_synced = True
         for kind, payload in self.pending:
             log.info("%s %s", kind, json.dumps(payload, allow_nan=False, separators=(",", ":")))
         self.pending.clear()
-        # A mirror failure halts practice, but the committed ledger survives it.
-        _atomic_json(self.path, state)
+        # A mirror failure halts practice, but the committed ledger survives it. A display copy: not synced.
+        _atomic_json(self.path, state, durable=False)
         self.last_checkpoint = now
 
     def step(self, now: float) -> None:
@@ -576,7 +599,7 @@ class SpeedRunner:
         fresh: set[str] = set()
         maker: set[str] = set()
         btc_at = self.desk.tape.last_at
-        if btc_at is None or not 0 <= now - btc_at <= self.desk.config.stale_s:
+        if btc_at is None or not -FUTURE_SKEW_S <= now - btc_at <= self.desk.config.stale_s:
             return fresh, maker
         for window in self.desk.windows.values():
             if window.venue not in self.enabled_venues or not window.start <= now < window.end:
