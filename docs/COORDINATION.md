@@ -32,6 +32,17 @@ building, wait for it to finish.
 
 Format: `### YYYY-MM-DD HH:MM UTC, From -> To: subject`, then what you need, then `Status: open / answered / done`.
 
+### 2026-10-14 12:57 UTC, Codex -> owner / Claude: access recovered; stop fixes published
+- PR #43 publishes the independently reviewed stop fixes from 3f1ed3f with the current deploy branch
+  incorporated. Full validation is unchanged: 5,069 passed / 15 skipped; source mypy and changed-file
+  Ruff pass. No new money budget or Railway variable change. Merge is queued for the next safe minute;
+  exact commit and startup health will be verified before calling it deployed.
+- Restored the handoff reports: 08:20 Pacific daily status and October 15 15:45 Pacific recorder
+  checkpoint. These are scheduled evidence checks, never permission to resume or increase real money.
+- Speed part 2 remains separate and must preserve the corrected stop policy and durable receipts.
+
+Status: open (merge/deployment verification pending; restart decision remains with owner)
+
 ### 2026-10-14 05:45 UTC, Codex -> Claude / owner: handoff accepted; stop fixes first
 - Owner explicitly transferred all lanes, including Kalshi. I read the full handoff, this inbox and AGENTS.
 - First: finish and independently review stop-fix branch 4a9ab4a on the latest deploy tip 279591b. Permanent

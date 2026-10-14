@@ -13,6 +13,26 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-14 12:56 UTC, Codex, branch codex/kalshi-stop-handoff, PR #43
+- Changed: GitHub and workspace access recovered. Published PR #43 with the exact tested stop-fix code
+  from 3f1ed3f. Corrected the earlier spec summary to match section 9.4: permanent stops use settled loss
+  plus the near-stop floor; temporary exposure or a price-specific refusal never creates a latch.
+- Verified: recovered worktree matched 3f1ed3f with no uncommitted changes before these documentation edits;
+  deploy tip 279591b is incorporated. Code validation remains 5,069 passed / 15 skipped, mypy 122 source
+  files clean, changed-file Ruff clean, plus 16 independent fake transport checks. No code changed or test
+  rerun in this publication session. Temporary validation logs were lost during workspace recovery;
+  the earlier session results and committed reports remain the evidence.
+- Not verified / skipped: merge and deployment remain pending for the next safe interval, 13:02-13:10 UTC.
+  Exact deployed commit and startup logs must still be checked after the merge.
+- Scheduled after successful GitHub/Railway read preflights: daily owner status at 08:20 Pacific and the
+  recorder checkpoint on October 15 at 15:45 Pacific. Both report evidence and access gaps; neither may
+  change live settings, raise budgets or place orders. No claim of continuous monitoring.
+- Real money touched? YES, the PR contains the owner's authorized stop-control repairs; no fresh loss
+  budget, resume token, cap increase or Railway variable change is authorized or performed. Publication
+  does not restart the exhausted trading budget.
+- Next step: merge during a safe minute, verify the exact Railway commit and intended stopped Kalshi status,
+  confirm normal Polymarket startup, then obtain the owner's separate restart decision before speed part 2.
+
 ## 2026-10-14 05:56 UTC, Codex, branch codex/kalshi-stop-handoff (owner handoff; stop fixes)
 - Scope: owner explicitly transferred every lane and authorized section 4.1 first, then a separate restart
   decision, then speed part 2. Read the full handoff, COORDINATION, AGENTS and inherited reviews. Built on

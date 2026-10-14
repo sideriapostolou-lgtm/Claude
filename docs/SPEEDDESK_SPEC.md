@@ -205,9 +205,13 @@ to exceed a strategy cap. A total stop persists through restarts and returns the
 nonempty `SPEEDDESK_KALSHI_RESUME_TOKEN` acknowledges a fresh stop budget (the configured total stop, counted from
 the result at that moment); it must preserve lifetime P&L, fills, fees, existing exposure and the current day's
 stop. Store only a fingerprint, never the token value. Reusing an old/pre-halt token or changing ordinary settings
-cannot silently clear the halt or corrupt state. **Since 2026-10-14 the stops latch (9.3):** the total stop latches
-(`total_halted`) when even a one-contract buy, or a one-contract first buy with its hedge, is refused by it, and the
-day stop latches the same way for the rest of the UTC day. A resume value seen while no total stop is latched is
+cannot silently clear the halt or corrupt state. **Since 2026-10-14 permanent stops use settled losses (9.4):**
+startup and every step latch the total stop (`total_halted`) or daily stop when settled loss plus
+`pair_cap - 0.01` (currently $0.98) reaches that stop. This is a deliberate near-stop floor, not a quoted pair
+price. Pending bids and unsettled exposure still constrain new risk, but a temporary or price-specific lack of
+room never latches a stop. The daily latch lasts until 00:00 UTC or the owner's day reset; the lifetime latch
+requires a fresh owner-authorized resume value. Strictly balancing hedges may continue under a financial stop,
+subject to every other safeguard in 9.4. A resume value seen while no total stop is latched is
 kept unspent and logged ("ignored; no total loss stop is latched"); the next total stop spends it, so a value present
 before a stop never clears that stop. Every use of a value is recorded (`speeddesk_live_resume`: applied, ignored
 because nothing is latched, already used, or held by a reconciliation stop), never the value itself.
