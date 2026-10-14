@@ -39,6 +39,12 @@ Check this queue at task start and before declaring current work complete. Keep 
 move an item to done only with linked evidence. Blocked or waiting-for-approval is not complete.
 
 ### EXEC-DELAY-001 — first task active; production attribution and verified fix pending
+- **2026-10-14 3:01 PM PDT:** measurement PR #52 is actually deployed on exact `0d93fe3`;
+  both services are online and the pre/post restart accounting matches. Two early joined traces
+  establish synchronous practice checkpoint/ledger work inside some real read-resumption gaps,
+  while substantial time remains unattributed. A scalar conversion correction is provisional,
+  not released; full checks and repeated post-fix window evidence remain required. Second task
+  stays unstarted. [Exact release/read receipts](../research/kalshi_profitability_2026-10-14/shared_loop_trace_release.json).
 - Owner's **2026-10-14 2:18 PM PDT** instruction: complete the execution-delay task thoroughly before
   the controlled strategy comparison. [Scope and completion evidence](../research/kalshi_profitability_2026-10-14/EXECUTION_DELAY.md).
 - Bounded callback timings and offline fault/ordering tests are prepared. Measurement release alone
@@ -49,6 +55,20 @@ move an item to done only with linked evidence. Blocked or waiting-for-approval 
   while the first remains open. TJR's separate authentic-data blocker and recorder duties persist.
 
 ### TJR-MNQ-001 — validation tooling complete; historical run blocked on data; paper/live disabled
+- Follow-up checked **2026-10-14 3:01 PM PDT** (22:01 UTC), current branch `0d93fe3`:
+  earlier explicit reprioritization still permits offline validation, but current execution-first
+  work is not cleared. PR #47's recorded verification is complete; PR #52 deployed measurement,
+  not the completed fix. Both current Page delta feeds are unchanged (main 2/prototype 1; no
+  truncation/resync). No authentic development data or actual account-cost evidence has arrived.
+  Reused saved source/tests; historical trades zero, P&L unknown, paper not started, live disabled.
+  Keep unfinished and follow-up enabled. [Bounded check](../research/tjr_validation_2026-10-14/FOLLOWUP_2026-10-14_1501_PDT.json).
+  No routine unchanged-blocker notification, duplicate research or new production authority.
+- Follow-up checked **2026-10-14 2:37 PM PDT** (21:37 UTC): offline priority was previously permitted,
+  but authentic development data/costs remain missing. Both Page delta feeds still match main sequence 2
+  and prototype 1, without changes, truncation or resync. PR #47 release/restart is recorded complete;
+  active EXEC-DELAY-001 and coverage work are not cleared by PR #52's measurement merge. Preserve the
+  owner's execution-first sequence; this reminder does not reprioritize or authorize a release. Keep
+  TJR blocked, paper not started/live disabled, and its automation enabled. No unchanged owner alert.
 - Follow-up checked **2026-10-14 1:07 PM PDT** (20:07 UTC), current branch `6b0f5e2`:
   priority remains permitted by the owner's explicit reprioritization; Kalshi evidence work is still
   open. Both Page change feeds remain unchanged (main 2, prototype 1; no truncation/resync). No new

@@ -42,6 +42,31 @@ state. Profiling changes timing, the input is invented, and this is neither a
 production attribution nor a baseline for a claimed speedup. It identifies
 additional candidates to compare against the new production intervals.
 
+## First production attribution, October 14 at 3:01 PM Pacific
+
+Measurement PR #52 reached SUCCESS at 2:55:20 PM PDT, exact commit
+`0d93fe3c764d2ac743661e681ca1911ec1bf81a9`. The
+[scoped release/account/trace receipts](shared_loop_trace_release.json) preserve
+the actual two early traces, pre/post financial snapshots and platform status.
+The restart retained the losses, cash, exposure, caps and used-resume history.
+
+At 2:56 PM, one 311.928 ms read-resumption gap overlaps 213.149 ms of retained
+work by interval union. The practice checkpoint overlaps 185.551 ms; its ledger
+span is 76.078 ms wall /39.415 ms full-span CPU. At 3 PM, one 1,814.169 ms
+positions resumption gap has 450.555 ms covered and 1,363.614 ms unattributed.
+A practice checkpoint inside it takes 340.712 ms wall /139.045 ms CPU, including
+ledger227.757 ms wall /45.371 ms CPU and state75.324 ms wall /61.958 ms CPU.
+Do not sum those nested times or prorate whole-span CPU to overlap. Bounded
+detail omissions, quiet spans, retention and uncovered time remain in the receipt.
+
+This establishes checkpoint/serialization work as a contributor, not the whole
+cause of multi-second pauses. A local exact-native-scalar conversion shortcut
+reduces synthetic checkpoint median wall time53.193 to39.947 ms (15 alternating
+pairs, identical stored state/receipts). It is still provisional and unreleased;
+the local reduction is not a promised production speedup or profitable strategy.
+The initial full-suite CPU-tail failure remains recorded while controlled
+diagnostics and serialized verification proceed. No thresholds were weakened.
+
 ## Completion evidence required
 
 1. Identify the measured blocking section from joined production intervals,

@@ -13,6 +13,80 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-14 22:01 UTC, Codex, measurement deployment verified; bounded TJR queue check (3:01 PM PDT)
+- Read current GitHub AGENTS/COORDINATION/newest WORKLOG, PR #47/#52 and frozen TJR status; fetched
+  latest exact 0d93fe3c764d2ac743661e681ca1911ec1bf81a9. PR #52 deployment f430e059-29ac-4596-8303-32d7c4c4edd7
+  reached SUCCESS at 2:55:20.563 PM PDT after the earlier scheduling wait. Polymarket startup at
+  2:55:15 PM says LIVE, ten contracts/order. Bot and recorder online 1/1, zero platform warnings,
+  criticals or recent failures. Bounded error query returned no rows; not exhaustive coverage.
+- Before 2:54:36 / after 2:55:40 PM: cash $34.5899, gross cost/risk $2.40, reserved zero, 507 real
+  fills, fees $2.23862, lifetime settled P&L -$12.7515, limits and stop states matched. Used resume/
+  reset values were ignored; losses were retained. Later real fills changed normal cash/exposure;
+  cash is not P&L. Exact scoped receipts: shared_loop_trace_release.json in the profitability lab.
+- Two actual joined traces now exist. At 2:56:08 PM, a 311.928 ms read-resumption gap overlaps
+  213.149 ms of retained synchronous work by interval union; practice checkpoint overlap185.551 ms,
+  including ledger76.078 ms and state85.637 ms. Nested values are not additive. At 3 PM a positions
+  gap1814.169 ms has450.555 ms covered and1363.614 ms unattributed; checkpoint340.712 ms includes
+  ledger227.757 ms /45.371 ms full-span thread CPU. Details are bounded/omitted, not full attribution.
+- Scalar candidate remains local/unreleased. Four isolated baseline/candidate arena flush runs and
+  four stage-instrumented runs all passed unchanged gates; no parent flush called to_jsonable.
+  This does not explain away the retained full-suite CPU-tail failure. Serialized full verification
+  is in progress, without profiling, threshold changes or concurrent timing jobs. No release claim.
+- Repeated TJR follow-up did not cancel/reprioritize active execution-first work. Earlier explicit
+  offline reprioritization remains; both current Page delta feeds unchanged (main2/prototype1), with
+  no truncation/resync. Original124 blocks and prior test receipts reused, not reconstructed/rerun.
+  Authentic MNQZ2025 Sep19-Oct31 data, mapping/license/bar conventions and actual account costs still
+  missing. Historical trades0/P&Lnull, paperfalse/livefalse. Independent read-only review agrees.
+- Updated existing queue and saved FOLLOWUP_2026-10-14_1501_PDT.json. TJR not done; follow-up remains
+  enabled; no routine unchanged-blocker notification. Next TJR input is the authorized development
+  export/cost evidence, then frozen development evaluation before holdout. No historical return claim.
+- These verification/queue actions made no orders, variable/risk/financial changes or deployment.
+  The separately authorized active execution release is measurement only. EXEC-DELAY-001 remains open:
+  finish supported correction/checks/review/release and repeated full-window observations before
+  starting controlled strategy comparison. Raw recorder/per-venue coverage obligations also remain.
+
+## 2026-10-14 21:49 UTC, Codex, execution work continues; build and CPU-tail gates open (2:49 PM PDT)
+- PR #52 merged in the safe interval at about 2:36 PM PDT, exact merge 0d93fe3c764d2ac743661e681ca1911ec1bf81a9.
+  Railway deployment f430e059-29ac-4596-8303-32d7c4c4edd7 still reports BUILDING. Its only returned build
+  log is 2:36:47 PM scheduling on a Metal builder; no new-runtime logs. Do not claim deployed or healthy.
+  The previous deployment still emitted live status at 2:45:34 PM PDT: cash $36.9899, cumulative P&L
+  -$12.7515, 506 fills, $2.23862 fees, modeled open risk zero, $2.01 reserved; existing caps/stops retained.
+- Prepared a provisional identity-only scalar shortcut in models.to_jsonable, keeping every nonprimitive
+  branch and both numeric int casts. Required baseline lint cleanup in this touched file preserves export
+  membership and business calculations. Nothing from this provisional patch is committed or live yet.
+- Independent baseline contract: 29 cases; combined models/ledger/hashing checks 107 pass, mypy125 and
+  changed-file Ruff pass. Reviewer accepted source/test bundle
+  1861501781778aad10f9aa7f83c1f2f02f12ce2b287a5d9ab99e06a743bce835.
+  Exact native values, subclasses/metaclasses, serialized bytes, hashes and rollback behavior preserved.
+- Fifteen alternating synthetic checkpoint pairs: median wall 53.192619 -> 39.946575 ms (24.90% lower),
+  with identical ledger, mirror, timestamps and receipts for every pair. Pinned original function comes
+  from 0d93fe3, not the provisional working tree. Counts match the earlier profile, but exact identity
+  with that earlier unpreserved fixture cannot be verified. No production attribution or profit claim.
+- Candidate full suite: 5,455 passed /14 existing skips /one CPU-tail failure in the unchanged arena flush
+  fixture: median0.108953 ms (<0.25), p99 0.805634 ms (>0.5), max1.762; all4,200 events and200 frames
+  retained, no drops/slicing. This differs from the earlier callback wall-mean failure. Do not blame
+  scheduling or waive the gate: thread CPU includes real GC/kernel work. Controlled per-stage wall/CPU/GC
+  diagnostics are underway with immutable baselines; tests and thresholds remain unchanged.
+- No new trading rule, cap, variable, resume budget, order/account action or strategy activation. Existing
+  losses remain visible. EXEC-DELAY-001 stays open: need build success, joined production attribution,
+  validated focused fix, green full suite, release verification and repeated active-window evidence.
+  The second comparison task has not started; TJR and raw-recorder coverage obligations remain open.
+
+## 2026-10-14 21:37 UTC, Codex, bounded deferred TJR check during active execution work (2:37 PM PDT)
+- Scheduled follow-up read current AGENTS/COORDINATION/newest WORKLOG through GitHub. Earlier owner
+  reprioritization permits offline TJR validation; the newer execution-first task remains active and
+  this reminder does not override it. PR #47's recorded deploy/restart is complete, while measured
+  delay correction, sustained execution and raw coverage evidence remain open. PR #52 is measurement.
+- Both Page change feeds remain unchanged from the complete preserved reads, main sequence 2 and
+  prototype 1; no truncation/resync/deletion. No new authorized MNQ development export or actual-cost
+  inputs appear in the current records. Preserved all source/tests/limitations without rerunning them.
+- TJR remains blocked: historical P&L unknown, zero historical trades tested, paper not started and
+  live disabled. No paid access, futures order/account/risk action or TJR production service. Existing
+  queue and automation remain unfinished/enabled; no routine unchanged-blocker notification.
+- Next TJR input remains verified actual MNQ December 2025 development bars plus contract/license/
+  timestamp/cost evidence. Continue the separately authorized active execution task without using
+  this reminder as deployment authority. Docs-only receipt will be saved with the next session update.
+
 ## 2026-10-14 21:32 UTC, Codex, EXEC-DELAY-001 measurement release preparation (2:32 PM PDT)
 - Owner requested sequential completion: finish measured execution-delay attribution/fix/release/verification,
   then controlled strategy comparison. Read latest instructions/coordination/worklog through GitHub and

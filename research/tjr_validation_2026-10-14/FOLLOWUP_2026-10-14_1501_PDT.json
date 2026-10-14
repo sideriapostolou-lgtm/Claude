@@ -1,0 +1,77 @@
+{
+  "checked_at_utc": "2026-10-14T22:01:00Z",
+  "checked_at_pacific": "2026-10-14 3:01 PM PDT",
+  "branch_head": "0d93fe3c764d2ac743661e681ca1911ec1bf81a9",
+  "source": "Connected GitHub current AGENTS, COORDINATION, newest WORKLOG, PR47/52 and HISTORICAL_STATUS; existing complete archived Page reads plus current delta feeds.",
+  "gate": {
+    "prior_explicit_offline_reprioritization": true,
+    "current_execution_first_task_cleared": false,
+    "pr47_recorded_deploy_verification_complete": true,
+    "pr52_measurement_deployed": true,
+    "reminder_confers_new_authority": false
+  },
+  "pages": [
+    {
+      "page_id": "page_d0294998a7cc8191b771278fbfb98a2f",
+      "after_sequence": 2,
+      "through_sequence": 2,
+      "markdown_diff": "",
+      "changes": [],
+      "changed_blocks": [],
+      "deleted_block_ids": [],
+      "truncated": false,
+      "resync_required": false
+    },
+    {
+      "page_id": "page_33c0bb7e8dac81919e012fc502bae98a",
+      "after_sequence": 1,
+      "through_sequence": 1,
+      "markdown_diff": "",
+      "changes": [],
+      "changed_blocks": [],
+      "deleted_block_ids": [],
+      "truncated": false,
+      "resync_required": false
+    }
+  ],
+  "historical_status": {
+    "status": "BLOCKED",
+    "reason": "VERIFIED_ACTUAL_MNQZ2025_DATA_BUNDLE_MISSING",
+    "generatedAtUTC": "2026-10-14T18:55:39.000Z",
+    "protocol": {
+      "version": "TJR_DEVELOPMENT_RUNNER_v1",
+      "sourceVersion": "TJR_BC23_MNQZ25_SWEEP_BOS_v0.1.1_calendar",
+      "contract": "MNQZ2025",
+      "warmup": "2025-09-19",
+      "start": "2025-09-22",
+      "end": "2025-10-31",
+      "partition": "DEVELOPMENT",
+      "holdout": [
+        "2025-11-03",
+        "2025-12-12"
+      ],
+      "liveExecutionEnabled": false,
+      "priceUnit": "INTEGER_TICKS",
+      "tickSize": 0.25,
+      "tickUSD": 0.5,
+      "assumedBarAvailability": "INTERVAL_CLOSE",
+      "observedLatency": false
+    },
+    "historicalTradesTested": 0,
+    "historicalPnlUSD": null,
+    "holdoutOpened": false,
+    "holdoutExposureStatus": "NOT_ACCESSED_NO_INPUT",
+    "holdoutReplayed": false,
+    "paperTradingStarted": false,
+    "liveExecutionEnabled": false,
+    "performanceClaimAllowed": false
+  },
+  "missing_inputs": [
+    "Authorized authentic unadjusted MNQ December 2025 minute OHLCV, September 19 through October 31, 2025",
+    "Verified provider/contract mapping, license, timestamp and bar conventions; immutable raw export",
+    "Actual intended-account fees, friction, platform and data-cost evidence",
+    "Separately verified current contract/feed/runtime before forward paper start"
+  ],
+  "decision": "Keep active/blocked and unfinished. Preserve original source/tests and unopened holdout. No repeat probes/tests, no paper or live execution. Follow-up automation remains enabled; unchanged-blocker routine notification suppressed.",
+  "next_step": "Verify/normalize authorized development export and real costs when supplied, run frozen development scenarios before holdout, then evaluate paper readiness."
+}
