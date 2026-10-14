@@ -13,6 +13,34 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-14 17:39 UTC, Codex, TJR source review and Kalshi entry/exit diagnosis (10:39 AM PDT)
+- Owner directly requested better Kalshi direction/profit-taking and more information about the saved TJR
+  bot. Read current rules/coordination/latest worklog and both full Spaces Pages, including every code block.
+  This is a limited source-review reprioritization; remaining Kalshi evidence work is not declared cleared.
+- Saved exact main sequence 2/prototype sequence 1 text, block/source hashes, Node v24.19.0 results and a
+  review under research/tjr_mnq_2026-10-14. Unchanged saved source reproduced 65/65 prototype and 26/26
+  separate feature checks. Independent reviewer reproduced both. Initial local fence extraction included
+  JSON and failed before testing; corrected exact language matching, without altering saved source.
+- Three extra synthetic probes confirmed missing/unknown calendar status becomes SKIPPED rather than
+  unresolved. Record a versioned calendar-classification fix as the next implementation prerequisite;
+  original Pages and source remain unchanged. These synthetic passes are not profitability evidence.
+- Historical trades tested zero; paper not started. Actual December 2025 MNQ data/provider mapping,
+  verified calendar and account costs remain missing; forward paper also needs a current contract/feed.
+  No new historical outcomes or held-out data accessed. TJR queue remains open for historical/paper work.
+- Kalshi loss audit: 28/29 windows filled both sides, net -$11.9154, and heavy side lost in 23/27
+  unbalanced pre-lock windows. Later locks improved the fixed recorded inventory outcome by $0.8246.
+  No verified inverse or exit-profit backtest exists. Current bot buys/locks, not sell-to-take-profit.
+- Next Kalshi evidence step: obtain complete synchronized executable bids/size at 1/5/30 seconds after
+  every fill, including fees, delay, stale/missing data and losses; distinguish bad entries from profits
+  available then lost. Proposed only, not a running experiment. Separate entry and exit tests before
+  combining; do not modify the existing frozen comparison or open its sealed TEST.
+- No production inspection/change, live rule, order, deployment, money limit, stop/reset or Railway
+  variable change. Documentation and source snapshots only; application pytest/mypy/Ruff not rerun because
+  application code is unchanged. Reproduction and extra probes are the verification for this review.
+- Next: retain Kalshi execution/raw-evidence follow-up; when queue permits, correct the TJR calendar guard
+  in a preserved-source derivative and validate development data before holdout/paper. Automation remains
+  enabled; do not repeat unchanged notifications or mark the queue done without completion evidence.
+
 ## 2026-10-14 17:09 UTC, Codex, TJR-MNQ-001 queue check (10:09 AM PDT)
 - Read current COORDINATION (including the queue), AGENTS and newest WORKLOG through connected GitHub.
   PR #47 is confirmed merged as e8db34ee; the recorded deployment and restart verification are complete.

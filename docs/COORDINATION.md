@@ -38,34 +38,57 @@ building, wait for it to finish.
 Check this queue at task start and before declaring current work complete. Keep unfinished items here;
 move an item to done only with linked evidence. Blocked or waiting-for-approval is not complete.
 
-### TJR-MNQ-001 — queued after current Kalshi work (owner request, 2026-10-14)
-- Last gate check: **2026-10-14 10:09 AM PDT** (17:09 UTC), through connected GitHub. PR #47 is
-  merged and its deployment receipt is recorded, but the execution/complete-record prerequisites below
-  remain open. No owner reprioritization found. Keep queued; no Pages research or paper run started.
+### TJR-MNQ-001 — source review complete; historical/paper work queued (owner request, 2026-10-14)
+- Latest update: **2026-10-14 10:39 AM PDT** (17:39 UTC). The owner directly asked to learn more about
+  the TJR prototype while discussing Kalshi direction/exits. That authorizes the source review now, not
+  a declaration that Kalshi evidence work is cleared or a new live desk. Both Pages were read completely,
+  exact source snapshots saved, and 65/65 prototype plus 26/26 feature synthetic checks reproduced.
+  Historical/paper work remains queued. [Review and evidence](../research/tjr_mnq_2026-10-14/REVIEW.md).
 - Owner: Codex. Start only after the current Kalshi work in this inbox/WORKLOG is cleared, or the owner
   explicitly reprioritizes it. PR #47 is deployed and its restart/money-state verification is complete.
   The outstanding execution/complete-record evidence follow-up remains open: local latency tails,
   complete-window coverage and raw recorder/per-venue verification are not cleared by PR #48's saved-metadata
   receipt. The owner's standing release approval permits tested code deployments; it does not mark these
-  evidence prerequisites complete. No explicit TJR reprioritization has been received.
+  evidence prerequisites complete. The direct TJR explanation request is a limited source-review
+  reprioritization; the remaining historical-validation/paper campaign is not complete or started.
 - Main TJR handoff: https://chatgpt.com/space/page_d0294998a7cc8191b771278fbfb98a2f
 - Actual MNQ implementation subpage: https://chatgpt.com/space/page_33c0bb7e8dac81919e012fc502bae98a
 - Read BOTH Pages completely, including code blocks and limitations; use the saved implementation,
   not a reconstruction from a summary. The prototype is a subpage, not a separate PDF.
-- Owner reports 65 passing synthetic checks; historical profitability is untested and paper trading
-  has not started. Verify the saved implementation/tests; do not treat this report as independent validation.
+- Reproduced 65/65 saved prototype checks and 26/26 separate feature checks with unchanged source in
+  Node v24.19.0. These use invented prices; historical profitability is untested and paper trading has not
+  started. Three extra probes found that missing/unknown calendar status is mislabeled as a planned
+  exclusion. Preserve original source; fix this in a versioned derivative before historical evaluation.
 - Then complete historical validation and start/verify paper trading as supported by the saved prototype.
   Keep live execution disabled. Preserve costs, losses, missing data and validation limits.
 - If either Page cannot be read, identify the exact missing Page and request its contents; never claim
   it was read. Prefer copied code blocks or a source export; both PDFs are a fallback.
-- Access-only check at 09:04 AM PDT: both Pages returned readable metadata through Spaces.
-  This session did not perform the full content/code review or start validation/paper trading.
+- Earlier access-only check at 09:04 AM PDT returned readable metadata. Full content/code review and
+  synthetic reproduction completed at 10:39 AM PDT; source sequences main=2, prototype=1 are archived.
+  Missing historical inputs: verified actual MNQ December 2025 data, calendar and actual account costs.
+  A current paper feed/instrument/runtime is also absent; the historical contract is expired.
 - Completion evidence: exact source version; synthetic test reproduction; historical validation report
   including fees/slippage and limitations; verified paper start and saved observations; live execution disabled.
 
 ## Inbox (newest first)
 
 Format: `### YYYY-MM-DD HH:MM UTC, From -> To: subject`, then what you need, then `Status: open / answered / done`.
+
+### 2026-10-14 17:39 UTC, Codex -> owner / Claude: TJR source reviewed; Kalshi entry/exit diagnosis next
+- Owner directly requested more about the saved TJR bot. Read both Pages completely; preserve main
+  sequence 2 and prototype sequence 1 under research/tjr_mnq_2026-10-14, with source hashes and outputs.
+- Exact original JS: 65/65 prototype checks, 26/26 separate feature checks. Independent reviewer agrees.
+  Three additional probes expose missing/unknown calendar status becoming SKIPPED, with zero unresolved
+  days. Correct in a versioned derivative before historical evaluation; saved original is unchanged.
+- No historical outcome data or paper process; no broker, production, risk, rule or variable changes.
+  This review does not clear the outstanding Kalshi timing/raw-coverage evidence or complete TJR-MNQ-001.
+- Kalshi next diagnostic: actual executable selling bids/size at 1/5/30 seconds after every fill, after
+  delay/fees, to distinguish immediately adverse fills from obtainable profits later lost. It is proposed,
+  not running. Current bot buys/locks; no sell-to-take-profit path. Preserve existing frozen comparisons.
+- Next TJR: version the calendar fix, obtain verified development data/calendar/costs when queue permits,
+  then untouched historical holdout and separately specified current-contract paper run, live disabled.
+
+Status: done (source review and synthetic reproduction); queued (historical/paper); open (Kalshi evidence)
 
 ### 2026-10-14 16:40 UTC, Codex -> owner / Claude: both approved releases live; saved recorder evidence available
 - PR #47 merged safely 16:21:48 UTC; bot exact `e8db34ee34d95411ac7f695f704ceb82ef8e32d5`, deployment
