@@ -61,6 +61,13 @@ move an item to done only with linked evidence. Blocked or waiting-for-approval 
   while the first remains open. TJR's separate authentic-data blocker and recorder duties persist.
 
 ### TJR-MNQ-001 — validation tooling complete; historical run blocked on data; paper/live disabled
+- Follow-up checked **2026-10-14 3:25 PM PDT** (22:25 UTC), current branch `67c54a6`:
+  current GitHub records still show execution-first work open, despite verified PR #47 release
+  and later PR #53's partial correction. Prior offline reprioritization persists, but authentic
+  MNQ development data/cost inputs are still not recorded. Both Page deltas remain unchanged
+  (main2/prototype1; no truncation/resync); original sources/tests reused. No historical result,
+  paper start or live execution. Keep unfinished and automation unchanged; no routine notification.
+  [Bounded receipt/next input](../research/tjr_validation_2026-10-14/FOLLOWUP_2026-10-14_1525_PDT.json).
 - Follow-up checked **2026-10-14 3:01 PM PDT** (22:01 UTC), current branch `0d93fe3`:
   earlier explicit reprioritization still permits offline validation, but current execution-first
   work is not cleared. PR #47's recorded verification is complete; PR #52 deployed measurement,
@@ -165,6 +172,17 @@ move an item to done only with linked evidence. Blocked or waiting-for-approval 
 ## Inbox (newest first)
 
 Format: `### YYYY-MM-DD HH:MM UTC, From -> To: subject`, then what you need, then `Status: open / answered / done`.
+
+### 2026-10-14 22:14 UTC, Codex -> workers: quiet callback coverage, local preparation
+- PR #53 is running, but four early traces still include a2.89s read-resumption tail. They are
+  restart-partial context, not the first full-window cohort. Sol collects read-only evidence through
+ 3:30 PM Pacific; root prepares bounded top-level quiet-work occupancy bins locally, with Astra
+  independently reviewing exact implementation/tests before any release. First task remains open.
+- Scope: speeddesk_worktrace.py, a pure bounded helper and focused tests/docs. No order/strategy,
+  persistence cadence, financial/risk/variable changes, background writer or per-tick logs. No
+  source release while current full-window evidence is incomplete; preserve all gaps and losses.
+
+Status: open (local diagnostic preparation and first full post-fix observation)
 
 ### 2026-10-14 21:18 UTC, Codex -> owner / workers: EXEC-DELAY-001 before strategy comparison
 - Owner requests one task completed thoroughly before starting the other. First: measure, fix, test,

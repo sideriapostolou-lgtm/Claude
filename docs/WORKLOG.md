@@ -13,6 +13,37 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-14 22:25 UTC, Codex, bounded quiet-work diagnostic ready, not released (3:25 PM PDT)
+- Repeated TJR reminder checked current AGENTS/COORDINATION/newest WORKLOG/frozen status through
+  connected GitHub at3:25:27 PM PDT. Current head67c54a6; PR #47 verification is recorded complete,
+  but active execution-first work is not cleared by merged/deployed partial fixes. Earlier offline
+  reprioritization persists; no new development bars or actual account costs are recorded. Both
+  Page change feeds unchanged (main2/prototype1), no truncation/resync. Preserved saved source/tests;
+  no duplicate probes/backtest or historical returns. Historical trades0/P&Lnull, paperfalse/livefalse.
+  Saved FOLLOWUP_2026-10-14_1525_PDT.json and updated existing queue, unfinished/automation unchanged.
+  Next: verified authorized MNQZ2025 Sep19-Oct31 data/mapping/license/timestamps/costs, then frozen
+  development evaluation. No routine unchanged-blocker notification; no production authority inferred.
+- PR #53 remains running while its first full3:15–3:30 PM Pacific window is collected read-only.
+  Partial-restart traces still show up to2.89s read-resumption delay; do not claim the scalar
+  correction resolved the tail or that its synthetic25% improvement transfers to production.
+- Prepared pure fixed512x31.25ms occupancy bins for completed top-level work, including callbacks
+  under5ms. Fully contained bins give a conservative wall lower bound; edges/expired/active/
+  uninstrumented work remain explicit. CPU counts only whole spans inside one queried full bin.
+  Never add overlapping slow-span/binned coverage or prorate CPU. No I/O, clocks, save cadence,
+  decision, financial/risk/variable action or per-callback log added. Helper loops/storage bounded.
+- Independent Astra review found a finite-input aggregate CPU overflow; guard and regression now
+  isolate it to diagnostics/strict JSON. Four-file source/test review bundle
+  db8dfd78384b96cf1c251cdb2614b628767392263287419a16b8e8a52c8ff135 retained exactly.
+- Full final suite:5,471 passed /14 existing skips in305.84s. Mypy126 source files and Ruff on
+  all4 changed Python files pass; no threshold or test weakened.14 new focused/independent cases
+  cover union/quiet work/boundaries/nesting/retention/huge clocks/overflow/faults. Full log saved.
+- Independent8 alternating synthetic pairs:6.929 ->10.519us per two empty spans, about1.795us
+  added per callback. Exact script/results archived with hashes; no production overhead guarantee.
+  QUIET_WORK_COVERAGE.md and quiet_bins_check_receipt.json preserve scope, source and limitations.
+- No source release before current full-window receipt. EXEC-DELAY-001 remains open; second
+  strategy-comparison task stays unstarted. TJR's unchanged data/cost blocker and other recorder
+  obligations remain; its repeated reminder supplies no new deployment or financial authority.
+
 ## 2026-10-14 22:11 UTC, Codex, PR #53 deployed; full-window timing still pending (3:11 PM PDT)
 - Under the prior active-task standing release approval, merged PR #53 in safe minute3:08 PM PDT,
   exact95ff8acb35294de7080460721c0a47a7934d4a37. Railway deploymentf838b81d-1bee-49f3-9083-e71a6cd0ae6f
