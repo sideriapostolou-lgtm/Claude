@@ -26,6 +26,7 @@ from websockets.asyncio.client import connect
 from .config import Settings
 from .speeddesk_feeds import number
 from .speeddesk_model import Book, Level, Trade
+from .speeddesk_worktrace import WorkTrace, work_span
 
 URL = "wss://external-api-ws.kalshi.com/trade-api/ws/v2"
 PATH = "/trade-api/ws/v2"
@@ -247,6 +248,7 @@ class KalshiMarketWS:
                  on_book: Callable[[Book], None], on_trade: Callable[[Trade], None],
                  on_status: Callable[[dict[str, Any]], None], clock: Callable[[], float] = time.time,
                  ws_connect: Callable[..., Any] | None = None) -> None:
+        self.work_trace: WorkTrace | None = None
         self._settings, self._tickers = settings, tickers
         self._on_book, self._on_trade, self._on_status = on_book, on_trade, on_status
         self._clock, self._connect = clock, ws_connect or connect
@@ -330,7 +332,8 @@ class KalshiMarketWS:
             except TimeoutError:
                 self._report()
                 continue
-            books, trades = self.state.apply(json.loads(payload), self._clock())
+            with work_span(self.work_trace, "kalshi_decode_apply"):
+                books, trades = self.state.apply(json.loads(payload), self._clock())
             self._report()
             for book in books:
                 self._on_book(book)

@@ -46,6 +46,7 @@ from .speeddesk_model import (
 )
 from .speeddesk_scorecard import window_scorecard
 from .speeddesk_venues import MarketFeeds
+from .speeddesk_worktrace import WorkTrace, observed, work_span
 
 log = logging.getLogger("nightcrawler.speeddesk")
 STATE_KEY = "speeddesk_state"
@@ -98,6 +99,7 @@ class SpeedRunner:
         config = practice_config(settings)
         self.clock = clock or RealClock(stop)
         self.monotonic = monotonic
+        self.work_trace = WorkTrace(monotonic=monotonic)
         self.tick_receipt: TickReceipt | None = None
         self.stop = stop
         self.directory = settings.data_dir / "speeddesk"
@@ -179,12 +181,24 @@ class SpeedRunner:
             self.feeds = feed_factory(settings, on_tick=self.on_tick, on_book=self.on_book,
                                       on_trade=self.on_trade, on_windows=self.on_windows,
                                       on_status=self.on_status, clock=self.clock.now)
+            # Share only the optional observer; all feed/model/account work stays on this loop.
+            try:
+                for adapter in getattr(self.feeds, "adapters", {}).values():
+                    adapter.work_trace = self.work_trace
+                    if getattr(adapter, "_ws", None) is not None:
+                        adapter._ws.work_trace = self.work_trace
+            except Exception:  # noqa: BLE001, S110 - optional wiring has no effect on market inputs.
+                pass
             self._refresh_live_snapshot()
             try:
                 self.live = live_factory(settings, self.directory / "kalshi_live", self.live_snapshot,
                                          clock=self.clock.now,
                                          monotonic=self.monotonic,
                                          direct_member_verified=settings.speeddesk_kalshi_account_type == "direct")
+                try:
+                    self.live.work_trace = self.work_trace
+                except Exception:  # noqa: BLE001, S110 - avoid I/O for a failed optional observer.
+                    pass
                 self.live.on_windows(list(self.desk.windows.values()))
             except Exception as exc:  # noqa: BLE001 — isolate live state failure from the running practice trial.
                 self.live_problem = "Kalshi companion unavailable; new real orders disabled; inspect live logs"
@@ -231,6 +245,7 @@ class SpeedRunner:
         if self.pending:
             self.checkpoint(self.clock.now())
 
+    @observed("feed_tick")
     def on_tick(self, price: float, event_at: float, received_at: float) -> None:
         received_mono = self.monotonic()
         if not -FUTURE_SKEW_S <= received_at - event_at <= self.desk.config.stale_s:
@@ -261,6 +276,7 @@ class SpeedRunner:
                                                  "venue_start_price": window.venue_start_price,
                                                  "settlement_source": "venue BRTI outcome"})
 
+    @observed("feed_book")
     def on_book(self, book: Book) -> None:
         # Optional measurement sees rejected quotes too; it never changes the accepted trading snapshot.
         try:
@@ -278,6 +294,7 @@ class SpeedRunner:
             # later favorable update may never replace a failed recheck.
             self.decisions(self.desk.advance(self.clock.now()))
 
+    @observed("feed_trade")
     def on_trade(self, trade: Trade) -> None:
         allowed = not hasattr(self.feeds, "maker_windows") or trade.window in self.feeds.maker_windows()
         if self.feed_status.get("trade_stream") and allowed:
@@ -286,6 +303,7 @@ class SpeedRunner:
             if self.arena is not None and trade.window in self._live_slugs:
                 self.arena.feed_trade(trade)  # one bounded append (practice town, sent at the next step)
 
+    @observed("feed_windows")
     def on_windows(self, windows: list[Window]) -> None:
         self.evidence.discover([asdict(window) for window in windows], self.clock.now())
         self._live_windows_dirty = True
@@ -300,6 +318,7 @@ class SpeedRunner:
         self._refresh_live_snapshot()
         self._live_call("on_windows", windows)
 
+    @observed("feed_status")
     def on_status(self, status: dict[str, Any]) -> None:
         if status.get("coinbase") != "connected" or not status.get("trade_stream"):
             self.evidence.last_fresh.clear()
@@ -370,6 +389,7 @@ class SpeedRunner:
                           "maker coverage also requires its verified trade stream; warm-up is included")
         return report
 
+    @observed("practice_daily_reports")
     def daily_reports(self, now: float) -> None:
         day = datetime.fromtimestamp(self.started_at, UTC).date()
         current = datetime.fromtimestamp(now, UTC).date()
@@ -391,6 +411,7 @@ class SpeedRunner:
                     self.record("speeddesk_daily_correction", self.reports[key])
             day += timedelta(days=1)
 
+    @observed("practice_panel")
     def panel(self, now: float) -> dict[str, Any]:
         btc_at = self.desk.tape.last_at
         books = [book.at for book in self.desk.books.values()
@@ -524,33 +545,39 @@ class SpeedRunner:
                 self.live_problem = "Kalshi cleanup unconfirmed; real exposure may remain; inspect live logs"
                 log.error("speeddesk_live_status mode=paper reason=cleanup_unconfirmed error=%s", type(exc).__name__)
 
+    @observed("practice_checkpoint")
     def checkpoint(self, now: float) -> None:
         self.daily_reports(now)
-        state = {"version": 1, "mode": "practice", "started_at": self.started_at, "updated_at": now,
-                 "model": self.desk.to_state(), "reports": self.reports, "observed_seconds": self.observed,
-                 "feed_latency": self.feed_latency, "opening_logged": sorted(self.opening_logged),
-                 "latency_metrics": self.metrics.state(),
-                 "window_evidence": self.evidence.state(),
-                 "venue_reporting_started_at": self.venue_reporting_started_at,
-                 "venue_coverage": self.venue_coverage,
-                 "panel": self.panel(now)}
-        first = not self._first_save_synced
-        if first:
-            self.ledger.set_synchronous(True)  # the ledger state is on disk before the display copy can be
-        with self.ledger.transaction():
+        with work_span(self.work_trace, "practice_state"):
+            state = {"version": 1, "mode": "practice", "started_at": self.started_at, "updated_at": now,
+                     "model": self.desk.to_state(), "reports": self.reports, "observed_seconds": self.observed,
+                     "feed_latency": self.feed_latency, "opening_logged": sorted(self.opening_logged),
+                     "latency_metrics": self.metrics.state(),
+                     "window_evidence": self.evidence.state(),
+                     "venue_reporting_started_at": self.venue_reporting_started_at,
+                     "venue_coverage": self.venue_coverage,
+                     "panel": self.panel(now)}
+        with work_span(self.work_trace, "practice_ledger"):
+            first = not self._first_save_synced
+            if first:
+                self.ledger.set_synchronous(True)  # the ledger state is on disk before the display copy can be
+            with self.ledger.transaction():
+                for kind, payload in self.pending:
+                    self.ledger.append_receipt(kind, payload, ts=payload.get("at", now))
+                self.ledger.set_kv(STATE_KEY, state)
+            if first:
+                self.ledger.set_synchronous(False)
+                self._first_save_synced = True
+        with work_span(self.work_trace, "practice_logs"):
             for kind, payload in self.pending:
-                self.ledger.append_receipt(kind, payload, ts=payload.get("at", now))
-            self.ledger.set_kv(STATE_KEY, state)
-        if first:
-            self.ledger.set_synchronous(False)
-            self._first_save_synced = True
-        for kind, payload in self.pending:
-            log.info("%s %s", kind, json.dumps(payload, allow_nan=False, separators=(",", ":")))
-        self.pending.clear()
+                log.info("%s %s", kind, json.dumps(payload, allow_nan=False, separators=(",", ":")))
+            self.pending.clear()
         # A mirror failure halts practice, but the committed ledger survives it. A display copy: not synced.
-        _atomic_json(self.path, state, durable=False)
+        with work_span(self.work_trace, "practice_mirror"):
+            _atomic_json(self.path, state, durable=False)
         self.last_checkpoint = now
 
+    @observed("practice_step")
     def step(self, now: float) -> None:
         self._refresh_live_snapshot()
         windows = [asdict(window) for window in self.desk.windows.values()]

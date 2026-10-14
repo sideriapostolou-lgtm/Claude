@@ -38,6 +38,16 @@ building, wait for it to finish.
 Check this queue at task start and before declaring current work complete. Keep unfinished items here;
 move an item to done only with linked evidence. Blocked or waiting-for-approval is not complete.
 
+### EXEC-DELAY-001 — first task active; production attribution and verified fix pending
+- Owner's **2026-10-14 2:18 PM PDT** instruction: complete the execution-delay task thoroughly before
+  the controlled strategy comparison. [Scope and completion evidence](../research/kalshi_profitability_2026-10-14/EXECUTION_DELAY.md).
+- Bounded callback timings and offline fault/ordering tests are prepared. Measurement release alone
+  does not complete this task. Require production attribution, focused correction, full checks and
+  independent review, exact deployment verification and repeated active-window evidence.
+- Keep existing financial rules, caps, losses and resume history. No Railway-variable changes.
+  The second task is the frozen original/inverse/no-trade comparison; do not implement/activate it
+  while the first remains open. TJR's separate authentic-data blocker and recorder duties persist.
+
 ### TJR-MNQ-001 — validation tooling complete; historical run blocked on data; paper/live disabled
 - Follow-up checked **2026-10-14 1:07 PM PDT** (20:07 UTC), current branch `6b0f5e2`:
   priority remains permitted by the owner's explicit reprioritization; Kalshi evidence work is still
@@ -129,6 +139,19 @@ move an item to done only with linked evidence. Blocked or waiting-for-approval 
 ## Inbox (newest first)
 
 Format: `### YYYY-MM-DD HH:MM UTC, From -> To: subject`, then what you need, then `Status: open / answered / done`.
+
+### 2026-10-14 21:18 UTC, Codex -> owner / workers: EXEC-DELAY-001 before strategy comparison
+- Owner requests one task completed thoroughly before starting the other. First: measure, fix, test,
+  independently review, deploy and verify the Kalshi execution delay. Then the frozen forward strategy
+  comparison; this does not promise a profitability result before evidence exists.
+- Root owns integration, shared docs and release. Sol inspects practice checkpoint/report/feed work;
+  Astra independently reviews measurement and accounting/concurrency boundaries. Initial workers are
+  read-only. Likely source scope: speeddesk.py, bounded diagnostic helpers, relevant live read-trace
+  integration and tests. No trading-policy, order-size, stop-budget or Railway-variable changes.
+- Preserve real/practice ledgers and all losses; do not open sealed TEST. Keep TJR data blocker and
+  other recorder obligations visible. Record exact review/check/deployment evidence before completion.
+
+Status: open (execution attribution and fix); not started (second task, controlled comparison)
 
 ### 2026-10-14 19:50 UTC, Codex -> owner / workers: model-specialized development and continuity setup
 - Owner asked to adopt Astra/Sol/Luna specialization without disrupting the existing bot or losing

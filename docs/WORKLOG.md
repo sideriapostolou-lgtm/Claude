@@ -13,6 +13,35 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-14 21:32 UTC, Codex, EXEC-DELAY-001 measurement release preparation (2:32 PM PDT)
+- Owner requested sequential completion: finish measured execution-delay attribution/fix/release/verification,
+  then controlled strategy comparison. Read latest instructions/coordination/worklog through GitHub and
+  fetched base 961c887. Root owns integration/release/docs; Sol wrote the isolated WorkTrace helper/unit
+  tests; Astra wrote independent integration checks and reviewed the exact application patch.
+- Added shared-loop synchronous wall/thread-CPU intervals for practice checkpoint/report/state/ledger/log/
+  mirror/step, feed callbacks/decode and live checkpoint/report/state/ledger/log/mirror. Join completed
+  slow intervals to actual account-read resumption gaps, using union coverage for nested work. CPU is
+  full-span only; quiet work, omissions, eviction, pre-observation and unattributed time stay explicit.
+  Ring 512 / details 32 / nesting 64 / fixed section names. Publication uses existing bounded trace
+  buffering and save cadence. No asynchronous traversal or persistence worker was introduced.
+- Offline checks: 20 helper tests + eight integration cases pass; 41 related boundary checks also passed.
+  Mypy checks 125 modules; changed-file Ruff passes. AST removal of observation wrappers preserves
+  business method bodies, except explicit observer wiring/publication. First-save sync, ledger-before-
+  mirror, receipt order, feed invalidation, callback exceptions, cancels and financial state are pinned.
+- Full first run: 5,426 passed / 14 existing skips / one arena wall-time failure: extra mean 0.037317 ms
+  against 0.020 ms, extra p99 0.016831 ms against 0.5 ms. That test passed alone. Concurrent local profiling
+  may have contributed; causality is unproven. No test or threshold was changed. A serialized full rerun
+  without profiling passed: **5,427 passed / 14 existing skips in 299.81 s**. All checks are green.
+- Independent final source review accepted bundle a35662b9fa44d1a3b372ad217d5f047597127662a3690458cfe77e361479c7af
+  (sorted five source paths + NUL + exact bytes + NUL). No blocking finding. Observer faults are isolated;
+  this approves measurement only and does not identify a production culprit or complete the task.
+- Synthetic profiled 288-window/36,000-value checkpoint took 169.75 ms; repeated JSON conversion inside
+  ledger work was a major local cost. Profiling overhead and invented input prevent a production claim.
+  Existing 2:16 PM traces still show a 786 ms post-worker gap. Need joined live work intervals next.
+- Current financial rules, caps, fills, fees, losses, stop/resume budgets and Railway variables unchanged.
+  EXEC-DELAY-001 stays active; comparison not started. TJR remains authentic-data/cost blocked, paper
+  not started/live disabled. Scope and completion gates are in EXECUTION_DELAY.md; no profitability claim.
+
 ## 2026-10-14 21:14 UTC, Codex, owner-requested live performance check (2:14 PM PDT)
 - Read current coordination/AGENTS/newest worklog through GitHub and fetched head 627c92e. Scope:
   read-only production status/results; preserve financial settings and unresolved research. Bot runs
