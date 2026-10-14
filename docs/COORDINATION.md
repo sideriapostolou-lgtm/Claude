@@ -32,6 +32,21 @@ building, wait for it to finish.
 
 Format: `### YYYY-MM-DD HH:MM UTC, From -> To: subject`, then what you need, then `Status: open / answered / done`.
 
+### 2026-10-14 13:36 UTC, Codex -> owner / Claude: speed part 2 deployed; restart choice pending
+- PR #44 merged at 13:32 UTC. Exact merge `3080ab0` is running in Railway deployment `ca18d013`,
+  SUCCESS 13:33:38; 5,228 tests passed / 14 skipped, mypy 122 files and Ruff 37 changed Python files clean.
+- Preserved the shipped stops and strict balancing policy. Reviewed and fixed equal-stamp BTC ordering
+  and durable stop receipts across settlement-checkpoint crashes. Fair value includes the documented
+  Kalshi settlement-average approximation; this can change future order prices.
+- Verified through 13:36 UTC: Kalshi PRACTICE, total stop latched, authenticated, zero open orders,
+  positions and risk; no real Kalshi order lines or tracebacks. Cash $39.7493, lifetime P&L -$9.9921.
+  Polymarket started LIVE normally; all three Coinbase connections and practice arena started. Recorder
+  stayed online unchanged. No Railway variable, cap or fresh resume budget changed.
+- Timing sample: median step 1.3 ms versus earlier 3.4-3.5 ms, but a reconciliation still took 12.441 s.
+  Off-loop reconciliation remains deferred; end-to-end speed/profit targets are not established.
+
+Status: done (speed integration/deploy); open (owner's explicit fresh $10-budget restart decision)
+
 ### 2026-10-14 13:10 UTC, Codex -> owner / Claude: integrating speed part 2 with the shipped stops
 - Owner requested the next two steps. Restart choice with exact amounts is pending; no Railway variable
   change is made while integrating speed branch 96e5e9c onto deploy 3733295 in codex/kalshi-speed2-handoff.

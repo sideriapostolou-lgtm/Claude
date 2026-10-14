@@ -13,6 +13,35 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-14 13:36 UTC, Codex, PR #44 deployed (speed part 2; restart still pending)
+- Shipped: PR #44 merged at 13:32 UTC inside the allowed interval. Railway built exact merge
+  `3080ab09821838a9440c5f22cb47e7294c56b46c`, deployment `ca18d013-3006-4156-969b-a4d19e912df1`,
+  terminal SUCCESS at 13:33:38 UTC; one running replica, zero crashed replicas or service issues.
+  Source/tests/build inputs match tested `669e744` byte for byte. Full checks: **5,228 passed / 14
+  skipped**, mypy 122 source files clean, Ruff 37 changed Python files clean; diff/secret scan clean.
+- Verified startup: 13:33:32 `polydesk_started ... (LIVE: 10 contract(s) per order)`; practice arena
+  started in its own process; 13:33:43 Coinbase `exchange_a`, `exchange_b` and `advanced_trade` connected.
+  Exact-deployment log queries through 13:36 UTC found no tracebacks or `speeddesk_live_order` entries.
+- Kalshi status at startup and 13:34/13:35: PRACTICE, configured_mode live, authenticated true,
+  total_halted true, real_orders_available false, no integrity error, zero open orders/positions/risk.
+  Cash $39.7493; lifetime trading P&L -$9.9921 including fees. Caps remain $10/window, $20 open,
+  $6 UTC daily stop, $10 lifetime stop, first-buy clip five. No new loss budget or variable change.
+- Initial production timing, while stopped: the two minute samples contain 191 and 258 steps, each
+  median 1.3 ms (prior deployment's sampled minute medians 3.4-3.5 ms). Recent reconciliation medians
+  were 1.245 s (17 cycles) and 0.863 s (25 cycles), versus the earlier 1.60-1.74 s samples. But the first
+  minute had a 12.441 s reconciliation and 12.725 s step; the next still had a 5.870 s reconciliation.
+  Network/account reads remain a bottleneck. These short, stopped-state observations are not a controlled
+  benchmark, trading-reaction measurement or profit evidence. No post-deploy real order exists from which
+  to measure decision-to-ack latency. The sub-0.5-second end-to-end goal is NOT established.
+- Recorder remains online on its unchanged deployment `5db5c4b0`; this bot merge did not restart it.
+  This is bounded deployment/health verification, not continuous monitoring or a capture-completeness audit.
+- Real money touched? YES, owner-authorized speed and fair-value code shipped with stop protections.
+  No key, Railway variable, cap or resume token changed. The owner has not answered the explicit fresh
+  $10-budget restart choice. Kalshi remains stopped; Polymarket remains under its existing live settings.
+- Next: owner's restart decision. Remaining speed work includes moving reconciliation off the decision
+  loop with the same freshness/cancel guarantees; do not claim that part 2 solved the long-tail pauses.
+  This deployment receipt is docs only and does not rebuild the bot.
+
 ## 2026-10-14 13:21 UTC, Codex, branch codex/kalshi-speed2-handoff (speed part 2)
 - Scope: owner requested the next two steps. Integrated speed branch `96e5e9c` with deploy `3733295`
   after the stop-fix shipment. The separate restart choice remains pending: no fresh resume token,
