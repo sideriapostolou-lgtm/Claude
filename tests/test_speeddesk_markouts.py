@@ -379,9 +379,24 @@ def test_invalid_own_depth_is_missing_not_external_liquidity(owned):
 def test_book_work_bound_rejects_excess_depth_without_a_partial_profit_claim():
     tracker = FillMarkouts(AT, MONO)
     observed(tracker)
-    bids = tuple(Level(.6 - index * .001, 10) for index in range(129))
+    limit = tracker.status()["max_levels_per_side"]
+    bids = tuple(Level(.6 - index * .001, 10) for index in range(limit + 1))
     row = horizons(quote(tracker, 2, book(2, bids)))[0]
     assert row["reason"] == "depth_work_bound" and row["hypothetical_net_usd"] is None
+    assert row["book_bid_levels"] == limit + 1
+    assert row["protocol_version"] == 2 and row["max_levels_per_side"] == limit
+
+
+@pytest.mark.parametrize("levels", [154, 512])
+def test_deep_fractional_price_book_is_measured_within_the_explicit_bound(levels):
+    tracker = FillMarkouts(AT, MONO)
+    observed(tracker)
+    bids = tuple(Level(round(.7 - index * .001, 8), 10) for index in range(levels))
+    row = horizons(quote(tracker, 2, book(2, bids)))[0]
+    assert row["reason"] is None and row["filled_size"] == 5
+    assert row["consumed_depth"] == [{"price": .7, "size": 5}]
+    assert row["book_bid_levels"] == levels and row["book_ask_levels"] == 1
+    assert row["own_bid_levels"] == 0 and row["protocol_version"] == 2
 
 
 def test_busy_book_callback_has_bounded_measurements_and_explicit_unretryable_gaps():

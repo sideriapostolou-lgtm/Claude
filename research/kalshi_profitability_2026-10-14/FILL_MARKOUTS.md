@@ -11,6 +11,9 @@ visible **1, 5 and 30 seconds after the complete fills account read returns**?
 The actual venue fill time and its age at discovery are retained. These are
 detection-relative observations, not subsecond measurements after the exchange
 match. Account pagination/reconciliation delay is not relabeled network latency.
+The controller's account-read wrapper can also await cancellation cleanup after
+the HTTP worker completes, before returning the fills batch. The recorded delay
+includes that wait; existing HTTP/read duration counters do not fully explain it.
 
 At each horizon, take the first market-book callback at or after the
 monotonic deadline. Local book receipt must be after the wall-time deadline;
@@ -74,8 +77,8 @@ are labeled prior_session_fill. Original real fill/settlement records survive.
 Diagnostics share the existing receipt durability: normal writes can be lost on
 a host/power failure before durable sync, and no gap-free restart is claimed.
 
-Memory bounds: 1,024 pending fills, bounded deduplication, 128 levels per side,
-and at most 32 detailed measurements per callback. Exceeding bounds produces
+Memory bounds: 1,024 pending fills, bounded deduplication, 512 levels per side,
+and at most eight detailed measurements per callback. Exceeding bounds produces
 explicit gaps. The ordinary callback checks whether anything is due in O(1).
 Exceptions disable the optional diagnostic and record its error type; real
 orders, cancellations, account reconciliation and risk accounting continue.
@@ -88,10 +91,37 @@ failure isolation. Integration tests prove real-fill-only admission, no extra
 account requests, persistent distinct receipts, cancellation/sending after a
 diagnostic fault, and expiry while an actual reconcile awaits its fills read.
 
-A local synthetic CPU check (not Railway latency) measured one due fill at
+A protocol-1 local synthetic CPU check (not Railway latency) measured one due fill at
 0.080 ms median / 0.118 ms p95 across 200 runs. A 1,024-fill simultaneous burst
 took 9.77 ms including explicit bound gaps, before receipt persistence/logging.
 These measurements do not prove negligible deployed overhead; monitor runtime.
+
+### First production observation and protocol version 2
+
+PR #49 deployed at 11:07 AM PDT on October 14. The first new fill was five UP
+contracts at $0.43, detected 11.7939 seconds after the venue timestamp. Its 1/5-second
+samples were stale (source ages 0.5841/0.6548 seconds); its fresh 30-second sample
+exceeded the initial 128-level bound. All three remain gaps, with no inferred exit
+profit. A subsequent public REST check of the same ticker found 125 YES / 154 NO
+levels, confirming that normal fractional-price depth exceeded the initial bound.
+
+Protocol version 2 raises the bound to 512 levels and reduces detailed measurements
+from 32 to eight per callback, retaining the same maximum depth-work product. Every
+new row/status names the version; terminal book rows give actual bid/ask/own level
+counts. Earlier unversioned rows are version 1 and are not recomputed. Freshness,
+sampling, fee assumptions and trading behavior are unchanged. This coverage fix
+does not resolve slow fill detection or prove executable exits.
+
+A seven-run version-2 adverse CPU probe used 512 thin price levels, with each
+measured fill consuming 500 levels. Eight pending fills took 14.902 ms median /
+15.892 ms maximum; 1,024 pending took 24.914 ms median / 29.575 ms maximum,
+with eight measurements and 1,016 explicit work-bound gaps. This excludes receipt
+persistence/logging and is not a production latency or profitability claim.
+
+The first eight production fills yielded 24 terminal version-1 gaps: 20 depth
+bounds, three stale books and one late observation. Detection delay was 1.102 s
+median, 0.466 s minimum and 11.794 s maximum (n=8; no full-window claim).
+Exact first-release receipts are preserved in fill_markouts_v1_release.json.
 
 After deployment, verify the exact commit, unchanged risk/stop history and the
 standalone startup status. Then verify one newly discovered real fill has all
@@ -104,3 +134,9 @@ existing hold/lock versus one fixed exit policy using attainable delayed bids.
 Test direction changes separately first. Existing original/inverted/no-trade
 protocol and sealed TEST remain untouched. TJR historical/paper work remains
 queued; this diagnostic does not clear all earlier Kalshi evidence prerequisites.
+
+For detection tails, correlate venue fill time, HTTP worker completion, coroutine
+resume, post-read cancellation cleanup and fill registration before choosing a fix.
+The current authenticated WebSocket consumes market books/trades, not account fill
+notifications. A private fill stream is a candidate to evaluate, not an implemented
+solution or proven cause of the 11.794-second sample.
