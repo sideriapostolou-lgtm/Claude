@@ -39,6 +39,12 @@ Check this queue at task start and before declaring current work complete. Keep 
 move an item to done only with linked evidence. Blocked or waiting-for-approval is not complete.
 
 ### TJR-MNQ-001 — validation tooling complete; historical run blocked on data; paper/live disabled
+- Follow-up checked **2026-10-14 1:07 PM PDT** (20:07 UTC), current branch `6b0f5e2`:
+  priority remains permitted by the owner's explicit reprioritization; Kalshi evidence work is still
+  open. Both Page change feeds remain unchanged (main 2, prototype 1; no truncation/resync). No new
+  genuine development data or verified costs appear in the latest records. The model-workflow setup
+  supplies neither. Keep this item active/blocked, paper not started and live disabled; preserve the
+  follow-up automation and next input below. No repeated owner notification for the unchanged blocker.
 - Follow-up checked **2026-10-14 12:34 PM PDT** (19:34 UTC): the owner's explicit reprioritization
   permits TJR validation alongside the still-open Kalshi evidence work. PR #47's recorded deployment
   and restart checks are complete; later diagnostics do not clear the remaining execution/coverage
