@@ -618,13 +618,14 @@ def test_multiday_history_is_preserved_without_reconsidering_every_closed_window
         model.add_window(Window(name, 0, 900, 100))
         model.closed.append(settlement(name, Inventory(), True, 900))
     checked = []
-    original = model.blocked
+    # advance/evaluate now prove unsettled membership once per pass before these checks.
+    original = model._blocked_unsettled
 
     def count(window, now):
         checked.append(window.slug)
         return original(window, now)
 
-    monkeypatch.setattr(model, "blocked", count)
+    monkeypatch.setattr(model, "_blocked_unsettled", count)
     model.evaluate(1010)
     assert checked == ["btc15m", "btc15m"]
     state = model.to_state()
