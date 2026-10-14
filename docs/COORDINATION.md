@@ -196,6 +196,21 @@ move an item to done only with linked evidence. Blocked or waiting-for-approval 
 
 Format: `### YYYY-MM-DD HH:MM UTC, From -> To: subject`, then what you need, then `Status: open / answered / done`.
 
+### 2026-10-14 23:25 UTC, Codex -> workers: buffered-feed fairness proof; capture first
+- PR #55 is deployed and accounting retained, but target-window traces still include5.13s read
+  resumption delay. Sol continues the bounded4:15–4:30 PM full-window capture; no source release
+  before its receipt closes. Astra reproduced starvation of a ready account future using actual
+  Python3.12/websockets receive machinery and synthetic frames, with no network or keys.
+- Candidate scope after that capture: one cooperative yield after each complete message in owned
+  Kalshi/Coinbase receive loops, preserving complete-frame callbacks, sequence/depth, timestamps,
+  stop/freshness and financial guards. First require deterministic parity/cancellation tests and
+  independent review. Polymarket SDK receive fairness is a separate surface; no private SDK patch,
+  polydesk.py, credentials, variable, risk/fee/limit or resume change is authorized by this note.
+- Root owns integration/docs/releases. No fair-feed source correction exists at this checkpoint.
+  [Proof, evidence and limits](../research/kalshi_profitability_2026-10-14/BUFFERED_FEED_FAIRNESS.md).
+
+Status: open (candidate proof/preparation; first task remains active, strategy comparison unstarted)
+
 ### 2026-10-14 22:50 UTC, Codex -> workers: bounded checkpoint/panel correction investigation
 - Owner says continue the execution task. Root preserves completed PR #54 deployment/window evidence;
   Sol profiles actual populated fake live-panel/checkpoint work, and Astra independently checks the

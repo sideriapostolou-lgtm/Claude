@@ -13,6 +13,34 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-14 23:29 UTC, Codex, buffered-feed fairness mechanism reproduced (4:29 PM PDT)
+- PR #55 is still running on4b0ea40. First five minutes of the full4:15–4:30 PM
+  capture include a5,131.435ms selected account resumption gap. Bins cover at least
+  3,905.784ms wall/2,465.387ms whole-contained CPU;1,225.651ms remains boundary or
+  unattributed. This is not resolved by the scorecard correction. Final window
+  receipt and settlement are still pending; no source release during its capture.
+- Actual Python3.12/websockets15 buffered receiver can drain16 or64 messages before
+  ready synthetic account work resumes. max_queue16 is a high-water mark. Separate
+  one-statement AST counterfactual yields after a complete message: account work
+  resumes after message1 rather than16/64, preserving full callback contents/order,
+  final state, statuses, subscriptions and pause/resume counts in both fixed-clock
+  scenarios. Exact scripts/results archived; original proof bytes unchanged.
+- No real account request, elapsed-time improvement or production causality claimed.
+  Owned Kalshi/Coinbase loop correction is a candidate only, pending integration,
+  freshness/failure/cancellation tests and independent exact-bundle review. SDK
+  handlers are synchronous; no async wrapper/private patch or Polydesk edit made.
+- Separate practice-report density profile did not reproduce203ms cold production
+  CPU maximum; medians32–34ms including its synthetic live panel. Retained full
+  script/results and limitations. No speculative serialization/cache change made.
+- Verified archive member hashes and JSON. Docs/research only: no app test rerun,
+  source/redeploy, order, variable, financial rule, stop, cap or loss-history change.
+  First execution task remains open; strategy comparison unstarted. TJR authentic
+  data/cost blocker and recorder coverage/storage obligations remain.
+- Next: close/audit the full-window financial/timing evidence, implement only the
+  owned-loop message-boundary correction, then full checks, reviewed safe release
+  and actual post-change observations. BUFFERED_FEED_FAIRNESS.md links originals.
+
+
 ## 2026-10-14 23:13 UTC, Codex, PR #55 deployed and restart verified (4:13 PM PDT)
 - Merged reviewed head641dde1 at4:08:35 PM PDT within the allowed minutes. Exact merge/source
   4b0ea4004060e5b66d09b509ee0b6e79b5e63c72, Railwayf2477918-6a76-4cc5-946b-a2e2e320e236,
