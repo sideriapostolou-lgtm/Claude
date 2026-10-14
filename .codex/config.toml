@@ -1,0 +1,8 @@
+# Project defaults for supported, trusted local Codex clients.
+# Permission, approval, provider, hook, and connector settings stay inherited.
+model = "gpt-6.1-sol"
+
+[agents]
+default_subagent_model = "gpt-6.1-sol"
+# Excludes the primary thread. Use fewer agents when work is not independent.
+max_concurrent_threads_per_session = 3

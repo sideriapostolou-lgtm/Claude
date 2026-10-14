@@ -110,9 +110,40 @@ move an item to done only with linked evidence. Blocked or waiting-for-approval 
 - Completion evidence: exact source version; synthetic test reproduction; historical validation report
   including fees/slippage and limitations; verified paper start and saved observations; live execution disabled.
 
+### MODEL-CLI-001 — defaults load; standalone CLI role launch awaits sign-in refresh
+- **2026-10-14 1:00 PM PDT:** project default Sol, default subagent Sol and three-worker cap load under
+  strict CLI 0.159.2 after the owner's authorized repository-only trust setting. The three named role
+  files parse and match official schema/catalog. Explicit Astra/Sol/Luna workers already ran in chat.
+- A bounded ephemeral read-only CLI role-launch check failed before generation because the access
+  token could not refresh after logout/account change. Do not claim CLI role discovery was verified.
+- Next, when that CLI's normal sign-in is refreshed: repeat the bounded no-edit role launch for
+  astra_architect, sol_implementer and luna_extractor, record actual acceptance/application, then close
+  this item. No production, financial or credential-copy work is needed; chat delegation stays usable.
+
 ## Inbox (newest first)
 
 Format: `### YYYY-MM-DD HH:MM UTC, From -> To: subject`, then what you need, then `Status: open / answered / done`.
+
+### 2026-10-14 19:50 UTC, Codex -> owner / workers: model-specialized development and continuity setup
+- Owner asked to adopt Astra/Sol/Luna specialization without disrupting the existing bot or losing
+  prior work. Root owns a small AGENTS.md addition, workflow/continuity docs and this inbox/worklog;
+  Sol worker may add only verified project-local .codex settings. Astra reviews architecture and
+  Luna inventories existing evidence. No application, Railway, credential or financial-setting edits.
+- Keep Git history, original research sources, runtime state locations and all loss records in place.
+  Add navigation and explicit task handoffs, not a migration or replacement ledger. Existing Kalshi
+  evidence follow-up and TJR-MNQ-001 remain unfinished; no new research result or runtime is implied.
+- Verify installed CLI/official syntax before adding settings. Model routing is for development;
+  the current live order/risk/accounting path stays deterministic. Root remains integration owner.
+
+Status: done (workflow, continuity index, project defaults and explicit chat delegation); open (MODEL-CLI-001 runtime discovery check after CLI sign-in refresh)
+
+Completion, 1:00 PM PDT: added three role definitions and project-only model/concurrency settings.
+Owner authorized permission changes; supported version-guarded writer set only trust for the canonical
+repository after verifying an empty effective user layer. No approval/sandbox/provider/connector or
+global model override. Preserved original AGENTS/CLAUDE/coordination content and added current entry
+points. Config/link/preservation checks and independent review passed. CLI smoke failed on its expired
+sign-in before any worker started; explicit chat workers are separate verified evidence. No bot code,
+research results, live settings, data or deployment was changed. See MODEL_WORKFLOW.md and WORKLOG.
 
 ### 2026-10-14 19:17 UTC, Codex -> owner / Claude: freeze the TJR profit-evidence test before returns
 - Owner is willing to consider a small live test when needed; no futures broker or exact live risk

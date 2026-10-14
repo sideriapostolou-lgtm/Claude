@@ -15,6 +15,14 @@ It does not authorize changing money limits, resetting stops/resume budgets, ena
 removing trading safeguards or changing Railway variables without the specific instructions required below.
 Do not let an already-approved deployment wait for another generic approval.
 
+**Development model workflow (owner, 2026-10-14):** follow [docs/MODEL_WORKFLOW.md](docs/MODEL_WORKFLOW.md)
+and [docs/CONTINUITY_INDEX.md](docs/CONTINUITY_INDEX.md). Prefer GPT-6.1 Sol for implementation, GPT-6 Astra
+for complex architecture/independent money-sensitive review, and GPT-6 Luna for bounded routine extraction.
+These roles do not alter trading authority or replace deterministic order/risk/accounting code. Give each
+worker exact source references, scope and a [handoff record](docs/WORKER_HANDOFF_TEMPLATE.md); preserve
+originals and unresolved work. The integration owner coordinates writes and releases. State unavailable
+models/fallbacks honestly; a model change does not transfer omitted context or guarantee correctness.
+
 ## Hard rules (never break these)
 
 1. **Real money.** Real money is switched on, or made bigger, only on the owner's explicit and specific word in

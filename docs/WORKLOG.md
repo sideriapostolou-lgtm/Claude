@@ -13,6 +13,49 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-14 20:00 UTC, Codex, model-specialized development and preserved continuity (1:00 PM PDT)
+- Owner requested Astra/Sol/Luna specialization and continuity from Claude, then explicitly authorized
+  the project permission changes needed. Read current AGENTS/COORDINATION/WORKLOG via GitHub and actual
+  source/handoffs. No service migration is required: Codex already owns all lanes under Claude's full
+  recorded handoff. Original code, research, losses, queues and production state remain in place.
+- Added .codex/config.toml with default/default-subagent gpt-6.1-sol and a three-spawned-thread cap.
+  Standalone roles: astra_architect (gpt-6-astra/high), sol_implementer (gpt-6.1-sol/medium),
+  luna_extractor (gpt-6-luna/medium). Role instructions require exact revision/scope/evidence and shared
+  handoffs; the integration owner retains writes/releases. Prompt restrictions are not tool isolation.
+- Astra reviewed actual accounting/control boundaries, Sol implemented/checked only development config,
+  and Luna inventoried source paths via explicit host model selection. Root checked the inventory:
+  original TJR Page/code snapshots are preserved, and recorder source/docs named by the old handoff
+  are absent from this main-deploy tree, requiring their actual recorder branch for implementation.
+- Added MODEL_WORKFLOW.md, CONTINUITY_INDEX.md and WORKER_HANDOFF_TEMPLATE.md. AGENTS links the workflow;
+  CLAUDE.md now directs workers to current instructions while preserving its old scaffold. The index
+  keeps Kalshi latency/coverage work, recorder obligations and blocked TJR validation visible without
+  replacing source evidence or claiming every chat/runtime byte is backed up in Git.
+- CLI 0.159.2 and official model/config/subagent documentation checked. Four TOML files parse; chosen
+  model IDs/efforts match bundled catalog. Strict app-server config/read verified active project layer,
+  Sol defaults and cap three; negative unknown-key probe rejected. `features list --strict-config`
+  is unsupported and was not counted as a pass. Non-generative prompt rendering also succeeded.
+- Initial automatic loading was blocked by untrusted project state. The supported config/value/write
+  API, guarded by expectedVersion, created only projects."/workspace/nightcrawler".trust_level="trusted"
+  after a read proved the effective user layer empty. Root independently read back only this project
+  trust entry at /run/codex-environment/codex-home/config.toml. Other effective layers were preserved;
+  no global model, approval, sandbox, provider, hook, connector or credential setting was changed.
+- Runtime-discovery limitation: a bounded read-only ephemeral CLI smoke invocation exited 1 before
+  generation. Exact error: "Your access token could not be refreshed because you have since logged out
+  or signed in to another account. Please sign in again." No custom CLI worker started; role files
+  are prepared/schema-validated, not proven applied by that CLI. The successful chat-worker launches
+  are separate evidence; the current root chat model was not changed. MODEL-CLI-001 preserves this
+  next step after normal CLI sign-in refresh. No token values were printed or requested.
+- Verified 62 local documentation links, ordered preservation of original AGENTS/CLAUDE/COORDINATION
+  lines, unchanged application/tests/research/watched deploy paths, TOML parsing and independent Astra
+  review. Application pytest/mypy/Ruff were not rerun for this docs/development-config-only change;
+  earlier source test receipts remain unchanged. No production inspection or restart is claimed.
+- Final independent review accepted the nine config/instruction files at base fb578cf59f73dbd89d1cc75b17587943c7e4c88f,
+  bundle SHA-256 37146eff86e9113456280eaa98d3acd00976b5d2eb664c12ee20fb4772269a05
+  (sorted UTF-8 path + NUL + exact file bytes + NUL). Coordination/worklog receipts reviewed separately.
+- Next: use the documented roles on the outstanding measured Kalshi delay/evidence work; retain TJR's
+  real-data/account-cost blocker and its follow-up automation. Complete MODEL-CLI-001 only after an
+  actual successful role-launch receipt, not from parsing alone. No trading/risk/financial change.
+
 ## 2026-10-14 19:34 UTC, Codex, bounded TJR-MNQ-001 follow-up (12:34 PM PDT)
 - Read current COORDINATION, AGENTS and newest WORKLOG through connected GitHub; fetched latest
   branch head 4bcf3bc without overwriting others. The owner already explicitly reprioritized TJR

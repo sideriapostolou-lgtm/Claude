@@ -1,5 +1,11 @@
 # CLAUDE.md - AI Assistant Guidelines
 
+**Current project entry point (2026-10-14):** read [AGENTS.md](AGENTS.md),
+[docs/COORDINATION.md](docs/COORDINATION.md), newest [docs/WORKLOG.md](docs/WORKLOG.md), and
+[docs/CONTINUITY_INDEX.md](docs/CONTINUITY_INDEX.md) before working. The original scaffold below is
+retained as history; its placeholder architecture/setup and branch examples are superseded by those
+current project instructions. Codex owns integration following Claude's recorded full handoff.
+
 This file provides guidance for AI assistants (like Claude) working with this repository.
 
 ## Project Overview
