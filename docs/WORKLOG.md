@@ -15,6 +15,35 @@ Template:
 
 
 
+## 2026-10-14 16:40 UTC, Codex, branch claude/kalshi-recorder, PR #48 deployment receipt
+- Changed: documentation-only release receipt. PR #48 merged at 16:36:39 UTC (safe interval), exact
+  `a0782b743a31369fe25ddf6d2eea96df8511cd8d`; recorder Railway deployment
+  `8453f919-b891-4aa7-8478-6fcf6b9c24ee` reached SUCCESS at 16:38:15.303 UTC. The release worker
+  verified startup at 16:38:07 UTC: READ_ONLY_PUBLIC, rate 1.5/s, BTC15M=true, spot=true, cap 4,608 MiB.
+  The six inspected startup lines contained no traceback. Startup preserved
+  `restart_partial_segment_recovered` for spot and `recorder_not_running` for all lanes.
+- Verified: startup evidence `source=previous_hour_startup`, `status=available`, saved hour
+  2026-10-14 15:00-16:00 UTC (08:00-09:00 PDT), recorded commit `0713e41` (the prior producer).
+  Saved manifest fingerprint: `3e418a7c0707ad55627485cb00c804f1de7466e983e5853fafd9151a03184b2a`.
+  Indexed spot: 2 sealed segments, 5,680 envelopes, 912,664 gzip bytes. BTC15M books: 2,396 envelopes,
+  1,087,232 gzip bytes. BTC15M trades: 793 envelopes, 4,284,075 gzip bytes. Saved coverage reports
+  60 fresh BTC minutes and 4 spot reconnect gap records. Saved storage 217,975,859 / 4,831,838,208 bytes,
+  level 0, no deleted segments. Saved books RTT p50/p95/p99: 67.084/118.244/213.644 ms; saved trade
+  receive lag p50/p95/p99: 3.492/6.225/7.054 s. Null REST error/429 counters stay unknown, not zero.
+- Checks: release source already passed 5,077 tests / 13 skipped, 76 targeted tests, mypy (126 modules)
+  and changed-file Ruff. This follow-up changes only two Markdown files; diff/credential scan checked,
+  no source changed and the full suite was not repeated for the receipt.
+- Not verified / skipped: metadata only. `coverage_certified`, `per_venue_spot_ticks_verified` and
+  `segment_hashes_reverified` are false. No raw segment or TEST outcome read; envelope counts are not
+  tick counts, and fresh-minute counts do not prove complete windows. Current-hour save is still pending;
+  no restart gaps are erased or earlier capture newly certified. Existing replay/protocol hashes and
+  freeze/TEST requirements remain unchanged.
+- Real money touched? no. This was the separate public recorder deployment. No keys, Railway variables,
+  orders, bot source, strategy or caps changed; the main bot remains deployment `f707494f` / `e8db34e`.
+- Next step: inspect the next existing hourly saved-manifest receipt and obtain authorized raw-record
+  access for independent payload/per-venue/complete-window coverage verification before making replay
+  feasibility or profitability claims. This docs-only receipt does not trigger a source deployment.
+
 ## 2026-10-14 16:35 UTC, Codex, branch codex/kalshi-recorder-evidence, no PR (local commit)
 - Changed: recorder-only saved-manifest diagnostics based on `0713e412b8077a32bced8794b2f26bbb46c59097`.
   Fixed previous-hour startup readback and existing manifest-save hooks emit `kalshi_recorder_evidence` to
