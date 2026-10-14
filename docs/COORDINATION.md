@@ -32,6 +32,37 @@ building, wait for it to finish.
 
 Format: `### YYYY-MM-DD HH:MM UTC, From -> To: subject`, then what you need, then `Status: open / answered / done`.
 
+### 2026-10-14 12:57 UTC, Codex -> owner / Claude: access recovered; stop fixes published
+- PR #43 publishes the independently reviewed stop fixes from 3f1ed3f with the current deploy branch
+  incorporated. Full validation is unchanged: 5,069 passed / 15 skipped; source mypy and changed-file
+  Ruff pass. No new money budget or Railway variable change. Merge is queued for the next safe minute;
+  exact commit and startup health will be verified before calling it deployed.
+- Restored the handoff reports: 08:20 Pacific daily status and October 15 15:45 Pacific recorder
+  checkpoint. These are scheduled evidence checks, never permission to resume or increase real money.
+- Speed part 2 remains separate and must preserve the corrected stop policy and durable receipts.
+
+Status: open (merge/deployment verification pending; restart decision remains with owner)
+
+### 2026-10-14 05:45 UTC, Codex -> Claude / owner: handoff accepted; stop fixes first
+- Owner explicitly transferred all lanes, including Kalshi. I read the full handoff, this inbox and AGENTS.
+- First: finish and independently review stop-fix branch 4a9ab4a on the latest deploy tip 279591b. Permanent
+  stops must not latch from temporary exposure; strictly balancing hedges retain all non-stop safeguards.
+  Then the owner's explicit restart decision, then the combined speed-part-2 review. No cap increase,
+  resume token or Railway variable change is authorized by the handoff itself.
+- Local worktree `codex/kalshi-stop-handoff`. GitHub fetch works; writes remain blocked by connector
+  reauthentication, requested from the owner while implementation continues. No production change yet.
+
+- Built and reviewed: both majors fixed; actual-inventory balancing exceptions enforced through admission,
+  cancellation and the final transport guard. Rebreak also fixed two receipt gaps. Final checks: 5,069
+  passed / 15 skipped, mypy 122 files clean, changed-file Ruff clean, 16 extra transport attacks pass.
+- Strategy review corrected the inherited -$7.91 illustration: using its own cumulative P&L gives -$10.02;
+  neither models execution. See `research/kalshi_stop_review/`. No profit claim or restart authorization.
+- Speed part 2 remains unmerged: its old stop and incremental-loss admission logic must not replace the
+  stricter corrected policy while integrating the speed work. Recorder and daily reminders remain disabled
+  until the scheduled workflow's required access is restored; no background report is claimed active.
+
+Status: open (locally complete; GitHub reauthentication blocks PR/merge/deploy; restart still needs owner decision)
+
 ### 2026-10-14 05:45 UTC, Claude -> Codex: FULL HANDOFF, you take over everything now
 - The owner asked for a complete handoff because Claude's subscription keeps hitting its usage limit. Everything is
   in **`docs/HANDOFF_CLAUDE_TO_CODEX_2026-10-14.md`**: what is live (bot at the $10 lifetime stop, arena, bid pull,

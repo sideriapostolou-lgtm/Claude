@@ -94,7 +94,16 @@ MIRROR_EVERY_S = 10.0
 # Saves that must survive a host or power failure, not only a process crash: the one before an order's first
 # network byte, startup and shutdown, and any that record an owner's one-time action. The others (a fsync of
 # about 57 ms each on Railway, twice a second in reconcile) hold account facts the next reconcile reads again.
-OWNER_RECORDS = frozenset({"speeddesk_live_day_reset", "speeddesk_live_integrity_reset"})
+OWNER_RECORDS = frozenset({"speeddesk_live_day_reset", "speeddesk_live_integrity_reset", "speeddesk_live_resume",
+                           "speeddesk_live_stop"})
+# What each outcome of the owner's resume value means, in the receipt (the value itself is never written).
+RESUME_STATES = {
+    "applied": "applied; the total loss stop is cleared and a fresh stop budget counts from the result now",
+    "used": "ignored; this value was already used",
+    "not_halted": "ignored; no total loss stop is latched, so the value is kept unused (a value present before a "
+                  "stop never clears that stop: set a new value after one)",
+    "integrity": "ignored; a reconciliation stop is in force, so the value is kept unused until that stop is cleared",
+}
 # The earned-growth ladder looks at the books at most this often (a change only ever starts at the next window).
 LADDER_EVERY_S = 1.0
 # Receipts kept out of the panel's latest events: the status line, and one line per finished pull (each pull's
@@ -338,6 +347,10 @@ class KalshiLiveDesk:
         # Definite single-order refusals since the last accepted create; three in a row pause.
         self.refusals = 0
         self.lock_notes: dict[str, str] = {}
+        # Why a window got no first buy (once per window and reason), and which stops are latched (a change is
+        # recorded once, durably).
+        self.starter_notes: dict[str, str] = {}
+        self.stop_state = (False, False)
         self.reason: str | None = "Practice only; live switches are off"
         self.foreign_windows: set[str] = set()
         self.changed_windows: set[str] = set()
@@ -436,18 +449,26 @@ class KalshiLiveDesk:
             # asks it for each window's limits. Its state is a top-level key the previous release ignores.
             self.ladder = Ladder(limits, enabled=settings.speeddesk_kalshi_ladder,
                                  max_window_usd=settings.speeddesk_kalshi_ladder_max_window_usd)
+            # Restored stops are not new events. Seed before any startup risk evaluation can latch another.
+            self.stop_state = (self.book.halted, self.book.day_latched(clock()))
             started = self.ladder.start(self.book, clock(), saved.get("ladder") if saved else None)
             self.ladder.attach(self.book)
             self.ladder.observe(self.book, clock())  # a saved stop is noted before a token below can clear it
+            # A stop that binds (no room for even a one-contract hedged first buy) latches now, before any token is
+            # read, so a token set for it is applied to it rather than judged while nothing is latched.
+            self.book.latch_bound_stops(clock())
+            self._watch_stops("at start")
             self.ladder_at = -math.inf
             self._mirror_twin(self.book.limits_now(clock()))
             self._record("speeddesk_live_ladder", action="start", state=started, rung=self.ladder.rung_for(clock()),
                          limits=limits_view(self.book.limits_now(clock())), ladder_rung=self.ladder.state.rung,
                          effective_from=self.ladder.state.rung_from, top_rung=self.ladder.top,
                          max_window_usd=self.ladder.max_window_usd)
-            token = _secret(settings.speeddesk_kalshi_resume_token)
-            if token:
-                self.book.apply_resume_token(token)
+            resumed = self.book.resume(_secret(settings.speeddesk_kalshi_resume_token))
+            if resumed:
+                self._record("speeddesk_live_resume", state=RESUME_STATES[resumed], total_pnl_usd=self.book.realized_pnl,
+                             counted_from_usd=self.book.stop_anchor if resumed == "applied" else None,
+                             total_halted=self.book.halted)
             outcome = self.book.arm_integrity_reset(_secret(settings.speeddesk_kalshi_integrity_reset_token))
             if outcome == "armed":
                 self._record("speeddesk_live_integrity_reset", code=self.book.integrity_reset_armed,
@@ -460,11 +481,17 @@ class KalshiLiveDesk:
             reset_at = clock()
             day_reset = self.book.apply_day_reset(_secret(settings.speeddesk_kalshi_day_reset_token), reset_at)
             if day_reset == "reset":
+                # The practice twin's day counts from the same moment, so the A/B control is not left frozen by
+                # its own copy of the daily stop while the real book trades again.
+                self.twin.apply_day_reset(reset_at)
                 self._record("speeddesk_live_day_reset", day=utc_day(reset_at),
                              counted_from_usd=self.book.day_anchor[utc_day(reset_at)],
-                             state="fresh daily budget from now until 00:00 UTC; caps and lifetime stop unchanged")
+                             state="fresh daily budget from now until 00:00 UTC; caps and lifetime stop unchanged",
+                             practice_twin_counted_from_usd=self.twin.day_anchor[utc_day(reset_at)])
             elif day_reset == "used":
                 self._record("speeddesk_live_day_reset", state="ignored; this value was already used")
+            # Tokens can clear a stop just recorded above. A later new latch must receive its own receipt.
+            self.stop_state = (self.book.halted, self.book.day_latched(clock()))
             self.checkpoint(durable=True)
         except BaseException:
             self.ledger.close()
@@ -760,10 +787,10 @@ class KalshiLiveDesk:
             return "Venue terms changed; wait for the next window"
         return ""
 
-    def _trade_reason(self) -> str:
-        return self._standing_reason() or self._waiting_reason()
+    def _trade_reason(self, *, balancing: bool = False) -> str:
+        return self._standing_reason(balancing=balancing) or self._waiting_reason()
 
-    def _standing_reason(self) -> str:
+    def _standing_reason(self, *, balancing: bool = False) -> str:
         """Why real money is off or stopped: gates, failures and financial stops."""
         if self.stopping or self.stop_event is not None and self.stop_event.is_set():
             return "Shutting down; no new orders"
@@ -773,7 +800,7 @@ class KalshiLiveDesk:
             return self.fatal_reason
         if not self.authenticated:
             return "Waiting for a successful balance read this run"
-        return self._risk_stop_reason()
+        return self._risk_stop_reason(balancing=balancing)
 
     def _waiting_reason(self) -> str:
         """Seconds-long pauses between orders while real money stays on."""
@@ -785,14 +812,14 @@ class KalshiLiveDesk:
             return "Reconciling an uncertain order; no new orders"
         return ""
 
-    def _risk_stop_reason(self) -> str:
+    def _risk_stop_reason(self, *, balancing: bool = False) -> str:
         risk = self.book.risk_status(self.clock())
-        if risk["halted"]:
-            return "Total loss stop; no new bets until a new resume token"
         if risk["integrity_error"]:
             return "Practice only; real account reconciliation needs review"
-        if risk["day_stopped"]:
-            return "Daily loss stop; no new buys until 00:00 UTC"
+        if risk["halted"] and (not balancing or self.book.halt_reason != "total_loss"):
+            return "Total loss stop; no new bets until a new resume token"
+        if risk["day_stopped"] and not balancing:
+            return "Daily loss stop; no new risk until 00:00 UTC or the owner's day reset"
         return ""
 
     async def _cancel_unsafe(self) -> None:
@@ -813,7 +840,7 @@ class KalshiLiveDesk:
             if not reason and not intent.lock:
                 # A lock buy is immediate-or-cancel and only completes pairs: the window
                 # closing or a money stop is exactly when it must be left to finish.
-                reason = (self._risk_stop_reason()
+                reason = (self._risk_stop_reason(balancing=self.book.strictly_balancing_intent(intent.client_order_id))
                           or (self._feed_reason(window, snapshot, now) if window else "Window missing"))
                 if not reason and window is not None:
                     # The stale-bid rules first: the practice twin follows those, never the pull.
@@ -1427,7 +1454,10 @@ class KalshiLiveDesk:
         now = self.clock()
         snapshot = self.snapshot()
         current = self._current_window(window.slug, snapshot)
-        reason = self._trade_reason() or (self._feed_reason(current, snapshot, now) if current else "Window missing")
+        # The risk book below rejects every risk-increasing buy under a financial stop. Keep scanning hedges;
+        # authentication, mode, shutdown, account freshness and reconciliation gates are never bypassed.
+        reason = (self._trade_reason(balancing=True)
+                  or (self._feed_reason(current, snapshot, now) if current else "Window missing"))
         if reason:
             self.reason = reason
             return False
@@ -1617,11 +1647,54 @@ class KalshiLiveDesk:
                 return True
         return False
 
+    def _balancing_possible(self) -> bool:
+        """A current window has real unpaired inventory that a pre-cutoff hedge could reduce."""
+        now = self.clock()
+        return any(slug not in self.book.settled and slug not in self.foreign_windows
+                   and slug not in self.changed_windows
+                   and spec.start <= now < spec.end - self.book.limits_for(slug).lock_s
+                   and self.book.lock_side(slug)[1] >= 1 - EPS
+                   for slug, spec in self.book.windows.items())
+
     def _lock_note(self, window: str, reason: str, side: Side, size: int) -> None:
         if self.lock_notes.get(window) != reason:
             self.lock_notes[window] = reason
             self._record("speeddesk_live_lock", window=window, side=side, size=size,
                          state="waiting to complete the pair", reason=reason)
+
+    def _starter_note(self, window: str, side: Side, price: float, reason: str) -> str:
+        """No first buy in this window because not even one contract with room for its hedge fits under a stop or a
+        budget (recorded once per window and reason); returns the plain-words reason for the status. Any other
+        refusal (a starter pending on the other side, stale cash) is the status reason as before, with no receipt."""
+        plain = {"day_stop": "the daily loss stop", "total_budget": "the lifetime loss stop",
+                 "open_budget": "the open budget", "window_budget": "the window budget",
+                 "cash_budget": "the Kalshi cash"}.get(reason)
+        if plain is None:
+            return reason
+        text = f"No first buy: one contract and its hedge would not fit under {plain}"
+        if self.starter_notes.get(window) != reason:
+            self.starter_notes[window] = reason
+            risk = self.book.risk_status(self.clock())
+            self._record("speeddesk_live_starter", window=window, side=side, price=price, reason=reason, state=text,
+                         total_at_risk_usd=risk["total_at_risk_usd"], day_at_risk_usd=risk["day_at_risk_usd"],
+                         total_stop_usd=self.book.limits.total_loss_usd, day_stop_usd=risk["limits"]["day_loss_usd"])
+        return text
+
+    def _watch_stops(self, when: str = "") -> None:
+        """Record each stop the moment it latches (durably: OWNER_RECORDS), with the books' numbers."""
+        self.book.latch_bound_stops(self.clock())
+        risk = self.book.risk_status(self.clock())
+        state = (bool(risk["halted"]), bool(risk["day_stop_latched"]))
+        for latched, before, stop, until in ((state[0], self.stop_state[0], "total", "a new resume token"),
+                                             (state[1], self.stop_state[1], "day", "00:00 UTC or the owner's day reset")):
+            if latched and not before:
+                self._record("speeddesk_live_stop", stop=stop, until=until,
+                             state=f"{stop} loss stop latched{' ' + when if when else ''}; no new risk until {until}; "
+                                   "risk-increasing bids are cancelled; strictly balancing hedges and locks may finish",
+                             total_pnl_usd=risk["total_pnl_usd"], total_at_risk_usd=risk["total_at_risk_usd"],
+                             total_stop_usd=self.book.limits.total_loss_usd, day_at_risk_usd=risk["day_at_risk_usd"],
+                             day_stop_usd=risk["limits"]["day_loss_usd"], at_risk_usd=risk["at_risk_usd"])
+        self.stop_state = state
 
     async def _send_lock(self, window: Window, side: Side, price: float, size: float) -> bool:
         now, decision_mono = self.clock(), self.monotonic()
@@ -1671,7 +1744,8 @@ class KalshiLiveDesk:
             return self._lock_guard(intent)
         snapshot = self.snapshot()
         current = self._current_window(intent.window, snapshot)
-        if (current is None or self._trade_reason()
+        if (current is None or self._trade_reason(
+                balancing=self.book.strictly_balancing_intent(client_id))
                 or self._feed_reason(current, snapshot, self.clock())):
             return False
         assert current.start_price is not None and snapshot.bitcoin_price is not None and snapshot.sigma is not None
@@ -1708,7 +1782,7 @@ class KalshiLiveDesk:
             return True
 
     async def _decide(self) -> None:
-        if reason := self._trade_reason():
+        if reason := self._trade_reason(balancing=True):
             self.reason = reason
             return
         self.reason = (None if self.fee_verified else
@@ -1758,6 +1832,12 @@ class KalshiLiveDesk:
                     units = min(units, math.floor(limits.window_usd / limits.pair_cap))
                     if units == 0:
                         self.reason = "Window budget is too small for a whole capped pair"
+                    elif not owed:
+                        # Leave room for the hedge under both loss stops. An owed practice bid must never
+                        # consult or latch the real risk book; the twin checks its own inventory and budget.
+                        units, refused = self.book.starter_fit(window.slug, side, kind, price, units, now)
+                        if units == 0:
+                            self.reason = self._starter_note(window.slug, side, price, refused)
                 if units and owed:  # practice twin only
                     self._practice("twin_unpulled_bid", self._twin_unpulled_bid, window, side, price, fair, units, now)
                 elif units:
@@ -1810,6 +1890,8 @@ class KalshiLiveDesk:
 
     async def step(self) -> None:
         began = self.monotonic()
+        # Latch before admission/cancels, but keep the durable receipt write after cancellation priority.
+        self.book.latch_bound_stops(self.clock())
         self._ladder_step()
         self.observe_market(self.clock())
         self._practice("twin_advance", lambda: self._twin_events(self.twin.advance(self.clock())))
@@ -1859,6 +1941,9 @@ class KalshiLiveDesk:
         self._phase("step", began)
 
     def _heartbeat(self) -> None:
+        # Every step exit passes here, including mode-off and backoff. Persist the latch and its receipt
+        # together before checkpointing, after any cancellation work that this step could perform.
+        self._watch_stops()
         if self.clock() - self.last_status >= 60:
             # Account reads since the last status line: complete and recent reconcile times, each read's time,
             # pages, rows and bytes, and how often each consistency check failed; plus the latest reconcile.
@@ -1954,16 +2039,17 @@ class KalshiLiveDesk:
         # The label follows the switches and stops, not the seconds between orders: after every order
         # the desk re-reads the account, and the town showed "PRACTICE" then (2026-10-13 00:15 UTC).
         standing, stop = self._standing_reason(), self._risk_stop_reason()
-        # A money stop blocks new bets, but a lock can only lower the loss and still runs before the close:
-        # while one is possible, real money is on for completing pairs only (review, 2026-10-13).
-        lock_only = bool(standing) and standing == stop and not self.book.integrity_error and self._lock_possible()
+        # Financial stops permit only risk reduction from actual inventory, including pre-cutoff hedges.
+        # The mode must still say REAL MONEY while either path can spend to finish a pair.
+        lock_only = (bool(standing) and standing == stop and not self._standing_reason(balancing=True)
+                     and (self._lock_possible() or self._balancing_possible()))
         live = not standing or lock_only
         waiting = ((("Paused after a Kalshi error; retrying shortly" if self.clock() < self.retry_at else "")
                     or self._waiting_reason()) if live and not lock_only else "")
         if lock_only:
             waiting = stop + "; only completing half-filled pairs before the close"
         active = self._active()
-        reason = self.fatal_reason or (waiting if lock_only else self.reason)
+        reason = self.fatal_reason or (waiting if lock_only else stop if standing == stop and stop else self.reason)
         return {"mode": "live" if live else "paper", "configured_mode": self.settings.speeddesk_kalshi_mode,
                 "status": "REAL MONEY (Kalshi)" if live else "PRACTICE", "reason": reason,
                 "trading_now": live and not waiting, "waiting": waiting,
@@ -1976,7 +2062,8 @@ class KalshiLiveDesk:
                 "at_risk_usd": risk.get("at_risk_usd", 0.0), "open_orders": len(active),
                 "positions": sum(abs(value) > EPS for key, value in self.position_sizes.items()
                                  if key in {intent.window for intent in self.intents.values()}),
-                "total_halted": risk.get("halted", False), "real_orders_available": live,
+                "total_halted": risk.get("halted", False), "day_stop_latched": risk.get("day_stop_latched", False),
+                "real_orders_available": live,
                 "integrity_error": self.book.integrity_error,
                 "integrity_reset": (self.reset_blocker or "armed") if self.book.integrity_reset_armed else None,
                 "cleanup_pending": bool(active) and bool(self._gates()),

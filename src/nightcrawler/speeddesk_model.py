@@ -388,6 +388,9 @@ class PracticeDesk:
         self.orders: dict[int, PracticeOrder] = {}
         self.closed: list[Settlement] = []
         self.days: dict[str, dict[str, float]] = {}
+        # The owner's one-time daily reset, mirrored from the live book (speeddesk_live applies it to both): today's
+        # loss for the day stop counts from this result. Keyed by UTC day, so it lapses at midnight.
+        self.day_anchor: dict[str, float] = {}
         self.venue_days: dict[str, dict[str, dict[str, float]]] = {venue: {} for venue in VENUES}
         self.venue_incomplete_days: set[str] = set()
         self.venue_filled_orders: set[int] = set()
@@ -456,6 +459,16 @@ class PracticeDesk:
     def _day(self, now: float) -> dict[str, float]:
         return self.days.setdefault(utc_day(now), {})
 
+    def day_loss(self, now: float) -> float:
+        """Today's settled loss for the day stop, counted from the owner's one-time reset when one was made today."""
+        day = utc_day(now)
+        return max(0.0, self.day_anchor.get(day, 0.0) - self.days.get(day, {}).get("pnl_usd", 0.0))
+
+    def apply_day_reset(self, now: float) -> None:
+        """The owner's one-time fresh daily budget (the live book's `apply_day_reset`), applied to this desk as the
+        A/B control: today's loss counts again from the result now, until 00:00 UTC."""
+        self.day_anchor = {utc_day(now): self.days.get(utc_day(now), {}).get("pnl_usd", 0.0)}
+
     def _venue_day(self, now: float, window: str | None) -> dict[str, float] | None:
         venue = self.window_venues.get(window or "")
         if venue not in VENUES:
@@ -494,7 +507,7 @@ class PracticeDesk:
             return "not_started"
         if now >= window.end - self.config.cutoff_s:
             return "cutoff"
-        if self._day(now).get("pnl_usd", 0.0) <= -self.config.day_stop_usd:
+        if self.day_loss(now) >= self.config.day_stop_usd:
             return "day_stop"
         price_stale_s = self.config.stale_s if self.price_stale_s is None else self.price_stale_s
         if self.tape.last_at is None or not 0 <= now - self.tape.last_at <= price_stale_s:
@@ -538,14 +551,45 @@ class PracticeDesk:
             return "starter_late"
         return self.starter_gate(window, now) if self.starter_gate is not None else ""
 
+    def _light_side(self, window: str) -> tuple[Side | None, float]:
+        """The side that completes this window's unpaired contracts, and how many are unpaired (live's `lock_side`)."""
+        inventory = self.inventory.get(window)
+        if inventory is None or any(item.window == window for item in self.closed):
+            return None, 0.0
+        difference = inventory.up.shares - inventory.down.shares
+        if abs(difference) <= EPSILON:
+            return None, 0.0
+        return ("down" if difference > 0 else "up"), abs(difference)
+
+    def _balancing(self, window: str, side: Side, size: float, unit: float,
+                   spare: dict[str, float] | None = None) -> float:
+        """Contracts of a buy that strictly balance the window, as the live book counts them
+        (``LiveRiskBook.balancing_contracts``): on the light side, within the unpaired contracts not already claimed
+        by another pending buy (`spare`), under $1 each with fees. They complete $1 pairs, so the live stops exempt
+        them; the rest of the buy is new risk."""
+        light, unpaired = self._light_side(window)
+        if light != side or unit >= 1 - EPSILON or size <= EPSILON:
+            return 0.0
+        left = unpaired if spare is None else spare.setdefault(window, unpaired)
+        balancing = max(0.0, min(size, left))
+        if spare is not None:
+            spare[window] = left - balancing
+        return balancing
+
     def _at_risk(self) -> float:
         """What can still be lost, as the live risk book counts it (``LiveRiskBook.at_risk_usd``): each unsettled
         window's cost minus the $1 its weaker side pays (a complete pair risks nothing), plus every pending buy but
-        a lock (a lock only completes pairs)."""
+        a lock and the strictly balancing part of a bid (both only complete pairs)."""
         closed = {item.window for item in self.closed}
         loss = sum(max(0.0, value.spent - min(value.up.shares, value.down.shares))
                    for key, value in self.inventory.items() if key not in closed)
-        return loss + sum(order.reserved for order in self.orders.values() if not order.lock)
+        pending, spare = 0.0, {}  # type: float, dict[str, float]
+        for order in self.orders.values():
+            if order.lock or order.remaining <= EPSILON:
+                continue
+            unit = order.reserved / order.remaining
+            pending += (order.remaining - self._balancing(order.window, order.side, order.remaining, unit, spare)) * unit
+        return loss + pending
 
     def _risk_reason(self, window: str, side: Side, price: float, size: float,
                      coefficient: float, now: float | None = None) -> str:
@@ -566,10 +610,12 @@ class PracticeDesk:
             open_cost = sum(value.spent for key, value in self.inventory.items() if key not in closed)
             if open_cost + sum(order.reserved for order in self.orders.values()) + cost > self.config.open_usd + EPSILON:
                 return "open_budget"
+        # The day stop is the live one (LiveRiskBook.can_buy), so it refuses before the loss is realized, and like
+        # live it counts only the buy's new risk: a strictly balancing contract completes a $1 pair and is exempt.
         if self.config.day_stop_counts_risk and now is not None:
-            # The day stop is the live one (LiveRiskBook.can_buy), so it refuses before the loss is realized.
-            day_loss = max(0.0, -self.days.get(utc_day(now), {}).get("pnl_usd", 0.0))
-            if day_loss + at_risk + cost >= self.config.day_stop_usd - EPSILON:
+            unit = cost / size
+            risk = cost - self._balancing(window, side, size, unit) * unit
+            if risk > EPSILON and self.day_loss(now) + at_risk + risk >= self.config.day_stop_usd - EPSILON:
                 return "day_stop"
         initial_total = inventory.up.shares + inventory.down.shares
         initial_difference = inventory.up.shares - inventory.down.shares
@@ -1042,6 +1088,9 @@ class PracticeDesk:
                 "inventory": {slug: asdict(value) for slug, value in self.inventory.items()},
                 "orders": [_order_state(order) for order in self.orders.values()],
                 "closed": [asdict(item) for item in self.closed], "days": self.days,
+                # Written only once the owner has reset a day (the pinned golden states stay as they are); ignored
+                # by the release before it, so a rollback returns to the plain daily stop.
+                **({"day_anchor": self.day_anchor} if self.day_anchor else {}),
                 "venue_reporting_version": 1, "venue_days": self.venue_days,
                 "venue_incomplete_days": sorted(self.venue_incomplete_days),
                 "venue_filled_orders": sorted(self.venue_filled_orders),
@@ -1084,6 +1133,12 @@ class PracticeDesk:
             desk.inventory[slug] = Inventory(Holding(**raw["up"]), Holding(**raw["down"]))
         desk.closed = [Settlement(**raw) for raw in state["closed"]]
         desk.days = state["days"]
+        anchor = state.get("day_anchor", {})
+        if not isinstance(anchor, dict) or any(not isinstance(day, str) or isinstance(value, bool)
+                                               or not isinstance(value, (int, float)) or not math.isfinite(value)
+                                               for day, value in anchor.items()):
+            raise ValueError("Invalid persisted practice daily reset")
+        desk.day_anchor = {day: float(value) for day, value in anchor.items()}
         desk.traded_days = {day: set(windows) for day, windows in state.get("traded_days", {}).items()}
         desk.filled_orders = {day: set(orders) for day, orders in state.get("filled_orders", {}).items()}
         if "venue_reporting_version" in state:

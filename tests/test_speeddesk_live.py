@@ -1243,14 +1243,17 @@ def test_the_owners_ten_dollar_windows_are_enforced_and_reported(tmp_path: Path)
 
 
 def test_the_first_buy_follows_the_kalshi_contract_cap_inside_the_window_budget(tmp_path: Path) -> None:
-    caps = {"speeddesk_kalshi_window_usd": 10.0, "speeddesk_kalshi_open_usd": 20.0}
-    for clip, expected in ((10.0, 10.0), (3.0, 3.0), (25.0, 10.0)):
+    # An $8 window with the day stop at its $12 ceiling: a first buy must also leave room for its hedge under both
+    # loss stops (2026-10-14), and eight hedged pairs cost about $8.19 (ten would cost $10.24, over the $10 lifetime
+    # stop), so here the window budget is the cap this test is about.
+    caps = {"speeddesk_kalshi_window_usd": 8.0, "speeddesk_kalshi_open_usd": 16.0, "speeddesk_kalshi_day_stop_usd": 12.0}
+    for clip, expected in ((10.0, 8.0), (3.0, 3.0), (25.0, 8.0)):
         root = tmp_path / str(clip)
         root.mkdir()
         desk, account, _ = make_desk(root, caps={**caps, "speeddesk_kalshi_clip": clip})
         try:
             asyncio.run(desk.step())
-            # A larger cap never lets one starter outgrow whole pairs at the pair cap ($10 / $0.99 -> 10).
+            # A larger cap never lets one starter outgrow whole pairs at the pair cap ($8 / $0.99 -> 8).
             assert [creation["size"] for creation in account.creates] == [expected]
             assert desk.twin.config.clip == clip
         finally:

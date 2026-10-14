@@ -699,7 +699,8 @@ def test_day_reset_never_lifts_the_lifetime_stop():
     assert book.apply_day_reset("owner-day-reset-2", 3950) == "reset"
     losing_window(book, 3, 4000)  # -$4.80 of the $5 lifetime stop
     assert book.risk_status(4950)["day_loss_usd"] == pytest.approx(1.6)
-    assert book.can_buy(open_window(book, 4950), "up", "take", .4, 1, 4950) == "total_budget"  # $4.80 + $0.42 >= $5
+    # Settled loss alone is within the fixed near-stop floor; it now latches before the next admission.
+    assert book.can_buy(open_window(book, 4950), "up", "take", .4, 1, 4950) == "total_loss"
 
 
 def test_day_reset_value_cannot_reuse_another_approval():

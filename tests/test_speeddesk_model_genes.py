@@ -361,7 +361,9 @@ def test_the_live_stops_and_open_budget_match_the_live_risk_book() -> None:
         practice, book, now = _twins(seed)
         for side in ("up", "down"):
             for size in range(1, 6):
-                live = book.can_buy(SLUG, side, "rest", 0.45, size, now)  # type: ignore[arg-type]
+                # The instantaneous answer: live's can_buy also latches from settled loss at the fixed policy
+                # floor (spec 9.4); the practice desk's stops do not latch.
+                live = book._buy_verdict(SLUG, side, "rest", 0.45, size, now)  # type: ignore[arg-type]
                 ours = practice.can_buy(SLUG, side, 0.45, size, 0.0, now)  # type: ignore[arg-type]
                 if live in before_budgets:
                     continue
