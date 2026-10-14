@@ -286,6 +286,9 @@ def venue_copy(account: FakeAccount, clock: FakeClock) -> FakeAccount:
 
 OWNERS_CAPS = {"speeddesk_kalshi_window_usd": 10.0, "speeddesk_kalshi_open_usd": 20.0,
                "speeddesk_kalshi_day_stop_usd": 6.0, "speeddesk_kalshi_total_stop_usd": 10.0}
+# The journal-depth runs need orders in quick succession; beat()'s Bitcoin jumps (up to 10c a beat) would hold the
+# window under the bid pull for most of the run, so those two run with the pull off (the restarts keep it on).
+NO_PULL = {"speeddesk_kalshi_pull": False}
 
 
 @pytest.mark.parametrize("seed", range(10))
@@ -350,7 +353,7 @@ def test_journal_replay_equals_the_full_save_at_every_send(tmp_path: Path, seed:
     """With every other change saved at once (the old behaviour), what a restart reads at an order's first
     network byte, the last full save plus the journal, is exactly the full save made at that moment."""
     rng = random.Random(seed)
-    desk, account, clock = make_desk(tmp_path / "run", caps=OWNERS_CAPS)
+    desk, account, clock = make_desk(tmp_path / "run", caps=OWNERS_CAPS, extra=NO_PULL)
     desk._save_soon = desk.checkpoint  # type: ignore[method-assign]
     desk._account_facts = object  # type: ignore[method-assign,assignment]  # every reconcile counts as a change
     create, checked = account.create_order, []
@@ -383,7 +386,7 @@ def test_journal_replay_holds_every_order_and_never_less_risk(tmp_path: Path, se
     """With the one-second full save, several orders can sit in the journal. At every send the replay holds each
     order with the rows its decision wrote, the same fills and realized money, and at least the money at risk."""
     rng = random.Random(seed)
-    desk, account, clock = make_desk(tmp_path / "run", caps=OWNERS_CAPS)
+    desk, account, clock = make_desk(tmp_path / "run", caps=OWNERS_CAPS, extra=NO_PULL)
     create, depths = account.create_order, []
 
     def at_the_send(**kwargs: Any) -> dict[str, Any]:

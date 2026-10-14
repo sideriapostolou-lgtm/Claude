@@ -15,6 +15,56 @@ Template:
 
 
 
+## 2026-10-14 00:55 UTC, Claude, branch claude/kalshi-fix-speed, no PR (merge of the deploy branch, the Kalshi bid pull PR #42; local merge commit, not pushed)
+- Changed:
+  - Merged origin/claude/nightcrawler-memecoin-bot-Gwnb1S at 6a1bf70 (PR #42: the bid pull, `speeddesk_live_pull.py`,
+    cancel acknowledgement and the re-send-after-a-fresh-read rule, the write-room rule, the `_practice` guard for
+    twin errors, one `KalshiLiveDesk._fair`, the pull settings, pagestate `kalshi_live.pull`) into the speed branch
+    (1a461fe) as a merge commit. Two text conflicts: `speeddesk_live.py` (13 hunks) and this log (two hunks; the
+    entries are ordered newest-first by their stamps: the pull's rebreak entry, commit 5687d4c at 00:19 UTC, sits
+    between the speed branch's 00:35 and 00:15 entries, and its 22:00 review entry below the speed branch's 22:20;
+    no line of either side lost). SPEEDDESK_SPEC (its 9.3), COORDINATION, `config.py`, `pagestate.py`,
+    `speeddesk_model.py` (the pull's `cancel_order` beside the speed branch's worst-case math) and
+    `speeddesk_kalshi_client.py` (`writes_last_second` beside the Trade API host) auto-merged.
+  - The deliberate conflict, the fair value: `KalshiLiveDesk._fair` carries `settles_on_average=True` once (the
+    39.5 s settlement-average lead, loss plan item 4), and every fair in the module comes from it: `_decide`, `_send`,
+    `_send_guard`, `_stale_bid_reason`, `_fair_drop`, `_pull_watch` (the trigger), `_take_available`. The pull's test
+    that the module holds exactly one `fair_up(` call passes. A lock uses no fair value (unchanged). The spec's
+    settlement-average paragraph now points at `_fair`.
+  - `_cancel_unsafe`: the pull's trigger check and its cancel bookkeeping (`cancel_acked`, `cancel_reasons`,
+    `cancel_failed`, pruned to the active orders) run before the speed branch's once-per-pass stop reason; the loop
+    runs in the pull's order (largest fair drop first) with the speed branch's rule inside it (a money stop leaves a
+    bid that lowers its window's risk resting; then the feed, stale-bid and pull reasons, the acknowledged-cancel rule
+    and the re-send after a fresh order-list read).
+  - `_cancel`: the pull's `cancel_reasons`, `_practice`-guarded twin cancel, acknowledged set and no-order-id handling
+    with the speed branch's save rule: no save before or after a cancel (`_save_soon`; the full state follows within
+    SAVE_EVERY_S) and the 2 s retry gate set only once a request was sent. A pull trigger marks the state for the next
+    save (`_pull_watch`), so a hold still survives a restart, within a second instead of at the cancel.
+  - `_send`: the pull's `_practice`-guarded twin copy, then the speed branch's synced journal row. `_submit`'s
+    definite refusal: the speed branch's journal rewrite (or save) first, then the pull's twin handling (a bid
+    refused only by the pull keeps the twin's copy resting). `_release_unsent`'s twin cancel goes through
+    `_twin_cancel_window` under `_practice` (as a refusal: the twin's other bids, never a bid a pull kept).
+    `checkpoint`: the pull's reopened-order bookkeeping inside the speed branch's once-a-minute daily reports.
+    `_reconcile_reads`: `money_changed` beside the pull's `order_reads` counter. The restored-from-journal receipts
+    precede the pull guard's construction in `__init__`.
+  - Tests: the pull suite's `market()` helper prices a target fair with the bot's horizon (`horizon()`,
+    AVERAGE_LEAD_S), so its pinned moves and prices hold as written; `test_fair_helper_matches_the_bots_fair` checks
+    `KalshiLiveDesk._fair` itself; four direct ledger reads call `checkpoint()` first (a twin cancel's receipt lands
+    with the next save, not at the cancel). Four speed-branch tests run with the pull off because their scenario
+    swaps in a snapshot 1.7c to 5c from make_desk's 0.50 fair, which the pull holds for 10 s as intended (the
+    small-make-edge stale-bid test, the settlement-horizon pricing test, the balancing desk, the two journal-depth
+    crash runs); the kill, stop-math, release, kill-point, property, ladder and golden suites run with the pull on.
+- Unchanged: every cap, stop, clip, reservation, release and journal rule; the pull's settings and defaults (on,
+  1c / 5 s / 5 s); caps $10/$20/$6/$10, clip 5, lock from 240 s up to $0.97 (exempt from the pull).
+- Deferred (practice only): under a money stop the twin's kept bids (`_twin_unpulled`) are still cancelled by the
+  stop, while a real balancing bid now stays resting (speed part 2); matching it needs a lowers-risk check on the
+  twin's own books.
+- Verified: full suite FULL_PASSED passed, FULL_SKIPPED skipped (Python 3.13); `mypy src/nightcrawler` clean (122 files);
+  ruff clean on the changed Python files. Directed: the pull file 59 of 59; with the crash, kill-point, release,
+  desk and book property, ladder, ladder-speed, golden and live suites 433 in all.
+- Real money touched? no (code merged; nothing pushed or deployed, no Railway change).
+- Next step: push and PR at a safe minute after the owner's go.
+
 ## 2026-10-14 00:35 UTC, Claude, branch claude/kalshi-fix-speed, no PR (merge of the deploy branch, the Kalshi arena; local merge commit, not pushed)
 - Changed:
   - Merged origin/claude/nightcrawler-memecoin-bot-Gwnb1S at 15c9457 (82c045f PR #41 Kalshi arena, 902b4c7 rewards
@@ -44,6 +94,57 @@ Template:
   branch's crash, kill-point, release and property tests all pass (332 in the directed run).
 - Real money touched? no. Not pushed; no Railway change.
 - Next step: push and PR at a safe minute after the owner's go; the bid-puller branch merges after it.
+
+## 2026-10-14 UTC, Claude, branch claude/kalshi-pull (rebreak fix round)
+- Rebreak of 703d942 (cancel acknowledgement, caps/locks/ladder, practice twin isolation and A/B, deploy
+  readiness). Every major reproduced first with the reviewers' scratch tests, then fixed with a regression test in
+  `tests/test_speeddesk_live_pull.py` that fails on 703d942 (11 new cases, all failing there) and passes here.
+- Real money, major: H1's re-send of a failed cancel ran first thing in every step once its backoff ended. When the
+  DELETE kept failing (500, 400, timeout) after Kalshi had already taken the order down, each failure set the
+  backoff again, so `step` returned before the reconcile and the lock: no account read, bid, fill or lock for as
+  long as it failed (61ca112 read the order list 2.1 s later and locked the pair). With the pull on, the `pull`
+  reason never passes, so the same happened there whatever the fair did. Now a cancel that failed goes out again
+  only once an order list read begun after the failure still shows the order open (`cancel_failed`,
+  `order_reads` / `orders_read`); if that read shows it canceled or executed, it is done and nothing is re-sent.
+  Shutdown and the repeated-error `_cancel_all` still send at once. The reviewers' 120 s runs: 2 cancels and about
+  197 reads, both orders terminal and re-bid, errors 0, with the pull on and off, for 400 and 500 (12 cancels and 0
+  reads before).
+- Real money, major: practice-twin code ran unguarded on the real paths: before the Kalshi cancel was sent
+  (`_twin_cancel`, so a twin error stopped the real cancels, at shutdown too, and paused trading as a Kalshi error),
+  in `_decide` (`_twin_unpulled_bid` in a held window, the write-room hold-back and an owed side), in `_send` (the
+  twin copy before the pre-send save) and in `_submit`'s refusal path. Each now runs through `_practice`, which
+  counts the error in the status line (`loop`, e.g. `twin_cancel_RuntimeError`) and changes nothing real; so does
+  the twin's `advance` in `step` and its shutdown cancel and the pull's last log lines at shutdown. The twin's
+  cancel keeps its place before the send so its timing matches the real decision. Test: with the twin's
+  `cancel_order`, `can_buy`, `place` or `advance` raising, the real cancels, bids and error count equal a healthy
+  run's; shutdown cancels both bids with the twin broken.
+- Minors fixed (local, display or practice only): the extra DELETE (a 404) after a timed-out cancel that went
+  through (same rule as above); a re-send after the reason passed no longer re-runs the twin's cancel with the first
+  reason (`_cancel(..., twin=False)`); `week_before` holds only windows that closed before `first_live` (the one
+  open at go-live had pulls; the existing panel test now reads the baseline as of that window's close); the pull's
+  logged move stops growing in the lock zone (it showed the close's swing to 0 or 1).
+- Deferred minors, with the reason: (1) the lock waits for the regular 1 s reconcile at the 240 s boundary, pull
+  or not (pre-existing; forcing a re-read there changes the real lock path, a separate change). (2) The A/B's twin
+  maker fills come from `WindowEvidence.fills`, pruned 31 days after a window ends, while real ones are kept, so
+  `week_before` twin fills fall toward 0 from about 24 days after go-live (P&L unaffected) and the panel cache key
+  uses list lengths: the fix needs a retention decision (a persisted per-window twin tally in the state written
+  before every cancel, or trimming the real side to 31 days); display only. (3) `_pull_watch` and `_twin_unpulled`
+  scan every window in the snapshot, which the outer practice desk never prunes (about 0.35 ms a call at 3,000
+  windows, about 10% on top of the existing O(windows) `observe_market`): caching the open windows changes the pull's
+  trigger path on real money; best done with the outer desk's window pruning. (4) `_pull_watch` is unguarded in
+  `on_tick`: an error there halts the companion, which fails closed (shutdown cancels the bids, now even with a
+  broken twin); the suggested fallback (hold new resting bids while the trigger check is down) is a new real-money
+  path and needs its own change and tests. The twin's feed callbacks (`on_book`, `on_trade`, `tick_btc`) predate
+  the pull and halt the same way. (5) A rollback to 61ca112 and back restarts the A/B (`first_live`, daily pull
+  counts): accepted, display only; trading, caps and locks unaffected.
+- Verified: full `python -m pytest -q -p no:cacheprovider` 4,863 passed, 12 skipped (network); the pull file has
+  59 tests (11 new cases, all failing on 703d942); the reviewers' scratch probes (ack regression, ack diff n1-n6,
+  twin isolation) pass or match 61ca112, except the two deferred A/B display probes. `mypy src/nightcrawler`
+  clean; ruff clean on the changed Python files.
+- Real money touched? Yes, code only (cancel re-send timing and practice-twin isolation on the real paths); caps
+  ($10 window / $20 open / $6 day / $10 lifetime), stops, locks, the 5-contract first buy and the ladder unchanged.
+  Committed locally on `claude/kalshi-pull`, not pushed, merged or deployed.
+- Next: merge in a safe minute when the owner says so.
 
 ## 2026-10-14 00:15 UTC, Claude, branch claude/kalshi-fix-speed, no PR (rebreak fix round; local commit, not pushed)
 - Changed:
@@ -193,6 +294,59 @@ Template:
 - Next step: push and deploy at a safe minute after the owner's go, then read the `reconcile`, `phases`, `loop`
   and `clock` status blocks on Railway.
 
+## 2026-10-13 22:00 UTC, Claude, branch claude/kalshi-pull (review fix round)
+- Two reviews of 8a5b4fe (caps and budget; correctness). Every blocker and major finding reproduced first (the
+  reviewers' scratch tests and probes failed on 8a5b4fe), then fixed with a regression test in
+  `tests/test_speeddesk_live_pull.py`; the new tests fail on 8a5b4fe and pass here.
+- Real money: H1 (high) a cancel that failed (503, timeout) or could not be sent (order id unknown after a lost
+  create reply) was never sent again once a reconcile cleared the order's uncertainty, so a pulled bid rested until
+  it expired and held every new order back (the cause predates the pull, also seen on 61ca112). Now the companion
+  remembers which cancels Kalshi accepted (200 or a definite 404) this run; only those are skipped, and any other
+  requested cancel is sent again with its first reason after the retry gate, or as soon as a reconcile learns the
+  order id. M2: with the pull on, a new order waits when the client's rolling second already holds 3 of its 5 writes
+  (`KalshiClient.writes_last_second`), so the pull's cancels never queue behind creates (the reviewers' burst: 6
+  writes in 0.8 s, now 4). M3: a pull cancel no longer forces an immediate account re-read. L5: the bid whose fair
+  fell most is cancelled first. A practice-twin error can no longer stop the real loop (`step`).
+- A/B control: M4 a real non-pull cancel (or refusal) no longer cancels the twin's kept bids, so in choppy markets
+  the twin now equals a genuine pull-off run (it had copied the pulled bot: 20 twin cancels in 2 minutes, now 0);
+  review 1 (high) when the old rule reprices a kept twin bid while the real bid there keeps resting, the twin bids
+  again at once (it was left bidless); review 6 a send refused only because of the pull keeps the twin's copy
+  (the pull check now runs last in the send guard); review 10 kept twin bids follow the take-available rule too;
+  L8 / review 8 twin bids are sized by the twin's own books, never the real risk book (no practice stop or ladder
+  write). Panel: review 2 P&L over windows either traded (non-trading side = 0) beside both-traded; review 3 the real
+  lock buys (count, contracts, cost, per window); M4 a bid up at a trigger counts as pulled whichever rule named the
+  cancel; review 7 `week_before` ends at `first_live` (the first go-live, kept across setting changes); review 11 a
+  failing comparison shows `error` and never stops a save or cancel. Review 5: one `KalshiLiveDesk._fair` behind
+  every fair (decision, send guard, stale-bid rules, trigger), with a test that it is the only `fair_up` call in the
+  module. L6 a clock step back never stretches a hold; L7 running min/max over the whole lookback (no 4,096 cap,
+  no rescans); L9 holds survive a restart (last triggers saved).
+- Not reproduced: review 4 (hold length vs the replay). The replay's code (`simple_trig`, `pull_simple`) samples once
+  a second, compares with the fair 5 s earlier and pulls while any of the last 5 seconds moved, so one jump pulls 9 s
+  there and about 10 s live: the same structure. The live max-min trigger also fires on a 1c round trip inside 5 s,
+  which the replay would miss (documented in SPEEDDESK_SPEC 9.3).
+- Deferred: the twin as an independent bot (it still copies the real decisions and never locks; documented); M3's
+  measured read peak is unchanged (15 reads a second demanded with 1c flips every 10.2 s, before and after, against
+  the client's 10) because it comes from the existing re-read after every new bid, not the cancels; the client
+  queues the extra reads, and a pull cancel can wait behind a queued read for up to about a second (speed part 2
+  could skip a re-read while the read budget is short). PULL_HOLD_S stays 0-60 as specified (the write room bounds
+  writes at 0). NIT: `pulls_today` still counts triggers with no bid resting.
+- Verified: full `python -m pytest -q -p no:cacheprovider` 4,852 passed, 12 skipped (network); the pull file has
+  48 tests (20 new) and the client file one more; run against 8a5b4fe all 20 new tests fail (and the 6 original
+  ones whose assertions changed: cancel order, compare and page fields). Reviewers' scratch load runs with the
+  client's write count wired
+  in: peak writes 4 a second or less in every run with the pull on (14 at the lowest allowed settings before); reads
+  at the lowest settings 15 a second at peak (40 before). Ruff clean on the changed Python files, `mypy
+  src/nightcrawler` clean.
+- Merge note for `claude/kalshi-fix-speed`: its `settles_on_average=True` belongs in `KalshiLiveDesk._fair` (one
+  place); the four call sites it edits now call `_fair`, so the merge conflicts there on purpose, and
+  `test_one_fair_value_behind_every_decision_and_trigger` fails if a direct `fair_up` call comes back.
+- Real money touched? Yes, code only, on the owner's word (2026-10-13 ~20:15 UTC): cancels are now retried until
+  accepted, new bids wait for write room while the pull is on, and cancel order changed; caps ($10 window / $20
+  open / $6 day / $10 lifetime), stops, locks and the 5-contract clip unchanged. Committed locally, not pushed,
+  merged or deployed.
+- Next: merge in a safe minute when the owner says so; watch `pull.since_pull` (either-traded P&L and locks)
+  against `week_before`.
+
 ## 2026-10-13 21:20 UTC, Claude, branch claude/kalshi-arena (review fixes)
 - Changed, after three reviews (every major finding reproduced first):
   - **The town runs in its own process.** A town thread could stall the live loop (a spinning pass raised a 1 ms
@@ -229,6 +383,46 @@ Template:
   `deskguard.py` and `engine.py` are unchanged.
 - Next step: deploy in a safe minute; read `kalshi_arena_feed` (flush p99) and `kalshi_arena_status` (drops, late,
   void_feed) for an hour.
+
+## 2026-10-13 21:00 UTC, Claude, branch claude/kalshi-pull
+- Owner request (2026-10-13 ~20:15 UTC): "Pulling bids the instant price moves ... test with our current bot cause
+  it's something that we will for sure have, just gotta make it good." Evidence going in: replay of "pull all bids
+  for 5 s after the quoted side's fair moves >= 1c within 5 s" = +28.1c/window strict, -8.7c touch, 60 s markout
+  +24-28c, 18% fewer fills; best of 68 variants, not proven. So it is measured live against the practice twin.
+- Changed: new `speeddesk_live_pull.py` (the rule's books: per-window Up-fair history over the lookback, triggers,
+  holds, pulls and bids pulled per UTC day, the saved `since`, and `compare` for the A/B). `speeddesk_live.py` hooks:
+  the trigger check on every tick (`on_tick`), every step and every `_cancel_unsafe` (also between account reads);
+  resting bids decided at or before the last trigger are cancelled with reason `pull` through the existing cancel
+  path (stale-bid rules first, one cancel per order, no re-send once Kalshi accepted it, the 2 s retry gate); no new
+  resting bid in a held window (`_decide`) and the send guard refuses a resting bid whose fresh fair is already a
+  trigger. Locks untouched. The practice twin never pulls: a pulled real bid's twin copy stays resting and follows
+  the old cancel rules (`_twin_unpulled`), and a held window gets the twin bid the old rule would send
+  (`_twin_unpulled_bid`, at most once a second per side); `PracticeDesk.cancel_order` cancels one twin order. Panel
+  and status line `pull`: settings, held windows, pulls/bids pulled today and 31 days, `since_pull` and
+  `week_before` real vs twin (P&L where both traded, maker fills per window where either traded). One
+  `speeddesk_live_pull` log line per pull when its hold ends (window, largest move, started, held until, bids).
+  `/api/page` whitelist `kalshi_live.pull` (`pagestate._kalshi_pull`). Settings `SPEEDDESK_KALSHI_PULL` (true),
+  `_PULL_MOVE` (0.01, 0.002-0.10), `_PULL_LOOKBACK_S` (5, 0.5-30), `_PULL_HOLD_S` (5, 0-60), validated in
+  config.py, in `.env.example` and SPEEDDESK_SPEC 9.3. COORDINATION note for Codex on the new page block.
+- Tests: new `tests/test_speeddesk_live_pull.py` (28): a 1.06c swing within 0.3 s cancels both resting bids (reason
+  pull) and no bid rests until 9.8 s after the dip, then they come back at the new fair; 0.8c (swing and rise) does
+  not pull; a 1.5c move cancels as reprice and still holds; the twin keeps its bids, follows the old reprice rule
+  and rests the old rule's bid in a held window; a lock fires during a hold; no re-cancel after acceptance while
+  the order list lags; 20 s of 1.2c jumps every 0.1 s give exactly two cancels and stay within 5 writes a second;
+  the send guard refuses a bid whose fair moved on its way (and sends it with the rule off); off = today's
+  behaviour; pulls count only with real money on; trigger, restart and `compare` unit tests; panel and page numbers;
+  settings validation.
+- Verified: full `python -m pytest -q -p no:cacheprovider` 4,831 passed, 12 skipped (network), rebased on 61ca112
+  (ladder merged); doc-reading and Kalshi files re-run after the doc edits (374 passed); ruff clean on the changed
+  Python files; `mypy src/nightcrawler` clean.
+- Not verified / skipped: no live run (not deployed). The A/B difference includes the existing real-vs-practice
+  fill gap (hence `week_before`). When speed part 2 (`claude/kalshi-fix-speed`) lands, `_pull_watch` must compute
+  the fair exactly as `_decide` does (that branch adds `settles_on_average` to `fair_up`).
+- Real money touched? Yes, code only, on the owner's word above: it only cancels real bids and withholds new
+  resting bids; caps, stops, locks and order sizes unchanged. Committed locally on `claude/kalshi-pull`, not pushed,
+  merged or deployed.
+- Next: merge in a safe minute when the owner says so, then watch the first `speeddesk_live_pull` lines and the
+  status line's `pull.since_pull` against `week_before`.
 
 ## 2026-10-13 20:20 UTC, Claude, branch claude/kalshi-ladder-ship
 - Owner decision (2026-10-13 ~20:15 UTC, answering the open first-buy question in SPEEDDESK_SPEC 9.2): "Keep 5 at

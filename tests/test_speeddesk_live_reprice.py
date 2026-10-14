@@ -78,7 +78,8 @@ def test_a_bid_above_fresh_fair_minus_two_cents_is_cancelled(tmp_path: Path) -> 
 
 def test_real_bids_are_priced_from_the_settlement_averages_horizon(tmp_path: Path) -> None:
     """Loss plan item 4: the live desk's fair uses Kalshi's 60-second settlement average, like its practice twin."""
-    desk, account, clock = make_desk(tmp_path, extra={"speeddesk_take_edge": 1.0})
+    # The pull off: the jump from make_desk's 80000 to 80288 is a 5c move, which the pull would hold for 10 s.
+    desk, account, clock = make_desk(tmp_path, extra={"speeddesk_take_edge": 1.0, "speeddesk_kalshi_pull": False})
     try:
         market(desk, clock, 80288)
         asyncio.run(desk.step())

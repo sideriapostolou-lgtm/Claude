@@ -527,6 +527,18 @@ class Settings:
     speeddesk_kalshi_cutoff_s: float = _f(180.0, "seconds", "Kalshi live companion: stop buying this long before "
                                           "window close; default trades only the first 12 minutes of a 15m window",
                                           lo=60, hi=899)
+    # Owner, 2026-10-13 ~20:15 UTC: "Pulling bids the instant price moves ... test with our current bot". Cancels only
+    # (never adds risk); locks are exempt; the practice twin keeps the rule without it as the live control.
+    speeddesk_kalshi_pull: bool = _f(True, "bool", "Kalshi live companion: pull every resting bid in a window the "
+                                     "moment the bot's fair value there moves PULL_MOVE within PULL_LOOKBACK_S, and "
+                                     "rest no new bid there until PULL_HOLD_S after the last such move. Lock buys "
+                                     "are exempt; the practice twin never pulls (it is the comparison)")
+    speeddesk_kalshi_pull_move: float = _f(0.01, "fraction", "Kalshi live companion: fair-value move (either "
+                                           "direction) that pulls the bids; 0.01 = 1 cent", lo=0.002, hi=0.10)
+    speeddesk_kalshi_pull_lookback_s: float = _f(5.0, "seconds", "Kalshi live companion: how far back the move is "
+                                                 "measured", lo=0.5, hi=30)
+    speeddesk_kalshi_pull_hold_s: float = _f(5.0, "seconds", "Kalshi live companion: no new resting bid in the "
+                                             "window until this long after the last move that pulled", lo=0, hi=60)
     # Owner, 2026-10-13: "Give our bots the incentive they're giving Grok bots: make money or die" (nightcrawler.
     # kalshi_arena). PRACTICE only: these four change pretend money and never a live limit, order or key. A bad value
     # turns the arena off with a warning instead of stopping the engine (Settings._lenient_arena).
@@ -689,6 +701,12 @@ class Settings:
                 continue
             if (f.name.startswith("speeddesk_kalshi_") and meta.get("unit") in ("usd", "seconds", "count")
                     and (isinstance(value, bool) or not isinstance(value, (int, float)))):
+                problems.append(f"{env} must be a finite number")
+                continue
+            if f.name == "speeddesk_kalshi_pull" and not isinstance(value, bool):
+                problems.append(f"{env} must be true or false")
+                continue
+            if f.name == "speeddesk_kalshi_pull_move" and (isinstance(value, bool) or not isinstance(value, (int, float))):
                 problems.append(f"{env} must be a finite number")
                 continue
             if f.name == "speeddesk_coins":

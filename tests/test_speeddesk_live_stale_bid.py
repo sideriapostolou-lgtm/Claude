@@ -54,7 +54,9 @@ def test_acknowledged_stale_bid_cancel_with_a_lagging_order_list(tmp_path: Path)
 
 
 def test_small_make_edge_bid_is_not_cancelled_on_sight(tmp_path: Path) -> None:
-    desk, account, clock = make_desk(tmp_path, extra={"speeddesk_take_edge": 1.0, "speeddesk_make_edge": .015})
+    # The pull off: the jump from make_desk's 80000 to 80100 is a 1.7c move, which the pull would hold for 10 s.
+    desk, account, clock = make_desk(tmp_path, extra={"speeddesk_take_edge": 1.0, "speeddesk_make_edge": .015,
+                                                      "speeddesk_kalshi_pull": False})
     try:
         view(desk, clock, 80100)
         for _ in range(20):

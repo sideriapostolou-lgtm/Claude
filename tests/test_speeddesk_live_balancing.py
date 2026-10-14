@@ -113,7 +113,9 @@ def balancing_desk(tmp_path: Path) -> tuple[KalshiLiveDesk, FakeAccount, FakeClo
     """The live loop after a 5-contract Down first buy at $0.42 filled, with a $2 loss earlier today."""
     caps = {"speeddesk_kalshi_window_usd": 10.0, "speeddesk_kalshi_open_usd": 20.0,
             "speeddesk_kalshi_day_stop_usd": 6.0, "speeddesk_kalshi_total_stop_usd": 10.0}
-    desk, account, clock = make_desk(tmp_path, caps=caps, extra={"speeddesk_take_edge": 1.0})
+    # The pull off: the Bitcoin jumps below (80000 to 80288 to 80640) are 5c moves, which the pull would hold.
+    desk, account, clock = make_desk(tmp_path, caps=caps, extra={"speeddesk_take_edge": 1.0,
+                                                                 "speeddesk_kalshi_pull": False})
     window = desk.book.windows[TICKER]
     desk.book.day_pnl[utc_day(clock.now())] = desk.book.realized_pnl = -2.0
 
