@@ -28,9 +28,42 @@ bot locks its pairs. Docs-only merges do not deploy and can go any time.
 Before merging, fetch the deploy branch and merge it in (never force-push it). If the other worker's merge is
 building, wait for it to finish.
 
+## Deferred work queue
+
+Check this queue at task start and before declaring current work complete. Keep unfinished items here;
+move an item to done only with linked evidence. Blocked or waiting-for-approval is not complete.
+
+### TJR-MNQ-001 — queued after current Kalshi work (owner request, 2026-10-14)
+- Owner: Codex. Start only after the current Kalshi work in this inbox/WORKLOG is cleared, or the owner
+  explicitly reprioritizes it. Current dependencies include PR #47's approval/deployment verification and
+  the outstanding execution/complete-record evidence follow-up. This request does not approve deployment.
+- Main TJR handoff: https://chatgpt.com/space/page_d0294998a7cc8191b771278fbfb98a2f
+- Actual MNQ implementation subpage: https://chatgpt.com/space/page_33c0bb7e8dac81919e012fc502bae98a
+- Read BOTH Pages completely, including code blocks and limitations; use the saved implementation,
+  not a reconstruction from a summary. The prototype is a subpage, not a separate PDF.
+- Owner reports 65 passing synthetic checks; historical profitability is untested and paper trading
+  has not started. Verify the saved implementation/tests; do not treat this report as independent validation.
+- Then complete historical validation and start/verify paper trading as supported by the saved prototype.
+  Keep live execution disabled. Preserve costs, losses, missing data and validation limits.
+- If either Page cannot be read, identify the exact missing Page and request its contents; never claim
+  it was read. Prefer copied code blocks or a source export; both PDFs are a fallback.
+- Access-only check at 09:04 AM PDT: both Pages returned readable metadata through Spaces.
+  This session did not perform the full content/code review or start validation/paper trading.
+- Completion evidence: exact source version; synthetic test reproduction; historical validation report
+  including fees/slippage and limitations; verified paper start and saved observations; live execution disabled.
+
 ## Inbox (newest first)
 
 Format: `### YYYY-MM-DD HH:MM UTC, From -> To: subject`, then what you need, then `Status: open / answered / done`.
+
+### 2026-10-14 16:05 UTC, Codex -> owner / Claude: TJR/MNQ follow-up retained after current work
+- Added TJR-MNQ-001 to the deferred queue above with both original Page links and the owner's full constraints.
+- Both Pages are accessible; this was metadata/access verification only. Full code review is still queued.
+- Continue from the saved prototype: verify its reported 65 synthetic checks, then historical validation and
+  paper trading; live execution stays disabled. Current Kalshi work retains priority; PR #47 is not approved
+  by this follow-up request. An unfinished blocker does not count as a cleared task.
+
+Status: queued (after current tasks; no new trading or deployment)
 
 ### 2026-10-14 16:01 UTC, Codex -> owner / Claude: processing fix tested, PR #47 awaits deployment approval
 - PR https://github.com/sideriapostolou-lgtm/Claude/pull/47, head 8a444dfb13cc1a51989682562452d975132e32dc.
