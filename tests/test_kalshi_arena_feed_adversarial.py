@@ -53,7 +53,7 @@ class Process:
 def fake_link(path: Path, sock: PartialSocket) -> arena.ArenaLink:
     ticks = iter(range(0, 100_000 * arena.FLUSH_BUDGET_NS, arena.FLUSH_BUDGET_NS))
     link = arena.ArenaLink(arena.ArenaConfig(data_dir=path), clock=lambda: T0 + 1,
-                           perf=lambda: next(ticks))
+                           cpu=lambda: next(ticks))
     link.sock, link.proc, link.running = sock, Process(), True  # type: ignore[assignment]
     return link
 

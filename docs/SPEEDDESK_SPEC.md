@@ -1098,10 +1098,13 @@ objects lengthened every garbage collection. A process boundary removes all of i
 
 - **The live loop's side (`ArenaLink`, updated 2026-10-14):** `on_book` and `on_trade` append the Kalshi book
   or print to a FIFO bounded at 16,384 events; overflow is dropped and counted. `on_status` appends the gap facts.
-  `on_tick` and `on_windows` have no arena code. Once per runner step (every 50 ms), `flush` encodes a slice of at
-  most 1,024 events with a 400 microsecond encoding budget checked every 16 events, plus changed market facts.
-  Marshal and nonblocking socket send add the bounded frame's work after that budget; it is not a total-time
-  guarantee. A full socket retains the partial or unsent frame and later FIFO events. Outcomes wait until earlier
+  `on_tick` and `on_windows` have no arena code. Once per runner step (a nominal 50 ms cadence, not guaranteed),
+  `flush` encodes at most 1,024 events with a 4 ms calling-thread CPU budget checked every 16 events, plus changed
+  market facts. The initial 400 microsecond wall-clock budget failed with production-depth books and slow runner
+  cadence; the larger bounded budget trades some live-loop CPU for adequate drain capacity. It is not a 0.5 ms
+  flush guarantee. Marshal and nonblocking socket send add work after the encoding budget; wall time is measured
+  separately and can exceed CPU time. A full socket retains the partial or unsent frame and later FIFO events.
+  Outcomes wait until earlier
   queued books/prints are transmitted. A dead town is noticed (`kalshi_arena_exited`) and never fed again.
   Overflow and more-than-three-second lateness still invalidate the affected window; gaps also cover newly
   registered and just-closed unsettled windows. More buffering never turns missing inputs into simulated profit.

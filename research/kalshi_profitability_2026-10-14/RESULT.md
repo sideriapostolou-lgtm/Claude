@@ -1,10 +1,12 @@
 # Profitability investigation, October 14
 
-**No profitable replacement strategy established. Two concrete execution/data defects were reproduced and
-fixed for deployment; reversing the signal remains an untested hypothesis.**
+**No profitable replacement strategy established. Execution/data defects were reproduced and corrected;
+the first deployment exposed an additional arena capacity problem. Reversing the signal remains untested.**
 
-At the 14:39 UTC write-up these source fixes were local and not yet deployed; the final deployment receipt
-and exact running commit are in the newest WORKLOG entry.
+PR #45 deployed as `18e180f` at 14:50 UTC. Its new diagnostics show local scheduling delays and persistent arena
+overflow, so that deployment did not establish usable practice coverage. The bounded follow-up increases the
+encoding CPU budget for real-depth books and removes streaming JSON overhead; exact running commits and
+production outcomes belong in the newest WORKLOG receipts, not a claim that local benchmarks prove success.
 
 The independent [loss audit](LOSS_AUDIT.md) reconciles 29 historical windows to **-$11.9154**. Buying both sides
 was already common (28/29 windows), yet cheap maker fills were often on the eventual losing side. Successfully
@@ -24,6 +26,10 @@ p95 6.703 s and maximum 9.922 s. Cancel timing includes scheduling and client wo
 [live_audit.py](live_audit.py) reproduces the aggregate and reconciles the captured completed window. The next
 window's settlement occurred outside that capture: first two post-restart results were -$1.0167 and +$1.4933,
 net +$0.4766. They predate this source fix and do not establish an edge.
+
+Later receipts add +$2.3811 for 14:30-14:45 UTC and -$0.1524 for 14:45-15:00 UTC. The latter straddled PR #45's
+restart. All four restarted windows total +$2.7053 after fees; lifetime realized P&L remains -$7.2868. Neither the
+recent gain nor the mixed-code window establishes causality or sustained profitability.
 
 The [prospective comparison](COMPARISON_PROTOCOL.md) fixes original, inverted-fair and no-trade arms, realistic
 cancellation delay, independent accounting, common coverage and a future endpoint. **It is a specification,

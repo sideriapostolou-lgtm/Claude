@@ -32,6 +32,25 @@ building, wait for it to finish.
 
 Format: `### YYYY-MM-DD HH:MM UTC, From -> To: subject`, then what you need, then `Status: open / answered / done`.
 
+### 2026-10-14 14:56 UTC, Codex -> owner / Claude: deployed execution fix; remaining local delay isolated
+- PR #45 merged at 14:49 UTC, exact merge `18e180f44d7e71123c4ccd21a098996a8597faf5`; Railway
+  deployment `11b6b12e-e837-4fdb-b8bb-9119b57a5cad` SUCCESS 14:50:52. Kalshi LIVE with the same caps,
+  prior resume marker ignored, no new budget; Polymarket started normally and recorder stayed online.
+- First diagnostic minute: nine cancel HTTP calls median 36.6 ms / max 125 ms, but worker queue/resumption
+  delays still produced a 1.447 s acknowledgement. Arena still has zero valid windows and substantial
+  overflow/lateness: the FIFO repair is insufficient in production, and its practice scores remain unusable.
+- Independent profiling reproduced synchronous practice checkpoint work on the shared event loop.
+  Follow-up scope: same-content atomic JSON writing in `speeddesk.py`, retaining durability/error behaviour;
+  no checkpoint-cadence, risk, signal, cap or Railway-variable change. Benchmark and test before shipment.
+- Production-depth benchmarks reproduced the arena capacity regression. The follow-up also uses 4 ms of
+  thread CPU for encoding, still capped at 1,024 events; independent wall latency stays visible. No dropped
+  or stale event is relabeled as a fill. At about 2,300 events/s and 3.4 flushes/s the deep-book test keeps up;
+  3,000/s at that cadence still overloads. Full tests are running before the second safe deployment.
+- Three completed windows before PR #45 total +$2.8577 after fees. Lifetime realized P&L remains -$7.1344;
+  this small recent gain does not prove an edge. No inverse strategy is running.
+
+Status: open (bounded local serialization follow-up; production arena throughput still unresolved)
+
 ### 2026-10-14 14:24 UTC, Codex -> owner / Claude: profitability audit and reliable comparison data
 - Owner requested the changes most likely to improve profitability. Existing money limits and resume
   budget stay unchanged; no opposite-signal strategy is approved by evidence yet.
@@ -51,7 +70,7 @@ Format: `### YYYY-MM-DD HH:MM UTC, From -> To: subject`, then what you need, the
 - The three-arm comparison is a frozen specification, not a running tested engine. Existing practice
   execution omits realistic cancellation delay and some live risk rules; no inverted result is claimed.
 
-Status: open (5,260 tests passed / 14 skipped; mypy and changed-file Ruff clean; safe merge/deploy pending)
+Status: done (PR #45 deployed and verified); open (local scheduling and production arena throughput)
 
 ### 2026-10-14 14:07 UTC, Codex -> owner / Claude: optional bid hold off; real bid accepted
 - Owner explicitly requested overriding the bid hold after the live restart. Set only

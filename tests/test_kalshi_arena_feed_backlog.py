@@ -117,18 +117,73 @@ def test_sustained_three_thousand_events_per_second_does_not_build_a_backlog(tmp
     assert sum(record[0] == "b" for message in sock.messages for record in message[5]) == 60_000
 
 
+@pytest.mark.parametrize(("events_per_step", "step_s"), [(150, 0.05), (700, 0.3)])
+def test_production_depth_and_delayed_steps_keep_up(tmp_path: Path, events_per_step: int, step_s: float) -> None:
+    """Actual 111/168-level side depths, including the observed slow ~3.4 Hz producer cadence.
+
+    One delta changes a bid level and its opposite ask, yielding two books as the real market adapter does.
+    These are transport capacity checks; they do not claim a latency or simulated-profit result.
+    """
+    clock = FakeClock(T0 + 1)
+    link, sock = link_at(tmp_path, clock)
+    snap = snapshot(clock)
+    slug = snap.windows[0].slug
+    bids = {side: tuple(Level(round(0.49 - n / 1000, 4), 10 + n) for n in range(depth))
+            for side, depth in (("up", 111), ("down", 168))}
+    asks = {side: tuple(Level(round(1 - level.price, 4), level.size) for level in levels)
+            for side, levels in bids.items()}
+    seq = 0
+    for _ in range(100):
+        for _ in range(events_per_step // 2):
+            seq += 1
+            changed = "up" if seq % 2 else "down"
+            index = seq % len(bids[changed])
+            price, size = bids[changed][index].price, 10 + seq % 100
+            bids[changed] = bids[changed][:index] + (Level(price, size),) + bids[changed][index + 1:]
+            asks[changed] = asks[changed][:index] + (Level(round(1 - price, 4), size),) + asks[changed][index + 1:]
+            for side, other in (("up", "down"), ("down", "up")):
+                link.feed_book(Book(slug, side, bids[side], asks[other], clock.now(), str(seq), clock.now()))
+        link.flush(snap)
+        clock.advance(step_s)
+    assert link.dropped == 0 and len(link.pending) < 1500
+    drain(link, snap)
+    assert sum(record[0] == "b" for message in sock.messages for record in message[5]) == events_per_step * 100
+
+
 def test_encoding_budget_leaves_unencoded_events_at_the_front(tmp_path: Path) -> None:
     clock = FakeClock(T0 + 1)
     link, sock = link_at(tmp_path, clock)
     expected = feed_events(link, clock.now(), 100)
     ticks = iter(range(0, 1000 * arena.FLUSH_BUDGET_NS, arena.FLUSH_BUDGET_NS))
-    link.perf = lambda: next(ticks)
+    link.cpu = lambda: next(ticks)
     link.flush(snapshot(clock))
     assert decode(sock) == expected[:arena.FLUSH_CHUNK]
     assert list(link.pending) == expected[arena.FLUSH_CHUNK:]
     assert link.sliced == 1 and link.dropped == 0
     drain(link, snapshot(clock))
     assert decode(sock) == expected
+
+
+def test_scheduler_wall_pause_does_not_consume_encoding_cpu_budget(tmp_path: Path) -> None:
+    clock = FakeClock(T0 + 1)
+    link, sock = link_at(tmp_path, clock)
+    expected = feed_events(link, clock.now(), arena.FLUSH_CHUNK * 4)
+    wall = iter((0, 1_000_000_000))
+    link.perf = lambda: next(wall)
+    link.cpu = lambda: 0
+    link.flush(snapshot(clock))
+    assert decode(sock) == expected and not link.pending
+    assert link.last_flush_us == 1_000_000  # wall telemetry must still disclose the scheduler pause
+
+
+def test_constant_cpu_clock_cannot_exceed_the_hard_event_cap(tmp_path: Path) -> None:
+    clock = FakeClock(T0 + 1)
+    link, sock = link_at(tmp_path, clock)
+    expected = feed_events(link, clock.now(), arena.FLUSH_MAX + 100)
+    link.cpu = lambda: 0
+    link.flush(snapshot(clock))
+    assert decode(sock) == expected[:arena.FLUSH_MAX]
+    assert list(link.pending) == expected[arena.FLUSH_MAX:] and link.dropped == 0
 
 
 def test_blocked_socket_retains_backlog_and_overflow_still_voids(tmp_path: Path,
