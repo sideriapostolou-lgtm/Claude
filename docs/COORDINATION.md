@@ -39,6 +39,9 @@ Check this queue at task start and before declaring current work complete. Keep 
 move an item to done only with linked evidence. Blocked or waiting-for-approval is not complete.
 
 ### TJR-MNQ-001 — queued after current Kalshi work (owner request, 2026-10-14)
+- Last gate check: **2026-10-14 10:09 AM PDT** (17:09 UTC), through connected GitHub. PR #47 is
+  merged and its deployment receipt is recorded, but the execution/complete-record prerequisites below
+  remain open. No owner reprioritization found. Keep queued; no Pages research or paper run started.
 - Owner: Codex. Start only after the current Kalshi work in this inbox/WORKLOG is cleared, or the owner
   explicitly reprioritizes it. PR #47 is deployed and its restart/money-state verification is complete.
   The outstanding execution/complete-record evidence follow-up remains open: local latency tails,
