@@ -13,6 +13,37 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-14 13:53 UTC, Codex, owner-approved Kalshi restart (configuration only)
+- Authorization: the owner replied "You have my approval for everything" directly to the concrete
+  proposal for a fresh $10 lifetime loss budget, retaining $10/window, $20 open, $6/day and five-contract
+  starters. Applied that named restart only; this is not blanket authority for future budget increases.
+- At 13:49:12 UTC (inside the safe interval), set one fresh `SPEEDDESK_KALSHI_RESUME_TOKEN` on production
+  service `bot` through Railway. Its value was never printed or committed. No keys, mode switches,
+  limits, daily reset, source code, Polymarket configuration or recorder settings changed.
+- Railway deployment `4a506c30-11e9-4bd0-99db-84f5f94100e9` built exact commit
+  `8492e2012950e148aa24c2a79805c4b44b82fba2`, terminal SUCCESS 13:49:52 UTC. That commit has the same
+  source/tests as tested speed release `3080ab0`; only documentation followed it. One healthy bot replica;
+  recorder stayed online on its unchanged deployment. Polymarket started LIVE normally at 13:49:46.
+- Verified 13:49:54 `speeddesk_live_resume`: applied, total_halted false, total_pnl_usd and
+  counted_from_usd both -9.9921. The prior losses remain in history; only the lifetime budget anchor
+  moved. Startup and subsequent status: REAL MONEY (Kalshi), authenticated, fee precision verified,
+  no integrity error, rung 0, caps $10/$20/$6/$10 and clip 5. Day P&L remains -$0.05 and its stop is
+  unlatched; approximately $5.95 daily loss room remains before additional exposure.
+- First observations through 13:53 UTC: no new real order or fill receipts, zero orders/positions/risk,
+  unchanged $39.7493 cash and -$9.9921 lifetime P&L. No startup tracebacks. Price-move bid holds and
+  stale-account checks blocked entries. At 13:52 the account read took 16.813 s and failed the freshness
+  gate; at 13:53 it recovered with a clean 1.594 s reconcile. Latest status still holds bids after a
+  fair-value move. Do not describe enabled live mode as a trade, a fill or a profitable result.
+- Verification: independent read-only restart review and two fake regression tests passed (startup
+  latch/resume, durable receipt, live gating, and reuse rejection after restart). No application edits;
+  prior full validation remains 5,228 passed / 14 skipped, mypy and changed-file Ruff clean. This
+  session's diff/secret check covers documentation only. No variable-listing tool was used.
+- Real money touched? YES, the explicitly approved fresh $10 loss budget is active. No additional
+  order or settlement is claimed in this bounded observation. Existing daily reporting remains active;
+  no continuous monitoring or profit guarantee is claimed. Slow account reads remain unresolved.
+- Next: observe eligible windows and actual fills/fees/settlements within these limits; stop guards stay
+  enforced. A new lifetime-stop reset or larger budget still needs a separate specific owner decision.
+
 ## 2026-10-14 13:36 UTC, Codex, PR #44 deployed (speed part 2; restart still pending)
 - Shipped: PR #44 merged at 13:32 UTC inside the allowed interval. Railway built exact merge
   `3080ab09821838a9440c5f22cb47e7294c56b46c`, deployment `ca18d013-3006-4156-969b-a4d19e912df1`,

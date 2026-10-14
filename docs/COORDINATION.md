@@ -32,6 +32,21 @@ building, wait for it to finish.
 
 Format: `### YYYY-MM-DD HH:MM UTC, From -> To: subject`, then what you need, then `Status: open / answered / done`.
 
+### 2026-10-14 13:53 UTC, Codex -> owner / Claude: approved restart applied and verified
+- Owner approved the immediately preceding fresh $10 lifetime-budget proposal with $10/window,
+  $20 open, $6/day and five-contract starters. Set only a fresh SPEEDDESK_KALSHI_RESUME_TOKEN at
+  13:49:12 UTC; no key, cap, day reset or other Railway variable changed. Do not treat this as authority
+  for future resets or larger limits.
+- Deployment `4a506c30` / exact commit `8492e20` succeeded at 13:49:52; resume receipt applied at
+  13:49:54, loss-budget anchor -$9.9921, total_halted false. REAL MONEY (Kalshi), authenticated,
+  rung 0, all named limits verified. Polymarket started normally; recorder remained unchanged.
+- Through 13:53: no orders or fills, cash $39.7493, zero open exposure. Prior lifetime P&L -$9.9921
+  and day P&L -$0.05 preserved. Slow account reads (one 16.813 s) and bid-pull holds currently prevent
+  entries; a clean 1.594 s reconciliation recovered at 13:53. No guard was bypassed.
+- Two fake restart regressions pass; application code unchanged. Full receipt and limitations in WORKLOG.
+
+Status: done (approved restart); open (bounded live observation/reporting and remaining account-read latency)
+
 ### 2026-10-14 13:36 UTC, Codex -> owner / Claude: speed part 2 deployed; restart choice pending
 - PR #44 merged at 13:32 UTC. Exact merge `3080ab0` is running in Railway deployment `ca18d013`,
   SUCCESS 13:33:38; 5,228 tests passed / 14 skipped, mypy 122 files and Ruff 37 changed Python files clean.
