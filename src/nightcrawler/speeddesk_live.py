@@ -61,6 +61,7 @@ from .speeddesk_model import (
 )
 from .speeddesk_readtrace import MAX_REPORTS_PER_MINUTE, ReadSpan, ReconcileTrace
 from .speeddesk_scorecard import window_scorecard
+from .speeddesk_worktrace import WorkTrace, observed, work_span
 
 log = logging.getLogger("nightcrawler.speeddesk")
 PREFIX = "nc-speed-"
@@ -362,6 +363,7 @@ class KalshiLiveDesk:
                  time_probe: Callable[[], float] = coinbase_time) -> None:
         self.settings, self.directory, self.snapshot, self.clock = settings, directory, snapshot, clock
         self.monotonic = monotonic
+        self.work_trace: WorkTrace | None = WorkTrace(monotonic=monotonic)
         self.directory.mkdir(parents=True, exist_ok=True)
         self._lock_stream = (directory / "controller.lock").open("a", encoding="utf-8")
         try:
@@ -695,6 +697,21 @@ class KalshiLiveDesk:
     def _trace_finish(self, failed: bool) -> None:
         row = self._trace_call("finish", self.clock(), self.monotonic(), failed)
         if row is not None:
+            # Synchronous callback intervals share the read trace's monotonic clock.
+            # Nested intervals overlap; union coverage is not their summed wall/CPU time.
+            try:
+                if self.work_trace is not None and self.read_trace is not None:
+                    base = self.read_trace.base
+                    row["callback_work"] = self.work_trace.overlap(base, self.monotonic(), max_spans=32)
+                    row["read_resume_work"] = [
+                        {"read": read["read"], **self.work_trace.overlap(
+                            base + marks["worker_completed"] / 1000,
+                            base + marks["coroutine_resumed"] / 1000, max_spans=8)}
+                        for read in row["reads"]
+                        if "worker_completed" in (marks := read["marks_ms"])
+                        and "coroutine_resumed" in marks]
+            except Exception:  # noqa: BLE001 - the observer cannot interrupt fills, cancels or persistence.
+                self.work_trace = None
             # Keep diagnostics out of `pending`: that collection can advance the
             # heartbeat's save cadence. Publish at the next already-chosen save.
             if len(self._trace_pending) == MAX_REPORTS_PER_MINUTE:
@@ -715,8 +732,16 @@ class KalshiLiveDesk:
     def _trace_panel(self) -> dict[str, Any]:
         return {**(self._trace_call("status") or
                    {"mode": "diagnostic", "enabled": False, "error": self.read_trace_error}),
+                "callback_work": self._work_trace_status(),
                 "publication": "next_existing_checkpoint", "buffered": len(self._trace_pending),
                 "buffer_dropped": self._trace_dropped}
+
+    def _work_trace_status(self) -> dict[str, Any]:
+        try:
+            return self.work_trace.status() if self.work_trace is not None else {"enabled": False}
+        except Exception:  # noqa: BLE001 - optional diagnostics have no trading authority.
+            self.work_trace = None
+            return {"enabled": False}
 
     def _start_io(self, callback: Callable[..., Any], *args: Any,
                   _read_span: ReadSpan | None = None, **kwargs: Any) -> asyncio.Task[Any]:
@@ -889,6 +914,7 @@ class KalshiLiveDesk:
                 if slug not in self.archived and slug not in live and window.end <= now - ARCHIVE_AFTER_S
                 and (slug in self.book.settled or slug not in traded)}
 
+    @observed("live_checkpoint")
     def checkpoint(self, durable: bool = False) -> None:
         started = time.perf_counter()
         self._trace_flush()
@@ -914,37 +940,39 @@ class KalshiLiveDesk:
         if durable or self.clock() - self.last_reports >= 60:  # completed days change rarely: not on every save
             self._daily_reports()
             self.last_reports = self.clock()
-        live = self._live_windows()
-        # Activity came back to an archived window: save it in full again; it is archived anew once finished.
-        self.archived -= live
-        cold = self._cold_windows(self.clock(), live)
-        hidden = self.archived | cold
-        chunk: dict[str, Any] | None = ({"version": 1, "windows": sorted(cold), "book": self.book.window_parts(lambda window: window in cold),
-                  "intents": {key: without_default_lock(asdict(value)) for key, value in self.intents.items()
-                              if value.window in cold}} if cold else None)
-        state: dict[str, Any] = {"version": 1, "started_at": self.started_at, "updated_at": self.clock(),
-                 "book": self.book.to_state(without=hidden),
-                 "intents": {key: without_default_lock(asdict(value)) for key, value in self.intents.items()
-                             if value.window not in hidden},
-                 "archived_windows": sorted(self.archived | cold), "archive_chunks": self.archive_chunks + bool(cold),
-                 "twin": self.twin.to_state(), "fatal_reason": self.fatal_reason,
-                 "pull": self.pull.to_state(),
-                 "foreign_windows": sorted(self.foreign_windows), "final_outcomes": self.final_outcomes,
-                 "changed_windows": sorted(self.changed_windows),
-                 "latency_metrics": self.metrics.state(),
-                 "window_evidence": self.evidence.state(),
-                 "reports": self.reports, "ladder": self.ladder.to_state(),
-                 "latest_events": self.latest_events}
+        with work_span(self.work_trace, "live_state"):
+            live = self._live_windows()
+            # Activity came back to an archived window: save it in full again; it is archived anew once finished.
+            self.archived -= live
+            cold = self._cold_windows(self.clock(), live)
+            hidden = self.archived | cold
+            chunk: dict[str, Any] | None = ({"version": 1, "windows": sorted(cold), "book": self.book.window_parts(lambda window: window in cold),
+                      "intents": {key: without_default_lock(asdict(value)) for key, value in self.intents.items()
+                                  if value.window in cold}} if cold else None)
+            state: dict[str, Any] = {"version": 1, "started_at": self.started_at, "updated_at": self.clock(),
+                     "book": self.book.to_state(without=hidden),
+                     "intents": {key: without_default_lock(asdict(value)) for key, value in self.intents.items()
+                                 if value.window not in hidden},
+                     "archived_windows": sorted(self.archived | cold), "archive_chunks": self.archive_chunks + bool(cold),
+                     "twin": self.twin.to_state(), "fatal_reason": self.fatal_reason,
+                     "pull": self.pull.to_state(),
+                     "foreign_windows": sorted(self.foreign_windows), "final_outcomes": self.final_outcomes,
+                     "changed_windows": sorted(self.changed_windows),
+                     "latency_metrics": self.metrics.state(),
+                     "window_evidence": self.evidence.state(),
+                     "reports": self.reports, "ladder": self.ladder.to_state(),
+                     "latest_events": self.latest_events}
         building = time.perf_counter()
-        self.ledger.set_synchronous(durable or any(kind in OWNER_RECORDS for kind, _ in self.pending))
-        with self.ledger.transaction():
-            for kind, payload in self.pending:
-                self.ledger.append_receipt(kind, payload, ts=payload["at"])
-            if chunk is not None:
-                self.ledger.set_kv(f"{ARCHIVE_KEY}{self.archive_chunks}", chunk)
-            self.ledger.set_kv(STATE_KEY, state)
-            if self.journal or self.journal_on_disk:  # the full state now holds every journaled order
-                self.ledger.set_kv(JOURNAL_KEY, {"version": 1, "intents": {}})
+        with work_span(self.work_trace, "live_ledger"):
+            self.ledger.set_synchronous(durable or any(kind in OWNER_RECORDS for kind, _ in self.pending))
+            with self.ledger.transaction():
+                for kind, payload in self.pending:
+                    self.ledger.append_receipt(kind, payload, ts=payload["at"])
+                if chunk is not None:
+                    self.ledger.set_kv(f"{ARCHIVE_KEY}{self.archive_chunks}", chunk)
+                self.ledger.set_kv(STATE_KEY, state)
+                if self.journal or self.journal_on_disk:  # the full state now holds every journaled order
+                    self.ledger.set_kv(JOURNAL_KEY, {"version": 1, "intents": {}})
         saved = time.perf_counter()
         self.journal.clear()
         self.journal_on_disk = False
@@ -955,22 +983,24 @@ class KalshiLiveDesk:
             for part in WINDOW_PARTS:
                 self.archive_parts[part].update(chunk["book"][part])
             self.archive_parts["live_intents"].update(chunk["intents"])
-        for kind, payload in self.pending:
-            log.info("%s %s", kind, json.dumps(payload, allow_nan=False, separators=(",", ":")))
-        self.pending.clear()
+        with work_span(self.work_trace, "live_logs"):
+            for kind, payload in self.pending:
+                log.info("%s %s", kind, json.dumps(payload, allow_nan=False, separators=(",", ":")))
+            self.pending.clear()
         mirror_ms = None
         if self.stopping or self.clock() - self.last_mirror >= MIRROR_EVERY_S:
-            mirroring = time.perf_counter()
-            # The money page reads the panel from this display copy only; the ledger state never needed it.
-            full = {**state, "intents": {**self.archive_parts["live_intents"], **state["intents"]},
-                    "book": {**state["book"], **{part: {**self.archive_parts[part], **state["book"][part]}
-                                                 for part in WINDOW_PARTS}}, "panel": self.panel()}
-            temporary = self.path.with_suffix(".tmp")
-            with temporary.open("w", encoding="utf-8") as stream:
-                json.dump(full, stream, allow_nan=False, separators=(",", ":"))
-            os.replace(temporary, self.path)
-            self.last_mirror = self.clock()
-            mirror_ms = (time.perf_counter() - mirroring) * 1000
+            with work_span(self.work_trace, "live_mirror"):
+                mirroring = time.perf_counter()
+                # The money page reads the panel from this display copy only; the ledger state never needed it.
+                full = {**state, "intents": {**self.archive_parts["live_intents"], **state["intents"]},
+                        "book": {**state["book"], **{part: {**self.archive_parts[part], **state["book"][part]}
+                                                     for part in WINDOW_PARTS}}, "panel": self.panel()}
+                temporary = self.path.with_suffix(".tmp")
+                with temporary.open("w", encoding="utf-8") as stream:
+                    json.dump(full, stream, allow_nan=False, separators=(",", ":"))
+                os.replace(temporary, self.path)
+                self.last_mirror = self.clock()
+                mirror_ms = (time.perf_counter() - mirroring) * 1000
         self.last_checkpoint = self.clock()
         self.save_ms = (time.perf_counter() - started) * 1000
         self.save_stages = {"build_ms": (building - started) * 1000, "ledger_ms": (saved - building) * 1000,
@@ -2536,6 +2566,7 @@ class KalshiLiveDesk:
         self.checkpoint(durable=True)
         self.shutdown_done = True
 
+    @observed("live_panel")
     def panel(self) -> dict[str, Any]:
         risk = self.book.risk_status(self.clock())
         # The label follows the switches and stops, not the seconds between orders: after every order
@@ -2633,6 +2664,7 @@ class KalshiLiveDesk:
         return {**self.twin.daily_summary(day, venue="kalshi"),
                 "latency": self.metrics.report(day, "practice_twin"), "scorecard": self.scorecard(day, twin=True)}
 
+    @observed("live_reports")
     def _daily_reports(self) -> None:
         today = datetime.fromtimestamp(self.clock(), UTC).date()
         day = max(datetime.fromtimestamp(self.started_at, UTC).date(), today - timedelta(days=31))

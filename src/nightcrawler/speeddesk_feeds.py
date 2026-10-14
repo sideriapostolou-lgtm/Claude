@@ -24,6 +24,7 @@ import requests
 
 from .config import Secret, Settings
 from .speeddesk_model import FUTURE_SKEW_S, Book, Level, Trade, Window
+from .speeddesk_worktrace import WorkTrace, work_span
 
 log = logging.getLogger("nightcrawler.speeddesk_feeds")
 GATEWAY = "https://gateway.polymarket.us"
@@ -246,6 +247,7 @@ class LiveFeeds:
                  on_windows: Callable[[list[Window]], None], on_status: Callable[[dict[str, Any]], None],
                  sdk_client: Any = None, rest_get: Callable[[str], Any] | None = None,
                  clock: Callable[[], float] = time.time, coinbase_connect: Any = None) -> None:
+        self.work_trace: WorkTrace | None = None
         self._key_id = settings.polymarket_us_key_id
         self._secret_key = settings.polymarket_us_secret_key
         self._client = sdk_client
@@ -421,7 +423,8 @@ class LiveFeeds:
                     while True:
                         message = await asyncio.wait_for(ws.recv(), timeout=10)
                         received_at = self._clock()
-                        reply = json.loads(message)
+                        with work_span(self.work_trace, "coinbase_decode"):
+                            reply = json.loads(message)
                         for price, at, trade_id in parse(reply):
                             if received_at - at < -FUTURE_SKEW_S:
                                 # Refused by every desk, so it must not use up the trade id (latency review,
