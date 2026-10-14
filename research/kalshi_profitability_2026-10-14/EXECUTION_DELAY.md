@@ -96,6 +96,22 @@ CPU by wall overlap. Bounded loop/process-CPU deltas could distinguish work from
 off-thread contention as hypotheses. This is a proposal, not implemented code.
 Keep no spans across await, no shared cross-thread observer and no per-tick logs.
 
+## Quiet-work release and remaining correction, 3:50 PM Pacific
+
+PR #54 is verified deployed on exact `89b7b6d`, SUCCESS at 3:33:15 PM PDT.
+The [release and window report](QUIET_WORK_RESULTS.md) preserves original receipts,
+full checks, the completed post-PR53 window, remaining timing tails and warnings.
+The new bins observe accumulated short work; they do not themselves remove it.
+One 1,028.850 ms resumption gap includes at least 756.031 ms of observed wall
+occupancy and 568.158 ms of whole-contained-span CPU. Substantial gaps remain.
+
+One completed window made $0.3641 after fees; cumulative recorded bot losses remain
+−$14.2971 in the 3:33 PM snapshot. Neither is proof of a profitable strategy.
+A naive active-window index was rejected because public mutable windows/history
+can invalidate it. The next focused candidate is redundant live scorecard work
+inside the measured panel/checkpoint path, subject to profiling and parity review.
+No active-index correction, task completion or comparison start is claimed.
+
 ## Completion evidence required
 
 1. Identify the measured blocking section from joined production intervals,

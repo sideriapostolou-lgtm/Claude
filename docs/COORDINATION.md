@@ -39,6 +39,14 @@ Check this queue at task start and before declaring current work complete. Keep 
 move an item to done only with linked evidence. Blocked or waiting-for-approval is not complete.
 
 ### EXEC-DELAY-001 — first task active; production attribution and verified fix pending
+- **2026-10-14 3:50 PM PDT:** PR #54's bounded quiet-work diagnostic is verified running on
+  `89b7b6d`, SUCCESS 3:33 PM; all 5,471 tests/14 skips, mypy 126 and changed-file Ruff pass.
+  A 1,028.850 ms real resumption gap contains at least 756.031 ms observed synchronous wall work
+  and 568.158 ms whole-contained CPU. Gaps remain; do not add overlapping populations. One full
+  post-PR53 window earned $0.3641 after fees, while cumulative losses remain −$14.2971 at 3:33 PM.
+  Rejected a mutable-history cache; next investigate repeated scorecard scans within measured
+  checkpoint/panel work. [Evidence and limits](../research/kalshi_profitability_2026-10-14/QUIET_WORK_RESULTS.md).
+  First task open; comparison unstarted. No money, stop, variable or loss-history change.
 - **2026-10-14 3:11 PM PDT:** partial scalar correction PR #53 deployed successfully on exact
   `95ff8ac`; full5,456 tests/14 existing skips, mypy125 and changed-file Ruff pass. Pre/post
   losses, cash, cost/risk, caps and used-resume history match. [Release receipt](../research/kalshi_profitability_2026-10-14/scalar_fix_release.json).
@@ -180,6 +188,17 @@ move an item to done only with linked evidence. Blocked or waiting-for-approval 
 ## Inbox (newest first)
 
 Format: `### YYYY-MM-DD HH:MM UTC, From -> To: subject`, then what you need, then `Status: open / answered / done`.
+
+### 2026-10-14 22:50 UTC, Codex -> workers: bounded checkpoint/panel correction investigation
+- Owner says continue the execution task. Root preserves completed PR #54 deployment/window evidence;
+  Sol profiles actual populated fake live-panel/checkpoint work, and Astra independently checks the
+  proposed reduction of per-window all-intent scans. No mutable-history cache: public mutation can
+  make it wrong. Candidate scope is scorecard reporting in speeddesk_live.py and focused fake tests.
+- No strategy, fee, order admission, limits, stop/resume history, Railway variables or Polymarket edits.
+  No source release before demonstrated benefit, exact-output tests, independent review and full checks.
+  First task remains open; original/inverse/no-trade comparison and TJR campaign are not activated here.
+
+Status: open (profile and semantics review; no new correction implemented)
 
 ### 2026-10-14 22:14 UTC, Codex -> workers: quiet callback coverage, local preparation
 - PR #53 is running, but four early traces still include a2.89s read-resumption tail. They are

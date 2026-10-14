@@ -13,6 +13,35 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-14 22:50 UTC, Codex, quiet diagnostic deployment and completed window evidence (3:50 PM PDT)
+- Preserved PR #54 exact source 89b7b6db8b7c887f8398d604c8b3bfe8ce9d16cc, deployment
+  af3e9f29-2124-4849-8c02-33e91dc46fdb, SUCCESS 3:33:15.252 PM PDT. Normal Polymarket LIVE startup;
+  both services online 1/1. The 3:32/3:33 snapshots retain cash $34.9543, open cost/risk $0.49,
+  514 fills, $2.27122 fees, cumulative settled P&L −$14.2971, all caps/stops and used-resume history.
+  Ordinary attempt counters changed. These are dated balances, not current account totals.
+- Exact traceback query through 3:36:15 PM returned zero, but warnings include pump.fun 403/backoff,
+  its learning breaker and a 3:35:22 weatherwatch callback-queue capture gap. No error-free or complete
+  capture claim. Recorder unchanged. Full 5,471 tests/14 skips, mypy 126, Ruff four files and exact
+  independent review bundle retained in quiet_bins_release.json; no check or threshold weakened.
+- Completed post-scalar 3:15–3:30 PM window: 41 intents/41 accepted IDs, two actual one-contract fills,
+  $0.633 cost + $0.0029 fees, $1 payout, +$0.3641 locked P&L; directional residual approximately zero.
+  Four selected cycles/20 reads still include a 4,757.837 ms resumption gap and 81 omitted work details.
+  Saved closed parsed receipt plus independent exact-prefix reread with 85 original financial messages.
+  One positive window does not erase losses, prove profitability or demonstrate causal latency gains.
+- New quiet bins expose at least 756.031 ms wall/568.158 ms whole-contained CPU in a 1,028.850 ms gap;
+  272.819 ms remains unattributed/boundary. Never add overlapping old/new coverage or prorate CPU.
+  Fakes-only density profile identifies repeated practice history scans, but mutable public windows/list
+  edits invalidate a naive cache; both independent design reviews rejected it. No cache implemented.
+- Preserved exact profile archive/hashes and bounded 30-second resource receipts, including rejected
+  five-second sampling and failed documentation fetch. Neither profile nor metrics establishes the
+  complete cause of production stalls. QUIET_WORK_RESULTS.md records limitations and next correction.
+- Owner says continue. Sol now profiles actual populated fake panel/checkpoint work; Astra checks a
+  proposed per-call grouping of scorecard intents. No candidate correction yet. EXEC-DELAY-001 stays
+  open; second comparison unstarted; TJR data/cost blocker and recorder obligations persist.
+- This publication changes only docs/evidence, not source, deployment, orders, variables or financial
+  rules/history. Verify JSON/archive hashes, preserved history and added-content credential scan before
+  push. Source tests above are the existing release checks, not a new application rerun for this receipt.
+
 ## 2026-10-14 22:44 UTC, Codex, bounded TJR queue follow-up (3:44 PM PDT)
 - Read current COORDINATION, AGENTS and newest WORKLOG through connected GitHub; fetched exact
   deploy-branch head 89b7b6db8b7c887f8398d604c8b3bfe8ce9d16cc without changing active work.
