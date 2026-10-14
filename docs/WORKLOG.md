@@ -13,6 +13,53 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-14 14:07 UTC, Codex, owner-approved optional bid hold disabled
+- Authorization: after the approved restart, the owner explicitly asked to turn trading back on and
+  override the guard preventing bids. Live mode was already enabled. Explained the narrow change:
+  disable the optional fair-move bid pull/hold, retaining cash/exposure/loss caps, freshness checks and
+  uncertain-order protection. No new budget, higher amounts or blanket safety override was applied.
+- Set only `SPEEDDESK_KALSHI_PULL=false` on Railway production service `bot` at 14:05 UTC, inside
+  the safe interval. This allows bids during fair-value swings and can spend the approved loss budget
+  faster. Ordinary repricing/stale-bid cancellations remain; removing the pull-specific two-write
+  reservation does not change the client's actual write-rate limit. No keys or other variables changed.
+- Deployment `02907385-c0a3-4595-aa12-72234dc61e7c` built exact commit
+  `1107fb46772136f37cd361586bf63ef4e47f7d8d`, SUCCESS at 14:06:23 UTC. Application source and tests
+  match the previously tested release. One healthy bot replica; recorder unchanged and healthy.
+  `polydesk_started` at 14:06:05 confirms its existing LIVE setting; no Polymarket settings changed.
+- At 14:06:12 the resume receipt said `ignored; this value was already used`: this restart did NOT
+  grant another loss budget. Status verifies REAL MONEY (Kalshi), authenticated, fee precision verified,
+  pull.enabled false, no held windows, rung 0, caps $10/window, $20 open, $6/day, $10 total, clip 5.
+  Existing day P&L -$0.05 and lifetime P&L -$9.9921 remain; both loss latches are clear.
+- First actual activity: a five-contract Down bid at $0.69 was stopped by the final pre-send check
+  (logged as prices moved; that receipt does not distinguish every guard cause). Kalshi then ACCEPTED
+  a five-contract Up bid at $0.24 ($1.20 before any applicable fees)
+  at 14:06:18 in `KXBTC15M-26OCT141015-15`. This is an accepted resting order, not a confirmed fill
+  or profit. Its decision-to-ack was 83.1 ms (32.5 ms save; 45.4 ms send-to-ack), one observation only.
+- Verification: independent toggle review; seven targeted fake regressions passed, plus direct checks
+  that restarting with pull disabled ignores saved holds. No source edit; prior full validation remains
+  5,228 passed / 14 skipped, mypy and changed-file Ruff clean. Startup traceback query is empty.
+  Slow account reconciliations remain a separate limitation; their freshness gate is still enforced.
+- Bounded follow-up through 14:07:57 UTC: five accepted bids (five contracts each; Up at $0.24,
+  $0.11, $0.18 and $0.16, Down at $0.84), each subsequently received a cancellation acknowledgement
+  for all five contracts. No new fill receipts. One extra cancel returned not-resting/404; the code
+  retains its reservation until reconciliation. Latest account snapshot at 14:07:23 had unchanged
+  $39.7493 cash, zero positions/orders/risk and no new realized P&L. Daily fill count includes one
+  older fill and is not evidence of a fill since this change.
+- Order acknowledgements ranged from 58.1 ms to 1.903 s. One cancellation took 9.922 s. The first
+  83.1 ms acknowledgement is not representative of the long tail; consistent sub-second execution
+  is NOT established. Account/feed freshness still pauses orders when necessary.
+- FIRST REAL FILL confirmed in the 14:08:46 receipt: five Up contracts at $0.25, $1.25 spent,
+  fee $0.00, maker fill, in `KXBTC15M-26OCT141015-15` (venue fill time 14:08:36 UTC). This was a
+  later accepted bid, not any of the first five cancelled bids. It is an executed real position,
+  not a settled win or profit. Latest startup traceback query remains empty.
+- At 14:09:24 the reconciled account confirms $38.4993 cash, one position, $1.25 at risk, zero
+  open orders, unchanged realized P&L, no integrity error and both loss latches clear. The current
+  entry refusal is pair_cap; that price constraint remains enforced, with no manual forced order.
+- Real money touched? YES, an owner-authorized strategy setting changed and Kalshi accepted real
+  resting bids within existing caps. No profit guarantee or continuous monitoring claim. Next:
+  report actual fills/settlements through the existing daily check and address account/cancel latency
+  without weakening freshness or uncertainty checks. No further budget reset is authorized here.
+
 ## 2026-10-14 13:53 UTC, Codex, owner-approved Kalshi restart (configuration only)
 - Authorization: the owner replied "You have my approval for everything" directly to the concrete
   proposal for a fresh $10 lifetime loss budget, retaining $10/window, $20 open, $6/day and five-contract

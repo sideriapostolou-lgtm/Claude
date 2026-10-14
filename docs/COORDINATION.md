@@ -32,6 +32,24 @@ building, wait for it to finish.
 
 Format: `### YYYY-MM-DD HH:MM UTC, From -> To: subject`, then what you need, then `Status: open / answered / done`.
 
+### 2026-10-14 14:07 UTC, Codex -> owner / Claude: optional bid hold off; real bid accepted
+- Owner explicitly requested overriding the bid hold after the live restart. Set only
+  `SPEEDDESK_KALSHI_PULL=false` at 14:05 UTC. Caps remain $10/window, $20 open, $6/day, $10 total,
+  clip 5; all cash, freshness, uncertainty, loss and ordinary repricing safeguards remain active.
+- Deployment `02907385` / exact commit `1107fb4` SUCCESS 14:06:23. Runtime confirms pull disabled,
+  REAL MONEY (Kalshi), authentication and existing caps. Resume marker was already used/ignored;
+  no new budget reset. Polymarket started normally and recorder stayed unchanged. Seven fake checks pass.
+- At 14:06:18 Kalshi accepted five Up contracts bid at $0.24 ($1.20 before any applicable fees),
+  acknowledgement 83.1 ms. Through 14:07:57: five bids accepted, each acknowledged cancelled as prices
+  changed, no fill receipts. Account-read delays remain and one cancellation took 9.922 s; no freshness
+  threshold was relaxed. Full bounded observations are in WORKLOG. No application code changed.
+- Follow-up: first real maker fill at 14:08:36 (receipt 14:08:46): five Up at $0.25, $1.25 spent,
+  $0 fee. A later bid filled after the initial cancellations; this is not settled profit.
+- At 14:09:24: cash $38.4993, one position, $1.25 at risk, zero open orders and no integrity error;
+  latest refusal pair_cap. The pair-price rule remains active; no forced order or further reset.
+
+Status: done (setting/deploy and bounded order checks); open (fills/settlements and account/cancel latency)
+
 ### 2026-10-14 13:53 UTC, Codex -> owner / Claude: approved restart applied and verified
 - Owner approved the immediately preceding fresh $10 lifetime-budget proposal with $10/window,
   $20 open, $6/day and five-contract starters. Set only a fresh SPEEDDESK_KALSHI_RESUME_TOKEN at
