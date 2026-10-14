@@ -13,6 +13,36 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-14 18:00 UTC, Codex, prospective Kalshi fill/exit evidence (11:00 AM PDT)
+- Owner asked for the next highest-leverage step. Built a bounded observation-only diagnostic that records
+  visible selling bids 1/5/30 seconds after the complete account-fill batch returns. Actual venue fill time
+  and detection delay remain separate; this cannot measure opportunities before the bot learned the fill.
+- New pure speeddesk_markouts.py, isolated hooks in speeddesk_live.py and an optional raw-book observer in
+  speeddesk.py. No extra account/market requests, decision rule, order authority, cap, stop, reset, variable,
+  fee policy or Polymarket change. Real and practice financial accounting are unchanged.
+- Explicit gaps for late/stale/invalid/absent books, feed invalidation, settlement, shutdown, old recovered
+  fills, dedup/work limits and unknown ownership. Partial depth gets separate partial net; full exit net
+  stays null. Quotes use a conservative sell-fee bound and have no simulated order transit/queue execution.
+  Per-fill alternative exits cannot be summed into portfolio profit or erase existing real losses.
+- Independent review caught two evidence defects before release: first invalid quotes were filtered by
+  practice acceptance, and newer account state could let a recently cancelled/filled own bid look external.
+  Fixed raw observation before both acceptance filters; now subtract every own order's original size for
+  that window, including terminal orders. This intentionally understates depth and is labeled in each row.
+  New regressions reproduce both problems and prove later favorable quotes cannot replace the first gap.
+- Verified: 55 pure and 22 integration tests pass; mypy 123 source files and changed-file Ruff clean.
+  Full suite: 5,379 passed / 14 existing skips in 298.07 seconds. The earlier full run was interrupted
+  after review fixes; its partial output is not
+  presented as a completed pass. Independent final review found no remaining blocking issue.
+- Local synthetic CPU: one due fill 0.080 ms median/0.118 ms p95; 1,024 simultaneous due fills 9.77 ms
+  before logging/persistence (32 detailed quotes, remaining explicit work-bound gaps). Not Railway latency.
+- Documentation: research/kalshi_profitability_2026-10-14/FILL_MARKOUTS.md fixes the sampling definition,
+  costs, restart/durability gaps, conservative own-depth bias and next research comparison. Existing frozen
+  original/inverted/no-trade protocol and sealed TEST untouched; TJR historical/paper remains queued.
+- Release uses the owner's standing approval after all checks, in a safe merge minute. Deployment and
+  first observed fill/horizon verification remain pending at this entry; no profitability claim.
+- Next: verify exact running commit, preserved caps/stops/loss history and normal Polymarket startup;
+  collect newly observed real fills with all three terminal horizon records, retaining gaps and losses.
+
 ## 2026-10-14 17:39 UTC, Codex, TJR source review and Kalshi entry/exit diagnosis (10:39 AM PDT)
 - Owner directly requested better Kalshi direction/profit-taking and more information about the saved TJR
   bot. Read current rules/coordination/latest worklog and both full Spaces Pages, including every code block.

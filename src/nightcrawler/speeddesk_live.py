@@ -39,6 +39,7 @@ from .speeddesk_live_model import (
     without_default_lock,
 )
 from .speeddesk_live_pull import PullGuard, PullRule, compare
+from .speeddesk_markouts import FillMarkouts
 from .speeddesk_metrics import (
     LatencyMetrics,
     TickReceipt,
@@ -121,7 +122,9 @@ JOURNAL_KEY, SAVE_EVERY_S = "kalshi_live_journal", 1.0
 # a network buffer can arrive late. While one waits, complete lists are read every ORDER_LIST_LAG_S.
 # Receipts kept out of the panel's latest events: the status line, and one line per finished pull (each pull's
 # cancels are events already; a busy minute of pulls would otherwise push the orders and fills out).
-QUIET_RECORDS = frozenset({"speeddesk_live_status", "speeddesk_live_pull"})
+QUIET_RECORDS = frozenset({"speeddesk_live_status", "speeddesk_live_pull", "speeddesk_fill_observed",
+                           "speeddesk_fill_markout", "speeddesk_fill_markout_gap",
+                           "speeddesk_fill_markout_status"})
 PULL_REASON = "Bids pulled: the fair value just moved; no new bid until the hold ends"
 # How often the practice twin may try the bid a held window would get without the pull (see _twin_unpulled_bid).
 TWIN_RETRY_S = 1.0
@@ -428,6 +431,8 @@ class KalshiLiveDesk:
         self.final_outcomes: dict[str, bool] = {}
         self.latest_events: list[dict[str, Any]] = []
         self.pending: list[tuple[str, dict[str, Any]]] = []
+        self.markouts: FillMarkouts | None = None
+        self.markout_error: str | None = None
         self.fatal_reason: str | None = None
         # Which reconciliation check stopped real orders, logged once per stop (and once after each restart).
         self.integrity_logged: str | None = None
@@ -571,6 +576,11 @@ class KalshiLiveDesk:
                 self._record("speeddesk_live_day_reset", state="ignored; this value was already used")
             # Tokens can clear a stop just recorded above. A later new latch must receive its own receipt.
             self.stop_state = (self.book.halted, self.book.day_latched(clock()))
+            try:
+                self.markouts = FillMarkouts(self.clock(), self.monotonic())
+            except Exception as exc:  # noqa: BLE001 - observation failure never changes trading authority.
+                self.markout_error = type(exc).__name__
+            self._record("speeddesk_fill_markout_status", **self._markout_panel())
             self.checkpoint(durable=True)
         except BaseException:
             self.ledger.close()
@@ -610,6 +620,52 @@ class KalshiLiveDesk:
         if receipt_kind not in QUIET_RECORDS:
             self.latest_events.append({"event": receipt_kind, **item})
             self.latest_events = self.latest_events[-20:]
+
+    def _markout_call(self, method: str, *args: Any, **kwargs: Any) -> None:
+        """Optional evidence only; no exception may reach the account/decision controller."""
+        if self.markouts is None:
+            return
+        try:
+            for row in getattr(self.markouts, method)(*args, **kwargs):
+                event = row.pop("event")
+                self._record(event, **row)
+        except Exception as exc:  # noqa: BLE001 - disable broken diagnostics, never real cancellations.
+            self.markout_error = type(exc).__name__
+            self.markouts = None
+            self._record("speeddesk_fill_markout_status", **self._markout_panel())
+
+    def _markout_panel(self) -> dict[str, Any]:
+        try:
+            return ({**self.markouts.status(), "error": self.markout_error,
+                     "own_depth_policy": "all_original_bot_order_sizes_in_window"}
+                    if self.markouts is not None else
+                    {"mode": "diagnostic", "enabled": False, "error": self.markout_error,
+                     "coverage": "unknown; diagnostic unavailable", "realized_pnl": False})
+        except Exception as exc:  # noqa: BLE001 - display diagnostics cannot disable real cleanup.
+            return {"mode": "diagnostic", "enabled": False, "error": type(exc).__name__,
+                    "coverage": "unknown; status unavailable", "realized_pnl": False}
+
+    def _markout_book(self, book: Book) -> None:
+        if self.markouts is None:
+            return
+        try:
+            now, mono = self.clock(), self.monotonic()
+            if not self.markouts.needs_book(book.window, book.side, mono):
+                return
+            own_bids: dict[float, float] = {}
+            # A fresh buffered quote may predate a cancel or partial fill already reconciled here.
+            # Exclude each own order's original size for this entire window, even after cancellation.
+            # This deliberately understates outside liquidity rather than counting a stale own bid.
+            for order in self.book._window_intents(book.window):
+                if order.side == book.side:
+                    own_bids[order.price] = own_bids.get(order.price, 0.0) + order.size
+            self._markout_call("on_book", book, now=now, mono=mono, own_bids=own_bids,
+                               ownership_unknown=book.window in self.foreign_windows
+                               or bool(self.book.integrity_error))
+        except Exception as exc:  # noqa: BLE001 - no diagnostic can break the feed or trading loop.
+            self.markout_error = type(exc).__name__
+            self.markouts = None
+            self._record("speeddesk_fill_markout_status", **self._markout_panel())
 
     def _start_io(self, callback: Callable[..., Any], *args: Any, **kwargs: Any) -> asyncio.Task[Any]:
         queued = self.monotonic()
@@ -894,10 +950,17 @@ class KalshiLiveDesk:
                 if previous is not None and any(getattr(previous, key) != getattr(window, key) for key in terms):
                     self.changed_windows.add(window.slug)
                     self._twin_events(self.twin.cancel(self.clock(), window.slug, "venue_terms_changed"))
+                    self._markout_call("expire", now=self.clock(), mono=self.monotonic(),
+                                       reason="venue_terms_changed", window=window.slug)
                 self.book.add_window(window)
                 self.twin.add_window(replace(window))
 
+    def observe_book(self, book: Book) -> None:
+        """Raw diagnostic callback; invalid first quotes must not be replaced by better ones."""
+        self._markout_book(book)
+
     def on_book(self, book: Book) -> None:
+        self.observe_book(book)
         if book.window in self.twin.windows and self.twin.on_book(book):
             self._twin_events(self.twin.advance(self.clock()))
             self.wake.set()
@@ -909,12 +972,18 @@ class KalshiLiveDesk:
     def on_status(self, status: dict[str, Any]) -> None:
         if status.get("coinbase") != "connected" or not status.get("trade_stream"):
             self.evidence.last_fresh.clear()
+            self._markout_call("expire", now=self.clock(), mono=self.monotonic(),
+                               reason="book_snapshot_invalidated")
         self.evidence.last_fresh.difference_update(status.get("gap_windows", []))
         for slug in status.get("gap_windows", []):
             self._twin_events(self.twin.cancel(self.clock(), slug, "venue_feed_gap"))
+            self._markout_call("expire", now=self.clock(), mono=self.monotonic(),
+                               reason="venue_feed_gap", window=slug)
 
     def on_settlement(self, window: str, up_wins: bool, now: float) -> None:
         self.final_outcomes[window] = up_wins
+        self._markout_call("expire", now=self.clock(), mono=self.monotonic(),
+                           reason="market_settled", window=window)
         if window in self.twin.windows:
             self._twin_events(self.twin.cancel(now, window, "settled"))
             result = self.twin.settle(window, up_wins, now)
@@ -1475,6 +1544,8 @@ class KalshiLiveDesk:
         unattributed: set[str] = set()  # windows with a fill Kalshi lists under an order id the bot does not know
         fills = await self._read("fills", self.client.fills,
                                  min_ts=max(0, int(self.started_at) - 60) if recent_from is None else recent_from)
+        # Completion of the whole paginated account read, not the exchange/wire receipt of each fill.
+        fills_batch_at, fills_batch_mono = self.clock(), self.monotonic()
         by_order = {intent.order_id: intent for intent in self.intents.values() if intent.order_id}
         for raw in fills:
             intent = by_order.get(str(raw.get("order_id", "")))
@@ -1499,6 +1570,9 @@ class KalshiLiveDesk:
             fill = self._fill(raw, intent)
             if self.book.record_fill(fill):
                 self._record("speeddesk_live_fill", **asdict(fill))
+                self._markout_call("observe_fill", fill, self.book.windows.get(fill.window),
+                                   observed_at=fills_batch_at, observed_mono=fills_batch_mono,
+                                   fee_precision=self.book.limits.fee_precision, fee_verified=self.fee_verified)
                 money_changed = True
         self.order_reads += 1
         reading = self.order_reads  # a cancel that fails from here on was not seen by this read (cancel_failed)
@@ -2252,6 +2326,7 @@ class KalshiLiveDesk:
         self._request_timings()
         status = self.clock() - self.last_status >= 60
         if status:
+            self._record("speeddesk_fill_markout_status", **self._markout_panel())
             # Account reads since the last status line: complete and recent reconcile times, each read's time,
             # pages, rows and bytes, and how often each consistency check failed; plus the latest reconcile.
             self._record("speeddesk_live_status", **self.panel(),
@@ -2315,10 +2390,17 @@ class KalshiLiveDesk:
                     self.loop_stats.count(f"clock_probe_{type(exc).__name__}")
             await asyncio.sleep(CLOCK_PROBE_S)
 
+    async def _markout_probe(self) -> None:
+        """Expire absent quotes even while an account GET is in flight; no network or decisions."""
+        while self.stop_event is not None and not self.stop_event.is_set():
+            await asyncio.sleep(0.1)
+            self._markout_call("expire", now=self.clock(), mono=self.monotonic())
+
     async def run(self, stop: threading.Event) -> None:
         self.stop_event = stop
         self.wake = asyncio.Event()  # bound to this run's event loop
-        probes = [asyncio.create_task(self._lag_probe()), asyncio.create_task(self._clock_probe())]
+        probes = [asyncio.create_task(self._lag_probe()), asyncio.create_task(self._clock_probe()),
+                  asyncio.create_task(self._markout_probe())]
         try:
             while not stop.is_set():
                 self.wake.clear()
@@ -2373,6 +2455,7 @@ class KalshiLiveDesk:
         self._practice("twin_shutdown", lambda: self._twin_events(self.twin.cancel(self.clock(), reason="shutdown")))
         for record in self._practice("pull_shutdown", lambda: self.pull.expire(self.clock(), everything=True)) or []:
             self._record("speeddesk_live_pull", **record)
+        self._markout_call("expire", now=self.clock(), mono=self.monotonic(), reason="shutdown")
         self.checkpoint(durable=True)
         self.shutdown_done = True
 
@@ -2416,6 +2499,7 @@ class KalshiLiveDesk:
                 "practice_twin": self._twin_summary(utc_day(self.clock())),
                 "reports": self.reports,
                 "pull": self._pull_panel(),
+                "fill_markouts": self._markout_panel(),
                 "latest_events": self.latest_events[-10:]}
 
     def _summary(self, day: str | None) -> dict[str, Any]:

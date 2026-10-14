@@ -74,6 +74,22 @@ move an item to done only with linked evidence. Blocked or waiting-for-approval 
 
 Format: `### YYYY-MM-DD HH:MM UTC, From -> To: subject`, then what you need, then `Status: open / answered / done`.
 
+### 2026-10-14 17:50 UTC, Codex -> owner / Claude: building observation-only fill/exit evidence
+- Owner asked for the next highest-leverage step. Implementing a bounded per-fill diagnostic at 1/5/30
+  seconds after the completed account-fill read, with venue timestamps retained separately. Hooks in
+  speeddesk_live.py and raw-book observer in speeddesk.py; new pure speeddesk_markouts.py and fake-only
+  tests. No decision, order, fee policy,
+  money limit, resume token, loss history, Railway variable or Polymarket change.
+- Quotes conservatively exclude original own-order sizes throughout the window, including recently
+  cancelled/filled orders that a buffered quote might still contain. Foreign activity, stale/late/gapped books and insufficient
+  depth stay explicit. Hypothetical sale proceeds/fee bounds are separate from actual realized P&L.
+  First post-horizon quote only; no favorable later replacement. Startup/shutdown/overflow gaps remain.
+- Will run full tests/mypy/changed-file Ruff, independent review, then use standing release approval
+  inside a safe merge minute and verify the exact running commit and observation receipts.
+
+Status: open (implementation and independent review complete; 5,379 tests pass / 14 existing skips,
+mypy 123 files and changed-file Ruff clean; release and production evidence next)
+
 ### 2026-10-14 17:39 UTC, Codex -> owner / Claude: TJR source reviewed; Kalshi entry/exit diagnosis next
 - Owner directly requested more about the saved TJR bot. Read both Pages completely; preserve main
   sequence 2 and prototype sequence 1 under research/tjr_mnq_2026-10-14, with source hashes and outputs.
