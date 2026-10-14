@@ -10,7 +10,8 @@ from __future__ import annotations
 import itertools
 import math
 from collections import deque
-from dataclasses import asdict, dataclass, field
+from collections.abc import Callable
+from dataclasses import asdict, dataclass, field, fields
 from datetime import UTC, datetime
 from decimal import ROUND_CEILING, ROUND_HALF_EVEN, Decimal
 from typing import Any, Literal
@@ -27,6 +28,20 @@ FUTURE_SKEW_S = 0.25
 # The mean of sixty one-second values of a random walk varies like the walk 60 - (61 x 121) / 360, about 39.5 s, before
 # the last of them: Kalshi's 15-minute settlement average (see fair_up).
 AVERAGE_LEAD_S = 39.5
+# A lock buy is never placed this close to the close; the live companion's own constant
+# (speeddesk_live_model.LOCK_MARGIN_S, kept equal by a test): the market may stop matching.
+LOCK_MARGIN_S = 20.0
+# Opt-in behaviours for the Kalshi arena's practice residents (nightcrawler.kalshi_arena). At their defaults the desk
+# is exactly today's (tests/test_speeddesk_model_genes.py replays a pinned run); config_state leaves them out then.
+OPT_IN_FIELDS = ("starter_clip", "starter_delay_s", "starter_stop_s", "rounds", "whole_contracts", "lock_s",
+                 "lock_max_price", "stop_s", "stop_pair_cost", "day_stop_counts_risk", "hedged_open_budget",
+                 "rest_ttl_s", "edge_fee_precision")
+# The most a protective stop pays a contract: completing a pair below $1 a pair always lowers the window's loss, so
+# the stop has no cap of its own beyond Kalshi's dearest whole-cent ask (the lock keeps lock_max_price).
+STOP_MAX_PRICE = 0.99
+# Pending orders per window whose fill combinations the worst case enumerates: the live risk book's own constant
+# (speeddesk_live_model.MAX_LEGS, kept equal by a test). In practice at most one order per side is pending.
+MAX_LEGS = 10
 
 
 @dataclass(frozen=True)
@@ -94,6 +109,34 @@ class SpeedConfig:
     # 1,500 returns still pin sigma to about 1.8 % (1 / sqrt(2n)); missing seconds are still never invented.
     sigma_min_samples: int = 1500
     sigma_warmup_s: float = 3600.0
+    # The size of a window's first buy (and of each round's); 0 uses clip.
+    starter_clip: float = 0.0
+    # No starter before the window's start plus this, nor from this long before its close (0: no such wait).
+    starter_delay_s: float = 0.0
+    starter_stop_s: float = 0.0
+    # Rounds: once a window's pair is complete (up = down, nothing pending), the next buy may be a fresh starter.
+    rounds: bool = False
+    # Whole contracts only, as the live companion sends them.
+    whole_contracts: bool = False
+    # The live lock: from this long before the close until LOCK_MARGIN_S before it, buy the unpaired side at the ask
+    # (immediate-or-cancel, at most lock_max_price, clip contracts at a time); 0: no lock.
+    lock_s: float = 0.0
+    lock_max_price: float = 0.97
+    # A protective stop: from stop_s before the close, complete the pair the same way once completing it would cost
+    # at least stop_pair_cost per pair, fees included; 0: off.
+    stop_s: float = 0.0
+    stop_pair_cost: float = 0.0
+    # The live risk book's own stops (speeddesk_live_model.LiveRiskBook.can_buy), for the Kalshi arena's residents:
+    # the day stop refuses a buy once today's settled loss plus the money still at risk plus its cost reaches it, and
+    # the open budget counts money at risk (a complete pair risks nothing) instead of gross spend.
+    day_stop_counts_risk: bool = False
+    hedged_open_budget: bool = False
+    # A resting bid expires this long after the whole second it was placed in, as live sends it (expiration_ts), and
+    # a fresh one queues behind the book again; 0: rests until cancelled.
+    rest_ttl_s: float = 0.0
+    # Live's edge check after its conservative fee reserve rounded to this grid ($0.01, or $0.0001 for a verified
+    # direct member: speeddesk_live._send); 0: the plain fee formula only.
+    edge_fee_precision: float = 0.0
 
     def __post_init__(self) -> None:
         values = asdict(self)
@@ -103,6 +146,41 @@ class SpeedConfig:
             raise ValueError("Invalid pair or imbalance limit")
         if not 1 <= self.sigma_min_samples <= 3600:
             raise ValueError("sigma_min_samples must be between 1 and 3600")
+        if not 0 < self.lock_max_price <= 0.99 or self.lock_s >= 900 or self.stop_s >= 900:
+            raise ValueError("Invalid lock or stop period")
+        if self.stop_pair_cost and not 1 < self.stop_pair_cost <= 2:
+            raise ValueError("A protective stop's pair cost must be above $1 and at most $2")
+        if self.edge_fee_precision not in (0.0, 0.01, 0.0001):
+            raise ValueError("edge_fee_precision must be 0, 0.01 or 0.0001")
+
+
+#: Every field and each opt-in field's default, read once: config_state runs inside the live companion's durable
+#: checkpoint (the twin's to_state), before the first byte of a real order.
+_CONFIG_FIELDS = tuple(item.name for item in fields(SpeedConfig))
+_OPT_IN_DEFAULTS = {item.name: item.default for item in fields(SpeedConfig) if item.name in OPT_IN_FIELDS}
+
+
+def config_state(config: SpeedConfig) -> dict[str, Any]:
+    """A saved config without the opt-in fields that hold their defaults, so a release from before them can still
+    read the state (the ``speeddesk_live_model.without_default_lock`` precedent); a missing field takes its default.
+    The same dict as ``asdict`` for the fields it keeps (every value is a plain number or flag)."""
+    state = {}
+    for name in _CONFIG_FIELDS:
+        value = getattr(config, name)
+        if name not in _OPT_IN_DEFAULTS or value != _OPT_IN_DEFAULTS[name]:
+            state[name] = value
+    return state
+
+
+def unit_reserve(price: float, coefficient: float, precision: float) -> float:
+    """Live's conservative cost of one contract (``speeddesk_live_model.reserve_unit_cost``, kept equal by a test):
+    a .01-contract fill's price plus fee, rounded up to the account's fee grid, per contract."""
+    if not (math.isfinite(price) and 0 < price < 1 and math.isfinite(coefficient) and 0 <= coefficient <= 1
+            and precision in (0.0001, 0.01)):
+        raise ValueError("Unknown or invalid fee inputs")
+    p, k, increment, grid = Decimal(str(price)), Decimal(str(coefficient)), Decimal(".01"), Decimal(str(precision))
+    cost = increment * (p + k * p * (1 - p))
+    return float((cost / grid).to_integral_value(rounding=ROUND_CEILING) * grid / increment)
 
 
 def fair_up(spot: float, opening: float, sigma: float, seconds_left: float, *,
@@ -281,6 +359,13 @@ class PracticeOrder:
     decision_sequence: str = ""
     fee_rounding: FeeRounding = "half_even"
     min_trade_qty: float = 0.01
+    # A lock (or protective stop) completing the window's unpaired contracts; it fills like a take.
+    lock: bool = False
+
+    @property
+    def counter(self) -> str:
+        """The prefix of this order's counters: locks never inflate the takes' fill rates."""
+        return "lock" if self.lock else self.kind
 
     @property
     def reserved(self) -> float:
@@ -321,8 +406,18 @@ class Settlement:
     pnl_usd: float
 
 
+def _order_state(order: PracticeOrder) -> dict[str, Any]:
+    """A saved order without the lock flag when it is False (readable by the release before locks)."""
+    return {key: value for key, value in asdict(order).items() if not (key == "lock" and value is False)}
+
+
 def utc_day(now: float) -> str:
     return datetime.fromtimestamp(now, UTC).date().isoformat()
+
+
+#: advance() keeps lock orders through these blocks: a lock runs after the cutoff and through the day stop, and
+#: needs no Bitcoin price or opening (it uses no fair value).
+KEEPS_LOCKS = frozenset({"cutoff", "day_stop", "bitcoin_stale", "opening_price_missing"})
 
 
 def settlement(window: str, inventory: Inventory, up_wins: bool, now: float) -> Settlement:
@@ -365,10 +460,16 @@ class PracticeDesk:
         self.next_order_id = 1
         self.seen_trades: set[str] = set()
         self.trade_order: deque[str] = deque()
+        # Prints remembered for de-duplication. The Kalshi arena de-duplicates once for all its residents and keeps
+        # each one's memory small (twelve 10,000-print memories were about 22 MB).
+        self.trade_memory = 10000
         self.consumed: dict[tuple[str, Side, float], float] = {}
         self.last_reason: dict[str, str] = {}
         self.bootstrap_order: dict[str, int] = {}
         self.bootstrap_side: dict[str, Side] = {}
+        # A starter filter (the Kalshi arena's signal slot): a reason blocks a window's starter, "" allows it; None
+        # keeps today's desk. Balancing buys and locks never ask it.
+        self.starter_gate: Callable[[Window, float], str] | None = None
 
     def add_window(self, window: Window) -> None:
         if window.end <= window.start or window.tick_size <= 0 or window.min_trade_qty <= 0:
@@ -463,6 +564,10 @@ class PracticeDesk:
             return "bitcoin_stale"
         if window.start_price is None:
             return "opening_price_missing"
+        return self._book_reason(window, now)
+
+    def _book_reason(self, window: Window, now: float) -> str:
+        """Both books fresh: all a lock needs (it uses no fair value)."""
         for side in ("up", "down"):
             book = self.books.get((window.slug, side))
             if book is None or not 0 <= now - book.at <= self.config.stale_s:
@@ -475,8 +580,65 @@ class PracticeDesk:
                 return "book_stale"
         return ""
 
+    def _expires(self, order: PracticeOrder) -> float:
+        """When the venue expires a resting bid (rest_ttl_s): from the whole second it was sent, as live's
+        ``expiration_ts = int(now) + 30``."""
+        return math.floor(order.placed_at) + self.config.rest_ttl_s
+
+    def _starter(self, window: str) -> bool:
+        """The next buy opens the window, or (with rounds) a fresh round after a complete pair with nothing pending."""
+        inventory = self.inventory[window]
+        if inventory.up.shares + inventory.down.shares <= EPSILON:
+            return True
+        return (self.config.rounds and abs(inventory.up.shares - inventory.down.shares) <= EPSILON
+                and not any(order.window == window for order in self.orders.values()))
+
+    def _starter_hold(self, window: Window, now: float) -> str:
+        """Why a starter waits (its timing or the starter filter); "" lets it go."""
+        if self.config.starter_delay_s and now < window.start + self.config.starter_delay_s:
+            return "starter_wait"
+        if self.config.starter_stop_s and now >= window.end - self.config.starter_stop_s:
+            return "starter_late"
+        return self.starter_gate(window, now) if self.starter_gate is not None else ""
+
+    @staticmethod
+    def _worst(inventory: Inventory, legs: list[tuple[Side, float, float]]) -> float:
+        """Largest loss a window can still take: its cost (fees included) minus the $1 its weaker side pays, over
+        every combination of its pending orders ``legs`` (side, contracts, reserved cost) filling or not. The live
+        risk book's ``LiveRiskBook._worst`` (speed part 2, loss plan bug 1), kept equal by a test.
+
+        The loss is convex in each order's filled amount, so the extremes (none or all of each) bound every
+        partial fill. A balancing order that completes pairs adds nothing: its worst case is not filling.
+        Beyond MAX_LEGS orders it falls back to the conservative sum of every reservation.
+        """
+        if len(legs) > MAX_LEGS:
+            return max(0.0, inventory.spent - min(inventory.up.shares, inventory.down.shares)) + sum(
+                cost for _side, _size, cost in legs)
+        worst = 0.0
+        for flags in itertools.product((False, True), repeat=len(legs)):
+            shares = {"up": inventory.up.shares, "down": inventory.down.shares}
+            paid = inventory.spent
+            for include, (side, size, cost) in zip(flags, legs, strict=True):
+                if include:
+                    shares[side] += size
+                    paid += cost
+            worst = max(worst, paid - min(shares.values()))
+        return worst
+
+    def _legs(self, window: str) -> list[tuple[Side, float, float]]:
+        """The window's pending orders as worst-case legs (``LiveRiskBook._legs``); a lock is one too, adding nothing."""
+        return [(order.side, order.remaining, order.reserved) for order in self.orders.values()
+                if order.window == window and order.reserved > EPSILON]
+
+    def _at_risk(self) -> float:
+        """What can still be lost, as the live risk book counts it (``LiveRiskBook.at_risk_usd``, loss plan bug 1):
+        each unsettled window's worst case over its pending orders' combinations. A balancing bid or a lock, which
+        can only complete pairs, adds nothing; a first buy adds all of its cost."""
+        closed = {item.window for item in self.closed}
+        return sum(self._worst(value, self._legs(key)) for key, value in self.inventory.items() if key not in closed)
+
     def _risk_reason(self, window: str, side: Side, price: float, size: float,
-                     coefficient: float) -> str:
+                     coefficient: float, now: float | None = None) -> str:
         inventory = self.inventory[window]
         if size <= EPSILON:
             return "zero_size"
@@ -485,20 +647,41 @@ class PracticeDesk:
         pending = [order for order in self.orders.values() if order.window == window]
         if inventory.spent + sum(order.reserved for order in pending) + cost > self.config.window_usd + EPSILON:
             return "window_budget"
-        closed = {item.window for item in self.closed}
-        open_cost = sum(value.spent for key, value in self.inventory.items() if key not in closed)
-        if open_cost + sum(order.reserved for order in self.orders.values()) + cost > self.config.open_usd + EPSILON:
-            return "open_budget"
+        if self.config.hedged_open_budget or self.config.day_stop_counts_risk:
+            # The live stops count what this order adds to its window's worst case, never less than nothing: all of
+            # it for a first buy, nothing for a bid that only completes pairs (``LiveRiskBook._buy_verdict``, loss
+            # plan bug 1). Spending stays capped by the window budget above.
+            at_risk = self._at_risk()
+            legs = self._legs(window)
+            added = max(0.0, self._worst(inventory, legs + [(side, size, cost)]) - self._worst(inventory, legs))
+        else:
+            at_risk = added = 0.0
+        if self.config.hedged_open_budget:
+            if at_risk + added > self.config.open_usd + EPSILON:
+                return "open_budget"
+        else:
+            closed = {item.window for item in self.closed}
+            open_cost = sum(value.spent for key, value in self.inventory.items() if key not in closed)
+            if open_cost + sum(order.reserved for order in self.orders.values()) + cost > self.config.open_usd + EPSILON:
+                return "open_budget"
+        if self.config.day_stop_counts_risk and now is not None:
+            # The day stop is the live one (LiveRiskBook.can_buy), so it refuses before the loss is realized.
+            day_loss = max(0.0, -self.days.get(utc_day(now), {}).get("pnl_usd", 0.0))
+            if day_loss + at_risk + added >= self.config.day_stop_usd - EPSILON:
+                return "day_stop"
         initial_total = inventory.up.shares + inventory.down.shares
         initial_difference = inventory.up.shares - inventory.down.shares
         starter_pending = self.bootstrap_order.get(window) in self.orders
         bootstrap = (abs(initial_difference) > self.config.max_imbalance * initial_total + EPSILON
                      or starter_pending)
-        if initial_total <= EPSILON:
+        # A round's starter is a window's first buy again: the imbalance check does not refuse it.
+        round_start = initial_total > EPSILON and self.config.rounds and self._starter(window)
+        if initial_total <= EPSILON or round_start:
             if pending:
                 return "starter_pending"
-            if size > self.config.clip + EPSILON:
+            if size > (self.config.starter_clip or self.config.clip) + EPSILON:
                 return "starter_clip"
+            bootstrap = bootstrap or round_start
         elif bootstrap:
             light: Side = "down" if initial_difference > 0 else "up"
             if abs(initial_difference) <= EPSILON or side != light:
@@ -528,17 +711,18 @@ class PracticeDesk:
         return ""
 
     def can_buy(self, window: str, side: Side, price: float, size: float,
-                coefficient: float) -> str:
+                coefficient: float, now: float | None = None) -> str:
         """Empty reason means allowed, including outstanding order reservations."""
-        return self._risk_reason(window, side, price, size, coefficient)
+        return self._risk_reason(window, side, price, size, coefficient, now)
 
-    def cancel(self, now: float, window: str | None = None, reason: str = "cancelled") -> list[Decision]:
+    def cancel(self, now: float, window: str | None = None, reason: str = "cancelled", *,
+               keep_locks: bool = False) -> list[Decision]:
         events = []
         for order_id, order in list(self.orders.items()):
-            if window is None or window == order.window:
+            if (window is None or window == order.window) and not (keep_locks and order.lock):
                 events.append(self._event("speeddesk_cancel", now, order.window, order=order, reason=reason))
                 del self.orders[order_id]
-                self._count(now, f"{order.kind}_cancelled", window=order.window)
+                self._count(now, f"{order.counter}_cancelled", window=order.window)
         return events
 
     def place(self, window: str, side: Side, kind: Literal["take", "rest"], price: float,
@@ -552,7 +736,7 @@ class PracticeDesk:
             reason = reason or "order_pending"
         if not reason and coefficient is not None:
             try:
-                reason = self._risk_reason(window, side, price, size, coefficient)
+                reason = self._risk_reason(window, side, price, size, coefficient, now)
             except ValueError:
                 reason = "fee_unknown"
         book = self.books.get((window, side))
@@ -571,10 +755,10 @@ class PracticeDesk:
         order = PracticeOrder(self.next_order_id, window, side, kind, price, size, size, now,
                               now + self.config.latency_ms / 1000, fair, coefficient, queue, book.sequence,
                               spec.fee_rounding, spec.min_trade_qty)
+        starter = self._starter(window)
         self.next_order_id += 1
         self.orders[order.order_id] = order
-        inventory = self.inventory[window]
-        if inventory.up.shares + inventory.down.shares <= EPSILON:
+        if starter:
             self.bootstrap_order[window] = order.order_id
             self.bootstrap_side[window] = side
         self._count(now, f"{kind}_orders", window=window)
@@ -596,14 +780,14 @@ class PracticeDesk:
         filled = self.filled_orders.setdefault(utc_day(now), set())
         if order.order_id not in filled:
             filled.add(order.order_id)
-            self._count(now, f"{order.kind}_filled_orders", track_venue=False)
+            self._count(now, f"{order.counter}_filled_orders", track_venue=False)
         # Per-venue rates are placement-day cohorts, so a later partial fill
         # cannot become a second successful order or a >100% midnight rate.
         if order.order_id not in self.venue_filled_orders:
             self.venue_filled_orders.add(order.order_id)
-            self._count_venue(order.placed_at, f"{order.kind}_filled_orders", 1.0, order.window)
+            self._count_venue(order.placed_at, f"{order.counter}_filled_orders", 1.0, order.window)
         self._count(now, "fills", window=order.window)
-        self._count(now, f"{order.kind}_filled_shares", size, window=order.window)
+        self._count(now, f"{order.counter}_filled_shares", size, window=order.window)
         self._count(now, "latency_ms_total", max(0.0, now - order.placed_at) * 1000, window=order.window)
         self._count(now, "fees_usd", fee, window=order.window)
         if order.remaining <= EPSILON:
@@ -624,14 +808,21 @@ class PracticeDesk:
             reason = self.blocked(window, now)
             if reason:
                 self.last_reason[window.slug] = reason
-                events.extend(self.cancel(now, window.slug, reason))
+                # A lock completes pairs after the cutoff and through the day stop, as live; no lock exists unless
+                # SpeedConfig.lock_s or stop_s is set.
+                events.extend(self.cancel(now, window.slug, reason, keep_locks=reason in KEEPS_LOCKS))
         for order in list(self.orders.values()):
             if order.kind != "take" or now + EPSILON < order.active_at:
+                continue
+            if order.lock and (order.window, order.side) not in self.books:
+                del self.orders[order.order_id]
+                self._count(now, "lock_completed", window=order.window)
+                events.append(self._event("speeddesk_cancel", now, order.window, order=order, reason="book_missing"))
                 continue
             book = self.books[(order.window, order.side)]
             if now > order.active_at + self.config.stale_s + EPSILON:
                 del self.orders[order.order_id]
-                self._count(now, "take_completed", window=order.window)
+                self._count(now, f"{order.counter}_completed", window=order.window)
                 events.append(self._event("speeddesk_cancel", now, order.window, order=order,
                                           reason="latency_recheck_missing"))
                 continue
@@ -641,7 +832,7 @@ class PracticeDesk:
                 # reject it, even before a qualifying post-delay confirmation.
                 # Never hold that decision open for the old price to return.
                 del self.orders[order.order_id]
-                self._count(now, "take_completed", window=order.window)
+                self._count(now, f"{order.counter}_completed", window=order.window)
                 events.append(self._event("speeddesk_cancel", now, order.window, order=order,
                                           reason="ask_moved"))
                 continue
@@ -663,7 +854,7 @@ class PracticeDesk:
             # IOC residual is never converted into a later resting order.
             if order.order_id in self.orders:
                 del self.orders[order.order_id]
-            self._count(now, "take_completed", window=order.window)
+            self._count(now, f"{order.counter}_completed", window=order.window)
             if size <= EPSILON:
                 events.append(self._event("speeddesk_cancel", now, order.window, order=order, reason="ask_moved"))
         return events
@@ -679,13 +870,15 @@ class PracticeDesk:
             return events
         self.seen_trades.add(identity)
         self.trade_order.append(identity)
-        while len(self.trade_order) > 10000:
+        while len(self.trade_order) > self.trade_memory:
             self.seen_trades.discard(self.trade_order.popleft())
         available = trade.size
         for order in sorted(self.orders.values(), key=lambda item: (-item.price, item.order_id)):
             if (order.window != trade.window or order.side != trade.side or order.kind != "rest"
                     or trade.at <= order.active_at or trade.price > order.price + EPSILON):
                 continue
+            if self.config.rest_ttl_s and trade.at >= self._expires(order) - EPSILON:
+                continue  # the venue expired it; evaluate() removes it
             queued = min(order.queue_ahead, available)
             order.queue_ahead -= queued
             available -= queued
@@ -700,6 +893,8 @@ class PracticeDesk:
     def evaluate(self, now: float, *, makers_enabled: bool = True,
                  maker_windows: set[str] | None = None) -> list[Decision]:
         events = self.advance(now)
+        if self.config.lock_s > 0 or self.config.stop_s > 0:
+            events.extend(self._lock_step(now))
         sigma = self.tape.sigma(now, self.config.sigma_min_samples, self.config.sigma_warmup_s)
         closed = {item.window for item in self.closed}
         for window in self.windows.values():
@@ -737,23 +932,34 @@ class PracticeDesk:
             if order.window == window.slug and order.side == side:
                 if order.kind == "take":
                     return []
-                if not take and makers_enabled and abs(fair - order.fair) <= self.config.reprice + EPSILON:
+                expired = bool(self.config.rest_ttl_s) and now >= self._expires(order) - EPSILON
+                # A starter still resting when its no-first-buy period (or a filter) begins stops there.
+                held = order.order_id == self.bootstrap_order.get(window.slug) and bool(self._starter_hold(window, now))
+                if (not (expired or held) and not take and makers_enabled
+                        and abs(fair - order.fair) <= self.config.reprice + EPSILON):
                     return []
                 del self.orders[order.order_id]
                 self._count(now, "rest_cancelled", window=window.slug)
-                reason = "take_available" if take else "reprice" if makers_enabled else "trade_stream_missing"
+                reason = ("expired" if expired else "starter_hold" if held else "take_available" if take
+                          else "reprice" if makers_enabled else "trade_stream_missing")
                 events.append(self._event("speeddesk_cancel", now, window.slug, order=order, reason=reason))
         kind: Literal["take", "rest"] = "rest"
+        starter = self._starter(window.slug)
+        clip = (self.config.starter_clip or self.config.clip) if starter else self.config.clip
         if ask and take:
             price = ask.price
             used = self.consumed.get((window.slug, side, ask.price), 0.0)
-            size = min(self.config.clip, max(0.0, ask.size - used))
+            size = min(clip, max(0.0, ask.size - used))
             kind = "take"
         else:
             price = math.floor((fair - self.config.make_edge + EPSILON) / window.tick_size) * window.tick_size
-            size = self.config.clip
+            size = clip
         if kind == "rest" and not makers_enabled:
             self.last_reason[window.slug] = "trade_stream_missing"
+            return events
+        hold = self._starter_hold(window, now) if starter else ""
+        if hold:
+            self.last_reason[window.slug] = hold
             return events
         if not 0 < price < 1:
             return events
@@ -764,21 +970,108 @@ class PracticeDesk:
         if coefficient is None:
             self.last_reason[window.slug] = "maker_fee_unknown"
             return events
-        units = max(0, math.floor((size + EPSILON) / window.min_trade_qty))
+        if self.config.edge_fee_precision:
+            # Live sends nothing whose edge its rounded fee reserve eats (speeddesk_live._send).
+            edge = self.config.take_edge if kind == "take" else self.config.make_edge
+            try:  # at live's own whole-tick price (it rounds to 4 places), never a float artefact above it
+                unit = unit_reserve(round(price, 4), coefficient, self.config.edge_fee_precision)
+            except ValueError:
+                unit = math.inf
+            if fair - unit < edge - EPSILON:
+                self.last_reason[window.slug] = "edge_after_fee"
+                return events
+        step = 1.0 if self.config.whole_contracts else window.min_trade_qty
+        units = max(0, math.floor((size + EPSILON) / step))
         low, high = 0, units
         while low < high:
             middle = (low + high + 1) // 2
-            if self._risk_reason(window.slug, side, price, middle * window.min_trade_qty, coefficient):
+            if self._risk_reason(window.slug, side, price, middle * step, coefficient, now):
                 high = middle - 1
             else:
                 low = middle
-        size = low * window.min_trade_qty
+        size = low * step
         if size <= EPSILON:
             self.last_reason[window.slug] = self._risk_reason(window.slug, side, price,
-                                                               window.min_trade_qty, coefficient) or "ask_depth"
+                                                               step, coefficient, now) or "ask_depth"
             return events
         events.append(self.place(window.slug, side, kind, price, size, fair, now))
         return events
+
+    def _lock_step(self, now: float) -> list[Decision]:
+        """Complete a half-filled pair at the ask, the live companion's lock (``speeddesk_live._lock``), and the
+        protective stop that does the same earlier once completing would cost at least ``stop_pair_cost``.
+
+        It needs both books fresh, no take or lock pending in the window and at least one whole unpaired contract;
+        the budgets, pair cap, edge, cutoff and day stop do not apply, because completing a pair can only lower the
+        window's possible loss. A resting bid in the window is cancelled first (new buys stop when the pair is
+        completed). The order fills like a take (the first book after the latency, top level only,
+        immediate-or-cancel)."""
+        events = []
+        closed = {item.window for item in self.closed}
+        for window in self.windows.values():
+            if window.slug in closed or not window.start <= now < window.end - LOCK_MARGIN_S:
+                continue
+            lock = self.config.lock_s > 0 and now >= window.end - self.config.lock_s
+            stop = self.config.stop_pair_cost > 0 and self.config.stop_s > 0 and now >= window.end - self.config.stop_s
+            inventory = self.inventory[window.slug]
+            difference = inventory.up.shares - inventory.down.shares
+            unpaired = math.floor(abs(difference) + EPSILON)
+            if (not (lock or stop) or unpaired < 1 or self._book_reason(window, now)
+                    or any(order.window == window.slug and order.kind == "take" for order in self.orders.values())):
+                continue
+            side: Side = "down" if difference > 0 else "up"
+            book = self.books[(window.slug, side)]
+            ask = min(book.asks, key=lambda level: level.price, default=None)
+            # Orders are whole cents: an immediate-or-cancel limit one tick above a sub-penny ask still fills there.
+            cap = self.config.lock_max_price if lock else STOP_MAX_PRICE
+            if ask is None or math.ceil(round(ask.price * 100, 6)) / 100 > cap + EPSILON:
+                continue
+            if not lock:
+                heavy = inventory.up if difference > 0 else inventory.down
+                cost = heavy.total / heavy.shares + ask.price + fee_per_share(ask.price, window.taker_coefficient)
+                if cost < self.config.stop_pair_cost - EPSILON:
+                    continue
+            used = self.consumed.get((window.slug, side, ask.price), 0.0)
+            size = min(unpaired, math.floor(self.config.clip + EPSILON), math.floor(ask.size - used + EPSILON))
+            if size < 1:
+                continue
+            events.extend(self.cancel(now, window.slug, "lock" if lock else "stop"))
+            order = PracticeOrder(self.next_order_id, window.slug, side, "take", ask.price, float(size), float(size),
+                                  now, now + self.config.latency_ms / 1000, ask.price, window.taker_coefficient,
+                                  0.0, book.sequence, window.fee_rounding, window.min_trade_qty, lock=True)
+            self.next_order_id += 1
+            self.orders[order.order_id] = order
+            self._count(now, "lock_orders", window=window.slug)
+            self._count(now, "lock_requested_shares", float(size), window=window.slug)
+            events.append(self._event("speeddesk_lock", now, window.slug, order=order,
+                                      reason="lock" if lock else "stop"))
+        return events
+
+    def forget(self, window: str, *, void: bool = False) -> None:
+        """Drop a settled window's per-window entries; the Kalshi arena keeps its own record of each window and
+        never adds a settled one again. ``void`` drops a window that never settled (no P&L at all). A window
+        with orders is never dropped: cancel them first."""
+        settled = any(item.window == window for item in self.closed)
+        if (not settled and not void) or any(order.window == window for order in self.orders.values()):
+            raise ValueError("Only a settled (or void) window without orders can be forgotten")
+        self.windows.pop(window, None)
+        self.inventory.pop(window, None)
+        self.closed = [item for item in self.closed if item.window != window]
+        self.books = {key: book for key, book in self.books.items() if key[0] != window}
+        self.consumed = {key: size for key, size in self.consumed.items() if key[0] != window}
+        for mapping in (self.last_reason, self.bootstrap_order, self.bootstrap_side, self.window_venues):
+            mapping.pop(window, None)
+        # The day tables keep today and yesterday (the day stop reads today); a filled-order mark matters only while
+        # its order can still fill.
+        days = sorted({*self.days, *self.traded_days, *self.filled_orders})[-2:]
+        self.days = {day: value for day, value in self.days.items() if day in days}
+        self.traded_days = {day: value for day, value in self.traded_days.items() if day in days}
+        self.filled_orders = {day: {order for order in value if order in self.orders}
+                              for day, value in self.filled_orders.items() if day in days}
+        for venue in VENUES:
+            self.venue_days[venue] = {day: value for day, value in self.venue_days[venue].items() if day in days}
+        self.venue_incomplete_days &= set(days)
+        self.venue_filled_orders &= set(self.orders)
 
     def settle(self, window: str, up_wins: bool, now: float) -> Settlement | None:
         if any(item.window == window for item in self.closed):
@@ -833,10 +1126,10 @@ class PracticeDesk:
         return report
 
     def to_state(self) -> dict[str, Any]:
-        return {"version": 1, "mode": "practice", "config": asdict(self.config),
+        return {"version": 1, "mode": "practice", "config": config_state(self.config),
                 "windows": {slug: asdict(window) for slug, window in self.windows.items()},
                 "inventory": {slug: asdict(value) for slug, value in self.inventory.items()},
-                "orders": [asdict(order) for order in self.orders.values()],
+                "orders": [_order_state(order) for order in self.orders.values()],
                 "closed": [asdict(item) for item in self.closed], "days": self.days,
                 "venue_reporting_version": 1, "venue_days": self.venue_days,
                 "venue_incomplete_days": sorted(self.venue_incomplete_days),

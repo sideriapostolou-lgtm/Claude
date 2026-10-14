@@ -41,6 +41,7 @@ from .speeddesk_model import (
     SpeedConfig,
     Trade,
     Window,
+    config_state,
     utc_day,
 )
 from .speeddesk_scorecard import window_scorecard
@@ -48,6 +49,7 @@ from .speeddesk_venues import MarketFeeds
 
 log = logging.getLogger("nightcrawler.speeddesk")
 STATE_KEY = "speeddesk_state"
+ARENA_EXIT_WAIT_S = 1.0  # kalshi_arena.EXIT_WAIT_S: at close, time for the practice town's final save
 
 
 def practice_config(settings: Settings) -> SpeedConfig:
@@ -85,6 +87,8 @@ def panel_state(settings: Settings, now: float) -> dict[str, Any]:
 
 class SpeedRunner:
     """Owns one event loop, independent caps, durable receipts and daily reports."""
+
+    arena: Any = None  # the Kalshi arena's link (a practice town in its own process) when it runs
 
     def __init__(self, settings: Settings, stop: threading.Event, *, clock: Clock | None = None,
                  monotonic: Callable[[], float] = time.monotonic,
@@ -190,6 +194,16 @@ class SpeedRunner:
                     except Exception:  # noqa: BLE001 — a companion cleanup fault must not stop public feeds.
                         log.error("speeddesk_live_status mode=paper reason=initialization_cleanup_failed")
                 self.live = None
+            # The Kalshi arena (practice town, nightcrawler.kalshi_arena) runs in its own process: the event loop
+            # appends Kalshi books and prints to a bounded list and hands them over once per step, never waiting.
+            if settings.kalshi_arena_enabled and settings.speeddesk_kalshi_enabled:
+                try:
+                    from .kalshi_arena import ArenaLink, arena_config
+
+                    self.arena = ArenaLink(arena_config(settings), clock=self.clock.now)
+                except Exception as exc:  # noqa: BLE001 — a practice town never stops the speed desk.
+                    log.warning("kalshi_arena_not_started error=%s", type(exc).__name__)
+                    self.arena = None
         except BaseException:
             self.ledger.close()
             raise
@@ -250,6 +264,8 @@ class SpeedRunner:
         if self.desk.on_book(book):
             self._refresh_live_snapshot()
             self._live_call("on_book", book)
+            if self.arena is not None and book.window in self._live_slugs:
+                self.arena.feed_book(book)  # one bounded append (practice town, sent at the next step)
             # Resolve the first eligible post-delay snapshot immediately. A
             # later favorable update may never replace a failed recheck.
             self.decisions(self.desk.advance(self.clock.now()))
@@ -259,6 +275,8 @@ class SpeedRunner:
         if self.feed_status.get("trade_stream") and allowed:
             self.decisions(self.desk.on_trade(trade, self.clock.now()))
             self._live_call("on_trade", trade)
+            if self.arena is not None and trade.window in self._live_slugs:
+                self.arena.feed_trade(trade)  # one bounded append (practice town, sent at the next step)
 
     def on_windows(self, windows: list[Window]) -> None:
         self.evidence.discover([asdict(window) for window in windows], self.clock.now())
@@ -295,6 +313,9 @@ class SpeedRunner:
                 self.desk.books = {key: book for key, book in self.desk.books.items() if key[0] != slug}
         self._refresh_live_snapshot()
         self._live_call("on_status", status)
+        if self.arena is not None:  # rare; the practice town applies the same gap rule in its own process
+            self.arena.feed_gap(tuple(status.get("gap_windows", ())), bool(status.get("trade_stream")),
+                                status.get("coinbase") == "connected")
 
     def summary(self, day: str, venue: str | None = None) -> dict[str, Any]:
         report = self.desk.daily_summary(day, venue=venue)
@@ -569,6 +590,10 @@ class SpeedRunner:
             self.last_heartbeat = now
         if self.pending or now - self.last_checkpoint >= 5:
             self.checkpoint(now)
+        if self.arena is not None:
+            # One frame to the practice town: what arrived since the last step plus the market facts that changed;
+            # a non-blocking write that drops (and counts) when the town is behind, and never raises.
+            self.arena.flush(self._live_market_snapshot)
 
     def _coverage_windows(self, now: float, maker_windows: set[str] | None) -> tuple[set[str], set[str]]:
         fresh: set[str] = set()
@@ -620,8 +645,15 @@ class SpeedRunner:
 
     async def run(self) -> None:
         self.record("speeddesk_started", {"at": self.clock.now(), "real_orders": False,
-                                          "trial_started_at": self.started_at, "config": asdict(self.desk.config)})
+                                          "trial_started_at": self.started_at,
+                                          "config": config_state(self.desk.config)})
         self.checkpoint(self.clock.now())
+        if self.arena is not None:
+            try:
+                self.arena.start()  # its own process; it ends when the link closes (or this process dies)
+            except Exception as exc:  # noqa: BLE001 — a practice town never stops the speed desk.
+                log.warning("kalshi_arena_not_started error=%s", type(exc).__name__)
+                self.arena = None
         tasks = [asyncio.create_task(self.feeds.run(self.stop)), asyncio.create_task(self._settlements())]
         self.live_task = asyncio.create_task(self._run_live()) if self.live is not None else None
         try:
@@ -643,13 +675,26 @@ class SpeedRunner:
                 await asyncio.gather(self.live_task, return_exceptions=True)
             self.decisions(self.desk.cancel(self.clock.now(), reason="shutdown"))
             self.checkpoint(self.clock.now())
+            self._close_arena()  # after every real-money shutdown step; never waits
+
+    def _close_arena(self, wait_s: float = 0.0) -> None:
+        if self.arena is not None:
+            try:
+                self.arena.close(wait_s)
+            except Exception as exc:  # noqa: BLE001 — a practice town never stops the speed desk.
+                log.warning("kalshi_arena_close_failed error=%s", type(exc).__name__)
 
     def close(self) -> None:
         try:
             if self.live is not None:
                 self.live.close()
         finally:
-            self.ledger.close()
+            try:
+                # Last, after the live companion closed: a moment for the town's final save (this process may be
+                # the container's first, whose exit ends every other process in it).
+                self._close_arena(ARENA_EXIT_WAIT_S)
+            finally:
+                self.ledger.close()
 
 
 def run_speeddesk(settings: Settings, stop_event: threading.Event) -> None:
