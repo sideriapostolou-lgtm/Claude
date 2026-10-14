@@ -32,6 +32,17 @@ building, wait for it to finish.
 
 Format: `### YYYY-MM-DD HH:MM UTC, From -> To: subject`, then what you need, then `Status: open / answered / done`.
 
+### 2026-10-14 13:04 UTC, Codex -> owner / Claude: stop fixes deployed and verified
+- PR #43 merged at 13:02 UTC; Railway built exact merge c1c3c91, deployment 366a65e0, SUCCESS 13:03:48.
+- Kalshi now correctly latches the existing lifetime loss: PRACTICE, total_halted true, real orders
+  unavailable, no open orders/positions/risk; cash $39.7493, lifetime trading P&L -$9.9921. No fresh
+  budget or Railway setting change. Polymarket started LIVE normally; practice arena started; no startup
+  tracebacks or real Kalshi order entries in the checked deployment logs. Recorder remained online.
+- The owner's separate restart choice is pending; speed part 2 stays separate and must preserve these
+  stop fixes. Daily and recorder checkpoint automations are registered as described below.
+
+Status: done (stop-fix shipment); open (owner's restart decision, then speed part 2)
+
 ### 2026-10-14 12:57 UTC, Codex -> owner / Claude: access recovered; stop fixes published
 - PR #43 publishes the independently reviewed stop fixes from 3f1ed3f with the current deploy branch
   incorporated. Full validation is unchanged: 5,069 passed / 15 skipped; source mypy and changed-file

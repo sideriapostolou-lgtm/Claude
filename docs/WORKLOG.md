@@ -13,6 +13,31 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-14 13:04 UTC, Codex, PR #43 deployed (stop fixes; no restart budget)
+- Shipped: PR #43 merged at 13:02 UTC inside the allowed interval. Merge commit
+  `c1c3c91250219d5b5e6527868133725d5f5f34f6` was built by Railway deployment
+  `366a65e0-a099-44ef-9050-a961b4140d82`, terminal SUCCESS at 13:03:48 UTC; one healthy running replica.
+  Source/tests/build inputs are byte-identical to tested 3f1ed3f; the later commit only corrected docs.
+- Verified startup: 13:03:31 `polydesk_started ... (LIVE: 10 contract(s) per order)`; 13:03:39 the new
+  `speeddesk_live_stop` receipt latched the total stop; the practice Kalshi arena started in its own process.
+  13:03:42 `speeddesk_live_status`: mode paper, configured_mode live, status PRACTICE,
+  total_halted true, real_orders_available false, zero open orders/positions/risk. This is the risk stop
+  doing its job, not a Railway mode-variable change.
+- Bot-reported cash $39.7493; lifetime trading P&L -$9.9921 including fees; current-day P&L -$0.05.
+  Caps unchanged: $10/window, $20 open, $6/day stop, $10 lifetime stop, first buy five contracts.
+  Exact-deployment log checks through 13:04 UTC found no tracebacks or `speeddesk_live_order` entries.
+  This is a bounded startup check, not an independent account-ledger audit or a future guarantee.
+- Recorder remains on its existing successful deployment 5db5c4b0, online with no deployment issues;
+  it was not restarted by this bot merge. Capture completeness remains for the scheduled evidence report.
+- Validation carried forward: 5,069 passed / 15 skipped; mypy 122 files clean; changed-file Ruff clean;
+  54 independent stop regressions and 16 extra fake transport checks. No app code changed this session.
+- Real money touched? YES, owner-authorized stop-control code deployed. No variable, key, cap, fresh
+  resume token or new trading budget changed. Owner's general request to get the fixes live does not name
+  a fresh money amount. Asked the concrete restart choice after verifying the deploy; answer pending.
+- Next: owner's restart decision, then speed part 2 with the corrected stop rules preserved. Daily report
+  scheduled 08:20 Pacific; recorder checkpoint October 15 at 15:45 Pacific. Neither automation changes
+  production settings or sends orders. This final receipt is docs only and does not rebuild the bot.
+
 ## 2026-10-14 12:56 UTC, Codex, branch codex/kalshi-stop-handoff, PR #43
 - Changed: GitHub and workspace access recovered. Published PR #43 with the exact tested stop-fix code
   from 3f1ed3f. Corrected the earlier spec summary to match section 9.4: permanent stops use settled loss
