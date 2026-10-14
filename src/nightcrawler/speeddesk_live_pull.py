@@ -161,7 +161,9 @@ class PullGuard:
             if count:
                 self._day(now)["pulls"] += 1
         else:
-            pull.move, pull.held_until = max(pull.move, move), now + self.rule.hold_s
+            pull.held_until = now + self.rule.hold_s
+            if count:  # the logged move stops at the lock zone (else the close's swing to 0 or 1 shows as the move)
+                pull.move = max(pull.move, move)
 
     def held(self, window: str, now: float) -> bool:
         """No new resting bid in ``window``: its latest sample is a trigger, or the last one was under hold_s ago."""

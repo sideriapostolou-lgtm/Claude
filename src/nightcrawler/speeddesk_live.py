@@ -327,6 +327,13 @@ class KalshiLiveDesk:
         # requested cancel that failed or could not be sent yet goes out again (with its first reason) until then.
         self.cancel_acked: set[str] = set()
         self.cancel_reasons: dict[str, str] = {}
+        # A cancel that failed goes out again only once an order list read since the failure still shows the order
+        # open (rebreak, 2026-10-14: re-sent first thing in every step, a DELETE that kept failing after Kalshi had
+        # already taken the order down set the backoff again each time, so the reconcile that would show it gone never
+        # ran: no bid, fill or lock for as long as it failed). Each failure keeps order_reads as it was then.
+        self.cancel_failed: dict[str, int] = {}
+        self.order_reads = 0  # order-list reads begun this run (the read that settles each order's status)
+        self.orders_read = 0  # the latest of those whose statuses were applied
         self.errors = 0
         # Definite single-order refusals since the last accepted create; three in a row pause.
         self.refusals = 0
@@ -797,6 +804,7 @@ class KalshiLiveDesk:
         current = {intent.client_order_id for intent in active}
         self.cancel_acked &= current
         self.cancel_reasons = {key: value for key, value in self.cancel_reasons.items() if key in current}
+        self.cancel_failed = {key: value for key, value in self.cancel_failed.items() if key in current}
         # The bid whose fair fell most goes first (after a rise, the Down bid is the one now priced too high).
         for intent in sorted(active, key=lambda item: self._fair_drop(item, snapshot, now)):
             window = self._current_window(intent.window, snapshot)
@@ -822,12 +830,15 @@ class KalshiLiveDesk:
                             # Once, when the cancel is first asked for: re-read before a new bid. A pulled window
                             # is held anyway and no order goes out until the order list confirms the cancel.
                             self.account_at = None
-            if (not reason and intent.cancel_requested and intent.client_order_id not in self.cancel_acked
-                    and intent.client_order_id in self.cancel_reasons):
+            again = (not reason and intent.cancel_requested and intent.client_order_id not in self.cancel_acked
+                     and intent.client_order_id in self.cancel_reasons)
+            if again:
                 # Asked for this run but never accepted (it failed, or the order id was unknown): send it again.
                 reason = self.cancel_reasons[intent.client_order_id]
+            if reason and self.orders_read <= self.cancel_failed.get(intent.client_order_id, -1):
+                continue  # it failed: sent again once an order list read since shows the order still open
             if reason:
-                await self._cancel(intent, reason)
+                await self._cancel(intent, reason, twin=not again)
 
     def _fair_drop(self, intent: Intent, snapshot: LiveSnapshot, now: float) -> float:
         """How far a resting bid's fair fell since it was priced (0 when unknown, or not a resting bid)."""
@@ -881,6 +892,16 @@ class KalshiLiveDesk:
                 self.pull.observe(window.slug, up, now, count=counting and now < window.end - self.book.limits.lock_s)
         for record in self.pull.expire(now):
             self._record("speeddesk_live_pull", **record)
+
+    def _practice(self, name: str, action: Callable[..., Any], *args: Any) -> Any:
+        """Practice-twin bookkeeping beside a real cancel, order or shutdown: an error there is counted in the status
+        line (loop ``<name>_<error>``) and never reaches the real loop (rebreak, 2026-10-14: a twin error before a
+        real cancel was sent stopped it, at shutdown too, and one in _decide paused trading as a Kalshi error)."""
+        try:
+            return action(*args)
+        except Exception as exc:  # noqa: BLE001 - practice only; real cancels, orders and errors are unaffected.
+            self.loop_stats.count(f"{name}_{type(exc).__name__}")
+            return None
 
     def _twin_cancel(self, intent: Intent, reason: str) -> None:
         """A real cancel cancels the twin's bids in its window, except a pull: the twin is the pull's control, so its
@@ -1008,8 +1029,10 @@ class KalshiLiveDesk:
                 row[0] += fill.size
                 row[1] += fill.size * fill.price + fill.fee_usd
         live_locks = [(self.intents[key].window, size, cost) for key, (size, cost) in locks.items()]
+        # The baseline holds only windows that closed before the first go-live: the one open then already had pulls.
+        closed = {slug: start for slug, start in starts.items() if self.book.windows[slug].end <= first}
         return {"since_pull": compare(starts, live, twin, live_maker, twin_maker, live_locks, start=since),
-                "week_before": compare(starts, live, twin, live_maker, twin_maker, live_locks,
+                "week_before": compare(closed, live, twin, live_maker, twin_maker, live_locks,
                                        start=first - 7 * 86400, end=first)}
 
     def _error(self, exc: Exception) -> None:
@@ -1056,7 +1079,9 @@ class KalshiLiveDesk:
             self._error(exc)
             return False
 
-    async def _cancel(self, intent: Intent, reason: str) -> None:
+    async def _cancel(self, intent: Intent, reason: str, *, twin: bool = True) -> None:
+        """Cancel one real order. ``twin``: also what a real cancel does to the practice twin (not when an earlier
+        cancel is only sent again after its reason passed: that reason no longer holds for the twin either)."""
         if intent.terminal:
             return
         key = intent.client_order_id
@@ -1069,7 +1094,8 @@ class KalshiLiveDesk:
         self.cancel_reasons.setdefault(key, reason)
         intent.cancel_requested = True
         self.book.request_cancel(key)
-        self._twin_cancel(intent, reason)
+        if twin:
+            self._practice("twin_cancel", self._twin_cancel, intent, reason)
         self.checkpoint()
         if not intent.order_id:
             intent.uncertain = True
@@ -1082,6 +1108,7 @@ class KalshiLiveDesk:
         try:
             reply = await self._io(self.client.cancel, intent.order_id, ticker=intent.window)
             self.cancel_acked.add(key)
+            self.cancel_failed.pop(key, None)
             self._record("speeddesk_live_cancel", client_order_id=intent.client_order_id,
                          order_id=intent.order_id, window=intent.window, reason=reason,
                          state="requested; reservation retained until fills reconcile",
@@ -1094,6 +1121,7 @@ class KalshiLiveDesk:
                 # Keep the reservation and let the order list confirm it; this is
                 # not an account error and must not pause trading.
                 self.cancel_acked.add(key)
+                self.cancel_failed.pop(key, None)
                 self._record("speeddesk_live_cancel", client_order_id=intent.client_order_id,
                              order_id=intent.order_id, window=intent.window, reason=reason,
                              state="not resting on Kalshi (404); reservation retained until reconciled",
@@ -1101,12 +1129,14 @@ class KalshiLiveDesk:
             else:
                 intent.uncertain = True
                 self.cancel_acked.discard(key)  # sent again (_cancel_unsafe) once the retry gate passes
+                self.cancel_failed[key] = self.order_reads  # and an order list read since still shows it open
                 self.book.mark_uncertain(intent.client_order_id, "cancel_unconfirmed")
                 self._error(exc)
                 self.cancel_retry_at[intent.client_order_id] = self.retry_at
         except Exception as exc:  # noqa: BLE001 — uncertain cancellation retains the full reservation.
             intent.uncertain = True
             self.cancel_acked.discard(key)
+            self.cancel_failed[key] = self.order_reads
             self.book.mark_uncertain(intent.client_order_id, "cancel_unconfirmed")
             self._error(exc)
             self.cancel_retry_at[intent.client_order_id] = self.retry_at
@@ -1230,6 +1260,8 @@ class KalshiLiveDesk:
             fill = self._fill(raw, intent)
             if self.book.record_fill(fill):
                 self._record("speeddesk_live_fill", **asdict(fill))
+        self.order_reads += 1
+        reading = self.order_reads  # a cancel that fails from here on was not seen by this read (cancel_failed)
         orders = await self._read("list_orders", self.client.list_orders, **order_filter)
         for raw in orders:
             intent = self.intents.get(str(raw.get("client_order_id", "")))
@@ -1267,6 +1299,7 @@ class KalshiLiveDesk:
                 intent.uncertain = False
                 if status in {"canceled", "executed"}:
                     intent.terminal = True
+        self.orders_read = reading
         resting = any(str(raw.get("status", "")) == "resting" and str(raw.get("ticker", "")).startswith("KXBTC15M-")
                       for raw in orders)
         positions = await self._read("positions", self.client.positions)
@@ -1430,12 +1463,16 @@ class KalshiLiveDesk:
         self._record("speeddesk_live_order", client_order_id=client_id, window=window.slug,
                      side=side, kind=kind, price=price, size=size, fair=fair, state="durable intent",
                      timing=self.metrics.decision("real_kalshi", now, snapshot.tick_receipt, decision_mono))
-        self._mirror_twin(self.book.limits_for(window.slug))
-        twin_event = self.twin.place(window.slug, side, kind, price, size, fair, now)
-        if twin_event.event in ("speeddesk_take", "speeddesk_rest"):
-            self.metrics.decision("practice_twin", now, snapshot.tick_receipt, decision_mono)
-        intent.twin_order_id = twin_event.order_id
-        self._twin_events([twin_event])
+
+        def twin_copy() -> None:
+            self._mirror_twin(self.book.limits_for(window.slug))
+            twin_event = self.twin.place(window.slug, side, kind, price, size, fair, now)
+            if twin_event.event in ("speeddesk_take", "speeddesk_rest"):
+                self.metrics.decision("practice_twin", now, snapshot.tick_receipt, decision_mono)
+            intent.twin_order_id = twin_event.order_id
+            self._twin_events([twin_event])
+
+        self._practice("twin_place", twin_copy)  # a twin error never leaves a real intent unsent and unsaved
         # The order identifier and its complete worst-case liability reach disk
         # before the first network byte can leave this process; one write covers the twin too.
         saving = self.monotonic()
@@ -1499,7 +1536,7 @@ class KalshiLiveDesk:
                     if intent.twin_order_id in self.twin.orders:
                         self.twin_kept.add(intent.twin_order_id)
                 elif not intent.lock:
-                    self._twin_cancel_window(window.slug, "real_order_rejected")
+                    self._practice("twin_rejected", self._twin_cancel_window, window.slug, "real_order_rejected")
             else:
                 intent.uncertain = True
                 self.book.mark_uncertain(client_id, "create_unconfirmed")
@@ -1721,19 +1758,19 @@ class KalshiLiveDesk:
                     units = min(units, math.floor(limits.window_usd / limits.pair_cap))
                     if units == 0:
                         self.reason = "Window budget is too small for a whole capped pair"
-                if units and owed:
-                    self._twin_unpulled_bid(window, side, price, fair, units, now)  # practice twin only
+                if units and owed:  # practice twin only
+                    self._practice("twin_unpulled_bid", self._twin_unpulled_bid, window, side, price, fair, units, now)
                 elif units:
                     candidates.append((fair - price, window, side, fair, kind, price, units))
         for _, window, side, fair, kind, price, units in sorted(candidates, key=lambda item: -item[0]):
             if kind == "rest" and self.pull.held(window.slug, now):
                 self.reason = PULL_REASON  # the practice twin rests the bid the rule without the pull would
-                self._twin_unpulled_bid(window, side, price, fair, units, now)
+                self._practice("twin_unpulled_bid", self._twin_unpulled_bid, window, side, price, fair, units, now)
                 continue
             if self._write_room_short():
                 self.reason = WRITE_ROOM_REASON
-                if kind == "rest":
-                    self._twin_unpulled_bid(window, side, price, fair, units, now)  # without the pull it was sent
+                if kind == "rest":  # without the pull it was sent
+                    self._practice("twin_unpulled_bid", self._twin_unpulled_bid, window, side, price, fair, units, now)
                 continue
             # Only whole contracts leave the process. With the owner's tiny
             # budget this bounded search generally tries fewer than five sizes.
@@ -1775,12 +1812,9 @@ class KalshiLiveDesk:
         began = self.monotonic()
         self._ladder_step()
         self.observe_market(self.clock())
-        self._twin_events(self.twin.advance(self.clock()))
+        self._practice("twin_advance", lambda: self._twin_events(self.twin.advance(self.clock())))
         self._pull_watch(self.snapshot(), self.clock())
-        try:
-            self._twin_unpulled(self.snapshot(), self.clock())
-        except Exception as exc:  # noqa: BLE001 - practice twin only: it must never stop the real loop's cancels.
-            self.loop_stats.count(f"twin_unpulled_{type(exc).__name__}")
+        self._practice("twin_unpulled", self._twin_unpulled, self.snapshot(), self.clock())
         self._phase("observe", began)
         if not await self._ensure_client():
             if self.book.integrity_reset_armed:
@@ -1909,8 +1943,8 @@ class KalshiLiveDesk:
                 await self._reconcile()
             except Exception as exc:  # noqa: BLE001 — leave reservations durable for the next startup.
                 self._error(exc)
-        self._twin_events(self.twin.cancel(self.clock(), reason="shutdown"))
-        for record in self.pull.expire(self.clock(), everything=True):
+        self._practice("twin_shutdown", lambda: self._twin_events(self.twin.cancel(self.clock(), reason="shutdown")))
+        for record in self._practice("pull_shutdown", lambda: self.pull.expire(self.clock(), everything=True)) or []:
             self._record("speeddesk_live_pull", **record)
         self.checkpoint(durable=True)
         self.shutdown_done = True

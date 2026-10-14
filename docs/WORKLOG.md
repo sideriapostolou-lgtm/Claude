@@ -15,6 +15,57 @@ Template:
 
 
 
+## 2026-10-14 UTC, Claude, branch claude/kalshi-pull (rebreak fix round)
+- Rebreak of 703d942 (cancel acknowledgement, caps/locks/ladder, practice twin isolation and A/B, deploy
+  readiness). Every major reproduced first with the reviewers' scratch tests, then fixed with a regression test in
+  `tests/test_speeddesk_live_pull.py` that fails on 703d942 (11 new cases, all failing there) and passes here.
+- Real money, major: H1's re-send of a failed cancel ran first thing in every step once its backoff ended. When the
+  DELETE kept failing (500, 400, timeout) after Kalshi had already taken the order down, each failure set the
+  backoff again, so `step` returned before the reconcile and the lock: no account read, bid, fill or lock for as
+  long as it failed (61ca112 read the order list 2.1 s later and locked the pair). With the pull on, the `pull`
+  reason never passes, so the same happened there whatever the fair did. Now a cancel that failed goes out again
+  only once an order list read begun after the failure still shows the order open (`cancel_failed`,
+  `order_reads` / `orders_read`); if that read shows it canceled or executed, it is done and nothing is re-sent.
+  Shutdown and the repeated-error `_cancel_all` still send at once. The reviewers' 120 s runs: 2 cancels and about
+  197 reads, both orders terminal and re-bid, errors 0, with the pull on and off, for 400 and 500 (12 cancels and 0
+  reads before).
+- Real money, major: practice-twin code ran unguarded on the real paths: before the Kalshi cancel was sent
+  (`_twin_cancel`, so a twin error stopped the real cancels, at shutdown too, and paused trading as a Kalshi error),
+  in `_decide` (`_twin_unpulled_bid` in a held window, the write-room hold-back and an owed side), in `_send` (the
+  twin copy before the pre-send save) and in `_submit`'s refusal path. Each now runs through `_practice`, which
+  counts the error in the status line (`loop`, e.g. `twin_cancel_RuntimeError`) and changes nothing real; so does
+  the twin's `advance` in `step` and its shutdown cancel and the pull's last log lines at shutdown. The twin's
+  cancel keeps its place before the send so its timing matches the real decision. Test: with the twin's
+  `cancel_order`, `can_buy`, `place` or `advance` raising, the real cancels, bids and error count equal a healthy
+  run's; shutdown cancels both bids with the twin broken.
+- Minors fixed (local, display or practice only): the extra DELETE (a 404) after a timed-out cancel that went
+  through (same rule as above); a re-send after the reason passed no longer re-runs the twin's cancel with the first
+  reason (`_cancel(..., twin=False)`); `week_before` holds only windows that closed before `first_live` (the one
+  open at go-live had pulls; the existing panel test now reads the baseline as of that window's close); the pull's
+  logged move stops growing in the lock zone (it showed the close's swing to 0 or 1).
+- Deferred minors, with the reason: (1) the lock waits for the regular 1 s reconcile at the 240 s boundary, pull
+  or not (pre-existing; forcing a re-read there changes the real lock path, a separate change). (2) The A/B's twin
+  maker fills come from `WindowEvidence.fills`, pruned 31 days after a window ends, while real ones are kept, so
+  `week_before` twin fills fall toward 0 from about 24 days after go-live (P&L unaffected) and the panel cache key
+  uses list lengths: the fix needs a retention decision (a persisted per-window twin tally in the state written
+  before every cancel, or trimming the real side to 31 days); display only. (3) `_pull_watch` and `_twin_unpulled`
+  scan every window in the snapshot, which the outer practice desk never prunes (about 0.35 ms a call at 3,000
+  windows, about 10% on top of the existing O(windows) `observe_market`): caching the open windows changes the pull's
+  trigger path on real money; best done with the outer desk's window pruning. (4) `_pull_watch` is unguarded in
+  `on_tick`: an error there halts the companion, which fails closed (shutdown cancels the bids, now even with a
+  broken twin); the suggested fallback (hold new resting bids while the trigger check is down) is a new real-money
+  path and needs its own change and tests. The twin's feed callbacks (`on_book`, `on_trade`, `tick_btc`) predate
+  the pull and halt the same way. (5) A rollback to 61ca112 and back restarts the A/B (`first_live`, daily pull
+  counts): accepted, display only; trading, caps and locks unaffected.
+- Verified: full `python -m pytest -q -p no:cacheprovider` 4,863 passed, 12 skipped (network); the pull file has
+  59 tests (11 new cases, all failing on 703d942); the reviewers' scratch probes (ack regression, ack diff n1-n6,
+  twin isolation) pass or match 61ca112, except the two deferred A/B display probes. `mypy src/nightcrawler`
+  clean; ruff clean on the changed Python files.
+- Real money touched? Yes, code only (cancel re-send timing and practice-twin isolation on the real paths); caps
+  ($10 window / $20 open / $6 day / $10 lifetime), stops, locks, the 5-contract first buy and the ladder unchanged.
+  Committed locally on `claude/kalshi-pull`, not pushed, merged or deployed.
+- Next: merge in a safe minute when the owner says so.
+
 ## 2026-10-13 22:00 UTC, Claude, branch claude/kalshi-pull (review fix round)
 - Two reviews of 8a5b4fe (caps and budget; correctness). Every blocker and major finding reproduced first (the
   reviewers' scratch tests and probes failed on 8a5b4fe), then fixed with a regression test in

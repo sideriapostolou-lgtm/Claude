@@ -450,7 +450,10 @@ Code: `speeddesk_live_pull.py` (the rule's books, no orders) and hooks in `speed
   sent again until Kalshi accepts it, whatever its reason does meanwhile: after the retry gate (2 s, or the error
   backoff), or as soon as a reconcile learns the order id (review, 2026-10-13: such a cancel was never re-sent once
   a reconcile cleared the order's uncertainty, so a pulled bid rested until it expired and held every new order
-  back; the cause predates the pull). A pull does not force an immediate account re-read: the hold and the
+  back; the cause predates the pull). A cancel that failed goes out again only once an order list read since the
+  failure still shows the order open (rebreak, 2026-10-14: re-sent first thing in each step, a DELETE that kept
+  failing after Kalshi had taken the order down reset the backoff every time, so the reconcile never ran and the
+  desk placed no bid and no lock for as long as it failed). A pull does not force an immediate account re-read: the hold and the
   unconfirmed cancel keep new bids back, and the regular reconcile (every second) confirms it (stale-bid cancels
   still ask for one). A cancel never adds risk.
 - **Write room.** While the pull is on, a new order waits when the client's rolling second already holds
@@ -478,7 +481,8 @@ Code: `speeddesk_live_pull.py` (the rule's books, no orders) and hooks in `speed
   same windows. The comparison also carries the gap between real and practice fills that existed before the rule,
   so the panel shows the same numbers for the seven days before the pull first went live (`week_before`): judge the
   change in that gap, not the gap itself. Still approximate: the twin is not an independent bot (its other bids are
-  copies of the real ones), and it never locks.
+  copies of the real ones), and it never locks. A practice-twin error beside a real cancel, order, decision or
+  shutdown is counted in the status line (`loop`, `twin_*_<error>`) and changes nothing real (rebreak, 2026-10-14).
 - **Shown and logged.** The panel and the `speeddesk_live_status` line carry `pull`: the settings, the windows held
   now (until when), `pulls_today`, `bids_pulled_today` (real bids up when the fair moved, whichever rule named the
   cancel), 31-day totals, and `since_pull` / `week_before`: real (`live_*`, real money) and twin (`twin_*`,
@@ -487,9 +491,10 @@ Code: `speeddesk_live_pull.py` (the rule's books, no orders) and hooks in `speed
   fills per window; and the real lock buys (count, contracts, cost and per window; the twin has none), since a pull
   that leaves more windows half filled buys more locks. `since` is when the rule went live with these settings (a
   changed setting starts it again; off clears it); `first_live` is when it first went live at all, where
-  `week_before` ends. The comparison is display only: if it ever fails the panel shows `error` and nothing else
+  `week_before` ends (it holds the windows that closed before then: the one open at go-live already had pulls). The comparison is display only: if it ever fails the panel shows `error` and nothing else
   stops. Pulls count only while real money is switched on and the window still takes bids. Each pull logs one
-  `speeddesk_live_pull` line when its hold ends: window, largest move, started, held until, real bids pulled.
+  `speeddesk_live_pull` line when its hold ends: window, largest move before the lock zone, started, held until,
+  real bids pulled.
   `/api/page` exposes the block as `kalshi_live.pull` (pagestate whitelist).
 
 ## 10. Public source-bot watcher and faster market data (owner, 2026-10-12)

@@ -4,6 +4,7 @@ on real money, with the practice twin keeping the rule without it as the live co
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import inspect
 import math
 import random
@@ -434,13 +435,15 @@ def test_the_panel_compares_real_and_twin_since_the_pull_went_live(tmp_path: Pat
     try:
         window = desk.book.windows[TICKER]
         panel = desk.panel()["pull"]
-        assert panel["since"] > window.start  # this window opened before the pull went live: it is the control
+        assert panel["since"] > window.start  # this window opened before the pull went live
         assert panel["since_pull"]["windows_either_traded"] == 0
         assert panel["week_before"]["live_maker_fills"] == 0  # not settled yet
         # Settle the window by hand: the real pair made 0.30, the twin's (the same two fills, practice) 0.25.
         desk.book.settled[TICKER] = LiveSettlement(TICKER, "kalshi:x", clock.now(), True, 5, 5, 4.7, 0, 5, 5, 5,
                                                    .3, 0, .3)
         desk.twin.closed.append(Settlement(TICKER, clock.now(), True, 5, 5, 4.7, .05, 5, .25, 0, .25))
+        # Open when the pull first went live, it is in neither comparison; as if it went live at this window's close:
+        desk.pull.first_live = window.end
         control = desk.panel()["pull"]["week_before"]
         assert (control["windows_both_traded"], control["live_pnl_usd"], control["twin_pnl_usd"]) == (1, .3, .25)
         assert (control["windows_either_traded"], control["live_maker_fills"], control["twin_maker_fills"]) == (1, 2, 2)
@@ -960,3 +963,183 @@ def test_a_broken_comparison_never_stops_a_save_or_a_cancel(tmp_path: Path) -> N
         assert desk.panel()["pull"]["error"] == "RuntimeError" and desk.panel()["pull"]["since_pull"] is None
     finally:
         desk.close()
+
+
+# Rebreak findings (2026-10-14), each reproduced first on 703d942.
+
+@pytest.mark.parametrize("pull", [False, True])
+def test_a_cancel_that_keeps_failing_never_starves_the_order_list_read_or_the_lock(tmp_path: Path, pull: bool) -> None:
+    """Major: a cancel whose DELETE keeps failing (500) after Kalshi already took the order down was sent again first
+    thing in every step once its backoff ended; each failure set the backoff again, so the reconcile that would show
+    the order gone never ran: no bid, fill or lock for as long as it failed (61ca112 read the order list 2.1 s later
+    and locked the pair). Now a failed cancel goes out again only once an order list read since the failure still
+    shows the order open. With the pull on, its reason ("pull") never passes, so it starved the same way."""
+    desk, account, clock = make_desk(tmp_path, caps=CAPS, extra={**MAKERS, "speeddesk_kalshi_pull": pull})
+    try:
+        starter_bid_filled(desk, account, clock)
+        run(desk, clock, .6)
+        assert [(c["side"], c["price"], c["size"]) for c in account.creates[1:]] == [("down", .47, 5)]  # order-2
+        cancel, list_orders = account.cancel, account.list_orders
+        failed: list[float] = []
+        reads: list[float] = []
+        start = clock.now()
+
+        def failing(order_id: str, *, ticker: str) -> dict[str, Any]:
+            if order_id != "order-2":
+                return cancel(order_id, ticker=ticker)
+            failed.append(round(clock.now() - start, 1))
+            account.orders[1].update(status="canceled", remaining_count_fp="0.00")  # Kalshi took it down anyway
+            raise KalshiClientError("cancel", "result unconfirmed", status=500, uncertain=True)
+
+        def reading(**kwargs: Any) -> list[dict[str, Any]]:
+            reads.append(round(clock.now() - start, 1))
+            return list_orders(**kwargs)
+
+        account.cancel = failing  # type: ignore[method-assign]
+        account.list_orders = reading  # type: ignore[method-assign]
+        market(desk, clock, .485)  # the Down fair rises 1.5c: the reprice rule cancels the Down bid
+        run(desk, clock, .3)
+        assert failed == [0.0]
+        market(desk, clock, .5)  # and comes straight back
+        run(desk, clock, 30)
+        [order_2] = [intent for intent in desk.intents.values() if intent.order_id == "order-2"]
+        assert reads and reads[0] <= 3.0 and order_2.terminal and desk.errors == 0 and failed == [0.0]
+        clock.advance(desk.book.windows[TICKER].end - 239 - clock.now())  # the lock period, Down ask 0.55
+        market(desk, clock, .5)
+        run(desk, clock, 6)
+        assert [(c["side"], c["kind"], c["price"], c["size"]) for c in account.creates if c["kind"] == "take"] == [
+            ("down", "take", .55, 5)]
+    finally:
+        desk.close()
+
+
+def test_a_cancel_that_timed_out_but_went_through_is_not_sent_again(tmp_path: Path) -> None:
+    """Minor: the first cancel timed out but Kalshi did cancel the order; the order list read after the backoff shows
+    it, so no second DELETE goes out once the reason has passed (it went out, a 404, and cost a write)."""
+    desk, account, clock = two_bids(tmp_path, speeddesk_kalshi_pull=False)
+    try:
+        cancel, seen = account.cancel, []
+
+        def timing_out(order_id: str, *, ticker: str) -> dict[str, Any]:
+            seen.append(order_id)
+            cancel(order_id, ticker=ticker)
+            if len(seen) == 1:
+                raise KalshiClientError("cancel", "transport failure", uncertain=True, timed_out=True)
+            return {}
+
+        account.cancel = timing_out  # type: ignore[method-assign]
+        market(desk, clock, .515)
+        run(desk, clock, .3)
+        market(desk, clock, .5)  # the reprice reason passes
+        run(desk, clock, 8)
+        assert seen == ["order-4", "order-3"] and desk.errors == 0 and len(account.creates) == 6
+    finally:
+        desk.close()
+
+
+def _broken_twin_run(tmp_path: Path, hook: str | None) -> dict[str, Any]:
+    """Two resting bids, then a 1.5c move: the old rule reprices both (twin ``cancel_order``), the pull holds the
+    window (the twin's own bid there, sized with ``can_buy``), and after the hold the bot bids again (twin ``place``);
+    every step advances the twin (``advance``). ``hook``: that practice-twin method raises throughout."""
+    desk, account, clock = two_bids(tmp_path)
+    try:
+        if hook is not None:
+            def broken(*args: Any, **kwargs: Any) -> Any:
+                raise RuntimeError("twin bug")
+
+            setattr(desk.twin, hook, broken)
+        market(desk, clock, .515, feed=False)  # the loop below hands the books over
+        end, errors = clock.now() + 12, 0
+        while clock.now() < end - 1e-9:
+            for book in desk.snapshot().books.values():
+                with contextlib.suppress(RuntimeError):  # a feed callback's error halts the companion; not tested here
+                    desk.on_book(book)
+            desk.on_tick(80000, clock.now(), clock.now())
+            asyncio.run(desk.step())
+            errors = max(errors, desk.errors)
+            clock.advance(.3)
+        return {"cancels": list(account.cancels), "errors": errors, "counts": dict(desk.loop_stats.counts),
+                "creates": [(c["side"], c["kind"], c["price"], c["size"]) for c in account.creates]}
+    finally:
+        desk.close()
+
+
+@pytest.mark.parametrize("hook", ["cancel_order", "can_buy", "place", "advance"])
+def test_a_practice_twin_error_never_changes_the_real_cancels_or_bids(tmp_path: Path, hook: str) -> None:
+    """Major: a twin error inside _cancel (before the real cancel was sent) stopped the real cancels, and one in
+    _decide (the held window's or an owed side's twin bid) was taken for a Kalshi error and paused the real loop.
+    Now each is counted in the status line and the real cancels, bids and error count are those of a healthy twin."""
+    healthy = _broken_twin_run(tmp_path / "healthy", None)
+    broken = _broken_twin_run(tmp_path / hook, hook)
+    assert broken["cancels"] == healthy["cancels"] == ["order-4", "order-3"]
+    assert broken["creates"] == healthy["creates"] and len(healthy["creates"]) == 6
+    assert broken["errors"] == healthy["errors"] == 0
+    assert any(name.endswith("_RuntimeError") for name in broken["counts"])
+    assert not any(name.endswith("_RuntimeError") for name in healthy["counts"])
+
+
+def test_a_practice_twin_error_never_stops_the_cancels_at_shutdown(tmp_path: Path) -> None:
+    desk, account, _ = two_bids(tmp_path)
+    try:
+        def broken(*args: Any, **kwargs: Any) -> Any:
+            raise RuntimeError("twin bug")
+
+        desk.twin.cancel_order = broken  # type: ignore[method-assign]
+        desk.twin.cancel = broken  # type: ignore[method-assign]
+        asyncio.run(desk.shutdown())
+        assert sorted(account.cancels) == ["order-3", "order-4"] and desk.shutdown_done
+    finally:
+        desk.close()
+
+
+def test_a_cancel_sent_again_after_its_reason_passed_leaves_the_twin_alone(tmp_path: Path) -> None:
+    """Minor: the re-send of a failed cancel whose reason has passed did what a fresh real cancel does to the practice
+    twin again, with the first reason; only the first ask does now."""
+    desk, account, clock = two_bids(tmp_path, speeddesk_kalshi_pull=False)
+    try:
+        failed = _flaky_cancel(account)
+        twin_cancels: list[str] = []
+        twin_cancel = desk._twin_cancel
+
+        def counted(intent: Any, reason: str) -> None:
+            twin_cancels.append(intent.order_id)
+            twin_cancel(intent, reason)
+
+        desk._twin_cancel = counted  # type: ignore[method-assign]
+        market(desk, clock, .515)
+        run(desk, clock, .3)
+        [first] = failed
+        market(desk, clock, .5)
+        run(desk, clock, 4)
+        assert account.cancels.count(first) == 1 and not _resting(account, first)  # sent again
+        assert sorted(twin_cancels) == ["order-3", "order-4"]
+    finally:
+        desk.close()
+
+
+def test_the_window_open_at_the_first_go_live_is_in_neither_comparison(tmp_path: Path) -> None:
+    """Minor: the window under way when the pull first went live already had pulls, so it is no part of the no-pull
+    baseline (week_before); it started before the pull, so it is not in since_pull either."""
+    desk, account, clock = two_bids(tmp_path)
+    try:
+        swing(desk, clock, .0053)
+        assert account.cancels == ["order-4", "order-3"]  # pulled
+        desk.book.settled[TICKER] = LiveSettlement(TICKER, "kalshi:x", clock.now(), True, 5, 5, 4.7, 0, 5, 5, 5,
+                                                   .3, 0, .3)
+        desk.twin.closed.append(Settlement(TICKER, clock.now(), True, 5, 5, 4.7, .05, 5, .25, 0, .25))
+        window, panel = desk.book.windows[TICKER], desk.panel()["pull"]
+        assert window.start < panel["first_live"] < window.end
+        assert panel["week_before"]["windows_either_traded"] == panel["since_pull"]["windows_either_traded"] == 0
+    finally:
+        desk.close()
+
+
+def test_a_pulls_logged_move_stops_at_the_lock_zone() -> None:
+    """Minor: in nonstop chop a pull stays open to the close, and its one log line showed the close's swing to 0 or 1
+    as its move; the move now grows only while the pull counts (before the lock zone)."""
+    guard = PullGuard(PullRule(), now=100.0)
+    guard.observe("w", .50, 100.0, count=True)
+    guard.observe("w", .52, 100.5, count=True)
+    guard.observe("w", .99, 101.0, count=False)  # in the lock zone
+    [line] = guard.expire(200.0)
+    assert line["move"] == .02 and line["held_until"] == 106.0
