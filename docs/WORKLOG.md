@@ -13,6 +13,31 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-14 16:06 UTC, Codex, deferred TJR/MNQ follow-up retained (09:06 AM PDT)
+- Owner requested retaining the TJR/MNQ prototype as a later task after the current work clears.
+  Added persistent item TJR-MNQ-001 to docs/COORDINATION.md, which workers already read at task start.
+  It records both exact Page URLs, dependencies, reported status, required outputs and live-disabled scope.
+- Verified Spaces access to both Pages using include_content=false: main page_d0294998a7cc8191b771278fbfb98a2f
+  ("TJR strategy research and bot handoff") and subpage page_33c0bb7e8dac81919e012fc502bae98a
+  ("TJR MNQ research prototype and validation"). Both can_read=true; the second is confirmed as a subpage
+  of the first. No PDF upload is needed now. This was access/metadata verification only, not the complete
+  content/code review. Full reading and source extraction remain queued.
+- Preserve the saved implementation, including all code/tests and limitations. Owner reports 65 synthetic
+  checks passing; historical profitability remains untested and paper trading unstarted, not independently
+  rerun this session. Next after current work: complete both reads, reproduce the implementation/checks,
+  perform historical validation, then start and verify paper trading. Keep live execution disabled.
+- Created enabled hourly condition-watch automation "TJR MNQ follow-up", America/Los_Angeles.
+  Connected GitHub and both Spaces reads succeeded before creation; private automation lookup found no
+  existing TJR/MNQ follow-up. The watch stays quiet while prerequisites remain open, checks current repo
+  records, avoids duplicate work, retains progress/blocks, and disables itself after verified completion.
+  A scheduled check is not a guarantee of data/tool access or completed research; report actual failures.
+- Current Kalshi work retains priority. PR #47 deployment approval and the execution/record-evidence
+  follow-up are not marked complete or bypassed. This new request is not deployment or real-trading approval.
+- Real money touched? No. Documentation and the requested follow-up schedule only; no source, orders,
+  settings, money limits, resume tokens or deployments changed. No code tests needed for this docs-only task.
+- Next: clear current tasks under their existing permissions, then advance TJR-MNQ-001 from its source Pages.
+  If either becomes inaccessible, name the missing Page and request its contents; never assume it was read.
+
 ## 2026-10-14 16:01 UTC, Codex, next profitability evidence step (09:01 AM PDT), PR #47
 - Prepared and published https://github.com/sideriapostolou-lgtm/Claude/pull/47 from
   codex/kalshi-complete-evidence, application commit 8a444dfb13cc1a51989682562452d975132e32dc.
