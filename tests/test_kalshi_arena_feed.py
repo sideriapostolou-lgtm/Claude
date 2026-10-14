@@ -237,7 +237,7 @@ def test_a_put_is_one_bounded_append_that_never_raises(tmp_path: Path) -> None:
     link = ArenaLink(ArenaConfig(data_dir=tmp_path))
     item = book(T0, 1)
     link.feed_book(item)
-    assert link.pending == [] and link.dropped == 0  # a town that is not running is not fed (and not counted)
+    assert not link.pending and link.dropped == 0  # a town that is not running is not fed (and not counted)
     link.running = True
     started = time.perf_counter()
     for _ in range(100_000):
@@ -336,7 +336,7 @@ def test_a_town_that_never_reads_never_blocks_the_live_loop(tmp_path: Path) -> N
             link.flush(snap)
             cpu.append((time.thread_time_ns() - began_cpu) / 1e6)
             wall.append((time.perf_counter_ns() - began) / 1e6)
-        assert link.running and link.dropped > 0  # the socket filled: whole frames dropped and counted
+        assert link.running and link.dropped > 0  # the socket and bounded FIFO filled: overflow is counted
         assert max(cpu) < 5 and p99(cpu) < 1.5, (max(cpu), p99(cpu))  # never waits, however full
         assert statistics.median(wall) < 1, statistics.median(wall)
     finally:
@@ -398,7 +398,7 @@ def test_a_dead_town_is_noticed_and_never_reaches_the_live_desk(tmp_path: Path, 
     assert "kalshi_arena_exited returncode=" in caplog.text
     link.feed_book(book(T0, 1))
     link.flush(snap)
-    assert link.pending == []
+    assert not link.pending
     broken = ArenaLink(ArenaConfig(data_dir=tmp_path / "x"), command=["/nonexistent/python"])
     broken.start()  # a process that cannot start: logged, the town stays off
     assert not broken.running and "kalshi_arena_not_started error=FileNotFoundError" in caplog.text
@@ -407,7 +407,7 @@ def test_a_dead_town_is_noticed_and_never_reaches_the_live_desk(tmp_path: Path, 
     broken.close(wait_s=1)
 
 
-def test_a_town_behind_drops_whole_frames_then_sends_whole_ladders(tmp_path: Path) -> None:
+def test_a_town_behind_keeps_whole_and_partial_frames_in_order(tmp_path: Path) -> None:
     import marshal
 
     class Socket:
@@ -458,29 +458,30 @@ def test_a_town_behind_drops_whole_frames_then_sends_whole_ladders(tmp_path: Pat
     assert [record[0] for record in first[5]] == ["w", "k", "o", "m", "b", "b"]
     for record in first[5][4:]:
         book_from_wire(record, town)
-    # The town is behind: the socket takes nothing, so the frame is dropped whole and the ladders reset.
+    # The socket takes nothing: retain the entire frame and its ladder baseline, without dropping the events.
     sock.takes = [None]
-    send(*ladders.delta(T0 + 1))
-    assert link.dropped == 2 and link.out == b"" and link._ladders == {} and link._windows is None
-    # Then it takes a few bytes of the next frame: the rest goes first next time, before any new frame.
+    delayed = ladders.delta(T0 + 1)
+    send(*delayed)
+    assert link.dropped == 0 and link.out and link._ladders and link._windows is not None
+    # A partial retry keeps the following books queued and unencoded until the first frame is complete.
     sock.takes = [100]
-    send(*ladders.delta(T0 + 2))
-    assert len(link.out) > 0 and link.frames == 2
+    queued = ladders.delta(T0 + 2)
+    send(*queued)
+    assert link.out and link.frames == 2 and len(link.pending) == 2
     latest = ladders.delta(T0 + 3)
     send(*latest)
     assert link.out == b"" and link.frames == 3
     second, third = frames(sock)
-    assert (second[1], third[1], second[3]) == (2, 3, 2)  # in order, and the drop count travels with them
-    assert [record[0] for record in second[5]] == ["w", "k", "o", "m", "b", "b"]  # every fact again after a drop
-    assert all(record[3][1] is None and record[4][1] is None for record in second[5][4:])  # whole ladders again
+    assert (second[1], third[1], second[3]) == (2, 3, 0)
+    assert [record[0] for record in second[5]] == ["b", "b"]
     rebuilt = [book_from_wire(record, town) for message in (second, third) for record in message[5]
                if record[0] == "b"]
-    assert rebuilt[-2:] == list(latest) and [record[0] for record in third[5]] == ["b", "b"]
-    # Still behind with a frame unfinished: that step's events are dropped before they are even encoded.
+    assert rebuilt == [*delayed, *queued, *latest]  # every intermediate book, in the original order
+    # Still behind with a frame unfinished: later events stay bounded in the queue, without false drop receipts.
     sock.takes = [10, None]
     send(ladders.delta(T0 + 4)[0])
     send(ladders.delta(T0 + 5)[0])
-    assert link.dropped == 3 and link.pending == [] and len(link.out) > 0
+    assert link.dropped == 0 and len(link.pending) == 1 and link.out and link.blocked == 2
 
 
 def test_only_windows_the_town_can_use_travel_and_only_when_they_change(tmp_path: Path) -> None:

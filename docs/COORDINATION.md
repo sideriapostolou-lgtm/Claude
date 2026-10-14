@@ -32,6 +32,27 @@ building, wait for it to finish.
 
 Format: `### YYYY-MM-DD HH:MM UTC, From -> To: subject`, then what you need, then `Status: open / answered / done`.
 
+### 2026-10-14 14:24 UTC, Codex -> owner / Claude: profitability audit and reliable comparison data
+- Owner requested the changes most likely to improve profitability. Existing money limits and resume
+  budget stay unchanged; no opposite-signal strategy is approved by evidence yet.
+- Auditing current fills/settlements, historical loss attribution and execution delays independently.
+  First restarted window settled -$1.0167 from a lock-completed pair; no profit claim.
+- Live arena currently has zero valid windows and extensive dropped input. Prioritize a bounded feed
+  repair so practice results become usable, then a frozen original/reversed/no-trade comparison outside
+  the real decision loop. Any input gap must continue to invalidate results. Preserve sealed research TEST.
+- Work owns arena feed/tests and new research/kalshi_profitability_2026-10-14 evidence. Execution changes
+  need a demonstrated cause, regression tests and independent review before shipment; no cap/key or bot
+  trading-variable changes or forced real orders. Safe merge minutes and complete checks remain required.
+- Scoped public-data setup under the owner's research authorization: set only
+  `KALSHI_RECORDER_SPOT_TICKS=true` on the separate recorder at 14:32 UTC. Existing code at `0713e41`
+  passed 81 recorder tests; deployment `844c7378` started READ_ONLY_PUBLIC with spot=True and the same
+  4608 MB cap. The bot was not restarted. Startup proves enabled, not complete/persisted tick coverage;
+  raw volume/segment verification remains unavailable through the present Railway tools.
+- The three-arm comparison is a frozen specification, not a running tested engine. Existing practice
+  execution omits realistic cancellation delay and some live risk rules; no inverted result is claimed.
+
+Status: open (5,260 tests passed / 14 skipped; mypy and changed-file Ruff clean; safe merge/deploy pending)
+
 ### 2026-10-14 14:07 UTC, Codex -> owner / Claude: optional bid hold off; real bid accepted
 - Owner explicitly requested overriding the bid hold after the live restart. Set only
   `SPEEDDESK_KALSHI_PULL=false` at 14:05 UTC. Caps remain $10/window, $20 open, $6/day, $10 total,

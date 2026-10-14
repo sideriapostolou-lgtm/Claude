@@ -85,6 +85,8 @@ LAG_PROBE_S, CLOCK_PROBE_S = 0.01, 60.0
 COINBASE_TIME = "https://api.exchange.coinbase.com/time"
 # The live loop steps on each Bitcoin tick or book change, at most every MIN_STEP_S, and at least every IDLE_STEP_S.
 MIN_STEP_S, IDLE_STEP_S = 0.02, 0.25
+# Only cancellation checks run while a private account GET is pending. No second risk writer or decision loop.
+CANCEL_CHECK_S = 0.05
 # A window an hour past its close, settled and with nothing open, moves once into a write-once archive chunk
 # (ledger key ARCHIVE_KEY + sequence). Every save rewrote every order ever made: 206 ms per save on Railway by
 # 2026-10-13 13:45 UTC, about 87 us more per stored order, several saves a second, all on the event loop.
@@ -270,6 +272,10 @@ class _RecoveryClient:
     def close(self) -> None:
         self._client.close()
 
+    def request_timings(self) -> dict[str, Any]:
+        read = getattr(self._client, "request_timings", None)
+        return read() if callable(read) else {"samples": [], "dropped": 0}
+
 
 def _number(value: Any) -> float:
     if isinstance(value, bool):
@@ -372,6 +378,7 @@ class KalshiLiveDesk:
         self.stop_event: threading.Event | None = None
         self.shutdown_done = False
         self._workers: set[asyncio.Task[Any]] = set()
+        self._read_workers: set[asyncio.Task[Any]] = set()
         self.startup_done = False
         self.closed = False
         self.account_at: float | None = None
@@ -437,6 +444,7 @@ class KalshiLiveDesk:
         # Speed plan step 0: time in each part of step(), event-loop lag, cancel timings and venue clock offsets.
         self.phase_stats = _Interval()
         self.loop_stats = _Interval()
+        self.request_stats = _Interval()
         self.clock_offsets = _ClockOffsets()
         self.time_probe = time_probe
         limits = LiveLimits(window_usd=settings.speeddesk_kalshi_window_usd,
@@ -603,23 +611,60 @@ class KalshiLiveDesk:
             self.latest_events.append({"event": receipt_kind, **item})
             self.latest_events = self.latest_events[-20:]
 
-    async def _io(self, callback: Callable[..., Any], *args: Any, **kwargs: Any) -> Any:
-        task = asyncio.create_task(asyncio.to_thread(callback, *args, **kwargs))
+    def _start_io(self, callback: Callable[..., Any], *args: Any, **kwargs: Any) -> asyncio.Task[Any]:
+        queued = self.monotonic()
+        stamps: list[float] = []
+        name = getattr(callback, "__name__", "")
+        operation = name if name in {"balance", "list_orders", "fills", "positions", "settlements",
+                                     "subaccount_balances", "create_order", "cancel"} else "other"
+
+        def invoke() -> Any:
+            stamps.append(self.monotonic())
+            try:
+                return callback(*args, **kwargs)
+            finally:
+                stamps.append(self.monotonic())
+
+        def finished(task: asyncio.Task[Any]) -> None:
+            if len(stamps) == 2:
+                self.loop_stats.add(f"{operation}_worker_queue", max(0.0, stamps[0] - queued) * 1000)
+                self.loop_stats.add(f"{operation}_worker_resume", max(0.0, self.monotonic() - stamps[1]) * 1000)
+            self._io_finished(task)
+
+        task = asyncio.create_task(asyncio.to_thread(invoke))
         self._workers.add(task)
-        task.add_done_callback(self._workers.discard)
+        task.add_done_callback(finished)
+        return task
+
+    def _io_finished(self, task: asyncio.Task[Any]) -> None:
+        self._workers.discard(task)
+        self._read_workers.discard(task)
+        if not task.cancelled():
+            task.exception()  # retrieve errors even if the shielded caller was cancelled during shutdown
+
+    async def _io(self, callback: Callable[..., Any], *args: Any, **kwargs: Any) -> Any:
+        task = self._start_io(callback, *args, **kwargs)
         return await asyncio.shield(task)
 
     async def _read(self, name: str, callback: Callable[..., Any], *args: Any, **kwargs: Any) -> Any:
         started = self.monotonic()
-        result = await self._io(callback, *args, **kwargs)
+        task = self._start_io(callback, *args, **kwargs)
+        self._read_workers.add(task)
+        while not task.done():
+            # wait() never cancels a still-running HTTP worker. This coroutine remains the only account/risk
+            # writer, and never creates orders while the account response is pending. A cancelled caller leaves
+            # the shielded worker tracked for shutdown; there is no detached cancellation task.
+            done, _ = await asyncio.wait({task}, timeout=CANCEL_CHECK_S)
+            if not done:
+                await self._cancel_unsafe()
+        result = await asyncio.shield(task)
         stats = getattr(self.client, "read_stats", None)
         pages = stats.get(name) if isinstance(stats, dict) else None
         self._sync_reads.append({"read": name, "ms": round((self.monotonic() - started) * 1000, 1),
                                  "rows": len(result) if isinstance(result, list) else None,
                                  "pages": pages.get("pages") if isinstance(pages, dict) else None,
                                  "bytes": pages.get("bytes") if isinstance(pages, dict) else None})
-        # Serialize all accounting mutations, but give cancellations priority
-        # between each private read instead of waiting for every account page.
+        # Re-check once before applying the completed response as well.
         await self._cancel_unsafe()
         return result
 
@@ -973,8 +1018,11 @@ class KalshiLiveDesk:
         # The bid whose fair fell most goes first (after a rise, the Down bid is the one now priced too high).
         for intent in sorted(active, key=lambda item: self._fair_drop(item, snapshot, now)):
             window = self._current_window(intent.window, snapshot)
-            reason = (self._gates() or self.fatal_reason
+            shutting_down = self.stopping or self.stop_event is not None and self.stop_event.is_set()
+            reason = (("shutdown" if shutting_down else "") or self._gates() or self.fatal_reason
                       or ("Repeated account errors" if self.errors >= 3 else ""))
+            if shutting_down and intent.client_order_id in self.cancel_acked:
+                continue
             if not reason and not intent.lock:
                 # A lock buy is immediate-or-cancel and only completes pairs: the window
                 # closing or a money stop is exactly when it must be left to finish.
@@ -2201,6 +2249,7 @@ class KalshiLiveDesk:
         # Every step exit passes here, including mode-off and backoff. Persist the latch and its receipt
         # together before checkpointing, after any cancellation work that this step could perform.
         self._watch_stops()
+        self._request_timings()
         status = self.clock() - self.last_status >= 60
         if status:
             # Account reads since the last status line: complete and recent reconcile times, each read's time,
@@ -2212,13 +2261,29 @@ class KalshiLiveDesk:
                          # Speed plan step 0: time in each part of step() ("step" is the whole), event-loop lag
                          # and cancel timings, and venue clock minus local clock (see _ClockOffsets).
                          phases=self.phase_stats.summary()["ms"], loop=self.loop_stats.summary(),
-                         clock=self.clock_offsets.summary())
+                         clock=self.clock_offsets.summary(), requests=self.request_stats.summary())
             self.last_status = self.clock()
         since = self.clock() - self.last_checkpoint
         # The once-a-minute status line goes out at once (it is logged when saved), not up to a second later.
         if (status or since >= 5 or self._must_save_now()
                 or ((self.dirty or self.pending) and since >= SAVE_EVERY_S)):
             self.checkpoint()
+
+    def _request_timings(self) -> None:
+        read = getattr(self.client, "request_timings", None)
+        if not callable(read):
+            return
+        try:
+            report = read()
+            self.request_stats.count("dropped", report["dropped"])
+            for sample in report["samples"]:
+                operation = sample["operation"]
+                self.request_stats.count(f"{operation}_{'ok' if sample['ok'] else 'error'}")
+                for stage in ("lock_wait_ms", "rate_wait_ms", "prepare_ms", "http_ms", "decode_ms", "total_ms"):
+                    if sample[stage] is not None:
+                        self.request_stats.add(f"{operation}_{stage}", sample[stage])
+        except Exception:  # noqa: BLE001 - diagnostics can never stop cancellation or change trading authority
+            self.request_stats.count("measurement_error")
 
     def _stops(self) -> tuple[Any, ...]:
         # And the minute of the ladder's last stop: a promotion waits 24 h after one, so a crash must not forget a
@@ -2274,8 +2339,11 @@ class KalshiLiveDesk:
         if self.closed or self.shutdown_done:
             return
         self.stopping = True
-        if self._workers:
-            await asyncio.gather(*tuple(self._workers), return_exceptions=True)
+        # A cancelled controller may leave a shielded create/cancel in flight. Drain those writes first, but do
+        # not let a history GET delay cancellation of known resting orders on the independent write connection.
+        writes = self._workers - self._read_workers
+        if writes:
+            await asyncio.gather(*tuple(writes), return_exceptions=True)
         if self.client is None and (self._active() or self.book.open_cost_usd > EPS):
             await self._ensure_client()
         known_ids = {intent.order_id for intent in self._active() if intent.order_id}
@@ -2284,6 +2352,8 @@ class KalshiLiveDesk:
         for intent in self._active():
             if intent.order_id in known_ids:
                 await self._cancel(intent, "shutdown")
+        if self._workers:
+            await asyncio.gather(*tuple(self._workers), return_exceptions=True)
         # A canceled coroutine may have lost its create response while the
         # shielded HTTP worker completed. Resolve that persisted intent before
         # trying to cancel, so shutdown does not leave the discovered bid live.
