@@ -13,6 +13,36 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-14 23:56 UTC, Codex, PR #56 deployed and principal restart comparison verified (4:56 PM PDT)
+- PR56 merged4:50:53PM inside allowed minutes, exactc8e37e5504aad04da0521b3f95c17f86dac42899.
+  Railwayad9f3073-9002-41d8-b29a-5b220fb19d1a SUCCESS4:52:47.327PM, regionus-east4-eqdc4a;
+  normal Polymarket LIVE startup4:52:45.030. Bothservicesonline1/1,no platformissues/recentfailures;
+  recorder deployment unchanged. Reviewed fourfilebundleafeb6aa… matches merged files exactly.
+-4:52:12old/4:53:08new principal logged fields all match:cash$34.8643,filledgrosscost/risk$0.43,
+  reserve0,openorders0,523fills,$2.27122fees,124settledwindows,cumulative−$14.4471,locked−$0.8212,
+  directional−$13.6259,caps$10window/$20open/$6day/$10total/clip5,stoplatchesfalse,integrityclear.
+  Existingresumeexplicitlyignoredalreadyused; no financialsetting/budget/history action. Comparison
+  is logged principal facts, not direct rawledger or stop-anchor export. Cash is not profit.
+- Exact tracebackquery through4:53:40zero. Three application WARNINGS: pump.fun403,its learning
+  breaker,and4:53:37Kalshi stale-book age3.320s/reconnect. No error-free/fresh-feed or causal latency
+  improvement claim; warning captured for follow-up. feed_fairness_release.json retains raw queries.
+- Full checks5528passed/14skips,capturedexit0,mypy126,Ruff4files and final independent review
+  remain release checks; source hashes unchanged. No new test run for this docs-only verification.
+- Sol readonlycollector assigned firsttwofull5:00–5:15/5:15–5:30PM Pacific windows, publication/
+  settlementtail to5:32. Protocol frozen beforecandidate results and includes boundaryintervals/
+  cycles,observercounter/reportedrow/retention checks; no-trace never means zero latency. Source
+  stays unchanged during collection. Real/practice and earlier losses remain separate/preserved.
+- Next: close/audit both windows, report actual financial outcomes and local/externaltiming, apply
+  prospectivelyrecordedgate. EXEC-DELAY-001OPEN,comparisonunstarted. TJRactualdata/costblocked/
+  paperandlivedisabled; repeatreminderunchangednotificationssuppressed. Recorder48hour/storage
+  obligations unchanged. Bounded readonly recorder snapshot now saved as RECORDER_STATUS_1656_PDT.json:
+  exacta0782b7 on its separateclaude/kalshi-recorder branch,online1/1,no platformissues.
+  Latest evidence/storage sample4:00PM Pacific only:313,640,667bytes of4,831,838,208configured
+  archivecap(6.49%),level0/deleted0. This is not hostfree-space or currentrawcoverage verification.
+  4:45–4:56PM logqueryempty;no new heartbeat/storage sample. Prior2:58PM Kraken disconnect/
+  reconnect preserved;sealedhashes/pervenuespotticks/coverage remain uncertified. No rawvolume probe.
+
+
 ## 2026-10-14 23:49 UTC, Codex, owned-feed fairness correction ready (4:49 PM PDT)
 - Added exactly2complete-message cooperative yields+comments to owned Kalshi/Coinbase loops.
   All callbacks/trades in one message finish together; ordering/timestamps/stale/sequence/dedup

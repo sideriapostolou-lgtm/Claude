@@ -39,6 +39,14 @@ Check this queue at task start and before declaring current work complete. Keep 
 move an item to done only with linked evidence. Blocked or waiting-for-approval is not complete.
 
 ### EXEC-DELAY-001 — first task active; production attribution and verified fix pending
+- **2026-10-14 4:56 PM PDT:** PR #56 deployed exactc8e37e5504aad04da0521b3f95c17f86dac42899,
+  Railwayad9f3073-9002-41d8-b29a-5b220fb19d1a SUCCESS4:52:47.327PM. Normal Polymarket LIVE
+  startup; bothservicesonline1/1.4:52:12before/4:53:08after compared cash$34.8643,cost/risk$0.43,
+  523fills,$2.27122fees,cumulative−$14.4471,caps/stops match; oldresumeignored. No rawstop-anchor
+  export claimed. Bounded tracebackqueryzero; one3.320s staleKalshibook/reconnect warning retained.
+  [Release receipt](../research/kalshi_profitability_2026-10-14/feed_fairness_release.json).
+  Firsttwofullwindows5:00–5:15/5:15–5:30PM Pacific assigned to readonlycollector; no further source
+  release during capture. FirsttaskOPEN,secondcomparisonunstarted; no variable/budget/rule change.
 - **2026-10-14 4:49 PM PDT:** two owned complete-message yields are ready, not deployed.
   Exact final four-file bundleafeb6aa444d39e4f118e3b82cb50ca47bcc2c2cc1173828d737a1121bc92b040
   independently accepted;5,528 tests/14 skips, captured exit0, mypy126/Ruff4pass. Test portability
