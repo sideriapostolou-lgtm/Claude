@@ -13,6 +13,31 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-14 22:11 UTC, Codex, PR #53 deployed; full-window timing still pending (3:11 PM PDT)
+- Under the prior active-task standing release approval, merged PR #53 in safe minute3:08 PM PDT,
+  exact95ff8acb35294de7080460721c0a47a7934d4a37. Railway deploymentf838b81d-1bee-49f3-9083-e71a6cd0ae6f
+  reached SUCCESS3:09:32.307 PM PDT. Polymarket LIVE startup3:09:27 PM, ten contracts/order; both
+  services online1/1, no platform warnings/criticals/recent failures. Scoped error query returns
+  no rows; bounded verification only. Recorder remains on its prior deployment, not restarted.
+- Before3:08:47 /after3:09:55 PM: cash$35.0802, unsettled gross cost$0.99 but modeled risk zero,
+  reservation zero,511 fills, fees$2.26832 and lifetime settled P&L-$14.6712 match. Limits and
+  both stop latches retained; used resume/reset values ignored. No loss history or budget reset.
+  This loss differs from the earlier receipt because the intervening real settlement lost$1.9197.
+- Exact source/test bundle retained; final5,456 passed /14 existing skips in300.22s, mypy125,
+  Ruff on three changed Python files. Verified all23 archived diagnostic artifacts against their
+  hash manifest, preserving the earlier failed run and raw controlled observations.
+- Saved scalar_fix_release.json. Cold first live save716.697ms is not comparable with steady-state
+  benchmark; no actual production speedup yet established. First complete post-restart window
+  is3:15–3:30 PM PDT. Collect repeated active timing/settlement/coverage evidence before closing.
+- Read-only source audit: arena/snapshot work already sits inside observed outer spans. Potential
+  missing coverage includes accumulated sub5ms callbacks, REST parse/delivery batches, WebSocket
+  dispatch/status, settlement/markout processing, and off-thread contention. These are hypotheses;
+  wall-vs-thread CPU does not identify GIL ownership. Proposed bounded quiet-work time bins remain
+  a diagnostic design only. No further source/financial/variable/order action in this receipt.
+- EXEC-DELAY-001 remains open; controlled comparison unstarted. TJR stays authentic-data/cost
+  blocked with paper/live disabled; reminder supplied no production authority. Next: complete
+  first full active-window observation, report remaining tails and only then choose the next fix.
+
 ## 2026-10-14 22:07 UTC, Codex, scalar checkpoint correction ready for release (3:07 PM PDT)
 - Supported partial correction: return exact native scalars before recursive JSON compatibility
   checks; preserve every nonprimitive branch, synchronous save/durability/mirror/receipt order,

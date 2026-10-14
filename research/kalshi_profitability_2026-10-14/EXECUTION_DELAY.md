@@ -67,6 +67,35 @@ the local reduction is not a promised production speedup or profitable strategy.
 The initial full-suite CPU-tail failure remains recorded while controlled
 diagnostics and serialized verification proceed. No thresholds were weakened.
 
+## Partial correction release, October 14 at 3:11 PM Pacific
+
+[PR #53's scalar shortcut](SCALAR_CHECKPOINT_FIX.md) is running on exact
+`95ff8acb35294de7080460721c0a47a7934d4a37`, deployment
+`f838b81d-1bee-49f3-9083-e71a6cd0ae6f`, SUCCESS3:09:32 PM PDT. The
+[release receipt](scalar_fix_release.json) verifies startup, platform health and
+retained financial state. Full checks pass; the earlier failed timing run and
+all controlled raw observations remain archived. No strategy/risk/variable change.
+
+The first complete post-restart window is3:15–3:30 PM Pacific. Its evidence is
+pending; a cold startup save is not a comparable steady-state performance sample.
+Do not claim a real speedup or task completion from the synthetic25% reduction.
+
+Read-only source review identifies an observation limitation: short callbacks
+below5ms are counted but not retained with timing. Cumulative short work can
+occupy material time. Arena flush/snapshot work is already enclosed by outer
+practice/feed spans, so absent inner names alone cannot explain uncovered time.
+Unwrapped REST batch parsing/delivery, WebSocket dispatch/reporting and some
+settlement/markout work also remain candidates. Other engine/page threads may
+contend for CPU/GIL; wall-vs-thread-CPU evidence does not prove that mechanism.
+
+If material gaps remain, the next diagnostic proposal is fixed monotonic time
+bins accumulating top-level synchronous occupancy, including quiet spans. Query
+only fully contained bins as a conservative lower bound, keep boundary/retention
+loss explicit, never add it to overlapping slow-span coverage and never prorate
+CPU by wall overlap. Bounded loop/process-CPU deltas could distinguish work from
+off-thread contention as hypotheses. This is a proposal, not implemented code.
+Keep no spans across await, no shared cross-thread observer and no per-tick logs.
+
 ## Completion evidence required
 
 1. Identify the measured blocking section from joined production intervals,

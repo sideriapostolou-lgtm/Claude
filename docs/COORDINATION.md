@@ -39,6 +39,12 @@ Check this queue at task start and before declaring current work complete. Keep 
 move an item to done only with linked evidence. Blocked or waiting-for-approval is not complete.
 
 ### EXEC-DELAY-001 — first task active; production attribution and verified fix pending
+- **2026-10-14 3:11 PM PDT:** partial scalar correction PR #53 deployed successfully on exact
+  `95ff8ac`; full5,456 tests/14 existing skips, mypy125 and changed-file Ruff pass. Pre/post
+  losses, cash, cost/risk, caps and used-resume history match. [Release receipt](../research/kalshi_profitability_2026-10-14/scalar_fix_release.json).
+  First full post-restart window is3:15–3:30 PM PDT; active timing/coverage verification remains
+  open, and a cold first save proves no production speedup. Short callbacks under5ms are counted
+  but their cumulative occupancy is unmeasured. No task completion or strategy-comparison start.
 - **2026-10-14 3:01 PM PDT:** measurement PR #52 is actually deployed on exact `0d93fe3`;
   both services are online and the pre/post restart accounting matches. Two early joined traces
   establish synchronous practice checkpoint/ledger work inside some real read-resumption gaps,
