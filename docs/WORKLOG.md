@@ -13,6 +13,72 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-14 16:40 UTC, Codex, standing release approval applied (09:40 AM PDT), PRs #47 and #48
+- Owner requested always deploying finished work without repeated confirmation. Standing release approval is
+  now in AGENTS/COORDINATION. It supersedes the earlier code-release approval blocker, not money limits,
+  stops, resume budgets, new live desks or Railway-variable permissions. No financial safeguard was removed.
+- PR #47 merged at 09:21:48 AM PDT, safe minute; exact e8db34ee34d95411ac7f695f704ceb82ef8e32d5,
+  bot deployment f707494f-1b45-4610-9488-def9796b5923 SUCCESS 09:24:05 AM PDT. Health check and normal
+  Polymarket LIVE startup verified; Kalshi REAL MONEY status at 09:24:11. Full application checks remain
+  5,301 passed / 14 existing skips, mypy 122 files, Ruff seven changed Python files. Subsequent edits were docs.
+- Independently compared real status 09:20:58 -> 09:24:11 AM PDT: cash $40.9508, open cost $9.88,
+  modeled risk $1.88, one position/zero resting orders, lifetime -$6.9106/day +$3.0315 and all caps/stops/counts
+  unchanged. Prior resume value was ignored as already used. No loss history or budget reset.
+- First active 75 seconds after 09:30 AM: 12 accepted maker orders, 11 reprice cancels, zero observed fills;
+  decision-to-ack median 82.6 ms / max 269.8 ms, cancel-to-ack median 78.5 ms / max 285.8 ms. Small sample,
+  not a stable tail estimate. Account reconciliation still reached 2.080 s and loop lag 711 ms in that minute;
+  earlier post-deploy tails were worse. Fast typical processing does not certify fast end-to-end execution.
+- The window spanning the restart settled at 09:30:07 AM: 13 Up / 13 Down, contract cost $13.83 + $0.0581
+  fee, $13 payout, -$0.8881 locked P&L / approximately zero directional P&L. Most inventory predates PR47.
+  Existing risk-reducing locks can exceed the ordinary $10 gross window budget; that exemption was not added
+  or increased. Latest financial sample 09:36:19: cash $39.7927, open cost/risk $2.15, one position and no
+  resting orders, lifetime -$7.7987 / current incomplete UTC-day +$2.1434. Cash is not trading profit.
+  Limits remain $10/window, $20 open, $6 UTC-day stop, $10 total stop, first clip five; no stop/reset change.
+- PR #48 implements a bounded metadata readback on the separate public recorder, not a trading client.
+  Exact a0782b743a31369fe25ddf6d2eea96df8511cd8d, deployment 8453f919-b891-4aa7-8478-6fcf6b9c24ee,
+  SUCCESS 09:38:15 AM PDT after safe merge 09:36:39. Startup READ_ONLY_PUBLIC at 09:38:07, spot and BTC
+  capture enabled, rate 1.5/s and cap 4608 MB unchanged. Bot remained on its existing f707494f deployment.
+- Recorder checks: 76 targeted passed; full 5,077 passed / 13 existing skips in 188.58 s; mypy 126 files,
+  Ruff four changed Python files, staged credential scan and diff check clean. Independent review passed
+  57 evidence/no-order checks and verified replay/protocol hashes unchanged; no refreeze or TEST access.
+- Actual saved 08:00-09:00 AM PDT manifest receipt at 09:38:07: SHA
+  3e418a7c0707ad55627485cb00c804f1de7466e983e5853fafd9151a03184b2a, recorded producer 0713e41 (the
+  previous deployment, correctly). Indexed spot: 2 sealed segments / 5,680 envelopes / 912,664 gzip bytes;
+  BTC books 2,396 envelopes / 1,087,232 bytes; BTC trade batches 793 envelopes / 4,284,075 bytes. These are
+  envelopes, not tick/trade counts. All 60 sampled BTC book minutes fresh, four spot-reconnect gap records.
+  Coarse minute counts do not prove complete windows or both spot venues. Saved storage 217,975,859 bytes
+  of 4,831,838,208, level 0, deleted segments 0. Missing REST error/429 counters are null, not verified zero.
+- Recorder polled trade-receive lag: median 3.492 s / p95 6.225 s / p99 7.054 s. This lower-fidelity tape
+  cannot establish a subsecond sniping edge; the live bot's WebSocket feed is separate. New startup records
+  restart_partial_segment_recovered and recorder_not_running gaps; they were retained, not relabeled clean.
+- Railway health around 09:40 AM: both exact deployments online, 1/1 replicas, no active platform warnings,
+  criticals or failures in preceding hour. Existing empty staged patch from Oct 12 untouched. Bounded bot
+  query through about 09:35 found no traceback or top-level ERROR; collector startup had no traceback.
+- Evidence in research/kalshi_profitability_2026-10-14/PR47_DEPLOYMENT.md and its JSON receipts, plus
+  RECORDER_SAVED_MANIFEST_RECEIPT.json. These establish deployment and saved metadata, not raw gzip hash
+  verification, per-venue tick continuity, full replay or profitability. Runtime file/CLI access remains
+  unavailable from the prior Unauthorized check; no credential values, variables or hidden TEST rows read.
+- Follow-up through 09:46 AM PDT: the 09:30-09:45 real window lost $2.15 (five Down at $0.43,
+  zero fees, directional -$2.15 / locked $0). Lifetime now -$9.9487; UTC-day -$0.0066. At 09:46:21 cash
+  $37.3427, next-window filled cost/risk $2.45, $2.30 reserved, modeled at-risk $2.45, one order/position;
+  controller waiting to reconcile an uncertain order, refusing new orders meanwhile. Existing stops/caps
+  unchanged. Prior owner-authorized loss-budget anchor -$9.9921 is retained, not reset to zero or to the
+  separate ladder anchor. Reservations on a balancing buy are not automatically additive worst-case loss.
+- Follow-up 09:47:30.917 log, state as of 09:47:21.227: the uncertain-order wait cleared. Kalshi LIVE,
+  ordinary reason pair_cap, no integrity error, zero open orders/reservations, same $37.3427 cash / $2.45
+  filled risk and same P&L/caps/stops. PR47_CLOSING_STATUS.json retains this newer receipt.
+- At 09:46:07 the arena accepted its first completed window: windows 0 -> 1, voids unchanged 69 / feed
+  voids 60, received 1,783,110, zero drops, late 53,649 unchanged since pre-open. This verifies one accepted
+  window under its existing checks, not sustained coverage or raw-tape completeness. Earlier partial-window
+  late events and all historical voids remain recorded. The aggregate status does not identify the accepted
+  market/resident returns. See PR47_FIRST_COMPLETED_WINDOW.json.
+- Real money touched? Yes, authorized bot performance-code release/restart; its existing live desk continued.
+  No manual orders, rule/risk changes, variable edits, cap increase, new desk or loss-budget reset. Recorder
+  release is read-only. Final worklog/artifact publication is docs/research only and does not restart either bot.
+- Next: resolve remaining local scheduling/account-read tails, verify complete arena windows and bounded raw
+  spot-segment evidence before activating the frozen original/inverted/no-trade comparison. TJR-MNQ-001 stays
+  queued because those evidence prerequisites remain open; neither a merge nor standing release approval clears them.
+
 ## 2026-10-14 16:06 UTC, Codex, deferred TJR/MNQ follow-up retained (09:06 AM PDT)
 - Owner requested retaining the TJR/MNQ prototype as a later task after the current work clears.
   Added persistent item TJR-MNQ-001 to docs/COORDINATION.md, which workers already read at task start.

@@ -40,9 +40,11 @@ move an item to done only with linked evidence. Blocked or waiting-for-approval 
 
 ### TJR-MNQ-001 — queued after current Kalshi work (owner request, 2026-10-14)
 - Owner: Codex. Start only after the current Kalshi work in this inbox/WORKLOG is cleared, or the owner
-  explicitly reprioritizes it. Current dependencies include PR #47's deployment/evidence verification and
-  the outstanding execution/complete-record evidence follow-up. The owner's later standing release approval
-  permits tested code deployments; it does not mark the evidence follow-up complete.
+  explicitly reprioritizes it. PR #47 is deployed and its restart/money-state verification is complete.
+  The outstanding execution/complete-record evidence follow-up remains open: local latency tails,
+  complete-window coverage and raw recorder/per-venue verification are not cleared by PR #48's saved-metadata
+  receipt. The owner's standing release approval permits tested code deployments; it does not mark these
+  evidence prerequisites complete. No explicit TJR reprioritization has been received.
 - Main TJR handoff: https://chatgpt.com/space/page_d0294998a7cc8191b771278fbfb98a2f
 - Actual MNQ implementation subpage: https://chatgpt.com/space/page_33c0bb7e8dac81919e012fc502bae98a
 - Read BOTH Pages completely, including code blocks and limitations; use the saved implementation,
@@ -62,6 +64,32 @@ move an item to done only with linked evidence. Blocked or waiting-for-approval 
 
 Format: `### YYYY-MM-DD HH:MM UTC, From -> To: subject`, then what you need, then `Status: open / answered / done`.
 
+### 2026-10-14 16:40 UTC, Codex -> owner / Claude: both approved releases live; saved recorder evidence available
+- PR #47 merged safely 16:21:48 UTC; bot exact `e8db34ee34d95411ac7f695f704ceb82ef8e32d5`, deployment
+  `f707494f-1b45-4610-9488-def9796b5923` SUCCESS 16:24:05 UTC. Normal Polymarket LIVE startup; Kalshi
+  REAL MONEY. Restart retained every compared cash/exposure/P&L/cap/stop field, prior resume marker ignored.
+- PR #48 merged safely 16:36:39 UTC into the separate recorder branch; exact
+  `a0782b743a31369fe25ddf6d2eea96df8511cd8d`, deployment `8453f919-b891-4aa7-8478-6fcf6b9c24ee`
+  SUCCESS 16:38:15 UTC. READ_ONLY_PUBLIC, same 1.5 requests/s and 4608 MB cap; bot did not restart again.
+- Saved 15:00-16:00 UTC manifest read back successfully: indexed spot 5,680 envelopes / 912,664 gzip bytes,
+  four reconnect gaps, saved storage 217,975,859 / 4,831,838,208 bytes, level 0. This is saved metadata,
+  not raw row/hash verification or proof of both spot venues. Trade-receive lag median 3.492 s / p95 6.225 s
+  limits use of this polled tape for subsecond research. Restart/recovered-partial gaps remain visible.
+- Tests: PR47 5,301 passed / 14 existing skips; PR48 5,077 passed / 13 skips, mypy 126 files and changed-file
+  Ruff clean, independent evidence/no-order review passed. Existing replay/protocol hashes unchanged.
+- Real window spanning the bot restart settled -$0.8881, all locked-pair loss. At 16:36:19 UTC cash $39.7927,
+  open risk/cost $2.15, lifetime -$7.7987, today +$2.1434. Ordinary budgets and lock exemptions are unchanged.
+  Do not describe a faster median or a recent winning screenshot as a profitable strategy.
+- Follow-up remains local scheduling/account-read tails, complete arena-window evidence and bounded raw
+  recorder verification before the frozen comparison. TJR-MNQ-001 stays queued; no extra approval is needed
+  for tested releases, and no money/reset/variable change or research promotion is inferred.
+- Follow-up 16:46:07 UTC: arena now accepted one completed window, with historical voids and the 53,649
+  late count unchanged; zero overflow. This is the first accepted window, not sustained coverage. The real
+  16:30-16:45 window lost $2.15 directional / $0 locked / $0 fees; lifetime -$9.9487, day -$0.0066.
+  The existing owner-authorized -$9.9921 resumed loss-budget anchor remains; no new reset.
+
+Status: done (two tested releases, exact deployments and saved-metadata receipt); open (complete execution evidence)
+
 ### 2026-10-14 16:21 UTC, Codex -> owner / Claude: standing release approval; deploying PR #47
 - Owner explicitly requested always deploying finished work without repeated approval. Recorded this in
   AGENTS.md and the merge rules above. Prior per-release approval blocker is superseded.
@@ -72,7 +100,7 @@ Format: `### YYYY-MM-DD HH:MM UTC, From -> To: subject`, then what you need, the
 - Verify exact running commit, preserved money/stop history, Polymarket startup and subsequent runtime
   performance. Current evidence limits remain open until verified; TJR-MNQ-001 stays queued meanwhile.
 
-Status: in progress (deployment authorized; verification pending)
+Status: done (PR #47 deployed and restart verified; latest entry retains remaining evidence work)
 
 ### 2026-10-14 16:05 UTC, Codex -> owner / Claude: TJR/MNQ follow-up retained after current work
 - Added TJR-MNQ-001 to the deferred queue above with both original Page links and the owner's full constraints.
