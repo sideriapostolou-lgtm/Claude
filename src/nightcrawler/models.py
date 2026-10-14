@@ -56,43 +56,43 @@ from pathlib import PurePath
 from typing import Any, ClassVar, Literal, TypeVar, Union, get_args, get_origin
 
 __all__ = [
-    "SOL_MINT",
     "LAMPORTS_PER_SOL",
-    "SOL_DECIMALS",
-    "TOKEN_ACCOUNT_RENT_LAMPORTS",
     "OPENING_RENT_RESERVE_LAMPORTS",
-    "TOKEN_PROGRAM_ID",
+    "SOL_DECIMALS",
+    "SOL_MINT",
     "TOKEN_2022_PROGRAM_ID",
-    "Mode",
-    "Side",
-    "SignalKind",
-    "VerdictSource",
+    "TOKEN_ACCOUNT_RENT_LAMPORTS",
+    "TOKEN_PROGRAM_ID",
+    "Balances",
+    "Candle",
+    "Decision",
     "DecisionAction",
-    "ReceiptKind",
+    "EquityPoint",
+    "Fill",
     "KillMode",
-    "to_jsonable",
-    "new_id",
-    "lamports_to_sol",
-    "sol_to_lamports",
+    "MarketSnapshot",
+    "Mode",
+    "Position",
+    "Quote",
+    "RadarSignal",
+    "Receipt",
+    "ReceiptKind",
+    "SafetyReport",
+    "Side",
+    "Signal",
+    "SignalKind",
+    "StrategyParams",
+    "TokenCandidate",
+    "Verdict",
+    "VerdictSource",
     "base_to_ui",
-    "ui_to_base",
     "effective_price_usd",
     "fill_gaps",
-    "Candle",
-    "TokenCandidate",
-    "MarketSnapshot",
-    "SafetyReport",
-    "RadarSignal",
-    "Signal",
-    "Verdict",
-    "Quote",
-    "Fill",
-    "Position",
-    "Decision",
-    "Receipt",
-    "EquityPoint",
-    "Balances",
-    "StrategyParams",
+    "lamports_to_sol",
+    "new_id",
+    "sol_to_lamports",
+    "to_jsonable",
+    "ui_to_base",
 ]
 
 # --------------------------------------------------------------------------- constants
@@ -162,6 +162,10 @@ def to_jsonable(obj: Any) -> Any:
     Dict keys become ``str``. Non-finite floats are kept (the hashing layer
     rejects them for receipts). Unknown objects are returned unchanged.
     """
+    kind = type(obj)
+    # Identity checks preserve subclasses and never invoke a custom metaclass's hash/equality.
+    if obj is None or kind is str or kind is int or kind is float or kind is bool:
+        return obj
     if dataclasses.is_dataclass(obj) and not isinstance(obj, type):
         return {f.name: to_jsonable(getattr(obj, f.name)) for f in dataclasses.fields(obj)}
     if isinstance(obj, dict):
@@ -186,7 +190,7 @@ def lamports_to_sol(lamports: int) -> float:
 
 def sol_to_lamports(sol: float) -> int:
     """SOL float -> int lamports, rounded to the nearest lamport."""
-    return int(round(sol * LAMPORTS_PER_SOL))
+    return int(round(sol * LAMPORTS_PER_SOL))  # noqa: RUF046 - preserve numeric-protocol int normalization.
 
 
 def base_to_ui(amount: int, decimals: int) -> float:
@@ -196,7 +200,7 @@ def base_to_ui(amount: int, decimals: int) -> float:
 
 def ui_to_base(ui_amount: float, decimals: int) -> int:
     """Whole tokens -> base units, rounded down (never overstate holdings)."""
-    return int(math.floor(ui_amount * (10**decimals) + 1e-9))
+    return int(math.floor(ui_amount * (10**decimals) + 1e-9))  # noqa: RUF046 - preserve numeric-protocol int normalization.
 
 
 def effective_price_usd(sol_lamports: int, token_amount: int, token_decimals: int, sol_usd: float) -> float:
@@ -251,7 +255,7 @@ class _Model:
         return to_jsonable(self)
 
     @classmethod
-    def from_dict(cls: type[M], data: dict[str, Any]) -> M:
+    def from_dict(cls, data: dict[str, Any]) -> typing.Self:
         hints = _hints(cls)
         kwargs = {}
         for f in dataclasses.fields(cls):  # type: ignore[arg-type]
@@ -261,7 +265,7 @@ class _Model:
 
 
 
-def fill_gaps(candles: list["Candle"], interval_s: int) -> list["Candle"]:
+def fill_gaps(candles: list[Candle], interval_s: int) -> list[Candle]:
     """Insert flat zero-volume candles (o=h=l=c=previous close) for intervals missing BETWEEN
     candles (ascending input). Nothing is invented after the last candle. Shared by the live
     GeckoTerminal client and the backtester, so both see the same series."""
@@ -288,12 +292,12 @@ class Candle(_Model):
     ts: int
     o: float
     h: float
-    l: float  # noqa: E741 - conventional OHLC name
+    l: float
     c: float
     v: float = 0.0
 
     @classmethod
-    def from_row(cls, row: typing.Sequence[Any]) -> "Candle":
+    def from_row(cls, row: typing.Sequence[Any]) -> Candle:
         """Build from ``[ts, o, h, l, c, v]`` (v optional). Values may be str/int/float."""
         v = float(row[5]) if len(row) > 5 and row[5] is not None else 0.0
         return cls(int(float(row[0])), float(row[1]), float(row[2]), float(row[3]), float(row[4]), v)
@@ -779,6 +783,6 @@ class StrategyParams(_Model):
     )
 
     @classmethod
-    def from_settings(cls, settings: Any) -> "StrategyParams":
+    def from_settings(cls, settings: Any) -> StrategyParams:
         """Copy the same-named attributes from a Settings (or any object)."""
         return cls(**{name: getattr(settings, name) for name in cls.FIELDS_FROM_SETTINGS})

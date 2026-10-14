@@ -13,6 +13,27 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-14 22:07 UTC, Codex, scalar checkpoint correction ready for release (3:07 PM PDT)
+- Supported partial correction: return exact native scalars before recursive JSON compatibility
+  checks; preserve every nonprimitive branch, synchronous save/durability/mirror/receipt order,
+  financial calculation and error. Required old lint cleanup in models.py preserves both numeric
+  int casts. No order policy, fees, caps, stop/resume budgets or Railway-variable change.
+- 29 independent baseline/candidate contract cases;107 related checks passed. Final serialized full
+  suite:5,456 passed /14 existing skips in300.22s. Mypy125 source files and Ruff on all3 changed
+  Python files pass. Reviewed source/test bundle1861501781778aad10f9aa7f83c1f2f02f12ce2b287a5d9ab99e06a743bce835
+  retained exactly. Astra accepted as a partial correction after actual production attribution.
+- Preserved earlier failed full run and every controlled diagnostic sample/result/script in
+  scalar_diagnostic_evidence.zip with hash manifest and scalar_diagnostic_receipt.json. Unchanged
+  arena CPU-tail failure cause is not established; baseline/candidate controlled runs all pass,
+  with no direct parent-flush converter calls. No test/threshold/GC configuration was weakened.
+- Portable benchmark and exact results saved:15 alternating synthetic pairs, median53.193 ->39.947ms,
+  24.9% lower, all ledger/mirror/timestamp/receipt artifacts identical. This is not a guaranteed
+  production improvement or profitable strategy. SCALAR_CHECKPOINT_FIX.md explains limits.
+- Next: publish/release reviewed correction in a safe minute under the earlier active-task standing
+  approval, verify exact deployment/accounting, collect repeated post-fix active-window timing.
+  This preparation is not a deployment claim; EXEC-DELAY-001 remains open and comparison unstarted.
+  The repeated TJR reminder supplies no production authority and its data/cost blocker persists.
+
 ## 2026-10-14 22:01 UTC, Codex, measurement deployment verified; bounded TJR queue check (3:01 PM PDT)
 - Read current GitHub AGENTS/COORDINATION/newest WORKLOG, PR #47/#52 and frozen TJR status; fetched
   latest exact 0d93fe3c764d2ac743661e681ca1911ec1bf81a9. PR #52 deployment f430e059-29ac-4596-8303-32d7c4c4edd7
