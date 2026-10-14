@@ -13,6 +13,42 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-14 21:14 UTC, Codex, owner-requested live performance check (2:14 PM PDT)
+- Read current coordination/AGENTS/newest worklog through GitHub and fetched head 627c92e. Scope:
+  read-only production status/results; preserve financial settings and unresolved research. Bot runs
+  567ba32d on successful deployment 4f84d690-5ecb-4357-8284-b0244bddd80b since 12:04:20 PM PDT.
+  Bot and recorder each show 1/1 running, zero platform warnings/criticals and no recent deployment
+  failures in the checked three-hour window. Recent documentation pushes were SKIPPED, not restarts.
+- Bot accounting at **2:12:30 PM PDT**: Kalshi REAL MONEY; cash $37.0220, cumulative settled P&L
+  -$13.4757 including $2.18652 fees. No resting orders, modeled open risk zero, net venue positions
+  zero, but unsettled gross inventory cost $1.2437 remains; do not describe that as fully settled.
+  Day/total stop latches false. Effective limits remain $10/window, $20 open, $6/day, $10 total,
+  clip five. Existing resume budget history is unchanged; cumulative loss is not a new loss budget.
+  Ladder stays rung 0, promotion not ready (windows/gain/house-money/stops blocked).
+- Incomplete UTC October 14 (starting October 13, 5 PM PDT): observed real settled P&L -$3.5336,
+  locked +$0.076759, directional -$3.610359, fees $0.6164, 193 fills, worst window -$2.15.
+  Practice reports +$12.90 across a different window/fill population; neither cohort is coverage
+  certified. This divergence does not demonstrate executable profit or a paired policy comparison.
+- Eight exact live settlement records from 12:15–2:00 PM PDT: four wins/four losses, net -$1.1778
+  after $0.12282 fees. At 2:00 PM, three matched pairs cost $4.4368 including fees, paid $3,
+  and lost $1.4368. Removing protective locks is not established as beneficial by these records.
+- Prior completed UTC day observed real P&L -$11.0074 / practice -$6.8833; full-day coverage remains
+  partial. Detailed counts, fees, locked/directional splits, fill rates and latency plus all eight
+  new settlement receipts are in research/kalshi_profitability_2026-10-14/STATUS_2026-10-14_1412_PDT.json.
+  Returned warning rows include feed reconnection/staleness and unrelated pump.fun 403/backoff;
+  no traceback in that bounded response, not a claim of exhaustive error-free logs.
+- Recorder's 2 PM saved-hour metadata: 287,566,823 / 4,831,838,208 bytes (~5.95%), storage warning
+  level zero, no deleted segments; three spot reconnection gaps. Raw hashes/per-venue verification
+  and coverage certification remain false. No sealed rows/outcomes or credential values accessed.
+- Independent Astra read-only review confirms existing loss/adverse-selection evidence and local
+  scheduling delay do not establish a profitable replacement or prove the cause of every loss.
+  Next: bounded callback wall/thread-CPU attribution, fix the measured delay preserving accounting,
+  then activate the frozen forward comparison when its coverage gate passes. No scaling or inversion.
+  TJR remains data/cost-blocked with no historical result or paper start; live disabled.
+- Only receipt/docs changed; JSON arithmetic, diff/history and credential checks passed. No app tests
+  rerun for this evidence-only change. No orders, trading code, production deployment, variables,
+  caps or resume budget changed. Profitability is still unproven and recorded live losses are retained.
+
 ## 2026-10-14 20:07 UTC, Codex, bounded TJR queue follow-up (1:07 PM PDT)
 - Read current AGENTS, COORDINATION and newest WORKLOG through connected GitHub; fetched and verified
   latest branch `6b0f5e292942f7195f902aaf47ccbc988bd4b899`, with a clean local tree before this receipt.
