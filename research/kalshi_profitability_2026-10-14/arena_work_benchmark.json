@@ -1,0 +1,37 @@
+{
+  "baseline": "13bf55b",
+  "optimized_model_sha256": "50ba3b4f78c6efd031fdcd8bb1cb1a59ea2988973c341b9ad275345d70de7429",
+  "python": "3.12.14",
+  "iterations": 3,
+  "books": 3000,
+  "trades": 30,
+  "side_depths": [
+    111,
+    168
+  ],
+  "residents": 12,
+  "orders_per_resident": 1,
+  "metric": "thread CPU seconds: marshal decode + receive + drain",
+  "results": {
+    "baseline": [
+      2.2684,
+      2.3139,
+      2.2467
+    ],
+    "optimized": [
+      0.4725,
+      0.5234,
+      0.491
+    ]
+  },
+  "median_speedup": 4.619959266802445,
+  "assertions": {
+    "all_events_received": true,
+    "coalesced": 0,
+    "late": 0,
+    "degraded_windows": 0,
+    "resting_orders_retained": 12
+  },
+  "limitations": "Fake frozen-clock load; excludes producer and scheduling; no profitability or coverage claim.",
+  "provenance": "Captured from the same benchmark run inline before the full test suite; portable script preserves its workload and assertions."
+}

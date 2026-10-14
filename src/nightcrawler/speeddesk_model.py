@@ -63,6 +63,33 @@ class Book:
     requested_at: float | None = None
 
 
+def _book_level_facts(book: Book) -> tuple[bool, frozenset[float]]:
+    """Share immutable level checks, never a desk's timestamp or consumed-depth decision.
+
+    The arena gives the very same Book to twelve residents. Revalidating every
+    level for each resident cannot keep up with deep books while orders rest.
+    The cache lives with that Book, outside its dataclass fields and wire/state
+    representation. Runtime callers may still supply mutable lists, subclasses
+    or numeric objects despite the annotations; those are checked every time.
+    """
+    exact_book = type(book) is Book
+    cached: tuple[bool, frozenset[float]] | None = (
+        book.__dict__.get("_cached_level_facts") if exact_book else None
+    )
+    if cached is not None:
+        return cached
+    levels = (*book.bids, *book.asks)
+    valid = not any(not math.isfinite(level.price) or not math.isfinite(level.size)
+                    or not 0 < level.price < 1 or level.size < 0 for level in levels)
+    prices = frozenset(level.price for level in book.asks if level.size > 0) if valid else frozenset()
+    result = (valid, prices)
+    if (exact_book and type(book.bids) is tuple and type(book.asks) is tuple
+            and all(type(level) is Level and type(level.price) in (int, float)
+                    and type(level.size) in (int, float) for level in levels)):
+        object.__setattr__(book, "_cached_level_facts", result)
+    return result
+
+
 @dataclass(frozen=True)
 class Trade:
     window: str
@@ -507,14 +534,13 @@ class PracticeDesk:
                                        and old.exchange_at is not None
                                        and book.exchange_at < old.exchange_at)):
             return False
-        if any(not math.isfinite(level.price) or not math.isfinite(level.size)
-               or not 0 < level.price < 1 or level.size < 0 for level in (*book.bids, *book.asks)):
+        valid, prices = _book_level_facts(book)
+        if not valid:
             return False
         self.books[key] = book
         # An unrelated book update does not replenish a consumed ask. Keep its
         # shadow debit until that price disappears. An increased displayed size
         # adds only the increase; unchanged snapshots never create new depth.
-        prices = {level.price for level in book.asks if level.size > 0}
         self.consumed = {item: value for item, value in self.consumed.items()
                          if item[:2] != key or item[2] in prices}
         return True
@@ -566,6 +592,15 @@ class PracticeDesk:
     def blocked(self, window: Window, now: float) -> str:
         if any(item.window == window.slug for item in self.closed):
             return "settled"
+        return self._blocked_unsettled(window, now)
+
+    def _blocked_unsettled(self, window: Window, now: float) -> str:
+        """Remaining checks after the caller has proved the window is unsettled.
+
+        advance/evaluate already build a closed-window set for their pass. Do
+        not rescan settlement history for every remaining window on every book.
+        Public blocked() retains its own settlement check for other callers.
+        """
         if now < window.start:
             return "not_started"
         if now >= window.end - self.config.cutoff_s:
@@ -850,7 +885,7 @@ class PracticeDesk:
         for window in self.windows.values():
             if window.slug in closed:
                 continue
-            reason = self.blocked(window, now)
+            reason = self._blocked_unsettled(window, now)
             if reason:
                 self.last_reason[window.slug] = reason
                 # A lock completes pairs after the cutoff and through the day stop, as live; no lock exists unless
@@ -945,7 +980,7 @@ class PracticeDesk:
         for window in self.windows.values():
             if window.slug in closed:
                 continue
-            reason = self.blocked(window, now)
+            reason = self._blocked_unsettled(window, now)
             if reason or sigma is None:
                 self.last_reason[window.slug] = reason or "volatility_warming"
                 continue

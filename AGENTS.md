@@ -8,6 +8,13 @@ your first change, and add an entry to `docs/WORKLOG.md` at the end of every ses
 the same time: read `docs/COORDINATION.md` (lanes, safe merge minutes, and the shared inbox) at the start of every
 task and before every merge, and write there when you need the other worker.
 
+**Standing release approval (owner, 2026-10-14):** deploy finished, tested improvements and verify them
+without asking for another merge/deploy confirmation each time. This supersedes the earlier session's
+read-only restriction for code releases. Keep safe merge minutes, required checks and deployment verification.
+It does not authorize changing money limits, resetting stops/resume budgets, enabling a new real-money desk,
+removing trading safeguards or changing Railway variables without the specific instructions required below.
+Do not let an already-approved deployment wait for another generic approval.
+
 ## Hard rules (never break these)
 
 1. **Real money.** Real money is switched on, or made bigger, only on the owner's explicit and specific word in
