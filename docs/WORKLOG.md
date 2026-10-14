@@ -13,6 +13,86 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-14 15:29 UTC, Codex, read-only daily production status (08:29 AM PDT)
+- Scope: read the latest Claude handoff, COORDINATION, AGENTS and WORKLOG through connected GitHub;
+  inspected production through connected Railway only. No credential values were requested or read. No variables, resume markers, caps,
+  trading rules, deployments or orders were changed. This is a documentation-only receipt, not a restart or promotion.
+- Health checked at 15:24 UTC (08:24 AM PDT): bot and recorder each online with 1/1 replicas, no Railway
+  warnings/criticals or failed deployments in the preceding 24 hours. Bot runs exact commit
+  41781df7284671da7b4ed534e5de81b2402779e7, deployment 08b7778c-713a-4f76-8b1c-48b62d092e97,
+  SUCCESS since 15:08:56 UTC (08:08:56 AM PDT). Later documentation commits were SKIPPED, not deployed.
+  Polymarket LIVE startup at 15:08:47 was confirmed; no traceback matched the bounded current-deployment
+  query from 15:08 through approximately 15:25 UTC. This is not continuous monitoring.
+- Latest retained money evidence: status 15:25:25.346 UTC (08:25:25 AM PDT), cash observed 15:25:25.127.
+  Kalshi LIVE, authenticated; trading_now=true, latest refusal pair_cap, no waiting reason, neither day
+  nor total stop latched, no integrity error. Cash $41.1046; one position, zero open orders/reservations,
+  modeled worst-case open risk $1.35. Lifetime settled trading P&L -$7.2868; current, incomplete UTC-day
+  settled P&L +$2.6553. Cash is not profit; these figures preserve previous losses.
+- Earlier status at 15:24:25 showed trading_now=false / Kalshi account data stale. That snapshot's last
+  account reconciliation took 6,892.2 ms; event-loop lag max 2,895.1 ms. Freshness recovered by 15:25:25,
+  but reliable subsecond execution is not established. Bot resource metrics queried around 15:25:
+  memory 1.297 GB of 8 GB, disk metric 3.188 GB; aggregate metric API does not provide exact sample times.
+- Unchanged runtime limits: $10/window ordinary buys, $20 open, $6 UTC-day stop, $10 total stop, five-contract
+  clip; existing strictly loss-reducing hedge/lock behavior is not a new spending authorization. Ladder rung
+  0, 16/96 qualifying settled windows; gain -$3.5407, risk-adjusted gain -$4.8907 versus $8.4850 needed,
+  house-money room $1.3632 versus $24.75 needed. Promotion blocked by windows, gain, house_money and stops.
+  The quiet-period threshold is Oct 15 06:49:54 AM PDT. No promotion pending; no fresh loss budget applied.
+- Prior completed UTC day: 2026-10-13 00:00-24:00 UTC = Oct 12 05:00 PM through Oct 13 05:00 PM PDT.
+  Persisted report read from the live status at Oct 14 08:23:23 AM PDT; code semantics independently checked:
+  real 68 distinct windows with fills / 299 fill records / 71 settlement records; fees on that day's fills
+  $1.50042. Settled P&L -$11.0074 = locked -$0.2565606 + directional -$10.7508394; worst settlement -$2.9792.
+  Fill-date and settlement-date populations differ; do not call all 71 records traded windows, and do not
+  deduct the listed fees again from net P&L. Prior owner-authorized day reset is recorded in the handoff;
+  neither reset nor a new day erases those losses.
+- Real fill rates for intents created Oct 13: maker 203/1,517 = 13.38%, take 15/18 = 83.33%, lock 43/49 =
+  87.76%. Denominators are durable intents, not guaranteed accepted orders; later observed fills can count.
+  Real BTC exchange timestamp-to-decision median/p95 457.4/1,408.5 ms (1,535 samples); callback receipt-to-
+  decision 335.8/1,159.1 ms. Decision-to-ack median/p95 347.6/1,228.9 ms across 1,514 successful samples
+  with 21 errors among 1,535 observations. Mean decision-to-fill 5,106.7 ms includes maker resting time and excludes lock fills,
+  so it is not an exchange round-trip or pure computation measure; exchange/local clock uncertainty remains.
+- PRACTICE twin, same completed UTC day: reported 25 fill windows / 44 fill records / 26 settlements;
+  net -$6.8833 = locked +$3.9948333 + directional -$10.8781333; worst -$2.85. Full-day simulated fee total
+  is missing from this aggregate, not zero. Maker fill rate 30/632 = 4.75%; take 13/15 = 86.67%.
+  Mean simulated decision-to-fill 6,673.7 ms includes resting time. BTC exchange-to-decision median/p95
+  429.1/1,330.5 ms; callback receipt-to-decision 326.3/1,131.8 ms (647 samples); no real venue ack applies.
+- Other PRACTICE desks, kept separate from the real companion's twin: speeddesk_daily at
+  Oct 14 00:00:05.099 UTC (Oct 13 05:00:05 PM PDT), day=Oct 13, partial_day=true, records Kalshi base
+  zero new-fill windows / one settlement / zero fills, locked $0 and directional/net -$0.3052 (worst same);
+  Polymarket US base zero new-fill windows / two settlements / zero fills, locked $0 and directional/net
+  -$19.4996 (worst -$10.4235). These are settlements of earlier inventory, not zero losses.
+  Complete coverage is only 5/96 Kalshi and 5/120 Polymarket US windows. Kalshi maker 0/19, no takes;
+  Polymarket US maker 0/26, takes 0/1; fill latency unavailable. Full-day fees unavailable for both;
+  nested zero fees describe only the five complete zero-trade windows and must not replace daily fees.
+- COVERAGE: both Oct 13 scorecards explicitly PARTIAL: only 6/96 eligible windows certified complete and
+  90 with gaps. Their restricted P&L (-$2.915 real / -$1.595 practice) must not replace the wider ledger
+  losses above. Roughly 97.88% fresh observed window-seconds does not mean 97.88% complete windows.
+  Legacy practice reporting_complete=true is not a certification of complete market data or executable fills.
+  No arena/paper result supports raising caps or changing real rules.
+- Arena at 15:24:02 UTC (08:24:02 AM PDT): 12 residents, zero complete windows, 64 void windows
+  including 56 feed voids; 1,066,264 received / 306,919 dropped / 299,185 late. Dropped input rose from
+  208,297 at 15:22 to 306,919 at 15:24. Instantaneous lag 0.00 s does not repair gaps; no candidate result.
+  Flush p99/max 26.637/30.724 ms; no arena error, child duty roughly 35-56% in preceding minutes.
+- Recorder runs exact 0713e412b8077a32bced8794b2f26bbb46c59097 on claude/kalshi-recorder, deployment
+  844c7378-d19f-4dd4-9771-7963ca968b55, us-west2, SUCCESS since 14:33:45 UTC (07:33:45 AM PDT).
+  Startup at 07:33:29 AM PDT confirms READ_ONLY_PUBLIC, spot and BTC15m enabled, 1.5 REST requests/s,
+  4,608 MB storage cap. Its eight runtime lines since startup show a restart gap and Kraken disconnects
+  at 07:53:47 and 08:10:55 AM PDT; reconnect-gap receipts at 07:53:53 and 08:11:01.538 AM PDT.
+  The latter is the latest available recorder event, not a successful captured-row heartbeat.
+- Recorder query contained no storage pause/halt, write failure or traceback. Platform metrics queried
+  at about 08:24 AM PDT: disk 0.377208832 GB, memory 0.500748288 GB, CPU 0.00885687 cores. Disk is not
+  verified recorder-owned /data bytes; exact metric sample timestamps were not supplied. Persisted records,
+  per-lane manifests and exact storage coverage could not be inspected: connected tools expose no SSH,
+  volume-file read or export operation. No credential workaround attempted; no successful file verification
+  claimed. The old storage forecast is not a fresh estimate after spot recording was enabled.
+  Planned 48-hour report remains due Oct 15 03:45 PM PDT (22:45 UTC), subject to actual verified coverage.
+- Highest-value next evidence step: obtain a read-only persisted-record/manifest export and reconcile one
+  complete forward window against venue fill/settlement receipts and account-refresh timing, including every
+  gap and cancellation delay. Arena drops and 6.9-second refreshes still need measured attribution before
+  another fix; this inspection does not authorize one. Do not promote a candidate or reset/raise budgets.
+- Verification: connected-service/status/log reads and arithmetic/source-cohort checks above; no application
+  changes, so no new application test run. Before write: fresh WORKLOG content/blob SHA and added-text
+  secret/whitespace checks. Preserve all prior entries. Real money touched? NO; documentation only.
+
 ## 2026-10-14 15:21 UTC, Codex, future TJR project assessment
 - Reviewed the owner's linked Page, "TJR strategy research and bot handoff":
   https://chatgpt.com/space/page_d0294998a7cc8191b771278fbfb98a2f . This is a research
