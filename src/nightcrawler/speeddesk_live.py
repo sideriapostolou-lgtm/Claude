@@ -92,7 +92,16 @@ MIRROR_EVERY_S = 10.0
 # Saves that must survive a host or power failure, not only a process crash: the one before an order's first
 # network byte, startup and shutdown, and any that record an owner's one-time action. The others (a fsync of
 # about 57 ms each on Railway, twice a second in reconcile) hold account facts the next reconcile reads again.
-OWNER_RECORDS = frozenset({"speeddesk_live_day_reset", "speeddesk_live_integrity_reset"})
+OWNER_RECORDS = frozenset({"speeddesk_live_day_reset", "speeddesk_live_integrity_reset", "speeddesk_live_resume",
+                           "speeddesk_live_stop"})
+# What each outcome of the owner's resume value means, in the receipt (the value itself is never written).
+RESUME_STATES = {
+    "applied": "applied; the total loss stop is cleared and a fresh stop budget counts from the result now",
+    "used": "ignored; this value was already used",
+    "not_halted": "ignored; no total loss stop is latched, so the value is kept unused (a value present before a "
+                  "stop never clears that stop: set a new value after one)",
+    "integrity": "ignored; a reconciliation stop is in force, so the value is kept unused until that stop is cleared",
+}
 # The earned-growth ladder looks at the books at most this often (a change only ever starts at the next window).
 LADDER_EVERY_S = 1.0
 
@@ -315,6 +324,10 @@ class KalshiLiveDesk:
         # Definite single-order refusals since the last accepted create; three in a row pause.
         self.refusals = 0
         self.lock_notes: dict[str, str] = {}
+        # Why a window got no first buy (once per window and reason), and which stops are latched (a change is
+        # recorded once, durably).
+        self.starter_notes: dict[str, str] = {}
+        self.stop_state = (False, False)
         self.reason: str | None = "Practice only; live switches are off"
         self.foreign_windows: set[str] = set()
         self.changed_windows: set[str] = set()
@@ -405,15 +418,21 @@ class KalshiLiveDesk:
             started = self.ladder.start(self.book, clock(), saved.get("ladder") if saved else None)
             self.ladder.attach(self.book)
             self.ladder.observe(self.book, clock())  # a saved stop is noted before a token below can clear it
+            # A stop that binds (no room for even a one-contract hedged first buy) latches now, before any token is
+            # read, so a token set for it is applied to it rather than judged while nothing is latched.
+            self.book.latch_bound_stops(clock())
+            self._watch_stops("at start")
             self.ladder_at = -math.inf
             self._mirror_twin(self.book.limits_now(clock()))
             self._record("speeddesk_live_ladder", action="start", state=started, rung=self.ladder.rung_for(clock()),
                          limits=limits_view(self.book.limits_now(clock())), ladder_rung=self.ladder.state.rung,
                          effective_from=self.ladder.state.rung_from, top_rung=self.ladder.top,
                          max_window_usd=self.ladder.max_window_usd)
-            token = _secret(settings.speeddesk_kalshi_resume_token)
-            if token:
-                self.book.apply_resume_token(token)
+            resumed = self.book.resume(_secret(settings.speeddesk_kalshi_resume_token))
+            if resumed:
+                self._record("speeddesk_live_resume", state=RESUME_STATES[resumed], total_pnl_usd=self.book.realized_pnl,
+                             counted_from_usd=self.book.stop_anchor if resumed == "applied" else None,
+                             total_halted=self.book.halted)
             outcome = self.book.arm_integrity_reset(_secret(settings.speeddesk_kalshi_integrity_reset_token))
             if outcome == "armed":
                 self._record("speeddesk_live_integrity_reset", code=self.book.integrity_reset_armed,
@@ -426,9 +445,13 @@ class KalshiLiveDesk:
             reset_at = clock()
             day_reset = self.book.apply_day_reset(_secret(settings.speeddesk_kalshi_day_reset_token), reset_at)
             if day_reset == "reset":
+                # The practice twin's day counts from the same moment, so the A/B control is not left frozen by
+                # its own copy of the daily stop while the real book trades again.
+                self.twin.apply_day_reset(reset_at)
                 self._record("speeddesk_live_day_reset", day=utc_day(reset_at),
                              counted_from_usd=self.book.day_anchor[utc_day(reset_at)],
-                             state="fresh daily budget from now until 00:00 UTC; caps and lifetime stop unchanged")
+                             state="fresh daily budget from now until 00:00 UTC; caps and lifetime stop unchanged",
+                             practice_twin_counted_from_usd=self.twin.day_anchor[utc_day(reset_at)])
             elif day_reset == "used":
                 self._record("speeddesk_live_day_reset", state="ignored; this value was already used")
             self.checkpoint(durable=True)
@@ -1358,6 +1381,39 @@ class KalshiLiveDesk:
             self._record("speeddesk_live_lock", window=window, side=side, size=size,
                          state="waiting to complete the pair", reason=reason)
 
+    def _starter_note(self, window: str, side: Side, price: float, reason: str) -> str:
+        """No first buy in this window because not even one contract with room for its hedge fits under a stop or a
+        budget (recorded once per window and reason); returns the plain-words reason for the status. Any other
+        refusal (a starter pending on the other side, stale cash) is the status reason as before, with no receipt."""
+        plain = {"day_stop": "the daily loss stop", "total_budget": "the lifetime loss stop",
+                 "open_budget": "the open budget", "window_budget": "the window budget",
+                 "cash_budget": "the Kalshi cash"}.get(reason)
+        if plain is None:
+            return reason
+        text = f"No first buy: one contract and its hedge would not fit under {plain}"
+        if self.starter_notes.get(window) != reason:
+            self.starter_notes[window] = reason
+            risk = self.book.risk_status(self.clock())
+            self._record("speeddesk_live_starter", window=window, side=side, price=price, reason=reason, state=text,
+                         total_at_risk_usd=risk["total_at_risk_usd"], day_at_risk_usd=risk["day_at_risk_usd"],
+                         total_stop_usd=self.book.limits.total_loss_usd, day_stop_usd=risk["limits"]["day_loss_usd"])
+        return text
+
+    def _watch_stops(self, when: str = "") -> None:
+        """Record each stop the moment it latches (durably: OWNER_RECORDS), with the books' numbers."""
+        risk = self.book.risk_status(self.clock())
+        state = (bool(risk["halted"]), bool(risk["day_stop_latched"]))
+        for latched, before, stop, until in ((state[0], self.stop_state[0], "total", "a new resume token"),
+                                             (state[1], self.stop_state[1], "day", "00:00 UTC or the owner's day reset")):
+            if latched and not before:
+                self._record("speeddesk_live_stop", stop=stop, until=until,
+                             state=f"{stop} loss stop latched{' ' + when if when else ''}; no new buys until {until}; "
+                                   "resting bids are cancelled and locks still complete pairs",
+                             total_pnl_usd=risk["total_pnl_usd"], total_at_risk_usd=risk["total_at_risk_usd"],
+                             total_stop_usd=self.book.limits.total_loss_usd, day_at_risk_usd=risk["day_at_risk_usd"],
+                             day_stop_usd=risk["limits"]["day_loss_usd"], at_risk_usd=risk["at_risk_usd"])
+        self.stop_state = state
+
     async def _send_lock(self, window: Window, side: Side, price: float, size: float) -> bool:
         now, decision_mono = self.clock(), self.monotonic()
         client_id = PREFIX + uuid.uuid4().hex
@@ -1472,6 +1528,12 @@ class KalshiLiveDesk:
                     units = min(units, math.floor(limits.window_usd / limits.pair_cap))
                     if units == 0:
                         self.reason = "Window budget is too small for a whole capped pair"
+                    else:
+                        # And to what leaves room for its hedge under the open budget and both loss stops (the
+                        # book's first-buy rule): with no room for even one hedged contract, nothing is sent.
+                        units, refused = self.book.starter_fit(window.slug, side, kind, price, units, now)
+                        if units == 0:
+                            self.reason = self._starter_note(window.slug, side, price, refused)
                 if units:
                     candidates.append((fair - price, window, side, fair, kind, price, units))
         for _, window, side, fair, kind, price, units in sorted(candidates, key=lambda item: -item[0]):
@@ -1549,6 +1611,7 @@ class KalshiLiveDesk:
                 mark = self._phase("lock", mark)
                 await self._decide()
                 self._phase("decide", mark)
+            self._watch_stops()
         except Exception as exc:  # noqa: BLE001 — failed account evidence never permits another order.
             self.account_at = None
             self._error(exc)
@@ -1675,7 +1738,8 @@ class KalshiLiveDesk:
                 "at_risk_usd": risk.get("at_risk_usd", 0.0), "open_orders": len(active),
                 "positions": sum(abs(value) > EPS for key, value in self.position_sizes.items()
                                  if key in {intent.window for intent in self.intents.values()}),
-                "total_halted": risk.get("halted", False), "real_orders_available": live,
+                "total_halted": risk.get("halted", False), "day_stop_latched": risk.get("day_stop_latched", False),
+                "real_orders_available": live,
                 "integrity_error": self.book.integrity_error,
                 "integrity_reset": (self.reset_blocker or "armed") if self.book.integrity_reset_armed else None,
                 "cleanup_pending": bool(active) and bool(self._gates()),

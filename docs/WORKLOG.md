@@ -13,6 +13,51 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-14 01:00 UTC, Claude, branch claude/kalshi-stop-fixes (the stop fixes after the 2026-10-13 loss)
+- Why: 29 real windows (9:00 AM to 4:15 PM PT) lost $11.92 and reached the $10 lifetime stop (-$9.94). The
+  forensics found no order outside the rules, but the stops cut or blocked hedges (they counted a hedge as new
+  risk), the last first buys were sized to the last room under the stop (one-sided bets at 3:45 and 4:00 PM), the
+  stops never latched (1 contract at 4c still went out with 5.8c of room; the resume token could never apply and
+  was spent silently), and the practice twin sat at its own $6 day stop all day because the owner's reset only
+  reached the real book.
+- Changed (real-money code, `speeddesk_live_model.py`, `speeddesk_live.py`, `speeddesk_model.py`; spec 9.1, 9.3):
+  1. a strictly balancing bid (light side, within the unpaired contracts, under $1 with fees) is exempt from the day
+     and lifetime stops like a lock, as a buy and as a pending reservation; the window budget, open budget, pair
+     cap, imbalance and cash still apply; the heavy side or any part beyond the unpaired count is new risk (the
+     practice desk's copy of the live stops, the arena residents' mode, counts the same way, so the parity test
+     with the live book still holds);
+  2. a window's first buy is sized so that its hedged pair (price plus the other side at 0.99 less the price, with
+     the taker fee) fits under both stops; if not even one hedged contract fits, nothing is sent and a receipt says
+     why (with a $6 day stop the first buy is at most 5 contracts, and smaller once the day is down);
+  3. the stops latch: a one-contract buy (or hedged first buy) refused by the lifetime stop sets `total_halted`
+     (paper, bids cancelled, "Total loss stop"), by the day stop latches the day until 00:00 UTC or the day reset;
+     a binding stop is latched at startup before any token is read; each latch is a durable `speeddesk_live_stop`
+     receipt; a resume value seen while nothing is latched is kept unspent (the next stop spends it, so a value
+     present before a stop never clears it); every token use is logged (`speeddesk_live_resume`) without the value;
+  4. the owner's day reset also resets the practice twin's day (`PracticeDesk.apply_day_reset`).
+- Verified: each fix has a regression test that fails on 15c9457 and passes here (`tests/test_speeddesk_live_stops.py`,
+  16 tests, among them a brute-force property test over random books: realized loss plus the worst the open windows
+  can still lose never passes either stop, with fills in any combination, cancels, locks, restarts, resumes and day
+  resets); the ladder's randomized test now states the new rule (a strictly balancing buy's new risk is zero) and
+  the clip-10 first-buy test uses an $8 window with the day stop at its $12 ceiling, since ten hedged pairs ($10.24)
+  never fit under the $10 lifetime stop; full suite, mypy src/nightcrawler, ruff on the changed files (see the
+  commit message for the counts).
+- Replay of 2026-10-13 (scratchpad `stopfix/replay.py` on the forensics `orders.csv`, `windows.csv`, `parsed.json`):
+  with fixes 1 and 2 the 29 windows come to about -$7.9 instead of -$11.92. Assumptions: a shrunk first buy fills in
+  full at the same price, its balancing fills are capped at the shrunk size and fill only if the real ones did, the
+  real lock fills the rest at its real price, adds beyond balancing are dropped; a hedge the stops cut fills in full
+  only if the cut one filled, at the same price, and a hedge never sent still gets no fill. Changed windows: the
+  morning 10-contract first buys become 5 under the $6 day stop (9:15 AM -2.98 -> -1.49; 9:30 0.00 -> +0.40; 9:45
+  +1.60 -> +0.17; 10:00 +1.09 -> +0.70; 10:15 -1.70 -> -0.22), the afternoon first buys shrink with the lifetime
+  room (12:30 PM +1.54 -> +0.04; 3:00 -0.01 -> +0.45; 3:15 -1.06 -> +0.15; 3:30 -1.33 -> -0.32; 3:45 -0.64 ->
+  -0.21; 4:00 PM -0.84 -> 0, nothing sent). Fix 1 alone (first buys as sent, cut hedges at full size): about
+  -$10.0 (10:15 AM +1.90 and 3:30 PM +1.43 saved; 9:30 AM -0.98, since the full hedge at 51c would have paired a
+  down side that won). The winning windows give back some of their later cheap pairs under fix 2; that is the
+  price of never holding an unhedged first buy.
+- Not verified / skipped: not pushed, not merged, Railway untouched, no secrets read.
+- Real money touched? no (code only; the owner decides on the resume).
+- Next step: review, merge at a safe minute, then the owner's resume value for the latched lifetime stop.
+
 
 
 ## 2026-10-13 23:05 UTC, Claude, branch claude/kalshi-arena (preflight fixes and the town's kalshi_arena contract)

@@ -1195,6 +1195,7 @@ class Run:
                                                            if item.window == window.slug)
         at_risk, reserved, debits = book.at_risk_usd, book.reserved_usd, book.cash_debits
         day_loss, total_loss = book.day_loss(now), max(0.0, book.stop_anchor - book.realized_pnl)
+        light_side, unpaired = book.lock_side(window.slug)
         self.orders += 1
         try:
             intent = book.reserve_intent(window.slug, side, "take", price, size, now, f"nc-speed-r{self.orders}",
@@ -1208,8 +1209,14 @@ class Run:
         if not lock:
             assert current + cost <= window_usd + 1e-9
             assert at_risk + cost <= open_usd + 1e-9
-            assert day_loss + at_risk + cost < day_usd
-            assert total_loss + at_risk + cost < 10
+            # The stops count the buy's new risk: a strictly balancing contract (light side, within the unpaired
+            # count, under $1 with fees) completes a $1 pair and is exempt like a lock (2026-10-14); the rest counts.
+            balancing = min(size, unpaired) if side == light_side and intent.unit_reserve < 1 else 0
+            risk = cost - balancing * intent.unit_reserve
+            assert day_loss + at_risk + risk < day_usd
+            assert total_loss + at_risk + risk < 10
+            if risk < cost:
+                self.counts["balancing"] += 1
         self.counts["lock" if lock else "buy"] += 1
 
     def fill_or_cancel(self, now: float) -> None:

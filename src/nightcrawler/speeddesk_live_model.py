@@ -42,8 +42,11 @@ LOCK_MARGIN_S = 20.0
 HARD_WINDOW_USD, HARD_OPEN_USD, HARD_DAY_LOSS_USD, HARD_TOTAL_LOSS_USD = 20.0, 40.0, 12.0, 10.0
 # The contract cap's own ceiling (config.py SPEEDDESK_KALSHI_CLIP has the first, hi=25).
 HARD_CLIP = 25.0
-# Refusals that mean a loss stop binds (the earned-growth ladder counts one on the smallest order as a stop).
+# Refusals that mean a loss stop binds: one on a one-contract order latches the stop (the day stop for the rest of
+# the UTC day, the total stop until a new resume token), and the earned-growth ladder counts it as a stop.
 STOP_REFUSALS = frozenset({"day_stop", "total_budget"})
+# What a resume value did when the companion saw it (speeddesk_live records one receipt per start).
+ResumeOutcome = Literal["applied", "used", "not_halted", "integrity", ""]
 # Integrity reset fingerprints live beside the resume ones; the prefix keeps the two kinds from matching.
 RESET_DOMAIN = b"kalshi-integrity-reset\x00"
 DAY_RESET_DOMAIN = b"kalshi-day-reset\x00"
@@ -210,9 +213,15 @@ class LiveRiskBook:
         self.stop_anchor = 0.0
         self.halted = False
         self.halt_reason: str | None = None
+        # The UTC day whose daily stop has latched (not even a one-contract buy fit under it): no new buys until the
+        # day rolls or the owner's one-time day reset. Persisted; the previous release ignores the key.
+        self.day_stop_latched: str | None = None
         self.integrity_error: str | None = None
         self.resume_token_hash: str | None = None
         self.seen_resume_hashes: set[str] = set()
+        # Resume values seen while no total stop was latched: kept unspent, and never an acknowledgement of a stop
+        # that comes later (the stop spends them), so a value left in the settings cannot clear a future halt.
+        self.resume_pending: set[str] = set()
         # The stop the owner's one-time reset approved, until it clears or a different check trips.
         self.integrity_reset_armed: str | None = None
         self.bootstrap_order: dict[str, str] = {}
@@ -276,9 +285,47 @@ class LiveRiskBook:
 
     @property
     def at_risk_usd(self) -> float:
-        # A pending lock buy completes pairs, so if it fills the possible loss only falls: it
-        # needs cash (reserved_usd) but is not added to the loss the stops measure.
-        return self.open_loss_usd + sum(intent.reserved for intent in self.intents.values() if not intent.lock)
+        """What can still be lost: the open loss plus the pending buys that could add to it.
+
+        A pending lock buy completes pairs, so if it fills the possible loss only falls: it needs cash
+        (reserved_usd) but is not added to the loss the stops measure. A pending bid is the same kind of
+        order for the part of it that strictly balances its window (see `balancing_contracts`); only the
+        rest is new risk.
+        """
+        return self.open_loss_usd + self.pending_risk_usd
+
+    @property
+    def pending_risk_usd(self) -> float:
+        """The reserved cost of pending buys that could raise a window's worst-case loss if they fill."""
+        total, spare = 0.0, {}  # type: float, dict[str, float]
+        for intent in self.intents.values():
+            if intent.lock or intent.reserved <= EPSILON:
+                continue
+            balancing = self.balancing_contracts(intent.window, intent.side, intent.remaining, intent.unit_reserve,
+                                                 spare)
+            total += (intent.remaining - balancing) * intent.unit_reserve
+        return total
+
+    def balancing_contracts(self, window: str, side: Side, size: float, unit: float,
+                            spare: dict[str, float] | None = None) -> float:
+        """How many of `size` contracts on `side` strictly balance this window: bought on the light side, within
+        the unpaired contracts (less any `spare` already claimed by another pending buy of the window), and under
+        $1 each at their worst permitted cost.
+
+        Each such contract completes a pair that pays $1 whatever happens, so filling it changes the worst-case
+        loss by `unit - 1 < 0`: like a lock, it is exempt from the day and lifetime stops (never from the window
+        budget, the open budget, the pair cap or the cash). A buy on the heavy side, a contract beyond the
+        unpaired count, or one at $1 or more with fees is new risk. (The pair cap holds for every reserved order:
+        `_inventory_guard` refuses a buy that would break it.)
+        """
+        light, unpaired = self.lock_side(window)
+        if light != side or unit >= 1 - EPSILON or size <= EPSILON:
+            return 0.0
+        left = unpaired if spare is None else spare.setdefault(window, unpaired)
+        balancing = max(0.0, min(size, left))
+        if spare is not None:
+            spare[window] = left - balancing
+        return balancing
 
     def lock_side(self, window: str) -> tuple[Side | None, float]:
         """The side that completes this window's unpaired contracts, and how many are unpaired."""
@@ -290,17 +337,65 @@ class LiveRiskBook:
             return None, 0.0
         return ("down" if difference > 0 else "up"), abs(difference)
 
+    def hedge_unit(self, window: str, price: float, limits: LiveLimits) -> float:
+        """The worst permitted cost of one contract of the other side at the pair cap less `price`: what the
+        hedge of a first buy at `price` may cost. Raises `pair_cap` when no such price exists."""
+        hedge = math.floor((limits.pair_cap - price) * 100 + EPSILON) / 100
+        if hedge < 0.01 - EPSILON:
+            raise LiveRejected("pair_cap")
+        return max(self.unit_reserve(window, hedge, "take"), self.unit_reserve(window, hedge, "rest"))
+
     def _note_stop(self, now: float) -> None:
         if math.isfinite(now):
             self.stop_hit_at = now if self.stop_hit_at is None else max(self.stop_hit_at, now)
             if self.stop_listener is not None:
                 self.stop_listener(now)
 
+    def _halt(self, now: float) -> None:
+        """Latch the total stop. Every resume value seen before it is spent by it: a value already in the settings
+        when a stop comes never clears that stop (speeddesk_live_model.resume)."""
+        if not self.halted:
+            self.seen_resume_hashes |= self.resume_pending
+            self.resume_pending.clear()
+        self.halted, self.halt_reason = True, "total_loss"
+        self._note_stop(now)
+
+    def _latch(self, reason: str, now: float) -> None:
+        """A stop refused even a one-contract buy: it has tripped, so it latches (and the ladder is told)."""
+        if reason == "total_budget":
+            self._halt(now)
+        elif reason == "day_stop" and math.isfinite(now):
+            self.day_stop_latched = utc_day(now)
+        self._note_stop(now)
+
+    def day_latched(self, now: float) -> bool:
+        return self.day_stop_latched is not None and self.day_stop_latched == utc_day(now)
+
     def _refresh_stops(self, now: float) -> None:
         loss = max(0.0, self.stop_anchor - self.realized_pnl)
         if loss + self.at_risk_usd >= self.limits.total_loss_usd - EPSILON:
-            self.halted, self.halt_reason = True, "total_loss"
-            self._note_stop(now)
+            self._halt(now)
+
+    def latch_bound_stops(self, now: float) -> list[str]:
+        """Latch each stop with no room left for even a one-contract hedged first buy (its pair costs at least the
+        pair cap less a cent, see `hedge_unit`); returns the stops latched ("total", "day").
+
+        The companion calls this at startup, before it reads any token, so a stop that binds is latched first and
+        a token set for it is applied to it, instead of being judged while nothing is latched.
+        """
+        self._refresh_stops(now)
+        limits = self.limits_now(now)
+        floor = limits.pair_cap - 0.01
+        latched = []
+        if not self.halted and (max(0.0, self.stop_anchor - self.realized_pnl) + self.at_risk_usd + floor
+                                >= self.limits.total_loss_usd - EPSILON):
+            self._halt(now)
+            latched.append("total")
+        if (math.isfinite(now) and not self.day_latched(now)
+                and self.day_loss(now) + self.at_risk_usd + floor >= limits.day_loss_usd - EPSILON):
+            self._latch("day_stop", now)
+            latched.append("day")
+        return latched
 
     def risk_status(self, now: float) -> dict[str, Any]:
         self._refresh_stops(now)
@@ -308,13 +403,15 @@ class LiveRiskBook:
         day_loss = self.day_loss(now)
         total_loss = max(0.0, self.stop_anchor - self.realized_pnl)
         available = None if self.cash_usd is None else max(0.0, self.cash_usd - self.cash_debits - self.reserved_usd)
+        day_latched = self.day_latched(now)
         return {"halted": self.halted, "halt_reason": self.halt_reason,
                 "integrity_error": self.integrity_error, "reserved_usd": self.reserved_usd,
                 "open_cost_usd": self.open_cost_usd, "open_loss_usd": self.open_loss_usd,
                 "at_risk_usd": self.at_risk_usd,
                 "day_pnl_usd": self.day_pnl.get(utc_day(now), 0.0), "day_loss_usd": day_loss,
                 "day_at_risk_usd": day_loss + self.at_risk_usd,
-                "day_stopped": day_loss + self.at_risk_usd >= limits.day_loss_usd - EPSILON,
+                "day_stopped": day_latched or day_loss + self.at_risk_usd >= limits.day_loss_usd - EPSILON,
+                "day_stop_latched": day_latched,
                 "total_pnl_usd": self.realized_pnl, "total_loss_usd": total_loss,
                 "total_at_risk_usd": total_loss + self.at_risk_usd,
                 "available_cash_usd": available, "cash_at": self.cash_at,
@@ -362,8 +459,43 @@ class LiveRiskBook:
     def can_buy(self, window: str, side: Side, kind: Kind, price: float, size: float, now: float) -> str:
         reason = self._buy_verdict(window, side, kind, price, size, now)
         if reason in STOP_REFUSALS and size <= 1 + EPSILON:
-            self._note_stop(now)  # not even the smallest order fits under the stop: it has tripped
+            self._latch(reason, now)  # not even the smallest order fits under the stop: it has tripped, and latches
         return reason
+
+    def starter_fit(self, window: str, side: Side, kind: Kind, price: float, size: float, now: float) -> tuple[int, str]:
+        """The largest first buy of at most `size` contracts that leaves room for its hedge, and when none does, why
+        one contract is refused.
+
+        A window's first buy must leave room for its hedge (2026-10-13, 3:45 and 4:00 PM PT: first buys sized to the
+        last room under the lifetime stop became one-sided bets): the pair's whole worst cost, this buy plus the
+        other side at the pair cap less its price (`hedge_unit`), must fit under the day stop and the lifetime stop
+        as new risk, and the buy itself must pass `can_buy`. (The companion holds the first buy to whole pairs at
+        the pair cap within the window budget before asking.) When not even one hedged contract fits under a stop,
+        that stop has tripped and latches, as a refused one-contract buy does in `can_buy`.
+        """
+        if window not in self.windows or window in self.settled:
+            return 0, "window_unknown_or_settled"
+        limits = self.limits_for(window)
+        try:
+            unit = self.unit_reserve(window, price, kind)
+            pair = unit + self.hedge_unit(window, price, limits)
+        except LiveRejected as exc:
+            return 0, exc.reason
+        day_room = limits.day_loss_usd - self.day_loss(now) - self.at_risk_usd
+        total_room = self.limits.total_loss_usd - max(0.0, self.stop_anchor - self.realized_pnl) - self.at_risk_usd
+        reason = ""
+        for contracts in range(int(size), 0, -1):
+            if contracts * pair >= day_room - EPSILON:
+                reason = "day_stop"
+            elif contracts * pair >= total_room - EPSILON:
+                reason = "total_budget"
+            else:
+                reason = self._buy_verdict(window, side, kind, price, float(contracts), now)
+            if not reason:
+                return contracts, ""
+        if reason in STOP_REFUSALS:
+            self._latch(reason, now)
+        return 0, reason
 
     def _buy_verdict(self, window: str, side: Side, kind: Kind, price: float, size: float, now: float) -> str:
         self._refresh_stops(now)
@@ -392,16 +524,21 @@ class LiveRiskBook:
         except LiveRejected as exc:
             return exc.reason
         cost = size * unit
+        # A strictly balancing buy only lowers the worst-case loss: like a lock, it is exempt from both loss stops
+        # (never from the window budget, the open budget or the cash). The rest of the buy is new risk.
+        risk = cost - self.balancing_contracts(window, side, size, unit) * unit
         current = self.inventory[window].spent + sum(item.reserved for item in self.intents.values() if item.window == window)
         if current + cost > limits.window_usd + EPSILON:
             return "window_budget"
         if self.at_risk_usd + cost > limits.open_usd + EPSILON:
             return "open_budget"
-        if self.day_loss(now) + self.at_risk_usd + cost >= limits.day_loss_usd - EPSILON:
+        if self.day_loss(now) + self.at_risk_usd + risk >= limits.day_loss_usd - EPSILON:
             return "day_stop"
         # The lifetime stop never scales: it is the configured one at every rung.
-        if max(0.0, self.stop_anchor - self.realized_pnl) + self.at_risk_usd + cost >= self.limits.total_loss_usd - EPSILON:
+        if max(0.0, self.stop_anchor - self.realized_pnl) + self.at_risk_usd + risk >= self.limits.total_loss_usd - EPSILON:
             return "total_budget"
+        if self.day_latched(now):
+            return "day_stop"  # latched earlier today; reported after the lifetime stop, the larger of the two
         if cost + self.reserved_usd + self.cash_debits > self.cash_usd + EPSILON:
             return "cash_budget"
         return self._inventory_guard(window, side, size, unit, limits)
@@ -618,19 +755,32 @@ class LiveRiskBook:
         self._refresh_stops(now)
         return result
 
-    def apply_resume_token(self, token: str) -> bool:
+    def resume(self, token: str) -> ResumeOutcome:
+        """The owner's acknowledgement of a latched total stop: a new value clears it exactly once and a fresh stop
+        budget counts from the result now.
+
+        A value seen while no total stop is latched is not spent ("not_halted"): it stays in the settings unused.
+        It is spent the moment a total stop latches, so a value present before a stop never clears it (only a value
+        set after the stop acknowledges it). A reconciliation stop keeps the value unspent too ("integrity"); it
+        applies once that stop is cleared. Only fingerprints are kept, never the value.
+        """
         if not token:
-            return False
+            return ""
         digest = hashlib.sha256(token.encode()).hexdigest()
         if digest in self.seen_resume_hashes:
-            return False
+            return "used"
+        if not self.halted or self.integrity_error:
+            self.resume_pending.add(digest)
+            return "integrity" if self.integrity_error else "not_halted"
+        self.resume_pending.discard(digest)
         self.seen_resume_hashes.add(digest)
         self.resume_token_hash = digest
-        if not self.halted or self.integrity_error:
-            return False
         self.stop_anchor = self.realized_pnl
         self.halted, self.halt_reason = False, None
-        return True
+        return "applied"
+
+    def apply_resume_token(self, token: str) -> bool:
+        return self.resume(token) == "applied"
 
     def day_loss(self, now: float) -> float:
         """Today's settled loss, counted from the owner's one-time reset when one was made today."""
@@ -641,10 +791,10 @@ class LiveRiskBook:
         """The owner's one-time fresh daily budget (owner, 2026-10-13: "U can reset it go ahead", "Approve
         everything").
 
-        Today's loss counts again from the result at the moment a new value is first seen. The daily cap itself,
-        the lifetime stop and every other limit are unchanged, and the next UTC day starts from zero as always.
-        The value is spent on first sight, with its own fingerprint kind, so no restart or rollback resets twice.
-        Returns "reset", "used" or "" (no value)."""
+        Today's loss counts again from the result at the moment a new value is first seen, and a latched daily stop
+        clears with it. The daily cap itself, the lifetime stop and every other limit are unchanged, and the next
+        UTC day starts from zero as always. The value is spent on first sight, with its own fingerprint kind, so no
+        restart or rollback resets twice. Returns "reset", "used" or "" (no value)."""
         if not token:
             return ""
         digest = hashlib.sha256(DAY_RESET_DOMAIN + token.encode()).hexdigest()
@@ -653,6 +803,7 @@ class LiveRiskBook:
         self.seen_resume_hashes.add(digest)
         day = utc_day(now)
         self.day_anchor = {day: self.day_pnl.get(day, 0.0)}
+        self.day_stop_latched = None
         return "reset"
 
     def arm_integrity_reset(self, token: str) -> str:
@@ -724,6 +875,10 @@ class LiveRiskBook:
                 "integrity_reset_armed": self.integrity_reset_armed,
                 # Also ignored by the previous release: a rollback returns to the plain daily stop.
                 "day_anchor": self.day_anchor,
+                # Also ignored by the previous release: a rollback forgets a latched daily stop (its per-buy check
+                # still refuses buys over the stop) and spends a kept resume value on sight, as it always did.
+                "day_stop_day": self.day_stop_latched,
+                "resume_pending": sorted(self.resume_pending),
                 "bootstrap_order": self.bootstrap_order}
 
     @classmethod
@@ -747,6 +902,8 @@ class LiveRiskBook:
             book.seen_resume_hashes.add(book.resume_token_hash)
         book.integrity_reset_armed = state.get("integrity_reset_armed")
         book.day_anchor = state.get("day_anchor", {})
+        book.day_stop_latched = state.get("day_stop_day")
+        book.resume_pending = set(state.get("resume_pending", [])) - book.seen_resume_hashes
         book.bootstrap_order = state["bootstrap_order"]
         # A restart cannot release uncertain orders or reuse an old balance.
         book._validate_state()
@@ -756,8 +913,11 @@ class LiveRiskBook:
         if set(self.inventory) != set(self.windows) or not isinstance(self.halted, bool):
             raise ValueError("Invalid persisted window or stop state")
         if any(not isinstance(value, str) or len(value) != 64 or any(char not in "0123456789abcdef" for char in value)
-               for value in self.seen_resume_hashes):
+               for value in self.seen_resume_hashes | self.resume_pending):
             raise ValueError("Invalid persisted resume token hash")
+        if self.day_stop_latched is not None and (not isinstance(self.day_stop_latched, str)
+                                                  or not DAY_KEY.fullmatch(self.day_stop_latched)):
+            raise ValueError("Invalid persisted daily stop")
         if self.integrity_reset_armed is not None and (not isinstance(self.integrity_reset_armed, str)
                                                        or not self.integrity_reset_armed.isidentifier()):
             raise ValueError("Invalid persisted integrity reset approval")

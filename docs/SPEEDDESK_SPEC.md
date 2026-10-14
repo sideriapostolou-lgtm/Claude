@@ -202,9 +202,15 @@ left under the day and total stops (a complete up+down pair risks nothing).
 
 Fees and resting orders count at their worst permitted cost. Kalshi cash is another limit, never permission
 to exceed a strategy cap. A total stop persists through restarts and returns the companion to paper. A new
-nonempty `SPEEDDESK_KALSHI_RESUME_TOKEN` acknowledges a fresh $5 stop budget; it must preserve lifetime P&L,
-fills, fees, existing exposure and the current day's stop. Store only a fingerprint, never the token value.
-Reusing an old/pre-halt token or changing ordinary settings cannot silently clear the halt or corrupt state.
+nonempty `SPEEDDESK_KALSHI_RESUME_TOKEN` acknowledges a fresh stop budget (the configured total stop, counted from
+the result at that moment); it must preserve lifetime P&L, fills, fees, existing exposure and the current day's
+stop. Store only a fingerprint, never the token value. Reusing an old/pre-halt token or changing ordinary settings
+cannot silently clear the halt or corrupt state. **Since 2026-10-14 the stops latch (9.3):** the total stop latches
+(`total_halted`) when even a one-contract buy, or a one-contract first buy with its hedge, is refused by it, and the
+day stop latches the same way for the rest of the UTC day. A resume value seen while no total stop is latched is
+kept unspent and logged ("ignored; no total loss stop is latched"); the next total stop spends it, so a value present
+before a stop never clears that stop. Every use of a value is recorded (`speeddesk_live_resume`: applied, ignored
+because nothing is latched, already used, or held by a reconciliation stop), never the value itself.
 
 A reconciliation stop (the book's `integrity_error`: venue data contradicted the bot's accounting) also returns
 the companion to paper and persists. The panel's `integrity_error` (shown on the page too) and a
@@ -224,7 +230,9 @@ that moment's result, until 00:00 UTC; the next day starts from zero as always. 
 stop and every other limit are unchanged, so the lifetime stop still bounds the total. The value is spent on first
 sight with its own fingerprint kind (a resume or integrity value never matches it), the reset point is saved with
 the books, and a `speeddesk_live_day_reset` receipt records it. A rollback ignores the saved point and returns to
-the plain daily stop.
+the plain daily stop. Since 2026-10-14 the reset also clears a latched daily stop, and it applies to the practice
+twin at the same moment (its own copy of the daily stop counts from the same reset), so the A/B control is not left
+frozen while the real book trades again (on 2026-10-13 the twin sat at -$6.88 from 6:45 AM PT to the end of the day).
 
 Other coins (owner, 2026-10-13: "scale ... to other markets but let's perfect it first"): `SPEEDDESK_COINS`
 (any of eth, sol, xrp, doge; empty by default) runs the same practice rules on Kalshi's KXETH15M, KXSOL15M,
@@ -338,6 +346,11 @@ pairs be "completely locked in" and that the bot "knows when to sell".
   and the loss stops do not block it; a pending lock holds cash but is not added to money at risk. So the $5
   per window bounds new buys, and a window's gross spend can exceed it only by a lock (its possible loss
   cannot). During a money stop the panel says new buys are stopped and that locks still complete pairs.
+- **A strictly balancing bid is the same kind of order (2026-10-14, 9.3):** bought on the light side, within the
+  window's unpaired contracts, under $1 each with fees, it completes $1 pairs and can only lower the worst-case
+  loss, so the day and lifetime stops do not count it (neither as a buy nor as a pending reservation). The window
+  budget, open budget, pair cap, imbalance rule and cash still apply to it in full. A buy on the heavy side, or
+  the part of a bid beyond the unpaired count, is new risk as before.
 - Saved state leaves out the lock fields while they hold defaults, so a rollback to the release before
   locks can still read it (a lock pending at that moment would not be readable by the old release). It never
   runs with live switches off, after a failure or integrity error, in a window the owner traded, or before
@@ -413,6 +426,47 @@ risk book asks it for each window's limits (`LiveRiskBook.limits_for`, `limits_n
   the 10-contract first buy the owner's 16:20 UTC rule stopped after two were run over. Asked to choose, the owner
   kept the configured cap: every rung's contract cap, so every first buy, balancing and lock order, is at most
   `SPEEDDESK_KALSHI_CLIP` (5). A bigger rung adds window, open budget and day stop, not a bigger first buy.
+
+### 9.3 Stop fixes after the 2026-10-13 loss (2026-10-14)
+
+What happened: 29 real windows from 9:00 AM to 4:15 PM PT lost $11.92 and took the lifetime result to -$9.94.
+No order broke a rule (`docs/WORKLOG.md`, 2026-10-14). Two defects in how the stops were applied made it worse:
+hedges counted as new risk, so the stops cut them or blocked them (at 10:15 AM a 10-contract hedge became 4; at 3:45
+and 4:00 PM no hedge could follow the first buy, which had been sized to the last room under the stop), and no stop
+ever latched, so the companion kept sending bids of 1 contract at 4c with 5.8c of room left. Code:
+`speeddesk_live_model.py` (`balancing_contracts`, `starter_fit`, `_latch`, `latch_bound_stops`, `resume`),
+`speeddesk_live.py` (`_decide`, startup, `_watch_stops`), `speeddesk_model.py` (`day_loss`, `apply_day_reset`).
+
+1. **Strictly balancing buys are not new risk.** See 9.1. The stops still see every other buy at its full cost.
+   The practice desk's copy of the live stops (`day_stop_counts_risk`, `hedged_open_budget`: the Kalshi arena's
+   residents) counts the same way, so its answers still match the live book's.
+   `tests/test_speeddesk_live_stops.py` proves by brute force over random books (fills in any combination, cancels,
+   locks, restarts, resume and day-reset tokens) that the realized loss plus the worst the open windows can still
+   lose never passes the day or lifetime stop.
+2. **A first buy must leave room for its hedge.** A window's first buy is sized so that its whole hedged pair (its
+   cost plus the other side at the pair cap less its price, at the worst permitted fee) still fits under the day
+   stop and the lifetime stop as new risk; the window budget already held it to whole pairs at the pair cap. If not
+   even one hedged contract fits, nothing is sent and a `speeddesk_live_starter` receipt says why (once per window and
+   reason). With a $6 day stop this also means a first buy is at most 5 contracts (about $1.01 a hedged pair), and
+   on a losing day it shrinks before the stop binds. The hedge itself is then exempt (fix 1), so the pair completes.
+3. **The stops latch.** When a stop refuses even a one-contract buy, or a one-contract first buy with its hedge, it has
+   tripped: the lifetime stop sets `total_halted` (saved; the companion returns to paper, resting bids are cancelled,
+   locks still complete pairs, the status says "Total loss stop; no new bets until a new resume token"); the daily
+   stop latches until 00:00 UTC or the owner's day reset ("Daily loss stop"). At startup, before any token is read,
+   a stop with no room for even a one-contract hedged first buy (less than the pair cap less a cent) is latched, so a
+   token set for it is applied to it. Each latch is recorded once (`speeddesk_live_stop`, durable). No tiny bids go
+   out while a stop binds. A trimmed bigger order is not a stop (as before). The ladder's stop notes are unchanged.
+   Token rules: a resume value clears a latched total stop exactly once; seen while nothing is latched it is kept
+   unspent and logged; the next total stop spends it (a value present before a stop never clears that stop); a
+   reconciliation stop also keeps it unspent. The day reset clears a latched daily stop and is spent on first sight
+   as before. Every token use is logged without the value.
+4. **The owner's day reset reaches the practice twin** (`PracticeDesk.apply_day_reset`), so the A/B control is not
+   frozen by its own copy of the daily stop when the real book is reset.
+
+Saved state: the book adds `day_stop_day` and `resume_pending`, the twin `day_anchor` (only once a reset was made);
+the previous release ignores them (a rollback forgets a latched daily stop, and spends a kept resume value on sight,
+as it always did). Replay of 2026-10-13's 29 windows with fixes 1 and 2 (assumptions in `docs/WORKLOG.md`): about
+-$7.9 instead of -$11.92, with the two one-sided afternoon bets gone and every window's loss bounded by its pairs.
 
 ## 10. Public source-bot watcher and faster market data (owner, 2026-10-12)
 
