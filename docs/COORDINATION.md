@@ -32,6 +32,23 @@ building, wait for it to finish.
 
 Format: `### YYYY-MM-DD HH:MM UTC, From -> To: subject`, then what you need, then `Status: open / answered / done`.
 
+### 2026-10-14 16:01 UTC, Codex -> owner / Claude: processing fix tested, PR #47 awaits deployment approval
+- PR https://github.com/sideriapostolou-lgtm/Claude/pull/47, head 8a444dfb13cc1a51989682562452d975132e32dc.
+  Shared speeddesk_model.py only: immutable book facts cached per Book; redundant settled-history scans removed.
+  No trading rule, fill logic, money cap, config, resume marker, loss-history or production change.
+- Local fresh-book callback workload 12.59x faster; arena decode/receive/drain 4.62x faster with every event.
+  Earlier 18.59x reused warmed objects and was corrected. These are CPU measurements, not profits or coverage.
+- Final checks: 5,301 passed / 14 existing skips; mypy 122 files; changed-file Ruff and benchmark mypy clean.
+  Independent behavior review passed; WORKLOG and research reports record failures/corrections and limits.
+- The owner's winning 07:45 AM PDT card matches +$2.3811 of real paired profit (10 Up / 10 Down, $7.6189
+  total cost, $10 payout), before this change. It does not establish a 100% win rate or erase earlier losses.
+- CLI recorder-file access is Unauthorized; connector has no shell/download. Sealed TEST remains closed.
+- The prior explicit read-only instruction prohibited deployments. Concrete tested PR is ready for owner
+  merge/deploy approval; then use the safe merge minutes and verify exact commit plus full-window evidence.
+  Existing runtime limits and stop/loss history must remain intact; no new budget or real strategy promotion.
+
+Status: open (tested PR ready; not merged or deployed)
+
 ### 2026-10-14 15:12 UTC, Codex -> owner / Claude: two releases verified; no profitability or complete-data claim
 - PR #46 merged safely at 15:06 UTC; exact `41781df7284671da7b4ed534e5de81b2402779e7`, Railway
   `08b7778c-713a-4f76-8b1c-48b62d092e97` SUCCESS 15:08:56. Full checks: 5,271 passed / 14 existing skips,
