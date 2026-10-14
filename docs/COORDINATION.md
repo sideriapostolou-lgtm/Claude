@@ -32,6 +32,27 @@ building, wait for it to finish.
 
 Format: `### YYYY-MM-DD HH:MM UTC, From -> To: subject`, then what you need, then `Status: open / answered / done`.
 
+### 2026-10-14 15:12 UTC, Codex -> owner / Claude: two releases verified; no profitability or complete-data claim
+- PR #46 merged safely at 15:06 UTC; exact `41781df7284671da7b4ed534e5de81b2402779e7`, Railway
+  `08b7778c-713a-4f76-8b1c-48b62d092e97` SUCCESS 15:08:56. Full checks: 5,271 passed / 14 existing skips,
+  mypy 122 files and changed-file Ruff clean. Kalshi LIVE, original caps and resume anchor preserved;
+  prior marker ignored, Polymarket LIVE startup normal, recorder unchanged, no startup tracebacks.
+- The deeper-book capacity correction helps but production data is STILL incomplete: after two minutes
+  121,175 received / 125,308 dropped / 79,085 late, zero complete windows. Latest lag 1.06 s does not erase
+  the gaps. Real freshness checks remain active; one reconciliation still took 15.580 s. No practice promotion.
+- Five settled windows since the earlier restart: +$2.7053 after fees; lifetime -$7.2868. The small recent
+  gain is not proof of an edge. At 15:11 cash $42.4546, one position, zero open orders/modeled loss exposure;
+  cash is not profit. The fifth window settled flat at 15:15:06: $10 cost, no fee, $10 payout; it straddled
+  PR #46's restart and does not isolate the release's effect. Inspect later receipts in daily reporting.
+- Follow-up 15:13:56: queue recovered to four events; dropped/late counts unchanged since 15:10:57.
+  This is a bounded recovery at recent traffic, not proof of peak-load or complete-window coverage.
+- Next: profile shared-process practice callbacks/checkpoints and local scheduling before another feed tweak;
+  verify complete future windows and actual recorder spot files. The original/inverted/no-trade comparison
+  is still specification only. No new reset, larger caps, rule inversion or Railway-variable change authorized.
+  Full receipts/diagnostic JSON and evidence are linked in the latest WORKLOG entries.
+
+Status: done (code, checks, deployment verification); open (local scheduling, clean practice coverage, profitable strategy)
+
 ### 2026-10-14 14:56 UTC, Codex -> owner / Claude: deployed execution fix; remaining local delay isolated
 - PR #45 merged at 14:49 UTC, exact merge `18e180f44d7e71123c4ccd21a098996a8597faf5`; Railway
   deployment `11b6b12e-e837-4fdb-b8bb-9119b57a5cad` SUCCESS 14:50:52. Kalshi LIVE with the same caps,
@@ -49,7 +70,7 @@ Format: `### YYYY-MM-DD HH:MM UTC, From -> To: subject`, then what you need, the
 - Three completed windows before PR #45 total +$2.8577 after fees. Lifetime realized P&L remains -$7.1344;
   this small recent gain does not prove an edge. No inverse strategy is running.
 
-Status: open (bounded local serialization follow-up; production arena throughput still unresolved)
+Status: done (PR #46 follow-up deployed); open (production scheduling and full-window data quality)
 
 ### 2026-10-14 14:24 UTC, Codex -> owner / Claude: profitability audit and reliable comparison data
 - Owner requested the changes most likely to improve profitability. Existing money limits and resume

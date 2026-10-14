@@ -13,6 +13,45 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-14 15:12 UTC, Codex, PR #46 deployed and independently verified
+- PR #46 merged at 15:06 UTC in the safe interval. Exact merge
+  `41781df7284671da7b4ed534e5de81b2402779e7` is running in Railway deployment
+  `08b7778c-713a-4f76-8b1c-48b62d092e97`, SUCCESS 15:08:56 UTC, one healthy replica. Tested source,
+  tests and build inputs match `0cd805c` exactly. Full checks: 5,271 passed, 14 existing skips; mypy
+  122 source files and Ruff all five changed/new Python files clean; added-text secret scan clean.
+- Independent startup verification: Kalshi LIVE, authenticated, fee precision verified, unchanged rung 0,
+  $10/window ordinary-buy budget, $20 open, $6/day, $10 total and five-contract clips, pull=false. Resume
+  marker already used/ignored; no new loss budget. Both stop latches clear, no integrity error. Polymarket
+  started LIVE normally at 15:08:47. Recorder stayed healthy on `844c7378`; no Railway variable changed.
+- Bounded queries through 15:12 found no tracebacks or new exact-deployment order/fill receipts. Existing
+  holdings survive restarts: cash $42.4546, zero open orders, one position and zero modeled loss exposure at
+  15:11:10. Do not call that no holdings or confuse cash with profit. Four earlier completed restarted
+  windows total +$2.7053 after fees; UTC-day realized +$2.6553, lifetime -$7.2868. Still no demonstrated edge.
+- The additional transport correction improved delivery, but did NOT establish usable practice coverage.
+  First minute: 74,806 received / 23,628 dropped / 43,380 late / 9.26 s lag. Second minute: 121,175 received /
+  125,308 dropped / 79,085 late / 1.06 s lag. Zero complete windows; previous voids preserved. Lag can recover
+  while drops remain, so it is not a success criterion by itself. Full post-restart window coverage remains
+  unverified. Evidence is in `research/kalshi_profitability_2026-10-14/deploy_46_diagnostics.json`.
+- Five-minute follow-up at 15:13:56: producer accepted 250,618 events, sent 2,172 frames, had four events
+  queued and no blocked socket writes. Drops remained 125,308; the 15:13:50 child report also retained the
+  same 79,085 late count as 15:10:57. The queue recovered and counters stopped growing for almost three
+  minutes at that traffic level. This does not erase startup gaps or establish peak-load/full-window coverage.
+- Settlement follow-up at 15:15:06: `KXBTC15M-26OCT141115-15` held 13 Up / 10 Down, cost $10, fees $0,
+  paid $10: $0 net (+$1.107692 matched pairs, -$1.107692 directional remainder). Five settled windows
+  since the earlier restart therefore still total +$2.7053; day/lifetime realized totals are unchanged.
+  This window straddled PR #46's restart, so it is not an isolated test of the new release.
+- Local scheduling still pauses: one reconciliation was 15.580 s and loop lag reached 3.572 s; the next
+  reconciliation recovered to 488 ms. The freshness gate stayed enforced. No new order acknowledgements
+  in this bounded interval exist to demonstrate post-patch end-to-end speed. The JSON benchmark is not a
+  claim that all production pauses were fixed.
+- Real money touched? YES through owner-authorized execution/shared-loop performance changes. No cap,
+  new budget, trading setting, strategy inversion or Polymarket trading rule changed. No profit guarantee.
+- Next evidence work: profile practice callback/checkpoint CPU versus wall time and shared-process scheduling
+  before another throughput change; isolate demonstrated competing work if necessary. Verify complete future
+  arena windows and recorder spot segments before relying on practice comparisons. Original/inverted/no-trade
+  comparison remains a frozen specification, not a tested running engine; existing sealed TEST stays sealed.
+  The existing daily check must report these limits and actual settlements. This receipt is docs only.
+
 ## 2026-10-14 15:03 UTC, Codex, practice transport capacity and JSON follow-up
 - Corrected the specific capacity regression found after PR #45: encode with a 4 ms calling-thread CPU
   budget, retaining the 1,024-event hard cap and independent wall-time telemetry. Backlogged calls now cost
