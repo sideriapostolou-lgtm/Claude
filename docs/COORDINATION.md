@@ -39,6 +39,13 @@ Check this queue at task start and before declaring current work complete. Keep 
 move an item to done only with linked evidence. Blocked or waiting-for-approval is not complete.
 
 ### EXEC-DELAY-001 — first task active; production attribution and verified fix pending
+- **2026-10-14 4:49 PM PDT:** two owned complete-message yields are ready, not deployed.
+  Exact final four-file bundleafeb6aa444d39e4f118e3b82cb50ca47bcc2c2cc1173828d737a1121bc92b040
+  independently accepted;5,528 tests/14 skips, captured exit0, mypy126/Ruff4pass. Test portability
+  and cancellation-race issues corrected; interrupted runs retained, never counted as passes.
+  [Prospective first-two-window gate](../research/kalshi_profitability_2026-10-14/FEED_FAIRNESS_VERIFICATION.md)
+  frozen before results, including edge intervals/publication coverage. Release/restart verification
+  and active-window evidence pending. Source rules/caps/losses/stops unchanged; comparison unstarted.
 - **2026-10-14 4:34 PM PDT:** PR #55 full4:15–4:30 PM window is closed and independently
   audited:7 accepted IDs,2 actual fills costing$0.98,zero fees,$1 payout,+$0.02 locked.
   Selected5,131.435ms resumption delay remains;14 contained status intervals retain
@@ -84,6 +91,11 @@ move an item to done only with linked evidence. Blocked or waiting-for-approval 
   while the first remains open. TJR's separate authentic-data blocker and recorder duties persist.
 
 ### TJR-MNQ-001 — validation tooling complete; historical run blocked on data; paper/live disabled
+- Repeated reminder checked **4:41 PM PDT** against fresh connected-GitHub AGENTS/COORDINATION/
+  newest WORKLOG. Only our4:34 receipt publication changed; execution-first task remains open and
+  authentic development bars/costs remain missing. Reused the4:34 unchanged-Page check and all saved
+  implementation/tests; no duplicate research, holdout, paper/live action or routine owner alert.
+  Keep unfinished and automation unchanged; concrete next input remains in the4:34 receipt below.
 - Follow-up checked **2026-10-14 4:34 PM PDT** (23:34 UTC), current head65985fe through
   connected GitHub. PR #47's exact release/restart verification is recorded complete; PR #55's
   closed window is audited but5.13-second execution tails leave EXEC-DELAY-001 open. Earlier

@@ -339,3 +339,6 @@ class KalshiMarketWS:
                 self._on_book(book)
             for trade in trades:
                 self._on_trade(trade)
+            # A buffered recv can finish inline. Give ready account work a turn
+            # only after every callback from this message has completed.
+            await asyncio.sleep(0)
