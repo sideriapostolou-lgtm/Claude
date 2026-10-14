@@ -13,6 +13,48 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-14 16:01 UTC, Codex, next profitability evidence step (09:01 AM PDT), PR #47
+- Prepared and published https://github.com/sideriapostolou-lgtm/Claude/pull/47 from
+  codex/kalshi-complete-evidence, application commit 8a444dfb13cc1a51989682562452d975132e32dc.
+  This is NOT deployed. The owner's preceding explicit instruction prohibited deployment changes;
+  merge/restart approval is the remaining step, with all existing limits and loss history preserved.
+- Found two demonstrated CPU costs in speeddesk_model.py: identical immutable deep books validated
+  repeatedly across 12 residents, and closed-history rescanned for each unresolved window even after
+  a membership set was built. Cache only immutable book facts; reuse membership within each pass.
+  Timestamp/consumed-depth checks, fills, fees, decisions, retention and all safety rules stay unchanged.
+- Baseline 13bf55b: arena decode/receive/drain of 3,000 deep books + 30 prints with 12 resting orders,
+  median CPU 2.2684 -> 0.4910 seconds (4.62x). All events/orders retained, no coalescing in the fake clock.
+  Parent original+twin with 400 synthetic windows (173 closed / 226 unresolved expired / one active),
+  300 callbacks: 1,304.71 -> 103.65 CPU ms (12.59x). Fresh Book objects used each timed pass.
+  An earlier 18.59x warm-object result was optimistic; independent review caught it and corrected it.
+  These are reproducible local costs, not production latency, full coverage or evidence of profitability.
+- Verified final python -m pytest -q: 5,301 passed / 14 existing skips in 298.05 s; mypy src/nightcrawler:
+  122 files clean; Ruff all seven changed Python files and mypy both benchmark scripts passed.
+  Independent cache/history parity tests passed. First console pytest invocation had two import
+  collection errors, resolved by module invocation; first full run had one obsolete helper-spy failure,
+  fixed by following the new helper while keeping every original history-preservation assertion.
+- Read-only Railway at approximately 08:49 AM PDT: bot and recorder online, one replica each, no
+  warnings/criticals or failures in the queried preceding hour. Active bot remains 41781df7284671da7b4ed534e5de81b2402779e7,
+  deployment 08b7778c-713a-4f76-8b1c-48b62d092e97. Recorder active deployment remains
+  844c7378-d19f-4dd4-9771-7963ca968b55. Existing empty staged patch from Oct 12 was left untouched.
+- Saved recorder files remain inaccessible: normal Railway CLI whoami AND explicit project/production
+  status returned Unauthorized. Connected tools provide no runtime shell/volume download. No credential
+  values, variable listings, login or key registration attempted. Exact /data usage, row continuity,
+  hashes and full replay remain unverified; sealed TEST remains unopened. Earlier losses remain intact:
+  completed UTC day Oct 13 real -$11.0074, twin -$6.8833, both only 6/96 fully covered windows.
+- Owner's 07:45 AM PDT winning screenshot matched public Kalshi HTTP 200 market KXBTC15M-26OCT141045-45,
+  exact $81,897.35 strike, result NO. Five real fill receipts: Down 5 at .36, Up 5 at .33, Up 3 at .16,
+  Down 5 at .67, then Up 2 at .16 as a lock. Total 10 Up / 10 Down, cost $7.60 + $0.0189 fee,
+  combined payout $10, locked P&L +$2.3811, directional approximately zero. Settlement logged
+  07:45:10.802 AM PDT. This predates this fix. Screenshot's rounded profit agrees; its $3.62/$6 display
+  components were not independently reconciled to cash credits. It is one winning window, not a 100% win rate.
+- Research reports, benchmark scripts/results and the winning-window breakdown are in PR #47 under
+  research/kalshi_profitability_2026-10-14/. No source, trading rule, setting, cap, resume token,
+  deployment or order changed in production. This newest-first session receipt is documentation only.
+- Next: approve the tested PR, merge at a safe minute and verify its exact deployment, preserved risk
+  state and subsequent full-window drop/late deltas and execution tails. Then obtain a bounded persisted
+  recorder evidence report before scoring any new rule. No cap increase or strategy promotion proposed.
+
 ## 2026-10-14 15:29 UTC, Codex, read-only daily production status (08:29 AM PDT)
 - Scope: read the latest Claude handoff, COORDINATION, AGENTS and WORKLOG through connected GitHub;
   inspected production through connected Railway only. No credential values were requested or read. No variables, resume markers, caps,
