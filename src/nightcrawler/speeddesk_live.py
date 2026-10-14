@@ -32,6 +32,7 @@ from .speeddesk_live_model import (
     LOCK_MARGIN_S,
     WINDOW_PARTS,
     ActualFill,
+    LiveIntent,
     LiveLimits,
     LiveRejected,
     LiveRiskBook,
@@ -2646,11 +2647,34 @@ class KalshiLiveDesk:
                        [asdict(row) for row in self.book.settled.values()])
         coverage = self.evidence.coverage(windows)
         if not twin:
+            # Keep this projection local: public intents and their fields may change
+            # between calls. Exotic mappings/fields retain the original lazy scan.
+            grouped: dict[str, list[Intent]] | None = None
+            if windows and type(self.book) is LiveRiskBook and self.book.integrity_error is None:
+                try:
+                    native = (
+                        type(self.intents) is dict and type(self.book.intents) is dict
+                        and all(type(window.get("slug")) is str for window in windows)
+                        and all(type(key) is str for key in self.intents)
+                        and all(type(key) is str for key in self.book.intents)
+                        and all(type(intent) is Intent and type(intent.window) is str
+                                and type(intent.client_order_id) is str
+                                and type(intent.terminal) is bool and type(intent.uncertain) is bool
+                                for intent in self.intents.values())
+                        and all(type(intent) is LiveIntent and type(intent.reservation_active) is bool
+                                for intent in self.book.intents.values())
+                    )
+                except AttributeError:
+                    native = False
+                if native:
+                    grouped = {}
+                    for intent in self.intents.values():
+                        grouped.setdefault(intent.window, []).append(intent)
             for window in windows:
                 if self.book.integrity_error or any(
                     intent.window == window["slug"] and (not intent.terminal or intent.uncertain
                         or self.book.intents[intent.client_order_id].reservation_active)
-                    for intent in self.intents.values()
+                    for intent in (self.intents.values() if grouped is None else grouped.get(window["slug"], ()))
                 ):
                     coverage[window["slug"]] = None
         report = window_scorecard(day, windows=windows, fills=fills, settlements=settlements,

@@ -13,6 +13,31 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-14 23:07 UTC, Codex, scorecard computation correction ready (4:07 PM PDT)
+- Removed the repeated per-ended-window full-intent scan only for guarded native report inputs;
+  grouping is rebuilt each call, preserving insertion order and the original lazy predicate. Custom
+  inputs retain the old path; twin/no-window/integrity shortcuts remain. No persisted cache, positions
+  change, trading rule, risk setting, save cadence, order or Railway variable change.
+- Frozen old-method fixture matches1ef0f927 and needs no Git/network in tests.19 differential plus12
+  independent adversarial cases preserve outputs, financial state, receipts and exact failures. Source/
+  tests/fixture bundle5f2612a5a39bd58b70919f0f99fb75e5bbdbe67dae1f1d758ae7557e26ce872c accepted.
+- Actual populated-fake profile confirms200 windows×3,350 intents causes670,200 generator iterations.
+  Clean six-pair medians: panel69.189→28.344ms, checkpoint79.999→38.273ms. Actual saved ledger/mirror/
+  model/receipts match every checkpoint pair. Invented histories, zero fees, no account reads or active
+  orders: no production speedup, fill improvement or profitability claim. Exact first benchmark source
+  bytes missing; first observations/hashes preserved, clean executed source retained exactly.
+- Full run printed5,502 passes/14 skips but command runner returned1; cause unknown, log preserved.
+  Explicit subprocess repeat from4:02:01 to4:07:07 PM PDT returned0: **5,502 passed/14 skips in304.06s**.
+  Mypy126 and Ruff all3 changed Python files pass. No test/threshold weakened. Checks/archive and
+  SCORECARD_GROUPING.md retain exact evidence. Source/test bundle unchanged after review.
+- Complete pre-change3:45–4:00 PM window lost$0.33 directional/$0 locked/$0 fees.23 durable intents,
+  22 accepted orders,21 cancels,1 fill; remaining intent correctly blocked by the final price guard.
+  Five selected cycles/25 reads still include2,768.346ms resumption delay. Retain this loss alongside
+  prior wins. QUIET_FULL_WINDOW_1600_PDT.json preserves bounded original messages and limitations.
+- Next: ship under standing release approval within safe minutes; verify exact commit, health,
+  Polymarket LIVE startup and retained money/stop history, then measure actual post-change timing.
+  EXEC-DELAY-001 remains open; comparison not started. TJR data/cost blocker and recorder duties persist.
+
 ## 2026-10-14 22:50 UTC, Codex, quiet diagnostic deployment and completed window evidence (3:50 PM PDT)
 - Preserved PR #54 exact source 89b7b6db8b7c887f8398d604c8b3bfe8ce9d16cc, deployment
   af3e9f29-2124-4849-8c02-33e91dc46fdb, SUCCESS 3:33:15.252 PM PDT. Normal Polymarket LIVE startup;
