@@ -259,6 +259,20 @@ def _number(value: Any) -> float:
     return number
 
 
+def _same_terms(raw: dict[str, Any], intent: Intent) -> bool:
+    """Whether a listed order has the terms ``intent`` was sent with (market, side, size, limit price), whatever its
+    client id: the bot's own order would, as _validate_order requires of every listed bot order. Unreadable terms
+    prove nothing, so they count as the same."""
+    outcome = "yes" if intent.side == "up" else "no"
+    try:
+        return (raw.get("ticker") == intent.window and raw.get("outcome_side") == outcome
+                and raw.get("book_side") == ("bid" if intent.side == "up" else "ask")
+                and abs(_number(raw["initial_count_fp"]) - intent.size) <= EPS
+                and abs(_number(raw[f"{outcome}_price_dollars"]) - intent.price) <= EPS)
+    except (KeyError, TypeError, ValueError):
+        return True
+
+
 def _stamp(value: Any) -> float:
     if isinstance(value, str) and not value.replace(".", "", 1).isdigit():
         moment = datetime.fromisoformat(value)
@@ -1100,14 +1114,14 @@ class KalshiLiveDesk:
         # Fully paginated reads return all pages or raise. Never interpret a
         # missing/failed page as zero inventory or a canceled order.
         orders = await self._read("list_orders", self.client.list_orders, **order_filter)
-        owner_orders: set[str] = set()  # listed orders without the bot's client-id prefix: provably the owner's
+        owner_orders: dict[str, dict[str, Any]] = {}  # listed orders without the bot's client-id prefix, by id
         for raw in orders:
             client_id = str(raw.get("client_order_id", ""))
             ticker = str(raw.get("ticker", ""))
             if not ticker.startswith("KXBTC15M-"):
                 continue
             if not client_id.startswith(PREFIX) and raw.get("order_id"):
-                owner_orders.add(str(raw["order_id"]))
+                owner_orders[str(raw["order_id"])] = raw
             intent = self.intents.get(client_id)
             if client_id.startswith(PREFIX) and intent is None:
                 self.fatal_reason = "Untracked prior bot order; manual reconciliation required"
@@ -1135,11 +1149,16 @@ class KalshiLiveDesk:
             if intent is None:
                 ticker = str(raw.get("ticker", ""))
                 if ticker.startswith("KXBTC15M-"):
-                    if str(raw.get("order_id", "")) in owner_orders:
-                        # A fill of an order Kalshi lists as the owner's cannot be an unsent bot order's: the
-                        # window is the owner's (and an unsent order there can still be proven away).
+                    unresolved = [item for item in self._active() if item.window == ticker and not item.order_id]
+                    listed_as = owner_orders.get(str(raw.get("order_id", "")))
+                    if listed_as is not None and not any(_same_terms(listed_as, item) for item in unresolved):
+                        # A fill of an order Kalshi lists without the bot's client id, on terms no unsent bot order
+                        # there has, is the owner's: the window is the owner's (and an unsent order there can still
+                        # be proven away). On an unsent order's exact terms it could be that order's own, listed
+                        # without its client id (rebreak, 2026-10-14: it was counted as the owner's and the order
+                        # released, so the bot's own fill vanished), so it holds the order, as on the base.
                         self.foreign_windows.add(ticker)
-                    elif any(item.window == ticker and not item.order_id for item in self._active()):
+                    elif unresolved:
                         checks.append("unattributed_fill_beside_unresolved_order")
                         unattributed.add(ticker)
                     else:

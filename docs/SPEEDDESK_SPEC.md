@@ -632,7 +632,12 @@ the row that replaces it, each with one `fdatasync`; on Railway the fsync itself
 is now one row, `kalshi_live_journal`, committed with synchronous=FULL: for each order sent since the last full
 save, its complete reservation, its intent, its window's terms when new and whether it is the window's first
 buy, exactly the rows a full save would hold for it. The fsync before every create stays, and so does every
-reservation before every send. The full state is saved at most once a second (heartbeat), at once after a fill,
+reservation before every send. One `fdatasync` per row is the usual case, not a guarantee (rebreak, 2026-10-14): the
+ledger's WAL checkpoints itself every 1000 frames, so a row that is the first commit after a checkpoint also syncs
+the restarted log's header (2), and a row whose commit takes the log past 1000 frames runs the checkpoint inside it
+(3, plus copying the changed pages into the database), all before the create's first byte. The old full save had
+the same, more often (about 11 frames a save against the row's 2). Moving checkpoints off the send path is
+deferred (work log, 2026-10-14). The full state is saved at most once a second (heartbeat), at once after a fill,
 settlement, stop, release or owner action, and at startup and shutdown; each full save empties the journal in
 the same transaction. A cancel writes nothing before or after its request (it only lowers exposure, the
 reservation is kept until Kalshi's list confirms it, and a restart cancels every open order again). A restart
@@ -651,7 +656,8 @@ released, and never sent again, only once its market has closed and two complete
 close, at least 30 s apart, leave it out while that window's own facts agree: neither order list is behind the
 fills, Kalshi lists no fill in that window under an order id the bot does not know (it could be this order's; a
 fill of an order Kalshi lists as the owner's, without the bot's client-id prefix, is the owner's and marks the
-window as the owner's instead),
+window as the owner's instead, unless that order has an unsent order's exact market, side, size and price: it
+could be that order listed without its client id, so its fill holds the order, as before),
 and the position matches the books or Kalshi has settled the market (its settlement row, and a flat position; in
 a window the owner also traded, the lists and fills decide). A slow read or a mismatch in another window no
 longer holds it. The release runs before the settlement pass, so the window settles in the same read and its

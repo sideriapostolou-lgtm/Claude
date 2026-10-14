@@ -15,6 +15,50 @@ Template:
 
 
 
+## 2026-10-14 00:15 UTC, Claude, branch claude/kalshi-fix-speed, no PR (rebreak fix round; local commit, not pushed)
+- Changed:
+  - Rebreak minor 1 (a change from the live base 61ca112, under a venue anomaly): since ad9144d a listed order
+    without the bot's client-id prefix was taken as proof that its fill was the owner's. If Kalshi listed the bot's
+    own landed order without its client id, the unsent order was released after the close, its fill counted as the
+    owner's and the window marked as the owner's (no position check, no payout audit), so the bot's own fill
+    vanished from its books. Now such a fill marks the window as the owner's only when that order's terms (market,
+    side, size, limit price) differ from every unsent bot order in the window; on an unsent order's exact terms it
+    holds the order in full, as on the base. `speeddesk_live._same_terms`; regression test
+    `test_a_landed_order_kalshi_lists_without_the_bot_client_id_keeps_its_reservation` fails before the fix
+    (released at close + 30.3 s, no fill booked) and passes after; ad9144d's owner test still passes (its owner
+    order is 2 contracts, the unsent bid 5). The rebreak's created-before-the-decision rule is left out: without it
+    more owner fills hold the order, never fewer.
+  - Rebreak minor 5: SPEEDDESK_SPEC step 2 no longer says each pre-send row makes exactly one fdatasync. Measured
+    again with strace: 1 at 900 and 985 WAL frames, 3 at 999 (the autocheckpoint runs inside the row, 25 page
+    writes), 2 at 1000 (the restarted log's header). Docs only.
+- Deferred (recorded here, no code change):
+  - Rebreak minor 2: in a window the owner also traded, a landed lock that both order lists miss for more than
+    ORDER_LIST_LAG_S is released at close + 30 s and its late fill then trips fill_after_settlement. It fails
+    closed (an integrity stop that needs the owner's reset, nothing dropped). A longer wait for locks in the owner's
+    windows changes the lock and release paths.
+  - Rebreak minor 3: a voided market (settlement row with neither yes nor no) holding bot contracts leaves the
+    account "stale" for good after the release. Not a regression (the base held the reservation for good).
+    Handling void rows (refund the cost, settle the window) is a settlement change of its own.
+  - Rebreak minor 4: after a restart the ladder's peak P&L can differ when a window's settlement arrives more than
+    an hour late (`_recount` walks `book.settled` in archive-merge order). Present on the base; the running total
+    and every cap and stop are unaffected, and the peak only matters from rung 1 (live at rung 0). The fix
+    (persisting a settlement sequence) changes ladder state that sets the limits from rung 1.
+  - Rebreak minor 5, code: moving WAL checkpoints off the send path (`wal_autocheckpoint=0` plus a checkpoint
+    inside the full save) adds work to the full save on the event loop; the spec now states the boundary cost.
+  - Rebreak minor 6 (informational, a change from the base): when both Exchange connections miss the older of two
+    same-stamp trades and Advanced Trade delivers it later, the tape's price goes back one trade (about 1 bp) until
+    the next trade, mostly at startup under the 3600 s warm-up. No cap or stop effect. A trade-id or tie-break
+    filter changes the price the stale-bid cancel reads, so it waits for its own change.
+  - Rebreak minor 7 (informational): a silent Coinbase connection shows "connected" for up to 10 s (heartbeats
+    only: indefinitely). Gating does not read it: the stale-feed check cancels 3 s after the last accepted tick.
+  - Rebreak minor 8 (informational): signed calls have no fallback host; an outage of external-api.kalshi.com
+    fails closed (no create sent elsewhere), and resting bids cannot be cancelled meanwhile, as on the base's host.
+- Verified: full suite 4,935 passed, 12 skipped (Python 3.13); ruff clean on the changed Python files; `mypy
+  src/nightcrawler` clean (120 files). The rebreak's 10 directed scratch tests pass on the fixed tree, and its a5
+  case now matches the base (reserved, "Kalshi account data stale").
+- Real money touched? no. Nothing pushed or deployed; no Railway change.
+- Next step: as before, push and deploy at a safe minute after the owner's go.
+
 ## 2026-10-13 22:20 UTC, Claude, branch claude/kalshi-fix-speed, no PR (review fix round; local commits, not pushed)
 - Changed:
   - Rebased onto the deploy branch (61ca112, with the ladder and bba948a). The three commits already live as PR #39

@@ -111,17 +111,18 @@ def restart(root: Path, venue: dict[str, Any]) -> tuple[Any, Any, Any]:
 
 
 def run_past_close(desk: Any, account: Any, clock: Any, *, settle_after_s: float = 5.0,
-                   until_s: float = 900.0, step_s: float = 5.0) -> dict[str, Any]:
-    """Step through the close; Kalshi settles the market settle_after_s after it (Up wins, $5 back). Returns when
-    the window settled and the order was released, and the checks seen."""
+                   until_s: float = 900.0, step_s: float = 5.0, settlement_row: bool = True) -> dict[str, Any]:
+    """Step through the close; Kalshi settles the market settle_after_s after it (Up wins, $5 back; no row for an
+    account flat in the market). Returns when the window settled and the order was released, and the checks seen."""
     close, seen, released_at, settled_at = desk.book.windows[TICKER].end, set(), None, None
     settled = False
     while clock.now() < close + until_s:
         if not settled and clock.now() >= close + settle_after_s:
             settled = True
             account.account_positions = []  # settlement_status=unsettled: a settled market leaves the list
-            account.resolutions = [{"ticker": TICKER, "market_result": "yes", "revenue": 500,
-                                    "settled_time": close + settle_after_s}]
+            if settlement_row:
+                account.resolutions = [{"ticker": TICKER, "market_result": "yes", "revenue": 500,
+                                        "settled_time": close + settle_after_s}]
         view(desk, clock, 80000, .55, .55)
         asyncio.run(desk.step())
         if desk.last_sync_report:
@@ -389,5 +390,42 @@ def test_a_lost_order_beside_the_owners_listed_fill_is_released_after_the_close(
         result = desk.book.settled.get(TICKER)
         assert result is not None and result.up_shares == 5 and result.down_shares == 0  # its own contracts only
         assert not desk.book.integrity_error and desk.fatal_reason is None
+    finally:
+        desk.close()
+
+
+def test_a_landed_order_kalshi_lists_without_the_bot_client_id_keeps_its_reservation(tmp_path: Path) -> None:
+    """Rebreak minor (2026-10-14), a change from the live base 61ca112: a listed order without the bot's client-id
+    prefix was taken as proof that its fill was the owner's. The balancing Down bid's create lands but its reply is
+    lost; Kalshi lists that order without the bot's client id and fills it in full before the close (the account
+    nets Up 5 and Down 5 to flat, so Kalshi writes no settlement row). Its fill was counted as the owner's, the
+    window marked as the owner's (no position check, no payout audit) and the order released: the bot's own Down 5
+    vanished from its books. A listed order with that unsent order's exact terms could be its own, so its fill
+    holds the order in full, as on the base."""
+    desk, account, clock = first_leg_filled(tmp_path)
+    try:
+        create = account.create_order
+
+        def landed_reply_lost(**kwargs: Any) -> dict[str, Any]:
+            create(**kwargs)
+            account.orders[-1]["client_order_id"] = ""  # listed without the bot's client id
+            raise KalshiClientError("create_order", "transport failure", uncertain=True, timed_out=True)
+        account.create_order = landed_reply_lost
+        for _ in range(4):
+            clock.advance(.3)
+            view(desk, clock, 80000, .55, .55)
+            asyncio.run(desk.step())
+            if len(account.creates) == 2:
+                break
+        account.create_order = create
+        sent = account.creates[1]
+        identity = sent["client_order_id"]
+        assert sent["side"] == "down" and desk.intents[identity].uncertain and not desk.intents[identity].order_id
+        fill_order(account, clock, 1, side="down", price=sent["price"], size=sent["size"])
+        account.account_positions = []
+        timeline = run_past_close(desk, account, clock, until_s=600, settlement_row=False)
+        assert desk.book.intents[identity].reservation_active and timeline["released_at"] is None, timeline
+        assert "unattributed_fill_beside_unresolved_order" in timeline["checks"]
+        assert TICKER not in desk.foreign_windows and TICKER not in desk.book.settled
     finally:
         desk.close()
