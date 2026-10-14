@@ -433,6 +433,9 @@ class LiveFeeds:
                                 continue
                             if self._first_delivery(trade_id, at):
                                 self.on_tick(price, at, received_at)
+                        # Keep this message's ticks on one receipt timestamp, then
+                        # yield even for heartbeats/duplicates with no delivered tick.
+                        await asyncio.sleep(0)
             except Exception as exc:  # noqa: BLE001 — reconnect on transport/protocol failure.
                 self._coinbase_state(name, False)
                 log.warning("speeddesk_feed_coinbase_disconnected feed=%s error=%s", name, type(exc).__name__)

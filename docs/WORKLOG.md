@@ -13,6 +13,36 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-14 23:49 UTC, Codex, owned-feed fairness correction ready (4:49 PM PDT)
+- Added exactly2complete-message cooperative yields+comments to owned Kalshi/Coinbase loops.
+  All callbacks/trades in one message finish together; ordering/timestamps/stale/sequence/dedup
+  guards and existing cancel/error cleanup remain. No SDK/Polydesk, strategy/risk/fee/order client,
+  save cadence, variable, money limit, stop or resume-history change. Inter-message scheduling
+  intentionally changes; fixed-clock parity is not a promise of identical live trades or profit.
+-26newcases/130focusedpass1.99s cover nativebuffered16/64messages, actual_read wrapper with fake
+  worker, complete-message atomicity, stale/cutoff/sequence/duplicate/timeout/callbackfailure/
+  stop/cancelcleanup. Root caught baseline Python3.11 assumptions; renewed independent Astra
+  review caught completed-recv cancellation race in the proposed test event. Final receipt-clock
+  event avoids that race; no local3.11runtime/execution claim. Exact final bundleafeb6aa444d39e4f118e3b82cb50ca47bcc2c2cc1173828d737a1121bc92b040 accepted.
+- Final full run4:43:46–4:48:55 PM:5,528passed/14existing skips,307.02s, captured pytestexit0;
+  mypy126/Ruff4files both0. Source/test hashes unchanged. Two prior full runs intentionally
+  stopped(-9), plus one partial log without completion evidence, preserved separately; none
+  counted as pass. Exact archive/receipt and limitations in BUFFERED_FEED_FAIRNESS.md.
+- Prospective first2consecutivecomplete post-restart windows frozen before deployment/results.
+  New coarse3,000ms local recurrence criterion is not an existing SLO or subsecond claim.
+  Require coverage of edge intervals/cycles, selected-report/publication counters, no concealed
+  cap/drop/error, active feeds/reads and financial reconciliation; missing evidence means open.
+-4:45read-only platformcheck bothservicesonline1/1,noissues.4:44bot still account-stale guard,
+  cash$35.2943,paired filledcost$0.99/risk0,522fills,fees$2.27122,cumulative settled−$14.4571;
+  dated preliminary context, not exact final pre-restart snapshot. No financial progress claim.
+- Repeated4:41TJRreminder reread freshGitHubAGENTS/COORDINATION/WORKLOG; missing authorized
+  MNQdevelopment data/costs unchanged. Reused4:34Page delta/source checks; no duplicate tests/
+  probes/holdout/backtest/paper/live action. Queue unfinished/automation unchanged; alert suppressed.
+- Next: safe-minute release under standing approval, verify exact commit/startup/retained financial
+  state, then fixed two-window evidence gate. First task OPEN; strategy comparison unstarted.
+  TJR still authentic-input blocked; recorder obligations retained. No production change yet.
+
+
 ## 2026-10-14 23:34 UTC, Codex, closed window audit and bounded TJR follow-up (4:34 PM PDT)
 - Closed full4:15–4:30 PM targetKXBTC15M-26OCT141930-30:7durable/7accepted IDs,
   2actual fills (Down47¢/Up51¢),cost$0.98,fees0,$1payout,+$0.02locked/$0directional.

@@ -136,3 +136,50 @@ The [independent audit](post_grouping_independent_audit.zip) reparsed all79 exac
 original event-prefix messages and checked financial IDs, Decimal arithmetic,
 selected timing spans and status populations. Its result hash is
 `9ee859712d77a0b28a995b20138fa12ba374deec61f97a70419dd56d1acd7f52`.
+
+## Candidate and final release gates, 4:42 PM Pacific
+
+The production patch contains exactly two `await asyncio.sleep(0)` statements and
+comments: after all Kalshi callbacks and after all Coinbase ticks for each complete
+message. No SDK, Polydesk, financial rule, order, persistence or cadence code changed.
+Final candidate four-file source/test bundle:
+`afeb6aa444d39e4f118e3b82cb50ca47bcc2c2cc1173828d737a1121bc92b040`.
+
+The first review missed a test portability assumption: Python3.11 positive-timeout
+`wait_for` can already yield while3.12 runs a buffered recv inline. Root caught it.
+Generic baseline observations now permit any complete-message boundary; candidate
+observations still require the first complete message. A first-received event was initially proposed for ignored Coinbase messages,
+but renewed independent review found Python3.11 can swallow cancellation while
+`wait_for` resumes from an already-completed recv. Final tests instead signal from
+the injected receipt clock **after** the recv wrapper returned, await that event
+directly inside an asyncio timeout context, and cancel at the explicit complete-
+message yield. Exactly one receipt and unchanged status/cancellation assertions
+remain. Exact3.12 starvation observations remain unchanged in the original archives.
+Python3.11 was not locally available; no execution on that version is claimed.
+
+Two earlier full checks were intentionally stopped (pytest return−9) before test
+corrections; neither is a pass. An intervening partial log has no successful
+completion receipt and is preserved separately with unknown completion/source-
+version coverage. The final serialized v2 run began4:43:47 PM PDT against frozen
+corrected files; result pending. Renewed independent review accepts the exact
+final bundle; root focused tests pass130/130 in1.99s and four-file Ruff passes.
+No timing threshold or existing safety assertion was weakened. No release yet.
+
+Status timing uses another endpoint as well as another population: worker-resume
+status metrics end in the worker task's done callback; detailed read-resumption
+marks end when the actual `_read` coroutine resumes. They are not interchangeable,
+and their maxima do not form a contradiction or a comparable pooled distribution.
+
+## Final checks closed, 4:49 PM Pacific
+
+Final serialized run4:43:46–4:48:55 PM: **5,528 passed/14 existing skips in307.02s**,
+pytest return0, mypy126 source files return0, Ruff all four changed Python files
+return0. Source/test hashes stayed unchanged. [Check receipt](feed_fairness_check_receipt.json)
+and [exact scripts/logs/archive](feed_fairness_checks_evidence.zip) retain interrupted
+runs separately. Independent final review accepted bundle`afeb6aa…`; no source
+changes followed. No Python3.11 execution claimed.
+
+The [prospective two-window verification gate](FEED_FAIRNESS_VERIFICATION.md) was
+frozen before candidate deployment/results. It uses a new coarse3-second recurrence
+criterion with selection/publication/edge-interval coverage checks, not a subsecond
+SLO or profitability criterion. First task remains open; second comparison unstarted.
