@@ -13,6 +13,28 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-14 15:21 UTC, Codex, future TJR project assessment
+- Reviewed the owner's linked Page, "TJR strategy research and bot handoff":
+  https://chatgpt.com/space/page_d0294998a7cc8191b771278fbfb98a2f . This is a research
+  specification, not an implemented or historically profitable strategy. The Page reports zero audiovisual
+  reviews, unresolved execution rules and no selected active version; its 26 checks are synthetic features.
+- Executed its complete standalone JavaScript harness: 26/26 checks pass. Added an in-memory probe with the
+  first candle arriving at 3000 and the second at 2000, evaluated at 3000. The emitted swing labels
+  availableAt=2000, although both inputs are first available at 3000. The evaluator does wait for both;
+  the defect is retrospective availability metadata, not evidence of an early live order. No Page edits.
+- An independent review agrees: the index session/sweep/reversal/pullback/confirmation hypothesis is
+  buildable, but it does not directly specify an edge for Bitcoin 15-minute binary contracts. A Bitcoin
+  adaptation needs actual settlement-event probabilities, executable prices, fees and realistic fills.
+- Recommended sequence: finish current capture/execution reliability; verify one TJR source version and
+  exact instrument; resolve its rules; test complete sessions and a frozen chronological holdout after
+  costs. Keep this a separate offline research project until evidence justifies further work.
+- Not verified: original video charts, historical strategy performance, broker/API eligibility, data costs
+  or a Kalshi adaptation. No profitability claim. No source/test/build input changed; full application
+  checks for the unchanged source remain the prior 5,271 passed / 14 skipped, clean mypy and changed-file Ruff.
+- Real money touched? NO. No bot strategy, cap, account, Railway variable or runtime was changed. This
+  documentation-only review does not authorize implementation or a new market. Next: existing bot data
+  quality and scheduling work remains the priority.
+
 ## 2026-10-14 15:12 UTC, Codex, PR #46 deployed and independently verified
 - PR #46 merged at 15:06 UTC in the safe interval. Exact merge
   `41781df7284671da7b4ed534e5de81b2402779e7` is running in Railway deployment
