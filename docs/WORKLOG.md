@@ -15,6 +15,18 @@ Template:
 
 
 
+## 2026-10-14 05:45 UTC, Claude, branch claude/handoff-codex (full handoff to Codex; docs only, no deploy)
+- Changed: wrote `docs/HANDOFF_CLAUDE_TO_CODEX_2026-10-14.md`; copied every review/research output of the day into
+  `research/handoff_2026-10-14/`; top inbox entry in `docs/COORDINATION.md`. Pushed every unmerged branch:
+  `claude/kalshi-stop-fixes` 4a9ab4a (two MAJOR caps-review findings open), `claude/kalshi-recorder-fx` d295391
+  (unreviewed), `claude/kalshi-lip-practice` ff852eb (unreviewed, off by default), `claude/kalshi-arena-feed` 5a84275
+  (WIP, tests not run), `claude/kalshi-fix-speed` (1a461fe + the bid-pull merge; see the handoff's section 4.2).
+- Verified: live state at handoff: deploy tip 6a1bf70 (PR #42); Kalshi real money at the $10 lifetime stop
+  (-$9.94, cash $39.80, 0 positions); recorder service on 0713e41 capturing since 22:37:54 UTC.
+- Not verified / skipped: the reviews that Claude's usage limit cut off (listed per branch in the handoff).
+- Real money touched? no. Claude's two self-firing reminders (recorder 48 h report, daily step-up check) are
+  disabled; Codex owns them.
+
 ## 2026-10-14 UTC, Claude, branch claude/kalshi-pull (rebreak fix round)
 - Rebreak of 703d942 (cancel acknowledgement, caps/locks/ladder, practice twin isolation and A/B, deploy
   readiness). Every major reproduced first with the reviewers' scratch tests, then fixed with a regression test in
