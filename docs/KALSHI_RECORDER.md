@@ -207,6 +207,57 @@ finalized before its backfill ran used to lose them while the coverage row still
 old, trade-tape minutes, KXBTC15M minutes with a book at most 5 s old, gaps, storage, and the sealed segments
 with their hashes.
 
+### Saved metadata through Railway logs
+
+The existing Railway connector can read logs but cannot read the volume. The recorder now emits a bounded
+`kalshi_recorder_evidence` JSON line after each successfully saved hourly or shutdown-partial coverage manifest.
+At startup it also reads exactly the previous full UTC hour's manifest. A missing prior-hour file is reported
+as unavailable; it does not search other hours or fall back to an unrelated file. No variable, extra service,
+public endpoint, credential or request budget is needed.
+
+Each receipt identifies its source, observation time, manifest period, partial flag, session start, recorded
+commit and the SHA-256 of the actual saved manifest bytes. The explicit field allowlist includes:
+
+- Per lane: indexed sealed segments, record **envelopes**, gzip bytes, first/last outer append times.
+- Coverage minutes, REST request/error/429 counts and latency percentiles, saved trade-receive lag, and gap
+  counts by known lane/cause. Unrecognized names become `other` or are omitted; arbitrary messages are never logged.
+- Saved recorder-owned disk bytes, cap, storage level and deleted-segment count. These are dated manifest
+  figures, not the platform's current disk measurement.
+
+This is a readback of **saved manifest and index metadata**, not an independent read or hash check of the gzip
+payloads. The receipt always says `sealed_only=true`, `segment_hashes_reverified=false`,
+`coverage_certified=false` and `per_venue_spot_ticks_verified=false`. The manifest fingerprint identifies those
+exact metadata bytes; it is not a claim that every retained raw segment was reverified.
+
+For the spot lane, an envelope contains a batch of ticks: 100 envelopes do **not** mean 100 ticks, nor do they
+prove that both Coinbase and Kraken contributed. First/last append times do not establish uninterrupted coverage,
+and coarse fresh-minute counters do not certify any complete 15-minute window. `session_started_at` can be later
+than the manifest's hour boundary. Shutdown partial manifests are written before the remaining open segments are
+sealed, so their segment totals exclude the active tail. Missing values stay null, not zero. Follow the existing
+`status`/`verify` and raw-record audit procedures when runtime-file access becomes available.
+
+The reporter reads only a fixed-format filename under `kalshi_recorder/manifests/`, refuses symlinked directories
+or files and non-regular files, and limits an input to 512 KiB and each JSON message to 8 KiB. It never opens a raw
+segment, quote, trade, settlement or held-out TEST file. Invalid, missing, oversized or unreadable metadata emits
+an explicit unavailable reason; a reporting or log-sink failure cannot stop collection. Original manifest
+write failures retain their existing recorder behavior. There is no new timer or per-tick operation: readback
+happens once at startup and after the existing manifest save.
+
+This health-only view is valid during Family A's feasibility phase and does not unlock TRAIN/VAL/TEST, expose
+outcomes, compute returns, or satisfy a future shadow study's activation. Phase and freeze restrictions remain
+unchanged.
+
+The diagnostic does not change the existing replay-code fingerprint (`FAMILYA_CODE`), the protocol hash, prior
+raw evidence or any freeze. The three pinned replay modules remain byte-identical to the pre-report release.
+Protocol section 18 allows extra labelled diagnostics that cannot change decisions. A recorder deployment still
+creates an ordinary restart gap, which must remain visible; this report neither recertifies earlier capture nor
+makes previously excluded windows eligible. TEST continues to require its existing frozen protocol and witness.
+
+Deployment note: the recorder service currently watches `kalshi_recorder.py`, but its configured watch list does
+not individually include the new `kalshi_recorder_evidence.py`. This release changes both. A future helper-only
+fix must also touch the watched integration file or use an explicitly authorized deployment; do not assume a
+helper-only push redeployed. No Railway watch configuration was changed here.
+
 ## 6. Disk
 
 Default cap 2 GiB (`KALSHI_RECORDER_MAX_STORAGE_MB=2048`), plus a free-disk reserve. The cap counts every file under
