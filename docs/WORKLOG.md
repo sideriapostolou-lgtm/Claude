@@ -13,6 +13,44 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-14 18:31 UTC, Codex, PR #50 deployed and actual exit observations verified (11:31 AM PDT)
+- PR #50 merged 18:18:21 UTC in an allowed minute. Railway deployment
+  80d6a42a-48da-4ae2-bcea-1f73c396ad93 built exact 176916071029c13e73cd5ae41fbc8413532dce71,
+  SUCCESS 18:20:43.184 UTC / 11:20:43 AM PDT. Polymarket LIVE startup logged 18:20:30 UTC.
+  Bot and recorder online 1/1 with zero health issues/failures; no matching application ERROR or
+  traceback found in checked new-deployment logs. Recorder remains on a0782b7, without a new restart.
+- Before 18:20:01.409 and after 18:20:45.356 UTC: cash $38.9281, open cost/risk $2, reserved $0,
+  caps $10/window/$20 open/$6 day/$10 total/clip 5, both stop states, 418 real historical fills,
+  fees $1.9764, lifetime settled -$8.8133 and UTC-day +$1.1288 all matched. Prior resume value ignored.
+  These totals changed normally from the earlier PR #49 baseline through intervening fills/settlement;
+  they were not reset. Financial limits/variables/trading authority were not changed by either release.
+- Actual protocol-2 records through 18:29:01 UTC: six new fills, all 18 terminal horizons, nine usable
+  full-depth hypothetical quotes and nine explicit gaps (three stale, one venue-feed gap, five pre-horizon
+  receipts). Measured books included up to 169 levels, verifying the depth correction in production.
+  Two quoted alternatives had positive net and seven negative; never sum them into portfolio returns.
+  Quotes exclude conservative original-own-order depth and bound fees, but do not simulate sell transit,
+  competition or whole-inventory liquidation. No realized exit profit or profitable strategy is established.
+- Runtime 18:29:04 UTC / 11:29:04 AM PDT: configured live, temporarily waiting on Kalshi account data,
+  cash $39.4194, open cost $14.5087, modeled open risk $1.5087, reserved $0, no day/total stop or integrity
+  error. Lifetime settled -$8.8133, UTC-day +$1.1288; lifetime fees $2.0001. Cash is not trading profit.
+  This snapshot does not certify uninterrupted trading or complete-window/day coverage.
+- Verified final source: 5,381 tests passed / 14 existing skips in 300.11 s; 79 diagnostic/integration
+  checks, mypy 123 files, changed-file Ruff and independent review passed. No source changes after this
+  verification; current follow-up is documentation/evidence only and does not restart the bot.
+- Recorder hourly saved metadata observed 18:00:00.789 UTC: storage 248,759,168 / 4,831,838,208 bytes,
+  warning level 0, no deleted segments, one spot reconnect gap. It explicitly does not certify complete
+  coverage, raw hashes or both spot venues. No new raw rows or held-out outcomes were read.
+- Saved exact startup/restart receipts in fill_markouts_v2_release.json and expanded partial-window
+  observations in fill_markouts_v2_followup_1129.json under research/kalshi_profitability_2026-10-14.
+  FILL_DETECTION_NEXT.md records the exact worst fill and bounded tracing plan. The read wrapper awaits
+  cancellation cleanup after HTTP completion; detection delay must not be called pure network latency.
+- TJR gate reminder handled during active work: reread current COORDINATION/AGENTS/WORKLOG through GitHub.
+  PR #47 deployment is verified; remaining Kalshi execution/complete-record evidence is still open.
+  No explicit MNQ reprioritization, so TJR-MNQ-001 stays queued. Do not repeat the already-completed Page
+  review or claim historical/paper validation. Automation remains enabled; no routine queue notification.
+- Next: attribute detection tails using correlated account-read/cancel timestamps; gather complete
+  version-2 windows before freezing entry-versus-exit comparisons. Preserve gaps, losses and sealed TEST.
+
 ## 2026-10-14 18:13 UTC, Codex, fill diagnostic live; correcting deep-book coverage (11:13 AM PDT)
 - PR #49 merged 18:06:07 UTC within an allowed merge minute. Railway deployment
   c049df06-b245-465b-969d-2c2b7317b5ed built exact f76cb5ba29ee6c4bee7caab087e0719fa270fa88,

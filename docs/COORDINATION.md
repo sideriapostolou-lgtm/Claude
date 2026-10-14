@@ -39,7 +39,12 @@ Check this queue at task start and before declaring current work complete. Keep 
 move an item to done only with linked evidence. Blocked or waiting-for-approval is not complete.
 
 ### TJR-MNQ-001 — source review complete; historical/paper work queued (owner request, 2026-10-14)
-- Latest update: **2026-10-14 10:39 AM PDT** (17:39 UTC). The owner directly asked to learn more about
+- Latest gate check: **2026-10-14 11:31 AM PDT** (18:31 UTC), through connected GitHub. PR #47's
+  deployment/restart check is complete; PRs #49/#50 are also deployed and their diagnostic works.
+  Complete-window execution evidence, fill-detection tails and raw recorder/per-venue verification remain
+  open. The scheduled reminder did not reprioritize MNQ or authorize another production change.
+  Historical/paper work stays queued; no duplicate Page/source review or routine queue notification.
+- Source-review update: **2026-10-14 10:39 AM PDT** (17:39 UTC). The owner directly asked to learn more about
   the TJR prototype while discussing Kalshi direction/exits. That authorizes the source review now, not
   a declaration that Kalshi evidence work is cleared or a new live desk. Both Pages were read completely,
   exact source snapshots saved, and 65/65 prototype plus 26/26 feature synthetic checks reproduced.
@@ -74,6 +79,25 @@ move an item to done only with linked evidence. Blocked or waiting-for-approval 
 
 Format: `### YYYY-MM-DD HH:MM UTC, From -> To: subject`, then what you need, then `Status: open / answered / done`.
 
+### 2026-10-14 18:31 UTC, Codex -> owner / Claude: fill diagnostics deployed and verified; evidence work remains
+- PR #49 deployed f76cb5b at 11:07:32 AM PDT; PR #50 deployed exact
+  176916071029c13e73cd5ae41fbc8413532dce71 at 11:20:43 AM PDT. Both restarts preserved compared
+  cash, risk, caps, stop states and real fill/fee/P&L history; old resume values were ignored.
+  Polymarket LIVE startup normal, bot and recorder online 1/1, no application error/traceback found.
+- Version 2 actually measured deep books (up to 169 levels in this sample): six new fills, 18 terminal
+  horizons, nine full-depth hypothetical quotes and nine explicit gaps. Two quotes were positive and
+  seven negative after conservative estimated costs; these are isolated alternatives, not realized or
+  aggregate strategy P&L. Version-1 gaps and all real losses are retained.
+- 5,381 tests passed / 14 existing skips; mypy 123 files, changed-file Ruff and independent review passed.
+  No trading decision, order authority, stop, money setting, variable or TJR runtime changed.
+- Exact receipts: research/kalshi_profitability_2026-10-14/fill_markouts_v2_release.json and
+  fill_markouts_v2_followup_1129.json. Next evidence: FILL_DETECTION_NEXT.md; correlate the 11.794-s
+  detection tail with reconciliation/cancellation stages, then collect complete windows before policy tests.
+- Rechecked the queued TJR reminder against current GitHub records; gate remains closed. Historical
+  validation/paper not started, automation stays enabled, no duplicate source review or routine alert.
+
+Status: done (diagnostic releases and actual observation verification); open (complete execution/strategy evidence)
+
 ### 2026-10-14 18:10 UTC, Codex -> owner / Claude: first fill exposed bounded-depth coverage limit
 - PR #49 deployed exact f76cb5b at 11:07 AM PDT; money/stop history and Polymarket LIVE startup verified.
   First new fill was detected 11.7939 seconds after venue time; 1/5-second quotes failed the existing
@@ -83,7 +107,7 @@ Format: `### YYYY-MM-DD HH:MM UTC, From -> To: subject`, then what you need, the
   version and actual depth counts in new rows. This preserves the previous maximum depth-work product.
   Existing gaps remain unchanged; no freshness relaxation, trading-rule or money-setting change.
 
-Status: open (bounded diagnostic correction; tests/review/release verification next)
+Status: done (PR #50 deployed; actual version-2 observations verified in newest entry)
 
 ### 2026-10-14 17:50 UTC, Codex -> owner / Claude: building observation-only fill/exit evidence
 - Owner asked for the next highest-leverage step. Implementing a bounded per-fill diagnostic at 1/5/30
@@ -98,8 +122,7 @@ Status: open (bounded diagnostic correction; tests/review/release verification n
 - Will run full tests/mypy/changed-file Ruff, independent review, then use standing release approval
   inside a safe merge minute and verify the exact running commit and observation receipts.
 
-Status: open (implementation and independent review complete; 5,379 tests pass / 14 existing skips,
-mypy 123 files and changed-file Ruff clean; release and production evidence next)
+Status: done (PR #49 deployed and first receipts verified; bounded-depth correction completed in PR #50)
 
 ### 2026-10-14 17:39 UTC, Codex -> owner / Claude: TJR source reviewed; Kalshi entry/exit diagnosis next
 - Owner directly requested more about the saved TJR bot. Read both Pages completely; preserve main

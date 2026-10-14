@@ -123,6 +123,15 @@ bounds, three stale books and one late observation. Detection delay was 1.102 s
 median, 0.466 s minimum and 11.794 s maximum (n=8; no full-window claim).
 Exact first-release receipts are preserved in fill_markouts_v1_release.json.
 
+Version 2 deployed exact commit 176916071029c13e73cd5ae41fbc8413532dce71 at
+11:20:43 AM PDT. Six newly observed fills produced all 18 terminal records:
+nine usable full-depth quotes and nine explicit gaps (three stale, one feed gap,
+five pre-horizon receipts). The measured books had up to 169 price levels.
+Two isolated quoted alternatives were positive after estimated costs and seven
+negative; no sum or profitable-strategy inference is valid. Actual receipts and
+restart checks are in fill_markouts_v2_release.json, with the expanded partial
+window in fill_markouts_v2_followup_1129.json. All version-1 gaps are retained.
+
 After deployment, verify the exact commit, unchanged risk/stop history and the
 standalone startup status. Then verify one newly discovered real fill has all
 three terminal horizon records (measurements or explicit gaps). Collect repeated
