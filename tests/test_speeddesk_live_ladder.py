@@ -1208,6 +1208,10 @@ class Run:
         cost = intent.size * intent.unit_reserve
         assert intent.size <= clip + 1e-9
         assert book.cash_usd is not None and cost + reserved + debits <= book.cash_usd + 1e-9
+        # Conservative risk never exceeds the old risk plus the whole new reservation; strict balancing
+        # contracts add nothing to loss risk, but still consume the full open-budget admission below.
+        after = book.at_risk_usd
+        assert after <= at_risk + cost + 1e-9
         if not lock:
             assert current + cost <= window_usd + 1e-9
             assert at_risk + cost <= open_usd + 1e-9

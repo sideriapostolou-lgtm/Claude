@@ -30,7 +30,10 @@ from cryptography.hazmat.primitives.serialization import load_pem_private_key
 from .clock import Clock, RealClock
 from .config import Secret
 
-BASE_URL = "https://api.elections.kalshi.com"
+# Kalshi's dedicated Trade API host, recommended for API traders (docs.kalshi.com getting_started/api_environments,
+# checked 2026-10-13; speed plan step 8). The shared api.elections.kalshi.com stays supported; signatures cover the
+# path only, so the host does not change them.
+BASE_URL = "https://external-api.kalshi.com"
 API_PATH = "/trade-api/v2"
 TIMEOUT = (3.05, 10.0)
 # Half of Kalshi's Basic-tier limits (20 reads and 10 writes per second, docs.kalshi.com rate limits),

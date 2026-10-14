@@ -15,7 +15,7 @@ import pytest
 from test_speeddesk_live import TICKER, events, make_desk
 
 from nightcrawler.config import Secret
-from nightcrawler.speeddesk_live import KalshiLiveDesk
+from nightcrawler.speeddesk_live import STATE_KEY, KalshiLiveDesk
 from nightcrawler.speeddesk_live_model import (
     STOP_REFUSALS,
     ActualFill,
@@ -440,8 +440,10 @@ def test_the_desk_latches_at_start_before_the_token_and_logs_every_token_use(tmp
     try:
         # 2026-10-13, 4:15 PM PT: $0.0579 of room, `total_halted` false. (The loss since the last resume is modelled
         # with the stop anchor: a saved book's realized result must match its settlements.)
-        desk.book.stop_anchor = 9.9421
-        desk.checkpoint(durable=True)
+        # Seed the legacy persisted state directly: today's checkpoint would already latch and record it.
+        saved = desk.ledger.get_kv(STATE_KEY)
+        saved["book"]["stop_anchor"] = 9.9421
+        desk.ledger.set_kv(STATE_KEY, saved)
     finally:
         desk.close()
     # Without a token: latched at start, paper, no bids at all (a one-contract bid at 4c went out at 4:25 PM PT).

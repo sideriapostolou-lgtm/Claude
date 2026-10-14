@@ -13,6 +13,41 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-14 13:21 UTC, Codex, branch codex/kalshi-speed2-handoff (speed part 2)
+- Scope: owner requested the next two steps. Integrated speed branch `96e5e9c` with deploy `3733295`
+  after the stop-fix shipment. The separate restart choice remains pending: no fresh resume token,
+  Railway variable change, cap increase or real order is authorized by this integration.
+- Changed: indexed active-order/risk calculations; a synced pre-send journal and throttled full saves;
+  bounded account-history reads; reusable HTTP sessions and Kalshi's Trade API host; constant-work BTC
+  tape updates and cached volatility; redundant Coinbase Exchange feeds with Advanced Trade fallback.
+  Kalshi fair values now account for the settlement average using the documented approximation.
+  This changes decision prices and potentially orders; it is not solely a performance refactor.
+- Preserved the deployed conservative admission policy, settled-loss-only latches and $0.98 floor,
+  strict aggregate balancing checks, starter hedge room, resume fingerprints and day-reset behavior.
+  The exhaustive worst-case helper is diagnostic, never the looser speed-branch admission policy.
+  No config.py, polydesk.py, recorder setting or research TEST change.
+- Independent review fixes: an unseen older trade with the same timestamp cannot rewind the BTC price
+  or refresh its age; a settlement checkpoint now records a newly latched stop before saving, so a
+  crash before heartbeat cannot persist the stop without its receipt. Added five feed, six risk and
+  twelve crash/transport regression cases. Reviewed partial fills, uncertain reservations, bid pulls,
+  post-close release evidence, startup restoration and early exits.
+- Final validation: **5,228 passed, 14 skipped** (290.97 s); source mypy passes all 122 files;
+  Ruff passes all 37 changed Python files. Skips: 12 opt-in network checks, one opt-in wall-clock
+  benchmark and one unavailable historical lab cache. No production order or credential test ran.
+  The first run caught an inherited liveness assertion for a $1 fake day budget that cannot fit a
+  first contract and its hedge. Kept its zero-order/zero-risk assertions and added a separate feasible
+  $1.50/day fake: 33 creates, 12 fills, five restarts and delayed/lost-create recovery, with every
+  venue-truth cap assertion retained. That file also passes separately (4 tests). Optional numerical
+  test libraries were installed only in the isolated environment; no production dependency change.
+- Pre-deploy measurements, exact running stop-fix deployment: at 13:16-13:18 UTC, median step 3.4-3.5 ms;
+  recent account reconciliation medians 1.60-1.74 s, with multi-second tails. These are small production
+  samples while risk-stopped. Earlier speed-branch local timing claims and its FULL_PASSED/FULL_SKIPPED
+  placeholders below are historical, not validation or a benchmark of this final integration.
+- Real money touched? YES, owner-authorized trading code. Publication/deploy verification pending;
+  Kalshi stays stopped. No profitability claim; post-deploy order-ack timing cannot be measured while
+  stopped. Independent reconciliation, private fill WebSocket and other deferred speed work remain open.
+- Next: publish the reviewed PR, safe-minute merge, exact-SHA Railway verification and receipt.
+
 ## 2026-10-14 13:04 UTC, Codex, PR #43 deployed (stop fixes; no restart budget)
 - Shipped: PR #43 merged at 13:02 UTC inside the allowed interval. Merge commit
   `c1c3c91250219d5b5e6527868133725d5f5f34f6` was built by Railway deployment
@@ -156,6 +191,86 @@ Template:
 - Real money touched? no. Claude's two self-firing reminders (recorder 48 h report, daily step-up check) are
   disabled; Codex owns them.
 
+## 2026-10-14 00:55 UTC, Claude, branch claude/kalshi-fix-speed, no PR (merge of the deploy branch, the Kalshi bid pull PR #42; local merge commit, not pushed)
+- Changed:
+  - Merged origin/claude/nightcrawler-memecoin-bot-Gwnb1S at 6a1bf70 (PR #42: the bid pull, `speeddesk_live_pull.py`,
+    cancel acknowledgement and the re-send-after-a-fresh-read rule, the write-room rule, the `_practice` guard for
+    twin errors, one `KalshiLiveDesk._fair`, the pull settings, pagestate `kalshi_live.pull`) into the speed branch
+    (1a461fe) as a merge commit. Two text conflicts: `speeddesk_live.py` (13 hunks) and this log (two hunks; the
+    entries are ordered newest-first by their stamps: the pull's rebreak entry, commit 5687d4c at 00:19 UTC, sits
+    between the speed branch's 00:35 and 00:15 entries, and its 22:00 review entry below the speed branch's 22:20;
+    no line of either side lost). SPEEDDESK_SPEC (its 9.3), COORDINATION, `config.py`, `pagestate.py`,
+    `speeddesk_model.py` (the pull's `cancel_order` beside the speed branch's worst-case math) and
+    `speeddesk_kalshi_client.py` (`writes_last_second` beside the Trade API host) auto-merged.
+  - The deliberate conflict, the fair value: `KalshiLiveDesk._fair` carries `settles_on_average=True` once (the
+    39.5 s settlement-average lead, loss plan item 4), and every fair in the module comes from it: `_decide`, `_send`,
+    `_send_guard`, `_stale_bid_reason`, `_fair_drop`, `_pull_watch` (the trigger), `_take_available`. The pull's test
+    that the module holds exactly one `fair_up(` call passes. A lock uses no fair value (unchanged). The spec's
+    settlement-average paragraph now points at `_fair`.
+  - `_cancel_unsafe`: the pull's trigger check and its cancel bookkeeping (`cancel_acked`, `cancel_reasons`,
+    `cancel_failed`, pruned to the active orders) run before the speed branch's once-per-pass stop reason; the loop
+    runs in the pull's order (largest fair drop first) with the speed branch's rule inside it (a money stop leaves a
+    bid that lowers its window's risk resting; then the feed, stale-bid and pull reasons, the acknowledged-cancel rule
+    and the re-send after a fresh order-list read).
+  - `_cancel`: the pull's `cancel_reasons`, `_practice`-guarded twin cancel, acknowledged set and no-order-id handling
+    with the speed branch's save rule: no save before or after a cancel (`_save_soon`; the full state follows within
+    SAVE_EVERY_S) and the 2 s retry gate set only once a request was sent. A pull trigger marks the state for the next
+    save (`_pull_watch`), so a hold still survives a restart, within a second instead of at the cancel.
+  - `_send`: the pull's `_practice`-guarded twin copy, then the speed branch's synced journal row. `_submit`'s
+    definite refusal: the speed branch's journal rewrite (or save) first, then the pull's twin handling (a bid
+    refused only by the pull keeps the twin's copy resting). `_release_unsent`'s twin cancel goes through
+    `_twin_cancel_window` under `_practice` (as a refusal: the twin's other bids, never a bid a pull kept).
+    `checkpoint`: the pull's reopened-order bookkeeping inside the speed branch's once-a-minute daily reports.
+    `_reconcile_reads`: `money_changed` beside the pull's `order_reads` counter. The restored-from-journal receipts
+    precede the pull guard's construction in `__init__`.
+  - Tests: the pull suite's `market()` helper prices a target fair with the bot's horizon (`horizon()`,
+    AVERAGE_LEAD_S), so its pinned moves and prices hold as written; `test_fair_helper_matches_the_bots_fair` checks
+    `KalshiLiveDesk._fair` itself; four direct ledger reads call `checkpoint()` first (a twin cancel's receipt lands
+    with the next save, not at the cancel). Four speed-branch tests run with the pull off because their scenario
+    swaps in a snapshot 1.7c to 5c from make_desk's 0.50 fair, which the pull holds for 10 s as intended (the
+    small-make-edge stale-bid test, the settlement-horizon pricing test, the balancing desk, the two journal-depth
+    crash runs); the kill, stop-math, release, kill-point, property, ladder and golden suites run with the pull on.
+- Unchanged: every cap, stop, clip, reservation, release and journal rule; the pull's settings and defaults (on,
+  1c / 5 s / 5 s); caps $10/$20/$6/$10, clip 5, lock from 240 s up to $0.97 (exempt from the pull).
+- Deferred (practice only): under a money stop the twin's kept bids (`_twin_unpulled`) are still cancelled by the
+  stop, while a real balancing bid now stays resting (speed part 2); matching it needs a lowers-risk check on the
+  twin's own books.
+- Verified: full suite FULL_PASSED passed, FULL_SKIPPED skipped (Python 3.13); `mypy src/nightcrawler` clean (122 files);
+  ruff clean on the changed Python files. Directed: the pull file 59 of 59; with the crash, kill-point, release,
+  desk and book property, ladder, ladder-speed, golden and live suites 433 in all.
+- Real money touched? no (code merged; nothing pushed or deployed, no Railway change).
+- Next step: push and PR at a safe minute after the owner's go.
+
+## 2026-10-14 00:35 UTC, Claude, branch claude/kalshi-fix-speed, no PR (merge of the deploy branch, the Kalshi arena; local merge commit, not pushed)
+- Changed:
+  - Merged origin/claude/nightcrawler-memecoin-bot-Gwnb1S at 15c9457 (82c045f PR #41 Kalshi arena, 902b4c7 rewards
+    playbook, 15c9457 COORDINATION.md) into the speed branch as a merge commit. Three text conflicts, each kept
+    whole on both sides: `speeddesk_model.py` (FUTURE_SKEW_S and AVERAGE_LEAD_S beside the arena's LOCK_MARGIN_S,
+    OPT_IN_FIELDS and STOP_MAX_PRICE), this log (the eight entries between the template and 19:30 ordered
+    newest-first by their stamps, so the 20:05 entry now sits below 20:20 and 20:10) and `tests/fixtures/README.md`
+    (both sides' rows). `speeddesk.py` auto-merged: the arena's feed hook (ArenaLink, feed_book/feed_trade/feed_gap,
+    one flush a step, start and close) beside the speed branch's future-skew tolerance, tape revision, sigma cache
+    and unsynced practice saves; SPEEDDESK_SPEC gained section 12 after the speed branch's edits to 9 and 10.
+  - One semantic conflict, practice code only: the arena's practice copy of the live stops (`day_stop_counts_risk`,
+    `hedged_open_budget`) counted a pending bid's whole cost, as the live risk book did before loss plan bug 1
+    (6a29919); the live book now counts what an order adds to its window's worst case over its pending orders' fill
+    combinations. The practice desk now has the same `_worst`, `_legs` and `_at_risk` (MAX_LEGS kept equal by a
+    test), so the arena's control follows the live rules again and the arena's 400-seed sweep against the live book
+    passes. New test `test_the_worst_case_over_pending_legs_is_the_live_risk_books` (2,000 random windows, leg for
+    leg, plus the legs-cap fallback).
+  - `tests/fixtures/speeddesk_model_golden.json` re-pinned with the arena's generator run against the speed branch's
+    model (2b84ad6, still without the arena fields): the 39.5 s settlement-average lead (1ce14d3) moves the Kalshi
+    window's fair value (first difference at event 266, fair 0.4847 -> 0.4835), 474 -> 471 events, the two US
+    windows unchanged, every covered behaviour still present. The merged model at defaults reproduces it, so the
+    arena's fields stay inert at their defaults.
+- Unchanged: every cap, stop, clip, reservation, release and journal rule on the live desk (`speeddesk_live*.py` is
+  the speed branch's; the arena never touched it), the arena's own rules, `config.py`, `pagestate.py`, `.env.example`.
+- Verified: full suite 5,074 passed, 13 skipped (Python 3.13); `mypy src/nightcrawler` clean (121 files); ruff clean on
+  the 42 .py files changed against the base 61ca112. The arena's golden-fixture, genes and page tests and the speed
+  branch's crash, kill-point, release and property tests all pass (332 in the directed run).
+- Real money touched? no. Not pushed; no Railway change.
+- Next step: push and PR at a safe minute after the owner's go; the bid-puller branch merges after it.
+
 ## 2026-10-14 UTC, Claude, branch claude/kalshi-pull (rebreak fix round)
 - Rebreak of 703d942 (cancel acknowledgement, caps/locks/ladder, practice twin isolation and A/B, deploy
   readiness). Every major reproduced first with the reviewers' scratch tests, then fixed with a regression test in
@@ -207,6 +322,50 @@ Template:
   Committed locally on `claude/kalshi-pull`, not pushed, merged or deployed.
 - Next: merge in a safe minute when the owner says so.
 
+## 2026-10-14 00:15 UTC, Claude, branch claude/kalshi-fix-speed, no PR (rebreak fix round; local commit, not pushed)
+- Changed:
+  - Rebreak minor 1 (a change from the live base 61ca112, under a venue anomaly): since ad9144d a listed order
+    without the bot's client-id prefix was taken as proof that its fill was the owner's. If Kalshi listed the bot's
+    own landed order without its client id, the unsent order was released after the close, its fill counted as the
+    owner's and the window marked as the owner's (no position check, no payout audit), so the bot's own fill
+    vanished from its books. Now such a fill marks the window as the owner's only when that order's terms (market,
+    side, size, limit price) differ from every unsent bot order in the window; on an unsent order's exact terms it
+    holds the order in full, as on the base. `speeddesk_live._same_terms`; regression test
+    `test_a_landed_order_kalshi_lists_without_the_bot_client_id_keeps_its_reservation` fails before the fix
+    (released at close + 30.3 s, no fill booked) and passes after; ad9144d's owner test still passes (its owner
+    order is 2 contracts, the unsent bid 5). The rebreak's created-before-the-decision rule is left out: without it
+    more owner fills hold the order, never fewer.
+  - Rebreak minor 5: SPEEDDESK_SPEC step 2 no longer says each pre-send row makes exactly one fdatasync. Measured
+    again with strace: 1 at 900 and 985 WAL frames, 3 at 999 (the autocheckpoint runs inside the row, 25 page
+    writes), 2 at 1000 (the restarted log's header). Docs only.
+- Deferred (recorded here, no code change):
+  - Rebreak minor 2: in a window the owner also traded, a landed lock that both order lists miss for more than
+    ORDER_LIST_LAG_S is released at close + 30 s and its late fill then trips fill_after_settlement. It fails
+    closed (an integrity stop that needs the owner's reset, nothing dropped). A longer wait for locks in the owner's
+    windows changes the lock and release paths.
+  - Rebreak minor 3: a voided market (settlement row with neither yes nor no) holding bot contracts leaves the
+    account "stale" for good after the release. Not a regression (the base held the reservation for good).
+    Handling void rows (refund the cost, settle the window) is a settlement change of its own.
+  - Rebreak minor 4: after a restart the ladder's peak P&L can differ when a window's settlement arrives more than
+    an hour late (`_recount` walks `book.settled` in archive-merge order). Present on the base; the running total
+    and every cap and stop are unaffected, and the peak only matters from rung 1 (live at rung 0). The fix
+    (persisting a settlement sequence) changes ladder state that sets the limits from rung 1.
+  - Rebreak minor 5, code: moving WAL checkpoints off the send path (`wal_autocheckpoint=0` plus a checkpoint
+    inside the full save) adds work to the full save on the event loop; the spec now states the boundary cost.
+  - Rebreak minor 6 (informational, a change from the base): when both Exchange connections miss the older of two
+    same-stamp trades and Advanced Trade delivers it later, the tape's price goes back one trade (about 1 bp) until
+    the next trade, mostly at startup under the 3600 s warm-up. No cap or stop effect. A trade-id or tie-break
+    filter changes the price the stale-bid cancel reads, so it waits for its own change.
+  - Rebreak minor 7 (informational): a silent Coinbase connection shows "connected" for up to 10 s (heartbeats
+    only: indefinitely). Gating does not read it: the stale-feed check cancels 3 s after the last accepted tick.
+  - Rebreak minor 8 (informational): signed calls have no fallback host; an outage of external-api.kalshi.com
+    fails closed (no create sent elsewhere), and resting bids cannot be cancelled meanwhile, as on the base's host.
+- Verified: full suite 4,935 passed, 12 skipped (Python 3.13); ruff clean on the changed Python files; `mypy
+  src/nightcrawler` clean (120 files). The rebreak's 10 directed scratch tests pass on the fixed tree, and its a5
+  case now matches the base (reserved, "Kalshi account data stale").
+- Real money touched? no. Nothing pushed or deployed; no Railway change.
+- Next step: as before, push and deploy at a safe minute after the owner's go.
+
 ## 2026-10-13 23:05 UTC, Claude, branch claude/kalshi-arena (preflight fixes and the town's kalshi_arena contract)
 - Changed (practice code only; `speeddesk.py`, `speeddesk_live*.py`, `config.py` untouched):
   - the town's process logs what isolation it actually got (`kalshi_arena_hardened`, a WARNING at normal CPU
@@ -257,6 +416,59 @@ Template:
   parent's /proc environ as the same user (root on Railway): its code never does, not an OS boundary; not pushed.
 - Real money touched? no.
 - Next step: merge at a safe minute with the other preflight lenses.
+
+## 2026-10-13 22:20 UTC, Claude, branch claude/kalshi-fix-speed, no PR (review fix round; local commits, not pushed)
+- Changed:
+  - Rebased onto the deploy branch (61ca112, with the ladder and bba948a). The three commits already live as PR #39
+    dropped out by patch id. New shas: bug 1 ad556cd, fair value 7566168, step 3 08bb8bd, step 4 1e7019c,
+    step 8 012915a, step 2 798fd5e, first work log 71037aa. The build's 1eb350e is kept as
+    backup/kalshi-fix-speed-1eb350e. Bug 1's stop math now sits in the ladder's _buy_verdict: open and daily checks
+    at the window's rung, the lifetime check at the configured $10.
+  - cd007c4: the speed steps on the ladder. The status line is saved at once; a new ladder stop is saved at once
+    (to the minute); rung 0 is pinned to the owner's $10/$20/$6/$10, 5 contracts ("Go back to 10 that will be
+    our low minimum resting number"). No limit or setting changed.
+  - cb862e5 (blocker): an unsent order in an unpaired window froze real trading for good. Kalshi settles about
+    5 s after the close and the position leaves the list, so every read failed position_mismatch. The release is
+    now decided per window: two complete lists after the close, 30 s apart; no unknown fill there; the position
+    matches or Kalshi has settled. It runs before settlement, and complete lists are read every 30 s while an
+    order waits. A definite refusal rewrites its journal entry at once. The journal on disk is emptied after a
+    replay.
+  - ade4ba6 (major): the money math sums over open windows only, through an index kept exact. Step time with a
+    week of history went from 57 ms to 0.6 ms. A complete reconcile with three days of listed orders went from
+    1.7 s to 79 ms (it was quadratic).
+  - 789ed1c: the reviewers' adversarial-venue, complete-scan and stale-bid tests are in the suite.
+  - 189eb90 (cheap minors):
+    - A money stop keeps only a light-side bid.
+    - A future-stamped Coinbase copy no longer uses up the trade id; refusals are counted per connection.
+    - The stale-feed check counts from the earlier of stamp and receipt.
+    - The sigma cache key holds when the newest tick is stamped ahead of the local clock.
+    - A reconcile that changes nothing of record waits for the 5 s save: 13 saves a quiet minute, was 60.
+    - The first practice save is synced.
+  - ad9144d: a fill of an order Kalshi lists as the owner's marks the window as the owner's, even beside an
+    unsent bot order, which then still gets released.
+  - 6855c58: the index holds the dicts it describes, so it is compared by identity, not by id.
+  - e347130: two Coinbase replay tests now replay at the recorded receipt times; their assertions are unchanged.
+- Unchanged: every cap and stop, the 5-contract clip, a reservation before every send, release only on venue
+  proof, the synced journal row before every create, and which orders the strategy places. Still unchanged too:
+  an unresolved order pauses all new orders until it is resolved (about 30 s after its close at worst). No new
+  setting, so `.env.example` is unchanged. Town UI files, Railway, keys and the arena branch are untouched.
+- Verified:
+  - Full suite: 4,934 passed, 12 skipped (Python 3.13). ruff is clean on changed files and `mypy` is clean.
+  - 46 new tests. Every new regression test fails on the tree before its fix and passes after.
+  - Kill-anywhere, 6 seeds, no cap: 295 crash images, 0 bad.
+  - Adversarial desk, 10,000 events each, 4 owner-cap and 2 tight-cap cases: 0 breaches. Highest use seen: window
+    $10.00 of $10, day $5.98 of $6 (owner caps); $3.00 of $3 and $0.99 of $1 (tight caps).
+- Not verified / skipped (deferred):
+  - Turning off WAL autocheckpoint (it lands on about 0.3% of pre-send rows): the fix needs care not to add fsyncs
+    to the loop.
+  - A per-ticker read instead of a complete scan when a window opens: needs Kalshi's ticker filter checked.
+  - Releasing a resting order at its expiration: needs a Kalshi demo test.
+  - Moving the fill-triggered save to the end of the step, and saving metrics under their own keys: design changes.
+  - The lag probe stays at 10 ms (measurement fidelity).
+  - Nothing deployed or pushed.
+- Real money touched? no.
+- Next step: push and deploy at a safe minute after the owner's go, then read the `reconcile`, `phases`, `loop`
+  and `clock` status blocks on Railway.
 
 ## 2026-10-13 22:00 UTC, Claude, branch claude/kalshi-pull (review fix round)
 - Two reviews of 8a5b4fe (caps and budget; correctness). Every blocker and major finding reproduced first (the
@@ -440,6 +652,44 @@ Template:
 - Real money touched? Code that sizes real Kalshi orders, committed locally on `claude/kalshi-ladder` only: not
   pushed, merged or deployed. On deploy it still starts at rung 0 (today's $10/$20/$6/$10, 5 contracts).
 - Next: owner decisions (ceilings, first-buy size at rung 2); merge after `claude/kalshi-fix-speed`.
+
+## 2026-10-13 20:05 UTC, Claude, branch claude/kalshi-fix-speed, no PR (local commits, not pushed)
+- Changed (one commit each, on top of claude/nightcrawler-memecoin-bot-Gwnb1S at c3ab6f8):
+  a3f068b loss plan bug 3 + speed step 1: between complete scans the order and fill reads pass `min_ts`
+  (oldest unfinished/uncertain/reserved order or one window ago, minus 60 s); complete reads at startup, every
+  60 s, after a window opens and while an integrity reset waits; reconcile timings, pages, rows, bytes and
+  failed checks in the status line.
+  4e20408 speed step 0: Kalshi `ts_ms` and clock offset on order/cancel records, per-phase step() timings,
+  event-loop lag probe, cancel timings, Coinbase Exchange `/time` clock probe (logging only).
+  80703e8 loss plan bug 2: stale-priced resting bids are cancelled even while account data are stale.
+  6a29919 loss plan bug 1: money at risk is each window's worst case over its pending orders; the open, day and
+  lifetime checks use what an order adds to it; a money stop no longer cancels a bid that only lowers it.
+  1ce14d3 loss plan item 4: Kalshi fair value uses time left minus 39.5 s (60-second settlement average).
+  c9ac533 speed step 3: constant-work Bitcoin tape, sigma cache keyed on completed seconds.
+  7a2aba2 speed step 4: Coinbase Exchange `matches` primary (two connections), Advanced Trade backup, trade-id
+  dedupe, 250 ms future-skew tolerance (staleness limits unchanged).
+  8562fc5 speed step 8: signed client on external-api.kalshi.com; one requests.Session per worker thread for
+  the speed desk's public pollers.
+  a716565 speed step 2: the pre-send write is one synced journal row; full state at most once a second and at
+  once after fills, settlements, stops, releases and owner actions; no saves in cancel; practice ledger NORMAL;
+  an order journaled but never sent is released only after its market closes and two complete lists miss it.
+- Unchanged: every cap and stop ($10 window, $20 open, day stop, lifetime stop), the 5-contract clip, a
+  reservation before every send and its release only on venue proof, the fsync before every create, which
+  orders the strategy places (except bug fixes 1 and 2), `exchange_index`, Railway variables and keys, town UI
+  files, the arena branch. No new setting, so `.env.example` is unchanged.
+- Verified: full suite 4,810 passed, 12 skipped (Python 3.13); ruff clean on changed files; `mypy` clean.
+  99 tests in the 8 new test files. The bug 1 and bug 2 tests fail without their fixes; the crash tests fail
+  under five deliberate breakages (no journal row, fills saved late, replay skipped, release before the close,
+  release after one list). Build-machine measurements: tape 0.37 -> 0.0007 ms per tick, sigma per trade
+  0.70 -> 0.15 ms; new TLS connection about 480 ms against 46 ms kept alive; pre-send write 1.65 -> 0.54 ms
+  median (one fdatasync each, counted with strace). Exchange `matches` arrive 50 to 61 ms (median) before
+  Advanced Trade's batches in the 2026-10-13 recording.
+- Not verified / skipped: nothing deployed or pushed; no live Railway timings (the ~57 ms Railway fsync stays
+  in the pre-send row). Left out of step 8: polydesk, weatherwatch_markets and skipwatch_alerts HTTP, and an
+  explicit `exchange_index` (needs that shard's collateral).
+- Real money touched? no.
+- Next step: review, push and deploy at a safe minute; then read the new `reconcile`, `phases`, `loop` and
+  `clock` status blocks on Railway to confirm the gains live.
 
 ## 2026-10-13 19:30 UTC, Claude, branch claude/kalshi-ladder
 - Owner request (2026-10-13 ~18:40 UTC, after Claude proposed the rule): "Max $50,000 a window build the ladder".

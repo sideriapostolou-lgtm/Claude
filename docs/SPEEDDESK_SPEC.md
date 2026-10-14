@@ -301,7 +301,13 @@ Already filled exposure remains real until it settles, and the page must say so 
   Kalshi account, `fcm` for a broker/FCM account, `unknown` by default. It never grants live permission. Reservations remain conservative
   about partial fills and do not spend an expected rounding rebate.
 - KXBTC15M rules use the 60-second average of CF Benchmarks BRTI at each boundary; YES wins ties. Read and
-  validate current rules/fees for every eligible window. Unknown terms disable that window.
+  validate current rules/fees for every eligible window. Unknown terms disable that window. Fair value accounts
+  for the average (loss plan item 4, 2026-10-13): under the model's independent-increment approximation,
+  the variance of sixty one-second values equals that of the index 39.5 s before the close. With 60 s or
+  more left the live desk and the Kalshi practice windows therefore use the time left
+  minus 39.5 s (`fair_up(..., settles_on_average=True)`); the last minute is unchanged and no buy is made then.
+  The live desk carries it once, in `KalshiLiveDesk._fair`, the helper behind every decision, send check, stale-bid
+  check and pull trigger (9.3). Polymarket US windows are unchanged.
 - Cancel only bot-owned resting orders at startup, cutoff, stale Bitcoin (>3 s), shutdown, repeated errors
   and mode changes, and a resting bid priced from an old fair value: fresh fair more than 1c from the fair it
   was priced at, or the bid above fresh fair minus 2c. The last runs on every step and between account reads,
@@ -337,9 +343,23 @@ orders, fills, fees, locked/directional P&L, gaps and anomalies in `docs/WORKLOG
 The owner chose "2.5x": $5 per window, $10 open, $6 UTC daily loss stop, $10 total loss stop, and asked that
 pairs be "completely locked in" and that the bot "knows when to sell".
 
-- **Money at risk** is what can still be lost: per unsettled window, its cost (fees included) minus $1 for
-  each complete up+down pair (Kalshi nets the pair to $1 at once), plus pending non-lock reservations. The
-  open budget and both loss stops use it. Gross cost is still reported as `open_cost_usd`.
+- **Money at risk** uses a conservative bound: each unsettled window's spent cost (fees included) minus
+  $1 for each complete up+down pair, floored at zero, plus pending reserved cost that can add risk. Strictly
+  balancing quantities within actual unpaired holdings and pending locks are exempt from that pending-risk
+  sum; other quantities count in full. The balancing allowance is consumed across pending bids so two bids
+  cannot claim the same held contract. The diagnostic `worst_loss` helper enumerates fill combinations, but
+  **it is not the admission policy**. The speed-part-2 integration preserves the shipped stop policy (9.4),
+  rather than adopting the speed branch's looser incremental-worst-loss check.
+  Every ordinary buy must fit `at_risk_usd + its full proposed fee-inclusive cost` under the open budget,
+  even a balancing buy. The window budget counts every dollar spent and reserved. The day and lifetime
+  admission checks add only the proposed buy's new-risk quantity to existing risk and settled loss; only
+  settled losses can latch a permanent stop. Under a financial stop a resting hedge survives only when all
+  active same-side reservations together fit actual unpaired holdings and its fee-inclusive unit cost is
+  below $1. This is rechecked after partial fills, before cancellation and under the final transport lock;
+  requested cancels and uncertain orders still reserve their quantities. Reconciliation, stale-feed,
+  stale-price, mode and cutoff checks remain effective. Gross cost is reported as `open_cost_usd`. With the
+  earned-growth ladder (9.2), open and daily checks use the window's rung and the lifetime check uses the
+  configured $10 stop.
 - **New buys stop** `SPEEDDESK_KALSHI_LOCK_S` (240) seconds before the close, never later than the cutoff.
 - **Lock:** from then until 20 s before the close, a window holding more of one side buys the other side at
   the ask (immediate-or-cancel) for exactly the unpaired whole contracts, at up to
@@ -350,7 +370,7 @@ pairs be "completely locked in" and that the bot "knows when to sell".
   and the loss stops do not block it; a pending lock holds cash but is not added to money at risk. So the $5
   per window bounds new buys, and a window's gross spend can exceed it only by a lock (its possible loss
   cannot). During a money stop the panel says new buys are stopped and that locks still complete pairs.
-- **A strictly balancing bid is the same kind of order (2026-10-14, 9.3):** bought on the light side, within the
+- **A strictly balancing bid is the same kind of order (2026-10-14, 9.4):** bought on the light side, within the
   window's unpaired contracts, under $1 each with fees, it completes $1 pairs and can only lower the worst-case
   loss, so the day and lifetime stops do not count it (neither as a buy nor as a pending reservation). The window
   budget, open budget, pair cap, imbalance rule and cash still apply to it in full. A buy on the heavy side, or
@@ -655,6 +675,17 @@ Public `GET /exchange/status` probes report successful HTTP round-trip median/p9
 counts, WebSocket age and order latency. One region's timings do not establish that a move will help; no
 Railway region or stored data is moved. Account reconciliation still contributes to full execution latency.
 
+**Speed-part-2 integration (2026-10-14):** the implementation below adds indexed lookups, bounded
+persistence, Coinbase feed failover and deduplication, reusable HTTP sessions, the Trade API host, and the
+settlement-average fair-value approximation. It preserves section 9.4's settled-loss-only latches, the
+conservative open-budget check, starter hedge room, strict balancing checks, resume/day-reset handling and
+immediate durable stop receipts. It does not resume real money or raise limits. The historical timing
+figures below are measurements of earlier branches on the stated machines, not a benchmark of this final
+integration or a promise of Railway reaction time. Measure production `phases`, `reconcile`, `loop` and
+`clock` blocks after deployment; fewer milliseconds do not establish a profitable strategy.
+Account reconciliation in an independent worker, private fill WebSocket, amend-based repricing, a
+separate live process and off-path WAL checkpoints remain deferred.
+
 Live loop speed (2026-10-13; owner: "Move to Virginia!!"; the service already ran in Virginia, so the gain is
 inside the bot). The companion steps on each accepted Bitcoin tick or Kalshi book change, at most every 20 ms
 and at least every 250 ms, instead of a fixed 250 ms sleep. The private client counts reads and writes in
@@ -662,7 +693,8 @@ separate rolling one-second budgets, 10 reads and 5 writes per second (half of K
 so an order never waits behind the account reads that came just before it. Before this change every call waited
 200 ms after the previous one, so a reconcile (six reads) blocked decisions for over a second. A reconcile
 reads settlements only while a traded window has ended and is not yet settled. One durable write before the
-send holds the intent, its full reservation and its practice-twin order; the post-send write follows the reply.
+send holds the intent, its full reservation and its practice-twin order id (since step 2 below, a journal row
+rather than the whole state); the reply's facts follow in the next full save.
 
 Small saves (2026-10-13). Every save rewrote every order the companion had ever made, twice (the risk book and
 the intent journal): 206 ms per save on Railway by 13:45 UTC, about 87 us more per stored order, several saves a
@@ -676,9 +708,26 @@ The release before this cannot read the archive and fails closed (companion halt
 every window (archived ones from memory, newer saved copies win), at most every 10 s and at shutdown, without
 an fsync (the ledger is the durable record; the page treats data older than 60 s as stale). The status line
 splits each save into build_ms, ledger_ms and mirror_ms.
+Money math over open windows only (2026-10-13; latency review). The archive keeps saves small, but a restart
+merges every archived window back into memory, and the risk book summed money at risk over every order and window
+ever made, five times per status and once per open order in each cancel pass: a step took 0.6 ms on a fresh book
+and 57 ms with a week of finished history (build machine), and a complete reconcile checked each listed order's id
+against every order ever made (1.7 s with three days). The book now keeps an index (each window's orders in
+creation order, the windows that can still lose money, the owner of each Kalshi order id), updated by the methods
+that add orders, settle windows and record order ids, and rebuilt whenever its dicts changed any other way; the
+sums over it are exactly the full sums (the randomized book test checks them after every event). Unfinished
+orders come from the open windows too, with the full scan kept for an integrity error, the one state in which a
+settled window can hold a reservation again. Money at risk is worked out once per status and the money stop once
+per cancel pass. On the earlier speed branch's build-machine benchmark, a week of history took 0.6 ms per
+step and a complete reconcile with every old order listed took 135 ms of local work (linear in the orders
+Kalshi lists). These figures have not been established for the integration that retains the stricter stops.
 Only saves that must survive a host or power failure sync the ledger's write-ahead log at commit: the one
-before an order's first network byte (orders and lock buys), startup, shutdown, and any that records an owner's
-one-time action. The others (about 57 ms of fsync each on Railway on 2026-10-13, twice a second in reconcile)
+before an order's first network byte (orders and lock buys; since step 2 the pre-send journal row), startup,
+shutdown, a newly latched stop with its receipt, and any that records an owner's one-time action. New stops
+are checked at every heartbeat, including mode-off/backoff exits, and at the start of every checkpoint so a
+settlement save cannot persist a stop without its receipt. These writes bypass the ordinary save throttle;
+normal step cancellation work retains priority. The others (about 57 ms of fsync each on Railway on
+2026-10-13, twice a second in reconcile)
 commit with SQLite synchronous=NORMAL: a process crash loses nothing, a host failure can lose account facts the
 next reconcile reads again, and the next synced commit makes every earlier commit durable.
 
@@ -710,6 +759,115 @@ heartbeat, and the whole step), `loop` (`event_loop_lag`: the oversleep of a 10 
 timings) and `clock` (Coinbase Exchange `/time` once a minute while real money is on, and Kalshi from every reply;
 each source's shortest round trip since the previous line, or the last one with `fresh: false`). A failed time
 probe is only counted. Accepted orders' `stages` keep their three fields for the existing log parsers.
+
+Bitcoin tape (2026-10-13; speed plan step 3). The one-second tape rebuilt both of its dictionaries on every
+accepted trade (1.6 to 1.7 ms on Railway, twice per trade: practice desk and live twin), and the live snapshot's
+volatility cache was keyed on every accepted tick, so each trade recomputed the hour of returns. The tape now
+updates in place and drops seconds older than an hour and a second oldest first (0.0007 ms a trade against
+0.37 ms on the build machine), and counts accepted ticks (`revision`). The cache key holds the number of accepted
+ticks in completed seconds instead: a trade in the current second cannot change volatility, a late one stamped
+in a completed second does and recomputes it; a query more than a second before the newest tick is never
+cached. Volatility is therefore computed about once a second (0.7 ms) instead of on every trade. When the newest
+tick is stamped in a later second than the local clock (the bounded skew below), the key is that second and the
+ticks before it, so it is still cached (latency review: it recomputed on every snapshot refresh, 7.2 times a second
+at -240 ms skew). Results are identical: `tests/test_speeddesk_tape.py` replays 3,000 recorded Coinbase trades six times, with late revisions
+of the current and the just-completed second, against the previous code.
+
+Bitcoin feed (2026-10-13; speed plan step 4). Coinbase Exchange's `matches` channel
+(`wss://ws-feed.exchange.coinbase.com`, with `heartbeat`) delivers each trade on its own, 50 to 61 ms (median)
+before Advanced Trade's batches. Two Exchange connections are the primary source and Advanced Trade
+(`market_trades`) stays as the backup; the three share one trade-id space (no price mismatch in 4,280 shared
+trades), so each trade id is delivered once, by whichever connection brings it first (the last 20,000 ids are
+remembered). A previously unseen older trade id sharing the latest timestamp is also rejected: a delayed
+Advanced Trade copy cannot move the price backward after a newer Exchange trade at the same timestamp or
+refresh its receipt. When the id is absent, only timestamp ordering is available. Exchange `last_match` and
+Advanced Trade `snapshot` events, both replays of past trades on every
+(re)connect, are not ticks. Bitcoin data reads `connected` while any connection is up; the status also lists each
+connection (`coinbase_feeds`), and every gate that cancels on a feed gap is unchanged. Freshness allows a bounded
+clock skew: a trade stamped up to 250 ms after the local clock (`FUTURE_SKEW_S`) is accepted by the practice
+desk, the live companion, the practice model's staleness check and the timing reports (which count it as 0 ms
+old), because the Exchange feed has no batching delay to hide the clocks' difference (the 2026-10-13 recording
+ran 18 ms behind Coinbase; on one container 91% of Exchange ticks would have been dropped). Every staleness limit
+is unchanged: with no trade for 3 s the live companion still cancels its bids ("Bitcoin feed stale"), and a stamp
+further ahead than 250 ms is refused, before its trade id is marked as delivered, so a later copy of the same trade
+from another connection that is inside the bound still arrives (latency review: with the local clock about 0.3 s
+behind Coinbase every Exchange copy was refused and used up the id the Advanced Trade copy needed, while the status
+read "connected"); the refusals are counted per connection in the status (`coinbase_future_stamped`, at most every
+10 s). The live companion's stale-feed check counts from the earlier of the newest tick's stamp and its local
+receipt, so a tick stamped ahead no longer keeps the feed "fresh" up to 250 ms past 3 s of silence. The step-0
+`clock` report compares the clocks.
+
+Hosts and connections (2026-10-13; speed plan step 8). The signed client sends to `https://external-api.kalshi.com`,
+the dedicated Trade API host Kalshi recommends for API traders (`api.elections.kalshi.com` stays supported;
+signatures cover the path only, so they are unchanged). The speed desk's public pollers (Kalshi REST books,
+trades and metadata in `speeddesk_kalshi`, the Polymarket US gateway in `speeddesk_feeds`, and the Coinbase time
+probe) keep one HTTP session per worker thread instead of a new TCP and TLS connection per request (from the
+build container, through its proxy: about 480 ms per new connection against 46 ms kept alive); the public
+poller keeps its host. Not changed: `exchange_index` stays -1 (automatic routing; an explicit shard needs that
+shard's collateral, the shard-aware cash task), and `polydesk`, `weatherwatch_markets` and `skipwatch_alerts` keep
+their own HTTP (a separate real-money desk, a separate desk with streamed, locked reads, and a probe that measures
+a fresh connection's round trip on purpose).
+
+Pre-send journal (2026-10-13; speed plan step 2). The write before an order's first network byte was a full
+save of the whole state, synced (1.65 ms median on the build machine with 12 orders, 24.7 KB, against 0.54 ms for
+the row that replaces it, each with one `fdatasync`; on Railway the fsync itself, about 57 ms, stays in both). It
+is now one row, `kalshi_live_journal`, committed with synchronous=FULL: for each order sent since the last full
+save, its complete reservation, its intent, its window's terms when new and whether it is the window's first
+buy, exactly the rows a full save would hold for it. The fsync before every create stays, and so does every
+reservation before every send. One `fdatasync` per row is the usual case, not a guarantee (rebreak, 2026-10-14): the
+ledger's WAL checkpoints itself every 1000 frames, so a row that is the first commit after a checkpoint also syncs
+the restarted log's header (2), and a row whose commit takes the log past 1000 frames runs the checkpoint inside it
+(3, plus copying the changed pages into the database), all before the create's first byte. The old full save had
+the same, more often (about 11 frames a save against the row's 2). Moving checkpoints off the send path is
+deferred (work log, 2026-10-14). The full state is saved at most once a second (heartbeat), at once after a fill,
+settlement, stop, release or owner action, and at startup and shutdown; each full save empties the journal in
+the same transaction. A cancel writes nothing before or after its request (it only lowers exposure, the
+reservation is kept until Kalshi's list confirms it, and a restart cancels every open order again). A restart
+reads the last full save plus the journal (`replay_journal`; `durable_state` in tests) and records "restored from
+the pre-send journal" for each order it adds; what a crash can lose is only what the next reconcile proves again
+(an order id from Kalshi's reply, a release the order list confirms, cash), so until then the restored stops are
+as strict or stricter. A reconcile that changes nothing of record (no order's status, id, fill count or
+reservation, no window newly marked as the owner's, settled by outcome or with changed terms) no longer marks the
+state for the next second's save; it waits for the five-second save (a quiet desk saved every second). The
+practice desk's ledger commits with synchronous=NORMAL and its display copy is no longer synced, except the first
+save on a fresh ledger, which is synced so a host failure cannot leave the display copy without its ledger state
+(the "missing beside existing report" check would then keep the whole speed desk, real-money companion included,
+from starting). An order journaled but never sent (a crash between the row and the send, or a create lost before
+Kalshi) used to keep its reservation for good and hold a restart in "Reconciling startup orders". It is now
+released, and never sent again, only once its market has closed and two complete order lists read after the
+close, at least 30 s apart, leave it out while that window's own facts agree: neither order list is behind the
+fills, Kalshi lists no fill in that window under an order id the bot does not know (it could be this order's; a
+fill of an order Kalshi lists as the owner's, without the bot's client-id prefix, is the owner's and marks the
+window as the owner's instead, unless that order has an unsent order's exact market, side, size and price: it
+could be that order listed without its client id, so its fill holds the order, as before),
+and the position matches the books or Kalshi has settled the market (its settlement row, and a flat position; in
+a window the owner also traded, the lists and fills decide). A slow read or a mismatch in another window no
+longer holds it. The release runs before the settlement pass, so the window settles in the same read and its
+payout check audits the books against Kalshi's revenue. (Review blocker, 2026-10-13: Kalshi settles about 5 s
+after the close, KXBTC15M-26OCT131145 at 15:45:04.68 UTC, and a settled market leaves the unsettled positions
+list; the release used to need a read with no failed check at all, so an unsent balancing bid or lock, which
+always sits in an unpaired window, failed position_mismatch on every read and real trading stopped for good.)
+While such an order waits after the close, complete lists are read at once and then every 30 s, so it is
+eligible for release about 30 s after the close when those complete account reads and settlement evidence
+arrive. Until then its reservation stays active under the same risk rules (a strict hedge or lock still has
+its ordinary loss-risk exemption), and the bot places no new order anywhere. An unresolved order pauses all
+new orders; outages, mismatches or missing settlement evidence can extend this wait indefinitely. Absence
+alone proves nothing while the market trades, since a request held up on the way
+could still arrive, and Kalshi accepts no order on a closed market. An order that did reach Kalshi is listed
+whatever its status and is adopted, canceled and released on Kalshi's word as before; a late copy that turns up
+while the market trades is adopted the same way. A definite refusal (the send guard's last check, or a definite
+4xx) rewrites that order's journal entry at once (synchronous=NORMAL: nothing was sent, so a host failure can
+only bring back the reservation the synced row holds), so a crash in the second before the next full save no
+longer restores a never-sent order as reserved. After a restart replayed the journal, the next full save empties
+the journal on disk as well.
+`tests/test_speeddesk_live_crash.py` kills a child process (`os._exit`) after the journal row and before the
+send, and after the send before the reply; checks at every send that the journal plus the last full save equals
+the full save made at that moment; and restarts from mid-run copies of the ledger (crash and after a full save)
+to check that the stop math is identical after the restart's first reconcile. `tests/test_speeddesk_live_release.py`
+kills it between the row and the send of a balancing bid and of a lock, loses a balancing create in the running
+desk, settles a minute late, and kills within a second of a refusal; `tests/test_speeddesk_live_killpoints.py`
+takes crash images at ten points of the order path and runs each restart through the close and Kalshi's
+settlement (`KILLPOINT_SEEDS=6 KILLPOINT_CAP=1000` repeats the review's 350 images).
 
 The public US probe checks the five-minute series and validates an actual market's BTC/UP_DOWN/5m/BRTI terms
 and start/end before logging `skipwatch_us_5m_listing`. Its first verified observation stays on the page.

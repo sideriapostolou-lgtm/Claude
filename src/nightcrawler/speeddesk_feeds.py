@@ -14,6 +14,7 @@ import logging
 import math
 import threading
 import time
+from collections import deque
 from collections.abc import Callable
 from dataclasses import replace
 from datetime import UTC, datetime
@@ -22,11 +23,21 @@ from typing import Any
 import requests
 
 from .config import Secret, Settings
-from .speeddesk_model import Book, Level, Trade, Window
+from .speeddesk_model import FUTURE_SKEW_S, Book, Level, Trade, Window
 
 log = logging.getLogger("nightcrawler.speeddesk_feeds")
 GATEWAY = "https://gateway.polymarket.us"
 COINBASE_WS = "wss://advanced-trade-ws.coinbase.com"
+# Speed plan step 4 (2026-10-13): Coinbase Exchange's "matches" channel delivers each trade on its own, 50 to 61 ms
+# (median) before Advanced Trade's batches. Two Exchange connections lead; Advanced Trade stays as the backup. They
+# share one trade-id space (no price mismatch in 4,280 shared trades), so each trade is delivered once, by
+# whichever connection brings it first, and Bitcoin ticks keep flowing while any connection is up.
+COINBASE_EXCHANGE_WS = "wss://ws-feed.exchange.coinbase.com"
+COINBASE_FEEDS = (("exchange_a", COINBASE_EXCHANGE_WS), ("exchange_b", COINBASE_EXCHANGE_WS),
+                  ("advanced_trade", COINBASE_WS))
+SEEN_TRADE_IDS = 20000
+# Future-stamped Coinbase trades (refused) are counted per connection and reported this often at most.
+SKEW_REPORT_S = 10.0
 # https://docs.polymarket.us/fees, verified 2026-10-12: standard, non-combo
 # maker theta is -0.0125; rounded per fill to cents with half-even rounding.
 DOCUMENTED_MAKER_COEFFICIENT = -0.0125
@@ -156,25 +167,71 @@ def parse_trades(reply: Any, received_at: float) -> tuple[Trade, ...]:
     )
 
 
-def coinbase_ticks(reply: Any) -> list[tuple[float, float]]:
-    """Price and exchange time; heartbeats and historical ticker metadata aren't ticks."""
+def _trade_id(value: Any) -> int | None:
+    """Coinbase's integer trade id (Advanced Trade sends it as a decimal string); anything else is unknown."""
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, int):
+        return value
+    return int(value) if isinstance(value, str) and value.isdigit() else None
+
+
+def advanced_trade_ticks(reply: Any) -> list[tuple[float, float, int | None]]:
+    """Advanced Trade ``market_trades``: (price, exchange time, trade id), oldest first.
+
+    Heartbeats aren't ticks, and neither is the ``snapshot`` event of past trades replayed on every (re)connect.
+    """
     if not isinstance(reply, dict) or reply.get("channel") != "market_trades":
         return []
-    rows: list[tuple[float, float]] = []
+    rows: list[tuple[float, float, int | None]] = []
     events = reply.get("events")
     for event in events if isinstance(events, list) else []:
-        trades = event.get("trades") if isinstance(event, dict) else None
+        if not isinstance(event, dict) or event.get("type") == "snapshot":
+            continue
+        trades = event.get("trades")
         for trade in trades if isinstance(trades, list) else []:
             if not isinstance(trade, dict) or trade.get("product_id") != "BTC-USD":
                 continue
             price, at = number(trade.get("price")), timestamp(trade.get("time"))
             if price is not None and price > 0 and at is not None:
-                rows.append((price, at))
-    return sorted(rows, key=lambda row: row[1])
+                rows.append((price, at, _trade_id(trade.get("trade_id"))))
+    return sorted(rows, key=lambda row: (row[1], -1 if row[2] is None else row[2]))
+
+
+def coinbase_ticks(reply: Any) -> list[tuple[float, float]]:
+    """Price and exchange time from Advanced Trade; heartbeats and replayed snapshots aren't ticks."""
+    return [(price, at) for price, at, _trade in advanced_trade_ticks(reply)]
+
+
+def exchange_ticks(reply: Any) -> list[tuple[float, float, int | None]]:
+    """Coinbase Exchange ``matches``: one (price, exchange time, trade id) per ``match`` message.
+
+    ``last_match``, sent once on every subscribe, replays a trade already past; heartbeats and subscription
+    replies are not ticks either.
+    """
+    if not isinstance(reply, dict) or reply.get("type") != "match" or reply.get("product_id") != "BTC-USD":
+        return []
+    price, at = number(reply.get("price")), timestamp(reply.get("time"))
+    if price is None or price <= 0 or at is None:
+        return []
+    return [(price, at, _trade_id(reply.get("trade_id")))]
+
+
+_THREAD = threading.local()
+
+
+def thread_session() -> requests.Session:
+    """This thread's kept-alive HTTP session (speed plan step 8). asyncio's worker threads are reused, so each
+    keeps its connections instead of a new TCP and TLS handshake on every public poll; no session is shared
+    between threads."""
+    session: requests.Session | None = getattr(_THREAD, "session", None)
+    if session is None:
+        session = _THREAD.session = requests.Session()
+    return session
 
 
 def _public_get(path: str) -> Any:
-    response = requests.get(GATEWAY + path, timeout=10)
+    response = thread_session().get(GATEWAY + path, timeout=10)
     if response.status_code == 404:
         return None
     response.raise_for_status()
@@ -205,6 +262,15 @@ class LiveFeeds:
         self._market_seen = 0.0
         self._market_connected = False
         self._subscription_error = False
+        self._coinbase_up: dict[str, bool] = {name: False for name, _url in COINBASE_FEEDS}
+        self._seen_trades: set[int] = set()
+        self._seen_order: deque[int] = deque()
+        self._latest_trade_at = -math.inf
+        self._latest_trade_id: int | None = None
+        # Trades each connection brought stamped further ahead of the local clock than FUTURE_SKEW_S (the desks
+        # refuse them), reported in the status at most every SKEW_REPORT_S.
+        self._future_stamped: dict[str, int] = {name: 0 for name, _url in COINBASE_FEEDS}
+        self._future_reported_at = -math.inf
         self._status: dict[str, Any] = {"coinbase": "connecting", "markets": "connecting", "trade_stream": False}
 
     def _report(self, **changes: Any) -> None:
@@ -294,27 +360,79 @@ class LiveFeeds:
         value = number(raw.get("settlement"))
         return value if value in (0.0, 1.0) else None
 
+    def _first_delivery(self, trade_id: int | None, at: float) -> bool:
+        """Deduplicate copies and order trades sharing a timestamp by Coinbase's increasing product trade id.
+
+        Both Exchange connections can miss an older trade on reconnect; Advanced Trade may then deliver that
+        unseen trade after a newer one with the same stamp. Letting it through would move the tape price back
+        and refresh its receipt. Different older stamps are already refused by BitcoinTape. Unknown ids retain
+        the existing timestamp-only behavior; they cannot supply evidence of relative order.
+        """
+        if trade_id is not None:
+            if trade_id in self._seen_trades:
+                return False
+            self._seen_trades.add(trade_id)
+            self._seen_order.append(trade_id)
+            while len(self._seen_order) > SEEN_TRADE_IDS:
+                self._seen_trades.discard(self._seen_order.popleft())
+            if at == self._latest_trade_at and self._latest_trade_id is not None and trade_id < self._latest_trade_id:
+                return False
+        if at > self._latest_trade_at:
+            self._latest_trade_at, self._latest_trade_id = at, trade_id
+        elif at == self._latest_trade_at and trade_id is not None:
+            self._latest_trade_id = trade_id
+        return True
+
+    def _future_stamp(self, name: str, now: float) -> None:
+        self._future_stamped[name] = self._future_stamped.get(name, 0) + 1
+        if now - self._future_reported_at >= SKEW_REPORT_S:
+            self._future_reported_at = now
+            self._report(coinbase_future_stamped=dict(self._future_stamped))
+
+    def _coinbase_state(self, name: str, up: bool) -> None:
+        """Bitcoin data counts as connected while any one connection is up; each one's state is reported too."""
+        if self._coinbase_up.get(name) == up and self._status.get("coinbase") != "connecting":
+            return
+        self._coinbase_up[name] = up
+        self._report(coinbase="connected" if any(self._coinbase_up.values()) else "disconnected",
+                     coinbase_feeds={feed: "connected" if state else "disconnected"
+                                     for feed, state in self._coinbase_up.items()})
+
     async def _coinbase(self) -> None:
+        await asyncio.gather(*(self._coinbase_feed(name, url) for name, url in COINBASE_FEEDS))
+
+    async def _coinbase_feed(self, name: str, url: str) -> None:
         from websockets.asyncio.client import connect
 
         connect_ws = self._coinbase_connect or connect
+        exchange = url == COINBASE_EXCHANGE_WS
+        subscriptions = ([{"type": "subscribe", "product_ids": ["BTC-USD"], "channels": ["matches", "heartbeat"]}]
+                         if exchange else
+                         [{"type": "subscribe", "product_ids": ["BTC-USD"], "channel": channel}
+                          for channel in ("market_trades", "heartbeats")])
+        parse = exchange_ticks if exchange else advanced_trade_ticks
         while True:
             try:
-                async with connect_ws(COINBASE_WS, open_timeout=10, ping_interval=20, ping_timeout=10) as ws:
-                    for channel in ("market_trades", "heartbeats"):
-                        await ws.send(json.dumps({"type": "subscribe", "product_ids": ["BTC-USD"],
-                                                  "channel": channel}))
-                    self._report(coinbase="connected")
-                    log.info("speeddesk_feed_coinbase_connected product=BTC-USD")
+                async with connect_ws(url, open_timeout=10, ping_interval=20, ping_timeout=10) as ws:
+                    for subscription in subscriptions:
+                        await ws.send(json.dumps(subscription))
+                    self._coinbase_state(name, True)
+                    log.info("speeddesk_feed_coinbase_connected product=BTC-USD feed=%s", name)
                     while True:
                         message = await asyncio.wait_for(ws.recv(), timeout=10)
-                        reply = json.loads(message)
                         received_at = self._clock()
-                        for price, at in coinbase_ticks(reply):
-                            self.on_tick(price, at, received_at)
+                        reply = json.loads(message)
+                        for price, at, trade_id in parse(reply):
+                            if received_at - at < -FUTURE_SKEW_S:
+                                # Refused by every desk, so it must not use up the trade id (latency review,
+                                # 2026-10-13): another connection's later copy may be inside the bound.
+                                self._future_stamp(name, received_at)
+                                continue
+                            if self._first_delivery(trade_id, at):
+                                self.on_tick(price, at, received_at)
             except Exception as exc:  # noqa: BLE001 — reconnect on transport/protocol failure.
-                self._report(coinbase="disconnected")
-                log.warning("speeddesk_feed_coinbase_disconnected error=%s", type(exc).__name__)
+                self._coinbase_state(name, False)
+                log.warning("speeddesk_feed_coinbase_disconnected feed=%s error=%s", name, type(exc).__name__)
                 await asyncio.sleep(2)
 
     def _ws_error(self, error: Any) -> None:

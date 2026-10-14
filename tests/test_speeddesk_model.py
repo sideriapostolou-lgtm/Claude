@@ -812,3 +812,35 @@ def test_incomplete_new_reporting_state_fails_closed_instead_of_returning_false_
     state.pop("venue_days")
     with pytest.raises(KeyError):
         PracticeDesk.from_state(state)
+
+
+def test_kalshis_settlement_average_shortens_the_horizon_with_a_minute_or_more_left():
+    """Loss plan item 4: Kalshi settles on the mean of the last sixty one-second index values."""
+    from nightcrawler.speeddesk_model import AVERAGE_LEAD_S
+
+    seconds = range(1, 61)
+    assert 60 - sum(min(i, j) for i in seconds for j in seconds) / 60 ** 2 == pytest.approx(AVERAGE_LEAD_S, abs=.01)
+    spot, opening, sigma = 80100, 80000, .001
+    assert fair_up(spot, opening, sigma, 600, settles_on_average=True) == fair_up(spot, opening, sigma, 560.5)
+    assert fair_up(spot, opening, sigma, 60, settles_on_average=True) == fair_up(spot, opening, sigma, 20.5)
+    assert fair_up(spot, opening, sigma, 59, settles_on_average=True) == fair_up(spot, opening, sigma, 59)
+    assert fair_up(spot, opening, sigma, 0, settles_on_average=True) == 1.0
+    assert fair_up(spot, opening, sigma, 600) != fair_up(spot, opening, sigma, 600, settles_on_average=True)
+
+
+def test_only_kalshi_practice_windows_price_from_the_settlement_average():
+    model = PracticeDesk(SpeedConfig(window_usd=100, open_usd=100, sigma_min_samples=1, sigma_warmup_s=0))
+    model.add_window(Window("btc15m", 1000, 1900, 100, taker_coefficient=0, maker_coefficient=0))
+    model.add_window(Window("KXBTC15M-AVG", 1000, 1900, None, venue_start_price=100, taker_coefficient=0,
+                            maker_coefficient=0, venue="kalshi"))
+    model.tick_btc(100, 1008.5)
+    model.tick_btc(100.2, 1009.5)
+    for slug in ("btc15m", "KXBTC15M-AVG"):
+        for side in ("up", "down"):
+            model.on_book(Book(slug, side, (Level(.1, 10),), (Level(.95, 100),), 1010, "a"))
+    sigma = model.tape.sigma(1010, 1, 0)
+    assert sigma is not None
+    fairs = {event.window: event.fair for event in model.evaluate(1010)
+             if event.event == "speeddesk_rest" and event.side == "up"}
+    assert fairs["btc15m"] == fair_up(100.2, 100, sigma, 890)
+    assert fairs["KXBTC15M-AVG"] == fair_up(100.2, 100, sigma, 890, settles_on_average=True)

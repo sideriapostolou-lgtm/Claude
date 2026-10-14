@@ -16,7 +16,12 @@ from fakes import FakeClock
 from nightcrawler import polymarket_us
 from nightcrawler.config import Settings
 from nightcrawler.speeddesk import SpeedRunner
-from nightcrawler.speeddesk_feeds import LiveFeeds, window_slugs
+from nightcrawler.speeddesk_feeds import (
+    COINBASE_EXCHANGE_WS,
+    COINBASE_WS,
+    LiveFeeds,
+    window_slugs,
+)
 from nightcrawler.speeddesk_model import Book, Level, Trade, Window
 
 
@@ -159,6 +164,10 @@ def test_live_practice_inputs_never_access_sdk_orders(monkeypatch: Any, tmp_path
     coinbase = CoinbaseSocket({"channel": "market_trades", "events": [{"trades": [{
         "product_id": "BTC-USD", "price": "80001", "time": stamp,
     }]}]})
+    # The Exchange "matches" connections (primary, two of them) and Advanced Trade (backup) each get their own socket.
+    exchange = CoinbaseSocket({"type": "match", "trade_id": 7, "product_id": "BTC-USD", "price": "80002",
+                               "size": "0.01", "side": "buy", "time": stamp})
+    sockets = {COINBASE_WS: coinbase, COINBASE_EXCHANGE_WS: exchange}
     ticks: list[Any] = []
     books: list[Any] = []
     trades: list[Any] = []
@@ -173,7 +182,7 @@ def test_live_practice_inputs_never_access_sdk_orders(monkeypatch: Any, tmp_path
     settings = Settings(data_dir=tmp_path, polymarket_us_key_id="test-only-id",
                         polymarket_us_secret_key="test-only-not-a-secret")
     feeds = LiveFeeds(settings, sdk_client=sdk, rest_get=rest_get, clock=clock.now,
-                      coinbase_connect=lambda *_args, **_kwargs: coinbase,
+                      coinbase_connect=lambda url, **_kwargs: sockets[url],
                       on_tick=lambda *args: ticks.append(args), on_book=books.append,
                       on_trade=on_trade, on_windows=windows.append, on_status=statuses.append)
 
@@ -194,6 +203,8 @@ def test_live_practice_inputs_never_access_sdk_orders(monkeypatch: Any, tmp_path
     assert f"/v1/markets/{slug}/settlement" in rest_calls
     assert f"/v1/markets/{slug}/book" in rest_calls
     assert {message["channel"] for message in coinbase.sent} == {"market_trades", "heartbeats"}
+    assert exchange.sent and all(message["channels"] == ["matches", "heartbeat"] for message in exchange.sent)
+    assert sorted(price for price, *_ in ticks) == [80001, 80002]  # one of each, the shared trade id once
 
 
 def test_practice_strategy_takes_rests_cancels_and_settles_without_order_access(

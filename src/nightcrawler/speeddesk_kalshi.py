@@ -21,10 +21,8 @@ from dataclasses import replace
 from typing import Any, TypeGuard
 from urllib.parse import urlencode
 
-import requests
-
 from .config import Settings
-from .speeddesk_feeds import number, timestamp
+from .speeddesk_feeds import number, thread_session, timestamp
 from .speeddesk_kalshi_ws import KalshiMarketWS
 from .speeddesk_model import Book, Level, Trade, Window
 
@@ -136,7 +134,7 @@ def parse_trades(rows: Any, ticker: str, received_at: float, *, series: str = SE
 
 
 def _public_get(path: str) -> Any:
-    response = requests.get(API + path, timeout=8)
+    response = thread_session().get(API + path, timeout=8)
     if response.status_code == 404:
         return None
     response.raise_for_status()
