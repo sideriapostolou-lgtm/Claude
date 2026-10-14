@@ -13,6 +13,45 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-14 05:56 UTC, Codex, branch codex/kalshi-stop-handoff (owner handoff; stop fixes)
+- Scope: owner explicitly transferred every lane and authorized section 4.1 first, then a separate restart
+  decision, then speed part 2. Read the full handoff, COORDINATION, AGENTS and inherited reviews. Built on
+  4a9ab4a and merged current deploy tip 279591b locally (66bfaed); resolved bid-pull/stop sizing conflicts
+  without letting practice-only owed bids query or mutate the real risk book. No Railway variable changes.
+- Fixed both inherited major findings: pending bids/unsettled windows still constrain new risk but never
+  latch permanent stops; settled loss uses one explicit $0.98 near-stop floor at startup and each step.
+  Strictly balancing hedges survive financial latches and can be submitted under them; actual fills and
+  aggregate remaining reservations are rechecked before transport. Every other gate remains enforced.
+- Fixed the minors: tiny adds blocked once the settled-loss floor binds, price-specific pair-cost refusal
+  never creates a different latch threshold, restored stops do not duplicate receipts, day text names the
+  owner's reset, and the first-buy comment accurately describes its loss-budget sizing. Panel stays REAL
+  MONEY while permitted old exposure can still be hedged. No automatic clear or fresh spending budget.
+- Independent reviews: 20 model + 26 controller + 8 receipt regressions pass; 16 extra fake transport
+  attacks pass. Rebreak found missing latch receipts on backoff/mode-off/error exits and immediately after
+  a startup reset; fixed by recording at every heartbeat and reseeding stop state after token handling.
+  All pending/uncertain/cancel-requested reservations remain counted. No remaining concrete review blocker.
+- Strategy-effect audit: archived actual P&L reconciles to -$11.91542. Inherited -$7.90934 illustration uses
+  original losses for later counterfactual sizing; using simulated cumulative results gives -$10.02224.
+  Neither is a causal strategy replay. Some improvement predates today's five-contract clip. Portable audit
+  and exact limitations in `research/kalshi_stop_review/`; no held-out TEST used. Twin stop policies differ,
+  so its P&L gap is not a clean estimate of the pull's causal benefit. Spec 9.4 now says so.
+- Validation: final full suite after receipt fixes **5,069 passed, 15 skipped** (195.75 s); mypy passes
+  122 source files; Ruff passes every changed/new Python file. Skips cover opt-in live network/performance
+  tests, missing scipy.stats and an unavailable old lab cache. Independent fake transport suite: 16 passed.
+- Production check: bot online on ba25407c / 6a1bf70; 05:41 UTC status still $39.7993 cash, -$9.9421
+  cumulative trading P&L, $0 open risk, total_halted false (old bug). These are bot-reported figures.
+- Real money touched? YES, trading code changed at the owner's explicit handoff; NO live deployment,
+  order, key, cap or Railway variable change. Existing exhausted budget must remain stopped after shipping.
+- Blocked: GitHub connector needs reauthentication and CLI has no valid write credential. Owner asked to
+  reconnect; read-only fetch works. PR, safe-minute merge and exact-SHA deploy verification remain pending.
+- Next: finish final checks, publish PR titled "touches real money", verify stop on deploy, then request
+  exact restart amounts/variable authorization. Keep prior research commits 3414399/d087dfd separate and
+  unpublished; no existing research, arena or recorder TEST changed. Handoff reminders are not yet recreated.
+- Speed-part-2 preparation: inspected 96e5e9c read-only. It overlaps stop policy, still latches on temporary
+  exposure, and uses a less conservative incremental-loss open-budget check. Port its performance work
+  without silently replacing these corrected controls; include day latch and receipts in durable-save
+  triggers. No speed merge or changes made before the stop-fix shipment/restart decision.
+
 ## 2026-10-14 01:00 UTC, Claude, branch claude/kalshi-stop-fixes (the stop fixes after the 2026-10-13 loss)
 - Why: 29 real windows (9:00 AM to 4:15 PM PT) lost $11.92 and reached the $10 lifetime stop (-$9.94). The
   forensics found no order outside the rules, but the stops cut or blocked hedges (they counted a hedge as new

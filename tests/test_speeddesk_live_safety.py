@@ -234,6 +234,8 @@ def test_partial_fill_and_failed_cancel_keep_cash_and_loss_risk_reserved(tmp_pat
         desk.book.day_pnl[desk.panel()["today"]["day"]] = -2.3
         assert desk.book.can_buy(other.slug, "up", "take", .4, 1, clock.now()) == "day_stop"
         desk.book.realized_pnl = -4.3
+        assert not desk.book.risk_status(clock.now())["halted"]  # provisional exposure is not a durable stop
+        desk.book.latch_bound_stops(clock.now())  # the controller checks the settled-loss floor each step
         assert desk.book.risk_status(clock.now())["halted"]
         assert desk.book.at_risk_usd == pytest.approx(.8384)
     finally:

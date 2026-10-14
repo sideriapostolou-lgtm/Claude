@@ -528,7 +528,7 @@ def test_the_lifetime_stop_never_scales_and_still_stops_real_money():
     at = window.start + 10
     assert book.limits_for(window.slug).total_loss_usd == 10
     book.realized_pnl = -9.6  # $9.60 lost since launch
-    assert book.can_buy(window.slug, "up", "take", .4, 1, at) == "total_budget"  # $9.60 + $0.42 >= $10
+    assert book.can_buy(window.slug, "up", "take", .4, 1, at) == "total_loss"  # realized loss reached the entry floor
     book.realized_pnl = -10.0
     assert book.risk_status(at)["halted"] and book.halt_reason == "total_loss"
     assert book.can_buy(window.slug, "up", "take", .4, 1, at) == "total_loss"
@@ -855,12 +855,12 @@ def test_the_status_line_and_the_page_carry_the_ladder(tmp_path: Path, caplog, m
 # ---- review findings (2026-10-13 fix round): each test pins the rule a reviewer showed was broken -------------
 
 def test_a_day_that_ran_into_its_daily_stop_blocks_a_promotion():
-    """Rule 4. The risk book never lets today's loss plus money at risk reach the cap, so its day_stopped flag
-    rarely trips: a daily loss within $1 of the stop, or a refused one-contract buy, counts as the stop."""
+    """Rule 4. Realized daily loss reaching the entry floor blocks promotion even with 96 completed windows.
+    The next attempted buy latches the day stop; an exposure-only refusal would not do so."""
     book, ladder = setup()
-    settle_run(book, ladder, 0, "W" * 82)  # Oct 8-9: +$47.56
-    settle_run(book, ladder, 128, "L" * 14)  # Oct 10 00:00-03:30 UTC: -$5.88 of the $6 daily stop
-    assert ladder.state.last_stop_at == slot(141).end and ladder.state.rung == 0  # less than $1 left
+    settle_run(book, ladder, 0, "W" * 84)  # Oct 8-9: +$48.72
+    settle_run(book, ladder, 128, "L" * 12)  # Oct 10: -$5.04; a thirteenth new buy would now be refused
+    assert ladder.state.last_stop_at == slot(139).end and ladder.state.rung == 0  # $0.96 left
     window = slot(142)
     book.add_window(window)
     at = window.start + 10
@@ -874,8 +874,8 @@ def test_a_day_that_ran_into_its_daily_stop_blocks_a_promotion():
 
 def test_after_a_daily_stop_the_same_utc_day_never_gets_a_bigger_day_stop():
     book, ladder = setup()
-    settle_run(book, ladder, 0, "W" * 82)
-    settle_run(book, ladder, 128, "L" * 14)
+    settle_run(book, ladder, 0, "W" * 84)
+    settle_run(book, ladder, 128, "L" * 12)  # 96 windows, but only $.96 daily room: no promotion
     stopped, later = slot(142), slot(143)
     book.add_window(stopped)
     book.update_cash(10_000, stopped.start + 10)
@@ -902,7 +902,7 @@ def test_a_refused_one_contract_buy_is_a_stop_and_a_trimmed_size_is_not():
     assert book.can_buy(window.slug, "up", "take", .4, 1, at) == "day_stop"  # not even one contract fits
     assert book.stop_hit_at == at and ladder.state.last_stop_at == at
     book.day_pnl[utc_day(at)], book.realized_pnl = 0.0, -9.7  # the lifetime stop binds the same way
-    assert book.can_buy(window.slug, "up", "take", .4, 1, at + 1) == "total_budget"
+    assert book.can_buy(window.slug, "up", "take", .4, 1, at + 1) == "total_loss"
     assert ladder.state.last_stop_at == at + 1
 
 
@@ -935,8 +935,10 @@ def test_a_promotion_is_cancelled_when_the_gain_is_gone_by_its_boundary():
 
 def test_a_promotion_is_cancelled_when_the_room_above_the_stop_is_gone_by_its_boundary():
     book = LiveRiskBook(BASE)
-    for index in range(13):
-        trade(book, index, wins=False)  # -$5.46 before the ladder starts
+    # The same -$5.46 lifetime history, spread over two UTC days so every synthetic buy obeys the daily entry
+    # floor. Constructing thirteen consecutive losses in one day would itself stop before the last one now.
+    for index in (*range(-96, -89), *range(6)):
+        trade(book, index, wins=False)
     ladder = Ladder(BASE)
     ladder.start(book, slot(12).end - 1)
     ladder.attach(book)

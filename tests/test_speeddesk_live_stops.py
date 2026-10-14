@@ -166,7 +166,10 @@ class Books:
         assert loss + worst <= FLOOR.total_loss_usd + 1e-6  # the lifetime stop is never exceeded ...
         assert book.day_loss(now) + worst <= FLOOR.day_loss_usd + 1e-6  # ... nor the day stop
         if book.halted:
-            assert book.can_buy(self.window.slug, "up", "rest", .4, 1, now) == "total_loss"
+            reason = book.can_buy(self.window.slug, "up", "rest", .4, 1, now)
+            if not reason:  # a latched financial stop may still finish an existing pair, never add risk
+                unit = book.unit_reserve(self.window.slug, .4, "rest")
+                assert book.balancing_contracts(self.window.slug, "up", 1, unit) == 1
 
     def restart(self, now: float) -> None:
         state = json.loads(json.dumps(self.book.to_state()))
@@ -372,7 +375,7 @@ def test_a_refused_one_contract_buy_latches_the_stop_and_a_trimmed_size_does_not
     # The lifetime stop latches as `halted`: paper until a new resume value. (The $9.70 lost since the last resume
     # is modelled with the stop anchor, so the book still restores: realized results must match settlements.)
     book.stop_anchor = 9.7
-    assert book.can_buy(tomorrow.slug, "up", "take", .4, 1, tomorrow.start + 11) == "total_budget"
+    assert book.can_buy(tomorrow.slug, "up", "take", .4, 1, tomorrow.start + 11) == "total_loss"
     assert book.halted and book.halt_reason == "total_loss"
     assert book.can_buy(tomorrow.slug, "up", "take", .01, 1, tomorrow.start + 12) == "total_loss"  # no tiny bids
     assert book.can_lock(tomorrow.slug, "down", .8, 1, tomorrow.end - 100) != "total_loss"  # locks still run
@@ -414,7 +417,7 @@ def test_resume_values_are_kept_while_nothing_is_latched_and_spent_by_the_stop_t
     assert book.resume("early") == "not_halted" and not book.seen_resume_hashes  # still kept
     assert not book.apply_resume_token("early")
     book.stop_anchor = 9.7  # $9.70 lost since the last resume (the anchor keeps the book restorable)
-    assert book.can_buy(window.slug, "up", "take", .4, 1, at) == "total_budget" and book.halted
+    assert book.can_buy(window.slug, "up", "take", .4, 1, at) == "total_loss" and book.halted
     # The stop spends every value seen before it: a value present before a stop never clears that stop.
     assert book.resume("early") == "used" and book.halted
     assert book.resume("after") == "applied" and not book.halted and book.stop_anchor == book.realized_pnl
@@ -486,14 +489,14 @@ def test_the_desk_latches_at_start_before_the_token_and_logs_every_token_use(tmp
 
 
 def test_a_stop_that_latches_while_trading_cancels_the_resting_bids_and_shows_in_the_status(tmp_path: Path) -> None:
-    desk, account, clock = make_desk(tmp_path, caps=CAPS)
+    desk, account, clock = make_desk(tmp_path, caps=CAPS, extra={"speeddesk_kalshi_clip": 1})
     try:
         asyncio.run(desk.step())
-        assert [c["size"] for c in account.creates] == [5.0]  # a bid rests ($2.08 reserved)
-        desk.book.realized_pnl = -7.5  # $0.42 of room left beyond the bid (as if earlier windows had just settled)
+        assert [c["size"] for c in account.creates] == [1.0]  # a bid rests ($0.42 reserved)
+        desk.book.realized_pnl = -9.1  # settled loss alone leaves less than the fixed $0.98 entry floor
         assert not desk.book.risk_status(clock.now())["halted"]
         clock.advance(.5)
-        asyncio.run(desk.step())  # the other side's first buy: not even one hedged contract fits: latched
+        asyncio.run(desk.step())  # latch from settled loss, not from the provisional bid
         assert desk.book.halted
         assert events(desk, "speeddesk_live_stop")[-1]["stop"] == "total"
         clock.advance(.5)
@@ -519,7 +522,7 @@ def test_a_latched_day_stop_shows_in_the_status_and_lapses_with_the_utc_day(tmp_
         asyncio.run(desk.step())
         panel = desk.panel()
         assert panel["day_stop_latched"] and panel["mode"] == "paper"
-        assert panel["reason"] == "Daily loss stop; no new buys until 00:00 UTC"
+        assert panel["reason"] == "Daily loss stop; no new risk until 00:00 UTC or the owner's day reset"
         assert events(desk, "speeddesk_live_stop")[-1]["stop"] == "day"
         assert set(STOP_REFUSALS) == {"day_stop", "total_budget"}
     finally:

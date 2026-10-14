@@ -523,7 +523,7 @@ ever latched, so the companion kept sending bids of 1 contract at 4c with 5.8c o
 1. **Strictly balancing buys are not new risk.** See 9.1. The stops still see every other buy at its full cost.
    The practice desk's copy of the live stops (`day_stop_counts_risk`, `hedged_open_budget`: the Kalshi arena's
    residents) counts the same way, so its answers still match the live book's.
-   `tests/test_speeddesk_live_stops.py` proves by brute force over random books (fills in any combination, cancels,
+   `tests/test_speeddesk_live_stops.py` checks by brute force over random books (fills in any combination, cancels,
    locks, restarts, resume and day-reset tokens) that the realized loss plus the worst the open windows can still
    lose never passes the day or lifetime stop.
 2. **A first buy must leave room for its hedge.** A window's first buy is sized so that its whole hedged pair (its
@@ -531,25 +531,43 @@ ever latched, so the companion kept sending bids of 1 contract at 4c with 5.8c o
    stop and the lifetime stop as new risk; the window budget already held it to whole pairs at the pair cap. If not
    even one hedged contract fits, nothing is sent and a `speeddesk_live_starter` receipt says why (once per window and
    reason). With a $6 day stop this also means a first buy is at most 5 contracts (about $1.01 a hedged pair), and
-   on a losing day it shrinks before the stop binds. The hedge itself is then exempt (fix 1), so the pair completes.
-3. **The stops latch.** When a stop refuses even a one-contract buy, or a one-contract first buy with its hedge, it has
-   tripped: the lifetime stop sets `total_halted` (saved; the companion returns to paper, resting bids are cancelled,
-   locks still complete pairs, the status says "Total loss stop; no new bets until a new resume token"); the daily
-   stop latches until 00:00 UTC or the owner's day reset ("Daily loss stop"). At startup, before any token is read,
-   a stop with no room for even a one-contract hedged first buy (less than the pair cap less a cent) is latched, so a
-   token set for it is applied to it. Each latch is recorded once (`speeddesk_live_stop`, durable). No tiny bids go
-   out while a stop binds. A trimmed bigger order is not a stop (as before). The ladder's stop notes are unchanged.
+   on a losing day it shrinks before the stop binds. A strictly balancing hedge is exempt from the loss stops,
+   but still needs cash, budget, valid inventory, pair cost and a real fill; pair completion is not guaranteed.
+3. **Permanent stops use settled losses.** Pending bids and unsettled windows still constrain every new-risk
+   admission, but a temporary lack of room never creates a permanent stop. Startup and every step use the same
+   price-independent near-stop threshold: settled loss plus `pair_cap - 0.01` (currently $0.98) reaching the
+   stop latches it. The floor is a deliberate small-budget shutdown policy, not a fee-inclusive pair price.
+   A specific quote may require more room and be refused temporarily without latching. Existing permanent
+   stops are never automatically cleared when later results improve. The lifetime stop requires a fresh resume
+   token; the daily stop lasts until 00:00 UTC or the owner's day reset. This also prevents tiny risk-increasing
+   adds from using the last few cents after the settled-loss floor binds.
+   A financial stop cancels risk-increasing resting bids, while strictly balancing hedges and end locks may
+   finish. The hedge exception uses actual fills and the aggregate remaining reservations on the light side,
+   including uncertain and cancel-pending orders; it is checked again under the transport lock before sending.
+   Cash, window/open budgets, pair cap, imbalance, mode/authentication, freshness, cutoff, pull and reconciliation
+   rules remain enforced. A nonfinancial halt has no balancing exception. The page stays REAL MONEY while a
+   permitted risk-reducing path remains, and says it can only finish half-filled pairs; otherwise it is PRACTICE.
+   Each new latch produces one durable `speeddesk_live_stop` receipt; restoring an existing latch does not
+   produce a duplicate. Startup latches before reading the owner's token. The ladder still records financial
+   stop events; a temporary sizing refusal does not fabricate one.
    Token rules: a resume value clears a latched total stop exactly once; seen while nothing is latched it is kept
    unspent and logged; the next total stop spends it (a value present before a stop never clears that stop); a
    reconciliation stop also keeps it unspent. The day reset clears a latched daily stop and is spent on first sight
    as before. Every token use is logged without the value.
 4. **The owner's day reset reaches the practice twin** (`PracticeDesk.apply_day_reset`), so the A/B control is not
    frozen by its own copy of the daily stop when the real book is reset.
+   The twin still has its own P&L and stops: its settled daily stop blocks all practice orders and it has no
+   matching live lifetime latch or end locks. It is not an identical stop-policy control. A real/twin P&L gap
+   cannot be attributed solely to bid pull, particularly while one side is halted or finishing old exposure.
 
 Saved state: the book adds `day_stop_day` and `resume_pending`, the twin `day_anchor` (only once a reset was made);
 the previous release ignores them (a rollback forgets a latched daily stop, and spends a kept resume value on sight,
-as it always did). Replay of 2026-10-13's 29 windows with fixes 1 and 2 (assumptions in `docs/WORKLOG.md`): about
--$7.9 instead of -$11.92, with the two one-sided afternoon bets gone and every window's loss bounded by its pairs.
+as it always did). The inherited -$7.91 estimate is **not a validated strategy replay**. Independent review
+reconciled actual P&L to -$11.91542 and reproduced the illustration at -$7.90934, but found that its later
+sizes use original historical losses after changing earlier trades. Carrying its own simulated P&L instead
+gives -$10.02224 under the same assumptions. Neither calculation models queues, cancels, latches or additional
+decisions; some improvement also comes from shrinking old starters that today's five-contract cap already
+limits. These safety fixes do not establish profitability or authorize a real-money restart.
 
 ## 10. Public source-bot watcher and faster market data (owner, 2026-10-12)
 

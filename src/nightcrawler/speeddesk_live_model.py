@@ -42,8 +42,8 @@ LOCK_MARGIN_S = 20.0
 HARD_WINDOW_USD, HARD_OPEN_USD, HARD_DAY_LOSS_USD, HARD_TOTAL_LOSS_USD = 20.0, 40.0, 12.0, 10.0
 # The contract cap's own ceiling (config.py SPEEDDESK_KALSHI_CLIP has the first, hi=25).
 HARD_CLIP = 25.0
-# Refusals that mean a loss stop binds: one on a one-contract order latches the stop (the day stop for the rest of
-# the UTC day, the total stop until a new resume token), and the earned-growth ladder counts it as a stop.
+# Refusals that mean the current proposed buy does not fit a loss budget. Only settled loss can latch a stop;
+# a pending order or an unsettled window may later release its exposure without losing money.
 STOP_REFUSALS = frozenset({"day_stop", "total_budget"})
 # What a resume value did when the companion saw it (speeddesk_live records one receipt per start).
 ResumeOutcome = Literal["applied", "used", "not_halted", "integrity", ""]
@@ -197,8 +197,8 @@ class LiveRiskBook:
         # The earned-growth ladder's limits for a window, by the window's start (speeddesk_live_ladder.Ladder);
         # None uses the configured limits everywhere. Never persisted here: the controller saves the ladder.
         self.window_limits: Callable[[float], LiveLimits] | None = None
-        # When a loss stop last bound (the total stop tripped, or even a one-contract buy was refused by the day or
-        # total stop), and who to tell (the ladder: no promotion within 24 h of a stop). Not persisted here.
+        # When a realized loss stop last latched, and who to tell (the ladder: no promotion within 24 h of a stop).
+        # Not persisted here.
         self.stop_hit_at: float | None = None
         self.stop_listener: Callable[[float], None] | None = None
         self.windows: dict[str, Window] = {}
@@ -213,8 +213,8 @@ class LiveRiskBook:
         self.stop_anchor = 0.0
         self.halted = False
         self.halt_reason: str | None = None
-        # The UTC day whose daily stop has latched (not even a one-contract buy fit under it): no new buys until the
-        # day rolls or the owner's one-time day reset. Persisted; the previous release ignores the key.
+        # The UTC day whose realized-loss stop latched: no new risk until the day rolls or the owner's one-time
+        # day reset. Strictly balancing buys can still complete existing pairs. Persisted.
         self.day_stop_latched: str | None = None
         self.integrity_error: str | None = None
         self.resume_token_hash: str | None = None
@@ -337,6 +337,24 @@ class LiveRiskBook:
             return None, 0.0
         return ("down" if difference > 0 else "up"), abs(difference)
 
+    def strictly_balancing_intent(self, client_order_id: str) -> bool:
+        """Whether every remaining contract is a hedge even if all same-side reservations fill.
+
+        Use actual holdings and all still-active reservations, including uncertain orders, requested cancels
+        and locks. A cancel request or a lagging venue status never releases the unpaired contracts it claims.
+        Recalculate after partial fills; a former hedge need not still be a hedge.
+        """
+        intent = self.intents.get(client_order_id)
+        if (intent is None or not intent.reservation_active or intent.remaining <= EPSILON
+                or not 0 < intent.unit_reserve < 1 - EPSILON):
+            return False
+        light, unpaired = self.lock_side(intent.window)
+        if light != intent.side:
+            return False
+        claimed = sum(item.remaining for item in self.intents.values()
+                      if item.window == intent.window and item.side == light and item.reservation_active)
+        return claimed <= unpaired + EPSILON
+
     def hedge_unit(self, window: str, price: float, limits: LiveLimits) -> float:
         """The worst permitted cost of one contract of the other side at the pair cap less `price`: what the
         hedge of a first buy at `price` may cost. Raises `pair_cap` when no such price exists."""
@@ -361,7 +379,7 @@ class LiveRiskBook:
         self._note_stop(now)
 
     def _latch(self, reason: str, now: float) -> None:
-        """A stop refused even a one-contract buy: it has tripped, so it latches (and the ladder is told)."""
+        """Settled losses reached the permanent entry floor; latch the stop and tell the ladder."""
         if reason == "total_budget":
             self._halt(now)
         elif reason == "day_stop" and math.isfinite(now):
@@ -373,26 +391,29 @@ class LiveRiskBook:
 
     def _refresh_stops(self, now: float) -> None:
         loss = max(0.0, self.stop_anchor - self.realized_pnl)
-        if loss + self.at_risk_usd >= self.limits.total_loss_usd - EPSILON:
+        if not self.halted and loss >= self.limits.total_loss_usd - EPSILON:
             self._halt(now)
 
     def latch_bound_stops(self, now: float) -> list[str]:
-        """Latch each stop with no room left for even a one-contract hedged first buy (its pair costs at least the
-        pair cap less a cent, see `hedge_unit`); returns the stops latched ("total", "day").
+        """Latch from settled loss alone when the remaining entry budget reaches the policy floor.
+
+        The price-independent floor is pair_cap minus one cent ($0.98 at the current cap). It is a deliberate
+        small-budget shutdown threshold, not the cost of a particular pair including fees. A quote can need
+        more room than this floor: starter_fit then refuses it temporarily without latching. Pending bids and
+        unsettled windows also constrain admission, but never permanently spend a budget they may recover.
 
         The companion calls this at startup, before it reads any token, so a stop that binds is latched first and
         a token set for it is applied to it, instead of being judged while nothing is latched.
         """
-        self._refresh_stops(now)
         limits = self.limits_now(now)
-        floor = limits.pair_cap - 0.01
+        floor = max(0.0, limits.pair_cap - 0.01)
         latched = []
-        if not self.halted and (max(0.0, self.stop_anchor - self.realized_pnl) + self.at_risk_usd + floor
+        if not self.halted and (max(0.0, self.stop_anchor - self.realized_pnl) + floor
                                 >= self.limits.total_loss_usd - EPSILON):
             self._halt(now)
             latched.append("total")
         if (math.isfinite(now) and not self.day_latched(now)
-                and self.day_loss(now) + self.at_risk_usd + floor >= limits.day_loss_usd - EPSILON):
+                and self.day_loss(now) + floor >= limits.day_loss_usd - EPSILON):
             self._latch("day_stop", now)
             latched.append("day")
         return latched
@@ -457,10 +478,8 @@ class LiveRiskBook:
         return ""
 
     def can_buy(self, window: str, side: Side, kind: Kind, price: float, size: float, now: float) -> str:
-        reason = self._buy_verdict(window, side, kind, price, size, now)
-        if reason in STOP_REFUSALS and size <= 1 + EPSILON:
-            self._latch(reason, now)  # not even the smallest order fits under the stop: it has tripped, and latches
-        return reason
+        self.latch_bound_stops(now)
+        return self._buy_verdict(window, side, kind, price, size, now)
 
     def starter_fit(self, window: str, side: Side, kind: Kind, price: float, size: float, now: float) -> tuple[int, str]:
         """The largest first buy of at most `size` contracts that leaves room for its hedge, and when none does, why
@@ -470,9 +489,10 @@ class LiveRiskBook:
         last room under the lifetime stop became one-sided bets): the pair's whole worst cost, this buy plus the
         other side at the pair cap less its price (`hedge_unit`), must fit under the day stop and the lifetime stop
         as new risk, and the buy itself must pass `can_buy`. (The companion holds the first buy to whole pairs at
-        the pair cap within the window budget before asking.) When not even one hedged contract fits under a stop,
-        that stop has tripped and latches, as a refused one-contract buy does in `can_buy`.
+        the pair cap within the window budget before asking.) A price-specific or exposure-specific refusal
+        does not latch: only settled loss reaching the shared entry floor does that.
         """
+        self.latch_bound_stops(now)
         if window not in self.windows or window in self.settled:
             return 0, "window_unknown_or_settled"
         limits = self.limits_for(window)
@@ -493,15 +513,13 @@ class LiveRiskBook:
                 reason = self._buy_verdict(window, side, kind, price, float(contracts), now)
             if not reason:
                 return contracts, ""
-        if reason in STOP_REFUSALS:
-            self._latch(reason, now)
         return 0, reason
 
     def _buy_verdict(self, window: str, side: Side, kind: Kind, price: float, size: float, now: float) -> str:
         self._refresh_stops(now)
         if self.integrity_error:
             return "reconciliation_error"
-        if self.halted:
+        if self.halted and self.halt_reason != "total_loss":
             return self.halt_reason or "halted"
         if window not in self.windows or window in self.settled:
             return "window_unknown_or_settled"
@@ -532,13 +550,17 @@ class LiveRiskBook:
             return "window_budget"
         if self.at_risk_usd + cost > limits.open_usd + EPSILON:
             return "open_budget"
-        if self.day_loss(now) + self.at_risk_usd + risk >= limits.day_loss_usd - EPSILON:
-            return "day_stop"
-        # The lifetime stop never scales: it is the configured one at every rung.
-        if max(0.0, self.stop_anchor - self.realized_pnl) + self.at_risk_usd + risk >= self.limits.total_loss_usd - EPSILON:
-            return "total_budget"
-        if self.day_latched(now):
-            return "day_stop"  # latched earlier today; reported after the lifetime stop, the larger of the two
+        if risk > EPSILON:
+            if self.halted:
+                return self.halt_reason or "halted"
+            if self.day_loss(now) + self.at_risk_usd + risk >= limits.day_loss_usd - EPSILON:
+                return "day_stop"
+            # The lifetime stop never scales: it is the configured one at every rung.
+            if (max(0.0, self.stop_anchor - self.realized_pnl) + self.at_risk_usd + risk
+                    >= self.limits.total_loss_usd - EPSILON):
+                return "total_budget"
+            if self.day_latched(now):
+                return "day_stop"
         if cost + self.reserved_usd + self.cash_debits > self.cash_usd + EPSILON:
             return "cash_budget"
         return self._inventory_guard(window, side, size, unit, limits)

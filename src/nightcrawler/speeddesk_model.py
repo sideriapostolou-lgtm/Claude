@@ -615,7 +615,7 @@ class PracticeDesk:
         if self.config.day_stop_counts_risk and now is not None:
             unit = cost / size
             risk = cost - self._balancing(window, side, size, unit) * unit
-            if self.day_loss(now) + at_risk + risk >= self.config.day_stop_usd - EPSILON:
+            if risk > EPSILON and self.day_loss(now) + at_risk + risk >= self.config.day_stop_usd - EPSILON:
                 return "day_stop"
         initial_total = inventory.up.shares + inventory.down.shares
         initial_difference = inventory.up.shares - inventory.down.shares
