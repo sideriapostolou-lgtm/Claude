@@ -13,6 +13,68 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-14 15:03 UTC, Codex, practice transport capacity and JSON follow-up
+- Corrected the specific capacity regression found after PR #45: encode with a 4 ms calling-thread CPU
+  budget, retaining the 1,024-event hard cap and independent wall-time telemetry. Backlogged calls now cost
+  several milliseconds; do not claim the former sub-0.5 ms target. FIFO/partial-frame retention, original
+  timestamps, overflow counts, strict three-second lateness and invalid-window handling are unchanged.
+- Tests now include actual-style 111/168-level paired books at 150 events/50 ms and 700 events/300 ms.
+  Independent deep-book review found no drops at 700 events/call (about 2,380/s at 3.4 calls/s), but 11,132
+  drops at 882/call. This restores capacity for the observed workload locally, not every possible burst or
+  unconditional 3,000/s throughput at slow cadence. Production verification remains necessary.
+- Practice mirror JSON now encodes once and writes once; exact format, allow_nan=False, atomic replace,
+  requested flush/fsync and failure propagation are preserved. Seven atomic-write regressions cover both
+  durability modes and invalid-value/write/fsync/rename failures. Local 399-window median whole-checkpoint
+  time 56.05 -> 38.75 ms; mirror-only 20.58 -> 3.23 ms. No checkpoint-cadence or simulated-fill rule change.
+- Independent review passed fourteen targeted arena/atomic failure checks and approved the bounded CPU
+  tradeoff. Full suite: **5,271 passed, 14 skipped** in 296.26 s. The skips are unchanged opt-in checks and
+  the absent legacy lab-3 cache. Source mypy 122 files and Ruff on all five changed/new Python files are
+  clean. Exact-deployment verification follows in a separate receipt; no skipped check is called passed.
+- Latest real receipt at 15:00:20: the 14:45-15:00 window (spanning the PR #45 restart) held eight contracts
+  each side, cost $8.12 plus $0.0324 fees, paid $8 and lost $0.1524. Four windows since the earlier restart
+  total +$2.7053, UTC-day realized P&L +$2.6553, lifetime -$7.2868. Cash at 15:00:25 was $42.4546 with zero
+  orders, positions and at-risk dollars. No source-change causality or sustained profitability inferred.
+- Real money touched? YES indirectly through shared-loop scheduling. No real entry/risk rule, cap, switch,
+  fresh resume budget or Railway setting changed in this follow-up. Existing public recording continues;
+  persisted tick completeness and the original/inverted comparison remain unverified/not running.
+
+## 2026-10-14 14:56 UTC, Codex, PR #45 deployed; live verification exposed a further capacity problem
+- PR #45 merged at 14:49 UTC inside the safe interval. Exact merge
+  `18e180f44d7e71123c4ccd21a098996a8597faf5` is running in Railway deployment
+  `11b6b12e-e837-4fdb-b8bb-9119b57a5cad`, SUCCESS 14:50:52 UTC, one healthy replica. Source/tests/build
+  inputs match tested `ee37d6f` exactly: 5,260 passed, 14 skipped, mypy 122 files and changed-file Ruff clean.
+- Kalshi startup confirms LIVE, authenticated, fee precision verified, rung 0, caps $10/window ordinary
+  buys, $20 open, $6/day, $10 total, clip five and pull=false. Existing loss-reducing lock exception remains.
+  Resume marker was already used/ignored; no fresh loss budget or trading variable change. No integrity
+  error. Polymarket started LIVE at 14:50:36, and the separate recorder stayed on `844c7378` unchanged.
+  Exact-deployment traceback queries were empty. No continuous-monitoring claim.
+- Real P&L BEFORE these fixes: -$1.0167, +$1.4933, +$2.3811 across the first three restarted windows,
+  net +$2.8577 after fees. The third held 10 Up / 10 Down, cost $7.60, fees $0.0189, paid $10.
+  UTC-day realized P&L +$2.8077 includes an earlier -$0.05; lifetime realized P&L remains -$7.1344.
+  These are a small observational sample, not evidence of sustained profitability or this patch's effect.
+  At 14:51:46 cash was $41.917 with one position, one resting order and $1.89 at risk: cash is not profit.
+- New diagnostics: nine cancellation samples in the first minute had HTTP median 36.6 ms / max 125 ms,
+  transport-lock/quota waits zero. Worker queue max 649.4 ms and event-loop resumption max 835.6 ms;
+  end-to-end cancellation median 95.5 ms / max 1.447 s. Overall loop lag reached 3.281 s. Local scheduling
+  remains material; consistent subsecond execution is not established. An independent read-only review
+  confirmed the preserved budgets, history and these timings.
+- IMPORTANT failed production goal: arena still has zero valid windows. At 14:55:45 its producer reported
+  75,572 accepted input events, 490,490 dropped, 1,029 frames in about 301 seconds, full 16,384-event backlog,
+  zero socket backpressure. That is only about 3.4 flushes/s, versus the benchmark's 20/s. Child CPU duty was
+  below 0.5%; it is not shown to be the bottleneck. Late/overflow windows remain void, never paper wins.
+- Independent public-book check found 168 NO / 111 YES levels. Repeating the 3,000 events/s benchmark with
+  168 changed-ladder levels exposed a regression: the new 400 microsecond budget dropped 10,688 of 60,000
+  inputs where the old event-count limit dropped none. The shallower 40-level benchmark missed this. Source
+  fix is not claimed to repair production coverage. Correct capacity and test realistic depth before relying
+  on practice results; do not relax the three-second lateness rule or promote an arena strategy.
+- Further profiling: synchronous practice checkpoints on the same event loop took 52.9-63.8 ms locally
+  with 399 stored windows; streaming JSON mirror writes dominated the profiled work. Preparing a same-format
+  single-write optimization, preserving atomic replacement, first-save durability and error propagation.
+  This does not prove the cause of every production pause. No change to checkpoint cadence is proposed.
+- Real money touched? YES, owner-authorized cancellation/execution fix; no additional reset, caps or signal
+  change. Next: bounded arena capacity correction and JSON optimization, complete checks and a second safe
+  deployment. The original/inverted/no-trade protocol remains a specification, not an active comparison.
+
 ## 2026-10-14 14:39 UTC, Codex, branch codex/kalshi-profitability-evidence
 - Owner requested the work most likely to improve profitability after asking about reversing the bot.
   Reproduced historical losses and current execution failures before selecting changes. No cap increase,

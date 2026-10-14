@@ -66,7 +66,8 @@ def practice_config(settings: Settings) -> SpeedConfig:
 def _atomic_json(path: Path, value: dict[str, Any], *, durable: bool = True) -> None:
     temporary = path.with_suffix(".tmp")
     with temporary.open("w", encoding="utf-8") as stream:
-        json.dump(value, stream, allow_nan=False, separators=(",", ":"))
+        # The compact encoder avoids tens of thousands of Python write calls on the live event loop.
+        stream.write(json.dumps(value, allow_nan=False, separators=(",", ":")))
         if durable:
             stream.flush()
             os.fsync(stream.fileno())

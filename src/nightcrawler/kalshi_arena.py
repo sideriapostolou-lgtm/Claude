@@ -143,7 +143,9 @@ FILL = "speeddesk_fill"  # the practice desk's fill decision
 # The live loop's side (ArenaLink).
 PENDING_MAX = 16_384  # bounded burst buffer; every book/print keeps its place (late events still void a window)
 FLUSH_MAX = 1024  # absolute event limit as well as the encoding time budget below
-FLUSH_BUDGET_NS = 400_000  # sustains 3,000 events/s; marshal and nonblocking send add a bounded frame's work afterward
+FLUSH_BUDGET_NS = 4_000_000  # own-thread CPU, not wall time; deep books must drain even when steps are delayed
+# A saturated flush may cost several milliseconds plus marshal/send. The prior 400 us wall budget could not keep
+# up with production's 111/168-level books at roughly 3-4 flushes/s; a GIL pause also exhausted that wall budget.
 FLUSH_CHUNK = 16  # check the encoding budget every small chunk, never after an entire backlog
 SEND_BYTES = 1 << 20  # the socket's send buffer (best effort; Linux caps it at net.core.wmem_max)
 READ_MAX = 8 << 20  # the town reads at most this much before a pass
@@ -564,10 +566,11 @@ class ArenaLink:
     client or a key."""
 
     def __init__(self, config: ArenaConfig, *, command: Sequence[str] | None = None,
-                 clock: Callable[[], float] = time.time, perf: Callable[[], int] = time.perf_counter_ns) -> None:
+                 clock: Callable[[], float] = time.time, perf: Callable[[], int] = time.perf_counter_ns,
+                 cpu: Callable[[], int] = time.thread_time_ns) -> None:
         self.wire = config_wire(config)
         self.command = list(command) if command is not None else worker_command()
-        self.clock, self.perf = clock, perf
+        self.clock, self.perf, self.cpu = clock, perf, cpu
         self.cwd = Path(config.data_dir)
         self.pending: deque[Any] = deque()
         self.proc: subprocess.Popen[bytes] | None = None
@@ -740,7 +743,7 @@ class ArenaLink:
         A deque avoids copying the remaining burst on each step. No event that did not fit the time budget is
         consumed, and the ladder baseline advances only in the same order as the retained wire frames.
         """
-        deadline = self.perf() + FLUSH_BUDGET_NS
+        deadline = self.cpu() + FLUSH_BUDGET_NS
         limit = min(len(self.pending), FLUSH_MAX)
         taken = 0
         while taken < limit:
@@ -753,7 +756,7 @@ class ArenaLink:
                 else:
                     items.append(trade_wire(item) if isinstance(item, Trade) else item)
                 taken += 1
-            if self.perf() >= deadline:
+            if self.cpu() >= deadline:
                 break
         if self.pending:
             self.sliced += 1

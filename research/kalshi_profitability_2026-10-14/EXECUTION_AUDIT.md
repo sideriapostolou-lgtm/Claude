@@ -61,6 +61,25 @@ Validation before the coordinating session's full repository run:
 
 These are offline correctness results, not production latency or economic results. No runtime setting, cap, budget anchor, order-selection rule, market-data threshold or Polymarket file changed in this execution patch. The coordinating session owns full validation, safe-minute shipping and deployment verification.
 
+## First deployed timing evidence and the next bounded correction
+
+PR #45 ran as commit `18e180f` in deployment `11b6b12e-e837-4fdb-b8bb-9119b57a5cad`. The 14:51:46 UTC status reports nine cancellation HTTP requests with median **36.6 ms**, maximum **125 ms**, zero measured lock/quota wait; corresponding worker queue maximum **649.4 ms** and event-loop resume maximum **835.6 ms**. Cancellation decision-to-ack median is **95.5 ms**, maximum **1,447.4 ms**. These are different distributions, so their individual maxima cannot be added as though they were one order.
+
+The following 14:52:46 status still has seven cancellation HTTP calls at median **51.6 ms**, maximum **94.2 ms**, while cancellation decision-to-ack reaches **3,666.7 ms** and resume delay **2,544.8 ms**. Event-loop lag reaches **3,110.5 ms**. Thus the remaining multi-second observed tail is substantially local scheduling/resumption, rather than the measured HTTP operation. This does not distinguish GIL competition from blocking synchronous event-loop work or host scheduling. The `worker_queue` metric also includes scheduling the `to_thread` wrapper, so it alone does not prove the executor has run out of threads.
+
+One concrete synchronous cost is `SpeedRunner.decisions()` calling `checkpoint()` whenever a practice event is pending (`speeddesk.py:230-231`), including from market feed callbacks. That checkpoint rebuilds historical state/reports/panel, encodes the ledger JSON, and writes the whole display mirror on the same event loop as the live controller (`speeddesk.py:519-544`). The live controller's own `heartbeat` timings do not include this separate practice path.
+
+A bounded synthetic profile used 399 closed windows, 3,602 Bitcoin second samples and a **411,267-byte** practice mirror. The old checkpoint made about **1.114 million Python calls** under cProfile; the streaming JSON mirror consumed about 53% of profiled time. This is a reproduction of material local overhead, not a production stack capture or a reproduction of the entire multi-second pause.
+
+The authorized minimal follow-up replaces only `_atomic_json`'s streaming `json.dump` with `stream.write(json.dumps(...))`, preserving compact bytes, `allow_nan=False`, the same temporary path, flush/fsync when requested, atomic rename and propagated failures. It does not change checkpoint cadence, reports, simulated fill decisions or real money. Nine alternating old/new local measurements on the same synthetic state:
+
+| Operation | Old median | New median | Old range | New range |
+|---|---:|---:|---:|---:|
+| Mirror encoding/write | 20.58 ms | 3.23 ms | 19.45–27.32 ms | 3.07–3.62 ms |
+| Entire practice checkpoint | 56.05 ms | 38.75 ms | 53.61–65.77 ms | 36.81–46.24 ms |
+
+Seven new atomic-write regressions cover durable/non-durable output and encoding, write, fsync and rename failures retaining the prior file. Combined atomic/runtime/snapshot checks: **39 passed**; mypy 122 files and changed-file Ruff clean. The coordinating session owns full validation and deployment. This removes a measured cost; **the production multi-second scheduling tail remains an open measurement problem**. The next profiling targets are practice callback/checkpoint wall time versus thread CPU, historical snapshot/advance work, and external GIL/host scheduling. No evidence here justifies increasing risk or changing trading signals.
+
 ## Offline reproduction
 
 Two temporary tests, using only fake account responses and throwaway in-memory signing keys, reproduced the old behavior before the correction:

@@ -75,3 +75,70 @@ only subsequent production counters can establish adequate coverage on Railway.
 
 Deployment and production complete-window counts are intentionally left to the parent session's receipt. No
 positive coverage, trading edge or profitability is claimed here.
+
+## Post-deploy failure and correction, 14:50–15:00 UTC
+
+The first feed repair deployed in PR #45, commit `18e180f`, Railway deployment `11b6b12e`, at 14:50:52 UTC.
+**It did not repair production coverage.** The shallow-book, nominal-cadence benchmark above was insufficient.
+Do not use that benchmark as evidence that the deployed arena had usable windows.
+
+Runtime evidence from this exact deployment:
+
+| Time UTC | Received | Dropped | Late | Lag | Complete windows |
+|---|---:|---:|---:|---:|---:|
+| 14:51:44 | 15,334 | 69,940 | 13,280 | 49.66 s | 0 |
+| 14:52:46 | 24,278 | 170,289 | 22,224 | 94.54 s | 0 |
+
+At 14:55:45, the producer reported 75,572 accepted events, 490,490 dropped events, 1,029 frames, a full
+16,384-event queue, 1,011 budget-limited flushes, and **zero blocked socket writes**. Over roughly 301 seconds
+since its start, that is only **3.4 flushes/s**, not the nominal 20, and approximately 58 events per frame.
+The child consumed only about 0.3% of a CPU and its pass p99 was approximately 0.6 ms. The bottleneck was before
+the child, not socket backpressure. Book/print rates and the budget-limited producer overwhelmed the queue.
+
+A read-only public book request found **111 YES levels and 168 NO levels** in the current KXBTC15M window.
+The prior local fixture used 40 levels per ladder. The wire diff scans the unchanged prefix and suffix of a
+changed ladder; deeper ladders reduce events encoded in the same budget. Production also reports 399 historical
+practice window reasons and the main producer runs much less frequently than its nominal sleep interval. Other
+session work investigates callback/checkpoint scheduling. Account calls are in a separate asynchronous task;
+an awaited account read by itself does not prove it blocks the producer.
+
+The local reproduction with 168 changed-ladder levels and 60,000 events at the nominal 3,000/s schedule showed:
+the pre-PR45 fixed-size sender delivered all 60,000 in 400 flushes; PR45's 400 us time budget delivered 49,312,
+dropped 10,688 and needed 599 flushes. Thus the encoding budget introduced a demonstrated capacity regression at
+realistic depth, despite improving bounded-work behavior and blocked-write retention. At the observed slower
+cadence, insufficient capacity was still worse. A wall-clock budget also charges time when another thread holds
+the GIL or the process is descheduled, which can prematurely stop encoding after one 16-event chunk.
+
+The follow-up changes only the encoding budget: **4 ms of the calling thread's own CPU**, with the existing hard
+**1,024-event cap**. `perf_counter_ns` continues to report actual wall time separately; `thread_time_ns` measures
+the encode budget. A backlogged call may now cost several milliseconds plus serialization/send work. It is
+explicitly **not** a sub-0.5 ms claim. FIFO order, retained partial writes, original timestamps, queue bounds,
+strict 3 second lateness, gap voiding and delayed settlement facts are unchanged.
+
+Independent reviewer measurements with deep books, 150 calls:
+
+| Events/call | Equivalent rate at 3.4 calls/s | Result with 4 ms CPU budget |
+|---:|---:|---|
+| 300 | 1,020/s | All 45,000 delivered; median 1.761 ms/call |
+| 700 | 2,380/s | No drops; 12 events waiting at the last scheduled call; median 4.359 ms, p99 5.495 ms |
+| 882 | About 3,000/s | 11,132 dropped out of 132,300, with 15,696 still waiting; **insufficient capacity** |
+
+This supports the observed approximately 2,300/s workload at the observed slow cadence in that local test, with
+little margin. It does not support an unconditional 3,000/s production claim. Improving producer cadence and
+verifying actual depth and live counters remain necessary; a faster machine or a nominal 50 ms sleep is not
+evidence of the real callback schedule.
+
+Additional regression checks at follow-up source freeze:
+
+- Production-style paired books with 111/168 levels, changing one bid and its opposite ask, pass at 150 events
+  per 50 ms nominal step and 700 per 300 ms delayed step. Each run has 100 steps, no overflow and fewer than
+  1,500 events queued before the final drain.
+- An injected one-second wall-clock pause does not consume an unchanged CPU budget, while the full one-second
+  wall latency is still reported. A constant fake CPU clock cannot encode beyond the 1,024-event cap.
+- The 14 existing new backlog/adversarial cases and two separate-clock/cap tests pass; the four targeted
+  production-depth and clock/cap cases pass. Changed Python Ruff and whitespace checks pass. Root performs
+  complete checks, safe deployment and fresh runtime verification separately.
+
+No source, settings, cap, order or deployment was changed during the initial read-only investigation. The
+follow-up code was then explicitly assigned by the parent session. Existing void history remains intact, and
+no profitability claim follows from either transport change.
