@@ -13,6 +13,64 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-14 19:07 UTC, Codex, PR #51 deployed and local delay measured (12:07 PM PDT)
+- PR #51 merged in allowed minute 12:02 PM PDT. Railway deployment
+  4f84d690-5ecb-4357-8284-b0244bddd80b built exact 567ba32d53d434d23d10fbec4627330ff83a5bbd;
+  SUCCESS at 12:04:20.509 PM PDT. Polymarket startup at 12:04:16 was LIVE, ten contracts/order.
+  Both bot and recorder online 1/1, no health warnings/failures; no application ERROR or traceback
+  matched 121 checked new-runtime rows from 12:04:14 through 12:05:54. This is bounded verification.
+- Compared 12:03:22 pre-restart with 12:04:31 post-restart: cash $36.3735, open cost $6.07, modeled
+  risk $1.07, 442 fills, fees $2.056, lifetime settled -$12.2979, caps and both stop states retained.
+  Resting reservation went from $0.69 to zero during repricing/shutdown; shutdown cancel receipt saved.
+  Existing resume value explicitly ignored as already used. No loss erasure or financial reset.
+- Six actual speeddesk_reconcile_trace rows verified and saved. Cycle 12 at 12:04:55 PM: first order
+  list waited 475.777 ms for a worker, callback took 109.694 ms, then controller resumption waited
+  2,476.114 ms. Cancellation checks in that read totaled 0.101 ms. Callback is not pure HTTP time;
+  cancellation overlaps other intervals and must not be added twice. Early slow cycles are not a
+  complete fill cohort. The new evidence establishes local delay, not its exact blocking callback.
+- Source review points to synchronous practice checkpoints/reports/serialization and shared feed work
+  as candidates; no causal attribution yet. Next: join bounded wall/thread-CPU spans to trace intervals,
+  then cache or relocate only the measured blocker while preserving event order/durable accounting.
+- Final source checks: 5,398 passed / 14 existing skips (302.11 s), mypy 124 files, changed-file Ruff,
+  100 targeted checks and independent review (38 tests). No source changed after these checks.
+  Restart touches live infrastructure under standing approval; trading rules, limits, stop/resume
+  budgets, order authority and Railway variables were unchanged. No profitable-strategy claim.
+- Recorder remains on a0782b7. 12:00 PM saved hourly metadata: 262,044,156 / 4,831,838,208 storage bytes,
+  warning level zero, zero deleted segments, six spot reconnect gaps. Raw segment hashes/per-venue
+  coverage remain unverified; coverage_certified=false. No sealed rows or held-out outcomes read.
+- Exact release/account/trace/recorder evidence: fill_detection_trace_release.json and updated
+  FILL_DETECTION_TRACE.md under research/kalshi_profitability_2026-10-14. TJR results below remain
+  blocked on genuine historical data; this docs/research follow-up does not restart the live bot.
+
+## 2026-10-14 19:03 UTC, Codex, TJR validation tooling complete; historical backtest blocked (12:03 PM PDT)
+- Owner explicitly reprioritized TJR alongside Kalshi work. Both current Pages were read in full and
+  match every saved block (92 main, 32 prototype). Original source remains unchanged. Reproduced
+  65/65 prototype and 26/26 feature checks. Versioned v0.1.1 calendar correction keeps all 65 passing;
+  unknown current/prior calendar status now blocks rather than becoming a planned exclusion.
+- Built local-only development runner with immutable input/source hashes, exact actual-contract
+  mapping checks, all 43 calendar dates / 30 development sessions, prior-session links, all nine cost
+  sensitivities, explicit missing days and preserved known closed losses on unresolved days. Whole-
+  campaign P&L stays null when incomplete. Holdout replay is rejected; rejected supplied data cannot
+  automatically claim the holdout was untouched. No broker/network path or paper runtime was added.
+- Verified: 58/58 runner/regression checks passed twice, including independent review. Original test
+  reproduction is included in that suite; counts are not independent market samples. Calendar verified
+  against Nasdaq/NYSE sources; it establishes scheduled cash hours, not actual CME feed completeness.
+- Actual historical invocation without a dataset exited 2 with BLOCKED, zero historical trades tested,
+  historical P&L null, paper not started and live disabled. Databento unauthenticated metadata request
+  returned HTTP 401. FirstRate sample has wrong dates/unverified contract; Portara sample is June 2026
+  and lacks the prior session. No sample strategy outcomes or frozen holdout prices were inspected.
+- Actual account fees/spread and platform/data costs remain unknown. The nine sensitivity cases are
+  assumptions. No paid access, credentials, account funding, orders or new production service.
+- Recommendation: no real-money TJR trial on present evidence; profitability is untested, not disproven.
+  This is the saved BC23-inspired subset, not all TJR discretion or a Kalshi strategy. The historical
+  contract is expired; a later paper study needs a separately verified current contract/feed/runtime.
+- Artifacts: research/tjr_validation_2026-10-14/VALIDATION.md, source derivation/test receipts,
+  DATA_ACCESS.md/.json, verified calendar, strict input templates, HISTORICAL_STATUS.json and independent
+  review. Existing queue updated to active but blocked on authentic data; not done, automation retained.
+- Next: authorized MNQ December 2025 minute export for September 19–October 31, mapping/license/timezone
+  evidence and actual costs; build a verified lossless adapter, freeze the bundle, run development, then
+  evaluate whether a controlled holdout and forward paper trial are justified. No profit claim.
+
 ## 2026-10-14 18:57 UTC, Codex, next Kalshi execution evidence and TJR reprioritization (11:57 AM PDT)
 - Owner explicitly requested TJR backtesting alongside the next Kalshi improvement. This clears the
   queue's priority gate, not historical validation or permission for a new live desk. Both current

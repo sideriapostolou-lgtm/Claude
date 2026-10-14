@@ -71,3 +71,28 @@ verify that the exact running commit emits `speeddesk_reconcile_trace`. Join
 new fills by their IDs and cycle start timestamps, then identify where the long
 tails occur before changing any execution behavior. Deployment and actual
 production trace verification are not claimed by this implementation note.
+
+## Verified release and first observations, 12:07 PM PDT
+
+PR #51 deployed commit `567ba32d53d434d23d10fbec4627330ff83a5bbd` successfully
+at 12:04:20 PM PDT. The first six actual trace rows are preserved in
+`fill_detection_trace_release.json`, with restart, account, test and recorder
+receipts. Full checks passed: 5,398 tests / 14 existing skips, mypy 124 files,
+changed-file Ruff and independent review.
+
+Cycle 12 began at 12:04:55.276 PM. Its first order-list callback took 109.694 ms,
+with 475.777 ms waiting for a worker beforehand and **2,476.114 ms after the
+worker completed before the controller resumed**. Cancellation checks totaled
+0.101 ms in that read. This establishes a local scheduling/processing delay in
+this cycle; it does not identify the blocking callback, prove a network cause,
+or explain every bad fill. The callback interval includes all client work and
+must still not be called raw HTTP time. These early slow cycles are not a
+representative fill-latency distribution.
+
+The next bounded investigation should join wall-time and thread-CPU spans around
+practice checkpoints, report generation, state serialization, ledger/mirror writes
+and feed callbacks to these monotonic intervals. The practice runner shares the
+live event loop and performs synchronous checkpoint work; it is a source-level
+candidate, not an established culprit. Only cache or relocate work after those
+measurements, preserving callback order and durable accounting. No resource or
+region change is justified by this sample, and none was made.

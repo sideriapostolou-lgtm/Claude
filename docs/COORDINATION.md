@@ -38,7 +38,17 @@ building, wait for it to finish.
 Check this queue at task start and before declaring current work complete. Keep unfinished items here;
 move an item to done only with linked evidence. Blocked or waiting-for-approval is not complete.
 
-### TJR-MNQ-001 — historical validation active; paper/live disabled (owner reprioritization, 2026-10-14)
+### TJR-MNQ-001 — validation tooling complete; historical run blocked on data; paper/live disabled
+- Validation update: **2026-10-14 12:03 PM PDT** (19:03 UTC). Owner reprioritization below remains active.
+  Both current Pages match all 124 saved blocks. Original 65/65 and feature 26/26 checks reproduced;
+  versioned calendar fix preserves the 65, and 58/58 runner checks passed independent review. Verified
+  30 development cash sessions plus warmup. Actual no-data run returns BLOCKED, zero historical trades
+  and null P&L. Databento returned 401 without authorized access; public samples are wrong/insufficient.
+  [Validation, exact commands and input templates](../research/tjr_validation_2026-10-14/VALIDATION.md).
+  Next: obtain authorized actual MNQ December 2025 minute bars for September 19–October 31, 2025,
+  verify mapping/license/costs and normalization, then run the frozen development scenarios. Holdout
+  remains unevaluated. Paper has not started; no live capability added. Queue is not done and follow-up
+  automation stays enabled; do not repeat unchanged blocker notifications or duplicate this research.
 - Owner explicitly reprioritized this at the current task: "also backtest and test TJRs strategy and tell
   us if we should try it or not." Historical validation may now proceed alongside Kalshi evidence work.
   Preserve the saved implementation/version, fix known validation defects in a separate derivative,
@@ -85,6 +95,39 @@ move an item to done only with linked evidence. Blocked or waiting-for-approval 
 
 Format: `### YYYY-MM-DD HH:MM UTC, From -> To: subject`, then what you need, then `Status: open / answered / done`.
 
+### 2026-10-14 19:07 UTC, Codex -> owner / Claude: PR #51 deployed; actual traces show local processing delay
+- Exact 567ba32d53d434d23d10fbec4627330ff83a5bbd deployed at 12:04:20 PM PDT. Both services healthy,
+  Polymarket LIVE startup normal, no application error/traceback in checked new-runtime interval.
+  Cash, cost/risk, 442 fills, fees, settled losses, caps and stop states match compared restart snapshots;
+  resting reservations cleared with shutdown cancellation. Used resume value was ignored, not reset.
+- Six actual trace receipts verified. Cycle 12: order-list callback 109.694 ms; worker queue 475.777 ms;
+  controller resumed 2,476.114 ms after worker completion; cancellation only 0.101 ms in that read.
+  This proves a local delay in the sample, not the exact blocking task or a profitable strategy.
+- Highest-value next evidence: bounded per-callback wall/thread-CPU timing of practice checkpoints,
+  reports/serialization/ledger/mirror and feed callbacks sharing the loop; then fix the measured blocker
+  while preserving accounting/callback order. Existing minute aggregates cannot identify it alone.
+- 5,398 tests / 14 existing skips; mypy 124, changed-file Ruff and independent review passed. No trading
+  rule, money limit, stop, resume budget or Railway variable changed. Full receipts in
+  research/kalshi_profitability_2026-10-14/fill_detection_trace_release.json.
+- TJR historical data remains blocked as documented below; no paper/live start. Do not duplicate tests
+  or claim the queue is done. Current documentation/research follow-up does not restart production.
+
+Status: done (trace release and initial production verification); open (local blocker attribution and strategy evidence)
+
+### 2026-10-14 19:03 UTC, Codex -> owner / Claude: TJR runner tested; actual historical data missing
+- Preserved current source exactly. Calendar classification fix is a separate v0.1.1 derivative;
+  unknown calendar now blocks instead of disappearing as an exclusion. Original 65 + feature 26
+  synthetic checks pass, as do 58 runner/regression checks and independent review.
+- Runner preserves all scheduled sessions, missing days, known losses, nine cost scenarios, immutable
+  input hashes and unopened holdout separation. Rejected inputs cannot claim untouched holdout data.
+- Calendar verified; authentic MNQZ25 prices and account costs remain unavailable. Actual no-input
+  invocation is BLOCKED with P&L null. No historical strategy result, paper start or live deployment.
+- Recommendation: do not put money into this strategy on current evidence. Obtain the existing
+  authorized actual-contract export; run development before a separately controlled holdout/paper step.
+  Full artifacts: research/tjr_validation_2026-10-14/VALIDATION.md and INDEPENDENT_REVIEW.md.
+
+Status: done (code/source/calendar validation); blocked (authentic historical data); TJR-MNQ-001 not done
+
 ### 2026-10-14 18:45 UTC, Codex -> owner / Claude: Kalshi delay investigation and explicit TJR reprioritization
 - Owner requested the next highest-leverage step plus TJR backtesting and a try/do-not-try verdict.
   Trace the observed fill-detection tails; any Kalshi fix must follow evidence and preserve decisions,
@@ -95,7 +138,7 @@ Format: `### YYYY-MM-DD HH:MM UTC, From -> To: subject`, then what you need, the
 - Separate agents may edit Kalshi trace code/tests and research/tjr_validation_2026-10-14; root owns
   coordination/worklog. Full tests/types/changed-file lint and independent review before any code release.
 
-Status: open (investigation and historical validation; no new deployment yet)
+Status: answered (PR #51 deployed and initial tracing verified above; TJR validation blocked on authentic data)
 
 ### 2026-10-14 18:31 UTC, Codex -> owner / Claude: fill diagnostics deployed and verified; evidence work remains
 - PR #49 deployed f76cb5b at 11:07:32 AM PDT; PR #50 deployed exact
