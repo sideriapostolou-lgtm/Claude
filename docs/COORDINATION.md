@@ -39,6 +39,15 @@ Check this queue at task start and before declaring current work complete. Keep 
 move an item to done only with linked evidence. Blocked or waiting-for-approval is not complete.
 
 ### TJR-MNQ-001 — validation tooling complete; historical run blocked on data; paper/live disabled
+- Follow-up checked **2026-10-14 12:34 PM PDT** (19:34 UTC): the owner's explicit reprioritization
+  permits TJR validation alongside the still-open Kalshi evidence work. PR #47's recorded deployment
+  and restart checks are complete; later diagnostics do not clear the remaining execution/coverage
+  evidence. Both Pages have no changes since the complete saved reads (main sequence 2, prototype 1;
+  change feeds returned no resync requirement or truncation). No new historical dataset, account-cost
+  evidence or futures-data access was found in current records/runtime metadata. Keep active/blocked,
+  preserve earlier tests and protocol, and do not repeat the unchanged owner notification or data probes.
+  Next remains the verified development export and costs below; no paper start, live enablement or
+  completion claim. Follow-up automation is retained.
 - Profit-evidence protocol update: **2026-10-14 12:17 PM PDT** (19:17 UTC). The owner wants evidence
   of profit/loss and is willing to consider a small live trial if needed. No TJR futures account or
   exact dollar budgets were supplied; this does not activate a new live desk or extend Kalshi permissions.
