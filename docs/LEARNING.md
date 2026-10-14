@@ -301,7 +301,10 @@ The learner reads the tape only through `TapeView(mint, as_of=t)`, which applies
 - **Torn lines.** A torn last line is cut at the last newline when the file is opened, and counted.
 - **Sealing** happens when the day's coins are all closed (about D+3 00:30 UTC). The steps are: write
   `X.jsonl.gz.tmp`, fsync, rename, write a `MANIFEST.json` (sha256 per file plus a root), write the `tape_seal`
-  outbox row, then delete the `.jsonl`. Every step is idempotent.
+  outbox row, then delete the `.jsonl`. Every step is idempotent. Everything streams in 8 MiB pieces (the
+  compression, the manifest's hashes and byte counts read back from the `.gz`, and the hourly roots): the seal runs
+  inside the trading process, and a 750 MB day used to pass through its memory twice; the bytes written are exactly
+  the one-shot version's (zlib's output does not depend on how its input is split).
 - **Hourly root.** Every hour the recorder hashes the byte ranges appended since the last root and writes a
   `tape_root` outbox row. Bytes cannot be edited afterwards without breaking a receipted root.
 - **Day completeness.** A day where fewer than 95% of coins completed all fetches is **excluded for every variant**.

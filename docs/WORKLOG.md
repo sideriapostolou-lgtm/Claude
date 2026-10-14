@@ -15,6 +15,43 @@ Template:
 
 
 
+## 2026-10-14 01:30 UTC, Claude, branch claude/kalshi-arena-feed (the arena's hand-over keeps up; voids; RSS; the seal streams)
+- Why: the first production day of the arena (2026-10-13, 4:18-5:37 PM PT, PR #41 and #42 containers) showed
+  `kalshi_arena_feed` with 2.55 M events offered and 845 K dropped (33 %), the late count rising in slices of 256,
+  and every window since 4:18 PM voided `feed_dropped`: the town learned nothing. The live process sat at ~1 vCPU
+  with event-loop lag up to 2.3 s and steps up to 8 s, about 700 Kalshi events a second at peak; the link held
+  1,024 events and flushed 256 a step.
+- Changed (PRACTICE paths and a status line only; no real-money code, no setting, no Railway change):
+  - `kalshi_arena.ArenaLink`: a book takes one slot per window and side (the latest replaces the waiting one, O(1)),
+    prints queue behind (PENDING_MAX 16,384), a flush encodes inside a 150 us CPU budget (FLUSH_MAX 4,096, checked
+    every 32 events) and leaves the rest for the next step, a frame the socket does not take waits whole for the next
+    step (never dropped), and a drop (only past the bound) is counted and named by its window to the town (a
+    `("d", windows)` record). Telemetry and `kalshi_arena_feed` gain coalesced, pending, pending_peak, sliced,
+    blocked, rss_mb, max_rss_mb.
+  - `kalshi_arena.KalshiArena`: a drop voids only the windows named (a sequence gap or an unnamed drop still voids
+    every open window); `late` is the town's OWN lateness (read more than 3 s after the hand-over); events the live
+    loop held longer than that are `held`, and a held print voids its window only when a resident's resting bid
+    would have filled on it (`feed_held`). Panel/page `feed` gains held, held_s, rss_mb, max_rss_mb (fixture and
+    COORDINATION contract updated, additive).
+  - `procmem.process_memory()` (RSS from /proc/self/statm, peak from getrusage); the engine heartbeat's
+    `engine.status.memory` carries the live process's.
+  - `learn/tape.py`: the seal, its verification and the hourly roots stream in 8 MiB chunks (same bytes, same
+    atomic rename); the recorder's `_seal` is unchanged in shape and now costs bounded memory.
+- Verified: lab reproduction of production's shape through the real town process (3 windows, 2 % prints, a 2.3 s
+  and an 8 s stall): before, 700 ev/s dropped 26 % (flush p99 0.75 ms) and 2,000 ev/s dropped 31 % (p99 1.15 ms);
+  after, 0 dropped at both, flush CPU p99 0.24 / 0.27 ms on the live thread, town late 0, open_incomplete 0. A
+  12,000-print backlog drains in 21 slices of <= 0.57 ms. A full queue (16,384 prints + books) costs 4 MB. A 315 MB
+  synthetic day seals with a Python peak of 25 MB (was 2x the file). New tests fail on the old code: 10 added or
+  rewritten in tests/test_kalshi_arena_feed.py, 2 in tests/test_kalshi_arena.py, 2 in tests/test_learn_tape.py,
+  tests/test_procmem.py, the engine heartbeat test. Full suite, mypy and ruff on changed files: see the commit.
+- Not verified / skipped: production's own figures after deploy (read `kalshi_arena_feed`: dropped should stay 0,
+  blocked/sliced near 0, flush p99 under 500 us; `kalshi_arena_status`: late 0, held small, void_feed not rising);
+  the opt-in wall-clock lateness test was not run on this shared machine (the hand-over stays on the live thread, no
+  new thread, so the GIL argument is unchanged).
+- Real money touched? no.
+- Next step: merge at a safe minute, read the two status lines after one busy hour, and the first windows that settle
+  without a void.
+
 ## 2026-10-14 UTC, Claude, branch claude/kalshi-pull (rebreak fix round)
 - Rebreak of 703d942 (cancel acknowledgement, caps/locks/ladder, practice twin isolation and A/B, deploy
   readiness). Every major reproduced first with the reviewers' scratch tests, then fixed with a regression test in

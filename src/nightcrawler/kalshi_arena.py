@@ -32,16 +32,19 @@ small ``panel.json`` for the page.
 
 SPEED: THE TOWN RUNS IN ITS OWN PROCESS. The live desk's event loop is latency-critical, and a thread would share
 Python's lock (and its garbage collector) with it: a busy or stuck town could delay every live decision. So the live
-loop only holds an :class:`ArenaLink`: each Kalshi book and print is one bounded ``list.append``; once per runner
-step (every 50 ms) :meth:`ArenaLink.flush` encodes what arrived plus the market facts that changed (windows, price,
-sigma, maker windows, outcomes) into ONE frame and hands it to a non-blocking pipe (``os.write``; a full pipe drops
-the frame and counts it, never waits). The town (:class:`KalshiArena`) runs in a child Python process started with
+loop only holds an :class:`ArenaLink`: each Kalshi book and print is one bounded O(1) put (a book replaces the one
+waiting for its window and side; prints queue behind); once per runner step (every 50 ms) :meth:`ArenaLink.flush`
+encodes what is waiting plus the market facts that changed (windows, price, sigma, maker windows, outcomes) into ONE
+frame, inside a CPU budget (what does not fit waits for the next step), and hands it to a non-blocking socket (what
+the socket does not take now goes first next time; nothing waits, and an event is dropped only past the queue's
+bound, counted and named by its window). The town (:class:`KalshiArena`) runs in a child Python process started with
 an empty environment (no ``KALSHI_*`` key ever reaches it), at the lowest CPU priority, first in line for the
 out-of-memory killer, under a memory limit, without core dumps, and killed by the kernel if one pass hangs for
 :data:`HANG_S` or spends :data:`PASS_CPU_S` of CPU (it logs what of this took effect: :func:`report_hardening`). It
-reads the frames, and a window whose feed was incomplete (frames dropped, or events older than the desks' 3 s freshness
-when read) is void for every resident. The child exits when the pipe closes (the live desk stopped or died), after a
-final save. A child that dies is logged (``kalshi_arena_exited``); the live desk never notices.
+reads the frames, and a window whose feed was incomplete FOR THAT WINDOW (an event of its dropped; the town reading
+more than the desks' 3 s freshness behind the hand-over; a print every desk had to discard as stale while a resident's
+bid would have filled on it) is void for every resident. The child exits when the pipe closes (the live desk stopped
+or died), after a final save. A child that dies is logged (``kalshi_arena_exited``); the live desk never notices.
 """
 
 from __future__ import annotations
@@ -71,7 +74,9 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Protocol
 
 from .deskguard import LOSING, PHRASES, WINNING, judge
+from .procmem import process_memory
 from .speeddesk_model import (
+    EPSILON,
     BitcoinTape,
     Book,
     Level,
@@ -138,9 +143,16 @@ PANEL_CANDIDATES = 5
 PANEL_EVENTS = 24  # of the EVENTS_KEEP kept; ``counts.events`` is every event this town recorded
 PANEL_MAX_BYTES = 256 << 10  # a panel is about 20-30 KiB; the page refuses a larger file before reading it
 FILL = "speeddesk_fill"  # the practice desk's fill decision
-# The live loop's side (ArenaLink).
-PENDING_MAX = 1024  # books and prints held between two flushes (about 2.5 s of a busy market); beyond, dropped
-FLUSH_MAX = 256  # events encoded per flush: a flush after a stall costs at most about 1 ms
+# The live loop's side (ArenaLink). A book replaces the one already waiting for its window and side (one slot per
+# market, so a busy book is never a backlog); prints and gaps queue behind them. Production on 2026-10-13 ran at
+# about 700 events a second with event-loop stalls of 2-8 s: at 1,024 waiting and 256 a flush, a third of the feed
+# was dropped and every window was void. Now the queue holds a few minutes of prints, a flush encodes what it can
+# inside a CPU budget and leaves the rest for the next step, and dropping is the last resort (counted per window).
+PENDING_MAX = 16_384  # prints (and the first book of each market) waiting between two flushes; beyond, dropped
+FLUSH_MAX = 4_096  # events encoded in one flush at most, whatever the budget
+FLUSH_BUDGET_NS = 150_000  # ... and no more than fit in this much of the live thread's time (checked per chunk);
+# the frame's marshal and send cost about as much again, so a flush of a backlog stays under half a millisecond
+FLUSH_CHUNK = 32  # events encoded between two looks at the clock
 SEND_BYTES = 1 << 20  # the socket's send buffer (best effort; Linux caps it at net.core.wmem_max)
 READ_MAX = 8 << 20  # the town reads at most this much before a pass
 CHECK_S = 5.0  # how often the live loop asks whether the town's process still runs (one waitpid)
@@ -552,10 +564,14 @@ def worker_env() -> dict[str, str]:
 
 class ArenaLink:
     """The live loop's whole side of the town (module docstring, SPEED). :meth:`feed_book`, :meth:`feed_trade` and
-    :meth:`feed_gap` are one bounded append; :meth:`flush` (once per runner step) encodes at most :data:`FLUSH_MAX`
-    events into one frame and writes it without waiting; :meth:`start` and :meth:`close` never block for long. None
-    of them raises. It holds the town's configuration (numbers and genes) and a pipe, never a Settings object, a
-    client or a key."""
+    :meth:`feed_gap` are one bounded append (a book for a market already waiting replaces it in place: one slot per
+    window and side, so the latest book always travels and the queue holds prints); :meth:`flush` (once per runner
+    step) encodes what is waiting into one frame inside a CPU budget (:data:`FLUSH_BUDGET_NS`; the rest waits for the
+    next step, in order) and writes it without waiting; a frame the socket does not take whole is finished at the
+    next step, never dropped, and the events behind it wait, bounded (:data:`PENDING_MAX`); only past that bound is
+    an event dropped, counted, and named by its window to the town (a ``("d", windows)`` record), so the town voids
+    only the windows that lost something. :meth:`start` and :meth:`close` never block for long. None of them raises.
+    It holds the town's configuration (numbers and genes) and a pipe, never a Settings object, a client or a key."""
 
     def __init__(self, config: ArenaConfig, *, command: Sequence[str] | None = None,
                  clock: Callable[[], float] = time.time, perf: Callable[[], int] = time.perf_counter_ns) -> None:
@@ -564,12 +580,18 @@ class ArenaLink:
         self.clock, self.perf = clock, perf
         self.cwd = Path(config.data_dir)
         self.pending: list[Any] = []
+        self.slots: dict[tuple[str, str], int] = {}  # where in ``pending`` each market's waiting book sits
+        self.drop_slugs: set[str] = set()  # windows that lost an event since the last frame
         self.proc: subprocess.Popen[bytes] | None = None
         self.sock: socket.socket | None = None
         self.running = False
         self.out = b""  # the rest of a frame the pipe took only part of
         self.seq = 0
         self.puts = self.dropped = self.frames = self.sent_bytes = 0
+        self.coalesced = 0  # books replaced by a later one before they were sent
+        self.sliced = 0  # flushes that left events for the next step (budget or FLUSH_MAX)
+        self.blocked = 0  # steps the town had not taken the last frame yet (nothing new was encoded)
+        self.pending_peak = 0  # the most events waiting at a flush since the last status line
         self.returncode: int | None = None
         self._windows: Any = None
         self._makers: Any = None
@@ -595,13 +617,32 @@ class ArenaLink:
         self._put(("g", tuple(gap_windows), bool(trade_stream), bool(coinbase_connected)))
 
     def _put(self, item: Any) -> None:
+        """O(1): a book takes its market's slot (replacing the book waiting there, which never travels: the town
+        wants the latest ladder; a take is checked against the first book after its latency, at most a step later
+        here); a print or gap is appended behind. Past :data:`PENDING_MAX` a print is dropped and its window
+        remembered for the next frame (a gap is a few bytes a minute and always goes)."""
         try:
             if not self.running:
                 return
-            if len(self.pending) >= PENDING_MAX:
+            pending = self.pending
+            if isinstance(item, Book):
+                key = (item.window, item.side)
+                slot = self.slots.get(key)
+                if slot is not None and slot < len(pending):
+                    pending[slot] = item
+                    self.coalesced += 1
+                    self.puts += 1
+                    return
+                if len(pending) >= PENDING_MAX:
+                    self.dropped += 1
+                    self.drop_slugs.add(item.window)
+                    return
+                self.slots[key] = len(pending)
+            elif isinstance(item, Trade) and len(pending) >= PENDING_MAX:
                 self.dropped += 1
+                self.drop_slugs.add(item.window)
                 return
-            self.pending.append(item)
+            pending.append(item)
             self.puts += 1
         except Exception:  # noqa: BLE001, S110 - the live loop must never see a practice error
             pass
@@ -647,6 +688,8 @@ class ArenaLink:
     def _stop_link(self) -> None:
         self.running = False
         self.pending = []
+        self.slots = {}
+        self.drop_slugs = set()
         self.out = b""
         with contextlib.suppress(Exception):
             if self.sock is not None:
@@ -677,13 +720,14 @@ class ArenaLink:
             if self.proc.poll() is not None:
                 self._exited()
                 return
+        pending = self.pending
+        self.pending_peak = max(self.pending_peak, len(pending))
         if now - self.status_at >= LINK_STATUS_S:
             self._status(now)
-        batch, self.pending = self.pending[:FLUSH_MAX], self.pending[FLUSH_MAX:]
         if self.out:  # finish the frame the socket took only part of before a new one starts
             self._send(self.out)
-            if self.out:  # the town is still behind: this step's events are dropped and counted, before encoding
-                self.dropped += len(batch)
+            if self.out:  # the town has not taken it yet: nothing new is encoded; the events wait (bounded)
+                self.blocked += 1
                 return
         items: list[Any] = []
         # The market facts that changed since the last frame, first: the town reads its windows before the events.
@@ -710,29 +754,49 @@ class ArenaLink:
         bitcoin = (snapshot.bitcoin_price, snapshot.bitcoin_at, snapshot.sigma)
         if bitcoin != self._bitcoin:
             items.append(("m", *bitcoin))
-        ladders = self._ladders
-        for item in batch:
-            if isinstance(item, Book):
-                key = (item.window, item.side)
-                items.append(book_wire(item, ladders.get(key)))
-                ladders[key] = (item.bids, item.asks)
-            else:
-                items.append(trade_wire(item) if isinstance(item, Trade) else item)
+        if self.drop_slugs:  # after the facts (a window listed in this frame), before the events
+            items.append(("d", tuple(sorted(self.drop_slugs))))
+            self.drop_slugs = set()
+        # The events, oldest first, as many as the budget allows: the rest stays, in order, for the next step.
+        taken = self._encode(pending, items)
+        if taken < len(pending):
+            self.pending = pending[taken:]
+            self.sliced += 1
+        else:
+            self.pending = []
+        self.slots = {}
         if not items:
             return
         self.seq += 1
         data = frame(("batch", self.seq, now, self.dropped, self.last_flush_us, items))
-        self._send(data)
-        if len(self.out) == len(data):  # nothing taken: the town is behind; this frame is dropped and counted
-            self.out = b""
-            self.seq -= 1
-            self.dropped += len(batch)
-            # The next frame carries every fact and whole ladders again.
-            self._ladders, self._windows, self._makers, self._outcomes, self._bitcoin = {}, None, None, None, None
-            self._recent, self._shown = None, None
-            return
+        self._send(data)  # whatever the socket does not take now goes first at the next step (``out``)
         self._windows, self._makers, self._outcomes, self._bitcoin = windows, makers, outcomes, bitcoin
         self.frames += 1
+
+    def _encode(self, pending: list[Any], items: list[Any]) -> int:
+        """Encode ``pending``'s events into ``items`` in order, at most :data:`FLUSH_MAX` and no more chunks than
+        fit the budget (:data:`FLUSH_BUDGET_NS` from now; a chunk is :data:`FLUSH_CHUNK` events: about 6 us of
+        prints or 60 us of books). Returns how many were taken."""
+        limit = min(len(pending), FLUSH_MAX)
+        if not limit:
+            return 0
+        ladders = self._ladders
+        deadline = self.perf() + FLUSH_BUDGET_NS
+        taken = 0
+        while taken < limit:
+            stop = min(limit, taken + FLUSH_CHUNK)
+            for index in range(taken, stop):
+                item = pending[index]
+                if isinstance(item, Book):
+                    key = (item.window, item.side)
+                    items.append(book_wire(item, ladders.get(key)))
+                    ladders[key] = (item.bids, item.asks)
+                else:
+                    items.append(trade_wire(item) if isinstance(item, Trade) else item)
+            taken = stop
+            if taken < limit and self.perf() > deadline:
+                break
+        return taken
 
     def _send(self, data: bytes) -> None:
         assert self.sock is not None
@@ -754,22 +818,31 @@ class ArenaLink:
         self._stop_link()
 
     def telemetry(self) -> dict[str, Any]:
-        """The live loop's own cost of the town: what was handed over, dropped, and how long a flush took."""
+        """The live loop's own cost of the town: what was handed over (``put``, of which ``coalesced`` books were
+        replaced before they travelled), dropped, waiting (``pending`` now and ``pending_peak`` since the last
+        status line), how often a flush left events for the next step (``sliced``) or found the town had not taken
+        the last frame (``blocked``), how long a flush took, and this process's memory (the live desk's)."""
         ordered = sorted(self.flush_ns)
 
         def us(q: float) -> int | None:
             return ordered[min(len(ordered) - 1, int(q * len(ordered)))] // 1000 if ordered else None
 
         return {"running": self.running, "pid": self.proc.pid if self.proc is not None else None, "put": self.puts,
-                "dropped": self.dropped, "frames": self.frames, "kib": self.sent_bytes // 1024,
-                "flush_us_p50": us(0.5), "flush_us_p99": us(0.99), "flush_us_max": us(1.0)}
+                "coalesced": self.coalesced, "dropped": self.dropped, "pending": len(self.pending),
+                "pending_peak": self.pending_peak, "sliced": self.sliced, "blocked": self.blocked,
+                "frames": self.frames, "kib": self.sent_bytes // 1024,
+                "flush_us_p50": us(0.5), "flush_us_p99": us(0.99), "flush_us_max": us(1.0), **process_memory()}
 
     def _status(self, now: float) -> None:
         self.status_at = now
         feed = self.telemetry()
-        log.info("kalshi_arena_feed pid=%s put=%d dropped=%d frames=%d kib=%d flush_us_p50=%s flush_us_p99=%s "
-                 "flush_us_max=%s", feed["pid"], feed["put"], feed["dropped"], feed["frames"], feed["kib"],
-                 feed["flush_us_p50"], feed["flush_us_p99"], feed["flush_us_max"])
+        log.info("kalshi_arena_feed pid=%s put=%d coalesced=%d dropped=%d pending=%d pending_peak=%d sliced=%d "
+                 "blocked=%d frames=%d kib=%d flush_us_p50=%s flush_us_p99=%s flush_us_max=%s rss_mb=%s "
+                 "max_rss_mb=%s", feed["pid"], feed["put"], feed["coalesced"], feed["dropped"], feed["pending"],
+                 feed["pending_peak"], feed["sliced"], feed["blocked"], feed["frames"], feed["kib"],
+                 feed["flush_us_p50"], feed["flush_us_p99"], feed["flush_us_max"], feed["rss_mb"],
+                 feed["max_rss_mb"])
+        self.pending_peak = 0
 
 
 # ---------------------------------------------------------------------- the town's view of the market
@@ -1014,9 +1087,11 @@ class KalshiArena:
         self.problem: str | None = None
         self.received = 0
         self.late = 0
+        self.held = 0  # events the live loop held past LATE_S before handing them over (its own loop was late)
         self.coalesced = 0
         self.errors = 0
-        self.lag_s = 0.0
+        self.lag_s = 0.0  # the town's own lag: how long after the hand-over it read an event (worst in the pass)
+        self.held_s = 0.0  # the live loop's: how long it held an event before the hand-over (worst in the pass)
         self.link_seq: int | None = None
         self.link_dropped = 0
         self.live_flush_us: deque[int] = deque(maxlen=PASSES_KEEP)
@@ -1040,24 +1115,32 @@ class KalshiArena:
         self._populate(clock())
 
     # ------------------------------------------------------------------ the feed
-    def feed_book(self, book: Book) -> None:
-        self.inbox.append(("book", book))
+    def feed_book(self, book: Book, handed_at: float | None = None) -> None:
+        """Queue a book; ``handed_at`` is when the live loop handed it over (a frame's time), else its own time."""
+        self.inbox.append(("book", book, book.at if handed_at is None else handed_at))
 
-    def feed_trade(self, trade: Trade) -> None:
-        self.inbox.append(("trade", trade))
+    def feed_trade(self, trade: Trade, handed_at: float | None = None) -> None:
+        if handed_at is None:
+            handed_at = trade.received_at if trade.received_at is not None else trade.at
+        self.inbox.append(("trade", trade, handed_at))
 
     def feed_gap(self, gap_windows: tuple[str, ...], trade_stream: bool, coinbase_connected: bool) -> None:
         self.inbox.append(("gap", gap_windows, trade_stream, coinbase_connected))
 
     def receive(self, message: Any, view: WireView) -> None:
-        """One frame from :class:`ArenaLink`: market facts update ``view``; books, prints and gaps are queued. A frame
-        the link had to drop leaves every open window incomplete (void at its settlement)."""
+        """One frame from :class:`ArenaLink`: market facts update ``view``; books, prints and gaps are queued, each
+        with the frame's time (when the live loop handed it over). Events the link had to drop are named by their
+        window (a ``("d", windows)`` record): only those windows are left incomplete (void at their settlement). A
+        frame missing from the sequence, or a drop count that rose without a record, lost events of unknown
+        windows: then every open window is incomplete."""
         if not isinstance(message, tuple) or not message or message[0] != "batch":
             raise ValueError("unexpected Kalshi arena frame")
-        _, seq, _sent_at, dropped, flush_us, items = message
+        _, seq, sent_at, dropped, flush_us, items = message
         now = self.clock()
         self.last_frame_at = now
-        if (self.link_seq is not None and seq != self.link_seq + 1) or dropped > self.link_dropped:
+        handed_at = float(sent_at)
+        named = any(record[0] == "d" for record in items)
+        if (self.link_seq is not None and seq != self.link_seq + 1) or (dropped > self.link_dropped and not named):
             self._degrade_open(now, "feed_dropped")
         self.link_seq, self.link_dropped = int(seq), max(self.link_dropped, int(dropped))
         self.live_flush_us.append(int(flush_us))
@@ -1066,14 +1149,17 @@ class KalshiArena:
             if tag == "b":
                 self.received += 1
                 try:
-                    self.feed_book(book_from_wire(record, self.ladders))
+                    self.feed_book(book_from_wire(record, self.ladders), handed_at)
                 except LookupError:  # a change to a ladder never received (not expected: the link resends whole)
                     self._degrade(str(record[1]), "feed_dropped")
             elif tag == "t":
-                self.feed_trade(trade_from_wire(record))
+                self.feed_trade(trade_from_wire(record), handed_at)
                 self.received += 1
             elif tag == "g":
                 self.feed_gap(tuple(record[1]), bool(record[2]), bool(record[3]))
+            elif tag == "d":
+                for slug in record[1]:
+                    self._degrade(str(slug), "feed_dropped")
             elif tag == "w":
                 view.windows = tuple(Window(*values) for values in record[1])
                 live = {window.slug for window in view.windows}
@@ -1158,11 +1244,18 @@ class KalshiArena:
         A book is skipped when a later book for the same window and side is already queued and no resident waits on
         a take or lock there (a resting bid needs only the latest book; a take is checked against the first book
         after its latency, so those windows keep every book). Each print is de-duplicated once for all residents.
-        An event read more than :data:`LATE_S` after it arrived leaves its window incomplete."""
+
+        Lateness, two ways. An event the town reads more than :data:`LATE_S` (the desks' freshness) after the live
+        loop handed it over is the TOWN's lateness (``late``): it fell behind the market the live desk saw, so the
+        window is incomplete. An event the live loop held longer than that before the hand-over (its own event loop
+        was late; ``held``) is not: the desks will not act on a book that old, exactly as the live desk's own
+        practice model would not, and the fresh book follows in the same frame. A print that old, though, every
+        desk discards (``stale_s``): when a resident had a resting bid it would have filled, the town missed data
+        it needed, and the window is incomplete (``feed_held``); when nobody could have used it, nothing was lost."""
         items = list(self.inbox)
         self.inbox.clear()
         if not items:
-            self.lag_s = 0.0
+            self.lag_s = self.held_s = 0.0
             return now
         latest: dict[tuple[str, str], int] = {}
         for index, item in enumerate(items):
@@ -1170,17 +1263,20 @@ class KalshiArena:
                 latest[(item[1].window, item[1].side)] = index
         taking = {order.window for res in self.residents.values() for order in res.desk.orders.values()
                   if order.kind == "take"}
-        lag = 0.0
+        lag = held = 0.0
         for index, item in enumerate(items):
             now = max(now, self.clock())
             kind = item[0]
             if kind == "book":
                 book: Book = item[1]
-                behind = now - book.at
+                behind = now - item[2]
                 lag = max(lag, behind)
                 if behind > LATE_S:
                     self.late += 1
                     self._degrade(book.window, "feed_late")
+                elif now - book.at > LATE_S:
+                    self.held += 1
+                    held = max(held, item[2] - book.at)
                 if latest[(book.window, book.side)] != index and book.window not in taking:
                     self.coalesced += 1
                     continue
@@ -1189,11 +1285,16 @@ class KalshiArena:
                         self._fills(res, res.desk.advance(now))
             elif kind == "trade":
                 trade: Trade = item[1]
-                behind = now - (trade.received_at if trade.received_at is not None else trade.at)
+                behind = now - item[2]
                 lag = max(lag, behind)
                 if behind > LATE_S:
                     self.late += 1
                     self._degrade(trade.window, "feed_late")
+                elif now - trade.at > LATE_S:
+                    self.held += 1
+                    held = max(held, item[2] - trade.at)
+                    if self._wanted(trade):
+                        self._degrade(trade.window, "feed_held")
                 identity = f"{trade.window}:{trade.side}:{trade.trade_id}"
                 if identity in self.seen_prints:
                     continue
@@ -1205,8 +1306,20 @@ class KalshiArena:
                     self._fills(res, res.desk.on_trade(trade, now))
             elif kind == "gap":
                 self._gap(item[1], bool(item[2]), bool(item[3]), now)
-        self.lag_s = max(0.0, lag)
+        self.lag_s, self.held_s = max(0.0, lag), max(0.0, held)
         return now
+
+    def _wanted(self, trade: Trade) -> bool:
+        """True when a resident's resting bid would have filled on this print (the desks' own rule in
+        ``PracticeDesk.on_trade``: a sell print, at or under the bid, after the bid became active)."""
+        if trade.aggressor != "sell":
+            return False
+        for res in self._holders(trade.window):
+            for order in res.desk.orders.values():
+                if (order.kind == "rest" and order.window == trade.window and order.side == trade.side
+                        and trade.price <= order.price + EPSILON and trade.at > order.active_at):
+                    return True
+        return False
 
     def _gap(self, gap_windows: Sequence[str], trade_stream: bool, coinbase: bool, now: float) -> None:
         """The speed desk's own feed-gap rule (SpeedRunner.on_status): a lost stream cancels everything."""
@@ -1569,12 +1682,13 @@ class KalshiArena:
 
         duty = round(100 * max(0.0, self.cpu() - self.cpu_base) / elapsed, 2)
         return {"queue": len(self.inbox), "received": self.received, "dropped": self.link_dropped,
-                "late": self.late, "coalesced": self.coalesced, "pass_p50_ms": ms(0.5), "pass_p99_ms": ms(0.99),
-                "pass_max_ms": ms(1.0), "duty_pct": duty, "lag_s": round(self.lag_s, 3),
+                "late": self.late, "held": self.held, "coalesced": self.coalesced, "pass_p50_ms": ms(0.5),
+                "pass_p99_ms": ms(0.99), "pass_max_ms": ms(1.0), "duty_pct": duty, "lag_s": round(self.lag_s, 3),
+                "held_s": round(self.held_s, 3),
                 "errors": self.errors, "live_flush_us_p50": pick(flushes, 0.5), "live_flush_us_p99": pick(flushes, 0.99),
                 "live_flush_us_max": pick(flushes, 1.0), "last_frame_at": self.last_frame_at,
                 "open_incomplete": len(self.degraded),
-                "hardening": None if self.hardening is None else dict(self.hardening)}
+                "hardening": None if self.hardening is None else dict(self.hardening), **process_memory()}
 
     def _resident_row(self, res: Resident, now: float) -> dict[str, Any]:
         """One resident as the page shows it. PRACTICE money in USD, fees included; equity carries the open
@@ -1661,7 +1775,7 @@ class KalshiArena:
                 "residents": [res.row for res in self.residents.values()], "grave": self.grave,
                 "events": self.events, "town": self.town,
                 "feed": {"received": self.received, "dropped": self.link_dropped, "late": self.late,
-                         "errors": self.errors}, "problem": self.problem}
+                         "held": self.held, "errors": self.errors}, "problem": self.problem}
 
     def _save(self, now: float) -> None:
         """state.json, then panel.json. The state is fsynced (the town's only record) only after a change that
@@ -1678,11 +1792,13 @@ class KalshiArena:
         self.status_at = now
         feed = self.telemetry(now)
         log.info("kalshi_arena_status residents=%d windows=%d void=%d void_feed=%d received=%d dropped=%d late=%d "
-                 "coalesced=%d pass_p99_ms=%s pass_max_ms=%s duty_pct=%.2f lag_s=%.2f errors=%d "
-                 "live_flush_us_p99=%s live_flush_us_max=%s", len(self.residents), self.town["windows"],
-                 self.town["void_windows"], self.town["void_feed"], feed["received"], feed["dropped"], feed["late"],
-                 feed["coalesced"], feed["pass_p99_ms"], feed["pass_max_ms"], feed["duty_pct"], feed["lag_s"],
-                 feed["errors"], feed["live_flush_us_p99"], feed["live_flush_us_max"])
+                 "held=%d coalesced=%d open_incomplete=%d pass_p99_ms=%s pass_max_ms=%s duty_pct=%.2f lag_s=%.2f "
+                 "held_s=%.2f errors=%d live_flush_us_p99=%s live_flush_us_max=%s rss_mb=%s max_rss_mb=%s",
+                 len(self.residents), self.town["windows"], self.town["void_windows"], self.town["void_feed"],
+                 feed["received"], feed["dropped"], feed["late"], feed["held"], feed["coalesced"],
+                 feed["open_incomplete"], feed["pass_p99_ms"], feed["pass_max_ms"], feed["duty_pct"], feed["lag_s"],
+                 feed["held_s"], feed["errors"], feed["live_flush_us_p99"], feed["live_flush_us_max"],
+                 feed["rss_mb"], feed["max_rss_mb"])
         self.passes.clear()
         self.live_flush_us.clear()
         self.cpu_base, self.cpu_since = self.cpu(), now

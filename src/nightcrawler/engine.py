@@ -234,6 +234,7 @@ from nightcrawler.models import (
     lamports_to_sol,
     new_id,
 )
+from nightcrawler.procmem import process_memory
 from nightcrawler.sources.pumpfun import is_pumpfun_coin
 from nightcrawler.strategy import entry_signal, exit_signal, rolling_high
 
@@ -2499,6 +2500,8 @@ class Engine:
             "crawler": crawler_stats,
             "stages": self.last_results,
             "learning": self.learning.status() if self.learning is not None else None,
+            # This process's memory (the live desks run in it): resident now and its high-water mark, in MB.
+            "memory": process_memory(),
         })
 
     def _cocoon_counters(self) -> dict[str, int]:

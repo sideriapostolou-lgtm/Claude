@@ -171,6 +171,90 @@ def test_the_seal_survives_a_crash_at_every_step(tmp_path, crash_at, monkeypatch
         assert TapeReader(root).rows(DAY, stream) == items
 
 
+def _reference_seal(data: bytes) -> bytes:
+    """The one-shot seal as it was written before the stream (gzip, mtime 0, no name, level 9), for the byte check."""
+    import io
+
+    buffer = io.BytesIO()
+    with gzip.GzipFile(filename="", mode="wb", fileobj=buffer, mtime=0) as gz:
+        gz.write(data[:data.rfind(b"\n") + 1])
+    return buffer.getvalue()
+
+
+def test_the_streamed_seal_writes_the_same_bytes_as_the_one_shot_seal(root, monkeypatch) -> None:
+    """Chunks of 64 KiB over a few megabytes with a torn last line longer than a chunk: the ``.gz`` bytes, the
+    manifest's hashes and byte counts and the hourly roots are exactly the one-shot versions'."""
+    monkeypatch.setattr(tape_mod, "CHUNK_BYTES", 64 << 10)
+    with TapeWriter(root) as w:
+        for stream, n in (("universe", 20_000), ("candles", 9_000)):
+            for r in rows(n, stream):
+                w.append(stream, DAY, r)
+    folder = root / DAY
+    torn = b'{"v": 1, "ts": 17914, "pad": "' + b"x" * (200 << 10)  # a torn line of 200 KiB (the process died mid-line)
+    with (folder / "universe.jsonl").open("ab") as fh:
+        fh.write(torn)
+    raw = {name: (folder / f"{name}.jsonl").read_bytes() for name in ("universe", "candles")}
+    assert len(raw["universe"]) > 2 << 20
+    with TapeWriter(root) as w:
+        roots = w.segments({})
+        manifest = w.seal(DAY)
+        w.finish_seal(DAY)
+    for name, data in raw.items():
+        whole = data[:data.rfind(b"\n") + 1]
+        assert (folder / f"{name}.jsonl.gz").read_bytes() == _reference_seal(data)
+        entry = next(f for f in manifest["files"] if f["file"] == f"{name}.jsonl")
+        assert entry["bytes"] == len(whole) and entry["sha256"] == hashlib.sha256(whole).hexdigest()
+        assert entry["gz_sha256"] == hashlib.sha256(_reference_seal(data)).hexdigest()
+        segment = next(s for s in roots if s["file"] == f"{DAY}/{name}.jsonl")
+        assert (segment["start"], segment["end"]) == (0, len(whole))
+        assert segment["sha256"] == hashlib.sha256(whole).hexdigest()
+    assert TapeReader(root).rows(DAY, "candles") == rows(9_000, "candles")
+    assert len(TapeReader(root).rows(DAY, "universe")) == 20_000  # the torn line is gone
+
+
+def test_a_multi_hundred_megabyte_day_seals_in_bounded_memory(root) -> None:
+    """The seal runs inside the real-money process once a day; a 750 MB day used to pass through its memory twice.
+    A synthetic 300 MB tape (and its hourly root over the whole file) seals under a tracemalloc ceiling of 48 MB:
+    the one-shot version peaked at twice the file."""
+    import tracemalloc
+
+    folder = root / DAY
+    folder.mkdir(parents=True)
+    line = (b'{"v":1,"ts":1791475200.0,"mint":"M' + b"0" * 40 + b'","src":{"pumpfun":[1791475200.0,200]},"raw":{"k":"'
+            + b"v" * 400 + b'"}}\n')
+    block = line * 2048  # about 1 MB of lines
+    size = 0
+    with (folder / "universe.jsonl").open("wb") as fh:
+        while size < 300 << 20:
+            fh.write(block)
+            size += len(block)
+        fh.write(b'{"v":1,"torn":')  # the process died mid-line
+    tracemalloc.start()
+    try:
+        with TapeWriter(root) as w:
+            roots = w.segments({})
+            manifest = w.seal(DAY)
+            w.finish_seal(DAY)
+        _current, peak = tracemalloc.get_traced_memory()
+    finally:
+        tracemalloc.stop()
+    print(f"sealing a {size / 1e6:.0f} MB day: Python peak {peak / 1e6:.1f} MB")
+    assert peak < 48 << 20, peak
+    (entry,) = manifest["files"]
+    assert entry["bytes"] == size and roots[0]["end"] == size  # whole lines only; the torn line never sealed
+    assert entry["sha256"] == roots[0]["sha256"]
+    assert sorted(p.name for p in folder.iterdir()) == [MANIFEST, "universe.jsonl.gz"]
+    with gzip.open(folder / "universe.jsonl.gz", "rb") as gz:
+        digest, total = hashlib.sha256(), 0
+        while True:
+            chunk = gz.read(8 << 20)
+            if not chunk:
+                break
+            digest.update(chunk)
+            total += len(chunk)
+    assert (total, digest.hexdigest()) == (size, entry["sha256"])
+
+
 # --------------------------------------------------------------------------- candles: first value wins, coverage
 
 

@@ -71,7 +71,7 @@
         "counts": {"residents": 4, "grave": 8, "candidates": 1, "events": 25},
         "truncated": {"residents": false, "grave": true, "candidates": false, "events": true},
         "town": {"born": 12, "evicted": 8, "windows": 244, "void_windows": 3, "void_feed": 1, "candidates": 1, "rent_days": 2, "rent_paid": 1.6},
-        "feed": {"queue": 0, "received": 1843210, "dropped": 412, "late": 37, "coalesced": 1201554, "errors": 0, "open_incomplete": 0, "pass_p50_ms": 0.41, "pass_p99_ms": 6.8, "pass_max_ms": 21.3, "duty_pct": 1.9, "lag_s": 0.12, "live_flush_us_p50": 38.0, "live_flush_us_p99": 260.0, "live_flush_us_max": 1210.0, "last_frame_at": 1792158431.96, "hardening": {"nice": 19, "sched": "idle", "as_limit_bytes": 1073741824, "oom_score_adj": 1000, "applied": true}}
+        "feed": {"queue": 0, "received": 1843210, "dropped": 412, "late": 37, "held": 3, "coalesced": 1201554, "errors": 0, "open_incomplete": 0, "pass_p50_ms": 0.41, "pass_p99_ms": 6.8, "pass_max_ms": 21.3, "duty_pct": 1.9, "lag_s": 0.12, "held_s": 0.41, "live_flush_us_p50": 38.0, "live_flush_us_p99": 260.0, "live_flush_us_max": 1210.0, "last_frame_at": 1792158431.96, "rss_mb": 61.4, "max_rss_mb": 73.2, "hardening": {"nice": 19, "sched": "idle", "as_limit_bytes": 1073741824, "oom_score_adj": 1000, "applied": true}}
       }
     },
     "stale": {
@@ -120,7 +120,7 @@
         "counts": {"residents": 4, "grave": 1, "candidates": 0, "events": 6},
         "truncated": {"residents": false, "grave": false, "candidates": false, "events": false},
         "town": {"born": 5, "evicted": 1, "windows": 23, "void_windows": 1, "void_feed": 0, "candidates": 0, "rent_days": 0, "rent_paid": 0.0},
-        "feed": {"queue": 0, "received": 151022, "dropped": 0, "late": 2, "coalesced": 97310, "errors": 0, "open_incomplete": 0, "pass_p50_ms": 0.38, "pass_p99_ms": 4.9, "pass_max_ms": 12.6, "duty_pct": 1.4, "lag_s": 0.08, "live_flush_us_p50": 35.0, "live_flush_us_p99": 240.0, "live_flush_us_max": 980.0, "last_frame_at": 1791957760.94, "hardening": {"nice": 19, "sched": "idle", "as_limit_bytes": 1073741824, "oom_score_adj": 1000, "applied": true}}
+        "feed": {"queue": 0, "received": 151022, "dropped": 0, "late": 2, "held": 0, "coalesced": 97310, "errors": 0, "open_incomplete": 0, "pass_p50_ms": 0.38, "pass_p99_ms": 4.9, "pass_max_ms": 12.6, "duty_pct": 1.4, "lag_s": 0.08, "held_s": 0.0, "live_flush_us_p50": 35.0, "live_flush_us_p99": 240.0, "live_flush_us_max": 980.0, "last_frame_at": 1791957760.94, "rss_mb": 58.9, "max_rss_mb": 64.0, "hardening": {"nice": 19, "sched": "idle", "as_limit_bytes": 1073741824, "oom_score_adj": 1000, "applied": true}}
       }
     },
     "missing_no_file": {

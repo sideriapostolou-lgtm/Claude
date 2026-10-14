@@ -234,6 +234,9 @@ def test_ticks_and_windows_never_reach_the_arena_and_a_step_flushes_once(tmp_pat
 
 
 def test_a_put_is_one_bounded_append_that_never_raises(tmp_path: Path) -> None:
+    """Books take one slot per window and side (the latest replaces the one waiting: a busy book is never a
+    backlog); prints queue behind them, bounded, and past the bound they are dropped, counted and their window
+    remembered for the town. Production on 2026-10-13 dropped a third of the feed at 1,024 waiting."""
     link = ArenaLink(ArenaConfig(data_dir=tmp_path))
     item = book(T0, 1)
     link.feed_book(item)
@@ -243,11 +246,47 @@ def test_a_put_is_one_bounded_append_that_never_raises(tmp_path: Path) -> None:
     for _ in range(100_000):
         link.feed_book(item)
     per_put_us = (time.perf_counter() - started) / 100_000 * 1e6
-    assert per_put_us < 5, per_put_us  # about 0.15 us here
-    assert len(link.pending) == link.puts == PENDING_MAX and link.dropped == 100_000 - PENDING_MAX
+    assert per_put_us < 5, per_put_us  # about 0.25 us here
+    assert len(link.pending) == 1 and link.puts == 100_000 and link.coalesced == 99_999 and link.dropped == 0
+    assert PENDING_MAX >= 16_384
+    for n in range(PENDING_MAX + 500):
+        link.feed_trade(trade(T0, n))
+    assert len(link.pending) == PENDING_MAX and link.dropped == 501 and link.drop_slugs == {SLUG}
+    other = Book("KXBTC15M-other", "up", (Level(.30, 2),), (Level(.60, 10),), T0, "o1", T0)
+    link.feed_book(other)  # a first book for a market when the queue is full: dropped and named too
+    assert link.dropped == 502 and link.drop_slugs == {SLUG, other.window}
+    newer = book(T0 + 1, 1)
+    link.feed_book(newer)  # a waiting market's book still takes its slot
+    assert link.pending[0] is newer and link.dropped == 502
+    link.feed_gap(("x",), True, True)  # a gap (a few a minute) always goes
+    assert len(link.pending) == PENDING_MAX + 1
     link.pending = None  # type: ignore[assignment]  # even a broken link cannot raise into the live loop
     link.feed_trade(trade(T0, 1))
+    link.feed_book(newer)
     link.feed_gap(("x",), True, True)
+
+
+def test_a_full_queue_costs_a_few_megabytes(tmp_path: Path) -> None:
+    """The memory behind PENDING_MAX: a queue full of prints plus a 25-level book for every market the live desk
+    follows (books share their Level objects with the market socket's own ladders)."""
+    import tracemalloc
+
+    link = ArenaLink(ArenaConfig(data_dir=tmp_path))
+    link.running = True
+    ladders = [Ladders(f"KXBTC15M-m{k}", depth=25, seed=k) for k in range(8)]
+    tracemalloc.start()
+    try:
+        for n in range(PENDING_MAX):
+            link.feed_trade(Trade(ladders[n % 8].slug, "up", 0.45, 2.0, T0 + n / 1000, f"t{n}", "sell", T0 + n / 1000))
+        for lad in ladders:
+            for item in lad.delta(T0):
+                link.feed_book(item)
+        current, _peak = tracemalloc.get_traced_memory()
+    finally:
+        tracemalloc.stop()
+    print(f"a full queue ({len(link.pending)} events): {current / 1e6:.1f} MB")
+    assert len(link.pending) == PENDING_MAX and link.dropped == 16
+    assert current < 16 << 20, current  # about 6 MB here
 
 
 def test_the_live_loop_pays_almost_nothing_per_book_and_print(tmp_path: Path) -> None:
@@ -311,10 +350,114 @@ def test_a_flush_of_a_busy_market_costs_well_under_half_a_millisecond(tmp_path: 
         print(f"flush CPU ms: median {median:.3f} p99 {high:.3f} max {ordered[-1]:.3f}; link {link.telemetry()}")
         assert median < 0.25 and high < 0.5, (median, high)
         assert link.dropped == 0 and link.frames >= 200
+        # Of each step's 20 books only the latest per window and side travels (2), with the print.
+        assert link.puts == 200 * 21 and link.coalesced == 200 * 18
     finally:
         link.close(wait_s=10)
     feed = kalshi_arena.panel_state(tmp_path, time.time())["feed"]
-    assert feed["received"] == 200 * 21 and feed["dropped"] == 0 and feed["live_flush_us_p99"] is not None
+    assert feed["received"] == 200 * 3 and feed["dropped"] == 0 and feed["live_flush_us_p99"] is not None
+    assert feed["rss_mb"] > 0 and feed["max_rss_mb"] >= feed["rss_mb"]  # the town's own memory, for the page
+
+
+def test_a_busy_feed_with_live_loop_stalls_drops_nothing_inside_the_budget(tmp_path: Path) -> None:
+    """Production's shape on 2026-10-13, three times over: 2,000 Kalshi events a second (books on three windows, two
+    sides, 2 % prints) with the live loop's stalls (a 2.3 s one, an 8 s one: the events of the stall arrive in one
+    burst before a single flush) through the real town. Nothing is dropped, the flush's CPU p99 on the live thread
+    stays under half a millisecond, and the budget leaves what it cannot encode for the next step instead."""
+    link = ArenaLink(ArenaConfig(data_dir=tmp_path))
+    link.start()
+    try:
+        assert link.running and wait_for(lambda: (tmp_path / "kalshi_arena" / "panel.json").exists())
+        now = time.time()
+        windows = tuple(Window(f"KXBTC15M-s{k}", now - 30 + 900 * k, now + 870 + 900 * k, None, taker_coefficient=0.07,
+                               maker_coefficient=0.0, venue_start_price=80_000, venue="kalshi", fee_rounding="kalshi")
+                        for k in range(3))
+        ladders = [Ladders(window.slug, depth=25, seed=k) for k, window in enumerate(windows)]
+        prints = 0
+
+        def feed(count: int, at: float) -> None:
+            nonlocal prints
+            for i in range(count):
+                lad = ladders[i % 3]
+                if i % 50 == 49:
+                    prints += 1
+                    link.feed_trade(Trade(lad.slug, "up", 0.45, 2.0, at, f"t{prints}", "sell", at))
+                else:
+                    for item in lad.delta(at):
+                        link.feed_book(item)
+
+        cpu: list[float] = []
+        stalls = {40: 2.3, 80: 8.0}
+        for step in range(120):
+            stall = stalls.get(step, 0.0)  # a stall's events carry the times they arrived, before the loop froze
+            feed(int(2000 * (stall or 0.05)), time.time() - stall)
+            snap = LiveSnapshot(windows=windows, bitcoin_price=80_000.0 + step % 50, bitcoin_at=time.time(),
+                                sigma=0.0003, maker_windows=frozenset(window.slug for window in windows))
+            started = time.thread_time_ns()
+            link.flush(snap)
+            cpu.append((time.thread_time_ns() - started) / 1e6)
+            time.sleep(0.05)
+        for _ in range(20):  # whatever a budget left behind drains over the next steps
+            link.flush(snap)
+            time.sleep(0.05)
+        ordered = sorted(cpu)
+        telemetry = link.telemetry()
+        print(f"2,000 events/s with stalls: flush CPU ms p50 {ordered[len(ordered) // 2]:.3f} "
+              f"p99 {ordered[int(0.99 * len(ordered))]:.3f} max {ordered[-1]:.3f}; link {telemetry}")
+        assert telemetry["dropped"] == 0 and telemetry["pending"] == 0 and telemetry["put"] > 60_000
+        assert ordered[int(0.99 * len(ordered))] < 0.5, ordered[int(0.99 * len(ordered))]
+        assert telemetry["pending_peak"] <= 16_000 * 2 // 50 + 6 + 10  # a stall's prints plus one book a market
+    finally:
+        link.close(wait_s=10)
+    feed_status = kalshi_arena.panel_state(tmp_path, time.time())["feed"]
+    assert feed_status["dropped"] == 0 and feed_status["received"] == telemetry["put"] - telemetry["coalesced"]
+    assert feed_status["received"] >= prints  # every print reached the town, plus the latest books
+    assert feed_status["late"] == 0  # the town read every frame within its own budget
+    assert feed_status["held"] > 0 and feed_status["open_incomplete"] == 0  # the stalls were the live loop's
+
+
+def test_a_backlog_is_encoded_in_slices_within_the_budget(tmp_path: Path) -> None:
+    """A queue of 12,000 prints (an 8 s stall of a busy market): one flush encodes only what fits the CPU budget
+    (and never more than FLUSH_MAX); the rest goes at the next steps, in order, and nothing is dropped."""
+    import marshal
+
+    class Socket:
+        def __init__(self) -> None:
+            self.frames: list[bytes] = []
+
+        def send(self, data: bytes) -> int:
+            self.frames.append(data[4:])  # decoded after the timing, outside the flush
+            return len(data)
+
+        def close(self) -> None:
+            pass
+
+    class Proc:
+        pid = 1
+
+        def poll(self) -> None:
+            return None
+
+    link = ArenaLink(ArenaConfig(data_dir=tmp_path))
+    sock = Socket()
+    link.sock, link.proc, link.running = sock, Proc(), True  # type: ignore[assignment]
+    snap = LiveSnapshot(windows=(kalshi_window(T0),), bitcoin_price=80_000.0, bitcoin_at=T0, sigma=0.0003)
+    for n in range(12_000):
+        link.feed_trade(trade(T0 + n / 1000, n))
+    flushes = 0
+    cpu: list[float] = []
+    while link.pending and flushes < 100:
+        started = time.thread_time_ns()
+        link.flush(snap)
+        cpu.append((time.thread_time_ns() - started) / 1e6)
+        flushes += 1
+    messages = [marshal.loads(data) for data in sock.frames]
+    print(f"backlog of 12,000 prints: {flushes} flushes, CPU ms max {max(cpu):.3f} p50 {quantile(cpu, 0.5):.3f}")
+    assert link.sliced >= 1 and link.dropped == 0 and flushes >= 3
+    sent = [record for message in messages for record in message[5] if record[0] == "t"]
+    assert [record[6] for record in sent] == [f"t{n}" for n in range(12_000)]  # every print, in order
+    assert all(len(message[5]) <= kalshi_arena.FLUSH_MAX + 4 for message in messages)
+    assert max(cpu) < 1.0, max(cpu)  # the budget, the frame's marshal and send, and a margin for a shared machine
 
 
 # ---------------------------------------------------------------------- isolation
@@ -331,12 +474,16 @@ def test_a_town_that_never_reads_never_blocks_the_live_loop(tmp_path: Path) -> N
             for _ in range(40):
                 for item in ladders.delta(now):
                     link.feed_book(item)
+            for n in range(60):  # prints are not coalesced: they fill the socket, then the queue
+                link.feed_trade(trade(now, step * 60 + n))
             snap = LiveSnapshot(windows=(window,), bitcoin_price=80_000.0 + step, bitcoin_at=now, sigma=0.0003)
             began, began_cpu = time.perf_counter_ns(), time.thread_time_ns()
             link.flush(snap)
             cpu.append((time.thread_time_ns() - began_cpu) / 1e6)
             wall.append((time.perf_counter_ns() - began) / 1e6)
-        assert link.running and link.dropped > 0  # the socket filled: whole frames dropped and counted
+        # The socket filled: the frame waits for the next step, the books keep replacing each other in their two
+        # slots and the prints queue, bounded; past the bound they are dropped and counted.
+        assert link.running and link.blocked > 0 and link.out and 0 < len(link.pending) <= PENDING_MAX
         assert max(cpu) < 5 and p99(cpu) < 1.5, (max(cpu), p99(cpu))  # never waits, however full
         assert statistics.median(wall) < 1, statistics.median(wall)
     finally:
@@ -407,7 +554,10 @@ def test_a_dead_town_is_noticed_and_never_reaches_the_live_desk(tmp_path: Path, 
     broken.close(wait_s=1)
 
 
-def test_a_town_behind_drops_whole_frames_then_sends_whole_ladders(tmp_path: Path) -> None:
+def test_a_town_behind_holds_the_frame_and_the_events_wait(tmp_path: Path) -> None:
+    """When the socket takes nothing (the town is behind), the frame waits for the next step and so do the events:
+    books in their slots (the latest replaces the waiting one), prints behind them. Nothing is dropped until the
+    queue's bound, and then the drop is counted and named by its window in the next frame."""
     import marshal
 
     class Socket:
@@ -453,34 +603,94 @@ def test_a_town_behind_drops_whole_frames_then_sends_whole_ladders(tmp_path: Pat
             link.feed_book(item)
         link.flush(snap)
 
+    def rebuild() -> list[Book]:
+        return [book_from_wire(record, town) for message in frames(sock) for record in message[5] if record[0] == "b"]
+
     send(*ladders.delta(T0))
     (first,) = frames(sock)
     assert [record[0] for record in first[5]] == ["w", "k", "o", "m", "b", "b"]
     for record in first[5][4:]:
         book_from_wire(record, town)
-    # The town is behind: the socket takes nothing, so the frame is dropped whole and the ladders reset.
+    # The town is behind: the socket takes nothing. The frame is kept whole; nothing is dropped.
     sock.takes = [None]
     send(*ladders.delta(T0 + 1))
-    assert link.dropped == 2 and link.out == b"" and link._ladders == {} and link._windows is None
-    # Then it takes a few bytes of the next frame: the rest goes first next time, before any new frame.
-    sock.takes = [100]
+    assert link.dropped == 0 and link.out and link.frames == 2 and link.pending == [] and link.seq == 2
+    # Still behind at the next step: this step's books wait in their slots, nothing new is encoded.
+    sock.takes = [None]
     send(*ladders.delta(T0 + 2))
-    assert len(link.out) > 0 and link.frames == 2
+    assert link.blocked == 1 and link.dropped == 0 and len(link.pending) == 2 and link.frames == 2
     latest = ladders.delta(T0 + 3)
-    send(*latest)
-    assert link.out == b"" and link.frames == 3
+    send(*latest)  # replaces the waiting books; the socket is open again: the held frame first, then these
+    assert link.coalesced == 2 and link.out == b"" and link.frames == 3
     second, third = frames(sock)
-    assert (second[1], third[1], second[3]) == (2, 3, 2)  # in order, and the drop count travels with them
-    assert [record[0] for record in second[5]] == ["w", "k", "o", "m", "b", "b"]  # every fact again after a drop
-    assert all(record[3][1] is None and record[4][1] is None for record in second[5][4:])  # whole ladders again
-    rebuilt = [book_from_wire(record, town) for message in (second, third) for record in message[5]
-               if record[0] == "b"]
-    assert rebuilt[-2:] == list(latest) and [record[0] for record in third[5]] == ["b", "b"]
-    # Still behind with a frame unfinished: that step's events are dropped before they are even encoded.
-    sock.takes = [10, None]
-    send(ladders.delta(T0 + 4)[0])
-    send(ladders.delta(T0 + 5)[0])
-    assert link.dropped == 3 and link.pending == [] and len(link.out) > 0
+    assert (second[1], third[1]) == (2, 3) and [record[0] for record in third[5]] == ["b", "b"]
+    sock.wire = bytearray()
+    for message in (second, third):
+        for record in message[5]:
+            if record[0] == "b":
+                town_book = book_from_wire(record, town)
+    assert town_book == latest[1]  # the ladders rebuild exactly through the hold
+    # A frame taken in part: the rest goes first next time, before any new frame.
+    sock.takes = [100]
+    send(*ladders.delta(T0 + 4))
+    assert len(link.out) > 0 and link.frames == 4
+    newest = ladders.delta(T0 + 5)
+    send(*newest)
+    assert link.out == b"" and link.frames == 5
+    assert rebuild()[-2:] == list(newest)
+    # The last resort: a queue full of prints while the town is behind drops the rest, counted and named.
+    sock.takes = [None]
+    for n in range(PENDING_MAX + 10):
+        link.feed_trade(trade(T0 + 6, n))
+    assert link.dropped == 10 and link.drop_slugs == {SLUG}
+    link.flush(snap)  # a frame with the first slice is built and held whole; the rest waits in the queue
+    assert link.out and link.dropped == 10 and link.sliced == 1 and 0 < len(link.pending) < PENDING_MAX
+    sock.takes = [None]
+    link.flush(snap)
+    assert link.blocked == 2 and link.sliced == 1  # still behind: nothing more is encoded
+    sock.takes = []
+    flushes = 0
+    while link.pending and flushes < 50:
+        link.flush(snap)
+        flushes += 1
+    sent = frames(sock)
+    assert sent[0][5][0] == ("d", (SLUG,)) and sent[0][3] == 10  # the windows that lost events, and the count
+    assert sum(record[0] == "t" for message in sent for record in message[5]) == PENDING_MAX
+    assert link.sliced >= 2 and link.drop_slugs == set() and link.out == b""
+
+
+def test_the_feed_status_line_carries_the_live_process_memory(tmp_path: Path, caplog: Any) -> None:
+    """``kalshi_arena_feed`` (every 5 minutes) says what the live process costs in memory, besides what the link
+    put, coalesced, dropped and how a flush went."""
+    import marshal
+
+    class Socket:
+        def send(self, data: bytes) -> int:
+            marshal.loads(data[4:])
+            return len(data)
+
+        def close(self) -> None:
+            pass
+
+    class Proc:
+        pid = 1
+
+        def poll(self) -> None:
+            return None
+
+    caplog.set_level(logging.INFO, "nightcrawler.kalshi_arena")
+    link = ArenaLink(ArenaConfig(data_dir=tmp_path))
+    link.sock, link.proc, link.running = Socket(), Proc(), True  # type: ignore[assignment]
+    link.status_at = -1e18
+    link.feed_book(book(T0, 1))
+    link.flush(LiveSnapshot(windows=(kalshi_window(T0),), bitcoin_price=80_000.0, bitcoin_at=T0, sigma=0.0003))
+    line = next(record.getMessage() for record in caplog.records if "kalshi_arena_feed" in record.getMessage())
+    telemetry = link.telemetry()
+    assert telemetry["rss_mb"] > 0 and telemetry["max_rss_mb"] >= telemetry["rss_mb"]
+    for key in ("put=1", "coalesced=0", "dropped=0", "pending=1", "pending_peak=1", "sliced=0", "blocked=0",
+                f"rss_mb={telemetry['rss_mb']}", f"max_rss_mb={telemetry['max_rss_mb']}"):
+        assert key in line, (key, line)
+
 
 
 def test_only_windows_the_town_can_use_travel_and_only_when_they_change(tmp_path: Path) -> None:

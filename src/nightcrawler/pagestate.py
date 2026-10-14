@@ -1687,11 +1687,11 @@ def _kalshi_arena_view(kalshi_arena: Any, raw: Mapping[str, Any], settings: Sett
     town = raw.get("town")
     feed = raw.get("feed")
     feed_block: dict[str, Any] | None = None if not isinstance(feed, Mapping) else {
-        **{key: _count(feed.get(key)) for key in ("queue", "received", "dropped", "late", "coalesced", "errors",
-                                                  "open_incomplete")},
+        **{key: _count(feed.get(key)) for key in ("queue", "received", "dropped", "late", "held", "coalesced",
+                                                  "errors", "open_incomplete")},
         **{key: _num(feed.get(key)) for key in ("pass_p50_ms", "pass_p99_ms", "pass_max_ms", "duty_pct", "lag_s",
-                                                 "live_flush_us_p50", "live_flush_us_p99", "live_flush_us_max",
-                                                 "last_frame_at")},
+                                                 "held_s", "live_flush_us_p50", "live_flush_us_p99",
+                                                 "live_flush_us_max", "last_frame_at", "rss_mb", "max_rss_mb")},
         "hardening": hardening(feed.get("hardening"))}
     as_of = _num(raw.get("as_of"))
     problem = text.opt(raw.get("problem"))

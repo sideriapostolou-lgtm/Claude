@@ -393,6 +393,8 @@ def test_heartbeat_and_status_are_written(make_rig) -> None:
     assert status["state"] == "running" and status["mode"] == "paper"
     assert status["counters"]["cocoon_checked"] == 2 and status["counters"]["entries"] == 1
     assert status["crawler"]["polls"] == 1
+    # The live process's memory rides along with every heartbeat (resident now, and its high-water mark, in MB).
+    assert set(status["memory"]) == {"rss_mb", "max_rss_mb"} and status["memory"]["max_rss_mb"] > 0
 
 
 def test_run_forever_writes_boot_and_shutdown_receipts(make_rig) -> None:

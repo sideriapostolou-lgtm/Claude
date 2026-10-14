@@ -42,33 +42,33 @@ import threading
 import time
 from collections import defaultdict
 from collections.abc import Callable, Iterable, Mapping, Sequence
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, BinaryIO
+from typing import Any, BinaryIO, Self
 
 from nightcrawler.models import Candle
 
 __all__ = [
-    "SCHEMA_V",
-    "STREAMS",
+    "CANDLE_LIMIT",
+    "DEFAULT_L_OBS_S",
     "FSYNC_EVERY_LINES",
     "FSYNC_EVERY_S",
+    "LAUNCH_FIELDS",
     "MANIFEST",
-    "DEFAULT_L_OBS_S",
-    "CANDLE_LIMIT",
+    "SCHEMA_V",
+    "STREAMS",
     "TAIL_MINUTES",
+    "TapeReader",
     "TapeSealed",
-    "tape_day",
-    "canonical_line",
-    "segment_root",
-    "verify_segments",
+    "TapeView",
+    "TapeWriter",
     "candle_fetch_row",
     "candle_mark",
-    "LAUNCH_FIELDS",
+    "canonical_line",
+    "segment_root",
+    "tape_day",
     "universe_row",
-    "TapeWriter",
-    "TapeReader",
-    "TapeView",
+    "verify_segments",
 ]
 
 SCHEMA_V = 1
@@ -91,7 +91,7 @@ class TapeSealed(Exception):
 
 def tape_day(ts: float) -> str:
     """UTC day ``YYYY-MM-DD`` of epoch seconds ``ts`` (the partition of a coin first seen at ``ts``)."""
-    return datetime.fromtimestamp(float(ts), tz=timezone.utc).strftime("%Y-%m-%d")
+    return datetime.fromtimestamp(float(ts), tz=UTC).strftime("%Y-%m-%d")
 
 
 def canonical_line(row: Mapping[str, Any]) -> bytes:
@@ -137,6 +137,75 @@ def _fsync_dir(path: Path) -> None:
         pass
     finally:
         os.close(fd)
+
+
+#: The seal and the hourly roots read a day's files in pieces of this size, never whole: a 750 MB day used to pass
+#: through the real-money process's memory twice (about 1.5 GB for a few seconds, once a day).
+CHUNK_BYTES = 8 << 20
+
+
+def _whole_lines_end(fh: BinaryIO, start: int = 0) -> int:
+    """The offset just after the last newline at or after ``start`` (``start`` when there is none): the bytes of
+    ``[start, end)`` are whole lines. Found from the file's end backwards, a chunk at a time, so a torn last line of
+    any length costs no more memory than one chunk."""
+    size = fh.seek(0, os.SEEK_END)
+    position = size
+    while position > start:
+        step = min(CHUNK_BYTES, position - start)
+        fh.seek(position - step)
+        chunk = fh.read(step)
+        cut = chunk.rfind(b"\n")
+        if cut >= 0:
+            return position - step + cut + 1
+        position -= step
+    return start
+
+
+def _hash_range(fh: BinaryIO, start: int, end: int) -> str:
+    """sha256 of ``fh[start:end]``, read in chunks."""
+    digest = hashlib.sha256()
+    fh.seek(start)
+    left = end - start
+    while left > 0:
+        chunk = fh.read(min(CHUNK_BYTES, left))
+        if not chunk:
+            break
+        digest.update(chunk)
+        left -= len(chunk)
+    return digest.hexdigest()
+
+
+def _gzip_range(source: BinaryIO, end: int, target: BinaryIO) -> None:
+    """``source[:end]`` -> gzip (mtime 0, no name) on ``target``, a chunk at a time. zlib's deflate stream does not
+    depend on how its input is split, so the bytes are exactly those of compressing the range in one write."""
+    source.seek(0)
+    left = end
+    with gzip.GzipFile(filename="", mode="wb", fileobj=target, mtime=0) as gz:
+        while left > 0:
+            chunk = source.read(min(CHUNK_BYTES, left))
+            if not chunk:
+                break
+            gz.write(chunk)
+            left -= len(chunk)
+
+
+def _verify_gzip(path: Path) -> tuple[int, str, str]:
+    """``(raw bytes, raw sha256, gz sha256)`` of a ``.gz`` file, both read in chunks (nothing is held whole)."""
+    gz_digest, raw_digest, raw_bytes = hashlib.sha256(), hashlib.sha256(), 0
+    with path.open("rb") as fh:
+        while True:
+            chunk = fh.read(CHUNK_BYTES)
+            if not chunk:
+                break
+            gz_digest.update(chunk)
+    with gzip.open(path, "rb") as gz:
+        while True:
+            chunk = gz.read(CHUNK_BYTES)
+            if not chunk:
+                break
+            raw_digest.update(chunk)
+            raw_bytes += len(chunk)
+    return raw_bytes, raw_digest.hexdigest(), gz_digest.hexdigest()
 
 
 # --------------------------------------------------------------------------- universe rows
@@ -255,7 +324,7 @@ class TapeWriter:
         self._files: dict[Path, _Open] = {}
         self._lock = threading.RLock()
 
-    def __enter__(self) -> "TapeWriter":
+    def __enter__(self) -> Self:
         return self
 
     def __exit__(self, *exc: object) -> None:
@@ -351,29 +420,28 @@ class TapeWriter:
         for path in sorted(self.root.glob("*/*.jsonl")):
             rel = f"{path.parent.name}/{path.name}"
             start = int(offsets.get(rel, 0))
-            with path.open("rb") as fh:
-                fh.seek(start)
-                data = fh.read()
-            end = start + data.rfind(b"\n") + 1
-            if end > start:
-                out.append({"file": rel, "start": start, "end": end,
-                            "sha256": hashlib.sha256(data[:end - start]).hexdigest()})
+            with path.open("rb") as fh:  # read in chunks: a day's whole file is never in memory at once
+                end = _whole_lines_end(fh, start)
+                if end > start:
+                    out.append({"file": rel, "start": start, "end": end, "sha256": _hash_range(fh, start, end)})
         return out
 
     # ---------------------------------------------------------------- sealing
     def seal(self, day: str) -> dict[str, Any]:
         """Steps 1-2 of sealing ``day`` (idempotent): every ``X.jsonl`` -> ``X.jsonl.gz`` (tmp, fsync,
         rename), then ``MANIFEST.json``. Returns the manifest; the caller writes the ``tape_seal``
-        outbox row, then calls :meth:`finish_seal`."""
+        outbox row, then calls :meth:`finish_seal`.
+
+        Everything streams in :data:`CHUNK_BYTES` pieces (compression, the manifest's hashes and byte counts, read
+        back from the ``.gz`` as a verification): the seal runs inside the trading process, and a day's file is
+        hundreds of megabytes. The bytes written are exactly those of the one-shot version (gzip with mtime 0)."""
         self._close_day(day)
         folder = self.root / day
         for path in sorted(folder.glob("*.jsonl")):
-            data = path.read_bytes()
-            data = data[:data.rfind(b"\n") + 1]  # a torn last line is never sealed
             tmp = path.with_name(path.name + ".gz.tmp")
-            with tmp.open("wb") as fh:
-                with gzip.GzipFile(filename="", mode="wb", fileobj=fh, mtime=0) as gz:
-                    gz.write(data)
+            with path.open("rb") as source, tmp.open("wb") as fh:
+                end = _whole_lines_end(source)  # a torn last line is never sealed
+                _gzip_range(source, end, fh)
                 fh.flush()
                 os.fsync(fh.fileno())
             self._step("gz_tmp_written")
@@ -382,10 +450,8 @@ class TapeWriter:
             self._step("gz_renamed")
         files = []
         for gz_path in sorted(folder.glob("*.jsonl.gz")):
-            gz_bytes = gz_path.read_bytes()
-            raw = gzip.decompress(gz_bytes)
-            files.append({"file": gz_path.name[:-3], "bytes": len(raw), "sha256": hashlib.sha256(raw).hexdigest(),
-                          "gz_sha256": hashlib.sha256(gz_bytes).hexdigest()})
+            raw_bytes, raw_sha, gz_sha = _verify_gzip(gz_path)
+            files.append({"file": gz_path.name[:-3], "bytes": raw_bytes, "sha256": raw_sha, "gz_sha256": gz_sha})
         manifest = {"v": SCHEMA_V, "day": day, "files": files, "root": segment_root(files)}
         tmp = folder / (MANIFEST + ".tmp")
         tmp.write_bytes(canonical_line(manifest))

@@ -849,3 +849,75 @@ def test_the_panel_says_the_control_runs_the_configured_limits_not_the_ladder(tm
     assert "rung 0" in kalshi_arena.NOTE and "promotion" in kalshi_arena.NOTE and len(kalshi_arena.NOTE) <= 400
     arena, clock = town(tmp_path)
     assert arena.panel(clock.now())["note"] == kalshi_arena.NOTE
+
+
+def _rest(slug: str, side: str, price: float, active_at: float) -> Any:
+    from nightcrawler.speeddesk_model import PracticeOrder
+
+    return PracticeOrder(998, slug, side, "rest", price, 2.0, 2.0, active_at - 0.25, active_at, 0.5, 0.07)  # type: ignore[arg-type]
+
+
+def test_a_drop_voids_only_the_window_that_lost_an_event(tmp_path: Path) -> None:
+    """Production on 2026-10-13 voided every window (why=feed_dropped) whenever the live loop dropped anything. The
+    link now names the windows whose events it dropped; only those are incomplete. A frame missing from the
+    sequence, or a drop count that rose without a name (an older link), still leaves every open window incomplete:
+    then nobody knows what was lost."""
+    arena, _ = town(tmp_path)
+    first, second = kalshi_window(T0), kalshi_window(T0 + 900)
+    arena.windows[first.slug], arena.windows[second.slug] = first, second
+    arena.clock = lambda: T0 + 10  # type: ignore[method-assign]
+    view = kalshi_arena.WireView()
+    arena.receive(("batch", 1, T0 + 10, 0, 40, []), view)
+    arena.receive(("batch", 2, T0 + 10, 7, 40, [("d", (first.slug,))]), view)  # 7 events of the first window
+    assert arena.degraded == {first.slug: "feed_dropped"}
+    arena.receive(("batch", 3, T0 + 10, 9, 40, [("d", ("KXBTC15M-unknown",))]), view)  # a window the town has no use for
+    assert arena.degraded == {first.slug: "feed_dropped"}
+    unnamed, _ = town(tmp_path / "unnamed")
+    unnamed.windows[first.slug], unnamed.windows[second.slug] = first, second
+    unnamed.clock = lambda: T0 + 10  # type: ignore[method-assign]
+    unnamed.receive(("batch", 1, T0 + 10, 0, 40, []), view)
+    unnamed.receive(("batch", 2, T0 + 10, 7, 40, []), view)  # the count rose and no window was named
+    assert unnamed.degraded == {first.slug: "feed_dropped"}  # only the OPEN window (the second has not started)
+    gap, _ = town(tmp_path / "gap")
+    gap.windows[first.slug] = first
+    gap.clock = lambda: T0 + 10  # type: ignore[method-assign]
+    gap.receive(("batch", 1, T0 + 10, 0, 40, []), view)
+    gap.receive(("batch", 3, T0 + 10, 0, 40, []), view)  # a frame missing in the sequence
+    assert gap.degraded == {first.slug: "feed_dropped"}
+
+
+def test_events_the_live_loop_held_are_not_the_towns_lateness(tmp_path: Path) -> None:
+    """The live loop's own stalls (2-8 s on 2026-10-13) age every event before the hand-over. A book that old is
+    harmless (no desk acts on a stale book; the fresh one follows in the same frame) and a print that old is only a
+    loss when a resident's resting bid would have filled on it (every desk discards it as stale). The town's OWN
+    lateness, reading a frame long after it was sent, still voids the window: it fell behind the market."""
+    market = Market(tmp_path, population=12, seed=5)
+    arena = market.start()
+    slug = _open(market)
+    now = market.clock.now()
+    bids = tuple(Level(round(.45 - k / 100, 2), 10 + k) for k in range(5))
+    asks = tuple(Level(round(.50 + k / 100, 2), 10 + k) for k in range(5))
+    # Held 6 s by the live loop, handed over and read at once: not the town's lateness, not a void.
+    arena.feed_book(Book(slug, "up", bids, asks, now - 6, "old-1", now - 6), handed_at=now)  # type: ignore[arg-type]
+    arena.feed_trade(Trade(slug, "up", 0.44, 2.0, now - 6, "old-print", "sell", now - 6), handed_at=now)  # type: ignore[arg-type]
+    arena._drain(now)
+    assert arena.held == 2 and arena.late == 0 and arena.degraded == {} and arena.held_s >= 5.9
+    # A resident had a resting bid the print would have filled: data the town needed, lost to every desk.
+    res = challenger(arena)
+    res.desk.orders[998] = _rest(slug, "up", 0.45, now - 20)
+    arena.feed_trade(Trade(slug, "up", 0.44, 2.0, now - 5, "old-print-2", "sell", now - 5), handed_at=now)  # type: ignore[arg-type]
+    arena._drain(now)
+    assert arena.degraded == {slug: "feed_held"} and arena.held == 3
+    arena.degraded.clear()
+    # A print above every bid, or before the bid was active, or a buy: nobody could have used it.
+    for price, at, aggressor in ((0.46, now - 5, "sell"), (0.44, now - 30, "sell"), (0.44, now - 5, "buy")):
+        arena.feed_trade(Trade(slug, "up", price, 2.0, at, f"p{price}{at}{aggressor}", aggressor, at), handed_at=now)  # type: ignore[arg-type]
+    arena._drain(now)
+    assert arena.degraded == {}
+    # The town's own lateness: a frame read 4 s after the live loop sent it.
+    arena.feed_book(Book(slug, "down", bids, asks, now - 4, "late-1", now - 4), handed_at=now - 4)  # type: ignore[arg-type]
+    arena._drain(now)
+    assert arena.late == 1 and arena.degraded == {slug: "feed_late"} and arena.lag_s >= 3.9
+    feed = arena.telemetry(now)
+    assert feed["held"] == 6 and feed["late"] == 1 and feed["rss_mb"] > 0 and feed["max_rss_mb"] > 0
+    assert set(arena.state(now)["feed"]) == {"received", "dropped", "late", "held", "errors"}

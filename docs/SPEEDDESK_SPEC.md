@@ -763,10 +763,18 @@ setting. A candidate is shown to the owner; real money stays with the live compa
 - **Void:** these windows count for nobody, equal for all (`town.void_windows`):
   - one that had started at a restart (every desk is rebuilt fresh); one listed but not started yet is joined;
   - one still without an outcome two hours after its close;
-  - one whose feed was incomplete for the town (`town.void_feed`, logged `kalshi_arena_void ... why=`): the live
-    loop dropped events while it was open (`feed_dropped`), or the town read an event more than 3 s after it
-    arrived, the desks' freshness (`feed_late`). Otherwise a town that fell behind would book windows it could not
-    trade as if it had seen the market.
+  - one whose feed was incomplete FOR THAT WINDOW (`town.void_feed`, logged `kalshi_arena_void ... why=`): the live
+    loop dropped an event of it (`feed_dropped`; the link names the windows whose events it dropped, so a drop in
+    another window is not this one's void; a frame missing from the sequence, or a drop count that rose without a
+    name, still voids every open window: nobody knows what was lost); the town read an event more than 3 s (the
+    desks' freshness) after the live loop handed it over (`feed_late`: the town's OWN lateness, it fell behind the
+    market the live desk saw); or a print the live loop had held longer than that before the hand-over (its own
+    event loop was late, 2-8 s in production on 2026-10-13) would have filled a resident's resting bid, and every
+    desk discarded it as stale (`feed_held`). A book held that long is no void (no desk acts on a stale book, exactly
+    as the live desk's own practice model would not, and the fresh one follows in the same frame), nor is a held
+    print nobody could have used; both are counted (`feed.held`, `feed.held_s`). Otherwise a town that fell behind
+    would book windows it could not trade as if it had seen the market, and a town whose live loop merely stalled
+    would void windows in which it missed nothing.
 
 ### Genes
 
@@ -839,12 +847,20 @@ spins or hangs holds Python's lock (a 1 ms loop's median lateness went from 0.12
 busy market capped the town near 400 books a second and its lock contention raised the live p99 by 0.6 ms, and its
 objects lengthened every garbage collection. A process boundary removes all of it.
 
-- **The live loop's side (`ArenaLink`):** `on_book` and `on_trade` append the Kalshi book or print to a list
-  (bounded at 1,024; beyond it they are dropped and counted), and `on_status` appends the gap facts. `on_tick` and
-  `on_windows` have no arena code. Once per runner step (every 50 ms) `flush` encodes at most 256 events plus the
-  market facts that changed (windows, price, sigma, maker windows, outcomes) into one frame and writes it to a Unix
-  stream socket without waiting: a full socket drops the whole frame (counted; the next frame carries every fact and
-  whole ladders again), and a dead town is noticed (`kalshi_arena_exited`) and never fed again. Nothing in it raises.
+- **The live loop's side (`ArenaLink`):** `on_book` and `on_trade` hand the Kalshi book or print to the link in O(1):
+  a book takes its market's slot (one per window and side; the latest replaces the one waiting, so a busy book is
+  never a backlog: at 2,000 events a second about 95 % of the books are replaced before they travel), a print
+  queues behind (bounded at 16,384, a few minutes of a busy market; beyond it a print is dropped, counted and its
+  window named to the town in the next frame), and `on_status` appends the gap facts (always). `on_tick` and
+  `on_windows` have no arena code. Once per runner step (every 50 ms) `flush` encodes what is waiting plus the
+  market facts that changed (windows, price, sigma, maker windows, outcomes) into one frame, inside a budget (150 us
+  of the live thread for the encoding, checked every 32 events, at most 4,096 events; the frame's marshal and send
+  cost about as much again; what does not fit waits for the next step, in order), and writes it to a Unix stream
+  socket without waiting: what the socket does not take now goes first at the next step, nothing new is encoded
+  until it has, and the events wait in their slots and queue (`blocked`, `sliced` and `pending_peak` count this).
+  A dead town is noticed (`kalshi_arena_exited`) and never fed again. Nothing in it raises. (Until 2026-10-14 the
+  queue held 1,024 events, a flush took 256 and a full socket dropped the whole frame: production dropped a third
+  of a 700-event-a-second feed and voided every window.)
   - A book's ladders travel as changes to the ladder last sent: the Kalshi socket rebuilds a ladder around the one
     level a delta changes, so a frame carries about one level a book, found by a C-level identity scan.
   - Not a pipe: a pipe's reader holds a lock its writer needs while it copies, so a descheduled town would make the
@@ -886,8 +902,14 @@ objects lengthened every garbage collection. A process boundary removes all of i
 - **Isolation, proven by tests (`tests/test_kalshi_arena_feed.py`):**
   - a stand-in hardened like the town spinning on every core: the live loop's 1 ms sleeps wake as on time as with
     no town (median 0.076 -> 0.073 ms, p90 0.125 -> 0.133 ms);
-  - a town that never reads: every flush returns at once (CPU p99 under 1.5 ms with 80 books a flush), whole frames
-    are dropped and counted;
+  - a town that never reads: every flush returns at once (CPU p99 under 1.5 ms with 80 books and 60 prints a
+    flush); the frame the socket would not take waits for the next step, the books keep replacing each other in
+    their slots, the prints queue (bounded at 16,384) and only past that bound are they dropped and counted;
+  - production's shape on 2026-10-13 (`test_a_busy_feed_with_live_loop_stalls_drops_nothing_inside_the_budget`):
+    2,000 events a second on three windows with a 2.3 s and an 8 s stall of the live loop, through the real town:
+    nothing dropped, flush CPU p99 on the live thread 0.27 ms (0.5 ms is the bound), the town's late count 0;
+  - a backlog of 12,000 prints drains in slices (about 21 flushes of at most about 0.5 ms each, in order, none
+    dropped), never in one flush;
   - a town that dies: noticed, logged, never fed again, never an error;
   - the town halts itself after 5 failed passes in a row (`kalshi_arena_halted`, saved for the page) and exits;
   - the opt-in wall-clock test (`NIGHTCRAWLER_PERF_TESTS=1`): with the real town at about 350 books a second, a 1 ms
@@ -896,12 +918,19 @@ objects lengthened every garbage collection. A process boundary removes all of i
 - **Shutdown:** the runner closes the link after every real-money shutdown step (the live companion's shutdown, the
   practice cancel and checkpoint), and `close()` gives the town up to 1 s for its final save after the live companion
   closed (the bot is the container's first process, whose exit ends every other).
-- **Production's own figure:** `kalshi_arena_feed` (the live side, every 5 minutes: put, dropped, frames, flush p50,
-  p99 and max in us) and `kalshi_arena_status` (the town: received, dropped, late, coalesced, pass CPU p99 and max,
-  duty, lag, and the live loop's flush p99 and max, which the link sends; every minute while the feed lags or drops).
-  `duty_pct` is the town process's whole CPU over wall time (reading and decoding frames too, about half of it at
-  400 books a second, not only the pass).
+- **Production's own figure:** `kalshi_arena_feed` (the live side, every 5 minutes: put, coalesced, dropped,
+  pending and its peak, sliced, blocked, frames, flush p50, p99 and max in us, and the live process's `rss_mb` and
+  `max_rss_mb`) and `kalshi_arena_status` (the town: received, dropped, late, held, coalesced, open_incomplete, pass
+  CPU p99 and max, duty, lag_s and held_s, the live loop's flush p99 and max, which the link sends, and the town
+  process's own `rss_mb` and `max_rss_mb`; every minute while the feed lags or drops). `duty_pct` is the town
+  process's whole CPU over wall time (reading and decoding frames too, about half of it at 400 books a second, not
+  only the pass). The engine's heartbeat (`engine.status.memory`) carries the live process's RSS too.
   The town's process costs memory of its own (about 22 MB at start).
+  - The first production day (2026-10-13, 4:18-5:37 PM PT, about 700 events a second at peak with event-loop stalls
+    of 2-8 s): 2.55 M events offered, 845 K dropped (33 %), the late count rising in whole slices of 256, and every
+    window voided `feed_dropped`. Reproduced in the lab at 700 and 2,000 events a second with the same stalls (26 %
+    and 31 % dropped, flush p99 0.75 and 1.15 ms); after the slots, the budget and the held frame: 0 dropped at
+    both rates, flush p99 0.24 and 0.27 ms, late 0.
 
 ### Files, page and logs
 
@@ -951,7 +980,7 @@ objects lengthened every garbage collection. A process boundary removes all of i
    candidate card lists "settings that express it" apart from "needs code".
 5. **Python 3.12 in production:** nothing 3.13-only is used.
 6. **Real-money files:**
-   - the hook lives in `speeddesk.py` (three bounded appends, one flush a step, start, and a close after every
+   - the hook lives in `speeddesk.py` (three bounded O(1) puts, one flush a step, start, and a close after every
      real-money shutdown step);
    - `speeddesk_live*.py`, `deskguard.py` and `engine.py` are unchanged;
    - `config.py` gains only the four practice settings, and a bad one turns the arena off instead of stopping the

@@ -98,10 +98,14 @@ Status: open (capturing; 48 h report Thu)
   `candidate_id` (the resident with `candidate_now` true and the highest t, null when none), `control` {id, name,
   equity_usd, windows, traded, pnl_usd, verdict, phrase, reason, genes_line}, the four lists, `counts`,
   `truncated`, `town` {born, evicted, windows, void_windows, void_feed, candidates, rent_days, rent_paid} (all-time),
-  `feed` {queue, received, dropped, late, coalesced, errors, open_incomplete, pass_p50_ms, pass_p99_ms,
-  pass_max_ms, duty_pct, lag_s, live_flush_us_p50, live_flush_us_p99, live_flush_us_max, last_frame_at, hardening
-  {nice, sched "idle"|"other", as_limit_bytes, oom_score_adj, applied}|null}; feed counters run from the start of
-  the town's process (not restored).
+  `feed` {queue, received, dropped, late, held, coalesced, errors, open_incomplete, pass_p50_ms, pass_p99_ms,
+  pass_max_ms, duty_pct, lag_s, held_s, live_flush_us_p50, live_flush_us_p99, live_flush_us_max, last_frame_at,
+  rss_mb, max_rss_mb, hardening {nice, sched "idle"|"other", as_limit_bytes, oom_score_adj, applied}|null}; feed
+  counters run from the start of the town's process (not restored). Added 2026-10-14 (additive): `held` and
+  `held_s` (events the live loop held past 3 s before the hand-over, its own loop's lateness, not the town's; the
+  worst hold in the last pass), `rss_mb` and `max_rss_mb` (the town process's resident memory now and its peak, MB).
+  `late` and `lag_s` are now the town's OWN lateness (read more than 3 s after the hand-over), and `dropped` voids
+  only the windows that lost an event.
 - **Nullability:** null means unknown, never infer it. With status missing or off every data field is null (never 0
   or []): as_of, heartbeat_s, town_id, population, rent_usd, broke_usd, start_cash, note, control_id, candidate_id,
   control, residents, grave, candidates, events, counts, truncated, town, feed. With stale or halted the last saved
