@@ -16,6 +16,8 @@ from contextlib import contextmanager
 from functools import wraps
 from typing import Any, ParamSpec, TypeVar
 
+from nightcrawler.speeddesk_workbins import WorkBins
+
 MAX_SPANS = 512
 MAX_DETAILS = 32
 MAX_DEPTH = 64
@@ -46,6 +48,7 @@ class WorkTrace:
         self._last_clocks: tuple[float, float] | None = None
         self._first_mono: float | None = None
         self._evicted_until: float | None = None
+        self._bins = WorkBins()
 
     def _disable(self, reason: str) -> None:
         if self.enabled:
@@ -98,6 +101,8 @@ class WorkTrace:
                 raise ValueError("invalid observer interval")
             if not self._active or self._active.pop() != token["span_id"]:
                 raise ValueError("invalid observer nesting")
+            if token["parent_id"] is None:
+                self._bins.record(token["start_mono"], wall, used)
             self.completed += 1
             aggregate = self._aggregates[token["name"]]
             aggregate["count"] += 1
@@ -131,7 +136,9 @@ class WorkTrace:
         """Join completed slow work to an absolute monotonic interval.
 
         Covered wall uses ALL retained overlaps, including omitted detail rows.
-        Quiet spans have aggregate counts only, so their times remain unattributed.
+        Quiet span details remain absent from slow-span coverage. A separate
+        fixed time-bin lower bound includes quiet top-level work; the two
+        overlapping coverage populations must never be added.
         Retention loss is conservative: eviction can make an earlier query
         incomplete even if the particular lost spans cannot be reconstructed.
         """
@@ -166,6 +173,7 @@ class WorkTrace:
                     "before_observation": self._first_mono is None or start < self._first_mono,
                     "active_spans": len(self._active), "quiet_spans_total": self.quiet,
                     "coverage_scope": "completed retained slow synchronous spans only",
+                    "all_sync_work_lower_bound": self._bins.overlap(start, end),
                     "cpu_basis": "full span thread CPU; not apportioned to overlap; nested values are not additive"}
         except Exception:  # noqa: BLE001 - bad diagnostics cannot change account-read processing.
             self._disable("observer_query_failed")
@@ -173,11 +181,18 @@ class WorkTrace:
                     "coverage_scope": "unavailable", "covered_wall_ms": None, "unattributed_wall_ms": None}
 
     def status(self) -> dict[str, Any]:
+        bins: dict[str, Any] = {"available": False}
+        if self.enabled:
+            try:
+                bins = self._bins.status()
+            except Exception:  # noqa: BLE001 - status is optional observation too.
+                self._disable("observer_bin_status_failed")
         return {"enabled": self.enabled, "error": self.error, "completed": self.completed,
                 "quiet": self.quiet, "evicted": self.evicted, "errors": self.errors,
                 "retained": len(self._spans), "max_spans": MAX_SPANS,
                 "max_details": MAX_DETAILS, "slow_threshold_ms": SLOW_S * 1000,
                 "sections": {name: dict(values) for name, values in self._aggregates.items()},
+                "all_sync_work_lower_bound": bins,
                 "cpu_basis": "thread CPU; full and nested spans are not additive"}
 
 
