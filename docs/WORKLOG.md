@@ -13,6 +13,27 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-14 23:13 UTC, Codex, PR #55 deployed and restart verified (4:13 PM PDT)
+- Merged reviewed head641dde1 at4:08:35 PM PDT within the allowed minutes. Exact merge/source
+  4b0ea4004060e5b66d09b509ee0b6e79b5e63c72, Railwayf2477918-6a76-4cc5-946b-a2e2e320e236,
+  SUCCESS4:10:22.641 PM PDT. Polymarket LIVE startup4:10:20 PM; bot and recorder online1/1,
+  zero platform issues/recent failures. Recorder deployment unchanged. Merged four-file source/
+  test/fixture bundle matches the independently accepted5f2612a5a39bd58b70919f0f99fb75e5bbdbe67dae1f1d758ae7557e26ce872c.
+- Before4:09:53 /after4:10:54 PM principal facts match: cash$35.2643, unsettled gross cost$0.96,
+  modeled risk zero, reservation zero,518 actual fills, fees$2.27122 and cumulative settled
+  P&L−$14.5171. This is paired exposure awaiting settlement, not zero open cost. Existing caps,
+  stop latches and loss history retained; already-used resume ignored, no new budget.
+- Through4:12:15 PM bounded exact traceback query returns zero. Application warning rows are
+  pump.fun403/backoff and its learning breaker; no exhaustive error-free/capture claim. Full
+  5,502 passes/14 skips, explicit pytest exit0, mypy126 and Ruff3 files remain the release checks.
+- Initial live-panel maximum CPU16.781ms across four cold calls is restart context, not a matched
+  production improvement. Broader delays still need actual post-change evidence. Sol's bounded
+  read-only collector is assigned to the first complete4:15–4:30 PM window, with original messages,
+  financial reconciliation, selected timing gaps and coverage limitations; not yet completed.
+- Saved scorecard_grouping_release.json and updated existing EXEC queue. No further source, order,
+  variable, fee, limit, stop or resume action. First task open; strategy comparison unstarted.
+  TJR remains authentic-data/cost blocked; recorder48-hour/storage obligations remain. Docs only.
+
 ## 2026-10-14 23:07 UTC, Codex, scorecard computation correction ready (4:07 PM PDT)
 - Removed the repeated per-ended-window full-intent scan only for guarded native report inputs;
   grouping is rebuilt each call, preserving insertion order and the original lazy predicate. Custom

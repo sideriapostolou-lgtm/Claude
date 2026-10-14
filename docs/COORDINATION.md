@@ -39,6 +39,13 @@ Check this queue at task start and before declaring current work complete. Keep 
 move an item to done only with linked evidence. Blocked or waiting-for-approval is not complete.
 
 ### EXEC-DELAY-001 — first task active; production attribution and verified fix pending
+- **2026-10-14 4:13 PM PDT:** scorecard correction PR #55 is deployed on exact `4b0ea40`,
+  Railway `f2477918-6a76-4cc5-946b-a2e2e320e236`, SUCCESS 4:10:22 PM. All 5,502 tests/14 skips,
+  captured pytest exit zero, mypy 126 and Ruff pass; independent review accepted the exact bundle.
+  Restart retained compared cash, gross cost, risk, fills, fees, losses, caps and stops; used resume
+  was ignored. Cumulative settled P&L remains −$14.5171. [Release receipt](../research/kalshi_profitability_2026-10-14/scorecard_grouping_release.json).
+  Full post-change 4:15–4:30 PM window collection is assigned and still pending. Cold initial
+  observations do not establish a production speedup. First task open; second comparison unstarted.
 - **2026-10-14 3:50 PM PDT:** PR #54's bounded quiet-work diagnostic is verified running on
   `89b7b6d`, SUCCESS 3:33 PM; all 5,471 tests/14 skips, mypy 126 and changed-file Ruff pass.
   A 1,028.850 ms real resumption gap contains at least 756.031 ms observed synchronous wall work
@@ -198,7 +205,7 @@ Format: `### YYYY-MM-DD HH:MM UTC, From -> To: subject`, then what you need, the
   No source release before demonstrated benefit, exact-output tests, independent review and full checks.
   First task remains open; original/inverse/no-trade comparison and TJR campaign are not activated here.
 
-Status: open (profile and semantics review; no new correction implemented)
+Status: done (PR #55 correction, full checks and exact deployment); open (post-change full-window timing verification)
 
 ### 2026-10-14 22:14 UTC, Codex -> workers: quiet callback coverage, local preparation
 - PR #53 is running, but four early traces still include a2.89s read-resumption tail. They are

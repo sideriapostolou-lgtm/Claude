@@ -83,3 +83,13 @@ The clean executed source is retained exactly. No recovery of the first source i
 Record the exact deployment before calling this released. EXEC-DELAY-001 remains
 open until its production verification requirements are met; the second strategy
 task has not started.
+
+## Actual release, 4:13 PM Pacific
+
+PR #55 merged at4:08 PM and deployed exact `4b0ea4004060e5b66d09b509ee0b6e79b5e63c72`;
+Railway `f2477918-6a76-4cc5-946b-a2e2e320e236` reached SUCCESS at4:10:22.641 PM PDT.
+The [release receipt](scorecard_grouping_release.json) verifies normal Polymarket
+LIVE startup, online services and retained principal financial state. Cumulative
+settled losses remain−$14.5171. No financial settings or loss budget changed.
+The first complete4:15–4:30 PM window is still being observed; startup measurements
+do not close EXEC-DELAY-001 or establish production improvement/profitability.
