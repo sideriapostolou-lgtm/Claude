@@ -32,10 +32,12 @@ small ``panel.json`` for the page.
 
 SPEED: THE TOWN RUNS IN ITS OWN PROCESS. The live desk's event loop is latency-critical, and a thread would share
 Python's lock (and its garbage collector) with it: a busy or stuck town could delay every live decision. So the live
-loop only holds an :class:`ArenaLink`: each Kalshi book and print is one bounded ``list.append``; once per runner
-step (every 50 ms) :meth:`ArenaLink.flush` encodes what arrived plus the market facts that changed (windows, price,
-sigma, maker windows, outcomes) into ONE frame and hands it to a non-blocking pipe (``os.write``; a full pipe drops
-the frame and counts it, never waits). The town (:class:`KalshiArena`) runs in a child Python process started with
+loop only holds an :class:`ArenaLink`: each Kalshi book and print is one bounded FIFO append; once per runner
+step (every 50 ms) :meth:`ArenaLink.flush` encodes a time-bounded slice plus the market facts that changed (windows,
+price, sigma, maker windows, outcomes) into ONE frame and hands it to a non-blocking socket. A full socket leaves
+the frame and following events queued, never waits, and never replaces a book with a later book. Queue overflow
+is counted; the affected windows are void, as are events read more than 3 s late. The town
+(:class:`KalshiArena`) runs in a child Python process started with
 an empty environment (no ``KALSHI_*`` key ever reaches it), at the lowest CPU priority, first in line for the
 out-of-memory killer, under a memory limit, without core dumps, and killed by the kernel if one pass hangs for
 :data:`HANG_S` or spends :data:`PASS_CPU_S` of CPU (it logs what of this took effect: :func:`report_hardening`). It
@@ -139,8 +141,10 @@ PANEL_EVENTS = 24  # of the EVENTS_KEEP kept; ``counts.events`` is every event t
 PANEL_MAX_BYTES = 256 << 10  # a panel is about 20-30 KiB; the page refuses a larger file before reading it
 FILL = "speeddesk_fill"  # the practice desk's fill decision
 # The live loop's side (ArenaLink).
-PENDING_MAX = 1024  # books and prints held between two flushes (about 2.5 s of a busy market); beyond, dropped
-FLUSH_MAX = 256  # events encoded per flush: a flush after a stall costs at most about 1 ms
+PENDING_MAX = 16_384  # bounded burst buffer; every book/print keeps its place (late events still void a window)
+FLUSH_MAX = 1024  # absolute event limit as well as the encoding time budget below
+FLUSH_BUDGET_NS = 400_000  # sustains 3,000 events/s; marshal and nonblocking send add a bounded frame's work afterward
+FLUSH_CHUNK = 16  # check the encoding budget every small chunk, never after an entire backlog
 SEND_BYTES = 1 << 20  # the socket's send buffer (best effort; Linux caps it at net.core.wmem_max)
 READ_MAX = 8 << 20  # the town reads at most this much before a pass
 CHECK_S = 5.0  # how often the live loop asks whether the town's process still runs (one waitpid)
@@ -553,7 +557,9 @@ def worker_env() -> dict[str, str]:
 class ArenaLink:
     """The live loop's whole side of the town (module docstring, SPEED). :meth:`feed_book`, :meth:`feed_trade` and
     :meth:`feed_gap` are one bounded append; :meth:`flush` (once per runner step) encodes at most :data:`FLUSH_MAX`
-    events into one frame and writes it without waiting; :meth:`start` and :meth:`close` never block for long. None
+    events within an encoding budget into one frame and writes it without waiting. Blocked or partial frames and
+    later events retain FIFO order until sent; only queue overflow drops an event. :meth:`start` and :meth:`close`
+    never block for long. None
     of them raises. It holds the town's configuration (numbers and genes) and a pipe, never a Settings object, a
     client or a key."""
 
@@ -563,13 +569,15 @@ class ArenaLink:
         self.command = list(command) if command is not None else worker_command()
         self.clock, self.perf = clock, perf
         self.cwd = Path(config.data_dir)
-        self.pending: list[Any] = []
+        self.pending: deque[Any] = deque()
         self.proc: subprocess.Popen[bytes] | None = None
         self.sock: socket.socket | None = None
         self.running = False
         self.out = b""  # the rest of a frame the pipe took only part of
         self.seq = 0
         self.puts = self.dropped = self.frames = self.sent_bytes = 0
+        self.blocked = self.sliced = self.pending_peak = 0
+        self._reported_dropped = 0
         self.returncode: int | None = None
         self._windows: Any = None
         self._makers: Any = None
@@ -646,7 +654,7 @@ class ArenaLink:
 
     def _stop_link(self) -> None:
         self.running = False
-        self.pending = []
+        self.pending.clear()
         self.out = b""
         with contextlib.suppress(Exception):
             if self.sock is not None:
@@ -679,11 +687,11 @@ class ArenaLink:
                 return
         if now - self.status_at >= LINK_STATUS_S:
             self._status(now)
-        batch, self.pending = self.pending[:FLUSH_MAX], self.pending[FLUSH_MAX:]
+        self.pending_peak = max(self.pending_peak, len(self.pending))
         if self.out:  # finish the frame the socket took only part of before a new one starts
             self._send(self.out)
-            if self.out:  # the town is still behind: this step's events are dropped and counted, before encoding
-                self.dropped += len(batch)
+            if self.out:  # retain the bounded FIFO; socket backpressure alone never loses a book or print
+                self.blocked += 1
                 return
         items: list[Any] = []
         # The market facts that changed since the last frame, first: the town reads its windows before the events.
@@ -701,38 +709,54 @@ class ArenaLink:
         makers = snapshot.maker_windows
         if makers != self._makers:
             items.append(("k", tuple(sorted(makers))))
-        outcomes = snapshot.outcomes
-        if outcomes is not self._outcomes:
-            shown = tuple(sorted((slug, bool(up)) for slug, up in outcomes.items() if slug in self._recent_slugs))
-            if shown != self._shown:
-                items.append(("o", shown))
-                self._shown = shown
+        outcome_index = len(items)
         bitcoin = (snapshot.bitcoin_price, snapshot.bitcoin_at, snapshot.sigma)
         if bitcoin != self._bitcoin:
             items.append(("m", *bitcoin))
-        ladders = self._ladders
-        for item in batch:
-            if isinstance(item, Book):
-                key = (item.window, item.side)
-                items.append(book_wire(item, ladders.get(key)))
-                ladders[key] = (item.bids, item.asks)
-            else:
-                items.append(trade_wire(item) if isinstance(item, Trade) else item)
-        if not items:
+        self._encode(items)
+        # An outcome must not overtake its final queued prints: the child settles after draining this frame,
+        # whereas a budget-limited following frame has not arrived yet. Retain the old outcome baseline until
+        # this frame contains the end of the FIFO, so the unchanged snapshot will be considered again next step.
+        outcomes = self._outcomes
+        if not self.pending:
+            outcomes = snapshot.outcomes
+            if outcomes is not self._outcomes:
+                shown = tuple(sorted((slug, bool(up)) for slug, up in outcomes.items() if slug in self._recent_slugs))
+                if shown != self._shown:
+                    items.insert(outcome_index, ("o", shown))
+                    self._shown = shown
+        if not items and self.dropped == self._reported_dropped:
             return
         self.seq += 1
         data = frame(("batch", self.seq, now, self.dropped, self.last_flush_us, items))
         self._send(data)
-        if len(self.out) == len(data):  # nothing taken: the town is behind; this frame is dropped and counted
-            self.out = b""
-            self.seq -= 1
-            self.dropped += len(batch)
-            # The next frame carries every fact and whole ladders again.
-            self._ladders, self._windows, self._makers, self._outcomes, self._bitcoin = {}, None, None, None, None
-            self._recent, self._shown = None, None
-            return
+        self._reported_dropped = self.dropped
         self._windows, self._makers, self._outcomes, self._bitcoin = windows, makers, outcomes, bitcoin
         self.frames += 1
+
+    def _encode(self, items: list[Any]) -> None:
+        """Move only a bounded slice of the FIFO to this frame, preserving every intermediate book and print.
+
+        A deque avoids copying the remaining burst on each step. No event that did not fit the time budget is
+        consumed, and the ladder baseline advances only in the same order as the retained wire frames.
+        """
+        deadline = self.perf() + FLUSH_BUDGET_NS
+        limit = min(len(self.pending), FLUSH_MAX)
+        taken = 0
+        while taken < limit:
+            for _ in range(min(FLUSH_CHUNK, limit - taken)):
+                item = self.pending.popleft()
+                if isinstance(item, Book):
+                    key = (item.window, item.side)
+                    items.append(book_wire(item, self._ladders.get(key)))
+                    self._ladders[key] = (item.bids, item.asks)
+                else:
+                    items.append(trade_wire(item) if isinstance(item, Trade) else item)
+                taken += 1
+            if self.perf() >= deadline:
+                break
+        if self.pending:
+            self.sliced += 1
 
     def _send(self, data: bytes) -> None:
         assert self.sock is not None
@@ -762,14 +786,19 @@ class ArenaLink:
 
         return {"running": self.running, "pid": self.proc.pid if self.proc is not None else None, "put": self.puts,
                 "dropped": self.dropped, "frames": self.frames, "kib": self.sent_bytes // 1024,
+                "pending": len(self.pending), "pending_peak": self.pending_peak,
+                "blocked": self.blocked, "sliced": self.sliced,
                 "flush_us_p50": us(0.5), "flush_us_p99": us(0.99), "flush_us_max": us(1.0)}
 
     def _status(self, now: float) -> None:
         self.status_at = now
         feed = self.telemetry()
-        log.info("kalshi_arena_feed pid=%s put=%d dropped=%d frames=%d kib=%d flush_us_p50=%s flush_us_p99=%s "
-                 "flush_us_max=%s", feed["pid"], feed["put"], feed["dropped"], feed["frames"], feed["kib"],
+        log.info("kalshi_arena_feed pid=%s put=%d dropped=%d frames=%d kib=%d pending=%d pending_peak=%d "
+                 "blocked=%d sliced=%d flush_us_p50=%s flush_us_p99=%s flush_us_max=%s",
+                 feed["pid"], feed["put"], feed["dropped"], feed["frames"], feed["kib"],
+                 feed["pending"], feed["pending_peak"], feed["blocked"], feed["sliced"],
                  feed["flush_us_p50"], feed["flush_us_p99"], feed["flush_us_max"])
+        self.pending_peak = 0
 
 
 # ---------------------------------------------------------------------- the town's view of the market
@@ -1019,6 +1048,7 @@ class KalshiArena:
         self.lag_s = 0.0
         self.link_seq: int | None = None
         self.link_dropped = 0
+        self._incomplete_before = -math.inf  # include windows first named in the same frame as a drop receipt
         self.live_flush_us: deque[int] = deque(maxlen=PASSES_KEEP)
         self.passes: deque[float] = deque(maxlen=PASSES_KEEP)
         # The share of a core: the process's whole CPU time (reading and decoding frames too, not only step()).
@@ -1051,14 +1081,16 @@ class KalshiArena:
 
     def receive(self, message: Any, view: WireView) -> None:
         """One frame from :class:`ArenaLink`: market facts update ``view``; books, prints and gaps are queued. A frame
-        the link had to drop leaves every open window incomplete (void at its settlement)."""
+        the link had to drop leaves every started, unsettled window incomplete (void at its settlement), including
+        windows first named in this frame. A delayed drop receipt must not spare a window merely because it closed."""
         if not isinstance(message, tuple) or not message or message[0] != "batch":
             raise ValueError("unexpected Kalshi arena frame")
         _, seq, _sent_at, dropped, flush_us, items = message
         now = self.clock()
         self.last_frame_at = now
         if (self.link_seq is not None and seq != self.link_seq + 1) or dropped > self.link_dropped:
-            self._degrade_open(now, "feed_dropped")
+            self._incomplete_before = max(self._incomplete_before, now)
+            self._degrade_started(now, "feed_dropped")
         self.link_seq, self.link_dropped = int(seq), max(self.link_dropped, int(dropped))
         self.live_flush_us.append(int(flush_us))
         for record in items:
@@ -1091,9 +1123,9 @@ class KalshiArena:
         if slug in self.windows:
             self.degraded.setdefault(slug, why)
 
-    def _degrade_open(self, now: float, why: str) -> None:
+    def _degrade_started(self, now: float, why: str) -> None:
         for slug, window in self.windows.items():
-            if window.start <= now < window.end:
+            if window.start <= now:
                 self.degraded.setdefault(slug, why)
 
     # ------------------------------------------------------------------ one pass
@@ -1138,6 +1170,8 @@ class KalshiArena:
                     self.town["void_windows"] += 1
                     continue
                 self.windows[slug] = replace(window)
+                if window.start <= self._incomplete_before:
+                    self.degraded.setdefault(slug, "feed_dropped")
                 self.members[slug] = set()
                 for res in self.residents.values():
                     if float(res.row["born"]) <= window.start:
@@ -1155,9 +1189,9 @@ class KalshiArena:
     def _drain(self, now: float) -> float:
         """Apply queued books, prints and gaps in arrival order, each at the time it is read; returns that time.
 
-        A book is skipped when a later book for the same window and side is already queued and no resident waits on
-        a take or lock there (a resting bid needs only the latest book; a take is checked against the first book
-        after its latency, so those windows keep every book). Each print is de-duplicated once for all residents.
+        A book is skipped only when a later book for the same window and side is already queued and no resident
+        has an order there. Resting bids also need intervening books: a stale book can cancel a bid before the next
+        print, and a take must see an ask disappear before it returns. Each print is de-duplicated once for all residents.
         An event read more than :data:`LATE_S` after it arrived leaves its window incomplete."""
         items = list(self.inbox)
         self.inbox.clear()
@@ -1168,8 +1202,7 @@ class KalshiArena:
         for index, item in enumerate(items):
             if item[0] == "book":
                 latest[(item[1].window, item[1].side)] = index
-        taking = {order.window for res in self.residents.values() for order in res.desk.orders.values()
-                  if order.kind == "take"}
+        ordered = {order.window for res in self.residents.values() for order in res.desk.orders.values()}
         lag = 0.0
         for index, item in enumerate(items):
             now = max(now, self.clock())
@@ -1181,7 +1214,7 @@ class KalshiArena:
                 if behind > LATE_S:
                     self.late += 1
                     self._degrade(book.window, "feed_late")
-                if latest[(book.window, book.side)] != index and book.window not in taking:
+                if latest[(book.window, book.side)] != index and book.window not in ordered:
                     self.coalesced += 1
                     continue
                 for res in self._holders(book.window):

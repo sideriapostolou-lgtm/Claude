@@ -13,6 +13,53 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-14 14:39 UTC, Codex, branch codex/kalshi-profitability-evidence
+- Owner requested the work most likely to improve profitability after asking about reversing the bot.
+  Reproduced historical losses and current execution failures before selecting changes. No cap increase,
+  fresh resume budget, live signal inversion, Polymarket change or profit guarantee.
+- Independent historical audit: 29 already-published October 13 windows reconcile to -$11.9154. Resting-only
+  matched pairs +$10.3173, lock-completed pairs -$17.0079, leftovers -$4.5984, fees -$0.6264. The lock legs
+  themselves improved the same fixed historical maker inventory by $0.8246; removing them is not supported.
+  Inverse executable P&L is unknown: the old fills do not contain opposing books, queues and cancel timing.
+- Fixed a reproduced live execution defect: during complete account GETs the single controller now checks
+  existing cancellation rules every 50 ms. Separate read/write sessions let a cancel overtake a blocked GET;
+  writes remain serialized and the shared request quotas/429 cooldown remain enforced. New buys still wait
+  for fresh complete account proof, and cancels retain reservations until fill/order reconciliation. Shutdown
+  gives known-order cancels priority before draining reads. New numeric timing diagnostics distinguish
+  worker queue/resumption, transport lock, quota, preparation, HTTP and decoding delays. This does not
+  eliminate every network or scheduling tail and does not establish a profit effect.
+- Arena data repair: at 14:23 it had zero complete windows, 60 voids, 1.45m dropped and 74,612 late inputs.
+  A bounded 16,384-event FIFO retains partial/blocked frames; time-sliced encoding sustains synthetic
+  3,000 events/s. Outcomes cannot overtake queued prints; gaps invalidate newly registered and recently
+  closed unsettled windows. Intermediate books remain for pending resting orders as well as takes.
+  Overflow and >3 s lateness still invalidate results. Old voids and P&L are never reset.
+- Same-process synthetic benchmark: 60,000/60,000 events delivered at 3,000/s; steady median flush CPU
+  405 -> 430 microseconds. Ten blocked writes lost 1,500 events before / zero after; a 6,000-event burst
+  lost 4,976 before / zero after. This is transport evidence, not proof of production coverage or profit.
+- Added the frozen original/inverted-fair/no-trade comparison SPECIFICATION and metadata sufficiency tool.
+  No comparison engine or scoring cohort is active. Practice cancellation/risk differences must be corrected
+  before using results for real decisions. Existing TEST partitions remain sealed; no historical outcome
+  was relabeled as a new holdout. Protocol hash is checked and activation needs a tested code/parameter hash.
+- Public recorder only: under the owner's existing recording/research authorization and current instruction,
+  set `KALSHI_RECORDER_SPOT_TICKS=true` at 14:32 UTC. Exact existing code `0713e412` passed 81 recorder tests;
+  deployment `844c7378-d19f-4dd4-9771-7963ca968b55` SUCCESS at 14:33:45, startup READ_ONLY_PUBLIC / spot=True /
+  unchanged 4608 MB cap. Coinbase/Kraken DNS succeeded; no spot disconnects or startup tracebacks in the
+  bounded query. This proves enabled, not complete persisted ticks: present tools cannot inspect the volume.
+  The bot did not restart from this setting, and no credential, trading variable or service resource changed.
+- Real results BEFORE these source fixes: first restarted window -$1.0167; next +$1.4933, combined +$0.4766.
+  Two windows are not profitability evidence. The second spent $12.44 plus $0.0667 fees and paid $14. The
+  existing loss-reducing lock exception permits gross spend above the $10 ordinary-buy budget; clarified
+  this to the owner and in the spec. No budget or lock policy was changed by this work.
+- Verification so far: 603 broad live/client tests and 126 final focused tests passed; 117 focused arena
+  tests passed (one optional skip, two stress tests left to the full run), including independent race,
+  shutdown, missing-data, exact-order and false-fill attacks. Source mypy 122 files clean; Ruff all 13
+  changed/new Python files clean. Full repository suite: **5,260 passed, 14 skipped** in 293.73 s.
+  Skips are existing opt-in network/performance checks and the absent legacy lab-3 cache. Deployment
+  verification follows in a separate receipt; no skipped case is described as passed.
+- Real money touched? YES: owner-authorized execution/cancellation code; entry prices, loss policy, current
+  limits and pull=false are preserved. New recorder capture is public and read-only. Source changes are
+  not yet deployed at this entry's timestamp; ship only after full checks and at an allowed merge minute.
+
 ## 2026-10-14 14:07 UTC, Codex, owner-approved optional bid hold disabled
 - Authorization: after the approved restart, the owner explicitly asked to turn trading back on and
   override the guard preventing bids. Live mode was already enabled. Explained the narrow change:

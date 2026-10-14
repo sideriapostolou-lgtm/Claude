@@ -16,6 +16,7 @@ from __future__ import annotations
 import base64
 import re
 import threading
+import time
 from collections import deque
 from collections.abc import Callable
 from decimal import Decimal, InvalidOperation
@@ -125,45 +126,57 @@ class KalshiClient:
             raise KalshiClientError("authentication", "invalid Ed25519 signing key") from None
         self._key_id = key_text.strip()
         self._signer = signer
-        # One kept-alive connection: a fresh TCP + TLS handshake per call cost
-        # several round trips to Kalshi (decision-to-acknowledgement was 641 ms
-        # on the first live order, 2026-10-12). Calls are serialized by _lock.
-        self._session: requests.Session | None = None if transport else requests.Session()
-        self._transport = transport or self._session.request  # type: ignore[union-attr]
+        # Read-only history can take seconds. Its connection must not hold a cancellation behind it.
+        # Each lane owns one kept-alive Session; all writes remain serialized, including the final send guard.
+        self._sessions = {} if transport else {False: requests.Session(), True: requests.Session()}
+        self._transports = {lane: transport or self._sessions[lane].request for lane in (False, True)}
         self._clock = clock or RealClock()
         self._page_size, self._max_pages = page_size, max_pages
         self._limits = {False: reads_per_s, True: writes_per_s}
         self._recent: dict[bool, deque[float]] = {False: deque(), True: deque()}
-        self._lock = threading.Lock()
+        self._locks = {False: threading.Lock(), True: threading.Lock()}
+        self._budget_lock = threading.Lock()
         self._blocked_until = 0.0
         self._rate_failures = 0
+        self._timings: deque[dict[str, Any]] = deque(maxlen=1024)
+        self._timings_dropped = 0
         # Pages and response bytes of each operation's last complete paginated read, for the status line.
         self.read_stats: dict[str, dict[str, int | None]] = {}
         self._local = threading.local()  # the response size of this thread's last call
 
     def _wait_turn(self, mutates: bool) -> None:
         """Rolling one-second budgets, reads and writes apart; a 429 backoff holds every later call."""
-        recent, limit = self._recent[mutates], self._limits[mutates]
         while True:
-            now = self._clock.now()
-            while recent and recent[0] <= now - 1.0:
-                recent.popleft()
-            wait = max(self._blocked_until - now, recent[0] + 1.0 - now if len(recent) >= limit else 0.0)
-            if wait <= 0:
-                recent.append(now)
-                return
+            with self._budget_lock:
+                recent, limit = self._recent[mutates], self._limits[mutates]
+                now = self._clock.now()
+                while recent and recent[0] <= now - 1.0:
+                    recent.popleft()
+                wait = max(self._blocked_until - now, recent[0] + 1.0 - now if len(recent) >= limit else 0.0)
+                if wait <= 0:
+                    recent.append(now)
+                    return
+            # A GET waiting for its own budget cannot prevent a write taking the independent write budget.
             self._clock.sleep(wait)
 
     def writes_last_second(self) -> int:
-        """Order creates and cancels in the rolling second, as the write budget counts them. Read without the
-        transport lock (a snapshot taken under the GIL), so the event loop never waits behind a request."""
-        now = self._clock.now()
-        return sum(1 for moment in tuple(self._recent[True]) if moment > now - 1.0)
+        """No transport, signing or sleep holds this brief counter lock."""
+        with self._budget_lock:
+            now = self._clock.now()
+            return sum(1 for moment in self._recent[True] if moment > now - 1.0)
+
+    def request_timings(self) -> dict[str, Any]:
+        """Drain bounded numeric diagnostics; no request/response content or credential material."""
+        with self._budget_lock:
+            result = {"samples": list(self._timings), "dropped": self._timings_dropped}
+            self._timings.clear()
+            self._timings_dropped = 0
+            return result
 
     def close(self) -> None:
-        """Close the kept-alive HTTP connection; no credential file is ever opened."""
-        if self._session is not None:
-            self._session.close()
+        """Called only after the controller has drained every HTTP worker."""
+        for session in self._sessions.values():
+            session.close()
 
     def headers(self, method: str, path: str) -> dict[str, str]:
         """Fresh Ed25519 signature; callers must never log the returned headers."""
@@ -184,44 +197,74 @@ class KalshiClient:
         query_string = urlencode(query or {})
         url = BASE_URL + full_path + ("?" + query_string if query_string else "")
         mutates = method != "GET"
-        with self._lock:
-            self._wait_turn(mutates)
-            headers = self.headers(method, full_path)
-            if before_send is not None:
+        began = time.perf_counter()
+        acquired = budgeted = sent = responded = decoded = None
+        status: int | None = None
+        ok = False
+        try:
+            with self._locks[mutates]:
+                acquired = time.perf_counter()
+                self._wait_turn(mutates)
+                budgeted = time.perf_counter()
+                headers = self.headers(method, full_path)
+                if before_send is not None:
+                    try:
+                        permitted = before_send() is True
+                    except Exception:  # noqa: BLE001 - any guard failure must prevent the real order
+                        permitted = False
+                    if not permitted:
+                        raise KalshiClientError(operation, "send_guard_rejected")
                 try:
-                    permitted = before_send() is True
-                except Exception:  # noqa: BLE001 - any guard failure must prevent the real order
-                    permitted = False
-                if not permitted:
-                    raise KalshiClientError(operation, "send_guard_rejected")
-            try:
-                response = self._transport(method, url, headers=headers, json=body,
-                                           timeout=TIMEOUT, allow_redirects=False)
-            except (requests.Timeout, TimeoutError):
-                raise KalshiClientError(operation, "transport failure", uncertain=mutates, timed_out=True) from None
-            except (requests.RequestException, OSError):
-                raise KalshiClientError(operation, "transport failure", uncertain=mutates) from None
-            status = getattr(response, "status_code", None)
-            if not isinstance(status, int) or isinstance(status, bool):
-                raise KalshiClientError(operation, "invalid response status", uncertain=mutates)
-            if status == 429:
-                self._rate_failures += 1
-                self._blocked_until = self._clock.now() + min(30.0, 2.0 ** min(self._rate_failures, 5))
-            else:
-                self._rate_failures = 0
-            if not 200 <= status < 300:
-                uncertain = mutates and (status >= 500 or status in (408, 409) or 300 <= status < 400)
-                raise KalshiClientError(operation, "request rejected" if not uncertain else "result unconfirmed",
-                                        status=status, uncertain=uncertain, code=_error_code(response))
-            content = getattr(response, "content", None)
-            self._local.bytes = len(content) if isinstance(content, (bytes, bytearray)) else None
-            try:
-                result = response.json()
-            except (ValueError, TypeError):
-                raise KalshiClientError(operation, "invalid JSON response", status=status, uncertain=mutates) from None
-            if not isinstance(result, dict):
-                raise KalshiClientError(operation, "invalid response shape", status=status, uncertain=mutates)
-            return result
+                    sent = time.perf_counter()
+                    response = self._transports[mutates](method, url, headers=headers, json=body,
+                                                        timeout=TIMEOUT, allow_redirects=False)
+                    responded = time.perf_counter()
+                except (requests.Timeout, TimeoutError):
+                    raise KalshiClientError(operation, "transport failure", uncertain=mutates, timed_out=True) from None
+                except (requests.RequestException, OSError):
+                    raise KalshiClientError(operation, "transport failure", uncertain=mutates) from None
+                response_status = getattr(response, "status_code", None)
+                if not isinstance(response_status, int) or isinstance(response_status, bool):
+                    raise KalshiClientError(operation, "invalid response status", uncertain=mutates)
+                status = response_status
+                with self._budget_lock:
+                    now = self._clock.now()
+                    if status == 429:
+                        self._rate_failures += 1
+                        self._blocked_until = max(self._blocked_until,
+                                                  now + min(30.0, 2.0 ** min(self._rate_failures, 5)))
+                    elif now >= self._blocked_until:
+                        # A response from the other lane that was already in flight must not erase a new 429.
+                        self._rate_failures = 0
+                if not 200 <= status < 300:
+                    uncertain = mutates and (status >= 500 or status in (408, 409) or 300 <= status < 400)
+                    raise KalshiClientError(operation, "request rejected" if not uncertain else "result unconfirmed",
+                                            status=status, uncertain=uncertain, code=_error_code(response))
+                content = getattr(response, "content", None)
+                self._local.bytes = len(content) if isinstance(content, (bytes, bytearray)) else None
+                try:
+                    result = response.json()
+                except (ValueError, TypeError):
+                    raise KalshiClientError(operation, "invalid JSON response", status=status, uncertain=mutates) from None
+                decoded = time.perf_counter()
+                if not isinstance(result, dict):
+                    raise KalshiClientError(operation, "invalid response shape", status=status, uncertain=mutates)
+                ok = True
+                return result
+        finally:
+            finished = time.perf_counter()
+
+            def elapsed(start: float | None, end: float | None) -> float | None:
+                return None if start is None else round(max(0.0, (finished if end is None else end) - start) * 1000, 3)
+
+            sample = {"operation": operation, "ok": ok, "status": status,
+                      "lock_wait_ms": elapsed(began, acquired), "rate_wait_ms": elapsed(acquired, budgeted),
+                      "prepare_ms": elapsed(budgeted, sent), "http_ms": elapsed(sent, responded),
+                      "decode_ms": elapsed(responded, decoded), "total_ms": elapsed(began, finished)}
+            with self._budget_lock:
+                if len(self._timings) == self._timings.maxlen:
+                    self._timings_dropped += 1
+                self._timings.append(sample)
 
     def _pages(self, operation: str, path: str, key: str, query: dict[str, Any]) -> list[dict[str, Any]]:
         """Complete result or an exception: never silently return a partial account."""

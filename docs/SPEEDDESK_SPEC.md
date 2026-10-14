@@ -367,8 +367,8 @@ pairs be "completely locked in" and that the bot "knows when to sell".
   every contract ends in a $1 pair and the window's result is known. Above that price the window is already
   decided and is left as it is.
 - At any price below $1 including fees a lock lowers the worst-case loss, so window budget, pair cap, edge
-  and the loss stops do not block it; a pending lock holds cash but is not added to money at risk. So the $5
-  per window bounds new buys, and a window's gross spend can exceed it only by a lock (its possible loss
+  and the loss stops do not block it; a pending lock holds cash but is not added to money at risk. The configured
+  per-window limit bounds new buys, and a window's gross spend can exceed it only by a lock (its possible loss
   cannot). During a money stop the panel says new buys are stopped and that locks still complete pairs.
 - **A strictly balancing bid is the same kind of order (2026-10-14, 9.4):** bought on the light side, within the
   window's unpaired contracts, under $1 each with fees, it completes $1 pairs and can only lower the worst-case
@@ -592,6 +592,29 @@ sizes use original historical losses after changing earlier trades. Carrying its
 gives -$10.02224 under the same assumptions. Neither calculation models queues, cancels, latches or additional
 decisions; some improvement also comes from shrinking old starters that today's five-contract cap already
 limits. These safety fixes do not establish profitability or authorize a real-money restart.
+
+### 9.5 Cancellation during slow account reads (2026-10-14)
+
+The single controller checks its existing cancellation rules every 50 ms while a complete read-only account
+operation is pending. It never creates orders or applies partial account responses in that interval. The read
+worker remains tracked and shielded; a cancelled caller cannot forget an in-flight request. Freshness, cash,
+reservations, real-fill reconciliation, loss stops and all final send checks retain their existing authority.
+
+Authenticated GETs and writes have separate kept-alive sessions and transport locks. All writes remain
+serialized; a short shared budget lock enforces the existing read/write rates and global 429 cooldown without
+holding it during network calls or sleep. Shutdown cancels known resting bids before draining a blocked read,
+then reconciles and cleans up any newly discovered orders. A cancel acknowledgement or 404 does not release
+its reserved money without consistent order/fill evidence.
+
+Status diagnostics split client lock wait, quota wait, preparation, HTTP, decoding and total time. Worker
+queue and event-loop resumption are measured separately. The older cancel `send_to_ack_ms` included more than
+wire time; do not label a 9.922 s sample as pure exchange latency. The checks run when the event loop can run:
+50 ms is the requested polling interval, not a guaranteed cancellation acknowledgement deadline.
+
+These changes address a reproduced execution defect, not a proven profit opportunity. The historical loss
+audit and prospective original/inverted/no-trade protocol are in `research/kalshi_profitability_2026-10-14/`.
+The comparison remains a specification until independently implemented and activated; it cannot be inferred
+by negating actual losses or ranking the current arena's simulated cash.
 
 ## 10. Public source-bot watcher and faster market data (owner, 2026-10-12)
 
@@ -1073,12 +1096,15 @@ spins or hangs holds Python's lock (a 1 ms loop's median lateness went from 0.12
 busy market capped the town near 400 books a second and its lock contention raised the live p99 by 0.6 ms, and its
 objects lengthened every garbage collection. A process boundary removes all of it.
 
-- **The live loop's side (`ArenaLink`):** `on_book` and `on_trade` append the Kalshi book or print to a list
-  (bounded at 1,024; beyond it they are dropped and counted), and `on_status` appends the gap facts. `on_tick` and
-  `on_windows` have no arena code. Once per runner step (every 50 ms) `flush` encodes at most 256 events plus the
-  market facts that changed (windows, price, sigma, maker windows, outcomes) into one frame and writes it to a Unix
-  stream socket without waiting: a full socket drops the whole frame (counted; the next frame carries every fact and
-  whole ladders again), and a dead town is noticed (`kalshi_arena_exited`) and never fed again. Nothing in it raises.
+- **The live loop's side (`ArenaLink`, updated 2026-10-14):** `on_book` and `on_trade` append the Kalshi book
+  or print to a FIFO bounded at 16,384 events; overflow is dropped and counted. `on_status` appends the gap facts.
+  `on_tick` and `on_windows` have no arena code. Once per runner step (every 50 ms), `flush` encodes a slice of at
+  most 1,024 events with a 400 microsecond encoding budget checked every 16 events, plus changed market facts.
+  Marshal and nonblocking socket send add the bounded frame's work after that budget; it is not a total-time
+  guarantee. A full socket retains the partial or unsent frame and later FIFO events. Outcomes wait until earlier
+  queued books/prints are transmitted. A dead town is noticed (`kalshi_arena_exited`) and never fed again.
+  Overflow and more-than-three-second lateness still invalidate the affected window; gaps also cover newly
+  registered and just-closed unsettled windows. More buffering never turns missing inputs into simulated profit.
   - A book's ladders travel as changes to the ladder last sent: the Kalshi socket rebuilds a ladder around the one
     level a delta changes, so a frame carries about one level a book, found by a C-level identity scan.
   - Not a pipe: a pipe's reader holds a lock its writer needs while it copies, so a descheduled town would make the
@@ -1098,8 +1124,8 @@ objects lengthened every garbage collection. A process boundary removes all of i
   sleeps on its own timer,
   takes what arrived, then runs a pass, so a write never wakes a process: with a waiting reader a write's p99 was
   8 ms, without one 0.1 ms. A book is applied to the residents only if it is the latest for its window and side in
-  the pass, or a resident waits on a take or lock there (a take is checked against the first book after its
-  latency); prints are de-duplicated once for all residents.
+  the pass, or a resident has any order there. Resting bids also need intervening books: a stale book can cancel
+  one before a print. Takes still check the first post-latency book; prints are de-duplicated once for all residents.
   - Its boot takes the idle class and nice 19 BEFORE it imports this package (the imports are most of a start's
     CPU, about 70 ms; at a restart they would otherwise compete at normal priority with the live desk's own start).
   - One town per DATA_DIR: it holds `DATA_DIR/kalshi_arena/town.lock` (an exclusive `flock`) for its life; a second
@@ -1172,6 +1198,10 @@ objects lengthened every garbage collection. A process boundary removes all of i
    - a live lock IOC can sweep several levels; practice fills the top level;
    - live's lifetime total stop halts the account; the control never halts (see above);
    - live leaves owner-traded windows alone.
+   - practice cancellation is immediate; actual cancels can take seconds. Real and simulated stop admission
+     also differ in some balancing states. A profitable arena resident is a research candidate, not an exact
+     replay or proof that the live account could earn that amount. The frozen three-arm experiment requires
+     a separate tested cancellation-delay and live-risk model before activation.
 
    The day stop, the open budget, the 30 s order expiry and the fee-reserve edge check are copied (review of
    2026-10-13; `tests/test_speeddesk_model_genes.py` compares the budgets with `LiveRiskBook.can_buy` on 400 random

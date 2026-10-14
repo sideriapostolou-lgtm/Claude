@@ -10,7 +10,7 @@ import os
 import random
 import time
 from collections import Counter
-from dataclasses import fields
+from dataclasses import fields, replace
 from pathlib import Path
 from typing import Any
 
@@ -570,13 +570,15 @@ def test_a_window_read_too_late_is_void_for_everyone(tmp_path: Path) -> None:
     assert slug not in arena.windows
 
 
-def test_a_backlog_drains_fast_and_only_takes_keep_every_book(tmp_path: Path) -> None:
+def test_a_backlog_drains_fast_and_orders_keep_every_book(tmp_path: Path) -> None:
     """The review's ceiling was about 400 books a second whatever CPU was free (a 2 ms rest after each book). The
     town now has its own process and no rests: a backlog of 25-level books coalesces to the latest per window
-    and side, except where a resident waits on a take or lock."""
+    and side only where no resident has an order. Resting bids, takes and locks keep every book."""
     market = Market(tmp_path, population=12, seed=5)
     arena = market.start()
     slug = _open(market)
+    for res in arena.residents.values():
+        res.desk.orders.clear()
     now = market.clock.now()
     bids = tuple(Level(round(.45 - k / 100, 2), 10 + k) for k in range(25))
     asks = tuple(Level(round(.50 + k / 100, 2), 10 + k) for k in range(25))
@@ -596,6 +598,12 @@ def test_a_backlog_drains_fast_and_only_takes_keep_every_book(tmp_path: Path) ->
         arena.feed_book(Book(slug, "up", bids, asks, now + 0.01 * n, f"t{n}", now))  # type: ignore[arg-type]
     arena._drain(now + 0.2)
     assert seen == [f"t{n}" for n in range(10)] and arena.coalesced == 0  # a pending take sees every book
+    taker.desk.orders[999] = replace(_take(slug, now), kind="rest", lock=False)
+    seen.clear()
+    for n in range(10):
+        arena.feed_book(Book(slug, "up", bids, asks, now + 0.01 * n, f"r{n}", now))
+    arena._drain(now + 0.2)
+    assert seen == [f"r{n}" for n in range(10)] and arena.coalesced == 0
 
 
 def _take(slug: str, now: float) -> Any:
