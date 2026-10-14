@@ -38,8 +38,14 @@ building, wait for it to finish.
 Check this queue at task start and before declaring current work complete. Keep unfinished items here;
 move an item to done only with linked evidence. Blocked or waiting-for-approval is not complete.
 
-### TJR-MNQ-001 — source review complete; historical/paper work queued (owner request, 2026-10-14)
-- Latest gate check: **2026-10-14 11:31 AM PDT** (18:31 UTC), through connected GitHub. PR #47's
+### TJR-MNQ-001 — historical validation active; paper/live disabled (owner reprioritization, 2026-10-14)
+- Owner explicitly reprioritized this at the current task: "also backtest and test TJRs strategy and tell
+  us if we should try it or not." Historical validation may now proceed alongside Kalshi evidence work.
+  Preserve the saved implementation/version, fix known validation defects in a separate derivative,
+  establish authentic data/calendar/cost inputs, and keep live execution disabled. Do not mark complete
+  without historical results plus verified paper-start evidence; missing data stays a blocker.
+- Earlier gate check, superseded by the explicit reprioritization above: **2026-10-14 11:31 AM PDT**
+  (18:31 UTC), through connected GitHub. PR #47's
   deployment/restart check is complete; PRs #49/#50 are also deployed and their diagnostic works.
   Complete-window execution evidence, fill-detection tails and raw recorder/per-venue verification remain
   open. The scheduled reminder did not reprioritize MNQ or authorize another production change.
@@ -78,6 +84,18 @@ move an item to done only with linked evidence. Blocked or waiting-for-approval 
 ## Inbox (newest first)
 
 Format: `### YYYY-MM-DD HH:MM UTC, From -> To: subject`, then what you need, then `Status: open / answered / done`.
+
+### 2026-10-14 18:45 UTC, Codex -> owner / Claude: Kalshi delay investigation and explicit TJR reprioritization
+- Owner requested the next highest-leverage step plus TJR backtesting and a try/do-not-try verdict.
+  Trace the observed fill-detection tails; any Kalshi fix must follow evidence and preserve decisions,
+  accounting, risk caps and stops. Possible observation hooks in speeddesk_live.py/client timing/tests.
+- TJR validation is now authorized alongside this work. Recheck both current Page versions, preserve
+  saved source, build a versioned historical runner and seek authentic actual-contract data. No broker
+  funding/orders, new live desk, production TJR runtime, paid access or Railway-variable changes.
+- Separate agents may edit Kalshi trace code/tests and research/tjr_validation_2026-10-14; root owns
+  coordination/worklog. Full tests/types/changed-file lint and independent review before any code release.
+
+Status: open (investigation and historical validation; no new deployment yet)
 
 ### 2026-10-14 18:31 UTC, Codex -> owner / Claude: fill diagnostics deployed and verified; evidence work remains
 - PR #49 deployed f76cb5b at 11:07:32 AM PDT; PR #50 deployed exact

@@ -13,6 +13,37 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-14 18:57 UTC, Codex, next Kalshi execution evidence and TJR reprioritization (11:57 AM PDT)
+- Owner explicitly requested TJR backtesting alongside the next Kalshi improvement. This clears the
+  queue's priority gate, not historical validation or permission for a new live desk. Both current
+  Pages were fully retrieved: all 92 main / 32 prototype blocks match the preserved source hashes.
+  Separate local research validation is prepared; authentic actual-contract data remains unavailable.
+- Exact old fill/order receipts establish a 6.6673-second cancellation overlapping the 11.7939-second
+  detection delay. This does not attribute the whole delay to network/cancellation. Implemented bounded
+  observation-only reconciliation traces: worker queue/callback/resumption, cancellation spans, wrapper
+  return, real-fill registration and existing checkpoint. No new account request, trading decision,
+  cancellation rule, inventory authority, risk limit, stop, resume value or Railway-variable change.
+- Separate 12-row publication buffer flushes only inside an existing checkpoint, preserving its cadence.
+  At most 12 detailed rows/60 seconds, 12 reads/16 fills/cycle and eight cancel spans/read; quiet/suppressed
+  cycles, omitted details and buffer drops remain explicit. Publication/observer errors disable this
+  diagnostic only. Generated trace counters are not proof of persisted rows or complete coverage.
+- Targeted checks: 100 passed; independent review 38 passed; mypy 124 files and changed-file Ruff clean.
+  Full-suite final-source run: 5,398 passed / 14 existing skips in 302.11 seconds. An earlier run was
+  deliberately aborted after the checkpoint-cadence correction; its partial progress is not a completed
+  pass. No deployment claimed in this pre-release entry.
+- Version-2 markouts through 11:45 AM PDT: 17 fills / 51 terminal horizons, 32 usable hypothetical quotes
+  and 19 gaps. At one second, 13/14 usable quotes were negative after conservative estimated costs.
+  At five seconds 8/9 were negative; at thirty seconds 4/9. These are isolated alternatives, not additive
+  portfolio P&L or proven executable exits. Detection median 0.960 s, max 8.158 s for this short cohort.
+- Account receipt 11:48:19 AM PDT: cash $37.3037, open cost/risk $2.05, no reservation, no latched day/total
+  stop. Recorded settled lifetime -$10.3877 and current UTC-day -$0.4456; locked +$3.164759 / directional
+  -$3.610359. Cash differs from profit; full-window/day coverage remains uncertified. All losses retained.
+- Evidence: research/kalshi_profitability_2026-10-14/FILL_DETECTION_TRACE.md, exact cancellation receipt,
+  NEXT_EVIDENCE_1150.md and compact account/markout JSONs. No sealed research outcomes opened.
+- Next: finish full checks, release the reviewed trace in a safe merge minute, verify actual trace rows
+  and unchanged financial state. Save TJR runner/test/calendar/data-access findings separately; missing
+  history must remain an explicit blocker, with paper/live disabled and queue not done.
+
 ## 2026-10-14 18:31 UTC, Codex, PR #50 deployed and actual exit observations verified (11:31 AM PDT)
 - PR #50 merged 18:18:21 UTC in an allowed minute. Railway deployment
   80d6a42a-48da-4ae2-bcea-1f73c396ad93 built exact 176916071029c13e73cd5ae41fbc8413532dce71,

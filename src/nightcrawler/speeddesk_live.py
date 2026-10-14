@@ -59,6 +59,7 @@ from .speeddesk_model import (
     fair_up,
     utc_day,
 )
+from .speeddesk_readtrace import MAX_REPORTS_PER_MINUTE, ReadSpan, ReconcileTrace
 from .speeddesk_scorecard import window_scorecard
 
 log = logging.getLogger("nightcrawler.speeddesk")
@@ -124,7 +125,7 @@ JOURNAL_KEY, SAVE_EVERY_S = "kalshi_live_journal", 1.0
 # cancels are events already; a busy minute of pulls would otherwise push the orders and fills out).
 QUIET_RECORDS = frozenset({"speeddesk_live_status", "speeddesk_live_pull", "speeddesk_fill_observed",
                            "speeddesk_fill_markout", "speeddesk_fill_markout_gap",
-                           "speeddesk_fill_markout_status"})
+                           "speeddesk_fill_markout_status", "speeddesk_reconcile_trace"})
 PULL_REASON = "Bids pulled: the fair value just moved; no new bid until the hold ends"
 # How often the practice twin may try the bid a held window would get without the pull (see _twin_unpulled_bid).
 TWIN_RETRY_S = 1.0
@@ -446,6 +447,10 @@ class KalshiLiveDesk:
         self.sync_stats = _Interval()
         self.last_sync_report: dict[str, Any] | None = None
         self._sync_reads: list[dict[str, Any]] = []
+        self.read_trace: ReconcileTrace | None = ReconcileTrace()
+        self.read_trace_error: str | None = None
+        self._trace_pending: list[dict[str, Any]] = []
+        self._trace_dropped = 0
         # Speed plan step 0: time in each part of step(), event-loop lag, cancel timings and venue clock offsets.
         self.phase_stats = _Interval()
         self.loop_stats = _Interval()
@@ -667,7 +672,54 @@ class KalshiLiveDesk:
             self.markouts = None
             self._record("speeddesk_fill_markout_status", **self._markout_panel())
 
-    def _start_io(self, callback: Callable[..., Any], *args: Any, **kwargs: Any) -> asyncio.Task[Any]:
+    def _trace_call(self, method: str, *args: Any, **kwargs: Any) -> Any:
+        """Timing evidence has no authority over account state or cancellation."""
+        if self.read_trace is None:
+            return None
+        try:
+            return getattr(self.read_trace, method)(*args, **kwargs)
+        except Exception as exc:  # noqa: BLE001 - fail only the optional observer.
+            self.read_trace_error = type(exc).__name__
+            self.read_trace = None
+            return None
+
+    def _trace_span(self, span: ReadSpan | None, method: str, *args: Any) -> None:
+        if span is None or self.read_trace is None:
+            return
+        try:
+            getattr(span, method)(*args)
+        except Exception as exc:  # noqa: BLE001 - also isolated inside account worker threads.
+            self.read_trace_error = type(exc).__name__
+            self.read_trace = None
+
+    def _trace_finish(self, failed: bool) -> None:
+        row = self._trace_call("finish", self.clock(), self.monotonic(), failed)
+        if row is not None:
+            # Keep diagnostics out of `pending`: that collection can advance the
+            # heartbeat's save cadence. Publish at the next already-chosen save.
+            if len(self._trace_pending) == MAX_REPORTS_PER_MINUTE:
+                self._trace_pending.pop(0)
+                self._trace_dropped += 1
+            self._trace_pending.append(row)
+
+    def _trace_flush(self) -> None:
+        rows, self._trace_pending = self._trace_pending, []
+        for row in rows:
+            try:
+                self._record("speeddesk_reconcile_trace", **row)
+            except Exception as exc:  # noqa: BLE001 - diagnostic publication cannot fail a reconcile.
+                self.read_trace_error = type(exc).__name__
+                self.read_trace = None
+                break
+
+    def _trace_panel(self) -> dict[str, Any]:
+        return {**(self._trace_call("status") or
+                   {"mode": "diagnostic", "enabled": False, "error": self.read_trace_error}),
+                "publication": "next_existing_checkpoint", "buffered": len(self._trace_pending),
+                "buffer_dropped": self._trace_dropped}
+
+    def _start_io(self, callback: Callable[..., Any], *args: Any,
+                  _read_span: ReadSpan | None = None, **kwargs: Any) -> asyncio.Task[Any]:
         queued = self.monotonic()
         stamps: list[float] = []
         name = getattr(callback, "__name__", "")
@@ -676,10 +728,12 @@ class KalshiLiveDesk:
 
         def invoke() -> Any:
             stamps.append(self.monotonic())
+            self._trace_span(_read_span, "mark", "worker_started", stamps[0])
             try:
                 return callback(*args, **kwargs)
             finally:
                 stamps.append(self.monotonic())
+                self._trace_span(_read_span, "mark", "worker_completed", stamps[1])
 
         def finished(task: asyncio.Task[Any]) -> None:
             if len(stamps) == 2:
@@ -704,7 +758,8 @@ class KalshiLiveDesk:
 
     async def _read(self, name: str, callback: Callable[..., Any], *args: Any, **kwargs: Any) -> Any:
         started = self.monotonic()
-        task = self._start_io(callback, *args, **kwargs)
+        span = self._trace_call("read_start", name, started)
+        task = self._start_io(callback, *args, _read_span=span, **kwargs)
         self._read_workers.add(task)
         while not task.done():
             # wait() never cancels a still-running HTTP worker. This coroutine remains the only account/risk
@@ -712,7 +767,12 @@ class KalshiLiveDesk:
             # the shielded worker tracked for shutdown; there is no detached cancellation task.
             done, _ = await asyncio.wait({task}, timeout=CANCEL_CHECK_S)
             if not done:
-                await self._cancel_unsafe()
+                cancel_start = self.monotonic()
+                try:
+                    await self._cancel_unsafe()
+                finally:
+                    self._trace_span(span, "cancel", "pending_read", cancel_start, self.monotonic())
+        self._trace_span(span, "mark", "coroutine_resumed", self.monotonic())
         result = await asyncio.shield(task)
         stats = getattr(self.client, "read_stats", None)
         pages = stats.get(name) if isinstance(stats, dict) else None
@@ -720,8 +780,16 @@ class KalshiLiveDesk:
                                  "rows": len(result) if isinstance(result, list) else None,
                                  "pages": pages.get("pages") if isinstance(pages, dict) else None,
                                  "bytes": pages.get("bytes") if isinstance(pages, dict) else None})
+        self._trace_span(span, "complete", len(result) if isinstance(result, list) else None,
+                         pages.get("pages") if isinstance(pages, dict) else None,
+                         pages.get("bytes") if isinstance(pages, dict) else None)
         # Re-check once before applying the completed response as well.
-        await self._cancel_unsafe()
+        cancel_start = self.monotonic()
+        try:
+            await self._cancel_unsafe()
+        finally:
+            self._trace_span(span, "cancel", "completed_read", cancel_start, self.monotonic())
+        self._trace_span(span, "mark", "wrapper_returned", self.monotonic())
         return result
 
     def _full_scan_due(self, now: float) -> bool:
@@ -823,6 +891,7 @@ class KalshiLiveDesk:
 
     def checkpoint(self, durable: bool = False) -> None:
         started = time.perf_counter()
+        self._trace_flush()
         # Reconciliation can save a new settlement before the next heartbeat. Never save a latched stop
         # without its receipt: a crash would otherwise restore it as old and suppress the only receipt.
         self._watch_stops()
@@ -1495,14 +1564,17 @@ class KalshiLiveDesk:
         full = self._full_scan_due(sync_started)
         checks: list[str] = []
         self._sync_reads = []
+        self._trace_call("begin", sync_started, started, full, max(0.0, self.retry_at - sync_started))
         try:
             await self._reconcile_reads(sync_started, full, checks)
         except BaseException:
             self._sync_report(full, started, checks, failed=True)
+            self._trace_finish(failed=True)
             raise
         if full:
             self.full_scan_at = sync_started
         self._sync_report(full, started, checks)
+        self._trace_finish(failed=False)
 
     async def _reconcile_reads(self, sync_started: float, full: bool, checks: list[str]) -> None:
         """One account reconcile; ``checks`` collects the name of each consistency check that failed."""
@@ -1546,6 +1618,7 @@ class KalshiLiveDesk:
                                  min_ts=max(0, int(self.started_at) - 60) if recent_from is None else recent_from)
         # Completion of the whole paginated account read, not the exchange/wire receipt of each fill.
         fills_batch_at, fills_batch_mono = self.clock(), self.monotonic()
+        self._trace_call("fills_returned", fills_batch_at, fills_batch_mono)
         by_order = {intent.order_id: intent for intent in self.intents.values() if intent.order_id}
         for raw in fills:
             intent = by_order.get(str(raw.get("order_id", "")))
@@ -1569,6 +1642,7 @@ class KalshiLiveDesk:
                 continue
             fill = self._fill(raw, intent)
             if self.book.record_fill(fill):
+                self._trace_call("fill", fill.fill_id, fill.at, self.monotonic())
                 self._record("speeddesk_live_fill", **asdict(fill))
                 self._markout_call("observe_fill", fill, self.book.windows.get(fill.window),
                                    observed_at=fills_batch_at, observed_mono=fills_batch_mono,
@@ -1699,7 +1773,9 @@ class KalshiLiveDesk:
         # SAVE_EVERY_S later; a read that changed nothing of record waits for the five-second save (latency
         # review: every reconcile marked the state dirty, so a quiet desk rewrote it every second).
         if money_changed or self._must_save_now():
+            self._trace_call("mark", "checkpoint_started", self.monotonic())
             self.checkpoint()
+            self._trace_call("mark", "checkpoint_completed", self.monotonic())
         elif self._account_facts() != facts:
             self._save_soon()
 
@@ -2333,6 +2409,7 @@ class KalshiLiveDesk:
                          save={"last_ms": self.save_ms, **self.save_stages, "archived_windows": len(self.archived),
                                "saved_orders": sum(intent.window not in self.archived for intent in self.intents.values())},
                          reconcile={**self.sync_stats.summary(), "last": self.last_sync_report},
+                         reconcile_trace=self._trace_panel(),
                          # Speed plan step 0: time in each part of step() ("step" is the whole), event-loop lag
                          # and cancel timings, and venue clock minus local clock (see _ClockOffsets).
                          phases=self.phase_stats.summary()["ms"], loop=self.loop_stats.summary(),
