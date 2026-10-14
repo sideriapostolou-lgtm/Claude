@@ -20,6 +20,11 @@ here first.
 
 ## When to merge (the live bot trades every 15 minutes)
 
+**Standing release approval, owner 2026-10-14:** deploy finished, tested improvements and verify the result
+without another per-release permission question. The earlier read-only restriction no longer blocks code
+deployments. This changes the release approval workflow, not money limits, loss stops, resume budgets,
+trading safeguards, new live desks or Railway-variable permissions. Keep the checks and timing below.
+
 A merge that touches `src/**`, `pyproject.toml`, `Dockerfile`, `railway.json` or `README.md` restarts the
 real-money bots within a few minutes. **Merge only at minutes :02-:10, :17-:25, :32-:40 or :47-:55 past the
 hour.** These avoid the 2 minutes around each window's open and the last 4 minutes of each window, when the Kalshi
@@ -35,8 +40,9 @@ move an item to done only with linked evidence. Blocked or waiting-for-approval 
 
 ### TJR-MNQ-001 — queued after current Kalshi work (owner request, 2026-10-14)
 - Owner: Codex. Start only after the current Kalshi work in this inbox/WORKLOG is cleared, or the owner
-  explicitly reprioritizes it. Current dependencies include PR #47's approval/deployment verification and
-  the outstanding execution/complete-record evidence follow-up. This request does not approve deployment.
+  explicitly reprioritizes it. Current dependencies include PR #47's deployment/evidence verification and
+  the outstanding execution/complete-record evidence follow-up. The owner's later standing release approval
+  permits tested code deployments; it does not mark the evidence follow-up complete.
 - Main TJR handoff: https://chatgpt.com/space/page_d0294998a7cc8191b771278fbfb98a2f
 - Actual MNQ implementation subpage: https://chatgpt.com/space/page_33c0bb7e8dac81919e012fc502bae98a
 - Read BOTH Pages completely, including code blocks and limitations; use the saved implementation,
@@ -55,6 +61,18 @@ move an item to done only with linked evidence. Blocked or waiting-for-approval 
 ## Inbox (newest first)
 
 Format: `### YYYY-MM-DD HH:MM UTC, From -> To: subject`, then what you need, then `Status: open / answered / done`.
+
+### 2026-10-14 16:21 UTC, Codex -> owner / Claude: standing release approval; deploying PR #47
+- Owner explicitly requested always deploying finished work without repeated approval. Recorded this in
+  AGENTS.md and the merge rules above. Prior per-release approval blocker is superseded.
+- Deploying the already-tested PR #47 within a safe merge minute. Source/tests remain the exact versions
+  with 5,301 passing tests / 14 existing skips, mypy 122 files and changed-file Ruff clean.
+- This removes repeated release confirmation, not money caps, stops, resume budgets, freshness/cash
+  checks or other trading rules. No Railway variable or real-mode change is part of this release.
+- Verify exact running commit, preserved money/stop history, Polymarket startup and subsequent runtime
+  performance. Current evidence limits remain open until verified; TJR-MNQ-001 stays queued meanwhile.
+
+Status: in progress (deployment authorized; verification pending)
 
 ### 2026-10-14 16:05 UTC, Codex -> owner / Claude: TJR/MNQ follow-up retained after current work
 - Added TJR-MNQ-001 to the deferred queue above with both original Page links and the owner's full constraints.
