@@ -1,5 +1,31 @@
 # Codex operating handoff — October 15, 2026
 
+## Latest priority and preservation — 1:18 PM PDT October 15
+
+Owner now explicitly prioritizes the full operating handoff to Codex and saves TJR/MNQ for last.
+The complete 942-line private handoff, both byte-exact procedures and source receipts are preserved
+in the owner's existing private memory repository, with a Codex entrypoint and current work order.
+Connected GitHub readback matched every one of the 12 changed files. Keep private inventory, contacts
+and Part 2 out of this public repo. Historical snapshots below remain dated; this note does not refresh
+production balances or turn an older restart instruction into current permission.
+
+Text preservation is complete; full operational transfer remains **OPEN**. Actual account/browser/host
+access, external automation control, unavailable source artifacts and raw-volume recovery are not
+verified by a Git handoff. Standalone Git/CLI authentication failed (including HTTP 401); connected
+GitHub still reads/writes and was used for preservation. Do not claim local sign-in is repaired.
+
+The existing TJR automation's prompt alone now says LAST after takeover and higher-priority work.
+Readback preserved its entire original prompt as a suffix, schedule, enablement and other task
+configurations. No duplicate, new research run or successful future delivery is claimed. Genuine MNQ
+bars/costs still missing; historical P&L null, holdout unopened, paper not started, live disabled.
+
+No production inspection/mutation, source release, variables, orders, caps, stop/reset/resume budgets
+or paid resources changed in this takeover task. Keep the current Kalshi evidence work, recorder's
+existing 3:45 PM Pacific checkpoint and storage review before October 20. Next resolve actual remaining
+access and automation ownership, verify present operating costs rather than old estimates, then
+complete one existing business workflow with its real source input. See the newest coordination and
+worklog entries; the following earlier notes are preserved history.
+
 This checklist supplements the [original Claude handoff](HANDOFF_CLAUDE_TO_CODEX_2026-10-14.md),
 [current coordination queue](COORDINATION.md), [continuity index](CONTINUITY_INDEX.md) and newest
 [worklog](WORKLOG.md). It preserves their original evidence; it does not copy accounts, keys or volumes.

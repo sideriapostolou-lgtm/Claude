@@ -43,6 +43,12 @@ building, wait for it to finish.
 Check this queue at task start and before declaring current work complete. Keep unfinished items here;
 move an item to done only with linked evidence. Blocked or waiting-for-approval is not complete.
 
+**Current owner work order, October 15, 1:18 PM PDT:** complete the whole operating handoff to
+Codex first; preserve active Kalshi evidence and the existing recorder checkpoint. Verify remaining
+access and automation ownership before claiming a complete transfer. **TJR/MNQ is last**, superseding
+earlier requests to advance it in parallel. Missing evidence/access is not cleared. No new live desk,
+financial-setting change, automatic restart or paid service follows from this priority update.
+
 ### EXEC-DELAY-001 — first task active; production attribution and verified fix pending
 - **12:53 PM PDT October 15:** PR64 probability observer exact8c8681a/2e88601d deployed and first prospective score independently verified: original12:35 forecast Up7.8267%, officialDown scored12:45:28, bothBrier0.006125724; separate supplement1forecast/1scored. V1gap/history intact, upstreamraces/accuracy/profitability unproved. Targetreal+$0.01 cannot be attributed to observer; prior−$0.3434 and cumulative−$18.9609 retained. Caps/stops unchanged; broader EXEC **OPEN**. [Release and evidence](../research/kalshi_probability_learning_2026-10-15/RELEASE.md).
 - **11:30 AM PDT October 15:** PR63 lock freshness fix deployed on exact `59ba6a8e` / `c1fda55b`, SUCCESS 11:19:53 AM; independent restart review accepts 54 exact / 13 explained selected-field changes. Actual fills reconcile cash; current pair unsettled, cumulative losses retained. Earlier numerical account-age interpretation withdrawn: `as_of` is panel time, actual account age unknown. Learner zero scored; broader EXEC stays **OPEN**. No caps, budgets or variables changed. [Release, originals and limits](../research/kalshi_execution_fix_2026-10-15/RELEASE.md).
@@ -254,6 +260,7 @@ move an item to done only with linked evidence. Blocked or waiting-for-approval 
   [Protocol and operational boundary](KALSHI_ONLINE_LEARNING.md).
 
 ### CODEX-TAKEOVER-001 — operating access/checklist audited; private state and raw-volume transfer unverified
+- **October 15, 1:18 PM PDT:** full private handoff, both verbatim procedures, provenance and one Codex entrypoint are now saved in the existing private memory repository; all 12 changed files read back exactly through connected GitHub. No private inventory/contact/source URL published here. Text preservation is complete; actual account/browser/host access, external routine control, unavailable artifacts and raw-volume transfer remain open. Current owner priority is takeover first and TJR last; keep Kalshi evidence and the recorder's 3:45 PM checkpoint. [Current public boundary](CODEX_TAKEOVER.md).
 - **October 15 9:40 AM PDT:** the complete owner-supplied attachment is received and all 942 lines read, including both full procedures. Private originals, exact procedure copies and continuity/reconciliation records are preserved outside Git. The missing-text blocker is resolved; earlier unavailable/unread notes remain dated history. First priority remains the Kalshi input-cause/execution diagnostic, with today's 3:45 PM recorder checkpoint retained. Actual account/browser/session access, external automation control and raw-volume transfer are still unverified; complete operational transfer stays OPEN. No private inventory or production/financial action.
 - **October15 9:33 AM PDT:** owner explicitly reaffirmed all-work ownership. Public handoff/currentrecords read at245ca1e;
   firstpriority remains exact Kalshi input-cause/execution evidence, recordercheckpoint retained. Threeprivate
@@ -268,6 +275,7 @@ move an item to done only with linked evidence. Blocked or waiting-for-approval 
   Recorder feasibility3:45PM today/storage beforeOct20 remain obligations; no production settings change.
 
 ### TJR-MNQ-001 — validation tooling complete; historical run blocked on data; paper/live disabled
+- **October 15, 1:18 PM PDT:** owner explicitly says save TJR for last. Existing follow-up prompt now begins with that priority and the takeover/current-work gate; exact readback preserves the full original prompt, schedule, enablement and all other task configurations. No duplicate task or research run. Keep queued/blocked until higher-priority work clears and authentic inputs exist; historical P&L null, holdout unopened, paper not started/live disabled. Earlier parallel-priority notes remain dated history.
 - **12:53 PM PDT October 15:** latest connected records/PR47 metadata retain its separately completed release/follow-up. PR64 bounded observer milestone does not clear broader EXEC or supply authentic MNQ bars/costs. Keep queued/blocked and unfinished, historicalP&Lnull/holdoutunopened/papernotstarted/liveoff. No duplicate Pages/research, routine unchanged notification or automation change. [Current gate](../research/kalshi_probability_learning_2026-10-15/QUEUE_GATE.json).
 - **11:45 AM PDT October 15:** fresh connected-GitHub records at `2f77520` and independent pinned PR47 deployment/data/status review retain PR47 separately complete, broader EXEC/learner open. Prior offline priority supplies no authentic MNQ bars/costs. Keep queued/blocked, historical trades zero/P&L null, holdout unopened, paper not started/live off; no duplicate Pages/research/probes/tests, production action, routine unchanged alert or automation change. [Receipt and next input](../research/tjr_validation_2026-10-14/FOLLOWUP_2026-10-15_1145_PDT.json).
 - **11:30 AM PDT October 15:** current connected-GitHub records and exact PR47 deployment/follow-up rechecked; PR47 separately complete, broader EXEC/learning still open after PR63. Prior offline priority retained; authentic MNQ bars/costs still absent. Keep queued/blocked, zero historical trades/P&L null, holdout unopened, paper not started/live off; no duplicate research, routine unchanged alert or automation change. [Dated gate and concrete next input](../research/kalshi_execution_fix_2026-10-15/QUEUE_GATE.json).
@@ -515,6 +523,25 @@ move an item to done only with linked evidence. Blocked or waiting-for-approval 
   this item. No production, financial or credential-copy work is needed; chat delegation stays usable.
 
 ## Inbox (newest first)
+
+### 2026-10-15 20:18 UTC, Codex -> owner / workers: whole operating takeover first; TJR last (1:18 PM PDT)
+
+Owner wants Codex responsible for the whole business/project handoff, with TJR saved for last. The
+complete 942-line private source, both unchanged procedures, provenance and current access/work-order
+records are now saved in the existing private memory repository. All 12 changed files were fetched
+back exactly; independent local review checked source hashes, schema, links and credential boundaries.
+Public records contain no private inventory or contacts. Ownership and text preservation do not prove
+browser/account/host transfer. External automation state and unavailable artifacts remain unverified;
+do not replace a functioning service or replay historical commands just to change ownership.
+
+Only the existing TJR follow-up prompt changed to enforce LAST; original requirements, timing,
+enablement and other tasks match readback. No source, production, financial or order action here.
+Standalone Git/CLI authentication failed; the separately working GitHub connection published and
+verified the private archive instead. CLI login is not declared fixed. Keep current Kalshi sources,
+losses, caps, live/practice separation, prospective observer work and today's 3:45 PM Pacific recorder
+checkpoint. Broader EXEC and takeover are still open. Next verify remaining account/automation access
+and current operating costs, then finish one existing business workflow with its actual source input.
+
 
 ### 2026-10-15 19:53 UTC, Codex -> owner / workers: separate probability observer has first verified score (12:53 PM PDT)
 
