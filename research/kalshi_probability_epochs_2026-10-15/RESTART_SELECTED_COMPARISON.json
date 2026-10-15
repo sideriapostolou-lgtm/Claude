@@ -1,0 +1,288 @@
+{
+  "before_timestamp": "2026-10-15T21:31:28.400196622Z",
+  "after_timestamp": "2026-10-15T21:34:45.548192704Z",
+  "selected_paths": 68,
+  "equal": 67,
+  "changed": [
+    {
+      "path": "ladder.start_pnl_usd",
+      "before": -3.7461,
+      "after": -3.7460999999999984
+    }
+  ],
+  "fields": {
+    "configured_mode": {
+      "before": "live",
+      "after": "live"
+    },
+    "cash_usd": {
+      "before": 30.2496,
+      "after": 30.2496
+    },
+    "reserved_usd": {
+      "before": 0,
+      "after": 0
+    },
+    "open_risk_usd": {
+      "before": 0,
+      "after": 0
+    },
+    "open_cost_usd": {
+      "before": 0,
+      "after": 0
+    },
+    "at_risk_usd": {
+      "before": 0,
+      "after": 0
+    },
+    "open_orders": {
+      "before": 0,
+      "after": 0
+    },
+    "positions": {
+      "before": 0,
+      "after": 0
+    },
+    "day_stop_latched": {
+      "before": true,
+      "after": true
+    },
+    "total_halted": {
+      "before": false,
+      "after": false
+    },
+    "integrity_error": {
+      "before": null,
+      "after": null
+    },
+    "integrity_reset": {
+      "before": null,
+      "after": null
+    },
+    "cleanup_pending": {
+      "before": false,
+      "after": false
+    },
+    "fee_precision_verified": {
+      "before": true,
+      "after": true
+    },
+    "fee_precision_usd": {
+      "before": 0.0001,
+      "after": 0.0001
+    },
+    "caps.window_usd": {
+      "before": 10,
+      "after": 10
+    },
+    "caps.open_usd": {
+      "before": 20,
+      "after": 20
+    },
+    "caps.day_stop_usd": {
+      "before": 6,
+      "after": 6
+    },
+    "caps.clip": {
+      "before": 5,
+      "after": 5
+    },
+    "caps.total_stop_usd": {
+      "before": 10,
+      "after": 10
+    },
+    "today.day": {
+      "before": "2026-10-15",
+      "after": "2026-10-15"
+    },
+    "today.windows": {
+      "before": 69,
+      "after": 69
+    },
+    "today.fills": {
+      "before": 302,
+      "after": 302
+    },
+    "today.settled_windows": {
+      "before": 71,
+      "after": 71
+    },
+    "today.fees_usd": {
+      "before": 0.8455,
+      "after": 0.8455
+    },
+    "today.locked_usd": {
+      "before": 4.501150769230759,
+      "after": 4.501150769230759
+    },
+    "today.directional_usd": {
+      "before": -9.545850769230768,
+      "after": -9.545850769230768
+    },
+    "today.pnl_usd": {
+      "before": -5.044700000000009,
+      "after": -5.044700000000009
+    },
+    "today.worst_usd": {
+      "before": -2.7667,
+      "after": -2.7667
+    },
+    "today.take_attempts": {
+      "before": 0,
+      "after": 0
+    },
+    "today.take_fills": {
+      "before": 0,
+      "after": 0
+    },
+    "today.maker_orders": {
+      "before": 3582,
+      "after": 3582
+    },
+    "today.maker_fills": {
+      "before": 224,
+      "after": 224
+    },
+    "today.locks": {
+      "before": 61,
+      "after": 61
+    },
+    "today.lock_fills": {
+      "before": 39,
+      "after": 39
+    },
+    "total.day": {
+      "before": null,
+      "after": null
+    },
+    "total.windows": {
+      "before": 180,
+      "after": 180
+    },
+    "total.fills": {
+      "before": 826,
+      "after": 826
+    },
+    "total.settled_windows": {
+      "before": 195,
+      "after": 195
+    },
+    "total.fees_usd": {
+      "before": 3.11672,
+      "after": 3.11672
+    },
+    "total.locked_usd": {
+      "before": 3.679949120879107,
+      "after": 3.679949120879107
+    },
+    "total.directional_usd": {
+      "before": -23.171749120879117,
+      "after": -23.171749120879117
+    },
+    "total.pnl_usd": {
+      "before": -19.49180000000001,
+      "after": -19.49180000000001
+    },
+    "total.worst_usd": {
+      "before": -2.9791999999999987,
+      "after": -2.9791999999999987
+    },
+    "total.take_attempts": {
+      "before": 39,
+      "after": 39
+    },
+    "total.take_fills": {
+      "before": 17,
+      "after": 17
+    },
+    "total.maker_orders": {
+      "before": 7001,
+      "after": 7001
+    },
+    "total.maker_fills": {
+      "before": 587,
+      "after": 587
+    },
+    "total.locks": {
+      "before": 142,
+      "after": 142
+    },
+    "total.lock_fills": {
+      "before": 111,
+      "after": 111
+    },
+    "ladder.enabled": {
+      "before": true,
+      "after": true
+    },
+    "ladder.rung": {
+      "before": 0,
+      "after": 0
+    },
+    "ladder.ladder_rung": {
+      "before": 0,
+      "after": 0
+    },
+    "ladder.max_window_usd": {
+      "before": 20,
+      "after": 20
+    },
+    "ladder.configured_max_window_usd": {
+      "before": 50000,
+      "after": 50000
+    },
+    "ladder.top_rung": {
+      "before": 2,
+      "after": 2
+    },
+    "ladder.change_pending": {
+      "before": false,
+      "after": false
+    },
+    "ladder.recheck_pending": {
+      "before": false,
+      "after": false
+    },
+    "ladder.effective_from": {
+      "before": null,
+      "after": null
+    },
+    "ladder.pending_limits": {
+      "before": null,
+      "after": null
+    },
+    "ladder.rung_started_at": {
+      "before": 1791923645.5061624,
+      "after": 1791923645.5061624
+    },
+    "ladder.start_pnl_usd": {
+      "before": -3.7461,
+      "after": -3.7460999999999984
+    },
+    "ladder.last_change": {
+      "before": null,
+      "after": null
+    },
+    "ladder.limits.window_usd": {
+      "before": 10,
+      "after": 10
+    },
+    "ladder.limits.open_usd": {
+      "before": 20,
+      "after": 20
+    },
+    "ladder.limits.day_stop_usd": {
+      "before": 6,
+      "after": 6
+    },
+    "ladder.limits.clip": {
+      "before": 5,
+      "after": 5
+    },
+    "ladder.limits.total_stop_usd": {
+      "before": 10,
+      "after": 10
+    }
+  },
+  "note": "Selected original status fields only; preserves daily-stop latch and losses. Not native volume/cash/control ledger certification; as_of is panel time."
+}
