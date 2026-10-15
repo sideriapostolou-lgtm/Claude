@@ -1,0 +1,38 @@
+{
+  "frozen_at_utc": "2026-10-15T19:28:49.490382+00:00",
+  "declaration_sha256": "7d2fefd9aa603bc3bd00adc0d761084d1a9b46dc92d7415af747772b2fa074a7",
+  "deployment_id": "2e88601d-c9c7-474f-add8-72c0a13c1a4b",
+  "source_commit": "8c8681a032a6181c49915ba88ba38d0818dc69d3",
+  "limit_per_query": 500,
+  "events": [
+    "kalshi_probability_learning_forecast",
+    "kalshi_probability_learning_scored",
+    "kalshi_probability_learning_unknown",
+    "kalshi_probability_learning_status",
+    "kalshi_online_learning_forecast",
+    "kalshi_online_learning_scored",
+    "kalshi_online_learning_unknown",
+    "kalshi_online_learning_status",
+    "kalshi_learning_input_diagnostic",
+    "speeddesk_live_fill",
+    "speeddesk_live_settlement",
+    "speeddesk_live_status"
+  ],
+  "phases": [
+    {
+      "name": "slot",
+      "start_utc": "2026-10-15T19:30:00+00:00",
+      "end_utc": "2026-10-15T19:35:30+00:00",
+      "run_after_requested_end": true
+    },
+    {
+      "name": "final",
+      "start_utc": "2026-10-15T19:30:00+00:00",
+      "end_utc": "2026-10-15T19:47:00+00:00",
+      "run_after_requested_end": true
+    }
+  ],
+  "original_parsing": "Anchored logger/event regex only; exact timestamp/message dedup across overlapping phase requests. Nested latest-event copies do not count. Record native responses, clocks, bounds/limits, errors/caps.",
+  "target": "Exact declared900second start/end; future metadata or forecast must identify actual ticker. Keep partial restart window and later tail activity separate.",
+  "extensions": "No silently extended window or target substitution. On labels absent at declared tail, record explicit missing result and separately bounded follow-up if necessary; existing2hourlabeltimeout unchanged."
+}
