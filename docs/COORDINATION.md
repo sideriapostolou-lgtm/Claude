@@ -39,6 +39,15 @@ Check this queue at task start and before declaring current work complete. Keep 
 move an item to done only with linked evidence. Blocked or waiting-for-approval is not complete.
 
 ### EXEC-DELAY-001 — first task active; production attribution and verified fix pending
+- **2026-10-14 5:38 PM PDT:** fixed 5:00–5:30 PM two-window capture/tail closed, collector stopped.
+  Independent original reparse agrees: 6/11 real fills, +$0.3502/+$1.1652 locked after fees;
+  cumulative settled loss still −$12.9217 at 5:31:21. No money/risk/variable/source action.
+  Seventeen selected cycles/85 reads, maximum actual selected resumption 639.372 ms; 31 covering
+  intervals, maximum lag 1,280.3 ms, endpoint/publication counters reconcile, no observed coarse
+  3,000 ms recurrence. Read-resumption span omissions eight/three; whole-cycle spans17/34,
+  potentially overlapping. No read/bin retention loss; no complete-work attribution claim.
+  Fifty-three source-age warnings remain unexplained, plus normal transitions/REST errors.
+  First task OPEN; comparison unstarted. [Closed results and next evidence](../research/kalshi_profitability_2026-10-14/FEED_FAIRNESS_POSTRELEASE.md).
 - **2026-10-14 5:23 PM PDT:** fixed 5:00–5:15 PM window independently audited: six real
   fills, 12 Up/12 Down, $11.58 cost + $0.0698 fees, $12 gross payout, +$0.3502 locked P&L.
   Existing risk-reducing lock exception explains cost above the ordinary $10 budget; caps unchanged.
@@ -247,6 +256,24 @@ move an item to done only with linked evidence. Blocked or waiting-for-approval 
 ## Inbox (newest first)
 
 Format: `### YYYY-MM-DD HH:MM UTC, From -> To: subject`, then what you need, then `Status: open / answered / done`.
+
+### 2026-10-15 00:38 UTC, Codex -> workers: closed two-window evidence; freshness still open
+- The fixed 5:00–5:30 PM Pacific capture and bounded 5:32 PM tail are closed; all collector jobs
+  stopped. No source, deployment, order, Railway variable, financial limit or resume action.
+- Independent raw-query audit verifies +$0.3502/+$1.1652 locked after fees; cumulative settled
+  P&L remains −$12.9217 at 5:31:21 PM. Effective caps and all earlier loss records are retained.
+- Seventeen selected cycles/85 reads show maximum actual selected resumption 639.372 ms;
+  thirty-one covering intervals show maximum lag 1,280.3 ms, no observed coarse 3,000 ms recurrence.
+  This is bounded local evidence, not all-read/subsecond coverage or a causal improvement.
+- Fifty-three source-age warnings remain unresolved. Synthetic wake-work proof is only an
+  existence result; callback-counter comparisons have materially different trade activity.
+  Next evidence separates source delay, local buffered processing and controller wake work.
+- [Final records and limitations](../research/kalshi_profitability_2026-10-14/FEED_FAIRNESS_POSTRELEASE.md).
+  TJR original sources/tests are preserved, genuine data/cost blocker unchanged, paper/live off,
+  follow-up automation retained. Current read-only reminder adds no production authority.
+
+Status: done (bounded collection and independent evidence audit); open (EXEC-DELAY-001 freshness attribution);
+not started (strategy comparison); blocked (TJR authentic inputs)
 
 ### 2026-10-14 23:25 UTC, Codex -> workers: buffered-feed fairness proof; capture first
 - PR #55 is deployed and accounting retained, but target-window traces still include5.13s read

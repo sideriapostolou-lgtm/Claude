@@ -13,6 +13,53 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-15 00:38 UTC, Codex, two fixed windows closed; execution task remains open (5:38 PM PDT October 14)
+- Closed the preassigned 5:00–5:15 and 5:15–5:30 PM windows plus bounded 5:32 PM tail.
+  All collector jobs stopped at 5:32:25 PM; no new source, deployment, variables, orders, caps,
+  stops or resume-budget action. Both services remain online on the unchanged recorded deployments.
+- Independent original-query reconstruction agrees: 1,300 returned rows -> 1,154 unique originals
+  -> 1,115 retained events + 39 excluded anchored practice statuses. No query/parse errors, query
+  caps or saved-event mismatches. Real financial rows are separated from practice events.
+- First/second windows: 125/105 durable intents, 124/101 accepted IDs, 6/11 actual fills, each
+  linked. Both hold 12 Up/12 Down; costs $11.58/$10.79, actual fees $0.0698/$0.0448, gross payouts
+  $12 each; +$0.3502/+$1.1652 locked after fees, directional residual only floating-point noise.
+  Combined +$1.5154 is not proof of profitability. Pair credits already returned; net settlement
+  payouts zero. Existing hedge exceptions explain cost above ordinary budgets; no cap increases.
+- Seventeen intersecting selected cycles/85 reads: maximum actual selected read resumption
+  639.372 ms. Thirty-one covering status intervals span both outer edges, maximum loop lag
+  1,280.3 ms, maximum sample count 2,771 below 8,192. No observed frozen coarse 3,000 ms local
+  recurrence; this does not certify all-read 250 ms/subsecond execution or causal improvement.
+  Required read marks retained; read-resumption work queries omit eight/three span details,
+  whole-cycle callback queries seventeen/thirty-four. These populations overlap; never sum them
+  as distinct missing work. No read/bin retention loss.
+- Status counters and report ordinals reconcile: last minute status at 5:31:21 has 20 reports;
+  later original cycle 1647 trace has 21 (payload completion 5:31:51.952 PM, Railway log
+  5:31:53.445 PM). Endpoint cohorts 956/1574 completed in later statuses,
+  buffers empty, suppression/drops zero. Do not conflate these different timestamps/endpoints.
+- Target period retains 58 feed warnings: 53 source-age, two normal market-set transitions,
+  three REST trade-gap ValueErrors. Freshness attribution is unresolved, so EXEC-DELAY-001 stays
+  OPEN despite the bounded local recurrence result and two positive settlements.
+- Dated 5:31:21.409 PM status: cash $37.1197 versus cumulative settled P&L −$12.9217; next-window
+  gross filled cost $4.70, modeled filled risk zero, reserved $1.62/one order, uncertain-order
+  guard blocking new buys at that snapshot. Cash is not profit; modeled risk zero is not zero
+  gross exposure. Caps $10 ordinary window/$20 open/$6 UTC day/$10 total, clip five; stop latches
+  false, integrity clear, ladder rung zero/promotion not ready. No raw stop-anchor export claimed.
+- Offline callback-count inventory independently reproduced. Its similarly sized endpoint spans
+  have different activity: prior span begins after all target trades, candidate contains all
+  125 intents/124 acceptances/six fills/123 cancellation rows. Higher checkpoint counts cannot
+  isolate wake amplification or CPU cost. Published derivative adds this confound and interval
+  wording correction; original extraction and initial/final classifiers are preserved.
+- Saved final derived report and exact raw/audit archive. Initial classifier differs only in
+  interpretation of longer durable-lock states; root verified original queries/events identical.
+  Final archive 5,498,164 bytes, SHA d102c23b2a0211f717989dfa35314f5e9378504df79e57807b8bd4c84c04cce2;
+  independent audit 194,559 bytes, SHA 4aab5a20c2c9574a3c92a80e4f3d17bf0d818200e9ee929a0e7c14a01b669813.
+  JSON/hash/archive/credential/preserved-history checks precede this docs-only push. App tests
+  not rerun; previous source release checks remain separate, source hashes unchanged.
+- Next: attribute source-age warnings using receive/processing timing and controller wake/activity
+  evidence before selecting a correction. Strategy comparison remains unstarted. TJR retains
+  saved sources/tests, authentic data/cost blocker, null historical P&L, no paper/live start and
+  unchanged automation; no routine unchanged-blocker notification. Recorder obligations remain.
+
 ## 2026-10-15 00:23 UTC, Codex, first fixed window audited; freshness remains open (5:23 PM PDT October 14)
 - Running source remains c8e37e5. No source, release, variable, order or financial-setting action.
   Independent original-message audit of the fixed 5:00–5:15 PM window confirms 125 durable intents,
