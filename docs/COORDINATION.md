@@ -44,6 +44,7 @@ Check this queue at task start and before declaring current work complete. Keep 
 move an item to done only with linked evidence. Blocked or waiting-for-approval is not complete.
 
 ### EXEC-DELAY-001 — first task active; production attribution and verified fix pending
+- **10:27 AM PDT October 15:** PR62 exactff05beb/c64SUCCESS10:22:53AM; first full diagnostic window10:30–10:45AM/tail10:47, declaredbeforestart with184s rootverificationmargin. Source/protectedhistory checked;67selectedrestartfields exact and3usedcontrols ignored. Runtimecause/probability/EXECevidence stillpending; no all-fixed/profitclaim. [Frozen futurecapture](../research/kalshi_input_causes_2026-10-15/CAPTURE_DECLARATION.md).
 - **10:16 AM PDT October 15:** child-only cause diagnostic now independently checked (5744passed/14existing skips, mypy128/Ruff5, exact corrected patch/source and local resource envelope). Safe-minute release/exact deployment and fixed future-window cause evidence remain pending. No actual upstream-cause fix, usable forecast, better trading result or full EXEC closure claimed. [Preparation/originals/limits](../research/kalshi_input_causes_2026-10-15/PREPARATION.md).
 - **9:24 AM PDT October15:** PR61 exact153a122/e641 SUCCESS8:57:51AM; owner-approved fresh$10total resume,
   unchanged10/window,20open,6/day,clip5; no day reset/stop removal/cap increase. 67selectedrestartfields retained.
@@ -504,6 +505,11 @@ move an item to done only with linked evidence. Blocked or waiting-for-approval 
   this item. No production, financial or credential-copy work is needed; chat delegation stays usable.
 
 ## Inbox (newest first)
+
+### 2026-10-15 17:27 UTC, Codex -> workers: PR62 deployed; fixed10:30–10:45AM Pacific diagnostic capture (10:27 AM PDT October 15)
+- Exact `ff05beb654095ce91fefe24adfb2a94eea22be39` /Railway `c64e8199-4ce2-4234-ac53-63905e22231d`, SUCCESS10:22:53AM; normalPolymarketLIVE10 original10:22:49AM. Rootcompletedverification10:26:56AM: activeexactsource, bothservicesonline; recorder8453unchanged. Newsource/tests/build equal checkedcandidate61b9198; no new financial policy.
+- Fresh10:24:57AM KalshiLIVE/authenticated/tradingtrue, waitingempty/nointegrity/cleanup. Initialstale10:23:57row excludedreadiness. All67selectedfinancial/cap/stop/ladderfields exactlyequalbefore; threeoriginalreset/resumecontrols ignoredalreadyused. Nestedstatuscopies excluded; no newbudget/reset/cap/order/settingsaction or fullnativeledger/volumeexport claim.
+- **Fixed future window10:30–10:45AM, tail10:47AM Pacific**, declared10:26:57AM with184s completed-verification margin. [Declaration/bounds/limits](../research/kalshi_input_causes_2026-10-15/CAPTURE_DECLARATION.md). Hold application source steady through finitecapture; docs-only receipt does not restart it. Firstdue originalcause/disposition stillpending; observer0forecasts/0scored/15unknown at10:23:51AM, not a learned/profitable strategy. EXEC remainsOPEN and TJRblocked; recorder3:45PM/storage obligationretained.
 
 ### 2026-10-15 17:16 UTC, Codex -> workers: exact child diagnostic checked; release and first future window next (10:16 AM PDT October 15)
 - Owner asked to continue through completion. Root owns integration; requested Sol implementation, Astra independent review and Luna bounded inventory launches accepted. Scope: child-only input-cause/timing diagnostic plus49 fake regressions. Pure learner/V1 history/fingerprint, all trading/risk/client/config/feed/ledger/ladder/Polymarket/build paths and parent/wire unchanged. No private handoff contents in Git.
