@@ -1,0 +1,52 @@
+{
+  "task": "bounded read-only archive and saved-check receipt validation",
+  "archive": {
+    "path": "/workspace/nightcrawler-live-correction/research/kalshi_execution_fix_2026-10-15/PREPARATION.zip",
+    "actual_bytes": 838703,
+    "expected_bytes": 838703,
+    "actual_sha256": "5e3b7611d89b9163074b60dd13c7a66f613d675139d8e1155f28321b283b81cf",
+    "expected_sha256": "5e3b7611d89b9163074b60dd13c7a66f613d675139d8e1155f28321b283b81cf",
+    "zip_member_count": 37,
+    "expected_member_count": 37,
+    "manifest_member_count": 37,
+    "crc_read_checked_count": 37,
+    "member_bytes_and_sha256_matching_manifest": 37,
+    "local_files_checked": 37,
+    "local_files_byte_identical": 37,
+    "missing_local_files": 0,
+    "different_local_files": 0,
+    "missing_zip_members": 0,
+    "extra_zip_members": 0,
+    "zip_testzip_bad_member": null
+  },
+  "manifest": {
+    "path": "/workspace/nightcrawler-live-correction/research/kalshi_execution_fix_2026-10-15/PREPARATION_MANIFEST.json",
+    "sha256": "18d236a28241808614705e7bc9a6ce85b759a373e678e9f581e2277339dc09b0",
+    "archive_declared_bytes": 838703,
+    "archive_declared_sha256": "5e3b7611d89b9163074b60dd13c7a66f613d675139d8e1155f28321b283b81cf"
+  },
+  "saved_full_pytest_log": {
+    "path": "/workspace/nightcrawler-live-correction/research/kalshi_execution_fix_2026-10-15/CHECK_full-pytest-v1.log",
+    "sha256": "39275c2bf4c3f1bfacde742edd5951ac827d9c2f7a6da2393391df09287c4b6f",
+    "summary": "5772 passed, 14 skipped in 316.58s (0:05:16)",
+    "captured_exit": "CAPTURED_EXIT=0",
+    "finished_utc": "FINISHED_UTC=2026-10-15T18:14:12.144910+00:00",
+    "rerun": false
+  },
+  "before_after_hash_freeze": {
+    "before_path": "CHECK_root-full-freeze-before.json",
+    "after_path": "CHECK_root-full-freeze-after.json",
+    "before_at_utc": "2026-10-15T18:08:53.895623+00:00",
+    "after_at_utc": "2026-10-15T18:14:12.145336+00:00",
+    "paths": {
+      "src/nightcrawler/speeddesk_live.py": "2471adff4eca63ee6abba73031da75793ae5e1b3cb0468e30e1e2d6b9934efd5",
+      "tests/test_speeddesk_lock_send_freshness.py": "e170bbc84e4b986ef370cbf267acd4a4dee9da45547042609ba858c4418f314c"
+    },
+    "paths_unchanged": true,
+    "after_unchanged_flag": true,
+    "after_exit": 0
+  },
+  "error_count": 0,
+  "errors": [],
+  "scope": "No source/test files were read or changed; freeze identities were read from saved receipts only. No tests rerun, production queried, private handoff or credential material accessed, or repository files modified."
+}

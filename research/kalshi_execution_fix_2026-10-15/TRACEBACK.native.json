@@ -1,0 +1,17 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "**Deployment c1fda55b-72fd-47b3-9801-dffec83b9e8b** [SUCCESS]\nservice: f84d3b52-002f-44cb-931e-bc9e3e097e97, env: 17f7b0e0-104c-4903-9484-0106748b3cdb\n\n### Deploy logs (0)\n(no deploy logs in range)"
+    }
+  ],
+  "structuredContent": {
+    "scope": "deployment",
+    "deploymentId": "c1fda55b-72fd-47b3-9801-dffec83b9e8b",
+    "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+    "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+    "status": "SUCCESS",
+    "deploy": []
+  },
+  "isError": false
+}
