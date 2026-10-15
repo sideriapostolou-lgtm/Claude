@@ -43,7 +43,13 @@ building, wait for it to finish.
 Check this queue at task start and before declaring current work complete. Keep unfinished items here;
 move an item to done only with linked evidence. Blocked or waiting-for-approval is not complete.
 
-**Current owner work order, October 15, 1:18 PM PDT:** complete the whole operating handoff to
+**Latest owner work order, October 15, 1:30 PM PDT:** Kalshi is first again. Keep unfinished takeover,
+access, cost and other business work on their existing records, deferred rather than done. TJR/MNQ
+remains last. Every unfinished item needs its actual state and next step; deployable changes require
+exact deployment and runtime verification before completion. This does not raise financial limits,
+reset stops/budgets, enable another live desk or authorize Railway-variable changes.
+
+**Earlier owner work order, October 15, 1:18 PM PDT:** complete the whole operating handoff to
 Codex first; preserve active Kalshi evidence and the existing recorder checkpoint. Verify remaining
 access and automation ownership before claiming a complete transfer. **TJR/MNQ is last**, superseding
 earlier requests to advance it in parallel. Missing evidence/access is not cleared. No new live desk,
@@ -260,6 +266,7 @@ financial-setting change, automatic restart or paid service follows from this pr
   [Protocol and operational boundary](KALSHI_ONLINE_LEARNING.md).
 
 ### CODEX-TAKEOVER-001 — operating access/checklist audited; private state and raw-volume transfer unverified
+- **October 15, 1:30 PM PDT:** owner reprioritizes Kalshi first. Complete private text preservation remains verified; full access/automation/artifact/volume transfer and current-cost/business follow-up remain **deferred and unfinished**, on existing records. TJR stays last. Do not treat a priority change as completion or permission to alter financial settings.
 - **October 15, 1:18 PM PDT:** full private handoff, both verbatim procedures, provenance and one Codex entrypoint are now saved in the existing private memory repository; all 12 changed files read back exactly through connected GitHub. No private inventory/contact/source URL published here. Text preservation is complete; actual account/browser/host access, external routine control, unavailable artifacts and raw-volume transfer remain open. Current owner priority is takeover first and TJR last; keep Kalshi evidence and the recorder's 3:45 PM checkpoint. [Current public boundary](CODEX_TAKEOVER.md).
 - **October 15 9:40 AM PDT:** the complete owner-supplied attachment is received and all 942 lines read, including both full procedures. Private originals, exact procedure copies and continuity/reconciliation records are preserved outside Git. The missing-text blocker is resolved; earlier unavailable/unread notes remain dated history. First priority remains the Kalshi input-cause/execution diagnostic, with today's 3:45 PM recorder checkpoint retained. Actual account/browser/session access, external automation control and raw-volume transfer are still unverified; complete operational transfer stays OPEN. No private inventory or production/financial action.
 - **October15 9:33 AM PDT:** owner explicitly reaffirmed all-work ownership. Public handoff/currentrecords read at245ca1e;
@@ -523,6 +530,29 @@ financial-setting change, automatic restart or paid service follows from this pr
   this item. No production, financial or credential-copy work is needed; chat delegation stays usable.
 
 ## Inbox (newest first)
+
+### 2026-10-15 20:30 UTC, Codex -> owner / workers: Kalshi first; late REST/recovered WS correction reserved (1:30 PM PDT)
+
+Owner requests the next concrete Kalshi improvement and a standing rule to retain all unfinished work.
+Root owns integration/docs; independent Astra review owns only private offline reproductions. Source
+scope reserved in isolated `codex/kalshi-feed-recovery`: Kalshi public feed adapter, current WS freshness
+accessor if needed, and focused fake tests. No controller/model/risk/ledger/config, money budget, variable,
+Polymarket, learner protocol/history or live strategy change. Do not overlap these files.
+
+Current source reproduces a late REST book/tape failure clearing already recovered books, while the same
+status still advertises healthy WS makers. Cached WS lists can themselves be stale, so suppression must
+use actual current same-window book freshness and, for tape, a verified fresh trade. Genuine failures,
+disconnects, stale data and earlier gap history must stay invalidating. This is a correctness correction,
+not proof of the cause of historic losses or a profitable strategy. Tests, exact independent review,
+safe-minute release and original runtime/restart evidence remain pending.
+
+Latest original 1:27:41 PM status reports live/authenticated, cash $30.4496 versus cumulative settled
+P&L −$18.8909; reported risk $0.4009. Totals split +$3.800849 locked / −$22.691749 directional, with
+coverage limits retained. Three official prospective scores are insufficient for trading promotion;
+V2 stays observe-only. Preserve caps 10/window,20open,6day,10total,clip5; no increase or new resume.
+Keep recorder's existing 3:45 PM Pacific checkpoint. Other unfinished takeover/business work is deferred
+on existing records; TJR last. The queue rule is durable in AGENTS and private operating memory.
+
 
 ### 2026-10-15 20:18 UTC, Codex -> owner / workers: whole operating takeover first; TJR last (1:18 PM PDT)
 

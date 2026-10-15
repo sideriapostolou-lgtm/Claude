@@ -61,6 +61,12 @@ models/fallbacks honestly; a model change does not transfer omitted context or g
    venue's own numbers. If something failed or was skipped, say so.
 8. **The owner's own bets.** The owner bets in the same Polymarket account (parlays, his own picks). Those are
    his (`rule="owner"`); never count them in the bot's caps or stops, and never touch them.
+9. **Keep unfinished work.** The owner asked on October 15 that every unfinished task stay on its existing
+   queue or commitment with its actual status, missing evidence and concrete next step. For deployable work,
+   tests, a commit or a merged PR are not completion: verify the exact live deployment and required runtime
+   evidence. Research and paper-only tasks keep their own completion requirements; this rule does not
+   authorize making them live. Current priority is Kalshi first, other takeover/business work deferred,
+   and TJR/MNQ last. Preserve finished substeps separately from the unfinished overall task.
 
 ## Commands
 
