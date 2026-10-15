@@ -1083,6 +1083,14 @@ class KalshiArena:
             self.learning.disable("optional_learning_method_failed")
             return None
 
+    def _learning_discover(self, windows: Sequence[Window], now: float) -> None:
+        known = set(self.learning.pending)
+        self._learning_call("discover", windows, now)
+        # A drop can precede the first window record in its frame. Use its observation
+        # time, never today's untimed, sticky simulator degradation history.
+        for slug in self.learning.pending.keys() - known:
+            self._learning_call("degrade", slug, "feed_dropped", self._incomplete_before)
+
     # ------------------------------------------------------------------ the feed
     def feed_book(self, book: Book) -> None:
         self.inbox.append(("book", book))
@@ -1107,6 +1115,7 @@ class KalshiArena:
             self._degrade_started(now, "feed_dropped")
         self.link_seq, self.link_dropped = int(seq), max(self.link_dropped, int(dropped))
         self.live_flush_us.append(int(flush_us))
+        missing_ladders: set[str] = set()  # bounded by this already-decoded frame
         for record in items:
             tag = record[0]
             if tag == "b":
@@ -1115,6 +1124,7 @@ class KalshiArena:
                     self.feed_book(book_from_wire(record, self.ladders))
                 except LookupError:  # a change to a ladder never received (not expected: the link resends whole)
                     self._degrade(str(record[1]), "feed_dropped")
+                    missing_ladders.add(str(record[1]))
             elif tag == "t":
                 self.feed_trade(trade_from_wire(record))
                 self.received += 1
@@ -1122,7 +1132,7 @@ class KalshiArena:
                 self.feed_gap(tuple(record[1]), bool(record[2]), bool(record[3]))
             elif tag == "w":
                 view.windows = tuple(Window(*values) for values in record[1])
-                self._learning_call("discover", view.windows, now)
+                self._learning_discover(view.windows, now)
                 live = {window.slug for window in view.windows}
                 self.ladders = {key: value for key, value in self.ladders.items() if key[0] in live}
             elif tag == "m":
@@ -1134,6 +1144,10 @@ class KalshiArena:
                 view.outcomes = {str(slug): bool(up) for slug, up in record[1]}
             else:
                 raise ValueError("unexpected Kalshi arena record")
+        # A missing ladder can appear before its first window announcement. Preserve
+        # that same-frame failure for learning without changing simulator behavior.
+        for slug in missing_ladders & self.learning.pending.keys():
+            self._learning_call("degrade", slug, "feed_dropped", now)
 
     def _degrade(self, slug: str, why: str) -> None:
         self._learning_call("degrade", slug, why, self.clock())
@@ -1141,9 +1155,11 @@ class KalshiArena:
             self.degraded.setdefault(slug, why)
 
     def _degrade_started(self, now: float, why: str) -> None:
+        # Learner forecasts outlive simulator windows (including skipped/void ones).
+        for slug in tuple(self.learning.pending):
+            self._learning_call("degrade", slug, why, now)
         for slug, window in self.windows.items():
             if window.start <= now:
-                self._learning_call("degrade", slug, why, now)
                 self.degraded.setdefault(slug, why)
 
     # ------------------------------------------------------------------ one pass
@@ -1151,14 +1167,14 @@ class KalshiArena:
         started = self.cpu()
         snap = self._snapshot()
         self.snap = snap
-        self._learning_call("discover", snap.windows, now)
+        self._learning_discover(snap.windows, now)
         self._windows(snap, now)
         self.tape.feed(snap.bitcoin_price, snap.bitcoin_at, snap.sigma)
         # Books and prints drained now may be newer than the pass's start: the rest of the pass uses the clock after
         # them, so none looks like it came from the future.
         now = max(self._drain(now), self.clock())
         self._learning_call("advance", snap.windows, snap.bitcoin_price, snap.sigma, snap.bitcoin_at,
-                            snap.outcomes, now, self.degraded, True)
+                            snap.outcomes, now, {}, True)
         self._settle(snap, now)
         self._voids(now)
         self._evaluate(snap, now)
