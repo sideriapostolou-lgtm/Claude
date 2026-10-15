@@ -39,6 +39,13 @@ Check this queue at task start and before declaring current work complete. Keep 
 move an item to done only with linked evidence. Blocked or waiting-for-approval is not complete.
 
 ### EXEC-DELAY-001 — first task active; production attribution and verified fix pending
+- **2026-10-15 4:46 AM PDT:** standalone cancellation-freshness candidate preserved locally as `9d69d95`;
+  exact two-file patch `537035` independently accepted, 5,582 tests / 14 existing skips, captured exit 0,
+  mypy 127 / Ruff 2 pass. It refreshes remaining-bid inputs after an awaited cancel; original method
+  reproduces eight misses. No source push/deploy, money-rule or financial-control change.
+  New retrospective evidence joins 15/23 slots / 82 fills to +$0.2668 after $0.2538 fees, with eight unknown
+  slots and worst −$2.2962; not a complete-day or causal-profit claim. EXEC stays open.
+  [Exact preparation, preserved archives and next verification](../research/kalshi_profitability_2026-10-14/CANCELLATION_FRESHNESS_PREPARATION.md).
 - **2026-10-14 10:39 PM PDT:** fixed 10:00–10:30 PM capture/tail closed; collector stopped
   10:32:19 PM. Two audited real windows −$1.590/+$0.261 total −$1.329 after $0.009 fees;
   locked +$0.940231/directional −$2.269231; all 12 fills joined. Four known main-reader delays
