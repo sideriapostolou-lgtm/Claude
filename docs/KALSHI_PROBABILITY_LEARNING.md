@@ -1,6 +1,6 @@
 # Prospective probability-only learner: V2
 
-Frozen design October 15, 2026, 11:53 AM Pacific. Status: implementation and independent checks pending. This new observer answers whether the existing conditional fair-value probabilities calibrate to official outcomes. It does not repair or certify upstream feed continuity, reproduce executable trades, establish P&L, or change live decisions.
+Frozen design October 15, 2026, 11:53 AM Pacific. Status: implementation and exact independent/full checks complete at 12:09 PM Pacific; release and runtime forecast/score proof pending. This new observer answers whether the existing conditional fair-value probabilities calibrate to official outcomes. It does not repair or certify upstream feed continuity, reproduce executable trades, establish P&L, or change live decisions.
 
 ## Why a separate observer
 
@@ -17,7 +17,7 @@ V1 requires the simulator's book/trade/maker continuity. Source review shows qui
 
 ## Prediction, labels and persistence
 
-Use unchanged `fair_up` with verified venue strike and settlement-average convention. Freeze baseline p and shadow q from ten bins with prior weight20: q=(prior_wins+20*p)/(prior_count+20), with only previously scored official outcomes. Freeze all inputs, terms, bin, counts, protocol and source fingerprint in the receipt. Score baseline and shadow Brier loss before updating a bin. A score is probability evidence, never money or trading P&L.
+Use unchanged `fair_up` with verified venue strike and settlement-average convention. Its baseline is a model estimate using Coinbase ticks against a Kalshi BRTI-settled outcome; that price-basis difference remains a limitation, not a verified true probability. Freeze baseline p and shadow q from ten bins with prior weight20: q=(prior_wins+20*p)/(prior_count+20), with only previously scored official outcomes. Freeze all inputs, terms, bin, counts, protocol and source fingerprint in the receipt. Score baseline and shadow Brier loss before updating a bin. A score is probability evidence, never money or trading P&L.
 
 Only raw strict boolean final labels from the existing official Kalshi settlement path, with arrival at/after end and within the existing two-hour timeout. Never score a future-known, invalid, early, conflicting or missing outcome as zero or reinterpret raw truthiness. Deduplicate/out-of-order labels and restart without hindsight. Already frozen unscored forecasts may survive restart with an annotation; an admitted unforecast window restarted after start is unknown.
 

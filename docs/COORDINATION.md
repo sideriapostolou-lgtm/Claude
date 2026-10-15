@@ -210,6 +210,7 @@ move an item to done only with linked evidence. Blocked or waiting-for-approval 
   while the first remains open. TJR's separate authentic-data blocker and recorder duties persist.
 
 ### KALSHI-ONLINE-001 — implementation/release verified; prospective accuracy evidence pending
+- **12:09 PM PDT October 15:** separate prospective V2 observer prepared beside unchanged V1. Exact bundle636cb13f:5884passed/14existing skips,mypy129/Ruff7; independent state/write/parent-source and local-resource checks pass. No V1 migration, upstream repair or accuracy/profit claim. Source release and actual future forecast/score verification pending; EXEC remains open. [Frozen design](KALSHI_PROBABILITY_LEARNING.md) and [exact preparation](../research/kalshi_probability_learning_2026-10-15/PREPARATION.md).
 - **10:50 AM PDT October15:** exact PR62 original10:35AM slot is unknown/pregap, unique identity-qualified join; observed explicit-sluggaps despite true aggregateflags/fresh BTC. Original10:45:18AM remains0forecasts/0scored/16unknown/Briernull, observe-only. V1 preserved, no backfill or relaxed admission. Bounded diagnostic release/capture complete, actual learning and EXEC incomplete; upstreamcause requires next separately reviewedmeasurement. [Originals and limitations](../research/kalshi_input_causes_2026-10-15/RELEASE_CAPTURE.md).
 - **9:24 AM PDT October15:** chronology correction PR61 deployed/tested5695pass/14existing skips,mypy128/Ruff2;
   observer remains enabled/observe-only. 9:05AM still excludespregap:0forecasts/0scored/10unknown(1startup9pregap),

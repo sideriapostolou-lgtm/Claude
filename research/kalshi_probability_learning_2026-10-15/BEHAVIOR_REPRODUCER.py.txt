@@ -1,0 +1,112 @@
+"""Independent base/candidate replay with fake clocks and no source changes."""
+from __future__ import annotations
+import ast
+import copy
+import hashlib
+import importlib.util
+import json
+import subprocess
+import sys
+import tempfile
+from dataclasses import astuple, replace
+from pathlib import Path
+from unittest.mock import patch
+
+from nightcrawler import kalshi_arena as candidate
+from nightcrawler.speeddesk_model import Window, Book, Level, Trade
+
+ROOT = Path('/workspace/nightcrawler-probability-learning')
+BASE = '88f8f6f4a695d32d712351d1dc1b2332180d165c'
+source = subprocess.check_output(['git','show',BASE+':src/nightcrawler/kalshi_arena.py'],cwd=ROOT)
+baseline_file = Path('/workspace/probability_review_baseline_arena.py')
+baseline_file.write_bytes(source)
+spec = importlib.util.spec_from_file_location('nightcrawler.review_baseline_arena',baseline_file)
+baseline = importlib.util.module_from_spec(spec)
+sys.modules[spec.name] = baseline
+spec.loader.exec_module(baseline)
+
+def strip_optional(value):
+    value = copy.deepcopy(value)
+    if isinstance(value,dict):
+        value.pop('learning_probability',None)
+    return value
+
+def replay(module, directory, scenario):
+    clock=[900.]
+    view=module.WireView()
+    writes=[]
+    def writer(path, data, durable=False):
+        writes.append((Path(path).name,strip_optional(json.loads(data)),durable))
+    with patch.object(module,'_write',writer),patch('os.urandom',lambda n: b'x'*n):
+        town=module.KalshiArena(module.ArenaConfig(Path(directory),population=12),lambda:view,
+                               clock=lambda:clock[0],cpu=lambda:0.)
+        w=Window('KXBTC15M-26OCT151345-45',1000,1900,100,venue_start_price=100,
+                 fee_rounding='kalshi',venue='kalshi')
+        seq=0
+        snapshots=[]
+        def receive(now, records, drop=0, jump=0):
+            nonlocal seq
+            clock[0]=now;seq+=1+jump
+            town.receive(('batch',seq,now,drop,0,records),view)
+            town.step(now)
+            snapshots.append(strip_optional(town.state(now)))
+        receive(900,[('w',[astuple(w)]),('m',100,900,.001),('k',(w.slug,)),('g',(),True,True)])
+        books=[Book(w.slug,side,(Level(.4,10),),(Level(.6,10),),1000,'initial',1000)
+               for side in ('up','down')]
+        receive(1000,[('m',100,1000,.001)]+[module.book_wire(b,None) for b in books])
+        if scenario=='maker_gap':
+            receive(1100,[('m',100,1100,.001),('g',(w.slug,),True,True)])
+        elif scenario=='raw_gap':
+            receive(1100,[('m',100,1100,.001)],jump=1)
+        elif scenario=='late_book':
+            receive(1100,[('m',100,1100,.001),module.book_wire(replace(books[0],at=1090),None)])
+        else:
+            receive(1100,[('m',100,1100,.001)])
+        receive(1300,[('m',100.2,1299.8,.001)])
+        if scenario=='terms':
+            w=replace(w,venue_start_price=101,start_price=101)
+            receive(1800,[('w',[astuple(w)]),('m',100,1800,.001)])
+        outcome='no' if scenario=='invalid_label' else False
+        receive(1900,[('o',[(w.slug,outcome)]),('m',100,1900,.001)])
+        next_w=replace(w,slug='KXBTC15M-26OCT151400-00',start=2000,end=2900,
+                       start_price=100,venue_start_price=100)
+        receive(1950,[('w',[astuple(w),astuple(next_w)]),('m',100,1950,.001)])
+        receive(2300,[('m',100,2300,.001)])
+        receive(2900,[('m',100,2900,.001),('o',[(w.slug,outcome),(next_w.slug,True)])])
+        town._save(2900)
+        result={'snapshots':snapshots,'writes':writes,'v1':town.learning.state()}
+        if hasattr(town,'learning_probability'):
+            result['v2']=town.learning_probability.state()
+        return result
+
+def main():
+    checks=[]
+    with tempfile.TemporaryDirectory(prefix='independent-probability-') as directory:
+        for scenario in ('healthy','maker_gap','raw_gap','late_book','terms','invalid_label'):
+            left=replay(baseline,Path(directory)/('base-'+scenario),scenario)
+            right=replay(candidate,Path(directory)/('candidate-'+scenario),scenario)
+            for field in ('snapshots','writes','v1'):
+                assert left[field]==right[field],(scenario,field)
+            checks.append({'scenario':scenario,'state_checkpoints':len(left['snapshots']),
+                           'writes_compared':len(left['writes']),'v1_counts':left['v1']['counts'],
+                           'v2_counts':right['v2']['counts'],'exact_except_optional_key':True})
+    protected=['kalshi_online_learning.py','speeddesk_model.py','speeddesk.py','speeddesk_venues.py',
+               'speeddesk_kalshi.py','speeddesk_kalshi_ws.py','speeddesk_live.py','speeddesk_live_model.py',
+               'speeddesk_live_ladder.py','speeddesk_kalshi_client.py','speeddesk_feeds.py','ledger.py',
+               'config.py','polydesk.py','polymarket_us.py']
+    identities={}
+    for name in protected:
+        path='src/nightcrawler/'+name
+        before=subprocess.check_output(['git','show',BASE+':'+path],cwd=ROOT)
+        after=(ROOT/path).read_bytes()
+        assert before==after,path
+        identities[path]=hashlib.sha256(after).hexdigest()
+    def parent_ast(text):
+        return ast.dump(next(node for node in ast.parse(text).body if isinstance(node,ast.ClassDef) and node.name=='ArenaLink'))
+    assert parent_ast(source)==parent_ast((ROOT/'src/nightcrawler/kalshi_arena.py').read_bytes())
+    output={'base':BASE,'replays':checks,'protected_bytes_identical':identities,'ArenaLink_ast_identical':True,
+            'source_sha256':{name:hashlib.sha256((ROOT/'src/nightcrawler'/name).read_bytes()).hexdigest()
+                             for name in ('kalshi_arena.py','kalshi_probability_learning.py')}}
+    print(json.dumps(output,indent=2))
+
+if __name__=='__main__':main()

@@ -1,0 +1,69 @@
+{
+  "source_commit": "88f8f6f4a695d32d712351d1dc1b2332180d165c",
+  "scope": "Read-only source diagnosis; no source, test, documentation, network or production mutation.",
+  "reviewed": [
+    "AGENTS.md",
+    "docs/COORDINATION.md",
+    "docs/WORKLOG.md newest entries",
+    "docs/MODEL_WORKFLOW.md",
+    "docs/CONTINUITY_INDEX.md",
+    "docs/HANDOFF.md",
+    "research/kalshi_input_causes_2026-10-15/RELEASE_CAPTURE.md",
+    "research/kalshi_input_causes_2026-10-15/NEXT_MEASUREMENT_DESIGN_DRAFT.json",
+    "research/kalshi_input_causes_2026-10-15/INDEPENDENT_NEXT_DESIGN_REVIEW.json",
+    "src/nightcrawler/speeddesk_kalshi.py",
+    "src/nightcrawler/speeddesk_kalshi_ws.py",
+    "src/nightcrawler/speeddesk_venues.py",
+    "src/nightcrawler/speeddesk.py",
+    "src/nightcrawler/kalshi_arena.py",
+    "src/nightcrawler/kalshi_online_learning.py"
+  ],
+  "established": [
+    {
+      "finding": "Healthy aggregate trade_stream/coinbase flags do not certify Kalshi-specific continuous data.",
+      "refs": [
+        "speeddesk_venues.py:27-41",
+        "speeddesk_kalshi.py:184-199"
+      ]
+    },
+    {
+      "finding": "WS maker membership loss independently emits explicit slug gaps even when book membership stays fresh; this intentionally conservatively cancels queue positions.",
+      "refs": [
+        "speeddesk_kalshi_ws.py:323-339"
+      ]
+    },
+    {
+      "finding": "Metadata window-set changes clear all REST trade readiness and emit gaps for all prior windows; any WS ticker-set change forces reconnect and invalidates all subscribed tickers.",
+      "refs": [
+        "speeddesk_kalshi.py:246-248",
+        "speeddesk_kalshi_ws.py:359-366",
+        "speeddesk_kalshi_ws.py:404-405"
+      ]
+    },
+    {
+      "finding": "Child applies gap at its existing apply clock and V1 permanently retains active pregap after subsequent recovery. Existing fake regression explicitly pins this.",
+      "refs": [
+        "kalshi_arena.py:1534-1544",
+        "kalshi_online_learning.py:162-171",
+        "tests/test_kalshi_online_learning_input_chronology.py:test_v1_explicit_active_gap_stays_permanent_after_recovery"
+      ]
+    }
+  ],
+  "not_safe_to_change_as_routine_fix": [
+    "Remove quiet-maker exclusions",
+    "Gap only removed metadata tickers while allowing original WS state across subscription reset",
+    "Use producer/frame occurrence clock to rewrite V1 existing effective-time admission",
+    "Delete/relabel/backfill recorded pregap history"
+  ],
+  "candidate_from_independent_astra_lane": {
+    "finding": "In-flight REST error after WS recovery unconditionally publishes explicit gap; book success already suppresses superseded REST results.",
+    "refs": [
+      "speeddesk_kalshi.py:277-288",
+      "speeddesk_kalshi.py:328-332",
+      "tests/test_speeddesk_kalshi_ws.py:test_inflight_rest_response_cannot_overwrite_newer_websocket_snapshot"
+    ],
+    "status": "Astra investigating independently; this worker did not reproduce or attribute actual production event yet."
+  },
+  "actual_production_cause": "Unknown: prior fixed capture identifies explicit_slug but producer branch/time was not carried. Neither current metadata nor quiet-maker hypothesis is joined to that exact event.",
+  "next": "Await root exact worktree and bounded edit scope. Implement/test only proved data-production correctness bug, preserving V1/history and legitimate invalidation."
+}

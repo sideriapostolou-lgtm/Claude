@@ -1547,8 +1547,10 @@ _ARENA_ACTIVITY = ("holding", "bidding", "idle", "newborn")
 _ARENA_HEX = re.compile(r"[0-9a-f]{12}")
 
 
-def _kalshi_learning_view(raw: Any) -> dict[str, Any] | None:
+def _kalshi_learning_view(raw: Any, *, probability_only: bool = False) -> dict[str, Any] | None:
     """Optional, numeric-only probability evidence; never practice money or a live control."""
+    expected_protocol = ("kalshi-probability-calibration-v2-h300-g5-b10-prior20" if probability_only
+                         else "kalshi-online-calibration-v1-h300-g5-b10-prior20")
     if (not isinstance(raw, Mapping) or raw.get("mode") != "observe_only"
             or raw.get("live_application") is not False or raw.get("profitability_proven") is not False
             or not isinstance(raw.get("enabled"), bool)):
@@ -1556,7 +1558,7 @@ def _kalshi_learning_view(raw: Any) -> dict[str, Any] | None:
     fingerprint, protocol = raw.get("source_fingerprint"), raw.get("protocol")
     if (not isinstance(fingerprint, str) or len(fingerprint) != 64
             or set(fingerprint) - set("0123456789abcdef")
-            or protocol != "kalshi-online-calibration-v1-h300-g5-b10-prior20"
+            or protocol != expected_protocol
             or raw.get("forecast_horizon_s") != 300 or raw.get("grace_s") != 5 or raw.get("bins") != 10):
         return None
     history_source, history_protocol = raw.get("history_source_fingerprint"), raw.get("history_protocol")
@@ -1565,7 +1567,8 @@ def _kalshi_learning_view(raw: Any) -> dict[str, Any] | None:
         return None
     if raw["enabled"] and (history_source != fingerprint or history_protocol != protocol):
         return None
-    if (not history_protocol.startswith("kalshi-online-calibration-") or len(history_protocol) > 80
+    history_prefix = "kalshi-probability-calibration-" if probability_only else "kalshi-online-calibration-"
+    if (not history_protocol.startswith(history_prefix) or len(history_protocol) > 80
             or any(char not in "abcdefghijklmnopqrstuvwxyz0123456789-_." for char in history_protocol)):
         history_protocol = "unrecognized_history_protocol"
     counts: dict[str, int] = {}
@@ -1580,6 +1583,8 @@ def _kalshi_learning_view(raw: Any) -> dict[str, Any] | None:
     if "exclusions" in raw:
         reasons = {"startup_inside", "late", "invalid", "pregap", "terms_changed", "missing_label",
                    "outcome_known", "invalid_label", "capacity"}
+        if probability_only:
+            reasons |= {"invalid_batch", "invalid_strike"}
         value = raw["exclusions"]
         if (not isinstance(value, Mapping) or set(value) != reasons
                 or any(type(item) is not int or not 0 <= item <= 2**53 for item in value.values())
@@ -1604,6 +1609,8 @@ def _kalshi_learning_view(raw: Any) -> dict[str, Any] | None:
               "conflicting_or_invalid_final_label", "clock_invalid_or_reversed", "malformed_optional_learning_state",
               "source_or_protocol_mismatch", "optional_learning_method_failed", "source_fingerprint_unavailable",
               "arena_state_unreadable"}
+    if probability_only:
+        errors.add("raw_stream_invalid")
     error = raw.get("error")
     error = error if isinstance(error, str) and error in errors else "learning_error" if error is not None else None
     return {"mode": "observe_only", "enabled": raw["enabled"], "live_application": False,
@@ -1611,7 +1618,8 @@ def _kalshi_learning_view(raw: Any) -> dict[str, Any] | None:
             "history_protocol": history_protocol, "history_source_fingerprint": history_source,
             "forecast_horizon_s": 300, "grace_s": 5, "bins": 10, **counts, **scores, "exclusions": exclusions,
             "error": error,
-            "coverage": "Quiet observations; full data coverage not certified"}
+            "coverage": ("Qualified current probability inputs; continuous history and trading profit not certified"
+                         if probability_only else "Quiet observations; full data coverage not certified")}
 
 
 def _kalshi_arena_envelope(status: str, reason: str | None) -> dict[str, Any]:
@@ -1801,6 +1809,8 @@ def _kalshi_arena_view(kalshi_arena: Any, raw: Mapping[str, Any], settings: Sett
         # The town runs in its own process; live_flush_us_* is the live loop's own cost of handing it the market.
         "feed": feed_block,
         **({"learning": _kalshi_learning_view(raw.get("learning"))} if "learning" in raw else {}),
+        **({"learning_probability": _kalshi_learning_view(raw.get("learning_probability"), probability_only=True)}
+           if "learning_probability" in raw else {}),
     }
 
 

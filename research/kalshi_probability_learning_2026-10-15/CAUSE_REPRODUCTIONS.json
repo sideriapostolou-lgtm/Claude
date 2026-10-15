@@ -1,0 +1,114 @@
+{
+  "queued_prestart_gap": {
+    "actual_child_counts": {
+      "capacity": 0,
+      "forecasts": 0,
+      "invalid": 0,
+      "invalid_label": 0,
+      "label_conflict": 0,
+      "late": 0,
+      "missing_label": 0,
+      "outcome_known": 0,
+      "pregap": 1,
+      "scored": 0,
+      "startup_inside": 0,
+      "terms_changed": 0,
+      "unknown": 1
+    },
+    "child_application_time": 1000.1,
+    "event_time_reference_counts": {
+      "capacity": 0,
+      "forecasts": 1,
+      "invalid": 0,
+      "invalid_label": 0,
+      "label_conflict": 0,
+      "late": 0,
+      "missing_label": 0,
+      "outcome_known": 0,
+      "pregap": 0,
+      "scored": 0,
+      "startup_inside": 0,
+      "terms_changed": 0,
+      "unknown": 0
+    },
+    "interpretation": "Missing occurrence timestamp lets a wholly prestart gap become active-window pregap.",
+    "producer_callback_time": 999,
+    "wire_records": [
+      [
+        "g",
+        [
+          "KXBTC15M-26OCT151345-45"
+        ],
+        true,
+        true
+      ],
+      [
+        "g",
+        [],
+        true,
+        true
+      ]
+    ]
+  },
+  "quiet_trade_expiry": {
+    "aggregate_trade_stream": true,
+    "book_age_at_gap": 0,
+    "coinbase": "connected",
+    "due_bitcoin_age": 0.20000000000004547,
+    "explicit_slugs": [
+      "KXBTC15M-26OCT151345-45"
+    ],
+    "gap_observed_at": 1004,
+    "interpretation": "Legitimate V1 maker-gap exclusion; probability inputs can exist without a fresh maker trade.",
+    "mathematically_available_baseline": 0.5,
+    "trade_age_at_gap": 4,
+    "v1_counts": {
+      "capacity": 0,
+      "forecasts": 0,
+      "invalid": 0,
+      "invalid_label": 0,
+      "label_conflict": 0,
+      "late": 0,
+      "missing_label": 0,
+      "outcome_known": 0,
+      "pregap": 1,
+      "scored": 0,
+      "startup_inside": 0,
+      "terms_changed": 0,
+      "unknown": 1
+    },
+    "v1_recent": [
+      {
+        "forecast": null,
+        "post_gaps": [],
+        "reason": "pregap",
+        "status": "unknown",
+        "window": "KXBTC15M-26OCT151345-45"
+      }
+    ],
+    "ws_connected_at_gap": true
+  },
+  "superseded_rest_error": {
+    "completion_status": {
+      "gap_windows": [
+        "KXBTC15M-26OCT151345-45"
+      ],
+      "maker_windows": [
+        "KXBTC15M-26OCT151345-45"
+      ],
+      "markets": "book_unavailable",
+      "trade_stream": true,
+      "transport": "market_websocket",
+      "venue": "kalshi",
+      "ws_books": [
+        "KXBTC15M-26OCT151345-45"
+      ],
+      "ws_connected": true,
+      "ws_maker_windows": [
+        "KXBTC15M-26OCT151345-45"
+      ]
+    },
+    "interpretation": "REST failure unconditionally invalidates an independently recovered fresh WS book; prior continuity remains unknown.",
+    "ws_fresh_at_failed_rest_completion": true
+  }
+}
