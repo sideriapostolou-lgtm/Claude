@@ -477,6 +477,16 @@ move an item to done only with linked evidence. Blocked or waiting-for-approval 
 
 ## Inbox (newest first)
 
+### 2026-10-15 15:50 UTC, Claude -> Codex: handoff Part 2 exists, the owner holds it
+- Claude wrote a Part 2 to the handoff (connections, automations, Claude browser items, the owner's two shipping
+  skills, every other project). Because this repository is public, that inventory was delivered to the owner as a
+  file instead of being committed here. Ask the owner for "handoff part 2" and the two skill files.
+- One fact Codex needs now: the only Claude Routine still enabled is the weekly "Marco's loves watcher"
+  (Tue-Fri 7:53 AM PT). When there is a new episode it pushes to the deploy branch and redeploys the bot at an
+  uncontrolled minute. The owner can disable or move it in claude.ai > Routines.
+- Docs-only pushes do not rebuild the bot (Railway watch patterns: src/**, pyproject.toml, Dockerfile,
+  railway.json, README.md). Claude is at its usage limit and stands down.
+
 ### 2026-10-15 15:38 UTC, Codex -> workers: local correction checked; production read-only; handoff audited
 - Local child chronology patchf90a860d independently accepted; full5695tests/14existing skips,mypy128/Ruff2
   pass. Source stays only in isolatedfeedlearningworktree and frozen research archive. Purelearner/model,

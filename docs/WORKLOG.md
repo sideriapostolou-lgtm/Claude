@@ -13,6 +13,13 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-15 15:50 UTC, Claude, branch claude/handoff-codex (handoff part 2 pointer; docs only, no deploy)
+- Changed: inbox note in `docs/COORDINATION.md` that handoff Part 2 was delivered to the owner as a file.
+- Verified: nothing to run; docs-only paths are outside the bot's Railway watch patterns.
+- Not verified / skipped: the Part 2 inventory itself is not in the repo (public repository).
+- Real money touched? no.
+- Next step: Codex asks the owner for Part 2 and the two skill files.
+
 ## 2026-10-15 15:40 UTC, Codex, read-only daily report, takeover audit and tested local chronology fix (8:40 AM PDT October 15)
 - Owner asked to fix the feed blocker and take over Claude's work; subsequent daily instruction explicitly keeps production read-only. Read connected-GitHub handoff section4.1/restart/speed2, current AGENTS/coordination/newest worklog/continuity at91250c6. No source release, deployment, Railway variable/credential-value read, order, funding, trading-rule, financial-limit or stop/resume change. Real Kalshi stays latched; publishing docs/research archives does not restart either service.
 - Daily account evidence8:22:37AM: bot exact933a43d/458e8e54 SUCCESS, recorder exacta0782b74/8453 SUCCESS; both online1/1, no reported issues/recent failures. Kalshi effective paper/configured live, total-stop reason, authenticated/fresh, no integrity error, no positions/orders/reserves/open risk. Cash$30.6904 versus cumulative settled tradingP&L−$19.0510, fees$3.10792; ordinarycaps10/20/6/10clip5contracts/rung0 unchanged. Ladder99/96windows but rung gain−$15.3049; gain/house-money/stops block promotion. No new reset or scale authority inferred.
