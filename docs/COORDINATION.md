@@ -117,6 +117,12 @@ move an item to done only with linked evidence. Blocked or waiting-for-approval 
   while the first remains open. TJR's separate authentic-data blocker and recorder duties persist.
 
 ### TJR-MNQ-001 — validation tooling complete; historical run blocked on data; paper/live disabled
+- **2026-10-14 7:36 PM PDT follow-up:** current GitHub records still leave EXEC open for
+  freshness attribution; PR47's separate exact deployment/restart check is complete. Earlier
+  offline priority persists, but actual MNQ development bars/costs remain absent. Both Page
+  deltas unchanged (main2/prototype1, no resync/truncation); reused all saved source/tests.
+  Keep queued/blocked: historical trades0/P&Lnull, paper not started/live off; automation unchanged,
+  no routine unchanged notification or production action. [Receipt/next input](../research/tjr_validation_2026-10-14/FOLLOWUP_2026-10-14_1936_PDT.json).
 - Follow-up checked **2026-10-14 6:21 PM PDT** through fresh connected-GitHub records. PR #47's
   exact deployment/restart verification is recorded complete. The fixed two-window audit is
   complete, but EXEC-DELAY-001 remains open for freshness attribution; a merge or two gains
