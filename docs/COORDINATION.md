@@ -180,7 +180,31 @@ move an item to done only with linked evidence. Blocked or waiting-for-approval 
   The second task is the frozen original/inverse/no-trade comparison; do not implement/activate it
   while the first remains open. TJR's separate authentic-data blocker and recorder duties persist.
 
+### KALSHI-ONLINE-001 — observe-only probability learning under implementation/review
+- **6:46 AM PDT October 15:** exact seven-file bundle914cc3b8 independently accepted;5,673tests/14existing skips,
+  mypy128/Ruff7 pass, source unchanged. V2 preserves causal forecasts/official labels/restart/history and
+  bounded unknowns; no live rules or financial controls changed. Synthetic overhead/resource limits remain
+  explicit. Safe release/exact deployment/observed learner status still pending; no trained-sample or edge claim.
+  [Checks/archive/next verification](../research/kalshi_online_learning_2026-10-15/PREPARATION.md).
+- Owner explicitly requested real-time self-learning on October15. Reuse the existing isolated arena child;
+  one fixed pre-outcome forecast per future full KXBTC15M window, official labels, score-before-train,
+  compact bounded restore/dedup state and explicit unknowns. No automatic live application or P&L claim.
+- Sol implements learner/child hooks and fake tests; root owns optional page whitelist, documentation,
+  integration and release; Astra independently reviews causality, restart/isolation and resource bounds.
+- Existing EXEC remains open. This observer cannot change live fair value, orders, cancellations, sizing,
+  financial caps, stops, resume budgets or ladder; no keys/model calls/new feeds/variables/sealed TEST.
+- Complete only after checks/exact deployment and observed-status evidence, with sample counts/limitations
+  retained. Any predictive improvement or profitable strategy needs separate prospective evidence.
+  [Protocol and operational boundary](KALSHI_ONLINE_LEARNING.md).
+
 ### TJR-MNQ-001 — validation tooling complete; historical run blocked on data; paper/live disabled
+- **2026-10-15 6:30 AM PDT check:** connected-GitHub reads pinned to `f0a0a9d` confirm PR47 release/restart
+  separately complete and EXEC open. Prior explicit offline TJR priority remains, but actual MNQ development
+  bars/costs are absent: historical trades0/P&Lnull, holdout unopened, paper not started/live disabled.
+  Reuse saved source/tests; no duplicate Pages/data/tests or new complete-read claim. Keep blocked/unfinished,
+  automation unchanged and routine notification suppressed. Initial wrong-ref404 was assistant typo,
+  corrected with successful exact-pin reads; no requested-branch access failure is asserted.
+  [Receipt/next input](../research/tjr_validation_2026-10-14/FOLLOWUP_2026-10-15_0630_PDT.json).
 - **2026-10-15 4:55 AM PDT check:** fresh GitHub records at `1f75331` distinguish PR47's verified
   deployment/restart from open EXEC and the checked but undeployed cancellation candidate.
   Prior explicit offline TJR priority persists; authentic MNQ bars/costs remain absent. Both current
@@ -400,6 +424,22 @@ move an item to done only with linked evidence. Blocked or waiting-for-approval 
   this item. No production, financial or credential-copy work is needed; chat delegation stays usable.
 
 ## Inbox (newest first)
+
+### 2026-10-15 13:10 UTC, Codex -> workers: bounded Kalshi online learning; prediction audit only
+- Owner asks for real-time self-learning. Root reserves new pure `kalshi_online_learning.py`, child-side
+  hooks in `kalshi_arena.py`, whitelisted `pagestate.py` learning metadata and focused fake tests.
+  Sol implements the pure learner/arena hooks; root owns page contract/docs/integration; Astra reviews.
+- One fixed-horizon forecast per prospective full KXBTC15M window, frozen baseline/challenger before
+  official final outcome, score before train. Bounded persisted bins/pending/dedup/coverage; invalid or
+  missing data remains unknown. This is forward probability calibration, not trading P&L or a profit claim.
+- Existing practice arena already evolves strategies. Reuse its isolated child/feed/checkpoint, without
+  live-loop work/model calls/new subscriptions. Learned values cannot change any real fair value,
+  order/cancel/sizing/locks/limits/stops/resume/ladder or Railway variables. No polydesk or sealed TEST.
+- Existing EXEC remains open for main-reader delay. Release only after resource-bound/leakage/restart
+  tests, independent review, full checks, safe minutes and exact deployment verification. No automatic
+  promotion based on this learner; a strategy change needs separate prospective fee/execution evidence.
+
+Status: active (bounded learning implementation/review); open (EXEC); blocked unchanged (TJR inputs).
 
 ### 2026-10-15 12:57 UTC, Codex -> workers: PR59 bounded verification complete; broader EXEC remains open
 - Exactsource1bd8f22/cdf0SUCCESS; final5:47AM bothservicesonline. Fixed windows and tail are closed,

@@ -1547,6 +1547,73 @@ _ARENA_ACTIVITY = ("holding", "bidding", "idle", "newborn")
 _ARENA_HEX = re.compile(r"[0-9a-f]{12}")
 
 
+def _kalshi_learning_view(raw: Any) -> dict[str, Any] | None:
+    """Optional, numeric-only probability evidence; never practice money or a live control."""
+    if (not isinstance(raw, Mapping) or raw.get("mode") != "observe_only"
+            or raw.get("live_application") is not False or raw.get("profitability_proven") is not False
+            or not isinstance(raw.get("enabled"), bool)):
+        return None
+    fingerprint, protocol = raw.get("source_fingerprint"), raw.get("protocol")
+    if (not isinstance(fingerprint, str) or len(fingerprint) != 64
+            or set(fingerprint) - set("0123456789abcdef")
+            or protocol != "kalshi-online-calibration-v1-h300-g5-b10-prior20"
+            or raw.get("forecast_horizon_s") != 300 or raw.get("grace_s") != 5 or raw.get("bins") != 10):
+        return None
+    history_source, history_protocol = raw.get("history_source_fingerprint"), raw.get("history_protocol")
+    if (not isinstance(history_source, str) or len(history_source) != 64
+            or set(history_source) - set("0123456789abcdef") or not isinstance(history_protocol, str)):
+        return None
+    if raw["enabled"] and (history_source != fingerprint or history_protocol != protocol):
+        return None
+    if (not history_protocol.startswith("kalshi-online-calibration-") or len(history_protocol) > 80
+            or any(char not in "abcdefghijklmnopqrstuvwxyz0123456789-_." for char in history_protocol)):
+        history_protocol = "unrecognized_history_protocol"
+    counts: dict[str, int] = {}
+    for key in ("pending", "forecasts", "scored", "unknown"):
+        value = raw.get(key)
+        if not isinstance(value, int) or isinstance(value, bool) or not 0 <= value <= 2**53:
+            return None
+        counts[key] = value
+    if counts["scored"] + counts["pending"] > counts["forecasts"]:
+        return None
+    exclusions = None
+    if "exclusions" in raw:
+        reasons = {"startup_inside", "late", "invalid", "pregap", "terms_changed", "missing_label",
+                   "outcome_known", "invalid_label", "capacity"}
+        value = raw["exclusions"]
+        if (not isinstance(value, Mapping) or set(value) != reasons
+                or any(type(item) is not int or not 0 <= item <= 2**53 for item in value.values())
+                or sum(value.values()) != counts["unknown"]):
+            return None
+        exclusions = {key: value[key] for key in sorted(reasons)}
+    scores: dict[str, float | None] = {}
+    for key in ("brier_baseline", "brier_shadow"):
+        value = raw.get(key)
+        if counts["scored"] == 0:
+            if value is not None:
+                return None
+            scores[key] = None
+        elif (isinstance(value, (int, float)) and not isinstance(value, bool)
+              and 0 <= value <= 1 and math.isfinite(value)):
+            scores[key] = float(value)
+        else:
+            return None
+    # The child emits fixed codes. Do not pass arbitrary saved-file text into
+    # this new field, even if it is not one of the configured account secrets.
+    errors = {"window_input_capacity", "label_input_capacity", "malformed_label_record", "malformed_label_key",
+              "conflicting_or_invalid_final_label", "clock_invalid_or_reversed", "malformed_optional_learning_state",
+              "source_or_protocol_mismatch", "optional_learning_method_failed", "source_fingerprint_unavailable",
+              "arena_state_unreadable"}
+    error = raw.get("error")
+    error = error if isinstance(error, str) and error in errors else "learning_error" if error is not None else None
+    return {"mode": "observe_only", "enabled": raw["enabled"], "live_application": False,
+            "profitability_proven": False, "protocol": protocol, "source_fingerprint": fingerprint,
+            "history_protocol": history_protocol, "history_source_fingerprint": history_source,
+            "forecast_horizon_s": 300, "grace_s": 5, "bins": 10, **counts, **scores, "exclusions": exclusions,
+            "error": error,
+            "coverage": "Quiet observations; full data coverage not certified"}
+
+
 def _kalshi_arena_envelope(status: str, reason: str | None) -> dict[str, Any]:
     """The block with nothing known: every figure null, never a zero or an empty list that would look like a fresh,
     empty town. ``mode`` and ``real_orders_enabled`` are constants of this page, never read from a file (the arena
@@ -1733,6 +1800,7 @@ def _kalshi_arena_view(kalshi_arena: Any, raw: Mapping[str, Any], settings: Sett
                  "rent_paid": _num(town.get("rent_paid"))} if isinstance(town, Mapping) else None,
         # The town runs in its own process; live_flush_us_* is the live loop's own cost of handing it the market.
         "feed": feed_block,
+        **({"learning": _kalshi_learning_view(raw.get("learning"))} if "learning" in raw else {}),
     }
 
 
