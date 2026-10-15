@@ -39,6 +39,12 @@ Check this queue at task start and before declaring current work complete. Keep 
 move an item to done only with linked evidence. Blocked or waiting-for-approval is not complete.
 
 ### EXEC-DELAY-001 — first task active; production attribution and verified fix pending
+- **9:24 AM PDT October15:** PR61 exact153a122/e641 SUCCESS8:57:51AM; owner-approved fresh$10total resume,
+  unchanged10/window,20open,6/day,clip5; no day reset/stop removal/cap increase. 67selectedrestartfields retained.
+  Fixed9:00–9:15AM actual3makerfills yield+$0.12locked/$0direction/$0fees; alljoined, coverageuncertified,
+  strictroot-before-start gateFAILED(verification9seconds late). Sixknown mainreader gaps max3345.957ms
+  and54gap/fivestatusoverflowunknowns retain EXEC OPEN. Next exact input-cause diagnostic; no profitable
+  edge/learning-success claim. [Release, loss history and closed extraction](../research/kalshi_online_learning_2026-10-15/INPUT_CHRONOLOGY_RELEASE.md).
 - **8:38 AM PDT October15:** read-only daily check preserves live−$4.5050/practice+$12.23 rawpriorUTCday
   summaries, both96gaps/0complete. Currentrealcash30.6904/cumulative−19.0510/noopenrisk/totalstoplatched.
   Offline fakes reproduce future untimed simulator-warning contamination plus distinct quiet-maker/queued-gap
@@ -194,6 +200,11 @@ move an item to done only with linked evidence. Blocked or waiting-for-approval 
   while the first remains open. TJR's separate authentic-data blocker and recorder duties persist.
 
 ### KALSHI-ONLINE-001 — implementation/release verified; prospective accuracy evidence pending
+- **9:24 AM PDT October15:** chronology correction PR61 deployed/tested5695pass/14existing skips,mypy128/Ruff2;
+  observer remains enabled/observe-only. 9:05AM still excludespregap:0forecasts/0scored/10unknown(1startup9pregap),
+  Briernull; oldhistory retained. Bounded source release/restart verification is separate from unfinished actual
+  learning. Next [observation-only cause/timing design](../research/kalshi_online_learning_2026-10-15/INPUT_CHRONOLOGY_NEXT_EVIDENCE.md),
+  preserving V1 protocol and source identity; no silent relaxed admission/backfill/live application.
 - **8:31 AM PDT evidence /8:38 check:** 0forecasts/0scored/7unknown(startup1,pregap6),Briernull;
   enabled observe-only, no error/live application. Local chronology correction reviewed/fulltests pass,
   genuine gaps and old history retained; candidate not deployed. Quiet maker eligibility remains V1;
@@ -239,6 +250,11 @@ move an item to done only with linked evidence. Blocked or waiting-for-approval 
   Recorder feasibility3:45PM today/storage beforeOct20 remain obligations; no production settings change.
 
 ### TJR-MNQ-001 — validation tooling complete; historical run blocked on data; paper/live disabled
+- **9:19 AM PDT October15 reminder, checked 9:24 AM PDT:** connectedGitHub exact153a122 instructions/newestrecords
+  matchGitblobs. PR47release/restart separatelycomplete; currentEXEC/learningevidence remainsopen.
+  Priorofflinepriority persists but authenticMNQdevelopmentbars/costs remainmissing; historicaltrades0/P&Lnull,
+  holdoutunopened,papernotstarted/liveoff. Saved65checks are historical receipts, not rerun here.
+  No duplicatePage/data/test work or routineunchangednotification; itemunfinished/automationunchanged.
 - **October15 8:39 AM PDT:** latest repeated reminder re-read connected GitHub branch/instructions/queue/
   newest worklog at exact91250c6. PR47 separately verified; EXEC still open and current local candidate
   unshipped. Prior explicit offline priority persists; authentic MNQ development bars/costs absent,
@@ -476,6 +492,13 @@ move an item to done only with linked evidence. Blocked or waiting-for-approval 
   this item. No production, financial or credential-copy work is needed; chat delegation stays usable.
 
 ## Inbox (newest first)
+
+### 2026-10-15 16:24 UTC, Codex -> workers: PR61 live; first paired win verified, learner still blocked
+- Owner-confirmed caps10/window,20open,6/day,clip5; fresh10total resume applied once from cumulative−19.051. Usedday/integritycontrols ignored; losses retained. Exact153a122/e641 SUCCESS8:57:51AM; normalPolymarketLIVE10. Sourcechecks5695/14,mypy128/Ruff2. No further watched-source change during fixed capture; this closure is docs-only.
+- Actual9:00–9:15AM3makerfills/2filledorders/22accepted:Up1@.41+Down1@.47=$.88cost,$0fees,$1grosspayout,+$.12locked,$0direction. Allfillsjoined; no order/arithmetic conflict in corrected extraction. Fourteenqueriesuncapped/error-free, finitebatchclosed9:17AM. Strictbefore-start rootverification gateFAILED by9seconds; fullsourcecoverageuncertified. Sixmainreader gapreceipts max3345.957ms plusoverflowunknowns preserve EXECOPEN; a winningwindow doesnotprove anedge.
+- Original9:17:50AM live/auth/trading:cash30.3804 versuscumulative−18.9310/day−4.4839,fees3.10792,786fills/174settlementcounter; nextpartialrisk$.43,noreserve/orders,excludedfromtrial. Bothservicesonline; recorderunchanged. Learner0/0/10unknown,9:05pregap,no actualupdate. [Release/raworiginals/limits](../research/kalshi_online_learning_2026-10-15/INPUT_CHRONOLOGY_RELEASE.md); [next diagnostic](../research/kalshi_online_learning_2026-10-15/INPUT_CHRONOLOGY_NEXT_EVIDENCE.md).
+- Repeated9:19AM TJR instruction re-read connectedGitHub at153a122; PR47separatelycomplete, EXECopen, original/inverseunstarted, authenticMNQbars/costsstillmissing,paperunstarted/liveoff. Priorofflinepriority/source/tests preserved; no duplicatePages/research or routineunchangedalert; queuestillunfinished/automationunchanged.
+- Owner-held privatehandoffPart2/twoshippingfiles remain unread; externalClauderoutine reported/unverified/unchanged. Preserve privateinventory outsidepublicGit; no complete credential/session/volume transfer claim. No capincrease, dayreset, extraresume, financialrule/polydesk edit or newreal desk in this docs closure.
 
 ### 2026-10-15 15:54 UTC, Codex -> workers: exact chronology release and bounded owner-approved restart
 - Owner's current reply keeps $10/window, $20 open, $6/day and clip5; Codex stated a fresh $10 total-loss budget. No cap increase, guard removal, day reset or historical-loss deletion. Existing configured mode is live; only a fresh single-use `SPEEDDESK_KALSHI_RESUME_TOKEN` is planned, without an extra deployment, immediately before the tested source merge in a safe minute.

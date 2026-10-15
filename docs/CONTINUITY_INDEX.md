@@ -9,6 +9,11 @@ or original research artifact is moved by the model-workflow setup.
 existing schedules, current separate service/source identities and the remaining private-state/data limits.
 It supplements this index; it is not proof of an account, credential or volume migration.
 
+**October15 release update:** [PR61 chronology correction and bounded resume](../research/kalshi_online_learning_2026-10-15/INPUT_CHRONOLOGY_RELEASE.md)
+records exact live source, unchanged caps/retained losses, +$0.12 actual paired result, failed verification-timing
+gate, continued execution delay and zero scored learner samples. It supersedes the earlier takeover snapshot's
+read-only/latched-stop status only for the recorded owner-approved action; it grants no future resume or increase.
+
 ## Read at task start or model/session handoff
 
 1. [AGENTS.md](../AGENTS.md): current hard rules and standing release scope.

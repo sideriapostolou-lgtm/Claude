@@ -3,8 +3,20 @@
 This checklist supplements the [original Claude handoff](HANDOFF_CLAUDE_TO_CODEX_2026-10-14.md),
 [current coordination queue](COORDINATION.md), [continuity index](CONTINUITY_INDEX.md) and newest
 [worklog](WORKLOG.md). It preserves their original evidence; it does not copy accounts, keys or volumes.
-Latest instruction for the current daily inspection: **production read-only**. Older restart/cap decisions
-must never be replayed. The existing real Kalshi loss stop stays latched.
+**October15, 9:08 AM PDT update:** the owner subsequently confirmed unchanged $10/window, $20 open,
+$6 daily and five-contract clip; Codex explicitly communicated a fresh $10 total-loss test budget.
+PR61 deployed exact `153a12214f8763b9bf9382697fe6d6810ab04860` on `e641cdf8-f9e1-43b2-9309-56fd70827d25`,
+SUCCESS8:57:51AM. One single-use resume applied; original8:59:42AM status is live/authenticated/fresh,
+with cash$30.6904, cumulative−$19.0510, day−$4.6039 and all caps/history retained. Used day/integrity
+controls were ignored. No cap increase or stop removal. This specific restart supersedes the earlier daily
+inspection's read-only/no-resume scope; it does not grant repeated budget resets or future increases.
+The fixed9:00–9:15AM window settled+$0.12locked after$0fees; all3fillsjoined. Strictroot-before-start
+verificationgate failed by9seconds; EXEC and learningdata remainopen,0forecasts/scored.
+[Released source, retained losses and full limits](../research/kalshi_online_learning_2026-10-15/INPUT_CHRONOLOGY_RELEASE.md).
+The following table preserves the earlier dated takeover snapshot.
+[Current release preparation and exact checks](../research/kalshi_online_learning_2026-10-15/INPUT_CHRONOLOGY_PREPARATION.md)
+are dated preparation evidence; see the newest worklog for the deployed follow-up. Older decisions must
+never be replayed as new authorization.
 
 ## Verified from this ChatGPT session
 
@@ -45,14 +57,16 @@ Unrelated account automations are outside this handoff and were left unchanged.
 1. **EXEC-DELAY-001:** production gaps/local delays remain unresolved. Offline fakes reproduce an old
    pre-start simulator warning contaminating a later learner slot, delayed timestamp-less gap delivery,
    and quiet-maker eligibility being treated as a gap. These are possible mechanisms, not attribution
-   of all five production exclusions. A narrow child chronology candidate is local only; the latest
-   worklog records its actual review/test status. Keep genuine gap checks and all prior unknowns.
-2. **KALSHI-ONLINE-001:** deployed observe-only calibration, zero scored forecasts as of the saved **8:31 AM**
-   evidence (startup1 +pregap6 exclusions). No improvement/profit established. Need genuine prospective forecasts and official same-terms
+   of all five production exclusions. The narrow child chronology correction deployed in PR61; genuine
+   gap checks and all prior unknowns remain. The9:05AM slot still excludes as pregap. No all-gaps-fixed
+   or production-cause attribution claim; next obtain the exact original input rejection cause.
+2. **KALSHI-ONLINE-001:** deployed observe-only calibration, zero forecasts/scored as of the saved **9:05 AM**
+   evidence (startup1 +pregap9 exclusions). No improvement/profit established. Need genuine prospective forecasts and official same-terms
    labels, score-before-update and retained exclusions. Algorithm fingerprint does not hash the entire
    upstream/arena input pipeline; preserve exact source/release IDs as well.
-3. **Risk:** total real Kalshi stop is latched. No restart, reset, cap increase or new real desk follows
-   from takeover wording. Preserve current caps, ladder, reservations and consumed control history.
+3. **Risk:** bounded owner-approved resume is recorded above; no repeated resume, day reset, cap increase
+   or new real desk follows from takeover wording. Preserve current caps, ladder, reservations, losses
+   and consumed control history. A future stop remains effective; this restart is not reusable permission.
 4. **Recorder:** feasibility checkpoint due 3:45 PM today; review storage before October 20. Latest saved-hour
    metadata is available, but raw payload hashes, per-venue spot ticks, queue/depth/fill feasibility and
    actual operating cost are not verified. Do not open sealed TEST. Railway December 1 settings migration
@@ -69,6 +83,8 @@ Unrelated account automations are outside this handoff and were left unchanged.
 
 ## Not yet a verified transfer
 
+- Claude reports the owner holds private handoff Part2 and two shipping skill files; those have not
+  been supplied/read here. The reported external Claude routine is not independently verified or disabled.
 - Unsaved Claude chats, local-only files outside available checkouts, private session state and provider
   permissions are not exported by a Git handoff. This audit cannot claim every historical detail is present.
 - Runtime volume contents, backups/recovery exports and full native venue/cash/stop-anchor ledgers were
@@ -77,5 +93,5 @@ Unrelated account automations are outside this handoff and were left unchanged.
   A healthy bot process is not proof that every app connection or research stream is complete.
 
 The integration owner reads current records before each task, gives one worker each file set, reviews exact
-patches, preserves failed attempts/losses and records unfinished items. Under the current read-only instruction,
-local fixes remain local; publishing this checklist and status evidence does not restart either service.
+patches, preserves failed attempts/losses and records unfinished items. Follow the latest task-specific
+production scope. This checklist update is docs-only and does not restart either service.
