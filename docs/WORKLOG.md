@@ -13,6 +13,23 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-15 03:46 UTC, Codex, bounded TJR check and session recovery context (8:46 PM PDT October 14)
+- Fresh connected-GitHub instructions/queue/newest worklog and pinned evidence/status reads:
+  PR47 has exact post-merge deployment/restart evidence, while EXEC remains open for freshness.
+  Both Page deltas unchanged (main2/prototype1; no truncation/resync); saved full source/tests
+  reused, no duplicate research, tests, data probes, historical run or holdout access.
+- TJR remains BLOCKED on actual MNQ development bars and verified costs:0 historical trades,
+  null P&L, paper not started/live disabled. Saved FOLLOWUP_2026-10-14_2046_PDT.json; existing queue and automation
+  retained unfinished, unchanged-blocker notification suppressed. No source/deploy/orders,
+  funding, variables, financial risk, stop/resume or current-account/profitability claim.
+- Owner clarified the reported glitch is the ChatGPT/Codex work session, not the town/bot app.
+  Saved repo state remains readable; requested that session's last task/error to recover the
+  correct work. No access to another chat's unsaved state or successful remote repair claimed.
+- Next TJR input: authorized actual MNQZ2025 Sep19–Oct31 minute bars plus mapping/license/
+  timestamps/bar convention and actual account/execution/platform/data costs, then frozen
+  development validation. Later paper needs current contract/feed/runtime evidence; live off.
+  Docs-only JSON/scope/preserved-content/secret checks; no app test rerun or production change.
+
 ## 2026-10-15 02:52 UTC, Codex, bounded TJR queue check (7:52 PM PDT October 14)
 - Fresh GitHub AGENTS/COORDINATION/newest WORKLOG still leave EXEC open for freshness; PR47's
   separate exact deployment/restart evidence is recorded complete. Independent two-file check
