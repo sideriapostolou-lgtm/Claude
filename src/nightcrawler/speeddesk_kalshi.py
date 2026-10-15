@@ -283,9 +283,15 @@ class KalshiFeeds:
                 for book in books:
                     self._deliver_book(replace(book, requested_at=requested_at))
         except Exception as exc:  # noqa: BLE001 — gaps cancel simulated makers and retain unknown depth.
-            self._rest_trade_at.pop(window.slug, None)
-            self._publish(markets="book_unavailable", gap_windows=[window.slug])
-            log.warning("speeddesk_feed_kalshi_book_failed error=%s", type(exc).__name__)
+            # A pending fallback failure cannot invalidate a retired window or
+            # a fresh WS book already delivered for this same ticker.
+            active = window.slug in self.windows and not (
+                self._transport.get(window.slug) == "websocket" and self._ws is not None
+                and window.slug in self._ws.fresh_books())
+            if active:
+                self._rest_trade_at.pop(window.slug, None)
+                self._publish(markets="book_unavailable", gap_windows=[window.slug])
+            log.warning("speeddesk_feed_kalshi_book_failed error=%s invalidated=%s", type(exc).__name__, active)
         return True
 
     async def poll_trades(self) -> bool:
@@ -326,10 +332,16 @@ class KalshiFeeds:
             self._tape_since[window.slug] = float(int(now))
             self._tape_since = {slug: stamp for slug, stamp in self._tape_since.items() if slug in self.windows}
         except Exception as exc:  # noqa: BLE001 — never fill makers across an incomplete tape.
-            self._tape_since[window.slug] = now
-            self._rest_trade_at.pop(window.slug, None)
-            self._publish(markets="trade_tape_gap", gap_windows=[window.slug])
-            log.warning("speeddesk_feed_kalshi_trade_gap error=%s", type(exc).__name__)
+            # Tape recovery needs both the delivered WS book and a real recent
+            # print. Cached status cannot prove either remains fresh now.
+            active = window.slug in self.windows and not (
+                self._transport.get(window.slug) == "websocket" and self._ws is not None
+                and window.slug in self._ws.fresh_maker_windows())
+            if active:
+                self._tape_since[window.slug] = now
+                self._rest_trade_at.pop(window.slug, None)
+                self._publish(markets="trade_tape_gap", gap_windows=[window.slug])
+            log.warning("speeddesk_feed_kalshi_trade_gap error=%s invalidated=%s", type(exc).__name__, active)
         return True
 
     async def settlement(self, slug: str) -> float | None:
