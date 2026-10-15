@@ -1186,7 +1186,12 @@ class KalshiLiveDesk:
         self.cancel_reasons = {key: value for key, value in self.cancel_reasons.items() if key in current}
         self.cancel_failed = {key: value for key, value in self.cancel_failed.items() if key in current}
         # The bid whose fair fell most goes first (after a rise, the Down bid is the one now priced too high).
+        refresh = False
         for intent in sorted(active, key=lambda item: self._fair_drop(item, snapshot, now)):
+            if refresh:
+                # A prior cancel yielded to feeds; keep the initial priority order, but recheck fresh inputs.
+                snapshot, now = self.snapshot(), self.clock()
+                refresh = False
             window = self._current_window(intent.window, snapshot)
             shutting_down = self.stopping or self.stop_event is not None and self.stop_event.is_set()
             reason = (("shutdown" if shutting_down else "") or self._gates() or self.fatal_reason
@@ -1222,6 +1227,7 @@ class KalshiLiveDesk:
                 continue  # it failed: sent again once an order list read since shows the order still open
             if reason:
                 await self._cancel(intent, reason, twin=not again)
+                refresh = True
 
     def _fair_drop(self, intent: Intent, snapshot: LiveSnapshot, now: float) -> float:
         """How far a resting bid's fair fell since it was priced (0 when unknown, or not a resting bid)."""
