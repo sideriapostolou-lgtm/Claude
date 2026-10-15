@@ -1,0 +1,55 @@
+{
+  "recorded_at_utc": "2026-10-15T16:53:40.877891+00:00",
+  "recorded_at_pacific": "2026-10-15T09:53:40.877891-07:00",
+  "task": "EXEC-DELAY-001 / KALSHI-ONLINE-001 child input cause diagnostic",
+  "base": "3ce8a0b92f53916768a3e1c09cac700281d3c1cd",
+  "owner_scope": "Continue thoroughly from complete handoff; standing tested release approval. No new financial authority.",
+  "implementation_owner": "Sol, child arena + diagnostic tests only",
+  "reviewer": "Astra independent exact patch; root integration, evidence and releases",
+  "allowed_paths": [
+    "src/nightcrawler/kalshi_arena.py",
+    "tests/test_kalshi_learning_diagnostic.py"
+  ],
+  "excluded_changes": [
+    "pure learner/model/fingerprint/protocol/history/counters/schema/save cadence",
+    "live controller/client/risk/config/feeds/ledger/ladder/Polymarket",
+    "parent/wire/environment/variables/keys",
+    "caps/budgets/resume/stops/orders/manual trades",
+    "sealed holdout and unrelated projects/private handoff contents"
+  ],
+  "acceptance_design": "../kalshi_online_learning_2026-10-15/INPUT_CHRONOLOGY_NEXT_EVIDENCE.md",
+  "resource_envelope_pre_measurement": {
+    "maximum_single_diagnostic_json_bytes": 8192,
+    "maximum_retained_diagnostic_memory_bytes_at_32_pending": 262144,
+    "normal_non_due_32_pending_max_median_incremental_child_step_cpu_ms": 2,
+    "burst_32_due_max_median_incremental_child_step_cpu_ms": 20,
+    "benchmark_method": "actual KalshiArena.step, interleaved enabled/disabled variants, deterministic fake observations/clocks, isolated unchanged save/evaluate configuration, bounded in-memory diagnostic log sink. Record exact setups, trial counts, raw samples, CPU/wall distribution, source identity and limitations. No production or peak-load guarantee."
+  },
+  "future_release_gate": {
+    "full_pytest": true,
+    "full_mypy": true,
+    "changed_python_ruff": true,
+    "exact_patch_independent_review": true,
+    "protected_source_and_source_fingerprint_equality": true,
+    "secret_privacy_and_archive_checks": true,
+    "safe_minutes": [
+      "02-10",
+      "17-25",
+      "32-40",
+      "47-55"
+    ],
+    "exact_terminal_success_and_original_startup": true,
+    "account_state_restart_audit": "Read-only before/after preserve consumed controls/caps/financial history, explain legitimate intervening events. No reset to make comparison pass.",
+    "no_new_owner_permission_step_for_already_authorized_release": true
+  },
+  "postrelease_evidence_plan": {
+    "selection": "After terminal SUCCESS, original normal startup/account health and root exact-source verification, freeze the first future UTC quarter-hour window whose start is at least30s after completed root verification. Record boundary before it starts.",
+    "observation_bounds": "One full900s window plus120s post-end tail; exactly one preregistered cohort, no moving bounds or silently replacing incomplete result.",
+    "primary_evidence": "Diagnostic slot/early-disposition event and actual original learner receipt/counters, cause flags and available frame/receive/apply clocks. No claim of producer occurrence when absent.",
+    "retrieval": "Finite filtered deployment-scoped batches after due slot and after window+tail. Limits/capped/errors/missing events and retrieval wallclocks retained. Any missing endpoint query unknown.",
+    "secondary": "Bounded orders/fills/fees/settlement audit and currentreal/practice status; actual trading results are not test of strategyedge.",
+    "finish": "Record diagnostic release and bounded observation, leave unresolved EXEC or predictive-skill claims open. Further correction only on evidence with separately reviewed source/quality protocol if needed."
+  },
+  "precheck_limitations": "Selected status precheck has future requested endpoint; valid for observed timestamped rows only. Service log metadata may name latest SKIPPED docs deployment; use actual active deployment evidence separately.",
+  "not_done": "No source committed/pushed/deployed at declaration. No forecast/score/edge established."
+}

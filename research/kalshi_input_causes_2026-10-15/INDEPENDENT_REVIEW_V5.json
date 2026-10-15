@@ -1,0 +1,75 @@
+{
+  "reviewed_at_utc": "2026-10-15T17:10:02.885507+00:00",
+  "base": "3ce8a0b92f53916768a3e1c09cac700281d3c1cd",
+  "source_sha256": "091ea297b1fed8973be3c78e74184e6ea71fa8f36e808e67449f433c88d19a0e",
+  "test_sha256": "239793d141ec481a66ec72acd3ab5f7fcff90bfdd00d02fcaeef5207caf355b0",
+  "patch_sha256": "e5ae15d0a3bfa279d7b867bd76f98138dbc826b9f64b3ad9bd4d77a931096f8c",
+  "decision": "No remaining source blocker found in exact v5; release still requires root repository/resource/release gates.",
+  "independent_checks": {
+    "pytest": "59 passed in0.62s: diagnostic+learning-arena integration; shared venv",
+    "behavior_receipt": "/workspace/input-cause-review-behavior-v5.json",
+    "behavior_harness": "/workspace/input-cause-review-behavior-harness.py",
+    "behavior": "Immutablebase actual child vs v4, normal/diagnosticfailed/diagnosticdisabled,30 checkpoints total. Identical fullstate,panels,completelearnerstate,serialized writebytes+durabilityflags/order,clockreadcounts.18writes each scenario; each scenario1forecast1scored1unknown; learner.enabled asserted.",
+    "ast_unchanged": [
+      "ArenaLink",
+      "frame",
+      "book_wire",
+      "trade_wire",
+      "window_wire",
+      "arena_config",
+      "worker_main"
+    ],
+    "bytes_unchanged": [
+      "kalshi_online_learning.py",
+      "speeddesk_model.py",
+      "speeddesk_live.py",
+      "speeddesk_live_model.py",
+      "speeddesk_kalshi_client.py",
+      "config.py",
+      "ledger.py",
+      "polydesk.py"
+    ],
+    "diff_check": "passed",
+    "logging_recovery_receipt": "/workspace/input-cause-review-log-recovery-v5.json",
+    "logging_recovery_harness": "/workspace/input-cause-review-log-recovery-repro.py",
+    "logging_recovery": "Four independent cases:1/2 simultaneous forecasts; logger raises beforewrite or afterwrite. Learner forecasts/scores all normally; no later scored diagnostic backfill or duplicate slot output."
+  },
+  "reviewed_contract": [
+    "Effective gap start/end conditions distinct from degrade start-only conditions; first+last retained with simultaneous fixed flags.",
+    "Per-inbox frame tuple preserves multiple queued batch attribution; replay retains original maximum-observed drop clock/context; receive/drain exception paths clear context.",
+    "Frame transit and child waiting explicitly exclude producer occurrence and parent FIFO residence. Producer time unavailable; invalid/reversed/out-of-range clocks yield null. Original late check clock/age separate from later degrade effective clock.",
+    "Disposition read from actual new recent receipt or actual forecast transition, never branch prediction. Original recent objects retained to prevent Python identity reuse; raw restored recent references exclude historical relabel.",
+    "Discover terminations are explicitly before advance, including at/past forecast horizon; unavailable preadvance market facts null.",
+    "Future restored rows remain eligible for prospective emission with unknown history; frozen restored forecasts do not duplicate slot output; historical counts excluded from restore delta.",
+    "Counter deltas labeled learner_call scope; perwindow outputs must not be summed as perwindow counter deltas.",
+    "Diagnostic map bounded by32 learnerpending keys, no state/checkpoint/panel persistence; manywindow pruning and fullrecent burst regressions pass.",
+    "Observation construction/hook/log failures isolated from learner/practice. No added clock reads, parent/wire/controller logic or source/model/protocol changes.",
+    "Slotattempt markers commit for all forecasttransitions before any logging. Failure of one event cannot abort other emissions; later scored/terms receipts with priorforecast are not reconstructed as missing slot observations."
+  ],
+  "fixed_findings": [
+    "Restored future row prematurely marked emitted; reproduced missing future forecast diagnostic.",
+    "Only prior receipt IDs retained: reproduced30/32 lost events from Python ID reuse during64-recent truncation.",
+    "Reversed receive drop clock mismatched max replay clock with later frame context.",
+    "Receive/drain original exceptions left stale frame context.",
+    "Restore counter delta included historical restored totals.",
+    "Late data age recomputed at second clock rather than original lateness check.",
+    "Same-slug historical startup receipt in learner-accepted checkpoint backfilled duplicate diagnostic; reproduced actualunknown+1 vs2diagnostics.",
+    "Whole-call counter deltas needed explicit scope; now labeled.",
+    "v4 transient observer/logger failure allowed later score to be mislabeled late_first_pass, with duplicate output when handler wrote then raised. v5 marks all batchforecastattempts before logging, isolates each emit, and excludes already-frozen later receipts; independent repro now passes."
+  ],
+  "benchmark_method_review": "Interleaved immutablebase/disabled/enabled actual-step synthetic benchmark appropriate for local overhead. Final checks must use v4 hash. Finite widest-schema fixtures and queue-context memory caveat requested and root incorporated. Does not measure production log backpressure, contention, network or full parent loop.",
+  "limits": [
+    "Independent reviewer made no source or production writes and ran no network/order/financial/holdout actions.",
+    "Full repository suite, final resource measurements and release verification are root-owned and were not claimed by this source review.",
+    "No deployment identity inside empty-environment child; sourcehash+learnerfingerprint+instance require external exact-deployment join.",
+    "Diagnostic explains observed child inputs, not upstream quiet-maker vs disconnect cause; no historical unknown relabel, execution-delay fix or profitable-edge claim.",
+    "Synthetic equivalence covers representative sequence and deterministic clocks, not every possible input or production runtime.",
+    "Prior superseded attempt/failure notes retained in /workspace/input-cause-review-attempts.json."
+  ],
+  "prior_review_history": [
+    "/workspace/input-cause-review-v4.json",
+    "/workspace/input-cause-review-v4-followup.json",
+    "/workspace/input-cause-review-log-recovery-v4.json"
+  ],
+  "parser_review": "Separate root-owned captureparser preliminary review sent: anchored framing good; harden malformed structuredContent/deploy/timestamp handling, dedup overlappingquery originals with provenance, explicitly whitelist disposition. These are evidence-parser suggestions, not v5 source changes."
+}

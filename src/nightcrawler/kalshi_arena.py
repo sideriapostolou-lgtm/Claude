@@ -73,7 +73,14 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Protocol
 
 from .deskguard import LOSING, PHRASES, WINNING, judge
-from .kalshi_online_learning import OnlineLearning
+from .kalshi_online_learning import (
+    GRACE,
+    HORIZON,
+    MAX_LABELS,
+    MAX_PENDING,
+    MAX_RECENT,
+    OnlineLearning,
+)
 from .speeddesk_model import (
     BitcoinTape,
     Book,
@@ -1003,6 +1010,189 @@ def _write(path: Path, text: str, *, durable: bool = False) -> None:
         raise
 
 
+# Fixed child-only observations. No learner state, wire fields, or save work is added.
+_DIAGNOSTIC_FLAGS = ("explicit_slug", "trade_stream_false", "coinbase_false", "sequence_discontinuity",
+                     "drop_counter_increased", "missing_ladder", "late_book", "late_trade", "replayed_drop")
+_DIAGNOSTIC_REASONS = frozenset(("explicit_feed_gap", "feed_dropped", "feed_late", "startup_inside", "late",
+                               "invalid", "pregap", "terms_changed", "missing_label", "outcome_known",
+                               "invalid_label"))
+
+
+def _diagnostic_number(value: Any) -> float | None:
+    return float(value) if type(value) in (int, float) and math.isfinite(value) and abs(value) <= 1e15 else None
+
+
+def _diagnostic_delay(start: Any, end: Any) -> float | None:
+    left, right = _diagnostic_number(start), _diagnostic_number(end)
+    return right - left if left is not None and right is not None and right >= left else None
+
+
+class _LearningDiagnostic:
+    """At most 32 first/last cause pairs, retained only while the learner has a pending key.
+
+    Inbox entries share their frame's immutable tuple; there is no second event queue.
+    Frames are encoded after parent FIFO residence, so frame transit excludes that residence.
+    """
+
+    def __init__(self) -> None:
+        self.identity = {"arena_source_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+                         "deployment_sha": None, "deployment_id": None,
+                         "deployment_identity": "unavailable_in_child",
+                         "pid": os.getpid(), "instance": os.urandom(12).hex()}
+        self.pending: dict[str, dict[str, Any]] = {}
+
+    def prune(self, learner: OnlineLearning) -> None:
+        self.pending = {slug: row for slug, row in self.pending.items() if slug in learner.pending}
+
+    def cause(self, learner: OnlineLearning, slug: str, now: float, flags: Sequence[str],
+              frame_context: tuple[Any, ...] | None, *, gap: bool = False,
+              data_at: float | None = None, clock_name: str | None = None,
+              applied_at: float | None = None, checked_at: float | None = None) -> None:
+        row = learner.pending.get(slug)
+        # Mirror the actual method: degrade has no end gate; gap does.
+        if (not learner.enabled or row is None or row["forecast"] is not None or not row["start"] <= now
+                or (gap and not now < row["end"])):
+            return
+        if slug not in self.pending and len(self.pending) >= MAX_PENDING:
+            return
+        state = self.pending.setdefault(slug, {"first": None, "last": None, "emitted": False,
+                                               "history": "observed_since_admission"})
+        seq, sent, received = frame_context if frame_context is not None else (None, None, None)
+        applied = now if applied_at is None else applied_at
+        observation = {"flags": {key: key in flags for key in _DIAGNOSTIC_FLAGS},
+                       "effective_at": _diagnostic_number(now), "child_apply_at": _diagnostic_number(applied),
+                       "child_receive_at": _diagnostic_number(received),
+                       "frame_sequence": seq if type(seq) is int and 0 <= seq <= 10**15 else None,
+                       "parent_frame_sent_at": _diagnostic_number(sent),
+                       "producer_event_time": None, "producer_timing": "unavailable_on_gap_wire",
+                       "frame_transit_s": _diagnostic_delay(sent, received),
+                       "child_wait_s": _diagnostic_delay(received, applied),
+                       "data_at": _diagnostic_number(data_at), "data_clock": clock_name,
+                       "data_checked_at": _diagnostic_number(checked_at),
+                       "data_age_s": _diagnostic_delay(data_at, applied if checked_at is None else checked_at),
+                       "timing": "finite_ordered" if (frame_context is not None
+                           and _diagnostic_delay(sent, received) is not None
+                           and _diagnostic_delay(received, applied) is not None) else "unknown_or_reversed"}
+        if state["first"] is None:
+            state["first"] = observation
+        state["last"] = observation
+
+    def before(self, learner: OnlineLearning, method: str, args: tuple[Any, ...]) -> dict[str, Any] | None:
+        if method not in ("advance", "discover", "restore"):
+            return None
+        self.prune(learner)
+        # Copy only fixed metadata, never terms, forecasts, outcomes, or full state.
+        rows = {slug: self.metadata(row, args[5] if method == "advance" else args[1])
+                for slug, row in learner.pending.items()}
+        if method == "restore" and isinstance(args[0], dict):
+            raw = args[0].get("pending", {})
+            if isinstance(raw, dict) and len(raw) <= MAX_PENDING:
+                rows = {slug: self.metadata(row, args[1]) for slug, row in raw.items() if isinstance(row, dict)}
+        counts = {key: learner.counts[key] for key in ("forecasts", "unknown", "scored")}
+        recent = tuple(learner.recent)
+        if method == "restore" and isinstance(args[0], dict):
+            saved_counts = args[0].get("counts", {})
+            counts = {key: saved_counts.get(key) for key in counts}
+            saved_recent = args[0].get("recent", [])
+            if isinstance(saved_recent, list) and len(saved_recent) <= MAX_RECENT:
+                recent = tuple(saved_recent)
+        return {"rows": rows, "recent": recent, "counts": counts}
+
+    @staticmethod
+    def metadata(row: Mapping[str, Any], now: float) -> dict[str, Any]:
+        start, end = _diagnostic_number(row.get("start")), _diagnostic_number(row.get("end"))
+        return {"start": start, "end": end, "elapsed_s": _diagnostic_delay(start, now),
+                "forecast_none": row.get("forecast") is None,
+                "stored_pregap": row.get("pregap") if row.get("pregap") in _DIAGNOSTIC_REASONS else
+                    ("other" if row.get("pregap") else None)}
+
+    def after(self, learner: OnlineLearning, method: str, args: tuple[Any, ...], before: dict[str, Any]) -> None:
+        now = args[5] if method == "advance" else args[1]
+        rows = before["rows"]
+        if method == "restore":
+            # Never backfill persisted recent records. Only this restore's actual removals are new evidence.
+            candidates = [r for r in learner.recent if r.get("window") in rows
+                          and r["window"] not in learner.pending and r.get("reason") == "startup_inside"
+                          and all(r is not old for old in before["recent"])]
+            for restored_slug, restored_row in learner.pending.items():
+                self.pending[restored_slug] = {"first": None, "last": None, "emitted": restored_row["forecast"] is not None,
+                                      "history": "restart_history_unavailable"}
+        else:
+            candidates = [r for r in learner.recent if all(r is not old for old in before["recent"])]
+        for receipt in candidates:
+            slug = receipt.get("window")
+            if not isinstance(slug, str) or len(slug) > 128:
+                continue
+            state = self.pending.get(slug, {})
+            if state.get("emitted"):
+                continue
+            meta = rows.get(slug)
+            # A missing/failed slot observation is never backfilled from a later score.
+            if (meta is not None and not meta["forecast_none"]) or receipt.get("forecast") is not None:
+                continue
+            if meta is None and method == "discover":
+                match = next((w for w in args[0][:MAX_LABELS] if w.slug == slug), None)
+                if match is not None:
+                    meta = self.metadata({"start": match.start, "end": match.end}, now)
+            self._attempt_emit(learner, slug, now, method, meta, state, receipt.get("status"), receipt.get("reason"),
+                               args, before)
+        if method == "advance":
+            forecasts = []
+            for slug, meta in rows.items():
+                row = learner.pending.get(slug)
+                state = self.pending.get(slug, {})
+                if meta["forecast_none"] and row is not None and row["forecast"] is not None and not state.get("emitted"):
+                    state = self.pending.setdefault(slug, {"first": None, "last": None,
+                                                           "history": "observed_since_admission"})
+                    state["emitted"] = True  # attempted, including a handler that writes and then raises
+                    forecasts.append((slug, meta, state))
+            # Mark the entire bounded batch before any logging; isolate each event's failure.
+            for slug, meta, state in forecasts:
+                self._attempt_emit(learner, slug, now, method, meta, state, "forecast", None, args, before)
+        self.prune(learner)
+
+    def _attempt_emit(self, *args: Any) -> None:
+        try:
+            self.emit(*args)
+        except Exception:  # noqa: BLE001, S110 - a failed event must not block others or be retried
+            pass
+
+    def emit(self, learner: OnlineLearning, slug: str, now: float, method: str, meta: Any,
+             state: Mapping[str, Any], disposition: Any, reason: Any, args: tuple[Any, ...],
+             before: Mapping[str, Any]) -> None:
+        due = meta is not None and meta["elapsed_s"] is not None and meta["elapsed_s"] >= HORIZON
+        age = _diagnostic_delay(args[3], now) if method == "advance" else None
+        facts = {"bitcoin_age_s": age, "bitcoin_age_valid": age is not None and age <= LATE_S,
+                 "spot_valid": method == "advance" and type(args[1]) in (int, float) and math.isfinite(args[1]) and args[1] > 0,
+                 "sigma_valid": method == "advance" and type(args[2]) in (int, float) and math.isfinite(args[2]) and args[2] >= 0}
+        if method != "advance":
+            facts = dict.fromkeys(facts)  # no pre-advance market snapshot exists for these terminations
+        payload = {"diagnostic_schema": 1, "mode": "observe_only", "live_application": False,
+                   "profitability_proven": False, **self.identity, "protocol": learner.history_protocol,
+                   "source_fingerprint": learner.history_source, "window": slug,
+                   "at": _diagnostic_number(now), "pending": meta,
+                   "learner_method": method if method in ("advance", "discover", "restore") else "other",
+                   "observation": "restart_history_unavailable" if method == "restore" else
+                       ("terminated_before_advance" if method == "discover" else
+                        "late_first_pass" if due and meta["elapsed_s"] > HORIZON + GRACE else
+                        ("due" if due else "terminated_before_due")),
+                   "cause_history": state.get("history", "unknown_if_prior_pregap" if meta and meta["stored_pregap"] else
+                                               ("global_feed_false_origin_unavailable" if learner.feed_ok is False
+                                                else "observed_since_admission")),
+                   "first_effective_cause": state.get("first"), "last_effective_cause": state.get("last"),
+                   "feed_ok": learner.feed_ok, "feed_status": list(self.feed_status), "input_facts": facts,
+                   "disposition": disposition if disposition in ("unknown", "scored", "forecast") else "unknown",
+                   "reason": reason if reason in _DIAGNOSTIC_REASONS else ("other" if reason else None),
+                   "counter_delta_scope": "learner_call",
+                   "counter_delta": {key: learner.counts[key] - before["counts"][key]
+                                     if type(before["counts"][key]) is int else None
+                                     for key in ("forecasts", "unknown", "scored")},
+                   "coverage": "child_observations_only; upstream cause and producer occurrence unavailable"}
+        log.info("kalshi_learning_input_diagnostic %s", json.dumps(payload, allow_nan=False, separators=(",", ":")))
+
+    feed_status = (False, False)
+
+
 # ---------------------------------------------------------------------- the town
 class KalshiArena:
     """The town (it runs in its own process: :func:`worker_main`). PRACTICE ONLY: no client, no key, no order path.
@@ -1069,6 +1259,14 @@ class KalshiArena:
         self.control_verdict = ""
         self.control_rule = rule_id(config.control)
         self.regime = rule_id(config.fixed)
+        self._diagnostic: _LearningDiagnostic | None = None
+        self._diagnostic_frame: tuple[Any, ...] | None = None
+        self._diagnostic_drop_frame: tuple[Any, ...] | None = None
+        self._diagnostic_drop_flags: tuple[str, ...] = ()
+        try:
+            self._diagnostic = _LearningDiagnostic()
+        except Exception:  # noqa: BLE001, S110 - observation must never affect the learner or arena
+            pass
         self.learning = OnlineLearning(clock())
         self._load(clock())
         self._learning_call("status", clock())
@@ -1077,11 +1275,27 @@ class KalshiArena:
 
     def _learning_call(self, method: str, *args: Any) -> Any:
         """Optional child diagnostics cannot reset the arena or alter resident decisions."""
+        before = self._diagnostic_call("before", self.learning, method, args)
         try:
-            return getattr(self.learning, method)(*args)
+            result = getattr(self.learning, method)(*args)
         except Exception:  # noqa: BLE001 - learning failures are isolated from practice and live execution
             self.learning.disable("optional_learning_method_failed")
             return None
+        if before is not None:
+            self._diagnostic_call("after", self.learning, method, args, before)
+        return result
+
+    def _diagnostic_call(self, method: str, *args: Any, **kwargs: Any) -> Any:
+        try:
+            if self._diagnostic is not None:
+                self._diagnostic.feed_status = self._feed_status
+                return getattr(self._diagnostic, method)(*args, **kwargs)
+        except Exception:  # noqa: BLE001, S110 - includes observation, encoding and logging failures
+            pass
+        return None
+
+    def _diagnostic_cause(self, slug: str, now: float, flags: Sequence[str], **kwargs: Any) -> None:
+        self._diagnostic_call("cause", self.learning, slug, now, flags, self._diagnostic_frame, **kwargs)
 
     def _learning_discover(self, windows: Sequence[Window], now: float) -> None:
         known = set(self.learning.pending)
@@ -1089,19 +1303,30 @@ class KalshiArena:
         # A drop can precede the first window record in its frame. Use its observation
         # time, never today's untimed, sticky simulator degradation history.
         for slug in self.learning.pending.keys() - known:
+            current = self._diagnostic_frame
+            self._diagnostic_frame = self._diagnostic_drop_frame
+            self._diagnostic_cause(slug, self._incomplete_before, (*self._diagnostic_drop_flags, "replayed_drop"),
+                                   applied_at=now)
+            self._diagnostic_frame = current
             self._learning_call("degrade", slug, "feed_dropped", self._incomplete_before)
 
     # ------------------------------------------------------------------ the feed
     def feed_book(self, book: Book) -> None:
-        self.inbox.append(("book", book))
+        self.inbox.append(("book", book, self._diagnostic_frame))
 
     def feed_trade(self, trade: Trade) -> None:
-        self.inbox.append(("trade", trade))
+        self.inbox.append(("trade", trade, self._diagnostic_frame))
 
     def feed_gap(self, gap_windows: tuple[str, ...], trade_stream: bool, coinbase_connected: bool) -> None:
-        self.inbox.append(("gap", gap_windows, trade_stream, coinbase_connected))
+        self.inbox.append(("gap", gap_windows, trade_stream, coinbase_connected, self._diagnostic_frame))
 
     def receive(self, message: Any, view: WireView) -> None:
+        try:
+            self._receive(message, view)
+        finally:
+            self._diagnostic_frame = None
+
+    def _receive(self, message: Any, view: WireView) -> None:
         """One frame from :class:`ArenaLink`: market facts update ``view``; books, prints and gaps are queued. A frame
         the link had to drop leaves every started, unsettled window incomplete (void at its settlement), including
         windows first named in this frame. A delayed drop receipt must not spare a window merely because it closed."""
@@ -1110,7 +1335,17 @@ class KalshiArena:
         _, seq, _sent_at, dropped, flush_us, items = message
         now = self.clock()
         self.last_frame_at = now
-        if (self.link_seq is not None and seq != self.link_seq + 1) or dropped > self.link_dropped:
+        self._diagnostic_frame = (seq, _sent_at, now)
+        sequence_gap = self.link_seq is not None and seq != self.link_seq + 1
+        increased_drop = dropped > self.link_dropped
+        if sequence_gap or increased_drop:
+            drop_flags = tuple(key for key, active in
+                (("sequence_discontinuity", sequence_gap), ("drop_counter_increased", increased_drop)) if active)
+            if now >= self._incomplete_before:
+                self._diagnostic_drop_frame = self._diagnostic_frame
+                self._diagnostic_drop_flags = drop_flags
+            for slug in self.learning.pending:
+                self._diagnostic_cause(slug, now, drop_flags)
             self._incomplete_before = max(self._incomplete_before, now)
             self._degrade_started(now, "feed_dropped")
         self.link_seq, self.link_dropped = int(seq), max(self.link_dropped, int(dropped))
@@ -1123,7 +1358,7 @@ class KalshiArena:
                 try:
                     self.feed_book(book_from_wire(record, self.ladders))
                 except LookupError:  # a change to a ladder never received (not expected: the link resends whole)
-                    self._degrade(str(record[1]), "feed_dropped")
+                    self._degrade(str(record[1]), "feed_dropped", flags=("missing_ladder",))
                     missing_ladders.add(str(record[1]))
             elif tag == "t":
                 self.feed_trade(trade_from_wire(record))
@@ -1147,10 +1382,17 @@ class KalshiArena:
         # A missing ladder can appear before its first window announcement. Preserve
         # that same-frame failure for learning without changing simulator behavior.
         for slug in missing_ladders & self.learning.pending.keys():
+            self._diagnostic_cause(slug, now, ("missing_ladder",))
             self._learning_call("degrade", slug, "feed_dropped", now)
+        self._diagnostic_frame = None
 
-    def _degrade(self, slug: str, why: str) -> None:
-        self._learning_call("degrade", slug, why, self.clock())
+    def _degrade(self, slug: str, why: str, *, flags: Sequence[str] = (),
+                 data_at: float | None = None, clock_name: str | None = None,
+                 checked_at: float | None = None) -> None:
+        now = self.clock()
+        if flags:
+            self._diagnostic_cause(slug, now, flags, data_at=data_at, clock_name=clock_name, checked_at=checked_at)
+        self._learning_call("degrade", slug, why, now)
         if slug in self.windows:
             self.degraded.setdefault(slug, why)
 
@@ -1224,6 +1466,12 @@ class KalshiArena:
                 self.windows[slug] = replace(window)
 
     def _drain(self, now: float) -> float:
+        try:
+            return self._drain_items(now)
+        finally:
+            self._diagnostic_frame = None
+
+    def _drain_items(self, now: float) -> float:
         """Apply queued books, prints and gaps in arrival order, each at the time it is read; returns that time.
 
         A book is skipped only when a later book for the same window and side is already queued and no resident
@@ -1244,13 +1492,15 @@ class KalshiArena:
         for index, item in enumerate(items):
             now = max(now, self.clock())
             kind = item[0]
+            self._diagnostic_frame = item[-1] if len(item) > (4 if kind == "gap" else 2) else None
             if kind == "book":
                 book: Book = item[1]
                 behind = now - book.at
                 lag = max(lag, behind)
                 if behind > LATE_S:
                     self.late += 1
-                    self._degrade(book.window, "feed_late")
+                    self._degrade(book.window, "feed_late", flags=("late_book",), data_at=book.at,
+                                  clock_name="book_at_parent_receipt", checked_at=now)
                 if latest[(book.window, book.side)] != index and book.window not in ordered:
                     self.coalesced += 1
                     continue
@@ -1263,7 +1513,10 @@ class KalshiArena:
                 lag = max(lag, behind)
                 if behind > LATE_S:
                     self.late += 1
-                    self._degrade(trade.window, "feed_late")
+                    self._degrade(trade.window, "feed_late", flags=("late_trade",),
+                                  data_at=trade.received_at if trade.received_at is not None else trade.at,
+                                  clock_name="trade_received_at" if trade.received_at is not None else "trade_at_fallback",
+                                  checked_at=now)
                 identity = f"{trade.window}:{trade.side}:{trade.trade_id}"
                 if identity in self.seen_prints:
                     continue
@@ -1275,11 +1528,18 @@ class KalshiArena:
                     self._fills(res, res.desk.on_trade(trade, now))
             elif kind == "gap":
                 self._gap(item[1], bool(item[2]), bool(item[3]), now)
+        self._diagnostic_frame = None
         self.lag_s = max(0.0, lag)
         return now
 
     def _gap(self, gap_windows: Sequence[str], trade_stream: bool, coinbase: bool, now: float) -> None:
         """The speed desk's own feed-gap rule (SpeedRunner.on_status): a lost stream cancels everything."""
+        selected = set(gap_windows[:MAX_LABELS])
+        for slug in self.learning.pending:
+            flags = tuple(key for key, active in (("explicit_slug", slug in selected),
+                          ("trade_stream_false", not trade_stream), ("coinbase_false", not coinbase)) if active)
+            if flags:
+                self._diagnostic_cause(slug, now, flags, gap=True)
         self._learning_call("gap", gap_windows, trade_stream, coinbase, now)
         old_stream, old_coinbase = self._feed_status
         self._feed_status = (trade_stream, coinbase)

@@ -44,6 +44,7 @@ Check this queue at task start and before declaring current work complete. Keep 
 move an item to done only with linked evidence. Blocked or waiting-for-approval is not complete.
 
 ### EXEC-DELAY-001 — first task active; production attribution and verified fix pending
+- **10:16 AM PDT October 15:** child-only cause diagnostic now independently checked (5744passed/14existing skips, mypy128/Ruff5, exact corrected patch/source and local resource envelope). Safe-minute release/exact deployment and fixed future-window cause evidence remain pending. No actual upstream-cause fix, usable forecast, better trading result or full EXEC closure claimed. [Preparation/originals/limits](../research/kalshi_input_causes_2026-10-15/PREPARATION.md).
 - **9:24 AM PDT October15:** PR61 exact153a122/e641 SUCCESS8:57:51AM; owner-approved fresh$10total resume,
   unchanged10/window,20open,6/day,clip5; no day reset/stop removal/cap increase. 67selectedrestartfields retained.
   Fixed9:00–9:15AM actual3makerfills yield+$0.12locked/$0direction/$0fees; alljoined, coverageuncertified,
@@ -260,6 +261,7 @@ move an item to done only with linked evidence. Blocked or waiting-for-approval 
   Recorder feasibility3:45PM today/storage beforeOct20 remain obligations; no production settings change.
 
 ### TJR-MNQ-001 — validation tooling complete; historical run blocked on data; paper/live disabled
+- **10:17 AM PDT October 15 reminder:** fresh connected-GitHub instructions/current records at3ce8a0b plus PR47 live metadata and pinned exact deployment evidence confirm PR47 separately complete. Current EXEC/learning evidence is OPEN and local diagnostic release is pending; neither preparation nor a merged PR clears it. Prior offline priority retained but authentic MNQ development bars/account costs remain missing: historicaltrades0/P&Lnull, holdout unopened, paper not started/live disabled. No duplicate Pages/data/tests, unchanged routine notification suppressed; automation left unchanged; item unfinished. [Receipt/next input](../research/tjr_validation_2026-10-14/FOLLOWUP_2026-10-15_1017_PDT.json). No authority inferred from this reminder.
 - **9:19 AM PDT October15 reminder, checked 9:24 AM PDT:** connectedGitHub exact153a122 instructions/newestrecords
   matchGitblobs. PR47release/restart separatelycomplete; currentEXEC/learningevidence remainsopen.
   Priorofflinepriority persists but authenticMNQdevelopmentbars/costs remainmissing; historicaltrades0/P&Lnull,
@@ -502,6 +504,11 @@ move an item to done only with linked evidence. Blocked or waiting-for-approval 
   this item. No production, financial or credential-copy work is needed; chat delegation stays usable.
 
 ## Inbox (newest first)
+
+### 2026-10-15 17:16 UTC, Codex -> workers: exact child diagnostic checked; release and first future window next (10:16 AM PDT October 15)
+- Owner asked to continue through completion. Root owns integration; requested Sol implementation, Astra independent review and Luna bounded inventory launches accepted. Scope: child-only input-cause/timing diagnostic plus49 fake regressions. Pure learner/V1 history/fingerprint, all trading/risk/client/config/feed/ledger/ladder/Polymarket/build paths and parent/wire unchanged. No private handoff contents in Git.
+- Exact corrected patch `e5ae15d` passes full5744tests/14existing skips, mypy128/Ruff5, independent source/behavior review and bounded resource checks. Preserve superseded v4 green run and later logging-recovery finding; final checks name corrected bytes. [Complete preparation and limits](../research/kalshi_input_causes_2026-10-15/PREPARATION.md).
+- Next: safe-minute source release will restart the existing real bots. Verify exact deployment, original normal startup, intended mode/caps and retained losses/consumed controls; then freeze one future full KXBTC15M window before its start. This diagnostic is not a data-cause correction or profitable strategy; EXEC/learner evidence remain OPEN. No new variables, budget reset/resume, cap increase, manual order, model/policy change or sealed TEST. Recorder3:45PM/storage duty and TJR data/cost blocker retained.
 
 ### 2026-10-15 16:40 UTC, Codex -> workers: complete private handoff read; Kalshi input evidence first (9:40 AM PDT October 15)
 - The owner's combined handoff is now received and read top to bottom: all 942 lines, three parts and both full embedded operating procedures. This supersedes the earlier missing-input status. The original, exact procedure copies and a continuity/reconciliation record are preserved privately outside Git; no private inventory, contacts, session links or procedure contents are published here.
