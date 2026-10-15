@@ -73,6 +73,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Protocol
 
 from .deskguard import LOSING, PHRASES, WINNING, judge
+from .kalshi_online_learning import OnlineLearning
 from .speeddesk_model import (
     BitcoinTape,
     Book,
@@ -1068,9 +1069,19 @@ class KalshiArena:
         self.control_verdict = ""
         self.control_rule = rule_id(config.control)
         self.regime = rule_id(config.fixed)
+        self.learning = OnlineLearning(clock())
         self._load(clock())
+        self._learning_call("status", clock())
         self.rng = random.Random(SEED + self.next_id)
         self._populate(clock())
+
+    def _learning_call(self, method: str, *args: Any) -> Any:
+        """Optional child diagnostics cannot reset the arena or alter resident decisions."""
+        try:
+            return getattr(self.learning, method)(*args)
+        except Exception:  # noqa: BLE001 - learning failures are isolated from practice and live execution
+            self.learning.disable("optional_learning_method_failed")
+            return None
 
     # ------------------------------------------------------------------ the feed
     def feed_book(self, book: Book) -> None:
@@ -1111,6 +1122,7 @@ class KalshiArena:
                 self.feed_gap(tuple(record[1]), bool(record[2]), bool(record[3]))
             elif tag == "w":
                 view.windows = tuple(Window(*values) for values in record[1])
+                self._learning_call("discover", view.windows, now)
                 live = {window.slug for window in view.windows}
                 self.ladders = {key: value for key, value in self.ladders.items() if key[0] in live}
             elif tag == "m":
@@ -1118,17 +1130,20 @@ class KalshiArena:
             elif tag == "k":
                 view.maker_windows = frozenset(record[1])
             elif tag == "o":
+                self._learning_call("labels_received", record[1], now)
                 view.outcomes = {str(slug): bool(up) for slug, up in record[1]}
             else:
                 raise ValueError("unexpected Kalshi arena record")
 
     def _degrade(self, slug: str, why: str) -> None:
+        self._learning_call("degrade", slug, why, self.clock())
         if slug in self.windows:
             self.degraded.setdefault(slug, why)
 
     def _degrade_started(self, now: float, why: str) -> None:
         for slug, window in self.windows.items():
             if window.start <= now:
+                self._learning_call("degrade", slug, why, now)
                 self.degraded.setdefault(slug, why)
 
     # ------------------------------------------------------------------ one pass
@@ -1136,11 +1151,14 @@ class KalshiArena:
         started = self.cpu()
         snap = self._snapshot()
         self.snap = snap
+        self._learning_call("discover", snap.windows, now)
         self._windows(snap, now)
         self.tape.feed(snap.bitcoin_price, snap.bitcoin_at, snap.sigma)
         # Books and prints drained now may be newer than the pass's start: the rest of the pass uses the clock after
         # them, so none looks like it came from the future.
         now = max(self._drain(now), self.clock())
+        self._learning_call("advance", snap.windows, snap.bitcoin_price, snap.sigma, snap.bitcoin_at,
+                            snap.outcomes, now, self.degraded, True)
         self._settle(snap, now)
         self._voids(now)
         self._evaluate(snap, now)
@@ -1246,6 +1264,7 @@ class KalshiArena:
 
     def _gap(self, gap_windows: Sequence[str], trade_stream: bool, coinbase: bool, now: float) -> None:
         """The speed desk's own feed-gap rule (SpeedRunner.on_status): a lost stream cancels everything."""
+        self._learning_call("gap", gap_windows, trade_stream, coinbase, now)
         old_stream, old_coinbase = self._feed_status
         self._feed_status = (trade_stream, coinbase)
         if (old_stream and not trade_stream) or (old_coinbase and not coinbase):
@@ -1685,7 +1704,8 @@ class KalshiArena:
                     "reason": control.row["verdict"].get("reason", ""), "genes_line": style(control.row["genes"])},
                 **shown, "counts": counts,
                 "truncated": {key: len(shown[key]) < counts[key] for key in counts},
-                "town": dict(self.town), "feed": self.telemetry(now)}
+                "town": dict(self.town), "feed": self.telemetry(now),
+                "learning": self._learning_call("panel")}
 
     def state(self, now: float) -> dict[str, Any]:
         return {"version": STATE_VERSION, "label": LABEL, "saved_at": now, "started_at": self.started_at,
@@ -1693,6 +1713,7 @@ class KalshiArena:
                              "broke_usd": self.config.broke_usd, "start_cash": self.config.start_cash},
                 "control_rule": self.control_rule, "regime": self.regime, "next_id": self.next_id, "seq": self.seq,
                 "town_id": self.town_id, "next_event": self.next_event, "rent_day": self.rent_day,
+                "learning": self._learning_call("state"),
                 "active_windows": [[slug, window.start] for slug, window in sorted(self.windows.items())],
                 "residents": [res.row for res in self.residents.values()], "grave": self.grave,
                 "events": self.events, "town": self.town,
@@ -1711,6 +1732,7 @@ class KalshiArena:
         self.dirty = False
 
     def _status(self, now: float) -> None:
+        self._learning_call("status", now)
         self.status_at = now
         feed = self.telemetry(now)
         log.info("kalshi_arena_status residents=%d windows=%d void=%d void_feed=%d received=%d dropped=%d late=%d "
@@ -1764,8 +1786,11 @@ class KalshiArena:
             self.skipped.clear()
             self.town = {key: 0.0 if key == "rent_paid" else 0 for key in self.town}
             self._reset(exc)
+        else:
+            self._learning_call("restore", raw.get("learning"), now)
 
     def _reset(self, exc: BaseException) -> None:
+        self.learning.disable("arena_state_unreadable")
         """A bad file moves aside (kept for a person to read) and the town starts fresh."""
         log.warning("kalshi_arena_state_reset error=%s", type(exc).__name__)
         with contextlib.suppress(OSError):
