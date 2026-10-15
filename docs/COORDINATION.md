@@ -39,6 +39,15 @@ Check this queue at task start and before declaring current work complete. Keep 
 move an item to done only with linked evidence. Blocked or waiting-for-approval is not complete.
 
 ### EXEC-DELAY-001 — first task active; production attribution and verified fix pending
+- **2026-10-14 10:39 PM PDT:** fixed 10:00–10:30 PM capture/tail closed; collector stopped
+  10:32:19 PM. Two audited real windows −$1.590/+$0.261 total −$1.329 after $0.009 fees;
+  locked +$0.940231/directional −$2.269231; all 12 fills joined. Four known main-reader delays
+  of 2.626–2.895 seconds plus 43 overflow-unknown receipts leave freshness and EXEC open;
+  comparison unstarted. Prior restart/next partial/practice excluded. Separate exact 668ba
+  seven-file timing candidate passed 5,625 tests/14 skips, mypy 128/Ruff 7 and independent review;
+  preserved locally/in archive, not released in this bounded queue follow-up. No production mutation.
+  [Closed evidence](../research/kalshi_profitability_2026-10-14/LIVE_MIRROR_POSTRELEASE.md);
+  [candidate/remaining verification](../research/kalshi_profitability_2026-10-14/LEDGER_STAGE_TIMING_PREPARATION.md).
 - **2026-10-14 10:09 PM PDT:** Codex preparing a separate numbers-only ledger timing
   candidate while the current capture remains frozen. Scope: optional per-ledger/thread checkpoint
   observation of normalization, JSON encoding, lock acquisition, BEGIN/SQL/COMMIT; fixed numeric
@@ -150,6 +159,12 @@ move an item to done only with linked evidence. Blocked or waiting-for-approval 
   while the first remains open. TJR's separate authentic-data blocker and recorder duties persist.
 
 ### TJR-MNQ-001 — validation tooling complete; historical run blocked on data; paper/live disabled
+- **2026-10-14 10:39 PM PDT check:** fresh GitHub and independent pinned evidence confirm
+  PR47 exact release/restart separately complete; EXEC remains open. Existing explicit offline
+  priority persists, but genuine MNQ bars/costs remain missing. Saved code/tests retained:
+  historical trades zero/P&L null, paper not started/live off. No new Page claim, duplicate probe,
+  production authority or unchanged notification. Keep queued/blocked and automation unchanged.
+  [Receipt/next input](../research/tjr_validation_2026-10-14/FOLLOWUP_2026-10-14_2236_PDT.json).
 - **2026-10-14 10:17 PM PDT check:** fresh connected-GitHub records verify PR47's
   exact deployment/restart evidence separately from still-open EXEC freshness work. Existing offline
   priority persists, but authentic MNQ bars/costs remain missing. Saved source/tests retained;
