@@ -13,6 +13,11 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-15 05:17 UTC, Codex, bounded TJR reminder check during active Kalshi work (10:17 PM PDT October 14)
+- Read current AGENTS, COORDINATION, newest WORKLOG, PR47 deployment evidence and historical status through connected GitHub at head a165f34. PR47 has exact SUCCESS/restart evidence; EXEC-DELAY-001 remains open during PR58's fixed capture and isolated timing preparation.
+- Earlier offline reprioritization persists, but authentic MNQ development bars and verified costs remain absent. Saved source/tests reused; historical trades remain zero, P&L null, paper not started and live disabled. No new Page read/delta claim, duplicate research, holdout access or unchanged data-access probe.
+- Leave TJR-MNQ-001 queued/blocked and automation unchanged; routine unchanged notification suppressed. This reminder adds no production authority and does not interrupt active work. [Bounded receipt and concrete next input](../research/tjr_validation_2026-10-14/FOLLOWUP_2026-10-14_2217_PDT.json).
+
 ## 2026-10-15 04:56 UTC, Codex, mirror correction deployed; restart reconciled; full verification active (9:56 PM PDT October 14)
 - PR58 merged9:47:47PM after fixed collector stopped9:47:18.296PM. Exact1e8d0be07b280292fa873a2f5da9b22dd02f28c3 matches reviewedbundle0faa0c5d9a1fd07c4824f51b323ec5a4d068837d6d0fdf64fb4ea6cee7eccac2. Railwayfc0a73e9-f052-435a-94b2-ce7b1272f36e SUCCESS9:48:49.546PM; normalPolymarketLIVE9:48:47.145PM. Bothservicesonline1/1/noissues; boundedstartuptracebackquerythrough9:49:50PM returnednone.
 - Exact53fieldrestartaudit retains37equal/16changed, no missing. LateoldDown5@.36/fee0 joinsintent/order; cost2.30→4.10, fills631→632, risk2.30→0, reserves2.25→0. Cash33.7994→36.9994 consistentwith5paircredit−1.80buy, notrawvenuecashtransactionexport. Five lateintents explainmakerorders+5. Cumulative settled−$13.642/fees$2.70752/caps10/20/6/10clip5/latches match; allthree one-timecontrols ignored-already-used. Firstnewstatusaccount-data-stale/trading_nowfalse; no rawledger/stopanchor or allstateidentity claim.
