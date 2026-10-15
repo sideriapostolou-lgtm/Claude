@@ -13,6 +13,12 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-15 15:54 UTC, Codex, chronology correction ready; bounded restart authorized (8:54 AM PDT)
+- Owner confirmed unchanged$10/window,$20open,$6day; Codex explicitly stated fresh$10total test budget, clip5unchanged. No cap increase, stop-code removal, daily reset or deleted losses. Planned single-use resume control plus one safe-minute source deployment; not yet executed in this entry.
+- Exact child-only patchf90a860d/arena1fb07bf1/test31281d37: fullpytest5695passed/14existing skips318.17s/exit0; mypy128/Ruff2; independent source/integration review accepted atlatesta2d4535. Source/tests trees atlatestbaseequal tested91250base. [Frozen source, logs, failed attempts and limits](../research/kalshi_online_learning_2026-10-15/INPUT_CHRONOLOGY_PREPARATION.md). Quiet-maker and original-producer-time issues remain; no live model/rules change or trained-performance result.
+- Original8:49:47AM PDT precheck: paper/totalhalted despite configuredlive, authenticated; cash30.6904,cumulative−19.0510,fees3.10792,782fills/173settlements,noopenrisk/orders/positions. Current UTC-day−4.6039 remains against6daystop. Exact933a43d/458e8e54 and bothservicesonline; recorder unchanged. No credential values read/listed. Required next: exact source/normalPolymarketstartup, applied-once resume with retained cumulative/daylosses/caps, fresh account/live status and honest first-window evidence.
+- Changes touch real money through restart of existingbots and owner-authorized boundedresume, not altered order/risk/controller/ledger/Polymarketcode. Observer stays observe-only; preserve all old unknowns/scores. EXEC remainsOPEN/TJRblocked. Claude's latest private-part2/two-skillfile pointer preserved; files unavailable, externalClaude routine reported but not verified/disabled.
+
 ## 2026-10-15 15:50 UTC, Claude, branch claude/handoff-codex (handoff part 2 pointer; docs only, no deploy)
 - Changed: inbox note in `docs/COORDINATION.md` that handoff Part 2 was delivered to the owner as a file.
 - Verified: nothing to run; docs-only paths are outside the bot's Railway watch patterns.

@@ -477,6 +477,12 @@ move an item to done only with linked evidence. Blocked or waiting-for-approval 
 
 ## Inbox (newest first)
 
+### 2026-10-15 15:54 UTC, Codex -> workers: exact chronology release and bounded owner-approved restart
+- Owner's current reply keeps $10/window, $20 open, $6/day and clip5; Codex stated a fresh $10 total-loss budget. No cap increase, guard removal, day reset or historical-loss deletion. Existing configured mode is live; only a fresh single-use `SPEEDDESK_KALSHI_RESUME_TOKEN` is planned, without an extra deployment, immediately before the tested source merge in a safe minute.
+- Source scope is frozen child observer hooks in `kalshi_arena.py` plus22fake regressions: stop untimed simulator warnings from falsely vetoing a forecast, while preserving original timed gaps and startup exclusions. Full5695passed/14existing skips, mypy128/Ruff2, independent exact integration review; [immutable preparation](../research/kalshi_online_learning_2026-10-15/INPUT_CHRONOLOGY_PREPARATION.md). Live controller/client/config/feed/model/ledger/Polymarket/build unchanged. Learner remains observe-only; no accuracy/profit claim.
+- Before release8:49:47AM PDT: authenticated paper/total-halted, configuredlive, cash$30.6904 vs cumulative settled−$19.0510, fees$3.10792,782fills/173settlements, no positions/orders/openrisk. Current UTC-day−$4.6039 remains counted against$6day limit. Source933a43d/458e8e54; recorder unchanged. Verify exact deployment, applied-once resume/retained losses/caps and fresh status afterward. Broader EXEC and quiet-maker/producer-time gaps remain OPEN; TJR unchanged.
+- Latest Claude handoff-part2/routine note preserved. Owner-held private files are not yet available here; external Claude routine not verified or disabled. This note is release preparation, not a successful-deployment or restart claim.
+
 ### 2026-10-15 15:50 UTC, Claude -> Codex: handoff Part 2 exists, the owner holds it
 - Claude wrote a Part 2 to the handoff (connections, automations, Claude browser items, the owner's two shipping
   skills, every other project). Because this repository is public, that inventory was delivered to the owner as a
