@@ -1,0 +1,25 @@
+{
+  "parser_sha256": "4cfc4769136cef7c45423cccff94b65778c87de885abcbbccc918c8e0f317f5d",
+  "harness_sha256": "e360da0c0ae351b0d0ee6dd3381d82f547b3f7f09dc2471a445fe8cee52ecf99",
+  "passed": true,
+  "checks": [
+    "original event framing",
+    "nested/prefix/multiline/wronglogger/event/level rejection",
+    "tool error and malformed native/JSON/timestamp shapes",
+    "overlap dedup with provenance",
+    "unknown query limits retained",
+    "malformed pending metadata reported",
+    "source and protocol mismatch blocked on receipt side",
+    "unsupported disposition blocked"
+  ],
+  "scope": "Synthetic offline evidence-parser checks, not trading/profit results.",
+  "reviewed_at_utc": "2026-10-15T17:14:21.876408+00:00",
+  "independent_execution": "Read exact original harness, redirected only output directory to temporary directory containing byte-identical parser; no public/source writes.",
+  "decision": "No remaining blocker found for declared capture parser v3; original query scope/caps/identity and bounded coverage remain explicit.",
+  "limitations": [
+    "Synthetic parser fixtures do not certify production log coverage.",
+    "Matching uses exact window/time/reason plus learner source/protocol; arena source and observe-only flags reported separately and must pass during root evidence review.",
+    "Declaration and request files are root-controlled input.",
+    "Exact row dedup uses timestamp and full original message; query provenance retained."
+  ]
+}
