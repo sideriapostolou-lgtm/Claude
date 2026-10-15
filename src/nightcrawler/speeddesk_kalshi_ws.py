@@ -27,6 +27,7 @@ from .config import Settings
 from .speeddesk_feeds import number
 from .speeddesk_model import Book, Level, Trade
 from .speeddesk_worktrace import WorkTrace, work_span
+from .speeddesk_ws_timing import TimingClientConnection
 
 URL = "wss://external-api-ws.kalshi.com/trade-api/ws/v2"
 PATH = "/trade-api/ws/v2"
@@ -256,6 +257,54 @@ class KalshiMarketWS:
         self.connected = False
         self._last_status: dict[str, Any] = {}
         self._timestamp_notice = False
+        self._timing_session = 0
+        self._timing_gap: dict[str, Any] | None = None
+
+    def _flush_timing_gap(self, ws: Any) -> None:
+        context, self._timing_gap = self._timing_gap, None
+        if context is not None:
+            self._timing_report(ws, event="gap", **context)
+
+    def _timing_report(self, ws: Any, *, event: str, call_mono: float,
+                       returned_mono: float, apply_mono: float, apply_wall: float,
+                       raw: Any, previous: tuple[float, float] | None) -> None:
+        """Observe a message without supplying timestamps to freshness or trading.
+
+        Protocol acceptance is later than socket/kernel arrival. Its residence
+        is a local lower bound, never an estimate of provider/network delay.
+        A missing stamp remains unknown; no local time replaces a source time.
+        """
+        try:
+            receipt = ws.last_receipt if isinstance(ws, TimingClientConnection) else None
+            msg = raw.get("msg") if isinstance(raw, dict) else None
+            kind = raw.get("type") if isinstance(raw, dict) else None
+            kind = kind if isinstance(kind, str) and kind in {"subscribed", "orderbook_snapshot", "orderbook_delta", "trade"} else "other"
+            sending = raw.get("sending_ts_ms") if isinstance(raw, dict) else None
+            engine = msg.get("ts_ms") if isinstance(msg, dict) else None
+            payload: dict[str, Any] = {
+                "session": self._timing_session, "event": event, "kind": kind,
+                "recv_call_mono": call_mono, "recv_return_mono": returned_mono,
+                "apply_mono": apply_mono, "apply_wall": apply_wall,
+                "recv_wait_ms": max(0.0, returned_mono - call_mono) * 1000,
+                "return_to_apply_ms": max(0.0, apply_mono - returned_mono) * 1000,
+                "sending_ts_ms": sending if _integer(sending) else None,
+                "engine_ts_ms": engine if _integer(engine) else None,
+                "receipt": None if receipt is None else receipt.as_dict(),
+                "connection": ws.timing_status() if isinstance(ws, TimingClientConnection) else None,
+                "previous_message": None if previous is None else {
+                    "processing_ms": previous[0], "yield_resume_ms": previous[1]},
+                "basis": "complete frame protocol acceptance to public recv; excludes earlier local and network delay",
+            }
+            if (receipt is not None and receipt.status == "known"
+                    and receipt.accepted_monotonic is not None
+                    and self.work_trace is not None and event == "gap"):
+                payload["local_work"] = self.work_trace.overlap(receipt.accepted_monotonic, apply_mono, max_spans=8)
+            log.info("speeddesk_feed_kalshi_ws_timing %s", json.dumps(payload, allow_nan=False, separators=(",", ":")))
+        except Exception:  # noqa: BLE001 - observation cannot change message processing or gap handling.
+            try:
+                log.info("speeddesk_feed_kalshi_ws_timing_unavailable")
+            except Exception:  # noqa: BLE001, S110 - a broken log sink cannot break market-data invalidation.
+                pass
 
     def fresh_books(self) -> frozenset[str]:
         now = self._clock()
@@ -293,6 +342,7 @@ class KalshiMarketWS:
                 async with self._connect(URL, additional_headers=signer.headers(self._clock()),
                                          open_timeout=8, close_timeout=2, ping_interval=10,
                                          ping_timeout=10, max_queue=16, max_size=1_000_000,
+                                         create_connection=TimingClientConnection,
                                          logger=_transport_log) as ws:
                     self.connected = True
                     try:
@@ -302,6 +352,9 @@ class KalshiMarketWS:
                         # can take seconds on a broken connection.
                         self.connected = False
                         self._report("reconnecting_public_rest_fallback", invalidate=True)
+                        # Existing cancellation/invalidation callbacks run first.
+                        # A diagnostic must not delay clearing a rejected book.
+                        self._flush_timing_gap(ws)
                         if self.state.book_at:
                             delay = 1.0
             except asyncio.CancelledError:
@@ -318,6 +371,11 @@ class KalshiMarketWS:
                 delay = min(30.0, delay * 2)
 
     async def _session(self, ws: Any, tickers: frozenset[str], stop: threading.Event) -> None:
+        self._timing_session += 1
+        self._timing_gap = None
+        last_report = -math.inf
+        previous: tuple[float, float] | None = None
+        yielded_at: float | None = None
         for identity, channel in ((1, "orderbook_delta"), (2, "trade")):
             params: dict[str, Any] = {"channels": [channel], "market_tickers": sorted(tickers)}
             if channel == "orderbook_delta":
@@ -325,20 +383,50 @@ class KalshiMarketWS:
             await ws.send(json.dumps({"id": identity, "cmd": "subscribe", "params": params}))
         self._report()
         while not stop.is_set():
+            resumed_at = time.monotonic()
+            if previous is not None and yielded_at is not None:
+                previous = (previous[0], max(0.0, resumed_at - yielded_at) * 1000)
+                yielded_at = None
             if self._tickers() != tickers:
                 raise MarketDataGap("market_set_changed")
+            call_mono = time.monotonic()
             try:
                 payload = await asyncio.wait_for(ws.recv(), timeout=0.2)
             except TimeoutError:
                 self._report()
                 continue
+            returned_mono = time.monotonic()
             with work_span(self.work_trace, "kalshi_decode_apply"):
-                books, trades = self.state.apply(json.loads(payload), self._clock())
+                raw = json.loads(payload)
+                apply_wall = self._clock()
+                apply_mono = time.monotonic()
+                try:
+                    books, trades = self.state.apply(raw, apply_wall)
+                except MarketDataGap:
+                    # Retain only allowlisted public timing fields, never the
+                    # frame, headers or exception text. Publish after invalidation.
+                    msg = raw.get("msg") if isinstance(raw, dict) else None
+                    kind = raw.get("type") if isinstance(raw, dict) else None
+                    sending = raw.get("sending_ts_ms") if isinstance(raw, dict) else None
+                    engine = msg.get("ts_ms") if isinstance(msg, dict) else None
+                    safe_raw = {"type": kind if isinstance(kind, str) and kind in {"subscribed", "orderbook_snapshot", "orderbook_delta", "trade"} else "other",
+                                "sending_ts_ms": sending if _integer(sending) else None,
+                                "msg": {"ts_ms": engine if _integer(engine) else None}}
+                    self._timing_gap = {"call_mono": call_mono, "returned_mono": returned_mono,
+                                        "apply_mono": apply_mono, "apply_wall": apply_wall,
+                                        "raw": safe_raw, "previous": previous}
+                    raise
             self._report()
             for book in books:
                 self._on_book(book)
             for trade in trades:
                 self._on_trade(trade)
+            if returned_mono - last_report >= 60:
+                self._timing_report(ws, event="status", call_mono=call_mono, returned_mono=returned_mono,
+                                    apply_mono=apply_mono, apply_wall=apply_wall, raw=raw, previous=previous)
+                last_report = returned_mono
+            yielded_at = time.monotonic()
+            previous = (max(0.0, yielded_at - returned_mono) * 1000, 0.0)
             # A buffered recv can finish inline. Give ready account work a turn
             # only after every callback from this message has completed.
             await asyncio.sleep(0)

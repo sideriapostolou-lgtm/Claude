@@ -13,6 +13,34 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-15 04:08 UTC, Codex, resumed feed-delay task; reviewed timing ready (9:08 PM PDT October 14)
+- Owner said continue the interrupted session; resumed EXEC-DELAY-001, not a new queue reminder.
+  Current remote instructions read and compared; base0fc4115, running app stillc8e37e5.
+  Fresh8:30–8:50PM query retains23source-age warnings, two normal transitions, threeRESTerrors.
+  Dated8:49:58PM cash$37.9131 differs from cumulative settled P&L−$11.4183; all losses retained.
+- Actual-controller/native buffered replay (24scenarios,500messages each) completes without
+  stale rejection/checkpoints during bursts. Yield permits72–83actual cycles at explicit5ms
+  callback load; it does not reproduce the earlier surrogate failure or prove a production cause.
+  Preserved exact harness/results/failed attempts and raw queries in a verified nine-member archive.
+- Added bounded native complete-message ordinal/clock stamps and gap/periodic timing. Logs run
+  after existing invalidation callbacks; missing/evicted/disabled evidence stays unknown. It is
+  protocol-acceptance-to-recv local residence, not socket ingress or provider-delay attribution.
+  Complete-message yields,3s guard,sequence/cancel rules, financial settings/state unchanged.
+- Requested Sol/medium implementation/replay, Astra/high architecture/exact review and Luna/medium
+  extraction launches succeeded. Exact four-file bundle4b86d13b5f2efe33626dd3c6b876086500f9377d0e9ca2ee676a1edaa2b0e405
+  accepted after reviewer caught two diagnostic bugs and a false-positive test. Final pytest5,555
+  passed/14existing skips305.14s, capturedexit0; mypy127/Ruff4pass. Target94pass separately on
+  websockets13.1/14.2; reviewer101pass on15.0.1. Prior full run interruptedexit137after revisions;
+  never counted as passing. Root verified archive/source bundle/JSON/hash/CRC equality.
+- Both servicesonline1/1. Recorder9:00PM manifest:378,895,408/4,831,838,208 configured archive bytes,
+  storagelevel0/deleted0,60/60reportedminutes/no reportedgaps; coverage and rawsegmenthashes
+  uncertified, not disk-free or raw-data verification. No keys/variable values read or listed.
+- [Measurement scope and frozen next evidence](../research/kalshi_profitability_2026-10-14/WS_TIMING_MEASUREMENT.md).
+  Release/startup/accounting verification pending at this checkpoint; standing approval applies,
+  safe merge minutes/fullchecks/exactreview retained. No orders/variables/caps/resume/rules changes.
+  EXEC staysopen; comparison unstarted; TJR savedsources/tests, actualdata/cost blocker, historical
+  P&Lnull/papernotstarted/liveoff andautomationunchanged. No profitability or fullcoverageclaim.
+
 ## 2026-10-15 03:46 UTC, Codex, bounded TJR check and session recovery context (8:46 PM PDT October 14)
 - Fresh connected-GitHub instructions/queue/newest worklog and pinned evidence/status reads:
   PR47 has exact post-merge deployment/restart evidence, while EXEC remains open for freshness.
