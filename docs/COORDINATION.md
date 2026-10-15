@@ -39,6 +39,15 @@ Check this queue at task start and before declaring current work complete. Keep 
 move an item to done only with linked evidence. Blocked or waiting-for-approval is not complete.
 
 ### EXEC-DELAY-001 — first task active; production attribution and verified fix pending
+- **2026-10-14 9:56 PM PDT:** PR58 exact1e8d0be/fc0a73e9 SUCCESS9:48:49.546PM,
+  normalPolymarketLIVE/bothservicesonline. Restart53fields37equal/16changed: lateoldDown5@.36
+  joinsintent/order, explainscost/fill/pairedrisk/cash arithmetic; cumulative−13.642/fees/caps/latches
+  unchanged, allusedcontrolsignored. No rawledger/cash/stopanchor export orfirststatusreadinessclaim.
+  Closedprechange9:15–9:45PM loses−4.30directional; selected27readsmax279.354ms/loop1075.9ms,
+  but identifiedmainlocalresidence3120.903ms. All originals/losses/producerlimits preserved.
+  Frozennewcapture10:00–10:30PM plus10:32PMtail active; no source release during it.
+  Startupmainalready2931.768mslocalwait, so partialfix/EXECopen/comparisonunstarted.
+  No variables/caps/stopresume/tradingrule change. [Release/evidence](../research/kalshi_profitability_2026-10-14/LIVE_MIRROR_RELEASE.md).
 - **2026-10-14 9:31 PM PDT:** isolated mirror one-write partial correction plus reader
   identity ready: reviewedbundle0faa0c5d9a1fd07c4824f51b323ec5a4d068837d6d0fdf64fb4ea6cee7eccac2;
   5,564tests/14existing skips,exit0,mypy127/Ruff4; independent123targets. No money-policy,

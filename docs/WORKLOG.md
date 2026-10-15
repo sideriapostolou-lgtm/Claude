@@ -13,6 +13,14 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-15 04:56 UTC, Codex, mirror correction deployed; restart reconciled; full verification active (9:56 PM PDT October 14)
+- PR58 merged9:47:47PM after fixed collector stopped9:47:18.296PM. Exact1e8d0be07b280292fa873a2f5da9b22dd02f28c3 matches reviewedbundle0faa0c5d9a1fd07c4824f51b323ec5a4d068837d6d0fdf64fb4ea6cee7eccac2. Railwayfc0a73e9-f052-435a-94b2-ce7b1272f36e SUCCESS9:48:49.546PM; normalPolymarketLIVE9:48:47.145PM. Bothservicesonline1/1/noissues; boundedstartuptracebackquerythrough9:49:50PM returnednone.
+- Exact53fieldrestartaudit retains37equal/16changed, no missing. LateoldDown5@.36/fee0 joinsintent/order; cost2.30→4.10, fills631→632, risk2.30→0, reserves2.25→0. Cash33.7994→36.9994 consistentwith5paircredit−1.80buy, notrawvenuecashtransactionexport. Five lateintents explainmakerorders+5. Cumulative settled−$13.642/fees$2.70752/caps10/20/6/10clip5/latches match; allthree one-timecontrols ignored-already-used. Firstnewstatusaccount-data-stale/trading_nowfalse; no rawledger/stopanchor or allstateidentity claim.
+- Closed9:15–9:45PM pair ofwindows independentlyaudited: losses−2.45/−1.85,−4.30directionalcombined, locked0/fees0/4fills. Prior+1.7001/nexttickerexposure excluded. Selected27readsmax279.354ms;31coveringloopintervalsmax1075.9ms. Publication1393=1383quiet+10reported,10originalrowsmatch/drop0; omissions/retention/scope limits preserved.
+- Shared28sourcewarnings differfrom29gapdiagnostics:2positive-mainknown,5unknown-producerknown,22overflow. Mainlocalresidences2769.481/3120.903ms; oldunidentifiedWeather/main eventsstayunknown. Archived31exactmembers/CRC/hash/sourcebytes plus independentaudits; preservedalllosses, no profitability claim.
+- Frozennewsource read-onlycapture firsttwofull10:00–10:15/10:15–10:30PM plus10:32PMtail assignedbeforeoutcomes. Restartpartialseparate; nosourcerelease duringcapture. Startupmain already2931.768mslocalwait; focusedmirrorchange ispartial, notresolvedfreshness. Offlineprofile/historyanalysis retainsrejectedcache/skip-recheck shortcuts; no furthercandidatechosen.
+- Full5,564tests/14existing skips/capturedexit0,mypy127/Ruff4/independent123targets passedbeforemerge. No variables/limits/stopresume budgets/tradingpolicy/polydesk changes. EXECopen, comparisonunstarted, TJRblockedunchanged. [Release, evidence and next gate](../research/kalshi_profitability_2026-10-14/LIVE_MIRROR_RELEASE.md).
+
 ## 2026-10-15 04:31 UTC, Codex, focused mirror correction checked; fixed capture still active (9:31 PM PDT October 14)
 - Isolated local candidate on basee4fd9a1: replace only live display json.dump with one compact
   json.dumps/write, retaining bytes for supported modelstate, ledger commit/durability, archive/panel,
