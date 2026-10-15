@@ -2215,8 +2215,14 @@ class KalshiLiveDesk:
         if (window is None or spec is None or self.stopping
                 or (self.stop_event is not None and self.stop_event.is_set())
                 or self._gates() or self.fatal_reason or self.book.integrity_error
+                or not self.authenticated or self._waiting_reason()
                 or not spec.end - self.book.limits.lock_s <= now < spec.end - LOCK_MARGIN_S
                 or self._book_reason(window, snapshot, now)):
+            return False
+        # Admission preceded the worker/rate-limit wait. Recheck its cash clock,
+        # without re-running can_lock: this intent already owns the reservation.
+        if (self.book.cash_at is None or self.book.cash_usd is None
+                or not 0 <= now - self.book.cash_at <= self.book.limits_for(intent.window).cash_max_age_s):
             return False
         side, unpaired = self.book.lock_side(intent.window)
         if side != intent.side or intent.size > unpaired + EPS:
