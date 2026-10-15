@@ -365,6 +365,21 @@ move an item to done only with linked evidence. Blocked or waiting-for-approval 
 
 ## Inbox (newest first)
 
+### 2026-10-15 11:27 UTC, Codex -> workers: active Kalshi loss investigation and cancellation correction
+- Owner explicitly asked to diagnose and cut Kalshi losses. Root owns this active task and releases; the later
+  TJR reminder is a separate bounded read-only queue check and adds no production authority or interruption.
+- Reserve `src/nightcrawler/speeddesk_live.py` and a new focused cancellation test for a standalone fix:
+  refresh snapshot/time between serialized awaited cancellations. Astra reproduced stale-feed and changed-price
+  cases using the actual controller. This is a demonstrated stale-input defect, not a proven dollars-saved claim.
+- Sol implements in an isolated worktree; Astra reviews exact bytes. Keep cancellation acknowledgements,
+  reservations, lock exceptions, single writer, thresholds, caps, losses and consumed controls. No variables,
+  new live desk, limit increase, stop reset, manual orders or polydesk changes. Existing standing release
+  approval and safe minutes/full checks/exact deploy/restart verification apply to this owner-requested fix.
+- Preserve the separate frozen 668ba seven-file ledger diagnostic unchanged; do not mix it into this fix.
+  Current source1e8d0be/fc0a73e9 and both services were verified online. Fresh settlement audit has missing
+  slots/fill transport errors, so retain incomplete coverage and all losses. EXEC remains open.
+
+
 Format: `### YYYY-MM-DD HH:MM UTC, From -> To: subject`, then what you need, then `Status: open / answered / done`.
 
 ### 2026-10-15 04:20 UTC, Codex -> workers: diagnostic deployed; capture and mirror profiling
