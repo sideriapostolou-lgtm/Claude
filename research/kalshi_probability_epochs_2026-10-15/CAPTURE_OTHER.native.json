@@ -1,0 +1,158 @@
+{
+  "practice_windows": {
+    "request": {
+      "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+      "deploymentId": "66e6e7e4-30d9-4628-a234-f2a8e97dad19",
+      "startDate": "2026-10-15T21:45:00Z",
+      "endDate": "2026-10-15T22:02:00Z",
+      "filter": "\"INFO nightcrawler.speeddesk: speeddesk_window \"",
+      "limit": 500
+    },
+    "before": {
+      "current_time": "2026-10-15 22:03:38 UTC"
+    },
+    "after": {
+      "current_time": "2026-10-15 22:03:38 UTC"
+    },
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "**Deployment 66e6e7e4-30d9-4628-a234-f2a8e97dad19** [SUCCESS]\nservice: f84d3b52-002f-44cb-931e-bc9e3e097e97, env: 17f7b0e0-104c-4903-9484-0106748b3cdb\n\n### Deploy logs (3)\n2026-10-15T21:45:16.983774220Z info 2026-10-15T21:45:16Z INFO nightcrawler.speeddesk: speeddesk_window {\"mode\":\"practice\",\"window\":\"KXBTC15M-26OCT151745-45\",\"at\":1792100716.378372,\"up_wins\":false,\"up_shares\":0.01,\"down_shares\":0.01,\"cost_usd\":0.0061,\"fee_usd\":0.0,\"payout_usd\":0.01,\"locked_usd\":0.0039000000000000003,\"direction_usd\":-4.336808689942018e-19,\"pnl_usd\":0.0039,\"side\":\"both\",\"price\":null,\"size\":0.02,\"fair\":null,\"edge\":null,\"latency_ms\":null,\"bitcoin_price\":82175.42,\"bitcoin_staleness_s\":0.5046930313110352,\"venue\":\"kalshi\"}\n2026-10-15T21:49:52.272078493Z info 2026-10-15T21:49:52Z INFO nightcrawler.speeddesk: speeddesk_window {\"mode\":\"practice\",\"window\":\"cpc-btc-updown-15m-2026-10-15-2130z\",\"at\":1792100991.737398,\"up_wins\":false,\"up_shares\":0.01,\"down_shares\":0.01,\"cost_usd\":0.0077,\"fee_usd\":0.0,\"payout_usd\":0.01,\"locked_usd\":0.0022999999999999995,\"direction_usd\":4.336808689942018e-19,\"pnl_usd\":0.0023,\"side\":\"both\",\"price\":null,\"size\":0.02,\"fair\":null,\"edge\":null,\"latency_ms\":null,\"bitcoin_price\":82244.61,\"bitcoin_staleness_s\":0.23165082931518555,\"venue\":\"polymarket_us\"}\n2026-10-15T22:00:19.563327191Z info 2026-10-15T22:00:19Z INFO nightcrawler.speeddesk: speeddesk_window {\"mode\":\"practice\",\"window\":\"KXBTC15M-26OCT151800-00\",\"at\":1792101619.0188136,\"up_wins\":true,\"up_shares\":0.0,\"down_shares\":0.0,\"cost_usd\":0.0,\"fee_usd\":0.0,\"payout_usd\":0.0,\"locked_usd\":0.0,\"direction_usd\":0.0,\"pnl_usd\":0.0,\"side\":\"both\",\"price\":null,\"size\":0.0,\"fair\":null,\"edge\":null,\"latency_ms\":null,\"bitcoin_price\":82340.63,\"bitcoin_staleness_s\":0.3074455261230469,\"venue\":\"kalshi\"}"
+        }
+      ],
+      "structuredContent": {
+        "scope": "deployment",
+        "deploymentId": "66e6e7e4-30d9-4628-a234-f2a8e97dad19",
+        "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+        "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+        "status": "SUCCESS",
+        "deploy": [
+          {
+            "timestamp": "2026-10-15T21:45:16.983774220Z",
+            "severity": "info",
+            "message": "2026-10-15T21:45:16Z INFO nightcrawler.speeddesk: speeddesk_window {\"mode\":\"practice\",\"window\":\"KXBTC15M-26OCT151745-45\",\"at\":1792100716.378372,\"up_wins\":false,\"up_shares\":0.01,\"down_shares\":0.01,\"cost_usd\":0.0061,\"fee_usd\":0.0,\"payout_usd\":0.01,\"locked_usd\":0.0039000000000000003,\"direction_usd\":-4.336808689942018e-19,\"pnl_usd\":0.0039,\"side\":\"both\",\"price\":null,\"size\":0.02,\"fair\":null,\"edge\":null,\"latency_ms\":null,\"bitcoin_price\":82175.42,\"bitcoin_staleness_s\":0.5046930313110352,\"venue\":\"kalshi\"}",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"info\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-15T21:49:52.272078493Z",
+            "severity": "info",
+            "message": "2026-10-15T21:49:52Z INFO nightcrawler.speeddesk: speeddesk_window {\"mode\":\"practice\",\"window\":\"cpc-btc-updown-15m-2026-10-15-2130z\",\"at\":1792100991.737398,\"up_wins\":false,\"up_shares\":0.01,\"down_shares\":0.01,\"cost_usd\":0.0077,\"fee_usd\":0.0,\"payout_usd\":0.01,\"locked_usd\":0.0022999999999999995,\"direction_usd\":4.336808689942018e-19,\"pnl_usd\":0.0023,\"side\":\"both\",\"price\":null,\"size\":0.02,\"fair\":null,\"edge\":null,\"latency_ms\":null,\"bitcoin_price\":82244.61,\"bitcoin_staleness_s\":0.23165082931518555,\"venue\":\"polymarket_us\"}",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"info\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-15T22:00:19.563327191Z",
+            "severity": "info",
+            "message": "2026-10-15T22:00:19Z INFO nightcrawler.speeddesk: speeddesk_window {\"mode\":\"practice\",\"window\":\"KXBTC15M-26OCT151800-00\",\"at\":1792101619.0188136,\"up_wins\":true,\"up_shares\":0.0,\"down_shares\":0.0,\"cost_usd\":0.0,\"fee_usd\":0.0,\"payout_usd\":0.0,\"locked_usd\":0.0,\"direction_usd\":0.0,\"pnl_usd\":0.0,\"side\":\"both\",\"price\":null,\"size\":0.0,\"fair\":null,\"edge\":null,\"latency_ms\":null,\"bitcoin_price\":82340.63,\"bitcoin_staleness_s\":0.3074455261230469,\"venue\":\"kalshi\"}",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"info\""
+              }
+            ]
+          }
+        ]
+      },
+      "isError": false
+    }
+  },
+  "tracebacks": {
+    "request": {
+      "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+      "deploymentId": "66e6e7e4-30d9-4628-a234-f2a8e97dad19",
+      "startDate": "2026-10-15T21:45:00Z",
+      "endDate": "2026-10-15T22:02:00Z",
+      "filter": "Traceback",
+      "limit": 500
+    },
+    "before": {
+      "current_time": "2026-10-15 22:03:38 UTC"
+    },
+    "after": {
+      "current_time": "2026-10-15 22:03:39 UTC"
+    },
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "**Deployment 66e6e7e4-30d9-4628-a234-f2a8e97dad19** [SUCCESS]\nservice: f84d3b52-002f-44cb-931e-bc9e3e097e97, env: 17f7b0e0-104c-4903-9484-0106748b3cdb\n\n### Deploy logs (0)\n(no deploy logs in range)"
+        }
+      ],
+      "structuredContent": {
+        "scope": "deployment",
+        "deploymentId": "66e6e7e4-30d9-4628-a234-f2a8e97dad19",
+        "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+        "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+        "status": "SUCCESS",
+        "deploy": []
+      },
+      "isError": false
+    }
+  },
+  "trade_gaps": {
+    "request": {
+      "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+      "deploymentId": "66e6e7e4-30d9-4628-a234-f2a8e97dad19",
+      "startDate": "2026-10-15T21:45:00Z",
+      "endDate": "2026-10-15T22:02:00Z",
+      "filter": "\"speeddesk_feed_kalshi_trade_gap\"",
+      "limit": 500
+    },
+    "before": {
+      "current_time": "2026-10-15 22:03:38 UTC"
+    },
+    "after": {
+      "current_time": "2026-10-15 22:03:39 UTC"
+    },
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "**Deployment 66e6e7e4-30d9-4628-a234-f2a8e97dad19** [SUCCESS]\nservice: f84d3b52-002f-44cb-931e-bc9e3e097e97, env: 17f7b0e0-104c-4903-9484-0106748b3cdb\n\n### Deploy logs (2)\n2026-10-15T21:54:03.824896553Z error 2026-10-15T21:54:03Z WARNING nightcrawler.speeddesk_kalshi: speeddesk_feed_kalshi_trade_gap error=ValueError invalidated=True\n2026-10-15T21:56:44.598795696Z error 2026-10-15T21:56:44Z WARNING nightcrawler.speeddesk_kalshi: speeddesk_feed_kalshi_trade_gap error=ValueError invalidated=True"
+        }
+      ],
+      "structuredContent": {
+        "scope": "deployment",
+        "deploymentId": "66e6e7e4-30d9-4628-a234-f2a8e97dad19",
+        "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+        "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+        "status": "SUCCESS",
+        "deploy": [
+          {
+            "timestamp": "2026-10-15T21:54:03.824896553Z",
+            "severity": "error",
+            "message": "2026-10-15T21:54:03Z WARNING nightcrawler.speeddesk_kalshi: speeddesk_feed_kalshi_trade_gap error=ValueError invalidated=True",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"error\""
+              }
+            ]
+          },
+          {
+            "timestamp": "2026-10-15T21:56:44.598795696Z",
+            "severity": "error",
+            "message": "2026-10-15T21:56:44Z WARNING nightcrawler.speeddesk_kalshi: speeddesk_feed_kalshi_trade_gap error=ValueError invalidated=True",
+            "attributes": [
+              {
+                "key": "level",
+                "value": "\"error\""
+              }
+            ]
+          }
+        ]
+      },
+      "isError": false
+    }
+  }
+}
