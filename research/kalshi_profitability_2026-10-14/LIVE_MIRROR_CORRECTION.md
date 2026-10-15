@@ -95,6 +95,12 @@ required checks/credential scan, merge in a safe minute, verify exact Railway
 SUCCESS/normal startup and selected financial-state continuity. No Railway
 variables, caps, stop/resume budgets, real-money activation or orders are changed.
 
+Use the original [prospective coarse verification criterion](FEED_FAIRNESS_VERIFICATION.md):
+3,000ms actual worker-completed→read-coroutine-resumed or covering main-loop lag,
+with required counters/publication/retention checks. This is not an all-read250ms
+or subsecond certificate. Main-reader freshness regressions remain a separate
+surface; unknown or missing evidence cannot pass it.
+
 For the correction, freeze the first two complete15-minute windows strictly after
 verified startup, with a two-minute tail and covering account status intervals.
 Keep restart partial separate and every outcome. Report main versus derived
