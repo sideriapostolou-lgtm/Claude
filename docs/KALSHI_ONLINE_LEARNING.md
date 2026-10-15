@@ -12,6 +12,10 @@ The implementation passed independent review, 5,673 tests / 14 existing skips, m
 [release/account verification with coverage limits](../research/kalshi_online_learning_2026-10-15/RELEASE.md).
 These dated counts are evidence timestamps, not a continuously updated dashboard reading.
 
+**Forward check, October 15 at 8:09 AM PDT:** still 0 forecasts / 0 scored. Five full forecast slots were
+excluded for pre-forecast feed gaps, plus one startup partial. The learner is running but has no usable
+training observations yet; the data path needs diagnosis. [Original observations and limits](../research/kalshi_online_learning_2026-10-15/OBSERVATION_2026-10-15_0812_PDT.json).
+
 ## What already learns
 
 The live fair-value model uses current Bitcoin prices and rolling volatility. Its volatility input changes

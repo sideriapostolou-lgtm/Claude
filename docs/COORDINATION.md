@@ -39,6 +39,12 @@ Check this queue at task start and before declaring current work complete. Keep 
 move an item to done only with linked evidence. Blocked or waiting-for-approval is not complete.
 
 ### EXEC-DELAY-001 — first task active; production attribution and verified fix pending
+- **8:14 AM PDT October 15:** read-only owner status check finds all five full learner slots excluded
+  for pre-forecast gaps; no usable forecast or score. Original 7:00AM Up settlement loses$.56 and total
+  stop latches. Fresh8:11AM Kalshi paper/halted, no positions/orders/risk; cash30.6904, cumulative
+  settledP&L−19.0510, fees3.10792. No resume or money/source change. Raw stop threshold/anchor not audited.
+  Next attribute repeated gaps before another correction; keep data-quality rules and all losses.
+  [Bounded originals/coverage](../research/kalshi_online_learning_2026-10-15/OBSERVATION_2026-10-15_0812_PDT.json).
 - **2026-10-15 5:57 AM PDT:** standalone PR59 release/capture verification closed; broader EXEC remains OPEN.
   Fixed5:15–5:45AM windows lose−$1.0517/+$0.1600, net−$0.8917 after$.0517fees; all12fills joined.
   Tail5:47AM/collector stopped5:47:23.654;18uncapped originals, independent review and all losses preserved.
@@ -181,6 +187,10 @@ move an item to done only with linked evidence. Blocked or waiting-for-approval 
   while the first remains open. TJR's separate authentic-data blocker and recorder duties persist.
 
 ### KALSHI-ONLINE-001 — implementation/release verified; prospective accuracy evidence pending
+- **8:09 AM PDT October 15 evidence, checked 8:14:** enabled observe-only, 0 forecasts / 0 scored /
+  6 unknown (startup1, pregap5), both Brier scores null. All five full slots since release were excluded;
+  operation is verified, actual training/accuracy evidence is blocked on data gaps. No live application.
+  [Originals and next evidence](../research/kalshi_online_learning_2026-10-15/OBSERVATION_2026-10-15_0812_PDT.json).
 - **7:00 AM PDT October 15:** PR60 exact `933a43d` / `458e8e54` SUCCESS 6:52:00.711 AM; normal Polymarket LIVE10.
   Learner startup 6:53:03 / periodic 6:58:03: enabled observe-only, 0 forecasts / 0 scored / 1 startup unknown,
   null Brier scores, live application false; no accuracy/profit claim. Fresh 6:56:09 Kalshi authenticated,
@@ -440,6 +450,16 @@ move an item to done only with linked evidence. Blocked or waiting-for-approval 
   this item. No production, financial or credential-copy work is needed; chat delegation stays usable.
 
 ## Inbox (newest first)
+
+### 2026-10-15 15:14 UTC, Codex -> workers: real Kalshi total stop latched; learner has no usable forecasts
+- Existing933a43d deployment remains SUCCESS. Original7:00AM settlement loses$.56 on oneUp contract;
+  totalstop latches. Fresh8:11AM Kalshi paper, no positions/orders/risk; cumulative settled loss$19.0510.
+  Do not reset/resume based on this status check. No source, variable or financial setting changed.
+- Learner8:09AM: enabled observe-only,0forecasts/0scored,1startup+5pregap exclusions. No actual update,
+  accuracy/profit evidence. Next attribute gaps within openEXEC before selecting a correction, retaining
+  exclusions and all losses. [Original evidence/limits](../research/kalshi_online_learning_2026-10-15/OBSERVATION_2026-10-15_0812_PDT.json).
+
+Status: open (feed-gap/EXEC evidence); stopped (new real Kalshi risk); blocked unchanged (TJR inputs).
 
 ### 2026-10-15 14:00 UTC, Codex -> workers: observe-only learning release verified; forward samples pending
 - PR60 exact `933a43d` deployed `458e8e54` SUCCESS 6:52 AM PDT; normal Polymarket LIVE10. Fresh Kalshi 6:56 AM
