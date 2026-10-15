@@ -81,6 +81,7 @@ from .kalshi_online_learning import (
     MAX_RECENT,
     OnlineLearning,
 )
+from .kalshi_probability_learning import ProbabilityLearning
 from .speeddesk_model import (
     BitcoinTape,
     Book,
@@ -1268,8 +1269,14 @@ class KalshiArena:
         except Exception:  # noqa: BLE001, S110 - observation must never affect the learner or arena
             pass
         self.learning = OnlineLearning(clock())
+        self.learning_probability: ProbabilityLearning | None = None
+        try:
+            self.learning_probability = ProbabilityLearning(self.learning.started_at)
+        except Exception:  # noqa: BLE001, S110 - optional construction cannot prevent arena startup
+            pass
         self._load(clock())
         self._learning_call("status", clock())
+        self._probability_call("status", self.learning.last_at)
         self.rng = random.Random(SEED + self.next_id)
         self._populate(clock())
 
@@ -1284,6 +1291,20 @@ class KalshiArena:
         if before is not None:
             self._diagnostic_call("after", self.learning, method, args, before)
         return result
+
+    def _probability_call(self, method: str, *args: Any) -> Any:
+        """A separate conditional observer cannot change V1 or resident decisions."""
+        observer = self.learning_probability
+        if observer is None:
+            return None
+        try:
+            return getattr(observer, method)(*args)
+        except Exception:  # noqa: BLE001 - optional failures cannot escape into the arena
+            try:
+                observer.disable("optional_learning_method_failed")
+            except Exception:  # noqa: BLE001, S110 - a broken optional object cannot affect the arena
+                pass
+            return None
 
     def _diagnostic_call(self, method: str, *args: Any, **kwargs: Any) -> Any:
         try:
@@ -1323,6 +1344,11 @@ class KalshiArena:
     def receive(self, message: Any, view: WireView) -> None:
         try:
             self._receive(message, view)
+        except Exception:
+            self._probability_call("disable", "raw_stream_invalid")
+            raise
+        else:
+            self._probability_call("batch_complete")
         finally:
             self._diagnostic_frame = None
 
@@ -1334,6 +1360,7 @@ class KalshiArena:
             raise ValueError("unexpected Kalshi arena frame")
         _, seq, _sent_at, dropped, flush_us, items = message
         now = self.clock()
+        self._probability_call("batch", message, now)
         self.last_frame_at = now
         self._diagnostic_frame = (seq, _sent_at, now)
         sequence_gap = self.link_seq is not None and seq != self.link_seq + 1
@@ -1368,6 +1395,7 @@ class KalshiArena:
             elif tag == "w":
                 view.windows = tuple(Window(*values) for values in record[1])
                 self._learning_discover(view.windows, now)
+                self._probability_call("discover", view.windows, now)
                 live = {window.slug for window in view.windows}
                 self.ladders = {key: value for key, value in self.ladders.items() if key[0] in live}
             elif tag == "m":
@@ -1376,6 +1404,7 @@ class KalshiArena:
                 view.maker_windows = frozenset(record[1])
             elif tag == "o":
                 self._learning_call("labels_received", record[1], now)
+                self._probability_call("labels_received", record[1], now)
                 view.outcomes = {str(slug): bool(up) for slug, up in record[1]}
             else:
                 raise ValueError("unexpected Kalshi arena record")
@@ -1417,6 +1446,7 @@ class KalshiArena:
         now = max(self._drain(now), self.clock())
         self._learning_call("advance", snap.windows, snap.bitcoin_price, snap.sigma, snap.bitcoin_at,
                             snap.outcomes, now, {}, True)
+        self._probability_call("advance", snap.windows, snap.bitcoin_price, snap.sigma, snap.bitcoin_at, now)
         self._settle(snap, now)
         self._voids(now)
         self._evaluate(snap, now)
@@ -1981,7 +2011,8 @@ class KalshiArena:
                 **shown, "counts": counts,
                 "truncated": {key: len(shown[key]) < counts[key] for key in counts},
                 "town": dict(self.town), "feed": self.telemetry(now),
-                "learning": self._learning_call("panel")}
+                "learning": self._learning_call("panel"),
+                "learning_probability": self._probability_call("panel")}
 
     def state(self, now: float) -> dict[str, Any]:
         return {"version": STATE_VERSION, "label": LABEL, "saved_at": now, "started_at": self.started_at,
@@ -1990,6 +2021,7 @@ class KalshiArena:
                 "control_rule": self.control_rule, "regime": self.regime, "next_id": self.next_id, "seq": self.seq,
                 "town_id": self.town_id, "next_event": self.next_event, "rent_day": self.rent_day,
                 "learning": self._learning_call("state"),
+                "learning_probability": self._probability_call("state"),
                 "active_windows": [[slug, window.start] for slug, window in sorted(self.windows.items())],
                 "residents": [res.row for res in self.residents.values()], "grave": self.grave,
                 "events": self.events, "town": self.town,
@@ -2009,6 +2041,7 @@ class KalshiArena:
 
     def _status(self, now: float) -> None:
         self._learning_call("status", now)
+        self._probability_call("status", now)
         self.status_at = now
         feed = self.telemetry(now)
         log.info("kalshi_arena_status residents=%d windows=%d void=%d void_feed=%d received=%d dropped=%d late=%d "
@@ -2064,9 +2097,15 @@ class KalshiArena:
             self._reset(exc)
         else:
             self._learning_call("restore", raw.get("learning"), now)
+            if "learning_probability" in raw:
+                if raw["learning_probability"] is None:
+                    self._probability_call("disable", "malformed_optional_learning_state")
+                else:
+                    self._probability_call("restore", raw["learning_probability"], now)
 
     def _reset(self, exc: BaseException) -> None:
         self.learning.disable("arena_state_unreadable")
+        self._probability_call("disable", "arena_state_unreadable")
         """A bad file moves aside (kept for a person to read) and the town starts fresh."""
         log.warning("kalshi_arena_state_reset error=%s", type(exc).__name__)
         with contextlib.suppress(OSError):

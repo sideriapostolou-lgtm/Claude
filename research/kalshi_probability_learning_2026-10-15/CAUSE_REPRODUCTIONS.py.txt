@@ -1,0 +1,141 @@
+"""Offline synthetic diagnosis. No network, credentials, or source mutations."""
+from __future__ import annotations
+
+import asyncio
+import json
+import tempfile
+from pathlib import Path
+from types import SimpleNamespace
+
+from nightcrawler.config import Settings
+from nightcrawler.kalshi_arena import ArenaConfig, ArenaLink, KalshiArena, WireView
+from nightcrawler.kalshi_online_learning import OnlineLearning
+from nightcrawler.speeddesk_kalshi import KalshiFeeds
+from nightcrawler.speeddesk_kalshi_ws import KalshiMarketWS, MarketState
+from nightcrawler.speeddesk_model import Window, fair_up
+from nightcrawler.speeddesk_venues import MarketFeeds
+
+SLUG = "KXBTC15M-26OCT151345-45"
+WINDOW = Window(SLUG, 1000, 1900, 100, venue_start_price=100, venue="kalshi")
+
+
+def run():
+    result = {}
+    with tempfile.TemporaryDirectory(prefix="independent-gap-") as directory:
+        clock = [900.0]
+        view = WireView(windows=(WINDOW,), bitcoin_price=100, bitcoin_at=900, sigma=.001)
+        town = KalshiArena(ArenaConfig(Path(directory), population=2), lambda: view, clock=lambda: clock[0])
+        town.step(900)
+        statuses = []
+
+        def consume(status):
+            statuses.append(status)
+            town.feed_gap(tuple(status["gap_windows"]), status["trade_stream"], status["coinbase"] == "connected")
+
+        router = MarketFeeds.__new__(MarketFeeds)
+        router.status = {"polymarket_us": {"coinbase": "connected", "trade_stream": True}}
+        router.known_windows = {}
+        router._on_status = consume
+        feed = KalshiFeeds(Settings(), on_tick=lambda *_: None, on_book=lambda _: None,
+                           on_trade=lambda _: None, on_windows=lambda _: None,
+                           on_status=lambda status: router._status("kalshi", status),
+                           clock=lambda: clock[0], websocket=False)
+        feed.windows = {SLUG: WINDOW}
+        router.adapters = {"kalshi": feed}
+        ws = KalshiMarketWS(Settings(), tickers=lambda: frozenset([SLUG]), on_book=lambda _: None,
+                            on_trade=lambda _: None, on_status=feed._ws_report, clock=lambda: clock[0])
+        ws.state = MarketState(frozenset([SLUG]))
+        ws.connected = True
+        clock[0] = 1000
+        ws.state.book_at[SLUG] = ws.state.exchange_at[SLUG] = ws.state.trade_at[SLUG] = 1000
+        ws._report()
+        town.step(1000)
+        clock[0] = 1004
+        ws.state.book_at[SLUG] = ws.state.exchange_at[SLUG] = 1004
+        ws._report()
+        town.step(1004)
+        gap_status = statuses[-1]
+        assert SLUG in ws.fresh_books()
+        clock[0] = 1300
+        view.bitcoin_at = 1299.8
+        town.step(1300)
+        assert gap_status["gap_windows"] == [SLUG] and gap_status["trade_stream"] is True
+        assert town.learning.counts["pregap"] == 1
+        result["quiet_trade_expiry"] = {
+            "gap_observed_at": 1004, "book_age_at_gap": 0, "trade_age_at_gap": 4,
+            "ws_connected_at_gap": ws.connected, "aggregate_trade_stream": gap_status["trade_stream"],
+            "coinbase": gap_status["coinbase"], "explicit_slugs": gap_status["gap_windows"],
+            "due_bitcoin_age": 1300 - view.bitcoin_at,
+            "mathematically_available_baseline": fair_up(100, 100, .001, 600, settles_on_average=True),
+            "v1_counts": town.learning.counts, "v1_recent": town.learning.recent,
+            "interpretation": "Legitimate V1 maker-gap exclusion; probability inputs can exist without a fresh maker trade."
+        }
+
+    with tempfile.TemporaryDirectory(prefix="independent-chronology-") as directory:
+        clock = [900.0]
+        view = WireView(windows=(WINDOW,), bitcoin_price=100, bitcoin_at=900, sigma=.001)
+        town = KalshiArena(ArenaConfig(Path(directory), population=2), lambda: view, clock=lambda: clock[0])
+        town.step(900)
+        link = ArenaLink(town.config, clock=lambda: clock[0])
+        link.running = True
+        clock[0] = 999.0
+        link.feed_gap((SLUG,), True, True)
+        link.feed_gap((), True, True)
+        payload = list(link.pending)
+        clock[0] = 1000.1
+        town.receive(("batch", 1, 1000.0, 0, 0, payload), view)
+        town.step(1000.1)
+        clock[0] = 1300
+        view.bitcoin_at = 1300
+        town.step(1300)
+        direct = OnlineLearning(900)
+        direct.discover([WINDOW], 900)
+        direct.gap((SLUG,), True, True, 999)
+        direct.gap((), True, True, 999)
+        direct.advance([WINDOW], 100, .001, 1300, {}, 1300, {})
+        assert town.learning.counts["pregap"] == 1 and direct.counts["forecasts"] == 1
+        result["queued_prestart_gap"] = {
+            "producer_callback_time": 999, "child_application_time": 1000.1,
+            "wire_records": payload, "actual_child_counts": town.learning.counts,
+            "event_time_reference_counts": direct.counts,
+            "interpretation": "Missing occurrence timestamp lets a wholly prestart gap become active-window pregap."
+        }
+
+    async def stale_rest_error():
+        clock = [1100.0]
+        ready = asyncio.Event()
+        release = asyncio.Event()
+        statuses = []
+        async def fake_to_thread(function, *args):
+            ready.set()
+            await release.wait()
+            raise TimeoutError("synthetic")
+        feed = KalshiFeeds(Settings(), on_tick=lambda *_: None, on_book=lambda _: None,
+                           on_trade=lambda _: None, on_windows=lambda _: None, on_status=statuses.append,
+                           clock=lambda: clock[0], websocket=False)
+        feed.windows = {SLUG: WINDOW}
+        fresh = set()
+        feed._ws = SimpleNamespace(fresh_books=lambda: frozenset(fresh))
+        original = asyncio.to_thread
+        asyncio.to_thread = fake_to_thread
+        try:
+            task = asyncio.create_task(feed.poll_book())
+            await ready.wait()
+            fresh.add(SLUG)
+            feed._transport[SLUG] = "websocket"
+            feed._ws_status = {"ws_connected": True, "ws_books": [SLUG], "ws_maker_windows": [SLUG]}
+            release.set()
+            await task
+        finally:
+            asyncio.to_thread = original
+        assert statuses[-1]["gap_windows"] == [SLUG] and statuses[-1]["trade_stream"]
+        return {"completion_status": statuses[-1], "ws_fresh_at_failed_rest_completion": SLUG in fresh,
+                "interpretation": "REST failure unconditionally invalidates an independently recovered fresh WS book; prior continuity remains unknown."}
+
+    result["superseded_rest_error"] = asyncio.run(stale_rest_error())
+    return result
+
+
+if __name__ == "__main__":
+    output = run()
+    print(json.dumps(output, indent=2, sort_keys=True))

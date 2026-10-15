@@ -110,8 +110,10 @@ def test_the_towns_own_panel_has_every_fixture_field(make_settings: Any, fake_cl
     model = CASES["fresh_with_candidate"]["kalshi_arena"]
     # Older saved panels retain the exact fixture contract; current producers add
     # optional probability evidence, separate from every existing money field.
-    assert set(block) == set(model) | {"learning"}
+    assert set(block) == set(model) | {"learning", "learning_probability"}
     assert block["learning"] is not None and block["learning"]["live_application"] is False
+    assert block["learning_probability"] is not None
+    assert block["learning_probability"]["live_application"] is False
     for key in ("control", "counts", "truncated", "town", "feed"):
         assert set(block[key]) == set(model[key]), key
     for key in ("residents", "grave", "candidates", "events"):
