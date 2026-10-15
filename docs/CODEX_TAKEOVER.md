@@ -1,5 +1,10 @@
 # Codex operating handoff — October 15, 2026
 
+**Latest owner priority, 1:30 PM PDT:** Kalshi first again; keep remaining account/automation,
+cost and business work deferred and unfinished on existing records. Private archive preservation
+is verified complete; full transfer is not. TJR remains last. The standing owner rule in AGENTS
+keeps every unfinished task queued with next steps, including deployment/runtime proof where relevant.
+
 ## Latest priority and preservation — 1:18 PM PDT October 15
 
 Owner now explicitly prioritizes the full operating handoff to Codex and saves TJR/MNQ for last.

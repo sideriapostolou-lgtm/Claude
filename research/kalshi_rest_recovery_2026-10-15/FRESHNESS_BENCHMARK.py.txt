@@ -1,0 +1,17 @@
+from pathlib import Path
+import json,sys,time,statistics
+from types import SimpleNamespace
+sys.path.insert(0,str(Path(sys.argv[1])/'src'))
+from nightcrawler.speeddesk_kalshi_ws import KalshiMarketWS,MarketState
+out=[]
+for n,repeats in [(2,2000),(512,500)]:
+ tickers=frozenset('KXBTC15M-FAKE'+str(i)+'-45' for i in range(n))
+ ws=KalshiMarketWS(SimpleNamespace(),tickers=lambda:tickers,on_book=lambda _:None,on_trade=lambda _:None,on_status=lambda _:None,clock=lambda:103.)
+ ws.connected=True;ws.state=MarketState(tickers)
+ ws.state.book_at=dict.fromkeys(tickers,102.);ws.state.exchange_at=dict.fromkeys(tickers,102.);ws.state.trade_at=dict.fromkeys(tickers,102.)
+ for _ in range(50):ws._report()
+ samples=[]
+ for _ in range(repeats):
+  t=time.perf_counter_ns();ws._report();samples.append((time.perf_counter_ns()-t)/1e6)
+ samples.sort();out.append({'tickers':n,'samples':repeats,'median_ms':statistics.median(samples),'p95_ms':samples[int(.95*(repeats-1))]})
+print(json.dumps(out))

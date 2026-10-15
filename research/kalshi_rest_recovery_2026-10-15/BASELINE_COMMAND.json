@@ -1,0 +1,8 @@
+{
+  "started_at": "2026-10-15T20:34:10.136591+00:00",
+  "finished_at": "2026-10-15T20:34:10.370651+00:00",
+  "exit_code": 0,
+  "source": "Unchanged original app in /workspace/nightcrawler-probability-learning",
+  "interpreter": "/workspace/shared/nightcrawler-venv/bin/python",
+  "prior_default_python_missing_dependency_failure_preserved": true
+}

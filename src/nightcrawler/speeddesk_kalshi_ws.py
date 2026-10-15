@@ -314,21 +314,28 @@ class KalshiMarketWS:
             except Exception:  # noqa: BLE001, S110 - a broken log sink cannot break market-data invalidation.
                 pass
 
-    def fresh_books(self) -> frozenset[str]:
-        now = self._clock()
+    def fresh_books(self, *, now: float | None = None) -> frozenset[str]:
+        now = self._clock() if now is None else now
         return frozenset(ticker for ticker, at in self.state.book_at.items()
                          if self.connected and 0 <= now - at <= STALE_S
                          and 0 <= now - self.state.exchange_at[ticker] <= STALE_S)
 
+    def fresh_maker_windows(self, *, now: float | None = None) -> frozenset[str]:
+        now = self._clock() if now is None else now
+        fresh = self.fresh_books(now=now)
+        return frozenset(ticker for ticker in fresh
+                         if 0 <= now - self.state.trade_at.get(ticker, -math.inf) <= STALE_S)
+
     def _report(self, reason: str = "market_websocket", *, invalidate: bool = False) -> None:
-        fresh = self.fresh_books()
+        now = self._clock()
+        fresh = self.fresh_books(now=now)
         if self.connected and self.state.unproven:
             if not self._timestamp_notice:
                 log.info("speeddesk_feed_kalshi_ws_waiting reason=missing_book_source_timestamp fallback=public_rest")
                 self._timestamp_notice = True
             if not fresh and reason == "market_websocket":
                 reason = "waiting_timestamped_book_public_rest_fallback"
-        maker = sorted(ticker for ticker in fresh if 0 <= self._clock() - self.state.trade_at.get(ticker, -math.inf) <= STALE_S)
+        maker = sorted(self.fresh_maker_windows(now=now))
         old = set(self._last_status.get("ws_books", [])) | set(self._last_status.get("ws_maker_windows", []))
         gap = sorted(self.state.tickers if invalidate else old - fresh | (set(self._last_status.get("ws_maker_windows", [])) - set(maker)))
         status = {"ws_connected": self.connected, "ws_books": sorted(fresh), "ws_maker_windows": maker,
