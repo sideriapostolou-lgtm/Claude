@@ -1,0 +1,117 @@
+{
+  "source_native_sha256": "1fd286669742cda3c0d4df26fff6571b7c6330e0a3a2e26cc85a336bfb97a3e6",
+  "fixed_window": "KXBTC15M-26OCT151715-15",
+  "bounds_utc": [
+    "2026-10-15T21:00:00Z",
+    "2026-10-15T21:17:00Z"
+  ],
+  "original_rows": 89,
+  "unique_target_fill_records": 3,
+  "quantities": {
+    "up": 1.0,
+    "down": 1.0
+  },
+  "cost_usd": 0.8400000000000002,
+  "fees_usd": 0.0,
+  "locked_pair_profit_usd": 0.1599999999999998,
+  "directional_usd": 0.0,
+  "submitted_intents": 20,
+  "accepted_unique_orders": 17,
+  "orders_with_recorded_fill": 2,
+  "accepted_order_fill_share": 0.11764705882352941,
+  "fill_rate_basis": "unique accepted target orders with >=one recorded target fill, including fractional fill records grouped by client_order_id; fixed logs only",
+  "submitted_quantity": 20.0,
+  "filled_quantity": 2.0,
+  "timing": {
+    "btc_exchange_to_decision": {
+      "n": 20,
+      "median_ms": 415.9123986028135,
+      "p95_nearest_rank_ms": 1399.149876087904,
+      "max_ms": 1918.8861539587379,
+      "raw_samples_ms": [
+        632.6565155759454,
+        260.0572002120316,
+        1199.7710252180696,
+        84.72653897479177,
+        1041.765883564949,
+        1270.1036045327783,
+        42.27122012525797,
+        75.67788381129503,
+        456.24360255897045,
+        103.28618483617902,
+        156.50217235088348,
+        345.9995426237583,
+        1015.168524812907,
+        1399.149876087904,
+        66.91392045468092,
+        299.5811840519309,
+        437.07359582185745,
+        1918.8861539587379,
+        1010.3093357756734,
+        394.7512013837695
+      ]
+    },
+    "btc_receipt_to_decision": {
+      "n": 20,
+      "median_ms": 354.9635182134807,
+      "p95_nearest_rank_ms": 1184.19895414263,
+      "max_ms": 1891.9155290350318,
+      "raw_samples_ms": [
+        434.7035298123956,
+        244.48512913659215,
+        1184.19895414263,
+        1.6693738289177418,
+        985.2292090654373,
+        708.6137840524316,
+        27.178608812391758,
+        19.957792945206165,
+        2.0514409989118576,
+        79.25430731847882,
+        126.82859599590302,
+        340.99966660141945,
+        955.7262430898845,
+        1140.7484821975231,
+        61.51564698666334,
+        278.5564800724387,
+        410.1029708981514,
+        1891.9155290350318,
+        853.2632561400533,
+        368.927369825542
+      ]
+    },
+    "decision_to_ack": {
+      "n": 17,
+      "median_ms": 102.20453515648842,
+      "p95_nearest_rank_ms": 1346.562386956066,
+      "max_ms": 1346.562386956066,
+      "raw_samples_ms": [
+        1346.562386956066,
+        88.43672880902886,
+        873.8380898721516,
+        110.69176578894258,
+        360.0765699520707,
+        594.5181818678975,
+        70.55112300440669,
+        594.2317149601877,
+        68.70811013504863,
+        126.3765781186521,
+        102.20453515648842,
+        98.57303788885474,
+        78.97211192175746,
+        81.74473699182272,
+        64.89440612494946,
+        138.9298541471362,
+        85.88885283097625
+      ]
+    }
+  },
+  "limitations": [
+    "one fixed window only",
+    "not continuous feed or nativecash ledger certification",
+    "no causal saved-dollars or profitableedge claim",
+    "same-window isolated quantities, not full-day results"
+  ],
+  "acknowledgement_errors": 3,
+  "original_rejects": 2,
+  "acknowledgement_limitations": "17successfulack samples;3error timings have nullvalue,2explicit400invalid_order rejections; precise cause unestablished. Preserve instead of imputing0."
+}

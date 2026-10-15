@@ -1,0 +1,98 @@
+{
+  "status": "accepted bounded restart evidence",
+  "before_timestamp": "2026-10-15T20:45:51.062302610Z",
+  "after_timestamp": "2026-10-15T20:54:18.514262585Z",
+  "selected_count": 68,
+  "exact_count": 67,
+  "changed": {
+    "ladder.start_pnl_usd": {
+      "before": -3.7461000000000038,
+      "after": -3.7461
+    }
+  },
+  "controls": [
+    {
+      "timestamp": "2026-10-15T20:50:08.463796849Z",
+      "event": "speeddesk_live_resume",
+      "payload": {
+        "at": 1792097408.1846952,
+        "venue": "kalshi",
+        "state": "ignored; this value was already used",
+        "total_pnl_usd": -19.20180000000001,
+        "counted_from_usd": null,
+        "total_halted": false
+      }
+    },
+    {
+      "timestamp": "2026-10-15T20:50:08.463801159Z",
+      "event": "speeddesk_live_integrity_reset",
+      "payload": {
+        "at": 1792097408.1847038,
+        "venue": "kalshi",
+        "code": null,
+        "state": "ignored; this value was already used"
+      }
+    },
+    {
+      "timestamp": "2026-10-15T20:50:08.463805449Z",
+      "event": "speeddesk_live_day_reset",
+      "payload": {
+        "at": 1792097408.1847086,
+        "venue": "kalshi",
+        "state": "ignored; this value was already used"
+      }
+    }
+  ],
+  "restart_native_matches": 16,
+  "restart_original_transactions": [],
+  "deployment": {
+    "id": "1c01ffe7-e231-40c6-a026-ac63fec01227",
+    "status": "SUCCESS",
+    "createdAt": "2026-10-15T20:47:23.393Z",
+    "updatedAt": "2026-10-15T20:49:04.606Z",
+    "serviceId": "f84d3b52-002f-44cb-931e-bc9e3e097e97",
+    "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+    "url": null,
+    "snapshotId": "f8f88596-73d2-4052-b7e4-09d705a4fdf5",
+    "canRollback": true,
+    "canRedeploy": true,
+    "regions": [
+      "us-east4-eqdc4a"
+    ],
+    "meta": {
+      "reason": "deploy",
+      "commitMessage": "fix: preserve recovered Kalshi feeds after obsolete REST failures (#65)\n\nTouches real money through feed correctness; stakes, stops and trading rules unchanged. Full5939tests/mypy129/Ruff3 and exact independent review passed. Deploy verification follows.",
+      "commitHash": "b7b7192e5d463e57417d05acb3b168744941b9fc",
+      "branch": "claude/nightcrawler-memecoin-bot-Gwnb1S"
+    }
+  },
+  "retained": {
+    "cash_usd": 30.5696,
+    "total.pnl_usd": -19.20180000000001,
+    "total.directional_usd": -22.691749120879116,
+    "today.pnl_usd": -4.754700000000008,
+    "open_cost_usd": 0.97,
+    "open_orders": 0,
+    "positions": 0,
+    "caps": {
+      "window_usd": 10.0,
+      "open_usd": 20.0,
+      "day_stop_usd": 6.0,
+      "clip": 5.0,
+      "total_stop_usd": 10.0
+    }
+  },
+  "limitations": [
+    "68 selected fields are not a native ledger/control export.",
+    "Open cost 0.97 retained despite zero positions; not certified current exposure.",
+    "No original transactions in bounded intervening query is not complete account audit.",
+    "as_of is panel time; account read age unpublished."
+  ],
+  "source_files_sha256": {
+    "/workspace/nightcrawler-feed-recovery/research/kalshi_rest_recovery_2026-10-15/BEFORE_STATUS.native.json": "788fc82673667f3da0c83e2daf2821b0bae8a64a52601c79048249636e3334ad",
+    "/workspace/nightcrawler-feed-recovery/research/kalshi_rest_recovery_2026-10-15/AFTER_STATUS.native.json": "f51c598318ed3d7cf5c4f9c70263c6f9b015270c7535abf803bfa376180116a4",
+    "/workspace/private-handoffs/claude-2026-10-15/kalshi_recovery_STARTUP_CONTROLS_3.json": "0eff37f2bf83050ba0cb51c9f197ed74051030a0fb0896f75ec86c6947b18e5f",
+    "/workspace/private-handoffs/claude-2026-10-15/kalshi_recovery_RESTART_EVENTS.json": "03d5e42d3eb5ce01de0a2a338da2728792bb5b571c008dee830b2fa6d859122a",
+    "/workspace/private-handoffs/claude-2026-10-15/kalshi_recovery_terminal_deployment.json": "60ef35f7d89d2ffcf5c3f60dac05a8434c36b79a2d114413708211616032a504"
+  }
+}

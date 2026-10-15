@@ -1,0 +1,65 @@
+{
+  "original_file_sha256": "0eff37f2bf83050ba0cb51c9f197ed74051030a0fb0896f75ec86c6947b18e5f",
+  "original_file_bytes": 261069,
+  "request": {
+    "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+    "deploymentId": "1c01ffe7-e231-40c6-a026-ac63fec01227",
+    "startDate": "2026-10-15T20:47:20Z",
+    "endDate": "2026-10-15T20:50:46Z",
+    "filter": "\"speeddesk_live_resume\" OR \"speeddesk_live_integrity_reset\" OR \"speeddesk_live_day_reset\"",
+    "limit": 12
+  },
+  "before": {
+    "current_time": "2026-10-15 20:50:46 UTC"
+  },
+  "after": {
+    "current_time": "2026-10-15 20:50:47 UTC"
+  },
+  "native_result_count": 5,
+  "limit": 12,
+  "original_rows": [
+    {
+      "timestamp": "2026-10-15T20:50:08.463796849Z",
+      "severity": "info",
+      "message": "2026-10-15T20:50:08Z INFO nightcrawler.speeddesk: speeddesk_live_resume {\"at\":1792097408.1846952,\"venue\":\"kalshi\",\"state\":\"ignored; this value was already used\",\"total_pnl_usd\":-19.20180000000001,\"counted_from_usd\":null,\"total_halted\":false}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-15T20:50:08.463801159Z",
+      "severity": "info",
+      "message": "2026-10-15T20:50:08Z INFO nightcrawler.speeddesk: speeddesk_live_integrity_reset {\"at\":1792097408.1847038,\"venue\":\"kalshi\",\"code\":null,\"state\":\"ignored; this value was already used\"}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-15T20:50:08.463805449Z",
+      "severity": "info",
+      "message": "2026-10-15T20:50:08Z INFO nightcrawler.speeddesk: speeddesk_live_day_reset {\"at\":1792097408.1847086,\"venue\":\"kalshi\",\"state\":\"ignored; this value was already used\"}",
+      "attributes": [
+        {
+          "key": "level",
+          "value": "\"info\""
+        }
+      ]
+    }
+  ],
+  "excluded_nested_or_other_events": [
+    {
+      "timestamp": "2026-10-15T20:50:10.491914975Z",
+      "event": "speeddesk_status"
+    },
+    {
+      "timestamp": "2026-10-15T20:50:17.299398949Z",
+      "event": "speeddesk_live_status"
+    }
+  ]
+}
