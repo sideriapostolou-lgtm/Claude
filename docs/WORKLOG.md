@@ -13,6 +13,63 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-15 00:23 UTC, Codex, first fixed window audited; freshness remains open (5:23 PM PDT October 14)
+- Running source remains c8e37e5. No source, release, variable, order or financial-setting action.
+  Independent original-message audit of the fixed 5:00–5:15 PM window confirms 125 durable intents,
+  124 accepted orders and six fills: 12 Up/12 Down, $11.58 cost + $0.0698 fees, $12 gross payout,
+  +$0.3502 locked P&L, negligible directional residual. Venue settlement 5:15:04.153 PM was observed
+  at 5:15:08.572 PM. Paired credit was already returned; net settlement payout was zero.
+- At the dated 5:15:16 status, cumulative settled loss remains −$14.0869 and cash is $35.6545.
+  The next window's $2.75 reservation/uncertain-order wait is separate; this is not current cash.
+  All-in cost $11.6498 exceeded the ordinary $10 budget through the existing risk-reducing lock
+  exception: four Down at 47c plus fees completed 12 pairs and reduced $1.70 modeled risk to zero.
+  No cap increased; zero modeled risk did not mean zero gross filled cost before settlement.
+- Seven selected cycles/35 reads have all required marks and no omitted reads; maximum actual
+  resumption 512.814 ms. Sixteen covering status intervals include both boundaries, fourteen are
+  contained; maximum lag 1,046 ms, no sample-cap hits. Endpoint 956 = 948 quiet + 8 reported,
+  buffer/drop/suppression zero. Final publication/cohort confirmation and second window pending.
+  A 3,197.157 ms whole cycle is a different measure, with only 35.031 ms maximum local resumption.
+- The window has 21 source-age warnings, one market-set transition and two REST trade-gap
+  ValueErrors. Earlier 4:15–4:30 PM warning queries had no stale-age warnings. Different traffic
+  prevents a causal estimate; positive settlement/coarse timing do not clear feed availability.
+- An offline native-receiver proof with invented 5 ms book work and a 12 ms wake-driven worker
+  drains 500 messages in 2.545 s without the yield. With the yield, account work resumes after
+  message one, but message 177 is stale at 3.014 s after 176 worker turns. Zero-work controls
+  both drain 500. This shows a possible work-amplification tradeoff, not production causality;
+  the surrogate is not the live controller. Source hashes and stale guard unchanged; no sockets,
+  keys, orders or selected fix. Candidate-only CPU query failed integer-hoursBack validation;
+  no CPU metric was returned or mixed-deployment aggregate substituted.
+- Exact receipt/audit/baseline queries/executed proof/results/failed query are archived: 1,519,909
+  bytes, SHA35b85a0ea83309d90d7284f75b96649eee9f5b97cd76764a3443aaa896bbda4b. Member hashes,
+  CRC, JSON and credential-pattern checks pass. FEED_FAIRNESS_POSTRELEASE.md and archive manifest
+  retain details/limits. Docs/evidence only; app tests not rerun, prior release checks unchanged.
+- Next: finish fixed 5:15–5:30 PM window and bounded tail through 5:32 PM; independently audit
+  both windows and attribute warnings. EXEC remains open, comparison unstarted, TJR data/cost
+  blocked with live disabled/automation unchanged. Recorder duties remain. Docs do not restart bot.
+
+## 2026-10-15 00:20 UTC, Codex, bounded TJR follow-up (5:20 PM PDT October14)
+- Read current COORDINATION, AGENTS, newest WORKLOG, PR47 deployment record and historical status
+  through connected GitHub. PR47 is merged with recorded exact release/restart verification;
+  active EXEC-DELAY-001 remains open. Current deployment evidence and scheduled complete-window
+  capture do not prove completion. This reminder does not interrupt that read-only work or
+  authorize a source release, production deployment, order, financial setting or Railway variable.
+- Current Page change feeds are unchanged, main2/prototype1, no truncation/resync. Reused the
+  previously fully read124 saved blocks and original implementation/tests; no duplicate
+  reconstruction, synthetic rerun, data probe, historical backtest or holdout access. Historical
+  trades0/P&Lnull, paper not started/live disabled. Genuine MNQ development bars and verified
+  account costs remain missing. No profitability conclusion follows from synthetic checks.
+- Connected-GitHub branch-URL fetch failed INVALID_ARGUMENT (invalid repository path); ordinary
+  git fetch succeeded and both local/remote refs matched c1e363badbce4895f575c43bb91ffa05f53e13cc.
+  File/Page reads succeeded. FOLLOWUP_2026-10-14_1720_PDT.json preserves exact file blobs,
+  unchanged Page deltas, status, the specific failed call and successful identity fallback.
+- Updated existing queue unfinished/blocked; follow-up automation unchanged. No routine
+  unchanged-blocker owner alert. Next: authorized immutable actual MNQ December2025 minute
+  OHLCV Sep19–Oct31 with verified mapping/license/timestamps and actual account/execution/
+  platform/data costs, then frozen development evaluation. Later paper needs a verified
+  current contract/feed/runtime. Holdout remains unopened; no live capability activated.
+- Docs/receipt only; source tests not rerun. Latest-branch, preserved-history, JSON and
+  added-content credential checks precede publication. Existing Kalshi evidence work continues.
+
 ## 2026-10-15 00:06 UTC, Codex, UTC-day financial audit and fresh recorder manifest (5:06 PM PDT October14)
 - Read exactsourcec8 live status at4:59:15/5:00:13/5:01:14PM Pacific. Saved priorOctober14UTC
   real report:41windows with actualfills,222fillevents,51settlements,$0.7011fillfees,settled

@@ -39,6 +39,15 @@ Check this queue at task start and before declaring current work complete. Keep 
 move an item to done only with linked evidence. Blocked or waiting-for-approval is not complete.
 
 ### EXEC-DELAY-001 — first task active; production attribution and verified fix pending
+- **2026-10-14 5:23 PM PDT:** fixed 5:00–5:15 PM window independently audited: six real
+  fills, 12 Up/12 Down, $11.58 cost + $0.0698 fees, $12 gross payout, +$0.3502 locked P&L.
+  Existing risk-reducing lock exception explains cost above the ordinary $10 budget; caps unchanged.
+  Seven selected cycles/35 reads, maximum actual resumption 512.814 ms; sixteen covering status
+  intervals, maximum lag 1,046 ms. Publication confirmation/second window pending. Twenty-one
+  source-age warnings need attribution; no freshness pass or task completion. Offline synthetic
+  worker proof shows a possible wake-work tradeoff, not production causality or a chosen fix.
+  [Evidence and limits](../research/kalshi_profitability_2026-10-14/FEED_FAIRNESS_POSTRELEASE.md).
+  No production action; fixed second-window capture continues unchanged.
 - **2026-10-14 4:56 PM PDT:** PR #56 deployed exactc8e37e5504aad04da0521b3f95c17f86dac42899,
   Railwayad9f3073-9002-41d8-b29a-5b220fb19d1a SUCCESS4:52:47.327PM. Normal Polymarket LIVE
   startup; bothservicesonline1/1.4:52:12before/4:53:08after compared cash$34.8643,cost/risk$0.43,
@@ -99,6 +108,14 @@ move an item to done only with linked evidence. Blocked or waiting-for-approval 
   while the first remains open. TJR's separate authentic-data blocker and recorder duties persist.
 
 ### TJR-MNQ-001 — validation tooling complete; historical run blocked on data; paper/live disabled
+- Follow-up checked **2026-10-14 5:20 PM PDT** through connected GitHub. PR #47's exact
+  release/restart verification is recorded complete; EXEC-DELAY-001 remains open while its
+  fixed two-window collection and feed-freshness follow-up continue. Prior offline TJR
+  reprioritization persists, but authentic development bars and verified costs remain absent.
+  Both Page change feeds are unchanged (main2/prototype1; no truncation/resync). Reused all
+  saved code/tests; historical trades0/P&Lnull, paper not started/live disabled. Keep unfinished
+  and automation unchanged; no routine unchanged-blocker alert or production action.
+  [Receipt and concrete next input](../research/tjr_validation_2026-10-14/FOLLOWUP_2026-10-14_1720_PDT.json).
 - Repeated reminder checked **4:41 PM PDT** against fresh connected-GitHub AGENTS/COORDINATION/
   newest WORKLOG. Only our4:34 receipt publication changed; execution-first task remains open and
   authentic development bars/costs remain missing. Reused the4:34 unchanged-Page check and all saved
