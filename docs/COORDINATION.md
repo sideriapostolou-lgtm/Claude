@@ -39,6 +39,14 @@ Check this queue at task start and before declaring current work complete. Keep 
 move an item to done only with linked evidence. Blocked or waiting-for-approval is not complete.
 
 ### EXEC-DELAY-001 — first task active; production attribution and verified fix pending
+- **2026-10-15 5:57 AM PDT:** standalone PR59 release/capture verification closed; broader EXEC remains OPEN.
+  Fixed5:15–5:45AM windows lose−$1.0517/+$0.1600, net−$0.8917 after$.0517fees; all12fills joined.
+  Tail5:47AM/collector stopped5:47:23.654;18uncapped originals, independent review and all losses preserved.
+  Main11known rejected-message waits max3,122.473ms plus81overflow unknowns remain unresolved.
+  Final5:47AM exactcdf0/1bdSUCCESS/bothservicesonline;5:46:55cash$30.9116/cumulative−$18.4098,
+  nextpartialrisk$.42/reserve$.56, caps/latches retained. No further source or financial-setting action.
+  Original/inverse comparison unstarted. Next: exact main-reader attribution/offline profile before choosing
+  another correction; keep frozen ledger diagnostic separate. [Final proof/limits](../research/kalshi_profitability_2026-10-14/CANCELLATION_FRESHNESS_POSTRELEASE.md).
 - **2026-10-15 5:15 AM PDT:** PR59 exact `1bd8f22` deployed on `cdf0d895`, SUCCESS 5:06:44.265 AM;
   normal Polymarket LIVE startup, both services online. Later fresh Kalshi status verifies live/account
   reconciliation; cold initial stale status excluded. Independent restart audit: 54 selected fields
@@ -392,6 +400,19 @@ move an item to done only with linked evidence. Blocked or waiting-for-approval 
   this item. No production, financial or credential-copy work is needed; chat delegation stays usable.
 
 ## Inbox (newest first)
+
+### 2026-10-15 12:57 UTC, Codex -> workers: PR59 bounded verification complete; broader EXEC remains open
+- Exactsource1bd8f22/cdf0SUCCESS; final5:47AM bothservicesonline. Fixed windows and tail are closed,
+  collector stopped. Independent original accounting gives net−$.8917 afterfees, all12fills joined;
+  source/reader/tail/coverage boundaries and every loss preserved. No new source release in this closure.
+- Main-reader local residence still reaches3.122s with81unknown gap intervals. Continue existing EXEC
+  attribution/profile; original/inverse comparison is unstarted. The frozen seven-file ledger diagnostic
+  remains separate and unreleased. Do not treat a measurement or one winning window as a profitable edge.
+- [Final report and immutable evidence](../research/kalshi_profitability_2026-10-14/CANCELLATION_FRESHNESS_POSTRELEASE.md).
+  No variables/caps/stop-resume budgets/manualorders/newlivedesk/polydesk change. TJR remains blocked,
+  saved source reused, paper/live disabled; automation unchanged and no routine unchanged notification.
+
+Status: done (PR59 release/restart/bounded capture); open (EXEC freshness/profitability); blocked (TJR inputs).
 
 ### 2026-10-15 12:15 UTC, Codex -> workers: cancellation fix deployed; fixed evidence capture active
 - Owner explicitly reaffirmed deploying the tested correction. PR59 exact `1bd8f22` is verified SUCCESS;
