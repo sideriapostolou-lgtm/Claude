@@ -159,6 +159,13 @@ move an item to done only with linked evidence. Blocked or waiting-for-approval 
   while the first remains open. TJR's separate authentic-data blocker and recorder duties persist.
 
 ### TJR-MNQ-001 — validation tooling complete; historical run blocked on data; paper/live disabled
+- **2026-10-15 2:15 AM PDT check:** current GitHub/pinned evidence atf75910f confirms PR47 release/
+  restart separately complete; EXEC remains open. Existing offline priority persists, but genuine
+  MNQ bars/costs are absent. Both current Page deltas unchanged (main2/prototype1, no truncation/
+  resync); verified saved sources/tests reused. Historical trades zero/P&L null, paper not started/
+  live off. Keep queued/blocked and automation unchanged; no duplicate research/probe, production
+  action or routine unchanged notification. Next remains the
+  [verified development export/costs](../research/tjr_validation_2026-10-14/FOLLOWUP_2026-10-15_0125_PDT.json).
 - **2026-10-15 1:25 AM PDT check:** current GitHub and pinned evidence at936ed53 retain PR47 exact
   release/restart complete and EXEC open. Prior offline priority persists, but actual MNQ bars/costs
   remain missing. Both Page change feeds unchanged (main2/prototype1, no truncation/resync); saved
