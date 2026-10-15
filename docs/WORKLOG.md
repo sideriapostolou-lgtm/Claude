@@ -13,6 +13,11 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-15 23:43 UTC, Codex, deferred TJR gate unchanged (4:43 PM PDT, October 15)
+- Fresh connected GitHub reads at 06ed3fd3df24938f56cf65056b553cb2be591790 confirm the same current work-order, takeover and TJR status as the prior check. PR47 remains merged at October 14 9:21:49 AM PDT; its separately verified deployment/bounded follow-up remains complete. Current PR67 is open/unmerged. Higher-priority EXEC, recorder verification/retention/cost and operating transfer are still open; independent queue review confirms the latest TJR-LAST instruction governs.
+- Keep TJR-MNQ-001 queued/blocked. Existing source/test receipts are preserved; no current Page access, duplicated research/tests or new profitability claim. Recorded historical P&L remains null, holdout unopened, paper not started and live execution disabled. No production, financial, order or automation change, and no routine unchanged notification.
+- Next: verify actual completion of higher-priority prerequisites or explicit owner reprioritization, then reuse the saved implementation with authorized actual-contract MNQ development data and verified costs. Historical results and verified paper-start evidence are still required before completion; follow-up remains unchanged.
+
 ## 2026-10-15 23:31 UTC, Codex, TJR/MNQ gate checked; remains queued (October 15, 4:31 PM PDT)
 - Re-read connected GitHub AGENTS, coordination takeover/work-order/TJR entries and newest worklog at exact 9a6d2239df8d6054c9ef7bc886a2b1ab9ae8b469. PR47's API merge time is October 14, 9:21:49 AM PDT; [separate deployment evidence](../research/kalshi_profitability_2026-10-14/PR47_DEPLOYMENT.md) records exact e8db34ee / f707494f SUCCESS at 9:24:05.418 AM and bounded follow-up. The old document's 9:21:48 shorthand is not the API merge time. Independent review confirms only that release milestone is complete.
 - Higher-priority EXEC, recorder volume/retention/cost verification and operating transfer remain open. PR67 is still open/unmerged; tests or a later merge cannot substitute for required deployment/runtime evidence. The owner's latest priority keeps TJR LAST; no new reprioritization or authority inferred. Keep TJR-MNQ-001 queued/blocked, not done.
