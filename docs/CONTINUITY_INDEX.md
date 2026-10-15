@@ -5,6 +5,10 @@ This is a navigation index, not a replacement for source files or a current acco
 The complete tracked tree and history stay in the same repository. No service, runtime state, dataset
 or original research artifact is moved by the model-workflow setup.
 
+**October15 update:** [Codex takeover checklist](CODEX_TAKEOVER.md) records verified connected access,
+existing schedules, current separate service/source identities and the remaining private-state/data limits.
+It supplements this index; it is not proof of an account, credential or volume migration.
+
 ## Read at task start or model/session handoff
 
 1. [AGENTS.md](../AGENTS.md): current hard rules and standing release scope.

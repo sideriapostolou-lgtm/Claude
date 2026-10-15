@@ -39,6 +39,13 @@ Check this queue at task start and before declaring current work complete. Keep 
 move an item to done only with linked evidence. Blocked or waiting-for-approval is not complete.
 
 ### EXEC-DELAY-001 — first task active; production attribution and verified fix pending
+- **8:38 AM PDT October15:** read-only daily check preserves live−$4.5050/practice+$12.23 rawpriorUTCday
+  summaries, both96gaps/0complete. Currentrealcash30.6904/cumulative−19.0510/noopenrisk/totalstoplatched.
+  Offline fakes reproduce future untimed simulator-warning contamination plus distinct quiet-maker/queued-gap
+  issues. Local child-only correction f90a860d passes5695tests/14skips,mypy128/Ruff2, independent review;
+  no source release under latest read-only instruction. Producer causes of actual exclusions still unjoined.
+  [Daily originals/limits](../research/kalshi_profitability_2026-10-14/DAILY_STATUS_2026-10-15.md);
+  [local candidate](../research/kalshi_online_learning_2026-10-15/INPUT_CHRONOLOGY_PREPARATION.md).
 - **8:14 AM PDT October 15:** read-only owner status check finds all five full learner slots excluded
   for pre-forecast gaps; no usable forecast or score. Original 7:00AM Up settlement loses$.56 and total
   stop latches. Fresh8:11AM Kalshi paper/halted, no positions/orders/risk; cash30.6904, cumulative
@@ -187,6 +194,11 @@ move an item to done only with linked evidence. Blocked or waiting-for-approval 
   while the first remains open. TJR's separate authentic-data blocker and recorder duties persist.
 
 ### KALSHI-ONLINE-001 — implementation/release verified; prospective accuracy evidence pending
+- **8:31 AM PDT evidence /8:38 check:** 0forecasts/0scored/7unknown(startup1,pregap6),Briernull;
+  enabled observe-only, no error/live application. Local chronology correction reviewed/fulltests pass,
+  genuine gaps and old history retained; candidate not deployed. Quiet maker eligibility remains V1;
+  separate prospective protocol required before narrowing it. No improvement/profit/EXEC-completion claim.
+  [Exact candidate, checks and remaining evidence](../research/kalshi_online_learning_2026-10-15/INPUT_CHRONOLOGY_PREPARATION.md).
 - **8:09 AM PDT October 15 evidence, checked 8:14:** enabled observe-only, 0 forecasts / 0 scored /
   6 unknown (startup1, pregap5), both Brier scores null. All five full slots since release were excluded;
   operation is verified, actual training/accuracy evidence is blocked on data gaps. No live application.
@@ -217,7 +229,21 @@ move an item to done only with linked evidence. Blocked or waiting-for-approval 
   retained. Any predictive improvement or profitable strategy needs separate prospective evidence.
   [Protocol and operational boundary](KALSHI_ONLINE_LEARNING.md).
 
+### CODEX-TAKEOVER-001 — operating access/checklist audited; private state and raw-volume transfer unverified
+- October15 8:38AM PDT: Codex already owns all lanes. Verified connected GitHub/Railway reads, original
+  history/source/research pointers, current separate services and three existing enabled ChatGPT schedules.
+  next_run_time null is retained; no timer migration/creation or guaranteed-delivery claim. Recorder source
+  guide located/read at actual4c00ba6d branch. Keep secrets/volumes in place and preserve all losses/controls.
+- [Portable checklist, source links and remaining obligations](CODEX_TAKEOVER.md). Unsaved Claude material,
+  raw-volume/hashes/backups, standalone CLI sign-in, actual app HTTP and some observer statuses remain open.
+  Recorder feasibility3:45PM today/storage beforeOct20 remain obligations; no production settings change.
+
 ### TJR-MNQ-001 — validation tooling complete; historical run blocked on data; paper/live disabled
+- **October15 8:39 AM PDT:** latest repeated reminder re-read connected GitHub branch/instructions/queue/
+  newest worklog at exact91250c6. PR47 separately verified; EXEC still open and current local candidate
+  unshipped. Prior explicit offline priority persists; authentic MNQ development bars/costs absent,
+  trades0/P&Lnull/holdoutunopened/papernotstarted/liveoff. No duplicate Pages/research/tests or routine
+  notification; automation unchanged. Keep blocked/unfinished. [Pinned receipt/source-body provenance](../research/tjr_validation_2026-10-14/FOLLOWUP_2026-10-15_0839_PDT.json).
 - **2026-10-15 6:58 AM PDT check:** fresh connected-GitHub exact `933a43d` records plus pinned PR47/status
   independently matched to five Git blobs/full contents. PR47 release/restart separately complete; EXEC
   remains open. Prior explicit offline priority persists, but actual MNQZ2025 bars/costs remain missing:
@@ -450,6 +476,36 @@ move an item to done only with linked evidence. Blocked or waiting-for-approval 
   this item. No production, financial or credential-copy work is needed; chat delegation stays usable.
 
 ## Inbox (newest first)
+
+### 2026-10-15 15:38 UTC, Codex -> workers: local correction checked; production read-only; handoff audited
+- Local child chronology patchf90a860d independently accepted; full5695tests/14existing skips,mypy128/Ruff2
+  pass. Source stays only in isolatedfeedlearningworktree and frozen research archive. Purelearner/model,
+  realcontroller/config/ledger/Polymarket/tradingrules/limits/stops/resume unchanged. Do not release it or
+  resume money under this daily inspection. Keep prior gaps/unknowns; no production improvement claim.
+- Current933a43d bot and a0782b74 recorder remainSUCCESS/online. Kalshi paper,totalstoplatched,noopenrisk;
+  cumulative−19.0510, cash30.6904. PriorUTCdayrawreal−4.5050/twin+$12.23 is not certified:96gaps/0complete.
+  Learner0forecasts/0scored at8:31AM. BroaderEXEC and quiet-maker/producertime issues remain open.
+- [Daily evidence](../research/kalshi_profitability_2026-10-14/DAILY_STATUS_2026-10-15.md),
+  [candidate](../research/kalshi_online_learning_2026-10-15/INPUT_CHRONOLOGY_PREPARATION.md),
+  [takeover checklist](CODEX_TAKEOVER.md). Existing three relevant automations enabled, next-run timesunknown;
+  no account/volume/key/session migration. TJR unchanged blocked, no routine alert or duplicate research.
+
+Status: done (bounded daily/takeover audit/local preparation); not released (candidate); open (EXEC/forward evidence).
+
+### 2026-10-15 15:26 UTC, Codex -> workers: read-only operations; isolate learner chronology candidate locally
+- Latest daily-status instruction keeps production read-only: no source release, Railway variable, real-order,
+  trading-rule, money-limit, stop or resume changes. Root continues the owner's feed repair/takeover request
+  through diagnosis and a reviewable local candidate; this note is not deployment approval.
+- Sol owns only `kalshi_arena.py` child learning hooks and a new chronology regression file in the isolated
+  `codex/kalshi-feed-learning` worktree at91250c6. Preserve practice degradation and real control paths.
+  Remove the demonstrated untimed simulator-history veto only after all genuine timed learner degradations
+  are covered, including frame drops and windows first announced in the dropped frame. Pure learner/protocol,
+  fair-value math, all active gap quality rules, prior unknowns and financial state stay intact. No backfill.
+- Astra reviews exact code, causality, restart/retained state and fake tests. Source changes stay local and
+  must never be bundled with this session's docs-only status publication. Quiet maker eligibility requires
+  separate future protocol design; this narrow candidate does not claim to fix all five production exclusions.
+
+Status: active (local candidate); read-only (production); open (EXEC); blocked unchanged (TJR).
 
 ### 2026-10-15 15:14 UTC, Codex -> workers: real Kalshi total stop latched; learner has no usable forecasts
 - Existing933a43d deployment remains SUCCESS. Original7:00AM settlement loses$.56 on oneUp contract;
