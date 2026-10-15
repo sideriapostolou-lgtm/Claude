@@ -1,0 +1,16 @@
+{
+  "protocol": "kalshi-probability-calibration-v2-h300-g5-b10-prior20",
+  "candidate_source_fingerprint": "f2652c6b9f5f4732b5ac865d72c4748df250ad73b38d493387f9dfc478dcff6c",
+  "source_files": {
+    "kalshi_probability_learning.py": "43d8f527fd24aee3a7dbb33d848dcaaaf0e39089ab605deddad32dfabc1e35ab",
+    "kalshi_probability_epochs.py": "495450c64b9402e2f9dfaa53756a51dbf44a5c75bf7245b6dc428271cddc708f",
+    "speeddesk_model.py": "50ba3b4f78c6efd031fdcd8bb1cb1a59ea2988973c341b9ad275345d70de7429",
+    "speeddesk_feeds.py": "4a942d649af275cc6ad7b467462236e66c9a629cab0920e1a1adb3c24982dffd",
+    "speeddesk_kalshi.py": "7946b64f9f1441ea8b02b1d17f5b2d400d7c8e7a65897eed8974373dac3ae9b9",
+    "speeddesk_kalshi_ws.py": "1eef6d36a0b5aaf3a00680c0aedec057e163aac8fc8d63e3e213b01124b4337b",
+    "speeddesk_venues.py": "54f0c2eaea909621f24734d8cd73cdd46f2ea711d885269b6892c564bc9dff51",
+    "speeddesk.py": "eb9146263a881ba2ef6645c03585ca78c7bc0e1d9f03cb5177028d483e403ef4",
+    "kalshi_arena.py": "52b983cb87ba6ec593124aef525b37b2ad48ce8cabba0325f6b813d52e7a0676"
+  },
+  "meaning": "new distinct epoch required, actual latest older dictionaries must remain archived unchanged; no live learner use"
+}

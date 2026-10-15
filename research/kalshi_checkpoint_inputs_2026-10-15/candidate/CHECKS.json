@@ -1,0 +1,88 @@
+{
+  "recorded_utc": "2026-10-15T22:32:27.177625+00:00",
+  "source_sha256": "eb9146263a881ba2ef6645c03585ca78c7bc0e1d9f03cb5177028d483e403ef4",
+  "test_sha256": "3eb15e8f138cbe47ef99b5b6fa76ac6ce6db4751bcba7e76b1d0d5585e13ca30",
+  "complete_patch_sha256": "475dc5aa1177815292b91d16bebb2a093692b1e38b0169578ed66fb3ac040b78",
+  "checks": [
+    {
+      "name": "focused-and-existing-practice",
+      "argv": [
+        "/usr/bin/env",
+        "-i",
+        "PATH=/usr/bin:/bin",
+        "PYTHONPATH=/workspace/nightcrawler-practice-checkpoint/src:/workspace/nightcrawler-practice-checkpoint/tests",
+        "/workspace/shared/nightcrawler-venv/bin/python",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/test_speeddesk_checkpoint_settlements.py",
+        "tests/test_speeddesk_runtime.py",
+        "tests/test_speeddesk_practice_sync.py",
+        "tests/test_speeddesk_atomic_json.py",
+        "tests/test_speeddesk_history_hotpath.py"
+      ],
+      "exit_code": 0,
+      "result": "69passed;40newcases",
+      "stdout": "candidate-focused-final.stdout.txt",
+      "stderr": "candidate-focused-final.stderr.txt",
+      "stdout_sha256": "51a3f27e634de699ed6968c008e1034d8f5dbd430894c702190f435db36d9dff",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "mypy",
+      "argv": [
+        "/usr/bin/env",
+        "-i",
+        "PATH=/usr/bin:/bin",
+        "PYTHONPATH=/workspace/nightcrawler-practice-checkpoint/src:/workspace/nightcrawler-practice-checkpoint/tests",
+        "/workspace/shared/nightcrawler-venv/bin/python",
+        "-B",
+        "-m",
+        "mypy",
+        "src/nightcrawler/speeddesk.py"
+      ],
+      "exit_code": 0,
+      "result": "Success: no issues found in1sourcefile",
+      "stdout": "candidate-mypy.stdout.txt",
+      "stderr": "candidate-mypy.stderr.txt",
+      "stdout_sha256": "5d4b6d285b77932e3d08212c3b4974d0a803f98ec60408ac6ccf6a063fa6c19e",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "Ruff",
+      "argv": [
+        "/usr/bin/env",
+        "-i",
+        "PATH=/usr/bin:/bin",
+        "PYTHONPATH=/workspace/nightcrawler-practice-checkpoint/src:/workspace/nightcrawler-practice-checkpoint/tests",
+        "/workspace/shared/nightcrawler-venv/bin/python",
+        "-B",
+        "-m",
+        "ruff",
+        "check",
+        "src/nightcrawler/speeddesk.py",
+        "tests/test_speeddesk_checkpoint_settlements.py"
+      ],
+      "exit_code": 0,
+      "result": "All checks passed",
+      "stdout": "candidate-ruff.stdout.txt",
+      "stderr": "candidate-ruff.stderr.txt",
+      "stdout_sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "git diff --check",
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    }
+  ],
+  "main_matrix_exit_code": 0,
+  "main_matrix_children": 58,
+  "main_matrix_initial_regression_gate": "failed zero-control; remainsretained",
+  "extension_exit_code": 0,
+  "extension_children": 20,
+  "extension_primary_gate_passed": true,
+  "root_fullchecks_and_independent_review": "pending root; no releaseauthorization claimed"
+}

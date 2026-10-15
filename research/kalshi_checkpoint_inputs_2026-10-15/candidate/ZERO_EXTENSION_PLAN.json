@@ -1,0 +1,31 @@
+{
+  "status": "preregistered before execution",
+  "source_unchanged": "eb9146263a881ba2ef6645c03585ca78c7bc0e1d9f03cb5177028d483e403ef4",
+  "main_pair_harness_sha256": "6eed10868f2d8b4593b891f974e56e693c2c526d843f379c8b2e3ad5d5e0255e",
+  "extension_harness_sha256": "090e50f2431b2e774d345981dd305b4721d452d6d0cad4971cadd802977ef44d",
+  "scope": "one zero-settlement control extension only; no further retries/optimization",
+  "schedule": "ABBA BAAB ABBA BAAB ABBA",
+  "A": "baseline",
+  "B": "candidate",
+  "children": 20,
+  "warmed_checkpoint_samples_per_child": 25,
+  "analysis": {
+    "primary": "median per-process checkpoint wall/threadCPU (25 samples each), then candidate/baseline ratio for10 adjacent order-balanced pairs; median of10 paired ratios and medianprocess values pervariant",
+    "secondary": "all raw/pool/process median/min/max/p95 distributions, paired differences in ms and percent, numberpairs >5%, maximumRSS/disk/elapsed; primarydo notsubstitute pooled samples forindependentprocesses",
+    "gate": "Either wall orCPU paired-median ratio>1.05 is an extension failure; do not automatically erase initial mainmatrix FAIL even ifextension below5%; root/Astra assess all results for repeatability/noise",
+    "output": "exactfirst/correction/steadyKV/mirror/orderedreceipt parity eachchild; fullfirstvariantbytescomparison; equalclockcounts; dynamicallyzero runtimeattempts"
+  },
+  "hardlimits": {
+    "perchild_seconds": 60,
+    "perchild_RSS_AS_MiB": 256,
+    "entireexperimentdiskMiB": 100
+  },
+  "initial_fail_retained": {
+    "pooledwall_percent": 5.046304593246709,
+    "pairedprocesswall_ratios": [
+      1.2128166415420247,
+      0.9159261057543143,
+      1.0649302305919157
+    ]
+  }
+}
