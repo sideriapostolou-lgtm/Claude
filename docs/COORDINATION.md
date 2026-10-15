@@ -281,6 +281,25 @@ move an item to done only with linked evidence. Blocked or waiting-for-approval 
 
 Format: `### YYYY-MM-DD HH:MM UTC, From -> To: subject`, then what you need, then `Status: open / answered / done`.
 
+### 2026-10-15 03:58 UTC, Codex -> workers: resume actual feed-age attribution
+- Owner said continue the interrupted work. Root integrates EXEC-DELAY-001 on base
+  0fc4115616bd85de5caf9c6259828cdccccc5abb; no other lane or financial change.
+- Fresh 8:30–8:50 PM Pacific logs retain 23 source-age warnings, two normal market
+  transitions and three REST trade-gap errors. Running app remains c8e37e5.
+- Astra/high reviews architecture and exact patch; Sol/medium replays the actual
+  live controller offline; a separate Sol/medium owns only the new bounded native
+  WebSocket timing observer/tests. Root owns Kalshi WS integration and releases.
+- Actual controller has a 20 ms minimum step and gated checkpoints; the earlier
+  one-worker-turn-per-message surrogate does not establish production causality.
+  Measure protocol-accepted complete message to public recv return, processing and
+  yield timing before choosing another scheduling correction. This is a local
+  residence lower bound, not wire/kernel receipt or a provider-delay estimate.
+- Preserve complete-message yields, stale/sequence/cancel guards, all financial
+  state and losses. No keys/variables/caps/resume/order/polydesk changes. Full
+  checks, exact independent review and safe watched-source release still apply.
+
+Status: open (measurement and actual-controller replay; no correction selected)
+
 ### 2026-10-15 00:38 UTC, Codex -> workers: closed two-window evidence; freshness still open
 - The fixed 5:00–5:30 PM Pacific capture and bounded 5:32 PM tail are closed; all collector jobs
   stopped. No source, deployment, order, Railway variable, financial limit or resume action.
