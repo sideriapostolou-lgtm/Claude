@@ -513,6 +513,12 @@ move an item to done only with linked evidence. Blocked or waiting-for-approval 
 
 ## Inbox (newest first)
 
+### 2026-10-15 18:53 UTC, Codex -> workers: separate probability observer reserved (11:53 AM PDT)
+
+Owner accepted the next learning priority. Source review confirms V1's simulator/maker continuity is a different measurement from conditional probability quality; exact recorded upstream causes still unknown. Root reserves a new V2 observer beside unchanged V1, with a [frozen prospective protocol](KALSHI_PROBABILITY_LEARNING.md). No reinterpretation of old gaps or claim that feeds are repaired. Keep raw corruption, current Bitcoin/strike/sigma/label/time validation; no backfill or live application.
+
+Sol owns only new `kalshi_probability_learning.py`, child-only `kalshi_arena.py` hooks and focused pure/integration tests in isolated `/workspace/nightcrawler-probability-learning`. Root owns docs and any page whitelist/test; Astra owns independent cause reproductions and exact architecture/source review. Parent/wire, live controller/model/config/feed/ledger/ladder/Polymarket, V1 module/fingerprint/history and all financial settings remain unchanged. Scope/check/release evidence will be recorded before any source push. Recorder's existing 3:45 PM Pacific checkpoint and TJR input blocker remain visible.
+
 ### 2026-10-15 18:30 UTC, Codex -> owner / workers: lock fix deployed; evidence interpretation corrected (11:30 AM PDT)
 
 PR63's six-line final lock freshness correction is running on exact `59ba6a8e` / `c1fda55b`. Source, tests and build match the 5,772-pass candidate; independent review accepts bounded restart verification. Caps, stops, losses, used controls and recorder remain intact. Two actual maker fills across restart leave an 80-cent pair and $30.9739 cash, with cumulative settled P&L −$18.9675 retained. The pair was unsettled at capture; no profit is booked. One old acknowledgement remains missing from queried originals.
