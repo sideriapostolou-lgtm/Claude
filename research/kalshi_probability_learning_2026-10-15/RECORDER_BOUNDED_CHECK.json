@@ -1,0 +1,259 @@
+{
+  "at_utc": "2026-10-15T19:49:18.028867+00:00",
+  "warning_query_rows": 0,
+  "error_keyword_query_rows": 1,
+  "actual_error_severity_rows": 0,
+  "keyword_false_positive": "One INFO evidence report contains metrics named errors; it is not an ERROR log.",
+  "latest_returned_evidence": {
+    "timestamp": "2026-10-15T19:00:01.937389403Z",
+    "payload": {
+      "commit": "a0782b743a31369fe25ddf6d2eea96df8511cd8d",
+      "coverage": {
+        "backfill_jobs_pending": 0,
+        "btc15m_fresh_minutes": 60,
+        "btc15m_minutes": 60,
+        "candidate_book_fresh_share": 1.0,
+        "minutes_sampled": 60,
+        "trade_covered_to": 1792090792,
+        "trade_tape_minutes": 60
+      },
+      "coverage_certified": false,
+      "gaps": {
+        "by_cause": {},
+        "by_lane": {},
+        "open_ended_records": 0,
+        "records": 0
+      },
+      "manifest_sha256": "0d6df312a422d68aba20ca83a7a32df862bc79bf0d8744d2a81a218871205bf9",
+      "observed_at": 1792090800.8460703,
+      "order_capability": false,
+      "per_venue_spot_ticks_verified": false,
+      "period": {
+        "from": 1792087200.0,
+        "partial": false,
+        "to": 1792090800
+      },
+      "read_only": true,
+      "rest_lanes": {
+        "backfill": {
+          "429": null,
+          "errors": null,
+          "ok": null,
+          "requests": null,
+          "rtt_ms": {
+            "p50": null,
+            "p95": null,
+            "p99": null
+          }
+        },
+        "books": {
+          "429": null,
+          "errors": null,
+          "ok": 2258,
+          "requests": 2258,
+          "rtt_ms": {
+            "p50": 67.33,
+            "p95": 119.856,
+            "p99": 196.345
+          }
+        },
+        "btc15m_meta": {
+          "429": null,
+          "errors": null,
+          "ok": 12,
+          "requests": 12,
+          "rtt_ms": {
+            "p50": 80.194,
+            "p95": 180.489,
+            "p99": 180.489
+          }
+        },
+        "discovery": {
+          "429": null,
+          "errors": null,
+          "ok": 630,
+          "requests": 630,
+          "rtt_ms": {
+            "p50": 84.045,
+            "p95": 155.489,
+            "p99": 234.332
+          }
+        },
+        "fees": {
+          "429": null,
+          "errors": null,
+          "ok": null,
+          "requests": null,
+          "rtt_ms": {
+            "p50": null,
+            "p95": null,
+            "p99": null
+          }
+        },
+        "other": {
+          "429": null,
+          "errors": null,
+          "ok": null,
+          "requests": null,
+          "rtt_ms": {
+            "p50": null,
+            "p95": null,
+            "p99": null
+          }
+        },
+        "settlement": {
+          "429": null,
+          "errors": null,
+          "ok": 4,
+          "requests": 4,
+          "rtt_ms": {
+            "p50": 79.059,
+            "p95": 89.524,
+            "p99": 89.524
+          }
+        },
+        "sweep": {
+          "429": null,
+          "errors": null,
+          "ok": 24,
+          "requests": 24,
+          "rtt_ms": {
+            "p50": 91.262,
+            "p95": 133.86,
+            "p99": 138.163
+          }
+        },
+        "trades": {
+          "429": null,
+          "errors": null,
+          "ok": 1912,
+          "requests": 1912,
+          "rtt_ms": {
+            "p50": 92.331,
+            "p95": 154.397,
+            "p99": 272.272
+          }
+        }
+      },
+      "rows_and_test_outcomes_read": false,
+      "schema": 1,
+      "sealed_lanes": {
+        "admissions": {
+          "first_append_at": 1792087210.7732632,
+          "gz_bytes": 1284,
+          "last_append_at": 1792090535.398815,
+          "record_envelopes": 10,
+          "segments": 1
+        },
+        "book_calls": {
+          "first_append_at": 1792087201.4855378,
+          "gz_bytes": 435089,
+          "last_append_at": 1792090798.2857811,
+          "record_envelopes": 2257,
+          "segments": 2
+        },
+        "books": {
+          "first_append_at": 1792087201.4855378,
+          "gz_bytes": 2438703,
+          "last_append_at": 1792090798.2857811,
+          "record_envelopes": 16950,
+          "segments": 2
+        },
+        "books_btc15m": {
+          "first_append_at": 1792087201.4855378,
+          "gz_bytes": 1006784,
+          "last_append_at": 1792090798.2857811,
+          "record_envelopes": 2262,
+          "segments": 2
+        },
+        "btc15m_meta": {
+          "first_append_at": 1792087206.0462155,
+          "gz_bytes": 4081,
+          "last_append_at": 1792090535.398815,
+          "record_envelopes": 16,
+          "segments": 1
+        },
+        "discovery": {
+          "first_append_at": 1792089492.5183072,
+          "gz_bytes": 63399,
+          "last_append_at": 1792089669.8784091,
+          "record_envelopes": 77,
+          "segments": 1
+        },
+        "markets": {
+          "first_append_at": 1792087202.095835,
+          "gz_bytes": 3902159,
+          "last_append_at": 1792090797.5832436,
+          "record_envelopes": 577,
+          "segments": 6
+        },
+        "requests": {
+          "first_append_at": 1792087200.1164763,
+          "gz_bytes": 648668,
+          "last_append_at": 1792090799.5914733,
+          "record_envelopes": 4840,
+          "segments": 2
+        },
+        "spot": {
+          "first_append_at": 1792087200.160478,
+          "gz_bytes": 651389,
+          "last_append_at": 1792090799.1580486,
+          "record_envelopes": 5002,
+          "segments": 1
+        },
+        "telemetry": {
+          "first_append_at": 1792087200.625262,
+          "gz_bytes": 230,
+          "last_append_at": 1792087200.625262,
+          "record_envelopes": 1,
+          "segments": 1
+        },
+        "trade_coverage": {
+          "first_append_at": 1792087200.7674298,
+          "gz_bytes": 34778,
+          "last_append_at": 1792090795.6390085,
+          "record_envelopes": 693,
+          "segments": 1
+        },
+        "trades": {
+          "first_append_at": 1792087204.107822,
+          "gz_bytes": 117257,
+          "last_append_at": 1792090789.5914204,
+          "record_envelopes": 453,
+          "segments": 1
+        },
+        "trades_btc15m": {
+          "first_append_at": 1792087200.1164763,
+          "gz_bytes": 4151760,
+          "last_append_at": 1792090799.5914733,
+          "record_envelopes": 1161,
+          "segments": 6
+        }
+      },
+      "sealed_only": true,
+      "segment_hash_basis": "index_metadata_computed_at_seal_not_rechecked",
+      "segment_hashes_reverified": false,
+      "session": "6196abf087e64f069778dfb2addee131",
+      "session_started_at": 1791995887.7187006,
+      "source": "saved_hourly_manifest",
+      "status": "available",
+      "storage": {
+        "cap_bytes": 4831838208,
+        "deleted_segments": 0,
+        "level": 0,
+        "used_bytes": 565164444
+      },
+      "trade_receive_lag_s": {
+        "p50": 3.709,
+        "p95": 7.28,
+        "p99": 8.3
+      }
+    }
+  },
+  "limits": [
+    "Recorder report is12:00PM Pacific for11:00AM-12:00PM; not current raw disk inspection.",
+    "Reported storage used/retentioncap is not filesystem free capacity.",
+    "Recorder declares coverage_certified=false, per_venue_spot_ticks_verified=false; summary does not certify raw segment completeness.",
+    "Existing3:45PM Pacific checkpoint and preOctober20storage review remain due; no service, retention or schedule change."
+  ]
+}

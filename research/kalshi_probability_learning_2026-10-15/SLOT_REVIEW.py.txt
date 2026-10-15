@@ -1,0 +1,118 @@
+"""Independent fixed-slot forecast review from saved originals only."""
+from __future__ import annotations
+import hashlib
+import json
+import math
+from datetime import UTC,datetime
+from pathlib import Path
+from statistics import NormalDist
+
+import probability_restart_review as evidence
+from nightcrawler.kalshi_probability_learning import fingerprint
+from nightcrawler.speeddesk_model import fair_up
+
+def clock(value):
+    return datetime.strptime(value['current_time'],'%Y-%m-%d %H:%M:%S UTC').replace(tzinfo=UTC).timestamp()
+
+def main():
+    declaration=evidence.read('CAPTURE_DECLARATION.json')
+    plan=evidence.read('CAPTURE_QUERY_PLAN.json')
+    phase=next(x for x in plan['phases'] if x['name']=='slot')
+    originals={};queries=[]
+    for event in plan['events']:
+        name='CAPTURE_SLOT_'+event.upper()+'.native.json'
+        rows,query=evidence.native(name,event)
+        wrapper=evidence.read(name)
+        request=wrapper['request']
+        assert request['deploymentId']==declaration['deployment_id']
+        assert evidence.iso(request['startDate'])==evidence.iso(phase['start_utc'])
+        assert evidence.iso(request['endDate'])==evidence.iso(phase['end_utc'])
+        assert request['limit']==500
+        assert clock(wrapper['before'])>=evidence.iso(phase['end_utc'])
+        keys=[(row['timestamp'],json.dumps(row['payload'],sort_keys=True)) for row in rows]
+        assert len(keys)==len(set(keys))
+        originals[event]=rows;queries.append(query)
+    metadata=evidence.read('TARGET_METADATA.json')
+    request=evidence.read('PUBLIC_WINDOW_BOUNDED.request.json')
+    body=(evidence.EVIDENCE/'PUBLIC_WINDOW_BOUNDED.body').read_bytes()
+    evidence.used['PUBLIC_WINDOW_BOUNDED.body']=hashlib.sha256(body).hexdigest()
+    assert evidence.used['PUBLIC_WINDOW_BOUNDED.body']==request['body_sha256'] and request['http_status']==200
+    markets=json.loads(body)
+    assert not markets['cursor']
+    matches=[row for row in markets['markets'] if evidence.iso(row['open_time'])==declaration['start']
+             and evidence.iso(row['close_time'])==declaration['end']]
+    assert len(matches)==1
+    market=matches[0];target=market['ticker']
+    assert target==metadata['window'] and market['status']=='active' and market['result']==''
+    assert market['floor_strike']==metadata['floor_strike']
+    forecasts=originals['kalshi_probability_learning_forecast']
+    assert len(forecasts)==1
+    original=forecasts[0];f=original['payload']
+    assert f['window']==target and f['protocol']==declaration['learner_protocol']
+    assert f['source_fingerprint']==declaration['learner_fingerprint']==fingerprint()
+    assert f['mode']=='observe_only' and f['live_application'] is False and f['profitability_proven'] is False
+    assert all(type(f[k]) in (int,float) and math.isfinite(f[k]) for k in
+               ('at','spot','sigma','bitcoin_at','batch_at','opening','venue_start_price','p','q'))
+    elapsed=f['at']-declaration['start'];btc_age=f['at']-f['bitcoin_at'];batch_age=f['at']-f['batch_at']
+    assert 300<=elapsed<=305 and 0<=btc_age<=3 and 0<=batch_age<=3
+    assert f['opening']==f['venue_start_price']==market['floor_strike'] and f['opening']>0
+    assert f['terms'][:4]==[declaration['start'],declaration['end'],f['opening'],f['opening']]
+    assert f['terms'][-2:]==['kalshi','kalshi']
+    assert f['spot']>0 and f['sigma']>0
+    remaining=declaration['end']-f['at'];adjusted=remaining-39.5
+    # Independently expressed normal CDF; log(ratio) differs in rounding from log difference.
+    z=math.log(f['spot']/f['opening'])/(f['sigma']*math.sqrt(adjusted))
+    independent_p=NormalDist().cdf(z)
+    unchanged_p=fair_up(f['spot'],f['opening'],f['sigma'],remaining,settles_on_average=True)
+    assert math.isclose(independent_p,f['p'],rel_tol=0,abs_tol=1e-10)
+    assert unchanged_p==f['p']
+    assert f['bin']==min(9,int(f['p']*10))==0 and f['n']==f['wins']==0
+    independent_q=(f['wins']+20*f['p'])/(f['n']+20)
+    assert independent_q==f['q']==f['p']
+    assert not originals['kalshi_probability_learning_scored'] and not originals['kalshi_probability_learning_unknown']
+    assert not originals['kalshi_online_learning_forecast'] and not originals['kalshi_online_learning_scored']
+    v1=originals['kalshi_online_learning_unknown'];diagnostics=originals['kalshi_learning_input_diagnostic']
+    assert len(v1)==len(diagnostics)==1
+    v,d=v1[0]['payload'],diagnostics[0]['payload']
+    assert v['window']==d['window']==target and v['reason']==d['reason']=='pregap'
+    assert v['at']==d['at']==f['at'] and v['source_fingerprint']==declaration['v1_fingerprint']
+    assert d['first_effective_cause']['flags']['explicit_slug'] and d['last_effective_cause']['flags']['explicit_slug']
+    assert d['feed_ok'] is True and d['feed_status']==[True,True]
+    assert d['last_effective_cause']['parent_frame_sent_at']==f['batch_at']
+    assert math.isclose(d['input_facts']['bitcoin_age_s'],btc_age,abs_tol=1e-12)
+    assert evidence.iso(original['timestamp'])<declaration['end']
+    assert evidence.iso(request['after_utc'])<f['at']
+    statuses=originals['kalshi_probability_learning_status']
+    assert all(x['payload']['learning']['forecasts']==x['payload']['learning']['scored']==0 for x in statuses)
+    output={
+      'status':'Actual original prospective forecast accepted; official outcome and score still pending.',
+      'deployed_source':declaration['source_commit'],'deployment':declaration['deployment_id'],
+      'target':target,'start':declaration['start'],'end':declaration['end'],'tail_end':declaration['tail_end'],
+      'forecast_original':original,
+      'input_checks':{'elapsed_seconds':elapsed,'bitcoin_age_seconds':btc_age,'completed_batch_age_seconds':batch_age,
+                     'venue_strike_matches_public_original':True,'source_fingerprint_matches_reviewed_code':True,
+                     'source_identity_note':'Native request pins deployment; child source fingerprint pins reviewed observer/input code. No raw parent receive/complete tape exported.'},
+      'arithmetic':{'seconds_left':remaining,'average_adjusted_seconds':adjusted,'independent_z':z,
+                    'independent_normal_cdf_p':independent_p,'unchanged_fair_up_p':unchanged_p,'reported_p':f['p'],
+                    'independent_q':independent_q,'reported_q':f['q'],'bin':f['bin'],'prior_count':f['n'],'prior_wins':f['wins'],
+                    'meaning':'P(YES/up) about7.8267%; first untrained shadow q equals baseline p. Not observed accuracy.'},
+      'pre_outcome_timing':{'original_log_seconds_before_end':declaration['end']-evidence.iso(original['timestamp']),
+                            'public_active_empty_result_read':request['after_utc'],'raw_slot_score_count':0,
+                            'no_score_claim':True},
+      'public_metadata':{'ticker':target,'open_time':market['open_time'],'close_time':market['close_time'],
+                         'status':market['status'],'result':market['result'],'floor_strike':market['floor_strike'],
+                         'rules_primary':market['rules_primary'],'rules_secondary':market['rules_secondary']},
+      'V1_original':v1[0],'V1_diagnostic_original':diagnostics[0],
+      'v1_interpretation':'Same slot remains legitimate V1 pregap; effective explicit slug observed with composite flags healthy. Producer cause/occurrence still unavailable, so no quiet-expiry attribution to this runtime window.',
+      'status_receipt_limit':'Four slot V2 statuses precede forecast and show0forecast0score/1startup exclusion. They cannot substitute for a postforecast status; original forecast is independent evidence.',
+      'queries':queries,'native_sha256':evidence.used,
+      'limitations':['Twelve fixed closed-bound requests uncapped/no reported errors; no full feed/account/native ledger coverage certificate.',
+                    'Strict input age and current source qualification verified from frozen original fields; underlying3600second sigma tape and complete raw batch stream were not exported.',
+                    'Model consumes Coinbase while settlement uses BRTI average; public contract metadata does not eliminate basis risk.',
+                    'A future official score must retain this identical frozen payload and independently match final public result; no early correctness/calibration/P&L inference.',
+                    'No source edits, production queries, window changes or tail extensions by reviewer.']}
+    Path('/workspace/probability-slot-independent.json').write_text(json.dumps(output,indent=2)+'\n')
+    print(json.dumps({'receipt':'/workspace/probability-slot-independent.json','elapsed':elapsed,'bitcoin_age':btc_age,
+                      'batch_age':batch_age,'p':f['p'],'independent_p':independent_p,'queries':len(queries)}))
+
+if __name__=='__main__':main()

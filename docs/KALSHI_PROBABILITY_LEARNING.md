@@ -1,6 +1,6 @@
 # Prospective probability-only learner: V2
 
-Frozen design October 15, 2026, 11:53 AM Pacific. Status: implementation and exact independent/full checks complete at 12:09 PM Pacific; release and runtime forecast/score proof pending. This new observer answers whether the existing conditional fair-value probabilities calibrate to official outcomes. It does not repair or certify upstream feed continuity, reproduce executable trades, establish P&L, or change live decisions.
+Frozen design October 15, 2026, 11:53 AM Pacific. Status: deployed and first prospective forecast/official score independently verified October 15 at 12:53 PM Pacific; see [release evidence and limitations](../research/kalshi_probability_learning_2026-10-15/RELEASE.md). One sample shows no accuracy or profitability advantage; V1 and live decisions are unchanged. This new observer answers whether the existing conditional fair-value probabilities calibrate to official outcomes. It does not repair or certify upstream feed continuity, reproduce executable trades, establish P&L, or change live decisions.
 
 ## Why a separate observer
 
