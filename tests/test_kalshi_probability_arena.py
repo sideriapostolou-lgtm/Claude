@@ -163,9 +163,12 @@ def test_frozen_v2_survives_restart_and_does_not_migrate_v1(tmp_path: Path) -> N
     assert restored.learning_probability.counts["scored"] == 1
     saved = restored.state(1900)
     del saved["learning_probability"]
+    del saved["learning_probability_epochs"]
     restored.path.write_text(json.dumps(saved))
     fresh = KalshiArena(town.config, lambda: view, clock=lambda: clock[0])
-    assert fresh.learning_probability.enabled and fresh.learning_probability.counts["scored"] == 0
+    # A loaded checkpoint with missing probability history is not a fresh install.
+    assert not fresh.learning_probability.enabled
+    assert fresh.panel(1900)["learning_probability"] is None
     assert fresh.learning.state() == restored.learning.state()
 
 

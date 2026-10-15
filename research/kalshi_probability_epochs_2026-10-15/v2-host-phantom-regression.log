@@ -1,0 +1,12 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_ test_validation_cannot_emit_phantom_unknown_receipts_but_real_restart_emits_once _
+tests/test_kalshi_probability_epochs.py:542: in test_validation_cannot_emit_phantom_unknown_receipts_but_real_restart_emits_once
+    assert not [r for r in caplog.records if r.message.startswith("kalshi_probability_learning_unknown ")]
+E   assert not [<LogRecord: nightcrawler.kalshi_probability_learning, 20, /workspace/nightcrawler-probability-epochs/src/nightcrawler...tcrawler-probability-epochs/src/nightcrawler/kalshi_probability_learning.py, 117, "kalshi_probability_learning_%s %s">]
+------------------------------ Captured log call -------------------------------
+INFO     nightcrawler.kalshi_probability_learning:kalshi_probability_learning.py:117 kalshi_probability_learning_unknown {"at":1100,"mode":"observe_only","live_application":false,"profitability_proven":false,"protocol":"kalshi-probability-calibration-v2-h300-g5-b10-prior20","source_fingerprint":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","window":"KXBTC15M-1000","reason":"startup_inside"}
+INFO     nightcrawler.kalshi_probability_learning:kalshi_probability_learning.py:117 kalshi_probability_learning_unknown {"at":1100,"mode":"observe_only","live_application":false,"profitability_proven":false,"protocol":"kalshi-probability-calibration-v2-h300-g5-b10-prior20","source_fingerprint":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","window":"KXBTC15M-1000","reason":"startup_inside"}
+=========================== short test summary info ============================
+FAILED tests/test_kalshi_probability_epochs.py::test_validation_cannot_emit_phantom_unknown_receipts_but_real_restart_emits_once
+1 failed, 51 deselected in 0.21s

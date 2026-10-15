@@ -20,7 +20,7 @@ log = logging.getLogger("nightcrawler.kalshi_probability_learning")
 PROTOCOL = "kalshi-probability-calibration-v2-h300-g5-b10-prior20"
 HORIZON, GRACE, BINS, PRIOR = 300, 5, 10, 20
 MAX_PENDING, MAX_RECENT, MAX_LABELS = 32, 64, 4096
-SOURCE_FILES = ("kalshi_probability_learning.py", "speeddesk_model.py", "speeddesk_feeds.py",
+SOURCE_FILES = ("kalshi_probability_learning.py", "kalshi_probability_epochs.py", "speeddesk_model.py", "speeddesk_feeds.py",
                 "speeddesk_kalshi.py", "speeddesk_kalshi_ws.py", "speeddesk_venues.py",
                 "speeddesk.py", "kalshi_arena.py")
 LABEL_TIMEOUT = 7200
