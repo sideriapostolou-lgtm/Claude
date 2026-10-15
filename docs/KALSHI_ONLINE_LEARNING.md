@@ -16,6 +16,8 @@ These dated counts are evidence timestamps, not a continuously updated dashboard
 excluded for pre-forecast feed gaps, plus one startup partial. The learner is running but has no usable
 training observations yet; the data path needs diagnosis. [Original observations and limits](../research/kalshi_online_learning_2026-10-15/OBSERVATION_2026-10-15_0812_PDT.json).
 
+**Forward diagnostic, October 15 at 10:35 AM PDT:** PR62's unchanged-V1 diagnostic joins the target rejection to explicit window-gap messages. Aggregate trade/Coinbase flags are true and the forecast-time BTC input is 0.245 seconds old, but earlier pregap is retained. The upstream branch and producer clock remain unavailable. At **10:45:18 AM**, counts are still **0 forecasts / 0 scored / 16 unknown**, null Brier scores. The fixed real window separately earns $0.11; that is not learned predictive skill. [Originals, losses and remaining cause evidence](../research/kalshi_input_causes_2026-10-15/RELEASE_CAPTURE.md).
+
 ## What already learns
 
 The live fair-value model uses current Bitcoin prices and rolling volatility. Its volatility input changes

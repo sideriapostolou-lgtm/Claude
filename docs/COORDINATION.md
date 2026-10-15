@@ -44,6 +44,7 @@ Check this queue at task start and before declaring current work complete. Keep 
 move an item to done only with linked evidence. Blocked or waiting-for-approval is not complete.
 
 ### EXEC-DELAY-001 — first task active; production attribution and verified fix pending
+- **10:50 AM PDT October15:** PR62 fixed10:30–10:45/tail10:47 capture closed on exactff05/c64; target2makerfills+$0.11locked/0fees, priorpartial−$0.2965retained, nexttailfills excluded. Unique childdiagnostic+receipt shows explicit-slugpregap with aggregateflagshealthy andBTCage0.244647s; upstreamreason/parentFIFOunknown. Learner0forecasts/0scored/16unknown, EXECOPEN. Lastfixedaccountstale retained; separate10:47:13originalLIVE/auth/fresh, cash30.7739/cumulative−19.1275/day−4.6804/capsunchanged. Nextsmallproducerbranch/timecontext requires throughput/partialsend checks; designonly. [Exact capture and limits](../research/kalshi_input_causes_2026-10-15/RELEASE_CAPTURE.md).
 - **10:27 AM PDT October 15:** PR62 exactff05beb/c64SUCCESS10:22:53AM; first full diagnostic window10:30–10:45AM/tail10:47, declaredbeforestart with184s rootverificationmargin. Source/protectedhistory checked;67selectedrestartfields exact and3usedcontrols ignored. Runtimecause/probability/EXECevidence stillpending; no all-fixed/profitclaim. [Frozen futurecapture](../research/kalshi_input_causes_2026-10-15/CAPTURE_DECLARATION.md).
 - **10:16 AM PDT October 15:** child-only cause diagnostic now independently checked (5744passed/14existing skips, mypy128/Ruff5, exact corrected patch/source and local resource envelope). Safe-minute release/exact deployment and fixed future-window cause evidence remain pending. No actual upstream-cause fix, usable forecast, better trading result or full EXEC closure claimed. [Preparation/originals/limits](../research/kalshi_input_causes_2026-10-15/PREPARATION.md).
 - **9:24 AM PDT October15:** PR61 exact153a122/e641 SUCCESS8:57:51AM; owner-approved fresh$10total resume,
@@ -207,6 +208,7 @@ move an item to done only with linked evidence. Blocked or waiting-for-approval 
   while the first remains open. TJR's separate authentic-data blocker and recorder duties persist.
 
 ### KALSHI-ONLINE-001 — implementation/release verified; prospective accuracy evidence pending
+- **10:50 AM PDT October15:** exact PR62 original10:35AM slot is unknown/pregap, unique identity-qualified join; observed explicit-sluggaps despite true aggregateflags/fresh BTC. Original10:45:18AM remains0forecasts/0scored/16unknown/Briernull, observe-only. V1 preserved, no backfill or relaxed admission. Bounded diagnostic release/capture complete, actual learning and EXEC incomplete; upstreamcause requires next separately reviewedmeasurement. [Originals and limitations](../research/kalshi_input_causes_2026-10-15/RELEASE_CAPTURE.md).
 - **9:24 AM PDT October15:** chronology correction PR61 deployed/tested5695pass/14existing skips,mypy128/Ruff2;
   observer remains enabled/observe-only. 9:05AM still excludespregap:0forecasts/0scored/10unknown(1startup9pregap),
   Briernull; oldhistory retained. Bounded source release/restart verification is separate from unfinished actual
@@ -262,6 +264,7 @@ move an item to done only with linked evidence. Blocked or waiting-for-approval 
   Recorder feasibility3:45PM today/storage beforeOct20 remain obligations; no production settings change.
 
 ### TJR-MNQ-001 — validation tooling complete; historical run blocked on data; paper/live disabled
+- **10:50 AM PDT October15:** latest connected-GitHub instructions/queue/worklog and exact branch962d rechecked; PR47 separately complete, current EXEC/learner evidence stillOPEN despite PR62 boundedcapture completion. Prior offlinepriority retained; authentic MNQdevelopmentbars/costs absent, historicaltrades0/P&Lnull/holdoutunopened/papernotstarted/liveoff. Existing savedimplementation/tests retained; no duplicatedresearch or routineunchangedalert/automationchange. Remainsunfinished; [current active evidence/next step](../research/kalshi_input_causes_2026-10-15/RELEASE_CAPTURE.md).
 - **10:17 AM PDT October 15 reminder:** fresh connected-GitHub instructions/current records at3ce8a0b plus PR47 live metadata and pinned exact deployment evidence confirm PR47 separately complete. Current EXEC/learning evidence is OPEN and local diagnostic release is pending; neither preparation nor a merged PR clears it. Prior offline priority retained but authentic MNQ development bars/account costs remain missing: historicaltrades0/P&Lnull, holdout unopened, paper not started/live disabled. No duplicate Pages/data/tests, unchanged routine notification suppressed; automation left unchanged; item unfinished. [Receipt/next input](../research/tjr_validation_2026-10-14/FOLLOWUP_2026-10-15_1017_PDT.json). No authority inferred from this reminder.
 - **9:19 AM PDT October15 reminder, checked 9:24 AM PDT:** connectedGitHub exact153a122 instructions/newestrecords
   matchGitblobs. PR47release/restart separatelycomplete; currentEXEC/learningevidence remainsopen.
@@ -505,6 +508,13 @@ move an item to done only with linked evidence. Blocked or waiting-for-approval 
   this item. No production, financial or credential-copy work is needed; chat delegation stays usable.
 
 ## Inbox (newest first)
+
+### 2026-10-15 17:51 UTC, Codex -> owner / workers: PR62 capture independently audited (10:51 AM PDT)
+
+Completed the fixed 10:30–10:45 AM /10:47 tail on exact ff05beb/c64. The actual child rejection joins explicit-slug gaps to V1 pregap; aggregate flags and due BTC are healthy, but upstream reason/producer clock/FIFO remain unknown. Original10:45:18 learner stays0forecasts/0scored/16unknown. Independent original reparse agrees: target two maker fills +$0.11locked/0fees; prior −$0.2965 retained and next tail fills excluded. This is not a profitable strategy or EXEC completion.
+
+[Originals, release/capture and remaining limits](../research/kalshi_input_causes_2026-10-15/RELEASE_CAPTURE.md). Separate10:47:13 readiness original verifies LIVE/auth/trading; cash$30.7739/cumulative−$19.1275, caps/stops/history unchanged. The stale10:46:05 row is retained. No source/settings/order/schedule change during capture. Next measurement needs small exact producer branch/event/time context with throughput/partial-send bounds, not the broad unimplemented draft. Root owns integration. Keep EXEC/learner and TJR blockers open, recorder3:45PM checkpoint, private handoff outside Git.
+
 
 ### 2026-10-15 17:27 UTC, Codex -> workers: PR62 deployed; fixed10:30–10:45AM Pacific diagnostic capture (10:27 AM PDT October 15)
 - Exact `ff05beb654095ce91fefe24adfb2a94eea22be39` /Railway `c64e8199-4ce2-4234-ac53-63905e22231d`, SUCCESS10:22:53AM; normalPolymarketLIVE10 original10:22:49AM. Rootcompletedverification10:26:56AM: activeexactsource, bothservicesonline; recorder8453unchanged. Newsource/tests/build equal checkedcandidate61b9198; no new financial policy.

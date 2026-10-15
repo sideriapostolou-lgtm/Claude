@@ -1,0 +1,241 @@
+{
+  "document_status": "Prospective design only; not implementation approval, selected final correction, or proof of upstream cause.",
+  "scope": "Read-only source/design follow-up; no source/test/repo writes, production queries, trading or financial changes.",
+  "source_commit": "962d887cc79e15fa6660f74a9d75bb148d4adbb5",
+  "source_sha256": {
+    "src/nightcrawler/speeddesk.py": "79a8ad7fc10879035297e2af4d87af1bff758b4f89c2adae3464fe812235477d",
+    "src/nightcrawler/speeddesk_venues.py": "54f0c2eaea909621f24734d8cd73cdd46f2ea711d885269b6892c564bc9dff51",
+    "src/nightcrawler/speeddesk_kalshi.py": "53727b3d3f2ec6790469d53d8fb330f7501ad1838c558c887ea95c54840d8f82",
+    "src/nightcrawler/speeddesk_kalshi_ws.py": "d76e9dfa6a026f796f11503642a373a5a0f2799da8dabadf078c565591f82112",
+    "src/nightcrawler/kalshi_arena.py": "091ea297b1fed8973be3c78e74184e6ea71fa8f36e808e67449f433c88d19a0e",
+    "src/nightcrawler/kalshi_online_learning.py": "16a14ff7d8bb933d4eb8e4251d0fdcf943c81e6f8c6f8f1720ced3d5e14f5fa8"
+  },
+  "root_supplied_actual_target": {
+    "window": "KXBTC15M-26OCT151345-45",
+    "advance_utc": "2026-10-15T17:35:00.117887Z",
+    "disposition": "unknown",
+    "reason": "pregap",
+    "first_effective_utc": "2026-10-15T17:30:00.700413Z",
+    "last_effective_utc": "2026-10-15T17:34:56.826439Z",
+    "flags": "explicit_slug only; trade_stream=true and coinbase=true",
+    "due_bitcoin_age_s": 0.244647,
+    "spot_valid": true,
+    "sigma_valid": true,
+    "evidence_authority": "Facts supplied by root as uniquely joined original with all identities true; worker did not query production or independently reread private originals.",
+    "inference": "Explicit active-window membership is established as child-side V1 exclusion input. Quiet-maker expiry, lost source, transport change, metadata change, REST error and queue timing remain upstream hypotheses."
+  },
+  "smallest_useful_question": "For each actual child first/last effective explicit_slug observation, identify exactly which producer status instance supplied that slug, whether the router added it, and when that same immutable event entered/exited the parent FIFO and was received/applied in the child.",
+  "semantic_contract": [
+    "Leave pure learner/fair model, fingerprint, V1 protocol/history/state/counters/receipts/admission/horizon/save cadence unchanged; no relabel/backfill.",
+    "The existing g first four fields, gap_windows list content and order, both booleans, callback order, and parent event FIFO order stay exactly the same. No extra g event, no skipped/replaced/coalesced g, no prioritization over queued books/trades, and no changed producer eligibility predicate.",
+    "Metadata is never an input to cancellation, risk, orders, maker availability, labels, terms, forecast eligibility, child effective-time choice, drop counters or learner disable paths. Invalid/missing metadata means unknown observation only.",
+    "Preserve existing clock calls used by decisions and existing evaluation order. Additional observation clocks are separately named and never substituted for existing application clocks. Do not call fresh_books/maker computations again to reconstruct a reason.",
+    "Do not add metadata keys to status dicts delivered to existing live callbacks/heartbeats/persisted outputs; use a separate observation call-scope carrier or explicit separate observer callback.",
+    "Exact physical runtime invariance is impossible to promise: metadata construction, bytes, decoding and logging consume time/resources and can alter near-deadline timing or socket backpressure. Require deterministic logical equivalence under matched fake clocks plus measured latency/pressure bounds; do not claim every real-time decision identical under every schedule."
+  ],
+  "source_correlation_breaks": [
+    {
+      "site": "producer WS membership computation",
+      "refs": [
+        "src/nightcrawler/speeddesk_kalshi_ws.py:323-338"
+      ],
+      "loss": "Distinct invalidate-all, old-fresh book disappearance and maker membership disappearance collapse into the same explicit slug list; ws_status default reason does not distinguish all predicates."
+    },
+    {
+      "site": "Kalshi adapter explicit gap publication",
+      "refs": [
+        "src/nightcrawler/speeddesk_kalshi.py:194-211",
+        "src/nightcrawler/speeddesk_kalshi.py:246-255",
+        "src/nightcrawler/speeddesk_kalshi.py:285-287",
+        "src/nightcrawler/speeddesk_kalshi.py:328-331"
+      ],
+      "loss": "WS gaps, source transport transition, metadata transition/failure, REST book/tape failure all become status gap_windows."
+    },
+    {
+      "site": "venue router",
+      "refs": [
+        "src/nightcrawler/speeddesk_venues.py:27-41"
+      ],
+      "loss": "Router unions producer explicit slugs with all venue windows on per-adapter stream true-to-false, while trade_stream becomes any-venue aggregate."
+    },
+    {
+      "site": "runner and ArenaLink",
+      "refs": [
+        "src/nightcrawler/speeddesk.py:321-345",
+        "src/nightcrawler/kalshi_arena.py:613-625"
+      ],
+      "loss": "Full status -> only slug tuple/two booleans. Status has no unique observation ID/producer occurrence. The event then enters an already bounded FIFO."
+    },
+    {
+      "site": "parent frame/child",
+      "refs": [
+        "src/nightcrawler/kalshi_arena.py:691-743",
+        "src/nightcrawler/kalshi_arena.py:748-779",
+        "src/nightcrawler/kalshi_arena.py:1333-1367",
+        "src/nightcrawler/kalshi_arena.py:1492-1495"
+      ],
+      "loss": "Frame seq/timestamp is not a per-status occurrence or producer ID; several g records can share a frame and identical flags. Existing child first/last diagnostic lacks per-record ordinal."
+    }
+  ],
+  "minimum_logical_schema": {
+    "version": 1,
+    "event_identity": {
+      "parent_observer_instance": "24 lowercase hex chars, generated once per parent process; observational only",
+      "producer_status_seq": "nonnegative int<=2^63-1, increments per producer status publication in that process; new process/new epoch prevents reuse",
+      "aggregate_status_seq": "nonnegative int<=2^63-1, each router callback; preserves same producer identity through router; direct/uninstrumented callbacks use null",
+      "link_epoch": "nonnegative bounded counter changes on new child/link lifecycle; observational only",
+      "frame_seq": "existing batch seq",
+      "record_ordinal": "index in actual encoded items list, including w/k/m/o records; not g-only ordinal guessed before outcomes are inserted",
+      "child_instance": "existing child diagnostic instance/PID/source hash; parent->child identity externally joined via exact deployment/spawn evidence, or an init-only common kernel process birth identity if byte-identical-wire map option requires it"
+    },
+    "clocks": {
+      "producer_status_at_wall": "observed callback publication time; this is status occurrence, NOT exchange gap/expiry time",
+      "producer_status_at_mono": "same-parent monotonic observation; optional unavailable if not captured",
+      "aggregate_received_at_mono": "router/runner observer boundary, after existing invalidation/cancel work if preserving critical callback priority; label exact point",
+      "fifo_enqueued_at_mono": "immediately adjacent to successful existing append; queued=false/null if original event dropped/notrunning",
+      "fifo_dequeued_at_mono": "adjacent to actual original pop during encode; no speculative sampling at flush start",
+      "frame_stamp_wall": "unchanged existing now sampled at _flush start; keep current meaning even if named parent_frame_sent_at in old diagnostic",
+      "frame_encode_started_mono": "optional new observation; includes no earlier FIFO residence",
+      "socket_first_attempt_mono": "optional, sampled adjacent to existing send; completion is null unless actually observed without extra sends",
+      "child_receive_wall": "existing receive() clock after decode, not socket arrival",
+      "child_apply_wall": "existing gap apply/effective clock, still authoritative for V1 admission",
+      "underlying_source_occurrence": "null unless a distinct valid source event timestamp exists; never invent it from producer callback, frame stamp or book/trade ages"
+    },
+    "reason_flags": "Fixed bitset preserving simultaneous observed branches; no single guessed root-cause string.",
+    "allowed_reason_flags": [
+      "ws_invalidate_all",
+      "ws_book_membership_lost",
+      "ws_maker_membership_lost",
+      "ws_timestamp_unproven",
+      "adapter_transport_changed",
+      "adapter_window_set_changed",
+      "adapter_metadata_failed",
+      "rest_book_failed",
+      "rest_tape_failed_or_incomplete",
+      "adapter_stopped",
+      "router_adapter_stream_fell",
+      "router_explicit_slug_propagated",
+      "unknown_context"
+    ],
+    "window_facts": "For at most32 tracked KXBTC15M slugs<=128chars: booleans before/after member of existing ws_books/ws_maker sets and producer explicit gap set/router-added set; existing adapter stream flag; transport enum rest/ws/unknown; existing connected flag; finite sampled local/source book and last accepted trade ages; age_sample_at named separately. Facts are observed predicates, not proof of quiet market versus missing upstream trades.",
+    "aggregate_facts": "Fixed bool flags aggregate_trade_stream,coinbase_connected,kalshi_adapter_stream; no arbitrary all-venue dict copies.",
+    "coverage_flags": [
+      "context_present",
+      "context_absent",
+      "context_invalid",
+      "context_budget_omitted",
+      "producer_uninstrumented",
+      "router_uninstrumented",
+      "identity_ambiguous",
+      "clock_invalid_or_reversed",
+      "restart_history_unavailable"
+    ],
+    "validation": "Only exact primitive types; no bool-as-int clocks/counters; finite clocks within declared numeric range; nonnegative differences only when ordered. Missing, reversed, overflow, wrap or mismatched identity -> null/unknown, never clamp. Fixed lengths/counts/byte budget before accepting metadata; never reject valid g because metadata is malformed."
+  },
+  "producer_carrier": {
+    "preferred": "Separate observation-only call-scope context (e.g. task/thread-local ContextVar with try/finally token reset) around existing synchronous callback chain, or an explicit separate optional observer callback. Preserve existing callback positional args/status dict exactly.",
+    "why": "A private extra status dict key would reach speeddesk._live_call(on_status,status) and possibly existing reports, violating strict unchanged-output scope.",
+    "capture_point": "Capture fixed reason bits at the branch that computed original gap, using already-computed sets/locals; at router add separate router_explicit/router_falling masks without replacing original status.",
+    "constraints": "No awaits, thread hops, I/O, logging or recomputation inside the carrier. Context absent in uninstrumented paths is normal unknown. Nested callbacks must restore prior context; asyncio task inheritance and thread isolation must be tested. Preserve before-await invalidation ordering at WS disconnect.",
+    "refs": [
+      "src/nightcrawler/speeddesk_kalshi_ws.py:359-366",
+      "src/nightcrawler/speeddesk_venues.py:27-41",
+      "src/nightcrawler/speeddesk.py:321-345"
+    ]
+  },
+  "transport_options": [
+    {
+      "name": "Optional fifth g metadata payload",
+      "shape": "(\"g\", original_slugs, original_trade_bool, original_coinbase_bool, optional_validated_context_tuple)",
+      "fit": "Smallest complete end-to-end link from exact producer status through existing FIFO to the child first/last observation, with one original queue entry and no second event transport.",
+      "compatibility": "Current child reads only record[1:4] and ignores trailing fields, so an older child ignores the optional fifth field. New child accepts original4-field form. This is still a wire-shape extension requiring explicit separate scope/review; first-four-field semantics remain V1.",
+      "implementation_boundary": "Copy fixed immutable metadata once into the existing g item at append; at actual encode annotate only observation-specific dequeue/frame facts without changing original event order. Child validates/sanitizes metadata in an isolated guard, attaches it to private inbox observation context, and invokes unchanged learner gap with the same existing apply clock/args. Never change calls to gap/degrade or route producer occurrence into learner time.",
+      "bounds": "Proposed context wire atom<=2048bytes; <=128 outstanding metadata atoms and <=256KiB outstanding payload budget, counted across pending/current encoded frame/partial out until send completion. Original g still enqueues unchanged when metadata budget is exhausted; omission is unknown, never a new dropped feed. No extra queue entries and no g coalescing. Worst extra encoded bytes remain budgeted; release metadata credit on original drop,successful complete send,linkclose or process exit.",
+      "risks": [
+        "Larger frames can increase marshal/decode CPU and socket pressure, change partial-send behavior, and move clock-sensitive windows. Measure; do not assert exact physical equality.",
+        "Credit accounting across _encode/_send partial out must not leak or alter original drop/put counts.",
+        "If context is absent/budgeted away, causal coverage is unknown. It must not be rescued by nearest-in-time producer logs."
+      ],
+      "refs": [
+        "src/nightcrawler/kalshi_arena.py:613-625",
+        "src/nightcrawler/kalshi_arena.py:748-779",
+        "src/nightcrawler/kalshi_arena.py:1366-1367"
+      ]
+    },
+    {
+      "name": "Parent map keyed by actual batch seq and record ordinal; original g bytes unchanged",
+      "shape": "Parent observer records context keyed (link_epoch,frame_seq,record_ordinal); child adds that ordinal to existing first/last diagnostic. Export map through bounded separate observer output after critical work.",
+      "fit": "Preserves original g wire and frame byte payloads. Avoids additional bytes on market-event socket, but requires parent observer state/export and a new child diagnostic ordinal.",
+      "exactness_requirements": [
+        "The index must reflect the final encoded items sequence: _flush inserts outcomes at outcome_index after _encode; an ordinal captured during pop needs adjustment using actual item reference or assigned only after insert. Do not guess from queue position.",
+        "Map needs parent/link/child epoch identity; batchseq and PID alone can repeat after process restart. Exact common process birth identity can be init-only (Linux childPID+PIDnamespace+process-startticks), otherwise external exact deployment/spawn join must prove unique instance or mark unknown. No env credentials.",
+        "Existing child frame seq alone is insufficient if repeated identical g records occur in one batch. The exact actual record ordinal must be logged by child without changing learner args.",
+        "Parent map cannot know which queued producer event the child will later call first-effective across a start boundary. Retain/export all bounded mapped candidates; if overflowed/expired, mark corresponding joins unavailable."
+      ],
+      "bounds": "Proposed128 map entries,256KiB total;64 final records per8KiB chunk only if actual serialized bytes fit,otherwise fewer;<=32 chunks/window/instance. Record max age120s would lose producer->slot joins across a5min preforecast period unless exported before expiry; therefore export bounded mappings at frame completion or use a predeclared >=360s retention with explicit overflow. Never make feed wait for export.",
+      "risks": [
+        "A bounded map can lose exact correlation before slot emission; unknown loss must remain explicit.",
+        "Exporting one record per g is forbidden/per-gap overhead; bounded batched chunks still add parent logger work and must have a hard rate/bytes cap with omission counters.",
+        "Adding observation bookkeeping inside CPU-budgeted _encode can change frame slicing even with identical g bytes. Put nonessential map finalization after existing encode/send work and measure overhead.",
+        "A separate asynchronous writer/sidecar adds lifecycle/failure complexity and is a larger scope; not an implied recommendation."
+      ],
+      "refs": [
+        "src/nightcrawler/kalshi_arena.py:723-743",
+        "src/nightcrawler/kalshi_arena.py:748-779",
+        "src/nightcrawler/kalshi_arena.py:1335-1338",
+        "src/nightcrawler/kalshi_arena.py:1354-1367"
+      ]
+    },
+    {
+      "name": "Independent context channel/socket",
+      "shape": "Dedicated bounded lossy observer channel for producer+frame mappings; do not insert new records into existing market FIFO.",
+      "fit": "Keeps existing g bytes unchanged and isolates context bytes from market socket, but requires separate transport/lifecycle/export and exact event keys.",
+      "risks": [
+        "Channel reorder/loss/independent backpressure; context may arrive after slot. Never delay learner emission awaiting it or revise old receipts.",
+        "If IDs are not carried in g, still needs exact parent(frame_seq,record_ordinal) mapping and child ordinal as above. A hash of identical flags/slugs is not unique.",
+        "Sending separate context records on the SAME existing FIFO is not independent: adds queue slots/bytes,changes overflow and can induce sequence failures; reject that variant under strict semantic-preservation scope.",
+        "Extra FDs/tasks/processes/threads,logger scheduling and memory expand parent-loop risk and verification scope."
+      ],
+      "recommendation": "Not the smallest first candidate."
+    }
+  ],
+  "conditional_recommendation": {
+    "preferred_if_wire_shape_extension_allowed": "Optional bounded fifth g context is the smallest exact join, with capability-tolerant old/new decoding and hard outstanding metadata budget. It needs a separately authorized parent/producer observation patch, full equivalence tests, independent money-sensitive review and measured loop/socket overhead.",
+    "preferred_if_g_bytes_must_stay_identical": "Use bounded parent frame+final-record-index map and child diagnostic ordinal. Explicitly accept incomplete correlation if map/export budget drops context; design common lifecycle identity before claiming unique joins.",
+    "not_recommended": "Do not infer upstream cause from ws_status strings nearest the target time, replace V1 feed rules now, add a second g event, or silently introduce an asynchronous logger/sidecar.",
+    "decision_boundary": "Root must choose wire-shape extension versus byte-identical transport requirement. Neither design is approved implementation, a correction of the measured exclusion, or proof of profit/execution improvement."
+  },
+  "acceptance_tests": [
+    "Deterministic paired runs observeroff/on with matched fake clock read sequence: exact existing status dicts/callback order,original g firstfour fields/FIFO order,books/trades/labels,live/practice decisions and serialized state,learner counters/receipts/fingerprint/protocol,save/fsync cadence. No optional metadata affects money code.",
+    "Compare sourceproducer fields from actual branch locals: ws maker loss with fresh books vs book freshness loss vs invalidation; transport change; metadata change; REST book/tape error; quiet successful poll; router explicit versus falling-edge injection; simultaneous reasons. Assert observation truth without altering predicates.",
+    "Same status tuple repeated within a frame and across frames, several producer callbacks before flush, outcomes inserted before queued events, budget slices/backpressure/partial sends. Join by exact finalized record index, not tuple hash or timestamp proximity.",
+    "Produced/received before start but child applied after start; actual current V1 pregap stays unchanged. Recovered status in same or later batch retains first exclusion. Do not reinterpret producer occurrence as effective learner time.",
+    "Postforecast/postend gaps, early terms/label termination, late-first-pass, conflicting/out-of-order outcomes. No new historical relabel or extra slot emission.",
+    "Producer/router/parent/child restart independently, processPID/frameSeq reuse, old snapshot/pregap, contextwrap, mixed old/new g formats; missing/ambiguous instance -> unknown; no history reconstruction.",
+    "Metadata absent,invalidversion,wrong types,bool-as-int,NaN/Inf,oversize strings/tuples,too many window facts,unknown enums,clockreversal/skew/overflow,contexts observed after deadline. Original valid g always applies unchanged; no learner disable or transport failure due optional metadata.",
+    "Saturate original PENDING_MAX,contextbudget,reader/socketbudget,partial-out close/crash. Same original put/drop accounting under fakeclock/same socketbehavior; context omitted instead of feed modified; memorycredits never leak; no waits or per-gap logs.",
+    "Logging/encoding/carrier/map observers throw before/after write,first event of multi-event batch; one attempted slot cannot duplicate or be backfilled at score. ContextVar token reset under nested callback/task/thread exceptions.",
+    "Privacy scan emitted JSON/serialized metadata and sources: no keys,headers,APIpayloads,account/order/position/financial values,unbounded error strings,filepaths or fullstatus snapshots. Only whitelisted public ticker,booleans,age/timing/IDs/hash/enum fields.",
+    "Benchmark actual producer callback,router,on_status,arena enqueue/flush and child step at realistic and max gaprates/deepbooks; interleaved observeroff/on wall+CPU,p50/p95/p99/max,allocated/retained bytes,frame/socket bytes,blocked/sliced/dropcounts,eventsize/lograte. Preserve threshold/reasoning before measuring and retain failedruns; no production latency claim from offline benchmark."
+  ],
+  "proposed_resource_gates_not_yet_validated": {
+    "metadata_atom_bytes_max": 2048,
+    "outstanding_atoms_max": 128,
+    "outstanding_metadata_bytes_max": 262144,
+    "tracked_window_facts_max": 32,
+    "child_pending_first_last_pairs_max": 32,
+    "diagnostic_json_bytes_max": 8192,
+    "logging": "No per-gap logs. Keep one child slot summary/window. Any parent-map export separately bounded by bytes,chunk count and rate; saturation means unknown coverage.",
+    "parent_hot_path": "No network/files/fsync/locks/awaits and no extra resident work. Counter and bounded immutable copy only; preserve existing cancellation/invalidation before nonessential observer work.",
+    "clock_tests": "Observe added monotonic clocks without replacing existing decision clocks. Cross-process monotonic subtraction only if commonclockdomain proved; otherwise use sameparent monotonic forFIFO and validatedwall forframe/child,or null.",
+    "limits": "These are prospective design ceilings, not measured passed gates. Addedbytes change pressure; exact real-time equivalence cannot be certified merely by passing fakeclock tests."
+  },
+  "open_questions_before_implementation": [
+    "Whether the next patch may extend g shape (firstfour unchanged) or must preserve every wirebyte.",
+    "Which minimum target windows/reasons should receive context when budget saturates; never prioritize by observed outcome.",
+    "How parent/link/child lifecycle identity is uniquely joined without environment or account data.",
+    "Whether producer predicate ages can be sampled from alreadycomputed locals without adding decisionclock calls or repeating expensive set computations.",
+    "Preregister parent-loop overhead/logging/pressure budgets before any implementation benchmark."
+  ],
+  "no_current_causal_claim": "The observed explicit-slug-only V1 exclusion is established by root. Its specific upstream cause remains unknown. This design does not assert quiet trade expiry, a genuine feed disconnect, all-gaps-fixed, a profitable edge, or EXEC completion."
+}
