@@ -39,6 +39,13 @@ Check this queue at task start and before declaring current work complete. Keep 
 move an item to done only with linked evidence. Blocked or waiting-for-approval is not complete.
 
 ### EXEC-DELAY-001 — first task active; production attribution and verified fix pending
+- **2026-10-14 10:09 PM PDT:** Codex preparing a separate numbers-only ledger timing
+  candidate while the current capture remains frozen. Scope: optional per-ledger/thread checkpoint
+  observation of normalization, JSON encoding, lock acquisition, BEGIN/SQL/COMMIT; fixed numeric
+  aggregates only. No payloads, SQL text, async writer, save cadence, durability or trading change.
+  Root owns integration; Sol implements in an isolated worktree; Astra reviews exact bytes.
+  No production release before the assigned 10:32 PM tail closes and the collector stops.
+  This is a proposed measurement, not a selected speed correction or completion claim.
 - **2026-10-14 9:56 PM PDT:** PR58 exact1e8d0be/fc0a73e9 SUCCESS9:48:49.546PM,
   normalPolymarketLIVE/bothservicesonline. Restart53fields37equal/16changed: lateoldDown5@.36
   joinsintent/order, explainscost/fill/pairedrisk/cash arithmetic; cumulative−13.642/fees/caps/latches
