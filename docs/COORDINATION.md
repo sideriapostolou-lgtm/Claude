@@ -39,6 +39,13 @@ Check this queue at task start and before declaring current work complete. Keep 
 move an item to done only with linked evidence. Blocked or waiting-for-approval is not complete.
 
 ### EXEC-DELAY-001 — first task active; production attribution and verified fix pending
+- **2026-10-15 4:46 AM PDT:** standalone cancellation-freshness candidate preserved locally as `9d69d95`;
+  exact two-file patch `537035` independently accepted, 5,582 tests / 14 existing skips, captured exit 0,
+  mypy 127 / Ruff 2 pass. It refreshes remaining-bid inputs after an awaited cancel; original method
+  reproduces eight misses. No source push/deploy, money-rule or financial-control change.
+  New retrospective evidence joins 15/23 slots / 82 fills to +$0.2668 after $0.2538 fees, with eight unknown
+  slots and worst −$2.2962; not a complete-day or causal-profit claim. EXEC stays open.
+  [Exact preparation, preserved archives and next verification](../research/kalshi_profitability_2026-10-14/CANCELLATION_FRESHNESS_PREPARATION.md).
 - **2026-10-14 10:39 PM PDT:** fixed 10:00–10:30 PM capture/tail closed; collector stopped
   10:32:19 PM. Two audited real windows −$1.590/+$0.261 total −$1.329 after $0.009 fees;
   locked +$0.940231/directional −$2.269231; all 12 fills joined. Four known main-reader delays
@@ -159,6 +166,20 @@ move an item to done only with linked evidence. Blocked or waiting-for-approval 
   while the first remains open. TJR's separate authentic-data blocker and recorder duties persist.
 
 ### TJR-MNQ-001 — validation tooling complete; historical run blocked on data; paper/live disabled
+- **2026-10-15 4:55 AM PDT check:** fresh GitHub records at `1f75331` distinguish PR47's verified
+  deployment/restart from open EXEC and the checked but undeployed cancellation candidate.
+  Prior explicit offline TJR priority persists; authentic MNQ bars/costs remain absent. Both current
+  Page deltas unchanged (main 2 / prototype 1, no truncation/resync); saved source hashes verified.
+  Zero historical trades / null P&L, paper not started / live disabled. Keep queued/blocked and
+  automation unchanged; no duplicate work, production action or routine unchanged notification.
+  [Receipt and next input](../research/tjr_validation_2026-10-14/FOLLOWUP_2026-10-15_0455_PDT.json).
+- **2026-10-15 4:38 AM PDT check:** current connected-GitHub records at 3c757ba confirm PR47 exact
+  release/restart separately complete; active Kalshi loss/cancellation work and EXEC remain open.
+  Prior offline TJR priority persists, but authentic MNQ bars/costs remain absent. Both current
+  Page deltas unchanged (main2/prototype1, no truncation/resync); saved source hashes verified/reused.
+  Historical trades0/P&Lnull, paper not started/live off. Keep queued/blocked and automation unchanged;
+  no duplicate research, production action or routine unchanged notification.
+  [Receipt and next verified input](../research/tjr_validation_2026-10-14/FOLLOWUP_2026-10-15_0438_PDT.json).
 - **2026-10-15 3:10 AM PDT check:** current GitHub and pinned evidence at df4f3ea confirm PR47 exact
   release/restart separately complete, EXEC open and authentic MNQ bars/costs absent. Existing
   offline priority persists. Both current Page change feeds remain main2/prototype1, no truncation/
