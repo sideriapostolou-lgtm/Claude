@@ -7,6 +7,11 @@ and reads new entries within a few minutes; Codex reads it at the start of each 
 
 ## Lanes (who owns which files)
 
+**Ownership update, owner October15:** Codex owns all lanes. The table below preserves the historical
+file map; it does not give Claude exclusive ownership or authorize overlapping edits. Codex coordinates
+workers and keeps existing release, financial and privacy rules. Private handoff inventories stay outside
+this public repository; responsibility does not prove that browser sessions or connections transferred.
+
 | Owner | Files | Notes |
 |---|---|---|
 | Claude | `speeddesk_live*.py`, `speeddesk_kalshi*.py`, `speeddesk_model.py`, `speeddesk_feeds.py`, `speeddesk_metrics.py`, the Kalshi fields in `config.py`, the Kalshi arena, `research/` for Kalshi | The live Kalshi bot: strategy, risk, speed, research. Claude checks every Kalshi deploy on Railway. |
@@ -241,6 +246,10 @@ move an item to done only with linked evidence. Blocked or waiting-for-approval 
   [Protocol and operational boundary](KALSHI_ONLINE_LEARNING.md).
 
 ### CODEX-TAKEOVER-001 — operating access/checklist audited; private state and raw-volume transfer unverified
+- **October15 9:33 AM PDT:** owner explicitly reaffirmed all-work ownership. Public handoff/currentrecords read at245ca1e;
+  firstpriority remains exact Kalshi input-cause/execution evidence, recordercheckpoint retained. Threeprivate
+  attachment inputs unavailable/unread; private intake and other-project/browser continuity are not verified.
+  Ownership accepted, complete transfer stillOPEN. No private inventory or financial/production change.
 - October15 8:38AM PDT: Codex already owns all lanes. Verified connected GitHub/Railway reads, original
   history/source/research pointers, current separate services and three existing enabled ChatGPT schedules.
   next_run_time null is retained; no timer migration/creation or guaranteed-delivery claim. Recorder source
@@ -492,6 +501,13 @@ move an item to done only with linked evidence. Blocked or waiting-for-approval 
   this item. No production, financial or credential-copy work is needed; chat delegation stays usable.
 
 ## Inbox (newest first)
+
+### 2026-10-15 16:33 UTC, Codex -> workers: ownership accepted; first priority is the remaining Kalshi evidence gap
+- I accept the owner's handoff of all work. Read the full300-line October14 handoff, current AGENTS, coordination queue and newest worklog through connectedGitHub at245ca1e. The old section4.1/restart/speed instructions are dated; later release/restart evidence takes precedence. Do not replay old restart workarounds, reset budgets or relaunch already completed steps.
+- **First, based on the verified repo records:** take EXEC-DELAY-001 and its linked KALSHI-ONLINE-001 input-cause diagnostic. Record the actual reason/timing of future learner rejections in the isolated child, preserve V1 rules/history/unknowns, and independently check a focused correction before any later release. Latest saved capture still has zero scored forecasts and a3.346s main-reader delay; the paired+$0.12 window does not clear either blocker. [Existing diagnostic design](../research/kalshi_online_learning_2026-10-15/INPUT_CHRONOLOGY_NEXT_EVIDENCE.md), [release and limitations](../research/kalshi_online_learning_2026-10-15/INPUT_CHRONOLOGY_RELEASE.md). This note assigns the first task; it is not a new implementation/deployment claim.
+- Preserve today's3:45PM Pacific recorder feasibility/storage checkpoint. Keep TJR queued with its authentic-data/cost blocker, historical losses and untouched holdout; no duplicated research or new live desk follows from this takeover.
+- **Private intake remains pending:** the three private files referenced by the owner were not available as chat attachments or local files, and the two supplementary skills were absent from the available catalog. Their contents have not been read. No private project/connection inventory, browser session information or skill contents are published here. Reconcile the remaining projects after those files are supplied; do not claim the complete transfer or browser access is verified.
+- This task changes documentation only. No app code, production deployment/settings, financial limits, stop/resume controls, orders, connected accounts, browser sessions or automation schedules changed.
 
 ### 2026-10-15 16:24 UTC, Codex -> workers: PR61 live; first paired win verified, learner still blocked
 - Owner-confirmed caps10/window,20open,6/day,clip5; fresh10total resume applied once from cumulative−19.051. Usedday/integritycontrols ignored; losses retained. Exact153a122/e641 SUCCESS8:57:51AM; normalPolymarketLIVE10. Sourcechecks5695/14,mypy128/Ruff2. No further watched-source change during fixed capture; this closure is docs-only.
