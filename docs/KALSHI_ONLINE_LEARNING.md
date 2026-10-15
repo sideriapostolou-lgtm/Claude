@@ -4,10 +4,13 @@ This first slice measures whether an outcome-trained probability estimate improv
 model. It runs in the existing practice arena's child process. It cannot send orders, change live probabilities,
 promote a strategy, raise limits or reset stops. It uses no language-model calls or additional market subscriptions.
 
-**Development status:** implementation independently reviewed; 5,673 tests / 14 existing skips, mypy and
-changed-file Ruff passed. [Exact preparation/evidence](../research/kalshi_online_learning_2026-10-15/PREPARATION.md).
-Deployment and observed samples will be recorded in WORKLOG; this document alone is not evidence that
-learning is running or improving.
+**Release status:** PR60 exact `933a43d` deployed successfully October 15 at **6:52 AM PDT**. Original
+startup and 6:58 AM periodic logs verify enabled **observe-only** learning: **0 forecasts, 0 scored,
+1 startup-partial exclusion, null Brier scores**. No trained-sample, accuracy or profitability result yet.
+The implementation passed independent review, 5,673 tests / 14 existing skips, mypy and changed-file Ruff.
+[Exact preparation](../research/kalshi_online_learning_2026-10-15/PREPARATION.md) and
+[release/account verification with coverage limits](../research/kalshi_online_learning_2026-10-15/RELEASE.md).
+These dated counts are evidence timestamps, not a continuously updated dashboard reading.
 
 ## What already learns
 

@@ -180,7 +180,17 @@ move an item to done only with linked evidence. Blocked or waiting-for-approval 
   The second task is the frozen original/inverse/no-trade comparison; do not implement/activate it
   while the first remains open. TJR's separate authentic-data blocker and recorder duties persist.
 
-### KALSHI-ONLINE-001 — observe-only probability learning under implementation/review
+### KALSHI-ONLINE-001 — implementation/release verified; prospective accuracy evidence pending
+- **7:00 AM PDT October 15:** PR60 exact `933a43d` / `458e8e54` SUCCESS 6:52:00.711 AM; normal Polymarket LIVE10.
+  Learner startup 6:53:03 / periodic 6:58:03: enabled observe-only, 0 forecasts / 0 scored / 1 startup unknown,
+  null Brier scores, live application false; no accuracy/profit claim. Fresh 6:56:09 Kalshi authenticated,
+  trading true, waiting empty; cold stale row excluded. Restart: 56 selected fields, 55 exact / one 1.8e−15
+  display difference. Cash $30.6904 / cumulative P&L −$18.4910 / fees $3.10792 / 782 fills / 172 settlements /
+  cost-risk $0.56 / caps and latches retained. Three used controls ignored. Both services online; recorder unchanged.
+  [Release/originals/limits](../research/kalshi_online_learning_2026-10-15/RELEASE.md).
+  Bounded implementation/release is complete; next prospective forecast / official-label update receipt pending.
+  Observer has no live decision/control path. EXEC remains OPEN; comparison unstarted. This docs verification
+  changes no source or money settings; no page-HTTP, whole-ledger or accuracy coverage claim.
 - **6:46 AM PDT October 15:** exact seven-file bundle914cc3b8 independently accepted;5,673tests/14existing skips,
   mypy128/Ruff7 pass, source unchanged. V2 preserves causal forecasts/official labels/restart/history and
   bounded unknowns; no live rules or financial controls changed. Synthetic overhead/resource limits remain
@@ -198,6 +208,12 @@ move an item to done only with linked evidence. Blocked or waiting-for-approval 
   [Protocol and operational boundary](KALSHI_ONLINE_LEARNING.md).
 
 ### TJR-MNQ-001 — validation tooling complete; historical run blocked on data; paper/live disabled
+- **2026-10-15 6:58 AM PDT check:** fresh connected-GitHub exact `933a43d` records plus pinned PR47/status
+  independently matched to five Git blobs/full contents. PR47 release/restart separately complete; EXEC
+  remains open. Prior explicit offline priority persists, but actual MNQZ2025 bars/costs remain missing:
+  historical trades 0 / P&L null / holdout unopened / paper not started / live off. PR60's passive release is separate;
+  no duplicate Page/data/test work or new Page-read claim, no routine notification/automation change.
+  Keep blocked/unfinished; [original receipt and concrete next input](../research/kalshi_online_learning_2026-10-15/RELEASE.md).
 - **2026-10-15 6:30 AM PDT check:** connected-GitHub reads pinned to `f0a0a9d` confirm PR47 release/restart
   separately complete and EXEC open. Prior explicit offline TJR priority remains, but actual MNQ development
   bars/costs are absent: historical trades0/P&Lnull, holdout unopened, paper not started/live disabled.
@@ -424,6 +440,20 @@ move an item to done only with linked evidence. Blocked or waiting-for-approval 
   this item. No production, financial or credential-copy work is needed; chat delegation stays usable.
 
 ## Inbox (newest first)
+
+### 2026-10-15 14:00 UTC, Codex -> workers: observe-only learning release verified; forward samples pending
+- PR60 exact `933a43d` deployed `458e8e54` SUCCESS 6:52 AM PDT; normal Polymarket LIVE10. Fresh Kalshi 6:56 AM
+  reconciled/authenticated, waiting empty. Cash $30.6904 / cumulative settled loss $18.4910 / fees $3.10792 /
+  risk $0.56 retained; limits/latches unchanged, all three used controls ignored. No budget reset.
+- Actual learner 6:58 AM: enabled observe-only, 0 forecasts / 0 scored / 1 startup exclusion; Brier null.
+  No real probability, order, cancel, sizing, financial control or ladder application. Page whitelist tested,
+  producer observed; authenticated HTTP/page not checked. Source/test bytes equal the full 5,673-pass candidate.
+- Preserve [release originals/audit/limits](../research/kalshi_online_learning_2026-10-15/RELEASE.md).
+  Next: future-window forecast plus official same-terms settlement / score-before-train receipt,
+  preserving gaps/losses; no accuracy/profit promise. EXEC open, comparison unstarted, frozen ledger
+  diagnostic unreleased. TJR blocked on authentic bars/costs, unchanged; no routine queue notification.
+
+Status: done (bounded implementation/release); pending (forward learning evidence); open (EXEC); blocked (TJR).
 
 ### 2026-10-15 13:10 UTC, Codex -> workers: bounded Kalshi online learning; prediction audit only
 - Owner asks for real-time self-learning. Root reserves new pure `kalshi_online_learning.py`, child-side
