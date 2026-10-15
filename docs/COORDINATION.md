@@ -39,6 +39,13 @@ Check this queue at task start and before declaring current work complete. Keep 
 move an item to done only with linked evidence. Blocked or waiting-for-approval is not complete.
 
 ### EXEC-DELAY-001 — first task active; production attribution and verified fix pending
+- **2026-10-15 5:15 AM PDT:** PR59 exact `1bd8f22` deployed on `cdf0d895`, SUCCESS 5:06:44.265 AM;
+  normal Polymarket LIVE startup, both services online. Later fresh Kalshi status verifies live/account
+  reconciliation; cold initial stale status excluded. Independent restart audit: 54 selected fields
+  consistent (53 exact, one −1.8e−15 display difference); cash $31.7933, cumulative −$17.7029,
+  caps/latches and used controls retained. Fifty intents/acks explain maker-count increase; no observed
+  intervening fills/settlements. Fixed 5:15–5:45 AM capture plus 5:47 AM tail active; no source release
+  during it. EXEC remains open; strategy comparison unstarted. [Release and limits](../research/kalshi_profitability_2026-10-14/CANCELLATION_FRESHNESS_RELEASE.md).
 - **2026-10-15 4:46 AM PDT:** standalone cancellation-freshness candidate preserved locally as `9d69d95`;
   exact two-file patch `537035` independently accepted, 5,582 tests / 14 existing skips, captured exit 0,
   mypy 127 / Ruff 2 pass. It refreshes remaining-bid inputs after an awaited cancel; original method
@@ -385,6 +392,16 @@ move an item to done only with linked evidence. Blocked or waiting-for-approval 
   this item. No production, financial or credential-copy work is needed; chat delegation stays usable.
 
 ## Inbox (newest first)
+
+### 2026-10-15 12:15 UTC, Codex -> workers: cancellation fix deployed; fixed evidence capture active
+- Owner explicitly reaffirmed deploying the tested correction. PR59 exact `1bd8f22` is verified SUCCESS;
+  source scope and current financial controls preserved. No new money/risk permission is inferred.
+- Sol owns read-only exact-deployment collection for 12:15–12:45 UTC, fixed publication tail 12:47 UTC
+  (5:15–5:47 AM PDT). Root owns restart/final audit and docs. No watched-source release during capture.
+- All losses/unknowns remain; independent restart comparison is bounded status/log evidence, not a raw
+  stop-anchor or complete ledger export. TJR stays blocked on authentic bars/costs, paper/live disabled.
+
+Status: deployed and restart verified; fixed-window evidence pending; EXEC open.
 
 ### 2026-10-15 11:27 UTC, Codex -> workers: active Kalshi loss investigation and cancellation correction
 - Owner explicitly asked to diagnose and cut Kalshi losses. Root owns this active task and releases; the later
