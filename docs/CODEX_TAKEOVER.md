@@ -20,6 +20,13 @@ never be replayed as new authorization.
 
 ## Verified from this ChatGPT session
 
+**October 15, 9:40 AM PDT private intake:** the owner supplied the complete combined Claude handoff.
+All 942 lines, three parts and both embedded operating procedures have been read. The original, exact
+procedure copies and continuity/reconciliation records are preserved privately outside Git. This resolves
+the missing-text blocker; it does not transfer authenticated sessions or prove access to every project.
+The first priority remains the Kalshi input-cause/execution diagnostic; preserve today's 3:45 PM Pacific
+recorder checkpoint. Earlier dated missing-input notes remain historical. No private inventory is published.
+
 | Item | Evidence / boundary |
 | --- | --- |
 | Source responsibility | Codex accepted all lanes, including Kalshi, in the October 14 handoff. The older Claude/Codex lane table maps files; it does not restore exclusive ownership. Coordinate overlapping writes. |
@@ -83,8 +90,9 @@ Unrelated account automations are outside this handoff and were left unchanged.
 
 ## Not yet a verified transfer
 
-- Claude reports the owner holds private handoff Part2 and two shipping skill files; those have not
-  been supplied/read here. The reported external Claude routine is not independently verified or disabled.
+- The private handoff and both embedded procedures are now read and preserved outside Git. Actual
+  browser/account access and migration remain unverified. The reported external Claude routine is not
+  independently verified, disabled or migrated; no duplicate routine was created.
 - Unsaved Claude chats, local-only files outside available checkouts, private session state and provider
   permissions are not exported by a Git handoff. This audit cannot claim every historical detail is present.
 - Runtime volume contents, backups/recovery exports and full native venue/cash/stop-anchor ledgers were

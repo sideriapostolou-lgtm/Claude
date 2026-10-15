@@ -246,6 +246,7 @@ move an item to done only with linked evidence. Blocked or waiting-for-approval 
   [Protocol and operational boundary](KALSHI_ONLINE_LEARNING.md).
 
 ### CODEX-TAKEOVER-001 — operating access/checklist audited; private state and raw-volume transfer unverified
+- **October 15 9:40 AM PDT:** the complete owner-supplied attachment is received and all 942 lines read, including both full procedures. Private originals, exact procedure copies and continuity/reconciliation records are preserved outside Git. The missing-text blocker is resolved; earlier unavailable/unread notes remain dated history. First priority remains the Kalshi input-cause/execution diagnostic, with today's 3:45 PM recorder checkpoint retained. Actual account/browser/session access, external automation control and raw-volume transfer are still unverified; complete operational transfer stays OPEN. No private inventory or production/financial action.
 - **October15 9:33 AM PDT:** owner explicitly reaffirmed all-work ownership. Public handoff/currentrecords read at245ca1e;
   firstpriority remains exact Kalshi input-cause/execution evidence, recordercheckpoint retained. Threeprivate
   attachment inputs unavailable/unread; private intake and other-project/browser continuity are not verified.
@@ -501,6 +502,12 @@ move an item to done only with linked evidence. Blocked or waiting-for-approval 
   this item. No production, financial or credential-copy work is needed; chat delegation stays usable.
 
 ## Inbox (newest first)
+
+### 2026-10-15 16:40 UTC, Codex -> workers: complete private handoff read; Kalshi input evidence first (9:40 AM PDT October 15)
+- The owner's combined handoff is now received and read top to bottom: all 942 lines, three parts and both full embedded operating procedures. This supersedes the earlier missing-input status. The original, exact procedure copies and a continuity/reconciliation record are preserved privately outside Git; no private inventory, contacts, session links or procedure contents are published here.
+- **First: EXEC-DELAY-001 and linked KALSHI-ONLINE-001.** Follow the [existing child-only cause/timing diagnostic design](../research/kalshi_online_learning_2026-10-15/INPUT_CHRONOLOGY_NEXT_EVIDENCE.md) to establish why learning samples are rejected and where observed delays occur. Preserve V1 admission rules, historical unknowns, losses and real/practice separation. The [latest saved release evidence](../research/kalshi_online_learning_2026-10-15/INPUT_CHRONOLOGY_RELEASE.md) still has zero scored forecasts and unresolved delays; one winning window does not establish an edge. This post assigns the next work; no diagnostic implementation or successful learning is claimed here.
+- I retain responsibility for all lanes and the other projects in the private handoff. Current repo records supersede older restart/release snapshots; do not replay completed steps or consumed controls. Preserve today's **3:45 PM Pacific recorder checkpoint**, storage review before October 20 and TJR's authentic-data/cost blocker. Existing research and schedules stay in place.
+- Text intake is complete; actual browser/account access, external automation control and raw-volume continuity remain unverified. No account/session migration, schedule change, production query, deployment, variable, financial limit, stop/resume control or order was performed in this handoff task. See the [current takeover checklist](CODEX_TAKEOVER.md).
 
 ### 2026-10-15 16:33 UTC, Codex -> workers: ownership accepted; first priority is the remaining Kalshi evidence gap
 - I accept the owner's handoff of all work. Read the full300-line October14 handoff, current AGENTS, coordination queue and newest worklog through connectedGitHub at245ca1e. The old section4.1/restart/speed instructions are dated; later release/restart evidence takes precedence. Do not replay old restart workarounds, reset budgets or relaunch already completed steps.
