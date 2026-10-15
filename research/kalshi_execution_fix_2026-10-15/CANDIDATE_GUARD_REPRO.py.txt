@@ -1,0 +1,43 @@
+import asyncio, json, sys, tempfile, hashlib
+from pathlib import Path
+from dataclasses import replace
+sys.path[:0] = ['/workspace/nightcrawler-live-correction/src','/workspace/nightcrawler-live-correction/tests']
+from test_speeddesk_live import make_desk, starter_filled, at_lock_time, TICKER
+from nightcrawler.speeddesk_model import utc_day
+
+rows=[]
+for case in ('fresh','account_age_4','cash_age_6','both_age_6','account_missing','auth_lost','day_stop','total_loss_stop','paper','shutdown'):
+    with tempfile.TemporaryDirectory() as d:
+        desk, account, clock = make_desk(Path(d))
+        try:
+            starter_filled(desk,account,clock)
+            at_lock_time(desk,clock,up_ask=.3,down_ask=.7)
+            original=account.create_order
+            record={ 'case':case }
+            def wrapper(**kwargs):
+                if case in ('account_age_4','both_age_6'):
+                    clock.advance(4 if case=='account_age_4' else 6)
+                    at_lock_time(desk,clock,up_ask=.3,down_ask=.7,before_close=desk.book.windows[TICKER].end-clock.now())
+                if case=='cash_age_6': desk.book.cash_at=clock.now()-6
+                if case=='account_missing': desk.account_at=None
+                if case=='auth_lost': desk.authenticated=False
+                if case=='day_stop': desk.book.day_pnl[utc_day(clock.now())]=-6
+                if case=='total_loss_stop': desk.book.halted=True; desk.book.halt_reason='total_loss'
+                if case=='paper': desk.settings=replace(desk.settings,speeddesk_kalshi_mode='paper')
+                if case=='shutdown': desk.stopping=True
+                intent=desk.intents[kwargs['client_order_id']]
+                record.update(account_age=None if desk.account_at is None else clock.now()-desk.account_at,
+                              cash_age=clock.now()-desk.book.cash_at,
+                              waiting=desk._waiting_reason(),authenticated=desk.authenticated,
+                              lock_guard=desk._lock_guard(intent),
+                              naive_can_lock=desk.book.can_lock(TICKER,intent.side,intent.price,intent.size,clock.now()),
+                              self_pending=True)
+                return original(**kwargs)
+            account.create_order=wrapper
+            asyncio.run(desk.step())
+            record['lock_sent']=len(account.creates)==2
+            rows.append(record)
+        finally: desk.close()
+result={'source_sha256':hashlib.sha256(Path('/workspace/nightcrawler-live-correction/src/nightcrawler/speeddesk_live.py').read_bytes()).hexdigest(),'rows':rows,'scope':'Offline fake account only; no network or historical loss attribution. Fresh quote after fake transport wait isolates account/cash freshness.'}
+Path('/workspace/kalshi-lock-guard-repro-v1.json').write_text(json.dumps(result,indent=2)+'\n')
+print(json.dumps(result,indent=2))

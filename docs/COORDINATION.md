@@ -44,6 +44,7 @@ Check this queue at task start and before declaring current work complete. Keep 
 move an item to done only with linked evidence. Blocked or waiting-for-approval is not complete.
 
 ### EXEC-DELAY-001 — first task active; production attribution and verified fix pending
+- **11:14 AM PDT October15:** concrete lock send-time freshness bug reproduced and corrected locally: account4s/cash6s after transport wait previously sent IOC, now refused with fresh books; valid stop-exempt balancing locks preserved. Exact six-line patch0e8a034b independently accepted; full5772passed/14existing skips,mypy128/Ruff2, originalmethod fails2newdelayedcases. Source not released yet. No claimed cause of prior−.2965 intendedhedge loss or profitableedge. Caps/model/learner/ledger/history unchanged; broader EXEC remainsOPEN. [Correction and actual loss proof](../research/kalshi_execution_fix_2026-10-15/CORRECTION.md).
 - **10:50 AM PDT October15:** PR62 fixed10:30–10:45/tail10:47 capture closed on exactff05/c64; target2makerfills+$0.11locked/0fees, priorpartial−$0.2965retained, nexttailfills excluded. Unique childdiagnostic+receipt shows explicit-slugpregap with aggregateflagshealthy andBTCage0.244647s; upstreamreason/parentFIFOunknown. Learner0forecasts/0scored/16unknown, EXECOPEN. Lastfixedaccountstale retained; separate10:47:13originalLIVE/auth/fresh, cash30.7739/cumulative−19.1275/day−4.6804/capsunchanged. Nextsmallproducerbranch/timecontext requires throughput/partialsend checks; designonly. [Exact capture and limits](../research/kalshi_input_causes_2026-10-15/RELEASE_CAPTURE.md).
 - **10:27 AM PDT October 15:** PR62 exactff05beb/c64SUCCESS10:22:53AM; first full diagnostic window10:30–10:45AM/tail10:47, declaredbeforestart with184s rootverificationmargin. Source/protectedhistory checked;67selectedrestartfields exact and3usedcontrols ignored. Runtimecause/probability/EXECevidence stillpending; no all-fixed/profitclaim. [Frozen futurecapture](../research/kalshi_input_causes_2026-10-15/CAPTURE_DECLARATION.md).
 - **10:16 AM PDT October 15:** child-only cause diagnostic now independently checked (5744passed/14existing skips, mypy128/Ruff5, exact corrected patch/source and local resource envelope). Safe-minute release/exact deployment and fixed future-window cause evidence remain pending. No actual upstream-cause fix, usable forecast, better trading result or full EXEC closure claimed. [Preparation/originals/limits](../research/kalshi_input_causes_2026-10-15/PREPARATION.md).
@@ -508,6 +509,13 @@ move an item to done only with linked evidence. Blocked or waiting-for-approval 
   this item. No production, financial or credential-copy work is needed; chat delegation stays usable.
 
 ## Inbox (newest first)
+
+### 2026-10-15 18:05 UTC, Codex -> owner / workers: actual lock send-guard correction reserved (11:05 AM PDT)
+
+Owner explicitly asks a concrete bot fix now. Root owns integration; Sol may edit only `speeddesk_live.py` lock-send freshness checks and a focused fake regression file in isolated `codex/kalshi-live-correction` from beea7bf. Astra independently reproduced that a four-second transport wait can still send a lock IOC while account data is stale; cash age six seconds also bypasses the original guard. Fresh locks and financial-stop balancing exceptions must keep working. No blind `can_lock` recheck: it sees the intent's own existing reservation as `order_pending`.
+
+This is a correctness defect, not proven cause of historical losses or a profitable edge. The prior −$0.2965 result used the intended late hedge; retain it and all other losses. Keep caps, stops, resume/day budgets, variables, model/protocol/history, order journal/accounting, Polymarket and trading thresholds unchanged. No diagnostic-only release or strategy retuning in this correction. Require full pytest/mypy/changed-file Ruff, exact independent patch review, safe merge, exact Railway deployment/restart/financial continuity and bounded runtime evidence. Existing TJR data/cost blocker and recorder3:45PM checkpoint persist. Metadata-copy optimization is measured only offline and held separately.
+
 
 ### 2026-10-15 17:51 UTC, Codex -> owner / workers: PR62 capture independently audited (10:51 AM PDT)
 

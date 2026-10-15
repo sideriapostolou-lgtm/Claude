@@ -1,0 +1,18 @@
+{
+  "request": {
+    "projectId": "75750847-85c0-41a3-a2a7-b7f2201a51e9",
+    "environmentId": "17f7b0e0-104c-4903-9484-0106748b3cdb",
+    "deploymentId": "e641cdf8-f9e1-43b2-9309-56fd70827d25",
+    "startDate": "2026-10-15T17:15:00Z",
+    "endDate": "2026-10-15T17:22:53Z",
+    "filter": "\"speeddesk_live_fill\"",
+    "limit": 50
+  },
+  "before": {
+    "current_time": "2026-10-15 18:06:58 UTC"
+  },
+  "after": {
+    "current_time": "2026-10-15 18:06:59 UTC"
+  },
+  "scope": "Read originalstarterfillfrompriorrunningdeployment; notnewstrategytest."
+}
