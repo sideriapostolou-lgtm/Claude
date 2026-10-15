@@ -13,6 +13,30 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-15 04:31 UTC, Codex, focused mirror correction checked; fixed capture still active (9:31 PM PDT October 14)
+- Isolated local candidate on basee4fd9a1: replace only live display json.dump with one compact
+  json.dumps/write, retaining bytes for supported modelstate, ledger commit/durability, archive/panel,
+  mirror timing and rename/stamp order. Added reader/process/instance identity to diagnostics and
+  gap warnings; a pre-session transport failure no longer borrows the last connection's session.
+  Derived WeatherWS is distinguished going forward; existing untagged events stay unknown.
+- Actualcheckpointtests pin supported bytes/onewrite, oldtarget/lastmirror on encode/write/rename
+  failure, prior ledger commit and recovery despite corrupt display. Known1100-deep malformed
+  recursion difference and extra traced allocation remain documented, not called safeguards or
+  universalerroridentity. No Ledger/hashing/normalization/trading-policy change.
+- Exact four-file bundle0faa0c5d9a1fd07c4824f51b323ec5a4d068837d6d0fdf64fb4ea6cee7eccac2
+  independently accepted; Astra123targets pass. Root finalfullpytest5,564passed/14existing skips
+  300.09s/capturedexit0; mypy127/Ruff4pass. Newtarget100pass separately onwebsockets13.1/14.2.
+  Prior candidate full run interrupted137after review-identityfix, retained not counted as pass.
+  Integrated latest remote docs without changing reviewed source/test bytes.
+- Synthetic1.77MB mirror old~87ms/new~15–17ms,346744→1writes; extra tracedpeak~3.46MB.
+  Oldthennew trialorder/processCPU limits retained. No production-speedup/profitability claim.
+  Exact17-member preparationarchive/hash/CRC/memberbytes verified; preserved raw profiling inputs
+  and corrected startup attribution. [Scope/evidence/review](../research/kalshi_profitability_2026-10-14/LIVE_MIRROR_CORRECTION.md).
+- PR57's fixed9:15–9:45PM capture and9:47PMtail remain active; no source release before close.
+  Candidate push/PR is preparation only. Safe release, actualdeployment/restart and firsttwofull
+  post-correction window verification still pending. No variables/caps/stops/resume/order or
+  Polymarket changes; all losses preserved. EXECopen, comparisonunstarted, TJRblocked unchanged.
+
 ## 2026-10-15 04:22 UTC, Codex, exact diagnostic release and new local-delay evidence (9:22 PM PDT October 14)
 - PR57 merged9:09:57PM safe minute into10f7f9d88a9acd51aba041345d569cd9972c4b6c.
   Railway86dabbf2-bedb-4686-b6ed-857955e0b521 SUCCESS9:11:05.907PM, exactsource matched;

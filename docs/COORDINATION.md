@@ -39,6 +39,13 @@ Check this queue at task start and before declaring current work complete. Keep 
 move an item to done only with linked evidence. Blocked or waiting-for-approval is not complete.
 
 ### EXEC-DELAY-001 — first task active; production attribution and verified fix pending
+- **2026-10-14 9:31 PM PDT:** isolated mirror one-write partial correction plus reader
+  identity ready: reviewedbundle0faa0c5d9a1fd07c4824f51b323ec5a4d068837d6d0fdf64fb4ea6cee7eccac2;
+  5,564tests/14existing skips,exit0,mypy127/Ruff4; independent123targets. No money-policy,
+  durability/cadence, variable or budget change. Known deep-malformed recursion difference and
+  memory cost retained. No release before the9:47PM fixed capture closes; then safe merge and
+  exactstartup/financial/freshness verification remain required. First taskOPEN; comparisonunstarted.
+  [Candidate/evidence](../research/kalshi_profitability_2026-10-14/LIVE_MIRROR_CORRECTION.md).
 - **2026-10-14 9:20 PM PDT:** PR57 exact10f7f9d/86dabbf2 SUCCESS9:11:05.907PM;
   normal Polymarket LIVE startup. Compared old9:10:01/new9:11:40 financial fields match:
   cash$37.6993,625fills,$2.64762fees,cumulative−$11.0421,cost10/risk1,reserve0,

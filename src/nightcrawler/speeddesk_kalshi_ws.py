@@ -13,10 +13,12 @@ import base64
 import json
 import logging
 import math
+import os
 import threading
 import time
 from bisect import bisect_left
 from collections.abc import Callable
+from itertools import count
 from typing import Any, TypeGuard
 
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
@@ -41,6 +43,7 @@ log = logging.getLogger("nightcrawler.speeddesk_kalshi_ws")
 # Keep its transport logger disabled even when application diagnostics are on.
 _transport_log = logging.getLogger("nightcrawler.kalshi_market_transport")
 _transport_log.disabled = True
+_reader_ids = count(1)
 
 
 class MarketDataGap(ValueError):
@@ -258,6 +261,10 @@ class KalshiMarketWS:
         self._last_status: dict[str, Any] = {}
         self._timestamp_notice = False
         self._timing_session = 0
+        # WeatherWS inherits this receiver on another thread/process. A session
+        # number alone is not an identity and must not mix its evidence with BTC.
+        self._timing_reader = {"kind": "speeddesk" if type(self) is KalshiMarketWS else "derived_market_reader",
+                               "instance": next(_reader_ids), "process": os.getpid()}
         self._timing_gap: dict[str, Any] | None = None
 
     def _flush_timing_gap(self, ws: Any) -> None:
@@ -282,6 +289,7 @@ class KalshiMarketWS:
             sending = raw.get("sending_ts_ms") if isinstance(raw, dict) else None
             engine = msg.get("ts_ms") if isinstance(msg, dict) else None
             payload: dict[str, Any] = {
+                "reader": dict(self._timing_reader),
                 "session": self._timing_session, "event": event, "kind": kind,
                 "recv_call_mono": call_mono, "recv_return_mono": returned_mono,
                 "apply_mono": apply_mono, "apply_wall": apply_wall,
@@ -337,6 +345,7 @@ class KalshiMarketWS:
                 await asyncio.sleep(0.2)
                 continue
             self.state = MarketState(tickers)
+            session_before = self._timing_session
             try:
                 signer = MarketHandshake(self._settings)
                 async with self._connect(URL, additional_headers=signer.headers(self._clock()),
@@ -361,7 +370,10 @@ class KalshiMarketWS:
                 raise
             except Exception as exc:  # noqa: BLE001 — never log headers, key material or server payloads.
                 reason = str(exc) if isinstance(exc, MarketDataGap) else type(exc).__name__
-                log.warning("speeddesk_feed_kalshi_ws_gap reason=%s", reason)
+                log.warning("speeddesk_feed_kalshi_ws_gap reason=%s reader_kind=%s reader_instance=%s reader_process=%s reader_session=%s",
+                            reason, self._timing_reader["kind"], self._timing_reader["instance"],
+                            self._timing_reader["process"],
+                            self._timing_session if self._timing_session != session_before else None)
             finally:
                 self.connected = False
                 self._report("reconnecting_public_rest_fallback")

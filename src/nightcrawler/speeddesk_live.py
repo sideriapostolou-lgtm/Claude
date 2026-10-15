@@ -998,7 +998,8 @@ class KalshiLiveDesk:
                                                      for part in WINDOW_PARTS}}, "panel": self.panel()}
                 temporary = self.path.with_suffix(".tmp")
                 with temporary.open("w", encoding="utf-8") as stream:
-                    json.dump(full, stream, allow_nan=False, separators=(",", ":"))
+                    # Encode once, avoiding a Python write call for every JSON fragment.
+                    stream.write(json.dumps(full, allow_nan=False, separators=(",", ":")))
                 os.replace(temporary, self.path)
                 self.last_mirror = self.clock()
                 mirror_ms = (time.perf_counter() - mirroring) * 1000

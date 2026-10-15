@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 import threading
 from types import SimpleNamespace
 from typing import Any
@@ -15,6 +16,7 @@ from test_speeddesk_ws_timing import connection, feed, text
 from nightcrawler import speeddesk_kalshi_ws
 from nightcrawler.speeddesk_kalshi_ws import KalshiMarketWS, MarketDataGap
 from nightcrawler.speeddesk_worktrace import WorkTrace
+from nightcrawler.weatherwatch_markets import WeatherWS
 
 
 def records(caplog: Any) -> list[dict[str, Any]]:
@@ -162,3 +164,41 @@ def test_broken_diagnostic_log_sink_preserves_rejection_invalidation_and_close(m
     assert receiver._timing_gap is None
     assert len(attempts) == 4  # Initial status and rejected frame, including each fallback.
     assert "orderbook_delta_network:age_s=3.500" in caplog.text
+
+
+def test_inherited_weather_reader_has_distinct_evidence_identity(caplog: Any) -> None:
+    async def run() -> None:
+        ws = connection()
+        base = reader(lambda *_: None, [])
+        weather = WeatherWS(base._settings, tickers=lambda: frozenset({TICKER}),
+            on_book=lambda _: None, on_trade=lambda _: None, on_status=lambda _: None,
+            on_snapshot=lambda _: None, clock=lambda: NOW)
+        for receiver in (base, weather):
+            receiver._timing_session = 1
+            receiver._timing_report(ws, event="status", call_mono=1, returned_mono=2,
+                apply_mono=3, apply_wall=NOW, raw={}, previous=None)
+        rows = records(caplog)
+        assert [row["reader"]["kind"] for row in rows] == ["speeddesk", "derived_market_reader"]
+        assert rows[0]["reader"]["instance"] != rows[1]["reader"]["instance"]
+        assert all(row["reader"]["process"] == os.getpid() and row["session"] == 1 for row in rows)
+    caplog.set_level("INFO")
+    asyncio.run(run())
+
+
+def test_failed_connection_does_not_reuse_previous_session_identity(caplog: Any) -> None:
+    config, _ = settings()
+    stop = threading.Event()
+    class FailedConnection:
+        async def __aenter__(self) -> Any:
+            stop.set()
+            raise ConnectionError("DO_NOT_LOG_REMOTE_ERROR_TEXT")
+        async def __aexit__(self, *_: object) -> None:
+            pass
+    receiver = KalshiMarketWS(config, tickers=lambda: frozenset({TICKER}),
+        on_book=lambda _: None, on_trade=lambda _: None, on_status=lambda _: None,
+        clock=lambda: NOW, ws_connect=lambda *_, **__: FailedConnection())
+    receiver._timing_session = 7
+    asyncio.run(receiver.run(stop))
+    assert "reader_session=None" in caplog.text
+    assert "reader_session=7" not in caplog.text and receiver._timing_session == 7
+    assert "reason=ConnectionError" in caplog.text and "DO_NOT_LOG" not in caplog.text
