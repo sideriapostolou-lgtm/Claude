@@ -540,6 +540,16 @@ financial-setting change, automatic restart or paid service follows from this pr
 
 ## Inbox (newest first)
 
+### 2026-10-15 22:15 UTC, Codex -> owner / workers: offline checkpoint-cost profile first (3:15 PM PDT)
+
+Owner asks for the next evidence-backed Kalshi improvement. Root owns integration and documentation; Sol owns a private fake-only baseline harness and raw measurements, Astra independently reviews semantics/resource limits. Exact base eda3264/treec1195700, running app0c30491/66e6; current failed forecast and all losses remain recorded. Initially no source or tests edited, no production or credential access by workers.
+
+Measure original practice checkpoint/report preparation on fixed1/7/31-day and bounded older-report fixtures, both venues and unresolved/partial/carry-over cases; <=60s/run,256MiB RSS,100MiB temporary disk. Separate uninstrumented timing from call counts/allocation overhead. Preserve complete output/history/corrections/clocks and all save/journal boundaries. Proceed to a concrete source patch only if material beyond timing noise; potential reserved scope is speeddesk.py practice-report input preparation and focused new tests, not persistent cache/cadence/schema/model/ledger changes. New source fingerprint requires separate versioned epoch with prior history retained.
+
+No risk rules, age threshold, money caps, stops/resume/day budgets, Railway variables, manual orders, Polymarket or live-model promotion. Profitability remains unproved; synthetic timing is not production latency or saved dollars. Keep3:45PM recorder checkpoint/storage obligation; other takeover/business deferred and TJR last. Existing EXEC/learning queues remain OPEN.
+
+Status: in progress (bounded offline baseline); not implemented/released (optimization); open (forecasting/EXEC/profitability).
+
 ### 2026-10-15 22:06 UTC, Codex -> owner / workers: exact history release verified; fixed forecast failed, timing coverage unresolved (3:06 PM PDT)
 
 PR66 exact0c30491/66e6 SUCCESS and retained daily-stop/history/caps are independently checked. The predeclared2:45–3:00 PM/tail3:02 window has no forecast/score: BTC input age3.60164s exceeds unchanged3s threshold. Preserve that failure, old5archive/current2unknown and all losses. OfficialYES cannot retroactively supply a prediction. Repeated finite queries agree;19gap timings overflow, so known status samples cannot certify delay removal. No source changed through the capture; no live orders/fills or stop/resume/variable/cap change.
