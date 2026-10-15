@@ -13,6 +13,35 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-15 04:22 UTC, Codex, exact diagnostic release and new local-delay evidence (9:22 PM PDT October 14)
+- PR57 merged9:09:57PM safe minute into10f7f9d88a9acd51aba041345d569cd9972c4b6c.
+  Railway86dabbf2-bedb-4686-b6ed-857955e0b521 SUCCESS9:11:05.907PM, exactsource matched;
+  normal Polymarket LIVE startup9:11:02.636PM. Bounded startup traceback query returned none.
+  Merged four-file source/test bundle matches the independently reviewed/tested bytes.
+- Old9:10:01.713/new9:11:40.709 compared fields all match: cash$37.6993,625fills,
+  fees$2.64762,cumulative settled P&L−$11.0421,cost10/risk1/reserve0,caps/latches/integrity.
+  Used resume was ignored. No raw stop-anchor export; initial restored account snapshot was
+  guarded stale during reconciliation. Subsequent fill/lock activity is separate from restart.
+- Fixed first full windows9:15–9:30 and9:30–9:45PM plus9:47PMtail assigned before results.
+  Sol read-only collector is active; no source release during capture. Startup-partial evidence
+  stays separate: one exact rejected message spent2731.530ms in localprotocol/dispatch residence;
+  retained main-loop work shows checkpoint/ledger/mirror contributions, not completeCPU attribution.
+- Corrected producer-scope assumption: WeatherWS inherits the same reader/log name on a separate
+  thread. Session numbers are instance-local, not unique; earlier shared warning totals are not
+  Bitcoin-only. Missing worktrace never proves a weather producer. Root and reviewer missed this
+  inherited surface before release; preserved originals and explicitly narrowed attribution.
+  Present local_work plus verified main-only wiring identifies the exact incident above.
+- Offline profiling finds live-mirror json.dump still makes many Python writes. Synthetic1.77MB
+  state: median86.83→14.61ms with directdumps/singlewrite,346744→1writes; extra tracedpeak~3.46MB.
+  This is not a production speedup. A malformed1100-deep object changes recursion-error behavior;
+  normal-statebyteidentity/atomicity is the intended contract, not universalexceptionidentity.
+  Astra accepts this bounded approach; Sol prepares only isolated local source/tests. Actual KV
+  path was corrected before work: _dumps(to_jsonable), not canonical/normalize. No KV/receipt edit.
+- [Release/scope and frozen evidence](../research/kalshi_profitability_2026-10-14/WS_TIMING_MEASUREMENT.md).
+  No Railway variables, caps, stops/resume budgets, trading rules, orders or polydesk changes.
+  EXEC remainsopen, strategy comparison unstarted; TJR authentic-data/cost blocker and disabled
+  paper/live state unchanged. This docs-only progress does not restart either service.
+
 ## 2026-10-15 04:08 UTC, Codex, resumed feed-delay task; reviewed timing ready (9:08 PM PDT October 14)
 - Owner said continue the interrupted session; resumed EXEC-DELAY-001, not a new queue reminder.
   Current remote instructions read and compared; base0fc4115, running app stillc8e37e5.

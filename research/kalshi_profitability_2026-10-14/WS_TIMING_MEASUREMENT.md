@@ -1,6 +1,6 @@
 # Locate the remaining stale-feed delay
 
-Recorded October 14, 2026, 9:05 PM Pacific (October 15, 04:05 UTC).
+Prepared October 14, 2026, 9:05 PM Pacific (October 15, 04:05 UTC); release update9:20PM.
 EXEC-DELAY-001 remains open. This is a measurement release, not a strategy change
 or a claim of profitability. It preserves the existing complete-message yields,
 three-second source-age rejection, sequence rules, cancellations and financial state.
@@ -89,6 +89,30 @@ test process was stopped after source revisions (exit137) and is not a successfu
 check; its partial failures are retained rather than counted as final results.
 
 ## Prospective production evidence, frozen before release
+
+PR57 merged9:09:57PM into exact `10f7f9d88a9acd51aba041345d569cd9972c4b6c`.
+Railway `86dabbf2-bedb-4686-b6ed-857955e0b521` reports SUCCESS9:11:05.907PM;
+normal Polymarket LIVE startup logged9:11:02.636PM (producer wall9:11:01).
+Old9:10:01.713/new9:11:40.709 status fields match: cash$37.6993,cost10,risk1,
+reserved0,625fills,fees2.64762,cumulative settled−11.0421,caps/latches/integrity.
+The used resume value was ignored. No raw stop-anchor export was obtained. Initial
+new account-data-stale guard remained active during reconciliation, rather than
+pretending the restored snapshot was fresh. [Selected-field comparison](ws_timing_restart_comparison.json)
+and [original release receipts](ws_timing_release_evidence.zip) retain this scope.
+
+Before the first full window, root assigned9:15–9:30PM and9:30–9:45PM Pacific,
+with the fixed9:47PM tail. No source release during collection. An excluded
+startup-partial rejection has exact2.731530s local residence; a matched main-loop
+worktrace contains material checkpoint/ledger/mirror work, not all CPU attribution.
+
+**Producer correction:** WeatherWS inherits the same receiver and log name on a
+separate thread. Its instance-local session numbers can overlap Bitcoin's. The
+original shared-logger warning totals above and in earlier reports are all-instance
+counts, not a Bitcoin-only count. Untagged events remain unattributed. A present
+local_work object plus verified main-only wiring identifies that incident's loop;
+its absence does not identify weather. The exact-patch review did not catch this
+scope surface before release. Explicit producer/instance identifiers remain needed.
+This correction changes attribution, not the preserved raw events or timestamps.
 
 After exact Railway SUCCESS, normal startup and unchanged compared financial
 state, freeze the first two complete 15-minute windows strictly after the verified

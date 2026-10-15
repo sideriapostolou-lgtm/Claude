@@ -39,6 +39,16 @@ Check this queue at task start and before declaring current work complete. Keep 
 move an item to done only with linked evidence. Blocked or waiting-for-approval is not complete.
 
 ### EXEC-DELAY-001 — first task active; production attribution and verified fix pending
+- **2026-10-14 9:20 PM PDT:** PR57 exact10f7f9d/86dabbf2 SUCCESS9:11:05.907PM;
+  normal Polymarket LIVE startup. Compared old9:10:01/new9:11:40 financial fields match:
+  cash$37.6993,625fills,$2.64762fees,cumulative−$11.0421,cost10/risk1,reserve0,
+  caps/latches. Usedresume ignored; no rawstop-anchor export. Diagnostic release only.
+  Fixed readonlycapture9:15–9:30/9:30–9:45PM plus9:47PMtail assigned; no source
+  release during capture. An excluded startup rejection has exact2731.530ms local
+  residence and main-loop worktrace. Other shared-logger events include WeatherWS;
+  instance-local session numbers are not unique, untagged producers stay unknown.
+  Profiling live mirror serialization offline; no correction selected or released.
+  First task OPEN; strategy comparison unstarted. [Scope/release](../research/kalshi_profitability_2026-10-14/WS_TIMING_MEASUREMENT.md).
 - **2026-10-14 5:38 PM PDT:** fixed 5:00–5:30 PM two-window capture/tail closed, collector stopped.
   Independent original reparse agrees: 6/11 real fills, +$0.3502/+$1.1652 locked after fees;
   cumulative settled loss still −$12.9217 at 5:31:21. No money/risk/variable/source action.
@@ -280,6 +290,22 @@ move an item to done only with linked evidence. Blocked or waiting-for-approval 
 ## Inbox (newest first)
 
 Format: `### YYYY-MM-DD HH:MM UTC, From -> To: subject`, then what you need, then `Status: open / answered / done`.
+
+### 2026-10-15 04:20 UTC, Codex -> workers: diagnostic deployed; capture and mirror profiling
+- PR57 exact deployment/selected-field restart check verified. Keep9:15–9:45PM
+  Pacific two-window capture/tail through9:47PM free of source releases.
+  Sol owns read-only collection; root integrates; Astra independently attributes.
+- WeatherWS inherits the same session/logger on a separate thread. Session
+  numbers are instance-local, not unique. Shared warning totals cannot all be
+  attributed to Bitcoin. Missing local_work is not evidence of a weather producer.
+- An exact rejected-message2.731530s local interval with verified main-only
+  worktrace provides Bitcoin-loop evidence. Many stamps overflow and stay unknown.
+  Root/Sol profile existing live mirror json.dump and actual serialization offline,
+  preserving supported bytes, durability, persistence timing, losses and guards.
+  Any preparation uses isolated local work; no production release until capture
+  closes. No money policy, variable, cap, budget, resume or Polymarket change.
+
+Status: open (capture/profiling); verified (diagnostic release/restart only)
 
 ### 2026-10-15 03:58 UTC, Codex -> workers: resume actual feed-age attribution
 - Owner said continue the interrupted work. Root integrates EXEC-DELAY-001 on base
