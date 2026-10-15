@@ -1,0 +1,54 @@
+[
+  {
+    "name": "focused-v3",
+    "command": [
+      "/workspace/shared/nightcrawler-venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "tests/test_kalshi_probability_epochs.py",
+      "tests/test_kalshi_probability_learning.py",
+      "tests/test_kalshi_probability_arena.py",
+      "tests/test_kalshi_probability_learning_page.py",
+      "tests/test_kalshi_arena_page.py"
+    ],
+    "cwd": "/workspace/nightcrawler-probability-epochs",
+    "started_at": "2026-10-15T21:07:29.809936+00:00",
+    "finished_at": "2026-10-15T21:07:32.073463+00:00",
+    "returncode": 0,
+    "stdout_file": "/workspace/kalshi-probability-epoch-checks/focused-v3.log"
+  },
+  {
+    "name": "mypy-v3",
+    "command": [
+      "/workspace/shared/nightcrawler-venv/bin/python",
+      "-m",
+      "mypy",
+      "src/nightcrawler"
+    ],
+    "cwd": "/workspace/nightcrawler-probability-epochs",
+    "started_at": "2026-10-15T21:07:32.073527+00:00",
+    "finished_at": "2026-10-15T21:07:33.060805+00:00",
+    "returncode": 0,
+    "stdout_file": "/workspace/kalshi-probability-epoch-checks/mypy-v3.log"
+  },
+  {
+    "name": "ruff-v3",
+    "command": [
+      "/workspace/shared/nightcrawler-venv/bin/ruff",
+      "check",
+      "src/nightcrawler/kalshi_probability_epochs.py",
+      "src/nightcrawler/kalshi_probability_learning.py",
+      "src/nightcrawler/kalshi_arena.py",
+      "src/nightcrawler/pagestate.py",
+      "tests/test_kalshi_probability_epochs.py",
+      "tests/test_kalshi_probability_arena.py",
+      "tests/test_kalshi_arena_page.py"
+    ],
+    "cwd": "/workspace/nightcrawler-probability-epochs",
+    "started_at": "2026-10-15T21:07:33.060839+00:00",
+    "finished_at": "2026-10-15T21:07:33.071326+00:00",
+    "returncode": 0,
+    "stdout_file": "/workspace/kalshi-probability-epoch-checks/ruff-v3.log"
+  }
+]

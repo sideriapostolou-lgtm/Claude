@@ -1,0 +1,55 @@
+{
+  "status": "architecture recommendation; no application implementation or production action",
+  "source": {
+    "strict_restore": "kalshi_probability_learning.py:366-462",
+    "identity": "kalshi_probability_learning.py:23-25,67-73",
+    "model_validation_limit": "kalshi_probability_learning.py:496: old mismatched-source forecasts receive structural validation but are not recomputed using current model",
+    "arena": "kalshi_arena.py:1272-1279,1295-1310,2017-2024,2098-2104",
+    "page": "pagestate.py:1550-1622,1812-1813"
+  },
+  "scope": "new child-only probability epoch host; strict learner restore remains unchanged; no V1/live/control/financial change",
+  "identity_rule": "Add new host source file to existing SOURCE_FILES. Source changes remain real new measurement identities. No hardcoded historical alias, source rewrite or disabled-state reenable.",
+  "state_contract": {
+    "learning_probability": "Immutable deep copy of original VALIDATED legacy checkpoint, frozen once on first host installation; root existing key remains archival.",
+    "learning_probability_epochs": {
+      "schema": "fixed version constant",
+      "legacy_sha256": "canonical JSON digest of frozen root legacy state; checksum is consistency evidence, not authenticity proof",
+      "archived": "ordered immutable complete records with ordinal, source/protocol identity, opened_at nullable only for imported legacy, closed_at, complete original state, canonical state digest",
+      "active": "one ordinal after archives, current actual fingerprint, opened_at, current ProbabilityLearning state",
+      "error": "fixed allowlisted host error or null"
+    },
+    "duplicate_legacy": "Simplest schema may store legacy both in root old key and archive0; count duplicated bytes in budget. Do not silently change archival root key on later epochs.",
+    "bounds": "Suggested max4 archived+1 active, total serialized optional envelope+duplicated legacy <=2MiB, each state retains existing262144-byte limit. No eviction. At cap refuse next rollout, retain all existing records and disable optional observation. Bound panel separately."
+  },
+  "restore_rules": [
+    "Fresh truly absent arena checkpoint can bootstrap a new empty observer; loaded checkpoint missing both probability history keys must fail optional observer closed instead of pretending first install.",
+    "Present null legacy state is invalid. Existing wrapper envelope is authoritative: never fall back to legacy or create zero active state if envelope is malformed/missing active.",
+    "Before mutating host, validate schema, exact key sets, bounds, ordinals, identities, timestamps, digests and each learner state. Use a disposable current-source ProbabilityLearning.restore; check restore_rejected, validated identity and ORIGINAL raw status. Retain original deep copy, never probe.state(): probe changes last_at/error/restart annotations.",
+    "Require same known prediction PROTOCOL for automatic rollout. A protocol/schema change requires explicit supported migration; generic mismatched string acceptance is not migration authority.",
+    "New epoch allowed only from validated history with original restore_rejected=false and either enabled=true/error=null or enabled=false/error=source_or_protocol_mismatch. Other error latches must remain disabled even though current restore may replace their displayed error with mismatch.",
+    "When active source equals current source, strict restore normal active state. Do not create another epoch or zero bins on routine restart. ProbabilityLearning constructor gets this restart's now; persisted epoch.opened_at is metadata only.",
+    "When source differs and capacity allows, freeze exact validated active raw as next archive; create entirely new ProbabilityLearning(now), zero counts/bins/scores/watermark/labels/pending/raw-batch state. Nothing from prior epoch trains new epoch.",
+    "Rollback A->B->A creates ordinal2 with fresh empty A observer; never select old archive by source hash. Old pending forecasts remain frozen/unresolved and never get scored under new source.",
+    "Malformed/capacity cases cannot throw into arena restore/reset. Preserve validated legacy and previously committed valid archive state; do not seed fresh active. Display unavailable/disabled current evidence, not fabricated zero performance. Unsafe malformed raw cannot be copied into strict JSON output and cause whole-arena save failure.",
+    "On cap rejection keep the existing bounded envelope intact and latch a fixed host error; no archive eviction, rolling aggregate, dropped-oldest counter or automatic disk edits."
+  ],
+  "integration": [
+    "Retain ProbabilityLearning as active model; wrapper handles only startup, checkpoint and lineage panel. Explicit forwarding/allowlist for discover/batch/batch_complete/labels_received/advance/status/disable; archived objects never receive runtime callbacks.",
+    "Avoid dynamic property mutation or generic call forwarding that hides existing tests/introspection. Arena can retain learning_probability pointing to active learner and separate host for state/restore/panel; wrapper updates pointer once at init only.",
+    "Existing panel learning_probability remains current-only and satisfies strict current/history identity equality. Add separate numeric allowlisted lineage panel: current ordinal and archive identity/count/Brier/pending summaries with frozen labels. No cross-epoch score/count sums or promoted best-epoch choice.",
+    "Keep save ordering/frequency/durability and parent ArenaLink untouched. Optional host errors cannot reset residents, V1, trade state or finances. Full resource replay must include maximum retained-history serialization before release."
+  ],
+  "acceptance": [
+    "Migrate synthetic old5scored/1unknown exactly: deep-equal archival state; fresh active0forecasts/0scored/nullBrier/empty bins; old and new sources distinct.",
+    "Original mismatch-disabled state accepted only as validated archive; malformed status, restore_rejected=true, raw_stream_invalid and label_conflict cannot become a new enabled observer.",
+    "Missing whole file vs loaded missing keys vs explicit null vs malformed authoritative envelope vs missing active vs altered legacy digest have distinct conservative outcomes.",
+    "Restart same source after scoring preserves current bins/counts; pending forecast gains existing child_restart_gap; started-inside window excluded; no second migration.",
+    "A->B->A produces3 separate ordinals with fresh bins for finalA; no resurrection, merge, sample relabel or backfill.",
+    "Boundary count/byte capacity and one-over refuse atomically, retaining every validated state. Nonfinite/cyclic or oversized fixture cannot break arena serialization; page cannot leak arbitrary strings or raw archive states.",
+    "Archive mutation, duplicate ordinal, truncated history, inconsistent source/protocol fields, reversed timestamps and negative/impossible counters fail closed. Unrecognized prediction protocol does not auto-migrate.",
+    "Full page/arena baseline isolation across state saves: apart from new optional epoch fields and current probability panel, V1/resident/financial bytes and write ordering/durability unchanged.",
+    "Fingerprint dependency preflight proves host changes change source and reports affected persisted identities before deployment; no observed calibration score implies profit."
+  ],
+  "capture_and_release": "Continue existing PR65 capture unchanged while building offline; current observer remains honestly disabled with5old scores retained. Current runtime has no safe activation interface. After fixed capture/tail, use one separately declared tested source release and a newly frozen future observer window; do not extend or restart source-fix capture retroactively.",
+  "evidence": "epoch_restore_facts.py and epoch_restore_facts.stdout: actual strict restore facts and design-only transition fakes passed; not an implemented wrapper, production history export or profitability result."
+}

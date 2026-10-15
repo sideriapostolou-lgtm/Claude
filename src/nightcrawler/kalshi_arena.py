@@ -81,6 +81,7 @@ from .kalshi_online_learning import (
     MAX_RECENT,
     OnlineLearning,
 )
+from .kalshi_probability_epochs import ProbabilityEpochs
 from .kalshi_probability_learning import ProbabilityLearning
 from .speeddesk_model import (
     BitcoinTape,
@@ -1270,13 +1271,16 @@ class KalshiArena:
             pass
         self.learning = OnlineLearning(clock())
         self.learning_probability: ProbabilityLearning | None = None
+        self._probability_epochs: ProbabilityEpochs | None = None
         try:
             self.learning_probability = ProbabilityLearning(self.learning.started_at)
-        except Exception:  # noqa: BLE001, S110 - optional construction cannot prevent arena startup
-            pass
+            self._probability_epochs = ProbabilityEpochs(self.learning_probability, self.learning.started_at)
+        except Exception:  # noqa: BLE001 - optional construction cannot prevent arena startup
+            self._probability_call("disable", "optional_learning_method_failed")
         self._load(clock())
         self._learning_call("status", clock())
         self._probability_call("status", self.learning.last_at)
+        self._probability_epoch_call("status", self.learning.last_at)
         self.rng = random.Random(SEED + self.next_id)
         self._populate(clock())
 
@@ -1314,6 +1318,22 @@ class KalshiArena:
         except Exception:  # noqa: BLE001, S110 - includes observation, encoding and logging failures
             pass
         return None
+
+    def _probability_epoch_call(self, method: str, *args: Any) -> Any:
+        """Isolate optional lineage persistence/panels; runtime callbacks stay on the learner."""
+        host = self._probability_epochs
+        if host is None or method not in {"restore", "checkpoint", "current_panel", "panel", "status"}:
+            return None
+        try:
+            return getattr(host, method)(*args)
+        except Exception:  # noqa: BLE001 - host failures cannot reset V1/residents or block saves
+            self._probability_call("disable", "optional_learning_method_failed")
+            with contextlib.suppress(Exception):
+                host._fail("epoch_method_failed")
+            if method == "checkpoint":
+                with contextlib.suppress(Exception):
+                    return host.retained_state()
+            return None
 
     def _diagnostic_cause(self, slug: str, now: float, flags: Sequence[str], **kwargs: Any) -> None:
         self._diagnostic_call("cause", self.learning, slug, now, flags, self._diagnostic_frame, **kwargs)
@@ -1996,6 +2016,10 @@ class KalshiArena:
                  "candidates": candidates[:PANEL_CANDIDATES], "events": self.events[:PANEL_EVENTS]}
         counts = {"residents": len(rows), "grave": int(self.town["evicted"]), "candidates": len(candidates),
                   "events": self.next_event - 1}
+        probability_panel = self._probability_epoch_call("current_panel")
+        epoch_panel = self._probability_epoch_call("panel")
+        if self._probability_epochs is None or self._probability_epochs.error is not None:
+            probability_panel = None
         return {"schema_version": PANEL_SCHEMA, "mode": "paper", "label": LABEL, "as_of": now,
                 "town_id": self.town_id, "heartbeat_s": SAVE_EVERY_S, "problem": self.problem,
                 "population": len(self.residents), "rent_usd": self.config.rent_usd,
@@ -2012,16 +2036,18 @@ class KalshiArena:
                 "truncated": {key: len(shown[key]) < counts[key] for key in counts},
                 "town": dict(self.town), "feed": self.telemetry(now),
                 "learning": self._learning_call("panel"),
-                "learning_probability": self._probability_call("panel")}
+                "learning_probability": probability_panel, "learning_probability_epochs": epoch_panel}
 
     def state(self, now: float) -> dict[str, Any]:
+        probability, epochs = self._probability_epoch_call("checkpoint") or (None, None)
         return {"version": STATE_VERSION, "label": LABEL, "saved_at": now, "started_at": self.started_at,
                 "settings": {"population": self.config.population, "rent_usd": self.config.rent_usd,
                              "broke_usd": self.config.broke_usd, "start_cash": self.config.start_cash},
                 "control_rule": self.control_rule, "regime": self.regime, "next_id": self.next_id, "seq": self.seq,
                 "town_id": self.town_id, "next_event": self.next_event, "rent_day": self.rent_day,
                 "learning": self._learning_call("state"),
-                "learning_probability": self._probability_call("state"),
+                "learning_probability": probability, "learning_probability_epochs": epochs,
+                "learning_probability_epoch_schema": 1,
                 "active_windows": [[slug, window.start] for slug, window in sorted(self.windows.items())],
                 "residents": [res.row for res in self.residents.values()], "grave": self.grave,
                 "events": self.events, "town": self.town,
@@ -2097,11 +2123,8 @@ class KalshiArena:
             self._reset(exc)
         else:
             self._learning_call("restore", raw.get("learning"), now)
-            if "learning_probability" in raw:
-                if raw["learning_probability"] is None:
-                    self._probability_call("disable", "malformed_optional_learning_state")
-                else:
-                    self._probability_call("restore", raw["learning_probability"], now)
+            if self._probability_epochs is not None:
+                self._probability_epoch_call("restore", raw, now)
 
     def _reset(self, exc: BaseException) -> None:
         self.learning.disable("arena_state_unreadable")

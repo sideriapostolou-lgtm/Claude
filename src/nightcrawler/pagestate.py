@@ -1622,6 +1622,73 @@ def _kalshi_learning_view(raw: Any, *, probability_only: bool = False) -> dict[s
                          if probability_only else "Quiet observations; full data coverage not certified")}
 
 
+def _kalshi_probability_epochs_view(raw: Any) -> dict[str, Any] | None:
+    """Bounded lineage summaries only; never raw states or combined epoch scores."""
+    errors = {"epoch_state_invalid", "epoch_history_missing", "epoch_history_disabled",
+              "epoch_protocol_unsupported", "epoch_capacity", "epoch_method_failed"}
+    protocol = "kalshi-probability-calibration-v2-h300-g5-b10-prior20"
+
+    def identity(value: Any) -> bool:
+        return isinstance(value, str) and len(value) == 64 and not set(value) - set("0123456789abcdef")
+
+    def summary(value: Any, ordinal: int, *, archived: bool) -> dict[str, Any] | None:
+        if (not isinstance(value, Mapping) or type(value.get("ordinal")) is not int or value["ordinal"] != ordinal
+                or value.get("protocol") != protocol or not identity(value.get("source_fingerprint"))
+                or value.get("pending_frozen_unresolved") is not True):
+            return None
+        opened: Any = value.get("opened_at")
+        closed: Any = value.get("closed_at")
+        if opened is None:
+            if ordinal != 0:
+                return None
+        elif _num(opened) is None or opened < 0:
+            return None
+        if archived:
+            if _num(closed) is None or closed < (opened or 0):
+                return None
+        elif closed is not None:
+            return None
+        counts: dict[str, Any] = {key: value.get(key) for key in ("forecasts", "scored", "unknown", "pending")}
+        if (any(type(n) is not int or not 0 <= n <= 10**12 for n in counts.values())
+                or counts["scored"] + counts["pending"] > counts["forecasts"]):
+            return None
+        scores: dict[str, Any] = {key: value.get(key) for key in ("brier_baseline", "brier_shadow")}
+        if any((v is not None if counts["scored"] == 0 else _num(v) is None or not 0 <= v <= 1)
+               for v in scores.values()):
+            return None
+        return {"ordinal": ordinal, "protocol": protocol, "source_fingerprint": value["source_fingerprint"],
+                "opened_at": opened, "closed_at": closed, **counts, **scores, "pending_frozen_unresolved": True}
+
+    if (not isinstance(raw, Mapping) or type(raw.get("schema")) is not int or raw["schema"] != 1
+            or raw.get("mode") != "observe_only" or raw.get("live_application") is not False
+            or raw.get("profitability_proven") is not False or type(raw.get("current_available")) is not bool
+            or not identity(raw.get("current_source_fingerprint"))
+            or not isinstance(raw.get("archived"), list) or len(raw["archived"]) > 4):
+        return None
+    error = raw.get("error")
+    if error is not None and (not isinstance(error, str) or error not in errors):
+        return None
+    ordinal = raw.get("active_ordinal")
+    if ordinal is not None and (type(ordinal) is not int or ordinal != len(raw["archived"])):
+        return None
+    if raw["current_available"] != (error is None and ordinal is not None):
+        return None
+    archives = [summary(value, index, archived=True) for index, value in enumerate(raw["archived"])]
+    if any(value is None for value in archives):
+        return None
+    retained = raw.get("retained_active")
+    if error is not None and ordinal is not None:
+        retained = summary(retained, ordinal, archived=False)
+        if retained is None:
+            return None
+    elif retained is not None:
+        return None
+    return {"schema": 1, "mode": "observe_only", "live_application": False, "profitability_proven": False,
+            "error": error, "current_source_fingerprint": raw["current_source_fingerprint"],
+            "active_ordinal": ordinal, "current_available": raw["current_available"],
+            "archived": archives, "retained_active": retained}
+
+
 def _kalshi_arena_envelope(status: str, reason: str | None) -> dict[str, Any]:
     """The block with nothing known: every figure null, never a zero or an empty list that would look like a fresh,
     empty town. ``mode`` and ``real_orders_enabled`` are constants of this page, never read from a file (the arena
@@ -1811,6 +1878,8 @@ def _kalshi_arena_view(kalshi_arena: Any, raw: Mapping[str, Any], settings: Sett
         **({"learning": _kalshi_learning_view(raw.get("learning"))} if "learning" in raw else {}),
         **({"learning_probability": _kalshi_learning_view(raw.get("learning_probability"), probability_only=True)}
            if "learning_probability" in raw else {}),
+        **({"learning_probability_epochs": _kalshi_probability_epochs_view(raw.get("learning_probability_epochs"))}
+           if "learning_probability_epochs" in raw else {}),
     }
 
 
