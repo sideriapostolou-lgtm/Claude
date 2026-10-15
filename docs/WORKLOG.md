@@ -13,6 +13,48 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-15 00:06 UTC, Codex, UTC-day financial audit and fresh recorder manifest (5:06 PM PDT October14)
+- Read exactsourcec8 live status at4:59:15/5:00:13/5:01:14PM Pacific. Saved priorOctober14UTC
+  real report:41windows with actualfills,222fillevents,51settlements,$0.7011fillfees,settled
+  P&L−$4.505 (locked−$0.564641/directional−$3.940359),worst−$2.15. Fees are already included
+  in settled P&L; fill fees/date and settlement/date cohorts differ. No double subtraction.
+-159of1,872makerintents created thatUTCday have at least one recordedfill asofsnapshot(8.4936%);
+  eachintent countedonce,fillmayoccuranotherday. This is separate from222dayfillevents.
+  No takerattempts/rate unavailable. Intent-inputage median154.013/p95725.238ms; validack
+  median94.473/p95740.103ms,1854validsamples+18errors of1872observations. Mean decision→fill
+  3178.333ms includesmakerwaiting/excludeslockintents,notpure reaction or all-fill latency.
+- Both real/twin scorecards remain partial,0complete/96gapwindows; calendar ended is not coverage
+  certification. Simulated twin67windows/199fills,+$12.23 (locked+$33.6482,direction−$21.4182),
+  differentfillpopulation; fees not separatelypresent in summary. No realprofit/edge promotion.
+  Separatepracticecontroller not fetched. Dated5:01financialcontext:cash$34.3243,grossfilledcost
+  $5.98/modeledrisk$0.98,reserve$2.75,oneopenorder,cumulative settled−$14.4371; windowunfinished.
+- Independent Astra raw-message/source audit verified all numbers and corrected rootdraft's maker
+  rate definition beforepublication. DAILY_2026-10-14_UTC_RECORDED.json retains rawquery/report,
+  definitions and limits. Fillheadline by venuefilldate,settledP&L by settlementdate,scorecard by
+  windowend; overnight settlement can legitimately create new-dayP&L before new-dayfills.
+- Recorder exacta0782b7 source confirms hourly completed-hour receipts, no periodic heartbeat;
+  quiet4:45–4:56PMloginterval is expected, not a missing-heartbeat diagnosis. Fresh5:00:02.447
+  platformlog/app5:00:00.824PM publishes4–5PM period:60/60reportedminutes,bookfreshshare1.0,
+  BTC15mfresh60/tradetape60,zero reportedgaps;coveragecertification/pervenuespotverification/
+  hashreverification allfalse. Storage326,687,745bytes/4,831,838,208configuredarchivecap(6.76%),
+  level0/deleted0,+13,047,078bytes frompriorhour. Not hostdiskfree or rawcapturecertification.
+  Saved exactcadence/metadata receipts; rootverified hashes. No raw/replay/TEST outcomes accessed.
+- Firstfull5:00–5:15PM tradingwindow is actively collected, followed by5:15–5:30 andboundedtail.
+  No complete-windowlatencypass/causalprofitclaim yet. Sourceunchanged; priorpartialwindow had
+  one newUp56¢fill balancing existingDown43¢,settled+$0.01onnewUTCday; excluded fromtargetcohort.
+- First5minutequerychunkclosed independentlyofopenwindow:5unique fills/$9.70cost/zero fees,
+  latest5:04:14modeledrisk$1.70,unsettled.6selectedcycles,maxactualresume512.814ms; wholecycle
+  max3197.157ms is a differentmeasure. Coveringstatussofar maxlag788.3ms,session473cycles=
+  466quiet+7reports,7unique originalreports,buffer/drop/suppression0. Firstcompletewindow and
+  its endpointcoverage remain pending; no latencygatepass or causalcomparison from this slice.
+ 12originalsource-age/marketsetwarnings through5:03:24retained; activefeeds/reads/stops normal
+  atlateststatus. Closedchunk6,393,632bytes hashad92c9bdb9ef31236277fbe888811ea26cbfb9a968eaf0799df4dd9da20eb2fa
+  remains in/shared awaitingfullwindowclosure; no claimofcompletequarter-hourfinancialcoverage.
+- Docs/evidence only; no source/test changes or rerun,variables/orders/financialrules/stops/resume
+  actions. Latestbranch/preservedhistory/JSON/secretpatternchecks precede push. ExecutiontaskOPEN,
+  comparisonunstarted,TJRauthenticinputblocked/automationunchanged; recorderduties preserved.
+
+
 ## 2026-10-14 23:56 UTC, Codex, PR #56 deployed and principal restart comparison verified (4:56 PM PDT)
 - PR56 merged4:50:53PM inside allowed minutes, exactc8e37e5504aad04da0521b3f95c17f86dac42899.
   Railwayad9f3073-9002-41d8-b29a-5b220fb19d1a SUCCESS4:52:47.327PM, regionus-east4-eqdc4a;
