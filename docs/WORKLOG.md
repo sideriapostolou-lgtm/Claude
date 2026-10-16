@@ -5,6 +5,23 @@ One entry per working session, newest first. Every AI worker (Claude, ChatGPT/Co
 Template:
 
 ```
+## YYYY-MM-DD HH:MM UTC, <worker>, branch <branch>, PR <#>
+- Changed: ...
+- Verified: (tests run and their result, logs checked)
+- Not verified / skipped: ...
+- Real money touched? no / yes (what, on whose word)
+- Next step: ...
+```
+
+## 2026-10-16 17:19 UTC, Codex — owner-supplied addendum fully read; entire handoff remains first (October 16, 10:19 AM PDT)
+
+- Read all 166 lines / 14,285 bytes of the new attachment. It exactly matches current `docs/HANDOFF_ADDENDUM_2026-10-16.md`, blob `fb3f3637bc5a2fa7887b24a3b593a7b0dab80585`; SHA-256 `f2b512f921c390a99076a34f5ba200dfed0444d42aa03f7fe5913d4931c4f5d9`. This is the same addendum reviewed in the prior operating reconciliation, so no duplicate broad audit or source reconstruction.
+- Owner explicitly answered **“Finish the entire handoff before redesigning.”** Keep CODEX-TAKEOVER-001 active and the town redesign deferred. Section 3 is retained as the product specification: a visible lane for every stage, separate real/practice/observation scopes, actual blocker and source-aged `/api/page` numbers. Guard checks remain continuous across stages, and owner controls are informational. Missing decision, shard/cooldown, reconciliation and recorder page data is engineering work, not data the owner must invent.
+- The supplied trading delta does not contain the remaining unique private source payloads, original host/session access, routine control/last-run evidence or volume/deployment/cost records. The existing private recovery request is narrowed to those actual inputs; original handoff, shipping skills and this addendum need no resend. Current callable tools expose no Claude account/browser/Mac or Vercel access; do not claim those sessions transferred. Keep existing private inventory private and every unfinished row on its existing commitment.
+- Fixed the previous Codex 17:00 WORKLOG entry being accidentally placed inside the fenced template. Moved the entry outside it without changing its text; original template and other workers' records retained. Validation: attachment/repo exact match, original-entry preservation and balanced Markdown fences; no app source or behavior changed, so no application tests required.
+- User reports desk live, funded, doubled and nothing open. That is attributed testimony for this intake, not a fresh account inspection. No Railway variables, production services, orders, transfers, financial limits, stop budgets, automations or secrets changed; no redesign, new research, TEST or TJR advancement.
+- Next: collect the existing private recovery request's missing source/control/host/state evidence, reconcile each row (or explicit owner disposition for genuinely unavailable dormant items), then implement Section 3. Entire handoff remains **in progress**.
+
 ## 2026-10-16 17:00 UTC, Codex — operating handoff reconciled; town clarity goal reopened (October 16, 10:00 AM PDT)
 
 - Owner wants the town to explain the actual automated business and asks for the complete Claude handoff before reorganization. Updated current ownership/priority without altering financial rules. [BUSINESS_WORKFLOW.md](BUSINESS_WORKFLOW.md) defines Trading, Research, Records, Operations and Engineering; real/practice/observation separation; recurring checks, reconciliation and cancellation; available versus missing page fields; source ages and phone acceptance. It is a reviewed work order, **not a deployed replacement**. PR73's technical release remains complete; its clarity/product goal is open.
@@ -15,14 +32,6 @@ Template:
 - Validation: independent workflow/source, inventory and UI-logic reviews; all three final document-review corrections applied, final documentation review clear. Authored-doc links, commitment schema, six original hashes, JSON evidence and public/private boundary checks passed; application tests not rerun because no application source changes. The canonical vault manifest was read and verified after an initial wrong-folder local lookup failed.
 - **Real money touched by this task: no.** Claude's separate reported cap action is attributed and observed, not repeated. No variables, credentials, orders, money transfers, production deployments, routine changes, paid calls or messages outside the explicitly requested coordination inbox. TJR remains last/queued while higher-priority work is open; unchanged routine notification suppressed.
 - Next: recover only the genuinely missing private payloads and routine/host/control evidence, record explicit owner disposition for any unavailable dormant item, then implement the reviewed town workflow. Keep current services and all existing trading/recorder evidence obligations intact.
-
-## YYYY-MM-DD HH:MM UTC, <worker>, branch <branch>, PR <#>
-- Changed: ...
-- Verified: (tests run and their result, logs checked)
-- Not verified / skipped: ...
-- Real money touched? no / yes (what, on whose word)
-- Next step: ...
-```
 
 ## 2026-10-16 17:00 UTC, Claude, Railway + docs (size doubled on the owner's word; handoff addendum)
 - Changed: bot variables `SPEEDDESK_KALSHI_WINDOW_USD` 10->20, `SPEEDDESK_KALSHI_OPEN_USD` 20->40,
