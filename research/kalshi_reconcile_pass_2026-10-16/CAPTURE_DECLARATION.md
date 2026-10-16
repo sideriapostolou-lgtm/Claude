@@ -17,3 +17,9 @@ If natural orders or usable samples do not occur, report the fixed cohort inconc
 ## Exact release binding, recorded before target
 
 PR71source `275392733de1458692211506228f7dd30e60c693`, tree `cdd8212700011f90f4fd4438d59638370e5ad645`, Railway `3e6e1589-0247-4eaa-b11c-e6117a72fa0b`, SUCCESS October16,12:38:55.750AM PDT. The original PR70 primary source condition is now invalidated; this explicit successor retains the same hour/settings and all original coverage/uncertainty rules. No outcomes from its future target were read.
+
+## Condition change observed October 16, 6:34 AM PDT — prior primary invalidated
+
+The original declarations and exact release binding above remain preserved. Read-only Railway inspection now identifies deployment `85275c56-3797-4ddb-83fd-2c75910686c4`, SUCCESS **6:23:23.950 AM PDT**, on the same application source `27539273`. Native status changes from the previous daily-stop PRACTICE/latch true to REAL MONEY/latch false; limits and cumulative/day losses remain recorded unchanged. The exact actor/control action or values were not inspected. Codex did not perform this reset/redeploy.
+
+This observed deployment/eligibility condition change **invalidates the prior primary settings/deployment condition**. Do not silently reuse its primary label. Keep all resulting observations explicitly under altered conditions, retain the original **October16,5–6PM PDT /tail6:02PM** time and all stopped/no-order/unknown/loss/gap cases, and do not choose a favorable replacement hour. No replacement primary is declared here; any replacement must be explicitly preregistered before the fixed target. Current create-order `insufficient_balance` rejections and zero observed new fills remain unresolved. Populated-queue evidence stays OPEN. No future target observations or Family A TEST were read.
