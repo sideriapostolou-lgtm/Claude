@@ -1,4 +1,6 @@
-"""The live desk against a truthful, adversarial fake Kalshi (the caps review of 2026-10-13, kept as a test).
+"""Historical admission fixtures exercise prior entry mechanics; they do not establish current production admission.
+
+The live desk against a truthful, adversarial fake Kalshi (the caps review of 2026-10-13, kept as a test).
 
 Creates are refused, time out (landed or lost) or arrive up to 20 s late; cancels fail after executing or not at
 all; reads fail, the feed goes stale, the process restarts, and settlement goes against the bot. The suite runs a
@@ -24,6 +26,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from historical_speeddesk_entry import HistoricalEntryDesk
 
 from nightcrawler.clock import FakeClock
 from nightcrawler.config import Secret, Settings
@@ -313,7 +316,7 @@ class Sim:
         self.venue.ledger_path = root / "live" / "receipts.db"
 
     def _open(self) -> KalshiLiveDesk:
-        desk = KalshiLiveDesk(self.settings, self.root / "live", self.snapshot, clock=self.clock.now,
+        desk = HistoricalEntryDesk(self.settings, self.root / "live", self.snapshot, clock=self.clock.now,
                               client_factory=lambda: self.venue, direct_member_verified=True)
         desk.on_windows(list(self.windows.values()))
         return desk

@@ -1,4 +1,7 @@
-"""Fake clocks and account callbacks only; trace data has no trading authority."""
+"""Historical factory cases are HISTORICAL ENTRY MECHANISM ONLY; no current entry authority
+or profitability claim. Other cases retain the production factory.
+
+Fake clocks and account callbacks only; trace data has no trading authority."""
 
 from __future__ import annotations
 
@@ -9,6 +12,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from historical_speeddesk_entry import make_historical_desk
 from test_speeddesk_live import TICKER, fill_order, make_desk
 
 from nightcrawler.speeddesk_live import QUIET_RECORDS, KalshiLiveDesk
@@ -93,7 +97,7 @@ def state(desk: KalshiLiveDesk) -> tuple[Any, ...]:
 
 
 def test_real_fill_trace_is_once_and_records_checkpoint_without_extra_reads(tmp_path: Path) -> None:
-    desk, account, clock = make_desk(tmp_path)
+    desk, account, clock = make_historical_desk(tmp_path)
     desk.monotonic = clock.now
     try:
         asyncio.run(desk.step())
@@ -184,7 +188,7 @@ def test_trace_buffer_bound_and_publication_failure_leave_checkpoint_working(tmp
 
 @pytest.mark.parametrize("method", ["begin", "read_start", "fills_returned", "fill", "mark", "finish", "status"])
 def test_observer_failure_never_changes_fills_caps_or_cancellation(tmp_path: Path, method: str) -> None:
-    desk, account, clock = make_desk(tmp_path)
+    desk, account, clock = make_historical_desk(tmp_path)
     try:
         asyncio.run(desk.step())
         fill_order(account, clock, 0, side="up", price=.4, size=2)

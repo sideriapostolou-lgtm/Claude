@@ -1,4 +1,7 @@
-"""Speed plan step 0: timing and clock measurements in the Kalshi companion's records (logging only)."""
+"""Historical factory cases are HISTORICAL ENTRY MECHANISM ONLY; they do not prove current
+entry authority or profitability. Other cases retain the production factory.
+
+Speed plan step 0: timing and clock measurements in the Kalshi companion's records (logging only)."""
 
 from __future__ import annotations
 
@@ -10,6 +13,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from historical_speeddesk_entry import make_historical_desk
 from test_speeddesk_live import FakeAccount, make_desk
 
 import nightcrawler.speeddesk_live as live
@@ -36,7 +40,7 @@ class StampingAccount(FakeAccount):
 
 
 def stamping_desk(tmp_path: Path) -> tuple[KalshiLiveDesk, StampingAccount, FakeClock]:
-    desk, _, clock = make_desk(tmp_path)
+    desk, _, clock = make_historical_desk(tmp_path)
     account = StampingAccount(clock)
     desk.client_factory = lambda: account
     return desk, account, clock

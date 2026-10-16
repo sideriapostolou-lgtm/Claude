@@ -1,4 +1,6 @@
-"""Loss plan bug 2 after the rebase: the deploy branch's bba948a fixes are kept (caps review 2, 2026-10-13).
+"""HISTORICAL ENTRY MECHANISM ONLY; no current entry authority or profitability claim.
+
+Loss plan bug 2 after the rebase: the deploy branch's bba948a fixes are kept (caps review 2, 2026-10-13).
 
 Once Kalshi has accepted a stale-bid cancel the rule stands down (with a lagging order list it re-sent the cancel
 five times and read the account 400 times in 10 s), and the stale-bid threshold respects a small make edge.
@@ -10,7 +12,8 @@ import asyncio
 from pathlib import Path
 from typing import Any
 
-from test_speeddesk_live import TICKER, make_desk
+from historical_speeddesk_entry import make_historical_desk
+from test_speeddesk_live import TICKER
 
 from nightcrawler.speeddesk_live import LiveSnapshot
 from nightcrawler.speeddesk_model import Book, Level
@@ -27,7 +30,7 @@ def view(desk, clock, bitcoin: float) -> None:
 
 
 def test_acknowledged_stale_bid_cancel_with_a_lagging_order_list(tmp_path: Path) -> None:
-    desk, account, clock = make_desk(tmp_path, extra={"speeddesk_take_edge": 1.0})
+    desk, account, clock = make_historical_desk(tmp_path, extra={"speeddesk_take_edge": 1.0})
     try:
         view(desk, clock, 80000)
         asyncio.run(desk.step())
@@ -54,8 +57,8 @@ def test_acknowledged_stale_bid_cancel_with_a_lagging_order_list(tmp_path: Path)
 
 
 def test_small_make_edge_bid_is_not_cancelled_on_sight(tmp_path: Path) -> None:
-    # The pull off: the jump from make_desk's 80000 to 80100 is a 1.7c move, which the pull would hold for 10 s.
-    desk, account, clock = make_desk(tmp_path, extra={"speeddesk_take_edge": 1.0, "speeddesk_make_edge": .015,
+    # The pull off: the jump from make_historical_desk's 80000 to 80100 is a 1.7c move, which the pull would hold for 10 s.
+    desk, account, clock = make_historical_desk(tmp_path, extra={"speeddesk_take_edge": 1.0, "speeddesk_make_edge": .015,
                                                       "speeddesk_kalshi_pull": False})
     try:
         view(desk, clock, 80100)

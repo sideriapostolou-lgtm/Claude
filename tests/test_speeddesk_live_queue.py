@@ -1,4 +1,6 @@
-"""Optional queue observations cannot alter fills, risk, send/cancel timing or persistence authority."""
+"""HISTORICAL ENTRY MECHANISM ONLY; no current entry authority or profitability claim.
+
+Optional queue observations cannot alter fills, risk, send/cancel timing or persistence authority."""
 from __future__ import annotations
 
 import asyncio
@@ -8,7 +10,8 @@ from dataclasses import replace
 from pathlib import Path
 
 import pytest
-from test_speeddesk_live import TICKER, make_desk
+from historical_speeddesk_entry import make_historical_desk
+from test_speeddesk_live import TICKER
 from test_speeddesk_live_pull import CAPS, MAKERS, market
 
 from nightcrawler.clock import FakeClock
@@ -172,7 +175,7 @@ def test_cancelled_async_wrapper_never_closes_or_reuses_underlying_live_thread()
 
 
 def prepare(tmp_path, reader):
-    desk, account, clock = make_desk(tmp_path, caps=CAPS, extra=MAKERS)
+    desk, account, clock = make_historical_desk(tmp_path, caps=CAPS, extra=MAKERS)
     market(desk, clock, .5)
     asyncio.run(desk.step())
     # Only fake signing-free reader creation is available; no real key or network client is constructed.
@@ -183,7 +186,7 @@ def prepare(tmp_path, reader):
 def test_real_books_reservations_practice_and_save_cadence_unchanged(tmp_path: Path):
     async def scenario():
         reader = Reader()
-        desk, account, clock = make_desk(tmp_path, caps=CAPS, extra=MAKERS)
+        desk, account, clock = make_historical_desk(tmp_path, caps=CAPS, extra=MAKERS)
         try:
             market(desk, clock, .5)
             await desk.step()
@@ -257,7 +260,7 @@ def test_canonical_reservation_mismatch_or_terminal_pending_fills_never_probed(t
 def test_slow_probe_never_delays_shutdown_first_cancel_or_closes_live_connection(tmp_path: Path):
     async def scenario():
         reader = Reader(); reader.block = True
-        desk, account, clock = make_desk(tmp_path, caps=CAPS, extra=MAKERS)
+        desk, account, clock = make_historical_desk(tmp_path, caps=CAPS, extra=MAKERS)
         shutdown = None
         try:
             market(desk, clock, .5)

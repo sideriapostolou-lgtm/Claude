@@ -1,6 +1,8 @@
 """Speed step 1: orders the recent (min_ts) reads cannot see are caught by the 60 s complete scan.
 
 The caps review of 2026-10-13, kept as a regression test.
+The imported reads_desk fixture uses explicit historical entry policy to reach
+the scan/reconciliation mechanism; it is not current entry authorization evidence.
 """
 
 from __future__ import annotations

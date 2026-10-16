@@ -1,4 +1,6 @@
-"""The Kalshi earned-growth ladder (owner, 2026-10-13 ~18:40 UTC: "Max $50,000 a window build the ladder").
+"""Historical admission fixtures exercise prior entry mechanics; they do not establish current production admission.
+
+The Kalshi earned-growth ladder (owner, 2026-10-13 ~18:40 UTC: "Max $50,000 a window build the ladder").
 
 Synthetic windows and fills only; no account or network. Every trade goes through the risk book's own checks.
 """
@@ -16,6 +18,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from historical_speeddesk_entry import make_historical_desk
 from test_speeddesk_live import TICKER, make_desk
 
 from nightcrawler import (
@@ -547,7 +550,7 @@ def force_rung(desk: KalshiLiveDesk, rung: int, now: float) -> None:
 
 
 def test_the_desk_starts_at_rung_zero_with_the_configured_limits(tmp_path: Path):
-    desk, account, _ = make_desk(tmp_path, caps=LADDER_CAPS)
+    desk, account, _ = make_historical_desk(tmp_path, caps=LADDER_CAPS)
     try:
         asyncio.run(desk.step())
         assert [creation["size"] for creation in account.creates] == [5.0]
@@ -569,7 +572,7 @@ def test_the_desk_starts_at_rung_zero_with_the_configured_limits(tmp_path: Path)
 
 
 def test_the_desk_with_the_ladder_off_always_uses_the_configured_limits(tmp_path: Path):
-    desk, account, clock = make_desk(tmp_path, caps=LADDER_CAPS, extra={"speeddesk_kalshi_ladder": False,
+    desk, account, clock = make_historical_desk(tmp_path, caps=LADDER_CAPS, extra={"speeddesk_kalshi_ladder": False,
                                                                          "speeddesk_kalshi_ladder_max_window_usd": 15.0})
     try:
         force_rung(desk, 2, clock.now())  # even a saved rung is ignored while the ladder is off
@@ -583,7 +586,7 @@ def test_the_desk_with_the_ladder_off_always_uses_the_configured_limits(tmp_path
 
 
 def test_the_desk_and_its_practice_twin_use_the_rungs_limits(tmp_path: Path):
-    desk, account, clock = make_desk(tmp_path, caps=LADDER_CAPS)
+    desk, account, clock = make_historical_desk(tmp_path, caps=LADDER_CAPS)
     try:
         force_rung(desk, 1, clock.now())
         asyncio.run(desk.step())
@@ -614,7 +617,7 @@ def test_the_first_buy_stays_at_the_configured_cap_at_every_rung(tmp_path: Path)
         assert book.can_buy(window.slug, "up", "take", .4, 6, window.start + 10) == "clip"
     ladder = Ladder(BASE)
     assert ladder.top == 2 and ladder.limits_at_rung(ladder.top).clip == 5  # the top rung too
-    desk, account, clock = make_desk(tmp_path, caps=LADDER_CAPS)
+    desk, account, clock = make_historical_desk(tmp_path, caps=LADDER_CAPS)
     try:
         force_rung(desk, 1, clock.now())
         asyncio.run(desk.step())
@@ -625,7 +628,7 @@ def test_the_first_buy_stays_at_the_configured_cap_at_every_rung(tmp_path: Path)
     finally:
         desk.close()
     # The cap is the configured one, not a fixed 5: a 3-contract setting gives a 3-contract first buy at rung 1.
-    desk, account, clock = make_desk(tmp_path / "three", caps=LADDER_CAPS, extra={"speeddesk_kalshi_clip": 3.0})
+    desk, account, clock = make_historical_desk(tmp_path / "three", caps=LADDER_CAPS, extra={"speeddesk_kalshi_clip": 3.0})
     try:
         force_rung(desk, 1, clock.now())
         asyncio.run(desk.step())
@@ -743,7 +746,7 @@ def test_saved_state_stays_readable_by_the_previous_release(tmp_path: Path):
     """The previous release reads the books, intents and twin it knows and ignores other top-level keys. The ladder
     adds one top-level key and nothing inside them. After a rollback the old release writes the state back without
     it, and the next upgrade starts again at rung 0 (the configured limits)."""
-    desk, account, clock = make_desk(tmp_path, caps=LADDER_CAPS)
+    desk, account, clock = make_historical_desk(tmp_path, caps=LADDER_CAPS)
     snapshot, settings = desk.snapshot, desk.settings
     try:
         force_rung(desk, 1, clock.now())

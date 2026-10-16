@@ -1,4 +1,6 @@
-"""Observation hooks cannot become a second trading or accounting path.
+"""Historical admission fixtures exercise prior entry mechanics; they do not establish current production admission.
+
+Observation hooks cannot become a second trading or accounting path.
 
 Real fills come from the existing fake account and actual reconciliation. No
 network, credentials, hypothetical orders or production records are involved.
@@ -13,6 +15,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from historical_speeddesk_entry import make_historical_desk
 from test_speeddesk_live import TICKER, fill_order, make_desk
 from test_speeddesk_runtime import LocalFeeds
 
@@ -70,7 +73,7 @@ def quote(at: float, *, side: Side = "up", sequence: str = "markout-quote") -> B
 
 
 def test_reconciliation_registers_actual_new_fill_once_at_batch_return(tmp_path: Path) -> None:
-    desk, account, clock = make_desk(tmp_path)
+    desk, account, clock = make_historical_desk(tmp_path)
     observer = Observer()
     install(desk, observer)
     desk.monotonic = lambda: clock.now() - 1000
@@ -120,7 +123,7 @@ def test_practice_events_never_enter_real_fill_diagnostic(tmp_path: Path) -> Non
 
 @pytest.mark.parametrize("method", ["needs_book", "on_book", "expire", "status"])
 def test_failed_diagnostic_does_not_change_account_state_or_block_cancel(tmp_path: Path, method: str) -> None:
-    desk, account, clock = make_desk(tmp_path)
+    desk, account, clock = make_historical_desk(tmp_path)
     try:
         asyncio.run(desk.step())
         assert len(account.creates) == 1
@@ -145,7 +148,7 @@ def test_failed_diagnostic_does_not_change_account_state_or_block_cancel(tmp_pat
 
 
 def test_failed_observation_keeps_authoritative_fill_and_fee(tmp_path: Path) -> None:
-    desk, account, clock = make_desk(tmp_path)
+    desk, account, clock = make_historical_desk(tmp_path)
     try:
         asyncio.run(desk.step())
         install(desk, Observer("observe_fill"))
@@ -164,7 +167,7 @@ def test_failed_observation_keeps_authoritative_fill_and_fee(tmp_path: Path) -> 
 
 
 def test_broken_diagnostic_at_start_does_not_block_authorized_send(tmp_path: Path) -> None:
-    desk, account, _ = make_desk(tmp_path)
+    desk, account, _ = make_historical_desk(tmp_path)
     try:
         install(desk, Observer("expire"))
         desk._markout_call("expire", now=desk.clock(), mono=desk.monotonic())
@@ -178,7 +181,7 @@ def test_broken_diagnostic_at_start_does_not_block_authorized_send(tmp_path: Pat
 
 
 def test_own_reserved_bids_include_uncertain_cancel_and_foreign_window(tmp_path: Path) -> None:
-    desk, account, clock = make_desk(tmp_path, extra={"speeddesk_take_edge": 1.0})
+    desk, account, clock = make_historical_desk(tmp_path, extra={"speeddesk_take_edge": 1.0})
     observer = Observer()
     try:
         asyncio.run(desk.step())
@@ -205,7 +208,7 @@ def test_own_reserved_bids_include_uncertain_cancel_and_foreign_window(tmp_path:
 
 @pytest.mark.parametrize("status,filled", [("canceled", 0), ("canceled", 1), ("filled", 5)])
 def test_buffered_quote_excludes_original_own_size_after_release(tmp_path: Path, status: str, filled: int) -> None:
-    desk, account, clock = make_desk(tmp_path, extra={"speeddesk_take_edge": 1.0})
+    desk, account, clock = make_historical_desk(tmp_path, extra={"speeddesk_take_edge": 1.0})
     observer = Observer()
     try:
         asyncio.run(desk.step())
@@ -227,7 +230,7 @@ def test_buffered_quote_excludes_original_own_size_after_release(tmp_path: Path,
 def test_rejected_first_quote_cannot_be_replaced_by_later_profitable_quote(
     tmp_path: Path, through_runner: bool,
 ) -> None:
-    desk, account, clock = make_desk(tmp_path)
+    desk, account, clock = make_historical_desk(tmp_path)
     desk.monotonic = clock.now
     desk.markouts = FillMarkouts(clock.now(), clock.now())
     runner: SpeedRunner | None = None
@@ -269,7 +272,7 @@ def test_rejected_first_quote_cannot_be_replaced_by_later_profitable_quote(
 
 
 def test_real_observations_persist_separately_without_profit_or_order_effect(tmp_path: Path) -> None:
-    desk, account, clock = make_desk(tmp_path)
+    desk, account, clock = make_historical_desk(tmp_path)
     desk.monotonic = clock.now
     desk.markouts = FillMarkouts(clock.now(), clock.now())
     try:
@@ -317,7 +320,7 @@ def test_all_diagnostic_event_types_are_quiet(tmp_path: Path) -> None:
 
 
 def test_expiry_probe_runs_while_account_read_is_waiting(tmp_path: Path) -> None:
-    desk, account, clock = make_desk(tmp_path)
+    desk, account, clock = make_historical_desk(tmp_path)
     observer = Observer()
     install(desk, observer)
     desk.stop_event = threading.Event()

@@ -17,6 +17,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from historical_speeddesk_entry import make_historical_desk
 from test_speeddesk_live import TICKER, make_desk, reopen
 
 from nightcrawler.speeddesk_kalshi_client import WRITES_PER_S
@@ -218,8 +219,9 @@ def test_partial_starter_depth_covers_filled_plus_remaining(tmp_path: Path) -> N
         desk.close()
 
 
-def test_first_price_is_lowered_for_fee_capped_visible_hedge(tmp_path: Path) -> None:
-    desk, account, clock = make_desk(tmp_path, extra={"speeddesk_kalshi_pull": False, "speeddesk_take_edge": 1.0})
+def test_historical_first_price_is_lowered_for_fee_capped_visible_hedge(tmp_path: Path) -> None:
+    """Prior entry sizing mechanism only; current production forbids first legs."""
+    desk, account, clock = make_historical_desk(tmp_path, extra={"speeddesk_kalshi_pull": False, "speeddesk_take_edge": 1.0})
     try:
         view(desk, clock, up=(Level(.9, 20),), down=(Level(.4, 20),))
         asyncio.run(desk.step())

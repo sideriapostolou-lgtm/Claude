@@ -1,4 +1,6 @@
-"""Shard funding and durable funding refusals, with offline account fakes only."""
+"""Historical admission fixtures exercise prior entry mechanics; they do not establish current production admission.
+
+Shard funding and durable funding refusals, with offline account fakes only."""
 
 from __future__ import annotations
 
@@ -8,8 +10,9 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from historical_speeddesk_entry import make_historical_desk
 from test_speeddesk_kalshi import SERIES, START, market
-from test_speeddesk_live import TICKER, at_lock_time, make_desk, reopen, starter_filled
+from test_speeddesk_live import TICKER, at_lock_time, make_desk, reopen
 from test_speeddesk_live_model import WINDOW, actual_fill, make_book, reserve
 from test_speeddesk_live_safety import SimulatedCrash
 
@@ -17,7 +20,7 @@ from nightcrawler.speeddesk_kalshi import parse_window
 from nightcrawler.speeddesk_kalshi_client import KalshiClientError
 from nightcrawler.speeddesk_live import JOURNAL_KEY, STATE_KEY, Intent
 from nightcrawler.speeddesk_live_cash import ShardFunding, primary_balances
-from nightcrawler.speeddesk_live_model import LiveRiskBook
+from nightcrawler.speeddesk_live_model import ActualFill, LiveRiskBook
 
 
 def row(shard: Any = 2, cash: Any = "25.0000", account: Any = 0) -> dict[str, Any]:
@@ -56,7 +59,7 @@ def test_exact_cash_uses_only_primary_subaccount_and_usd_strings() -> None:
 
 @pytest.mark.parametrize("rows", [[], [row(0)], [row(2, "0.0000")], [row(account=1)]])
 def test_aggregate_funded_does_not_fund_empty_or_missing_primary_shard(tmp_path: Path, rows: Any) -> None:
-    desk, account, _ = make_desk(tmp_path)
+    desk, account, _ = make_historical_desk(tmp_path)
     account.subaccount_balances = lambda: rows  # type: ignore[method-assign]
     try:
         asyncio.run(desk.step())
@@ -156,7 +159,7 @@ def test_new_foreign_rest_between_order_reads_blocks_creation(tmp_path: Path) ->
 
 
 def test_funding_refusal_survives_successful_reconciles_and_restart(tmp_path: Path) -> None:
-    desk, account, clock = make_desk(tmp_path)
+    desk, account, clock = make_historical_desk(tmp_path)
     account.create_error = KalshiClientError("create_order", "request rejected", status=400,
                                             code="insufficient_balance")
     try:
@@ -184,7 +187,7 @@ def test_funding_refusal_survives_successful_reconciles_and_restart(tmp_path: Pa
 def test_repeated_funding_refusals_escalate_to_five_minutes(tmp_path: Path) -> None:
     from test_speeddesk_live_reads import view
 
-    desk, account, clock = make_desk(tmp_path)
+    desk, account, clock = make_historical_desk(tmp_path)
     account.create_error = KalshiClientError("create_order", "request rejected", status=400,
                                             code="insufficient_balance")
     try:
@@ -200,7 +203,7 @@ def test_repeated_funding_refusals_escalate_to_five_minutes(tmp_path: Path) -> N
 
 
 def test_cooldown_does_not_starve_unsafe_cancellation_or_account_reads(tmp_path: Path) -> None:
-    desk, account, clock = make_desk(tmp_path)
+    desk, account, clock = make_historical_desk(tmp_path)
     try:
         asyncio.run(desk.step())
         assert len(account.creates) == 1
@@ -220,8 +223,17 @@ def test_final_guard_rechecks_cash_and_cooldown_after_transport_wait(tmp_path: P
     desk, account, clock = make_desk(tmp_path)
     try:
         desk.client = account
+        # An actual filled position makes this a currently permitted reduction.
+        # Seed it directly so the production desk never needs historical admission.
+        held_side = "up" if lock else "down"
+        desk.book.update_cash(account.cash, clock.now())
+        desk.book.reserve_intent(TICKER, held_side, "rest", .2, 5, clock.now(), "nc-speed-held", .5)
+        assert desk.book.record_fill(ActualFill("held-fill", "held-order", "nc-speed-held", TICKER,
+                                                held_side, .2, 5, 0, clock.now()))
+        desk.intents["nc-speed-held"] = Intent("nc-speed-held", TICKER, held_side, "rest", .2, 5, .5,
+                                                clock.now(), order_id="held-order", terminal=True)
+        account.account_positions = [{"ticker": TICKER, "position_fp": "5.00" if lock else "-5.00"}]
         if lock:
-            starter_filled(desk, account, clock)
             at_lock_time(desk, clock, up_ask=.2, down_ask=.8)
         asyncio.run(desk._reconcile())
         desk.startup_done = True
@@ -242,7 +254,7 @@ def test_final_guard_rechecks_cash_and_cooldown_after_transport_wait(tmp_path: P
 
 
 def test_unknown_create_keeps_reservation_without_retry_or_funding_classification(tmp_path: Path) -> None:
-    desk, account, clock = make_desk(tmp_path)
+    desk, account, clock = make_historical_desk(tmp_path)
     account.create_error = KalshiClientError("create_order", "transport failure", uncertain=True,
                                             code="insufficient_balance")
     try:
@@ -288,7 +300,7 @@ def test_paper_never_constructs_client_for_shard_balances(tmp_path: Path) -> Non
 def test_crash_at_refusal_checkpoint_restores_reservation_or_durable_cooldown(
     tmp_path: Path, after_commit: bool,
 ) -> None:
-    desk, account, clock = make_desk(tmp_path)
+    desk, account, clock = make_historical_desk(tmp_path)
     account.create_error = KalshiClientError("create_order", "request rejected", status=400,
                                             code="insufficient_balance")
     checkpoint = desk.checkpoint
@@ -319,7 +331,7 @@ def test_crash_at_refusal_checkpoint_restores_reservation_or_durable_cooldown(
 
 
 def test_persisted_live_practice_and_journal_windows_are_rollback_readable(tmp_path: Path) -> None:
-    desk, account, _ = make_desk(tmp_path)
+    desk, account, _ = make_historical_desk(tmp_path)
     try:
         asyncio.run(desk.step())
         assert account.creates

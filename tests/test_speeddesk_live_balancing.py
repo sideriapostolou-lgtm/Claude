@@ -1,4 +1,6 @@
-"""Loss plan bug 1: the stops count what an order adds to its window's worst case, so balancing bids that only
+"""Historical admission fixtures exercise prior entry mechanics; they do not establish current production admission.
+
+Loss plan bug 1: the stops count what an order adds to its window's worst case, so balancing bids that only
 shrink a loss are neither cut down nor cancelled by a money stop."""
 
 from __future__ import annotations
@@ -9,7 +11,8 @@ import random
 from pathlib import Path
 
 import pytest
-from test_speeddesk_live import TICKER, FakeAccount, make_desk, steps
+from historical_speeddesk_entry import make_historical_desk
+from test_speeddesk_live import TICKER, FakeAccount, steps
 
 from nightcrawler.clock import FakeClock
 from nightcrawler.speeddesk_live import KalshiLiveDesk, LiveSnapshot
@@ -119,7 +122,7 @@ def balancing_desk(tmp_path: Path) -> tuple[KalshiLiveDesk, FakeAccount, FakeClo
     caps = {"speeddesk_kalshi_window_usd": 10.0, "speeddesk_kalshi_open_usd": 20.0,
             "speeddesk_kalshi_day_stop_usd": 6.0, "speeddesk_kalshi_total_stop_usd": 10.0}
     # The pull off: the Bitcoin jumps below (80000 to 80288 to 80640) are 5c moves, which the pull would hold.
-    desk, account, clock = make_desk(tmp_path, caps=caps, extra={"speeddesk_take_edge": 1.0,
+    desk, account, clock = make_historical_desk(tmp_path, caps=caps, extra={"speeddesk_take_edge": 1.0,
                                                                  "speeddesk_kalshi_pull": False})
     window = desk.book.windows[TICKER]
     def view(bitcoin: float, up_ask: float) -> None:

@@ -1,4 +1,6 @@
-"""The bid pull (owner, 2026-10-13 ~20:15 UTC: "Pulling bids the instant price moves ... test with our current bot"),
+"""HISTORICAL ENTRY MECHANISM ONLY; no current entry authority or profitability claim.
+
+The bid pull (owner, 2026-10-13 ~20:15 UTC: "Pulling bids the instant price moves ... test with our current bot"),
 on real money, with the practice twin keeping the rule without it as the live control. Offline: no account."""
 
 from __future__ import annotations
@@ -14,7 +16,8 @@ from statistics import NormalDist
 from typing import Any
 
 import pytest
-from test_speeddesk_live import TICKER, FakeAccount, fill_order, make_desk, reopen
+from historical_speeddesk_entry import make_historical_desk
+from test_speeddesk_live import TICKER, FakeAccount, fill_order, reopen
 
 from nightcrawler import pagestate, speeddesk_live
 from nightcrawler.clock import FakeClock
@@ -111,7 +114,7 @@ def two_bids(tmp_path: Path, **extra: Any) -> tuple[KalshiLiveDesk, FakeAccount,
     """Legacy unequal holdings, 5.01 Up/5 Down at .47, then two bids of 3. The old starter was 6 contracts,
     partially filled and canceled. No positive equal holding ever triggers pair protection. This keeps the
     pull's two-sided cancellation/control tests reachable without reopening a protected full pair."""
-    desk, account, clock = make_desk(tmp_path, caps=CAPS, extra={**MAKERS, **extra})
+    desk, account, clock = make_historical_desk(tmp_path, caps=CAPS, extra={**MAKERS, **extra})
     starter_bid_filled(desk, account, clock)
     # Supply the legacy partial execution before the first reconciliation observes it. New orders still
     # use the current five-contract clip; historical integer-sized intents may have a larger original size.
@@ -255,7 +258,7 @@ def test_the_twins_kept_bid_follows_the_old_reprice_rule(tmp_path: Path) -> None
 
 def test_a_held_window_gets_the_twins_bid_but_no_real_one(tmp_path: Path) -> None:
     """The move comes before the first bid: no real bid is sent, the twin rests the starter the old rule would."""
-    desk, account, clock = make_desk(tmp_path, caps=CAPS, extra=MAKERS)
+    desk, account, clock = make_historical_desk(tmp_path, caps=CAPS, extra=MAKERS)
     try:
         market(desk, clock, .4947)
         desk.on_tick(80000, clock.now(), clock.now())  # the tick wake alone runs the trigger check
@@ -278,7 +281,7 @@ def test_a_held_window_gets_the_twins_bid_but_no_real_one(tmp_path: Path) -> Non
 def test_the_send_guard_refuses_a_bid_whose_fair_moved_on_its_way(tmp_path: Path, pull: bool) -> None:
     """The decision passed, then the fair moved 1.2c before the first byte left: the last check under the transport
     lock refuses the resting bid (the edge and the book still allow it, so only the pull refuses it)."""
-    desk, account, clock = make_desk(tmp_path, caps=CAPS, extra={**MAKERS, "speeddesk_kalshi_pull": pull})
+    desk, account, clock = make_historical_desk(tmp_path, caps=CAPS, extra={**MAKERS, "speeddesk_kalshi_pull": pull})
     try:
         market(desk, clock, .5)
         desk.on_tick(80000, clock.now(), clock.now())
@@ -302,7 +305,7 @@ def test_the_send_guard_refuses_a_bid_whose_fair_moved_on_its_way(tmp_path: Path
 
 def test_locks_still_fire_during_a_hold(tmp_path: Path) -> None:
     """A lock buy is immediate-or-cancel and only completes pairs: a pull never delays it."""
-    desk, account, clock = make_desk(tmp_path, caps=CAPS, extra=MAKERS)
+    desk, account, clock = make_historical_desk(tmp_path, caps=CAPS, extra=MAKERS)
     try:
         starter_bid_filled(desk, account, clock)
         run(desk, clock, 1.5)
@@ -389,7 +392,7 @@ def test_the_guard_switched_off_is_todays_behaviour(tmp_path: Path) -> None:
 
 
 def test_pulls_count_only_while_real_money_is_on(tmp_path: Path) -> None:
-    desk, _, clock = make_desk(tmp_path, mode="paper", caps=CAPS, extra=MAKERS)
+    desk, _, clock = make_historical_desk(tmp_path, mode="paper", caps=CAPS, extra=MAKERS)
     try:
         market(desk, clock, .4947)
         run(desk, clock, .3)
@@ -601,7 +604,7 @@ def test_a_pull_on_a_bid_whose_create_reply_was_lost_still_cancels_it(tmp_path: 
     """H1: the create reached Kalshi but its reply was lost, so the order id is unknown when the pull comes. The
     cancel goes out in the reconcile that learns the id (that reconcile waits out the create error's own backoff);
     before the fix it was never sent."""
-    desk, account, clock = make_desk(tmp_path, caps=CAPS, extra=MAKERS)
+    desk, account, clock = make_historical_desk(tmp_path, caps=CAPS, extra=MAKERS)
     try:
         market(desk, clock, .4947)
         create = account.create_order
@@ -703,7 +706,7 @@ def test_new_bids_keep_write_room_for_the_pulls_cancels(tmp_path: Path) -> None:
 
 
 def test_a_bid_held_back_for_write_room_rests_in_the_twin(tmp_path: Path) -> None:
-    desk, account, clock = make_desk(tmp_path, caps=CAPS, extra=MAKERS)
+    desk, account, clock = make_historical_desk(tmp_path, caps=CAPS, extra=MAKERS)
     try:
         busy = [WRITES_PER_S - 2]
         account.writes_last_second = lambda: busy[0]  # type: ignore[attr-defined]
@@ -825,7 +828,7 @@ def test_a_bid_the_pull_stops_at_the_send_leaves_the_twins_kept_bids_alone(tmp_p
 def test_twin_logic_never_touches_the_real_risk_book(tmp_path: Path) -> None:
     """L8/review 8: the held window's twin bid was sized with the real book's can_buy, which notes a real stop (and
     holds the ladder) when even one contract is refused. It is sized by the twin's own books now."""
-    desk, account, clock = make_desk(tmp_path, caps=CAPS, extra=MAKERS)
+    desk, account, clock = make_historical_desk(tmp_path, caps=CAPS, extra=MAKERS)
     try:
         desk.book.can_buy = lambda *args, **kwargs: pytest.fail("practice code asked the real risk book")  # type: ignore[method-assign]
         market(desk, clock, .4947)
@@ -878,7 +881,7 @@ def test_one_fair_value_behind_every_decision_and_trigger(tmp_path: Path) -> Non
     """Review 5 (merge hazard): the speed branch changes fair_up's arguments at each call site; the trigger had its
     own call and would have kept the old fair. Every check now goes through KalshiLiveDesk._fair."""
     assert inspect.getsource(speeddesk_live).count("fair_up(") == 1
-    desk, _, clock = make_desk(tmp_path, caps=CAPS, extra=MAKERS)
+    desk, _, clock = make_historical_desk(tmp_path, caps=CAPS, extra=MAKERS)
     try:
         market(desk, clock, .5)
         asyncio.run(desk.step())
@@ -959,7 +962,7 @@ def test_compare_shows_pnl_where_either_traded_and_the_real_lock_buys() -> None:
 
 
 def test_the_panel_counts_the_real_lock_buys(tmp_path: Path) -> None:
-    desk, account, clock = make_desk(tmp_path, caps=CAPS, extra=MAKERS)
+    desk, account, clock = make_historical_desk(tmp_path, caps=CAPS, extra=MAKERS)
     try:
         starter_bid_filled(desk, account, clock)
         run(desk, clock, 1.5)
@@ -1009,7 +1012,7 @@ def test_a_cancel_that_keeps_failing_never_starves_the_order_list_read_or_the_lo
     the order gone never ran: no bid, fill or lock for as long as it failed (61ca112 read the order list 2.1 s later
     and locked the pair). Now a failed cancel goes out again only once an order list read since the failure still
     shows the order open. With the pull on, its reason ("pull") never passes, so it starved the same way."""
-    desk, account, clock = make_desk(tmp_path, caps=CAPS, extra={**MAKERS, "speeddesk_kalshi_pull": pull})
+    desk, account, clock = make_historical_desk(tmp_path, caps=CAPS, extra={**MAKERS, "speeddesk_kalshi_pull": pull})
     try:
         starter_bid_filled(desk, account, clock)
         run(desk, clock, .6)

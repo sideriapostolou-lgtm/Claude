@@ -1,4 +1,6 @@
-"""Timing is evidence only: fake clocks/transports, no private account requests."""
+"""Historical admission fixtures exercise prior policy; they do not establish current production admission.
+
+Timing is evidence only: fake clocks/transports, no private account requests."""
 from __future__ import annotations
 
 import asyncio
@@ -9,6 +11,7 @@ from datetime import UTC, datetime
 import pytest
 import requests
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+from historical_speeddesk_entry import make_historical_desk
 from test_speeddesk_kalshi_client import Transport, client, create
 from test_speeddesk_live import TICKER, make_desk
 from test_speeddesk_snapshot_cache import make_runner
@@ -100,7 +103,7 @@ def test_runner_preserves_accepted_tick_provenance_and_records_practice_intent_o
 
 
 def test_live_ack_timing_uses_monotonic_and_acceptance_never_books_a_fill(tmp_path):
-    desk, account, clock = make_desk(tmp_path)
+    desk, account, clock = make_historical_desk(tmp_path)
     mono = [50.0]
     desk.monotonic = lambda: mono[0]
     snapshot = replace(desk.snapshot(), tick_receipt=TickReceipt(clock.now() - .1, clock.now(), 49.8))
@@ -129,7 +132,7 @@ def test_live_ack_timing_uses_monotonic_and_acceptance_never_books_a_fill(tmp_pa
 
 @pytest.mark.parametrize("timeout", [True, False])
 def test_uncertain_error_never_contributes_successful_ack_or_releases_reservation(tmp_path, timeout):
-    desk, account, clock = make_desk(tmp_path)
+    desk, account, clock = make_historical_desk(tmp_path)
     account.create_error = KalshiClientError("create_order", "transport failure", uncertain=True, timed_out=timeout)
     try:
         asyncio.run(desk.step())
@@ -150,7 +153,7 @@ def test_client_classifies_timeout_without_changing_uncertainty_or_exposing_tran
 
 
 def test_real_gate_rechecks_source_age_at_last_send_guard_even_with_fresh_receipt(tmp_path):
-    desk, account, clock = make_desk(tmp_path)
+    desk, account, clock = make_historical_desk(tmp_path)
     snapshot = desk.snapshot()
     snapshot = replace(snapshot, books={key: replace(book, source="websocket", requested_at=None,
                                                     exchange_at=clock.now() - 2.99)
@@ -282,7 +285,7 @@ def test_restart_keeps_discovered_history_but_does_not_credit_offline_gap():
 
 
 def test_unresolved_real_intent_cannot_be_reported_as_quiet_zero_window(tmp_path):
-    desk, account, clock = make_desk(tmp_path)
+    desk, account, clock = make_historical_desk(tmp_path)
     account.create_error = KalshiClientError("create_order", "transport failure", uncertain=True)
     try:
         asyncio.run(desk.step())
@@ -385,7 +388,7 @@ def test_companion_retains_published_oldest_daily_card_after_raw_evidence_evicti
 
 
 def test_real_gate_rechecks_entire_rest_request_age_at_last_send_guard(tmp_path):
-    desk, account, clock = make_desk(tmp_path)
+    desk, account, clock = make_historical_desk(tmp_path)
     original = desk.snapshot()
     snapshot = replace(original, books={key: replace(book, at=clock.now() - .1,
                                                     requested_at=clock.now() - 2.99)

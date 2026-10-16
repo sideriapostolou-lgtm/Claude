@@ -86,6 +86,7 @@ log = logging.getLogger("nightcrawler.speeddesk")
 PREFIX = "nc-speed-"
 STATE_KEY = "kalshi_live_state"
 EPS = 1e-8
+REDUCTION_ONLY_REASON = "REDUCTION ONLY: only hedging confirmed unpaired inventory; no new first legs"
 # How long Kalshi's order list may trail its fills list before the mismatch stops real orders for good
 # (seen trailing by under a second on 2026-10-13; every read in between counts as not yet reconciled).
 ORDER_LIST_LAG_S = 30.0
@@ -1395,10 +1396,10 @@ class KalshiLiveDesk:
             if not reason and not intent.lock:
                 # A lock buy is immediate-or-cancel and only completes pairs: the window
                 # closing or a money stop is exactly when it must be left to finish.
-                reason = (("pair_protected" if intent.window in self.book.protected_windows
-                           and self.book.intents[intent.client_order_id].reservation_active
-                           and self.book.intents[intent.client_order_id].remaining > EPS
-                           and not self.book.strictly_balancing_intent(intent.client_order_id) else "")
+                containment = self._entry_cancel_reason(intent)
+                if containment and intent.client_order_id in self.cancel_acked:
+                    continue  # acknowledged cancel; keep its reservation until reconciliation confirms it
+                reason = (containment
                           or self._risk_stop_reason(balancing=self.book.strictly_balancing_intent(intent.client_order_id))
                           or (self._feed_reason(window, snapshot, now) if window else "Window missing"))
                 if not reason and window is not None:
@@ -2244,6 +2245,22 @@ class KalshiLiveDesk:
                     return True
         return False
 
+    def _entry_contracts(self, window: str, side: Side) -> float:
+        """Current policy never starts a leg from a quote or a pending order."""
+        light, unpaired = self.book.lock_side(window)
+        return unpaired if side == light else 0.0
+
+    def _entry_allowed(self, window: str, side: Side, size: float, unit: float) -> bool:
+        return self.book.balancing_contracts(window, side, size, unit) >= size - EPS
+
+    def _entry_intent_allowed(self, client_id: str) -> bool:
+        return self.book.strictly_balancing_intent(client_id)
+
+    def _entry_cancel_reason(self, intent: Intent) -> str:
+        reserved = self.book.intents[intent.client_order_id]
+        return ("reduction_only" if reserved.reservation_active and reserved.remaining > EPS
+                and not self.book.strictly_balancing_intent(intent.client_order_id) else "")
+
     async def _send(self, window: Window, side: Side, kind: Literal["take", "rest"],
                     price: float, size: float, fair: float, *, completion: bool = False) -> bool:
         now = self.clock()
@@ -2269,6 +2286,9 @@ class KalshiLiveDesk:
             cost = self.book.unit_reserve(window.slug, price, kind)
         except LiveRejected:
             self.reason = "Fee schedule unavailable"
+            return False
+        if not self._entry_allowed(window.slug, side, size, cost):
+            self.reason = REDUCTION_ONLY_REASON
             return False
         if reason := self.funding.check(current, self.book, now, cost=size * cost):
             self.reason = reason
@@ -2604,8 +2624,7 @@ class KalshiLiveDesk:
         intent = self.intents[client_id]
         if intent.lock:
             return self._lock_guard(intent)
-        if (intent.window in self.book.protected_windows
-                and not self.book.strictly_balancing_intent(client_id)):
+        if not self._entry_intent_allowed(client_id):
             return False
         snapshot = self.snapshot()
         current = self._current_window(intent.window, snapshot)
@@ -2665,7 +2684,7 @@ class KalshiLiveDesk:
             return
         if await self._complete_early():
             return
-        self.reason = (None if self.fee_verified else
+        self.reason = (REDUCTION_ONLY_REASON if self.fee_verified else
                        "Account fee precision unverified; conservative fee rounding is required")
         snapshot, now = self.snapshot(), self.clock()
         candidates: list[tuple[float, Window, Side, float, Literal["take", "rest"], float, int]] = []
@@ -2679,6 +2698,11 @@ class KalshiLiveDesk:
             if up is None:
                 continue
             for side in ("up", "down"):
+                # Only actual fills can supply a hedge obligation. Pending bids and
+                # attractive mirrored depth cannot authorize another first leg.
+                unpaired = self._entry_contracts(window.slug, side)
+                if unpaired < 1 - EPS:
+                    continue
                 fair = up if side == "up" else 1 - up
                 book = snapshot.books[(window.slug, side)]
                 ask = min(book.asks, key=lambda item: item.price, default=None)
@@ -2711,7 +2735,7 @@ class KalshiLiveDesk:
                 if kind == "rest" and window.slug not in snapshot.maker_windows:
                     continue
                 limits = self.book.limits_for(window.slug)  # the window's ladder rung
-                units = math.floor(min(limits.clip, ask.size if ask and take else 25))
+                units = math.floor(min(limits.clip, ask.size if ask and take else 25, unpaired + EPS))
                 inventory = self.book.inventory[window.slug]
                 if inventory.up.shares + inventory.down.shares <= EPS and not owed:
                     # Preserve the existing maker-only first-entry rule. The crossing-price fallback
@@ -3011,12 +3035,14 @@ class KalshiLiveDesk:
         live = not standing or lock_only
         waiting = ((("Paused after a Kalshi error; retrying shortly" if self.clock() < self.retry_at else "")
                     or self._waiting_reason()
-                    or (self.funding.refusal["code"] if self.funding.refusal else ""))
+                    or (self.funding.refusal["code"] if self.funding.refusal else "")
+                    or (REDUCTION_ONLY_REASON if not (self._balancing_possible() or self._lock_possible()) else ""))
                    if live and not lock_only else "")
         if lock_only:
             waiting = stop + "; only completing half-filled pairs before the close"
         active = self._active()
-        reason = self.fatal_reason or (waiting if lock_only else stop if standing == stop and stop else self.reason)
+        reason = self.fatal_reason or (waiting if lock_only or waiting == REDUCTION_ONLY_REASON and self.fee_verified
+                                      else stop if standing == stop and stop else self.reason)
         return {"mode": "live" if live else "paper", "configured_mode": self.settings.speeddesk_kalshi_mode,
                 "status": "REAL MONEY (Kalshi)" if live else "PRACTICE", "reason": reason,
                 "trading_now": live and not waiting, "waiting": waiting,
@@ -3038,10 +3064,11 @@ class KalshiLiveDesk:
                 "integrity_error": self.book.integrity_error,
                 "pair_protection": {"protected_windows": sorted(self.book.protected_windows & self.book.open_windows()),
                                     "total_windows": len(self.book.protected_windows)},
-                "pair_execution": {"version": 1, "starter": "visible_fee_capped_depth",
+                "pair_execution": {"version": 2, "policy": "reduction_only", "status": "REDUCTION ONLY",
+                                   "starter": "disabled", "automatic_resume": False, "expires_at": None,
                                    "early_completion": "ordinary_limits", "maker": "pair_cap_fallback",
                                    "practice_comparable": False,
-                                   "practice_gap": "kept bids use legacy repricing and single-level practice takes"},
+                                   "practice_gap": "real orders only hedge confirmed inventory; practice retains legacy entries"},
                 "integrity_reset": (self.reset_blocker or "armed") if self.book.integrity_reset_armed else None,
                 "cleanup_pending": bool(active) and bool(self._gates()),
                 # The limits the risk book enforces now (the ladder's rung), not the settings asked for.

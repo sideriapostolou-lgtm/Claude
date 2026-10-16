@@ -10,7 +10,8 @@ from typing import Any, Literal
 
 import pytest
 from test_speeddesk_live import TICKER, FakeAccount, make_desk
-from test_speeddesk_live_pull import CAPS, MAKERS, market, starter_bid_filled
+from test_speeddesk_live_pull import CAPS, market
+from test_speeddesk_live_stop_controller_review import _filled_starter
 from test_speeddesk_live_stop_receipts_review import near_stop, stop_receipts
 
 from nightcrawler.clock import FakeClock
@@ -27,9 +28,7 @@ Stop = Literal["day", "total"]
 
 
 def _filled(tmp_path: Path) -> tuple[KalshiLiveDesk, FakeAccount, FakeClock]:
-    desk, account, clock = make_desk(tmp_path, caps=CAPS, extra=MAKERS)
-    starter_bid_filled(desk, account, clock)
-    asyncio.run(desk._reconcile())
+    desk, account, clock = _filled_starter(tmp_path)
     assert desk.book.inventory[TICKER].up.shares == 5
     assert desk.book.inventory[TICKER].down.shares == 0
     assert not desk.book.integrity_error

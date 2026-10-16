@@ -1,4 +1,6 @@
-"""Independent cancellation attacks with a deliberately stuck account read.
+"""Historical admission fixtures exercise prior policy; they do not establish current production admission.
+
+Independent cancellation attacks with a deliberately stuck account read.
 
 No network: fake venue, fake account keys and bounded thread events only.
 """
@@ -10,7 +12,7 @@ import threading
 from pathlib import Path
 from typing import Any
 
-from test_speeddesk_live import make_desk
+from historical_speeddesk_entry import make_historical_desk
 from test_speeddesk_live_stale_bid import view
 
 from nightcrawler.speeddesk_kalshi_client import KalshiClientError
@@ -21,7 +23,7 @@ async def reached(event: threading.Event) -> None:
 
 
 def test_cancel_ack_during_slow_read_keeps_reservation_until_terminal_evidence(tmp_path: Path) -> None:
-    desk, account, clock = make_desk(
+    desk, account, clock = make_historical_desk(
         tmp_path, extra={"speeddesk_take_edge": 1.0, "speeddesk_kalshi_pull": False}
     )
     entered, release, cancelled = (threading.Event() for _ in range(3))
@@ -82,7 +84,7 @@ def test_cancel_ack_during_slow_read_keeps_reservation_until_terminal_evidence(t
 
 
 def test_failed_cancel_during_slow_read_cannot_retry_without_new_order_evidence(tmp_path: Path) -> None:
-    desk, account, clock = make_desk(
+    desk, account, clock = make_historical_desk(
         tmp_path, extra={"speeddesk_take_edge": 1.0, "speeddesk_kalshi_pull": False}
     )
     entered, release, cancelled = (threading.Event() for _ in range(3))
@@ -140,7 +142,7 @@ def test_failed_cancel_during_slow_read_cannot_retry_without_new_order_evidence(
 
 
 def test_cancelled_step_shutdown_cancels_known_order_before_read_finishes(tmp_path: Path) -> None:
-    desk, account, clock = make_desk(
+    desk, account, clock = make_historical_desk(
         tmp_path, extra={"speeddesk_take_edge": 1.0, "speeddesk_kalshi_pull": False}
     )
     entered, release, cancelled = (threading.Event() for _ in range(3))

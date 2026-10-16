@@ -1,4 +1,6 @@
-"""Loss plan bug 2: a stale-priced resting bid is cancelled even while Kalshi account data are stale."""
+"""HISTORICAL ENTRY MECHANISM ONLY; no current entry authority or profitability claim.
+
+Loss plan bug 2: a stale-priced resting bid is cancelled even while Kalshi account data are stale."""
 
 from __future__ import annotations
 
@@ -6,7 +8,8 @@ import asyncio
 from pathlib import Path
 
 import pytest
-from test_speeddesk_live import TICKER, FakeAccount, make_desk, steps
+from historical_speeddesk_entry import make_historical_desk
+from test_speeddesk_live import TICKER, FakeAccount, steps
 
 from nightcrawler.clock import FakeClock
 from nightcrawler.speeddesk_live import KalshiLiveDesk, LiveSnapshot
@@ -27,7 +30,7 @@ def market(desk: KalshiLiveDesk, clock: FakeClock, bitcoin: float) -> None:
 
 
 def resting_bid_with_stale_account(tmp_path: Path) -> tuple[KalshiLiveDesk, FakeAccount, FakeClock]:
-    desk, account, clock = make_desk(tmp_path, extra={"speeddesk_take_edge": 1.0})  # makers only, as live
+    desk, account, clock = make_historical_desk(tmp_path, extra={"speeddesk_take_edge": 1.0})  # makers only, as live
     market(desk, clock, 80000)
     asyncio.run(desk.step())
     assert [(c["side"], c["kind"], c["price"]) for c in account.creates] == [("down", "rest", .47)]
@@ -78,8 +81,8 @@ def test_a_bid_above_fresh_fair_minus_two_cents_is_cancelled(tmp_path: Path) -> 
 
 def test_real_bids_are_priced_from_the_settlement_averages_horizon(tmp_path: Path) -> None:
     """Loss plan item 4: the live desk's fair uses Kalshi's 60-second settlement average, like its practice twin."""
-    # The pull off: the jump from make_desk's 80000 to 80288 is a 5c move, which the pull would hold for 10 s.
-    desk, account, clock = make_desk(tmp_path, extra={"speeddesk_take_edge": 1.0, "speeddesk_kalshi_pull": False})
+    # The pull off: the jump from make_historical_desk's 80000 to 80288 is a 5c move, which the pull would hold for 10 s.
+    desk, account, clock = make_historical_desk(tmp_path, extra={"speeddesk_take_edge": 1.0, "speeddesk_kalshi_pull": False})
     try:
         market(desk, clock, 80288)
         asyncio.run(desk.step())
@@ -95,7 +98,7 @@ def test_real_bids_are_priced_from_the_settlement_averages_horizon(tmp_path: Pat
 
 @pytest.mark.parametrize("bitcoin", [80120, 79880])
 def test_the_rule_matches_the_reprice_when_account_data_are_fresh(tmp_path: Path, bitcoin: float) -> None:
-    desk, account, clock = make_desk(tmp_path, extra={"speeddesk_take_edge": 1.0})
+    desk, account, clock = make_historical_desk(tmp_path, extra={"speeddesk_take_edge": 1.0})
     try:
         market(desk, clock, 80000)
         asyncio.run(desk.step())
@@ -128,7 +131,7 @@ def test_an_acknowledged_cancel_is_not_resent_while_the_order_list_lags(tmp_path
 def test_a_small_make_edge_never_cancels_a_fresh_bid_on_sight(tmp_path: Path) -> None:
     """Review of part 1: with SPEEDDESK_MAKE_EDGE below the stale-bid edge, a new bid already sits above fresh fair
     minus 2c; the rule uses the smaller edge so a flat market leaves one bid resting instead of churning."""
-    desk, account, clock = make_desk(tmp_path, extra={"speeddesk_take_edge": 1.0, "speeddesk_make_edge": 0.01})
+    desk, account, clock = make_historical_desk(tmp_path, extra={"speeddesk_take_edge": 1.0, "speeddesk_make_edge": 0.01})
     try:
         market(desk, clock, 80000)
         steps(desk, clock, 10)
