@@ -27,6 +27,7 @@ from .config import Secret, Settings
 from .ledger import Ledger
 from .speeddesk_feeds import thread_session
 from .speeddesk_kalshi_client import WRITES_PER_S, KalshiClient, KalshiClientError
+from .speeddesk_live_cash import ShardFunding
 from .speeddesk_live_ladder import Ladder, limits_view
 from .speeddesk_live_model import (
     LOCK_MARGIN_S,
@@ -59,6 +60,7 @@ from .speeddesk_model import (
     Trade,
     Window,
     fair_up,
+    persisted_window,
     utc_day,
 )
 from .speeddesk_readtrace import MAX_REPORTS_PER_MINUTE, ReadSpan, ReconcileTrace
@@ -405,6 +407,9 @@ class KalshiLiveDesk:
         self.wake = asyncio.Event()
         self.cash_usd: float | None = None
         self.cash_at: float | None = None
+        self.funding = ShardFunding()
+        self.create_cooldown_until = 0.0
+        self.insufficient_balance_refusals = 0
         self.last_sync = -math.inf
         self.last_status = -math.inf
         self.last_checkpoint = -math.inf
@@ -543,6 +548,13 @@ class KalshiLiveDesk:
                 self.changed_windows = set(saved.get("changed_windows", []))
                 self.final_outcomes = saved.get("final_outcomes", {})
                 self.latest_events = saved.get("latest_events", [])[-20:]
+                cooldown = saved.get("create_funding_cooldown", {})
+                until, count = cooldown.get("until", 0.0), cooldown.get("refusals", 0)
+                if (isinstance(until, bool) or not isinstance(until, (int, float))
+                        or not math.isfinite(until) or until < 0
+                        or type(count) is not int or not 0 <= count <= 4):
+                    raise ValueError("Invalid create funding cooldown")
+                self.create_cooldown_until, self.insufficient_balance_refusals = float(until), count
                 for key in replayed:  # saved in full by the startup save below, which empties the journal
                     self._record("speeddesk_live_order", client_order_id=key, window=self.intents[key].window,
                                  state="restored from the pre-send journal; reconciling with Kalshi")
@@ -984,6 +996,8 @@ class KalshiLiveDesk:
                      "pull": self.pull.to_state(),
                      "foreign_windows": sorted(self.foreign_windows), "final_outcomes": self.final_outcomes,
                      "changed_windows": sorted(self.changed_windows),
+                     "create_funding_cooldown": {"until": self.create_cooldown_until,
+                                                 "refusals": self.insufficient_balance_refusals},
                      "latency_metrics": self.metrics.state(),
                      "window_evidence": self.evidence.state(),
                      "reports": self.reports, "ladder": self.ladder.to_state(),
@@ -1047,7 +1061,8 @@ class KalshiLiveDesk:
         spec = self.book.windows[window.slug]
         self.journal[intent.client_order_id] = {
             "book": without_default_lock(asdict(reserved)), "intent": without_default_lock(asdict(intent)),
-            "window": asdict(spec), "bootstrap": self.book.bootstrap_order.get(window.slug) == intent.client_order_id}
+            "window": persisted_window(spec),
+            "bootstrap": self.book.bootstrap_order.get(window.slug) == intent.client_order_id}
         self.ledger.set_synchronous(durable)
         with self.ledger.transaction():
             self.ledger.set_kv(JOURNAL_KEY, {"version": 1, "intents": self.journal})
@@ -1213,6 +1228,13 @@ class KalshiLiveDesk:
                                       trace_scope="whole_window_terms_changed")
                     self._markout_call("expire", now=self.clock(), mono=self.monotonic(),
                                        reason="venue_terms_changed", window=window.slug)
+                if (previous is not None and previous.exchange_index is not None
+                        and previous.exchange_index != window.exchange_index):
+                    self.changed_windows.add(window.slug)
+                elif previous is not None and previous.exchange_index is None:
+                    # Older state had no routing metadata. Only this ticker's fresh market
+                    # record can supply it; never infer a shard from a ticker/category.
+                    previous.exchange_index = window.exchange_index
                 self.book.add_window(window)
                 self.twin.add_window(replace(window))
 
@@ -1317,9 +1339,11 @@ class KalshiLiveDesk:
         return self._risk_stop_reason(balancing=balancing)
 
     def _waiting_reason(self) -> str:
-        """Seconds-long pauses between orders while real money stays on."""
+        """Temporary create gates; reconciliation and cancellation remain available."""
         if not self.startup_done:
             return "Reconciling startup orders"
+        if self.clock() < self.create_cooldown_until:
+            return "Insufficient shard balance; new orders cooling down"
         if self.account_at is None or not 0 <= self.clock() - self.account_at <= 3:
             return "Kalshi account data stale"
         if any(intent.uncertain or intent.cancel_requested for intent in self._active()):
@@ -1823,6 +1847,7 @@ class KalshiLiveDesk:
             elif raw.get("status") == "resting":
                 self.foreign_windows.add(ticker)
         listed = {str(raw.get("client_order_id", "")) for raw in orders}
+        self.funding.orders(orders, self.book, full=full)
         money_changed = False
         unattributed: set[str] = set()  # windows with a fill Kalshi lists under an order id the bot does not know
         fills = await self._read("fills", self.client.fills,
@@ -1876,6 +1901,7 @@ class KalshiLiveDesk:
         self.order_reads += 1
         reading = self.order_reads  # a cancel that fails from here on was not seen by this read (cancel_failed)
         orders = await self._read("list_orders", self.client.list_orders, **order_filter)
+        self.funding.orders(orders, self.book, full=False)
         listed |= {str(raw.get("client_order_id", "")) for raw in orders}
         for raw in orders:
             intent = self.intents.get(str(raw.get("client_order_id", "")))
@@ -1983,7 +2009,12 @@ class KalshiLiveDesk:
                 else _number(balance["balance"]) / 100)
         if cash < 0:
             raise ValueError("Negative available cash")
+        # Aggregate cash remains a display/risk ceiling. Only this exact primary-subaccount
+        # read proves which shard can fund a ticker; no balance-total fallback.
+        self.funding.at, self.funding.error = None, "shard_cash_unknown"
+        shard_rows = await self._read("subaccount_balances", self.client.subaccount_balances)
         now = self.clock()
+        self.funding.update(shard_rows, now)
         self.book.update_cash(cash, now)
         self.cash_usd, self.cash_at = cash, now
         if now - sync_started > 3:
@@ -2148,6 +2179,9 @@ class KalshiLiveDesk:
         except LiveRejected:
             self.reason = "Fee schedule unavailable"
             return False
+        if reason := self.funding.check(current, self.book, now, cost=size * cost):
+            self.reason = reason
+            return False
         edge = self.settings.speeddesk_take_edge if kind == "take" else self.settings.speeddesk_make_edge
         if fair - cost < edge - EPS:
             self.reason = ("Account fee precision unverified; no edge after conservative fee rounding"
@@ -2220,6 +2254,8 @@ class KalshiLiveDesk:
                     self.queue_observer_error = type(exc).__name__
                     self.queue_observer.stop()
             self.refusals = 0
+            self.insufficient_balance_refusals = 0
+            self.create_cooldown_until = 0.0
             acked = self.monotonic()
             # Where the decision-to-acknowledgement time went: the pre-send disk write, the wait from the decision
             # to the first request byte (disk write, worker hand-off, request budget), and Kalshi's reply.
@@ -2237,13 +2273,29 @@ class KalshiLiveDesk:
             self._record("speeddesk_live_timing", client_order_id=client_id,
                          timing=timing(None, "timeout" if isinstance(exc, KalshiClientError)
                                        and exc.timed_out else "error"))
+            insufficient = (self._single_order_refusal(exc) and isinstance(exc, KalshiClientError)
+                            and exc.code == "insufficient_balance")
+            if insufficient:
+                assert isinstance(exc, KalshiClientError)
+                self.insufficient_balance_refusals = min(4, self.insufficient_balance_refusals + 1)
+                delay = min(300.0, 60.0 * 2 ** (self.insufficient_balance_refusals - 1))
+                self.create_cooldown_until = self.clock() + delay
+                self.reason = "Insufficient shard balance; new orders cooling down"
+                self._record("speeddesk_live_reject", client_order_id=client_id, window=window.slug,
+                             reason=self.reason, operation=exc.operation, code=exc.code, status=exc.status,
+                             cooldown_until=self.create_cooldown_until, cooldown_s=delay)
             if isinstance(exc, KalshiClientError) and not exc.uncertain:
                 self.book.reject_intent(client_id, "definite_create_rejection", confirmed=True)
                 intent.terminal = True
                 # Review fix: what a restart reads holds the refusal at once, not after the next full save; a
                 # crash in that second restored the never-sent order as reserved (and, in an unpaired window,
                 # held real trading until the release after the close).
-                if client_id in self.journal:
+                if insufficient:
+                    # Atomic durable state includes BOTH terminal evidence and cooldown.
+                    # Before this commit a crash restores the pending reservation, never
+                    # a released rejection with a forgotten funding pause.
+                    self.checkpoint(durable=True)
+                elif client_id in self.journal:
                     self._journal_intent(intent, window, durable=False)
                 else:
                     self.checkpoint()
@@ -2262,6 +2314,8 @@ class KalshiLiveDesk:
                 # Our own last check stopped it before any byte left: the market moved, nothing failed.
                 self._record("speeddesk_live_order", client_order_id=client_id, window=window.slug,
                              state="not sent; prices moved before send")
+            elif insufficient:
+                pass  # funding cooldown is independent of reconciliation/general error counters
             elif self._single_order_refusal(exc) and self.refusals < 2:
                 assert isinstance(exc, KalshiClientError)
                 self.refusals += 1
@@ -2385,6 +2439,17 @@ class KalshiLiveDesk:
 
     async def _send_lock(self, window: Window, side: Side, price: float, size: float) -> bool:
         now, decision_mono = self.clock(), self.monotonic()
+        reason = self._trade_reason(balancing=True)
+        if not reason:
+            try:
+                reason = self.funding.check(window, self.book, now,
+                                            cost=size * self.book.unit_reserve(window.slug, price, "take"))
+            except LiveRejected as exc:
+                reason = exc.reason
+        if reason:
+            self.reason = reason
+            self._lock_note(window.slug, reason, side, int(size))
+            return False
         client_id = PREFIX + uuid.uuid4().hex
         try:
             self.book.reserve_intent(window.slug, side, "take", price, size, now,
@@ -2410,6 +2475,7 @@ class KalshiLiveDesk:
                 or (self.stop_event is not None and self.stop_event.is_set())
                 or self._gates() or self.fatal_reason or self.book.integrity_error
                 or not self.authenticated or self._waiting_reason()
+                or self.funding.check(window, self.book, now)
                 or not spec.end - self.book.limits.lock_s <= now < spec.end - LOCK_MARGIN_S
                 or self._book_reason(window, snapshot, now)):
             return False
@@ -2442,7 +2508,8 @@ class KalshiLiveDesk:
         current = self._current_window(intent.window, snapshot)
         if (current is None or self._trade_reason(
                 balancing=self.book.strictly_balancing_intent(client_id))
-                or self._feed_reason(current, snapshot, self.clock())):
+                or self._feed_reason(current, snapshot, self.clock())
+                or self.funding.check(current, self.book, self.clock())):
             return False
         assert current.start_price is not None and snapshot.bitcoin_price is not None and snapshot.sigma is not None
         now = self.clock()
@@ -2802,7 +2869,9 @@ class KalshiLiveDesk:
                      and (self._lock_possible() or self._balancing_possible()))
         live = not standing or lock_only
         waiting = ((("Paused after a Kalshi error; retrying shortly" if self.clock() < self.retry_at else "")
-                    or self._waiting_reason()) if live and not lock_only else "")
+                    or self._waiting_reason()
+                    or (self.funding.refusal["code"] if self.funding.refusal else ""))
+                   if live and not lock_only else "")
         if lock_only:
             waiting = stop + "; only completing half-filled pairs before the close"
         active = self._active()
@@ -2813,7 +2882,11 @@ class KalshiLiveDesk:
                 "as_of": self.clock(), "authenticated": self.authenticated,
                 "fee_precision_verified": self.fee_verified,
                 "fee_precision_usd": self.book.limits.fee_precision,
-                "cash_usd": self.cash_usd, "cash_at": self.cash_at,
+                "cash_usd": self.cash_usd, "cash_total_usd": self.cash_usd, "cash_at": self.cash_at,
+                "shard_funding": self.funding.panel(),
+                "create_funding_cooldown": {"until": self.create_cooldown_until,
+                                            "remaining_s": max(0.0, self.create_cooldown_until - self.clock()),
+                                            "refusals": self.insufficient_balance_refusals},
                 "reserved_usd": risk.get("reserved_usd", 0.0), "open_risk_usd": risk.get("open_loss_usd", 0.0),
                 "open_cost_usd": risk.get("open_cost_usd", 0.0),
                 "at_risk_usd": risk.get("at_risk_usd", 0.0), "open_orders": len(active),

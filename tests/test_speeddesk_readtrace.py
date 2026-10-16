@@ -107,7 +107,7 @@ def test_real_fill_trace_is_once_and_records_checkpoint_without_extra_reads(tmp_
         assert row["new_fills"][0]["fill_id"] == "fill-0"
         assert row["marks_ms"]["checkpoint_completed"] >= row["marks_ms"]["checkpoint_started"]
         assert [read["read"] for read in row["reads"]] == [
-            "list_orders", "fills", "list_orders", "positions", "balance"]
+            "list_orders", "fills", "list_orders", "positions", "balance", "subaccount_balances"]
         assert account.reads - before == 4  # unchanged fake's counted endpoints
         assert desk.book.inventory[TICKER].up.shares == 5
         assert "speeddesk_reconcile_trace" in QUIET_RECORDS

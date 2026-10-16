@@ -39,6 +39,9 @@ class FakeAccount:
             raise self.balance_error
         return {"balance_dollars": f"{self.cash:.4f}"}
 
+    def subaccount_balances(self) -> list[dict[str, Any]]:
+        return [{"subaccount_number": 0, "exchange_index": 2, "balance": f"{self.cash:.4f}"}]
+
     def list_orders(self, **_kwargs: Any) -> list[dict[str, Any]]:
         self.reads += 1
         return [dict(order) for order in self.orders]
@@ -102,7 +105,7 @@ def make_desk(tmp_path: Path, *, mode: str = "live", confirm: str | None = "yes"
                         **(extra or {}))
     window = Window(TICKER, clock.now() - 10, clock.now() + 890, start_price=80000,
                     venue_start_price=80000, venue="kalshi", taker_coefficient=.07, maker_coefficient=0,
-                    min_trade_qty=.01, fee_rounding="kalshi")
+                    min_trade_qty=.01, fee_rounding="kalshi", exchange_index=2)
     books = {(TICKER, side): Book(TICKER, side, (Level(.3, 2),),
                                  (Level(.4 if side == "up" else .6, 10),), clock.now(), "book",
                                  source="rest", requested_at=clock.now()) for side in ("up", "down")}
@@ -1086,8 +1089,10 @@ def reopen(tmp_path: Path, desk: KalshiLiveDesk, account: FakeAccount, clock: Fa
     settings = Settings(data_dir=tmp_path, speeddesk_kalshi_mode="live", speeddesk_kalshi_live_confirm=Secret("yes"),
                         kalshi_key_id=Secret("fake-key-id"), kalshi_private_key=Secret("fake-private-key"),
                         **(FIVE_DOLLAR_CAPS if caps is None else caps))
-    return KalshiLiveDesk(settings, tmp_path / "live", desk.snapshot, clock=clock.now,
-                          client_factory=lambda: account, direct_member_verified=True)
+    restarted = KalshiLiveDesk(settings, tmp_path / "live", desk.snapshot, clock=clock.now,
+                              client_factory=lambda: account, direct_member_verified=True)
+    restarted.on_windows(list(desk.snapshot().windows))  # production supplies fresh public market metadata
+    return restarted
 
 
 def settled_window(tmp_path: Path) -> tuple[KalshiLiveDesk, FakeAccount, FakeClock]:

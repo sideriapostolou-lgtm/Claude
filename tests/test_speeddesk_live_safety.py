@@ -111,7 +111,7 @@ def companion(path: Path, *, settings: Settings | None = None,
     clock = account.clock if account is not None else FakeClock()
     account = account or Account(clock)
     window = Window("KXBTC15M-26OCT121500-00", clock.now() - 10, clock.now() + 890, 100,
-                    venue="kalshi", taker_coefficient=.07, maker_coefficient=0, fee_rounding="kalshi")
+                    venue="kalshi", taker_coefficient=.07, maker_coefficient=0, fee_rounding="kalshi", exchange_index=2)
 
     def snapshot() -> LiveSnapshot:
         books = {(window.slug, side): Book(window.slug, side, (Level(.3, 10),), (Level(.4, 10),),
@@ -135,6 +135,7 @@ def arm_fake(desk: KalshiLiveDesk, account: Account, clock: FakeClock) -> None:
     desk.book.limits = replace(desk.book.limits, fee_precision=.0001)
     desk.account_at = clock.now()
     desk.book.update_cash(25, clock.now())
+    desk.funding.update(account.subaccount_balances(), clock.now())
 
 
 @pytest.mark.parametrize("changes", [

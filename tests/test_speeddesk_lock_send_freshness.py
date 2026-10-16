@@ -176,6 +176,7 @@ def test_refused_lock_is_not_retried_without_resync_and_new_identity(tmp_path: P
             desk.close()
             desk = KalshiLiveDesk(settings, tmp_path / "live", snapshot, clock=clock.now,
                                   client_factory=lambda: account, direct_member_verified=True)
+            desk.on_windows(list(snapshot().windows))  # fresh public routing, as production supplies after restart
             assert desk.intents[rejected].terminal and not desk.book.intents[rejected].reservation_active
             assert len(account.creates) == 1 and not desk.startup_done
         asyncio.run(desk.step())

@@ -115,6 +115,13 @@ class Window:
     min_trade_qty: float = 0.01
     fee_rounding: FeeRounding = "half_even"
     venue: str = "polymarket_us"
+    # Public market metadata; None means routing/funding is unknown, never shard zero.
+    exchange_index: int | None = None
+
+
+def persisted_window(window: Window) -> dict[str, Any]:
+    """Keep old-source rollback readable; routing must be reacquired from fresh market metadata."""
+    return {key: value for key, value in asdict(window).items() if key != "exchange_index"}
 
 
 @dataclass(frozen=True)
@@ -1207,7 +1214,7 @@ class PracticeDesk:
 
     def to_state(self) -> dict[str, Any]:
         return {"version": 1, "mode": "practice", "config": config_state(self.config),
-                "windows": {slug: asdict(window) for slug, window in self.windows.items()},
+                "windows": {slug: persisted_window(window) for slug, window in self.windows.items()},
                 "inventory": {slug: asdict(value) for slug, value in self.inventory.items()},
                 "orders": [_order_state(order) for order in self.orders.values()],
                 "closed": [asdict(item) for item in self.closed], "days": self.days,

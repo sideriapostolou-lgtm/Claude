@@ -124,7 +124,7 @@ def test_a_late_fill_outside_the_recent_range_is_caught_by_the_complete_scan(tmp
 
 def next_window(clock: FakeClock, start: float) -> Window:
     return Window(NEXT, start, start + 900, start_price=80000, venue_start_price=80000, venue="kalshi",
-                  taker_coefficient=.07, maker_coefficient=0, min_trade_qty=.01, fee_rounding="kalshi")
+                  taker_coefficient=.07, maker_coefficient=0, min_trade_qty=.01, fee_rounding="kalshi", exchange_index=2)
 
 
 def opening_scenario(tmp_path: Path, owner_order: bool) -> tuple[KalshiLiveDesk, FilteringAccount]:
