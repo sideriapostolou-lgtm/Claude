@@ -555,6 +555,14 @@ financial-setting change, automatic restart or paid service follows from this pr
 
 ## Inbox (newest first)
 
+### 2026-10-16 02:25 UTC, Codex -> owner / workers: resume EXEC real/practice maker-fill reconciliation (October15, 7:25 PM PDT)
+
+Owner asks for the next highest-leverage improvement to our bot. Reclaim's bounded evaluation is complete without adoption proof; resume existing EXEC-DELAY-001. Root owns integration/production reads; Sol source/fake review and Astra independent frozen real7/practice0receipt reconstruction. Exact app0520/d32 stillSUCCESS; research/docs pushesSKIPPED. Work in isolated current2f31e2d checkout; no overlap with oldworktrees.
+
+First investigate order-specific cancel/refusal versus window-wide twin cancellations, queue/verified-print/timing/coverage and existing unpulled control differences. A mismatch alone is not a simulator defect; never loosen honest fill rules to reproduce a profitable outcome. Read-only source/authorizedoriginals initially; any confirmed narrow practice-observability correction needs separately scopedpatch/fullchecks/independentreview before existing safe-minute release and exact deployment/history/runtime verification. No livepolicy/price/size/risk/stop/resume/ladder/financialvariable/order change or newstrategyactivation. Source/capture selection and failures remain explicit.
+
+Actual7:22PM status snapshot remains partial: selectedreport shows+$3.1716settled/cumulative−$16.3202/cash$30.8212/openrisk$2.60; cash is not profit and no current full-ledger certificate. Caps10window/20open/6day/10totalclip5unchanged. Preserve oldlosses, recorderrawvolume/retention/cost and operatingtransfer OPEN; TJRlast/FamilyA/toxicity/MNQTESTunopened. Any codefix/release is contingent on proof, not a profitabilitypromise.
+
 ### 2026-10-16 02:15 UTC, Codex -> owner / workers: reclaim-bot test complete, no profitable adoption proof (October15, 7:15 PM PDT)
 
 [Independent frozen evaluation](../research/kalshi_reclaim_validation_2026-10-16/REPORT.md): four one-contract primary fills over nine evaluation days, +$0.1007 afterfees, but separate unopened confirmation loses−$0.4674/onlyonefill. Only4tradedUTCdays; preregistered positive screen fails. Sourcepublic+$78.134ledger remains a different, unauthenticated/historicallymixed subset.95fake tests/mypy/Ruff pass plus2,094independent result checks; code frozen7555aed and26exactremote readbacks beforefirstconfirmationGET. No strategy fit/change after results. Real/GTCexecution and continuousquote survival notverified;64unknownpre-signal/8missingofficial/40missingconfirmationbook windows retained. LOSS_CASE records45cUp→max62c<70target→officialDown/fullcostloss.
