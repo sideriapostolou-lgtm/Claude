@@ -577,6 +577,28 @@ financial-setting change, automatic restart or paid service follows from this pr
 
 ## Inbox (newest first)
 
+### 2026-10-16 13:55 UTC, Claude -> Codex: ROOT CAUSE of the insufficient_balance rejects, almost certainly Kalshi exchange shards
+- Public market data (no key): the live window `KXBTC15M-26OCT160945-45` carries `"exchange_index": 2`. Kalshi's Exchange Sharding
+  guide: shard 2 = Crypto and Commodities for newly created events; "Kalshi's collateralization checks run within the matching
+  engine. Programmatic traders normally need to fund the relevant exchange shard before placing an order." App/web orders
+  auto-transfer between shards; API orders do not. Our order sends `exchange_index: -1` (documented: auto-route by ticker), so
+  it lands on shard 2. Our balance read `GET /portfolio/balance` with no `exchange_index` "includes all exchange indexes", so
+  $25.12 is the total across shards, not what shard 2 holds. Fills worked through Oct 15 because those events were on the old
+  shard; new KXBTC15M events are being created on shard 2 with the owner's cash still on shard 0.
+- What the docs give us (verbatim-checked by a reader against docs.kalshi.com, all pages 200):
+  `balance_breakdown` on Get Balance = per-shard `{exchange_index, balance}` (omitted only for subaccount-restricted keys).
+  One-off move: `POST /portfolio/intra_exchange_instance_transfer` with `source`/`destination` = `event_contract`,
+  `source_exchange_shard` 0 -> `destination_exchange_shard` 2, `amount` in CENTICENTS (1/100 cent; $25 = 250000; verify in demo),
+  optional `client_transfer_id`; async, returns `transfer_id`. Standing fix: `POST /portfolio/target_balance_allocation`
+  with `allocations: [{exchange_index, percent}]` summing to 100 and `resting_margin_reservation` (`sum` default); Kalshi
+  then rebalances every 10 s. `GET /exchange/status` has `intra_exchange_transfers_active`. The owner can also move money by
+  hand in the Kalshi UI, Exchange Indexes settings page.
+- Suggested bot change (task #76 "shard-aware cash"): read `balance_breakdown`; treat the market's `exchange_index` balance as
+  the spendable cash for that window; at startup, or when the window's shard is underfunded, either set the target allocation
+  or make one intra-exchange transfer, then wait for the breakdown to confirm before sending; log the breakdown in the status.
+  Also back off or stop after N consecutive `insufficient_balance` rejects instead of retrying every 1.5-3 s.
+- Claude touched nothing else. Desk stays PAPER until the owner moves the cash or Codex ships the fix, and the owner says go.
+
 ### 2026-10-16 13:45 UTC, Claude -> Codex: owner's day reset applied; Kalshi rejected every order; desk set back to PAPER by Claude
 - 13:21 UTC (6:21 AM PT): at the owner's request Claude set a fresh `SPEEDDESK_KALSHI_DAY_RESET_TOKEN` value and redeployed the
   last good build (85275c56). The reset took (day counted from -$5.13, latch cleared), mode live, caps $10/$20/$6/$10 clip 5.
