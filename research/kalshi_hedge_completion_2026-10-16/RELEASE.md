@@ -65,7 +65,12 @@ positive was also corrected and strengthened; details and exact logs are in
 [MODIFIED_TESTS.txt](MODIFIED_TESTS.txt). Independent approval covers exact bundle
 `3dcfe32a07a90bd708ae14f5404cae9660ffac39e27b3d2f9f1c3065ff9b6e29`;
 see [review](REVIEW.md) and [file manifest](final_candidate_manifest.json).
-Deployment and actual runtime verification are still pending.
+Released through [PR75](https://github.com/sideriapostolou-lgtm/Claude/pull/75),
+merge `2f0bba487b4c88fa39299924b7a112e8413cb933`, at **1:33:19 PM PDT** in a safe
+merge minute. The merged tree exactly equals the tested feature tree. Railway
+deployment `7582010e-5681-41bb-964b-951e8b3c6767` reached SUCCESS at
+**1:34:33.499 PM PDT**. Normal existing Polymarket LIVE startup is recorded.
+See [deployment receipt](DEPLOYMENT.json).
 
 The helper benchmark uses constructed states and warm indexes. Its measurements
 exclude network, ledger I/O and production scheduling. They are computational
@@ -77,8 +82,36 @@ See [exact outputs](HELPER_BENCHMARK.json); production scheduling remains unmeas
 
 ## Next evidence
 
-After exact deployment and startup verification, inspect bounded native policy
-status and actual decisions/refusals. An accepted order is not a fill, and no
-eligible opportunity is not a failed test or proof of profit. The wider profitable
-entry/hedge task remains open until a prospective fixed source/settings cohort
-has complete actual fills, fees, settlements and explicitly accounted gaps.
+Bounded release/startup verification is complete. Original native status at
+**1:39:21.213 PM PDT** confirms the new policy identity, authenticated REAL MONEY,
+`trading_now=true`, empty waiting reason and a clean 427.7 ms recent reconciliation.
+Cash is **$47.3599**; cumulative settled P&L remains **−$27.4415**, including
+**+$8.842332** locked and **−$36.283832** directional. Current UTC-day settled P&L
+remains **−$7.9497**. These are retained native totals, not a newly audited complete
+ledger. Cash is not trading profit. Caps, both latches, 953 fills, 242 settlements,
+fees, zero reservations and zero unpaired risk exactly match the last old-source
+snapshot. Three already-used resume/reset controls were ignored at startup;
+anchors and consumed-control hashes were not read. [Runtime](RUNTIME.json),
+[cold startup](STARTUP.json), [last old status](LAST_OLD_STATUS.json).
+
+The current protected pair cost $0.94 and was completed before deployment. Its
+eventual settlement belongs to the old policy. There were no new native
+order/fill/settlement log headers returned in the unsaturated **1:34–1:40 PM PDT**
+query; new entry/completion execution is therefore **not yet verified**. The
+existing practice twin is explicitly noncomparable. Page projection tests pass;
+an authenticated production page read was unavailable.
+
+The first three native snapshots were blocked after full-account scans taking
+6.7648 / 5.4735 / 5.8191 seconds. Later freshness is verified; minute-aligned
+samples do not establish continuous staleness or continuous readiness. Periodic
+slow reads remain open. The same bounded error search returned no ERROR/Traceback
+lines. A separate legacy learning recorder did log `low_disk free_mb=210`; this
+does not establish whole-volume capacity or recorder retention. Bot and standalone
+Kalshi recorder were both online with one replica; the latter's deployment was
+unchanged. No capacity setting or paid resource was changed.
+
+Next, freeze a prospective source/settings cohort before its start and reconcile
+all actual fills, fees and settlements, including failed and zero-fill windows,
+with queue/markout gaps explicit. No replacement fills or saved losses are
+invented. Profitable-entry evidence, periodic reconciliation delays, capacity,
+town acceptance and full operating handoff stay on their existing open records.

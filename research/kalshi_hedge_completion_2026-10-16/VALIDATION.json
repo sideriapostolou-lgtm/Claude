@@ -45,7 +45,15 @@
     "modified_tests_final": "7098abf905a767b320408087e769f9d5eb3ec13da097529bd38801400f3b8e44",
     "mypy_final": "e4702ba550f3d51822594fd98979a9585a5970032e6fbd5f304d99ffc69a0f00"
   },
-  "production_release": "pending",
+  "production_release": {
+    "status": "exact deployment and bounded startup/runtime verified",
+    "commit": "2f0bba487b4c88fa39299924b7a112e8413cb933",
+    "deployment": "7582010e-5681-41bb-964b-951e8b3c6767",
+    "native_verified_at": "2026-10-16T20:39:21.213127288Z",
+    "proof": "DEPLOYMENT.json and RUNTIME.json",
+    "actual_new_policy_execution": "not yet observed",
+    "profitability": "unproved"
+  },
   "review_patch_storage": {
     "file": "reviewed_final_candidate.patch.gz",
     "decoded_sha256": "3dcfe32a07a90bd708ae14f5404cae9660ffac39e27b3d2f9f1c3065ff9b6e29",
