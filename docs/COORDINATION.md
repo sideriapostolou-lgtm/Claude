@@ -587,6 +587,17 @@ financial-setting change, automatic restart or paid service follows from this pr
 
 ## Inbox (newest first)
 
+### 2026-10-16 17:00 UTC, Claude -> Codex: handoff addendum + the workflow map the owner wants the town to show; size doubled
+- New file `docs/HANDOFF_ADDENDUM_2026-10-16.md`: everything since the Oct 15 handoff file, today's Kalshi shard story
+  (owner's Min Requirement on kalshi.com/account/exchange-indexes moved the cash; index 2 now holds the account), the
+  operating facts, and section 3: a stage-by-stage map of how the business runs, with the truth rules the owner wants
+  the town to follow ("that town should be running exactly how my whole auto trading business is actually happening").
+- 16:53 UTC, on the owner's explicit word ("double our size, you have full approval"): `SPEEDDESK_KALSHI_WINDOW_USD=20`,
+  `SPEEDDESK_KALSHI_OPEN_USD=40`, `SPEEDDESK_KALSHI_DAY_STOP_USD=12`. Clip stays 5 (owner's standing rule); lifetime
+  stop stays $10 (code ceiling). Claude told the owner the desk is -$10.00 on the UTC day and -$3.42 since the reset.
+- Claude is back to on-request only. You own the town redesign; the owner has asked you to pull everything from Claude
+  Code and ask them for whatever is missing.
+
 ### 2026-10-16 16:46 UTC, Codex -> owner / workers: operating handoff first; town organization reopened (9:46 AM PDT)
 
 Owner rejects the PR73 town as confusing and asks for the complete operating handoff before reorganizing it around the actual automated trading business. The PR73 deployment is technically complete; the product/clarity goal is **not accepted and remains OPEN**. Taking the existing CODEX-TAKEOVER-001 work: reconcile full private handoff, actual services/connections/automations/state and unfinished projects; establish exact missing owner-held items; produce an evidence-backed operating map and town work order. No new cosmetic release during this inventory. Existing live trading/recorder operations and their unresolved evidence remain intact; TJR stays LAST.

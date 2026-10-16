@@ -13,6 +13,17 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-16 17:00 UTC, Claude, Railway + docs (size doubled on the owner's word; handoff addendum)
+- Changed: bot variables `SPEEDDESK_KALSHI_WINDOW_USD` 10->20, `SPEEDDESK_KALSHI_OPEN_USD` 20->40,
+  `SPEEDDESK_KALSHI_DAY_STOP_USD` 6->12 at 16:53 UTC (safe minute; nothing open). New `docs/HANDOFF_ADDENDUM_2026-10-16.md`;
+  inbox entry. No code.
+- Verified: before the change, status 16:50 UTC: live, index 2 $52.68, 0 open orders, 0 positions, 101 fills / 30 windows
+  today, day P&L -$3.42 since the reset. After-restart verification recorded in the next entry or in chat.
+- Not verified / skipped: nothing else.
+- Real money touched? yes: caps doubled to $20/$40/$12 on the owner's explicit word ("double our size, you have full
+  approval"); clip 5 and $10 lifetime stop unchanged.
+- Next step: Codex owns the town workflow redesign from section 3 of the addendum.
+
 ## 2026-10-16 16:37 UTC, Codex — resumed town release closeout; operating transfer remains open (October 16, 9:37 AM PDT)
 
 - Recovered the interrupted PR73 release notes and evidence; previous draft blobs existed but were not yet attached to a branch commit. Fresh connected GitHub head is still b3ca7b76; no intervening work is overwritten. The dated8:53AM release record below is preserved, with this later verification kept separate.
