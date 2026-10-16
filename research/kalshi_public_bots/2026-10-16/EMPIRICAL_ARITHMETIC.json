@@ -1,0 +1,50 @@
+{
+  "record_count": 628,
+  "unique_markets": 628,
+  "wins": 520,
+  "paid_sum": "1400.78",
+  "fees_sum": "1616.42",
+  "bank": {
+    "cash": "2400.82",
+    "start": "1000.0",
+    "peak": "3639.91",
+    "low": "746.12",
+    "settled": "628",
+    "fees": "1616.42"
+  },
+  "grade_slices": {
+    "NONE (no disagreement)": {
+      "n": 3,
+      "wins": 3,
+      "paid_sum": "75.17"
+    },
+    "WEAK (50-70c)": {
+      "n": 5,
+      "wins": 4,
+      "paid_sum": "-22.43"
+    },
+    "WEAK (small disagreement)": {
+      "n": 1,
+      "wins": 1,
+      "paid_sum": "24.84"
+    },
+    "GOOD": {
+      "n": 613,
+      "wins": 506,
+      "paid_sum": "1093.45"
+    },
+    "REVENGE": {
+      "n": 6,
+      "wins": 6,
+      "paid_sum": "229.75"
+    }
+  },
+  "mean_price": "0.7982308917197452261146496815",
+  "mean_price_plus_fee_per_contract": "0.8093206761518679579025673406",
+  "artyom": {
+    "rows": 3322,
+    "unique_markets": 1389,
+    "last_simulated_bank": "19493.890000000065",
+    "mixed_semantics_pnl_sum_not_a_return": "-55253.90999999999598102"
+  }
+}

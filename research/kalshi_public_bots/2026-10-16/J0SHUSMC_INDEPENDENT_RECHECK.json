@@ -1,0 +1,417 @@
+{
+  "source": "https://github.com/J0shusmc/Kalshi-BTC/blob/d5a55bf10c02ddc2b429eec78b1fd847fa1b6760/reports/btc15_trade_log.json",
+  "source_sha256": "d0d3f6176bcb1a23d93616fa0a53965634129d1613dc69281d8b894bcbea8df6",
+  "fill_count": 84,
+  "unique_fill_ids": 84,
+  "unique_order_ids": 56,
+  "settlement_count": 31,
+  "unique_settlement_tickers": 31,
+  "fills_without_settlement": [],
+  "settlements_without_fills": [],
+  "field_mismatch_market_count": 0,
+  "sum_payout": "853.00",
+  "sum_cost": "758.595000",
+  "sum_fees": "16.271000",
+  "sum_net": "78.134000",
+  "positive_markets": 24,
+  "negative_markets": 7,
+  "earliest_fill": "2026-08-27T23:48:20.924022Z",
+  "latest_fill": "2026-09-16T16:24:46.145582Z",
+  "synced_at": "2026-09-17T23:54:03.653079+00:00",
+  "maker_fill_rows": 40,
+  "taker_fill_rows": 44,
+  "pending_orders": 1,
+  "paper_trades_excluded": 4,
+  "local_tag_slices": {
+    "PULLBACK_99": {
+      "markets": 18,
+      "net": "-1.646900"
+    },
+    "NO_RECLAIM_80": {
+      "markets": 2,
+      "net": "6.014300"
+    },
+    "BTC_FADE_90": {
+      "markets": 8,
+      "net": "32.050000"
+    },
+    "RECLAIM_70": {
+      "markets": 3,
+      "net": "41.716600"
+    }
+  },
+  "results": [
+    {
+      "ticker": "KXBTC15M-26AUG272000-00",
+      "result": "no",
+      "payout": "5.00",
+      "cost": "2.955000",
+      "fees": "0.085100",
+      "net": "1.959900",
+      "field_mismatches": {},
+      "local_tags": [
+        "PULLBACK_99"
+      ]
+    },
+    {
+      "ticker": "KXBTC15M-26AUG272015-15",
+      "result": "no",
+      "payout": "5.00",
+      "cost": "3.000000",
+      "fees": "0.084700",
+      "net": "1.915300",
+      "field_mismatches": {},
+      "local_tags": [
+        "PULLBACK_99"
+      ]
+    },
+    {
+      "ticker": "KXBTC15M-26AUG272045-45",
+      "result": "no",
+      "payout": "5.00",
+      "cost": "2.950000",
+      "fees": "0.085300",
+      "net": "1.964700",
+      "field_mismatches": {},
+      "local_tags": [
+        "PULLBACK_99"
+      ]
+    },
+    {
+      "ticker": "KXBTC15M-26AUG272245-45",
+      "result": "yes",
+      "payout": "22.00",
+      "cost": "12.540000",
+      "fees": "0.379500",
+      "net": "9.080500",
+      "field_mismatches": {},
+      "local_tags": [
+        "PULLBACK_99"
+      ]
+    },
+    {
+      "ticker": "KXBTC15M-26AUG272315-15",
+      "result": "no",
+      "payout": "22.00",
+      "cost": "13.200000",
+      "fees": "0.372600",
+      "net": "8.427400",
+      "field_mismatches": {},
+      "local_tags": [
+        "PULLBACK_99"
+      ]
+    },
+    {
+      "ticker": "KXBTC15M-26AUG272345-45",
+      "result": "no",
+      "payout": "0",
+      "cost": "14.000000",
+      "fees": "0.431300",
+      "net": "-14.431300",
+      "field_mismatches": {},
+      "local_tags": [
+        "PULLBACK_99"
+      ]
+    },
+    {
+      "ticker": "KXBTC15M-26AUG280115-15",
+      "result": "no",
+      "payout": "22.00",
+      "cost": "13.200000",
+      "fees": "0.375200",
+      "net": "8.424800",
+      "field_mismatches": {},
+      "local_tags": [
+        "PULLBACK_99"
+      ]
+    },
+    {
+      "ticker": "KXBTC15M-26AUG280130-30",
+      "result": "yes",
+      "payout": "23.00",
+      "cost": "13.570000",
+      "fees": "0.392200",
+      "net": "9.037800",
+      "field_mismatches": {},
+      "local_tags": [
+        "PULLBACK_99"
+      ]
+    },
+    {
+      "ticker": "KXBTC15M-26AUG280245-45",
+      "result": "yes",
+      "payout": "0",
+      "cost": "14.160000",
+      "fees": "0.406400",
+      "net": "-14.566400",
+      "field_mismatches": {},
+      "local_tags": [
+        "PULLBACK_99"
+      ]
+    },
+    {
+      "ticker": "KXBTC15M-26AUG280315-15",
+      "result": "no",
+      "payout": "23.00",
+      "cost": "13.340000",
+      "fees": "0.394700",
+      "net": "9.265300",
+      "field_mismatches": {},
+      "local_tags": [
+        "PULLBACK_99"
+      ]
+    },
+    {
+      "ticker": "KXBTC15M-26AUG280330-30",
+      "result": "yes",
+      "payout": "25.00",
+      "cost": "14.250000",
+      "fees": "0.431200",
+      "net": "10.318800",
+      "field_mismatches": {},
+      "local_tags": [
+        "PULLBACK_99"
+      ]
+    },
+    {
+      "ticker": "KXBTC15M-26AUG280400-00",
+      "result": "yes",
+      "payout": "25.00",
+      "cost": "15.000000",
+      "fees": "0.423400",
+      "net": "9.576600",
+      "field_mismatches": {},
+      "local_tags": [
+        "PULLBACK_99"
+      ]
+    },
+    {
+      "ticker": "KXBTC15M-26AUG280545-45",
+      "result": "no",
+      "payout": "0",
+      "cost": "15.960000",
+      "fees": "0.480400",
+      "net": "-16.440400",
+      "field_mismatches": {},
+      "local_tags": [
+        "PULLBACK_99"
+      ]
+    },
+    {
+      "ticker": "KXBTC15M-26AUG280600-00",
+      "result": "no",
+      "payout": "0",
+      "cost": "14.250000",
+      "fees": "0.429000",
+      "net": "-14.679000",
+      "field_mismatches": {},
+      "local_tags": [
+        "PULLBACK_99"
+      ]
+    },
+    {
+      "ticker": "KXBTC15M-26AUG280730-30",
+      "result": "no",
+      "payout": "21.00",
+      "cost": "12.600000",
+      "fees": "0.355600",
+      "net": "8.044400",
+      "field_mismatches": {},
+      "local_tags": [
+        "PULLBACK_99"
+      ]
+    },
+    {
+      "ticker": "KXBTC15M-26AUG280900-00",
+      "result": "yes",
+      "payout": "20.00",
+      "cost": "12.000000",
+      "fees": "0.338700",
+      "net": "7.661300",
+      "field_mismatches": {},
+      "local_tags": [
+        "PULLBACK_99"
+      ]
+    },
+    {
+      "ticker": "KXBTC15M-26AUG280915-15",
+      "result": "no",
+      "payout": "0",
+      "cost": "12.980000",
+      "fees": "0.372600",
+      "net": "-13.352600",
+      "field_mismatches": {},
+      "local_tags": [
+        "PULLBACK_99"
+      ]
+    },
+    {
+      "ticker": "KXBTC15M-26AUG280800-00",
+      "result": "no",
+      "payout": "0",
+      "cost": "13.440000",
+      "fees": "0.414000",
+      "net": "-13.854000",
+      "field_mismatches": {},
+      "local_tags": [
+        "PULLBACK_99"
+      ]
+    },
+    {
+      "ticker": "KXBTC15M-26SEP081300-00",
+      "result": "no",
+      "payout": "19.00",
+      "cost": "17.290000",
+      "fees": "0.316500",
+      "net": "1.393500",
+      "field_mismatches": {},
+      "local_tags": [
+        "NO_RECLAIM_80"
+      ]
+    },
+    {
+      "ticker": "KXBTC15M-26SEP082115-15",
+      "result": "no",
+      "payout": "47.00",
+      "cost": "37.600000",
+      "fees": "0.822500",
+      "net": "8.577500",
+      "field_mismatches": {},
+      "local_tags": [
+        "BTC_FADE_90"
+      ]
+    },
+    {
+      "ticker": "KXBTC15M-26SEP090100-00",
+      "result": "yes",
+      "payout": "45.00",
+      "cost": "39.150000",
+      "fees": "0.772100",
+      "net": "5.077900",
+      "field_mismatches": {},
+      "local_tags": [
+        "BTC_FADE_90"
+      ]
+    },
+    {
+      "ticker": "KXBTC15M-26SEP090730-30",
+      "result": "yes",
+      "payout": "42.00",
+      "cost": "39.060000",
+      "fees": "0.685400",
+      "net": "2.254600",
+      "field_mismatches": {},
+      "local_tags": [
+        "BTC_FADE_90"
+      ]
+    },
+    {
+      "ticker": "KXBTC15M-26SEP101915-15",
+      "result": "no",
+      "payout": "0",
+      "cost": "26.840000",
+      "fees": "0.000000",
+      "net": "-26.840000",
+      "field_mismatches": {},
+      "local_tags": [
+        "BTC_FADE_90"
+      ]
+    },
+    {
+      "ticker": "KXBTC15M-26SEP111645-45",
+      "result": "yes",
+      "payout": "47.00",
+      "cost": "35.720000",
+      "fees": "0.000000",
+      "net": "11.280000",
+      "field_mismatches": {},
+      "local_tags": [
+        "RECLAIM_70"
+      ]
+    },
+    {
+      "ticker": "KXBTC15M-26SEP112000-00",
+      "result": "yes",
+      "payout": "59.00",
+      "cost": "41.300000",
+      "fees": "0.991200",
+      "net": "16.708800",
+      "field_mismatches": {},
+      "local_tags": [
+        "RECLAIM_70"
+      ]
+    },
+    {
+      "ticker": "KXBTC15M-26SEP130900-00",
+      "result": "yes",
+      "payout": "59.00",
+      "cost": "44.250000",
+      "fees": "1.022200",
+      "net": "13.727800",
+      "field_mismatches": {},
+      "local_tags": [
+        "RECLAIM_70"
+      ]
+    },
+    {
+      "ticker": "KXBTC15M-26SEP140045-45",
+      "result": "yes",
+      "payout": "63.00",
+      "cost": "48.510000",
+      "fees": "1.098600",
+      "net": "13.391400",
+      "field_mismatches": {},
+      "local_tags": [
+        "BTC_FADE_90"
+      ]
+    },
+    {
+      "ticker": "KXBTC15M-26SEP140430-30",
+      "result": "yes",
+      "payout": "50.00",
+      "cost": "47.500000",
+      "fees": "0.796300",
+      "net": "1.703700",
+      "field_mismatches": {},
+      "local_tags": [
+        "BTC_FADE_90"
+      ]
+    },
+    {
+      "ticker": "KXBTC15M-26SEP151030-30",
+      "result": "no",
+      "payout": "67.00",
+      "cost": "52.930000",
+      "fees": "1.172100",
+      "net": "12.897900",
+      "field_mismatches": {},
+      "local_tags": [
+        "BTC_FADE_90"
+      ]
+    },
+    {
+      "ticker": "KXBTC15M-26SEP160030-30",
+      "result": "yes",
+      "payout": "74.00",
+      "cost": "57.720000",
+      "fees": "1.293000",
+      "net": "14.987000",
+      "field_mismatches": {},
+      "local_tags": [
+        "BTC_FADE_90"
+      ]
+    },
+    {
+      "ticker": "KXBTC15M-26SEP161230-30",
+      "result": "no",
+      "payout": "63.00",
+      "cost": "57.330000",
+      "fees": "1.049200",
+      "net": "4.620800",
+      "field_mismatches": {},
+      "local_tags": [
+        "NO_RECLAIM_80"
+      ]
+    }
+  ]
+}
