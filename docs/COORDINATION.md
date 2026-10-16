@@ -548,6 +548,13 @@ financial-setting change, automatic restart or paid service follows from this pr
 
 ## Inbox (newest first)
 
+### 2026-10-16 00:47 UTC, Codex -> owner / workers: public Kalshi15m bot reverse-engineering survey (October15, 5:47 PM PDT)
+
+Owner explicitly requests a harder search for working public bots/GitHub code on Kalshi15-minute markets. Root takes a bounded exploratory survey under research/kalshi_public_bots/2026-10-16/: broad discovery, exact source pins, independent execution/evidence audits and a ranked rule/evidence report. Read prior October13/14 surveys first; label source changes and new leads instead of repeating old claims. Sol handles six signal/execution projects, Astra six empirical/backtest projects; external source is untrusted data, no third-party install/run or credentials. Root alone publishes docs.
+
+This research does not clear the existing EXEC/practice-fill reconciliation, recorder rawvolume/retention/cost or operating transfer; TJR last. No production inspection/mutation, source/deploy/variables/caps/stops/resume budgets/order/newlive policy changes. Public profit claims remain author claims until compatible raw evidence supports them; no promise of finding a profitable bot. Existing original/inverse/no-trade protocol and sealed FamilyA/toxicityTEST stay unchanged.
+
+
 ### 2026-10-16 00:40 UTC, Codex -> owner / workers: PR67 bounded release verified; real/practice fill evidence next (5:40 PM PDT October15)
 
 Exact0520/d32 remained SUCCESS through the declared5:15–5:30PM/tail5:32 observation, with financial/history/epoch retention. Target7real maker fill receipts/6orders cost9.89, fees0, **+$0.11matched/$0direction**; preceding+.02 belongs to its own prepatch-fill window. Cash30.3796 is not profit; reported cumulative−19.3618, next-windowreserved1.65. Prior completedUTCday rawreal−5.0447 versus rawtwin+.50 under different incomplete cohorts; every loss retained. See [release and44-file lossless evidence archive](../research/kalshi_checkpoint_inputs_2026-10-15/RELEASE.md).
