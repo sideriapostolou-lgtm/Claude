@@ -13,6 +13,14 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-16 20:30 UTC, Codex — entry/hedge correction verified; exact release next (October 16, 1:30 PM PDT)
+
+- Owner explicitly asked to fix the diagnosed losses. Implemented visible fee-capped opposite-depth admission and partial-starter cancellation, ordinary-budget early pair completion, and lower admissible maker hedges with capped queue retention. Existing late protection, caps, stops, history and reservations remain. No variable, funding, resume or direct-order action. [Scope, limits and exact checks](../research/kalshi_hedge_completion_2026-10-16/RELEASE.md).
+- Final-source full suite **6,281 passed / 14 existing skips**, latest modified files **218 passed**, independent final selected **104 passed**, root separate adversarial replay21. Mypy135 and changed-file Ruff13 pass. Independent exact11-file bundle `3dcfe32a07a90bd708ae14f5404cae9660ffac39e27b3d2f9f1c3065ff9b6e29` matches. Full-run collection preceded one strengthened test-only fixture; the218 rerun covers every changed test at its final bytes. Early failed iterations and the corrected harness false positive are recorded; no failed check waived.
+- Practice remains separate and explicitly noncomparable for the new pair policy; the page suppresses the current mixed-policy control comparison, keeping raw history and prior-period observations. Visible depth is not atomic execution, own-depth subtraction is conservative, and no profitable alternative fill is claimed. Older code cannot read a persisted true completion marker; use a compatible reviewed forward correction if needed.
+- Native **1:23:52.998 PM PDT**, still old source e72f4b8b: REAL MONEY, cash$47.1207, cumulative settled−$27.2407, current UTC-day−$7.7489, risk$.38, reserve0, caps20/40/12/10/clip5 and both latchesfalse. Cash is not profit; this is a bounded native status, not a fresh complete ledger audit.
+- Next: safe-minute PR merge, exact deployment/startup, loss/cap/used-control retention and bounded actual new-policy evidence. Source fix is not yet deployed at this entry. Broader profitable-entry evidence, town acceptance, full operating handoff and recorder obligations stay OPEN; TJR reminder stays paused.
+
 ## 2026-10-16 19:24 UTC, Codex — single biggest Kalshi loss source verified (October 16, 12:24 PM PDT)
 
 - Owner request: identify the single biggest reason the bot loses. [Report and reproducible receipts](../research/kalshi_loss_cause_2026-10-16/REPORT.md). This was a read-only investigation. Deployment `a717faa1`, source `e72f4b8b`, remains SUCCESS; the reviewed entry/hedge files match that deployed version.
