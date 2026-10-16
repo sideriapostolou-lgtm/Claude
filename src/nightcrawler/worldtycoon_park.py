@@ -3,15 +3,15 @@
 TYCOON_PARK = r"""
   // Colour identifies a department, never a simulated flow of money. The same cast, feet, desk coordinates
   // and walking graph survive the park treatment. Decorative buildings cannot send an order or invent work.
-  const TYCOON_PARK_COLORS = { table: 0x08afa7, workshop: 0xff8c22, den: 0x9955e8,
-    vault: 0x258ae8, archive: 0x20b778, dock: 0xffbf26, observatory: 0x526ee6 };
+  const TYCOON_PARK_COLORS = { table: 0x45d8ca, workshop: 0x6c9fc4, den: 0xb77aa5,
+    vault: 0x6bbfd2, archive: 0x4cb7a0, dock: 0x65c6ca, observatory: 0x739ace };
   const TYCOON_PARK_STATE = { group: null, routes: [], departments: [], flags: [], upgrades: [],
     growth: { qualified: false, level: null, pnl_usd: null }, hidden: [], hiddenSet: new Set() };
   const TYCOON_DAY_DIRECTION = new THREE.Vector3(-.45, .85, .4).normalize();
 
   function tycoonParkBuild() {
     const group = new THREE.Group(); group.name = "tycoon:park";
-    const ground = [], signs = [], landscape = [], buildings = [], white = 0xf9fcff, paving = 0xdfe6ed;
+    const ground = [], signs = [], landscape = [], buildings = [], white = 0x9dbbc8, paving = 0x304b60;
     const put = function (list, geo, colour, point, yaw) {
       if (yaw) geo.rotateY(yaw);
       if (point) geo.translate(point.x, point.y, point.z);
@@ -27,22 +27,6 @@ TYCOON_PARK = r"""
     const box = function (list, width, height, depth, colour, point, yaw) {
       put(list, new THREE.BoxGeometry(width, height, depth), colour, point, yaw);
     };
-    const tree = function (x, z, size) {
-      disc(1.05 * size, 0x36ad43, v(x + .18 * size, -.139, z + .12 * size));
-      box(landscape, .31 * size, 1.95 * size, .31 * size, 0x996337, v(x, .83 * size, z));
-      // Three clean plastic blocks read as a tree at phone size; no noisy leaf textures or extra draw calls.
-      box(landscape, 1.85 * size, 1.48 * size, 1.72 * size, 0x2cba50, v(x, 2.07 * size, z));
-      box(landscape, 1.38 * size, .72 * size, 1.28 * size, 0x55d862, v(x - .12 * size, 3.04 * size, z - .04 * size));
-      box(landscape, .72 * size, .82 * size, 1.08 * size, 0x22a546, v(x + .80 * size, 1.94 * size, z + .14 * size));
-    };
-    const fence = function (x, z, length, yaw) {
-      const at = function (a, y) { return v(a, y, 0).applyAxisAngle(v(0, 1, 0), yaw).add(v(x, 0, z)); };
-      for (let a = -length / 2; a <= length / 2 + .01; a += 1.4) {
-        box(landscape, .13, .92, .13, white, at(a, .40), yaw);
-        put(landscape, new THREE.ConeGeometry(.12, .17, 4), white, at(a, .94), yaw + Math.PI / 4);
-      }
-      [.34, .68].forEach(function (y) { box(landscape, length, .11, .08, white, at(0, y), yaw); });
-    };
     const badge = function (point, yaw, colour, room) {
       const at = function (x, y, z) { return v(x, y, z).applyAxisAngle(v(0, 1, 0), yaw).add(point); };
       box(signs, .14, 2.65, .14, white, at(0, 1.325, 0), yaw);
@@ -51,210 +35,129 @@ TYCOON_PARK = r"""
       box(signs, .18, .74, .15, white, at(.20, 2.25, 0), yaw);
       TYCOON_PARK_STATE.flags.push({ room: room, position: point.toArray() });
     };
-    const emblem = function (frame, room, colour, x, y, z, size) {
-      const at = function (a, b, c) { return frame.at(x + a * size, y + b * size, z + c * size); };
-      const block = function (w, h, d, tint, a, b, c, tilt) {
-        const geometry = new THREE.BoxGeometry(w * size, h * size, d * size);
-        if (tilt) geometry.rotateZ(tilt);
-        put(signs, geometry, tint, at(a, b, c), frame.yaw);
-      };
-      const ring = function (radius, tube, a, b, c) {
-        put(signs, new THREE.TorusGeometry(radius * size, tube * size, 6, 16), white, at(a, b, c), frame.yaw);
-      };
-      block(1.86, 1.64, .20, white, 0, 0, 0);
-      block(1.66, 1.44, .24, colour, 0, 0, .035);
-      if (room === "workshop") {
-        ring(.36, .105, -.13, .10, .23);
-        block(.16, .58, .12, white, .30, -.31, .23, Math.PI / 4);
-      } else if (room === "den") {
-        put(signs, new THREE.CylinderGeometry(.56 * size, .56 * size, .14 * size, 5).rotateX(Math.PI / 2),
-          white, at(0, .04, .22), frame.yaw);
-        block(.13, .36, .14, colour, -.12, -.05, .32, Math.PI / 4);
-        block(.13, .62, .14, colour, .12, .04, .32, -Math.PI / 4);
-      } else if (room === "vault") {
-        ring(.25, .075, 0, .25, .22);
-        block(.70, .54, .13, white, 0, -.13, .25);
-        block(.09, .21, .15, colour, 0, -.12, .33);
-      } else if (room === "archive") {
-        [-.31, 0, .31].forEach(function (offset, i) {
-          block(.96 - i * .09, .20, .15, white, i % 2 * .06, offset, .22);
-          block(.10, .22, .18, colour, -.23, offset, .24);
-        });
-      } else if (room === "dock") {
-        block(.90, .85, .16, white, 0, 0, .22);
-        block(.14, .88, .18, colour, 0, 0, .25);
-        block(.90, .13, .18, colour, 0, .13, .26);
-      } else {
-        block(.18, .98, .14, white, 0, 0, .22, Math.PI / 4);
-        block(.18, .98, .14, white, 0, 0, .23, -Math.PI / 4);
-        block(.26, .26, .16, colour, 0, 0, .32);
-      }
-    };
-
-    // A connected lawn replaces the visual gaps between floating islets. It stays below every original floor,
-    // foot and contact shadow. Alternating mowing strips are decorative, not lots for sale or profit counters.
-    box(landscape, 56, 3.0, 50, 0x9d7251, v(2, -1.65, -3));
-    box(landscape, 56.2, .24, 50.2, 0x37a749, v(2, -.27, -3));
-    for (let row = 0; row < 10; row++) for (let column = 0; column < 12; column++) {
-      rectangle(56 / 12 + .002, 5.002, (row + column) % 2 ? 0x55c747 : 0x60d14c,
-        v(-26 + (column + .5) * 56 / 12, -.145, -28 + (row + .5) * 5));
-    }
+    // Architectural campus, not a simulated city economy. The complete floor is connected and
+    // all pathways follow real navigation. No moving particles, invented visitors or order streams.
+    box(landscape, 56, 2.3, 50, 0x0b1728, v(2, -1.30, -3));
+    box(landscape, 56.2, .16, 50.2, 0x233a50, v(2, -.23, -3));
+    rectangle(56.2, 50.2, 0x182a3c, v(2, -.145, -3));
+    // A quiet unpatterned campus surface keeps the actual workplaces legible at phone scale.
     DISCS.forEach(function (d, i) {
-      disc(d[2] - .09, i % 3 === 0 ? 0x60d14c : i % 3 === 1 ? 0x55c747 : 0x66d653,
-        v(d[0], d[3] + .002 - i * .00003, d[1]));
+      disc(d[2] - .09, 0x344c5f, v(d[0], d[3] + .002 - i * .00003, d[1]));
     });
-    disc(COURT_R + .44, 0x3fa746, v(0, .007, 0));
-    disc(COURT_R + .18, paving, v(0, .008, 0));
+    disc(COURT_R + .44, 0x102336, v(0, .007, 0));
+    disc(COURT_R + .18, 0x446175, v(0, .008, 0));
     put(ground, new THREE.RingGeometry(COURT_R - .12, COURT_R + .12, 80).rotateX(-Math.PI / 2),
       TYCOON_PARK_COLORS.table, v(0, .009, 0));
-    put(ground, new THREE.RingGeometry(2.42, 2.53, 64).rotateX(-Math.PI / 2),
-      TYCOON_PARK_COLORS.table, v(0, .009, 0));
-    rectangle(4.8, 8.4, white, v(0, -.12, 17.7));
-    rectangle(4.35, 8.4, paving, v(0, -.11, 17.7));
-    rectangle(32.6, 2.60, white, v(4, .009, 16.2));
-    rectangle(32.6, 2.24, paving, v(4, .010, 16.2));
 
-    // Open-front toy shops: a thick sign wall, colored side plinths and a generous striped canopy make the
-    // department recognizable before its text label is readable. The work area stays open to the camera.
+
+    // Generous low cutaway laboratories. The upper frame sits at the rear; the workstation,
+    // resident and doorway remain visible from either phone overview or selected camera.
     const dimensions = { workshop: [7.5, 7], den: [7.5, 7], archive: [7, 6.4], vault: [7, 6.4] };
     Object.keys(ROOMS).forEach(function (key) {
       const frame = RF[key], colour = TYCOON_PARK_COLORS[key], size = dimensions[key];
       if (colour == null) return;
       TYCOON_PARK_STATE.departments.push(key);
       if (frame && size) {
-        const pale = new THREE.Color(colour).lerp(new THREE.Color(white), .48),
-          dark = new THREE.Color(colour).multiplyScalar(.55), w = size[0], d = size[1];
-        rectangle(w + 1.14, d + 1.10, 0x3ca448, frame.at(.12, .003, -.05), frame.yaw);
+        const w = size[0], d = size[1], shell = 0x627d8d, edge = 0x98b5bf;
         rectangle(w + .74, d + .74, colour, frame.at(0, .004, 0), frame.yaw);
-        rectangle(w - .03, d - .03, white, frame.at(0, .006, 0), frame.yaw);
-        rectangle(4.9, 2.20, white, frame.at(0, .008, d / 2 + .7), frame.yaw);
-        rectangle(4.6, 1.92, colour, frame.at(0, .009, d / 2 + .7), frame.yaw);
-        rectangle(2.02, 1.96, paving, frame.at(0, .010, d / 2 + .7), frame.yaw);
+        rectangle(w + .54, d + .54, 0x152a3f, frame.at(0, .005, 0), frame.yaw);
+        rectangle(w - .03, d - .03, 0x76929d, frame.at(0, .006, 0), frame.yaw);
+        rectangle(2.35, 2.20, colour, frame.at(0, .008, d / 2 + .7), frame.yaw);
+        rectangle(2.02, 2.20, paving, frame.at(0, .009, d / 2 + .7), frame.yaw);
         badge(frame.at(-2.65, 0, d / 2 + .9), frame.yaw, colour, key);
-        // The tall silhouette is at the rear, away from every doorway, desk and worker home.
-        if (key === "den") {
-          // The overview sees Nyx from this shop's rear. A wide, open cutaway keeps her real home visible;
-          // the outer towers and roof trim preserve the building silhouette without a wall across her face.
-          [-1, 1].forEach(function (sign) {
-            box(buildings, 2.08, 2.34, .56, pale, frame.at(sign * (w / 2 - .76), 1.17, -d / 2), frame.yaw);
-          });
-          box(buildings, w - 3.52, .73, .56, pale, frame.at(0, .365, -d / 2), frame.yaw);
-        } else box(buildings, w + .56, 2.34, .56, pale, frame.at(0, 1.17, -d / 2), frame.yaw);
-        box(buildings, w + .58, .64, .60, colour, frame.at(0, .35, -d / 2), frame.yaw);
-        const roofEdge = function (width, height, depth, tint, y, z) {
-          if (key === "den") [-1, 1].forEach(function (sign) {
-            box(buildings, 2.20, height, depth, tint, frame.at(sign * (w / 2 - .57), y, z), frame.yaw);
-          });
-          else box(buildings, width, height, depth, tint, frame.at(0, y, z), frame.yaw);
-        };
-        // Nyx's low body also needs an opening through the rear roof trim when viewed from a small phone.
-        // Two roof towers frame her workspace; a continuous beam here would cross the selected-camera ray.
-        roofEdge(w + 1.02, .45, 1.25, colour, 2.53, -d / 2);
-        roofEdge(w + 1.14, .14, 1.36, white, 2.83, -d / 2);
-        roofEdge(w + .70, .12, .76, dark, 2.29, -d / 2 + .20);
-        emblem(frame, key, colour, key === "den" ? 3.0 : 0, 3.32, -d / 2 + .38, .92);
         [-1, 1].forEach(function (sign) {
-          const x = sign * (key === "den" ? 2.85 : 2.23);
-          box(buildings, 1.52, 1.07, .10, colour, frame.at(x, 1.45, -d / 2 + .34), frame.yaw);
-          box(buildings, 1.25, .81, .12, 0x243f62, frame.at(x, 1.45, -d / 2 + .41), frame.yaw);
-          box(buildings, .10, .84, .14, white, frame.at(x, 1.45, -d / 2 + .47), frame.yaw);
-          box(buildings, 1.28, .10, .14, white, frame.at(x, 1.45, -d / 2 + .47), frame.yaw);
+          // Rear corner towers leave a central sightline, including the short practice resident.
+          box(buildings, 1.22, 2.80, .64, shell, frame.at(sign * (w / 2 - .35), 1.40, -d / 2), frame.yaw);
+          // Solid corner volumes and partial roofs read as finished cutaway laboratories.
+          box(buildings, 1.70, 1.85, .46, shell, frame.at(sign * (w / 2 - .60), .925, -d / 2), frame.yaw);
+          box(buildings, 1.75, .24, 2.10, shell, frame.at(sign * (w / 2 - .60), 2.90, -d / 2 + .68), frame.yaw);
+          box(buildings, 1.77, .055, 2.12, edge, frame.at(sign * (w / 2 - .60), 3.05, -d / 2 + .68), frame.yaw);
+
+          box(buildings, .09, 2.45, .69, colour, frame.at(sign * (w / 2 - .35), 1.43, -d / 2 + .04), frame.yaw);
+          box(buildings, .48, .85, d, shell, frame.at(sign * w / 2, .425, 0), frame.yaw);
+          box(buildings, .54, .10, d, edge, frame.at(sign * w / 2, .90, 0), frame.yaw);
+          box(buildings, 1.08, .48, .84, shell, frame.at(sign * (w / 2 - .55), .24, d / 2 + .50), frame.yaw);
+          box(buildings, .88, .15, .66, 0x275c59, frame.at(sign * (w / 2 - .55), .52, d / 2 + .50), frame.yaw);
+          put(buildings, new THREE.IcosahedronGeometry(.42, 1), 0x469786,
+            frame.at(sign * (w / 2 - .55), .86, d / 2 + .50));
         });
-        [-1, 1].forEach(function (sign) {
-          box(buildings, .39, 2.90, .40, colour, frame.at(sign * (w / 2 + .04), 1.45, -d / 2), frame.yaw);
-          box(buildings, .59, .21, d - .12, colour, frame.at(sign * w / 2, .87, 0), frame.yaw);
-          box(buildings, .26, 2.56, .26, white, frame.at(sign * 1.88, 1.28, d / 2 + 1.24), frame.yaw);
-          box(buildings, .41, .37, .41, dark, frame.at(sign * 1.88, .18, d / 2 + 1.24), frame.yaw);
-        });
-        for (let stripe = 0; stripe < 10; stripe++) {
-          const x = (stripe - 4.5) * .44, shade = stripe % 2 ? white : colour;
-          box(buildings, .442, .24, 1.82, shade, frame.at(x, 2.65, d / 2 + .58), frame.yaw);
-          box(buildings, .442, .31, .17, shade, frame.at(x, 2.46, d / 2 + 1.49), frame.yaw);
+        box(buildings, w + .55, .22, .94, shell, frame.at(0, 2.92, -d / 2), frame.yaw);
+        box(buildings, w + .55, .055, .98, colour, frame.at(0, 3.06, -d / 2), frame.yaw);
+        // A low rear equipment wall is kept below faces, with static vents instead of fake charts.
+        box(buildings, w - 2.0, .68, .44, shell, frame.at(0, .34, -d / 2), frame.yaw);
+        for (let i = -2; i <= 2; i++) {
+          box(buildings, .46, .045, .07, edge, frame.at(i * .72, .45, -d / 2 + .24), frame.yaw);
         }
-        // Small department-colour planter boxes finish the corners without surrounding the worker in labels.
-        [-1, 1].forEach(function (sign) {
-          box(buildings, 1.02, .43, .72, white, frame.at(sign * (w / 2 - .62), .22, d / 2 + .72), frame.yaw);
-          box(buildings, .87, .12, .58, dark, frame.at(sign * (w / 2 - .62), .44, d / 2 + .72), frame.yaw);
-          box(buildings, .82, .57, .61, 0x23b754, frame.at(sign * (w / 2 - .62), .74, d / 2 + .72), frame.yaw);
-          box(buildings, .20, .21, .19, key === "den" ? 0xffbc35 : 0xff638d,
-            frame.at(sign * (w / 2 - .62), 1.10, d / 2 + .72), frame.yaw);
-        });
       } else if (key === "observatory" && frame) {
-        disc(5.73, 0x3ca448, frame.at(0, .004, 0));
-        disc(5.48, paving, frame.at(0, .006, 0));
-        put(ground, new THREE.RingGeometry(4.91, 5.43, 64).rotateX(-Math.PI / 2), colour, frame.at(0, .008, 0));
-        // A low octagonal science terrace replaces the opaque-looking glass greenhouse in town mode.
-        // Its front stays entirely open to the existing stairs and observation desk.
+        disc(5.73, 0x102336, frame.at(0, .004, 0));
+        disc(5.48, 0x627f90, frame.at(0, .006, 0));
+        put(ground, new THREE.RingGeometry(5.30, 5.43, 64).rotateX(-Math.PI / 2), colour, frame.at(0, .008, 0));
         for (let i = 0; i < 7; i++) {
           const angle = Math.PI * (.5 + i / 6), x = Math.sin(angle) * 5.47, z = Math.cos(angle) * 5.47;
-          const yaw = frame.yaw + angle;
-          box(buildings, 3.25, .92, .38, white, frame.at(x, .46, z), yaw);
-          box(buildings, 3.42, .20, .61, colour, frame.at(x, 1.03, z), yaw);
+          box(buildings, 3.25, .58, .38, 0x243e56, frame.at(x, .29, z), frame.yaw + angle);
+          box(buildings, 3.28, .06, .42, colour, frame.at(x, .61, z), frame.yaw + angle);
         }
-        box(buildings, 7.0, .56, 1.04, colour, frame.at(0, 2.43, -5.1));
-        box(buildings, 7.18, .16, 1.19, white, frame.at(0, 2.79, -5.1));
-        [-2.8, 2.8].forEach(function (x) { box(buildings, .41, 2.61, .44, colour, frame.at(x, 1.30, -5.1)); });
-        emblem(frame, key, colour, 0, 3.24, -4.83, 1.05);
+        [-2.8, 2.8].forEach(function (x) {
+          box(buildings, .32, 2.9, .44, 0x243e56, frame.at(x, 1.45, -5.1));
+          box(buildings, .08, 2.5, .46, colour, frame.at(x, 1.45, -5.08));
+        });
+        box(buildings, 7.0, .22, .80, 0x243e56, frame.at(0, 3.0, -5.1));
+        box(buildings, 7.0, .05, .84, colour, frame.at(0, 3.15, -5.1));
         badge(frame.at(-2.15, 0, 4.95), frame.yaw, colour, key);
       } else if (key === "dock") {
-        rectangle(5.08, 2.55, 0x3ca448, v(23.2, .007, -1.5));
-        rectangle(4.75, 2.22, paving, v(23.2, .009, -1.5));
-        rectangle(4.75, .18, colour, v(23.2, .010, -2.5));
-        rectangle(4.75, .18, colour, v(23.2, .010, -.5));
+        rectangle(5.08, 2.55, colour, v(23.2, .007, -1.5));
+        rectangle(4.85, 2.32, paving, v(23.2, .009, -1.5));
         badge(v(24.95, 0, -2.37), 0, colour, key);
-        // The parcel depot sits behind Jet, clear of his console and the walkway at x=19.5.
-        box(buildings, .52, 2.55, 3.12, white, v(25.81, 1.27, -1.5));
-        box(buildings, 1.10, .38, 3.56, colour, v(25.74, 2.63, -1.5));
-        box(buildings, 1.19, .12, 3.69, white, v(25.74, 2.89, -1.5));
-        emblem({ at: function (x, y, z) { return v(25.48 - z, y, -1.5 + x); }, yaw: -Math.PI / 2 },
-          key, colour, 0, 3.34, 0, .88);
+        box(buildings, .52, 2.55, 3.12, 0x243e56, v(25.81, 1.27, -1.5));
+        box(buildings, .56, .07, 3.18, colour, v(25.81, 2.59, -1.5));
+        [-2.45, -.55].forEach(function (z) {
+          box(buildings, .04, 1.8, .06, colour, v(25.52, 1.3, z));
+        });
       }
     });
-
-    // Path edges follow the actual walk graph. No decorative parcel implies an order; actors move only through
-    // their existing event handler. Stairs retain their original treads and the courtyard remains one open plaza.
     Object.keys(NAV).forEach(function (key) {
       NAV[key].edges.forEach(function (other) {
         if (key >= other || key.startsWith("tb") || other.startsWith("tb")) return;
         const a = NAV[key].p, b = NAV[other].p;
         if (Math.abs(a.y - b.y) > .05) return;
         const length = a.distanceTo(b); if (length < .05) return;
-        const midpoint = a.clone().add(b).multiplyScalar(.5), yaw = Math.atan2(b.x - a.x, b.z - a.z);
-        midpoint.y += .0111; rectangle(1.76, length + .11, white, midpoint, yaw);
-        midpoint.y += .0004; rectangle(1.49, length + .04, paving, midpoint, yaw);
         TYCOON_PARK_STATE.routes.push([key, other]);
       });
     });
-    [-23, -19, -15, -11, -7, 7, 11, 15, 19, 23, 27].forEach(function (x, i) { tree(x, -24 + i % 2, .95 + i % 3 * .15); });
-    [-18, -12, -6, 0, 6, 12, 17].forEach(function (z, i) { tree(-23, z, 1 + i % 2 * .22); });
-    [-18, -12, 7, 13, 18].forEach(function (z, i) { tree(27, z, .96 + i % 2 * .18); });
-    fence(-23.2, -3, 44, Math.PI / 2); fence(27.6, -3, 44, Math.PI / 2);
-    fence(2, -25.2, 50.4, 0); fence(-12.4, 19.3, 19.6, 0); fence(14.4, 19.3, 23.6, 0);
-    [-1, 1].forEach(function (sign) {
-      box(buildings, .92, 3.90, .95, 0x196ec7, v(sign * 2.55, 1.81, 19.3));
-      box(buildings, 1.17, .42, 1.20, white, v(sign * 2.55, .13, 19.3));
-      box(buildings, 1.14, .25, 1.20, 0xffcb39, v(sign * 2.55, 3.88, 19.3));
-      box(buildings, .34, .40, .34, white, v(sign * 2.55, 4.20, 19.3));
-      // Fixed pennants are decoration, with no visitor count, ticket price or earnings claim.
-      box(signs, .11, 1.63, .11, white, v(sign * 3.30, 4.07, 19.3));
-      box(signs, .94, .56, .12, sign < 0 ? 0xff8d32 : 0x9955e8, v(sign * 3.68, 4.55, 19.3));
+    // Four broad primary approaches replace the detailed navigation mesh. Navigation keeps
+    // every original node, but the drawing is a calm, readable campus rather than a wireframe.
+    [[200, RF.workshop.at(0, 0, 4)], [340, RF.den.at(0, 0, 4)],
+      [135, RF.archive.at(0, 0, 3.7)], [45, RF.vault.at(0, 0, 3.7)]].forEach(function (q) {
+      const angle = q[0] * Math.PI / 180, a = v(Math.cos(angle) * COURT_R, .010, Math.sin(angle) * COURT_R),
+        b = q[1], midpoint = a.clone().add(b).multiplyScalar(.5), yaw = Math.atan2(b.x - a.x, b.z - a.z);
+      midpoint.y = .010; rectangle(2.8, a.distanceTo(b) + .6, 0x526d7e, midpoint, yaw);
     });
-    box(buildings, 6.16, .95, .76, 0x196ec7, v(0, 3.82, 19.3));
-    box(buildings, 6.42, .19, 1.02, white, v(0, 4.39, 19.3));
-    box(signs, 2.05, .48, .12, white, v(0, 3.84, 19.75));
-    [-.54, 0, .54].forEach(function (x) { box(signs, .28, .28, .14, TYCOON_PARK_COLORS.table, v(x, 3.84, 19.83)); });
-    [-18, -8, 9, 18].forEach(function (x) {
-      box(landscape, 2.05, .18, .65, 0xffa735, v(x, .56, 18.05));
-      box(landscape, 2.05, .65, .15, 0xffa735, v(x, .96, 18.30));
-      [-.69, .69].forEach(function (offset) { box(landscape, .14, .54, .50, 0x294d74, v(x + offset, .24, 18.05)); });
-      box(landscape, .63, .96, .63, 0x258ae8, v(x + 1.68, .34, 18.10));
-      box(landscape, .70, .13, .70, 0x294d74, v(x + 1.68, .88, 18.10));
+    // A single broad service promenade reaches the order workstation; no secondary edge network.
+    rectangle(18.8, 2.8, 0x526d7e, v(13.2, .010, 2));
+    rectangle(2.8, 4.5, 0x526d7e, v(22.6, .010, .25));
+    for (let i = 0; i < 10; i++) {
+      const zf = -6.2 - .25 * i, depth = zf + 8.8;
+      box(buildings, 3.2, .18 * (i + 1), depth, 0x304b60,
+        v(0, .09 * (i + 1), zf - depth / 2));
+      box(buildings, 3.2, .018, .045, 0x528c99, v(0, .18 * (i + 1) + .009, zf - .02));
+    }
+    // Sparse architectural landscaping frames the campus; all foliage is static decoration.
+    [-20, -13, -6, 8, 15, 23].forEach(function (x) {
+      box(landscape, 2.6, .4, 1.5, 0x294459, v(x, .05, -23));
+      [-.7, .7].forEach(function (dx) {
+        put(landscape, new THREE.IcosahedronGeometry(.85, 1), 0x3e8a7b, v(x + dx, .96, -23));
+      });
     });
+    // Restrained perimeter light strips are fixed architectural details, unrelated to desk state.
+    [-25.6, 29.6].forEach(function (x) {
+      box(landscape, .14, .22, 49.5, 0x3e7c86, v(x, -.05, -3));
+    });
+    box(landscape, 55, .22, .14, 0x3e7c86, v(2, -.05, -27.6));
 
     const merge = function (list, name, cast, parent) {
       const geometry = mergeGeometries(list, false); if (!geometry) return null;
-      const material = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: cast ? .62 : .88,
-        metalness: 0, depthWrite: !!cast, polygonOffset: !cast, polygonOffsetFactor: 0, polygonOffsetUnits: -1 });
+      const material = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: cast ? .48 : .78,
+        metalness: cast ? .24 : .08, depthWrite: !!cast, polygonOffset: !cast, polygonOffsetFactor: 0, polygonOffsetUnits: -1 });
       const mesh = new THREE.Mesh(geometry, material); mesh.name = name;
       if (!cast) mesh.renderOrder = 1;
       mesh.receiveShadow = true; mesh.castShadow = !!cast && Q.shadows;
@@ -315,6 +218,19 @@ TYCOON_PARK = r"""
         part.layers.set(2);
       });
     };
+    // Replace the previous fantasy architecture completely, retaining actor parents, lights,
+    // receipt objects and all navigation. Layer masks restore the original tour exactly.
+    if (typeof staticMeshes !== "undefined") staticMeshes.forEach(hide);
+    if (typeof TY_CUTAWAY !== "undefined") TY_CUTAWAY.parts.forEach(function (part) {
+      hide(part.cover); hide(part.low);
+    });
+    if (typeof STANDIN !== "undefined") Object.values(STANDIN).forEach(function (list) {
+      if (Array.isArray(list)) list.forEach(hide);
+    });
+    if (typeof props !== "undefined") Object.values(props).forEach(hide);
+    if (typeof MAT !== "undefined") scene.children.forEach(function (node) {
+      if (node.isInstancedMesh && [MAT.leaf, MAT.books, MAT.brass].includes(node.material)) hide(node);
+    });
     // The old tower and villagers use UTC profit; the separate arena buildings use practice results. Neither
     // becomes part of this Pacific-day town's growth. Layers keep later animation ticks from revealing them.
     if (typeof GP !== "undefined") {
@@ -355,18 +271,18 @@ TYCOON_PARK = r"""
     if (typeof keyLight !== "undefined") keyLight.intensity = 0;
     if (typeof practicals !== "undefined") Object.values(practicals).forEach(function (p) { p.light.intensity = p.base * .10; });
     if (typeof hemi !== "undefined") {
-      hemi.color.set(0xd5eeff); hemi.groundColor.set(0x749960); hemi.intensity = .82;
-      sun.color.set(0xfff5e6); sun.intensity = 1.55;
+      hemi.color.set(0xd5eeff); hemi.groundColor.set(0x38546a); hemi.intensity = 1.15;
+      sun.color.set(0xfff5e6); sun.intensity = 2.0;
       sun.position.copy(cam.look).addScaledVector(TYCOON_DAY_DIRECTION, 60);
       if (sun.target) sun.target.position.copy(cam.look);
-      renderer.toneMappingExposure = .94;
+      renderer.toneMappingExposure = 1.04;
     }
     if (typeof skyU !== "undefined") {
-      skyU.uTop.value.set(0x258cdc); skyU.uMid.value.set(0x75c3f6); skyU.uHorizon.value.set(0xb1e3ff);
-      skyU.uBelow.value.set(0x65b9eb); skyU.uSunCol.value.set(0xfff5e6); skyU.uStars.value = 0;
+      skyU.uTop.value.set(0x172d46); skyU.uMid.value.set(0x34566f); skyU.uHorizon.value.set(0x668699);
+      skyU.uBelow.value.set(0x314a61); skyU.uSunCol.value.set(0xfff5e6); skyU.uStars.value = 0;
       skyU.uSunDir.value.copy(TYCOON_DAY_DIRECTION);
-      cloudU.uLit.value.set(0xf5fbff); cloudU.uShade.value.set(0x9cbfe0); cloudU.uFar.value.set(0xb1e3ff);
-      cloudU.uSunDir.value.copy(TYCOON_DAY_DIRECTION); scene.fog.color.set(0xb1e3ff);
+      cloudU.uLit.value.set(0xf5fbff); cloudU.uShade.value.set(0x9cbfe0); cloudU.uFar.value.set(0x668699);
+      cloudU.uSunDir.value.copy(TYCOON_DAY_DIRECTION); scene.fog.color.set(0x668699);
       // The overview can be 150m from the set on a narrow phone. Fog must not bleach the entire park.
       scene.fog.near = 180; scene.fog.far = 520;
     }

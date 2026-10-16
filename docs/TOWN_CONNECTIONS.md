@@ -1,15 +1,17 @@
 # What the town's numbers and movement mean
 
-**October 16, 10:00 AM PDT:** the owner rejected PR73's clarity and requested operating reconciliation
-before the next town reorganization. The current implementation described below is deployed, but its
-product goal remains open. [BUSINESS_WORKFLOW.md](BUSINESS_WORKFLOW.md) is the reviewed work order and
-source-gap map, not a claim that a replacement is already built. Private operating inventory remains
-in the existing private vault. Characters are display guides; each actual service needs its own
-purpose, evidence, mode, action/waiting reason and source age.
+**October 16, 11:29 AM PDT owner override:** improve the town and fix its missing Kalshi
+money now. This supersedes the earlier handoff-before-redesign sequence, while the
+operating handoff, unmapped services and product acceptance remain unfinished. The
+10:00 AM rejection of PR73 remains historical evidence; its successful deployment did
+not establish that the owner found the product clear. This document describes the
+current release implementation; exact deployment and runtime evidence belong in the
+release record.
 
 The town is a read-only view of the running business. `/` and `/world` show the
 town; `/summary` shows the same projection without 3D. The only menu choices are
-Money, Team and Help. Both pages read the authenticated `GET /api/page`; neither
+Money, Team and Help. The town reads authenticated `GET /api/town` for Kalshi money and `GET /api/page`
+for the full company projection; the summary reads `/api/page`. Neither
 places orders, changes settings or requests a venue account directly.
 
 The foreground is Kalshi: cash, Pacific-day bot profit, real activity, safeguards
@@ -17,6 +19,42 @@ and daily garden growth. Polymarket remains live at the owner’s explicit reque
 its account stays separate in secondary Money details. Practice and observation
 services continue behind the scenes and remain available in their detail panels.
 This focus is a display choice, never a trading-mode switch.
+
+
+## Independent Kalshi money loading
+
+`GET /api/town` uses the same dashboard authorization as `/api/page`, returns
+scrubbed strict JSON with `Cache-Control: no-store`, and performs no account query,
+ledger scan or trading action. It reads the bounded real display mirror
+`speeddesk/kalshi_live/state.json` directly, once per request, independently of the
+practice report and the full-page assembly lock. The town polls this endpoint every
+5 seconds while visible, with an 8-second timeout. Full-page requests run every
+30 seconds with a 20-second timeout. Poll success is transport evidence only; the
+browser preserves each report's own age and does not let an older full-page reply
+replace newer Kalshi data.
+
+The fast response contains `generated_at`, `refresh_s`,
+`money.speeddesk.kalshi_live` and `money.connections.kalshi` (under connections
+version 1). The first is the whitelisted saved status/cash panel; the second validates
+the complete saved real-fill book before projecting profit and limiting lists. The
+8 MiB source-read limit remains in force. Missing, oversized or malformed sources
+stay unavailable, and cash can remain independently known when profit is unknown.
+The full-page reader also falls back to the independent real panel when its nested
+practice companion report is missing.
+
+`money.connections.kalshi.total_pnl_usd` is cumulative settled bot P&L from the
+validated full book (`realized_pnl`), after actual fill fees. It is separate from
+Pacific-day profit, the companion's UTC-day result and account cash. It does not
+include owner results, deposits or practice. Book failure leaves it unknown.
+Neither a list truncated to 50 rows nor visible receipts are used to total money.
+
+The panel also forwards bounded sanitized daily-stop, exchange-index funding and
+create-order cooldown diagnostics. Account cash can span exchange indexes; an
+individual market may require funds on a particular index. Funding observations keep
+their own `at`; no source age establishes a successful account reconciliation that
+was never persisted. Recorded fill cost means gross bot fill cost awaiting a recorded
+settlement, including ended unresolved markets. It is not verified current account
+holdings or a mark-to-market valuation. Reservations and possible loss remain separate.
 
 ## Real money
 
@@ -196,3 +234,17 @@ longer declares every foreground worker busy. Voss reports the desk state withou
 claiming an unrecorded decision. Selected desks retain their current explanation
 and show their own last qualified receipt when one exists. None of this grants
 browser access, task execution or additional trading authority.
+
+## Job-first campus release
+
+The town now uses a connected architectural campus with readable cutaway workplaces,
+a quieter floor and sparse static landscaping. Job labels lead: Observe, Checks, Orders and Results, with separate Research/practice
+and Lab/background areas; character names are secondary.
+Money and workflow controls explain the spatial map, and selecting a workplace shows
+its purpose, dated report and actual waiting reason. Static connections, lighting and
+landscaping do not establish runtime work or financial activity.
+
+This release does not supply the still-missing complete Operations/Engineering or
+external-routine registry. Those sources and the private operating handoff retain
+their existing open tasks. Tests and deployment cannot alone establish that the
+owner's overall clarity and appearance goal has been accepted.

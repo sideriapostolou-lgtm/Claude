@@ -16,10 +16,11 @@ def test_failed_fetch_clears_activity_and_only_auth_failure_clears_private_data(
     tmp_path: Path, status: int,
 ) -> None:
     functions = "\n".join(_js_body(_MODULE, marker) for marker in (
-        "  async function fetchPage(", "  function setOffline(", "  function clearPageAccess(",
+        "  async function fetchTownData(", "  async function fetchPage(", "  function setOffline(", "  function clearPageAccess(",
     ))
     out = _node("""
 const token = "local-test-only";
+const TOWN_TRANSPORT = {epoch:0, kalshiAt:-Infinity, kalshiMoney:null};
 let data = {money: {cash: 42}}, plain = {private: true}, offline = false, authLocked = false;
 let lastOkAt = 10, lastClosedKey = "old";
 const members = {risk: {private: true}}, lastEventTs = {risk: 9};
@@ -60,6 +61,6 @@ console.log(JSON.stringify({result, data, plain, members, lastEventTs, lastOkAt,
 
 def test_successful_reauthentication_starts_a_new_event_baseline() -> None:
     apply = _js_body(_MODULE, "  function apply(d)")
-    assert "const first = !data;" in apply
+    assert "const first = !data || !data.team;" in apply
     assert "authLocked = false;" in apply
     assert 'BUS.emit("data", d, first)' in apply

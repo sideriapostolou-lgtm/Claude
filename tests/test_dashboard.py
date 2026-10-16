@@ -606,3 +606,18 @@ def test_safe_mode_banner_and_foreign_wallet_positions(ledger: Ledger,
     page = build_page_state(ledger, live, NOW)
     assert any(a["level"] == "bad" and a["text"].startswith("Safe mode") for a in page["alerts"])
     assert {t["foreign"] for t in page["trades"]["open"]} == {False, True}
+
+
+def test_fast_town_route_is_authenticated_and_bypasses_full_page(serve, make_settings, monkeypatch) -> None:
+    from nightcrawler import pagestate
+
+    settings = make_settings(DASHBOARD_TOKEN=TOKEN)
+    client = serve(settings, lambda: pytest.fail("full ledger provider must not run"))
+    assert client.request("/api/town")[0] == 401
+    monkeypatch.setattr(pagestate, "build_town_money_state", lambda *args: {
+        "generated_at": NOW, "money": {"cash_usd": None}, "note": TOKEN})
+    status, headers, body = client.request("/api/town?token=" + TOKEN)
+    assert status == 200
+    assert headers["Cache-Control"] == "no-store"
+    assert TOKEN.encode() not in body
+    assert json.loads(body)["money"]["cash_usd"] is None

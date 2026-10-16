@@ -1,6 +1,6 @@
 # The business workflow and the next town design
 
-Owner direction, October 16, 2026, 9:44 AM Pacific: complete operating reconciliation before reorganizing the town. PR73 deployed successfully, but the owner rejected its clarity and appearance. Deployment completion is preserved; the product goal is open. This is a source-backed work order, not a claim that this replacement UI exists or that the private operating handoff is complete.
+Owner direction, October 16, 2026, **11:29 AM Pacific:** improve the town now and fix the Kalshi money loading. This overrides the 9:44 AM handoff-before-redesign sequence. PR73's successful deployment and rejected appearance/clarity remain historical evidence. The current release implements the bounded money transport and campus changes below; complete operating handoff, missing service registries and owner acceptance of the overall product goal remain open. Exact deployment and runtime proof belong in the release record.
 
 ## What the company actually does
 
@@ -85,13 +85,21 @@ Claude now reports on-request assistance; Codex owns integration and operating r
 
 ## Missing information that the design must expose honestly
 
-- Native Kalshi status already reports daily stop, pair protection, eligible exchange-index cash and create-order cooldown, but the page's whitelist does not forward all of these. Add only bounded, sanitized fields needed to explain actual behavior.
+- This release forwards bounded sanitized daily-stop, exchange-index funding and create-order cooldown fields, alongside existing recorded open cost. Native pair protection and detailed decision/reconciliation telemetry remain distinct source gaps; do not infer them from decorative station activity.
 - Detailed recent decisions are not fully supplied to the town. A fresh status timestamp is not proof of a recent decision. Show “Decision detail not recorded” until a real producer receipt exists.
 - Last successful account reconciliation is not persisted as an authoritative page field. Do not substitute page age, report age or balance time.
 - The recorder, host recovery, external routines and development queue need their own read-only evidence sources. Do not add synchronous provider/account queries to page rendering.
 - A lifecycle needs reliable order/fill/settlement identity joins. Without one, show separate receipts; never combine unrelated latest events into a fictitious trade.
 
 For each service retain stable ID, purpose, venue, execution kind, real/practice/observation scope, source version, original evidence time, freshness, actual action/reason, missing evidence and existing task/next step. Keep operational status separate from a task's status. Any new producer work needs a separate scoped review; this document does not add trading decisions or change risk.
+
+## Current release: Kalshi transport and campus
+
+The authenticated read-only `/api/town` route reads `speeddesk/kalshi_live/state.json` directly, independently of practice reports, full-page ledger assembly and its serialized lock. The response supplies only the existing Kalshi status panel and validated real-book connection projection; it makes no account call. Strict JSON, secret scrubbing, no-store responses and the 8 MiB saved-source limit apply. The browser polls Kalshi every 5 seconds with an 8-second timeout and loads the full `/api/page` projection every 30 seconds with a 20-second timeout. Independent source timestamps survive merging, and an older full-page reply cannot overwrite newer Kalshi money.
+
+Cash, UTC-day result, Pacific-day result and `money.connections.kalshi.total_pnl_usd` are separate. The cumulative field is full-book settled bot `realized_pnl`, after actual fees, validated before row truncation. Missing or inconsistent books produce unknown profit. Recorded gross fill cost may include ended markets still awaiting settlement reconciliation; it is not verified current account holdings or their valuation. Account cash spans exchange indexes, while eligibility may require one specific index. No response timestamp substitutes for an unpersisted successful account check.
+
+The job-first campus has connected cutaway workplaces, a quieter architectural floor and sparse static landscaping. Labels lead with Observe, Checks, Orders and Results, with separate Research/practice and Lab/background areas; names remain secondary. Selecting a workplace explains its purpose and dated status. Static wiring, lighting and scenery do not prove work occurred. This is an implemented presentation change, not a complete Operations/Engineering registry or proof of owner acceptance. See [TOWN_CONNECTIONS.md](TOWN_CONNECTIONS.md) for the exact money contract.
 
 ## Phone layout and behavior
 
@@ -126,11 +134,11 @@ Use at least14px for essential status text and44px tap targets at320/390px width
 
 ## Implementation and completion order
 
-1. Complete the existing operating-handoff acceptance rows, or obtain an explicit owner disposition for a genuinely unavailable dormant item. Missing access is not cleared. TJR stays last; existing trading/recorder obligations stay open.
+1. Under the 11:29 AM override, complete and verify this town release now. Keep operating-handoff acceptance rows, missing access and unmapped operational/engineering sources on their existing unfinished records. TJR stays last; existing trading/recorder obligations stay open.
 2. Freeze the supported service inventory and data contract. Include unavailable services as unknown/dormant without activating them. Keep private inventory out of public code.
 3. Build a plain-text company view using existing authoritative projections, then connect the same view model to the town. `/summary` and the town must agree.
 4. Add the minimum read-only telemetry needed for truthful explanations, with source time, scope and bounds. Preserve fees, all losses, UTC/Pacific distinctions, owner/bot separation, partial coverage, stale/auth-clear and no-replay behavior.
 5. Validate live/idle, stopped with exposure, pairs-only, stale account, accounting block, partial fill, cancel pending, unknown decision, incomplete results and developer work awaiting runtime proof. Run required code checks and verify the exact authorized deployment.
 6. An unfamiliar phone user must be able to explain what runs, what each department does, what is blocked, what settled and what happens next without opening Help. A tested release alone is not evidence that this product goal is met.
 
-This work order is the next town organization task under CODEX-TAKEOVER-001. It does not deploy UI, clear the full handoff, remove safeguards, change variables, activate a desk or raise limits.
+This work remains under CODEX-TAKEOVER-001. The implemented town release requires its exact deployment and runtime verification; it does not clear the full handoff or authorize safeguards, variable, activation or limit changes.

@@ -3793,13 +3793,66 @@ _M_LIFE = r"""
   // ============================================================= THE DATA (the bot's own ledger, nothing else)
   let data = null, offline = false, authLocked = false, lastOkAt = null, lastClosedKey = null, chatterAt = 0, chatterIdx = 0;
   const members = {}, lastEventTs = {};
+  // Independent requests: a slow full ledger must never hold up Kalshi's header.
+  const TOWN_TRANSPORT = { epoch: 0, pageBusy: false, townBusy: false, kalshiAt: -Infinity, kalshiMoney: null, kalshiFast: false };
+  async function fetchTownData(path, timeoutMs) {
+    let epoch = TOWN_TRANSPORT.epoch;
+    const controller = new AbortController(), timer = setTimeout(function () { controller.abort(); }, timeoutMs);
+    const opts = { cache: "no-store", credentials: "same-origin", signal: controller.signal };
+    try {
+      let res = await fetch(path, opts);
+      if (res.status === 401) {
+        // Lock immediately, including when the legacy token retry can restore access.
+        if (epoch === TOWN_TRANSPORT.epoch) clearPageAccess();
+        else return null;
+        epoch = TOWN_TRANSPORT.epoch;
+        if (token) res = await fetch(path + "?token=" + encodeURIComponent(token), opts);
+      }
+      if (epoch !== TOWN_TRANSPORT.epoch) return null;
+      if (res.status === 401) return null;
+      if (!res.ok) throw new Error("Data request failed (" + res.status + ")");
+      const value = await res.json();
+      if (epoch !== TOWN_TRANSPORT.epoch) return null;
+      authLocked = false;
+      return value;
+    } finally { clearTimeout(timer); }
+  }
   async function fetchPage() {
-    const opts = { cache: "no-store", credentials: "same-origin" };
-    let res = await fetch("api/page", opts);
-    if (res.status === 401 && token) res = await fetch("api/page?token=" + encodeURIComponent(token), opts);
-    if (res.status === 401) { clearPageAccess(); return null; }
-    if (!res.ok) { setOffline("Cannot reach the bot's data (" + res.status + ")"); return null; }
-    return res.json();
+    try { return await fetchTownData("api/page", 20000); }
+    catch (e) { if (!authLocked && Date.now() / 1000 - TOWN_TRANSPORT.kalshiAt > 30) setOffline("Cannot reach the bot right now"); return null; }
+  }
+  function mergeTownKalshi(d, fast) {
+    const money = d.money || {}, at = fast ? d.generated_at : money._town_kalshi_generated_at || d.generated_at;
+    // Full-page checkpoints can be older than their response clock. Once the direct
+    // source is available, only that stream may replace Kalshi, including unknowns.
+    if ((fast || !TOWN_TRANSPORT.kalshiFast) && typeof at === "number" && isFinite(at) && at >= TOWN_TRANSPORT.kalshiAt) {
+      TOWN_TRANSPORT.kalshiFast = fast;
+      TOWN_TRANSPORT.kalshiAt = at;
+      TOWN_TRANSPORT.kalshiMoney = { live: (money.speeddesk || {}).kalshi_live,
+        connection: (money.connections || {}).kalshi, version: (money.connections || {}).version };
+    }
+    const saved = TOWN_TRANSPORT.kalshiMoney;
+    const base = fast ? Object.assign({}, data || {}) : Object.assign({}, d);
+    base.money = Object.assign({}, base.money || {});
+    if (saved) {
+      base.money.speeddesk = Object.assign({}, base.money.speeddesk || {}, { kalshi_live: saved.live });
+      base.money.connections = Object.assign({}, base.money.connections || {}, { kalshi: saved.connection, version: saved.version });
+      base.money._town_kalshi_generated_at = TOWN_TRANSPORT.kalshiAt;
+    }
+    return base;
+  }
+  async function tickTown() {
+    if (TOWN_TRANSPORT.townBusy) return;
+    TOWN_TRANSPORT.townBusy = true;
+    try {
+      const d = await fetchTownData("api/town", 8000);
+      if (!d) return;
+      data = mergeTownKalshi(d, true);
+      offline = false; body.classList.remove("offline");
+      // Full-page receipt/event listeners retain their own cadence and baseline.
+      tycoonDraw();
+    } catch (e) { /* Keep dated evidence; freshness is checked against its original source clock. */ }
+    finally { TOWN_TRANSPORT.townBusy = false; }
   }
   function setOffline(text) {
     offline = true; statusEl.textContent = text; statusEl.hidden = false; statusEl.className = "bad"; body.classList.add("offline");
@@ -3807,6 +3860,7 @@ _M_LIFE = r"""
     TY_BUSINESS.sources = {}; TY_BUSINESS.memo.sources = {}; tycoonBusinessClear(false);
   }
   function clearPageAccess() {
+    TOWN_TRANSPORT.epoch += 1; TOWN_TRANSPORT.kalshiAt = -Infinity; TOWN_TRANSPORT.kalshiMoney = null; TOWN_TRANSPORT.kalshiFast = false;
     authLocked = true; data = null; plain = null; lastOkAt = null; lastClosedKey = null;
     Object.keys(members).forEach(function (key) { delete members[key]; });
     Object.keys(lastEventTs).forEach(function (key) { delete lastEventTs[key]; });
@@ -3874,7 +3928,8 @@ _M_LIFE = r"""
     if (b) b.kind = "chatter";
   }
   function apply(d) {
-    const first = !data;
+    const first = !data || !data.team;
+    d = mergeTownKalshi(d, false);
     offline = false; authLocked = false; lastOkAt = Date.now(); body.classList.remove("offline");
     plain = d.plain && d.plain.real && d.plain.pretend ? d.plain : null;
     renderBar();
@@ -4086,7 +4141,11 @@ _M_LIFE = r"""
   canvas.addEventListener("pointerdown", function () { if (panelKind) closePanel(); });
   document.addEventListener("keydown", function (e) { if (e.key === "Escape") { closePanel(); closeGuide(); } });
   async function tick() {
-    try { const d = await fetchPage(); if (d) apply(d); } catch (e) { setOffline("Cannot reach the bot right now"); }
+    if (TOWN_TRANSPORT.pageBusy) return;
+    TOWN_TRANSPORT.pageBusy = true;
+    try { const d = await fetchPage(); if (d) apply(d); }
+    catch (e) { console.warn("world: could not render page data", e); }
+    finally { TOWN_TRANSPORT.pageBusy = false; }
     clockEl.textContent = lastOkAt ? "updated " + new Date(lastOkAt).toLocaleTimeString() : "";
   }
 
@@ -8081,7 +8140,9 @@ _M_LIVE = r"""
   cut("arrival", arrivalShot);
   renderChips(); renderCard();
   boot.hidden = true;
-  tick(); setInterval(function () { if (document.visibilityState === "visible") tick(); }, REFRESH_MS);
+  tickTown(); tick();
+  setInterval(function () { if (document.visibilityState === "visible") tickTown(); }, 5000);
+  setInterval(function () { if (document.visibilityState === "visible") tick(); }, Math.max(30000, REFRESH_MS));
   raf = requestAnimationFrame(frame);
 }
 """

@@ -242,3 +242,59 @@ def test_gross_historical_cost_alone_does_not_establish_current_exposure(
     monkeypatch.setattr(speeddesk, "panel_state", lambda *args: speed_report(now, raw))
     live = pagestate.speed_desk(live_settings(make_settings), now)["kalshi_live"]
     assert live["open_cost_usd"] == 5.75 and not live["has_real_exposure"]
+
+
+@pytest.mark.parametrize("age", [0, 120])
+def test_real_panel_survives_missing_practice_report(make_settings, fake_clock, tmp_path, age) -> None:
+    now = fake_clock.now()
+    settings = live_settings(make_settings, DATA_DIR=str(tmp_path))
+    path = tmp_path / "speeddesk/kalshi_live/state.json"
+    path.parent.mkdir(parents=True)
+    raw = companion(now - age)
+    path.write_text(json.dumps({"version": 1, "panel": raw}))
+    result = pagestate.speed_desk(settings, now)
+    assert result["problem"] == "Practice report unavailable"
+    assert result["today"]["pnl_usd"] is None
+    live = result["kalshi_live"]
+    assert live["as_of"] == now - age
+    assert live["cash_at"] == now - age
+    assert live["stale"] is bool(age)
+    assert live["cash_usd"] == (None if age else 14.39)
+    assert live["active"] is (not bool(age))
+
+
+def test_real_panel_fallback_respects_bounded_read(make_settings, fake_clock, tmp_path, monkeypatch) -> None:
+    now = fake_clock.now()
+    settings = live_settings(make_settings, DATA_DIR=str(tmp_path))
+    path = tmp_path / "speeddesk/kalshi_live/state.json"
+    path.parent.mkdir(parents=True)
+    path.write_text(json.dumps({"version": 1, "panel": companion(now)}))
+    monkeypatch.setattr(moneyconnections, "MAX_SOURCE_BYTES", 16)
+    live = pagestate.speed_desk(settings, now)["kalshi_live"]
+    assert live["cash_usd"] is None
+    assert live["active"] is False
+
+
+def test_fast_town_money_keeps_cash_independent_of_broken_book(make_settings, fake_clock, tmp_path) -> None:
+    now = fake_clock.now()
+    settings = live_settings(make_settings, DATA_DIR=str(tmp_path))
+    path = tmp_path / "speeddesk/kalshi_live/state.json"
+    path.parent.mkdir(parents=True)
+    panel = companion(now)
+    panel.update(day_stop_latched=True, shard_funding={
+        "at": now - 7, "balances": [{"exchange_index": 2, "balance_usd": 3.25}],
+        "error": None, "subaccount_number": 0, "external_resting_orders": 0,
+        "external_resting_unknown": False,
+        "refusal": {"code": "shard_cash_budget", "required_usd": 4, "available_usd": 3.25}})
+    path.write_text(json.dumps({"version": 1, "updated_at": now, "panel": panel, "book": {}}))
+    result = pagestate.build_town_money_state(settings, now)
+    live = result["money"]["speeddesk"]["kalshi_live"]
+    connection = result["money"]["connections"]["kalshi"]
+    assert live["cash_usd"] == 14.39
+    assert live["day_stop_latched"] is True
+    assert live["shard_funding"]["at"] == now - 7
+    assert live["shard_funding"]["balances"][0]["balance_usd"] == 3.25
+    assert live["shard_funding"]["refusal"]["available_usd"] == 3.25
+    assert connection["status"] == "incomplete"
+    assert connection["today_pacific"]["pnl_usd"] is None
+    assert connection["venue_positions_at"] is None

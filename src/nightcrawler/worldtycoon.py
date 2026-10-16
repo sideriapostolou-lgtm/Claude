@@ -7,14 +7,20 @@ from nightcrawler.worldtycoon_workflow import TYCOON_WORKFLOW
 
 TYCOON_HTML = """
 <section id="ty-header" aria-label="Town and real money">
-  <div class="ty-heading"><div><span class="ty-logo" aria-hidden="true">N</span><h1>Nightcrawler<span>YOUR BUSINESS TYCOON</span></h1></div>
+  <div class="ty-heading"><div><span class="ty-logo" aria-hidden="true">N</span><h1>Nightcrawler<span>YOUR TRADING TOWN</span></h1></div>
     <button type="button" id="ty-more" aria-controls="panel" aria-label="Open town menu">Menu <span aria-hidden="true">☰</span></button></div>
   <div class="ty-money">
-    <div><span>Kalshi cash</span><b id="ty-cash">—</b><small>Available account cash</small></div>
-    <div><span>Kalshi bot profit</span><b id="ty-today">—</b><small>Since midnight Pacific</small></div>
+    <div><span>Kalshi cash</span><b id="ty-cash">—</b><small id="ty-cash-note">Account balance · awaiting source</small></div>
+    <div><span>Kalshi bot profit</span><b id="ty-today">—</b><small id="ty-profit-note">Since midnight Pacific</small></div>
+  </div>
+  <div class="ty-capital" aria-label="Kalshi committed money and recorded results">
+    <div><span>Recorded fill cost</span><b id="ty-committed">—</b></div>
+    <div><span>Order reserves</span><b id="ty-reserved">—</b></div>
+    <div><span>All-time bot P&amp;L</span><b id="ty-total">—</b></div>
   </div>
   <div class="ty-status"><span id="ty-state" role="status">Connecting</span><span id="ty-fresh">Waiting for reports</span></div>
   <div id="ty-exposure">Waiting for Kalshi account records</div>
+  <div id="ty-blocker" role="status">Connecting to the Kalshi desk…</div>
   <button type="button" id="ty-alert" aria-controls="panel" hidden></button>
 </section>
 <div id="ty-markers" aria-label="Town workstations"></div>
@@ -25,14 +31,14 @@ TYCOON_HTML = """
   <button type="button" id="ty-info" aria-controls="panel">Desk details <span aria-hidden="true">↗</span></button>
 </section>
 <section id="ty-dock" aria-label="Latest town activity">
-  <div class="ty-work-heading"><b>TEAM WORKFLOW</b><span id="ty-work-note">Waiting for reports</span></div>
+  <div class="ty-work-heading"><b>HOW THE DESK WORKS</b><span id="ty-work-note">Waiting for reports</span></div>
   <div id="ty-workflow" aria-label="Kalshi team roles">
-    <button type="button" id="ty-work-voss"><b>Voss</b><span>BTC desk</span><small>No report</small></button><i aria-hidden="true">›</i>
-    <button type="button" id="ty-work-rook"><b>Rook</b><span>Risk</span><small>No report</small></button><i aria-hidden="true">›</i>
-    <button type="button" id="ty-work-jet"><b>Jet</b><span>Orders</span><small>No report</small></button><i aria-hidden="true">›</i>
-    <button type="button" id="ty-work-mote"><b>Mote</b><span>Records</span><small>No report</small></button>
+    <button type="button" id="ty-work-voss"><span>01 · Voss</span><b>Observe</b><small>No report</small></button><i aria-hidden="true">›</i>
+    <button type="button" id="ty-work-rook"><span>02 · Rook</span><b>Check</b><small>No report</small></button><i aria-hidden="true">›</i>
+    <button type="button" id="ty-work-jet"><span>03 · Jet</span><b>Order</b><small>No report</small></button><i aria-hidden="true">›</i>
+    <button type="button" id="ty-work-mote"><span>04 · Mote</span><b>Settle</b><small>No report</small></button>
   </div>
-  <div class="ty-receipt-stages" aria-label="Receipt types, not a transaction progress bar">Order <span>→</span> Fill <span>→</span> Settlement <small>Settled profit / loss</small></div>
+  <div class="ty-receipt-stages" aria-label="Workflow explanation">Checks repeat throughout. Only fills become bets.</div>
   <div id="ty-event"><span class="ty-event-dot" aria-hidden="true"></span><span id="ty-event-text">Waiting for the bot’s report…</span><span id="ty-event-age"></span></div>
   <p id="ty-growth">Tap a building to visit your team</p>
 </section>
@@ -150,6 +156,106 @@ body.tycoon #ty-header, body.tycoon #ty-dock { border-color: #eaffff; box-shadow
   body.tycoon #ty-selection { left: auto; right: 20px; width: 330px; }
 }
 @media (max-width: 350px) { .ty-money small { font-size: 7px; } .ty-status { font-size: 7px; } }
+
+/* The money and workflow are the controls; the campus is their spatial map. */
+body.tycoon { --ty-ink: #e8f3f6; --ty-muted: #94aebb; --ty-edge: #2c485b;
+  background: #0b1724; font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
+body.tycoon #ty-header, body.tycoon #ty-dock, body.tycoon #ty-selection {
+  color: #e8f3f6; background: #0e2133f5; border: 1px solid #345367; border-radius: 16px;
+  box-shadow: 0 10px 35px #0005, inset 0 1px 0 #b4e8f510; backdrop-filter: blur(12px); }
+body.tycoon #ty-header { padding: 9px 12px 10px; left: 12px; right: 12px; top: calc(12px + env(safe-area-inset-top)); }
+.ty-heading { margin: 0 0 11px; padding: 0; border: 0; background: none; }
+.ty-logo { background: #183e49; border: 1px solid #4fbcbd; color: #83f0dc; border-radius: 9px;
+  width: 34px; height: 34px; font-size: 22px; transform: none; box-shadow: inset 0 0 12px #53d6c41c; }
+.ty-heading h1 { font-size: 17px; letter-spacing: -.04em; text-shadow: none; }
+.ty-heading h1 span { font-size: 8px; letter-spacing: .14em; color: #8daab9; }
+#ty-more, #ty-home, #ty-info { min-height: 44px; background: #193248; color: #e1f1f5; border: 1px solid #34556a;
+  box-shadow: none; border-radius: 10px; font-size: 12px; }
+.ty-money { gap: 8px; }
+.ty-money > div { background: #152d41; border: 1px solid #315065; border-radius: 10px; padding: 9px; }
+.ty-money > div + div { border-color: #315065; }
+.ty-money span { color: #afc4cf; font-size: 11px; font-weight: 600; }
+.ty-money b { font-size: 30px; line-height: 1.15; letter-spacing: -.05em; margin: 4px 0; font-weight: 750; }
+.ty-money > div > small { color: #9db5c3; font-size: 9px; min-height: 12px; }
+.ty-money .positive, .ty-capital .positive { color: #7ce4c5; }
+.ty-money .negative, .ty-capital .negative { color: #ff9a9f; }
+.ty-capital { display: grid; grid-template-columns: 1fr 1fr 1.1fr; padding: 10px 0 8px; gap: 8px; border-bottom: 1px solid #345064; }
+.ty-capital span { display: block; color: #8ea9b8; font-size: 9px; }
+.ty-capital b { display: block; font-size: 14px; font-weight: 650; margin-top: 3px; font-variant-numeric: tabular-nums; }
+.ty-status { margin-top: 8px; font-size: 9px; color: #98b4c3; }
+#ty-state.on { color: #81e5c9; } #ty-state { max-width: 60%; white-space: normal; }
+#ty-state.paused, #ty-state.stale, #ty-state.offline, #ty-state.blocked, #ty-state.exposure { color: #ffd091; }
+#ty-fresh { color: #9db5c3; max-width: 43%; }
+#ty-exposure { color: #9db5c3; font-size: 9px; margin-top: 5px; }
+#ty-blocker { color: #d9e9ef; font-size: 11px; line-height: 1.4; margin-top: 8px; padding-left: 9px; border-left: 2px solid #57bdb8; }
+#ty-alert { font-size: 10px; line-height: 1.35; min-height: 44px; border: 1px solid #6c573b; background: #362e25; color: #ffcf97; }
+body.tycoon #ty-dock { left: 12px; right: 12px; padding: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); border-radius: 16px; }
+.ty-work-heading { color: #93b2c4; font-size: 8px; align-items: baseline; margin-bottom: 9px; }
+.ty-work-heading b { color: #81d7cf; font-size: 9px; letter-spacing: .1em; white-space: nowrap; }
+#ty-work-note { text-align: right; max-width: 48%; }
+#ty-workflow { gap: 3px; grid-template-columns: 1fr 6px 1fr 6px 1fr 6px 1fr; }
+#ty-workflow button { min-height: 64px; padding: 7px 1px; border: 1px solid #315167; border-radius: 9px; background: #172e40; color: #e4f1f6; }
+#ty-workflow b { font-size: 12px; margin-top: 3px; } #ty-workflow span { color: #9cb6c5; font-size: 8px; }
+#ty-workflow small { color: #a0bdcb; font-size: 8px; margin-top: 4px; }
+#ty-workflow i { color: #6ca0b6; }
+#ty-workflow [data-status="stuck"] { background: #3a3027; border-color: #92693b; }
+#ty-workflow [data-status="working"] { background: #153e42; border-color: #57b8b2; }
+.ty-receipt-stages { color: #88a6b7; font-size: 8px; margin: 8px 0; }
+#ty-event { border-top: 1px solid #2c475b; padding-top: 8px; font-size: 10px; }
+.ty-event-dot { background: #51aaa9; border: 0; border-radius: 50%; width: 6px; height: 6px; }
+#ty-event-age, #ty-growth { color: #8eabba; font-size: 8px; }
+#ty-growth { margin-left: 13px; }
+.ty-money span { font-size: 13px; }
+.ty-money > div > small { font-size: 11px; }
+.ty-capital span { font-size: 10px; }
+.ty-status { font-size: 11px; }
+#ty-exposure { font-size: 11px; }
+#ty-blocker { font-size: 14px; }
+#ty-workflow b { font-size: 14px; }
+#ty-workflow span, #ty-workflow small { font-size: 10px; }
+#ty-event { font-size: 12px; }
+.ty-marker b { font-size: 12px; }
+.ty-marker[data-background="true"] b { font-size: 10px; }
+.ty-marker { color: #e7f4f7; }
+.ty-marker b { color: #e2f0f4; background: #122d40ee; border: 1px solid #507184; border-left: 3px solid var(--ty-department);
+  border-radius: 7px; box-shadow: 0 4px 10px #0004; padding: 5px 8px; font-size: 10px; }
+.ty-marker[data-background="true"] b { color: #c4b9de; background: #272c43eb; border-color: #5e587b; font-size: 9px; }
+body.tycoon #ty-selection { bottom: calc(204px + env(safe-area-inset-bottom)); }
+.ty-eyebrow, #ty-doing { color: #b1c9d4; } #ty-focus { font-size: 17px; }
+body.tycoon #panel { background: #102335; color: #e0edf3; border: 1px solid #395b71; border-radius: 16px; box-shadow: 0 20px 70px #000a; }
+body.tycoon #panel h2, body.tycoon #panel h3 { color: #ecf5f8; }
+body.tycoon #panel .dim { color: #a5bdca; } body.tycoon #panel .warn { color: #ffd09b; }
+body.tycoon #panel-close { background: #214258; border-color: #40647a; }
+body.tycoon #panel .ty-menu-row, body.tycoon #panel .ty-person { color: #e0eff5; border-color: #355267; }
+body.tycoon #panel .ty-person { background: #193449; }
+body.tycoon #panel .ty-person small { color: #a4bfcc; }
+body.tycoon #panel .ty-flow-card, .ty-details { border-color: #355267; }
+.ty-details > summary::before { color: #81ddce; }
+@media (min-width: 760px) {
+  body.tycoon #ty-header { left: 24px; right: auto; width: 360px; top: 24px; }
+  body.tycoon #ty-dock { left: 50%; right: auto; width: 480px; }
+  body.tycoon #ty-selection { right: 24px; left: auto; width: 320px; bottom: 24px; }
+}
+@media (max-width: 350px), (max-height: 700px) and (max-width: 759px) {
+  body.tycoon #ty-header { padding: 6px 9px 7px; top: 6px; left: 7px; right: 7px; }
+  .ty-heading { margin-bottom: 6px; } .ty-heading h1 { font-size: 15px; } .ty-logo { height: 28px; width: 28px; }
+  .ty-money > div { padding: 6px; } .ty-money b { font-size: 25px; margin: 2px 0; }
+  .ty-money span { font-size: 12px; } .ty-money > div > small { font-size: 10px; }
+  .ty-capital { padding: 6px 0; } .ty-capital span { font-size: 9px; } .ty-capital b { font-size: 13px; }
+  .ty-status { font-size: 10px; margin-top: 5px; } #ty-blocker { font-size: 13px; margin-top: 5px; }
+  body.tycoon #ty-dock { left: 7px; right: 7px; bottom: 6px; padding: 8px; }
+  #ty-workflow button { min-height: 48px; padding: 4px 1px; } #ty-growth, .ty-receipt-stages { display: none; }
+  #ty-event { padding-top: 5px; margin-top: 7px; } .ty-work-heading { margin-bottom: 6px; }
+  body.tycoon #ty-selection { bottom: 137px; }
+  .ty-capital > div:nth-child(-n+2) { display: none; }
+  .ty-capital { display: block; }
+  .ty-capital > div:last-child { display: flex; justify-content: space-between; align-items: baseline; }
+  .ty-capital span { font-size: 11px; }
+}
+@media (max-width: 759px) {
+  body.tycoon:has(#ty-selection:not([hidden])) #ty-dock { display: none; }
+  body.tycoon #ty-selection { bottom: calc(12px + env(safe-area-inset-bottom)); }
+}
 """
 
 TYCOON_UI = r"""
@@ -169,6 +275,22 @@ TYCOON_UI = r"""
     return value > 0 && value < .01 ? "$" + value.toFixed(4) : fmtUsd(value);
   }
   function tyText(id, value) { const n = el(id), s = String(value); if (n.textContent !== s) n.textContent = s; }
+  function tycoonNowDoing(k) {
+    if (!k.current) return "Desk report unavailable. Waiting for a fresh update.";
+    if (k.integrityNote) return k.integrityNote;
+    if (k.cleanupPending) return "Checking cancellations and remaining positions.";
+    if (k.locksOnly) return "Completing existing pairs only · no new directional bets.";
+    if (k.dayStopped) return "Daily loss stop · new bets paused" + (k.hasExposure ? ". Filled bets still settle." : ".");
+    if (k.totalHalted) return "Total loss stop · new bets paused.";
+    if (k.fundingCooldownRemaining > 0) return "Order funding cooldown · " + Math.ceil(k.fundingCooldownRemaining) + "s remaining.";
+    const reason = k.waiting || k.reason;
+    const words = { pair_protected: "Matched pair protected · holding to settlement.",
+      day_stop: "Latest buy skipped: it would reach the daily loss limit.",
+      insufficient_balance: "Waiting for cash on the market’s exchange index.",
+      stale_feed: "Market feed is stale · new orders paused.",
+      before_open: "Waiting for this Bitcoin window to open." };
+    return words[reason] || reason || (k.active ? "Real orders enabled · waiting for the next recorded decision." : k.stateText);
+  }
   function tycoonMeasure() {
     if (!tycoonActive()) return;
     TY_UI.top = tyHeader.getBoundingClientRect().bottom + 8;
@@ -232,16 +354,21 @@ TYCOON_UI = r"""
     el("ty-alert").hidden = !warning; tyText("ty-alert", warning || "");
     tyText("ty-cash", fmtUsd(f.cash)); tyText("ty-today", fmtSigned(f.today));
     el("ty-today").className = f.today > 0 ? "positive" : f.today < 0 ? "negative" : "";
+    tyText("ty-cash-note", f.cashAt ? "Account balance · " + tyAge(f.cashAge) : "Account balance · source unavailable");
+    tyText("ty-profit-note", f.todayCurrent ? "Since midnight Pacific · after fees" : "Pacific-day result unverified");
+    tyText("ty-committed", fmtUsd(f.openCost)); tyText("ty-reserved", fmtUsd(f.reserved)); tyText("ty-total", fmtSigned(f.total));
+    el("ty-total").className = f.total > 0 ? "positive" : f.total < 0 ? "negative" : "";
+    tyText("ty-blocker", locked ? "Sign in again to load private account data." : offline ? "Reconnecting · the last report may be old." : tycoonNowDoing(k));
     const oldMoney = [];
     if (f.cashStale) oldMoney.push(f.cashAt ? "Cash checked " + tyAge(f.cashAge) : "Cash time unknown");
-    if (k.accountStale) oldMoney.push(k.accountAt ? "Account checked " + tyAge(k.accountAge) : "Account time unknown");
+    // Account reconciliation time has no authoritative producer; details retain that gap.
     if (!f.todayCurrent) oldMoney.push("Profit needs verification");
     tyText("ty-fresh", locked ? "Private data cleared" : offline ? "Connection lost · last report" : f.stale ? "Waiting for fresh Kalshi data"
       : oldMoney.length ? oldMoney.join(" · ")
       : f.cashAt ? "Cash checked " + tyAge(f.cashAge) : "Waiting for Kalshi");
     const count = function (n, word) { return n === null ? word + " unknown" : n + " " + word; };
     tyText("ty-exposure", count(f.positions, "positions") + " · " + count(f.orders, "waiting orders")
-      + " · " + fmtUsd(f.exposure) + " at risk" + (offline || k.accountStale ? " · last report" : ""));
+      + " · " + fmtUsd(f.exposure) + " bot risk" + (offline || k.stale ? " · last report" : ""));
     const chosen = s.crew.find(function (c) { return c.key === TYCOON.selected; }) || (CAST[TYCOON.selected] ? {
       name: CAST[TYCOON.selected].name, job: "Workstation", status: "unknown", doing: "Waiting for a crew report.", age: null, practice: null,
     } : null);
@@ -272,7 +399,7 @@ TYCOON_UI = r"""
       m.el.dataset.status = c ? c.status : "unknown";
       const background = c ? c.background === true : ["pip", "nyx"].includes(m.key);
       m.el.dataset.background = String(background);
-      const markerName = c ? c.name : CAST[m.key].name;
+      const markerName = { voss: "Observe", rook: "Checks", jet: "Orders", mote: "Results", pip: "Research", nyx: "Lab" }[m.key] || (c ? c.name : CAST[m.key].name);
       const label = markerName + (background ? c && c.practice === true ? " · practice" : " · background" : "");
       if (m.label.textContent !== label) { m.label.textContent = label; m.w = 0; }
       if (c) {
@@ -284,8 +411,8 @@ TYCOON_UI = r"""
     tyText("ty-event-text", s.event ? s.event.text : "Kalshi · waiting for the next recorded event");
     tyText("ty-event-age", s.event ? tyAge(s.event.age) : "");
     const growth = s.growth;
-    tyText("ty-growth", growth && growth.qualified ? "Gardens " + growth.level + "/5 · " + growth.label
-      : "Kalshi gardens wait for verified profit · tap a building to visit");
+    tyText("ty-growth", growth && growth.qualified ? "Town upgrades " + growth.level + "/5 · verified Kalshi profit today"
+      : "Practice stays separate · tap a workstation for its actual report");
     if (panelKind && panelKind.indexOf("ty-") === 0 && panelKind !== "ty-menu") tycoonPanel();
     tycoonMeasure();
   }
@@ -294,6 +421,8 @@ TYCOON_UI = r"""
     const f = s.focus, k = f.account;
     if (k.integrityNote) return k.integrityNote;
     if (k.cleanupPending) return "Kalshi order cancellation and account checks are still pending.";
+    const sourceIssue = f.book.issues.find(function (issue) { return !issue.startsWith("Venue positions and successful account reconciliation time"); });
+    if ((!k.current || !f.todayCurrent) && sourceIssue) return sourceIssue;
     if (f.stale || f.state === "unknown") return "Waiting for a fresh Kalshi connection. Figures may be old.";
     if (k.totalHalted) return k.stopNote;
     if (k.locksOnly) return k.stateText;
@@ -427,6 +556,7 @@ TYCOON_UI = r"""
     } else if (panelKind === "ty-team") {
       panelTitle.textContent = "Your team";
       para(content, "Tap a teammate or their building to visit their workstation.", "dim");
+      para(content, "Workstations represent software jobs. They are not six continuously running AI employees; each status comes from a dated desk report.", "dim");
       const crew = document.createElement("div"); crew.className = "ty-menu-crew";
       TY_UI.people.filter(function (p) { return !["pip", "nyx"].includes(p.key); }).forEach(function (p) { crew.appendChild(p.b); });
       content.appendChild(crew);
@@ -458,7 +588,10 @@ TYCOON_UI = r"""
       panelTitle.textContent = "Kalshi money";
       para(content, (k.active ? "REAL MONEY (Kalshi)" : k.practice ? "PRACTICE (Kalshi)" : k.stateText) + " · cash " + fmtUsd(f.cash));
       para(content, "Bot profit today (midnight Pacific): " + fmtSigned(f.today));
+      para(content, "Cumulative settled bot result: " + fmtSigned(f.total));
       para(content, "Cash is the account balance. Profit is settled bot winnings minus losses and fees; they are different numbers.", "dim");
+      para(content, "Recorded fill cost: " + fmtUsd(f.openCost) + ". These gross fills may include ended markets awaiting settlement reconciliation. This is not a current venue holding valuation. Matched pairs can still tie up cash with no directional risk.", "dim");
+      para(content, "Account cash spans exchange indexes. An individual market can require funds on a particular index.", "dim");
       para(content, "Money at risk: " + fmtUsd(k.exposure) + " · " + (k.positions === null ? "unknown" : k.positions) + " positions");
       para(content, (k.orders === null ? "Unknown" : k.orders) + " waiting orders · cash reserved " + fmtUsd(k.reserved));
       para(content, k.cashAt ? "Kalshi cash checked " + tyAge(k.cashAge) + "." : "Kalshi cash update time is unknown.", "dim");
@@ -477,7 +610,15 @@ TYCOON_UI = r"""
       }
       const limits = tycoonDetails(content, "Limits, fees and account checks", "kalshi-checks");
       if (k.limits && [k.limits.window, k.limits.open, k.limits.day, k.limits.total].some(function (n) { return n !== null; })) para(limits, "New-bet limits: " + fmtUsd(k.limits.window) + " per window · " + fmtUsd(k.limits.open)
-        + " at risk · " + fmtUsd(k.limits.day) + " daily loss stop · " + fmtUsd(k.limits.total) + " total loss stop (UTC).", "dim");
+        + " at risk · " + fmtUsd(k.limits.day) + " daily loss stop · " + fmtUsd(k.limits.total) + " lifetime loss stop.", "dim");
+      para(limits, "The daily stop uses the trading desk’s UTC day or an owner-authorized reset. It is separate from Pacific-day displayed profit; the lifetime stop does not reset at midnight.", "dim");
+      const shard = k.shardFunding, balances = Array.isArray(shard.balances) ? shard.balances : [];
+      if (balances.length) {
+        para(limits, "Cash by exchange index (reported balances):", "dim");
+        para(limits, k.shardAt ? "Index snapshot " + tyAge(k.shardAge) + (k.shardStale ? " · stale." : ".") : "Index snapshot time unknown.", "dim");
+        balances.forEach(function (b) { para(limits, "Index " + b.exchange_index + ": " + fmtUsd(tycoonCost(b.balance_usd)), "dim"); });
+      }
+      if (shard.error) para(limits, "Index balance check: " + shard.error, "warn");
       if (k.limitsNote) para(limits, k.limitsNote, "dim");
       if (k.riskNote) para(limits, k.riskNote, "dim");
       if (k.reserveNote) para(limits, k.reserveNote, "dim");

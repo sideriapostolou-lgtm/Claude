@@ -184,3 +184,20 @@ console.log(JSON.stringify({picks, outside, lawn, hidden}));
     assert out["outside"] is None
     assert out["lawn"] is None
     assert out["hidden"] is None
+
+
+def test_campus_replaces_legacy_scenery_and_restores_original_tour(tmp_path: Path) -> None:
+    out = _run(tmp_path, """
+const staticMeshes = [new THREE.Mesh(), new THREE.Mesh()];
+const TY_CUTAWAY = {parts:[{cover:new THREE.Group(),low:new THREE.Group()}]};
+const STANDIN = {desk:[new THREE.Group()]};
+const props = {decoration:new THREE.Group()};
+const MAT = {leaf:new THREE.MeshBasicMaterial(),books:new THREE.MeshBasicMaterial(),brass:new THREE.MeshBasicMaterial()};
+const foliage = new THREE.InstancedMesh(new THREE.BoxGeometry(),MAT.leaf,1);scene.add(foliage);
+const nodes = [...staticMeshes,TY_CUTAWAY.parts[0].cover,TY_CUTAWAY.parts[0].low,STANDIN.desk[0],props.decoration,foliage];
+nodes[0].layers.set(1);const masks=nodes.map(n=>n.layers.mask);
+tycoonPark(true);const hidden=nodes.every(n=>n.layers.mask===4);
+tycoonPark(false);const restored=nodes.every((n,i)=>n.layers.mask===masks[i]);
+console.log(JSON.stringify({hidden,restored}));
+""")
+    assert out == {"hidden": True, "restored": True}

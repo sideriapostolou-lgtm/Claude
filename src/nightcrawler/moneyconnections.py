@@ -57,7 +57,7 @@ def _base(venue: str, now: float) -> dict[str, Any]:
     return {"venue": venue, "as_of": None, "stale": True, "status": "unavailable",
             "source_note": "Saved source unavailable; this does not establish an empty account.",
             "positions_basis": "Unknown", "venue_positions_at": None, "cash_at": None,
-            "cash_usd": None, "cash_scope": "account", "reported_mode": None,
+            "cash_usd": None, "cash_scope": "account", "reported_mode": None, "total_pnl_usd": None,
             "positions": [], "orders": [], "events": [], "open_cost_usd": None,
             "reserved_usd": None, "at_risk_usd": None,
             "today_pacific": pacific_booked_day(None, now), "issues": [],
@@ -169,6 +169,7 @@ def kalshi_connection(raw_state: Any, now: float, text: Text) -> dict[str, Any]:
         out["issues"].append("The saved real book does not reconcile; individual money rows and profit are unavailable.")
         return _finish(out, text)
     out["status"] = "ok"
+    out["total_pnl_usd"] = book.realized_pnl
     out["today_pacific"] = _kalshi_day(book, as_of, now)
     if book.integrity_error or raw_state.get("fatal_reason"):
         out["status"] = "incomplete"
@@ -442,6 +443,24 @@ def _read_saved(path: Path) -> tuple[Any, str | None]:
         return None, None
     except (OSError, ValueError, UnicodeError, RecursionError):
         return None, "Saved source could not be read; values are unavailable."
+
+
+def saved_kalshi_state(data_dir: Path) -> tuple[Any, str | None]:
+    """Bounded read of the real display mirror; no trading client or ledger access."""
+    return _read_saved(data_dir / "speeddesk/kalshi_live/state.json")
+
+
+def saved_kalshi_panel(data_dir: Path) -> Mapping[str, Any] | None:
+    """Read the real companion independently of the practice report, with a size cap.
+
+    The mirror's panel already carries its own cash/report times. Reading it does
+    not validate its fill book or establish Pacific-day profit coverage.
+    """
+    raw, _ = saved_kalshi_state(data_dir)
+    if not isinstance(raw, Mapping) or raw.get("version") != 1:
+        return None
+    panel = raw.get("panel")
+    return panel if isinstance(panel, Mapping) else None
 
 
 def load_connections(data_dir: Path, now: float, text: Text,

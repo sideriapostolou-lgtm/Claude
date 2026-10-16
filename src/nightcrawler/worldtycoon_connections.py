@@ -34,13 +34,14 @@ TYCOON_CONNECTIONS = r"""
       asOf: at, age: age, current: known && sourceCurrent && !tycoonOld(age, limit),
       status: known ? "ok" : tycoonText(day.status) || "unavailable", reasonCode: tycoonText(day.reason) };
   }
-  function tycoonConnections(d, now, pageCurrent) {
+  function tycoonConnections(d, now, pageCurrent, kalshiPageCurrent) {
     const raw = tycoonObject(tycoonObject(d.money).connections), venues = {}, activity = [];
     const available = raw.version === 1;
     ["polymarket_us", "kalshi"].forEach(function (key) {
       const row = available ? tycoonObject(raw[key]) : {}, limit = key === "kalshi" ? 60 : 600;
       const asOf = tycoonStamp(row.as_of, now), age = tycoonAge(asOf, now);
-      const reportFresh = pageCurrent && now !== null && asOf !== null && row.stale === false && !tycoonOld(age, limit);
+      const sourceCurrent = key === "kalshi" && typeof kalshiPageCurrent === "boolean" ? kalshiPageCurrent : pageCurrent;
+      const reportFresh = sourceCurrent && now !== null && asOf !== null && row.stale === false && !tycoonOld(age, limit);
       const current = reportFresh && row.status === "ok";
       const name = key === "kalshi" ? "Kalshi" : "Polymarket";
       const positions = (Array.isArray(row.positions) ? row.positions : []).slice(0, 50).map(function (p) {
@@ -66,6 +67,7 @@ TYCOON_CONNECTIONS = r"""
       day.reason = tycoonProfitReason(row.today_pacific, day.current, name);
       if (row.status === "incomplete" && day.status === "ok") day.reason = name + " profit today is unverified: saved money records need review.";
       venues[key] = { name: name, asOf: asOf, age: age, current: current, reportFresh: reportFresh, status: tycoonText(row.status),
+        total: tycoonNumber(row.total_pnl_usd),
         sourceNote: tycoonText(row.source_note), positionsBasis: tycoonText(row.positions_basis),
         positions: positions, orders: orders, issues: issues, truncated: tycoonObject(row.truncated),
         day: day };
@@ -112,7 +114,14 @@ TYCOON_CONNECTIONS = r"""
       mote: { job: "Kalshi records", detail: "Shows Kalshi fills, actual fees and settled bot results. Practice never counts as profit.",
         doing: latest ? latest.text : "Waiting for recorded Kalshi activity." },
     };
-    return s.crew.map(function (c) {
+    const crew = s.crew.slice();
+    // The independent money stream arrives before the slower company report.
+    // These are named display roles, not invented worker heartbeats.
+    Object.keys(roles).forEach(function (key) {
+      if (kalshi.asOf !== null && !crew.some(function (c) { return c.key === key; })) crew.push({ key: key,
+        name: { voss: "Voss", rook: "Rook", jet: "Jet", mote: "Mote" }[key], status: "unknown", age: null });
+    });
+    return crew.map(function (c) {
       const role = roles[c.key];
       if (!role) return Object.assign({}, c, { background: true,
         job: c.practice === true ? "Practice " + (c.key === "pip" ? "scouting" : "checks") : "Background " + c.job.toLowerCase(),
@@ -120,7 +129,7 @@ TYCOON_CONNECTIONS = r"""
       // Receipts describe completed observations, not continuous work by all four roles.
       const kinds = { voss: [], rook: ["reject"], jet: ["order", "fill", "cancel", "reject"], mote: ["fill", "settlement"] };
       const receipt = s.activity.find(function (e) { return e.scope === "bot" && e.current && kinds[c.key].includes(e.kind); });
-      const attention = kalshi.cleanupPending || kalshi.integrityError || kalshi.integrityReset || kalshi.totalHalted
+      const attention = kalshi.cleanupPending || kalshi.integrityError || kalshi.integrityReset || kalshi.totalHalted || kalshi.dayStopped
         || k.status === "incomplete";
       return Object.assign({}, c, { job: role.job, jobDetail: role.detail, doing: role.doing, recordedWork: role.doing,
         statusReason: role.doing, background: false,
