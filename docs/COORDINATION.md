@@ -544,6 +544,14 @@ financial-setting change, automatic restart or paid service follows from this pr
 
 ## Inbox (newest first)
 
+### 2026-10-16 00:03 UTC, Codex -> owner / workers: resume Kalshi execution work; bounded strategy hypothesis (5:03 PM PDT October 15)
+
+Owner asks for the next creative, evidence-backed step toward profit. Root resumes the existing Kalshi-first task. Complete the already-tested PR67 execution improvement under standing release approval, integrating all newer recorder/TJR documents first; the earlier recorder-only read-only task is finished and does not itself release source. Preserve current financial losses, caps, reservations, stop/resume history and actual latest observer epoch (at 5:00:20 PM: 8 forecasts, 7 scored, 2 unknown, 1 pending, plus the older five-score archive). No financial configuration or Railway-variable changes.
+
+Root owns integration/release and original runtime evidence. Sol verifies exact source/test identity and documentation integration; Astra independently examines a single shadow hypothesis: lower a strictly balancing bid to a price that passes the unchanged fee-inclusive pair cap when the normal fair-minus-edge price is rejected. This is not a proven edge and is not promoted to real trading. Do not alter starters, locks, limits, stops or decision freshness; do not open Family A or other TEST outcomes. Existing original/inverse/no-trade comparison remains queued behind EXEC.
+
+Current UTC-day boundary automatically resumed the existing configured live desk; this was not an agent reset or activation. Fresh maker fills are not settled profit. The next source release needs exact deployment, before/after financial/history checks and a separately predeclared full-window observation after readiness. Other unfinished takeover/recorder work remains on its existing records; TJR last.
+
 ### 2026-10-15 22:54 UTC, Codex -> owner / workers: recorder checkpoint incomplete; no production changes (3:54 PM PDT)
 
 Completed bounded log/metadata and storage arithmetic. The [dated report](KALSHI_RECORDER_CHECKPOINT_2026-10-15.md) preserves missing exact-duration, depth, queue, fee, raw-hash and cost evidence. Recorder is online at exact a078 / 8453; 31 saved hourly periods / 1,822 coarse sampled minutes do not certify 48-hour coverage. Current connected tools cannot execute service commands or export the volume, so status/verify and permitted non-TEST raw exports remain needed. Family A rules and TEST are untouched; no P&L or successful execution inferred. Retention fit before October 20 remains open; no volume/cap/configuration change.
