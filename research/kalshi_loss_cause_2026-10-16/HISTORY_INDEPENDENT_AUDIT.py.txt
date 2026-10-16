@@ -1,0 +1,36 @@
+from pathlib import Path
+from decimal import Decimal as D
+from collections import defaultdict
+from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
+import json, hashlib
+P=Path(__file__).resolve().parent
+def payloads(name,event):
+ obj=json.loads((P/(name+'.json')).read_text()); output=[]
+ for row in obj['rows']:
+  marker=' INFO nightcrawler.speeddesk: '+event+' '
+  assert marker in row['message']
+  output.append(json.loads(row['message'].split(marker,1)[1]))
+ return output
+ss=payloads('settlements','speeddesk_live_settlement');fs=payloads('fills','speeddesk_live_fill');orders=payloads('orders_1700','speeddesk_live_order')+payloads('orders_1730','speeddesk_live_order')
+status=json.loads((P/'STATUS_PROJECTION.json').read_text());checks={}; bywindow=defaultdict(list);smap={s['window']:s for s in ss}
+checks['unique_settlements']=len(smap)==len(ss)==42
+checks['unique_fill_ids']=len(set(f['fill_id'] for f in fs))==len(fs)==119
+for f in fs:bywindow[f['window']].append(f)
+for window,fls in bywindow.items():
+ if window not in smap:continue
+ s=smap[window];qty={side:sum((D(str(f['size'])) for f in fls if f['side']==side),D(0)) for side in ['up','down']};cost=sum((D(str(f['price']))*D(str(f['size'])) for f in fls),D(0));fee=sum((D(str(f['fee_usd'])) for f in fls),D(0));payout=qty['up' if s['up_wins'] else 'down']
+ for k,a,b in [('up',qty['up'],s['up_shares']),('down',qty['down'],s['down_shares']),('cost',cost,s['cost_usd']),('fee',fee,s['fee_usd']),('payout',payout,s['payout_usd']),('pnl',payout-cost-fee,s['pnl_usd'])]:checks[window+':'+k]=abs(a-D(str(b)))<D('1e-8')
+totals={k:sum((D(str(s[k])) for s in ss),D(0)) for k in ['cost_usd','fee_usd','payout_usd','pnl_usd','locked_usd','direction_usd']}
+for payloadkey,statuskey in [('fee_usd','fees_usd'),('pnl_usd','pnl_usd'),('locked_usd','locked_usd'),('direction_usd','directional_usd')]:checks['status:'+payloadkey]=abs(totals[payloadkey]-D(str(status['fields']['today'][statuskey])))<D('1e-8')
+selected=[]
+for window in ['KXBTC15M-26OCT161315-15','KXBTC15M-26OCT161345-45','KXBTC15M-26OCT161400-00']:
+ s=smap[window];fls=bywindow[window];checks['single_fill:'+window]=len(fls)==1;f=fls[0];oo=[o for o in orders if o['client_order_id']==f['client_order_id']];intents=[o for o in oo if o['state']=='durable intent'];acks=[o for o in oo if o.get('order_id')==f['order_id']];checks['intent:'+window]=len(intents)==1 and all(intents[0][k]==f[k] for k in ['window','side','price','size']);checks['ack:'+window]=len(acks)==1;i=intents[0];ack=acks[0]
+ checks['unmatched_loss:'+window]=s['payout_usd']==0 and s['fee_usd']==0 and min(s['up_shares'],s['down_shares'])==0
+ selected.append({'window':window,'settlement_observed_pacific':datetime.fromtimestamp(s['observed_at'],ZoneInfo('America/Los_Angeles')).isoformat(),'fill_id':f['fill_id'],'client_order_id':f['client_order_id'],'side':f['side'],'size':f['size'],'price':f['price'],'fee':f['fee_usd'],'pnl':s['pnl_usd'],'decision_fair':i['fair'],'decision_to_ack_ms':ack['timing']['value_ms'],'decision_to_venue_fill_seconds':D(str(f['at']))-D(str(i['at'])),'btc_exchange_to_decision_ms':next(t['value_ms'] for t in i['timing'] if t['metric']=='btc_exchange_to_decision')})
+groups={}
+for name,rows in [('equal_nonempty',[s for s in ss if s['up_shares']==s['down_shares'] and s['up_shares']>0]),('unequal',[s for s in ss if s['up_shares']!=s['down_shares']]),('positive',[s for s in ss if s['pnl_usd']>1e-8]),('negative',[s for s in ss if s['pnl_usd']<-1e-8]),('zero',[s for s in ss if abs(s['pnl_usd'])<=1e-8])]:groups[name]={'windows':len(rows),'pnl':sum((D(str(s['pnl_usd'])) for s in rows),D(0)),'fees':sum((D(str(s['fee_usd'])) for s in rows),D(0))}
+report={'created_utc':datetime.now(timezone.utc).isoformat(),'source_sha256':{name:hashlib.sha256((P/name).read_bytes()).hexdigest() for name in ['settlements.json','fills.json','orders_1700.json','orders_1730.json','STATUS_PROJECTION.json']},'total_settlements':len(ss),'total_fills':len(fs),'settled_fills':sum(len(v) for k,v in bywindow.items() if k in smap),'unsettled_windows':{k:v for k,v in bywindow.items() if k not in smap},'totals':totals,'groups':groups,'selected_three_unmatched_losses':selected,'selected_total_pnl':sum((D(str(s['pnl'])) for s in selected),D(0)),'checks':checks,'checks_passed':sum(checks.values()),'checks_total':len(checks),'limits':['Bounded service logs span source revisions, not a current-source backtest.','Exact native status projection is selected fields, not full account or volume evidence.','Three example cases are retrospective adverse cases, not an unbiased expectancy sample.','Decision fair is not fill-time fair or proven true probability.','119fills include3paired fills in one unsettledwindow; no bookedprofit assigned to thatwindow.']}
+assert all(checks.values())
+(P/'HISTORY_INDEPENDENT_AUDIT.json').write_text(json.dumps(report,indent=2,default=str)+'\n')
+print('all checks',sum(checks.values()),len(checks))
