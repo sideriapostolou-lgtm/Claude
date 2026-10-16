@@ -74,6 +74,9 @@ class Venue:
         self._maybe_fail("balance")
         return {"balance_dollars": f"{max(0.0, self.cash):.4f}"}
 
+    def subaccount_balances(self) -> list[dict[str, Any]]:
+        return [{"subaccount_number": 0, "exchange_index": 2, "balance": f"{max(0.0, self.cash):.4f}"}]
+
     def list_orders(self, **kwargs: Any) -> list[dict[str, Any]]:
         self._maybe_fail("list_orders")
         since = kwargs.get("min_ts", 0)
@@ -327,7 +330,7 @@ class Sim:
             if slug not in self.windows and begin <= now + 60:
                 window = Window(slug, begin, begin + 900, start_price=self.bitcoin, venue_start_price=self.bitcoin,
                                 venue="kalshi", taker_coefficient=.07, maker_coefficient=0, min_trade_qty=.01,
-                                fee_rounding="kalshi")
+                                fee_rounding="kalshi", exchange_index=2)
                 self.windows[slug] = window
                 self.venue.ends[slug] = window.end
                 self.desk.on_windows([window])

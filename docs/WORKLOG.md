@@ -13,6 +13,14 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-16 14:18 UTC, Codex — shard cash and persistent refusal backoff green; release pending (October 16, 7:18 AM PDT)
+
+- Bounded correction to real-money code: exact primary-subaccount/market-index cash instead of aggregate-only eligibility; reservations, actual fill fees/debits, unknown routing and foreign resting commitments remain conservative. Definite insufficient_balance pauses new creates for 60/120/240/300 seconds, persists atomically with rejection and survives successful reconciliation/restart. Cancels/reconciliation continue. No cash transfer/allocation, funding, variable/mode/control/limit/reset/strategy or manual test order action.
+- Frozen source/test patch c8c2289cee038a32613ede4b9f28c30e38a2a5199ab277ed62078cdcc6579be2 on docs-current8aa66a7: full **6,225 passed /14 existing skips /293.51s**, mypy133, Ruff13 plus evidence comparator. Independent no-blocker review,153 pytest+32 separate assertions initially and95 final-delta tests (overlap, not additive coverage). Initial full run's2 failures/6223passes retained; test-only missing restart routing callback and read expectation corrected before green rerun. [Report, checks, source manifest and review](../research/kalshi_shard_cash_2026-10-16/REPORT.md).
+- Fresh pre-release native status **7:16:19.009 AM PDT**, old07e8627b/source27539273: configured/effective PAPER, no authenticated cash read; currentUTC-day settled−$5.1277/lifetime−$24.6195, zero reported risk, caps$10/window,$20open,$6day,existing$10total/clip5 unchanged. Both bot and recorder online1/1, no platform alerts; old empty staged patch untouched. Per-index account balances/holds are unverified, so the scope defect is proven but the account-specific explanation is not. No profitability claim.
+- Fresh current GitHub instructions/queues and PR47 API/separate follow-up checked: PR47 historically complete, current EXEC/recorder/operating work OPEN. TJR remains LAST/queued/blocked, no Pages/duplicate research/paper/live start/automation change or routine notification. Existing fixed-cohort invalidation retained; sealed TEST untouched.
+- Next: safe-minute exact source release under standing code-release approval, normal Polymarket startup and preserved PAPER/losses/caps verification. Then separate read-only primary-index cash evidence; automatic cash movement and successful execution remain unfinished, not silently declared fixed.
+
 ## 2026-10-16 13:45 UTC, Claude, Railway only (owner's day reset; Kalshi insufficient_balance; back to paper)
 - Changed: bot service variables `SPEEDDESK_KALSHI_DAY_RESET_TOKEN` (fresh value, owner's word) and then
   `SPEEDDESK_KALSHI_MODE=paper` (Claude's safety call); redeploys 85275c56 (13:21 UTC) and 07e8627b (13:38 UTC). No code.

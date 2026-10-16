@@ -149,7 +149,8 @@ def after_restart(item: dict[str, Any], settings: Any) -> dict[str, Any]:
             from nightcrawler.speeddesk_model import Window
             start = FakeClock().now()
             window = Window(TICKER, start - 10, start + 890, start_price=80000, venue_start_price=80000, venue="kalshi",
-                            taker_coefficient=.07, maker_coefficient=0, min_trade_qty=.01, fee_rounding="kalshi")
+                            taker_coefficient=.07, maker_coefficient=0, min_trade_qty=.01, fee_rounding="kalshi",
+                            exchange_index=2)
         desk.snapshot = lambda: LiveSnapshot((window,), {}, 80000, moment.now(), .001,  # type: ignore[method-assign]
                                              frozenset({TICKER}))
         desk.on_windows([window])  # production calls on_windows right after constructing the companion

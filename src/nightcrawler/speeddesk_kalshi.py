@@ -65,11 +65,14 @@ def parse_window(raw: Any, series: Any, now: float, *, name: str = SERIES, index
         if step is None or step <= 0 or abs(0.01 / step - round(0.01 / step)) > 1e-7:
             return None
     strike = number(raw.get("floor_strike"))
+    shard = raw.get("exchange_index")
+    shard = shard if type(shard) is int and shard >= 0 else None
     return Window(slug=slug, start=start, end=end, start_price=None,
                   venue_start_price=strike if strike and strike > 0 else None,
                   taker_coefficient=0.07 * multiplier,
                   maker_coefficient=0.0175 * multiplier if fee_type == "quadratic_with_maker_fees" else 0.0,
-                  tick_size=0.01, min_trade_qty=0.01, fee_rounding="kalshi", venue="kalshi")
+                  tick_size=0.01, min_trade_qty=0.01, fee_rounding="kalshi", venue="kalshi",
+                  exchange_index=shard)
 
 
 def _levels(raw: Any) -> tuple[Level, ...] | None:

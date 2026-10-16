@@ -22,6 +22,7 @@ from .speeddesk_model import (
     Inventory,
     Side,
     Window,
+    persisted_window,
     settlement,
     utc_day,
 )
@@ -233,6 +234,7 @@ class LiveRiskBook:
         self.cash_usd: float | None = None
         self.cash_at: float | None = None
         self.cash_debits = 0.0
+        self.cash_debits_by_window: dict[str, float] = {}
         # Latency review (2026-10-13): the money math summed every order and window ever made (a restart merges
         # the archive back into memory), dozens of times a step: 0.6 ms a step on a fresh book, 57 ms after a week.
         # This index holds each window's orders in creation order, the windows that can still lose money
@@ -317,6 +319,7 @@ class LiveRiskBook:
         if self.cash_at is not None and now < self.cash_at:
             raise LiveRejected("cash_stale")
         self.cash_usd, self.cash_at, self.cash_debits = cash_usd, now, 0.0
+        self.cash_debits_by_window = {}
 
     def unit_reserve(self, window: str, price: float, kind: Kind) -> float:
         spec = self.windows[window]
@@ -834,6 +837,8 @@ class LiveRiskBook:
         self.fills[fill.fill_id] = fill
         intent.filled_size += fill.size
         self.cash_debits += fill.size * fill.price + fill.fee_usd
+        self.cash_debits_by_window[fill.window] = (self.cash_debits_by_window.get(fill.window, 0.0)
+                                                  + fill.size * fill.price + fill.fee_usd)
         if released_before_fill:
             # Authoritative new execution contradicts the earlier claim
             # that all terminal fills were reconciled. Keep the real cost
@@ -1024,7 +1029,7 @@ class LiveRiskBook:
 
     def window_parts(self, keep: Callable[[str], bool]) -> dict[str, dict[str, Any]]:
         """The per-window parts of the saved state (WINDOW_PARTS) for the windows ``keep`` accepts."""
-        return {"windows": {key: asdict(value) for key, value in self.windows.items() if keep(key)},
+        return {"windows": {key: persisted_window(value) for key, value in self.windows.items() if keep(key)},
                 "intents": {key: without_default_lock(asdict(value)) for key, value in self.intents.items()
                             if keep(value.window)},
                 "inventory": {key: asdict(value) for key, value in self.inventory.items() if keep(key)},
