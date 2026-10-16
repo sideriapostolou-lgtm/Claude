@@ -1,0 +1,51 @@
+{
+  "schema": 1,
+  "format": "ordered base64 -> XZ -> UTF-8 JSON files[path,text]",
+  "archive_sha256": "0cf452767ca54d71bf6f6af5e007e795cc58f154bac98963132632af75220810",
+  "unpacked_sha256": "6ed2dff13d338979ded568d0f20e19d0ff2c33dc565bb994b8f6b9fcae19d4a6",
+  "archive_bytes": 8856,
+  "unpacked_bytes": 64916,
+  "encoded_characters": 11808,
+  "parts": [
+    {
+      "path": "RUNTIME_EVIDENCE_01.b64.txt",
+      "sha256": "8551ec2516804e0bd6ecca71c0089bfd17be1d1ee25a6982cdc4acaf85df0e09",
+      "bytes": 11809
+    }
+  ],
+  "files": [
+    {
+      "path": "money.json",
+      "bytes": 17023,
+      "sha256": "f067c2e6ec35a7ad452649886eecfae25224c9b455ce9d6c68cc5849302da5cf"
+    },
+    {
+      "path": "PUBLIC_MARKETS.json",
+      "bytes": 11047,
+      "sha256": "222e7388acd485b997cab4393a3766c27557ebd096297d21de8368f90a92ea17"
+    },
+    {
+      "path": "astra/SCREENSHOT_REVIEW.md",
+      "bytes": 3786,
+      "sha256": "fd921fda2cee0d7b67589332c730aec876f39378b8d34a656a1722fe98324969"
+    },
+    {
+      "path": "astra/ANALYSIS.json",
+      "bytes": 20617,
+      "sha256": "b85aa0749532592c4725f80ad4b89ba2db82574386ff60cdf3e638ae00e36563"
+    },
+    {
+      "path": "astra/screenshot_audit.py",
+      "bytes": 5472,
+      "sha256": "ae797fab89a530d042a086c5199c5590609743cc84a2c6a6e96b37f7cb6911c6"
+    }
+  ],
+  "roundtrip": "all selected original bytes and hashes match",
+  "scope": "Explicit selected original receipts/reviews/analysis only. Service metadata is labeled selected; no raw-volume or continuous-market-coverage certificate.",
+  "excluded": [
+    "Unrelated owner orders/activity",
+    "Private operating handoffs and credential values",
+    "Full deployment creator/contact metadata",
+    "Sealed research TEST and unselected historical raw tapes"
+  ]
+}
