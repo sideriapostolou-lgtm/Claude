@@ -13,6 +13,13 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-16 18:21 UTC, Codex — unwanted TJR/MNQ reminder paused (October 16, 11:21 AM PDT)
+
+- Owner explicitly says the repeated long TJR/MNQ message is unwanted and to ignore it every time. Identified one exact matching enabled hourly follow-up; latest invocation11:19:43AM matches the repeated prompt. Updated only is_enabled=false at11:21:06AM; fresh private lookup verifies disabled, original prompt/schedule unchanged and all other task definitions unchanged.
+- Saved this newer instruction in the current work order and existing TJR queue. Ignore stale copies rather than re-running routine gate checks or interrupting active handoff work. Do not recreate or re-enable the reminder unless the owner asks. TJR remains unfinished/LAST/backlog; pausing the reminder does not claim historical validation, paper start or research completion.
+- No Pages, research, TEST, Railway, deployments, variables, orders, limits or budgets changed. Only the requested reminder and operating documentation changed; no application tests needed. Existing records and earlier completion requirements remain preserved.
+- Next: continue the actual operating-handoff priority and its existing capacity/recovery/access tasks. TJR advances only under the current owner work order and satisfied prerequisites, never because the old repeated message reappears.
+
 ## 2026-10-16 17:50 UTC, Codex — private delta verified and preserved; capacity evidence refreshed (October 16, 10:50 AM PDT)
 
 - Verified the owner-delivered private archive against the expected SHA-256 in Claude's inbox pointer; internal checksums, exact source preservation and independent bounded reviews passed. Stored only in the existing private vault, with remote archive SHA-256 and changed-file blob checks verified. Updated the same operating map, acceptance matrix, recovery request and commitment; recovered inputs are no longer requested. No private payload, contact or business inventory is published here. Full takeover remains **in progress**, town redesign deferred by the owner's explicit choice, TJR last.
