@@ -224,7 +224,7 @@ const TY_UI={summary:null,people:[],markers:[],openDetails:{}}, TYCOON={selected
 let offline=false, panelKind=null, paragraphs=[];
 const statusEl={textContent:"Sign in again to reconnect to the dashboard."};
 const fmtUsd=n=>n==null?"—":"$"+n.toFixed(2), fmtSigned=fmtUsd;
-const tycoonMeasure=()=>{},tycoonParkApply=()=>{};
+const tycoonMeasure=()=>{},tycoonParkApply=()=>{},tycoonWorkApply=()=>{};
 const panelBody=new Node(),panelEl=new Node(),panelTitle=new Node();
 const para=(parent,text,cls)=>{ const n=new Node("p");n.textContent=text;n.className=cls||"";parent.appendChild(n);
   paragraphs.push({text,cls:cls||""}); };

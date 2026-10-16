@@ -3,6 +3,7 @@
 from nightcrawler.worldtycoon_camera import TYCOON_CAMERA
 from nightcrawler.worldtycoon_data import TYCOON_DATA
 from nightcrawler.worldtycoon_park import TYCOON_PARK
+from nightcrawler.worldtycoon_workflow import TYCOON_WORKFLOW
 
 TYCOON_HTML = """
 <section id="ty-header" aria-label="Town and real money">
@@ -24,6 +25,14 @@ TYCOON_HTML = """
   <button type="button" id="ty-info" aria-controls="panel">Desk details <span aria-hidden="true">↗</span></button>
 </section>
 <section id="ty-dock" aria-label="Latest town activity">
+  <div class="ty-work-heading"><b>TEAM WORKFLOW</b><span id="ty-work-note">Waiting for reports</span></div>
+  <div id="ty-workflow" aria-label="Kalshi team roles">
+    <button type="button" id="ty-work-voss"><b>Voss</b><span>BTC desk</span><small>No report</small></button><i aria-hidden="true">›</i>
+    <button type="button" id="ty-work-rook"><b>Rook</b><span>Risk</span><small>No report</small></button><i aria-hidden="true">›</i>
+    <button type="button" id="ty-work-jet"><b>Jet</b><span>Orders</span><small>No report</small></button><i aria-hidden="true">›</i>
+    <button type="button" id="ty-work-mote"><b>Mote</b><span>Records</span><small>No report</small></button>
+  </div>
+  <div class="ty-receipt-stages" aria-label="Receipt types, not a transaction progress bar">Order <span>→</span> Fill <span>→</span> Settlement <small>Settled profit / loss</small></div>
   <div id="ty-event"><span class="ty-event-dot" aria-hidden="true"></span><span id="ty-event-text">Waiting for the bot’s report…</span><span id="ty-event-age"></span></div>
   <p id="ty-growth">Tap a building to visit your team</p>
 </section>
@@ -68,7 +77,7 @@ body.tycoon #ty-dock { bottom: calc(10px + env(safe-area-inset-bottom)); left: 9
 #ty-event-text { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; flex: 1; }
 #ty-event-age { color: #607787; font-size: 9px; }
 #ty-growth { margin: 4px 0 0 14px; color: #607787; font-size: 9px; line-height: 1.3; }
-body.tycoon #ty-selection { left: 10px; right: 10px; bottom: calc(82px + env(safe-area-inset-bottom)); padding: 11px 12px; }
+body.tycoon #ty-selection { left: 10px; right: 10px; bottom: calc(181px + env(safe-area-inset-bottom)); padding: 11px 12px; }
 #ty-selection > div { padding-right: 75px; } .ty-eyebrow { font-size: 9px; line-height: 1.2; font-weight: 750; letter-spacing: .08em; color: #607787; }
 #ty-focus { display: block; font-size: 17px; margin-top: 2px; } #ty-home { position: absolute; top: 9px; right: 10px; }
 #ty-doing { font-size: 12px; line-height: 1.4; margin: 12px 0 7px; }
@@ -121,6 +130,20 @@ body.tycoon #panel .ty-flow-card { border-color: #d1e2e9; }
 .ty-position small { color: #bbc9bd; }
 .ty-flow-card { padding: 12px; margin-top: 12px; border: 1px solid #c8dbc033; border-left: 4px solid #9acbae; border-radius: 10px; }
 .ty-flow-card h3 { margin: 0 0 8px; font-size: 16px; } .ty-flow-card p { margin: 8px 0; } .ty-flow-card.practice { border-left-color: #bdabdf; }
+.ty-work-heading { display: flex; justify-content: space-between; gap: 6px; font-size: 8px; color: #527287; margin-bottom: 6px; }
+.ty-work-heading b { color: #186779; letter-spacing: .08em; }
+#ty-workflow { display: grid; grid-template-columns: 1fr 8px 1fr 8px 1fr 8px 1fr; align-items: center; gap: 2px; }
+#ty-workflow button { min-width: 0; min-height: 48px; padding: 4px 2px; border: 1px solid #9bcbd6; border-top: 2px solid #50c8d8;
+  background: #e8f6f9; color: #254c60; border-radius: 6px; font: inherit; cursor: pointer; }
+#ty-workflow b, #ty-workflow span, #ty-workflow small { display: block; }
+#ty-workflow b { font-size: 11px; } #ty-workflow span { font-size: 8px; } #ty-workflow small { font-size: 8px; color: #536e7b; margin-top: 2px; }
+#ty-workflow i { color: #28849b; font-style: normal; text-align: center; }
+#ty-workflow [data-status="stuck"] { border-top-color: #d79426; background: #fff2db; }
+#ty-workflow [data-status="working"] { border-top-color: #17a4b7; background: #d5f5f4; }
+#ty-workflow button:focus-visible { outline: 3px solid #ffb72e; outline-offset: 2px; }
+.ty-receipt-stages { display: flex; align-items: center; gap: 5px; font-size: 8px; margin: 6px 0; color: #476c80; }
+.ty-receipt-stages span { color: #23889d; } .ty-receipt-stages small { margin-left: auto; font-size: 7px; }
+body.tycoon #ty-header, body.tycoon #ty-dock { border-color: #eaffff; box-shadow: 0 3px 0 #286587, 0 0 0 1px #69ccdd, 0 7px 16px #163a5830; }
 @media (min-width: 760px) {
   body.tycoon #ty-header { left: 20px; right: auto; width: 365px; }
   body.tycoon #ty-dock { left: 50%; right: auto; transform: translateX(-50%); width: 430px; }
@@ -196,11 +219,13 @@ TYCOON_UI = r"""
       if (s.growth) s.growth = Object.assign({}, s.growth, { qualified: false, level: null });
     }
     tycoonParkApply(s);
+    tycoonWorkApply(s, offline);
     if (typeof tycoonBusinessApply === "function") tycoonBusinessApply(s);
-    const f = s.focus, k = f.account, state = offline ? "offline" : f.state;
+    const locked = typeof authLocked !== "undefined" && authLocked;
+    const f = s.focus, k = f.account, state = locked ? "locked" : offline ? "offline" : f.state;
     const stateWords = { live: "REAL MONEY · Kalshi", "pairs only": "REAL MONEY · completing pairs",
       practice: "PRACTICE · Kalshi", exposure: "Kalshi · real bets remain", blocked: "Kalshi · buys blocked",
-      stale: "Kalshi · data delayed", offline: "Reconnecting", unknown: "Kalshi · waiting for report" };
+      stale: "Kalshi · data delayed", locked: "Locked · sign in again", offline: "Reconnecting", unknown: "Kalshi · waiting for report" };
     const status = el("ty-state"); status.className = state === "live" ? "on" : state;
     status.textContent = stateWords[state] || "Kalshi · waiting for report";
     const warning = tycoonFocusWarning(s, offline);
@@ -211,7 +236,7 @@ TYCOON_UI = r"""
     if (f.cashStale) oldMoney.push(f.cashAt ? "Cash checked " + tyAge(f.cashAge) : "Cash time unknown");
     if (k.accountStale) oldMoney.push(k.accountAt ? "Account checked " + tyAge(k.accountAge) : "Account time unknown");
     if (!f.todayCurrent) oldMoney.push("Profit needs verification");
-    tyText("ty-fresh", offline ? "Connection lost · last report" : f.stale ? "Waiting for fresh Kalshi data"
+    tyText("ty-fresh", locked ? "Private data cleared" : offline ? "Connection lost · last report" : f.stale ? "Waiting for fresh Kalshi data"
       : oldMoney.length ? oldMoney.join(" · ")
       : f.cashAt ? "Cash checked " + tyAge(f.cashAge) : "Waiting for Kalshi");
     const count = function (n, word) { return n === null ? word + " unknown" : n + " " + word; };
@@ -229,7 +254,7 @@ TYCOON_UI = r"""
     tyText("ty-context", chosen ? (chosen.background ? chosen.practice ? "BACKGROUND PRACTICE" : "BACKGROUND DESK" : "KALSHI WORKSTATION") : "YOUR CREW");
     tyText("ty-focus", chosen ? chosen.name + " · " + chosen.job : "The whole town");
     el("ty-info").setAttribute("aria-label", chosen ? "About " + chosen.name + "’s workstation" : "How the town works");
-    tyText("ty-doing", chosen ? (workWords[chosen.status] || "No current report") + ". " + chosen.doing + (chosen.age == null ? "" : " · " + tyAge(chosen.age))
+    tyText("ty-doing", chosen ? (workWords[chosen.status] || "No current report") + ". " + chosen.doing + (chosen.lastReceipt ? " Last receipt: " + chosen.lastReceipt.text + "." : "") + (chosen.age == null ? "" : " · " + tyAge(chosen.age))
       : (activity ? "Latest report: " + activity + ". Tap a teammate for details." : "Waiting for crew reports. Tap a teammate to see their desk."));
     for (const p of TY_UI.people) {
       const c = s.crew.find(function (q) { return q.key === p.key; });
@@ -597,6 +622,7 @@ TYCOON_UI = r"""
   el("ty-alert").onclick = function () { openPanel("ty-alerts"); };
   BUS.on("data", function () { tycoonDraw(); }); BUS.on("frame", tycoonFrame);
   window.addEventListener("resize", tycoonMeasure);
+  ["voss", "rook", "jet", "mote"].forEach(function (key) { el("ty-work-" + key).onclick = function () { tycoonChoose(key); }; });
   tycoonBuildCrew(); tycoonView();
   window.__skyport = Object.assign(window.__skyport || {}, { tycoon: {
     on: tycoonActive, select: tycoonChoose, camera: tycoonCameraState,
@@ -605,4 +631,4 @@ TYCOON_UI = r"""
   } });
 """
 
-TYCOON_MODULE = TYCOON_DATA + TYCOON_CAMERA + TYCOON_PARK + TYCOON_UI
+TYCOON_MODULE = TYCOON_DATA + TYCOON_CAMERA + TYCOON_PARK + TYCOON_WORKFLOW + TYCOON_UI
