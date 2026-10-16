@@ -13,6 +13,14 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-16 19:09 UTC, Codex — private Version2 handoff received and audited (October 16, 12:09 PM PDT)
+
+- Received the owner's four new private files and supplied archive hash. Exact outer hash, internal manifests, duplicate attachment matches and independent private-preservation review pass. All extracted owner-ledger items are accounted for; source/version, date, quotation and authority limitations are retained in the private audit. Original bytes and earlier handoff remain unchanged. Current owner decisions take precedence over historical exported instructions.
+- Preserved the package and audit in the existing private vault; updated its existing operating entrypoint, acceptance matrix, recovery request and takeover commitment. Public records contain only this sanitized receipt, not the payload, contacts, account/cost details or credential inventory. Full operating takeover remains **in progress**: actual account/control, original-host/source and raw-state/backup evidence gaps are not cleared by text transfer.
+- Verification is limited to supplied-source integrity, citation/rendering audit, parsed metadata, private link/schema/diff checks and remote preservation evidence. No application/runtime or profitability test was performed or claimed. No credentials read/listed, supplied script executed, TEST opened, app deployed, routine changed, order/transfer sent, risk/stop/budget reset, subscription purchased/cancelled or Railway variable changed.
+- Current town-now owner priority and PR74's completed bounded deployment are preserved; signed-in production money rendering/timing, broader product acceptance and existing capacity/recorder obligations remain open. The unwanted TJR reminder remains paused/ignored; research unfinished and last.
+- Next: continue the existing storage/recovery evidence obligation and obtain only the remaining owner-held source/access inputs identified privately. Do not ask for delivered handoff files again or replay old approvals as current authority.
+
 ## 2026-10-16 18:54 UTC, Codex — PR74 town update deployed and startup verified (October 16, 11:54 AM PDT)
 
 - [PR74](https://github.com/sideriapostolou-lgtm/Claude/pull/74) merged at11:49AM in the approved safe window. Tested feature19290dd4 and merged e72f4b8b have identical trees. Railway deployment **a717faa1-3c47-4a62-9b74-277da85b0fc6**, exact source **e72f4b8b86dc812ab333a45d54151ae44f8c713f**, reached SUCCESS **11:50:25.620AM PDT**. Both services online1/1 without platform issues; separate recorder remains8453f919/sourcea0782b74 and was not redeployed.

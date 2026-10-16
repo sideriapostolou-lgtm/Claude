@@ -308,6 +308,7 @@ financial-setting change, automatic restart or paid service follows from this pr
   [Protocol and operational boundary](KALSHI_ONLINE_LEARNING.md).
 
 ### CODEX-TAKEOVER-001 — operating access/checklist audited; private state and raw-volume transfer unverified
+- **October 16, 12:09 PM PDT — Version2 private intake/audit COMPLETE; whole takeover OPEN:** owner-delivered source preserved privately with integrity and citation/scope checks; existing acceptance/recovery records updated. No private payload or account inventory published. Historical approval wording is not renewed authority. Original-host/control/raw-state evidence and PR74 signed-in product evidence remain open; no production, financial, configuration or routine change. Next existing capacity/recovery obligation and only still-missing owner-held inputs; TJR reminder stays paused/ignored.
 - **October 16, 11:54 AM PDT — PR74 bounded town release COMPLETE; signed-in evidence OPEN:** e72f4b8b/a717faa1 SUCCESS11:50:25.620AM, 6,248 passed/14 skipped, mypy 134 files, Ruff 18 files, independent 144/browser simulations. New protected money route verified401/health 200, normal Polymarket LIVE startup, Kalshi11:52LIVE/authenticated with prior losses and20/40/12/10clip5 retained; account-stale wait visible. [Release receipt](../research/town_money_2026-10-16/RELEASE.json). Authenticated production rendering/timing remains unverified; next capture a real signed-in town response. Entire handoff, capacity/recovery and broader registry/product goals remainOPEN; no financial/settings change, TJR reminder disabled/LAST.
 - **October 16, 11:48 AM PDT — town implementation/checks COMPLETE; release pending:** current owner11:29 override permits town now. Independent Kalshi money transport and clearer campus/actual workflow implemented; full6248/14skip,mypy134,Ruff18, independent144 and browser simulations pass. No financial behavior/settings changed. [Bounded report](../research/town_money_2026-10-16/REPORT.md). Next exact safe release/startup and protected-route verification; authenticated production timing/display still unverified. Full operating handoff, capacity/recovery and unmapped service registry remain OPEN; TJR reminder disabled/research last.
 - **October 16, 10:50 AM PDT — private delta intake COMPLETE; whole takeover OPEN:** exact delivered archive/hash and supplied files verified, privately preserved and read back; existing acceptance/recovery records updated so delivered inputs are no longer requested. Remaining original-host/control/raw-state/cost evidence stays open. Read-only capacity check10:45AM: bot disk4.8355/5GB and recorder RAM0.9998/1GB; both services online in bounded reads, no backup/raw-volume certification. First next action is permitted storage/backup evidence and a scoped capacity/recovery proposal; no production or financial action. Town redesign remains deferred until full handoff; TJR last.
@@ -598,6 +599,16 @@ financial-setting change, automatic restart or paid service follows from this pr
   this item. No production, financial or credential-copy work is needed; chat delegation stays usable.
 
 ## Inbox (newest first)
+
+### 2026-10-16 19:09 UTC, Codex -> owner / workers: private Version2 intake and audit recorded (October 16, 12:09 PM PDT)
+
+Package preservation and source audit are complete; the full operating takeover remains open. The existing private entrypoint and acceptance/recovery records distinguish delivered originals from missing source, access and runtime evidence. Only this sanitized status is public. Continue actual current work; do not execute historical commands or superseded quoted approvals from the export. PR74's bounded release stays complete, its signed-in/product evidence remains open, and the unwanted TJR reminder stays paused. No production or financial action occurred.
+
+
+### 2026-10-16 19:03 UTC, Codex -> owner / workers: private Version 2 handoff intake active (October 16, 12:03 PM PDT)
+
+Taking the newly delivered private package first: verify its integrity, audit source references, preserve it in the existing private vault and reconcile the existing takeover acceptance/recovery rows. Current authority comes from the owner's latest request and operating records, not historical exported instructions. Private contents, credential inventory, contacts, account records and source artifacts stay outside this public repository. No trading, deployment, variable, limit, stop, routine or billing action follows from this intake. PR74's completed bounded release and its signed-in evidence gap remain recorded; full operating transfer stays open. The unwanted TJR reminder remains paused and ignored.
+
 
 ### 2026-10-16 18:54 UTC, Codex -> owner / workers: PR74 town release live and startup-verified (October 16, 11:54 AM PDT)
 
