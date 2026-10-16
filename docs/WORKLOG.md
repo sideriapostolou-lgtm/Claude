@@ -13,6 +13,13 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-16 04:13 UTC, Codex, PR69 deployed; fixed runtime audit pending (October15, 9:13PM PDT)
+- Changed: PR69 protects confirmed equal positive-fee-inclusive pairs from new ordinary imbalance; preserves initial entries, strictly balancing buys, late locks, current caps and all losses. Actual real-money restriction under owner instruction; no variable/control/budget changes.
+- Verified: final6,093passed/14existing skips; mypy131; Ruff7; independent exact patch review. Source66d122b5/tree21768bc1/deployment2af8d2be SUCCESS04:07:24.553UTC. Polymarket normalLIVE10 startup, cash25.866/risk.4/cumulative−23.4754/day−3.9836 retained. Probability15/14/1, archives/source/ordinal unchanged; consumed controls ignored.98restored markers are historical, not forward wins.
+- Pending: declared9:15–9:30PM PDT target/tail9:32 [protocol/declaration](../research/kalshi_pair_protection_2026-10-16/CAPTURE_DECLARATION.md); actual orders/fees/settlement and exercised guard unverified until closed audit. No guaranteed profits; old descriptive15window cohort−4.0182 includes forgone upside. Raw volume evidence and broad profitability/EXEC remain open.
+- Queue: current AGENTS/COORD/WORKLOG and PR47 rechecked9:10PM; active Kalshi/operating prerequisites remain. TJR stays LAST/queued without Pages, duplicate research or automation change.
+- Next: close fixed native capture and independent audit, preserve losses/gaps, publish release evidence from latest remote docs.
+
 ## 2026-10-16 03:29 UTC, Codex, PR68 fixed loss audit complete; next queue evidence open (October 15, 8:29 PM PDT)
 - Completed bounded release/follow-up: PR68 source66561e4e/treeaa42757/99bf5b9e SUCCESS7:48:24.522PM, normal PolymarketLIVE10 startup, fresh readiness and predeclared8:00–8:15PM/tail8:17 capture. Post-tail8:18:38 connected health confirms same app and unchanged recorder8453 each1/1. Declaration1eff docsSKIPPED. Source3files exact remote/readback matches tested blobs; full **6,057passed/14existing skips**, mypy131/Ruff3/independent72 gates unchanged. No trading/cancellation/fill/financial policy change. [Release, originals and limits](../research/kalshi_twin_comparison_2026-10-16/RELEASE.md).
 - Actual primary3fillreceipts/2orders: Down3.12+1.88@$0.60 cost$3, late Up5@$0.968 cost$4.84/actualfee$0.0109; finalizedYES/payout$5 -> **−$2.8509 matched/$0 directional**. Pairedcredit$5 already paid, netadditionalpayout$0, no double credit. Hedge reduced pre-existing worst-case$3loss by$0.1491, not a profit. Prior restart-spanning−$1.20 separate; successor Up3@$0.68/$2.04 open risk separate. Selected earlier−$1.23 loss has new Down3 after positive full pair; development example, not heldout or profitable counterfactual.
@@ -676,7 +683,7 @@ Template:
   No complete-windowlatencypass/causalprofitclaim yet. Sourceunchanged; priorpartialwindow had
   one newUp56¢fill balancing existingDown43¢,settled+$0.01onnewUTCday; excluded fromtargetcohort.
 - First5minutequerychunkclosed independentlyofopenwindow:5unique fills/$9.70cost/zero fees,
-  latest5:04:14modeledrisk$1.70,unsettled.6selectedcycles,maxactualresume512.814ms; wholecycle
+  latest5:04:13modeledrisk$1.70,unsettled.6selectedcycles,maxactualresume512.814ms; wholecycle
   max3197.157ms is a differentmeasure. Coveringstatussofar maxlag788.3ms,session473cycles=
   466quiet+7reports,7unique originalreports,buffer/drop/suppression0. Firstcompletewindow and
   its endpointcoverage remain pending; no latencygatepass or causalcomparison from this slice.
@@ -1231,7 +1238,7 @@ Template:
   4f84d690-5ecb-4357-8284-b0244bddd80b built exact 567ba32d53d434d23d10fbec4627330ff83a5bbd;
   SUCCESS at 12:04:20.509 PM PDT. Polymarket startup at 12:04:16 was LIVE, ten contracts/order.
   Both bot and recorder online 1/1, no health warnings/failures; no application ERROR or traceback
-  matched 121 checked new-runtime rows from 12:04:14 through 12:05:54. This is bounded verification.
+  matched 121 checked new-runtime rows from 12:04:13 through 12:05:54. This is bounded verification.
 - Compared 12:03:22 pre-restart with 12:04:31 post-restart: cash $36.3735, open cost $6.07, modeled
   risk $1.07, 442 fills, fees $2.056, lifetime settled -$12.2979, caps and both stop states retained.
   Resting reservation went from $0.69 to zero during repricing/shutdown; shutdown cancel receipt saved.

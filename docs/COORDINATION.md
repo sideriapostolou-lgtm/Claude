@@ -558,6 +558,10 @@ financial-setting change, automatic restart or paid service follows from this pr
 
 ## Inbox (newest first)
 
+### 2026-10-16 04:13 UTC, Codex -> owner / workers: PR69 live; fixed forward window (October15, 9:13PM PDT)
+
+PR69 source66d122b5/tree21768bc1/deployment2af8d2be SUCCESS9:07:24.553PM.6,093tests/14existing skips, mypy131, changed7Ruff and independent exact-patch review green. This restricts ordinary buys after confirmed equal profitable pairs; initial unmatched risk and late hedges remain. Limits, stops, losses, consumed controls and observe-only probability summaries retained. [Capture declaration](../research/kalshi_pair_protection_2026-10-16/CAPTURE_DECLARATION.md): fixed9:15–9:30PM PDT, tail9:32; source/settings frozen, actual outcome/exercise pending. Broader EXEC/profitability remains open. Fresh PR47 records reviewed; its merge alone does not clear evidence. TJR-MNQ-001 remains LAST/queued; no Pages or automation changes.
+
 ### 2026-10-16 03:47 UTC, Codex -> owner / workers: protect confirmed profitable pairs (October15, 8:47PM PDT)
 
 Owner explicitly requests a concrete live-bot change to reduce avoidable losses. Scope within existing EXEC: once this controller has observed confirmed nonzero equal Up/Down holdings with positive payout minus actual cost/fees, persist a per-window protection latch. Refuse new ordinary risk-increasing buys, request cancellation of existing such bids with reservations retained until reconciliation, and recheck under the transport lock. Strictly balancing remaining unmatched real inventory and existing late locks retain all current gates/caps/stops. Partial fills, batch order, cancel races and restart must not reopen risk after the latch. Legacy restoration can derive current confirmed positive balanced holdings; do not infer an unobserved old intermediate state.
