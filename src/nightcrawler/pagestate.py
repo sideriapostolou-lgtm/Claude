@@ -434,7 +434,12 @@ from nightcrawler.deskguard import VERDICTS as GUARD_VERDICTS
 from nightcrawler.ledger import LedgerError
 from nightcrawler.logging_setup import get_logger, redact_text
 from nightcrawler.models import LAMPORTS_PER_SOL, EquityPoint
-from nightcrawler.moneyconnections import load_connections
+from nightcrawler.moneyconnections import (
+    kalshi_connection,
+    load_connections,
+    saved_kalshi_panel,
+    saved_kalshi_state,
+)
 from nightcrawler.office3d import CAST3D
 from nightcrawler.page import LEARNING_RULE, MEMBERS, REFRESH_S
 from nightcrawler.polydesk import (
@@ -2029,6 +2034,25 @@ def _kalshi_ladder(raw: Any) -> dict[str, Any] | None:
     }
 
 
+def _kalshi_funding(raw: Any, text: _Text) -> dict[str, Any] | None:
+    if not isinstance(raw, Mapping):
+        return None
+    balances = raw.get("balances")
+    refusal = _xp_map(raw.get("refusal"))
+    return {"source": "GET /portfolio/subaccounts/balances",
+            "at": _num(raw.get("at")), "error": text.opt(raw.get("error")),
+            "subaccount_number": _count(raw.get("subaccount_number")),
+            "external_resting_orders": _count(raw.get("external_resting_orders")),
+            "external_resting_unknown": raw.get("external_resting_unknown") is True,
+            "balances": [{"exchange_index": _count(row.get("exchange_index")),
+                          "balance_usd": _num(row.get("balance_usd"))}
+                         for row in balances[:64] if isinstance(row, Mapping)] if isinstance(balances, list) else [],
+            "refusal": ({"code": text.opt(refusal.get("code")),
+                         **{key: _num(refusal.get(key)) for key in
+                            ("exchange_index", "subaccount_number", "required_usd", "available_usd")}}
+                        if refusal else None)}
+
+
 def _kalshi_live_panel(raw: Any, settings: Settings, now: float) -> dict[str, Any] | None:
     """Whitelist the companion's saved account report; never query an account from the page.
 
@@ -2103,6 +2127,10 @@ def _kalshi_live_panel(raw: Any, settings: Settings, now: float) -> dict[str, An
         "cash_usd": cash if cash_fresh and cash is not None and cash >= 0 else None, "cash_at": cash_at,
         "real_orders_available": active, "lock_only": lock_only,
         "trading_now": active and raw.get("trading_now") is True, "waiting": waiting,
+        "day_stop_latched": raw.get("day_stop_latched") is True,
+        "shard_funding": _kalshi_funding(raw.get("shard_funding"), text),
+        "create_funding_cooldown": {key: _num(_xp_map(raw.get("create_funding_cooldown")).get(key))
+                                    for key in ("until", "remaining_s", "refusals")},
         "total_halted": raw.get("total_halted") is True,
         "cleanup_pending": raw.get("cleanup_pending") is True,
         # Which reconciliation check stopped real orders, and what its one-time reset is waiting for.
@@ -2393,6 +2421,11 @@ def speed_desk(settings: Settings, now: float) -> dict[str, Any] | None:
         log.warning("speeddesk_panel_failed error=%s", type(exc).__name__)
         raw = {"problem": "Practice report unavailable"}
     raw = _xp_map(raw)
+    # The real companion persists its own display panel. A missing practice
+    # checkpoint must not hide an otherwise available real account report.
+    live_raw = raw.get("kalshi_live")
+    if not isinstance(live_raw, Mapping):
+        live_raw = saved_kalshi_panel(settings.data_dir)
     day = utc_day(now)
     today = _xp_map(raw.get("today"))
     day_matches = today.get("day") == day
@@ -2416,7 +2449,7 @@ def speed_desk(settings: Settings, now: float) -> dict[str, Any] | None:
                             "required_samples": _count(volatility.get("required_samples")),
                             "required_elapsed_s": _num(volatility.get("required_elapsed_s")),
                             "ready": volatility.get("ready") is True} if volatility else None),
-            "kalshi_live": _kalshi_live_panel(raw.get("kalshi_live"), settings, now),
+            "kalshi_live": _kalshi_live_panel(live_raw, settings, now),
             "coins": _practice_coins(settings, now),
             "btc_age_s": _num(raw.get("btc_age_s")), "book_age_s": _num(raw.get("book_age_s"))}
 
@@ -3562,6 +3595,25 @@ def plain_words(settings: Settings, money: Mapping[str, Any], members: list[dict
 
 
 # =========================================================================== assembly
+
+
+def build_town_money_state(settings: Settings, now: float) -> dict[str, Any]:
+    """Fast real Kalshi projection, independent of ledger/practice page assembly.
+
+    Source timestamps are retained; an HTTP response never refreshes saved cash.
+    Full fill-book validation still precedes Pacific-day profit and row limits.
+    """
+    started = time.monotonic()
+    raw, problem = saved_kalshi_state(settings.data_dir)
+    observed = now + max(0.0, time.monotonic() - started)
+    text = _Text(settings)
+    connection = kalshi_connection(raw, observed, text)
+    if problem:
+        connection["issues"].append(text(problem))
+    panel = _xp_map(raw).get("panel") if _xp_map(raw).get("version") == 1 else None
+    return {"generated_at": now, "refresh_s": REFRESH_S,
+            "money": {"speeddesk": {"kalshi_live": _kalshi_live_panel(panel, settings, observed)},
+                      "connections": {"version": 1, "kalshi": connection}}}
 
 
 def build_page_state(ledger: Any, settings: Settings, now: float, engine_status: dict[str, Any] | None = None,

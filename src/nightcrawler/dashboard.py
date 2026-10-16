@@ -106,6 +106,7 @@ import json
 import math
 import re
 import threading
+import time
 from collections.abc import Callable, Iterable
 from http.cookies import CookieError, SimpleCookie
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -581,6 +582,7 @@ class _Handler(BaseHTTPRequestHandler):
             "/summary",
             "/api/state",
             "/api/page",
+            "/api/town",
             "/team",
             "/api/team",
             "/api/polydesk",
@@ -603,6 +605,15 @@ class _Handler(BaseHTTPRequestHandler):
             self._send(
                 302, b"", "text/plain; charset=utf-8", [*headers, ("Location", "/")]
             )
+            return
+        if parts.path == "/api/town":
+            try:
+                body = dashboard.town_json()
+            except Exception:
+                log.exception("town_state_failed")
+                self._send(500, b'{"error":"town money unavailable"}', "application/json", headers)
+                return
+            self._send(200, body, "application/json", [*headers, ("Cache-Control", "no-store")])
             return
         if parts.path in (
             "/api/team",
@@ -793,6 +804,13 @@ class DashboardServer:
         return json.dumps(
             state, allow_nan=False, separators=(",", ":"), default=str
         ).encode("utf-8")
+
+    def town_json(self) -> bytes:
+        """A small read-only response that cannot queue behind the full ledger page."""
+        from nightcrawler.pagestate import build_town_money_state
+
+        state = scrub(build_town_money_state(self.settings, time.time()), self._secrets)
+        return json.dumps(state, allow_nan=False, separators=(",", ":"), default=str).encode("utf-8")
 
     # ------------------------------------------------------------------ lifecycle
     def start(self) -> threading.Thread:

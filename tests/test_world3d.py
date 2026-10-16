@@ -201,7 +201,8 @@ def test_world_is_static_and_lists_every_member(settings: Settings) -> None:
     assert f'data-pipeline="{",".join(PIPELINE)}"' in page
     module = _module(page)
     assert module.lstrip().startswith('import * as THREE from "three";')
-    assert 'fetch("api/page"' in module and "http" not in module  # data and code come from this server only
+    assert 'fetchTownData("api/page"' in module and "http" not in module  # same-origin data only
+    assert 'fetchTownData("api/town"' in module
     assert "innerHTML" not in page and "eval(" not in page and "insertAdjacentHTML" not in page  # text only, ever
     assert "textContent" in module and "fillText" in module
     assert "Math.min(1.75, window.devicePixelRatio" in module  # the pixel ratio cap

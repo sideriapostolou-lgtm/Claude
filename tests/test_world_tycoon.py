@@ -246,7 +246,7 @@ function draw(kind="ty-accounts") {
 
 def run_ui(module: str, tmp_path: Path, code: str, value: dict[str, Any] | None = None) -> Any:
     hooks = "\n".join(_js_body(module, f"  function {name}(") for name in (
-        "tyAge", "tyFee", "tyText", "tycoonDraw", "tycoonFocusWarning", "tycoonDetails", "tycoonBusinessDetails",
+        "tyAge", "tyFee", "tyText", "tycoonNowDoing", "tycoonDraw", "tycoonFocusWarning", "tycoonDetails", "tycoonBusinessDetails",
         "tycoonResearchDetails", "tycoonOtherAlerts", "tycoonPanelMerge", "tycoonPanel",
     ))
     return _node(TYCOON_DATA + "\nconst data=" + json.dumps(value if value is not None else connected())
@@ -318,7 +318,7 @@ def test_missing_kalshi_never_falls_back_to_other_account_or_practice_cash(modul
     assert out["cash"] == "—" and out["today"] == "—"
     assert out["state"] == "Kalshi · waiting for report"
     assert "Waiting for a fresh Kalshi" in out["alert"]
-    assert "wait for verified profit" in out["growth"]
+    assert "Practice stays separate" in out["growth"]
     assert not any("REAL MONEY (Kalshi)" in text for text in out["direct"])
 
 
@@ -333,7 +333,7 @@ const paper=draw();
 console.log(JSON.stringify({exposed,paper}));
 """)
     assert out["exposed"]["state"] == "Kalshi · real bets remain"
-    assert "2 positions" in out["exposed"]["exposure"] and "$1.98 at risk" in out["exposed"]["exposure"]
+    assert "2 positions" in out["exposed"]["exposure"] and "$1.98 bot risk" in out["exposed"]["exposure"]
     assert out["paper"]["state"] == "PRACTICE · Kalshi"
     assert "0 positions" in out["paper"]["exposure"]
 
@@ -366,7 +366,7 @@ def test_money_panel_explains_restricted_real_orders_and_unverified_profit(modul
     messages = out["messages"]
     assert "REAL MONEY (Kalshi) · cash $25.00" in messages
     assert "Real money: completing existing pairs only; new bets are stopped" in messages
-    assert "New-bet limits: $2.00 per window · $4.00 at risk · $3.00 daily loss stop · $5.00 total loss stop (UTC)." in messages
+    assert "New-bet limits: $2.00 per window · $4.00 at risk · $3.00 daily loss stop · $5.00 lifetime loss stop." in messages
     assert any("pair-completion reservations do not" in text for text in messages)
     assert any("may exceed these budgets or loss stops" in text for text in messages)
     assert any("saved result totals do not match the daily book" in text for text in messages)
@@ -394,13 +394,13 @@ console.log(JSON.stringify({first,second:read()}));
 """)
     first = {row["key"]: row for row in out["first"]}
     assert len(first) == 6
-    assert first["pip"]["label"] == "Pip · practice"
-    assert first["nyx"]["label"] == "Nyx · background"
-    assert first["voss"]["label"] == "Voss"
+    assert first["pip"]["label"] == "Research · practice"
+    assert first["nyx"]["label"] == "Lab · background"
+    assert first["voss"]["label"] == "Observe"
     assert first["pip"]["background"] == first["nyx"]["background"] == "true"
     assert first["voss"]["background"] == "false"
     assert all(row["status"] == "working" for row in out["first"])
-    assert next(row for row in out["second"] if row["key"] == "pip")["label"] == "Pip · background"
+    assert next(row for row in out["second"] if row["key"] == "pip")["label"] == "Research · background"
     assert '.ty-marker[data-background="true"] b::before { background: #91a4ab; }' in TYCOON_STYLE
 
 

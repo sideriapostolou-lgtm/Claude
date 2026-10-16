@@ -44,7 +44,9 @@ TYCOON_DATA = TYCOON_CONNECTIONS + TYCOON_RESEARCH + r"""
       current: account.current, stale: !account.current,
       exposure: account.current ? account.exposure : null,
       positions: account.current ? account.positions : null, orders: account.current ? account.orders : null,
-      reserved: account.current ? account.reserved : null };
+      reserved: account.current ? account.reserved : null,
+      openCost: account.current ? account.openCost : null,
+      total: book.current ? book.total : null };
   }
   function tycoonKalshi(d, now, pageCurrent) {
     const raw = tycoonObject(tycoonObject(tycoonObject(d.money).speeddesk).kalshi_live);
@@ -65,9 +67,9 @@ TYCOON_DATA = TYCOON_CONNECTIONS + TYCOON_RESEARCH + r"""
       && raw.real_orders_available === true && !integrityError && !integrityReset
       && (raw.total_halted !== true || reportedLocksOnly);
     const locksOnly = active && reportedLocksOnly;
-    const hasExposure = raw.has_real_exposure === true;
+    const hasExposure = raw.has_real_exposure === true, dayStopped = raw.day_stop_latched === true;
     const state = !present ? "unknown" : stale ? "stale" : integrityError || integrityReset ? "blocked"
-      : locksOnly ? "pairs only" : active ? "live" : hasExposure ? "exposure"
+      : locksOnly ? "pairs only" : dayStopped ? "blocked" : active ? "live" : hasExposure ? "exposure"
       : mode === "paper" ? "practice" : "unknown";
     const today = tycoonObject(raw.today), total = tycoonObject(raw.total), caps = tycoonObject(raw.caps), date = tycoonUtcDate(now);
     const dayCurrent = date !== "" && today.day === date;
@@ -91,7 +93,8 @@ TYCOON_DATA = TYCOON_CONNECTIONS + TYCOON_RESEARCH + r"""
         : integrityReset ? "Kalshi account checks are pending; real buys are blocked." : "");
     return { name: "Kalshi", state: state, active: active, practice: state === "practice", mode: mode,
       stateText: state === "pairs only" ? "Real money: completing existing pairs only; new bets are stopped"
-        : state === "blocked" ? "Accounting checks stopped real buys"
+        : state === "blocked" ? dayStopped && !integrityError && !integrityReset
+          ? "Daily loss stop: no new real bets" + (hasExposure ? "; filled bets remain" : "") : "Accounting checks stopped real buys"
         : state === "live" ? "Real-money trading is enabled" : state === "exposure" ? "Real bets remain open"
         : state === "practice" ? "Practice only; no new real orders" : state === "stale" ? "Waiting for a fresh Kalshi report"
         : "No current Kalshi report",
@@ -109,6 +112,16 @@ TYCOON_DATA = TYCOON_CONNECTIONS + TYCOON_RESEARCH + r"""
       directional: dayCurrent ? tycoonNumber(today.directional_usd) : null,
       hasExposure: hasExposure, exposure: tycoonCost(raw.at_risk_usd), positions: tycoonCount(raw.positions),
       orders: tycoonCount(raw.open_orders), reserved: tycoonCost(raw.reserved_usd),
+      openCost: tycoonCost(raw.open_cost_usd),
+      dayStopped: raw.day_stop_latched === true,
+      shardFunding: tycoonObject(raw.shard_funding),
+      shardAt: tycoonStamp(tycoonObject(raw.shard_funding).at, now),
+      shardAge: tycoonAge(tycoonStamp(tycoonObject(raw.shard_funding).at, now), now),
+      shardStale: stale || tycoonStamp(tycoonObject(raw.shard_funding).at, now) === null
+        || tycoonOld(tycoonAge(tycoonStamp(tycoonObject(raw.shard_funding).at, now), now), 60),
+      fundingCooldown: tycoonObject(raw.create_funding_cooldown),
+      fundingCooldownRemaining: now !== null && tycoonNumber(tycoonObject(raw.create_funding_cooldown).until) !== null
+        ? Math.max(0, raw.create_funding_cooldown.until - now) : null,
       cleanupPending: raw.cleanup_pending === true,
       totalHalted: raw.total_halted === true,
       stopNote: (stale ? "Last report: " : "") + "Kalshi’s total-loss stop blocks new bets until the owner resumes it. Completing existing pairs may still use real cash to reduce possible loss.",
@@ -243,8 +256,10 @@ TYCOON_DATA = TYCOON_CONNECTIONS + TYCOON_RESEARCH + r"""
       positionsNote: "Recorded positions, not the current venue book. App sales can leave these records behind; ownership is not supplied.",
       eventNote: "Latest recorded real event; historical settlements may later be corrected." };
     const pageCurrent = now !== null && updated !== null && !pageStale;
-    summary.accounts = { kalshi: tycoonKalshi(d, now, pageCurrent) };
-    summary.business = tycoonConnections(d, now, pageCurrent);
+    const fastAt = tycoonStamp(money._town_kalshi_generated_at, now);
+    const kalshiPageCurrent = fastAt !== null ? now !== null && !tycoonOld(tycoonAge(fastAt, now), TYCOON_PAGE_STALE_S) : pageCurrent;
+    summary.accounts = { kalshi: tycoonKalshi(d, now, kalshiPageCurrent) };
+    summary.business = tycoonConnections(d, now, pageCurrent, kalshiPageCurrent);
     summary.activity = summary.business.kalshiActivity;
     summary.activitySources = { polymarket_us: false, kalshi: summary.business.venues.kalshi.current };
     summary.accounts.kalshi.todayPacific = summary.business.venues.kalshi.day;

@@ -42,6 +42,19 @@ def kalshi_state(book: LiveRiskBook, *, now: float = NOW) -> dict[str, Any]:
                                            "mode": "paper", "authenticated": False}}
 
 
+def test_cumulative_result_comes_from_validated_book_not_panel_or_account_cash() -> None:
+    book = LiveRiskBook(LiveLimits(fee_precision=.0001))
+    add_settlement(book, 99, NOW - 1000, won=False)
+    source = kalshi_state(book)
+    source["panel"]["total"] = {"pnl_usd": 99999}
+    result = C.kalshi_connection(source, NOW, text)
+    assert result["total_pnl_usd"] == pytest.approx(-.4168)
+    assert result["cash_usd"] == 25
+    source["book"]["realized_pnl"] += 1
+    broken = C.kalshi_connection(source, NOW, text)
+    assert broken["status"] == "incomplete" and broken["total_pnl_usd"] is None
+
+
 def partial_book(*, now: float = NOW) -> LiveRiskBook:
     book = LiveRiskBook(LiveLimits(fee_precision=.0001))
     book.add_window(Window(WINDOW, now - 100, now + 800, 100,
