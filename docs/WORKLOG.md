@@ -13,6 +13,14 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-16 15:02 UTC, Codex — owner requests real mode; read-only readiness check (October 16, 8:02 AM PDT)
+
+- Owner asks to leave practice and use real money. Request recorded; no activation, financial-control change, transfer, reset, order, variable read/write or deployment action was performed. This is not a missing generic approval question.
+- Fresh Railway check: bot deployment `3a1b0098-8b07-4bc7-b586-38a24fcc625a`, source `c9301a1f5d102cc7ed1403c89bc19a6118942d95`, remains SUCCESS; bot and unchanged recorder online 1/1, no platform warnings/criticals/recent failures. Latest branch `7cebb3b8` is documentation-only and its build was SKIPPED.
+- Three native statuses between **7:57:57 and 7:59:58 AM PDT** confirm configured/effective PAPER, reason "Practice only; live mode is off", authenticated false, real orders unavailable. Daily latch false, total halt false, integrity error null; current UTC-day settled P&L **−$5.1277**, lifetime settled P&L **−$24.6195**, total fills 912. Reported bot risk/reservations/orders/positions remain zero. Caps **$10/window, $20 open, $6 daily, $10 existing total-loss allowance, clip 5** retained.
+- Cash and index-cash fields are null/unknown in paper; initialized zero foreign-order counters do not prove an account scan. Actual funded exchange index, account commitments and successful real-order acceptance remain unverified. No claim that the code release created profitability or resolved funding.
+- Next: owner-controlled live-mode change, if chosen, followed by read-only exact deployment/mode/cash-index/acceptance and loss-retention verification. Do not reset budgets, increase limits or infer funding from aggregate cash. Existing EXEC, recorder and operating-handoff obligations remain open; TJR stays last. Documentation-only update, no application tests needed.
+
 ## 2026-10-16 14:25 UTC, Codex — PR72 deployed; shard-cash/backoff code verified in PAPER (October 16, 7:25 AM PDT)
 
 - Completed bounded correction/release: exact [PR72](https://github.com/sideriapostolou-lgtm/Claude/pull/72) mergec9301a1f/candidated0d3ea4f/treea8ee2f20, safe **7:20:10 AM PDT** merge; Railway3a1b0098 SUCCESS **7:21:47.747 AM**. Full6225passed/14existing skips/293.51s,mypy133,Ruff13+evidence comparator, independent reviewedpatchc8c2289c. All24candidatefiles read back exact; merge tree identical. Initial2test failures and fixture corrections retained. [Release, checks, receipts and limitations](../research/kalshi_shard_cash_2026-10-16/REPORT.md).
