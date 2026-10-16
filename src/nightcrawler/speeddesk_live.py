@@ -62,6 +62,14 @@ from .speeddesk_model import (
 )
 from .speeddesk_readtrace import MAX_REPORTS_PER_MINUTE, ReadSpan, ReconcileTrace
 from .speeddesk_scorecard import window_scorecard
+from .speeddesk_twin_trace import (
+    MAX_PENDING,
+    OrderState,
+    TwinTrace,
+    validated_rows,
+    validated_status,
+)
+from .speeddesk_twin_trace import capture as capture_twin_order
 from .speeddesk_worktrace import WorkTrace, observed, work_span
 
 log = logging.getLogger("nightcrawler.speeddesk")
@@ -127,7 +135,7 @@ JOURNAL_KEY, SAVE_EVERY_S = "kalshi_live_journal", 1.0
 # cancels are events already; a busy minute of pulls would otherwise push the orders and fills out).
 QUIET_RECORDS = frozenset({"speeddesk_live_status", "speeddesk_live_pull", "speeddesk_fill_observed",
                            "speeddesk_fill_markout", "speeddesk_fill_markout_gap",
-                           "speeddesk_fill_markout_status", "speeddesk_reconcile_trace"})
+                           "speeddesk_fill_markout_status", "speeddesk_reconcile_trace", "speeddesk_twin_trace"})
 PULL_REASON = "Bids pulled: the fair value just moved; no new bid until the hold ends"
 # How often the practice twin may try the bid a held window would get without the pull (see _twin_unpulled_bid).
 TWIN_RETRY_S = 1.0
@@ -457,6 +465,17 @@ class KalshiLiveDesk:
         # Speed plan step 0: time in each part of step(), event-loop lag, cancel timings and venue clock offsets.
         self.phase_stats = _Interval()
         self.loop_stats = _Interval()
+        self.twin_trace: TwinTrace | None = None
+        self.twin_trace_failures = 0
+        self.twin_trace_error: str | None = None
+        self._twin_trace_in_pending = False
+        self.twin_trace_publication_dropped = 0
+        self.twin_trace_publication_unknown = 0
+        try:
+            self.twin_trace = TwinTrace(uuid.uuid4().hex)
+        except Exception as exc:  # noqa: BLE001 - optional session evidence cannot block startup.
+            self.twin_trace_error = type(exc).__name__
+            self.twin_trace_failures += 1
         self.request_stats = _Interval()
         self.clock_offsets = _ClockOffsets()
         self.time_probe = time_probe
@@ -919,6 +938,7 @@ class KalshiLiveDesk:
     def checkpoint(self, durable: bool = False) -> None:
         started = time.perf_counter()
         self._trace_flush()
+        self._twin_trace_flush()
         # Reconciliation can save a new settlement before the next heartbeat. Never save a latched stop
         # without its receipt: a crash would otherwise restore it as old and suppress the only receipt.
         self._watch_stops()
@@ -988,6 +1008,7 @@ class KalshiLiveDesk:
             for kind, payload in self.pending:
                 log.info("%s %s", kind, json.dumps(payload, allow_nan=False, separators=(",", ":")))
             self.pending.clear()
+            self._twin_trace_in_pending = False
         mirror_ms = None
         if self.stopping or self.clock() - self.last_mirror >= MIRROR_EVERY_S:
             with work_span(self.work_trace, "live_mirror"):
@@ -1029,12 +1050,62 @@ class KalshiLiveDesk:
         """A change the next full save holds (at most SAVE_EVERY_S later); Kalshi can prove it again after a crash."""
         self.dirty = True
 
-    def _twin_events(self, events: list[Any]) -> None:
+    def _twin_note(self, action: Callable[[TwinTrace], Any]) -> Any:
+        """Guard extraction AND observation; no diagnostic can stop an actual practice/real action."""
+        try:
+            return action(self.twin_trace) if self.twin_trace is not None else None
+        except Exception as exc:  # noqa: BLE001 - diagnostics have no execution authority.
+            self.twin_trace_error = type(exc).__name__
+            self.twin_trace_failures += 1
+            return None
+
+    def _twin_trace_flush(self) -> None:
+        # Separate bounded buffer: it cannot trigger an earlier save or displace latest_events.
+        # Rows already carry an observed clock; no extra financial clock read via _record.
+        if self._twin_trace_in_pending:
+            return  # A failed checkpoint still owns those bounded rows; never accumulate another batch.
+        drained_count = 0
+        count_known = False
+        emitted = 0
+        try:
+            raw = self._twin_note(lambda trace: trace.drain(
+                failures=self.twin_trace_failures, error=self.twin_trace_error)) or []
+            if type(raw) is list:
+                drained_count = len(raw)
+                count_known = True
+            rows = validated_rows(raw)
+            for row in rows:
+                self.pending.append(("speeddesk_twin_trace", {"venue": "kalshi", **row}))
+                self._twin_trace_in_pending = True
+                emitted += 1
+        except Exception as exc:  # noqa: BLE001 - even publication cannot block the original checkpoint.
+            self.twin_trace_error = type(exc).__name__
+            self.twin_trace_failures += 1
+            self.twin_trace_publication_dropped += max(0, drained_count - emitted)
+            self.twin_trace_publication_unknown += not count_known
+
+    def _twin_trace_panel(self) -> dict[str, Any]:
+        return {"enabled": self.twin_trace is not None,
+                **(self._twin_note(lambda trace: validated_status(trace.status())) or {}),
+                "helper_failures": self.twin_trace_failures, "helper_error": self.twin_trace_error,
+                "publication_dropped": self.twin_trace_publication_dropped,
+                "publication_unknown_batches": self.twin_trace_publication_unknown,
+                "max_published_pending": MAX_PENDING,
+                "publication": "next_existing_checkpoint"}
+
+    def _twin_events(self, events: list[Any], *, trace_origin: Intent | None = None,
+                     trace_scope: str = "practice_model", trace_before: OrderState | None = None) -> None:
         for event in events:
             if event.event != "speeddesk_skip":
                 self._record("speeddesk_twin", **asdict(event))
                 if event.event == "speeddesk_fill":
                     self.evidence.fill({**asdict(event), "is_taker": event.kind == "take"})
+            def note_event(trace: TwinTrace, event: Any = event) -> None:
+                trace.event(event, self.twin.orders.get(event.order_id),
+                            parent_client_id=trace_origin.client_order_id if trace_origin else None,
+                            parent_twin_id=trace_origin.twin_order_id if trace_origin else None,
+                            scope=trace_scope, before=trace_before)
+            self._twin_note(note_event)
 
     def on_tick(self, price: float, event_at: float, received_at: float) -> None:
         if -FUTURE_SKEW_S <= received_at - event_at <= 3:
@@ -1050,7 +1121,8 @@ class KalshiLiveDesk:
                 terms = ("taker_coefficient", "maker_coefficient", "tick_size", "min_trade_qty", "fee_rounding")
                 if previous is not None and any(getattr(previous, key) != getattr(window, key) for key in terms):
                     self.changed_windows.add(window.slug)
-                    self._twin_events(self.twin.cancel(self.clock(), window.slug, "venue_terms_changed"))
+                    self._twin_events(self.twin.cancel(self.clock(), window.slug, "venue_terms_changed"),
+                                      trace_scope="whole_window_terms_changed")
                     self._markout_call("expire", now=self.clock(), mono=self.monotonic(),
                                        reason="venue_terms_changed", window=window.slug)
                 self.book.add_window(window)
@@ -1077,7 +1149,8 @@ class KalshiLiveDesk:
                                reason="book_snapshot_invalidated")
         self.evidence.last_fresh.difference_update(status.get("gap_windows", []))
         for slug in status.get("gap_windows", []):
-            self._twin_events(self.twin.cancel(self.clock(), slug, "venue_feed_gap"))
+            self._twin_events(self.twin.cancel(self.clock(), slug, "venue_feed_gap"),
+                              trace_scope="whole_window_feed_gap")
             self._markout_call("expire", now=self.clock(), mono=self.monotonic(),
                                reason="venue_feed_gap", window=slug)
 
@@ -1086,7 +1159,7 @@ class KalshiLiveDesk:
         self._markout_call("expire", now=self.clock(), mono=self.monotonic(),
                            reason="market_settled", window=window)
         if window in self.twin.windows:
-            self._twin_events(self.twin.cancel(now, window, "settled"))
+            self._twin_events(self.twin.cancel(now, window, "settled"), trace_scope="whole_window_settled")
             result = self.twin.settle(window, up_wins, now)
             if result is not None:
                 self._record("speeddesk_twin_settlement", **asdict(result))
@@ -1306,18 +1379,22 @@ class KalshiLiveDesk:
         """A real cancel cancels the twin's bids in its window, except a pull: the twin is the pull's control, so its
         bid stays resting until the rule without the pull would cancel it (_twin_unpulled)."""
         if reason != "pull":
-            self._twin_cancel_window(intent.window, reason)
+            self._twin_cancel_window(intent.window, reason, intent)
         elif intent.twin_order_id in self.twin.orders:
             self.twin_kept.add(intent.twin_order_id)
 
-    def _twin_cancel_window(self, window: str, reason: str) -> None:
+    def _twin_cancel_window(self, window: str, reason: str, origin: Intent | None = None) -> None:
         """What a real cancel or refusal does to the twin (as before the pull: every twin bid in the window), except
         the kept bids, which only the rule without the pull cancels (_twin_unpulled). Without the pull there are none,
         so this is exactly the old window-wide cancel."""
         now = self.clock()
         for order_id in [key for key, order in self.twin.orders.items()
                          if order.window == window and key not in self.twin_kept]:
-            self._twin_events(self.twin.cancel_order(now, order_id, reason))
+            def before_cancel(_trace: TwinTrace, order_id: int = order_id) -> OrderState | None:
+                return capture_twin_order(self.twin.orders.get(order_id))
+            before = self._twin_note(before_cancel)
+            self._twin_events(self.twin.cancel_order(now, order_id, reason), trace_origin=origin,
+                              trace_scope="window_except_kept", trace_before=before)
 
     def _twin_unpulled(self, snapshot: LiveSnapshot, now: float) -> None:
         """The twin's kept bids follow the rule without the pull: cancelled for what cancels a real resting bid there
@@ -1339,7 +1416,11 @@ class KalshiLiveDesk:
                           or ("" if window.slug in snapshot.maker_windows else "maker_trades_unverified"))
             if reason:
                 self.twin_kept.discard(order_id)
-                self._twin_events(self.twin.cancel_order(now, order_id, reason))
+                def before_cancel(_trace: TwinTrace, order_id: int = order_id) -> OrderState | None:
+                    return capture_twin_order(self.twin.orders.get(order_id))
+                before = self._twin_note(before_cancel)
+                self._twin_events(self.twin.cancel_order(now, order_id, reason),
+                                  trace_scope="kept_rule", trace_before=before)
                 if reason in ("reprice", "bid_above_fair"):
                     # The rule without the pull rests a new bid there at once (_decide), even while the real bid
                     # there, decided after the pull, keeps resting (review, 2026-10-13: the twin was left bidless).
@@ -1682,6 +1763,12 @@ class KalshiLiveDesk:
             if self.book.record_fill(fill):
                 self._trace_call("fill", fill.fill_id, fill.at, self.monotonic())
                 self._record("speeddesk_live_fill", **asdict(fill))
+                def note_real_fill(trace: TwinTrace, intent: Intent = intent, fill: ActualFill = fill) -> None:
+                    trace.real_fill(client_id=intent.client_order_id, twin_id=intent.twin_order_id,
+                                    window=fill.window, side=fill.side, fill_id=fill.fill_id,
+                                    venue_fill_at=fill.at, observed_at=fills_batch_at,
+                                    current=self.twin.orders.get(intent.twin_order_id))
+                self._twin_note(note_real_fill)
                 self._markout_call("observe_fill", fill, self.book.windows.get(fill.window),
                                    observed_at=fills_batch_at, observed_mono=fills_batch_mono,
                                    fee_precision=self.book.limits.fee_precision, fee_verified=self.fee_verified)
@@ -1881,7 +1968,7 @@ class KalshiLiveDesk:
             self.unsent_absent.pop(key, None)
             if not intent.lock:
                 # As a refusal reaches the twin: the window's other bids, never a bid a pull kept (practice only).
-                self._practice("twin_released", self._twin_cancel_window, intent.window, "real_order_never_sent")
+                self._practice("twin_released", self._twin_cancel_window, intent.window, "real_order_never_sent", intent)
             self._record("speeddesk_live_order", client_order_id=key, window=intent.window,
                          state="released; never reached Kalshi (market closed, missing from two complete "
                                "order lists)")
@@ -1985,7 +2072,7 @@ class KalshiLiveDesk:
             if twin_event.event in ("speeddesk_take", "speeddesk_rest"):
                 self.metrics.decision("practice_twin", now, snapshot.tick_receipt, decision_mono)
             intent.twin_order_id = twin_event.order_id
-            self._twin_events([twin_event])
+            self._twin_events([twin_event], trace_origin=intent, trace_scope="real_copy")
 
         self._practice("twin_place", twin_copy)  # a twin error never leaves a real intent unsent and unsaved
         # The order identifier and its complete worst-case liability reach disk, synced, before the first
@@ -2059,7 +2146,7 @@ class KalshiLiveDesk:
                     if intent.twin_order_id in self.twin.orders:
                         self.twin_kept.add(intent.twin_order_id)
                 elif not intent.lock:
-                    self._practice("twin_rejected", self._twin_cancel_window, window.slug, "real_order_rejected")
+                    self._practice("twin_rejected", self._twin_cancel_window, window.slug, "real_order_rejected", intent)
             else:
                 intent.uncertain = True
                 self.book.mark_uncertain(client_id, "create_unconfirmed")
@@ -2573,7 +2660,8 @@ class KalshiLiveDesk:
                 await self._reconcile()
             except Exception as exc:  # noqa: BLE001 — leave reservations durable for the next startup.
                 self._error(exc)
-        self._practice("twin_shutdown", lambda: self._twin_events(self.twin.cancel(self.clock(), reason="shutdown")))
+        self._practice("twin_shutdown", lambda: self._twin_events(
+            self.twin.cancel(self.clock(), reason="shutdown"), trace_scope="global_shutdown"))
         for record in self._practice("pull_shutdown", lambda: self.pull.expire(self.clock(), everything=True)) or []:
             self._record("speeddesk_live_pull", **record)
         self._markout_call("expire", now=self.clock(), mono=self.monotonic(), reason="shutdown")
@@ -2619,6 +2707,7 @@ class KalshiLiveDesk:
                 "ladder": self.ladder.panel(self.book, self.clock(), risk),
                 "today": self._summary(utc_day(self.clock())), "total": self._summary(None),
                 "practice_twin": self._twin_summary(utc_day(self.clock())),
+                "twin_trace": self._twin_trace_panel(),
                 "reports": self.reports,
                 "pull": self._pull_panel(),
                 "fill_markouts": self._markout_panel(),

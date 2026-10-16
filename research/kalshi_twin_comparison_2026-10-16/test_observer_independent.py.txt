@@ -1,0 +1,283 @@
+"""Offline differential checks against frozen pre-diagnostic project source."""
+
+from __future__ import annotations
+
+import asyncio
+import importlib.util
+import itertools
+import sys
+from dataclasses import asdict
+from pathlib import Path
+from types import SimpleNamespace
+from typing import Any
+
+import pytest
+import test_speeddesk_live as fixtures
+from nightcrawler.speeddesk_kalshi_client import KalshiClientError
+from nightcrawler.speeddesk_model import Trade, utc_day
+
+from nightcrawler import speeddesk_live as candidate
+
+BASE_PATH = Path(__file__).with_name("baseline_speeddesk_live.py")
+SPEC = importlib.util.spec_from_file_location(
+    "nightcrawler._astra_baseline_live", BASE_PATH
+)
+assert SPEC is not None and SPEC.loader is not None
+BASE = importlib.util.module_from_spec(SPEC)
+sys.modules[SPEC.name] = BASE
+SPEC.loader.exec_module(BASE)
+
+
+class BrokenObserver:
+    def __getattr__(self, name: str) -> Any:
+        raise RuntimeError("independent synthetic diagnostic lookup failure")
+
+
+def exercise(
+    tmp: Path, module: Any, mode: str, scenario: str, monkeypatch: pytest.MonkeyPatch
+) -> dict[str, Any]:
+    ids = itertools.count(1)
+
+    def broken(*args: Any, **kwargs: Any) -> Any:
+        raise RuntimeError("independent synthetic extraction/construction failure")
+
+    class FailDiagnosticAppend(list[Any]):
+        def append(self, item: Any) -> None:
+            if item[0] == "speeddesk_twin_trace":
+                raise RuntimeError("independent diagnostic publication failure")
+            super().append(item)
+
+    with monkeypatch.context() as patch:
+        patch.setattr(
+            module,
+            "uuid",
+            SimpleNamespace(uuid4=lambda: SimpleNamespace(hex=f"{next(ids):032x}")),
+        )
+        patch.setattr(fixtures, "KalshiLiveDesk", module.KalshiLiveDesk)
+        if mode == "constructor_error":
+            patch.setattr(module, "TwinTrace", broken)
+        elif mode == "extraction_error":
+            patch.setattr(module, "capture_twin_order", broken)
+        desk, account, clock = fixtures.make_desk(
+            tmp, extra={"speeddesk_take_edge": 1.0}
+        )
+        ids = itertools.count(
+            1
+        )  # session UUID is separate from deterministic order IDs
+        desk.monotonic = clock.now
+        if mode == "disabled":
+            desk.twin_trace = None
+        elif mode == "broken":
+            desk.twin_trace = BrokenObserver()
+        elif mode == "publication_error":
+            desk.pending = FailDiagnosticAppend(desk.pending)
+        try:
+            if scenario == "uncertain_send":
+                account.create_error = KalshiClientError(
+                    "create_order", "transport failure", uncertain=True
+                )
+            asyncio.run(desk.step())
+            assert len(account.creates) == 1
+            intent = next(iter(desk.intents.values()))
+            if scenario == "partial_fill":
+                clock.advance(0.3)
+                order = account.orders[0]
+                order.update(
+                    fill_count_fp="1.00", remaining_count_fp=str(intent.size - 1)
+                )
+                account.executions.append(
+                    {
+                        "fill_id": "actual-partial",
+                        "order_id": intent.order_id,
+                        "ticker": fixtures.TICKER,
+                        "outcome_side": "yes" if intent.side == "up" else "no",
+                        "book_side": "bid" if intent.side == "up" else "ask",
+                        "count_fp": "1.00",
+                        (
+                            "yes_price_dollars"
+                            if intent.side == "up"
+                            else "no_price_dollars"
+                        ): str(intent.price),
+                        "fee_cost": ".0168",
+                        "ts": clock.now(),
+                        "is_taker": False,
+                    }
+                )
+                account.account_positions = [
+                    {
+                        "ticker": fixtures.TICKER,
+                        "position_fp": "1.00" if intent.side == "up" else "-1.00",
+                    }
+                ]
+                desk.on_trade(
+                    Trade(
+                        fixtures.TICKER,
+                        intent.side,
+                        intent.price,
+                        1,
+                        clock.now(),
+                        "public-partial",
+                        "sell",
+                        clock.now(),
+                    )
+                )
+                asyncio.run(desk._reconcile())
+                asyncio.run(
+                    desk._reconcile()
+                )  # duplicate real fill must not become new diagnostic/accounting fill
+                assert (
+                    getattr(desk.book.inventory[fixtures.TICKER], intent.side).shares
+                    == 1
+                )
+                assert (
+                    getattr(desk.book.inventory[fixtures.TICKER], intent.side).fees
+                    == 0.0168
+                )
+            elif scenario == "reprice":
+                asyncio.run(desk._cancel(intent, "reprice"))
+            elif scenario == "feed_gap":
+                desk.on_status(
+                    {
+                        "coinbase": "connected",
+                        "trade_stream": False,
+                        "gap_windows": [fixtures.TICKER],
+                    }
+                )
+            elif scenario == "day_stop":
+                desk.book.day_pnl[utc_day(clock.now())] = -10
+                asyncio.run(desk.step())
+            elif scenario == "total_stop":
+                desk.book.halted, desk.book.halt_reason = True, "total_loss"
+                asyncio.run(desk.step())
+            elif scenario == "shutdown":
+                asyncio.run(desk.shutdown())
+            elif scenario == "uncertain_send":
+                clock.advance(0.25)
+                asyncio.run(desk.step())
+                assert len(account.creates) == 1
+            desk.checkpoint()
+            # Actual receipt kinds and latest events retain their complete payloads.
+            actual = [
+                (r.kind, r.payload)
+                for r in desk.ledger.receipts()
+                if r.kind not in module.QUIET_RECORDS
+            ]
+            return {
+                "book": desk.book.to_state(),
+                "twin": desk.twin.to_state(),
+                "intents": {k: asdict(v) for k, v in desk.intents.items()},
+                "creates": account.creates,
+                "cancels": account.cancels,
+                "positions": account.account_positions,
+                "reads": account.reads,
+                "receipts": actual,
+                "latest_events": desk.latest_events,
+                "foreign": sorted(desk.foreign_windows),
+                "outcomes": desk.final_outcomes,
+                "chain_valid": desk.ledger.verify_chain()[0],
+            }
+        finally:
+            desk.close()
+
+
+@pytest.mark.parametrize(
+    "scenario",
+    [
+        "partial_fill",
+        "reprice",
+        "feed_gap",
+        "day_stop",
+        "total_stop",
+        "shutdown",
+        "uncertain_send",
+    ],
+)
+@pytest.mark.parametrize(
+    "mode",
+    [
+        "enabled",
+        "disabled",
+        "broken",
+        "constructor_error",
+        "extraction_error",
+        "publication_error",
+    ],
+)
+def test_exact_baseline_behavior(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mode: str, scenario: str
+) -> None:
+    expected = exercise(tmp_path / "baseline", BASE, "baseline", scenario, monkeypatch)
+    observed = exercise(tmp_path / "candidate", candidate, mode, scenario, monkeypatch)
+    assert observed == expected
+
+
+class MalformedObserver:
+    def __init__(self, rows: Any, status: Any = None):
+        self.rows = rows
+        self.value = {} if status is None else status
+
+    def drain(self, **kwargs: Any) -> Any:
+        return self.rows
+
+    def status(self) -> Any:
+        return self.value
+
+
+@pytest.mark.parametrize(
+    "bad_kind", ["iterator", "object", "missing_clock", "nan_clock"]
+)
+def test_malformed_diagnostic_cannot_poison_original_checkpoint(
+    tmp_path: Path, bad_kind: str
+) -> None:
+    desk, _, _ = fixtures.make_desk(tmp_path, mode="paper")
+    cases = {
+        "iterator": iter([None]),
+        "object": [{"at": 100, "bad": object()}],
+        "missing_clock": [{}],
+        "nan_clock": [{"at": float("nan")}],
+    }
+    desk.twin_trace = MalformedObserver(cases[bad_kind])
+    try:
+        desk._record("independent_financial_sentinel", result="unchanged")
+        before = desk.book.to_state()
+        desk.checkpoint()
+        assert desk.book.to_state() == before
+        receipt = desk.ledger.last_receipt("independent_financial_sentinel")
+        assert receipt is not None and receipt.payload["result"] == "unchanged"
+        assert desk.ledger.verify_chain() == (True, None)
+        assert desk.twin_trace_failures > 0
+        assert not desk.ledger.last_receipt("speeddesk_twin_trace")
+    finally:
+        desk.twin_trace = None
+        desk.pending = []
+        desk.close()
+
+
+def test_malformed_status_cannot_block_original_financial_panel(tmp_path: Path) -> None:
+    desk, _, _ = fixtures.make_desk(tmp_path, mode="paper")
+    before = desk.book.to_state()
+    desk.twin_trace = MalformedObserver([], status=42)
+    try:
+        panel = desk.panel()
+        assert panel["mode"] == "paper"
+        assert desk.book.to_state() == before
+        assert desk.twin_trace_failures > 0
+    finally:
+        desk.twin_trace = None
+        desk.close()
+
+
+def test_removed_partial_ioc_cannot_be_claimed_fully_filled() -> None:
+    from nightcrawler.speeddesk_model import Decision
+    from nightcrawler.speeddesk_twin_trace import TwinTrace
+
+    trace = TwinTrace("independent-ioc")
+    # IOC originally requested5; its event proves1 execution and removal, not5 executions.
+    event = Decision(
+        "speeddesk_fill", fixtures.TICKER, "up", 0.4, 1, order_id=1, at=101, kind="take"
+    )
+    trace.event(event, None)
+    row = trace.drain()[0]
+    assert row["practice_fill_size"] == 1
+    assert row["terminal_state"] != "filled"
+    assert row["twin_remaining"] is None
