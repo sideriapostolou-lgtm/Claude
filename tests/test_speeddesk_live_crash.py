@@ -348,6 +348,21 @@ def in_memory(desk: KalshiLiveDesk) -> dict[str, Any]:
             "intents": {key: without_default_lock(asdict(value)) for key, value in desk.intents.items()}}
 
 
+def unfilled_requotes(desk: KalshiLiveDesk, clock: FakeClock) -> None:
+    """Pin repeated sends and multiple journal rows without relying on reopening a profitable full pair.
+
+    Each earlier order is definitively canceled and reconciled before the next empty-inventory starter.
+    The clock stays within one checkpoint second, so the normal save cadence can retain multiple rows.
+    """
+    view(desk, clock, 80000, .55, .55)
+    asyncio.run(desk.step())
+    for _ in range(2):
+        [active] = desk._active()
+        asyncio.run(desk._cancel(active, "test_requote"))
+        asyncio.run(desk._reconcile())
+        assert asyncio.run(desk._send(desk.book.windows[TICKER], "up", "rest", .35, 1, .5))
+
+
 @pytest.mark.parametrize("seed", range(4))
 def test_journal_replay_equals_the_full_save_at_every_send(tmp_path: Path, seed: int) -> None:
     """With every other change saved at once (the old behaviour), what a restart reads at an order's first
@@ -371,6 +386,7 @@ def test_journal_replay_equals_the_full_save_at_every_send(tmp_path: Path, seed:
 
     account.create_order = at_the_send  # type: ignore[method-assign]
     try:
+        unfilled_requotes(desk, clock)
         for _ in range(60):
             beat(desk, account, clock, rng)
         assert len(checked) >= 3
@@ -411,6 +427,7 @@ def test_journal_replay_holds_every_order_and_never_less_risk(tmp_path: Path, se
 
     account.create_order = at_the_send  # type: ignore[method-assign]
     try:
+        unfilled_requotes(desk, clock)
         for _ in range(60):
             beat(desk, account, clock, rng)
         assert len(depths) >= 3 and max(depths) >= 2  # some sends found earlier orders still in the journal

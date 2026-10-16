@@ -227,6 +227,9 @@ class LiveRiskBook:
         # The stop the owner's one-time reset approved, until it clears or a different check trips.
         self.integrity_reset_armed: str | None = None
         self.bootstrap_order: dict[str, str] = {}
+        # Once actual fills make a positive complete pair, this window only accepts further risk reduction.
+        # Keep the latch after cancel-race fills make the inventory unequal, and across restarts.
+        self.protected_windows: set[str] = set()
         self.cash_usd: float | None = None
         self.cash_at: float | None = None
         self.cash_debits = 0.0
@@ -458,6 +461,18 @@ class LiveRiskBook:
                       if item.side == light and item.reservation_active)
         return claimed <= unpaired + EPSILON
 
+    def _protect_pair(self, window: str) -> bool:
+        """Latch a positive full pair from confirmed inventory, including its actual fees, once per window."""
+        value = self.inventory[window]
+        payout = min(value.up.shares, value.down.shares)
+        margin = payout - value.spent
+        if (window in self.protected_windows or not math.isfinite(margin)
+                or payout <= EPSILON or abs(value.up.shares - value.down.shares) > EPSILON
+                or margin <= EPSILON):
+            return False
+        self.protected_windows.add(window)
+        return True
+
     def hedge_unit(self, window: str, price: float, limits: LiveLimits) -> float:
         """The worst permitted cost of one contract of the other side at the pair cap less `price`: what the
         hedge of a first buy at `price` may cost. Raises `pair_cap` when no such price exists."""
@@ -647,6 +662,9 @@ class LiveRiskBook:
             unit = self.unit_reserve(window, price, kind)
         except LiveRejected as exc:
             return exc.reason
+        if (window in self.protected_windows
+                and self.balancing_contracts(window, side, size, unit) < size - EPSILON):
+            return "pair_protected"
         cost = size * unit
         # A strictly balancing buy only lowers the worst-case loss: like a lock, it is exempt from both loss stops
         # (never from the window budget, the open budget or the cash). The rest of the buy is new risk.
@@ -828,6 +846,7 @@ class LiveRiskBook:
         if (intent.filled_size > intent.size + EPSILON or fill.price > intent.price + EPSILON
                 or fill.size * fill.price + fill.fee_usd > fill.size * intent.unit_reserve + EPSILON):
             self.integrity_error = "fill_exceeded_reserved_terms"
+        self._protect_pair(fill.window)  # before the next fill in the same reconciliation batch
         self._refresh_stops(fill.at)
         return True
 
@@ -1030,6 +1049,8 @@ class LiveRiskBook:
                 # still refuses buys over the stop) and spends a kept resume value on sight, as it always did.
                 "day_stop_day": self.day_stop_latched,
                 "resume_pending": sorted(self.resume_pending),
+                # A rollback ignores this additional restriction; no accounting or stop history is replaced.
+                "protected_windows": sorted(self.protected_windows),
                 "bootstrap_order": self.bootstrap_order}
 
     @classmethod
@@ -1056,8 +1077,17 @@ class LiveRiskBook:
         book.day_stop_latched = state.get("day_stop_day")
         book.resume_pending = set(state.get("resume_pending", [])) - book.seen_resume_hashes
         book.bootstrap_order = state["bootstrap_order"]
+        protected = state.get("protected_windows", [])
+        if (not isinstance(protected, list) or any(not isinstance(key, str) or key not in book.windows
+                                                  for key in protected) or len(set(protected)) != len(protected)):
+            raise ValueError("Invalid persisted pair protection")
+        book.protected_windows = set(protected)
         # A restart cannot release uncertain orders or reuse an old balance.
         book._validate_state()
+        # Older saves have no latch. Only their current confirmed equal holdings establish a trigger;
+        # replaying historical fills in a guessed observation order would invent past complete pairs.
+        for window in book.inventory:
+            book._protect_pair(window)
         return book
 
     def _validate_state(self) -> None:

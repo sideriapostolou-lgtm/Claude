@@ -1274,7 +1274,11 @@ class KalshiLiveDesk:
             if not reason and not intent.lock:
                 # A lock buy is immediate-or-cancel and only completes pairs: the window
                 # closing or a money stop is exactly when it must be left to finish.
-                reason = (self._risk_stop_reason(balancing=self.book.strictly_balancing_intent(intent.client_order_id))
+                reason = (("pair_protected" if intent.window in self.book.protected_windows
+                           and self.book.intents[intent.client_order_id].reservation_active
+                           and self.book.intents[intent.client_order_id].remaining > EPS
+                           and not self.book.strictly_balancing_intent(intent.client_order_id) else "")
+                          or self._risk_stop_reason(balancing=self.book.strictly_balancing_intent(intent.client_order_id))
                           or (self._feed_reason(window, snapshot, now) if window else "Window missing"))
                 if not reason and window is not None:
                     # The stale-bid rules first: the practice twin follows those, never the pull.
@@ -1760,9 +1764,17 @@ class KalshiLiveDesk:
                         self.foreign_windows.add(ticker)
                 continue
             fill = self._fill(raw, intent)
+            protected_before = fill.window in self.book.protected_windows
             if self.book.record_fill(fill):
                 self._trace_call("fill", fill.fill_id, fill.at, self.monotonic())
                 self._record("speeddesk_live_fill", **asdict(fill))
+                if not protected_before and fill.window in self.book.protected_windows:
+                    inventory = self.book.inventory[fill.window]
+                    self._record("speeddesk_live_pair_protected", window=fill.window,
+                                 payout_usd=min(inventory.up.shares, inventory.down.shares),
+                                 cost_usd=inventory.spent,
+                                 inventory_floor_usd=min(inventory.up.shares, inventory.down.shares) - inventory.spent,
+                                 state="Positive full pair; no new directional buys; prior reservations remain")
                 def note_real_fill(trace: TwinTrace, intent: Intent = intent, fill: ActualFill = fill) -> None:
                     trace.real_fill(client_id=intent.client_order_id, twin_id=intent.twin_order_id,
                                     window=fill.window, side=fill.side, fill_id=fill.fill_id,
@@ -2328,6 +2340,9 @@ class KalshiLiveDesk:
         intent = self.intents[client_id]
         if intent.lock:
             return self._lock_guard(intent)
+        if (intent.window in self.book.protected_windows
+                and not self.book.strictly_balancing_intent(client_id)):
+            return False
         snapshot = self.snapshot()
         current = self._current_window(intent.window, snapshot)
         if (current is None or self._trade_reason(
@@ -2700,6 +2715,8 @@ class KalshiLiveDesk:
                 "total_halted": risk.get("halted", False), "day_stop_latched": risk.get("day_stop_latched", False),
                 "real_orders_available": live,
                 "integrity_error": self.book.integrity_error,
+                "pair_protection": {"protected_windows": sorted(self.book.protected_windows & self.book.open_windows()),
+                                    "total_windows": len(self.book.protected_windows)},
                 "integrity_reset": (self.reset_blocker or "armed") if self.book.integrity_reset_armed else None,
                 "cleanup_pending": bool(active) and bool(self._gates()),
                 # The limits the risk book enforces now (the ladder's rung), not the settings asked for.
