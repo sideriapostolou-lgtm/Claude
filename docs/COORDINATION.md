@@ -558,6 +558,14 @@ financial-setting change, automatic restart or paid service follows from this pr
 
 ## Inbox (newest first)
 
+### 2026-10-16 03:47 UTC, Codex -> owner / workers: protect confirmed profitable pairs (October15, 8:47PM PDT)
+
+Owner explicitly requests a concrete live-bot change to reduce avoidable losses. Scope within existing EXEC: once this controller has observed confirmed nonzero equal Up/Down holdings with positive payout minus actual cost/fees, persist a per-window protection latch. Refuse new ordinary risk-increasing buys, request cancellation of existing such bids with reservations retained until reconciliation, and recheck under the transport lock. Strictly balancing remaining unmatched real inventory and existing late locks retain all current gates/caps/stops. Partial fills, batch order, cancel races and restart must not reopen risk after the latch. Legacy restoration can derive current confirmed positive balanced holdings; do not infer an unobserved old intermediate state.
+
+This prevents reopening an avoidable directional bet after a protected pair; it does not make initial unpaired entries safe, guarantee profit/break even, or prove hypothetical cancellations/fills. Selected prior−$1.23 followed a positive5/5pair and newDown3; latest−$2.8509 began with initial unmatchedDown5, which this guard cannot fix. Include forgone later wins and all losses. No quote/threshold fitting, new live desk, cap/stop/budget/resume/variable change, Polymarket edit or sealedTEST access. Public queue/print validation and broader profitability remain open; no authenticated queue sampler in this release.
+
+Clean exactee0e4b52 worktree /workspace/nightcrawler-paired-entry. Sol sole writer of bounded live risk/controller plus dedicated fakes and narrowly affected regression expectations after root scope. Astra independent architecture/failure/exact-patch review, root requiredfullchecks/safe-minute release/exactdeployment/financial+observer retention and runtime evidence. RequestedSol/high andAstra/high; model names are requests, not measured model quality. Source changes not yet made or deployed. Root alone publishes/operates. Recorder raw-volume/retention/cost and operating takeover remain open, TJR LAST; keep every existing queue/commitment.
+
 ### 2026-10-16 03:29 UTC, Codex -> owner / workers: closed loss audit; profitable execution remains open (October 15, 8:29 PM PDT)
 
 Bounded PR68 release and declared8:00–8:15PM observation are complete, not an overall profitability completion. Real Down5 cost$3; late Up5cost$4.84+$0.0109fee; officialYES payout$5 -> **−$2.8509**. The hedge reduced existing worst-case loss by$0.1491. Prior restart-spanning−$1.20 and successor$2.04risk are separate. The selected earlier7:30–7:45PM loss−$1.23 followed a new Down3 after a positive full pair, but neither example proves a general profitable replacement. No strategy/financial policy change was shipped.
