@@ -1,6 +1,6 @@
 # PR69 fixed forward capture declaration
 
-Published October15,2026 9:13PM PDT (October16 04:13UTC), before the target opens. Governed by FORWARD_PROTOCOL.md frozen8:56PM PDT. No outcomes used to select the window.
+Published October15,2026 9:14PM PDT (October16 04:14UTC), before the target opens. Governed by FORWARD_PROTOCOL.md frozen8:56PM PDT. No outcomes used to select the window.
 
 - Source merge: 66d122b58000bdea98c95368bee5df912a9666bf; source tree21768bc1d087655cbc40dcecf7cf942ef825f3e8; PR69.
 - Bot deployment2af8d2be-77f7-4738-ab67-33c37c09b86b SUCCESS04:07:24.553UTC; normal PolymarketLIVE10 startup04:07:20.836490916UTC.
