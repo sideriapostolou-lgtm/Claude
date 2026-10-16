@@ -14,6 +14,7 @@ so the controller can reconcile exact quantities and ownership before booking.
 from __future__ import annotations
 
 import base64
+import json
 import re
 import threading
 import time
@@ -164,6 +165,30 @@ class KalshiClient:
         with self._budget_lock:
             now = self._clock.now()
             return sum(1 for moment in self._recent[True] if moment > now - 1.0)
+
+    def _try_queue_read_slot(self) -> bool:
+        """Best-effort observer quota only: never wait, and leave a local read slot for account work.
+
+        This local headroom cannot establish the venue's account-wide token balance. Queue HTTP/backoff
+        has its own connection and never changes the financial client's transport or global cooldown.
+        """
+        if not self._budget_lock.acquire(blocking=False):
+            return False
+        try:
+            now = self._clock.now()
+            recent = self._recent[False]
+            while recent and recent[0] <= now - 1:
+                recent.popleft()
+            if now < self._blocked_until or len(recent) >= self._limits[False] - 1:
+                return False
+            recent.append(now)
+            return True
+        finally:
+            self._budget_lock.release()
+
+    def own_queue_reader(self) -> OwnQueueReader:
+        """A GET-only observer using the already loaded signer, never a second credential read."""
+        return OwnQueueReader(self.headers, self._try_queue_read_slot)
 
     def request_timings(self) -> dict[str, Any]:
         """Drain bounded numeric diagnostics; no request/response content or credential material."""
@@ -420,3 +445,82 @@ class KalshiClient:
         except (ValueError, TypeError):
             raise KalshiClientError("cancel", "invalid cancellation acknowledgement", uncertain=True) from None
         return reply
+
+
+class _SignedOnlyAuth(requests.auth.AuthBase):
+    """Keep signed headers; a truthy explicit auth prevents requests from adding netrc Basic auth."""
+
+    def __call__(self, request: Any) -> Any:
+        return request
+
+
+class OwnQueueReader:
+    """One owned-ID GET, on an isolated connection. No order methods, shared cooldown or retries.
+
+    Public schema: GET /portfolio/orders/{order_id}/queue_position returns queue_position_fp, a
+    two-decimal contract-count string, with no venue snapshot clock. Phase timeouts are not an
+    absolute wall deadline for slow headers; the observer also permits only one outstanding read.
+    """
+
+    MAX_BYTES = 8192
+    BODY_DEADLINE_S = 2.0
+
+    def __init__(self, headers: Callable[[str, str], dict[str, str]], claim: Callable[[], bool], *,
+                 session: Any = None, monotonic: Callable[[], float] = time.monotonic) -> None:
+        self._headers, self._claim, self._mono = headers, claim, monotonic
+        self._session = session if session is not None else requests.Session()
+        self._closed = False
+
+    def read(self, order_id: str) -> str:
+        order_id = _identifier(order_id)
+        if self._closed:
+            raise KalshiClientError("queue_position", "observer_closed")
+        if not self._claim():
+            raise KalshiClientError("queue_position", "observer_budget_busy")
+        path = API_PATH + "/portfolio/orders/" + order_id + "/queue_position"
+        response = None
+        try:
+            # Preserve the session's proxy/CA handling, while never reading netrc or sending cookies.
+            self._session.cookies.clear()
+            response = self._session.get(BASE_URL + path, headers=self._headers("GET", path),
+                                         auth=_SignedOnlyAuth(), timeout=(1.0, 1.0),
+                                         stream=True, allow_redirects=False)
+            status = response.status_code
+            if type(status) is not int or not 200 <= status < 300:
+                raise KalshiClientError("queue_position", "observer_http_error",
+                                        status=status if type(status) is int else None)
+            length = response.headers.get("Content-Length")
+            if length is not None and (not str(length).isdigit() or int(length) > self.MAX_BYTES):
+                raise KalshiClientError("queue_position", "observer_response_size")
+            body = bytearray()
+            began = self._mono()
+            # One-byte delivery exposes body trickle to the elapsed check; requests' header/read timeout
+            # remains a phase timeout, not a guarantee of a hard total network deadline.
+            for chunk in response.iter_content(chunk_size=1):
+                if self._mono() - began > self.BODY_DEADLINE_S:
+                    raise KalshiClientError("queue_position", "observer_body_deadline", timed_out=True)
+                body.extend(chunk)
+                if len(body) > self.MAX_BYTES:
+                    raise KalshiClientError("queue_position", "observer_response_size")
+            try:
+                payload = json.loads(body)
+                value = payload.get("queue_position_fp") if type(payload) is dict else None
+                if not isinstance(value, str) or re.fullmatch(r"[0-9]{1,12}\.[0-9]{2}", value) is None:
+                    raise ValueError("invalid fixed-point count")
+            except (ValueError, TypeError):
+                raise KalshiClientError("queue_position", "observer_invalid_response") from None
+            return value
+        except (requests.Timeout, TimeoutError):
+            raise KalshiClientError("queue_position", "observer_transport_timeout", timed_out=True) from None
+        except (requests.RequestException, OSError):
+            raise KalshiClientError("queue_position", "observer_transport_error") from None
+        finally:
+            try:
+                if response is not None:
+                    response.close()
+            finally:
+                self._session.cookies.clear()
+
+    def close(self) -> None:
+        self._closed = True
+        self._session.close()
