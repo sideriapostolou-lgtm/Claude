@@ -28,6 +28,13 @@ from .ledger import Ledger
 from .speeddesk_feeds import thread_session
 from .speeddesk_kalshi_client import WRITES_PER_S, KalshiClient, KalshiClientError
 from .speeddesk_live_cash import ShardFunding
+from .speeddesk_live_completion import (
+    completion_guard,
+    depth_limit,
+    external_asks,
+    maker_price,
+    starter_fit,
+)
 from .speeddesk_live_ladder import Ladder, limits_view
 from .speeddesk_live_model import (
     LOCK_MARGIN_S,
@@ -176,6 +183,7 @@ class Intent:
     cancel_requested: bool = False
     twin_order_id: int = 0
     lock: bool = False
+    completion: bool = False
 
 
 class _Clock:
@@ -537,8 +545,9 @@ class KalshiLiveDesk:
                             or intent.side != reserved.side or intent.kind != reserved.kind
                             or intent.price != reserved.price or intent.size != reserved.size
                             or (intent.order_id or None) != reserved.order_id
+                            or intent.lock != reserved.lock or intent.completion != reserved.completion
                             or any(not isinstance(value, bool) for value in
-                                   (intent.terminal, intent.uncertain, intent.cancel_requested))
+                                   (intent.terminal, intent.uncertain, intent.cancel_requested, intent.completion))
                             or intent.terminal and reserved.reservation_active):
                         raise ValueError("Real intent journal changed its reserved terms")
                 self.twin = PracticeDesk.from_state(saved["twin"], twin_config)
@@ -1395,8 +1404,11 @@ class KalshiLiveDesk:
                 if not reason and window is not None:
                     # The stale-bid rules first: the practice twin follows those, never the pull.
                     pulled = intent.kind == "rest" and self.pull.pulled_since(intent.window, intent.at)
-                    reason = (self._stale_bid_reason(intent, window, snapshot, now,
-                                                     min(STALE_BID_EDGE, self.settings.speeddesk_make_edge))
+                    reason = (self._rest_reason(intent, window, snapshot, now)
+                              or ("hedge_liquidity" if self._starter_pending(intent)
+                                  and not self._starter_liquidity(window, intent.side, intent.kind, intent.price,
+                                                                  self.book.intents[intent.client_order_id].remaining,
+                                                                  snapshot) else "")
                               or ("pull" if pulled else ""))
                     if reason and intent.client_order_id in self.cancel_acked:
                         reason = ""  # Kalshi already acknowledged the cancel (200 or 404); the order list confirms it
@@ -1606,7 +1618,8 @@ class KalshiLiveDesk:
             except Exception as exc:  # noqa: BLE001 - display numbers only; the books and orders are unaffected.
                 control = {"since_pull": None, "week_before": None, "error": type(exc).__name__}
             self._pull_ab = (key, control)
-        return {**self.pull.panel(now), **self._pull_ab[1]}
+        return {**self.pull.panel(now), **self._pull_ab[1], "pair_policy_comparable": False,
+                "comparison_gap": "practice kept bids and takes do not fully model live pair completion"}
 
     def _pull_control(self, since: float, first: float) -> dict[str, Any]:
         starts = {slug: window.start for slug, window in self.book.windows.items()}
@@ -2153,8 +2166,86 @@ class KalshiLiveDesk:
     def _current_window(self, slug: str, snapshot: LiveSnapshot) -> Window | None:
         return next((window for window in snapshot.windows if window.slug == slug), None)
 
+    def _starter_pending(self, intent: Intent) -> bool:
+        reserved = self.book.intents[intent.client_order_id]
+        return (reserved.reservation_active and reserved.remaining > EPS
+                and self.book.bootstrap_order.get(intent.window) == intent.client_order_id
+                and self.book.balancing_contracts(intent.window, intent.side, reserved.remaining,
+                                                  reserved.unit_reserve) < reserved.remaining - EPS)
+
+    def _starter_liquidity(self, window: Window, side: Side, kind: Literal["take", "rest"], price: float,
+                           size: float, snapshot: LiveSnapshot) -> bool:
+        opposite: Side = "down" if side == "up" else "up"
+        other = snapshot.books.get((window.slug, opposite))
+        if other is None:
+            return False
+        inventory = self.book.inventory[window.slug]
+        held = inventory.up.shares - inventory.down.shares
+        if side == "down":
+            held = -held
+        # A partial first fill and its outstanding remainder can both become unpaired exposure.
+        limit = depth_limit(external_asks(self.book, window.slug, opposite, other), size + max(0.0, held))
+        return (limit is not None and self.book.unit_reserve(window.slug, price, kind)
+                + self.book.unit_reserve(window.slug, limit, "take") <= self.book.limits_for(window.slug).pair_cap + EPS)
+
+    def _rest_reason(self, intent: Intent, window: Window, snapshot: LiveSnapshot, now: float) -> str:
+        reason = self._stale_bid_reason(intent, window, snapshot, now,
+                                        min(STALE_BID_EDGE, self.settings.speeddesk_make_edge))
+        if reason != "reprice" or not self.book.strictly_balancing_intent(intent.client_order_id):
+            return reason
+        up = self._fair(window, snapshot, now)
+        if up is None:
+            return reason
+        fair = up if intent.side == "up" else 1 - up
+        # Only preserve a favorable move whose best admissible replacement cannot improve this bid.
+        # Adverse fair, pull, feed, account, mode and close guards retain their cancellation rules.
+        price = math.floor((fair - self.settings.speeddesk_make_edge + EPS) * 100) / 100
+        if fair > intent.fair and 0 < price < 1:
+            capped = maker_price(self.book, intent.window, intent.side, price,
+                                 self.book.intents[intent.client_order_id].remaining, now,
+                                 exclude=intent.client_order_id)
+            if abs(capped - intent.price) <= EPS:
+                return ""
+        return reason
+
+    async def _complete_early(self) -> bool:
+        """Take a visible fee-capped hedge of confirmed inventory before the late-lock period."""
+        snapshot, now = self.snapshot(), self.clock()
+        for window in snapshot.windows:
+            if self._feed_reason(window, snapshot, now):
+                continue
+            if self.pull.held(window.slug, now):
+                continue
+            side, unpaired = self.book.lock_side(window.slug)
+            if side is None or unpaired < 1 - EPS:
+                continue
+            levels = external_asks(self.book, window.slug, side, snapshot.books[(window.slug, side)])
+            pending = [item for item in self._active() if item.window == window.slug]
+            # Never infer that canceling a bid released its contracts or its cash.
+            if pending:
+                # A possible capped take can replace a resting hedge only after confirmed reconciliation.
+                if len(pending) == 1 and pending[0].kind == "rest":
+                    for size in range(min(math.floor(unpaired + EPS), int(self.book.limits_for(window.slug).clip)), 0, -1):
+                        limit = depth_limit(levels, size)
+                        if limit is not None and not self.book.replacement_verdict(
+                                pending[0].client_order_id, limit, now, kind="take", size=size, side=side):
+                            await self._cancel(pending[0], "pair_take_available")
+                            self.account_at = None
+                            return True
+                continue
+            if self._write_room_short():
+                self.reason = WRITE_ROOM_REASON
+                continue
+            for size in range(min(math.floor(unpaired + EPS), int(self.book.limits_for(window.slug).clip)), 0, -1):
+                limit = depth_limit(levels, size)
+                if limit is None or self.book.can_buy(window.slug, side, "take", limit, size, now):
+                    continue
+                if await self._send(window, side, "take", limit, float(size), limit, completion=True):
+                    return True
+        return False
+
     async def _send(self, window: Window, side: Side, kind: Literal["take", "rest"],
-                    price: float, size: float, fair: float) -> bool:
+                    price: float, size: float, fair: float, *, completion: bool = False) -> bool:
         now = self.clock()
         snapshot = self.snapshot()
         current = self._current_window(window.slug, snapshot)
@@ -2183,22 +2274,34 @@ class KalshiLiveDesk:
             self.reason = reason
             return False
         edge = self.settings.speeddesk_take_edge if kind == "take" else self.settings.speeddesk_make_edge
-        if fair - cost < edge - EPS:
+        if completion:
+            if (kind != "take" or self.pull.held(window.slug, now)
+                    or any(item.window == window.slug for item in self._active())
+                    or self.book.balancing_contracts(window.slug, side, size, cost) < size - EPS
+                    or depth_limit(external_asks(self.book, window.slug, side,
+                                                snapshot.books[(window.slug, side)]), size, price) is None):
+                return False
+        elif fair - cost < edge - EPS:
             self.reason = ("Account fee precision unverified; no edge after conservative fee rounding"
                            if not self.fee_verified else "Edge after conservative rounded fees is too small")
+            return False
+        inventory = self.book.inventory[window.slug]
+        if (inventory.up.shares + inventory.down.shares <= EPS
+                and not self._starter_liquidity(current, side, kind, price, size, snapshot)):
+            self.reason = "No first buy: visible opposite liquidity does not fit the pair cap"
             return False
         client_id = PREFIX + uuid.uuid4().hex
         decision_mono = self.monotonic()
         try:
             self.book.reserve_intent(window.slug, side, kind, price, size, now,
-                                     client_order_id=client_id, fair=fair)
+                                     client_order_id=client_id, fair=fair, completion=completion)
         except LiveRejected as exc:
             self.reason = str(exc)
             return False
-        intent = Intent(client_id, window.slug, side, kind, price, size, fair, now)
+        intent = Intent(client_id, window.slug, side, kind, price, size, fair, now, completion=completion)
         self.intents[client_id] = intent
         self._record("speeddesk_live_order", client_order_id=client_id, window=window.slug,
-                     side=side, kind=kind, price=price, size=size, fair=fair, state="durable intent",
+                     side=side, kind=kind, price=price, size=size, fair=fair, completion=completion, state="durable intent",
                      timing=self.metrics.decision("real_kalshi", now, snapshot.tick_receipt, decision_mono))
 
         def twin_copy() -> None:
@@ -2511,6 +2614,18 @@ class KalshiLiveDesk:
                 or self._feed_reason(current, snapshot, self.clock())
                 or self.funding.check(current, self.book, self.clock())):
             return False
+        if intent.completion:
+            return (not self.pull.held(intent.window, self.clock())
+                    and completion_guard(self.book, client_id, self.clock())
+                    and not any(item.client_order_id != client_id and item.window == intent.window
+                                for item in self._active())
+                    and depth_limit(external_asks(self.book, intent.window, intent.side,
+                                                 snapshot.books[(intent.window, intent.side)]),
+                                    self.book.intents[client_id].remaining, intent.price) is not None)
+        if (self._starter_pending(intent)
+                and not self._starter_liquidity(current, intent.side, intent.kind, intent.price,
+                                                self.book.intents[client_id].remaining, snapshot)):
+            return False
         assert current.start_price is not None and snapshot.bitcoin_price is not None and snapshot.sigma is not None
         now = self.clock()
         up = self._fair(current, snapshot, now)
@@ -2548,6 +2663,8 @@ class KalshiLiveDesk:
         if reason := self._trade_reason(balancing=True):
             self.reason = reason
             return
+        if await self._complete_early():
+            return
         self.reason = (None if self.fee_verified else
                        "Account fee precision unverified; conservative fee rounding is required")
         snapshot, now = self.snapshot(), self.clock()
@@ -2569,12 +2686,20 @@ class KalshiLiveDesk:
                 # fee reservation. This quick filter never authorizes spending.
                 take = bool(ask and self.book.unit_reserve(window.slug, ask.price, "take")
                             <= fair - self.settings.speeddesk_take_edge + EPS)
+                pending = [item for item in self._active() if item.window == window.slug and item.side == side]
+                if take and pending and self.book.strictly_balancing_intent(pending[0].client_order_id):
+                    assert ask is not None
+                    # Standalone fair cannot authorize replacing a valid hedge with an uncapped take.
+                    available = min(math.floor(ask.size), int(self.book.limits_for(window.slug).clip),
+                                    math.floor(self.book.lock_side(window.slug)[1] + EPS))
+                    take = any(not self.book.replacement_verdict(pending[0].client_order_id, ask.price, now,
+                                                                 kind="take", size=size)
+                               for size in range(available, 0, -1))
                 kind: Literal["take", "rest"] = "take" if take else "rest"
                 price = ask.price if ask and take else round(math.floor(
                     (fair - self.settings.speeddesk_make_edge + EPS) / window.tick_size) * window.tick_size, 4)
-                pending = [item for item in self._active() if item.window == window.slug and item.side == side]
                 for intent in pending:
-                    if (intent.kind == "rest" and (take or abs(fair - intent.fair) > REPRICE_FAIR + EPS
+                    if (intent.kind == "rest" and (take or self._rest_reason(intent, window, snapshot, now)
                                                    or window.slug not in snapshot.maker_windows)):
                         await self._cancel(intent, "reprice" if not take else "take_available")
                         self.account_at = None
@@ -2583,13 +2708,24 @@ class KalshiLiveDesk:
                 owed = bool(pending) and kind == "rest" and (window.slug, side) in self.twin_owed
                 if pending and not owed or not 0 < price < 1:
                     continue
-                if kind == "rest" and (window.slug not in snapshot.maker_windows
-                                       or any(level.price <= price + EPS for level in book.asks)):
+                if kind == "rest" and window.slug not in snapshot.maker_windows:
                     continue
                 limits = self.book.limits_for(window.slug)  # the window's ladder rung
                 units = math.floor(min(limits.clip, ask.size if ask and take else 25))
                 inventory = self.book.inventory[window.slug]
-                if inventory.up.shares + inventory.down.shares <= EPS:
+                if inventory.up.shares + inventory.down.shares <= EPS and not owed:
+                    # Preserve the existing maker-only first-entry rule. The crossing-price fallback
+                    # below is for an owed hedge of actual inventory, not a new starter opportunity.
+                    if kind == "rest" and any(level.price <= price + EPS for level in book.asks):
+                        continue
+                    opposite: Side = "down" if side == "up" else "up"
+                    price, units = starter_fit(self.book, window.slug, side, kind, price, units,
+                                               external_asks(self.book, window.slug, opposite,
+                                                             snapshot.books[(window.slug, opposite)]))
+                    if not units:
+                        self.reason = ("No first buy: visible opposite liquidity does not fit the pair cap"
+                                       + (" under unverified fee precision" if not self.fee_verified else ""))
+                        continue
                     # Scale the starter to whole pairs at the authorized pair
                     # cap, so a cheap first side cannot consume the hedge budget.
                     units = min(units, math.floor(limits.window_usd / limits.pair_cap))
@@ -2618,7 +2754,12 @@ class KalshiLiveDesk:
             # Only whole contracts leave the process. With the owner's tiny
             # budget this bounded search generally tries fewer than five sizes.
             for size in range(units, 0, -1):
-                if await self._send(window, side, kind, price, float(size), fair):
+                capped = (maker_price(self.book, window.slug, side, price, float(size), now)
+                          if kind == "rest" else price)
+                if kind == "rest" and any(level.price <= capped + EPS
+                                          for level in snapshot.books[(window.slug, side)].asks):
+                    continue
+                if await self._send(window, side, kind, capped, float(size), fair):
                     return
 
     def observe_market(self, observed_at: float) -> None:
@@ -2897,6 +3038,10 @@ class KalshiLiveDesk:
                 "integrity_error": self.book.integrity_error,
                 "pair_protection": {"protected_windows": sorted(self.book.protected_windows & self.book.open_windows()),
                                     "total_windows": len(self.book.protected_windows)},
+                "pair_execution": {"version": 1, "starter": "visible_fee_capped_depth",
+                                   "early_completion": "ordinary_limits", "maker": "pair_cap_fallback",
+                                   "practice_comparable": False,
+                                   "practice_gap": "kept bids use legacy repricing and single-level practice takes"},
                 "integrity_reset": (self.reset_blocker or "armed") if self.book.integrity_reset_armed else None,
                 "cleanup_pending": bool(active) and bool(self._gates()),
                 # The limits the risk book enforces now (the ladder's rung), not the settings asked for.

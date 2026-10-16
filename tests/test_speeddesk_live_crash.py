@@ -20,7 +20,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from test_speeddesk_live import TICKER, FakeAccount, make_desk
+from test_speeddesk_live import TICKER, FakeAccount, make_desk, starter_filled
 
 from nightcrawler.clock import FakeClock
 from nightcrawler.ledger import Ledger
@@ -299,6 +299,10 @@ def test_stop_math_is_identical_across_crash_and_graceful_restarts(tmp_path: Pat
     desk, account, clock = make_desk(tmp_path / "run", caps=OWNERS_CAPS)
     restarts = {"crash": 0, "graceful": 0}
     try:
+        # Establish actual fake-venue exposure before randomized wide spreads and repeated pull holds.
+        # This preserves nonvacuous restart/accounting coverage with the stricter first-entry gate.
+        starter_filled(desk, account, clock)
+        asyncio.run(desk._reconcile())
         for index in range(60):
             beat(desk, account, clock, rng)
             if index % 6 != 5:

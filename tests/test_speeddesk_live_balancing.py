@@ -139,7 +139,8 @@ def balancing_desk(tmp_path: Path) -> tuple[KalshiLiveDesk, FakeAccount, FakeClo
                                "outcome_side": "no", "book_side": "ask", "count_fp": "5.00",
                                "no_price_dollars": ".42", "fee_cost": "0.0000", "ts": clock.now()})
     account.account_positions = [{"ticker": TICKER, "position_fp": "-5.00"}]
-    steps(desk, clock, 2)  # the fill is booked
+    asyncio.run(desk._reconcile())
+    # Move the book before another decision: the new early-completion path would take the old cheap ask.
     assert desk.book.inventory[TICKER].down.shares == 5 and not account.cancels
     # The first buy's hedge budget had to fit when sent. A later loss must not shrink the owed hedge.
     desk.book.day_pnl[utc_day(clock.now())] = desk.book.realized_pnl = -2.0

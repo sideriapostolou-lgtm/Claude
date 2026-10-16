@@ -2173,8 +2173,13 @@ def _kalshi_pull(raw: Any, day: str) -> dict[str, Any] | None:
 
     held = raw.get("held")
     today = raw.get("day") == day
+    comparable = raw.get("pair_policy_comparable")
+    comparable = comparable if isinstance(comparable, bool) else None
     return {
         "enabled": raw.get("enabled") is True,
+        "pair_policy_comparable": comparable,
+        "comparison_gap": ("Practice kept bids and takes do not fully model live pair completion"
+                           if comparable is False else None),
         **{key: _num(raw.get(key)) for key in ("move", "lookback_s", "hold_s", "since", "first_live")},
         "held": ({window: _num(until) for window, until in list(held.items())[:4]
                   if isinstance(window, str) and re.fullmatch(r"KXBTC15M-[A-Z0-9]+-[0-9]{2}", window)}
@@ -2182,7 +2187,8 @@ def _kalshi_pull(raw: Any, day: str) -> dict[str, Any] | None:
         "pulls_today": _count(raw.get("pulls_today")) if today else None,
         "bids_pulled_today": _count(raw.get("bids_pulled_today")) if today else None,
         **{key: _count(raw.get(key)) for key in ("pulls_31d", "bids_pulled_31d")},
-        "since_pull": control(raw.get("since_pull")), "week_before": control(raw.get("week_before")),
+        "since_pull": None if comparable is False else control(raw.get("since_pull")),
+        "week_before": control(raw.get("week_before")),
     }
 
 

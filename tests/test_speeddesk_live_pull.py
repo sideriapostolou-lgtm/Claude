@@ -51,14 +51,17 @@ def horizon(seconds_left: float) -> float:
     return seconds_left - AVERAGE_LEAD_S if seconds_left >= 60 else seconds_left
 
 
-def market(desk: KalshiLiveDesk, clock: FakeClock, up: float, *, ask: float = .55, feed: bool = True) -> None:
+def market(desk: KalshiLiveDesk, clock: FakeClock, up: float, *, ask: float = .55, feed: bool = True,
+           starter_ask: float | None = None) -> None:
     """Fresh books (asks above both bids) and a Bitcoin print that puts the Up fair at ``up`` right now; ``feed``
     also hands the books to the desk, as the feeds do."""
     window = desk.book.windows[TICKER]
     bitcoin = 80000 * math.exp(NormalDist().inv_cdf(up) * SIGMA * math.sqrt(horizon(window.end - clock.now())))
 
     def view() -> LiveSnapshot:
-        books = {(TICKER, side): Book(TICKER, side, (Level(.3, 2),), (Level(ask, 10),), clock.now(), "book",
+        starter = desk.book.intents.get(desk.book.bootstrap_order.get(TICKER, ""))
+        shown = starter_ask if starter_ask is not None and (starter is None or starter.reservation_active) else ask
+        books = {(TICKER, side): Book(TICKER, side, (Level(.3, 2),), (Level(shown, 10),), clock.now(), "book",
                                       source="rest", requested_at=clock.now()) for side in ("up", "down")}
         return LiveSnapshot((window,), books, bitcoin, clock.now(), SIGMA, frozenset({TICKER}))
 
@@ -95,11 +98,13 @@ def maker_fill(desk: KalshiLiveDesk, account: FakeAccount, clock: FakeClock, ind
 
 def starter_bid_filled(desk: KalshiLiveDesk, account: FakeAccount, clock: FakeClock) -> None:
     """The first bid, Up 5 at 0.47, fills."""
-    market(desk, clock, .5)
+    market(desk, clock, .5, ask=.50)  # Visible taker hedge fits the fee-inclusive first-entry cap.
     asyncio.run(desk.step())
     assert [(c["side"], c["kind"], c["price"], c["size"]) for c in account.creates] == [("up", "rest", .47, 5)]
     maker_fill(desk, account, clock, 0, "up")
     account.account_positions = [{"ticker": TICKER, "position_fp": "5.00"}]
+    # Until the first account reconcile, the still-pending starter retains its hedgeable book.
+    market(desk, clock, .5, starter_ask=.50)
 
 
 def two_bids(tmp_path: Path, **extra: Any) -> tuple[KalshiLiveDesk, FakeAccount, FakeClock]:
@@ -261,9 +266,9 @@ def test_a_held_window_gets_the_twins_bid_but_no_real_one(tmp_path: Path) -> Non
         run(desk, clock, 3)
         assert not account.creates
         [order] = desk.twin.orders.values()
-        assert (order.side, order.kind, order.price, order.size) == ("up", "rest", .47, 5)
+        assert (order.side, order.kind, order.price, order.size) == ("up", "rest", .42, 5)
         run(desk, clock, 10)
-        assert [(c["side"], c["price"]) for c in account.creates] == [("up", .47)]
+        assert [(c["side"], c["price"]) for c in account.creates] == [("up", .42)]
         assert list(desk.twin.orders.values()) == [order]  # its own bid, not a second copy
     finally:
         desk.close()
@@ -290,7 +295,7 @@ def test_the_send_guard_refuses_a_bid_whose_fair_moved_on_its_way(tmp_path: Path
             assert [event["state"] for event in desk.latest_events
                     if event["event"] == "speeddesk_live_order"][-1] == "not sent; prices moved before send"
         else:
-            assert [(c["side"], c["price"]) for c in account.creates] == [("up", .47)]
+            assert [(c["side"], c["price"]) for c in account.creates] == [("up", .42)]
     finally:
         desk.close()
 
@@ -487,9 +492,11 @@ def test_the_page_feed_carries_the_pull_numbers_and_nothing_else(tmp_path: Path)
         raw["pull"]["held"]["<script>"] = 1.0
         page = pagestate._kalshi_pull(raw["pull"], utc_day(clock.now()))
         assert page is not None and page["enabled"] and page["pulls_today"] == 1 and page["bids_pulled_today"] == 2
-        assert list(page["held"]) == [TICKER] and page["since_pull"]["live_pnl_usd"] == 0
-        assert page["first_live"] == raw["pull"]["first_live"] and page["since_pull"]["live_locks"] == 0
-        assert page["since_pull"]["live_pnl_either_usd"] == 0 and page["week_before"]["live_lock_cost_usd"] == 0
+        assert list(page["held"]) == [TICKER] and page["since_pull"] is None
+        assert page["pair_policy_comparable"] is False and page["comparison_gap"]
+        assert page["week_before"]["live_pnl_usd"] == 0
+        assert page["first_live"] == raw["pull"]["first_live"] and page["week_before"]["live_locks"] == 0
+        assert page["week_before"]["live_lock_cost_usd"] == 0
         assert pagestate._kalshi_pull(raw["pull"], "2099-01-01")["pulls_today"] is None  # another day: unknown
         assert pagestate._kalshi_pull(None, "x") is None
     finally:
@@ -704,10 +711,10 @@ def test_a_bid_held_back_for_write_room_rests_in_the_twin(tmp_path: Path) -> Non
         asyncio.run(desk.step())
         assert not account.creates and desk.reason == WRITE_ROOM_REASON
         [order] = desk.twin.orders.values()  # without the pull the bid was sent: the twin rests it
-        assert (order.side, order.price, order.size) == ("up", .47, 5) and desk.twin_kept == {order.order_id}
+        assert (order.side, order.price, order.size) == ("up", .42, 5) and desk.twin_kept == {order.order_id}
         busy[0] = WRITES_PER_S - 3
         run(desk, clock, .6)
-        assert [(c["side"], c["price"]) for c in account.creates] == [("up", .47)]
+        assert [(c["side"], c["price"]) for c in account.creates] == [("up", .42)]
     finally:
         desk.close()
 
@@ -829,7 +836,7 @@ def test_twin_logic_never_touches_the_real_risk_book(tmp_path: Path) -> None:
         run(desk, clock, 3)
         assert not account.creates and desk.book.stop_hit_at is None
         [order] = desk.twin.orders.values()
-        assert (order.side, order.price, order.size) == ("up", .47, 5)
+        assert (order.side, order.price, order.size) == ("up", .42, 5)
     finally:
         desk.close()
 

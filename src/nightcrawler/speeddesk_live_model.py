@@ -100,7 +100,7 @@ WINDOW_PARTS = ("windows", "intents", "inventory", "fills", "settled")
 
 def without_default_lock(row: dict[str, Any]) -> dict[str, Any]:
     """Saved intent without the lock flag when it is False (readable by the release before locks)."""
-    return {key: value for key, value in row.items() if not (key == "lock" and value is False)}
+    return {key: value for key, value in row.items() if not (key in ("lock", "completion") and value is False)}
 
 
 def reserve_unit_cost(price: float, coefficient: float, precision: float = 0.01) -> float:
@@ -140,6 +140,7 @@ class LiveIntent:
     uncertainty: str | None = None
     # Completes already-bought contracts into $1 pairs: it can only lower the possible loss.
     lock: bool = False
+    completion: bool = False
 
     @property
     def remaining(self) -> float:
@@ -564,9 +565,11 @@ class LiveRiskBook:
     def _reject(self, reason: str) -> None:
         raise LiveRejected(reason)
 
-    def _inventory_guard(self, window: str, side: Side, size: float, unit: float, limits: LiveLimits) -> str:
+    def _inventory_guard(self, window: str, side: Side, size: float, unit: float, limits: LiveLimits,
+                         exclude: str | None = None) -> str:
         inventory = self.inventory[window]
-        pending = [intent for intent in self._window_intents(window) if intent.reserved > EPSILON]
+        pending = [intent for intent in self._window_intents(window)
+                   if intent.reserved > EPSILON and intent.client_order_id != exclude]
         total = inventory.up.shares + inventory.down.shares
         difference = inventory.up.shares - inventory.down.shares
         starter_id = self.bootstrap_order.get(window)
@@ -638,7 +641,8 @@ class LiveRiskBook:
                 return contracts, ""
         return 0, reason
 
-    def _buy_verdict(self, window: str, side: Side, kind: Kind, price: float, size: float, now: float) -> str:
+    def _buy_verdict(self, window: str, side: Side, kind: Kind, price: float, size: float, now: float,
+                     exclude: str | None = None) -> str:
         self._refresh_stops(now)
         if self.integrity_error:
             return "reconciliation_error"
@@ -658,7 +662,7 @@ class LiveRiskBook:
             return "clip"
         if self.cash_at is None or self.cash_usd is None or not 0 <= now - self.cash_at <= limits.cash_max_age_s:
             return "cash_stale"
-        mine = self._window_intents(window)
+        mine = [item for item in self._window_intents(window) if item.client_order_id != exclude]
         if any(item.side == side and item.reservation_active for item in mine):
             return "order_pending"
         try:
@@ -690,9 +694,24 @@ class LiveRiskBook:
                 return "total_budget"
             if self.day_latched(now):
                 return "day_stop"
-        if cost + self.reserved_usd + self.cash_debits > self.cash_usd + EPSILON:
+        excluded = self.intents[exclude].reserved if exclude is not None else 0.0
+        if cost + self.reserved_usd - excluded + self.cash_debits > self.cash_usd + EPSILON:
             return "cash_budget"
-        return self._inventory_guard(window, side, size, unit, limits)
+        return self._inventory_guard(window, side, size, unit, limits, exclude=exclude)
+
+    def replacement_verdict(self, client_order_id: str, price: float, now: float,
+                            *, kind: Kind | None = None, size: float | None = None,
+                            side: Side | None = None) -> str:
+        """Read-only hypothetical replacement of one strictly balancing reservation, never a release."""
+        item = self.intents[client_order_id]
+        kind = item.kind if kind is None else kind
+        size = item.remaining if size is None else size
+        side = item.side if side is None else side
+        if self.balancing_contracts(item.window, side, size,
+                                    self.unit_reserve(item.window, price, kind)) < size - EPSILON:
+            return "balancing_size"
+        return self._buy_verdict(item.window, side, kind, price, size, now,
+                                 exclude=client_order_id)
 
     def can_lock(self, window: str, side: Side, price: float, size: float, now: float) -> str:
         """An immediate buy that only completes this window's bought contracts into $1 pairs.
@@ -736,18 +755,21 @@ class LiveRiskBook:
 
     def reserve_intent(self, window: str, side: Side, kind: Kind, price: float, size: float,
                        now: float, client_order_id: str, fair: float | None = None,
-                       *, lock: bool = False) -> LiveIntent:
+                       *, lock: bool = False, completion: bool = False) -> LiveIntent:
         if (not client_order_id.startswith(CLIENT_PREFIX) or len(client_order_id) <= len(CLIENT_PREFIX)
                 or client_order_id in self.intents):
             raise LiveRejected("client_order_id")
         if lock and kind != "take":
             raise LiveRejected("invalid_order")
+        if completion and (lock or kind != "take" or self.balancing_contracts(
+                window, side, size, self.unit_reserve(window, price, kind)) < size - EPSILON):
+            raise LiveRejected("completion_size")
         reason = (self.can_lock(window, side, price, size, now) if lock
                   else self.can_buy(window, side, kind, price, size, now))
         if reason:
             raise LiveRejected(reason)
         intent = LiveIntent(client_order_id, window, side, kind, price, size, now,
-                            self.unit_reserve(window, price, kind), fair, lock=lock)
+                            self.unit_reserve(window, price, kind), fair, lock=lock, completion=completion)
         self._index()
         self.intents[client_order_id] = intent
         self._by_window.setdefault(window, []).append(client_order_id)
@@ -1133,7 +1155,9 @@ class LiveRiskBook:
                     or intent.unit_reserve < intent.price - EPSILON
                     or not isinstance(intent.reservation_active, bool)
                     or not isinstance(intent.cancel_requested, bool)
-                    or not isinstance(intent.lock, bool) or (intent.lock and intent.kind != "take")):
+                    or not isinstance(intent.lock, bool) or (intent.lock and intent.kind != "take")
+                    or not isinstance(intent.completion, bool)
+                    or (intent.completion and (intent.lock or intent.kind != "take"))):
                 raise ValueError("Invalid persisted live intent")
             for value in (intent.last_snapshot_at, intent.venue_remaining_size, intent.fair):
                 if value is not None and (not math.isfinite(value) or value < 0):

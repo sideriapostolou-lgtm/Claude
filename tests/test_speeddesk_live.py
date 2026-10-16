@@ -107,7 +107,7 @@ def make_desk(tmp_path: Path, *, mode: str = "live", confirm: str | None = "yes"
                     venue_start_price=80000, venue="kalshi", taker_coefficient=.07, maker_coefficient=0,
                     min_trade_qty=.01, fee_rounding="kalshi", exchange_index=2)
     books = {(TICKER, side): Book(TICKER, side, (Level(.3, 2),),
-                                 (Level(.4 if side == "up" else .6, 10),), clock.now(), "book",
+                                 (Level(.4 if side == "up" else .55, 10),), clock.now(), "book",
                                  source="rest", requested_at=clock.now()) for side in ("up", "down")}
     snapshot = LiveSnapshot((window,), books, 80000, clock.now(), .001, frozenset({TICKER}))
     desk = KalshiLiveDesk(settings, tmp_path / "live", lambda: snapshot, clock=clock.now,
