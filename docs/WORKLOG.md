@@ -13,6 +13,13 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-16 11:31 UTC, Codex — deferred TJR/MNQ gate rechecked (October 16, 4:31 AM PDT)
+
+- Read fresh connected-GitHub `60c5279da9f212110f52d8410fde6e09c7b6508e`: AGENTS, coordination takeover/work-order/TJR queue and newest WORKLOG. Higher-priority EXEC/initial-entry/queue evidence, recorder Phase0/raw-volume/retention/cost and operating access/automation transfer remain unfinished. PR71's recorded bounded completion does not clear that work. The owner still places TJR last; no access, missing evidence or approval wait is treated as completed.
+- Independent fresh read of [PR47](https://github.com/sideriapostolou-lgtm/Claude/pull/47) and its [separate deployment/follow-up record](../research/kalshi_profitability_2026-10-14/PR47_DEPLOYMENT.md), unchanged blob `33c13fb3`: actual October14 merge9:21:49AM PDT/16:21:49UTC, `e8db34ee`; recorded deployment `f707494f` SUCCESS9:24:05.418AM. Historical reconciliation cleared in state9:47:21.227AM and log9:47:30.917AM. The document's one-second-earlier merge shorthand is not API metadata. These historical records are not a current production-health check or overall-clearance certificate.
+- Gate remains closed. TJR-MNQ-001 stays LAST/queued/blocked; neither Page opened, no code reconstructed, repeated research/tests, historical run or paper start. Synthetic-check claims were not reproduced; historical-P&L-null/paper-unstarted/live-disabled remains recorded status, not new validation. No Railway, credentials, orders, variables, risk/stop/resume changes, deployments, purchases or automation changes. Only additive changes to these two documentation paths; no application tests required or rerun. Routine unchanged owner notification suppressed.
+- Next: complete the existing higher-priority obligations with evidence, or receive explicit reprioritization. Then read both current Pages fully, reuse the saved implementation/tests and validate authentic authorized MNQ data with fees, slippage and gaps before historical results and verified paper-start evidence, live execution disabled. Keep item unfinished and follow-up unchanged until both completion conditions are met.
+
 ## 2026-10-16 10:09 UTC, Codex — TJR/MNQ prerequisite check, unchanged (October 16, 3:09 AM PDT)
 
 - Read current connected-GitHub `8dc185f40169f9157f7c7c71e8c2bb2c96f10247`: AGENTS, coordination takeover/work-order/TJR entries and newest WORKLOG. Current records keep EXEC/initial-entry/queue evidence, recorder Phase0/raw-volume/retention/cost and operating access/automation transfer OPEN. PR71's completed bounded release/audit is not completion of that broader work. The owner continues to put TJR last; missing evidence, access or approval remains unfinished.
