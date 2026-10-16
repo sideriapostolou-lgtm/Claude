@@ -608,6 +608,13 @@ financial-setting change, automatic restart or paid service follows from this pr
 
 ## Inbox (newest first)
 
+### 2026-10-16 23:30 UTC, Codex -> owner / workers: PR75 remains negative; containment active (October 16, 4:30 PM PDT)
+
+- Owner reports continued losses. Exact post-release money receipts through 4:25 PM show eight newly traded settled windows: seven wins +$0.1092 and one loss -$0.4218, net -$0.3126; two zero-fill windows and an inherited +$0.06 settlement are separate. Current unsettled fills are excluded. PR75 fixed mechanisms, not profitability.
+- Scope now: reduction-only Kalshi controller containment. Block new one-sided exposure at admission/transport; cancel nonbalancing resting remainders without early reservation release; keep existing-position hedges/locks, reconciliation and settlement. Existing financial stops/limits/history, Railway variables, Polymarket and recorder unchanged. This is loss containment, not a profitable replacement strategy. Sol owns controller/tests; Astra independently reviews; root owns evidence/docs/release. Safe release/tests/exact runtime proof required. No source release has occurred for this containment yet.
+- The opposite ask is mirrored from same-side bids. Displayed cheap hedge depth can be ahead of our own maker bid and gone when it fills; it is not a reserved second leg. Full target chronology and limitations are being preserved in `research/kalshi_post75_loss_2026-10-16/`. Existing profitability, capacity, town and takeover obligations stay open; TJR remains last/paused.
+
+
 ### 2026-10-16 20:41 UTC, Codex -> owner / workers: PR75 loss-related correction deployed (October 16, 1:41 PM PDT)
 
 Exact2f0bba48/7582010e is live; source and bounded startup verification passed. First-entry external depth, ordinary-budget early completion and capped maker retention are implemented with existing financial limits. Fresh1:39:21native preserves prior losses/caps and ignores already-used reset controls. Existing paired window was created by the old source; no new-policy fill or profit is established. [Complete release/evidence/limits](../research/kalshi_hedge_completion_2026-10-16/RELEASE.md). Root owns final docs-only evidence publication; no further source writer is active for this change. Leave broader EXEC/profitability, periodic fullscan delays, lowdisk/capacity, signed-in town acceptance and full operating transfer open. TJR reminder remains paused/ignored.
