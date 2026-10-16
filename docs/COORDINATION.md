@@ -42,6 +42,8 @@ building, wait for it to finish.
 
 ## Deferred work queue
 
+**Owner work order — October 16, 11:29 AM PDT:** the owner now explicitly asks to work on the town, including broken Kalshi money loading and poor visual/workflow quality. Town repair and redesign is active now; the earlier handoff-before-redesign sequence is superseded for this task. The full operating handoff remains unfinished on its existing record. No money limits, stops, trading rules, Railway variables or new live desks are in scope. Ignore the paused TJR reminder; research stays last.
+
 **Owner override — October 16, 11:21 AM PDT:** the repeated long TJR/MNQ follow-up message is unwanted. Its exact matching hourly reminder is now paused and read back disabled; prompt and schedule are preserved, and other tasks are unchanged. Ignore stale repetitions of that old message instead of restarting gate checks or interrupting current work. Keep TJR-MNQ-001 unfinished and LAST on the backlog; this is cancellation of the reminder, not completion or authorization to advance research. Do not re-enable or replace that reminder unless the owner asks. Current operating-handoff work order remains in force.
 
 **Latest owner work order, October 16, 9:44 AM PDT:** reconcile and complete the operating handoff before the next town reorganization. The owner rejected PR73's clarity despite its successful deployment; the town product goal stays open. Keep the existing live trading/recorder services stable and retain their unresolved evidence work. Build the town from a verified operating map, not character names or decorative activity. TJR/MNQ remains last; no financial authorization follows from this work order.
@@ -594,6 +596,10 @@ financial-setting change, automatic restart or paid service follows from this pr
   this item. No production, financial or credential-copy work is needed; chat delegation stays usable.
 
 ## Inbox (newest first)
+
+### 2026-10-16 18:29 UTC, Codex -> owner / workers: town money connection and workflow repair active (11:29 AM PDT)
+
+Scope: trace and repair the read-only Kalshi money projection/refresh path, then rebuild the phone-first town around actual stages and live blockers. Shared-file declaration: `pagestate.py` and dashboard API read-only routing may be touched only for bounded presentation/data loading; trading engines, risk, venue clients and configuration are excluded. Root integrates one writer per file set, independent financial-truth review, full tests/mypy/changed-file Ruff, mobile checks and safe-minute exact deployment verification. Preserve all private handoff gaps and capacity evidence; do not treat a redesign as handoff completion.
 
 ### 2026-10-16 17:50 UTC, Codex -> owner / on-request Claude: private delta verified; capacity comes first (October 16, 10:50 AM PDT)
 
