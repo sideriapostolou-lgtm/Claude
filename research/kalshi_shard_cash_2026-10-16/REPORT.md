@@ -4,8 +4,9 @@ October 16, 2026. Times below are Pacific daylight time (UTC−7).
 
 ## Result and scope
 
-Code correction implemented and required checks passed; exact deployment and
-runtime verification remain pending at this pre-release checkpoint. This is an execution-eligibility repair, not
+**Bounded code release and paper restart verification complete.**
+PR72 merged at **7:20:10 AM PDT**; Railway deployed the exact tested tree successfully
+at **7:21:47.747 AM PDT**. Funding/account acceptance remains unverified. This is an execution-eligibility repair, not
 evidence of a profitable strategy or of a funded account.
 
 The old cash check used aggregate cash even though Bitcoin orders route to the
@@ -75,15 +76,44 @@ volume/ledger or account-hold certificate.
 - Caps **$10/window, $20 open, $6 daily, existing $10 total-loss allowance,
   clip 5**. Daily and total halt flags false; integrity error null.
 
-Exact release commit/deployment, normal Polymarket startup, bounded traceback
-inspection and comparison of selected controls/losses remain pending. The
+[RELEASE.json](RELEASE.json) binds merge `c9301a1f5d102cc7ed1403c89bc19a6118942d95`,
+reviewed candidate `d0d3ea4f752e1363b74dc6c840d6e73ab6a24b58`, identical tree
+`a8ee2f2039057a6cfc97d484dd8fe392ab193991` and deployment
+`3a1b0098-8b07-4bc7-b586-38a24fcc625a`. All 24 remote candidate files were read back
+byte-for-byte; local/remote candidate/merge trees match.
+
+Polymarket logged its normal LIVE10 startup at **7:21:38.735 AM**. Kalshi first
+reported PAPER at **7:22:50.451 AM**, then again at **7:23:50.894 AM**. It remains
+unauthenticated, with cash unknown and all selected losses/caps/history retained.
+The three consumed controls each logged `ignored; this value was already used`
+at **7:22:49.214 AM**; no reset was replayed. Root retention checks: **28 passed**,
+then **29 follow-up comparisons passed**. Independent review recorded **450
+comparisons**, including source identities; these overlapping checks do not imply
+450 independent runtime cases. See [INDEPENDENT_RETENTION.md](INDEPENDENT_RETENTION.md),
+[RETENTION_CHECKS.json](RETENTION_CHECKS.json) and [FOLLOWUP_CHECKS.json](FOLLOWUP_CHECKS.json).
+
+Native traceback query **7:20:12–7:24:00 AM** returned zero rows. Startup halt and
+reject queries through **7:23:23 AM** also returned zero rows. These are bounded
+log observations, not proof of all-time error freedom. Earlier BUILDING/empty queries
+are preserved in [STARTUP_LOGS.json](STARTUP_LOGS.json). Filters also matched nested
+old events; only actual standalone startup lines count as control receipts.
+Bot and unchanged recorder `8453f919` were both online1/1 with no platform alerts.
+This does not certify the recorder volume, retention, data completeness or cost.
+
+New status fields are present: `cash_total_usd: null`, `shard_cash_unknown`, no
+balance rows, and cooldown zero. In flat paper mode these are initialized unknown
+values, not an authenticated cash or foreign-order scan. No real acceptance or
+production backoff trigger was exercised.
+
+The
 [verify_restart.py](verify_restart.py) script compares before/after status fields
 without any account access or financial action. It cannot certify raw budget
 anchors, credential values, continuous coverage or every persisted byte.
 
 ## Unfinished work and next evidence
 
-1. Complete exact release and selected runtime retention checks, keeping paper.
+1. **Complete:** exact code release and selected paper restart/retention checks.
+   This completes the bounded repair, not the full cash-funding incident.
 2. Obtain authorized read-only primary-account/index cash and commitment evidence.
    The patch deliberately does not instantiate a trading client during flat paper
    startup just to populate this evidence. Missing data remains unknown.
