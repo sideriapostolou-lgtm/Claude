@@ -40,6 +40,7 @@ from .speeddesk_live_model import (
     without_default_lock,
 )
 from .speeddesk_live_pull import PullGuard, PullRule, compare
+from .speeddesk_live_queue import QueueContext, QueueObserver
 from .speeddesk_markouts import FillMarkouts
 from .speeddesk_metrics import (
     LatencyMetrics,
@@ -396,6 +397,9 @@ class KalshiLiveDesk:
         self._read_workers: set[asyncio.Task[Any]] = set()
         self.startup_done = False
         self.closed = False
+        self.queue_observer: QueueObserver | None = QueueObserver(None, clock=clock, monotonic=monotonic)
+        self.queue_observer_error: str | None = None
+        self._queue_in_pending = False
         self.account_at: float | None = None
         # Set by every accepted Bitcoin tick and Kalshi book change: the loop decides at once instead of on a timer.
         self.wake = asyncio.Event()
@@ -939,6 +943,7 @@ class KalshiLiveDesk:
         started = time.perf_counter()
         self._trace_flush()
         self._twin_trace_flush()
+        self._queue_flush()
         # Reconciliation can save a new settlement before the next heartbeat. Never save a latched stop
         # without its receipt: a crash would otherwise restore it as old and suppress the only receipt.
         self._watch_stops()
@@ -1009,6 +1014,7 @@ class KalshiLiveDesk:
                 log.info("%s %s", kind, json.dumps(payload, allow_nan=False, separators=(",", ":")))
             self.pending.clear()
             self._twin_trace_in_pending = False
+            self._queue_in_pending = False
         mirror_ms = None
         if self.stopping or self.clock() - self.last_mirror >= MIRROR_EVERY_S:
             with work_span(self.work_trace, "live_mirror"):
@@ -1092,6 +1098,88 @@ class KalshiLiveDesk:
                 "publication_unknown_batches": self.twin_trace_publication_unknown,
                 "max_published_pending": MAX_PENDING,
                 "publication": "next_existing_checkpoint"}
+
+    def _queue_context(self, client_id: str) -> QueueContext | None:
+        intent, reserved = self.intents.get(client_id), self.book.intents.get(client_id)
+        if intent is None or reserved is None:
+            return None
+        if (intent.client_order_id != client_id or reserved.client_order_id != client_id
+                or any(getattr(intent, field) != getattr(reserved, field)
+                       for field in ("order_id", "window", "side", "kind", "price", "size", "lock"))):
+            return None
+        if any(not isinstance(value, str) or len(value) > 128 for value in
+               (client_id, intent.order_id, intent.window, intent.side)):
+            return None
+        status = ("terminal" if intent.terminal or reserved.status in {"canceled", "executed"}
+                  or not reserved.reservation_active or reserved.remaining <= EPS else
+                  "cancel_requested" if intent.cancel_requested or reserved.cancel_requested else
+                  "uncertain" if intent.uncertain or reserved.uncertainty else
+                  "foreign_window" if intent.window in self.foreign_windows else
+                  "unsupported" if reserved.status not in {"submitted", "resting"}
+                  or intent.lock or intent.kind != "rest" or not intent.order_id
+                  or intent.window not in self.book.windows or intent.window in self.book.settled
+                  or intent.window in self.changed_windows else "resting")
+        twin = self.twin.orders.get(intent.twin_order_id)
+        matches = twin is not None and twin.window == intent.window and twin.side == intent.side
+        return QueueContext(client_id, intent.order_id, intent.window, intent.side, intent.price, reserved.remaining,
+                            status, intent.twin_order_id, twin.queue_ahead if matches and twin is not None else None,
+                            twin.remaining if matches and twin is not None else None)
+
+    def _queue_enabled(self) -> bool:
+        return (not self.stopping and not (self.stop_event is not None and self.stop_event.is_set())
+                and not self._gates() and not self.fatal_reason and not self.book.integrity_error
+                and self.authenticated and self.startup_done)
+
+    def _queue_tick(self) -> None:
+        """Optional background work; never called from the execution or account-read worker path."""
+        try:
+            enabled = self._queue_enabled()
+            if (self.queue_observer is not None and self.queue_observer.reader is None
+                    and self.queue_observer_error is None and enabled):
+                factory = getattr(self.client, "own_queue_reader", None)
+                if callable(factory):
+                    self.queue_observer.reader = factory()
+            if self.queue_observer is not None:
+                candidates = []
+                # This registry is populated only at new successful ordinary-maker acknowledgements.
+                # Never scan full financial history or startup/recovery orders for optional evidence.
+                for client_id in list(self.queue_observer.tracked):
+                    context = self._queue_context(client_id)
+                    if context is None or context.status in {"terminal", "foreign_window", "unsupported"}:
+                        self.queue_observer.tracked.remove(client_id)
+                    else:
+                        candidates.append(context)
+                self.queue_observer.poll(candidates, lambda item: self._queue_context(item.client_order_id),
+                                         enabled=enabled)
+        except Exception as exc:  # noqa: BLE001 - observer failures never change real orders or stops.
+            self.queue_observer_error = type(exc).__name__
+            if self.queue_observer is not None:
+                self.queue_observer.stop()
+
+    async def _queue_probe(self) -> None:
+        while not self.stopping:
+            self._queue_tick()
+            await asyncio.sleep(.1)
+
+    def _queue_flush(self) -> None:
+        if self.queue_observer is None or self._queue_in_pending:
+            return
+        try:
+            for row in self.queue_observer.drain():
+                self.pending.append((row["event"], {"venue": "kalshi", **{key: value for key, value in row.items()
+                                                                          if key != "event"}}))
+                self._queue_in_pending = True
+        except Exception as exc:  # noqa: BLE001 - preserve the existing financial checkpoint on diagnostic failure.
+            self.queue_observer_error = type(exc).__name__
+            self.queue_observer.stop()
+
+    def _queue_panel(self) -> dict[str, Any]:
+        try:
+            return ({**self.queue_observer.status(), "error": self.queue_observer_error}
+                    if self.queue_observer is not None else
+                    {"mode": "diagnostic", "enabled": False, "error": self.queue_observer_error})
+        except Exception:  # noqa: BLE001 - a display error has no financial authority.
+            return {"mode": "diagnostic", "enabled": False, "error": "status_unavailable"}
 
     def _twin_events(self, events: list[Any], *, trace_origin: Intent | None = None,
                      trace_scope: str = "practice_model", trace_before: OrderState | None = None) -> None:
@@ -2124,6 +2212,12 @@ class KalshiLiveDesk:
             if not intent.order_id:
                 raise ValueError("Create response has no order identifier")
             self.book.mark_submitted(client_id, intent.order_id)
+            if not intent.lock and kind == "rest" and self.queue_observer is not None:
+                try:
+                    self.queue_observer.register(client_id)
+                except Exception as exc:  # noqa: BLE001 - an evidence failure cannot interrupt a real acknowledgement.
+                    self.queue_observer_error = type(exc).__name__
+                    self.queue_observer.stop()
             self.refusals = 0
             acked = self.monotonic()
             # Where the decision-to-acknowledgement time went: the pre-send disk write, the wait from the decision
@@ -2623,7 +2717,7 @@ class KalshiLiveDesk:
         self.stop_event = stop
         self.wake = asyncio.Event()  # bound to this run's event loop
         probes = [asyncio.create_task(self._lag_probe()), asyncio.create_task(self._clock_probe()),
-                  asyncio.create_task(self._markout_probe())]
+                  asyncio.create_task(self._markout_probe()), asyncio.create_task(self._queue_probe())]
         try:
             while not stop.is_set():
                 self.wake.clear()
@@ -2644,6 +2738,8 @@ class KalshiLiveDesk:
         if self.closed or self.shutdown_done:
             return
         self.stopping = True
+        if self.queue_observer is not None:
+            self.queue_observer.stop()
         # A cancelled controller may leave a shielded create/cancel in flight. Drain those writes first, but do
         # not let a history GET delay cancellation of known resting orders on the independent write connection.
         writes = self._workers - self._read_workers
@@ -2680,7 +2776,17 @@ class KalshiLiveDesk:
         for record in self._practice("pull_shutdown", lambda: self.pull.expire(self.clock(), everything=True)) or []:
             self._record("speeddesk_live_pull", **record)
         self._markout_call("expire", now=self.clock(), mono=self.monotonic(), reason="shutdown")
+        # The optional HTTP read cannot hold up final financial durability, just as it cannot delay cancels.
         self.checkpoint(durable=True)
+        if self.queue_observer is not None:
+            try:
+                await self.queue_observer.close(lambda item: self._queue_context(item.client_order_id))
+                log.info("speeddesk_queue_shutdown %s", json.dumps(
+                    {"version": 1, "session_id": self.queue_observer.session_id,
+                     "unpublished": self.queue_observer.counts["shutdown_unpublished"],
+                     "reason": "no_extra_financial_checkpoint_for_observer"}, allow_nan=False))
+            except Exception as exc:  # noqa: BLE001 - all real cleanup above has priority over the observer.
+                self.queue_observer_error = type(exc).__name__
         self.shutdown_done = True
 
     @observed("live_panel")
@@ -2725,6 +2831,7 @@ class KalshiLiveDesk:
                 "today": self._summary(utc_day(self.clock())), "total": self._summary(None),
                 "practice_twin": self._twin_summary(utc_day(self.clock())),
                 "twin_trace": self._twin_trace_panel(),
+                "own_order_queue": self._queue_panel(),
                 "reports": self.reports,
                 "pull": self._pull_panel(),
                 "fill_markouts": self._markout_panel(),
@@ -2831,6 +2938,9 @@ class KalshiLiveDesk:
         if not self.closed:
             if any(not task.done() for task in self._workers):
                 raise RuntimeError("Cannot release Kalshi account lock while network writes may still run")
+            if (self.queue_observer is not None and not self.queue_observer.close_idle(
+                    lambda item: self._queue_context(item.client_order_id))):
+                raise RuntimeError("Cannot close while the optional queue read is still running")
             if self.client is not None:
                 self.client.close()
             self.ledger.close()

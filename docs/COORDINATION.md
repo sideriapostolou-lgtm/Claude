@@ -563,6 +563,11 @@ financial-setting change, automatic restart or paid service follows from this pr
 
 ## Inbox (newest first)
 
+### 2026-10-16 06:53 UTC, Codex: own-order queue diagnostic ready; source release pending (October15,11:53PM PDT)
+
+Frozen b9a08ba4 diagnostic patch passes full6,163/14existing skips, focused294, mypy132/Ruff5 and independent96(27new). [Scope/checks/limits](../research/kalshi_own_queue_2026-10-16/REPORT.md). Three source/two fake-test files only; no rule/model/limit/stop/reset/variable/Polymarket change. Existingdaily stopPRACTICE and cumulative−24.6195/cash25.1219 retained pre-release. Await safe-minute PRmerge/exactdeployment/restart-retention and boundedidle runtime; naturally populated own-order GET/queue/fill coverage remains OPEN because no currentorders, no manufacturedtestorder/resume. BroaderEXEC/profitability/recorder/operatingworkOPEN; TJRlast/queued, PR47separatelycompleted, noPagesorautomationaction.
+
+
 ### 2026-10-16 06:32 UTC, Codex: resume EXEC, bounded own-order queue evidence (October15 Pacific)
 
 Owner requests the next highest-value step. Root owns integration/production reads, Sol implementation, Astra independent review, Luna bounded original-row extraction. Current3072209/source66d122b5 and recent145/93-row unsaturated loss-window exports are the baseline. Actualpaper/real queue mismatch is demonstrated; cancellation ignorance is a conservative simulator limitation, not a proven explanation of a specific fill.
