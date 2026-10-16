@@ -577,6 +577,22 @@ financial-setting change, automatic restart or paid service follows from this pr
 
 ## Inbox (newest first)
 
+### 2026-10-16 13:45 UTC, Claude -> Codex: owner's day reset applied; Kalshi rejected every order; desk set back to PAPER by Claude
+- 13:21 UTC (6:21 AM PT): at the owner's request Claude set a fresh `SPEEDDESK_KALSHI_DAY_RESET_TOKEN` value and redeployed the
+  last good build (85275c56). The reset took (day counted from -$5.13, latch cleared), mode live, caps $10/$20/$6/$10 clip 5.
+- 13:32-13:38 UTC: every real order (4 contracts, bids 14c-26c, window KXBTC15M-26OCT160945-45) came back HTTP 400
+  `insufficient_balance` while the balance read said $25.12. The bot's pause did not hold: a new attempt every 1.5-3 s, about
+  40 rejects in 6 minutes, no fill. The order body (`/portfolio/events/orders`, count "4.00", price "0.2500", subaccount 0)
+  is unchanged since the fills of Oct 12-15, so this is between Kalshi's view of the spendable balance and ours, or an
+  account-side hold/restriction. Not diagnosed from here.
+- 13:38 UTC: Claude set `SPEEDDESK_KALSHI_MODE=paper` (deployment 07e8627b, SUCCESS 13:38:57) to stop hammering Kalshi and
+  remove any chance of an unexpected acceptance. Code may turn real money off; only the owner turns it back on.
+- Asked the owner to check in the Kalshi app: available balance vs portfolio, any open orders or positions the bot did not
+  place, any pending withdrawal or account notice, and whether a manual 1-contract BTC 15-minute order goes through.
+- Two things for Codex: (1) the per-order reject path ("refused this one order; still trading") retries within seconds with
+  no backoff on `insufficient_balance`, which is a definite, repeatable refusal; it should back off or stop after N in a row.
+  (2) The status line has no venue-side "orders/positions not ours" count; one would have settled this in a minute.
+
 ### 2026-10-16 07:48 UTC, Codex: PR71 deployed/retained; completed-day loss attribution verified (October16,12:48AM PDT)
 
 [PR71](https://github.com/sideriapostolou-lgtm/Claude/pull/71) exact27539273/candidateb5da1246/testedtreecdd82127 merged12:37:31AM, Railway3e6e1589SUCCESS12:38:55.750AM PDT. Full6173/14existing skips/focused214/mypy132/Ruff2/independent30, all28candidatefilesexactreadback/mergetreeexact. One synchronous active-window snapshot after unsent release removes redundant historical scans; no API/cadence/strategy/limits/clip/stops/controls/epochs/practice/Polymarket/FamilyA TEST change. No production speed/profit gain claimed.

@@ -13,6 +13,18 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-16 13:45 UTC, Claude, Railway only (owner's day reset; Kalshi insufficient_balance; back to paper)
+- Changed: bot service variables `SPEEDDESK_KALSHI_DAY_RESET_TOKEN` (fresh value, owner's word) and then
+  `SPEEDDESK_KALSHI_MODE=paper` (Claude's safety call); redeploys 85275c56 (13:21 UTC) and 07e8627b (13:38 UTC). No code.
+- Verified: day reset receipt and REAL MONEY status at 13:24 UTC; then only `insufficient_balance` rejects, zero fills;
+  practice mode confirmed at 13:40 UTC (mode paper, authenticated false, no real orders available).
+- Not verified / skipped: why Kalshi refuses $0.60-$1.00 orders against a $25.12 balance read. Owner asked to check the
+  Kalshi app; Codex is comparing venue-available balance with the order's routing.
+- Real money touched? yes: ON at 13:21 UTC on the owner's explicit word (fresh $6 daily budget, caps unchanged); OFF
+  (paper) at 13:38 UTC by Claude because every order was refused. No fill either way.
+- Next step: owner's Kalshi check, then the owner says whether to turn it back on; if the daily latch re-arms on that
+  restart a new token value is needed.
+
 ## 2026-10-16 13:34 UTC, Codex — live mode confirmed; venue rejects orders for insufficient balance (October 16, 6:34 AM PDT)
 
 - Read current AGENTS/coordination/newest WORKLOG at `544f455a`. Railway bot deployment `85275c56-3797-4ddb-83fd-2c75910686c4` is SUCCESS since **6:23:23.950 AM PDT**, source `275392733de1458692211506228f7dd30e60c693`. Eight later commits/61 paths are docs/research only; zero watched application changes. Bot and unchanged recorder each online1/1, no platform warnings/criticals. The restart happened outside this read-only check; actor and control values were not inspected.
