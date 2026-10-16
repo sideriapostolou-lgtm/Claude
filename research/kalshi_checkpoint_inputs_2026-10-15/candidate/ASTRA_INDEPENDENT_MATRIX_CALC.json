@@ -1,0 +1,95 @@
+{
+  "checks": {
+    "zero": {
+      "wall_medians_ms": {
+        "baseline": 1.752094,
+        "candidate": 1.84051
+      },
+      "percent_change": 5.046304593246709,
+      "full_byte_pairs_verified": 9
+    },
+    "one": {
+      "wall_medians_ms": {
+        "baseline": 1.942091,
+        "candidate": 1.835621
+      },
+      "percent_change": -5.482235384438738,
+      "full_byte_pairs_verified": 9
+    },
+    "1day": {
+      "wall_medians_ms": {
+        "baseline": 4.730555,
+        "candidate": 4.711168
+      },
+      "percent_change": -0.4098250628097544,
+      "full_byte_pairs_verified": 9
+    },
+    "fixed7days": {
+      "wall_medians_ms": {
+        "baseline": 10.267955,
+        "candidate": 9.418969
+      },
+      "percent_change": -8.26830659074762,
+      "full_byte_pairs_verified": 9
+    },
+    "7days": {
+      "wall_medians_ms": {
+        "baseline": 49.416842,
+        "candidate": 42.245809
+      },
+      "percent_change": -14.511313774360568,
+      "full_byte_pairs_verified": 9
+    },
+    "31days": {
+      "wall_medians_ms": {
+        "baseline": 618.279938,
+        "candidate": 502.983763
+      },
+      "percent_change": -18.647891984488098,
+      "full_byte_pairs_verified": 9
+    },
+    "older35days": {
+      "wall_medians_ms": {
+        "baseline": 261.091925,
+        "candidate": 212.406919
+      },
+      "percent_change": -18.646691581901663,
+      "full_byte_pairs_verified": 9
+    }
+  },
+  "zero_extension": {
+    "wall_ms": {
+      "paired_median_ratio": 0.9873702734231427,
+      "pairs_gt_1_05": 2,
+      "pooled_p95_ms": {
+        "baseline": 2.093165,
+        "candidate": 2.348005
+      },
+      "pooled_p95_growth_percent": 12.174864380017825
+    },
+    "thread_cpu_ms": {
+      "paired_median_ratio": 0.9909062182932835,
+      "pairs_gt_1_05": 2,
+      "pooled_p95_ms": {
+        "baseline": 2.07748,
+        "candidate": 2.338047
+      },
+      "pooled_p95_growth_percent": 12.542455282361331
+    }
+  },
+  "raw_children_verified": 78,
+  "full_output_byte_pairs": 72,
+  "input_claim": "Input sizes equal and fixture code shared; raw pre-checkpoint input hashes not recorded. First/correction/steady persisted full bytes equal.",
+  "source_test_hashes": {
+    "src/nightcrawler/speeddesk.py": "eb9146263a881ba2ef6645c03585ca78c7bc0e1d9f03cb5177028d483e403ef4",
+    "tests/test_speeddesk_checkpoint_settlements.py": "3eb15e8f138cbe47ef99b5b6fa76ac6ce6db4751bcba7e76b1d0d5585e13ca30"
+  },
+  "limits": {
+    "main_max_elapsed_s": 10.822223800991196,
+    "main_max_sampled_RSS_kib": 81356,
+    "main_max_sampled_disk_bytes": 15345281,
+    "extension_max_elapsed_s": 0.4708428500016453,
+    "extension_max_sampled_RSS_kib": 50460,
+    "extension_max_sampled_disk_bytes": 7126740
+  }
+}

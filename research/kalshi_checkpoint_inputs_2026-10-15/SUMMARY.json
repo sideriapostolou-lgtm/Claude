@@ -1,0 +1,959 @@
+{
+  "status": "passed",
+  "fixtures": {
+    "1day": {
+      "counts": {
+        "evidence_fills": 32,
+        "settlements": 46,
+        "unresolved": 4,
+        "windows": 50
+      },
+      "input_bytes": 74912,
+      "mirror_bytes": 68590,
+      "kv_json_bytes": 68590,
+      "mirror_sha256": "b64493d948250aa978474e37d6f8f8e1f11f623cb168c2cebd717e43248d31dc",
+      "receipts": {
+        "chain_valid": true,
+        "count": 116,
+        "kinds": {
+          "speeddesk_cancel": 16,
+          "speeddesk_daily": 1,
+          "speeddesk_daily_correction": 1,
+          "speeddesk_fill": 34,
+          "speeddesk_rest": 18,
+          "speeddesk_window": 46
+        },
+        "payload_bytes": 49791,
+        "tail_hash": "7991cf23036398c7334795c7169951a8c968435aaad1a9076d35a2d02f60a1be"
+      },
+      "first_full_sync_checkpoint_ms": {
+        "wall_ms": {
+          "n": 3,
+          "median": 17.036718,
+          "p95_nearest_rank": 17.963591,
+          "min": 15.063279,
+          "max": 17.963591
+        },
+        "thread_cpu_ms": {
+          "n": 3,
+          "median": 16.071349,
+          "p95_nearest_rank": 17.162048,
+          "min": 14.240431,
+          "max": 17.162048
+        }
+      },
+      "correction_checkpoint_ms": {
+        "wall_ms": {
+          "n": 3,
+          "median": 6.428274,
+          "p95_nearest_rank": 6.719523,
+          "min": 6.050605,
+          "max": 6.719523
+        },
+        "thread_cpu_ms": {
+          "n": 3,
+          "median": 6.427703,
+          "p95_nearest_rank": 6.719127,
+          "min": 6.050097,
+          "max": 6.719127
+        }
+      },
+      "max_child_elapsed_s": 0.4686226679914398,
+      "max_child_rss_kib": 48940,
+      "max_scratch_disk_bytes": 488646,
+      "runtime_forbidden_attempts_total": 0,
+      "blocked_import_socket_probes": 5,
+      "operations": {
+        "checkpoint": {
+          "wall_ms": {
+            "n": 15,
+            "median": 5.221927,
+            "p95_nearest_rank": 8.551217,
+            "min": 4.514087,
+            "max": 8.551217
+          },
+          "thread_cpu_ms": {
+            "n": 15,
+            "median": 5.221932,
+            "p95_nearest_rank": 8.553552,
+            "min": 4.505042,
+            "max": 8.553552
+          },
+          "counted_calls_per_operation": {
+            "complete_kalshi_day": 2.0,
+            "coverage": 4.0,
+            "daily_reports": 1.0,
+            "panel": 1.0,
+            "speeddesk.asdict:Settlement": 184.0,
+            "speeddesk.asdict:Window": 100.0,
+            "speeddesk_model.asdict:Inventory": 50.0,
+            "speeddesk_model.asdict:PracticeOrder": 2.0,
+            "speeddesk_model.asdict:Settlement": 46.0,
+            "speeddesk_model.asdict:Window": 50.0,
+            "sql:BEGIN": 1.0,
+            "sql:COMMIT": 1.0,
+            "sql:INSERT": 1.0,
+            "sql:RELEASE": 1.0,
+            "sql:SAVEPOINT": 1.0,
+            "summary": 5.0,
+            "window_scorecard": 4.0
+          },
+          "counted_asdict_per_operation_ms": {
+            "speeddesk.asdict:Settlement": {
+              "wall_ms": 0.6478004,
+              "thread_cpu_ms": 0.6747764
+            },
+            "speeddesk.asdict:Window": {
+              "wall_ms": 0.5225172,
+              "thread_cpu_ms": 0.5369172
+            },
+            "speeddesk_model.asdict:Inventory": {
+              "wall_ms": 0.1917416,
+              "thread_cpu_ms": 0.1910732
+            },
+            "speeddesk_model.asdict:PracticeOrder": {
+              "wall_ms": 0.0111668,
+              "thread_cpu_ms": 0.0114154
+            },
+            "speeddesk_model.asdict:Settlement": {
+              "wall_ms": 0.1609652,
+              "thread_cpu_ms": 0.1660182
+            },
+            "speeddesk_model.asdict:Window": {
+              "wall_ms": 0.184837,
+              "thread_cpu_ms": 0.1906044
+            }
+          },
+          "instrumentation_wall_median_ms": {
+            "count": 5.60158,
+            "allocation": 30.356318
+          },
+          "instrumentation_wall_ratio_to_timing": {
+            "count": 1.0727036207131966,
+            "allocation": 5.813240591069159
+          },
+          "allocation_current_peak_bytes": [
+            77247,
+            348266
+          ],
+          "settlement_report_passes": 4.0
+        },
+        "daily_reports": {
+          "wall_ms": {
+            "n": 15,
+            "median": 0.995892,
+            "p95_nearest_rank": 1.47859,
+            "min": 0.940497,
+            "max": 1.47859
+          },
+          "thread_cpu_ms": {
+            "n": 15,
+            "median": 0.9961,
+            "p95_nearest_rank": 1.478781,
+            "min": 0.940696,
+            "max": 1.478781
+          },
+          "counted_calls_per_operation": {
+            "complete_kalshi_day": 1.0,
+            "coverage": 2.0,
+            "daily_reports": 1.0,
+            "speeddesk.asdict:Settlement": 92.0,
+            "speeddesk.asdict:Window": 50.0,
+            "summary": 2.0,
+            "window_scorecard": 2.0
+          },
+          "counted_asdict_per_operation_ms": {
+            "speeddesk.asdict:Settlement": {
+              "wall_ms": 0.3469388,
+              "thread_cpu_ms": 0.3577438
+            },
+            "speeddesk.asdict:Window": {
+              "wall_ms": 0.20380020000000001,
+              "thread_cpu_ms": 0.2102244
+            }
+          },
+          "instrumentation_wall_median_ms": {
+            "count": 1.343766,
+            "allocation": 8.733388
+          },
+          "instrumentation_wall_ratio_to_timing": {
+            "count": 1.3493089612126616,
+            "allocation": 8.769412747567005
+          },
+          "allocation_current_peak_bytes": [
+            21218,
+            70051
+          ],
+          "settlement_report_passes": 2.0
+        },
+        "summary": {
+          "wall_ms": {
+            "n": 15,
+            "median": 0.725164,
+            "p95_nearest_rank": 0.988047,
+            "min": 0.687924,
+            "max": 0.988047
+          },
+          "thread_cpu_ms": {
+            "n": 15,
+            "median": 0.725806,
+            "p95_nearest_rank": 0.989058,
+            "min": 0.688195,
+            "max": 0.989058
+          },
+          "counted_calls_per_operation": {
+            "complete_kalshi_day": 1.0,
+            "coverage": 2.0,
+            "speeddesk.asdict:Settlement": 92.0,
+            "speeddesk.asdict:Window": 50.0,
+            "summary": 3.0,
+            "window_scorecard": 2.0
+          },
+          "counted_asdict_per_operation_ms": {
+            "speeddesk.asdict:Settlement": {
+              "wall_ms": 0.320326,
+              "thread_cpu_ms": 0.3303064
+            },
+            "speeddesk.asdict:Window": {
+              "wall_ms": 0.1947924,
+              "thread_cpu_ms": 0.20478179999999999
+            }
+          },
+          "instrumentation_wall_median_ms": {
+            "count": 0.980964,
+            "allocation": 3.722328
+          },
+          "instrumentation_wall_ratio_to_timing": {
+            "count": 1.352747792223552,
+            "allocation": 5.133084378154459
+          },
+          "allocation_current_peak_bytes": [
+            27981,
+            60698
+          ],
+          "settlement_report_passes": 2.0
+        }
+      }
+    },
+    "7days": {
+      "counts": {
+        "evidence_fills": 224,
+        "settlements": 322,
+        "unresolved": 16,
+        "windows": 338
+      },
+      "input_bytes": 505978,
+      "mirror_bytes": 404638,
+      "kv_json_bytes": 404638,
+      "mirror_sha256": "1cdf0d46f6b56b8311e3a1b0bc2e4160d6a0052352781b35fe3aa8623b18d257",
+      "receipts": {
+        "chain_valid": true,
+        "count": 782,
+        "kinds": {
+          "speeddesk_cancel": 112,
+          "speeddesk_daily": 7,
+          "speeddesk_daily_correction": 1,
+          "speeddesk_fill": 226,
+          "speeddesk_rest": 114,
+          "speeddesk_window": 322
+        },
+        "payload_bytes": 288302,
+        "tail_hash": "3f19f1bfadf14a0a91a0a892d44fc9e7277e8b60508791b31035589e54980c1a"
+      },
+      "first_full_sync_checkpoint_ms": {
+        "wall_ms": {
+          "n": 3,
+          "median": 101.628372,
+          "p95_nearest_rank": 103.184238,
+          "min": 101.145672,
+          "max": 103.184238
+        },
+        "thread_cpu_ms": {
+          "n": 3,
+          "median": 100.133906,
+          "p95_nearest_rank": 101.98258,
+          "min": 99.69116,
+          "max": 101.98258
+        }
+      },
+      "correction_checkpoint_ms": {
+        "wall_ms": {
+          "n": 3,
+          "median": 62.341727,
+          "p95_nearest_rank": 69.369584,
+          "min": 62.028499,
+          "max": 69.369584
+        },
+        "thread_cpu_ms": {
+          "n": 3,
+          "median": 62.335251,
+          "p95_nearest_rank": 69.360982,
+          "min": 62.005536,
+          "max": 69.360982
+        }
+      },
+      "max_child_elapsed_s": 1.1835976930015022,
+      "max_child_rss_kib": 56684,
+      "max_scratch_disk_bytes": 3366622,
+      "runtime_forbidden_attempts_total": 0,
+      "blocked_import_socket_probes": 5,
+      "operations": {
+        "checkpoint": {
+          "wall_ms": {
+            "n": 15,
+            "median": 48.102451,
+            "p95_nearest_rank": 50.722514,
+            "min": 47.133487,
+            "max": 50.722514
+          },
+          "thread_cpu_ms": {
+            "n": 15,
+            "median": 48.101462,
+            "p95_nearest_rank": 50.32855,
+            "min": 47.121643,
+            "max": 50.32855
+          },
+          "counted_calls_per_operation": {
+            "complete_kalshi_day": 8.0,
+            "coverage": 22.0,
+            "daily_reports": 1.0,
+            "panel": 1.0,
+            "speeddesk.asdict:Settlement": 5152.0,
+            "speeddesk.asdict:Window": 2704.0,
+            "speeddesk_model.asdict:Inventory": 338.0,
+            "speeddesk_model.asdict:PracticeOrder": 2.0,
+            "speeddesk_model.asdict:Settlement": 322.0,
+            "speeddesk_model.asdict:Window": 338.0,
+            "sql:BEGIN": 1.0,
+            "sql:COMMIT": 1.0,
+            "sql:INSERT": 1.0,
+            "sql:RELEASE": 1.0,
+            "sql:SAVEPOINT": 1.0,
+            "summary": 17.0,
+            "window_scorecard": 16.0
+          },
+          "counted_asdict_per_operation_ms": {
+            "speeddesk.asdict:Settlement": {
+              "wall_ms": 18.343065,
+              "thread_cpu_ms": 19.0086448
+            },
+            "speeddesk.asdict:Window": {
+              "wall_ms": 9.9587684,
+              "thread_cpu_ms": 10.302315199999999
+            },
+            "speeddesk_model.asdict:Inventory": {
+              "wall_ms": 1.3126888,
+              "thread_cpu_ms": 1.362132
+            },
+            "speeddesk_model.asdict:PracticeOrder": {
+              "wall_ms": 0.0146774,
+              "thread_cpu_ms": 0.015020200000000001
+            },
+            "speeddesk_model.asdict:Settlement": {
+              "wall_ms": 1.1414714,
+              "thread_cpu_ms": 1.1912108000000001
+            },
+            "speeddesk_model.asdict:Window": {
+              "wall_ms": 1.2044406,
+              "thread_cpu_ms": 1.2421846
+            }
+          },
+          "instrumentation_wall_median_ms": {
+            "count": 65.342057,
+            "allocation": 278.029482
+          },
+          "instrumentation_wall_ratio_to_timing": {
+            "count": 1.3583935047301434,
+            "allocation": 5.779944186212049
+          },
+          "allocation_current_peak_bytes": [
+            341020,
+            2063752
+          ],
+          "settlement_report_passes": 16.0
+        },
+        "daily_reports": {
+          "wall_ms": {
+            "n": 15,
+            "median": 29.760217,
+            "p95_nearest_rank": 31.498785,
+            "min": 28.986752,
+            "max": 31.498785
+          },
+          "thread_cpu_ms": {
+            "n": 15,
+            "median": 29.760553,
+            "p95_nearest_rank": 31.49901,
+            "min": 28.98265,
+            "max": 31.49901
+          },
+          "counted_calls_per_operation": {
+            "complete_kalshi_day": 7.0,
+            "coverage": 20.0,
+            "daily_reports": 1.0,
+            "speeddesk.asdict:Settlement": 4508.0,
+            "speeddesk.asdict:Window": 2366.0,
+            "summary": 14.0,
+            "window_scorecard": 14.0
+          },
+          "counted_asdict_per_operation_ms": {
+            "speeddesk.asdict:Settlement": {
+              "wall_ms": 15.7809074,
+              "thread_cpu_ms": 16.3307946
+            },
+            "speeddesk.asdict:Window": {
+              "wall_ms": 8.7530606,
+              "thread_cpu_ms": 9.0415478
+            }
+          },
+          "instrumentation_wall_median_ms": {
+            "count": 41.452748,
+            "allocation": 154.444663
+          },
+          "instrumentation_wall_ratio_to_timing": {
+            "count": 1.3928913219954007,
+            "allocation": 5.189634974771857
+          },
+          "allocation_current_peak_bytes": [
+            7410,
+            265604
+          ],
+          "settlement_report_passes": 14.0
+        },
+        "summary": {
+          "wall_ms": {
+            "n": 15,
+            "median": 3.929217,
+            "p95_nearest_rank": 4.291076,
+            "min": 3.857451,
+            "max": 4.291076
+          },
+          "thread_cpu_ms": {
+            "n": 15,
+            "median": 3.930079,
+            "p95_nearest_rank": 4.292556,
+            "min": 3.858434,
+            "max": 4.292556
+          },
+          "counted_calls_per_operation": {
+            "complete_kalshi_day": 1.0,
+            "coverage": 2.0,
+            "speeddesk.asdict:Settlement": 644.0,
+            "speeddesk.asdict:Window": 338.0,
+            "summary": 3.0,
+            "window_scorecard": 2.0
+          },
+          "counted_asdict_per_operation_ms": {
+            "speeddesk.asdict:Settlement": {
+              "wall_ms": 2.2282376,
+              "thread_cpu_ms": 2.311248
+            },
+            "speeddesk.asdict:Window": {
+              "wall_ms": 1.2294188000000001,
+              "thread_cpu_ms": 1.2800344
+            }
+          },
+          "instrumentation_wall_median_ms": {
+            "count": 5.568318,
+            "allocation": 17.441169
+          },
+          "instrumentation_wall_ratio_to_timing": {
+            "count": 1.4171571587927059,
+            "allocation": 4.4388408682951335
+          },
+          "allocation_current_peak_bytes": [
+            14334,
+            247770
+          ],
+          "settlement_report_passes": 2.0
+        }
+      }
+    },
+    "31days": {
+      "counts": {
+        "evidence_fills": 992,
+        "settlements": 1426,
+        "unresolved": 64,
+        "windows": 1490
+      },
+      "input_bytes": 2243554,
+      "mirror_bytes": 1758496,
+      "kv_json_bytes": 1758496,
+      "mirror_sha256": "c27c52da58150ecbb131e48f6e09589f2c3becba7fb221f5b507929b5325271c",
+      "receipts": {
+        "chain_valid": true,
+        "count": 3446,
+        "kinds": {
+          "speeddesk_cancel": 496,
+          "speeddesk_daily": 31,
+          "speeddesk_daily_correction": 1,
+          "speeddesk_fill": 994,
+          "speeddesk_rest": 498,
+          "speeddesk_window": 1426
+        },
+        "payload_bytes": 1245968,
+        "tail_hash": "be95931484a631e299c425bb41627a23c694840c283e1487a4c373b3a0bcca1d"
+      },
+      "first_full_sync_checkpoint_ms": {
+        "wall_ms": {
+          "n": 3,
+          "median": 856.018142,
+          "p95_nearest_rank": 870.195165,
+          "min": 828.759535,
+          "max": 870.195165
+        },
+        "thread_cpu_ms": {
+          "n": 3,
+          "median": 851.264305,
+          "p95_nearest_rank": 866.551367,
+          "min": 823.970903,
+          "max": 866.551367
+        }
+      },
+      "correction_checkpoint_ms": {
+        "wall_ms": {
+          "n": 3,
+          "median": 623.941066,
+          "p95_nearest_rank": 633.183972,
+          "min": 621.208427,
+          "max": 633.183972
+        },
+        "thread_cpu_ms": {
+          "n": 3,
+          "median": 622.860469,
+          "p95_nearest_rank": 632.476193,
+          "min": 620.331633,
+          "max": 632.476193
+        }
+      },
+      "max_child_elapsed_s": 10.673243116994854,
+      "max_child_rss_kib": 78164,
+      "max_scratch_disk_bytes": 10105960,
+      "runtime_forbidden_attempts_total": 0,
+      "blocked_import_socket_probes": 5,
+      "operations": {
+        "checkpoint": {
+          "wall_ms": {
+            "n": 15,
+            "median": 617.890174,
+            "p95_nearest_rank": 643.105718,
+            "min": 600.464756,
+            "max": 643.105718
+          },
+          "thread_cpu_ms": {
+            "n": 15,
+            "median": 617.831436,
+            "p95_nearest_rank": 643.072283,
+            "min": 600.42949,
+            "max": 643.072283
+          },
+          "counted_calls_per_operation": {
+            "complete_kalshi_day": 32.0,
+            "coverage": 94.0,
+            "daily_reports": 1.0,
+            "panel": 1.0,
+            "speeddesk.asdict:Settlement": 91264.0,
+            "speeddesk.asdict:Window": 47680.0,
+            "speeddesk_model.asdict:Inventory": 1490.0,
+            "speeddesk_model.asdict:PracticeOrder": 2.0,
+            "speeddesk_model.asdict:Settlement": 1426.0,
+            "speeddesk_model.asdict:Window": 1490.0,
+            "sql:BEGIN": 1.0,
+            "sql:COMMIT": 1.0,
+            "sql:INSERT": 1.0,
+            "sql:RELEASE": 1.0,
+            "sql:SAVEPOINT": 1.0,
+            "summary": 65.0,
+            "window_scorecard": 64.0
+          },
+          "counted_asdict_per_operation_ms": {
+            "speeddesk.asdict:Settlement": {
+              "wall_ms": 322.4217852,
+              "thread_cpu_ms": 334.0162938
+            },
+            "speeddesk.asdict:Window": {
+              "wall_ms": 171.384938,
+              "thread_cpu_ms": 177.13672019999998
+            },
+            "speeddesk_model.asdict:Inventory": {
+              "wall_ms": 6.0895176,
+              "thread_cpu_ms": 6.2756978
+            },
+            "speeddesk_model.asdict:PracticeOrder": {
+              "wall_ms": 0.016234600000000002,
+              "thread_cpu_ms": 0.016677400000000002
+            },
+            "speeddesk_model.asdict:Settlement": {
+              "wall_ms": 5.0690892000000005,
+              "thread_cpu_ms": 5.226539
+            },
+            "speeddesk_model.asdict:Window": {
+              "wall_ms": 5.3636244,
+              "thread_cpu_ms": 5.5081896
+            }
+          },
+          "instrumentation_wall_median_ms": {
+            "count": 859.603038,
+            "allocation": 2834.388053
+          },
+          "instrumentation_wall_ratio_to_timing": {
+            "count": 1.3911906584227378,
+            "allocation": 4.587203636288931
+          },
+          "allocation_current_peak_bytes": [
+            502417,
+            8436884
+          ],
+          "settlement_report_passes": 64.0
+        },
+        "daily_reports": {
+          "wall_ms": {
+            "n": 15,
+            "median": 542.135387,
+            "p95_nearest_rank": 555.541141,
+            "min": 531.737702,
+            "max": 555.541141
+          },
+          "thread_cpu_ms": {
+            "n": 15,
+            "median": 542.115096,
+            "p95_nearest_rank": 555.501347,
+            "min": 531.724303,
+            "max": 555.501347
+          },
+          "counted_calls_per_operation": {
+            "complete_kalshi_day": 31.0,
+            "coverage": 92.0,
+            "daily_reports": 1.0,
+            "speeddesk.asdict:Settlement": 88412.0,
+            "speeddesk.asdict:Window": 46190.0,
+            "summary": 62.0,
+            "window_scorecard": 62.0
+          },
+          "counted_asdict_per_operation_ms": {
+            "speeddesk.asdict:Settlement": {
+              "wall_ms": 311.9698314,
+              "thread_cpu_ms": 323.9883534
+            },
+            "speeddesk.asdict:Window": {
+              "wall_ms": 168.97645359999999,
+              "thread_cpu_ms": 174.8134516
+            }
+          },
+          "instrumentation_wall_median_ms": {
+            "count": 767.267339,
+            "allocation": 2324.182823
+          },
+          "instrumentation_wall_ratio_to_timing": {
+            "count": 1.4152688745256172,
+            "allocation": 4.287089311511775
+          },
+          "allocation_current_peak_bytes": [
+            278534,
+            1376804
+          ],
+          "settlement_report_passes": 62.0
+        },
+        "summary": {
+          "wall_ms": {
+            "n": 15,
+            "median": 17.157803,
+            "p95_nearest_rank": 18.495709,
+            "min": 16.540724,
+            "max": 18.495709
+          },
+          "thread_cpu_ms": {
+            "n": 15,
+            "median": 17.159673,
+            "p95_nearest_rank": 18.497791,
+            "min": 16.54179,
+            "max": 18.497791
+          },
+          "counted_calls_per_operation": {
+            "complete_kalshi_day": 1.0,
+            "coverage": 2.0,
+            "speeddesk.asdict:Settlement": 2852.0,
+            "speeddesk.asdict:Window": 1490.0,
+            "summary": 3.0,
+            "window_scorecard": 2.0
+          },
+          "counted_asdict_per_operation_ms": {
+            "speeddesk.asdict:Settlement": {
+              "wall_ms": 10.054597,
+              "thread_cpu_ms": 10.3982622
+            },
+            "speeddesk.asdict:Window": {
+              "wall_ms": 5.336879,
+              "thread_cpu_ms": 5.5256468
+            }
+          },
+          "instrumentation_wall_median_ms": {
+            "count": 23.938097,
+            "allocation": 70.926301
+          },
+          "instrumentation_wall_ratio_to_timing": {
+            "count": 1.3951726220425773,
+            "allocation": 4.133763571011976
+          },
+          "allocation_current_peak_bytes": [
+            14626,
+            1072625
+          ],
+          "settlement_report_passes": 2.0
+        }
+      }
+    },
+    "older35days": {
+      "counts": {
+        "evidence_fills": 420,
+        "settlements": 490,
+        "unresolved": 72,
+        "windows": 562
+      },
+      "input_bytes": 896150,
+      "mirror_bytes": 1096342,
+      "kv_json_bytes": 1096342,
+      "mirror_sha256": "197a962081db1ea7aa0a7f63d6bb9515fc7d9c0b157c504ccf56cf8a2cc09511",
+      "receipts": {
+        "chain_valid": true,
+        "count": 1370,
+        "kinds": {
+          "speeddesk_cancel": 210,
+          "speeddesk_daily": 35,
+          "speeddesk_daily_correction": 1,
+          "speeddesk_fill": 422,
+          "speeddesk_rest": 212,
+          "speeddesk_window": 490
+        },
+        "payload_bytes": 695915,
+        "tail_hash": "a9b5a5b03b20a66e9f16516dd6a99605b8651428f63d70e552db746936e8ae86"
+      },
+      "first_full_sync_checkpoint_ms": {
+        "wall_ms": {
+          "n": 3,
+          "median": 380.529596,
+          "p95_nearest_rank": 390.014084,
+          "min": 366.777488,
+          "max": 390.014084
+        },
+        "thread_cpu_ms": {
+          "n": 3,
+          "median": 378.964071,
+          "p95_nearest_rank": 388.374423,
+          "min": 365.278982,
+          "max": 388.374423
+        }
+      },
+      "correction_checkpoint_ms": {
+        "wall_ms": {
+          "n": 3,
+          "median": 270.059659,
+          "p95_nearest_rank": 272.448959,
+          "min": 262.610683,
+          "max": 272.448959
+        },
+        "thread_cpu_ms": {
+          "n": 3,
+          "median": 270.050487,
+          "p95_nearest_rank": 272.440011,
+          "min": 262.601958,
+          "max": 272.440011
+        }
+      },
+      "max_child_elapsed_s": 4.8630499879946,
+      "max_child_rss_kib": 65800,
+      "max_scratch_disk_bytes": 9207169,
+      "runtime_forbidden_attempts_total": 0,
+      "blocked_import_socket_probes": 5,
+      "operations": {
+        "checkpoint": {
+          "wall_ms": {
+            "n": 15,
+            "median": 259.49743,
+            "p95_nearest_rank": 281.524601,
+            "min": 254.102702,
+            "max": 281.524601
+          },
+          "thread_cpu_ms": {
+            "n": 15,
+            "median": 259.474218,
+            "p95_nearest_rank": 281.485501,
+            "min": 254.086527,
+            "max": 281.485501
+          },
+          "counted_calls_per_operation": {
+            "complete_kalshi_day": 36.0,
+            "coverage": 106.0,
+            "daily_reports": 1.0,
+            "panel": 1.0,
+            "speeddesk.asdict:Settlement": 35280.0,
+            "speeddesk.asdict:Window": 20232.0,
+            "speeddesk_model.asdict:Inventory": 562.0,
+            "speeddesk_model.asdict:PracticeOrder": 2.0,
+            "speeddesk_model.asdict:Settlement": 490.0,
+            "speeddesk_model.asdict:Window": 562.0,
+            "sql:BEGIN": 1.0,
+            "sql:COMMIT": 1.0,
+            "sql:INSERT": 1.0,
+            "sql:RELEASE": 1.0,
+            "sql:SAVEPOINT": 1.0,
+            "summary": 73.0,
+            "window_scorecard": 72.0
+          },
+          "counted_asdict_per_operation_ms": {
+            "speeddesk.asdict:Settlement": {
+              "wall_ms": 126.484681,
+              "thread_cpu_ms": 130.65006540000002
+            },
+            "speeddesk.asdict:Window": {
+              "wall_ms": 72.978398,
+              "thread_cpu_ms": 75.3186858
+            },
+            "speeddesk_model.asdict:Inventory": {
+              "wall_ms": 2.2941226,
+              "thread_cpu_ms": 2.3716858
+            },
+            "speeddesk_model.asdict:PracticeOrder": {
+              "wall_ms": 0.0163426,
+              "thread_cpu_ms": 0.0166866
+            },
+            "speeddesk_model.asdict:Settlement": {
+              "wall_ms": 1.7448596,
+              "thread_cpu_ms": 1.8026868
+            },
+            "speeddesk_model.asdict:Window": {
+              "wall_ms": 2.0322384,
+              "thread_cpu_ms": 2.1108474
+            }
+          },
+          "instrumentation_wall_median_ms": {
+            "count": 354.548441,
+            "allocation": 1200.580632
+          },
+          "instrumentation_wall_ratio_to_timing": {
+            "count": 1.3662888337660994,
+            "allocation": 4.626560779426601
+          },
+          "allocation_current_peak_bytes": [
+            32248,
+            3734894
+          ],
+          "settlement_report_passes": 72.0
+        },
+        "daily_reports": {
+          "wall_ms": {
+            "n": 15,
+            "median": 220.4835,
+            "p95_nearest_rank": 238.63493,
+            "min": 216.461159,
+            "max": 238.63493
+          },
+          "thread_cpu_ms": {
+            "n": 15,
+            "median": 220.47412,
+            "p95_nearest_rank": 238.62569,
+            "min": 216.459435,
+            "max": 238.62569
+          },
+          "counted_calls_per_operation": {
+            "complete_kalshi_day": 35.0,
+            "coverage": 104.0,
+            "daily_reports": 1.0,
+            "speeddesk.asdict:Settlement": 34300.0,
+            "speeddesk.asdict:Window": 19670.0,
+            "summary": 70.0,
+            "window_scorecard": 70.0
+          },
+          "counted_asdict_per_operation_ms": {
+            "speeddesk.asdict:Settlement": {
+              "wall_ms": 121.39985340000001,
+              "thread_cpu_ms": 125.739081
+            },
+            "speeddesk.asdict:Window": {
+              "wall_ms": 71.49622459999999,
+              "thread_cpu_ms": 74.0455
+            }
+          },
+          "instrumentation_wall_median_ms": {
+            "count": 311.175504,
+            "allocation": 925.073604
+          },
+          "instrumentation_wall_ratio_to_timing": {
+            "count": 1.4113323854165958,
+            "allocation": 4.195659103742457
+          },
+          "allocation_current_peak_bytes": [
+            13289,
+            403591
+          ],
+          "settlement_report_passes": 70.0
+        },
+        "summary": {
+          "wall_ms": {
+            "n": 15,
+            "median": 6.190829,
+            "p95_nearest_rank": 6.974622,
+            "min": 5.985102,
+            "max": 6.974622
+          },
+          "thread_cpu_ms": {
+            "n": 15,
+            "median": 6.191812,
+            "p95_nearest_rank": 6.975836,
+            "min": 5.985908,
+            "max": 6.975836
+          },
+          "counted_calls_per_operation": {
+            "complete_kalshi_day": 1.0,
+            "coverage": 2.0,
+            "speeddesk.asdict:Settlement": 980.0,
+            "speeddesk.asdict:Window": 562.0,
+            "summary": 3.0,
+            "window_scorecard": 2.0
+          },
+          "counted_asdict_per_operation_ms": {
+            "speeddesk.asdict:Settlement": {
+              "wall_ms": 3.4374992,
+              "thread_cpu_ms": 3.5626876000000003
+            },
+            "speeddesk.asdict:Window": {
+              "wall_ms": 2.0323782,
+              "thread_cpu_ms": 2.1017053999999997
+            }
+          },
+          "instrumentation_wall_median_ms": {
+            "count": 8.655281,
+            "allocation": 24.882677
+          },
+          "instrumentation_wall_ratio_to_timing": {
+            "count": 1.3980810970550148,
+            "allocation": 4.019280293479274
+          },
+          "allocation_current_peak_bytes": [
+            14382,
+            383370
+          ],
+          "settlement_report_passes": 2.0
+        }
+      },
+      "old_reports_preserved": [
+        "2026-08-01",
+        "2026-08-02",
+        "2026-08-03",
+        "2026-08-04"
+      ]
+    }
+  },
+  "limitations": [
+    "Synthetic sparse windows, no production-size or event-causality equivalence.",
+    "Timing has a common FakeClock.now call-counter increment; count/allocation passes add separate instrumentation.",
+    "15 samples = 3 sequential isolated processes x5; p95 nearest-rank is descriptive, not a production percentile.",
+    "Conversion timings have wrapper clock/counter overhead. Inclusive nested function timings must never be summed.",
+    "Only inert paper companion panel measured; actual live companion display/state costs excluded.",
+    "No optimization/candidate run or predicted/actual production speed or profit measured.",
+    "Initial pilot used after-expiry carry fill, superseded. Failed-v1 matrix correctly caught blocked import-time urllib3 IPv6 socket probe. Corrected carry fill occurs600s after midnight,299s before window end.",
+    "Probe denial remains active; corrected final matrix records blocked import probes separately from asserted-zero runtime attempts."
+  ],
+  "resource_upper_bound_persistent_plus_peak_scratch_bytes": 10310831,
+  "manifest_sha256": "1552cbf76f6e4002b99442bb7310e0e0aeef3f59f18f1aacc833926629778981"
+}

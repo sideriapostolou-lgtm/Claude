@@ -38,6 +38,7 @@ from .speeddesk_model import (
     Book,
     Decision,
     PracticeDesk,
+    Settlement,
     SpeedConfig,
     Trade,
     Window,
@@ -51,6 +52,8 @@ from .speeddesk_worktrace import WorkTrace, observed, work_span
 log = logging.getLogger("nightcrawler.speeddesk")
 STATE_KEY = "speeddesk_state"
 ARENA_EXIT_WAIT_S = 1.0  # kalshi_arena.EXIT_WAIT_S: at close, time for the practice town's final save
+_SETTLEMENT_FIELDS = ("window", "at", "up_wins", "up_shares", "down_shares", "cost_usd", "fee_usd",
+                      "payout_usd", "locked_usd", "direction_usd", "pnl_usd")
 
 
 def practice_config(settings: Settings) -> SpeedConfig:
@@ -114,6 +117,7 @@ class SpeedRunner:
         self.ledger.set_synchronous(False)
         self._first_save_synced = False
         self.pending: list[tuple[str, dict[str, Any]]] = []
+        self._settlement_cache: dict[int, tuple[Settlement, tuple[Any, ...], dict[str, Any]]] | None = None
         self.last_checkpoint = -math.inf
         self.last_heartbeat = -math.inf
         self.last_step = self.clock.now()
@@ -344,6 +348,41 @@ class SpeedRunner:
             self.arena.feed_gap(tuple(status.get("gap_windows", ())), bool(status.get("trade_stream")),
                                 status.get("coinbase") == "connected")
 
+    def _settlement_report_row(self, row: Settlement) -> dict[str, Any]:
+        cache = self._settlement_cache
+        if cache is None or type(row) is not Settlement:
+            return asdict(row)
+        previous = cache.get(id(row))
+        if previous is not None and previous[0] is row:
+            # Cached scalar objects are exact immutable builtins. Checking their
+            # identities avoids invoking equality/hash on a replacement exotic.
+            for name, value in zip(_SETTLEMENT_FIELDS, previous[1], strict=True):
+                try:
+                    current = getattr(row, name)
+                except AttributeError:
+                    cache.pop(id(row), None)
+                    return asdict(row)
+                if current is not value:
+                    cache.pop(id(row), None)
+                    return asdict(row)
+            return previous[2].copy()
+        # Populate lazily, in original field order, falling back immediately at
+        # the first exotic or missing value without inspecting later fields.
+        values = []
+        for name in _SETTLEMENT_FIELDS:
+            try:
+                value = getattr(row, name)
+            except AttributeError:
+                return asdict(row)
+            kind = type(value)
+            if kind is not str and kind is not bool and kind is not int and kind is not float and value is not None:
+                return asdict(row)
+            values.append(value)
+        converted = asdict(row)
+        cache[id(row)] = (row, tuple(values), converted)
+        # Consumers receive independent containers, including duplicate rows.
+        return converted.copy()
+
     def summary(self, day: str, venue: str | None = None) -> dict[str, Any]:
         report = self.desk.daily_summary(day, venue=venue)
         latency = self.feed_latency.get(day, [0.0, 0.0])
@@ -362,7 +401,7 @@ class SpeedRunner:
             windows = [asdict(window) for window in self.desk.windows.values()
                        if window.venue == venue and window.end <= self.clock.now()]
             report["scorecard"] = window_scorecard(
-                day, windows=windows, fills=self.evidence.fills, settlements=[asdict(row) for row in self.desk.closed],
+                day, windows=windows, fills=self.evidence.fills, settlements=[self._settlement_report_row(row) for row in self.desk.closed],
                 coverage=self.evidence.coverage(windows), scope="practice", as_of=self.clock.now(),
                 day_coverage_complete=self.evidence.complete_kalshi_day(day, windows, self.clock.now())
                 if venue == "kalshi" else False)
@@ -547,35 +586,40 @@ class SpeedRunner:
 
     @observed("practice_checkpoint")
     def checkpoint(self, now: float) -> None:
-        self.daily_reports(now)
-        with work_span(self.work_trace, "practice_state"):
-            state = {"version": 1, "mode": "practice", "started_at": self.started_at, "updated_at": now,
-                     "model": self.desk.to_state(), "reports": self.reports, "observed_seconds": self.observed,
-                     "feed_latency": self.feed_latency, "opening_logged": sorted(self.opening_logged),
-                     "latency_metrics": self.metrics.state(),
-                     "window_evidence": self.evidence.state(),
-                     "venue_reporting_started_at": self.venue_reporting_started_at,
-                     "venue_coverage": self.venue_coverage,
-                     "panel": self.panel(now)}
-        with work_span(self.work_trace, "practice_ledger"):
-            first = not self._first_save_synced
-            if first:
-                self.ledger.set_synchronous(True)  # the ledger state is on disk before the display copy can be
-            with self.ledger.transaction():
+        previous = self._settlement_cache
+        self._settlement_cache = {}
+        try:
+            self.daily_reports(now)
+            with work_span(self.work_trace, "practice_state"):
+                state = {"version": 1, "mode": "practice", "started_at": self.started_at, "updated_at": now,
+                         "model": self.desk.to_state(), "reports": self.reports, "observed_seconds": self.observed,
+                         "feed_latency": self.feed_latency, "opening_logged": sorted(self.opening_logged),
+                         "latency_metrics": self.metrics.state(),
+                         "window_evidence": self.evidence.state(),
+                         "venue_reporting_started_at": self.venue_reporting_started_at,
+                         "venue_coverage": self.venue_coverage,
+                         "panel": self.panel(now)}
+            with work_span(self.work_trace, "practice_ledger"):
+                first = not self._first_save_synced
+                if first:
+                    self.ledger.set_synchronous(True)  # the ledger state is on disk before the display copy can be
+                with self.ledger.transaction():
+                    for kind, payload in self.pending:
+                        self.ledger.append_receipt(kind, payload, ts=payload.get("at", now))
+                    self.ledger.set_kv(STATE_KEY, state)
+                if first:
+                    self.ledger.set_synchronous(False)
+                    self._first_save_synced = True
+            with work_span(self.work_trace, "practice_logs"):
                 for kind, payload in self.pending:
-                    self.ledger.append_receipt(kind, payload, ts=payload.get("at", now))
-                self.ledger.set_kv(STATE_KEY, state)
-            if first:
-                self.ledger.set_synchronous(False)
-                self._first_save_synced = True
-        with work_span(self.work_trace, "practice_logs"):
-            for kind, payload in self.pending:
-                log.info("%s %s", kind, json.dumps(payload, allow_nan=False, separators=(",", ":")))
-            self.pending.clear()
-        # A mirror failure halts practice, but the committed ledger survives it. A display copy: not synced.
-        with work_span(self.work_trace, "practice_mirror"):
-            _atomic_json(self.path, state, durable=False)
-        self.last_checkpoint = now
+                    log.info("%s %s", kind, json.dumps(payload, allow_nan=False, separators=(",", ":")))
+                self.pending.clear()
+            # A mirror failure halts practice, but the committed ledger survives it. A display copy: not synced.
+            with work_span(self.work_trace, "practice_mirror"):
+                _atomic_json(self.path, state, durable=False)
+            self.last_checkpoint = now
+        finally:
+            self._settlement_cache = previous
 
     @observed("practice_step")
     def step(self, now: float) -> None:
