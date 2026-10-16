@@ -1,4 +1,6 @@
-"""A cancel await must not lend old market inputs to the next resting bid.
+"""Historical admission fixtures exercise prior policy; they do not establish current production admission.
+
+A cancel await must not lend old market inputs to the next resting bid.
 
 Only fake venue acknowledgements are used; reservations remain real model state.
 """
@@ -12,6 +14,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from historical_speeddesk_entry import make_historical_desk
 from test_speeddesk_live import TICKER, make_desk
 
 from nightcrawler.speeddesk_live import Intent, LiveSnapshot
@@ -23,7 +26,7 @@ from nightcrawler.speeddesk_live_model import ActualFill, OrderSnapshot
 def test_remaining_bid_uses_inputs_after_first_cancel(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, make_edge: float, change: str,
 ) -> None:
-    desk, account, clock = make_desk(
+    desk, account, clock = make_historical_desk(
         tmp_path, extra={"speeddesk_make_edge": make_edge, "speeddesk_kalshi_pull": False},
     )
     try:

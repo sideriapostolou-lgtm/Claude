@@ -1,4 +1,6 @@
-"""Slow reads must not delay safe cancellation; all network and account state here is fake."""
+"""Historical admission fixtures exercise prior policy; they do not establish current production admission.
+
+Slow reads must not delay safe cancellation; all network and account state here is fake."""
 
 from __future__ import annotations
 
@@ -13,8 +15,9 @@ from typing import Any
 import pytest
 import requests
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+from historical_speeddesk_entry import make_historical_desk
 from test_speeddesk_kalshi_client import Response, ack, create, pem
-from test_speeddesk_live import TICKER, make_desk
+from test_speeddesk_live import TICKER
 
 from nightcrawler.clock import FakeClock
 from nightcrawler.speeddesk_kalshi_client import KalshiClient, KalshiClientError
@@ -27,7 +30,7 @@ def client(transport: Any, clock: FakeClock | None = None, **kwargs: Any) -> Kal
 
 @pytest.mark.parametrize("trigger", ["stale", "cutoff", "mode", "confirmation", "fair_drop", "stop"])
 def test_pending_account_read_checks_cancellations_without_admitting_new_buys(tmp_path: Path, trigger: str) -> None:
-    desk, account, clock = make_desk(tmp_path, extra={"speeddesk_kalshi_pull": False,
+    desk, account, clock = make_historical_desk(tmp_path, extra={"speeddesk_kalshi_pull": False,
                                                     "speeddesk_take_edge": 1.0, "speeddesk_make_edge": .12})
     entered, release, cancelled = threading.Event(), threading.Event(), threading.Event()
     original, cancel = account.list_orders, account.cancel
@@ -111,7 +114,7 @@ def test_get_and_cancel_have_separate_transport_lanes() -> None:
 
 @pytest.mark.parametrize("status", [200, 404])
 def test_fill_racing_a_cancel_during_get_is_booked_once_before_reservation_release(tmp_path: Path, status: int) -> None:
-    desk, account, clock = make_desk(tmp_path, extra={"speeddesk_kalshi_pull": False,
+    desk, account, clock = make_historical_desk(tmp_path, extra={"speeddesk_kalshi_pull": False,
                                                     "speeddesk_take_edge": 1.0, "speeddesk_make_edge": .12})
     entered, release, cancelled = threading.Event(), threading.Event(), threading.Event()
     original = account.list_orders

@@ -1,4 +1,7 @@
-"""Independent callback-attribution boundary checks; fake accounts and clocks only."""
+"""Historical factory cases are HISTORICAL ENTRY MECHANISM ONLY; no current entry authority
+or profitability claim. Other cases retain the production factory.
+
+Independent callback-attribution boundary checks; fake accounts and clocks only."""
 
 from __future__ import annotations
 
@@ -11,6 +14,7 @@ from typing import Any
 
 import pytest
 from fakes import FakeClock
+from historical_speeddesk_entry import make_historical_desk
 from test_speeddesk_live import TICKER, fill_order, make_desk
 from test_speeddesk_live_runtime import PublicFeeds
 
@@ -60,7 +64,7 @@ def test_runner_and_live_share_observer_without_opening_account(tmp_path: Path) 
 
 @pytest.mark.parametrize("operation", ["overlap", "status"])
 def test_observer_query_fault_does_not_disable_accounting(tmp_path: Path, operation: str) -> None:
-    desk, account, clock = make_desk(tmp_path)
+    desk, account, clock = make_historical_desk(tmp_path)
     try:
         asyncio.run(desk.step())
         fill_order(account, clock, 0, side="up", price=.4, size=5)

@@ -1,4 +1,7 @@
-"""Bounded evidence only: fakes, no account/network, no simulated-fill changes."""
+"""Historical factory cases are HISTORICAL ENTRY MECHANISM ONLY; no current entry authority
+or profitability claim. Other cases retain the production factory.
+
+Bounded evidence only: fakes, no account/network, no simulated-fill changes."""
 
 from __future__ import annotations
 
@@ -10,6 +13,7 @@ from typing import Any
 from unittest.mock import patch
 
 import pytest
+from historical_speeddesk_entry import make_historical_desk
 from test_speeddesk_live import TICKER, fill_order, make_desk
 
 from nightcrawler.speeddesk_model import Decision, PracticeOrder
@@ -195,7 +199,7 @@ def test_enabled_and_disabled_keep_real_calls_financial_state_and_regular_receip
     tmp_path: Path,
 ) -> None:
     def run(path: Path, enabled: bool) -> dict[str, Any]:
-        desk, account, clock = make_desk(path)
+        desk, account, clock = make_historical_desk(path)
         try:
             if not enabled:
                 desk.twin_trace = None
@@ -250,7 +254,7 @@ def test_enabled_and_disabled_keep_real_calls_financial_state_and_regular_receip
 def test_extraction_or_observer_failure_cannot_block_original_cancel_or_receipt(
     tmp_path: Path,
 ) -> None:
-    desk, account, _ = make_desk(tmp_path)
+    desk, account, _ = make_historical_desk(tmp_path)
     try:
         asyncio.run(desk.step())
         intent = next(iter(desk.intents.values()))
@@ -302,7 +306,7 @@ def test_diagnostics_alone_do_not_schedule_save_or_displace_latest_events(
 def test_fill_notes_only_new_real_fill_and_cache_is_not_persistent(
     tmp_path: Path,
 ) -> None:
-    desk, account, clock = make_desk(tmp_path)
+    desk, account, clock = make_historical_desk(tmp_path)
     try:
         asyncio.run(desk.step())
         fill_order(account, clock, 0, side="up", price=0.4, size=1)

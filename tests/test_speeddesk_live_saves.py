@@ -1,4 +1,7 @@
-"""Latency review minor (2026-10-13): every reconcile marked the state dirty, so a quiet desk rewrote its whole
+"""Historical factory cases are HISTORICAL ENTRY MECHANISM ONLY; they do not prove current
+entry authority or profitability. Other cases retain the production factory.
+
+Latency review minor (2026-10-13): every reconcile marked the state dirty, so a quiet desk rewrote its whole
 state (up to 31 days of metrics, 7 to 69 ms each on the build machine) every second on the shared event loop.
 
 A reconcile that changes nothing of record now waits for the five-second save; one that does (an order id found, a
@@ -12,6 +15,7 @@ import itertools
 from pathlib import Path
 from typing import Any
 
+from historical_speeddesk_entry import make_historical_desk
 from test_speeddesk_live import TICKER, make_desk
 
 
@@ -28,7 +32,7 @@ def count_saves(desk: Any) -> list[float]:
 
 
 def test_a_quiet_desk_saves_every_five_seconds_not_every_second(tmp_path: Path) -> None:
-    desk, account, clock = make_desk(tmp_path, extra={"speeddesk_take_edge": 1.0})
+    desk, account, clock = make_historical_desk(tmp_path, extra={"speeddesk_take_edge": 1.0})
     try:
         asyncio.run(desk.step())  # one resting bid, then nothing changes
         assert account.creates and account.creates[0]["kind"] == "rest"

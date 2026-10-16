@@ -1,4 +1,7 @@
-"""The 2026-10-13 loss fixes: balancing buys are not new risk, a first buy leaves room for its hedge, the stops latch
+"""Historical factory cases are HISTORICAL ENTRY MECHANISM ONLY; they do not prove current
+entry authority or profitability. Other cases retain the production factory.
+
+The 2026-10-13 loss fixes: balancing buys are not new risk, a first buy leaves room for its hedge, the stops latch
 and the owner's day reset reaches the practice twin. Synthetic windows and a fake Kalshi account only."""
 
 from __future__ import annotations
@@ -12,6 +15,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from historical_speeddesk_entry import make_historical_desk
 from test_speeddesk_live import TICKER, events, make_desk
 
 from nightcrawler.config import Secret
@@ -324,7 +328,7 @@ def test_a_first_buy_is_sized_so_that_its_hedge_still_fits_under_the_stops():
 
 
 def test_the_desk_sends_no_one_sided_first_buy_near_a_stop(tmp_path: Path) -> None:
-    desk, account, clock = make_desk(tmp_path, caps=CAPS)
+    desk, account, clock = make_historical_desk(tmp_path, caps=CAPS)
     try:
         desk.book.realized_pnl = -8.7  # $1.30 of room: 3 contracts at 0.4 would fit, one with its hedge does
         asyncio.run(desk.step())
@@ -332,7 +336,7 @@ def test_the_desk_sends_no_one_sided_first_buy_near_a_stop(tmp_path: Path) -> No
         assert not desk.book.halted
     finally:
         desk.close()
-    desk, account, clock = make_desk(tmp_path / "none", caps=CAPS)
+    desk, account, clock = make_historical_desk(tmp_path / "none", caps=CAPS)
     try:
         desk.book.realized_pnl = -9.1  # $0.90 of room: not even one hedged contract
         asyncio.run(desk.step())
@@ -436,7 +440,7 @@ def test_resume_values_are_kept_while_nothing_is_latched_and_spent_by_the_stop_t
 
 
 def test_the_desk_latches_at_start_before_the_token_and_logs_every_token_use(tmp_path: Path) -> None:
-    desk, _, clock = make_desk(tmp_path, caps=CAPS)
+    desk, _, clock = make_historical_desk(tmp_path, caps=CAPS)
     try:
         # 2026-10-13, 4:15 PM PT: $0.0579 of room, `total_halted` false. (The loss since the last resume is modelled
         # with the stop anchor: a saved book's realized result must match its settlements.)
@@ -447,7 +451,7 @@ def test_the_desk_latches_at_start_before_the_token_and_logs_every_token_use(tmp
     finally:
         desk.close()
     # Without a token: latched at start, paper, no bids at all (a one-contract bid at 4c went out at 4:25 PM PT).
-    again, account, clock = make_desk(tmp_path, caps=CAPS)
+    again, account, clock = make_historical_desk(tmp_path, caps=CAPS)
     try:
         assert again.book.halted and again.panel()["total_halted"] and again.panel()["mode"] == "paper"
         latched = events(again, "speeddesk_live_stop")
@@ -461,7 +465,7 @@ def test_the_desk_latches_at_start_before_the_token_and_logs_every_token_use(tmp
         again.close()
     # A token set now is applied to the latched stop, once, and the receipt never carries the value.
     token = {"speeddesk_kalshi_resume_token": Secret("owner-resume-after-the-stop")}
-    resumed, account, clock = make_desk(tmp_path, caps=CAPS, extra=token)
+    resumed, account, clock = make_historical_desk(tmp_path, caps=CAPS, extra=token)
     try:
         receipt = events(resumed, "speeddesk_live_resume")
         assert [item["state"][:7] for item in receipt] == ["applied"]
@@ -475,13 +479,13 @@ def test_the_desk_latches_at_start_before_the_token_and_logs_every_token_use(tmp
         resumed.checkpoint(durable=True)
     finally:
         resumed.close()
-    used, _, _ = make_desk(tmp_path, caps=CAPS, extra=token)
+    used, _, _ = make_historical_desk(tmp_path, caps=CAPS, extra=token)
     try:
         assert events(used, "speeddesk_live_resume")[-1]["state"] == "ignored; this value was already used"
     finally:
         used.close()
     # A token set while nothing is latched is logged as ignored and kept, not spent.
-    fresh, _, _ = make_desk(tmp_path / "fresh", caps=CAPS, extra={"speeddesk_kalshi_resume_token": Secret("too-early")})
+    fresh, _, _ = make_historical_desk(tmp_path / "fresh", caps=CAPS, extra={"speeddesk_kalshi_resume_token": Secret("too-early")})
     try:
         state = events(fresh, "speeddesk_live_resume")[-1]["state"]
         assert state.startswith("ignored; no total loss stop is latched")
@@ -491,7 +495,7 @@ def test_the_desk_latches_at_start_before_the_token_and_logs_every_token_use(tmp
 
 
 def test_a_stop_that_latches_while_trading_cancels_the_resting_bids_and_shows_in_the_status(tmp_path: Path) -> None:
-    desk, account, clock = make_desk(tmp_path, caps=CAPS, extra={"speeddesk_kalshi_clip": 1})
+    desk, account, clock = make_historical_desk(tmp_path, caps=CAPS, extra={"speeddesk_kalshi_clip": 1})
     try:
         asyncio.run(desk.step())
         assert [c["size"] for c in account.creates] == [1.0]  # a bid rests ($0.42 reserved)
@@ -514,7 +518,7 @@ def test_a_stop_that_latches_while_trading_cancels_the_resting_bids_and_shows_in
 
 
 def test_a_latched_day_stop_shows_in_the_status_and_lapses_with_the_utc_day(tmp_path: Path) -> None:
-    desk, account, clock = make_desk(tmp_path, caps=CAPS)
+    desk, account, clock = make_historical_desk(tmp_path, caps=CAPS)
     try:
         desk.book.day_pnl[utc_day(clock.now())] = -5.2  # $0.80 of today's $6 left
         asyncio.run(desk.step())

@@ -1,4 +1,6 @@
-"""Speed plan step 2: a crash keeps the pre-send journal row and the last full save, and nothing it needs is lost.
+"""Historical admission fixtures exercise prior entry mechanics; they do not establish current production admission.
+
+Speed plan step 2: a crash keeps the pre-send journal row and the last full save, and nothing it needs is lost.
 
 The two kills are real (``os._exit`` in a child process: no shutdown, no save, no flush); the other restarts start
 from a copy of the ledger taken mid-run (the disk as a crash leaves it). No account or network is touched.
@@ -20,7 +22,8 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from test_speeddesk_live import TICKER, FakeAccount, make_desk, starter_filled
+from historical_speeddesk_entry import HistoricalEntryDesk, make_historical_desk
+from test_speeddesk_live import TICKER, FakeAccount, starter_filled
 
 from nightcrawler.clock import FakeClock
 from nightcrawler.ledger import Ledger
@@ -38,7 +41,7 @@ from nightcrawler.speeddesk_model import Book, Level, Side
 TESTS = Path(__file__).resolve().parent
 KILLED = 17
 
-# The child runs the live desk of make_desk until its first order and dies at the named point. "row": after the
+# The child runs the historical fake desk until its first order and dies at the named point. "row": after the
 # journal row is synced, before any byte of the create leaves. "sent": Kalshi has the order, the reply never came.
 CHILD = textwrap.dedent("""
     import asyncio, json, os, sys
@@ -46,10 +49,10 @@ CHILD = textwrap.dedent("""
 
     tests, src, root, where = sys.argv[1:5]
     sys.path[:0] = [src, tests]
-    from test_speeddesk_live import make_desk
+    from historical_speeddesk_entry import make_historical_desk
 
     root = Path(root)
-    desk, account, clock = make_desk(root)
+    desk, account, clock = make_historical_desk(root)
     journal, create = desk._journal_intent, account.create_order
 
     def journaled(intent, window, **kwargs):
@@ -102,7 +105,7 @@ def test_a_kill_between_the_journal_row_and_the_send_keeps_the_reservation_then_
     state, journal = saved_rows(tmp_path)
     # Only the journal row knows the order: the last full save was made before the decision.
     assert identity not in state["intents"] and identity in journal["intents"]
-    desk, account, clock = make_desk(tmp_path)  # the restart: same ledger and clock; Kalshi never saw the order
+    desk, account, clock = make_historical_desk(tmp_path)  # the restart: same ledger and clock; Kalshi never saw the order
     try:
         assert desk.book.intents[identity].reservation_active and not desk.intents[identity].order_id
         assert restored_risk(desk) == pytest.approx(memory["risk"])
@@ -129,7 +132,7 @@ def test_a_kill_between_the_journal_row_and_the_send_keeps_the_reservation_then_
                    for event in desk.latest_events)
     finally:
         desk.close()
-    restarted, _, _ = make_desk(tmp_path)  # the release was saved: a later restart does not hold it again
+    restarted, _, _ = make_historical_desk(tmp_path)  # the release was saved: a later restart does not hold it again
     try:
         assert not restarted.book.intents[identity].reservation_active
     finally:
@@ -141,7 +144,7 @@ def test_a_late_copy_of_the_request_is_adopted_and_canceled_never_released(tmp_p
     adopted by its client id and canceled; the reservation is released on Kalshi's word, not by absence."""
     memory = kill_child(tmp_path, "row")
     identity = memory["client_order_id"]
-    desk, account, clock = make_desk(tmp_path)
+    desk, account, clock = make_historical_desk(tmp_path)
     try:
         for _ in range(12):  # four minutes of complete and recent reads without it
             asyncio.run(desk.step())
@@ -168,7 +171,7 @@ def test_a_kill_after_the_send_before_the_reply_finds_cancels_and_releases_the_o
     assert [order["client_order_id"] for order in venue["orders"]] == [identity]
     state, journal = saved_rows(tmp_path)
     assert identity not in state["intents"] and identity in journal["intents"]
-    desk, account, _ = make_desk(tmp_path)
+    desk, account, _ = make_historical_desk(tmp_path)
     account.orders, account.creates = venue["orders"], venue["creates"]
     try:
         assert desk.book.intents[identity].reservation_active and not desk.intents[identity].order_id
@@ -296,7 +299,7 @@ def test_stop_math_is_identical_across_crash_and_graceful_restarts(tmp_path: Pat
     """A restart from any point restores the caps' and stops' inputs: at once after a full save, and after one
     reconcile with Kalshi after a crash; until then a crash can only restore more money at risk, never less."""
     rng = random.Random(seed)
-    desk, account, clock = make_desk(tmp_path / "run", caps=OWNERS_CAPS)
+    desk, account, clock = make_historical_desk(tmp_path / "run", caps=OWNERS_CAPS)
     restarts = {"crash": 0, "graceful": 0}
     try:
         # Establish actual fake-venue exposure before randomized wide spreads and repeated pull holds.
@@ -315,7 +318,7 @@ def test_stop_math_is_identical_across_crash_and_graceful_restarts(tmp_path: Pat
             crash_image(desk, image)
             moment = FakeClock(clock.now())
             venue = venue_copy(account, moment)
-            restored = KalshiLiveDesk(desk.settings, image, desk.snapshot, clock=moment.now,
+            restored = HistoricalEntryDesk(desk.settings, image, desk.snapshot, clock=moment.now,
                                       client_factory=serving(venue), direct_member_verified=True)
             try:
                 after = stop_math(restored)
@@ -372,7 +375,7 @@ def test_journal_replay_equals_the_full_save_at_every_send(tmp_path: Path, seed:
     """With every other change saved at once (the old behaviour), what a restart reads at an order's first
     network byte, the last full save plus the journal, is exactly the full save made at that moment."""
     rng = random.Random(seed)
-    desk, account, clock = make_desk(tmp_path / "run", caps=OWNERS_CAPS, extra=NO_PULL)
+    desk, account, clock = make_historical_desk(tmp_path / "run", caps=OWNERS_CAPS, extra=NO_PULL)
     desk._save_soon = desk.checkpoint  # type: ignore[method-assign]
     desk._account_facts = object  # type: ignore[method-assign,assignment]  # every reconcile counts as a change
     create, checked = account.create_order, []
@@ -406,7 +409,7 @@ def test_journal_replay_holds_every_order_and_never_less_risk(tmp_path: Path, se
     """With the one-second full save, several orders can sit in the journal. At every send the replay holds each
     order with the rows its decision wrote, the same fills and realized money, and at least the money at risk."""
     rng = random.Random(seed)
-    desk, account, clock = make_desk(tmp_path / "run", caps=OWNERS_CAPS, extra=NO_PULL)
+    desk, account, clock = make_historical_desk(tmp_path / "run", caps=OWNERS_CAPS, extra=NO_PULL)
     create, depths = account.create_order, []
 
     def at_the_send(**kwargs: Any) -> dict[str, Any]:

@@ -8,11 +8,12 @@ from pathlib import Path
 from typing import Any, Literal
 
 import pytest
-from test_speeddesk_live import TICKER, FakeAccount, make_desk, reopen
-from test_speeddesk_live_pull import CAPS, MAKERS, market, starter_bid_filled
+from test_speeddesk_live import TICKER, FakeAccount, fill_order, make_desk, reopen
+from test_speeddesk_live_pull import CAPS, MAKERS, market
 
 from nightcrawler.clock import FakeClock
-from nightcrawler.speeddesk_live import KalshiLiveDesk
+from nightcrawler.speeddesk_live import Intent, KalshiLiveDesk
+from nightcrawler.speeddesk_live_model import ActualFill, LiveIntent
 from nightcrawler.speeddesk_model import utc_day
 
 Stop = Literal["day", "total"]
@@ -20,7 +21,30 @@ Stop = Literal["day", "total"]
 
 def _filled_starter(tmp_path: Path) -> tuple[KalshiLiveDesk, FakeAccount, FakeClock]:
     desk, account, clock = make_desk(tmp_path, caps=CAPS, extra=MAKERS)
-    starter_bid_filled(desk, account, clock)
+    market(desk, clock, .5, ask=.50)
+    asyncio.run(desk.step())
+    assert not account.creates  # Current production policy cannot create a new first leg.
+    # Existing owned execution from before containment: seed its original intent and venue records.
+    # All hedge admission, transport, cancellation and stop behavior below uses the production desk.
+    identity = "nc-speed-review-existing-starter"
+    desk.intents[identity] = Intent(identity, TICKER, "up", "rest", .47, 5, .5, clock.now(),
+                                    order_id="order-1", terminal=True)
+    desk.book.intents[identity] = LiveIntent(identity, TICKER, "up", "rest", .47, 5, clock.now(), .47,
+                                           order_id="order-1")
+    desk.book.bootstrap_order[TICKER] = identity
+    account.creates.append({"client_order_id": identity, "ticker": TICKER, "side": "up",
+                            "kind": "rest", "price": .47, "size": 5})
+    account.orders.append({"client_order_id": identity, "order_id": "order-1", "ticker": TICKER,
+                           "status": "resting", "initial_count_fp": "5.00", "fill_count_fp": "0.00",
+                           "remaining_count_fp": "5.00", "outcome_side": "yes", "book_side": "bid",
+                           "yes_price_dollars": ".47", "no_price_dollars": ".53"})
+    clock.advance(.3)
+    fill_order(account, clock, 0, side="up", price=.47, size=5)
+    account.executions[-1]["fee_cost"] = "0.0000"
+    assert desk.book.record_fill(ActualFill("fill-0", "order-1", identity, TICKER, "up", .47, 5, 0,
+                                           clock.now()))
+    account.account_positions = [{"ticker": TICKER, "position_fp": "5.00"}]
+    market(desk, clock, .5, starter_ask=.50)
     asyncio.run(desk._reconcile())
     assert desk.book.inventory[TICKER].up.shares == 5
     assert desk.book.inventory[TICKER].down.shares == 0

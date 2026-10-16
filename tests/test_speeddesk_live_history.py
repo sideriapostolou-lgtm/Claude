@@ -1,4 +1,6 @@
-"""Latency review (2026-10-13): the money math walked every order and window the desk ever had.
+"""Historical admission fixtures exercise prior entry mechanics; they do not establish current production admission.
+
+Latency review (2026-10-13): the money math walked every order and window the desk ever had.
 
 A restart merges the archive back into memory, so after a week the risk book holds thousands of finished orders.
 Money at risk was summed over all of them five times per status and once per open order per cancel pass: a step
@@ -15,7 +17,8 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from test_speeddesk_live import TICKER, make_desk
+from historical_speeddesk_entry import make_historical_desk
+from test_speeddesk_live import TICKER
 
 from nightcrawler.speeddesk_live import Intent
 from nightcrawler.speeddesk_live_model import LiveIntent, LiveSettlement
@@ -47,7 +50,7 @@ def add_history(desk: Any, account: Any, days: int) -> None:
 
 def reserved_reads(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, days: int) -> tuple[int, Any]:
     """How many times thirty steps read an order's reservation, with ``days`` of finished history."""
-    desk, account, clock = make_desk(tmp_path / f"days-{days}")
+    desk, account, clock = make_historical_desk(tmp_path / f"days-{days}")
     asyncio.run(desk.step())  # the first order rests
     add_history(desk, account, days)
     reads = [0]
@@ -79,7 +82,7 @@ def test_a_steps_money_math_does_not_grow_with_finished_history(tmp_path: Path,
 
 def test_a_complete_reconcile_does_not_check_each_listed_order_against_all_others(tmp_path: Path) -> None:
     """Each listed order's id was checked against every order ever made (quadratic in the history)."""
-    desk, account, _clock = make_desk(tmp_path)
+    desk, account, _clock = make_historical_desk(tmp_path)
     try:
         asyncio.run(desk.step())
         add_history(desk, account, 2)  # 1,920 finished orders, each listed by Kalshi
@@ -105,7 +108,7 @@ def test_a_complete_reconcile_does_not_check_each_listed_order_against_all_other
 
 
 def test_the_unfinished_orders_come_from_open_windows_only_and_match_a_full_scan(tmp_path: Path) -> None:
-    desk, account, clock = make_desk(tmp_path)
+    desk, account, clock = make_historical_desk(tmp_path)
     try:
         asyncio.run(desk.step())
         add_history(desk, account, 1)

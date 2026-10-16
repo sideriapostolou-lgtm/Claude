@@ -1,4 +1,7 @@
-"""One synchronous settlement pass reuses active membership without changing real reconciliation."""
+"""Historical factory cases are HISTORICAL ENTRY MECHANISM ONLY; they do not prove current
+entry authority or profitability. Other cases retain the production factory.
+
+One synchronous settlement pass reuses active membership without changing real reconciliation."""
 from __future__ import annotations
 
 import asyncio
@@ -6,6 +9,7 @@ from dataclasses import asdict, replace
 from pathlib import Path
 
 import pytest
+from historical_speeddesk_entry import make_historical_desk
 from test_speeddesk_live import TICKER, make_desk
 from test_speeddesk_live_history import add_history
 
@@ -60,7 +64,7 @@ def reconcile(desk):
 
 @pytest.mark.parametrize('integrity', [False, True])
 def test_finalized_history_has_bounded_active_queries_even_during_integrity_fallback(tmp_path: Path, integrity):
-    desk, account, _clock = make_desk(tmp_path)
+    desk, account, _clock = make_historical_desk(tmp_path)
     try:
         asyncio.run(desk.step())
         add_history(desk, account, 7)

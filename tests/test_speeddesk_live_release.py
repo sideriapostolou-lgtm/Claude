@@ -1,4 +1,6 @@
-"""Speed step 2's release of an order that never reached Kalshi, in a window holding unpaired contracts.
+"""Historical admission fixtures exercise prior entry mechanics; they do not establish current production admission.
+
+Speed step 2's release of an order that never reached Kalshi, in a window holding unpaired contracts.
 
 Review blocker (2026-10-13): Kalshi settles KXBTC15M about 4.7 s after the close (KXBTC15M-26OCT131145 closed
 15:45:00 UTC, settled_time 15:45:04.68), and a settled market leaves the unsettled positions list. An unsent order
@@ -25,7 +27,8 @@ import textwrap
 from pathlib import Path
 from typing import Any
 
-from test_speeddesk_live import TICKER, fill_order, make_desk, reopen, steps
+from historical_speeddesk_entry import make_historical_desk
+from test_speeddesk_live import TICKER, fill_order, reopen, steps
 from test_speeddesk_live_crash import view
 
 from nightcrawler.speeddesk_kalshi_client import KalshiClientError
@@ -43,11 +46,12 @@ CHILD = textwrap.dedent("""
 
     tests, src, root, where = sys.argv[1:5]
     sys.path[:0] = [src, tests]
-    from test_speeddesk_live import make_desk, TICKER
+    from historical_speeddesk_entry import make_historical_desk
+    from test_speeddesk_live import TICKER
     from test_speeddesk_live_crash import view
 
     root = Path(root)
-    desk, account, clock = make_desk(root)
+    desk, account, clock = make_historical_desk(root)
     create = account.create_order
 
     def dump():
@@ -94,7 +98,7 @@ def kill_child(root: Path, where: str) -> dict[str, Any]:
 
 
 def restart(root: Path, venue: dict[str, Any]) -> tuple[Any, Any, Any]:
-    desk, account, clock = make_desk(root)
+    desk, account, clock = make_historical_desk(root)
     account.orders, account.executions = venue["orders"], venue["executions"]
     account.account_positions, account.creates = venue["positions"], venue["creates"]
     clock.advance(venue["now"] - clock.now() + 0.5)
@@ -183,7 +187,7 @@ def test_a_crash_between_the_journal_row_and_the_send_of_a_lock_is_released_afte
 
 def first_leg_filled(tmp_path: Path) -> tuple[Any, Any, Any]:
     """In-process: the first buy (take Up 5 @ 0.40) fills in full; the account holds +5 Up."""
-    desk, account, clock = make_desk(tmp_path)
+    desk, account, clock = make_historical_desk(tmp_path)
     asyncio.run(desk.step())
     fill_order(account, clock, 0, side="up", price=.4, size=5)
     account.executions[-1]["fee_cost"] = "0.0168"
@@ -301,7 +305,7 @@ def priced(desk: Any, clock: Any) -> None:
 
 def test_lost_balancing_create_in_an_unpaired_window_is_released_after_kalshi_settles(tmp_path: Path) -> None:
     """The caps reviewer's version: steps every 10 s for ten minutes after Kalshi settled."""
-    desk, account, clock = make_desk(tmp_path)
+    desk, account, clock = make_historical_desk(tmp_path)
     try:
         asyncio.run(desk.step())
         assert [(c["side"], c["kind"], c["size"]) for c in account.creates] == [("up", "take", 5)]
@@ -326,7 +330,7 @@ def test_lost_balancing_create_in_an_unpaired_window_is_released_after_kalshi_se
 
 
 def test_restart_with_an_unsent_balancing_bid_finishes_startup_after_kalshi_settles(tmp_path: Path) -> None:
-    desk, account, clock = make_desk(tmp_path)
+    desk, account, clock = make_historical_desk(tmp_path)
     asyncio.run(desk.step())
     fill_order(account, clock, 0, side="up", price=.4, size=5)
     account.account_positions = [{"ticker": TICKER, "position_fp": "5.00"}]

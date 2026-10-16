@@ -1,4 +1,9 @@
-"""Offline execution-controller checks; no account or network is accessed."""
+"""Offline execution-controller checks; no account or network is accessed.
+
+Explicit ``make_historical_desk`` calls preserve prior-entry mechanism checks.
+They do not assert current entry authorization or profitability. ``make_desk``
+and its default controller remain production-policy fixtures.
+"""
 
 from __future__ import annotations
 
@@ -9,6 +14,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from historical_speeddesk_entry import make_historical_desk
 
 from nightcrawler.clock import FakeClock
 from nightcrawler.config import Secret, Settings
@@ -95,7 +101,8 @@ SMALL_CAPS = {"speeddesk_kalshi_window_usd": 2.0, "speeddesk_kalshi_open_usd": 4
 
 def make_desk(tmp_path: Path, *, mode: str = "live", confirm: str | None = "yes",
               keys: bool = True, direct: bool = True, caps: dict[str, float] | None = None,
-              extra: dict[str, Any] | None = None) -> tuple[KalshiLiveDesk, FakeAccount, FakeClock]:
+              extra: dict[str, Any] | None = None,
+              desk_class: type[KalshiLiveDesk] = KalshiLiveDesk) -> tuple[KalshiLiveDesk, FakeAccount, FakeClock]:
     clock = FakeClock()
     account = FakeAccount(clock)
     settings = Settings(data_dir=tmp_path, speeddesk_kalshi_mode=mode,
@@ -110,7 +117,7 @@ def make_desk(tmp_path: Path, *, mode: str = "live", confirm: str | None = "yes"
                                  (Level(.4 if side == "up" else .55, 10),), clock.now(), "book",
                                  source="rest", requested_at=clock.now()) for side in ("up", "down")}
     snapshot = LiveSnapshot((window,), books, 80000, clock.now(), .001, frozenset({TICKER}))
-    desk = KalshiLiveDesk(settings, tmp_path / "live", lambda: snapshot, clock=clock.now,
+    desk = desk_class(settings, tmp_path / "live", lambda: snapshot, clock=clock.now,
                           client_factory=lambda: account, direct_member_verified=direct)
     desk.on_windows([window])
     desk.on_tick(80000, clock.now(), clock.now())
@@ -160,7 +167,7 @@ def test_fee_precision_is_never_guessed_from_account_access(tmp_path: Path) -> N
 
 
 def test_intent_is_durable_before_real_order_and_twin_has_no_authority(tmp_path: Path) -> None:
-    desk, account, _ = make_desk(tmp_path, caps=SMALL_CAPS)
+    desk, account, _ = make_historical_desk(tmp_path, caps=SMALL_CAPS)
     original = account.create_order
 
     def inspect(**kwargs: Any) -> dict[str, Any]:
@@ -184,7 +191,7 @@ def test_intent_is_durable_before_real_order_and_twin_has_no_authority(tmp_path:
 
 
 def test_unknown_create_never_retries_or_releases_reservation(tmp_path: Path) -> None:
-    desk, account, clock = make_desk(tmp_path)
+    desk, account, clock = make_historical_desk(tmp_path)
     account.create_error = KalshiClientError("create_order", "transport failure", uncertain=True)
     try:
         asyncio.run(desk.step())
@@ -201,7 +208,7 @@ def test_unknown_create_never_retries_or_releases_reservation(tmp_path: Path) ->
 
 
 def test_actual_fill_drives_inventory_and_partial_reservation(tmp_path: Path) -> None:
-    desk, account, _ = make_desk(tmp_path)
+    desk, account, _ = make_historical_desk(tmp_path)
     try:
         asyncio.run(desk.step())
         intent = next(iter(desk.intents.values()))
@@ -223,7 +230,7 @@ def test_actual_fill_drives_inventory_and_partial_reservation(tmp_path: Path) ->
 
 @pytest.mark.parametrize("trigger", ["stale", "cutoff", "mode", "shutdown"])
 def test_real_orders_cancel_for_required_triggers(tmp_path: Path, trigger: str) -> None:
-    desk, account, clock = make_desk(tmp_path)
+    desk, account, clock = make_historical_desk(tmp_path)
     try:
         asyncio.run(desk.step())
         if trigger == "shutdown":
@@ -243,7 +250,7 @@ def test_real_orders_cancel_for_required_triggers(tmp_path: Path, trigger: str) 
 
 
 def test_startup_paper_recovery_only_cancels_and_reconciles(tmp_path: Path) -> None:
-    desk, account, clock = make_desk(tmp_path)
+    desk, account, clock = make_historical_desk(tmp_path)
     asyncio.run(desk.step())
     settings, snapshot = replace(desk.settings, speeddesk_kalshi_mode="paper"), desk.snapshot
     desk.close()
@@ -285,7 +292,7 @@ def test_owner_order_is_not_canceled_or_adopted(tmp_path: Path) -> None:
 
 
 def test_paper_restart_reconciles_filled_exposure_without_resting_orders(tmp_path: Path) -> None:
-    desk, account, clock = make_desk(tmp_path)
+    desk, account, clock = make_historical_desk(tmp_path)
     asyncio.run(desk.step())
     intent = next(iter(desk.intents.values()))
     account.orders[0].update(status="executed", fill_count_fp=str(intent.size), remaining_count_fp="0.00")
@@ -312,7 +319,7 @@ def test_paper_restart_reconciles_filled_exposure_without_resting_orders(tmp_pat
 
 
 def test_changed_fee_terms_cancel_and_block_that_window(tmp_path: Path) -> None:
-    desk, account, _ = make_desk(tmp_path)
+    desk, account, _ = make_historical_desk(tmp_path)
     try:
         asyncio.run(desk.step())
         desk.on_windows([replace(desk.snapshot().windows[0], taker_coefficient=.08)])
@@ -338,7 +345,7 @@ def test_disabled_desk_never_initializes_real_client(tmp_path: Path, flag: str) 
 
 
 def test_eventually_visible_create_id_is_resolved_without_adopting_foreign_fills(tmp_path: Path) -> None:
-    desk, account, _ = make_desk(tmp_path)
+    desk, account, _ = make_historical_desk(tmp_path)
     account.create_error = KalshiClientError("create_order", "transport failure", uncertain=True)
     try:
         asyncio.run(desk.step())
@@ -370,7 +377,7 @@ def test_eventually_visible_create_id_is_resolved_without_adopting_foreign_fills
 
 @pytest.mark.parametrize("stop", ["day", "total", "integrity"])
 def test_financial_stop_also_cancels_existing_real_orders(tmp_path: Path, stop: str) -> None:
-    desk, account, clock = make_desk(tmp_path, caps=SMALL_CAPS)
+    desk, account, clock = make_historical_desk(tmp_path, caps=SMALL_CAPS)
     try:
         asyncio.run(desk.step())
         if stop == "day":
@@ -388,7 +395,7 @@ def test_financial_stop_also_cancels_existing_real_orders(tmp_path: Path, stop: 
 
 
 def test_starter_leaves_budget_for_a_balancing_whole_pair(tmp_path: Path) -> None:
-    desk, account, _ = make_desk(tmp_path, caps=SMALL_CAPS)
+    desk, account, _ = make_historical_desk(tmp_path, caps=SMALL_CAPS)
     try:
         asyncio.run(desk.step())
         intent = next(iter(desk.intents.values()))
@@ -412,7 +419,7 @@ def test_one_refused_order_keeps_trading_but_three_refusals_in_a_row_pause(tmp_p
     A single definite refusal is about that one order: record Kalshi's code and keep trading. Three in a
     row still pause between attempts, as every refusal did before (a lasting account problem such as no
     cash on the shard still retries, rate-limited by the pause and a fresh account read each time)."""
-    desk, account, clock = make_desk(tmp_path)
+    desk, account, clock = make_historical_desk(tmp_path)
     account.create_error = KalshiClientError("create_order", "request rejected", status=400,
                                              code="post_only_cross")
     try:
@@ -453,7 +460,7 @@ def test_cancel_404_for_an_order_already_gone_does_not_pause_trading(tmp_path: P
     """2026-10-12: a repeat cancel of an order Kalshi had already canceled returned 404 and the desk paused
     itself for minutes. A 404 means nothing of ours rests there: keep the reservation, let the order list
     confirm it, and do not count it as an account error."""
-    desk, account, clock = make_desk(tmp_path)
+    desk, account, clock = make_historical_desk(tmp_path)
     try:
         asyncio.run(desk.step())
         assert [order["status"] for order in account.orders] == ["resting"]
@@ -481,7 +488,7 @@ def test_label_stays_real_money_between_orders(tmp_path: Path) -> None:
     """2026-10-13 00:15: after every order the desk briefly re-reads the account or waits for a cancel to
     confirm. The town showed "PRACTICE" in those seconds and the owner thought it had stopped. Real money is
     still on: keep the label and say what it is waiting for."""
-    desk, account, _ = make_desk(tmp_path)
+    desk, account, _ = make_historical_desk(tmp_path)
     try:
         asyncio.run(desk.step())
         assert len(account.creates) == 1
@@ -535,7 +542,7 @@ def steps(desk: KalshiLiveDesk, clock: FakeClock, count: int = 3) -> None:
 
 def test_lock_completes_a_losing_half_pair_and_caps_the_loss(tmp_path: Path) -> None:
     """Bitcoin moved against the starter: the bot pays up to complete the pair instead of riding a coin flip."""
-    desk, account, clock = make_desk(tmp_path)
+    desk, account, clock = make_historical_desk(tmp_path)
     try:
         starter_filled(desk, account, clock)
         at_lock_time(desk, clock, up_ask=.22, down_ask=.8)
@@ -562,7 +569,7 @@ def test_lock_completes_a_losing_half_pair_and_caps_the_loss(tmp_path: Path) -> 
 
 
 def test_lock_turns_a_winning_half_pair_into_locked_profit(tmp_path: Path) -> None:
-    desk, account, clock = make_desk(tmp_path)
+    desk, account, clock = make_historical_desk(tmp_path)
     try:
         starter_filled(desk, account, clock)
         at_lock_time(desk, clock, up_ask=.9, down_ask=.08)
@@ -578,7 +585,7 @@ def test_lock_turns_a_winning_half_pair_into_locked_profit(tmp_path: Path) -> No
 
 
 def test_a_decided_window_or_the_final_seconds_are_left_alone(tmp_path: Path) -> None:
-    desk, account, clock = make_desk(tmp_path)
+    desk, account, clock = make_historical_desk(tmp_path)
     try:
         starter_filled(desk, account, clock)
         at_lock_time(desk, clock, up_ask=.02, down_ask=.98)  # above the 97c lock price: already decided
@@ -594,7 +601,7 @@ def test_a_decided_window_or_the_final_seconds_are_left_alone(tmp_path: Path) ->
 
 
 def test_lock_still_completes_during_a_money_stop_but_never_with_live_off(tmp_path: Path) -> None:
-    desk, account, clock = make_desk(tmp_path)
+    desk, account, clock = make_historical_desk(tmp_path)
     try:
         starter_filled(desk, account, clock)
         at_lock_time(desk, clock, up_ask=.3, down_ask=.7)
@@ -611,7 +618,7 @@ def test_lock_still_completes_during_a_money_stop_but_never_with_live_off(tmp_pa
 
 
 def test_lock_guard_refuses_once_the_pair_is_already_complete(tmp_path: Path) -> None:
-    desk, account, clock = make_desk(tmp_path)
+    desk, account, clock = make_historical_desk(tmp_path)
     try:
         starter_filled(desk, account, clock)
         at_lock_time(desk, clock, up_ask=.3, down_ask=.7)
@@ -633,7 +640,7 @@ def test_lock_reporting_is_truthful(tmp_path: Path) -> None:
     """Review findings: after a lock the panel said "Practice; cancelling prior live bids", locks were counted as
     instant-order attempts, during a money stop the panel said "no new buys" while a lock could still run, the
     page's "Open position risk" showed gross cost, and an emergency stop did not stop a lock about to be sent."""
-    desk, account, clock = make_desk(tmp_path)
+    desk, account, clock = make_historical_desk(tmp_path)
     try:
         starter_filled(desk, account, clock)
         at_lock_time(desk, clock, up_ask=.3, down_ask=.7)
@@ -663,7 +670,7 @@ def test_lock_uses_a_penny_limit_for_sub_penny_asks_and_fits_the_cash(tmp_path: 
     """Simulator findings: a 90.5c ask was refused as an invalid price, and slightly too little cash locked
     nothing at all. A whole-cent IOC limit just above still fills at the better price; the lock takes as many
     contracts as the cash allows."""
-    desk, account, clock = make_desk(tmp_path)
+    desk, account, clock = make_historical_desk(tmp_path)
     try:
         starter_filled(desk, account, clock)
         at_lock_time(desk, clock, up_ask=.05, down_ask=.905)
@@ -722,7 +729,7 @@ def stopped_desk(tmp_path: Path, code: str) -> None:
 
 
 def test_reconciliation_stop_names_the_check_that_tripped(tmp_path: Path) -> None:
-    desk, account, clock = make_desk(tmp_path)
+    desk, account, clock = make_historical_desk(tmp_path)
     try:
         starter_filled(desk, account, clock)
         steps(desk, clock, 4)
@@ -737,7 +744,7 @@ def test_reconciliation_stop_names_the_check_that_tripped(tmp_path: Path) -> Non
         assert panel["integrity_reset"] is None
     finally:
         desk.close()
-    restarted, _, _ = make_desk(tmp_path)
+    restarted, _, _ = make_historical_desk(tmp_path)
     try:  # every restart names the stop again, once
         assert [item["code"] for item in events(restarted, "speeddesk_live_integrity")] == ["fill_changed"] * 2
     finally:
@@ -747,7 +754,7 @@ def test_reconciliation_stop_names_the_check_that_tripped(tmp_path: Path) -> Non
 def test_owner_reset_clears_a_stop_once_after_a_clean_reconcile(tmp_path: Path) -> None:
     stopped_desk(tmp_path, "settlement_net_payout_mismatch")
     reset = {"speeddesk_kalshi_integrity_reset_token": Secret("owner-reset-1")}
-    desk, account, clock = make_desk(tmp_path, extra=reset)
+    desk, account, clock = make_historical_desk(tmp_path, extra=reset)
     try:
         assert desk.panel()["integrity_reset"] == "armed"
         # The owner's own contracts and bid are still on the account: the stop stays until they are gone.
@@ -776,7 +783,7 @@ def test_owner_reset_clears_a_stop_once_after_a_clean_reconcile(tmp_path: Path) 
         desk.close()
     # The same value never clears a later stop, even after a restart.
     stopped_desk(tmp_path, "fill_changed")
-    again, account, clock = make_desk(tmp_path, extra=reset)
+    again, account, clock = make_historical_desk(tmp_path, extra=reset)
     try:
         steps(again, clock, 8)
         assert again.book.integrity_error == "fill_changed" and again.panel()["integrity_reset"] is None
@@ -842,7 +849,7 @@ def test_owner_reset_approval_survives_a_restart_while_waiting(tmp_path: Path) -
 
 def test_owner_reset_is_not_blocked_by_an_old_cancelled_order(tmp_path: Path) -> None:
     """Review finding: a finished order keeps its cancel request on record; only open orders hold the reset."""
-    desk, account, clock = make_desk(tmp_path)
+    desk, account, clock = make_historical_desk(tmp_path)
     try:
         asyncio.run(desk.step())  # the starter rests, then the live switch goes off and it is cancelled
         desk.settings = desk.settings.replace(speeddesk_kalshi_mode="paper")
@@ -854,7 +861,7 @@ def test_owner_reset_is_not_blocked_by_an_old_cancelled_order(tmp_path: Path) ->
         history = (account.orders, account.creates)
     finally:
         desk.close()
-    again, account, clock = make_desk(tmp_path, extra={"speeddesk_kalshi_integrity_reset_token": Secret("r-3")})
+    again, account, clock = make_historical_desk(tmp_path, extra={"speeddesk_kalshi_integrity_reset_token": Secret("r-3")})
     account.orders, account.creates = history  # Kalshi still lists the cancelled order
     try:
         steps(again, clock, 8)
@@ -879,7 +886,7 @@ def test_owner_reset_shows_a_failing_account_read_as_waiting(tmp_path: Path) -> 
 
 def test_owner_reset_shows_what_it_waits_for_when_startup_cannot_finish(tmp_path: Path) -> None:
     """Second review: a bid Kalshi keeps listing as resting keeps startup open; the panel must say so."""
-    desk, account, clock = make_desk(tmp_path)
+    desk, account, clock = make_historical_desk(tmp_path)
     try:
         asyncio.run(desk.step())  # the starter rests
         desk.book.integrity_error = "fill_exceeded_reserved_terms"
@@ -887,7 +894,7 @@ def test_owner_reset_shows_what_it_waits_for_when_startup_cannot_finish(tmp_path
         history = (account.orders, account.creates)
     finally:
         desk.close()
-    again, account, clock = make_desk(tmp_path, extra={"speeddesk_kalshi_integrity_reset_token": Secret("r-6")})
+    again, account, clock = make_historical_desk(tmp_path, extra={"speeddesk_kalshi_integrity_reset_token": Secret("r-6")})
     account.orders, account.creates = history
     account.cancel = lambda order_id, *, ticker: {}  # type: ignore[method-assign]  # accepted, still resting
     try:
@@ -913,7 +920,7 @@ def test_owner_reset_shows_live_off_while_the_switches_are_off(tmp_path: Path) -
 # Kalshi's order list can trail its fills list (2026-10-13 02:00:03 UTC): wait for a fresh read, never stop for good.
 
 def test_order_list_trailing_the_fills_pauses_one_read_and_never_stops_real_money(tmp_path: Path) -> None:
-    desk, account, clock = make_desk(tmp_path)
+    desk, account, clock = make_historical_desk(tmp_path)
     try:
         asyncio.run(desk.step())
         order = account.orders[0]
@@ -935,7 +942,7 @@ def test_order_list_trailing_the_fills_pauses_one_read_and_never_stops_real_mone
 
 
 def test_order_list_trailing_the_fills_for_too_long_still_stops(tmp_path: Path) -> None:
-    desk, account, clock = make_desk(tmp_path)
+    desk, account, clock = make_historical_desk(tmp_path)
     try:
         asyncio.run(desk.step())
         order = account.orders[0]
@@ -954,7 +961,7 @@ def test_order_list_trailing_the_fills_for_too_long_still_stops(tmp_path: Path) 
 
 
 def test_a_stale_report_of_a_finished_order_does_not_pause_trading(tmp_path: Path) -> None:
-    desk, account, clock = make_desk(tmp_path)
+    desk, account, clock = make_historical_desk(tmp_path)
     try:
         asyncio.run(desk.step())
         order = account.orders[0]
@@ -975,7 +982,7 @@ def test_a_stale_report_of_a_finished_order_does_not_pause_trading(tmp_path: Pat
 
 
 def test_one_save_before_the_send_holds_the_intent_and_its_practice_twin(tmp_path: Path) -> None:
-    desk, account, _ = make_desk(tmp_path, caps=SMALL_CAPS)
+    desk, account, _ = make_historical_desk(tmp_path, caps=SMALL_CAPS)
     original_checkpoint, original_journal, original_create = desk.checkpoint, desk._journal_intent, account.create_order
     writes: list[str] = []
 
@@ -1009,7 +1016,7 @@ def test_one_save_before_the_send_holds_the_intent_and_its_practice_twin(tmp_pat
 
 
 def test_settlements_are_read_only_once_a_traded_window_has_ended_unsettled(tmp_path: Path) -> None:
-    desk, account, clock = make_desk(tmp_path, caps=SMALL_CAPS)
+    desk, account, clock = make_historical_desk(tmp_path, caps=SMALL_CAPS)
     original = account.settlements
     reads: list[float] = []
 
@@ -1069,7 +1076,7 @@ def test_a_bitcoin_tick_wakes_the_live_loop_at_once(tmp_path: Path, monkeypatch:
 
 
 def test_accepted_order_reports_where_its_time_went(tmp_path: Path) -> None:
-    desk, account, _ = make_desk(tmp_path, caps=SMALL_CAPS)
+    desk, account, _ = make_historical_desk(tmp_path, caps=SMALL_CAPS)
     try:
         asyncio.run(desk.step())
         assert len(account.creates) == 1
@@ -1089,7 +1096,7 @@ def reopen(tmp_path: Path, desk: KalshiLiveDesk, account: FakeAccount, clock: Fa
     settings = Settings(data_dir=tmp_path, speeddesk_kalshi_mode="live", speeddesk_kalshi_live_confirm=Secret("yes"),
                         kalshi_key_id=Secret("fake-key-id"), kalshi_private_key=Secret("fake-private-key"),
                         **(FIVE_DOLLAR_CAPS if caps is None else caps))
-    restarted = KalshiLiveDesk(settings, tmp_path / "live", desk.snapshot, clock=clock.now,
+    restarted = type(desk)(settings, tmp_path / "live", desk.snapshot, clock=clock.now,
                               client_factory=lambda: account, direct_member_verified=True)
     restarted.on_windows(list(desk.snapshot().windows))  # production supplies fresh public market metadata
     return restarted
@@ -1097,7 +1104,7 @@ def reopen(tmp_path: Path, desk: KalshiLiveDesk, account: FakeAccount, clock: Fa
 
 def settled_window(tmp_path: Path) -> tuple[KalshiLiveDesk, FakeAccount, FakeClock]:
     """One traded window that closed, settled at Kalshi and was booked; nothing is open."""
-    desk, account, clock = make_desk(tmp_path)
+    desk, account, clock = make_historical_desk(tmp_path)
     starter_filled(desk, account, clock)
     steps(desk, clock, 4)
     clock.advance(900)
@@ -1208,7 +1215,7 @@ def test_the_money_page_still_reads_the_whole_real_book_after_archiving(tmp_path
 
 
 def test_only_the_save_before_an_order_and_owner_actions_wait_for_the_disk(tmp_path: Path) -> None:
-    desk, account, clock = make_desk(tmp_path, caps=SMALL_CAPS)
+    desk, account, clock = make_historical_desk(tmp_path, caps=SMALL_CAPS)
     calls: list[bool] = []
     original_sync, original_create = desk.ledger.set_synchronous, account.create_order
     at_send: list[bool] = []
@@ -1240,7 +1247,7 @@ def test_only_the_save_before_an_order_and_owner_actions_wait_for_the_disk(tmp_p
 def test_the_owners_ten_dollar_windows_are_enforced_and_reported(tmp_path: Path) -> None:
     caps = {"speeddesk_kalshi_window_usd": 10.0, "speeddesk_kalshi_open_usd": 20.0,
             "speeddesk_kalshi_day_stop_usd": 6.0, "speeddesk_kalshi_total_stop_usd": 10.0}
-    desk, account, _ = make_desk(tmp_path, caps=caps)
+    desk, account, _ = make_historical_desk(tmp_path, caps=caps)
     try:
         assert (desk.book.limits.window_usd, desk.book.limits.open_usd) == (10.0, 20.0)
         asyncio.run(desk.step())
@@ -1263,7 +1270,7 @@ def test_the_first_buy_follows_the_kalshi_contract_cap_inside_the_window_budget(
     for clip, expected in ((10.0, 8.0), (3.0, 3.0), (25.0, 8.0)):
         root = tmp_path / str(clip)
         root.mkdir()
-        desk, account, _ = make_desk(root, caps={**caps, "speeddesk_kalshi_clip": clip})
+        desk, account, _ = make_historical_desk(root, caps={**caps, "speeddesk_kalshi_clip": clip})
         try:
             asyncio.run(desk.step())
             # A larger cap never lets one starter outgrow whole pairs at the pair cap ($8 / $0.99 -> 8).

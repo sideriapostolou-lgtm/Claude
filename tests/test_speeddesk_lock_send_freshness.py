@@ -8,9 +8,11 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from test_speeddesk_live import TICKER, at_lock_time, make_desk, starter_filled
+from test_speeddesk_live import TICKER, FakeAccount, at_lock_time, fill_order, make_desk
 
-from nightcrawler.speeddesk_live import KalshiLiveDesk, durable_state
+from nightcrawler.clock import FakeClock
+from nightcrawler.speeddesk_live import Intent, KalshiLiveDesk, durable_state
+from nightcrawler.speeddesk_live_model import ActualFill, LiveIntent
 from nightcrawler.speeddesk_model import utc_day
 
 
@@ -19,11 +21,36 @@ def refresh_quotes(desk: KalshiLiveDesk, clock: Any) -> None:
                  before_close=desk.book.windows[TICKER].end - clock.now())
 
 
+def existing_filled_starter(tmp_path: Path) -> tuple[KalshiLiveDesk, FakeAccount, FakeClock]:
+    """Seed an owned execution from before containment; lock guards use the production controller."""
+    desk, account, clock = make_desk(tmp_path)
+    asyncio.run(desk.step())
+    assert not account.creates
+    identity = "nc-speed-existing-lock-starter"
+    desk.intents[identity] = Intent(identity, TICKER, "up", "take", .4, 5, .5, clock.now(),
+                                    order_id="order-1", terminal=True)
+    desk.book.intents[identity] = LiveIntent(identity, TICKER, "up", "take", .4, 5, clock.now(), .42,
+                                           order_id="order-1")
+    desk.book.bootstrap_order[TICKER] = identity
+    account.creates.append({"client_order_id": identity, "ticker": TICKER, "side": "up",
+                            "kind": "take", "price": .4, "size": 5})
+    account.orders.append({"client_order_id": identity, "order_id": "order-1", "ticker": TICKER,
+                           "status": "resting", "initial_count_fp": "5.00", "fill_count_fp": "0.00",
+                           "remaining_count_fp": "5.00", "outcome_side": "yes", "book_side": "bid",
+                           "yes_price_dollars": ".40", "no_price_dollars": ".60"})
+    fill_order(account, clock, 0, side="up", price=.4, size=5)
+    fee = float(account.executions[-1]["fee_cost"])
+    assert desk.book.record_fill(ActualFill("fill-0", "order-1", identity, TICKER, "up", .4, 5, fee,
+                                           clock.now()))
+    account.account_positions = [{"ticker": TICKER, "position_fp": "5.00"}]
+    asyncio.run(desk._reconcile())
+    return desk, account, clock
+
+
 @pytest.mark.parametrize("case", ["account_age_4", "cash_age_6"])
 def test_transport_wait_rechecks_account_and_cash_before_first_byte(tmp_path: Path, case: str) -> None:
-    desk, account, clock = make_desk(tmp_path)
+    desk, account, clock = existing_filled_starter(tmp_path)
     try:
-        starter_filled(desk, account, clock)
         at_lock_time(desk, clock, up_ask=.3, down_ask=.7)
         original_create = account.create_order
         attempted = []
@@ -66,9 +93,8 @@ def test_transport_wait_rechecks_account_and_cash_before_first_byte(tmp_path: Pa
 def test_transport_guard_refuses_invalidated_admission(
     tmp_path: Path, field: str, value: Any,
 ) -> None:
-    desk, account, clock = make_desk(tmp_path)
+    desk, account, clock = existing_filled_starter(tmp_path)
     try:
-        starter_filled(desk, account, clock)
         at_lock_time(desk, clock, up_ask=.3, down_ask=.7)
         original_create = account.create_order
         guarded = []
@@ -100,9 +126,8 @@ def test_transport_guard_refuses_invalidated_admission(
 def test_fresh_lock_inclusive_boundaries_keep_own_reservation_and_loss_stop_exemptions(
     tmp_path: Path, stop: str, account_age: float, cash_age: float,
 ) -> None:
-    desk, account, clock = make_desk(tmp_path)
+    desk, account, clock = existing_filled_starter(tmp_path)
     try:
-        starter_filled(desk, account, clock)
         at_lock_time(desk, clock, up_ask=.3, down_ask=.7)
         original_create = account.create_order
         facts = []
@@ -130,9 +155,8 @@ def test_fresh_lock_inclusive_boundaries_keep_own_reservation_and_loss_stop_exem
 
 
 def test_cash_clock_uses_window_specific_limit_after_wait(tmp_path: Path) -> None:
-    desk, account, clock = make_desk(tmp_path)
+    desk, account, clock = existing_filled_starter(tmp_path)
     try:
-        starter_filled(desk, account, clock)
         at_lock_time(desk, clock, up_ask=.3, down_ask=.7)
         limits = replace(desk.book.limits, cash_max_age_s=2)
         desk.book.window_limits = lambda _start: limits
@@ -151,9 +175,8 @@ def test_cash_clock_uses_window_specific_limit_after_wait(tmp_path: Path) -> Non
 
 @pytest.mark.parametrize("restart", [False, True])
 def test_refused_lock_is_not_retried_without_resync_and_new_identity(tmp_path: Path, restart: bool) -> None:
-    desk, account, clock = make_desk(tmp_path)
+    desk, account, clock = existing_filled_starter(tmp_path)
     try:
-        starter_filled(desk, account, clock)
         at_lock_time(desk, clock, up_ask=.3, down_ask=.7)
         original_create = account.create_order
         attempts = []

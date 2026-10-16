@@ -1,4 +1,6 @@
-"""After a confirmed positive full pair, retain liabilities and permit only risk reduction. Offline fakes."""
+"""Historical admission fixtures exercise prior policy; they do not establish current production admission.
+
+After a confirmed positive full pair, retain liabilities and permit only risk reduction. Offline fakes."""
 
 from __future__ import annotations
 
@@ -9,7 +11,8 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from test_speeddesk_live import TICKER, FakeAccount, fill_order, make_desk, reopen
+from historical_speeddesk_entry import make_historical_desk
+from test_speeddesk_live import TICKER, FakeAccount, fill_order, reopen
 from test_speeddesk_live_pull import CAPS, MAKERS, market, run, starter_bid_filled
 
 from nightcrawler.clock import FakeClock
@@ -142,7 +145,7 @@ def test_legacy_restore_seeds_only_current_confirmed_positive_equal_holdings() -
 
 
 def pair_desk(tmp_path: Path) -> tuple[KalshiLiveDesk, FakeAccount, FakeClock]:
-    desk, account, clock = make_desk(tmp_path, caps=CAPS, extra=MAKERS)
+    desk, account, clock = make_historical_desk(tmp_path, caps=CAPS, extra=MAKERS)
     starter_bid_filled(desk, account, clock)
     asyncio.run(desk._reconcile())
     asyncio.run(desk.step())
@@ -257,7 +260,7 @@ def test_race_fill_keeps_latch_and_only_strict_balancing_pending_bid_survives(tm
 
 
 def test_transport_guard_rechecks_new_pair_after_wait(tmp_path: Path) -> None:
-    desk, account, clock = make_desk(tmp_path, caps=CAPS, extra=MAKERS)
+    desk, account, clock = make_historical_desk(tmp_path, caps=CAPS, extra=MAKERS)
     try:
         starter_bid_filled(desk, account, clock)
         asyncio.run(desk._reconcile())

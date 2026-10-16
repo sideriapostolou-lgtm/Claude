@@ -1,4 +1,6 @@
-"""Independent execution-boundary checks; every account operation is a fake."""
+"""Historical fixtures are HISTORICAL ENTRY MECHANISM ONLY; no current entry authority or profitability claim.
+
+Independent execution-boundary checks; every account operation is a fake."""
 
 from __future__ import annotations
 
@@ -12,6 +14,7 @@ from typing import Any
 
 import pytest
 from fakes import FakeClock
+from historical_speeddesk_entry import HistoricalEntryDesk
 
 from nightcrawler.config import Settings
 from nightcrawler.speeddesk_kalshi_client import KalshiClientError
@@ -106,8 +109,8 @@ def configured(**changes: Any) -> Settings:
                     kalshi_key_id="fake-account-id", kalshi_private_key="fake-signing-material").replace(**changes)
 
 
-def companion(path: Path, *, settings: Settings | None = None,
-              account: Account | None = None) -> tuple[KalshiLiveDesk, Account, FakeClock, Window]:
+def companion(path: Path, *, settings: Settings | None = None, account: Account | None = None,
+              desk_class: type[KalshiLiveDesk] = KalshiLiveDesk) -> tuple[KalshiLiveDesk, Account, FakeClock, Window]:
     clock = account.clock if account is not None else FakeClock()
     account = account or Account(clock)
     window = Window("KXBTC15M-26OCT121500-00", clock.now() - 10, clock.now() + 890, 100,
@@ -119,13 +122,18 @@ def companion(path: Path, *, settings: Settings | None = None,
         return LiveSnapshot(windows=(window,), books=books, bitcoin_price=100, bitcoin_at=clock.now(),
                             sigma=.001, maker_windows=frozenset({window.slug}))
 
-    desk = KalshiLiveDesk(settings or configured(), path, snapshot, clock=clock.now, client_factory=lambda: account)
+    desk = desk_class(settings or configured(), path, snapshot, clock=clock.now, client_factory=lambda: account)
     account.controller = desk
     desk.on_windows([window])
     desk.on_tick(100, clock.now(), clock.now())
     for book in snapshot().books.values():
         desk.on_book(book)
     return desk, account, clock, window
+
+
+def historical_companion(path: Path, *, settings: Settings | None = None,
+                         account: Account | None = None) -> tuple[KalshiLiveDesk, Account, FakeClock, Window]:
+    return companion(path, settings=settings, account=account, desk_class=HistoricalEntryDesk)
 
 
 def arm_fake(desk: KalshiLiveDesk, account: Account, clock: FakeClock) -> None:
@@ -159,7 +167,7 @@ def test_fresh_paper_or_missing_gate_never_constructs_account_client(tmp_path: P
 
 
 def test_primary_subaccount_and_fresh_balance_do_not_prove_fee_precision(tmp_path: Path) -> None:
-    desk, account, _, _ = companion(tmp_path)
+    desk, account, _, _ = historical_companion(tmp_path)
     try:
         asyncio.run(desk.step())
         assert desk.authenticated
@@ -183,7 +191,7 @@ def test_second_controller_cannot_share_the_live_ledger_lock(tmp_path: Path) -> 
 
 @pytest.mark.parametrize("failure", ["timeout", "crash"])
 def test_unknown_create_is_durable_and_paper_restart_never_submits_again(tmp_path: Path, failure: str) -> None:
-    desk, account, clock, window = companion(tmp_path)
+    desk, account, clock, window = historical_companion(tmp_path)
     arm_fake(desk, account, clock)
     account.create_result = failure
     try:
@@ -211,7 +219,7 @@ def test_unknown_create_is_durable_and_paper_restart_never_submits_again(tmp_pat
 
 
 def test_partial_fill_and_failed_cancel_keep_cash_and_loss_risk_reserved(tmp_path: Path) -> None:
-    desk, account, clock, window = companion(tmp_path, settings=configured(speeddesk_kalshi_window_usd=2, speeddesk_kalshi_open_usd=4, speeddesk_kalshi_day_stop_usd=3, speeddesk_kalshi_total_stop_usd=5))
+    desk, account, clock, window = historical_companion(tmp_path, settings=configured(speeddesk_kalshi_window_usd=2, speeddesk_kalshi_open_usd=4, speeddesk_kalshi_day_stop_usd=3, speeddesk_kalshi_total_stop_usd=5))
     arm_fake(desk, account, clock)
     try:
         assert asyncio.run(desk._send(window, "up", "take", .4, 2, .6))
@@ -255,7 +263,7 @@ def test_partial_fill_and_failed_cancel_keep_cash_and_loss_risk_reserved(tmp_pat
 def test_same_client_id_cannot_confirm_an_order_with_different_terms(
     tmp_path: Path, field: str, value: str,
 ) -> None:
-    desk, account, clock, window = companion(tmp_path)
+    desk, account, clock, window = historical_companion(tmp_path)
     arm_fake(desk, account, clock)
     try:
         assert asyncio.run(desk._send(window, "up", "rest", .3, 2, .6))
@@ -275,7 +283,7 @@ def test_same_client_id_cannot_confirm_an_order_with_different_terms(
 def test_delayed_settlement_keeps_the_venues_actual_utc_day(tmp_path: Path) -> None:
     midnight = datetime(2026, 10, 13, tzinfo=UTC).timestamp()
     account = Account(FakeClock(midnight - 1000))
-    desk, _, clock, window = companion(tmp_path, account=account)
+    desk, _, clock, window = historical_companion(tmp_path, account=account)
     arm_fake(desk, account, clock)
     try:
         assert asyncio.run(desk._send(window, "up", "take", .4, 2, .6))
@@ -301,7 +309,7 @@ def test_delayed_settlement_keeps_the_venues_actual_utc_day(tmp_path: Path) -> N
 
 
 def test_cancelled_caller_cannot_release_lock_or_leave_late_created_order_resting(tmp_path: Path) -> None:
-    desk, account, clock, window = companion(tmp_path)
+    desk, account, clock, window = historical_companion(tmp_path)
     arm_fake(desk, account, clock)
     account.create_result = "blocked"
 
@@ -314,7 +322,7 @@ def test_cancelled_caller_cannot_release_lock_or_leave_late_created_order_restin
         with pytest.raises(RuntimeError, match="lock"):
             desk.close()
         with pytest.raises(RuntimeError, match="lock"):
-            companion(tmp_path, account=account)
+            historical_companion(tmp_path, account=account)
         shutdown = asyncio.create_task(desk.shutdown())
         await asyncio.sleep(0)
         assert not shutdown.done()
@@ -337,7 +345,7 @@ def test_owner_trade_in_the_bots_window_neither_freezes_the_desk_nor_breaks_its_
     position then includes the owner's contracts, every reconcile came back inconsistent, and every window froze
     until the close. The bot already leaves that window alone; it keeps its own books from its own fills, keeps
     trading the other windows, and settles from its own contracts (the venue revenue includes the owner's)."""
-    desk, account, clock, window = companion(tmp_path)
+    desk, account, clock, window = historical_companion(tmp_path)
     arm_fake(desk, account, clock)
     try:
         assert asyncio.run(desk._send(window, "up", "take", .4, 2, .6))
@@ -374,7 +382,7 @@ def test_owner_trade_in_the_bots_window_neither_freezes_the_desk_nor_breaks_its_
 def test_an_unexplained_position_in_a_bot_window_still_stops_new_orders(tmp_path: Path) -> None:
     """The relaxation covers only windows with a fill that is provably not the bot's. A position change with no
     such fill (a fill not yet visible, or anything unexplained) still blocks every new order until it reconciles."""
-    desk, account, clock, window = companion(tmp_path)
+    desk, account, clock, window = historical_companion(tmp_path)
     arm_fake(desk, account, clock)
     try:
         assert asyncio.run(desk._send(window, "up", "take", .4, 2, .6))
@@ -391,7 +399,7 @@ def test_owner_closing_out_the_bots_position_by_hand_settles_instead_of_freezing
     """Review of the owner-window fix: if the owner sells the bot's contracts by hand, Kalshi nets them and the
     account is flat in that market, so the venue writes no settlement row. The bot must settle its own contracts
     from the final outcome instead of waiting forever for a receipt that will never come."""
-    desk, account, clock, window = companion(tmp_path)
+    desk, account, clock, window = historical_companion(tmp_path)
     arm_fake(desk, account, clock)
     try:
         assert asyncio.run(desk._send(window, "up", "take", .4, 2, .6))

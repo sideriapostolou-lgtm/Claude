@@ -1,4 +1,6 @@
-"""Bounded Kalshi account reads (loss plan bug 3, speed plan step 1): offline, fake account only."""
+"""Historical admission fixtures exercise prior entry mechanics; they do not establish current production admission.
+
+Bounded Kalshi account reads (loss plan bug 3, speed plan step 1): offline, fake account only."""
 
 from __future__ import annotations
 
@@ -7,7 +9,8 @@ import json
 from pathlib import Path
 from typing import Any
 
-from test_speeddesk_live import TICKER, FakeAccount, fill_order, make_desk, steps
+from historical_speeddesk_entry import make_historical_desk
+from test_speeddesk_live import TICKER, FakeAccount, fill_order, steps
 
 from nightcrawler.clock import FakeClock
 from nightcrawler.speeddesk_live import (
@@ -46,7 +49,7 @@ class FilteringAccount(FakeAccount):
 
 
 def reads_desk(tmp_path: Path) -> tuple[KalshiLiveDesk, FilteringAccount, FakeClock]:
-    desk, _, clock = make_desk(tmp_path)
+    desk, _, clock = make_historical_desk(tmp_path)
     account = FilteringAccount(clock)
     desk.client_factory = lambda: account
     return desk, account, clock
