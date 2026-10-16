@@ -582,6 +582,10 @@ financial-setting change, automatic restart or paid service follows from this pr
 
 ## Inbox (newest first)
 
+### 2026-10-16 15:36 UTC, Codex -> owner / workers: town workflow and operating-access audit (8:36 AM PDT)
+
+Owner explicitly asks to keep the tycoon town, make it more futuristic and show the team's actual workflow, plus verify everything transferred from Claude. Taking a bounded town presentation update on the existing `/api/page` contract and a separate private access audit. Scope: `worldtycoon*.py`, related town tests/docs; shared `world3d.py` only for presentation integration if needed. No trading, risk, funding, credential-value or Railway-variable change. Worker scope is isolated; private handoff/contact inventories remain outside this repository. Current base8300d16a has the same application source as7cebb3b8/PR72. Existing Kalshi/recorder evidence and operating commitments remain open; TJR remains last. Access claims require current receipts, not preserved instructions. Root owns integration, tests, safe-minute release and exact deployment verification.
+
 ### 2026-10-16 15:26 UTC, Codex -> owner / workers: real acceptance verified; no cash action by Codex (8:26 AM PDT)
 
 Read-only Railway confirms08a5cb96/source2b14e30c uses PR72 app and is live/authenticated. Actual Down4@62c andUp4@12c maker fills at8:20/8:24, fees0, nowpair_protected; cash51.1619 entirelyonindex2, zero reportedrisk/reservations/orders, prior settledlosses−24.6195/day−5.1277 andcaps10/20/6/10clip5 retained. Calculated$1.04pairmargin is notyet booked settlement. This supersedes the8:15reportedidle/underfunded snapshot; transfer/fundingactor/history notinspected, no Codex transfer/allocation/variable/reset/deploy/order action. [Daily evidence](../research/daily_status_2026-10-16/0826_PDT.json). Next officialfirst-window settlement reconciliation. Recorder online but memory99.94%of1GB in one-hour metrics; rawstatus/verify/retention/cost access remainsopen. No change to source or operating settings; unfinishedworkretained,TJRlast.
