@@ -169,3 +169,23 @@ This UI work changes no order rules, caps, live switches or protected financial
 execution files. To stop new real orders, set both `POLYDESK_MODE=paper` and
 `SPEEDDESK_KALSHI_MODE=paper` on Railway, then verify both desks and cancellation
 of Kalshi's resting orders. Already filled bets remain exposed until settlement.
+
+## Futuristic workstations and workflow
+
+The existing tycoon town keeps its buildings, six cast members and navigation.
+Each original worker home now has an open holographic console. The cyan ground
+connections from Voss to Rook, Jet and Mote are static role wiring, not evidence
+that a transaction or an AI call happened. Console status indicators use the same
+current crew projection as the phone dock; reconnecting or missing reports show
+unknown. No screen chart, typing loop or moving data packet invents activity.
+
+The dock's four workstation shortcuts show Voss's BTC desk, Rook's safeguards,
+Jet's orders and Mote's records. Pip and Nyx remain background desks. The separate
+“Order → Fill → Settlement” legend names receipt types; it is not a progress bar
+for one transaction. Only the existing qualified real-event gates move the cast.
+A recent fill can mark Jet and Mote recently active; an order marks Jet, a
+settlement marks Mote, and a rejection marks Jet and Rook. A generic receipt no
+longer declares every foreground worker busy. Voss reports the desk state without
+claiming an unrecorded decision. Selected desks retain their current explanation
+and show their own last qualified receipt when one exists. None of this grants
+browser access, task execution or additional trading authority.

@@ -3791,17 +3791,32 @@ _M_LIFE = r"""
   }
 
   // ============================================================= THE DATA (the bot's own ledger, nothing else)
-  let data = null, offline = false, lastOkAt = null, lastClosedKey = null, chatterAt = 0, chatterIdx = 0;
+  let data = null, offline = false, authLocked = false, lastOkAt = null, lastClosedKey = null, chatterAt = 0, chatterIdx = 0;
   const members = {}, lastEventTs = {};
   async function fetchPage() {
     const opts = { cache: "no-store", credentials: "same-origin" };
     let res = await fetch("api/page", opts);
     if (res.status === 401 && token) res = await fetch("api/page?token=" + encodeURIComponent(token), opts);
-    if (res.status === 401) { setOffline("Locked: open the link that ends with ?token=…"); return null; }
+    if (res.status === 401) { clearPageAccess(); return null; }
     if (!res.ok) { setOffline("Cannot reach the bot's data (" + res.status + ")"); return null; }
     return res.json();
   }
-  function setOffline(text) { offline = true; statusEl.textContent = text; statusEl.hidden = false; statusEl.className = "bad"; body.classList.add("offline"); }
+  function setOffline(text) {
+    offline = true; statusEl.textContent = text; statusEl.hidden = false; statusEl.className = "bad"; body.classList.add("offline");
+    // Clear synchronously: a quick reconnect can happen before the next animation frame.
+    TY_BUSINESS.sources = {}; TY_BUSINESS.memo.sources = {}; tycoonBusinessClear(false);
+  }
+  function clearPageAccess() {
+    authLocked = true; data = null; plain = null; lastOkAt = null; lastClosedKey = null;
+    Object.keys(members).forEach(function (key) { delete members[key]; });
+    Object.keys(lastEventTs).forEach(function (key) { delete lastEventTs[key]; });
+    TY_BUSINESS.latest.clear(); TY_BUSINESS.memo = townActivityMemo();
+    tycoonBusinessClear(true);
+    closePanel(); panelBody.textContent = ""; TY_UI.panelSignature = null; TY_UI.panelRoot = null;
+    board.visible = false; drawVaultSign("—", "PRIVATE DATA LOCKED", null);
+    setOffline("Locked: sign in again with your private app link.");
+    renderBar(); renderCard(); tycoonDraw();
+  }
   function onEvent(memberId, ev) {
     if (typeof tycoonActive === "function" && tycoonActive()) return;
     const actor = actors[actorOf[memberId]]; if (!actor) return;
@@ -3860,7 +3875,7 @@ _M_LIFE = r"""
   }
   function apply(d) {
     const first = !data;
-    offline = false; lastOkAt = Date.now(); body.classList.remove("offline");
+    offline = false; authLocked = false; lastOkAt = Date.now(); body.classList.remove("offline");
     plain = d.plain && d.plain.real && d.plain.pretend ? d.plain : null;
     renderBar();
     const money = d.money || {}, since = (money.since_start || {}).usd;

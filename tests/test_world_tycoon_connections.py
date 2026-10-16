@@ -253,7 +253,11 @@ def test_only_kalshi_receipts_can_mark_foreground_crew_working(tmp_path: Path) -
     assert out["event"] is None
     p["money"]["connections"]["kalshi"]["events"] = [event("kalshi", ts=NOW - 2)]
     out = run(tmp_path, p)
-    assert all(c["status"] == "working" for c in out["crew"] if not c["background"])
+    crew = {c["key"]: c for c in out["crew"]}
+    assert crew["voss"]["status"] == "waiting"
+    assert crew["jet"]["status"] == "working"
+    assert crew["jet"]["lastReceipt"]["kind"] == "fill"
+    assert crew["voss"]["lastReceipt"] is None
     assert out["event"]["venue"] == "kalshi"
 
 
@@ -265,3 +269,19 @@ def test_busy_secondary_desk_cannot_crowd_kalshi_out_of_main_activity(tmp_path: 
     assert len(out["business"]["activity"]) == 60
     assert len(out["activity"]) == 50
     assert all(e["venue"] == "kalshi" for e in out["activity"])
+
+
+@pytest.mark.parametrize(("kind", "busy"), [
+    ("order", {"jet"}), ("fill", {"jet", "mote"}),
+    ("settlement", {"mote"}), ("reject", {"rook", "jet"}),
+])
+def test_receipts_only_mark_the_roles_that_handle_them(tmp_path: Path, kind: str, busy: set[str]) -> None:
+    p = connected()
+    for key in ("rook", "jet"):
+        p["plain"]["team"].append({"id": key, "name": key.title()})
+    p["money"]["connections"]["kalshi"]["events"] = [event("kalshi", kind)]
+    crew = run(tmp_path, p)["crew"]
+    assert {c["key"] for c in crew if not c["background"] and c["status"] == "working"} == busy
+    p["money"]["connections"]["kalshi"]["stale"] = True
+    crew = run(tmp_path, p)["crew"]
+    assert all(c["status"] == "unknown" and c["lastReceipt"] is None for c in crew if not c["background"])

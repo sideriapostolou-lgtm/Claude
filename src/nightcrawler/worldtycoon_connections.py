@@ -117,13 +117,17 @@ TYCOON_CONNECTIONS = r"""
       if (!role) return Object.assign({}, c, { background: true,
         job: c.practice === true ? "Practice " + (c.key === "pip" ? "scouting" : "checks") : "Background " + c.job.toLowerCase(),
         jobDetail: c.jobDetail + " This work stays behind the scenes and does not grow the Kalshi town." });
+      // Receipts describe completed observations, not continuous work by all four roles.
+      const kinds = { voss: [], rook: ["reject"], jet: ["order", "fill", "cancel", "reject"], mote: ["fill", "settlement"] };
+      const receipt = s.activity.find(function (e) { return e.scope === "bot" && e.current && kinds[c.key].includes(e.kind); });
       const attention = kalshi.cleanupPending || kalshi.integrityError || kalshi.integrityReset || kalshi.totalHalted
         || k.status === "incomplete";
       return Object.assign({}, c, { job: role.job, jobDetail: role.detail, doing: role.doing, recordedWork: role.doing,
         statusReason: role.doing, background: false,
+        lastReceipt: receipt ? { kind: receipt.kind, text: receipt.text, age: receipt.age } : null,
         status: !fresh ? "unknown" : c.key === "rook" && attention ? "stuck"
-          : latest && latest.age <= 60 ? "working" : "waiting",
-        practice: null, age: latest ? latest.age : null });
+          : receipt && receipt.age <= 60 ? "working" : "waiting",
+        practice: null, age: receipt ? receipt.age : null });
     });
   }
 """
