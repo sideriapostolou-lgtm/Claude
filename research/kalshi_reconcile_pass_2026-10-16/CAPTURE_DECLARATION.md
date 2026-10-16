@@ -13,3 +13,7 @@ Settings stay **$10/window, $20 open, $6/day stop, $10 total-loss allowance, cli
 Use the original declaration's exact identity joins, request/start/return intervals, queue uncertainty, selection/coverage denominators, real/practice separation, public-print/source-gap handling, resource duty and after-tail independent arithmetic without alteration. Primary question remains contemporaneous real versus simulated queue disagreement for exact eligible locally owned ordinary-maker IDs. Queue zero, a depth decline, 404 or an unsampled interval never proves a fill or causal profit.
 
 If natural orders or usable samples do not occur, report the fixed cohort inconclusive and keep populated queue validation OPEN. No persistent background Codex process, complete future collection or profitable strategy is claimed. Existing unfinished operating/recorder/entry work remains queued; TJR/MNQ last.
+
+## Exact release binding, recorded before target
+
+PR71source `275392733de1458692211506228f7dd30e60c693`, tree `cdd8212700011f90f4fd4438d59638370e5ad645`, Railway `3e6e1589-0247-4eaa-b11c-e6117a72fa0b`, SUCCESS October16,12:38:55.750AM PDT. The original PR70 primary source condition is now invalidated; this explicit successor retains the same hour/settings and all original coverage/uncertainty rules. No outcomes from its future target were read.
