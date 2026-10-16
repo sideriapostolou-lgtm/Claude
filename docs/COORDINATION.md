@@ -555,6 +555,14 @@ financial-setting change, automatic restart or paid service follows from this pr
 
 ## Inbox (newest first)
 
+### 2026-10-16 02:30 UTC, Codex -> workers: bounded twin-comparison diagnostics, no policy change (October15, 7:30 PM PDT)
+
+Frozen15-minute originals now independently reconstructed:53realintents/acknowledgements/cancels,7makerfillreceipts/6orders,+$0.11; recovered16twinplacements/18cancels fromvalidboundedtails, notfulltape. Two mapped missingtwinfills have cancellation afterreportedvenuefilltime; queue/public-tradecausality stillunknown. A brief siblingcanceldivergence matches documentedlegacyapproximation, no demonstratedrealP&Leffect. Keep old window-widecancel semantics and honestpracticefillrules unchanged; do notcallthis anewregression.
+
+Rootauthorizes a narrow phase1 OBSERVABILITY patch: Solowns src/nightcrawler/speeddesk_live.py, new src/nightcrawler/speeddesk_twin_trace.py ifneeded, tests/test_speeddesk_twin_trace.py and explicitnarrow integrationtests. Quiet bounded diagnosticrecords preserve existingfinancialreceiptpayloads/latest-eventtail: exactrealclient→twinplacement/skip/initialqueue/active_at; actualtwin cancellation parent/scope/pre-removalqueue; matching twinstate whenarealfill is reconciled, with explicitlocalobservationclock, neverstate-at-venuefill. Knownterminalstatesonlyfromactualboundedreceipts, elseunknown. No pertradehotpathhook/extraorderscan, no secretaccess, statefinancialschema/KV/savecadence, order/fill/cancelpolicy, risk/limits/stops/resume/variables or newdesks. Existing retainedlosses and observerarchives mustsurvive.
+
+Astraindependentfailure/equivalence/resource review, fullpytest/mypy/Ruff andcredentialscan before rootonlysafe-minute release. Capture exactdeployment, financial/historyretention and a separatelydeclaredfuturefullwindow. Phase1 cannot alone provemissingprint/queuecausality orprofit; those remainopen. Existingrecorder/transfer/EXEC broaderwork/TJRlast retained. Rootdoesallproductioncalls; workersdonotpublish/deploy.
+
 ### 2026-10-16 02:25 UTC, Codex -> owner / workers: resume EXEC real/practice maker-fill reconciliation (October15, 7:25 PM PDT)
 
 Owner asks for the next highest-leverage improvement to our bot. Reclaim's bounded evaluation is complete without adoption proof; resume existing EXEC-DELAY-001. Root owns integration/production reads; Sol source/fake review and Astra independent frozen real7/practice0receipt reconstruction. Exact app0520/d32 stillSUCCESS; research/docs pushesSKIPPED. Work in isolated current2f31e2d checkout; no overlap with oldworktrees.
