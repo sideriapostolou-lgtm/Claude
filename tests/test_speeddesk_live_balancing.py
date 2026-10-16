@@ -13,7 +13,12 @@ from test_speeddesk_live import TICKER, FakeAccount, make_desk, steps
 
 from nightcrawler.clock import FakeClock
 from nightcrawler.speeddesk_live import KalshiLiveDesk, LiveSnapshot
-from nightcrawler.speeddesk_live_model import ActualFill, LiveLimits, LiveRiskBook
+from nightcrawler.speeddesk_live_model import (
+    ActualFill,
+    LiveIntent,
+    LiveLimits,
+    LiveRiskBook,
+)
 from nightcrawler.speeddesk_model import Book, Level, Window, utc_day
 
 WINDOW = "KXBTC15M-TEST-A"
@@ -170,8 +175,11 @@ def test_a_money_stop_keeps_no_pair_of_bids_that_together_add_risk() -> None:
         book.mark_submitted(intent.client_order_id, f"venue-{side}-pair")
         book.record_fill(ActualFill(f"fill-{side}-pair", f"venue-{side}-pair", intent.client_order_id, WINDOW, side,
                                     .49, 5, 0.0, 1011))
-    up = book.reserve_intent(WINDOW, "up", "rest", .50, 3, 1012, "nc-speed-up-more", .52)
-    down = book.reserve_intent(WINDOW, "down", "rest", .50, 3, 1012, "nc-speed-down-more", .52)
+    # Existing pre-protection orders remain liabilities. New ordinary admission now forbids these bids;
+    # seed their legacy reservations explicitly to retain this independent stop-accounting regression.
+    up = LiveIntent("nc-speed-up-more", WINDOW, "up", "rest", .50, 3, 1012, .50, .52)
+    down = LiveIntent("nc-speed-down-more", WINDOW, "down", "rest", .50, 3, 1012, .50, .52)
+    book.intents[up.client_order_id], book.intents[down.client_order_id] = up, down
     assert book.worst_loss(WINDOW) == pytest.approx(book.worst_loss(WINDOW, without=up.client_order_id))
     assert book.worst_loss(WINDOW) - book._worst(book.inventory[WINDOW], []) == pytest.approx(1.40)
     assert not book.lowers_risk(up.client_order_id) and not book.lowers_risk(down.client_order_id)

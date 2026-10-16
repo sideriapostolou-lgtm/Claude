@@ -103,15 +103,27 @@ def starter_bid_filled(desk: KalshiLiveDesk, account: FakeAccount, clock: FakeCl
 
 
 def two_bids(tmp_path: Path, **extra: Any) -> tuple[KalshiLiveDesk, FakeAccount, FakeClock]:
-    """5 Up and 5 Down bought at 0.47 (a pair), then an Up and a Down bid of 3 at 0.47 resting (the most the 25%
-    imbalance cap allows), at an Up fair of 0.50; the practice twin holds the same."""
+    """Legacy unequal holdings, 5.01 Up/5 Down at .47, then two bids of 3. The old starter was 6 contracts,
+    partially filled and canceled. No positive equal holding ever triggers pair protection. This keeps the
+    pull's two-sided cancellation/control tests reachable without reopening a protected full pair."""
     desk, account, clock = make_desk(tmp_path, caps=CAPS, extra={**MAKERS, **extra})
     starter_bid_filled(desk, account, clock)
+    # Supply the legacy partial execution before the first reconciliation observes it. New orders still
+    # use the current five-contract clip; historical integer-sized intents may have a larger original size.
+    first = next(iter(desk.intents.values()))
+    first.size = desk.book.intents[first.client_order_id].size = 6
+    account.creates[0]["size"] = 6
+    account.orders[0].update(initial_count_fp="6.00", fill_count_fp="5.01", remaining_count_fp="0.00", status="canceled")
+    account.executions[0]["count_fp"] = "5.01"
+    account.account_positions = [{"ticker": TICKER, "position_fp": "5.01"}]
+    desk.twin.inventory[TICKER].up.shares = 5.01
+    desk.twin.inventory[TICKER].up.cost = 5.01 * .47
     run(desk, clock, .6)
     assert [(c["side"], c["price"], c["size"]) for c in account.creates[1:]] == [("down", .47, 5)]
     maker_fill(desk, account, clock, 1, "down")
-    account.account_positions = []
+    account.account_positions = [{"ticker": TICKER, "position_fp": "0.01"}]
     run(desk, clock, 1.5)
+    assert TICKER not in desk.book.protected_windows
     assert sorted(bids(account)) == [("down", .47), ("up", .47)]
     assert [c["size"] for c in account.creates[2:]] == [3, 3]
     assert not account.cancels
@@ -457,7 +469,8 @@ def test_the_panel_compares_real_and_twin_since_the_pull_went_live(tmp_path: Pat
         control = desk.panel()["pull"]["week_before"]
         assert (control["windows_both_traded"], control["live_pnl_usd"], control["twin_pnl_usd"]) == (1, .3, .25)
         assert (control["windows_either_traded"], control["live_maker_fills"], control["twin_maker_fills"]) == (1, 2, 2)
-        assert control["live_maker_contracts"] == control["twin_maker_contracts"] == 10
+        assert control["live_maker_contracts"] == pytest.approx(10.01)  # the legacy starter's partial fill
+        assert control["twin_maker_contracts"] == 10
         desk.pull.since = window.start
         assert desk.panel()["pull"]["since_pull"]["live_minus_twin_usd"] == pytest.approx(.05)
         status = desk.panel()

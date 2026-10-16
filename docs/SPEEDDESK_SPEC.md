@@ -616,6 +616,43 @@ audit and prospective original/inverted/no-trade protocol are in `research/kalsh
 The comparison remains a specification until independently implemented and activated; it cannot be inferred
 by negating actual losses or ranking the current arena's simulated cash.
 
+### 9.6 Protect a confirmed profitable full pair (owner-requested loss reduction, 2026-10-15)
+
+Once the live risk book observes nonzero, equal Up/Down bought quantities whose $1-per-pair payout exceeds
+actual principal plus actual fees (using the existing epsilon), that window is protected. It refuses new
+ordinary buys that add directional exposure and requests cancellation of residual ordinary bids that are
+not strictly balancing confirmed inventory. The final transport guard rechecks this after any wait. The
+top-level `protected_windows` marker persists with existing fill-batch checkpoints; the archive parts and
+every financial receipt, fee, loss, cap, stop and consumed control remain unchanged.
+
+Cancellation requests, acknowledgements,404s and timeouts never release reservations without the existing
+fill/order reconciliation. A residual fill can make the protected window unequal: keep the marker, permit
+only aggregate-reservation-safe balancing buys under all existing ordinary checks, and preserve the existing
+late risk-reducing lock path unchanged. No new exposure is authorized by this rule, and no limit or variable
+is increased or reset. New windows retain the existing first-entry policy; initial unmatched entries can lose.
+
+`speeddesk_live_pair_protected` records the first live fill trigger, with the confirmed-inventory payout,
+cost and `inventory_floor_usd`. This floor excludes outstanding liabilities; old orders can still erode it
+in a cancellation race. The status adds `pair_protection`; its historical count can include currently
+qualifying older holdings derived on startup and is not a count of forward-tested profitable windows.
+
+Old saves have no marker. Restore derives protection only from their current confirmed positive full pairs;
+it does not guess an earlier transient pair from arbitrary fill order. Once checkpointed, the marker survives
+restart and cold archives. A crash before that checkpoint plus a differently ordered, now-unequal replay may
+lose an unpersisted intermediate observation. A reported balanced prefix in one reconciliation batch is a
+confirmed subset, not proof the entire physical account was flat then. Older code ignores the new key and
+would withdraw this restriction; no automatic rollback or safeguard removal is authorized here.
+
+This is a risk restriction, not demonstrated positive expectancy or a break-even guarantee. It can forgo
+profitable later rounds and directional winners. Keep all such gains, all actual losses, initial-entry risk,
+cancel races and coverage gaps in comparisons. The existing practice twin still has its documented pull,
+cancellation, lock-copy and fill limitations; standalone practice/arena residents are not automatically an
+exact new-policy counterfactual. No practice fill is manufactured from a real receipt.
+
+See `research/kalshi_pair_protection_2026-10-16/` for the exact patch, failure cases, broad prior-live descriptive
+cohort, required checks, independent review and separately declared forward evidence. Research holdouts and
+the existing queue/print validation remain separate; this change does not open TEST or establish profitability.
+
 ## 10. Public source-bot watcher and faster market data (owner, 2026-10-12)
 
 The owner wants real Kalshi trading as the eventual result of learning the source bot, within the owner's

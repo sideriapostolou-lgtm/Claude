@@ -39,7 +39,10 @@ def test_conservative_pending_cost_is_preserved_when_both_sides_have_bids():
         book.record_fill(ActualFill(f"fill-{key}", f"venue-{key}", key, window.slug, side, .49, 5, 0, NOW))
         assert not intent.reservation_active
     for side in ("up", "down"):
-        book.reserve_intent(window.slug, side, "rest", .50, 3, NOW, f"nc-speed-{side}-more")
+        # Pre-protection liabilities can still be present after a full pair. Seed those legacy orders
+        # directly: new directional admission is now forbidden, but their complete cost stays reserved.
+        key = f"nc-speed-{side}-more"
+        book.intents[key] = LiveIntent(key, window.slug, side, "rest", .50, 3, NOW, .50)
     assert book.worst_loss(window.slug) == pytest.approx(1.4)
     assert book.at_risk_usd == pytest.approx(3)  # full new-risk reservation cost, not incremental exact loss
     assert not book.lowers_risk("nc-speed-up-more")
