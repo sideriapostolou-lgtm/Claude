@@ -563,6 +563,16 @@ financial-setting change, automatic restart or paid service follows from this pr
 
 ## Inbox (newest first)
 
+### 2026-10-16 06:32 UTC, Codex: resume EXEC, bounded own-order queue evidence (October15 Pacific)
+
+Owner requests the next highest-value step. Root owns integration/production reads, Sol implementation, Astra independent review, Luna bounded original-row extraction. Current3072209/source66d122b5 and recent145/93-row unsaturated loss-window exports are the baseline. Actualpaper/real queue mismatch is demonstrated; cancellation ignorance is a conservative simulator limitation, not a proven explanation of a specific fill.
+
+Reserve minimal diagnostic-only source scope: a session-only sampler of the documented authenticated single-own-order GET `/portfolio/orders/{order_id}/queue_position`, ordinary acknowledged owned resting IDs only, returning `queue_position_fp`. Separate bounded session/backoff and at-most-one background read outside execution transport/worker locks; best-effort no-wait admission with existing read-quota headroom, conservative cadence/body/time bounds, no blind retries. Stop admission before shutdown, prioritize real cancels, then drain/close sampler. Never publish headers/raw responses/keys or unrelated owner orders. Record dispatch/return clocks, exact real/twin identity, missing404/changes/errors/skips explicitly; no server snapshot timestamp is supplied. A zero queue is not a fill. No overwriting simulatorqueues, learning/promotingrules or profitability/counterfactual claims.
+
+Only diagnostic client/controller hooks/newpurehelper and fake tests, plus documentation; no buy/sell/fee/price/cancel/risk decisions or account limits, stops, budgets, resume values, variables, Polymarket code or FamilyAprotocol/TEST change. Existingdaily stop remains; no test orders/resume for sampler coverage. Finishedsource requires fullpytest/mypy/changedRuff, independentreview, safe-minute release, exact restart/history/financial retention and bounded runtime verification. While no realrestingorders exist, idle/no-sample behavior can be verified but naturally populatedqueue evidence remains queued. BroaderEXEC/profitability/recorder/operatingworkOPEN;TJRlast. Latestreminder leavesTJRblocked: freshPR47metadata e8dbmerged plus separatef707follow-up complete, notoverallclearance.
+
+Status: architecture agreed, implementation now reserved; not built, released or profitable yet.
+
 ### 2026-10-16 06:27 UTC, Codex: current losses and other-market/leverage review (October15 Pacific)
 
 Owner asks why losses continue and whether another Kalshi market or leverage could work. Completed bounded read-only review; exact results and current book/product evidence are in [the dated report](../research/kalshi_market_review_2026-10-16/REPORT.md). Six new traded windows after PR69 lost79.26c; inherited35.15c loss stays included, not erased. Last11:23:57PM panel remains daily-stop PRACTICE with no reported open risk; configuredlive is unchanged. The guard protects already-positive pairs, while initial unmatched entries remain risky; late hedge reduced one actual loss by18.74c. No profitable replacement or larger-size approval inferred.
