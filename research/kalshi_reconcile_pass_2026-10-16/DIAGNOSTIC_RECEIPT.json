@@ -1,0 +1,15 @@
+{
+  "base": "d1ee16f728612275fedb0d08846e127b0ad9b88d",
+  "worktree_clean": true,
+  "artifacts": {
+    "profile_active_windows.py": "ee9b88f7d062e333404169baa320fe6de7c99520712803eb4d68bc362e839c45",
+    "PROPOSAL_ONLY.patch": "d08885a84116d6ebd0052ab416425935f7c9fa5a9d385f94dc82cc207db6f744",
+    "PROFILE.json": "ea2e1d98db2abd41be72261e03755002aee9d4b96049eed4384b733f94e09ab2",
+    "candidate_mechanism.py": "7aafdf4474a22adf70e6b8f9f477ceccd80fb9826859cb9a47472b85e1499f73",
+    "BASELINE_TESTS.log": "c0353d23bbacb02e6ca2d6e19320d20945286cfdd0f2758a5bb1195fa481352e"
+  },
+  "scope": "read-only diagnostic; proposal NOT applied",
+  "network_or_credentials": "none",
+  "source_tests_writes": "none intentional; imports may create ignored Python bytecode cache",
+  "baseline_tests": "............                                                             [100%]\n12 passed in 1.62s"
+}

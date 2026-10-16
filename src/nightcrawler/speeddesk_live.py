@@ -1937,10 +1937,11 @@ class KalshiLiveDesk:
             # audits the books against Kalshi's revenue).
             money_changed |= self._release_unsent(sync_started, listed, self._release_proof(
                 checks, unattributed, actual, settlement_rows))
+        active_windows = {item.window for item in self._active()}
         for ticker in windows:
             expected = self.book.expected_position(ticker)
             current = actual.get(ticker, 0.0)
-            if (ticker in self.final_outcomes and not any(item.window == ticker for item in self._active())
+            if (ticker in self.final_outcomes and ticker not in active_windows
                     and abs(current) <= EPS):
                 row = settlement_rows.get(ticker)
                 # A flat paired position needs no settlement payout. A

@@ -12,3 +12,7 @@ Declared October 16 UTC before the target period; owner display times below are 
 - After the fixed tail: restore bounded native exports and run exact-ID joins/independent arithmetic; choose one falsifiable follow-up only if evidence distinguishes alternatives. If there are no natural eligible orders or usable samples, close the cohort as inconclusive and keep populated endpoint/queue validation OPEN. No manufactured order or restart is allowed to improve coverage.
 
 Current release can be marked deployed/retained/idle-verified separately. The broader EXEC/practice-fidelity/profitability task, actual populated queue evidence, recorder Phase0/retention/cost and operating takeover stay on their existing queues. TJR/MNQ remains LAST. A persistent background Codex session or completed future audit is not claimed by this declaration.
+
+## Source supersession declared before capture
+
+October16,12:30AM PDT: the planned tested reconciliation patch changes this declaration's required PR70 source. Upon its verified deployment this primary source comparison is invalidated; its original text and evidence remain preserved. The [explicit successor declaration](../kalshi_reconcile_pass_2026-10-16/CAPTURE_DECLARATION.md) keeps the same target hour and existing settings. If that source does not deploy, this original source condition remains controlling. No order, resume, setting or risk increase is implied.
