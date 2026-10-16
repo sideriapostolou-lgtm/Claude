@@ -1,5 +1,7 @@
 # What the town's numbers and movement mean
 
+Release evidence: [PR74](https://github.com/sideriapostolou-lgtm/Claude/pull/74), exact e72f4b8b/a717faa1 SUCCESS October 16, 11:50:25.620AM PDT. [Bounded runtime receipt](../research/town_money_2026-10-16/RELEASE.json). Signed-in production money rendering/latency remains unverified; local browser account figures are synthetic.
+
 **October 16, 11:29 AM PDT owner override:** improve the town and fix its missing Kalshi
 money now. This supersedes the earlier handoff-before-redesign sequence, while the
 operating handoff, unmapped services and product acceptance remain unfinished. The

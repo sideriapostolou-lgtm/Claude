@@ -1,5 +1,7 @@
 # The business workflow and the next town design
 
+Release evidence: [PR74](https://github.com/sideriapostolou-lgtm/Claude/pull/74), exact e72f4b8b/a717faa1 SUCCESS October 16, 11:50:25.620AM PDT. [Bounded runtime receipt](../research/town_money_2026-10-16/RELEASE.json). Signed-in production money rendering/latency remains unverified; local browser account figures are synthetic.
+
 Owner direction, October 16, 2026, **11:29 AM Pacific:** improve the town now and fix the Kalshi money loading. This overrides the 9:44 AM handoff-before-redesign sequence. PR73's successful deployment and rejected appearance/clarity remain historical evidence. The current release implements the bounded money transport and campus changes below; complete operating handoff, missing service registries and owner acceptance of the overall product goal remain open. Exact deployment and runtime proof belong in the release record.
 
 ## What the company actually does
