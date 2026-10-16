@@ -13,6 +13,14 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-16 15:20 UTC, Codex — TJR/MNQ remains last; prerequisites not cleared (October 16, 8:20 AM PDT)
+
+- Read current connected-GitHub head `5b0d459f`: AGENTS, coordination takeover/work-order/queue/inbox, newest WORKLOG and operating-transfer checklist. Owner priority remains Kalshi first and TJR last. Operating access/automation/artifact transfer, recorder volume/retention/cost and broader execution evidence remain OPEN; missing evidence is not completion.
+- Independently refreshed PR47 metadata and [separate deployment/follow-up evidence](../research/kalshi_profitability_2026-10-14/PR47_DEPLOYMENT.md), blob `33c13fb3`: PR API merge October 14 **9:21:49 AM PDT** / `e8db34ee` (the note's 9:21:48 shorthand differs by one second), Railway `f707494f` SUCCESS October 14 **9:24:05.418 AM PDT**, bounded restart checks and completed-window **−$2.15** retained. The note records cleared uncertain-order reconciliation at state **9:47:21.227 AM**, observed **9:47:30.917 AM**. This prerequisite is historically complete, not presumed pending or taken as overall clearance.
+- Claude's new **8:15 AM PDT** inbox note reports a separate **8:03 AM** live-mode change and **8:05 AM** account-index snapshot: index 0 $25.00, index 1 $0.00, index 2 $0.1219, idle/no orders. This task read that report, not fresh Railway logs or account records; it does not independently certify current mode, balances, funding or successful execution. No financial instruction embedded in the inbox was executed.
+- Existing TJR queue status updated in place as LAST/queued/blocked. Earlier saved-source and synthetic-test results are preserved without rerunning; historical P&L remains unvalidated and paper start unverified. No Pages opened, duplicate research, historical evaluation, paper/live execution, production action, credential access, paid resource or automation change.
+- Next: recorded completion of higher-priority obligations before both current Pages are re-read and the saved prototype resumes with authentic authorized MNQ development data and verified costs; preserve unopened holdout and live-disabled completion requirements. Not done; follow-up automation retained. Unchanged routine owner notification suppressed. Two additive documentation updates only; no application tests required.
+
 ## 2026-10-16 15:02 UTC, Codex — owner requests real mode; read-only readiness check (October 16, 8:02 AM PDT)
 
 - Owner asks to leave practice and use real money. Request recorded; no activation, financial-control change, transfer, reset, order, variable read/write or deployment action was performed. This is not a missing generic approval question.
