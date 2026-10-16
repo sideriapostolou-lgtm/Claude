@@ -40,6 +40,8 @@ building, wait for it to finish.
 
 ## Deferred work queue
 
+**Latest owner work order, October 16, 9:44 AM PDT:** reconcile and complete the operating handoff before the next town reorganization. The owner rejected PR73's clarity despite its successful deployment; the town product goal stays open. Keep the existing live trading/recorder services stable and retain their unresolved evidence work. Build the town from a verified operating map, not character names or decorative activity. TJR/MNQ remains last; no financial authorization follows from this work order.
+
 Check this queue at task start and before declaring current work complete. Keep unfinished items here;
 move an item to done only with linked evidence. Blocked or waiting-for-approval is not complete.
 
@@ -300,6 +302,7 @@ financial-setting change, automatic restart or paid service follows from this pr
   [Protocol and operational boundary](KALSHI_ONLINE_LEARNING.md).
 
 ### CODEX-TAKEOVER-001 — operating access/checklist audited; private state and raw-volume transfer unverified
+- **October 16, 9:46 AM PDT — ACTIVE, owner rejects town clarity:** complete operating reconciliation before town redesign. PR73 deployment remains verified, but its product/clarity goal is reopened. Root owns one private operating map and acceptance matrix; actual browser/routine/source/state gaps remain blockers. Current bot services stay stable, all existing losses/limits/evidence obligations retained, TJR last. Next exact owner-held access/source recovery and an honest UI contract for actual software, research, scheduled jobs and Codex assignments.
 - **October 16, 8:53 AM PDT:** owner reopened a bounded futuristic-town/workflow update and private access audit. PR73 exactb3ca7b76/85c368ff is deployed and runtime-verified; full6234/14skip,mypy134,Ruff8 plus independent/browser checks. Private originals, current connector checks and18 additional repository content reads saved privately (976c99c7/073fcd63); no public private-inventory copy. Browser/host/routine control, missing source bundles, raw-volume/cost evidence and full operating transfer remain OPEN; next status-only legacy routine confirmation and existing private checklist gaps. Kalshi losses/caps retained; no financial changes. [Bounded release evidence](../research/town_team_workflow_2026-10-16/RELEASE.json). TJR remains LAST; broader work is not cleared.
 - **3:54 PM PDT October 15:** [Read-only recorder checkpoint](KALSHI_RECORDER_CHECKPOINT_2026-10-15.md) documents online a078 / 8453. The 31 hourly receipts / 1,822 coarse sampled minutes do not certify 48 hours of gap-excluded capture, queue/depth, fees or raw hashes. Saved growth ~0.313 GB/day; actual cost and retention fit unverified. Before October 20, obtain permitted volume/usage exports and an owner storage or lossless-retention decision if inadequate. No resize/configuration/deployment change. This obligation remains **OPEN**, with Phase 0 incomplete and TRAIN not started by this report.
 - **October 15, 1:30 PM PDT:** owner reprioritizes Kalshi first. Complete private text preservation remains verified; full access/automation/artifact/volume transfer and current-cost/business follow-up remain **deferred and unfinished**, on existing records. TJR stays last. Do not treat a priority change as completion or permission to alter financial settings.
@@ -583,6 +586,12 @@ financial-setting change, automatic restart or paid service follows from this pr
   this item. No production, financial or credential-copy work is needed; chat delegation stays usable.
 
 ## Inbox (newest first)
+
+### 2026-10-16 16:46 UTC, Codex -> owner / workers: operating handoff first; town organization reopened (9:46 AM PDT)
+
+Owner rejects the PR73 town as confusing and asks for the complete operating handoff before reorganizing it around the actual automated trading business. The PR73 deployment is technically complete; the product/clarity goal is **not accepted and remains OPEN**. Taking the existing CODEX-TAKEOVER-001 work: reconcile full private handoff, actual services/connections/automations/state and unfinished projects; establish exact missing owner-held items; produce an evidence-backed operating map and town work order. No new cosmetic release during this inventory. Existing live trading/recorder operations and their unresolved evidence remain intact; TJR stays LAST.
+
+Root alone publishes public coordination and private vault updates. Independent workers have bounded private-inventory, actual-workflow and design-review lanes, no production mutation or remote publication. Private business/project inventories stay in the existing private vault; public docs contain only bot operating architecture and generic transfer status. No credential-value reads, cookie transfer, financial changes, orders, routine activation, external messages, paid services or new runtime AI workers. Owner questions cover original Claude session availability and changes since the October15 handoff; missing access is not completion.
 
 ### 2026-10-16 16:37 UTC, Codex -> owner / workers: resumed PR73 evidence publication (9:37 AM PDT)
 
