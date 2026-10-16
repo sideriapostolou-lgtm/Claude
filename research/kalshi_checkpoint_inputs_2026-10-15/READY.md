@@ -1,3 +1,11 @@
+# Current integration update — 5:04 PM PDT October 15
+
+The source release is resumed in the owner's new active Kalshi task. The earlier 3:47 PM plan below did **not** occur: the intervening recorder checkpoint explicitly restricted that task to read-only production inspection. All its newer docs/evidence and TJR queue entries are preserved. Only documentation integration changed since the reviewed candidate; required source tests remain scoped to identical application/test bytes. Exact combined-tree readback and actual deployment/runtime evidence are still required.
+
+At 5:00:20 PM the actual predecessor source23e2 has 8 forecasts/7 scores/2 unknown/1 pending (not the older dated 3/2 snapshot below). Refresh immediately before release; retain every score, miss and pending row in the predecessor epoch, plus the older five-score archive. Expected new source f265 starts distinct; no learned model is enabled for real orders.
+
+The UTC-day boundary resumed the existing configured live desk automatically. Root did not reset any budget/stop or change variables. New fills are unsettled; no win/profit claim. Preserve current financial/accounting and all losses around restart. The following is retained dated preparation history:
+
 # Tested report-conversion improvement; release pending
 
 Prepared October15 at3:38PM PDT (22:38UTC). Exact application source SHA256 eb9146263a881ba2ef6645c03585ca78c7bc0e1d9f03cb5177028d483e403ef4, test3eb15e8f138cbe47ef99b5b6fa76ac6ce6db4751bcba7e76b1d0d5585e13ca30, conventional patch475dc5aa1177815292b91d16bebb2a093692b1e38b0169578ed66fb3ac040b78.
