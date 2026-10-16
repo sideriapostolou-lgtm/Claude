@@ -232,7 +232,8 @@ financial-setting change, automatic restart or paid service follows from this pr
   The second task is the frozen original/inverse/no-trade comparison; do not implement/activate it
   while the first remains open. TJR's separate authentic-data blocker and recorder duties persist.
 
-### PUBLIC-BOT-15M-001 — selected source/evidence audit complete; independent causal validation pending
+### PUBLIC-BOT-15M-001 — source audit complete; owner-prioritized offline causal validation active
+- **October15, 6:52 PM PDT:** Owner explicitly requests testing the identified reclaim bot now. Bounded OFFLINE validation is ACTIVE under [RCLv1](../research/kalshi_reclaim_validation_2026-10-16/PROTOCOL.md); preserve the existing EXEC-first unresolved evidence, recorder/transfer tasks and TJRlast. No app/trading/financial/deployment authority. Freeze two current lanes, causalofficialcandles, fees/delay, hold-to-settlement losses; externalOct10–12confirmation remains unopened until exact code/review freeze. Actual result and executableprofitability pending.
 - **October 15, 6:37 PM PDT:** Owner-requested public Kalshi15m search:134 query rows/123 distinct metadata names,18selected projects source-audited. [Report](../research/kalshi_public_bots/2026-10-16/REPORT.md) and exactpins/rulecards distinguish published claims from execution. Two independent Decimal reconstructions agree84public fills/31settlements: **+$78.134after$16.271fees**,24positive/7negative, worst−$26.84; authenticity/fullaccountcoverage unknown. Currentreclaim2lanes differfromhistorical3; realizedexits70c, researchclockleak/paperloss omissions disclosed. Elham628paperresults mixedrules; four bounded externaldatasetfiles inspected, not continuousqueueproof. This research milestone does not establish our profitability or complete currentEXEC. Next finish existing real/practice receipt reconciliation, then a separately declared causal reclaim/persistentfavorite comparison under existingcaps/fees/delay/depth/officialsettlements; no TEST opened or live strategy change. Retain recorder/transfer obligations; TJR last.
 
 ### KALSHI-ONLINE-001 — implementation/release verified; prospective accuracy evidence pending
@@ -552,6 +553,13 @@ financial-setting change, automatic restart or paid service follows from this pr
   this item. No production, financial or credential-copy work is needed; chat delegation stays usable.
 
 ## Inbox (newest first)
+
+### 2026-10-16 01:52 UTC, Codex -> owner / workers: public reclaim-bot offline validation active (October15, 6:52 PM PDT)
+
+Owner now explicitly asks “That bot u found find out if it works.” Take PUBLIC-BOT-15M-001 bounded OFFLINE validation now: independently reconstruct two current d5a55reclaim lanes, officialminute/BTCcausal clocks, delayed observed-quote taker proxy, fees and every settlementloss. [Declared protocol](../research/kalshi_reclaim_validation_2026-10-16/PROTOCOL.md) fixes Oct3development, Oct4–9validation and separately unopenedOct10–12externalconfirmation; implementation/hash/review freeze required beforeconfirmation access. Historical APIs cannot prove barfirstvisibility or GTCqueuefills; disclose assumptions. No thirdpartybotexecution, live source/deploy/variables/caps/stops/resume/orders, credentials, paid services or storeddata changes. Root integrates/downloads/publishes; Sol pure replay/tests, Astra independentdesign/code/resultreview, Luna boundedmetadata only.
+
+This explicit offline task order supersedes only PUBLIC-BOT's wait behind EXEC for this scoped research; EXEC, real7/practice0reconciliation, recorder volume/retention/cost and operatingtransfer remainOPEN/deferred, not cleared. Original/inverse/no-trade and FamilyA/toxicityTEST stay untouched; TJRlast. Research source-audit alreadycomplete; profitable/executable validation notyet established.
+
 
 ### 2026-10-16 01:37 UTC, Codex -> owner / workers: public BTC15m reverse-engineering evidence complete (October 15, 6:37 PM PDT)
 
