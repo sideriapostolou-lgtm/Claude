@@ -1,0 +1,174 @@
+"""Independent Decimal audit of fixed native receipts; no bot imports or network."""
+import collections
+import hashlib
+import json
+from decimal import Decimal
+from pathlib import Path
+
+BASE = Path(__file__).resolve().parent
+NATIVE = BASE / "native"
+TARGET = "KXBTC15M-26OCT152315-15"
+DEPLOY = "99bf5b9e-72b2-4912-a7cb-8a3db414133b"
+D = Decimal
+
+
+def sha(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def main():
+    checks = []
+
+    def check(name, condition):
+        checks.append({"name": name, "passed": bool(condition)})
+        if not condition:
+            raise AssertionError(name)
+
+    manifest = []
+    unique = {}
+    by_file = {}
+    classifications = collections.Counter()
+    for path in sorted(NATIVE.glob("CAPTURE_*.native.json")):
+        wrapper = json.loads(path.read_text())
+        req = wrapper["request"]
+        result = wrapper["result"]
+        rows = result["structuredContent"]["deploy"]
+        check(path.name + " success/bounds/unsaturated", not result.get("isError", False)
+              and req["deploymentId"] == DEPLOY and req["limit"] == 500 and len(rows) < 500
+              and req["startDate"] == "2026-10-16T03:00:00Z"
+              and req["endDate"] == "2026-10-16T03:17:00Z")
+        manifest.append({"name": "native/" + path.name, "sha256": sha(path), "rows": len(rows),
+                         "request": req, "before": wrapper["before"], "after": wrapper["after"]})
+        parsed = []
+        for row in rows:
+            key = row["timestamp"], row["message"]
+            first = key not in unique
+            unique[key] = row
+            message = row["message"]
+            prefix, sep, body = message.partition("{")
+            if not sep:
+                if first:
+                    classifications["plain_text"] += 1
+                continue
+            try:
+                payload = json.loads("{" + body, parse_float=D, parse_int=D)
+            except json.JSONDecodeError:
+                if first:
+                    classifications["invalid_or_truncated_json"] += 1
+                continue
+            if first:
+                classifications["valid_json"] += 1
+            parsed.append({"platform_timestamp": row["timestamp"], "prefix": prefix, "payload": payload})
+        by_file[path.name.removeprefix("CAPTURE_").removesuffix(".native.json")] = parsed
+    check("19 exact closed queries", len(manifest) == 19)
+    check("279 rows 269 unique 10 duplicates", sum(x["rows"] for x in manifest) == 279 and len(unique) == 269)
+    check("17 genuine invalid/truncated JSON", classifications["invalid_or_truncated_json"] == 17)
+
+    def target(name):
+        return [r for r in by_file[name] if r["payload"].get("window") == TARGET]
+
+    orders = target("live_order")
+    intents = {r["payload"]["client_order_id"]: r["payload"] for r in orders
+               if r["payload"].get("state", "").startswith("durable intent")}
+    acks = {r["payload"]["client_order_id"]: r["payload"] for r in orders
+            if r["payload"].get("state") == "accepted; waiting for real fills"}
+    fills = sorted((r["payload"] for r in target("live_fill")), key=lambda p: p["at"])
+    check("six intents including one lock, six acknowledgements", len(intents) == len(acks) == 6
+          and sum(v["kind"] == "lock" for v in intents.values()) == 1)
+    check("three unique fills on two orders", len(fills) == len({x["fill_id"] for x in fills}) == 3
+          and len({x["order_id"] for x in fills}) == 2)
+    check("all real fills join exact intents and acknowledgement IDs", all(
+        x["client_order_id"] in intents and acks[x["client_order_id"]]["order_id"] == x["order_id"]
+        for x in fills))
+    costs = {s: sum((x["size"] * x["price"] for x in fills if x["side"] == s), D(0)) for s in ("up", "down")}
+    qty = {s: sum((x["size"] for x in fills if x["side"] == s), D(0)) for s in costs}
+    fees = sum((x["fee_usd"] for x in fills), D(0))
+    payout = qty["up"]
+    pnl = payout - sum(costs.values()) - fees
+    settlement = target("live_settlement")[0]["payload"]
+    check("real costs quantities and fees", qty == {"up": D(5), "down": D(5)}
+          and costs == {"up": D("4.840"), "down": D("3.000")} and fees == D("0.0109"))
+    check("settlement reconciliation with no double paired credit", settlement["up_wins"] is True
+          and settlement["cost_usd"] == sum(costs.values()) and settlement["fee_usd"] == fees
+          and settlement["payout_usd"] == payout and settlement["paired_credit_usd"] == payout
+          and settlement["net_payout_usd"] == 0 and settlement["pnl_usd"] == pnl == D("-2.8509")
+          and settlement["locked_usd"] == pnl and settlement["direction_usd"] == 0)
+    official_wrapper = json.loads((NATIVE / "PUBLIC_TARGET_FINAL_FIRST.json").read_text())
+    check("official response raw hash", hashlib.sha256(official_wrapper["raw_utf8"].encode()).hexdigest()
+          == official_wrapper["sha256"] and official_wrapper["status"] == 200)
+    market = json.loads(official_wrapper["raw_utf8"])["market"]
+    check("official finalized YES at declared bounds", market["ticker"] == TARGET and market["result"] == "yes"
+          and market["status"] == "finalized" and market["open_time"] == "2026-10-16T03:00:00Z"
+          and market["close_time"] == "2026-10-16T03:15:00Z")
+
+    traces = [x["payload"] for x in target("twin_trace")]
+    actions = collections.Counter(x["action"] for x in traces)
+    check("13 primary traces exact actions", actions == {"copy": 5, "cancel": 5, "real_fill_reconcile": 3})
+    copies = {x["parent_client_order_id"]: x for x in traces if x["action"] == "copy"}
+    cancels = {x["parent_client_order_id"]: x for x in traces if x["action"] == "cancel"}
+    fill_traces = {x["fill_id"]: x for x in traces if x["action"] == "real_fill_reconcile"}
+    check("all five ordinary intents copied and matching-parent cancelled", all(
+        v["kind"] == "lock" or cid in copies and cid in cancels
+        and copies[cid]["twin_order_id"] == cancels[cid]["twin_order_id"]
+        and cancels[cid]["parent_twin_order_id"] == cancels[cid]["twin_order_id"]
+        for cid, v in intents.items()))
+    check("every real fill has explicit non-venue snapshot", all(
+        f["fill_id"] in fill_traces and fill_traces[f["fill_id"]]["snapshot_time_exact"] is False
+        and fill_traces[f["fill_id"]]["clock_basis"] == "fills_batch_return" for f in fills))
+    check("maker partials mapped; lock unknown and not counted as ordinary missing copy", all(
+        (fill_traces[f["fill_id"]]["twin_order_id"] == 9349
+         and fill_traces[f["fill_id"]]["terminal_state"] == "cancelled") if not f["is_taker"]
+        else (intents[f["client_order_id"]]["kind"] == "lock"
+              and fill_traces[f["fill_id"]]["twin_order_id"] == 0
+              and fill_traces[f["fill_id"]]["twin_state"] == "unknown_absent_or_unmapped") for f in fills))
+    counters = ["pending_dropped", "terminal_evicted", "identities_omitted", "helper_failures",
+                "publication_dropped", "publication_unknown_batches"]
+    status_rows = by_file["live_status"]
+    maxima = {k: max(r["payload"]["twin_trace"][k] for r in status_rows) for k in counters}
+    check("all six trace helper/publication counters zero across 17 panels", len(status_rows) == 17
+          and all(x == 0 for x in maxima.values()))
+    twin = target("twin_settlement")[0]["payload"]
+    practice = target("practice_window")[0]["payload"]
+    check("decision twin and separate practice target have zero shares/cost/PnL", all(
+        p[k] == 0 for p in (twin, practice) for k in ("up_shares", "down_shares", "cost_usd", "pnl_usd")))
+
+    probability = target("probability_events")
+    forecast = next(r["payload"] for r in probability if "p" in r["payload"])
+    score = next(r["payload"] for r in probability if r["payload"].get("status") == "scored")
+    check("forecast score same exact identity and original values", all(
+        forecast[k] == score["forecast"][k] for k in score["forecast"]) and score["outcome"] is True
+        and forecast["live_application"] is False and forecast["p"] == forecast["q"])
+    last = status_rows[-1]
+    p = last["payload"]
+    check("unchanged named effective caps", p["caps"] == {"window_usd": D(10), "open_usd": D(20),
+          "day_stop_usd": D(6), "clip": D(5), "total_stop_usd": D(10)})
+    check("last financial raw PnL split within float representation", abs(
+        p["total"]["locked_usd"] + p["total"]["directional_usd"] - p["total"]["pnl_usd"]) < D("0.000000001"))
+    check("tail successor fill kept separate", sum(1 for x in by_file["live_fill"]
+          if x["payload"].get("window") != TARGET) == 1)
+    out = {"kind": "independent direct-native audit; not a profitability gate", "target": TARGET,
+           "queries": manifest, "population": {"raw_rows": 279, "unique_rows": len(unique),
+           "duplicate_rows": 10, "classification": dict(classifications)}, "checks": checks,
+           "fills": fills, "quantity": qty, "cost": costs, "fees": fees, "payout": payout,
+           "pnl": pnl, "locked": pnl, "directional": D(0), "all_in_pair_cost": (sum(costs.values()) + fees) / D(5),
+           "hedge_reduction_of_prehedge_worst_case": pnl - D(-3),
+           "intent_count": len(intents), "filled_orders": 2, "trace_actions": dict(actions),
+           "trace_counter_max": maxima, "forecast_brier": (D(1) - forecast["p"]) ** 2,
+           "forecast": forecast, "score": score,
+           "last_status": {"platform_timestamp": last["platform_timestamp"], "selected": {
+               k: p[k] for k in ("at", "mode", "authenticated", "trading_now", "reason", "waiting", "cash_usd",
+               "open_risk_usd", "reserved_usd", "total_halted", "day_stop_latched", "caps")}},
+           "coverage_certified": False, "limits": [
+               "Complete bounded filtered log returns do not certify all market events, queue state or continuous coverage.",
+               "Lock policy does not produce the ordinary decision-twin copy; unknown is not a zero-size simulated hedge.",
+               "Raw practice combined-status JSONs remain genuinely truncated, unrepaired.",
+               "Original generic scaffold has known narrow-label/prefix exclusions; retained unchanged, superseded for final conclusions.",
+               "Snapshot during reconcile is not venue execution time; no exact callback/queue delay inferred.",
+               "One window cannot establish an edge or comparative profitability."]}
+    (BASE / "ROOT_NATIVE_AUDIT.json").write_text(json.dumps(out, indent=2, default=str) + "\n")
+    print(json.dumps({"passed": len(checks), "pnl": str(pnl), "population": out["population"],
+                      "fees": str(fees), "brier": str(out["forecast_brier"])}, indent=2))
+
+
+if __name__ == "__main__":
+    main()
