@@ -1,6 +1,29 @@
 # Codex operating handoff — October 15, 2026
 
-**Latest owner priority, 1:30 PM PDT:** Kalshi first again; keep remaining account/automation,
+## Current update — October 16, 10:00 AM Pacific
+
+The owner prioritizes operating reconciliation before reorganizing the town; TJR stays last.
+The original private text and both complete procedures are hash-verified. Bounded GitHub source,
+Railway service/runtime and scheduler checks are recorded in the existing private vault's operating
+map, acceptance matrix and recovery request. Source preservation is complete; actual external
+routine control/last-run, unique artifact payloads, host/deployment and raw-volume/cost evidence
+still prevent full operating acceptance. No competing tracker or invented migration percentage.
+
+The complete new Claude addendum at8e97efc7 supplies a trading delta. Preserve its testimony with
+source-backed corrections in [BUSINESS_WORKFLOW.md](BUSINESS_WORKFLOW.md): not all proposed page
+telemetry exists, both real venues remain separate, observers are not simulated traders, and
+recorder Phase0 remains incomplete despite a completed checkpoint report. Native logs corroborate
+the separately reported external20/40/12 cap change with10total/clip5 retained; this handoff does
+not change any money controls. Old10/20/6 observations below remain historical.
+
+Historical stop/speed integration and later arena/recorder successor releases are already done;
+keep their separate deployment and bounded follow-up evidence. Remaining tape-seal/RSS, input,
+raw-data, retention/cost, preserved drafts and operating-access gaps remain on existing queues.
+PR73 release is verified but the owner's product/clarity goal is reopened. Next collect only the
+missing private source/control evidence, then implement the reviewed town organization. The old
+priorities and snapshots below are retained history, not new instructions or current balances.
+
+**Historical owner priority, October15, 1:30 PM PDT (superseded above):** Kalshi first again; keep remaining account/automation,
 cost and business work deferred and unfinished on existing records. Private archive preservation
 is verified complete; full transfer is not. TJR remains last. The standing owner rule in AGENTS
 keeps every unfinished task queued with next steps, including deployment/runtime proof where relevant.

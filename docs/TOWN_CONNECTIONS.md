@@ -1,5 +1,12 @@
 # What the town's numbers and movement mean
 
+**October 16, 10:00 AM PDT:** the owner rejected PR73's clarity and requested operating reconciliation
+before the next town reorganization. The current implementation described below is deployed, but its
+product goal remains open. [BUSINESS_WORKFLOW.md](BUSINESS_WORKFLOW.md) is the reviewed work order and
+source-gap map, not a claim that a replacement is already built. Private operating inventory remains
+in the existing private vault. Characters are display guides; each actual service needs its own
+purpose, evidence, mode, action/waiting reason and source age.
+
 The town is a read-only view of the running business. `/` and `/world` show the
 town; `/summary` shows the same projection without 3D. The only menu choices are
 Money, Team and Help. Both pages read the authenticated `GET /api/page`; neither
