@@ -13,6 +13,13 @@ Template:
 - Next step: ...
 ```
 
+## 2026-10-16 13:05 UTC, Codex — deferred TJR/MNQ gate remains closed (October 16, 6:05 AM PDT)
+
+- Fresh connected-GitHub `6556e21c551dfccdd444500c2ca49ca21734fbce` AGENTS, coordination takeover/work-order/queue and newest WORKLOG retain higher-priority EXEC, recorder verification/retention/cost and operating transfer as OPEN. Owner has not moved TJR ahead of these. Missing access/evidence and pending activation verification are not completion.
+- Fresh independent PR47 API confirms October 14 merge **9:21:49 AM PDT**, `e8db34ee`; separate deployment record blob `33c13fb3` records `f707494f` SUCCESS **9:24:05.418 AM**, reconciliation cleared in state **9:47:21.227 AM** and log **9:47:30.917 AM**. Historical release/follow-up is complete; no current health or overall-clearance inference.
+- TJR remains LAST/queued/blocked. No Pages, duplicate research, synthetic-test rerun, historical validation, paper/live execution, paid access, automation or production/financial change. These two additive documentation updates preserve previous entries; application tests are unnecessary. Unchanged routine TJR notification suppressed. Owner's active phone guidance is separate; screenshots of an online service/menu do not prove a reset or real-trading activation.
+- Next: complete the existing higher-priority obligations with evidence, then read both current Pages fully and reuse the saved implementation/tests with authentic authorized MNQ development data, fees and slippage. Keep historical-validation and verified paper-start requirements outstanding, with live execution disabled.
+
 ## 2026-10-16 12:37 UTC, Codex — current app verified; owner daily-budget response recorded (October 16, 5:37 AM PDT)
 
 - Read current `ab9a40b37c2e240b708bb1cf121d83f67cbddb9b` AGENTS, coordination takeover/work-order/EXEC/TJR queue and newest WORKLOG. The owner has now replied to the offered one-time fresh **$6** daily allowance. Record the response against that specific offered scope, not permanent stop removal, unlimited losses or increases to other limits. The older unanswered-choice entry is preserved as history.
