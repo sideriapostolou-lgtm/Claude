@@ -42,6 +42,8 @@ building, wait for it to finish.
 
 ## Deferred work queue
 
+**Owner work order — October 16, 1:12 PM PDT:** fix the diagnosed Kalshi entry/hedge failures. This supersedes the previous diagnosis-only scope for this task and authorizes a tested code correction with standing release verification. It does not change financial limits, stops, resume budgets, variables or new-live-desk authority. Keep other unfinished commitments on their existing records.
+
 **Owner work order — October 16, 12:24 PM PDT:** diagnose the single biggest source of Kalshi losses. Read-only actual-fill/settlement/source investigation takes priority in this task. No strategy/cap/stop/variable/deployment changes follow from diagnosis. Existing town acceptance, full handoff and recorder obligations remain open; TJR stays last and its repeated reminder stays paused.
 
 **Owner work order — October 16, 11:29 AM PDT:** the owner now explicitly asks to work on the town, including broken Kalshi money loading and poor visual/workflow quality. Town repair and redesign is active now; the earlier handoff-before-redesign sequence is superseded for this task. The full operating handoff remains unfinished on its existing record. No money limits, stops, trading rules, Railway variables or new live desks are in scope. Ignore the paused TJR reminder; research stays last.
@@ -602,6 +604,10 @@ financial-setting change, automatic restart or paid service follows from this pr
   this item. No production, financial or credential-copy work is needed; chat delegation stays usable.
 
 ## Inbox (newest first)
+
+### 2026-10-16 20:12 UTC, Codex -> owner / workers: entry and hedge correction authorized (October 16, 1:12 PM PDT)
+
+Owner says to fix the loss mechanisms just diagnosed. Scope: reproduce first-entry/hedge price selection and completion failures, choose a bounded correction, retain caps/stops/history and real/practice separation, run full tests and independent money-sensitive review, then use standing approval for safe-minute release and exact runtime verification. No money increase, new live desk, variable change or stop/resume reset. Root owns integration and docs; requested Astra reviews design/patch and Sol implements the assigned isolated files. No profitability claim from synthetic checks, no sealed TEST or hypothetical successful fills. Existing town, takeover and recorder work remain open; TJR reminder stays paused.
 
 ### 2026-10-16 19:24 UTC, Codex -> owner / workers: current loss source reconciled (October 16, 12:24 PM PDT)
 
